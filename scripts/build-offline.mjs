@@ -45,7 +45,9 @@ const pdfCoreSrc = readFileSync(path.join(pdfjsDir, "build/pdf.min.mjs"), "utf8"
 const pdfWorkerSrc = readFileSync(path.join(pdfjsDir, "build/pdf.worker.min.mjs"), "utf8");
 
 const styles = readFileSync(path.join(ROOT, "src/styles.css"), "utf8");
-const appJs = readFileSync(path.join(ROOT, "src/app.js"), "utf8");
+const appJs = ["src/app.js", "src/app-guests.js", "src/app-v8.js"]
+  .map((f) => readFileSync(path.join(ROOT, f), "utf8"))
+  .join("\n");
 
 const shell = readFileSync(path.join(ROOT, "index.html"), "utf8");
 

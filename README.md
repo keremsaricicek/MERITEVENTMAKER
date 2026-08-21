@@ -44,19 +44,22 @@ how earlier versions of this app shipped as a single email-able file.
 ## Project structure
 
 ```
-index.html         Page shell — dialogs, containers, vendor <script> tags
-src/styles.css      Full design system (tokens, components, both UI layers)
-src/app.js          Application logic (events, floor plan, guests, seating,
-                     live tracking, reports, Excel/PDF import)
+index.html          Page shell — dialogs, containers, vendor <script> tags
+src/styles.css       Full design system (tokens, components, both UI layers)
+src/app.js           Base app: events, floor plan editor, canvas interactions
+src/app-guests.js     Guests, Excel import wizard, seating, live, reports, guide
+src/app-v8.js         "V8" layer: overrides/extends the base app
 scripts/build-offline.mjs   Produces the single-file offline build
 ```
 
-`src/app.js` is two layers concatenated in their original load order: the
-base app, followed by a "V8" layer that overrides/extends it (card-based
-event home screen, guided event setup, assisted floor-plan detection from
-an uploaded image, live operational mode). Both layers share one global
-scope by design — this mirrors how the app was actually built and shipped,
-so it's kept as-is rather than restructured.
+The three `src/*.js` files are loaded as classic (non-module) scripts, in
+that order, and share one global scope by design — `src/app-v8.js` is a
+layer that overrides and extends functions defined in the first two
+(card-based event home screen, guided event setup, assisted floor-plan
+detection from an uploaded image, live operational mode). This mirrors how
+the app was actually built and shipped, so it's kept as-is rather than
+restructured into modules. Load order matters; don't reorder the `<script>`
+tags in `index.html`.
 
 ## Design system
 
