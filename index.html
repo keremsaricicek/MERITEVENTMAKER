@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>MERIT ENTERTAINMENT — EVENT MAKER</title>
+  <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+  <main id="app" class="app"></main>
+  <input id="floorPlanFile" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg,.pdf" hidden>
+  <input id="guestFileInput" type="file" accept=".xlsx,.xls,.csv,text/csv" hidden>
+
+  <dialog id="eventDialog" class="dialog-sm"><form id="eventForm" method="dialog">
+    <div class="dialog-head"><h2>Create Event</h2><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
+    <div class="dialog-body"><div class="form-grid"><div class="field full"><label>Event Name</label><input name="name" required value=""></div><div class="field"><label>Date</label><input name="date" type="date" required></div><div class="field"><label>Event Status</label><select name="status"><option>Planning</option><option>Confirmed</option><option>Live</option></select></div><div class="field full"><label>Venue</label><input name="venue" required value=""></div></div></div>
+    <div class="dialog-foot"><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="default">Create Event</button></div>
+  </form></dialog>
+
+  <dialog id="guestDialog" class="dialog-sm"><form id="guestForm" method="dialog">
+    <input type="hidden" name="id"><div class="dialog-head"><h2 id="guestDialogTitle">Add Guest</h2><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
+    <div class="dialog-body"><div class="form-grid"><div class="field full"><label>Name Surname</label><input name="name" required placeholder="KEREM SARICICEK"></div><div class="field"><label>Additional Guests</label><input name="additionalGuests" type="number" min="0" max="99" value="0" required></div><div class="field"><label>Planning Status</label><select name="planningStatus"><option>Confirmed</option><option>Tentative</option></select></div><div class="field full"><div class="total-pax-box"><span>Total Pax</span><b id="guestTotalPax">1</b></div></div><div class="field"><label>VIP Level</label><select name="vip"><option>Standard</option><option>VIP</option><option>VVIP</option></select></div><div class="field"><label>Invited By</label><input name="invitedBy"></div><div class="field full"><label>Notes</label><textarea name="notes"></textarea></div></div></div>
+    <div class="dialog-foot"><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="default">Save Guest</button></div>
+  </form></dialog>
+
+  <dialog id="excelDialog" class="dialog-wide"><div id="excelWizard"></div></dialog>
+  <dialog id="guideDialog" class="guide-dialog"><div id="guideRoot" class="guide-shell"></div></dialog>
+  <div id="toastWrap" class="toast-wrap" aria-live="polite"></div>
+
+  <!--
+    Spreadsheet (SheetJS xlsx@0.18.5) and PDF (pdfjs-dist@5.7.284) engines are
+    loaded from jsDelivr, pinned to the exact versions this app was built
+    against, instead of being vendored inline — see README.md for why, and
+    for the script that builds a single-file, fully offline HTML for
+    environments with no network access at runtime.
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script type="module">
+    import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.7.284/build/pdf.min.mjs";
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.7.284/build/pdf.worker.min.mjs";
+    globalThis.MeritPdf = { getDocument: pdfjsLib.getDocument, GlobalWorkerOptions: pdfjsLib.GlobalWorkerOptions };
+    globalThis.dispatchEvent(new CustomEvent("merit-pdf-ready"));
+  </script>
+  <script src="src/app.js"></script>
+</body>
+</html>
