@@ -16,12 +16,10 @@ evaluation, and model lifecycle sections are your primary spec — and
 discipline (deployment workflow, drift monitoring, model registry/
 promotion, automated-retraining safeguards, A/B testing, rollback). When a
 task actually requires real dataset/training/tuning mechanics rather than
-correction-pipeline design, also read the relevant Ultralytics skill —
-`.claude/skills/yolo-datasets/SKILL.md` for dataset versioning/splits,
-`.claude/skills/yolo-training/SKILL.md` or `.claude/skills/yolo-tuning/
-SKILL.md` for training/hyperparameter runs — via the `yolo/SKILL.md`
-router; don't load all of them for a task that's really just about the
-correction UX or data shape.
+correction-pipeline design, also read `.claude/skills/
+merit-yolo-obb-workflow/SKILL.md` (§3 source-plan-aware splitting, §4
+training workflow, §5 tuning workflow, §9 model versioning) — don't load
+it for a task that's really just about the correction UX or data shape.
 
 ## What you own
 

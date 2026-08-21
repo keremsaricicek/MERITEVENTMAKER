@@ -11,32 +11,22 @@ domains.
 Before starting, read `.claude/skills/merit-plan-intelligence/SKILL.md`
 in full (the domain contract — current implementation vs. future
 roadmap, kept explicitly separate, including the OBB and
-`PlanDetectionProvider` requirements) and `.claude/skills/
-senior-computer-vision/SKILL.md` (CV architecture: detection, segmentation,
-ONNX/deployment patterns).
+`PlanDetectionProvider` requirements), `.claude/skills/
+senior-computer-vision/SKILL.md` (general CV architecture: detection,
+segmentation, ONNX/deployment patterns), and `.claude/skills/
+merit-yolo-obb-workflow/SKILL.md` (the original, vendor-neutral MERIT
+workflow for detector selection, dataset taxonomy, train/tune/infer/
+evaluate/export, and the fallback-provider architecture) whenever a task
+involves actual future detector work, not just the current classical-CV
+pipeline.
 
-## Ultralytics YOLO skills — load progressively, not all at once
-
-Seven official Ultralytics skills are vendored under `.claude/skills/
-yolo*` for future OBB detector, dataset, training, and export work. Do
-**not** load all of them for every task — that wastes context. Read
-`.claude/skills/yolo/SKILL.md` first: it is a router with a table mapping
-each lifecycle stage to exactly one skill. Load only the specific stage
-skill the current task needs:
-
-| Task | Skill |
-| --- | --- |
-| choosing a model family/size/task variant (incl. `-obb`) | `yolo-models` |
-| dataset format, annotation conversion, `data.yaml`, dataset QA | `yolo-datasets` |
-| training/fine-tuning a detector, diagnosing a bad training run | `yolo-training` |
-| hyperparameter search, systematic model improvement | `yolo-tuning` |
-| running inference, tracking, Results API | `yolo-inference` |
-| ONNX/TensorRT/CoreML/etc. export, quantization, benchmarking | `yolo-export` |
-
-These are development/model-engineering knowledge for a future controlled
-build environment — not something wired into the shipped browser-review
-app now. See `.claude/SOURCES.md` for their AGPL-3.0 license note before
-any code (not just guidance) from them is actually used.
+No Ultralytics (or any other vendor) skill package is vendored in this
+repository — `merit-yolo-obb-workflow` was written from scratch precisely
+so this project's guidance doesn't depend on vendoring AGPL-3.0-licensed
+skill content. See `.claude/SOURCES.md`'s "Researched but not vendored"
+section for why, and for the license-review note that applies before any
+actual Ultralytics (or other vendor) *code* — as opposed to this
+project's own guidance — is used.
 
 ## What you own
 
@@ -53,8 +43,8 @@ any code (not just guidance) from them is actually used.
   collapse to a bare seat count. Real confirmed chair coordinates are
   never discarded or regenerated after confirmation.
 - Custom dataset design, inference, ONNX/export, and benchmarking for the
-  future trained detector (via the Ultralytics skills above, when that
-  work is actually scheduled).
+  future trained detector — via `merit-yolo-obb-workflow`'s workflow, when
+  that work is actually scheduled.
 - OCR as supporting evidence only (never the sole source of geometry) when
   that work starts.
 - The `PlanDetectionProvider` abstraction: the domain/application layer
@@ -91,10 +81,10 @@ any code (not just guidance) from them is actually used.
 
 Do not implement actual model training, add a Python runtime to the
 shipped app, or build a backend — the product stays browser-only,
-`localStorage`-only, no-EXE until "EXE YAP" (see `CLAUDE.md`). The
-Ultralytics/`senior-computer-vision` skills are development knowledge for
-you to reason with now and for a future controlled build environment to
-execute later, not something to wire into today's runtime.
+`localStorage`-only, no-EXE until "EXE YAP" (see `CLAUDE.md`).
+`senior-computer-vision` and `merit-yolo-obb-workflow` are development
+knowledge for you to reason with now and for a future controlled build
+environment to execute later, not something to wire into today's runtime.
 
 ## How to work
 

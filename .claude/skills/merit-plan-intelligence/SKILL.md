@@ -80,13 +80,12 @@ Chair detections remain first-class objects under this rule too — a
 confirmed chair's real detected coordinates are never discarded or
 regenerated after confirmation (see "Chairs are first-class" below).
 
-When real detector training starts, the vendored Ultralytics skills
-(`.claude/skills/yolo*`) cover the `-obb` task variant specifically —
-`yolo-models` for choosing an OBB-capable model, `yolo-datasets` for OBB
-label formats (e.g. DOTA-style), `yolo-training`/`yolo-tuning` for
-training an OBB model, `yolo-export` for exporting it. Route to the
-specific stage skill via `yolo/SKILL.md`'s table rather than loading all
-of them.
+When real detector training starts, `.claude/skills/
+merit-yolo-obb-workflow/SKILL.md` is the original, vendor-neutral MERIT
+workflow for this — detector selection, OBB dataset taxonomy and label
+formats, source-plan-aware splitting, training/tuning, inference,
+evaluation, and export. It stays vendor-neutral by design: no specific
+vendor's SDK/skill package is assumed or required to read it.
 
 ## Provider abstraction — never hard-wire to one vendor
 
@@ -96,19 +95,22 @@ never directly on a vendor's detection API (Ultralytics/YOLO, ONNX
 Runtime, or any other SDK). Concrete implementations behind that
 interface can include:
 
-- Classical CV (today's `runAssistedDetection` heuristics) as one
-  provider/fallback.
-- A future Ultralytics YOLO OBB model as another provider.
-- ONNX Runtime inference as another.
-- Any other detector, present or future.
+- `ClassicalCvProvider` — today's `runAssistedDetection` heuristics; the
+  guaranteed always-available fallback.
+- `UltralyticsObbProvider` — a future Ultralytics YOLO OBB model, if that
+  turns out to be the chosen detector family (see
+  `merit-yolo-obb-workflow`).
+- `OnnxObbProvider` — a future ONNX Runtime-based provider, independent
+  of which framework trained the model.
+- `FutureDetectorProvider` — whatever else turns out to fit best; the
+  interface is the contract, not any one of these names.
 
 This mirrors the boundary discipline in `.claude/skills/
 software-architecture/SKILL.md` — treat detection engine choice as an
 infrastructure detail behind a stable interface, not something the UI or
-domain logic reaches through to a specific vendor SDK. Installing the
-Ultralytics skills is knowledge for implementing one such provider later —
-it is not permission to wire the application directly to the
-`ultralytics` package.
+domain logic reaches through to a specific vendor SDK. `merit-yolo-obb-
+workflow` is knowledge for implementing one such provider later — it is
+not permission to wire the application directly to any vendor's package.
 
 ## Chairs are first-class — never collapse to a seat count
 
