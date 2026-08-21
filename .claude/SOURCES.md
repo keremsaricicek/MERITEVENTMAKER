@@ -7,7 +7,7 @@ cloning the source repository directly (not by trusting a search result)
 during this environment's setup session. Original `LICENSE` files are
 copied alongside each vendored skill — do not remove them.
 
-## Vendored external skills (12)
+## Vendored external skills (20)
 
 ### 1. ui-ux-pro-max
 - **Purpose:** Searchable UI/UX design intelligence — styles, palettes, font
@@ -160,6 +160,76 @@ copied alongside each vendored skill — do not remove them.
 - **Note:** this is the optional database skill (task section 15) — one
   installed, not several overlapping SQL packs.
 
+### 13-19. Ultralytics YOLO lifecycle (official) — 7 skills
+- **Purpose:** the official Ultralytics Agent Skills covering the full
+  YOLO lifecycle — model/task selection, dataset annotation/conversion,
+  training, hyperparameter tuning, inference, and export/deployment.
+  Directly relevant to Plan Intelligence: table/chair detection, OBB
+  models, custom dataset design, and ONNX export are core future
+  capabilities of this product.
+- **Source:** `https://github.com/ultralytics/skills` (official
+  Ultralytics org repo)
+- **Paths vendored** (each `skills/<name>/SKILL.md` in the source repo):
+  - `skills/yolo/SKILL.md` — entry-point/router skill; routes to the
+    stage-specific skill below by task (model choice, data, train, tune,
+    infer, export). **Read this one first** — it is the intended
+    progressive-loading dispatcher, not a skill to load alongside all six
+    others by default.
+  - `skills/yolo-models/SKILL.md` — model family/size/task-variant
+    selection (YOLO26/YOLO11/YOLOv8, YOLO-World, YOLOE, SAM/SAM2,
+    RT-DETR; task variants including `-obb`).
+  - `skills/yolo-datasets/SKILL.md` — dataset annotation, `data.yaml`,
+    YOLO label formats, COCO/DOTA/mask conversion, dataset analysis.
+  - `skills/yolo-training/SKILL.md` — `model.train()`/`yolo train`,
+    hyperparameters, augmentation, multi-GPU, diagnosing OOM/NaN/low mAP.
+  - `skills/yolo-tuning/SKILL.md` — hyperparameter search
+    (`model.tune()`, Ray Tune), systematic model-improvement playbook.
+  - `skills/yolo-inference/SKILL.md` — `model.predict()`/`track()`,
+    Results API, persistent tracking, Solutions (counting/heatmaps).
+  - `skills/yolo-export/SKILL.md` — ONNX/TensorRT/CoreML/OpenVINO/
+    LiteRT/NCNN/NPU export, quantization, benchmarking, export-parity
+    validation.
+- **Commit:** `dcee0db39adf8bc8110329589f4cebb2ad8f0004` (2026-08-20)
+- **License:** **GNU AGPL-3.0** (`LICENSE`, Ultralytics) — copied
+  alongside each of the 7 vendored skill folders. This is a materially
+  different license from every other vendored skill here (all MIT/Apache
+  2.0) — **flagging explicitly**: AGPL-3.0 is a strong copyleft license.
+  What's vendored here is Ultralytics' own reference documentation/skill
+  guidance text, kept and attributed as-is for Claude's use while working
+  in this repository — it is not code compiled or linked into the MERIT
+  EVENT MAKER application. Before any actual `ultralytics` package code
+  or model weights are vendored into or shipped with the product (as
+  opposed to Claude reading this guidance during development), get a
+  license review — AGPL's network-copyleft terms are a real
+  consideration for a commercial product and are out of scope for this
+  engineering-environment task to resolve.
+- **Vendored as:** `.claude/skills/yolo/`, `.claude/skills/yolo-models/`,
+  `.claude/skills/yolo-datasets/`, `.claude/skills/yolo-training/`,
+  `.claude/skills/yolo-tuning/`, `.claude/skills/yolo-inference/`,
+  `.claude/skills/yolo-export/`
+- **Installed:** 2026-08-21
+- **Scope note:** development/model-engineering knowledge only. Model
+  training does not happen now (current stage is browser review); when it
+  does, it happens in a controlled developer/build environment, never on
+  the end user's machine — see `merit-desktop-architecture` and
+  `CLAUDE.md`'s EXE gate. The end user is never asked to install Python.
+
+### 20. senior-ml-engineer
+- **Purpose:** production ML engineering / MLOps — model deployment
+  workflow, feature stores, drift monitoring, model registry/promotion,
+  automated retraining safeguards, A/B testing, cost optimization.
+  Installed specifically to close the MLOps/production-lifecycle gap
+  noted in the original pass (see "MLOps / active-learning skill" below)
+  — this is a genuinely strong, dedicated fit where the previously
+  considered `ml-engineering` (LLM-fine-tuning-flavored) skill was not.
+- **Source:** `https://github.com/alirezarezvani/claude-skills`, path
+  `engineering-team/skills/senior-ml-engineer/SKILL.md`
+- **Commit:** `98180dafc4f0bc9d629bd479fc6107674cfb3cf8` (2026-08-21) — same
+  clone already used for `senior-computer-vision` (#5).
+- **License:** MIT (Alireza Rezvani, 2025) — `LICENSE` included.
+- **Vendored as:** `.claude/skills/senior-ml-engineer/`
+- **Installed:** 2026-08-21
+
 ## Requested sources that did not pan out
 
 - **`AbsolutelySkilled/AbsolutelySkilled`** (requested as the preferred
@@ -177,20 +247,29 @@ copied alongside each vendored skill — do not remove them.
   research. This keeps the stack curated and single-sourced where a
   well-maintained alternative already existed locally.
 
-- **MLOps / active-learning skill:** no genuinely strong, actively
-  maintained Claude Code skill was found that matches the requested scope
-  (dataset lifecycle, train/val/test discipline, model registry,
-  champion/challenger, **active learning** specifically for a CV pipeline).
-  The closest candidate, `magnus919/agent-skills` → `ml-engineering`, is
-  scoped to LLM fine-tuning/serving (LoRA/QLoRA, vLLM, GGUF quantization)
-  and is not a good fit for Merit's table/chair detection pipeline. Per
-  the task's own instruction not to install a weak substitute, this was
-  **not vendored**. That domain knowledge is instead carried directly by
-  the project's own `merit-plan-intelligence` skill (sections on active
-  learning data, train/val/test discipline, model lifecycle) and owned by
-  the `active-learning-engineer` agent — which is more accurate for this
-  product's specific CV use case than a generic MLOps skill would be
-  anyway.
+- **MLOps / active-learning skill — UPDATE (2026-08-21):** the first pass
+  found no genuinely strong, actively maintained Claude Code skill
+  matching the requested scope (dataset lifecycle, train/val/test
+  discipline, model registry, champion/challenger, **active learning**
+  for a CV pipeline). The closest candidate at the time,
+  `magnus919/agent-skills` → `ml-engineering`, was scoped to LLM
+  fine-tuning/serving (LoRA/QLoRA, vLLM, GGUF quantization) and not a
+  good fit, so nothing was vendored for this gap in the first pass. A
+  follow-up request specifically pointed at `alirezarezvani/claude-skills`
+  → `senior-ml-engineer` (#20 above), which genuinely covers production
+  MLOps — deployment workflow, drift monitoring, model registry/
+  promotion, automated-retraining safeguards — and **has now been
+  vendored** to close this gap. CV-pipeline-specific active-learning
+  detail (verified examples, negative examples, group-aware splits,
+  candidate/champion/challenger for a detection model specifically)
+  still lives primarily in the project's own `merit-plan-intelligence`
+  skill and the `active-learning-engineer` agent, with `senior-ml-
+  engineer` now supplying the general production-MLOps discipline
+  underneath it (registry, drift, promotion, rollback safeguards).
+  Ultralytics' `yolo-training`/`yolo-tuning`/`yolo-datasets` (#13-19
+  above) supply the YOLO-specific training/tuning/dataset mechanics that
+  `active-learning-engineer` reaches for only when a task actually
+  requires real model work.
 
 - **Canvas/spatial editor skill** (Konva/Fabric/SVG, drag/resize/rotate/
   marquee): no maintained, genuine Claude Code skill was found. Several

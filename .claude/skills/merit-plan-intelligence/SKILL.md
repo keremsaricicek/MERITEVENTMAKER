@@ -1,6 +1,6 @@
 ---
 name: merit-plan-intelligence
-description: High-priority domain skill for MERIT ENTERTAINMENT — EVENT MAKER's floor-plan understanding — Assisted Detection (classical CV), chair-first-class objects, chair-table association, Teach AI corrections, active-learning data, and the strict AI-truthfulness rules. Use for any work touching floor-plan analysis, object/chair detection, OCR, Teach AI, verified examples, or model lifecycle.
+description: High-priority domain skill for MERIT ENTERTAINMENT — EVENT MAKER's floor-plan understanding — Assisted Detection (classical CV), the OBB/rotation-aware table-detector requirement, the PlanDetectionProvider abstraction, chair-first-class objects, chair-table association, Teach AI corrections, active-learning data, and the strict AI-truthfulness rules. Use for any work touching floor-plan analysis, object/chair detection, OBB, OCR, Teach AI, verified examples, or model lifecycle.
 ---
 
 # Merit Plan Intelligence
@@ -67,11 +67,48 @@ environment:
 8. Model registry/versioning with champion/challenger and rollback.
 9. Dataset lifecycle management.
 
-Orientation: always preserve `center`, `width`, `height`, `rotation` —
-never collapse detections to axis-aligned boxes. Use OBB output or
-`minAreaRect`/PCA where appropriate (the current PCA rotation computation
-in `runAssistedDetection` is exactly this pattern, just on connected
-components instead of a trained detector).
+**OBB requirement — non-negotiable.** The preferred table detector must
+support oriented bounding boxes (OBB) or an equivalently rotation-aware
+representation. Do not convert rotated rectangular tables into
+axis-aligned boxes unless technically unavoidable. Always preserve
+`center x/y`, `width`, `height`, `rotation` end to end — from detection,
+through the review UI, through confirmation, into the persisted table
+record. Use OBB output or `minAreaRect`/PCA where appropriate (the current
+PCA rotation computation in `runAssistedDetection` is exactly this
+pattern, just on connected components instead of a trained detector).
+Chair detections remain first-class objects under this rule too — a
+confirmed chair's real detected coordinates are never discarded or
+regenerated after confirmation (see "Chairs are first-class" below).
+
+When real detector training starts, the vendored Ultralytics skills
+(`.claude/skills/yolo*`) cover the `-obb` task variant specifically —
+`yolo-models` for choosing an OBB-capable model, `yolo-datasets` for OBB
+label formats (e.g. DOTA-style), `yolo-training`/`yolo-tuning` for
+training an OBB model, `yolo-export` for exporting it. Route to the
+specific stage skill via `yolo/SKILL.md`'s table rather than loading all
+of them.
+
+## Provider abstraction — never hard-wire to one vendor
+
+MERIT EVENT MAKER must retain a **`PlanDetectionProvider`** abstraction in
+the domain/application layer. The domain layer depends on this interface,
+never directly on a vendor's detection API (Ultralytics/YOLO, ONNX
+Runtime, or any other SDK). Concrete implementations behind that
+interface can include:
+
+- Classical CV (today's `runAssistedDetection` heuristics) as one
+  provider/fallback.
+- A future Ultralytics YOLO OBB model as another provider.
+- ONNX Runtime inference as another.
+- Any other detector, present or future.
+
+This mirrors the boundary discipline in `.claude/skills/
+software-architecture/SKILL.md` — treat detection engine choice as an
+infrastructure detail behind a stable interface, not something the UI or
+domain logic reaches through to a specific vendor SDK. Installing the
+Ultralytics skills is knowledge for implementing one such provider later —
+it is not permission to wire the application directly to the
+`ultralytics` package.
 
 ## Chairs are first-class — never collapse to a seat count
 
@@ -144,8 +181,13 @@ When a real trained model exists, track real metrics only: precision,
 recall, mAP, table recall, chair recall, exact seat-count accuracy,
 table-type accuracy, mean rotation error, stage-detection quality — never
 fabricated numbers. Support candidate/champion/challenger models with
-explicit activation and rollback; never silently swap the production model
-after one correction.
+explicit activation and rollback; never silently swap or promote the
+production model after one correction — promotion happens only after
+explicit evaluation against these tracked metrics. `.claude/skills/
+senior-ml-engineer/SKILL.md` covers the general production-MLOps
+discipline behind this (deployment workflow, drift monitoring, registry,
+automated-retraining safeguards, A/B testing, rollback) — apply it, don't
+duplicate it here.
 
 ## Browser training honesty
 
