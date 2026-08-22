@@ -46,10 +46,12 @@ Full detail: `.claude/skills/merit-product-contract/SKILL.md`.
 ## UI standard
 
 Premium, restrained, operational desktop software — not a generic AI
-dashboard, card wall, or gradient-heavy template. Dark graphite shell,
-warm-paper Floor Plan canvas, controlled cool-blue interaction state,
-semantic-only color, VERY restrained VIP gold. Body text ~12–14px; dense,
-not unreadable. Desktop-first at 1920×1080 / 2560×1440 / ~1440px.
+dashboard, card wall, or gradient-heavy template. "Merit Night Operations"
+system: warm-ink shell with a left navigation rail, warm-paper "parchment"
+Floor Plan/Seating canvas, deep-teal interaction state, serif reserved for
+identity/numerals only, semantic-only color, VERY restrained VIP gold.
+Body text ~12–14px; dense, not unreadable. Desktop-first at 1920×1080 /
+2560×1440 / ~1440px.
 
 **A UI change is not done until it has been rendered and screenshotted** —
 source/markup review is not a substitute. Full detail:

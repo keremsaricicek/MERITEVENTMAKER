@@ -8,10 +8,17 @@ description: The permanent visual constitution for MERIT ENTERTAINMENT — EVENT
 MERIT ENTERTAINMENT — EVENT MAKER is professional desktop operational
 software for premium hospitality/casino event management — comparable in
 discipline to commissioned enterprise event-operations software, not a
-generic dashboard template. The current design system already lives in
-`src/styles.css` as CSS custom properties (spacing, radius, elevation,
-motion scales, color tokens); this skill is the durable brief that governs
-how that system evolves.
+generic dashboard template. The design system lives in `src/styles.css`
+as CSS custom properties (spacing, radius, elevation, motion scales, color
+tokens); this skill is the durable brief that governs how that system
+evolves.
+
+The system in place is **"Merit Night Operations"**: a warm-ink dark
+shell (never cool-gray, never black-and-white) with a deep-teal signature
+accent, a left navigation rail, and serif used sparingly for identity and
+numerals only — not as a body typeface. This replaced an earlier
+"dark graphite + cool blue + top tabs" shell; treat that description as
+historical, not current.
 
 ## The feeling this product must have
 
@@ -21,12 +28,21 @@ decoration for its own sake.
 
 ## Visual direction
 
-- **Dark graphite** application shell/chrome. Quiet neutral panels.
-- **Warm-paper-toned canvas** for the Floor Plan itself — this is
-  deliberate and already how `src/styles.css` treats the canvas; it reads
-  as a physical plan on paper, not another dark panel.
-- **Controlled cool blue** for selection, interaction, focus, and active
-  state — nothing else claims that color.
+- **Warm-ink** application shell/chrome (the `--ink-*` token scale) — not
+  cool-gray, not pure black. Quiet, layered neutral panels.
+- **Left navigation rail** (`.workspace-rail`) is the primary section
+  switcher, not a top tab bar. Secondary/destructive card actions
+  (Duplicate, Delete) live behind an overflow menu, not as always-visible
+  icon buttons.
+- **Warm-paper-toned "parchment" canvas** for the Floor Plan and Seating
+  Plan — this is a deliberate, singular material contrast with the dark
+  shell around it. It is not extended to any other screen.
+- **Deep teal signal color** (`--signal`) for selection, interaction,
+  focus, and active state — nothing else claims that color.
+- **Serif (`--font-display`) is for identity and numerals only** — event
+  titles, table numbers, KPI figures, dialog headings. Body/operational
+  text stays on the sans (`--font-ui`) stack. Never flip this: serif
+  throughout reads as editorial, not operational software.
 - **Semantic color only**: green = success, amber = warning, red =
   danger/operational alert. Don't repurpose these for decoration.
 - **Gold is VERY restrained** — only where VIP/VVIP business meaning
@@ -40,7 +56,10 @@ Decorative gradients (gradient-heavy cards especially). Fake luxury gold.
 Giant rounded "card wall" layouts. Huge empty marketing sections. Tiny
 unreadable UI. Random unmotivated theme changes. White generic admin
 forms. Anything that reads as a templated interface rather than a
-purpose-built one.
+purpose-built one. Also reject the "AI-generated" clichés this system was
+deliberately built to avoid: warm cream + high-contrast serif +
+terracotta; near-black + a single acid/neon accent; zero-radius broadsheet
+styling.
 
 ## Typography and density
 

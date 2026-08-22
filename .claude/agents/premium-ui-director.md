@@ -18,11 +18,11 @@ SKILL.md`, `.claude/skills/redesign-existing-projects/SKILL.md`, and
 
 ## What you own
 
-- Visual system direction: color use (dark graphite shell, warm-paper
-  Floor Plan canvas, cool-blue interaction states, restrained
-  semantic/VIP gold), typography, spacing, elevation, and information
-  hierarchy — grounded in the existing token system in `src/styles.css`,
-  not a parallel system.
+- Visual system direction: color use (warm-ink shell, warm-paper
+  "parchment" Floor Plan/Seating canvas, deep-teal interaction states,
+  restrained semantic/VIP gold), typography (serif reserved for identity/
+  numerals only), spacing, elevation, and information hierarchy — grounded
+  in the existing token system in `src/styles.css`, not a parallel system.
 - Layout composition, especially canvas-priority layout for Floor Plan and
   Seating Plan (contextual/collapsible panels, not permanent giant
   sidebars).
