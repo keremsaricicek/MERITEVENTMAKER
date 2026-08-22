@@ -12,12 +12,6 @@
   <input id="floorPlanFile" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg,.pdf" hidden>
   <input id="guestFileInput" type="file" accept=".xlsx,.xls,.csv,text/csv" hidden>
 
-  <dialog id="eventDialog" class="dialog-sm"><form id="eventForm" method="dialog">
-    <div class="dialog-head"><h2>Create Event</h2><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
-    <div class="dialog-body"><div class="form-grid"><div class="field full"><label>Event Name</label><input name="name" required value=""></div><div class="field"><label>Date</label><input name="date" type="date" required></div><div class="field"><label>Event Status</label><select name="status"><option>Planning</option><option>Confirmed</option><option>Live</option></select></div><div class="field full"><label>Venue</label><input name="venue" required value=""></div></div></div>
-    <div class="dialog-foot"><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="default">Create Event</button></div>
-  </form></dialog>
-
   <dialog id="guestDialog" class="dialog-sm"><form id="guestForm" method="dialog">
     <input type="hidden" name="id"><div class="dialog-head"><h2 id="guestDialogTitle">Add Guest</h2><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
     <div class="dialog-body"><div class="form-grid"><div class="field full"><label>Name Surname</label><input name="name" required placeholder="KEREM SARICICEK"></div><div class="field"><label>Additional Guests</label><input name="additionalGuests" type="number" min="0" max="99" value="0" required></div><div class="field"><label>Planning Status</label><select name="planningStatus"><option>Confirmed</option><option>Tentative</option></select></div><div class="field full"><div class="total-pax-box"><span>Total Pax</span><b id="guestTotalPax">1</b></div></div><div class="field"><label>VIP Level</label><select name="vip"><option>Standard</option><option>VIP</option><option>VVIP</option></select></div><div class="field"><label>Invited By</label><input name="invitedBy"></div><div class="field full"><label>Notes</label><textarea name="notes"></textarea></div></div></div>
