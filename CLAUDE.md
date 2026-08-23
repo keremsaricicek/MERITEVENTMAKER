@@ -46,21 +46,22 @@ Full detail: `.claude/skills/merit-product-contract/SKILL.md`.
 ## UI standard
 
 Premium, restrained, operational desktop software — not a generic AI
-dashboard, card wall, or gradient-heavy template. Dark graphite shell,
-warm-paper Floor Plan canvas, controlled cool-blue interaction state,
-semantic-only color, VERY restrained VIP gold. Body text ~12–14px; dense,
-not unreadable. Desktop-first at 1920×1080 / 2560×1440 / ~1440px.
+dashboard, card wall, or gradient-heavy template. One coherent light/warm
+palette app-wide (the old dark-graphite shell was fully retired, not just
+recolored — see `src/styles.css`'s root tokens and the `--pi-*` tokens
+they now cohere with), warm-paper Floor Plan canvas, controlled cool-blue/
+teal interaction state, semantic-only color, VERY restrained VIP gold.
+Body text ~12–14px; dense, not unreadable. Desktop-first at 1920×1080 /
+2560×1440 / ~1440px.
 
-**Scoped exception:** the Floor Plan default editing view and the Plan
-Intelligence review screen ("Concept 3 — Live Map") intentionally use a
-separate light/calm/architectural palette (`--pi-*` tokens in
-`src/styles.css`, `.planmap-*`/`.planintel-*` classes) — no permanent left
-object list or right technical inspector there; a floating minimal
-toolbar, a contextual card on selection, and a bottom status pill instead.
-This was a deliberate product decision, not drift; the rest of the app
-(Events/Home, Guests, Seating, Live Event, Reports) still uses the dark
-system above. Extending the light system app-wide is a follow-up, not yet
-done — don't "fix" the contrast between the two without checking first.
+The Floor Plan default editing view and the Plan Intelligence review
+screen ("Concept 3 — Live Map") still use their own `--pi-*`-scoped
+component patterns (no permanent left object list or right technical
+inspector — a floating minimal toolbar, a contextual card on selection, a
+bottom status pill) since each screen is designed for its own job, not a
+single reused component set; but the underlying color language is now the
+same one used everywhere else in the app. Don't reintroduce a second,
+visually distinct dark system for any screen.
 
 **A UI change is not done until it has been rendered and screenshotted** —
 source/markup review is not a substitute. Full detail:
