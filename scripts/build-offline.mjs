@@ -45,7 +45,12 @@ const pdfCoreSrc = readFileSync(path.join(pdfjsDir, "build/pdf.min.mjs"), "utf8"
 const pdfWorkerSrc = readFileSync(path.join(pdfjsDir, "build/pdf.worker.min.mjs"), "utf8");
 
 const styles = readFileSync(path.join(ROOT, "src/styles.css"), "utf8");
-const appJs = ["src/app.js", "src/app-guests.js", "src/app-v8.js"]
+// Tesseract.js (OCR) is intentionally NOT vendored here: this build's whole
+// point is zero network at runtime, which real OCR language data cannot
+// honor without embedding tens of MB. src/plan-ocr.js detects its absence
+// and reports the capacity auditor's OCR step as unavailable rather than
+// faking a result — see that file for the full rationale.
+const appJs = ["src/app.js", "src/app-guests.js", "src/i18n.js", "src/plan-ocr.js", "src/plan-intelligence.js", "src/app-v8.js"]
   .map((f) => readFileSync(path.join(ROOT, f), "utf8"))
   .join("\n");
 

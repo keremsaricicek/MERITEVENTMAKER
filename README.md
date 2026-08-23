@@ -48,7 +48,20 @@ index.html          Page shell — dialogs, containers, vendor <script> tags
 src/styles.css       Full design system (tokens, components, both UI layers)
 src/app.js           Base app: events, floor plan editor, canvas interactions
 src/app-guests.js     Guests, Excel import wizard, seating, live, reports, guide
-src/app-v8.js         "V8" layer: overrides/extends the base app
+src/app-v8.js         "V8" layer: overrides/extends the base app; also the
+                      Concept 3 "Live Map" Floor Plan/Plan Intelligence
+                      workspace, Review Center, and difficult-item Teach AI
+src/i18n.js           Bilingual (tr-TR/en-US) string table + t() helper —
+                      covers Floor Plan/Plan Intelligence/Review Center/
+                      Teach AI/nav; see MERIT_I18N_STATUS in that file for
+                      what isn't migrated yet
+src/plan-ocr.js       Real client-side OCR (Tesseract.js) for the capacity
+                      auditor — requires network on first use; intentionally
+                      not part of the offline build (see comments in the file)
+src/plan-intelligence.js  PlanIntelligenceResult contract + real geometric
+                      heuristics (furniture grouping, similarity clustering,
+                      bulk review groups, OCR capacity cross-check) built on
+                      top of the classical-CV Assisted Detection candidates
 scripts/build-offline.mjs   Produces the single-file offline build
 ```
 

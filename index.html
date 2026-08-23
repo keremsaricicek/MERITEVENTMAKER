@@ -42,8 +42,19 @@
     globalThis.MeritPdf = { getDocument: pdfjsLib.getDocument, GlobalWorkerOptions: pdfjsLib.GlobalWorkerOptions };
     globalThis.dispatchEvent(new CustomEvent("merit-pdf-ready"));
   </script>
+  <!--
+    Tesseract.js (MIT) — real client-side OCR for the Plan Intelligence
+    capacity auditor (reads printed pax notes / labels off the imported plan
+    image). Loaded from CDN like the two engines above; requires network on
+    first use to fetch its WASM core + language data. Not present in the
+    offline single-file build — see src/plan-ocr.js for why.
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
   <script src="src/app.js"></script>
   <script src="src/app-guests.js"></script>
+  <script src="src/i18n.js"></script>
+  <script src="src/plan-ocr.js"></script>
+  <script src="src/plan-intelligence.js"></script>
   <script src="src/app-v8.js"></script>
 </body>
 </html>

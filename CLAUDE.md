@@ -51,6 +51,17 @@ warm-paper Floor Plan canvas, controlled cool-blue interaction state,
 semantic-only color, VERY restrained VIP gold. Body text ~12–14px; dense,
 not unreadable. Desktop-first at 1920×1080 / 2560×1440 / ~1440px.
 
+**Scoped exception:** the Floor Plan default editing view and the Plan
+Intelligence review screen ("Concept 3 — Live Map") intentionally use a
+separate light/calm/architectural palette (`--pi-*` tokens in
+`src/styles.css`, `.planmap-*`/`.planintel-*` classes) — no permanent left
+object list or right technical inspector there; a floating minimal
+toolbar, a contextual card on selection, and a bottom status pill instead.
+This was a deliberate product decision, not drift; the rest of the app
+(Events/Home, Guests, Seating, Live Event, Reports) still uses the dark
+system above. Extending the light system app-wide is a follow-up, not yet
+done — don't "fix" the contrast between the two without checking first.
+
 **A UI change is not done until it has been rendered and screenshotted** —
 source/markup review is not a substitute. Full detail:
 `.claude/skills/merit-ui-constitution/SKILL.md`.

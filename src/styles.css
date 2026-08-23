@@ -728,3 +728,132 @@ body{min-width:1180px}
 @media(max-width:1180px){
   .upcoming-grid{grid-template-columns:repeat(2,1fr)}
 }
+
+/* ============================================================
+   CONCEPT 3 — Live Map. Plan Intelligence + Floor Plan workspace.
+   Scoped to .planmap-* / .planintel-* / .poi-card / .review-* /
+   .difficult-question-* / .contextual-card so the rest of the app's
+   existing dark token system is untouched (a deliberate scoping decision —
+   see the PR description for why this isn't an app-wide token flip yet).
+   Light, calm, architectural: warm off-white ground, one teal accent,
+   soft depth instead of heavy borders. */
+:root{
+  --pi-bg:#f6f4ef;--pi-surface:#ffffff;--pi-surface-2:#fbfaf6;
+  --pi-ink:#242018;--pi-muted:#7d7768;--pi-muted-2:#a19a89;
+  --pi-line:#e6e1d5;--pi-line-soft:#eeeae0;
+  --pi-accent:#2f6f66;--pi-accent-strong:#1f4f48;--pi-accent-soft:rgba(47,111,102,.12);
+  --pi-danger:#b4483f;--pi-danger-soft:rgba(180,72,63,.1);
+  --pi-warn:#b5883f;
+  --pi-radius:14px;--pi-radius-sm:9px;--pi-radius-pill:999px;
+  --pi-shadow-1:0 2px 8px rgba(40,32,16,.08);
+  --pi-shadow-2:0 10px 30px rgba(40,32,16,.14);
+  --pi-shadow-3:0 20px 60px rgba(40,32,16,.2);
+}
+
+/* ---- Floor Plan default editing surface (map-first, no docked panels) --- */
+.planmap-shell{position:relative;width:100%;height:100%;background:var(--pi-bg);overflow:hidden}
+.planmap-shell .canvas-viewport{position:absolute;inset:0}
+.planmap-shell .canvas-world{background:var(--paper)}
+.planmap-shell .v8-create-pop{top:64px;left:16px;border:1px solid var(--pi-line);background:var(--pi-surface);box-shadow:var(--pi-shadow-3);color:var(--pi-ink)}
+.planmap-shell .v8-create-pop p{color:var(--pi-muted)}
+.planmap-shell .field label{color:var(--pi-muted-2)}
+.planmap-shell .field input,.planmap-shell .field select{background:var(--pi-surface-2);border:1px solid var(--pi-line);color:var(--pi-ink)}
+.planmap-shell .bulk-actions .btn{background:var(--pi-surface-2);border:1px solid var(--pi-line);color:var(--pi-ink)}
+.planmap-shell .bulk-actions .btn.primary{background:var(--pi-accent);border:none;color:#fff}
+
+.planmap-toolbar{position:absolute;top:16px;left:16px;z-index:40;display:flex;align-items:center;gap:2px;padding:6px;background:var(--pi-surface);border:1px solid var(--pi-line);border-radius:var(--pi-radius-pill);box-shadow:var(--pi-shadow-2)}
+.planmap-toolbar .tool-group{display:flex;align-items:center;gap:2px;padding:0 7px;border-right:1px solid var(--pi-line-soft);height:32px}
+.planmap-toolbar .tool-group:last-child{border-right:0}
+.planmap-toolbar .toolbar-btn{height:28px;min-width:28px;padding:0 8px;border-radius:999px;background:transparent;color:var(--pi-muted);border:1px solid transparent;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;transition:background var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease)}
+.planmap-toolbar .toolbar-btn:hover{background:var(--pi-surface-2);color:var(--pi-ink)}
+.planmap-toolbar .toolbar-btn.active{background:var(--pi-accent-soft);color:var(--pi-accent-strong)}
+.planmap-toolbar .toolbar-btn.ai{background:var(--pi-accent);color:#fff}
+.planmap-toolbar .toolbar-btn svg{width:14px;height:14px}
+.planmap-toolbar .zoom-label{font-size:10.5px;color:var(--pi-muted);min-width:32px;text-align:center}
+
+.planmap-fab{position:absolute;right:20px;bottom:20px;z-index:40;height:44px;padding:0 18px 0 14px;border-radius:999px;background:var(--pi-accent);color:#fff;border:none;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:650;box-shadow:var(--pi-shadow-2);transition:transform var(--dur-fast) var(--ease),background var(--dur-fast) var(--ease)}
+.planmap-fab:hover{background:var(--pi-accent-strong);transform:translateY(-1px)}
+.planmap-fab svg{width:16px;height:16px}
+
+.contextual-card{position:absolute;right:20px;top:16px;z-index:41;width:272px;background:var(--pi-surface);border:1px solid var(--pi-line);border-radius:var(--pi-radius);box-shadow:var(--pi-shadow-3);padding:16px;color:var(--pi-ink);animation:popIn var(--dur-base) var(--ease)}
+.contextual-card-head{margin-bottom:12px}
+.contextual-card-head strong{font-size:14px;display:block}
+.contextual-card-head span{font-size:10.5px;color:var(--pi-muted);text-transform:uppercase;letter-spacing:.04em}
+.contextual-card .seat-editor{margin-bottom:12px}
+.contextual-card .seat-stepper{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.contextual-card .seat-stepper button{width:26px;height:26px;border-radius:999px;border:1px solid var(--pi-line);background:var(--pi-surface-2);color:var(--pi-ink)}
+.contextual-card .seat-stepper b{font-size:16px;min-width:22px;text-align:center}
+.contextual-card .seat-presets{display:flex;gap:5px;flex-wrap:wrap}
+.contextual-card .seat-presets button{height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--pi-line);background:var(--pi-surface-2);color:var(--pi-muted);font-size:10.5px}
+.contextual-card .seat-presets button.active{background:var(--pi-accent-soft);border-color:var(--pi-accent);color:var(--pi-accent-strong)}
+.contextual-card .form-grid.compact{gap:8px;margin-bottom:12px}
+.contextual-card .form-grid.compact .field label{font-size:9px;color:var(--pi-muted-2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;display:block}
+.contextual-card .form-grid.compact input,.contextual-card .form-grid.compact select{width:100%;height:30px;padding:0 8px;border:1px solid var(--pi-line);border-radius:var(--pi-radius-sm);background:var(--pi-surface-2);color:var(--pi-ink);font-size:11.5px}
+.contextual-card-actions{display:flex;gap:6px;flex-wrap:wrap}
+.contextual-card-actions .btn{font-size:10.5px;height:28px;padding:0 9px;border-radius:var(--pi-radius-sm);border:1px solid var(--pi-line);background:var(--pi-surface-2);color:var(--pi-ink);display:inline-flex;align-items:center;gap:5px}
+.contextual-card-actions .btn.danger{background:var(--pi-danger-soft);color:var(--pi-danger);border-color:transparent}
+.contextual-card-actions .btn svg{width:12px;height:12px}
+
+.planmap-status-pill{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:39;display:flex;align-items:center;gap:8px;padding:9px 16px;background:var(--pi-surface);border:1px solid var(--pi-line);border-radius:999px;box-shadow:var(--pi-shadow-2);font-size:11.5px;color:var(--pi-ink);white-space:nowrap}
+.planmap-status-pill.wide{max-width:min(920px,92vw);white-space:normal}
+.planmap-status-pill b{font-size:13px}
+.planmap-status-pill small{color:var(--pi-muted);margin-right:2px}
+.planmap-status-pill .pill-div{width:1px;height:16px;background:var(--pi-line)}
+.planmap-status-pill .pill-check{color:var(--pi-accent);display:flex}
+.planmap-status-pill .pill-chip{border:none;background:var(--pi-accent-soft);color:var(--pi-accent-strong);border-radius:999px;padding:4px 11px;font-size:11px;font-weight:650}
+.planmap-status-pill .btn.quiet{background:transparent;border:none;color:var(--pi-muted);font-size:11px}
+.planmap-status-pill .btn.primary{background:var(--pi-accent);border:none;color:#fff}
+
+/* ---- Plan Intelligence review screen (analysisHTML) --------------------- */
+.planintel-screen{position:relative;height:100%;display:flex;flex-direction:column;background:var(--pi-bg);color:var(--pi-ink)}
+.planintel-top{flex:0 0 auto;display:flex;align-items:center;gap:16px;padding:12px 18px;background:var(--pi-surface);border-bottom:1px solid var(--pi-line)}
+.planintel-top .btn{background:var(--pi-surface-2);border:1px solid var(--pi-line);color:var(--pi-ink)}
+.planintel-title h2{font-size:15px}
+.planintel-title p{font-size:11px;color:var(--pi-muted);margin-top:2px;max-width:520px}
+.planintel-diagnostics{position:relative}
+.planintel-diagnostics summary{list-style:none;cursor:pointer;font-size:10.5px;color:var(--pi-muted-2);text-transform:uppercase;letter-spacing:.05em;padding:7px 11px;border:1px solid var(--pi-line);border-radius:999px}
+.planintel-diagnostics .diag-pop{position:absolute;top:calc(100% + 8px);right:0;width:280px;background:var(--pi-surface);border:1px solid var(--pi-line);border-radius:var(--pi-radius);box-shadow:var(--pi-shadow-3);padding:14px;z-index:60;display:flex;flex-direction:column;gap:9px}
+.planintel-diagnostics .analysis-note{font-size:10.5px;color:var(--pi-muted);line-height:1.5}
+
+.planintel-map{position:relative;flex:1;min-height:0;overflow:hidden;background:#e9e5d8}
+.planintel-map img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.review-pin{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:999px;background:var(--pi-warn);color:#fff;border:2px solid #fff;font-size:11px;font-weight:700;box-shadow:var(--pi-shadow-1);z-index:20;display:flex;align-items:center;justify-content:center;transition:transform var(--dur-fast) var(--ease)}
+.review-pin:hover{transform:translate(-50%,-50%) scale(1.12)}
+.review-pin.active{background:var(--pi-accent);width:30px;height:30px}
+.review-pin.question{background:var(--pi-danger)}
+
+.poi-card{position:absolute;right:20px;top:82px;z-index:45;width:260px;background:var(--pi-surface);border:1px solid var(--pi-line);border-radius:var(--pi-radius);box-shadow:var(--pi-shadow-3);padding:15px;animation:popIn var(--dur-base) var(--ease)}
+.poi-card-head strong{font-size:14px;display:block}
+.poi-card-head span{font-size:10.5px;color:var(--pi-muted)}
+.poi-card .field-select{width:100%;height:32px;margin:11px 0;border:1px solid var(--pi-line);border-radius:var(--pi-radius-sm);background:var(--pi-surface-2);color:var(--pi-ink);padding:0 8px;font-size:11.5px}
+.poi-card-actions{display:flex;gap:7px}
+.poi-card-actions .btn{flex:1;height:30px;border-radius:var(--pi-radius-sm);font-size:11px}
+.poi-card-actions .btn.primary{background:var(--pi-accent);border:none;color:#fff}
+.poi-card-actions .btn:not(.primary){background:var(--pi-surface-2);border:1px solid var(--pi-line);color:var(--pi-ink)}
+
+.review-center-panel{position:absolute;right:0;top:0;bottom:0;z-index:50;width:360px;background:var(--pi-surface);border-left:1px solid var(--pi-line);box-shadow:var(--pi-shadow-3);display:flex;flex-direction:column;animation:slideIn var(--dur-base) var(--ease)}
+@keyframes slideIn{from{transform:translateX(16px);opacity:.4}to{transform:translateX(0);opacity:1}}
+.review-center-head{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--pi-line-soft)}
+.review-center-head strong{font-size:13.5px}
+.review-center-head button{background:var(--pi-surface-2);border:1px solid var(--pi-line);color:var(--pi-ink);border-radius:999px}
+.review-center-list{flex:1;overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.review-group-card{border:1px solid var(--pi-line);border-radius:var(--pi-radius-sm);padding:12px}
+.review-group-title{font-size:12.5px;font-weight:650;margin-bottom:4px}
+.review-group-meta{font-size:10.5px;color:var(--pi-muted);margin-bottom:9px}
+.review-group-actions{display:flex;gap:6px}
+.review-group-actions .btn{flex:1;height:28px;font-size:10.5px;border-radius:var(--pi-radius-sm)}
+.review-group-actions .btn.primary{background:var(--pi-accent);border:none;color:#fff}
+.review-group-actions .btn:not(.primary){background:var(--pi-surface-2);border:1px solid var(--pi-line);color:var(--pi-ink)}
+.review-center-difficult{flex:0 0 auto;padding:12px 16px 16px;border-top:1px solid var(--pi-line-soft)}
+.review-center-difficult strong{font-size:11.5px;display:block;margin-bottom:8px}
+.difficult-q-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--pi-line-soft);font-size:11px}
+.difficult-q-row .btn{height:26px;font-size:10px;padding:0 9px;background:var(--pi-surface-2);border:1px solid var(--pi-line);border-radius:999px;color:var(--pi-ink)}
+
+.difficult-question-overlay{position:absolute;inset:0;z-index:55;display:flex;align-items:center;justify-content:center;background:rgba(36,32,24,.28)}
+.difficult-question-card{width:min(420px,88vw);background:var(--pi-surface);border-radius:var(--pi-radius);box-shadow:var(--pi-shadow-3);padding:24px;text-align:center}
+.difficult-question-card .eyebrow{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--pi-accent);font-weight:700;margin-bottom:10px}
+.difficult-question-text{font-size:16px;line-height:1.5;margin-bottom:18px}
+.difficult-question-actions{display:flex;flex-direction:column;gap:8px}
+.difficult-question-actions .btn{height:38px;border-radius:var(--pi-radius-sm);font-size:12.5px}
+.difficult-question-actions .btn.primary{background:var(--pi-accent);border:none;color:#fff}
+.difficult-question-actions .btn:not(.primary){background:var(--pi-surface-2);border:1px solid var(--pi-line);color:var(--pi-ink)}
