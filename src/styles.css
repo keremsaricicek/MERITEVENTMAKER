@@ -676,7 +676,7 @@ body{min-width:1180px}
    semantic crimson glow (never neon) so they are unmistakable against the
    source plan; every other candidate on screen quiets down so it can't
    compete for attention, without hiding the underlying plan image itself. */
-.candidate-box.review-target{border-color:var(--pi-danger);border-width:2.5px;box-shadow:0 0 0 4px var(--pi-danger-soft),0 0 14px rgba(180,72,63,.35);z-index:30}
+.candidate-box.review-target{border-color:var(--pi-danger);border-width:2.5px;box-shadow:0 0 0 4px var(--pi-danger-soft),0 0 14px rgba(180,72,63,.35);z-index:15}
 .candidate-box.review-dimmed{opacity:.2}
 .review-group-boundary{position:absolute;border:2px dashed var(--pi-danger);border-radius:10px;background:var(--pi-danger-soft);pointer-events:none;z-index:25;transition:left var(--dur-base) var(--ease),top var(--dur-base) var(--ease),width var(--dur-base) var(--ease),height var(--dur-base) var(--ease)}
 .planintel-map-inner{position:absolute;inset:0;transform-origin:0 0;transition:transform .4s var(--ease);will-change:transform}
