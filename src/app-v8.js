@@ -386,7 +386,7 @@
       ui.analysisStage=t("analysis.stage.relating");ui.analysisProgress=90;render();await yieldFrame();
       ui.analysisStage=t("analysis.stage.capacity");ui.analysisProgress=95;render();await yieldFrame();
       event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText);
-      ui.analysisStage=t("analysis.stage.review");ui.analysisProgress=100;ui.analysisBusy=false;ui.selectedCandidateId=event.analysis.candidates[0]?.id||null;ui.difficultQuestionIndex=0;audit(event,"ASSISTED_DETECTION_COMPLETED",event.analysis.diagnostics);touchEvent(event);render();
+      ui.analysisStage=t("analysis.stage.review");ui.analysisProgress=100;ui.analysisBusy=false;ui.selectedCandidateId=event.analysis.candidates[0]?.id||null;ui.difficultQuestionIndex=0;ui.activeReviewGroupId=null;ui.activeQuestionId=null;audit(event,"ASSISTED_DETECTION_COMPLETED",event.analysis.diagnostics);touchEvent(event);render();
     }catch(error){console.error(error);ui.analysisBusy=false;ui.analysisStage="Analysis failed";render();toast(`Assisted Detection failed: ${error.message}`,"error",7000);}
   }
   // Re-derives the whole PlanIntelligenceResult from the CURRENT candidates +
@@ -397,7 +397,47 @@
   // actually decided.
   function recomputePlanIntelligence(event){event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText??null);}
   function reviewCandidates(event){const a=event.analysis;if(!a)return[];return a.candidates.filter(c=>(ui.reviewFilter==="all"||c.status===ui.reviewFilter)&&(ui.reviewClass==="all"||c.kind===ui.reviewClass)&&c.confidence>=ui.reviewConfidence);}
-  function candidateBox(c,selected){return`<button class="candidate-box ${c.kind} ${c.status} ${selected?"selected":""}" data-candidate-box="${c.id}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%;transform:rotate(${c.rotation||0}deg)" title="${esc(c.kind)} · ${Math.round(c.confidence*100)}%"></button>${(c.chairDetections||[]).map(ch=>`<i class="candidate-box chair" style="left:${ch.x}%;top:${ch.y}%;width:${Math.max(.5,ch.w)}%;height:${Math.max(.5,ch.h)}%;transform:translate(-50%,-50%) rotate(${ch.rotation||0}deg)"></i>`).join("")}`;}
+  // Which candidate(s) the screen is actively asking a question about right
+  // now — a difficult question's whole furniture group, an inspected Review
+  // Center family, or a single selected candidate, in that priority order.
+  // Everything NOT in this set gets visually quieted (see candidateBox)
+  // so the one real decision in front of the human is unmistakable.
+  function activeReviewTargetIds(pi){
+    if(!pi)return null;
+    if(ui.activeQuestionId){
+      const q=pi.uncertainQuestions.find(x=>x.id===ui.activeQuestionId),group=q&&pi.furnitureGroups.find(g=>g.id===q.groupId);
+      if(group)return{ids:new Set(group.memberIds),isGroup:group.memberIds.length>1};
+    }
+    if(ui.activeReviewGroupId){
+      const group=pi.reviewGroups.find(g=>g.id===ui.activeReviewGroupId);
+      if(group)return{ids:new Set(group.memberIds),isGroup:true};
+    }
+    if(ui.selectedCandidateId)return{ids:new Set([ui.selectedCandidateId]),isGroup:false};
+    return null;
+  }
+  function unionBbox(members){
+    if(!members.length)return null;
+    const xs=members.flatMap(m=>[m.x,m.x+m.w]),ys=members.flatMap(m=>[m.y,m.y+m.h]);
+    return{x:Math.min(...xs),y:Math.min(...ys),w:Math.max(...xs)-Math.min(...xs),h:Math.max(...ys)-Math.min(...ys)};
+  }
+  // Real camera-fit for a group review: scales/pans the (transformed) scene
+  // wrapper so the target bbox fills most of the visible map, instead of
+  // relying on the human to spot a small group inside a large plan. Resets
+  // to the neutral 1x view for a plain single-candidate look (no bbox).
+  function applyReviewZoom(bbox){
+    const outer=document.getElementById("analysisScene"),inner=document.getElementById("analysisSceneInner");
+    if(!outer||!inner)return;
+    if(!bbox){inner.style.transform="";return;}
+    const rect=outer.getBoundingClientRect();if(!rect.width||!rect.height)return;
+    const pad=.4,tx=Math.max(0,bbox.x-bbox.w*pad),ty=Math.max(0,bbox.y-bbox.h*pad),tw=Math.min(100-tx,bbox.w*(1+2*pad)||20),th=Math.min(100-ty,bbox.h*(1+2*pad)||20);
+    const scale=Math.max(1,Math.min(4,Math.min(100/Math.max(8,tw),100/Math.max(8,th))));
+    const cxPx=(tx+tw/2)/100*rect.width,cyPx=(ty+th/2)/100*rect.height;
+    inner.style.transform=`translate(${rect.width/2-cxPx*scale}px, ${rect.height/2-cyPx*scale}px) scale(${scale})`;
+  }
+  function candidateBox(c,selected,targetIds){
+    const reviewCls=targetIds?(targetIds.has(c.id)?"review-target":"review-dimmed"):"";
+    return`<button class="candidate-box ${c.kind} ${c.status} ${selected?"selected":""} ${reviewCls}" data-candidate-box="${c.id}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%;transform:rotate(${c.rotation||0}deg)" title="${esc(c.kind)} · ${Math.round(c.confidence*100)}%"></button>${(c.chairDetections||[]).map(ch=>`<i class="candidate-box chair ${reviewCls}" style="left:${ch.x}%;top:${ch.y}%;width:${Math.max(.5,ch.w)}%;height:${Math.max(.5,ch.h)}%;transform:translate(-50%,-50%) rotate(${ch.rotation||0}deg)"></i>`).join("")}`;
+  }
   // ============================================================
   // Concept 3 + Concept 2 + Concept 1 unified Plan Intelligence review screen.
   // The imported plan is the full-bleed hero. Review pins mark only the
@@ -422,9 +462,27 @@
     const opt=o=>`<option value="${o.kind}:${o.type}" ${c.kind===o.kind&&c.type===o.type?"selected":""}>${t("teach.type."+o.type)}</option>`;
     return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div><select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select><div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button></div></aside>`;
   }
+  // Real pixel crop of a candidate straight out of the actual imported plan
+  // image — a CSS background-position/-size window, never a synthesized or
+  // generated diagram, per the product's honesty rule on AI review UI.
+  function cropThumbHTML(event,c){
+    const bg=event.background?.src;if(!bg||!c)return"";
+    const pad=.6;
+    const cw=Math.min(99,Math.max(3,c.w*(1+2*pad))),ch=Math.min(99,Math.max(3,c.h*(1+2*pad)));
+    const cx=Math.min(100-cw,Math.max(0,c.x-c.w*pad)),cy=Math.min(100-ch,Math.max(0,c.y-c.h*pad));
+    const sizeW=(100/cw*100).toFixed(2),sizeH=(100/ch*100).toFixed(2);
+    const posX=(cx/(100-cw)*100).toFixed(2),posY=(cy/(100-ch)*100).toFixed(2);
+    return`<div class="crop-thumb" style="background-image:url('${esc(bg)}');background-size:${sizeW}% ${sizeH}%;background-position:${posX}% ${posY}%" title="${esc(t("teach.type."+c.type))}"></div>`;
+  }
+  function memberCropsHTML(event,memberIds,max=6){
+    const byId=new Map(event.analysis.candidates.map(c=>[c.id,c]));
+    const shown=memberIds.slice(0,max).map(id=>cropThumbHTML(event,byId.get(id))).join("");
+    const overflow=memberIds.length>max?`<span class="crop-more">+${memberIds.length-max}</span>`:"";
+    return`<div class="review-group-crops">${shown}${overflow}</div>`;
+  }
   function reviewCenterPanelHTML(event){
     const pi=event.analysis.planIntelligence,decisions=event.analysis.groupingDecisions||[];
-    return`<aside class="review-center-panel"><div class="review-center-head"><strong>${t("review.center")}</strong>${decisions.length?`<button class="btn sm quiet" data-review-decision-action="undo-last" title="Undo the most recent plan decision">${icon("undo")} Undo last decision (${decisions.length})</button>`:""}<button class="btn icon-only sm" data-review-action="close-review-center">${icon("x")}</button></div><div class="review-center-list">${pi.reviewGroups.map(g=>`<div class="review-group-card"><div class="review-group-title">${titleCase(g.title)}</div><div class="review-group-meta">${g.totalInFamily} similar · ${g.consistentCount} ${t("review.consistentOf")} · ${g.memberIds.length} ${t("review.needReview")}</div><div class="review-group-actions"><button class="btn sm primary" data-reviewgroup-action="confirm-family" data-group="${g.id}">${t("action.applyToAll")}</button><button class="btn sm" data-reviewgroup-action="inspect" data-group="${g.id}">${t("action.reviewOutliers")}</button></div></div>`).join("")||`<div class="inspector-empty">${t("review.noGroups")}</div>`}</div>${pi.uncertainQuestions.length?`<div class="review-center-difficult"><strong>${t("review.difficultQuestions")}</strong>${pi.uncertainQuestions.map(q=>`<div class="difficult-q-row"><span>${esc(questionText(q))}</span><button class="btn sm" data-question-action="open" data-question="${q.id}">${t("action.answer")}</button></div>`).join("")}</div>`:""}</aside>`;
+    return`<aside class="review-center-panel"><div class="review-center-head"><strong>${t("review.center")}</strong>${decisions.length?`<button class="btn sm quiet" data-review-decision-action="undo-last" title="Undo the most recent plan decision">${icon("undo")} Undo last decision (${decisions.length})</button>`:""}<button class="btn icon-only sm" data-review-action="close-review-center">${icon("x")}</button></div><div class="review-center-list">${pi.reviewGroups.map(g=>`<div class="review-group-card"><div class="review-group-title">${titleCase(g.title)}</div>${memberCropsHTML(event,g.memberIds)}<div class="review-group-meta">${g.totalInFamily} similar · ${g.consistentCount} ${t("review.consistentOf")} · ${g.memberIds.length} ${t("review.needReview")}</div><div class="review-group-actions"><button class="btn sm primary" data-reviewgroup-action="confirm-family" data-group="${g.id}">${t("action.applyToAll")}</button><button class="btn sm" data-reviewgroup-action="inspect" data-group="${g.id}">${t("action.reviewOutliers")}</button></div></div>`).join("")||`<div class="inspector-empty">${t("review.noGroups")}</div>`}</div>${pi.uncertainQuestions.length?`<div class="review-center-difficult"><strong>${t("review.difficultQuestions")}</strong>${pi.uncertainQuestions.map(q=>`<div class="difficult-q-row"><span>${esc(questionText(q))}</span><button class="btn sm" data-question-action="open" data-question="${q.id}">${t("action.answer")}</button></div>`).join("")}</div>`:""}</aside>`;
   }
   // AI-generated review questions are stored as a semantic {questionType,
   // questionParams} pair (plan-intelligence.js), never a hardcoded English
@@ -438,7 +496,8 @@
   function difficultQuestionCardHTML(event){
     const pi=event.analysis?.planIntelligence;if(!pi||!ui.activeQuestionId)return"";
     const q=pi.uncertainQuestions.find(x=>x.id===ui.activeQuestionId);if(!q)return"";
-    return`<div class="difficult-question-overlay"><div class="difficult-question-card"><div class="eyebrow">${t("teach.needsHelp")}</div><p class="difficult-question-text">${esc(questionText(q))}</p><div class="difficult-question-actions"><button class="btn primary" data-question-action="yes" data-question="${q.id}">${t("question.yesGroup")}</button><button class="btn" data-question-action="no" data-question="${q.id}">${t("question.noSeparate")}</button></div></div></div>`;
+    const group=pi.furnitureGroups.find(g=>g.id===q.groupId);
+    return`<div class="difficult-question-overlay"><div class="difficult-question-card"><div class="eyebrow">${t("teach.needsHelp")}</div>${group?memberCropsHTML(event,group.memberIds):""}<p class="difficult-question-text">${esc(questionText(q))}</p><div class="difficult-question-actions"><button class="btn primary" data-question-action="yes" data-question="${q.id}">${t("question.yesGroup")}</button><button class="btn" data-question-action="no" data-question="${q.id}">${t("question.noSeparate")}</button></div></div></div>`;
   }
   function reviewGroupCount(pi){return pi.reviewGroups.length+pi.uncertainQuestions.length;}
   function planIntelBottomPillHTML(event){
@@ -462,7 +521,10 @@
   function analysisHTML(event){
     const a=event.analysis,candidates=reviewCandidates(event),selected=a?.candidates.find(c=>c.id===ui.selectedCandidateId),pi=a?.planIntelligence;
     const pins=reviewMapPins(event,pi);
-    return`<section class="planintel-screen"><header class="planintel-top"><button class="btn" data-review-action="back">${icon("arrow")}Floor Plan</button><div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):"No analysis yet")}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:a.ocr.reason||"no network"})):a.notice}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>Advanced Diagnostics</summary><div class="diag-pop"><div class="analysis-note">${esc(a.engine)} · ${a.diagnostics.resolution}<br>Diff +${a.comparison.added} / −${a.comparison.removed}</div><div class="field"><label>Status</label><select data-review-filter="status"><option value="all">All</option>${["unreviewed","confirmed","rejected"].map(v=>`<option ${ui.reviewFilter===v?"selected":""}>${v}</option>`).join("")}</select></div><div class="field full"><label>Minimum confidence ${Math.round(ui.reviewConfidence*100)}%</label><input data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?"Cancel Drawing":t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">Save Verified Plan</button><button class="btn sm" data-review-action="improve">Improve AI (Local Calibration)</button></div></details><button class="btn" data-review-action="reanalyze">Re-Analyze</button>`:""}<button class="btn sm" data-review-action="toggle-lang">${ui.lang==="tr"?"TR":"EN"}</button></header>${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><img src="${event.background.src}" alt="Floor plan analysis source">${candidates.map(c=>candidateBox(c,selected?.id===c.id)).join("")}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="open-review-center" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="Difficult question">${p.label}</button>`).join("")}</div>${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?"Analyzing locally…":"No analysis yet"}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
+    const target=activeReviewTargetIds(pi),byId=a?new Map(a.candidates.map(c=>[c.id,c])):new Map();
+    const boundaryBox=target?.isGroup?unionBbox([...target.ids].map(id=>byId.get(id)).filter(Boolean)):null;
+    requestAnimationFrame(()=>applyReviewZoom(boundaryBox));
+    return`<section class="planintel-screen"><header class="planintel-top"><button class="btn" data-review-action="back">${icon("arrow")}Floor Plan</button><div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):"No analysis yet")}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:a.ocr.reason||"no network"})):a.notice}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>Advanced Diagnostics</summary><div class="diag-pop"><div class="analysis-note">${esc(a.engine)} · ${a.diagnostics.resolution}<br>Diff +${a.comparison.added} / −${a.comparison.removed}</div><div class="field"><label>Status</label><select data-review-filter="status"><option value="all">All</option>${["unreviewed","confirmed","rejected"].map(v=>`<option ${ui.reviewFilter===v?"selected":""}>${v}</option>`).join("")}</select></div><div class="field full"><label>Minimum confidence ${Math.round(ui.reviewConfidence*100)}%</label><input data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?"Cancel Drawing":t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">Save Verified Plan</button><button class="btn sm" data-review-action="improve">Improve AI (Local Calibration)</button></div></details><button class="btn" data-review-action="reanalyze">Re-Analyze</button>`:""}<button class="btn sm" data-review-action="toggle-lang">${ui.lang==="tr"?"TR":"EN"}</button></header>${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><div class="planintel-map-inner" id="analysisSceneInner"><img src="${event.background.src}" alt="Floor plan analysis source">${candidates.map(c=>candidateBox(c,selected?.id===c.id,target?.ids||null)).join("")}${boundaryBox?`<div class="review-group-boundary" style="left:${Math.max(0,boundaryBox.x-2.5)}%;top:${Math.max(0,boundaryBox.y-2.5)}%;width:${boundaryBox.w+5}%;height:${boundaryBox.h+5}%"></div>`:""}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="focus-group" data-group="${p.groupId}" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="Difficult question">${p.label}</button>`).join("")}</div></div>${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?"Analyzing locally…":"No analysis yet"}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
   }
   function updateCandidateField(field,value){
     const event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(!c)return;
@@ -485,8 +547,8 @@
   function saveVerified(){const event=activeEvent();if(!ui.teachAI)return toast("Enable Teach AI with corrections first.","error");const a=event.analysis;if(!a)return;state.verifiedExamples.push({id:uid("verified"),eventId:event.id,savedAt:nowISO(),engine:a.engine,trainedModel:false,threshold:a.threshold,imageSize:[a.imageWidth,a.imageHeight],predictions:a.candidates.map(clone),groundTruth:a.candidates.filter(c=>c.status!=="rejected").map(clone),rejected:a.candidates.filter(c=>c.status==="rejected").map(c=>c.id),missed:[...a.missed],hardExample:a.missed.length>0||a.candidates.some(c=>c.status==="rejected")});saveState();toast("Verified plan saved locally with predictions, corrections, rejections and missed detections.","success",6000);}
   function improveAI(){if(!state.verifiedExamples.length)return toast("Save at least one verified plan first.","error");const samples=state.verifiedExamples.flatMap(v=>v.groundTruth||[]),avg=samples.length?samples.reduce((n,c)=>n+(c.confidence||0),0)/samples.length:0;state.calibration={version:(state.calibration?.version||0)+1,updatedAt:nowISO(),examples:state.verifiedExamples.length,objects:samples.length,recommendedConfidence:Number(Math.max(.35,Math.min(.8,avg*.85)).toFixed(2)),trainedModel:false,label:"Local assisted-detection calibration; not a trained neural model"};saveState();toast(`Local calibration v${state.calibration.version} completed from ${state.verifiedExamples.length} verified plan(s). No trained model claim is made.`,"success",6500);}
   function bindReview(){
-    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.screen="workspace";ui.tab="floor";render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){c.status="confirmed";c.selected=true;touchEvent(event);render();}else if(action==="reject"&&c){c.status="rejected";c.selected=false;touchEvent(event);render();}else if(action==="delete-candidate"&&c){event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;touchEvent(event);render();}else if(action==="draw"){ui.reviewDrawMode=!ui.reviewDrawMode;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
-    document.querySelectorAll("[data-candidate],[data-candidate-box]").forEach(node=>node.onclick=e=>{if(e.target.matches("input"))return;ui.selectedCandidateId=node.dataset.candidate||node.dataset.candidateBox;render();});document.querySelectorAll("[data-candidate-select]").forEach(input=>input.onchange=()=>{const c=activeEvent().analysis.candidates.find(x=>x.id===input.dataset.candidateSelect);c.selected=input.checked;touchEvent(activeEvent());});document.querySelectorAll("[data-candidate-edit]").forEach(input=>input.onchange=()=>updateCandidateField(input.dataset.candidateEdit,input.value));document.querySelectorAll("[data-review-filter]").forEach(input=>input.oninput=()=>{if(input.dataset.reviewFilter==="status")ui.reviewFilter=input.value;else if(input.dataset.reviewFilter==="class")ui.reviewClass=input.value;else ui.reviewConfidence=Number(input.value);render();});document.querySelector("[data-teach-ai]")?.addEventListener("change",e=>{ui.teachAI=e.target.checked;});
+    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.screen="workspace";ui.tab="floor";ui.activeReviewGroupId=null;ui.activeQuestionId=null;ui.selectedCandidateId=null;render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){c.status="confirmed";c.selected=true;touchEvent(event);render();}else if(action==="reject"&&c){c.status="rejected";c.selected=false;touchEvent(event);render();}else if(action==="delete-candidate"&&c){event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;touchEvent(event);render();}else if(action==="draw"){ui.reviewDrawMode=!ui.reviewDrawMode;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="focus-group"){ui.activeReviewGroupId=b.dataset.group;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=true;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
+    document.querySelectorAll("[data-candidate],[data-candidate-box]").forEach(node=>node.onclick=e=>{if(e.target.matches("input"))return;ui.selectedCandidateId=node.dataset.candidate||node.dataset.candidateBox;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();});document.querySelectorAll("[data-candidate-select]").forEach(input=>input.onchange=()=>{const c=activeEvent().analysis.candidates.find(x=>x.id===input.dataset.candidateSelect);c.selected=input.checked;touchEvent(activeEvent());});document.querySelectorAll("[data-candidate-edit]").forEach(input=>input.onchange=()=>updateCandidateField(input.dataset.candidateEdit,input.value));document.querySelectorAll("[data-review-filter]").forEach(input=>input.oninput=()=>{if(input.dataset.reviewFilter==="status")ui.reviewFilter=input.value;else if(input.dataset.reviewFilter==="class")ui.reviewClass=input.value;else ui.reviewConfidence=Number(input.value);render();});document.querySelector("[data-teach-ai]")?.addEventListener("change",e=>{ui.teachAI=e.target.checked;});
     document.querySelectorAll("[data-reviewgroup-action]").forEach(b=>b.onclick=()=>{
       const event=activeEvent(),pi=event.analysis?.planIntelligence,group=pi?.reviewGroups.find(g=>g.id===b.dataset.group);if(!group)return;
       if(b.dataset.reviewgroupAction==="confirm-family"){
@@ -495,13 +557,13 @@
         touchEvent(event);ui.reviewCenterOpen=group.outlierIds.length>0;render();
         toast(`${strong.length} object${strong.length===1?"":"s"} confirmed as ${group.title}. ${group.outlierIds.length?group.outlierIds.length+" outlier(s) still need review.":""}`,"success",5000);
       } else if(b.dataset.reviewgroupAction==="inspect"){
-        ui.selectedCandidateId=group.memberIds[0];ui.reviewCenterOpen=false;render();
+        ui.activeReviewGroupId=group.id;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=false;render();
       }
     });
     document.querySelectorAll("[data-question-action]").forEach(b=>b.onclick=()=>{
       const event=activeEvent(),pi=event.analysis?.planIntelligence,q=pi?.uncertainQuestions.find(x=>x.id===b.dataset.question);if(!q)return;
       const action=b.dataset.questionAction;
-      if(action==="open"){ui.activeQuestionId=q.id;ui.reviewCenterOpen=false;render();return;}
+      if(action==="open"){ui.activeQuestionId=q.id;ui.activeReviewGroupId=null;ui.selectedCandidateId=null;ui.reviewCenterOpen=false;render();return;}
       const group=pi.furnitureGroups.find(g=>g.id===q.groupId),memberIds=group?.memberIds||[];
       if(!canMutate(event,"answer a plan question"))return;
       const decision=action==="yes"?"merged":"separate";

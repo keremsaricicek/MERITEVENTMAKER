@@ -672,6 +672,20 @@ body{min-width:1180px}
 .candidate-box.venue{border-color:#a082d6}
 .candidate-box.rejected{border-color:#d47b81;opacity:.35}
 .candidate-box.confirmed{border-style:solid;box-shadow:0 0 0 1px rgba(255,255,255,.6)}
+/* Active-review state: the exact object(s) a question is about get a calm,
+   semantic crimson glow (never neon) so they are unmistakable against the
+   source plan; every other candidate on screen quiets down so it can't
+   compete for attention, without hiding the underlying plan image itself. */
+.candidate-box.review-target{border-color:var(--pi-danger);border-width:2.5px;box-shadow:0 0 0 4px var(--pi-danger-soft),0 0 14px rgba(180,72,63,.35);z-index:30}
+.candidate-box.review-dimmed{opacity:.2}
+.review-group-boundary{position:absolute;border:2px dashed var(--pi-danger);border-radius:10px;background:var(--pi-danger-soft);pointer-events:none;z-index:25;transition:left var(--dur-base) var(--ease),top var(--dur-base) var(--ease),width var(--dur-base) var(--ease),height var(--dur-base) var(--ease)}
+.planintel-map-inner{position:absolute;inset:0;transform-origin:0 0;transition:transform .4s var(--ease);will-change:transform}
+/* Real pixel crops (Review Center, difficult-question card): a small window
+   into the actual imported plan image via background-position/-size, never a
+   generated diagram — cropThumbHTML() in app-v8.js computes the percentages. */
+.review-group-crops{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.crop-thumb{width:44px;height:44px;border-radius:8px;border:1px solid var(--pi-line);background-color:var(--pi-surface-2);background-repeat:no-repeat;box-shadow:var(--pi-shadow-1);flex:none}
+.crop-more{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;border:1px dashed var(--pi-line);color:var(--pi-muted);font-size:11px;font-weight:600;flex:none}
 .candidate-box.selected{box-shadow:0 0 0 3px rgba(110,184,223,.4)}
 .draw-mode{cursor:crosshair}
 .analysis-detail h3{font-size:14px;margin-bottom:10px}
