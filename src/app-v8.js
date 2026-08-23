@@ -487,6 +487,33 @@
     }
     return{reappliedCount,restored,idRemap};
   }
+  // ---- False-positive filtering, real evidence rather than a raised
+  // threshold: capacity text ("114 pax seating"), dimension labels, and other
+  // printed annotations get picked up by the classical binarization pass the
+  // same as real furniture. Real OCR word boxes (from the same canvas the
+  // detector ran on, so same pixel space) tell candidates and printed text
+  // apart directly — a candidate whose area is dominated by recognized text
+  // is dropped outright, UNLESS it has real seat adjacency (nearby chair
+  // detections), which is strong counter-evidence it's an actual table.
+  function suppressTextFalsePositives(candidates,words,width,height){
+    const wordBoxesPct=(words||[]).filter(w=>w.text?.trim().length&&w.bbox).map(w=>({
+      x:w.bbox.x0/width*100,y:w.bbox.y0/height*100,
+      w:(w.bbox.x1-w.bbox.x0)/width*100,h:(w.bbox.y1-w.bbox.y0)/height*100,
+    }));
+    if(!wordBoxesPct.length)return{kept:candidates,removedCount:0};
+    const overlapArea=(a,b)=>{
+      const x1=Math.max(a.x,b.x),y1=Math.max(a.y,b.y),x2=Math.min(a.x+a.w,b.x+b.w),y2=Math.min(a.y+a.h,b.y+b.h);
+      return Math.max(0,x2-x1)*Math.max(0,y2-y1);
+    };
+    const kept=[];let removedCount=0;
+    for(const c of candidates){
+      const cArea=Math.max(.0001,c.w*c.h);
+      let textArea=0;for(const wb of wordBoxesPct)textArea+=overlapArea(c,wb);
+      const overlapRatio=Math.min(1,textArea/cArea),hasChairs=(c.chairDetections?.length||0)>0;
+      if(overlapRatio>.4&&!hasChairs){removedCount++;}else{kept.push(c);}
+    }
+    return{kept,removedCount};
+  }
   async function runAssistedDetection(){
     const event=activeEvent();if(!canMutate(event,"run plan analysis")||!event.background?.src)return toast("Import a floor plan first.","error");ui.analysisBusy=true;ui.analysisProgress=3;ui.analysisStage=t("analysis.stage.reading");ui.screen="review";render();await yieldFrame();
     try{
@@ -495,7 +522,17 @@
       ui.analysisStage=t("analysis.stage.understanding");ui.analysisProgress=45;render();await yieldFrame();const visited=new Uint8Array(binary.length),queue=new Int32Array(binary.length),components=[],minPixels=Math.max(10,Math.round(width*height*.000006));
       for(let start=0;start<binary.length;start++){if(!binary[start]||visited[start])continue;let head=0,tail=0,count=0,minX=width,minY=height,maxX=0,maxY=0,sx=0,sy=0,sxx=0,syy=0,sxy=0;queue[tail++]=start;visited[start]=1;while(head<tail){const p=queue[head++],x=p%width,y=Math.floor(p/width);count++;minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);sx+=x;sy+=y;sxx+=x*x;syy+=y*y;sxy+=x*y;for(let yy=Math.max(0,y-1);yy<=Math.min(height-1,y+1);yy++)for(let xx=Math.max(0,x-1);xx<=Math.min(width-1,x+1);xx++){const next=yy*width+xx;if(binary[next]&&!visited[next]){visited[next]=1;queue[tail++]=next;}}}if(count<minPixels)continue;const w=maxX-minX+1,h=maxY-minY+1,aspect=w/h,fill=count/(w*h),mx=sx/count,my=sy/count,covXX=sxx/count-mx*mx,covYY=syy/count-my*my,covXY=sxy/count-mx*my,rotation=.5*Math.atan2(2*covXY,covXX-covYY)*180/Math.PI;components.push({x:minX,y:minY,w,h,count,aspect,fill,rotation});}
       ui.analysisStage=t("analysis.stage.seating");ui.analysisProgress=73;render();await yieldFrame();const area=width*height,minDim=Math.min(width,height),notWall=c=>!(Math.min(c.w,c.h)<3&&Math.max(c.w,c.h)>minDim*.08),chairs=components.filter(c=>notWall(c)&&Math.min(c.w,c.h)>=3&&Math.max(c.w,c.h)<=minDim*.065&&c.w*c.h<area*.0028&&c.fill>=.045),tables=components.filter(c=>notWall(c)&&Math.min(c.w,c.h)>=minDim*.016&&c.w*c.h>=area*.00015&&c.w*c.h<=area*.04&&c.aspect>=.35&&c.aspect<=3.8&&c.fill>=.035).sort((a,b)=>b.w*b.h-a.w*a.h).slice(0,100);
-      const candidates=tables.map((t,index)=>{const nearby=chairs.filter(ch=>{const cx=ch.x+ch.w/2,cy=ch.y+ch.h/2,margin=Math.max(t.w,t.h)*.65;return cx>=t.x-margin&&cx<=t.x+t.w+margin&&cy>=t.y-margin&&cy<=t.y+t.h+margin&&!(cx>=t.x&&cx<=t.x+t.w&&cy>=t.y&&cy<=t.y+t.h);}).sort((a,b)=>{const ax=a.x+a.w/2-(t.x+t.w/2),ay=a.y+a.h/2-(t.y+t.h/2),bx=b.x+b.w/2-(t.x+t.w/2),by=b.y+b.h/2-(t.y+t.h/2);return ax*ax+ay*ay-bx*bx-by*by;}).slice(0,18),round=t.aspect>.78&&t.aspect<1.28&&t.fill<.68,confidence=Math.min(.94,.4+Math.min(.3,nearby.length*.04)+Math.min(.18,t.fill*.28));return{id:uid("candidate"),kind:"table",type:round?"round":"rectangle",x:t.x/width*100,y:t.y/height*100,w:t.w/width*100,h:t.h/height*100,rotation:t.rotation,confidence,status:"unreviewed",selected:confidence>=.48,chairDetections:nearby.map(ch=>({id:uid("candidate-chair"),x:(ch.x+ch.w/2)/width*100,y:(ch.y+ch.h/2)/height*100,w:ch.w/width*100,h:ch.h/height*100,rotation:ch.rotation,confidence:.56})),evidence:{geometry:Number(Math.min(.95,t.fill+.35).toFixed(2)),chairs:nearby.length,repetition:tables.filter(o=>Math.abs(o.w-t.w)<t.w*.2&&Math.abs(o.h-t.h)<t.h*.2).length}};});
+      const candidates=tables.map((t,index)=>{const nearby=chairs.filter(ch=>{const cx=ch.x+ch.w/2,cy=ch.y+ch.h/2,margin=Math.max(t.w,t.h)*.65;return cx>=t.x-margin&&cx<=t.x+t.w+margin&&cy>=t.y-margin&&cy<=t.y+t.h+margin&&!(cx>=t.x&&cx<=t.x+t.w&&cy>=t.y&&cy<=t.y+t.h);}).sort((a,b)=>{const ax=a.x+a.w/2-(t.x+t.w/2),ay=a.y+a.h/2-(t.y+t.h/2),bx=b.x+b.w/2-(t.x+t.w/2),by=b.y+b.h/2-(t.y+t.h/2);return ax*ax+ay*ay-bx*bx-by*by;}).slice(0,18),round=t.aspect>.78&&t.aspect<1.28&&t.fill<.68,
+        repetition=tables.filter(o=>Math.abs(o.w-t.w)<t.w*.2&&Math.abs(o.h-t.h)<t.h*.2).length,
+        // Real context, not a raised threshold: a shape with zero nearby
+        // chairs AND no other similarly-sized table anywhere on the plan is
+        // far more likely a stray dimension mark or capacity note that
+        // slipped past the aspect/fill filters than an actual table — most
+        // venue plans have many repeated identical tables. A well-repeated
+        // cluster gets a small boost instead.
+        isolatedNoChairs=nearby.length===0&&repetition<=1,
+        confidence=Math.max(.15,Math.min(.94,.4+Math.min(.3,nearby.length*.04)+Math.min(.18,t.fill*.28)+Math.min(.08,Math.max(0,repetition-1)*.02)-(isolatedNoChairs?.22:0)));
+      return{id:uid("candidate"),kind:"table",type:round?"round":"rectangle",x:t.x/width*100,y:t.y/height*100,w:t.w/width*100,h:t.h/height*100,rotation:t.rotation,confidence,status:"unreviewed",selected:confidence>=.48,chairDetections:nearby.map(ch=>({id:uid("candidate-chair"),x:(ch.x+ch.w/2)/width*100,y:(ch.y+ch.h/2)/height*100,w:ch.w/width*100,h:ch.h/height*100,rotation:ch.rotation,confidence:.56})),evidence:{geometry:Number(Math.min(.95,t.fill+.35).toFixed(2)),chairs:nearby.length,repetition}};});
       const venues=components.filter(c=>notWall(c)&&c.w*c.h>area*.008&&c.w*c.h<area*.12&&(c.aspect>3.1||c.aspect<.32)).slice(0,14).map(c=>({id:uid("candidate"),kind:"venue",type:c.aspect>3?"stage":"column",x:c.x/width*100,y:c.y/height*100,w:c.w/width*100,h:c.h/height*100,rotation:c.rotation,confidence:.52,status:"unreviewed",selected:false,chairDetections:[],evidence:{geometry:.62,chairs:0,repetition:0}}));
       for(const c of candidates)c.visualDescriptor=computeVisualDescriptor(gray,binary,width,height,c);
       for(const c of venues)c.visualDescriptor=computeVisualDescriptor(gray,binary,width,height,c);
@@ -519,6 +556,11 @@
       // grouping/reclassification decision can recompute planIntelligence
       // later without re-running OCR.
       event.analysis.ocrText=ocrResult.available?ocrResult.text:null;
+      if(ocrResult.available&&ocrResult.words?.length){
+        const suppression=suppressTextFalsePositives(event.analysis.candidates,ocrResult.words,width,height);
+        event.analysis.candidates=suppression.kept;
+        event.analysis.diagnostics.textSuppressed=suppression.removedCount;
+      }
       ui.analysisStage=t("analysis.stage.relating");ui.analysisProgress=90;render();await yieldFrame();
       ui.analysisStage=t("analysis.stage.capacity");ui.analysisProgress=95;render();await yieldFrame();
       event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText);
@@ -660,7 +702,7 @@
     const target=activeReviewTargetIds(pi),byId=a?new Map(a.candidates.map(c=>[c.id,c])):new Map();
     const boundaryBox=target?.isGroup?unionBbox([...target.ids].map(id=>byId.get(id)).filter(Boolean)):null;
     requestAnimationFrame(()=>applyReviewZoom(boundaryBox));
-    return`<section class="planintel-screen"><header class="planintel-top"><button class="btn" data-review-action="back">${icon("arrow")}Floor Plan</button><div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):"No analysis yet")}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:a.ocr.reason||"no network"})):a.notice}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>Advanced Diagnostics</summary><div class="diag-pop"><div class="analysis-note">${esc(a.engine)} · ${a.diagnostics.resolution}<br>Diff +${a.comparison.added} / −${a.comparison.removed}</div><div class="field"><label>Status</label><select data-review-filter="status"><option value="all">All</option>${["unreviewed","confirmed","rejected"].map(v=>`<option ${ui.reviewFilter===v?"selected":""}>${v}</option>`).join("")}</select></div><div class="field full"><label>Minimum confidence ${Math.round(ui.reviewConfidence*100)}%</label><input data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?"Cancel Drawing":t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">Save Verified Plan</button><button class="btn sm" data-review-action="improve">Improve AI (Local Calibration)</button></div></details><button class="btn" data-review-action="reanalyze">Re-Analyze</button>`:""}<button class="btn sm" data-review-action="toggle-lang">${ui.lang==="tr"?"TR":"EN"}</button></header>${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><div class="planintel-map-inner" id="analysisSceneInner"><img src="${event.background.src}" alt="Floor plan analysis source">${candidates.map(c=>candidateBox(c,selected?.id===c.id,target?.ids||null)).join("")}${boundaryBox?`<div class="review-group-boundary" style="left:${Math.max(0,boundaryBox.x-2.5)}%;top:${Math.max(0,boundaryBox.y-2.5)}%;width:${boundaryBox.w+5}%;height:${boundaryBox.h+5}%"></div>`:""}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="focus-group" data-group="${p.groupId}" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="Difficult question">${p.label}</button>`).join("")}</div></div>${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?"Analyzing locally…":"No analysis yet"}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
+    return`<section class="planintel-screen"><header class="planintel-top"><button class="btn" data-review-action="back">${icon("arrow")}Floor Plan</button><div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):"No analysis yet")}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:a.ocr.reason||"no network"})):a.notice}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>Advanced Diagnostics</summary><div class="diag-pop"><div class="analysis-note">${esc(a.engine)} · ${a.diagnostics.resolution}<br>Diff +${a.comparison.added} / −${a.comparison.removed}${a.diagnostics.textSuppressed?`<br>${a.diagnostics.textSuppressed} candidate(s) discarded as printed text/labels via real OCR overlap`:""}</div><div class="field"><label>Status</label><select data-review-filter="status"><option value="all">All</option>${["unreviewed","confirmed","rejected"].map(v=>`<option ${ui.reviewFilter===v?"selected":""}>${v}</option>`).join("")}</select></div><div class="field full"><label>Minimum confidence ${Math.round(ui.reviewConfidence*100)}%</label><input data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?"Cancel Drawing":t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">Save Verified Plan</button><button class="btn sm" data-review-action="improve">Improve AI (Local Calibration)</button></div></details><button class="btn" data-review-action="reanalyze">Re-Analyze</button>`:""}<button class="btn sm" data-review-action="toggle-lang">${ui.lang==="tr"?"TR":"EN"}</button></header>${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><div class="planintel-map-inner" id="analysisSceneInner"><img src="${event.background.src}" alt="Floor plan analysis source">${candidates.map(c=>candidateBox(c,selected?.id===c.id,target?.ids||null)).join("")}${boundaryBox?`<div class="review-group-boundary" style="left:${Math.max(0,boundaryBox.x-2.5)}%;top:${Math.max(0,boundaryBox.y-2.5)}%;width:${boundaryBox.w+5}%;height:${boundaryBox.h+5}%"></div>`:""}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="focus-group" data-group="${p.groupId}" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="Difficult question">${p.label}</button>`).join("")}</div></div>${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?"Analyzing locally…":"No analysis yet"}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
   }
   function updateCandidateField(field,value){
     const event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(!c)return;
