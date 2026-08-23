@@ -374,17 +374,28 @@
       ui.analysisStage=t("analysis.stage.seating");ui.analysisProgress=73;render();await yieldFrame();const area=width*height,minDim=Math.min(width,height),notWall=c=>!(Math.min(c.w,c.h)<3&&Math.max(c.w,c.h)>minDim*.08),chairs=components.filter(c=>notWall(c)&&Math.min(c.w,c.h)>=3&&Math.max(c.w,c.h)<=minDim*.065&&c.w*c.h<area*.0028&&c.fill>=.045),tables=components.filter(c=>notWall(c)&&Math.min(c.w,c.h)>=minDim*.016&&c.w*c.h>=area*.00015&&c.w*c.h<=area*.04&&c.aspect>=.35&&c.aspect<=3.8&&c.fill>=.035).sort((a,b)=>b.w*b.h-a.w*a.h).slice(0,100);
       const candidates=tables.map((t,index)=>{const nearby=chairs.filter(ch=>{const cx=ch.x+ch.w/2,cy=ch.y+ch.h/2,margin=Math.max(t.w,t.h)*.65;return cx>=t.x-margin&&cx<=t.x+t.w+margin&&cy>=t.y-margin&&cy<=t.y+t.h+margin&&!(cx>=t.x&&cx<=t.x+t.w&&cy>=t.y&&cy<=t.y+t.h);}).sort((a,b)=>{const ax=a.x+a.w/2-(t.x+t.w/2),ay=a.y+a.h/2-(t.y+t.h/2),bx=b.x+b.w/2-(t.x+t.w/2),by=b.y+b.h/2-(t.y+t.h/2);return ax*ax+ay*ay-bx*bx-by*by;}).slice(0,18),round=t.aspect>.78&&t.aspect<1.28&&t.fill<.68,confidence=Math.min(.94,.4+Math.min(.3,nearby.length*.04)+Math.min(.18,t.fill*.28));return{id:uid("candidate"),kind:"table",type:round?"round":"rectangle",x:t.x/width*100,y:t.y/height*100,w:t.w/width*100,h:t.h/height*100,rotation:t.rotation,confidence,status:"unreviewed",selected:confidence>=.48,chairDetections:nearby.map(ch=>({id:uid("candidate-chair"),x:(ch.x+ch.w/2)/width*100,y:(ch.y+ch.h/2)/height*100,w:ch.w/width*100,h:ch.h/height*100,rotation:ch.rotation,confidence:.56})),evidence:{geometry:Number(Math.min(.95,t.fill+.35).toFixed(2)),chairs:nearby.length,repetition:tables.filter(o=>Math.abs(o.w-t.w)<t.w*.2&&Math.abs(o.h-t.h)<t.h*.2).length}};});
       const venues=components.filter(c=>notWall(c)&&c.w*c.h>area*.008&&c.w*c.h<area*.12&&(c.aspect>3.1||c.aspect<.32)).slice(0,14).map(c=>({id:uid("candidate"),kind:"venue",type:c.aspect>3?"stage":"column",x:c.x/width*100,y:c.y/height*100,w:c.w/width*100,h:c.h/height*100,rotation:c.rotation,confidence:.52,status:"unreviewed",selected:false,chairDetections:[],evidence:{geometry:.62,chairs:0,repetition:0}}));
-      const previous=event.analysis?.candidates||[],signatures=list=>list.map(c=>`${c.kind}:${c.type}:${Math.round(c.x)}:${Math.round(c.y)}`),oldSig=new Set(signatures(previous)),newSig=new Set(signatures([...candidates,...venues]));event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:false,notice:"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:Math.round(width/ratio),originalHeight:Math.round(height/ratio),threshold,candidates:[...candidates,...venues],missed:[],comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{components:components.length,wallSuppression:true,chairs:chairs.length,tables:tables.length,resolution:`${width}×${height}`}};
+      const previous=event.analysis?.candidates||[],signatures=list=>list.map(c=>`${c.kind}:${c.type}:${Math.round(c.x)}:${Math.round(c.y)}`),oldSig=new Set(signatures(previous)),newSig=new Set(signatures([...candidates,...venues]));event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:false,notice:"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:Math.round(width/ratio),originalHeight:Math.round(height/ratio),threshold,candidates:[...candidates,...venues],missed:[],groupingDecisions:[],comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{components:components.length,wallSuppression:true,chairs:chairs.length,tables:tables.length,resolution:`${width}×${height}`}};
       ui.analysisStage=t("analysis.stage.labels");ui.analysisProgress=84;render();await yieldFrame();
       let ocrResult={available:false,text:null,reason:"OCR not attempted"};
       try{ocrResult=await runPlanOCR(canvas.toDataURL("image/png"));}catch(ocrError){ocrResult={available:false,text:null,reason:ocrError.message};}
       event.analysis.ocr={available:ocrResult.available,reason:ocrResult.reason||null,engine:"tesseract.js"};
+      // Kept in full (not just the truncated capacityAudit.sourceText) so a
+      // grouping/reclassification decision can recompute planIntelligence
+      // later without re-running OCR.
+      event.analysis.ocrText=ocrResult.available?ocrResult.text:null;
       ui.analysisStage=t("analysis.stage.relating");ui.analysisProgress=90;render();await yieldFrame();
       ui.analysisStage=t("analysis.stage.capacity");ui.analysisProgress=95;render();await yieldFrame();
-      event.analysis.planIntelligence=buildPlanIntelligence(event,ocrResult.available?ocrResult.text:null);
+      event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText);
       ui.analysisStage=t("analysis.stage.review");ui.analysisProgress=100;ui.analysisBusy=false;ui.selectedCandidateId=event.analysis.candidates[0]?.id||null;ui.difficultQuestionIndex=0;audit(event,"ASSISTED_DETECTION_COMPLETED",event.analysis.diagnostics);touchEvent(event);render();
     }catch(error){console.error(error);ui.analysisBusy=false;ui.analysisStage="Analysis failed";render();toast(`Assisted Detection failed: ${error.message}`,"error",7000);}
   }
+  // Re-derives the whole PlanIntelligenceResult from the CURRENT candidates +
+  // any recorded grouping/reclassification decisions. Called after every
+  // decision that changes the logical interpretation of the plan (grouping
+  // answers, cross-kind reclassification) so capacity, dining-group counts,
+  // Review Center and overlays are never stale relative to what a human
+  // actually decided.
+  function recomputePlanIntelligence(event){event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText??null);}
   function reviewCandidates(event){const a=event.analysis;if(!a)return[];return a.candidates.filter(c=>(ui.reviewFilter==="all"||c.status===ui.reviewFilter)&&(ui.reviewClass==="all"||c.kind===ui.reviewClass)&&c.confidence>=ui.reviewConfidence);}
   function candidateBox(c,selected){return`<button class="candidate-box ${c.kind} ${c.status} ${selected?"selected":""}" data-candidate-box="${c.id}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%;transform:rotate(${c.rotation||0}deg)" title="${esc(c.kind)} · ${Math.round(c.confidence*100)}%"></button>${(c.chairDetections||[]).map(ch=>`<i class="candidate-box chair" style="left:${ch.x}%;top:${ch.y}%;width:${Math.max(.5,ch.w)}%;height:${Math.max(.5,ch.h)}%;transform:translate(-50%,-50%) rotate(${ch.rotation||0}deg)"></i>`).join("")}`;}
   // ============================================================
@@ -401,8 +412,8 @@
     return`<aside class="poi-card"><div class="poi-card-head"><strong>${titleCase(c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div><select class="field-select" data-candidate-edit="type">${options.map(v=>`<option value="${v}" ${c.type===v?"selected":""}>${titleCase(v)}</option>`).join("")}</select><div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button></div></aside>`;
   }
   function reviewCenterPanelHTML(event){
-    const pi=event.analysis.planIntelligence;
-    return`<aside class="review-center-panel"><div class="review-center-head"><strong>${t("review.center")}</strong><button class="btn icon-only sm" data-review-action="close-review-center">${icon("x")}</button></div><div class="review-center-list">${pi.reviewGroups.map(g=>`<div class="review-group-card"><div class="review-group-title">${titleCase(g.title)}</div><div class="review-group-meta">${g.totalInFamily} similar · ${g.consistentCount} ${t("review.consistentOf")} · ${g.memberIds.length} ${t("review.needReview")}</div><div class="review-group-actions"><button class="btn sm primary" data-reviewgroup-action="confirm-family" data-group="${g.id}">${t("action.applyToAll")}</button><button class="btn sm" data-reviewgroup-action="inspect" data-group="${g.id}">${t("action.reviewOutliers")}</button></div></div>`).join("")||`<div class="inspector-empty">${t("review.noGroups")}</div>`}</div>${pi.uncertainQuestions.length?`<div class="review-center-difficult"><strong>${t("review.difficultQuestions")}</strong>${pi.uncertainQuestions.map(q=>`<div class="difficult-q-row"><span>${esc(q.question)}</span><button class="btn sm" data-question-action="open" data-question="${q.id}">${t("action.answer")}</button></div>`).join("")}</div>`:""}</aside>`;
+    const pi=event.analysis.planIntelligence,decisions=event.analysis.groupingDecisions||[];
+    return`<aside class="review-center-panel"><div class="review-center-head"><strong>${t("review.center")}</strong>${decisions.length?`<button class="btn sm quiet" data-review-decision-action="undo-last" title="Undo the most recent plan decision">${icon("undo")} Undo last decision (${decisions.length})</button>`:""}<button class="btn icon-only sm" data-review-action="close-review-center">${icon("x")}</button></div><div class="review-center-list">${pi.reviewGroups.map(g=>`<div class="review-group-card"><div class="review-group-title">${titleCase(g.title)}</div><div class="review-group-meta">${g.totalInFamily} similar · ${g.consistentCount} ${t("review.consistentOf")} · ${g.memberIds.length} ${t("review.needReview")}</div><div class="review-group-actions"><button class="btn sm primary" data-reviewgroup-action="confirm-family" data-group="${g.id}">${t("action.applyToAll")}</button><button class="btn sm" data-reviewgroup-action="inspect" data-group="${g.id}">${t("action.reviewOutliers")}</button></div></div>`).join("")||`<div class="inspector-empty">${t("review.noGroups")}</div>`}</div>${pi.uncertainQuestions.length?`<div class="review-center-difficult"><strong>${t("review.difficultQuestions")}</strong>${pi.uncertainQuestions.map(q=>`<div class="difficult-q-row"><span>${esc(q.question)}</span><button class="btn sm" data-question-action="open" data-question="${q.id}">${t("action.answer")}</button></div>`).join("")}</div>`:""}</aside>`;
   }
   function difficultQuestionCardHTML(event){
     const pi=event.analysis?.planIntelligence;if(!pi||!ui.activeQuestionId)return"";
@@ -458,9 +469,25 @@
       const event=activeEvent(),pi=event.analysis?.planIntelligence,q=pi?.uncertainQuestions.find(x=>x.id===b.dataset.question);if(!q)return;
       const action=b.dataset.questionAction;
       if(action==="open"){ui.activeQuestionId=q.id;ui.reviewCenterOpen=false;render();return;}
-      state.verifiedExamples.push({id:uid("verified"),eventId:event.id,savedAt:nowISO(),kind:"grouping-question",question:q.question,answer:action==="yes"?"one-group":"separate-tables",memberCandidateIds:pi.furnitureGroups.find(g=>g.id===q.groupId)?.memberIds||[]});
-      saveState();ui.activeQuestionId=null;render();
-      toast(action==="yes"?"Recorded — Teach AI will use this to recognize similar arrangements. Seating capacity for these tables still tracks each physical table separately.":"Recorded as separate tables.","success",5500);
+      const group=pi.furnitureGroups.find(g=>g.id===q.groupId),memberIds=group?.memberIds||[];
+      if(!canMutate(event,"answer a plan question"))return;
+      const decision=action==="yes"?"merged":"separate";
+      event.analysis.groupingDecisions ||= [];
+      event.analysis.groupingDecisions.push({id:uid("groupdecision"),memberIds:[...memberIds],decision,decidedAt:nowISO(),fromQuestionId:q.id});
+      state.verifiedExamples.push({id:uid("verified"),eventId:event.id,savedAt:nowISO(),kind:"grouping-question",question:q.question,answer:action==="yes"?"one-group":"separate-tables",memberCandidateIds:memberIds});
+      recomputePlanIntelligence(event);
+      const newPi=event.analysis.planIntelligence;
+      touchEvent(event);ui.activeQuestionId=null;render();
+      toast(decision==="merged"
+        ?`Confirmed as one seating group. Plan now shows ${newPi.planSummary.diningGroups} dining group(s). Undo is available in Review Center.`
+        :`Split into ${memberIds.length} separate tables. Plan now shows ${newPi.planSummary.diningGroups} dining group(s). Undo is available in Review Center.`,
+        "success",6000);
+    });
+    document.querySelectorAll("[data-review-decision-action='undo-last']").forEach(b=>b.onclick=()=>{
+      const event=activeEvent();if(!canMutate(event,"undo a plan decision"))return;
+      const decisions=event.analysis?.groupingDecisions;if(!decisions?.length)return;
+      const undone=decisions.pop();recomputePlanIntelligence(event);touchEvent(event);render();
+      toast(`Undone: ${undone.decision==="merged"?"one seating group":"separate tables"} decision reverted.`,"success",5000);
     });
     bindReviewDrawing();
   }

@@ -44,27 +44,55 @@
   // ---- Furniture grouping: real geometric heuristic (touch + gap + alignment),
   // never "close together" alone. Matches merit-plan-intelligence's requirement
   // that grouping use multiple signals, not proximity by itself.
-  function buildFurnitureGroups(tableCandidates) {
+  //
+  // `decisions` are real human answers to a difficult grouping question
+  // (event.analysis.groupingDecisions, written by app-v8.js's question
+  // handler) — a "separate" decision blocks every pairwise union among its
+  // original memberIds so the group genuinely splits into standalone tables;
+  // a "merged" decision forces a union even if geometry alone wouldn't
+  // connect them, and both are honored on every recompute so a human answer
+  // has a real, persistent effect instead of being logged and ignored.
+  function pairKey(idA, idB) { return idA < idB ? `${idA}|${idB}` : `${idB}|${idA}`; }
+  function buildFurnitureGroups(tableCandidates, decisions = []) {
     const n = tableCandidates.length, parent = Array.from({ length: n }, (_, i) => i);
     const find = i => (parent[i] === i ? i : (parent[i] = find(parent[i])));
     const union = (i, j) => { const a = find(i), b = find(j); if (a !== b) parent[a] = b; };
+    const indexById = new Map(tableCandidates.map((c, i) => [c.id, i]));
+    const blockedPairs = new Set(), forcedPairs = new Set();
+    for (const d of decisions) {
+      if (!Array.isArray(d.memberIds)) continue;
+      const target = d.decision === "separate" ? blockedPairs : d.decision === "merged" ? forcedPairs : null;
+      if (!target) continue;
+      for (let a = 0; a < d.memberIds.length; a++) for (let b = a + 1; b < d.memberIds.length; b++) target.add(pairKey(d.memberIds[a], d.memberIds[b]));
+    }
     for (let i = 0; i < n; i++) {
       for (let j = i + 1; j < n; j++) {
         const a = tableCandidates[i], b = tableCandidates[j];
+        if (blockedPairs.has(pairKey(a.id, b.id))) continue;
         const gap = gapBetween(a, b), threshold = Math.min(a.w, a.h, b.w, b.h) * 0.28;
         if (gap <= threshold && aligned(a, b)) union(i, j);
       }
+    }
+    for (const key of forcedPairs) {
+      const [idA, idB] = key.split("|");
+      if (indexById.has(idA) && indexById.has(idB)) union(indexById.get(idA), indexById.get(idB));
     }
     const groups = new Map();
     tableCandidates.forEach((c, i) => { const root = find(i); if (!groups.has(root)) groups.set(root, []); groups.get(root).push(c); });
     return [...groups.values()].filter(members => members.length >= 1).map(members => {
       const xs = members.flatMap(m => [m.x, m.x + m.w]), ys = members.flatMap(m => [m.y, m.y + m.h]);
+      const memberIds = members.map(m => m.id).sort();
+      const matchingDecision = decisions.find(d => Array.isArray(d.memberIds) && d.memberIds.length === memberIds.length && [...d.memberIds].sort().every((id, i) => id === memberIds[i]));
       return {
         id: uid("furngroup"),
         memberIds: members.map(m => m.id),
-        reason: members.length > 1
-          ? `${members.length} physical tables touch and align — treated as one logical dining unit.`
-          : "Single physical table.",
+        reason: matchingDecision
+          ? (matchingDecision.decision === "merged" ? "Confirmed by a human answer as one seating group." : "Confirmed by a human answer as separate tables.")
+          : members.length > 1
+            ? `${members.length} physical tables touch and align — treated as one logical dining unit.`
+            : "Single physical table.",
+        decision: matchingDecision?.decision || null,
+        decidedAt: matchingDecision?.decidedAt || null,
         bbox: { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) },
       };
     });
@@ -151,8 +179,10 @@
     const out = [];
     for (const fg of furnitureGroups) {
       if (fg.memberIds.length < 2) continue;
+      if (fg.decision) continue; // already answered by a human — never re-ask the same question.
       out.push({ id: uid("question"), candidateId: fg.memberIds[0], groupId: fg.id, kind: "grouping",
-        question: `Do these ${fg.memberIds.length} connected tables operate as one seating group?` });
+        question: `Do these ${fg.memberIds.length} connected tables operate as one seating group?`,
+        questionType: "combinedDiningGroup", questionParams: { memberCount: fg.memberIds.length } });
     }
     return out;
   }
@@ -191,7 +221,7 @@
   function buildPlanIntelligence(event, ocrText) {
     const analysis = event.analysis; if (!analysis) return null;
     const tableCandidates = analysis.candidates.filter(c => c.kind === "table");
-    const furnitureGroups = buildFurnitureGroups(tableCandidates);
+    const furnitureGroups = buildFurnitureGroups(tableCandidates, analysis.groupingDecisions || []);
     const similarityGroups = buildSimilarityGroups(analysis.candidates);
     const reviewGroups = buildReviewGroups(analysis.candidates, similarityGroups);
     const uncertainQuestions = buildDifficultQuestions(analysis.candidates, furnitureGroups);
@@ -225,7 +255,7 @@
 
   globalThis.buildPlanIntelligence = buildPlanIntelligence;
   globalThis.MERIT_PLAN_INTELLIGENCE_STATUS = {
-    implemented: ["Geometric furniture grouping (touch+align)", "Geometric similarity clustering", "Bulk review-group collapsing", "Difficult-item queue for multi-table groups", "OCR-based capacity audit (when plan-ocr.js/Tesseract is loaded)"],
+    implemented: ["Geometric furniture grouping (touch+align)", "Geometric similarity clustering", "Bulk review-group collapsing", "Difficult-item queue for multi-table groups", "OCR-based capacity audit (when plan-ocr.js/Tesseract is loaded)", "Grouping-question answers persist as real decisions (event.analysis.groupingDecisions) that force-split or force-merge tables on every recompute, and are undoable — never a log-only toast"],
     foundationOnly: ["SemanticVisionProvider/GroundingProvider/EmbeddingProvider abstraction — interface not yet defined, no hosted model connected"],
     future: ["Trained/learned object detection", "Sofa/bench automatic capacity estimation from pixels", "Cross-plan venue memory", "Layout change detection"],
   };
