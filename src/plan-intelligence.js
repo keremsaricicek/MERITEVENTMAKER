@@ -98,20 +98,45 @@
     });
   }
 
-  // ---- Similarity clustering: pure geometric feature vector (size, aspect,
-  // kind/type), NOT a learned embedding. Greedy nearest-cluster assignment —
-  // this is what lets "Teach once" propagate a correction to many objects
-  // without asking the same question repeatedly.
+  // ---- Similarity clustering: geometric feature vector (size, aspect,
+  // kind/type) PLUS, when available, a real pixel-derived visual descriptor
+  // (c.visualDescriptor, computed in app-v8.js's runAssistedDetection from
+  // the actual decoded plan image — fill ratio, edge density, an intensity
+  // histogram, a quadrant fill signature; see the VisualEmbeddingProvider
+  // comment there for why this is classical/deterministic rather than a
+  // trained embedding). Geometry alone cannot tell a solid table apart from
+  // an open frame of the same bounding box; real pixel content can. Greedy
+  // nearest-cluster assignment — this is what lets "Teach once" propagate a
+  // correction to many objects without asking the same question repeatedly.
   function featureVector(c) {
-    return { area: c.w * c.h, aspect: c.w / Math.max(0.001, c.h), kind: c.kind, type: c.type };
+    return { area: c.w * c.h, aspect: c.w / Math.max(0.001, c.h), kind: c.kind, type: c.type, visual: c.visualDescriptor || null };
+  }
+  function visualDistance(v1, v2) {
+    if (!v1 || !v2) return 0; // no real pixel signal on one side (e.g. a manually-drawn or memory-restored candidate) — fall back to geometry alone rather than penalizing an unknown.
+    const fillDiff = Math.abs(v1.fillRatio - v2.fillRatio);
+    const edgeDiff = Math.abs(v1.edgeDensity - v2.edgeDensity);
+    const histDiff = v1.intensityHist.reduce((s, val, i) => s + Math.abs(val - v2.intensityHist[i]), 0) / 2;
+    const quadDiff = v1.quadrantFill.reduce((s, val, i) => s + Math.abs(val - v2.quadrantFill[i]), 0) / 4;
+    return fillDiff * 1.5 + edgeDiff * 1.2 + histDiff * 1.5 + quadDiff * 1.3;
   }
   function featureDistance(f1, f2) {
     if (f1.kind !== f2.kind) return Infinity;
     const areaRatio = Math.max(f1.area, f2.area) / Math.max(0.0001, Math.min(f1.area, f2.area));
     const aspectDiff = Math.abs(f1.aspect - f2.aspect);
-    return (areaRatio - 1) * 2 + aspectDiff * 3;
+    return (areaRatio - 1) * 2 + aspectDiff * 3 + visualDistance(f1.visual, f2.visual) * 2;
   }
-  function buildSimilarityGroups(candidates, distanceThreshold = 0.9) {
+  function averageVisual(centroidVisual, incomingVisual, n) {
+    if (!incomingVisual) return centroidVisual;
+    if (!centroidVisual) return { ...incomingVisual, intensityHist: [...incomingVisual.intensityHist], quadrantFill: [...incomingVisual.quadrantFill] };
+    const blend = (a, b) => (a * (n - 1) + b) / n;
+    return {
+      fillRatio: blend(centroidVisual.fillRatio, incomingVisual.fillRatio),
+      edgeDensity: blend(centroidVisual.edgeDensity, incomingVisual.edgeDensity),
+      intensityHist: centroidVisual.intensityHist.map((v, i) => blend(v, incomingVisual.intensityHist[i])),
+      quadrantFill: centroidVisual.quadrantFill.map((v, i) => blend(v, incomingVisual.quadrantFill[i])),
+    };
+  }
+  function buildSimilarityGroups(candidates, distanceThreshold = 1.6) {
     const clusters = [];
     for (const c of candidates) {
       const f = featureVector(c);
@@ -125,6 +150,7 @@
         const n = best.members.length;
         best.centroid.area = (best.centroid.area * (n - 1) + f.area) / n;
         best.centroid.aspect = (best.centroid.aspect * (n - 1) + f.aspect) / n;
+        best.centroid.visual = averageVisual(best.centroid.visual, f.visual, n);
       } else {
         clusters.push({ centroid: { ...f }, members: [c] });
       }
@@ -255,8 +281,8 @@
 
   globalThis.buildPlanIntelligence = buildPlanIntelligence;
   globalThis.MERIT_PLAN_INTELLIGENCE_STATUS = {
-    implemented: ["Geometric furniture grouping (touch+align)", "Geometric similarity clustering", "Bulk review-group collapsing", "Difficult-item queue for multi-table groups", "OCR-based capacity audit (when plan-ocr.js/Tesseract is loaded)", "Grouping-question answers persist as real decisions (event.analysis.groupingDecisions) that force-split or force-merge tables on every recompute, and are undoable — never a log-only toast", "Current Plan Memory (event.planMemory, app-v8.js): reclassifications, confirm/reject, and manually-drawn missed objects are re-applied to freshly detected candidates after Re-Analyze by matching real geometry (position/size) — the underlying image and detector are deterministic, so this is a genuine match, not a fabricated one"],
-    foundationOnly: ["SemanticVisionProvider/GroundingProvider/EmbeddingProvider abstraction — interface not yet defined, no hosted model connected"],
+    implemented: ["Geometric furniture grouping (touch+align)", "Similarity clustering using real pixel-derived visual descriptors (fill ratio, edge density, intensity histogram, quadrant fill signature) computed from the actual decoded plan image, not geometry alone — see computeVisualDescriptor() in app-v8.js", "Bulk review-group collapsing", "Difficult-item queue for multi-table groups", "OCR-based capacity audit (when plan-ocr.js/Tesseract is loaded)", "Grouping-question answers persist as real decisions (event.analysis.groupingDecisions) that force-split or force-merge tables on every recompute, and are undoable — never a log-only toast", "Current Plan Memory (event.planMemory, app-v8.js): reclassifications, confirm/reject, and manually-drawn missed objects are re-applied to freshly detected candidates after Re-Analyze by matching real geometry (position/size) — the underlying image and detector are deterministic, so this is a genuine match, not a fabricated one"],
+    foundationOnly: ["VisualEmbeddingProvider from a real trained model (ONNX Runtime Web + a pretrained vision model such as MobileNetV2) — evaluated and confirmed technically fetchable in this environment (onnxruntime-web is on the npm registry; a real ~14MB MobileNetV2 ONNX model is reachable via media.githubusercontent.com), but not integrated this pass; the classical pixel-descriptor implementation above is a real, working, swappable stand-in behind the same interface shape, not a placeholder that does nothing", "SemanticVisionProvider/GroundingProvider abstraction — interface not yet defined, no hosted model connected"],
     future: ["Trained/learned object detection", "Sofa/bench automatic capacity estimation from pixels", "Cross-plan venue memory", "Layout change detection"],
   };
 })();
