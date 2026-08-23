@@ -73,8 +73,11 @@
     "teach.type.exit": { en: "Exit", tr: "Çıkış" },
     "teach.type.column": { en: "Column", tr: "Kolon" },
     "teach.type.lounge": { en: "Lounge Object", tr: "Lounge Objesi" },
+    "teach.type.text": { en: "Text / Label", tr: "Yazı / Etiket" },
     "teach.type.other": { en: "Other", tr: "Diğer" },
     "teach.type.ignore": { en: "Ignore", tr: "Yoksay" },
+    "taxonomy.tables": { en: "Tables", tr: "Masalar" },
+    "taxonomy.objects": { en: "Other Objects", tr: "Diğer Nesneler" },
 
     "question.yesGroup": { en: "Yes, one group", tr: "Evet, tek grup" },
     "question.noSeparate": { en: "No, separate tables", tr: "Hayır, ayrı masalar" },

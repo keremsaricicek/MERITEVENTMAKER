@@ -406,10 +406,21 @@
   // one object; Review Center answers a whole family at once; the difficult
   // -question card is reserved for genuinely ambiguous multi-table grouping.
   // ============================================================
+  // Full cross-kind reclassification taxonomy (merit-plan-intelligence
+  // contract): correcting a detection to ANY of these must be able to cross
+  // table<->venue kind, not just swap type within the same kind. "Ignore" is
+  // deliberately not listed here — it is the existing "Not an object" reject
+  // action, which already stores a real negative example rather than deleting.
+  const RECLASSIFY_TAXONOMY=[
+    {kind:"table",type:"round"},{kind:"table",type:"square"},{kind:"table",type:"rectangle"},{kind:"table",type:"bistro"},
+    {kind:"venue",type:"chair"},{kind:"venue",type:"armchair"},{kind:"venue",type:"sofa"},
+    {kind:"venue",type:"stage"},{kind:"venue",type:"bar"},{kind:"venue",type:"entrance"},{kind:"venue",type:"exit"},
+    {kind:"venue",type:"column"},{kind:"venue",type:"text"},{kind:"venue",type:"other"},
+  ];
   function reviewPoiCardHTML(c){
     if(!c)return"";
-    const options=c.kind==="table"?["rectangle","square","round","bistro"]:["stage","bar","entrance","exit","column","text"];
-    return`<aside class="poi-card"><div class="poi-card-head"><strong>${titleCase(c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div><select class="field-select" data-candidate-edit="type">${options.map(v=>`<option value="${v}" ${c.type===v?"selected":""}>${titleCase(v)}</option>`).join("")}</select><div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button></div></aside>`;
+    const opt=o=>`<option value="${o.kind}:${o.type}" ${c.kind===o.kind&&c.type===o.type?"selected":""}>${t("teach.type."+o.type)}</option>`;
+    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div><select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select><div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button></div></aside>`;
   }
   function reviewCenterPanelHTML(event){
     const pi=event.analysis.planIntelligence,decisions=event.analysis.groupingDecisions||[];
@@ -453,7 +464,20 @@
     const pins=reviewMapPins(event,pi);
     return`<section class="planintel-screen"><header class="planintel-top"><button class="btn" data-review-action="back">${icon("arrow")}Floor Plan</button><div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):"No analysis yet")}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:a.ocr.reason||"no network"})):a.notice}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>Advanced Diagnostics</summary><div class="diag-pop"><div class="analysis-note">${esc(a.engine)} · ${a.diagnostics.resolution}<br>Diff +${a.comparison.added} / −${a.comparison.removed}</div><div class="field"><label>Status</label><select data-review-filter="status"><option value="all">All</option>${["unreviewed","confirmed","rejected"].map(v=>`<option ${ui.reviewFilter===v?"selected":""}>${v}</option>`).join("")}</select></div><div class="field full"><label>Minimum confidence ${Math.round(ui.reviewConfidence*100)}%</label><input data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?"Cancel Drawing":t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">Save Verified Plan</button><button class="btn sm" data-review-action="improve">Improve AI (Local Calibration)</button></div></details><button class="btn" data-review-action="reanalyze">Re-Analyze</button>`:""}<button class="btn sm" data-review-action="toggle-lang">${ui.lang==="tr"?"TR":"EN"}</button></header>${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><img src="${event.background.src}" alt="Floor plan analysis source">${candidates.map(c=>candidateBox(c,selected?.id===c.id)).join("")}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="open-review-center" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="Difficult question">${p.label}</button>`).join("")}</div>${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?"Analyzing locally…":"No analysis yet"}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
   }
-  function updateCandidateField(field,value){const event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(!c)return;if(field==="rotation")c.rotation=Number(value)||0;else if(field==="chairs"){const count=Math.max(0,Math.min(99,Number(value)||0));c.chairDetections=Array.from({length:count},(_,i)=>c.chairDetections?.[i]||{id:uid("candidate-chair"),x:c.x+c.w/2,y:c.y+c.h/2,w:.7,h:.7,rotation:0,confidence:.3});}else c[field]=value;touchEvent(event);render();}
+  function updateCandidateField(field,value){
+    const event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(!c)return;
+    if(field==="rotation")c.rotation=Number(value)||0;
+    else if(field==="chairs"){const count=Math.max(0,Math.min(99,Number(value)||0));c.chairDetections=Array.from({length:count},(_,i)=>c.chairDetections?.[i]||{id:uid("candidate-chair"),x:c.x+c.w/2,y:c.y+c.h/2,w:.7,h:.7,rotation:0,confidence:.3});}
+    else if(field==="kindtype"){
+      const [kind,type]=value.split(":"),crossedKind=kind!==c.kind;
+      c.kind=kind;c.type=type;
+      if(crossedKind&&kind!=="table")c.chairDetections=[]; // a chair/armchair/sofa/stage/etc. candidate carries no nested seat detections of its own.
+      c.status="confirmed";c.selected=true;
+      recomputePlanIntelligence(event); // reclassifying can move a candidate in/out of furniture grouping, similarity clustering, review groups and the physical-seat capacity sum — never just relabel it.
+    }
+    else c[field]=value;
+    touchEvent(event);render();
+  }
   function commitCandidates(){
     const event=activeEvent(),chosen=event.analysis?.candidates.filter(c=>c.selected&&c.status!=="rejected")||[];if(!chosen.length)return toast("Select at least one detection to confirm.","error");recordUndo(event);let tables=0,venues=0;for(const c of chosen){if(c.committedId)continue;const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);if(c.kind==="table"){const table=syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||1),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:true});if(c.chairDetections?.length){table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0,occupancy:null}));table.capacity=table.chairs.length;}event.tables.push(table);c.committedId=table.id;tables++;}else{const object={id:uid("venue"),type:c.type||"text",label:String(c.type||"OBJECT").toUpperCase(),x,y,w,h,rotation:c.rotation||0,locked:false,z:4};event.venueObjects.push(object);c.committedId=object.id;venues++;}c.status="confirmed";}touchEvent(event);ui.screen="workspace";ui.tab="floor";render();toast(`${tables} table${tables===1?"":"s"}, ${venues} venue object${venues===1?"":"s"} confirmed. Chair coordinates were preserved.`,"success",6000);
   }
