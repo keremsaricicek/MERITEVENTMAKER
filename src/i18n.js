@@ -99,6 +99,7 @@
     "poi.unreviewed": { en: "Unreviewed", tr: "İncelenmedi" },
     "poi.confirmed": { en: "Confirmed", tr: "Onaylandı" },
     "poi.rejected": { en: "Rejected", tr: "Reddedildi" },
+    "poi.fromMemory": { en: "Remembered from your earlier correction on this plan", tr: "Bu plandaki önceki düzeltmenizden hatırlandı" },
     "ocr.unavailable": { en: "OCR unavailable in this session ({reason}) — capacity audit skipped, not fabricated.", tr: "Bu oturumda OCR kullanılamıyor ({reason}) — kapasite denetimi atlandı, uydurulmadı." },
 
     "diag.notInstalled": { en: "DOMAIN MODEL NOT INSTALLED", tr: "ALAN MODELİ KURULU DEĞİL" },

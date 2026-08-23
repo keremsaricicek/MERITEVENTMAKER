@@ -364,6 +364,80 @@
   function yieldFrame(){return new Promise(resolve=>requestAnimationFrame(()=>resolve()));}
   function sourceBlob(src){return fetch(src).then(r=>r.blob());}
   function otsu(hist,total,sum){let bg=0,bgSum=0,best=-1,threshold=150;for(let value=0;value<256;value++){bg+=hist[value];if(!bg)continue;const fg=total-bg;if(!fg)break;bgSum+=value*hist[value];const score=bg*fg*((bgSum/bg)-((sum-bgSum)/fg))**2;if(score>best){best=score;threshold=value;}}return threshold;}
+  // ============================================================
+  // Current Plan Memory: a human correction (reclassify, confirm, reject, or
+  // a manually-drawn "AI missed this" object) must survive Re-Analyze, not be
+  // silently discarded when runAssistedDetection() throws away the whole old
+  // candidate list and generates fresh ones with new random ids. Stored on
+  // event.planMemory (NOT event.analysis, which gets fully replaced on every
+  // analysis pass) and matched back onto the newly detected candidates by
+  // real geometry: since the source plan image never changed and the
+  // classical CV pipeline is deterministic, the same physical object reappears
+  // at essentially the same position/size on every re-run — this is a real,
+  // honest match, not a fabricated one. Matching by learned visual similarity
+  // instead of geometry alone is a separate, larger piece of future work (see
+  // plan-intelligence.js's similarity clustering).
+  function rememberCorrection(event,c,{manual=false}={}){
+    event.planMemory ||= [];
+    const entry={id:uid("planmemory"),sourceCandidateId:c.id,kind:c.kind,type:c.type,status:c.status,
+      geometry:{x:c.x,y:c.y,w:c.w,h:c.h,rotation:c.rotation||0},manual,correctedAt:nowISO()};
+    const existing=event.planMemory.findIndex(m=>m.sourceCandidateId===c.id);
+    if(existing>=0)event.planMemory[existing]=entry;else event.planMemory.push(entry);
+  }
+  function memoryDistance(c,m){const g=m.geometry;return Math.hypot(c.x-g.x,c.y-g.y,(c.w-g.w)*.5,(c.h-g.h)*.5);}
+  // General old-candidate -> new-candidate geometry remap, used to carry
+  // grouping decisions (which reference every member of a furniture group,
+  // not just ones a human individually confirmed/reclassified) across a
+  // Re-Analyze pass. Same deterministic-geometry reasoning as plan memory.
+  function matchCandidatesByGeometry(oldCandidates,freshCandidates){
+    const TOLERANCE=3,pairs=[];
+    for(const o of oldCandidates)for(const c of freshCandidates)pairs.push({o,c,dist:Math.hypot(c.x-o.x,c.y-o.y,(c.w-o.w)*.5,(c.h-o.h)*.5)});
+    pairs.sort((a,b)=>a.dist-b.dist);
+    const usedO=new Set(),usedC=new Set(),remap=new Map();
+    for(const{o,c,dist}of pairs){
+      if(dist>TOLERANCE||usedO.has(o.id)||usedC.has(c.id))continue;
+      remap.set(o.id,c.id);usedO.add(o.id);usedC.add(c.id);
+    }
+    return remap;
+  }
+  // Re-applies remembered corrections onto a fresh detection pass: matches
+  // each memory entry to its closest freshly-detected candidate (greedy
+  // nearest-geometry, one-to-one) within a tight tolerance, overwrites that
+  // candidate's kind/type/status with the remembered human decision (flagging
+  // fromMemory so this is never silently indistinguishable from a fresh
+  // detection), and re-inserts a manually-drawn "AI missed this" object
+  // outright if the detector still doesn't find it. Returns an id remap so
+  // grouping decisions (which reference old candidate ids) can be carried
+  // forward too.
+  function applyPlanMemory(freshCandidates,memory){
+    const idRemap=new Map();
+    if(!memory?.length)return{reappliedCount:0,restored:[],idRemap};
+    const TOLERANCE=3;
+    // Matched purely by geometry, never by kind: a reclassification memory's
+    // whole point is that the detector's raw kind guess was wrong (e.g. a
+    // table-shaped detection that a human corrected to venue:chair) -- the
+    // freshly re-detected candidate at that position will get the SAME wrong
+    // kind guess again on every re-run, so requiring kind equality here would
+    // make the correction impossible to ever re-apply.
+    const pairs=[];
+    for(const m of memory)for(const c of freshCandidates)pairs.push({m,c,dist:memoryDistance(c,m)});
+    pairs.sort((a,b)=>a.dist-b.dist);
+    const usedC=new Set(),usedM=new Set();
+    let reappliedCount=0;
+    for(const{m,c,dist}of pairs){
+      if(dist>TOLERANCE||usedC.has(c.id)||usedM.has(m.id))continue;
+      c.kind=m.kind;c.type=m.type;c.status=m.status;c.selected=m.status!=="rejected";c.fromMemory=true;
+      usedC.add(c.id);usedM.add(m.id);idRemap.set(m.sourceCandidateId,c.id);reappliedCount++;
+    }
+    const restored=[];
+    for(const m of memory){
+      if(usedM.has(m.id)||!m.manual)continue; // a non-manual correction whose object wasn't re-detected this time is left alone -- we never fabricate a detection that didn't happen.
+      const g=m.geometry,id=uid("candidate");
+      restored.push({id,kind:m.kind,type:m.type,x:g.x,y:g.y,w:g.w,h:g.h,rotation:g.rotation,confidence:1,status:m.status,selected:m.status!=="rejected",missed:true,fromMemory:true,chairDetections:[],evidence:{geometry:"manual-memory",chairs:0,repetition:0}});
+      idRemap.set(m.sourceCandidateId,id);
+    }
+    return{reappliedCount,restored,idRemap};
+  }
   async function runAssistedDetection(){
     const event=activeEvent();if(!canMutate(event,"run plan analysis")||!event.background?.src)return toast("Import a floor plan first.","error");ui.analysisBusy=true;ui.analysisProgress=3;ui.analysisStage=t("analysis.stage.reading");ui.screen="review";render();await yieldFrame();
     try{
@@ -374,7 +448,18 @@
       ui.analysisStage=t("analysis.stage.seating");ui.analysisProgress=73;render();await yieldFrame();const area=width*height,minDim=Math.min(width,height),notWall=c=>!(Math.min(c.w,c.h)<3&&Math.max(c.w,c.h)>minDim*.08),chairs=components.filter(c=>notWall(c)&&Math.min(c.w,c.h)>=3&&Math.max(c.w,c.h)<=minDim*.065&&c.w*c.h<area*.0028&&c.fill>=.045),tables=components.filter(c=>notWall(c)&&Math.min(c.w,c.h)>=minDim*.016&&c.w*c.h>=area*.00015&&c.w*c.h<=area*.04&&c.aspect>=.35&&c.aspect<=3.8&&c.fill>=.035).sort((a,b)=>b.w*b.h-a.w*a.h).slice(0,100);
       const candidates=tables.map((t,index)=>{const nearby=chairs.filter(ch=>{const cx=ch.x+ch.w/2,cy=ch.y+ch.h/2,margin=Math.max(t.w,t.h)*.65;return cx>=t.x-margin&&cx<=t.x+t.w+margin&&cy>=t.y-margin&&cy<=t.y+t.h+margin&&!(cx>=t.x&&cx<=t.x+t.w&&cy>=t.y&&cy<=t.y+t.h);}).sort((a,b)=>{const ax=a.x+a.w/2-(t.x+t.w/2),ay=a.y+a.h/2-(t.y+t.h/2),bx=b.x+b.w/2-(t.x+t.w/2),by=b.y+b.h/2-(t.y+t.h/2);return ax*ax+ay*ay-bx*bx-by*by;}).slice(0,18),round=t.aspect>.78&&t.aspect<1.28&&t.fill<.68,confidence=Math.min(.94,.4+Math.min(.3,nearby.length*.04)+Math.min(.18,t.fill*.28));return{id:uid("candidate"),kind:"table",type:round?"round":"rectangle",x:t.x/width*100,y:t.y/height*100,w:t.w/width*100,h:t.h/height*100,rotation:t.rotation,confidence,status:"unreviewed",selected:confidence>=.48,chairDetections:nearby.map(ch=>({id:uid("candidate-chair"),x:(ch.x+ch.w/2)/width*100,y:(ch.y+ch.h/2)/height*100,w:ch.w/width*100,h:ch.h/height*100,rotation:ch.rotation,confidence:.56})),evidence:{geometry:Number(Math.min(.95,t.fill+.35).toFixed(2)),chairs:nearby.length,repetition:tables.filter(o=>Math.abs(o.w-t.w)<t.w*.2&&Math.abs(o.h-t.h)<t.h*.2).length}};});
       const venues=components.filter(c=>notWall(c)&&c.w*c.h>area*.008&&c.w*c.h<area*.12&&(c.aspect>3.1||c.aspect<.32)).slice(0,14).map(c=>({id:uid("candidate"),kind:"venue",type:c.aspect>3?"stage":"column",x:c.x/width*100,y:c.y/height*100,w:c.w/width*100,h:c.h/height*100,rotation:c.rotation,confidence:.52,status:"unreviewed",selected:false,chairDetections:[],evidence:{geometry:.62,chairs:0,repetition:0}}));
-      const previous=event.analysis?.candidates||[],signatures=list=>list.map(c=>`${c.kind}:${c.type}:${Math.round(c.x)}:${Math.round(c.y)}`),oldSig=new Set(signatures(previous)),newSig=new Set(signatures([...candidates,...venues]));event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:false,notice:"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:Math.round(width/ratio),originalHeight:Math.round(height/ratio),threshold,candidates:[...candidates,...venues],missed:[],groupingDecisions:[],comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{components:components.length,wallSuppression:true,chairs:chairs.length,tables:tables.length,resolution:`${width}×${height}`}};
+      const previous=event.analysis?.candidates||[],signatures=list=>list.map(c=>`${c.kind}:${c.type}:${Math.round(c.x)}:${Math.round(c.y)}`),oldSig=new Set(signatures(previous)),newSig=new Set(signatures([...candidates,...venues]));
+      const freshCandidates=[...candidates,...venues];
+      const priorCandidates=event.analysis?.candidates||[],priorDecisions=event.analysis?.groupingDecisions||[];
+      const memoryResult=applyPlanMemory(freshCandidates,event.planMemory||[]);
+      const allCandidates=[...freshCandidates,...memoryResult.restored];
+      // Grouping decisions are keyed by candidate id, which is regenerated on
+      // every analysis pass -- remap them through the same geometry match so
+      // a "these are separate tables" answer survives Re-Analyze instead of
+      // silently reverting to the detector's default grouping.
+      const geometryRemap=matchCandidatesByGeometry(priorCandidates,allCandidates);
+      const carriedDecisions=priorDecisions.map(d=>({...d,memberIds:d.memberIds.map(id=>geometryRemap.get(id)).filter(Boolean)})).filter(d=>d.memberIds.length>=2);
+      event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:false,notice:"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:Math.round(width/ratio),originalHeight:Math.round(height/ratio),threshold,candidates:allCandidates,missed:allCandidates.filter(c=>c.missed).map(c=>c.id),groupingDecisions:carriedDecisions,memoryReapplied:memoryResult.reappliedCount,memoryRestored:memoryResult.restored.length,comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{components:components.length,wallSuppression:true,chairs:chairs.length,tables:tables.length,resolution:`${width}×${height}`}};
       ui.analysisStage=t("analysis.stage.labels");ui.analysisProgress=84;render();await yieldFrame();
       let ocrResult={available:false,text:null,reason:"OCR not attempted"};
       try{ocrResult=await runPlanOCR(canvas.toDataURL("image/png"));}catch(ocrError){ocrResult={available:false,text:null,reason:ocrError.message};}
@@ -460,7 +545,7 @@
   function reviewPoiCardHTML(c){
     if(!c)return"";
     const opt=o=>`<option value="${o.kind}:${o.type}" ${c.kind===o.kind&&c.type===o.type?"selected":""}>${t("teach.type."+o.type)}</option>`;
-    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div><select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select><div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button></div></aside>`;
+    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select><div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button></div></aside>`;
   }
   // Real pixel crop of a candidate straight out of the actual imported plan
   // image — a CSS background-position/-size window, never a synthesized or
@@ -535,6 +620,7 @@
       c.kind=kind;c.type=type;
       if(crossedKind&&kind!=="table")c.chairDetections=[]; // a chair/armchair/sofa/stage/etc. candidate carries no nested seat detections of its own.
       c.status="confirmed";c.selected=true;
+      rememberCorrection(event,c);
       recomputePlanIntelligence(event); // reclassifying can move a candidate in/out of furniture grouping, similarity clustering, review groups and the physical-seat capacity sum — never just relabel it.
     }
     else c[field]=value;
@@ -543,17 +629,17 @@
   function commitCandidates(){
     const event=activeEvent(),chosen=event.analysis?.candidates.filter(c=>c.selected&&c.status!=="rejected")||[];if(!chosen.length)return toast("Select at least one detection to confirm.","error");recordUndo(event);let tables=0,venues=0;for(const c of chosen){if(c.committedId)continue;const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);if(c.kind==="table"){const table=syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||1),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:true});if(c.chairDetections?.length){table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0,occupancy:null}));table.capacity=table.chairs.length;}event.tables.push(table);c.committedId=table.id;tables++;}else{const object={id:uid("venue"),type:c.type||"text",label:String(c.type||"OBJECT").toUpperCase(),x,y,w,h,rotation:c.rotation||0,locked:false,z:4};event.venueObjects.push(object);c.committedId=object.id;venues++;}c.status="confirmed";}touchEvent(event);ui.screen="workspace";ui.tab="floor";render();toast(`${tables} table${tables===1?"":"s"}, ${venues} venue object${venues===1?"":"s"} confirmed. Chair coordinates were preserved.`,"success",6000);
   }
-  function bindReviewDrawing(){const scene=document.getElementById("analysisScene");if(!scene||!ui.reviewDrawMode)return;scene.onpointerdown=e=>{if(e.target!==scene&&e.target.tagName!=="IMG")return;e.preventDefault();const r=scene.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top,box=document.createElement("div");box.className="candidate-box selected";scene.appendChild(box);const move=ev=>{const x=ev.clientX-r.left,y=ev.clientY-r.top;Object.assign(box.style,{left:Math.min(sx,x)+"px",top:Math.min(sy,y)+"px",width:Math.abs(x-sx)+"px",height:Math.abs(y-sy)+"px"});};const up=ev=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);const x=Math.min(sx,ev.clientX-r.left)/r.width*100,y=Math.min(sy,ev.clientY-r.top)/r.height*100,w=Math.abs(ev.clientX-r.left-sx)/r.width*100,h=Math.abs(ev.clientY-r.top-sy)/r.height*100;if(w>1&&h>1){const c={id:uid("candidate"),kind:"table",type:"rectangle",x,y,w,h,rotation:0,confidence:1,status:"unreviewed",selected:true,missed:true,chairDetections:[],evidence:{geometry:"manual",chairs:0,repetition:0}};activeEvent().analysis.candidates.push(c);activeEvent().analysis.missed.push(c.id);ui.selectedCandidateId=c.id;ui.reviewDrawMode=false;touchEvent(activeEvent());}render();};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);};}
+  function bindReviewDrawing(){const scene=document.getElementById("analysisScene");if(!scene||!ui.reviewDrawMode)return;scene.onpointerdown=e=>{if(e.target!==scene&&e.target.tagName!=="IMG")return;e.preventDefault();const r=scene.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top,box=document.createElement("div");box.className="candidate-box selected";scene.appendChild(box);const move=ev=>{const x=ev.clientX-r.left,y=ev.clientY-r.top;Object.assign(box.style,{left:Math.min(sx,x)+"px",top:Math.min(sy,y)+"px",width:Math.abs(x-sx)+"px",height:Math.abs(y-sy)+"px"});};const up=ev=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);const x=Math.min(sx,ev.clientX-r.left)/r.width*100,y=Math.min(sy,ev.clientY-r.top)/r.height*100,w=Math.abs(ev.clientX-r.left-sx)/r.width*100,h=Math.abs(ev.clientY-r.top-sy)/r.height*100;if(w>1&&h>1){const event=activeEvent();const c={id:uid("candidate"),kind:"table",type:"rectangle",x,y,w,h,rotation:0,confidence:1,status:"unreviewed",selected:true,missed:true,chairDetections:[],evidence:{geometry:"manual",chairs:0,repetition:0}};event.analysis.candidates.push(c);event.analysis.missed.push(c.id);rememberCorrection(event,c,{manual:true});ui.selectedCandidateId=c.id;ui.reviewDrawMode=false;touchEvent(event);}render();};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);};}
   function saveVerified(){const event=activeEvent();if(!ui.teachAI)return toast("Enable Teach AI with corrections first.","error");const a=event.analysis;if(!a)return;state.verifiedExamples.push({id:uid("verified"),eventId:event.id,savedAt:nowISO(),engine:a.engine,trainedModel:false,threshold:a.threshold,imageSize:[a.imageWidth,a.imageHeight],predictions:a.candidates.map(clone),groundTruth:a.candidates.filter(c=>c.status!=="rejected").map(clone),rejected:a.candidates.filter(c=>c.status==="rejected").map(c=>c.id),missed:[...a.missed],hardExample:a.missed.length>0||a.candidates.some(c=>c.status==="rejected")});saveState();toast("Verified plan saved locally with predictions, corrections, rejections and missed detections.","success",6000);}
   function improveAI(){if(!state.verifiedExamples.length)return toast("Save at least one verified plan first.","error");const samples=state.verifiedExamples.flatMap(v=>v.groundTruth||[]),avg=samples.length?samples.reduce((n,c)=>n+(c.confidence||0),0)/samples.length:0;state.calibration={version:(state.calibration?.version||0)+1,updatedAt:nowISO(),examples:state.verifiedExamples.length,objects:samples.length,recommendedConfidence:Number(Math.max(.35,Math.min(.8,avg*.85)).toFixed(2)),trainedModel:false,label:"Local assisted-detection calibration; not a trained neural model"};saveState();toast(`Local calibration v${state.calibration.version} completed from ${state.verifiedExamples.length} verified plan(s). No trained model claim is made.`,"success",6500);}
   function bindReview(){
-    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.screen="workspace";ui.tab="floor";ui.activeReviewGroupId=null;ui.activeQuestionId=null;ui.selectedCandidateId=null;render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){c.status="confirmed";c.selected=true;touchEvent(event);render();}else if(action==="reject"&&c){c.status="rejected";c.selected=false;touchEvent(event);render();}else if(action==="delete-candidate"&&c){event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;touchEvent(event);render();}else if(action==="draw"){ui.reviewDrawMode=!ui.reviewDrawMode;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="focus-group"){ui.activeReviewGroupId=b.dataset.group;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=true;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
+    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.screen="workspace";ui.tab="floor";ui.activeReviewGroupId=null;ui.activeQuestionId=null;ui.selectedCandidateId=null;render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){c.status="confirmed";c.selected=true;rememberCorrection(event,c);touchEvent(event);render();}else if(action==="reject"&&c){c.status="rejected";c.selected=false;rememberCorrection(event,c);touchEvent(event);render();}else if(action==="delete-candidate"&&c){event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;touchEvent(event);render();}else if(action==="draw"){ui.reviewDrawMode=!ui.reviewDrawMode;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="focus-group"){ui.activeReviewGroupId=b.dataset.group;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=true;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
     document.querySelectorAll("[data-candidate],[data-candidate-box]").forEach(node=>node.onclick=e=>{if(e.target.matches("input"))return;ui.selectedCandidateId=node.dataset.candidate||node.dataset.candidateBox;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();});document.querySelectorAll("[data-candidate-select]").forEach(input=>input.onchange=()=>{const c=activeEvent().analysis.candidates.find(x=>x.id===input.dataset.candidateSelect);c.selected=input.checked;touchEvent(activeEvent());});document.querySelectorAll("[data-candidate-edit]").forEach(input=>input.onchange=()=>updateCandidateField(input.dataset.candidateEdit,input.value));document.querySelectorAll("[data-review-filter]").forEach(input=>input.oninput=()=>{if(input.dataset.reviewFilter==="status")ui.reviewFilter=input.value;else if(input.dataset.reviewFilter==="class")ui.reviewClass=input.value;else ui.reviewConfidence=Number(input.value);render();});document.querySelector("[data-teach-ai]")?.addEventListener("change",e=>{ui.teachAI=e.target.checked;});
     document.querySelectorAll("[data-reviewgroup-action]").forEach(b=>b.onclick=()=>{
       const event=activeEvent(),pi=event.analysis?.planIntelligence,group=pi?.reviewGroups.find(g=>g.id===b.dataset.group);if(!group)return;
       if(b.dataset.reviewgroupAction==="confirm-family"){
         const strong=group.memberIds.filter(id=>!group.outlierIds.includes(id));
-        strong.forEach(id=>{const c=event.analysis.candidates.find(x=>x.id===id);if(c){c.status="confirmed";c.selected=true;}});
+        strong.forEach(id=>{const c=event.analysis.candidates.find(x=>x.id===id);if(c){c.status="confirmed";c.selected=true;rememberCorrection(event,c);}});
         touchEvent(event);ui.reviewCenterOpen=group.outlierIds.length>0;render();
         toast(`${strong.length} object${strong.length===1?"":"s"} confirmed as ${group.title}. ${group.outlierIds.length?group.outlierIds.length+" outlier(s) still need review.":""}`,"success",5000);
       } else if(b.dataset.reviewgroupAction==="inspect"){

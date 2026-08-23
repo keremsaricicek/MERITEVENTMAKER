@@ -255,7 +255,7 @@
 
   globalThis.buildPlanIntelligence = buildPlanIntelligence;
   globalThis.MERIT_PLAN_INTELLIGENCE_STATUS = {
-    implemented: ["Geometric furniture grouping (touch+align)", "Geometric similarity clustering", "Bulk review-group collapsing", "Difficult-item queue for multi-table groups", "OCR-based capacity audit (when plan-ocr.js/Tesseract is loaded)", "Grouping-question answers persist as real decisions (event.analysis.groupingDecisions) that force-split or force-merge tables on every recompute, and are undoable — never a log-only toast"],
+    implemented: ["Geometric furniture grouping (touch+align)", "Geometric similarity clustering", "Bulk review-group collapsing", "Difficult-item queue for multi-table groups", "OCR-based capacity audit (when plan-ocr.js/Tesseract is loaded)", "Grouping-question answers persist as real decisions (event.analysis.groupingDecisions) that force-split or force-merge tables on every recompute, and are undoable — never a log-only toast", "Current Plan Memory (event.planMemory, app-v8.js): reclassifications, confirm/reject, and manually-drawn missed objects are re-applied to freshly detected candidates after Re-Analyze by matching real geometry (position/size) — the underlying image and detector are deterministic, so this is a genuine match, not a fabricated one"],
     foundationOnly: ["SemanticVisionProvider/GroundingProvider/EmbeddingProvider abstraction — interface not yet defined, no hosted model connected"],
     future: ["Trained/learned object detection", "Sofa/bench automatic capacity estimation from pixels", "Cross-plan venue memory", "Layout change detection"],
   };
