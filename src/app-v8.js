@@ -142,10 +142,12 @@
 
   function planIssues(event){
     const issues=[],numbers=new Set(),capacity=physicalCapacity(event),pax=event.guests.reduce((n,g)=>n+paxOf(g),0);
-    for(const table of event.tables){if(numbers.has(table.number))issues.push({level:"blocker",title:"Duplicate table number",text:table.number});numbers.add(table.number);}
-    if(!event.tables.length)issues.push({level:"warn",title:"Blank plan",text:"Add tables manually or use Assisted Detection."});
-    if(pax>capacity)issues.push({level:"blocker",title:"Capacity exceeded",text:`${pax} guest pax / ${capacity} physical chairs`});
-    const unassigned=event.guests.filter(g=>!g.assignment).reduce((n,g)=>n+paxOf(g),0);if(unassigned)issues.push({level:"warn",title:"Unassigned guests",text:`${unassigned} pax still need seats.`});
+    // Each issue carries a stable `code` so callers can route on it without
+    // string-matching a translated title.
+    for(const table of event.tables){if(numbers.has(table.number))issues.push({level:"blocker",code:"duplicateTable",fix:"floor",title:t("health.issue.duplicateTable"),text:t("health.issue.duplicateTableText",{number:table.number})});numbers.add(table.number);}
+    if(!event.tables.length)issues.push({level:"warn",code:"blankPlan",fix:"floor",title:t("health.issue.blankPlan"),text:t("health.issue.blankPlanText")});
+    if(pax>capacity)issues.push({level:"blocker",code:"capacityExceeded",fix:"floor",title:t("health.issue.capacityExceeded"),text:t("health.issue.capacityExceededText",{pax,capacity})});
+    const unassigned=event.guests.filter(g=>!g.assignment).reduce((n,g)=>n+paxOf(g),0);if(unassigned)issues.push({level:"warn",code:"unassigned",fix:"seating",title:t("health.issue.unassigned"),text:t("health.issue.unassignedText",{n:unassigned})});
     return issues;
   }
   function planHealthHTML(event){
@@ -347,18 +349,224 @@
     document.querySelectorAll("[data-empty-seat]").forEach(row=>row.onclick=()=>{const ids=ui.selectedGuestIds.length?ui.selectedGuestIds:[ui.selectedGuestId].filter(Boolean);if(ids.length)assignGuestGroup(ids,ui.selectedTableId,Number(row.dataset.emptySeat));});document.querySelectorAll("[data-unassign]").forEach(b=>b.onclick=()=>unassignGuest(b.dataset.unassign));document.querySelectorAll("[data-lock-assignment]").forEach(b=>b.onclick=()=>toggleAssignmentLock(b.dataset.lockAssignment));
   };
 
+  // A party of N renders as N dots — one solid for the named guest, the rest
+  // muted for companions. A non-technical operator reads "four people" from
+  // this instantly; "+3" in a pax column reads as a spreadsheet.
+  function paxDotsHTML(g){
+    const pax=paxOf(g);
+    if(pax>10)return`<span class="pax-badge">${pax}</span>`;
+    return`<span class="pax-dots">${Array.from({length:pax},(_,i)=>`<i class="${i?"companion":""}"></i>`).join("")}</span>`;
+  }
+  function partyMetaHTML(g){
+    const add=additionalOf(g),bits=[];
+    bits.push(`${paxDotsHTML(g)}<span>${t("live.partyOf",{n:paxOf(g)})}</span>`);
+    if(add)bits.push(`<span>${t("live.companionsOf",{n:add})}</span>`);
+    if(g.vip&&g.vip!=="Standard")bits.push(`<span class="vip-tag">${esc(g.vip)}</span>`);
+    return bits.join("");
+  }
+  function seatTagHTML(event,g){
+    const t_=g.assignment&&event.tables.find(x=>x.id===g.assignment.tableId);
+    if(!t_)return`<span class="seat-tag none">${t("live.noTable")}</span>`;
+    return`<span class="seat-tag">${esc(formatTableNumber(t_.number))}${g.assignment.seats?.length?` · ${esc(seatRange(g.assignment.seats))}`:""}</span>`;
+  }
+  const ARRIVAL_ORDER={"Not Arrived":0,"Checked In":1,"No Show":2};
   liveHTML = function(event){
-    const q=ui.liveQuery.trim().toLocaleLowerCase("tr"),rows=event.guests.filter(g=>!q||[g.name,g.vip,g.invitedBy,g.planningStatus,g.arrivalStatus,event.tables.find(t=>t.id===g.assignment?.tableId)?.number].join(" ").toLocaleLowerCase("tr").includes(q)),s=liveStats(event);
-    const kpis=[["all",t("live.kpi.total"),s.total,t("live.kpi.totalNote"),"users",""],["checked",t("live.kpi.checked"),s.checked,t("live.kpi.checkedNote"),"users",""],["not-arrived",t("live.kpi.notArrived"),s.notArrived,t("live.kpi.notArrivedNote"),"users","attention"],["no-show",t("live.kpi.noShow"),s.noShow,t("live.kpi.noShowNote"),"users","danger"],["empty",t("live.kpi.emptyTables"),s.emptyTables,t("live.kpi.emptyTablesNote"),"table",""],["available",t("live.kpi.emptyChairs"),s.emptyChairs,t("live.kpi.emptyChairsNote"),"chair","available"]];
-    return`<div class="screen-scroll"><div class="screen-inner"><div class="screen-titlebar"><div><h2>${t("live.title")}</h2><p>${t("live.subtitle")}</p></div><input class="filter-input" id="liveSearch" value="${esc(ui.liveQuery)}" placeholder="${t("live.search")}"></div><div class="live-kpis v8-live-kpis">${kpis.map(([id,label,value,note,ic,cls])=>`<button class="live-kpi ${cls}" data-live-kpi="${id}"><span class="kpi-top">${label}${icon(ic)}</span><b>${value}</b><small>${note}</small></button>`).join("")}</div><div class="live-list"><div class="live-row header v8-live-row"><span>${t("live.col.name")}</span><span>${t("live.col.pax")}</span><span>${t("live.col.invitedBy")}</span><span>${t("live.col.table")}</span><span>${t("live.col.planning")}</span><span>${t("live.col.arrival")}</span><span>${t("live.col.action")}</span></div>${rows.map(g=>{const t_=event.tables.find(x=>x.id===g.assignment?.tableId);return`<div class="live-row v8-live-row"><span><b>${esc(g.name)}${additionalOf(g)?` +${additionalOf(g)}`:""}</b><small class="subline">${esc(g.vip)}</small></span><span>${paxOf(g)}</span><span class="inviter-cell">${esc(g.invitedBy||"—")}</span><span>${t_?esc(t_.number):"—"}</span><span>${esc(t("status.planning."+g.planningStatus))}</span><span class="${g.arrivalStatus==="Checked In"?"arrival-checked":g.arrivalStatus==="No Show"?"arrival-no-show":""}">${esc(t("status.arrival."+g.arrivalStatus))}</span><span class="live-actions"><button class="btn sm ${g.arrivalStatus==="Checked In"?"active":""}" data-arrival="Checked In" data-live-guest="${g.id}">${t("live.checkIn")}</button><button class="btn sm ${g.arrivalStatus==="No Show"?"danger":""}" data-arrival="No Show" data-live-guest="${g.id}">${t("live.noShow")}</button></span></div>`}).join("")}</div></div></div>`;
+    const q=ui.liveQuery.trim().toLocaleLowerCase("tr"),s=liveStats(event);
+    if(!ui.liveRecent)ui.liveRecent=[];
+    const rows=event.guests
+      .filter(g=>!q||[g.name,g.vip,g.invitedBy,g.planningStatus,g.arrivalStatus,event.tables.find(x=>x.id===g.assignment?.tableId)?.number].join(" ").toLocaleLowerCase("tr").includes(q))
+      // Not Arrived first: on event night the operator's list is "who is still
+      // outside", not an alphabetical roster.
+      .sort((a,b)=>(ARRIVAL_ORDER[a.arrivalStatus]-ARRIVAL_ORDER[b.arrivalStatus])||naturalSort(a.name,b.name));
+    const metrics=[
+      `<div class="mx-metric is-hero is-good"><span class="mx-metric-label">${t("live.arrived")}</span><span class="mx-metric-value">${s.checked}</span><span class="mx-metric-note">${t("live.arrivedNote",{total:s.total})}</span></div>`,
+      `<div class="mx-metric"><span class="mx-metric-label">${t("live.stillExpected")}</span><span class="mx-metric-value">${s.notArrived}</span><span class="mx-metric-note">${t("live.stillExpectedNote")}</span></div>`,
+      `<div class="mx-metric ${s.noShow?"is-alert":""}"><span class="mx-metric-label">${t("live.kpi.noShow")}</span><span class="mx-metric-value">${s.noShow}</span><span class="mx-metric-note">${t("live.kpi.noShowNote")}</span></div>`,
+      `<button class="mx-metric" data-live-kpi="empty"><span class="mx-metric-label">${t("live.kpi.emptyTables")}</span><span class="mx-metric-value">${s.emptyTables}</span><span class="mx-metric-note">${t("live.kpi.emptyTablesNote")}</span></button>`,
+      `<button class="mx-metric" data-live-kpi="available"><span class="mx-metric-label">${t("live.kpi.emptyChairs")}</span><span class="mx-metric-value">${s.emptyChairs}</span><span class="mx-metric-note">${t("live.kpi.emptyChairsNote")}</span></button>`,
+    ].join("");
+    const recent=ui.liveRecent.length?ui.liveRecent.map(r=>`<div class="recent-item"><span class="arr-state ${r.to==="Checked In"?"in":r.to==="No Show"?"no":"not"}">${esc(t("status.arrival."+r.to))}</span><b>${esc(r.name)}</b><button class="undo-link" data-live-undo="${r.guestId}">${t("live.undo")}</button></div>`).join(""):`<div class="recent-item" style="color:var(--muted)">${t("live.recentEmpty")}</div>`;
+    const list=rows.length?rows.map(g=>{
+      const isIn=g.arrivalStatus==="Checked In",isNo=g.arrivalStatus==="No Show";
+      return`<div class="arrival-row ${isIn?"is-in":isNo?"is-no":""}">
+        <div class="arrival-who"><div class="party-name">${esc(g.name)}</div><div class="party-sub">${partyMetaHTML(g)}</div></div>
+        <div>${seatTagHTML(event,g)}</div>
+        <div><span class="arr-state ${isIn?"in":isNo?"no":"not"}">${esc(t("status.arrival."+g.arrivalStatus))}</span></div>
+        <div class="arrival-actions">
+          <button class="btn-arrive ${isIn?"undo":"go"}" data-arrival="Checked In" data-live-guest="${g.id}">${isIn?t("live.undoCheckIn"):t("live.checkInAction")}</button>
+          <button class="btn-arrive ${isNo?"undo":"no"}" data-arrival="No Show" data-live-guest="${g.id}">${isNo?t("live.undo"):t("live.noShow")}</button>
+        </div>
+      </div>`;
+    }).join(""):`<div class="mx-empty"><h3>${q?t("live.noResults"):t("live.allArrived")}</h3></div>`;
+    return`<div class="mx-screen"><div class="mx-wrap">
+      <div class="mx-head"><div><h1>${t("live.title")}</h1><p>${t("live.subtitle")}</p></div></div>
+      <div class="mx-metrics">${metrics}</div>
+      <div class="live-stage">
+        <div>
+          <div class="live-search-hero"><span class="hero-icon">${icon("search")}</span><input id="liveSearch" value="${esc(ui.liveQuery)}" placeholder="${t("live.searchHero")}" autocomplete="off"></div>
+          <p class="live-hint">${t("live.hint")}</p>
+          <div class="mx-list" style="margin-top:12px">${list}</div>
+        </div>
+        <aside class="live-aside"><div class="live-aside-head">${t("live.recentTitle")}</div>${recent}</aside>
+      </div>
+    </div></div>`;
   };
   bindLive = function(){
-    const search=document.getElementById("liveSearch");search.oninput=()=>{ui.liveQuery=search.value;render();};document.querySelectorAll("[data-live-kpi]").forEach(b=>b.onclick=()=>{const target=b.dataset.liveKpi;if(["checked","not-arrived","no-show"].includes(target)){ui.liveQuery=target==="checked"?"Checked In":target==="not-arrived"?"Not Arrived":"No Show";return render();}ui.tab="seating";ui.seatingFilter=target;ui.seatingGuestScope="all";ui.seatingQuery="";ui.operationalMode=target==="available"||target==="empty";ui.selectedGuestIds=[];ui.selectedGuestId=null;ui.selectedTableId=null;render();});document.querySelectorAll("[data-live-guest]").forEach(b=>b.onclick=()=>{const event=activeEvent();if(!canMutate(event,"change live arrival status"))return;const g=event.guests.find(x=>x.id===b.dataset.liveGuest),status=b.dataset.arrival;g.arrivalStatus=g.arrivalStatus===status?"Not Arrived":status;audit(event,"ARRIVAL_STATUS_CHANGED",{guestId:g.id,status:g.arrivalStatus});touchEvent(event);render();toast(`${g.name}: ${g.arrivalStatus}.`,"success");});
+    const search=document.getElementById("liveSearch");
+    if(search){
+      search.oninput=()=>{
+        ui.liveQuery=search.value;
+        const pos=search.selectionStart;
+        render();
+        requestAnimationFrame(()=>{const n=document.getElementById("liveSearch");if(n){n.focus();n.setSelectionRange(pos,pos);}});
+      };
+      // Event night: the operator walks up and types. Claim focus only when
+      // nothing else already has it, so this never steals from another field.
+      if(document.activeElement===document.body)search.focus();
+    }
+    document.querySelectorAll("[data-live-kpi]").forEach(b=>b.onclick=()=>{
+      ui.tab="seating";ui.seatingFilter=b.dataset.liveKpi;ui.seatingGuestScope="all";ui.seatingQuery="";
+      ui.operationalMode=true;ui.selectedGuestIds=[];ui.selectedGuestId=null;ui.selectedTableId=null;render();
+    });
+    document.querySelectorAll("[data-live-guest]").forEach(b=>b.onclick=()=>{
+      const event=activeEvent();if(!canMutate(event,"change live arrival status"))return;
+      const g=event.guests.find(x=>x.id===b.dataset.liveGuest),status=b.dataset.arrival;
+      const from=g.arrivalStatus;
+      // Arrival status is its own axis: this writes arrivalStatus and nothing
+      // else. planningStatus and the planned seat assignment are untouched.
+      g.arrivalStatus=from===status?"Not Arrived":status;
+      recordArrival(g,from,g.arrivalStatus);
+      audit(event,"ARRIVAL_STATUS_CHANGED",{guestId:g.id,status:g.arrivalStatus});
+      touchEvent(event);render();
+      if(g.arrivalStatus==="No Show")toast(t("live.noShowKeepsSeat"),"success",5200);
+      else if(g.arrivalStatus==="Checked In")toast(t("live.checkedInToast",{name:g.name}),"success");
+      else toast(t("live.undoneToast",{name:g.name}));
+    });
+    document.querySelectorAll("[data-live-undo]").forEach(b=>b.onclick=()=>{
+      const event=activeEvent();if(!canMutate(event,"change live arrival status"))return;
+      const id=b.dataset.liveUndo,entry=(ui.liveRecent||[]).find(r=>r.guestId===id),g=event.guests.find(x=>x.id===id);
+      if(!entry||!g)return;
+      g.arrivalStatus=entry.from;
+      ui.liveRecent=ui.liveRecent.filter(r=>r.guestId!==id);
+      audit(event,"ARRIVAL_STATUS_CHANGED",{guestId:g.id,status:g.arrivalStatus});
+      touchEvent(event);render();toast(t("live.undoneToast",{name:g.name}));
+    });
+  };
+  // Session-only trail so a mis-tap at the door is recoverable. Deliberately
+  // ui state, not event data -- it must never reach the stored schema.
+  function recordArrival(g,from,to){
+    if(!ui.liveRecent)ui.liveRecent=[];
+    ui.liveRecent=ui.liveRecent.filter(r=>r.guestId!==g.id);
+    if(from!==to)ui.liveRecent.unshift({guestId:g.id,name:g.name,from,to});
+    ui.liveRecent=ui.liveRecent.slice(0,6);
+  }
+
+  // ---- Reports: catch problems BEFORE the workbook leaves the building --
+  // The screen is free to change; the workbook contract is frozen. Nothing
+  // here touches makeTablePlanSheet / makeListSheet / seatExportName.
+  reportsHTML = function(event){
+    const m=eventMetrics(event),s=seatingStats(event),issues=planIssues(event);
+    const unassigned=event.guests.filter(g=>!g.assignment),unassignedPax=unassigned.reduce((n,g)=>n+paxOf(g),0);
+    const fixFor=i=>`<button class="pf-fix" data-report-fix="${i.fix||"seating"}">${t(i.fix==="floor"?"reports.fixFloor":"reports.fixSeating")}</button>`;
+    const preflight=issues.length
+      ?issues.map(i=>`<div class="pf-item ${i.level}"><i class="pf-dot"></i><div class="pf-text"><b>${esc(i.title)}</b><span>${esc(i.text)}</span></div>${fixFor(i)}</div>`).join("")
+      :`<div class="pf-item ok"><i class="pf-dot"></i><div class="pf-text"><b>${t("reports.preflightOk")}</b><span>${t("reports.preflightOkNote")}</span></div></div>`;
+    const capacity=[
+      `<div class="mx-metric is-hero"><span class="mx-metric-label">${t("reports.totalCapacity")}</span><span class="mx-metric-value">${m.total}</span><span class="mx-metric-note">${t("reports.tablesCount",{n:event.tables.length})}</span></div>`,
+      `<div class="mx-metric"><span class="mx-metric-label">${t("reports.assignedGuests")}</span><span class="mx-metric-value">${m.assigned}</span><span class="mx-metric-note">${t("reports.live")}</span></div>`,
+      `<div class="mx-metric"><span class="mx-metric-label">${t("reports.emptyChairs")}</span><span class="mx-metric-value">${s.emptyChairs}</span><span class="mx-metric-note">${t("reports.emptyTables")}: ${s.emptyTables}</span></div>`,
+      `<div class="mx-metric ${unassignedPax?"is-warn":""}"><span class="mx-metric-label">${t("reports.unassigned")}</span><span class="mx-metric-value">${unassignedPax}</span><span class="mx-metric-note">${t("reports.guestsCount",{n:unassigned.length})}</span></div>`,
+    ].join("");
+    const tableRows=[...event.tables].sort((a,b)=>naturalSort(a.number,b.number))
+      .map(t_=>`<div class="mx-row cols-report"><div><b style="font-size:12.5px">${esc(formatTableNumber(t_.number))}</b> <span class="muted" style="font-size:11.5px">${esc(t_.zone)}</span></div><div class="seat-tag">${tableAssignedPax(event,t_.id)} / ${t_.capacity}</div></div>`).join("");
+    return`<div class="mx-screen"><div class="mx-wrap">
+      <div class="mx-head"><div><h1>${t("reports.title")}</h1><p>${t("reports.subtitle")}</p></div></div>
+      <div class="reports-stage">
+        <div>
+          <div class="mx-section" style="margin-top:0"><div class="mx-section-head"><h2>${t("reports.preflight")}</h2><span class="count">${issues.length||""}</span></div><div class="preflight">${preflight}</div></div>
+          <div class="mx-section"><div class="mx-section-head"><h2>${t("reports.capacitySummary")}</h2></div><div class="mx-metrics" style="margin-bottom:0">${capacity}</div></div>
+          <div class="mx-section"><div class="mx-section-head"><h2>${t("reports.tableList")}</h2><span class="count">${t("reports.tablesCount",{n:event.tables.length})}</span></div>${event.tables.length?`<div class="mx-list">${tableRows}</div>`:`<div class="mx-empty" style="padding:28px">${t("reports.tablesCount",{n:0})}</div>`}</div>
+        </div>
+        <aside class="export-panel">
+          <h3>${t("reports.workbook")}</h3>
+          <p>${t("reports.workbookNote")}</p>
+          <div class="sheet-preview">
+            <div class="sheet-chip"><b>${t("reports.sheetTablePlan")}</b><span>${t("reports.sheetNoteTables",{n:event.tables.length})}</span></div>
+            <div class="sheet-chip"><b>${t("reports.sheetGuestList")}</b><span>${t("reports.sheetNoteRecords",{n:event.guests.length})}</span></div>
+            <div class="sheet-chip"><b>${t("reports.sheetUnassigned")}</b><span>${t("reports.sheetNoteGuests",{n:unassignedPax})}</span></div>
+          </div>
+          <button class="btn primary btn-export" data-report="xlsx">${icon("download")}${t("reports.exportTablePlan")}</button>
+          <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="csv">${icon("download")}${t("reports.guestCsv")}</button>
+          <p style="font-size:11px;color:var(--muted-2);margin:12px 0 0;line-height:1.45">${t("reports.sheetsInEnglish")}</p>
+        </aside>
+      </div>
+    </div></div>`;
+  };
+  // Own binder with null guards: the base one dereferences querySelector
+  // results directly, which blanks Reports if a button is ever conditional.
+  bindReports = function(){
+    app.querySelectorAll("[data-report='csv']").forEach(b=>b.onclick=exportGuestCSV);
+    app.querySelectorAll("[data-report='xlsx']").forEach(b=>b.onclick=exportTablePlanXLSX);
+    app.querySelectorAll("[data-report-fix]").forEach(b=>b.onclick=()=>{ui.tab=b.dataset.reportFix;render();});
+  };
+
+  // ---- Guests: a party list, not a spreadsheet ------------------------
+  // Every row is ONE guest record. Companions are shown as part of that
+  // record's identity, never promoted into rows of their own.
+  function guestCounts(event){
+    const totalPax=event.guests.reduce((n,g)=>n+paxOf(g),0);
+    const seatedPax=event.guests.filter(g=>g.assignment).reduce((n,g)=>n+paxOf(g),0);
+    return{records:event.guests.length,totalPax,seatedPax,unseatedPax:totalPax-seatedPax,
+      vip:event.guests.filter(g=>g.vip&&g.vip!=="Standard").length};
+  }
+  function guestPartyCellHTML(event,g){
+    const add=additionalOf(g),bits=[`${paxDotsHTML(g)}<span>${t("guests.partyOf",{n:paxOf(g)})}</span>`];
+    if(add)bits.push(`<span>${t("guests.companions",{n:add})}</span>`);
+    if(g.vip&&g.vip!=="Standard")bits.push(`<span class="vip-tag">${esc(g.vip)}</span>`);
+    if(g.notes)bits.push(`<span class="note-dot" title="${esc(g.notes)}">${icon("edit")}${t("guests.hasNote")}</span>`);
+    return`<div><div class="party-name">${esc(g.name)}</div><div class="party-sub">${bits.join("")}</div></div>`;
+  }
+  guestsHTML = function(event){
+    const guests=filteredGuests(event),c=guestCounts(event);
+    const metrics=[
+      `<div class="mx-metric is-hero"><span class="mx-metric-label">${t("guests.m.totalPax")}</span><span class="mx-metric-value">${c.totalPax}</span><span class="mx-metric-note">${t("guests.m.totalPaxNote",{n:c.records})}</span></div>`,
+      `<div class="mx-metric ${c.seatedPax?"is-good":""}"><span class="mx-metric-label">${t("guests.m.seated")}</span><span class="mx-metric-value">${c.seatedPax}</span><span class="mx-metric-note">${t("guests.m.seatedNote")}</span></div>`,
+      `<div class="mx-metric ${c.unseatedPax?"is-warn":""}"><span class="mx-metric-label">${t("guests.m.unseated")}</span><span class="mx-metric-value">${c.unseatedPax}</span><span class="mx-metric-note">${t("guests.m.unseatedNote")}</span></div>`,
+      `<div class="mx-metric"><span class="mx-metric-label">${t("guests.m.vip")}</span><span class="mx-metric-value">${c.vip}</span><span class="mx-metric-note">${t("guests.m.vipNote")}</span></div>`,
+    ].join("");
+    // The unassigned backlog is stated outright instead of hiding behind a
+    // filter the operator has to remember to switch to.
+    const queue=c.unseatedPax
+      ?`<div class="mx-queue"><b>${t("guests.queue",{n:c.unseatedPax})}</b><span>${t("guests.queueHint")}</span><button class="btn sm primary" data-guest-command="seating">${t("guests.queueGo")}</button></div>`
+      :c.records?`<div class="mx-queue clear"><b>${t("guests.queueClear")}</b><span></span></div>`:"";
+    const filters=[["all",t("guests.filter.all")],["assigned",t("guests.filter.assigned")],["unassigned",t("guests.filter.unassigned")],["confirmed",t("guests.filter.confirmed")],["tentative",t("guests.filter.tentative")]];
+    const body=!c.records
+      ?`<div class="mx-empty"><h3>${t("guests.emptyTitle")}</h3><p>${t("guests.emptyHint")}</p><div class="toolbar-row" style="justify-content:center"><button class="btn" data-guest-command="import">${icon("image")}${t("guests.importExcel")}</button><button class="btn primary" data-guest-command="add">${icon("plus")}${t("guests.addGuest")}</button></div></div>`
+      :`<div class="mx-list"><div class="mx-list-head cols-guest"><span>${t("guests.col.guest")}</span><span>${t("guests.col.status")}</span><span>${t("guests.col.invitedBy")}</span><span>${t("guests.col.tableSeat")}</span><span></span></div>${
+        guests.length?guests.map(g=>`<div class="mx-row cols-guest">${guestPartyCellHTML(event,g)}<div><span class="plan-tag ${g.planningStatus.toLowerCase()}">${esc(t("status.planning."+g.planningStatus))}</span></div><div class="muted" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(g.invitedBy||"—")}</div><div>${seatTagHTML(event,g)}${g.assignment?.locked?" 🔒":""}</div><div class="row-icons"><button class="row-action" title="${t("guests.col.tableSeat")}" data-guest-seat="${g.id}">${icon("seat")}</button><button class="row-action" data-guest-edit="${g.id}">${icon("edit")}</button><button class="row-action" data-guest-delete="${g.id}">${icon("trash")}</button></div></div>`).join(""):`<div class="mx-empty" style="border:none;background:none">${t("guests.noMatches")}</div>`
+      }</div>`;
+    return`<div class="mx-screen"><div class="mx-wrap">
+      <div class="mx-head"><div><h1>${t("guests.title")}</h1><p>${t("guests.recordsSummary",{records:c.records,total:c.totalPax})}</p></div><div class="mx-head-actions"><button class="btn" data-guest-command="template">${icon("download")}${t("guests.excelTemplate")}</button><button class="btn" data-guest-command="import">${icon("image")}${t("guests.importExcel")}</button><button class="btn primary" data-guest-command="add">${icon("plus")}${t("guests.addGuest")}</button></div></div>
+      <div class="mx-metrics">${metrics}</div>
+      ${queue}
+      <div class="mx-toolbar"><div class="grow"><input class="filter-input" id="guestSearch" style="width:100%" value="${esc(ui.guestQuery)}" placeholder="${t("guests.search")}"></div><select class="filter-input" id="guestFilter" style="width:170px">${filters.map(([v,l])=>`<option value="${v}" ${ui.guestFilter===v?"selected":""}>${l}</option>`).join("")}</select></div>
+      ${body}
+    </div></div>`;
   };
 
   openGuestDialog = function(...args){if(canMutate(activeEvent(),"edit guest records"))original.openGuestDialog(...args);};
   deleteGuest = function(...args){if(canMutate(activeEvent(),"delete guest records"))original.deleteGuest(...args);};
-  bindGuests = function(){if(isHistorical(activeEvent()))return;original.bindGuests();};
+  bindGuests = function(){
+    if(isHistorical(activeEvent()))return;
+    original.bindGuests();
+    // The empty state repeats Import/Add, and the base binder uses
+    // querySelector -- first match only -- so the duplicates would be inert.
+    app.querySelectorAll("[data-guest-command='add']").forEach(b=>b.onclick=()=>openGuestDialog());
+    app.querySelectorAll("[data-guest-command='import']").forEach(b=>b.onclick=openExcelWizard);
+    app.querySelectorAll("[data-guest-command='template']").forEach(b=>b.onclick=downloadExcelTemplate);
+    const toSeating=app.querySelector("[data-guest-command='seating']");
+    if(toSeating)toSeating.onclick=()=>{ui.tab="seating";ui.seatingGuestScope="unassigned";ui.seatingQuery="";ui.selectedGuestId=null;ui.selectedGuestIds=[];render();};
+  };
   loadXLSX = function(){return globalThis.XLSX?Promise.resolve():Promise.reject(new Error("Embedded spreadsheet engine did not initialize."));};
 
   function yieldFrame(){return new Promise(resolve=>requestAnimationFrame(()=>resolve()));}
