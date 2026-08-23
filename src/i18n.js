@@ -78,6 +78,11 @@
 
     "question.yesGroup": { en: "Yes, one group", tr: "Evet, tek grup" },
     "question.noSeparate": { en: "No, separate tables", tr: "Hayır, ayrı masalar" },
+    // AI-generated question text keyed by semantic type, never a hardcoded
+    // English string — plan-intelligence.js emits {questionType, questionParams}
+    // and app-v8.js's questionText() renders it through this table so a
+    // Turkish UI never leaks English question text.
+    "question.combinedDiningGroup": { en: "Do these {memberCount} connected tables operate as one seating group?", tr: "Bu {memberCount} bitişik masa tek bir oturma grubu olarak mı kullanılıyor?" },
     "review.center": { en: "Review Center", tr: "İnceleme Merkezi" },
     "review.difficultQuestions": { en: "Difficult questions", tr: "Zor Sorular" },
     "review.consistentOf": { en: "consistent", tr: "tutarlı" },
@@ -111,7 +116,7 @@
   globalThis.t = t;
   globalThis.MERIT_I18N_LANG = currentLang;
   globalThis.MERIT_I18N_STATUS = {
-    coverage: "Floor Plan / Plan Intelligence / Review Center / Teach AI / navigation only.",
+    coverage: "Floor Plan / Plan Intelligence / Review Center / Teach AI / navigation / AI-generated question text (semantic type+params, see questionText() in app-v8.js) only.",
     notMigrated: ["Guests table screen", "Seating Plan legacy labels", "Live Event legacy labels", "Reports screen", "Guide/Help content"],
     note: "Foundation is real and working (see the language toggle in the top bar); full-app string migration is a follow-up pass, not implemented in this one.",
   };
