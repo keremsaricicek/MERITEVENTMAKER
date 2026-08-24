@@ -5,7 +5,9 @@
   let state,pendingImport=null,quotaToastShown=false;
   const app=document.getElementById("app"),uid=p=>p+"_"+(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)),clone=v=>JSON.parse(JSON.stringify(v));
   const esc=v=>String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
-  const nowISO=()=>new Date().toISOString(),fmtDate=v=>new Intl.DateTimeFormat("en-GB",{day:"2-digit",month:"short",year:"numeric"}).format(new Date(v+"T12:00:00"));
+  // Dates follow the active UI language; resolved per call, not at load, so
+  // the language toggle takes effect without a reload.
+  const nowISO=()=>new Date().toISOString(),fmtDate=v=>new Intl.DateTimeFormat(ui&&ui.lang==="tr"?"tr-TR":"en-GB",{day:"2-digit",month:"short",year:"numeric"}).format(new Date(v+"T12:00:00"));
   const naturalSort=(a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true,sensitivity:"base"});
   function naturalTableSort(a,b){const prefix=v=>(String(v).replace(/\s+/g,"").match(/^([A-Za-z]+)/)?.[1]||"").toUpperCase(),rank={T:0,VIP:1,B:2},pa=prefix(a),pb=prefix(b),ra=rank[pa]??3,rb=rank[pb]??3;return ra-rb||naturalSort(a,b)}
   const ICONS={

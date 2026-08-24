@@ -171,6 +171,15 @@
     "health.issue.capacityExceededText": { en: "{pax} guest pax against {capacity} physical chairs.", tr: "{capacity} fiziksel koltuğa karşılık {pax} misafir." },
     "health.issue.unassigned": { en: "Unassigned guests", tr: "Oturtulmamış misafirler" },
     "health.issue.unassignedText": { en: "{n} pax still need seats.", tr: "{n} kişinin hâlâ koltuğa ihtiyacı var." },
+    // ---- Home, next-event-first redesign ----
+    "home.nextEvent": { en: "Next event", tr: "Sıradaki etkinlik" },
+    "home.otherUpcoming": { en: "Other upcoming events", tr: "Diğer yaklaşan etkinlikler" },
+    "home.seatedProgress": { en: "Guests seated", tr: "Oturtulan misafir" },
+    "home.capacityProgress": { en: "Chairs used", tr: "Kullanılan koltuk" },
+    "home.duplicate": { en: "Duplicate", tr: "Kopyala" },
+    "home.noPlanYet": { en: "No tables in the plan yet", tr: "Planda henüz masa yok" },
+    "home.openEventNamed": { en: "Open {name}", tr: "{name} etkinliğini aç" },
+    "home.historyOpenHint": { en: "Double-click a row to open it read-only", tr: "Salt okunur açmak için satıra çift tıklayın" },
     "guests.additionalNote": { en: "+{n} guests · {pax} total pax", tr: "+{n} misafir · {pax} toplam kişi" },
     "guests.unassigned": { en: "Unassigned", tr: "Atanmadı" },
 
@@ -342,6 +351,72 @@
   function currentLang() {
     return (typeof ui !== "undefined" && ui.lang === "tr") ? "tr" : "en";
   }
+
+  // ---- Toast translation -------------------------------------------------
+  // Toasts are raised from ~40 call sites across three files, many with
+  // interpolated data. Rather than rewrite every call, translation happens at
+  // the toast boundary: an exact-match table for fixed messages, then ordered
+  // patterns for the interpolated ones. Anything unmatched passes through in
+  // English -- visible, and therefore fixable, rather than silently wrong.
+  const TOAST_TR = {
+    "Guest added.": "Misafir eklendi.",
+    "Guest updated.": "Misafir güncellendi.",
+    "Guest deleted.": "Misafir silindi.",
+    "Event deleted.": "Etkinlik silindi.",
+    "Event duplicated.": "Etkinlik çoğaltıldı.",
+    "Nothing to undo.": "Geri alınacak bir şey yok.",
+    "Nothing to redo.": "Yinelenecek bir şey yok.",
+    "Saved locally in this browser.": "Bu tarayıcıya yerel olarak kaydedildi.",
+    "Blank event created. Add plan objects when ready.": "Boş etkinlik oluşturuldu. Hazır olduğunuzda plan nesnelerini ekleyin.",
+    "Event name, date and hotel are required.": "Etkinlik adı, tarih ve otel zorunludur.",
+    "That table number is already in use.": "Bu masa numarası zaten kullanımda.",
+    "This object is locked. Unlock it in the Inspector.": "Bu nesne kilitli. Kilidini denetçi panelinden açın.",
+    "Unlock this object before resizing.": "Yeniden boyutlandırmadan önce bu nesnenin kilidini açın.",
+    "Unlock this object before rotating.": "Döndürmeden önce bu nesnenin kilidini açın.",
+    "Unlock this assignment before removing it.": "Kaldırmadan önce bu atamanın kilidini açın.",
+    "Unlock every selected object before moving.": "Taşımadan önce seçili tüm nesnelerin kilidini açın.",
+    "Select one or more objects first.": "Önce bir veya daha fazla nesne seçin.",
+    "Select at least one detection to confirm.": "Onaylamak için en az bir tespit seçin.",
+    "The group move was rolled back.": "Grup taşıma geri alındı.",
+    "No assignments changed.": "Hiçbir atama değişmedi.",
+    "Repeated placement cancelled.": "Tekrarlı yerleştirme iptal edildi.",
+    "Import a floor plan first.": "Önce bir kat planı içe aktarın.",
+    "Choose PNG, JPG, JPEG or PDF.": "PNG, JPG, JPEG veya PDF seçin.",
+    "Floor plan imported locally. Assisted Detection is ready.": "Kat planı yerel olarak içe aktarıldı. Destekli Tespit hazır.",
+    "Enable Teach AI with corrections first.": "Önce düzeltmelerle Yapay Zekâya Öğret'i etkinleştirin.",
+    "Save at least one verified plan first.": "Önce en az bir doğrulanmış plan kaydedin.",
+    "Excel template downloaded.": "Excel şablonu indirildi.",
+    "Guest CSV exported.": "Misafir CSV'si dışa aktarıldı.",
+    "Table Plan workbook exported with three worksheets.": "Masa planı çalışma kitabı üç sayfayla dışa aktarıldı.",
+    "Fix blocking import errors first.": "Önce engelleyici içe aktarma hatalarını düzeltin.",
+    "Map one column to Name Surname.": "Bir sütunu Ad Soyad ile eşleştirin.",
+    "Name Surname is required.": "Ad Soyad zorunludur.",
+    "Browser storage is full. Export the workbook before closing.": "Tarayıcı depolaması dolu. Kapatmadan önce çalışma kitabını dışa aktarın.",
+    "Browser storage is full. Export your workbook before closing.": "Tarayıcı depolaması dolu. Kapatmadan önce çalışma kitabınızı dışa aktarın.",
+    "Event data was saved, but large images exceeded browser storage.": "Etkinlik verisi kaydedildi, ancak büyük görseller tarayıcı depolamasını aştı.",
+  };
+  const TOAST_PATTERNS = [
+    [/^(.+) returned to Unassigned\.$/, (m) => `${m[1]} atanmamışlara döndü.`],
+    [/^(.+)'s assignment is locked\. Unlock it before moving\.$/, (m) => `${m[1]} ataması kilitli. Taşımadan önce kilidini açın.`],
+    [/^(.+)'s assignment is locked\.$/, (m) => `${m[1]} ataması kilitli.`],
+    [/^(.+) added with (\d+) chairs\.$/, (m) => `${m[1]}, ${m[2]} sandalyeyle eklendi.`],
+    [/^(\d+) objects? added with physical chair records\.$/, (m) => `${m[1]} nesne fiziksel sandalye kayıtlarıyla eklendi.`],
+    [/^(\d+) records? moved transactionally to (.+) · (\d+) chairs reserved\.$/, (m) => `${m[1]} kayıt ${m[2]} masasına taşındı · ${m[3]} sandalye ayrıldı.`],
+    [/^(.+) has only (\d+) seats available for this record\.$/, (m) => `${m[1]} masasında bu kayıt için yalnızca ${m[2]} koltuk var.`],
+    [/^Historical events are read-only\. You cannot (.+)\.$/, () => `Geçmiş etkinlikler salt okunurdur; bu işlem yapılamaz.`],
+    [/^Assisted Detection failed: (.+)$/, (m) => `Destekli Tespit başarısız: ${m[1]}`],
+    [/^(.+) added\.$/, (m) => `${m[1]} eklendi.`],
+  ];
+  function translateToast(message) {
+    if (currentLang() !== "tr" || typeof message !== "string") return message;
+    if (TOAST_TR[message]) return TOAST_TR[message];
+    for (const [re, fn] of TOAST_PATTERNS) {
+      const m = message.match(re);
+      if (m) return fn(m);
+    }
+    return message;
+  }
+  globalThis.translateToast = translateToast;
 
   function t(key, vars) {
     const entry = STRINGS[key];

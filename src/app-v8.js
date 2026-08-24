@@ -155,10 +155,52 @@
     return`<details class="plan-health"><summary><i class="health-dot ${level}"></i>${t("health.planHealth")}${issues.length?` · ${issues.length}`:` · ${t("health.ready")}`}</summary><div class="health-pop">${issues.length?issues.map(x=>`<div class="health-item"><i class="health-dot ${x.level}"></i><div><b>${esc(x.title)}</b><span>${esc(x.text)}</span></div></div>`).join(""):`<div class="health-item"><i class="health-dot"></i><div><b>${t("health.noBlockingIssues")}</b><span>${t("health.consistent")}</span></div></div>`}</div></details>`;
   }
   function eventCard(event){const m=eventMetrics(event),cover=event.coverImage?`<div class="event-cover" style="background-image:url('${event.coverImage}')"></div>`:`<div class="event-cover"><div class="event-cover-placeholder"></div></div>`;return`<article class="event-card" data-card-event="${event.id}">${cover}<div class="event-card-body"><div class="kicker">${esc(event.status)}</div><h3>${esc(event.name)}</h3><div class="event-meta">${esc(fmtDate(event.date))}<br>${esc([event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet"))}</div><div class="event-card-stats"><div class="event-card-stat"><b>${m.guests}</b><span>${t("home.col.guestPax")}</span></div><div class="event-card-stat"><b>${physicalCapacity(event)}</b><span>${t("home.col.physicalChairs")}</span></div></div><div class="event-card-actions"><button class="btn primary" data-open-event="${event.id}">${t("home.openEvent")}</button><button class="btn" data-duplicate-event="${event.id}" title="Duplicate">${icon("copy")}</button><button class="btn danger" data-delete-event="${event.id}" title="Delete">${icon("trash")}</button></div></div></article>`;}
+  // The next event is what the operator came for 95% of the time, so it gets
+  // the hero treatment and everything else becomes a compact line.
+  function nextEventHeroHTML(event){
+    const totalPax=event.guests.reduce((n,g)=>n+paxOf(g),0);
+    const seatedPax=event.guests.filter(g=>g.assignment).reduce((n,g)=>n+paxOf(g),0);
+    const chairs=physicalCapacity(event);
+    const bar=(label,value,max,cls)=>`<div class="nb"><div class="nb-top"><span>${label}</span><b>${value} / ${max}</b></div><div class="nb-track"><div class="nb-fill ${cls}" style="width:${max?Math.min(100,Math.round(value/max*100)):0}%"></div></div></div>`;
+    const venue=[event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet");
+    return`<div class="next-event">
+      <div class="next-event-main">
+        <span class="next-badge"><i></i>${t("home.nextEvent")}</span>
+        <h2>${esc(event.name)}</h2>
+        <div class="next-event-when">${esc(fmtDate(event.date))} · ${esc(venue)}</div>
+        <div class="next-event-bars">
+          ${bar(t("home.seatedProgress"),seatedPax,totalPax,seatedPax&&seatedPax===totalPax?"good":"")}
+          ${chairs?bar(t("home.capacityProgress"),totalPax,chairs,totalPax>chairs?"warn":"good"):`<div class="nb-top" style="color:var(--amber)">${t("home.noPlanYet")}</div>`}
+        </div>
+      </div>
+      <div class="next-event-side">
+        <button class="btn primary" data-open-event="${event.id}">${t("home.openEvent")}</button>
+        <button class="btn" data-duplicate-event="${event.id}">${icon("copy")}${t("home.duplicate")}</button>
+        <button class="btn danger" data-delete-event="${event.id}">${icon("trash")}${t("home.delete")}</button>
+      </div>
+    </div>`;
+  }
+  function upcomingLineHTML(event){
+    const venue=[event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet");
+    return`<div class="event-line" data-open-event="${event.id}" title="${esc(t("home.openEventNamed",{name:event.name}))}">
+      <div><b>${esc(event.name)}</b></div>
+      <div class="muted">${esc(fmtDate(event.date))}</div>
+      <div class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(venue)}</div>
+      <div class="seat-tag">${eventMetrics(event).guests}</div>
+      <div class="seat-tag">${physicalCapacity(event)}</div>
+      <div class="row-icons"><button class="row-action" data-duplicate-event="${event.id}" title="${t("home.duplicate")}">${icon("copy")}</button><button class="row-action" data-delete-event="${event.id}" title="${t("home.delete")}">${icon("trash")}</button></div>
+    </div>`;
+  }
   eventsHTML = function(){
     const upcoming=state.events.filter(e=>!isHistorical(e)).sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
     const history=state.events.filter(isHistorical).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
-    return`<header class="appbar">${topBrand()}<div class="crumb">${t("home.crumb")} / <b>${t("home.portfolio")}</b></div><div class="appbar-actions">${helpButton()}<button class="btn primary" data-action="create-event">${icon("plus")}${t("home.createEvent")}</button></div></header><section class="events-page"><div class="events-wrap v8-home"><div class="v8-home-head"><div><div class="kicker">${t("home.eyebrow")}</div><h1>${t("home.title")}</h1><p>${t("home.subtitle")}</p></div><span class="muted">${t(state.events.length===1?"home.eventCount1":"home.eventsCount",{n:state.events.length})}</span></div><section class="event-section"><div class="event-section-title"><h2>${t("home.upcomingEvents")}</h2><span>${upcoming.length}</span></div>${upcoming.length?`<div class="upcoming-grid">${upcoming.map(eventCard).join("")}</div>`:`<div class="v8-empty"><h2>${t("home.noUpcoming")}</h2><p>${t("home.noUpcomingHint")}</p><button class="btn primary" data-action="create-event">${icon("plus")}${t("home.createEvent")}</button></div>`}</section><section class="event-section"><div class="event-section-title"><h2>${t("home.eventsHistory")}</h2><span>${t("home.historyNote")}</span></div><div class="history-shell"><table class="history-table"><thead><tr><th>${t("home.col.event")}</th><th>${t("home.col.date")}</th><th>${t("home.col.hotelSalon")}</th><th>${t("home.col.guestPax")}</th><th>${t("home.col.physicalChairs")}</th><th>${t("home.col.status")}</th><th>${t("home.col.access")}</th><th></th></tr></thead><tbody>${history.length?history.map(e=>`<tr data-history-event="${e.id}" title="Double-click to open read-only"><td><b>${esc(e.name)}</b></td><td>${esc(fmtDate(e.date))}</td><td>${esc([e.hotel,e.salon].filter(Boolean).join(" · ")||"—")}</td><td>${eventMetrics(e).guests}</td><td>${physicalCapacity(e)}</td><td><span class="status-chip">${esc(e.status)}</span></td><td><span class="history-readonly">${icon("lock")}${t("home.readOnly")}</span></td><td><button class="btn sm danger" data-delete-event="${e.id}">${t("home.delete")}</button></td></tr>`).join(""):`<tr><td colspan="8" class="muted" style="text-align:center;padding:28px">${t("home.noHistorical")}</td></tr>`}</tbody></table></div></section></div></section>`;
+    const [next,...rest]=upcoming;
+    return`<header class="appbar">${topBrand()}<div class="crumb">${t("home.crumb")} / <b>${t("home.portfolio")}</b></div><div class="appbar-actions">${helpButton()}<button class="btn primary" data-action="create-event">${icon("plus")}${t("home.createEvent")}</button></div></header><div class="mx-screen"><div class="mx-wrap">
+      <div class="mx-head"><div><div class="kicker">${t("home.eyebrow")}</div><h1>${t("home.title")}</h1><p>${t("home.subtitle")}</p></div><span class="muted" style="font-size:12px">${t(state.events.length===1?"home.eventCount1":"home.eventsCount",{n:state.events.length})}</span></div>
+      ${next?nextEventHeroHTML(next):`<div class="mx-empty"><h3>${t("home.noUpcoming")}</h3><p>${t("home.noUpcomingHint")}</p><button class="btn primary" data-action="create-event">${icon("plus")}${t("home.createEvent")}</button></div>`}
+      ${rest.length?`<div class="mx-section"><div class="mx-section-head"><h2>${t("home.otherUpcoming")}</h2><span class="count">${rest.length}</span></div><div class="mx-list"><div class="mx-list-head event-line"><span>${t("home.col.event")}</span><span>${t("home.col.date")}</span><span>${t("home.col.hotelSalon")}</span><span>${t("home.col.guestPax")}</span><span>${t("home.col.physicalChairs")}</span><span></span></div>${rest.map(upcomingLineHTML).join("")}</div></div>`:""}
+      <div class="mx-section"><div class="mx-section-head"><h2>${t("home.eventsHistory")}</h2><span class="count">${t("home.historyNote")}</span></div>${history.length?`<div class="mx-list"><div class="mx-list-head event-line"><span>${t("home.col.event")}</span><span>${t("home.col.date")}</span><span>${t("home.col.hotelSalon")}</span><span>${t("home.col.guestPax")}</span><span>${t("home.col.physicalChairs")}</span><span></span></div>${history.map(e=>`<div class="event-line" data-history-event="${e.id}" title="${esc(t("home.historyOpenHint"))}"><div><b>${esc(e.name)}</b></div><div class="muted">${esc(fmtDate(e.date))}</div><div class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc([e.hotel,e.salon].filter(Boolean).join(" · ")||"—")}</div><div class="seat-tag">${eventMetrics(e).guests}</div><div class="seat-tag">${physicalCapacity(e)}</div><div class="row-icons"><span class="readonly-tag">${icon("lock")}${t("home.readOnly")}</span><button class="row-action" data-delete-event="${e.id}" title="${t("home.delete")}">${icon("trash")}</button></div></div>`).join("")}</div>`:`<div class="mx-empty" style="padding:30px">${t("home.noHistorical")}</div>`}</div>
+    </div></div>`;
   };
 
   const normalTabs=[["floor",()=>t("nav.floorPlanTab")],["guests",()=>t("nav.guestsTab")],["seating",()=>t("nav.seatingTab")],["live",()=>t("nav.liveTab")],["reports",()=>t("nav.reportsTab")]];
@@ -569,6 +611,11 @@
   };
   loadXLSX = function(){return globalThis.XLSX?Promise.resolve():Promise.reject(new Error("Embedded spreadsheet engine did not initialize."));};
 
+  // Translate at the toast boundary rather than at ~40 call sites. Strings
+  // already localized by t() simply pass through unmatched.
+  const baseToast=toast;
+  toast=function(message,...rest){return baseToast(typeof translateToast==="function"?translateToast(message):message,...rest);};
+
   function yieldFrame(){return new Promise(resolve=>requestAnimationFrame(()=>resolve()));}
   function sourceBlob(src){return fetch(src).then(r=>r.blob());}
   function otsu(hist,total,sum){let bg=0,bgSum=0,best=-1,threshold=150;for(let value=0;value<256;value++){bg+=hist[value];if(!bg)continue;const fg=total-bg;if(!fg)break;bgSum+=value*hist[value];const score=bg*fg*((bgSum/bg)-((sum-bgSum)/fg))**2;if(score>best){best=score;threshold=value;}}return threshold;}
@@ -975,7 +1022,9 @@
   }
 
   function bindV8Common(){
-    document.querySelectorAll("[data-action='create-event']").forEach(b=>b.onclick=startNewEvent);document.querySelectorAll("[data-action='help']").forEach(b=>b.onclick=openGuide);document.querySelectorAll("[data-open-event]").forEach(b=>b.onclick=()=>openEvent(b.dataset.openEvent));document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=()=>duplicateEvent(b.dataset.duplicateEvent));document.querySelectorAll("[data-delete-event]").forEach(b=>b.onclick=()=>deleteEvent(b.dataset.deleteEvent));document.querySelectorAll("[data-history-event]").forEach(row=>row.ondblclick=()=>openEvent(row.dataset.historyEvent));
+    document.querySelectorAll("[data-action='create-event']").forEach(b=>b.onclick=startNewEvent);document.querySelectorAll("[data-action='help']").forEach(b=>b.onclick=openGuide);document.querySelectorAll("[data-open-event]").forEach(b=>b.onclick=()=>openEvent(b.dataset.openEvent));// Row-level open + per-row action buttons now coexist on Home, so the
+// buttons must not bubble into the row's open handler.
+document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.stopPropagation();duplicateEvent(b.dataset.duplicateEvent);});document.querySelectorAll("[data-delete-event]").forEach(b=>b.onclick=e=>{e.stopPropagation();deleteEvent(b.dataset.deleteEvent);});document.querySelectorAll("[data-history-event]").forEach(row=>row.ondblclick=()=>openEvent(row.dataset.historyEvent));document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondblclick=e=>e.stopPropagation());
     document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{ui.tab=b.dataset.tab;ui.selectedObjectId=null;ui.selectedObjectIds=[];ui.highlightId=null;ui.operationalMode=false;render();});const back=document.querySelector("[data-action='back-events']");if(back)back.onclick=()=>{ui.screen="events";ui.focusMode=false;render();};const save=document.querySelector("[data-action='save-now']");if(save)save.onclick=()=>saveState(true);const search=document.getElementById("globalGuestSearch");if(search){search.oninput=()=>renderGlobalSearch(search.value);search.onkeydown=e=>{if(e.key==="Escape")document.getElementById("globalSearchResults")?.classList.add("hidden");};}
   }
   bindCommon = bindV8Common;
