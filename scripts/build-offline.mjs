@@ -57,8 +57,20 @@ const appJs = ["src/app.js", "src/app-guests.js", "src/i18n.js", "src/plan-ocr.j
 const shell = readFileSync(path.join(ROOT, "index.html"), "utf8");
 
 const bodyStart = shell.indexOf("<body>");
-const bodyEnd = shell.indexOf("<!--");
+// Cut at the first <script>, not at the first HTML comment: the markup this
+// build needs (the dialogs, the hidden file inputs, the toast host) sits
+// above the script block, and an explanatory comment anywhere in that markup
+// used to silently truncate the body and ship a build with no dialogs at all.
+const bodyEnd = shell.indexOf("<script");
+if (bodyStart < 0 || bodyEnd < 0 || bodyEnd <= bodyStart) {
+  throw new Error("build-offline: could not locate the body markup range in index.html");
+}
 const bodyMarkup = shell.slice(bodyStart, bodyEnd);
+for (const required of ['id="app"', 'id="guestForm"', 'id="excelDialog"', 'id="toastWrap"']) {
+  if (!bodyMarkup.includes(required)) {
+    throw new Error(`build-offline: body markup is missing ${required} — the offline build would be broken`);
+  }
+}
 
 const pdfBridge = `
 GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([${JSON.stringify(
