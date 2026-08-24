@@ -300,23 +300,60 @@
   }
   function bulkPanel(event){
     if(!ui.v8AddOpen)return"";const d=ui.bulkDraft||={kind:"table",type:"round",chairs:8,quantity:4,rows:2,cols:2,placement:"grid",prefix:"T",zone:"MAIN FLOOR"};
-    return`<div class="v8-create-pop"><h3>Add Objects</h3><p>Preview a row, grid, repeated placement or array before committing.</p><div class="bulk-grid"><div class="field"><label>Kind</label><select data-bulk="kind"><option value="table">Table + chairs</option><option value="venue" ${d.kind==="venue"?"selected":""}>Venue object</option></select></div><div class="field"><label>Type</label><select data-bulk="type">${(d.kind==="venue"?["stage","bar","entrance","exit","column","text"]:["rectangle","square","round","bistro"]).map(v=>`<option ${d.type===v?"selected":""}>${v}</option>`).join("")}</select></div>${d.kind==="table"?`<div class="field"><label>Chairs each</label><input data-bulk="chairs" type="number" min="1" max="99" value="${d.chairs}"></div><div class="field"><label>Number prefix</label><input data-bulk="prefix" value="${esc(d.prefix)}" maxlength="4"></div>`:""}<div class="field"><label>Quantity</label><input data-bulk="quantity" type="number" min="1" max="60" value="${d.quantity}"></div><div class="field"><label>Placement</label><select data-bulk="placement">${["grid","row","repeated","array"].map(v=>`<option ${d.placement===v?"selected":""}>${v}</option>`).join("")}</select></div><div class="field"><label>Rows</label><input data-bulk="rows" type="number" min="1" max="12" value="${d.rows}"></div><div class="field"><label>Columns</label><input data-bulk="cols" type="number" min="1" max="12" value="${d.cols}"></div></div><div class="bulk-actions"><button class="btn sm" data-v8-action="close-add">Cancel</button><button class="btn sm primary" data-v8-action="commit-add">${d.placement==="repeated"?"Start placement":"Add to plan"}</button></div></div>`;
+    // Option LABELS are translated; the option VALUES stay the English
+    // identifiers the data model stores. The old markup relied on the label
+    // being the value (`<option>${v}</option>`), so translating without an
+    // explicit value= would have written Turkish words into table.type.
+    const opt=(v,sel)=>`<option value="${v}" ${sel===v?"selected":""}>${t("bulk.type."+v)}</option>`;
+    const typeValues=d.kind==="venue"?["stage","bar","entrance","exit","column","text"]:["rectangle","square","round","bistro"];
+    const placeValues=["grid","row","repeated","array"];
+    return`<div class="v8-create-pop"><h3>${t("bulk.title")}</h3><p>${t("bulk.subtitle")}</p><div class="bulk-grid"><div class="field"><label>${t("bulk.kind")}</label><select data-bulk="kind"><option value="table" ${d.kind==="table"?"selected":""}>${t("bulk.kind.table")}</option><option value="venue" ${d.kind==="venue"?"selected":""}>${t("bulk.kind.venue")}</option></select></div><div class="field"><label>${t("bulk.type")}</label><select data-bulk="type">${typeValues.map(v=>opt(v,d.type)).join("")}</select></div>${d.kind==="table"?`<div class="field"><label>${t("bulk.chairsEach")}</label><input data-bulk="chairs" type="number" min="1" max="99" value="${d.chairs}"></div><div class="field"><label>${t("bulk.numberPrefix")}</label><input data-bulk="prefix" value="${esc(d.prefix)}" maxlength="4"></div>`:""}<div class="field"><label>${t("bulk.quantity")}</label><input data-bulk="quantity" type="number" min="1" max="60" value="${d.quantity}"></div><div class="field"><label>${t("bulk.placement")}</label><select data-bulk="placement">${placeValues.map(v=>`<option value="${v}" ${d.placement===v?"selected":""}>${t("bulk.placement."+v)}</option>`).join("")}</select></div><div class="field"><label>${t("bulk.rows")}</label><input data-bulk="rows" type="number" min="1" max="12" value="${d.rows}"></div><div class="field"><label>${t("bulk.columns")}</label><input data-bulk="cols" type="number" min="1" max="12" value="${d.cols}"></div></div><div class="bulk-actions"><button class="btn sm" data-v8-action="close-add">${t("bulk.cancel")}</button><button class="btn sm primary" data-v8-action="commit-add">${t(d.placement==="repeated"?"bulk.startPlacement":"bulk.addToPlan")}</button></div></div>`;
+  }
+  // Quantity is authoritative everywhere except "array", where rows x cols is.
+  // Grid used to silently truncate to rows*cols, so asking for 25 tables in a
+  // 2x2 grid quietly produced 4 -- the Quantity field lied about the outcome.
+  // The bulk fields commit on `change`, which fires only on blur. Typing a
+  // value and immediately clicking "Add to plan" therefore used to discard
+  // that last edit -- type prefix "B", click, get T01. Read the live DOM
+  // values before committing, the same way syncSetupFields does.
+  function syncBulkFields(){
+    if(!ui.bulkDraft)return;
+    document.querySelectorAll("[data-bulk]").forEach(input=>{
+      ui.bulkDraft[input.dataset.bulk]=input.type==="number"?Number(input.value):input.value;
+    });
+  }
+  // Repaint just the placement ghosts, so the live preview can follow typing
+  // without a full render tearing down the panel the operator is using.
+  function refreshGhosts(){
+    const world=document.getElementById("canvasWorld");
+    if(!world)return;
+    world.querySelectorAll(".ghost-object").forEach(n=>n.remove());
+    world.insertAdjacentHTML("beforeend",ghostHTML());
+  }
+  function bulkCount(d){
+    if(d.placement==="array")return Math.max(1,Math.min(60,(Math.max(1,Number(d.rows)||1))*(Math.max(1,Number(d.cols)||1))));
+    return Math.max(1,Math.min(60,Number(d.quantity)||1));
   }
   function bulkPositions(d){
-    const count=Math.max(1,Math.min(60,Number(d.quantity)||1)),cols=d.placement==="row"?count:Math.max(1,Number(d.cols)||1),rows=Math.max(1,Number(d.rows)||1),gapX=190,gapY=145,out=[];
-    for(let i=0;i<count;i++){const c=i%cols,r=Math.floor(i/cols);if(r>=rows&&d.placement!=="row")break;out.push({x:440+c*gapX,y:270+r*gapY});}return out;
+    const count=bulkCount(d),gapX=190,gapY=145,out=[];
+    const cols=d.placement==="row"?count:Math.max(1,Math.min(count,Number(d.cols)||1));
+    for(let i=0;i<count;i++){const c=i%cols,r=Math.floor(i/cols);out.push({x:440+c*gapX,y:270+r*gapY});}
+    return out;
   }
   function ghostHTML(){if(!ui.v8AddOpen||ui.bulkDraft?.placement==="repeated")return"";return bulkPositions(ui.bulkDraft).map((p,i)=>`<div class="ghost-object" data-label="${esc((ui.bulkDraft.prefix||"T")+String(i+1).padStart(2,"0"))}" style="left:${p.x}px;top:${p.y}px;width:120px;height:82px"></div>`).join("");}
   const oldViewport=canvasViewportHTML;
   canvasViewportHTML = function(event,seating){
     const html=oldViewport(event,seating);if(seating)return html;
-    return html.replace("</div><div class=\"canvas-status\"",`${ghostHTML()}</div><div class="canvas-status v8-status"`).replace("Drag to move · Handles resize and rotate · Delete removes selection",`Ctrl/Shift multi-select · Drag blank canvas for marquee · Arrow keys nudge<span class="status-right">${ui.selectedObjectIds.length||0} selected</span>`);
+    // Both replacements go through t(), so the v8 status survives a language
+    // switch instead of only matching the English string.
+    return html.replace("</div><div class=\"canvas-status\"",`${ghostHTML()}</div><div class="canvas-status v8-status"`)
+      .replace(t("canvas.editHint"),`${t("canvas.multiSelectHint")}<span class="status-right">${t("canvas.selectedCount",{n:ui.selectedObjectIds.length||0})}</span>`);
   };
   floorPlanHTML = function(event){return`<div class="planmap-shell">${planMapToolbarHTML(event)}${bulkPanel(event)}${canvasViewportHTML(event,false)}${contextualCardHTML(event)}${planStatusPillHTML(event)}${addManuallyFabHTML()}</div>`;};
 
   function uniqueNumber(event,prefix,index){let n=index;while(event.tables.some(t=>t.number===prefix+String(n).padStart(2,"0")))n++;return prefix+String(n).padStart(2,"0");}
   function createTable(event,d,x,y,index){const dims=d.type==="round"?[120,120]:d.type==="square"?[105,105]:d.type==="bistro"?[82,72]:[170,86],number=uniqueNumber(event,(d.prefix|| (d.type==="bistro"?"B":"T")).toUpperCase(),index);return syncTableChairs({id:uid("table"),number,type:d.type,x,y,w:dims[0],h:dims[1],capacity:Number(d.chairs)||1,zone:d.type==="bistro"?"BISTRO":d.zone||"MAIN FLOOR",rotation:0,locked:false,z:10,hasPhysicalSeats:true});}
-  function commitBulk(){const event=activeEvent(),d=ui.bulkDraft;if(!canMutate(event,"add plan objects"))return;if(d.placement==="repeated"){ui.repeatPlacement={...d,remaining:Math.max(1,Number(d.quantity)||1),index:1};ui.v8AddOpen=false;render();toast("Repeated placement active. Click the canvas for each object; Esc cancels.","success",5000);return;}const positions=bulkPositions(d);if(!positions.length)return;recordUndo(event);const created=[];positions.forEach((p,i)=>{if(d.kind==="table"){const t=createTable(event,d,p.x,p.y,i+1);event.tables.push(t);created.push(t.id);}else{const sizes={stage:[380,180],bar:[300,70],entrance:[110,40],exit:[90,40],column:[55,55],text:[150,42]},s=sizes[d.type]||[120,50],o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:p.x,y:p.y,w:s[0],h:s[1],rotation:0,locked:false,z:4};event.venueObjects.push(o);created.push(o.id);}});ui.selectedObjectIds=created;ui.selectedObjectId=created[0];ui.v8AddOpen=false;touchEvent(event);render();toast(`${created.length} object${created.length===1?"":"s"} added with physical chair records.`,"success");}
+  function commitBulk(){syncBulkFields();const event=activeEvent(),d=ui.bulkDraft;if(!canMutate(event,"add plan objects"))return;if(d.placement==="repeated"){ui.repeatPlacement={...d,remaining:Math.max(1,Number(d.quantity)||1),index:1};ui.v8AddOpen=false;render();toast("Repeated placement active. Click the canvas for each object; Esc cancels.","success",5000);return;}const positions=bulkPositions(d);if(!positions.length)return;recordUndo(event);const created=[];positions.forEach((p,i)=>{if(d.kind==="table"){const t=createTable(event,d,p.x,p.y,i+1);event.tables.push(t);created.push(t.id);}else{const sizes={stage:[380,180],bar:[300,70],entrance:[110,40],exit:[90,40],column:[55,55],text:[150,42]},s=sizes[d.type]||[120,50],o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:p.x,y:p.y,w:s[0],h:s[1],rotation:0,locked:false,z:4};event.venueObjects.push(o);created.push(o.id);}});ui.selectedObjectIds=created;ui.selectedObjectId=created[0];ui.v8AddOpen=false;touchEvent(event);render();toast(`${created.length} object${created.length===1?"":"s"} added with physical chair records.`,"success");}
   function placeRepeated(pointerEvent){const r=document.getElementById("canvasViewport").getBoundingClientRect(),d=ui.repeatPlacement,event=activeEvent(),x=(pointerEvent.clientX-r.left-ui.pan.x)/ui.zoom,y=(pointerEvent.clientY-r.top-ui.pan.y)/ui.zoom;if(!d||!canMutate(event,"place plan objects"))return;recordUndo(event);let id;if(d.kind==="table"){const t=createTable(event,d,x-60,y-45,d.index);event.tables.push(t);id=t.id;}else{const o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:x-60,y:y-30,w:120,h:60,rotation:0,locked:false,z:4};event.venueObjects.push(o);id=o.id;}d.remaining--;d.index++;ui.selectedObjectId=id;ui.selectedObjectIds=[id];if(d.remaining<=0)ui.repeatPlacement=null;touchEvent(event);render();}
   function duplicateSelection(){const event=activeEvent();if(!canMutate(event,"duplicate plan objects"))return;const ids=ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean);if(!ids.length)return toast("Select one or more objects first.");recordUndo(event);const created=[];for(const id of ids){const t=event.tables.find(x=>x.id===id),o=event.venueObjects.find(x=>x.id===id),c=clone(t||o);if(!c)continue;c.id=uid(t?"table":"venue");c.x+=24;c.y+=24;c.locked=false;if(t){c.number=uniqueNumber(event,t.type==="bistro"?"B":"T",1);c.chairs=(c.chairs||[]).map((chair,index)=>({...chair,id:uid("chair"),parentTableId:c.id,seatNumber:index+1,occupancy:null}));event.tables.push(c);}else event.venueObjects.push(c);created.push(c.id);}ui.selectedObjectIds=created;ui.selectedObjectId=created[0]||null;touchEvent(event);render();}
   function deleteSelection(){const event=activeEvent();if(!canMutate(event,"delete plan objects"))return;const ids=new Set(ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean));if(!ids.size)return;const affected=event.guests.filter(g=>ids.has(g.assignment?.tableId));if(!confirm(`Delete ${ids.size} selected object${ids.size===1?"":"s"}${affected.length?` and return ${affected.length} guest record(s) to Unassigned`:""}?`))return;recordUndo(event);affected.forEach(g=>g.assignment=null);event.tables=event.tables.filter(t=>!ids.has(t.id));event.venueObjects=event.venueObjects.filter(o=>!ids.has(o.id));ui.selectedObjectIds=[];ui.selectedObjectId=null;touchEvent(event);render();}
@@ -350,7 +387,19 @@
     oldBindCanvas();const event=activeEvent(),viewport=document.getElementById("canvasViewport"),world=document.getElementById("canvasWorld");
     if(isHistorical(event))return;
     document.querySelectorAll("[data-v8-action]").forEach(button=>button.onclick=()=>{const action=button.dataset.v8Action;if(action==="add"){ui.v8AddOpen=!ui.v8AddOpen;ui.bulkDraft ||= {kind:"table",type:"round",chairs:8,quantity:4,rows:2,cols:2,placement:"grid",prefix:"T",zone:"MAIN FLOOR"};render();}else if(action==="close-add"){ui.v8AddOpen=false;render();}else if(action==="commit-add")commitBulk();else if(action==="duplicate-selection")duplicateSelection();else if(action==="delete-selection")deleteSelection();else if(action==="focus"){ui.focusMode=!ui.focusMode;render();}else if(action==="detect")runAssistedDetection();else if(action==="toggle-bg"){recordUndo(event);event.background.visible=!event.background.visible;touchEvent(event);}else if(action==="replace-bg")document.getElementById("floorPlanFile").click();else if(action==="open-review-center"){ui.reviewCenterOpen=true;ui.screen="review";render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
-    document.querySelectorAll("[data-bulk]").forEach(input=>input.onchange=()=>{let value=input.type==="number"?Number(input.value):input.value;ui.bulkDraft[input.dataset.bulk]=value;if(input.dataset.bulk==="kind")ui.bulkDraft.type=value==="venue"?"stage":"round";render();});
+    // Typed fields update the draft and refresh only the ghost preview. A full
+    // re-render on every change replaced the "Add to plan" button mid-click --
+    // typing a value and clicking straight through lost both the edit and the
+    // click. Selects still re-render, since choosing an option can change which
+    // fields exist and no other click is in flight.
+    document.querySelectorAll("[data-bulk]").forEach(input=>{
+      const isSelect=input.tagName==="SELECT";
+      input.oninput=()=>{
+        syncBulkFields();
+        if(input.dataset.bulk==="kind")ui.bulkDraft.type=ui.bulkDraft.kind==="venue"?"stage":"round";
+        if(isSelect)render();else refreshGhosts();
+      };
+    });
     viewport?.addEventListener("pointerdown",e=>{if(ui.repeatPlacement&&e.target.closest("[data-object-id]")==null){e.preventDefault();placeRepeated(e);}},true);viewport?.addEventListener("pointerdown",startMarquee,true);
     world?.querySelectorAll("[data-object-id]").forEach(el=>{if(ui.selectedObjectIds.includes(el.dataset.objectId))el.classList.add("multi-selected");if(ui.tab==="seating"&&el.dataset.objectKind==="table"){el.addEventListener("drop",e=>{const raw=e.dataTransfer.getData("application/x-merit-guests");if(raw){e.preventDefault();e.stopPropagation();assignGuestGroup(JSON.parse(raw),el.dataset.objectId);}},true);}});
     const clear=document.querySelector("[data-clear-seating-filter]");if(clear)clear.onclick=()=>{ui.seatingFilter="all";ui.operationalMode=false;render();};
@@ -698,6 +747,680 @@
   function sourceBlob(src){return fetch(src).then(r=>r.blob());}
   function otsu(hist,total,sum){let bg=0,bgSum=0,best=-1,threshold=150;for(let value=0;value<256;value++){bg+=hist[value];if(!bg)continue;const fg=total-bg;if(!fg)break;bgSum+=value*hist[value];const score=bg*fg*((bgSum/bg)-((sum-bgSum)/fg))**2;if(score>best){best=score;threshold=value;}}return threshold;}
   // ============================================================
+  // PlanDetectionProvider — classical-CV implementation
+  //
+  // Everything in this section is deterministic classical computer vision on
+  // the real decoded plan pixels. It is NOT a trained model and must never be
+  // presented as one (see .claude/skills/merit-plan-intelligence/SKILL.md,
+  // "AI truthfulness"). It is exposed as a provider object
+  //   { id, label, trainedModel:false, detect(pixels,width,height,hooks) }
+  // so the application layer below never reaches into pixel code directly and
+  // a future ONNX / YOLO-OBB provider can be dropped in behind the identical
+  // call signature (real pixels in, oriented candidates out) without
+  // runAssistedDetection() or plan-intelligence.js changing.
+  //
+  // Four accuracy defects diagnosed against a real venue plan drove this
+  // rewrite; each fix is marked FIX #n below.
+  //   1. colour was discarded on the first pass (luma only)
+  //   2. Sobel edges were OR-ed into the labelling mask, so two tables drawn
+  //      as adjacent outlines fused into ONE component centred between them
+  //   3. table selection was "biggest area first, cap 100", which actively
+  //      promoted those merge artifacts over correct single tables
+  //   4. round vs rectangle came from the bounding-box aspect ratio, so every
+  //      square table was reported as a round table
+  // ============================================================
+
+  // ---- FIX #1: a colour model derived FROM THE IMAGE ---------------------
+  // No hue is hardcoded: a 512-bin (3 bits/channel) RGB histogram is built in
+  // the same pass that builds luma, then mode-seeking leader clustering
+  // (descending bin population, fixed merge radius — deterministic, no RNG)
+  // reduces it to at most 12 real colour clusters. The most populous cluster
+  // is the paper/background; the most saturated well-populated cluster is the
+  // "accent" family (orange chairs on the reported plan, blue chairs on the
+  // next venue's plan — same code path); clusters that are clearly darker than
+  // paper but not ink are "tint" families (the pale beige table fills). On a
+  // neutral drawing the accent family simply comes out empty and the same
+  // clustering still separates paper / grey fill / ink by tone; if even that
+  // fails there is a luma fallback (see buildDetectionSources).
+  const RGB_BITS=3,RGB_LEVELS=1<<RGB_BITS,RGB_BINS=RGB_LEVELS**3,RGB_SHIFT=8-RGB_BITS;
+  const PX_BACKGROUND=0,PX_ACCENT=1,PX_TINT=2,PX_INK=3,PX_OTHER=4;
+  function rgbBinIndex(r,g,b){return((r>>RGB_SHIFT)*RGB_LEVELS+(g>>RGB_SHIFT))*RGB_LEVELS+(b>>RGB_SHIFT);}
+  function rgbHue(r,g,b){
+    const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
+    if(!d)return 0;
+    let h;
+    if(max===r)h=((g-b)/d)%6;else if(max===g)h=(b-r)/d+2;else h=(r-g)/d+4;
+    h*=60;return h<0?h+360:h;
+  }
+  function hueGap(a,b){const d=Math.abs(a-b)%360;return d>180?360-d:d;}
+  function buildColorModel(binCount,binR,binG,binB,total){
+    const order=[];
+    for(let bin=0;bin<RGB_BINS;bin++)if(binCount[bin])order.push(bin);
+    order.sort((a,b)=>binCount[b]-binCount[a]||a-b); // ties broken by bin index so the model is reproducible run to run
+    const clusters=[],MERGE_DIST=72; // one 3-bit bucket step is 32 per channel
+    for(const bin of order){
+      const n=binCount[bin],r=binR[bin]/n,g=binG[bin]/n,b=binB[bin]/n;
+      let host=null,bestDist=Infinity;
+      for(const cl of clusters){const d=Math.hypot(cl.r-r,cl.g-g,cl.b-b);if(d<bestDist){bestDist=d;host=cl;}}
+      if(host&&bestDist<=MERGE_DIST){
+        host.n+=n;host.sr+=binR[bin];host.sg+=binG[bin];host.sb+=binB[bin];
+        host.r=host.sr/host.n;host.g=host.sg/host.n;host.b=host.sb/host.n;
+      }else if(clusters.length<12)clusters.push({n,sr:binR[bin],sg:binG[bin],sb:binB[bin],r,g,b});
+    }
+    if(!clusters.length)return null;
+    for(const cl of clusters){
+      cl.luma=cl.r*.299+cl.g*.587+cl.b*.114;
+      cl.chroma=Math.max(cl.r,cl.g,cl.b)-Math.min(cl.r,cl.g,cl.b);
+      cl.hue=rgbHue(cl.r,cl.g,cl.b);
+      cl.fraction=cl.n/total;
+    }
+    const background=clusters.reduce((best,c)=>c.n>best.n?c:best,clusters[0]);
+    const others=clusters.filter(c=>c!==background);
+    const saturated=others.filter(c=>c.chroma>=45&&c.fraction>=.0006)
+      .sort((a,b)=>b.chroma*Math.sqrt(b.n)-a.chroma*Math.sqrt(a.n)||b.n-a.n);
+    const seed=saturated[0]||null;
+    // A drawn object is usually a saturated fill plus a darker stroke of the
+    // SAME hue, so the accent family is hue-anchored, not a single cluster.
+    const accent=seed?others.filter(c=>c.chroma>=Math.max(35,seed.chroma*.5)&&hueGap(c.hue,seed.hue)<=30&&c.fraction>=.0002):[];
+    const inkCeil=Math.max(90,background.luma*.45);
+    const tint=others.filter(c=>!accent.includes(c)&&c.luma<background.luma-12&&c.luma>inkCeil&&c.fraction>=.003)
+      .sort((a,b)=>b.n-a.n).slice(0,2);
+    const ink=others.filter(c=>!accent.includes(c)&&!tint.includes(c)&&c.luma<=inkCeil);
+    const groupOf=new Map();
+    for(const c of clusters)groupOf.set(c,PX_OTHER);
+    groupOf.set(background,PX_BACKGROUND);
+    for(const c of ink)groupOf.set(c,PX_INK);
+    for(const c of tint)groupOf.set(c,PX_TINT);
+    for(const c of accent)groupOf.set(c,PX_ACCENT);
+    // Per-bucket lookup: every one of the 512 buckets (including the
+    // antialiased in-between ones that never got their own cluster) is mapped
+    // to its nearest cluster centroid, so mask building is one table lookup
+    // per pixel instead of a distance search.
+    const lut=new Uint8Array(RGB_BINS),tintIndex=new Uint8Array(RGB_BINS);
+    for(let bin=0;bin<RGB_BINS;bin++){
+      const rb=(bin/(RGB_LEVELS*RGB_LEVELS))|0,gb=((bin/RGB_LEVELS)|0)%RGB_LEVELS,bb=bin%RGB_LEVELS,half=1<<(RGB_SHIFT-1);
+      const r=rb*(1<<RGB_SHIFT)+half,g=gb*(1<<RGB_SHIFT)+half,b=bb*(1<<RGB_SHIFT)+half;
+      let best=clusters[0],bestDist=Infinity;
+      for(const cl of clusters){const d=(cl.r-r)**2+(cl.g-g)**2+(cl.b-b)**2;if(d<bestDist){bestDist=d;best=cl;}}
+      lut[bin]=groupOf.get(best);
+      tintIndex[bin]=lut[bin]===PX_TINT?tint.indexOf(best)+1:0;
+    }
+    return{clusters,background,accent,tint,ink,lut,tintIndex,
+      isColorPlan:accent.length>0,tintFamilies:tint.length,
+      summary:{clusters:clusters.length,accentFraction:accent.reduce((n,c)=>n+c.fraction,0),
+        tintFraction:tint.reduce((n,c)=>n+c.fraction,0),backgroundLuma:Math.round(background.luma),
+        accentHue:seed?Math.round(seed.hue):null,accentChroma:seed?Math.round(seed.chroma):null}};
+  }
+
+  // ---- Masks --------------------------------------------------------------
+  function buildClassMasks(data,total,model){
+    const accent=new Uint8Array(total),tints=[];
+    for(let k=0;k<model.tintFamilies;k++)tints.push(new Uint8Array(total));
+    const{lut,tintIndex}=model;
+    for(let i=0,o=0;i<total;i++,o+=4){
+      const bin=rgbBinIndex(data[o],data[o+1],data[o+2]),cls=lut[bin];
+      if(cls===PX_ACCENT)accent[i]=1;
+      else if(cls===PX_TINT){const k=tintIndex[bin];if(k)tints[k-1][i]=1;}
+    }
+    return{accent,tints};
+  }
+  // A real solidity measure (4-neighbour erosion survival). A genuine filled
+  // object survives erosion; a 1px antialiasing halo along an outline does
+  // not. This is what stops a "tint" family that is really just edge fringing
+  // from being used as an object source.
+  function maskSolidity(mask,width,height){
+    let on=0,solid=0;
+    for(let y=1;y<height-1;y++)for(let x=1;x<width-1;x++){
+      const i=y*width+x;if(!mask[i])continue;on++;
+      if(mask[i-1]&&mask[i+1]&&mask[i-width]&&mask[i+width])solid++;
+    }
+    return on?solid/on:0;
+  }
+  // FIX #2, part 1: enclosed-interior extraction. Tables on a CAD-style plan
+  // are drawn as thin OUTLINES. Labelling the ink itself fuses two tables that
+  // share or touch an outline into one component whose bbox spans both — the
+  // "one table detected in the middle of two tables" report. The interior of
+  // each closed outline, however, is a separate region: flood the background
+  // in from the image border and whatever is left unreached (and not ink) is
+  // enclosed by something. A shared outline still separates the two interiors,
+  // so adjacent tables stay two objects. It also makes a chair drawn ON TOP OF
+  // a table outline harmless: it cannot leak into the interior.
+  function enclosedRegions(barrier,width,height){
+    const reached=new Uint8Array(barrier.length),stack=new Int32Array(barrier.length);
+    let sp=0;
+    const push=i=>{if(!barrier[i]&&!reached[i]){reached[i]=1;stack[sp++]=i;}};
+    for(let x=0;x<width;x++){push(x);push((height-1)*width+x);}
+    for(let y=0;y<height;y++){push(y*width);push(y*width+width-1);}
+    while(sp){
+      const p=stack[--sp],x=p%width,y=(p/width)|0;
+      if(x>0)push(p-1);
+      if(x<width-1)push(p+1);
+      if(y>0)push(p-width);
+      if(y<height-1)push(p+width);
+    }
+    const out=new Uint8Array(barrier.length);
+    for(let i=0;i<out.length;i++)if(!barrier[i]&&!reached[i])out[i]=1;
+    return out;
+  }
+  function labelComponents(mask,width,height,minPixels,connect8){
+    const labels=new Int32Array(mask.length),queue=new Int32Array(mask.length),comps=[];
+    let label=0;
+    for(let start=0;start<mask.length;start++){
+      if(!mask[start]||labels[start])continue;
+      label++;
+      let head=0,tail=0,count=0,minX=width,minY=height,maxX=0,maxY=0,sx=0,sy=0,sxx=0,syy=0,sxy=0;
+      queue[tail++]=start;labels[start]=label;
+      while(head<tail){
+        const p=queue[head++],x=p%width,y=(p/width)|0;
+        count++;
+        if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;
+        sx+=x;sy+=y;sxx+=x*x;syy+=y*y;sxy+=x*y;
+        const left=x>0,right=x<width-1,up=y>0,down=y<height-1;
+        if(left&&mask[p-1]&&!labels[p-1]){labels[p-1]=label;queue[tail++]=p-1;}
+        if(right&&mask[p+1]&&!labels[p+1]){labels[p+1]=label;queue[tail++]=p+1;}
+        if(up&&mask[p-width]&&!labels[p-width]){labels[p-width]=label;queue[tail++]=p-width;}
+        if(down&&mask[p+width]&&!labels[p+width]){labels[p+width]=label;queue[tail++]=p+width;}
+        if(connect8){
+          if(left&&up&&mask[p-width-1]&&!labels[p-width-1]){labels[p-width-1]=label;queue[tail++]=p-width-1;}
+          if(right&&up&&mask[p-width+1]&&!labels[p-width+1]){labels[p-width+1]=label;queue[tail++]=p-width+1;}
+          if(left&&down&&mask[p+width-1]&&!labels[p+width-1]){labels[p+width-1]=label;queue[tail++]=p+width-1;}
+          if(right&&down&&mask[p+width+1]&&!labels[p+width+1]){labels[p+width+1]=label;queue[tail++]=p+width+1;}
+        }
+      }
+      if(count<minPixels)continue;
+      const w=maxX-minX+1,h=maxY-minY+1,mx=sx/count,my=sy/count;
+      const covXX=sxx/count-mx*mx,covYY=syy/count-my*my,covXY=sxy/count-mx*my;
+      comps.push({label,x:minX,y:minY,w,h,count,aspect:w/h,fill:count/(w*h),cx:mx,cy:my,
+        pcaRotation:.5*Math.atan2(2*covXY,covXX-covYY)*180/Math.PI});
+    }
+    return{labels,comps};
+  }
+
+  // ---- Oriented bounding box (real OBB, never forced axis-aligned) --------
+  // Rotating-calipers-style minimum-area rectangle over the shape's boundary
+  // points. This is the rotation-aware representation merit-plan-intelligence
+  // requires: centre x/y, width, height and rotation are measured together and
+  // carried end to end. Axis-aligned wins near-ties on purpose — a square or a
+  // circle has (near-)equal area at every angle, and printing a spurious 37°
+  // tilt for an axis-aligned object would be a fabricated orientation.
+  function minAreaRect(pointsX,pointsY){
+    const n=pointsX.length;
+    if(n<3)return null;
+    const step=Math.max(1,Math.ceil(n/220)),xs=[],ys=[];
+    for(let i=0;i<n;i+=step){xs.push(pointsX[i]);ys.push(pointsY[i]);}
+    const measure=deg=>{
+      const rad=deg*Math.PI/180,cos=Math.cos(rad),sin=Math.sin(rad);
+      let minU=Infinity,maxU=-Infinity,minV=Infinity,maxV=-Infinity;
+      for(let i=0;i<xs.length;i++){
+        const u=xs[i]*cos+ys[i]*sin,v=-xs[i]*sin+ys[i]*cos;
+        if(u<minU)minU=u;if(u>maxU)maxU=u;if(v<minV)minV=v;if(v>maxV)maxV=v;
+      }
+      const w=maxU-minU+1,h=maxV-minV+1;
+      return{deg,cos,sin,w,h,area:w*h,cu:(minU+maxU)/2,cv:(minV+maxV)/2};
+    };
+    const axis=measure(0);
+    let best=axis;
+    for(let deg=3;deg<90;deg+=3){const m=measure(deg);if(m.area<best.area)best=m;}
+    for(let deg=best.deg-2;deg<=best.deg+2;deg++){
+      if(deg===best.deg||deg<0||deg>=90)continue;
+      const m=measure(deg);if(m.area<best.area)best=m;
+    }
+    if(axis.area<=best.area*1.03)best=axis;
+    let w=best.w,h=best.h,rotation=best.deg;
+    if(rotation>45){const swap=w;w=h;h=swap;rotation-=90;} // keep rotation in (-45,45]; same physical rectangle
+    return{cx:best.cu*best.cos-best.cv*best.sin,cy:best.cu*best.sin+best.cv*best.cos,w,h,rotation};
+  }
+
+  // ---- FIX #4: shape decided from real pixels, not the bbox aspect --------
+  // The component is hole-filled locally (flood from the padded window border;
+  // whatever the outline encloses becomes solid), then measured in its own OBB
+  // frame. `cornerOccupancy` is how much of the four OBB corner squares
+  // (|u|>0.72 and |v|>0.72 of the half-extents — a region that lies entirely
+  // OUTSIDE an inscribed ellipse and entirely INSIDE a rectangle) is actually
+  // covered. A circle leaves them empty; a square fills them. quadrantFill is
+  // the same 4-quadrant balance computeVisualDescriptor already produces,
+  // measured here on the filled shape so an off-centre/L-shaped object can be
+  // told apart from a symmetric one.
+  function shapeAnalysis(labels,label,comp,width,height){
+    const pad=1,x0=comp.x-pad,y0=comp.y-pad,lw=comp.w+2*pad,lh=comp.h+2*pad;
+    if(lw<3||lh<3)return null;
+    const loc=new Uint8Array(lw*lh);
+    for(let y=0;y<lh;y++){
+      const gy=y0+y;if(gy<0||gy>=height)continue;
+      for(let x=0;x<lw;x++){
+        const gx=x0+x;if(gx<0||gx>=width)continue;
+        if(labels[gy*width+gx]===label)loc[y*lw+x]=1;
+      }
+    }
+    const reached=new Uint8Array(lw*lh),stack=new Int32Array(lw*lh);
+    let sp=0;
+    const push=i=>{if(!loc[i]&&!reached[i]){reached[i]=1;stack[sp++]=i;}};
+    for(let x=0;x<lw;x++){push(x);push((lh-1)*lw+x);}
+    for(let y=0;y<lh;y++){push(y*lw);push(y*lw+lw-1);}
+    while(sp){
+      const p=stack[--sp],x=p%lw,y=(p/lw)|0;
+      if(x>0)push(p-1);
+      if(x<lw-1)push(p+1);
+      if(y>0)push(p-lw);
+      if(y<lh-1)push(p+lw);
+    }
+    const filled=new Uint8Array(lw*lh);
+    let filledCount=0;
+    for(let i=0;i<filled.length;i++)if(loc[i]||!reached[i]){filled[i]=1;filledCount++;}
+    const bx=[],by=[];
+    for(let y=0;y<lh;y++)for(let x=0;x<lw;x++){
+      const i=y*lw+x;if(!filled[i])continue;
+      if(x===0||y===0||x===lw-1||y===lh-1||!filled[i-1]||!filled[i+1]||!filled[i-lw]||!filled[i+lw]){bx.push(x0+x);by.push(y0+y);}
+    }
+    const obb=minAreaRect(bx,by);
+    if(!obb)return null;
+    const rad=obb.rotation*Math.PI/180,cos=Math.cos(rad),sin=Math.sin(rad);
+    const hw=Math.max(1,obb.w/2),hh=Math.max(1,obb.h/2);
+    let cornerOn=0,cornerTotal=0,edgeOn=0,edgeTotal=0;
+    const quadOn=[0,0,0,0],quadTotal=[0,0,0,0];
+    for(let y=0;y<lh;y++)for(let x=0;x<lw;x++){
+      const dx=x0+x-obb.cx,dy=y0+y-obb.cy;
+      const u=(dx*cos+dy*sin)/hw,v=(-dx*sin+dy*cos)/hh;
+      const au=Math.abs(u),av=Math.abs(v);
+      if(au>1.02||av>1.02)continue;
+      const on=filled[y*lw+x];
+      const qi=(u<0?0:1)+(v<0?0:2);quadTotal[qi]++;if(on)quadOn[qi]++;
+      if(au>.72&&av>.72){cornerTotal++;if(on)cornerOn++;}
+      else if((au<.25&&av>.72)||(av<.25&&au>.72)){edgeTotal++;if(on)edgeOn++;}
+    }
+    const cornerOccupancy=cornerTotal?cornerOn/cornerTotal:0;
+    const edgeOccupancy=edgeTotal?edgeOn/edgeTotal:0;
+    return{obb,filledCount,rawCount:comp.count,
+      obbFill:filledCount/Math.max(1,obb.w*obb.h),
+      cornerOccupancy,edgeOccupancy,
+      cornerVsEdge:edgeOccupancy>.02?cornerOccupancy/edgeOccupancy:(cornerOccupancy>.02?1:0),
+      quadrantFill:quadTotal.map((n,i)=>n?quadOn[i]/n:0)};
+  }
+  function classifyTableShape(shape){
+    if(!shape)return{type:"rectangle",basis:"no-shape-signal",shapeConfidence:.15};
+    const aspect=shape.obb.w/Math.max(1,shape.obb.h);
+    const squareish=aspect>=.82&&aspect<=1.22;
+    let round,basis;
+    if(shape.obbFill>=.5){round=shape.cornerOccupancy<.35;basis="corner-occupancy";}
+    else{round=shape.cornerVsEdge<.35;basis="corner-vs-edge-density";} // an outline that never closed, so hole filling could not run
+    // A strongly unbalanced quadrant signature is not a simple round table
+    // even if the corners read empty (an arc, an L-shaped bench, a stray mark).
+    const quads=shape.quadrantFill,spread=Math.max(...quads)-Math.min(...quads);
+    if(round&&spread>.45){round=false;basis+="+quadrant-imbalance";}
+    const type=round?"round":squareish?"square":"rectangle";
+    const margin=round?Math.min(1,(.35-shape.cornerOccupancy)/.35):Math.min(1,(shape.cornerOccupancy-.35)/.4);
+    return{type,basis,shapeConfidence:Math.max(.1,Math.min(1,margin)),aspect,squareish};
+  }
+
+  // ---- FIX #3: a modal-size prior instead of "biggest area first" ---------
+  // A venue plan is highly repetitive, so the population itself says what a
+  // table is. The mode is taken in log space (constant RELATIVE bin width) so
+  // it is scale-free, and the peak bin plus its two neighbours are averaged so
+  // one bin boundary cannot swing the answer. Ranking by agreement with the
+  // mode means a merged double-table blob (~2x modal) is demoted, where the
+  // old "sort by area, cap 100" actively promoted it.
+  function modalMagnitude(values){
+    const vals=values.filter(v=>Number.isFinite(v)&&v>0);
+    if(!vals.length)return null;
+    const BIN=Math.log(1.15),counts=new Map();
+    for(const v of vals){const k=Math.round(Math.log(v)/BIN);counts.set(k,(counts.get(k)||0)+1);}
+    let bestK=null,bestN=-1;
+    for(const k of [...counts.keys()].sort((a,b)=>a-b)){
+      const support=(counts.get(k)||0)+(counts.get(k-1)||0)+(counts.get(k+1)||0);
+      if(support>bestN){bestN=support;bestK=k;}
+    }
+    const pool=vals.filter(v=>Math.abs(Math.round(Math.log(v)/BIN)-bestK)<=1);
+    return{value:pool.reduce((a,b)=>a+b,0)/pool.length,support:pool.length,total:vals.length};
+  }
+  function sizeAgreement(value,modal){
+    if(!modal||!modal.value||!(value>0))return .5;
+    return Math.max(0,1-Math.abs(Math.log(value/modal.value)/Math.log(1.7)));
+  }
+  // FIX #2, part 2: an evidence-gated split for blobs that really did merge
+  // (two filled tables touching with no drawn separator, which hole filling
+  // cannot help with). A split is only made where the pixels actually show a
+  // density valley AND both halves land near the modal object size — never
+  // "this looks twice as big, cut it in half".
+  function splitAtValley(comp,labels,width,height,modalLong,modalShort){
+    if(!modalLong||!modalShort)return null;
+    const horizontal=comp.w>=comp.h;
+    const long=horizontal?comp.w:comp.h,short=horizontal?comp.h:comp.w;
+    if(long<modalLong*1.7||short>modalShort*1.45||short<modalShort*.55)return null;
+    const n=horizontal?comp.w:comp.h,across=horizontal?comp.h:comp.w,profile=new Int32Array(n);
+    for(let a=0;a<across;a++)for(let b=0;b<n;b++){
+      const gx=horizontal?comp.x+b:comp.x+a,gy=horizontal?comp.y+a:comp.y+b;
+      if(gx<width&&gy<height&&labels[gy*width+gx]===comp.label)profile[b]++;
+    }
+    let sum=0;for(let i=0;i<n;i++)sum+=profile[i];
+    const mean=sum/n,floor=mean*.35,guard=Math.round(modalLong*.45),cuts=[];
+    let runStart=-1;
+    for(let i=guard;i<n-guard;i++){
+      if(profile[i]<=floor){if(runStart<0)runStart=i;}
+      else if(runStart>=0){cuts.push(Math.round((runStart+i-1)/2));runStart=-1;}
+    }
+    if(runStart>=0)cuts.push(Math.round((runStart+n-guard)/2));
+    if(!cuts.length)return null;
+    const bounds=[0,...cuts,n],parts=[];
+    for(let i=0;i<bounds.length-1;i++){
+      const from=bounds[i],to=bounds[i+1],len=to-from;
+      if(len<modalLong*.55||len>modalLong*1.6)return null; // not a clean repeat of the modal object: leave the blob alone rather than inventing a boundary
+      parts.push({from,to});
+    }
+    if(parts.length<2)return null;
+    return parts.map(p=>{
+      let count=0,minX=width,minY=height,maxX=0,maxY=0;
+      for(let a=0;a<across;a++)for(let b=p.from;b<p.to;b++){
+        const gx=horizontal?comp.x+b:comp.x+a,gy=horizontal?comp.y+a:comp.y+b;
+        if(gx>=width||gy>=height||labels[gy*width+gx]!==comp.label)continue;
+        count++;
+        if(gx<minX)minX=gx;if(gx>maxX)maxX=gx;if(gy<minY)minY=gy;if(gy>maxY)maxY=gy;
+      }
+      if(!count)return null;
+      const w=maxX-minX+1,h=maxY-minY+1;
+      return{label:comp.label,x:minX,y:minY,w,h,count,aspect:w/h,fill:count/(w*h),
+        cx:(minX+maxX)/2,cy:(minY+maxY)/2,pcaRotation:comp.pcaRotation,wasSplit:true};
+    }).filter(Boolean);
+  }
+
+  // ---- Candidate geometry helpers ----------------------------------------
+  function boxIoU(a,b){
+    const x1=Math.max(a.x,b.x),y1=Math.max(a.y,b.y);
+    const x2=Math.min(a.x+a.w,b.x+b.w),y2=Math.min(a.y+a.h,b.y+b.h);
+    const inter=Math.max(0,x2-x1)*Math.max(0,y2-y1);
+    if(!inter)return 0;
+    return inter/(a.w*a.h+b.w*b.h-inter);
+  }
+  // Distance from a point to an oriented rectangle's boundary (0 when inside).
+  function distanceToOBB(px,py,obb){
+    const rad=(obb.rotation||0)*Math.PI/180,cos=Math.cos(rad),sin=Math.sin(rad);
+    const dx=px-obb.cx,dy=py-obb.cy;
+    const u=Math.abs(dx*cos+dy*sin)-obb.w/2,v=Math.abs(-dx*sin+dy*cos)-obb.h/2;
+    return Math.hypot(Math.max(0,u),Math.max(0,v));
+  }
+
+  // ---- The provider -------------------------------------------------------
+  const CLASSICAL_CV_PROVIDER={
+    id:"classical-cv",
+    label:"Assisted Detection (classical computer vision)",
+    trainedModel:false,
+    async detect(pixels,width,height,{onStage}={}){
+      const stage=onStage||(async()=>{});
+      const total=width*height,data=pixels.data;
+      // ---- pass 1: luma + histogram + RGB colour histogram, one loop ----
+      const gray=new Uint8Array(total),hist=new Uint32Array(256);
+      const binCount=new Uint32Array(RGB_BINS),binR=new Float64Array(RGB_BINS),binG=new Float64Array(RGB_BINS),binB=new Float64Array(RGB_BINS);
+      let sum=0;
+      for(let i=0,o=0;i<total;i++,o+=4){
+        const r=data[o],g=data[o+1],b=data[o+2];
+        const v=Math.round(r*.299+g*.587+b*.114);
+        gray[i]=v;hist[v]++;sum+=v;
+        const bin=rgbBinIndex(r,g,b);
+        binCount[bin]++;binR[bin]+=r;binG[bin]+=g;binB[bin]+=b;
+      }
+      const threshold=otsu(hist,total,sum);
+      await stage("understanding",30);
+      // ---- pass 2: adaptive fill mask and Sobel edge map, kept SEPARATE ----
+      // FIX #2: the edge map is no longer OR-ed into the mask that gets
+      // labelled. It is used only as a BARRIER for enclosed-region extraction
+      // (where a shared outline helps by separating two interiors) and as the
+      // union mask handed to computeVisualDescriptor, whose descriptor
+      // semantics stay exactly as before.
+      const fillMask=new Uint8Array(total),edgeMask=new Uint8Array(total),barrier=new Uint8Array(total);
+      const integral=new Uint32Array((width+1)*(height+1));
+      for(let y=1;y<=height;y++){let row=0;for(let x=1;x<=width;x++){row+=gray[(y-1)*width+x-1];integral[y*(width+1)+x]=integral[(y-1)*(width+1)+x]+row;}}
+      const stride=width+1;
+      for(let y=1;y<height-1;y++)for(let x=1;x<width-1;x++){
+        const i=y*width+x,r=18,x0=Math.max(0,x-r),x1=Math.min(width-1,x+r),y0=Math.max(0,y-r),y1=Math.min(height-1,y+r);
+        const local=(integral[(y1+1)*stride+x1+1]-integral[y0*stride+x1+1]-integral[(y1+1)*stride+x0]+integral[y0*stride+x0])/((x1-x0+1)*(y1-y0+1));
+        const gx=-gray[i-width-1]+gray[i-width+1]-2*gray[i-1]+2*gray[i+1]-gray[i+width-1]+gray[i+width+1];
+        const gy=-gray[i-width-1]-2*gray[i-width]-gray[i-width+1]+gray[i+width-1]+2*gray[i+width]+gray[i+width+1];
+        if(gray[i]<Math.min(threshold+12,local-7))fillMask[i]=1;
+        if(Math.abs(gx)+Math.abs(gy)>150)edgeMask[i]=1;
+        barrier[i]=(fillMask[i]||edgeMask[i])?1:0;
+      }
+      const binary=barrier; // same union the previous pipeline labelled; kept for computeVisualDescriptor
+      const colorModel=buildColorModel(binCount,binR,binG,binB,total);
+      await stage("understanding",42);
+
+      const area=total,minDim=Math.min(width,height);
+      const minPixels=Math.max(10,Math.round(area*.000006));
+      const notWall=c=>!(Math.min(c.w,c.h)<3&&Math.max(c.w,c.h)>minDim*.08);
+      const tableSizeOk=c=>notWall(c)&&Math.min(c.w,c.h)>=minDim*.016&&c.w*c.h>=area*.00015&&c.w*c.h<=area*.04&&c.aspect>=.28&&c.aspect<=3.6;
+      const chairSizeOk=c=>notWall(c)&&Math.min(c.w,c.h)>=3&&Math.max(c.w,c.h)<=minDim*.065&&c.w*c.h<area*.0028;
+      const venueSizeOk=c=>notWall(c)&&c.w*c.h>area*.008&&c.w*c.h<area*.12&&(c.aspect>3.1||c.aspect<.32);
+
+      // Shape analysis scans each candidate's own window, so it is bounded by
+      // a real pixel budget rather than trusting the size filters to keep the
+      // candidate count sane on a pathological drawing.
+      let shapeBudget=area*6;
+      const analyze=(comps,labels)=>{
+        for(const c of comps){
+          if(c.shape!==undefined)continue;
+          if(shapeBudget<=0){c.shape=null;continue;}
+          shapeBudget-=(c.w+2)*(c.h+2);
+          c.shape=shapeAnalysis(labels,c.label,c,width,height);
+        }
+        return comps;
+      };
+
+      // ---- object sources --------------------------------------------------
+      const sources=[],diagnosticsSources={};
+      let fallbackChairComps=[],accentMask=null;
+      // (a) interiors of closed outlines — the primary table source
+      {
+        const enclosed=enclosedRegions(barrier,width,height);
+        const{labels,comps}=labelComponents(enclosed,width,height,minPixels,false);
+        const kept=analyze(comps.filter(c=>tableSizeOk(c)&&c.fill>=.35),labels);
+        for(const c of kept)c.source="interior";
+        diagnosticsSources.interior=kept.length;
+        sources.push({name:"interior",labels,comps:kept,all:comps});
+      }
+      // (b) tinted/solid fills straight from the colour model — one mask per
+      //     tone family, so a mid-grey chair fill and a pale table fill cannot
+      //     end up in the same mask and merge
+      if(colorModel){
+        const masks=buildClassMasks(data,total,colorModel);
+        accentMask=colorModel.isColorPlan?masks.accent:null;
+        let toneKept=0;
+        masks.tints.forEach((mask,index)=>{
+          if(maskSolidity(mask,width,height)<.25)return; // antialiasing fringe along outlines, not a real filled object
+          const{labels,comps}=labelComponents(mask,width,height,minPixels,true);
+          const kept=analyze(comps.filter(c=>tableSizeOk(c)&&c.fill>=.35),labels);
+          for(const c of kept)c.source="tone";
+          toneKept+=kept.length;
+          sources.push({name:"tone"+index,labels,comps:kept,all:comps});
+        });
+        diagnosticsSources.tone=toneKept;
+      }
+      // (c) solid dark objects straight from the fill mask (no edges OR-ed in)
+      {
+        const{labels,comps}=labelComponents(fillMask,width,height,minPixels,true);
+        const kept=analyze(comps.filter(c=>tableSizeOk(c)&&c.fill>=.35),labels);
+        for(const c of kept)c.source="fill";
+        diagnosticsSources.fill=kept.length;
+        sources.push({name:"fill",labels,comps:kept,all:comps});
+        fallbackChairComps=analyze(comps.filter(c=>chairSizeOk(c)&&c.fill>=.045),labels);
+        for(const c of fallbackChairComps)c.source="fill";
+        diagnosticsSources.fallbackChairComponents=fallbackChairComps.length;
+      }
+      await stage("seating",58);
+
+      // ---- STAGE B: chairs first -------------------------------------------
+      // Chairs are detected from their OWN model before any table is
+      // considered. That is what stops a chair drawn against a table outline
+      // from being swallowed by the table blob, and it makes the seat count
+      // independent of whether a table was found at all.
+      let chairComps=[],chairSource="none";
+      if(accentMask){
+        const{labels,comps}=labelComponents(accentMask,width,height,Math.max(6,Math.round(minPixels*.6)),true);
+        chairComps=analyze(comps.filter(c=>chairSizeOk(c)&&c.fill>=.3),labels);
+        for(const c of chairComps)c.source="colour";
+        chairSource="colour-cluster";
+      }
+      if(chairComps.length<6&&fallbackChairComps.length){chairComps=fallbackChairComps;chairSource="luma-components";}
+      const chairModal=modalMagnitude(chairComps.map(c=>Math.sqrt(c.w*c.h)));
+      // A trustworthy chair population is MANY objects of ONE size. If the
+      // population is not uniform we say so in the result and fall back to the
+      // table-first path instead of reporting a seat count we cannot defend.
+      const chairUniform=!!chairModal&&chairComps.length>=6&&chairModal.support/chairModal.total>=.6;
+      const chairs=chairUniform?chairComps.filter(c=>sizeAgreement(Math.sqrt(c.w*c.h),chairModal)>=.25):chairComps;
+      const detectionPath=chairUniform?"chair-first":"table-first";
+
+      // ---- table candidate pool --------------------------------------------
+      let pool=[];
+      for(const s of sources)for(const c of s.comps)pool.push({comp:c,labels:s.labels});
+      // Chair-first has a second payoff: anything already claimed as a chair is
+      // removed from the table pool, so chair blobs can no longer masquerade as
+      // small tables (they did before — a 17px chair passes the table size
+      // floor on a 1000px-tall plan) and cannot drag the modal table size down.
+      if(chairUniform&&chairs.length){
+        pool=pool.filter(p=>!chairs.some(ch=>boxIoU(p.comp,ch)>=.4));
+      }
+      const modalLong=modalMagnitude(pool.map(p=>Math.max(p.comp.shape?.obb.w||p.comp.w,p.comp.shape?.obb.h||p.comp.h)));
+      const modalShort=modalMagnitude(pool.map(p=>Math.min(p.comp.shape?.obb.w||p.comp.w,p.comp.shape?.obb.h||p.comp.h)));
+      let splitCount=0;
+      const expanded=[];
+      for(const entry of pool){
+        const parts=splitAtValley(entry.comp,entry.labels,width,height,modalLong?.value,modalShort?.value);
+        if(!parts||parts.length<2){expanded.push(entry);continue;}
+        splitCount+=parts.length-1;
+        for(const part of parts){
+          part.source=entry.comp.source;
+          analyze([part],entry.labels);
+          expanded.push({comp:part,labels:entry.labels});
+        }
+      }
+      // De-duplicate across sources: one physical table can surface both as an
+      // enclosed interior and as a tone fill. Keep one, preferring the source
+      // that gives the cleanest shape signal.
+      const sourceRank={tone:3,interior:2,fill:1};
+      expanded.sort((a,b)=>(sourceRank[b.comp.source]||0)-(sourceRank[a.comp.source]||0)||b.comp.count-a.comp.count);
+      const unique=[];
+      for(const entry of expanded){
+        if(unique.some(u=>boxIoU(entry.comp,u.comp)>=.45))continue;
+        unique.push(entry);
+      }
+      const modalArea=modalMagnitude(unique.map(u=>{const o=u.comp.shape?.obb;return o?o.w*o.h:u.comp.w*u.comp.h;}));
+
+      // ---- chair -> table association: one chair, at most one table --------
+      // merit-plan-intelligence requires each chair to belong to at most one
+      // table. The old pipeline evaluated proximity per table independently, so
+      // a chair sitting between two tables was counted twice — a real
+      // over-count living next to the under-count.
+      const tableBoxes=unique.map((entry,index)=>{
+        const c=entry.comp,obb=c.shape?.obb||{cx:c.x+c.w/2,cy:c.y+c.h/2,w:c.w,h:c.h,rotation:c.pcaRotation||0};
+        return{index,entry,obb};
+      });
+      const chairAssign=new Map(),chairsByTable=new Map(),pairs=[];
+      for(let ci=0;ci<chairs.length;ci++){
+        const ch=chairs[ci],px=ch.shape?.obb.cx??ch.x+ch.w/2,py=ch.shape?.obb.cy??ch.y+ch.h/2,span=Math.max(ch.w,ch.h);
+        for(const box of tableBoxes){
+          const margin=Math.min(span*1.6+Math.min(box.obb.w,box.obb.h)*.25,Math.max(box.obb.w,box.obb.h)*.7);
+          const d=distanceToOBB(px,py,box.obb);
+          if(d<=margin)pairs.push({ci,ti:box.index,d});
+        }
+      }
+      pairs.sort((a,b)=>a.d-b.d||a.ci-b.ci||a.ti-b.ti);
+      for(const p of pairs){
+        if(chairAssign.has(p.ci))continue;
+        chairAssign.set(p.ci,p.ti);
+        if(!chairsByTable.has(p.ti))chairsByTable.set(p.ti,[]);
+        chairsByTable.get(p.ti).push(p.ci);
+      }
+
+      // ---- scoring and ranking (FIX #3) ------------------------------------
+      const scored=tableBoxes.map(box=>{
+        const c=box.entry.comp,obb=box.obb;
+        const seats=(chairsByTable.get(box.index)||[]).length;
+        const agreement=sizeAgreement(obb.w*obb.h,modalArea);
+        const repetition=tableBoxes.filter(o=>Math.abs(o.obb.w-obb.w)<obb.w*.2&&Math.abs(o.obb.h-obb.h)<obb.h*.2).length;
+        const shape=classifyTableShape(c.shape);
+        // Deterministic evidence score, NOT a model probability: measured seat
+        // adjacency, agreement with the plan's own modal object size, how many
+        // identical objects repeat, and how clean the shape signal was.
+        const confidence=Math.max(.15,Math.min(.94,
+          .32+Math.min(.26,seats*.035)+agreement*.2+Math.min(.1,Math.max(0,repetition-1)*.025)+shape.shapeConfidence*.1
+          -((seats===0&&repetition<=1)?.22:0)));
+        return{box,c,obb,seats,agreement,repetition,shape,confidence,
+          score:agreement*2+Math.min(1,seats/6)+Math.min(.5,(repetition-1)*.08)};
+      });
+      scored.sort((a,b)=>b.score-a.score||b.confidence-a.confidence);
+      const MAX_TABLES=240,capReached=scored.length>MAX_TABLES,chosen=scored.slice(0,MAX_TABLES);
+      const chosenIndexes=new Set(chosen.map(s=>s.box.index));
+
+      const toPercentBox=obb=>({x:(obb.cx-obb.w/2)/width*100,y:(obb.cy-obb.h/2)/height*100,w:obb.w/width*100,h:obb.h/height*100});
+      const chairOBB=ch=>ch.shape?.obb||{cx:ch.x+ch.w/2,cy:ch.y+ch.h/2,w:ch.w,h:ch.h,rotation:ch.pcaRotation||0};
+      // Deterministic evidence score for a chair: how well it agrees with the
+      // plan's own modal chair size, plus whether it came from a real colour
+      // cluster or only from the luma fallback. Never a random number.
+      const chairEvidence=(ch,associated)=>Math.max(.2,Math.min(.9,
+        .34+sizeAgreement(Math.sqrt(ch.w*ch.h),chairModal)*.3+(chairSource==="colour-cluster"?.16:0)+(associated?.05:0)));
+      const candidates=chosen.map(s=>{
+        const seatIndexes=chairsByTable.get(s.box.index)||[];
+        return{id:uid("candidate"),kind:"table",type:s.shape.type,...toPercentBox(s.obb),rotation:s.obb.rotation,
+          confidence:s.confidence,status:"unreviewed",selected:s.confidence>=.48,
+          chairDetections:seatIndexes.map(ci=>{
+            const obb=chairOBB(chairs[ci]);
+            return{id:uid("candidate-chair"),x:obb.cx/width*100,y:obb.cy/height*100,
+              w:obb.w/width*100,h:obb.h/height*100,rotation:obb.rotation,confidence:chairEvidence(chairs[ci],true)};
+          }),
+          evidence:{geometry:Number(Math.min(.95,(s.c.shape?.obbFill??s.c.fill)+.2).toFixed(2)),
+            chairs:seatIndexes.length,repetition:s.repetition,source:s.c.source,
+            shapeBasis:s.shape.basis,sizeAgreement:Number(s.agreement.toFixed(2)),split:!!s.c.wasSplit}};
+      });
+      // Chairs that belong to no detected table stay first-class objects with
+      // their real coordinates instead of being dropped (which is how the old
+      // pipeline lost seats). They are never attached to an invented table.
+      const chairVenues=[];
+      for(let ci=0;ci<chairs.length;ci++){
+        const ti=chairAssign.get(ci);
+        if(ti!==undefined&&chosenIndexes.has(ti))continue;
+        const ch=chairs[ci],obb=chairOBB(ch);
+        chairVenues.push({id:uid("candidate"),kind:"venue",type:"chair",...toPercentBox(obb),rotation:obb.rotation,
+          confidence:chairEvidence(ch,false),status:"unreviewed",selected:false,chairDetections:[],
+          evidence:{geometry:Number(Math.min(.95,ch.fill).toFixed(2)),chairs:1,repetition:chairs.length,
+            source:chairSource,unassociated:true}});
+      }
+      // ---- venue-scale objects (stage band / long bar / column) ------------
+      const venueComps=[];
+      for(const s of sources)for(const c of s.all)if(venueSizeOk(c)&&!venueComps.some(o=>boxIoU(o,c)>=.5))venueComps.push(c);
+      const venues=venueComps.slice(0,14).map(c=>{
+        analyze([c],sources.find(s=>s.all.includes(c)).labels);
+        const obb=c.shape?.obb||{cx:c.x+c.w/2,cy:c.y+c.h/2,w:c.w,h:c.h,rotation:c.pcaRotation||0};
+        return{id:uid("candidate"),kind:"venue",type:c.aspect>3?"stage":"column",...toPercentBox(obb),
+          rotation:obb.rotation,confidence:.52,status:"unreviewed",selected:false,chairDetections:[],
+          evidence:{geometry:.62,chairs:0,repetition:0,source:c.source||"fill"}};
+      }).concat(chairVenues);
+
+      const associatedSeats=candidates.reduce((n,c)=>n+c.chairDetections.length,0);
+      return{
+        candidates,venues,gray,binary,threshold,
+        diagnostics:{
+          components:pool.length,wallSuppression:true,
+          chairs:chairs.length,tables:candidates.length,
+          detectionPath,chairSource,
+          chairsDetected:chairs.length,chairsAssociated:associatedSeats,chairsUnassociated:chairVenues.length,
+          chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
+          tableModalArea:modalArea?Math.round(modalArea.value):null,
+          mergesSplit:splitCount,candidateCapReached:capReached,
+          sources:diagnosticsSources,
+          colorModel:colorModel?{...colorModel.summary,isColorPlan:colorModel.isColorPlan,tintFamilies:colorModel.tintFamilies}:null,
+        },
+      };
+    },
+  };
+  // The registry is the seam a future provider plugs into. Today there is
+  // exactly one implementation and it is classical CV — nothing here implies
+  // a trained model exists (trainedModel is false and stays false until a real
+  // one is installed).
+  const PLAN_DETECTION_PROVIDERS={"classical-cv":CLASSICAL_CV_PROVIDER};
+  function resolvePlanDetectionProvider(){
+    const requested=globalThis.MERIT_PLAN_DETECTION_PROVIDER_ID;
+    return PLAN_DETECTION_PROVIDERS[requested]||CLASSICAL_CV_PROVIDER;
+  }
+  globalThis.MERIT_PLAN_DETECTION={providers:PLAN_DETECTION_PROVIDERS,resolve:resolvePlanDetectionProvider,
+    activeId:CLASSICAL_CV_PROVIDER.id,trainedModelInstalled:false};
+  // ============================================================
   // VisualEmbeddingProvider (classical/deterministic implementation).
   //
   // Real visual similarity requires real pixel information, not just a
@@ -851,24 +1574,23 @@
     const event=activeEvent();if(!canMutate(event,"run plan analysis")||!event.background?.src)return toast("Import a floor plan first.","error");ui.analysisBusy=true;ui.analysisProgress=3;ui.analysisStage=t("analysis.stage.reading");ui.screen="review";render();await yieldFrame();
     try{
       const blob=await sourceBlob(event.background.src),bitmap=await createImageBitmap(blob),max=1920,ratio=Math.min(1,max/Math.max(bitmap.width,bitmap.height)),width=Math.max(1,Math.round(bitmap.width*ratio)),height=Math.max(1,Math.round(bitmap.height*ratio)),canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,height);bitmap.close();
-      ui.analysisStage=t("analysis.stage.understanding");ui.analysisProgress=22;render();await yieldFrame();const pixels=ctx.getImageData(0,0,width,height),gray=new Uint8Array(width*height),hist=new Uint32Array(256);let sum=0;for(let i=0,o=0;i<gray.length;i++,o+=4){const v=Math.round(pixels.data[o]*.299+pixels.data[o+1]*.587+pixels.data[o+2]*.114);gray[i]=v;hist[v]++;sum+=v;}const threshold=otsu(hist,gray.length,sum),binary=new Uint8Array(gray.length),integral=new Uint32Array((width+1)*(height+1));for(let y=1;y<=height;y++){let row=0;for(let x=1;x<=width;x++){row+=gray[(y-1)*width+x-1];integral[y*(width+1)+x]=integral[(y-1)*(width+1)+x]+row;}}for(let y=1;y<height-1;y++)for(let x=1;x<width-1;x++){const i=y*width+x,r=18,x0=Math.max(0,x-r),x1=Math.min(width-1,x+r),y0=Math.max(0,y-r),y1=Math.min(height-1,y+r),stride=width+1,local=(integral[(y1+1)*stride+x1+1]-integral[y0*stride+x1+1]-integral[(y1+1)*stride+x0]+integral[y0*stride+x0])/((x1-x0+1)*(y1-y0+1)),gx=-gray[(y-1)*width+x-1]+gray[(y-1)*width+x+1]-2*gray[y*width+x-1]+2*gray[y*width+x+1]-gray[(y+1)*width+x-1]+gray[(y+1)*width+x+1],gy=-gray[(y-1)*width+x-1]-2*gray[(y-1)*width+x]-gray[(y-1)*width+x+1]+gray[(y+1)*width+x-1]+2*gray[(y+1)*width+x]+gray[(y+1)*width+x+1],edge=Math.abs(gx)+Math.abs(gy)>150;binary[i]=(gray[i]<Math.min(threshold+12,local-7)||edge)?1:0;}
-      ui.analysisStage=t("analysis.stage.understanding");ui.analysisProgress=45;render();await yieldFrame();const visited=new Uint8Array(binary.length),queue=new Int32Array(binary.length),components=[],minPixels=Math.max(10,Math.round(width*height*.000006));
-      for(let start=0;start<binary.length;start++){if(!binary[start]||visited[start])continue;let head=0,tail=0,count=0,minX=width,minY=height,maxX=0,maxY=0,sx=0,sy=0,sxx=0,syy=0,sxy=0;queue[tail++]=start;visited[start]=1;while(head<tail){const p=queue[head++],x=p%width,y=Math.floor(p/width);count++;minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);sx+=x;sy+=y;sxx+=x*x;syy+=y*y;sxy+=x*y;for(let yy=Math.max(0,y-1);yy<=Math.min(height-1,y+1);yy++)for(let xx=Math.max(0,x-1);xx<=Math.min(width-1,x+1);xx++){const next=yy*width+xx;if(binary[next]&&!visited[next]){visited[next]=1;queue[tail++]=next;}}}if(count<minPixels)continue;const w=maxX-minX+1,h=maxY-minY+1,aspect=w/h,fill=count/(w*h),mx=sx/count,my=sy/count,covXX=sxx/count-mx*mx,covYY=syy/count-my*my,covXY=sxy/count-mx*my,rotation=.5*Math.atan2(2*covXY,covXX-covYY)*180/Math.PI;components.push({x:minX,y:minY,w,h,count,aspect,fill,rotation});}
-      ui.analysisStage=t("analysis.stage.seating");ui.analysisProgress=73;render();await yieldFrame();const area=width*height,minDim=Math.min(width,height),notWall=c=>!(Math.min(c.w,c.h)<3&&Math.max(c.w,c.h)>minDim*.08),chairs=components.filter(c=>notWall(c)&&Math.min(c.w,c.h)>=3&&Math.max(c.w,c.h)<=minDim*.065&&c.w*c.h<area*.0028&&c.fill>=.045),tables=components.filter(c=>notWall(c)&&Math.min(c.w,c.h)>=minDim*.016&&c.w*c.h>=area*.00015&&c.w*c.h<=area*.04&&c.aspect>=.35&&c.aspect<=3.8&&c.fill>=.035).sort((a,b)=>b.w*b.h-a.w*a.h).slice(0,100);
-      const candidates=tables.map((t,index)=>{const nearby=chairs.filter(ch=>{const cx=ch.x+ch.w/2,cy=ch.y+ch.h/2,margin=Math.max(t.w,t.h)*.65;return cx>=t.x-margin&&cx<=t.x+t.w+margin&&cy>=t.y-margin&&cy<=t.y+t.h+margin&&!(cx>=t.x&&cx<=t.x+t.w&&cy>=t.y&&cy<=t.y+t.h);}).sort((a,b)=>{const ax=a.x+a.w/2-(t.x+t.w/2),ay=a.y+a.h/2-(t.y+t.h/2),bx=b.x+b.w/2-(t.x+t.w/2),by=b.y+b.h/2-(t.y+t.h/2);return ax*ax+ay*ay-bx*bx-by*by;}).slice(0,18),round=t.aspect>.78&&t.aspect<1.28&&t.fill<.68,
-        repetition=tables.filter(o=>Math.abs(o.w-t.w)<t.w*.2&&Math.abs(o.h-t.h)<t.h*.2).length,
-        // Real context, not a raised threshold: a shape with zero nearby
-        // chairs AND no other similarly-sized table anywhere on the plan is
-        // far more likely a stray dimension mark or capacity note that
-        // slipped past the aspect/fill filters than an actual table — most
-        // venue plans have many repeated identical tables. A well-repeated
-        // cluster gets a small boost instead.
-        isolatedNoChairs=nearby.length===0&&repetition<=1,
-        confidence=Math.max(.15,Math.min(.94,.4+Math.min(.3,nearby.length*.04)+Math.min(.18,t.fill*.28)+Math.min(.08,Math.max(0,repetition-1)*.02)-(isolatedNoChairs?.22:0)));
-      return{id:uid("candidate"),kind:"table",type:round?"round":"rectangle",x:t.x/width*100,y:t.y/height*100,w:t.w/width*100,h:t.h/height*100,rotation:t.rotation,confidence,status:"unreviewed",selected:confidence>=.48,chairDetections:nearby.map(ch=>({id:uid("candidate-chair"),x:(ch.x+ch.w/2)/width*100,y:(ch.y+ch.h/2)/height*100,w:ch.w/width*100,h:ch.h/height*100,rotation:ch.rotation,confidence:.56})),evidence:{geometry:Number(Math.min(.95,t.fill+.35).toFixed(2)),chairs:nearby.length,repetition}};});
-      const venues=components.filter(c=>notWall(c)&&c.w*c.h>area*.008&&c.w*c.h<area*.12&&(c.aspect>3.1||c.aspect<.32)).slice(0,14).map(c=>({id:uid("candidate"),kind:"venue",type:c.aspect>3?"stage":"column",x:c.x/width*100,y:c.y/height*100,w:c.w/width*100,h:c.h/height*100,rotation:c.rotation,confidence:.52,status:"unreviewed",selected:false,chairDetections:[],evidence:{geometry:.62,chairs:0,repetition:0}}));
-      for(const c of candidates)c.visualDescriptor=computeVisualDescriptor(gray,binary,width,height,c);
-      for(const c of venues)c.visualDescriptor=computeVisualDescriptor(gray,binary,width,height,c);
+      ui.analysisStage=t("analysis.stage.understanding");ui.analysisProgress=22;render();await yieldFrame();
+      const pixels=ctx.getImageData(0,0,width,height);
+      // The application layer talks to a PlanDetectionProvider, never to pixel
+      // code or a vendor SDK directly (merit-plan-intelligence, "Provider
+      // abstraction"). Today exactly one provider is installed and it is
+      // classical computer vision: trainedModel stays false and the UI keeps
+      // saying DOMAIN MODEL NOT INSTALLED.
+      const provider=resolvePlanDetectionProvider();
+      const detectionStartedAt=performance.now();
+      const detection=await provider.detect(pixels,width,height,{onStage:async(key,progress)=>{
+        ui.analysisStage=t("analysis.stage."+key);ui.analysisProgress=progress;render();await yieldFrame();
+      }});
+      const detectionMs=Math.round(performance.now()-detectionStartedAt);
+      const candidates=detection.candidates,venues=detection.venues,threshold=detection.threshold;
+      ui.analysisStage=t("analysis.stage.seating");ui.analysisProgress=73;render();await yieldFrame();
+      for(const c of candidates)c.visualDescriptor=computeVisualDescriptor(detection.gray,detection.binary,width,height,c);
+      for(const c of venues)c.visualDescriptor=computeVisualDescriptor(detection.gray,detection.binary,width,height,c);
       const previous=event.analysis?.candidates||[],signatures=list=>list.map(c=>`${c.kind}:${c.type}:${Math.round(c.x)}:${Math.round(c.y)}`),oldSig=new Set(signatures(previous)),newSig=new Set(signatures([...candidates,...venues]));
       const freshCandidates=[...candidates,...venues];
       const priorCandidates=event.analysis?.candidates||[],priorDecisions=event.analysis?.groupingDecisions||[];
@@ -880,7 +1602,7 @@
       // silently reverting to the detector's default grouping.
       const geometryRemap=matchCandidatesByGeometry(priorCandidates,allCandidates);
       const carriedDecisions=priorDecisions.map(d=>({...d,memberIds:d.memberIds.map(id=>geometryRemap.get(id)).filter(Boolean)})).filter(d=>d.memberIds.length>=2);
-      event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:false,notice:"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:Math.round(width/ratio),originalHeight:Math.round(height/ratio),threshold,candidates:allCandidates,missed:allCandidates.filter(c=>c.missed).map(c=>c.id),groupingDecisions:carriedDecisions,memoryReapplied:memoryResult.reappliedCount,memoryRestored:memoryResult.restored.length,comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{components:components.length,wallSuppression:true,chairs:chairs.length,tables:tables.length,resolution:`${width}×${height}`}};
+      event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:false,notice:"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:Math.round(width/ratio),originalHeight:Math.round(height/ratio),threshold,candidates:allCandidates,missed:allCandidates.filter(c=>c.missed).map(c=>c.id),groupingDecisions:carriedDecisions,memoryReapplied:memoryResult.reappliedCount,memoryRestored:memoryResult.restored.length,comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{...detection.diagnostics,resolution:`${width}×${height}`,detectionMs,provider:provider.id,providerLabel:provider.label}};
       ui.analysisStage=t("analysis.stage.labels");ui.analysisProgress=84;render();await yieldFrame();
       let ocrResult={available:false,text:null,reason:"OCR not attempted"};
       try{ocrResult=await runPlanOCR(canvas.toDataURL("image/png"));}catch(ocrError){ocrResult={available:false,text:null,reason:ocrError.message};}

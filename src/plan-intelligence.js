@@ -213,12 +213,30 @@
     return out;
   }
 
-  // ---- Capacity: physical seat count purely from confirmed/selected chair
-  // detections — no estimation for tables (chairs are literal). Sofas/benches
-  // (not yet detected by the classical pipeline; taxonomy exists for Teach AI)
-  // get a real evidence-based estimate when the user provides one via Teach AI.
+  // ---- Capacity: physical seat count purely from detected chair objects —
+  // no estimation for tables (chairs are literal). Sofas/benches (not yet
+  // detected by the classical pipeline; taxonomy exists for Teach AI) get a
+  // real evidence-based estimate when the user provides one via Teach AI.
+  //
+  // Two real chair populations are counted, never double-counted: chairs
+  // associated with a table (c.chairDetections, one chair belongs to at most
+  // one table) and chairs the detector found on their own that no table could
+  // claim (kind "venue", type "chair"). The second group used to be dropped
+  // entirely, which is a direct contributor to an under-reported seat total on
+  // a plan whose chairs are the number the operator actually needs. Rejected
+  // candidates are excluded: a human said that object is not real.
   function computePhysicalCapacity(candidates) {
-    return candidates.reduce((n, c) => n + (c.chairDetections?.length || 0), 0);
+    return candidates.reduce((n, c) => {
+      if (c.status === "rejected") return n;
+      if (c.kind === "venue" && c.type === "chair") return n + 1;
+      return n + (c.chairDetections?.length || 0);
+    }, 0);
+  }
+  function countAssociatedSeats(candidates) {
+    return candidates.reduce((n, c) => n + (c.status === "rejected" ? 0 : (c.chairDetections?.length || 0)), 0);
+  }
+  function countStandaloneChairs(candidates) {
+    return candidates.filter(c => c.status !== "rejected" && c.kind === "venue" && c.type === "chair").length;
   }
 
   // ---- OCR capacity cross-check. Requires a real OCR engine (Tesseract.js,
