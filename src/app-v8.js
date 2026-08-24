@@ -1481,11 +1481,16 @@
       // Disabled when there is no repeated population to reason from, so a plan
       // with two unlike tables is never pruned on a prior it does not have.
       let offModalDropped=0;
-      if(modalArea&&modalArea.support>=4){
+      const chairArea=chairUniform&&chairModal?chairModal.value**2:null;
+      if((modalArea&&modalArea.support>=4)||chairArea){
         const kept=unique.filter(u=>{
           const o=u.comp.shape?.obb,objectArea=o?o.w*o.h:u.comp.w*u.comp.h;
-          const ratio=objectArea/modalArea.value;
-          if(ratio>=.2&&ratio<=5)return true;
+          // Wildly off the repeated object size (an eighth of it, or six times
+          // it) with a real repeated population to compare against...
+          const wayOff=modalArea&&modalArea.support>=4&&(objectArea<modalArea.value/8||objectArea>modalArea.value*6);
+          // ...or no bigger than the plan's own chairs, which a table is not.
+          const chairSized=chairArea!=null&&objectArea<=chairArea*1.3;
+          if(!wayOff&&!chairSized)return true;
           offModalDropped++;return false;
         });
         unique.length=0;unique.push(...kept);
