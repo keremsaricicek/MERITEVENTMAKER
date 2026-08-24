@@ -356,13 +356,69 @@
 
   function guestSelectionRows(event){const q=ui.seatingQuery.trim().toLocaleLowerCase("tr"),showAll=ui.seatingGuestScope==="all";return event.guests.filter(g=>(showAll||!g.assignment)&&(!q||[g.name,g.vip,g.invitedBy,g.planningStatus,event.tables.find(t=>t.id===g.assignment?.tableId)?.number].join(" ").toLocaleLowerCase("tr").includes(q)));}
   seatingHTML = function(event){
-    const records=guestSelectionRows(event),selectedIds=ui.selectedGuestIds.length?ui.selectedGuestIds:[ui.selectedGuestId].filter(Boolean),left=ui.leftCollapsed?collapsedPanel("left"):`<aside class="side-panel left"><div class="panel-head"><strong>${ui.seatingGuestScope==="all"?t("seating.allGuestRecords"):t("seating.needingAssignment")}</strong><button class="panel-toggle" data-panel-toggle="left">${icon("chevron")}</button></div>${selectedIds.length?`<div class="selection-count">${t("seating.recordsSelected",{n:selectedIds.length,pax:selectedIds.reduce((n,id)=>n+paxOf(event.guests.find(g=>g.id===id)),0)})}</div>`:""}<div class="guest-scope-strip">${[["all",t("seating.scope.all")],["unassigned",t("seating.scope.unassigned")]].map(([v,l])=>`<button class="seg-btn ${ui.seatingGuestScope===v?"active":""}" data-seating-scope="${v}">${l}</button>`).join("")}</div><div class="guest-filter-strip">${[["all",t("seating.filter.all")],["empty",t("seating.filter.empty")],["available",t("seating.filter.available")],["full",t("seating.filter.full")]].map(([v,l])=>`<button class="seg-btn ${ui.seatingFilter===v?"active":""}" data-seating-filter="${v}">${l}</button>`).join("")}</div><div class="unassigned-search"><input class="filter-input" id="seatingSearch" value="${esc(ui.seatingQuery)}" placeholder="${t("seating.search")}"></div><div class="unassigned-list">${records.length?records.map(g=>{const table=event.tables.find(t=>t.id===g.assignment?.tableId);return`<div class="guest-row-card ${selectedIds.includes(g.id)?"selected multi-selected":""}" draggable="true" data-seating-guest="${g.id}"><strong>${esc(g.name)}${additionalOf(g)?` +${additionalOf(g)}`:""}</strong><span><em>${esc(g.invitedBy||g.vip)}</em><em>${table?esc(table.number):paxOf(g)+" "+t("unit.pax")}</em></span></div>`}).join(""):`<div class="inspector-empty">${t("seating.noMatches")}</div>`}</div></aside>`;
-    return`<div class="${editorClasses(true)}">${left}<section class="canvas-column">${v8Toolbar(event,true)}${canvasViewportHTML(event,true)}</section>${selectedTablePanelHTML(event)}</div>`;
+    // Floor Plan collapses the side panels for its own map-first layout.
+    // Seating's whole job is "move this guest onto that seat", so the guest
+    // queue must never arrive collapsed and leave the operator staring at
+    // an empty screen.
+    ui.leftCollapsed=false;
+    const records=guestSelectionRows(event);
+    const selectedIds=ui.selectedGuestIds.length?ui.selectedGuestIds:[ui.selectedGuestId].filter(Boolean);
+    const selPax=selectedIds.reduce((n,id)=>n+paxOf(event.guests.find(g=>g.id===id)||{}),0);
+    const scopes=[["unassigned",t("seating.scope.unassigned")],["all",t("seating.scope.all")]];
+    const filters=[["all",t("seating.filter.all")],["empty",t("seating.filter.empty")],["available",t("seating.filter.available")],["full",t("seating.filter.full")]];
+    const totalPax=event.guests.reduce((n,g)=>n+paxOf(g),0);
+    const seatedPax=event.guests.filter(g=>g.assignment).reduce((n,g)=>n+paxOf(g),0);
+    const freeChairs=Math.max(0,physicalCapacity(event)-seatedPax);
+    const queue=records.length?records.map(g=>{
+      const t_=g.assignment&&event.tables.find(x=>x.id===g.assignment.tableId);
+      return`<div class="queue-card ${selectedIds.includes(g.id)?"selected multi-selected":""}" draggable="true" data-seating-guest="${g.id}">
+        <div class="party-name">${esc(g.name)}</div>
+        <div class="party-sub">${paxDotsHTML(g)}<span>${t("guests.partyOf",{n:paxOf(g)})}</span>${g.vip&&g.vip!=="Standard"?`<span class="vip-tag">${esc(g.vip)}</span>`:""}${t_?`<span class="seat-tag">${esc(formatTableNumber(t_.number))}</span>`:""}</div>
+      </div>`;
+    }).join(""):`<div class="mx-empty" style="border:none;background:none;padding:26px 12px">${t("seating.noMatches")}</div>`;
+    return`<div class="seat-stage">
+      <aside class="seat-queue">
+        <div class="seat-queue-head"><strong>${ui.seatingGuestScope==="all"?t("seating.allGuests"):t("seating.guestQueue")}</strong>${selectedIds.length?`<span class="sel">${t("seating.recordsSelected",{n:selectedIds.length,pax:selPax})}</span>`:""}</div>
+        <div class="seat-queue-controls">
+          <div class="guest-scope-strip">${scopes.map(([v,l])=>`<button class="seg-btn ${ui.seatingGuestScope===v?"active":""}" data-seating-scope="${v}">${l}</button>`).join("")}</div>
+          <div class="guest-filter-strip">${filters.map(([v,l])=>`<button class="seg-btn ${ui.seatingFilter===v?"active":""}" data-seating-filter="${v}">${l}</button>`).join("")}</div>
+          <input class="filter-input" id="seatingSearch" value="${esc(ui.seatingQuery)}" placeholder="${t("seating.search")}">
+        </div>
+        <div class="seat-queue-list">${queue}</div>
+      </aside>
+      <section class="seat-canvas-col">
+        ${v8Toolbar(event,true)}
+        ${canvasViewportHTML(event,true)}
+        ${selectedTablePanelHTML(event)}
+        <div class="seat-pill">${t("seating.statusPill",{seated:seatedPax,total:totalPax,tables:event.tables.length,free:freeChairs})}</div>
+      </section>
+    </div>`;
+  };
+  // Contextual card, not a permanent inspector: it exists only while a table
+  // is selected, and closing it hands the space back to the plan.
+  selectedTablePanelHTML = function(event){
+    const t_=event.tables.find(x=>x.id===ui.selectedTableId);
+    if(!t_)return"";
+    const map=tableSeatMap(event,t_.id),occupied=tableAssignedPax(event,t_.id),empty=Math.max(0,t_.capacity-occupied);
+    const selected=event.guests.find(g=>g.id===ui.selectedGuestId);
+    const moving=selected&&selected.assignment&&selected.assignment.tableId!==t_.id;
+    return`<aside class="table-card">
+      <div class="table-card-head"><h3>${esc(formatTableNumber(t_.number))}</h3><span class="muted" style="font-size:11px">${esc(t_.zone||"")}</span><button class="table-card-close" data-close-table-card title="${t("seating.closeCard")}">&times;</button></div>
+      <div class="table-card-stats">
+        <div><span>${t("seating.capacity")}</span><b>${t_.capacity}</b></div>
+        <div><span>${t("seating.occupied")}</span><b>${occupied}</b></div>
+        <div><span>${t("seating.empty")}</span><b>${empty}</b></div>
+      </div>
+      <div class="table-card-cta">${selected
+        ?`<button class="btn primary sm" data-assign-selected="${t_.id}">${t(moving?"seating.moveGuest":"seating.assignGuest",{name:selected.name,n:paxOf(selected)})}</button>`
+        :`<div class="table-card-hint">${t("seating.pickGuestFirst")}</div>`}</div>
+      <div class="table-card-seats">${Array.from({length:t_.capacity},(_,i)=>seatRowHTML(i,map.get(i),selected)).join("")}</div>
+    </aside>`;
   };
   seatRowHTML = function(index,occupant,selected){
-    if(!occupant)return`<div class="seat-row empty" data-empty-seat="${index}"><span class="seat-no">S${index+1}</span><span class="seat-person">Empty</span>${selected?"<button class='seat-action'>Assign here</button>":"<span></span>"}</div>`;
+    if(!occupant)return`<div class="seat-row empty" data-empty-seat="${index}"><span class="seat-no">S${index+1}</span><span class="seat-person">${t("seating.seatEmpty")}</span>${selected?`<button class='seat-action'>${t("seating.assignHere")}</button>`:"<span></span>"}</div>`;
     const g=occupant.guest,label=occupant.companion?`GUEST OF ${g.name.toUpperCase()}`:g.name;
-    return`<div class="seat-row ${ui.selectedGuestIds.includes(g.id)?"multi-selected":""}" draggable="${occupant.index===0}" data-occupant-guest="${occupant.index===0?g.id:""}"><span class="seat-no">S${index+1}</span><span class="seat-person">${esc(label)} ${occupant.companion?"<small>companion</small>":""}</span>${occupant.index===0?`<span><button class="seat-action" data-lock-assignment="${g.id}">${g.assignment.locked?"Unlock":"Lock"}</button> <button class="seat-action" data-unassign="${g.id}">Unassign</button></span>`:"<span></span>"}</div>`;
+    return`<div class="seat-row ${ui.selectedGuestIds.includes(g.id)?"multi-selected":""}" draggable="${occupant.index===0}" data-occupant-guest="${occupant.index===0?g.id:""}"><span class="seat-no">S${index+1}</span><span class="seat-person">${esc(label)} ${occupant.companion?`<small>${t("seating.companion")}</small>`:""}</span>${occupant.index===0?`<span><button class="seat-action" data-lock-assignment="${g.id}">${g.assignment.locked?t("seating.unlock"):t("seating.lock")}</button> <button class="seat-action" data-unassign="${g.id}">${t("seating.unassign")}</button></span>`:"<span></span>"}</div>`;
   };
   function selectGuestRecord(id,eventLike,rows){
     const ids=rows.map(g=>g.id),index=ids.indexOf(id),anchor=ids.indexOf(ui.guestAnchorId);
@@ -384,7 +440,10 @@
   unassignGuest = function(id){const event=activeEvent();if(!canMutate(event,"remove a seating assignment"))return;original.unassignGuest(id);};
   toggleAssignmentLock = function(id){const event=activeEvent();if(!canMutate(event,"change an assignment lock"))return;original.toggleAssignmentLock(id);};
   bindSeating = function(){
-    bindPanelToggles();const event=activeEvent(),records=guestSelectionRows(event),search=document.getElementById("seatingSearch");if(search)search.oninput=()=>{ui.seatingQuery=search.value;render();};
+    bindPanelToggles();const event=activeEvent(),records=guestSelectionRows(event),search=document.getElementById("seatingSearch");
+    if(search){search.oninput=()=>{ui.seatingQuery=search.value;const pos=search.selectionStart;render();requestAnimationFrame(()=>{const n=document.getElementById("seatingSearch");if(n){n.focus();n.setSelectionRange(pos,pos);}});};}
+    const closeCard=document.querySelector("[data-close-table-card]");
+    if(closeCard)closeCard.onclick=()=>{ui.selectedTableId=null;render();};
     document.querySelectorAll("[data-seating-scope]").forEach(b=>b.onclick=()=>{ui.seatingGuestScope=b.dataset.seatingScope;ui.selectedGuestIds=[];ui.selectedGuestId=null;render();});document.querySelectorAll("[data-seating-filter]").forEach(b=>b.onclick=()=>{ui.seatingFilter=b.dataset.seatingFilter;ui.operationalMode=false;render();});
     document.querySelectorAll("[data-seating-guest]").forEach(row=>{row.onclick=e=>{selectGuestRecord(row.dataset.seatingGuest,e,records);render();};row.ondragstart=e=>{if(!ui.selectedGuestIds.includes(row.dataset.seatingGuest))ui.selectedGuestIds=[row.dataset.seatingGuest];e.dataTransfer.setData("application/x-merit-guests",JSON.stringify(ui.selectedGuestIds));e.dataTransfer.setData("application/x-merit-guest",row.dataset.seatingGuest);};});
     document.querySelectorAll("[data-occupant-guest]").forEach(row=>{if(!row.dataset.occupantGuest)return;row.onclick=e=>{selectGuestRecord(row.dataset.occupantGuest,e,event.guests);render();};row.ondragstart=e=>{if(!ui.selectedGuestIds.includes(row.dataset.occupantGuest))ui.selectedGuestIds=[row.dataset.occupantGuest];e.dataTransfer.setData("application/x-merit-guests",JSON.stringify(ui.selectedGuestIds));};});

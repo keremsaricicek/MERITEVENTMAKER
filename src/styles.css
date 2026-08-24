@@ -1039,6 +1039,43 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .readonly-tag{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--muted-2)}
 .readonly-tag svg{width:11px;height:11px}
 
+/* Seating: the plan is the work surface. The guest queue stays docked
+   because it is the source of the task; the table inspector became a
+   contextual card that exists only while a table is selected. */
+.seat-stage{position:relative;display:grid;grid-template-columns:286px minmax(0,1fr);height:100%;min-height:0;background:var(--shell)}
+.seat-queue{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line);background:var(--chrome)}
+.seat-queue-head{padding:11px 14px 9px;border-bottom:1px solid var(--line)}
+.seat-queue-head strong{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);font-weight:700}
+.seat-queue-head .sel{display:block;margin-top:5px;font-size:11.5px;color:var(--blue);font-weight:600}
+.seat-queue-controls{padding:9px 12px;display:flex;flex-direction:column;gap:7px;border-bottom:1px solid var(--line-soft)}
+.seat-queue-controls .guest-scope-strip,.seat-queue-controls .guest-filter-strip{display:flex;flex-wrap:wrap;gap:5px;width:100%}
+.seat-queue-controls .seg-btn{flex:1 1 auto;min-width:0;white-space:nowrap;font-size:11px;padding:5px 8px}
+.seat-queue-list{flex:1;min-height:0;overflow:auto;padding:7px}
+.queue-card{padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--panel);margin-bottom:6px;cursor:grab;transition:border-color var(--dur-fast) var(--ease),background var(--dur-fast) var(--ease)}
+.queue-card:hover{border-color:var(--muted-2)}
+.queue-card.selected{border-color:var(--blue);background:var(--blue-soft);box-shadow:var(--ring)}
+.queue-card .party-name{font-size:12.5px}
+.queue-card .party-sub{font-size:11px;margin-top:3px}
+
+.seat-canvas-col{position:relative;min-width:0;display:flex;flex-direction:column}
+.table-card{position:absolute;top:14px;right:14px;z-index:70;width:288px;max-height:calc(100% - 78px);display:flex;flex-direction:column;background:var(--chrome);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-3);overflow:hidden}
+.table-card-head{display:flex;align-items:center;gap:9px;padding:11px 13px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.table-card-head h3{margin:0;font-size:15px;font-weight:650;letter-spacing:-.01em;flex:1}
+.table-card-close{background:none;border:none;cursor:pointer;color:var(--muted-2);font-size:17px;line-height:1;padding:2px 4px;border-radius:var(--radius-sm)}
+.table-card-close:hover{background:var(--panel-3);color:var(--text)}
+.table-card-stats{display:flex;border-bottom:1px solid var(--line-soft)}
+.table-card-stats div{flex:1;padding:9px 12px;border-left:1px solid var(--line-soft);display:flex;flex-direction:column;gap:1px}
+.table-card-stats div:first-child{border-left:none}
+.table-card-stats span{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted-2);font-weight:700}
+.table-card-stats b{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.table-card-cta{padding:10px 12px;border-bottom:1px solid var(--line-soft)}
+.table-card-cta .btn{width:100%;justify-content:center}
+.table-card-hint{font-size:11.5px;color:var(--muted);line-height:1.4}
+.table-card-seats{overflow:auto;padding:6px 0}
+
+.seat-pill{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:60;display:flex;align-items:center;gap:9px;padding:7px 15px;border:1px solid var(--line);border-radius:var(--radius-pill);background:rgba(252,251,250,.95);backdrop-filter:blur(8px);box-shadow:var(--shadow-2);font-size:11.5px;color:var(--muted);white-space:nowrap}
+.seat-pill b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+
 .reports-stage{display:grid;grid-template-columns:minmax(0,1fr) 336px;gap:22px;align-items:start}
 .reports-stage .export-panel{position:sticky;top:0}
 .cols-report{grid-template-columns:minmax(0,1fr) auto}
