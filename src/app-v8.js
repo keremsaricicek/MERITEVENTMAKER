@@ -770,20 +770,29 @@
   //      square table was reported as a round table
   // ============================================================
 
-  // ---- FIX #1: a colour model derived FROM THE IMAGE ---------------------
-  // No hue is hardcoded: a 512-bin (3 bits/channel) RGB histogram is built in
-  // the same pass that builds luma, then mode-seeking leader clustering
-  // (descending bin population, fixed merge radius — deterministic, no RNG)
-  // reduces it to at most 12 real colour clusters. The most populous cluster
-  // is the paper/background; the most saturated well-populated cluster is the
-  // "accent" family (orange chairs on the reported plan, blue chairs on the
-  // next venue's plan — same code path); clusters that are clearly darker than
-  // paper but not ink are "tint" families (the pale beige table fills). On a
-  // neutral drawing the accent family simply comes out empty and the same
-  // clustering still separates paper / grey fill / ink by tone; if even that
-  // fails there is a luma fallback (see buildDetectionSources).
+  // ---- FIX #1: a colour/tone model derived FROM THE IMAGE ----------------
+  // No hue and no grey level is hardcoded. Two complementary models are built
+  // from the drawing itself:
+  //
+  //  * ACCENT (hue): a 512-bin (3 bits/channel) RGB histogram reduced by
+  //    mode-seeking leader clustering (descending bin population, fixed merge
+  //    radius — deterministic, no RNG). The most saturated well-populated
+  //    cluster family is the accent: orange chairs on the reported plan, blue
+  //    chairs on the next venue's plan, same code path.
+  //
+  //  * TONE (lightness): 3 bits per channel cannot tell a pale beige or light
+  //    grey table fill from white paper at all — they land in the SAME bucket —
+  //    so tone families come from a full 8-bit luma histogram of the
+  //    non-accent pixels instead. Its peaks are the drawing's real flat fills
+  //    (paper / table fill / chair fill / ink), and each family only claims a
+  //    narrow band around its own peak so antialiasing between two fills is
+  //    claimed by neither.
+  //
+  // If the drawing has no saturated family the accent model simply comes out
+  // empty and detection runs on tone alone; if it has no tone families either,
+  // the luma component fallback still runs.
   const RGB_BITS=3,RGB_LEVELS=1<<RGB_BITS,RGB_BINS=RGB_LEVELS**3,RGB_SHIFT=8-RGB_BITS;
-  const PX_BACKGROUND=0,PX_ACCENT=1,PX_TINT=2,PX_INK=3,PX_OTHER=4;
+  const LOW_CHROMA=40,MID_CHROMA=90;
   function rgbBinIndex(r,g,b){return((r>>RGB_SHIFT)*RGB_LEVELS+(g>>RGB_SHIFT))*RGB_LEVELS+(b>>RGB_SHIFT);}
   function rgbHue(r,g,b){
     const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
@@ -793,7 +802,7 @@
     h*=60;return h<0?h+360:h;
   }
   function hueGap(a,b){const d=Math.abs(a-b)%360;return d>180?360-d:d;}
-  function buildColorModel(binCount,binR,binG,binB,total){
+  function buildAccentModel(binCount,binR,binG,binB,total){
     const order=[];
     for(let bin=0;bin<RGB_BINS;bin++)if(binCount[bin])order.push(bin);
     order.sort((a,b)=>binCount[b]-binCount[a]||a-b); // ties broken by bin index so the model is reproducible run to run
@@ -822,45 +831,90 @@
     // A drawn object is usually a saturated fill plus a darker stroke of the
     // SAME hue, so the accent family is hue-anchored, not a single cluster.
     const accent=seed?others.filter(c=>c.chroma>=Math.max(35,seed.chroma*.5)&&hueGap(c.hue,seed.hue)<=30&&c.fraction>=.0002):[];
-    const inkCeil=Math.max(90,background.luma*.45);
-    const tint=others.filter(c=>!accent.includes(c)&&c.luma<background.luma-12&&c.luma>inkCeil&&c.fraction>=.003)
-      .sort((a,b)=>b.n-a.n).slice(0,2);
-    const ink=others.filter(c=>!accent.includes(c)&&!tint.includes(c)&&c.luma<=inkCeil);
-    const groupOf=new Map();
-    for(const c of clusters)groupOf.set(c,PX_OTHER);
-    groupOf.set(background,PX_BACKGROUND);
-    for(const c of ink)groupOf.set(c,PX_INK);
-    for(const c of tint)groupOf.set(c,PX_TINT);
-    for(const c of accent)groupOf.set(c,PX_ACCENT);
-    // Per-bucket lookup: every one of the 512 buckets (including the
-    // antialiased in-between ones that never got their own cluster) is mapped
-    // to its nearest cluster centroid, so mask building is one table lookup
-    // per pixel instead of a distance search.
-    const lut=new Uint8Array(RGB_BINS),tintIndex=new Uint8Array(RGB_BINS);
+    const accentSet=new Set(accent);
+    // Per-bucket lookup, including the antialiased in-between buckets that
+    // never got their own cluster: mask building becomes one lookup per pixel.
+    const accentBucket=new Uint8Array(RGB_BINS),neutralBucket=new Uint8Array(RGB_BINS);
+    const chromaCut=seed?Math.max(LOW_CHROMA,Math.min(MID_CHROMA,seed.chroma*.5)):MID_CHROMA;
     for(let bin=0;bin<RGB_BINS;bin++){
       const rb=(bin/(RGB_LEVELS*RGB_LEVELS))|0,gb=((bin/RGB_LEVELS)|0)%RGB_LEVELS,bb=bin%RGB_LEVELS,half=1<<(RGB_SHIFT-1);
       const r=rb*(1<<RGB_SHIFT)+half,g=gb*(1<<RGB_SHIFT)+half,b=bb*(1<<RGB_SHIFT)+half;
       let best=clusters[0],bestDist=Infinity;
       for(const cl of clusters){const d=(cl.r-r)**2+(cl.g-g)**2+(cl.b-b)**2;if(d<bestDist){bestDist=d;best=cl;}}
-      lut[bin]=groupOf.get(best);
-      tintIndex[bin]=lut[bin]===PX_TINT?tint.indexOf(best)+1:0;
+      accentBucket[bin]=accentSet.has(best)?1:0;
+      neutralBucket[bin]=(!accentBucket[bin]&&(Math.max(r,g,b)-Math.min(r,g,b))<=chromaCut)?1:0;
     }
-    return{clusters,background,accent,tint,ink,lut,tintIndex,
-      isColorPlan:accent.length>0,tintFamilies:tint.length,
-      summary:{clusters:clusters.length,accentFraction:accent.reduce((n,c)=>n+c.fraction,0),
-        tintFraction:tint.reduce((n,c)=>n+c.fraction,0),backgroundLuma:Math.round(background.luma),
-        accentHue:seed?Math.round(seed.hue):null,accentChroma:seed?Math.round(seed.chroma):null}};
+    return{clusters,background,accent,accentBucket,neutralBucket,
+      isColorPlan:accent.length>0,
+      accentHue:seed?Math.round(seed.hue):null,accentChroma:seed?Math.round(seed.chroma):null,
+      accentFraction:accent.reduce((n,c)=>n+c.fraction,0),backgroundLuma:Math.round(background.luma)};
+  }
+  // Tone families: the real flat fills of the drawing, found as peaks of the
+  // non-accent luma histogram. Each family claims only a narrow band around its
+  // own peak, so the 1px antialiasing ramp between paper and a fill belongs to
+  // neither family and cannot bridge two objects together.
+  function buildToneModel(lowHist,midHist,sampled,accentChroma){
+    const useMid=!accentChroma||accentChroma>=120; // a mid-chroma fill is a table tint, unless the accent itself is that weak
+    const hist=new Float64Array(256);
+    let neutral=0;
+    for(let v=0;v<256;v++){hist[v]=lowHist[v]+(useMid?midHist[v]:0);neutral+=hist[v];}
+    if(!neutral)return null;
+    const smooth=new Float64Array(256);
+    for(let v=0;v<256;v++){
+      let sum=0,n=0;
+      for(let k=-2;k<=2;k++){const u=v+k;if(u<0||u>255)continue;sum+=hist[u];n++;}
+      smooth[v]=sum/n;
+    }
+    const raw=[];
+    // The ends of the range are candidates too: white paper sits at 255 and a
+    // solid black fill at 0, and skipping the boundaries made the brightest
+    // fill (not the paper) look like the background of the drawing.
+    for(let v=0;v<256;v++){
+      const prev=v>0?smooth[v-1]:-1,next=v<255?smooth[v+1]:-1;
+      if(smooth[v]>0&&smooth[v]>=prev&&smooth[v]>next)raw.push(v);
+    }
+    raw.sort((a,b)=>smooth[b]-smooth[a]||a-b);
+    const peaks=[];
+    for(const v of raw){
+      if(peaks.some(p=>Math.abs(p.luma-v)<10))continue; // one peak per real fill, not per histogram wobble
+      let mass=0;
+      for(let k=-5;k<=5;k++){const u=v+k;if(u>=0&&u<256)mass+=hist[u];}
+      peaks.push({luma:v,mass,fraction:mass/sampled});
+      if(peaks.length>=8)break;
+    }
+    if(!peaks.length)return null;
+    peaks.sort((a,b)=>a.luma-b.luma);
+    const background=peaks.reduce((best,p)=>p.mass>best.mass?p:best,peaks[0]);
+    const inkCeil=Math.max(90,background.luma*.45);
+    const families=peaks.filter(p=>p!==background&&p.luma<background.luma-10&&p.luma>inkCeil&&p.fraction>=.002)
+      .sort((a,b)=>b.mass-a.mass).slice(0,3);
+    const toneLut=new Uint8Array(256);
+    families.forEach((family,index)=>{
+      let gap=Infinity;
+      for(const p of peaks)if(p!==family)gap=Math.min(gap,Math.abs(p.luma-family.luma));
+      const window=Math.max(3,Math.min(14,Math.floor(gap/2)));
+      for(let v=Math.max(0,family.luma-window);v<=Math.min(255,family.luma+window);v++)
+        if(!toneLut[v]||Math.abs(v-family.luma)<Math.abs(v-families[toneLut[v]-1].luma))toneLut[v]=index+1;
+    });
+    return{peaks,background,families,toneLut,
+      summary:{peaks:peaks.map(p=>p.luma),backgroundLuma:background.luma,
+        families:families.map(f=>({luma:f.luma,fraction:Number(f.fraction.toFixed(4))}))}};
   }
 
   // ---- Masks --------------------------------------------------------------
-  function buildClassMasks(data,total,model){
-    const accent=new Uint8Array(total),tints=[];
-    for(let k=0;k<model.tintFamilies;k++)tints.push(new Uint8Array(total));
-    const{lut,tintIndex}=model;
+  function buildClassMasks(data,gray,total,accentModel,toneModel){
+    const accent=accentModel?.isColorPlan?new Uint8Array(total):null;
+    const familyCount=toneModel?.families.length||0,tints=[];
+    for(let k=0;k<familyCount;k++)tints.push(new Uint8Array(total));
+    const accentBucket=accentModel?.accentBucket,neutralBucket=accentModel?.neutralBucket,toneLut=toneModel?.toneLut;
     for(let i=0,o=0;i<total;i++,o+=4){
-      const bin=rgbBinIndex(data[o],data[o+1],data[o+2]),cls=lut[bin];
-      if(cls===PX_ACCENT)accent[i]=1;
-      else if(cls===PX_TINT){const k=tintIndex[bin];if(k)tints[k-1][i]=1;}
+      const bin=rgbBinIndex(data[o],data[o+1],data[o+2]);
+      if(accent&&accentBucket[bin]){accent[i]=1;continue;}
+      if(!familyCount)continue;
+      if(accentBucket&&accentBucket[bin])continue;
+      if(neutralBucket&&!neutralBucket[bin])continue;
+      const family=toneLut[gray[i]];
+      if(family)tints[family-1][i]=1;
     }
     return{accent,tints};
   }
@@ -1192,6 +1246,9 @@
       // The colour model is a global statistic, so it is built from a fixed 2x2
       // subsample (deterministic, ~25% of the pixels) instead of every pixel.
       const binCount=new Uint32Array(RGB_BINS),binR=new Uint32Array(RGB_BINS),binG=new Uint32Array(RGB_BINS),binB=new Uint32Array(RGB_BINS);
+      // Luma histograms split by how saturated the pixel is, so the tone model
+      // can look at the drawing's fills without the accent objects skewing it.
+      const lumaLowChroma=new Uint32Array(256),lumaMidChroma=new Uint32Array(256);
       let sum=0,sampled=0;
       for(let y=0;y<height;y++){
         const rowSampled=(y&1)===0;
@@ -1202,6 +1259,8 @@
           if(rowSampled&&(x&1)===0){
             const bin=rgbBinIndex(r,g,b);
             binCount[bin]++;binR[bin]+=r;binG[bin]+=g;binB[bin]+=b;sampled++;
+            const chroma=Math.max(r,g,b)-Math.min(r,g,b);
+            if(chroma<LOW_CHROMA)lumaLowChroma[v]++;else if(chroma<MID_CHROMA)lumaMidChroma[v]++;
           }
         }
       }
@@ -1229,7 +1288,8 @@
       }
       const binary=barrier; // same union the previous pipeline labelled; kept for computeVisualDescriptor
       mark("binarize");
-      const colorModel=buildColorModel(binCount,binR,binG,binB,sampled);
+      const accentModel=buildAccentModel(binCount,binR,binG,binB,sampled);
+      const toneModel=buildToneModel(lumaLowChroma,lumaMidChroma,sampled,accentModel?.accentChroma);
       mark("colourModel");
       await stage("understanding",42);phaseFrom=performance.now();
 
@@ -1275,9 +1335,9 @@
       // (b) tinted/solid fills straight from the colour model — one mask per
       //     tone family, so a mid-grey chair fill and a pale table fill cannot
       //     end up in the same mask and merge
-      if(colorModel){
-        const masks=buildClassMasks(data,total,colorModel);
-        accentMask=colorModel.isColorPlan?masks.accent:null;
+      if(accentModel||toneModel){
+        const masks=buildClassMasks(data,gray,total,accentModel,toneModel);
+        accentMask=masks.accent;
         let toneKept=0;
         masks.tints.forEach((mask,index)=>{
           if(maskSolidity(mask,width,height)<.25)return; // antialiasing fringe along outlines, not a real filled object
@@ -1360,7 +1420,20 @@
       // population is not uniform we say so in the result and fall back to the
       // table-first path instead of reporting a seat count we cannot defend.
       const chairUniform=!!chairModal&&chairComps.length>=6&&chairModal.support/chairModal.total>=.6;
-      const chairs=chairUniform?chairComps.filter(c=>sizeAgreement(Math.sqrt(c.w*c.h),chairModal)>=.25):chairComps;
+      // Chairs on a plan are drawn identically, so the repeated SHAPE is real
+      // evidence too. Elongation is measured orientation-invariantly
+      // (long/short side), because the same chair drawn on the left of a table
+      // is the same object rotated 90 degrees, not a different one. This is
+      // what tells a chair-sized printed glyph from a chair without OCR.
+      const chairModalElongation=modalMagnitude(chairComps.map(c=>Math.max(c.w,c.h)/Math.max(1,Math.min(c.w,c.h))));
+      const chairShapeOk=c=>{
+        if(!chairUniform||!chairModalElongation)return true;
+        const elongation=Math.max(c.w,c.h)/Math.max(1,Math.min(c.w,c.h));
+        return Math.abs(Math.log(elongation/chairModalElongation.value))<=Math.log(1.6);
+      };
+      const chairs=chairUniform
+        ?chairComps.filter(c=>sizeAgreement(Math.sqrt(c.w*c.h),chairModal)>=.25&&chairShapeOk(c))
+        :chairComps;
       const detectionPath=chairUniform?"chair-first":"table-first";
       mark("chairs");
 
@@ -1400,6 +1473,23 @@
       }
       for(const entry of unique)analyze([entry.comp],entry.labels);
       const modalArea=modalMagnitude(unique.map(u=>{const o=u.comp.shape?.obb;return o?o.w*o.h:u.comp.w*u.comp.h;}));
+      // Off-modal rejection. When the plan really is repetitive (a modal object
+      // size supported by several objects), something a fifth the size of every
+      // repeated object — a printed character, a dimension tick — is not a
+      // table. This is the honest use of the modal prior: it drops what agrees
+      // with nothing, instead of the old rule which kept whatever was biggest.
+      // Disabled when there is no repeated population to reason from, so a plan
+      // with two unlike tables is never pruned on a prior it does not have.
+      let offModalDropped=0;
+      if(modalArea&&modalArea.support>=4){
+        const kept=unique.filter(u=>{
+          const o=u.comp.shape?.obb,objectArea=o?o.w*o.h:u.comp.w*u.comp.h;
+          const ratio=objectArea/modalArea.value;
+          if(ratio>=.2&&ratio<=5)return true;
+          offModalDropped++;return false;
+        });
+        unique.length=0;unique.push(...kept);
+      }
 
       // ---- chair -> table association: one chair, at most one table --------
       // merit-plan-intelligence requires each chair to belong to at most one
@@ -1502,9 +1592,12 @@
           chairsDetected:chairs.length,chairsAssociated:associatedSeats,chairsUnassociated:chairVenues.length,
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
-          mergesSplit:splitCount,candidateCapReached:capReached,
+          mergesSplit:splitCount,candidateCapReached:capReached,offModalDropped,
           sources:diagnosticsSources,phaseMs,
-          colorModel:colorModel?{...colorModel.summary,isColorPlan:colorModel.isColorPlan,tintFamilies:colorModel.tintFamilies}:null,
+          colorModel:accentModel?{isColorPlan:accentModel.isColorPlan,accentHue:accentModel.accentHue,
+            accentChroma:accentModel.accentChroma,accentFraction:Number(accentModel.accentFraction.toFixed(4)),
+            backgroundLuma:accentModel.backgroundLuma}:null,
+          toneModel:toneModel?toneModel.summary:null,
         },
       };
     },
@@ -1703,6 +1796,13 @@
       const geometryRemap=matchCandidatesByGeometry(priorCandidates,allCandidates);
       const carriedDecisions=priorDecisions.map(d=>({...d,memberIds:d.memberIds.map(id=>geometryRemap.get(id)).filter(Boolean)})).filter(d=>d.memberIds.length>=2);
       event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:false,notice:"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:Math.round(width/ratio),originalHeight:Math.round(height/ratio),threshold,candidates:allCandidates,missed:allCandidates.filter(c=>c.missed).map(c=>c.id),groupingDecisions:carriedDecisions,memoryReapplied:memoryResult.reappliedCount,memoryRestored:memoryResult.restored.length,comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{...detection.diagnostics,resolution:`${width}×${height}`,detectionMs,provider:provider.id,providerLabel:provider.label}};
+      // A complete PlanIntelligenceResult exists from the moment the analysis
+      // object does, so the review screen (and anything reading the stored
+      // event) never sees an analysis with null provider metadata or a null
+      // seat count while OCR is still being attempted. It is recomputed below
+      // once OCR either produced real text or honestly reported unavailable.
+      event.analysis.ocrText=null;
+      event.analysis.planIntelligence=buildPlanIntelligence(event,null);
       ui.analysisStage=t("analysis.stage.labels");ui.analysisProgress=84;render();await yieldFrame();
       let ocrResult={available:false,text:null,reason:"OCR not attempted"};
       try{ocrResult=await runPlanOCR(canvas.toDataURL("image/png"));}catch(ocrError){ocrResult={available:false,text:null,reason:ocrError.message};}
