@@ -1414,6 +1414,33 @@
         }
       }
       for(const e of chairEntries)analyze([e.comp],e.labels);
+      // Second dedup pass, now that a modal chair size exists. A drawn chair is
+      // typically an outline plus an inner fill, or a seat plus a back; those
+      // land as two components sitting almost on top of each other, and they
+      // overlap too little for the earlier same-object test to catch. Two
+      // centres closer together than ~0.55 of one chair cannot be two chairs on
+      // a plan whose chairs are all one size, so they are merged into their
+      // union. Measured on the venue plan: 63 such pairs out of 241.
+      {
+        const provisional=modalMagnitude(chairEntries.map(e=>Math.sqrt(e.comp.w*e.comp.h)));
+        if(provisional&&provisional.support>=4){
+          const minGap=provisional.value*.55;
+          const merged=[];
+          for(const e of chairEntries){
+            const cx=e.comp.x+e.comp.w/2,cy=e.comp.y+e.comp.h/2;
+            const hit=merged.find(m=>Math.hypot(cx-(m.comp.x+m.comp.w/2),cy-(m.comp.y+m.comp.h/2))<minGap);
+            if(!hit){merged.push(e);continue;}
+            const x1=Math.min(hit.comp.x,e.comp.x),y1=Math.min(hit.comp.y,e.comp.y);
+            const x2=Math.max(hit.comp.x+hit.comp.w,e.comp.x+e.comp.w),y2=Math.max(hit.comp.y+hit.comp.h,e.comp.y+e.comp.h);
+            hit.comp.x=x1;hit.comp.y=y1;hit.comp.w=x2-x1;hit.comp.h=y2-y1;
+            hit.comp.shape=null; // recomputed by analyze() below
+          }
+          if(merged.length!==chairEntries.length){
+            chairEntries.length=0;chairEntries.push(...merged);
+            for(const e of chairEntries)analyze([e.comp],e.labels);
+          }
+        }
+      }
       const chairComps=chairEntries.map(e=>e.comp);
       const chairModal=modalMagnitude(chairComps.map(c=>Math.sqrt(c.w*c.h)));
       // A trustworthy chair population is MANY objects of ONE size. If the
@@ -1472,7 +1499,18 @@
         unique.push(entry);
       }
       for(const entry of unique)analyze([entry.comp],entry.labels);
-      const modalArea=modalMagnitude(unique.map(u=>{const o=u.comp.shape?.obb;return o?o.w*o.h:u.comp.w*u.comp.h;}));
+      // The modal TABLE size must be measured over things that could be a
+      // table. Printed glyphs, dimension ticks and wall fragments outnumber the
+      // furniture on a busy plan, and letting them set the modal collapses it
+      // to a few hundred square pixels — after which the off-modal rule below
+      // prunes every real table for being "six times the modal". Measured on
+      // the venue plan: modal 274px^2 and 83 genuine tables dropped. A table is
+      // by definition at least as big as the plan's own chairs, so anything
+      // smaller is excluded from the estimate.
+      const chairAreaForModal=chairUniform&&chairModal?chairModal.value**2:null;
+      const areaOf=u=>{const o=u.comp.shape?.obb;return o?o.w*o.h:u.comp.w*u.comp.h;};
+      const modalPool=chairAreaForModal?unique.filter(u=>areaOf(u)>chairAreaForModal*1.3):unique;
+      const modalArea=modalMagnitude((modalPool.length>=4?modalPool:unique).map(areaOf));
       // Off-modal rejection. When the plan really is repetitive (a modal object
       // size supported by several objects), something a fifth the size of every
       // repeated object — a printed character, a dimension tick — is not a
