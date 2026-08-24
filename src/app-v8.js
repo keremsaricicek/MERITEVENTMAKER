@@ -1552,7 +1552,7 @@
       const candidates=chosen.map(s=>{
         const seatIndexes=chairsByTable.get(s.box.index)||[];
         return{id:uid("candidate"),kind:"table",type:s.shape.type,...toPercentBox(s.obb),rotation:s.obb.rotation,
-          confidence:s.confidence,status:"unreviewed",selected:s.confidence>=.48,
+          confidence:s.confidence,status:"unreviewed",selected:s.confidence>=calibratedThreshold(),
           chairDetections:seatIndexes.map(ci=>{
             const obb=chairOBB(chairs[ci]);
             return{id:uid("candidate-chair"),x:obb.cx/width*100,y:obb.cy/height*100,
@@ -1992,17 +1992,59 @@
     requestAnimationFrame(()=>applyReviewZoom(boundaryBox));
     return`<section class="planintel-screen"><header class="planintel-top"><button class="btn" data-review-action="back">${icon("arrow")}Floor Plan</button><div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):"No analysis yet")}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:a.ocr.reason||"no network"})):a.notice}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>Advanced Diagnostics</summary><div class="diag-pop">${detectionDiagnosticsHTML(a)}<div class="field"><label>Status</label><select data-review-filter="status"><option value="all">All</option>${["unreviewed","confirmed","rejected"].map(v=>`<option ${ui.reviewFilter===v?"selected":""}>${v}</option>`).join("")}</select></div><div class="field full"><label>Minimum confidence ${Math.round(ui.reviewConfidence*100)}%</label><input data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?"Cancel Drawing":t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">Save Verified Plan</button><button class="btn sm" data-review-action="improve">Improve AI (Local Calibration)</button></div></details><button class="btn" data-review-action="reanalyze">Re-Analyze</button>`:""}<button class="btn sm" data-review-action="toggle-lang">${ui.lang==="tr"?"TR":"EN"}</button></header>${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><div class="planintel-map-inner" id="analysisSceneInner"><img src="${event.background.src}" alt="Floor plan analysis source">${candidates.map(c=>candidateBox(c,selected?.id===c.id,target?.ids||null)).join("")}${boundaryBox?`<div class="review-group-boundary" style="left:${Math.max(0,boundaryBox.x-2.5)}%;top:${Math.max(0,boundaryBox.y-2.5)}%;width:${boundaryBox.w+5}%;height:${boundaryBox.h+5}%"></div>`:""}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="focus-group" data-group="${p.groupId}" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="Difficult question">${p.label}</button>`).join("")}</div></div>${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?"Analyzing locally…":"No analysis yet"}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
   }
+  // The confidence at which a fresh candidate arrives pre-selected. Local
+  // calibration (improveAI) writes state.calibration.recommendedConfidence
+  // from the operator's own verified plans; until this existed the button
+  // computed that number and nothing ever read it, so "Improve AI" changed
+  // nothing. This is threshold calibration from measured examples, not model
+  // training, and trainedModel stays false.
+  function calibratedThreshold(){
+    const v=state.calibration?.recommendedConfidence;
+    return Number.isFinite(v)?Math.max(.2,Math.min(.9,v)):.48;
+  }
+  // Spread a type correction across the candidates the similarity clustering
+  // already grouped with this one. Only touches candidates that are still
+  // unreviewed AND still carry the exact classification the operator just
+  // rejected, so it can never overwrite a decision they made themselves.
+  function applyCorrectionToFamily(event,corrected,wasKind,wasType){
+    const pi=event.analysis?.planIntelligence;if(!pi)return 0;
+    // Prefer the full similarity family; fall back to the review group.
+    const group=(pi.similarityGroups||[]).find(g=>(g.memberIds||[]).includes(corrected.id))
+      ||(pi.reviewGroups||[]).find(g=>(g.memberIds||[]).includes(corrected.id));
+    if(!group)return 0;
+    let n=0;
+    for(const id of group.memberIds){
+      if(id===corrected.id)continue;
+      const other=event.analysis.candidates.find(x=>x.id===id);
+      if(!other||other.status!=="unreviewed")continue;
+      if(other.kind!==wasKind||other.type!==wasType)continue;
+      other.kind=corrected.kind;other.type=corrected.type;
+      if(corrected.kind!=="table")other.chairDetections=[];
+      other.status="confirmed";other.selected=true;
+      rememberCorrection(event,other);
+      n++;
+    }
+    return n;
+  }
   function updateCandidateField(field,value){
     const event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(!c)return;
     if(field==="rotation")c.rotation=Number(value)||0;
     else if(field==="chairs"){const count=Math.max(0,Math.min(99,Number(value)||0));c.chairDetections=Array.from({length:count},(_,i)=>c.chairDetections?.[i]||{id:uid("candidate-chair"),x:c.x+c.w/2,y:c.y+c.h/2,w:.7,h:.7,rotation:0,confidence:.3});}
     else if(field==="kindtype"){
       const [kind,type]=value.split(":"),crossedKind=kind!==c.kind;
+      const wasKind=c.kind,wasType=c.type;
       c.kind=kind;c.type=type;
       if(crossedKind&&kind!=="table")c.chairDetections=[]; // a chair/armchair/sofa/stage/etc. candidate carries no nested seat detections of its own.
       c.status="confirmed";c.selected=true;
       rememberCorrection(event,c);
+      // One correction should repair the whole family, not one object. Every
+      // still-unreviewed candidate that the similarity clustering already
+      // considers the same shape gets the same correction. This is
+      // calibration against measured geometry, NOT model training -- nothing
+      // is learned across plans.
+      const spread=applyCorrectionToFamily(event,c,wasKind,wasType);
       recomputePlanIntelligence(event); // reclassifying can move a candidate in/out of furniture grouping, similarity clustering, review groups and the physical-seat capacity sum — never just relabel it.
+      if(spread)toast(t("review.correctionSpread",{n:spread}),"success",4200);
     }
     else c[field]=value;
     touchEvent(event);render();

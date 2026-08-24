@@ -311,6 +311,13 @@
       capacityEstimate: { physical: physicalSeats },
       capacityAudit,
       reviewGroups,
+      // The full similarity families, not just the ones that still need
+      // review. Documented in the contract at the top of this file but never
+      // actually returned, so a correction could only ever be spread across a
+      // family that happened to be flagged. A family the detector already
+      // considers consistent is exactly the one where a single correction
+      // should repair every member.
+      similarityGroups,
       uncertainQuestions,
     };
   }

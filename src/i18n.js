@@ -249,6 +249,7 @@
     "bulk.placement.array": { en: "Array", tr: "Dizi" },
     "canvas.multiSelectHint": { en: "Ctrl/Shift multi-select · Drag blank canvas for marquee · Arrow keys nudge", tr: "Ctrl/Shift ile çoklu seçim · Boş alanı sürükleyerek seçim kutusu · Ok tuşlarıyla ince ayar" },
     "canvas.selectedCount": { en: "{n} selected", tr: "{n} seçili" },
+    "review.correctionSpread": { en: "Same correction applied to {n} more object(s) of the same shape.", tr: "Aynı düzeltme, aynı şekildeki {n} nesneye daha uygulandı." },
     "guests.additionalNote": { en: "+{n} guests · {pax} total pax", tr: "+{n} misafir · {pax} toplam kişi" },
     "guests.unassigned": { en: "Unassigned", tr: "Atanmadı" },
 
