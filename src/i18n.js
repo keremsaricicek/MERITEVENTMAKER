@@ -104,6 +104,21 @@
 
     "diag.notInstalled": { en: "DOMAIN MODEL NOT INSTALLED", tr: "ALAN MODELİ KURULU DEĞİL" },
     "diag.classicalCV": { en: "Classical computer vision is active; no trained Merit model is installed in this browser review.", tr: "Klasik görüntü işleme aktif; bu tarayıcı incelemesinde eğitilmiş bir Merit modeli kurulu değil." },
+    // ---- Assisted Detection diagnostics ----
+    // These describe what the classical pipeline actually did on this plan.
+    // They must never imply a trained model: the path names describe pixel
+    // work, not inference.
+    "diag.path": { en: "Detection path", tr: "Algılama yolu" },
+    "diag.path.chairFirst": { en: "Chair-first — chairs were detected from their own colour/size model, then tables were inferred among them", tr: "Önce sandalye — sandalyeler kendi renk/boyut modelinden algılandı, masalar bunların arasından çıkarıldı" },
+    "diag.path.tableFirst": { en: "Table-first fallback — no separable chair population was found", tr: "Önce masa (yedek yol) — ayrıştırılabilir bir sandalye kümesi bulunamadı" },
+    "diag.chairSource": { en: "Chair evidence", tr: "Sandalye kanıtı" },
+    "diag.chairSource.colour": { en: "dominant saturated colour cluster measured in this drawing", tr: "bu çizimde ölçülen baskın doygun renk kümesi" },
+    "diag.chairSource.luma": { en: "brightness components only (this drawing has no separable colour)", tr: "yalnızca parlaklık bileşenleri (bu çizimde ayrıştırılabilir renk yok)" },
+    "diag.chairSource.none": { en: "no chair population was found", tr: "sandalye kümesi bulunamadı" },
+    "diag.chairsFound": { en: "{n} chairs detected · {associated} associated with a table · {orphans} not associated with any table", tr: "{n} sandalye algılandı · {associated} bir masayla ilişkilendirildi · {orphans} hiçbir masayla ilişkilendirilmedi" },
+    "diag.mergesSplit": { en: "{n} merged blob(s) split where the pixels showed a real gap", tr: "Piksellerde gerçek boşluk görülen {n} birleşik leke ayrıldı" },
+    "diag.capReached": { en: "Candidate cap reached — the lowest-agreement candidates were dropped, not the largest kept", tr: "Aday sınırına ulaşıldı — en büyükler değil, boyut uyumu en düşük adaylar elendi" },
+    "diag.textSuppressed": { en: "{n} candidate(s) discarded as printed text/labels via real OCR overlap", tr: "Gerçek OCR örtüşmesiyle {n} aday basılı yazı/etiket olarak elendi" },
 
     // ---- Guests screen ----
     "guests.title": { en: "Guest List", tr: "Misafir Listesi" },

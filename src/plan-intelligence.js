@@ -272,17 +272,30 @@
     const physicalSeats = computePhysicalCapacity(analysis.candidates);
     const capacityAudit = buildCapacityAudit(ocrText, physicalSeats, analysis.candidates);
     const venueCandidates = analysis.candidates.filter(c => c.kind === "venue");
+    // Which detection path actually ran is reported, not hidden: a chair-first
+    // pass (chairs detected from their own colour/size model, then tables
+    // inferred among them) and the table-first fallback have very different
+    // reliability, and the operator is entitled to know which one produced the
+    // number on screen. Passed straight through from the provider's real
+    // diagnostics — never asserted when the provider did not report it.
+    const diag = analysis.diagnostics || {};
     return {
       version: 1,
       providerMetadata: {
         engine: "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
         trainedModel: false,
+        detectionProvider: diag.provider || null,
+        detectionPath: diag.detectionPath || null,
+        chairSource: diag.chairSource || null,
         ocrEngine: ocrText != null ? "tesseract.js" : null,
         ocrAvailable: ocrText != null,
       },
       planSummary: {
         diningGroups: furnitureGroups.length,
         physicalSeats,
+        associatedSeats: countAssociatedSeats(analysis.candidates),
+        unassociatedChairs: countStandaloneChairs(analysis.candidates),
+        detectionPath: diag.detectionPath || null,
         stage: venueCandidates.filter(c => c.type === "stage").length,
         bar: venueCandidates.filter(c => c.type === "bar").length,
         entrances: venueCandidates.filter(c => c.type === "entrance").length,
