@@ -63,7 +63,9 @@
   }
   function refreshChairOccupancy(event){
     for(const table of event.tables||[])syncTableChairs(table).chairs.forEach(chair=>chair.occupancy=null);
-    for(const guest of event.guests||[]){if(!guest.assignment)return;const table=event.tables.find(t=>t.id===guest.assignment.tableId);if(!table)continue;(guest.assignment.seats||[]).forEach((seatIndex,partyIndex)=>{const chair=table.chairs[Number(seatIndex)];if(chair)chair.occupancy={guestId:guest.id,partyIndex,planned:true};});}
+    // `continue`, not `return`: this used to abort the whole loop at the first
+    // unassigned guest, leaving every later guest's chairs marked unoccupied.
+    for(const guest of event.guests||[]){if(!guest.assignment)continue;const table=event.tables.find(t=>t.id===guest.assignment.tableId);if(!table)continue;(guest.assignment.seats||[]).forEach((seatIndex,partyIndex)=>{const chair=table.chairs[Number(seatIndex)];if(chair)chair.occupancy={guestId:guest.id,partyIndex,planned:true};});}
   }
   function migrateEvent(event){
     const migrated={...event};
@@ -674,6 +676,23 @@
   // already localized by t() simply pass through unmatched.
   const baseToast=toast;
   toast=function(message,...rest){return baseToast(typeof translateToast==="function"?translateToast(message):message,...rest);};
+
+  // Cancel and the close X live inside <form method="dialog"> as untyped
+  // buttons, so both SUBMITTED the form: pressing Cancel on a guest edit
+  // committed it -- pax change, capacity check and seat repack included.
+  document.querySelectorAll("#guestDialog [value='cancel']").forEach(b=>{
+    b.type="button";
+    b.onclick=()=>document.getElementById("guestDialog").close("cancel");
+  });
+
+  // Importing guests is a mutation, but neither the wizard opener nor its
+  // import step consulted canMutate; protection was incidental (bindGuests
+  // simply never runs on historical events).
+  const baseOpenExcelWizard=typeof openExcelWizard==="function"?openExcelWizard:null;
+  if(baseOpenExcelWizard)openExcelWizard=function(...a){
+    if(!canMutate(activeEvent(),"import a guest list"))return;
+    return baseOpenExcelWizard(...a);
+  };
 
   function yieldFrame(){return new Promise(resolve=>requestAnimationFrame(()=>resolve()));}
   function sourceBlob(src){return fetch(src).then(r=>r.blob());}
