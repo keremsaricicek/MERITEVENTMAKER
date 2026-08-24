@@ -870,7 +870,7 @@
   // from being used as an object source.
   function maskSolidity(mask,width,height){
     let on=0,solid=0;
-    for(let y=1;y<height-1;y++)for(let x=1;x<width-1;x++){
+    for(let y=1;y<height-1;y+=2)for(let x=1;x<width-1;x++){ // every other row: this is a ratio, not a count
       const i=y*width+x;if(!mask[i])continue;on++;
       if(mask[i-1]&&mask[i+1]&&mask[i-width]&&mask[i+width])solid++;
     }
@@ -886,24 +886,49 @@
   // so adjacent tables stay two objects. It also makes a chair drawn ON TOP OF
   // a table outline harmless: it cannot leak into the interior.
   function enclosedRegions(barrier,width,height){
-    const reached=new Uint8Array(barrier.length),stack=new Int32Array(barrier.length);
+    const reached=new Uint8Array(barrier.length),stack=scratchQueue(barrier.length);
     let sp=0;
-    const push=i=>{if(!barrier[i]&&!reached[i]){reached[i]=1;stack[sp++]=i;}};
-    for(let x=0;x<width;x++){push(x);push((height-1)*width+x);}
-    for(let y=0;y<height;y++){push(y*width);push(y*width+width-1);}
+    const seed=i=>{if(!barrier[i]&&!reached[i]){reached[i]=1;stack[sp++]=i;}};
+    for(let x=0;x<width;x++){seed(x);seed((height-1)*width+x);}
+    for(let y=0;y<height;y++){seed(y*width);seed(y*width+width-1);}
+    // Span/scanline flood rather than per-pixel: the background of a floor plan
+    // is most of the image, and pushing every background pixel individually was
+    // the single most expensive step in the pass. Each pop fills a whole run and
+    // seeds only the FIRST open pixel of each run in the rows above and below.
     while(sp){
-      const p=stack[--sp],x=p%width,y=(p/width)|0;
-      if(x>0)push(p-1);
-      if(x<width-1)push(p+1);
-      if(y>0)push(p-width);
-      if(y<height-1)push(p+width);
+      const p=stack[--sp],y=(p/width)|0,rowStart=y*width,rowEnd=rowStart+width-1;
+      let l=p;while(l>rowStart&&!barrier[l-1]&&!reached[l-1]){l--;reached[l]=1;}
+      let r=p;while(r<rowEnd&&!barrier[r+1]&&!reached[r+1]){r++;reached[r]=1;}
+      if(y>0){
+        let run=false;
+        for(let q=l-width;q<=r-width;q++){
+          if(barrier[q]||reached[q]){run=false;continue;}
+          if(!run){reached[q]=1;stack[sp++]=q;run=true;}
+        }
+      }
+      if(y<height-1){
+        let run=false;
+        for(let q=l+width;q<=r+width;q++){
+          if(barrier[q]||reached[q]){run=false;continue;}
+          if(!run){reached[q]=1;stack[sp++]=q;run=true;}
+        }
+      }
     }
-    const out=new Uint8Array(barrier.length);
-    for(let i=0;i<out.length;i++)if(!barrier[i]&&!reached[i])out[i]=1;
-    return out;
+    // Inverted in place (enclosed = not ink, not reachable from the border)
+    // rather than into a second full-size array.
+    for(let i=0;i<reached.length;i++)reached[i]=(!barrier[i]&&!reached[i])?1:0;
+    return reached;
+  }
+  // One shared BFS work queue. Each labelling pass used to allocate (and
+  // zero-fill) 4 bytes per pixel just to throw it away; the queue is always
+  // written before it is read, so it can be reused across passes.
+  let SCRATCH_QUEUE=null;
+  function scratchQueue(size){
+    if(!SCRATCH_QUEUE||SCRATCH_QUEUE.length<size)SCRATCH_QUEUE=new Int32Array(size);
+    return SCRATCH_QUEUE;
   }
   function labelComponents(mask,width,height,minPixels,connect8){
-    const labels=new Int32Array(mask.length),queue=new Int32Array(mask.length),comps=[];
+    const labels=new Int32Array(mask.length),queue=scratchQueue(mask.length),comps=[];
     let label=0;
     for(let start=0;start<mask.length;start++){
       if(!mask[start]||labels[start])continue;
@@ -1123,6 +1148,18 @@
   }
 
   // ---- Candidate geometry helpers ----------------------------------------
+  // "Are these two boxes the SAME physical object?" — overlap measured against
+  // the smaller box (two masks rarely agree on the exact extent of one object)
+  // AND a size sanity check, because a chair sitting inside a table's bounding
+  // box also overlaps it completely without being the same object.
+  function sameObject(a,b,sizeRatio=2.5){
+    const x1=Math.max(a.x,b.x),y1=Math.max(a.y,b.y);
+    const x2=Math.min(a.x+a.w,b.x+b.w),y2=Math.min(a.y+a.h,b.y+b.h);
+    const inter=Math.max(0,x2-x1)*Math.max(0,y2-y1);
+    if(!inter)return false;
+    const areaA=a.w*a.h,areaB=b.w*b.h;
+    return inter/Math.min(areaA,areaB)>.5&&Math.max(areaA,areaB)<=Math.min(areaA,areaB)*sizeRatio;
+  }
   function boxIoU(a,b){
     const x1=Math.max(a.x,b.x),y1=Math.max(a.y,b.y);
     const x2=Math.min(a.x+a.w,b.x+b.w),y2=Math.min(a.y+a.h,b.y+b.h);
@@ -1146,19 +1183,31 @@
     async detect(pixels,width,height,{onStage}={}){
       const stage=onStage||(async()=>{});
       const total=width*height,data=pixels.data;
+      // Real measured phase timings, reported in diagnostics so a future
+      // performance change can be judged against numbers instead of a feeling.
+      const phaseMs={};let phaseFrom=performance.now();
+      const mark=name=>{const now=performance.now();phaseMs[name]=Math.round(now-phaseFrom);phaseFrom=now;};
       // ---- pass 1: luma + histogram + RGB colour histogram, one loop ----
       const gray=new Uint8Array(total),hist=new Uint32Array(256);
-      const binCount=new Uint32Array(RGB_BINS),binR=new Float64Array(RGB_BINS),binG=new Float64Array(RGB_BINS),binB=new Float64Array(RGB_BINS);
-      let sum=0;
-      for(let i=0,o=0;i<total;i++,o+=4){
-        const r=data[o],g=data[o+1],b=data[o+2];
-        const v=Math.round(r*.299+g*.587+b*.114);
-        gray[i]=v;hist[v]++;sum+=v;
-        const bin=rgbBinIndex(r,g,b);
-        binCount[bin]++;binR[bin]+=r;binG[bin]+=g;binB[bin]+=b;
+      // The colour model is a global statistic, so it is built from a fixed 2x2
+      // subsample (deterministic, ~25% of the pixels) instead of every pixel.
+      const binCount=new Uint32Array(RGB_BINS),binR=new Uint32Array(RGB_BINS),binG=new Uint32Array(RGB_BINS),binB=new Uint32Array(RGB_BINS);
+      let sum=0,sampled=0;
+      for(let y=0;y<height;y++){
+        const rowSampled=(y&1)===0;
+        for(let x=0,i=y*width,o=i*4;x<width;x++,i++,o+=4){
+          const r=data[o],g=data[o+1],b=data[o+2];
+          const v=Math.round(r*.299+g*.587+b*.114);
+          gray[i]=v;hist[v]++;sum+=v;
+          if(rowSampled&&(x&1)===0){
+            const bin=rgbBinIndex(r,g,b);
+            binCount[bin]++;binR[bin]+=r;binG[bin]+=g;binB[bin]+=b;sampled++;
+          }
+        }
       }
       const threshold=otsu(hist,total,sum);
-      await stage("understanding",30);
+      mark("pixels");
+      await stage("understanding",30);phaseFrom=performance.now();
       // ---- pass 2: adaptive fill mask and Sobel edge map, kept SEPARATE ----
       // FIX #2: the edge map is no longer OR-ed into the mask that gets
       // labelled. It is used only as a BARRIER for enclosed-region extraction
@@ -1179,8 +1228,10 @@
         barrier[i]=(fillMask[i]||edgeMask[i])?1:0;
       }
       const binary=barrier; // same union the previous pipeline labelled; kept for computeVisualDescriptor
-      const colorModel=buildColorModel(binCount,binR,binG,binB,total);
-      await stage("understanding",42);
+      mark("binarize");
+      const colorModel=buildColorModel(binCount,binR,binG,binB,sampled);
+      mark("colourModel");
+      await stage("understanding",42);phaseFrom=performance.now();
 
       const area=total,minDim=Math.min(width,height);
       const minPixels=Math.max(10,Math.round(area*.000006));
@@ -1189,9 +1240,10 @@
       const chairSizeOk=c=>notWall(c)&&Math.min(c.w,c.h)>=3&&Math.max(c.w,c.h)<=minDim*.065&&c.w*c.h<area*.0028;
       const venueSizeOk=c=>notWall(c)&&c.w*c.h>area*.008&&c.w*c.h<area*.12&&(c.aspect>3.1||c.aspect<.32);
 
-      // Shape analysis scans each candidate's own window, so it is bounded by
-      // a real pixel budget rather than trusting the size filters to keep the
-      // candidate count sane on a pathological drawing.
+      // Shape analysis scans each candidate's own window, so it runs as late as
+      // possible (only on candidates that survived de-duplication) and is
+      // bounded by a real pixel budget rather than trusting the size filters to
+      // keep the candidate count sane on a pathological drawing.
       let shapeBudget=area*6;
       const analyze=(comps,labels)=>{
         for(const c of comps){
@@ -1205,15 +1257,20 @@
 
       // ---- object sources --------------------------------------------------
       const sources=[],diagnosticsSources={};
-      let fallbackChairComps=[],accentMask=null;
+      // Chair-size components are collected per source at the same time, in
+      // order of how specific the evidence is (a dedicated colour cluster
+      // beats a tone cluster beats "it was dark enough to threshold").
+      const chairSources=[];
+      let fallbackChairComps=[],fallbackChairLabels=null,accentMask=null;
       // (a) interiors of closed outlines — the primary table source
       {
         const enclosed=enclosedRegions(barrier,width,height);
         const{labels,comps}=labelComponents(enclosed,width,height,minPixels,false);
-        const kept=analyze(comps.filter(c=>tableSizeOk(c)&&c.fill>=.35),labels);
+        const kept=comps.filter(c=>tableSizeOk(c)&&c.fill>=.35);
         for(const c of kept)c.source="interior";
         diagnosticsSources.interior=kept.length;
         sources.push({name:"interior",labels,comps:kept,all:comps});
+        mark("interiors");
       }
       // (b) tinted/solid fills straight from the colour model — one mask per
       //     tone family, so a mid-grey chair fill and a pale table fill cannot
@@ -1225,39 +1282,79 @@
         masks.tints.forEach((mask,index)=>{
           if(maskSolidity(mask,width,height)<.25)return; // antialiasing fringe along outlines, not a real filled object
           const{labels,comps}=labelComponents(mask,width,height,minPixels,true);
-          const kept=analyze(comps.filter(c=>tableSizeOk(c)&&c.fill>=.35),labels);
+          const kept=comps.filter(c=>tableSizeOk(c)&&c.fill>=.35);
           for(const c of kept)c.source="tone";
           toneKept+=kept.length;
           sources.push({name:"tone"+index,labels,comps:kept,all:comps});
+          // On a neutral drawing one tone family IS the chairs (a mid-grey
+          // chair fill against a pale table fill), so tone families are a real
+          // chair source, not only a table source.
+          chairSources.push({name:"tone-cluster",labels,comps:comps.filter(c=>chairSizeOk(c)&&c.fill>=.3)});
         });
         diagnosticsSources.tone=toneKept;
+        mark("toneMasks");
       }
       // (c) solid dark objects straight from the fill mask (no edges OR-ed in)
       {
         const{labels,comps}=labelComponents(fillMask,width,height,minPixels,true);
-        const kept=analyze(comps.filter(c=>tableSizeOk(c)&&c.fill>=.35),labels);
+        const kept=comps.filter(c=>tableSizeOk(c)&&c.fill>=.35);
         for(const c of kept)c.source="fill";
         diagnosticsSources.fill=kept.length;
         sources.push({name:"fill",labels,comps:kept,all:comps});
-        fallbackChairComps=analyze(comps.filter(c=>chairSizeOk(c)&&c.fill>=.045),labels);
-        for(const c of fallbackChairComps)c.source="fill";
+        fallbackChairComps=comps.filter(c=>chairSizeOk(c)&&c.fill>=.045);
+        fallbackChairLabels=labels;
         diagnosticsSources.fallbackChairComponents=fallbackChairComps.length;
+        mark("fillMask");
       }
-      await stage("seating",58);
+      await stage("seating",58);phaseFrom=performance.now();
 
       // ---- STAGE B: chairs first -------------------------------------------
       // Chairs are detected from their OWN model before any table is
       // considered. That is what stops a chair drawn against a table outline
       // from being swallowed by the table blob, and it makes the seat count
-      // independent of whether a table was found at all.
-      let chairComps=[],chairSource="none";
+      // independent of whether a table was found at all. On this product's
+      // plans the chair count IS the number the operator needs (pax), so it is
+      // a first-class output, not a by-product of table detection.
       if(accentMask){
         const{labels,comps}=labelComponents(accentMask,width,height,Math.max(6,Math.round(minPixels*.6)),true);
-        chairComps=analyze(comps.filter(c=>chairSizeOk(c)&&c.fill>=.3),labels);
-        for(const c of chairComps)c.source="colour";
-        chairSource="colour-cluster";
+        chairSources.unshift({name:"colour-cluster",labels,comps:comps.filter(c=>chairSizeOk(c)&&c.fill>=.3)});
       }
-      if(chairComps.length<6&&fallbackChairComps.length){chairComps=fallbackChairComps;chairSource="luma-components";}
+      // The same physical chair can surface in more than one mask; the most
+      // specific source wins and the duplicate is dropped (overlap of the
+      // smaller box, not IoU, because the masks disagree slightly on size).
+      const chairEntries=[];
+      const addChairs=(comps,labels,name)=>{
+        for(const c of comps){
+          if(chairEntries.some(e=>sameObject(e.comp,c)))continue;
+          c.source=name;
+          chairEntries.push({comp:c,labels,source:name});
+        }
+      };
+      let chairSource="none";
+      const specificCount=chairSources.reduce((n,src)=>n+src.comps.length,0);
+      if(specificCount>=6){
+        for(const src of chairSources)addChairs(src.comps,src.labels,src.name);
+        chairSource=chairSources.find(src=>src.comps.length)?.name||"none";
+      }else if(fallbackChairComps.length){
+        addChairs(fallbackChairComps,fallbackChairLabels,"luma-components");
+        chairSource="luma-components";
+      }
+      // Two chairs drawn a pixel or two apart merge into one blob. Where the
+      // pixels actually show the gap, the same evidence-gated valley split used
+      // for tables recovers both — measured, never assumed.
+      const chairModalPre=modalMagnitude(chairEntries.map(e=>Math.sqrt(e.comp.w*e.comp.h)));
+      if(chairModalPre){
+        const modalSide=chairModalPre.value;
+        for(let i=chairEntries.length-1;i>=0;i--){
+          const e=chairEntries[i];
+          if(Math.max(e.comp.w,e.comp.h)<modalSide*1.7)continue;
+          const parts=splitAtValley(e.comp,e.labels,width,height,modalSide,modalSide);
+          if(!parts||parts.length<2)continue;
+          chairEntries.splice(i,1,...parts.map(p=>({comp:Object.assign(p,{source:e.source}),labels:e.labels,source:e.source})));
+        }
+      }
+      for(const e of chairEntries)analyze([e.comp],e.labels);
+      const chairComps=chairEntries.map(e=>e.comp);
       const chairModal=modalMagnitude(chairComps.map(c=>Math.sqrt(c.w*c.h)));
       // A trustworthy chair population is MANY objects of ONE size. If the
       // population is not uniform we say so in the result and fall back to the
@@ -1265,6 +1362,7 @@
       const chairUniform=!!chairModal&&chairComps.length>=6&&chairModal.support/chairModal.total>=.6;
       const chairs=chairUniform?chairComps.filter(c=>sizeAgreement(Math.sqrt(c.w*c.h),chairModal)>=.25):chairComps;
       const detectionPath=chairUniform?"chair-first":"table-first";
+      mark("chairs");
 
       // ---- table candidate pool --------------------------------------------
       let pool=[];
@@ -1274,7 +1372,7 @@
       // small tables (they did before — a 17px chair passes the table size
       // floor on a 1000px-tall plan) and cannot drag the modal table size down.
       if(chairUniform&&chairs.length){
-        pool=pool.filter(p=>!chairs.some(ch=>boxIoU(p.comp,ch)>=.4));
+        pool=pool.filter(p=>!chairs.some(ch=>sameObject(p.comp,ch)));
       }
       const modalLong=modalMagnitude(pool.map(p=>Math.max(p.comp.shape?.obb.w||p.comp.w,p.comp.shape?.obb.h||p.comp.h)));
       const modalShort=modalMagnitude(pool.map(p=>Math.min(p.comp.shape?.obb.w||p.comp.w,p.comp.shape?.obb.h||p.comp.h)));
@@ -1300,6 +1398,7 @@
         if(unique.some(u=>boxIoU(entry.comp,u.comp)>=.45))continue;
         unique.push(entry);
       }
+      for(const entry of unique)analyze([entry.comp],entry.labels);
       const modalArea=modalMagnitude(unique.map(u=>{const o=u.comp.shape?.obb;return o?o.w*o.h:u.comp.w*u.comp.h;}));
 
       // ---- chair -> table association: one chair, at most one table --------
@@ -1392,6 +1491,7 @@
           evidence:{geometry:.62,chairs:0,repetition:0,source:c.source||"fill"}};
       }).concat(chairVenues);
 
+      mark("tables");
       const associatedSeats=candidates.reduce((n,c)=>n+c.chairDetections.length,0);
       return{
         candidates,venues,gray,binary,threshold,
@@ -1403,7 +1503,7 @@
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
           mergesSplit:splitCount,candidateCapReached:capReached,
-          sources:diagnosticsSources,
+          sources:diagnosticsSources,phaseMs,
           colorModel:colorModel?{...colorModel.summary,isColorPlan:colorModel.isColorPlan,tintFamilies:colorModel.tintFamilies}:null,
         },
       };
