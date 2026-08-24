@@ -228,7 +228,12 @@
   function computePhysicalCapacity(candidates) {
     return candidates.reduce((n, c) => {
       if (c.status === "rejected") return n;
-      if (c.kind === "venue" && c.type === "chair") return n + 1;
+      // A standalone chair object seats exactly one person.
+      if (c.kind === "chair" || (c.kind === "venue" && c.type === "chair")) return n + 1;
+      // Only tables seat people. A stage, a bar, or a stray printed label that
+      // happened to have a chair associated with it must never inflate the
+      // capacity the operator plans against.
+      if (c.kind !== "table") return n;
       return n + (c.chairDetections?.length || 0);
     }, 0);
   }

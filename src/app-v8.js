@@ -1867,10 +1867,16 @@
     if(!outer||!inner)return;
     if(!bbox){inner.style.transform="";return;}
     const rect=outer.getBoundingClientRect();if(!rect.width||!rect.height)return;
+    // Percentages are relative to the inner box (the rendered plan image), and
+    // that box is centred inside the outer panel rather than filling it, so
+    // measure both: offsetWidth/offsetLeft are layout values and are not
+    // affected by the transform already on the element.
+    const iw=inner.offsetWidth||rect.width,ih=inner.offsetHeight||rect.height;
+    const ox=inner.offsetLeft,oy=inner.offsetTop;
     const pad=.4,tx=Math.max(0,bbox.x-bbox.w*pad),ty=Math.max(0,bbox.y-bbox.h*pad),tw=Math.min(100-tx,bbox.w*(1+2*pad)||20),th=Math.min(100-ty,bbox.h*(1+2*pad)||20);
     const scale=Math.max(1,Math.min(4,Math.min(100/Math.max(8,tw),100/Math.max(8,th))));
-    const cxPx=(tx+tw/2)/100*rect.width,cyPx=(ty+th/2)/100*rect.height;
-    inner.style.transform=`translate(${rect.width/2-cxPx*scale}px, ${rect.height/2-cyPx*scale}px) scale(${scale})`;
+    const cxPx=(tx+tw/2)/100*iw,cyPx=(ty+th/2)/100*ih;
+    inner.style.transform=`translate(${rect.width/2-ox-cxPx*scale}px, ${rect.height/2-oy-cyPx*scale}px) scale(${scale})`;
   }
   function candidateBox(c,selected,targetIds){
     const reviewCls=targetIds?(targetIds.has(c.id)?"review-target":"review-dimmed"):"";
