@@ -1441,18 +1441,21 @@
   // cannot help with). A split is only made where the pixels actually show a
   // density valley AND both halves land near the modal object size — never
   // "this looks twice as big, cut it in half".
-  function splitAtValley(comp,labels,width,height,modalLong,modalShort){
-    if(!modalLong||!modalShort)return null;
-    const horizontal=comp.w>=comp.h;
+  // Cut one axis of a blob wherever the pixel profile shows a real valley, and
+  // only when every resulting part is a clean repeat of the modal object. A
+  // valley that does not produce modal-sized parts is not a table boundary, and
+  // inventing one is worse than leaving the blob merged.
+  function splitAlongAxis(comp,labels,width,height,horizontal,modalSpan,modalAcross){
+    if(!modalSpan||!modalAcross)return null;
     const long=horizontal?comp.w:comp.h,short=horizontal?comp.h:comp.w;
-    if(long<modalLong*1.7||short>modalShort*1.45||short<modalShort*.55)return null;
+    if(long<modalSpan*1.7||short<modalAcross*.55)return null;
     const n=horizontal?comp.w:comp.h,across=horizontal?comp.h:comp.w,profile=new Int32Array(n);
     for(let a=0;a<across;a++)for(let b=0;b<n;b++){
       const gx=horizontal?comp.x+b:comp.x+a,gy=horizontal?comp.y+a:comp.y+b;
       if(gx<width&&gy<height&&labels[gy*width+gx]===comp.label)profile[b]++;
     }
     let sum=0;for(let i=0;i<n;i++)sum+=profile[i];
-    const mean=sum/n,floor=mean*.35,guard=Math.round(modalLong*.45),cuts=[];
+    const mean=sum/n,floor=mean*.35,guard=Math.round(modalSpan*.45),cuts=[];
     let runStart=-1;
     for(let i=guard;i<n-guard;i++){
       if(profile[i]<=floor){if(runStart<0)runStart=i;}
@@ -1463,7 +1466,7 @@
     const bounds=[0,...cuts,n],parts=[];
     for(let i=0;i<bounds.length-1;i++){
       const from=bounds[i],to=bounds[i+1],len=to-from;
-      if(len<modalLong*.55||len>modalLong*1.6)return null; // not a clean repeat of the modal object: leave the blob alone rather than inventing a boundary
+      if(len<modalSpan*.55||len>modalSpan*1.6)return null; // not a clean repeat of the modal object: leave the blob alone rather than inventing a boundary
       parts.push({from,to});
     }
     if(parts.length<2)return null;
@@ -1480,6 +1483,34 @@
       return{label:comp.label,x:minX,y:minY,w,h,count,aspect:w/h,fill:count/(w*h),
         cx:(minX+maxX)/2,cy:(minY+maxY)/2,pcaRotation:comp.pcaRotation,wasSplit:true};
     }).filter(Boolean);
+  }
+  // Tables in a banquet plan are laid out in GRIDS, not just rows: on the real
+  // venue plan the fused blobs measured about 1.5 x 2 and 1 x 3 modal tables.
+  // A single-axis cut cannot separate those -- it used to refuse outright the
+  // moment a blob was wider than one table across, which is why the split pass
+  // never fired on a real plan. So cut the long axis first, then try the other
+  // axis inside each strip. Both passes keep the "every part must be a clean
+  // repeat of the modal object" rule, so a blob that is not a grid of tables is
+  // still left alone rather than carved into invented objects.
+  function splitAtValley(comp,labels,width,height,modalLong,modalShort){
+    if(!modalLong||!modalShort)return null;
+    const first=comp.w>=comp.h;
+    const strips=splitAlongAxis(comp,labels,width,height,first,modalLong,modalShort)
+      ||splitAlongAxis(comp,labels,width,height,!first,modalShort,modalLong);
+    const stage1=strips||[comp];
+    const out=[];
+    for(const strip of stage1){
+      const across=strip.w>=strip.h;
+      // Cut the perpendicular axis of each strip. Spans are swapped because a
+      // strip's long side is now roughly one modal table.
+      const cells=splitAlongAxis(strip,labels,width,height,across,
+        across?modalLong:modalShort, across?modalShort:modalLong);
+      if(cells&&cells.length>1)out.push(...cells);
+      else out.push(strip);
+    }
+    if(out.length<2)return null;
+    // Never return the untouched original dressed up as a split.
+    return out.length===1&&out[0]===comp?null:out.map(c=>c===comp?c:{...c,wasSplit:true});
   }
 
   // ---- Candidate geometry helpers ----------------------------------------
@@ -1755,8 +1786,31 @@
       if(chairUniform&&chairs.length){
         pool=pool.filter(p=>!chairs.some(ch=>sameObject(p.comp,ch)));
       }
-      const modalLong=modalMagnitude(pool.map(p=>Math.max(p.comp.shape?.obb.w||p.comp.w,p.comp.shape?.obb.h||p.comp.h)));
-      const modalShort=modalMagnitude(pool.map(p=>Math.min(p.comp.shape?.obb.w||p.comp.w,p.comp.shape?.obb.h||p.comp.h)));
+      // The modal has to describe a TABLE, not the pool. Walls, printed text and
+      // venue objects are all still in here, and a modal dragged out toward a
+      // long wall makes every genuinely fused blob look too short to be a run --
+      // which is the second reason the split pass never fired on a real plan.
+      // Same filtering idea already used for the downstream modal table area:
+      // drop anything chair-sized, and drop anything shaped like a wall.
+      const spanOf=p=>{const o=p.comp.shape?.obb;
+        const w=o?.w||p.comp.w,h=o?.h||p.comp.h;
+        return{long:Math.max(w,h),short:Math.min(w,h)};};
+      const chairAreaFloor=chairUniform&&chairModal?chairModal.value**2:0;
+      // Both dimensions, not just area: an area-only floor still admits things
+      // one chair wide, which drags the SHORT modal down to chair scale -- and a
+      // chair-scale short modal lets the split halve real tables. Measured on
+      // the real plan: area-only gave a 68x39 modal against a ~38px chair and
+      // over-split to 51 tables where about 45 exist.
+      const chairSpanFloor=chairUniform&&chairModal?chairModal.value*1.15:0;
+      const furnitureish=pool.filter(p=>{
+        const s=spanOf(p);
+        if(chairAreaFloor&&s.long*s.short<=chairAreaFloor*1.3)return false;
+        if(chairSpanFloor&&s.short<=chairSpanFloor)return false;
+        return s.long/Math.max(1,s.short)<=4;
+      });
+      const spanPool=furnitureish.length>=4?furnitureish:pool;
+      const modalLong=modalMagnitude(spanPool.map(p=>spanOf(p).long));
+      const modalShort=modalMagnitude(spanPool.map(p=>spanOf(p).short));
       let splitCount=0;
       const expanded=[];
       for(const entry of pool){
@@ -1921,7 +1975,7 @@
           chairsDetected:chairs.length,chairsAssociated:associatedSeats,chairsUnassociated:chairVenues.length,
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
-          mergesSplit:splitCount,candidateCapReached:capReached,offModalDropped,
+          mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,
           sources:diagnosticsSources,phaseMs,
           colorModel:accentModel?{isColorPlan:accentModel.isColorPlan,accentHue:accentModel.accentHue,
             accentChroma:accentModel.accentChroma,accentFraction:Number(accentModel.accentFraction.toFixed(4)),
