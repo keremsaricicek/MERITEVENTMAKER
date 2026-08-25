@@ -226,7 +226,41 @@
 
   function setupHTML(){
     const d=newEventDraft;
-    return`<section class="setup-screen"><header class="setup-top">${topBrand()}<button class="btn" data-setup="cancel">${icon("x")}Cancel</button></header><div class="setup-shell"><section class="setup-panel"><div class="kicker">NEW EVENT · FULL SETUP</div><h1>Create Event</h1><p>Event identity, venue information and optional cover are stored separately from the plan.</p><form id="v8EventForm" class="setup-form"><div class="field full"><label>Event Name</label><input name="name" required autocomplete="off" value="${esc(d.name)}" placeholder="Event name"></div><div class="field"><label>Date</label><input name="date" type="date" required value="${esc(d.date)}"></div><div class="field"><label>Status</label><select name="status">${["Planning","Confirmed","Live"].map(s=>`<option ${d.status===s?"selected":""}>${s}</option>`).join("")}</select></div><div class="field"><label>Hotel</label><input name="hotel" required value="${esc(d.hotel)}" placeholder="Hotel"></div><div class="field"><label>Salon</label><input name="salon" value="${esc(d.salon)}" placeholder="Salon / hall"></div><div class="field full"><label>Optional Event Cover</label><label class="cover-drop" data-cover-drop>${d.coverImage?`<img src="${d.coverImage}" alt="Event cover" style="width:100%;height:100%;object-fit:cover">`:`<span>${icon("image")} Choose JPG or PNG cover</span>`}<input id="v8CoverFile" type="file" accept="image/png,image/jpeg" hidden></label>${d.coverImage?`<div class="file-tools"><button class="btn sm" type="button" data-setup="remove-cover">Remove cover</button></div>`:""}</div></form></section><section class="setup-panel"><div class="kicker">FLOOR PLAN · OPTIONAL</div><h1>Import or start blank</h1><p>PNG, JPG, JPEG and every page of a PDF are processed locally in this browser.</p><label class="plan-drop" id="v8PlanDrop">${d.planSrc?`<img class="plan-preview" src="${d.planSrc}" alt="Selected floor plan"><strong>${esc(d.planName)}</strong>`:`${icon("image")}<strong>Drop a floor plan here</strong><span>or click to choose PNG, JPG, JPEG or PDF</span>`}<input id="v8PlanFile" type="file" accept="image/png,image/jpeg,application/pdf,.png,.jpg,.jpeg,.pdf" hidden></label>${d.pdfPages?.length?`<div class="pdf-pages">${d.pdfPages.map((p,i)=>`<button class="pdf-page ${d.pdfPage===i?"active":""}" type="button" data-pdf-page="${i}"><canvas data-pdf-thumb="${i}"></canvas><span>Page ${i+1}</span></button>`).join("")}</div>`:""}<div class="file-tools">${d.planSrc?`<button class="btn sm" data-setup="replace-plan">Replace</button><button class="btn sm danger" data-setup="remove-plan">Remove</button>`:""}</div><div class="privacy-note">Nothing is uploaded. PDF rendering, image analysis, guest data and autosave stay in this browser profile.</div><div class="setup-actions"><button class="btn" data-setup="blank" ${ui.setupBusy?"disabled":""}>Continue Without Floor Plan</button><button class="btn primary" data-setup="create" ${ui.setupBusy?"disabled":""}>${ui.setupBusy?"Preparing plan…":"Create Event"}${icon("arrow")}</button></div></section></div></section>`;
+    const statuses=["Planning","Confirmed","Live"];
+    return`<section class="mx-setup">
+      <header class="mx-setup-top">${topBrand()}<button class="btn" data-setup="cancel">${icon("x")}${t("setup.cancel")}</button></header>
+      <div class="mx-setup-body">
+        <section class="mx-panel">
+          <div class="kicker">${t("setup.eyebrow")}</div>
+          <h2>${t("setup.title")}</h2>
+          <p>${t("setup.subtitle")}</p>
+          <form id="v8EventForm" class="mx-form">
+            <div class="field full"><label>${t("setup.eventName")}</label><input name="name" required autocomplete="off" value="${esc(d.name)}" placeholder="${t("setup.eventNamePh")}"></div>
+            <div class="field"><label>${t("setup.date")}</label><input name="date" type="date" required value="${esc(d.date)}"></div>
+            <div class="field"><label>${t("setup.status")}</label><select name="status">${statuses.map(s=>`<option value="${s}" ${d.status===s?"selected":""}>${t("setup.status."+s)}</option>`).join("")}</select></div>
+            <div class="field"><label>${t("setup.hotel")}</label><input name="hotel" required value="${esc(d.hotel)}" placeholder="${t("setup.hotelPh")}"></div>
+            <div class="field"><label>${t("setup.salon")}</label><input name="salon" value="${esc(d.salon)}" placeholder="${t("setup.salonPh")}"></div>
+            <div class="field full"><label>${t("setup.cover")} · ${t("setup.coverOptional")}</label>
+              <label class="mx-drop cover" data-cover-drop>${d.coverImage?`<img src="${d.coverImage}" alt="">`:`<span>${icon("image")} ${t("setup.chooseCover")}</span>`}<input id="v8CoverFile" type="file" accept="image/png,image/jpeg" hidden></label>
+              ${d.coverImage?`<div class="mx-setup-actions" style="margin-top:9px"><button class="btn sm" type="button" data-setup="remove-cover">${t("setup.removeCover")}</button></div>`:""}
+            </div>
+          </form>
+        </section>
+        <section class="mx-panel">
+          <div class="kicker">${t("setup.planEyebrow")}</div>
+          <h2>${t("setup.planTitle")}</h2>
+          <p>${t("setup.planSubtitle")}</p>
+          <label class="mx-drop" id="v8PlanDrop">${d.planSrc?`<img src="${d.planSrc}" alt=""><strong>${esc(d.planName)}</strong>`:`${icon("image")}<strong>${t("setup.dropPlan")}</strong><span>${t("setup.dropPlanHint")}</span>`}<input id="v8PlanFile" type="file" accept="image/png,image/jpeg,application/pdf,.png,.jpg,.jpeg,.pdf" hidden></label>
+          ${d.pdfPages?.length?`<div class="pdf-pages">${d.pdfPages.map((p,i)=>`<button class="pdf-page ${d.pdfPage===i?"active":""}" type="button" data-pdf-page="${i}"><canvas data-pdf-thumb="${i}"></canvas><span>${t("setup.page",{n:i+1})}</span></button>`).join("")}</div>`:""}
+          ${d.planSrc?`<div class="mx-setup-actions" style="margin-top:11px;justify-content:flex-start"><button class="btn sm" data-setup="replace-plan">${t("setup.replacePlan")}</button><button class="btn sm danger" data-setup="remove-plan">${t("setup.removePlan")}</button></div>`:""}
+          <p class="mx-note">${t("setup.privacy")}</p>
+          <div class="mx-setup-actions">
+            <button class="btn" data-setup="blank" ${ui.setupBusy?"disabled":""}>${t("setup.continueBlank")}</button>
+            <button class="btn primary" data-setup="create" ${ui.setupBusy?"disabled":""}>${ui.setupBusy?t("setup.preparing"):t("setup.create")}${icon("arrow")}</button>
+          </div>
+        </section>
+      </div>
+    </section>`;
   }
   let newEventDraft={name:"",date:"",hotel:"",salon:"",status:"Planning",coverImage:"",planSrc:"",planName:"",pdfDoc:null,pdfPages:[],pdfPage:0};
   function startNewEvent(){newEventDraft={name:"",date:new Date(Date.now()+7*86400000).toLocaleDateString("en-CA"),hotel:"",salon:"",status:"Planning",coverImage:"",planSrc:"",planName:"",pdfDoc:null,pdfPages:[],pdfPage:0};ui.screen="new-event";render();}
