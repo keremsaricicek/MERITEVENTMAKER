@@ -159,6 +159,16 @@
     "guests.col.tableSeat": { en: "Table / Seat", tr: "Masa / Koltuk" },
     "guests.emptyTitle": { en: "No guests yet", tr: "Henüz misafir yok" },
     "guests.emptyHint": { en: "Add guests one by one, or import an existing list from Excel.", tr: "Misafirleri tek tek ekleyin veya mevcut listeyi Excel'den içe aktarın." },
+    // Deleting and unassigning are the two actions that destroy typed work, so
+    // both are confirmed AND undoable.
+    "guests.confirmDelete": { en: "Delete {name} from the guest list?", tr: "{name} misafir listesinden silinsin mi?" },
+    "guests.deletedToast": { en: "{name} deleted.", tr: "{name} silindi." },
+    "guests.restoredToast": { en: "{name} restored, with the same table and seats.", tr: "{name} aynı masa ve koltuklarla geri getirildi." },
+    "guests.restoredNoSeat": { en: "{name} restored, but the old seats were taken — the record is unassigned.", tr: "{name} geri getirildi ama eski koltuklar dolmuş — kayıt atanmamış durumda." },
+    "seating.unassignedToast": { en: "{name} returned to Unassigned.", tr: "{name} atanmamışlara döndü." },
+    "seating.reassignedToast": { en: "{name} put back on {table}.", tr: "{name} tekrar {table} masasına yerleştirildi." },
+    "seating.seatTaken": { en: "Those seats are no longer free — {name} stays unassigned.", tr: "O koltuklar artık boş değil — {name} atanmamış kalıyor." },
+    "seating.unlockFirst": { en: "Unlock this assignment before removing it.", tr: "Kaldırmadan önce bu atamanın kilidini açın." },
     "guests.hasNote": { en: "Has a note", tr: "Notu var" },
     "guests.companions": { en: "{n} companions", tr: "{n} refakatçi" },
     "guests.partyOf": { en: "party of {n}", tr: "{n} kişilik" },

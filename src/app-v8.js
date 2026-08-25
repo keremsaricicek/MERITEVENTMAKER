@@ -522,7 +522,7 @@
     catch(error){snapshot.forEach(s=>{event.guests.find(g=>g.id===s.id).assignment=s.assignment;});toast("The group move was rolled back.","error");}
   }
   assignGuestToTable = function(guestId,tableId,preferred=null){assignGuestGroup([guestId],tableId,preferred);};
-  unassignGuest = function(id){const event=activeEvent();if(!canMutate(event,"remove a seating assignment"))return;original.unassignGuest(id);};
+  // unassignGuest is defined further down, where its undo lives.
   toggleAssignmentLock = function(id){const event=activeEvent();if(!canMutate(event,"change an assignment lock"))return;original.toggleAssignmentLock(id);};
   bindSeating = function(){
     bindPanelToggles();const event=activeEvent(),records=guestSelectionRows(event),search=document.getElementById("seatingSearch");
@@ -826,6 +826,81 @@
     if(g.notes)bits.push(`<span class="note-dot" title="${esc(g.notes)}">${icon("edit")}${t("guests.hasNote")}</span>`);
     return`<div><div class="party-name">${esc(g.name)}</div><div class="party-sub">${bits.join("")}</div></div>`;
   }
+  // ---- Undo for the two actions that destroy work ---------------------
+  // A guest record is typed by hand or imported once; losing one to a mis-click
+  // is the kind of mistake a non-technical operator cannot recover from. These
+  // replace the thin canMutate wrappers that used to delegate to the base
+  // implementations -- the guard is kept, the recovery is new.
+  function toastAction(message,label,onAction,type="info",duration=8000){
+    const wrap=document.getElementById("toastWrap");if(!wrap)return;
+    const el=document.createElement("div");el.className="toast has-action "+type;
+    const text=document.createElement("span");text.className="toast-text";text.textContent=message;
+    const btn=document.createElement("button");btn.type="button";btn.className="toast-action";btn.textContent=label;
+    let done=false;
+    btn.onclick=()=>{if(done)return;done=true;el.remove();onAction();};
+    el.append(text,btn);wrap.appendChild(el);
+    setTimeout(()=>el.remove(),duration);
+  }
+  deleteGuest = function(id){
+    const event=activeEvent(),g=event&&event.guests.find(x=>x.id===id);
+    if(!g||!canMutate(event,"delete a guest"))return;
+    if(!confirm(t("guests.confirmDelete",{name:g.name})))return;
+    // The whole record is kept, including its planned assignment, so undo puts
+    // the guest back exactly where they were rather than as a fresh unassigned
+    // record. Position is kept too, so the list does not reshuffle on undo.
+    const index=event.guests.indexOf(g),snapshot=JSON.parse(JSON.stringify(g));
+    event.guests.splice(index,1);
+    refreshChairOccupancy(event);
+    audit(event,"GUEST_DELETED",{guestId:g.id,name:g.name});
+    touchEvent(event);render();
+    toastAction(t("guests.deletedToast",{name:g.name}),t("live.undo"),()=>{
+      const now=activeEvent();
+      if(!now||!canMutate(now,"restore a guest"))return;
+      if(now.guests.some(x=>x.id===snapshot.id))return;
+      // The seat may have been given away in the meantime. Restoring the record
+      // matters more than restoring the seat, so the guest comes back either
+      // way -- unassigned if the seat is gone, and the operator is told.
+      let seatLost=false;
+      if(snapshot.assignment){
+        const table=now.tables.find(x=>x.id===snapshot.assignment.tableId);
+        const used=table?occupiedSeatIndexes(now,table.id):null;
+        const clash=!table||(snapshot.assignment.seats||[]).some(s=>used.has(Number(s)));
+        if(clash){snapshot.assignment=null;seatLost=true;}
+      }
+      now.guests.splice(Math.min(index,now.guests.length),0,snapshot);
+      refreshChairOccupancy(now);
+      audit(now,"GUEST_RESTORED",{guestId:snapshot.id,name:snapshot.name});
+      touchEvent(now);render();
+      toast(seatLost?t("guests.restoredNoSeat",{name:snapshot.name}):t("guests.restoredToast",{name:snapshot.name}),"success");
+    });
+  };
+  unassignGuest = function(id){
+    const event=activeEvent(),g=event&&event.guests.find(x=>x.id===id);
+    if(!g||!g.assignment)return;
+    if(!canMutate(event,"unassign a guest"))return;
+    if(g.assignment.locked){toast(t("seating.unlockFirst"),"error");return;}
+    const snapshot=JSON.parse(JSON.stringify(g.assignment));
+    const table=event.tables.find(x=>x.id===snapshot.tableId);
+    const label=table?formatTableNumber(table.number):"";
+    g.assignment=null;ui.selectedGuestId=id;
+    refreshChairOccupancy(event);
+    touchEvent(event);render();
+    toastAction(t("seating.unassignedToast",{name:g.name}),t("live.undo"),()=>{
+      const now=activeEvent();
+      if(!now||!canMutate(now,"reassign a guest"))return;
+      const guest=now.guests.find(x=>x.id===id);if(!guest||guest.assignment)return;
+      const back=now.tables.find(x=>x.id===snapshot.tableId);
+      const used=back?occupiedSeatIndexes(now,back.id,id):null;
+      if(!back||(snapshot.seats||[]).some(s=>used.has(Number(s)))){
+        toast(t("seating.seatTaken",{name:guest.name}),"error",5200);return;
+      }
+      guest.assignment=snapshot;
+      refreshChairOccupancy(now);
+      audit(now,"GUEST_REASSIGNED",{guestId:id,tableId:snapshot.tableId});
+      touchEvent(now);render();
+      toast(t("seating.reassignedToast",{name:guest.name,table:label}),"success");
+    });
+  };
   guestsHTML = function(event){
     const guests=filteredGuests(event),c=guestCounts(event);
     const metrics=[
@@ -855,7 +930,7 @@
   };
 
   openGuestDialog = function(...args){if(canMutate(activeEvent(),"edit guest records"))original.openGuestDialog(...args);};
-  deleteGuest = function(...args){if(canMutate(activeEvent(),"delete guest records"))original.deleteGuest(...args);};
+  // deleteGuest is defined further up, where its undo lives.
   bindGuests = function(){
     if(isHistorical(activeEvent()))return;
     original.bindGuests();

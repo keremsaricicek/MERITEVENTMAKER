@@ -481,10 +481,16 @@ dialog::backdrop{background:rgba(32,28,20,.44)}
 .guide-warning{border-left-color:#b77e42;background:#f4ece1}
 
 .toast-wrap{position:fixed;right:16px;bottom:16px;z-index:2000;display:flex;flex-direction:column;gap:7px}
-.toast{min-width:270px;max-width:410px;padding:10px 13px;border:1px solid #ddd9d0;border-left:3px solid var(--blue);border-radius:var(--radius-md);background:#f4f3f0;box-shadow:var(--shadow-3);font-size:10px;animation:toastIn var(--dur-slow) var(--ease)}
+/* 10px was below the readable floor for a message the operator has to act on. */
+.toast{min-width:270px;max-width:410px;padding:10px 13px;border:1px solid #ddd9d0;border-left:3px solid var(--blue);border-radius:var(--radius-md);background:#f4f3f0;box-shadow:var(--shadow-3);font-size:12px;line-height:1.45;animation:toastIn var(--dur-slow) var(--ease)}
 @keyframes toastIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 .toast.error{border-left-color:var(--red)}
 .toast.success{border-left-color:var(--green)}
+.toast.has-action{display:flex;align-items:center;gap:12px}
+.toast-text{flex:1;min-width:0}
+.toast-action{flex:none;padding:5px 11px;border:1px solid var(--blue-soft-strong);border-radius:var(--radius-sm);background:var(--panel);color:var(--blue);font:inherit;font-size:11.5px;font-weight:650;cursor:pointer;transition:background var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease)}
+.toast-action:hover{background:var(--blue-soft);border-color:var(--blue)}
+.toast-action:focus-visible{outline:none;box-shadow:var(--ring)}
 
 @media(max-width:1450px){
   .editor-layout{grid-template-columns:218px minmax(430px,1fr) 272px}
