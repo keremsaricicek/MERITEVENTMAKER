@@ -1,11 +1,17 @@
 :root{
   --shell:#fbfbf9;--chrome:#f9f8f7;--panel:#f7f6f4;--panel-2:#f5f4f0;--panel-3:#f3f1ed;
-  --line:#ece9e3;--line-soft:#f3f1ed;--text:#242018;--muted:#5f5642;--muted-2:#7c7259;
+  /* --muted-2 was #7c7259 -> 4.41:1 on --panel, just under the 4.5 AA floor,
+     and it colours every eyebrow, column header and secondary tag in the app. */
+  --line:#ece9e3;--line-soft:#f3f1ed;--text:#242018;--muted:#5f5642;--muted-2:#736a53;
   --paper:#f4f2ed;--paper-2:#e9e5dd;--ink:#20262c;
+  /* Each -ink is the same hue darkened to stay readable ON its own -soft tint.
+     The base token keeps its value for dots, borders and text on plain panel,
+     where it already passes -- a tag's text sits on the tint, which lifts the
+     background and drops the ratio to ~3.3:1. */
   --blue:#3671a4;--blue-2:#4080b0;--blue-dim:#396a8e;--blue-soft:rgba(54,113,164,.16);--blue-soft-strong:rgba(54,113,164,.26);
-  --green:#4a8968;--green-soft:rgba(88,165,125,.14);
-  --amber:#ab7630;--amber-soft:rgba(200,149,71,.13);
-  --red:#b63d3d;--red-soft:rgba(157,55,55,.13);
+  --green:#4a8968;--green-soft:rgba(88,165,125,.14);--green-ink:#38684f;
+  --amber:#ab7630;--amber-soft:rgba(200,149,71,.13);--amber-ink:#825a24;
+  --red:#b63d3d;--red-soft:rgba(157,55,55,.13);--red-ink:#a73838;
   --font:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 
   /* V8 layer accents: distinct from the base palette on purpose — these mark
@@ -29,7 +35,7 @@
 
   /* VIP is business meaning, never decoration. One restrained warm brass,
      used only where VIP/VVIP genuinely applies. */
-  --vip:#9a7b33;--vip-soft:rgba(154,123,51,.11);--vip-line:rgba(154,123,51,.32);
+  --vip:#9a7b33;--vip-soft:rgba(154,123,51,.11);--vip-line:rgba(154,123,51,.32);--vip-ink:#755d27;
 
   --ease:cubic-bezier(.4,0,.2,1);
   --dur-fast:.12s;--dur-base:.18s;--dur-slow:.28s;
@@ -999,10 +1005,10 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .party-sub{font-size:11.5px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .pax-badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--muted)}
 
-.vip-tag{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.07em;padding:2px 6px;border-radius:var(--radius-sm);background:var(--vip-soft);color:var(--vip);border:1px solid var(--vip-line)}
+.vip-tag{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.07em;padding:2px 6px;border-radius:var(--radius-sm);background:var(--vip-soft);color:var(--vip-ink);border:1px solid var(--vip-line)}
 .plan-tag{display:inline-block;font-size:10px;font-weight:650;letter-spacing:.04em;padding:2px 8px;border-radius:var(--radius-pill)}
-.plan-tag.confirmed{background:var(--green-soft);color:var(--green)}
-.plan-tag.tentative{background:var(--amber-soft);color:var(--amber)}
+.plan-tag.confirmed{background:var(--green-soft);color:var(--green-ink)}
+.plan-tag.tentative{background:var(--amber-soft);color:var(--amber-ink)}
 .seat-tag{font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--text);font-weight:600}
 .seat-tag.none{color:var(--muted-2);font-weight:400}
 
@@ -1030,8 +1036,8 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .arrival-row.is-no{background:rgba(182,61,61,.05)}
 .arr-state{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:var(--radius-pill);white-space:nowrap}
 .arr-state.not{background:var(--panel-3);color:var(--muted)}
-.arr-state.in{background:var(--green-soft);color:var(--green)}
-.arr-state.no{background:var(--red-soft);color:var(--red)}
+.arr-state.in{background:var(--green-soft);color:var(--green-ink)}
+.arr-state.no{background:var(--red-soft);color:var(--red-ink)}
 .arrival-actions{display:flex;gap:7px;justify-content:flex-end;align-items:center}
 /* The search has narrowed to exactly this person, so Enter will check them in.
    Say whose door it is about to open before the key is pressed. */
@@ -1065,7 +1071,12 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .pf-text{flex:1;min-width:0}
 .pf-text b{display:block;font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:1px}
 .pf-text span{font-size:11.5px;color:var(--muted);line-height:1.4}
-.pf-fix{font-size:11.5px;color:var(--blue);background:none;border:none;font-family:inherit;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px;flex-shrink:0}
+/* min-height 24px: this rendered 17px tall, under the WCAG 2.2 AA target-size
+   minimum. It is a standalone control in a list, not a link inside a sentence,
+   so the inline exception does not apply. Padding keeps the text where it was
+   optically while giving the pointer a real target. */
+.pf-fix{display:inline-flex;align-items:center;min-height:24px;font-size:11.5px;color:var(--blue);background:none;border:none;font-family:inherit;cursor:pointer;padding:0 2px;text-decoration:underline;text-underline-offset:2px;flex-shrink:0}
+.pf-fix:focus-visible{outline:none;box-shadow:var(--ring);border-radius:var(--radius-sm)}
 
 .export-panel{border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--chrome);padding:18px 20px;box-shadow:var(--shadow-1)}
 .export-panel h3{font-size:14px;font-weight:650;margin:0 0 4px;color:var(--text)}

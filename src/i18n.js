@@ -161,6 +161,13 @@
     "guests.emptyHint": { en: "Add guests one by one, or import an existing list from Excel.", tr: "Misafirleri tek tek ekleyin veya mevcut listeyi Excel'den içe aktarın." },
     // Deleting and unassigning are the two actions that destroy typed work, so
     // both are confirmed AND undoable.
+    // Icon-only row actions repeat down a list. Naming them with the record
+    // they act on turns twelve identical "button"s into twelve distinct ones.
+    "guests.a11y.seat": { en: "Choose a seat for {name}", tr: "{name} için koltuk seç" },
+    "guests.a11y.edit": { en: "Edit {name}", tr: "{name} kaydını düzenle" },
+    "guests.a11y.delete": { en: "Delete {name}", tr: "{name} kaydını sil" },
+    "home.a11y.duplicate": { en: "Duplicate the event {name}", tr: "{name} etkinliğini kopyala" },
+    "home.a11y.delete": { en: "Delete the event {name}", tr: "{name} etkinliğini sil" },
     "guests.confirmDelete": { en: "Delete {name} from the guest list?", tr: "{name} misafir listesinden silinsin mi?" },
     "guests.deletedToast": { en: "{name} deleted.", tr: "{name} silindi." },
     "guests.restoredToast": { en: "{name} restored, with the same table and seats.", tr: "{name} aynı masa ve koltuklarla geri getirildi." },

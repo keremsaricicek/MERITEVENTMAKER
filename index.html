@@ -20,13 +20,17 @@
     dedicated setup screen (startNewEvent / createBlankEventFromSetup).
   -->
 
-  <dialog id="guestDialog" class="dialog-sm"><form id="guestForm" method="dialog">
+  <!-- Every label is bound to its field with for/id. Without that binding a
+       screen reader announces each of these as "edit, blank" -- the visible
+       text is not enough. aria-labelledby names the dialog itself. -->
+  <dialog id="guestDialog" class="dialog-sm" aria-labelledby="guestDialogTitle"><form id="guestForm" method="dialog">
     <input type="hidden" name="id"><div class="dialog-head"><h2 id="guestDialogTitle">Add Guest</h2><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
-    <div class="dialog-body"><div class="form-grid"><div class="field full"><label>Name Surname</label><input name="name" required placeholder="KEREM SARICICEK"></div><div class="field"><label>Additional Guests</label><input name="additionalGuests" type="number" min="0" max="99" value="0" required></div><div class="field"><label>Planning Status</label><select name="planningStatus"><option>Confirmed</option><option>Tentative</option></select></div><div class="field full"><div class="total-pax-box"><span>Total Pax</span><b id="guestTotalPax">1</b></div></div><div class="field"><label>VIP Level</label><select name="vip"><option>Standard</option><option>VIP</option><option>VVIP</option></select></div><div class="field"><label>Invited By</label><input name="invitedBy"></div><div class="field full"><label>Notes</label><textarea name="notes"></textarea></div></div></div>
+    <div class="dialog-body"><div class="form-grid"><div class="field full"><label for="gfName">Name Surname</label><input id="gfName" name="name" required placeholder="KEREM SARICICEK"></div><div class="field"><label for="gfAdditional">Additional Guests</label><input id="gfAdditional" name="additionalGuests" type="number" min="0" max="99" value="0" required></div><div class="field"><label for="gfPlanning">Planning Status</label><select id="gfPlanning" name="planningStatus"><option>Confirmed</option><option>Tentative</option></select></div><div class="field full"><div class="total-pax-box"><span id="gfPaxLabel">Total Pax</span><b id="guestTotalPax" role="status" aria-labelledby="gfPaxLabel">1</b></div></div><div class="field"><label for="gfVip">VIP Level</label><select id="gfVip" name="vip"><option>Standard</option><option>VIP</option><option>VVIP</option></select></div><div class="field"><label for="gfInvitedBy">Invited By</label><input id="gfInvitedBy" name="invitedBy"></div><div class="field full"><label for="gfNotes">Notes</label><textarea id="gfNotes" name="notes"></textarea></div></div></div>
     <div class="dialog-foot"><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="default">Save Guest</button></div>
   </form></dialog>
 
-  <dialog id="excelDialog" class="dialog-wide"><div id="excelWizard"></div></dialog>
+  <!-- The wizard renders its own <h2 id="wizTitle"> from app-v8.js. -->
+  <dialog id="excelDialog" class="dialog-wide" aria-labelledby="wizTitle"><div id="excelWizard"></div></dialog>
   <dialog id="guideDialog" class="guide-dialog"><div id="guideRoot" class="guide-shell"></div></dialog>
   <div id="toastWrap" class="toast-wrap" aria-live="polite"></div>
 

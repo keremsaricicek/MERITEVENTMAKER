@@ -190,7 +190,7 @@
       <div class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(venue)}</div>
       <div class="seat-tag">${eventMetrics(event).guests}</div>
       <div class="seat-tag">${physicalCapacity(event)}</div>
-      <div class="row-icons"><button class="row-action" data-duplicate-event="${event.id}" title="${t("home.duplicate")}">${icon("copy")}</button><button class="row-action" data-delete-event="${event.id}" title="${t("home.delete")}">${icon("trash")}</button></div>
+      <div class="row-icons"><button class="row-action" data-duplicate-event="${event.id}" aria-label="${esc(t("home.a11y.duplicate",{name:event.name}))}" title="${t("home.duplicate")}">${icon("copy")}</button><button class="row-action" data-delete-event="${event.id}" aria-label="${esc(t("home.a11y.delete",{name:event.name}))}" title="${t("home.delete")}">${icon("trash")}</button></div>
     </div>`;
   }
   eventsHTML = function(){
@@ -201,7 +201,7 @@
       <div class="mx-head"><div><div class="kicker">${t("home.eyebrow")}</div><h1>${t("home.title")}</h1><p>${t("home.subtitle")}</p></div><span class="muted" style="font-size:12px">${t(state.events.length===1?"home.eventCount1":"home.eventsCount",{n:state.events.length})}</span></div>
       ${next?nextEventHeroHTML(next):`<div class="mx-empty"><h3>${t("home.noUpcoming")}</h3><p>${t("home.noUpcomingHint")}</p><button class="btn primary" data-action="create-event">${icon("plus")}${t("home.createEvent")}</button></div>`}
       ${rest.length?`<div class="mx-section"><div class="mx-section-head"><h2>${t("home.otherUpcoming")}</h2><span class="count">${rest.length}</span></div><div class="mx-list"><div class="mx-list-head event-line"><span>${t("home.col.event")}</span><span>${t("home.col.date")}</span><span>${t("home.col.hotelSalon")}</span><span>${t("home.col.guestPax")}</span><span>${t("home.col.physicalChairs")}</span><span></span></div>${rest.map(upcomingLineHTML).join("")}</div></div>`:""}
-      <div class="mx-section"><div class="mx-section-head"><h2>${t("home.eventsHistory")}</h2><span class="count">${t("home.historyNote")}</span></div>${history.length?`<div class="mx-list"><div class="mx-list-head event-line"><span>${t("home.col.event")}</span><span>${t("home.col.date")}</span><span>${t("home.col.hotelSalon")}</span><span>${t("home.col.guestPax")}</span><span>${t("home.col.physicalChairs")}</span><span></span></div>${history.map(e=>`<div class="event-line" data-history-event="${e.id}" title="${esc(t("home.historyOpenHint"))}"><div><b>${esc(e.name)}</b></div><div class="muted">${esc(fmtDate(e.date))}</div><div class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc([e.hotel,e.salon].filter(Boolean).join(" · ")||"—")}</div><div class="seat-tag">${eventMetrics(e).guests}</div><div class="seat-tag">${physicalCapacity(e)}</div><div class="row-icons"><span class="readonly-tag">${icon("lock")}${t("home.readOnly")}</span><button class="row-action" data-delete-event="${e.id}" title="${t("home.delete")}">${icon("trash")}</button></div></div>`).join("")}</div>`:`<div class="mx-empty" style="padding:30px">${t("home.noHistorical")}</div>`}</div>
+      <div class="mx-section"><div class="mx-section-head"><h2>${t("home.eventsHistory")}</h2><span class="count">${t("home.historyNote")}</span></div>${history.length?`<div class="mx-list"><div class="mx-list-head event-line"><span>${t("home.col.event")}</span><span>${t("home.col.date")}</span><span>${t("home.col.hotelSalon")}</span><span>${t("home.col.guestPax")}</span><span>${t("home.col.physicalChairs")}</span><span></span></div>${history.map(e=>`<div class="event-line" data-history-event="${e.id}" title="${esc(t("home.historyOpenHint"))}"><div><b>${esc(e.name)}</b></div><div class="muted">${esc(fmtDate(e.date))}</div><div class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc([e.hotel,e.salon].filter(Boolean).join(" · ")||"—")}</div><div class="seat-tag">${eventMetrics(e).guests}</div><div class="seat-tag">${physicalCapacity(e)}</div><div class="row-icons"><span class="readonly-tag">${icon("lock")}${t("home.readOnly")}</span><button class="row-action" data-delete-event="${e.id}" aria-label="${esc(t("home.a11y.delete",{name:e.name}))}" title="${t("home.delete")}">${icon("trash")}</button></div></div>`).join("")}</div>`:`<div class="mx-empty" style="padding:30px">${t("home.noHistorical")}</div>`}</div>
     </div></div>`;
   };
 
@@ -757,7 +757,9 @@
   };
   renderExcelWizard = function(){
     const root=document.getElementById("excelWizard"),p=pendingImport;if(!p||!root)return;
-    root.innerHTML=`<div class="wz-head"><h2>${t("wiz.title")}</h2><button class="table-card-close" data-wizard-close title="${t("wiz.close")}">&times;</button></div>${wizardStepsHTML(p.step)}<div class="wz-body">${wizardBodyHTML(p)}</div><div class="wz-foot">${wizardFootHTML(p)}</div>`;
+    // id="wizTitle" is what #excelDialog's aria-labelledby points at, so the
+    // dialog announces itself by name rather than as an unnamed dialog.
+    root.innerHTML=`<div class="wz-head"><h2 id="wizTitle">${t("wiz.title")}</h2><button class="table-card-close" data-wizard-close aria-label="${t("wiz.close")}" title="${t("wiz.close")}">&times;</button></div>${wizardStepsHTML(p.step)}<div class="wz-body">${wizardBodyHTML(p)}</div><div class="wz-foot">${wizardFootHTML(p)}</div>`;
     bindExcelWizard();
   };
 
@@ -974,7 +976,7 @@
     const body=!c.records
       ?`<div class="mx-empty"><h3>${t("guests.emptyTitle")}</h3><p>${t("guests.emptyHint")}</p><div class="toolbar-row" style="justify-content:center"><button class="btn" data-guest-command="import">${icon("image")}${t("guests.importExcel")}</button><button class="btn primary" data-guest-command="add">${icon("plus")}${t("guests.addGuest")}</button></div></div>`
       :`<div class="mx-list"><div class="mx-list-head cols-guest"><span>${t("guests.col.guest")}</span><span>${t("guests.col.status")}</span><span>${t("guests.col.invitedBy")}</span><span>${t("guests.col.tableSeat")}</span><span></span></div>${
-        guests.length?guests.map(g=>`<div class="mx-row cols-guest">${guestPartyCellHTML(event,g)}<div><span class="plan-tag ${g.planningStatus.toLowerCase()}">${esc(t("status.planning."+g.planningStatus))}</span></div><div class="muted" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(g.invitedBy||"—")}</div><div>${seatTagHTML(event,g)}${g.assignment?.locked?" 🔒":""}</div><div class="row-icons"><button class="row-action" title="${t("guests.col.tableSeat")}" data-guest-seat="${g.id}">${icon("seat")}</button><button class="row-action" data-guest-edit="${g.id}">${icon("edit")}</button><button class="row-action" data-guest-delete="${g.id}">${icon("trash")}</button></div></div>`).join(""):`<div class="mx-empty" style="border:none;background:none">${t("guests.noMatches")}</div>`
+        guests.length?guests.map(g=>`<div class="mx-row cols-guest">${guestPartyCellHTML(event,g)}<div><span class="plan-tag ${g.planningStatus.toLowerCase()}">${esc(t("status.planning."+g.planningStatus))}</span></div><div class="muted" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(g.invitedBy||"—")}</div><div>${seatTagHTML(event,g)}${g.assignment?.locked?" 🔒":""}</div><div class="row-icons"><button class="row-action" aria-label="${esc(t("guests.a11y.seat",{name:g.name}))}" title="${t("guests.col.tableSeat")}" data-guest-seat="${g.id}">${icon("seat")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.edit",{name:g.name}))}" data-guest-edit="${g.id}">${icon("edit")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.delete",{name:g.name}))}" data-guest-delete="${g.id}">${icon("trash")}</button></div></div>`).join(""):`<div class="mx-empty" style="border:none;background:none">${t("guests.noMatches")}</div>`
       }</div>`;
     return`<div class="mx-screen"><div class="mx-wrap">
       <div class="mx-head"><div><h1>${t("guests.title")}</h1><p>${t("guests.recordsSummary",{records:c.records,total:c.totalPax})}</p></div><div class="mx-head-actions"><button class="btn" data-guest-command="template">${icon("download")}${t("guests.excelTemplate")}</button><button class="btn" data-guest-command="import">${icon("image")}${t("guests.importExcel")}</button><button class="btn primary" data-guest-command="add">${icon("plus")}${t("guests.addGuest")}</button></div></div>
@@ -2452,6 +2454,48 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   openGuide = function(){renderGuide();document.getElementById("guideDialog").showModal();};
 
   const oldFloorInput=document.getElementById("floorPlanFile"),freshFloorInput=oldFloorInput.cloneNode(true);oldFloorInput.replaceWith(freshFloorInput);freshFloorInput.addEventListener("change",async e=>{const file=e.target.files[0],event=activeEvent();if(!file||!event||!canMutate(event,"replace the floor plan"))return;try{let src,name=file.name;if(file.type==="application/pdf"||file.name.toLowerCase().endsWith(".pdf")){const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise,pageNumber=Math.max(1,Math.min(doc.numPages,Number(prompt(`PDF contains ${doc.numPages} pages. Enter page number:`,"1"))||1)),page=await doc.getPage(pageNumber),v=page.getViewport({scale:2.6}),canvas=document.createElement("canvas");canvas.width=Math.ceil(v.width);canvas.height=Math.ceil(v.height);await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;src=canvas.toDataURL("image/png",.96);name=`${file.name} · page ${pageNumber}`;}else src=await readDataURL(file);recordUndo(event);event.background={src,name,opacity:.34,visible:true,locked:true,isDefault:false,scale:100};touchEvent(event);render();toast("Floor plan imported locally. Assisted Detection is ready.","success");}catch(error){toast(error.message,"error",6500);}finally{e.target.value="";}});
+
+  // ---- Focus return after a dialog closes -----------------------------
+  // A native <dialog> restores focus to whatever had it when showModal() ran.
+  // That does not survive here: every close is followed by render(), which
+  // replaces the DOM, so the remembered node is detached and focus falls to
+  // <body> -- a keyboard user is dropped at the top of the document and has to
+  // tab all the way back. So remember a SELECTOR, not the node, and re-find an
+  // equivalent control after the re-render.
+  let dialogOpener=null;
+  function openerSelector(el){
+    if(!el||el===document.body)return null;
+    for(const key in el.dataset){
+      const attr="data-"+key.replace(/[A-Z]/g,m=>"-"+m.toLowerCase());
+      const val=el.dataset[key];
+      return val?`[${attr}="${CSS.escape(val)}"]`:`[${attr}]`;
+    }
+    return el.id?`#${CSS.escape(el.id)}`:null;
+  }
+  document.addEventListener("pointerdown",e=>{
+    const hit=e.target.closest&&e.target.closest("button,[role=button],a[href]");
+    if(hit)dialogOpener=openerSelector(hit);
+  },true);
+  document.addEventListener("focusin",e=>{
+    const el=e.target;
+    if(el&&el.closest&&!el.closest("dialog")&&/BUTTON|A/.test(el.tagName))dialogOpener=openerSelector(el);
+  },true);
+  for(const id of ["guestDialog","excelDialog","guideDialog"]){
+    const dlg=document.getElementById(id);if(!dlg)continue;
+    dlg.addEventListener("close",()=>{
+      const sel=dialogOpener;
+      // After render(), not before: the node to focus does not exist yet.
+      requestAnimationFrame(()=>{
+        let target=sel&&document.querySelector(sel);
+        // The opener can legitimately be gone -- the guest it belonged to was
+        // just deleted. Fall back to the screen's first real control rather
+        // than leaving focus on <body>.
+        if(!target||target.offsetParent===null)
+          target=document.querySelector(".mx-head button, .appbar button, .tab.active");
+        if(target)target.focus();
+      });
+    });
+  }
 
   window.addEventListener("keydown",e=>{
     if(e.key==="Escape"){if(ui.repeatPlacement){ui.repeatPlacement=null;toast("Repeated placement cancelled.");}if(ui.focusMode)ui.focusMode=false;if(ui.reviewDrawMode)ui.reviewDrawMode=false;if(ui.activeQuestionId)ui.activeQuestionId=null;if(ui.reviewCenterOpen)ui.reviewCenterOpen=false;render();return;}
