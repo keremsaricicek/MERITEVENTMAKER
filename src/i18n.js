@@ -282,6 +282,58 @@
     "setup.continueBlank": { en: "Continue without a floor plan", tr: "Kat planı olmadan devam et" },
     "setup.create": { en: "Create Event", tr: "Etkinliği Oluştur" },
     "setup.preparing": { en: "Preparing plan…", tr: "Plan hazırlanıyor…" },
+    // ---- Excel import wizard ----
+    // The five steps and their order are the feature, not chrome: nothing is
+    // written until the last one. Labels are translated; every mapped field
+    // VALUE stays the English identifier the import writes against.
+    "wiz.title": { en: "Import Guest List", tr: "Misafir Listesi İçe Aktar" },
+    "wiz.close": { en: "Close", tr: "Kapat" },
+    "wiz.step.file": { en: "Choose file", tr: "Dosya seç" },
+    "wiz.step.preview": { en: "Source preview", tr: "Kaynak önizleme" },
+    "wiz.step.mapping": { en: "Column mapping", tr: "Sütun eşleme" },
+    "wiz.step.interpret": { en: "Interpretation", tr: "Yorumlama" },
+    "wiz.step.summary": { en: "Summary", tr: "Özet" },
+    "wiz.chooseTitle": { en: "Choose an Excel or CSV file", tr: "Excel veya CSV dosyası seçin" },
+    "wiz.chooseNote": { en: "Nothing is imported until you have reviewed the source rows, the column mapping and the interpretation.", tr: "Kaynak satırları, sütun eşlemesini ve yorumlamayı gözden geçirmeden hiçbir şey içe aktarılmaz." },
+    "wiz.template": { en: "Download Excel template", tr: "Excel şablonunu indir" },
+    "wiz.choose": { en: "Choose file", tr: "Dosya seç" },
+    "wiz.previewTitle": { en: "Source data", tr: "Kaynak veri" },
+    "wiz.previewNote": { en: "{file} · first {shown} of {total} rows, exactly as read.", tr: "{file} · {total} satırın ilk {shown} tanesi, okunduğu hâliyle." },
+    "wiz.mapTitle": { en: "Column mapping", tr: "Sütun eşleme" },
+    "wiz.mapNote": { en: "Map at least one column to Name Surname. Columns you do not need can be ignored.", tr: "En az bir sütunu Ad Soyad ile eşleyin. İhtiyacınız olmayan sütunlar yok sayılabilir." },
+    "wiz.interpTitle": { en: "How each row becomes a guest", tr: "Her satır nasıl misafire dönüşecek" },
+    "wiz.interpNote": { en: "One source row becomes one guest record. Correct any wrong value here before continuing.", tr: "Bir kaynak satırı bir misafir kaydı olur. Yanlış bir değeri devam etmeden burada düzeltin." },
+    "wiz.sumTitle": { en: "Import summary", tr: "İçe aktarma özeti" },
+    "wiz.sumNote": { en: "Final review. Existing guests are kept — this adds to them.", tr: "Son kontrol. Mevcut misafirler korunur — bu ekleme yapar." },
+    "wiz.sum.records": { en: "Records", tr: "Kayıt" },
+    "wiz.sum.guests": { en: "Total guests", tr: "Toplam kişi" },
+    "wiz.sum.confirmed": { en: "Confirmed", tr: "Onaylandı" },
+    "wiz.sum.tentative": { en: "Tentative", tr: "Ön Görüşme" },
+    "wiz.sum.attention": { en: "Needs attention", tr: "Dikkat gerekiyor" },
+    "wiz.blocking": { en: "{n} row(s) have blocking errors. Go back to Interpretation and fix them before importing.", tr: "{n} satırda engelleyici hata var. İçe aktarmadan önce Yorumlama adımına dönüp düzeltin." },
+    "wiz.readyToImport": { en: "Ready to import {records} records representing {guests} physical guests.", tr: "{records} kayıt, toplam {guests} kişi olarak içe aktarılmaya hazır." },
+    "wiz.back": { en: "Back", tr: "Geri" },
+    "wiz.toMapping": { en: "Continue to mapping", tr: "Eşlemeye devam et" },
+    "wiz.toInterpret": { en: "Interpret rows", tr: "Satırları yorumla" },
+    "wiz.toSummary": { en: "Review summary", tr: "Özeti gör" },
+    "wiz.import": { en: "Import guests", tr: "Misafirleri aktar" },
+    "wiz.ready": { en: "Ready", tr: "Hazır" },
+    "wiz.map.ignore": { en: "Ignore column", tr: "Sütunu yok say" },
+    "wiz.map.name": { en: "Name Surname", tr: "Ad Soyad" },
+    "wiz.map.pax": { en: "Total pax", tr: "Toplam kişi" },
+    "wiz.map.additionalGuests": { en: "Additional guests", tr: "Ek misafir" },
+    "wiz.map.planningStatus": { en: "Status", tr: "Durum" },
+    "wiz.map.vip": { en: "VIP level", tr: "VIP seviyesi" },
+    "wiz.map.invitedBy": { en: "Invited by", tr: "Davet eden" },
+    "wiz.map.notes": { en: "Notes", tr: "Notlar" },
+    "wiz.map.existingTable": { en: "Existing table", tr: "Mevcut masa" },
+    "wiz.map.existingSeat": { en: "Existing seat", tr: "Mevcut koltuk" },
+    "wiz.col.source": { en: "Source row", tr: "Kaynak satır" },
+    "wiz.col.additional": { en: "Additional", tr: "Ek" },
+    "wiz.col.totalPax": { en: "Total pax", tr: "Toplam kişi" },
+    "wiz.col.table": { en: "Table", tr: "Masa" },
+    "wiz.col.seat": { en: "Seat", tr: "Koltuk" },
+    "wiz.col.validation": { en: "Check", tr: "Kontrol" },
     "guests.additionalNote": { en: "+{n} guests · {pax} total pax", tr: "+{n} misafir · {pax} toplam kişi" },
     "guests.unassigned": { en: "Unassigned", tr: "Atanmadı" },
 
@@ -508,7 +560,38 @@
     [/^Historical events are read-only\. You cannot (.+)\.$/, () => `Geçmiş etkinlikler salt okunurdur; bu işlem yapılamaz.`],
     [/^Assisted Detection failed: (.+)$/, (m) => `Destekli Tespit başarısız: ${m[1]}`],
     [/^(.+) added\.$/, (m) => `${m[1]} eklendi.`],
+    [/^(\d+) guest records imported · (\d+) assigned\.$/, (m) => `${m[1]} misafir kaydı içe aktarıldı · ${m[2]} tanesi yerleştirildi.`],
+    [/^(\d+) guest records imported\.$/, (m) => `${m[1]} misafir kaydı içe aktarıldı.`],
+    [/^(.+) moved to (.+) · (\d+) seats reserved\.$/, (m) => `${m[1]} ${m[2]} masasına taşındı · ${m[3]} koltuk ayrıldı.`],
+    [/^(.+) assigned to (.+) · (\d+) seats reserved\.$/, (m) => `${m[1]} ${m[2]} masasına yerleştirildi · ${m[3]} koltuk ayrıldı.`],
+    [/^(.+) has only (\d+) available seats\. (.+) requires (\d+)\.$/, (m) => `${m[1]} masasında yalnızca ${m[2]} boş koltuk var. ${m[3]} için ${m[4]} koltuk gerekiyor.`],
+    [/^(.+): (Not Arrived|Checked In|No Show)\.$/, (m) => `${m[1]}: ${t("status.arrival." + m[2])}.`],
   ];
+  // Excel import warnings/errors are produced in app-guests.js, which also
+  // filters them back out by matching English substrings -- so the stored
+  // message stays English and is translated only at the moment it is drawn.
+  // Anything unmatched falls through in English so a gap stays visible.
+  const IMPORT_ISSUE_TR = {
+    "+N differs from Additional Guests; mapped column is used.":
+      "İsimdeki +N ile Ek Misafir sütunu farklı; sütundaki sayı kullanıldı.",
+    "Invalid additional guest number.": "Ek misafir sayısı geçersiz.",
+    "Invalid total pax.": "Toplam kişi sayısı geçersiz.",
+    "Name is empty.": "İsim boş.",
+    "Not enough seat numbers for total pax.": "Toplam kişi sayısı için yeterli koltuk numarası yazılmamış.",
+    "One or more seats are already assigned.": "Bir veya birden fazla koltuk zaten dolu.",
+    "Possible duplicate name.": "Bu isim listede tekrar ediyor olabilir.",
+    "Seat number is outside table capacity.": "Koltuk numarası masanın kapasitesinin dışında.",
+    "Table does not have enough available seats.": "Masada yeterli boş koltuk yok.",
+    "Table number does not exist.": "Bu masa numarası yok.",
+    "The same seat number is listed more than once.": "Aynı koltuk numarası birden fazla kez yazılmış.",
+    "Unknown status changed to Tentative.": "Durum anlaşılmadı, Ön Görüşme olarak ayarlandı.",
+  };
+  function translateImportIssue(message) {
+    if (currentLang() !== "tr" || typeof message !== "string") return message;
+    return IMPORT_ISSUE_TR[message] || message;
+  }
+  globalThis.translateImportIssue = translateImportIssue;
+
   function translateToast(message) {
     if (currentLang() !== "tr" || typeof message !== "string") return message;
     if (TOAST_TR[message]) return TOAST_TR[message];
@@ -530,8 +613,8 @@
   globalThis.t = t;
   globalThis.MERIT_I18N_LANG = currentLang;
   globalThis.MERIT_I18N_STATUS = {
-    coverage: "Floor Plan (toolbar + canvas + Plan Intelligence review + Review Center + Teach AI + AI-generated question text), Guests, Seating (left panel), Live Event, Reports, Home/Events, the shared workspace header/tabs/appbar, and the fixed planning/arrival status enums.",
-    notMigrated: ["Seating's right-side selected-table inspector panel and the base Inspector (table/venue property editor)", "Create Event / setup wizard screen", "Guest add/edit dialog", "Excel import wizard", "Guide/User Manual modal body content", "toast messages", "Reports XLSX workbook content itself (by design -- exported files stay in the documented English/uppercase business format regardless of UI language, since the workbook is a shared operational artifact, not a UI screen)"],
+    coverage: "Floor Plan (toolbar + canvas + Plan Intelligence review + Review Center + Teach AI + AI-generated question text), Guests, Seating (left panel), Live Event, Reports, Home/Events, Create Event, the Excel import wizard (including its validation messages), the shared workspace header/tabs/appbar, the fixed planning/arrival status enums, and toast messages (translated at the toast boundary; an unmatched string passes through in English so the gap stays visible).",
+    notMigrated: ["Seating's right-side selected-table inspector panel and the base Inspector (table/venue property editor)", "Guest add/edit dialog", "Guide/User Manual modal body content", "Reports XLSX workbook content itself (by design -- exported files stay in the documented English/uppercase business format regardless of UI language, since the workbook is a shared operational artifact, not a UI screen)"],
     note: "Coverage now spans every primary screen's main content; the items above are real, flagged gaps for a follow-up pass, not silently ignored.",
   };
 })();

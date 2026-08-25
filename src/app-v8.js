@@ -647,6 +647,73 @@
     ui.liveRecent=ui.liveRecent.slice(0,6);
   }
 
+  // ---- Excel import wizard: same design language, same five steps ------
+  // Presentation only. app-guests.js keeps the reading, mapping, interpreting
+  // and importing logic untouched -- including the rule that nothing is
+  // written until step 5 and that blocking errors disable the import.
+  const WIZ_STEPS=["wiz.step.file","wiz.step.preview","wiz.step.mapping","wiz.step.interpret","wiz.step.summary"];
+  wizardStepsHTML = function(step){
+    return`<div class="wz-rail">${WIZ_STEPS.map((k,i)=>`<div class="wz-node ${step===i+1?"active":step>i+1?"done":""}"><i>${step>i+1?"✓":i+1}</i><span>${t(k)}</span></div>`).join("")}</div>`;
+  };
+  // Labels are translated; the option VALUE stays the identifier the importer
+  // writes against, so a Turkish UI never changes what a column maps to.
+  mappingRowsHTML = function(p){
+    return p.headers.map(h=>`<div class="wz-map"><div class="wz-map-src" title="${esc(h)}">${esc(h)}</div><div class="wz-map-arrow">→</div><select data-map-header="${esc(h)}">${MAP_FIELDS.map(([v])=>`<option value="${v}" ${p.mapping[h]===v?"selected":""}>${t(v?"wiz.map."+v:"wiz.map.ignore")}</option>`).join("")}</select></div>`).join("");
+  };
+  sourcePreviewHTML = function(p){
+    return`<table class="wz-table"><thead><tr><th>#</th>${p.headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${p.rows.slice(0,15).map((row,i)=>`<tr><td>${i+1}</td>${p.headers.map(h=>`<td>${esc(row[h])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  };
+  // The message the importer stored stays English -- app-guests.js matches on
+  // it to decide which issues survive a re-check. Only the drawn text changes.
+  function wizIssueText(message){
+    return typeof translateImportIssue==="function"?translateImportIssue(message):message;
+  }
+  interpretRowHTML = function(r,i){
+    const issues=r.issues||[];
+    const sel=(field,values,current)=>`<select data-interp-row="${i}" data-interp-field="${field}">${values.map(v=>`<option value="${v}" ${current===v?"selected":""}>${field==="planningStatus"?t("status.planning."+v):esc(v)}</option>`).join("")}</select>`;
+    return`<tr>
+      <td class="src" title="${esc(r.sourceName)}">${esc(r.sourceName)}</td>
+      <td><input data-interp-row="${i}" data-interp-field="name" value="${esc(r.name)}"></td>
+      <td class="num"><input data-interp-row="${i}" data-interp-field="additionalGuests" type="number" min="0" value="${r.additionalGuests}"></td>
+      <td class="pax"><b>${r.pax}</b></td>
+      <td>${sel("planningStatus",["Confirmed","Tentative"],r.planningStatus)}</td>
+      <td>${sel("vip",["Standard","VIP","VVIP"],r.vip)}</td>
+      <td><input data-interp-row="${i}" data-interp-field="tableNumber" value="${esc(r.tableNumber||"")}"></td>
+      <td><input data-interp-row="${i}" data-interp-field="seatText" value="${esc(r.seatText||"")}"></td>
+      <td>${issues.length?issues.map(x=>`<div class="wz-issue ${x.level}">⚠ ${esc(wizIssueText(x.message))}</div>`).join(""):`<span class="wz-ok">✓ ${t("wiz.ready")}</span>`}</td>
+    </tr>`;
+  };
+  wizardBodyHTML = function(p){
+    if(p.step===1)return`<div class="wz-drop">${icon("download")}<h3>${t("wiz.chooseTitle")}</h3><p>${t("wiz.chooseNote")}</p><div class="toolbar-row" style="justify-content:center;margin-top:6px"><button class="btn" data-wizard-template>${icon("download")}${t("wiz.template")}</button><button class="btn primary" data-wizard-choose>${icon("plus")}${t("wiz.choose")}</button></div></div>`;
+    if(p.step===2)return`<h3 class="wz-title">${t("wiz.previewTitle")}</h3><p class="wz-note">${t("wiz.previewNote",{file:esc(p.fileName),shown:Math.min(15,p.rows.length),total:p.rows.length})}</p><div class="wz-scroll">${sourcePreviewHTML(p)}</div>`;
+    if(p.step===3)return`<h3 class="wz-title">${t("wiz.mapTitle")}</h3><p class="wz-note">${t("wiz.mapNote")}</p><div style="max-width:780px">${mappingRowsHTML(p)}</div>`;
+    if(p.step===4)return`<h3 class="wz-title">${t("wiz.interpTitle")}</h3><p class="wz-note">${t("wiz.interpNote")}</p><div class="wz-scroll"><table class="wz-table interp"><colgroup><col class="c-source"><col class="c-name"><col class="c-num"><col class="c-num"><col class="c-status"><col class="c-vip"><col class="c-table"><col class="c-seat"><col class="c-check"></colgroup><thead><tr><th>${t("wiz.col.source")}</th><th>${t("wiz.map.name")}</th><th>${t("wiz.col.additional")}</th><th>${t("wiz.col.totalPax")}</th><th>${t("wiz.map.planningStatus")}</th><th>${t("wiz.map.vip")}</th><th>${t("wiz.col.table")}</th><th>${t("wiz.col.seat")}</th><th>${t("wiz.col.validation")}</th></tr></thead><tbody>${p.interpreted.map((r,i)=>interpretRowHTML(r,i)).join("")}</tbody></table></div>`;
+    const s=importSummary(p.interpreted);
+    return`<h3 class="wz-title">${t("wiz.sumTitle")}</h3><p class="wz-note">${t("wiz.sumNote")}</p>
+      <div class="wz-sum">
+        <div><span>${t("wiz.sum.records")}</span><b>${s.records}</b></div>
+        <div><span>${t("wiz.sum.guests")}</span><b>${s.guests}</b></div>
+        <div><span>${t("wiz.sum.confirmed")}</span><b>${s.confirmed}</b></div>
+        <div><span>${t("wiz.sum.tentative")}</span><b>${s.tentative}</b></div>
+        <div><span>${t("wiz.sum.attention")}</span><b>${s.attention}</b></div>
+      </div>
+      ${s.errors?`<div class="wz-banner stop">${t("wiz.blocking",{n:s.errors})}</div>`:`<div class="wz-banner ok">${t("wiz.readyToImport",{records:s.records,guests:s.guests})}</div>`}`;
+  };
+  wizardFootHTML = function(p){
+    if(p.step===1)return`<button class="btn" data-wizard-close>${t("setup.cancel")}</button>`;
+    const back=`<button class="btn" data-wizard-back>${t("wiz.back")}</button>`;
+    if(p.step===2)return`${back}<button class="btn primary" data-wizard-next>${t("wiz.toMapping")}${icon("arrow")}</button>`;
+    if(p.step===3)return`${back}<button class="btn primary" data-wizard-next>${t("wiz.toInterpret")}${icon("arrow")}</button>`;
+    if(p.step===4)return`${back}<button class="btn primary" data-wizard-next>${t("wiz.toSummary")}${icon("arrow")}</button>`;
+    const s=importSummary(p.interpreted);
+    return`${back}<button class="btn primary" data-wizard-import ${s.errors?"disabled":""}>${t("wiz.import")}</button>`;
+  };
+  renderExcelWizard = function(){
+    const root=document.getElementById("excelWizard"),p=pendingImport;if(!p||!root)return;
+    root.innerHTML=`<div class="wz-head"><h2>${t("wiz.title")}</h2><button class="table-card-close" data-wizard-close title="${t("wiz.close")}">&times;</button></div>${wizardStepsHTML(p.step)}<div class="wz-body">${wizardBodyHTML(p)}</div><div class="wz-foot">${wizardFootHTML(p)}</div>`;
+    bindExcelWizard();
+  };
+
   // ---- Reports: catch problems BEFORE the workbook leaves the building --
   // The screen is free to change; the workbook contract is frozen. Nothing
   // here touches makeTablePlanSheet / makeListSheet / seatExportName.
