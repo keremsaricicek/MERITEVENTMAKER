@@ -370,7 +370,14 @@
     "live.noTable": { en: "No table", tr: "Masa yok" },
     "live.noShowKeepsSeat": { en: "Marked No Show. The planned seat is kept; only live capacity is released.", tr: "Gelmedi olarak işaretlendi. Planlanan koltuk korunur; yalnızca canlı kapasite serbest bırakılır." },
     "live.checkedInToast": { en: "{name} checked in.", tr: "{name} giriş yaptı." },
-    "live.undoneToast": { en: "{name} set back to Not Arrived.", tr: "{name} tekrar Gelmedi durumuna alındı." },
+    // "Not Arrived" is "Bekleniyor" everywhere else -- "Gelmedi" is No Show, and
+    // at a door the two must never read the same.
+    "live.undoneToast": { en: "{name} set back to Not Arrived.", tr: "{name} tekrar Bekleniyor durumuna alındı." },
+    "live.enterHint": { en: "Or type a name and press Enter — when one guest is left, Enter checks them in.", tr: "Ya da bir isim yazıp Enter'a basın — tek kişi kaldığında Enter girişini alır." },
+    "live.armed": { en: "Enter", tr: "Enter" },
+    "live.armedTitle": { en: "Press Enter to check this guest in", tr: "Bu misafirin girişini almak için Enter'a basın" },
+    "live.tooMany": { en: "{n} guests match. Keep typing until one is left.", tr: "{n} misafir eşleşiyor. Tek kişi kalana kadar yazmaya devam edin." },
+    "live.alreadyIn": { en: "{name} has already checked in.", tr: "{name} zaten giriş yapmış." },
     "live.companionsOf": { en: "{n} companions", tr: "{n} refakatçi" },
     "live.partyOf": { en: "party of {n}", tr: "{n} kişilik" },
     "live.col.name": { en: "Name Surname", tr: "Ad Soyad" },
@@ -548,6 +555,9 @@
     "Browser storage is full. Export the workbook before closing.": "Tarayıcı depolaması dolu. Kapatmadan önce çalışma kitabını dışa aktarın.",
     "Browser storage is full. Export your workbook before closing.": "Tarayıcı depolaması dolu. Kapatmadan önce çalışma kitabınızı dışa aktarın.",
     "Event data was saved, but large images exceeded browser storage.": "Etkinlik verisi kaydedildi, ancak büyük görseller tarayıcı depolamasını aştı.",
+    "Layout and guests were saved. The imported image was too large for browser storage.": "Yerleşim ve misafirler kaydedildi. İçe aktarılan görsel tarayıcı depolaması için fazla büyüktü.",
+    "Repeated placement active. Click the canvas for each object; Esc cancels.": "Tekrarlı yerleştirme açık. Her nesne için tuvale tıklayın; Esc iptal eder.",
+    "Verified plan saved locally with predictions, corrections, rejections and missed detections.": "Doğrulanmış plan; tahminler, düzeltmeler, reddedilenler ve kaçırılan tespitlerle birlikte yerel olarak kaydedildi.",
   };
   const TOAST_PATTERNS = [
     [/^(.+) returned to Unassigned\.$/, (m) => `${m[1]} atanmamışlara döndü.`],

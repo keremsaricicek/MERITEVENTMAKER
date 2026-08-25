@@ -556,6 +556,10 @@
     return`<span class="seat-tag">${esc(formatTableNumber(t_.number))}${g.assignment.seats?.length?` · ${esc(seatRange(g.assignment.seats))}`:""}</span>`;
   }
   const ARRIVAL_ORDER={"Not Arrived":0,"Checked In":1,"No Show":2};
+  // What the current search actually narrowed to, so the Enter key acts on
+  // exactly the rows the operator can see. Deliberately a local, not ui state:
+  // it is a property of the last render, and must never reach the stored schema.
+  let liveVisibleIds=[];
   liveHTML = function(event){
     const q=ui.liveQuery.trim().toLocaleLowerCase("tr"),s=liveStats(event);
     if(!ui.liveRecent)ui.liveRecent=[];
@@ -564,6 +568,11 @@
       // Not Arrived first: on event night the operator's list is "who is still
       // outside", not an alphabetical roster.
       .sort((a,b)=>(ARRIVAL_ORDER[a.arrivalStatus]-ARRIVAL_ORDER[b.arrivalStatus])||naturalSort(a.name,b.name));
+    liveVisibleIds=rows.map(g=>g.id);
+    // Enter only fires when the search has narrowed to a single person, and the
+    // screen says whose door it is about to open. Checking in the wrong guest
+    // is worse than one more keystroke, so there is no "top match wins" rule.
+    const armedId=q&&rows.length===1&&rows[0].arrivalStatus!=="Checked In"?rows[0].id:null;
     const metrics=[
       `<div class="mx-metric is-hero is-good"><span class="mx-metric-label">${t("live.arrived")}</span><span class="mx-metric-value">${s.checked}</span><span class="mx-metric-note">${t("live.arrivedNote",{total:s.total})}</span></div>`,
       `<div class="mx-metric"><span class="mx-metric-label">${t("live.stillExpected")}</span><span class="mx-metric-value">${s.notArrived}</span><span class="mx-metric-note">${t("live.stillExpectedNote")}</span></div>`,
@@ -574,11 +583,13 @@
     const recent=ui.liveRecent.length?ui.liveRecent.map(r=>`<div class="recent-item"><span class="arr-state ${r.to==="Checked In"?"in":r.to==="No Show"?"no":"not"}">${esc(t("status.arrival."+r.to))}</span><b>${esc(r.name)}</b><button class="undo-link" data-live-undo="${r.guestId}">${t("live.undo")}</button></div>`).join(""):`<div class="recent-item" style="color:var(--muted)">${t("live.recentEmpty")}</div>`;
     const list=rows.length?rows.map(g=>{
       const isIn=g.arrivalStatus==="Checked In",isNo=g.arrivalStatus==="No Show";
-      return`<div class="arrival-row ${isIn?"is-in":isNo?"is-no":""}">
+      const armed=g.id===armedId;
+      return`<div class="arrival-row ${isIn?"is-in":isNo?"is-no":""} ${armed?"is-armed":""}">
         <div class="arrival-who"><div class="party-name">${esc(g.name)}</div><div class="party-sub">${partyMetaHTML(g)}</div></div>
         <div>${seatTagHTML(event,g)}</div>
         <div><span class="arr-state ${isIn?"in":isNo?"no":"not"}">${esc(t("status.arrival."+g.arrivalStatus))}</span></div>
         <div class="arrival-actions">
+          ${armed?`<kbd class="enter-key" title="${t("live.armedTitle")}">${t("live.armed")} ↵</kbd>`:""}
           <button class="btn-arrive ${isIn?"undo":"go"}" data-arrival="Checked In" data-live-guest="${g.id}">${isIn?t("live.undoCheckIn"):t("live.checkInAction")}</button>
           <button class="btn-arrive ${isNo?"undo":"no"}" data-arrival="No Show" data-live-guest="${g.id}">${isNo?t("live.undo"):t("live.noShow")}</button>
         </div>
@@ -590,13 +601,24 @@
       <div class="live-stage">
         <div>
           <div class="live-search-hero"><span class="hero-icon">${icon("search")}</span><input id="liveSearch" value="${esc(ui.liveQuery)}" placeholder="${t("live.searchHero")}" autocomplete="off"></div>
-          <p class="live-hint">${t("live.hint")}</p>
+          <p class="live-hint">${t("live.hint")}<br>${t("live.enterHint")}</p>
           <div class="mx-list" style="margin-top:12px">${list}</div>
         </div>
         <aside class="live-aside"><div class="live-aside-head">${t("live.recentTitle")}</div>${recent}</aside>
       </div>
     </div></div>`;
   };
+  // render() replaces the input node, so focus has to be re-established by hand
+  // after every keystroke -- otherwise the operator types one letter and loses
+  // the field.
+  function focusLiveSearch(caret){
+    requestAnimationFrame(()=>{
+      const n=document.getElementById("liveSearch");if(!n)return;
+      n.focus();
+      const pos=caret==null?n.value.length:caret;
+      n.setSelectionRange(pos,pos);
+    });
+  }
   bindLive = function(){
     const search=document.getElementById("liveSearch");
     if(search){
@@ -604,7 +626,32 @@
         ui.liveQuery=search.value;
         const pos=search.selectionStart;
         render();
-        requestAnimationFrame(()=>{const n=document.getElementById("liveSearch");if(n){n.focus();n.setSelectionRange(pos,pos);}});
+        focusLiveSearch(pos);
+      };
+      // The door flow: type a name, press Enter, type the next name. The query
+      // clears on a successful check-in so the operator never has to reach for
+      // the mouse between two guests.
+      search.onkeydown=e=>{
+        // stopPropagation: the window-level Escape handler would otherwise fire a
+        // second render for a key that means only "clear this field".
+        if(e.key==="Escape"){e.preventDefault();e.stopPropagation();ui.liveQuery="";render();focusLiveSearch();return;}
+        if(e.key!=="Enter")return;
+        e.preventDefault();
+        if(!ui.liveQuery.trim())return;
+        const event=activeEvent();if(!canMutate(event,"change live arrival status"))return;
+        if(!liveVisibleIds.length)return;
+        if(liveVisibleIds.length>1){toast(t("live.tooMany",{n:liveVisibleIds.length}));return;}
+        const g=event.guests.find(x=>x.id===liveVisibleIds[0]);if(!g)return;
+        if(g.arrivalStatus==="Checked In"){toast(t("live.alreadyIn",{name:g.name}));return;}
+        const from=g.arrivalStatus;
+        // Same single axis as the buttons: arrivalStatus only. planningStatus
+        // and the planned seat assignment are untouched.
+        g.arrivalStatus="Checked In";
+        recordArrival(g,from,"Checked In");
+        audit(event,"ARRIVAL_STATUS_CHANGED",{guestId:g.id,status:"Checked In"});
+        ui.liveQuery="";
+        touchEvent(event);render();focusLiveSearch();
+        toast(t("live.checkedInToast",{name:g.name}),"success");
       };
       // Event night: the operator walks up and types. Claim focus only when
       // nothing else already has it, so this never steals from another field.
