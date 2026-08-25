@@ -404,6 +404,12 @@
     "reports.title": { en: "Reports & Export", tr: "Raporlar ve Dışa Aktarım" },
     "reports.subtitle": { en: "Operational seating workbook, guest list and unassigned records.", tr: "Operasyonel oturma çalışma kitabı, misafir listesi ve atanmamış kayıtlar." },
     "reports.guestCsv": { en: "Guest CSV", tr: "Misafir CSV" },
+    // The paper plan is built from the same model as the workbook, so it can
+    // never disagree with the exported file about who sits where.
+    "reports.printTablePlan": { en: "Print table plan", tr: "Masa planını yazdır" },
+    "reports.printNoTables": { en: "There are no tables to print yet.", tr: "Henüz yazdırılacak masa yok." },
+    "reports.printTables": { en: "{n} tables", tr: "{n} masa" },
+    "reports.printPax": { en: "{seated} of {total} pax seated", tr: "{total} kişiden {seated} tanesi oturtuldu" },
     "reports.exportTablePlan": { en: "Export Table Plan (.XLSX)", tr: "Masa Planını Dışa Aktar (.XLSX)" },
     "reports.capacitySummary": { en: "Capacity Summary", tr: "Kapasite Özeti" },
     "reports.live": { en: "Live", tr: "Canlı" },

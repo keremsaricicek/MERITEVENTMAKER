@@ -796,6 +796,7 @@
             <div class="sheet-chip"><b>${t("reports.sheetUnassigned")}</b><span>${t("reports.sheetNoteGuests",{n:unassignedPax})}</span></div>
           </div>
           <button class="btn primary btn-export" data-report="xlsx">${icon("download")}${t("reports.exportTablePlan")}</button>
+          <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="print">${icon("image")}${t("reports.printTablePlan")}</button>
           <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="csv">${icon("download")}${t("reports.guestCsv")}</button>
           <p style="font-size:11px;color:var(--muted-2);margin:12px 0 0;line-height:1.45">${t("reports.sheetsInEnglish")}</p>
         </aside>
@@ -807,8 +808,63 @@
   bindReports = function(){
     app.querySelectorAll("[data-report='csv']").forEach(b=>b.onclick=exportGuestCSV);
     app.querySelectorAll("[data-report='xlsx']").forEach(b=>b.onclick=exportTablePlanXLSX);
+    app.querySelectorAll("[data-report='print']").forEach(b=>b.onclick=printTablePlan);
     app.querySelectorAll("[data-report-fix]").forEach(b=>b.onclick=()=>{ui.tab=b.dataset.reportFix;render();});
   };
+
+  // ---- Paper table plan -----------------------------------------------
+  // Walking the floor with a laptop is not how this job is done. The sheet is
+  // built from buildTablePlanModel() -- the SAME model the workbook uses -- so
+  // table numbering, seat numbering, "GUEST OF [PRIMARY NAME]", the per-table
+  // total and the four-cards-per-row grouping cannot drift apart from the
+  // exported .xlsx. Nothing in app-guests.js is touched.
+  function printTablePlan(){
+    const event=activeEvent();if(!event)return;
+    if(!event.tables.length){toast(t("reports.printNoTables"),"error");return;}
+    const model=buildTablePlanModel(event);
+    const totalPax=event.guests.reduce((n,g)=>n+paxOf(g),0);
+    const seatedPax=event.guests.filter(g=>g.assignment).reduce((n,g)=>n+paxOf(g),0);
+    // Four per row, same grouping as the workbook, so a page of paper and a
+    // page of the spreadsheet show the same four tables side by side.
+    const groups=[];
+    for(let i=0;i<model.tables.length;i+=4)groups.push(model.tables.slice(i,i+4));
+    const card=table=>{
+      const seats=Array.from({length:table.capacity},(_,s)=>{
+        const name=seatExportName(event,table,s);
+        return`<tr class="${name?"":"free"}"><td class="s">S${s+1}</td><td class="n">${esc(name)}</td></tr>`;
+      }).join("");
+      return`<div class="pp-card">
+        <div class="pp-card-head">${esc(formatTableNumber(table.number))}</div>
+        <table class="pp-seats"><tbody>${seats}</tbody></table>
+        <div class="pp-card-total"><span>TOTAL GUEST:</span><b>${tableAssignedPax(event,table.id)}</b></div>
+      </div>`;
+    };
+    const root=printRoot();
+    root.innerHTML=`
+      <div class="pp-head">
+        <div class="pp-title"><b>${esc(event.name)}</b><span>${esc([event.hotel,event.salon].filter(Boolean).join(" · "))}</span></div>
+        <div class="pp-meta">
+          <span>${esc(fmtDate(event.date))}</span>
+          <span>${t("reports.printTables",{n:model.tables.length})}</span>
+          <span>${t("reports.printPax",{seated:seatedPax,total:totalPax})}</span>
+        </div>
+      </div>
+      ${groups.map(g=>`<div class="pp-row">${g.map(card).join("")}</div>`).join("")}`;
+    document.body.classList.add("printing");
+    // Clear the print layer once the dialog closes either way, so a stale plan
+    // can never be printed after the seating has changed.
+    const cleanup=()=>{document.body.classList.remove("printing");root.innerHTML="";window.removeEventListener("afterprint",cleanup);};
+    window.addEventListener("afterprint",cleanup);
+    window.print();
+    // Browsers that never fire afterprint (or a blocked print dialog) must not
+    // leave the app stuck behind the print layer.
+    setTimeout(cleanup,60000);
+  }
+  function printRoot(){
+    let root=document.getElementById("printRoot");
+    if(!root){root=document.createElement("div");root.id="printRoot";document.body.appendChild(root);}
+    return root;
+  }
 
   // ---- Guests: a party list, not a spreadsheet ------------------------
   // Every row is ONE guest record. Companions are shown as part of that

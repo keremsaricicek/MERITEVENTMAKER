@@ -514,10 +514,21 @@ dialog::backdrop{background:rgba(32,28,20,.44)}
   .workspace-actions .btn.quiet{display:none}
 }
 
+/* The paper table plan lives outside .app so the print sheet is built from the
+   export model rather than from screen markup. Never visible on screen. */
+#printRoot{display:none}
+
 @media print{
-  html,body{height:auto!important;overflow:visible!important;background:#fdfdfc!important}
+  /* min-width:1180px is a screen rule for the desktop shell. Left in place it
+     forces the printer to scale the whole page down to fit, which is exactly
+     how a table plan becomes unreadable on paper. */
+  html,body{height:auto!important;overflow:visible!important;background:#fdfdfc!important;min-width:0!important;width:auto!important}
   .app,.toast-wrap,body>input,body>dialog:not(#guideDialog){display:none!important}
-  #guideDialog{display:block!important;position:static!important;width:100%!important;height:auto!important;max-height:none!important;margin:0!important;border:0!important;box-shadow:none!important;background:#fdfdfc!important;color:#2d291f!important}
+  /* [open] matters: without it a CLOSED guide dialog was forced visible, so
+     Ctrl+P from any screen printed the user manual. */
+  body:not(.printing) #guideDialog[open]{display:block!important;position:static!important;width:100%!important;height:auto!important;max-height:none!important;margin:0!important;border:0!important;box-shadow:none!important;background:#fdfdfc!important;color:#2d291f!important}
+  body.printing #guideDialog{display:none!important}
+  #printRoot{display:block!important}
   #guideDialog::backdrop{display:none}
   .guide-shell{display:block!important}
   .guide-nav,.guide-top{display:none!important}
@@ -528,6 +539,40 @@ dialog::backdrop{background:rgba(32,28,20,.44)}
   .manual-item{break-inside:avoid}
   .guide-tip{print-color-adjust:exact;-webkit-print-color-adjust:exact}
   .excel-card h4{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+
+  /* ---- Paper table plan ------------------------------------------------
+     Four cards per row, matching the workbook's horizontal grouping, so a
+     page of paper and a page of the .xlsx show the same four tables side by
+     side. Sized to fit A4 portrait; landscape simply gives it more air. */
+  #printRoot{font-family:var(--font-ui,system-ui,sans-serif);color:#221f18;font-size:8.5pt;line-height:1.35}
+  .pp-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+    padding-bottom:6pt;margin-bottom:9pt;border-bottom:1.5pt solid #221f18}
+  .pp-title b{display:block;font-size:14pt;font-weight:700;letter-spacing:-.01em}
+  .pp-title span{display:block;font-size:9pt;color:#5a5346;margin-top:1pt}
+  .pp-meta{display:flex;gap:14pt;font-size:8.5pt;color:#5a5346;white-space:nowrap}
+  .pp-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7pt;margin-bottom:9pt;
+    break-inside:avoid;page-break-inside:avoid}
+  /* Flex column with the total pushed to the bottom: cards in a row hold
+     different numbers of wrapped names, and a row of cards whose footers do
+     not line up reads as four unrelated scraps rather than one plan. */
+  .pp-card{display:flex;flex-direction:column;border:.9pt solid #4a4638;break-inside:avoid;page-break-inside:avoid}
+  .pp-card-total{margin-top:auto}
+  .pp-card-head{padding:3pt 5pt;border-bottom:.9pt solid #4a4638;background:#f0cf58;
+    font-size:10.5pt;font-weight:700;text-align:center;letter-spacing:.02em;
+    print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .pp-seats{width:100%;border-collapse:collapse;table-layout:fixed}
+  .pp-seats td{padding:1.6pt 3pt;border-bottom:.4pt solid #cfcabb;vertical-align:top;
+    word-break:break-word;overflow-wrap:anywhere}
+  /* 7.4pt keeps "GUEST OF [LONG NAME]" on one line in a quarter-width card on
+     A4 portrait; landscape simply leaves more air. */
+  .pp-seats td.n{font-size:7.4pt}
+  /* nowrap: too narrow and the seat label itself breaks into "S" / "1",
+     doubling every row's height. */
+  .pp-seats td.s{width:20pt;white-space:nowrap;font-weight:700;color:#4a4638;border-right:.4pt solid #cfcabb}
+  /* An empty seat still needs a visible ruled line to write a name on. */
+  .pp-seats tr.free td.n{min-height:11pt}
+  .pp-card-total{display:flex;justify-content:space-between;gap:5pt;padding:3pt 5pt;
+    border-top:.9pt solid #4a4638;font-size:8pt;font-weight:700}
 }
 
 /* ---- V8 layer: home grid, guided setup, AI plan analysis, live/operational mode ---- */
