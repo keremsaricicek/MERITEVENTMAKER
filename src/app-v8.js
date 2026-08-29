@@ -32,7 +32,7 @@
     lang:"en", reviewCenterOpen:false, difficultQuestionIndex:0, activeReviewGroupId:null, activeQuestionId:null, ocrText:null
   });
 
-  function blankRoot(){ return {version:8, schemaVersion:8, events:[], verifiedExamples:[], analyses:[], calibration:null, audit:[]}; }
+  function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], analyses:[], calibration:null, audit:[]}; }
   function isHistorical(event){ return !!event && (event.status === "Completed" || (!!event.date && event.date < todayKey())); }
   function audit(event, action, detail={}){
     state.audit ||= [];
@@ -98,6 +98,14 @@
   function parseRoot(raw){
     const parsed=JSON.parse(raw); parsed.version=8; parsed.schemaVersion=8;
     parsed.events=(parsed.events||[]).map(migrateEvent); parsed.verifiedExamples ||= []; parsed.analyses ||= []; parsed.audit ||= [];
+    // Promote the old free-text hotel/salon strings into real Venue/Layout
+    // records (src/venue-model.js). Additive: every event keeps its original
+    // strings, and a venueRef is attached alongside, so nothing that reads
+    // event.hotel today changes behaviour.
+    if(globalThis.MeritVenueModel){
+      const result=MeritVenueModel.migrateVenues(parsed);
+      if(result.linked)parsed.audit.unshift({id:uid("audit"),eventId:null,action:"VENUE_MODEL_MIGRATION",detail:result,at:nowISO()});
+    }
     return parsed;
   }
   // One-time migration source only: whatever a pre-StorageProvider install
@@ -330,7 +338,7 @@
   function createBlankEventFromSetup(usePlan){
     syncSetupFields();const d=newEventDraft;if(!d.name.trim()||!d.date||!d.hotel.trim()){toast("Event name, date and hotel are required.","error");return;}
     const event=migrateEvent({id:uid("event"),name:d.name.trim(),date:d.date,hotel:d.hotel.trim(),salon:d.salon.trim(),status:d.status,coverImage:d.coverImage,tables:[],venueObjects:[],guests:[],background:{src:usePlan?d.planSrc:"",name:usePlan?d.planName:"",opacity:.34,visible:!!(usePlan&&d.planSrc),locked:true,isDefault:false,scale:100},createdAt:nowISO(),lastModified:nowISO()});
-    state.events.unshift(event);audit(event,"EVENT_CREATED",{blank:!event.background.src,hotel:event.hotel,salon:event.salon});saveState();ui.activeEventId=event.id;ui.screen="workspace";ui.tab="floor";ui.leftCollapsed=true;render();toast(event.background.src?"Event created. Review the plan, then run Assisted Detection.":"Blank event created. Add plan objects when ready.","success",5000);
+    state.events.unshift(event);if(globalThis.MeritVenueModel)MeritVenueModel.migrateVenues(state);audit(event,"EVENT_CREATED",{blank:!event.background.src,hotel:event.hotel,salon:event.salon});saveState();ui.activeEventId=event.id;ui.screen="workspace";ui.tab="floor";ui.leftCollapsed=true;render();toast(event.background.src?"Event created. Review the plan, then run Assisted Detection.":"Blank event created. Add plan objects when ready.","success",5000);
   }
   function bindSetup(){
     document.querySelector("[data-setup='cancel']").onclick=()=>{ui.screen="events";render();};
