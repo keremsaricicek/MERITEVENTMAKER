@@ -1,23 +1,26 @@
 {
-  "ranAt": "2026-08-29T06:16:03.473Z",
+  "ranAt": "2026-08-29T06:18:39.063Z",
   "reports": [
     {
       "planId": "merit-real-venue",
       "matchToleranceP": 3,
       "tables": {
         "groundTruth": 46,
-        "detected": 121,
-        "tp": 44,
-        "fp": 77,
-        "fn": 2,
-        "precision": 0.364,
-        "recall": 0.957,
-        "f1": 0.527,
+        "detected": 82,
+        "tp": 41,
+        "fp": 41,
+        "fn": 5,
+        "precision": 0.5,
+        "recall": 0.891,
+        "f1": 0.641,
         "missedIds": [
+          "t42",
+          "t43",
           "t44",
+          "t45",
           "t46"
         ],
-        "spuriousCount": 77
+        "spuriousCount": 41
       },
       "tableTypeAccuracy": {
         "square": {
@@ -31,9 +34,9 @@
           "accuracy": 1
         },
         "bistro": {
-          "matched": 3,
+          "matched": 0,
           "correct": 0,
-          "accuracy": 0
+          "accuracy": null
         },
         "rectangle": {
           "matched": 0,
@@ -97,12 +100,12 @@
       },
       "falsePositiveRegions": {
         "textRegionsAnnotated": 7,
-        "detectionsInsideTextRegions": 2,
+        "detectionsInsideTextRegions": 1,
         "architectureRegionsAnnotated": 1,
         "detectionsInsideArchitectureRegions": 0
       },
       "humanEffort": {
-        "reviewGroups": 23,
+        "reviewGroups": 13,
         "uncertainQuestions": 15,
         "note": "review groups + questions the operator must resolve before Plan Confirmed"
       },
@@ -115,7 +118,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 494,
+      "detectionMs": 407,
       "pageErrors": [],
       "imageShaMatches": true
     }

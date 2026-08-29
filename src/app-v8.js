@@ -1726,7 +1726,7 @@
       // order of how specific the evidence is (a dedicated colour cluster
       // beats a tone cluster beats "it was dark enough to threshold").
       const chairSources=[];
-      let fallbackChairComps=[],fallbackChairLabels=null,accentMask=null;
+      let fallbackChairComps=[],fallbackChairLabels=null,accentMask=null,surfaceMask=null;
       // (a) interiors of closed outlines — the primary table source
       {
         const enclosed=enclosedRegions(barrier,width,height);
@@ -1743,6 +1743,14 @@
       if(accentModel||toneModel){
         const masks=buildClassMasks(data,gray,total,accentModel,toneModel);
         accentMask=masks.accent;
+        // The tint family that actually carries furniture surfaces, kept as a
+        // per-pixel mask so a table candidate can later be asked the direct
+        // question "is this thing made of table?". Chosen by how much of the
+        // drawing it covers, which on a seating plan is the table fill.
+        surfaceMask=masks.tints.length?masks.tints.reduce((best,m)=>{
+          let n=0;for(let i=0;i<total;i+=7)if(m[i])n++;
+          return (!best||n>best.n)?{mask:m,n}:best;
+        },null)?.mask||null:null;
         let toneKept=0;
         masks.tints.forEach((mask,index)=>{
           if(maskSolidity(mask,width,height)<.25)return; // antialiasing fringe along outlines, not a real filled object
@@ -1955,10 +1963,60 @@
       expanded.sort((a,b)=>(sourceRank[b.comp.source]||0)-(sourceRank[a.comp.source]||0)
         ||dedupFitness(b.comp)-dedupFitness(a.comp)
         ||b.comp.count-a.comp.count);
+      // Two boxes describing ONE physical table often overlap only slightly:
+      // the tone mask finds the table surface, the barrier mask finds the
+      // table plus the chair tucked against it, so the boxes are offset by
+      // roughly a chair. Measured on the real plan those pairs sit at IoU~0.13
+      // -- far under any IoU threshold that would still keep two genuinely
+      // adjacent tables apart. Centre distance separates the two cases
+      // cleanly and scale-free: a duplicate is a fraction of a table away,
+      // a real neighbour is about one table away.
+      const modalSpanForDedup=provisionalModalArea?Math.sqrt(provisionalModalArea.value):null;
+      const boxesIntersect=(a,b)=>a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h;
+      const centreDistance=(a,b)=>Math.hypot((a.x+a.w/2)-(b.x+b.w/2),(a.y+a.h/2)-(b.y+b.h/2));
       const unique=[];
       for(const entry of expanded){
-        if(unique.some(u=>boxIoU(entry.comp,u.comp)>=.45))continue;
+        const dup=unique.some(u=>{
+          if(boxIoU(entry.comp,u.comp)>=.45)return true;
+          if(!modalSpanForDedup)return false;
+          // Same object seen twice: the boxes actually touch AND their centres
+          // are much closer than one repeated object apart.
+          return boxesIntersect(entry.comp,u.comp)&&centreDistance(entry.comp,u.comp)<modalSpanForDedup*.55;
+        });
+        if(dup)continue;
         unique.push(entry);
+      }
+      // ---- is this candidate actually made of table? ------------------------
+      // A table drawn with a filled surface is mostly that surface colour. A
+      // row of chairs, a wall fragment, a block of printed text and a door
+      // swing are not, however table-shaped their bounding box looks. Asking
+      // the pixels directly is stronger evidence than any size or aspect rule,
+      // and it is the same colour reasoning that fixed the chair source.
+      //
+      // Only applied when the drawing really does have a surface family to
+      // reason from, and never to a candidate that already carries chair
+      // evidence -- a table surrounded by its own chairs is a table even if
+      // its fill reads faintly.
+      let surfaceRejected=0;
+      if(surfaceMask){
+        const surfaceCoverage=c=>{
+          const x0=Math.max(0,Math.round(c.x)),y0=Math.max(0,Math.round(c.y));
+          const x1=Math.min(width,Math.round(c.x+c.w)),y1=Math.min(height,Math.round(c.y+c.h));
+          let on=0,tot=0;
+          for(let y=y0;y<y1;y+=2)for(let x=x0;x<x1;x+=2){tot++;if(surfaceMask[y*width+x])on++;}
+          return tot?on/tot:0;
+        };
+        const surfaceKept=unique.filter(u=>{
+          const cov=surfaceCoverage(u.comp);
+          u.comp.surfaceCoverage=+cov.toFixed(3);
+          if(cov>=.22)return true;
+          surfaceRejected++;return false;
+        });
+        // Refuse to apply the rule if it would gut the plan: that would mean
+        // the surface family is not what this drawing uses for tables, and a
+        // filter that removes almost everything is wrong, not strict.
+        if(surfaceKept.length>=Math.max(4,unique.length*.2)){unique.length=0;unique.push(...surfaceKept);}
+        else surfaceRejected=0;
       }
       // Debug capture for benchmarks/run-benchmark.mjs: what each source
       // actually proposed, before and after de-duplication. Off unless asked.
@@ -2111,7 +2169,7 @@
           chairsDetected:chairs.length,chairsAssociated:associatedSeats,chairsUnassociated:chairVenues.length,
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
-          mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,debugPool,
+          mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,debugPool,
           sources:diagnosticsSources,phaseMs,
           colorModel:accentModel?{isColorPlan:accentModel.isColorPlan,accentHue:accentModel.accentHue,
             accentChroma:accentModel.accentChroma,accentFraction:Number(accentModel.accentFraction.toFixed(4)),
