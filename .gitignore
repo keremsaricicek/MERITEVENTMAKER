@@ -1,2 +1,6 @@
 .vendor-cache/
 dist/
+
+# Benchmark run output: timestamped reports are local run artifacts.
+# latest.json is kept so the committed numbers are reviewable.
+benchmarks/reports/benchmark-*.json

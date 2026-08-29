@@ -1,0 +1,784 @@
+{
+  "planId": "merit-real-venue",
+  "source": {
+    "file": "plans/merit-real-venue-plan.png",
+    "sha256": "991cfc48f7b72a682727fe135feae118ac7e3c2ef91f9547df8545afa1708c4f",
+    "width": 1355,
+    "height": 788,
+    "venue": "Merit (real supplied venue plan)",
+    "layout": "Main floor — concert seating"
+  },
+  "annotationMethod": "Table centres extracted programmatically from the drawing's own green centre marker (flood-fill on the marker hue, constrained to small round blobs sitting on a tan table surface, which rejects the decorative planter), then verified by rendering every accepted marker back over the plan (benchmarks/reports/dots-overlay reference). Bistro tables carry no centre marker and were located by visual inspection of zoomed crops. Per-table seat counts were counted from zoomed crops. Banquette seat counts are NOT determinable from the drawing and are recorded as unverified rather than guessed.",
+  "confidence": {
+    "tables": "high — 46 tables from two independent methods (marker extraction and manual count of zoomed crops) that agree",
+    "tableTypes": "high — round/square/bistro are visually unambiguous in this export",
+    "chairs": "medium — counted from zoomed crops, individual armchairs only",
+    "banquetteCapacity": "unverified — see capacity.unverified",
+    "venueObjects": "medium — stage/bar/entrance located by eye, extents approximate",
+    "relationships": "not annotated in this revision"
+  },
+  "objects": [
+    {
+      "id": "t01",
+      "class": "table",
+      "type": "square",
+      "cx": 845,
+      "cy": 98,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t02",
+      "class": "table",
+      "type": "square",
+      "cx": 1139,
+      "cy": 98,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t03",
+      "class": "table",
+      "type": "square",
+      "cx": 998,
+      "cy": 99,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t04",
+      "class": "table",
+      "type": "square",
+      "cx": 846,
+      "cy": 146,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t05",
+      "class": "table",
+      "type": "square",
+      "cx": 1140,
+      "cy": 146,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t06",
+      "class": "table",
+      "type": "square",
+      "cx": 996,
+      "cy": 150,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t07",
+      "class": "table",
+      "type": "square",
+      "cx": 844,
+      "cy": 196,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t08",
+      "class": "table",
+      "type": "square",
+      "cx": 997,
+      "cy": 196,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t09",
+      "class": "table",
+      "type": "square",
+      "cx": 1139,
+      "cy": 196,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t10",
+      "class": "table",
+      "type": "round",
+      "cx": 1264,
+      "cy": 263,
+      "w": 96,
+      "h": 96,
+      "rotation": 0,
+      "seats": 6,
+      "seatsConfidence": "high"
+    },
+    {
+      "id": "t11",
+      "class": "table",
+      "type": "square",
+      "cx": 1126,
+      "cy": 309,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t12",
+      "class": "table",
+      "type": "square",
+      "cx": 977,
+      "cy": 311,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t13",
+      "class": "table",
+      "type": "square",
+      "cx": 808,
+      "cy": 312,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t14",
+      "class": "table",
+      "type": "square",
+      "cx": 1126,
+      "cy": 357,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t15",
+      "class": "table",
+      "type": "square",
+      "cx": 977,
+      "cy": 358,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t16",
+      "class": "table",
+      "type": "square",
+      "cx": 808,
+      "cy": 359,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t17",
+      "class": "table",
+      "type": "square",
+      "cx": 660,
+      "cy": 361,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t18",
+      "class": "table",
+      "type": "square",
+      "cx": 1295,
+      "cy": 395,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t19",
+      "class": "table",
+      "type": "square",
+      "cx": 1245,
+      "cy": 397,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t20",
+      "class": "table",
+      "type": "square",
+      "cx": 660,
+      "cy": 408,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t21",
+      "class": "table",
+      "type": "square",
+      "cx": 976,
+      "cy": 410,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t22",
+      "class": "table",
+      "type": "square",
+      "cx": 807,
+      "cy": 411,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t23",
+      "class": "table",
+      "type": "square",
+      "cx": 1127,
+      "cy": 413,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t24",
+      "class": "table",
+      "type": "square",
+      "cx": 240,
+      "cy": 444,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t25",
+      "class": "table",
+      "type": "square",
+      "cx": 287,
+      "cy": 444,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t26",
+      "class": "table",
+      "type": "square",
+      "cx": 434,
+      "cy": 444,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t27",
+      "class": "table",
+      "type": "square",
+      "cx": 490,
+      "cy": 444,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t28",
+      "class": "table",
+      "type": "square",
+      "cx": 537,
+      "cy": 444,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t29",
+      "class": "table",
+      "type": "square",
+      "cx": 338,
+      "cy": 445,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t30",
+      "class": "table",
+      "type": "square",
+      "cx": 660,
+      "cy": 460,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t31",
+      "class": "table",
+      "type": "square",
+      "cx": 1127,
+      "cy": 461,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t32",
+      "class": "table",
+      "type": "round",
+      "cx": 115,
+      "cy": 467,
+      "w": 96,
+      "h": 96,
+      "rotation": 0,
+      "seats": 6,
+      "seatsConfidence": "high"
+    },
+    {
+      "id": "t33",
+      "class": "table",
+      "type": "round",
+      "cx": 1262,
+      "cy": 551,
+      "w": 96,
+      "h": 96,
+      "rotation": 0,
+      "seats": 6,
+      "seatsConfidence": "high",
+      "note": "centre marker below extractor size floor; confirmed visually"
+    },
+    {
+      "id": "t34",
+      "class": "table",
+      "type": "square",
+      "cx": 240,
+      "cy": 597,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t35",
+      "class": "table",
+      "type": "square",
+      "cx": 287,
+      "cy": 597,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t36",
+      "class": "table",
+      "type": "square",
+      "cx": 338,
+      "cy": 597,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t37",
+      "class": "table",
+      "type": "square",
+      "cx": 475,
+      "cy": 601,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t38",
+      "class": "table",
+      "type": "square",
+      "cx": 429,
+      "cy": 602,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t39",
+      "class": "table",
+      "type": "square",
+      "cx": 530,
+      "cy": 602,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t40",
+      "class": "table",
+      "type": "square",
+      "cx": 577,
+      "cy": 602,
+      "w": 52,
+      "h": 48,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "medium"
+    },
+    {
+      "id": "t41",
+      "class": "table",
+      "type": "round",
+      "cx": 111,
+      "cy": 619,
+      "w": 96,
+      "h": 96,
+      "rotation": 0,
+      "seats": 6,
+      "seatsConfidence": "high"
+    },
+    {
+      "id": "t42",
+      "class": "table",
+      "type": "bistro",
+      "shape": "round",
+      "cx": 35,
+      "cy": 235,
+      "w": 46,
+      "h": 40,
+      "rotation": 0,
+      "seats": 2,
+      "seatsConfidence": "high"
+    },
+    {
+      "id": "t43",
+      "class": "table",
+      "type": "bistro",
+      "shape": "round",
+      "cx": 80,
+      "cy": 235,
+      "w": 46,
+      "h": 40,
+      "rotation": 0,
+      "seats": 2,
+      "seatsConfidence": "high"
+    },
+    {
+      "id": "t44",
+      "class": "table",
+      "type": "bistro",
+      "shape": "square",
+      "cx": 200,
+      "cy": 725,
+      "w": 46,
+      "h": 40,
+      "rotation": 0,
+      "seats": 2,
+      "seatsConfidence": "high"
+    },
+    {
+      "id": "t45",
+      "class": "table",
+      "type": "bistro",
+      "shape": "square",
+      "cx": 400,
+      "cy": 725,
+      "w": 46,
+      "h": 40,
+      "rotation": 0,
+      "seats": 2,
+      "seatsConfidence": "high"
+    },
+    {
+      "id": "t46",
+      "class": "table",
+      "type": "bistro",
+      "shape": "square",
+      "cx": 520,
+      "cy": 725,
+      "w": 46,
+      "h": 40,
+      "rotation": 0,
+      "seats": 2,
+      "seatsConfidence": "high"
+    },
+    {
+      "id": "s01",
+      "class": "banquette",
+      "cx": 790,
+      "cy": 148,
+      "w": 26,
+      "h": 150,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "unverified"
+    },
+    {
+      "id": "s02",
+      "class": "banquette",
+      "cx": 1032,
+      "cy": 148,
+      "w": 26,
+      "h": 150,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "unverified"
+    },
+    {
+      "id": "s03",
+      "class": "banquette",
+      "cx": 1085,
+      "cy": 148,
+      "w": 26,
+      "h": 150,
+      "rotation": 0,
+      "seats": null,
+      "seatsConfidence": "unverified"
+    },
+    {
+      "id": "v01",
+      "class": "stage",
+      "cx": 905,
+      "cy": 600,
+      "w": 430,
+      "h": 210
+    },
+    {
+      "id": "v02",
+      "class": "bar",
+      "cx": 360,
+      "cy": 230,
+      "w": 490,
+      "h": 120
+    },
+    {
+      "id": "v03",
+      "class": "entrance",
+      "cx": 45,
+      "cy": 168,
+      "w": 60,
+      "h": 26,
+      "label": "GIRIS"
+    },
+    {
+      "id": "v04",
+      "class": "entrance",
+      "cx": 1281,
+      "cy": 88,
+      "w": 26,
+      "h": 70,
+      "label": "GIRIS"
+    }
+  ],
+  "logicalGroups": [
+    {
+      "id": "g1",
+      "members": [
+        "left-mid-A"
+      ],
+      "note": "3 square tables pushed together seating 8 as one long table",
+      "seats": 8
+    },
+    {
+      "id": "g2",
+      "members": [
+        "left-mid-B"
+      ],
+      "note": "3 square tables pushed together seating 8",
+      "seats": 8
+    },
+    {
+      "id": "g3",
+      "members": [
+        "left-bot-A"
+      ],
+      "note": "3 square tables pushed together seating 6",
+      "seats": 6
+    },
+    {
+      "id": "g4",
+      "members": [
+        "left-bot-B"
+      ],
+      "note": "4 square tables pushed together seating 10",
+      "seats": 10
+    }
+  ],
+  "capacity": {
+    "ocrStated": {
+      "seating": 114,
+      "bistro": 10,
+      "total": 124,
+      "source": "printed on the drawing, top-left"
+    },
+    "annotatedChairs": 105,
+    "annotatedChairsNote": "individual armchairs and round-table chairs counted from zoomed crops, including the 10 bistro chairs",
+    "unverified": [
+      {
+        "objectIds": [
+          "s01",
+          "s02",
+          "s03"
+        ],
+        "reason": "Three long banquettes in the top-right cluster. The drawing does not divide them into seat positions, so their capacity cannot be read off it. The gap between 105 counted chairs and the drawing's stated 124 is the size of this unknown; a capacity auditor should surface these three objects as the unresolved region rather than silently balancing the number."
+      }
+    ]
+  },
+  "regions": [
+    {
+      "class": "text",
+      "x": 100,
+      "y": 52,
+      "w": 172,
+      "h": 84,
+      "note": "114 pax seating / 10 pax bistro / Total : 124 pax"
+    },
+    {
+      "class": "text",
+      "x": 318,
+      "y": 196,
+      "w": 78,
+      "h": 32,
+      "note": "BAR"
+    },
+    {
+      "class": "text",
+      "x": 884,
+      "y": 528,
+      "w": 36,
+      "h": 20,
+      "note": "8 m"
+    },
+    {
+      "class": "text",
+      "x": 712,
+      "y": 634,
+      "w": 44,
+      "h": 20,
+      "note": "3,10 m"
+    },
+    {
+      "class": "text",
+      "x": 894,
+      "y": 624,
+      "w": 56,
+      "h": 20,
+      "note": "SAHNE"
+    },
+    {
+      "class": "text",
+      "x": 20,
+      "y": 152,
+      "w": 60,
+      "h": 32,
+      "note": "GIRIS (left)"
+    },
+    {
+      "class": "text",
+      "x": 1266,
+      "y": 52,
+      "w": 26,
+      "h": 76,
+      "note": "GIRIS (right, rotated)"
+    },
+    {
+      "class": "architecture",
+      "x": 8,
+      "y": 12,
+      "w": 1338,
+      "h": 740,
+      "note": "room outline / perimeter walls"
+    },
+    {
+      "class": "architecture",
+      "x": 630,
+      "y": 60,
+      "w": 80,
+      "h": 110,
+      "note": "decorative planter"
+    }
+  ],
+  "counts": {
+    "tables": 46,
+    "square": 37,
+    "round": 4,
+    "bistro": 5,
+    "banquettes": 3,
+    "venueObjects": 4,
+    "textRegions": 7
+  }
+}

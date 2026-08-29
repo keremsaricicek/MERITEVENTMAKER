@@ -1,0 +1,145 @@
+{
+  "ranAt": "2026-08-29T06:10:58.403Z",
+  "reports": [
+    {
+      "planId": "merit-real-venue",
+      "matchToleranceP": 3,
+      "tables": {
+        "groundTruth": 46,
+        "detected": 52,
+        "tp": 22,
+        "fp": 30,
+        "fn": 24,
+        "precision": 0.423,
+        "recall": 0.478,
+        "f1": 0.449,
+        "missedIds": [
+          "t01",
+          "t02",
+          "t03",
+          "t04",
+          "t05",
+          "t06",
+          "t07",
+          "t08",
+          "t09",
+          "t12",
+          "t17",
+          "t18",
+          "t19",
+          "t21",
+          "t24",
+          "t26",
+          "t28",
+          "t29",
+          "t30",
+          "t34",
+          "t35",
+          "t43",
+          "t44",
+          "t46"
+        ],
+        "spuriousCount": 30
+      },
+      "tableTypeAccuracy": {
+        "square": {
+          "matched": 16,
+          "correct": 0,
+          "accuracy": 0
+        },
+        "round": {
+          "matched": 4,
+          "correct": 4,
+          "accuracy": 1
+        },
+        "bistro": {
+          "matched": 2,
+          "correct": 0,
+          "accuracy": 0
+        },
+        "rectangle": {
+          "matched": 0,
+          "correct": 0,
+          "accuracy": null
+        }
+      },
+      "chairs": {
+        "note": "This annotation records a chair TOTAL, not per-chair positions, so precision/recall is not computed for chairs — only the count comparison below.",
+        "annotatedChairs": 105,
+        "detectedOnTables": 100,
+        "detectedStandalone": 22,
+        "detectedTotal": 122
+      },
+      "capacity": {
+        "ocrStated": {
+          "seating": 114,
+          "bistro": 10,
+          "total": 124,
+          "source": "printed on the drawing, top-left"
+        },
+        "annotatedChairs": 105,
+        "systemPhysicalSeats": 122,
+        "unverifiedInAnnotation": [
+          {
+            "objectIds": [
+              "s01",
+              "s02",
+              "s03"
+            ],
+            "reason": "Three long banquettes in the top-right cluster. The drawing does not divide them into seat positions, so their capacity cannot be read off it. The gap between 105 counted chairs and the drawing's stated 124 is the size of this unknown; a capacity auditor should surface these three objects as the unresolved region rather than silently balancing the number."
+          }
+        ],
+        "auditFromApp": null
+      },
+      "semanticObjects": {
+        "stage": {
+          "tp": 1,
+          "fp": 1,
+          "fn": 0,
+          "precision": 0.5,
+          "recall": 1,
+          "f1": 0.667
+        },
+        "bar": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 1,
+          "precision": 0,
+          "recall": 0,
+          "f1": 0
+        },
+        "entrance": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 2,
+          "precision": 0,
+          "recall": 0,
+          "f1": 0
+        }
+      },
+      "falsePositiveRegions": {
+        "textRegionsAnnotated": 7,
+        "detectionsInsideTextRegions": 1,
+        "architectureRegionsAnnotated": 1,
+        "detectionsInsideArchitectureRegions": 0
+      },
+      "humanEffort": {
+        "reviewGroups": 22,
+        "uncertainQuestions": 9,
+        "note": "review groups + questions the operator must resolve before Plan Confirmed"
+      },
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "colour-cluster",
+        "ocrEngine": null,
+        "ocrAvailable": false
+      },
+      "detectionMs": 693,
+      "pageErrors": [],
+      "imageShaMatches": true
+    }
+  ]
+}
