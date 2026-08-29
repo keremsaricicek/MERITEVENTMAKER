@@ -992,6 +992,27 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .mx-row:first-child{border-top:none}
 .mx-row:hover{background:var(--panel)}
 
+/*
+  Off-screen rows are not laid out. On the 4,000-seat fixture (3,000 guest
+  records, 400 tables) the profiler charged a Guests render 902-1,715ms, and
+  the split was 22ms to build the HTML string, 118ms to parse it and ~370ms+
+  per pass laying out rows nobody could see -- 70,205 DOM nodes on one
+  screen. Skipping off-screen layout took the same render to 225-288ms
+  measured, with no change to what is rendered: the filter, the counts and
+  the keyboard flow all still run over every guest, so search, "check in all
+  visible" and the metric strip stay exact. `auto <height>` is a first-paint
+  estimate only -- the browser substitutes each row's real height once it has
+  been on screen, so the scrollbar does not drift.
+
+  These three selectors are the only long operational lists in the app. Do
+  not extend this to short lists: paint containment clips anything a child
+  draws outside the row box, which is fine for a table row and wrong for
+  something with a popover.
+*/
+.mx-row{content-visibility:auto;contain-intrinsic-size:auto 67px}
+.arrival-row{content-visibility:auto;contain-intrinsic-size:auto 73px}
+.queue-card{content-visibility:auto;contain-intrinsic-size:auto 66px}
+
 .mx-empty{text-align:center;padding:52px 20px;border:1px dashed var(--line);border-radius:var(--radius-lg);background:var(--panel);color:var(--muted)}
 .mx-empty h3{font-size:15px;font-weight:600;color:var(--text);margin:0 0 5px}
 .mx-empty p{font-size:12.5px;margin:0 0 14px}

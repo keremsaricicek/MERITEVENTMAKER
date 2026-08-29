@@ -490,7 +490,30 @@
     const clear=document.querySelector("[data-clear-seating-filter]");if(clear)clear.onclick=()=>{ui.seatingFilter="all";ui.operationalMode=false;render();};
   };
 
-  function guestSelectionRows(event){const q=ui.seatingQuery.trim().toLocaleLowerCase("tr"),showAll=ui.seatingGuestScope==="all";return event.guests.filter(g=>(showAll||!g.assignment)&&(!q||[g.name,g.vip,g.invitedBy,g.planningStatus,event.tables.find(t=>t.id===g.assignment?.tableId)?.number].join(" ").toLocaleLowerCase("tr").includes(q)));}
+  // One lookup table per call instead of a linear scan per guest. These
+  // filters ran `event.tables.find(...)` INSIDE a per-guest predicate, which
+  // is O(guests x tables) -- 1.2M comparisons per render on the 4,000-seat
+  // fixture (3,000 guests, 400 tables).
+  //
+  // Honest accounting: this was NOT what made those screens slow. Profiled on
+  // that fixture the whole filter pass costs 3-4ms either way; the render time
+  // was DOM layout, fixed in styles.css. The index is kept because it is the
+  // correct shape and stops the cost growing with the table count, not because
+  // it bought back a measured second.
+  function tableIndex(event){
+    const map=new Map();
+    for(const t of event.tables||[])map.set(t.id,t);
+    return map;
+  }
+  globalThis.meritTableIndex=tableIndex;
+  function guestSelectionRows(event){
+    const q=ui.seatingQuery.trim().toLocaleLowerCase("tr"),showAll=ui.seatingGuestScope==="all";
+    if(!q)return event.guests.filter(g=>showAll||!g.assignment);
+    const byId=tableIndex(event);
+    return event.guests.filter(g=>(showAll||!g.assignment)&&
+      [g.name,g.vip,g.invitedBy,g.planningStatus,byId.get(g.assignment?.tableId)?.number]
+        .join(" ").toLocaleLowerCase("tr").includes(q));
+  }
   seatingHTML = function(event){
     // Floor Plan collapses the side panels for its own map-first layout.
     // Seating's whole job is "move this guest onto that seat", so the guest
@@ -505,8 +528,9 @@
     const totalPax=event.guests.reduce((n,g)=>n+paxOf(g),0);
     const seatedPax=event.guests.filter(g=>g.assignment).reduce((n,g)=>n+paxOf(g),0);
     const freeChairs=Math.max(0,physicalCapacity(event)-seatedPax);
+    const byId=tableIndex(event);
     const queue=records.length?records.map(g=>{
-      const t_=g.assignment&&event.tables.find(x=>x.id===g.assignment.tableId);
+      const t_=g.assignment&&byId.get(g.assignment.tableId);
       return`<div class="queue-card ${selectedIds.includes(g.id)?"selected multi-selected":""}" draggable="true" data-seating-guest="${g.id}">
         <div class="party-name">${esc(g.name)}</div>
         <div class="party-sub">${paxDotsHTML(g)}<span>${t("guests.partyOf",{n:paxOf(g)})}</span>${g.vip&&g.vip!=="Standard"?`<span class="vip-tag">${esc(g.vip)}</span>`:""}${t_?`<span class="seat-tag">${esc(formatTableNumber(t_.number))}</span>`:""}</div>
@@ -628,8 +652,11 @@
     if(g.vip&&g.vip!=="Standard")bits.push(`<span class="vip-tag">${esc(g.vip)}</span>`);
     return bits.join("");
   }
-  function seatTagHTML(event,g){
-    const t_=g.assignment&&event.tables.find(x=>x.id===g.assignment.tableId);
+  // `byId` is optional so single-row callers stay simple; list callers pass
+  // the index they already built rather than scanning the table array once
+  // per row.
+  function seatTagHTML(event,g,byId){
+    const t_=g.assignment&&(byId?byId.get(g.assignment.tableId):event.tables.find(x=>x.id===g.assignment.tableId));
     if(!t_)return`<span class="seat-tag none">${t("live.noTable")}</span>`;
     return`<span class="seat-tag">${esc(formatTableNumber(t_.number))}${g.assignment.seats?.length?` · ${esc(seatRange(g.assignment.seats))}`:""}</span>`;
   }
@@ -641,8 +668,9 @@
   liveHTML = function(event){
     const q=ui.liveQuery.trim().toLocaleLowerCase("tr"),s=liveStats(event);
     if(!ui.liveRecent)ui.liveRecent=[];
+    const byId=tableIndex(event);
     const rows=event.guests
-      .filter(g=>!q||[g.name,g.vip,g.invitedBy,g.planningStatus,g.arrivalStatus,event.tables.find(x=>x.id===g.assignment?.tableId)?.number].join(" ").toLocaleLowerCase("tr").includes(q))
+      .filter(g=>!q||[g.name,g.vip,g.invitedBy,g.planningStatus,g.arrivalStatus,byId.get(g.assignment?.tableId)?.number].join(" ").toLocaleLowerCase("tr").includes(q))
       // Not Arrived first: on event night the operator's list is "who is still
       // outside", not an alphabetical roster.
       .sort((a,b)=>(ARRIVAL_ORDER[a.arrivalStatus]-ARRIVAL_ORDER[b.arrivalStatus])||naturalSort(a.name,b.name));
@@ -664,7 +692,7 @@
       const armed=g.id===armedId;
       return`<div class="arrival-row ${isIn?"is-in":isNo?"is-no":""} ${armed?"is-armed":""}">
         <div class="arrival-who"><div class="party-name">${esc(g.name)}</div><div class="party-sub">${partyMetaHTML(g)}</div></div>
-        <div>${seatTagHTML(event,g)}</div>
+        <div>${seatTagHTML(event,g,byId)}</div>
         <div><span class="arr-state ${isIn?"in":isNo?"no":"not"}">${esc(t("status.arrival."+g.arrivalStatus))}</span></div>
         <div class="arrival-actions">
           ${armed?`<kbd class="enter-key" title="${t("live.armedTitle")}">${t("live.armed")} ↵</kbd>`:""}
@@ -1038,7 +1066,7 @@
     });
   };
   guestsHTML = function(event){
-    const guests=filteredGuests(event),c=guestCounts(event);
+    const guests=filteredGuests(event),c=guestCounts(event),byId=tableIndex(event);
     const metrics=[
       `<div class="mx-metric is-hero"><span class="mx-metric-label">${t("guests.m.totalPax")}</span><span class="mx-metric-value">${c.totalPax}</span><span class="mx-metric-note">${t("guests.m.totalPaxNote",{n:c.records})}</span></div>`,
       `<div class="mx-metric ${c.seatedPax?"is-good":""}"><span class="mx-metric-label">${t("guests.m.seated")}</span><span class="mx-metric-value">${c.seatedPax}</span><span class="mx-metric-note">${t("guests.m.seatedNote")}</span></div>`,
@@ -1054,7 +1082,7 @@
     const body=!c.records
       ?`<div class="mx-empty"><h3>${t("guests.emptyTitle")}</h3><p>${t("guests.emptyHint")}</p><div class="toolbar-row" style="justify-content:center"><button class="btn" data-guest-command="import">${icon("image")}${t("guests.importExcel")}</button><button class="btn primary" data-guest-command="add">${icon("plus")}${t("guests.addGuest")}</button></div></div>`
       :`<div class="mx-list"><div class="mx-list-head cols-guest"><span>${t("guests.col.guest")}</span><span>${t("guests.col.status")}</span><span>${t("guests.col.invitedBy")}</span><span>${t("guests.col.tableSeat")}</span><span></span></div>${
-        guests.length?guests.map(g=>`<div class="mx-row cols-guest">${guestPartyCellHTML(event,g)}<div><span class="plan-tag ${g.planningStatus.toLowerCase()}">${esc(t("status.planning."+g.planningStatus))}</span></div><div class="muted" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(g.invitedBy||"—")}</div><div>${seatTagHTML(event,g)}${g.assignment?.locked?" 🔒":""}</div><div class="row-icons"><button class="row-action" aria-label="${esc(t("guests.a11y.seat",{name:g.name}))}" title="${t("guests.col.tableSeat")}" data-guest-seat="${g.id}">${icon("seat")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.edit",{name:g.name}))}" data-guest-edit="${g.id}">${icon("edit")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.delete",{name:g.name}))}" data-guest-delete="${g.id}">${icon("trash")}</button></div></div>`).join(""):`<div class="mx-empty" style="border:none;background:none">${t("guests.noMatches")}</div>`
+        guests.length?guests.map(g=>`<div class="mx-row cols-guest">${guestPartyCellHTML(event,g)}<div><span class="plan-tag ${g.planningStatus.toLowerCase()}">${esc(t("status.planning."+g.planningStatus))}</span></div><div class="muted" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(g.invitedBy||"—")}</div><div>${seatTagHTML(event,g,byId)}${g.assignment?.locked?" 🔒":""}</div><div class="row-icons"><button class="row-action" aria-label="${esc(t("guests.a11y.seat",{name:g.name}))}" title="${t("guests.col.tableSeat")}" data-guest-seat="${g.id}">${icon("seat")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.edit",{name:g.name}))}" data-guest-edit="${g.id}">${icon("edit")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.delete",{name:g.name}))}" data-guest-delete="${g.id}">${icon("trash")}</button></div></div>`).join(""):`<div class="mx-empty" style="border:none;background:none">${t("guests.noMatches")}</div>`
       }</div>`;
     return`<div class="mx-screen"><div class="mx-wrap">
       <div class="mx-head"><div><h1>${t("guests.title")}</h1><p>${t("guests.recordsSummary",{records:c.records,total:c.totalPax})}</p></div><div class="mx-head-actions"><button class="btn" data-guest-command="template">${icon("download")}${t("guests.excelTemplate")}</button><button class="btn" data-guest-command="import">${icon("image")}${t("guests.importExcel")}</button><button class="btn primary" data-guest-command="add">${icon("plus")}${t("guests.addGuest")}</button></div></div>
