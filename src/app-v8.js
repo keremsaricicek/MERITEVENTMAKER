@@ -518,7 +518,34 @@
     const used=occupiedSeatIndexes(event,tableId,null);for(const g of guests)if(g.assignment?.tableId===tableId)(g.assignment.seats||[]).forEach(s=>used.delete(Number(s)));
     let free=Array.from({length:table.capacity},(_,i)=>i).filter(i=>!used.has(i));if(preferred!==null&&free.includes(preferred))free=[preferred,...free.filter(i=>i!==preferred)];const required=guests.reduce((n,g)=>n+paxOf(g),0);if(free.length<required)return toast(`${table.number} has ${free.length} available chairs; the selected group needs ${required}. No assignments changed.`,"error",6000);
     const snapshot=guests.map(g=>({id:g.id,assignment:clone(g.assignment)}));let cursor=0;
-    try{for(const g of guests){const count=paxOf(g),seats=free.slice(cursor,cursor+count);cursor+=count;g.assignment={tableId,seats,locked:false};}ui.selectedTableId=tableId;ui.highlightId=tableId;touchEvent(event);render();toast(`${guests.length} record${guests.length===1?"":"s"} moved transactionally to ${table.number} · ${required} chairs reserved.`,"success",5000);}
+    // Undo only matters here when the group had somewhere to fall back to --
+    // a first-time assignment from Unassigned has nothing destructive to
+    // recover (Unassign already covers that), and offering it anyway would
+    // put an undo toast on every single seating instead of only real moves.
+    const isMove=snapshot.some(s=>s.assignment);
+    try{
+      for(const g of guests){const count=paxOf(g),seats=free.slice(cursor,cursor+count);cursor+=count;g.assignment={tableId,seats,locked:false};}
+      ui.selectedTableId=tableId;ui.highlightId=tableId;touchEvent(event);render();
+      const message=t("seating.groupMovedToast",{n:guests.length,plural:guests.length===1?"":"s",table:table.number,seats:required});
+      if(!isMove){toast(message,"success",5000);return;}
+      toastAction(message,t("live.undo"),()=>{
+        const now=activeEvent();if(!now||!canMutate(now,"undo a seating move"))return;
+        // Seats may have been given away since the move -- restore what's still
+        // free and leave the rest exactly where the move put them, same
+        // clash-safe contract as unassignGuest's undo.
+        let anyClash=false;
+        for(const s of snapshot){
+          const guest=now.guests.find(x=>x.id===s.id);if(!guest)continue;
+          if(!s.assignment){guest.assignment=null;continue;}
+          const back=now.tables.find(x=>x.id===s.assignment.tableId);
+          const used=back?occupiedSeatIndexes(now,back.id,s.id):null;
+          if(!back||(s.assignment.seats||[]).some(seat=>used.has(Number(seat)))){anyClash=true;continue;}
+          guest.assignment=s.assignment;
+        }
+        refreshChairOccupancy(now);touchEvent(now);render();
+        toast(anyClash?t("seating.groupSeatTaken"):t("seating.groupRestoredToast"),anyClash?"error":"success",5200);
+      });
+    }
     catch(error){snapshot.forEach(s=>{event.guests.find(g=>g.id===s.id).assignment=s.assignment;});toast("The group move was rolled back.","error");}
   }
   assignGuestToTable = function(guestId,tableId,preferred=null){assignGuestGroup([guestId],tableId,preferred);};
