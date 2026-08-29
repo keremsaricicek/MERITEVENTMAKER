@@ -323,9 +323,9 @@
     const t_=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId);
     if(!t_&&!o)return"";
     if(t_){const assigned=tableAssignedPax(event,t_.id),presets=t_.type==="round"?[6,8,10,12]:[2,4,6,8];
-      return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(formatTableNumber(t_.number))}</strong><span>${esc(t_.zone)} · ${assigned} occupied</span></div><div class="seat-editor"><div class="seat-stepper"><button data-seat-step="-1" title="Remove one seat">−</button><b>${t_.capacity}</b><button data-seat-step="1" title="Add one seat">+</button></div><div class="seat-presets">${presets.map(n=>`<button class="${t_.capacity===n?"active":""}" data-seat-capacity="${n}">${n}</button>`).join("")}<button data-seat-custom>Custom</button></div></div><div class="form-grid compact"><div class="field"><label>Type</label><select data-inspector="type">${["rectangle","square","round","bistro"].map(x=>`<option value="${x}" ${t_.type===x?"selected":""}>${titleCase(x)}</option>`).join("")}</select></div><div class="field"><label>Rotation</label><input data-inspector="rotation" type="number" value="${Math.round(t_.rotation||0)}"></div><div class="field full"><label>Zone</label><select data-inspector="zone">${ZONES.map(z=>`<option ${t_.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div><div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}Duplicate</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${t_.locked?"Unlock":"Lock"}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}Delete</button></div></aside>`;
+      return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(formatTableNumber(t_.number))}</strong><span>${esc(t_.zone)} · ${assigned} ${t("seating.occupied").toLowerCase()}</span></div><div class="seat-editor"><div class="seat-stepper"><button data-seat-step="-1" title="${t("inspector.removeSeat")}">−</button><b>${t_.capacity}</b><button data-seat-step="1" title="${t("inspector.addSeat")}">+</button></div><div class="seat-presets">${presets.map(n=>`<button class="${t_.capacity===n?"active":""}" data-seat-capacity="${n}">${n}</button>`).join("")}<button data-seat-custom>${t("inspector.custom")}</button></div></div><div class="form-grid compact"><div class="field"><label>${t("inspector.type")}</label><select data-inspector="type">${["rectangle","square","round","bistro"].map(x=>`<option value="${x}" ${t_.type===x?"selected":""}>${t("bulk.type."+x)}</option>`).join("")}</select></div><div class="field"><label>${t("inspector.rotation")}</label><input data-inspector="rotation" type="number" value="${Math.round(t_.rotation||0)}"></div><div class="field full"><label>${t("inspector.zone")}</label><select data-inspector="zone">${ZONES.map(z=>`<option ${t_.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div><div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${t_.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
     }
-    return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(o.label)}</strong><span>${titleCase(o.type)} object</span></div><div class="form-grid compact"><div class="field full"><label>Label</label><input data-inspector="label" value="${esc(o.label)}"></div><div class="field"><label>Rotation</label><input data-inspector="rotation" type="number" value="${Math.round(o.rotation||0)}"></div></div><div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}Duplicate</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${o.locked?"Unlock":"Lock"}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}Delete</button></div></aside>`;
+    return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(o.label)}</strong><span>${t("inspector.object",{type:t("bulk.type."+o.type)})}</span></div><div class="form-grid compact"><div class="field full"><label>${t("inspector.label")}</label><input data-inspector="label" value="${esc(o.label)}"></div><div class="field"><label>${t("inspector.rotation")}</label><input data-inspector="rotation" type="number" value="${Math.round(o.rotation||0)}"></div></div><div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${o.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
   }
   function addManuallyFabHTML(){return`<button class="planmap-fab" data-v8-action="add" title="${t("action.addManually")}">${icon(ui.v8AddOpen?"x":"plus")}<span>${t("action.addManually")}</span></button>`;}
 
@@ -987,7 +987,30 @@
     </div></div>`;
   };
 
-  openGuestDialog = function(...args){if(canMutate(activeEvent(),"edit guest records"))original.openGuestDialog(...args);};
+  openGuestDialog = function(...args){if(canMutate(activeEvent(),"edit guest records")){original.openGuestDialog(...args);translateStaticDialogs();}};
+
+  // guestDialog/excelDialog markup lives once in index.html and never passes
+  // through render(), so a language toggle has nothing to re-draw it. This
+  // pushes the current language into that static markup directly, called on
+  // every render() and whenever the guest dialog opens.
+  function translateStaticDialogs(){
+    const form=document.getElementById("guestForm");if(!form)return;
+    const editing=!!form.elements.id.value;
+    const title=document.getElementById("guestDialogTitle");if(title)title.textContent=t(editing?"guests.editGuest":"guests.addGuest");
+    const setLabel=(forId,key)=>{const lbl=form.querySelector(`label[for="${forId}"]`);if(lbl)lbl.textContent=t(key);};
+    setLabel("gfName","guestDialog.name");
+    setLabel("gfAdditional","guestDialog.additionalGuests");
+    setLabel("gfPlanning","guestDialog.planningStatus");
+    setLabel("gfVip","guestDialog.vipLevel");
+    setLabel("gfInvitedBy","guestDialog.invitedBy");
+    setLabel("gfNotes","guestDialog.notes");
+    const paxLabel=document.getElementById("gfPaxLabel");if(paxLabel)paxLabel.textContent=t("guestDialog.totalPax");
+    const planningSel=form.elements.planningStatus;
+    if(planningSel){const cur=planningSel.value||"Confirmed";planningSel.innerHTML=`<option value="Confirmed">${t("status.planning.Confirmed")}</option><option value="Tentative">${t("status.planning.Tentative")}</option>`;planningSel.value=cur;}
+    const cancelBtn=form.querySelector(".dialog-foot .btn:not(.primary)");if(cancelBtn)cancelBtn.textContent=t("guestDialog.cancel");
+    const saveBtn=form.querySelector(".dialog-foot .btn.primary");if(saveBtn)saveBtn.textContent=t("guestDialog.save");
+  }
+  translateStaticDialogs();
   // deleteGuest is defined further up, where its undo lives.
   bindGuests = function(){
     if(isHistorical(activeEvent()))return;
@@ -2485,6 +2508,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   duplicateEvent = function(id,open=false){const source=state.events.find(e=>e.id===id);if(!source)return;original.duplicateEvent(id,open);const copy=state.events[0];copy.hotel=copy.hotel||copy.venue||"";copy.salon=copy.salon||"";copy.tables.forEach(t=>{t.chairs=(t.chairs||[]).map((c,i)=>({...c,id:uid("chair"),parentTableId:t.id,seatNumber:i+1,occupancy:null}));});saveState();};
 
   render = function(){
+    translateStaticDialogs();
     if(ui.screen==="new-event"){app.innerHTML=setupHTML();bindSetup();return;}
     if(ui.screen==="review"){const event=activeEvent();app.innerHTML=analysisHTML(event);bindReview();return;}
     if(!state.events.length&&ui.screen!=="events")ui.screen="events";
