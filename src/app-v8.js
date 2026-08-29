@@ -1796,10 +1796,26 @@
         }
       };
       let chairSource="none";
-      const specificCount=chairSources.reduce((n,src)=>n+src.comps.length,0);
+      // On a plan where the chairs have their OWN colour, the dedicated accent
+      // cluster is the whole chair population and the tone families describe
+      // something else -- on the real venue plan the strongest tone family IS
+      // the tan table surface. Unioning the two sources therefore fed real
+      // tables into the chair list, which both removed them from the table pool
+      // (they get subtracted from it below) and inflated the seat count with
+      // objects nobody sits on. Measured on that plan: tables were reported as
+      // `venue/chair`, and the seat total only looked close to the drawing's
+      // printed 124 because tables were padding it.
+      //
+      // So: the most specific source wins outright rather than being merged
+      // with a weaker one. tone-cluster stays the chair source for monochrome
+      // plans, where it is the only evidence there is.
+      const colourChairs=chairSources.find(src=>src.name==="colour-cluster");
+      const useColourOnly=colourChairs&&colourChairs.comps.length>=6;
+      const activeChairSources=useColourOnly?[colourChairs]:chairSources;
+      const specificCount=activeChairSources.reduce((n,src)=>n+src.comps.length,0);
       if(specificCount>=6){
-        for(const src of chairSources)addChairs(src.comps,src.labels,src.name);
-        chairSource=chairSources.find(src=>src.comps.length)?.name||"none";
+        for(const src of activeChairSources)addChairs(src.comps,src.labels,src.name);
+        chairSource=activeChairSources.find(src=>src.comps.length)?.name||"none";
       }else if(fallbackChairComps.length){
         addChairs(fallbackChairComps,fallbackChairLabels,"luma-components");
         chairSource="luma-components";
@@ -1919,12 +1935,39 @@
       // De-duplicate across sources: one physical table can surface both as an
       // enclosed interior and as a tone fill. Keep one, preferring the source
       // that gives the cleanest shape signal.
+      //
+      // Within a source the tie-break used to be raw pixel count -- biggest
+      // wins. That is the same failure the modal prior was introduced to kill,
+      // surviving here in the ordering: a blob spanning three tables and their
+      // chairs has the largest count, so it was seeded first and every cleaner
+      // table-sized box that overlapped it was then dropped as a duplicate.
+      // Order by agreement with the repeated object size instead, using a
+      // provisional modal measured over the furniture-shaped pool before any
+      // splitting or de-duplication has happened.
+      const provisionalModalArea=modalMagnitude(furnitureish.map(p=>{
+        const s=spanOf(p);return s.long*s.short;
+      }));
+      const dedupFitness=comp=>{
+        const o=comp.shape?.obb,a=o?o.w*o.h:comp.w*comp.h;
+        return provisionalModalArea?sizeAgreement(Math.sqrt(a),{value:Math.sqrt(provisionalModalArea.value)}):0;
+      };
       const sourceRank={tone:3,interior:2,fill:1};
-      expanded.sort((a,b)=>(sourceRank[b.comp.source]||0)-(sourceRank[a.comp.source]||0)||b.comp.count-a.comp.count);
+      expanded.sort((a,b)=>(sourceRank[b.comp.source]||0)-(sourceRank[a.comp.source]||0)
+        ||dedupFitness(b.comp)-dedupFitness(a.comp)
+        ||b.comp.count-a.comp.count);
       const unique=[];
       for(const entry of expanded){
         if(unique.some(u=>boxIoU(entry.comp,u.comp)>=.45))continue;
         unique.push(entry);
+      }
+      // Debug capture for benchmarks/run-benchmark.mjs: what each source
+      // actually proposed, before and after de-duplication. Off unless asked.
+      let debugPool=null;
+      if(globalThis.MERIT_DETECT_DEBUG){
+        const box=e=>({s:e.comp.source,x:Math.round(e.comp.x),y:Math.round(e.comp.y),
+          w:Math.round(e.comp.w),h:Math.round(e.comp.h),n:e.comp.count,fit:+dedupFitness(e.comp).toFixed(2)});
+        debugPool={provisionalModalArea:provisionalModalArea?Math.round(provisionalModalArea.value):null,
+          expanded:expanded.map(box),unique:unique.map(box)};
       }
       for(const entry of unique)analyze([entry.comp],entry.labels);
       // The modal TABLE size must be measured over things that could be a
@@ -2068,7 +2111,7 @@
           chairsDetected:chairs.length,chairsAssociated:associatedSeats,chairsUnassociated:chairVenues.length,
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
-          mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,
+          mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,debugPool,
           sources:diagnosticsSources,phaseMs,
           colorModel:accentModel?{isColorPlan:accentModel.isColorPlan,accentHue:accentModel.accentHue,
             accentChroma:accentModel.accentChroma,accentFraction:Number(accentModel.accentFraction.toFixed(4)),
