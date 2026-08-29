@@ -256,15 +256,127 @@
     return Number.isFinite(stated) ? stated : null;
   }
 
-  function buildCapacityAudit(ocrText, systemCounted, candidates) {
+  // Rank the places a missing (or excess) seat is most likely hiding.
+  //
+  // The previous comparator was `(b.conf - a.conf) ? 0 : 0`, which evaluates
+  // the difference only for truthiness and returns 0 either way. It therefore
+  // never sorted anything: the "five most likely areas" were just the first
+  // five candidates in detection order. This scores each candidate on real
+  // evidence and sorts on that score.
+  function rankSuspectRegions(candidates, difference) {
+    const scored = candidates
+      .filter(c => c.status !== "rejected" && c.status !== "confirmed")
+      .map(c => {
+        const reasons = [];
+        let score = 0;
+        // An object whose seat count is explicitly unknown is the strongest
+        // explanation for a capacity gap -- a banquette nobody has counted.
+        if (c.seats == null && (c.kind === "sofa" || c.kind === "bench" || c.kind === "banquette" ||
+            c.type === "sofa" || c.type === "bench" || c.type === "banquette")) { score += 6; reasons.push("unverified seating furniture"); }
+        // Chairs the association step could not attach to any table: real
+        // detected seats that are currently contributing to nobody's total.
+        if (c.unassociated) { score += 4; reasons.push("chair not associated with a table"); }
+        // A table carrying no chairs at all on a plan where tables normally do.
+        if (c.kind === "table" && !(c.chairDetections?.length)) { score += 3; reasons.push("table with no seats found"); }
+        // Low confidence and never reviewed: the detector itself is unsure.
+        const conf = c.confidence ?? 0;
+        if (c.status === "unreviewed") { score += 1; reasons.push("not yet reviewed"); }
+        if (conf < 0.5) { score += 2 * (0.5 - conf) / 0.5; reasons.push(`low confidence ${conf.toFixed(2)}`); }
+        // Direction matters: if the drawing claims MORE than was counted, look
+        // at things that might hide seats; if fewer, look at things that might
+        // have invented them.
+        if (difference > 0 && c.kind === "table" && (c.chairDetections?.length || 0) < 2) { score += 1; reasons.push("fewer seats than a table usually has"); }
+        if (difference < 0 && (c.chairDetections?.length || 0) > 8) { score += 1; reasons.push("unusually many seats for one table"); }
+        return { id: c.id, score: +score.toFixed(2), reasons };
+      })
+      .filter(s => s.score > 0)
+      .sort((a, b) => b.score - a.score || String(a.id).localeCompare(String(b.id)));
+    return scored;
+  }
+
+  // Multi-source capacity reasoning: what the drawing says, what was physically
+  // detected, what the logical seating groups imply, and what is admittedly
+  // unknown. Every number is labelled with where it came from; none of them is
+  // adjusted to make the others agree.
+  function buildCapacityAudit(ocrText, systemCounted, candidates, furnitureGroups) {
     const stated = parsePaxFromText(ocrText);
-    if (stated == null) return null;
-    const difference = stated - systemCounted;
-    const likelyAreaIds = difference !== 0
-      ? [...candidates].sort((a, b) => (b.confidence || 0) - (a.confidence || 0) ? 0 : 0)
-        .filter(c => c.status === "unreviewed" || (c.confidence || 0) < 0.6).slice(0, 5).map(c => c.id)
-      : [];
-    return { drawingStated: stated, systemCounted, difference, sourceText: ocrText.slice(0, 400), likelyAreaIds };
+    const unverifiedSeating = candidates.filter(c =>
+      c.status !== "rejected" && c.seats == null &&
+      ["sofa", "bench", "banquette"].includes(c.kind === "venue" ? c.type : c.kind));
+    const logicalSeats = (furnitureGroups || []).reduce((n, g) => {
+      const members = g.memberIds || [];
+      return n + members.reduce((m, id) => {
+        const c = candidates.find(x => x.id === id);
+        return m + (c?.chairDetections?.length || 0);
+      }, 0);
+    }, 0);
+    const audit = {
+      physical: { seats: systemCounted, source: "chairs detected and associated to tables, plus standalone chairs" },
+      logical: { seats: logicalSeats, groups: (furnitureGroups || []).length, source: "seats summed over logical seating groups" },
+      unverified: unverifiedSeating.map(c => ({ id: c.id, kind: c.kind, type: c.type,
+        note: "seat count not determinable from the drawing — needs a human answer" })),
+      drawingStated: stated,
+      difference: stated == null ? null : stated - systemCounted,
+      sourceText: ocrText ? ocrText.slice(0, 400) : null,
+      ocrAvailable: ocrText != null,
+    };
+    audit.suspectRegions = rankSuspectRegions(candidates, audit.difference ?? 0).slice(0, 8);
+    // Kept for callers that already read this field.
+    audit.likelyAreaIds = audit.suspectRegions.map(s => s.id);
+    // With no OCR there is no stated number to compare against, but the
+    // physical/logical/unverified breakdown is still real and worth returning.
+    return (stated == null && !unverifiedSeating.length && !audit.suspectRegions.length) ? null : audit;
+  }
+
+  // ---- scene graph ---------------------------------------------------------
+  // Explicit typed relationships derived from real geometry. Nothing here
+  // asserts a relationship the pixels do not support: every edge records the
+  // evidence that produced it, and objects with no qualifying evidence simply
+  // get no edge rather than a guessed one.
+  function buildSceneGraph(candidates, furnitureGroups) {
+    const edges = [];
+    const alive = candidates.filter(c => c.status !== "rejected");
+    const tables = alive.filter(c => c.kind === "table");
+    const byId = new Map(alive.map(c => [c.id, c]));
+
+    // chair -> belongsTo -> table. The association already happened in the
+    // detector (one chair, at most one table); this records it as a relation.
+    for (const t of tables)
+      for (const ch of t.chairDetections || [])
+        edges.push({ from: ch.id || `${t.id}:chair:${Math.round(ch.x)}x${Math.round(ch.y)}`,
+          type: "belongsTo", to: t.id, evidence: "chair-table association (nearest table within reach, one table per chair)" });
+
+    // table -> touches -> table, and table -> partOf -> logical group.
+    for (const g of furnitureGroups || []) {
+      const members = (g.memberIds || []).filter(id => byId.has(id));
+      if (members.length > 1) {
+        for (let i = 0; i < members.length; i++)
+          for (let j = i + 1; j < members.length; j++) {
+            const a = byId.get(members[i]), b = byId.get(members[j]);
+            if (gapBetween(a, b) <= Math.min(a.w, a.h, b.w, b.h) * 0.28 && aligned(a, b))
+              edges.push({ from: members[i], type: "touches", to: members[j], evidence: "boxes within a fraction of a table of each other and axis-aligned" });
+          }
+      }
+      for (const id of members)
+        edges.push({ from: id, type: "partOf", to: g.id, evidence: g.decision ? `human answer: ${g.decision}` : "geometric grouping (touch + alignment)" });
+    }
+
+    // seating furniture -> faces -> logical group, when it runs alongside one.
+    const seating = alive.filter(c => ["sofa", "bench", "banquette"].includes(c.kind === "venue" ? c.type : c.kind));
+    for (const s of seating) {
+      let best = null, bestGap = Infinity;
+      for (const g of furnitureGroups || []) {
+        if (!g.bbox) continue;
+        const gap = gapBetween(s, g.bbox);
+        if (gap < bestGap) { bestGap = gap; best = g; }
+      }
+      const reach = Math.max(s.w, s.h) * 0.9;
+      if (best && bestGap <= reach)
+        edges.push({ from: s.id, type: "faces", to: best.id, evidence: `runs alongside the group, gap ${bestGap.toFixed(1)} within reach ${reach.toFixed(1)}` });
+    }
+
+    const counts = edges.reduce((m, e) => (m[e.type] = (m[e.type] || 0) + 1, m), {});
+    return { edges, counts, nodeCount: alive.length };
   }
 
   function buildPlanIntelligence(event, ocrText) {
@@ -275,7 +387,8 @@
     const reviewGroups = buildReviewGroups(analysis.candidates, similarityGroups);
     const uncertainQuestions = buildDifficultQuestions(analysis.candidates, furnitureGroups);
     const physicalSeats = computePhysicalCapacity(analysis.candidates);
-    const capacityAudit = buildCapacityAudit(ocrText, physicalSeats, analysis.candidates);
+    const capacityAudit = buildCapacityAudit(ocrText, physicalSeats, analysis.candidates, furnitureGroups);
+    const sceneGraph = buildSceneGraph(analysis.candidates, furnitureGroups);
     const venueCandidates = analysis.candidates.filter(c => c.kind === "venue");
     // Which detection path actually ran is reported, not hidden: a chair-first
     // pass (chairs detected from their own colour/size model, then tables
@@ -307,9 +420,13 @@
         reviewGroups: reviewGroups.length,
       },
       furnitureGroups,
-      similarityGroups,
       capacityEstimate: { physical: physicalSeats },
       capacityAudit,
+      // Physical objects and logical seating groups are deliberately separate
+      // structures: three tables pushed together stay three physical table
+      // candidates that also appear as one logical group, and are never
+      // replaced by a single invented rectangle.
+      sceneGraph,
       reviewGroups,
       // The full similarity families, not just the ones that still need
       // review. Documented in the contract at the top of this file but never
