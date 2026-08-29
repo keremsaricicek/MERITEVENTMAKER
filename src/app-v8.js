@@ -2,6 +2,16 @@
   "use strict";
   const V8_STORAGE_KEY = "meritEventMaker.v8";
   const LEGACY_KEYS = ["meritEventMaker.v7", "meritEventMaker.v3", "meritEventMaker.v2", "meritEventMaker.v1"];
+  // StorageProvider selection (src/storage-provider.js). IndexedDB is primary;
+  // localStorage under V8_STORAGE_KEY/LEGACY_KEYS is now read-only -- it is
+  // still where a pre-existing install's data lives, so it's the migration
+  // source on first load, but nothing writes to it again after that.
+  const storageProvider = (() => {
+    try { if (globalThis.MeritStorageProviders?.IndexedDBStorageProvider) return new MeritStorageProviders.IndexedDBStorageProvider(); }
+    catch (error) { console.warn("IndexedDB provider unavailable, falling back to localStorage.", error); }
+    return new MeritStorageProviders.LocalStorageStorageProvider(V8_STORAGE_KEY);
+  })();
+  globalThis.MERIT_STORAGE_STATUS = { provider: storageProvider.constructor.name };
   const todayKey = () => new Date().toLocaleDateString("en-CA");
   const original = {
     render, bindCommon, bindCanvas, bindGuests, bindSeating, bindLive, bindReports,
@@ -89,23 +99,55 @@
     parsed.events=(parsed.events||[]).map(migrateEvent); parsed.verifiedExamples ||= []; parsed.analyses ||= []; parsed.audit ||= [];
     return parsed;
   }
-  function loadV8(){
+  // One-time migration source only: whatever a pre-StorageProvider install
+  // left in localStorage. Read here, never written to again after this.
+  function loadFromLegacyLocalStorage(){
     try{
       const own=localStorage.getItem(V8_STORAGE_KEY); if(own) return parseRoot(own);
       for(const key of LEGACY_KEYS){const raw=localStorage.getItem(key);if(raw){const migrated=parseRoot(raw);migrated.audit.unshift({id:uid("audit"),eventId:null,action:"LEGACY_MIGRATION",detail:{source:key,venueToHotel:true,salonInvented:false},at:nowISO()});return migrated;}}
-    }catch(error){console.warn("V8 state restore failed",error);}
+    }catch(error){console.warn("Legacy localStorage restore failed",error);}
+    return null;
+  }
+  async function loadV8Async(){
+    try{
+      const fromProvider=await storageProvider.load();
+      if(fromProvider) return parseRoot(fromProvider);
+    }catch(error){console.warn("StorageProvider load failed, checking legacy localStorage.",error);}
+    const legacy=loadFromLegacyLocalStorage();
+    if(legacy){
+      // Get it into the real store right away so this migration only ever
+      // has to run once, even if the provider load above merely came back
+      // empty (first run after switching to IndexedDB) rather than erroring.
+      storageProvider.save(JSON.stringify(legacy)).catch(error=>console.warn("Could not persist migrated legacy state.",error));
+      return legacy;
+    }
     return blankRoot();
   }
   saveState = function(show=false){
+    // Nothing to persist yet, and persisting now would be actively harmful:
+    // `state` is still the boot placeholder until loadV8Async() resolves, so
+    // writing it (e.g. from the beforeunload handler firing on a reload that
+    // races ahead of the async load) would overwrite real data with a blank
+    // slate. See the isMigrationRace regression check in scratchpad.
+    if(!bootReady)return;
     state.events.forEach(refreshChairOccupancy);
-    try{localStorage.setItem(V8_STORAGE_KEY,JSON.stringify(state));if(show)toast("Saved locally in this browser.","success");}
-    catch(error){
-      try{const compact=clone(state);compact.events.forEach(e=>{if(e.background)e.background.src="";if(e.coverImage)e.coverImage="";});localStorage.setItem(V8_STORAGE_KEY,JSON.stringify(compact));toast("Event data was saved, but large images exceeded browser storage.","error",6500);}
-      catch{toast("Browser storage is full. Export the workbook before closing.","error",6500);}
-    }
+    let payload;
+    try{payload=JSON.stringify(state);}
+    catch(error){toast("Browser storage is full. Export the workbook before closing.","error",6500);return;}
+    storageProvider.save(payload)
+      .then(()=>{if(show)toast("Saved locally in this browser.","success");})
+      .catch(error=>{
+        // Large embedded images are the only realistic reason a save this
+        // size fails -- strip them and retry once before giving up.
+        console.warn("StorageProvider save failed, retrying with images stripped.",error);
+        const compact=clone(state);compact.events.forEach(e=>{if(e.background)e.background.src="";if(e.coverImage)e.coverImage="";});
+        return storageProvider.save(JSON.stringify(compact)).then(()=>toast("Event data was saved, but large images exceeded browser storage.","error",6500));
+      })
+      .catch(error=>{console.warn("StorageProvider save failed entirely.",error);toast("Browser storage is full. Export the workbook before closing.","error",6500);});
   };
   touchEvent = function(event){event.lastModified=nowISO();audit(event,"EVENT_UPDATED");saveState();};
-  state=loadV8();
+  let bootReady=false;
+  state=blankRoot();
 
   seatPositions = function(table){syncTableChairs(table);return table.chairs.map(c=>({x:c.x,y:c.y,rotation:c.rotation,id:c.id,seatNumber:c.seatNumber}));};
   function physicalCapacity(event){return event.tables.filter(t=>t.hasPhysicalSeats!==false).reduce((sum,t)=>sum+t.chairs.length,0);}
@@ -2613,5 +2655,11 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
     }
   });
 
-  render();
+  // The very first render must wait on the async StorageProvider load --
+  // every render() after this one is driven by user interaction and needs
+  // nothing more than the in-memory `state` object already being current.
+  loadV8Async().then(loaded=>{state=loaded;bootReady=true;render();}).catch(error=>{
+    console.error("Storage load failed entirely; starting from a blank state.",error);
+    state=blankRoot();bootReady=true;render();
+  });
 })();
