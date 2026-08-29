@@ -519,6 +519,14 @@
     "appbar.allEvents": { en: "All Events", tr: "Tüm Etkinlikler" },
     "appbar.saveNow": { en: "Save now", tr: "Şimdi Kaydet" },
     "appbar.localAutosave": { en: "Local autosave", tr: "Yerel Otomatik Kayıt" },
+    "backup.export": { en: "Back up all events to a file", tr: "Tüm etkinlikleri bir dosyaya yedekle" },
+    "backup.import": { en: "Restore from a backup file", tr: "Yedek dosyasından geri yükle" },
+    "backup.exportedToast": { en: "Backup file downloaded.", tr: "Yedek dosyası indirildi." },
+    "backup.confirmRestore": { en: "This replaces every event currently saved on this computer with the {n} event(s) in this backup. This cannot be undone. Continue?", tr: "Bu işlem, bu bilgisayarda kayıtlı tüm etkinlikleri yedekteki {n} etkinlikle değiştirir. Bu geri alınamaz. Devam edilsin mi?" },
+    "backup.restoredToast": { en: "Backup restored: {n} event(s).", tr: "Yedek geri yüklendi: {n} etkinlik." },
+    "backup.invalidFile": { en: "This is not a MERIT EVENT MAKER backup file.", tr: "Bu bir MERIT EVENT MAKER yedek dosyası değil." },
+    "backup.corruptFile": { en: "This backup file could not be read (it may be damaged or incomplete).", tr: "Bu yedek dosyası okunamadı (bozuk veya eksik olabilir)." },
+    "backup.badReference": { en: "This backup file has broken internal references and was not restored.", tr: "Bu yedek dosyasının iç referansları bozuk, bu yüzden geri yüklenmedi." },
     "appbar.venueNotSet": { en: "Venue not set", tr: "Mekan Belirtilmedi" },
 
     // ---- Nav tabs ----
