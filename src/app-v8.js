@@ -2147,7 +2147,73 @@
           score:agreement*2+Math.min(1,seats/6)+Math.min(.5,(repetition-1)*.08)};
       });
       scored.sort((a,b)=>b.score-a.score||b.confidence-a.confidence);
-      const MAX_TABLES=240,capReached=scored.length>MAX_TABLES,chosen=scored.slice(0,MAX_TABLES);
+      const MAX_TABLES=240,capReached=scored.length>MAX_TABLES,ranked=scored.slice(0,MAX_TABLES);
+
+      // ---- fragment suppression (Gate C/D) --------------------------------
+      // Measured on the real venue plan: of 82 proposed tables, 41 were real
+      // and 41 were fragments -- mostly pieces the valley-split step cut out
+      // of merged linework and printed matter. They separate cleanly from real
+      // furniture, but NOT on any single axis:
+      //
+      //                  real (n=41)          fragments (n=41)
+      //   aspect         1.00-1.12            1.18-2.69  (median 1.55)
+      //   sizeAgreement  median 0.99          median 0.39
+      //   wasSplit       0/41                 28/41
+      //   source         tone 41/41           fill 28, tone 13
+      //
+      // The tempting rule is "aspect > 1.18", which on this plan separates
+      // them perfectly. It is also worthless: a banquet hall of 2.4-aspect
+      // rectangle tables would lose every real table it has. So nothing here
+      // is an absolute threshold. A plan states its own furniture vocabulary
+      // -- a modal size (already used for scoring) and a modal aspect -- and
+      // each candidate is judged against THAT. On a rectangle-table plan the
+      // modal aspect simply becomes 2.4 and rectangles read as normal.
+      //
+      // A candidate is dropped only when it disagrees with the plan's own
+      // vocabulary on THREE independent axes at once. One odd axis is a real
+      // object that happens to be unusual; three is a fragment. Measured:
+      // removes 35/41 fragments and 0/41 real tables.
+      const aspectOf=obb=>Math.max(obb.w,obb.h)/Math.max(1,Math.min(obb.w,obb.h));
+      const medianOf=vals=>{const v=[...vals].sort((a,b)=>a-b);return v.length?v[v.length>>1]:null;};
+      const modalAspect=medianOf(ranked.map(s=>aspectOf(s.obb)));
+      const agreeWith=(v,m)=>m?Math.max(0,1-Math.abs(v-m)/m):1;
+      const fragmentEvidence=s=>{
+        const reasons=[];
+        if(s.c.wasSplit)reasons.push("cut out of a merged blob");
+        if(s.agreement<.6)reasons.push(`size disagrees with the plan's modal object (${s.agreement.toFixed(2)})`);
+        const aa=agreeWith(aspectOf(s.obb),modalAspect);
+        if(aa<.85)reasons.push(`aspect ${aspectOf(s.obb).toFixed(2)} against plan modal ${modalAspect?modalAspect.toFixed(2):"?"}`);
+        if(s.seats===0)reasons.push("no seat adjacency");
+        return reasons;
+      };
+      const FRAGMENT_MIN_REASONS=3;
+      const flagged=ranked.filter(s=>fragmentEvidence(s).length>=FRAGMENT_MIN_REASONS);
+      // Self-disabling guard, same shape as the surface-coverage filter above:
+      // if this would delete most of the plan, the plan is unusual rather than
+      // its objects, and a filter that removes the furniture is worse than the
+      // fragments it removes. Report the decision either way.
+      // An A/B switch so before/after can be measured on the same build rather
+      // than by reverting code. Benchmarks set it; the product never does.
+      const fragmentFilterActive=!globalThis.MERIT_DISABLE_FRAGMENT_FILTER&&
+        ranked.length>=8&&flagged.length<=ranked.length*.45;
+      const fragmentDrops=fragmentFilterActive?flagged:[];
+      const droppedIds=new Set(fragmentDrops.map(s=>s.box.index));
+      const fragmentDiagnostics={
+        active:fragmentFilterActive,
+        proposed:ranked.length,
+        dropped:fragmentDrops.length,
+        flaggedButKept:fragmentFilterActive?0:flagged.length,
+        minReasons:FRAGMENT_MIN_REASONS,
+        planModalAspect:modalAspect?Number(modalAspect.toFixed(3)):null,
+        disabledReason:fragmentFilterActive?null:
+          (globalThis.MERIT_DISABLE_FRAGMENT_FILTER?"disabled by benchmark A/B switch":
+           ranked.length<8?"too few candidates to trust a plan-derived vocabulary":
+           "would have removed more than 45% of the plan"),
+        examples:fragmentDrops.slice(0,6).map(s=>({aspect:Number(aspectOf(s.obb).toFixed(2)),
+          sizeAgreement:Number(s.agreement.toFixed(2)),seats:s.seats,split:!!s.c.wasSplit,
+          reasons:fragmentEvidence(s)})),
+      };
+      const chosen=ranked.filter(s=>!droppedIds.has(s.box.index));
       const chosenIndexes=new Set(chosen.map(s=>s.box.index));
 
       const toPercentBox=obb=>({x:(obb.cx-obb.w/2)/width*100,y:(obb.cy-obb.h/2)/height*100,w:obb.w/width*100,h:obb.h/height*100});
@@ -2173,10 +2239,103 @@
       // Chairs that belong to no detected table stay first-class objects with
       // their real coordinates instead of being dropped (which is how the old
       // pipeline lost seats). They are never attached to an invented table.
+      // Printed glyphs are chair-sized, so on a plan with no colour separation
+      // the chair detector reads the letters of a room label as seats. On the
+      // dense benchmark fixture that is exactly what happened: 24 phantom
+      // chairs, every one of them a letter of "BALLROOM B" / "96 PAX" /
+      // "ZONE A" / "ZONE B".
+      //
+      // The existing OCR-based suppression cannot help here — it requires
+      // Tesseract, and the whole point of the offline build is that OCR may be
+      // absent. But text does not need to be READ to be recognised as text. A
+      // word is a run of similarly-sized marks sitting on a shared baseline
+      // with small, regular gaps. Chairs are arranged around a table
+      // perimeter, and the ones that are not are still not baseline-aligned
+      // with tight even spacing. That structure is the evidence, and it is
+      // available with no engine at all.
+      //
+      // Deliberately conservative: only UNASSOCIATED chairs are eligible (a
+      // chair the associator tied to a real table is never touched), the run
+      // must be at least 4 long, and the gaps must be tighter than the marks
+      // are wide — which is true of letters and false of seats around a table.
+      const TEXT_RUN_MIN_TABLE_DISTANCE_WIDTHS=2.0;
+      // Edge distance from a mark to the nearest DETECTED table box, in pixels.
+      const nearestTableDistance=e=>{
+        let best=Infinity;
+        for(const s of chosen){
+          const t=s.obb;
+          const dx=Math.max(0,Math.abs(e.cx-t.cx)-(t.w/2+e.w/2));
+          const dy=Math.max(0,Math.abs(e.cy-t.cy)-(t.h/2+e.h/2));
+          best=Math.min(best,Math.hypot(dx,dy));
+        }
+        return best;
+      };
+      const textRunIndexes=(()=>{
+        const eligible=[];
+        for(let ci=0;ci<chairs.length;ci++){
+          const ti=chairAssign.get(ci);
+          if(ti!==undefined&&chosenIndexes.has(ti))continue;   // associated: leave alone
+          const obb=chairOBB(chairs[ci]);
+          eligible.push({ci,cx:obb.cx,cy:obb.cy,w:obb.w,h:obb.h,bottom:obb.cy+obb.h/2});
+        }
+        const flagged=new Set();
+        if(eligible.length<4)return flagged;
+        // group by shared baseline: bottom edges within 25% of glyph height
+        const used=new Set();
+        for(const seed of eligible){
+          if(used.has(seed.ci))continue;
+          const tol=Math.max(2,seed.h*.25);
+          const line=eligible.filter(e=>!used.has(e.ci)&&Math.abs(e.bottom-seed.bottom)<=tol&&
+            Math.abs(e.h-seed.h)<=seed.h*.6).sort((a,b)=>a.cx-b.cx);
+          if(line.length<4)continue;
+          // horizontal run: consecutive gaps small relative to mark width
+          let run=[line[0]];
+          const runs=[];
+          for(let i=1;i<line.length;i++){
+            const prev=run[run.length-1];
+            const gap=(line[i].cx-line[i].w/2)-(prev.cx+prev.w/2);
+            const maxGap=Math.max(prev.w,line[i].w)*.9;
+            if(gap<=maxGap&&gap>=-Math.max(prev.w,line[i].w)*.5)run.push(line[i]);
+            else{runs.push(run);run=[line[i]];}
+          }
+          runs.push(run);
+          for(const r of runs){
+            if(r.length<4)continue;
+            // a real word's marks are packed: median gap under half the mark
+            // width. Seats spaced around a table are not.
+            const gaps=[];
+            for(let i=1;i<r.length;i++)gaps.push((r[i].cx-r[i].w/2)-(r[i-1].cx+r[i-1].w/2));
+            gaps.sort((a,b)=>a-b);
+            const medGap=gaps[gaps.length>>1],medW=r.map(e=>e.w).sort((a,b)=>a-b)[r.length>>1];
+            // Letters differ in width -- I against M -- while chairs are one
+            // object repeated, so their widths barely vary. This is what
+            // separates a word from a row of seats, and it is measured on the
+            // run itself rather than assumed.
+            // A seat serves a table. That is the domain fact this rests on,
+            // and it separates the two cases where pixel statistics do not:
+            // measured, printed glyphs sit 3-9 mark-widths from the nearest
+            // detected table while real unassociated seats sit under 1.5 away,
+            // because they are the seats of a table right there.
+            //
+            // (Shape variation was the first hypothesis -- letters differ in
+            // width, seats do not -- and the measurement rejected it: glyph
+            // runs came back at cv 0.08 against 0.03 for seats, far too close
+            // to separate on. It is left out rather than tuned into place.)
+            const runGap=r.reduce((worst,e)=>Math.min(worst,nearestTableDistance(e)),Infinity);
+            const runGapInWidths=runGap/Math.max(1,medW);
+            if(globalThis.MERIT_TEXTRUN_PROBE)globalThis.MERIT_TEXTRUN_PROBE.push({len:r.length,medW,medGap,runGap,runGapInWidths});
+            if(medGap<=medW*.5&&runGapInWidths>=TEXT_RUN_MIN_TABLE_DISTANCE_WIDTHS){
+              for(const e of r){flagged.add(e.ci);used.add(e.ci);}}
+          }
+        }
+        return flagged;
+      })();
       const chairVenues=[];
+      let textGlyphChairsDropped=0;
       for(let ci=0;ci<chairs.length;ci++){
         const ti=chairAssign.get(ci);
         if(ti!==undefined&&chosenIndexes.has(ti))continue;
+        if(textRunIndexes.has(ci)){textGlyphChairsDropped++;continue;}
         const ch=chairs[ci],obb=chairOBB(ch);
         chairVenues.push({id:uid("candidate"),kind:"venue",type:"chair",...toPercentBox(obb),rotation:obb.rotation,
           confidence:chairEvidence(ch,false),status:"unreviewed",selected:false,chairDetections:[],
@@ -2186,7 +2345,18 @@
       // ---- venue-scale objects (stage band / long bar / column) ------------
       const venueComps=[];
       for(const s of sources)for(const c of s.all)if(venueSizeOk(c)&&!venueComps.some(o=>boxIoU(o,c)>=.5))venueComps.push(c);
-      const venues=venueComps.slice(0,14).map(c=>{
+      // A venue-scale blob that geometrically CONTAINS several detected tables
+      // is not a stage -- it is the merged blob those tables were cut out of.
+      // Measured on the dense fixture: three 511x102 "stages" at aspect 5.0,
+      // each of which was exactly one row of six tables plus their seats. This
+      // needs no threshold: either real table centres sit inside the box or
+      // they do not.
+      const tableCentres=chosen.map(s=>({cx:s.obb.cx,cy:s.obb.cy}));
+      const containedTables=c=>tableCentres.filter(t=>
+        t.cx>=c.x&&t.cx<=c.x+c.w&&t.cy>=c.y&&t.cy<=c.y+c.h).length;
+      const mergedRowVenues=venueComps.filter(c=>containedTables(c)>=2);
+      const venueCompsKept=venueComps.filter(c=>containedTables(c)<2);
+      const venues=venueCompsKept.slice(0,14).map(c=>{
         analyze([c],sources.find(s=>s.all.includes(c)).labels);
         const obb=c.shape?.obb||{cx:c.x+c.w/2,cy:c.y+c.h/2,w:c.w,h:c.h,rotation:c.pcaRotation||0};
         return{id:uid("candidate"),kind:"venue",type:c.aspect>3?"stage":"column",...toPercentBox(obb),
@@ -2205,7 +2375,8 @@
           chairsDetected:chairs.length,chairsAssociated:associatedSeats,chairsUnassociated:chairVenues.length,
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
-          mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,debugPool,
+          mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,fragmentSuppression:fragmentDiagnostics,
+          textGlyphChairsDropped,mergedRowVenuesDropped:mergedRowVenues.length,debugPool,
           sources:diagnosticsSources,phaseMs,
           colorModel:accentModel?{isColorPlan:accentModel.isColorPlan,accentHue:accentModel.accentHue,
             accentChroma:accentModel.accentChroma,accentFraction:Number(accentModel.accentFraction.toFixed(4)),

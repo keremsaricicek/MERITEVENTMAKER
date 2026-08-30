@@ -57,6 +57,12 @@ async function detect(browser, imagePath) {
   const page = await browser.newPage({ viewport: { width: 1800, height: 1000 } });
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
+  // MERIT_BENCH_NO_FRAGMENT_FILTER=1 measures the pre-suppression baseline on
+  // the same build, so a before/after table is two runs of one binary rather
+  // than a comparison against remembered numbers from reverted code.
+  if (process.env.MERIT_BENCH_NO_FRAGMENT_FILTER) {
+    await page.addInitScript(() => { globalThis.MERIT_DISABLE_FRAGMENT_FILTER = true; });
+  }
   await page.goto(`http://localhost:${PORT}/index.html`);
   await page.waitForLoadState("networkidle");
   await page.click('.appbar [data-action="create-event"]');
@@ -160,11 +166,26 @@ function evaluate(annot, det) {
 
   // How many detections land inside an annotated text or architecture region.
   // This is the direct measure of text/architecture false positives.
+  //
+  // Split by kind, because they are different failures with different costs.
+  // A wall proposed as a TABLE puts a phantom table on the floor plan and into
+  // the capacity total — that is the one that corrupts the product. A wall
+  // proposed as a venue object is at worst clutter in the review queue. Rolling
+  // both into one number hides which of the two a change actually moved.
   const inRegion = (c, r) => c.cx >= r.x && c.cx <= r.x + r.w && c.cy >= r.y && c.cy <= r.y + r.h;
   const textRegions = (annot.regions || []).filter(r => r.class === "text");
   const archRegions = (annot.regions || []).filter(r => r.class === "architecture" && r.w * r.h < W * H * 0.5);
-  const textFP = cands.filter(c => textRegions.some(r => inRegion(c, r)));
-  const archFP = cands.filter(c => archRegions.some(r => inRegion(c, r)));
+  const textFPall = cands.filter(c => textRegions.some(r => inRegion(c, r)));
+  const archFPall = cands.filter(c => archRegions.some(r => inRegion(c, r)));
+  const textFP = textFPall.filter(c => c.kind === "table");
+  const archFP = archFPall.filter(c => c.kind === "table");
+  // Which specific regions attracted a phantom table, so a regression names
+  // the offender instead of just moving a count.
+  const regionHits = r => cands.filter(c => c.kind === "table" && inRegion(c, r)).length;
+  const worstTextRegions = textRegions.map(r => ({ id: r.id, tables: regionHits(r) }))
+    .filter(r => r.tables).sort((a, b) => b.tables - a.tables);
+  const worstArchRegions = archRegions.map(r => ({ id: r.id, subclass: r.subclass, tables: regionHits(r) }))
+    .filter(r => r.tables).sort((a, b) => b.tables - a.tables);
 
   return {
     planId: annot.planId,
@@ -192,9 +213,13 @@ function evaluate(annot, det) {
     semanticObjects: semantic,
     falsePositiveRegions: {
       textRegionsAnnotated: textRegions.length,
-      detectionsInsideTextRegions: textFP.length,
+      tablesInsideTextRegions: textFP.length,
+      anyDetectionInsideTextRegions: textFPall.length,
+      worstTextRegions,
       architectureRegionsAnnotated: archRegions.length,
-      detectionsInsideArchitectureRegions: archFP.length,
+      tablesInsideArchitectureRegions: archFP.length,
+      anyDetectionInsideArchitectureRegions: archFPall.length,
+      worstArchitectureRegions: worstArchRegions,
     },
     humanEffort: {
       reviewGroups: det.reviewGroups,
@@ -234,7 +259,11 @@ for (const f of files) {
   console.log(`  TYPES    ${Object.entries(rep.tableTypeAccuracy).filter(([, v]) => v.matched).map(([k, v]) => `${k} ${v.correct}/${v.matched}`).join("  ") || "(none matched)"}`);
   console.log(`  CHAIRS   annotated=${rep.chairs.annotatedChairs} detected=${rep.chairs.detectedTotal} (onTables=${rep.chairs.detectedOnTables} standalone=${rep.chairs.detectedStandalone})`);
   console.log(`  CAPACITY ocrStated=${JSON.stringify(rep.capacity.ocrStated?.total ?? null)} systemSeats=${rep.capacity.systemPhysicalSeats}`);
-  console.log(`  FP-ZONES text=${rep.falsePositiveRegions.detectionsInsideTextRegions}/${rep.falsePositiveRegions.textRegionsAnnotated}regions  arch=${rep.falsePositiveRegions.detectionsInsideArchitectureRegions}/${rep.falsePositiveRegions.architectureRegionsAnnotated}regions`);
+  const fpz = rep.falsePositiveRegions;
+  console.log(`  FP-ZONES text: ${fpz.tablesInsideTextRegions} tables (${fpz.anyDetectionInsideTextRegions} any) in ${fpz.textRegionsAnnotated} regions` +
+    `   arch: ${fpz.tablesInsideArchitectureRegions} tables (${fpz.anyDetectionInsideArchitectureRegions} any) in ${fpz.architectureRegionsAnnotated} regions`);
+  if (fpz.worstTextRegions.length) console.log(`           text offenders: ${fpz.worstTextRegions.slice(0, 6).map(r => `${r.id}x${r.tables}`).join(" ")}`);
+  if (fpz.worstArchitectureRegions.length) console.log(`           arch offenders: ${fpz.worstArchitectureRegions.slice(0, 6).map(r => `${r.id}x${r.tables}`).join(" ")}`);
   const sem = Object.entries(rep.semanticObjects).map(([k, v]) => `${k} TP${v.tp}/FP${v.fp}/FN${v.fn}`).join("  ");
   if (sem) console.log(`  SEMANTIC ${sem}`);
   console.log(`  EFFORT   reviewGroups=${rep.humanEffort.reviewGroups} questions=${rep.humanEffort.uncertainQuestions}`);
