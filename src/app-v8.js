@@ -2432,6 +2432,59 @@
   // shape signature that tells a round table's radial fill apart from an
   // L-shaped or off-center one). This is real pixel-derived signal, honestly
   // labeled as classical/deterministic -- never described as a trained model.
+  // ---- VisualEmbeddingProvider (Gate G) --------------------------------
+  //
+  // The boundary a real learned embedding model would plug into, so that
+  // swapping one in is a provider registration rather than a rewrite of the
+  // similarity clustering.
+  //
+  // Exactly one provider is installed today and it is NOT a model. It is a
+  // hand-crafted descriptor: fill ratio, edge density, an 8-bin intensity
+  // histogram and a quadrant fill signature, computed from the decoded plan
+  // pixels. Calling that an embedding would be false, so `kind` says
+  // "handcrafted-descriptor", `trainedModel` is false, and `dimensions` is the
+  // real vector length rather than a model's hidden size. Nothing in the UI
+  // may describe this as a learned or trained representation.
+  //
+  // See benchmarks/embedding/README.md for the license matrix and for the
+  // measured baseline any candidate model has to beat before it is worth
+  // shipping tens of megabytes of weights into an offline package.
+  const VisualEmbeddingProviders={
+    handcrafted:{
+      id:"handcrafted-descriptor-v1",
+      kind:"handcrafted-descriptor",
+      trainedModel:false,
+      label:"Geometric + intensity descriptor computed from plan pixels. Not a trained model, not an embedding.",
+      dimensions:14, // fillRatio + edgeDensity + 8 histogram bins + 4 quadrants
+      offline:true,
+      licence:"n/a — computed in-product, no third-party weights",
+      embed(gray,binary,width,height,candidate){
+        return computeVisualDescriptor(gray,binary,width,height,candidate);
+      },
+      // Flat vector form, so a consumer can compare providers without knowing
+      // the shape of any one of them.
+      toVector(d){
+        if(!d)return null;
+        return [d.fillRatio,d.edgeDensity,...(d.intensityHist||[]),...(d.quadrantFill||[])];
+      },
+    },
+  };
+  function resolveVisualEmbeddingProvider(){
+    const id=globalThis.MERIT_VISUAL_EMBEDDING_PROVIDER||"handcrafted";
+    return VisualEmbeddingProviders[id]||VisualEmbeddingProviders.handcrafted;
+  }
+  globalThis.MeritVisualEmbedding={
+    providers:VisualEmbeddingProviders,
+    resolve:resolveVisualEmbeddingProvider,
+    // Registration seam for a future real model. Kept deliberately explicit:
+    // a provider must declare whether it is a trained model, because the
+    // honesty rules downstream key off that flag rather than off its name.
+    register(id,provider){
+      if(!provider||typeof provider.embed!=="function")throw new Error("A visual embedding provider needs an embed() function.");
+      if(typeof provider.trainedModel!=="boolean")throw new Error("A visual embedding provider must declare trainedModel explicitly.");
+      VisualEmbeddingProviders[id]=provider;
+    },
+  };
   function computeVisualDescriptor(gray,binary,width,height,c){
     const px=Math.max(0,Math.round(c.x/100*width)),py=Math.max(0,Math.round(c.y/100*height));
     const pw=Math.max(1,Math.min(width-px,Math.round(c.w/100*width))),ph=Math.max(1,Math.min(height-py,Math.round(c.h/100*height)));
@@ -2587,8 +2640,12 @@
       const detectionMs=Math.round(performance.now()-detectionStartedAt);
       const candidates=detection.candidates,venues=detection.venues,threshold=detection.threshold;
       ui.analysisStage=t("analysis.stage.seating");ui.analysisProgress=73;render();await yieldFrame();
-      for(const c of candidates)c.visualDescriptor=computeVisualDescriptor(detection.gray,detection.binary,width,height,c);
-      for(const c of venues)c.visualDescriptor=computeVisualDescriptor(detection.gray,detection.binary,width,height,c);
+      // Through the provider boundary rather than the function directly, so a
+      // future learned model is a registration and not a rewrite. Today this
+      // resolves to the hand-crafted descriptor and says so.
+      const embedder=resolveVisualEmbeddingProvider();
+      for(const c of candidates)c.visualDescriptor=embedder.embed(detection.gray,detection.binary,width,height,c);
+      for(const c of venues)c.visualDescriptor=embedder.embed(detection.gray,detection.binary,width,height,c);
       const previous=event.analysis?.candidates||[],signatures=list=>list.map(c=>`${c.kind}:${c.type}:${Math.round(c.x)}:${Math.round(c.y)}`),oldSig=new Set(signatures(previous)),newSig=new Set(signatures([...candidates,...venues]));
       const freshCandidates=[...candidates,...venues];
       const priorCandidates=event.analysis?.candidates||[],priorDecisions=event.analysis?.groupingDecisions||[];
