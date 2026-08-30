@@ -71,8 +71,25 @@ const appJs = ["src/storage-provider.js", "src/venue-model.js", "src/app.js", "s
 
 const shell = readFileSync(path.join(ROOT, "index.html"), "utf8");
 const bodyStart = shell.indexOf("<body>");
-const bodyEnd = shell.indexOf("<!--");
+// Cut at the first <script>, not at the first HTML comment. build-offline.mjs
+// was fixed for this and this build was not, so it silently shipped truncated
+// markup for as long as index.html has carried an explanatory comment above
+// the dialogs: #guestDialog never made it into the file, app-guests.js threw
+// on `getElementById("guestForm").elements`, and because all eight sources
+// are concatenated into ONE <script> the throw killed everything after it —
+// i18n, plan-ocr, plan-intelligence and app-v8 never ran. The package booted
+// to a dead shell, and the OCR this build exists to provide was not merely
+// broken but absent. The assertions below make that a build failure.
+const bodyEnd = shell.indexOf("<script");
+if (bodyStart < 0 || bodyEnd < 0 || bodyEnd <= bodyStart) {
+  throw new Error("build-offline-full: could not locate the body markup range in index.html");
+}
 const bodyMarkup = shell.slice(bodyStart, bodyEnd);
+for (const required of ['id="app"', 'id="guestForm"', 'id="excelDialog"', 'id="guideDialog"', 'id="toastWrap"', 'id="floorPlanFile"', 'id="guestFileInput"', 'id="backupFileInput"']) {
+  if (!bodyMarkup.includes(required)) {
+    throw new Error(`build-offline-full: body markup is missing ${required} — the offline package would boot to a dead shell`);
+  }
+}
 
 const pdfBridge = `
 GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([${JSON.stringify(pdfWorkerSrc)}], {type:"text/javascript"}));

@@ -63,7 +63,20 @@
     engine: "tesseract.js (MIT license, client-side WASM, no API key)",
     languages: ["eng", "tur"],
     onlineBuild: "index.html — Tesseract.js core/lang data load from its CDN default on first use, then cache in the browser.",
-    offlineFullBuild: "dist/merit-offline/ (scripts/build-offline-full.mjs) — worker/core/lang files are shipped as local sibling files; MERIT_OCR_ASSET_PATHS points Tesseract.js at them, so OCR works with zero network access. Verified with Playwright network blocking during development.",
+    offlineFullBuild: "dist/merit-offline/ (scripts/build-offline-full.mjs) — worker/core/lang files are shipped as local sibling files; MERIT_OCR_ASSET_PATHS points Tesseract.js at them, so OCR runs with zero network access.",
     offlineLightBuild: "dist/index-offline.html (scripts/build-offline.mjs) — single email-able file, no OCR bundled (would add ~20MB of base64 language data to one file); reports itself unavailable there rather than faking a result.",
+    // Measured, not asserted. benchmarks/offline/verify-offline-package.mjs
+    // serves dist/merit-offline/ and aborts every request that is not
+    // same-origin, so a silent CDN fetch cannot pass. Re-run it after touching
+    // either build script.
+    offlineVerification: {
+      harness: "benchmarks/offline/verify-offline-package.mjs",
+      result: "OCR available with zero off-origin requests attempted; ~2.1s for a 1000x420 plan crop, headless Chromium.",
+      readCorrectly: ["TOTAL 124 PAX", "114 pax seating", "10 pax bistro", "SAHNE (Turkish label)"],
+      // Written down because it is exactly the trap someone would fall into
+      // later: OCR is reliable on the printed capacity numbers this product
+      // reads, and NOT reliable on alphanumeric table labels.
+      knownLimitation: "Table labels mixing a letter with digits are misread: T01/T02/T03 came back as TO1/TO02/TO3 (letter O for digit 0) at confidence 57-89, against 95-97 for the capacity text. Do not build table-number recognition on this. OCR stays supporting evidence for capacity and labels; it never defines geometry or object identity by itself.",
+    },
   };
 })();

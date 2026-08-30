@@ -66,7 +66,7 @@ if (bodyStart < 0 || bodyEnd < 0 || bodyEnd <= bodyStart) {
   throw new Error("build-offline: could not locate the body markup range in index.html");
 }
 const bodyMarkup = shell.slice(bodyStart, bodyEnd);
-for (const required of ['id="app"', 'id="guestForm"', 'id="excelDialog"', 'id="toastWrap"']) {
+for (const required of ['id="app"', 'id="guestForm"', 'id="excelDialog"', 'id="guideDialog"', 'id="toastWrap"', 'id="floorPlanFile"', 'id="guestFileInput"', 'id="backupFileInput"']) {
   if (!bodyMarkup.includes(required)) {
     throw new Error(`build-offline: body markup is missing ${required} — the offline build would be broken`);
   }
