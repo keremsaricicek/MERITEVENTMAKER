@@ -1795,6 +1795,16 @@
         for(const c of kept)c.source="interior";
         diagnosticsSources.interior=kept.length;
         sources.push({name:"interior",labels,comps:kept,all:comps});
+        // The same enclosed interiors, at chair scale, are a chair source.
+        // Not every chair is a filled symbol: the round tables on the real
+        // venue plan are ringed by OUTLINED pale chairs, which carry no
+        // saturated colour and no distinct fill tone, so neither the accent
+        // cluster nor any tone family can see them. What they do have is a
+        // closed outline, which is exactly what this pass already extracts --
+        // it was simply never offered to the chair pool.
+        const interiorChairs=comps.filter(c=>chairSizeOk(c)&&c.fill>=.35);
+        if(interiorChairs.length)chairSources.push({name:"outline-interior",labels,
+          rawCount:comps.length,comps:interiorChairs});
         mark("interiors");
       }
       // (b) tinted/solid fills straight from the colour model — one mask per
@@ -1945,6 +1955,28 @@
       // plans, where it is the only evidence there is.
       const colourChairs=chairSources.find(src=>src.name==="colour-cluster");
       const useColourOnly=colourChairs&&colourChairs.comps.length>=6;
+      // MEASURED LIMITATION, deliberately left in place rather than traded away.
+      //
+      // On a colour plan only the accent cluster feeds the chair pool. That
+      // costs the pale OUTLINED chairs ringing the round tables on the real
+      // venue plan: they carry no accent colour and no distinct fill tone, so
+      // the outline-interior source is the only evidence that can see them,
+      // and it is excluded here.
+      //
+      // Letting it through was tried and measured. Real-plan chairs went
+      // 79 -> 124 (which happens to match the drawing's printed 124), but
+      // tables collapsed: F1 0.882 -> 0.543, and 0 of 24 square tables
+      // survived. The reason is structural, not a tuning miss -- chairs are
+      // subtracted from the table pool, and on THIS plan the chair symbols
+      // (~34px) and the square tables (~44px) both pass chairSizeOk, whose
+      // ceiling is 0.065 of the short edge, about 51px. So the source claims
+      // real tables as chairs.
+      //
+      // The honest fix is a pipeline reordering: the chair/table split for
+      // size-ambiguous components has to happen AFTER the modal table size is
+      // known, so each component can be assigned to whichever modal it agrees
+      // with. That is real work, not a threshold, and a chair number bought by
+      // destroying table recall is worth nothing. See the sprint report.
       const activeChairSources=useColourOnly?[colourChairs]:chairSources;
       const specificCount=activeChairSources.reduce((n,src)=>n+src.comps.length,0);
       // What each chair source actually offered, kept in diagnostics. Without
