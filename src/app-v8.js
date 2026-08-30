@@ -1675,7 +1675,7 @@
     id:"classical-cv",
     label:"Assisted Detection (classical computer vision)",
     trainedModel:false,
-    async detect(pixels,width,height,{onStage}={}){
+    async detect(pixels,width,height,{onStage,protectedRegions=[]}={}){
       const stage=onStage||(async()=>{});
       const total=width*height,data=pixels.data;
       // Real measured phase timings, reported in diagnostics so a future
@@ -2187,7 +2187,16 @@
         return reasons;
       };
       const FRAGMENT_MIN_REASONS=3;
-      const flagged=ranked.filter(s=>fragmentEvidence(s).length>=FRAGMENT_MIN_REASONS);
+      // A region the operator already confirmed (or drew themselves) is off
+      // limits. The filter may disagree with the detector; it may not overrule
+      // a human. Regions arrive as percentages of the plan, same units the
+      // candidates are reported in.
+      const isProtected=obb=>{
+        const cx=obb.cx/width*100,cy=obb.cy/height*100;
+        return protectedRegions.some(r=>cx>=r.x-.5&&cx<=r.x+r.w+.5&&cy>=r.y-.5&&cy<=r.y+r.h+.5);
+      };
+      const flagged=ranked.filter(s=>!isProtected(s.obb)&&fragmentEvidence(s).length>=FRAGMENT_MIN_REASONS);
+      const protectedFromFilter=ranked.filter(s=>isProtected(s.obb)&&fragmentEvidence(s).length>=FRAGMENT_MIN_REASONS).length;
       // Self-disabling guard, same shape as the surface-coverage filter above:
       // if this would delete most of the plan, the plan is unusual rather than
       // its objects, and a filter that removes the furniture is worse than the
@@ -2202,6 +2211,7 @@
         active:fragmentFilterActive,
         proposed:ranked.length,
         dropped:fragmentDrops.length,
+        protectedByHumanDecision:protectedFromFilter,
         flaggedButKept:fragmentFilterActive?0:flagged.length,
         minReasons:FRAGMENT_MIN_REASONS,
         planModalAspect:modalAspect?Number(modalAspect.toFixed(3)):null,
@@ -2560,7 +2570,18 @@
       // saying DOMAIN MODEL NOT INSTALLED.
       const provider=resolvePlanDetectionProvider();
       const detectionStartedAt=performance.now();
-      const detection=await provider.detect(pixels,width,height,{onStage:async(key,progress)=>{
+      // Regions the operator has already ruled on. An automatic filter is
+      // allowed to disagree with the detector; it is never allowed to overrule
+      // a human. Without this, fragment suppression runs before plan memory is
+      // re-applied, so a table the operator explicitly confirmed could be
+      // deleted before memory ever got the chance to restore it. It happened
+      // to survive in testing only because an unrelated chair candidate
+      // remained at that position for memory to match against -- an accident,
+      // not a guarantee.
+      const protectedRegions=(event.planMemory||[])
+        .filter(m=>m.status==="confirmed"||m.manual)
+        .map(m=>({x:m.geometry.x,y:m.geometry.y,w:m.geometry.w,h:m.geometry.h}));
+      const detection=await provider.detect(pixels,width,height,{protectedRegions,onStage:async(key,progress)=>{
         ui.analysisStage=t("analysis.stage."+key);ui.analysisProgress=progress;render();await yieldFrame();
       }});
       const detectionMs=Math.round(performance.now()-detectionStartedAt);
