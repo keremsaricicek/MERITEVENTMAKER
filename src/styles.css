@@ -914,6 +914,13 @@ body{min-width:1180px}
    semantic-warn while the count is unknown and settles to muted once the
    operator has verified it -- an admitted unknown reads as something to
    resolve, not as an error. */
+/* The end-of-window affordance on Live. Quiet: it reports how much of the
+   list is mounted and grows it, and it is a fallback for keyboard use since
+   scrolling to it grows the list on its own. */
+.live-more{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:10px;padding:10px 16px;border:1px solid var(--line);border-radius:var(--radius-lg);
+  background:var(--panel);color:var(--muted);font-size:12px}
+
 .poi-seat-row{margin-top:10px}
 .poi-seat-row label{display:block;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--pi-muted,var(--muted-2));font-weight:700;margin-bottom:5px}
 .poi-seat-row input{width:100%;padding:7px 9px;border:1px solid var(--pi-line,var(--line));border-radius:var(--pi-radius-sm,6px);background:var(--pi-surface-2,var(--panel));color:var(--text);font-size:13px;font-variant-numeric:tabular-nums}

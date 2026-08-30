@@ -304,6 +304,8 @@
     "canvas.multiSelectHint": { en: "Ctrl/Shift multi-select · Drag blank canvas for marquee · Arrow keys nudge", tr: "Ctrl/Shift ile çoklu seçim · Boş alanı sürükleyerek seçim kutusu · Ok tuşlarıyla ince ayar" },
     "canvas.selectedCount": { en: "{n} selected", tr: "{n} seçili" },
     "review.correctionSpread": { en: "Same correction applied to {n} more object(s) of the same shape.", tr: "Aynı düzeltme, aynı şekildeki {n} nesneye daha uygulandı." },
+    "live.showingOf": { en: "Showing {shown} of {total} guests", tr: "{total} misafirden {shown} tanesi gösteriliyor" },
+    "live.showMore": { en: "Show more", tr: "Daha fazla göster" },
     "poi.seatsOnThis": { en: "Seats on this", tr: "Buradaki koltuk" },
     "poi.seatsUnset": { en: "not counted", tr: "sayılmadı" },
     "poi.seatsUnverifiedNote": { en: "Capacity unknown until you enter a number. It is not counted as zero — it is reported as unverified.", tr: "Bir sayı girene kadar kapasite bilinmiyor. Sıfır sayılmaz; doğrulanmamış olarak raporlanır." },
