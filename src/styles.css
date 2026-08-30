@@ -910,6 +910,15 @@ body{min-width:1180px}
 .poi-card{position:absolute;right:20px;top:82px;z-index:45;width:260px;background:var(--pi-surface);border:1px solid var(--pi-line);border-radius:var(--pi-radius);box-shadow:var(--pi-shadow-3);padding:15px;animation:popIn var(--dur-base) var(--ease)}
 .poi-memory-note{display:flex;align-items:center;gap:6px;margin-top:9px;padding:7px 9px;border-radius:var(--pi-radius-sm);background:var(--pi-accent-soft);color:var(--pi-accent-strong);font-size:10.5px;font-weight:600}
 .poi-memory-note svg{width:13px;height:13px;flex:none}
+/* Seating furniture whose capacity a drawing does not state. The note is
+   semantic-warn while the count is unknown and settles to muted once the
+   operator has verified it -- an admitted unknown reads as something to
+   resolve, not as an error. */
+.poi-seat-row{margin-top:10px}
+.poi-seat-row label{display:block;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--pi-muted,var(--muted-2));font-weight:700;margin-bottom:5px}
+.poi-seat-row input{width:100%;padding:7px 9px;border:1px solid var(--pi-line,var(--line));border-radius:var(--pi-radius-sm,6px);background:var(--pi-surface-2,var(--panel));color:var(--text);font-size:13px;font-variant-numeric:tabular-nums}
+.poi-seat-note{margin:6px 0 0;font-size:10.5px;line-height:1.45;color:var(--warn,#8a6d1f)}
+.poi-seat-row input:not([value=""])~.poi-seat-note{color:var(--pi-muted,var(--muted))}
 .poi-card-head strong{font-size:14px;display:block}
 .poi-card-head span{font-size:10.5px;color:var(--pi-muted)}
 .poi-card .field-select{width:100%;height:32px;margin:11px 0;border:1px solid var(--pi-line);border-radius:var(--pi-radius-sm);background:var(--pi-surface-2);color:var(--pi-ink);padding:0 8px;font-size:11.5px}
