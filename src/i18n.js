@@ -302,6 +302,11 @@
     "canvas.multiSelectHint": { en: "Ctrl/Shift multi-select · Drag blank canvas for marquee · Arrow keys nudge", tr: "Ctrl/Shift ile çoklu seçim · Boş alanı sürükleyerek seçim kutusu · Ok tuşlarıyla ince ayar" },
     "canvas.selectedCount": { en: "{n} selected", tr: "{n} seçili" },
     "review.correctionSpread": { en: "Same correction applied to {n} more object(s) of the same shape.", tr: "Aynı düzeltme, aynı şekildeki {n} nesneye daha uygulandı." },
+    "review.familyTitle.table": { en: "{type} Table Family", tr: "{type} Masa Ailesi" },
+    "review.familyTitle.object": { en: "{type} Object Family", tr: "{type} Nesne Ailesi" },
+    "review.undoCorrection": { en: "Undo correction ({n})", tr: "Düzeltmeyi geri al ({n})" },
+    "review.undoCorrectionTitle": { en: "Undo the last reclassification, including every object the same correction was spread to.", tr: "Son yeniden sınıflandırmayı, aynı düzeltmenin uygulandığı tüm nesnelerle birlikte geri alır." },
+    "review.undoCorrectionToast": { en: "Correction undone on {n} object(s), and the stored correction was withdrawn.", tr: "{n} nesnedeki düzeltme geri alındı ve kaydedilen düzeltme kaldırıldı." },
     // ---- Create Event screen ----
     "setup.cancel": { en: "Cancel", tr: "İptal" },
     "setup.eyebrow": { en: "New event", tr: "Yeni etkinlik" },

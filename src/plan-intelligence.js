@@ -183,6 +183,12 @@
       const consistent = members.length - needsReview.length;
       groups.push({
         id: uid("reviewgroup"),
+        // Structured, not pre-rendered: the domain layer must not decide what
+        // language the operator reads. The UI renders this through t(), the
+        // same way uncertainQuestions already carry questionType/params
+        // instead of an English sentence. `title` stays as the English
+        // fallback for anything reading the old shape.
+        titleParams: { type: sg.type, kind: sg.kind === "table" ? "table" : "object" },
         title: `${sg.type} ${sg.kind === "table" ? "table" : "object"} family`,
         memberIds: needsReview.map(m => m.id),
         totalInFamily: members.length,

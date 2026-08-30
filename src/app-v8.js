@@ -2726,13 +2726,27 @@
   }
   function reviewCenterPanelHTML(event){
     const pi=event.analysis.planIntelligence,decisions=event.analysis.groupingDecisions||[];
-    return`<aside class="review-center-panel"><div class="review-center-head"><strong>${t("review.center")}</strong>${decisions.length?`<button class="btn sm quiet" data-review-decision-action="undo-last" title="${t("diag.undoLastDecisionTitle")}">${icon("undo")} ${t("diag.undoLastDecision",{n:decisions.length})}</button>`:""}<button class="btn icon-only sm" data-review-action="close-review-center">${icon("x")}</button></div><div class="review-center-list">${pi.reviewGroups.map(g=>`<div class="review-group-card"><div class="review-group-title">${titleCase(g.title)}</div>${memberCropsHTML(event,g.memberIds)}<div class="review-group-meta">${g.totalInFamily} ${t("review.similar")} · ${g.consistentCount} ${t("review.consistentOf")} · ${g.memberIds.length} ${t("review.needReview")}</div><div class="review-group-actions"><button class="btn sm primary" data-reviewgroup-action="confirm-family" data-group="${g.id}">${t("action.applyToAll")}</button><button class="btn sm" data-reviewgroup-action="inspect" data-group="${g.id}">${t("action.reviewOutliers")}</button></div></div>`).join("")||`<div class="inspector-empty">${t("review.noGroups")}</div>`}</div>${pi.uncertainQuestions.length?`<div class="review-center-difficult"><strong>${t("review.difficultQuestions")}</strong>${pi.uncertainQuestions.map(q=>`<div class="difficult-q-row"><span>${esc(questionText(q))}</span><button class="btn sm" data-question-action="open" data-question="${q.id}">${t("action.answer")}</button></div>`).join("")}</div>`:""}</aside>`;
+    return`<aside class="review-center-panel"><div class="review-center-head"><strong>${t("review.center")}</strong>${(ui.correctionUndo||[]).length?`<button class="btn sm quiet" data-review-decision-action="undo-correction" title="${t("review.undoCorrectionTitle")}">${icon("undo")} ${t("review.undoCorrection",{n:(ui.correctionUndo||[]).length})}</button>`:""}${decisions.length?`<button class="btn sm quiet" data-review-decision-action="undo-last" title="${t("diag.undoLastDecisionTitle")}">${icon("undo")} ${t("diag.undoLastDecision",{n:decisions.length})}</button>`:""}<button class="btn icon-only sm" data-review-action="close-review-center">${icon("x")}</button></div><div class="review-center-list">${pi.reviewGroups.map(g=>`<div class="review-group-card"><div class="review-group-title">${esc(reviewGroupTitle(g))}</div>${memberCropsHTML(event,g.memberIds)}<div class="review-group-meta">${g.totalInFamily} ${t("review.similar")} · ${g.consistentCount} ${t("review.consistentOf")} · ${g.memberIds.length} ${t("review.needReview")}</div><div class="review-group-actions"><button class="btn sm primary" data-reviewgroup-action="confirm-family" data-group="${g.id}">${t("action.applyToAll")}</button><button class="btn sm" data-reviewgroup-action="inspect" data-group="${g.id}">${t("action.reviewOutliers")}</button></div></div>`).join("")||`<div class="inspector-empty">${t("review.noGroups")}</div>`}</div>${pi.uncertainQuestions.length?`<div class="review-center-difficult"><strong>${t("review.difficultQuestions")}</strong>${pi.uncertainQuestions.map(q=>`<div class="difficult-q-row"><span>${esc(questionText(q))}</span><button class="btn sm" data-question-action="open" data-question="${q.id}">${t("action.answer")}</button></div>`).join("")}</div>`:""}</aside>`;
   }
   // AI-generated review questions are stored as a semantic {questionType,
   // questionParams} pair (plan-intelligence.js), never a hardcoded English
   // string — this renders that through i18n.js's t() so the active UI
   // language is honored. q.question (a plain English literal) is kept only
   // as a defensive fallback for a question shape without a known type.
+  // Review-group titles arrive as {type, kind} rather than an English phrase,
+  // so the Turkish UI does not show "Round Table Family" in the middle of a
+  // Turkish panel. Falls back to the pre-rendered string for any group shaped
+  // the old way.
+  function reviewGroupTitle(g){
+    const p=g.titleParams;
+    if(!p)return titleCase(g.title||"");
+    // Reuse the shape labels the Add-objects panel already ships rather than
+    // adding a parallel set that could drift out of sync. t() returns the key
+    // itself when a string is missing, so that is the miss signal.
+    const key="bulk.type."+p.type,label=t(key);
+    const typeLabel=label===key?titleCase(p.type):label;
+    return t(p.kind==="table"?"review.familyTitle.table":"review.familyTitle.object",{type:typeLabel});
+  }
   function questionText(q){
     if(q.questionType==="combinedDiningGroup")return t("question.combinedDiningGroup",{memberCount:q.questionParams?.memberCount??"?"});
     return q.question||"";
@@ -2807,6 +2821,20 @@
   // already grouped with this one. Only touches candidates that are still
   // unreviewed AND still carry the exact classification the operator just
   // rejected, so it can never overwrite a decision they made themselves.
+  // Exactly which candidates a spread will reach, computed with the same rules
+  // the spread itself uses. Shared so the undo snapshot and the mutation can
+  // never disagree about the affected set.
+  function familyCandidateIds(event,corrected,wasKind,wasType){
+    const pi=event.analysis?.planIntelligence;if(!pi)return[];
+    const group=(pi.similarityGroups||[]).find(g=>(g.memberIds||[]).includes(corrected.id))
+      ||(pi.reviewGroups||[]).find(g=>(g.memberIds||[]).includes(corrected.id));
+    if(!group)return[];
+    return group.memberIds.filter(id=>{
+      if(id===corrected.id)return false;
+      const other=event.analysis.candidates.find(x=>x.id===id);
+      return !!other&&other.status==="unreviewed"&&other.kind===wasKind&&other.type===wasType;
+    });
+  }
   function applyCorrectionToFamily(event,corrected,wasKind,wasType){
     const pi=event.analysis?.planIntelligence;if(!pi)return 0;
     // Prefer the full similarity family; fall back to the review group.
@@ -2827,6 +2855,49 @@
     }
     return n;
   }
+  // A reclassification lives entirely in event.analysis.candidates and
+  // event.planMemory. The canvas undo stack snapshots {tables, venueObjects,
+  // background}, so it cannot reach any of it -- which meant one dropdown
+  // change that repaired a whole family of objects was, until now,
+  // irreversible. The more objects the spread correctly fixed, the more
+  // damage an accidental wrong pick did.
+  //
+  // Session-only, deliberately on ui rather than the event: like ui.liveRecent
+  // it is a property of this working session and must never reach the stored
+  // schema.
+  function recordCorrectionUndo(event,affectedIds,label){
+    ui.correctionUndo ||= [];
+    const before=affectedIds.map(id=>{
+      const c=event.analysis.candidates.find(x=>x.id===id);
+      return c?{id,kind:c.kind,type:c.type,status:c.status,selected:c.selected,
+        chairDetections:clone(c.chairDetections||[])}:null;
+    }).filter(Boolean);
+    const memoryBefore=(event.planMemory||[]).map(m=>m.id);
+    ui.correctionUndo.push({before,memoryBefore,label,at:nowISO()});
+    if(ui.correctionUndo.length>30)ui.correctionUndo.shift();
+  }
+  function undoLastCorrection(){
+    const event=activeEvent();
+    if(!canMutate(event,"undo a plan correction"))return 0;
+    const entry=(ui.correctionUndo||[]).pop();
+    if(!entry)return 0;
+    let restored=0;
+    for(const snap of entry.before){
+      const c=event.analysis?.candidates.find(x=>x.id===snap.id);
+      if(!c)continue;
+      c.kind=snap.kind;c.type=snap.type;c.status=snap.status;c.selected=snap.selected;
+      c.chairDetections=snap.chairDetections;
+      restored++;
+    }
+    // Corrections write plan memory, so undoing one has to withdraw the memory
+    // entries it added -- otherwise the reverted classification would come
+    // straight back on the next Re-Analyze.
+    const keep=new Set(entry.memoryBefore);
+    if(event.planMemory)event.planMemory=event.planMemory.filter(m=>keep.has(m.id));
+    recomputePlanIntelligence(event);
+    touchEvent(event);
+    return restored;
+  }
   function updateCandidateField(field,value){
     const event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(!c)return;
     if(field==="rotation")c.rotation=Number(value)||0;
@@ -2834,6 +2905,10 @@
     else if(field==="kindtype"){
       const [kind,type]=value.split(":"),crossedKind=kind!==c.kind;
       const wasKind=c.kind,wasType=c.type;
+      // Snapshot the corrected object AND every object the spread is about to
+      // reach, before anything changes, so undo restores the whole action as
+      // one unit rather than leaving the family half-corrected.
+      recordCorrectionUndo(event,[c.id,...familyCandidateIds(event,c,wasKind,wasType)],"reclassify");
       c.kind=kind;c.type=type;
       if(crossedKind&&kind!=="table")c.chairDetections=[]; // a chair/armchair/sofa/stage/etc. candidate carries no nested seat detections of its own.
       c.status="confirmed";c.selected=true;
@@ -2887,6 +2962,11 @@
         ?`Confirmed as one seating group. Plan now shows ${newPi.planSummary.diningGroups} dining group(s). Undo is available in Review Center.`
         :`Split into ${memberIds.length} separate tables. Plan now shows ${newPi.planSummary.diningGroups} dining group(s). Undo is available in Review Center.`,
         "success",6000);
+    });
+    document.querySelectorAll("[data-review-decision-action='undo-correction']").forEach(b=>b.onclick=()=>{
+      const n=undoLastCorrection();
+      render();
+      if(n)toast(t("review.undoCorrectionToast",{n}),"success",5000);
     });
     document.querySelectorAll("[data-review-decision-action='undo-last']").forEach(b=>b.onclick=()=>{
       const event=activeEvent();if(!canMutate(event,"undo a plan decision"))return;
