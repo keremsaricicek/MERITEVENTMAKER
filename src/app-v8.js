@@ -1295,8 +1295,31 @@
     if(!peaks.length)return null;
     peaks.sort((a,b)=>a.luma-b.luma);
     const background=peaks.reduce((best,p)=>p.mass>best.mass?p:best,peaks[0]);
+    // A luma floor used to exclude dark peaks here, on the theory that anything
+    // dark enough is linework. On white paper that floor lands at 114, and a
+    // mid-grey chair fill sits at 110 -- so on every monochrome plan the chair
+    // family was thrown away as "ink" before a single component was looked at.
+    // Measured on the dense grayscale fixture: 96 chairs, 0 detected, because
+    // their tone family never existed.
+    //
+    // Darkness is the wrong question. Linework is THIN; furniture is a solid,
+    // repeated, similarly-sized blob. That is a structural property and it is
+    // measured per family from the family's own components, in the mask loop
+    // below, where the pixels are actually available. Here the job is only to
+    // offer the candidates -- including dark ones, flagged so the structural
+    // test can be stricter with them.
     const inkCeil=Math.max(90,background.luma*.45);
     const families=peaks.filter(p=>p!==background&&p.luma<background.luma-10&&p.luma>inkCeil&&p.fraction>=.002)
+      .sort((a,b)=>b.mass-a.mass).slice(0,3);
+    // Peaks the ceiling rejects. These are NOT added to `families`, because
+    // `families` drives the nearest-family tone LUT and adding to it steals
+    // pixels from the table surface family -- measured on the real colour
+    // plan, tone sources fell 57 -> 23 and the table masks fragmented.
+    //
+    // They get their own standalone masks instead, and are offered only to the
+    // chair pool, where the grayscale failure actually is.
+    const darkFloor=Math.max(35,background.luma*.15);
+    const darkCandidates=peaks.filter(p=>p!==background&&p.luma<=inkCeil&&p.luma>darkFloor&&p.fraction>=.0015)
       .sort((a,b)=>b.mass-a.mass).slice(0,3);
     const toneLut=new Uint8Array(256);
     families.forEach((family,index)=>{
@@ -1306,9 +1329,10 @@
       for(let v=Math.max(0,family.luma-window);v<=Math.min(255,family.luma+window);v++)
         if(!toneLut[v]||Math.abs(v-family.luma)<Math.abs(v-families[toneLut[v]-1].luma))toneLut[v]=index+1;
     });
-    return{peaks,background,families,toneLut,
+    return{peaks,background,families,darkCandidates,toneLut,
       summary:{peaks:peaks.map(p=>p.luma),backgroundLuma:background.luma,
-        families:families.map(f=>({luma:f.luma,fraction:Number(f.fraction.toFixed(4))}))}};
+        families:families.map(f=>({luma:f.luma,fraction:Number(f.fraction.toFixed(4))})),
+        darkCandidates:darkCandidates.map(f=>({luma:f.luma,fraction:Number(f.fraction.toFixed(4))}))}};
   }
 
   // ---- Masks --------------------------------------------------------------
@@ -1788,19 +1812,85 @@
           return (!best||n>best.n)?{mask:m,n}:best;
         },null)?.mask||null:null;
         let toneKept=0;
+        const toneFamilyEvidence=[];
         masks.tints.forEach((mask,index)=>{
-          if(maskSolidity(mask,width,height)<.25)return; // antialiasing fringe along outlines, not a real filled object
+          const solidity=maskSolidity(mask,width,height);
+          const family=toneModel?.families?.[index]||null;
           const{labels,comps}=labelComponents(mask,width,height,minPixels,true);
+
+          // Is this tone family furniture, or is it linework?
+          //
+          // Not decided by how dark it is. Linework is thin: its components
+          // sprawl, have low fill inside their own bounding box, and vary
+          // wildly in size. Furniture repeats: many components at nearly the
+          // same scale, each solidly filling its box. So the family is asked
+          // about its own components.
+          const compact=comps.filter(c=>c.fill>=.45&&Math.max(c.w,c.h)/Math.max(1,Math.min(c.w,c.h))<=2.2);
+          const sides=compact.map(c=>Math.sqrt(c.w*c.h)).sort((a,b)=>a-b);
+          const medSide=sides.length?sides[sides.length>>1]:0;
+          // How tightly the compact components agree on one size. A repeated
+          // furniture symbol clusters hard; incidental ink blobs do not.
+          const nearModal=medSide?compact.filter(c=>{
+            const s=Math.sqrt(c.w*c.h);return s>=medSide*.65&&s<=medSide*1.55;}).length:0;
+          const repetition=compact.length?nearModal/compact.length:0;
+          const looksLikeFurniture=nearModal>=6&&repetition>=.55;
+          // A dark family has to clear the structural bar outright, since dark
+          // families are where linework actually lives. A light family may also
+          // pass on the old solidity signal alone.
+          const tableWorthy=solidity>=.25; // antialiasing fringe along outlines, not a real filled object
+          const chairWorthy=looksLikeFurniture;
+          toneFamilyEvidence.push({index,luma:family?.luma??null,
+            solidity:Number(solidity.toFixed(3)),components:comps.length,compact:compact.length,
+            nearModal,repetition:Number(repetition.toFixed(2)),
+            modalSide:medSide?Number(medSide.toFixed(1)):null,
+            usedForTables:tableWorthy,usedForChairs:chairWorthy,
+            verdict:tableWorthy?"furniture surface (solid mask)":chairWorthy?"repeated compact family (chairs only)":"linework"});
+          // On a neutral drawing one tone family IS the chairs (a mid-grey
+          // chair fill against a pale table fill), so tone families are a real
+          // chair source, not only a table source.
+          if(chairWorthy)chairSources.push({name:"tone-cluster"+index,labels,rawCount:comps.length,comps:comps.filter(c=>chairSizeOk(c)&&c.fill>=.3)});
+          if(!tableWorthy)return;
           const kept=comps.filter(c=>tableSizeOk(c)&&c.fill>=.35);
           for(const c of kept)c.source="tone";
           toneKept+=kept.length;
           sources.push({name:"tone"+index,labels,comps:kept,all:comps});
-          // On a neutral drawing one tone family IS the chairs (a mid-grey
-          // chair fill against a pale table fill), so tone families are a real
-          // chair source, not only a table source.
-          chairSources.push({name:"tone-cluster",labels,comps:comps.filter(c=>chairSizeOk(c)&&c.fill>=.3)});
         });
         diagnosticsSources.tone=toneKept;
+        diagnosticsSources.toneFamilies=toneFamilyEvidence;
+
+        // ---- dark repeated families, chairs only --------------------------
+        // A mid-grey chair fill on white paper sits below the ink ceiling, so
+        // the tone families above never see it: measured on the dense
+        // grayscale fixture, 96 chairs and 0 detected, because their family
+        // was discarded as linework before a component was examined.
+        //
+        // Darkness is the wrong question. Linework is thin; furniture is a
+        // solid, repeated, similarly-sized blob. Each rejected dark peak gets
+        // its own standalone mask -- deliberately NOT part of the tone LUT,
+        // which would steal pixels from the table surface -- and earns a place
+        // in the chair pool only by that structure.
+        for(const [di,peak] of (toneModel?.darkCandidates||[]).entries()){
+          let gap=Infinity;
+          for(const q of toneModel.peaks)if(q!==peak)gap=Math.min(gap,Math.abs(q.luma-peak.luma));
+          const window=Math.max(4,Math.min(16,Math.floor(gap/2)));
+          const dmask=new Uint8Array(total);
+          for(let i=0;i<total;i++){const v=gray[i];if(Math.abs(v-peak.luma)<=window)dmask[i]=1;}
+          const{labels,comps}=labelComponents(dmask,width,height,minPixels,true);
+          const compact=comps.filter(c=>c.fill>=.45&&Math.max(c.w,c.h)/Math.max(1,Math.min(c.w,c.h))<=2.2);
+          const sides=compact.map(c=>Math.sqrt(c.w*c.h)).sort((a,b)=>a-b);
+          const medSide=sides.length?sides[sides.length>>1]:0;
+          const nearModal=medSide?compact.filter(c=>{
+            const sv=Math.sqrt(c.w*c.h);return sv>=medSide*.65&&sv<=medSide*1.55;}).length:0;
+          const rep=compact.length?nearModal/compact.length:0;
+          const furniture=nearModal>=6&&rep>=.55;
+          toneFamilyEvidence.push({index:"dark"+di,luma:peak.luma,belowInkCeiling:true,
+            components:comps.length,compact:compact.length,nearModal,
+            repetition:Number(rep.toFixed(2)),modalSide:medSide?Number(medSide.toFixed(1)):null,
+            usedForTables:false,usedForChairs:furniture,
+            verdict:furniture?"repeated compact family (chairs only)":"linework"});
+          if(furniture)chairSources.push({name:"dark-tone-cluster"+di,labels,rawCount:comps.length,
+            comps:comps.filter(c=>chairSizeOk(c)&&c.fill>=.3)});
+        }
         mark("toneMasks");
       }
       // (c) solid dark objects straight from the fill mask (no edges OR-ed in)
@@ -1826,7 +1916,7 @@
       // a first-class output, not a by-product of table detection.
       if(accentMask){
         const{labels,comps}=labelComponents(accentMask,width,height,Math.max(6,Math.round(minPixels*.6)),true);
-        chairSources.unshift({name:"colour-cluster",labels,comps:comps.filter(c=>chairSizeOk(c)&&c.fill>=.3)});
+        chairSources.unshift({name:"colour-cluster",labels,rawCount:comps.length,comps:comps.filter(c=>chairSizeOk(c)&&c.fill>=.3)});
       }
       // The same physical chair can surface in more than one mask; the most
       // specific source wins and the duplicate is dropped (overlap of the
@@ -1857,6 +1947,14 @@
       const useColourOnly=colourChairs&&colourChairs.comps.length>=6;
       const activeChairSources=useColourOnly?[colourChairs]:chairSources;
       const specificCount=activeChairSources.reduce((n,src)=>n+src.comps.length,0);
+      // What each chair source actually offered, kept in diagnostics. Without
+      // this the only visible fact is the final count, which cannot tell "the
+      // source found nothing" apart from "the source found things and they
+      // were filtered out" -- and those need opposite fixes.
+      const chairSourceBreakdown=chairSources.map(src=>({
+        name:src.name,offered:src.comps.length,
+        rawPool:src.rawCount??null,
+      })).concat([{name:"luma-fallback",offered:fallbackChairComps.length,rawPool:null}]);
       if(specificCount>=6){
         for(const src of activeChairSources)addChairs(src.comps,src.labels,src.name);
         chairSource=activeChairSources.find(src=>src.comps.length)?.name||"none";
@@ -2387,7 +2485,7 @@
           tableModalArea:modalArea?Math.round(modalArea.value):null,
           mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,fragmentSuppression:fragmentDiagnostics,
           textGlyphChairsDropped,mergedRowVenuesDropped:mergedRowVenues.length,debugPool,
-          sources:diagnosticsSources,phaseMs,
+          sources:diagnosticsSources,chairSourceBreakdown,phaseMs,
           colorModel:accentModel?{isColorPlan:accentModel.isColorPlan,accentHue:accentModel.accentHue,
             accentChroma:accentModel.accentChroma,accentFraction:Number(accentModel.accentFraction.toFixed(4)),
             backgroundLuma:accentModel.backgroundLuma}:null,
