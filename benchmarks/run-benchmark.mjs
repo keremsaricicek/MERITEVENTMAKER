@@ -118,6 +118,7 @@ async function detect(browser, imagePath) {
       planSummary: pi.planSummary || null,
       providerMetadata: pi.providerMetadata || null,
       reviewGroups: (pi.reviewGroups || []).length,
+      reviewGroupDetail: (pi.reviewGroups || []).map(g => ({ kind: g.kind, type: g.titleParams && g.titleParams.type, n: (g.memberIds || []).length, clusters: (g.clusters || []).length })),
       uncertainQuestions: (pi.uncertainQuestions || []).length,
       capacityAudit: pi.capacityAudit || null,
       diagnostics: a.diagnostics || null,
@@ -332,6 +333,7 @@ function evaluate(annot, det) {
     },
     humanEffort: {
       reviewGroups: det.reviewGroups,
+      reviewGroupDetail: det.reviewGroupDetail,
       uncertainQuestions: det.uncertainQuestions,
       note: "review groups + questions the operator must resolve before Plan Confirmed",
     },

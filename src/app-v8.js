@@ -3128,9 +3128,54 @@
       // cluster or only from the luma fallback. Never a random number.
       const chairEvidence=(ch,associated)=>Math.max(.2,Math.min(.9,
         .34+sizeAgreement(Math.sqrt(ch.w*ch.h),chairModal)*.3+(chairSource==="colour-cluster"?.16:0)+(associated?.05:0)));
+      // ---- bistro, which is a semantic type and not a shape -----------------
+      //
+      // Finding a table and knowing WHAT it is are two different jobs, and the
+      // shape classifier can only ever answer round, square or rectangle: it
+      // sees one component's pixels and nothing else. Measured before this
+      // existed, the real plan found all five of its bistro tables and typed
+      // every one of them wrong — detection recall 5/5, type accuracy 0/5.
+      //
+      // "Small table = bistro" is the tempting rule and it is wrong: a small
+      // table is a small table, and on a plan of two-tops it would relabel the
+      // entire room. What makes a bistro table a bistro table is how it is USED,
+      // and that is visible in evidence the shape classifier does not have —
+      // who sits at it, how many, and what it is drawn with.
+      //
+      // Small is necessary but never sufficient. At least two further facts
+      // must agree, each of which comes from a different part of the pipeline,
+      // so no single signal can carry the label:
+      //
+      //   seats far fewer than the plan's modal table    (association)
+      //   seated by a minority CHAIR family              (chair families)
+      //   drawn in a minority surface finish             (tone families)
+      //
+      // On the real plan all four hold for all five bistro tables. On a plan
+      // whose tables are uniformly small the size test passes for everything
+      // and the other three fail together, which is the intended behaviour.
+      const BISTRO_MAX_AREA_RATIO=.7,BISTRO_MIN_REASONS=3;
+      const seatCountOf=s=>(chairsByTable.get(s.box.index)||[]).length;
+      const seatedCounts=chosen.map(seatCountOf).filter(n=>n>0).sort((a,b)=>a-b);
+      const modalSeats=seatedCounts.length?seatedCounts[seatedCounts.length>>1]:0;
+      const bistroReasons=s=>{
+        const area=s.obb.w*s.obb.h;
+        if(!modalArea||area>modalArea.value*BISTRO_MAX_AREA_RATIO)return[];
+        const reasons=["smaller than this plan's modal table"];
+        const seats=chairsByTable.get(s.box.index)||[];
+        if(modalSeats&&seats.length&&seats.length<=Math.max(2,modalSeats*.5))
+          reasons.push(`seats ${seats.length} against a modal table's ${modalSeats}`);
+        if(seats.some(ci=>(chairs[ci]?.source||"").startsWith("family:")))
+          reasons.push("seated by a minority chair family");
+        if(s.c.surfaceFromMinorityFinish)reasons.push("drawn in a minority surface finish");
+        return reasons.length>=BISTRO_MIN_REASONS?reasons:[];
+      };
+      let bistrosTyped=0;
       const candidates=chosen.map(s=>{
         const seatIndexes=chairsByTable.get(s.box.index)||[];
-        return{id:uid("candidate"),kind:"table",type:s.shape.type,...toPercentBox(s.obb),rotation:s.obb.rotation,
+        const bistro=bistroReasons(s);
+        if(bistro.length)bistrosTyped++;
+        return{id:uid("candidate"),kind:"table",type:bistro.length?"bistro":s.shape.type,
+          typeEvidence:bistro.length?bistro:null,...toPercentBox(s.obb),rotation:s.obb.rotation,
           confidence:s.confidence,status:"unreviewed",selected:s.confidence>=calibratedThreshold(),
           chairDetections:seatIndexes.map(ci=>{
             const obb=chairOBB(chairs[ci]);
@@ -3282,23 +3327,50 @@
       // identifiable there.
       const COLUMN_MIN_MEMBERS=3,COLUMN_MAX_ASPECT=1.6,COLUMN_ALIGN_SHARE=.5;
       const columnComps=(()=>{
+        // "Nobody sits at it" has to mean nobody sits at it — not "no seat
+        // happens to pass nearby". A column standing in a room full of tables
+        // is surrounded by other people's chairs, and on the architecture
+        // fixture exactly that killed C5: a seat belonging to a round table two
+        // feet away came within 28px, and a column that six other facts agreed
+        // about was thrown out for it. A chair the associator already seated at
+        // a table that survived to `chosen` is spoken for, and its proximity
+        // says nothing about this object. Only unclaimed seats count.
+        const chosenTableIndexes=new Set(chosen.map(s=>s.box.index));
+        const seatedAtRealTable=ci=>chosenTableIndexes.has(chairAssign.get(ci));
         const seatless=surfaceRejectedComps.filter(c=>{
           const aspect=Math.max(c.w,c.h)/Math.max(1,Math.min(c.w,c.h));
           if(aspect>COLUMN_MAX_ASPECT)return false;
           const reach=Math.max(c.w,c.h)*.7;
-          return !chairs.some(ch=>gapTo(c,ch)<=reach);
+          return !chairs.some((ch,ci)=>!seatedAtRealTable(ci)&&gapTo(c,ch)<=reach);
         });
         if(seatless.length<COLUMN_MIN_MEMBERS)return[];
-        // Same log-size family key the chair pass uses, so "one size" means the
-        // same thing here as it does there.
-        const groups=new Map();
-        for(const c of seatless){
-          const k=Math.round(Math.log(Math.sqrt(c.w*c.h))/Math.log(1.18));
-          if(!groups.has(k))groups.set(k,[]);
-          groups.get(k).push(c);
+        // "One size" as a RELATION between members, not as a grid laid over the
+        // number line.
+        //
+        // The chair pass keys families by round(log(size)/log(1.18)), and that
+        // key has a boundary problem this fixture shows exactly: its four
+        // square columns measure 42 across and its two round ones 40 — a 5%
+        // difference, well inside the 18% the key is meant to tolerate — but 40
+        // and 42 fall either side of a bin edge. The six columns of one
+        // structural grid were split into a family of four and a family of two,
+        // and the pair died on the member floor. Recall 4/6 with precision
+        // 1.000 was a bin edge, not a detector limit.
+        //
+        // Same tolerance, expressed as "no member is more than 18% larger than
+        // the next smaller one": sort by size and cut wherever that gap opens.
+        // There is no boundary to sit on, because the comparison is always
+        // between two real objects.
+        const COLUMN_SIZE_RATIO=1.18;
+        const sized=seatless.map(c=>({c,s:Math.sqrt(c.w*c.h)})).sort((a,b)=>a.s-b.s);
+        const groups=[];
+        let run=[];
+        for(const it of sized){
+          if(run.length&&it.s>run[run.length-1].s*COLUMN_SIZE_RATIO){groups.push(run.map(x=>x.c));run=[];}
+          run.push(it);
         }
+        if(run.length)groups.push(run.map(x=>x.c));
         const out=[];
-        for(const members of groups.values()){
+        for(const members of groups){
           if(members.length<COLUMN_MIN_MEMBERS)continue;
           const tol=Math.max(4,members.reduce((n,c)=>n+Math.max(c.w,c.h),0)/members.length*.25);
           const centre=c=>[c.x+c.w/2,c.y+c.h/2];
@@ -3355,6 +3427,7 @@
           chairsDetected:chairs.length,chairsAssociated:associatedSeats,chairsUnassociated:chairVenues.length,
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
+          tableModalSeats:modalSeats||null,bistrosTyped,
           mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,surfaceMinorityFinishKept,secondaryChairFamilies:secondaryFamilyDiagnostics,fragmentSuppression:fragmentDiagnostics,
           textGlyphChairsDropped,mergedRowVenuesDropped:mergedRowVenues.length,columnsDetected:columnComps.length,debugPool,
           sources:diagnosticsSources,chairSourceBreakdown,phaseMs,

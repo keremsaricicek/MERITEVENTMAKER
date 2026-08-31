@@ -1,6 +1,6 @@
 {
-  "recordedAt": "2026-08-31T14:16:30.963Z",
-  "commit": "b8153d7c99f16b454ebb5dbef7e2d38f7dfd4b23",
+  "recordedAt": "2026-08-31T17:37:42.712Z",
+  "commit": "74f8873568aadf568ee6779dba6b72f14337a3c1",
   "note": "Measured by benchmarks/run-benchmark.mjs against the annotations in benchmarks/annotations/. Classical computer vision (Assisted Detection); no trained model is involved in these numbers.",
   "guardedFields": [
     {
@@ -78,6 +78,54 @@
     {
       "field": "relationships.accuracy",
       "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.round.correct",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.round.accuracy",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "semanticObjects.column.tp",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "semanticObjects.column.fp",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "semanticObjects.column.fn",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "tableTypeAccuracy.square.correct",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.square.accuracy",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.bistro.correct",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.bistro.accuracy",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "semanticObjects.stage.tp",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "semanticObjects.stage.fp",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "semanticObjects.stage.fn",
+      "worseWhen": "higher"
     }
   ],
   "tolerance": 0.005,
@@ -102,7 +150,12 @@
       "tables.f1": 1,
       "chairs.detectedTotal": 80,
       "humanEffort.reviewGroups": 1,
-      "humanEffort.uncertainQuestions": 0
+      "humanEffort.uncertainQuestions": 0,
+      "tableTypeAccuracy.round.correct": 10,
+      "tableTypeAccuracy.round.accuracy": 1,
+      "semanticObjects.column.tp": 6,
+      "semanticObjects.column.fp": 0,
+      "semanticObjects.column.fn": 0
     },
     {
       "planId": "adversarial-bistro-v1",
@@ -124,7 +177,9 @@
       "tables.f1": 0.878,
       "chairs.detectedTotal": 72,
       "humanEffort.reviewGroups": 0,
-      "humanEffort.uncertainQuestions": 0
+      "humanEffort.uncertainQuestions": 0,
+      "tableTypeAccuracy.square.correct": 18,
+      "tableTypeAccuracy.square.accuracy": 1
     },
     {
       "planId": "adversarial-dense-v1",
@@ -146,7 +201,9 @@
       "tables.f1": 1,
       "chairs.detectedTotal": 80,
       "humanEffort.reviewGroups": 1,
-      "humanEffort.uncertainQuestions": 1
+      "humanEffort.uncertainQuestions": 1,
+      "tableTypeAccuracy.square.correct": 24,
+      "tableTypeAccuracy.square.accuracy": 1
     },
     {
       "planId": "adversarial-text-v1",
@@ -168,7 +225,9 @@
       "tables.f1": 1,
       "chairs.detectedTotal": 73,
       "humanEffort.reviewGroups": 0,
-      "humanEffort.uncertainQuestions": 0
+      "humanEffort.uncertainQuestions": 0,
+      "tableTypeAccuracy.square.correct": 12,
+      "tableTypeAccuracy.square.accuracy": 1
     },
     {
       "planId": "merit-real-venue",
@@ -189,7 +248,7 @@
       "tables.recall": 1,
       "tables.f1": 0.958,
       "chairs.detectedTotal": 112,
-      "humanEffort.reviewGroups": 5,
+      "humanEffort.reviewGroups": 6,
       "humanEffort.uncertainQuestions": 5,
       "chairs.tp": 107,
       "chairs.fp": 5,
@@ -200,7 +259,16 @@
       "relationships.correct": 20,
       "relationships.wrong": 0,
       "relationships.orphan": 0,
-      "relationships.accuracy": 1
+      "relationships.accuracy": 1,
+      "tableTypeAccuracy.square.correct": 37,
+      "tableTypeAccuracy.square.accuracy": 1,
+      "tableTypeAccuracy.round.correct": 4,
+      "tableTypeAccuracy.round.accuracy": 1,
+      "tableTypeAccuracy.bistro.correct": 5,
+      "tableTypeAccuracy.bistro.accuracy": 1,
+      "semanticObjects.stage.tp": 1,
+      "semanticObjects.stage.fp": 1,
+      "semanticObjects.stage.fn": 0
     }
   ]
 }

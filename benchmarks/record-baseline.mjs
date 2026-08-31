@@ -69,12 +69,36 @@ function pick(obj, dotted) {
   return dotted.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj);
 }
 
+// Guarded per type and per class actually present in the report, because a
+// plan's vocabulary belongs to the plan and not to this script. Two numbers
+// this file did not previously protect, and both are things the detector was
+// measured to get wrong before it got them right:
+//
+//   - TYPE accuracy. Detection recall and type accuracy are different numbers.
+//     The real plan found all five of its bistro tables while typing 0 of 5
+//     correctly, and no guarded field moved. Keyed by the GROUND TRUTH type, so
+//     re-typing a table correctly cannot look like a regression in the type it
+//     used to be called.
+//   - SEMANTIC objects. Column recall went 4/6 → 6/6 at precision 1.000; with
+//     nothing guarding it, a later change could hand that back in silence.
+function dynamicFields(report) {
+  const out = [];
+  for (const [type, v] of Object.entries(report.tableTypeAccuracy || {}))
+    if (v && v.matched > 0)
+      out.push([`tableTypeAccuracy.${type}.correct`, "up"], [`tableTypeAccuracy.${type}.accuracy`, "up"]);
+  for (const [cls, v] of Object.entries(report.semanticObjects || {}))
+    if (v && Number.isFinite(v.tp))
+      out.push([`semanticObjects.${cls}.tp`, "up"], [`semanticObjects.${cls}.fp`, "down"],
+               [`semanticObjects.${cls}.fn`, "down"]);
+  return out;
+}
+
 function fieldsFor(report) {
   const fields = report.chairs && Number.isFinite(report.chairs.tp)
     ? [...GUARDED, ...GUARDED_WHEN_SPATIAL_CHAIRS]
     : [...GUARDED];
   if (report.relationships && Number.isFinite(report.relationships.accuracy)) fields.push(...GUARDED_WHEN_RELATIONSHIPS);
-  return fields;
+  return [...fields, ...dynamicFields(report)];
 }
 
 function summarise(report) {
@@ -111,7 +135,8 @@ if (RECORD) {
     commit,
     note: "Measured by benchmarks/run-benchmark.mjs against the annotations in benchmarks/annotations/. " +
       "Classical computer vision (Assisted Detection); no trained model is involved in these numbers.",
-    guardedFields: [...GUARDED, ...GUARDED_WHEN_SPATIAL_CHAIRS, ...GUARDED_WHEN_RELATIONSHIPS]
+    guardedFields: [...new Map([...GUARDED, ...GUARDED_WHEN_SPATIAL_CHAIRS, ...GUARDED_WHEN_RELATIONSHIPS,
+      ...latest.reports.flatMap(dynamicFields)].map(([f, dir]) => [f, dir])).entries()]
       .map(([f, dir]) => ({ field: f, worseWhen: dir === "up" ? "lower" : "higher" })),
     tolerance: TOLERANCE,
     plans: current,
@@ -134,13 +159,16 @@ const regressions = [];
 const improvements = [];
 const missing = [];
 
-for (const plan of current) {
+for (const [i, plan] of current.entries()) {
   const was = byPlan.get(plan.planId);
   if (!was) { missing.push(`${plan.planId} is not in the baseline (new plan — re-record if intended)`); continue; }
   if (plan.imageShaMatches === false) {
     regressions.push(`${plan.planId}: the plan image no longer matches its annotation's sha256 — the numbers are not comparable`);
   }
-  for (const [field, betterDirection] of [...GUARDED, ...GUARDED_WHEN_SPATIAL_CHAIRS]) {
+  // The same field list the plan was summarised and recorded with. Comparing
+  // against a hard-coded subset is how the relationship fields came to be
+  // recorded on every run and compared on none of them.
+  for (const [field, betterDirection] of fieldsFor(latest.reports[i])) {
     const before = was[field], after = plan[field];
     if (typeof before !== "number" || typeof after !== "number") continue;
     const delta = after - before;
