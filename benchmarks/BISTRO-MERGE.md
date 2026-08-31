@@ -152,16 +152,74 @@ say to revert. That one was measured twice, at 0.882 to 0.543 and 0.882 to
 0.820, and reverted both times. This is 0.882 to 0.872 with the table count
 itself untouched.
 
+## The fix that worked was also wrong — measured once there was spatial truth
+
+The section above was written before the real plan had per-chair ground truth.
+Once it did, the "+8 chairs" turned out to be **eight pieces of printed text**.
+
+| | before the second mode | with it |
+|---|---|---|
+| chair TP | 79 | 79 |
+| chair FP | **0** | **8** |
+| chair precision | **1.000** | 0.908 |
+| chair F1 | **0.823** | 0.790 |
+| table FP | **6** | 7 |
+| table F1 | **0.882** | 0.872 |
+| review groups | **8** | 12 |
+
+Not one real chair was gained. The eight sit at (124–231, 66–135), which is
+exactly the capacity block — *114 pax seating / 10 pax bistro / Total : 124
+pax* — thresholding into runs of about 35×17 at elongation ~2.0.
+
+That is the failure the chair-shape test was written to prevent, and the
+comment directly under it says so: a chair-sized printed glyph is told from a
+chair by its repeated shape. Widening the shape gate let the glyphs in.
+
+**Reverted.** Chair precision is back to 1.000 and table F1 to 0.882.
+
+### Why the fixture did not catch it
+
+Because the fixture had no printed matter on it. It was built to isolate one
+question and it isolated it so well that it could not see the cost of the
+answer. Three attempts were needed to fix that honestly:
+
+1. Text in the real plan's warm orange — the colour clusterer adopted the
+   **text** as the plan's accent family and ignored the actual chairs: 82
+   chairs became 16 glyph runs. A real weakness, but a colour-model one.
+2. Text at normal letter spacing — glyphs stayed separate at ~14×18,
+   elongation 1.3, inside the chair gate, and were read as 31 chairs. On the
+   real plan a capacity line thresholds into wide runs, and that width is what
+   rejects it.
+3. Text in the linework ink, tightly spaced so it thresholds into runs, as the
+   real plan's does. The fixture now reads 18/23 tables, 72/82 chairs, and
+   **zero detections in its five text regions** — the trap is present and
+   correctly refused.
+
+A fixture that only contains the thing you are trying to find will approve any
+rule that finds it.
+
 ## What is still open
 
-The real plan's five bistro misses remain misses. Their chairs are now found
-and the region is now proposed, but as one merged box rather than separate
-tables. The remaining work is in the valley-split step, which does not cut this
-blob — a different problem from the one this file documents.
+Against spatial ground truth the real plan now reads:
 
-The recurring pattern across all three findings here is worth stating on its
-own: **this pipeline makes several independent global-modal decisions — table
-size, table aspect, chair shape — and each one deletes minority families by
-construction.** Two of the three were found this way. The third (aspect) is
-still there, still unaddressed, and still the reason a hall of rectangle tables
-mixed with round ones has not been tested.
+| chair family | GT | TP | FN | recall |
+|---|---|---|---|---|
+| orange armchair | 79 | 79 | 0 | **1.000** |
+| orange bistro chair | 10 | 0 | 10 | **0.000** |
+| pale outlined chair | 24 | 0 | 24 | **0.000** |
+| **total** | **113** | **79** | **34** | 0.699 |
+
+The armchair family is perfect. The other two are absent entirely — and until
+this annotation existed, "87 of 105" made that invisible.
+
+The five bistro tables are still missed, and so are all ten of their chairs.
+The 24 pale chairs are missed as whole objects, not partially.
+
+The fix for the bistro family is still a second chair family — but admitted on
+evidence printed text cannot fake, such as adjacency to a table surface, not on
+a looser shape rule. Shape alone was tried and is recorded above.
+
+The recurring pattern remains: **this pipeline makes several independent
+global-modal decisions — table size, table aspect, chair shape — and each one
+deletes minority families by construction.** Loosening any of them without
+independent evidence lets printed matter in through the same door.

@@ -1,6 +1,6 @@
 {
-  "recordedAt": "2026-08-31T08:15:45.484Z",
-  "commit": "9e135ed0f470afe11ef27705a44fb8c187ced1a5",
+  "recordedAt": "2026-08-31T09:30:07.214Z",
+  "commit": "4df43bdaea4f5fc6afd09fcd8f5ed06b94373a6a",
   "note": "Measured by benchmarks/run-benchmark.mjs against the annotations in benchmarks/annotations/. Classical computer vision (Assisted Detection); no trained model is involved in these numbers.",
   "guardedFields": [
     {
@@ -38,6 +38,30 @@
     {
       "field": "humanEffort.uncertainQuestions",
       "worseWhen": "higher"
+    },
+    {
+      "field": "chairs.tp",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "chairs.fp",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "chairs.fn",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "chairs.precision",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "chairs.recall",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "chairs.f1",
+      "worseWhen": "lower"
     }
   ],
   "tolerance": 0.005,
@@ -76,14 +100,14 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "tables.tp": 23,
+      "tables.tp": 18,
       "tables.fp": 0,
-      "tables.fn": 0,
+      "tables.fn": 5,
       "tables.precision": 1,
-      "tables.recall": 1,
-      "tables.f1": 1,
-      "chairs.detectedTotal": 82,
-      "humanEffort.reviewGroups": 1,
+      "tables.recall": 0.783,
+      "tables.f1": 0.878,
+      "chairs.detectedTotal": 72,
+      "humanEffort.reviewGroups": 0,
       "humanEffort.uncertainQuestions": 0
     },
     {
@@ -143,14 +167,20 @@
         "ocrAvailable": false
       },
       "tables.tp": 41,
-      "tables.fp": 7,
+      "tables.fp": 6,
       "tables.fn": 5,
-      "tables.precision": 0.854,
+      "tables.precision": 0.872,
       "tables.recall": 0.891,
-      "tables.f1": 0.872,
-      "chairs.detectedTotal": 87,
-      "humanEffort.reviewGroups": 12,
-      "humanEffort.uncertainQuestions": 12
+      "tables.f1": 0.882,
+      "chairs.detectedTotal": 79,
+      "humanEffort.reviewGroups": 8,
+      "humanEffort.uncertainQuestions": 12,
+      "chairs.tp": 79,
+      "chairs.fp": 0,
+      "chairs.fn": 34,
+      "chairs.precision": 1,
+      "chairs.recall": 0.699,
+      "chairs.f1": 0.823
     }
   ]
 }

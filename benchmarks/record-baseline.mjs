@@ -38,6 +38,18 @@ const GUARDED = [
   ["humanEffort.uncertainQuestions", "down"],
 ];
 
+// Guarded only where the annotation carries chair positions. A plan whose
+// annotation records a chair TOTAL cannot report chair precision, and
+// pretending otherwise would compare a number against nothing.
+const GUARDED_WHEN_SPATIAL_CHAIRS = [
+  ["chairs.tp", "up"],
+  ["chairs.fp", "down"],
+  ["chairs.fn", "down"],
+  ["chairs.precision", "up"],
+  ["chairs.recall", "up"],
+  ["chairs.f1", "up"],
+];
+
 // Small movements in a float are noise from a rounding change, not a
 // regression; anything a person would notice is above this.
 const TOLERANCE = 0.005;
@@ -46,9 +58,15 @@ function pick(obj, dotted) {
   return dotted.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj);
 }
 
+function fieldsFor(report) {
+  return report.chairs && Number.isFinite(report.chairs.tp)
+    ? [...GUARDED, ...GUARDED_WHEN_SPATIAL_CHAIRS]
+    : GUARDED;
+}
+
 function summarise(report) {
   const out = { planId: report.planId, imageShaMatches: report.imageShaMatches, provider: report.provider };
-  for (const [field] of GUARDED) out[field] = pick(report, field);
+  for (const [field] of fieldsFor(report)) out[field] = pick(report, field);
   return out;
 }
 
@@ -65,8 +83,8 @@ try { commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: path.dirname(RO
 // A guarded field that is not in the report compares to nothing, so a renamed
 // field would quietly turn this whole check into a no-op that still prints
 // "no regressions". Refuse to record one.
-const absent = current.flatMap(plan =>
-  GUARDED.filter(([f]) => typeof plan[f] !== "number").map(([f]) => `${plan.planId}.${f}`));
+const absent = current.flatMap((plan, i) =>
+  fieldsFor(latest.reports[i]).filter(([f]) => typeof plan[f] !== "number").map(([f]) => `${plan.planId}.${f}`));
 if (absent.length) {
   console.error("These guarded fields are missing from the benchmark report, so they cannot be compared:");
   for (const field of absent) console.error("  " + field);
@@ -80,13 +98,15 @@ if (RECORD) {
     commit,
     note: "Measured by benchmarks/run-benchmark.mjs against the annotations in benchmarks/annotations/. " +
       "Classical computer vision (Assisted Detection); no trained model is involved in these numbers.",
-    guardedFields: GUARDED.map(([f, dir]) => ({ field: f, worseWhen: dir === "up" ? "lower" : "higher" })),
+    guardedFields: [...GUARDED, ...GUARDED_WHEN_SPATIAL_CHAIRS]
+      .map(([f, dir]) => ({ field: f, worseWhen: dir === "up" ? "lower" : "higher" })),
     tolerance: TOLERANCE,
     plans: current,
   };
   fs.writeFileSync(BASELINE, JSON.stringify(payload, null, 2) + "\n");
   console.log(`Recorded ${current.length} plans to ${path.relative(process.cwd(), BASELINE)} at commit ${commit.slice(0, 8)}.`);
-  for (const plan of current) console.log("  " + plan.planId + "  " + GUARDED.map(([f]) => `${f.split(".").pop()}=${plan[f]}`).join(" "));
+  for (const plan of current) console.log("  " + plan.planId + "  " +
+    Object.entries(plan).filter(([k]) => k.includes(".")).map(([k, v]) => `${k.split(".").pop()}=${v}`).join(" "));
   process.exit(0);
 }
 
@@ -107,7 +127,7 @@ for (const plan of current) {
   if (plan.imageShaMatches === false) {
     regressions.push(`${plan.planId}: the plan image no longer matches its annotation's sha256 — the numbers are not comparable`);
   }
-  for (const [field, betterDirection] of GUARDED) {
+  for (const [field, betterDirection] of [...GUARDED, ...GUARDED_WHEN_SPATIAL_CHAIRS]) {
     const before = was[field], after = plan[field];
     if (typeof before !== "number" || typeof after !== "number") continue;
     const delta = after - before;

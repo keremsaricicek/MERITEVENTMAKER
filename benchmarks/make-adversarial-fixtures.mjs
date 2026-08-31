@@ -425,7 +425,21 @@ function bistroFixtureSpec() {
       cx, cy: biY, w: BW, h: BH, seats: BISTRO_CHAIRS, seatsConfidence: "constructed" });
   }
 
-  return { W, H, objects, regions, squares: objects.filter(o => o.type === "square"),
+  // Printed matter, at chair scale. This is here because its absence made the
+  // fixture lie: a chair rule loosened to recover the bistro chairs scored a
+  // clean 23/23 here and, on the real plan, admitted the printed capacity
+  // block as eight chairs. A fixture for a chair-shape question must contain
+  // the thing chair-shape rules exist to reject.
+  const texts = [
+    { id: "capacity-1", x: 60, y: 40, w: 210, h: 26, size: 24, weight: "bold", s: "114 pax seating" },
+    { id: "capacity-2", x: 60, y: 72, w: 190, h: 26, size: 24, weight: "bold", s: "10 pax bistro" },
+    { id: "capacity-3", x: 60, y: 104, w: 220, h: 26, size: 24, weight: "bold", s: "Total : 124 pax" },
+    { id: "legend", x: 1010, y: 40, w: 330, h: 22, size: 20, weight: "normal", s: "BISTRO 2 PAX / DINING 4 PAX" },
+    { id: "scalebar", x: 1010, y: 76, w: 260, h: 22, size: 20, weight: "normal", s: "0    5    10 m" },
+  ];
+  texts.forEach(t => regions.push({ id: t.id, class: "text", x: t.x, y: t.y, w: t.w, h: t.h }));
+
+  return { W, H, objects, regions, texts, squares: objects.filter(o => o.type === "square"),
     bistros, squareSize: SQ, squareChairs: SQ_CHAIRS,
     bistroW: BW, bistroH: BH, bistroChairs: BISTRO_CHAIRS,
     chairsPer: SQ_CHAIRS };
@@ -467,6 +481,24 @@ async function renderBistroFixture(page, spec) {
         x.strokeStyle = INK; x.lineWidth = 1; x.strokeRect(px - cw / 2, b.cy - ch / 2, cw, ch);
       }
     }
+
+    // The printed matter, in the same warm ink the real plan uses for it, and
+    // deliberately TIGHT. On the real plan a capacity line thresholds into wide
+    // runs (35x17, elongation ~2) rather than separate letters, and that width
+    // is what the chair-shape test rejects it by. Rendered with normal spacing
+    // the glyphs here stayed separate at ~14x18, elongation 1.3 — inside the
+    // chair gate — and the fixture reported them as 31 chairs, measuring
+    // letter spacing instead of the bistro question it exists for.
+    // Drawn in the linework ink, not in a saturated accent. A first attempt
+    // used the real plan's warm orange for the capacity block, which made the
+    // colour clusterer adopt the TEXT as the plan's accent family and ignore
+    // the actual chairs -- 82 chairs became 16 glyph runs. That is a real
+    // weakness, but it is a colour-model question, not the bistro-merge
+    // question this fixture exists for.
+    x.fillStyle = INK; x.textBaseline = "top";
+    if ("letterSpacing" in x) x.letterSpacing = "-2px";
+    for (const t of spec.texts) { x.font = `900 ${t.size}px sans-serif`; x.fillText(t.s, t.x, t.y); }
+    if ("letterSpacing" in x) x.letterSpacing = "0px";
     return c.toDataURL("image/png");
   }, { spec, PAPER, INK, SURFACE, SEAT, drawText });
 }
@@ -489,6 +521,6 @@ writeFixture("adversarial-dense", "adversarial-dense-v1", await renderDenseFixtu
 
 const bistroSpec = bistroFixtureSpec();
 writeFixture("adversarial-bistro", "adversarial-bistro-v1", await renderBistroFixture(page, bistroSpec), bistroSpec,
-  "The bistro merge, in isolation. 18 square tables at the real plan's scale with four separated chairs set the modal object size; 5 bistro tables carry two chairs pressed against opposite edges so table and chairs collapse into one wide, short component at threshold. This is the exact regime of the five remaining misses on the real venue plan, where the nearest detection sits 83-133px away against a 47px tolerance. A fix has to recover the bistros while the squares on the same image still score 1.0.");
+  "The bistro merge, plus the printed matter that makes it a fair test. 18 square tables at the real plan's scale with four separated chairs set the modal object size; 5 bistro tables carry two chairs pressed against opposite edges so table and chairs collapse into one wide, short component at threshold. This is the regime of the five remaining misses on the real venue plan. The five text blocks are not decoration: without them, a loosened chair-shape rule scored 23/23 here and admitted the real plan's printed capacity block as eight chairs (benchmarks/BISTRO-MERGE.md). A fix has to recover the bistros while the squares still score 1.0 AND no detection lands in a text region.");
 
 await browser.close();

@@ -101,7 +101,7 @@ async function detect(browser, imagePath) {
         xPct: c.x, yPct: c.y, wPct: c.w, hPct: c.h,
         confidence: c.confidence,
         chairCount: (c.chairDetections || []).length,
-        chairs: (c.chairDetections || []).map(ch => ({ xPct: ch.x, yPct: ch.y })),
+        chairs: (c.chairDetections || []).map(ch => ({ xPct: ch.x, yPct: ch.y, wPct: ch.w, hPct: ch.h })),
       })),
       planSummary: pi.planSummary || null,
       providerMetadata: pi.providerMetadata || null,
@@ -190,6 +190,61 @@ function evaluate(annot, det) {
   const worstArchRegions = archRegions.map(r => ({ id: r.id, subclass: r.subclass, tables: regionHits(r) }))
     .filter(r => r.tables).sort((a, b) => b.tables - a.tables);
 
+  // ---- chairs, spatially ---------------------------------------------------
+  // A chair total tells you nothing about whether the right chairs were found.
+  // When the annotation carries positions, chairs are matched object by object
+  // exactly like tables, and broken down by the visual family the drawing
+  // actually uses -- because "87 of 105" hid the fact that an entire family
+  // could be missing while another was over-detected.
+  const gtChairs = annot.objects.filter(o => o.class === "chair" && Number.isFinite(o.cx));
+  let chairScore;
+  if (gtChairs.length) {
+    // Every chair the detector proposes, wherever it sits: attached to a table
+    // or standing alone. Chair geometry comes back as percent like everything
+    // else.
+    const detChairs = [
+      ...cands.filter(c => c.kind === "table").flatMap(c => (c.chairs || []).map(ch => toPixels(ch, W, H))),
+      ...cands.filter(c => c.kind !== "table" && /chair|armchair/.test(c.type || "")).map(c => c),
+    ];
+    const all = matchObjects(gtChairs, detChairs, diag, tolPct);
+    const families = {};
+    for (const family of [...new Set(gtChairs.map(c => c.family || "unspecified"))]) {
+      const gtFam = gtChairs.filter(c => (c.family || "unspecified") === family);
+      // A detection is charged to the family it matched. Spurious detections
+      // belong to no family and are reported once, at the total, rather than
+      // split by a guess.
+      const matchedIds = new Set(all.matches.filter(m => (m.gt.family || "unspecified") === family).map(m => m.gt.id));
+      const tp = matchedIds.size, fn = gtFam.length - tp;
+      families[family] = { groundTruth: gtFam.length, truePositives: tp, falseNegatives: fn,
+        recall: gtFam.length ? +(tp / gtFam.length).toFixed(3) : null };
+    }
+    chairScore = {
+      method: `spatial, same greedy nearest-first matching as tables, tolerance ${tolPct}% of the plan diagonal`,
+      groundTruth: gtChairs.length, detected: detChairs.length,
+      ...prf(all.matches.length, all.spurious.length, all.missed.length),
+      byFamily: families,
+      missedIds: all.missed.map(g => g.id).slice(0, 40),
+      // Where the detector saw a chair and the drawing has none. Positions, not
+      // a count: "8 false chairs" cannot be acted on, "8 false chairs all inside
+      // the stage" can.
+      spurious: all.spurious.slice(0, 20).map(c => ({
+        cx: Math.round(c.cx), cy: Math.round(c.cy),
+        w: Math.round(c.w || 0), h: Math.round(c.h || 0),
+      })),
+      detectedOnTables: detChairsOnTables,
+      detectedStandalone: detStandaloneChairs,
+      detectedTotal: detChairsOnTables + detStandaloneChairs,
+    };
+  } else {
+    chairScore = {
+      method: "count only — this annotation records a chair TOTAL, not per-chair positions, so precision/recall cannot be computed",
+      annotatedChairs: annot.capacity?.annotatedChairs ?? null,
+      detectedOnTables: detChairsOnTables,
+      detectedStandalone: detStandaloneChairs,
+      detectedTotal: detChairsOnTables + detStandaloneChairs,
+    };
+  }
+
   return {
     planId: annot.planId,
     matchToleranceP: tolPct,
@@ -199,13 +254,7 @@ function evaluate(annot, det) {
       spuriousCount: tableMatch.spurious.length,
     },
     tableTypeAccuracy: typeAccuracy,
-    chairs: {
-      note: "This annotation records a chair TOTAL, not per-chair positions, so precision/recall is not computed for chairs — only the count comparison below.",
-      annotatedChairs: annot.capacity?.annotatedChairs ?? null,
-      detectedOnTables: detChairsOnTables,
-      detectedStandalone: detStandaloneChairs,
-      detectedTotal: detChairsOnTables + detStandaloneChairs,
-    },
+    chairs: chairScore,
     capacity: {
       ocrStated: annot.capacity?.ocrStated ?? null,
       annotatedChairs: annot.capacity?.annotatedChairs ?? null,
@@ -260,7 +309,14 @@ for (const f of files) {
   const t = rep.tables;
   console.log(`  TABLES   gt=${t.groundTruth} det=${t.detected} TP=${t.tp} FP=${t.fp} FN=${t.fn} P=${t.precision} R=${t.recall} F1=${t.f1}`);
   console.log(`  TYPES    ${Object.entries(rep.tableTypeAccuracy).filter(([, v]) => v.matched).map(([k, v]) => `${k} ${v.correct}/${v.matched}`).join("  ") || "(none matched)"}`);
-  console.log(`  CHAIRS   annotated=${rep.chairs.annotatedChairs} detected=${rep.chairs.detectedTotal} (onTables=${rep.chairs.detectedOnTables} standalone=${rep.chairs.detectedStandalone})`);
+  if (rep.chairs.groundTruth != null) {
+    console.log(`  CHAIRS   gt=${rep.chairs.groundTruth} det=${rep.chairs.detected} TP=${rep.chairs.tp} FP=${rep.chairs.fp} FN=${rep.chairs.fn} P=${rep.chairs.precision} R=${rep.chairs.recall} F1=${rep.chairs.f1}`);
+    for (const [family, f] of Object.entries(rep.chairs.byFamily || {})) {
+      console.log(`           ${family.padEnd(22)} gt=${f.groundTruth} TP=${f.truePositives} FN=${f.falseNegatives} R=${f.recall}`);
+    }
+  } else {
+    console.log(`  CHAIRS   annotated=${rep.chairs.annotatedChairs} detected=${rep.chairs.detectedTotal} (onTables=${rep.chairs.detectedOnTables} standalone=${rep.chairs.detectedStandalone})`);
+  }
   console.log(`  CAPACITY ocrStated=${JSON.stringify(rep.capacity.ocrStated?.total ?? null)} systemSeats=${rep.capacity.systemPhysicalSeats}`);
   const fpz = rep.falsePositiveRegions;
   console.log(`  FP-ZONES text: ${fpz.tablesInsideTextRegions} tables (${fpz.anyDetectionInsideTextRegions} any) in ${fpz.textRegionsAnnotated} regions` +

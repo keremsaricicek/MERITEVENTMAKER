@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-08-31T08:11:44.478Z",
+  "ranAt": "2026-08-31T09:30:07.149Z",
   "reports": [
     {
       "planId": "adversarial-architecture-v1",
@@ -39,7 +39,7 @@
         }
       },
       "chairs": {
-        "note": "This annotation records a chair TOTAL, not per-chair positions, so precision/recall is not computed for chairs — only the count comparison below.",
+        "method": "count only — this annotation records a chair TOTAL, not per-chair positions, so precision/recall cannot be computed",
         "annotatedChairs": 80,
         "detectedOnTables": 80,
         "detectedStandalone": 0,
@@ -67,56 +67,56 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_0dcc4f5c-262b-42c9-b302-a4589f4f5798",
+              "id": "candidate_1873da54-4fc0-4fc4-aa85-e415a13458ab",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_103e0992-e35e-42d7-a5b9-3912ea370faa",
+              "id": "candidate_18bcfa18-c6b0-4094-bb63-36357198c167",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_19f60012-3d7e-4419-a594-dfae4b6a3593",
+              "id": "candidate_46b2278d-4029-46b6-8452-763399bf7bdb",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_1f66dc55-a1bf-4fa1-ac04-9513c972e637",
+              "id": "candidate_79eb90f5-59f6-469a-834b-5d367c37141b",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_2c77ebdf-9c41-4981-827d-030d6bf55e3f",
+              "id": "candidate_a1db5ac1-06fb-4ea2-b957-368121140c48",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_5642ffcd-c854-4bd1-8b8a-ada2ec26d1b5",
+              "id": "candidate_b3d851f6-6662-4c4d-8150-50ea24c8e14f",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_7194abb2-9a98-495b-b168-ac33d968cb35",
+              "id": "candidate_c12a455a-9fc1-4984-95ea-25547a574db9",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_971144e9-8fe7-4f5d-9cd5-66df7fcae510",
+              "id": "candidate_c33bbca6-3429-4789-a3bb-b1daca8f27e7",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -124,14 +124,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_0dcc4f5c-262b-42c9-b302-a4589f4f5798",
-            "candidate_103e0992-e35e-42d7-a5b9-3912ea370faa",
-            "candidate_19f60012-3d7e-4419-a594-dfae4b6a3593",
-            "candidate_1f66dc55-a1bf-4fa1-ac04-9513c972e637",
-            "candidate_2c77ebdf-9c41-4981-827d-030d6bf55e3f",
-            "candidate_5642ffcd-c854-4bd1-8b8a-ada2ec26d1b5",
-            "candidate_7194abb2-9a98-495b-b168-ac33d968cb35",
-            "candidate_971144e9-8fe7-4f5d-9cd5-66df7fcae510"
+            "candidate_1873da54-4fc0-4fc4-aa85-e415a13458ab",
+            "candidate_18bcfa18-c6b0-4094-bb63-36357198c167",
+            "candidate_46b2278d-4029-46b6-8452-763399bf7bdb",
+            "candidate_79eb90f5-59f6-469a-834b-5d367c37141b",
+            "candidate_a1db5ac1-06fb-4ea2-b957-368121140c48",
+            "candidate_b3d851f6-6662-4c4d-8150-50ea24c8e14f",
+            "candidate_c12a455a-9fc1-4984-95ea-25547a574db9",
+            "candidate_c33bbca6-3429-4789-a3bb-b1daca8f27e7"
           ]
         }
       },
@@ -169,7 +169,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 425,
+      "detectionMs": 468,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -178,14 +178,20 @@
       "matchToleranceP": 2,
       "tables": {
         "groundTruth": 23,
-        "detected": 23,
-        "tp": 23,
+        "detected": 18,
+        "tp": 18,
         "fp": 0,
-        "fn": 0,
+        "fn": 5,
         "precision": 1,
-        "recall": 1,
-        "f1": 1,
-        "missedIds": [],
+        "recall": 0.783,
+        "f1": 0.878,
+        "missedIds": [
+          "B01",
+          "B02",
+          "B03",
+          "B04",
+          "B05"
+        ],
         "spuriousCount": 0
       },
       "tableTypeAccuracy": {
@@ -200,9 +206,9 @@
           "accuracy": null
         },
         "bistro": {
-          "matched": 5,
+          "matched": 0,
           "correct": 0,
-          "accuracy": 0
+          "accuracy": null
         },
         "rectangle": {
           "matched": 0,
@@ -211,25 +217,25 @@
         }
       },
       "chairs": {
-        "note": "This annotation records a chair TOTAL, not per-chair positions, so precision/recall is not computed for chairs — only the count comparison below.",
+        "method": "count only — this annotation records a chair TOTAL, not per-chair positions, so precision/recall cannot be computed",
         "annotatedChairs": 82,
-        "detectedOnTables": 82,
+        "detectedOnTables": 72,
         "detectedStandalone": 0,
-        "detectedTotal": 82
+        "detectedTotal": 72
       },
       "capacity": {
         "ocrStated": null,
         "annotatedChairs": 82,
-        "systemPhysicalSeats": 82,
+        "systemPhysicalSeats": 72,
         "unverifiedInAnnotation": [],
         "auditFromApp": {
           "physical": {
-            "seats": 82,
+            "seats": 72,
             "source": "chairs detected and associated to tables, plus standalone chairs"
           },
           "logical": {
-            "seats": 82,
-            "groups": 23,
+            "seats": 72,
+            "groups": 18,
             "source": "seats summed over logical seating groups"
           },
           "unverified": [],
@@ -239,56 +245,56 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_05e8ec9c-decf-417e-b0e1-0a55061562d3",
+              "id": "candidate_0044132b-a3b6-45b6-b1b7-185f4babfaa3",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_08d01f2f-3185-40d7-92a6-0ee306782d58",
+              "id": "candidate_035f90e3-63d1-4e36-8bbb-577d2a96c511",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_15f9ecdb-dcd8-4fc0-af01-412a0379be65",
+              "id": "candidate_05f6dd0e-06ab-49a7-aa1a-bdf87f8a135b",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_174658a9-c7af-42af-8822-7c33ec94cd73",
+              "id": "candidate_310b892d-ccff-4798-8f63-45db9dca6431",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_1964a6a8-c0f0-452c-9cc4-d7407cfff28d",
+              "id": "candidate_48d6445c-a68c-46f9-a469-bbf7794fa618",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_1e5d4807-5d56-443f-ac9c-6460407d5b10",
+              "id": "candidate_4cd8d59d-b145-4df7-b8e0-43727007cae3",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_32bba509-7606-420f-9721-b35b1044b86a",
+              "id": "candidate_5a6a05d0-f547-4783-81d6-f4c8113a1af5",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_33f157cf-63b6-4cc3-a9e9-d102b9fdf183",
+              "id": "candidate_5a8c3f42-28f0-49bd-81b7-31d17555980e",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -296,20 +302,20 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_05e8ec9c-decf-417e-b0e1-0a55061562d3",
-            "candidate_08d01f2f-3185-40d7-92a6-0ee306782d58",
-            "candidate_15f9ecdb-dcd8-4fc0-af01-412a0379be65",
-            "candidate_174658a9-c7af-42af-8822-7c33ec94cd73",
-            "candidate_1964a6a8-c0f0-452c-9cc4-d7407cfff28d",
-            "candidate_1e5d4807-5d56-443f-ac9c-6460407d5b10",
-            "candidate_32bba509-7606-420f-9721-b35b1044b86a",
-            "candidate_33f157cf-63b6-4cc3-a9e9-d102b9fdf183"
+            "candidate_0044132b-a3b6-45b6-b1b7-185f4babfaa3",
+            "candidate_035f90e3-63d1-4e36-8bbb-577d2a96c511",
+            "candidate_05f6dd0e-06ab-49a7-aa1a-bdf87f8a135b",
+            "candidate_310b892d-ccff-4798-8f63-45db9dca6431",
+            "candidate_48d6445c-a68c-46f9-a469-bbf7794fa618",
+            "candidate_4cd8d59d-b145-4df7-b8e0-43727007cae3",
+            "candidate_5a6a05d0-f547-4783-81d6-f4c8113a1af5",
+            "candidate_5a8c3f42-28f0-49bd-81b7-31d17555980e"
           ]
         }
       },
       "semanticObjects": {},
       "falsePositiveRegions": {
-        "textRegionsAnnotated": 0,
+        "textRegionsAnnotated": 5,
         "tablesInsideTextRegions": 0,
         "anyDetectionInsideTextRegions": 0,
         "worstTextRegions": [],
@@ -319,7 +325,7 @@
         "worstArchitectureRegions": []
       },
       "humanEffort": {
-        "reviewGroups": 1,
+        "reviewGroups": 0,
         "uncertainQuestions": 0,
         "note": "review groups + questions the operator must resolve before Plan Confirmed"
       },
@@ -332,7 +338,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 374,
+      "detectionMs": 495,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -374,7 +380,7 @@
         }
       },
       "chairs": {
-        "note": "This annotation records a chair TOTAL, not per-chair positions, so precision/recall is not computed for chairs — only the count comparison below.",
+        "method": "count only — this annotation records a chair TOTAL, not per-chair positions, so precision/recall cannot be computed",
         "annotatedChairs": 96,
         "detectedOnTables": 76,
         "detectedStandalone": 4,
@@ -402,7 +408,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_1e9640f0-a884-45fa-8501-adc979c0f199",
+              "id": "candidate_32ddf426-abd8-4206-a3d9-c720332e230a",
               "score": 1.25,
               "reasons": [
                 "not yet reviewed",
@@ -410,7 +416,7 @@
               ]
             },
             {
-              "id": "candidate_c764633e-040d-485f-b034-9e1a097438ec",
+              "id": "candidate_a5c7e373-87a0-4289-b68e-9f8f4397bc8f",
               "score": 1.25,
               "reasons": [
                 "not yet reviewed",
@@ -418,42 +424,42 @@
               ]
             },
             {
-              "id": "candidate_031c2451-60a2-4254-9324-2e50e3af2f08",
+              "id": "candidate_0d576f83-490b-456c-8602-8aedc093ef64",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0c62b696-25d9-4f0c-b8ed-a7d5b6607d33",
+              "id": "candidate_108dde84-5d03-4f5e-833d-7f24feb90e85",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0fefae99-8c34-4adf-9d29-74c5916101ae",
+              "id": "candidate_1bcb6dec-7ad9-401f-87c5-c5246cd5aabf",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_15562bb1-c153-43cd-b20b-f11d05edbbf7",
+              "id": "candidate_4af61536-4aea-49e5-b007-e62ba555e4ab",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_25ecc851-8f89-4756-a761-131d1796450c",
+              "id": "candidate_4e51423d-ef1c-45f7-af1c-931e39676629",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_2ca26d2e-e275-45b8-b92c-e177ed55fc3b",
+              "id": "candidate_578af9e6-9cae-48d9-871a-5d9feb383aa8",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -461,14 +467,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_1e9640f0-a884-45fa-8501-adc979c0f199",
-            "candidate_c764633e-040d-485f-b034-9e1a097438ec",
-            "candidate_031c2451-60a2-4254-9324-2e50e3af2f08",
-            "candidate_0c62b696-25d9-4f0c-b8ed-a7d5b6607d33",
-            "candidate_0fefae99-8c34-4adf-9d29-74c5916101ae",
-            "candidate_15562bb1-c153-43cd-b20b-f11d05edbbf7",
-            "candidate_25ecc851-8f89-4756-a761-131d1796450c",
-            "candidate_2ca26d2e-e275-45b8-b92c-e177ed55fc3b"
+            "candidate_32ddf426-abd8-4206-a3d9-c720332e230a",
+            "candidate_a5c7e373-87a0-4289-b68e-9f8f4397bc8f",
+            "candidate_0d576f83-490b-456c-8602-8aedc093ef64",
+            "candidate_108dde84-5d03-4f5e-833d-7f24feb90e85",
+            "candidate_1bcb6dec-7ad9-401f-87c5-c5246cd5aabf",
+            "candidate_4af61536-4aea-49e5-b007-e62ba555e4ab",
+            "candidate_4e51423d-ef1c-45f7-af1c-931e39676629",
+            "candidate_578af9e6-9cae-48d9-871a-5d9feb383aa8"
           ]
         }
       },
@@ -497,7 +503,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 450,
+      "detectionMs": 487,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -539,7 +545,7 @@
         }
       },
       "chairs": {
-        "note": "This annotation records a chair TOTAL, not per-chair positions, so precision/recall is not computed for chairs — only the count comparison below.",
+        "method": "count only — this annotation records a chair TOTAL, not per-chair positions, so precision/recall cannot be computed",
         "annotatedChairs": 72,
         "detectedOnTables": 73,
         "detectedStandalone": 0,
@@ -567,56 +573,56 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_2d27ad20-e18d-45b1-8d7e-d53c50c71272",
+              "id": "candidate_0b6c1fe7-16c0-4f11-bf8f-12386bb02ed4",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_3d814d4a-4557-4057-a8cd-34578352c3a2",
+              "id": "candidate_0fa5d69f-ac8d-4e1d-ba74-a3e84e78ad2a",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_3f62c5d5-703e-4d31-b493-619151ff7be7",
+              "id": "candidate_2e4a5269-6ce7-4bea-a9b9-c3bb6e274e43",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_40b0fa85-0300-4242-b16f-8b5a4496d693",
+              "id": "candidate_30b78426-fc1b-48bd-ab38-b04f1ca64344",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_44c66a00-ebda-43d3-86e5-90066cfd4c80",
+              "id": "candidate_8268937d-5a4c-48ce-9173-d7b62738acd0",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_486f7507-89a7-4bc3-8d2b-91ab533cb1bb",
+              "id": "candidate_94ad8731-aba6-4df5-8e99-482a2ef6914c",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_50fa66b3-e42b-46f6-b125-f9829835131d",
+              "id": "candidate_991bd3a4-3a7c-4287-89a8-76896c95f321",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_7f4712fd-765d-4783-8e96-70ff8608be87",
+              "id": "candidate_a0dc080f-412e-47b8-ae81-ac8749b9b23a",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -624,14 +630,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_2d27ad20-e18d-45b1-8d7e-d53c50c71272",
-            "candidate_3d814d4a-4557-4057-a8cd-34578352c3a2",
-            "candidate_3f62c5d5-703e-4d31-b493-619151ff7be7",
-            "candidate_40b0fa85-0300-4242-b16f-8b5a4496d693",
-            "candidate_44c66a00-ebda-43d3-86e5-90066cfd4c80",
-            "candidate_486f7507-89a7-4bc3-8d2b-91ab533cb1bb",
-            "candidate_50fa66b3-e42b-46f6-b125-f9829835131d",
-            "candidate_7f4712fd-765d-4783-8e96-70ff8608be87"
+            "candidate_0b6c1fe7-16c0-4f11-bf8f-12386bb02ed4",
+            "candidate_0fa5d69f-ac8d-4e1d-ba74-a3e84e78ad2a",
+            "candidate_2e4a5269-6ce7-4bea-a9b9-c3bb6e274e43",
+            "candidate_30b78426-fc1b-48bd-ab38-b04f1ca64344",
+            "candidate_8268937d-5a4c-48ce-9173-d7b62738acd0",
+            "candidate_94ad8731-aba6-4df5-8e99-482a2ef6914c",
+            "candidate_991bd3a4-3a7c-4287-89a8-76896c95f321",
+            "candidate_a0dc080f-412e-47b8-ae81-ac8749b9b23a"
           ]
         }
       },
@@ -660,7 +666,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 381,
+      "detectionMs": 409,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -669,21 +675,21 @@
       "matchToleranceP": 3,
       "tables": {
         "groundTruth": 46,
-        "detected": 48,
+        "detected": 47,
         "tp": 41,
-        "fp": 7,
+        "fp": 6,
         "fn": 5,
-        "precision": 0.854,
+        "precision": 0.872,
         "recall": 0.891,
-        "f1": 0.872,
+        "f1": 0.882,
         "missedIds": [
-          "t42",
-          "t43",
-          "t44",
-          "t45",
-          "t46"
+          "t042",
+          "t043",
+          "t044",
+          "t045",
+          "t046"
         ],
-        "spuriousCount": 7
+        "spuriousCount": 6
       },
       "tableTypeAccuracy": {
         "square": {
@@ -708,11 +714,75 @@
         }
       },
       "chairs": {
-        "note": "This annotation records a chair TOTAL, not per-chair positions, so precision/recall is not computed for chairs — only the count comparison below.",
-        "annotatedChairs": 105,
-        "detectedOnTables": 41,
-        "detectedStandalone": 46,
-        "detectedTotal": 87
+        "method": "spatial, same greedy nearest-first matching as tables, tolerance 3% of the plan diagonal",
+        "groundTruth": 113,
+        "detected": 79,
+        "tp": 79,
+        "fp": 0,
+        "fn": 34,
+        "precision": 1,
+        "recall": 0.699,
+        "f1": 0.823,
+        "byFamily": {
+          "orange-armchair": {
+            "groundTruth": 79,
+            "truePositives": 79,
+            "falseNegatives": 0,
+            "recall": 1
+          },
+          "orange-bistro-chair": {
+            "groundTruth": 10,
+            "truePositives": 0,
+            "falseNegatives": 10,
+            "recall": 0
+          },
+          "pale-outlined-chair": {
+            "groundTruth": 24,
+            "truePositives": 0,
+            "falseNegatives": 24,
+            "recall": 0
+          }
+        },
+        "missedIds": [
+          "c080",
+          "c081",
+          "c082",
+          "c083",
+          "c084",
+          "c085",
+          "c086",
+          "c087",
+          "c088",
+          "c089",
+          "c090",
+          "c091",
+          "c092",
+          "c093",
+          "c094",
+          "c095",
+          "c096",
+          "c097",
+          "c098",
+          "c099",
+          "c100",
+          "c101",
+          "c102",
+          "c103",
+          "c104",
+          "c105",
+          "c106",
+          "c107",
+          "c108",
+          "c109",
+          "c110",
+          "c111",
+          "c112",
+          "c113"
+        ],
+        "spurious": [],
+        "detectedOnTables": 38,
+        "detectedStandalone": 41,
+        "detectedTotal": 79
       },
       "capacity": {
         "ocrStated": {
@@ -721,8 +791,8 @@
           "total": 124,
           "source": "printed on the drawing, top-left"
         },
-        "annotatedChairs": 105,
-        "systemPhysicalSeats": 87,
+        "annotatedChairs": 113,
+        "systemPhysicalSeats": 79,
         "unverifiedInAnnotation": [
           {
             "objectIds": [
@@ -735,12 +805,12 @@
         ],
         "auditFromApp": {
           "physical": {
-            "seats": 87,
+            "seats": 79,
             "source": "chairs detected and associated to tables, plus standalone chairs"
           },
           "logical": {
-            "seats": 41,
-            "groups": 20,
+            "seats": 38,
+            "groups": 19,
             "source": "seats summed over logical seating groups"
           },
           "unverified": [],
@@ -750,7 +820,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_c4a882f4-d276-453c-a107-96d101b50838",
+              "id": "candidate_3366ed98-9f25-4417-88db-e80106625d72",
               "score": 4.07,
               "reasons": [
                 "table with no seats found",
@@ -759,7 +829,7 @@
               ]
             },
             {
-              "id": "candidate_1e6a8bd3-3941-439f-8239-a222b8832425",
+              "id": "candidate_a2fac988-848b-458f-9fc1-0f240c55172f",
               "score": 4.03,
               "reasons": [
                 "table with no seats found",
@@ -768,7 +838,7 @@
               ]
             },
             {
-              "id": "candidate_344f353b-cdbd-4cef-9966-79b84aee614c",
+              "id": "candidate_319d621a-948b-4df8-836f-d8b93d9888c1",
               "score": 4.02,
               "reasons": [
                 "table with no seats found",
@@ -777,7 +847,7 @@
               ]
             },
             {
-              "id": "candidate_b9f19549-811f-4504-9fc1-55b20d2b1a4b",
+              "id": "candidate_405f8a8f-6ed6-4841-883a-e3c1a3fd5ddb",
               "score": 4.02,
               "reasons": [
                 "table with no seats found",
@@ -786,7 +856,7 @@
               ]
             },
             {
-              "id": "candidate_e050eae7-8290-4cbd-961c-94712acb69a4",
+              "id": "candidate_7b187fa3-0d28-4a14-9275-14d67b131877",
               "score": 4.02,
               "reasons": [
                 "table with no seats found",
@@ -795,7 +865,7 @@
               ]
             },
             {
-              "id": "candidate_2832d03d-b201-421d-b7a7-499cca39347c",
+              "id": "candidate_000a8238-acaa-4bb1-afaf-f30dc9e3c1a1",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -803,7 +873,7 @@
               ]
             },
             {
-              "id": "candidate_36de06a9-869d-414a-b31f-61e446beb8c7",
+              "id": "candidate_00ec2903-4b27-4495-953d-a1570d398e7d",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -811,7 +881,7 @@
               ]
             },
             {
-              "id": "candidate_3a449700-86b7-42de-9f0b-962ddbc4f7a6",
+              "id": "candidate_1b3c2bc7-b006-4198-8be1-3b6f583ab9f3",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -820,14 +890,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_c4a882f4-d276-453c-a107-96d101b50838",
-            "candidate_1e6a8bd3-3941-439f-8239-a222b8832425",
-            "candidate_344f353b-cdbd-4cef-9966-79b84aee614c",
-            "candidate_b9f19549-811f-4504-9fc1-55b20d2b1a4b",
-            "candidate_e050eae7-8290-4cbd-961c-94712acb69a4",
-            "candidate_2832d03d-b201-421d-b7a7-499cca39347c",
-            "candidate_36de06a9-869d-414a-b31f-61e446beb8c7",
-            "candidate_3a449700-86b7-42de-9f0b-962ddbc4f7a6"
+            "candidate_3366ed98-9f25-4417-88db-e80106625d72",
+            "candidate_a2fac988-848b-458f-9fc1-0f240c55172f",
+            "candidate_319d621a-948b-4df8-836f-d8b93d9888c1",
+            "candidate_405f8a8f-6ed6-4841-883a-e3c1a3fd5ddb",
+            "candidate_7b187fa3-0d28-4a14-9275-14d67b131877",
+            "candidate_000a8238-acaa-4bb1-afaf-f30dc9e3c1a1",
+            "candidate_00ec2903-4b27-4495-953d-a1570d398e7d",
+            "candidate_1b3c2bc7-b006-4198-8be1-3b6f583ab9f3"
           ]
         }
       },
@@ -839,30 +909,15 @@
           "precision": 0.5,
           "recall": 1,
           "f1": 0.667
-        },
-        "bar": {
-          "tp": 0,
-          "fp": 0,
-          "fn": 1,
-          "precision": 0,
-          "recall": 0,
-          "f1": 0
-        },
-        "entrance": {
-          "tp": 0,
-          "fp": 0,
-          "fn": 2,
-          "precision": 0,
-          "recall": 0,
-          "f1": 0
         }
       },
       "falsePositiveRegions": {
         "textRegionsAnnotated": 7,
         "tablesInsideTextRegions": 1,
-        "anyDetectionInsideTextRegions": 6,
+        "anyDetectionInsideTextRegions": 1,
         "worstTextRegions": [
           {
+            "id": "giris-left",
             "tables": 1
           }
         ],
@@ -872,7 +927,7 @@
         "worstArchitectureRegions": []
       },
       "humanEffort": {
-        "reviewGroups": 12,
+        "reviewGroups": 8,
         "uncertainQuestions": 12,
         "note": "review groups + questions the operator must resolve before Plan Confirmed"
       },
@@ -885,7 +940,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 558,
+      "detectionMs": 641,
       "pageErrors": [],
       "imageShaMatches": true
     }
