@@ -21,7 +21,16 @@ import { fileURLToPath } from "node:url";
 const app = await serveApp();
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const FILTER = process.argv[2] || "";
+const argv = process.argv.slice(2);
+const optOf = name => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : null; };
+const FILTER = argv.find(a => !a.startsWith("--") && argv[argv.indexOf(a) - 1] !== "--annotations" && argv[argv.indexOf(a) - 1] !== "--out") || "";
+// --annotations points the runner at another directory of annotations, and
+// --out sends the report somewhere other than reports/latest.json. Both exist
+// so the robustness suite can score the Golden Plan's transformed variants
+// with this same evaluator, without those variants ever entering the main
+// benchmark or the recorded baseline as if they were separate plans.
+const ANNOT_DIR = optOf("--annotations");
+const OUT_FILE = optOf("--out");
 
 // ---- matching -------------------------------------------------------------
 // Greedy nearest-first over all (gt, det) pairs within tolerance. Greedy on a
@@ -283,7 +292,7 @@ function evaluate(annot, det) {
 }
 
 // ---- main -----------------------------------------------------------------
-const annDir = path.join(ROOT, "annotations");
+const annDir = ANNOT_DIR ? path.resolve(ANNOT_DIR) : path.join(ROOT, "annotations");
 const files = fs.readdirSync(annDir).filter(f => f.endsWith(".json")).filter(f => !FILTER || f.includes(FILTER));
 if (!files.length) { console.error("no annotations matched", FILTER); process.exit(1); }
 
@@ -330,8 +339,15 @@ for (const f of files) {
 }
 await browser.close();
 
-const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-const outFile = path.join(ROOT, "reports", `benchmark-${stamp}.json`);
-fs.writeFileSync(outFile, JSON.stringify({ ranAt: new Date().toISOString(), reports }, null, 2));
-fs.writeFileSync(path.join(ROOT, "reports", "latest.json"), JSON.stringify({ ranAt: new Date().toISOString(), reports }, null, 2));
-console.log(`\nwrote ${outFile}`);
+const payload = { ranAt: new Date().toISOString(), reports };
+if (OUT_FILE) {
+  fs.mkdirSync(path.dirname(path.resolve(OUT_FILE)), { recursive: true });
+  fs.writeFileSync(path.resolve(OUT_FILE), JSON.stringify(payload, null, 2));
+  console.log(`\nwrote ${OUT_FILE}`);
+} else {
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const outFile = path.join(ROOT, "reports", `benchmark-${stamp}.json`);
+  fs.writeFileSync(outFile, JSON.stringify(payload, null, 2));
+  fs.writeFileSync(path.join(ROOT, "reports", "latest.json"), JSON.stringify(payload, null, 2));
+  console.log(`\nwrote ${outFile}`);
+}

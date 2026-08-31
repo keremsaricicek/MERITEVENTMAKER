@@ -1,0 +1,183 @@
+{
+  "ranAt": "2026-08-31T09:37:37.293Z",
+  "realDistinctVenuePlans": 1,
+  "note": "Every variant is a transform of benchmarks/plans/merit-real-venue-plan.png. This matrix measures robustness to rendering, not generalisation to unseen venues.",
+  "rows": [
+    {
+      "variant": "ORIGINAL (real plan)",
+      "tableTP": 41,
+      "tableFP": 6,
+      "tableF1": 0.882,
+      "chairTP": 79,
+      "chairFP": 0,
+      "chairF1": 0.823,
+      "armchairRecall": 1,
+      "reviewGroups": 8
+    },
+    {
+      "variant": "blur",
+      "tableTP": 37,
+      "tableFP": 28,
+      "tableF1": 0.667,
+      "chairTP": 79,
+      "chairFP": 0,
+      "chairF1": 0.823,
+      "armchairRecall": 1,
+      "reviewGroups": 14
+    },
+    {
+      "variant": "bright-down",
+      "tableTP": 24,
+      "tableFP": 4,
+      "tableF1": 0.649,
+      "chairTP": 79,
+      "chairFP": 0,
+      "chairF1": 0.823,
+      "armchairRecall": 1,
+      "reviewGroups": 6
+    },
+    {
+      "variant": "bright-up",
+      "tableTP": 37,
+      "tableFP": 45,
+      "tableF1": 0.578,
+      "chairTP": 79,
+      "chairFP": 0,
+      "chairF1": 0.823,
+      "armchairRecall": 1,
+      "reviewGroups": 11
+    },
+    {
+      "variant": "contrast-high",
+      "tableTP": 37,
+      "tableFP": 47,
+      "tableF1": 0.569,
+      "chairTP": 80,
+      "chairFP": 2,
+      "chairF1": 0.821,
+      "armchairRecall": 1,
+      "reviewGroups": 14
+    },
+    {
+      "variant": "contrast-low",
+      "tableTP": 41,
+      "tableFP": 2,
+      "tableF1": 0.921,
+      "chairTP": 79,
+      "chairFP": 0,
+      "chairF1": 0.823,
+      "armchairRecall": 1,
+      "reviewGroups": 7
+    },
+    {
+      "variant": "crop-pad",
+      "tableTP": 42,
+      "tableFP": 42,
+      "tableF1": 0.646,
+      "chairTP": 79,
+      "chairFP": 0,
+      "chairF1": 0.823,
+      "armchairRecall": 1,
+      "reviewGroups": 12
+    },
+    {
+      "variant": "downscale-70",
+      "tableTP": 41,
+      "tableFP": 3,
+      "tableF1": 0.911,
+      "chairTP": 79,
+      "chairFP": 0,
+      "chairF1": 0.823,
+      "armchairRecall": 1,
+      "reviewGroups": 7
+    },
+    {
+      "variant": "grayscale",
+      "tableTP": 41,
+      "tableFP": 24,
+      "tableF1": 0.739,
+      "chairTP": 113,
+      "chairFP": 561,
+      "chairF1": 0.287,
+      "armchairRecall": 1,
+      "reviewGroups": 97
+    },
+    {
+      "variant": "hue-shift",
+      "tableTP": 38,
+      "tableFP": 51,
+      "tableF1": 0.563,
+      "chairTP": 79,
+      "chairFP": 0,
+      "chairF1": 0.823,
+      "armchairRecall": 1,
+      "reviewGroups": 14
+    },
+    {
+      "variant": "jpeg-q20",
+      "tableTP": 15,
+      "tableFP": 2,
+      "tableF1": 0.476,
+      "chairTP": 69,
+      "chairFP": 1,
+      "chairF1": 0.754,
+      "armchairRecall": 0.873,
+      "reviewGroups": 9
+    },
+    {
+      "variant": "jpeg-q40",
+      "tableTP": 41,
+      "tableFP": 4,
+      "tableF1": 0.901,
+      "chairTP": 79,
+      "chairFP": 0,
+      "chairF1": 0.823,
+      "armchairRecall": 1,
+      "reviewGroups": 7
+    },
+    {
+      "variant": "lowres-roundtrip",
+      "tableTP": 4,
+      "tableFP": 10,
+      "tableF1": 0.133,
+      "chairTP": 66,
+      "chairFP": 0,
+      "chairF1": 0.737,
+      "armchairRecall": 0.835,
+      "reviewGroups": 8
+    },
+    {
+      "variant": "noise",
+      "tableTP": 43,
+      "tableFP": 17,
+      "tableF1": 0.811,
+      "chairTP": 79,
+      "chairFP": 0,
+      "chairF1": 0.823,
+      "armchairRecall": 1,
+      "reviewGroups": 10
+    },
+    {
+      "variant": "rotate-2",
+      "tableTP": 33,
+      "tableFP": 16,
+      "tableF1": 0.695,
+      "chairTP": 89,
+      "chairFP": 119,
+      "chairF1": 0.555,
+      "armchairRecall": 1,
+      "reviewGroups": 37
+    },
+    {
+      "variant": "rotate-minus-3",
+      "tableTP": 35,
+      "tableFP": 23,
+      "tableF1": 0.673,
+      "chairTP": 89,
+      "chairFP": 117,
+      "chairF1": 0.558,
+      "armchairRecall": 1,
+      "reviewGroups": 33
+    }
+  ]
+}

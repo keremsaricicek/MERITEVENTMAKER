@@ -1,675 +1,6 @@
 {
-  "ranAt": "2026-08-31T09:30:07.149Z",
+  "ranAt": "2026-08-31T09:35:20.960Z",
   "reports": [
-    {
-      "planId": "adversarial-architecture-v1",
-      "matchToleranceP": 2,
-      "tables": {
-        "groundTruth": 10,
-        "detected": 10,
-        "tp": 10,
-        "fp": 0,
-        "fn": 0,
-        "precision": 1,
-        "recall": 1,
-        "f1": 1,
-        "missedIds": [],
-        "spuriousCount": 0
-      },
-      "tableTypeAccuracy": {
-        "square": {
-          "matched": 0,
-          "correct": 0,
-          "accuracy": null
-        },
-        "round": {
-          "matched": 10,
-          "correct": 10,
-          "accuracy": 1
-        },
-        "bistro": {
-          "matched": 0,
-          "correct": 0,
-          "accuracy": null
-        },
-        "rectangle": {
-          "matched": 0,
-          "correct": 0,
-          "accuracy": null
-        }
-      },
-      "chairs": {
-        "method": "count only — this annotation records a chair TOTAL, not per-chair positions, so precision/recall cannot be computed",
-        "annotatedChairs": 80,
-        "detectedOnTables": 80,
-        "detectedStandalone": 0,
-        "detectedTotal": 80
-      },
-      "capacity": {
-        "ocrStated": null,
-        "annotatedChairs": 80,
-        "systemPhysicalSeats": 80,
-        "unverifiedInAnnotation": [],
-        "auditFromApp": {
-          "physical": {
-            "seats": 80,
-            "source": "chairs detected and associated to tables, plus standalone chairs"
-          },
-          "logical": {
-            "seats": 80,
-            "groups": 10,
-            "source": "seats summed over logical seating groups"
-          },
-          "unverified": [],
-          "drawingStated": null,
-          "difference": null,
-          "sourceText": null,
-          "ocrAvailable": false,
-          "suspectRegions": [
-            {
-              "id": "candidate_1873da54-4fc0-4fc4-aa85-e415a13458ab",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_18bcfa18-c6b0-4094-bb63-36357198c167",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_46b2278d-4029-46b6-8452-763399bf7bdb",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_79eb90f5-59f6-469a-834b-5d367c37141b",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_a1db5ac1-06fb-4ea2-b957-368121140c48",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_b3d851f6-6662-4c4d-8150-50ea24c8e14f",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_c12a455a-9fc1-4984-95ea-25547a574db9",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_c33bbca6-3429-4789-a3bb-b1daca8f27e7",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            }
-          ],
-          "likelyAreaIds": [
-            "candidate_1873da54-4fc0-4fc4-aa85-e415a13458ab",
-            "candidate_18bcfa18-c6b0-4094-bb63-36357198c167",
-            "candidate_46b2278d-4029-46b6-8452-763399bf7bdb",
-            "candidate_79eb90f5-59f6-469a-834b-5d367c37141b",
-            "candidate_a1db5ac1-06fb-4ea2-b957-368121140c48",
-            "candidate_b3d851f6-6662-4c4d-8150-50ea24c8e14f",
-            "candidate_c12a455a-9fc1-4984-95ea-25547a574db9",
-            "candidate_c33bbca6-3429-4789-a3bb-b1daca8f27e7"
-          ]
-        }
-      },
-      "semanticObjects": {
-        "column": {
-          "tp": 0,
-          "fp": 0,
-          "fn": 6,
-          "precision": 0,
-          "recall": 0,
-          "f1": 0
-        }
-      },
-      "falsePositiveRegions": {
-        "textRegionsAnnotated": 0,
-        "tablesInsideTextRegions": 0,
-        "anyDetectionInsideTextRegions": 0,
-        "worstTextRegions": [],
-        "architectureRegionsAnnotated": 11,
-        "tablesInsideArchitectureRegions": 0,
-        "anyDetectionInsideArchitectureRegions": 0,
-        "worstArchitectureRegions": []
-      },
-      "humanEffort": {
-        "reviewGroups": 0,
-        "uncertainQuestions": 0,
-        "note": "review groups + questions the operator must resolve before Plan Confirmed"
-      },
-      "provider": {
-        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
-        "trainedModel": false,
-        "detectionProvider": "classical-cv",
-        "detectionPath": "chair-first",
-        "chairSource": "colour-cluster",
-        "ocrEngine": null,
-        "ocrAvailable": false
-      },
-      "detectionMs": 468,
-      "pageErrors": [],
-      "imageShaMatches": true
-    },
-    {
-      "planId": "adversarial-bistro-v1",
-      "matchToleranceP": 2,
-      "tables": {
-        "groundTruth": 23,
-        "detected": 18,
-        "tp": 18,
-        "fp": 0,
-        "fn": 5,
-        "precision": 1,
-        "recall": 0.783,
-        "f1": 0.878,
-        "missedIds": [
-          "B01",
-          "B02",
-          "B03",
-          "B04",
-          "B05"
-        ],
-        "spuriousCount": 0
-      },
-      "tableTypeAccuracy": {
-        "square": {
-          "matched": 18,
-          "correct": 18,
-          "accuracy": 1
-        },
-        "round": {
-          "matched": 0,
-          "correct": 0,
-          "accuracy": null
-        },
-        "bistro": {
-          "matched": 0,
-          "correct": 0,
-          "accuracy": null
-        },
-        "rectangle": {
-          "matched": 0,
-          "correct": 0,
-          "accuracy": null
-        }
-      },
-      "chairs": {
-        "method": "count only — this annotation records a chair TOTAL, not per-chair positions, so precision/recall cannot be computed",
-        "annotatedChairs": 82,
-        "detectedOnTables": 72,
-        "detectedStandalone": 0,
-        "detectedTotal": 72
-      },
-      "capacity": {
-        "ocrStated": null,
-        "annotatedChairs": 82,
-        "systemPhysicalSeats": 72,
-        "unverifiedInAnnotation": [],
-        "auditFromApp": {
-          "physical": {
-            "seats": 72,
-            "source": "chairs detected and associated to tables, plus standalone chairs"
-          },
-          "logical": {
-            "seats": 72,
-            "groups": 18,
-            "source": "seats summed over logical seating groups"
-          },
-          "unverified": [],
-          "drawingStated": null,
-          "difference": null,
-          "sourceText": null,
-          "ocrAvailable": false,
-          "suspectRegions": [
-            {
-              "id": "candidate_0044132b-a3b6-45b6-b1b7-185f4babfaa3",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_035f90e3-63d1-4e36-8bbb-577d2a96c511",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_05f6dd0e-06ab-49a7-aa1a-bdf87f8a135b",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_310b892d-ccff-4798-8f63-45db9dca6431",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_48d6445c-a68c-46f9-a469-bbf7794fa618",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_4cd8d59d-b145-4df7-b8e0-43727007cae3",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_5a6a05d0-f547-4783-81d6-f4c8113a1af5",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_5a8c3f42-28f0-49bd-81b7-31d17555980e",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            }
-          ],
-          "likelyAreaIds": [
-            "candidate_0044132b-a3b6-45b6-b1b7-185f4babfaa3",
-            "candidate_035f90e3-63d1-4e36-8bbb-577d2a96c511",
-            "candidate_05f6dd0e-06ab-49a7-aa1a-bdf87f8a135b",
-            "candidate_310b892d-ccff-4798-8f63-45db9dca6431",
-            "candidate_48d6445c-a68c-46f9-a469-bbf7794fa618",
-            "candidate_4cd8d59d-b145-4df7-b8e0-43727007cae3",
-            "candidate_5a6a05d0-f547-4783-81d6-f4c8113a1af5",
-            "candidate_5a8c3f42-28f0-49bd-81b7-31d17555980e"
-          ]
-        }
-      },
-      "semanticObjects": {},
-      "falsePositiveRegions": {
-        "textRegionsAnnotated": 5,
-        "tablesInsideTextRegions": 0,
-        "anyDetectionInsideTextRegions": 0,
-        "worstTextRegions": [],
-        "architectureRegionsAnnotated": 0,
-        "tablesInsideArchitectureRegions": 0,
-        "anyDetectionInsideArchitectureRegions": 0,
-        "worstArchitectureRegions": []
-      },
-      "humanEffort": {
-        "reviewGroups": 0,
-        "uncertainQuestions": 0,
-        "note": "review groups + questions the operator must resolve before Plan Confirmed"
-      },
-      "provider": {
-        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
-        "trainedModel": false,
-        "detectionProvider": "classical-cv",
-        "detectionPath": "chair-first",
-        "chairSource": "outline-interior",
-        "ocrEngine": null,
-        "ocrAvailable": false
-      },
-      "detectionMs": 495,
-      "pageErrors": [],
-      "imageShaMatches": true
-    },
-    {
-      "planId": "adversarial-dense-v1",
-      "matchToleranceP": 2,
-      "tables": {
-        "groundTruth": 24,
-        "detected": 24,
-        "tp": 24,
-        "fp": 0,
-        "fn": 0,
-        "precision": 1,
-        "recall": 1,
-        "f1": 1,
-        "missedIds": [],
-        "spuriousCount": 0
-      },
-      "tableTypeAccuracy": {
-        "square": {
-          "matched": 24,
-          "correct": 24,
-          "accuracy": 1
-        },
-        "round": {
-          "matched": 0,
-          "correct": 0,
-          "accuracy": null
-        },
-        "bistro": {
-          "matched": 0,
-          "correct": 0,
-          "accuracy": null
-        },
-        "rectangle": {
-          "matched": 0,
-          "correct": 0,
-          "accuracy": null
-        }
-      },
-      "chairs": {
-        "method": "count only — this annotation records a chair TOTAL, not per-chair positions, so precision/recall cannot be computed",
-        "annotatedChairs": 96,
-        "detectedOnTables": 76,
-        "detectedStandalone": 4,
-        "detectedTotal": 80
-      },
-      "capacity": {
-        "ocrStated": null,
-        "annotatedChairs": 96,
-        "systemPhysicalSeats": 80,
-        "unverifiedInAnnotation": [],
-        "auditFromApp": {
-          "physical": {
-            "seats": 80,
-            "source": "chairs detected and associated to tables, plus standalone chairs"
-          },
-          "logical": {
-            "seats": 76,
-            "groups": 4,
-            "source": "seats summed over logical seating groups"
-          },
-          "unverified": [],
-          "drawingStated": null,
-          "difference": null,
-          "sourceText": null,
-          "ocrAvailable": false,
-          "suspectRegions": [
-            {
-              "id": "candidate_32ddf426-abd8-4206-a3d9-c720332e230a",
-              "score": 1.25,
-              "reasons": [
-                "not yet reviewed",
-                "low confidence 0.44"
-              ]
-            },
-            {
-              "id": "candidate_a5c7e373-87a0-4289-b68e-9f8f4397bc8f",
-              "score": 1.25,
-              "reasons": [
-                "not yet reviewed",
-                "low confidence 0.44"
-              ]
-            },
-            {
-              "id": "candidate_0d576f83-490b-456c-8602-8aedc093ef64",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_108dde84-5d03-4f5e-833d-7f24feb90e85",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_1bcb6dec-7ad9-401f-87c5-c5246cd5aabf",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_4af61536-4aea-49e5-b007-e62ba555e4ab",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_4e51423d-ef1c-45f7-af1c-931e39676629",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_578af9e6-9cae-48d9-871a-5d9feb383aa8",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            }
-          ],
-          "likelyAreaIds": [
-            "candidate_32ddf426-abd8-4206-a3d9-c720332e230a",
-            "candidate_a5c7e373-87a0-4289-b68e-9f8f4397bc8f",
-            "candidate_0d576f83-490b-456c-8602-8aedc093ef64",
-            "candidate_108dde84-5d03-4f5e-833d-7f24feb90e85",
-            "candidate_1bcb6dec-7ad9-401f-87c5-c5246cd5aabf",
-            "candidate_4af61536-4aea-49e5-b007-e62ba555e4ab",
-            "candidate_4e51423d-ef1c-45f7-af1c-931e39676629",
-            "candidate_578af9e6-9cae-48d9-871a-5d9feb383aa8"
-          ]
-        }
-      },
-      "semanticObjects": {},
-      "falsePositiveRegions": {
-        "textRegionsAnnotated": 4,
-        "tablesInsideTextRegions": 0,
-        "anyDetectionInsideTextRegions": 4,
-        "worstTextRegions": [],
-        "architectureRegionsAnnotated": 9,
-        "tablesInsideArchitectureRegions": 0,
-        "anyDetectionInsideArchitectureRegions": 0,
-        "worstArchitectureRegions": []
-      },
-      "humanEffort": {
-        "reviewGroups": 2,
-        "uncertainQuestions": 4,
-        "note": "review groups + questions the operator must resolve before Plan Confirmed"
-      },
-      "provider": {
-        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
-        "trainedModel": false,
-        "detectionProvider": "classical-cv",
-        "detectionPath": "chair-first",
-        "chairSource": "outline-interior",
-        "ocrEngine": null,
-        "ocrAvailable": false
-      },
-      "detectionMs": 487,
-      "pageErrors": [],
-      "imageShaMatches": true
-    },
-    {
-      "planId": "adversarial-text-v1",
-      "matchToleranceP": 2,
-      "tables": {
-        "groundTruth": 12,
-        "detected": 12,
-        "tp": 12,
-        "fp": 0,
-        "fn": 0,
-        "precision": 1,
-        "recall": 1,
-        "f1": 1,
-        "missedIds": [],
-        "spuriousCount": 0
-      },
-      "tableTypeAccuracy": {
-        "square": {
-          "matched": 12,
-          "correct": 12,
-          "accuracy": 1
-        },
-        "round": {
-          "matched": 0,
-          "correct": 0,
-          "accuracy": null
-        },
-        "bistro": {
-          "matched": 0,
-          "correct": 0,
-          "accuracy": null
-        },
-        "rectangle": {
-          "matched": 0,
-          "correct": 0,
-          "accuracy": null
-        }
-      },
-      "chairs": {
-        "method": "count only — this annotation records a chair TOTAL, not per-chair positions, so precision/recall cannot be computed",
-        "annotatedChairs": 72,
-        "detectedOnTables": 73,
-        "detectedStandalone": 0,
-        "detectedTotal": 73
-      },
-      "capacity": {
-        "ocrStated": null,
-        "annotatedChairs": 72,
-        "systemPhysicalSeats": 73,
-        "unverifiedInAnnotation": [],
-        "auditFromApp": {
-          "physical": {
-            "seats": 73,
-            "source": "chairs detected and associated to tables, plus standalone chairs"
-          },
-          "logical": {
-            "seats": 73,
-            "groups": 12,
-            "source": "seats summed over logical seating groups"
-          },
-          "unverified": [],
-          "drawingStated": null,
-          "difference": null,
-          "sourceText": null,
-          "ocrAvailable": false,
-          "suspectRegions": [
-            {
-              "id": "candidate_0b6c1fe7-16c0-4f11-bf8f-12386bb02ed4",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_0fa5d69f-ac8d-4e1d-ba74-a3e84e78ad2a",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_2e4a5269-6ce7-4bea-a9b9-c3bb6e274e43",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_30b78426-fc1b-48bd-ab38-b04f1ca64344",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_8268937d-5a4c-48ce-9173-d7b62738acd0",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_94ad8731-aba6-4df5-8e99-482a2ef6914c",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_991bd3a4-3a7c-4287-89a8-76896c95f321",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_a0dc080f-412e-47b8-ae81-ac8749b9b23a",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            }
-          ],
-          "likelyAreaIds": [
-            "candidate_0b6c1fe7-16c0-4f11-bf8f-12386bb02ed4",
-            "candidate_0fa5d69f-ac8d-4e1d-ba74-a3e84e78ad2a",
-            "candidate_2e4a5269-6ce7-4bea-a9b9-c3bb6e274e43",
-            "candidate_30b78426-fc1b-48bd-ab38-b04f1ca64344",
-            "candidate_8268937d-5a4c-48ce-9173-d7b62738acd0",
-            "candidate_94ad8731-aba6-4df5-8e99-482a2ef6914c",
-            "candidate_991bd3a4-3a7c-4287-89a8-76896c95f321",
-            "candidate_a0dc080f-412e-47b8-ae81-ac8749b9b23a"
-          ]
-        }
-      },
-      "semanticObjects": {},
-      "falsePositiveRegions": {
-        "textRegionsAnnotated": 23,
-        "tablesInsideTextRegions": 0,
-        "anyDetectionInsideTextRegions": 0,
-        "worstTextRegions": [],
-        "architectureRegionsAnnotated": 0,
-        "tablesInsideArchitectureRegions": 0,
-        "anyDetectionInsideArchitectureRegions": 0,
-        "worstArchitectureRegions": []
-      },
-      "humanEffort": {
-        "reviewGroups": 0,
-        "uncertainQuestions": 0,
-        "note": "review groups + questions the operator must resolve before Plan Confirmed"
-      },
-      "provider": {
-        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
-        "trainedModel": false,
-        "detectionProvider": "classical-cv",
-        "detectionPath": "chair-first",
-        "chairSource": "colour-cluster",
-        "ocrEngine": null,
-        "ocrAvailable": false
-      },
-      "detectionMs": 409,
-      "pageErrors": [],
-      "imageShaMatches": true
-    },
     {
       "planId": "merit-real-venue",
       "matchToleranceP": 3,
@@ -820,7 +151,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_3366ed98-9f25-4417-88db-e80106625d72",
+              "id": "candidate_30d5a7c0-1bd3-428f-a6b4-282c42b01915",
               "score": 4.07,
               "reasons": [
                 "table with no seats found",
@@ -829,7 +160,7 @@
               ]
             },
             {
-              "id": "candidate_a2fac988-848b-458f-9fc1-0f240c55172f",
+              "id": "candidate_0473b657-24ff-4859-b199-ea1c0f66d2cd",
               "score": 4.03,
               "reasons": [
                 "table with no seats found",
@@ -838,7 +169,7 @@
               ]
             },
             {
-              "id": "candidate_319d621a-948b-4df8-836f-d8b93d9888c1",
+              "id": "candidate_2d3082fe-2e83-439f-af44-38d4bd9bb72b",
               "score": 4.02,
               "reasons": [
                 "table with no seats found",
@@ -847,7 +178,7 @@
               ]
             },
             {
-              "id": "candidate_405f8a8f-6ed6-4841-883a-e3c1a3fd5ddb",
+              "id": "candidate_37500427-537e-4703-9b12-eabeb8c51ec8",
               "score": 4.02,
               "reasons": [
                 "table with no seats found",
@@ -856,7 +187,7 @@
               ]
             },
             {
-              "id": "candidate_7b187fa3-0d28-4a14-9275-14d67b131877",
+              "id": "candidate_c01d6b6a-7bf6-4f8c-aa55-40646be7672e",
               "score": 4.02,
               "reasons": [
                 "table with no seats found",
@@ -865,7 +196,7 @@
               ]
             },
             {
-              "id": "candidate_000a8238-acaa-4bb1-afaf-f30dc9e3c1a1",
+              "id": "candidate_08585ace-3a6e-44b7-a5de-6dcd847e835e",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -873,7 +204,7 @@
               ]
             },
             {
-              "id": "candidate_00ec2903-4b27-4495-953d-a1570d398e7d",
+              "id": "candidate_0edb8856-3e38-406b-976b-0671296e7788",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -881,7 +212,7 @@
               ]
             },
             {
-              "id": "candidate_1b3c2bc7-b006-4198-8be1-3b6f583ab9f3",
+              "id": "candidate_15791762-608d-467b-aca8-5d660d64af8c",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -890,14 +221,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_3366ed98-9f25-4417-88db-e80106625d72",
-            "candidate_a2fac988-848b-458f-9fc1-0f240c55172f",
-            "candidate_319d621a-948b-4df8-836f-d8b93d9888c1",
-            "candidate_405f8a8f-6ed6-4841-883a-e3c1a3fd5ddb",
-            "candidate_7b187fa3-0d28-4a14-9275-14d67b131877",
-            "candidate_000a8238-acaa-4bb1-afaf-f30dc9e3c1a1",
-            "candidate_00ec2903-4b27-4495-953d-a1570d398e7d",
-            "candidate_1b3c2bc7-b006-4198-8be1-3b6f583ab9f3"
+            "candidate_30d5a7c0-1bd3-428f-a6b4-282c42b01915",
+            "candidate_0473b657-24ff-4859-b199-ea1c0f66d2cd",
+            "candidate_2d3082fe-2e83-439f-af44-38d4bd9bb72b",
+            "candidate_37500427-537e-4703-9b12-eabeb8c51ec8",
+            "candidate_c01d6b6a-7bf6-4f8c-aa55-40646be7672e",
+            "candidate_08585ace-3a6e-44b7-a5de-6dcd847e835e",
+            "candidate_0edb8856-3e38-406b-976b-0671296e7788",
+            "candidate_15791762-608d-467b-aca8-5d660d64af8c"
           ]
         }
       },
@@ -940,7 +271,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 641,
+      "detectionMs": 650,
       "pageErrors": [],
       "imageShaMatches": true
     }
