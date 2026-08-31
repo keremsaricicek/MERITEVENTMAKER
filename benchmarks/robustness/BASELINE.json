@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-08-31T13:47:43.478Z",
+  "ranAt": "2026-08-31T14:07:27.251Z",
   "realDistinctVenuePlans": 1,
   "note": "Every variant is a transform of benchmarks/plans/merit-real-venue-plan.png. This matrix measures robustness to rendering, not generalisation to unseen venues.",
   "rows": [
@@ -12,7 +12,7 @@
       "chairFP": 5,
       "chairF1": 0.951,
       "armchairRecall": 1,
-      "reviewGroups": 12
+      "reviewGroups": 5
     },
     {
       "variant": "blur",
@@ -23,7 +23,7 @@
       "chairFP": 2,
       "chairF1": 0.991,
       "armchairRecall": 1,
-      "reviewGroups": 23
+      "reviewGroups": 4
     },
     {
       "variant": "bright-down",
@@ -34,7 +34,7 @@
       "chairFP": 1,
       "chairF1": 0.944,
       "armchairRecall": 1,
-      "reviewGroups": 13
+      "reviewGroups": 4
     },
     {
       "variant": "bright-up",
@@ -45,7 +45,7 @@
       "chairFP": 2,
       "chairF1": 0.935,
       "armchairRecall": 1,
-      "reviewGroups": 20
+      "reviewGroups": 5
     },
     {
       "variant": "contrast-high",
@@ -56,7 +56,7 @@
       "chairFP": 3,
       "chairF1": 0.978,
       "armchairRecall": 0.987,
-      "reviewGroups": 21
+      "reviewGroups": 5
     },
     {
       "variant": "contrast-low",
@@ -67,7 +67,7 @@
       "chairFP": 1,
       "chairF1": 0.959,
       "armchairRecall": 1,
-      "reviewGroups": 9
+      "reviewGroups": 5
     },
     {
       "variant": "crop-pad",
@@ -78,7 +78,7 @@
       "chairFP": 5,
       "chairF1": 0.951,
       "armchairRecall": 1,
-      "reviewGroups": 11
+      "reviewGroups": 5
     },
     {
       "variant": "downscale-70",
@@ -89,7 +89,7 @@
       "chairFP": 73,
       "chairF1": 0.752,
       "armchairRecall": 1,
-      "reviewGroups": 17
+      "reviewGroups": 5
     },
     {
       "variant": "grayscale",
@@ -100,7 +100,7 @@
       "chairFP": 15,
       "chairF1": 0.897,
       "armchairRecall": 0.987,
-      "reviewGroups": 23
+      "reviewGroups": 5
     },
     {
       "variant": "hue-shift",
@@ -111,7 +111,7 @@
       "chairFP": 6,
       "chairF1": 0.974,
       "armchairRecall": 1,
-      "reviewGroups": 23
+      "reviewGroups": 5
     },
     {
       "variant": "jpeg-q20",
@@ -122,7 +122,7 @@
       "chairFP": 3,
       "chairF1": 0.96,
       "armchairRecall": 1,
-      "reviewGroups": 31
+      "reviewGroups": 5
     },
     {
       "variant": "jpeg-q40",
@@ -133,7 +133,7 @@
       "chairFP": 2,
       "chairF1": 0.973,
       "armchairRecall": 1,
-      "reviewGroups": 11
+      "reviewGroups": 5
     },
     {
       "variant": "lowres-roundtrip",
@@ -144,7 +144,7 @@
       "chairFP": 3,
       "chairF1": 0.941,
       "armchairRecall": 1,
-      "reviewGroups": 19
+      "reviewGroups": 5
     },
     {
       "variant": "noise",
@@ -155,7 +155,7 @@
       "chairFP": 6,
       "chairF1": 0.965,
       "armchairRecall": 1,
-      "reviewGroups": 15
+      "reviewGroups": 5
     },
     {
       "variant": "rotate-2",
@@ -166,7 +166,7 @@
       "chairFP": 11,
       "chairF1": 0.949,
       "armchairRecall": 1,
-      "reviewGroups": 15
+      "reviewGroups": 5
     },
     {
       "variant": "rotate-minus-3",
@@ -177,7 +177,7 @@
       "chairFP": 6,
       "chairF1": 0.97,
       "armchairRecall": 1,
-      "reviewGroups": 12
+      "reviewGroups": 5
     }
   ]
 }

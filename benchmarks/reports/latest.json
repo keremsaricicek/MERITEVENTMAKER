@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-08-31T13:43:25.022Z",
+  "ranAt": "2026-08-31T14:00:14.213Z",
   "reports": [
     {
       "planId": "adversarial-architecture-v1",
@@ -68,56 +68,56 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_14ef7d12-70bf-432b-8a9c-d4c247d8211f",
+              "id": "candidate_0bb052a2-6939-4034-9bed-55fa7a6c2231",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_4781b713-40a7-4d7d-955d-0e96097a6c13",
+              "id": "candidate_30a1808b-2770-46ea-8ccf-fda135c4b165",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_56163912-6781-4174-88a3-8ce8bcc85e88",
+              "id": "candidate_88cc3504-eec8-4b72-b421-f69b0603a3cd",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_5dd7770a-dae8-41bb-bf92-4f0ca5e468ea",
+              "id": "candidate_93693fc9-1cba-43c0-afed-8b023f5da737",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_93c05292-4eff-4cc6-a34e-96d0af5681a1",
+              "id": "candidate_9ad4d658-82c9-4dd6-8c70-187fe1fc80d0",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_ab12e009-1cb5-48e1-861b-c873a11516a8",
+              "id": "candidate_a82434d7-be3d-4e2e-992f-4bd874dd3a2a",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_bb77943d-e6b2-4941-9735-bd82ca4bee5e",
+              "id": "candidate_bb41e95c-98dd-4d9f-a8b0-34f95718f5ac",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_d7f57bd0-5c50-49fd-859a-dbc8b8e30401",
+              "id": "candidate_bb6a00ab-a37c-4aa4-bd5d-67dbff3b324c",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -125,14 +125,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_14ef7d12-70bf-432b-8a9c-d4c247d8211f",
-            "candidate_4781b713-40a7-4d7d-955d-0e96097a6c13",
-            "candidate_56163912-6781-4174-88a3-8ce8bcc85e88",
-            "candidate_5dd7770a-dae8-41bb-bf92-4f0ca5e468ea",
-            "candidate_93c05292-4eff-4cc6-a34e-96d0af5681a1",
-            "candidate_ab12e009-1cb5-48e1-861b-c873a11516a8",
-            "candidate_bb77943d-e6b2-4941-9735-bd82ca4bee5e",
-            "candidate_d7f57bd0-5c50-49fd-859a-dbc8b8e30401"
+            "candidate_0bb052a2-6939-4034-9bed-55fa7a6c2231",
+            "candidate_30a1808b-2770-46ea-8ccf-fda135c4b165",
+            "candidate_88cc3504-eec8-4b72-b421-f69b0603a3cd",
+            "candidate_93693fc9-1cba-43c0-afed-8b023f5da737",
+            "candidate_9ad4d658-82c9-4dd6-8c70-187fe1fc80d0",
+            "candidate_a82434d7-be3d-4e2e-992f-4bd874dd3a2a",
+            "candidate_bb41e95c-98dd-4d9f-a8b0-34f95718f5ac",
+            "candidate_bb6a00ab-a37c-4aa4-bd5d-67dbff3b324c"
           ]
         }
       },
@@ -170,7 +170,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 743,
+      "detectionMs": 733,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -247,56 +247,56 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_31aa6244-552b-44fe-991f-293906c1e140",
+              "id": "candidate_10efe498-0bd5-4452-9bcb-0e4c1b41433e",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_3c13c7f0-b708-4c25-b959-ceb69a995d5d",
+              "id": "candidate_35966be0-8a9c-4b7a-b69b-21ddb74a03ab",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_4b7d19b0-8420-49fc-b711-0758eed50abd",
+              "id": "candidate_3605c46f-1820-4301-8c45-786e859c4063",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_5831b551-dc5a-4a66-a13d-bc68f84c53b4",
+              "id": "candidate_46d53263-f492-495b-9e16-97ce84a9c77c",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_5f67e2d2-2502-4f7c-a56b-a6e3da1999bf",
+              "id": "candidate_54f399ef-d704-4381-81fe-a76f85a113da",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_6662635b-9cc2-4e1f-b35c-08db3289df01",
+              "id": "candidate_63d27313-9252-4e71-be6e-a513cf4e3fa5",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_7aa13a34-3e75-46f7-b2c0-64593f53fc8c",
+              "id": "candidate_681bfce0-483b-4381-8d40-22bf430d74c0",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_7cc84fc1-adbb-4880-8d3b-c757f697d232",
+              "id": "candidate_7b3f8d00-8572-40ed-bde9-f9d9f11074be",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -304,14 +304,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_31aa6244-552b-44fe-991f-293906c1e140",
-            "candidate_3c13c7f0-b708-4c25-b959-ceb69a995d5d",
-            "candidate_4b7d19b0-8420-49fc-b711-0758eed50abd",
-            "candidate_5831b551-dc5a-4a66-a13d-bc68f84c53b4",
-            "candidate_5f67e2d2-2502-4f7c-a56b-a6e3da1999bf",
-            "candidate_6662635b-9cc2-4e1f-b35c-08db3289df01",
-            "candidate_7aa13a34-3e75-46f7-b2c0-64593f53fc8c",
-            "candidate_7cc84fc1-adbb-4880-8d3b-c757f697d232"
+            "candidate_10efe498-0bd5-4452-9bcb-0e4c1b41433e",
+            "candidate_35966be0-8a9c-4b7a-b69b-21ddb74a03ab",
+            "candidate_3605c46f-1820-4301-8c45-786e859c4063",
+            "candidate_46d53263-f492-495b-9e16-97ce84a9c77c",
+            "candidate_54f399ef-d704-4381-81fe-a76f85a113da",
+            "candidate_63d27313-9252-4e71-be6e-a513cf4e3fa5",
+            "candidate_681bfce0-483b-4381-8d40-22bf430d74c0",
+            "candidate_7b3f8d00-8572-40ed-bde9-f9d9f11074be"
           ]
         }
       },
@@ -340,7 +340,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 664,
+      "detectionMs": 726,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -411,7 +411,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_49ba4a70-cec3-4946-9c8b-9774836f13dd",
+              "id": "candidate_0fd5c433-26e1-4ee1-9732-8bafc1f86c64",
               "score": 1.25,
               "reasons": [
                 "not yet reviewed",
@@ -419,7 +419,7 @@
               ]
             },
             {
-              "id": "candidate_a028136e-8542-4af4-85be-b2592d722c9b",
+              "id": "candidate_cb52a8d9-44f3-4897-abea-cdcd894b63db",
               "score": 1.25,
               "reasons": [
                 "not yet reviewed",
@@ -427,42 +427,42 @@
               ]
             },
             {
-              "id": "candidate_00c16d57-878f-4f5d-8337-b13d63b7556e",
+              "id": "candidate_10092019-5573-4890-85e0-69b242e57698",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_04eb8ba5-9cc3-4da1-aacd-a8aaeeace939",
+              "id": "candidate_144fd468-353e-4da2-9eff-c6b463df8640",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_1167be02-0de3-4a01-89f9-0227778c83b9",
+              "id": "candidate_15fad493-736b-4d86-af1a-78b77fd0e0da",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_14df4fa9-e184-4333-837f-3a0448d3c54b",
+              "id": "candidate_1915cc2b-7ab3-40d2-9dfc-61889970fcc6",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_220ce3b4-e6a7-4b2a-834d-9d38040feb3b",
+              "id": "candidate_1d1c5f29-a478-4f09-8c41-349613a008c6",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_256179cb-4b77-4573-b0b7-5495e7892697",
+              "id": "candidate_20896614-fa1f-482a-82c1-2b82a946c368",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -470,14 +470,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_49ba4a70-cec3-4946-9c8b-9774836f13dd",
-            "candidate_a028136e-8542-4af4-85be-b2592d722c9b",
-            "candidate_00c16d57-878f-4f5d-8337-b13d63b7556e",
-            "candidate_04eb8ba5-9cc3-4da1-aacd-a8aaeeace939",
-            "candidate_1167be02-0de3-4a01-89f9-0227778c83b9",
-            "candidate_14df4fa9-e184-4333-837f-3a0448d3c54b",
-            "candidate_220ce3b4-e6a7-4b2a-834d-9d38040feb3b",
-            "candidate_256179cb-4b77-4573-b0b7-5495e7892697"
+            "candidate_0fd5c433-26e1-4ee1-9732-8bafc1f86c64",
+            "candidate_cb52a8d9-44f3-4897-abea-cdcd894b63db",
+            "candidate_10092019-5573-4890-85e0-69b242e57698",
+            "candidate_144fd468-353e-4da2-9eff-c6b463df8640",
+            "candidate_15fad493-736b-4d86-af1a-78b77fd0e0da",
+            "candidate_1915cc2b-7ab3-40d2-9dfc-61889970fcc6",
+            "candidate_1d1c5f29-a478-4f09-8c41-349613a008c6",
+            "candidate_20896614-fa1f-482a-82c1-2b82a946c368"
           ]
         }
       },
@@ -493,8 +493,8 @@
         "worstArchitectureRegions": []
       },
       "humanEffort": {
-        "reviewGroups": 2,
-        "uncertainQuestions": 4,
+        "reviewGroups": 1,
+        "uncertainQuestions": 1,
         "note": "review groups + questions the operator must resolve before Plan Confirmed"
       },
       "provider": {
@@ -506,7 +506,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 757,
+      "detectionMs": 822,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -577,56 +577,56 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_021c0df1-23e1-487f-aede-2fa08ab95463",
+              "id": "candidate_20525bb8-bf30-423f-9db3-4e78c8a3a6d7",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_033b82a9-78b3-4b77-bf1b-f56f4d152fd4",
+              "id": "candidate_246b03de-6628-4e70-a3ed-9341a03d6ba0",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_06894f9d-468e-4d5c-9c6c-4a9ff075081e",
+              "id": "candidate_28dbb535-6ef9-45ba-adca-59547c73d1d7",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_44b4791d-eeb1-4623-98fc-0eb2047dd422",
+              "id": "candidate_3fed8733-edc6-4900-8fd2-2f61c0c74a31",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_45812dbd-0e17-488c-ab4a-0acbab8a8a66",
+              "id": "candidate_63306796-fc76-4d01-9035-b143413877dd",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_5336105d-040a-47a5-9487-632f1ad89a10",
+              "id": "candidate_8a565d5a-cb5c-447d-b89a-6817f41060de",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_54f02f7d-0a4e-4e25-b50b-717656c433fa",
+              "id": "candidate_90c08109-8416-470d-b96b-8354bbb744c7",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_6e26c800-d36f-442d-a48e-ce89a1dab7ac",
+              "id": "candidate_a8704171-d7c6-4582-b8c3-aedec3d2c784",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -634,14 +634,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_021c0df1-23e1-487f-aede-2fa08ab95463",
-            "candidate_033b82a9-78b3-4b77-bf1b-f56f4d152fd4",
-            "candidate_06894f9d-468e-4d5c-9c6c-4a9ff075081e",
-            "candidate_44b4791d-eeb1-4623-98fc-0eb2047dd422",
-            "candidate_45812dbd-0e17-488c-ab4a-0acbab8a8a66",
-            "candidate_5336105d-040a-47a5-9487-632f1ad89a10",
-            "candidate_54f02f7d-0a4e-4e25-b50b-717656c433fa",
-            "candidate_6e26c800-d36f-442d-a48e-ce89a1dab7ac"
+            "candidate_20525bb8-bf30-423f-9db3-4e78c8a3a6d7",
+            "candidate_246b03de-6628-4e70-a3ed-9341a03d6ba0",
+            "candidate_28dbb535-6ef9-45ba-adca-59547c73d1d7",
+            "candidate_3fed8733-edc6-4900-8fd2-2f61c0c74a31",
+            "candidate_63306796-fc76-4d01-9035-b143413877dd",
+            "candidate_8a565d5a-cb5c-447d-b89a-6817f41060de",
+            "candidate_90c08109-8416-470d-b96b-8354bbb744c7",
+            "candidate_a8704171-d7c6-4582-b8c3-aedec3d2c784"
           ]
         }
       },
@@ -670,7 +670,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 660,
+      "detectionMs": 606,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -847,7 +847,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_0472d17d-2407-4a28-aa69-02ffd2c5d847",
+              "id": "candidate_1753cf5d-bd61-4f6e-8769-add5d7772962",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -855,7 +855,7 @@
               ]
             },
             {
-              "id": "candidate_0cf3021d-7b33-4390-b867-575ba840f87e",
+              "id": "candidate_206ada63-8c8c-4a75-b4cf-5334fda2e61d",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -863,7 +863,7 @@
               ]
             },
             {
-              "id": "candidate_27b00f80-64d7-4bbd-8596-4e4ace39c0ec",
+              "id": "candidate_2216db08-11d2-49fb-aa72-383dcddba54c",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -871,7 +871,7 @@
               ]
             },
             {
-              "id": "candidate_2de814bf-494b-42b8-90b2-088f3d959c2a",
+              "id": "candidate_2b6c5aad-0a1b-4fc4-86be-fac1db511401",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -879,7 +879,7 @@
               ]
             },
             {
-              "id": "candidate_3192d5c5-b1d3-4d5d-9cb6-18767b598384",
+              "id": "candidate_360eff17-a244-4118-92b6-5a79434e1e9e",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -887,7 +887,7 @@
               ]
             },
             {
-              "id": "candidate_356d1eb0-e75f-43fd-a53a-963910d873a7",
+              "id": "candidate_771a65ae-742c-4e5d-8861-5e415158770a",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -895,7 +895,7 @@
               ]
             },
             {
-              "id": "candidate_4179cfeb-4c9a-46c1-a427-19e367b00d23",
+              "id": "candidate_a901f6e2-ee27-431d-b038-2af976c83760",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -903,7 +903,7 @@
               ]
             },
             {
-              "id": "candidate_4fb1b359-ede4-4296-a58a-d7cad75fa059",
+              "id": "candidate_c016006e-789a-4883-913a-f83a4009bf54",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -912,14 +912,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_0472d17d-2407-4a28-aa69-02ffd2c5d847",
-            "candidate_0cf3021d-7b33-4390-b867-575ba840f87e",
-            "candidate_27b00f80-64d7-4bbd-8596-4e4ace39c0ec",
-            "candidate_2de814bf-494b-42b8-90b2-088f3d959c2a",
-            "candidate_3192d5c5-b1d3-4d5d-9cb6-18767b598384",
-            "candidate_356d1eb0-e75f-43fd-a53a-963910d873a7",
-            "candidate_4179cfeb-4c9a-46c1-a427-19e367b00d23",
-            "candidate_4fb1b359-ede4-4296-a58a-d7cad75fa059"
+            "candidate_1753cf5d-bd61-4f6e-8769-add5d7772962",
+            "candidate_206ada63-8c8c-4a75-b4cf-5334fda2e61d",
+            "candidate_2216db08-11d2-49fb-aa72-383dcddba54c",
+            "candidate_2b6c5aad-0a1b-4fc4-86be-fac1db511401",
+            "candidate_360eff17-a244-4118-92b6-5a79434e1e9e",
+            "candidate_771a65ae-742c-4e5d-8861-5e415158770a",
+            "candidate_a901f6e2-ee27-431d-b038-2af976c83760",
+            "candidate_c016006e-789a-4883-913a-f83a4009bf54"
           ]
         }
       },
@@ -949,8 +949,8 @@
         "worstArchitectureRegions": []
       },
       "humanEffort": {
-        "reviewGroups": 12,
-        "uncertainQuestions": 13,
+        "reviewGroups": 5,
+        "uncertainQuestions": 5,
         "note": "review groups + questions the operator must resolve before Plan Confirmed"
       },
       "provider": {
@@ -962,7 +962,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 910,
+      "detectionMs": 873,
       "pageErrors": [],
       "imageShaMatches": true
     }

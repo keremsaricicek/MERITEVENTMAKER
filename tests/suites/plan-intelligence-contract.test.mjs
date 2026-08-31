@@ -63,6 +63,18 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
       withRotation: alive.filter(c => typeof c.rotation === "number").length,
       chairs,
       candidateIds: alive.map(c => c.id),
+      unreviewedLow: a.candidates.filter(c => c.status === "unreviewed" && c.confidence < 0.72).length,
+      reviewGroups: (pi?.reviewGroups || []).map(g => ({
+        kind: g.kind, type: g.titleParams?.type, need: g.memberIds.length,
+        total: g.totalInFamily, clusters: (g.clusters || []).length,
+        memberIds: g.memberIds,
+      })),
+      questions: (pi?.uncertainQuestions || []).map(q => ({
+        type: q.questionType, memberCount: q.questionParams?.memberCount,
+        arrangement: q.arrangement || null,
+        groupIds: q.groupIds || [q.groupId], covers: q.coversGroups || 1,
+      })),
+      furnitureGroupIds: (pi?.furnitureGroups || []).map(g => g.id),
       pi: pi && {
         nodeCount: pi.sceneGraph.nodeCount,
         counts: pi.sceneGraph.counts,
@@ -179,4 +191,43 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     .filter(id => belongsTo.filter(e => e.from === id).length > 1);
   checks.ok(multiplyOwned.length === 0,
     "no chair belongs to two tables at once", multiplyOwned.slice(0, 3));
+
+  // --- one family, one decision ---------------------------------------------
+  // Similarity clustering is the right unit for propagating a decision and the
+  // wrong unit to put in front of a person. Before consolidation this plan
+  // produced twelve review groups of which seven were singletons, with the same
+  // kind-and-type appearing on three separate cards, plus thirteen questions of
+  // which eight were literally the same question about eight identical
+  // arrangements of three square tables.
+  //
+  // These are contracts, not counts: the numbers may move as detection
+  // improves, but asking the same question twice must stay impossible.
+  const groupKeys = result.reviewGroups.map(g => `${g.kind}:${g.type}`);
+  checks.ok(new Set(groupKeys).size === groupKeys.length,
+    "no two review groups ask about the same kind and type", groupKeys);
+  checks.ok(result.reviewGroups.every(g => g.clusters >= 1),
+    "each review group keeps the similarity clusters it was built from, so a decision can still propagate cluster by cluster",
+    result.reviewGroups.map(g => ({ type: g.type, clusters: g.clusters })));
+
+  // The arrangement is the table count AND the multiset of table types, so
+  // four squares and rectangle-plus-three-squares stay two questions.
+  const questionKeys = result.questions.map(q => `${q.type}:${q.arrangement}`);
+  checks.ok(result.questions.every(q => q.arrangement),
+    "each question records the arrangement that defines it", result.questions);
+  checks.ok(new Set(questionKeys).size === questionKeys.length,
+    "no two questions ask about the same arrangement", questionKeys);
+  checks.ok(result.questions.every(q => q.covers === q.groupIds.length),
+    "a question's stated reach matches the groups it actually carries",
+    result.questions.map(q => ({ covers: q.covers, ids: q.groupIds.length })));
+  const knownGroups = new Set(result.furnitureGroupIds);
+  const strayGroupRefs = result.questions.flatMap(q => q.groupIds.filter(id => !knownGroups.has(id)));
+  checks.ok(strayGroupRefs.length === 0,
+    "every arrangement a question covers is a real furniture group", strayGroupRefs.slice(0, 3));
+
+  // Consolidation must be presentational. Nothing may be dropped from review to
+  // make the count look better — the sprint rule is explicit about that.
+  const reviewedMembers = new Set(result.reviewGroups.flatMap(g => g.memberIds));
+  checks.ok(reviewedMembers.size === result.unreviewedLow,
+    "every unreviewed low-confidence candidate is still in exactly one review group — consolidation hides nothing",
+    { inGroups: reviewedMembers.size, unreviewedLow: result.unreviewedLow });
 }

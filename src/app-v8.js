@@ -2329,6 +2329,30 @@
           return v.length?v[v.length>>1]:0;
         };
         const referenceSide=medianSide(claimed);
+        // How far apart the primary family's own seats stand, and how close a
+        // candidate is to the nearest of them. A genuinely distinct seat family
+        // sits at ITS OWN tables; a family of debris shed by the primary one
+        // interleaves with the seats it came from.
+        const centreOf=c=>[c.x+c.w/2,c.y+c.h/2];
+        const primaryCentres=claimed.map(centreOf);
+        const nearestPrimaryDistance=c=>{
+          const[cx,cy]=centreOf(c);let best=Infinity;
+          for(const[px,py] of primaryCentres){
+            const d=Math.hypot(cx-px,cy-py);
+            if(d<best)best=d;
+          }
+          return best;
+        };
+        const spacings=primaryCentres.map(([x0,y0])=>{
+          let best=Infinity;
+          for(const[px,py] of primaryCentres){
+            if(px===x0&&py===y0)continue;
+            const d=Math.hypot(x0-px,y0-py);
+            if(d<best)best=d;
+          }
+          return best;
+        }).filter(Number.isFinite).sort((a,b)=>a-b);
+        const primarySpacing=spacings.length?spacings[spacings.length>>1]:0;
         const surfaceSide=medianSide(surfaces.filter(c=>Math.min(c.w,c.h)>=6));
         const groups=new Map();
         for(const e of extra){const k=keyOf(e.comp);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(e);}
@@ -2351,10 +2375,26 @@
           const seated=members.filter(m=>touchesSurface(m.comp));
           const adjacent=seated.length;
           const share=adjacent/members.length;
+          // How much of this family is standing among the primary family's own
+          // seats rather than at tables of its own.
+          // Reported, not gated on. A genuinely distinct seat family sits at its
+          // own tables and so stands well clear of the primary family's seats;
+          // a family of debris shed by the primary one interleaves with them.
+          // Measured, in units of the primary family's own seat spacing: the
+          // real plan's five admitted families read 1.75 to 3.34, and the
+          // `downscale-70` debris families read 1.04 and 1.07. It separates —
+          // by 17%, on one plan, with the real plan's smallest admitted family
+          // sitting closest to the line. That is not enough margin to delete a
+          // family on, and it would remove 32 of that variant's 73 false chairs
+          // rather than all of them. Left as evidence for whoever has more of it.
+          const nearDists=members.map(m=>nearestPrimaryDistance(m.comp)).filter(Number.isFinite).sort((a,b)=>a-b);
+          const medianNearPrimary=nearDists.length?nearDists[nearDists.length>>1]:Infinity;
+          const crowding=primarySpacing?medianNearPrimary/primarySpacing:Infinity;
           const admitted=sizeOk&&share>=SECONDARY_MIN_ADJACENT;
           secondaryFamilies.push({key,members:members.length,adjacent,
             share:Number(share.toFixed(2)),admitted,sizeOk,
             side:Math.round(side),referenceSide:Math.round(referenceSide),surfaceSide:Math.round(surfaceSide),
+            crowding:Number(crowding.toFixed(2)),primarySpacing:Math.round(primarySpacing),
             source:members[0].source.name});
           // One entry per originating source, all under the same family name.
           // The label map a component was found in is what shape analysis has
@@ -2563,6 +2603,20 @@
         const modalSize=profile?.size||chairModal;
         return sizeAgreement(Math.sqrt(e.comp.w*e.comp.h),modalSize)>=.25&&chairShapeOk(e.comp,profile);
       };
+      // Cross-family duplicate suppression was tried here and is NOT in the
+      // code, because it measured as a no-op on every plan and variant.
+      //
+      // The near-duplicate merge above is deliberately per-family, so a ring of
+      // small seats is not swallowed by a gap measured from the big ones, and
+      // that leaves no suppression BETWEEN families. On `downscale-70` that
+      // looked like the cause of 73 false chairs: a 24px armchair fragments
+      // into 8-14px pieces which are too far from the primary modal to be
+      // claimed, form a minority family of their own, and pass the
+      // table-adjacency test trivially. But the pieces sit BESIDE their parent
+      // chair, 15-40px from its centre, not inside it — "nothing sits inside a
+      // chair" is true and removes nothing. See the family diagnostics'
+      // `crowding` figure for what does separate them, and why it is not
+      // gated on.
       const chairs=chairUniform
         ?chairEntries.filter(chairAccepted).map(e=>e.comp)
         :chairComps;
@@ -3808,7 +3862,14 @@
     return t(p.kind==="table"?"review.familyTitle.table":"review.familyTitle.object",{type:typeLabel});
   }
   function questionText(q){
-    if(q.questionType==="combinedDiningGroup")return t("question.combinedDiningGroup",{memberCount:q.questionParams?.memberCount??"?"});
+    if(q.questionType==="combinedDiningGroup"){
+      const memberCount=q.questionParams?.memberCount??"?",count=q.coversGroups||1;
+      // A question standing for several identical arrangements says so, rather
+      // than looking like a question about one of them.
+      return count>1
+        ?t("question.combinedDiningGroupRepeated",{memberCount,count})
+        :t("question.combinedDiningGroup",{memberCount});
+    }
     return q.question||"";
   }
   function difficultQuestionCardHTML(event){
@@ -4119,12 +4180,20 @@
       const event=activeEvent(),pi=event.analysis?.planIntelligence,q=pi?.uncertainQuestions.find(x=>x.id===b.dataset.question);if(!q)return;
       const action=b.dataset.questionAction;
       if(action==="open"){ui.activeQuestionId=q.id;ui.activeReviewGroupId=null;ui.selectedCandidateId=null;ui.reviewCenterOpen=false;render();return;}
-      const group=pi.furnitureGroups.find(g=>g.id===q.groupId),memberIds=group?.memberIds||[];
+      // One question can stand for several identical arrangements, and each of
+      // them gets its OWN decision record: a grouping decision belongs to the
+      // tables it is about, and one record shared across arrangements is the
+      // data-model bug already fixed once in this repository.
+      const groupIds=q.groupIds?.length?q.groupIds:[q.groupId];
+      const groups=groupIds.map(id=>pi.furnitureGroups.find(g=>g.id===id)).filter(Boolean);
+      const memberIds=groups[0]?.memberIds||[];
       if(!canMutate(event,"answer a plan question"))return;
       const decision=action==="yes"?"merged":"separate";
       event.analysis.groupingDecisions ||= [];
-      event.analysis.groupingDecisions.push({id:uid("groupdecision"),memberIds:[...memberIds],decision,decidedAt:nowISO(),fromQuestionId:q.id});
-      state.verifiedExamples.push({id:uid("verified"),eventId:event.id,savedAt:nowISO(),kind:"grouping-question",question:q.question,answer:action==="yes"?"one-group":"separate-tables",memberCandidateIds:memberIds});
+      for(const group of groups){
+        event.analysis.groupingDecisions.push({id:uid("groupdecision"),memberIds:[...group.memberIds],decision,decidedAt:nowISO(),fromQuestionId:q.id});
+        state.verifiedExamples.push({id:uid("verified"),eventId:event.id,savedAt:nowISO(),kind:"grouping-question",question:q.question,answer:action==="yes"?"one-group":"separate-tables",memberCandidateIds:group.memberIds});
+      }
       recomputePlanIntelligence(event);
       const newPi=event.analysis.planIntelligence;
       touchEvent(event);ui.activeQuestionId=null;render();

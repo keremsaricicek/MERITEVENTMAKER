@@ -198,7 +198,37 @@
         kind: sg.kind,
       });
     }
-    return groups.sort((a, b) => b.memberIds.length - a.memberIds.length);
+    // One family, one decision.
+    //
+    // Similarity clustering is the right unit for PROPAGATION — it is what
+    // makes "apply to all" safe — but it is the wrong unit to put in front of a
+    // person. Measured on the Golden Plan it produced twelve review groups, of
+    // which seven were singletons and the same kind-and-type appeared in three
+    // separate cards: three "square table family", two "round table family",
+    // two "rectangle table family", three "chair object family", two "stage
+    // object family". An operator asked the same question five times has been
+    // given five decisions to make, not five pieces of information.
+    //
+    // So clusters are merged for review by what the operator is actually being
+    // asked about, which is the object's kind and type. Each merged group keeps
+    // its constituent clusters, so anything that wants to propagate a decision
+    // can still do it cluster by cluster rather than across the whole family.
+    const merged = new Map();
+    for (const g of groups) {
+      const key = `${g.kind}:${g.titleParams.type}`;
+      const hit = merged.get(key);
+      if (!hit) { merged.set(key, { ...g, clusters: [{ memberIds: g.memberIds, outlierIds: g.outlierIds }] }); continue; }
+      hit.memberIds = hit.memberIds.concat(g.memberIds);
+      hit.totalInFamily += g.totalInFamily;
+      hit.consistentCount += g.consistentCount;
+      hit.outlierIds = hit.outlierIds.concat(g.outlierIds);
+      hit.clusters.push({ memberIds: g.memberIds, outlierIds: g.outlierIds });
+    }
+    return [...merged.values()]
+      .map(g => ({ ...g,
+        question: `${g.totalInFamily} similar ${g.titleParams.type} object${g.totalInFamily === 1 ? "" : "s"} found. `
+          + `${g.consistentCount} look consistent, ${g.memberIds.length} need review.` }))
+      .sort((a, b) => b.memberIds.length - a.memberIds.length);
   }
 
   // ---- Difficult-item queue (Concept 1): only genuinely ambiguous, high-value
@@ -208,15 +238,50 @@
   // unit), or a candidate whose aspect ratio sits in the round/rectangle
   // boundary zone.
   function buildDifficultQuestions(candidates, furnitureGroups) {
-    const out = [];
+    const byId = new Map(candidates.map(c => [c.id, c]));
+    // One question per repeated ARRANGEMENT, not per group.
+    //
+    // Measured on the Golden Plan, this asked thirteen questions of which eight
+    // were literally the same question — "3 physical tables touch and align; do
+    // they operate as one seating group?" — about eight identical arrangements
+    // of three identical square tables. Answering the same question eight times
+    // is not eight pieces of information, and the sprint's review-consolidation
+    // rule is explicit that a family should be one decision.
+    //
+    // Two arrangements are the same question when they have the same number of
+    // tables and the same multiset of table types. Anything that differs in
+    // either stays its own question, so the two four-table groups, the
+    // rectangle+square mix and the pair of round tables are still asked
+    // separately.
+    //
+    // Consolidation is presentational only. Every group the question covers is
+    // carried in groupIds and gets its OWN decision record when the operator
+    // answers, because a grouping decision belongs to the tables it is about —
+    // sharing one record across arrangements is the data-model bug this
+    // repository has already fixed once.
+    const byArrangement = new Map();
     for (const fg of furnitureGroups) {
       if (fg.memberIds.length < 2) continue;
       if (fg.decision) continue; // already answered by a human — never re-ask the same question.
-      out.push({ id: uid("question"), candidateId: fg.memberIds[0], groupId: fg.id, kind: "grouping",
+      const types = fg.memberIds.map(id => byId.get(id)?.type || "?").sort().join("+");
+      const key = `${fg.memberIds.length}:${types}`;
+      const hit = byArrangement.get(key);
+      if (hit) { hit.groupIds.push(fg.id); continue; }
+      byArrangement.set(key, {
+        id: uid("question"), candidateId: fg.memberIds[0], groupId: fg.id, groupIds: [fg.id],
+        // What makes two arrangements the same question, recorded so the
+        // consolidation is checkable rather than implied by a count.
+        arrangement: key,
+        kind: "grouping",
         question: `Do these ${fg.memberIds.length} connected tables operate as one seating group?`,
-        questionType: "combinedDiningGroup", questionParams: { memberCount: fg.memberIds.length } });
+        questionType: "combinedDiningGroup",
+        questionParams: { memberCount: fg.memberIds.length },
+      });
     }
-    return out;
+    // The count each question resolves, so the operator can see what one answer
+    // is worth and the effort measurement is not quietly hiding anything.
+    return [...byArrangement.values()].map(q => ({ ...q, coversGroups: q.groupIds.length }))
+      .sort((a, b) => b.coversGroups - a.coversGroups);
   }
 
   // ---- Capacity: physical seat count purely from detected chair objects —

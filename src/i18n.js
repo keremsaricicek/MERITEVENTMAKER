@@ -111,6 +111,8 @@
     // and app-v8.js's questionText() renders it through this table so a
     // Turkish UI never leaks English question text.
     "question.combinedDiningGroup": { en: "Do these {memberCount} connected tables operate as one seating group?", tr: "Bu {memberCount} bitişik masa tek bir oturma grubu olarak mı kullanılıyor?" },
+    "question.combinedDiningGroupRepeated": { en: "This arrangement of {memberCount} connected tables appears {count} times. Do they operate as one seating group?", tr: "{memberCount} bitişik masadan oluşan bu düzen planda {count} kez geçiyor. Tek bir oturma grubu olarak mı kullanılıyorlar?" },
+    "question.coversGroups": { en: "One answer resolves {count} identical arrangements.", tr: "Tek bir yanıt, birebir aynı {count} düzeni çözer." },
     "review.center": { en: "Review Center", tr: "İnceleme Merkezi" },
     "review.difficultQuestions": { en: "Difficult questions", tr: "Zor Sorular" },
     "review.consistentOf": { en: "consistent", tr: "tutarlı" },

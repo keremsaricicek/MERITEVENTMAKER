@@ -239,7 +239,7 @@ function evaluate(annot, det) {
       // Where the detector saw a chair and the drawing has none. Positions, not
       // a count: "8 false chairs" cannot be acted on, "8 false chairs all inside
       // the stage" can.
-      spurious: all.spurious.slice(0, 20).map(c => ({
+      spurious: all.spurious.slice(0, 120).map(c => ({
         cx: Math.round(c.cx), cy: Math.round(c.cy),
         w: Math.round(c.w || 0), h: Math.round(c.h || 0),
       })),

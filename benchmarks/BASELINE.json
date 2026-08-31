@@ -1,6 +1,6 @@
 {
-  "recordedAt": "2026-08-31T13:38:30.670Z",
-  "commit": "50d21327cf463fb083386e71997cd5a8497e5e17",
+  "recordedAt": "2026-08-31T14:07:27.162Z",
+  "commit": "a3f7cb0655ef0d90f360f7286597a884485287b8",
   "note": "Measured by benchmarks/run-benchmark.mjs against the annotations in benchmarks/annotations/. Classical computer vision (Assisted Detection); no trained model is involved in these numbers.",
   "guardedFields": [
     {
@@ -129,8 +129,8 @@
       "tables.recall": 1,
       "tables.f1": 1,
       "chairs.detectedTotal": 80,
-      "humanEffort.reviewGroups": 2,
-      "humanEffort.uncertainQuestions": 4
+      "humanEffort.reviewGroups": 1,
+      "humanEffort.uncertainQuestions": 1
     },
     {
       "planId": "adversarial-text-v1",
@@ -173,8 +173,8 @@
       "tables.recall": 1,
       "tables.f1": 0.958,
       "chairs.detectedTotal": 112,
-      "humanEffort.reviewGroups": 12,
-      "humanEffort.uncertainQuestions": 13,
+      "humanEffort.reviewGroups": 5,
+      "humanEffort.uncertainQuestions": 5,
       "chairs.tp": 107,
       "chairs.fp": 5,
       "chairs.fn": 6,
