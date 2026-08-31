@@ -75,6 +75,9 @@ async function detect(browser, imagePath) {
   if (process.env.MERIT_BENCH_NO_FRAGMENT_FILTER) {
     await page.addInitScript(() => { globalThis.MERIT_DISABLE_FRAGMENT_FILTER = true; });
   }
+  if (process.env.MERIT_BENCH_ALL_CHAIR_SOURCES) {
+    await page.addInitScript(() => { globalThis.MERIT_ALL_CHAIR_SOURCES = true; });
+  }
   await page.goto(`${app.baseUrl}/index.html`);
   await page.waitForLoadState("networkidle");
   await page.click('.appbar [data-action="create-event"]');
@@ -261,6 +264,13 @@ function evaluate(annot, det) {
       groundTruth: gtTables.length, detected: detTables.length, ...tables,
       missedIds: tableMatch.missed.map(g => g.id),
       spuriousCount: tableMatch.spurious.length,
+      // Where the false positives actually are, not just how many. A count
+      // says a change cost two tables; these say whether they are the same two
+      // as last time, and a position is the only way to go and look at them.
+      spurious: tableMatch.spurious.slice(0, 20).map(c => ({
+        cx: Math.round(c.cx), cy: Math.round(c.cy),
+        w: Math.round(c.w), h: Math.round(c.h),
+      })),
     },
     tableTypeAccuracy: typeAccuracy,
     chairs: chairScore,

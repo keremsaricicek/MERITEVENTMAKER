@@ -1880,6 +1880,20 @@
         // per-pixel mask so a table candidate can later be asked the direct
         // question "is this thing made of table?". Chosen by how much of the
         // drawing it covers, which on a seating plan is the table fill.
+        //
+        // Asking every solid tint family instead, and taking the best answer,
+        // was tried here: it is the same "a plan may have two families" fix
+        // that worked for chairs, and this plan does draw its bistro tables in
+        // a different finish (tan, luma 213) from its banquet tables (pale
+        // grey, luma 229). It changed nothing on the real plan — the tan is
+        // not a tint family at all, so there was no second family to find —
+        // and it cost the dense fixture four table false positives, because
+        // there a second solid family exists and "made of SOME furniture tone"
+        // is a weaker question than "made of THE table tone".
+        //
+        // The real-plan bistro finish needs the tone model to see tan as a
+        // family in the first place; widening this consumer of it does not
+        // help. Left as it was, with the finding recorded.
         surfaceMask=masks.tints.length?masks.tints.reduce((best,m)=>{
           let n=0;for(let i=0;i<total;i+=7)if(m[i])n++;
           return (!best||n>best.n)?{mask:m,n}:best;
@@ -1995,6 +2009,12 @@
       // specific source wins and the duplicate is dropped (overlap of the
       // smaller box, not IoU, because the masks disagree slightly on size).
       const chairEntries=[];
+      // Which chair family an entry belongs to. Everything the primary source
+      // claimed is one family; each secondary family admitted below is its own.
+      // This is the axis the whole chair stage reasons on from here down —
+      // "which family is this, and does it look like the rest of THAT family"
+      // rather than "does this look like the one modal object on the plan".
+      const chairFamilyOf=e=>(e.source||"").startsWith("family:")?e.source:"primary";
       const addChairs=(comps,labels,name)=>{
         for(const c of comps){
           if(chairEntries.some(e=>sameObject(e.comp,c)))continue;
@@ -2040,7 +2060,200 @@
       // known, so each component can be assigned to whichever modal it agrees
       // with. That is real work, not a threshold, and a chair number bought by
       // destroying table recall is worth nothing. See the sprint report.
-      const activeChairSources=useColourOnly?[colourChairs]:chairSources;
+      // A/B switch so the cost of the colour-only gate can be measured on the
+      // same build against per-family ground truth, rather than argued about.
+      // Benchmarks set it; the product never does.
+      //
+      // ---- secondary chair families (measured, see the table) ---------------
+      //
+      // Against per-chair ground truth on the real plan, the colour source is
+      // exactly right and exactly incomplete:
+      //
+      //                     colour only        every source
+      //   orange armchair    79/79              79/79
+      //   bistro chair        0/10             10/10
+      //   pale outlined       0/24             24/24
+      //   chair TP / FP      79 / 0           113 / 303
+      //   table F1            0.882             0.804
+      //
+      // The two missing families are not invisible to this pipeline. Every one
+      // of the 34 is found by a source the colour gate discards -- along with
+      // 303 things that are not chairs. That makes this a PRECISION problem
+      // rather than a recall one, and precision is answerable with evidence.
+      //
+      // A real chair on a floor plan sits against a table. A shard of linework
+      // does not, and neither does printed text. So the candidates the colour
+      // source did not claim are grouped into families by size and shape, and
+      // a family is admitted only when most of its members are adjacent to a
+      // table SURFACE component -- available here because the surface masks
+      // are built in this same pass. Repetition alone is NOT enough and was
+      // measured wrong before (benchmarks/BISTRO-MERGE.md); adjacency is
+      // evidence a text run or a wall fragment cannot fake.
+      //
+      // "Near a bigger thing" is not that evidence on its own, and measuring it
+      // proved it: printed matter sits INSIDE a drawn legend box, whose filled
+      // interior is itself a surface component, so every glyph of the capacity
+      // block "touched a surface" and nine of them were admitted as chairs.
+      //
+      // The physical fact is narrower than adjacency. You sit AGAINST a table,
+      // never inside one. So a candidate whose centre pixel belongs to the
+      // surface it is near is contained BY that surface, not seated at it, and
+      // it does not count. This is tested against the surface's actual mask
+      // rather than its bounding box, because a chair in the ring around a
+      // round table is inside that table's bounding SQUARE while being well
+      // clear of the disc -- a box test would throw away every round-table
+      // chair on this plan to catch the glyphs.
+      const surfaceEntries=sources.flatMap(src=>src.comps.map(c=>({comp:c,labels:src.labels})));
+      const gapTo=(a,b)=>Math.max(0,Math.max(a.x-(b.x+b.w),b.x-(a.x+a.w)))
+        +Math.max(0,Math.max(a.y-(b.y+b.h),b.y-(a.y+a.h)));
+      const surfaces=surfaceEntries.map(e=>e.comp);
+      const containedBy=(c,e)=>{
+        const cx=Math.round(c.x+c.w/2),cy=Math.round(c.y+c.h/2);
+        if(cx<0||cy<0||cx>=width||cy>=height||!e.labels)return false;
+        return e.labels[cy*width+cx]===e.comp.label;
+      };
+      //
+      // And "something bigger nearby" is not the test either. Measured on the
+      // real plan, the surface each capacity-block glyph was found against was
+      // its own WORD: 49x20, 38x20, 58x21 — bigger, yes, but exactly as tall
+      // as the glyph and grown only sideways. The surfaces real seats sit
+      // against were 36x32, 67x67, 68x69.
+      //
+      // A table is broader than a chair in EVERY direction and several times
+      // its area, because it seats several of them along each usable side. A
+      // line of text can only ever be as tall as its own letters. That is the
+      // difference, and it is a fact about furniture rather than a threshold
+      // chosen to make this plan pass. The two numbers below are read off the
+      // real plan (real seats: 3.3x area and up; glyphs: 1.1-2.9x) and are
+      // guarded by the benchmark.
+      // An aspect bar on the surface was tried here too -- a table is roughly
+      // as broad as it is deep, a line of text is a line -- and it changed
+      // nothing on any fixture, so it is not in the code. The five remaining
+      // false chairs reach their surfaces some other way. An unexercised
+      // constant is an unmeasured claim, and this one would also reject a long
+      // trestle table, which is a real seat surface.
+      const SEAT_SURFACE_MIN_AREA=3;
+      const seatSurfaceFor=c=>{
+        const reach=Math.max(c.w,c.h)*.7,area=c.w*c.h,longSide=Math.max(c.w,c.h);
+        return surfaceEntries.find(e=>e.comp!==c&&!sameObject(e.comp,c)
+          &&gapTo(c,e.comp)<=reach
+          &&Math.min(e.comp.w,e.comp.h)>longSide
+          &&e.comp.w*e.comp.h>=area*SEAT_SURFACE_MIN_AREA
+          &&!containedBy(c,e))||null;
+      };
+      const touchesSurface=c=>!!seatSurfaceFor(c);
+      // A secondary family also has to be a plausible SEAT. The primary colour
+      // family gives the reference: on the real plan its chairs are ~35px, the
+      // bistro chairs are ~17px and the pale crescents ~25px, so a factor of
+      // about two below the reference is a real minority family. Without this
+      // band the adjacency rule happily admitted families of 4-6px specks --
+      // they repeat, and on a dense plan everything is near something.
+      const SECONDARY_MIN_MEMBERS=4,SECONDARY_MIN_ADJACENT=.7;
+      // Two bounds, and they anchor to different things on purpose.
+      //
+      // The FLOOR is relative to the primary chair family: a minority seat is
+      // smaller than the main one but not by an order of magnitude. On the real
+      // plan the reference is ~35px, the bistro chairs are ~17 and the pale
+      // crescents ~25. Without a floor, adjacency admitted families of 4-6px
+      // specks -- they repeat, and on a dense plan everything is near something.
+      //
+      // The CEILING is relative to the plan's own SURFACES, not to the chair.
+      // Anchoring it to the chair (1.6x of 35 = 56px) admitted a family at
+      // table scale, which removed 22 of 22 square tables from the table pool
+      // and took table F1 to 0.529. Nothing the size of this plan's surfaces
+      // may be claimed as a chair; the table pool needs it more.
+      const SECONDARY_MIN_SIDE_RATIO=.4,SECONDARY_MAX_SURFACE_RATIO=.75;
+      const secondaryFamilies=[];
+      let primaryFamilyComps=colourChairs?colourChairs.comps:[];
+      if(useColourOnly&&!globalThis.MERIT_ALL_CHAIR_SOURCES){
+        // The PRIMARY source is not one family either, and assuming it was is
+        // what hid the bistro seats for so long. On the real plan the accent
+        // colour belongs to both the 34px armchairs and the 17px bistro
+        // chairs: the colour cluster offers 111 components, the modal size
+        // gate downstream keeps 79, and the ~10 it drops are real chairs found
+        // by the strongest evidence this pipeline has. They were thrown away
+        // for not resembling their bigger cousins.
+        //
+        // So the colour source is split the same way as everything else: its
+        // dominant size family is the REFERENCE (it defines what a chair is on
+        // this plan, and everything downstream measures against it), and its
+        // minority members go back into the pool to earn admission on the same
+        // adjacency evidence as any other family. A minority family is not
+        // trusted because it shares a colour -- printed matter in the accent
+        // colour would share it too -- it is trusted because most of its
+        // members sit against a table surface.
+        const primaryModal=modalMagnitude(colourChairs.comps.map(c=>Math.sqrt(c.w*c.h)));
+        const inPrimaryFamily=c=>!primaryModal||sizeAgreement(Math.sqrt(c.w*c.h),primaryModal)>=.25;
+        const claimed=colourChairs.comps.filter(inPrimaryFamily);
+        primaryFamilyComps=claimed;
+        const extra=colourChairs.comps.filter(c=>!inPrimaryFamily(c))
+          .map(c=>({comp:c,source:colourChairs}));
+        for(const src of chairSources){
+          if(src===colourChairs)continue;
+          for(const c of src.comps){
+            if(claimed.some(k=>sameObject(k,c))||extra.some(k=>sameObject(k.comp,c)))continue;
+            extra.push({comp:c,source:src});
+          }
+        }
+        // Family key: size and elongation, both on a log scale, so a family is
+        // "objects drawn the same" rather than "objects within N pixels".
+        const keyOf=c=>{
+          const side=Math.sqrt(c.w*c.h),elong=Math.max(c.w,c.h)/Math.max(1,Math.min(c.w,c.h));
+          return Math.round(Math.log(side)/Math.log(1.18))+":"+Math.round(Math.log(elong)/Math.log(1.25));
+        };
+        const medianSide=list=>{
+          const v=list.map(c=>Math.sqrt(c.w*c.h)).sort((a,b)=>a-b);
+          return v.length?v[v.length>>1]:0;
+        };
+        const referenceSide=medianSide(claimed);
+        const surfaceSide=medianSide(surfaces.filter(c=>Math.min(c.w,c.h)>=6));
+        const groups=new Map();
+        for(const e of extra){const k=keyOf(e.comp);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(e);}
+        for(const [key,members] of groups){
+          if(members.length<SECONDARY_MIN_MEMBERS)continue;
+          const sides=members.map(m=>Math.sqrt(m.comp.w*m.comp.h)).sort((a,b)=>a-b);
+          const side=sides[sides.length>>1];
+          const sizeOk=(!referenceSide||side>=referenceSide*SECONDARY_MIN_SIDE_RATIO)
+            &&(!surfaceSide||side<=surfaceSide*SECONDARY_MAX_SURFACE_RATIO);
+          // Two questions, not one. The family answers "is a second kind of
+          // seat drawn on this plan at all", and only a family most of whose
+          // members sit at a table may say yes. Each MEMBER then answers "am I
+          // one of them" for itself.
+          //
+          // Both are needed, because the trap on this plan is a family that is
+          // genuinely mixed: the capacity block is printed at chair scale in
+          // the chair's own colour, so its glyphs land in the same size-and-
+          // shape family as the real bistro seats. Admitting the family whole
+          // takes nine glyphs with it; rejecting it whole loses the seats.
+          const seated=members.filter(m=>touchesSurface(m.comp));
+          const adjacent=seated.length;
+          const share=adjacent/members.length;
+          const admitted=sizeOk&&share>=SECONDARY_MIN_ADJACENT;
+          secondaryFamilies.push({key,members:members.length,adjacent,
+            share:Number(share.toFixed(2)),admitted,sizeOk,
+            side:Math.round(side),referenceSide:Math.round(referenceSide),surfaceSide:Math.round(surfaceSide),
+            source:members[0].source.name});
+          // One entry per originating source, all under the same family name.
+          // The label map a component was found in is what shape analysis has
+          // to re-read its pixels from, so a family whose members came from two
+          // masks cannot be pushed as one source with one of their label maps —
+          // the other half would be measured against the wrong pixels.
+          if(admitted){
+            const bySource=new Map();
+            for(const m of seated){
+              if(!bySource.has(m.source))bySource.set(m.source,[]);
+              bySource.get(m.source).push(m.comp);
+            }
+            for(const [src,comps] of bySource)
+              chairSources.push({name:"family:"+key,labels:src.labels,rawCount:comps.length,comps});
+          }
+        }
+      }
+      const admittedFamilies=secondaryFamilies.filter(f=>f.admitted);
+      const activeChairSources=(useColourOnly&&!globalThis.MERIT_ALL_CHAIR_SOURCES)
+        ?[{...colourChairs,comps:primaryFamilyComps},
+          ...chairSources.filter(src=>src.name.startsWith("family:"))]
+        :chairSources;
       const specificCount=activeChairSources.reduce((n,src)=>n+src.comps.length,0);
       // What each chair source actually offered, kept in diagnostics. Without
       // this the only visible fact is the final count, which cannot tell "the
@@ -2050,6 +2263,15 @@
         name:src.name,offered:src.comps.length,
         rawPool:src.rawCount??null,
       })).concat([{name:"luma-fallback",offered:fallbackChairComps.length,rawPool:null}]);
+      // Every secondary family considered, admitted or not, with the evidence
+      // that decided it. A family rejected for sitting nowhere near a table is
+      // the most useful line in this whole diagnostic.
+      const secondaryFamilyDiagnostics={
+        considered:secondaryFamilies.length,
+        admitted:admittedFamilies.length,
+        minMembers:SECONDARY_MIN_MEMBERS,minAdjacentShare:SECONDARY_MIN_ADJACENT,
+        families:secondaryFamilies.slice().sort((a,b)=>b.members-a.members).slice(0,12),
+      };
       if(specificCount>=6){
         for(const src of activeChairSources)addChairs(src.comps,src.labels,src.name);
         chairSource=activeChairSources.find(src=>src.comps.length)?.name||"none";
@@ -2079,14 +2301,32 @@
       // centres closer together than ~0.55 of one chair cannot be two chairs on
       // a plan whose chairs are all one size, so they are merged into their
       // union. Measured on the venue plan: 63 such pairs out of 241.
+      //
+      // The gap is per FAMILY, not per plan. A merge distance taken from the
+      // majority chair (~34px here) is wider than a minority chair is big, so
+      // a global gap would swallow whole rings of the smaller seats into one
+      // blob each — the families would be recovered above and then quietly
+      // destroyed here.
       {
-        const provisional=modalMagnitude(chairEntries.map(e=>Math.sqrt(e.comp.w*e.comp.h)));
+        const provisionalOf=list=>modalMagnitude(list.map(e=>Math.sqrt(e.comp.w*e.comp.h)));
+        const gapByFamily=new Map();
+        for(const e of chairEntries){
+          const k=chairFamilyOf(e);
+          if(!gapByFamily.has(k))gapByFamily.set(k,[]);
+          gapByFamily.get(k).push(e);
+        }
+        for(const [k,list] of gapByFamily){
+          const p=provisionalOf(list);
+          gapByFamily.set(k,p&&p.support>=4?p.value*.55:0);
+        }
+        const provisional=provisionalOf(chairEntries);
         if(provisional&&provisional.support>=4){
-          const minGap=provisional.value*.55;
           const merged=[];
           for(const e of chairEntries){
+            const minGap=gapByFamily.get(chairFamilyOf(e))||0;
             const cx=e.comp.x+e.comp.w/2,cy=e.comp.y+e.comp.h/2;
-            const hit=merged.find(m=>Math.hypot(cx-(m.comp.x+m.comp.w/2),cy-(m.comp.y+m.comp.h/2))<minGap);
+            const hit=minGap&&merged.find(m=>chairFamilyOf(m)===chairFamilyOf(e)
+              &&Math.hypot(cx-(m.comp.x+m.comp.w/2),cy-(m.comp.y+m.comp.h/2))<minGap);
             if(!hit){merged.push(e);continue;}
             const x1=Math.min(hit.comp.x,e.comp.x),y1=Math.min(hit.comp.y,e.comp.y);
             const x2=Math.max(hit.comp.x+hit.comp.w,e.comp.x+e.comp.w),y2=Math.max(hit.comp.y+hit.comp.h,e.comp.y+e.comp.h);
@@ -2100,18 +2340,29 @@
         }
       }
       const chairComps=chairEntries.map(e=>e.comp);
-      const chairModal=modalMagnitude(chairComps.map(c=>Math.sqrt(c.w*c.h)));
+      const primaryComps=chairEntries.filter(e=>chairFamilyOf(e)==="primary").map(e=>e.comp);
+      // The modal is the PRIMARY family's, not the whole chair population's.
+      // Downstream this number stands for "how big is a chair on this plan"
+      // when subtracting chairs from the table pool and setting the split
+      // thresholds, and a minority family of smaller seats must not drag it
+      // down — a chair-scale short modal is exactly what over-split real
+      // tables the last time it moved.
+      const chairModal=modalMagnitude((primaryComps.length?primaryComps:chairComps).map(c=>Math.sqrt(c.w*c.h)));
       // A trustworthy chair population is MANY objects of ONE size. If the
       // population is not uniform we say so in the result and fall back to the
       // table-first path instead of reporting a seat count we cannot defend.
-      const chairUniform=!!chairModal&&chairComps.length>=6&&chairModal.support/chairModal.total>=.6;
+      // Judged on the primary family for the same reason: admitting a second,
+      // smaller family is evidence about the plan, not a loss of confidence in
+      // the first one.
+      const chairUniform=!!chairModal&&(primaryComps.length?primaryComps:chairComps).length>=6
+        &&chairModal.support/chairModal.total>=.6;
       // Chairs on a plan are drawn identically, so the repeated SHAPE is real
       // evidence too. Elongation is measured orientation-invariantly
       // (long/short side), because the same chair drawn on the left of a table
       // is the same object rotated 90 degrees, not a different one. This is
       // what tells a chair-sized printed glyph from a chair without OCR.
       const elongationOf=c=>Math.max(c.w,c.h)/Math.max(1,Math.min(c.w,c.h));
-      const chairModalElongation=modalMagnitude(chairComps.map(elongationOf));
+      const chairModalElongation=modalMagnitude((primaryComps.length?primaryComps:chairComps).map(elongationOf));
       // One elongation mode, deliberately. A second mode was implemented here
       // and REVERTED once the real plan had per-chair ground truth to measure
       // against -- see benchmarks/BISTRO-MERGE.md.
@@ -2133,13 +2384,57 @@
       // A second family is still the right idea, but it needs independent
       // evidence that text cannot fake -- adjacency to a table surface, not a
       // looser shape rule. Shape alone is not enough.
-      const chairShapeOk=c=>{
-        if(!chairUniform||!chairModalElongation)return true;
+      //
+      // That is what the secondary-family pass above does, and this is where
+      // its result is honoured: the elongation and size a candidate is judged
+      // against are ITS OWN family's, so a 17px crescent is not asked to
+      // resemble a 34px armchair. The gate is not loosened — each family is
+      // still held to a single repeated size and a single repeated shape, and
+      // a family only exists at all because most of its members sit against a
+      // table surface. A run of printed glyphs still fails, now for the reason
+      // it should: it never becomes a family.
+      const familyProfiles=new Map();
+      for(const e of chairEntries){
+        const k=chairFamilyOf(e);
+        if(!familyProfiles.has(k))familyProfiles.set(k,[]);
+        familyProfiles.get(k).push(e.comp);
+      }
+      for(const [k,comps] of familyProfiles){
+        familyProfiles.set(k,{
+          count:comps.length,
+          size:k==="primary"?chairModal:modalMagnitude(comps.map(c=>Math.sqrt(c.w*c.h))),
+          elongation:k==="primary"?chairModalElongation:modalMagnitude(comps.map(elongationOf)),
+        });
+      }
+      const profileFor=e=>familyProfiles.get(chairFamilyOf(e))||null;
+      // A note for whoever reaches the downstream rule "nothing at chair scale
+      // is a table", which is enforced with a single number taken from the
+      // majority chair.
+      //
+      // That looks like the same mistake as judging every chair against the
+      // majority chair, and this plan looks like the case that proves it: its
+      // five bistro tables are 36x31 to 36x39 against ~34x34 armchairs, so one
+      // armchair area is very nearly enough to reject them, and all five are
+      // in fact rejected somewhere. Taking the floor from the SMALLEST family
+      // instead was implemented and measured, and changed nothing on any of
+      // the five benchmark plans — the bistro tables die one stage earlier, at
+      // surface coverage, and the looser floor admitted nothing else either.
+      //
+      // So it is not here. A guard that is loosened for a reason that sounds
+      // right and measures as nothing is a guard weakened for free.
+      const chairShapeOk=(c,profile)=>{
+        const modalElongation=profile?.elongation||chairModalElongation;
+        if(!chairUniform||!modalElongation)return true;
         const elongation=elongationOf(c);
-        return Math.abs(Math.log(elongation/chairModalElongation.value))<=Math.log(1.6);
+        return Math.abs(Math.log(elongation/modalElongation.value))<=Math.log(1.6);
+      };
+      const chairAccepted=e=>{
+        const profile=profileFor(e);
+        const modalSize=profile?.size||chairModal;
+        return sizeAgreement(Math.sqrt(e.comp.w*e.comp.h),modalSize)>=.25&&chairShapeOk(e.comp,profile);
       };
       const chairs=chairUniform
-        ?chairComps.filter(c=>sizeAgreement(Math.sqrt(c.w*c.h),chairModal)>=.25&&chairShapeOk(c))
+        ?chairEntries.filter(chairAccepted).map(e=>e.comp)
         :chairComps;
       const detectionPath=chairUniform?"chair-first":"table-first";
       mark("chairs");
@@ -2248,7 +2543,28 @@
       // reason from, and never to a candidate that already carries chair
       // evidence -- a table surrounded by its own chairs is a table even if
       // its fill reads faintly.
+      //
+      // Coverage is asked of EVERY furniture tint family, not just the biggest
+      // one. Measuring the single largest family is the one-modal assumption
+      // again, one stage further down, and it cost this plan all five of its
+      // bistro tables: they are drawn in a paler cream with a fine grid
+      // texture, so against the majority tables' tone they score 0.124, 0.131
+      // and 0.132 against a 0.22 floor, while the grey wall panel kept in
+      // their place scores 0.997.
+      //
+      // "Is this made of the stuff the plan's majority tables are made of" is
+      // a different question from "is this made of furniture", and on a plan
+      // with two table finishes only the second one is worth asking.
+      //
+      // The seat-evidence exemption the paragraph above describes was also
+      // tried, twice, and is NOT what this code does. Exempting any low-cover
+      // candidate with a chair against it found all 46 tables and 55 false
+      // ones; requiring two chairs and modal size still gave 18 false ones
+      // against a baseline of 6. On a banquet floor every gap between a
+      // hundred chairs has chairs against it, so seats cannot carry that
+      // decision here. The finish can, once it is allowed to be plural.
       let surfaceRejected=0;
+      const uniqueBeforeSurface=globalThis.MERIT_DETECT_DEBUG?unique.map(u=>u.comp):null;
       if(surfaceMask){
         const surfaceCoverage=c=>{
           const x0=Math.max(0,Math.round(c.x)),y0=Math.max(0,Math.round(c.y));
@@ -2274,9 +2590,11 @@
       let debugPool=null;
       if(globalThis.MERIT_DETECT_DEBUG){
         const box=e=>({s:e.comp.source,x:Math.round(e.comp.x),y:Math.round(e.comp.y),
-          w:Math.round(e.comp.w),h:Math.round(e.comp.h),n:e.comp.count,fit:+dedupFitness(e.comp).toFixed(2)});
+          w:Math.round(e.comp.w),h:Math.round(e.comp.h),n:e.comp.count,fit:+dedupFitness(e.comp).toFixed(2),
+          cov:e.comp.surfaceCoverage??null});
         debugPool={provisionalModalArea:provisionalModalArea?Math.round(provisionalModalArea.value):null,
-          expanded:expanded.map(box),unique:unique.map(box)};
+          expanded:expanded.map(box),unique:unique.map(box),
+          preSurface:(uniqueBeforeSurface||[]).map(c=>box({comp:c}))};
       }
       for(const entry of unique)analyze([entry.comp],entry.labels);
       // The modal TABLE size must be measured over things that could be a
@@ -2398,7 +2716,27 @@
         if(s.agreement<.6)reasons.push(`size disagrees with the plan's modal object (${s.agreement.toFixed(2)})`);
         const aa=agreeWith(aspectOf(s.obb),modalAspect);
         if(aa<.85)reasons.push(`aspect ${aspectOf(s.obb).toFixed(2)} against plan modal ${modalAspect?modalAspect.toFixed(2):"?"}`);
-        if(s.seats===0)reasons.push("no seat adjacency");
+        // Seat adjacency is evidence only where it could be seating.
+        //
+        // Recovering this plan's minority chair families gave two architectural
+        // blobs their first seats and rescued both from this filter: a 45x99
+        // wall panel picked up the two bistro chairs standing 11px from it, and
+        // a 56x26 plinth picked up one. The comment below this block predicted
+        // the opposite — that recovered chairs would rescue the bistro TABLES
+        // and leave the seatless fragments alone. Half of that was right. The
+        // chairs came back; the bistro tables are still rejected upstream, so
+        // their chairs had no table to belong to and attached to the nearest
+        // wall instead.
+        //
+        // So a seat counts only for a candidate that is at least the size of
+        // the plan's own furniture — the wall panel's size agreement is 0.00.
+        // The rule stays "no seats at all", not "fewer than two": requiring
+        // two put a third reason on most of the plan, which tripped this
+        // filter's own self-disabling guard and switched it off entirely
+        // (table FP 8 -> 42). A filter that fires on everything is not strict,
+        // it is broken, and the guard was right to say so.
+        const seatsThatCount=s.agreement>=.25?s.seats:0;
+        if(seatsThatCount===0)reasons.push("no seat adjacency");
         return reasons;
       };
       const FRAGMENT_MIN_REASONS=3;
@@ -2636,7 +2974,7 @@
           chairsDetected:chairs.length,chairsAssociated:associatedSeats,chairsUnassociated:chairVenues.length,
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
-          mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,fragmentSuppression:fragmentDiagnostics,
+          mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,secondaryChairFamilies:secondaryFamilyDiagnostics,fragmentSuppression:fragmentDiagnostics,
           textGlyphChairsDropped,mergedRowVenuesDropped:mergedRowVenues.length,debugPool,
           sources:diagnosticsSources,chairSourceBreakdown,phaseMs,
           colorModel:accentModel?{isColorPlan:accentModel.isColorPlan,accentHue:accentModel.accentHue,

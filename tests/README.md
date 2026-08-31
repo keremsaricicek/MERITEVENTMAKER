@@ -30,6 +30,8 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `venue-model` | storage | a published layout version is no longer frozen |
 | `i18n` | ui | a raw translation key reaches the screen, or a language stops rendering |
 | `plan-intelligence-contract` | intelligence, **slow** | the detector fabricates, or its scene graph points at objects that do not exist |
+| `chair-families` | intelligence, **slow** | the detector can only describe one kind of chair again, or printed text gets in as the second kind |
+| `training-data-capture` | intelligence, **slow** | a human decision stops storing a real crop with its provenance, or a capture log starts calling itself a model |
 
 ## Environment
 

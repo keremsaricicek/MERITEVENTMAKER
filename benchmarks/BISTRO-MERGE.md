@@ -198,9 +198,9 @@ answer. Three attempts were needed to fix that honestly:
 A fixture that only contains the thing you are trying to find will approve any
 rule that finds it.
 
-## What is still open
+## The state that opened the multi-family work
 
-Against spatial ground truth the real plan now reads:
+Against spatial ground truth the real plan read:
 
 | chair family | GT | TP | FN | recall |
 |---|---|---|---|---|
@@ -209,17 +209,124 @@ Against spatial ground truth the real plan now reads:
 | pale outlined chair | 24 | 0 | 24 | **0.000** |
 | **total** | **113** | **79** | **34** | 0.699 |
 
-The armchair family is perfect. The other two are absent entirely — and until
+The armchair family was perfect. The other two were absent entirely — and until
 this annotation existed, "87 of 105" made that invisible.
 
-The five bistro tables are still missed, and so are all ten of their chairs.
-The 24 pale chairs are missed as whole objects, not partially.
+The recurring pattern: **this pipeline makes several independent global-modal
+decisions — table size, table aspect, chair shape — and each one deletes
+minority families by construction.** Loosening any of them without independent
+evidence lets printed matter in through the same door.
 
-The fix for the bistro family is still a second chair family — but admitted on
-evidence printed text cannot fake, such as adjacency to a table surface, not on
-a looser shape rule. Shape alone was tried and is recorded above.
+## The multi-family pass — what it changed and what it cost
 
-The recurring pattern remains: **this pipeline makes several independent
-global-modal decisions — table size, table aspect, chair shape — and each one
-deletes minority families by construction.** Loosening any of them without
-independent evidence lets printed matter in through the same door.
+The question every stage asked was "does this resemble THE modal object on this
+plan?", which only the majority family can answer yes to. It now asks "which
+family is this, and does it resemble the rest of THAT family?"
+
+| | before | after |
+|---|---|---|
+| chair TP / FP | 79 / 0 | **107** / 5 |
+| chair recall | 0.699 | **0.947** |
+| chair F1 | 0.823 | **0.951** |
+| orange armchair | 79/79 | 79/79 |
+| orange bistro chair | **0/10** | **8/10** |
+| pale outlined chair | **0/24** | **20/24** |
+| table TP / FP | 41 / 6 | 41 / **5** |
+| table F1 | 0.882 | **0.891** |
+| review groups | **8** | 12 |
+
+Table detection did not pay for the chairs: it improved. The four adversarial
+fixtures are unchanged to the digit.
+
+### Four places the same one-modal assumption was living
+
+1. **The final chair gate.** `sizeAgreement(17px, 34px modal)` scores 0, so a
+   minority seat could never pass. Each family is now judged against its own
+   modal size and elongation — the gate is not loosened, it is asked the right
+   question.
+2. **The primary source itself.** The colour cluster offered 111 components and
+   79 survived; the bistro chairs were found by the strongest evidence the
+   pipeline has and then discarded for not resembling their bigger cousins. The
+   colour source is now split too: its dominant family is the reference, its
+   minority members earn admission on the same adjacency evidence as any other.
+3. **The near-duplicate chair merge.** Its gap came from the majority chair
+   (~34px), which is wider than a minority chair is big — it would have merged
+   whole rings of recovered seats into one blob each. Now per family.
+4. **"A table is bigger than a chair."** Enforced with the majority chair's
+   area. A bistro table is bigger than a bistro chair. Now the floor is the
+   smallest seat the plan actually draws.
+
+### The evidence that keeps printed matter out
+
+A family is admitted only when most of its members sit against a table surface,
+and then only its seated members are taken. Both halves are needed, because the
+trap here is a family that is genuinely mixed: the capacity block is printed at
+chair scale in the chair's own colour, so its glyphs land in the same
+size-and-shape family as the real bistro seats. Admitting the family whole took
+nine glyphs with it; rejecting it whole lost the seats.
+
+"Near something bigger" was not enough on its own — measured, the surface each
+glyph was found against was its own **word**: 49×20, 38×20, 58×21. Bigger, and
+exactly as tall as the glyph. Real seats sit against 36×32, 67×67, 68×69. A
+table is broader than a chair in every direction and several times its area,
+because it seats several of them; a line of text can only be as tall as its own
+letters.
+
+### The prediction in this file was half wrong
+
+The section above said recovering the merged chairs would give the bistro
+tables seat adjacency and "leave the real plan's 7 seatless fragments exactly
+where they are." The chairs came back. The bistro tables stayed rejected — one
+stage earlier, before seats were ever counted — so their chairs had no table to
+belong to and attached to the nearest wall instead. Two architectural blobs
+gained their first seats and were rescued from the fragment filter: a 45×99 wall
+panel and a 56×26 plinth, taking table FP from 6 to 8.
+
+Fixed by qualifying the evidence rather than removing it: a seat counts only for
+a candidate that is at least the size of the plan's own furniture. The wall
+panel's size agreement is 0.00.
+
+Requiring *two* seats instead was also tried and is not in the code: it put a
+third reason on most of the plan, tripped the fragment filter's own
+self-disabling guard, and switched the filter off entirely — table FP 8 → 42. A
+filter that fires on everything is not strict, it is broken.
+
+### Two fixes measured and rejected
+
+**Plural surface masks.** The surface-coverage filter measures a candidate
+against the single tint family covering most of the drawing. This plan draws its
+bistro tables in tan (luma 213) and its banquet tables in pale grey (luma 229),
+so the bistro discs score 0.124–0.132 against a 0.22 floor while the grey wall
+panel kept in their place scores 0.997 — the same one-family error, one stage
+down. Asking every solid tint family and taking the best answer changed nothing
+on the real plan (the tan is not a tint family at all, so there was no second
+family to find) and cost the dense fixture four table false positives. Reverted.
+**The real fix is in the tone model, which never proposes a tan family.**
+
+**Seat-evidence exemption from the surface filter.** Exempting any low-coverage
+candidate with a chair against it found all 46 tables — every bistro included —
+and 55 false ones. Requiring two chairs and modal size still gave 18 against a
+baseline of 6. On a banquet floor every gap between a hundred chairs has chairs
+against it, so seats cannot carry that decision here.
+
+**An aspect bar on the seat's surface** (a table is roughly as broad as it is
+deep; a line of text is a line) changed nothing on any fixture and would reject
+a long trestle table. Not shipped — an unexercised constant is an unmeasured
+claim.
+
+## What is still open
+
+- **Five bistro tables, still missed**, for the surface-coverage reason above.
+  All five of the real plan's remaining table misses are these. The fix is a
+  tone model that sees tan as a family, not a wider filter downstream.
+- **Six chairs still missed** (2 bistro, 4 pale) and **five false chairs**, four
+  of which are capacity-block and GİRİŞ glyphs that reach a qualifying surface
+  some other way than the word blobs measured above.
+- **Operator effort rose**, 8 review groups to 12. Twenty-eight fewer objects to
+  place by hand against four more groups to review, but it is a cost.
+- **Robustness**: chair true positives rose on 14 of the 16 renderings and table
+  F1 recovered sharply on the worst of them (lowres-roundtrip 0.133 → 0.554,
+  jpeg-q20 0.476 → 0.714). The exception is `downscale-70`, where every object
+  is 30% smaller, the minority families land at ~12px and chair FP goes 0 → 73.
+  Small-scale renderings are where family admission is weakest, and that is
+  recorded rather than tuned away on one variant.

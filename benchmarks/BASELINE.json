@@ -1,6 +1,6 @@
 {
-  "recordedAt": "2026-08-31T09:30:07.214Z",
-  "commit": "4df43bdaea4f5fc6afd09fcd8f5ed06b94373a6a",
+  "recordedAt": "2026-08-31T12:46:15.364Z",
+  "commit": "ceb58ce8623cf872b1c6af2b8d10418cf3a5ca7b",
   "note": "Measured by benchmarks/run-benchmark.mjs against the annotations in benchmarks/annotations/. Classical computer vision (Assisted Detection); no trained model is involved in these numbers.",
   "guardedFields": [
     {
@@ -167,20 +167,20 @@
         "ocrAvailable": false
       },
       "tables.tp": 41,
-      "tables.fp": 6,
+      "tables.fp": 5,
       "tables.fn": 5,
-      "tables.precision": 0.872,
+      "tables.precision": 0.891,
       "tables.recall": 0.891,
-      "tables.f1": 0.882,
-      "chairs.detectedTotal": 79,
-      "humanEffort.reviewGroups": 8,
+      "tables.f1": 0.891,
+      "chairs.detectedTotal": 112,
+      "humanEffort.reviewGroups": 12,
       "humanEffort.uncertainQuestions": 12,
-      "chairs.tp": 79,
-      "chairs.fp": 0,
-      "chairs.fn": 34,
-      "chairs.precision": 1,
-      "chairs.recall": 0.699,
-      "chairs.f1": 0.823
+      "chairs.tp": 107,
+      "chairs.fp": 5,
+      "chairs.fn": 6,
+      "chairs.precision": 0.955,
+      "chairs.recall": 0.947,
+      "chairs.f1": 0.951
     }
   ]
 }
