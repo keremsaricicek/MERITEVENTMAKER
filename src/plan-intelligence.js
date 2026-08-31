@@ -111,13 +111,28 @@
   function featureVector(c) {
     return { area: c.w * c.h, aspect: c.w / Math.max(0.001, c.h), kind: c.kind, type: c.type, visual: c.visualDescriptor || null };
   }
+  // When the active provider is the learned encoder, the descriptor carries a
+  // `learned` unit vector alongside the four measured fields. It is an extra
+  // term, never a replacement: cosine distance between two 32-d unit vectors,
+  // weighted alongside the others rather than above them. A descriptor without
+  // one — a manually drawn candidate, a memory-restored one, or an install
+  // whose weights were never built — simply skips the term, which is why the
+  // encoder can be absent without any of this changing behaviour.
+  function learnedDistance(a, b) {
+    if (!a || !b || a.length !== b.length) return null;
+    let dotp = 0;
+    for (let i = 0; i < a.length; i++) dotp += a[i] * b[i];
+    return 1 - dotp; // both sides are unit-length, so this is in [0, 2]
+  }
   function visualDistance(v1, v2) {
     if (!v1 || !v2) return 0; // no real pixel signal on one side (e.g. a manually-drawn or memory-restored candidate) — fall back to geometry alone rather than penalizing an unknown.
     const fillDiff = Math.abs(v1.fillRatio - v2.fillRatio);
     const edgeDiff = Math.abs(v1.edgeDensity - v2.edgeDensity);
     const histDiff = v1.intensityHist.reduce((s, val, i) => s + Math.abs(val - v2.intensityHist[i]), 0) / 2;
     const quadDiff = v1.quadrantFill.reduce((s, val, i) => s + Math.abs(val - v2.quadrantFill[i]), 0) / 4;
-    return fillDiff * 1.5 + edgeDiff * 1.2 + histDiff * 1.5 + quadDiff * 1.3;
+    const learned = learnedDistance(v1.learned, v2.learned);
+    return fillDiff * 1.5 + edgeDiff * 1.2 + histDiff * 1.5 + quadDiff * 1.3
+      + (learned == null ? 0 : learned * 1.5);
   }
   function featureDistance(f1, f2) {
     if (f1.kind !== f2.kind) return Infinity;
@@ -127,13 +142,29 @@
   }
   function averageVisual(centroidVisual, incomingVisual, n) {
     if (!incomingVisual) return centroidVisual;
-    if (!centroidVisual) return { ...incomingVisual, intensityHist: [...incomingVisual.intensityHist], quadrantFill: [...incomingVisual.quadrantFill] };
+    if (!centroidVisual) return { ...incomingVisual, intensityHist: [...incomingVisual.intensityHist], quadrantFill: [...incomingVisual.quadrantFill],
+      learned: incomingVisual.learned ? [...incomingVisual.learned] : null };
     const blend = (a, b) => (a * (n - 1) + b) / n;
+    // A centroid of unit vectors is not a unit vector, and cosine distance
+    // against an un-normalised centroid would drift as a cluster grows. So the
+    // running mean is re-normalised, which is what makes it a direction the
+    // cluster agrees on rather than an average magnitude.
+    let learned = centroidVisual.learned || null;
+    if (incomingVisual.learned && learned && learned.length === incomingVisual.learned.length) {
+      const mean = learned.map((v, i) => blend(v, incomingVisual.learned[i]));
+      let norm = 0;
+      for (const v of mean) norm += v * v;
+      norm = Math.sqrt(norm) || 1;
+      learned = mean.map(v => v / norm);
+    } else if (!learned && incomingVisual.learned) {
+      learned = [...incomingVisual.learned];
+    }
     return {
       fillRatio: blend(centroidVisual.fillRatio, incomingVisual.fillRatio),
       edgeDensity: blend(centroidVisual.edgeDensity, incomingVisual.edgeDensity),
       intensityHist: centroidVisual.intensityHist.map((v, i) => blend(v, incomingVisual.intensityHist[i])),
       quadrantFill: centroidVisual.quadrantFill.map((v, i) => blend(v, incomingVisual.quadrantFill[i])),
+      learned,
     };
   }
   function buildSimilarityGroups(candidates, distanceThreshold = 1.6) {

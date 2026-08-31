@@ -1,121 +1,159 @@
-# Gate G — VisualEmbeddingProvider, licensing, and whether a model is justified
+# The visual representation: what ships, what it beat, and how to re-measure
 
 ```
-node benchmarks/embedding/measure-descriptor-baseline.mjs
+node benchmarks/embedding/extract-crops.mjs        # build the crop corpus (derived, gitignored)
+node benchmarks/embedding/train-encoder.mjs --gradcheck
+node benchmarks/embedding/train-encoder.mjs        # ~45s, writes encoder-weights.json
+node scripts/build-encoder-module.mjs              # inline the weights into src/
+node benchmarks/embedding/retrieval-benchmark.mjs  # the numbers below
 ```
 
-Writes `baseline.json`. Re-run it before proposing any learned model.
+## What ships
 
-## What shipped
-
-`MeritVisualEmbedding` in `src/app-v8.js` is the boundary a real learned
-embedding would plug into, so swapping one in is a provider registration rather
-than a rewrite of the similarity clustering. Detection now obtains descriptors
-through `resolveVisualEmbeddingProvider()`, not by calling the pixel function
-directly.
-
-`register(id, provider)` **requires** `trainedModel` to be declared explicitly
-and throws without it. The honesty rules downstream key off that flag rather
-than off a provider's name, so a provider cannot omit it and be quietly treated
-as a model — or quietly treated as not one.
-
-Exactly one provider is installed and **it is not a model**:
+A **trained** representation, and the word is used literally: 5,656 parameters
+fitted by gradient descent, multiplied by real pixels at inference time.
 
 | | |
 | --- | --- |
-| id | `handcrafted-descriptor-v1` |
-| kind | `handcrafted-descriptor` |
-| trainedModel | `false` |
-| dimensions | 14 — fill ratio, edge density, 8 intensity-histogram bins, 4 quadrant fills |
-| licence | none — computed in-product, no third-party weights |
+| id | `merit-plan-encoder-v1+handcrafted-descriptor-v1` |
+| kind | `learned-encoder + handcrafted-descriptor` |
+| `trainedModel` | **true** |
+| dimensions | 46 — a 32-d learned embedding, plus the 14-number descriptor |
+| parameters | 5,656 |
+| size in the offline package | 54 KB, inlined, never fetched |
+| licence | **trained in this repository on this project's own annotated plans** |
+| training data | 112 objects of the Golden Plan across 16 real re-renderings, 1,792 crops |
+| held out | 52 objects, and all four fixture plans entirely |
 
-Calling this an embedding would be false, and the project's rules forbid
-describing a pixel histogram as one. `kind` and `trainedModel` say what it is.
+### What `trainedModel: true` does not mean
 
-## Is a learned model justified? Measured: no.
+It does not mean a trained **domain model** is installed. Detection is still
+classical computer vision, `analysis.trainedModel` is still `false`, and the
+Plan Intelligence screen still says **DOMAIN MODEL NOT INSTALLED**. An encoder
+that ranks visual neighbours is not a detector.
+`tests/suites/plan-encoder.test.mjs` asserts both halves of that at once.
 
-Before shipping tens of megabytes of weights into an offline package there has
-to be a number the model must beat. Measured on real data, matching every
-detection to its annotated ground-truth object and scoring how well the
-descriptor separates classes:
+## The architecture
 
-| plan | matched objects | classes | silhouette | 1-NN accuracy |
-| --- | ---: | --- | ---: | ---: |
-| merit-real-venue | 42 | 37 square, 4 round, 1 entrance | 0.525 | **1.000 (41/41)** |
-| adversarial-text | 12 | 12 square | — | — |
-| adversarial-architecture | 10 | 10 round | — | — |
+```
+32x32x1   standardise per crop      (removes exposure and contrast)
+          conv 5x5 x8   relu pool2  ->  16x16x8
+          conv 3x3 x16  relu pool2  ->   8x8x16
+          conv 3x3 x24  relu pool2  ->   4x4x24
+          global average pool       ->   24
+          dense 24 -> 32, L2 normalise
+```
 
-1-NN accuracy is the metric that matters, because nearest-neighbour in
-descriptor space is exactly what the similarity clustering does. It is already
-**perfect** on the only plan that has more than one class. There is no measured
-headroom for a model to capture, so shipping ~30–90MB of weights to improve a
-1.000 is not defensible.
+Trained with InfoNCE: an anchor is a crop of one annotated object in one
+rendering, its positive is the **same object in a different rendering**, and
+the negatives are the other objects in the batch. No synthetic augmentation is
+used anywhere — the positive pairs are the Golden Plan genuinely re-rendered by
+`benchmarks/robustness/make-variants.mjs` (blurred, rescaled, recoloured, JPEG
+compressed, rotated), so what the encoder learns to ignore is what a real
+export or scan really does to a drawing.
 
-**Limits of that claim, stated rather than buried.** It rests on one plan and
-41 objects. The classes present — square vs round vs entrance — are visually
-very distinct; the silhouette of 0.525 shows the clusters do overlap, and 1-NN
-is the more forgiving of the two metrics. The discrimination that would
-actually be hard, sofa vs bench vs banquette, is not represented in any
-annotation yet. The two synthetic fixtures are single-class and cannot
-contribute a separation number at all. So this is evidence that a model is not
-justified *today*, not proof that one never will be.
+The backward pass is hand-written, so it is checked against finite differences
+before anything is trained on it (`--gradcheck`, worst relative error 3.3e-7 on
+gradients up to 9.3e-3). An earlier version of that check sampled six
+near-identical crops, saturated the softmax, and passed on gradients of 1e-18
+against a numeric zero — it now fails if every numeric gradient is zero, because
+a check that cannot fail is not a check.
 
-The harness is committed so that decision gets revisited on evidence: when a
-plan appears where 1-NN drops, that is the moment to reopen this.
+## What it beat
 
-## Licence matrix
+Measured on 2,699 crops of annotated ground-truth boxes across 21 images, on
+**objects the encoder never trained on**. Top-1 retrieval accuracy:
 
-Researched against primary sources, because this is the part that is expensive
-to get wrong.
+| | handcrafted | learned | **both** |
+| --- | ---: | ---: | ---: |
+| same-object invariance | 0.7188 | 0.9447 | **0.9495** |
+| same-class retrieval | 0.9255 | 0.9075 | **0.9435** |
+| table-type retrieval | 0.8542 | 0.8625 | **0.8750** |
+| *held-out plans*, same-class | 1.0000 | 1.0000 | **1.0000** |
+| *held-out plans*, top-5 purity | 0.9573 | 0.9947 | **0.9947** |
+
+The learned encoder alone is far better at knowing two crops are the same
+physical object and slightly **worse** at same-class retrieval. That trade is
+why it did not ship alone: a representation that hands back one number to buy
+another has not earned promotion, and the trade is invisible in an average.
+Concatenated with the descriptor, the worst movement on any measured metric is
+**+0.0000** — it wins or ties everywhere. That is the whole promotion argument.
+
+### Why these two metrics
+
+They are what the product does with a representation, not proxies for it:
+
+- **Same-object invariance** is Plan Memory. A human corrects an object, the
+  plan is re-analysed, and the correction has to land back on the same object.
+  It was the weakest number the old descriptor had, and nothing measured it.
+- **Same-class retrieval** is Teach AI propagation. A human judges one object
+  and the decision spreads to the ones that look like it.
+
+The query's own crops are removed from the gallery entirely in the same-class
+test, so nothing can score by finding itself.
+
+## What this supersedes
+
+An earlier pass measured 1-NN class accuracy on 41 matched objects of one plan,
+got **1.000**, and concluded there was no headroom for a model. That measurement
+was not wrong; it was narrow. Three visually very distinct classes (square,
+round, entrance) on 41 objects is an easy problem, and it left out the two
+things a representation is actually used for. Measured properly — over 2,699
+crops, including all 113 chairs and three chair families, and including
+invariance across real re-renderings — the same descriptor scores **0.719** on
+the metric Plan Memory depends on.
+
+The old conclusion also assumed any model meant "ship 30–90 MB of third-party
+weights". That framing is what made the answer no. Training a domain-specific
+encoder on this project's own annotated plans costs 54 KB and no licence
+question at all.
+
+## Licence matrix — still valid, and now not needed
+
+Researched against primary sources. It is kept because the reasoning still
+applies to any future candidate, and because the **code licence is not the
+licence that matters**.
 
 | candidate | code licence | **weights** licence | commercially usable | notes |
 | --- | --- | --- | --- | --- |
-| **DINOv2** (ViT-S/14, 21M params) | Apache-2.0 | **Apache-2.0** | **Yes** | The repo README states plainly: *"DINOv2 code and model weights are released under the Apache License 2.0."* Originally CC-BY-NC and relicensed after community pressure. Pretrained on LVD-142M (142M images), not ImageNet-1k — which is what keeps the weights clean. Requires shipping the Apache-2.0 text and NOTICE. |
-| MobileNetV3 / ResNet via **timm** or **torchvision** | Apache-2.0 / BSD | **ImageNet-derived — restricted** | **No, not safely** | The permissive code licence is the easy half and the misleading half. ImageNet's access agreement binds researchers to *non-commercial research and educational purposes*, and binds their for-profit employer too. Whether trained weights are a derivative work of the dataset is genuinely unsettled; the field leans on a fair-use argument, not on permission. For internal hospitality software that is an unnecessary risk. |
-| **CLIP** (OpenAI) | MIT | MIT | Yes | ~350MB for ViT-B/32. Far too large for an offline package whose whole point is being copyable to a venue laptop. |
-| **ONNX Runtime Web** (runtime, not a model) | **MIT** | n/a | **Yes** | Would be the inference engine for any of the above. Confirmed obtainable here from the npm registry (32MB tarball). |
+| **`merit-plan-encoder-v1`** (what ships) | this repo | **this repo** | **Yes** | Trained here on this project's own annotated plans. No third-party weights, no third-party dataset, nothing to attribute. |
+| **DINOv2** ViT-S/14, 21M params | Apache-2.0 | **Apache-2.0** | Yes | The repo README states plainly: *"DINOv2 code and model weights are released under the Apache License 2.0."* Originally CC-BY-NC and relicensed after community pressure. Pretrained on LVD-142M, not ImageNet-1k, which is what keeps the weights clean. Would require shipping the Apache-2.0 text and NOTICE. |
+| MobileNetV3 / ResNet via **timm** or **torchvision** | Apache-2.0 / BSD | **ImageNet-derived — restricted** | **No, not safely** | The permissive code licence is the easy half and the misleading half. ImageNet's access agreement binds researchers to *non-commercial research and educational purposes*, and binds their for-profit employer too. Whether trained weights are a derivative work of the dataset is genuinely unsettled; the field leans on a fair-use argument, not on permission. |
+| **CLIP** (OpenAI) | MIT | MIT | Yes | ~350MB for ViT-B/32. Far too large for a package whose point is being copyable to a venue laptop. |
+| **ONNX Runtime Web** (runtime, not a model) | **MIT** | n/a | Yes | Would be the inference engine for any of the above. Not needed: a 5,656-parameter forward pass is ~90 lines of JavaScript, so the product ships no inference runtime at all. |
 
-The headline: **the code licence is not the licence that matters.** MobileNet
-and ResNet look permissive and are not, because the constraint travels with the
-training data rather than the source. DINOv2 is the one candidate that is clean
-on both counts, and it is clean specifically because Meta relicensed it *and*
-trained it off ImageNet.
+Egress from this sandbox, re-checked at the time of writing: `huggingface.co`
+unreachable, `storage.googleapis.com/tfjs-models` 403, `registry.npmjs.org` and
+`raw.githubusercontent.com` reachable. None of it mattered in the end — nothing
+is downloaded, at build time or at run time.
 
-## Secondary blocker: the weights are not obtainable here
+## Runtime
 
-Distinct from the "not justified" finding above, and worth recording separately
-so nobody mistakes one for the other.
+No network, at any point. The weights are inlined into
+`src/plan-encoder-weights.js` by `scripts/build-encoder-module.mjs`, because a
+`fetch()` for a weights file works in the normal build and dies in the offline
+single-file one. `benchmarks/offline/verify-offline-package.mjs` runs the
+forward pass **inside the built artifact** and asserts it returns a unit vector
+with zero off-origin requests.
 
-| source | result |
-| --- | --- |
-| `huggingface.co` (DINOv2 weights) | blocked by the egress proxy |
-| `github.com/onnx/models` raw | 403 |
-| `cdn.jsdelivr.net` | blocked |
-| `registry.npmjs.org` | **reachable** — ONNX Runtime Web downloads fine |
-| `storage.googleapis.com/tfjs-models` | **reachable** — but only serves ImageNet-trained weights, which the matrix above rules out |
+Cost, measured on the real plan's 99 candidates: ~2.4 ms per crop, ~240 ms for
+the plan, reported per run as `diagnostics.embedding.embeddingMs`. The
+convolution's loop order accounts for most of that — hoisting the weight out of
+the innermost loop so it walks contiguous rows, rather than summing per output
+position, is the same arithmetic with the memory traffic the right way round.
+Embeddings are cached on the crop's **contents**, which does nothing within one
+pass (every candidate is a different object) and hits on Re-Analyze, where the
+same drawing produces the same pixels under new candidate ids.
 
-This is a limit of *this sandbox*, not of the product. A developer machine with
-normal network access could fetch DINOv2 and vendor it the same way
-`build-offline-full.mjs` already vendors Tesseract. It is not the reason a model
-is not shipping; the measurement is.
+## Honesty rules this file is bound by
 
-## If a model is ever added
-
-1. Re-run `measure-descriptor-baseline.mjs` first and record the number to beat.
-2. Register it through `MeritVisualEmbedding.register()` with
-   `trainedModel: true`.
-3. Vendor the weights at build time into `dist/merit-offline/assets/`, next to
-   the OCR assets, and ship the Apache-2.0 text and NOTICE alongside them.
-4. Re-run `benchmarks/offline/verify-offline-package.mjs` — a model that needs
-   the network at runtime breaks the offline guarantee and must fail that check.
-5. Only then may the UI describe the representation as learned, and only if
-   `trainedModel` is genuinely true. "DOMAIN MODEL NOT INSTALLED" stays the
-   honest state until a model is actually running.
-
-## Sources
-
-- [facebookresearch/dinov2 README and LICENSE](https://github.com/facebookresearch/dinov2)
-- [ImageNet access agreement](https://image-net.org/accessagreement)
-- [timm (pytorch-image-models)](https://github.com/huggingface/pytorch-image-models)
-- [torchvision MobileNetV3](https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.mobilenet_v3_large.html)
-- [ONNX Runtime Web](https://onnxruntime.ai/docs/tutorials/web/)
+- `register()` refuses a provider that will not declare `trainedModel`. Nothing
+  downstream keys off a provider's name.
+- Both providers stay registered, so the comparison above stays runnable rather
+  than becoming a claim about a build that no longer exists.
+- If `src/plan-encoder-weights.js` is absent, the app resolves to the
+  handcrafted descriptor and the diagnostics say so. It does not pretend.
+- **REAL DISTINCT VENUE PLANS: 1.** The held-out-plans column is four synthetic
+  fixtures, not four venues. Cross-venue generalization remains **NOT
+  VERIFIED**, and a 0.9495 on one venue's held-out objects is not evidence
+  about the next venue.

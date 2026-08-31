@@ -9,3 +9,9 @@ tests/.artifacts/
 # latest.json is kept so the committed numbers are reviewable, and
 # BASELINE.json is the recorded claim they are checked against.
 benchmarks/reports/benchmark-*.json
+
+# Embedding crop corpus: derived from the tracked plan images and annotations
+# by benchmarks/embedding/extract-crops.mjs in one command. 2.7MB of pixels
+# that regenerate identically, so they are a build artifact and not a source.
+benchmarks/embedding/crops.bin
+benchmarks/embedding/crops.json

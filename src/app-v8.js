@@ -3513,7 +3513,15 @@
     },
   };
   function resolveVisualEmbeddingProvider(){
-    const id=globalThis.MERIT_VISUAL_EMBEDDING_PROVIDER||"handcrafted";
+    // The learned encoder is the default WHEN IT IS INSTALLED, and only
+    // because it was measured to be better on every retrieval number and
+    // worse on none — see src/plan-embedding.js and
+    // benchmarks/embedding/retrieval.json. If its weights are absent (a build
+    // that did not run scripts/build-encoder-module.mjs) the app degrades to
+    // the handcrafted descriptor rather than failing, and says which one ran
+    // in the detection diagnostics either way.
+    const id=globalThis.MERIT_VISUAL_EMBEDDING_PROVIDER
+      ||(VisualEmbeddingProviders.learned?"learned":"handcrafted");
     return VisualEmbeddingProviders[id]||VisualEmbeddingProviders.handcrafted;
   }
   globalThis.MeritVisualEmbedding={
@@ -3528,6 +3536,11 @@
       VisualEmbeddingProviders[id]=provider;
     },
   };
+  // src/plan-embedding.js loads before this file, so it cannot register itself
+  // against a registry that does not exist yet. It exposes the registration and
+  // this calls it, which also means an installation without the weights simply
+  // never registers and the handcrafted descriptor stays the resolved provider.
+  if(typeof globalThis.MeritRegisterPlanEncoder==="function")globalThis.MeritRegisterPlanEncoder();
   function computeVisualDescriptor(gray,binary,width,height,c){
     const px=Math.max(0,Math.round(c.x/100*width)),py=Math.max(0,Math.round(c.y/100*height));
     const pw=Math.max(1,Math.min(width-px,Math.round(c.w/100*width))),ph=Math.max(1,Math.min(height-py,Math.round(c.h/100*height)));
@@ -3827,16 +3840,21 @@
       const detectionMs=Math.round(performance.now()-detectionStartedAt);
       const candidates=detection.candidates,venues=detection.venues,threshold=detection.threshold;
       ui.analysisStage=t("analysis.stage.seating");ui.analysisProgress=73;render();await yieldFrame();
-      // Through the provider boundary rather than the function directly, so a
-      // future learned model is a registration and not a rewrite. Today this
-      // resolves to the hand-crafted descriptor and says so.
+      // Through the provider boundary rather than the function directly. That
+      // seam was built for a future learned model and is now carrying one:
+      // when src/plan-encoder-weights.js is present this resolves to the
+      // trained encoder concatenated with the descriptor, and to the
+      // descriptor alone when it is not. Which one ran is reported in the
+      // detection diagnostics, never assumed.
       //
       // Embedding reads the deskewed pixel buffers, so it happens while the
       // geometry is still in deskewed space; the mapping back to plan space is
       // the next statement.
       const embedder=resolveVisualEmbeddingProvider();
+      const embeddingStartedAt=performance.now();
       for(const c of candidates)c.visualDescriptor=embedder.embed(detection.gray,detection.binary,dw,dh,c);
       for(const c of venues)c.visualDescriptor=embedder.embed(detection.gray,detection.binary,dw,dh,c);
+      const embeddingMs=Math.round(performance.now()-embeddingStartedAt);
       for(const c of [...candidates,...venues])planFromDeskew(c);
       const previous=event.analysis?.candidates||[],signatures=list=>list.map(c=>`${c.kind}:${c.type}:${Math.round(c.x)}:${Math.round(c.y)}`),oldSig=new Set(signatures(previous)),newSig=new Set(signatures([...candidates,...venues]));
       const freshCandidates=[...candidates,...venues];
@@ -3849,7 +3867,14 @@
       // silently reverting to the detector's default grouping.
       const geometryRemap=matchCandidatesByGeometry(priorCandidates,allCandidates);
       const carriedDecisions=priorDecisions.map(d=>({...d,memberIds:d.memberIds.map(id=>geometryRemap.get(id)).filter(Boolean)})).filter(d=>d.memberIds.length>=2);
-      event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:false,notice:"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:Math.round(width/ratio),originalHeight:Math.round(height/ratio),threshold,candidates:allCandidates,missed:allCandidates.filter(c=>c.missed).map(c=>c.id),groupingDecisions:carriedDecisions,memoryReapplied:memoryResult.reappliedCount,memoryRestored:memoryResult.restored.length,comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{...detection.diagnostics,resolution:`${width}×${height}`,detectionMs,provider:provider.id,providerLabel:provider.label}};
+      event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:false,notice:"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:Math.round(width/ratio),originalHeight:Math.round(height/ratio),threshold,candidates:allCandidates,missed:allCandidates.filter(c=>c.missed).map(c=>c.id),groupingDecisions:carriedDecisions,memoryReapplied:memoryResult.reappliedCount,memoryRestored:memoryResult.restored.length,comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{...detection.diagnostics,resolution:`${width}×${height}`,detectionMs,provider:provider.id,providerLabel:provider.label,
+        // Which visual representation actually produced the descriptors, and
+        // whether it involved trained weights. Reported from the resolved
+        // provider rather than from a constant, so an install without the
+        // encoder says so instead of claiming one ran.
+        embedding:{id:embedder.id,kind:embedder.kind||"handcrafted-descriptor",trainedModel:!!embedder.trainedModel,
+          dimensions:embedder.dimensions||null,embeddingMs,
+          cache:globalThis.MeritPlanEncoder?.cacheStats?.()||null}}};
       // A complete PlanIntelligenceResult exists from the moment the analysis
       // object does, so the review screen (and anything reading the stored
       // event) never sees an analysis with null provider metadata or a null

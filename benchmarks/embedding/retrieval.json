@@ -1,0 +1,176 @@
+{
+ "ranAt": "2026-08-31T17:47:03.685Z",
+ "corpus": {
+  "crops": 2699,
+  "side": 32,
+  "margin": 0.15,
+  "plans": [
+   "adversarial-architecture-v1",
+   "adversarial-bistro-v1",
+   "adversarial-dense-v1",
+   "adversarial-text-v1",
+   "merit-real-venue"
+  ]
+ },
+ "results": [
+  {
+   "provider": "handcrafted-descriptor-v1",
+   "trainedModel": false,
+   "dimensions": 14,
+   "splits": {
+    "held-out objects (Golden Plan, 16 renderings)": {
+     "crops": 832,
+     "distinctObjects": 52,
+     "sameObjectInvariance": {
+      "asked": 832,
+      "top1": 0.7188,
+      "top5": 0.8377
+     },
+     "sameClassRetrieval": {
+      "asked": 832,
+      "top1": 0.9255,
+      "top5Purity": 0.9159
+     },
+     "tableTypeRetrieval": {
+      "asked": 240,
+      "top1": 0.8542,
+      "top5Purity": 0.8633
+     }
+    },
+    "held-out plans (four fixtures the encoder never saw)": {
+     "crops": 75,
+     "distinctObjects": 75,
+     "sameClassRetrieval": {
+      "asked": 75,
+      "top1": 1,
+      "top5Purity": 0.9573
+     },
+     "tableTypeRetrieval": {
+      "asked": 69,
+      "top1": 1,
+      "top5Purity": 0.9855
+     }
+    },
+    "all Golden Plan objects (train and test together — reported, never a gate)": {
+     "crops": 2624,
+     "sameObjectInvariance": {
+      "asked": 2624,
+      "top1": 0.6056,
+      "top5": 0.7523
+     },
+     "sameClassRetrieval": {
+      "asked": 2624,
+      "top1": 0.9627,
+      "top5Purity": 0.9534
+     }
+    }
+   }
+  },
+  {
+   "provider": "merit-plan-encoder-v1",
+   "trainedModel": true,
+   "dimensions": 32,
+   "splits": {
+    "held-out objects (Golden Plan, 16 renderings)": {
+     "crops": 832,
+     "distinctObjects": 52,
+     "sameObjectInvariance": {
+      "asked": 832,
+      "top1": 0.9447,
+      "top5": 0.9748
+     },
+     "sameClassRetrieval": {
+      "asked": 832,
+      "top1": 0.9075,
+      "top5Purity": 0.8986
+     },
+     "tableTypeRetrieval": {
+      "asked": 240,
+      "top1": 0.8625,
+      "top5Purity": 0.8658
+     }
+    },
+    "held-out plans (four fixtures the encoder never saw)": {
+     "crops": 75,
+     "distinctObjects": 75,
+     "sameClassRetrieval": {
+      "asked": 75,
+      "top1": 1,
+      "top5Purity": 0.9947
+     },
+     "tableTypeRetrieval": {
+      "asked": 69,
+      "top1": 1,
+      "top5Purity": 0.9855
+     }
+    },
+    "all Golden Plan objects (train and test together — reported, never a gate)": {
+     "crops": 2624,
+     "sameObjectInvariance": {
+      "asked": 2624,
+      "top1": 0.9116,
+      "top5": 0.9607
+     },
+     "sameClassRetrieval": {
+      "asked": 2624,
+      "top1": 0.9649,
+      "top5Purity": 0.9616
+     }
+    }
+   }
+  },
+  {
+   "provider": "merit-plan-encoder-v1+handcrafted-descriptor-v1",
+   "trainedModel": true,
+   "dimensions": 46,
+   "splits": {
+    "held-out objects (Golden Plan, 16 renderings)": {
+     "crops": 832,
+     "distinctObjects": 52,
+     "sameObjectInvariance": {
+      "asked": 832,
+      "top1": 0.9495,
+      "top5": 0.9784
+     },
+     "sameClassRetrieval": {
+      "asked": 832,
+      "top1": 0.9435,
+      "top5Purity": 0.9267
+     },
+     "tableTypeRetrieval": {
+      "asked": 240,
+      "top1": 0.875,
+      "top5Purity": 0.8575
+     }
+    },
+    "held-out plans (four fixtures the encoder never saw)": {
+     "crops": 75,
+     "distinctObjects": 75,
+     "sameClassRetrieval": {
+      "asked": 75,
+      "top1": 1,
+      "top5Purity": 0.9947
+     },
+     "tableTypeRetrieval": {
+      "asked": 69,
+      "top1": 1,
+      "top5Purity": 0.9855
+     }
+    },
+    "all Golden Plan objects (train and test together — reported, never a gate)": {
+     "crops": 2624,
+     "sameObjectInvariance": {
+      "asked": 2624,
+      "top1": 0.9127,
+      "top5": 0.9646
+     },
+     "sameClassRetrieval": {
+      "asked": 2624,
+      "top1": 0.9764,
+      "top5Purity": 0.9725
+     }
+    }
+   }
+  }
+ ]
+}

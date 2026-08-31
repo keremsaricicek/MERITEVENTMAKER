@@ -164,11 +164,36 @@ if (existsSync(LIGHT)) {
       typeof globalThis.buildPlanIntelligence === 'function' && typeof globalThis.MeritVenueModel === 'object';
     let ocr = null;
     if (typeof globalThis.runPlanOCR === 'function') ocr = await runPlanOCR('data:image/png;base64,iVBORw0KGgo=', { timeoutMs: 4000 });
-    return { missing, booted, xlsx: typeof globalThis.XLSX, ocr };
+    // The trained encoder's weights are INLINED rather than fetched, precisely
+    // so that they survive into a single file opened from disk. That claim is
+    // only worth making if something checks it: run the forward pass here, on
+    // this artifact, and confirm it produces a unit vector.
+    let encoder = null;
+    if (globalThis.MeritPlanEncoder) {
+      const probe = new Uint8Array(32 * 32);
+      for (let i = 0; i < probe.length; i++) probe[i] = (i * 37) % 256;
+      const v = globalThis.MeritPlanEncoder.available ? globalThis.MeritPlanEncoder.encode(probe) : null;
+      const provider = globalThis.MeritVisualEmbedding ? globalThis.MeritVisualEmbedding.resolve() : null;
+      encoder = {
+        available: !!globalThis.MeritPlanEncoder.available,
+        parameters: globalThis.MERIT_PLAN_ENCODER_WEIGHTS ? globalThis.MERIT_PLAN_ENCODER_WEIGHTS.parameters : null,
+        dims: v ? v.length : 0,
+        norm: v ? Math.sqrt(v.reduce((s, x) => s + x * x, 0)) : 0,
+        providerId: provider ? provider.id : null,
+        trainedModel: provider ? provider.trainedModel : null,
+      };
+    }
+    return { missing, booted, xlsx: typeof globalThis.XLSX, ocr, encoder };
   });
   await lp.close();
   checks.push(
     ['light build: every source file executed', light.booted === true],
+    ['light build: the trained encoder is inlined and runs offline',
+      !!light.encoder && light.encoder.available === true && light.encoder.dims > 0 &&
+      Math.abs(light.encoder.norm - 1) < 1e-4 && light.encoder.parameters > 0],
+    ['light build: the learned representation is the one detection would use',
+      !!light.encoder && light.encoder.trainedModel === true &&
+      /merit-plan-encoder/.test(light.encoder.providerId || '')],
     ['light build: all required dialogs/inputs present', light.missing.length === 0, light.missing],
     ['light build: SheetJS is inlined (XLSX export works with no network)', light.xlsx === 'object'],
     ['light build: OCR reports itself unavailable rather than faking a result',

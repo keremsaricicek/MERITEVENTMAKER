@@ -102,8 +102,28 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(records.every(r => r.providers?.detection?.trainedModel === false),
     "each example records which detector produced the prediction, and that it was not a trained model",
     records[0].providers);
-  checks.ok(records.every(r => r.providers?.embedding?.trainedModel === false),
-    "and which visual representation was active, also not a trained model", records[0].providers?.embedding);
+
+  // The visual representation IS a trained model now — 5,656 parameters fitted
+  // by gradient descent, see benchmarks/embedding/README.md. What this asserts
+  // is not a fixed answer but that the captured provenance tells the TRUTH
+  // about whichever representation ran, because the whole value of a stored
+  // example is knowing what produced it. An installation without the weights
+  // records the descriptor and `false`; one with them records the encoder and
+  // `true`. What must never happen is the flag disagreeing with the provider
+  // that is actually installed.
+  const liveEmbedding = await page.evaluate(() => {
+    const p = globalThis.MeritVisualEmbedding.resolve();
+    return { id: p.id, trainedModel: p.trainedModel };
+  });
+  checks.ok(records.every(r => r.providers?.embedding?.id === liveEmbedding.id),
+    "each example names the visual representation that was actually active",
+    { recorded: records[0].providers?.embedding, live: liveEmbedding });
+  checks.ok(records.every(r => r.providers?.embedding?.trainedModel === liveEmbedding.trainedModel),
+    "and its trainedModel flag matches what that representation really is",
+    { recorded: records[0].providers?.embedding?.trainedModel, live: liveEmbedding.trainedModel });
+  checks.ok(records.every(r => typeof r.providers?.embedding?.trainedModel === "boolean"),
+    "never left undefined — a missing flag reads as 'not a model' and would be a lie either way",
+    records[0].providers?.embedding);
 
   // --- the record shape a decision type implies ----------------------------
   const correction = records.find(r => r.decisionType === "correction");

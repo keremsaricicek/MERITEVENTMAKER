@@ -31,6 +31,7 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `i18n` | ui | a raw translation key reaches the screen, or a language stops rendering |
 | `plan-intelligence-contract` | intelligence, **slow** | the detector fabricates, or its scene graph points at objects that do not exist |
 | `chair-families` | intelligence, **slow** | the detector can only describe one kind of chair again, or printed text gets in as the second kind |
+| `plan-encoder` | intelligence | the browser forward pass drifts from the trainer's, the encoder's embeddings collapse, a provider hides whether it is a trained model, or shipping one starts implying a domain model is installed |
 | `structural-objects` | intelligence, **slow** | a column grid is split by a size-bin edge, a column is thrown out for someone else's chair, or printed text starts being read as a column grid |
 | `table-typing` | intelligence, **slow** | a table is typed bistro on its size alone, without evidence, or a plan of uniform tables starts producing bistros |
 | `training-data-capture` | intelligence, **slow** | a human decision stops storing a real crop with its provenance, or a capture log starts calling itself a model |
