@@ -1,6 +1,11 @@
 .vendor-cache/
 dist/
+node_modules/
+
+# Test run output: downloaded workbooks, backup fixtures, screenshots.
+tests/.artifacts/
 
 # Benchmark run output: timestamped reports are local run artifacts.
-# latest.json is kept so the committed numbers are reviewable.
+# latest.json is kept so the committed numbers are reviewable, and
+# BASELINE.json is the recorded claim they are checked against.
 benchmarks/reports/benchmark-*.json

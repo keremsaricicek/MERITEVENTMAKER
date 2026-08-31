@@ -1,0 +1,134 @@
+{
+  "recordedAt": "2026-08-31T07:20:30.813Z",
+  "commit": "23a7f78c8668a8051f6dfe3d2ea5ddc43a5c627f",
+  "note": "Measured by benchmarks/run-benchmark.mjs against the annotations in benchmarks/annotations/. Classical computer vision (Assisted Detection); no trained model is involved in these numbers.",
+  "guardedFields": [
+    {
+      "field": "tables.tp",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tables.fp",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "tables.fn",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "tables.precision",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tables.recall",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tables.f1",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "chairs.detectedTotal",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "humanEffort.reviewGroups",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "humanEffort.uncertainQuestions",
+      "worseWhen": "higher"
+    }
+  ],
+  "tolerance": 0.005,
+  "plans": [
+    {
+      "planId": "adversarial-architecture-v1",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "colour-cluster",
+        "ocrEngine": null,
+        "ocrAvailable": false
+      },
+      "tables.tp": 10,
+      "tables.fp": 0,
+      "tables.fn": 0,
+      "tables.precision": 1,
+      "tables.recall": 1,
+      "tables.f1": 1,
+      "chairs.detectedTotal": 80,
+      "humanEffort.reviewGroups": 0,
+      "humanEffort.uncertainQuestions": 0
+    },
+    {
+      "planId": "adversarial-dense-v1",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "outline-interior",
+        "ocrEngine": null,
+        "ocrAvailable": false
+      },
+      "tables.tp": 24,
+      "tables.fp": 0,
+      "tables.fn": 0,
+      "tables.precision": 1,
+      "tables.recall": 1,
+      "tables.f1": 1,
+      "chairs.detectedTotal": 80,
+      "humanEffort.reviewGroups": 2,
+      "humanEffort.uncertainQuestions": 4
+    },
+    {
+      "planId": "adversarial-text-v1",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "colour-cluster",
+        "ocrEngine": null,
+        "ocrAvailable": false
+      },
+      "tables.tp": 12,
+      "tables.fp": 0,
+      "tables.fn": 0,
+      "tables.precision": 1,
+      "tables.recall": 1,
+      "tables.f1": 1,
+      "chairs.detectedTotal": 73,
+      "humanEffort.reviewGroups": 0,
+      "humanEffort.uncertainQuestions": 0
+    },
+    {
+      "planId": "merit-real-venue",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "colour-cluster",
+        "ocrEngine": null,
+        "ocrAvailable": false
+      },
+      "tables.tp": 41,
+      "tables.fp": 6,
+      "tables.fn": 5,
+      "tables.precision": 0.872,
+      "tables.recall": 0.891,
+      "tables.f1": 0.882,
+      "chairs.detectedTotal": 79,
+      "humanEffort.reviewGroups": 8,
+      "humanEffort.uncertainQuestions": 12
+    }
+  ]
+}

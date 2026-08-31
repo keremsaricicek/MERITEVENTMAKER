@@ -8,15 +8,21 @@
 // worse than a slow screen.
 //
 // Usage: node benchmarks/perf/live-windowing-correctness.mjs
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+import { launchChromium } from "../../tests/lib/env.mjs";
+import { serveApp } from "../../tests/lib/server.mjs";
 
-const b = await chromium.launch({ headless: true, executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+// The runner serves the app itself; nothing here depends on a server a
+// person remembered to start. MERIT_BASE_URL overrides it.
+const app = await serveApp();
+
+
+const b = await launchChromium();
 const p = await b.newPage({ viewport: { width: 1920, height: 1080 } });
 const errs = []; p.on('pageerror', e => errs.push(e.message));
 let passed = 0, failed = 0;
 const ok = (c, l, d) => { if (c) { passed++; console.log('OK: ' + l); } else { failed++; console.log('FAIL: ' + l + (d !== undefined ? ' :: ' + JSON.stringify(d) : '')); } };
 
-await p.goto('http://localhost:8000/index.html'); await p.waitForLoadState('networkidle');
+await p.goto(app.baseUrl + '/index.html'); await p.waitForLoadState('networkidle');
 await p.click('.appbar [data-action="create-event"]'); await p.waitForTimeout(300);
 await p.fill('input[name="name"]', 'LiveWin'); await p.fill('input[name="hotel"]', 'M');
 await p.fill('input[name="date"]', '2026-12-31');

@@ -1,7 +1,6 @@
 # Gates H/I — human decisions survive Re-Analyze
 
 ```
-python3 -m http.server 8000
 node benchmarks/teach/human-decisions-survive-reanalyze.mjs
 ```
 

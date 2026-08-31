@@ -1,11 +1,13 @@
 # Performance benchmarks
 
-Two harnesses, both driving the real app in Chromium via Playwright. Run the
-app first (`python3 -m http.server 8000` from the repo root), then:
+Driving the real app in Chromium via Playwright. Each runner serves the app
+itself, so nothing needs starting first.
 
 ```
+npm run perf                                    # all of them, in order
 node benchmarks/perf/stress-4000-seats.mjs      # end-to-end operator timings
 node benchmarks/perf/profile-render-phases.mjs  # where a render's time goes
+node benchmarks/perf/live-windowing-correctness.mjs  # windowing changed nothing an operator sees
 ```
 
 `stress-4000-seats.mjs` builds 400 tables / 4,000 chairs / 3,000 guest records

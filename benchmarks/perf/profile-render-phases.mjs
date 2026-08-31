@@ -2,10 +2,16 @@
 // timed region, so the cost lands on the render that caused it instead of on
 // whatever call happens next. Also breaks render() into HTML / innerHTML /
 // bind / layout.
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
-const b=await chromium.launch({headless:true,executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome'});
+import { launchChromium } from "../../tests/lib/env.mjs";
+import { serveApp } from "../../tests/lib/server.mjs";
+
+// The runner serves the app itself; nothing here depends on a server a
+// person remembered to start. MERIT_BASE_URL overrides it.
+const app = await serveApp();
+
+const b=await launchChromium();
 const p=await b.newPage({viewport:{width:1920,height:1080}});
-await p.goto('http://localhost:8000/index.html');await p.waitForLoadState('networkidle');
+await p.goto(app.baseUrl + '/index.html');await p.waitForLoadState('networkidle');
 await p.click('.appbar [data-action="create-event"]');await p.waitForTimeout(300);
 await p.fill('input[name="name"]','Profile 4000');await p.fill('input[name="hotel"]','Merit Arena');
 await p.fill('input[name="date"]','2026-12-31');

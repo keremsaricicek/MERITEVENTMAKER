@@ -18,14 +18,13 @@
 // Usage: node benchmarks/make-adversarial-fixtures.mjs
 // Writes benchmarks/fixtures/*.png and benchmarks/annotations/*.json.
 
-import { chromium } from "/opt/node22/lib/node_modules/playwright/index.mjs";
+import { launchChromium } from "../tests/lib/env.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 
 // ---------------------------------------------------------------------------
 // Fixture A: real furniture buried in printed text.
@@ -375,7 +374,7 @@ function writeFixture(name, planId, dataUrl, spec, notes) {
     `${spec.regions.filter(r => r.class === "architecture").length} architecture regions`);
 }
 
-const browser = await chromium.launch({ headless: true, executablePath: CHROME });
+const browser = await launchChromium();
 const page = await browser.newPage();
 await page.goto("about:blank");
 

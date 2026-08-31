@@ -1,14 +1,36 @@
 # Testing / QA rules
 
-- This repo currently has no automated test suite — treat that as a real,
-  flagged gap, not something to silently route around.
+- The regression suite lives in `tests/` and is the first thing to run and
+  the first thing to extend:
+
+  ```
+  npm test              # every fast suite (~2 min); exit code is the verdict
+  npm run test:all      # plus the slow ones (real detection on the real plan)
+  npm run test:list     # what exists
+  ```
+
+  It serves the app itself and isolates storage per suite, so nothing
+  depends on a server someone started by hand. `tests/README.md` says what
+  each suite guards and how to add one. A behaviour change that no suite
+  would have caught needs a suite, not a manual check.
+- `npm run serve` runs the app on :8000 for manual/QA use — no build step
+  for the normal (non-offline) build.
 - For any UI change: render and screenshot at 1920×1080, 2560×1440, and
   ~1440px via the `visual-qa-reviewer` agent (Bash + the vendored
   `webapp-testing` skill: Python Playwright, works with this environment's
   pre-installed Chromium). Check the browser console for errors on every
   pass.
-- Run the app via `python3 -m http.server 8000` from the repo root for
-  manual/QA use — no build step for the normal (non-offline) build.
+- Detector changes are measured, never asserted from memory:
+
+  ```
+  npm run benchmark            # object-level, per plan, against annotations
+  npm run benchmark:baseline   # compare to the committed benchmarks/BASELINE.json
+  ```
+
+  The baseline compares every guarded field separately per plan, because a
+  trade (chair recall up, table F1 down) is invisible in a single score and
+  is a revert, not a win. Re-record it only as a deliberate, explained
+  decision.
 - After any change to `index.html` or `src/*.js`/`src/styles.css`
   structure, rebuild BOTH offline artifacts and then **run the built
   artifacts**:

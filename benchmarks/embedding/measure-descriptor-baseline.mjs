@@ -21,13 +21,18 @@
 //                  the clustering does.
 //
 // Usage: node benchmarks/embedding/measure-descriptor-baseline.mjs
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+import { launchChromium } from "../../tests/lib/env.mjs";
+import { serveApp } from "../../tests/lib/server.mjs";
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// The runner serves the app itself; nothing here depends on a server a
+// person remembered to start. MERIT_BASE_URL overrides it.
+const app = await serveApp();
+
 const ROOT = path.dirname(path.dirname(path.dirname(fileURLToPath(import.meta.url))));
-const PORT = process.env.MERIT_BENCH_PORT || '8000';
 
 const PLANS = [
   { id: 'merit-real-venue', img: 'benchmarks/plans/merit-real-venue-plan.png', annot: 'benchmarks/annotations/merit-real-venue.json' },
@@ -85,7 +90,7 @@ function nn1(vectors, labels) {
   return { accuracy: +(correct / n).toFixed(4), correct, total: n };
 }
 
-const browser = await chromium.launch({ headless: true, executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const browser = await launchChromium();
 const report = { ranAt: new Date().toISOString(), provider: null, plans: [] };
 
 for (const plan of PLANS) {
@@ -94,7 +99,7 @@ for (const plan of PLANS) {
   const tol = (annot.matchToleranceP ?? 3) / 100 * diag;
 
   const page = await browser.newPage({ viewport: { width: 1800, height: 1000 } });
-  await page.goto(`http://localhost:${PORT}/index.html`);
+  await page.goto(`${app.baseUrl}/index.html`);
   await page.waitForLoadState('networkidle');
   await page.click('.appbar [data-action="create-event"]'); await page.waitForTimeout(300);
   await page.fill('input[name="name"]', 'Emb'); await page.fill('input[name="hotel"]', 'Emb');

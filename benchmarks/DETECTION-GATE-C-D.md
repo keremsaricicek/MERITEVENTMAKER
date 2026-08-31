@@ -1,7 +1,6 @@
 # Gates C/D — text and architectural false-positive suppression
 
 ```
-python3 -m http.server 8000                          # serve the app
 node benchmarks/make-adversarial-fixtures.mjs        # regenerate fixtures + ground truth
 node benchmarks/run-benchmark.mjs                    # measure
 MERIT_BENCH_NO_FRAGMENT_FILTER=1 node benchmarks/run-benchmark.mjs   # pre-suppression baseline

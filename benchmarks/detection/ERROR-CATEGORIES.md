@@ -1,7 +1,6 @@
 # Real-plan detection errors, categorized
 
 ```
-python3 -m http.server 8000
 node benchmarks/detection/categorize-errors.mjs
 ```
 

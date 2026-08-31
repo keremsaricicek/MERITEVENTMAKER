@@ -2,15 +2,27 @@
 // Builds the dataset through the app's own model (syncTableChairs, real guest
 // records with +N / VIP / statuses), then measures the operations an operator
 // actually performs. Every number below is wall-clock in this environment.
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
-const b=await chromium.launch({headless:true,executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome'});
+import { launchChromium } from "../../tests/lib/env.mjs";
+import { serveApp } from "../../tests/lib/server.mjs";
+import { routeVendorFromCache } from "../../tests/lib/vendor.mjs";
+
+// The runner serves the app itself; nothing here depends on a server a
+// person remembered to start. MERIT_BASE_URL overrides it.
+const app = await serveApp();
+
+const b=await launchChromium();
 const p=await b.newPage({viewport:{width:1920,height:1080}});
+// SheetJS comes from a CDN in index.html. Without it XLSX is undefined, the
+// export produces a 0-byte blob, and the xlsxExport timing below measures a
+// workbook that was never built. Serving the pinned package from
+// .vendor-cache/ makes that number mean what it says.
+await routeVendorFromCache(p);
 const errs=[];p.on('pageerror',e=>errs.push(e.message));
 p.on('console',m=>{if(m.type()==='error'&&!/404|ERR_TUNNEL/.test(m.text()))errs.push('console: '+m.text())});
 const T={};
 const time=async(label,fn)=>{const t0=Date.now();const r=await fn();T[label]=Date.now()-t0;return r;};
 
-await p.goto('http://localhost:8000/index.html');await p.waitForLoadState('networkidle');
+await p.goto(app.baseUrl + '/index.html');await p.waitForLoadState('networkidle');
 await p.click('.appbar [data-action="create-event"]');await p.waitForTimeout(300);
 await p.fill('input[name="name"]','Stress 4000');await p.fill('input[name="hotel"]','Merit Arena');
 await p.fill('input[name="date"]','2026-12-31');
@@ -80,16 +92,25 @@ await time('noShow',()=>p.evaluate(()=>{
   const e=state.events[0],g=e.guests.find(x=>x.name==='GUEST 1235');
   g.arrivalStatus='No Show';touchEvent(e);render();return true;}));
 await time('reportsRender',async()=>{await p.evaluate(()=>{ui.liveQuery='';ui.tab='reports';render();});});
-const xlsxBytes=await time('xlsxExport',()=>p.evaluate(async()=>{
-  const before=document.querySelectorAll('a').length;
+// Timed to the moment the workbook blob actually exists, not to a fixed
+// sleep. The earlier version waited 2500ms unconditionally and reported that
+// as the export cost, so the number said the same thing whatever the export
+// did -- including producing nothing at all.
+const xlsx=await time('xlsxExport',()=>p.evaluate(async()=>{
   let captured=0;
   const origCreate=URL.createObjectURL;
   URL.createObjectURL=(blob)=>{captured=blob.size;return origCreate.call(URL,blob);};
+  const t0=performance.now();
   document.querySelector('[data-report="xlsx"]').click();
-  await new Promise(r=>setTimeout(r,2500));
+  const deadline=t0+30000;
+  while(!captured&&performance.now()<deadline)await new Promise(r=>setTimeout(r,20));
   URL.createObjectURL=origCreate;
-  return captured;
+  return {bytes:captured,ms:Math.round(performance.now()-t0)};
 }));
+// The in-page measurement is the honest one: `time()` also carries the
+// round-trip to the browser.
+T.xlsxExport=xlsx.ms;
+const xlsxBytes=xlsx.bytes;
 await time('undoSnapshot',()=>p.evaluate(()=>{recordUndo(state.events[0]);return true;}));
 await time('undoRestore',()=>p.evaluate(()=>{undoCanvas();return true;}));
 

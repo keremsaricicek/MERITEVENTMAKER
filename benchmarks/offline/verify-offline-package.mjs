@@ -15,7 +15,7 @@
 // Usage: node benchmarks/offline/verify-offline-package.mjs
 // Exits non-zero on any failure. Run it after touching either build script.
 
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+import { launchChromium } from "../../tests/lib/env.mjs";
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -44,7 +44,7 @@ const srv = createServer(async (req, res) => {
 await new Promise(r => srv.listen(8123, r));
 const ORIGIN = 'http://127.0.0.1:8123';
 
-const b = await chromium.launch({ headless: true, executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const b = await launchChromium();
 const ctx = await b.newContext({ viewport: { width: 1600, height: 1000 } });
 const blocked = [];
 await ctx.route('**/*', route => {

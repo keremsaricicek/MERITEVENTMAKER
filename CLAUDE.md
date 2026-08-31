@@ -75,6 +75,15 @@ model exists, say **"DOMAIN MODEL NOT INSTALLED"** rather than implying
 one is running. Never fabricate detections, confidence scores, or model
 metrics. Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.
 
+## Tests
+
+`npm test` runs the regression suite in `tests/` (real UI, real Chromium, its
+own server, ~2 min). It is the first thing to run and the first thing to
+extend: a behaviour change no suite would have caught needs a suite. Detector
+changes are measured with `npm run benchmark` and checked against the
+committed `benchmarks/BASELINE.json` — never against remembered numbers. Full
+detail: `tests/README.md`, `benchmarks/README.md`, `.claude/rules/testing.md`.
+
 ## Data integrity
 
 Persisted state must never silently corrupt guest/table/chair/assignment

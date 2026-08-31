@@ -1,7 +1,6 @@
 # Gate G — VisualEmbeddingProvider, licensing, and whether a model is justified
 
 ```
-python3 -m http.server 8000
 node benchmarks/embedding/measure-descriptor-baseline.mjs
 ```
 

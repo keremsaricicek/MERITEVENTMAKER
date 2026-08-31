@@ -1,0 +1,76 @@
+name: CI
+
+# What a change has to survive before anyone looks at it.
+#
+# Scope is deliberate: the cheap deterministic checks that protect the business
+# rules, the workbook contract, storage and migration, the venue model, and the
+# detector's behaviour on synthetic fixtures whose truth is known by
+# construction. Nothing here downloads a model or trains anything.
+#
+# The real-venue detector numbers are measured too, but as a comparison against
+# the committed baseline in benchmarks/BASELINE.json rather than as a hardcoded
+# expectation, so an honest improvement is reported and a silent regression
+# fails.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    name: Regression suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Playwright
+        run: npm ci --no-audit --no-fund
+
+      # Cached separately from node_modules: the browser is ~150MB and changes
+      # only when the pinned Playwright version does.
+      - name: Cache Chromium
+        id: browser-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Populates .vendor-cache/ with the pinned SheetJS and PDF.js tarballs,
+      # which the test run then serves locally instead of reaching a CDN, and
+      # proves the single-file offline artifact still builds.
+      - name: Build the offline artifact
+        run: npm run build:offline
+
+      - name: Regression suite
+        run: npm test
+
+      - name: Detection benchmark
+        run: npm run benchmark
+
+      # Fails on any drop against benchmarks/BASELINE.json, per field, per
+      # plan. A trade -- chair recall up, table F1 down -- is invisible to a
+      # single score, so every guarded field is compared on its own.
+      - name: Detector baseline
+        run: npm run benchmark:baseline
+
+      - name: Upload benchmark report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-report
+          path: benchmarks/reports/latest.json
+          if-no-files-found: warn

@@ -20,7 +20,8 @@
     setTableCapacity, inspectorAction, updateInspectorField, deleteSelectedObject,
     startObjectDrag, startResize, startRotate, createTableFromDraft, addVenue,
     openGuestDialog, deleteGuest, assignGuestToTable, unassignGuest, toggleAssignmentLock,
-    duplicateEvent, loadXLSX, saveState, touchEvent, openGuide
+    duplicateEvent, loadXLSX, saveState, touchEvent, openGuide,
+    undoCanvas, redoCanvas
   };
 
   Object.assign(ui, {
@@ -466,6 +467,16 @@
   startRotate = function(...args){if(canMutate(activeEvent(),"rotate plan objects"))original.startRotate(...args);};
   createTableFromDraft = function(){if(canMutate(activeEvent(),"add a table")){original.createTableFromDraft();const e=activeEvent(),t=e.tables.find(x=>x.id===ui.selectedObjectId);if(t){syncTableChairs(t);saveState();}}};
   addVenue = function(...args){if(canMutate(activeEvent(),"add a venue object"))original.addVenue(...args);};
+  // Undo/redo were the last canvas mutation path with no historical guard, and
+  // the most reachable one: the Ctrl+Z handler in app-guests.js is bound to
+  // window and is gated on neither screen, tab nor event status. Marking an
+  // event Completed without leaving the workspace -- or simply working past
+  // midnight into a past-dated event -- left a live undo stack pointed at a
+  // record that is supposed to be frozen, and one keystroke rewrote its floor
+  // plan. Guarding the handler would have fixed that one caller; the rule is
+  // that canMutate rejects every mutation path, so the guard goes here.
+  undoCanvas = function(){if(canMutate(activeEvent(),"undo changes"))original.undoCanvas();};
+  redoCanvas = function(){if(canMutate(activeEvent(),"redo changes"))original.redoCanvas();};
 
   const oldBindCanvas=bindCanvas;
   bindCanvas = function(){

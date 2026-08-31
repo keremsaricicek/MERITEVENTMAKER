@@ -7,18 +7,21 @@
 //
 // Usage:
 //   node benchmarks/run-benchmark.mjs [planIdSubstring]
-// Requires the app served at localhost:8000 (python3 -m http.server 8000).
 
-import { chromium } from "/opt/node22/lib/node_modules/playwright/index.mjs";
+import { launchChromium } from "../tests/lib/env.mjs";
+import { serveApp } from "../tests/lib/server.mjs";
+
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
+// The runner serves the app itself; nothing here depends on a server a
+// person remembered to start. MERIT_BASE_URL overrides it.
+const app = await serveApp();
+
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const PORT = process.env.MERIT_BENCH_PORT || "8000";
 const FILTER = process.argv[2] || "";
-const CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 
 // ---- matching -------------------------------------------------------------
 // Greedy nearest-first over all (gt, det) pairs within tolerance. Greedy on a
@@ -63,7 +66,7 @@ async function detect(browser, imagePath) {
   if (process.env.MERIT_BENCH_NO_FRAGMENT_FILTER) {
     await page.addInitScript(() => { globalThis.MERIT_DISABLE_FRAGMENT_FILTER = true; });
   }
-  await page.goto(`http://localhost:${PORT}/index.html`);
+  await page.goto(`${app.baseUrl}/index.html`);
   await page.waitForLoadState("networkidle");
   await page.click('.appbar [data-action="create-event"]');
   await page.waitForTimeout(300);
@@ -235,7 +238,7 @@ const annDir = path.join(ROOT, "annotations");
 const files = fs.readdirSync(annDir).filter(f => f.endsWith(".json")).filter(f => !FILTER || f.includes(FILTER));
 if (!files.length) { console.error("no annotations matched", FILTER); process.exit(1); }
 
-const browser = await chromium.launch({ headless: true, executablePath: CHROME });
+const browser = await launchChromium();
 const reports = [];
 for (const f of files) {
   const annot = JSON.parse(fs.readFileSync(path.join(annDir, f), "utf8"));

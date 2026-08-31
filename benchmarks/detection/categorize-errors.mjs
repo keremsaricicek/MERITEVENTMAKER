@@ -1,14 +1,20 @@
 // GATE 4: each remaining table false positive, individually, with the
 // evidence that was available to reject it. Solve by category, never by
 // coordinate.
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+import { launchChromium } from "../../tests/lib/env.mjs";
+import { serveApp } from "../../tests/lib/server.mjs";
+
 import fs from 'node:fs';
+
+// The runner serves the app itself; nothing here depends on a server a
+// person remembered to start. MERIT_BASE_URL overrides it.
+const app = await serveApp();
 const annot=JSON.parse(fs.readFileSync('/home/user/MERITEVENTMAKER/benchmarks/annotations/merit-real-venue.json','utf8'));
 const W=annot.source.width,H=annot.source.height,diag=Math.hypot(W,H);
 const tol=(annot.matchToleranceP??3)/100*diag;
-const b=await chromium.launch({headless:true,executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome'});
+const b=await launchChromium();
 const p=await b.newPage({viewport:{width:1800,height:1000}});
-await p.goto('http://localhost:8000/index.html');await p.waitForLoadState('networkidle');
+await p.goto(app.baseUrl + '/index.html');await p.waitForLoadState('networkidle');
 await p.click('.appbar [data-action="create-event"]');await p.waitForTimeout(300);
 await p.fill('input[name="name"]','FP');await p.fill('input[name="hotel"]','FP');await p.fill('input[name="date"]','2026-10-02');
 await p.click('button[data-setup="blank"]');await p.waitForTimeout(700);

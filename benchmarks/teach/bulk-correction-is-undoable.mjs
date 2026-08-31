@@ -10,19 +10,25 @@
 // Drives the real review UI throughout.
 //
 // Usage: node benchmarks/teach/bulk-correction-is-undoable.mjs
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+import { launchChromium } from "../../tests/lib/env.mjs";
+import { serveApp } from "../../tests/lib/server.mjs";
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// The runner serves the app itself; nothing here depends on a server a
+// person remembered to start. MERIT_BASE_URL overrides it.
+const app = await serveApp();
+
 const REPO = path.dirname(path.dirname(path.dirname(fileURLToPath(import.meta.url))));
-const b = await chromium.launch({ headless: true, executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const b = await launchChromium();
 const p = await b.newPage({ viewport: { width: 1800, height: 1000 } });
 const errs = []; p.on('pageerror', e => errs.push(e.message));
 let passed = 0, failed = 0;
 const ok = (c, l, d) => { if (c) { passed++; console.log('OK: ' + l); } else { failed++; console.log('FAIL: ' + l + (d !== undefined ? ' :: ' + JSON.stringify(d) : '')); } };
 
-await p.goto('http://localhost:8000/index.html'); await p.waitForLoadState('networkidle');
+await p.goto(app.baseUrl + '/index.html'); await p.waitForLoadState('networkidle');
 await p.click('.appbar [data-action="create-event"]'); await p.waitForTimeout(300);
 await p.fill('input[name="name"]', 'Bulk'); await p.fill('input[name="hotel"]', 'Bulk');
 await p.fill('input[name="date"]', '2026-10-02');

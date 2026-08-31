@@ -76,10 +76,26 @@ the over-splitting failure mode we need to see.
 ## Running
 
 ```
-node benchmarks/run-benchmark.mjs            # all annotated plans
+npm run benchmark                            # all annotated plans
 node benchmarks/run-benchmark.mjs realplan   # substring filter
+npm run benchmark:baseline                   # compare this run to BASELINE.json
+node benchmarks/record-baseline.mjs --record # adopt this run as the new baseline
 ```
 
-Requires the app served locally (`python3 -m http.server 8000`); the runner
-drives the real detector through the real UI, because most of the domain
-logic is closure-scoped and not reachable any other way.
+The runner serves the app itself and drives the real detector through the real
+UI, because most of the domain logic is closure-scoped and not reachable any
+other way. Set `MERIT_BASE_URL` to point it at a server you already have.
+
+## The recorded baseline
+
+`BASELINE.json` is the committed claim about what the detector currently does:
+per plan, per field, at a named commit, against images with recorded hashes.
+`npm run benchmark:baseline` compares a fresh run to it and exits non-zero on
+any drop.
+
+Fields are compared one at a time and per plan, on purpose. A single overall
+score hides the trade this project cares most about — chair recall rising
+while table F1 collapses — and that trade is a revert, not a win. An
+improvement is reported and never fails the run. If a change genuinely earns
+worse numbers somewhere, re-record with `--record` and say why in the commit
+message; the baseline is a claim someone made deliberately, not a rubber stamp.

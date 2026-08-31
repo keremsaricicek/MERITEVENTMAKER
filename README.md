@@ -10,9 +10,11 @@ stored in the browser via `localStorage`; nothing is uploaded anywhere.
 ## Running it
 
 ```
-python3 -m http.server 8000   # or any static file server
-# open http://localhost:8000
+npm run serve                 # http://127.0.0.1:8000 — or any static file server
 ```
+
+There is no build step and no runtime dependency: `npm install` fetches
+Playwright for the test suite only, and is not needed just to open the app.
 
 `index.html` loads the SheetJS (Excel import/export) and PDF.js (PDF floor
 plan import) engines from jsDelivr, pinned to the exact versions this app
@@ -40,6 +42,23 @@ node scripts/build-offline.mjs
 This downloads the two pinned npm packages once (cached in
 `.vendor-cache/`) and inlines them into `dist/index-offline.html`, mirroring
 how earlier versions of this app shipped as a single email-able file.
+
+## Tests and benchmarks
+
+```
+npm install                  # once — Playwright, for the tests only
+npm test                     # regression suite, ~2 min; exit code is the verdict
+npm run test:all             # plus the slow suites (real detection on the real plan)
+npm run benchmark            # object-level detection accuracy, per plan
+npm run benchmark:baseline   # compare that run to benchmarks/BASELINE.json
+npm run perf                 # performance runners
+npm run verify:offline       # boot and drive both offline artifacts
+```
+
+The suites drive the real UI in Chromium and serve the app themselves — no
+server to start first. `tests/README.md` lists what each one guards;
+`benchmarks/README.md` explains the recorded detector baseline and why a
+regression there is a revert rather than a new number.
 
 ## Project structure
 
