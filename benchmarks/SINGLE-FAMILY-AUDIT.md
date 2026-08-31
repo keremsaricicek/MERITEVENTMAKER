@@ -192,9 +192,29 @@ single chair family splits into several under-supported ones.
 **Measured:** `rotate-2` and `rotate-minus-3` are the only variants where
 armchair recall falls (1.000 → 0.823) and review groups explode (12 → 35 / 41).
 
-**Replacement:** estimate the plan's dominant line orientation and deskew before
-detection, or carry OBB dimensions into the family gates. Deskew is preferable:
-it fixes every downstream gate at once instead of each separately.
+**Replacement — done.** A projection-profile deskew now runs before any
+component is measured, so every one of those gates is fixed at once instead of
+each separately.
+
+Per-pixel gradient voting was tried first and rejected: a line drawn at 2
+degrees is rasterised as a staircase whose every local gradient is exactly
+axis-aligned, so the aliasing votes for zero. On known rotations of +2 and -3 it
+returned 1.74 and -2.54. The projection profile — rotate the ink by each
+candidate angle, keep the one whose horizontal projection is most concentrated,
+because a long wall collapses into a few tall rows only when it is parallel to
+the scan — returns 1.998 and -3.000, and 0.00 on all six straight renderings.
+It only fires when the best angle beats square-on by a real margin (measured:
+gain 2.03 and 2.20 rotated, exactly 1.0000 straight).
+
+| | before | after |
+|---|---|---|
+| rotate-2 table F1 | 0.672 | **0.968** |
+| rotate-2 table FP | 31 | **2** |
+| rotate-2 review groups | 29 | **15** |
+| rotate-minus-3 table F1 | 0.667 | **0.901** |
+| rotate-minus-3 table FP | 36 | **4** |
+| rotate-minus-3 review groups | 31 | **12** |
+| rotate-minus-3 chair F1 | 0.915 | **0.970** |
 
 ---
 
@@ -255,7 +275,7 @@ than pass them through as detections. See §10 of the sprint brief.
 | A4 dark candidates capped, chairs only | open |
 | B1–B5 table size/aspect modals | open |
 | C2–C6 absolute pixel and luma constants | open |
-| D rotation / no deskew | open — the only remaining robustness regression |
+| D rotation / no deskew | **fixed** — projection-profile deskew before detection |
 | E2 surface filter keep-ratio guard | open |
 
 Measured result of the fixed items, real Golden Plan:
@@ -269,11 +289,10 @@ Measured result of the fixed items, real Golden Plan:
 
 ## Priority for what remains
 
-1. **D** — deskew. The rotation variants are the only rows still below their
-   recorded baseline, and rotation breaks every axis-aligned gate at once.
-2. **C2–C6** — the remaining absolute constants; `downscale-70`'s 73 false
+1. **C2–C6** — the remaining absolute constants; `downscale-70`'s 73 false
    chairs and the contrast/brightness collapses.
-3. **E2** — a stage that loses its evidence must defer to review, not accept.
-4. **B1–B5** — table families, the same fix already proven for chairs.
-5. **A2, A3, A4** — real generalization gaps with no Golden Plan evidence
+2. **E2** — a stage that loses its evidence must defer to review, not accept.
+   This is what `bright-up` (0.586) and `contrast-high` (0.561) are.
+3. **B1–B5** — table families, the same fix already proven for chairs.
+4. **A2, A3, A4** — real generalization gaps with no Golden Plan evidence
    behind them. Must not be claimed as solved.

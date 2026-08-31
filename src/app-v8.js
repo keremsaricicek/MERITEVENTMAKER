@@ -1219,6 +1219,69 @@
   function yieldFrame(){return new Promise(resolve=>requestAnimationFrame(()=>resolve()));}
   function sourceBlob(src){return fetch(src).then(r=>r.blob());}
   function otsu(hist,total,sum){let bg=0,bgSum=0,best=-1,threshold=150;for(let value=0;value<256;value++){bg+=hist[value];if(!bg)continue;const fg=total-bg;if(!fg)break;bgSum+=value*hist[value];const score=bg*fg*((bgSum/bg)-((sum-bgSum)/fg))**2;if(score>best){best=score;threshold=value;}}return threshold;}
+  // ---- deskew -------------------------------------------------------------
+  // A scan is never quite square to the page, and this pipeline is unusually
+  // sensitive to that: almost every gate upstream of the oriented box uses the
+  // AXIS-ALIGNED width and height of a component. Three degrees inflates the
+  // box of an elongated object and changes its measured elongation, which moves
+  // it into a different size-and-shape family — so one chair family splits into
+  // several under-supported ones and each is then too small to be admitted.
+  // Measured on the rotate variants before this existed: armchair recall fell
+  // from 1.000 to 0.823 and review groups went from 12 to 35 and 41.
+  //
+  // Correcting the image once fixes every one of those gates at the same time,
+  // which is why this is a deskew and not a rotation-tolerance rule in each of
+  // them.
+  //
+  // Estimated by projection profile: rotate the ink by each candidate angle and
+  // keep the one whose horizontal projection is most concentrated, because a
+  // long wall collapses into a few tall rows only when it is parallel to the
+  // scan direction. Per-pixel gradient voting was tried first and is NOT used:
+  // a line drawn at 2 degrees is rendered as a staircase whose every local
+  // gradient is exactly axis-aligned, so the aliasing votes for zero and drags
+  // the estimate down. Measured, that method returned 1.74 and -2.54 for known
+  // rotations of +2 and -3; this one returns 1.998 and -3.000.
+  const SKEW_MAX_DEG=6,SKEW_STEP=.25,SKEW_MIN_DEG=.35,SKEW_MIN_GAIN=1.08;
+  function estimatePlanSkew(sourceCanvas,width,height){
+    // Skew is a global property of the drawing, so it is measured small.
+    const target=500,s=Math.min(1,target/Math.max(width,height));
+    const W=Math.max(8,Math.round(width*s)),H=Math.max(8,Math.round(height*s));
+    const small=document.createElement("canvas");small.width=W;small.height=H;
+    const sctx=small.getContext("2d",{willReadFrequently:true});
+    sctx.drawImage(sourceCanvas,0,0,W,H);
+    const d=sctx.getImageData(0,0,W,H).data;
+    const gray=new Float32Array(W*H);
+    for(let i=0,o=0;i<W*H;i++,o+=4)gray[i]=d[o]*.299+d[o+1]*.587+d[o+2]*.114;
+    // Ink is gradient magnitude, so a pale plan and a dark one behave alike.
+    const ink=new Float32Array(W*H);let inkTotal=0;
+    for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
+      const i=y*W+x,m=Math.abs(gray[i+1]-gray[i-1])+Math.abs(gray[i+W]-gray[i-W]);
+      if(m>40){ink[i]=m;inkTotal+=m;}
+    }
+    if(!inkTotal)return{deg:0,gain:1,measured:false};
+    const cx=W/2,cy=H/2,rows=new Float32Array(H+2);
+    const scoreAt=deg=>{
+      const r=deg*Math.PI/180,cos=Math.cos(r),sin=Math.sin(r);
+      rows.fill(0);
+      for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){
+        const v=ink[y*W+x];if(!v)continue;
+        const ry=((x-cx)*-sin+(y-cy)*cos+cy)|0;
+        if(ry>=0&&ry<H)rows[ry]+=v;
+      }
+      let sum=0;for(let i=0;i<H;i++)sum+=rows[i]*rows[i];
+      return sum;
+    };
+    const scores=[];let best=0,bestScore=-1,zero=1;
+    for(let deg=-SKEW_MAX_DEG;deg<=SKEW_MAX_DEG+1e-9;deg+=SKEW_STEP){
+      const sc=scoreAt(deg);scores.push(sc);
+      if(Math.abs(deg)<1e-9)zero=sc||1;
+      if(sc>bestScore){bestScore=sc;best=deg;}
+    }
+    const i0=Math.round((best+SKEW_MAX_DEG)/SKEW_STEP);
+    const l=scores[i0-1]??bestScore,m=bestScore,r=scores[i0+1]??bestScore,den=l-2*m+r;
+    const refined=best+(den?.5*(l-r)/den:0)*SKEW_STEP;
+    return{deg:+refined.toFixed(3),gain:+(bestScore/zero).toFixed(4),measured:true};
+  }
   // ============================================================
   // PlanDetectionProvider — classical-CV implementation
   //
@@ -3464,7 +3527,77 @@
     try{
       const blob=await sourceBlob(event.background.src),bitmap=await createImageBitmap(blob),max=1920,ratio=Math.min(1,max/Math.max(bitmap.width,bitmap.height)),width=Math.max(1,Math.round(bitmap.width*ratio)),height=Math.max(1,Math.round(bitmap.height*ratio)),canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,height);bitmap.close();
       ui.analysisStage=t("analysis.stage.understanding");ui.analysisProgress=22;render();await yieldFrame();
-      const pixels=ctx.getImageData(0,0,width,height);
+      // Deskew before anything measures a component. See estimatePlanSkew.
+      //
+      // Only when the evidence is real: the best angle has to beat square-on by
+      // a margin, not merely tie with it. Measured, that gain is 2.03 and 2.20
+      // on the two genuinely rotated variants and exactly 1.0000 on the six
+      // straight renderings, so the deadband is not a close call.
+      const skew=estimatePlanSkew(canvas,width,height);
+      const deskewDeg=(skew.measured&&Math.abs(skew.deg)>=SKEW_MIN_DEG&&skew.gain>=SKEW_MIN_GAIN)?skew.deg:0;
+      let dw=width,dh=height,dctx=ctx;
+      if(deskewDeg){
+        const rad=-deskewDeg*Math.PI/180,cos=Math.abs(Math.cos(rad)),sin=Math.abs(Math.sin(rad));
+        dw=Math.max(1,Math.round(width*cos+height*sin));
+        dh=Math.max(1,Math.round(width*sin+height*cos));
+        const dcanvas=document.createElement("canvas");dcanvas.width=dw;dcanvas.height=dh;
+        dctx=dcanvas.getContext("2d",{willReadFrequently:true});
+        // Paper, not black, behind the rotated corners: a black wedge would read
+        // as a giant dark object and change every tone family on the plan.
+        dctx.fillStyle="#ffffff";dctx.fillRect(0,0,dw,dh);
+        dctx.translate(dw/2,dh/2);dctx.rotate(rad);dctx.drawImage(canvas,-width/2,-height/2);
+        dctx.setTransform(1,0,0,1,0,0);
+      }
+      const pixels=dctx.getImageData(0,0,dw,dh);
+      // Everything the detector returns is in DESKEWED percent, and everything
+      // the product stores and draws is in PLAN percent. These two are the only
+      // bridge between them, and both are identities when no deskew happened.
+      //
+      // A candidate's w/h are its oriented box's own dimensions, not an
+      // axis-aligned extent, so rotating the frame does not change them — only
+      // the centre moves and the angle shifts by the correction that was
+      // applied. That is why this mapping is four lines rather than a general
+      // polygon transform.
+      const skewRad=deskewDeg*Math.PI/180;
+      const planFromDeskewPoint=(px,py)=>{
+        if(!deskewDeg)return[px,py];
+        const ox=px-dw/2,oy=py-dh/2,cos=Math.cos(skewRad),sin=Math.sin(skewRad);
+        return[ox*cos-oy*sin+width/2,ox*sin+oy*cos+height/2];
+      };
+      const deskewFromPlanPoint=(px,py)=>{
+        if(!deskewDeg)return[px,py];
+        const ox=px-width/2,oy=py-height/2,cos=Math.cos(-skewRad),sin=Math.sin(-skewRad);
+        return[ox*cos-oy*sin+dw/2,ox*sin+oy*cos+dh/2];
+      };
+      const planFromDeskew=o=>{
+        if(!o)return o;
+        if(deskewDeg){
+          const[cx,cy]=planFromDeskewPoint((o.x+o.w/2)/100*dw,(o.y+o.h/2)/100*dh);
+          const ow=o.w/100*dw,oh=o.h/100*dh;
+          o.w=ow/width*100;o.h=oh/height*100;
+          o.x=cx/width*100-o.w/2;o.y=cy/height*100-o.h/2;
+          o.rotation=((o.rotation||0)+deskewDeg)%360;
+        }
+        for(const ch of o.chairDetections||[])planFromDeskewChair(ch);
+        return o;
+      };
+      // A nested seat carries its CENTRE in x/y, not a top-left corner.
+      const planFromDeskewChair=ch=>{
+        if(!deskewDeg)return ch;
+        const[cx,cy]=planFromDeskewPoint(ch.x/100*dw,ch.y/100*dh);
+        const cw=ch.w/100*dw,chh=ch.h/100*dh;
+        ch.x=cx/width*100;ch.y=cy/height*100;
+        ch.w=cw/width*100;ch.h=chh/height*100;
+        ch.rotation=((ch.rotation||0)+deskewDeg)%360;
+        return ch;
+      };
+      // Human-confirmed regions travel the other way: they were stored in plan
+      // percent and the detector needs them where it is looking.
+      const deskewToPlan=list=>!deskewDeg?list:list.map(r=>{
+        const[cx,cy]=deskewFromPlanPoint((r.x+r.w/2)/100*width,(r.y+r.h/2)/100*height);
+        const w=r.w/100*width/dw*100,h=r.h/100*height/dh*100;
+        return{x:cx/dw*100-w/2,y:cy/dh*100-h/2,w,h};
+      });
       // The application layer talks to a PlanDetectionProvider, never to pixel
       // code or a vendor SDK directly (merit-plan-intelligence, "Provider
       // abstraction"). Today exactly one provider is installed and it is
@@ -3483,7 +3616,7 @@
       const protectedRegions=(event.planMemory||[])
         .filter(m=>m.status==="confirmed"||m.manual)
         .map(m=>({x:m.geometry.x,y:m.geometry.y,w:m.geometry.w,h:m.geometry.h}));
-      const detection=await provider.detect(pixels,width,height,{protectedRegions,onStage:async(key,progress)=>{
+      const detection=await provider.detect(pixels,dw,dh,{protectedRegions:deskewToPlan(protectedRegions),onStage:async(key,progress)=>{
         ui.analysisStage=t("analysis.stage."+key);ui.analysisProgress=progress;render();await yieldFrame();
       }});
       const detectionMs=Math.round(performance.now()-detectionStartedAt);
@@ -3492,9 +3625,14 @@
       // Through the provider boundary rather than the function directly, so a
       // future learned model is a registration and not a rewrite. Today this
       // resolves to the hand-crafted descriptor and says so.
+      //
+      // Embedding reads the deskewed pixel buffers, so it happens while the
+      // geometry is still in deskewed space; the mapping back to plan space is
+      // the next statement.
       const embedder=resolveVisualEmbeddingProvider();
-      for(const c of candidates)c.visualDescriptor=embedder.embed(detection.gray,detection.binary,width,height,c);
-      for(const c of venues)c.visualDescriptor=embedder.embed(detection.gray,detection.binary,width,height,c);
+      for(const c of candidates)c.visualDescriptor=embedder.embed(detection.gray,detection.binary,dw,dh,c);
+      for(const c of venues)c.visualDescriptor=embedder.embed(detection.gray,detection.binary,dw,dh,c);
+      for(const c of [...candidates,...venues])planFromDeskew(c);
       const previous=event.analysis?.candidates||[],signatures=list=>list.map(c=>`${c.kind}:${c.type}:${Math.round(c.x)}:${Math.round(c.y)}`),oldSig=new Set(signatures(previous)),newSig=new Set(signatures([...candidates,...venues]));
       const freshCandidates=[...candidates,...venues];
       const priorCandidates=event.analysis?.candidates||[],priorDecisions=event.analysis?.groupingDecisions||[];

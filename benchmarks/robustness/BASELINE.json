@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-08-31T13:38:30.768Z",
+  "ranAt": "2026-08-31T13:47:43.478Z",
   "realDistinctVenuePlans": 1,
   "note": "Every variant is a transform of benchmarks/plans/merit-real-venue-plan.png. This matrix measures robustness to rendering, not generalisation to unseen venues.",
   "rows": [
@@ -159,25 +159,25 @@
     },
     {
       "variant": "rotate-2",
-      "tableTP": 39,
-      "tableFP": 31,
-      "tableF1": 0.672,
-      "chairTP": 113,
-      "chairFP": 17,
-      "chairF1": 0.93,
+      "tableTP": 45,
+      "tableFP": 2,
+      "tableF1": 0.968,
+      "chairTP": 112,
+      "chairFP": 11,
+      "chairF1": 0.949,
       "armchairRecall": 1,
-      "reviewGroups": 29
+      "reviewGroups": 15
     },
     {
       "variant": "rotate-minus-3",
       "tableTP": 41,
-      "tableFP": 36,
-      "tableF1": 0.667,
-      "chairTP": 108,
-      "chairFP": 15,
-      "chairF1": 0.915,
-      "armchairRecall": 0.975,
-      "reviewGroups": 31
+      "tableFP": 4,
+      "tableF1": 0.901,
+      "chairTP": 112,
+      "chairFP": 6,
+      "chairF1": 0.97,
+      "armchairRecall": 1,
+      "reviewGroups": 12
     }
   ]
 }
