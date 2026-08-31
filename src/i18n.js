@@ -23,6 +23,17 @@
     "action.correct": { en: "Correct", tr: "Doğru" },
     "action.change": { en: "Change", tr: "Değiştir" },
     "action.notAnObject": { en: "Not an object", tr: "Nesne Değil" },
+    // Distinct from "Not an object" on purpose. That one says the detector
+    // hallucinated; this one says the thing is really there and is not
+    // something this product tracks. Both are stored as training signal --
+    // neither is a delete.
+    "action.notImportant": { en: "Not important", tr: "Önemli Değil" },
+    "action.exportDataset": { en: "Export dataset", tr: "Veri Setini Dışa Aktar" },
+    "teach.exportEmpty": { en: "No decisions have been captured yet. Confirm, correct or dismiss something first.", tr: "Henüz kaydedilmiş karar yok. Önce bir nesneyi onaylayın, düzeltin veya eleyin." },
+    "teach.exportDone": { en: "Exported {n} captured decision(s) from {plans} plan(s), with image crops and a plan-grouped split.", tr: "{plans} plandan {n} kayıtlı karar, görüntü kırpımları ve plana göre ayrılmış bölümlemeyle dışa aktarıldı." },
+    "teach.exportMissingCrops": { en: "{n} example(s) had no stored crop and are marked missing in the file rather than filled with a blank image.", tr: "{n} örneğin kırpımı bulunamadı; dosyada boş görüntüyle doldurulmak yerine eksik olarak işaretlendi." },
+    "action.exportDatasetTitle": { en: "Export every captured decision, with its image crop, as a single portable file.", tr: "Kaydedilen her kararı, görüntü kırpımıyla birlikte tek taşınabilir dosya olarak dışa aktarır." },
+    "action.notImportantTitle": { en: "A real thing, but not something we track. Kept as a negative example.", tr: "Gerçek bir nesne, ancak takip ettiklerimizden değil. Olumsuz örnek olarak saklanır." },
     "action.reviewOutliers": { en: "Review outliers", tr: "Farklı Olanları İncele" },
     "action.applyToAll": { en: "Apply to all", tr: "Tümüne Uygula" },
     "action.applyStrongMatches": { en: "Apply to strong matches", tr: "Güçlü Eşleşmelere Uygula" },

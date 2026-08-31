@@ -67,6 +67,17 @@ visually distinct dark system for any screen.
 source/markup review is not a substitute. Full detail:
 `.claude/skills/merit-ui-constitution/SKILL.md`.
 
+## Captured decisions
+
+Every human decision in the review screen stores a training example with the
+real image crop, the plan hash, the venue/layout/version it came from, what
+the detector had predicted, and which build predicted it — five decision
+types, including negatives ("Not important" is a stored example, never a
+delete). This is a data foundation: it trains nothing, and `trainedModel`
+stays false. Labels spread across a family are marked as not individually
+reviewed. Dataset splits are grouped by plan, never by example. Full detail:
+`benchmarks/TRAINING-DATA.md`.
+
 ## Plan Intelligence honesty
 
 Assisted Detection today is classical computer vision, not a trained

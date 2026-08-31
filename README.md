@@ -58,7 +58,9 @@ npm run verify:offline       # boot and drive both offline artifacts
 The suites drive the real UI in Chromium and serve the app themselves — no
 server to start first. `tests/README.md` lists what each one guards;
 `benchmarks/README.md` explains the recorded detector baseline and why a
-regression there is a revert rather than a new number.
+regression there is a revert rather than a new number;
+`benchmarks/TRAINING-DATA.md` documents what a human decision captures
+and how a dataset exported from it is split.
 
 ## Project structure
 
@@ -81,12 +83,20 @@ src/plan-intelligence.js  PlanIntelligenceResult contract + real geometric
                       heuristics (furniture grouping, similarity clustering,
                       bulk review groups, OCR capacity cross-check) built on
                       top of the classical-CV Assisted Detection candidates
+src/training-data.js  What a human decision leaves behind: the record shape,
+                      the image crop, and leakage-safe dataset splitting.
+                      Captures data; trains nothing (benchmarks/TRAINING-DATA.md)
+src/storage-provider.js   The persistence boundary (IndexedDB, localStorage
+                      fallback) — see the desktop-architecture skill for why
+src/venue-model.js    Venue → Layout → LayoutVersion → Event, and layout memory
 scripts/build-offline.mjs   Produces the single-file offline build
+tests/                Regression suite (tests/README.md)
+benchmarks/           Detection accuracy, performance, offline verification
 ```
 
-The three `src/*.js` files are loaded as classic (non-module) scripts, in
-that order, and share one global scope by design — `src/app-v8.js` is a
-layer that overrides and extends functions defined in the first two
+The `src/*.js` files are loaded as classic (non-module) scripts, in the order
+listed in `index.html`, and share one global scope by design — `src/app-v8.js`
+is a layer that overrides and extends functions defined earlier
 (card-based event home screen, guided event setup, assisted floor-plan
 detection from an uploaded image, live operational mode). This mirrors how
 the app was actually built and shipped, so it's kept as-is rather than

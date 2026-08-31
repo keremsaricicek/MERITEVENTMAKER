@@ -13,6 +13,10 @@
     return new MeritStorageProviders.LocalStorageStorageProvider(V8_STORAGE_KEY);
   })();
   globalThis.MERIT_STORAGE_STATUS = { provider: storageProvider.constructor.name };
+  // Exposed so the training-data crops can be read back and exported without
+  // routing image bytes through the state record. Read/write access to the
+  // blob store only -- the state record still goes through saveState().
+  globalThis.MERIT_STORAGE_PROVIDER = storageProvider;
   const todayKey = () => new Date().toLocaleDateString("en-CA");
   const original = {
     render, bindCommon, bindCanvas, bindGuests, bindSeating, bindLive, bindReports,
@@ -33,7 +37,7 @@
     lang:"en", reviewCenterOpen:false, difficultQuestionIndex:0, activeReviewGroupId:null, activeQuestionId:null, ocrText:null
   });
 
-  function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], analyses:[], calibration:null, audit:[]}; }
+  function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], analyses:[], calibration:null, audit:[]}; }
   function isHistorical(event){ return !!event && (event.status === "Completed" || (!!event.date && event.date < todayKey())); }
   function audit(event, action, detail={}){
     state.audit ||= [];
@@ -99,6 +103,10 @@
   function parseRoot(raw){
     const parsed=JSON.parse(raw); parsed.version=8; parsed.schemaVersion=8;
     parsed.events=(parsed.events||[]).map(migrateEvent); parsed.verifiedExamples ||= []; parsed.analyses ||= []; parsed.audit ||= [];
+    // Added with training-data capture. An install from before it simply has
+    // no examples yet -- there is nothing to reconstruct, because the crops
+    // it would have needed were never taken.
+    parsed.trainingData ||= [];
     // Promote the old free-text hotel/salon strings into real Venue/Layout
     // records (src/venue-model.js). Additive: every event keeps its original
     // strings, and a venueRef is attached alongside, so nothing that reads
@@ -2714,6 +2722,80 @@
     const existing=event.planMemory.findIndex(m=>m.sourceCandidateId===c.id);
     if(existing>=0)event.planMemory[existing]=entry;else event.planMemory.push(entry);
   }
+  // ---- training-data capture (Gates E-G) ----------------------------------
+  //
+  // rememberCorrection above keeps a plan tidy: it records the answer so the
+  // same object comes back the same way after Re-Analyze. It does not keep
+  // the question. Nothing in it says what the detector had predicted, which
+  // build predicted it, which plan and which layout version the object came
+  // from, or what the operator was actually looking at.
+  //
+  // captureTrainingExample keeps all of that, with the real crop, in
+  // state.trainingData. It is a data foundation and nothing else: it never
+  // changes a detection, never trains anything, and never sets trainedModel.
+  // See src/training-data.js for the record shape and the decision types.
+  //
+  // Failures are reported, not swallowed. A correction that was applied but
+  // not captured is a real gap in the dataset, and an operator who is told
+  // "saved" while nothing was stored would build on sand.
+  let planImageCache={src:null,image:null};
+  let planHashCache={src:null,hash:null};
+  let captureFailureReported=false;
+  async function planHashFor(src){
+    if(planHashCache.src!==src)planHashCache={src,hash:await MeritTrainingData.planFingerprint(src)};
+    return planHashCache.hash;
+  }
+  async function planImageFor(src){
+    if(planImageCache.src!==src){
+      if(planImageCache.image?.close)planImageCache.image.close();
+      planImageCache={src,image:await MeritTrainingData.imageFromDataUrl(src)};
+    }
+    return planImageCache.image;
+  }
+  function classOf(c){return c?{kind:c.kind,type:c.type,confidence:c.confidence,source:c.evidence?.geometry??null,candidateId:c.id}:null;}
+  function truthOf(c){return c?{kind:c.kind,type:c.type,seats:c.seats??null,seatsConfidence:c.seatsConfidence??null}:null;}
+  async function captureTrainingExample(event,c,{decisionType,predictionBefore=null,note=null}={}){
+    if(!globalThis.MeritTrainingData||!event?.background?.src||!c)return null;
+    try{
+      const src=event.background.src;
+      const [planHash,image]=await Promise.all([planHashFor(src),planImageFor(src)]);
+      if(!planHash)return null;
+      const geometry={x:c.x,y:c.y,w:c.w,h:c.h,rotation:c.rotation||0};
+      const shot=await MeritTrainingData.cropFromImage(image,geometry);
+      const blobId=uid("crop");
+      await storageProvider.putBlob(blobId,shot.dataUrl);
+      const wantsTruth=decisionType==="confirmation"||decisionType==="correction"||decisionType==="missedObject";
+      const record=MeritTrainingData.buildRecord({
+        decisionType,
+        plan:{planHash,name:event.background.name||null,width:image.width,height:image.height},
+        context:{eventId:event.id,venueId:event.venueRef?.venueId??null,
+          layoutId:event.venueRef?.layoutId??null,layoutVersionId:event.venueRef?.layoutVersionId??null},
+        geometry,
+        predictionBefore,
+        humanTruth:wantsTruth?truthOf(c):null,
+        providers:{
+          detection:event.analysis?.diagnostics?.provider
+            ?{id:event.analysis.diagnostics.provider,engine:event.analysis.engine,trainedModel:false}:null,
+          embedding:(()=>{const p=MeritVisualEmbedding?.resolve?.();
+            return p?{id:p.id,kind:p.kind,trainedModel:p.trainedModel,dimensions:p.dimensions}:null;})(),
+        },
+        descriptor:c.descriptor??null,
+        crop:{blobId,size:shot.size,sourceRect:shot.sourceRect,objectRect:shot.objectRect,padding:shot.padding},
+        note,
+      });
+      state.trainingData ||= [];
+      state.trainingData.push(record);
+      saveState();
+      return record;
+    }catch(error){
+      if(!captureFailureReported){
+        captureFailureReported=true;
+        toast(`The correction was applied, but capturing it as a training example failed: ${error.message}`,"error",7000);
+      }
+      console.error("Training-data capture failed.",error);
+      return null;
+    }
+  }
   function memoryDistance(c,m){const g=m.geometry;return Math.hypot(c.x-g.x,c.y-g.y,(c.w-g.w)*.5,(c.h-g.h)*.5);}
   // General old-candidate -> new-candidate geometry remap, used to carry
   // grouping decisions (which reference every member of a furniture group,
@@ -2962,7 +3044,7 @@
   function reviewPoiCardHTML(c){
     if(!c)return"";
     const opt=o=>`<option value="${o.kind}:${o.type}" ${c.kind===o.kind&&c.type===o.type?"selected":""}>${t("teach.type."+o.type)}</option>`;
-    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button></div></aside>`;
+    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
   }
   // Real pixel crop of a candidate straight out of the actual imported plan
   // image — a CSS background-position/-size window, never a synthesized or
@@ -3063,7 +3145,7 @@
     const boundaryBox=target?.isGroup?unionBbox([...target.ids].map(id=>byId.get(id)).filter(Boolean)):null;
     requestAnimationFrame(()=>applyReviewZoom(boundaryBox));
     const statusLabel=v=>t(v==="unreviewed"?"poi.unreviewed":v==="confirmed"?"poi.confirmed":"poi.rejected");
-    return`<section class="planintel-screen"><header class="planintel-top"><button class="btn" data-review-action="back">${icon("arrow")}${t("nav.floorPlan")}</button><div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):t("plan.noAnalysisYet"))}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:a.ocr.reason||"no network"})):a.notice}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>${t("diag.advancedDiagnostics")}</summary><div class="diag-pop">${detectionDiagnosticsHTML(a)}<div class="field"><label>${t("diag.status")}</label><select data-review-filter="status"><option value="all">${t("diag.all")}</option>${["unreviewed","confirmed","rejected"].map(v=>`<option value="${v}" ${ui.reviewFilter===v?"selected":""}>${statusLabel(v)}</option>`).join("")}</select></div><div class="field full"><label>${t("diag.minConfidence",{pct:Math.round(ui.reviewConfidence*100)})}</label><input data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?t("action.cancelDrawing"):t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">${t("action.saveVerifiedPlan")}</button><button class="btn sm" data-review-action="improve">${t("action.improveAI")}</button></div></details><button class="btn" data-review-action="reanalyze">${t("action.reanalyze")}</button>`:""}<button class="btn sm" data-review-action="toggle-lang">${ui.lang==="tr"?"TR":"EN"}</button></header>${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><div class="planintel-map-inner" id="analysisSceneInner"><img src="${event.background.src}" alt="Floor plan analysis source">${candidates.map(c=>candidateBox(c,selected?.id===c.id,target?.ids||null)).join("")}${boundaryBox?`<div class="review-group-boundary" style="left:${Math.max(0,boundaryBox.x-2.5)}%;top:${Math.max(0,boundaryBox.y-2.5)}%;width:${boundaryBox.w+5}%;height:${boundaryBox.h+5}%"></div>`:""}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="focus-group" data-group="${p.groupId}" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="Difficult question">${p.label}</button>`).join("")}</div></div>${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?t("plan.analyzingLocally"):t("plan.noAnalysisYet")}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
+    return`<section class="planintel-screen"><header class="planintel-top"><button class="btn" data-review-action="back">${icon("arrow")}${t("nav.floorPlan")}</button><div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):t("plan.noAnalysisYet"))}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:a.ocr.reason||"no network"})):a.notice}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>${t("diag.advancedDiagnostics")}</summary><div class="diag-pop">${detectionDiagnosticsHTML(a)}<div class="field"><label>${t("diag.status")}</label><select data-review-filter="status"><option value="all">${t("diag.all")}</option>${["unreviewed","confirmed","rejected"].map(v=>`<option value="${v}" ${ui.reviewFilter===v?"selected":""}>${statusLabel(v)}</option>`).join("")}</select></div><div class="field full"><label>${t("diag.minConfidence",{pct:Math.round(ui.reviewConfidence*100)})}</label><input data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?t("action.cancelDrawing"):t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">${t("action.saveVerifiedPlan")}</button><button class="btn sm" data-review-action="improve">${t("action.improveAI")}</button><button class="btn sm" data-review-action="export-dataset" title="${t("action.exportDatasetTitle")}">${t("action.exportDataset")}</button></div></details><button class="btn" data-review-action="reanalyze">${t("action.reanalyze")}</button>`:""}<button class="btn sm" data-review-action="toggle-lang">${ui.lang==="tr"?"TR":"EN"}</button></header>${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><div class="planintel-map-inner" id="analysisSceneInner"><img src="${event.background.src}" alt="Floor plan analysis source">${candidates.map(c=>candidateBox(c,selected?.id===c.id,target?.ids||null)).join("")}${boundaryBox?`<div class="review-group-boundary" style="left:${Math.max(0,boundaryBox.x-2.5)}%;top:${Math.max(0,boundaryBox.y-2.5)}%;width:${boundaryBox.w+5}%;height:${boundaryBox.h+5}%"></div>`:""}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="focus-group" data-group="${p.groupId}" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="Difficult question">${p.label}</button>`).join("")}</div></div>${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?t("plan.analyzingLocally"):t("plan.noAnalysisYet")}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
   }
   // The confidence at which a fresh candidate arrives pre-selected. Local
   // calibration (improveAI) writes state.calibration.recommendedConfidence
@@ -3109,6 +3191,13 @@
       if(corrected.kind!=="table")other.chairDetections=[];
       other.status="confirmed";other.selected=true;
       rememberCorrection(event,other);
+      // Captured, but marked as propagated. A person looked at one object and
+      // this repaired forty; recording forty human decisions would overstate
+      // the evidence by a factor of forty, and an evaluation that counted them
+      // as independent labels would be measuring its own guess.
+      captureTrainingExample(event,other,{decisionType:"correction",
+        predictionBefore:{kind:wasKind,type:wasType,confidence:other.confidence,source:other.evidence?.geometry??null,candidateId:other.id},
+        note:`propagated from ${corrected.id}; not individually reviewed by a person`});
       n++;
     }
     return n;
@@ -3191,6 +3280,8 @@
       }else{delete c.seats;delete c.seatsConfidence;}
       c.status="confirmed";c.selected=true;
       rememberCorrection(event,c);
+      captureTrainingExample(event,c,{decisionType:crossedKind||wasType!==type?"correction":"confirmation",
+        predictionBefore:{kind:wasKind,type:wasType,confidence:c.confidence,source:c.evidence?.geometry??null,candidateId:c.id}});
       // One correction should repair the whole family, not one object. Every
       // still-unreviewed candidate that the similarity clustering already
       // considers the same shape gets the same correction. This is
@@ -3211,17 +3302,93 @@
       if(UNVERIFIED_SEATING.has(object.type)){object.seats=c.seats??null;object.seatsConfidence=c.seats==null?"unverified":"verified";}
       event.venueObjects.push(object);c.committedId=object.id;venues++;}c.status="confirmed";}touchEvent(event);ui.screen="workspace";ui.tab="floor";render();toast(`${tables} table${tables===1?"":"s"}, ${venues} venue object${venues===1?"":"s"} confirmed. Chair coordinates were preserved.`,"success",6000);
   }
-  function bindReviewDrawing(){const scene=document.getElementById("analysisScene");if(!scene||!ui.reviewDrawMode)return;scene.onpointerdown=e=>{if(e.target!==scene&&e.target.tagName!=="IMG")return;e.preventDefault();const r=scene.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top,box=document.createElement("div");box.className="candidate-box selected";scene.appendChild(box);const move=ev=>{const x=ev.clientX-r.left,y=ev.clientY-r.top;Object.assign(box.style,{left:Math.min(sx,x)+"px",top:Math.min(sy,y)+"px",width:Math.abs(x-sx)+"px",height:Math.abs(y-sy)+"px"});};const up=ev=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);const x=Math.min(sx,ev.clientX-r.left)/r.width*100,y=Math.min(sy,ev.clientY-r.top)/r.height*100,w=Math.abs(ev.clientX-r.left-sx)/r.width*100,h=Math.abs(ev.clientY-r.top-sy)/r.height*100;if(w>1&&h>1){const event=activeEvent();const c={id:uid("candidate"),kind:"table",type:"rectangle",x,y,w,h,rotation:0,confidence:1,status:"unreviewed",selected:true,missed:true,chairDetections:[],evidence:{geometry:"manual",chairs:0,repetition:0}};event.analysis.candidates.push(c);event.analysis.missed.push(c.id);rememberCorrection(event,c,{manual:true});ui.selectedCandidateId=c.id;ui.reviewDrawMode=false;touchEvent(event);}render();};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);};}
+  function bindReviewDrawing(){const scene=document.getElementById("analysisScene");if(!scene||!ui.reviewDrawMode)return;scene.onpointerdown=e=>{if(e.target!==scene&&e.target.tagName!=="IMG")return;e.preventDefault();const r=scene.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top,box=document.createElement("div");box.className="candidate-box selected";scene.appendChild(box);const move=ev=>{const x=ev.clientX-r.left,y=ev.clientY-r.top;Object.assign(box.style,{left:Math.min(sx,x)+"px",top:Math.min(sy,y)+"px",width:Math.abs(x-sx)+"px",height:Math.abs(y-sy)+"px"});};const up=ev=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);const x=Math.min(sx,ev.clientX-r.left)/r.width*100,y=Math.min(sy,ev.clientY-r.top)/r.height*100,w=Math.abs(ev.clientX-r.left-sx)/r.width*100,h=Math.abs(ev.clientY-r.top-sy)/r.height*100;if(w>1&&h>1){const event=activeEvent();const c={id:uid("candidate"),kind:"table",type:"rectangle",x,y,w,h,rotation:0,confidence:1,status:"unreviewed",selected:true,missed:true,chairDetections:[],evidence:{geometry:"manual",chairs:0,repetition:0}};event.analysis.candidates.push(c);event.analysis.missed.push(c.id);rememberCorrection(event,c,{manual:true});captureTrainingExample(event,c,{decisionType:"missedObject",note:"drawn by the operator on a region the detector never proposed"});ui.selectedCandidateId=c.id;ui.reviewDrawMode=false;touchEvent(event);}render();};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);};}
+  // ---- dataset export (Gates H-J) ----------------------------------------
+  //
+  // One portable file containing every captured decision, its image crop, and
+  // a leakage-safe train/val/test split computed by plan rather than by
+  // example. The split is included so that whoever picks this up cannot
+  // accidentally shuffle crops at random: forty chairs from one drawing on
+  // both sides of the line produce a model that has memorised a venue and a
+  // number that says it generalises.
+  //
+  // The file states what it is. `trainedModel` is false throughout, the
+  // readiness line says plainly whether this is a training set or a capture
+  // log, and nothing here trains, evaluates or promotes anything.
+  const DATASET_FORMAT = "merit-training-dataset";
+  const DATASET_FORMAT_VERSION = 1;
+  async function buildTrainingDatasetExport({includeCrops=true}={}){
+    const records=state.trainingData||[];
+    const split=MeritTrainingData.splitByPlan(records);
+    const splitOf=new Map();
+    for(const name of ["train","val","test"])for(const r of split[name])splitOf.set(r.id,name);
+    const examples=[];
+    let cropsMissing=0;
+    for(const record of records){
+      const entry={...record,split:splitOf.get(record.id)||null};
+      if(includeCrops&&record.crop?.blobId){
+        const dataUrl=await storageProvider.getBlob(record.crop.blobId).catch(()=>null);
+        // A missing crop is reported, never quietly replaced with a blank one:
+        // a dataset that silently substitutes empty images trains on nothing
+        // and reports success.
+        if(dataUrl)entry.crop={...record.crop,dataUrl};
+        else{entry.crop={...record.crop,dataUrl:null,missing:true};cropsMissing++;}
+      }
+      examples.push(entry);
+    }
+    return {
+      format:DATASET_FORMAT,
+      formatVersion:DATASET_FORMAT_VERSION,
+      exportedAt:nowISO(),
+      schemaVersion:MeritTrainingData.SCHEMA_VERSION,
+      crop:{size:MeritTrainingData.CROP_SIZE,padding:MeritTrainingData.CROP_PADDING,encoding:"image/png",
+        note:"Square crop centred on the object, padded by a fraction of its own span so context is kept. sourceRect gives the exact source pixels."},
+      trainedModel:false,
+      producedBy:"MERIT EVENT MAKER Assisted Detection (classical computer vision) plus human decisions. No model was trained to produce this file.",
+      summary:MeritTrainingData.summarise(records),
+      split:{
+        method:"grouped by plan content hash; every crop from one plan lands in one split",
+        rationale:"Splitting individual crops at random puts objects from the same drawing on both sides and turns a memorised venue into a high score.",
+        counts:{train:split.train.length,val:split.val.length,test:split.test.length},
+        plans:split.plansPerSplit,
+        warning:split.warning,
+      },
+      cropsMissing,
+      examples,
+    };
+  }
+  async function exportTrainingDataset(){
+    const records=state.trainingData||[];
+    if(!records.length)return toast(t("teach.exportEmpty"),"error",5200);
+    try{
+      const payload=await buildTrainingDatasetExport();
+      const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+      const a=document.createElement("a");
+      a.href=URL.createObjectURL(blob);
+      a.download=`merit-training-dataset-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+      const s=payload.summary;
+      toast(t("teach.exportDone",{n:s.total,plans:s.distinctPlans}),"success",7000);
+      if(payload.cropsMissing)toast(t("teach.exportMissingCrops",{n:payload.cropsMissing}),"error",7000);
+    }catch(error){
+      toast(`Dataset export failed: ${error.message}`,"error",7000);
+    }
+  }
+  globalThis.MERIT_TRAINING_EXPORT=buildTrainingDatasetExport;
+
   function saveVerified(){const event=activeEvent();if(!ui.teachAI)return toast("Enable Teach AI with corrections first.","error");const a=event.analysis;if(!a)return;state.verifiedExamples.push({id:uid("verified"),eventId:event.id,savedAt:nowISO(),engine:a.engine,trainedModel:false,threshold:a.threshold,imageSize:[a.imageWidth,a.imageHeight],predictions:a.candidates.map(clone),groundTruth:a.candidates.filter(c=>c.status!=="rejected").map(clone),rejected:a.candidates.filter(c=>c.status==="rejected").map(c=>c.id),missed:[...a.missed],hardExample:a.missed.length>0||a.candidates.some(c=>c.status==="rejected")});saveState();toast("Verified plan saved locally with predictions, corrections, rejections and missed detections.","success",6000);}
   function improveAI(){if(!state.verifiedExamples.length)return toast("Save at least one verified plan first.","error");const samples=state.verifiedExamples.flatMap(v=>v.groundTruth||[]),avg=samples.length?samples.reduce((n,c)=>n+(c.confidence||0),0)/samples.length:0;state.calibration={version:(state.calibration?.version||0)+1,updatedAt:nowISO(),examples:state.verifiedExamples.length,objects:samples.length,recommendedConfidence:Number(Math.max(.35,Math.min(.8,avg*.85)).toFixed(2)),trainedModel:false,label:"Local assisted-detection calibration; not a trained neural model"};saveState();toast(`Local calibration v${state.calibration.version} completed from ${state.verifiedExamples.length} verified plan(s). No trained model claim is made.`,"success",6500);}
   function bindReview(){
-    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.screen="workspace";ui.tab="floor";ui.activeReviewGroupId=null;ui.activeQuestionId=null;ui.selectedCandidateId=null;render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){c.status="confirmed";c.selected=true;rememberCorrection(event,c);touchEvent(event);render();}else if(action==="reject"&&c){c.status="rejected";c.selected=false;rememberCorrection(event,c);touchEvent(event);render();}else if(action==="delete-candidate"&&c){event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;touchEvent(event);render();}else if(action==="draw"){ui.reviewDrawMode=!ui.reviewDrawMode;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="focus-group"){ui.activeReviewGroupId=b.dataset.group;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=true;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
+    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.screen="workspace";ui.tab="floor";ui.activeReviewGroupId=null;ui.activeQuestionId=null;ui.selectedCandidateId=null;render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){const was=classOf(c);c.status="confirmed";c.selected=true;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was});touchEvent(event);render();}else if(action==="reject"&&c){const was=classOf(c);c.status="rejected";c.selected=false;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"falsePositive",predictionBefore:was});touchEvent(event);render();}else if(action==="dismiss"&&c){const was=classOf(c);captureTrainingExample(event,c,{decisionType:"negative",predictionBefore:was,note:"operator dismissed this region as not important"});event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;touchEvent(event);render();}else if(action==="draw"){ui.reviewDrawMode=!ui.reviewDrawMode;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="export-dataset")exportTrainingDataset();else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="focus-group"){ui.activeReviewGroupId=b.dataset.group;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=true;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
     document.querySelectorAll("[data-candidate],[data-candidate-box]").forEach(node=>node.onclick=e=>{if(e.target.matches("input"))return;ui.selectedCandidateId=node.dataset.candidate||node.dataset.candidateBox;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();});document.querySelectorAll("[data-candidate-select]").forEach(input=>input.onchange=()=>{const c=activeEvent().analysis.candidates.find(x=>x.id===input.dataset.candidateSelect);c.selected=input.checked;touchEvent(activeEvent());});document.querySelectorAll("[data-candidate-edit]").forEach(input=>input.onchange=()=>{const f=input.dataset.candidateEdit,v=input.value;requestAnimationFrame(()=>updateCandidateField(f,v));});document.querySelectorAll("[data-review-filter]").forEach(input=>input.oninput=()=>{if(input.dataset.reviewFilter==="status")ui.reviewFilter=input.value;else if(input.dataset.reviewFilter==="class")ui.reviewClass=input.value;else ui.reviewConfidence=Number(input.value);render();});document.querySelector("[data-teach-ai]")?.addEventListener("change",e=>{ui.teachAI=e.target.checked;});
     document.querySelectorAll("[data-reviewgroup-action]").forEach(b=>b.onclick=()=>{
       const event=activeEvent(),pi=event.analysis?.planIntelligence,group=pi?.reviewGroups.find(g=>g.id===b.dataset.group);if(!group)return;
       if(b.dataset.reviewgroupAction==="confirm-family"){
         const strong=group.memberIds.filter(id=>!group.outlierIds.includes(id));
-        strong.forEach(id=>{const c=event.analysis.candidates.find(x=>x.id===id);if(c){c.status="confirmed";c.selected=true;rememberCorrection(event,c);}});
+        strong.forEach(id=>{const c=event.analysis.candidates.find(x=>x.id===id);if(c){const was=classOf(c);c.status="confirmed";c.selected=true;rememberCorrection(event,c);
+          captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was,
+            note:"accepted in bulk via Confirm All; not individually reviewed by a person"});}});
         touchEvent(event);ui.reviewCenterOpen=group.outlierIds.length>0;render();
         toast(`${strong.length} object${strong.length===1?"":"s"} confirmed as ${group.title}. ${group.outlierIds.length?group.outlierIds.length+" outlier(s) still need review.":""}`,"success",5000);
       } else if(b.dataset.reviewgroupAction==="inspect"){

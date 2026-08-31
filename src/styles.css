@@ -929,8 +929,14 @@ body{min-width:1180px}
 .poi-card-head strong{font-size:14px;display:block}
 .poi-card-head span{font-size:10.5px;color:var(--pi-muted)}
 .poi-card .field-select{width:100%;height:32px;margin:11px 0;border:1px solid var(--pi-line);border-radius:var(--pi-radius-sm);background:var(--pi-surface-2);color:var(--pi-ink);padding:0 8px;font-size:11.5px}
-.poi-card-actions{display:flex;gap:7px}
-.poi-card-actions .btn{flex:1;height:30px;border-radius:var(--pi-radius-sm);font-size:11px}
+/* Two rows, not three squeezed buttons. There is one affirmative answer and
+   two ways of saying no ("not an object" = the detector saw nothing;
+   "not important" = it is real and we do not track it), so the primary takes
+   the full width and the two refusals share the row below. Three side by side
+   overflowed the 260px card in English and clipped the last label. */
+.poi-card-actions{display:flex;flex-wrap:wrap;gap:7px}
+.poi-card-actions .btn{flex:1 1 calc(50% - 4px);height:30px;border-radius:var(--pi-radius-sm);font-size:11px}
+.poi-card-actions .btn.primary{flex-basis:100%}
 .poi-card-actions .btn.primary{background:var(--pi-accent);border:none;color:#fff}
 .poi-card-actions .btn:not(.primary){background:var(--pi-surface-2);border:1px solid var(--pi-line);color:var(--pi-ink)}
 
