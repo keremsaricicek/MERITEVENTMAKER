@@ -2763,6 +2763,9 @@
       // hundred chairs has chairs against it, so seats cannot carry that
       // decision here. The finish can, once it is allowed to be plural.
       let surfaceRejected=0,surfaceMinorityFinishKept=0;
+      // What the surface filter turned away. Not made of table is not the same
+      // as not an object — see the column pass further down.
+      const surfaceRejectedComps=[];
       const uniqueBeforeSurface=globalThis.MERIT_DETECT_DEBUG?unique.map(u=>u.comp):null;
       const surfaceFamilies=(masksTints&&masksTints.length)?masksTints:(surfaceMask?[surfaceMask]:[]);
       if(surfaceFamilies.length){
@@ -2820,10 +2823,10 @@
           }
           u.comp.surfaceCoverage=+best.toFixed(3);
           u.comp.surfaceFromMinorityFinish=fromMinority;
-          if(best<.22){surfaceRejected++;return false;}
+          if(best<.22){surfaceRejected++;surfaceRejectedComps.push(u.comp);return false;}
           if(dominant>=.22)return true;
           if(dedupFitness(u.comp)>=.25&&seatedAgainst(u.comp)){surfaceMinorityFinishKept++;return true;}
-          surfaceRejected++;return false;
+          surfaceRejected++;surfaceRejectedComps.push(u.comp);return false;
         });
         // Refuse to apply the rule if it would gut the plan: that would mean
         // the surface family is not what this drawing uses for tables, and a
@@ -3245,6 +3248,74 @@
             source:chairSource,unassociated:true}});
       }
       // ---- venue-scale objects (stage band / long bar / column) ------------
+      // ---- columns and structural repeats -----------------------------------
+      // A candidate the surface filter turned away is not a table: it is not
+      // made of the material this plan draws tables with. That is a real and
+      // useful verdict, and until now it ended the object's life. On a plan
+      // that has columns, those are precisely the objects — solid, repeated,
+      // compact, standing on a structural grid, and never seated at.
+      //
+      // Measured on benchmarks/fixtures/adversarial-architecture.png, whose six
+      // columns are exact by construction: all six reach de-duplication, all
+      // six score 0.000 surface coverage against the table tint, and all six
+      // were then discarded. The fixture scored column recall 0.000 while
+      // scoring 10 of 10 tables perfectly.
+      //
+      // A column is not "a small rectangle". Four independent facts have to
+      // agree, and no single one of them is allowed to carry the decision:
+      //
+      //   the family repeats     3 or more members at one size
+      //   it is compact          not a wall, not a line of text
+      //   nobody sits at it      no chair anywhere near it
+      //   it stands on a GRID    members share a row AND a column with other
+      //                          members — which is what a structural grid is
+      //
+      // The last one has to be both axes, and that was measured the hard way:
+      // "shares a row or a column" is satisfied by a line of text by
+      // construction, and it put 26 false columns on the text fixture and 13 on
+      // the dense one. A word is aligned in one direction. A column grid is
+      // aligned in two, because the building's structure repeats across the
+      // floor as well as along it.
+      //
+      // Together these are why this does not invent columns on the real venue
+      // plan — whose annotation deliberately records that none are
+      // identifiable there.
+      const COLUMN_MIN_MEMBERS=3,COLUMN_MAX_ASPECT=1.6,COLUMN_ALIGN_SHARE=.5;
+      const columnComps=(()=>{
+        const seatless=surfaceRejectedComps.filter(c=>{
+          const aspect=Math.max(c.w,c.h)/Math.max(1,Math.min(c.w,c.h));
+          if(aspect>COLUMN_MAX_ASPECT)return false;
+          const reach=Math.max(c.w,c.h)*.7;
+          return !chairs.some(ch=>gapTo(c,ch)<=reach);
+        });
+        if(seatless.length<COLUMN_MIN_MEMBERS)return[];
+        // Same log-size family key the chair pass uses, so "one size" means the
+        // same thing here as it does there.
+        const groups=new Map();
+        for(const c of seatless){
+          const k=Math.round(Math.log(Math.sqrt(c.w*c.h))/Math.log(1.18));
+          if(!groups.has(k))groups.set(k,[]);
+          groups.get(k).push(c);
+        }
+        const out=[];
+        for(const members of groups.values()){
+          if(members.length<COLUMN_MIN_MEMBERS)continue;
+          const tol=Math.max(4,members.reduce((n,c)=>n+Math.max(c.w,c.h),0)/members.length*.25);
+          const centre=c=>[c.x+c.w/2,c.y+c.h/2];
+          // Coordinate REUSE on both axes, measured over the family. Asking
+          // each member to share both a row and a column with someone is the
+          // same idea but breaks as soon as the grid is only partly detected:
+          // with four of this fixture's six columns found, only one member has
+          // both a row-partner and a column-partner and the family scored zero.
+          const sharesOn=(get)=>members.filter(c=>{
+            const v=get(centre(c));
+            return members.some(o=>o!==c&&Math.abs(v-get(centre(o)))<=tol);
+          }).length/members.length;
+          const rowShare=sharesOn(p=>p[1]),columnShare=sharesOn(p=>p[0]);
+          if(rowShare>=COLUMN_ALIGN_SHARE&&columnShare>=COLUMN_ALIGN_SHARE)out.push(...members);
+        }
+        return out;
+      })();
       const venueComps=[];
       for(const s of sources)for(const c of s.all)if(venueSizeOk(c)&&!venueComps.some(o=>boxIoU(o,c)>=.5))venueComps.push(c);
       // A venue-scale blob that geometrically CONTAINS several detected tables
@@ -3258,13 +3329,20 @@
         t.cx>=c.x&&t.cx<=c.x+c.w&&t.cy>=c.y&&t.cy<=c.y+c.h).length;
       const mergedRowVenues=venueComps.filter(c=>containedTables(c)>=2);
       const venueCompsKept=venueComps.filter(c=>containedTables(c)<2);
+      const columnVenues=columnComps.slice(0,40).map(c=>{
+        const obb=c.shape?.obb||{cx:c.x+c.w/2,cy:c.y+c.h/2,w:c.w,h:c.h,rotation:c.pcaRotation||0};
+        return{id:uid("candidate"),kind:"venue",type:"column",...toPercentBox(obb),
+          rotation:obb.rotation,confidence:.55,status:"unreviewed",selected:false,chairDetections:[],
+          evidence:{geometry:.6,chairs:0,repetition:columnComps.length,source:c.source||"structural",
+            basis:"repeated compact object, aligned on a structural grid, no seating"}};
+      });
       const venues=venueCompsKept.slice(0,14).map(c=>{
         analyze([c],sources.find(s=>s.all.includes(c)).labels);
         const obb=c.shape?.obb||{cx:c.x+c.w/2,cy:c.y+c.h/2,w:c.w,h:c.h,rotation:c.pcaRotation||0};
         return{id:uid("candidate"),kind:"venue",type:c.aspect>3?"stage":"column",...toPercentBox(obb),
           rotation:obb.rotation,confidence:.52,status:"unreviewed",selected:false,chairDetections:[],
           evidence:{geometry:.62,chairs:0,repetition:0,source:c.source||"fill"}};
-      }).concat(chairVenues);
+      }).concat(columnVenues).concat(chairVenues);
 
       mark("tables");
       const associatedSeats=candidates.reduce((n,c)=>n+c.chairDetections.length,0);
@@ -3278,7 +3356,7 @@
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
           mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,surfaceMinorityFinishKept,secondaryChairFamilies:secondaryFamilyDiagnostics,fragmentSuppression:fragmentDiagnostics,
-          textGlyphChairsDropped,mergedRowVenuesDropped:mergedRowVenues.length,debugPool,
+          textGlyphChairsDropped,mergedRowVenuesDropped:mergedRowVenues.length,columnsDetected:columnComps.length,debugPool,
           sources:diagnosticsSources,chairSourceBreakdown,phaseMs,
           colorModel:accentModel?{isColorPlan:accentModel.isColorPlan,accentHue:accentModel.accentHue,
             accentChroma:accentModel.accentChroma,accentFraction:Number(accentModel.accentFraction.toFixed(4)),

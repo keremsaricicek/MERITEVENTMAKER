@@ -214,9 +214,11 @@ function evaluate(annot, det) {
     // Every chair the detector proposes, wherever it sits: attached to a table
     // or standing alone. Chair geometry comes back as percent like everything
     // else.
+    // Each chair remembers the table it was associated with, so the same match
+    // that scores chair positions can also score the chair->table relationship.
     const detChairs = [
-      ...cands.filter(c => c.kind === "table").flatMap(c => (c.chairs || []).map(ch => toPixels(ch, W, H))),
-      ...cands.filter(c => c.kind !== "table" && /chair|armchair/.test(c.type || "")).map(c => c),
+      ...cands.filter(c => c.kind === "table").flatMap(c => (c.chairs || []).map(ch => ({ ...toPixels(ch, W, H), parentId: c.id }))),
+      ...cands.filter(c => c.kind !== "table" && /chair|armchair/.test(c.type || "")).map(c => ({ ...c, parentId: null })),
     ];
     const all = matchObjects(gtChairs, detChairs, diag, tolPct);
     const families = {};
@@ -236,6 +238,9 @@ function evaluate(annot, det) {
       ...prf(all.matches.length, all.spurious.length, all.missed.length),
       byFamily: families,
       missedIds: all.missed.map(g => g.id).slice(0, 40),
+      // Kept so relationship scoring can ask "which detection is this GT chair"
+      // without re-running the match.
+      matchPairs: all.matches.map(m => ({ gtId: m.gt.id, det: m.det })),
       // Where the detector saw a chair and the drawing has none. Positions, not
       // a count: "8 false chairs" cannot be acted on, "8 false chairs all inside
       // the stage" can.
@@ -257,9 +262,42 @@ function evaluate(annot, det) {
     };
   }
 
+  // ---- chair -> table association -------------------------------------------
+  // Detection accuracy and RELATIONSHIP accuracy are different questions: a
+  // detector can find every chair and every table and still seat them at the
+  // wrong ones. Scored only where the annotation carries the relationship, and
+  // only for chairs and tables that were both found -- an association verdict
+  // on an object nobody detected would be meaningless.
+  let relationships = null;
+  const gtRelations = (annot.relationships || []).filter(r => r.chair && r.belongsTo);
+  if (gtRelations.length && chairScore && chairScore.matchPairs) {
+    const chairGtToDet = new Map(chairScore.matchPairs.map(m => [m.gtId, m.det]));
+    const tableDetToGt = new Map(tableMatch.matches.map(m => [m.det.id, m.gt.id]));
+    let correct = 0, wrong = 0, orphan = 0, unscoreable = 0;
+    const wrongExamples = [];
+    for (const rel of gtRelations) {
+      const det = chairGtToDet.get(rel.chair);
+      if (!det) { unscoreable++; continue; }              // the chair itself was not found
+      if (!det.parentId) { orphan++; continue; }          // found, but seated at no table
+      const gtTableId = tableDetToGt.get(det.parentId);
+      if (gtTableId === undefined) { unscoreable++; continue; } // seated at a table that is itself a false positive
+      if (gtTableId === rel.belongsTo) correct++;
+      else { wrong++; if (wrongExamples.length < 5) wrongExamples.push({ chair: rel.chair, expected: rel.belongsTo, got: gtTableId }); }
+    }
+    const scored = correct + wrong + orphan;
+    relationships = {
+      method: "chair->table, scored only where both the chair and its table were detected",
+      groundTruth: gtRelations.length,
+      scored, correct, wrong, orphan, unscoreable,
+      accuracy: scored ? +(correct / scored).toFixed(3) : null,
+      wrongExamples,
+    };
+  }
+
   return {
     planId: annot.planId,
     matchToleranceP: tolPct,
+    relationships,
     tables: {
       groundTruth: gtTables.length, detected: detTables.length, ...tables,
       missedIds: tableMatch.missed.map(g => g.id),
@@ -344,6 +382,8 @@ for (const f of files) {
   if (fpz.worstArchitectureRegions.length) console.log(`           arch offenders: ${fpz.worstArchitectureRegions.slice(0, 6).map(r => `${r.id}x${r.tables}`).join(" ")}`);
   const sem = Object.entries(rep.semanticObjects).map(([k, v]) => `${k} TP${v.tp}/FP${v.fp}/FN${v.fn}`).join("  ");
   if (sem) console.log(`  SEMANTIC ${sem}`);
+  const rel = rep.relationships;
+  if (rel) console.log(`  RELATIONS chair->table gt=${rel.groundTruth} scored=${rel.scored} correct=${rel.correct} wrong=${rel.wrong} orphan=${rel.orphan} unscoreable=${rel.unscoreable} accuracy=${rel.accuracy}`);
   console.log(`  EFFORT   reviewGroups=${rep.humanEffort.reviewGroups} questions=${rep.humanEffort.uncertainQuestions}`);
   console.log(`  TIME     ${ms} ms   pageErrors=${errors.length}`);
 }

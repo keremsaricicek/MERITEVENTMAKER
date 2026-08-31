@@ -38,6 +38,17 @@ const GUARDED = [
   ["humanEffort.uncertainQuestions", "down"],
 ];
 
+// Guarded only where the annotation carries chair->table relationships. A
+// detector can find every chair and every table and still seat them at the
+// wrong ones, so association is its own guarded number rather than something
+// implied by the object scores.
+const GUARDED_WHEN_RELATIONSHIPS = [
+  ["relationships.correct", "up"],
+  ["relationships.wrong", "down"],
+  ["relationships.orphan", "down"],
+  ["relationships.accuracy", "up"],
+];
+
 // Guarded only where the annotation carries chair positions. A plan whose
 // annotation records a chair TOTAL cannot report chair precision, and
 // pretending otherwise would compare a number against nothing.
@@ -59,9 +70,11 @@ function pick(obj, dotted) {
 }
 
 function fieldsFor(report) {
-  return report.chairs && Number.isFinite(report.chairs.tp)
+  const fields = report.chairs && Number.isFinite(report.chairs.tp)
     ? [...GUARDED, ...GUARDED_WHEN_SPATIAL_CHAIRS]
-    : GUARDED;
+    : [...GUARDED];
+  if (report.relationships && Number.isFinite(report.relationships.accuracy)) fields.push(...GUARDED_WHEN_RELATIONSHIPS);
+  return fields;
 }
 
 function summarise(report) {
@@ -98,7 +111,7 @@ if (RECORD) {
     commit,
     note: "Measured by benchmarks/run-benchmark.mjs against the annotations in benchmarks/annotations/. " +
       "Classical computer vision (Assisted Detection); no trained model is involved in these numbers.",
-    guardedFields: [...GUARDED, ...GUARDED_WHEN_SPATIAL_CHAIRS]
+    guardedFields: [...GUARDED, ...GUARDED_WHEN_SPATIAL_CHAIRS, ...GUARDED_WHEN_RELATIONSHIPS]
       .map(([f, dir]) => ({ field: f, worseWhen: dir === "up" ? "lower" : "higher" })),
     tolerance: TOLERANCE,
     plans: current,
