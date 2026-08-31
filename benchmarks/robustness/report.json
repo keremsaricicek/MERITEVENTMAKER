@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-08-31T12:42:35.943Z",
+  "ranAt": "2026-08-31T13:35:30.415Z",
   "reports": [
     {
       "planId": "merit-real-blur",
@@ -255,7 +255,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_910fa9b3-8f3e-4283-b764-f8a007d48586",
+              "id": "candidate_3b4b4045-9dc7-452a-b026-781e74f78e0d",
               "score": 5.2,
               "reasons": [
                 "table with no seats found",
@@ -264,7 +264,7 @@
               ]
             },
             {
-              "id": "candidate_02d767c0-9d12-4b56-9f9e-ae904f638059",
+              "id": "candidate_01946d14-cef5-468b-868f-9287c3def37d",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -272,7 +272,7 @@
               ]
             },
             {
-              "id": "candidate_0d7d62fd-5ab3-4f93-a0f9-9b6cd8e8488e",
+              "id": "candidate_1d942dd4-e680-40df-ae0f-b35f331df961",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -280,7 +280,7 @@
               ]
             },
             {
-              "id": "candidate_11d94e5f-2766-408c-ac3c-1b464fa43e00",
+              "id": "candidate_381c568d-d463-48d7-9eb4-a60e1ffb29f9",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -288,7 +288,7 @@
               ]
             },
             {
-              "id": "candidate_13278890-c4b5-43b3-b8c8-3cc6e81c7533",
+              "id": "candidate_388bd024-1653-428f-8469-7f616080224c",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -296,7 +296,7 @@
               ]
             },
             {
-              "id": "candidate_154aa783-5174-42d8-ad4d-d5222c9980ac",
+              "id": "candidate_44eae441-4244-4f70-b98d-8b3d5ac16451",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -304,7 +304,7 @@
               ]
             },
             {
-              "id": "candidate_1d43fbb8-ab2d-4f85-8d72-31aa78edef0d",
+              "id": "candidate_52ecd187-8ece-4b05-9aa1-762a2ef09699",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -312,7 +312,7 @@
               ]
             },
             {
-              "id": "candidate_3a0c3ae5-c2f6-4e7c-bc43-1f1e5a221bcc",
+              "id": "candidate_5320f13e-9d1a-4fbf-a8cf-b23eacac0536",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -321,14 +321,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_910fa9b3-8f3e-4283-b764-f8a007d48586",
-            "candidate_02d767c0-9d12-4b56-9f9e-ae904f638059",
-            "candidate_0d7d62fd-5ab3-4f93-a0f9-9b6cd8e8488e",
-            "candidate_11d94e5f-2766-408c-ac3c-1b464fa43e00",
-            "candidate_13278890-c4b5-43b3-b8c8-3cc6e81c7533",
-            "candidate_154aa783-5174-42d8-ad4d-d5222c9980ac",
-            "candidate_1d43fbb8-ab2d-4f85-8d72-31aa78edef0d",
-            "candidate_3a0c3ae5-c2f6-4e7c-bc43-1f1e5a221bcc"
+            "candidate_3b4b4045-9dc7-452a-b026-781e74f78e0d",
+            "candidate_01946d14-cef5-468b-868f-9287c3def37d",
+            "candidate_1d942dd4-e680-40df-ae0f-b35f331df961",
+            "candidate_381c568d-d463-48d7-9eb4-a60e1ffb29f9",
+            "candidate_388bd024-1653-428f-8469-7f616080224c",
+            "candidate_44eae441-4244-4f70-b98d-8b3d5ac16451",
+            "candidate_52ecd187-8ece-4b05-9aa1-762a2ef09699",
+            "candidate_5320f13e-9d1a-4fbf-a8cf-b23eacac0536"
           ]
         }
       },
@@ -371,7 +371,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 901,
+      "detectionMs": 930,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -464,13 +464,13 @@
       "chairs": {
         "method": "spatial, same greedy nearest-first matching as tables, tolerance 3% of the plan diagonal",
         "groundTruth": 113,
-        "detected": 104,
+        "detected": 103,
         "tp": 102,
-        "fp": 2,
+        "fp": 1,
         "fn": 11,
-        "precision": 0.981,
+        "precision": 0.99,
         "recall": 0.903,
-        "f1": 0.94,
+        "f1": 0.944,
         "byFamily": {
           "orange-armchair": {
             "groundTruth": 79,
@@ -506,21 +506,15 @@
         ],
         "spurious": [
           {
-            "cx": 486,
-            "cy": 616,
-            "w": 20,
-            "h": 13
-          },
-          {
             "cx": 678,
             "cy": 706,
             "w": 20,
             "h": 21
           }
         ],
-        "detectedOnTables": 57,
+        "detectedOnTables": 56,
         "detectedStandalone": 47,
-        "detectedTotal": 104
+        "detectedTotal": 103
       },
       "capacity": {
         "ocrStated": {
@@ -530,7 +524,7 @@
           "source": "printed on the drawing, top-left"
         },
         "annotatedChairs": 113,
-        "systemPhysicalSeats": 104,
+        "systemPhysicalSeats": 103,
         "unverifiedInAnnotation": [
           {
             "objectIds": [
@@ -543,11 +537,11 @@
         ],
         "auditFromApp": {
           "physical": {
-            "seats": 104,
+            "seats": 103,
             "source": "chairs detected and associated to tables, plus standalone chairs"
           },
           "logical": {
-            "seats": 57,
+            "seats": 56,
             "groups": 20,
             "source": "seats summed over logical seating groups"
           },
@@ -558,7 +552,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_98628b34-f8f3-4fbe-8ea6-3ee346d11563",
+              "id": "candidate_2257159e-1990-4254-8f5c-7e1aac7d2f54",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -566,49 +560,49 @@
               ]
             },
             {
-              "id": "candidate_007e507a-3524-40f6-87b5-a2aea87e6b18",
+              "id": "candidate_01126347-5869-4049-91fa-038e30d63642",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_033c7bab-52f5-49bf-888e-640bdc2ba08a",
+              "id": "candidate_02b2e7b4-3ac4-48ae-8c08-c40d76b18687",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_034b06f6-6b7d-45c5-8d12-92f336ea8788",
+              "id": "candidate_02c02a92-7fbd-4913-a66d-86157b7a8e83",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_04639168-bdc2-4626-bdb2-d7f6709623b0",
+              "id": "candidate_0931d775-4bd7-4ffa-b454-5dd5716001b7",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_048e2de7-b6a9-4edb-98b6-4aded4b85338",
+              "id": "candidate_0c48d246-4b3b-4ab1-87d0-5f0c90946c5e",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0909e4da-332c-445e-a343-29971706967e",
+              "id": "candidate_0d4f17cf-edf2-4c48-a35e-404b3a2a2fd5",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_09997cbd-386d-4797-818d-033f15e5efd2",
+              "id": "candidate_16668a36-2261-4a99-b721-49bd52739db5",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -616,14 +610,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_98628b34-f8f3-4fbe-8ea6-3ee346d11563",
-            "candidate_007e507a-3524-40f6-87b5-a2aea87e6b18",
-            "candidate_033c7bab-52f5-49bf-888e-640bdc2ba08a",
-            "candidate_034b06f6-6b7d-45c5-8d12-92f336ea8788",
-            "candidate_04639168-bdc2-4626-bdb2-d7f6709623b0",
-            "candidate_048e2de7-b6a9-4edb-98b6-4aded4b85338",
-            "candidate_0909e4da-332c-445e-a343-29971706967e",
-            "candidate_09997cbd-386d-4797-818d-033f15e5efd2"
+            "candidate_2257159e-1990-4254-8f5c-7e1aac7d2f54",
+            "candidate_01126347-5869-4049-91fa-038e30d63642",
+            "candidate_02b2e7b4-3ac4-48ae-8c08-c40d76b18687",
+            "candidate_02c02a92-7fbd-4913-a66d-86157b7a8e83",
+            "candidate_0931d775-4bd7-4ffa-b454-5dd5716001b7",
+            "candidate_0c48d246-4b3b-4ab1-87d0-5f0c90946c5e",
+            "candidate_0d4f17cf-edf2-4c48-a35e-404b3a2a2fd5",
+            "candidate_16668a36-2261-4a99-b721-49bd52739db5"
           ]
         }
       },
@@ -666,7 +660,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 1023,
+      "detectionMs": 874,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -935,7 +929,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_1efe07a3-221f-445f-a132-28e1d6b0f763",
+              "id": "candidate_681043bb-bf0b-4543-96f6-3d3fd0cf009c",
               "score": 5.4,
               "reasons": [
                 "table with no seats found",
@@ -944,7 +938,7 @@
               ]
             },
             {
-              "id": "candidate_9f5bd11e-f368-4dd7-bc1e-2ecb38fa0a59",
+              "id": "candidate_6e0d3b1d-374e-4358-b569-f19f3a5e8169",
               "score": 5.4,
               "reasons": [
                 "table with no seats found",
@@ -953,7 +947,7 @@
               ]
             },
             {
-              "id": "candidate_d9c9ae16-6bd4-4d3b-81fd-4cd5c0d3ba39",
+              "id": "candidate_fa492f4e-99b2-43d8-b40e-99a925d1a4a6",
               "score": 5.4,
               "reasons": [
                 "table with no seats found",
@@ -962,7 +956,7 @@
               ]
             },
             {
-              "id": "candidate_5a615ce6-8ffb-4875-a211-6a6fc5eb40e0",
+              "id": "candidate_5a7aa3c2-bd7a-467f-9a9e-d8aaebc0914a",
               "score": 4.48,
               "reasons": [
                 "table with no seats found",
@@ -971,7 +965,7 @@
               ]
             },
             {
-              "id": "candidate_450f517b-32d3-42dc-a961-5879ffad478c",
+              "id": "candidate_05e6e9be-a53f-4633-8310-ff6d7662d666",
               "score": 4.31,
               "reasons": [
                 "table with no seats found",
@@ -980,7 +974,7 @@
               ]
             },
             {
-              "id": "candidate_ff7f0e58-fbad-45f2-a38b-c8d5dfabc66c",
+              "id": "candidate_5d3e6ffc-6496-49e3-b7fc-ab2a8efbd789",
               "score": 4.06,
               "reasons": [
                 "table with no seats found",
@@ -989,7 +983,7 @@
               ]
             },
             {
-              "id": "candidate_00b4107a-b297-4acd-87ab-ebeb1ab904d4",
+              "id": "candidate_07a5359c-0ee4-462c-8af3-427df474fd44",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -997,7 +991,7 @@
               ]
             },
             {
-              "id": "candidate_011faf9e-177d-44a9-a644-a26b62f48214",
+              "id": "candidate_20d99f00-0e67-4526-83a5-80094703f6fc",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -1006,14 +1000,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_1efe07a3-221f-445f-a132-28e1d6b0f763",
-            "candidate_9f5bd11e-f368-4dd7-bc1e-2ecb38fa0a59",
-            "candidate_d9c9ae16-6bd4-4d3b-81fd-4cd5c0d3ba39",
-            "candidate_5a615ce6-8ffb-4875-a211-6a6fc5eb40e0",
-            "candidate_450f517b-32d3-42dc-a961-5879ffad478c",
-            "candidate_ff7f0e58-fbad-45f2-a38b-c8d5dfabc66c",
-            "candidate_00b4107a-b297-4acd-87ab-ebeb1ab904d4",
-            "candidate_011faf9e-177d-44a9-a644-a26b62f48214"
+            "candidate_681043bb-bf0b-4543-96f6-3d3fd0cf009c",
+            "candidate_6e0d3b1d-374e-4358-b569-f19f3a5e8169",
+            "candidate_fa492f4e-99b2-43d8-b40e-99a925d1a4a6",
+            "candidate_5a7aa3c2-bd7a-467f-9a9e-d8aaebc0914a",
+            "candidate_05e6e9be-a53f-4633-8310-ff6d7662d666",
+            "candidate_5d3e6ffc-6496-49e3-b7fc-ab2a8efbd789",
+            "candidate_07a5359c-0ee4-462c-8af3-427df474fd44",
+            "candidate_20d99f00-0e67-4526-83a5-80094703f6fc"
           ]
         }
       },
@@ -1060,7 +1054,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 783,
+      "detectionMs": 845,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -1236,13 +1230,13 @@
       "chairs": {
         "method": "spatial, same greedy nearest-first matching as tables, tolerance 3% of the plan diagonal",
         "groundTruth": 113,
-        "detected": 118,
+        "detected": 114,
         "tp": 111,
-        "fp": 7,
+        "fp": 3,
         "fn": 2,
-        "precision": 0.941,
+        "precision": 0.974,
         "recall": 0.982,
-        "f1": 0.961,
+        "f1": 0.978,
         "byFamily": {
           "orange-armchair": {
             "groundTruth": 79,
@@ -1269,30 +1263,6 @@
         ],
         "spurious": [
           {
-            "cx": 355,
-            "cy": 572,
-            "w": 33,
-            "h": 36
-          },
-          {
-            "cx": 1055,
-            "cy": 87,
-            "w": 29,
-            "h": 8
-          },
-          {
-            "cx": 817,
-            "cy": 215,
-            "w": 29,
-            "h": 8
-          },
-          {
-            "cx": 1102,
-            "cy": 492,
-            "w": 28,
-            "h": 8
-          },
-          {
             "cx": 688,
             "cy": 717,
             "w": 20,
@@ -1311,9 +1281,9 @@
             "h": 20
           }
         ],
-        "detectedOnTables": 78,
+        "detectedOnTables": 74,
         "detectedStandalone": 40,
-        "detectedTotal": 118
+        "detectedTotal": 114
       },
       "capacity": {
         "ocrStated": {
@@ -1323,7 +1293,7 @@
           "source": "printed on the drawing, top-left"
         },
         "annotatedChairs": 113,
-        "systemPhysicalSeats": 118,
+        "systemPhysicalSeats": 114,
         "unverifiedInAnnotation": [
           {
             "objectIds": [
@@ -1336,11 +1306,11 @@
         ],
         "auditFromApp": {
           "physical": {
-            "seats": 118,
+            "seats": 114,
             "source": "chairs detected and associated to tables, plus standalone chairs"
           },
           "logical": {
-            "seats": 78,
+            "seats": 74,
             "groups": 22,
             "source": "seats summed over logical seating groups"
           },
@@ -1351,7 +1321,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_cd709417-f059-479b-bc10-0fb05bdf95cd",
+              "id": "candidate_537de822-9376-48bc-bff8-8a8617598dbf",
               "score": 4.48,
               "reasons": [
                 "table with no seats found",
@@ -1360,7 +1330,7 @@
               ]
             },
             {
-              "id": "candidate_dd76ebbf-2eee-44ae-89e5-a1e3bfd8bec6",
+              "id": "candidate_a2f0211f-3572-477d-b323-582426e2f90a",
               "score": 4.47,
               "reasons": [
                 "table with no seats found",
@@ -1369,7 +1339,7 @@
               ]
             },
             {
-              "id": "candidate_a488406a-2d1a-44b3-9786-09c4144c821d",
+              "id": "candidate_feafc535-f038-460a-9a9d-98d930642d80",
               "score": 4.31,
               "reasons": [
                 "table with no seats found",
@@ -1378,7 +1348,7 @@
               ]
             },
             {
-              "id": "candidate_2e2b7715-4c30-4cc0-b8db-bb6f445fb8fa",
+              "id": "candidate_13c457f6-f5bd-4715-8f43-ee34ceb09057",
               "score": 4.25,
               "reasons": [
                 "table with no seats found",
@@ -1387,7 +1357,7 @@
               ]
             },
             {
-              "id": "candidate_c770b8c8-b261-4531-bb5c-0dfe8e2bb7c4",
+              "id": "candidate_69a83fd7-606c-4fd3-9783-875bf2f3ca60",
               "score": 4.16,
               "reasons": [
                 "table with no seats found",
@@ -1396,7 +1366,7 @@
               ]
             },
             {
-              "id": "candidate_16d844c9-a8d3-43dc-bbe4-69dc7c5e37c2",
+              "id": "candidate_00a63098-8ceb-45ee-9721-26f8e10d1b54",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -1404,7 +1374,7 @@
               ]
             },
             {
-              "id": "candidate_18559016-dbed-4f5f-a78b-23e0f5f6d727",
+              "id": "candidate_0971cac8-bfa7-4175-9092-efe1a632ab6d",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -1412,7 +1382,7 @@
               ]
             },
             {
-              "id": "candidate_1dfed153-82bc-4f6a-a640-b5cf2d5b5aa8",
+              "id": "candidate_0e9b9795-813b-4f77-a3d6-50accdfe4eb7",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -1421,14 +1391,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_cd709417-f059-479b-bc10-0fb05bdf95cd",
-            "candidate_dd76ebbf-2eee-44ae-89e5-a1e3bfd8bec6",
-            "candidate_a488406a-2d1a-44b3-9786-09c4144c821d",
-            "candidate_2e2b7715-4c30-4cc0-b8db-bb6f445fb8fa",
-            "candidate_c770b8c8-b261-4531-bb5c-0dfe8e2bb7c4",
-            "candidate_16d844c9-a8d3-43dc-bbe4-69dc7c5e37c2",
-            "candidate_18559016-dbed-4f5f-a78b-23e0f5f6d727",
-            "candidate_1dfed153-82bc-4f6a-a640-b5cf2d5b5aa8"
+            "candidate_537de822-9376-48bc-bff8-8a8617598dbf",
+            "candidate_a2f0211f-3572-477d-b323-582426e2f90a",
+            "candidate_feafc535-f038-460a-9a9d-98d930642d80",
+            "candidate_13c457f6-f5bd-4715-8f43-ee34ceb09057",
+            "candidate_69a83fd7-606c-4fd3-9783-875bf2f3ca60",
+            "candidate_00a63098-8ceb-45ee-9721-26f8e10d1b54",
+            "candidate_0971cac8-bfa7-4175-9092-efe1a632ab6d",
+            "candidate_0e9b9795-813b-4f77-a3d6-50accdfe4eb7"
           ]
         }
       },
@@ -1475,7 +1445,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 827,
+      "detectionMs": 934,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -1624,7 +1594,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_838250a8-9fcc-45e4-a602-f20c41724eae",
+              "id": "candidate_a03f0d12-730b-4730-9031-4432e6fab3e9",
               "score": 5,
               "reasons": [
                 "table with no seats found",
@@ -1633,7 +1603,7 @@
               ]
             },
             {
-              "id": "candidate_105a67e6-b47d-4700-81b4-99afcd25374a",
+              "id": "candidate_97ed3235-c3af-40a0-a752-a32c2d3ab843",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -1641,42 +1611,42 @@
               ]
             },
             {
-              "id": "candidate_02b54a60-71ff-4e24-8249-a529a9a1f76b",
+              "id": "candidate_097940c5-0b54-48ff-80fe-6b4654187243",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_05b18e3d-1975-48c0-a66f-28d0fb244029",
+              "id": "candidate_1080d694-6f2a-4de8-8d6b-8e3883728439",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0b4c438c-27e4-4474-9fa1-6b7861ccf666",
+              "id": "candidate_12360cae-4a98-4708-a767-c52a9b69491d",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0df8510e-71bd-480e-9269-2598d9105364",
+              "id": "candidate_138f7c53-74f4-4269-ae45-78fc4c1899dd",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0e2adf20-85ff-4c3b-a58e-58c3ee19cb6a",
+              "id": "candidate_14cd7068-4b6d-4588-9e35-62314898e113",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_1800dc8c-d906-4129-af97-62761d96d436",
+              "id": "candidate_1c492e7e-5105-4a25-9a06-4e9d89fe14f8",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -1684,14 +1654,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_838250a8-9fcc-45e4-a602-f20c41724eae",
-            "candidate_105a67e6-b47d-4700-81b4-99afcd25374a",
-            "candidate_02b54a60-71ff-4e24-8249-a529a9a1f76b",
-            "candidate_05b18e3d-1975-48c0-a66f-28d0fb244029",
-            "candidate_0b4c438c-27e4-4474-9fa1-6b7861ccf666",
-            "candidate_0df8510e-71bd-480e-9269-2598d9105364",
-            "candidate_0e2adf20-85ff-4c3b-a58e-58c3ee19cb6a",
-            "candidate_1800dc8c-d906-4129-af97-62761d96d436"
+            "candidate_a03f0d12-730b-4730-9031-4432e6fab3e9",
+            "candidate_97ed3235-c3af-40a0-a752-a32c2d3ab843",
+            "candidate_097940c5-0b54-48ff-80fe-6b4654187243",
+            "candidate_1080d694-6f2a-4de8-8d6b-8e3883728439",
+            "candidate_12360cae-4a98-4708-a767-c52a9b69491d",
+            "candidate_138f7c53-74f4-4269-ae45-78fc4c1899dd",
+            "candidate_14cd7068-4b6d-4588-9e35-62314898e113",
+            "candidate_1c492e7e-5105-4a25-9a06-4e9d89fe14f8"
           ]
         }
       },
@@ -1734,7 +1704,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 864,
+      "detectionMs": 909,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -1743,27 +1713,16 @@
       "matchToleranceP": 3,
       "tables": {
         "groundTruth": 46,
-        "detected": 85,
-        "tp": 42,
-        "fp": 43,
-        "fn": 4,
-        "precision": 0.494,
-        "recall": 0.913,
-        "f1": 0.641,
-        "missedIds": [
-          "t043",
-          "t044",
-          "t045",
-          "t046"
-        ],
-        "spuriousCount": 43,
+        "detected": 49,
+        "tp": 46,
+        "fp": 3,
+        "fn": 0,
+        "precision": 0.939,
+        "recall": 1,
+        "f1": 0.968,
+        "missedIds": [],
+        "spuriousCount": 3,
         "spurious": [
-          {
-            "cx": 836,
-            "cy": 337,
-            "w": 63,
-            "h": 39
-          },
           {
             "cx": 105,
             "cy": 187,
@@ -1771,112 +1730,16 @@
             "h": 45
           },
           {
-            "cx": 689,
-            "cy": 502,
-            "w": 63,
-            "h": 40
+            "cx": 1205,
+            "cy": 550,
+            "w": 40,
+            "h": 34
           },
           {
-            "cx": 1005,
-            "cy": 453,
-            "w": 63,
-            "h": 41
-          },
-          {
-            "cx": 898,
-            "cy": 455,
-            "w": 64,
-            "h": 41
-          },
-          {
-            "cx": 329,
-            "cy": 511,
-            "w": 41,
-            "h": 65
-          },
-          {
-            "cx": 369,
-            "cy": 510,
-            "w": 41,
-            "h": 65
-          },
-          {
-            "cx": 408,
-            "cy": 447,
-            "w": 39,
-            "h": 66
-          },
-          {
-            "cx": 330,
-            "cy": 448,
-            "w": 42,
-            "h": 65
-          },
-          {
-            "cx": 1067,
-            "cy": 454,
-            "w": 65,
-            "h": 42
-          },
-          {
-            "cx": 751,
-            "cy": 504,
-            "w": 65,
-            "h": 42
-          },
-          {
-            "cx": 525,
-            "cy": 668,
-            "w": 41,
-            "h": 65
-          },
-          {
-            "cx": 897,
-            "cy": 377,
-            "w": 64,
-            "h": 44
-          },
-          {
-            "cx": 369,
-            "cy": 447,
-            "w": 41,
-            "h": 66
-          },
-          {
-            "cx": 664,
-            "cy": 770,
-            "w": 56,
-            "h": 26
-          },
-          {
-            "cx": 1215,
-            "cy": 339,
-            "w": 63,
-            "h": 43
-          },
-          {
-            "cx": 1154,
-            "cy": 421,
-            "w": 63,
-            "h": 45
-          },
-          {
-            "cx": 750,
-            "cy": 425,
-            "w": 63,
-            "h": 45
-          },
-          {
-            "cx": 1215,
-            "cy": 421,
-            "w": 63,
-            "h": 45
-          },
-          {
-            "cx": 1216,
-            "cy": 380,
-            "w": 65,
-            "h": 42
+            "cx": 727,
+            "cy": 554,
+            "w": 40,
+            "h": 33
           }
         ]
       },
@@ -1892,7 +1755,7 @@
           "accuracy": 1
         },
         "bistro": {
-          "matched": 1,
+          "matched": 5,
           "correct": 0,
           "accuracy": 0
         },
@@ -1972,8 +1835,8 @@
             "h": 20
           }
         ],
-        "detectedOnTables": 104,
-        "detectedStandalone": 8,
+        "detectedOnTables": 61,
+        "detectedStandalone": 51,
         "detectedTotal": 112
       },
       "capacity": {
@@ -2001,8 +1864,8 @@
             "source": "chairs detected and associated to tables, plus standalone chairs"
           },
           "logical": {
-            "seats": 104,
-            "groups": 33,
+            "seats": 61,
+            "groups": 23,
             "source": "seats summed over logical seating groups"
           },
           "unverified": [],
@@ -2012,34 +1875,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_87e5a135-ca6a-4ab3-986e-ab2cc0db6162",
-              "score": 5.2,
-              "reasons": [
-                "table with no seats found",
-                "not yet reviewed",
-                "low confidence 0.20"
-              ]
-            },
-            {
-              "id": "candidate_046aa71f-ae08-46cd-92f8-452bc42687e6",
-              "score": 4.22,
-              "reasons": [
-                "table with no seats found",
-                "not yet reviewed",
-                "low confidence 0.45"
-              ]
-            },
-            {
-              "id": "candidate_6cd995c8-a958-49ea-aa53-ed94e0b4337e",
-              "score": 4.03,
-              "reasons": [
-                "table with no seats found",
-                "not yet reviewed",
-                "low confidence 0.49"
-              ]
-            },
-            {
-              "id": "candidate_1866e043-11d4-4806-ac8c-3394893052dd",
+              "id": "candidate_17d2e66d-d73e-4f62-9a70-02c3501da972",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -2047,7 +1883,7 @@
               ]
             },
             {
-              "id": "candidate_19726ad9-d64d-4950-9e6a-7bf7adde39f2",
+              "id": "candidate_1dadf7f0-75f4-4ff0-8e02-d5bb6156adbb",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -2055,7 +1891,7 @@
               ]
             },
             {
-              "id": "candidate_1f93fb53-ca2d-43f8-995b-6c03eced6a83",
+              "id": "candidate_1fd006c1-0ced-4933-82cc-c3693c602b0c",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -2063,7 +1899,7 @@
               ]
             },
             {
-              "id": "candidate_28ba71ad-ef9a-49da-8015-36db80c590ac",
+              "id": "candidate_22224ea4-0444-4f0b-8940-cc34a0882d00",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -2071,7 +1907,31 @@
               ]
             },
             {
-              "id": "candidate_3a65df82-2790-40fb-a34a-954fbb1f3f57",
+              "id": "candidate_3c817a84-e454-4e4b-8479-60200c437c5f",
+              "score": 4,
+              "reasons": [
+                "table with no seats found",
+                "not yet reviewed"
+              ]
+            },
+            {
+              "id": "candidate_4c1c626e-e6f4-46cd-8c07-001658fc9436",
+              "score": 4,
+              "reasons": [
+                "table with no seats found",
+                "not yet reviewed"
+              ]
+            },
+            {
+              "id": "candidate_524e1c51-c44a-4ef0-8f26-5ee0cd9f2ad8",
+              "score": 4,
+              "reasons": [
+                "table with no seats found",
+                "not yet reviewed"
+              ]
+            },
+            {
+              "id": "candidate_65376136-83a7-40c4-8566-6913c869b6c1",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -2080,14 +1940,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_87e5a135-ca6a-4ab3-986e-ab2cc0db6162",
-            "candidate_046aa71f-ae08-46cd-92f8-452bc42687e6",
-            "candidate_6cd995c8-a958-49ea-aa53-ed94e0b4337e",
-            "candidate_1866e043-11d4-4806-ac8c-3394893052dd",
-            "candidate_19726ad9-d64d-4950-9e6a-7bf7adde39f2",
-            "candidate_1f93fb53-ca2d-43f8-995b-6c03eced6a83",
-            "candidate_28ba71ad-ef9a-49da-8015-36db80c590ac",
-            "candidate_3a65df82-2790-40fb-a34a-954fbb1f3f57"
+            "candidate_17d2e66d-d73e-4f62-9a70-02c3501da972",
+            "candidate_1dadf7f0-75f4-4ff0-8e02-d5bb6156adbb",
+            "candidate_1fd006c1-0ced-4933-82cc-c3693c602b0c",
+            "candidate_22224ea4-0444-4f0b-8940-cc34a0882d00",
+            "candidate_3c817a84-e454-4e4b-8479-60200c437c5f",
+            "candidate_4c1c626e-e6f4-46cd-8c07-001658fc9436",
+            "candidate_524e1c51-c44a-4ef0-8f26-5ee0cd9f2ad8",
+            "candidate_65376136-83a7-40c4-8566-6913c869b6c1"
           ]
         }
       },
@@ -2117,8 +1977,8 @@
         "worstArchitectureRegions": []
       },
       "humanEffort": {
-        "reviewGroups": 16,
-        "uncertainQuestions": 14,
+        "reviewGroups": 11,
+        "uncertainQuestions": 13,
         "note": "review groups + questions the operator must resolve before Plan Confirmed"
       },
       "provider": {
@@ -2130,7 +1990,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 960,
+      "detectionMs": 963,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -2398,7 +2258,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_ee550811-a0c9-4049-b5a2-c537b56e0501",
+              "id": "candidate_2d743edc-5fe1-47d8-9c2b-28c31df80d2b",
               "score": 5.12,
               "reasons": [
                 "table with no seats found",
@@ -2407,49 +2267,49 @@
               ]
             },
             {
-              "id": "candidate_07c311f9-c588-480b-b0e4-f3a258bf9d7d",
+              "id": "candidate_05f3cff8-44c5-4d9a-a116-40570ca96c5f",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_09888c6c-621e-470e-8366-8bac4ac22a61",
+              "id": "candidate_0793e9ee-ca0d-4f54-a6fd-a521601489a8",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0d46bfe2-075b-468a-a5aa-d23d8509a39e",
+              "id": "candidate_087e3ecb-1926-4d38-a71f-69b919db2d41",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_12c5ce75-582d-4e3d-9721-61919177d44c",
+              "id": "candidate_0ab79595-7360-46d1-a355-3aabdb150614",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_12d0b4d9-0646-4be7-9afa-3878c49a8429",
+              "id": "candidate_0e562d91-e440-45bd-8043-8560433e8089",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_15774d53-5d2e-4db4-8c3d-832517294451",
+              "id": "candidate_13128a36-4903-4198-a6b4-d280c8b2c401",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_19cc889e-cff9-4e0d-a980-d637730e631c",
+              "id": "candidate_134deee6-c6e6-4395-a140-9216e1266171",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -2457,14 +2317,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_ee550811-a0c9-4049-b5a2-c537b56e0501",
-            "candidate_07c311f9-c588-480b-b0e4-f3a258bf9d7d",
-            "candidate_09888c6c-621e-470e-8366-8bac4ac22a61",
-            "candidate_0d46bfe2-075b-468a-a5aa-d23d8509a39e",
-            "candidate_12c5ce75-582d-4e3d-9721-61919177d44c",
-            "candidate_12d0b4d9-0646-4be7-9afa-3878c49a8429",
-            "candidate_15774d53-5d2e-4db4-8c3d-832517294451",
-            "candidate_19cc889e-cff9-4e0d-a980-d637730e631c"
+            "candidate_2d743edc-5fe1-47d8-9c2b-28c31df80d2b",
+            "candidate_05f3cff8-44c5-4d9a-a116-40570ca96c5f",
+            "candidate_0793e9ee-ca0d-4f54-a6fd-a521601489a8",
+            "candidate_087e3ecb-1926-4d38-a71f-69b919db2d41",
+            "candidate_0ab79595-7360-46d1-a355-3aabdb150614",
+            "candidate_0e562d91-e440-45bd-8043-8560433e8089",
+            "candidate_13128a36-4903-4198-a6b4-d280c8b2c401",
+            "candidate_134deee6-c6e6-4395-a140-9216e1266171"
           ]
         }
       },
@@ -2507,7 +2367,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 583,
+      "detectionMs": 611,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -2516,28 +2376,20 @@
       "matchToleranceP": 3,
       "tables": {
         "groundTruth": 46,
-        "detected": 54,
-        "tp": 41,
-        "fp": 13,
-        "fn": 5,
-        "precision": 0.759,
-        "recall": 0.891,
-        "f1": 0.82,
+        "detected": 48,
+        "tp": 43,
+        "fp": 5,
+        "fn": 3,
+        "precision": 0.896,
+        "recall": 0.935,
+        "f1": 0.915,
         "missedIds": [
           "t042",
-          "t043",
           "t044",
-          "t045",
-          "t046"
+          "t045"
         ],
-        "spuriousCount": 13,
+        "spuriousCount": 5,
         "spurious": [
-          {
-            "cx": 45,
-            "cy": 153,
-            "w": 55,
-            "h": 45
-          },
           {
             "cx": 777,
             "cy": 303,
@@ -2545,9 +2397,9 @@
             "h": 39
           },
           {
-            "cx": 1094,
-            "cy": 387,
-            "w": 62,
+            "cx": 45,
+            "cy": 153,
+            "w": 55,
             "h": 45
           },
           {
@@ -2557,52 +2409,10 @@
             "h": 26
           },
           {
-            "cx": 903,
-            "cy": 59,
-            "w": 55,
-            "h": 26
-          },
-          {
-            "cx": 1118,
-            "cy": 430,
-            "w": 33,
-            "h": 45
-          },
-          {
-            "cx": 1203,
-            "cy": 59,
-            "w": 55,
-            "h": 26
-          },
-          {
-            "cx": 1145,
-            "cy": 516,
-            "w": 40,
-            "h": 34
-          },
-          {
-            "cx": 604,
-            "cy": 144,
-            "w": 56,
-            "h": 26
-          },
-          {
-            "cx": 510,
-            "cy": 453,
-            "w": 42,
-            "h": 32
-          },
-          {
-            "cx": 304,
-            "cy": 737,
-            "w": 55,
-            "h": 26
-          },
-          {
-            "cx": 470,
-            "cy": 453,
-            "w": 42,
-            "h": 33
+            "cx": 950,
+            "cy": 200,
+            "w": 37,
+            "h": 35
           },
           {
             "cx": 668,
@@ -2620,13 +2430,13 @@
         },
         "round": {
           "matched": 4,
-          "correct": 2,
-          "accuracy": 0.5
+          "correct": 4,
+          "accuracy": 1
         },
         "bistro": {
-          "matched": 0,
+          "matched": 2,
           "correct": 0,
-          "accuracy": null
+          "accuracy": 0
         },
         "rectangle": {
           "matched": 0,
@@ -2637,25 +2447,25 @@
       "chairs": {
         "method": "spatial, same greedy nearest-first matching as tables, tolerance 3% of the plan diagonal",
         "groundTruth": 113,
-        "detected": 674,
-        "tp": 113,
-        "fp": 561,
-        "fn": 0,
-        "precision": 0.168,
-        "recall": 1,
-        "f1": 0.287,
+        "detected": 119,
+        "tp": 104,
+        "fp": 15,
+        "fn": 9,
+        "precision": 0.874,
+        "recall": 0.92,
+        "f1": 0.897,
         "byFamily": {
           "orange-armchair": {
             "groundTruth": 79,
-            "truePositives": 79,
-            "falseNegatives": 0,
-            "recall": 1
+            "truePositives": 78,
+            "falseNegatives": 1,
+            "recall": 0.987
           },
           "orange-bistro-chair": {
             "groundTruth": 10,
-            "truePositives": 10,
-            "falseNegatives": 0,
-            "recall": 1
+            "truePositives": 2,
+            "falseNegatives": 8,
+            "recall": 0.2
           },
           "pale-outlined-chair": {
             "groundTruth": 24,
@@ -2664,132 +2474,112 @@
             "recall": 1
           }
         },
-        "missedIds": [],
+        "missedIds": [
+          "c037",
+          "c080",
+          "c081",
+          "c082",
+          "c084",
+          "c085",
+          "c086",
+          "c087",
+          "c089"
+        ],
         "spurious": [
           {
-            "cx": 460,
-            "cy": 466,
-            "w": 44,
-            "h": 42
-          },
-          {
-            "cx": 442,
-            "cy": 422,
-            "w": 4,
-            "h": 7
-          },
-          {
-            "cx": 443,
-            "cy": 478,
-            "w": 6,
-            "h": 6
-          },
-          {
-            "cx": 440,
-            "cy": 419,
-            "w": 20,
-            "h": 25
-          },
-          {
-            "cx": 443,
-            "cy": 417,
-            "w": 7,
+            "cx": 656,
+            "cy": 702,
+            "w": 25,
             "h": 27
           },
           {
-            "cx": 420,
-            "cy": 504,
-            "w": 4,
-            "h": 27
+            "cx": 1318,
+            "cy": 271,
+            "w": 15,
+            "h": 20
           },
           {
-            "cx": 442,
-            "cy": 504,
-            "w": 5,
-            "h": 26
-          },
-          {
-            "cx": 415,
-            "cy": 504,
-            "w": 4,
+            "cx": 379,
+            "cy": 248,
+            "w": 15,
             "h": 17
           },
           {
-            "cx": 261,
-            "cy": 467,
-            "w": 44,
-            "h": 42
+            "cx": 1137,
+            "cy": 673,
+            "w": 17,
+            "h": 19
           },
           {
-            "cx": 223,
-            "cy": 479,
-            "w": 4,
-            "h": 9
+            "cx": 675,
+            "cy": 675,
+            "w": 25,
+            "h": 16
           },
           {
-            "cx": 243,
-            "cy": 417,
-            "w": 7,
-            "h": 5
+            "cx": 678,
+            "cy": 706,
+            "w": 20,
+            "h": 20
           },
           {
-            "cx": 242,
-            "cy": 494,
-            "w": 21,
-            "h": 25
+            "cx": 1138,
+            "cy": 707,
+            "w": 19,
+            "h": 22
           },
           {
-            "cx": 237,
-            "cy": 420,
-            "w": 22,
+            "cx": 110,
+            "cy": 66,
+            "w": 12,
+            "h": 18
+          },
+          {
+            "cx": 130,
+            "cy": 66,
+            "w": 24,
+            "h": 18
+          },
+          {
+            "cx": 160,
+            "cy": 70,
+            "w": 25,
+            "h": 19
+          },
+          {
+            "cx": 249,
+            "cy": 70,
+            "w": 25,
+            "h": 19
+          },
+          {
+            "cx": 128,
+            "cy": 95,
+            "w": 25,
+            "h": 18
+          },
+          {
+            "cx": 164,
+            "cy": 100,
+            "w": 35,
+            "h": 19
+          },
+          {
+            "cx": 109,
+            "cy": 126,
+            "w": 14,
+            "h": 18
+          },
+          {
+            "cx": 1160,
+            "cy": 687,
+            "w": 26,
             "h": 26
-          },
-          {
-            "cx": 221,
-            "cy": 500,
-            "w": 5,
-            "h": 26
-          },
-          {
-            "cx": 220,
-            "cy": 415,
-            "w": 5,
-            "h": 27
-          },
-          {
-            "cx": 363,
-            "cy": 466,
-            "w": 44,
-            "h": 42
-          },
-          {
-            "cx": 366,
-            "cy": 454,
-            "w": 3,
-            "h": 33
-          },
-          {
-            "cx": 353,
-            "cy": 471,
-            "w": 15,
-            "h": 3
-          },
-          {
-            "cx": 360,
-            "cy": 419,
-            "w": 21,
-            "h": 25
-          },
-          {
-            "cx": 363,
-            "cy": 415,
-            "w": 4,
-            "h": 27
           }
         ],
-        "detectedOnTables": 262,
-        "detectedStandalone": 412,
-        "detectedTotal": 674
+        "detectedOnTables": 83,
+        "detectedStandalone": 36,
+        "detectedTotal": 119
       },
       "capacity": {
         "ocrStated": {
@@ -2799,7 +2589,7 @@
           "source": "printed on the drawing, top-left"
         },
         "annotatedChairs": 113,
-        "systemPhysicalSeats": 674,
+        "systemPhysicalSeats": 119,
         "unverifiedInAnnotation": [
           {
             "objectIds": [
@@ -2812,12 +2602,12 @@
         ],
         "auditFromApp": {
           "physical": {
-            "seats": 674,
+            "seats": 119,
             "source": "chairs detected and associated to tables, plus standalone chairs"
           },
           "logical": {
-            "seats": 262,
-            "groups": 25,
+            "seats": 83,
+            "groups": 21,
             "source": "seats summed over logical seating groups"
           },
           "unverified": [],
@@ -2827,79 +2617,79 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_013dcbab-a815-4e45-bcd4-55478825462f",
-              "score": 1.64,
+              "id": "candidate_1525f711-c7db-47dd-be0a-12cd849ae6ca",
+              "score": 4,
               "reasons": [
-                "not yet reviewed",
-                "low confidence 0.34"
+                "table with no seats found",
+                "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_03715dbb-2733-4c12-a89e-215f802e0f78",
-              "score": 1.64,
+              "id": "candidate_4812340d-fdf2-4814-8350-c833c77a1075",
+              "score": 4,
               "reasons": [
-                "not yet reviewed",
-                "low confidence 0.34"
+                "table with no seats found",
+                "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_059ff57c-59c3-4fc3-ad74-0b472c9310d2",
-              "score": 1.64,
+              "id": "candidate_53b358c5-2070-4b4b-bb06-94e70a34fb97",
+              "score": 4,
               "reasons": [
-                "not yet reviewed",
-                "low confidence 0.34"
+                "table with no seats found",
+                "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_05ac2139-ecfa-47ad-b167-b5cfba7893df",
-              "score": 1.64,
+              "id": "candidate_58e573d3-366d-47bc-ae14-18a0e8bab206",
+              "score": 4,
               "reasons": [
-                "not yet reviewed",
-                "low confidence 0.34"
+                "table with no seats found",
+                "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_05dcc78a-bb8f-423a-9e3b-1568dbb8744f",
-              "score": 1.64,
+              "id": "candidate_c94bf8f6-8aad-4457-9c47-b3c726a01f23",
+              "score": 4,
               "reasons": [
-                "not yet reviewed",
-                "low confidence 0.34"
+                "table with no seats found",
+                "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_08266635-e8c4-44eb-af32-d83cba06ffea",
-              "score": 1.64,
+              "id": "candidate_e8106c9c-02ed-4d2a-becc-b3d9a3e243a7",
+              "score": 4,
               "reasons": [
-                "not yet reviewed",
-                "low confidence 0.34"
+                "table with no seats found",
+                "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0c2e704f-f441-40c4-b2a6-cd7197f1fea3",
-              "score": 1.64,
+              "id": "candidate_edf5495a-1c99-48dc-baaa-aa699f331b1b",
+              "score": 4,
               "reasons": [
-                "not yet reviewed",
-                "low confidence 0.34"
+                "table with no seats found",
+                "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0d14cb02-6ead-4681-b877-81508ec4e0d0",
-              "score": 1.64,
+              "id": "candidate_f7bd9306-5d77-4f19-869a-c7eccd21e0e0",
+              "score": 4,
               "reasons": [
-                "not yet reviewed",
-                "low confidence 0.34"
+                "table with no seats found",
+                "not yet reviewed"
               ]
             }
           ],
           "likelyAreaIds": [
-            "candidate_013dcbab-a815-4e45-bcd4-55478825462f",
-            "candidate_03715dbb-2733-4c12-a89e-215f802e0f78",
-            "candidate_059ff57c-59c3-4fc3-ad74-0b472c9310d2",
-            "candidate_05ac2139-ecfa-47ad-b167-b5cfba7893df",
-            "candidate_05dcc78a-bb8f-423a-9e3b-1568dbb8744f",
-            "candidate_08266635-e8c4-44eb-af32-d83cba06ffea",
-            "candidate_0c2e704f-f441-40c4-b2a6-cd7197f1fea3",
-            "candidate_0d14cb02-6ead-4681-b877-81508ec4e0d0"
+            "candidate_1525f711-c7db-47dd-be0a-12cd849ae6ca",
+            "candidate_4812340d-fdf2-4814-8350-c833c77a1075",
+            "candidate_53b358c5-2070-4b4b-bb06-94e70a34fb97",
+            "candidate_58e573d3-366d-47bc-ae14-18a0e8bab206",
+            "candidate_c94bf8f6-8aad-4457-9c47-b3c726a01f23",
+            "candidate_e8106c9c-02ed-4d2a-becc-b3d9a3e243a7",
+            "candidate_edf5495a-1c99-48dc-baaa-aa699f331b1b",
+            "candidate_f7bd9306-5d77-4f19-869a-c7eccd21e0e0"
           ]
         }
       },
@@ -2916,7 +2706,7 @@
       "falsePositiveRegions": {
         "textRegionsAnnotated": 7,
         "tablesInsideTextRegions": 1,
-        "anyDetectionInsideTextRegions": 27,
+        "anyDetectionInsideTextRegions": 8,
         "worstTextRegions": [
           {
             "id": "giris-left",
@@ -2925,11 +2715,11 @@
         ],
         "architectureRegionsAnnotated": 1,
         "tablesInsideArchitectureRegions": 0,
-        "anyDetectionInsideArchitectureRegions": 13,
+        "anyDetectionInsideArchitectureRegions": 0,
         "worstArchitectureRegions": []
       },
       "humanEffort": {
-        "reviewGroups": 109,
+        "reviewGroups": 23,
         "uncertainQuestions": 12,
         "note": "review groups + questions the operator must resolve before Plan Confirmed"
       },
@@ -2937,12 +2727,12 @@
         "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
         "trainedModel": false,
         "detectionProvider": "classical-cv",
-        "detectionPath": "table-first",
+        "detectionPath": "chair-first",
         "chairSource": "outline-interior",
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 924,
+      "detectionMs": 867,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -3117,13 +2907,13 @@
       "chairs": {
         "method": "spatial, same greedy nearest-first matching as tables, tolerance 3% of the plan diagonal",
         "groundTruth": 113,
-        "detected": 139,
+        "detected": 119,
         "tp": 113,
-        "fp": 26,
+        "fp": 6,
         "fn": 0,
-        "precision": 0.813,
+        "precision": 0.95,
         "recall": 1,
-        "f1": 0.897,
+        "f1": 0.974,
         "byFamily": {
           "orange-armchair": {
             "groundTruth": 79,
@@ -3147,129 +2937,45 @@
         "missedIds": [],
         "spurious": [
           {
-            "cx": 1268,
-            "cy": 389,
-            "w": 17,
-            "h": 10
-          },
-          {
-            "cx": 513,
-            "cy": 438,
-            "w": 19,
-            "h": 12
-          },
-          {
-            "cx": 314,
-            "cy": 591,
-            "w": 18,
-            "h": 11
-          },
-          {
-            "cx": 870,
-            "cy": 89,
-            "w": 17,
-            "h": 10
-          },
-          {
-            "cx": 1164,
-            "cy": 195,
-            "w": 20,
-            "h": 18
-          },
-          {
-            "cx": 1164,
-            "cy": 144,
-            "w": 15,
-            "h": 21
-          },
-          {
-            "cx": 604,
-            "cy": 595,
-            "w": 18,
-            "h": 11
-          },
-          {
             "cx": 688,
             "cy": 716,
             "w": 20,
             "h": 20
           },
           {
-            "cx": 363,
-            "cy": 446,
-            "w": 16,
-            "h": 20
-          },
-          {
-            "cx": 552,
-            "cy": 595,
-            "w": 18,
-            "h": 11
-          },
-          {
-            "cx": 362,
-            "cy": 590,
-            "w": 15,
-            "h": 12
-          },
-          {
-            "cx": 502,
-            "cy": 595,
-            "w": 17,
-            "h": 12
-          },
-          {
-            "cx": 312,
-            "cy": 437,
-            "w": 17,
-            "h": 10
-          },
-          {
-            "cx": 677,
-            "cy": 384,
-            "w": 11,
-            "h": 23
-          },
-          {
-            "cx": 994,
-            "cy": 382,
-            "w": 11,
-            "h": 16
-          },
-          {
-            "cx": 994,
-            "cy": 438,
-            "w": 10,
-            "h": 21
-          },
-          {
-            "cx": 263,
-            "cy": 439,
+            "cx": 1148,
+            "cy": 718,
             "w": 19,
-            "h": 12
+            "h": 22
           },
           {
-            "cx": 825,
-            "cy": 384,
+            "cx": 134,
+            "cy": 95,
             "w": 12,
-            "h": 14
+            "h": 18
           },
           {
-            "cx": 826,
-            "cy": 438,
-            "w": 10,
+            "cx": 137,
+            "cy": 65,
+            "w": 13,
             "h": 17
           },
           {
-            "cx": 1144,
-            "cy": 382,
-            "w": 11,
-            "h": 16
+            "cx": 196,
+            "cy": 95,
+            "w": 17,
+            "h": 19
+          },
+          {
+            "cx": 1310,
+            "cy": 261,
+            "w": 15,
+            "h": 20
           }
         ],
-        "detectedOnTables": 96,
+        "detectedOnTables": 76,
         "detectedStandalone": 43,
-        "detectedTotal": 139
+        "detectedTotal": 119
       },
       "capacity": {
         "ocrStated": {
@@ -3279,7 +2985,7 @@
           "source": "printed on the drawing, top-left"
         },
         "annotatedChairs": 113,
-        "systemPhysicalSeats": 139,
+        "systemPhysicalSeats": 119,
         "unverifiedInAnnotation": [
           {
             "objectIds": [
@@ -3292,11 +2998,11 @@
         ],
         "auditFromApp": {
           "physical": {
-            "seats": 139,
+            "seats": 119,
             "source": "chairs detected and associated to tables, plus standalone chairs"
           },
           "logical": {
-            "seats": 96,
+            "seats": 76,
             "groups": 18,
             "source": "seats summed over logical seating groups"
           },
@@ -3307,7 +3013,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_94d4107d-4c9b-4149-915a-976d0e6d33f1",
+              "id": "candidate_f2e195a5-8f84-4a84-acfb-d3eaedeaf0ff",
               "score": 4.53,
               "reasons": [
                 "table with no seats found",
@@ -3316,7 +3022,7 @@
               ]
             },
             {
-              "id": "candidate_90a82c51-137f-4323-a483-240acdcf65a6",
+              "id": "candidate_5d300964-86a6-4e83-9431-0af7c5130735",
               "score": 4.26,
               "reasons": [
                 "table with no seats found",
@@ -3325,7 +3031,7 @@
               ]
             },
             {
-              "id": "candidate_1941f52b-539a-495f-ba5d-6a8be54d0331",
+              "id": "candidate_1ac300b4-4f69-44e9-95c5-2eab3d48f8a9",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -3333,7 +3039,7 @@
               ]
             },
             {
-              "id": "candidate_1ad2690f-3ee8-4283-a4a4-636930fe97c6",
+              "id": "candidate_1c74b3a9-b086-4737-a4af-09849e414e77",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -3341,7 +3047,7 @@
               ]
             },
             {
-              "id": "candidate_2683a061-db26-4e41-a80e-5240ba6cfbad",
+              "id": "candidate_24b908cc-56e2-4b1c-9275-0320d6f798aa",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -3349,7 +3055,7 @@
               ]
             },
             {
-              "id": "candidate_7251cd26-a01c-48d0-8c60-a324e32d7128",
+              "id": "candidate_4009e528-7d27-4de4-b228-1aa12a224c1d",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -3357,7 +3063,7 @@
               ]
             },
             {
-              "id": "candidate_97a5cc66-917e-4830-9de3-a318ae387af4",
+              "id": "candidate_4983362b-9556-488f-a120-63fad055a19e",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -3365,7 +3071,7 @@
               ]
             },
             {
-              "id": "candidate_c2fceef6-8033-492b-b5a1-03e0aa69c802",
+              "id": "candidate_77130f58-5e9a-470e-ab49-e3e279e5a3fd",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -3374,14 +3080,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_94d4107d-4c9b-4149-915a-976d0e6d33f1",
-            "candidate_90a82c51-137f-4323-a483-240acdcf65a6",
-            "candidate_1941f52b-539a-495f-ba5d-6a8be54d0331",
-            "candidate_1ad2690f-3ee8-4283-a4a4-636930fe97c6",
-            "candidate_2683a061-db26-4e41-a80e-5240ba6cfbad",
-            "candidate_7251cd26-a01c-48d0-8c60-a324e32d7128",
-            "candidate_97a5cc66-917e-4830-9de3-a318ae387af4",
-            "candidate_c2fceef6-8033-492b-b5a1-03e0aa69c802"
+            "candidate_f2e195a5-8f84-4a84-acfb-d3eaedeaf0ff",
+            "candidate_5d300964-86a6-4e83-9431-0af7c5130735",
+            "candidate_1ac300b4-4f69-44e9-95c5-2eab3d48f8a9",
+            "candidate_1c74b3a9-b086-4737-a4af-09849e414e77",
+            "candidate_24b908cc-56e2-4b1c-9275-0320d6f798aa",
+            "candidate_4009e528-7d27-4de4-b228-1aa12a224c1d",
+            "candidate_4983362b-9556-488f-a120-63fad055a19e",
+            "candidate_77130f58-5e9a-470e-ab49-e3e279e5a3fd"
           ]
         }
       },
@@ -3424,7 +3130,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 872,
+      "detectionMs": 977,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -3433,34 +3139,29 @@
       "matchToleranceP": 3,
       "tables": {
         "groundTruth": 46,
-        "detected": 66,
-        "tp": 40,
+        "detected": 71,
+        "tp": 45,
         "fp": 26,
-        "fn": 6,
-        "precision": 0.606,
-        "recall": 0.87,
-        "f1": 0.714,
+        "fn": 1,
+        "precision": 0.634,
+        "recall": 0.978,
+        "f1": 0.769,
         "missedIds": [
-          "t008",
-          "t042",
-          "t043",
-          "t044",
-          "t045",
-          "t046"
+          "t008"
         ],
         "spuriousCount": 26,
         "spurious": [
-          {
-            "cx": 45,
-            "cy": 147,
-            "w": 55,
-            "h": 28
-          },
           {
             "cx": 469,
             "cy": 453,
             "w": 43,
             "h": 33
+          },
+          {
+            "cx": 45,
+            "cy": 147,
+            "w": 55,
+            "h": 28
           },
           {
             "cx": 604,
@@ -3499,6 +3200,12 @@
             "h": 22
           },
           {
+            "cx": 1144,
+            "cy": 516,
+            "w": 37,
+            "h": 31
+          },
+          {
             "cx": 1172,
             "cy": 516,
             "w": 24,
@@ -3523,22 +3230,10 @@
             "h": 43
           },
           {
-            "cx": 124,
-            "cy": 208,
-            "w": 44,
-            "h": 98
-          },
-          {
             "cx": 649,
             "cy": 450,
             "w": 19,
             "h": 21
-          },
-          {
-            "cx": 1144,
-            "cy": 516,
-            "w": 37,
-            "h": 31
           },
           {
             "cx": 1250,
@@ -3565,6 +3260,12 @@
             "h": 16
           },
           {
+            "cx": 670,
+            "cy": 520,
+            "w": 28,
+            "h": 32
+          },
+          {
             "cx": 604,
             "cy": 143,
             "w": 55,
@@ -3584,9 +3285,9 @@
           "accuracy": 0.75
         },
         "bistro": {
-          "matched": 0,
+          "matched": 5,
           "correct": 0,
-          "accuracy": null
+          "accuracy": 0
         },
         "rectangle": {
           "matched": 0,
@@ -3652,8 +3353,8 @@
             "h": 21
           }
         ],
-        "detectedOnTables": 65,
-        "detectedStandalone": 45,
+        "detectedOnTables": 72,
+        "detectedStandalone": 38,
         "detectedTotal": 110
       },
       "capacity": {
@@ -3681,8 +3382,8 @@
             "source": "chairs detected and associated to tables, plus standalone chairs"
           },
           "logical": {
-            "seats": 65,
-            "groups": 58,
+            "seats": 72,
+            "groups": 62,
             "source": "seats summed over logical seating groups"
           },
           "unverified": [],
@@ -3692,7 +3393,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_14260ba1-fd93-41b9-afc1-d7cb30fd160c",
+              "id": "candidate_fb30ea34-00e1-4ac9-9ca2-cbdb5b0b22ad",
               "score": 5.4,
               "reasons": [
                 "table with no seats found",
@@ -3701,7 +3402,7 @@
               ]
             },
             {
-              "id": "candidate_3f47452a-959e-49ba-b0a5-c0040ab8c215",
+              "id": "candidate_d04d4da9-699a-4058-8fab-9f5eb0b170c2",
               "score": 5.2,
               "reasons": [
                 "table with no seats found",
@@ -3710,7 +3411,7 @@
               ]
             },
             {
-              "id": "candidate_2f607130-fe0c-483e-88d3-4e9b5fcf5b54",
+              "id": "candidate_81de3ce2-dc5e-429b-a4c7-3ca9ee9028ca",
               "score": 4.58,
               "reasons": [
                 "table with no seats found",
@@ -3719,7 +3420,7 @@
               ]
             },
             {
-              "id": "candidate_32988b0a-6fd4-41ac-a9c9-a7bbdffa8817",
+              "id": "candidate_7f15a95f-ee04-4be4-a2e8-ce98c332f6cb",
               "score": 4.48,
               "reasons": [
                 "table with no seats found",
@@ -3728,7 +3429,7 @@
               ]
             },
             {
-              "id": "candidate_4cddc34f-1456-4ceb-9ed0-4bc98b2ee51f",
+              "id": "candidate_d2150aef-e13a-410a-a37d-3d6d94e107cb",
               "score": 4.48,
               "reasons": [
                 "table with no seats found",
@@ -3737,7 +3438,7 @@
               ]
             },
             {
-              "id": "candidate_92522f82-c0b6-431b-b091-0318a76d8a16",
+              "id": "candidate_d99b1a78-0c90-4431-8bb9-d5685bad6bc3",
               "score": 4.48,
               "reasons": [
                 "table with no seats found",
@@ -3746,7 +3447,7 @@
               ]
             },
             {
-              "id": "candidate_49df2563-d6a9-40aa-abfc-27e77ff79c46",
+              "id": "candidate_8375ac9e-1bb5-4458-90cb-2c8a6b7ad6e6",
               "score": 4.45,
               "reasons": [
                 "table with no seats found",
@@ -3755,24 +3456,24 @@
               ]
             },
             {
-              "id": "candidate_97846b2a-f685-4ab4-941b-ab98c1ed3bcb",
-              "score": 4.43,
+              "id": "candidate_34178b08-01c4-4c45-a12a-1b105c5ab1dc",
+              "score": 4.38,
               "reasons": [
                 "table with no seats found",
                 "not yet reviewed",
-                "low confidence 0.39"
+                "low confidence 0.41"
               ]
             }
           ],
           "likelyAreaIds": [
-            "candidate_14260ba1-fd93-41b9-afc1-d7cb30fd160c",
-            "candidate_3f47452a-959e-49ba-b0a5-c0040ab8c215",
-            "candidate_2f607130-fe0c-483e-88d3-4e9b5fcf5b54",
-            "candidate_32988b0a-6fd4-41ac-a9c9-a7bbdffa8817",
-            "candidate_4cddc34f-1456-4ceb-9ed0-4bc98b2ee51f",
-            "candidate_92522f82-c0b6-431b-b091-0318a76d8a16",
-            "candidate_49df2563-d6a9-40aa-abfc-27e77ff79c46",
-            "candidate_97846b2a-f685-4ab4-941b-ab98c1ed3bcb"
+            "candidate_fb30ea34-00e1-4ac9-9ca2-cbdb5b0b22ad",
+            "candidate_d04d4da9-699a-4058-8fab-9f5eb0b170c2",
+            "candidate_81de3ce2-dc5e-429b-a4c7-3ca9ee9028ca",
+            "candidate_7f15a95f-ee04-4be4-a2e8-ce98c332f6cb",
+            "candidate_d2150aef-e13a-410a-a37d-3d6d94e107cb",
+            "candidate_d99b1a78-0c90-4431-8bb9-d5685bad6bc3",
+            "candidate_8375ac9e-1bb5-4458-90cb-2c8a6b7ad6e6",
+            "candidate_34178b08-01c4-4c45-a12a-1b105c5ab1dc"
           ]
         }
       },
@@ -3797,8 +3498,8 @@
         "worstArchitectureRegions": []
       },
       "humanEffort": {
-        "reviewGroups": 30,
-        "uncertainQuestions": 7,
+        "reviewGroups": 31,
+        "uncertainQuestions": 8,
         "note": "review groups + questions the operator must resolve before Plan Confirmed"
       },
       "provider": {
@@ -3810,7 +3511,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 716,
+      "detectionMs": 784,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -3819,21 +3520,15 @@
       "matchToleranceP": 3,
       "tables": {
         "groundTruth": 46,
-        "detected": 47,
-        "tp": 41,
-        "fp": 6,
-        "fn": 5,
-        "precision": 0.872,
-        "recall": 0.891,
-        "f1": 0.882,
-        "missedIds": [
-          "t042",
-          "t043",
-          "t044",
-          "t045",
-          "t046"
-        ],
-        "spuriousCount": 6,
+        "detected": 50,
+        "tp": 46,
+        "fp": 4,
+        "fn": 0,
+        "precision": 0.92,
+        "recall": 1,
+        "f1": 0.958,
+        "missedIds": [],
+        "spuriousCount": 4,
         "spurious": [
           {
             "cx": 45,
@@ -3842,22 +3537,10 @@
             "h": 45
           },
           {
-            "cx": 604,
-            "cy": 736,
-            "w": 56,
-            "h": 26
-          },
-          {
             "cx": 467,
             "cy": 635,
             "w": 37,
             "h": 65
-          },
-          {
-            "cx": 304,
-            "cy": 737,
-            "w": 55,
-            "h": 26
           },
           {
             "cx": 1145,
@@ -3885,9 +3568,9 @@
           "accuracy": 1
         },
         "bistro": {
-          "matched": 0,
+          "matched": 5,
           "correct": 0,
-          "accuracy": null
+          "accuracy": 0
         },
         "rectangle": {
           "matched": 0,
@@ -3898,13 +3581,13 @@
       "chairs": {
         "method": "spatial, same greedy nearest-first matching as tables, tolerance 3% of the plan diagonal",
         "groundTruth": 113,
-        "detected": 159,
-        "tp": 113,
-        "fp": 46,
-        "fn": 0,
-        "precision": 0.711,
-        "recall": 1,
-        "f1": 0.831,
+        "detected": 111,
+        "tp": 109,
+        "fp": 2,
+        "fn": 4,
+        "precision": 0.982,
+        "recall": 0.965,
+        "f1": 0.973,
         "byFamily": {
           "orange-armchair": {
             "groundTruth": 79,
@@ -3914,143 +3597,40 @@
           },
           "orange-bistro-chair": {
             "groundTruth": 10,
-            "truePositives": 10,
-            "falseNegatives": 0,
-            "recall": 1
+            "truePositives": 8,
+            "falseNegatives": 2,
+            "recall": 0.8
           },
           "pale-outlined-chair": {
             "groundTruth": 24,
-            "truePositives": 24,
-            "falseNegatives": 0,
-            "recall": 1
+            "truePositives": 22,
+            "falseNegatives": 2,
+            "recall": 0.917
           }
         },
-        "missedIds": [],
+        "missedIds": [
+          "c085",
+          "c089",
+          "c104",
+          "c105"
+        ],
         "spurious": [
           {
-            "cx": 314,
-            "cy": 465,
-            "w": 22,
-            "h": 15
-          },
-          {
-            "cx": 283,
-            "cy": 457,
-            "w": 12,
-            "h": 18
-          },
-          {
-            "cx": 674,
-            "cy": 405,
+            "cx": 196,
+            "cy": 95,
             "w": 18,
-            "h": 13
-          },
-          {
-            "cx": 986,
-            "cy": 352,
-            "w": 24,
-            "h": 12
-          },
-          {
-            "cx": 974,
-            "cy": 332,
-            "w": 18,
-            "h": 17
-          },
-          {
-            "cx": 982,
-            "cy": 306,
-            "w": 13,
             "h": 18
           },
           {
-            "cx": 972,
-            "cy": 315,
-            "w": 17,
-            "h": 16
-          },
-          {
-            "cx": 506,
-            "cy": 466,
-            "w": 23,
-            "h": 17
-          },
-          {
-            "cx": 668,
-            "cy": 459,
-            "w": 13,
-            "h": 17
-          },
-          {
-            "cx": 660,
-            "cy": 484,
-            "w": 21,
-            "h": 17
-          },
-          {
-            "cx": 558,
-            "cy": 465,
-            "w": 15,
-            "h": 18
-          },
-          {
-            "cx": 532,
-            "cy": 454,
-            "w": 10,
-            "h": 18
-          },
-          {
-            "cx": 815,
-            "cy": 357,
-            "w": 15,
-            "h": 13
-          },
-          {
-            "cx": 815,
-            "cy": 308,
-            "w": 13,
-            "h": 16
-          },
-          {
-            "cx": 804,
-            "cy": 312,
-            "w": 16,
-            "h": 11
-          },
-          {
-            "cx": 659,
-            "cy": 383,
-            "w": 18,
-            "h": 23
-          },
-          {
-            "cx": 424,
-            "cy": 610,
-            "w": 16,
-            "h": 14
-          },
-          {
-            "cx": 862,
-            "cy": 214,
-            "w": 10,
-            "h": 17
-          },
-          {
-            "cx": 840,
-            "cy": 200,
-            "w": 14,
-            "h": 19
-          },
-          {
-            "cx": 473,
-            "cy": 607,
-            "w": 17,
-            "h": 13
+            "cx": 678,
+            "cy": 706,
+            "w": 20,
+            "h": 20
           }
         ],
-        "detectedOnTables": 139,
-        "detectedStandalone": 20,
-        "detectedTotal": 159
+        "detectedOnTables": 102,
+        "detectedStandalone": 9,
+        "detectedTotal": 111
       },
       "capacity": {
         "ocrStated": {
@@ -4060,7 +3640,7 @@
           "source": "printed on the drawing, top-left"
         },
         "annotatedChairs": 113,
-        "systemPhysicalSeats": 159,
+        "systemPhysicalSeats": 111,
         "unverifiedInAnnotation": [
           {
             "objectIds": [
@@ -4073,12 +3653,12 @@
         ],
         "auditFromApp": {
           "physical": {
-            "seats": 159,
+            "seats": 111,
             "source": "chairs detected and associated to tables, plus standalone chairs"
           },
           "logical": {
-            "seats": 139,
-            "groups": 21,
+            "seats": 102,
+            "groups": 23,
             "source": "seats summed over logical seating groups"
           },
           "unverified": [],
@@ -4088,16 +3668,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_9a9ef7c7-2960-4ed9-baa2-48cc7bef86dc",
-              "score": 4.07,
-              "reasons": [
-                "table with no seats found",
-                "not yet reviewed",
-                "low confidence 0.48"
-              ]
-            },
-            {
-              "id": "candidate_e32796a9-c7a5-408b-a773-bd7fbadfeb84",
+              "id": "candidate_36edbf2f-f340-4763-940a-504030647d5f",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -4105,42 +3676,51 @@
               ]
             },
             {
-              "id": "candidate_0d9a81a7-9755-49b8-80d9-89333e6771b5",
+              "id": "candidate_77f8f302-9404-4498-acd7-96b8013477e4",
+              "score": 4,
+              "reasons": [
+                "table with no seats found",
+                "not yet reviewed"
+              ]
+            },
+            {
+              "id": "candidate_caba4a2b-87e2-44dd-b7ee-bfaedef7cf2a",
+              "score": 4,
+              "reasons": [
+                "table with no seats found",
+                "not yet reviewed"
+              ]
+            },
+            {
+              "id": "candidate_01ab75dd-a653-40e4-b950-c3bbb2e13ed0",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0e570a04-dc32-442e-80de-d2e133f5917e",
+              "id": "candidate_02501d27-e6ba-4094-b900-024e817a0c39",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0e633bc7-b278-4da0-9b45-85a15235dd31",
+              "id": "candidate_0ad5361b-3e30-47d6-bf25-aff24b9b56f7",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_1b84095a-c246-44bd-9063-c6d18ef980b8",
+              "id": "candidate_0bbb78d8-ebc6-477c-9031-308aa750c581",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_212502da-2618-4666-ae67-2da45c3db7e6",
-              "score": 1,
-              "reasons": [
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_226bbff6-806f-43dd-bfca-3ec8b5d3476f",
+              "id": "candidate_123a7861-eee0-4912-9d00-adddbb7f10ec",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -4148,14 +3728,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_9a9ef7c7-2960-4ed9-baa2-48cc7bef86dc",
-            "candidate_e32796a9-c7a5-408b-a773-bd7fbadfeb84",
-            "candidate_0d9a81a7-9755-49b8-80d9-89333e6771b5",
-            "candidate_0e570a04-dc32-442e-80de-d2e133f5917e",
-            "candidate_0e633bc7-b278-4da0-9b45-85a15235dd31",
-            "candidate_1b84095a-c246-44bd-9063-c6d18ef980b8",
-            "candidate_212502da-2618-4666-ae67-2da45c3db7e6",
-            "candidate_226bbff6-806f-43dd-bfca-3ec8b5d3476f"
+            "candidate_36edbf2f-f340-4763-940a-504030647d5f",
+            "candidate_77f8f302-9404-4498-acd7-96b8013477e4",
+            "candidate_caba4a2b-87e2-44dd-b7ee-bfaedef7cf2a",
+            "candidate_01ab75dd-a653-40e4-b950-c3bbb2e13ed0",
+            "candidate_02501d27-e6ba-4094-b900-024e817a0c39",
+            "candidate_0ad5361b-3e30-47d6-bf25-aff24b9b56f7",
+            "candidate_0bbb78d8-ebc6-477c-9031-308aa750c581",
+            "candidate_123a7861-eee0-4912-9d00-adddbb7f10ec"
           ]
         }
       },
@@ -4172,7 +3752,7 @@
       "falsePositiveRegions": {
         "textRegionsAnnotated": 7,
         "tablesInsideTextRegions": 1,
-        "anyDetectionInsideTextRegions": 3,
+        "anyDetectionInsideTextRegions": 2,
         "worstTextRegions": [
           {
             "id": "giris-left",
@@ -4185,8 +3765,8 @@
         "worstArchitectureRegions": []
       },
       "humanEffort": {
-        "reviewGroups": 14,
-        "uncertainQuestions": 12,
+        "reviewGroups": 11,
+        "uncertainQuestions": 13,
         "note": "review groups + questions the operator must resolve before Plan Confirmed"
       },
       "provider": {
@@ -4198,7 +3778,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 715,
+      "detectionMs": 804,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -4207,13 +3787,13 @@
       "matchToleranceP": 3,
       "tables": {
         "groundTruth": 46,
-        "detected": 37,
-        "tp": 23,
+        "detected": 42,
+        "tp": 28,
         "fp": 14,
-        "fn": 23,
-        "precision": 0.622,
-        "recall": 0.5,
-        "f1": 0.554,
+        "fn": 18,
+        "precision": 0.667,
+        "recall": 0.609,
+        "f1": 0.636,
         "missedIds": [
           "t003",
           "t004",
@@ -4228,14 +3808,9 @@
           "t018",
           "t019",
           "t020",
-          "t022",
           "t025",
-          "t027",
-          "t029",
           "t030",
           "t042",
-          "t043",
-          "t044",
           "t045",
           "t046"
         ],
@@ -4278,12 +3853,6 @@
             "h": 25
           },
           {
-            "cx": 123,
-            "cy": 208,
-            "w": 45,
-            "h": 96
-          },
-          {
             "cx": 305,
             "cy": 143,
             "w": 52,
@@ -4302,10 +3871,10 @@
             "h": 25
           },
           {
-            "cx": 30,
-            "cy": 426,
-            "w": 23,
-            "h": 51
+            "cx": 123,
+            "cy": 208,
+            "w": 45,
+            "h": 96
           },
           {
             "cx": 1144,
@@ -4321,6 +3890,12 @@
           },
           {
             "cx": 30,
+            "cy": 426,
+            "w": 23,
+            "h": 51
+          },
+          {
+            "cx": 30,
             "cy": 718,
             "w": 23,
             "h": 45
@@ -4329,9 +3904,9 @@
       },
       "tableTypeAccuracy": {
         "square": {
-          "matched": 19,
-          "correct": 8,
-          "accuracy": 0.421
+          "matched": 22,
+          "correct": 11,
+          "accuracy": 0.5
         },
         "round": {
           "matched": 4,
@@ -4339,9 +3914,9 @@
           "accuracy": 0.75
         },
         "bistro": {
-          "matched": 0,
+          "matched": 2,
           "correct": 0,
-          "accuracy": null
+          "accuracy": 0
         },
         "rectangle": {
           "matched": 0,
@@ -4352,13 +3927,13 @@
       "chairs": {
         "method": "spatial, same greedy nearest-first matching as tables, tolerance 3% of the plan diagonal",
         "groundTruth": 113,
-        "detected": 130,
-        "tp": 105,
-        "fp": 25,
-        "fn": 8,
-        "precision": 0.808,
-        "recall": 0.929,
-        "f1": 0.864,
+        "detected": 106,
+        "tp": 103,
+        "fp": 3,
+        "fn": 10,
+        "precision": 0.972,
+        "recall": 0.912,
+        "f1": 0.941,
         "byFamily": {
           "orange-armchair": {
             "groundTruth": 79,
@@ -4374,16 +3949,18 @@
           },
           "pale-outlined-chair": {
             "groundTruth": 24,
-            "truePositives": 16,
-            "falseNegatives": 8,
-            "recall": 0.667
+            "truePositives": 14,
+            "falseNegatives": 10,
+            "recall": 0.583
           }
         },
         "missedIds": [
           "c092",
+          "c094",
           "c096",
           "c097",
           "c100",
+          "c103",
           "c107",
           "c108",
           "c109",
@@ -4391,100 +3968,10 @@
         ],
         "spurious": [
           {
-            "cx": 1318,
-            "cy": 269,
-            "w": 14,
-            "h": 18
-          },
-          {
-            "cx": 597,
-            "cy": 622,
-            "w": 13,
-            "h": 15
-          },
-          {
-            "cx": 502,
-            "cy": 621,
-            "w": 20,
-            "h": 14
-          },
-          {
-            "cx": 241,
-            "cy": 450,
-            "w": 21,
-            "h": 11
-          },
-          {
-            "cx": 361,
-            "cy": 464,
-            "w": 16,
-            "h": 16
-          },
-          {
-            "cx": 73,
-            "cy": 236,
-            "w": 7,
-            "h": 21
-          },
-          {
-            "cx": 136,
-            "cy": 65,
-            "w": 13,
-            "h": 16
-          },
-          {
-            "cx": 1115,
-            "cy": 318,
-            "w": 18,
-            "h": 9
-          },
-          {
-            "cx": 662,
-            "cy": 350,
-            "w": 11,
-            "h": 16
-          },
-          {
-            "cx": 1127,
-            "cy": 348,
-            "w": 13,
-            "h": 15
-          },
-          {
-            "cx": 978,
-            "cy": 348,
-            "w": 21,
-            "h": 9
-          },
-          {
-            "cx": 646,
-            "cy": 355,
-            "w": 13,
-            "h": 16
-          },
-          {
-            "cx": 648,
-            "cy": 421,
-            "w": 13,
-            "h": 17
-          },
-          {
-            "cx": 664,
-            "cy": 449,
-            "w": 13,
-            "h": 13
-          },
-          {
-            "cx": 1126,
-            "cy": 453,
-            "w": 13,
-            "h": 13
-          },
-          {
-            "cx": 520,
-            "cy": 603,
-            "w": 16,
-            "h": 14
+            "cx": 636,
+            "cy": 488,
+            "w": 36,
+            "h": 32
           },
           {
             "cx": 677,
@@ -4493,27 +3980,15 @@
             "h": 19
           },
           {
-            "cx": 1128,
-            "cy": 403,
-            "w": 12,
-            "h": 18
-          },
-          {
-            "cx": 1113,
-            "cy": 476,
-            "w": 18,
-            "h": 14
-          },
-          {
-            "cx": 1003,
-            "cy": 103,
-            "w": 20,
-            "h": 13
+            "cx": 1162,
+            "cy": 325,
+            "w": 25,
+            "h": 12
           }
         ],
-        "detectedOnTables": 29,
-        "detectedStandalone": 101,
-        "detectedTotal": 130
+        "detectedOnTables": 37,
+        "detectedStandalone": 69,
+        "detectedTotal": 106
       },
       "capacity": {
         "ocrStated": {
@@ -4523,7 +3998,7 @@
           "source": "printed on the drawing, top-left"
         },
         "annotatedChairs": 113,
-        "systemPhysicalSeats": 130,
+        "systemPhysicalSeats": 106,
         "unverifiedInAnnotation": [
           {
             "objectIds": [
@@ -4536,12 +4011,12 @@
         ],
         "auditFromApp": {
           "physical": {
-            "seats": 130,
+            "seats": 106,
             "source": "chairs detected and associated to tables, plus standalone chairs"
           },
           "logical": {
-            "seats": 29,
-            "groups": 37,
+            "seats": 37,
+            "groups": 41,
             "source": "seats summed over logical seating groups"
           },
           "unverified": [],
@@ -4551,7 +4026,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_8c1df3df-25b2-4b51-b91f-65b3c1401a1b",
+              "id": "candidate_6f212dc7-4e75-4a96-b0d9-253d6d51c4f5",
               "score": 4.58,
               "reasons": [
                 "table with no seats found",
@@ -4560,7 +4035,7 @@
               ]
             },
             {
-              "id": "candidate_183d49ee-d67c-4507-b025-8a1a085f89bc",
+              "id": "candidate_2337f98b-0ac8-4819-86ba-7f6a45be1e43",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -4569,7 +4044,7 @@
               ]
             },
             {
-              "id": "candidate_19e1a81a-f59d-4d24-a452-88596ccc2ab9",
+              "id": "candidate_2448a2e0-1d51-4b42-b41c-6348fe905d47",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -4578,7 +4053,7 @@
               ]
             },
             {
-              "id": "candidate_50660ac2-1aee-4cc9-9724-1159ddd8b719",
+              "id": "candidate_541ba46b-0655-46c1-834c-72a6c9553088",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -4587,7 +4062,7 @@
               ]
             },
             {
-              "id": "candidate_544dcb1d-a38e-453f-8120-0ebd760fe442",
+              "id": "candidate_68e5ff9c-57d1-4be2-910e-6d9d636c4d4b",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -4596,7 +4071,7 @@
               ]
             },
             {
-              "id": "candidate_57c5668e-d813-4590-a52c-ad825f144664",
+              "id": "candidate_75fc38e1-b1c9-44a2-af33-799a03aa6173",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -4605,7 +4080,7 @@
               ]
             },
             {
-              "id": "candidate_58809ace-5962-4fe7-9753-d52de89f4bd4",
+              "id": "candidate_7d8bed6f-1e45-48da-8a83-bf5f8dba462a",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -4614,7 +4089,7 @@
               ]
             },
             {
-              "id": "candidate_5d9301c8-ad83-4018-8860-d1f666916318",
+              "id": "candidate_8a3a642d-16f6-4df7-a4fb-8f7c5cab4e06",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -4624,14 +4099,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_8c1df3df-25b2-4b51-b91f-65b3c1401a1b",
-            "candidate_183d49ee-d67c-4507-b025-8a1a085f89bc",
-            "candidate_19e1a81a-f59d-4d24-a452-88596ccc2ab9",
-            "candidate_50660ac2-1aee-4cc9-9724-1159ddd8b719",
-            "candidate_544dcb1d-a38e-453f-8120-0ebd760fe442",
-            "candidate_57c5668e-d813-4590-a52c-ad825f144664",
-            "candidate_58809ace-5962-4fe7-9753-d52de89f4bd4",
-            "candidate_5d9301c8-ad83-4018-8860-d1f666916318"
+            "candidate_6f212dc7-4e75-4a96-b0d9-253d6d51c4f5",
+            "candidate_2337f98b-0ac8-4819-86ba-7f6a45be1e43",
+            "candidate_2448a2e0-1d51-4b42-b41c-6348fe905d47",
+            "candidate_541ba46b-0655-46c1-834c-72a6c9553088",
+            "candidate_68e5ff9c-57d1-4be2-910e-6d9d636c4d4b",
+            "candidate_75fc38e1-b1c9-44a2-af33-799a03aa6173",
+            "candidate_7d8bed6f-1e45-48da-8a83-bf5f8dba462a",
+            "candidate_8a3a642d-16f6-4df7-a4fb-8f7c5cab4e06"
           ]
         }
       },
@@ -4648,7 +4123,7 @@
       "falsePositiveRegions": {
         "textRegionsAnnotated": 7,
         "tablesInsideTextRegions": 1,
-        "anyDetectionInsideTextRegions": 2,
+        "anyDetectionInsideTextRegions": 1,
         "worstTextRegions": [
           {
             "id": "giris-left",
@@ -4661,8 +4136,8 @@
         "worstArchitectureRegions": []
       },
       "humanEffort": {
-        "reviewGroups": 24,
-        "uncertainQuestions": 0,
+        "reviewGroups": 19,
+        "uncertainQuestions": 1,
         "note": "review groups + questions the operator must resolve before Plan Confirmed"
       },
       "provider": {
@@ -4674,7 +4149,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 823,
+      "detectionMs": 883,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -4925,7 +4400,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_1133bbc2-8786-40cb-923c-c55b2c077949",
+              "id": "candidate_11ad7e6f-fe54-468a-9576-b967d10f4adc",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -4933,7 +4408,7 @@
               ]
             },
             {
-              "id": "candidate_42247e8a-a0d4-4a64-b0e6-951fe55d4f08",
+              "id": "candidate_1a365e1b-e822-4991-96c3-cca3ce5c55ef",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -4941,7 +4416,7 @@
               ]
             },
             {
-              "id": "candidate_4f1b9919-e95e-464e-87bb-a376267c89f5",
+              "id": "candidate_292630ca-45fb-4f6b-b3b2-15ca102561ea",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -4949,7 +4424,7 @@
               ]
             },
             {
-              "id": "candidate_548004be-9322-44d4-baad-667affd511ab",
+              "id": "candidate_3c012ef6-a247-4a97-95b1-b17dc667cd3e",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -4957,7 +4432,7 @@
               ]
             },
             {
-              "id": "candidate_5cdd9f20-b09b-4d64-828e-ee2fbe7a41bc",
+              "id": "candidate_48615e0e-85f0-4e79-a5ad-8a6200e69612",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -4965,7 +4440,7 @@
               ]
             },
             {
-              "id": "candidate_63cff4e5-4611-4fcf-9e11-010c4ed99cea",
+              "id": "candidate_4927cc9c-50fe-46cf-bb93-e186d7b9306d",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -4973,7 +4448,7 @@
               ]
             },
             {
-              "id": "candidate_76b782c9-9254-4079-857f-af097cf3b7bd",
+              "id": "candidate_539519ba-8640-450f-b12a-2270a51bd6d0",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -4981,7 +4456,7 @@
               ]
             },
             {
-              "id": "candidate_9b7dd7bb-7ba9-4a20-b1d0-3aafdb14af82",
+              "id": "candidate_5919fa2d-3879-4de5-9c82-7393173be00b",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -4990,14 +4465,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_1133bbc2-8786-40cb-923c-c55b2c077949",
-            "candidate_42247e8a-a0d4-4a64-b0e6-951fe55d4f08",
-            "candidate_4f1b9919-e95e-464e-87bb-a376267c89f5",
-            "candidate_548004be-9322-44d4-baad-667affd511ab",
-            "candidate_5cdd9f20-b09b-4d64-828e-ee2fbe7a41bc",
-            "candidate_63cff4e5-4611-4fcf-9e11-010c4ed99cea",
-            "candidate_76b782c9-9254-4079-857f-af097cf3b7bd",
-            "candidate_9b7dd7bb-7ba9-4a20-b1d0-3aafdb14af82"
+            "candidate_11ad7e6f-fe54-468a-9576-b967d10f4adc",
+            "candidate_1a365e1b-e822-4991-96c3-cca3ce5c55ef",
+            "candidate_292630ca-45fb-4f6b-b3b2-15ca102561ea",
+            "candidate_3c012ef6-a247-4a97-95b1-b17dc667cd3e",
+            "candidate_48615e0e-85f0-4e79-a5ad-8a6200e69612",
+            "candidate_4927cc9c-50fe-46cf-bb93-e186d7b9306d",
+            "candidate_539519ba-8640-450f-b12a-2270a51bd6d0",
+            "candidate_5919fa2d-3879-4de5-9c82-7393173be00b"
           ]
         }
       },
@@ -5035,7 +4510,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 1050,
+      "detectionMs": 1141,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -5044,43 +4519,101 @@
       "matchToleranceP": 3,
       "tables": {
         "groundTruth": 46,
-        "detected": 51,
-        "tp": 37,
-        "fp": 14,
-        "fn": 9,
-        "precision": 0.725,
-        "recall": 0.804,
-        "f1": 0.763,
+        "detected": 70,
+        "tp": 39,
+        "fp": 31,
+        "fn": 7,
+        "precision": 0.557,
+        "recall": 0.848,
+        "f1": 0.672,
         "missedIds": [
-          "t016",
-          "t022",
-          "t039",
-          "t040",
+          "t014",
+          "t017",
           "t042",
           "t043",
           "t044",
           "t045",
           "t046"
         ],
-        "spuriousCount": 14,
+        "spuriousCount": 31,
         "spurious": [
           {
-            "cx": 663,
-            "cy": 420,
-            "w": 20,
-            "h": 19
+            "cx": 928,
+            "cy": 90,
+            "w": 55,
+            "h": 27
+          },
+          {
+            "cx": 606,
+            "cy": 757,
+            "w": 56,
+            "h": 26
+          },
+          {
+            "cx": 1228,
+            "cy": 101,
+            "w": 55,
+            "h": 27
+          },
+          {
+            "cx": 306,
+            "cy": 747,
+            "w": 55,
+            "h": 26
+          },
+          {
+            "cx": 1204,
+            "cy": 779,
+            "w": 55,
+            "h": 26
+          },
+          {
+            "cx": 326,
+            "cy": 154,
+            "w": 55,
+            "h": 26
+          },
+          {
+            "cx": 626,
+            "cy": 165,
+            "w": 55,
+            "h": 27
+          },
+          {
+            "cx": 1154,
+            "cy": 557,
+            "w": 40,
+            "h": 34
+          },
+          {
+            "cx": 42,
+            "cy": 427,
+            "w": 25,
+            "h": 54
+          },
+          {
+            "cx": 676,
+            "cy": 543,
+            "w": 40,
+            "h": 33
+          },
+          {
+            "cx": 33,
+            "cy": 719,
+            "w": 26,
+            "h": 46
+          },
+          {
+            "cx": 143,
+            "cy": 212,
+            "w": 45,
+            "h": 99
           },
           {
             "cx": 67,
             "cy": 154,
             "w": 55,
             "h": 44
-          },
-          {
-            "cx": 311,
-            "cy": 599,
-            "w": 18,
-            "h": 19
           },
           {
             "cx": 1258,
@@ -5095,71 +4628,47 @@
             "h": 15
           },
           {
+            "cx": 571,
+            "cy": 634,
+            "w": 16,
+            "h": 22
+          },
+          {
+            "cx": 660,
+            "cy": 471,
+            "w": 17,
+            "h": 17
+          },
+          {
             "cx": 1023,
             "cy": 198,
             "w": 17,
             "h": 15
           },
           {
-            "cx": 1031,
-            "cy": 171,
-            "w": 15,
-            "h": 14
-          },
-          {
-            "cx": 436,
-            "cy": 473,
+            "cx": 311,
+            "cy": 599,
             "w": 18,
-            "h": 16
+            "h": 19
           },
           {
-            "cx": 1157,
-            "cy": 171,
-            "w": 18,
-            "h": 15
-          },
-          {
-            "cx": 1151,
-            "cy": 445,
-            "w": 14,
-            "h": 18
-          },
-          {
-            "cx": 1124,
-            "cy": 489,
-            "w": 16,
-            "h": 17
-          },
-          {
-            "cx": 1128,
-            "cy": 333,
-            "w": 14,
-            "h": 17
-          },
-          {
-            "cx": 1154,
-            "cy": 557,
-            "w": 40,
-            "h": 34
-          },
-          {
-            "cx": 676,
-            "cy": 543,
-            "w": 40,
-            "h": 33
+            "cx": 663,
+            "cy": 420,
+            "w": 20,
+            "h": 19
           }
         ]
       },
       "tableTypeAccuracy": {
         "square": {
           "matched": 35,
-          "correct": 17,
-          "accuracy": 0.486
+          "correct": 18,
+          "accuracy": 0.514
         },
         "round": {
-          "matched": 2,
-          "correct": 1,
-          "accuracy": 0.5
+          "matched": 4,
+          "correct": 3,
+          "accuracy": 0.75
         },
         "bistro": {
           "matched": 0,
@@ -5175,19 +4684,19 @@
       "chairs": {
         "method": "spatial, same greedy nearest-first matching as tables, tolerance 3% of the plan diagonal",
         "groundTruth": 113,
-        "detected": 141,
-        "tp": 97,
-        "fp": 44,
-        "fn": 16,
-        "precision": 0.688,
-        "recall": 0.858,
-        "f1": 0.764,
+        "detected": 130,
+        "tp": 113,
+        "fp": 17,
+        "fn": 0,
+        "precision": 0.869,
+        "recall": 1,
+        "f1": 0.93,
         "byFamily": {
           "orange-armchair": {
             "groundTruth": 79,
-            "truePositives": 65,
-            "falseNegatives": 14,
-            "recall": 0.823
+            "truePositives": 79,
+            "falseNegatives": 0,
+            "recall": 1
           },
           "orange-bistro-chair": {
             "groundTruth": 10,
@@ -5197,71 +4706,54 @@
           },
           "pale-outlined-chair": {
             "groundTruth": 24,
-            "truePositives": 22,
-            "falseNegatives": 2,
-            "recall": 0.917
+            "truePositives": 24,
+            "falseNegatives": 0,
+            "recall": 1
           }
         },
-        "missedIds": [
-          "c007",
-          "c009",
-          "c010",
-          "c013",
-          "c020",
-          "c023",
-          "c042",
-          "c052",
-          "c067",
-          "c068",
-          "c069",
-          "c070",
-          "c071",
-          "c078",
-          "c093",
-          "c103"
-        ],
+        "missedIds": [],
         "spurious": [
           {
-            "cx": 1194,
-            "cy": 419,
-            "w": 25,
-            "h": 6
+            "cx": 984,
+            "cy": 148,
+            "w": 30,
+            "h": 32
           },
           {
-            "cx": 1285,
-            "cy": 464,
-            "w": 3,
-            "h": 18
-          },
-          {
-            "cx": 1322,
-            "cy": 496,
-            "w": 21,
+            "cx": 1324,
+            "cy": 414,
+            "w": 32,
             "h": 31
           },
           {
-            "cx": 1322,
-            "cy": 415,
-            "w": 5,
-            "h": 27
+            "cx": 264,
+            "cy": 667,
+            "w": 33,
+            "h": 32
           },
           {
-            "cx": 1269,
-            "cy": 419,
-            "w": 16,
-            "h": 25
+            "cx": 1336,
+            "cy": 317,
+            "w": 15,
+            "h": 20
           },
           {
-            "cx": 70,
-            "cy": 177,
-            "w": 5,
+            "cx": 171,
+            "cy": 140,
+            "w": 33,
             "h": 17
           },
           {
-            "cx": 238,
-            "cy": 662,
-            "w": 5,
-            "h": 26
+            "cx": 230,
+            "cy": 142,
+            "w": 36,
+            "h": 19
+          },
+          {
+            "cx": 206,
+            "cy": 114,
+            "w": 35,
+            "h": 18
           },
           {
             "cx": 274,
@@ -5270,10 +4762,16 @@
             "h": 19
           },
           {
-            "cx": 145,
-            "cy": 100,
-            "w": 9,
+            "cx": 253,
+            "cy": 137,
+            "w": 35,
             "h": 18
+          },
+          {
+            "cx": 160,
+            "cy": 70,
+            "w": 13,
+            "h": 17
           },
           {
             "cx": 158,
@@ -5282,69 +4780,45 @@
             "h": 18
           },
           {
-            "cx": 188,
-            "cy": 104,
-            "w": 35,
-            "h": 18
+            "cx": 678,
+            "cy": 698,
+            "w": 26,
+            "h": 15
           },
           {
-            "cx": 253,
-            "cy": 137,
-            "w": 35,
-            "h": 18
+            "cx": 952,
+            "cy": 395,
+            "w": 26,
+            "h": 14
           },
           {
-            "cx": 916,
-            "cy": 116,
-            "w": 24,
-            "h": 5
+            "cx": 783,
+            "cy": 430,
+            "w": 26,
+            "h": 14
           },
           {
-            "cx": 1098,
-            "cy": 373,
-            "w": 25,
-            "h": 5
+            "cx": 1140,
+            "cy": 712,
+            "w": 17,
+            "h": 19
           },
           {
-            "cx": 293,
-            "cy": 412,
-            "w": 5,
-            "h": 25
+            "cx": 681,
+            "cy": 729,
+            "w": 20,
+            "h": 21
           },
           {
-            "cx": 778,
-            "cy": 437,
-            "w": 25,
-            "h": 5
-          },
-          {
-            "cx": 1090,
-            "cy": 521,
-            "w": 25,
-            "h": 6
-          },
-          {
-            "cx": 358,
-            "cy": 566,
-            "w": 6,
-            "h": 25
-          },
-          {
-            "cx": 1121,
-            "cy": 119,
-            "w": 30,
-            "h": 4
-          },
-          {
-            "cx": 374,
-            "cy": 413,
-            "w": 5,
-            "h": 27
+            "cx": 1136,
+            "cy": 742,
+            "w": 27,
+            "h": 16
           }
         ],
-        "detectedOnTables": 27,
-        "detectedStandalone": 114,
-        "detectedTotal": 141
+        "detectedOnTables": 56,
+        "detectedStandalone": 74,
+        "detectedTotal": 130
       },
       "capacity": {
         "ocrStated": {
@@ -5354,7 +4828,7 @@
           "source": "printed on the drawing, top-left"
         },
         "annotatedChairs": 113,
-        "systemPhysicalSeats": 141,
+        "systemPhysicalSeats": 130,
         "unverifiedInAnnotation": [
           {
             "objectIds": [
@@ -5367,12 +4841,12 @@
         ],
         "auditFromApp": {
           "physical": {
-            "seats": 141,
+            "seats": 130,
             "source": "chairs detected and associated to tables, plus standalone chairs"
           },
           "logical": {
-            "seats": 27,
-            "groups": 49,
+            "seats": 56,
+            "groups": 68,
             "source": "seats summed over logical seating groups"
           },
           "unverified": [],
@@ -5382,16 +4856,25 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_890b164d-0650-481b-ac3c-deb22b38ec76",
-              "score": 4.33,
+              "id": "candidate_6f2fa958-439c-4103-a501-f67b6a658380",
+              "score": 5.2,
               "reasons": [
                 "table with no seats found",
                 "not yet reviewed",
-                "low confidence 0.42"
+                "low confidence 0.20"
               ]
             },
             {
-              "id": "candidate_1d76553c-9678-4ef3-a0b4-213d316cb852",
+              "id": "candidate_c51c46f7-f47d-40fc-b6a2-1ef90a181196",
+              "score": 4.48,
+              "reasons": [
+                "table with no seats found",
+                "not yet reviewed",
+                "low confidence 0.38"
+              ]
+            },
+            {
+              "id": "candidate_0c8af915-4513-4556-942b-1efb29e312b0",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -5400,7 +4883,7 @@
               ]
             },
             {
-              "id": "candidate_2f850f0e-302c-4e1b-bb02-df3509c1ef6b",
+              "id": "candidate_1556186b-4afa-48e0-b574-c568445e3cdc",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -5409,7 +4892,7 @@
               ]
             },
             {
-              "id": "candidate_51713a49-71c0-43c9-b34b-841fbd505829",
+              "id": "candidate_1efae9a0-91ef-4f8d-8b40-e5666ab44519",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -5418,7 +4901,7 @@
               ]
             },
             {
-              "id": "candidate_5e55e5a9-2260-45d0-ab8a-c706fc6c511c",
+              "id": "candidate_264a5b91-ba48-43d5-8558-f48a9142d90b",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -5427,7 +4910,7 @@
               ]
             },
             {
-              "id": "candidate_62e86969-e84f-4c8c-903e-2b5bb2392f99",
+              "id": "candidate_31b4b8de-bc8a-4a4b-a55e-5d0dfeafc04b",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -5436,16 +4919,7 @@
               ]
             },
             {
-              "id": "candidate_70056699-284f-499c-9916-0d8d0734df1c",
-              "score": 4.28,
-              "reasons": [
-                "table with no seats found",
-                "not yet reviewed",
-                "low confidence 0.43"
-              ]
-            },
-            {
-              "id": "candidate_816e815b-eea8-493a-8e37-1fdf81f6d318",
+              "id": "candidate_366eca7a-e330-470e-8489-cfb73a1625a0",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -5455,14 +4929,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_890b164d-0650-481b-ac3c-deb22b38ec76",
-            "candidate_1d76553c-9678-4ef3-a0b4-213d316cb852",
-            "candidate_2f850f0e-302c-4e1b-bb02-df3509c1ef6b",
-            "candidate_51713a49-71c0-43c9-b34b-841fbd505829",
-            "candidate_5e55e5a9-2260-45d0-ab8a-c706fc6c511c",
-            "candidate_62e86969-e84f-4c8c-903e-2b5bb2392f99",
-            "candidate_70056699-284f-499c-9916-0d8d0734df1c",
-            "candidate_816e815b-eea8-493a-8e37-1fdf81f6d318"
+            "candidate_6f2fa958-439c-4103-a501-f67b6a658380",
+            "candidate_c51c46f7-f47d-40fc-b6a2-1ef90a181196",
+            "candidate_0c8af915-4513-4556-942b-1efb29e312b0",
+            "candidate_1556186b-4afa-48e0-b574-c568445e3cdc",
+            "candidate_1efae9a0-91ef-4f8d-8b40-e5666ab44519",
+            "candidate_264a5b91-ba48-43d5-8558-f48a9142d90b",
+            "candidate_31b4b8de-bc8a-4a4b-a55e-5d0dfeafc04b",
+            "candidate_366eca7a-e330-470e-8489-cfb73a1625a0"
           ]
         }
       },
@@ -5479,7 +4953,7 @@
       "falsePositiveRegions": {
         "textRegionsAnnotated": 7,
         "tablesInsideTextRegions": 1,
-        "anyDetectionInsideTextRegions": 6,
+        "anyDetectionInsideTextRegions": 5,
         "worstTextRegions": [
           {
             "id": "giris-left",
@@ -5492,7 +4966,7 @@
         "worstArchitectureRegions": []
       },
       "humanEffort": {
-        "reviewGroups": 35,
+        "reviewGroups": 29,
         "uncertainQuestions": 2,
         "note": "review groups + questions the operator must resolve before Plan Confirmed"
       },
@@ -5505,7 +4979,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 863,
+      "detectionMs": 926,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -5514,136 +4988,75 @@
       "matchToleranceP": 3,
       "tables": {
         "groundTruth": 46,
-        "detected": 54,
-        "tp": 34,
-        "fp": 20,
-        "fn": 12,
-        "precision": 0.63,
-        "recall": 0.739,
-        "f1": 0.68,
+        "detected": 77,
+        "tp": 41,
+        "fp": 36,
+        "fn": 5,
+        "precision": 0.532,
+        "recall": 0.891,
+        "f1": 0.667,
         "missedIds": [
-          "t008",
-          "t010",
-          "t012",
-          "t028",
-          "t032",
-          "t039",
-          "t040",
           "t042",
           "t043",
           "t044",
           "t045",
           "t046"
         ],
-        "spuriousCount": 20,
+        "spuriousCount": 36,
         "spurious": [
           {
-            "cx": 697,
-            "cy": 490,
-            "w": 14,
-            "h": 21
+            "cx": 905,
+            "cy": 82,
+            "w": 55,
+            "h": 27
           },
           {
-            "cx": 1013,
-            "cy": 153,
-            "w": 20,
-            "h": 15
+            "cx": 1204,
+            "cy": 66,
+            "w": 55,
+            "h": 26
           },
           {
-            "cx": 496,
-            "cy": 656,
-            "w": 16,
-            "h": 17
+            "cx": 641,
+            "cy": 774,
+            "w": 55,
+            "h": 26
           },
           {
-            "cx": 447,
-            "cy": 508,
-            "w": 17,
-            "h": 16
+            "cx": 342,
+            "cy": 791,
+            "w": 55,
+            "h": 26
           },
           {
-            "cx": 604,
-            "cy": 629,
-            "w": 18,
-            "h": 15
+            "cx": 1239,
+            "cy": 744,
+            "w": 55,
+            "h": 26
           },
           {
-            "cx": 1277,
-            "cy": 392,
-            "w": 18,
-            "h": 19
+            "cx": 311,
+            "cy": 198,
+            "w": 55,
+            "h": 26
           },
           {
-            "cx": 501,
-            "cy": 479,
-            "w": 16,
-            "h": 17
+            "cx": 610,
+            "cy": 183,
+            "w": 56,
+            "h": 26
           },
           {
-            "cx": 335,
-            "cy": 642,
-            "w": 20,
-            "h": 17
+            "cx": 1170,
+            "cy": 527,
+            "w": 40,
+            "h": 34
           },
           {
-            "cx": 1131,
-            "cy": 120,
-            "w": 17,
-            "h": 20
-          },
-          {
-            "cx": 599,
-            "cy": 655,
-            "w": 18,
-            "h": 20
-          },
-          {
-            "cx": 1157,
-            "cy": 416,
-            "w": 14,
-            "h": 18
-          },
-          {
-            "cx": 252,
-            "cy": 518,
-            "w": 23,
-            "h": 15
-          },
-          {
-            "cx": 1008,
-            "cy": 182,
-            "w": 18,
-            "h": 14
-          },
-          {
-            "cx": 255,
-            "cy": 491,
-            "w": 18,
-            "h": 14
-          },
-          {
-            "cx": 548,
-            "cy": 657,
-            "w": 18,
-            "h": 22
-          },
-          {
-            "cx": 690,
-            "cy": 409,
-            "w": 11,
-            "h": 22
-          },
-          {
-            "cx": 1013,
-            "cy": 230,
-            "w": 16,
-            "h": 14
-          },
-          {
-            "cx": 1001,
-            "cy": 395,
-            "w": 22,
-            "h": 18
+            "cx": 52,
+            "cy": 495,
+            "w": 25,
+            "h": 54
           },
           {
             "cx": 693,
@@ -5652,23 +5065,77 @@
             "h": 33
           },
           {
-            "cx": 1170,
-            "cy": 527,
-            "w": 40,
-            "h": 34
+            "cx": 67,
+            "cy": 786,
+            "w": 25,
+            "h": 46
+          },
+          {
+            "cx": 52,
+            "cy": 216,
+            "w": 55,
+            "h": 33
+          },
+          {
+            "cx": 1251,
+            "cy": 251,
+            "w": 17,
+            "h": 15
+          },
+          {
+            "cx": 152,
+            "cy": 706,
+            "w": 13,
+            "h": 22
+          },
+          {
+            "cx": 133,
+            "cy": 273,
+            "w": 45,
+            "h": 99
+          },
+          {
+            "cx": 1140,
+            "cy": 144,
+            "w": 17,
+            "h": 16
+          },
+          {
+            "cx": 1277,
+            "cy": 392,
+            "w": 18,
+            "h": 19
+          },
+          {
+            "cx": 1013,
+            "cy": 230,
+            "w": 16,
+            "h": 14
+          },
+          {
+            "cx": 335,
+            "cy": 642,
+            "w": 20,
+            "h": 17
+          },
+          {
+            "cx": 697,
+            "cy": 490,
+            "w": 14,
+            "h": 21
           }
         ]
       },
       "tableTypeAccuracy": {
         "square": {
-          "matched": 32,
-          "correct": 7,
-          "accuracy": 0.219
+          "matched": 37,
+          "correct": 12,
+          "accuracy": 0.324
         },
         "round": {
-          "matched": 2,
-          "correct": 1,
-          "accuracy": 0.5
+          "matched": 4,
+          "correct": 4,
+          "accuracy": 1
         },
         "bistro": {
           "matched": 0,
@@ -5684,187 +5151,135 @@
       "chairs": {
         "method": "spatial, same greedy nearest-first matching as tables, tolerance 3% of the plan diagonal",
         "groundTruth": 113,
-        "detected": 154,
-        "tp": 86,
-        "fp": 68,
-        "fn": 27,
-        "precision": 0.558,
-        "recall": 0.761,
-        "f1": 0.644,
+        "detected": 123,
+        "tp": 108,
+        "fp": 15,
+        "fn": 5,
+        "precision": 0.878,
+        "recall": 0.956,
+        "f1": 0.915,
         "byFamily": {
           "orange-armchair": {
             "groundTruth": 79,
-            "truePositives": 65,
-            "falseNegatives": 14,
-            "recall": 0.823
+            "truePositives": 77,
+            "falseNegatives": 2,
+            "recall": 0.975
           },
           "orange-bistro-chair": {
             "groundTruth": 10,
-            "truePositives": 0,
-            "falseNegatives": 10,
-            "recall": 0
+            "truePositives": 8,
+            "falseNegatives": 2,
+            "recall": 0.8
           },
           "pale-outlined-chair": {
             "groundTruth": 24,
-            "truePositives": 21,
-            "falseNegatives": 3,
-            "recall": 0.875
+            "truePositives": 23,
+            "falseNegatives": 1,
+            "recall": 0.958
           }
         },
         "missedIds": [
-          "c007",
-          "c009",
-          "c013",
-          "c015",
-          "c017",
-          "c018",
-          "c023",
-          "c033",
-          "c052",
-          "c067",
-          "c069",
-          "c071",
-          "c074",
-          "c078",
-          "c080",
-          "c081",
-          "c082",
+          "c024",
+          "c050",
           "c083",
           "c084",
-          "c085",
-          "c086",
-          "c087",
-          "c088",
-          "c089",
-          "c096",
-          "c098",
-          "c109"
+          "c098"
         ],
         "spurious": [
           {
-            "cx": 512,
-            "cy": 672,
-            "w": 15,
-            "h": 2
-          },
-          {
-            "cx": 1291,
-            "cy": 402,
-            "w": 2,
-            "h": 15
-          },
-          {
-            "cx": 1342,
-            "cy": 401,
-            "w": 3,
-            "h": 13
-          },
-          {
-            "cx": 322,
-            "cy": 628,
-            "w": 14,
-            "h": 3
-          },
-          {
-            "cx": 538,
-            "cy": 465,
-            "w": 14,
+            "cx": 558,
+            "cy": 464,
+            "w": 13,
             "h": 26
           },
           {
-            "cx": 449,
-            "cy": 472,
-            "w": 13,
-            "h": 3
+            "cx": 1330,
+            "cy": 273,
+            "w": 15,
+            "h": 20
           },
           {
-            "cx": 380,
-            "cy": 471,
-            "w": 16,
-            "h": 25
+            "cx": 185,
+            "cy": 172,
+            "w": 34,
+            "h": 19
           },
           {
-            "cx": 675,
-            "cy": 571,
-            "w": 3,
-            "h": 33
+            "cx": 237,
+            "cy": 187,
+            "w": 35,
+            "h": 16
           },
           {
-            "cx": 1100,
-            "cy": 94,
-            "w": 31,
-            "h": 5
-          },
-          {
-            "cx": 1043,
-            "cy": 99,
-            "w": 29,
-            "h": 9
-          },
-          {
-            "cx": 908,
-            "cy": 118,
-            "w": 9,
-            "h": 31
-          },
-          {
-            "cx": 806,
-            "cy": 109,
-            "w": 26,
-            "h": 3
-          },
-          {
-            "cx": 1195,
-            "cy": 163,
+            "cx": 710,
+            "cy": 709,
             "w": 24,
-            "h": 5
-          },
-          {
-            "cx": 156,
-            "cy": 189,
-            "w": 4,
             "h": 17
           },
           {
-            "cx": 1050,
-            "cy": 231,
+            "cx": 127,
+            "cy": 130,
+            "w": 10,
+            "h": 17
+          },
+          {
+            "cx": 138,
+            "cy": 159,
+            "w": 12,
+            "h": 17
+          },
+          {
+            "cx": 209,
+            "cy": 185,
+            "w": 12,
+            "h": 17
+          },
+          {
+            "cx": 201,
+            "cy": 156,
+            "w": 18,
+            "h": 18
+          },
+          {
+            "cx": 956,
+            "cy": 382,
+            "w": 27,
+            "h": 15
+          },
+          {
+            "cx": 1033,
+            "cy": 419,
             "w": 28,
-            "h": 4
+            "h": 16
           },
           {
-            "cx": 812,
-            "cy": 241,
+            "cx": 866,
+            "cy": 430,
             "w": 29,
-            "h": 8
+            "h": 15
           },
           {
-            "cx": 1261,
-            "cy": 349,
-            "w": 30,
-            "h": 10
+            "cx": 646,
+            "cy": 488,
+            "w": 26,
+            "h": 14
           },
           {
-            "cx": 1321,
-            "cy": 359,
-            "w": 5,
-            "h": 27
-          },
-          {
-            "cx": 1274,
-            "cy": 362,
-            "w": 5,
+            "cx": 353,
+            "cy": 535,
+            "w": 13,
             "h": 26
           },
           {
-            "cx": 1253,
-            "cy": 363,
-            "w": 5,
-            "h": 26
+            "cx": 713,
+            "cy": 740,
+            "w": 21,
+            "h": 20
           }
         ],
-        "detectedOnTables": 15,
-        "detectedStandalone": 139,
-        "detectedTotal": 154
+        "detectedOnTables": 45,
+        "detectedStandalone": 78,
+        "detectedTotal": 123
       },
       "capacity": {
         "ocrStated": {
@@ -5874,7 +5289,7 @@
           "source": "printed on the drawing, top-left"
         },
         "annotatedChairs": 113,
-        "systemPhysicalSeats": 154,
+        "systemPhysicalSeats": 123,
         "unverifiedInAnnotation": [
           {
             "objectIds": [
@@ -5887,12 +5302,12 @@
         ],
         "auditFromApp": {
           "physical": {
-            "seats": 154,
+            "seats": 123,
             "source": "chairs detected and associated to tables, plus standalone chairs"
           },
           "logical": {
-            "seats": 15,
-            "groups": 51,
+            "seats": 45,
+            "groups": 73,
             "source": "seats summed over logical seating groups"
           },
           "unverified": [],
@@ -5902,16 +5317,16 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_831d1bb0-d7ef-4626-80e3-da5ffb163bb3",
-              "score": 4.35,
+              "id": "candidate_bcc44790-79fd-4b33-bd02-f08f60f825db",
+              "score": 4.41,
               "reasons": [
                 "table with no seats found",
                 "not yet reviewed",
-                "low confidence 0.41"
+                "low confidence 0.40"
               ]
             },
             {
-              "id": "candidate_078760a1-7ca3-4e0a-a861-d954652bef42",
+              "id": "candidate_018bb5ef-bba1-47a2-bda7-558ec88b5bbf",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -5920,7 +5335,7 @@
               ]
             },
             {
-              "id": "candidate_2d9070dd-5979-48ab-9eff-220312e071f2",
+              "id": "candidate_0b76557a-b343-4388-9f02-d8c66e2ccc7a",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -5929,7 +5344,7 @@
               ]
             },
             {
-              "id": "candidate_3d6b85e5-5bec-45a3-bcdc-534d6f4289a9",
+              "id": "candidate_2093c507-435a-4d34-aa95-970824719a4f",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -5938,7 +5353,7 @@
               ]
             },
             {
-              "id": "candidate_46fdddaf-a63f-462b-834a-bb0ebed67ab4",
+              "id": "candidate_22999cbb-2c05-4d06-93fc-4c10afc5fc3f",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -5947,7 +5362,7 @@
               ]
             },
             {
-              "id": "candidate_47ee48f3-8047-4730-9270-400b0e74a575",
+              "id": "candidate_264a6129-e036-4b4d-9d1e-93488cbe3229",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -5956,7 +5371,7 @@
               ]
             },
             {
-              "id": "candidate_64824cf2-598a-40c8-a423-f73d0532252a",
+              "id": "candidate_266eda41-20de-49c5-87cf-cc00e4b195b2",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -5965,7 +5380,7 @@
               ]
             },
             {
-              "id": "candidate_7a018166-7907-41e2-938a-863adadc8e02",
+              "id": "candidate_2a06d183-aaed-464e-b34d-f490af941ca1",
               "score": 4.28,
               "reasons": [
                 "table with no seats found",
@@ -5975,14 +5390,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_831d1bb0-d7ef-4626-80e3-da5ffb163bb3",
-            "candidate_078760a1-7ca3-4e0a-a861-d954652bef42",
-            "candidate_2d9070dd-5979-48ab-9eff-220312e071f2",
-            "candidate_3d6b85e5-5bec-45a3-bcdc-534d6f4289a9",
-            "candidate_46fdddaf-a63f-462b-834a-bb0ebed67ab4",
-            "candidate_47ee48f3-8047-4730-9270-400b0e74a575",
-            "candidate_64824cf2-598a-40c8-a423-f73d0532252a",
-            "candidate_7a018166-7907-41e2-938a-863adadc8e02"
+            "candidate_bcc44790-79fd-4b33-bd02-f08f60f825db",
+            "candidate_018bb5ef-bba1-47a2-bda7-558ec88b5bbf",
+            "candidate_0b76557a-b343-4388-9f02-d8c66e2ccc7a",
+            "candidate_2093c507-435a-4d34-aa95-970824719a4f",
+            "candidate_22999cbb-2c05-4d06-93fc-4c10afc5fc3f",
+            "candidate_264a6129-e036-4b4d-9d1e-93488cbe3229",
+            "candidate_266eda41-20de-49c5-87cf-cc00e4b195b2",
+            "candidate_2a06d183-aaed-464e-b34d-f490af941ca1"
           ]
         }
       },
@@ -5999,7 +5414,7 @@
       "falsePositiveRegions": {
         "textRegionsAnnotated": 7,
         "tablesInsideTextRegions": 0,
-        "anyDetectionInsideTextRegions": 1,
+        "anyDetectionInsideTextRegions": 5,
         "worstTextRegions": [],
         "architectureRegionsAnnotated": 1,
         "tablesInsideArchitectureRegions": 0,
@@ -6007,8 +5422,8 @@
         "worstArchitectureRegions": []
       },
       "humanEffort": {
-        "reviewGroups": 41,
-        "uncertainQuestions": 3,
+        "reviewGroups": 31,
+        "uncertainQuestions": 4,
         "note": "review groups + questions the operator must resolve before Plan Confirmed"
       },
       "provider": {
@@ -6020,7 +5435,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 917,
+      "detectionMs": 905,
       "pageErrors": [],
       "imageShaMatches": true
     }

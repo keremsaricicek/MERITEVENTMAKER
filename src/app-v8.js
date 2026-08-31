@@ -1372,8 +1372,35 @@
     // offer the candidates -- including dark ones, flagged so the structural
     // test can be stricter with them.
     const inkCeil=Math.max(90,background.luma*.45);
+    // Every qualifying peak is a candidate surface family, not the three
+    // largest.
+    //
+    // This used to be `.slice(0,3)` — a top-three-by-mass cut — and a minority
+    // furniture surface is DEFINED by having little mass, so that cap was not a
+    // tie-break but a structural exclusion. Measured on the real venue plan:
+    // its luma peaks are 29, 109, 121, 146, 169, 201, 229, 255, and the bistro
+    // tables' tan surface does peak, at 201. The cut kept 229 (bulk grey
+    // architecture) and 121/146 (linework), so no tint mask ever contained the
+    // tan; the five bistro discs then scored 0.124-0.132 surface coverage
+    // against a 0.22 floor and were deleted. All five of this plan's remaining
+    // table misses were those tables. See benchmarks/SINGLE-FAMILY-AUDIT.md.
+    //
+    // Mass was never the right question. Whether a tone family is furniture is
+    // decided downstream, from the family's own components -- are they compact,
+    // repeated, similarly sized -- and that test cannot run on a family that
+    // was thrown away before its mask was built. The filter conditions here
+    // (real mass, not the background, above the ink ceiling) select candidates;
+    // the structural test selects families.
+    //
+    // Bounded by the peak finder's own limit rather than an independent number.
+    // Each family claims only a narrow band around its own peak, computed from
+    // the gap to the nearest PEAK (not the nearest family), so admitting one
+    // more family cannot widen or narrow anybody else's band -- the measured
+    // failure that produced the old cap was adding DARK peaks, which sit close
+    // together and do fight over pixels, and those are still kept out of this
+    // list entirely (darkCandidates below).
     const families=peaks.filter(p=>p!==background&&p.luma<background.luma-10&&p.luma>inkCeil&&p.fraction>=.002)
-      .sort((a,b)=>b.mass-a.mass).slice(0,3);
+      .sort((a,b)=>b.mass-a.mass);
     // Peaks the ceiling rejects. These are NOT added to `families`, because
     // `families` drives the nearest-family tone LUT and adding to it steals
     // pixels from the table surface family -- measured on the real colour
@@ -1825,7 +1852,23 @@
       const minPixels=Math.max(10,Math.round(area*.000006));
       const notWall=c=>!(Math.min(c.w,c.h)<3&&Math.max(c.w,c.h)>minDim*.08);
       const tableSizeOk=c=>notWall(c)&&Math.min(c.w,c.h)>=minDim*.016&&c.w*c.h>=area*.00015&&c.w*c.h<=area*.04&&c.aspect>=.28&&c.aspect<=3.6;
-      const chairSizeOk=c=>notWall(c)&&Math.min(c.w,c.h)>=3&&Math.max(c.w,c.h)<=minDim*.065&&c.w*c.h<area*.0028;
+      // The chair FLOOR is a fraction of the plan, like the ceiling already is.
+      //
+      // It used to be an absolute 3 pixels, which says nothing about a drawing:
+      // it is below the width of antialiasing fringe at this resolution, and at
+      // 70% scale it stops excluding anything at all. Two measured failures came
+      // through it. The `downscale-70` variant exploded from 0 to 73 false
+      // chairs. And once the tone model was allowed to see minority surface
+      // families, the real plan's tan bistro finish arrived as 823 components
+      // whose median side is 4.9px — edge fringe, not furniture — and the
+      // structural test called that repeated population a chair family.
+      //
+      // A chair is a drawn object. On a 765px-tall plan the floor is 7.7px, the
+      // smallest real seat is 15px, and the fringe is 5px. Expressed against the
+      // plan rather than the pixel grid, it means the same thing at every
+      // rendering scale, which is the point.
+      const CHAIR_MIN_SIDE_P=.01;
+      const chairSizeOk=c=>notWall(c)&&Math.min(c.w,c.h)>=minDim*CHAIR_MIN_SIDE_P&&Math.max(c.w,c.h)<=minDim*.065&&c.w*c.h<area*.0028;
       const venueSizeOk=c=>notWall(c)&&c.w*c.h>area*.008&&c.w*c.h<area*.12&&(c.aspect>3.1||c.aspect<.32);
 
       // Shape analysis scans each candidate's own window, so it runs as late as
@@ -1849,7 +1892,9 @@
       // order of how specific the evidence is (a dedicated colour cluster
       // beats a tone cluster beats "it was dark enough to threshold").
       const chairSources=[];
-      let fallbackChairComps=[],fallbackChairLabels=null,accentMask=null,surfaceMask=null;
+      let fallbackChairComps=[],fallbackChairLabels=null,accentMask=null,surfaceMask=null,masksTints=null;
+      // Which tint families the plan uses as CHAIR material, aligned with masksTints.
+      const tintIsChairMaterial=[];
       // (a) interiors of closed outlines — the primary table source
       {
         const enclosed=enclosedRegions(barrier,width,height);
@@ -1876,6 +1921,7 @@
       if(accentModel||toneModel){
         const masks=buildClassMasks(data,gray,total,accentModel,toneModel);
         accentMask=masks.accent;
+        masksTints=masks.tints;
         // The tint family that actually carries furniture surfaces, kept as a
         // per-pixel mask so a table candidate can later be asked the direct
         // question "is this thing made of table?". Chosen by how much of the
@@ -1920,7 +1966,20 @@
           const nearModal=medSide?compact.filter(c=>{
             const s=Math.sqrt(c.w*c.h);return s>=medSide*.65&&s<=medSide*1.55;}).length:0;
           const repetition=compact.length?nearModal/compact.length:0;
-          const looksLikeFurniture=nearModal>=6&&repetition>=.55;
+          // ...and what repeats has to be big enough to be a drawn object.
+          //
+          // Repetition alone says "many similar blobs", which is equally true of
+          // a seating row and of the antialiasing band along every edge in the
+          // drawing. Measured, once minority tone families were admitted: the
+          // real plan's tan surface family arrives as 823 components whose
+          // modal side is 4.9px against a 7.7px chair floor — fringe — and it
+          // passed this test on 148 of 192 compact components agreeing with
+          // each other. It then contributed 22 false chairs.
+          //
+          // The family's own modal size is the honest thing to ask about, and
+          // the floor is the same plan-relative one a single chair must clear.
+          const familyModalOk=medSide>=minDim*CHAIR_MIN_SIDE_P;
+          const looksLikeFurniture=nearModal>=6&&repetition>=.55&&familyModalOk;
           // A dark family has to clear the structural bar outright, since dark
           // families are where linework actually lives. A light family may also
           // pass on the old solidity signal alone.
@@ -1935,6 +1994,7 @@
           // On a neutral drawing one tone family IS the chairs (a mid-grey
           // chair fill against a pale table fill), so tone families are a real
           // chair source, not only a table source.
+          tintIsChairMaterial[index]=chairWorthy;
           if(chairWorthy)chairSources.push({name:"tone-cluster"+index,labels,rawCount:comps.length,comps:comps.filter(c=>chairSizeOk(c)&&c.fill>=.3)});
           if(!tableWorthy)return;
           const kept=comps.filter(c=>tableSizeOk(c)&&c.fill>=.35);
@@ -2407,21 +2467,28 @@
         });
       }
       const profileFor=e=>familyProfiles.get(chairFamilyOf(e))||null;
-      // A note for whoever reaches the downstream rule "nothing at chair scale
-      // is a table", which is enforced with a single number taken from the
-      // majority chair.
+      // The SMALLEST chair family, for the downstream rule "nothing at chair
+      // scale is a table".
       //
-      // That looks like the same mistake as judging every chair against the
-      // majority chair, and this plan looks like the case that proves it: its
-      // five bistro tables are 36x31 to 36x39 against ~34x34 armchairs, so one
-      // armchair area is very nearly enough to reject them, and all five are
-      // in fact rejected somewhere. Taking the floor from the SMALLEST family
-      // instead was implemented and measured, and changed nothing on any of
-      // the five benchmark plans — the bistro tables die one stage earlier, at
-      // surface coverage, and the looser floor admitted nothing else either.
+      // That rule is enforced with one number, and taking it from the majority
+      // chair is the same mistake as judging every chair against the majority
+      // chair. This plan is the case that proves it: its bistro tables measure
+      // 36x31 to 36x39 against ~34x34 armchairs, so a floor of one armchair
+      // area (1156px) sits right in the middle of them — 1224 and 1258 survive,
+      // 1116 and 1152 are deleted as "chair-sized". A bistro table is bigger
+      // than a bistro chair; it is not bigger than an armchair, and it does not
+      // have to be.
       //
-      // So it is not here. A guard that is loosened for a reason that sounds
-      // right and measures as nothing is a guard weakened for free.
+      // Worth knowing: this exact change was implemented and measured once
+      // before and changed nothing at all, because the bistro tables were
+      // already being deleted an earlier stage up, at surface coverage. It was
+      // reverted then for that reason — a guard loosened for a reason that
+      // sounds right and measures as nothing is a guard weakened for free. It
+      // is back now because that earlier stage was fixed and this one became
+      // the binding constraint, which is the only argument that should have
+      // brought it back.
+      const chairFamilySides=[...familyProfiles.values()].map(p=>p.size?.value).filter(v=>v>0);
+      const chairFloorSide=chairFamilySides.length?Math.min(...chairFamilySides):null;
       const chairShapeOk=(c,profile)=>{
         const modalElongation=profile?.elongation||chairModalElongation;
         if(!chairUniform||!modalElongation)return true;
@@ -2544,17 +2611,32 @@
       // evidence -- a table surrounded by its own chairs is a table even if
       // its fill reads faintly.
       //
-      // Coverage is asked of EVERY furniture tint family, not just the biggest
-      // one. Measuring the single largest family is the one-modal assumption
-      // again, one stage further down, and it cost this plan all five of its
-      // bistro tables: they are drawn in a paler cream with a fine grid
-      // texture, so against the majority tables' tone they score 0.124, 0.131
-      // and 0.132 against a 0.22 floor, while the grey wall panel kept in
-      // their place scores 0.997.
+      // Coverage is asked of EVERY tone family, and the best answer wins.
       //
-      // "Is this made of the stuff the plan's majority tables are made of" is
-      // a different question from "is this made of furniture", and on a plan
-      // with two table finishes only the second one is worth asking.
+      // "Is this made of the stuff the plan's MAJORITY tables are made of" is a
+      // different question from "is this made of one coherent surface", and on
+      // a plan drawing two table finishes only the second is worth asking. This
+      // plan draws its banquet tables in pale grey and its bistro tables in a
+      // tan with a fine grid texture. Measured, per family, on the three bistro
+      // discs (families are luma 229 / 121 / 146 / 201 / 169):
+      //
+      //   disc (63,217)   0.124  0.022  0.019  [0.254]  0.019
+      //   disc (24,219)   0.131  0.016  0.013  [0.284]  0.020
+      //   disc (380,704)  0.132  0.000  0.003  [0.274]  0.003
+      //   wall panel      0.997  0      0      0        0
+      //   merged blob     0.079  0.014  0.039  0.105    0.032
+      //
+      // Against the majority family alone all five bistro tables fall under the
+      // 0.22 floor and are deleted; against their own they clear it. The wall
+      // panel and the merged double-table blob are unaffected, because a thing
+      // made of no surface is made of no surface however many you offer it.
+      //
+      // The single-family version of this filter was the last stage still
+      // deleting this plan's minority tables. It only became fixable once the
+      // tone model stopped capping itself at the three largest families
+      // (buildToneModel) — before that there was no tan family to find, which
+      // is why an earlier attempt at exactly this change measured as a no-op
+      // and was reverted.
       //
       // The seat-evidence exemption the paragraph above describes was also
       // tried, twice, and is NOT what this code does. Exempting any low-cover
@@ -2563,20 +2645,67 @@
       // against a baseline of 6. On a banquet floor every gap between a
       // hundred chairs has chairs against it, so seats cannot carry that
       // decision here. The finish can, once it is allowed to be plural.
-      let surfaceRejected=0;
+      let surfaceRejected=0,surfaceMinorityFinishKept=0;
       const uniqueBeforeSurface=globalThis.MERIT_DETECT_DEBUG?unique.map(u=>u.comp):null;
-      if(surfaceMask){
-        const surfaceCoverage=c=>{
+      const surfaceFamilies=(masksTints&&masksTints.length)?masksTints:(surfaceMask?[surfaceMask]:[]);
+      if(surfaceFamilies.length){
+        // The best SINGLE family, never their union: a table is made of one
+        // material, so the question is whether some one family accounts for
+        // most of this candidate — not whether the candidate can be covered by
+        // borrowing a little from each.
+        const coverageIn=(c,mask)=>{
           const x0=Math.max(0,Math.round(c.x)),y0=Math.max(0,Math.round(c.y));
           const x1=Math.min(width,Math.round(c.x+c.w)),y1=Math.min(height,Math.round(c.y+c.h));
           let on=0,tot=0;
-          for(let y=y0;y<y1;y+=2)for(let x=x0;x<x1;x+=2){tot++;if(surfaceMask[y*width+x])on++;}
+          for(let y=y0;y<y1;y+=2)for(let x=x0;x<x1;x+=2){tot++;if(mask[y*width+x])on++;}
           return tot?on/tot:0;
         };
+        // A MINORITY finish is weaker evidence than the plan's main one and has
+        // to be corroborated.
+        //
+        // "Not made of the same stuff as this plan's tables" was doing real
+        // work, and simply accepting any family threw it away: on the dense
+        // fixture the architecture blocks along both edges are a genuine second
+        // solid family (luma 142, solidity 0.94), so the plural test read them
+        // as tables and cost four false positives.
+        //
+        // What separates them from the real plan's bistro tables is not the
+        // material — both are a coherent minority finish — it is that one has
+        // chairs drawn against it and the other does not. Architecture does not
+        // acquire seating. So the dominant finish still stands on its own, and
+        // a minority finish needs a seat against the candidate as well.
+        //
+        // This is much narrower than the seat exemption measured and rejected
+        // above: that one offered seats to EVERY low-coverage candidate on the
+        // plan, where on a banquet floor every gap between a hundred chairs has
+        // chairs against it. Here seats only decide candidates that are already
+        // made of a coherent, repeated surface which simply is not the majority
+        // one.
+        // ...and the minority finish may not be the plan's CHAIR material.
+        //
+        // A candidate made of the stuff this plan draws its chairs with is not
+        // thereby a table, however solid and repeated that stuff is. Measured
+        // on the grayscale variant, where the orange chairs become a mid-grey
+        // tint family of their own (luma 145, solidity 0.59): letting it
+        // license tables cost 32 extra table false positives, because on a
+        // banquet floor a chair-material blob always has chairs beside it, so
+        // the seat corroboration below is satisfied trivially.
+        const dominantSurface=surfaceMask;
+        const minoritySurfaces=(masksTints||[])
+          .filter((m,i)=>m!==dominantSurface&&!tintIsChairMaterial[i]);
+        const seatedAgainst=c=>chairs.some(ch=>!sameObject(ch,c)&&gapTo(c,ch)<=Math.max(ch.w,ch.h)*.35);
         const surfaceKept=unique.filter(u=>{
-          const cov=surfaceCoverage(u.comp);
-          u.comp.surfaceCoverage=+cov.toFixed(3);
-          if(cov>=.22)return true;
+          const dominant=dominantSurface?coverageIn(u.comp,dominantSurface):0;
+          let best=dominant,fromMinority=false;
+          for(const mask of minoritySurfaces){
+            const cov=coverageIn(u.comp,mask);
+            if(cov>best){best=cov;fromMinority=true;}
+          }
+          u.comp.surfaceCoverage=+best.toFixed(3);
+          u.comp.surfaceFromMinorityFinish=fromMinority;
+          if(best<.22){surfaceRejected++;return false;}
+          if(dominant>=.22)return true;
+          if(dedupFitness(u.comp)>=.25&&seatedAgainst(u.comp)){surfaceMinorityFinishKept++;return true;}
           surfaceRejected++;return false;
         });
         // Refuse to apply the rule if it would gut the plan: that would mean
@@ -2617,7 +2746,7 @@
       // Disabled when there is no repeated population to reason from, so a plan
       // with two unlike tables is never pruned on a prior it does not have.
       let offModalDropped=0;
-      const chairArea=chairUniform&&chairModal?chairModal.value**2:null;
+      const chairArea=chairUniform&&chairFloorSide?chairFloorSide**2:null;
       if((modalArea&&modalArea.support>=4)||chairArea){
         const kept=unique.filter(u=>{
           const o=u.comp.shape?.obb,objectArea=o?o.w*o.h:u.comp.w*u.comp.h;
@@ -2740,6 +2869,18 @@
         return reasons;
       };
       const FRAGMENT_MIN_REASONS=3;
+      // The share of proposals that must agree with the plan's modal size
+      // before this filter's reasons are worth acting on. Measured across the
+      // robustness matrix, and the two groups do not overlap:
+      //
+      //   Golden Plan       0.432      lowres-roundtrip  0.190
+      //   crop-pad          0.411      jpeg-q20          0.183
+      //   noise             0.538
+      //   blur              0.543
+      //
+      // The bar sits in a 2.2x gap between the worst legible rendering and the
+      // best illegible one, which is as much margin as this evidence can offer.
+      const VOCABULARY_MIN_AGREEING=.3;
       // A plan can hold more than one furniture family, and all three reasons
       // above are measured against ONE plan-wide modal, so a minority family
       // disagrees on every axis at once by construction -- exactly this
@@ -2792,8 +2933,51 @@
       // fragments it removes. Report the decision either way.
       // An A/B switch so before/after can be measured on the same build rather
       // than by reverting code. Benchmarks set it; the product never does.
+      // The guard protects CONFIDENT candidates, not a proposal ratio.
+      //
+      // It used to be `flagged.length <= ranked.length * .45` — switch the
+      // whole filter off if it would remove more than 45% of what was
+      // proposed. Two measured problems with that. On the Golden Plan itself
+      // the filter removes 38 of 88, which is 43.2%: the plan this project is
+      // built around sits one percentage point from having its fragment filter
+      // silently disabled. And the `crop-pad` variant — the same drawing moved
+      // 60px right and 34px down, nothing else — crosses the line, switches the
+      // filter off, keeps all 90 proposals and scores 44 table false positives
+      // against 4 on the original.
+      //
+      // A ratio of proposals is the wrong quantity anyway: proposals include
+      // known junk, so "how much of the pool would go" says nothing about
+      // whether the plan's furniture is at risk. What matters is whether the
+      // filter would take something the detector is confident about — and it
+      // cannot, by construction, because deletion needs three independent
+      // disagreements with the plan's own vocabulary and a candidate that
+      // agrees on size and carries seats can collect at most two.
+      //
+      // So the guard now asks that directly: if any candidate that agrees with
+      // the modal size AND has seats would be deleted, the filter's reasoning
+      // is not describing this plan and it stands down. Otherwise it runs,
+      // however many fragments there turn out to be.
+      const wouldLoseConfident=flagged.some(s=>s.agreement>=.6&&s.seats>0);
+      // ...and the vocabulary has to actually describe this plan.
+      //
+      // Every reason this filter deletes on is a disagreement with a
+      // plan-derived modal. On a badly degraded rendering the modal describes
+      // nothing — objects are fragmented, sizes scatter, and the filter becomes
+      // confidently wrong rather than merely unhelpful. Measured on the
+      // `lowres-roundtrip` variant with no such check: it deleted 13 real
+      // tables, taking true positives from 28 to 15. A missed table costs an
+      // operator more than a false one — a false table is one click to reject,
+      // a missed table has to be found and drawn by hand — so a filter that is
+      // guessing must stand down.
+      //
+      // "Does the vocabulary describe the plan" is measurable directly: the
+      // share of proposals that agree with the modal size. Measured, that share
+      // separates the cases cleanly, and it is a statement about evidence
+      // rather than about how many things happen to have been proposed.
+      const agreeingShare=ranked.length?ranked.filter(s=>s.agreement>=.6).length/ranked.length:0;
+      const vocabularyTrusted=agreeingShare>=VOCABULARY_MIN_AGREEING;
       const fragmentFilterActive=!globalThis.MERIT_DISABLE_FRAGMENT_FILTER&&
-        ranked.length>=8&&flagged.length<=ranked.length*.45;
+        ranked.length>=8&&!wouldLoseConfident&&vocabularyTrusted;
       const fragmentDrops=fragmentFilterActive?flagged:[];
       const droppedIds=new Set(fragmentDrops.map(s=>s.box.index));
       const fragmentDiagnostics={
@@ -2803,11 +2987,13 @@
         protectedByHumanDecision:protectedFromFilter,
         flaggedButKept:fragmentFilterActive?0:flagged.length,
         minReasons:FRAGMENT_MIN_REASONS,
+        agreeingShare:Number(agreeingShare.toFixed(3)),
         planModalAspect:modalAspect?Number(modalAspect.toFixed(3)):null,
         disabledReason:fragmentFilterActive?null:
           (globalThis.MERIT_DISABLE_FRAGMENT_FILTER?"disabled by benchmark A/B switch":
            ranked.length<8?"too few candidates to trust a plan-derived vocabulary":
-           "would have removed more than 45% of the plan"),
+           !vocabularyTrusted?`the plan's modal describes only ${Math.round(agreeingShare*100)}% of proposals`:
+           "would have deleted a candidate that agrees with the plan and carries seats"),
         examples:fragmentDrops.slice(0,6).map(s=>({aspect:Number(aspectOf(s.obb).toFixed(2)),
           sizeAgreement:Number(s.agreement.toFixed(2)),seats:s.seats,split:!!s.c.wasSplit,
           repetition:s.repetition,reasons:fragmentEvidence(s)})),
@@ -2974,7 +3160,7 @@
           chairsDetected:chairs.length,chairsAssociated:associatedSeats,chairsUnassociated:chairVenues.length,
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
-          mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,secondaryChairFamilies:secondaryFamilyDiagnostics,fragmentSuppression:fragmentDiagnostics,
+          mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,surfaceMinorityFinishKept,secondaryChairFamilies:secondaryFamilyDiagnostics,fragmentSuppression:fragmentDiagnostics,
           textGlyphChairsDropped,mergedRowVenuesDropped:mergedRowVenues.length,debugPool,
           sources:diagnosticsSources,chairSourceBreakdown,phaseMs,
           colorModel:accentModel?{isColorPlan:accentModel.isColorPlan,accentHue:accentModel.accentHue,

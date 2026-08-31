@@ -1,13 +1,13 @@
 {
-  "ranAt": "2026-08-31T12:46:18.693Z",
+  "ranAt": "2026-08-31T13:38:30.768Z",
   "realDistinctVenuePlans": 1,
   "note": "Every variant is a transform of benchmarks/plans/merit-real-venue-plan.png. This matrix measures robustness to rendering, not generalisation to unseen venues.",
   "rows": [
     {
       "variant": "ORIGINAL (real plan)",
-      "tableTP": 41,
-      "tableFP": 5,
-      "tableF1": 0.891,
+      "tableTP": 46,
+      "tableFP": 4,
+      "tableF1": 0.958,
       "chairTP": 107,
       "chairFP": 5,
       "chairF1": 0.951,
@@ -31,8 +31,8 @@
       "tableFP": 4,
       "tableF1": 0.649,
       "chairTP": 102,
-      "chairFP": 2,
-      "chairF1": 0.94,
+      "chairFP": 1,
+      "chairF1": 0.944,
       "armchairRecall": 1,
       "reviewGroups": 13
     },
@@ -53,8 +53,8 @@
       "tableFP": 49,
       "tableF1": 0.561,
       "chairTP": 111,
-      "chairFP": 7,
-      "chairF1": 0.961,
+      "chairFP": 3,
+      "chairF1": 0.978,
       "armchairRecall": 0.987,
       "reviewGroups": 21
     },
@@ -71,14 +71,14 @@
     },
     {
       "variant": "crop-pad",
-      "tableTP": 42,
-      "tableFP": 43,
-      "tableF1": 0.641,
+      "tableTP": 46,
+      "tableFP": 3,
+      "tableF1": 0.968,
       "chairTP": 107,
       "chairFP": 5,
       "chairF1": 0.951,
       "armchairRecall": 1,
-      "reviewGroups": 16
+      "reviewGroups": 11
     },
     {
       "variant": "downscale-70",
@@ -93,14 +93,14 @@
     },
     {
       "variant": "grayscale",
-      "tableTP": 41,
-      "tableFP": 13,
-      "tableF1": 0.82,
-      "chairTP": 113,
-      "chairFP": 561,
-      "chairF1": 0.287,
-      "armchairRecall": 1,
-      "reviewGroups": 109
+      "tableTP": 43,
+      "tableFP": 5,
+      "tableF1": 0.915,
+      "chairTP": 104,
+      "chairFP": 15,
+      "chairF1": 0.897,
+      "armchairRecall": 0.987,
+      "reviewGroups": 23
     },
     {
       "variant": "hue-shift",
@@ -108,43 +108,43 @@
       "tableFP": 52,
       "tableF1": 0.559,
       "chairTP": 113,
-      "chairFP": 26,
-      "chairF1": 0.897,
+      "chairFP": 6,
+      "chairF1": 0.974,
       "armchairRecall": 1,
       "reviewGroups": 23
     },
     {
       "variant": "jpeg-q20",
-      "tableTP": 40,
+      "tableTP": 45,
       "tableFP": 26,
-      "tableF1": 0.714,
+      "tableF1": 0.769,
       "chairTP": 107,
       "chairFP": 3,
       "chairF1": 0.96,
       "armchairRecall": 1,
-      "reviewGroups": 30
+      "reviewGroups": 31
     },
     {
       "variant": "jpeg-q40",
-      "tableTP": 41,
-      "tableFP": 6,
-      "tableF1": 0.882,
-      "chairTP": 113,
-      "chairFP": 46,
-      "chairF1": 0.831,
+      "tableTP": 46,
+      "tableFP": 4,
+      "tableF1": 0.958,
+      "chairTP": 109,
+      "chairFP": 2,
+      "chairF1": 0.973,
       "armchairRecall": 1,
-      "reviewGroups": 14
+      "reviewGroups": 11
     },
     {
       "variant": "lowres-roundtrip",
-      "tableTP": 23,
+      "tableTP": 28,
       "tableFP": 14,
-      "tableF1": 0.554,
-      "chairTP": 105,
-      "chairFP": 25,
-      "chairF1": 0.864,
+      "tableF1": 0.636,
+      "chairTP": 103,
+      "chairFP": 3,
+      "chairF1": 0.941,
       "armchairRecall": 1,
-      "reviewGroups": 24
+      "reviewGroups": 19
     },
     {
       "variant": "noise",
@@ -159,25 +159,25 @@
     },
     {
       "variant": "rotate-2",
-      "tableTP": 37,
-      "tableFP": 14,
-      "tableF1": 0.763,
-      "chairTP": 97,
-      "chairFP": 44,
-      "chairF1": 0.764,
-      "armchairRecall": 0.823,
-      "reviewGroups": 35
+      "tableTP": 39,
+      "tableFP": 31,
+      "tableF1": 0.672,
+      "chairTP": 113,
+      "chairFP": 17,
+      "chairF1": 0.93,
+      "armchairRecall": 1,
+      "reviewGroups": 29
     },
     {
       "variant": "rotate-minus-3",
-      "tableTP": 34,
-      "tableFP": 20,
-      "tableF1": 0.68,
-      "chairTP": 86,
-      "chairFP": 68,
-      "chairF1": 0.644,
-      "armchairRecall": 0.823,
-      "reviewGroups": 41
+      "tableTP": 41,
+      "tableFP": 36,
+      "tableF1": 0.667,
+      "chairTP": 108,
+      "chairFP": 15,
+      "chairF1": 0.915,
+      "armchairRecall": 0.975,
+      "reviewGroups": 31
     }
   ]
 }
