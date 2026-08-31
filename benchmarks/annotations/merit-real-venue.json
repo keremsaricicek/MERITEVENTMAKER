@@ -1792,100 +1792,802 @@
   ],
   "relationships": [
     {
+      "chair": "c001",
+      "belongsTo": "t001",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 6.0px; next is t004 at 14.9px"
+    },
+    {
+      "chair": "c002",
+      "belongsTo": "t002",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 5.0px; next is t005 at 11.2px"
+    },
+    {
+      "chair": "c003",
+      "belongsTo": "t003",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 7.0px; next is t006 at 13.0px"
+    },
+    {
+      "chair": "c004",
+      "belongsTo": "t004",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 7.0px; next is t001 at 12.0px"
+    },
+    {
+      "chair": "c005",
+      "belongsTo": "t005",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 7.0px; next is t002 at 10.6px"
+    },
+    {
+      "chair": "c006",
+      "belongsTo": "t006",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 7.0px; next is t009 at 11.4px"
+    },
+    {
+      "chair": "c007",
+      "belongsTo": "t007",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 7.0px; next is t004 at 14.8px"
+    },
+    {
+      "chair": "c008",
+      "belongsTo": "t008",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 8.0px; next is t005 at 16.1px"
+    },
+    {
+      "chair": "c009",
+      "belongsTo": "t009",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 4.0px; next is t006 at 15.5px"
+    },
+    {
+      "chair": "c010",
+      "belongsTo": "t011",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 3.0px; next is t016 at 23.2px"
+    },
+    {
+      "chair": "c011",
+      "belongsTo": "t012",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 3.0px; next is t014 at 21.2px"
+    },
+    {
+      "chair": "c012",
+      "belongsTo": "t011",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 2.0px; next is t016 at 20.1px"
+    },
+    {
+      "chair": "c013",
+      "belongsTo": "t012",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 3.0px; next is t014 at 20.2px"
+    },
+    {
+      "chair": "c014",
+      "belongsTo": "t010",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 3.0px; next is t015 at 16.1px"
+    },
+    {
+      "chair": "c015",
+      "belongsTo": "t010",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 3.0px; next is t015 at 15.3px"
+    },
+    {
+      "chair": "c016",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t012",
+        "t014"
+      ],
+      "evidence": "3.0px from t012 and 3.0px from t014 — the annotation cannot say which"
+    },
+    {
+      "chair": "c017",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t011",
+        "t016"
+      ],
+      "evidence": "3.0px from t011 and 3.0px from t016 — the annotation cannot say which"
+    },
+    {
+      "chair": "c018",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t015",
+        "t010"
+      ],
+      "evidence": "4.0px from t015 and 5.0px from t010 — the annotation cannot say which"
+    },
+    {
+      "chair": "c019",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t011",
+        "t016"
+      ],
+      "evidence": "4.0px from t011 and 4.0px from t016 — the annotation cannot say which"
+    },
+    {
+      "chair": "c020",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t012",
+        "t014"
+      ],
+      "evidence": "4.0px from t012 and 4.0px from t014 — the annotation cannot say which"
+    },
+    {
+      "chair": "c021",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t010",
+        "t015"
+      ],
+      "evidence": "3.0px from t010 and 3.0px from t015 — the annotation cannot say which"
+    },
+    {
+      "chair": "c022",
+      "belongsTo": "t013",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 4.0px; next is t019 at 21.4px"
+    },
+    {
+      "chair": "c023",
+      "belongsTo": "t013",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 3.0px; next is t019 at 20.1px"
+    },
+    {
+      "chair": "c024",
+      "belongsTo": "t018",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 0.0px; next is t017 at 7.0px"
+    },
+    {
+      "chair": "c025",
+      "belongsTo": "t017",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 0.0px; next is t018 at 13.0px"
+    },
+    {
+      "chair": "c026",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t014",
+        "t021"
+      ],
+      "evidence": "5.0px from t014 and 5.0px from t021 — the annotation cannot say which"
+    },
+    {
+      "chair": "c027",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t016",
+        "t022"
+      ],
+      "evidence": "3.0px from t016 and 3.0px from t022 — the annotation cannot say which"
+    },
+    {
+      "chair": "c028",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t016",
+        "t022"
+      ],
+      "evidence": "5.0px from t016 and 5.0px from t022 — the annotation cannot say which"
+    },
+    {
+      "chair": "c029",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t014",
+        "t021"
+      ],
+      "evidence": "3.0px from t014 and 3.0px from t021 — the annotation cannot say which"
+    },
+    {
+      "chair": "c030",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t015",
+        "t020"
+      ],
+      "evidence": "2.0px from t015 and 2.0px from t020 — the annotation cannot say which"
+    },
+    {
+      "chair": "c031",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t015",
+        "t020"
+      ],
+      "evidence": "3.0px from t015 and 3.0px from t020 — the annotation cannot say which"
+    },
+    {
+      "chair": "c032",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t013",
+        "t019"
+      ],
+      "evidence": "3.0px from t013 and 3.0px from t019 — the annotation cannot say which"
+    },
+    {
+      "chair": "c033",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t019",
+        "t013"
+      ],
+      "evidence": "3.0px from t019 and 4.0px from t013 — the annotation cannot say which"
+    },
+    {
+      "chair": "c034",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t023",
+        "t027"
+      ],
+      "evidence": "5.0px from t023 and 6.0px from t027 — the annotation cannot say which"
+    },
+    {
+      "chair": "c035",
+      "belongsTo": "t023",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 5.0px; next is t027 at 20.9px"
+    },
+    {
+      "chair": "c036",
+      "belongsTo": "t026",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 5.0px; next is t027 at 23.5px"
+    },
+    {
+      "chair": "c037",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t026",
+        "t027"
+      ],
+      "evidence": "4.0px from t026 and 4.0px from t027 — the annotation cannot say which"
+    },
+    {
+      "chair": "c038",
+      "belongsTo": "t024",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 3.0px; next is t025 at 20.2px"
+    },
+    {
+      "chair": "c039",
+      "belongsTo": "t028",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 4.0px; next is t025 at 20.2px"
+    },
+    {
+      "chair": "c040",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t024",
+        "t025"
+      ],
+      "evidence": "3.0px from t024 and 3.0px from t025 — the annotation cannot say which"
+    },
+    {
+      "chair": "c041",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t025",
+        "t028"
+      ],
+      "evidence": "3.0px from t025 and 4.0px from t028 — the annotation cannot say which"
+    },
+    {
+      "chair": "c042",
+      "belongsTo": "t021",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 3.0px; next is t014 at 19.2px"
+    },
+    {
+      "chair": "c043",
+      "belongsTo": "t021",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 4.0px; next is t014 at 19.4px"
+    },
+    {
+      "chair": "c044",
+      "belongsTo": "t022",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 2.0px; next is t016 at 20.1px"
+    },
+    {
+      "chair": "c045",
+      "belongsTo": "t022",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 4.0px; next is t016 at 20.4px"
+    },
+    {
+      "chair": "c046",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t029",
+        "t019"
+      ],
+      "evidence": "4.0px from t029 and 5.0px from t019 — the annotation cannot say which"
+    },
+    {
+      "chair": "c047",
+      "belongsTo": "t019",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 2.0px; next is t029 at 3.0px"
+    },
+    {
+      "chair": "c048",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t020",
+        "t030"
+      ],
+      "evidence": "3.0px from t020 and 3.0px from t030 — the annotation cannot say which"
+    },
+    {
+      "chair": "c049",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t020",
+        "t030"
+      ],
+      "evidence": "5.0px from t020 and 6.0px from t030 — the annotation cannot say which"
+    },
+    {
+      "chair": "c050",
+      "belongsTo": "t017",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 2.0px; next is t018 at 6.1px"
+    },
+    {
+      "chair": "c051",
+      "belongsTo": "t018",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 1.0px; next is t017 at 13.2px"
+    },
+    {
+      "chair": "c052",
+      "belongsTo": "t029",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 3.0px; next is t019 at 19.1px"
+    },
+    {
+      "chair": "c053",
+      "belongsTo": "t029",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 4.0px; next is t019 at 20.6px"
+    },
+    {
+      "chair": "c054",
+      "belongsTo": "t030",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 2.0px; next is t020 at 21.1px"
+    },
+    {
+      "chair": "c055",
+      "belongsTo": "t030",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 6.0px; next is t020 at 22.6px"
+    },
+    {
+      "chair": "c056",
+      "belongsTo": "t023",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 4.0px; next is t027 at 20.2px"
+    },
+    {
+      "chair": "c057",
+      "belongsTo": "t026",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 3.0px; next is t027 at 21.4px"
+    },
+    {
+      "chair": "c058",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t026",
+        "t027"
+      ],
+      "evidence": "3.0px from t026 and 4.0px from t027 — the annotation cannot say which"
+    },
+    {
+      "chair": "c059",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t027",
+        "t023"
+      ],
+      "evidence": "4.0px from t027 and 5.0px from t023 — the annotation cannot say which"
+    },
+    {
+      "chair": "c060",
+      "belongsTo": "t024",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 5.0px; next is t025 at 19.6px"
+    },
+    {
+      "chair": "c061",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t024",
+        "t025"
+      ],
+      "evidence": "5.0px from t024 and 5.0px from t025 — the annotation cannot say which"
+    },
+    {
+      "chair": "c062",
+      "belongsTo": "t028",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 7.0px; next is t025 at 21.6px"
+    },
+    {
+      "chair": "c063",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t025",
+        "t028"
+      ],
+      "evidence": "7.0px from t025 and 9.0px from t028 — the annotation cannot say which"
+    },
+    {
+      "chair": "c064",
+      "belongsTo": "t033",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 5.0px; next is t032 at 10.3px"
+    },
+    {
+      "chair": "c065",
+      "belongsTo": "t032",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 5.0px; next is t033 at 11.2px"
+    },
+    {
+      "chair": "c066",
+      "belongsTo": "t031",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 4.0px; next is t033 at 10.3px"
+    },
+    {
+      "chair": "c067",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t034",
+        "t035"
+      ],
+      "evidence": "4.0px from t034 and 5.0px from t035 — the annotation cannot say which"
+    },
+    {
+      "chair": "c068",
+      "belongsTo": "t035",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 3.0px; next is t034 at 15.1px"
+    },
+    {
+      "chair": "c069",
+      "belongsTo": "t034",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 2.0px; next is t036 at 3.0px"
+    },
+    {
+      "chair": "c070",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t036",
+        "t037"
+      ],
+      "evidence": "3.0px from t036 and 3.0px from t037 — the annotation cannot say which"
+    },
+    {
+      "chair": "c071",
+      "belongsTo": "t037",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 3.0px; next is t036 at 19.2px"
+    },
+    {
+      "chair": "c072",
+      "belongsTo": "t032",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 2.0px; next is t033 at 9.2px"
+    },
+    {
+      "chair": "c073",
+      "belongsTo": "t031",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 5.0px; next is t033 at 12.4px"
+    },
+    {
+      "chair": "c074",
+      "belongsTo": "t033",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 5.0px; next is t032 at 13.0px"
+    },
+    {
+      "chair": "c075",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t034",
+        "t036"
+      ],
+      "evidence": "3.0px from t034 and 3.0px from t036 — the annotation cannot say which"
+    },
+    {
+      "chair": "c076",
+      "belongsTo": "t035",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 4.0px; next is t034 at 15.5px"
+    },
+    {
+      "chair": "c077",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t034",
+        "t035"
+      ],
+      "evidence": "4.0px from t034 and 4.0px from t035 — the annotation cannot say which"
+    },
+    {
+      "chair": "c078",
+      "belongsTo": null,
+      "method": "ambiguous",
+      "candidates": [
+        "t036",
+        "t037"
+      ],
+      "evidence": "4.0px from t036 and 4.0px from t037 — the annotation cannot say which"
+    },
+    {
+      "chair": "c079",
+      "belongsTo": "t037",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 6.0px; next is t036 at 19.9px"
+    },
+    {
+      "chair": "c080",
+      "belongsTo": "t043",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 1.0px; next is t042 at 13.0px"
+    },
+    {
+      "chair": "c081",
+      "belongsTo": "t042",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 1.0px; next is t043 at 13.3px"
+    },
+    {
+      "chair": "c082",
+      "belongsTo": "t042",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 1.0px; next is t043 at 13.0px"
+    },
+    {
+      "chair": "c083",
+      "belongsTo": "t043",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 1.0px; next is t042 at 11.2px"
+    },
+    {
+      "chair": "c084",
+      "belongsTo": "t044",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 2.0px; next is t045 at 60.0px"
+    },
+    {
+      "chair": "c085",
+      "belongsTo": "t044",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 2.0px; next is t035 at 90.4px"
+    },
+    {
+      "chair": "c086",
+      "belongsTo": "t045",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 2.0px; next is t036 at 87.0px"
+    },
+    {
+      "chair": "c087",
+      "belongsTo": "t045",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 2.0px; next is t044 at 59.0px"
+    },
+    {
+      "chair": "c088",
+      "belongsTo": "t046",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 2.0px; next is t032 at 96.0px"
+    },
+    {
+      "chair": "c089",
+      "belongsTo": "t046",
+      "method": "derived",
+      "evidence": "nearest annotated table perimeter at 2.0px; next is t041 at 68.9px"
+    },
+    {
       "chair": "c090",
-      "belongsTo": "t038"
+      "belongsTo": "t038",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c091",
-      "belongsTo": "t038"
+      "belongsTo": "t038",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c092",
-      "belongsTo": "t038"
+      "belongsTo": "t038",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c093",
-      "belongsTo": "t038"
+      "belongsTo": "t038",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c094",
-      "belongsTo": "t038"
+      "belongsTo": "t038",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c095",
-      "belongsTo": "t039"
+      "belongsTo": "t039",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c096",
-      "belongsTo": "t039"
+      "belongsTo": "t039",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c097",
-      "belongsTo": "t039"
+      "belongsTo": "t039",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c098",
-      "belongsTo": "t039"
+      "belongsTo": "t039",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c099",
-      "belongsTo": "t039"
+      "belongsTo": "t039",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c100",
-      "belongsTo": "t039"
+      "belongsTo": "t039",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c101",
-      "belongsTo": "t040"
+      "belongsTo": "t040",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c102",
-      "belongsTo": "t040"
+      "belongsTo": "t040",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c103",
-      "belongsTo": "t040"
+      "belongsTo": "t040",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c104",
-      "belongsTo": "t040"
+      "belongsTo": "t040",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c105",
-      "belongsTo": "t040"
+      "belongsTo": "t040",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c106",
-      "belongsTo": "t040"
+      "belongsTo": "t040",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c107",
-      "belongsTo": "t040"
+      "belongsTo": "t040",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c108",
-      "belongsTo": "t041"
+      "belongsTo": "t041",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c109",
-      "belongsTo": "t041"
+      "belongsTo": "t041",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c110",
-      "belongsTo": "t041"
+      "belongsTo": "t041",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c111",
-      "belongsTo": "t041"
+      "belongsTo": "t041",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c112",
-      "belongsTo": "t041"
+      "belongsTo": "t041",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
       "chair": "c113",
-      "belongsTo": "t041"
+      "belongsTo": "t041",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     }
   ],
   "logicalGroups": [
@@ -2027,5 +2729,6 @@
       "h": 110,
       "note": "decorative planter"
     }
-  ]
+  ],
+  "relationshipMethod": "Chair-to-table relationships carry a `method`. `annulus` relationships come from build-real-annotation.mjs, which recovered those chairs by angular clustering just outside their table's disc, so the table is part of the finding. `derived` relationships are nearest-annotated-perimeter over the human-verified boxes, added by derive-relationships.mjs; they are weaker evidence than annulus ones because the detector's associator, while not the same computation, is the same idea. `ambiguous` and `unassigned` entries carry belongsTo:null and are never scored — a chair nearly equidistant from two tables has no derivable answer and guessing one would manufacture a disagreement the annotation cannot adjudicate."
 }

@@ -64,6 +64,23 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
       chairs,
       candidateIds: alive.map(c => c.id),
       unreviewedLow: a.candidates.filter(c => c.status === "unreviewed" && c.confidence < 0.72).length,
+      // Every free-standing chair, and how far it is from the nearest DETECTED
+      // table's edge, in units of its own size. A seat touching a real table is
+      // not a free-standing object.
+      strandedChairs: (() => {
+        const tables = alive.filter(c => c.kind === "table");
+        const gap = (a, b) => {
+          const dx = Math.max(Math.abs((a.x + a.w / 2) - (b.x + b.w / 2)) - (a.w + b.w) / 2, 0);
+          const dy = Math.max(Math.abs((a.y + a.h / 2) - (b.y + b.h / 2)) - (a.h + b.h) / 2, 0);
+          return Math.hypot(dx, dy);
+        };
+        return alive.filter(c => c.kind === "venue" && c.type === "chair").map(c => {
+          let nearest = Infinity;
+          for (const t of tables) nearest = Math.min(nearest, gap(c, t));
+          return { nearestTableGap: nearest, ownSize: Math.sqrt(c.w * c.h) };
+        });
+      })(),
+      chairsReseated: a.diagnostics.chairsReseated ?? null,
       reviewGroups: (pi?.reviewGroups || []).map(g => ({
         kind: g.kind, type: g.titleParams?.type, need: g.memberIds.length,
         total: g.totalInFamily, clusters: (g.clusters || []).length,
@@ -226,6 +243,28 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
 
   // Consolidation must be presentational. Nothing may be dropped from review to
   // make the count look better — the sprint rule is explicit about that.
+  // ---- a seat at a table is never reported as a free-standing object -------
+  //
+  // Association runs over every table PROPOSAL and the fragment filter then
+  // deletes some of them. A chair assigned to a deleted proposal used to be
+  // dropped from seating entirely and re-emitted as a free-standing object,
+  // even with a real surviving table a few pixels away. Measured once
+  // relationship ground truth was extended from 24 chairs to 83: chair->table
+  // accuracy 0.711, zero WRONG tables, and 22 orphans — every failure was a
+  // seat the detector found and seated nowhere, with its annotated table 2 to
+  // 5 pixels away and detected. The losers' seats are now offered to the
+  // survivors.
+  //
+  // Asserted as an invariant rather than a count: a free-standing chair may
+  // exist (a plan really can draw a seat away from any table), but not one
+  // that is touching a table the detector found.
+  const touching = result.strandedChairs.filter(c => c.nearestTableGap <= c.ownSize * 0.25);
+  checks.ok(touching.length === 0,
+    "no chair is reported free-standing while touching a table the detector found",
+    { touching: touching.length, sample: touching.slice(0, 4) });
+  checks.ok(result.chairsReseated !== null,
+    "the detector reports how many seats it moved onto surviving tables", result.chairsReseated);
+
   const reviewedMembers = new Set(result.reviewGroups.flatMap(g => g.memberIds));
   checks.ok(reviewedMembers.size === result.unreviewedLow,
     "every unreviewed low-confidence candidate is still in exactly one review group — consolidation hides nothing",

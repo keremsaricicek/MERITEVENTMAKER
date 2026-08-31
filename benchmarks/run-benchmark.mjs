@@ -275,23 +275,54 @@ function evaluate(annot, det) {
     const chairGtToDet = new Map(chairScore.matchPairs.map(m => [m.gtId, m.det]));
     const tableDetToGt = new Map(tableMatch.matches.map(m => [m.det.id, m.gt.id]));
     let correct = 0, wrong = 0, orphan = 0, unscoreable = 0;
-    const wrongExamples = [];
+    const wrongExamples = [], orphanExamples = [];
+    // Split by how the relationship was established, because they are not
+    // equally strong evidence and averaging them hides that. `annulus`
+    // relationships come from the way those chairs were RECOVERED — angular
+    // clustering just outside their table's disc — so the table is part of the
+    // finding. `derived` relationships are nearest-annotated-perimeter over the
+    // human-verified boxes; not the detector's computation, but the same idea,
+    // so agreement is weaker evidence than the number alone suggests. The
+    // annotation's ambiguous entries carry no table and never reach here.
+    const byMethod = {};
+    const bump = (m, k) => { (byMethod[m] ||= { scored: 0, correct: 0, wrong: 0, orphan: 0, unscoreable: 0 })[k]++; };
     for (const rel of gtRelations) {
+      const m = rel.method || "unlabelled";
       const det = chairGtToDet.get(rel.chair);
-      if (!det) { unscoreable++; continue; }              // the chair itself was not found
-      if (!det.parentId) { orphan++; continue; }          // found, but seated at no table
+      if (!det) { unscoreable++; bump(m, "unscoreable"); continue; }   // the chair itself was not found
+      if (!det.parentId) {
+        orphan++; bump(m, "orphan"); bump(m, "scored");
+        // A chair the detector found and seated nowhere is a different failure
+        // from one it seated wrongly, and it needs different evidence to fix:
+        // how far the annotation says that chair is from its table, and how big
+        // that table is. Carried through so the report answers "why" and not
+        // only "how many".
+        if (orphanExamples.length < 12) {
+          const t = gtTables.find(g => g.id === rel.belongsTo);
+          orphanExamples.push({ chair: rel.chair, expected: rel.belongsTo, method: m,
+            tableSize: t ? `${Math.round(t.w)}x${Math.round(t.h)}` : null,
+            chairSize: `${Math.round(det.w)}x${Math.round(det.h)}`,
+            evidence: rel.evidence || null });
+        }
+        continue;
+      } // found, but seated at no table
       const gtTableId = tableDetToGt.get(det.parentId);
-      if (gtTableId === undefined) { unscoreable++; continue; } // seated at a table that is itself a false positive
-      if (gtTableId === rel.belongsTo) correct++;
-      else { wrong++; if (wrongExamples.length < 5) wrongExamples.push({ chair: rel.chair, expected: rel.belongsTo, got: gtTableId }); }
+      if (gtTableId === undefined) { unscoreable++; bump(m, "unscoreable"); continue; } // seated at a table that is itself a false positive
+      bump(m, "scored");
+      if (gtTableId === rel.belongsTo) { correct++; bump(m, "correct"); }
+      else { wrong++; bump(m, "wrong"); if (wrongExamples.length < 5) wrongExamples.push({ chair: rel.chair, method: m, expected: rel.belongsTo, got: gtTableId }); }
     }
+    for (const v of Object.values(byMethod)) v.accuracy = v.scored ? +(v.correct / v.scored).toFixed(3) : null;
     const scored = correct + wrong + orphan;
+    const abstained = (annot.relationships || []).filter(r => r.chair && !r.belongsTo).length;
     relationships = {
       method: "chair->table, scored only where both the chair and its table were detected",
       groundTruth: gtRelations.length,
+      abstainedInAnnotation: abstained,
       scored, correct, wrong, orphan, unscoreable,
       accuracy: scored ? +(correct / scored).toFixed(3) : null,
-      wrongExamples,
+      byMethod,
+      wrongExamples, orphanExamples,
     };
   }
 
@@ -385,7 +416,13 @@ for (const f of files) {
   const sem = Object.entries(rep.semanticObjects).map(([k, v]) => `${k} TP${v.tp}/FP${v.fp}/FN${v.fn}`).join("  ");
   if (sem) console.log(`  SEMANTIC ${sem}`);
   const rel = rep.relationships;
-  if (rel) console.log(`  RELATIONS chair->table gt=${rel.groundTruth} scored=${rel.scored} correct=${rel.correct} wrong=${rel.wrong} orphan=${rel.orphan} unscoreable=${rel.unscoreable} accuracy=${rel.accuracy}`);
+  if (rel) {
+    console.log(`  RELATIONS chair->table gt=${rel.groundTruth} scored=${rel.scored} correct=${rel.correct} wrong=${rel.wrong} orphan=${rel.orphan} unscoreable=${rel.unscoreable} accuracy=${rel.accuracy}`);
+    const methods = Object.entries(rel.byMethod || {});
+    if (methods.length > 1 || rel.abstainedInAnnotation)
+      console.log(`           ${methods.map(([m, v]) => `${m} ${v.correct}/${v.scored}=${v.accuracy}`).join("  ")}` +
+        (rel.abstainedInAnnotation ? `   (${rel.abstainedInAnnotation} unscoreable by annotation)` : ""));
+  }
   console.log(`  EFFORT   reviewGroups=${rep.humanEffort.reviewGroups} questions=${rep.humanEffort.uncertainQuestions}`);
   console.log(`  TIME     ${ms} ms   pageErrors=${errors.length}`);
 }

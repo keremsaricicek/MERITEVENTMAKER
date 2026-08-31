@@ -3170,6 +3170,47 @@
       const chosen=ranked.filter(s=>!droppedIds.has(s.box.index));
       const chosenIndexes=new Set(chosen.map(s=>s.box.index));
 
+      // ---- re-seat the chairs whose table did not survive -------------------
+      //
+      // Association runs over every table PROPOSAL, and the fragment filter
+      // then deletes some of those proposals. A chair assigned to a deleted one
+      // used to be dropped from seating entirely and re-emitted as a
+      // free-standing object, even when a real, surviving table stood a few
+      // pixels away.
+      //
+      // Measured on the Golden Plan once relationship ground truth was extended
+      // from 24 chairs to 83: chair->table accuracy 0.711, with **zero** wrong
+      // tables and 22 orphans — every failure was a seat the detector found and
+      // seated nowhere. Their annotated tables are 2 to 5 pixels away and were
+      // all detected. The detector had the answer and threw it out with the
+      // losing proposal.
+      //
+      // So the losers' seats are offered to the survivors, using the same
+      // margin-qualified pairs the first pass built. Nothing new is invented: a
+      // chair is only re-seated at a table it already qualified for.
+      let reseated=0;
+      for(let ci=0;ci<chairs.length;ci++){
+        const ti=chairAssign.get(ci);
+        if(ti!==undefined&&chosenIndexes.has(ti))continue;
+        let best=null;
+        for(const p of pairs){
+          if(p.ci!==ci||!chosenIndexes.has(p.ti))continue;
+          if(!best||p.d<best.d)best=p;
+        }
+        if(!best)continue;
+        if(ti!==undefined){
+          const previous=chairsByTable.get(ti);
+          if(previous){
+            const at=previous.indexOf(ci);
+            if(at>=0)previous.splice(at,1);
+          }
+        }
+        chairAssign.set(ci,best.ti);
+        if(!chairsByTable.has(best.ti))chairsByTable.set(best.ti,[]);
+        chairsByTable.get(best.ti).push(ci);
+        reseated++;
+      }
+
       const toPercentBox=obb=>({x:(obb.cx-obb.w/2)/width*100,y:(obb.cy-obb.h/2)/height*100,w:obb.w/width*100,h:obb.h/height*100});
       const chairOBB=ch=>ch.shape?.obb||{cx:ch.x+ch.w/2,cy:ch.y+ch.h/2,w:ch.w,h:ch.h,rotation:ch.pcaRotation||0};
       // Deterministic evidence score for a chair: how well it agrees with the
@@ -3476,7 +3517,7 @@
           chairsDetected:chairs.length,chairsAssociated:associatedSeats,chairsUnassociated:chairVenues.length,
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
-          tableModalSeats:modalSeats||null,bistrosTyped,
+          tableModalSeats:modalSeats||null,bistrosTyped,chairsReseated:reseated,
           mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,surfaceMinorityFinishKept,secondaryChairFamilies:secondaryFamilyDiagnostics,fragmentSuppression:fragmentDiagnostics,
           textGlyphChairsDropped,mergedRowVenuesDropped:mergedRowVenues.length,columnsDetected:columnComps.length,debugPool,
           sources:diagnosticsSources,chairSourceBreakdown,phaseMs,
