@@ -1,4 +1,4 @@
-# The bistro merge — a reproduced failure and one rejected fix
+# The bistro merge — one reproduced failure, one rejected fix, one that worked
 
 ```
 node benchmarks/make-adversarial-fixtures.mjs   # regenerate the fixture + truth
@@ -16,15 +16,15 @@ one real plan: 18 square tables at the real plan's scale with four separated
 chairs each, setting the modal object size, and 5 bistro tables whose chairs
 touch the table body. Every box is exact by construction.
 
-It reproduces the failure with the same signature:
+It reproduced the failure with the same signature — 18 of 18 squares, 0 of 5
+bistros, recall lost entirely on the minority family while the majority scored
+perfectly:
 
 ```
 TABLES   gt=23 det=18 TP=18 FP=0 FN=5 P=1 R=0.783 F1=0.878
-TYPES    square 18/18
 ```
 
-18 of 18 squares, 0 of 5 bistros — recall lost entirely on the minority family
-while the majority scores perfectly.
+It now scores 23/23. What follows is how, including the attempt that failed.
 
 ## What is actually happening
 
@@ -87,23 +87,81 @@ banquet hall of 2.4-aspect rectangle tables would lose every real table it has.
 So: **repetition does not distinguish a minority furniture family from a
 repeating fragment family.** Do not re-run this experiment.
 
-## Where the fix actually belongs
+## Where the first fix would have belonged, and did
 
 The axis that *does* separate the two cases is already in the filter: seats.
-The bistros have two chairs each and score zero only because those chairs
+The bistros have two chairs each and scored zero only because those chairs
 merged into the table's own component. The real plan's 7 spared fragments have
-no chairs at all and never will.
+no chairs at all and never will. So the work belonged upstream, in the chair
+pass — and that is what was done next.
 
-Recovering merged chairs would give the bistros seat adjacency — two reasons,
-below the bar, kept — and leave the seven fragments exactly where they are. No
-change to the suppression rule is needed, and none should be made.
+## The fix that worked
 
-That is upstream work in the chair pass: for a table candidate with no
-associated seats, look for chair-sized sub-regions of chair colour at the edges
-of its own component, rather than only among components the chair pass already
-separated. It is not attempted here, and the fixture stays red until it is.
+The chairs were not missing from the masks at all. They were dropped by a
+**third** global-modal decision: the chair-shape uniformity test. Chairs are
+accepted when their elongation matches the plan's modal chair shape within a
+factor of 1.6. The square tables' chairs are near-square (elongation ~1.00); a
+bistro chair squeezed against the table edge measures ~1.69. Just outside. All
+ten were discarded, which left the bistro tables with no seat adjacency, which
+supplied the third reason the fragment filter needed to delete the tables.
 
-The baseline in `BASELINE.json` records `fn=5` for this fixture on purpose. It
-is a regression fixture holding a known, unfixed failure: when the chair pass
-recovers merged chairs, this file's number moves and `npm run benchmark:baseline`
-reports it as an improvement.
+The chair test now allows a **second** elongation mode — computed on the chairs
+the primary mode rejects, and admitted only when it is a substantial,
+self-consistent population (at least 4 chairs, at least 6% of the chair
+population, and at least 60% of the residual). A handful of odd shapes stays
+rejected, which is what the uniformity test is for.
+
+| | before | after |
+|---|---|---|
+| bistro fixture tables | 18/23, FN 5 | **23/23, FN 0** |
+| bistro fixture chairs | 72 of 82 | **82 of 82** |
+| bistro fixture F1 | 0.878 | **1.000** |
+| bistro fixture review groups | 0 | 1 |
+| real plan chairs | 79 of 105 | **87 of 105** |
+| real plan table TP / FN | 41 / 5 | 41 / 5 |
+| real plan table FP | 6 | **7** |
+| real plan F1 | 0.882 | **0.872** |
+| real plan review groups | 8 | **12** |
+
+### The regressions, and why they were accepted
+
+**The seventh false positive is not a spurious blob.** It sits at (123,208),
+45x99px, carrying 3 chairs, and its nearest ground-truth object is
+`table/bistro "t43"` — 51px away against a 47px match tolerance. The detector
+has started seeing the bistro region it was previously blind to, and proposes
+it as one tall merged box rather than two separate bistro tables. That is a
+different, later failure — the merge/split step, not the chair pass — and it
+scores as a false positive because the box does not resolve into individual
+tables.
+
+**Operator effort rose**, and that is the cost worth stating plainly: review
+groups on the real plan went from 8 to 12, roughly 50% more bulk-review work on
+this plan. It follows directly from finding 8 more chairs and one more table —
+there is genuinely more to look at — but it is a cost, not a free win, and it
+belongs in the summary rather than out of it.
+
+Accepted as a deliberate trade and re-recorded in `BASELINE.json`:
+
+- **gained** — an entire failure mode on the fixture (0 of 5 bistro tables to
+  5 of 5), and +8 real chairs (75% to 83% of the annotated 105).
+- **cost** — one merged proposal an operator can split or reject, and four more
+  review groups. Table true positives and misses are unchanged.
+
+This is not the "chair recall up, table F1 collapses" trade the sprint rules
+say to revert. That one was measured twice, at 0.882 to 0.543 and 0.882 to
+0.820, and reverted both times. This is 0.882 to 0.872 with the table count
+itself untouched.
+
+## What is still open
+
+The real plan's five bistro misses remain misses. Their chairs are now found
+and the region is now proposed, but as one merged box rather than separate
+tables. The remaining work is in the valley-split step, which does not cut this
+blob — a different problem from the one this file documents.
+
+The recurring pattern across all three findings here is worth stating on its
+own: **this pipeline makes several independent global-modal decisions — table
+size, table aspect, chair shape — and each one deletes minority families by
+construction.** Two of the three were found this way. The third (aspect) is
+still there, still unaddressed, and still the reason a hall of rectangle tables
+mixed with round ones has not been tested.

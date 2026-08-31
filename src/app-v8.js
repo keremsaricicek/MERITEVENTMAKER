@@ -2110,11 +2110,39 @@
       // (long/short side), because the same chair drawn on the left of a table
       // is the same object rotated 90 degrees, not a different one. This is
       // what tells a chair-sized printed glyph from a chair without OCR.
-      const chairModalElongation=modalMagnitude(chairComps.map(c=>Math.max(c.w,c.h)/Math.max(1,Math.min(c.w,c.h))));
+      const elongationOf=c=>Math.max(c.w,c.h)/Math.max(1,Math.min(c.w,c.h));
+      const chairModalElongation=modalMagnitude(chairComps.map(elongationOf));
+      const ELONGATION_TOLERANCE=Math.log(1.6);
+      const matchesMode=(elongation,mode)=>!!mode&&Math.abs(Math.log(elongation/mode.value))<=ELONGATION_TOLERANCE;
+      // A plan can seat two chair shapes. On the venue plan the square tables
+      // carry near-square chairs and the bistro tables carry taller, narrower
+      // ones; measured, the bistro chairs land at elongation ~1.69 against a
+      // plan modal of 1.00, just outside this tolerance, so all ten were
+      // dropped -- which left their tables with no seat adjacency, which was
+      // one of the three reasons the fragment filter then deleted the tables
+      // themselves (benchmarks/BISTRO-MERGE.md).
+      //
+      // So a second mode is allowed, but only when it is a real population
+      // rather than the tail of the first: computed on the chairs the primary
+      // mode rejects, and required to be a substantial, self-consistent group.
+      // A handful of odd shapes stays rejected, which is the point of the
+      // uniformity test in the first place.
+      const SECOND_MODE_MIN_COUNT=4,SECOND_MODE_MIN_SHARE=.06;
+      const chairSecondElongation=(()=>{
+        if(!chairModalElongation)return null;
+        const residual=chairComps.map(elongationOf).filter(e=>!matchesMode(e,chairModalElongation));
+        if(residual.length<SECOND_MODE_MIN_COUNT)return null;
+        const mode=modalMagnitude(residual);
+        if(!mode)return null;
+        const strong=mode.support>=SECOND_MODE_MIN_COUNT
+          &&mode.support/chairComps.length>=SECOND_MODE_MIN_SHARE
+          &&mode.support/residual.length>=.6;
+        return strong?mode:null;
+      })();
       const chairShapeOk=c=>{
         if(!chairUniform||!chairModalElongation)return true;
-        const elongation=Math.max(c.w,c.h)/Math.max(1,Math.min(c.w,c.h));
-        return Math.abs(Math.log(elongation/chairModalElongation.value))<=Math.log(1.6);
+        const elongation=elongationOf(c);
+        return matchesMode(elongation,chairModalElongation)||matchesMode(elongation,chairSecondElongation);
       };
       const chairs=chairUniform
         ?chairComps.filter(c=>sizeAgreement(Math.sqrt(c.w*c.h),chairModal)>=.25&&chairShapeOk(c))
