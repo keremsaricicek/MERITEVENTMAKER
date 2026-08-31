@@ -3040,13 +3040,59 @@
       // limits. The filter may disagree with the detector; it may not overrule
       // a human. Regions arrive as percentages of the plan, same units the
       // candidates are reported in.
+      // ...but protection covers the OBJECT the human judged, not everything
+      // whose centre happens to land in its box.
+      //
+      // Centre containment alone was the test, and it protected the wrong
+      // things. Measured on the Golden Plan: confirm six chairs, Re-Analyze,
+      // and four merged double-table blobs — which the fragment filter had
+      // correctly deleted on the first pass — sat with their centres inside a
+      // confirmed chair's box, were exempted, and survived. Those false tables
+      // then absorbed fifteen real chairs as their seats, so fifteen standalone
+      // chair candidates the operator had never touched vanished from the plan
+      // (unassociated chairs 47 -> 32) and three remembered corrections had
+      // nothing left to re-attach to.
+      //
+      // A blob twice the size of the chair a person confirmed is not that
+      // chair. Overlap decides it, at the ordinary 0.5 intersection-over-union
+      // that means "the same object" everywhere else in detection: the same
+      // object re-detected scores about 0.95, and a merged pair containing it
+      // scores about 0.44.
+      const PROTECTED_MIN_IOU=.5;
       const isProtected=obb=>{
-        const cx=obb.cx/width*100,cy=obb.cy/height*100;
-        return protectedRegions.some(r=>cx>=r.x-.5&&cx<=r.x+r.w+.5&&cy>=r.y-.5&&cy<=r.y+r.h+.5);
+        const box={x:(obb.cx-obb.w/2)/width*100,y:(obb.cy-obb.h/2)/height*100,
+          w:obb.w/width*100,h:obb.h/height*100};
+        return protectedRegions.some(r=>{
+          const ix=Math.max(0,Math.min(box.x+box.w,r.x+r.w)-Math.max(box.x,r.x));
+          const iy=Math.max(0,Math.min(box.y+box.h,r.y+r.h)-Math.max(box.y,r.y));
+          const inter=ix*iy;
+          if(!inter)return false;
+          return inter/(box.w*box.h+r.w*r.h-inter)>=PROTECTED_MIN_IOU;
+        });
       };
       const looksFragmentary=s=>fragmentEvidence(s).length>=reasonsNeeded(s);
-      const flagged=ranked.filter(s=>!isProtected(s.obb)&&looksFragmentary(s));
-      const protectedFromFilter=ranked.filter(s=>isProtected(s.obb)&&looksFragmentary(s)).length;
+      // What the filter believes, BEFORE any human protection is considered.
+      //
+      // The two must be kept apart, and conflating them was a real defect.
+      // `flagged` used to exclude protected candidates, and the self-disabling
+      // guard below is computed from it — so protecting a region could remove
+      // the very candidate whose presence was holding the filter back, switch
+      // the filter on, and delete other objects entirely.
+      //
+      // Measured on the Golden Plan: six chair confirmations, then Re-Analyze.
+      // The confirmed candidates became protected, `wouldLoseConfident` flipped
+      // from true to false, the fragment filter went from standing down to
+      // running, and FIFTEEN standalone chair candidates the operator had never
+      // touched disappeared — merging into eight table-sized blobs, with
+      // unassociated chairs dropping 47 to 32. Three remembered corrections
+      // then had nothing left to re-attach to, which is what took Re-Analyze
+      // retention to 0.81.
+      //
+      // A human decision may only ever SAVE a candidate. So the guard reasons
+      // about the plan, and protection is applied to the outcome afterwards.
+      const fragmentary=ranked.filter(looksFragmentary);
+      const flagged=fragmentary.filter(s=>!isProtected(s.obb));
+      const protectedFromFilter=fragmentary.length-flagged.length;
       // Self-disabling guard, same shape as the surface-coverage filter above:
       // if this would delete most of the plan, the plan is unusual rather than
       // its objects, and a filter that removes the furniture is worse than the
@@ -3077,7 +3123,10 @@
       // the modal size AND has seats would be deleted, the filter's reasoning
       // is not describing this plan and it stands down. Otherwise it runs,
       // however many fragments there turn out to be.
-      const wouldLoseConfident=flagged.some(s=>s.agreement>=.6&&s.seats>0);
+      // Asked of `fragmentary`, not `flagged`: whether the filter's reasoning
+      // describes this plan is a property of the plan, and must not change
+      // because a person confirmed something.
+      const wouldLoseConfident=fragmentary.some(s=>s.agreement>=.6&&s.seats>0);
       // ...and the vocabulary has to actually describe this plan.
       //
       // Every reason this filter deletes on is a disagreement with a
@@ -3665,12 +3714,15 @@
   // not just ones a human individually confirmed/reclassified) across a
   // Re-Analyze pass. Same deterministic-geometry reasoning as plan memory.
   function matchCandidatesByGeometry(oldCandidates,freshCandidates){
-    const TOLERANCE=3,pairs=[];
+    const pairs=[];
     for(const o of oldCandidates)for(const c of freshCandidates)pairs.push({o,c,dist:Math.hypot(c.x-o.x,c.y-o.y,(c.w-o.w)*.5,(c.h-o.h)*.5)});
     pairs.sort((a,b)=>a.dist-b.dist);
     const usedO=new Set(),usedC=new Set(),remap=new Map();
     for(const{o,c,dist}of pairs){
-      if(dist>TOLERANCE||usedO.has(o.id)||usedC.has(c.id))continue;
+      // Same size-relative rule as plan memory, and for the same reason: a
+      // grouping decision carried onto a neighbouring chair is as wrong as a
+      // correction carried onto one.
+      if(dist>memoryTolerance(o)||usedO.has(o.id)||usedC.has(c.id))continue;
       remap.set(o.id,c.id);usedO.add(o.id);usedC.add(c.id);
     }
     return remap;
@@ -3684,10 +3736,31 @@
   // outright if the detector still doesn't find it. Returns an id remap so
   // grouping decisions (which reference old candidate ids) can be carried
   // forward too.
+  // How far a remembered object is allowed to have moved, RELATIVE TO ITS OWN
+  // SIZE rather than to the plan.
+  //
+  // A flat 3-percent-of-plan tolerance is the same distance for a banquet
+  // table and for a chair, and on this plan's concert seating adjacent chairs
+  // stand about 2.6 percent apart — inside it. Measured: after 21 corrections
+  // and a Re-Analyze, three chair corrections came back on a NEIGHBOURING
+  // chair, because greedy nearest-first pairing over 39 memories can displace
+  // a match when several candidates are all within tolerance of each other.
+  // Retention 0.857 against a 0.98 gate, and the operator sees a confirmed,
+  // remembered decision sitting on the wrong seat.
+  //
+  // A big table can shift three percent of the plan and still obviously be
+  // that table. A chair cannot: three percent is more than a chair away. So
+  // the tolerance is a fraction of the object's own short side, floored so a
+  // tiny object still has some slack and capped at the old value so nothing
+  // matches more loosely than it used to.
+  const MEMORY_TOLERANCE_OF_SIZE=.75,MEMORY_MIN_TOLERANCE=.5,MEMORY_MAX_TOLERANCE=3;
+  function memoryTolerance(g){
+    return Math.max(MEMORY_MIN_TOLERANCE,
+      Math.min(MEMORY_MAX_TOLERANCE,Math.min(g.w,g.h)*MEMORY_TOLERANCE_OF_SIZE));
+  }
   function applyPlanMemory(freshCandidates,memory){
     const idRemap=new Map();
     if(!memory?.length)return{reappliedCount:0,restored:[],idRemap};
-    const TOLERANCE=3;
     // Matched purely by geometry, never by kind: a reclassification memory's
     // whole point is that the detector's raw kind guess was wrong (e.g. a
     // table-shaped detection that a human corrected to venue:chair) -- the
@@ -3700,7 +3773,7 @@
     const usedC=new Set(),usedM=new Set();
     let reappliedCount=0;
     for(const{m,c,dist}of pairs){
-      if(dist>TOLERANCE||usedC.has(c.id)||usedM.has(m.id))continue;
+      if(dist>memoryTolerance(m.geometry)||usedC.has(c.id)||usedM.has(m.id))continue;
       c.kind=m.kind;c.type=m.type;c.status=m.status;c.selected=m.status!=="rejected";c.fromMemory=true;
       usedC.add(c.id);usedM.add(m.id);idRemap.set(m.sourceCandidateId,c.id);reappliedCount++;
     }

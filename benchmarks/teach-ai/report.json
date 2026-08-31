@@ -1,0 +1,762 @@
+{
+ "ranAt": "2026-08-31T18:17:45.671Z",
+ "plan": "merit-real-venue",
+ "matchToleranceP": 3,
+ "candidates": 99,
+ "annotatedScoreable": 164,
+ "matched": 90,
+ "matching": {
+  "flatTolerancePx": 47,
+  "tightenedForNeighbours": 163,
+  "note": "A GT object's tolerance is capped at half the distance to its nearest neighbour, so an identity claim is decidable on a plan whose chairs are closer together than the flat tolerance."
+ },
+ "propagation": {
+  "trials": 90,
+  "spreadTrials": 80,
+  "reached": 274,
+  "scored": 274,
+  "correct": 274,
+  "wrong": 0,
+  "ontoUnannotated": 0,
+  "precision": 1,
+  "gate": 0.98,
+  "met": true,
+  "perTrial": [
+   {
+    "object": "t025",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t024",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t030",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t028",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t001",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t009",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t003",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t006",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t036",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t002",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t016",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t010",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t037",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t007",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t004",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t008",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t005",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t015",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t022",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t020",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t023",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t034",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t027",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t035",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t019",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t029",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t021",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t014",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t013",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t011",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t012",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t026",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t040",
+    "was": "table:round",
+    "taught": "table:round",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t041",
+    "was": "table:round",
+    "taught": "table:round",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t038",
+    "was": "table:round",
+    "taught": "table:round",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t043",
+    "was": "table:bistro",
+    "taught": "table:bistro",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t042",
+    "was": "table:bistro",
+    "taught": "table:bistro",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t039",
+    "was": "table:round",
+    "taught": "table:round",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t045",
+    "was": "table:bistro",
+    "taught": "table:bistro",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t044",
+    "was": "table:bistro",
+    "taught": "table:bistro",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t046",
+    "was": "table:bistro",
+    "taught": "table:bistro",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c013",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 6,
+    "correct": 6,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c015",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 6,
+    "correct": 6,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c016",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c017",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c020",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 6,
+    "correct": 6,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c021",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 6,
+    "correct": 6,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c022",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c023",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 6,
+    "correct": 6,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c026",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c028",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c029",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c030",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c032",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c031",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 6,
+    "correct": 6,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c036",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c034",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c035",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c037",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c043",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c045",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c048",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c046",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c047",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c052",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 6,
+    "correct": 6,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c053",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c057",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 7,
+    "correct": 7,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c058",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 7,
+    "correct": 7,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c059",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 7,
+    "correct": 7,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c056",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 7,
+    "correct": 7,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c066",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c067",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c068",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c069",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c070",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c071",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c073",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 7,
+    "correct": 7,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c075",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 7,
+    "correct": 7,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c076",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 7,
+    "correct": 7,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "c077",
+    "was": "venue:chair",
+    "taught": "venue:chair",
+    "reached": 7,
+    "correct": 7,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   }
+  ]
+ },
+ "reanalyze": {
+  "correctionsMade": 21,
+  "memoryEntries": 39,
+  "retained": 21,
+  "lost": 0,
+  "retention": 1,
+  "retentionGate": 0.98,
+  "retentionMet": true,
+  "wrongApplications": 0,
+  "wrongApplicationRate": 0,
+  "wrongApplicationGate": 0.01,
+  "wrongApplicationMet": true,
+  "lostDetail": []
+ },
+ "pageErrors": []
+}
