@@ -1,6 +1,6 @@
 {
-  "recordedAt": "2026-08-31T07:20:30.813Z",
-  "commit": "23a7f78c8668a8051f6dfe3d2ea5ddc43a5c627f",
+  "recordedAt": "2026-08-31T08:06:46.592Z",
+  "commit": "19ab9b27eaa2c19b1a8a8f50e5d2224a9c8fad15",
   "note": "Measured by benchmarks/run-benchmark.mjs against the annotations in benchmarks/annotations/. Classical computer vision (Assisted Detection); no trained model is involved in these numbers.",
   "guardedFields": [
     {
@@ -61,6 +61,28 @@
       "tables.recall": 1,
       "tables.f1": 1,
       "chairs.detectedTotal": 80,
+      "humanEffort.reviewGroups": 0,
+      "humanEffort.uncertainQuestions": 0
+    },
+    {
+      "planId": "adversarial-bistro-v1",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "outline-interior",
+        "ocrEngine": null,
+        "ocrAvailable": false
+      },
+      "tables.tp": 18,
+      "tables.fp": 0,
+      "tables.fn": 5,
+      "tables.precision": 1,
+      "tables.recall": 0.783,
+      "tables.f1": 0.878,
+      "chairs.detectedTotal": 72,
       "humanEffort.reviewGroups": 0,
       "humanEffort.uncertainQuestions": 0
     },

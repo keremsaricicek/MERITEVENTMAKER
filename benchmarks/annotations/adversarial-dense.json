@@ -394,6 +394,6 @@
     "annotatedChairs": 96,
     "ocrStated": null,
     "unverified": [],
-    "note": "Chair count is constructed: every table was drawn with exactly this many seat markers."
+    "note": "Chair count is constructed: summed from the seat markers actually drawn on each table."
   }
 }

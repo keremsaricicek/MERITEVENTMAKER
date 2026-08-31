@@ -86,6 +86,15 @@ The runner serves the app itself and drives the real detector through the real
 UI, because most of the domain logic is closure-scoped and not reachable any
 other way. Set `MERIT_BASE_URL` to point it at a server you already have.
 
+## Notes on specific failures
+
+- `DETECTION-GATE-C-D.md` — text and architectural false-positive suppression.
+- `BISTRO-MERGE.md` — the five remaining real-plan misses, the fixture that
+  reproduces them, and one fix that was measured and rejected. Read it before
+  touching fragment suppression.
+- `detection/ERROR-CATEGORIES.md` — every remaining error on the real plan.
+- `TRAINING-DATA.md` — what a human decision captures.
+
 ## The recorded baseline
 
 `BASELINE.json` is the committed claim about what the detector currently does:

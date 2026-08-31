@@ -360,18 +360,115 @@ function writeFixture(name, planId, dataUrl, spec, notes) {
     objects: spec.objects,
     regions: spec.regions,
     capacity: {
-      annotatedChairs: tables.length * spec.chairsPer,
+      // Summed per table, not tables x chairsPer. A fixture with two table
+      // families (the bistro one has 4-seat squares and 2-seat bistros) would
+      // otherwise report a chair total that was never drawn, and a benchmark
+      // scoring against an invented number is worse than one with no number.
+      annotatedChairs: tables.reduce((n, o) => n + (Number.isFinite(o.seats) ? o.seats : spec.chairsPer), 0),
       ocrStated: null,
       unverified: [],
-      note: "Chair count is constructed: every table was drawn with exactly this many seat markers.",
+      note: "Chair count is constructed: summed from the seat markers actually drawn on each table.",
     },
   };
   fs.writeFileSync(path.join(ROOT, "annotations", `${name}.json`), JSON.stringify(annot, null, 2) + "\n");
   console.log(`${name}.png  ${spec.W}x${spec.H}  sha256 ${sha.slice(0, 16)}...`);
-  console.log(`  ${tables.length} tables, ${tables.length * spec.chairsPer} chairs, ` +
+  console.log(`  ${tables.length} tables, ${annot.capacity.annotatedChairs} chairs, ` +
     `${spec.objects.filter(o => o.class === "column").length} columns, ` +
     `${spec.regions.filter(r => r.class === "text").length} text regions, ` +
     `${spec.regions.filter(r => r.class === "architecture").length} architecture regions`);
+}
+
+
+// ---------------------------------------------------------------------------
+// Fixture D: the bistro merge.
+//
+// Reproduces the failure mode behind all five remaining misses on the real
+// venue plan. Those are bistro tables: 46x40px, with two chairs pulled tight
+// against opposite edges. At threshold the table and its two chairs stop being
+// three components and become one 73x29px blob, which is the wrong shape and
+// the wrong size to be proposed as a table at all. They are never rejected --
+// they are never suggested, and the nearest detection sits 83-133px away
+// against a 47px match tolerance.
+//
+// The fixture puts them next to the family that dominates the plan: larger
+// square tables with four separated chairs. That is the point. A single global
+// size rule has to serve both, and the modal object size is set by the
+// majority, so the minority family falls outside it. Any fix has to recover
+// the bistros while the squares on the same image still score 1.0.
+// ---------------------------------------------------------------------------
+function bistroFixtureSpec() {
+  const W = 1400, H = 900;
+  const objects = [], regions = [];
+
+  // The majority family: square tables at the real plan's scale, four chairs
+  // each, clearly separated. These set the modal size.
+  const SQ = 52, SQ_CHAIRS = 4;
+  const sqCols = 6, sqRows = 3, sqGapX = 170, sqGapY = 165, sqX0 = 240, sqY0 = 170;
+  let n = 0;
+  for (let r = 0; r < sqRows; r++) for (let c = 0; c < sqCols; c++) {
+    n++;
+    objects.push({ id: `S${String(n).padStart(2, "0")}`, class: "table", type: "square",
+      cx: sqX0 + c * sqGapX, cy: sqY0 + r * sqGapY, w: SQ, h: SQ,
+      seats: SQ_CHAIRS, seatsConfidence: "constructed" });
+  }
+
+  // The minority family: bistro tables, two chairs hard against the left and
+  // right edges, at the real plan's measured geometry.
+  const BW = 46, BH = 40, BISTRO_CHAIRS = 2;
+  const biCols = 5, biGapX = 200, biX0 = 260, biY = 760;
+  const bistros = [];
+  for (let c = 0; c < biCols; c++) {
+    n++;
+    const cx = biX0 + c * biGapX;
+    bistros.push({ cx, cy: biY });
+    objects.push({ id: `B${String(c + 1).padStart(2, "0")}`, class: "table", type: "bistro",
+      cx, cy: biY, w: BW, h: BH, seats: BISTRO_CHAIRS, seatsConfidence: "constructed" });
+  }
+
+  return { W, H, objects, regions, squares: objects.filter(o => o.type === "square"),
+    bistros, squareSize: SQ, squareChairs: SQ_CHAIRS,
+    bistroW: BW, bistroH: BH, bistroChairs: BISTRO_CHAIRS,
+    chairsPer: SQ_CHAIRS };
+}
+
+async function renderBistroFixture(page, spec) {
+  return page.evaluate(({ spec, PAPER, INK, SURFACE, SEAT, drawText }) => {
+    eval(drawText);
+    const c = document.createElement("canvas"); c.width = spec.W; c.height = spec.H;
+    const x = c.getContext("2d");
+    x.fillStyle = PAPER; x.fillRect(0, 0, spec.W, spec.H);
+
+    // Square tables: four chairs, each set clear of the table edge so the
+    // components stay separate at threshold.
+    for (const o of spec.squares) {
+      x.fillStyle = SURFACE; x.strokeStyle = INK; x.lineWidth = 1.6;
+      x.fillRect(o.cx - o.w / 2, o.cy - o.h / 2, o.w, o.h);
+      x.strokeRect(o.cx - o.w / 2, o.cy - o.h / 2, o.w, o.h);
+      const s = 16, gap = 7;
+      const offsets = [[0, -(o.h / 2 + gap + s / 2)], [0, o.h / 2 + gap + s / 2],
+                       [-(o.w / 2 + gap + s / 2), 0], [o.w / 2 + gap + s / 2, 0]];
+      for (const [dx, dy] of offsets) {
+        x.fillStyle = SEAT; x.fillRect(o.cx + dx - s / 2, o.cy + dy - s / 2, s, s);
+        x.strokeStyle = INK; x.lineWidth = 1; x.strokeRect(o.cx + dx - s / 2, o.cy + dy - s / 2, s, s);
+      }
+    }
+
+    // Bistro tables: two chairs touching the left and right edges, so table
+    // and chairs merge into one wide, short component.
+    for (const b of spec.bistros) {
+      const w = spec.bistroW, h = spec.bistroH;
+      x.fillStyle = SURFACE; x.strokeStyle = INK; x.lineWidth = 1.6;
+      x.fillRect(b.cx - w / 2, b.cy - h / 2, w, h);
+      x.strokeRect(b.cx - w / 2, b.cy - h / 2, w, h);
+      const cw = 14, ch = 22;
+      for (const side of [-1, 1]) {
+        const px = b.cx + side * (w / 2 + cw / 2 - 1); // -1: overlapping, so they merge
+        x.fillStyle = SEAT; x.fillRect(px - cw / 2, b.cy - ch / 2, cw, ch);
+        x.strokeStyle = INK; x.lineWidth = 1; x.strokeRect(px - cw / 2, b.cy - ch / 2, cw, ch);
+      }
+    }
+    return c.toDataURL("image/png");
+  }, { spec, PAPER, INK, SURFACE, SEAT, drawText });
 }
 
 const browser = await launchChromium();
@@ -389,5 +486,9 @@ writeFixture("adversarial-architecture", "adversarial-architecture-v1", await re
 const denseSpec = denseFixtureSpec();
 writeFixture("adversarial-dense", "adversarial-dense-v1", await renderDenseFixture(page, denseSpec), denseSpec,
   "The hard case, built to reproduce the conditions the real venue plan fails under. Greyscale, so the chair-first colour clustering cannot engage; 24 tables spaced 12px apart so the blob stage merges them and the valley-split step has to guess boundaries; walls cutting through the seating field; five filled service blocks at table scale; and room labels drawn as large as a real table. The tables are still regular and exactly annotated, so a suppression rule that 'solves' this image by deleting furniture is caught by recall here.");
+
+const bistroSpec = bistroFixtureSpec();
+writeFixture("adversarial-bistro", "adversarial-bistro-v1", await renderBistroFixture(page, bistroSpec), bistroSpec,
+  "The bistro merge, in isolation. 18 square tables at the real plan's scale with four separated chairs set the modal object size; 5 bistro tables carry two chairs pressed against opposite edges so table and chairs collapse into one wide, short component at threshold. This is the exact regime of the five remaining misses on the real venue plan, where the nearest detection sits 83-133px away against a 47px tolerance. A fix has to recover the bistros while the squares on the same image still score 1.0.");
 
 await browser.close();

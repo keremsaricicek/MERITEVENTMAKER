@@ -2380,6 +2380,41 @@
         return reasons;
       };
       const FRAGMENT_MIN_REASONS=3;
+      // A plan can hold more than one furniture family, and all three reasons
+      // above are measured against ONE plan-wide modal, so a minority family
+      // disagrees on every axis at once by construction -- exactly this
+      // filter's deletion condition. benchmarks/fixtures/adversarial-bistro.png
+      // isolates that: 18 square tables set the modal, and the 5 bistro tables
+      // are proposed and then dropped with precisely these three reasons.
+      //
+      // "Repetition is counter-evidence" was tried here and MEASURED WRONG.
+      // Requiring one extra reason for a repeated whole component fixed the
+      // fixture (FN 5 -> 0) and broke the real plan (FP 6 -> 13, F1 0.882 ->
+      // 0.820). The 7 fragments it spared are as tight a family as the real
+      // bistros are, on every axis available:
+      //
+      //                    real plan, spared (all FP)   bistro fixture (real)
+      //   tight repetition 7 of 7 within 8%             5 of 5 within 8%
+      //   dimensions       55x26, 56x26, 54x26          44x38
+      //   seats            0                            0
+      //   source           tone                         tone
+      //   wasSplit         false                        false
+      //   sizeAgreement    0.35-0.46                    0.24
+      //
+      // The only axis that separates them is aspect (2.1 vs 1.16), and this
+      // filter already refuses to use aspect as an absolute threshold -- a
+      // banquet hall of 2.4-aspect rectangle tables would lose every table it
+      // has. So repetition does not distinguish a minority furniture family
+      // from a repeating fragment family, and the change was reverted.
+      //
+      // The axis that DOES separate them is the one already here: seats. The
+      // bistros have two chairs each and score zero only because those chairs
+      // touch the table and merge into its component, so the chair pass never
+      // proposes them. Recovering merged chairs would give the bistros seat
+      // adjacency (2 reasons, kept) and leave the real plan's 7 seatless
+      // fragments exactly where they are. That is upstream work in the chair
+      // pass, not a loosening of this filter.
+      const reasonsNeeded=()=>FRAGMENT_MIN_REASONS;
       // A region the operator already confirmed (or drew themselves) is off
       // limits. The filter may disagree with the detector; it may not overrule
       // a human. Regions arrive as percentages of the plan, same units the
@@ -2388,8 +2423,9 @@
         const cx=obb.cx/width*100,cy=obb.cy/height*100;
         return protectedRegions.some(r=>cx>=r.x-.5&&cx<=r.x+r.w+.5&&cy>=r.y-.5&&cy<=r.y+r.h+.5);
       };
-      const flagged=ranked.filter(s=>!isProtected(s.obb)&&fragmentEvidence(s).length>=FRAGMENT_MIN_REASONS);
-      const protectedFromFilter=ranked.filter(s=>isProtected(s.obb)&&fragmentEvidence(s).length>=FRAGMENT_MIN_REASONS).length;
+      const looksFragmentary=s=>fragmentEvidence(s).length>=reasonsNeeded(s);
+      const flagged=ranked.filter(s=>!isProtected(s.obb)&&looksFragmentary(s));
+      const protectedFromFilter=ranked.filter(s=>isProtected(s.obb)&&looksFragmentary(s)).length;
       // Self-disabling guard, same shape as the surface-coverage filter above:
       // if this would delete most of the plan, the plan is unusual rather than
       // its objects, and a filter that removes the furniture is worse than the
@@ -2414,7 +2450,7 @@
            "would have removed more than 45% of the plan"),
         examples:fragmentDrops.slice(0,6).map(s=>({aspect:Number(aspectOf(s.obb).toFixed(2)),
           sizeAgreement:Number(s.agreement.toFixed(2)),seats:s.seats,split:!!s.c.wasSplit,
-          reasons:fragmentEvidence(s)})),
+          repetition:s.repetition,reasons:fragmentEvidence(s)})),
       };
       const chosen=ranked.filter(s=>!droppedIds.has(s.box.index));
       const chosenIndexes=new Set(chosen.map(s=>s.box.index));
