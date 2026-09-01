@@ -175,6 +175,14 @@
     "contradiction.memoryOverruled": { en: "{n} object(s) were detected again as the class you had already corrected.", tr: "{n} nesne, daha önce düzelttiğiniz sınıfla yeniden tespit edildi." },
     "contradiction.memoryLost": { en: "{n} object(s) you confirmed were not found in this analysis.", tr: "Onayladığınız {n} nesne bu analizde bulunamadı." },
     "contradiction.tablesNoDining": { en: "{tables} tables were found, but no part of the room reads as a dining area.", tr: "{tables} masa bulundu ama odanın hiçbir bölümü yemek alanı olarak okunmuyor." },
+    "contradiction.seatsInsideBody": { en: "{n} object(s) contain every seat attached to them, which a table does not.", tr: "{n} nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz." },
+    "contradiction.claim.seatsAround": { en: "a table's seats stand around it, not inside it", tr: "bir masanın koltukları etrafında durur, içinde değil" },
+    "contradiction.claim.proposedTable": { en: "{n} of these are tables with seats", tr: "bunlardan {n} tanesi koltuklu masa" },
+    // The review card's note on an object the analysis held back. It says what
+    // was held and why, and that it is still the operator's call — nothing was
+    // deleted and the seat is still there.
+    "poi.lowEvidence": { en: "Held back from the floor plan", tr: "Kat planına aktarılmadı" },
+    "poi.lowEvidence.seatsInsideBody": { en: "Every seat attached to this object is inside it. A table's seats stand around it, so this is more likely a seat than a table. Nothing was deleted — confirm it to include it.", tr: "Bu nesneye bağlı tüm koltuklar içinde. Bir masanın koltukları etrafında durur, bu yüzden bu bir masadan çok bir koltuk olabilir. Hiçbir şey silinmedi — dahil etmek için onaylayın." },
     "contradiction.severity.high": { en: "serious", tr: "ciddi" },
     "contradiction.severity.medium": { en: "worth checking", tr: "kontrol edilmeli" },
     "contradiction.downgraded": { en: "stated less confidently because of this", tr: "bu nedenle daha temkinli ifade edildi" },

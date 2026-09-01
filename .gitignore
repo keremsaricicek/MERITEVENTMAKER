@@ -15,3 +15,8 @@ benchmarks/reports/benchmark-*.json
 # that regenerate identically, so they are a build artifact and not a source.
 benchmarks/embedding/crops.bin
 benchmarks/embedding/crops.json
+
+# Regenerated in one command by `npm run benchmark:false-positives`; ~9MB of
+# PNGs that would otherwise land in every clone. The README says how to make
+# them and what they show.
+benchmarks/false-positives/debug/

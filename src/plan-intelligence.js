@@ -882,6 +882,21 @@
             .filter(id => id === "tableTypeMix")),
         mixedGroups.flatMap(g => g.memberIds || []));
 
+    // -- RELATIONSHIP: an object that contains its own seats -------------------
+    //
+    // The detection pass already declines to commit these (app-v8's seat
+    // containment gate, measured at 129 invented tables held and zero real ones
+    // across eleven renderings). This is the same finding stated to the
+    // operator: the chair pass says "seat", the table pass says "table with a
+    // seat inside it", and those cannot both describe one object.
+    const seatsInside = tables.filter(t => t.lowEvidence && t.lowEvidence.reason === "seatsInsideBody");
+    if (seatsInside.length)
+      say("contra:seatsInsideBody", "RELATIONSHIP", "contradiction.seatsInsideBody",
+        { n: seatsInside.length }, "high",
+        [side("tableDetection", "proposedTable", { n: seatsInside.length }),
+         side("chairAssociation", "seatsAround")],
+        tableClaims(seatsInside.length), seatsInside.map(t => t.id));
+
     // -- ZONE: a table standing on the stage -----------------------------------
     //
     // Deliberately object containment, not zone-box overlap. A zone's box is

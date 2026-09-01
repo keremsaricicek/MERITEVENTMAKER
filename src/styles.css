@@ -920,6 +920,15 @@ body{min-width:1180px}
   letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px}
 .poi-visual-note span{display:block;color:var(--pi-ink)}
 .poi-visual-note em{display:block;margin-top:3px;color:var(--pi-muted);font-size:10px;font-style:normal}
+/* An object the analysis declined to commit. Warn-toned because it is a real
+   consequence the operator should see, but not an error state: nothing was
+   deleted and confirming it puts it back. */
+.poi-lowevidence{margin-top:9px;padding:8px 9px;border:1px solid var(--pi-warn);
+  border-radius:var(--pi-radius-sm);background:color-mix(in srgb,var(--pi-warn) 8%,transparent);
+  font-size:11px;line-height:1.45}
+.poi-lowevidence strong{display:block;color:var(--pi-warn);font-size:9.5px;font-weight:700;
+  letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px}
+.poi-lowevidence span{display:block;color:var(--pi-ink)}
 .poi-visual-note.weak span{color:var(--pi-muted)}
 .poi-visual-note.disagree{border-color:var(--pi-warn);background:color-mix(in srgb,var(--pi-warn) 8%,transparent)}
 .poi-visual-note.disagree span{color:var(--pi-warn)}

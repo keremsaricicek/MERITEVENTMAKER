@@ -86,6 +86,17 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
       physicalSeats: pi?.planSummary?.physicalSeats ?? null,
       ocrAvailable: !!pi?.providerMetadata?.ocrAvailable,
       tableIds: alive.filter(c => c.kind === "table").map(c => c.id),
+      // The seat-containment gate: what it held, and whether it deleted
+      // anything. Measured at 129 invented tables held and zero real ones
+      // across eleven renderings (benchmarks/false-positives/).
+      seatGate: {
+        counted: a.diagnostics && a.diagnostics.seatsInsideBody,
+        held: alive.filter(c => c.lowEvidence && c.lowEvidence.reason === "seatsInsideBody")
+          .map(c => ({ id: c.id, selected: c.selected !== false, kind: c.kind,
+            seats: (c.chairDetections || []).length, status: c.status })),
+        // Every table candidate, so "was anything removed" is answerable.
+        tablesAlive: alive.filter(c => c.kind === "table").length,
+      },
       // Standalone chair candidates plus the seats nested on tables: a
       // contradiction may point at either, and both are objects that survived.
       chairIds: alive.filter(c => c.kind === "venue" && c.type === "chair").map(c => c.id)
@@ -421,6 +432,40 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(reviewedMembers.size === result.unreviewedLow,
     "every unreviewed low-confidence candidate is still in exactly one review group — consolidation hides nothing",
     { inGroups: reviewedMembers.size, unreviewedLow: result.unreviewedLow });
+
+  // ---- the seat-containment gate ------------------------------------------
+  //
+  // A table whose every attached seat sits inside its own box is a seat wrapped
+  // in a table: chairs stand AROUND a table, so their centres fall outside it.
+  // Measured across eleven renderings, that topology holds for 0 of 424 correct
+  // tables and for 129 invented ones.
+  //
+  // The gate DESELECTS rather than deletes, and these checks exist because the
+  // difference is the whole design: one venue is not enough evidence to remove
+  // an object a person might be able to see is real.
+  const gate = result.seatGate;
+  checks.ok(typeof gate.counted === "number",
+    "the analysis reports how many objects the seat-containment gate held", gate.counted);
+  checks.equal(gate.held.length, gate.counted,
+    "and the count matches the objects actually flagged", { counted: gate.counted, flagged: gate.held.length });
+  for (const h of gate.held) {
+    checks.equal(h.selected, false,
+      "a held object is not committed to the floor plan", h);
+    checks.ok(h.status !== "rejected",
+      "but it is NOT rejected — it stays visible and reviewable, and a person can confirm it", h);
+    checks.ok(h.seats > 0,
+      "and it keeps the seat it contains; nothing about the chair pass is undone", h);
+  }
+  checks.ok(gate.tablesAlive >= gate.counted,
+    "held objects are still in the candidate list — deselecting is not deleting",
+    { tables: gate.tablesAlive, held: gate.counted });
+  if (gate.counted > 0) {
+    const contra = result.contradictions.find(c => c.id === "contra:seatsInsideBody");
+    checks.ok(contra && contra.kind === "RELATIONSHIP",
+      "and the operator is told, as a disagreement between the chair pass and the table pass", contra);
+    checks.ok(contra && contra.targets === gate.counted,
+      "pointing at every object it held", { targets: contra && contra.targets, held: gate.counted });
+  }
 
   // ---- contradictions: two stages that cannot both be right ---------------
   //

@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-09-01T06:23:10.688Z",
+  "ranAt": "2026-09-01T13:07:45.894Z",
   "reports": [
     {
       "planId": "adversarial-architecture-v1",
@@ -69,56 +69,56 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_05f42618-5b35-45e6-8867-a3687635a52b",
+              "id": "candidate_1b3f018e-f287-4819-a68b-363d7033008b",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_16f7eee8-3fe4-4a8a-a440-e47552c77551",
+              "id": "candidate_217049de-e68f-4f4f-a664-700ef12da2ac",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_26adc4d3-96f5-47dd-b4aa-f62566379035",
+              "id": "candidate_22d31e17-b30c-49f4-8db1-62879fe25216",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_285bec14-3eaa-4119-8d58-dfe2dc40aac0",
+              "id": "candidate_3007aede-7a9f-4daa-bb4b-62abf6ded2ce",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_2e879179-1afc-4b63-866d-bff473a53bc1",
+              "id": "candidate_33fab0d9-aaac-4f52-b701-0055077b47dd",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_608a862f-502b-442e-aa3a-ec1b051f5d08",
+              "id": "candidate_484d27dc-1f1e-44d1-91ce-6ad79c4143ed",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_6497632b-6b66-470b-b182-c2554377d551",
+              "id": "candidate_660b1154-e201-4103-8e9f-14b5c7e54955",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_690266b7-9e58-4c8c-892a-366830204673",
+              "id": "candidate_73c906c5-30e6-4844-9ba0-b4e79690b137",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -126,14 +126,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_05f42618-5b35-45e6-8867-a3687635a52b",
-            "candidate_16f7eee8-3fe4-4a8a-a440-e47552c77551",
-            "candidate_26adc4d3-96f5-47dd-b4aa-f62566379035",
-            "candidate_285bec14-3eaa-4119-8d58-dfe2dc40aac0",
-            "candidate_2e879179-1afc-4b63-866d-bff473a53bc1",
-            "candidate_608a862f-502b-442e-aa3a-ec1b051f5d08",
-            "candidate_6497632b-6b66-470b-b182-c2554377d551",
-            "candidate_690266b7-9e58-4c8c-892a-366830204673"
+            "candidate_1b3f018e-f287-4819-a68b-363d7033008b",
+            "candidate_217049de-e68f-4f4f-a664-700ef12da2ac",
+            "candidate_22d31e17-b30c-49f4-8db1-62879fe25216",
+            "candidate_3007aede-7a9f-4daa-bb4b-62abf6ded2ce",
+            "candidate_33fab0d9-aaac-4f52-b701-0055077b47dd",
+            "candidate_484d27dc-1f1e-44d1-91ce-6ad79c4143ed",
+            "candidate_660b1154-e201-4103-8e9f-14b5c7e54955",
+            "candidate_73c906c5-30e6-4844-9ba0-b4e79690b137"
           ]
         }
       },
@@ -179,7 +179,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 807,
+      "detectionMs": 603,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -257,56 +257,56 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_0ae840a3-89cd-4877-940f-ea637eb809ae",
+              "id": "candidate_0b04ba9c-f1c9-461e-990d-d9e34793345e",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0ea9cd3b-0279-42c3-8c24-fa374cb1046f",
+              "id": "candidate_0f1805a8-c4eb-4cf5-9fc5-898c728276df",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_1e377f88-2c15-4ae5-b405-df4ac85e4e96",
+              "id": "candidate_27ec24ca-6a5a-4cbe-9b3d-11bee2c48fad",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_2ec89f37-9d46-4cdb-842c-182fb95e6fa1",
+              "id": "candidate_3982378c-fc36-4d61-96dc-107a1046e1a2",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_32ed06a9-d2c9-41e2-b4dc-12b791f249e4",
+              "id": "candidate_4a9bab54-9e45-4303-92a9-65ae07e456bf",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_3afffe85-5653-4a50-89d7-7ee7e85ad283",
+              "id": "candidate_5c689c3a-54cb-4ccc-94d6-0f9101868d4a",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_3e414918-127b-4371-bc6f-71ad2c7fd7f1",
+              "id": "candidate_66693eb9-ec1e-4801-8d48-3f167ec89137",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_8a1a4098-8f60-4d9c-907b-c6fe99ec6971",
+              "id": "candidate_9732b407-088a-4fe4-bbf8-82efa1b6789f",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -314,14 +314,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_0ae840a3-89cd-4877-940f-ea637eb809ae",
-            "candidate_0ea9cd3b-0279-42c3-8c24-fa374cb1046f",
-            "candidate_1e377f88-2c15-4ae5-b405-df4ac85e4e96",
-            "candidate_2ec89f37-9d46-4cdb-842c-182fb95e6fa1",
-            "candidate_32ed06a9-d2c9-41e2-b4dc-12b791f249e4",
-            "candidate_3afffe85-5653-4a50-89d7-7ee7e85ad283",
-            "candidate_3e414918-127b-4371-bc6f-71ad2c7fd7f1",
-            "candidate_8a1a4098-8f60-4d9c-907b-c6fe99ec6971"
+            "candidate_0b04ba9c-f1c9-461e-990d-d9e34793345e",
+            "candidate_0f1805a8-c4eb-4cf5-9fc5-898c728276df",
+            "candidate_27ec24ca-6a5a-4cbe-9b3d-11bee2c48fad",
+            "candidate_3982378c-fc36-4d61-96dc-107a1046e1a2",
+            "candidate_4a9bab54-9e45-4303-92a9-65ae07e456bf",
+            "candidate_5c689c3a-54cb-4ccc-94d6-0f9101868d4a",
+            "candidate_66693eb9-ec1e-4801-8d48-3f167ec89137",
+            "candidate_9732b407-088a-4fe4-bbf8-82efa1b6789f"
           ]
         }
       },
@@ -351,7 +351,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 515,
+      "detectionMs": 527,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -423,7 +423,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_55826b12-7620-4d3b-9316-e06750ae4c43",
+              "id": "candidate_be94fd9a-4f66-4b28-9009-4c36fe49416a",
               "score": 1.25,
               "reasons": [
                 "not yet reviewed",
@@ -431,7 +431,7 @@
               ]
             },
             {
-              "id": "candidate_79dfa9af-6e8d-4937-9afc-3d2681d84741",
+              "id": "candidate_d4bc74fc-add2-4f81-917c-98cb53a0f80d",
               "score": 1.25,
               "reasons": [
                 "not yet reviewed",
@@ -439,42 +439,42 @@
               ]
             },
             {
-              "id": "candidate_1f326c54-d04b-458c-b75d-6a7c637b56f9",
+              "id": "candidate_0042d081-1cde-4b93-9d04-3c7692c0196c",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_20ddb3cf-9e25-477a-92b0-31624aa89581",
+              "id": "candidate_0d0e38b5-3b8c-4921-bfbf-c6efb61a6b81",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_2199db68-90a3-4286-a9c1-ae1b5889a00b",
+              "id": "candidate_0fdc93d3-9906-4da8-b9e5-2afa8f808492",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_2ca7b164-d537-4a9f-80d0-16839d4d4b19",
+              "id": "candidate_1a92a8e1-5dc0-4058-8ab3-9f8f9dc9b6e2",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_2e57c127-42b1-4b14-9924-b14a6539426d",
+              "id": "candidate_1e9ca427-3ce3-4d0d-b9c1-d5f89a5a0e31",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_47cee4e0-72d3-4189-b989-fed52efca9ec",
+              "id": "candidate_28f52a7f-77b2-4013-809a-66cd5d03eebc",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -482,14 +482,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_55826b12-7620-4d3b-9316-e06750ae4c43",
-            "candidate_79dfa9af-6e8d-4937-9afc-3d2681d84741",
-            "candidate_1f326c54-d04b-458c-b75d-6a7c637b56f9",
-            "candidate_20ddb3cf-9e25-477a-92b0-31624aa89581",
-            "candidate_2199db68-90a3-4286-a9c1-ae1b5889a00b",
-            "candidate_2ca7b164-d537-4a9f-80d0-16839d4d4b19",
-            "candidate_2e57c127-42b1-4b14-9924-b14a6539426d",
-            "candidate_47cee4e0-72d3-4189-b989-fed52efca9ec"
+            "candidate_be94fd9a-4f66-4b28-9009-4c36fe49416a",
+            "candidate_d4bc74fc-add2-4f81-917c-98cb53a0f80d",
+            "candidate_0042d081-1cde-4b93-9d04-3c7692c0196c",
+            "candidate_0d0e38b5-3b8c-4921-bfbf-c6efb61a6b81",
+            "candidate_0fdc93d3-9906-4da8-b9e5-2afa8f808492",
+            "candidate_1a92a8e1-5dc0-4058-8ab3-9f8f9dc9b6e2",
+            "candidate_1e9ca427-3ce3-4d0d-b9c1-d5f89a5a0e31",
+            "candidate_28f52a7f-77b2-4013-809a-66cd5d03eebc"
           ]
         }
       },
@@ -526,7 +526,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 574,
+      "detectionMs": 646,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -598,56 +598,56 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_47c4685a-b6e2-4d8b-8868-54fbe2e3aef1",
+              "id": "candidate_0d487b59-b86a-4cd2-b02b-46e303e04ca5",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_5062b2e5-99de-4c84-b5a0-e51aea9c737d",
+              "id": "candidate_0ecacfa6-3b08-4b48-9a19-dacae7bb2592",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_688eb085-79bf-458d-86aa-3c9b03c23617",
+              "id": "candidate_139ffca6-0473-43d6-b967-bd0ec60196f3",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_9f509297-fde4-400a-acd9-117862f1038f",
+              "id": "candidate_158af2f1-b2ae-4169-8860-bafc9f818587",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_a3b36292-7b7f-4dfe-8b35-0ef72a637334",
+              "id": "candidate_2c08a7b9-eecf-4002-ad99-94cf880977f6",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_a513f606-0bba-4ac3-9ebe-2bfef10ea4a1",
+              "id": "candidate_5e00e078-a3c5-436d-9751-8c6d4687745c",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_aec6fa88-1343-44f3-9ce8-f4b61779bfd7",
+              "id": "candidate_76ca87ec-310b-4715-bbec-4f5bf2a07244",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_cccbbdc6-3fe6-492a-8a56-59abee5dd733",
+              "id": "candidate_a2df200d-4363-4b23-974e-3b04f4bbff0a",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -655,14 +655,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_47c4685a-b6e2-4d8b-8868-54fbe2e3aef1",
-            "candidate_5062b2e5-99de-4c84-b5a0-e51aea9c737d",
-            "candidate_688eb085-79bf-458d-86aa-3c9b03c23617",
-            "candidate_9f509297-fde4-400a-acd9-117862f1038f",
-            "candidate_a3b36292-7b7f-4dfe-8b35-0ef72a637334",
-            "candidate_a513f606-0bba-4ac3-9ebe-2bfef10ea4a1",
-            "candidate_aec6fa88-1343-44f3-9ce8-f4b61779bfd7",
-            "candidate_cccbbdc6-3fe6-492a-8a56-59abee5dd733"
+            "candidate_0d487b59-b86a-4cd2-b02b-46e303e04ca5",
+            "candidate_0ecacfa6-3b08-4b48-9a19-dacae7bb2592",
+            "candidate_139ffca6-0473-43d6-b967-bd0ec60196f3",
+            "candidate_158af2f1-b2ae-4169-8860-bafc9f818587",
+            "candidate_2c08a7b9-eecf-4002-ad99-94cf880977f6",
+            "candidate_5e00e078-a3c5-436d-9751-8c6d4687745c",
+            "candidate_76ca87ec-310b-4715-bbec-4f5bf2a07244",
+            "candidate_a2df200d-4363-4b23-974e-3b04f4bbff0a"
           ]
         }
       },
@@ -692,7 +692,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 516,
+      "detectionMs": 591,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -840,7 +840,7 @@
               "cy": 557.5,
               "w": 14,
               "h": 19,
-              "parentId": "candidate_24176376-e237-49db-b12e-f0ec0438d072"
+              "parentId": "candidate_9e32b248-886d-49b8-9f00-98d6b898739c"
             }
           },
           {
@@ -854,7 +854,7 @@
               "cy": 662.021426959237,
               "w": 19.352792866388484,
               "h": 9.772863559306641,
-              "parentId": "candidate_56d531d8-bab2-4cb3-a0c2-4110249d63dd"
+              "parentId": "candidate_5e996fa0-b4f9-4d75-a515-ca5c91bf8ce6"
             }
           },
           {
@@ -868,7 +868,7 @@
               "cy": 643.0856874664514,
               "w": 11.835478380024028,
               "h": 19.59628742467612,
-              "parentId": "candidate_56d531d8-bab2-4cb3-a0c2-4110249d63dd"
+              "parentId": "candidate_5e996fa0-b4f9-4d75-a515-ca5c91bf8ce6"
             }
           },
           {
@@ -882,7 +882,7 @@
               "cy": 270.49999999999994,
               "w": 19,
               "h": 15.000000000000002,
-              "parentId": "candidate_d3a0aa24-b99b-431b-8910-11f68911b507"
+              "parentId": "candidate_b72dec3c-56aa-4fc1-8bf2-951de86c3b0c"
             }
           },
           {
@@ -896,7 +896,7 @@
               "cy": 230.77569069465005,
               "w": 19.865057560334435,
               "h": 11.808422628223296,
-              "parentId": "candidate_661a7091-b3bb-471b-a754-a733e35ebd25"
+              "parentId": "candidate_89f2dba2-9ca1-4b5b-bdb7-ab8229e7908c"
             }
           },
           {
@@ -910,7 +910,7 @@
               "cy": 443.21751442127214,
               "w": 20.09188309203677,
               "h": 14.4350288425444,
-              "parentId": "candidate_21da701c-3b1f-4044-bf65-eb8cc34d122c"
+              "parentId": "candidate_783f6e30-c413-4132-a363-316127aa1b52"
             }
           },
           {
@@ -924,7 +924,7 @@
               "cy": 586.5169289985972,
               "w": 20.104930503480887,
               "h": 12.010684444113396,
-              "parentId": "candidate_24176376-e237-49db-b12e-f0ec0438d072"
+              "parentId": "candidate_9e32b248-886d-49b8-9f00-98d6b898739c"
             }
           },
           {
@@ -938,7 +938,7 @@
               "cy": 217.49999999999997,
               "w": 18,
               "h": 14.000000000000002,
-              "parentId": "candidate_d3a0aa24-b99b-431b-8910-11f68911b507"
+              "parentId": "candidate_b72dec3c-56aa-4fc1-8bf2-951de86c3b0c"
             }
           },
           {
@@ -952,7 +952,7 @@
               "cy": 733.5,
               "w": 14.999999999999998,
               "h": 19,
-              "parentId": "candidate_0ca0f3d7-606c-4824-a040-2627685750b0"
+              "parentId": "candidate_e4aea6f9-5e4d-4aa9-88de-deaa445f9607"
             }
           },
           {
@@ -966,7 +966,7 @@
               "cy": 227.21797595639708,
               "w": 19.888526193876032,
               "h": 10.13668343377458,
-              "parentId": "candidate_661a7091-b3bb-471b-a754-a733e35ebd25"
+              "parentId": "candidate_89f2dba2-9ca1-4b5b-bdb7-ab8229e7908c"
             }
           },
           {
@@ -980,7 +980,7 @@
               "cy": 518.0087761116908,
               "w": 19.692148711216305,
               "h": 11.981331477341257,
-              "parentId": "candidate_24176376-e237-49db-b12e-f0ec0438d072"
+              "parentId": "candidate_9e32b248-886d-49b8-9f00-98d6b898739c"
             }
           },
           {
@@ -994,7 +994,7 @@
               "cy": 451.36369356537614,
               "w": 14.51855881099965,
               "h": 20.170197900547407,
-              "parentId": "candidate_21da701c-3b1f-4044-bf65-eb8cc34d122c"
+              "parentId": "candidate_783f6e30-c413-4132-a363-316127aa1b52"
             }
           },
           {
@@ -1008,7 +1008,7 @@
               "cy": 216.5,
               "w": 18,
               "h": 13,
-              "parentId": "candidate_7e8ada2f-30df-46aa-85cf-21ef3b0cbc3b"
+              "parentId": "candidate_c935f5aa-76c4-4064-84ba-eb53e0db8739"
             }
           },
           {
@@ -1022,7 +1022,7 @@
               "cy": 514.5116864293267,
               "w": 19.664102265187694,
               "h": 10.129531569065648,
-              "parentId": "candidate_24176376-e237-49db-b12e-f0ec0438d072"
+              "parentId": "candidate_9e32b248-886d-49b8-9f00-98d6b898739c"
             }
           },
           {
@@ -1036,7 +1036,7 @@
               "cy": 492.96092780990955,
               "w": 12.107540996855477,
               "h": 20.311555536113588,
-              "parentId": "candidate_21da701c-3b1f-4044-bf65-eb8cc34d122c"
+              "parentId": "candidate_783f6e30-c413-4132-a363-316127aa1b52"
             }
           },
           {
@@ -1050,7 +1050,7 @@
               "cy": 731.5000000000001,
               "w": 16,
               "h": 18,
-              "parentId": "candidate_a4eae921-877b-4054-89a7-4ef183bd750b"
+              "parentId": "candidate_5ef4911a-2d7d-4a15-a63e-955b94774cb6"
             }
           },
           {
@@ -1064,7 +1064,7 @@
               "cy": 602.2785923634146,
               "w": 14.414043871307685,
               "h": 19.796318392277215,
-              "parentId": "candidate_56d531d8-bab2-4cb3-a0c2-4110249d63dd"
+              "parentId": "candidate_5e996fa0-b4f9-4d75-a515-ca5c91bf8ce6"
             }
           },
           {
@@ -1078,7 +1078,7 @@
               "cy": 270.49999999999994,
               "w": 20,
               "h": 15.999999999999998,
-              "parentId": "candidate_7e8ada2f-30df-46aa-85cf-21ef3b0cbc3b"
+              "parentId": "candidate_c935f5aa-76c4-4064-84ba-eb53e0db8739"
             }
           },
           {
@@ -1092,7 +1092,7 @@
               "cy": 263.6570023109722,
               "w": 11.490301063899096,
               "h": 20.416451177213332,
-              "parentId": "candidate_661a7091-b3bb-471b-a754-a733e35ebd25"
+              "parentId": "candidate_89f2dba2-9ca1-4b5b-bdb7-ab8229e7908c"
             }
           },
           {
@@ -1106,7 +1106,7 @@
               "cy": 597.4587093915312,
               "w": 14.25410089052747,
               "h": 20.006219820367505,
-              "parentId": "candidate_56d531d8-bab2-4cb3-a0c2-4110249d63dd"
+              "parentId": "candidate_5e996fa0-b4f9-4d75-a515-ca5c91bf8ce6"
             }
           },
           {
@@ -1120,7 +1120,7 @@
               "cy": 729.5,
               "w": 16,
               "h": 19,
-              "parentId": "candidate_28632dca-281b-4491-8a17-5ff402bcc90c"
+              "parentId": "candidate_9a180bcc-4f2e-479d-81d6-f0e9c061a806"
             }
           },
           {
@@ -1134,7 +1134,7 @@
               "cy": 731.5,
               "w": 14.999999999999998,
               "h": 20,
-              "parentId": "candidate_a4eae921-877b-4054-89a7-4ef183bd750b"
+              "parentId": "candidate_5ef4911a-2d7d-4a15-a63e-955b94774cb6"
             }
           },
           {
@@ -1148,7 +1148,7 @@
               "cy": 504.61402088459914,
               "w": 19.472287484975027,
               "h": 11.378041425607478,
-              "parentId": "candidate_21da701c-3b1f-4044-bf65-eb8cc34d122c"
+              "parentId": "candidate_783f6e30-c413-4132-a363-316127aa1b52"
             }
           },
           {
@@ -1162,7 +1162,7 @@
               "cy": 654.605122739741,
               "w": 19.433594832989797,
               "h": 10.734896950324698,
-              "parentId": "candidate_56d531d8-bab2-4cb3-a0c2-4110249d63dd"
+              "parentId": "candidate_5e996fa0-b4f9-4d75-a515-ca5c91bf8ce6"
             }
           },
           {
@@ -1176,7 +1176,7 @@
               "cy": 551.1966729354809,
               "w": 11.186791607623718,
               "h": 20.102115567995384,
-              "parentId": "candidate_24176376-e237-49db-b12e-f0ec0438d072"
+              "parentId": "candidate_9e32b248-886d-49b8-9f00-98d6b898739c"
             }
           },
           {
@@ -1190,7 +1190,7 @@
               "cy": 210.50000000000003,
               "w": 35,
               "h": 29,
-              "parentId": "candidate_d30d5f37-0712-418f-ac9a-2f73dc4517ee"
+              "parentId": "candidate_1c4303d9-d60e-47de-89cd-2b901e038e3a"
             }
           },
           {
@@ -1204,7 +1204,7 @@
               "cy": 114.5,
               "w": 34.00000000000001,
               "h": 31.999999999999996,
-              "parentId": "candidate_963011c0-eac7-4a88-846f-2d9a2232322f"
+              "parentId": "candidate_79aa3499-052d-40cf-ba4b-cdf4057a0a24"
             }
           },
           {
@@ -1218,7 +1218,7 @@
               "cy": 210.50000000000003,
               "w": 34.00000000000001,
               "h": 31,
-              "parentId": "candidate_9fe7f37b-bda0-45eb-a37f-4f10cb74b1f5"
+              "parentId": "candidate_57688f65-3817-4d54-8708-9028bcdb7e25"
             }
           },
           {
@@ -1232,7 +1232,7 @@
               "cy": 216.5,
               "w": 34.00000000000001,
               "h": 31,
-              "parentId": "candidate_70a90d42-9019-4ece-a7cc-4c473b89d874"
+              "parentId": "candidate_1e71a3d2-850d-41c0-84d7-4091a43d1e1c"
             }
           },
           {
@@ -1246,7 +1246,7 @@
               "cy": 158.5,
               "w": 34.00000000000001,
               "h": 31.999999999999996,
-              "parentId": "candidate_7fe0d217-33ed-46f2-b75a-cd5970c19fc1"
+              "parentId": "candidate_2bc75a22-54a5-48e5-985c-be9c23c46a37"
             }
           },
           {
@@ -1260,7 +1260,7 @@
               "cy": 168.5,
               "w": 34.00000000000001,
               "h": 31.999999999999996,
-              "parentId": "candidate_612959e5-a52d-4408-9f8c-8da20ff9656f"
+              "parentId": "candidate_aa4dda24-b789-4228-a2f5-d09d3cc4c38e"
             }
           },
           {
@@ -1274,7 +1274,7 @@
               "cy": 445.49999999999994,
               "w": 36,
               "h": 33,
-              "parentId": "candidate_01c4d711-278b-449a-83d5-c756d505e177"
+              "parentId": "candidate_4a19673c-c79c-4e4f-aaee-dc8b46f08f50"
             }
           },
           {
@@ -1288,7 +1288,7 @@
               "cy": 509.5,
               "w": 31.000000000000004,
               "h": 37,
-              "parentId": "candidate_3a9e3db0-9b43-4bd2-b044-d8c12860bca1"
+              "parentId": "candidate_a3a25da5-d251-46da-9917-dbf0b2da14e4"
             }
           },
           {
@@ -1302,7 +1302,7 @@
               "cy": 158.5,
               "w": 34.00000000000001,
               "h": 31.999999999999996,
-              "parentId": "candidate_715cc604-8a7e-45d6-8733-ccfea147bd33"
+              "parentId": "candidate_21d2f31d-82fd-46f0-8cb0-a1b0aa71387b"
             }
           },
           {
@@ -1316,7 +1316,7 @@
               "cy": 116.50000000000001,
               "w": 34.00000000000001,
               "h": 33,
-              "parentId": "candidate_3cb54101-19cb-4602-83da-670fdddf4593"
+              "parentId": "candidate_c702a2dc-acac-4eaf-a4c6-c2ecd3ac53e7"
             }
           },
           {
@@ -1330,7 +1330,7 @@
               "cy": 358.5,
               "w": 36,
               "h": 31.999999999999996,
-              "parentId": "candidate_4209458b-c931-4b11-97da-33616bdc392f"
+              "parentId": "candidate_d0525129-8240-4372-baf3-9b9d7f967ede"
             }
           },
           {
@@ -1344,7 +1344,7 @@
               "cy": 355.49999999999994,
               "w": 36,
               "h": 33,
-              "parentId": "candidate_4209458b-c931-4b11-97da-33616bdc392f"
+              "parentId": "candidate_d0525129-8240-4372-baf3-9b9d7f967ede"
             }
           },
           {
@@ -1358,7 +1358,7 @@
               "cy": 487.49999999999994,
               "w": 36,
               "h": 33,
-              "parentId": "candidate_41f470ab-3d42-4d7a-93c3-06835b1dde0e"
+              "parentId": "candidate_6b3915ed-f19a-4778-9f57-42536d03e259"
             }
           },
           {
@@ -1372,7 +1372,7 @@
               "cy": 420.50000000000006,
               "w": 32,
               "h": 37,
-              "parentId": "candidate_46461347-9c07-4923-9bae-7c0657b86ddf"
+              "parentId": "candidate_8174276e-c163-4a78-86e7-577d7eb972fb"
             }
           },
           {
@@ -1386,7 +1386,7 @@
               "cy": 358.5,
               "w": 36,
               "h": 31.999999999999996,
-              "parentId": "candidate_55287982-b146-46ab-82a3-b7f4b1763bdf"
+              "parentId": "candidate_bf4de1bb-e642-4dcc-94ce-6550825a170c"
             }
           },
           {
@@ -1400,7 +1400,7 @@
               "cy": 510.49999999999994,
               "w": 32,
               "h": 37,
-              "parentId": "candidate_ce4fe6fb-17bf-4526-b68d-07e83393ad40"
+              "parentId": "candidate_3b89a2a9-4b1f-4160-a0ea-0b5bd44ab92a"
             }
           },
           {
@@ -1414,7 +1414,7 @@
               "cy": 420.50000000000006,
               "w": 32,
               "h": 37,
-              "parentId": "candidate_ce4fe6fb-17bf-4526-b68d-07e83393ad40"
+              "parentId": "candidate_3b89a2a9-4b1f-4160-a0ea-0b5bd44ab92a"
             }
           },
           {
@@ -1428,7 +1428,7 @@
               "cy": 420.50000000000006,
               "w": 32,
               "h": 36,
-              "parentId": "candidate_ce4fe6fb-17bf-4526-b68d-07e83393ad40"
+              "parentId": "candidate_3b89a2a9-4b1f-4160-a0ea-0b5bd44ab92a"
             }
           },
           {
@@ -1442,7 +1442,7 @@
               "cy": 375.5,
               "w": 32,
               "h": 38,
-              "parentId": "candidate_3b2218d3-9b00-4689-8d47-ebf7e889d5b1"
+              "parentId": "candidate_e8085c2d-5409-4bdc-8420-7465cf854124"
             }
           },
           {
@@ -1456,7 +1456,7 @@
               "cy": 405.5,
               "w": 37.00000000000001,
               "h": 31.999999999999996,
-              "parentId": "candidate_a093e1fa-9a17-4c74-9e89-bb26fd020417"
+              "parentId": "candidate_bb9188cf-abe3-4008-9afe-cfba6a334f39"
             }
           },
           {
@@ -1470,7 +1470,7 @@
               "cy": 571.5,
               "w": 33,
               "h": 37,
-              "parentId": "candidate_92220ab4-d8ca-427e-ab16-4fbccf8dfa2b"
+              "parentId": "candidate_0e82677b-12ef-4959-a876-b05c8965b899"
             }
           },
           {
@@ -1484,7 +1484,7 @@
               "cy": 420.50000000000006,
               "w": 32,
               "h": 37,
-              "parentId": "candidate_3a9e3db0-9b43-4bd2-b044-d8c12860bca1"
+              "parentId": "candidate_a3a25da5-d251-46da-9917-dbf0b2da14e4"
             }
           },
           {
@@ -1498,7 +1498,7 @@
               "cy": 315.49999999999994,
               "w": 37.00000000000001,
               "h": 31,
-              "parentId": "candidate_8dcd2663-4834-49f1-80d6-5fa772391f60"
+              "parentId": "candidate_e20bd0fc-1dfc-4cf1-8823-1c0127efc345"
             }
           },
           {
@@ -1512,7 +1512,7 @@
               "cy": 111.5,
               "w": 34.00000000000001,
               "h": 33,
-              "parentId": "candidate_a32c78d5-f612-4086-b808-356bfd92888f"
+              "parentId": "candidate_16c88bc8-cee1-4748-8cdb-fb6d2f241c95"
             }
           },
           {
@@ -1526,7 +1526,7 @@
               "cy": 450.5,
               "w": 36,
               "h": 33,
-              "parentId": "candidate_01c4d711-278b-449a-83d5-c756d505e177"
+              "parentId": "candidate_4a19673c-c79c-4e4f-aaee-dc8b46f08f50"
             }
           },
           {
@@ -1540,7 +1540,7 @@
               "cy": 357.49999999999994,
               "w": 36,
               "h": 33,
-              "parentId": "candidate_97369fdc-4054-4895-92c9-fc32466ea7c2"
+              "parentId": "candidate_65a10301-ac72-480d-8372-6a6e6eac9302"
             }
           },
           {
@@ -1554,7 +1554,7 @@
               "cy": 408.5,
               "w": 37.00000000000001,
               "h": 34,
-              "parentId": "candidate_a093e1fa-9a17-4c74-9e89-bb26fd020417"
+              "parentId": "candidate_bb9188cf-abe3-4008-9afe-cfba6a334f39"
             }
           },
           {
@@ -1568,7 +1568,7 @@
               "cy": 571.5,
               "w": 32,
               "h": 36,
-              "parentId": "candidate_0aa1412a-79d3-455c-ab5d-be8771114cbf"
+              "parentId": "candidate_f8dd501a-7e7d-4ef2-9767-4c51c3e50c46"
             }
           },
           {
@@ -1582,7 +1582,7 @@
               "cy": 571.5,
               "w": 33,
               "h": 36,
-              "parentId": "candidate_a1b5059c-64f1-4052-b808-9692f805c7db"
+              "parentId": "candidate_b277df5f-14d0-4beb-8c1f-90b68d98cbbb"
             }
           },
           {
@@ -1596,7 +1596,7 @@
               "cy": 360.50000000000006,
               "w": 36,
               "h": 34,
-              "parentId": "candidate_170c3535-eb53-4af9-8d45-be8d2d7e5efa"
+              "parentId": "candidate_ced56db1-1ae3-4ea5-a353-e9549f845a58"
             }
           },
           {
@@ -1610,7 +1610,7 @@
               "cy": 367.5,
               "w": 37.00000000000001,
               "h": 31.999999999999996,
-              "parentId": "candidate_50ab1b61-9d53-48ae-9777-9b8d8bac4703"
+              "parentId": "candidate_21920167-6dfa-45ac-b14b-3b5f4bce5c33"
             }
           },
           {
@@ -1624,7 +1624,7 @@
               "cy": 400.5,
               "w": 37.00000000000001,
               "h": 31.999999999999996,
-              "parentId": "candidate_55287982-b146-46ab-82a3-b7f4b1763bdf"
+              "parentId": "candidate_bf4de1bb-e642-4dcc-94ce-6550825a170c"
             }
           },
           {
@@ -1638,7 +1638,7 @@
               "cy": 418.5,
               "w": 31.000000000000004,
               "h": 37,
-              "parentId": "candidate_4066dd5e-02bd-4307-bcd6-9285cb1c975e"
+              "parentId": "candidate_137f10db-3c98-40a8-8517-268e79aaa587"
             }
           },
           {
@@ -1652,7 +1652,7 @@
               "cy": 507.5,
               "w": 32,
               "h": 37,
-              "parentId": "candidate_46461347-9c07-4923-9bae-7c0657b86ddf"
+              "parentId": "candidate_8174276e-c163-4a78-86e7-577d7eb972fb"
             }
           },
           {
@@ -1666,7 +1666,7 @@
               "cy": 578.5,
               "w": 31.000000000000004,
               "h": 37,
-              "parentId": "candidate_6c9d5d95-3dd7-40b4-a7d0-d5079054520a"
+              "parentId": "candidate_ffdecc6d-e0bb-4ea7-83c2-e127030680f7"
             }
           },
           {
@@ -1680,7 +1680,7 @@
               "cy": 506.5000000000001,
               "w": 33,
               "h": 36,
-              "parentId": "candidate_f366ef4a-447c-4bd1-8040-d42c525a9357"
+              "parentId": "candidate_f54d4a14-de05-4427-86d8-645eb48f8078"
             }
           },
           {
@@ -1694,7 +1694,7 @@
               "cy": 436.49999999999994,
               "w": 37.00000000000001,
               "h": 31.999999999999996,
-              "parentId": "candidate_7914a0e1-dca3-4dcf-bad5-e2a1b72f589c"
+              "parentId": "candidate_80525d24-dd6e-492a-b21d-1aaae8c93996"
             }
           },
           {
@@ -1708,7 +1708,7 @@
               "cy": 406.49999999999994,
               "w": 36,
               "h": 31.999999999999996,
-              "parentId": "candidate_01c4d711-278b-449a-83d5-c756d505e177"
+              "parentId": "candidate_4a19673c-c79c-4e4f-aaee-dc8b46f08f50"
             }
           },
           {
@@ -1722,7 +1722,7 @@
               "cy": 399.49999999999994,
               "w": 37.00000000000001,
               "h": 33,
-              "parentId": "candidate_4209458b-c931-4b11-97da-33616bdc392f"
+              "parentId": "candidate_d0525129-8240-4372-baf3-9b9d7f967ede"
             }
           },
           {
@@ -1736,7 +1736,7 @@
               "cy": 322.5,
               "w": 37.00000000000001,
               "h": 33,
-              "parentId": "candidate_b793e11a-cc71-4b2b-a779-f692b9995c05"
+              "parentId": "candidate_aad7de4e-1faf-4ace-9ac1-82b04030c651"
             }
           },
           {
@@ -1750,7 +1750,7 @@
               "cy": 363.50000000000006,
               "w": 37.00000000000001,
               "h": 33,
-              "parentId": "candidate_55287982-b146-46ab-82a3-b7f4b1763bdf"
+              "parentId": "candidate_bf4de1bb-e642-4dcc-94ce-6550825a170c"
             }
           },
           {
@@ -1764,7 +1764,7 @@
               "cy": 439.5,
               "w": 37.00000000000001,
               "h": 33,
-              "parentId": "candidate_a8d2e7ff-89c1-4c71-aa85-f84465dd09cc"
+              "parentId": "candidate_52794b02-3bfa-42d1-b1f9-1b0efa730d95"
             }
           },
           {
@@ -1778,7 +1778,7 @@
               "cy": 664.5,
               "w": 33,
               "h": 37,
-              "parentId": "candidate_08bba6e9-cb99-4edd-8abb-bbd42597fc6b"
+              "parentId": "candidate_3a8ade24-6640-4408-8479-aa269496b591"
             }
           },
           {
@@ -1792,7 +1792,7 @@
               "cy": 316.49999999999994,
               "w": 37.00000000000001,
               "h": 33,
-              "parentId": "candidate_b127ebab-90b3-4cfb-b743-6b9e77322422"
+              "parentId": "candidate_5803f584-a922-46dd-aa24-4cef213a0e8d"
             }
           },
           {
@@ -1806,7 +1806,7 @@
               "cy": 487.49999999999994,
               "w": 37.00000000000001,
               "h": 33,
-              "parentId": "candidate_41f470ab-3d42-4d7a-93c3-06835b1dde0e"
+              "parentId": "candidate_6b3915ed-f19a-4778-9f57-42536d03e259"
             }
           },
           {
@@ -1820,7 +1820,7 @@
               "cy": 418.5,
               "w": 33,
               "h": 37,
-              "parentId": "candidate_46461347-9c07-4923-9bae-7c0657b86ddf"
+              "parentId": "candidate_8174276e-c163-4a78-86e7-577d7eb972fb"
             }
           },
           {
@@ -1834,7 +1834,7 @@
               "cy": 419.5,
               "w": 34.00000000000001,
               "h": 38,
-              "parentId": "candidate_f366ef4a-447c-4bd1-8040-d42c525a9357"
+              "parentId": "candidate_f54d4a14-de05-4427-86d8-645eb48f8078"
             }
           },
           {
@@ -1848,7 +1848,7 @@
               "cy": 457.5,
               "w": 33,
               "h": 37,
-              "parentId": "candidate_3b2218d3-9b00-4689-8d47-ebf7e889d5b1"
+              "parentId": "candidate_e8085c2d-5409-4bdc-8420-7465cf854124"
             }
           },
           {
@@ -1862,7 +1862,7 @@
               "cy": 456.5,
               "w": 32,
               "h": 36,
-              "parentId": "candidate_80e76f15-bef8-4a8b-9b07-4aa9a25c5dca"
+              "parentId": "candidate_db5b86b7-3c85-4515-8ae3-795d9e0887d5"
             }
           },
           {
@@ -1876,7 +1876,7 @@
               "cy": 488.5,
               "w": 37.00000000000001,
               "h": 33,
-              "parentId": "candidate_2f5fbd3d-85a1-4db4-aee2-128f99dec68d"
+              "parentId": "candidate_5e7e2055-1832-44de-a5df-eca4e268b75a"
             }
           },
           {
@@ -1890,7 +1890,7 @@
               "cy": 578.5,
               "w": 33,
               "h": 37,
-              "parentId": "candidate_08bba6e9-cb99-4edd-8abb-bbd42597fc6b"
+              "parentId": "candidate_3a8ade24-6640-4408-8479-aa269496b591"
             }
           },
           {
@@ -1904,7 +1904,7 @@
               "cy": 665.5000000000001,
               "w": 33,
               "h": 37,
-              "parentId": "candidate_08bba6e9-cb99-4edd-8abb-bbd42597fc6b"
+              "parentId": "candidate_3a8ade24-6640-4408-8479-aa269496b591"
             }
           },
           {
@@ -1918,7 +1918,7 @@
               "cy": 509.5,
               "w": 34.00000000000001,
               "h": 37,
-              "parentId": "candidate_d39d3830-acda-4379-b462-14d112110260"
+              "parentId": "candidate_88476050-1255-4b1b-b6d0-0e0d91120c3e"
             }
           },
           {
@@ -1932,7 +1932,7 @@
               "cy": 420.50000000000006,
               "w": 33,
               "h": 37,
-              "parentId": "candidate_d39d3830-acda-4379-b462-14d112110260"
+              "parentId": "candidate_88476050-1255-4b1b-b6d0-0e0d91120c3e"
             }
           },
           {
@@ -1946,7 +1946,7 @@
               "cy": 665.5000000000001,
               "w": 33,
               "h": 37,
-              "parentId": "candidate_6c9d5d95-3dd7-40b4-a7d0-d5079054520a"
+              "parentId": "candidate_ffdecc6d-e0bb-4ea7-83c2-e127030680f7"
             }
           },
           {
@@ -1960,7 +1960,7 @@
               "cy": 317.5,
               "w": 37.00000000000001,
               "h": 31.999999999999996,
-              "parentId": "candidate_b127ebab-90b3-4cfb-b743-6b9e77322422"
+              "parentId": "candidate_5803f584-a922-46dd-aa24-4cef213a0e8d"
             }
           },
           {
@@ -1974,7 +1974,7 @@
               "cy": 661.5,
               "w": 31.000000000000004,
               "h": 38,
-              "parentId": "candidate_92220ab4-d8ca-427e-ab16-4fbccf8dfa2b"
+              "parentId": "candidate_0e82677b-12ef-4959-a876-b05c8965b899"
             }
           },
           {
@@ -1988,7 +1988,7 @@
               "cy": 507.5,
               "w": 32,
               "h": 37,
-              "parentId": "candidate_4066dd5e-02bd-4307-bcd6-9285cb1c975e"
+              "parentId": "candidate_137f10db-3c98-40a8-8517-268e79aaa587"
             }
           },
           {
@@ -2002,7 +2002,7 @@
               "cy": 399.50000000000006,
               "w": 36,
               "h": 35,
-              "parentId": "candidate_4209458b-c931-4b11-97da-33616bdc392f"
+              "parentId": "candidate_d0525129-8240-4372-baf3-9b9d7f967ede"
             }
           },
           {
@@ -2016,7 +2016,7 @@
               "cy": 490.50000000000006,
               "w": 37.00000000000001,
               "h": 35,
-              "parentId": "candidate_2f5fbd3d-85a1-4db4-aee2-128f99dec68d"
+              "parentId": "candidate_5e7e2055-1832-44de-a5df-eca4e268b75a"
             }
           },
           {
@@ -2030,7 +2030,7 @@
               "cy": 319.5,
               "w": 37.00000000000001,
               "h": 33,
-              "parentId": "candidate_170c3535-eb53-4af9-8d45-be8d2d7e5efa"
+              "parentId": "candidate_ced56db1-1ae3-4ea5-a353-e9549f845a58"
             }
           },
           {
@@ -2044,7 +2044,7 @@
               "cy": 578.5,
               "w": 34.00000000000001,
               "h": 37,
-              "parentId": "candidate_6a781ce4-6de4-4085-8c82-8da3b5e3a896"
+              "parentId": "candidate_7dc1a3dd-2bed-48b6-b1f5-c8c21e53d28b"
             }
           },
           {
@@ -2058,7 +2058,7 @@
               "cy": 321.50000000000006,
               "w": 37.00000000000001,
               "h": 34,
-              "parentId": "candidate_b793e11a-cc71-4b2b-a779-f692b9995c05"
+              "parentId": "candidate_aad7de4e-1faf-4ace-9ac1-82b04030c651"
             }
           },
           {
@@ -2072,7 +2072,7 @@
               "cy": 578.5,
               "w": 33,
               "h": 37,
-              "parentId": "candidate_aab04b85-46ef-4349-93f9-f0472c65e00a"
+              "parentId": "candidate_c0633527-741d-4bcf-871a-a4315189a874"
             }
           },
           {
@@ -2086,7 +2086,7 @@
               "cy": 400.5,
               "w": 37.00000000000001,
               "h": 34,
-              "parentId": "candidate_97369fdc-4054-4895-92c9-fc32466ea7c2"
+              "parentId": "candidate_65a10301-ac72-480d-8372-6a6e6eac9302"
             }
           },
           {
@@ -2100,7 +2100,7 @@
               "cy": 659.5,
               "w": 33,
               "h": 38,
-              "parentId": "candidate_0aa1412a-79d3-455c-ab5d-be8771114cbf"
+              "parentId": "candidate_f8dd501a-7e7d-4ef2-9767-4c51c3e50c46"
             }
           },
           {
@@ -2114,7 +2114,7 @@
               "cy": 438.49999999999994,
               "w": 37.00000000000001,
               "h": 31.999999999999996,
-              "parentId": "candidate_a8d2e7ff-89c1-4c71-aa85-f84465dd09cc"
+              "parentId": "candidate_52794b02-3bfa-42d1-b1f9-1b0efa730d95"
             }
           },
           {
@@ -2128,7 +2128,7 @@
               "cy": 665.5000000000001,
               "w": 33,
               "h": 37,
-              "parentId": "candidate_aab04b85-46ef-4349-93f9-f0472c65e00a"
+              "parentId": "candidate_c0633527-741d-4bcf-871a-a4315189a874"
             }
           },
           {
@@ -2142,7 +2142,7 @@
               "cy": 660.5000000000001,
               "w": 32,
               "h": 38,
-              "parentId": "candidate_a1b5059c-64f1-4052-b808-9692f805c7db"
+              "parentId": "candidate_b277df5f-14d0-4beb-8c1f-90b68d98cbbb"
             }
           },
           {
@@ -2156,7 +2156,7 @@
               "cy": 449.5,
               "w": 36,
               "h": 35,
-              "parentId": "candidate_a093e1fa-9a17-4c74-9e89-bb26fd020417"
+              "parentId": "candidate_bb9188cf-abe3-4008-9afe-cfba6a334f39"
             }
           },
           {
@@ -2170,7 +2170,7 @@
               "cy": 374.50000000000006,
               "w": 34.00000000000001,
               "h": 37,
-              "parentId": "candidate_80e76f15-bef8-4a8b-9b07-4aa9a25c5dca"
+              "parentId": "candidate_db5b86b7-3c85-4515-8ae3-795d9e0887d5"
             }
           },
           {
@@ -2184,7 +2184,7 @@
               "cy": 449.5,
               "w": 37.00000000000001,
               "h": 33,
-              "parentId": "candidate_a093e1fa-9a17-4c74-9e89-bb26fd020417"
+              "parentId": "candidate_bb9188cf-abe3-4008-9afe-cfba6a334f39"
             }
           },
           {
@@ -2198,7 +2198,7 @@
               "cy": 400.5,
               "w": 37.00000000000001,
               "h": 34,
-              "parentId": "candidate_97369fdc-4054-4895-92c9-fc32466ea7c2"
+              "parentId": "candidate_65a10301-ac72-480d-8372-6a6e6eac9302"
             }
           },
           {
@@ -2212,7 +2212,7 @@
               "cy": 366.5,
               "w": 37.00000000000001,
               "h": 34,
-              "parentId": "candidate_50ab1b61-9d53-48ae-9777-9b8d8bac4703"
+              "parentId": "candidate_21920167-6dfa-45ac-b14b-3b5f4bce5c33"
             }
           },
           {
@@ -2226,7 +2226,7 @@
               "cy": 577.5,
               "w": 33,
               "h": 38,
-              "parentId": "candidate_6c9d5d95-3dd7-40b4-a7d0-d5079054520a"
+              "parentId": "candidate_ffdecc6d-e0bb-4ea7-83c2-e127030680f7"
             }
           },
           {
@@ -2240,7 +2240,7 @@
               "cy": 508.50000000000006,
               "w": 34.00000000000001,
               "h": 38,
-              "parentId": "candidate_46461347-9c07-4923-9bae-7c0657b86ddf"
+              "parentId": "candidate_8174276e-c163-4a78-86e7-577d7eb972fb"
             }
           },
           {
@@ -2254,7 +2254,7 @@
               "cy": 667.5000000000001,
               "w": 34.00000000000001,
               "h": 37,
-              "parentId": "candidate_6a781ce4-6de4-4085-8c82-8da3b5e3a896"
+              "parentId": "candidate_7dc1a3dd-2bed-48b6-b1f5-c8c21e53d28b"
             }
           },
           {
@@ -2268,7 +2268,7 @@
               "cy": 510.49999999999994,
               "w": 33,
               "h": 38,
-              "parentId": "candidate_ce4fe6fb-17bf-4526-b68d-07e83393ad40"
+              "parentId": "candidate_3b89a2a9-4b1f-4160-a0ea-0b5bd44ab92a"
             }
           },
           {
@@ -2282,7 +2282,7 @@
               "cy": 439.5,
               "w": 37.00000000000001,
               "h": 35,
-              "parentId": "candidate_7914a0e1-dca3-4dcf-bad5-e2a1b72f589c"
+              "parentId": "candidate_80525d24-dd6e-492a-b21d-1aaae8c93996"
             }
           },
           {
@@ -2296,7 +2296,7 @@
               "cy": 299.1045252802011,
               "w": 19.507609052108364,
               "h": 11.330013337564878,
-              "parentId": "candidate_661a7091-b3bb-471b-a754-a733e35ebd25"
+              "parentId": "candidate_89f2dba2-9ca1-4b5b-bdb7-ab8229e7908c"
             }
           },
           {
@@ -2310,7 +2310,7 @@
               "cy": 581.5,
               "w": 21.000000000000004,
               "h": 20,
-              "parentId": "candidate_24176376-e237-49db-b12e-f0ec0438d072"
+              "parentId": "candidate_9e32b248-886d-49b8-9f00-98d6b898739c"
             }
           },
           {
@@ -2324,7 +2324,7 @@
               "cy": 270.50000000000006,
               "w": 14.999999999999998,
               "h": 20,
-              "parentId": "candidate_661a7091-b3bb-471b-a754-a733e35ebd25"
+              "parentId": "candidate_89f2dba2-9ca1-4b5b-bdb7-ab8229e7908c"
             }
           }
         ],
@@ -2400,7 +2400,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_49bb4ebf-e8d7-4a7c-b9e9-64e717d8199e",
+              "id": "candidate_6dc8da7f-b8f2-474d-91f9-f3ce057d8533",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -2408,7 +2408,7 @@
               ]
             },
             {
-              "id": "candidate_cf498352-a357-425c-9e88-1224d41749d6",
+              "id": "candidate_f16f8bc7-92d0-473f-9c81-731ed5549ea0",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -2416,42 +2416,42 @@
               ]
             },
             {
-              "id": "candidate_01c4d711-278b-449a-83d5-c756d505e177",
+              "id": "candidate_0e82677b-12ef-4959-a876-b05c8965b899",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_08bba6e9-cb99-4edd-8abb-bbd42597fc6b",
+              "id": "candidate_137f10db-3c98-40a8-8517-268e79aaa587",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0aa1412a-79d3-455c-ab5d-be8771114cbf",
+              "id": "candidate_16c88bc8-cee1-4748-8cdb-fb6d2f241c95",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0ca0f3d7-606c-4824-a040-2627685750b0",
+              "id": "candidate_1c4303d9-d60e-47de-89cd-2b901e038e3a",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_170c3535-eb53-4af9-8d45-be8d2d7e5efa",
+              "id": "candidate_1e71a3d2-850d-41c0-84d7-4091a43d1e1c",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_21da701c-3b1f-4044-bf65-eb8cc34d122c",
+              "id": "candidate_21920167-6dfa-45ac-b14b-3b5f4bce5c33",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -2459,14 +2459,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_49bb4ebf-e8d7-4a7c-b9e9-64e717d8199e",
-            "candidate_cf498352-a357-425c-9e88-1224d41749d6",
-            "candidate_01c4d711-278b-449a-83d5-c756d505e177",
-            "candidate_08bba6e9-cb99-4edd-8abb-bbd42597fc6b",
-            "candidate_0aa1412a-79d3-455c-ab5d-be8771114cbf",
-            "candidate_0ca0f3d7-606c-4824-a040-2627685750b0",
-            "candidate_170c3535-eb53-4af9-8d45-be8d2d7e5efa",
-            "candidate_21da701c-3b1f-4044-bf65-eb8cc34d122c"
+            "candidate_6dc8da7f-b8f2-474d-91f9-f3ce057d8533",
+            "candidate_f16f8bc7-92d0-473f-9c81-731ed5549ea0",
+            "candidate_0e82677b-12ef-4959-a876-b05c8965b899",
+            "candidate_137f10db-3c98-40a8-8517-268e79aaa587",
+            "candidate_16c88bc8-cee1-4748-8cdb-fb6d2f241c95",
+            "candidate_1c4303d9-d60e-47de-89cd-2b901e038e3a",
+            "candidate_1e71a3d2-850d-41c0-84d7-4091a43d1e1c",
+            "candidate_21920167-6dfa-45ac-b14b-3b5f4bce5c33"
           ]
         }
       },
@@ -2547,7 +2547,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 927,
+      "detectionMs": 1091,
       "pageErrors": [],
       "imageShaMatches": true
     }

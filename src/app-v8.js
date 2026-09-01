@@ -3276,6 +3276,40 @@
             chairs:seatIndexes.length,repetition:s.repetition,source:s.c.source,
             shapeBasis:s.shape.basis,sizeAgreement:Number(s.agreement.toFixed(2)),split:!!s.c.wasSplit}};
       });
+      // ---- a table that contains all of its own seats ---------------------
+      //
+      // Measured across eleven renderings (benchmarks/false-positives/): of 424
+      // correctly detected tables, ZERO have every attached seat's centre
+      // inside the table's own box. Of the invented ones, 121 do.
+      //
+      // The reason is physical rather than statistical. Chairs stand AROUND a
+      // table, so their centres fall outside its outline; a box whose seats are
+      // all inside itself is not a table with seats, it is a seat wrapped in a
+      // table. On the renderings where tone separation collapses — `hue-shift`,
+      // `bright-up`, `contrast-high`, `blur` — a chair merges with its
+      // surroundings into one component and the table pass proposes a box
+      // around it. Those four account for 121 of the 176 invented tables of
+      // this kind.
+      //
+      // IT IS NOT DELETED, and that is the whole design. This is one venue, and
+      // a drawing that tucks its chairs under the tables would trip the same
+      // topology honestly. So the candidate is DESELECTED and flagged
+      // low-evidence: it stays on screen, stays reviewable, keeps its seat, and
+      // is simply not committed to the floor plan unless a person says so.
+      // Abstention, not a verdict.
+      let seatsInsideBody=0;
+      for(const c of candidates){
+        const seats=c.chairDetections||[];
+        if(!seats.length)continue;
+        // A nested seat carries its CENTRE in x/y; the table carries a
+        // top-left corner. Comparing them the other way round would make this
+        // fire on almost everything.
+        const inside=seats.filter(ch=>ch.x>c.x&&ch.x<c.x+c.w&&ch.y>c.y&&ch.y<c.y+c.h).length;
+        if(inside!==seats.length)continue;
+        c.selected=false;
+        c.lowEvidence={reason:"seatsInsideBody",seats:seats.length};
+        seatsInsideBody++;
+      }
       // Chairs that belong to no detected table stay first-class objects with
       // their real coordinates instead of being dropped (which is how the old
       // pipeline lost seats). They are never attached to an invented table.
@@ -3517,7 +3551,7 @@
           chairsDetected:chairs.length,chairsAssociated:associatedSeats,chairsUnassociated:chairVenues.length,
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
-          tableModalSeats:modalSeats||null,bistrosTyped,chairsReseated:reseated,
+          tableModalSeats:modalSeats||null,bistrosTyped,chairsReseated:reseated,seatsInsideBody,
           mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,surfaceMinorityFinishKept,secondaryChairFamilies:secondaryFamilyDiagnostics,fragmentSuppression:fragmentDiagnostics,
           textGlyphChairsDropped,mergedRowVenuesDropped:mergedRowVenues.length,columnsDetected:columnComps.length,debugPool,
           sources:diagnosticsSources,chairSourceBreakdown,phaseMs,
@@ -4339,7 +4373,7 @@
   function reviewPoiCardHTML(c){
     if(!c)return"";
     const opt=o=>`<option value="${o.kind}:${o.type}" ${c.kind===o.kind&&c.type===o.type?"selected":""}>${t("teach.type."+o.type)}</option>`;
-    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${visualEvidenceHTML(c)}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
+    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${c.lowEvidence?`<div class="poi-lowevidence"><strong>${t("poi.lowEvidence")}</strong><span>${esc(t("poi.lowEvidence."+c.lowEvidence.reason))}</span></div>`:""}${visualEvidenceHTML(c)}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
   }
   // Real pixel crop of a candidate straight out of the actual imported plan
   // image — a CSS background-position/-size window, never a synthesized or
