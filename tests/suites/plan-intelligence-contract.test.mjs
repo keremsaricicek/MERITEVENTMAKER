@@ -86,6 +86,19 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
       physicalSeats: pi?.planSummary?.physicalSeats ?? null,
       ocrAvailable: !!pi?.providerMetadata?.ocrAvailable,
       tableIds: alive.filter(c => c.kind === "table").map(c => c.id),
+      facts: (pi?.facts || []).map(f => ({ id: f.id, key: f.key, params: f.params,
+        strength: f.strength, provenance: f.provenance, basis: f.basis })),
+      priorities: (pi?.reviewPriorities || []).map(p => ({ key: p.key, rank: p.rank, why: p.why,
+        targets: (p.targetIds || []).length })),
+      factsRendered: (() => {
+        const was = ui.lang, out = { en: [], tr: [] };
+        for (const lang of ["en", "tr"]) {
+          ui.lang = lang;
+          out[lang] = (pi?.facts || []).map(f => t(f.key, f.params));
+        }
+        ui.lang = was;
+        return out;
+      })(),
       reviewGroups: (pi?.reviewGroups || []).map(g => ({
         kind: g.kind, type: g.titleParams?.type, need: g.memberIds.length,
         total: g.totalInFamily, clusters: (g.clusters || []).length,
@@ -310,6 +323,51 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(new Set(zoned).size === zoned.length,
     "and no object is claimed by two zones at once",
     zoned.filter((id, i) => zoned.indexOf(id) !== i).slice(0, 3));
+
+  // ---- the whole-plan interpreter states what it knows, and how surely ----
+  //
+  // These are the product's CLAIMS about a drawing, and a product that states
+  // wrong things confidently is worse than one that says less. Accuracy is
+  // measured against ground truth in benchmarks/interpreter/; what is pinned
+  // here is that no claim can be made without an honest strength, provenance
+  // and the numbers behind it — and that `strong` is not handed out to a claim
+  // whose truth depends on the detector having found everything.
+  checks.ok(result.facts.length > 0, "the plan is interpreted as readable claims", result.facts.length);
+  const STRENGTHS = new Set(["strong", "likely", "uncertain"]);
+  checks.ok(result.facts.every(f => STRENGTHS.has(f.strength)),
+    "every fact carries a declared strength", result.facts.map(f => f.strength));
+  const noProvenance = result.facts.filter(f => !Array.isArray(f.provenance) || !f.provenance.length);
+  checks.ok(noProvenance.length === 0,
+    "every fact names the evidence it rests on", noProvenance.slice(0, 3));
+  checks.ok(result.facts.every(f => f.basis && typeof f.basis === "object"),
+    "and carries the numbers, so nothing has to be taken on trust",
+    result.facts.filter(f => !f.basis).slice(0, 3));
+
+  // A count is bounded by detection recall and can never be certain. This is
+  // the exact defect the fact benchmark caught: "18 tables, most of them
+  // square" was asserted as certain on a plan with 23, because a robust claim
+  // and a recall-bound one were bundled under one strength.
+  const countFacts = result.facts.filter(f => f.key === "fact.tableCount" || f.key === "fact.seats");
+  checks.ok(countFacts.length > 0, "the interpreter states counts at all", countFacts.map(f => f.key));
+  checks.ok(countFacts.every(f => f.strength !== "strong"),
+    "no count is ever stated as certain — a count cannot beat detection recall",
+    countFacts.map(f => ({ key: f.key, strength: f.strength })));
+
+  // Both languages, every fact, with no raw key and no unfilled placeholder.
+  for (const lang of ["en", "tr"]) {
+    const bad = result.factsRendered[lang]
+      .map((s, i) => ({ s, key: result.facts[i].key }))
+      .filter(x => !x.s || /^fact\./.test(x.s) || /\{[a-zA-Z]+\}/.test(x.s));
+    checks.ok(bad.length === 0, `every fact renders in ${lang} with no raw key or placeholder`, bad.slice(0, 3));
+  }
+
+  // Priorities point at real objects and say why, so the UI can take a person
+  // there instead of describing a problem at them.
+  checks.ok(result.priorities.every(p => typeof p.why === "string" && p.why.length),
+    "every review priority says why it matters", result.priorities.slice(0, 3));
+  checks.ok(result.priorities.every((p, i, a) => i === 0 || a[i - 1].rank <= p.rank),
+    "priorities are ordered by what an unresolved item costs",
+    result.priorities.map(p => p.rank));
 
   const reviewedMembers = new Set(result.reviewGroups.flatMap(g => g.memberIds));
   checks.ok(reviewedMembers.size === result.unreviewedLow,

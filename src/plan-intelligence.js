@@ -616,6 +616,175 @@
     return clusters;
   }
 
+  // ---- the whole-plan interpreter -----------------------------------------
+  //
+  // Everything above answers a question about one object, one pair or one
+  // region. This answers questions about the DRAWING: what kind of room is
+  // this, how many people does it seat, what is unresolved, what should a
+  // person look at first. Those are the questions an operator actually opens
+  // the plan with, and until now the product could answer none of them in
+  // words.
+  //
+  // A fact is a claim, and a claim can be wrong, so every one carries:
+  //
+  //   strength    strong | likely | uncertain — and STRONG has to be earned.
+  //               A strong fact is one where the evidence is direct and
+  //               corroborated, so being wrong about it is a serious defect
+  //               and benchmarks/interpreter/ scores it as one. Anything that
+  //               depends on the detector having found everything is at best
+  //               `likely`, because detection recall is not a certainty.
+  //   provenance  which stage produced the evidence, in words.
+  //   basis       the actual numbers, so nothing has to be taken on trust.
+  //
+  // Statements are structured (`key` + `params`), never pre-rendered English,
+  // for the same reason review-group titles are: the domain layer does not
+  // decide what language an operator reads.
+  //
+  // NOTHING HERE COUNTS AS A NEW MEASUREMENT. Every fact restates evidence
+  // some earlier stage already produced. An interpreter that discovered new
+  // objects would be a detector, and this is not one.
+  function buildPlanFacts(candidates, zones, furnitureGroups, capacityAudit, physicalSeats, ocrText) {
+    const alive = candidates.filter(c => c.status !== "rejected");
+    const tables = alive.filter(c => c.kind === "table");
+    const facts = [];
+    const say = (id, key, params, strength, provenance, basis) =>
+      facts.push({ id, key, params, strength, provenance, basis });
+
+    if (!tables.length && !zones.length) {
+      say("empty", "fact.nothingFound", {}, "strong",
+        ["no candidate survived detection"], {});
+      return facts;
+    }
+
+    // -- what kind of room ----------------------------------------------------
+    const byType = tables.reduce((m, t) => (m[t.type] = (m[t.type] || 0) + 1, m), {});
+    const rankedTypes = Object.entries(byType).sort((a, b) => b[1] - a[1]);
+    if (rankedTypes.length) {
+      const [modalType, modalCount] = rankedTypes[0];
+      const share = modalCount / tables.length;
+      // Two claims, deliberately NOT one sentence, because they are not equally
+      // safe and one strength cannot cover both.
+      //
+      // Which type dominates is a property of the DRAWING: a large majority
+      // does not flip because a few tables were missed. How many tables there
+      // are is bounded by detection recall and can never be better than it.
+      //
+      // Measured, when they were one `strong` fact: on the bistro fixture the
+      // detector finds 18 of 23 tables, and the interpreter stated "18 tables,
+      // most of them square" with certainty. The type half was right and the
+      // count half was wrong by 22%, and bundling them made the product
+      // confidently wrong — which is worse than saying less.
+      say("tableTypeMix", "fact.tableTypeMix", { type: modalType, n: modalCount },
+        share >= 0.6 ? "strong" : "likely",
+        ["table type classification, which types on evidence from three separate stages"],
+        { byType, share: +share.toFixed(2) });
+      say("tableCount", "fact.tableCount", { total: tables.length }, "likely",
+        ["tables surviving detection — a count can never be better than recall"],
+        { total: tables.length });
+      for (const [type, n] of rankedTypes.slice(1))
+        say(`has:${type}`, "fact.alsoHas", { n, type }, "likely",
+          ["table type classification"], { count: n });
+    }
+
+    // -- seating --------------------------------------------------------------
+    // Never `strong`: a seat count is exactly as complete as detection recall,
+    // and claiming certainty about it would be the easiest lie in the product.
+    const seatedTables = tables.filter(t => (t.chairDetections || []).length).length;
+    say("seats", "fact.seats", { seats: physicalSeats, tables: tables.length }, "likely",
+      ["chairs detected and associated to tables, plus standalone chairs"],
+      { physicalSeats, seatedTables });
+    const unseated = tables.length - seatedTables;
+    if (unseated > 0)
+      say("unseated", "fact.unseatedTables", { n: unseated }, "likely",
+        ["tables with no chair associated to them"], { unseated });
+
+    // -- logical groups -------------------------------------------------------
+    const multi = (furnitureGroups || []).filter(g => (g.memberIds || []).length > 1);
+    if (multi.length) {
+      const biggest = multi.reduce((a, b) => ((b.memberIds || []).length > (a.memberIds || []).length ? b : a));
+      say("groups", "fact.combinedTables",
+        { groups: multi.length, largest: (biggest.memberIds || []).length }, "likely",
+        ["tables that touch and align, treated as one logical seating unit"],
+        { groups: multi.length, largest: (biggest.memberIds || []).length });
+    }
+
+    // -- zones ----------------------------------------------------------------
+    const zoneTypes = zones.reduce((m, z) => (m[z.type] = (m[z.type] || 0) + 1, m), {});
+    for (const [type, n] of Object.entries(zoneTypes)) {
+      if (type === "unknown") {
+        say("zone:unknown", "fact.undeterminedAreas", { n }, "uncertain",
+          ["areas of the plan that satisfied no zone rule"], { n });
+        continue;
+      }
+      // A stage is an object the detector typed, so its presence is direct.
+      // Dining and bistro areas are clusters, which depend on recall.
+      say(`zone:${type}`, "fact.zone", { n, type }, type === "stage" ? "strong" : "likely",
+        [`semantic zones, ${type} typed on the evidence each zone records`], { n });
+    }
+
+    // -- what the drawing itself says -----------------------------------------
+    const stated = capacityAudit && capacityAudit.drawingStated;
+    if (stated != null) {
+      const diff = stated - physicalSeats;
+      say("capacity", Math.abs(diff) <= Math.max(2, stated * 0.05) ? "fact.capacityAgrees" : "fact.capacityDiffers",
+        { stated, counted: physicalSeats, difference: Math.abs(diff) },
+        // OCR read a number off the page: what the PLAN says is direct
+        // evidence, whatever the detector counted.
+        "strong",
+        ["a pax figure read from the drawing by OCR", "seats counted by detection"],
+        { stated, counted: physicalSeats, difference: diff });
+    } else if (capacityAudit && capacityAudit.ocrAvailable === false) {
+      say("capacityUnknown", "fact.noStatedCapacity", {}, "strong",
+        ["OCR did not run, so the drawing's own pax figure was never read"], {});
+    }
+    const unverified = (capacityAudit && capacityAudit.unverified) || [];
+    if (unverified.length)
+      say("unverifiedSeating", "fact.unverifiedSeating", { n: unverified.length }, "strong",
+        ["seating furniture whose capacity cannot be read off a drawing"],
+        { ids: unverified.map(u => u.id) });
+
+    return facts;
+  }
+
+  // What a person should look at first, and why.
+  //
+  // Ordered by what an unresolved item COSTS, not by how many there are: a
+  // capacity disagreement can invalidate a whole plan, an undetermined area is
+  // a part of the room nobody has named, and a review group is a batch of
+  // ordinary confirmations. Each priority points at real ids so the UI can
+  // take a person straight there rather than describing the problem at them.
+  function buildReviewPriorities(facts, zones, reviewGroups, uncertainQuestions, capacityAudit) {
+    const out = [];
+    const capacity = facts.find(f => f.id === "capacity");
+    if (capacity && capacity.key === "fact.capacityDiffers")
+      out.push({ id: "priority:capacity", key: "priority.capacity", rank: 1,
+        params: { difference: capacity.params.difference },
+        why: "the drawing states a different number of people from the one counted",
+        targetIds: (capacityAudit && capacityAudit.likelyAreaIds) || [] });
+    const unknownZones = zones.filter(z => z.type === "unknown");
+    if (unknownZones.length)
+      out.push({ id: "priority:unknownZones", key: "priority.undeterminedAreas", rank: 2,
+        params: { n: unknownZones.length },
+        why: "part of the room has no determined purpose",
+        targetIds: unknownZones.flatMap(z => z.memberIds) });
+    const unverified = facts.find(f => f.id === "unverifiedSeating");
+    if (unverified)
+      out.push({ id: "priority:unverifiedSeating", key: "priority.unverifiedSeating", rank: 3,
+        params: { n: unverified.params.n },
+        why: "seating whose capacity only a person can supply",
+        targetIds: unverified.basis.ids || [] });
+    for (const q of uncertainQuestions || [])
+      out.push({ id: `priority:${q.id}`, key: "priority.question", rank: 4,
+        params: { n: 1 }, why: "a grouping the detector could not resolve",
+        targetIds: q.memberIds || [] });
+    for (const g of reviewGroups || [])
+      out.push({ id: `priority:${g.id}`, key: "priority.reviewGroup", rank: 5,
+        params: { n: g.memberIds.length, type: g.titleParams && g.titleParams.type },
+        why: "a batch of similar objects to confirm together",
+        targetIds: g.memberIds });
+    return out.sort((a, b) => a.rank - b.rank);
+  }
+
   function buildPlanIntelligence(event, ocrText) {
     const analysis = event.analysis; if (!analysis) return null;
     const tableCandidates = analysis.candidates.filter(c => c.kind === "table");
@@ -627,6 +796,8 @@
     const capacityAudit = buildCapacityAudit(ocrText, physicalSeats, analysis.candidates, furnitureGroups);
     const sceneGraph = buildSceneGraph(analysis.candidates, furnitureGroups);
     const zones = buildZones(analysis.candidates, furnitureGroups, ocrText);
+    const facts = buildPlanFacts(analysis.candidates, zones, furnitureGroups, capacityAudit, physicalSeats, ocrText);
+    const reviewPriorities = buildReviewPriorities(facts, zones, reviewGroups, uncertainQuestions, capacityAudit);
     const venueCandidates = analysis.candidates.filter(c => c.kind === "venue");
     // Which detection path actually ran is reported, not hidden: a chair-first
     // pass (chairs detected from their own colour/size model, then tables
@@ -664,6 +835,12 @@
       // it. A region that satisfies no rule is reported as `unknown` rather
       // than dropped — see buildZones.
       zones,
+      // What the whole drawing says, as claims a person can read and check.
+      // Every fact carries its strength, its provenance and the numbers it
+      // rests on; `strong` has to be earned. See buildPlanFacts.
+      facts,
+      // What to look at first, and why, pointing at real ids.
+      reviewPriorities,
       capacityEstimate: { physical: physicalSeats },
       capacityAudit,
       // Physical objects and logical seating groups are deliberately separate

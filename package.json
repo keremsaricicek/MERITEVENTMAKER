@@ -14,6 +14,7 @@
     "benchmark:teaching": "node benchmarks/teach-ai/measure-teaching.mjs",
     "benchmark:retrieval": "node benchmarks/embedding/retrieval-benchmark.mjs",
     "benchmark:zones": "node benchmarks/zones/measure-zones.mjs",
+    "benchmark:facts": "node benchmarks/interpreter/measure-facts.mjs",
     "perf": "node benchmarks/perf/run-perf.mjs",
     "build:offline": "node scripts/build-offline.mjs",
     "build:offline-full": "node scripts/build-offline-full.mjs",

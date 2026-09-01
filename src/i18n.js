@@ -131,6 +131,48 @@
     "ocr.unavailable": { en: "OCR unavailable in this session ({reason}) — capacity audit skipped, not fabricated.", tr: "Bu oturumda OCR kullanılamıyor ({reason}) — kapasite denetimi atlandı, uydurulmadı." },
 
     "diag.notInstalled": { en: "DOMAIN MODEL NOT INSTALLED", tr: "ALAN MODELİ KURULU DEĞİL" },
+    // ---- Whole-plan interpreter: what the drawing says, in words ----
+    // The domain layer emits a key and parameters, never a sentence, so the
+    // operator's language is decided here and nowhere else.
+    "fact.nothingFound": { en: "Nothing was detected on this plan.", tr: "Bu planda hiçbir şey tespit edilmedi." },
+    "fact.tableTypeMix": { en: "Most of this plan's tables are {type} ({n}).", tr: "Bu planın masalarının çoğu {type} ({n})." },
+    "fact.tableCount": { en: "{total} tables were detected.", tr: "{total} masa tespit edildi." },
+    "fact.alsoHas": { en: "Also {n} {type}.", tr: "Ayrıca {n} {type}." },
+    "fact.seats": { en: "{seats} seats detected across {tables} tables.", tr: "{tables} masada {seats} koltuk tespit edildi." },
+    "fact.unseatedTables": { en: "{n} tables have no seats detected at them.", tr: "{n} masada koltuk tespit edilmedi." },
+    "fact.combinedTables": { en: "{groups} groups of tables are pushed together; the largest joins {largest}.", tr: "{groups} masa grubu birleştirilmiş; en büyüğü {largest} masayı birleştiriyor." },
+    "fact.zone": { en: "{n} {type} area(s).", tr: "{n} {type} alanı." },
+    "fact.undeterminedAreas": { en: "{n} area(s) of the plan could not be identified.", tr: "Planın {n} alanı tanımlanamadı." },
+    "fact.capacityAgrees": { en: "The plan states {stated} pax; {counted} seats were counted — they agree.", tr: "Plan {stated} kişi belirtiyor; {counted} koltuk sayıldı — uyuşuyorlar." },
+    "fact.capacityDiffers": { en: "The plan states {stated} pax but {counted} seats were counted — a difference of {difference}.", tr: "Plan {stated} kişi belirtiyor ancak {counted} koltuk sayıldı — {difference} fark var." },
+    "fact.noStatedCapacity": { en: "The drawing's own capacity figure was not read, because OCR did not run.", tr: "OCR çalışmadığı için çizimin kendi kapasite rakamı okunmadı." },
+    "fact.unverifiedSeating": { en: "{n} piece(s) of seating furniture whose capacity a drawing cannot show.", tr: "Kapasitesi çizimden okunamayan {n} oturma mobilyası." },
+    "fact.strength.strong": { en: "certain", tr: "kesin" },
+    "fact.strength.likely": { en: "likely", tr: "muhtemel" },
+    "fact.strength.uncertain": { en: "uncertain", tr: "belirsiz" },
+    "priority.capacity": { en: "Resolve a capacity difference of {difference}", tr: "{difference} kişilik kapasite farkını çözün" },
+    "priority.undeterminedAreas": { en: "Identify {n} undetermined area(s)", tr: "{n} tanımlanamayan alanı belirleyin" },
+    "priority.unverifiedSeating": { en: "Enter seat counts for {n} piece(s) of seating", tr: "{n} oturma mobilyası için koltuk sayısı girin" },
+    "priority.question": { en: "Answer a grouping question", tr: "Bir gruplama sorusunu yanıtlayın" },
+    "priority.reviewGroup": { en: "Confirm {n} {type} object(s) together", tr: "{n} {type} nesneyi birlikte onaylayın" },
+    // Lower-case type names for use INSIDE a sentence. teach.type.* are card
+    // titles ("Square Table") and read wrong mid-clause; a fact says "most of
+    // this plan's tables are square", and in Turkish "kare" rather than the
+    // untranslated English word.
+    "fact.type.square": { en: "square", tr: "kare" },
+    "fact.type.round": { en: "round", tr: "yuvarlak" },
+    "fact.type.rectangle": { en: "rectangle", tr: "dikdörtgen" },
+    "fact.type.bistro": { en: "bistro", tr: "bistro" },
+    "fact.type.dining": { en: "dining", tr: "yemek" },
+    "fact.type.lounge": { en: "lounge", tr: "lounge" },
+    "fact.type.stage": { en: "stage", tr: "sahne" },
+    "fact.type.entrance": { en: "entrance", tr: "giriş" },
+    "fact.type.unknown": { en: "unidentified", tr: "tanımlanamayan" },
+    "fact.type.chair": { en: "chair", tr: "sandalye" },
+    "explain.title": { en: "What this plan says", tr: "Bu plan ne diyor" },
+    "explain.lookAtFirst": { en: "Look at first", tr: "Önce şuna bakın" },
+    "explain.basedOn": { en: "Based on", tr: "Dayanak" },
+    "action.explainPlan": { en: "Explain this plan", tr: "Bu planı açıkla" },
     "diag.classicalCV": { en: "Classical computer vision is active; no trained Merit model is installed in this browser review.", tr: "Klasik görüntü işleme aktif; bu tarayıcı incelemesinde eğitilmiş bir Merit modeli kurulu değil." },
     // ---- Assisted Detection diagnostics ----
     // These describe what the classical pipeline actually did on this plan.

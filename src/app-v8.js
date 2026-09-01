@@ -4128,9 +4128,47 @@
     const overflow=memberIds.length>max?`<span class="crop-more">+${memberIds.length-max}</span>`:"";
     return`<div class="review-group-crops">${shown}${overflow}</div>`;
   }
+  // What the whole plan says, and what to look at first.
+  //
+  // Every claim shows its strength, because a product that states everything
+  // in the same voice teaches an operator to trust all of it equally — and
+  // some of it is a count bounded by detection recall. `strong` reads as
+  // certain, and the interpreter has to earn it (benchmarks/interpreter/).
+  function explainPlanHTML(event){
+    const pi=event.analysis?.planIntelligence;
+    if(!pi||!(pi.facts||[]).length)return"";
+    const facts=pi.facts,priorities=(pi.reviewPriorities||[]).slice(0,4);
+    // The domain layer names a type in its own vocabulary ("square"); the
+    // sentence it lands in is a different question and belongs here. Without
+    // this the Turkish read "masalarının çoğu square", which is the exact
+    // failure the structured key/params design exists to prevent.
+    // t() returns the KEY when a string is missing, so an unmapped type would
+    // print "fact.type.whatever" on screen. Fall back to the raw type name,
+    // which is at least a word.
+    const typeWord=type=>{
+      const key="fact.type."+type,word=t(key);
+      return word===key?String(type):word;
+    };
+    const say=(key,params)=>t(key,params&&params.type?{...params,type:typeWord(params.type)}:params);
+    // Collapsible, and open by default. The Review Center's job is ACTION —
+    // the groups and questions below — and twelve facts unfolded push them
+    // under the fold. Context that cannot be folded away is chrome.
+    return`<details class="plan-explain" open><summary>${t("explain.title")}</summary>`
+      +`<ul class="plan-explain-facts">${facts.map(f=>
+        `<li class="fact fact-${esc(f.strength)}"><span class="fact-strength">${t("fact.strength."+f.strength)}</span>`
+        +`<span class="fact-text">${esc(say(f.key,f.params))}</span>`
+        // The evidence travels with the claim rather than living in a
+        // diagnostics panel nobody opens.
+        +(f.provenance&&f.provenance.length?`<span class="fact-basis">${t("explain.basedOn")}: ${esc(f.provenance.join("; "))}</span>`:"")
+        +`</li>`).join("")}</ul>`
+      +(priorities.length?`<strong class="plan-explain-next">${t("explain.lookAtFirst")}</strong>`
+        +`<ol class="plan-explain-priorities">${priorities.map(pr=>
+          `<li>${esc(say(pr.key,pr.params))}</li>`).join("")}</ol>`:"")
+      +`</details>`;
+  }
   function reviewCenterPanelHTML(event){
     const pi=event.analysis.planIntelligence,decisions=event.analysis.groupingDecisions||[];
-    return`<aside class="review-center-panel"><div class="review-center-head"><strong>${t("review.center")}</strong>${(ui.correctionUndo||[]).length?`<button class="btn sm quiet" data-review-decision-action="undo-correction" title="${t("review.undoCorrectionTitle")}">${icon("undo")} ${t("review.undoCorrection",{n:(ui.correctionUndo||[]).length})}</button>`:""}${decisions.length?`<button class="btn sm quiet" data-review-decision-action="undo-last" title="${t("diag.undoLastDecisionTitle")}">${icon("undo")} ${t("diag.undoLastDecision",{n:decisions.length})}</button>`:""}<button class="btn icon-only sm" data-review-action="close-review-center">${icon("x")}</button></div><div class="review-center-list">${pi.reviewGroups.map(g=>`<div class="review-group-card"><div class="review-group-title">${esc(reviewGroupTitle(g))}</div>${memberCropsHTML(event,g.memberIds)}<div class="review-group-meta">${g.totalInFamily} ${t("review.similar")} · ${g.consistentCount} ${t("review.consistentOf")} · ${g.memberIds.length} ${t("review.needReview")}</div><div class="review-group-actions"><button class="btn sm primary" data-reviewgroup-action="confirm-family" data-group="${g.id}">${t("action.applyToAll")}</button><button class="btn sm" data-reviewgroup-action="inspect" data-group="${g.id}">${t("action.reviewOutliers")}</button></div></div>`).join("")||`<div class="inspector-empty">${t("review.noGroups")}</div>`}</div>${pi.uncertainQuestions.length?`<div class="review-center-difficult"><strong>${t("review.difficultQuestions")}</strong>${pi.uncertainQuestions.map(q=>`<div class="difficult-q-row"><span>${esc(questionText(q))}</span><button class="btn sm" data-question-action="open" data-question="${q.id}">${t("action.answer")}</button></div>`).join("")}</div>`:""}</aside>`;
+    return`<aside class="review-center-panel"><div class="review-center-head"><strong>${t("review.center")}</strong>${(ui.correctionUndo||[]).length?`<button class="btn sm quiet" data-review-decision-action="undo-correction" title="${t("review.undoCorrectionTitle")}">${icon("undo")} ${t("review.undoCorrection",{n:(ui.correctionUndo||[]).length})}</button>`:""}${decisions.length?`<button class="btn sm quiet" data-review-decision-action="undo-last" title="${t("diag.undoLastDecisionTitle")}">${icon("undo")} ${t("diag.undoLastDecision",{n:decisions.length})}</button>`:""}<button class="btn icon-only sm" data-review-action="close-review-center">${icon("x")}</button></div><div class="review-center-list">${explainPlanHTML(event)}${pi.reviewGroups.map(g=>`<div class="review-group-card"><div class="review-group-title">${esc(reviewGroupTitle(g))}</div>${memberCropsHTML(event,g.memberIds)}<div class="review-group-meta">${g.totalInFamily} ${t("review.similar")} · ${g.consistentCount} ${t("review.consistentOf")} · ${g.memberIds.length} ${t("review.needReview")}</div><div class="review-group-actions"><button class="btn sm primary" data-reviewgroup-action="confirm-family" data-group="${g.id}">${t("action.applyToAll")}</button><button class="btn sm" data-reviewgroup-action="inspect" data-group="${g.id}">${t("action.reviewOutliers")}</button></div></div>`).join("")||`<div class="inspector-empty">${t("review.noGroups")}</div>`}</div>${pi.uncertainQuestions.length?`<div class="review-center-difficult"><strong>${t("review.difficultQuestions")}</strong>${pi.uncertainQuestions.map(q=>`<div class="difficult-q-row"><span>${esc(questionText(q))}</span><button class="btn sm" data-question-action="open" data-question="${q.id}">${t("action.answer")}</button></div>`).join("")}</div>`:""}</aside>`;
   }
   // AI-generated review questions are stored as a semantic {questionType,
   // questionParams} pair (plan-intelligence.js), never a hardcoded English

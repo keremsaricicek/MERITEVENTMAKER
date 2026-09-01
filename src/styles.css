@@ -946,6 +946,29 @@ body{min-width:1180px}
 .review-center-head strong{font-size:13.5px}
 .review-center-head button{background:var(--pi-surface-2);border:1px solid var(--pi-line);color:var(--pi-ink);border-radius:999px}
 .review-center-list{flex:1;overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+/* Whole-plan interpretation, at the top of the Review Center.
+
+   Restrained on purpose: this is an operator reading a room, not a dashboard.
+   The only colour is the strength chip, and it is semantic — an operator has
+   to be able to tell a certainty from an estimate at a glance, because the
+   two carry different consequences. */
+.plan-explain{border:1px solid var(--pi-line);border-radius:var(--pi-radius-sm);background:var(--pi-surface-2);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.plan-explain>summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pi-muted);font-weight:650;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px}
+.plan-explain>summary::-webkit-details-marker{display:none}
+.plan-explain>summary::before{content:"";width:0;height:0;border-left:4px solid currentColor;border-top:3.5px solid transparent;border-bottom:3.5px solid transparent;transition:transform var(--dur-base,.18s) var(--ease,ease)}
+.plan-explain[open]>summary::before{transform:rotate(90deg)}
+.plan-explain>summary:focus-visible{outline:2px solid var(--pi-accent);outline-offset:2px;border-radius:3px}
+.plan-explain>strong{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pi-muted)}
+.plan-explain-next{margin-top:4px}
+.plan-explain-facts,.plan-explain-priorities{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+.plan-explain-priorities{list-style:decimal;padding-left:18px;font-size:12.5px;color:var(--pi-ink)}
+.plan-explain-facts .fact{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;align-items:baseline}
+.fact-text{font-size:12.5px;line-height:1.45;color:var(--pi-ink)}
+.fact-basis{grid-column:2;font-size:10.5px;line-height:1.4;color:var(--pi-muted-2)}
+.fact-strength{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:650;padding:2px 7px;border-radius:var(--pi-radius-pill);border:1px solid transparent;white-space:nowrap}
+.fact-strong .fact-strength{background:var(--pi-accent-soft);border-color:var(--pi-accent);color:var(--pi-accent-strong)}
+.fact-likely .fact-strength{background:var(--pi-surface);border-color:var(--pi-line);color:var(--pi-muted)}
+.fact-uncertain .fact-strength{background:var(--pi-danger-soft);border-color:var(--pi-warn);color:var(--pi-warn)}
 .review-group-card{border:1px solid var(--pi-line);border-radius:var(--pi-radius-sm);padding:12px}
 .review-group-title{font-size:12.5px;font-weight:650;margin-bottom:4px}
 .review-group-meta{font-size:10.5px;color:var(--pi-muted);margin-bottom:9px}
