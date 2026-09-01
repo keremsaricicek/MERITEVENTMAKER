@@ -1,0 +1,294 @@
+{
+ "ranAt": "2026-09-01T11:14:23.352Z",
+ "maxGroups": 8,
+ "variants": [
+  {
+   "variant": "ORIGINAL",
+   "errors": 4,
+   "items": 14,
+   "reviewGroups": 6,
+   "shipped": {
+    "1": 2,
+    "3": 3,
+    "5": 3
+   },
+   "rankOnly": {
+    "1": 2,
+    "3": 3,
+    "5": 3
+   },
+   "randomMean": {
+    "1": 0.61,
+    "3": 1.81,
+    "5": 2.52
+   },
+   "biggestBatch": 15,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 3,
+     "seats": 7,
+     "facts": 2
+    }
+   }
+  },
+  {
+   "variant": "jpeg-q40",
+   "errors": 4,
+   "items": 15,
+   "reviewGroups": 7,
+   "shipped": {
+    "1": 3,
+    "3": 4,
+    "5": 4
+   },
+   "rankOnly": {
+    "1": 3,
+    "3": 4,
+    "5": 4
+   },
+   "randomMean": {
+    "1": 0.6,
+    "3": 1.65,
+    "5": 2.33
+   },
+   "biggestBatch": 27,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 3,
+     "seats": 0,
+     "facts": 2
+    }
+   }
+  },
+  {
+   "variant": "grayscale",
+   "errors": 8,
+   "items": 15,
+   "reviewGroups": 7,
+   "shipped": {
+    "1": 3,
+    "3": 4,
+    "5": 4
+   },
+   "rankOnly": {
+    "1": 1,
+    "3": 4,
+    "5": 4
+   },
+   "randomMean": {
+    "1": 0.87,
+    "3": 2.39,
+    "5": 3.69
+   },
+   "biggestBatch": 35,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 6,
+     "seats": 21,
+     "facts": 3
+    }
+   }
+  },
+  {
+   "variant": "noise",
+   "errors": 16,
+   "items": 16,
+   "reviewGroups": 6,
+   "shipped": {
+    "1": 13,
+    "3": 16,
+    "5": 16
+   },
+   "rankOnly": {
+    "1": 3,
+    "3": 16,
+    "5": 16
+   },
+   "randomMean": {
+    "1": 2.15,
+    "3": 6.69,
+    "5": 9.77
+   },
+   "biggestBatch": 16,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 29,
+     "seats": 42,
+     "facts": 3
+    }
+   }
+  },
+  {
+   "variant": "downscale-70",
+   "errors": 9,
+   "items": 13,
+   "reviewGroups": 6,
+   "shipped": {
+    "1": 1,
+    "3": 3,
+    "5": 3
+   },
+   "rankOnly": {
+    "1": 1,
+    "3": 3,
+    "5": 3
+   },
+   "randomMean": {
+    "1": 0.84,
+    "3": 2.75,
+    "5": 4.16
+   },
+   "biggestBatch": 24,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 4,
+     "seats": 23,
+     "facts": 3
+    }
+   }
+  },
+  {
+   "variant": "rotate-2",
+   "errors": 3,
+   "items": 12,
+   "reviewGroups": 7,
+   "shipped": {
+    "1": 1,
+    "3": 1,
+    "5": 1
+   },
+   "rankOnly": {
+    "1": 1,
+    "3": 1,
+    "5": 1
+   },
+   "randomMean": {
+    "1": 0.39,
+    "3": 1.11,
+    "5": 1.66
+   },
+   "biggestBatch": 29,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 2,
+     "seats": 5,
+     "facts": 2
+    }
+   }
+  },
+  {
+   "variant": "contrast-low",
+   "errors": 7,
+   "items": 12,
+   "reviewGroups": 6,
+   "shipped": {
+    "1": 1,
+    "3": 2,
+    "5": 2
+   },
+   "rankOnly": {
+    "1": 1,
+    "3": 2,
+    "5": 2
+   },
+   "randomMean": {
+    "1": 0.76,
+    "3": 2.19,
+    "5": 3.61
+   },
+   "biggestBatch": 31,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 1,
+     "seats": 2,
+     "facts": 3
+    }
+   }
+  },
+  {
+   "variant": "blur",
+   "errors": 41,
+   "items": 19,
+   "reviewGroups": 4,
+   "shipped": {
+    "1": 1,
+    "3": 28,
+    "5": 37
+   },
+   "rankOnly": {
+    "1": 1,
+    "3": 11,
+    "5": 17
+   },
+   "randomMean": {
+    "1": 4.1,
+    "3": 11.5,
+    "5": 18.66
+   },
+   "biggestBatch": 34,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 1,
+     "seats": 2,
+     "facts": 3
+    }
+   }
+  },
+  {
+   "variant": "jpeg-q20",
+   "errors": 27,
+   "items": 16,
+   "reviewGroups": 6,
+   "shipped": {
+    "1": 17,
+    "3": 19,
+    "5": 21
+   },
+   "rankOnly": {
+    "1": 17,
+    "3": 19,
+    "5": 21
+   },
+   "randomMean": {
+    "1": 3.76,
+    "3": 9.79,
+    "5": 14.43
+   },
+   "biggestBatch": 34,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 32,
+     "seats": 0,
+     "facts": 3
+    }
+   }
+  }
+ ],
+ "deterministic": true,
+ "totals": {
+  "shipped": {
+   "1": 42,
+   "3": 80,
+   "5": 91
+  },
+  "rankOnly": {
+   "1": 30,
+   "3": 63,
+   "5": 71
+  },
+  "randomMean": {
+   "1": 14.08,
+   "3": 39.88,
+   "5": 60.83
+  }
+ }
+}

@@ -983,6 +983,7 @@ body{min-width:1180px}
 .fact-likely .fact-strength{background:var(--pi-surface);border-color:var(--pi-line);color:var(--pi-muted)}
 .fact-uncertain .fact-strength{background:var(--pi-danger-soft);border-color:var(--pi-warn);color:var(--pi-warn)}
 .fact-downgraded{grid-column:2;font-size:10px;color:var(--pi-warn)}
+.priority-impact{display:block;font-size:10px;color:var(--pi-muted-2)}
 /* Where two stages of the analysis cannot both be right. Above the facts, and
    carrying the only real colour in this panel: a claim and the reason to doubt
    it are useless in that order. Restrained -- a left rule and one label, not a

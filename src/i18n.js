@@ -251,6 +251,12 @@
     "fact.type.chair": { en: "chair", tr: "sandalye" },
     "explain.title": { en: "What this plan says", tr: "Bu plan ne diyor" },
     "explain.lookAtFirst": { en: "Look at first", tr: "Önce şuna bakın" },
+    // What one answer settles. Shown next to the item so the ordering is
+    // legible rather than something the operator has to take on trust — the
+    // queue is measured on exactly this (benchmarks/review-order/).
+    "explain.settles": { en: "settles {objects} object(s)", tr: "{objects} nesneyi çözer" },
+    "explain.settlesSeats": { en: "settles {objects} object(s), {seats} seat(s)", tr: "{objects} nesneyi, {seats} koltuğu çözer" },
+    "explain.settlesFacts": { en: "settles {objects} object(s) and {facts} disputed claim(s)", tr: "{objects} nesneyi ve tartışmalı {facts} ifadeyi çözer" },
     "explain.basedOn": { en: "Based on", tr: "Dayanak" },
     // Where each claim's evidence came from. Shown next to the claim on the
     // review screen, so it is operator-facing text and belongs here rather than

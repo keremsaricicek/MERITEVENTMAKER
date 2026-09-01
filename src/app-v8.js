@@ -4290,6 +4290,14 @@
   // in the same voice teaches an operator to trust all of it equally — and
   // some of it is a count bounded by detection recall. `strong` reads as
   // certain, and the interpreter has to earn it (benchmarks/interpreter/).
+  // The most informative of the three impact quantities, not all three: a
+  // priority line that reads "settles 12 objects, 48 seats and 2 disputed
+  // claims" is a specification, not a reason to click.
+  function impactWords(i){
+    if(i.facts)return t("explain.settlesFacts",{objects:i.objects,facts:i.facts});
+    if(i.seats)return t("explain.settlesSeats",{objects:i.objects,seats:i.seats});
+    return t("explain.settles",{objects:i.objects});
+  }
   function explainPlanHTML(event){
     const pi=event.analysis?.planIntelligence;
     if(!pi||!(pi.facts||[]).length)return"";
@@ -4344,7 +4352,12 @@
         +`</li>`).join("")}</ul>`
       +(priorities.length?`<strong class="plan-explain-next">${t("explain.lookAtFirst")}</strong>`
         +`<ol class="plan-explain-priorities">${priorities.map(pr=>
-          `<li>${esc(say(pr.key,pr.params))}</li>`).join("")}</ol>`:"")
+          `<li>${esc(say(pr.key,pr.params))}`
+          // What this one answer settles, next to the item. The order is
+          // measured on exactly this quantity, so an operator who wants to
+          // work the list differently can see what they are trading away.
+          +(pr.downstreamImpact?.objects?`<span class="priority-impact">${esc(impactWords(pr.downstreamImpact))}</span>`:"")
+          +`</li>`).join("")}</ol>`:"")
       +`</details>`;
   }
   function reviewCenterPanelHTML(event){

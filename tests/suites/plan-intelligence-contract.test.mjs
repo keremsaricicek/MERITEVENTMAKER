@@ -98,7 +98,17 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
         targets: (c.targetIds || []).length, targetIds: c.targetIds || [] })),
       contradictionKinds: pi?.contradictionKinds || [],
       priorities: (pi?.reviewPriorities || []).map(p => ({ key: p.key, rank: p.rank, why: p.why,
-        targets: (p.targetIds || []).length })),
+        targets: (p.targetIds || []).length, impact: p.downstreamImpact, signature: p.signature,
+        buildOrder: p.buildOrder })),
+      prioritiesRendered: (() => {
+        const was = ui.lang, out = { en: [], tr: [] };
+        for (const lang of ["en", "tr"]) {
+          ui.lang = lang;
+          out[lang] = (pi?.reviewPriorities || []).map(p => t(p.key, p.params));
+        }
+        ui.lang = was;
+        return out;
+      })(),
       factsRendered: (() => {
         const was = ui.lang, out = { en: [], tr: [] };
         for (const lang of ["en", "tr"]) {
@@ -476,6 +486,48 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
       .filter(s => !s || /^provenance\./.test(s) || /\{[a-zA-Z]+\}/.test(s));
     checks.ok(badProv.length === 0,
       `every fact's evidence line renders in ${lang} with no raw key or placeholder`, badProv.slice(0, 3));
+  }
+
+  // ---- what one answer settles, and why the order is what it is -----------
+  //
+  // The queue claims an operator's time. Measured in benchmarks/review-order/:
+  // following it reaches three times as many real errors per action as working
+  // at random. These pin the structure that number depends on.
+  const noImpact = result.priorities.filter(p => !p.impact || typeof p.impact.objects !== "number");
+  checks.ok(noImpact.length === 0,
+    "every queue item says how much of the plan one answer settles", noImpact.slice(0, 3).map(p => p.key));
+  const underReach = result.priorities.filter(p => p.impact.objects < p.targets);
+  checks.ok(underReach.length === 0,
+    "an item's reach is never smaller than the objects it points at",
+    underReach.slice(0, 3).map(p => ({ key: p.key, objects: p.impact.objects, targets: p.targets })));
+  const groupPriority = result.priorities.find(p => p.key === "priority.reviewGroup");
+  const biggestGroup = result.reviewGroups.reduce((a, g) => Math.max(a, g.total || 0), 0);
+  checks.ok(!groupPriority || groupPriority.impact.objects > 1 || biggestGroup <= 1,
+    "confirming a family counts as reaching the whole family, not just the flagged members",
+    { impact: groupPriority && groupPriority.impact, biggestFamily: biggestGroup });
+
+  // Candidate ids are regenerated on every analysis, so an order that depends
+  // on them reshuffles the queue when an operator re-analyses the same plan.
+  const idInSignature = result.priorities.filter(p => /candidate_/.test(p.signature || ""));
+  checks.ok(idInSignature.length === 0,
+    "the tiebreak is a geometry signature, never a candidate id", idInSignature.slice(0, 2));
+  const sorted = result.priorities.every((p, i, a) => {
+    if (i === 0) return true;
+    const q = a[i - 1];
+    if (q.rank !== p.rank) return q.rank < p.rank;
+    if (q.impact.facts !== p.impact.facts) return q.impact.facts > p.impact.facts;
+    if (q.impact.objects !== p.impact.objects) return q.impact.objects > p.impact.objects;
+    return true;
+  });
+  checks.ok(sorted,
+    "within a rank, the item that settles more comes first",
+    result.priorities.slice(0, 5).map(p => `${p.rank}:${p.impact.facts}/${p.impact.objects}`));
+
+  for (const lang of ["en", "tr"]) {
+    const bad = result.prioritiesRendered[lang]
+      .filter(s => !s || /^priority\./.test(s) || /\{[a-zA-Z]+\}/.test(s));
+    checks.ok(bad.length === 0,
+      `every queue item renders in ${lang} with no raw key or placeholder`, bad.slice(0, 3));
   }
 
   // A serious disagreement outranks an ordinary batch of confirmations.

@@ -1030,47 +1030,104 @@
   // through in any order; a contradiction is the product telling them it does
   // not know something it appears to know, and it stays wrong until someone
   // looks.
-  function buildReviewPriorities(facts, zones, reviewGroups, uncertainQuestions, capacityAudit, contradictions) {
+  //
+  // Within a rank, order by WHAT ONE ANSWER SETTLES. Every item here costs the
+  // operator roughly the same — read it, look at the objects, decide — so the
+  // only thing that separates them is how much of the plan stops being unknown
+  // afterwards. That is deliberately measured as three plain quantities and
+  // compared lexicographically rather than folded into a weighted score:
+  // "objects × 1 + seats × 0.5 + facts × 3" would be three invented constants
+  // presented as a ranking.
+  //
+  //   facts   — claims on screen that this answer could settle. A wrong
+  //             sentence an operator has already read is the most expensive
+  //             thing on the list.
+  //   objects — how many candidates the answer reaches, including propagation:
+  //             confirming a family of twelve is one decision, not twelve.
+  //   seats   — how many people hang on those objects, since a ten-top and a
+  //             two-top are not the same mistake.
+  //
+  // The tiebreak is a rounded geometry signature, never an id: candidate ids
+  // are regenerated on every analysis, so ordering on them would reshuffle the
+  // queue on a re-run of the identical plan.
+  function buildReviewPriorities(facts, zones, reviewGroups, uncertainQuestions, capacityAudit, contradictions, candidates) {
     const out = [];
+    const byId = new Map((candidates || []).filter(c => c.status !== "rejected").map(c => [c.id, c]));
+    const seatsOf = ids => ids.reduce((n, id) => {
+      const c = byId.get(id);
+      if (!c) return n;
+      const seats = (c.chairDetections || []).length;
+      return n + (seats || (c.kind === "venue" && c.type === "chair" ? 1 : 0));
+    }, 0);
+    const signature = ids => ids.map(id => byId.get(id)).filter(Boolean)
+      .map(c => `${Math.round(c.x)},${Math.round(c.y)}`).sort().join(";");
+    const impact = (targetIds, factCount, reach) => ({
+      objects: Math.max(reach || 0, new Set(targetIds).size),
+      seats: seatsOf(targetIds),
+      facts: factCount || 0,
+    });
+    const push = (item, targetIds, factCount, reach) => {
+      item.targetIds = targetIds;
+      item.downstreamImpact = impact(targetIds, factCount, reach);
+      item.signature = signature(targetIds);
+      // The position this item was built in, before any sorting. Kept so the
+      // ordering can be compared against the one it replaced without a
+      // benchmark having to guess how the list used to be assembled — the
+      // first attempt at that reconstructed the order from the already-sorted
+      // list, which made the two orderings identical by construction and the
+      // comparison meaningless.
+      item.buildOrder = out.length;
+      out.push(item);
+    };
     for (const c of contradictions || [])
-      out.push({ id: `priority:${c.id}`, key: "priority.contradiction",
+      push({ id: `priority:${c.id}`, key: "priority.contradiction",
         rank: c.severity === "high" ? 0 : 2,
         params: { kind: `contradiction.kind.${c.kind}` }, contradictionId: c.id,
         // Developer-facing, and English on purpose: `why` explains the ordering
         // in diagnostics and benchmark output. What an operator reads is `key`.
-        why: `${c.sides[0].from} and ${c.sides[1].from} cannot both be right`,
-        targetIds: c.targetIds || [] });
+        why: `${c.sides[0].from} and ${c.sides[1].from} cannot both be right` },
+        c.targetIds || [], c.affects.length);
     const capacity = facts.find(f => f.id === "capacity");
     // Skipped when the contradiction engine already raised the same
     // disagreement, so the operator is not shown one problem as two.
     const capacityRaised = (contradictions || []).some(c => c.id === "contra:capacity");
     if (capacity && capacity.key === "fact.capacityDiffers" && !capacityRaised)
-      out.push({ id: "priority:capacity", key: "priority.capacity", rank: 1,
+      push({ id: "priority:capacity", key: "priority.capacity", rank: 1,
         params: { difference: capacity.params.difference },
-        why: "the drawing states a different number of people from the one counted",
-        targetIds: (capacityAudit && capacityAudit.likelyAreaIds) || [] });
+        why: "the drawing states a different number of people from the one counted" },
+        (capacityAudit && capacityAudit.likelyAreaIds) || [], 2);
     const unknownZones = zones.filter(z => z.type === "unknown");
     if (unknownZones.length)
-      out.push({ id: "priority:unknownZones", key: "priority.undeterminedAreas", rank: 3,
+      push({ id: "priority:unknownZones", key: "priority.undeterminedAreas", rank: 3,
         params: { n: unknownZones.length },
-        why: "part of the room has no determined purpose",
-        targetIds: unknownZones.flatMap(z => z.memberIds) });
+        why: "part of the room has no determined purpose" },
+        unknownZones.flatMap(z => z.memberIds), 1);
     const unverified = facts.find(f => f.id === "unverifiedSeating");
     if (unverified)
-      out.push({ id: "priority:unverifiedSeating", key: "priority.unverifiedSeating", rank: 4,
+      push({ id: "priority:unverifiedSeating", key: "priority.unverifiedSeating", rank: 4,
         params: { n: unverified.params.n },
-        why: "seating whose capacity only a person can supply",
-        targetIds: unverified.basis.ids || [] });
+        why: "seating whose capacity only a person can supply" },
+        unverified.basis.ids || [], 1);
     for (const q of uncertainQuestions || [])
-      out.push({ id: `priority:${q.id}`, key: "priority.question", rank: 5,
-        params: { n: 1 }, why: "a grouping the detector could not resolve",
-        targetIds: q.memberIds || [] });
+      // A grouping answer reaches every arrangement it repeats across, not only
+      // the one the question shows.
+      push({ id: `priority:${q.id}`, key: "priority.question", rank: 5,
+        params: { n: 1 }, why: "a grouping the detector could not resolve" },
+        q.memberIds || [], 0, (q.memberIds || []).length * (q.coversGroups || 1));
     for (const g of reviewGroups || [])
-      out.push({ id: `priority:${g.id}`, key: "priority.reviewGroup", rank: 6,
+      // Confirming a family is one decision that lands on every member of it,
+      // not only the ones flagged for review — that is what makes it a batch.
+      push({ id: `priority:${g.id}`, key: "priority.reviewGroup", rank: 6,
         params: { n: g.memberIds.length, type: g.titleParams && g.titleParams.type },
-        why: "a batch of similar objects to confirm together",
-        targetIds: g.memberIds });
-    return out.sort((a, b) => a.rank - b.rank);
+        why: "a batch of similar objects to confirm together" },
+        g.memberIds, 0, g.totalInFamily);
+    return out.sort((a, b) =>
+      a.rank - b.rank
+      || b.downstreamImpact.facts - a.downstreamImpact.facts
+      || b.downstreamImpact.objects - a.downstreamImpact.objects
+      || b.downstreamImpact.seats - a.downstreamImpact.seats
+      || (a.signature < b.signature ? -1 : a.signature > b.signature ? 1 : 0)
+      || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
   }
 
   function buildPlanIntelligence(event, ocrText) {
@@ -1093,7 +1150,7 @@
       capacityAudit, physicalSeats, memoryConflicts: analysis.memoryConflicts || [],
     });
     applyContradictions(facts, contradictions);
-    const reviewPriorities = buildReviewPriorities(facts, zones, reviewGroups, uncertainQuestions, capacityAudit, contradictions);
+    const reviewPriorities = buildReviewPriorities(facts, zones, reviewGroups, uncertainQuestions, capacityAudit, contradictions, analysis.candidates);
     const venueCandidates = analysis.candidates.filter(c => c.kind === "venue");
     // Which detection path actually ran is reported, not hidden: a chair-first
     // pass (chairs detected from their own colour/size model, then tables
