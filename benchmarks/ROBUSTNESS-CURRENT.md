@@ -83,8 +83,16 @@ Re-measured on the shipped build: **they are not stale, they are current.**
 But the failure mode says the fix is not a tone-architecture rewrite. Every one
 of those five variants is a **false-positive** problem, and a false-positive
 problem is precisely what a second, independent opinion on "does this crop
-actually look like a table?" is for. That is Phase 2 of this roadmap, arriving
-next, and the matrix above is its before-measurement.
+actually look like a table?" is for. That is Phase 2 of this roadmap, and the
+matrix above is its before-measurement.
+
+**Phase 2 result: the matrix did not move, by design.** Every suppression rule
+built on the learned channel was simulated against ground truth and every one
+also removed real tables on at least one rendering, so detector fusion was
+**NOT PROMOTED**. The channel ships as evidence instead — it flags invented
+tables to the operator without deleting anything, which is why every number
+above is identical after it. Full result and the numbers behind both decisions:
+`benchmarks/embedding/SECOND-OPINION.md`.
 
 So per §7 and §58: **the tone architecture is not being rewritten on this
 evidence.** The evidence points at Phase 2, not back at Phase 1.

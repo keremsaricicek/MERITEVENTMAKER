@@ -910,6 +910,19 @@ body{min-width:1180px}
 .poi-card{position:absolute;right:20px;top:82px;z-index:45;width:260px;background:var(--pi-surface);border:1px solid var(--pi-line);border-radius:var(--pi-radius);box-shadow:var(--pi-shadow-3);padding:15px;animation:popIn var(--dur-base) var(--ease)}
 .poi-memory-note{display:flex;align-items:center;gap:6px;margin-top:9px;padding:7px 9px;border-radius:var(--pi-radius-sm);background:var(--pi-accent-soft);color:var(--pi-accent-strong);font-size:10.5px;font-weight:600}
 .poi-memory-note svg{width:13px;height:13px;flex:none}
+/* The learned encoder's separate opinion. Quiet by default and semantic only
+   when it actually disagrees with the classical pipeline -- it never removes
+   anything, so it must not look like an error state. The tier line is always
+   present because "compared with what?" is the load-bearing half. */
+.poi-visual-note{margin-top:9px;padding:8px 9px;border:1px solid var(--pi-line);
+  border-radius:var(--pi-radius-sm);background:var(--pi-surface-2);font-size:11px;line-height:1.45}
+.poi-visual-note strong{display:block;color:var(--pi-muted-2);font-size:9.5px;font-weight:700;
+  letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px}
+.poi-visual-note span{display:block;color:var(--pi-ink)}
+.poi-visual-note em{display:block;margin-top:3px;color:var(--pi-muted);font-size:10px;font-style:normal}
+.poi-visual-note.weak span{color:var(--pi-muted)}
+.poi-visual-note.disagree{border-color:var(--pi-warn);background:color-mix(in srgb,var(--pi-warn) 8%,transparent)}
+.poi-visual-note.disagree span{color:var(--pi-warn)}
 /* Seating furniture whose capacity a drawing does not state. The note is
    semantic-warn while the count is unknown and settles to muted once the
    operator has verified it -- an admitted unknown reads as something to

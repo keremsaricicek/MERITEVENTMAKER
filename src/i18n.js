@@ -173,6 +173,31 @@
     "explain.lookAtFirst": { en: "Look at first", tr: "Önce şuna bakın" },
     "explain.basedOn": { en: "Based on", tr: "Dayanak" },
     "action.explainPlan": { en: "Explain this plan", tr: "Bu planı açıkla" },
+    // ---- the visual second opinion ----
+    // A SEPARATE answer from the learned encoder, kept in words rather than a
+    // score, because a similarity number is not a probability and must never
+    // be shown as one. It never removes a detection; it only tells the
+    // operator what the appearance channel thinks, and what it was compared
+    // against — the tier matters more than the verdict on a plan where nobody
+    // has confirmed anything yet.
+    "visual.title": { en: "Visual check", tr: "Görsel kontrol" },
+    "visual.strong": { en: "Looks like the other {cls} on this plan.", tr: "Bu plandaki diğer {cls} gibi görünüyor." },
+    "visual.moderate": { en: "Broadly resembles the other {cls} on this plan.", tr: "Bu plandaki diğer {cls} ile genel olarak benziyor." },
+    "visual.uncertain": { en: "Does not clearly resemble anything else on this plan.", tr: "Bu plandaki başka hiçbir şeye net olarak benzemiyor." },
+    "visual.disagree": { en: "Closer to this plan's {other} than to its {cls}.", tr: "{other} ile daha çok benzeşiyor, {cls} ile değil." },
+    // A weak match that is ALSO in the wrong class. Both halves are said,
+    // because "nothing matches well" and "the least bad match is a chair" are
+    // different pieces of information and the second one is often the useful
+    // one on a degraded drawing.
+    "visual.weakDisagree": { en: "Does not clearly resemble anything on this plan; the closest match is among its {other}.", tr: "Bu plandaki hiçbir şeye net olarak benzemiyor; en yakın eşleşme {other} arasında." },
+    "visual.tier.verified": { en: "compared with objects you confirmed", tr: "onayladığınız nesnelerle karşılaştırıldı" },
+    "visual.tier.memory": { en: "compared with objects remembered from this plan", tr: "bu plandan hatırlanan nesnelerle karşılaştırıldı" },
+    "visual.tier.provisional": { en: "compared with this plan's own detections, not with verified objects", tr: "doğrulanmış nesnelerle değil, bu planın kendi tespitleriyle karşılaştırıldı" },
+    "visual.class.table": { en: "tables", tr: "masalar" },
+    "visual.class.chair": { en: "chairs", tr: "sandalyeler" },
+    "visual.class.column": { en: "columns", tr: "kolonlar" },
+    "visual.class.stage": { en: "stages", tr: "sahneler" },
+    "visual.class.other": { en: "objects", tr: "nesneler" },
     "diag.classicalCV": { en: "Classical computer vision is active; no trained Merit model is installed in this browser review.", tr: "Klasik görüntü işleme aktif; bu tarayıcı incelemesinde eğitilmiş bir Merit modeli kurulu değil." },
     // ---- Assisted Detection diagnostics ----
     // These describe what the classical pipeline actually did on this plan.

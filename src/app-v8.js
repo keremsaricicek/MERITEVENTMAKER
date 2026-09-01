@@ -3827,6 +3827,87 @@
     }
     return{reappliedCount,restored,idRemap};
   }
+  // ---- the visual second opinion -------------------------------------------
+  //
+  // The learned encoder answers "does this crop look like the things we know
+  // are real on this plan?" — a question the classical pipeline never asks,
+  // because every stage of it reasons about geometry, size families and
+  // adjacency instead of appearance.
+  //
+  // IT NEVER DELETES A CANDIDATE. That is measured, not cautious:
+  // benchmarks/embedding/measure-separation.mjs simulated six suppression
+  // rules against ground truth on the renderings where the detector invents
+  // most, and every rule that removed a meaningful number of false tables also
+  // removed real ones on at least one rendering. On `jpeg-q20` the channel
+  // inverts outright — real tables score BELOW invented ones — so a rule tuned
+  // on the others deletes real furniture there. A missed table costs an
+  // operator more than an extra one they can reject in a click, so detector
+  // fusion did not earn promotion and is not wired. The opinion is recorded as
+  // evidence for the review queue and the contradiction engine to weigh.
+  //
+  // REFERENCES ARE TIERED and the tier travels with every answer, because
+  // where the references came from is the whole question (§13). A plan on
+  // which nobody has decided anything yet can only compare against the
+  // detector's own better-corroborated guesses, and it says exactly that
+  // rather than presenting the result as verified knowledge.
+  const VISUAL_REF_MIN_AGREEMENT=.6,VISUAL_REF_MIN_CONFIDENCE=.6;
+  function visualClassOf(c){return c.kind==="table"?"table":`${c.kind}:${c.type||"other"}`;}
+  function buildVisualReferences(candidates,memoryByCandidate,seatVectors){
+    const refs=[],qualifiedTables=new Set();
+    for(const c of candidates){
+      const vector=c.visualDescriptor?.vector;
+      if(!vector||c.status==="rejected")continue;
+      const m=memoryByCandidate.get(c.id);
+      let tier=null;
+      if(m){
+        if(m.status==="rejected")continue; // a human said this is not an object; it is not a reference for anything
+        tier=(m.status==="confirmed"||m.manual)?"verified":"memory";
+      }else{
+        // The detector's own guess, admitted only when a DIFFERENT stage of
+        // the pipeline corroborates it: seats found by the chair pass, or a
+        // repeated size family. A candidate whose only support is the same
+        // reasoning we are about to second-guess is not a reference.
+        const corroborated=c.kind==="table"
+          ?(c.chairDetections?.length||0)>0&&(c.evidence?.sizeAgreement||0)>=VISUAL_REF_MIN_AGREEMENT
+          :(c.confidence||0)>=VISUAL_REF_MIN_CONFIDENCE;
+        if(corroborated)tier="provisional";
+      }
+      if(!tier)continue;
+      refs.push({id:c.id,tier,vector,cls:visualClassOf(c)});
+      if(c.kind==="table")qualifiedTables.add(c.id);
+    }
+    // A seat is a reference only if the table it was attached to is one. A
+    // ring of marks around an invented table teaches nothing about chairs.
+    for(const[chairId,rec]of seatVectors||[]){
+      if(!qualifiedTables.has(rec.tableId))continue;
+      refs.push({id:chairId,tier:"provisional",vector:rec.vector,cls:"venue:chair"});
+    }
+    return refs;
+  }
+  function applyVisualSecondOpinion(candidates,memoryByCandidate,seatVectors){
+    const api=globalThis.MeritVisualSecondOpinion;
+    if(!api?.build)return{available:false,reason:"visual second opinion module not loaded"};
+    const refs=buildVisualReferences(candidates,memoryByCandidate,seatVectors);
+    const library=api.build(refs);
+    if(!library.referenceCount)
+      return{available:false,reason:`no class reached ${api.minReferencesPerClass} trusted references`,
+        referencesConsidered:refs.length};
+    const answers=library.assessMany(candidates.map(c=>({
+      id:c.id,vector:c.visualDescriptor?.vector||null,cvClass:visualClassOf(c)})));
+    const agreement={agree:0,disagree:0},strength={strong:0,moderate:0,weak:0,unknown:0};
+    let assessed=0;
+    answers.forEach((a,i)=>{
+      if(!a){delete candidates[i].visualEvidence;return;}
+      candidates[i].visualEvidence=a;assessed++;
+      agreement[a.agreement]=(agreement[a.agreement]||0)+1;
+      strength[a.strength]=(strength[a.strength]||0)+1;
+    });
+    return{available:true,references:library.referenceCount,classes:library.classes,
+      tiers:library.tiers,bestTier:library.bestTier,assessed,agreement,strength,
+      // Recorded so nothing downstream can quietly start treating this as a
+      // filter. Suppression was measured and refused.
+      role:"evidence-only",suppresses:false};
+  }
   // ---- False-positive filtering, real evidence rather than a raised
   // threshold: capacity text ("114 pax seating"), dimension labels, and other
   // printed annotations get picked up by the classical binarization pass the
@@ -3968,6 +4049,23 @@
       const embeddingStartedAt=performance.now();
       for(const c of candidates)c.visualDescriptor=embedder.embed(detection.gray,detection.binary,dw,dh,c);
       for(const c of venues)c.visualDescriptor=embedder.embed(detection.gray,detection.binary,dw,dh,c);
+      // Seats the associator attached to a table are the best-corroborated
+      // chairs on the plan, and they are what lets the second opinion say
+      // "that looks more like a chair than a table" instead of only "that
+      // matches nothing well". Measured: on six of the seven degraded
+      // renderings a false table sits closer to a real chair than to a real
+      // table (benchmarks/embedding/separation.json).
+      //
+      // Their vectors are kept OFF the stored objects and thrown away with
+      // this pass. Persisting ~113 extra 128-float arrays per analysis would
+      // cost real storage for something recomputed on every run. A nested seat
+      // carries its CENTRE in x/y, so the box is converted before cropping.
+      const seatVectors=new Map();
+      for(const c of candidates)for(const ch of c.chairDetections||[]){
+        const v=embedder.embed(detection.gray,detection.binary,dw,dh,
+          {x:ch.x-ch.w/2,y:ch.y-ch.h/2,w:ch.w,h:ch.h});
+        if(v?.vector)seatVectors.set(ch.id,{vector:v.vector,tableId:c.id});
+      }
       const embeddingMs=Math.round(performance.now()-embeddingStartedAt);
       for(const c of [...candidates,...venues])planFromDeskew(c);
       const previous=event.analysis?.candidates||[],signatures=list=>list.map(c=>`${c.kind}:${c.type}:${Math.round(c.x)}:${Math.round(c.y)}`),oldSig=new Set(signatures(previous)),newSig=new Set(signatures([...candidates,...venues]));
@@ -3975,6 +4073,18 @@
       const priorCandidates=event.analysis?.candidates||[],priorDecisions=event.analysis?.groupingDecisions||[];
       const memoryResult=applyPlanMemory(freshCandidates,event.planMemory||[]);
       const allCandidates=[...freshCandidates,...memoryResult.restored];
+      // Which candidate carries which human decision, so the reference tiering
+      // below can tell a confirmed object from the detector's own guess. Run
+      // AFTER plan memory, so a reclassified candidate is referenced under the
+      // class the operator gave it rather than the one the detector guessed.
+      const memoryByCandidate=new Map();
+      for(const m of event.planMemory||[]){
+        const cid=memoryResult.idRemap.get(m.sourceCandidateId);
+        if(cid)memoryByCandidate.set(cid,m);
+      }
+      const secondOpinionStartedAt=performance.now();
+      const secondOpinion=applyVisualSecondOpinion(allCandidates,memoryByCandidate,seatVectors);
+      secondOpinion.ms=Math.round(performance.now()-secondOpinionStartedAt);
       // Grouping decisions are keyed by candidate id, which is regenerated on
       // every analysis pass -- remap them through the same geometry match so
       // a "these are separate tables" answer survives Re-Analyze instead of
@@ -3988,7 +4098,8 @@
         // encoder says so instead of claiming one ran.
         embedding:{id:embedder.id,kind:embedder.kind||"handcrafted-descriptor",trainedModel:!!embedder.trainedModel,
           dimensions:embedder.dimensions||null,embeddingMs,
-          cache:globalThis.MeritPlanEncoder?.cacheStats?.()||null}}};
+          cache:globalThis.MeritPlanEncoder?.cacheStats?.()||null,
+          secondOpinion}}};
       // A complete PlanIntelligenceResult exists from the moment the analysis
       // object does, so the review screen (and anything reading the stored
       // event) never sees an analysis with null provider metadata or a null
@@ -4105,10 +4216,40 @@
     {kind:"venue",type:"stage"},{kind:"venue",type:"bar"},{kind:"venue",type:"entrance"},{kind:"venue",type:"exit"},
     {kind:"venue",type:"column"},{kind:"venue",type:"text"},{kind:"venue",type:"other"},
   ];
+  // The learned encoder's opinion, in words. Deliberately NOT a percentage:
+  // the similarity behind it is graded against this plan's own distribution,
+  // which makes it a visual match strength and not a probability — showing it
+  // as "97% certain" would be a fabricated confidence number.
+  //
+  // The tier is shown next to the verdict every time, never omitted. On a plan
+  // with no operator decisions the comparison is against the detector's own
+  // candidates, and an operator who is not told that would read a machine
+  // agreeing with itself as independent corroboration.
+  function visualClassWord(cls){
+    const key="visual.class."+(cls==="table"?"table":(cls||"").split(":")[1]||"other");
+    const word=t(key);
+    return word===key?t("visual.class.other"):word;
+  }
+  function visualEvidenceHTML(c){
+    const v=c?.visualEvidence;
+    if(!v)return"";
+    // Strength and agreement are independent, so all four combinations get a
+    // sentence rather than the weak ones collapsing into one shrug. Only a
+    // confident disagreement is coloured: the channel deletes nothing, so it
+    // must not read like an error on every uncertain crop.
+    const own=visualClassWord(v.cvClass),other=visualClassWord(v.nearestClass);
+    const weak=v.strength==="weak"||v.strength==="unknown",disagrees=v.agreement==="disagree";
+    const body=weak?(disagrees?t("visual.weakDisagree",{other}):t("visual.uncertain"))
+      :disagrees?t("visual.disagree",{other,cls:own})
+      :t(v.strength==="strong"?"visual.strong":"visual.moderate",{cls:own});
+    return`<div class="poi-visual-note ${disagrees&&!weak?"disagree":weak?"weak":"agree"}">`
+      +`<strong>${t("visual.title")}</strong>`
+      +`<span>${esc(body)}</span><em>${esc(t("visual.tier."+(v.nearestTier||"provisional")))}</em></div>`;
+  }
   function reviewPoiCardHTML(c){
     if(!c)return"";
     const opt=o=>`<option value="${o.kind}:${o.type}" ${c.kind===o.kind&&c.type===o.type?"selected":""}>${t("teach.type."+o.type)}</option>`;
-    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
+    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${visualEvidenceHTML(c)}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
   }
   // Real pixel crop of a candidate straight out of the actual imported plan
   // image — a CSS background-position/-size window, never a synthesized or

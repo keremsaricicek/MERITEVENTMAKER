@@ -157,3 +157,11 @@ same drawing produces the same pixels under new candidate ids.
   fixtures, not four venues. Cross-venue generalization remains **NOT
   VERIFIED**, and a 0.9495 on one venue's held-out objects is not evidence
   about the next venue.
+
+## The second opinion
+
+`npm run benchmark:separation` asks the question this encoder was built to
+answer at detection time: can it tell a real table from an invented one? The
+answer split in two — **not as a filter, yes as evidence** — and both halves,
+with the ground-truth simulations behind them, are in
+[`SECOND-OPINION.md`](SECOND-OPINION.md).

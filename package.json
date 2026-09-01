@@ -13,6 +13,7 @@
     "benchmark:baseline": "node benchmarks/record-baseline.mjs",
     "benchmark:teaching": "node benchmarks/teach-ai/measure-teaching.mjs",
     "benchmark:retrieval": "node benchmarks/embedding/retrieval-benchmark.mjs",
+    "benchmark:separation": "node benchmarks/embedding/measure-separation.mjs",
     "benchmark:zones": "node benchmarks/zones/measure-zones.mjs",
     "benchmark:facts": "node benchmarks/interpreter/measure-facts.mjs",
     "perf": "node benchmarks/perf/run-perf.mjs",

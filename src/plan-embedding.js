@@ -297,6 +297,189 @@
 
   function cacheStats() { return { size: CACHE.size, hits: cacheHits, misses: cacheMisses }; }
 
+  // ---- the visual second opinion -------------------------------------------
+  //
+  // An independent answer to "does this candidate look like the things we know
+  // are real?", computed from the learned encoder and kept SEPARATE from the
+  // classical detector's own reasoning so the two can be compared.
+  //
+  // IT DOES NOT DELETE ANYTHING, and that is a measured decision rather than
+  // caution. benchmarks/embedding/measure-separation.mjs shows the visual
+  // channel separates true tables from invented ones very well in
+  // DISTRIBUTION — on `hue-shift`, 48 of 52 false tables fall below the 10th
+  // percentile of the real ones. But every safe suppression rule was simulated
+  // against ground truth and none earned promotion:
+  //
+  //   rule                          hue-shift   contrast-high   blur   jpeg-q20
+  //   bottom 30% + no seats          1 / 0        2 / 0         1 / 1   7 / 5
+  //   below 0.70 + no seats          3 / 0        5 / 1         1 / 1  11 / 9
+  //                                  (false removed / REAL LOST)
+  //
+  // The false positives on those renderings HAVE seats — the chair associator
+  // attached chairs to them — so a gate that requires the absence of
+  // independent evidence never reaches them. And on `jpeg-q20` the channel
+  // inverts: real tables score BELOW invented ones, so any rule that removes
+  // anything there deletes real tables. A missed table costs an operator more
+  // than a false one, so that trade is refused.
+  //
+  // What it does instead is state its opinion as evidence, for the
+  // contradiction engine and the review queue to weigh against everything else.
+  //
+  // REFERENCES ARE TIERED, and the tier travels with the answer. Nothing is
+  // baked in from one venue: the library is assembled at runtime from what is
+  // actually trustworthy, and a plan with no human decisions yet says so.
+  var REFERENCE_TIERS = ["verified", "memory", "provisional"];
+
+  function cosine(a, b) {
+    var s = 0;
+    for (var i = 0; i < a.length; i++) s += a[i] * b[i];
+    return s;
+  }
+
+  // embed() returns the learned half and the descriptor half CONCATENATED, and
+  // each half is normalised on its own — so the joined vector has norm ~sqrt(2)
+  // and a bare dot product is not a cosine. It stays monotone in the cosine
+  // while every vector has the same norm, which is why the grading came out
+  // right anyway, but it reported similarities above 1 and would silently stop
+  // being a cosine the moment one half is missing. Normalise once, at the
+  // boundary, instead of trusting the caller.
+  function unit(v) {
+    var s = 0, i;
+    for (i = 0; i < v.length; i++) s += v[i] * v[i];
+    if (!(s > 0)) return null;
+    var inv = 1 / Math.sqrt(s), out = new Array(v.length);
+    for (i = 0; i < v.length; i++) out[i] = v[i] * inv;
+    return out;
+  }
+
+  // Similarity is NOT a probability and is never reported as one (§15). It is
+  // graded against the distribution of the plan's OWN matches for the same
+  // class, because what counts as a close match depends on how legible that
+  // rendering is at all: on `jpeg-q20` the true tables themselves only reach a
+  // median of 0.70, so an absolute 0.75 cut would call every real table weak.
+  function gradeStrength(sim, population) {
+    if (sim == null || !population || population.length < MIN_POPULATION) return "unknown";
+    var sorted = population.slice().sort(function (x, y) { return x - y; });
+    var at = function (p) { return sorted[Math.min(sorted.length - 1, Math.floor(p * (sorted.length - 1)))]; };
+    if (sim >= at(0.75)) return "strong";
+    if (sim >= at(0.35)) return "moderate";
+    return "weak";
+  }
+
+  // Below this, a percentile says more about the sample size than about the
+  // object, so the answer is "unknown" rather than a confident-looking grade.
+  var MIN_POPULATION = 8;
+  var MIN_REFERENCES_PER_CLASS = 3;
+
+  function buildSecondOpinion(references) {
+    var byClass = {}, usable = [];
+    for (var i = 0; i < references.length; i++) {
+      var r = references[i];
+      if (!r || !r.vector || !r.cls || REFERENCE_TIERS.indexOf(r.tier) < 0) continue;
+      var u = unit(r.vector);
+      if (!u) continue;
+      var ref = { id: r.id, cls: r.cls, tier: r.tier, vector: u };
+      (byClass[ref.cls] = byClass[ref.cls] || []).push(ref);
+      usable.push(ref);
+    }
+    // A class represented by one or two examples is not a reference library,
+    // it is an anecdote. Drop it rather than let a single odd crop define what
+    // "looks like a column" means.
+    for (var cls in byClass)
+      if (byClass[cls].length < MIN_REFERENCES_PER_CLASS) delete byClass[cls];
+    usable = usable.filter(function (r) { return byClass[r.cls]; });
+
+    var tiers = {};
+    for (var k = 0; k < usable.length; k++) tiers[usable[k].tier] = (tiers[usable[k].tier] || 0) + 1;
+
+    // The nearest reference of every class, EXCLUDING the item itself: a
+    // provisional reference set contains the very candidates being assessed,
+    // and letting one match itself at similarity 1.0 would be the detector
+    // grading its own homework (§13).
+    function nearest(vector, selfId) {
+      var best = null;
+      for (var c in byClass) {
+        var group = byClass[c];
+        for (var j = 0; j < group.length; j++) {
+          if (selfId && group[j].id === selfId) continue;
+          var sim = cosine(vector, group[j].vector);
+          if (!best || sim > best.sim) best = { cls: c, sim: sim, tier: group[j].tier, refId: group[j].id };
+        }
+      }
+      return best;
+    }
+
+    // Two INDEPENDENT axes, the same way planning status and arrival status are
+    // independent in the rest of this product. `strength` says how well this
+    // crop matches anything at all on the plan; `agreement` says whether the
+    // best match belongs to the class the classical pipeline chose. Collapsing
+    // them lost the useful half: gating agreement behind strength hid every
+    // "that is closer to a chair" on exactly the degraded renderings where the
+    // detector invents most (0/6 on `hue-shift` — six invented tables flagged,
+    // no real one touched). Neither axis is ever a probability.
+    function finish(best, cvClass, population) {
+      var strength = gradeStrength(best.sim, population);
+      var agreement = cvClass == null ? null : best.cls === cvClass ? "agree" : "disagree";
+      return {
+        nearestClass: best.cls,
+        nearestTier: best.tier,
+        similarity: Number(best.sim.toFixed(3)),
+        strength: strength,
+        agreement: agreement,
+        cvClass: cvClass || null,
+      };
+    }
+
+    return {
+      classes: Object.keys(byClass),
+      referenceCount: usable.length,
+      tiers: tiers,
+      // The best tier any reference came from, which is how a consumer knows
+      // whether this opinion rests on human decisions or on the detector's own
+      // provisional guesses. It travels with every answer too, as nearestTier.
+      bestTier: REFERENCE_TIERS.filter(function (t) { return tiers[t]; })[0] || null,
+
+      // Single-shot form, for callers that already know the population.
+      assess: function (vector, cvClass, population, selfId) {
+        if (!vector || !usable.length) return null;
+        var q = unit(vector);
+        if (!q) return null;
+        var best = nearest(q, selfId);
+        return best ? finish(best, cvClass, population || []) : null;
+      },
+
+      // Two passes over the same items: find every nearest match, then grade
+      // each one against the distribution of matches for ITS OWN class. A
+      // chair's similarity numbers and a table's are not on the same scale and
+      // must not be pooled.
+      assessMany: function (items) {
+        if (!usable.length) return items.map(function () { return null; });
+        var raw = items.map(function (it) {
+          if (!it || !it.vector) return null;
+          var q = unit(it.vector);
+          return q ? nearest(q, it.id) : null;
+        });
+        var pops = {};
+        for (var a = 0; a < raw.length; a++) {
+          if (!raw[a]) continue;
+          var key = items[a].cvClass || "?";
+          (pops[key] = pops[key] || []).push(raw[a].sim);
+        }
+        return raw.map(function (best, idx) {
+          if (!best) return null;
+          return finish(best, items[idx].cvClass, pops[items[idx].cvClass || "?"] || []);
+        });
+      },
+    };
+  }
+
+  globalThis.MeritVisualSecondOpinion = {
+    build: buildSecondOpinion,
+    tiers: REFERENCE_TIERS,
+    minReferencesPerClass: MIN_REFERENCES_PER_CLASS,
+    minPopulation: MIN_POPULATION,
+  };
+
   globalThis.MeritPlanEncoder = {
     available: !!W,
     weights: W,
