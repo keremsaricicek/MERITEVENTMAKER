@@ -34,6 +34,27 @@ agreed to run.
 Nothing about the recording is shown to the operator while they work. Being
 shown your own speed mid-task is a product decision nobody asked for.
 
+## The one-click report
+
+`Advanced Diagnostics → Session report`, on the review screen. No developer
+console, no URL flag: the person running the test clicks a button and reads a
+page they can copy and send back.
+
+It reports **Import → Confirm**, analysis time, review time, time to first
+action, how many actions were taken and how many landed on the suggested queue,
+whether they started at the top of it, what is still unreviewed, what the
+analysis held back, how many disagreements are still open, and whether the plan
+was confirmed. Then the eight questions below it, on the same page.
+
+It reports what happened and **does not grade it**. There is no baseline for a
+"good" review time, and inventing one would be the overclaiming this product
+refuses everywhere else.
+
+The timings live on the background (import) and the analysis (everything after),
+because both survive the event migration — a `planTimings` field on the event
+itself was silently dropped by `migrateEvent`, which is the kind of thing a test
+that reads the *value* catches and a test that reads the *code* does not.
+
 ## The test a person has to perform
 
 One session, one real plan, one person who does event operations and has not
@@ -43,7 +64,8 @@ explains itself is most of the question.
 Give them the plan and one instruction: *"Get this floor plan into the system
 correctly."* Then stop talking.
 
-Record from `MeritOperatorSessions.summary()` afterwards, plus these by hand:
+Open the session report at the end. It fills in the numbers; these are the
+answers only a person can give, and they are printed on the same page:
 
 | # | question | what to write down |
 |--:|---|---|

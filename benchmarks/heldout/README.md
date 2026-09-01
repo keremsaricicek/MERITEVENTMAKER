@@ -88,3 +88,18 @@ generalization VERIFIED — it makes it MEASURED ONCE.
 benchmark.** The moment it is in the training set, the only chance to see this
 system's honest behaviour on an unseen venue is gone, and it cannot be recovered
 by holding out a third.
+
+## Fail-closed, verified by breaking it
+
+Not asserted from reading the code — the manifest was actually corrupted and the
+harness re-run:
+
+| situation | exit | behaviour |
+|---|--:|---|
+| manifest unreadable, status path | **2** | REFUSED, says the guard cannot read its input |
+| manifest unreadable, run path | **2** | REFUSED before anything is measured |
+| manifest intact, status path | 0 | reports the corpus and NOT VERIFIED |
+| manifest intact, plan already trained on | **1** | REFUSED, naming all three checks that fired |
+
+A missing or malformed manifest is never treated as "safe". The only outcomes
+are a refusal or a measurement.

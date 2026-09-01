@@ -181,6 +181,40 @@
     // The review card's note on an object the analysis held back. It says what
     // was held and why, and that it is still the operator's call — nothing was
     // deleted and the seat is still there.
+    // ---- the operator test report ----
+    // Reachable from Advanced Diagnostics so a person running the usability
+    // test never needs a developer console. It reports what happened and does
+    // not grade it: there is no baseline for a "good" review time, and
+    // inventing one would be the overclaiming this product refuses elsewhere.
+    "op.report": { en: "Session report", tr: "Oturum raporu" },
+    "op.reportTitle": { en: "Import to Confirm", tr: "İçe aktarmadan onaya" },
+    "op.noSession": { en: "No analysis has been run on this event yet.", tr: "Bu etkinlikte henüz bir analiz çalıştırılmadı." },
+    "op.plan": { en: "Plan", tr: "Plan" },
+    "op.importToConfirm": { en: "Import → Confirm", tr: "İçe aktarma → Onay" },
+    "op.analysisTime": { en: "Analysis", tr: "Analiz" },
+    "op.reviewTime": { en: "Review", tr: "İnceleme" },
+    "op.toFirstAction": { en: "To first action", tr: "İlk eyleme kadar" },
+    "op.actions": { en: "Operator actions", tr: "Operatör eylemi" },
+    "op.onQueue": { en: "On the suggested queue", tr: "Önerilen sırada" },
+    "op.startedAtTop": { en: "Started at the top of the queue", tr: "Sıranın başından başladı" },
+    "op.objects": { en: "Objects detected", tr: "Tespit edilen nesne" },
+    "op.unreviewed": { en: "Still unreviewed", tr: "Hâlâ incelenmemiş" },
+    "op.heldBack": { en: "Held back by the analysis", tr: "Analiz tarafından aktarılmadı" },
+    "op.reviewLeft": { en: "Review items left", tr: "Kalan inceleme maddesi" },
+    "op.disagreements": { en: "Open disagreements", tr: "Açık çelişki" },
+    "op.manuallyAdded": { en: "Added by hand", tr: "Elle eklenen" },
+    "op.confirmed": { en: "Plan confirmed", tr: "Plan onaylandı" },
+    "op.yes": { en: "yes", tr: "evet" },
+    "op.no": { en: "no", tr: "hayır" },
+    "op.questions": { en: "Only a person can answer these", tr: "Bunları yalnızca bir kişi yanıtlayabilir" },
+    "op.q.understood": { en: "Did you understand every review question?", tr: "Her inceleme sorusunu anladınız mı?" },
+    "op.q.obviouslyWrong": { en: "Was anything obviously wrong?", tr: "Açıkça yanlış bir şey var mıydı?" },
+    "op.q.missedSomething": { en: "Did it miss something important?", tr: "Önemli bir şeyi atladı mı?" },
+    "op.q.unnecessary": { en: "Did it ask unnecessary questions?", tr: "Gereksiz sorular sordu mu?" },
+    "op.q.teachAI": { en: "Was Teach AI understandable?", tr: "AI'ya Öğret anlaşılır mıydı?" },
+    "op.q.explainUseful": { en: "Was \"What this plan says\" useful?", tr: "\"Bu plan ne diyor\" faydalı mıydı?" },
+    "op.q.slow": { en: "Did anything feel slow?", tr: "Bir şey yavaş hissettirdi mi?" },
+    "op.q.confusing": { en: "Did anything feel confusing or unsafe?", tr: "Bir şey kafa karıştırıcı veya güvensiz hissettirdi mi?" },
     "poi.lowEvidence": { en: "Held back from the floor plan", tr: "Kat planına aktarılmadı" },
     "poi.lowEvidence.seatsInsideBody": { en: "Every seat attached to this object is inside it. A table's seats stand around it, so this is more likely a seat than a table. Nothing was deleted — confirm it to include it.", tr: "Bu nesneye bağlı tüm koltuklar içinde. Bir masanın koltukları etrafında durur, bu yüzden bu bir masadan çok bir koltuk olabilir. Hiçbir şey silinmedi — dahil etmek için onaylayın." },
     "contradiction.severity.high": { en: "serious", tr: "ciddi" },

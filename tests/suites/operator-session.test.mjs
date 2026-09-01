@@ -60,7 +60,12 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   }, "data:image/png;base64," + fs.readFileSync(plan).toString("base64"));
   await page.waitForTimeout(500);
   await click(page, '[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis, null, { timeout: 240000 });
+  // Wait for the analysis to FINISH, not merely to exist. `analysis` is
+  // assigned partway through the pass, so waiting on it alone reads a run that
+  // is still going — and the retrying click helper can start a second one on
+  // top of it. `analysisBusy` is the signal a person waits for too.
+  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy,
+    null, { timeout: 240000 });
   await page.waitForTimeout(600);
 
   // Nothing recorded before anything was done: opening a plan is not a session
@@ -162,6 +167,50 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "time to first and last action are both available", s);
   checks.equal(s.firstActionWasTopOfQueue, true,
     "and whether the operator started where the product pointed", s.firstActionWasTopOfQueue);
+
+  // ---- the one-click report ------------------------------------------------
+  //
+  // OP4: the person running the usability test must be able to finish it
+  // without opening a developer console. So the report is reached by clicking
+  // a real control, and read as rendered text — not from a global.
+  await page.evaluate(() => { ui.operatorReportOpen = false; ui.selectedCandidateId = null; render(); });
+  // The control lives inside Advanced Diagnostics, which is a collapsed
+  // disclosure. That is deliberate — this is test instrumentation, not a
+  // feature the everyday operator needs on screen — so the test opens it the
+  // way a person would rather than setting the flag directly.
+  await click(page, '.planintel-diagnostics > summary');
+  await page.waitForTimeout(200);
+  await click(page, '[data-review-action="session-report"]');
+  await page.waitForTimeout(300);
+  const report = await page.evaluate(() => {
+    const was = ui.lang, out = {};
+    for (const lang of ["en", "tr"]) {
+      ui.lang = lang; render();
+      const n = document.querySelector(".op-report-panel");
+      out[lang] = n ? n.innerText : null;
+    }
+    ui.lang = was; render();
+    return { text: out, api: globalThis.MeritOperatorReport() };
+  });
+  checks.ok(report.text.en && report.text.tr,
+    "the session report opens from a control on the screen, in both languages",
+    { en: !!report.text.en, tr: !!report.text.tr });
+  for (const lang of ["en", "tr"]) {
+    checks.ok(!/\bop\.[a-zA-Z]/.test(report.text[lang]) && !/\{[a-zA-Z]+\}/.test(report.text[lang]),
+      `no raw key or placeholder reaches the tester in ${lang.toUpperCase()}`,
+      (report.text[lang] || "").slice(0, 160));
+  }
+  const api = report.api;
+  checks.require(api, "the report is also readable as data");
+  checks.ok(api.actions.total >= 2, "it counts the actions actually taken", api.actions);
+  checks.equal(api.actions.startedAtTopOfQueue, true,
+    "and whether the operator started where the product pointed", api.actions.startedAtTopOfQueue);
+  checks.ok(typeof api.timings.analysisS === "number" && api.timings.analysisS > 0,
+    "analysis time is measured, not guessed", api.timings);
+  checks.equal(api.confirmed, false,
+    "and it says the plan was not confirmed, because it was not", api.confirmed);
+  checks.ok(api.plan_state.objectsDetected > 0 && api.plan_state.reviewItemsLeft !== null,
+    "it reports what is still unresolved", api.plan_state);
 
   // ---- it stays on the machine --------------------------------------------
   checks.equal(offOrigin.length - beforeActions, 0,
