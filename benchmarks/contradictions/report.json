@@ -1,24 +1,59 @@
 {
- "ranAt": "2026-09-01T11:06:18.853Z",
+ "ranAt": "2026-09-01T13:31:31.965Z",
  "variants": [
   {
    "variant": "ORIGINAL",
    "tables": 50,
    "falsePositives": 4,
    "baselineFalseRate": 0.08,
-   "contradictions": 3,
+   "contradictions": 4,
    "kinds": [
     "COUNT",
     "TYPE",
     "RELATIONSHIP"
    ],
-   "pointedAt": 7,
-   "pointedAtFalse": 3,
-   "targetedPrecision": 0.4286,
-   "lift": 5.357,
+   "pointedAt": 8,
+   "pointedAtFalse": 4,
+   "targetedPrecision": 0.5,
+   "lift": 6.25,
    "severities": {
-    "medium": 3
+    "medium": 3,
+    "high": 1
    },
+   "perContradiction": [
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 2,
+     "ofThoseFalse": 2,
+     "precision": 1
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 3,
+     "ofThoseFalse": 2,
+     "precision": 0.6667
+    },
+    {
+     "id": "contra:mixedGroupTypes",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 4,
+     "ofThoseFalse": 1,
+     "precision": 0.25
+    },
+    {
+     "id": "contra:seatsInsideBody",
+     "kind": "RELATIONSHIP",
+     "severity": "high",
+     "pointedAt": 1,
+     "ofThoseFalse": 1,
+     "precision": 1
+    }
+   ],
    "downgradedFacts": [
     {
      "id": "tableCount",
@@ -27,11 +62,6 @@
     },
     {
      "id": "has:rectangle",
-     "from": "likely",
-     "to": "uncertain"
-    },
-    {
-     "id": "unseated",
      "from": "likely",
      "to": "uncertain"
     }
@@ -45,12 +75,14 @@
     "en": [
      "2 table(s) have no seat while 4 seat(s) have no table.",
      "3 object(s) called tables do not look like this plan's tables.",
-     "1 seating unit(s) are made of tables typed as different kinds."
+     "1 seating unit(s) are made of tables typed as different kinds.",
+     "1 object(s) contain every seat attached to them, which a table does not."
     ],
     "tr": [
      "2 masada hiç koltuk yok, buna karşılık 4 koltuğun masası yok.",
      "Masa denen 3 nesne bu planın masalarına benzemiyor.",
-     "1 oturma biriminde farklı türde sınıflandırılmış masalar var."
+     "1 oturma biriminde farklı türde sınıflandırılmış masalar var.",
+     "1 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz."
     ]
    }
   },
@@ -59,7 +91,7 @@
    "tables": 50,
    "falsePositives": 4,
    "baselineFalseRate": 0.08,
-   "contradictions": 3,
+   "contradictions": 4,
    "kinds": [
     "COUNT",
     "TYPE",
@@ -70,8 +102,43 @@
    "targetedPrecision": 0.5,
    "lift": 6.25,
    "severities": {
-    "medium": 3
+    "medium": 3,
+    "high": 1
    },
+   "perContradiction": [
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 3,
+     "ofThoseFalse": 3,
+     "precision": 1
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 1,
+     "ofThoseFalse": 1,
+     "precision": 1
+    },
+    {
+     "id": "contra:mixedGroupTypes",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 5,
+     "ofThoseFalse": 1,
+     "precision": 0.2
+    },
+    {
+     "id": "contra:seatsInsideBody",
+     "kind": "RELATIONSHIP",
+     "severity": "high",
+     "pointedAt": 1,
+     "ofThoseFalse": 1,
+     "precision": 1
+    }
+   ],
    "downgradedFacts": [
     {
      "id": "tableCount",
@@ -80,11 +147,6 @@
     },
     {
      "id": "has:rectangle",
-     "from": "likely",
-     "to": "uncertain"
-    },
-    {
-     "id": "unseated",
      "from": "likely",
      "to": "uncertain"
     }
@@ -98,12 +160,14 @@
     "en": [
      "3 table(s) have no seat while 2 seat(s) have no table.",
      "1 object(s) called tables do not look like this plan's tables.",
-     "1 seating unit(s) are made of tables typed as different kinds."
+     "1 seating unit(s) are made of tables typed as different kinds.",
+     "1 object(s) contain every seat attached to them, which a table does not."
     ],
     "tr": [
      "3 masada hiç koltuk yok, buna karşılık 2 koltuğun masası yok.",
      "Masa denen 1 nesne bu planın masalarına benzemiyor.",
-     "1 oturma biriminde farklı türde sınıflandırılmış masalar var."
+     "1 oturma biriminde farklı türde sınıflandırılmış masalar var.",
+     "1 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz."
     ]
    }
   },
@@ -112,7 +176,7 @@
    "tables": 48,
    "falsePositives": 5,
    "baselineFalseRate": 0.1042,
-   "contradictions": 3,
+   "contradictions": 4,
    "kinds": [
     "COUNT",
     "TYPE",
@@ -123,8 +187,43 @@
    "targetedPrecision": 0.3077,
    "lift": 2.954,
    "severities": {
-    "medium": 3
+    "medium": 3,
+    "high": 1
    },
+   "perContradiction": [
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 2,
+     "ofThoseFalse": 1,
+     "precision": 0.5
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 6,
+     "ofThoseFalse": 3,
+     "precision": 0.5
+    },
+    {
+     "id": "contra:mixedGroupTypes",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 8,
+     "ofThoseFalse": 2,
+     "precision": 0.25
+    },
+    {
+     "id": "contra:seatsInsideBody",
+     "kind": "RELATIONSHIP",
+     "severity": "high",
+     "pointedAt": 2,
+     "ofThoseFalse": 2,
+     "precision": 1
+    }
+   ],
    "downgradedFacts": [
     {
      "id": "tableCount",
@@ -140,11 +239,6 @@
      "id": "has:rectangle",
      "from": "likely",
      "to": "uncertain"
-    },
-    {
-     "id": "unseated",
-     "from": "likely",
-     "to": "uncertain"
     }
    ],
    "topPriorities": [
@@ -156,12 +250,14 @@
     "en": [
      "2 table(s) have no seat while 12 seat(s) have no table.",
      "6 object(s) called tables do not look like this plan's tables.",
-     "2 seating unit(s) are made of tables typed as different kinds."
+     "2 seating unit(s) are made of tables typed as different kinds.",
+     "2 object(s) contain every seat attached to them, which a table does not."
     ],
     "tr": [
      "2 masada hiç koltuk yok, buna karşılık 12 koltuğun masası yok.",
      "Masa denen 6 nesne bu planın masalarına benzemiyor.",
-     "2 oturma biriminde farklı türde sınıflandırılmış masalar var."
+     "2 oturma biriminde farklı türde sınıflandırılmış masalar var.",
+     "2 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz."
     ]
    }
   },
@@ -170,7 +266,7 @@
    "tables": 62,
    "falsePositives": 16,
    "baselineFalseRate": 0.2581,
-   "contradictions": 3,
+   "contradictions": 4,
    "kinds": [
     "COUNT",
     "TYPE",
@@ -181,8 +277,43 @@
    "targetedPrecision": 0.5,
    "lift": 1.938,
    "severities": {
-    "medium": 3
+    "medium": 3,
+    "high": 1
    },
+   "perContradiction": [
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 7,
+     "ofThoseFalse": 3,
+     "precision": 0.4286
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 4,
+     "ofThoseFalse": 4,
+     "precision": 1
+    },
+    {
+     "id": "contra:mixedGroupTypes",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 29,
+     "ofThoseFalse": 13,
+     "precision": 0.4483
+    },
+    {
+     "id": "contra:seatsInsideBody",
+     "kind": "RELATIONSHIP",
+     "severity": "high",
+     "pointedAt": 1,
+     "ofThoseFalse": 1,
+     "precision": 1
+    }
+   ],
    "downgradedFacts": [
     {
      "id": "tableTypeMix",
@@ -196,11 +327,6 @@
     },
     {
      "id": "has:rectangle",
-     "from": "likely",
-     "to": "uncertain"
-    },
-    {
-     "id": "unseated",
      "from": "likely",
      "to": "uncertain"
     },
@@ -219,12 +345,14 @@
     "en": [
      "7 table(s) have no seat while 5 seat(s) have no table.",
      "4 object(s) called tables do not look like this plan's tables.",
-     "5 seating unit(s) are made of tables typed as different kinds."
+     "5 seating unit(s) are made of tables typed as different kinds.",
+     "1 object(s) contain every seat attached to them, which a table does not."
     ],
     "tr": [
      "7 masada hiç koltuk yok, buna karşılık 5 koltuğun masası yok.",
      "Masa denen 4 nesne bu planın masalarına benzemiyor.",
-     "5 oturma biriminde farklı türde sınıflandırılmış masalar var."
+     "5 oturma biriminde farklı türde sınıflandırılmış masalar var.",
+     "1 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz."
     ]
    }
   },
@@ -246,6 +374,32 @@
    "severities": {
     "medium": 3
    },
+   "perContradiction": [
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 1,
+     "ofThoseFalse": 1,
+     "precision": 1
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 4,
+     "ofThoseFalse": 1,
+     "precision": 0.25
+    },
+    {
+     "id": "contra:mixedGroupTypes",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 8,
+     "ofThoseFalse": 2,
+     "precision": 0.25
+    }
+   ],
    "downgradedFacts": [
     {
      "id": "tableCount",
@@ -259,11 +413,6 @@
     },
     {
      "id": "has:round",
-     "from": "likely",
-     "to": "uncertain"
-    },
-    {
-     "id": "unseated",
      "from": "likely",
      "to": "uncertain"
     }
@@ -291,7 +440,7 @@
    "tables": 69,
    "falsePositives": 32,
    "baselineFalseRate": 0.4638,
-   "contradictions": 6,
+   "contradictions": 7,
    "kinds": [
     "COUNT",
     "TYPE",
@@ -304,8 +453,66 @@
    "lift": 1.285,
    "severities": {
     "medium": 4,
-    "high": 2
+    "high": 3
    },
+   "perContradiction": [
+    {
+     "id": "contra:orphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 0,
+     "ofThoseFalse": 0,
+     "precision": null
+    },
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "high",
+     "pointedAt": 14,
+     "ofThoseFalse": 1,
+     "precision": 0.0714
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 5,
+     "ofThoseFalse": 5,
+     "precision": 1
+    },
+    {
+     "id": "contra:familyOutlier",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 1,
+     "ofThoseFalse": 1,
+     "precision": 1
+    },
+    {
+     "id": "contra:mixedGroupTypes",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 43,
+     "ofThoseFalse": 26,
+     "precision": 0.6047
+    },
+    {
+     "id": "contra:seatsInsideBody",
+     "kind": "RELATIONSHIP",
+     "severity": "high",
+     "pointedAt": 16,
+     "ofThoseFalse": 16,
+     "precision": 1
+    },
+    {
+     "id": "contra:seatingInStage",
+     "kind": "ZONE",
+     "severity": "high",
+     "pointedAt": 1,
+     "ofThoseFalse": 1,
+     "precision": 1
+    }
+   ],
    "downgradedFacts": [
     {
      "id": "tableTypeMix",
@@ -328,24 +535,9 @@
      "to": "uncertain"
     },
     {
-     "id": "seats",
-     "from": "likely",
-     "to": "uncertain"
-    },
-    {
-     "id": "unseated",
-     "from": "likely",
-     "to": "uncertain"
-    },
-    {
      "id": "groups",
      "from": "likely",
      "to": "uncertain"
-    },
-    {
-     "id": "zone:stage",
-     "from": "strong",
-     "to": "likely"
     }
    ],
    "topPriorities": [
@@ -360,6 +552,7 @@
      "5 object(s) called tables do not look like this plan's tables.",
      "1 object(s) were typed differently from the family they look like.",
      "9 seating unit(s) are made of tables typed as different kinds.",
+     "16 object(s) contain every seat attached to them, which a table does not.",
      "1 seating area(s) overlap a stage."
     ],
     "tr": [
@@ -368,6 +561,7 @@
      "Masa denen 5 nesne bu planın masalarına benzemiyor.",
      "1 nesne, benzediği aileden farklı türde sınıflandırıldı.",
      "9 oturma biriminde farklı türde sınıflandırılmış masalar var.",
+     "16 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz.",
      "1 oturma alanı sahneyle çakışıyor."
     ]
    }
@@ -377,20 +571,62 @@
    "tables": 90,
    "falsePositives": 52,
    "baselineFalseRate": 0.5778,
-   "contradictions": 4,
+   "contradictions": 5,
    "kinds": [
     "COUNT",
     "TYPE",
     "RELATIONSHIP"
    ],
-   "pointedAt": 76,
-   "pointedAtFalse": 50,
-   "targetedPrecision": 0.6579,
-   "lift": 1.139,
+   "pointedAt": 77,
+   "pointedAtFalse": 51,
+   "targetedPrecision": 0.6623,
+   "lift": 1.146,
    "severities": {
     "medium": 3,
-    "high": 1
+    "high": 2
    },
+   "perContradiction": [
+    {
+     "id": "contra:orphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 0,
+     "ofThoseFalse": 0,
+     "precision": null
+    },
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "high",
+     "pointedAt": 21,
+     "ofThoseFalse": 4,
+     "precision": 0.1905
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 6,
+     "ofThoseFalse": 6,
+     "precision": 1
+    },
+    {
+     "id": "contra:mixedGroupTypes",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 72,
+     "ofThoseFalse": 46,
+     "precision": 0.6389
+    },
+    {
+     "id": "contra:seatsInsideBody",
+     "kind": "RELATIONSHIP",
+     "severity": "high",
+     "pointedAt": 39,
+     "ofThoseFalse": 39,
+     "precision": 1
+    }
+   ],
    "downgradedFacts": [
     {
      "id": "tableTypeMix",
@@ -409,16 +645,6 @@
     },
     {
      "id": "has:round",
-     "from": "likely",
-     "to": "uncertain"
-    },
-    {
-     "id": "seats",
-     "from": "likely",
-     "to": "uncertain"
-    },
-    {
-     "id": "unseated",
      "from": "likely",
      "to": "uncertain"
     },
@@ -438,13 +664,15 @@
      "33 of 119 detected seats belong to no table.",
      "21 table(s) have no seat while 33 seat(s) have no table.",
      "6 object(s) called tables do not look like this plan's tables.",
-     "8 seating unit(s) are made of tables typed as different kinds."
+     "8 seating unit(s) are made of tables typed as different kinds.",
+     "39 object(s) contain every seat attached to them, which a table does not."
     ],
     "tr": [
      "Tespit edilen 119 koltuktan 33 tanesi hiçbir masaya ait değil.",
      "21 masada hiç koltuk yok, buna karşılık 33 koltuğun masası yok.",
      "Masa denen 6 nesne bu planın masalarına benzemiyor.",
-     "8 oturma biriminde farklı türde sınıflandırılmış masalar var."
+     "8 oturma biriminde farklı türde sınıflandırılmış masalar var.",
+     "39 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz."
     ]
    }
   },
@@ -453,20 +681,70 @@
    "tables": 86,
    "falsePositives": 49,
    "baselineFalseRate": 0.5698,
-   "contradictions": 5,
+   "contradictions": 6,
    "kinds": [
     "COUNT",
     "TYPE",
     "RELATIONSHIP"
    ],
-   "pointedAt": 70,
-   "pointedAtFalse": 47,
-   "targetedPrecision": 0.6714,
-   "lift": 1.178,
+   "pointedAt": 71,
+   "pointedAtFalse": 48,
+   "targetedPrecision": 0.6761,
+   "lift": 1.187,
    "severities": {
     "medium": 4,
-    "high": 1
+    "high": 2
    },
+   "perContradiction": [
+    {
+     "id": "contra:orphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 0,
+     "ofThoseFalse": 0,
+     "precision": null
+    },
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "high",
+     "pointedAt": 22,
+     "ofThoseFalse": 5,
+     "precision": 0.2273
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 2,
+     "ofThoseFalse": 2,
+     "precision": 1
+    },
+    {
+     "id": "contra:familyOutlier",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 1,
+     "ofThoseFalse": 1,
+     "precision": 1
+    },
+    {
+     "id": "contra:mixedGroupTypes",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 65,
+     "ofThoseFalse": 42,
+     "precision": 0.6462
+    },
+    {
+     "id": "contra:seatsInsideBody",
+     "kind": "RELATIONSHIP",
+     "severity": "high",
+     "pointedAt": 35,
+     "ofThoseFalse": 35,
+     "precision": 1
+    }
+   ],
    "downgradedFacts": [
     {
      "id": "tableTypeMix",
@@ -485,16 +763,6 @@
     },
     {
      "id": "has:round",
-     "from": "likely",
-     "to": "uncertain"
-    },
-    {
-     "id": "seats",
-     "from": "likely",
-     "to": "uncertain"
-    },
-    {
-     "id": "unseated",
      "from": "likely",
      "to": "uncertain"
     },
@@ -515,14 +783,16 @@
      "22 table(s) have no seat while 34 seat(s) have no table.",
      "2 object(s) called tables do not look like this plan's tables.",
      "1 object(s) were typed differently from the family they look like.",
-     "7 seating unit(s) are made of tables typed as different kinds."
+     "7 seating unit(s) are made of tables typed as different kinds.",
+     "35 object(s) contain every seat attached to them, which a table does not."
     ],
     "tr": [
      "Tespit edilen 114 koltuktan 34 tanesi hiçbir masaya ait değil.",
      "22 masada hiç koltuk yok, buna karşılık 34 koltuğun masası yok.",
      "Masa denen 2 nesne bu planın masalarına benzemiyor.",
      "1 nesne, benzediği aileden farklı türde sınıflandırıldı.",
-     "7 oturma biriminde farklı türde sınıflandırılmış masalar var."
+     "7 oturma biriminde farklı türde sınıflandırılmış masalar var.",
+     "35 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz."
     ]
    }
   },
@@ -545,6 +815,40 @@
     "medium": 3,
     "high": 1
    },
+   "perContradiction": [
+    {
+     "id": "contra:orphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 0,
+     "ofThoseFalse": 0,
+     "precision": null
+    },
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "high",
+     "pointedAt": 32,
+     "ofThoseFalse": 17,
+     "precision": 0.5313
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 15,
+     "ofThoseFalse": 3,
+     "precision": 0.2
+    },
+    {
+     "id": "contra:mixedGroupTypes",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 6,
+     "ofThoseFalse": 4,
+     "precision": 0.6667
+    }
+   ],
    "downgradedFacts": [
     {
      "id": "tableTypeMix",
@@ -558,16 +862,6 @@
     },
     {
      "id": "has:round",
-     "from": "likely",
-     "to": "uncertain"
-    },
-    {
-     "id": "seats",
-     "from": "likely",
-     "to": "uncertain"
-    },
-    {
-     "id": "unseated",
      "from": "likely",
      "to": "uncertain"
     },
@@ -599,10 +893,116 @@
   }
  ],
  "gates": {
-  "meanTargetedPrecision": 0.4876,
+  "meanTargetedPrecision": 0.4966,
   "meanBaselineFalseRate": 0.2876,
   "renderingsWherePointingBeatsChance": "9/9",
-  "contradictionsOnTheCleanOriginal": 3,
+  "contradictionsOnTheCleanOriginal": 4,
   "honestyFailures": 0
- }
+ },
+ "perKind": {
+  "COUNT": {
+   "kind": "COUNT",
+   "fired": 13,
+   "pointedAt": 104,
+   "ofThoseFalse": 37
+  },
+  "TYPE": {
+   "kind": "TYPE",
+   "fired": 11,
+   "pointedAt": 48,
+   "ofThoseFalse": 29
+  },
+  "RELATIONSHIP": {
+   "kind": "RELATIONSHIP",
+   "fired": 16,
+   "pointedAt": 335,
+   "ofThoseFalse": 232
+  },
+  "ZONE": {
+   "kind": "ZONE",
+   "fired": 1,
+   "pointedAt": 1,
+   "ofThoseFalse": 1
+  }
+ },
+ "perCheck": {
+  "contra:emptyTablesOrphanSeats": {
+   "id": "contra:emptyTablesOrphanSeats",
+   "kind": "COUNT",
+   "fired": 9,
+   "pointedAt": 104,
+   "ofThoseFalse": 37,
+   "severities": {
+    "medium": 5,
+    "high": 4
+   }
+  },
+  "contra:visualClass": {
+   "id": "contra:visualClass",
+   "kind": "TYPE",
+   "fired": 9,
+   "pointedAt": 46,
+   "ofThoseFalse": 27,
+   "severities": {
+    "medium": 9
+   }
+  },
+  "contra:mixedGroupTypes": {
+   "id": "contra:mixedGroupTypes",
+   "kind": "RELATIONSHIP",
+   "fired": 9,
+   "pointedAt": 240,
+   "ofThoseFalse": 137,
+   "severities": {
+    "medium": 9
+   }
+  },
+  "contra:seatsInsideBody": {
+   "id": "contra:seatsInsideBody",
+   "kind": "RELATIONSHIP",
+   "fired": 7,
+   "pointedAt": 95,
+   "ofThoseFalse": 95,
+   "severities": {
+    "high": 7
+   }
+  },
+  "contra:orphanSeats": {
+   "id": "contra:orphanSeats",
+   "kind": "COUNT",
+   "fired": 4,
+   "pointedAt": 0,
+   "ofThoseFalse": 0,
+   "severities": {
+    "medium": 4
+   }
+  },
+  "contra:familyOutlier": {
+   "id": "contra:familyOutlier",
+   "kind": "TYPE",
+   "fired": 2,
+   "pointedAt": 2,
+   "ofThoseFalse": 2,
+   "severities": {
+    "medium": 2
+   }
+  },
+  "contra:seatingInStage": {
+   "id": "contra:seatingInStage",
+   "kind": "ZONE",
+   "fired": 1,
+   "pointedAt": 1,
+   "ofThoseFalse": 1,
+   "severities": {
+    "high": 1
+   }
+  }
+ },
+ "kindVerdict": {
+  "ZONE": "informative",
+  "RELATIONSHIP": "TRUSTED",
+  "TYPE": "TRUSTED",
+  "COUNT": "informative"
+ },
+ "chanceRate": 0.2876
 }

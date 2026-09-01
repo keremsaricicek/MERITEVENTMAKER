@@ -115,3 +115,53 @@ reasoning of the relationship stage, not another threshold in the chair pass.
 
 Recorded, and the variant left at 0.752 chair F1 rather than tuned. Chair recall
 on it is 0.991 and the median chair F1 across all sixteen renderings is 0.955.
+
+---
+
+## Two more rejected fixes (final hardening sprint)
+
+The taxonomy pass first corrected a mislabel of its own: the cause originally
+printed as `on-a-real-chair` for a chair candidate actually means *on a real
+**table***, because the check compares against the other class. Renamed
+`on-another-class`. So the 53 are **chairs detected on top of real tables** —
+at 70% scale the table's own surface pattern reads as seats.
+
+### Rejected: near-duplicate seat spacing
+
+If the false seats were duplicates of real ones, their nearest-neighbour
+distance would be smaller than a real seat's. Measured, in units of the
+detection's own size:
+
+| | p10 | median | p90 |
+|---|--:|--:|--:|
+| real seats | 0.6 | 1.2 | 2.7 |
+| false seats | 1.0 | **1.6** | 3.0 |
+
+The false seats are **further apart** than the real ones — the opposite of a
+duplicate signal. The hypothesis is wrong, not merely unusable.
+
+### Rejected: a seat inside its own table
+
+The mirror of the seat-containment gate that works so well on tables: a seat
+sits *around* its table, so one whose centre falls *inside* the table outline
+is the table's surface read as a seat. On `downscale-70` this separates
+strongly — **54 of 68** false seats against **8 of 104** real ones.
+
+It does not survive contact with the other renderings:
+
+| | real seats inside their own table | false seats inside |
+|---|--:|--:|
+| `hue-shift` | **47 / 84** | 1 / 2 |
+| `bright-up` | **42 / 79** | 1 / 2 |
+| `contrast-high` | **42 / 78** | 1 / 2 |
+| `blur` | **29 / 82** | 0 / 0 |
+| all renderings | **209 / 913** | 58 / 81 |
+
+Applying it would destroy real seats on exactly the renderings where the table
+gate helps most. A rule that only works on `downscale-70` is a rule tuned to one
+rendering, which is the thing this project has repeatedly refused to ship.
+
+**`downscale-70` keeps its 73 false chairs.** Six fixes have now been priced
+against ground truth and rejected. Chair recall there is 0.991 — the seats are
+all found; the cost is precision on one rendering, and it is stated rather than
+tuned away.

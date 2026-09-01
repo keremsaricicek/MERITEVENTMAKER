@@ -116,7 +116,11 @@ async function analyse(page, baseUrl, file) {
         chairs.push({ id: ch.id, type: "chair", nested: true, parent: c.id,
           x: (ch.x - ch.w / 2) / 100 * ow, y: (ch.y - ch.h / 2) / 100 * oh,
           w: ch.w / 100 * ow, h: ch.h / 100 * oh,
-          cx: ch.x / 100 * ow, cy: ch.y / 100 * oh, confidence: ch.confidence, source: "associated" });
+          cx: ch.x / 100 * ow, cy: ch.y / 100 * oh, confidence: ch.confidence, source: "associated",
+          // A seat sits AROUND its table, so its centre falls outside the
+          // table's outline. One that falls inside is the table's own surface
+          // read as a seat -- the mirror of the seat-containment gate.
+          insideParent: ch.x > c.x && ch.x < c.x + c.w && ch.y > c.y && ch.y < c.y + c.h });
       if (c.kind === "venue" && c.type === "chair")
         chairs.push({ id: c.id, type: "chair", nested: false, parent: null, ...box(c), ...provenance(c) });
     }
@@ -155,7 +159,7 @@ const inside = (r, cx, cy) => cx >= r.x && cx <= r.x + r.w && cy >= r.y && cy <=
 // ONE cause per false positive, assigned in this order. The order matters: an
 // object that is both a fragment and sitting on printed text is a text
 // artifact, because that is the fact a fix would act on.
-const CAUSES = ["duplicate", "text", "architecture-edge", "on-a-real-chair",
+const CAUSES = ["duplicate", "text", "architecture-edge", "on-another-class",
                 "between-seats", "merged-span", "fragment", "oversized", "unplaced"];
 
 function classify(d, ctx) {
@@ -184,11 +188,14 @@ function classify(d, ctx) {
 
   // Sitting on an annotated object of the OTHER class: a table drawn over a
   // real chair, or a chair over a real table. The object is real; the class is
-  // not.
+  // not. Named for the relation rather than for one direction of it — the
+  // first version called this "on-a-real-chair" for both classes, which read
+  // as "chair detected on a chair" when what it means for a chair candidate is
+  // "chair detected on a TABLE".
   const otherClass = gtSame === "table" ? gtChairs : gtTables;
   for (const g of otherClass) {
     const tol = Math.max(g.w, g.h) * 0.6;
-    if (Math.hypot(g.cx - d.cx, g.cy - d.cy) <= tol) return "on-a-real-chair";
+    if (Math.hypot(g.cx - d.cx, g.cy - d.cy) <= tol) return "on-another-class";
   }
 
   // The gap between two neighbouring seats of the same table, read as its own
@@ -244,6 +251,7 @@ for (const id of LIST) {
       byCause[cause] = (byCause[cause] || 0) + 1;
       detail.push({ cause, id: d.id, x: Math.round(d.x), y: Math.round(d.y),
         w: Math.round(d.w), h: Math.round(d.h), type: d.type,
+        cx: Math.round(d.cx), cy: Math.round(d.cy), parent: d.parent, insideParent: d.insideParent,
         source: d.source, shapeBasis: d.shapeBasis, sizeAgreement: d.sizeAgreement,
         repetition: d.repetition, split: d.split, seats: d.seats, nested: d.nested,
         seatFill: d.seatFill, containedSeats: d.containedSeats,
@@ -255,7 +263,8 @@ for (const id of LIST) {
       // The SAME evidence for the objects that are real. A separator measured
       // only on false positives is a separator nobody has priced.
       truePositives: accepted.map(d => ({ id: d.id, type: d.type, source: d.source,
-        w: Math.round(d.w), h: Math.round(d.h),
+        w: Math.round(d.w), h: Math.round(d.h), cx: Math.round(d.cx), cy: Math.round(d.cy),
+        nested: d.nested, parent: d.parent, insideParent: d.insideParent,
         sizeAgreement: d.sizeAgreement, split: d.split, seats: d.seats,
         seatFill: d.seatFill, containedSeats: d.containedSeats,
         selected: d.selected, lowEvidence: d.lowEvidence,

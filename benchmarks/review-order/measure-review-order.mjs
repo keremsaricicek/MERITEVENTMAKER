@@ -31,6 +31,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { click } from "../../tests/lib/app-actions.mjs";
 import { launchChromium } from "../../tests/lib/env.mjs";
 import { serveApp } from "../../tests/lib/server.mjs";
 
@@ -188,6 +189,68 @@ for (const id of VARIANTS) {
     firstItem: run.priorities[0] ? { key: run.priorities[0].key, impact: run.priorities[0].impact } : null });
 }
 
+// ---- DYNAMIC: does the queue change once an answer has been given? ----------
+//
+// A queue computed once at import and never updated asks its second question as
+// if the first had not been answered. This drives the real controls on the real
+// plan and reads the queue back after each decision, which is the only way to
+// see whether the recompute actually happens: the review handlers are where it
+// lives, and calling the domain function directly would prove nothing.
+async function dynamicRun(page, baseUrl, file) {
+  await analyse(page, baseUrl, file);
+  const snapshots = [];
+  const snap = () => page.evaluate(() => {
+    const pi = state.events[0].analysis.planIntelligence;
+    return {
+      items: pi.reviewPriorities.length,
+      groups: pi.reviewGroups.length,
+      questions: pi.uncertainQuestions.length,
+      unreviewed: state.events[0].analysis.candidates.filter(c => c.status === "unreviewed").length,
+      top: pi.reviewPriorities[0]
+        ? { key: pi.reviewPriorities[0].key, signature: pi.reviewPriorities[0].signature,
+            impact: pi.reviewPriorities[0].downstreamImpact }
+        : null,
+    };
+  });
+  snapshots.push(await snap());
+  // Answer the top item, three times, the way an operator would: open what it
+  // points at and act on it.
+  for (let step = 0; step < 3; step++) {
+    const acted = await page.evaluate(() => {
+      const a = state.events[0].analysis, pi = a.planIntelligence;
+      const top = pi.reviewPriorities[0];
+      if (!top) return null;
+      if (top.key === "priority.reviewGroup") {
+        const g = pi.reviewGroups.find(x => `priority:${x.id}` === top.id);
+        if (g) { ui.reviewCenterOpen = true; render(); return { kind: "group", id: g.id }; }
+      }
+      const id = (top.targetIds || []).find(x => a.candidates.some(c => c.id === x && c.kind === "table"));
+      if (!id) return null;
+      ui.selectedCandidateId = id; ui.reviewDrawMode = false; render();
+      return { kind: "candidate", id };
+    });
+    if (!acted) break;
+    if (acted.kind === "group") await click(page, `[data-reviewgroup-action="confirm-family"][data-group="${acted.id}"]`);
+    else await click(page, '[data-review-action="confirm"]');
+    await page.waitForTimeout(250);
+    snapshots.push(await snap());
+  }
+  return snapshots;
+}
+
+const dyn = await dynamicRun(page, app.baseUrl, GOLDEN);
+report.dynamic = dyn;
+console.log("\nDYNAMIC QUEUE — the real plan, answering the top item three times");
+console.log("  after   items  groups  questions  unreviewed  top item");
+dyn.forEach((s, i) => console.log(`  ${String(i).padEnd(7)} ${String(s.items).padStart(5)} ${String(s.groups).padStart(7)}`
+  + ` ${String(s.questions).padStart(10)} ${String(s.unreviewed).padStart(11)}  ${s.top ? s.top.key : "—"}`));
+const shrank = dyn.length > 1 && dyn[dyn.length - 1].unreviewed < dyn[0].unreviewed;
+const requeued = dyn.length > 1 && dyn.some((s, i) => i > 0 && JSON.stringify(s.top) !== JSON.stringify(dyn[i - 1].top));
+if (!shrank) failures.push("answering questions did not reduce the unreviewed count");
+if (!requeued) failures.push("the queue never changed after an answer — it is still the order computed at import");
+report.dynamicShrank = shrank;
+report.dynamicRequeued = requeued;
+
 // ---- the order is the same on a re-run of the same plan ----------------------
 const first = await analyse(page, app.baseUrl, GOLDEN);
 const second = await analyse(page, app.baseUrl, GOLDEN);
@@ -220,6 +283,8 @@ for (const n of [1, 3, 5])
 gate("first 5 is at least as good as rank alone", `${totals.shipped[5]} vs ${totals.rankOnly[5]}`,
   totals.shipped[5] >= totals.rankOnly[5], "impact ordering must not make it worse");
 gate("the queue order is stable across a re-run", deterministic, deterministic, "true");
+gate("answering reduces what is left to review", shrank, shrank, "true");
+gate("the queue is recomputed after an answer", requeued, requeued, "true");
 gate("most review groups an operator faces at once", Math.max(...rows.map(r => r.reviewGroups)),
   Math.max(...rows.map(r => r.reviewGroups)) <= MAX_GROUPS, `<= ${MAX_GROUPS}`);
 // Reported, deliberately NOT gated. A family of thirty-five is ONE decision --

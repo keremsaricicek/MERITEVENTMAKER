@@ -1,5 +1,5 @@
 {
- "ranAt": "2026-09-01T11:04:40.722Z",
+ "ranAt": "2026-09-01T13:24:41.283Z",
  "plans": [
   {
    "planId": "adversarial-architecture-v1",
@@ -118,7 +118,7 @@
    ],
    "priorities": [
     {
-     "id": "priority:reviewgroup_cb9b704f-2573-41c7-8f8a-824142392729",
+     "id": "priority:reviewgroup_8c796aaf-521c-4d9e-9947-9ca548d97882",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -127,13 +127,20 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_3b07dfa6-111e-4a8a-9d70-1288cb3b6201",
-      "candidate_547fc2ec-123b-4137-a0e4-f9e25ee48cb0",
-      "candidate_1970eabc-90ff-40b9-8629-099b0a306461",
-      "candidate_f86293dd-6c6a-4d71-a326-9ac12c42242e",
-      "candidate_6a98bd0d-65ac-4d7f-bc62-61126b868c9d",
-      "candidate_1927fb2b-68a1-4666-8301-ce01709f3359"
-     ]
+      "candidate_8ba4e5fe-d04d-419c-bc5c-28ca28f929b0",
+      "candidate_2f3304e9-8e3f-46d9-ae3b-cc01792b4061",
+      "candidate_aeb1999f-1aee-40c7-9a28-84bf3d939a6e",
+      "candidate_8c4c0ed5-68ad-4ff3-87d9-b552eacbde80",
+      "candidate_3b9e86bb-077d-4558-9a94-a681cf52bdb9",
+      "candidate_fcbb56fd-a744-48c8-8899-5cb131912ea1"
+     ],
+     "downstreamImpact": {
+      "objects": 6,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "10,20;10,75;49,20;49,76;87,20;87,76",
+     "buildOrder": 0
     }
    ],
    "untranslated": [],
@@ -395,17 +402,24 @@
    ],
    "priorities": [
     {
-     "id": "priority:question_cc242f2f-5e79-4c19-b22e-27fc23add251",
+     "id": "priority:question_66a093e6-3956-4d05-86cc-482aa4aef4ef",
      "key": "priority.question",
      "rank": 5,
      "params": {
       "n": 1
      },
      "why": "a grouping the detector could not resolve",
-     "targetIds": []
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 0
     },
     {
-     "id": "priority:reviewgroup_95dcfa33-e1f3-4af4-89ee-b8fd6b34ce6a",
+     "id": "priority:reviewgroup_d5a023c2-fc1f-4653-8936-5a76d2d065e4",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -414,11 +428,18 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_f371cb88-e104-4af6-abe9-05cbda45aaa5",
-      "candidate_cfbf65fe-8d10-4b03-ba09-f58485764c2e",
-      "candidate_61e91746-31c6-474d-9b3a-91bc99922e57",
-      "candidate_1d5f50eb-0f42-45c7-8b29-6d1888dfa77c"
-     ]
+      "candidate_440153ea-5fec-4fb7-a233-1dbb81482fa7",
+      "candidate_9b383a1c-9351-466c-b784-e00654900862",
+      "candidate_6ba2c412-a4bc-45a5-9c0a-629a655ce76a",
+      "candidate_74858282-32bf-49fb-a44f-d0b1398af639"
+     ],
+     "downstreamImpact": {
+      "objects": 4,
+      "seats": 4,
+      "facts": 0
+     },
+     "signature": "17,8;20,8;20,94;66,94",
+     "buildOrder": 1
     }
    ],
    "untranslated": [],
@@ -580,7 +601,8 @@
      "strength": "uncertain",
      "strengthBefore": "likely",
      "contradictedBy": [
-      "contra:visualClass"
+      "contra:visualClass",
+      "contra:seatsInsideBody"
      ],
      "en": "50 tables were detected.",
      "tr": "50 masa tespit edildi.",
@@ -652,7 +674,8 @@
      "strengthBefore": "likely",
      "contradictedBy": [
       "contra:visualClass",
-      "contra:mixedGroupTypes"
+      "contra:mixedGroupTypes",
+      "contra:seatsInsideBody"
      ],
      "en": "Also 2 rectangle.",
      "tr": "Ayrıca 2 rectangle.",
@@ -698,11 +721,9 @@
     },
     {
      "key": "fact.unseatedTables",
-     "strength": "uncertain",
-     "strengthBefore": "likely",
-     "contradictedBy": [
-      "contra:emptyTablesOrphanSeats"
-     ],
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "2 tables have no seats detected at them.",
      "tr": "2 masada koltuk tespit edilmedi.",
      "provenance": [
@@ -840,18 +861,24 @@
    ],
    "priorities": [
     {
-     "id": "priority:contra:emptyTablesOrphanSeats",
+     "id": "priority:contra:seatsInsideBody",
      "key": "priority.contradiction",
-     "rank": 2,
+     "rank": 0,
      "params": {
-      "kind": "contradiction.kind.COUNT"
+      "kind": "contradiction.kind.RELATIONSHIP"
      },
-     "contradictionId": "contra:emptyTablesOrphanSeats",
-     "why": "contradiction.from.tableDetection and contradiction.from.chairDetection cannot both be right",
+     "contradictionId": "contra:seatsInsideBody",
+     "why": "contradiction.from.tableDetection and contradiction.from.chairAssociation cannot both be right",
      "targetIds": [
-      "candidate_2c647f28-7082-4eba-a310-a6d685328bc7",
-      "candidate_42c85e68-17d1-4bce-9bb7-50000226962b"
-     ]
+      "candidate_844c0b6c-e849-49bc-b8be-6ddae0962b2c"
+     ],
+     "downstreamImpact": {
+      "objects": 1,
+      "seats": 1,
+      "facts": 2
+     },
+     "signature": "1,17",
+     "buildOrder": 3
     },
     {
      "id": "priority:contra:visualClass",
@@ -863,10 +890,17 @@
      "contradictionId": "contra:visualClass",
      "why": "contradiction.from.detectionAndShape and contradiction.from.visualSecondOpinion cannot both be right",
      "targetIds": [
-      "candidate_e62a45b2-d828-4f5e-9abf-428dc13dfc64",
-      "candidate_aad07664-aedd-4846-b43f-f6484cc425e6",
-      "candidate_42c85e68-17d1-4bce-9bb7-50000226962b"
-     ]
+      "candidate_71037888-e4ef-48c7-abd9-3d335d83a6db",
+      "candidate_a8a7649f-5522-4ef9-8008-7c2fe9f18f43",
+      "candidate_ec95fbc3-b27a-40fe-94d7-3735c00ccb72"
+     ],
+     "downstreamImpact": {
+      "objects": 3,
+      "seats": 7,
+      "facts": 2
+     },
+     "signature": "48,64;5,74;55,36",
+     "buildOrder": 1
     },
     {
      "id": "priority:contra:mixedGroupTypes",
@@ -878,64 +912,127 @@
      "contradictionId": "contra:mixedGroupTypes",
      "why": "contradiction.from.geometricGrouping and contradiction.from.shapeClassification cannot both be right",
      "targetIds": [
-      "candidate_43fbfcfd-b36b-4e5d-b795-a540eb7bf665",
-      "candidate_6073236c-0a6d-41bd-b38d-f6e60218a880",
-      "candidate_04759b34-8d0d-4ef6-9c9a-5e040c0cc41a",
-      "candidate_e62a45b2-d828-4f5e-9abf-428dc13dfc64"
-     ]
+      "candidate_4e1900d1-a573-49a0-bf08-bbcfc5c1ca91",
+      "candidate_81f7041e-9275-40b2-a2e7-ef6824c15245",
+      "candidate_65af0895-18d6-42c5-ad0d-179f403f020e",
+      "candidate_71037888-e4ef-48c7-abd9-3d335d83a6db"
+     ],
+     "downstreamImpact": {
+      "objects": 4,
+      "seats": 8,
+      "facts": 1
+     },
+     "signature": "55,36;58,36;58,43;58,50",
+     "buildOrder": 2
     },
     {
-     "id": "priority:question_9f34f79e-cb78-431b-ac79-1830eaf03911",
+     "id": "priority:contra:emptyTablesOrphanSeats",
+     "key": "priority.contradiction",
+     "rank": 2,
+     "params": {
+      "kind": "contradiction.kind.COUNT"
+     },
+     "contradictionId": "contra:emptyTablesOrphanSeats",
+     "why": "contradiction.from.tableDetection and contradiction.from.chairDetection cannot both be right",
+     "targetIds": [
+      "candidate_d842a902-19e0-44ad-994e-927a4f33fd68",
+      "candidate_ec95fbc3-b27a-40fe-94d7-3735c00ccb72"
+     ],
+     "downstreamImpact": {
+      "objects": 2,
+      "seats": 0,
+      "facts": 1
+     },
+     "signature": "48,64;83,63",
+     "buildOrder": 0
+    },
+    {
+     "id": "priority:question_20eccd13-882d-49cb-8905-4792fbd89bc8",
      "key": "priority.question",
      "rank": 5,
      "params": {
       "n": 1
      },
      "why": "a grouping the detector could not resolve",
-     "targetIds": []
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 4
     },
     {
-     "id": "priority:question_4862ec3a-4c17-4f8f-a0d1-547691858e0b",
+     "id": "priority:question_def9de22-e5f7-4ae7-8f1f-07520925623f",
      "key": "priority.question",
      "rank": 5,
      "params": {
       "n": 1
      },
      "why": "a grouping the detector could not resolve",
-     "targetIds": []
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 5
     },
     {
-     "id": "priority:question_dbd037cf-d345-45f1-8c27-31c59487440b",
+     "id": "priority:question_23c6cb04-806d-4630-9391-eccc7f099527",
      "key": "priority.question",
      "rank": 5,
      "params": {
       "n": 1
      },
      "why": "a grouping the detector could not resolve",
-     "targetIds": []
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 6
     },
     {
-     "id": "priority:question_308b13a8-80bc-4abd-a763-b57fcffb0add",
+     "id": "priority:question_008edd37-adc0-43a1-a9e9-78c3519ac377",
      "key": "priority.question",
      "rank": 5,
      "params": {
       "n": 1
      },
      "why": "a grouping the detector could not resolve",
-     "targetIds": []
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 7
     },
     {
-     "id": "priority:question_4a36e15e-9190-4207-ac7f-dae2217bfa1f",
+     "id": "priority:question_65a13936-4897-4df6-8118-b8d072282312",
      "key": "priority.question",
      "rank": 5,
      "params": {
       "n": 1
      },
      "why": "a grouping the detector could not resolve",
-     "targetIds": []
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 8
     },
     {
-     "id": "priority:reviewgroup_dc86d31a-ae9e-4ae8-bda0-d80ffbfe7c5b",
+     "id": "priority:reviewgroup_b5f21a2d-3b19-4993-a11d-2d214d25daf2",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -944,25 +1041,32 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_0e0e3942-8e67-46c3-8ac6-48cc74c7343f",
-      "candidate_cf9f743a-b9e3-488d-a329-1d2c1b73a944",
-      "candidate_eda349ba-36d2-43f5-8f22-21c90cdc248e",
-      "candidate_7ac5f57f-639d-48b2-b034-c73cf35a6115",
-      "candidate_70521543-2d43-4104-896c-b757ba200d46",
-      "candidate_f3110522-e775-4d68-bd61-471ebd2812bc",
-      "candidate_e6dc14a6-521b-4e6b-bb32-95d5c7def510",
-      "candidate_39d0e44c-e132-452a-8d79-f20a60d32280",
-      "candidate_04759b34-8d0d-4ef6-9c9a-5e040c0cc41a",
-      "candidate_eed83677-bd02-4b5d-bad8-44ee1cd1f547",
-      "candidate_09c198cc-0429-4b0d-ab12-3880887cd232",
-      "candidate_201be020-91b0-4795-b254-d67d19ff400c",
-      "candidate_fa66a080-98d4-417a-b5b2-2377f087dfc4",
-      "candidate_2c647f28-7082-4eba-a310-a6d685328bc7",
-      "candidate_42c85e68-17d1-4bce-9bb7-50000226962b"
-     ]
+      "candidate_13272e88-877f-41a5-a5a9-0f0169dd7a80",
+      "candidate_ad460ad5-5adb-4400-8425-9a364321795e",
+      "candidate_c4acebbf-0d14-4dd1-a53a-013bcc8006e3",
+      "candidate_082bf716-4366-43a2-b367-90e554b37e96",
+      "candidate_7cbf6d68-5d00-41a4-9cd3-84628e6a87af",
+      "candidate_f0ef6e94-eb45-4faf-aa78-df06a691c9f3",
+      "candidate_f7aefc8f-15f8-48e3-8ac4-555665817a4c",
+      "candidate_04176c86-fc06-4d36-801d-864abc33968c",
+      "candidate_65af0895-18d6-42c5-ad0d-179f403f020e",
+      "candidate_e2469148-0380-4377-a236-3a630faa91d6",
+      "candidate_6d5ad259-e445-4a58-923e-0094b94eb9e6",
+      "candidate_a441ec4a-28d3-4fe8-b16e-c4ff9cd7d171",
+      "candidate_e55c8056-7276-4926-9ca5-c11d73282911",
+      "candidate_d842a902-19e0-44ad-994e-927a4f33fd68",
+      "candidate_ec95fbc3-b27a-40fe-94d7-3735c00ccb72"
+     ],
+     "downstreamImpact": {
+      "objects": 27,
+      "seats": 32,
+      "facts": 0
+     },
+     "signature": "16,54;20,54;24,54;24,73;30,74;34,74;47,43;47,49;47,56;48,64;58,36;70,36;70,43;71,49;83,63",
+     "buildOrder": 9
     },
     {
-     "id": "priority:reviewgroup_5b6aa9ca-9739-4251-814a-84dfc24f2537",
+     "id": "priority:reviewgroup_e329464f-baa5-4ded-813b-bb65410c7d69",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -971,15 +1075,22 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_80681ccb-1f19-4eae-8604-764c9cca4e43",
-      "candidate_437e6596-3d75-48fd-9cc0-0918b127869b",
-      "candidate_4aa99081-c442-4a82-84a8-69ffb74c385a",
-      "candidate_fdbf16c1-99a3-40b0-b1b9-8b183f91ebda",
-      "candidate_75e93a8c-972c-46df-a80d-d35e81065b9c"
-     ]
+      "candidate_7ac3d8fb-7edf-4371-95d8-b08063a5a54a",
+      "candidate_239c968b-9fd5-4335-ab13-978491fa27e2",
+      "candidate_ee5ca23e-1449-43ab-8382-d468983d228b",
+      "candidate_17fdbf82-2226-4205-8855-953f177442ae",
+      "candidate_5131ac63-9d5f-4769-b6f2-040d8feab41d"
+     ],
+     "downstreamImpact": {
+      "objects": 5,
+      "seats": 8,
+      "facts": 0
+     },
+     "signature": "14,90;2,28;28,89;36,90;5,28",
+     "buildOrder": 10
     },
     {
-     "id": "priority:reviewgroup_c36ec0d5-b6fe-40dc-8620-9a7996498ed1",
+     "id": "priority:reviewgroup_0a4523e6-b7fd-48d9-9329-c034b2ea616d",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -988,14 +1099,21 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_1cbd4cf4-bc4b-46b6-8966-c46d2e5dd741",
-      "candidate_49d0b476-0f18-4d28-89eb-ccda9e34aa6d",
-      "candidate_aad07664-aedd-4846-b43f-f6484cc425e6",
-      "candidate_a3ebae02-e2b0-4f29-b6cd-9df5e81f5123"
-     ]
+      "candidate_d81ddac4-c9a1-4a2c-aa37-6f873ab4ff45",
+      "candidate_ad84d7ba-a4ee-4007-8d77-28f7ed722736",
+      "candidate_a8a7649f-5522-4ef9-8008-7c2fe9f18f43",
+      "candidate_558a16ad-d8c1-4ce5-9482-440450441b6e"
+     ],
+     "downstreamImpact": {
+      "objects": 4,
+      "seats": 20,
+      "facts": 0
+     },
+     "signature": "5,74;6,55;91,29;91,65",
+     "buildOrder": 11
     },
     {
-     "id": "priority:reviewgroup_75cb1d17-f161-4bcf-9e09-b7a0c2095838",
+     "id": "priority:reviewgroup_42443a10-a39b-47a0-bce5-5b70dc8d5e37",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1004,14 +1122,21 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_bc98afd6-6428-44bd-b492-12c80857397e",
-      "candidate_f861c601-4013-4a72-ae1c-2f7fc57b49eb",
-      "candidate_b5c1ed98-a56d-4231-ad18-e73a00da4781",
-      "candidate_7640d97f-4e21-44d3-813b-70a355f00e6a"
-     ]
+      "candidate_ae41137f-0991-4788-90da-df515b45b66b",
+      "candidate_395c5f5e-9772-4cab-963e-7516b6914c48",
+      "candidate_f7e465d3-5cee-426b-90d0-22b9e33f80d7",
+      "candidate_e7145240-f64b-4c46-8d92-5085bab45e63"
+     ],
+     "downstreamImpact": {
+      "objects": 4,
+      "seats": 4,
+      "facts": 0
+     },
+     "signature": "10,7;14,11;15,15;49,88",
+     "buildOrder": 12
     },
     {
-     "id": "priority:reviewgroup_551df702-9f47-44d9-b1df-613125a2176e",
+     "id": "priority:reviewgroup_31af51d9-5900-4408-b125-548153d83c39",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1020,12 +1145,19 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_e62a45b2-d828-4f5e-9abf-428dc13dfc64",
-      "candidate_8dee6e22-b955-4479-9c1c-db0e8b942af9"
-     ]
+      "candidate_71037888-e4ef-48c7-abd9-3d335d83a6db",
+      "candidate_844c0b6c-e849-49bc-b8be-6ddae0962b2c"
+     ],
+     "downstreamImpact": {
+      "objects": 2,
+      "seats": 3,
+      "facts": 0
+     },
+     "signature": "1,17;55,36",
+     "buildOrder": 13
     },
     {
-     "id": "priority:reviewgroup_48c5dea7-7b51-41a4-abc5-ef316d4803e0",
+     "id": "priority:reviewgroup_4951ff68-2007-45fc-99d9-6ce748fb015e",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1034,9 +1166,16 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_d90c443e-0b8b-49c0-836e-eb8ae78bd94d",
-      "candidate_f1f1248d-481d-40fe-b68b-1629d707c5f3"
-     ]
+      "candidate_99717bc2-100d-4cfc-bcba-b31a12025314",
+      "candidate_35c1d5ae-b9c2-414c-9957-427b5ea92435"
+     ],
+     "downstreamImpact": {
+      "objects": 2,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "51,88;8,33",
+     "buildOrder": 14
     }
    ],
    "untranslated": [],
@@ -1045,15 +1184,15 @@
  ],
  "calibration": {
   "downgraded": {
-   "n": 3,
+   "n": 2,
    "wrong": 1
   },
   "untouched": {
-   "n": 20,
+   "n": 21,
    "wrong": 1
   },
-  "downgradedWrongRate": 0.3333333333333333,
-  "untouchedWrongRate": 0.05
+  "downgradedWrongRate": 0.5,
+  "untouchedWrongRate": 0.047619047619047616
  },
  "accuracy": 0.913,
  "checkable": 23,

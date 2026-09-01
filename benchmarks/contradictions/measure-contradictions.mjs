@@ -131,6 +131,17 @@ for (const id of VARIANTS) {
   const precision = pointed.size ? pointedFalse / pointed.size : null;
   const lift = precision != null && baseline > 0 ? precision / baseline : null;
 
+  // Per-contradiction precision, because a mean hides the difference between a
+  // category that points at real errors and one that points at noise. Each
+  // contradiction is scored on the objects IT points at, not on the pool.
+  const perContradiction = run.contradictions.map(c => {
+    const pointed = [...new Set(c.targetIds)].filter(x => tableIds.has(x));
+    const wrong = pointed.filter(x => falseIds.has(x)).length;
+    return { id: c.id, kind: c.kind, severity: c.severity,
+      pointedAt: pointed.length, ofThoseFalse: wrong,
+      precision: pointed.length ? +(wrong / pointed.length).toFixed(4) : null };
+  });
+
   const kinds = [...new Set(run.contradictions.map(c => c.kind))].join(",");
   console.log(`${id.padEnd(17)} ${String(run.tables.length).padStart(6)} ${String(falseIds.size).padStart(3)}`
     + `  ${baseline.toFixed(3).padStart(8)} | ${String(run.contradictions.length).padStart(6)}`
@@ -161,6 +172,7 @@ for (const id of VARIANTS) {
     targetedPrecision: precision == null ? null : +precision.toFixed(4),
     lift: lift == null ? null : +lift.toFixed(3),
     severities: run.contradictions.reduce((m, c) => (m[c.severity] = (m[c.severity] || 0) + 1, m), {}),
+    perContradiction,
     downgradedFacts: run.facts.filter(f => f.strengthBefore).map(f => ({ id: f.id, from: f.strengthBefore, to: f.strength })),
     topPriorities: run.topPriorities,
     sample: { en: run.text.en.contradictions, tr: run.text.tr.contradictions } });
@@ -183,6 +195,50 @@ report.gates = {
   contradictionsOnTheCleanOriginal: original ? original.contradictions : null,
   honestyFailures: failures.length,
 };
+
+// ---- per category, pooled across renderings ---------------------------------
+//
+// SEM1: a combined mean is not enough. A category that points at real errors
+// and one that points at noise are different products, and the second one must
+// not be allowed to lower the confidence of a claim the first would support.
+const byId = {};
+for (const v of report.variants) for (const c of v.perContradiction || []) {
+  const k = byId[c.id] = byId[c.id] || { id: c.id, kind: c.kind, fired: 0,
+    pointedAt: 0, ofThoseFalse: 0, severities: {} };
+  k.fired++; k.pointedAt += c.pointedAt; k.ofThoseFalse += c.ofThoseFalse;
+  k.severities[c.severity] = (k.severities[c.severity] || 0) + 1;
+}
+const byKind = {};
+for (const c of Object.values(byId)) {
+  const k = byKind[c.kind] = byKind[c.kind] || { kind: c.kind, fired: 0, pointedAt: 0, ofThoseFalse: 0 };
+  k.fired += c.fired; k.pointedAt += c.pointedAt; k.ofThoseFalse += c.ofThoseFalse;
+}
+const prec = o => (o.pointedAt ? o.ofThoseFalse / o.pointedAt : null);
+const meanBase = report.variants.reduce((s, v) => s + v.baselineFalseRate, 0) / report.variants.length;
+
+console.log("\nPRECISION PER CONTRADICTION TYPE  (chance on these renderings: "
+  + meanBase.toFixed(3) + ")");
+console.log("kind          fired  pointedAt  ofThoseFalse  precision  verdict");
+const verdictOf = o => {
+  const p = prec(o);
+  if (p == null) return "no-targets";
+  if (p >= meanBase * 1.5 && o.pointedAt >= 10) return "TRUSTED";
+  if (p > meanBase) return "informative";
+  return "NOISY";
+};
+const kindVerdict = {};
+for (const k of Object.values(byKind).sort((a, b) => (prec(b) ?? -1) - (prec(a) ?? -1))) {
+  kindVerdict[k.kind] = verdictOf(k);
+  console.log(`${k.kind.padEnd(13)} ${String(k.fired).padStart(5)} ${String(k.pointedAt).padStart(10)}`
+    + ` ${String(k.ofThoseFalse).padStart(13)}  ${(prec(k) == null ? "—" : prec(k).toFixed(4)).padStart(9)}  ${kindVerdict[k.kind]}`);
+}
+console.log("\nPER CHECK");
+console.log("id                              fired  pointedAt  ofThoseFalse  precision");
+for (const c of Object.values(byId).sort((a, b) => (prec(b) ?? -1) - (prec(a) ?? -1)))
+  console.log(`${c.id.padEnd(31)} ${String(c.fired).padStart(5)} ${String(c.pointedAt).padStart(10)}`
+    + ` ${String(c.ofThoseFalse).padStart(13)}  ${(prec(c) == null ? "—" : prec(c).toFixed(4)).padStart(9)}`);
+report.perKind = byKind; report.perCheck = byId; report.kindVerdict = kindVerdict;
+report.chanceRate = +meanBase.toFixed(4);
 
 console.log("\nGATES");
 const gate = (label, value, ok, target) => {

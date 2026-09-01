@@ -787,7 +787,7 @@
     const out = [];
     const factIds = new Set(facts.map(f => f.id));
     const say = (id, kind, key, params, severity, sides, affects, targetIds) => {
-      out.push({ id, kind, key, params, severity,
+      out.push({ id, kind, key, params, severity, policy: policyFor(id),
         sides, affects: affects.filter(a => factIds.has(a)), targetIds: targetIds || [] });
     };
     // One side of a disagreement: which stage said it, and what it said —
@@ -1014,9 +1014,50 @@
   // instances of the same kind are one disagreement seen twice, and would
   // otherwise let a plan with many similar objects bury every claim it makes.
   const STRENGTH_ORDER = ["strong", "likely", "uncertain"];
+
+  // WHICH CHECKS ARE ALLOWED TO LOWER A CLAIM'S CONFIDENCE.
+  //
+  // A mean precision of 0.49 across the engine hides the thing that matters:
+  // some of these checks point at real errors nearly every time and one of them
+  // barely beats guessing. Letting the weak one lower a claim that the strong
+  // one would support is how an evidence system turns into noise with a
+  // warning label.
+  //
+  // Measured per check against ground truth on nine renderings
+  // (benchmarks/contradictions/, chance rate 0.288 on that set):
+  //
+  //   contra:seatsInsideBody           1.000  over  95 objects   downgrade
+  //   contra:visualClass               0.587  over  46 objects   downgrade
+  //   contra:mixedGroupTypes           0.571  over 240 objects   downgrade
+  //   contra:emptyTablesOrphanSeats    0.356  over 104 objects   PRIORITISE ONLY
+  //   contra:familyOutlier             1.000  over   2 objects   too few to trust
+  //   contra:seatingInStage            1.000  over   1 object    too few to trust
+  //   contra:orphanSeats                  —   never points at a table
+  //
+  // Two rules, both deliberate. A check must beat chance by half again before
+  // it may lower a claim, AND it must have pointed at enough objects for that
+  // to mean something. An UNMEASURED check defaults to prioritise, never to
+  // downgrade: a check nobody has scored is not evidence that a claim is wrong.
+  //
+  // Every check still appears on screen and still raises review priority. This
+  // governs one thing only: whether it is allowed to change how confidently the
+  // product states something.
+  //
+  // Calibrated on ONE VENUE. That is a real limit on this table, not a footnote.
+  const CONTRADICTION_POLICY = {
+    "contra:seatsInsideBody": "downgrade",
+    "contra:visualClass": "downgrade",
+    "contra:mixedGroupTypes": "downgrade",
+    "contra:emptyTablesOrphanSeats": "prioritise",
+    "contra:orphanSeats": "prioritise",
+    "contra:familyOutlier": "prioritise",
+    "contra:seatingInStage": "prioritise",
+  };
+  const policyFor = id => CONTRADICTION_POLICY[id] || "prioritise";
+
   function applyContradictions(facts, contradictions) {
     const kindsByFact = new Map();
-    for (const c of contradictions)
+    for (const c of contradictions.filter(c => policyFor(c.id) === "downgrade"))
       for (const id of c.affects) {
         if (!kindsByFact.has(id)) kindsByFact.set(id, new Set());
         kindsByFact.get(id).add(c.kind);
@@ -1068,6 +1109,26 @@
   function buildReviewPriorities(facts, zones, reviewGroups, uncertainQuestions, capacityAudit, contradictions, candidates) {
     const out = [];
     const byId = new Map((candidates || []).filter(c => c.status !== "rejected").map(c => [c.id, c]));
+    // A question the operator has already answered.
+    //
+    // A contradiction is a statement about the plan and stays true until the
+    // plan changes — `seatsInsideBody` still holds after someone confirms the
+    // object, because the topology has not moved. But the QUEUE is not a list
+    // of true statements, it is a list of things still needing a decision, and
+    // an item that keeps returning to the top after being acted on teaches an
+    // operator that the list is broken.
+    //
+    // Measured: without this, confirming the top item three times in a row left
+    // the same item at the top all three times and the unreviewed count moved
+    // once. So a contradiction whose every target has been ruled on — confirmed
+    // or rejected — leaves the queue. It stays on screen as a stated
+    // disagreement, and it still lowers the confidence of what it disputes; it
+    // simply stops being asked again.
+    const statusOf = new Map((candidates || []).map(c => [c.id, c.status]));
+    const settled = c => {
+      const targets = (c.targetIds || []).filter(id => statusOf.has(id));
+      return targets.length > 0 && targets.every(id => statusOf.get(id) !== "unreviewed");
+    };
     const seatsOf = ids => ids.reduce((n, id) => {
       const c = byId.get(id);
       if (!c) return n;
@@ -1094,7 +1155,7 @@
       item.buildOrder = out.length;
       out.push(item);
     };
-    for (const c of contradictions || [])
+    for (const c of (contradictions || []).filter(c => !settled(c)))
       push({ id: `priority:${c.id}`, key: "priority.contradiction",
         rank: c.severity === "high" ? 0 : 2,
         params: { kind: `contradiction.kind.${c.kind}` }, contradictionId: c.id,
@@ -1212,6 +1273,9 @@
       // reclassifies anything. See buildContradictions.
       contradictions,
       contradictionKinds: CONTRADICTION_KINDS,
+      // Which checks are allowed to lower a claim's confidence, and which only
+      // raise review priority. Measured, not assumed — see CONTRADICTION_POLICY.
+      contradictionPolicy: CONTRADICTION_POLICY,
       // What to look at first, and why, pointing at real ids.
       reviewPriorities,
       capacityEstimate: { physical: physicalSeats },
