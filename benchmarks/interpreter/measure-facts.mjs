@@ -177,6 +177,11 @@ const app = await serveApp();
 const browser = await launchChromium();
 const report = { ranAt: new Date().toISOString(), plans: [] };
 let totalCheckable = 0, totalCorrect = 0, fabricatedStrong = [];
+// Does the contradiction engine lower the confidence of the claims that are
+// actually wrong? A downgrade that lands on correct claims as often as on wrong
+// ones is not calibration, it is noise with a warning label, and it would make
+// the product less useful while looking more careful.
+const calibration = { downgraded: { n: 0, wrong: 0 }, untouched: { n: 0, wrong: 0 } };
 
 for (const { annot, file } of plans()) {
   annotHasRelationships = (annot.relationships || []).some(r => r.belongsTo);
@@ -197,8 +202,12 @@ for (const { annot, file } of plans()) {
       totalCheckable++;
       if (verdict.correct) totalCorrect++;
       else if (f.strength === "strong") fabricatedStrong.push({ plan: annot.planId, fact: f.key, rendered: rendered.en[i], detail: verdict.detail });
+      const bucket = f.strengthBefore ? calibration.downgraded : calibration.untouched;
+      bucket.n++;
+      if (!verdict.correct) bucket.wrong++;
     }
-    rows.push({ key: f.key, strength: f.strength, en: rendered.en[i], tr: rendered.tr[i],
+    rows.push({ key: f.key, strength: f.strength, strengthBefore: f.strengthBefore || null,
+      contradictedBy: f.contradictedBy || null, en: rendered.en[i], tr: rendered.tr[i],
       provenance: f.provenance, basis: f.basis, ...verdict });
   }
 
@@ -227,6 +236,16 @@ console.log(`  ACCURACY               ${accuracy === null ? "n/a" : accuracy.toF
 console.log(`  FABRICATED STRONG      ${fabricatedStrong.length}                gate == 0     ${fabricatedStrong.length === 0 ? "MET" : "NOT MET"}`);
 for (const f of fabricatedStrong) console.log(`    ${f.plan}: ${f.rendered}  ${JSON.stringify(f.detail)}`);
 console.log(`  untranslated strings   ${untranslatedTotal}`);
+
+const rate = b => (b.n ? b.wrong / b.n : null);
+const dRate = rate(calibration.downgraded), uRate = rate(calibration.untouched);
+console.log(`\n=== CONTRADICTION CALIBRATION`);
+console.log(`  claims a disagreement lowered   ${calibration.downgraded.n}, of which wrong ${calibration.downgraded.wrong}` +
+  (dRate === null ? "" : `  (${dRate.toFixed(3)})`));
+console.log(`  claims nothing disputed         ${calibration.untouched.n}, of which wrong ${calibration.untouched.wrong}` +
+  (uRate === null ? "" : `  (${uRate.toFixed(3)})`));
+console.log(`  a downgrade is worth showing only if the first rate is the higher one.`);
+report.calibration = { ...calibration, downgradedWrongRate: dRate, untouchedWrongRate: uRate };
 
 report.accuracy = accuracy === null ? null : +accuracy.toFixed(4);
 report.checkable = totalCheckable;

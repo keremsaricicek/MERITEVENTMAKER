@@ -155,6 +155,86 @@
     "priority.unverifiedSeating": { en: "Enter seat counts for {n} piece(s) of seating", tr: "{n} oturma mobilyası için koltuk sayısı girin" },
     "priority.question": { en: "Answer a grouping question", tr: "Bir gruplama sorusunu yanıtlayın" },
     "priority.reviewGroup": { en: "Confirm {n} {type} object(s) together", tr: "{n} {type} nesneyi birlikte onaylayın" },
+    "priority.contradiction": { en: "Settle a {kind} disagreement", tr: "{kind} çelişkisini çözün" },
+    // ---- contradictions ----
+    // Two stages of the pipeline that cannot both be right. Each sentence names
+    // WHAT disagrees, never a verdict on which side is correct — the product
+    // does not know, and pretending otherwise is the failure this engine exists
+    // to prevent. The two sides are rendered underneath, with their sources.
+    "contradiction.title": { en: "Disagreements", tr: "Çelişkiler" },
+    "contradiction.none": { en: "No stage of the analysis contradicts another on this plan.", tr: "Bu planda analiz aşamalarından hiçbiri bir diğeriyle çelişmiyor." },
+    "contradiction.orphanSeats": { en: "{orphans} of {total} detected seats belong to no table.", tr: "Tespit edilen {total} koltuktan {orphans} tanesi hiçbir masaya ait değil." },
+    "contradiction.emptyTablesOrphanSeats": { en: "{tables} table(s) have no seat while {seats} seat(s) have no table.", tr: "{tables} masada hiç koltuk yok, buna karşılık {seats} koltuğun masası yok." },
+    "contradiction.visualClass": { en: "{n} object(s) called tables do not look like this plan's tables.", tr: "Masa denen {n} nesne bu planın masalarına benzemiyor." },
+    "contradiction.familyOutlier": { en: "{n} object(s) were typed differently from the family they look like.", tr: "{n} nesne, benzediği aileden farklı türde sınıflandırıldı." },
+    "contradiction.mixedGroupTypes": { en: "{n} seating unit(s) are made of tables typed as different kinds.", tr: "{n} oturma biriminde farklı türde sınıflandırılmış masalar var." },
+    "contradiction.seatingInStage": { en: "{n} seating area(s) overlap a stage.", tr: "{n} oturma alanı sahneyle çakışıyor." },
+    "contradiction.unzonedTables": { en: "{n} table(s) belong to no area of the room.", tr: "{n} masa odanın hiçbir alanına ait değil." },
+    "contradiction.capacity": { en: "The drawing says {stated} people; detection counted {counted}.", tr: "Çizim {stated} kişi diyor; tespit {counted} saydı." },
+    "contradiction.capacityUnverified": { en: "The totals match, but {n} piece(s) of seating have no known capacity.", tr: "Toplamlar uyuşuyor ama {n} oturma mobilyasının kapasitesi bilinmiyor." },
+    "contradiction.memoryOverruled": { en: "{n} object(s) were detected again as the class you had already corrected.", tr: "{n} nesne, daha önce düzelttiğiniz sınıfla yeniden tespit edildi." },
+    "contradiction.memoryLost": { en: "{n} object(s) you confirmed were not found in this analysis.", tr: "Onayladığınız {n} nesne bu analizde bulunamadı." },
+    "contradiction.tablesNoDining": { en: "{tables} tables were found, but no part of the room reads as a dining area.", tr: "{tables} masa bulundu ama odanın hiçbir bölümü yemek alanı olarak okunmuyor." },
+    "contradiction.severity.high": { en: "serious", tr: "ciddi" },
+    "contradiction.severity.medium": { en: "worth checking", tr: "kontrol edilmeli" },
+    "contradiction.downgraded": { en: "stated less confidently because of this", tr: "bu nedenle daha temkinli ifade edildi" },
+    "contradiction.kind.COUNT": { en: "count", tr: "sayım" },
+    "contradiction.kind.TYPE": { en: "type", tr: "tür" },
+    "contradiction.kind.RELATIONSHIP": { en: "relationship", tr: "ilişki" },
+    "contradiction.kind.ZONE": { en: "area", tr: "alan" },
+    "contradiction.kind.CAPACITY": { en: "capacity", tr: "kapasite" },
+    "contradiction.kind.MEMORY": { en: "memory", tr: "hafıza" },
+    "contradiction.kind.SEMANTIC": { en: "meaning", tr: "anlam" },
+    // The two sides of a disagreement, structured the same way facts are: a
+    // key plus params, never a pre-rendered English sentence. The first version
+    // of this shipped the sides as literal strings and the Turkish panel read
+    // "table detection: 2 tables have no seat" underneath a perfectly good
+    // Turkish headline — the exact failure the key/params design exists to
+    // prevent, reintroduced on a new surface.
+    "contradiction.from.tableDetection": { en: "table detection", tr: "masa tespiti" },
+    "contradiction.from.chairDetection": { en: "chair detection", tr: "koltuk tespiti" },
+    "contradiction.from.chairAssociation": { en: "chair-table association", tr: "koltuk-masa eşleştirmesi" },
+    "contradiction.from.detectionAndShape": { en: "table detection and shape classification", tr: "masa tespiti ve şekil sınıflandırması" },
+    "contradiction.from.visualSecondOpinion": { en: "visual second opinion ({tier} references)", tr: "görsel ikinci görüş ({tier} referanslar)" },
+    "contradiction.from.similarityClustering": { en: "visual similarity clustering", tr: "görsel benzerlik kümelemesi" },
+    "contradiction.from.shapeClassification": { en: "shape classification", tr: "şekil sınıflandırması" },
+    "contradiction.from.geometricGrouping": { en: "geometric grouping", tr: "geometrik gruplama" },
+    "contradiction.from.stageDetection": { en: "stage detection", tr: "sahne tespiti" },
+    "contradiction.from.semanticZones": { en: "semantic zones", tr: "anlamsal alanlar" },
+    "contradiction.from.drawingOcr": { en: "the drawing, read by OCR", tr: "OCR ile okunan çizim" },
+    "contradiction.from.countedSeats": { en: "seats counted by detection", tr: "tespitle sayılan koltuklar" },
+    "contradiction.from.capacityAudit": { en: "capacity audit", tr: "kapasite denetimi" },
+    "contradiction.from.seatingInventory": { en: "seating inventory", tr: "oturma envanteri" },
+    "contradiction.from.thisAnalysis": { en: "this analysis", tr: "bu analiz" },
+    "contradiction.from.yourCorrections": { en: "your earlier corrections", tr: "önceki düzeltmeleriniz" },
+    "contradiction.from.yourConfirmations": { en: "your earlier confirmations", tr: "önceki onaylarınız" },
+    "contradiction.tier.verified": { en: "confirmed", tr: "onaylanmış" },
+    "contradiction.tier.memory": { en: "remembered", tr: "hatırlanan" },
+    "contradiction.tier.provisional": { en: "provisional", tr: "geçici" },
+    "contradiction.claim.seatsExist": { en: "{n} seats exist on this plan", tr: "bu planda {n} koltuk var" },
+    "contradiction.claim.seatsPlaced": { en: "only {n} of them belong to a table", tr: "bunlardan yalnızca {n} tanesi bir masaya ait" },
+    "contradiction.claim.tablesNoSeat": { en: "{n} tables have no seat", tr: "{n} masada hiç koltuk yok" },
+    "contradiction.claim.seatsNoTable": { en: "{n} seats have no table", tr: "{n} koltuğun masası yok" },
+    "contradiction.claim.theseAreTables": { en: "{n} of these are tables", tr: "bunlardan {n} tanesi masa" },
+    "contradiction.claim.lookLikeOthers": { en: "they look more like other objects on this plan", tr: "bu plandaki başka nesnelere daha çok benziyorlar" },
+    "contradiction.claim.oneFamily": { en: "these objects look like one family", tr: "bu nesneler tek bir aile gibi görünüyor" },
+    "contradiction.claim.typedDifferently": { en: "it typed some of them differently from the rest", tr: "bazılarını diğerlerinden farklı sınıflandırdı" },
+    "contradiction.claim.oneUnit": { en: "these tables touch and align, so they are one seating unit", tr: "bu masalar bitişik ve hizalı, yani tek bir oturma birimi" },
+    "contradiction.claim.differentKinds": { en: "it typed them as different kinds of table", tr: "onları farklı türde masalar olarak sınıflandırdı" },
+    "contradiction.claim.stageNoSeating": { en: "this region is a performance area with no seating in it", tr: "bu bölge, içinde oturma olmayan bir sahne alanı" },
+    "contradiction.claim.tablesInside": { en: "{n} table(s) stand inside it", tr: "içinde {n} masa duruyor" },
+    "contradiction.claim.tablesOnPlan": { en: "{n} tables are on this plan", tr: "bu planda {n} masa var" },
+    "contradiction.claim.belongNoArea": { en: "{n} of them belong to no area of the room", tr: "bunlardan {n} tanesi odanın hiçbir alanına ait değil" },
+    "contradiction.claim.statedPeople": { en: "{n} people", tr: "{n} kişi" },
+    "contradiction.claim.countedPeople": { en: "{n} people", tr: "{n} kişi" },
+    "contradiction.claim.totalsMatch": { en: "the counted total matches the drawing", tr: "sayılan toplam çizimle uyuşuyor" },
+    "contradiction.claim.unknownCapacity": { en: "{n} pieces of seating have no known capacity, so the total is a lower bound", tr: "{n} oturma mobilyasının kapasitesi bilinmiyor, yani toplam bir alt sınır" },
+    "contradiction.claim.proposedAgain": { en: "the detector proposed these classes again", tr: "tespit bu sınıfları yeniden önerdi" },
+    "contradiction.claim.alreadyChanged": { en: "you had already changed them to something else", tr: "bunları daha önce başka bir şeye değiştirmiştiniz" },
+    "contradiction.claim.objectsReal": { en: "{n} objects here are real", tr: "buradaki {n} nesne gerçek" },
+    "contradiction.claim.notFoundNow": { en: "it did not find them this time", tr: "bu sefer onları bulamadı" },
+    "contradiction.claim.tablesFound": { en: "{n} tables were found", tr: "{n} masa bulundu" },
+    "contradiction.claim.noDiningArea": { en: "no part of this room reads as a place people eat", tr: "bu odanın hiçbir bölümü yemek yenen bir yer olarak okunmuyor" },
     // Lower-case type names for use INSIDE a sentence. teach.type.* are card
     // titles ("Square Table") and read wrong mid-clause; a fact says "most of
     // this plan's tables are square", and in Turkish "kare" rather than the
@@ -172,6 +252,22 @@
     "explain.title": { en: "What this plan says", tr: "Bu plan ne diyor" },
     "explain.lookAtFirst": { en: "Look at first", tr: "Önce şuna bakın" },
     "explain.basedOn": { en: "Based on", tr: "Dayanak" },
+    // Where each claim's evidence came from. Shown next to the claim on the
+    // review screen, so it is operator-facing text and belongs here rather than
+    // as English literals in the domain layer.
+    "provenance.nothingSurvived": { en: "no candidate survived detection", tr: "hiçbir aday tespitten geçmedi" },
+    "provenance.typeClassificationThreeStages": { en: "table type classification, which types on evidence from three separate stages", tr: "üç ayrı aşamanın kanıtına dayanan masa türü sınıflandırması" },
+    "provenance.tablesSurvivingDetection": { en: "tables surviving detection — a count can never be better than recall", tr: "tespitten geçen masalar — bir sayım, bulma oranından iyi olamaz" },
+    "provenance.typeClassification": { en: "table type classification", tr: "masa türü sınıflandırması" },
+    "provenance.chairsDetectedAssociated": { en: "chairs detected and associated to tables, plus standalone chairs", tr: "masalara eşleştirilen koltuklar ve tek başına duran koltuklar" },
+    "provenance.tablesWithNoChair": { en: "tables with no chair associated to them", tr: "hiçbir koltukla eşleştirilmemiş masalar" },
+    "provenance.touchAndAlign": { en: "tables that touch and align, treated as one logical seating unit", tr: "bitişik ve hizalı masalar, tek bir mantıksal oturma birimi sayılır" },
+    "provenance.noZoneRule": { en: "areas of the plan that satisfied no zone rule", tr: "hiçbir alan kuralına uymayan plan bölgeleri" },
+    "provenance.zoneTyped": { en: "semantic zones, {type} typed on the evidence each zone records", tr: "anlamsal alanlar; her alanın kaydettiği kanıta göre {type} olarak belirlendi" },
+    "provenance.paxFromOcr": { en: "a pax figure read from the drawing by OCR", tr: "OCR ile çizimden okunan kişi sayısı" },
+    "provenance.seatsCounted": { en: "seats counted by detection", tr: "tespitle sayılan koltuklar" },
+    "provenance.ocrDidNotRun": { en: "OCR did not run, so the drawing's own pax figure was never read", tr: "OCR çalışmadı, bu yüzden çizimin kendi kişi sayısı hiç okunmadı" },
+    "provenance.unreadableCapacity": { en: "seating furniture whose capacity cannot be read off a drawing", tr: "kapasitesi çizimden okunamayan oturma mobilyası" },
     "action.explainPlan": { en: "Explain this plan", tr: "Bu planı açıkla" },
     // ---- the visual second opinion ----
     // A SEPARATE answer from the learned encoder, kept in words rather than a
@@ -779,10 +875,26 @@
   }
   globalThis.translateToast = translateToast;
 
+  // A parameter that is itself a string key is resolved before it is
+  // substituted, so a domain layer can name a thing in its own vocabulary
+  // ("contradiction.kind.COUNT") without every caller having to know which of
+  // its params needs translating first. Only a value that both contains a dot
+  // and exists in this table is treated that way, so an ordinary param — a
+  // count, a type name like "square", a difference — is never touched.
+  //
+  // This exists because the review screen resolved one such param in its own
+  // renderer and the benchmark, rendering the same structure directly, printed
+  // "contradiction.kind.COUNT çelişkisini çözün". Fixing it at the one place
+  // that does substitution makes every consumer correct rather than every
+  // consumer responsible.
   function t(key, vars) {
     const entry = STRINGS[key];
     let str = entry ? (entry[currentLang()] || entry.en) : key;
-    if (vars) for (const k in vars) str = str.replace(new RegExp(`\\{${k}\\}`, "g"), vars[k]);
+    if (vars) for (const k in vars) {
+      const v = vars[k];
+      const resolved = typeof v === "string" && v.includes(".") && STRINGS[v] ? t(v) : v;
+      str = str.replace(new RegExp(`\\{${k}\\}`, "g"), resolved);
+    }
     return str;
   }
 

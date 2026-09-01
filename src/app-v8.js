@@ -3801,7 +3801,7 @@
   }
   function applyPlanMemory(freshCandidates,memory){
     const idRemap=new Map();
-    if(!memory?.length)return{reappliedCount:0,restored:[],idRemap};
+    if(!memory?.length)return{reappliedCount:0,restored:[],idRemap,conflicts:[]};
     // Matched purely by geometry, never by kind: a reclassification memory's
     // whole point is that the detector's raw kind guess was wrong (e.g. a
     // table-shaped detection that a human corrected to venue:chair) -- the
@@ -3813,19 +3813,34 @@
     pairs.sort((a,b)=>a.dist-b.dist);
     const usedC=new Set(),usedM=new Set();
     let reappliedCount=0;
+    // Where the operator and the detector actually disagree. Re-applying a
+    // correction silently makes the plan look right while hiding the fact that
+    // the detector proposed the same wrong answer again -- which is exactly the
+    // signal that says this class of object is not being read correctly. It is
+    // recorded here, at the only place that can see both answers, and reported
+    // as a MEMORY contradiction rather than being smoothed over.
+    const conflicts=[];
     for(const{m,c,dist}of pairs){
       if(dist>memoryTolerance(m.geometry)||usedC.has(c.id)||usedM.has(m.id))continue;
+      if(c.kind!==m.kind||c.type!==m.type)
+        conflicts.push({kind:"overruled",candidateId:c.id,
+          detector:{kind:c.kind,type:c.type},operator:{kind:m.kind,type:m.type}});
       c.kind=m.kind;c.type=m.type;c.status=m.status;c.selected=m.status!=="rejected";c.fromMemory=true;
       usedC.add(c.id);usedM.add(m.id);idRemap.set(m.sourceCandidateId,c.id);reappliedCount++;
     }
     const restored=[];
     for(const m of memory){
+      // A confirmed object the detector did NOT find again this run. Not
+      // fabricated back into existence, but not silent either: a human said
+      // this is real and detection now disagrees.
+      if(!usedM.has(m.id)&&!m.manual&&m.status==="confirmed")
+        conflicts.push({kind:"lost",memoryId:m.id,object:{kind:m.kind,type:m.type},geometry:m.geometry});
       if(usedM.has(m.id)||!m.manual)continue; // a non-manual correction whose object wasn't re-detected this time is left alone -- we never fabricate a detection that didn't happen.
       const g=m.geometry,id=uid("candidate");
       restored.push({id,kind:m.kind,type:m.type,x:g.x,y:g.y,w:g.w,h:g.h,rotation:g.rotation,confidence:1,status:m.status,selected:m.status!=="rejected",missed:true,fromMemory:true,chairDetections:[],evidence:{geometry:"manual-memory",chairs:0,repetition:0}});
       idRemap.set(m.sourceCandidateId,id);
     }
-    return{reappliedCount,restored,idRemap};
+    return{reappliedCount,restored,idRemap,conflicts};
   }
   // ---- the visual second opinion -------------------------------------------
   //
@@ -4091,7 +4106,7 @@
       // silently reverting to the detector's default grouping.
       const geometryRemap=matchCandidatesByGeometry(priorCandidates,allCandidates);
       const carriedDecisions=priorDecisions.map(d=>({...d,memberIds:d.memberIds.map(id=>geometryRemap.get(id)).filter(Boolean)})).filter(d=>d.memberIds.length>=2);
-      event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:false,notice:"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:Math.round(width/ratio),originalHeight:Math.round(height/ratio),threshold,candidates:allCandidates,missed:allCandidates.filter(c=>c.missed).map(c=>c.id),groupingDecisions:carriedDecisions,memoryReapplied:memoryResult.reappliedCount,memoryRestored:memoryResult.restored.length,comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{...detection.diagnostics,resolution:`${width}×${height}`,detectionMs,provider:provider.id,providerLabel:provider.label,
+      event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:false,notice:"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:Math.round(width/ratio),originalHeight:Math.round(height/ratio),threshold,candidates:allCandidates,missed:allCandidates.filter(c=>c.missed).map(c=>c.id),groupingDecisions:carriedDecisions,memoryReapplied:memoryResult.reappliedCount,memoryRestored:memoryResult.restored.length,memoryConflicts:memoryResult.conflicts,comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{...detection.diagnostics,resolution:`${width}×${height}`,detectionMs,provider:provider.id,providerLabel:provider.label,
         // Which visual representation actually produced the descriptors, and
         // whether it involved trained weights. Reported from the resolved
         // provider rather than from a constant, so an install without the
@@ -4290,17 +4305,42 @@
       const key="fact.type."+type,word=t(key);
       return word===key?String(type):word;
     };
+    // A type is named in the domain's own vocabulary ("square") and needs the
+    // in-sentence word here. Params that are string KEYS are resolved by t()
+    // itself, so nothing else needs unwrapping.
     const say=(key,params)=>t(key,params&&params.type?{...params,type:typeWord(params.type)}:params);
     // Collapsible, and open by default. The Review Center's job is ACTION —
     // the groups and questions below — and twelve facts unfolded push them
     // under the fold. Context that cannot be folded away is chrome.
+    // Where two stages of the analysis cannot both be right. Shown ABOVE the
+    // facts, because a claim and the reason to doubt it are useless in that
+    // order: an operator who reads "112 seats" first has already believed it.
+    // Each one names both sides and where each came from, and states no verdict
+    // — the product does not know which side is wrong, and the resolution
+    // belongs to the person looking at the drawing.
+    const contradictions=pi.contradictions||[];
+    const contradictionsHTML=contradictions.length
+      ?`<div class="plan-contradictions"><strong>${t("contradiction.title")}</strong>`
+        +`<ul>${contradictions.map(c=>
+          `<li class="contra contra-${esc(c.severity)}">`
+          +`<span class="contra-kind">${esc(t("contradiction.kind."+c.kind).toUpperCase())}</span>`
+          +`<span class="contra-text">${esc(t(c.key,c.params))}</span>`
+          +`<span class="contra-sides">${c.sides.map(s=>
+            `<em>${esc(t(s.from,s.fromParams))}</em>: ${esc(t(s.claim,s.params))}`).join(" &nbsp;·&nbsp; ")}</span>`
+          +`</li>`).join("")}</ul></div>`
+      :"";
     return`<details class="plan-explain" open><summary>${t("explain.title")}</summary>`
+      +contradictionsHTML
       +`<ul class="plan-explain-facts">${facts.map(f=>
         `<li class="fact fact-${esc(f.strength)}"><span class="fact-strength">${t("fact.strength."+f.strength)}</span>`
         +`<span class="fact-text">${esc(say(f.key,f.params))}</span>`
         // The evidence travels with the claim rather than living in a
         // diagnostics panel nobody opens.
-        +(f.provenance&&f.provenance.length?`<span class="fact-basis">${t("explain.basedOn")}: ${esc(f.provenance.join("; "))}</span>`:"")
+        +(f.provenance&&f.provenance.length?`<span class="fact-basis">${t("explain.basedOn")}: ${esc(f.provenance.map(p=>
+          say(p.key,p.params)).join("; "))}</span>`:"")
+        // A claim whose confidence a disagreement lowered says so. Silently
+        // restating it one notch weaker would hide the reason.
+        +(f.strengthBefore?`<span class="fact-downgraded">${t("contradiction.downgraded")}</span>`:"")
         +`</li>`).join("")}</ul>`
       +(priorities.length?`<strong class="plan-explain-next">${t("explain.lookAtFirst")}</strong>`
         +`<ol class="plan-explain-priorities">${priorities.map(pr=>

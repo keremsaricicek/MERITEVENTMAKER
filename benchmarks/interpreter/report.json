@@ -1,5 +1,5 @@
 {
- "ranAt": "2026-09-01T05:42:11.175Z",
+ "ranAt": "2026-09-01T11:04:40.722Z",
  "plans": [
   {
    "planId": "adversarial-architecture-v1",
@@ -7,10 +7,15 @@
     {
      "key": "fact.tableTypeMix",
      "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "Most of this plan's tables are round (10).",
      "tr": "Bu planın masalarının çoğu round (10).",
      "provenance": [
-      "table type classification, which types on evidence from three separate stages"
+      {
+       "key": "provenance.typeClassificationThreeStages",
+       "params": {}
+      }
      ],
      "basis": {
       "byType": {
@@ -28,10 +33,15 @@
     {
      "key": "fact.tableCount",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "10 tables were detected.",
      "tr": "10 masa tespit edildi.",
      "provenance": [
-      "tables surviving detection — a count can never be better than recall"
+      {
+       "key": "provenance.tablesSurvivingDetection",
+       "params": {}
+      }
      ],
      "basis": {
       "total": 10
@@ -46,10 +56,15 @@
     {
      "key": "fact.seats",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "80 seats detected across 10 tables.",
      "tr": "10 masada 80 koltuk tespit edildi.",
      "provenance": [
-      "chairs detected and associated to tables, plus standalone chairs"
+      {
+       "key": "provenance.chairsDetectedAssociated",
+       "params": {}
+      }
      ],
      "basis": {
       "physicalSeats": 80,
@@ -61,10 +76,17 @@
     {
      "key": "fact.zone",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "10 dining area(s).",
      "tr": "10 dining alanı.",
      "provenance": [
-      "semantic zones, dining typed on the evidence each zone records"
+      {
+       "key": "provenance.zoneTyped",
+       "params": {
+        "type": "dining"
+       }
+      }
      ],
      "basis": {
       "n": 10
@@ -79,10 +101,15 @@
     {
      "key": "fact.noStatedCapacity",
      "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "The drawing's own capacity figure was not read, because OCR did not run.",
      "tr": "OCR çalışmadığı için çizimin kendi kapasite rakamı okunmadı.",
      "provenance": [
-      "OCR did not run, so the drawing's own pax figure was never read"
+      {
+       "key": "provenance.ocrDidNotRun",
+       "params": {}
+      }
      ],
      "basis": {},
      "checkable": false,
@@ -91,21 +118,21 @@
    ],
    "priorities": [
     {
-     "id": "priority:reviewgroup_a797cb22-207f-4a5c-b906-48931ec3ba8d",
+     "id": "priority:reviewgroup_cb9b704f-2573-41c7-8f8a-824142392729",
      "key": "priority.reviewGroup",
-     "rank": 5,
+     "rank": 6,
      "params": {
       "n": 6,
       "type": "column"
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_abcd411a-7360-4b82-993a-3db4a9f9c41f",
-      "candidate_9cf27b05-fff8-4b7b-a1e2-1fa35a002c63",
-      "candidate_02f9625f-5723-4bb2-8c77-eebee2f7b007",
-      "candidate_85812734-3783-4b78-b6ce-a02a23b69373",
-      "candidate_3b3371d0-30e0-43a1-b21e-eabc9bccb992",
-      "candidate_a92cc26b-46e4-4df3-9f2e-426df72a5a3b"
+      "candidate_3b07dfa6-111e-4a8a-9d70-1288cb3b6201",
+      "candidate_547fc2ec-123b-4137-a0e4-f9e25ee48cb0",
+      "candidate_1970eabc-90ff-40b9-8629-099b0a306461",
+      "candidate_f86293dd-6c6a-4d71-a326-9ac12c42242e",
+      "candidate_6a98bd0d-65ac-4d7f-bc62-61126b868c9d",
+      "candidate_1927fb2b-68a1-4666-8301-ce01709f3359"
      ]
     }
    ],
@@ -118,10 +145,15 @@
     {
      "key": "fact.tableTypeMix",
      "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "Most of this plan's tables are square (18).",
      "tr": "Bu planın masalarının çoğu square (18).",
      "provenance": [
-      "table type classification, which types on evidence from three separate stages"
+      {
+       "key": "provenance.typeClassificationThreeStages",
+       "params": {}
+      }
      ],
      "basis": {
       "byType": {
@@ -139,10 +171,15 @@
     {
      "key": "fact.tableCount",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "18 tables were detected.",
      "tr": "18 masa tespit edildi.",
      "provenance": [
-      "tables surviving detection — a count can never be better than recall"
+      {
+       "key": "provenance.tablesSurvivingDetection",
+       "params": {}
+      }
      ],
      "basis": {
       "total": 18
@@ -157,10 +194,15 @@
     {
      "key": "fact.seats",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "72 seats detected across 18 tables.",
      "tr": "18 masada 72 koltuk tespit edildi.",
      "provenance": [
-      "chairs detected and associated to tables, plus standalone chairs"
+      {
+       "key": "provenance.chairsDetectedAssociated",
+       "params": {}
+      }
      ],
      "basis": {
       "physicalSeats": 72,
@@ -172,10 +214,17 @@
     {
      "key": "fact.zone",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "18 dining area(s).",
      "tr": "18 dining alanı.",
      "provenance": [
-      "semantic zones, dining typed on the evidence each zone records"
+      {
+       "key": "provenance.zoneTyped",
+       "params": {
+        "type": "dining"
+       }
+      }
      ],
      "basis": {
       "n": 18
@@ -190,10 +239,15 @@
     {
      "key": "fact.noStatedCapacity",
      "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "The drawing's own capacity figure was not read, because OCR did not run.",
      "tr": "OCR çalışmadığı için çizimin kendi kapasite rakamı okunmadı.",
      "provenance": [
-      "OCR did not run, so the drawing's own pax figure was never read"
+      {
+       "key": "provenance.ocrDidNotRun",
+       "params": {}
+      }
      ],
      "basis": {},
      "checkable": false,
@@ -210,10 +264,15 @@
     {
      "key": "fact.tableTypeMix",
      "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "Most of this plan's tables are square (24).",
      "tr": "Bu planın masalarının çoğu square (24).",
      "provenance": [
-      "table type classification, which types on evidence from three separate stages"
+      {
+       "key": "provenance.typeClassificationThreeStages",
+       "params": {}
+      }
      ],
      "basis": {
       "byType": {
@@ -231,10 +290,15 @@
     {
      "key": "fact.tableCount",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "24 tables were detected.",
      "tr": "24 masa tespit edildi.",
      "provenance": [
-      "tables surviving detection — a count can never be better than recall"
+      {
+       "key": "provenance.tablesSurvivingDetection",
+       "params": {}
+      }
      ],
      "basis": {
       "total": 24
@@ -249,10 +313,15 @@
     {
      "key": "fact.seats",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "80 seats detected across 24 tables.",
      "tr": "24 masada 80 koltuk tespit edildi.",
      "provenance": [
-      "chairs detected and associated to tables, plus standalone chairs"
+      {
+       "key": "provenance.chairsDetectedAssociated",
+       "params": {}
+      }
      ],
      "basis": {
       "physicalSeats": 80,
@@ -264,10 +333,15 @@
     {
      "key": "fact.combinedTables",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "4 groups of tables are pushed together; the largest joins 6.",
      "tr": "4 masa grubu birleştirilmiş; en büyüğü 6 masayı birleştiriyor.",
      "provenance": [
-      "tables that touch and align, treated as one logical seating unit"
+      {
+       "key": "provenance.touchAndAlign",
+       "params": {}
+      }
      ],
      "basis": {
       "groups": 4,
@@ -279,10 +353,17 @@
     {
      "key": "fact.zone",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "4 dining area(s).",
      "tr": "4 dining alanı.",
      "provenance": [
-      "semantic zones, dining typed on the evidence each zone records"
+      {
+       "key": "provenance.zoneTyped",
+       "params": {
+        "type": "dining"
+       }
+      }
      ],
      "basis": {
       "n": 4
@@ -297,10 +378,15 @@
     {
      "key": "fact.noStatedCapacity",
      "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "The drawing's own capacity figure was not read, because OCR did not run.",
      "tr": "OCR çalışmadığı için çizimin kendi kapasite rakamı okunmadı.",
      "provenance": [
-      "OCR did not run, so the drawing's own pax figure was never read"
+      {
+       "key": "provenance.ocrDidNotRun",
+       "params": {}
+      }
      ],
      "basis": {},
      "checkable": false,
@@ -309,9 +395,9 @@
    ],
    "priorities": [
     {
-     "id": "priority:question_cf096f5f-33b5-4fd0-b3cb-ff537395842e",
+     "id": "priority:question_cc242f2f-5e79-4c19-b22e-27fc23add251",
      "key": "priority.question",
-     "rank": 4,
+     "rank": 5,
      "params": {
       "n": 1
      },
@@ -319,19 +405,19 @@
      "targetIds": []
     },
     {
-     "id": "priority:reviewgroup_26fd2f98-b6f3-4fac-a347-0fb82eaf3bd0",
+     "id": "priority:reviewgroup_95dcfa33-e1f3-4af4-89ee-b8fd6b34ce6a",
      "key": "priority.reviewGroup",
-     "rank": 5,
+     "rank": 6,
      "params": {
       "n": 4,
       "type": "chair"
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_0daa0b20-1c25-4b0e-abf1-caba747ff2d1",
-      "candidate_4dcc715f-af53-4f89-a52a-647e20e9131b",
-      "candidate_8c06fc2a-75f4-4c1c-a564-79d806900c99",
-      "candidate_3047c988-6298-4e63-b75f-3470b75825de"
+      "candidate_f371cb88-e104-4af6-abe9-05cbda45aaa5",
+      "candidate_cfbf65fe-8d10-4b03-ba09-f58485764c2e",
+      "candidate_61e91746-31c6-474d-9b3a-91bc99922e57",
+      "candidate_1d5f50eb-0f42-45c7-8b29-6d1888dfa77c"
      ]
     }
    ],
@@ -344,10 +430,15 @@
     {
      "key": "fact.tableTypeMix",
      "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "Most of this plan's tables are square (12).",
      "tr": "Bu planın masalarının çoğu square (12).",
      "provenance": [
-      "table type classification, which types on evidence from three separate stages"
+      {
+       "key": "provenance.typeClassificationThreeStages",
+       "params": {}
+      }
      ],
      "basis": {
       "byType": {
@@ -365,10 +456,15 @@
     {
      "key": "fact.tableCount",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "12 tables were detected.",
      "tr": "12 masa tespit edildi.",
      "provenance": [
-      "tables surviving detection — a count can never be better than recall"
+      {
+       "key": "provenance.tablesSurvivingDetection",
+       "params": {}
+      }
      ],
      "basis": {
       "total": 12
@@ -383,10 +479,15 @@
     {
      "key": "fact.seats",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "73 seats detected across 12 tables.",
      "tr": "12 masada 73 koltuk tespit edildi.",
      "provenance": [
-      "chairs detected and associated to tables, plus standalone chairs"
+      {
+       "key": "provenance.chairsDetectedAssociated",
+       "params": {}
+      }
      ],
      "basis": {
       "physicalSeats": 73,
@@ -398,10 +499,17 @@
     {
      "key": "fact.zone",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "12 dining area(s).",
      "tr": "12 dining alanı.",
      "provenance": [
-      "semantic zones, dining typed on the evidence each zone records"
+      {
+       "key": "provenance.zoneTyped",
+       "params": {
+        "type": "dining"
+       }
+      }
      ],
      "basis": {
       "n": 12
@@ -416,10 +524,15 @@
     {
      "key": "fact.noStatedCapacity",
      "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "The drawing's own capacity figure was not read, because OCR did not run.",
      "tr": "OCR çalışmadığı için çizimin kendi kapasite rakamı okunmadı.",
      "provenance": [
-      "OCR did not run, so the drawing's own pax figure was never read"
+      {
+       "key": "provenance.ocrDidNotRun",
+       "params": {}
+      }
      ],
      "basis": {},
      "checkable": false,
@@ -436,10 +549,15 @@
     {
      "key": "fact.tableTypeMix",
      "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "Most of this plan's tables are square (39).",
      "tr": "Bu planın masalarının çoğu square (39).",
      "provenance": [
-      "table type classification, which types on evidence from three separate stages"
+      {
+       "key": "provenance.typeClassificationThreeStages",
+       "params": {}
+      }
      ],
      "basis": {
       "byType": {
@@ -459,11 +577,18 @@
     },
     {
      "key": "fact.tableCount",
-     "strength": "likely",
+     "strength": "uncertain",
+     "strengthBefore": "likely",
+     "contradictedBy": [
+      "contra:visualClass"
+     ],
      "en": "50 tables were detected.",
      "tr": "50 masa tespit edildi.",
      "provenance": [
-      "tables surviving detection — a count can never be better than recall"
+      {
+       "key": "provenance.tablesSurvivingDetection",
+       "params": {}
+      }
      ],
      "basis": {
       "total": 50
@@ -478,10 +603,15 @@
     {
      "key": "fact.alsoHas",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "Also 5 bistro.",
      "tr": "Ayrıca 5 bistro.",
      "provenance": [
-      "table type classification"
+      {
+       "key": "provenance.typeClassification",
+       "params": {}
+      }
      ],
      "basis": {
       "count": 5
@@ -496,10 +626,15 @@
     {
      "key": "fact.alsoHas",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "Also 4 round.",
      "tr": "Ayrıca 4 round.",
      "provenance": [
-      "table type classification"
+      {
+       "key": "provenance.typeClassification",
+       "params": {}
+      }
      ],
      "basis": {
       "count": 4
@@ -513,11 +648,19 @@
     },
     {
      "key": "fact.alsoHas",
-     "strength": "likely",
+     "strength": "uncertain",
+     "strengthBefore": "likely",
+     "contradictedBy": [
+      "contra:visualClass",
+      "contra:mixedGroupTypes"
+     ],
      "en": "Also 2 rectangle.",
      "tr": "Ayrıca 2 rectangle.",
      "provenance": [
-      "table type classification"
+      {
+       "key": "provenance.typeClassification",
+       "params": {}
+      }
      ],
      "basis": {
       "count": 2
@@ -532,10 +675,15 @@
     {
      "key": "fact.seats",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "112 seats detected across 50 tables.",
      "tr": "50 masada 112 koltuk tespit edildi.",
      "provenance": [
-      "chairs detected and associated to tables, plus standalone chairs"
+      {
+       "key": "provenance.chairsDetectedAssociated",
+       "params": {}
+      }
      ],
      "basis": {
       "physicalSeats": 112,
@@ -550,11 +698,18 @@
     },
     {
      "key": "fact.unseatedTables",
-     "strength": "likely",
+     "strength": "uncertain",
+     "strengthBefore": "likely",
+     "contradictedBy": [
+      "contra:emptyTablesOrphanSeats"
+     ],
      "en": "2 tables have no seats detected at them.",
      "tr": "2 masada koltuk tespit edilmedi.",
      "provenance": [
-      "tables with no chair associated to them"
+      {
+       "key": "provenance.tablesWithNoChair",
+       "params": {}
+      }
      ],
      "basis": {
       "unseated": 2
@@ -569,10 +724,15 @@
     {
      "key": "fact.combinedTables",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "13 groups of tables are pushed together; the largest joins 4.",
      "tr": "13 masa grubu birleştirilmiş; en büyüğü 4 masayı birleştiriyor.",
      "provenance": [
-      "tables that touch and align, treated as one logical seating unit"
+      {
+       "key": "provenance.touchAndAlign",
+       "params": {}
+      }
      ],
      "basis": {
       "groups": 13,
@@ -588,10 +748,17 @@
     {
      "key": "fact.zone",
      "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "2 stage area(s).",
      "tr": "2 stage alanı.",
      "provenance": [
-      "semantic zones, stage typed on the evidence each zone records"
+      {
+       "key": "provenance.zoneTyped",
+       "params": {
+        "type": "stage"
+       }
+      }
      ],
      "basis": {
       "n": 2
@@ -606,10 +773,17 @@
     {
      "key": "fact.zone",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "6 dining area(s).",
      "tr": "6 dining alanı.",
      "provenance": [
-      "semantic zones, dining typed on the evidence each zone records"
+      {
+       "key": "provenance.zoneTyped",
+       "params": {
+        "type": "dining"
+       }
+      }
      ],
      "basis": {
       "n": 6
@@ -624,10 +798,17 @@
     {
      "key": "fact.zone",
      "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "3 bistro area(s).",
      "tr": "3 bistro alanı.",
      "provenance": [
-      "semantic zones, bistro typed on the evidence each zone records"
+      {
+       "key": "provenance.zoneTyped",
+       "params": {
+        "type": "bistro"
+       }
+      }
      ],
      "basis": {
       "n": 3
@@ -642,10 +823,15 @@
     {
      "key": "fact.noStatedCapacity",
      "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
      "en": "The drawing's own capacity figure was not read, because OCR did not run.",
      "tr": "OCR çalışmadığı için çizimin kendi kapasite rakamı okunmadı.",
      "provenance": [
-      "OCR did not run, so the drawing's own pax figure was never read"
+      {
+       "key": "provenance.ocrDidNotRun",
+       "params": {}
+      }
      ],
      "basis": {},
      "checkable": false,
@@ -654,157 +840,202 @@
    ],
    "priorities": [
     {
-     "id": "priority:question_ec33344a-32c1-43ef-8de6-ed884d77f959",
-     "key": "priority.question",
-     "rank": 4,
+     "id": "priority:contra:emptyTablesOrphanSeats",
+     "key": "priority.contradiction",
+     "rank": 2,
      "params": {
-      "n": 1
+      "kind": "contradiction.kind.COUNT"
      },
-     "why": "a grouping the detector could not resolve",
-     "targetIds": []
+     "contradictionId": "contra:emptyTablesOrphanSeats",
+     "why": "contradiction.from.tableDetection and contradiction.from.chairDetection cannot both be right",
+     "targetIds": [
+      "candidate_2c647f28-7082-4eba-a310-a6d685328bc7",
+      "candidate_42c85e68-17d1-4bce-9bb7-50000226962b"
+     ]
     },
     {
-     "id": "priority:question_b5899467-a78c-4d2e-988d-18fe4b743e4c",
-     "key": "priority.question",
-     "rank": 4,
+     "id": "priority:contra:visualClass",
+     "key": "priority.contradiction",
+     "rank": 2,
      "params": {
-      "n": 1
+      "kind": "contradiction.kind.TYPE"
      },
-     "why": "a grouping the detector could not resolve",
-     "targetIds": []
+     "contradictionId": "contra:visualClass",
+     "why": "contradiction.from.detectionAndShape and contradiction.from.visualSecondOpinion cannot both be right",
+     "targetIds": [
+      "candidate_e62a45b2-d828-4f5e-9abf-428dc13dfc64",
+      "candidate_aad07664-aedd-4846-b43f-f6484cc425e6",
+      "candidate_42c85e68-17d1-4bce-9bb7-50000226962b"
+     ]
     },
     {
-     "id": "priority:question_b233605b-9a80-4492-a931-7770998d8e52",
-     "key": "priority.question",
-     "rank": 4,
+     "id": "priority:contra:mixedGroupTypes",
+     "key": "priority.contradiction",
+     "rank": 2,
      "params": {
-      "n": 1
+      "kind": "contradiction.kind.RELATIONSHIP"
      },
-     "why": "a grouping the detector could not resolve",
-     "targetIds": []
+     "contradictionId": "contra:mixedGroupTypes",
+     "why": "contradiction.from.geometricGrouping and contradiction.from.shapeClassification cannot both be right",
+     "targetIds": [
+      "candidate_43fbfcfd-b36b-4e5d-b795-a540eb7bf665",
+      "candidate_6073236c-0a6d-41bd-b38d-f6e60218a880",
+      "candidate_04759b34-8d0d-4ef6-9c9a-5e040c0cc41a",
+      "candidate_e62a45b2-d828-4f5e-9abf-428dc13dfc64"
+     ]
     },
     {
-     "id": "priority:question_f830bf9b-4777-4457-8585-556194e89edd",
+     "id": "priority:question_9f34f79e-cb78-431b-ac79-1830eaf03911",
      "key": "priority.question",
-     "rank": 4,
-     "params": {
-      "n": 1
-     },
-     "why": "a grouping the detector could not resolve",
-     "targetIds": []
-    },
-    {
-     "id": "priority:question_176fc46f-fdd4-4b3c-929a-0c11ca32367f",
-     "key": "priority.question",
-     "rank": 4,
-     "params": {
-      "n": 1
-     },
-     "why": "a grouping the detector could not resolve",
-     "targetIds": []
-    },
-    {
-     "id": "priority:reviewgroup_0efa9554-edbd-469d-87a7-de3b06a35ff5",
-     "key": "priority.reviewGroup",
      "rank": 5,
+     "params": {
+      "n": 1
+     },
+     "why": "a grouping the detector could not resolve",
+     "targetIds": []
+    },
+    {
+     "id": "priority:question_4862ec3a-4c17-4f8f-a0d1-547691858e0b",
+     "key": "priority.question",
+     "rank": 5,
+     "params": {
+      "n": 1
+     },
+     "why": "a grouping the detector could not resolve",
+     "targetIds": []
+    },
+    {
+     "id": "priority:question_dbd037cf-d345-45f1-8c27-31c59487440b",
+     "key": "priority.question",
+     "rank": 5,
+     "params": {
+      "n": 1
+     },
+     "why": "a grouping the detector could not resolve",
+     "targetIds": []
+    },
+    {
+     "id": "priority:question_308b13a8-80bc-4abd-a763-b57fcffb0add",
+     "key": "priority.question",
+     "rank": 5,
+     "params": {
+      "n": 1
+     },
+     "why": "a grouping the detector could not resolve",
+     "targetIds": []
+    },
+    {
+     "id": "priority:question_4a36e15e-9190-4207-ac7f-dae2217bfa1f",
+     "key": "priority.question",
+     "rank": 5,
+     "params": {
+      "n": 1
+     },
+     "why": "a grouping the detector could not resolve",
+     "targetIds": []
+    },
+    {
+     "id": "priority:reviewgroup_dc86d31a-ae9e-4ae8-bda0-d80ffbfe7c5b",
+     "key": "priority.reviewGroup",
+     "rank": 6,
      "params": {
       "n": 15,
       "type": "square"
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_7a5cf72f-eb31-47dd-b4fa-399de0374190",
-      "candidate_84f82ade-2682-4f4f-8f89-11917d1fa133",
-      "candidate_02a611e7-6631-48f4-9389-03174be75cff",
-      "candidate_bbae46cc-f67a-4909-91f4-d4db9c9dd69f",
-      "candidate_7062f52e-5008-49c7-a677-a158f0d97f8c",
-      "candidate_648c31f5-906e-4c99-ab59-ba552a1664b6",
-      "candidate_c29b6401-0f87-4867-838f-63aa9f032f04",
-      "candidate_83d723e8-9e72-4c87-9bc8-d45a9fd83c08",
-      "candidate_8487b042-6fae-4ff5-882b-f943bed9210e",
-      "candidate_f2385adc-7663-4ccc-8f21-ef8b7a4259fe",
-      "candidate_faf1e235-9e18-42a9-8998-3ae7daa2b0b1",
-      "candidate_babf6752-23be-4186-9875-2ffa06b1a0a5",
-      "candidate_7063d5fd-5b9a-4571-bee3-fd7cc0b2c9ce",
-      "candidate_2163c300-8279-48e8-bc2c-37eec7cf87d2",
-      "candidate_92be9dd7-7341-476b-9fda-672e35f5efce"
+      "candidate_0e0e3942-8e67-46c3-8ac6-48cc74c7343f",
+      "candidate_cf9f743a-b9e3-488d-a329-1d2c1b73a944",
+      "candidate_eda349ba-36d2-43f5-8f22-21c90cdc248e",
+      "candidate_7ac5f57f-639d-48b2-b034-c73cf35a6115",
+      "candidate_70521543-2d43-4104-896c-b757ba200d46",
+      "candidate_f3110522-e775-4d68-bd61-471ebd2812bc",
+      "candidate_e6dc14a6-521b-4e6b-bb32-95d5c7def510",
+      "candidate_39d0e44c-e132-452a-8d79-f20a60d32280",
+      "candidate_04759b34-8d0d-4ef6-9c9a-5e040c0cc41a",
+      "candidate_eed83677-bd02-4b5d-bad8-44ee1cd1f547",
+      "candidate_09c198cc-0429-4b0d-ab12-3880887cd232",
+      "candidate_201be020-91b0-4795-b254-d67d19ff400c",
+      "candidate_fa66a080-98d4-417a-b5b2-2377f087dfc4",
+      "candidate_2c647f28-7082-4eba-a310-a6d685328bc7",
+      "candidate_42c85e68-17d1-4bce-9bb7-50000226962b"
      ]
     },
     {
-     "id": "priority:reviewgroup_e9559766-54de-49c6-8891-b26137460b51",
+     "id": "priority:reviewgroup_5b6aa9ca-9739-4251-814a-84dfc24f2537",
      "key": "priority.reviewGroup",
-     "rank": 5,
+     "rank": 6,
      "params": {
       "n": 5,
       "type": "bistro"
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_3635f042-40bc-423c-8018-82f93ff081dd",
-      "candidate_e878f694-7bf9-4ffe-ac2c-e69bdbaad246",
-      "candidate_e8d5b4e1-60d6-4030-a6b8-7b93f9b83e4b",
-      "candidate_b21ef9a1-e871-4cfe-b47b-8d2289ed688d",
-      "candidate_2c363f98-0a98-458f-9c50-a8422b4b1409"
+      "candidate_80681ccb-1f19-4eae-8604-764c9cca4e43",
+      "candidate_437e6596-3d75-48fd-9cc0-0918b127869b",
+      "candidate_4aa99081-c442-4a82-84a8-69ffb74c385a",
+      "candidate_fdbf16c1-99a3-40b0-b1b9-8b183f91ebda",
+      "candidate_75e93a8c-972c-46df-a80d-d35e81065b9c"
      ]
     },
     {
-     "id": "priority:reviewgroup_0c8253b1-9092-4ec4-a496-f6243e2e1139",
+     "id": "priority:reviewgroup_c36ec0d5-b6fe-40dc-8620-9a7996498ed1",
      "key": "priority.reviewGroup",
-     "rank": 5,
+     "rank": 6,
      "params": {
       "n": 4,
       "type": "round"
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_2f7d0e70-5825-47ae-a1f5-93b4f0923311",
-      "candidate_ae225504-c5c0-4ec7-9723-13f46c0af71a",
-      "candidate_9e08ce3d-c330-417b-8363-ba7e6bbaaa7b",
-      "candidate_4f65cee5-b25b-4d67-9bbb-7773c5ab2d41"
+      "candidate_1cbd4cf4-bc4b-46b6-8966-c46d2e5dd741",
+      "candidate_49d0b476-0f18-4d28-89eb-ccda9e34aa6d",
+      "candidate_aad07664-aedd-4846-b43f-f6484cc425e6",
+      "candidate_a3ebae02-e2b0-4f29-b6cd-9df5e81f5123"
      ]
     },
     {
-     "id": "priority:reviewgroup_85110d9e-ed5e-4ee6-a4ba-ba3346e9b328",
+     "id": "priority:reviewgroup_75cb1d17-f161-4bcf-9e09-b7a0c2095838",
      "key": "priority.reviewGroup",
-     "rank": 5,
+     "rank": 6,
      "params": {
       "n": 4,
       "type": "chair"
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_85c2a34e-3c89-4cef-ad75-09e161ad1915",
-      "candidate_7fba5f63-a3b8-448e-95d1-5c628d27029b",
-      "candidate_e4464133-42fa-4f15-826c-c76ec2247135",
-      "candidate_83fd6669-ddcd-4171-9529-3472330e86ae"
+      "candidate_bc98afd6-6428-44bd-b492-12c80857397e",
+      "candidate_f861c601-4013-4a72-ae1c-2f7fc57b49eb",
+      "candidate_b5c1ed98-a56d-4231-ad18-e73a00da4781",
+      "candidate_7640d97f-4e21-44d3-813b-70a355f00e6a"
      ]
     },
     {
-     "id": "priority:reviewgroup_e53d3e64-15a9-4dc2-8bf3-c5346175d620",
+     "id": "priority:reviewgroup_551df702-9f47-44d9-b1df-613125a2176e",
      "key": "priority.reviewGroup",
-     "rank": 5,
+     "rank": 6,
      "params": {
       "n": 2,
       "type": "rectangle"
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_4b506e94-e9d9-4910-95d6-2f206a636dc9",
-      "candidate_2cc4a685-fea8-4866-a3a7-73c5d20778d8"
+      "candidate_e62a45b2-d828-4f5e-9abf-428dc13dfc64",
+      "candidate_8dee6e22-b955-4479-9c1c-db0e8b942af9"
      ]
     },
     {
-     "id": "priority:reviewgroup_2e87034f-c387-4030-b689-74afb5473708",
+     "id": "priority:reviewgroup_48c5dea7-7b51-41a4-abc5-ef316d4803e0",
      "key": "priority.reviewGroup",
-     "rank": 5,
+     "rank": 6,
      "params": {
       "n": 2,
       "type": "stage"
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_45d43910-f6b2-44b3-8568-aaf831511327",
-      "candidate_259eb0da-af8c-4dd4-8e0d-b705a0a76818"
+      "candidate_d90c443e-0b8b-49c0-836e-eb8ae78bd94d",
+      "candidate_f1f1248d-481d-40fe-b68b-1629d707c5f3"
      ]
     }
    ],
@@ -812,6 +1043,18 @@
    "pageErrors": 0
   }
  ],
+ "calibration": {
+  "downgraded": {
+   "n": 3,
+   "wrong": 1
+  },
+  "untouched": {
+   "n": 20,
+   "wrong": 1
+  },
+  "downgradedWrongRate": 0.3333333333333333,
+  "untouchedWrongRate": 0.05
+ },
  "accuracy": 0.913,
  "checkable": 23,
  "correct": 21,

@@ -86,8 +86,17 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
       physicalSeats: pi?.planSummary?.physicalSeats ?? null,
       ocrAvailable: !!pi?.providerMetadata?.ocrAvailable,
       tableIds: alive.filter(c => c.kind === "table").map(c => c.id),
+      // Standalone chair candidates plus the seats nested on tables: a
+      // contradiction may point at either, and both are objects that survived.
+      chairIds: alive.filter(c => c.kind === "venue" && c.type === "chair").map(c => c.id)
+        .concat(alive.flatMap(c => (c.chairDetections || []).map(ch => ch.id))),
       facts: (pi?.facts || []).map(f => ({ id: f.id, key: f.key, params: f.params,
-        strength: f.strength, provenance: f.provenance, basis: f.basis })),
+        strength: f.strength, strengthBefore: f.strengthBefore || null,
+        contradictedBy: f.contradictedBy || null, provenance: f.provenance, basis: f.basis })),
+      contradictions: (pi?.contradictions || []).map(c => ({ id: c.id, kind: c.kind, key: c.key,
+        params: c.params, severity: c.severity, sides: c.sides, affects: c.affects,
+        targets: (c.targetIds || []).length, targetIds: c.targetIds || [] })),
+      contradictionKinds: pi?.contradictionKinds || [],
       priorities: (pi?.reviewPriorities || []).map(p => ({ key: p.key, rank: p.rank, why: p.why,
         targets: (p.targetIds || []).length })),
       factsRendered: (() => {
@@ -95,6 +104,28 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
         for (const lang of ["en", "tr"]) {
           ui.lang = lang;
           out[lang] = (pi?.facts || []).map(f => t(f.key, f.params));
+        }
+        ui.lang = was;
+        return out;
+      })(),
+      // Everything an operator reads on the review panel, rendered in both
+      // languages: the claim, the evidence under it, and both sides of every
+      // disagreement. All three have shipped as English literals at some point.
+      contradictionsRendered: (() => {
+        const was = ui.lang, out = { en: [], tr: [] };
+        for (const lang of ["en", "tr"]) {
+          ui.lang = lang;
+          out[lang] = (pi?.contradictions || []).flatMap(c => [t(c.key, c.params)]
+            .concat(c.sides.flatMap(s => [t(s.from, s.fromParams), t(s.claim, s.params)])));
+        }
+        ui.lang = was;
+        return out;
+      })(),
+      provenanceRendered: (() => {
+        const was = ui.lang, out = { en: [], tr: [] };
+        for (const lang of ["en", "tr"]) {
+          ui.lang = lang;
+          out[lang] = (pi?.facts || []).flatMap(f => (f.provenance || []).map(p => t(p.key, p.params)));
         }
         ui.lang = was;
         return out;
@@ -339,6 +370,13 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const noProvenance = result.facts.filter(f => !Array.isArray(f.provenance) || !f.provenance.length);
   checks.ok(noProvenance.length === 0,
     "every fact names the evidence it rests on", noProvenance.slice(0, 3));
+  // Structured, not a pre-rendered sentence. This shipped as English literals
+  // once and put "Based on: table type classification" under a Turkish claim.
+  const literalProvenance = result.facts.filter(f =>
+    f.provenance.some(p => typeof p !== "object" || !p.key));
+  checks.ok(literalProvenance.length === 0,
+    "provenance is a key and params, never a pre-rendered English sentence",
+    literalProvenance.map(f => f.id));
   checks.ok(result.facts.every(f => f.basis && typeof f.basis === "object"),
     "and carries the numbers, so nothing has to be taken on trust",
     result.facts.filter(f => !f.basis).slice(0, 3));
@@ -373,4 +411,77 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(reviewedMembers.size === result.unreviewedLow,
     "every unreviewed low-confidence candidate is still in exactly one review group — consolidation hides nothing",
     { inGroups: reviewedMembers.size, unreviewedLow: result.unreviewedLow });
+
+  // ---- contradictions: two stages that cannot both be right ---------------
+  //
+  // The engine's job is to say when the analysis disagrees with itself. The
+  // ways that can go wrong are not subtle, and each one is pinned here:
+  // inventing a disagreement with only one side to it, pointing at nothing an
+  // operator can open, deleting the objects it doubts, or leaving a claim
+  // stated as certain while something disputes it.
+  const KINDS = new Set(result.contradictionKinds);
+  checks.ok(KINDS.size >= 7, "the declared contradiction vocabulary is the documented one",
+    result.contradictionKinds);
+  const strangeKind = result.contradictions.filter(c => !KINDS.has(c.kind));
+  checks.ok(strangeKind.length === 0, "every contradiction uses that vocabulary",
+    strangeKind.map(c => c.kind));
+
+  const oneSided = result.contradictions.filter(c =>
+    !Array.isArray(c.sides) || c.sides.length !== 2 || c.sides[0].from === c.sides[1].from);
+  checks.ok(oneSided.length === 0,
+    "every contradiction names two DIFFERENT stages — a single stage being unsure is what `strength` is for, not a disagreement",
+    oneSided.map(c => c.id));
+  checks.ok(result.contradictions.every(c => c.sides.every(s => s.claim && s.from)),
+    "each side says what it claims and where it came from",
+    result.contradictions.map(c => c.sides));
+  checks.ok(result.contradictions.every(c => ["high", "medium"].includes(c.severity)),
+    "every contradiction carries a severity from the declared set",
+    result.contradictions.map(c => c.severity));
+
+  // Pointing at real objects is what separates this from a warning banner.
+  const aliveIds = new Set(result.tableIds);
+  checks.ok(result.contradictions.every(c => c.targets > 0 || c.id === "contra:tablesNoDining" || c.id === "contra:memoryLost"),
+    "a contradiction points at objects an operator can open, or is one of the two that are about the plan as a whole",
+    result.contradictions.filter(c => !c.targets).map(c => c.id));
+
+  // The affects/strength relationship, in both directions.
+  const factById = new Map(result.facts.map(f => [f.id, f]));
+  const disputedButCertain = result.facts.filter(f => f.strength === "strong" && (f.contradictedBy || []).length);
+  checks.ok(disputedButCertain.length === 0,
+    "no claim is stated as certain while another stage disputes it",
+    disputedButCertain.map(f => f.id));
+  const downgradedWithoutCause = result.facts.filter(f => f.strengthBefore && !(f.contradictedBy || []).length);
+  checks.ok(downgradedWithoutCause.length === 0,
+    "a claim is only stated less confidently when something actually disputes it",
+    downgradedWithoutCause.map(f => f.id));
+  const affectsUnknownFact = result.contradictions.flatMap(c => c.affects.filter(id => !factById.has(id)));
+  checks.ok(affectsUnknownFact.length === 0,
+    "a contradiction never claims to affect a fact the interpreter did not state", affectsUnknownFact);
+
+  // A contradiction is evidence, not a filter. Every table id it points at has
+  // to still BE in the surviving candidate list: if doubting an object could
+  // remove it, the ids here would outrun the objects there.
+  const pointedTables = result.contradictions.flatMap(c => c.targetIds).filter(id => /^candidate_/.test(id));
+  const vanished = pointedTables.filter(id => !aliveIds.has(id) && !result.chairIds.includes(id));
+  checks.ok(vanished.length === 0,
+    "every object a contradiction disputes is still in the candidate list — doubting one never removes it",
+    vanished.slice(0, 3));
+
+  for (const lang of ["en", "tr"]) {
+    const bad = result.contradictionsRendered[lang]
+      .filter(s => !s || /^contradiction\./.test(s) || /\{[a-zA-Z]+\}/.test(s));
+    checks.ok(bad.length === 0,
+      `every contradiction and both of its sides render in ${lang} with no raw key or placeholder`, bad.slice(0, 3));
+    const badProv = result.provenanceRendered[lang]
+      .filter(s => !s || /^provenance\./.test(s) || /\{[a-zA-Z]+\}/.test(s));
+    checks.ok(badProv.length === 0,
+      `every fact's evidence line renders in ${lang} with no raw key or placeholder`, badProv.slice(0, 3));
+  }
+
+  // A serious disagreement outranks an ordinary batch of confirmations.
+  const firstContra = result.priorities.find(p => p.key === "priority.contradiction");
+  const firstGroup = result.priorities.find(p => p.key === "priority.reviewGroup");
+  checks.ok(!firstContra || !firstGroup || result.priorities.indexOf(firstContra) < result.priorities.indexOf(firstGroup),
+    "a disagreement is queued above an ordinary review group",
+    result.priorities.slice(0, 4).map(p => `${p.key}#${p.rank}`));
 }

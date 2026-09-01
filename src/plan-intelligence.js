@@ -649,10 +649,14 @@
     const facts = [];
     const say = (id, key, params, strength, provenance, basis) =>
       facts.push({ id, key, params, strength, provenance, basis });
+    // Where a claim's evidence came from, as a key rather than a sentence. It
+    // is shown next to the claim, so it is operator-facing text and belongs in
+    // the string table like everything else an operator reads.
+    const prov = (key, params) => ({ key: `provenance.${key}`, params: params || {} });
 
     if (!tables.length && !zones.length) {
       say("empty", "fact.nothingFound", {}, "strong",
-        ["no candidate survived detection"], {});
+        [prov("nothingSurvived")], {});
       return facts;
     }
 
@@ -676,14 +680,14 @@
       // confidently wrong — which is worse than saying less.
       say("tableTypeMix", "fact.tableTypeMix", { type: modalType, n: modalCount },
         share >= 0.6 ? "strong" : "likely",
-        ["table type classification, which types on evidence from three separate stages"],
+        [prov("typeClassificationThreeStages")],
         { byType, share: +share.toFixed(2) });
       say("tableCount", "fact.tableCount", { total: tables.length }, "likely",
-        ["tables surviving detection — a count can never be better than recall"],
+        [prov("tablesSurvivingDetection")],
         { total: tables.length });
       for (const [type, n] of rankedTypes.slice(1))
         say(`has:${type}`, "fact.alsoHas", { n, type }, "likely",
-          ["table type classification"], { count: n });
+          [prov("typeClassification")], { count: n });
     }
 
     // -- seating --------------------------------------------------------------
@@ -691,12 +695,12 @@
     // and claiming certainty about it would be the easiest lie in the product.
     const seatedTables = tables.filter(t => (t.chairDetections || []).length).length;
     say("seats", "fact.seats", { seats: physicalSeats, tables: tables.length }, "likely",
-      ["chairs detected and associated to tables, plus standalone chairs"],
+      [prov("chairsDetectedAssociated")],
       { physicalSeats, seatedTables });
     const unseated = tables.length - seatedTables;
     if (unseated > 0)
       say("unseated", "fact.unseatedTables", { n: unseated }, "likely",
-        ["tables with no chair associated to them"], { unseated });
+        [prov("tablesWithNoChair")], { unseated });
 
     // -- logical groups -------------------------------------------------------
     const multi = (furnitureGroups || []).filter(g => (g.memberIds || []).length > 1);
@@ -704,7 +708,7 @@
       const biggest = multi.reduce((a, b) => ((b.memberIds || []).length > (a.memberIds || []).length ? b : a));
       say("groups", "fact.combinedTables",
         { groups: multi.length, largest: (biggest.memberIds || []).length }, "likely",
-        ["tables that touch and align, treated as one logical seating unit"],
+        [prov("touchAndAlign")],
         { groups: multi.length, largest: (biggest.memberIds || []).length });
     }
 
@@ -713,13 +717,13 @@
     for (const [type, n] of Object.entries(zoneTypes)) {
       if (type === "unknown") {
         say("zone:unknown", "fact.undeterminedAreas", { n }, "uncertain",
-          ["areas of the plan that satisfied no zone rule"], { n });
+          [prov("noZoneRule")], { n });
         continue;
       }
       // A stage is an object the detector typed, so its presence is direct.
       // Dining and bistro areas are clusters, which depend on recall.
       say(`zone:${type}`, "fact.zone", { n, type }, type === "stage" ? "strong" : "likely",
-        [`semantic zones, ${type} typed on the evidence each zone records`], { n });
+        [prov("zoneTyped", { type })], { n });
     }
 
     // -- what the drawing itself says -----------------------------------------
@@ -731,18 +735,286 @@
         // OCR read a number off the page: what the PLAN says is direct
         // evidence, whatever the detector counted.
         "strong",
-        ["a pax figure read from the drawing by OCR", "seats counted by detection"],
+        [prov("paxFromOcr"), prov("seatsCounted")],
         { stated, counted: physicalSeats, difference: diff });
     } else if (capacityAudit && capacityAudit.ocrAvailable === false) {
       say("capacityUnknown", "fact.noStatedCapacity", {}, "strong",
-        ["OCR did not run, so the drawing's own pax figure was never read"], {});
+        [prov("ocrDidNotRun")], {});
     }
     const unverified = (capacityAudit && capacityAudit.unverified) || [];
     if (unverified.length)
       say("unverifiedSeating", "fact.unverifiedSeating", { n: unverified.length }, "strong",
-        ["seating furniture whose capacity cannot be read off a drawing"],
+        [prov("unreadableCapacity")],
         { ids: unverified.map(u => u.id) });
 
+    return facts;
+  }
+
+  // ---- contradictions ------------------------------------------------------
+  //
+  // Everything above this point is a pipeline stage stating what IT found. Each
+  // one is honest on its own terms and each one can be wrong, and the product
+  // had no way to notice when two of them could not both be right. The
+  // interpreter would then say "112 seats" and "6 tables nobody sits at" in the
+  // same confident voice, on the same screen, and leave the operator to spot
+  // that those are the same failure described twice.
+  //
+  // A contradiction here is a specific thing, not a low score: TWO STAGES THAT
+  // CANNOT BOTH BE RIGHT. So every entry names both sides and where each came
+  // from. A stage merely being unsure is not a contradiction — that is what
+  // `strength` already carries.
+  //
+  // Nothing is deleted, reclassified or re-detected on this evidence. A
+  // contradiction lowers the confidence of the claims it undermines and goes to
+  // the top of the review queue, because the resolution belongs to the person
+  // looking at the drawing.
+  const CONTRADICTION_KINDS = ["COUNT", "TYPE", "RELATIONSHIP", "ZONE", "CAPACITY", "MEMORY", "SEMANTIC"];
+  const ORPHAN_SEAT_SHARE = 0.15;   // of all detected seats, before it is a disagreement rather than a few stragglers
+  const FAMILY_MIN_FOR_OUTLIER = 4; // a "family" of three cannot have a meaningful outlier
+  // A disagreement about a handful of objects does not undermine a claim about
+  // what the room MOSTLY is. Three mistyped tables out of forty-six do not make
+  // "most of them are square" doubtful, and downgrading it anyway would make
+  // `uncertain` mean nothing — the same failure as calling everything `strong`,
+  // in the other direction. So a contradiction lowers a claim's confidence only
+  // when it is large enough to change that claim.
+  const MATERIAL_SHARE = 0.2;
+
+  function buildContradictions(ctx) {
+    const { candidates, zones, facts, furnitureGroups, similarityGroups,
+            capacityAudit, physicalSeats, memoryConflicts } = ctx;
+    const alive = candidates.filter(c => c.status !== "rejected");
+    const tables = alive.filter(c => c.kind === "table");
+    const out = [];
+    const factIds = new Set(facts.map(f => f.id));
+    const say = (id, kind, key, params, severity, sides, affects, targetIds) => {
+      out.push({ id, kind, key, params, severity,
+        sides, affects: affects.filter(a => factIds.has(a)), targetIds: targetIds || [] });
+    };
+    // One side of a disagreement: which stage said it, and what it said —
+    // structured, never a pre-rendered sentence. The domain layer does not
+    // decide what language an operator reads, and a `from` that is a literal
+    // string would put English underneath a Turkish headline.
+    const side = (from, claim, params, fromParams) => ({
+      from: `contradiction.from.${from}`, fromParams: fromParams || null,
+      claim: `contradiction.claim.${claim}`, params: params || {},
+    });
+    // Which claims a disagreement over `n` tables is big enough to move. A
+    // count is disputed by any wrong object; a claim about the dominant type is
+    // not, until enough of them are wrong to shift the majority.
+    const tableClaims = n => tables.length && n / tables.length >= MATERIAL_SHARE
+      ? ["tableCount", "tableTypeMix"] : ["tableCount"];
+
+    // -- COUNT: seats the table pass could not place ---------------------------
+    const standaloneChairs = alive.filter(c => c.kind === "venue" && c.type === "chair");
+    const associated = tables.reduce((n, t) => n + (t.chairDetections || []).length, 0);
+    const totalSeats = associated + standaloneChairs.length;
+    const orphanShare = totalSeats ? standaloneChairs.length / totalSeats : 0;
+    if (orphanShare > ORPHAN_SEAT_SHARE)
+      say("contra:orphanSeats", "COUNT", "contradiction.orphanSeats",
+        { orphans: standaloneChairs.length, total: totalSeats }, "medium",
+        [side("chairDetection", "seatsExist", { n: totalSeats }),
+         side("chairAssociation", "seatsPlaced", { n: associated })],
+        ["seats", "tableCount"], standaloneChairs.map(c => c.id));
+
+    // Tables with nobody at them AND seats with nowhere to sit, at the same
+    // time, is not two facts. It is one association failure told twice.
+    const unseated = tables.filter(t => !(t.chairDetections || []).length);
+    if (unseated.length && standaloneChairs.length)
+      say("contra:emptyTablesOrphanSeats", "COUNT", "contradiction.emptyTablesOrphanSeats",
+        { tables: unseated.length, seats: standaloneChairs.length },
+        // Two tables out of fifty is a couple of stragglers; a fifth of the
+        // room is an association failure.
+        unseated.length / Math.max(1, tables.length) >= MATERIAL_SHARE ? "high" : "medium",
+        [side("tableDetection", "tablesNoSeat", { n: unseated.length }),
+         side("chairDetection", "seatsNoTable", { n: standaloneChairs.length })],
+        // Always disputes the count of tables nobody sits at, since that is
+        // literally what it is about. Disputes the seat TOTAL only when enough
+        // seats are unplaced to move it.
+        orphanShare > ORPHAN_SEAT_SHARE ? ["unseated", "seats"] : ["unseated"],
+        unseated.map(t => t.id));
+
+    // -- TYPE: the learned encoder disagrees with the classifier ---------------
+    //
+    // The one genuinely independent opinion in the pipeline: it reasons about
+    // appearance, every other stage reasons about geometry. Measured on the
+    // degraded renderings, it flags invented tables and leaves the real ones
+    // alone (benchmarks/embedding/SECOND-OPINION.md).
+    const visualDisagree = tables.filter(t => t.visualEvidence && t.visualEvidence.agreement === "disagree");
+    if (visualDisagree.length) {
+      const tier = visualDisagree[0].visualEvidence.nearestTier;
+      say("contra:visualClass", "TYPE", "contradiction.visualClass",
+        { n: visualDisagree.length }, tier === "verified" ? "high" : "medium",
+        [side("detectionAndShape", "theseAreTables", { n: visualDisagree.length }),
+         side("visualSecondOpinion", "lookLikeOthers", {}, { tier: `contradiction.tier.${tier}` })],
+        tableClaims(visualDisagree.length), visualDisagree.map(t => t.id));
+    }
+
+    // -- TYPE: a family member typed unlike its own family ---------------------
+    const byId = new Map(alive.map(c => [c.id, c]));
+    const outliers = [];
+    for (const g of similarityGroups || []) {
+      const members = (g.memberIds || []).map(id => byId.get(id)).filter(c => c && c.kind === "table");
+      if (members.length < FAMILY_MIN_FOR_OUTLIER) continue;
+      const types = members.reduce((m, c) => (m[c.type] = (m[c.type] || 0) + 1, m), {});
+      const [modal] = Object.entries(types).sort((a, b) => b[1] - a[1])[0];
+      for (const c of members) if (c.type !== modal) outliers.push({ id: c.id, type: c.type, family: modal });
+    }
+    if (outliers.length)
+      say("contra:familyOutlier", "TYPE", "contradiction.familyOutlier",
+        { n: outliers.length }, "medium",
+        [side("similarityClustering", "oneFamily"),
+         side("shapeClassification", "typedDifferently")],
+        tableClaims(outliers.length).filter(id => id === "tableTypeMix"), outliers.map(o => o.id));
+
+    // -- RELATIONSHIP: one physical unit, more than one type -------------------
+    const multiGroups = (furnitureGroups || []).filter(g => (g.memberIds || []).length > 1);
+    const mixedGroups = multiGroups.filter(g => {
+      const members = (g.memberIds || []).map(id => byId.get(id)).filter(Boolean);
+      return new Set(members.map(c => c.type)).size > 1;
+    });
+    if (mixedGroups.length)
+      say("contra:mixedGroupTypes", "RELATIONSHIP", "contradiction.mixedGroupTypes",
+        { n: mixedGroups.length }, "medium",
+        [side("geometricGrouping", "oneUnit"),
+         side("shapeClassification", "differentKinds")],
+        (mixedGroups.length / Math.max(1, multiGroups.length) >= MATERIAL_SHARE ? ["groups"] : [])
+          .concat(tableClaims(mixedGroups.flatMap(g => g.memberIds || []).length)
+            .filter(id => id === "tableTypeMix")),
+        mixedGroups.flatMap(g => g.memberIds || []));
+
+    // -- ZONE: a table standing on the stage -----------------------------------
+    //
+    // Deliberately object containment, not zone-box overlap. A zone's box is
+    // the axis-aligned hull of a cluster, so on any real plan the dining hull
+    // spans the room and touches the stage's hull — the first version of this
+    // check fired on the clean original and flagged an entire correct dining
+    // area. Overlapping hulls are not evidence of anything; a table whose
+    // centre sits inside a detected stage is.
+    const stageObjects = alive.filter(c => c.kind === "venue" && c.type === "stage");
+    const onStage = tables.filter(t => stageObjects.some(s => containsCentre(s, t)));
+    if (onStage.length)
+      say("contra:seatingInStage", "ZONE", "contradiction.seatingInStage",
+        { n: onStage.length }, "high",
+        [side("stageDetection", "stageNoSeating"),
+         side("tableDetection", "tablesInside", { n: onStage.length })],
+        ["zone:stage"].concat(tableClaims(onStage.length)), onStage.map(t => t.id));
+
+    // -- ZONE: a table the zone pass never placed ------------------------------
+    // Zones are built by clustering every surviving table, so a table in no
+    // zone means the two stages are looking at different object sets.
+    const zoned = new Set(zones.flatMap(z => z.memberIds || []));
+    const unzoned = tables.filter(t => !zoned.has(t.id));
+    if (unzoned.length)
+      say("contra:unzonedTables", "ZONE", "contradiction.unzonedTables",
+        { n: unzoned.length }, "medium",
+        [side("tableDetection", "tablesOnPlan", { n: tables.length }),
+         side("semanticZones", "belongNoArea", { n: unzoned.length })],
+        tableClaims(unzoned.length), unzoned.map(t => t.id));
+
+    // -- CAPACITY: the drawing's own number against the counted one ------------
+    const capacity = facts.find(f => f.id === "capacity");
+    if (capacity && capacity.key === "fact.capacityDiffers")
+      say("contra:capacity", "CAPACITY", "contradiction.capacity",
+        { stated: capacity.params.stated, counted: capacity.params.counted,
+          difference: capacity.params.difference }, "high",
+        [side("drawingOcr", "statedPeople", { n: capacity.params.stated }),
+         side("countedSeats", "countedPeople", { n: capacity.params.counted })],
+        ["capacity", "seats"], (capacityAudit && capacityAudit.likelyAreaIds) || []);
+
+    // An agreement that rests on furniture whose capacity nobody has read is
+    // not an agreement, it is a coincidence that has not been checked.
+    const unverified = (capacityAudit && capacityAudit.unverified) || [];
+    if (capacity && capacity.key === "fact.capacityAgrees" && unverified.length)
+      say("contra:capacityUnverified", "CAPACITY", "contradiction.capacityUnverified",
+        { n: unverified.length, counted: physicalSeats }, "medium",
+        [side("capacityAudit", "totalsMatch"),
+         side("seatingInventory", "unknownCapacity", { n: unverified.length })],
+        ["capacity", "unverifiedSeating"], unverified.map(u => u.id));
+
+    // -- MEMORY: the operator and the detector, on the same object -------------
+    const overruled = (memoryConflicts || []).filter(c => c.kind === "overruled");
+    if (overruled.length)
+      say("contra:memoryOverruled", "MEMORY", "contradiction.memoryOverruled",
+        { n: overruled.length }, "medium",
+        [side("thisAnalysis", "proposedAgain"),
+         side("yourCorrections", "alreadyChanged")],
+        tableClaims(overruled.length), overruled.map(c => c.candidateId));
+    const lost = (memoryConflicts || []).filter(c => c.kind === "lost");
+    if (lost.length)
+      say("contra:memoryLost", "MEMORY", "contradiction.memoryLost",
+        { n: lost.length }, "high",
+        [side("yourConfirmations", "objectsReal", { n: lost.length }),
+         side("thisAnalysis", "notFoundNow")],
+        ["tableCount", "seats"], []);
+
+    // -- SEMANTIC: facts that cannot all hold ---------------------------------
+    const diningZones = zones.filter(z => ["dining", "bistro"].includes(z.type)).length;
+    if (tables.length && !diningZones)
+      say("contra:tablesNoDining", "SEMANTIC", "contradiction.tablesNoDining",
+        { tables: tables.length }, "medium",
+        [side("tableDetection", "tablesFound", { n: tables.length }),
+         side("semanticZones", "noDiningArea")],
+        // Disputes neither the count nor the type mix — it disputes what the
+        // room IS, and the interpreter states no fact about that to lower. It
+        // goes to the review queue on its own.
+        [], []);
+
+    // -- a claim resting entirely on disputed objects -------------------------
+    //
+    // "Also 2 rectangle" is a claim about two tables. If half of them are
+    // objects another stage says are typed wrong, the sentence is not a finding
+    // about the room so much as the dispute restated as fact. Measured: on the
+    // real plan that claim IS the interpreter's one remaining wrong one
+    // (benchmarks/interpreter/), and one of its two tables is exactly what the
+    // grouping check points at.
+    //
+    // Half, rather than all, because these are minority claims resting on a
+    // handful of objects — a bistro claim backed by five tables survives one
+    // disputed member, a rectangle claim backed by two does not. The claim is
+    // lowered in confidence, never removed: a minority type that turns out to
+    // be real is exactly what an operator needs to see.
+    const DISPUTED_SUPPORT_SHARE = 0.5;
+    const disputed = new Set(out.flatMap(c => c.targetIds));
+    for (const f of facts) {
+      if (!f.id.startsWith("has:")) continue;
+      const supporting = tables.filter(t => t.type === f.id.slice(4));
+      if (!supporting.length) continue;
+      const share = supporting.filter(t => disputed.has(t.id)).length / supporting.length;
+      if (share < DISPUTED_SUPPORT_SHARE) continue;
+      for (const c of out)
+        if (supporting.some(t => c.targetIds.includes(t.id))) c.affects.push(f.id);
+    }
+
+    return out;
+  }
+
+  function containsCentre(outer, inner) {
+    const cx = inner.x + inner.w / 2, cy = inner.y + inner.h / 2;
+    return cx >= outer.x && cx <= outer.x + outer.w && cy >= outer.y && cy <= outer.y + outer.h;
+  }
+
+  // A claim that another stage disagrees with is not as safe as one that stands
+  // unopposed, and saying it in the same voice is the failure this whole engine
+  // exists to prevent. One step down per DISTINCT disagreeing kind: two
+  // instances of the same kind are one disagreement seen twice, and would
+  // otherwise let a plan with many similar objects bury every claim it makes.
+  const STRENGTH_ORDER = ["strong", "likely", "uncertain"];
+  function applyContradictions(facts, contradictions) {
+    const kindsByFact = new Map();
+    for (const c of contradictions)
+      for (const id of c.affects) {
+        if (!kindsByFact.has(id)) kindsByFact.set(id, new Set());
+        kindsByFact.get(id).add(c.kind);
+      }
+    for (const f of facts) {
+      const kinds = kindsByFact.get(f.id);
+      if (!kinds || !kinds.size) continue;
+      const from = STRENGTH_ORDER.indexOf(f.strength);
+      if (from < 0) continue;
+      f.contradictedBy = contradictions.filter(c => c.affects.includes(f.id)).map(c => c.id);
+      f.strengthBefore = f.strength;
+      f.strength = STRENGTH_ORDER[Math.min(STRENGTH_ORDER.length - 1, from + kinds.size)];
+    }
     return facts;
   }
 
@@ -753,32 +1025,48 @@
   // a part of the room nobody has named, and a review group is a batch of
   // ordinary confirmations. Each priority points at real ids so the UI can
   // take a person straight there rather than describing the problem at them.
-  function buildReviewPriorities(facts, zones, reviewGroups, uncertainQuestions, capacityAudit) {
+  // Two stages that cannot both be right outrank everything else on this list.
+  // An ordinary review group is a batch of confirmations a person could work
+  // through in any order; a contradiction is the product telling them it does
+  // not know something it appears to know, and it stays wrong until someone
+  // looks.
+  function buildReviewPriorities(facts, zones, reviewGroups, uncertainQuestions, capacityAudit, contradictions) {
     const out = [];
+    for (const c of contradictions || [])
+      out.push({ id: `priority:${c.id}`, key: "priority.contradiction",
+        rank: c.severity === "high" ? 0 : 2,
+        params: { kind: `contradiction.kind.${c.kind}` }, contradictionId: c.id,
+        // Developer-facing, and English on purpose: `why` explains the ordering
+        // in diagnostics and benchmark output. What an operator reads is `key`.
+        why: `${c.sides[0].from} and ${c.sides[1].from} cannot both be right`,
+        targetIds: c.targetIds || [] });
     const capacity = facts.find(f => f.id === "capacity");
-    if (capacity && capacity.key === "fact.capacityDiffers")
+    // Skipped when the contradiction engine already raised the same
+    // disagreement, so the operator is not shown one problem as two.
+    const capacityRaised = (contradictions || []).some(c => c.id === "contra:capacity");
+    if (capacity && capacity.key === "fact.capacityDiffers" && !capacityRaised)
       out.push({ id: "priority:capacity", key: "priority.capacity", rank: 1,
         params: { difference: capacity.params.difference },
         why: "the drawing states a different number of people from the one counted",
         targetIds: (capacityAudit && capacityAudit.likelyAreaIds) || [] });
     const unknownZones = zones.filter(z => z.type === "unknown");
     if (unknownZones.length)
-      out.push({ id: "priority:unknownZones", key: "priority.undeterminedAreas", rank: 2,
+      out.push({ id: "priority:unknownZones", key: "priority.undeterminedAreas", rank: 3,
         params: { n: unknownZones.length },
         why: "part of the room has no determined purpose",
         targetIds: unknownZones.flatMap(z => z.memberIds) });
     const unverified = facts.find(f => f.id === "unverifiedSeating");
     if (unverified)
-      out.push({ id: "priority:unverifiedSeating", key: "priority.unverifiedSeating", rank: 3,
+      out.push({ id: "priority:unverifiedSeating", key: "priority.unverifiedSeating", rank: 4,
         params: { n: unverified.params.n },
         why: "seating whose capacity only a person can supply",
         targetIds: unverified.basis.ids || [] });
     for (const q of uncertainQuestions || [])
-      out.push({ id: `priority:${q.id}`, key: "priority.question", rank: 4,
+      out.push({ id: `priority:${q.id}`, key: "priority.question", rank: 5,
         params: { n: 1 }, why: "a grouping the detector could not resolve",
         targetIds: q.memberIds || [] });
     for (const g of reviewGroups || [])
-      out.push({ id: `priority:${g.id}`, key: "priority.reviewGroup", rank: 5,
+      out.push({ id: `priority:${g.id}`, key: "priority.reviewGroup", rank: 6,
         params: { n: g.memberIds.length, type: g.titleParams && g.titleParams.type },
         why: "a batch of similar objects to confirm together",
         targetIds: g.memberIds });
@@ -797,7 +1085,15 @@
     const sceneGraph = buildSceneGraph(analysis.candidates, furnitureGroups);
     const zones = buildZones(analysis.candidates, furnitureGroups, ocrText);
     const facts = buildPlanFacts(analysis.candidates, zones, furnitureGroups, capacityAudit, physicalSeats, ocrText);
-    const reviewPriorities = buildReviewPriorities(facts, zones, reviewGroups, uncertainQuestions, capacityAudit);
+    // Built from the facts, then applied back to them: a claim another stage
+    // disagrees with stops being stated in the same voice as one nothing
+    // disputes. Nothing is deleted or reclassified on this evidence.
+    const contradictions = buildContradictions({
+      candidates: analysis.candidates, zones, facts, furnitureGroups, similarityGroups,
+      capacityAudit, physicalSeats, memoryConflicts: analysis.memoryConflicts || [],
+    });
+    applyContradictions(facts, contradictions);
+    const reviewPriorities = buildReviewPriorities(facts, zones, reviewGroups, uncertainQuestions, capacityAudit, contradictions);
     const venueCandidates = analysis.candidates.filter(c => c.kind === "venue");
     // Which detection path actually ran is reported, not hidden: a chair-first
     // pass (chairs detected from their own colour/size model, then tables
@@ -839,6 +1135,11 @@
       // Every fact carries its strength, its provenance and the numbers it
       // rests on; `strong` has to be earned. See buildPlanFacts.
       facts,
+      // Where two stages of the pipeline cannot both be right. Each entry names
+      // both sides and where each came from; none of them deletes or
+      // reclassifies anything. See buildContradictions.
+      contradictions,
+      contradictionKinds: CONTRADICTION_KINDS,
       // What to look at first, and why, pointing at real ids.
       reviewPriorities,
       capacityEstimate: { physical: physicalSeats },

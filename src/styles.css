@@ -982,6 +982,24 @@ body{min-width:1180px}
 .fact-strong .fact-strength{background:var(--pi-accent-soft);border-color:var(--pi-accent);color:var(--pi-accent-strong)}
 .fact-likely .fact-strength{background:var(--pi-surface);border-color:var(--pi-line);color:var(--pi-muted)}
 .fact-uncertain .fact-strength{background:var(--pi-danger-soft);border-color:var(--pi-warn);color:var(--pi-warn)}
+.fact-downgraded{grid-column:2;font-size:10px;color:var(--pi-warn)}
+/* Where two stages of the analysis cannot both be right. Above the facts, and
+   carrying the only real colour in this panel: a claim and the reason to doubt
+   it are useless in that order. Restrained -- a left rule and one label, not a
+   red alert box. */
+.plan-contradictions{display:flex;flex-direction:column;gap:7px}
+.plan-contradictions>strong{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pi-warn)}
+.plan-contradictions ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
+/* Stacked rather than a label column: the kinds are different lengths
+   (COUNT vs RELATIONSHIP) and a shared label column either misaligns the
+   statements or eats a fifth of a narrow panel to hold the longest word. */
+.contra{display:flex;flex-direction:column;gap:2px;
+  padding-left:9px;border-left:2px solid var(--pi-line)}
+.contra-high{border-left-color:var(--pi-warn)}
+.contra-kind{font-size:9px;letter-spacing:.07em;font-weight:700;color:var(--pi-muted-2)}
+.contra-text{font-size:12.5px;line-height:1.45;color:var(--pi-ink)}
+.contra-sides{font-size:10.5px;line-height:1.45;color:var(--pi-muted)}
+.contra-sides em{font-style:normal;font-weight:650;color:var(--pi-muted-2)}
 .review-group-card{border:1px solid var(--pi-line);border-radius:var(--pi-radius-sm);padding:12px}
 .review-group-title{font-size:12.5px;font-weight:650;margin-bottom:4px}
 .review-group-meta{font-size:10.5px;color:var(--pi-muted);margin-bottom:9px}

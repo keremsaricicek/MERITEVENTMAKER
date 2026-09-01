@@ -1,0 +1,608 @@
+{
+ "ranAt": "2026-09-01T11:06:18.853Z",
+ "variants": [
+  {
+   "variant": "ORIGINAL",
+   "tables": 50,
+   "falsePositives": 4,
+   "baselineFalseRate": 0.08,
+   "contradictions": 3,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "RELATIONSHIP"
+   ],
+   "pointedAt": 7,
+   "pointedAtFalse": 3,
+   "targetedPrecision": 0.4286,
+   "lift": 5.357,
+   "severities": {
+    "medium": 3
+   },
+   "downgradedFacts": [
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:rectangle",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "unseated",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "2 table(s) have no seat while 4 seat(s) have no table.",
+     "3 object(s) called tables do not look like this plan's tables.",
+     "1 seating unit(s) are made of tables typed as different kinds."
+    ],
+    "tr": [
+     "2 masada hiç koltuk yok, buna karşılık 4 koltuğun masası yok.",
+     "Masa denen 3 nesne bu planın masalarına benzemiyor.",
+     "1 oturma biriminde farklı türde sınıflandırılmış masalar var."
+    ]
+   }
+  },
+  {
+   "variant": "jpeg-q40",
+   "tables": 50,
+   "falsePositives": 4,
+   "baselineFalseRate": 0.08,
+   "contradictions": 3,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "RELATIONSHIP"
+   ],
+   "pointedAt": 8,
+   "pointedAtFalse": 4,
+   "targetedPrecision": 0.5,
+   "lift": 6.25,
+   "severities": {
+    "medium": 3
+   },
+   "downgradedFacts": [
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:rectangle",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "unseated",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "3 table(s) have no seat while 2 seat(s) have no table.",
+     "1 object(s) called tables do not look like this plan's tables.",
+     "1 seating unit(s) are made of tables typed as different kinds."
+    ],
+    "tr": [
+     "3 masada hiç koltuk yok, buna karşılık 2 koltuğun masası yok.",
+     "Masa denen 1 nesne bu planın masalarına benzemiyor.",
+     "1 oturma biriminde farklı türde sınıflandırılmış masalar var."
+    ]
+   }
+  },
+  {
+   "variant": "grayscale",
+   "tables": 48,
+   "falsePositives": 5,
+   "baselineFalseRate": 0.1042,
+   "contradictions": 3,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "RELATIONSHIP"
+   ],
+   "pointedAt": 13,
+   "pointedAtFalse": 4,
+   "targetedPrecision": 0.3077,
+   "lift": 2.954,
+   "severities": {
+    "medium": 3
+   },
+   "downgradedFacts": [
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:round",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:rectangle",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "unseated",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "2 table(s) have no seat while 12 seat(s) have no table.",
+     "6 object(s) called tables do not look like this plan's tables.",
+     "2 seating unit(s) are made of tables typed as different kinds."
+    ],
+    "tr": [
+     "2 masada hiç koltuk yok, buna karşılık 12 koltuğun masası yok.",
+     "Masa denen 6 nesne bu planın masalarına benzemiyor.",
+     "2 oturma biriminde farklı türde sınıflandırılmış masalar var."
+    ]
+   }
+  },
+  {
+   "variant": "noise",
+   "tables": 62,
+   "falsePositives": 16,
+   "baselineFalseRate": 0.2581,
+   "contradictions": 3,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "RELATIONSHIP"
+   ],
+   "pointedAt": 32,
+   "pointedAtFalse": 16,
+   "targetedPrecision": 0.5,
+   "lift": 1.938,
+   "severities": {
+    "medium": 3
+   },
+   "downgradedFacts": [
+    {
+     "id": "tableTypeMix",
+     "from": "strong",
+     "to": "likely"
+    },
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:rectangle",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "unseated",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "groups",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "7 table(s) have no seat while 5 seat(s) have no table.",
+     "4 object(s) called tables do not look like this plan's tables.",
+     "5 seating unit(s) are made of tables typed as different kinds."
+    ],
+    "tr": [
+     "7 masada hiç koltuk yok, buna karşılık 5 koltuğun masası yok.",
+     "Masa denen 4 nesne bu planın masalarına benzemiyor.",
+     "5 oturma biriminde farklı türde sınıflandırılmış masalar var."
+    ]
+   }
+  },
+  {
+   "variant": "downscale-70",
+   "tables": 45,
+   "falsePositives": 4,
+   "baselineFalseRate": 0.0889,
+   "contradictions": 3,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "RELATIONSHIP"
+   ],
+   "pointedAt": 11,
+   "pointedAtFalse": 3,
+   "targetedPrecision": 0.2727,
+   "lift": 3.068,
+   "severities": {
+    "medium": 3
+   },
+   "downgradedFacts": [
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:rectangle",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:round",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "unseated",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "1 table(s) have no seat while 13 seat(s) have no table.",
+     "4 object(s) called tables do not look like this plan's tables.",
+     "2 seating unit(s) are made of tables typed as different kinds."
+    ],
+    "tr": [
+     "1 masada hiç koltuk yok, buna karşılık 13 koltuğun masası yok.",
+     "Masa denen 4 nesne bu planın masalarına benzemiyor.",
+     "2 oturma biriminde farklı türde sınıflandırılmış masalar var."
+    ]
+   }
+  },
+  {
+   "variant": "blur",
+   "tables": 69,
+   "falsePositives": 32,
+   "baselineFalseRate": 0.4638,
+   "contradictions": 6,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "RELATIONSHIP",
+    "ZONE"
+   ],
+   "pointedAt": 47,
+   "pointedAtFalse": 28,
+   "targetedPrecision": 0.5957,
+   "lift": 1.285,
+   "severities": {
+    "medium": 4,
+    "high": 2
+   },
+   "downgradedFacts": [
+    {
+     "id": "tableTypeMix",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:rectangle",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:round",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "seats",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "unseated",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "groups",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "zone:stage",
+     "from": "strong",
+     "to": "likely"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "33 of 115 detected seats belong to no table.",
+     "14 table(s) have no seat while 33 seat(s) have no table.",
+     "5 object(s) called tables do not look like this plan's tables.",
+     "1 object(s) were typed differently from the family they look like.",
+     "9 seating unit(s) are made of tables typed as different kinds.",
+     "1 seating area(s) overlap a stage."
+    ],
+    "tr": [
+     "Tespit edilen 115 koltuktan 33 tanesi hiçbir masaya ait değil.",
+     "14 masada hiç koltuk yok, buna karşılık 33 koltuğun masası yok.",
+     "Masa denen 5 nesne bu planın masalarına benzemiyor.",
+     "1 nesne, benzediği aileden farklı türde sınıflandırıldı.",
+     "9 oturma biriminde farklı türde sınıflandırılmış masalar var.",
+     "1 oturma alanı sahneyle çakışıyor."
+    ]
+   }
+  },
+  {
+   "variant": "hue-shift",
+   "tables": 90,
+   "falsePositives": 52,
+   "baselineFalseRate": 0.5778,
+   "contradictions": 4,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "RELATIONSHIP"
+   ],
+   "pointedAt": 76,
+   "pointedAtFalse": 50,
+   "targetedPrecision": 0.6579,
+   "lift": 1.139,
+   "severities": {
+    "medium": 3,
+    "high": 1
+   },
+   "downgradedFacts": [
+    {
+     "id": "tableTypeMix",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:square",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:round",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "seats",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "unseated",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "groups",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "33 of 119 detected seats belong to no table.",
+     "21 table(s) have no seat while 33 seat(s) have no table.",
+     "6 object(s) called tables do not look like this plan's tables.",
+     "8 seating unit(s) are made of tables typed as different kinds."
+    ],
+    "tr": [
+     "Tespit edilen 119 koltuktan 33 tanesi hiçbir masaya ait değil.",
+     "21 masada hiç koltuk yok, buna karşılık 33 koltuğun masası yok.",
+     "Masa denen 6 nesne bu planın masalarına benzemiyor.",
+     "8 oturma biriminde farklı türde sınıflandırılmış masalar var."
+    ]
+   }
+  },
+  {
+   "variant": "contrast-high",
+   "tables": 86,
+   "falsePositives": 49,
+   "baselineFalseRate": 0.5698,
+   "contradictions": 5,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "RELATIONSHIP"
+   ],
+   "pointedAt": 70,
+   "pointedAtFalse": 47,
+   "targetedPrecision": 0.6714,
+   "lift": 1.178,
+   "severities": {
+    "medium": 4,
+    "high": 1
+   },
+   "downgradedFacts": [
+    {
+     "id": "tableTypeMix",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:square",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:round",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "seats",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "unseated",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "groups",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "34 of 114 detected seats belong to no table.",
+     "22 table(s) have no seat while 34 seat(s) have no table.",
+     "2 object(s) called tables do not look like this plan's tables.",
+     "1 object(s) were typed differently from the family they look like.",
+     "7 seating unit(s) are made of tables typed as different kinds."
+    ],
+    "tr": [
+     "Tespit edilen 114 koltuktan 34 tanesi hiçbir masaya ait değil.",
+     "22 masada hiç koltuk yok, buna karşılık 34 koltuğun masası yok.",
+     "Masa denen 2 nesne bu planın masalarına benzemiyor.",
+     "1 nesne, benzediği aileden farklı türde sınıflandırıldı.",
+     "7 oturma biriminde farklı türde sınıflandırılmış masalar var."
+    ]
+   }
+  },
+  {
+   "variant": "jpeg-q20",
+   "tables": 71,
+   "falsePositives": 26,
+   "baselineFalseRate": 0.3662,
+   "contradictions": 4,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "RELATIONSHIP"
+   ],
+   "pointedAt": 44,
+   "pointedAtFalse": 20,
+   "targetedPrecision": 0.4545,
+   "lift": 1.241,
+   "severities": {
+    "medium": 3,
+    "high": 1
+   },
+   "downgradedFacts": [
+    {
+     "id": "tableTypeMix",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:round",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "seats",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "unseated",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "groups",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "38 of 110 detected seats belong to no table.",
+     "32 table(s) have no seat while 38 seat(s) have no table.",
+     "15 object(s) called tables do not look like this plan's tables.",
+     "3 seating unit(s) are made of tables typed as different kinds."
+    ],
+    "tr": [
+     "Tespit edilen 110 koltuktan 38 tanesi hiçbir masaya ait değil.",
+     "32 masada hiç koltuk yok, buna karşılık 38 koltuğun masası yok.",
+     "Masa denen 15 nesne bu planın masalarına benzemiyor.",
+     "3 oturma biriminde farklı türde sınıflandırılmış masalar var."
+    ]
+   }
+  }
+ ],
+ "gates": {
+  "meanTargetedPrecision": 0.4876,
+  "meanBaselineFalseRate": 0.2876,
+  "renderingsWherePointingBeatsChance": "9/9",
+  "contradictionsOnTheCleanOriginal": 3,
+  "honestyFailures": 0
+ }
+}
