@@ -110,6 +110,53 @@ const parsed = await p.evaluate(text => {
     ocrAvailable: pi.capacityAudit.ocrAvailable } : null;
 }, ocr.text || null);
 
+// The whole capacity loop, driven by REAL OCR output rather than by a string
+// someone typed into a test. The drawing says 124; the question is what the
+// product does when what it counted does not agree, and whether that ends up
+// somewhere an operator can act on rather than in a diagnostics panel.
+//
+// Two runs over the same OCR text: one where the counted seats match the
+// printed figure, one where they do not. The interesting one is the second.
+const capacityLoop = await p.evaluate(text => {
+  const plan = seatsPerTable => {
+    const candidates = [];
+    for (let i = 0; i < 20; i++) {
+      const chairs = [];
+      for (let s = 0; s < seatsPerTable; s++)
+        chairs.push({ id: `ch-${i}-${s}`, x: 5 + i * 4, y: 20 + s, w: 1, h: 1, rotation: 0 });
+      candidates.push({ id: `t-${i}`, kind: 'table', type: 'square', x: 4 + i * 4, y: 18, w: 3, h: 3,
+        rotation: 0, confidence: 0.9, status: 'unreviewed', selected: true, chairDetections: chairs,
+        evidence: { geometry: 0.9, chairs: seatsPerTable, repetition: 20, sizeAgreement: 0.9 } });
+    }
+    return { tables: [], venueObjects: [], guests: [], background: null,
+      analysis: { candidates, groupingDecisions: [] } };
+  };
+  const read = seatsPerTable => {
+    const pi = buildPlanIntelligence(plan(seatsPerTable), text);
+    const contra = (pi.contradictions || []).find(c => c.kind === 'CAPACITY');
+    const priority = (pi.reviewPriorities || []).find(x => x.contradictionId === (contra && contra.id));
+    const fact = (pi.facts || []).find(f => f.id === 'capacity');
+    return {
+      counted: pi.capacityEstimate.physical,
+      stated: pi.capacityAudit && (pi.capacityAudit.stated ?? pi.capacityAudit.drawingStated),
+      factKey: fact && fact.key,
+      factStrength: fact && fact.strength,
+      contradiction: contra ? { key: contra.key, severity: contra.severity,
+        targets: (contra.targetIds || []).length, sides: contra.sides.map(s => s.from) } : null,
+      priorityRank: priority ? priority.rank : null,
+      priorityTargets: priority ? (priority.targetIds || []).length : 0,
+    };
+  };
+  // 20 x 4 = 80 against a printed 124: a difference of 44, far outside the
+  // auditor's tolerance of max(2, 5%) = 6.2.
+  //
+  // The first version of this used 6 seats a table -- 120 against 124, a
+  // difference of 4 -- and the auditor correctly called that agreement. The
+  // fixture was wrong, not the product. 20 x 6 is also what the "agrees" case
+  // rounds to, so the two runs were the same run.
+  return { differs: read(4), agrees: read(Math.round(124 / 20)) };
+}, ocr.text || null);
+
 const text = (ocr.text || '').toUpperCase();
 const offOrigin = [...new Set(blocked.filter(u => !u.startsWith('chrome-extension')))];
 const notBooted = Object.entries(boot).filter(([k, v]) => v === false).map(([k]) => k);
@@ -127,6 +174,22 @@ const checks = [
   ['read a Turkish venue label (SAHNE)', text.includes('SAHNE')],
   ['returned per-word boxes with confidences, not one blob', (ocr.words || []).length > 0],
   ['the capacity auditor parsed a stated total out of real OCR text', parsed?.stated === 124, parsed],
+  // The loop, end to end, on real OCR output: read the drawing's own figure,
+  // disagree with the count when they disagree, and put that disagreement at
+  // the top of the queue pointing at real regions.
+  ['capacity loop: a real disagreement is stated as one',
+    capacityLoop.differs.factKey === 'fact.capacityDiffers', capacityLoop.differs],
+  ['capacity loop: it becomes a CAPACITY contradiction naming both sides',
+    !!capacityLoop.differs.contradiction && capacityLoop.differs.contradiction.sides.length === 2,
+    capacityLoop.differs.contradiction],
+  ['capacity loop: rated serious and queued first',
+    capacityLoop.differs.contradiction?.severity === 'high' && capacityLoop.differs.priorityRank === 0,
+    { severity: capacityLoop.differs.contradiction?.severity, rank: capacityLoop.differs.priorityRank }],
+  ['capacity loop: it points at regions an operator can open',
+    capacityLoop.differs.priorityTargets > 0, capacityLoop.differs.priorityTargets],
+  ['capacity loop: agreement raises no disagreement',
+    capacityLoop.agrees.factKey === 'fact.capacityAgrees' && !capacityLoop.agrees.contradiction,
+    capacityLoop.agrees],
   ['no page errors', errs.length === 0, errs.slice(0, 3)],
 ];
 
@@ -135,6 +198,7 @@ console.log('\nOCR available:', ocr.available, '| ms:', ocr.ms);
 console.log('OCR text:', JSON.stringify(ocr.text));
 console.log('words:', JSON.stringify((ocr.words || []).slice(0, 14)));
 console.log('capacity auditor:', JSON.stringify(parsed));
+console.log('capacity loop:', JSON.stringify(capacityLoop, null, 1));
 
 // Reported, not asserted. OCR reads the capacity numbers this product depends
 // on at 95-97 confidence and misreads alphanumeric table labels (T01 -> TO1)

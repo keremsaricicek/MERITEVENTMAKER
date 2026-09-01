@@ -37,7 +37,7 @@
     lang:"en", reviewCenterOpen:false, difficultQuestionIndex:0, activeReviewGroupId:null, activeQuestionId:null, ocrText:null
   });
 
-  function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], analyses:[], calibration:null, audit:[]}; }
+  function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], operatorSessions:[], analyses:[], calibration:null, audit:[]}; }
   function isHistorical(event){ return !!event && (event.status === "Completed" || (!!event.date && event.date < todayKey())); }
   function audit(event, action, detail={}){
     state.audit ||= [];
@@ -3842,6 +3842,81 @@
     }
     return{reappliedCount,restored,idRemap,conflicts};
   }
+  // ---- operator sessions: what a real person actually did -----------------
+  //
+  // Every number in benchmarks/review-order/ is about reaching an error, not
+  // about a person resolving one. The queue is measured against ground truth
+  // by a script that never gets confused, never scrolls past a card, and never
+  // decides the third question is not worth answering. Whether the screen works
+  // for someone doing this job is a different question and this code cannot
+  // answer it — it can only make the answer recordable.
+  //
+  // So this records what actually happened in a review session: when it
+  // started, what was done, in what order, and how that order compares to the
+  // one the product suggested. It is the instrument, not the result.
+  //
+  // ENTIRELY LOCAL. It lives in state alongside everything else, it is written
+  // by the same storage provider, and there is no network path out of it — no
+  // fetch, no beacon, no analytics endpoint, not behind a flag. A tool that
+  // watches an operator work and can also phone home is a different product
+  // from the one the user agreed to run.
+  const OPERATOR_SESSION_MAX = 50;
+  function operatorSession(event){
+    const analysisId=event.analysis?.id;
+    if(!analysisId)return null;
+    state.operatorSessions ||= [];
+    let s=state.operatorSessions.find(x=>x.analysisId===analysisId);
+    if(!s){
+      s={id:uid("session"),analysisId,eventId:event.id,startedAt:nowISO(),
+        startedAtMs:Date.now(),actions:[],
+        // The order the product proposed at the moment the session opened, so
+        // "did they follow it" is measured against what they were actually
+        // shown rather than against a queue recomputed after their edits.
+        suggestedOrder:(event.analysis.planIntelligence?.reviewPriorities||[])
+          .map(p=>({key:p.key,targetIds:p.targetIds||[]}))};
+      state.operatorSessions.push(s);
+      if(state.operatorSessions.length>OPERATOR_SESSION_MAX)
+        state.operatorSessions=state.operatorSessions.slice(-OPERATOR_SESSION_MAX);
+    }
+    return s;
+  }
+  function recordOperatorAction(event,type,targetIds){
+    const s=operatorSession(event);
+    if(!s)return;
+    const ids=(Array.isArray(targetIds)?targetIds:[targetIds]).filter(Boolean);
+    // Which suggested item this action landed on, if any. -1 means the operator
+    // worked somewhere the queue never pointed, which is itself a finding.
+    const position=s.suggestedOrder.findIndex(p=>p.targetIds.some(id=>ids.includes(id)));
+    s.actions.push({at:nowISO(),sinceStartMs:Date.now()-s.startedAtMs,
+      type,targetIds:ids,suggestedPosition:position});
+  }
+  // A read-only summary for the operator-usability harness. Deliberately not
+  // rendered anywhere: an operator being shown their own speed while working is
+  // a different product decision, and one nobody asked for.
+  function operatorSessionSummary(analysisId){
+    const s=(state.operatorSessions||[]).find(x=>x.analysisId===analysisId);
+    if(!s)return null;
+    const acts=s.actions;
+    const onQueue=acts.filter(a=>a.suggestedPosition>=0);
+    return{
+      sessionId:s.id,analysisId:s.analysisId,startedAt:s.startedAt,
+      suggestedItems:s.suggestedOrder.length,
+      actions:acts.length,
+      byType:acts.reduce((m,a)=>(m[a.type]=(m[a.type]||0)+1,m),{}),
+      msToFirstAction:acts.length?acts[0].sinceStartMs:null,
+      msToLastAction:acts.length?acts[acts.length-1].sinceStartMs:null,
+      // Of the actions that landed on a suggested item, how far down the list
+      // it was. A person working strictly top-down averages near 0.
+      onQueueActions:onQueue.length,
+      offQueueActions:acts.length-onQueue.length,
+      meanSuggestedPosition:onQueue.length
+        ? +(onQueue.reduce((n,a)=>n+a.suggestedPosition,0)/onQueue.length).toFixed(2):null,
+      firstActionWasTopOfQueue:acts.length?acts[0].suggestedPosition===0:null,
+    };
+  }
+  globalThis.MeritOperatorSessions={summary:operatorSessionSummary,
+    all:()=>(state.operatorSessions||[]).map(s=>operatorSessionSummary(s.analysisId))};
+
   // ---- the visual second opinion -------------------------------------------
   //
   // The learned encoder answers "does this crop look like the things we know
@@ -4683,7 +4758,7 @@
   function saveVerified(){const event=activeEvent();if(!ui.teachAI)return toast("Enable Teach AI with corrections first.","error");const a=event.analysis;if(!a)return;state.verifiedExamples.push({id:uid("verified"),eventId:event.id,savedAt:nowISO(),engine:a.engine,trainedModel:false,threshold:a.threshold,imageSize:[a.imageWidth,a.imageHeight],predictions:a.candidates.map(clone),groundTruth:a.candidates.filter(c=>c.status!=="rejected").map(clone),rejected:a.candidates.filter(c=>c.status==="rejected").map(c=>c.id),missed:[...a.missed],hardExample:a.missed.length>0||a.candidates.some(c=>c.status==="rejected")});saveState();toast("Verified plan saved locally with predictions, corrections, rejections and missed detections.","success",6000);}
   function improveAI(){if(!state.verifiedExamples.length)return toast("Save at least one verified plan first.","error");const samples=state.verifiedExamples.flatMap(v=>v.groundTruth||[]),avg=samples.length?samples.reduce((n,c)=>n+(c.confidence||0),0)/samples.length:0;state.calibration={version:(state.calibration?.version||0)+1,updatedAt:nowISO(),examples:state.verifiedExamples.length,objects:samples.length,recommendedConfidence:Number(Math.max(.35,Math.min(.8,avg*.85)).toFixed(2)),trainedModel:false,label:"Local assisted-detection calibration; not a trained neural model"};saveState();toast(`Local calibration v${state.calibration.version} completed from ${state.verifiedExamples.length} verified plan(s). No trained model claim is made.`,"success",6500);}
   function bindReview(){
-    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.screen="workspace";ui.tab="floor";ui.activeReviewGroupId=null;ui.activeQuestionId=null;ui.selectedCandidateId=null;render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){const was=classOf(c);c.status="confirmed";c.selected=true;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was});touchEvent(event);render();}else if(action==="reject"&&c){const was=classOf(c);c.status="rejected";c.selected=false;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"falsePositive",predictionBefore:was});touchEvent(event);render();}else if(action==="dismiss"&&c){const was=classOf(c);captureTrainingExample(event,c,{decisionType:"negative",predictionBefore:was,note:"operator dismissed this region as not important"});event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;touchEvent(event);render();}else if(action==="draw"){ui.reviewDrawMode=!ui.reviewDrawMode;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="export-dataset")exportTrainingDataset();else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="focus-group"){ui.activeReviewGroupId=b.dataset.group;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=true;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
+    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.screen="workspace";ui.tab="floor";ui.activeReviewGroupId=null;ui.activeQuestionId=null;ui.selectedCandidateId=null;render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){const was=classOf(c);c.status="confirmed";c.selected=true;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was});recordOperatorAction(event,"confirm",c.id);touchEvent(event);render();}else if(action==="reject"&&c){const was=classOf(c);c.status="rejected";c.selected=false;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"falsePositive",predictionBefore:was});recordOperatorAction(event,"reject",c.id);touchEvent(event);render();}else if(action==="dismiss"&&c){const was=classOf(c);captureTrainingExample(event,c,{decisionType:"negative",predictionBefore:was,note:"operator dismissed this region as not important"});recordOperatorAction(event,"dismiss",c.id);event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;touchEvent(event);render();}else if(action==="draw"){ui.reviewDrawMode=!ui.reviewDrawMode;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="export-dataset")exportTrainingDataset();else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="focus-group"){ui.activeReviewGroupId=b.dataset.group;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=true;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
     document.querySelectorAll("[data-candidate],[data-candidate-box]").forEach(node=>node.onclick=e=>{if(e.target.matches("input"))return;ui.selectedCandidateId=node.dataset.candidate||node.dataset.candidateBox;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();});document.querySelectorAll("[data-candidate-select]").forEach(input=>input.onchange=()=>{const c=activeEvent().analysis.candidates.find(x=>x.id===input.dataset.candidateSelect);c.selected=input.checked;touchEvent(activeEvent());});document.querySelectorAll("[data-candidate-edit]").forEach(input=>input.onchange=()=>{const f=input.dataset.candidateEdit,v=input.value;requestAnimationFrame(()=>updateCandidateField(f,v));});document.querySelectorAll("[data-review-filter]").forEach(input=>input.oninput=()=>{if(input.dataset.reviewFilter==="status")ui.reviewFilter=input.value;else if(input.dataset.reviewFilter==="class")ui.reviewClass=input.value;else ui.reviewConfidence=Number(input.value);render();});document.querySelector("[data-teach-ai]")?.addEventListener("change",e=>{ui.teachAI=e.target.checked;});
     document.querySelectorAll("[data-reviewgroup-action]").forEach(b=>b.onclick=()=>{
       const event=activeEvent(),pi=event.analysis?.planIntelligence,group=pi?.reviewGroups.find(g=>g.id===b.dataset.group);if(!group)return;
@@ -4692,6 +4767,7 @@
         strong.forEach(id=>{const c=event.analysis.candidates.find(x=>x.id===id);if(c){const was=classOf(c);c.status="confirmed";c.selected=true;rememberCorrection(event,c);
           captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was,
             note:"accepted in bulk via Confirm All; not individually reviewed by a person"});}});
+        recordOperatorAction(event,"confirm-family",strong);
         touchEvent(event);ui.reviewCenterOpen=group.outlierIds.length>0;render();
         toast(`${strong.length} object${strong.length===1?"":"s"} confirmed as ${group.title}. ${group.outlierIds.length?group.outlierIds.length+" outlier(s) still need review.":""}`,"success",5000);
       } else if(b.dataset.reviewgroupAction==="inspect"){
@@ -4711,6 +4787,7 @@
       const memberIds=groups[0]?.memberIds||[];
       if(!canMutate(event,"answer a plan question"))return;
       const decision=action==="yes"?"merged":"separate";
+      recordOperatorAction(event,`grouping-${decision}`,groups.flatMap(g=>g.memberIds||[]));
       event.analysis.groupingDecisions ||= [];
       for(const group of groups){
         event.analysis.groupingDecisions.push({id:uid("groupdecision"),memberIds:[...group.memberIds],decision,decidedAt:nowISO(),fromQuestionId:q.id});

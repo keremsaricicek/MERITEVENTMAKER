@@ -18,6 +18,7 @@
     "benchmark:facts": "node benchmarks/interpreter/measure-facts.mjs",
     "benchmark:contradictions": "node benchmarks/contradictions/measure-contradictions.mjs",
     "benchmark:review-order": "node benchmarks/review-order/measure-review-order.mjs",
+    "benchmark:heldout": "node benchmarks/heldout/run-heldout.mjs",
     "perf": "node benchmarks/perf/run-perf.mjs",
     "build:offline": "node scripts/build-offline.mjs",
     "build:offline-full": "node scripts/build-offline-full.mjs",
