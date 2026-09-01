@@ -81,6 +81,11 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
         });
       })(),
       chairsReseated: a.diagnostics.chairsReseated ?? null,
+      zones: (pi?.zones || []).map(z => ({ type: z.type, confidence: z.confidence,
+        evidence: z.evidence, members: z.memberIds.length, memberIds: z.memberIds, seats: z.seats })),
+      physicalSeats: pi?.planSummary?.physicalSeats ?? null,
+      ocrAvailable: !!pi?.providerMetadata?.ocrAvailable,
+      tableIds: alive.filter(c => c.kind === "table").map(c => c.id),
       reviewGroups: (pi?.reviewGroups || []).map(g => ({
         kind: g.kind, type: g.titleParams?.type, need: g.memberIds.length,
         total: g.totalInFamily, clusters: (g.clusters || []).length,
@@ -264,6 +269,47 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     { touching: touching.length, sample: touching.slice(0, 4) });
   checks.ok(result.chairsReseated !== null,
     "the detector reports how many seats it moved onto surviving tables", result.chairsReseated);
+
+  // ---- semantic zones say what they are, and why ---------------------------
+  //
+  // A zone is the product telling an operator what a part of the room is for,
+  // which is exactly the kind of statement that must carry evidence or not be
+  // made. `unknown` is a real answer here: a cluster of tables nobody sits at
+  // is reported as an undetermined region rather than guessed into a dining
+  // room, and dropping it silently would be the dishonest option.
+  const ZONE_TYPES = new Set(["dining", "bistro", "lounge", "stage", "entrance", "unknown"]);
+  checks.ok(result.zones.length > 0, "the plan is read as regions with a job, not just objects", result.zones.length);
+  const strangeTypes = result.zones.filter(z => !ZONE_TYPES.has(z.type));
+  checks.ok(strangeTypes.length === 0, "every zone uses the declared vocabulary", strangeTypes.slice(0, 3));
+  const unevidenced = result.zones.filter(z => !Array.isArray(z.evidence) || !z.evidence.length);
+  checks.ok(unevidenced.length === 0,
+    "every zone states the facts that typed it", unevidenced.slice(0, 3));
+  checks.ok(result.zones.every(z => ["strong", "likely", "uncertain"].includes(z.confidence)),
+    "and how sure it is, in words rather than an invented number",
+    result.zones.map(z => z.confidence));
+
+  // Nothing is inferred from a name: an entrance zone requires either a
+  // confirmed entrance object or wording OCR actually read.
+  const entrances = result.zones.filter(z => z.type === "entrance");
+  checks.ok(entrances.length === 0 || result.ocrAvailable || entrances.every(z => z.members > 0),
+    "no entrance zone is invented on a build where OCR never ran",
+    { entrances: entrances.length, ocrAvailable: result.ocrAvailable });
+
+  // A zone may never claim seats the detector did not find.
+  const zoneSeats = result.zones.reduce((n, z) => n + z.seats, 0);
+  checks.ok(result.physicalSeats == null || zoneSeats <= result.physicalSeats,
+    "zones never claim more seats than the detector found",
+    { zoneSeats, physicalSeats: result.physicalSeats });
+
+  // Every table is inside exactly one zone — a table in none would be a part of
+  // the room the product silently declined to describe.
+  const zoned = result.zones.flatMap(z => z.memberIds);
+  const missingTables = result.tableIds.filter(id => !zoned.includes(id));
+  checks.ok(missingTables.length === 0,
+    "no detected table falls outside every zone", missingTables.slice(0, 4));
+  checks.ok(new Set(zoned).size === zoned.length,
+    "and no object is claimed by two zones at once",
+    zoned.filter((id, i) => zoned.indexOf(id) !== i).slice(0, 3));
 
   const reviewedMembers = new Set(result.reviewGroups.flatMap(g => g.memberIds));
   checks.ok(reviewedMembers.size === result.unreviewedLow,

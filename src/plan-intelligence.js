@@ -481,6 +481,141 @@
     return { edges, counts, nodeCount: alive.length };
   }
 
+  // ---- semantic zones ------------------------------------------------------
+  //
+  // A plan is not a bag of objects. An operator reads a room as regions with a
+  // job — this end is dining, that corner is bistro, the band is the stage —
+  // and every number the product reports is easier to trust when it is attached
+  // to a part of the room rather than to a total.
+  //
+  // Three rules this follows, and they are the whole design:
+  //
+  //   EVIDENCE OR NOTHING. Every zone carries the facts that typed it, in
+  //   words. A region that satisfies no rule becomes an `unknown` zone and is
+  //   still reported — a plan with a region nobody can name is exactly the
+  //   thing an operator needs told, and silently dropping it would be the
+  //   dishonest option.
+  //
+  //   PLAN-RELATIVE, NEVER ABSOLUTE. Clusters link at a fraction of THIS plan's
+  //   own modal table size, so a zone is not a distance in pixels and survives
+  //   an export at another scale.
+  //
+  //   NOTHING IS INFERRED FROM A NAME. An entrance zone exists only where OCR
+  //   actually read entrance wording or a human confirmed an entrance object.
+  //   Where OCR is unavailable there is no entrance zone, rather than a guessed
+  //   one.
+  const ZONE_LINK_OF_TABLE = 1.5;   // cluster link distance, in modal table sides
+  const ENTRANCE_WORDS = /\b(giri[sş]|entrance|entry|exit|[cç][iı]k[iı][sş])\b/i;
+
+  function buildZones(candidates, furnitureGroups, ocrText) {
+    const alive = candidates.filter(c => c.status !== "rejected");
+    const tables = alive.filter(c => c.kind === "table");
+    const venues = alive.filter(c => c.kind === "venue");
+    const zones = [];
+    const bboxOf = list => {
+      const xs = list.flatMap(c => [c.x, c.x + c.w]), ys = list.flatMap(c => [c.y, c.y + c.h]);
+      return { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
+    };
+    const seatsOf = list => list.reduce((n, c) => n + (c.chairDetections || []).length, 0);
+    const add = (type, members, confidence, evidence, extra = {}) => {
+      if (!members.length) return;
+      zones.push({ id: uid("zone"), type, confidence, evidence,
+        memberIds: members.map(c => c.id), objects: members.length,
+        seats: seatsOf(members), bbox: bboxOf(members), ...extra });
+    };
+
+    // -- stage, from objects the detector typed as stage ----------------------
+    const stageObjects = venues.filter(c => c.type === "stage");
+    if (stageObjects.length) {
+      // Stage bands that touch are one performance area, not several.
+      for (const cluster of clusterByGap(stageObjects, s => Math.max(s.w, s.h) * 0.6))
+        add("stage", cluster, "strong",
+          [`${cluster.length} stage object${cluster.length === 1 ? "" : "s"} detected`,
+           "no seating is counted inside a stage"]);
+    }
+
+    // -- entrance, only where wording was actually read -----------------------
+    const entranceObjects = venues.filter(c => c.type === "entrance");
+    if (entranceObjects.length) {
+      add("entrance", entranceObjects, "strong", ["objects confirmed as entrances"]);
+    } else if (ocrText && ENTRANCE_WORDS.test(ocrText)) {
+      // Read, but with no object to attach it to. Recorded as a zone with no
+      // members and no box rather than invented somewhere plausible.
+      zones.push({ id: uid("zone"), type: "entrance", confidence: "uncertain",
+        evidence: ["entrance wording was read on the plan, but no entrance object was detected to place it"],
+        memberIds: [], objects: 0, seats: 0, bbox: null });
+    }
+
+    // -- lounge: seating furniture that serves no table -----------------------
+    const loungeFurniture = venues.filter(c => ["sofa", "bench", "banquette"].includes(c.type));
+    const modalTableSide = tables.length
+      ? (() => { const v = tables.map(t => Math.sqrt(t.w * t.h)).sort((a, b) => a - b); return v[v.length >> 1]; })()
+      : 0;
+    const link = (modalTableSide || 4) * ZONE_LINK_OF_TABLE;
+    const standalone = loungeFurniture.filter(s =>
+      !tables.some(t => gapBetween(s, t) <= Math.max(s.w, s.h) * 0.9));
+    for (const cluster of clusterByGap(standalone, () => link))
+      add("lounge", cluster, cluster.length > 1 ? "likely" : "uncertain",
+        [`${cluster.length} seating object${cluster.length === 1 ? "" : "s"} with no table within reach`,
+         "seat count on this furniture is unverified unless an operator entered it"],
+        { seatsVerified: cluster.every(c => c.seatsConfidence === "verified") });
+
+    // -- dining and bistro: clusters of tables, typed by what they are --------
+    //
+    // The zone's type comes from its members' modal table type, so a corner of
+    // bistro tables reads as a bistro zone and the banquet floor reads as
+    // dining. It is never "small tables = bistro": the tables were typed
+    // upstream on evidence from three different stages, and this only reports
+    // what they already are.
+    for (const cluster of clusterByGap(tables, () => link)) {
+      const types = cluster.reduce((m, c) => (m[c.type] = (m[c.type] || 0) + 1, m), {});
+      const ranked = Object.entries(types).sort((a, b) => b[1] - a[1]);
+      const [modalType, modalCount] = ranked[0];
+      const share = modalCount / cluster.length;
+      const seated = cluster.filter(c => (c.chairDetections || []).length > 0).length;
+      const groups = (furnitureGroups || []).filter(g =>
+        (g.memberIds || []).some(id => cluster.some(c => c.id === id))).length;
+      const evidence = [
+        `${cluster.length} table${cluster.length === 1 ? "" : "s"} standing together`,
+        `${modalCount} of them typed ${modalType}`,
+        `${seated} carry detected seats`,
+      ];
+      if (groups) evidence.push(`${groups} logical seating group${groups === 1 ? "" : "s"} inside it`);
+      if (!seated) {
+        // Tables nobody sits at are not a dining room. Say so rather than
+        // guessing what the region is for.
+        add("unknown", cluster, "uncertain",
+          [...evidence, "no seats were detected at any of them, so what this area is for is undetermined"]);
+        continue;
+      }
+      const type = modalType === "bistro" && share >= 0.5 ? "bistro" : "dining";
+      add(type, cluster, share >= 0.8 ? "strong" : "likely", evidence, { modalTableType: modalType });
+    }
+    return zones;
+  }
+
+  // Single-linkage clustering with a caller-supplied link distance, so "these
+  // things stand together" is a relation between real objects rather than a
+  // grid laid over the plan.
+  function clusterByGap(items, linkFor) {
+    const remaining = items.slice(), clusters = [];
+    while (remaining.length) {
+      const cluster = [remaining.shift()];
+      let grew = true;
+      while (grew) {
+        grew = false;
+        for (let i = remaining.length - 1; i >= 0; i--) {
+          const c = remaining[i];
+          if (cluster.some(m => gapBetween(m, c) <= Math.max(linkFor(m), linkFor(c)))) {
+            cluster.push(c); remaining.splice(i, 1); grew = true;
+          }
+        }
+      }
+      clusters.push(cluster);
+    }
+    return clusters;
+  }
+
   function buildPlanIntelligence(event, ocrText) {
     const analysis = event.analysis; if (!analysis) return null;
     const tableCandidates = analysis.candidates.filter(c => c.kind === "table");
@@ -491,6 +626,7 @@
     const physicalSeats = computePhysicalCapacity(analysis.candidates);
     const capacityAudit = buildCapacityAudit(ocrText, physicalSeats, analysis.candidates, furnitureGroups);
     const sceneGraph = buildSceneGraph(analysis.candidates, furnitureGroups);
+    const zones = buildZones(analysis.candidates, furnitureGroups, ocrText);
     const venueCandidates = analysis.candidates.filter(c => c.kind === "venue");
     // Which detection path actually ran is reported, not hidden: a chair-first
     // pass (chairs detected from their own colour/size model, then tables
@@ -520,8 +656,14 @@
         bar: venueCandidates.filter(c => c.type === "bar").length,
         entrances: venueCandidates.filter(c => c.type === "entrance").length,
         reviewGroups: reviewGroups.length,
+        zones: zones.length,
+        zoneTypes: zones.reduce((m, z) => (m[z.type] = (m[z.type] || 0) + 1, m), {}),
       },
       furnitureGroups,
+      // Regions of the room with a job, each carrying the evidence that typed
+      // it. A region that satisfies no rule is reported as `unknown` rather
+      // than dropped — see buildZones.
+      zones,
       capacityEstimate: { physical: physicalSeats },
       capacityAudit,
       // Physical objects and logical seating groups are deliberately separate
