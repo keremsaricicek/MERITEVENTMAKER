@@ -1,5 +1,20 @@
 # Intelligence sprint — evidence report
 
+> **SUPERSEDED.** This file records the state at the commit it was written on
+> and is kept as history, not as a live claim. Several of its numbers are no
+> longer true — most importantly **bistro type accuracy 0/5 (now 5/5)**,
+> **column recall 0.667 (now 1.000)**, **review groups 5 (now 6, because typing
+> the bistro tables correctly splits them out of the square group)**, and
+> **24 scoreable chair→table relationships (now 83)**.
+>
+> For what the shipped build actually does today see
+> **`ROBUSTNESS-CURRENT.md`** (the authoritative rendering matrix) and
+> **`SPRINT-COMPLETION-REPORT.md`**.
+>
+> Its robustness F1 figures were re-measured against the current build and are
+> **still accurate**, including `hue-shift` 0.559 — that number was not stale,
+> it is a real and current weakness.
+
 Every number here is a measurement from `npm run benchmark`,
 `node benchmarks/robustness/run-robustness.mjs`, `npm run test:all` and
 `npm run perf` at the commit this file was written on. Nothing is remembered

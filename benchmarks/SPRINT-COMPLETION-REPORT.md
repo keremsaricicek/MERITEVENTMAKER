@@ -78,6 +78,10 @@ plan, whose annotation records that none are identifiable there.
 | chair floor, all variants | ≥ 0.85 | **0.752** on `downscale-70` | **no** |
 | table floor, low resolution / colour | ≥ 0.75 | 0.636 / 0.559 | **no** |
 
+Re-measured against the shipped build in the roadmap sprint that followed and
+**confirmed still current** — see `ROBUSTNESS-CURRENT.md` for the authoritative
+per-rendering matrix with triage.
+
 No regressions against the recorded robustness baseline across the whole
 sprint, through every change in it.
 
