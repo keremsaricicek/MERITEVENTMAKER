@@ -3846,8 +3846,24 @@
   // plan-intelligence.js's similarity clustering).
   function rememberCorrection(event,c,{manual=false}={}){
     event.planMemory ||= [];
+    // Identity used to be geometry alone, which is really determinism matching:
+    // it works because re-running a deterministic detector on identical pixels
+    // puts every box back where it was. The moment the pixels differ — a JPEG
+    // round trip, a greyscale export, a plan re-issued with two tables moved —
+    // a decision is silently lost, or worse, lands on a different object.
+    //
+    // So the decision is stored with what the object LOOKED like and what stood
+    // AROUND it as well as where it was. Both are already computed by the time
+    // a person can click: the encoder ran over every candidate during detection,
+    // and the neighbourhood is the candidate list itself.
+    const alive=(event.analysis?.candidates||[]).filter(x=>x.status!=="rejected");
+    const vector=c.visualDescriptor?.vector||null;
     const entry={id:uid("planmemory"),sourceCandidateId:c.id,kind:c.kind,type:c.type,status:c.status,
-      geometry:{x:c.x,y:c.y,w:c.w,h:c.h,rotation:c.rotation||0},manual,correctedAt:nowISO()};
+      geometry:{x:c.x,y:c.y,w:c.w,h:c.h,rotation:c.rotation||0},manual,correctedAt:nowISO(),
+      visual:vector?{vector:Array.from(vector),
+        provider:globalThis.MeritVisualEmbedding?.resolve?.()?.id||null,
+        version:globalThis.MERIT_PLAN_ENCODER_WEIGHTS?.id||null}:null,
+      context:globalThis.MeritPlanMemory?globalThis.MeritPlanMemory.contextSignature(c,alive):null};
     const existing=event.planMemory.findIndex(m=>m.sourceCandidateId===c.id);
     if(existing>=0)event.planMemory[existing]=entry;else event.planMemory.push(entry);
   }
@@ -3984,9 +4000,19 @@
     // freshly re-detected candidate at that position will get the SAME wrong
     // kind guess again on every re-run, so requiring kind equality here would
     // make the correction impossible to ever re-apply.
-    const pairs=[];
-    for(const m of memory)for(const c of freshCandidates)pairs.push({m,c,dist:memoryDistance(c,m)});
-    pairs.sort((a,b)=>a.dist-b.dist);
+    //
+    // Matching itself lives in src/plan-memory.js, where it is scored from
+    // geometry, size, the learned encoder's embedding of the crop, the local
+    // neighbourhood and family compatibility, and graded STRONG / LIKELY /
+    // AMBIGUOUS / NONE. Only the first two re-apply. An AMBIGUOUS match — two
+    // candidates that fit about equally — is deliberately NOT applied: picking
+    // one silently is how a human decision lands on an object it was never
+    // about, and that failure looks exactly like success.
+    const byId=new Map(freshCandidates.map(c=>[c.id,c]));
+    const memById=new Map(memory.map(m=>[m.id,m]));
+    const result=globalThis.MeritPlanMemory.match(memory,
+      freshCandidates.map(c=>({id:c.id,kind:c.kind,type:c.type,x:c.x,y:c.y,w:c.w,h:c.h,
+        vector:c.visualDescriptor?.vector||null})));
     const usedC=new Set(),usedM=new Set();
     let reappliedCount=0;
     // Where the operator and the detector actually disagree. Re-applying a
@@ -3996,13 +4022,25 @@
     // recorded here, at the only place that can see both answers, and reported
     // as a MEMORY contradiction rather than being smoothed over.
     const conflicts=[];
-    for(const{m,c,dist}of pairs){
-      if(dist>memoryTolerance(m.geometry)||usedC.has(c.id)||usedM.has(m.id))continue;
-      if(c.kind!==m.kind||c.type!==m.type)
+    for(const hit of result.matches){
+      const c=byId.get(hit.candidateId),m=memById.get(hit.memoryId);
+      if(!c||!m)continue;
+      if(hit.reclassifies)
         conflicts.push({kind:"overruled",candidateId:c.id,
           detector:{kind:c.kind,type:c.type},operator:{kind:m.kind,type:m.type}});
       c.kind=m.kind;c.type=m.type;c.status=m.status;c.selected=m.status!=="rejected";c.fromMemory=true;
+      c.memoryMatch={grade:hit.grade,score:hit.score,margin:hit.margin,
+        movedBeyondTolerance:!hit.withinOldTolerance,visualCosine:hit.visualCosine,terms:hit.terms};
       usedC.add(c.id);usedM.add(m.id);idRemap.set(m.sourceCandidateId,c.id);reappliedCount++;
+    }
+    // Two candidates fit this decision about equally well. Not applied, and not
+    // silent: the operator is the only one who can say which object they meant.
+    for(const hit of result.ambiguous){
+      const m=memById.get(hit.memoryId);
+      if(!m||usedM.has(m.id))continue;
+      usedM.add(m.id);
+      conflicts.push({kind:"ambiguous",memoryId:m.id,candidateId:hit.candidateId,
+        object:{kind:m.kind,type:m.type},score:hit.score,margin:hit.margin});
     }
     const restored=[];
     for(const m of memory){
@@ -4016,7 +4054,7 @@
       restored.push({id,kind:m.kind,type:m.type,x:g.x,y:g.y,w:g.w,h:g.h,rotation:g.rotation,confidence:1,status:m.status,selected:m.status!=="rejected",missed:true,fromMemory:true,chairDetections:[],evidence:{geometry:"manual-memory",chairs:0,repetition:0}});
       idRemap.set(m.sourceCandidateId,id);
     }
-    return{reappliedCount,restored,idRemap,conflicts};
+    return{reappliedCount,restored,idRemap,conflicts,identity:result.stats};
   }
   // ---- operator sessions: what a real person actually did -----------------
   //

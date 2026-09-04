@@ -21,6 +21,7 @@
     "benchmark:heldout": "node benchmarks/heldout/run-heldout.mjs",
     "benchmark:false-positives": "node benchmarks/false-positives/measure-false-positives.mjs",
     "benchmark:adversarial": "node benchmarks/adversarial/run-adversarial.mjs",
+    "benchmark:memory": "node benchmarks/memory/measure-memory.mjs",
     "perf": "node benchmarks/perf/run-perf.mjs",
     "build:offline": "node scripts/build-offline.mjs",
     "build:offline-full": "node scripts/build-offline-full.mjs",

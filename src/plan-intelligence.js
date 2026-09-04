@@ -987,6 +987,17 @@
         [side("yourConfirmations", "objectsReal", { n: lost.length }),
          side("thisAnalysis", "notFoundNow")],
         ["tableCount", "seats"], []);
+    // A decision the matcher could place on two objects about equally well.
+    // Deliberately NOT applied to either — a human decision landing on the
+    // wrong object corrupts a plan while looking like it worked — so this is
+    // the only way the operator learns it happened.
+    const ambiguousMemory = (memoryConflicts || []).filter(c => c.kind === "ambiguous");
+    if (ambiguousMemory.length)
+      say("contra:memoryAmbiguous", "MEMORY", "contradiction.memoryAmbiguous",
+        { n: ambiguousMemory.length }, "medium",
+        [side("yourCorrections", "appliedToOne", { n: ambiguousMemory.length }),
+         side("thisAnalysis", "twoObjectsFit")],
+        [], ambiguousMemory.map(c => c.candidateId).filter(Boolean));
 
     // -- SEMANTIC: facts that cannot all hold ---------------------------------
     const diningZones = zones.filter(z => ["dining", "bistro"].includes(z.type)).length;
