@@ -2617,8 +2617,13 @@
       // chair" is true and removes nothing. See the family diagnostics'
       // `crowding` figure for what does separate them, and why it is not
       // gated on.
+      // The family label lives on the entry, not the component, and the
+      // relationship engine needs it: whether a chair looks like the chairs
+      // already at a table is one of its tie-breakers. Assigning onto the same
+      // component object rather than copying keeps object identity, which the
+      // `sameObject` pool filter below depends on.
       const chairs=chairUniform
-        ?chairEntries.filter(chairAccepted).map(e=>e.comp)
+        ?chairEntries.filter(chairAccepted).map(e=>Object.assign(e.comp,{chairFamily:chairFamilyOf(e)}))
         :chairComps;
       const detectionPath=chairUniform?"chair-first":"table-first";
       mark("chairs");
@@ -2886,30 +2891,66 @@
         unique.length=0;unique.push(...kept);
       }
 
-      // ---- chair -> table association: one chair, at most one table --------
+      // ---- chair -> table association --------------------------------------
       // merit-plan-intelligence requires each chair to belong to at most one
       // table. The old pipeline evaluated proximity per table independently, so
       // a chair sitting between two tables was counted twice — a real
       // over-count living next to the under-count.
+      //
+      // This first pass is deliberately the crude one: nearest qualifying table,
+      // one chair one table. Its only consumer is the table scorer below, which
+      // wants a seat-ADJACENCY count — "how many chairs stand against this
+      // blob" — and nothing more.
+      //
+      // Keeping it crude is a correctness decision, not laziness. Feeding the
+      // full relationship reasoning into the thing that decides WHAT IS A TABLE
+      // is the circular evidence merit-plan-intelligence forbids: a table would
+      // be a table because chairs relate well to it, and those chairs would
+      // relate well to it because it is a table. Independent object evidence
+      // first; relationship reasoning afterwards, on objects already classified.
+      //
+      // Measured, when this pass did use the evidence engine: seat counts
+      // shifted, table confidence shifted with them, and three renderings of the
+      // Golden Plan gained a phantom table each. Detection is not what the
+      // engine is for.
+      //
+      // The real association — perimeter position, facing, arrangement, family,
+      // competing tables, ambiguity — runs after suppression, over the tables
+      // that survived. See src/plan-relationships.js.
       const tableBoxes=unique.map((entry,index)=>{
         const c=entry.comp,obb=c.shape?.obb||{cx:c.x+c.w/2,cy:c.y+c.h/2,w:c.w,h:c.h,rotation:c.pcaRotation||0};
         return{index,entry,obb};
       });
-      const chairAssign=new Map(),chairsByTable=new Map(),pairs=[];
-      for(let ci=0;ci<chairs.length;ci++){
-        const ch=chairs[ci],px=ch.shape?.obb.cx??ch.x+ch.w/2,py=ch.shape?.obb.cy??ch.y+ch.h/2,span=Math.max(ch.w,ch.h);
-        for(const box of tableBoxes){
-          const margin=Math.min(span*1.6+Math.min(box.obb.w,box.obb.h)*.25,Math.max(box.obb.w,box.obb.h)*.7);
-          const d=distanceToOBB(px,py,box.obb);
-          if(d<=margin)pairs.push({ci,ti:box.index,d});
+      // The ink centroid minus the box centre. A connected component already
+      // carries both, so the asymmetry that reveals a backrest costs nothing
+      // to compute and is the only honest source of a facing direction.
+      const inkOffsetOf=ch=>{
+        if(!Number.isFinite(ch.cx)||!Number.isFinite(ch.cy))return null;
+        return{x:ch.cx-(ch.x+ch.w/2),y:ch.cy-(ch.y+ch.h/2)};
+      };
+      const chairOBB=ch=>ch.shape?.obb||{cx:ch.x+ch.w/2,cy:ch.y+ch.h/2,w:ch.w,h:ch.h,rotation:ch.pcaRotation||0};
+      const relationInput=chairs.map((ch,i)=>({
+        id:i,family:ch.chairFamily||chairSource||"unknown",
+        obb:chairOBB(ch),inkOffset:inkOffsetOf(ch)}));
+      const chairAssign=new Map(),chairsByTable=new Map(),chairRelation=new Map();
+      let relationStats=null;
+      {
+        const pairs=[];
+        for(let ci=0;ci<chairs.length;ci++){
+          const ch=chairs[ci],px=ch.shape?.obb.cx??ch.x+ch.w/2,py=ch.shape?.obb.cy??ch.y+ch.h/2,span=Math.max(ch.w,ch.h);
+          for(const box of tableBoxes){
+            const margin=globalThis.MeritRelationships.reachFor(span,box.obb);
+            const d=distanceToOBB(px,py,box.obb);
+            if(d<=margin)pairs.push({ci,ti:box.index,d});
+          }
         }
-      }
-      pairs.sort((a,b)=>a.d-b.d||a.ci-b.ci||a.ti-b.ti);
-      for(const p of pairs){
-        if(chairAssign.has(p.ci))continue;
-        chairAssign.set(p.ci,p.ti);
-        if(!chairsByTable.has(p.ti))chairsByTable.set(p.ti,[]);
-        chairsByTable.get(p.ti).push(p.ci);
+        pairs.sort((a,b)=>a.d-b.d||a.ci-b.ci||a.ti-b.ti);
+        for(const p of pairs){
+          if(chairAssign.has(p.ci))continue;
+          chairAssign.set(p.ci,p.ti);
+          if(!chairsByTable.has(p.ti))chairsByTable.set(p.ti,[]);
+          chairsByTable.get(p.ti).push(p.ci);
+        }
       }
 
       // ---- scoring and ranking (FIX #3) ------------------------------------
@@ -3185,34 +3226,42 @@
       // all detected. The detector had the answer and threw it out with the
       // losing proposal.
       //
-      // So the losers' seats are offered to the survivors, using the same
-      // margin-qualified pairs the first pass built. Nothing new is invented: a
-      // chair is only re-seated at a table it already qualified for.
+      // So the REAL association happens here, once, over the tables that
+      // survived — and this is the pass that carries the evidence model. It
+      // runs after classification, on objects the detector has already decided
+      // are tables, so nothing it concludes can feed back into that decision.
+      //
+      // It also replaces the old patch-up (keep pass one's answers, re-offer
+      // only the orphans). Associating everything against the final table set
+      // is both simpler and more correct: the context that decides it — how far
+      // the other seats at a table sit, what family they are — is measured over
+      // the tables that actually exist, not over a set that included proposals
+      // since deleted. Nothing new is invented: the surviving tables are a
+      // subset of the ones pass one already offered.
+      const survivingBoxes=tableBoxes.filter(b=>chosenIndexes.has(b.index));
+      const finalRelations=globalThis.MeritRelationships.associate(
+        relationInput,survivingBoxes.map(b=>({id:b.index,obb:b.obb})));
+      const adjacencyAssign=new Map(chairAssign);
       let reseated=0;
-      for(let ci=0;ci<chairs.length;ci++){
-        const ti=chairAssign.get(ci);
-        if(ti!==undefined&&chosenIndexes.has(ti))continue;
-        let best=null;
-        for(const p of pairs){
-          if(p.ci!==ci||!chosenIndexes.has(p.ti))continue;
-          if(!best||p.d<best.d)best=p;
-        }
-        if(!best)continue;
-        if(ti!==undefined){
-          const previous=chairsByTable.get(ti);
-          if(previous){
-            const at=previous.indexOf(ci);
-            if(at>=0)previous.splice(at,1);
-          }
-        }
-        chairAssign.set(ci,best.ti);
-        if(!chairsByTable.has(best.ti))chairsByTable.set(best.ti,[]);
-        chairsByTable.get(best.ti).push(ci);
-        reseated++;
+      chairAssign.clear();chairsByTable.clear();
+      for(const r of finalRelations.results){
+        // `tableIndex` is a position in the surviving list; `tableId` carries
+        // the original pool index, which is what everything downstream uses.
+        const ti=r.tableId;
+        chairRelation.set(r.chairIndex,{...r,tableIndex:ti==null?null:ti});
+        if(ti==null)continue;
+        if(adjacencyAssign.get(r.chairIndex)!==ti)reseated++;
+        chairAssign.set(r.chairIndex,ti);
+        if(!chairsByTable.has(ti))chairsByTable.set(ti,[]);
+        chairsByTable.get(ti).push(r.chairIndex);
       }
+      // How many seats ended up somewhere other than where the crude adjacency
+      // pass put them. Most of these are seats whose nearest table was a
+      // proposal the suppression stage then deleted — the failure that used to
+      // drop them from seating entirely.
+      relationStats={...finalRelations.stats,seatedElsewhereThanAdjacency:reseated};
 
       const toPercentBox=obb=>({x:(obb.cx-obb.w/2)/width*100,y:(obb.cy-obb.h/2)/height*100,w:obb.w/width*100,h:obb.h/height*100});
-      const chairOBB=ch=>ch.shape?.obb||{cx:ch.x+ch.w/2,cy:ch.y+ch.h/2,w:ch.w,h:ch.h,rotation:ch.pcaRotation||0};
       // Deterministic evidence score for a chair: how well it agrees with the
       // plan's own modal chair size, plus whether it came from a real colour
       // cluster or only from the luma fallback. Never a random number.
@@ -3268,14 +3317,46 @@
           typeEvidence:bistro.length?bistro:null,...toPercentBox(s.obb),rotation:s.obb.rotation,
           confidence:s.confidence,status:"unreviewed",selected:s.confidence>=calibratedThreshold(),
           chairDetections:seatIndexes.map(ci=>{
-            const obb=chairOBB(chairs[ci]);
+            const obb=chairOBB(chairs[ci]),rel=chairRelation.get(ci);
             return{id:uid("candidate-chair"),x:obb.cx/width*100,y:obb.cy/height*100,
-              w:obb.w/width*100,h:obb.h/height*100,rotation:obb.rotation,confidence:chairEvidence(chairs[ci],true)};
+              w:obb.w/width*100,h:obb.h/height*100,rotation:obb.rotation,confidence:chairEvidence(chairs[ci],true),
+              // Why this seat was put at this table, kept with the seat rather
+              // than thrown away after the decision. An operator asking "why
+              // is that chair on table 12" gets an answer, and a close call
+              // between two tables is visible as a close call instead of
+              // reading exactly like a certain one.
+              // The runner-up's `tableId` is its index in the ORIGINAL table
+              // pool, which is what the resolution pass below keys on. Its
+              // `tableIndex` is a position in the surviving-table list and is
+              // meaningless outside the engine.
+              relation:rel?{ambiguous:rel.state==="ambiguous",score:rel.score,margin:rel.margin,
+                reason:rel.reason,runnerUpTableIndex:rel.runnerUp?rel.runnerUp.tableId:null,
+                runnerUpScore:rel.runnerUp?rel.runnerUp.score:null,
+                competitors:rel.competitors,evidence:rel.evidence,
+                orientation:{known:rel.orientation.known,angle:rel.orientation.angle,
+                  strength:Number(rel.orientation.strength.toFixed(3)),evidence:rel.orientation.evidence,
+                  facingKnown:rel.orientation.facingKnown,facingAngle:rel.orientation.facingAngle,
+                  facingEvidence:rel.orientation.facingEvidence}}:null};
           }),
           evidence:{geometry:Number(Math.min(.95,(s.c.shape?.obbFill??s.c.fill)+.2).toFixed(2)),
             chairs:seatIndexes.length,repetition:s.repetition,source:s.c.source,
             shapeBasis:s.shape.basis,sizeAgreement:Number(s.agreement.toFixed(2)),split:!!s.c.wasSplit}};
       });
+      // The relation records a runner-up by its position in the table pool.
+      // Resolve those to real candidate ids now that the candidates exist, and
+      // drop the reference where the runner-up did not survive into the final
+      // list — pointing at an object the operator cannot see would be worse
+      // than not naming it.
+      {
+        const idByTableIndex=new Map();
+        chosen.forEach((s,i)=>idByTableIndex.set(s.box.index,candidates[i].id));
+        for(const c of candidates)for(const ch of c.chairDetections){
+          if(!ch.relation)continue;
+          const ti=ch.relation.runnerUpTableIndex;
+          ch.relation.runnerUpId=ti==null?null:(idByTableIndex.get(ti)||null);
+          delete ch.relation.runnerUpTableIndex;
+        }
+      }
       // ---- a table that contains all of its own seats ---------------------
       //
       // Measured across eleven renderings (benchmarks/false-positives/): of 424
@@ -3297,18 +3378,71 @@
       // low-evidence: it stays on screen, stays reviewable, keeps its seat, and
       // is simply not committed to the floor plan unless a person says so.
       // Abstention, not a verdict.
-      let seatsInsideBody=0;
-      for(const c of candidates){
-        const seats=c.chairDetections||[];
-        if(!seats.length)continue;
-        // A nested seat carries its CENTRE in x/y; the table carries a
-        // top-left corner. Comparing them the other way round would make this
-        // fire on almost everything.
-        const inside=seats.filter(ch=>ch.x>c.x&&ch.x<c.x+c.w&&ch.y>c.y&&ch.y<c.y+c.h).length;
-        if(inside!==seats.length)continue;
-        c.selected=false;
-        c.lowEvidence={reason:"seatsInsideBody",seats:seats.length};
-        seatsInsideBody++;
+      //
+      // ------------------------------------------------------------------
+      // AND THAT WORRY WAS RIGHT. The adversarial fixtures were built to test
+      // exactly this rule, and it failed both of them. On `a1` — a banquet
+      // plan with the chairs tucked under long tables, which is how a plan
+      // shows a set table nobody is sitting at — it held back all 8 tables it
+      // found. On `a8` the table and its ring of chairs merge into one
+      // component, so the proposed box spans the ring, so every seat centre
+      // falls inside it, and it held back all 240 tables of a 324-table venue.
+      // A rule that was right 158 times and wrong none on one drawing was
+      // wrong 248 times on the first two drawings it had never seen.
+      //
+      // The fix came out of re-reading the measurement rather than guessing.
+      // Of the 117 invented tables this gate has ever held across the eleven
+      // renderings, EVERY SINGLE ONE has exactly one seat inside it. Not one
+      // has two. The real tucked tables have six (a1) and ten (a8).
+      //
+      // So the topology was never the signal — the COUNT was. One seat inside
+      // a box is a seat wrapped in a table. Six seats inside a box is a table
+      // with its chairs pushed in. `seatFill` does not separate them (the
+      // invented ones span 0.10-0.64 and a1's real ones sit at 0.27 in the
+      // middle of that range); the seat count separates them completely.
+      //
+      // The seat count alone still is not enough, and `a8` proves it. On a
+      // 324-table venue drawn at arena scale the seat symbols are 17px and
+      // chair recall collapses to 0.074, so each merged table-plus-ring box
+      // carries exactly ONE detected seat, inside itself — indistinguishable
+      // from a fragment by the count. The gate held all 240 tables the plan
+      // had, and the operator would have been handed an empty floor.
+      //
+      // What separates them there is not the individual candidate but the
+      // SHARE. Measured across the eleven renderings, the most this pattern
+      // ever describes on a plan where it is genuinely a fragment is 42%
+      // (`hue-shift`; then 37%, 37%, 19%, and 2% or 0 everywhere else). On the
+      // two plans where the held tables are real it describes 100%.
+      //
+      // So the gate refuses to run when it would claim most of the plan. That
+      // is the same guard the surface filter above already applies for the same
+      // reason: a suppression rule that removes almost everything is not being
+      // strict, it is misfiring, and the honest response is to stand down and
+      // say so rather than to hand back a blank drawing.
+      const GATE_MAX_SHARE=.6;
+      let seatsInsideBody=0,seatsInsideBodyStoodDown=null;
+      {
+        const held=candidates.filter(c=>{
+          const seats=c.chairDetections||[];
+          // Two or more seats under one box is a tucked table, not a fragment.
+          // Measured, not assumed: of the 117 invented tables this gate has
+          // ever held, every one has exactly one seat inside it.
+          if(seats.length!==1)return false;
+          // A nested seat carries its CENTRE in x/y; the table carries a
+          // top-left corner. Comparing them the other way round would make
+          // this fire on almost everything.
+          const ch=seats[0];
+          return ch.x>c.x&&ch.x<c.x+c.w&&ch.y>c.y&&ch.y<c.y+c.h;
+        });
+        const share=candidates.length?held.length/candidates.length:0;
+        if(held.length&&share>GATE_MAX_SHARE){
+          seatsInsideBodyStoodDown={wouldHold:held.length,of:candidates.length,
+            share:Number(share.toFixed(3)),limit:GATE_MAX_SHARE};
+        }else for(const c of held){
+          c.selected=false;
+          c.lowEvidence={reason:"seatsInsideBody",seats:1};
+          seatsInsideBody++;
+        }
       }
       // Chairs that belong to no detected table stay first-class objects with
       // their real coordinates instead of being dropped (which is how the old
@@ -3552,6 +3686,14 @@
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
           tableModalSeats:modalSeats||null,bistrosTyped,chairsReseated:reseated,seatsInsideBody,
+          // Present only when the seat-containment gate stood down because it
+          // would have claimed most of the plan. Its absence means it ran.
+          seatsInsideBodyStoodDown,
+          // What the relationship engine actually did, including the number
+          // that decides whether it earned its place: how many seats it put at
+          // a different table than "nearest perimeter" would have. Reported
+          // even when it is zero.
+          relations:relationStats,
           mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,surfaceMinorityFinishKept,secondaryChairFamilies:secondaryFamilyDiagnostics,fragmentSuppression:fragmentDiagnostics,
           textGlyphChairsDropped,mergedRowVenuesDropped:mergedRowVenues.length,columnsDetected:columnComps.length,debugPool,
           sources:diagnosticsSources,chairSourceBreakdown,phaseMs,
@@ -4454,10 +4596,27 @@
       +`<strong>${t("visual.title")}</strong>`
       +`<span>${esc(body)}</span><em>${esc(t("visual.tier."+(v.nearestTier||"provisional")))}</em></div>`;
   }
+  // Seats this table and a neighbour can both claim. Shown only when there are
+  // any — a line saying "0 seats are uncertain" on every card would be noise,
+  // and the absence of the line is itself the answer.
+  //
+  // It names the neighbour, because "one of these seats might belong somewhere
+  // else" is not an actionable sentence and "…might belong to T14" is.
+  function relationNoteHTML(c){
+    if(!c||c.kind!=="table")return"";
+    const seats=(c.chairDetections||[]).filter(ch=>ch.relation&&ch.relation.ambiguous);
+    if(!seats.length)return"";
+    const event=activeEvent(),byId=new Map((event?.analysis?.candidates||[]).map(x=>[x.id,x]));
+    const others=[...new Set(seats.map(s=>s.relation.runnerUpId).filter(Boolean))]
+      .map(id=>byId.get(id)).filter(Boolean).map(x=>t("teach.type."+x.type));
+    return`<div class="poi-relation-note"><strong>${t("relation.ambiguousTitle")}</strong>`
+      +`<span>${esc(others.length?t("relation.ambiguousWith",{n:seats.length,other:others[0]})
+        :t("relation.ambiguous",{n:seats.length}))}</span></div>`;
+  }
   function reviewPoiCardHTML(c){
     if(!c)return"";
     const opt=o=>`<option value="${o.kind}:${o.type}" ${c.kind===o.kind&&c.type===o.type?"selected":""}>${t("teach.type."+o.type)}</option>`;
-    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${c.lowEvidence?`<div class="poi-lowevidence"><strong>${t("poi.lowEvidence")}</strong><span>${esc(t("poi.lowEvidence."+c.lowEvidence.reason))}</span></div>`:""}${visualEvidenceHTML(c)}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
+    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${c.lowEvidence?`<div class="poi-lowevidence"><strong>${t("poi.lowEvidence")}</strong><span>${esc(t("poi.lowEvidence."+c.lowEvidence.reason))}</span></div>`:""}${visualEvidenceHTML(c)}${relationNoteHTML(c)}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
   }
   // Real pixel crop of a candidate straight out of the actual imported plan
   // image — a CSS background-position/-size window, never a synthesized or

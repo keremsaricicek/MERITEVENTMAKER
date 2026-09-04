@@ -1883,63 +1883,39 @@
     },
     {
       "chair": "c016",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t012",
-        "t014"
-      ],
-      "evidence": "3.0px from t012 and 3.0px from t014 — the annotation cannot say which"
+      "belongsTo": "t014",
+      "method": "perimeter-span",
+      "evidence": "2.5px inside t014's right edge span, and 22.3px beyond t012's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c017",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t011",
-        "t016"
-      ],
-      "evidence": "3.0px from t011 and 3.0px from t016 — the annotation cannot say which"
+      "belongsTo": "t016",
+      "method": "perimeter-span",
+      "evidence": "1.5px inside t016's right edge span, and 22.0px beyond t011's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c018",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t015",
-        "t010"
-      ],
-      "evidence": "4.0px from t015 and 5.0px from t010 — the annotation cannot say which"
+      "belongsTo": "t015",
+      "method": "perimeter-span",
+      "evidence": "5.0px inside t015's right edge span, and 25.1px beyond t010's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c019",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t011",
-        "t016"
-      ],
-      "evidence": "4.0px from t011 and 4.0px from t016 — the annotation cannot say which"
+      "belongsTo": "t016",
+      "method": "perimeter-span",
+      "evidence": "4.5px inside t016's left edge span, and 24.0px beyond t011's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c020",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t012",
-        "t014"
-      ],
-      "evidence": "4.0px from t012 and 4.0px from t014 — the annotation cannot say which"
+      "belongsTo": "t014",
+      "method": "perimeter-span",
+      "evidence": "5.5px inside t014's left edge span, and 24.4px beyond t012's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c021",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t010",
-        "t015"
-      ],
-      "evidence": "3.0px from t010 and 3.0px from t015 — the annotation cannot say which"
+      "belongsTo": "t015",
+      "method": "perimeter-span",
+      "evidence": "9.5px inside t015's left edge span, and 25.9px beyond t010's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c022",
@@ -1967,43 +1943,27 @@
     },
     {
       "chair": "c026",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t014",
-        "t021"
-      ],
-      "evidence": "5.0px from t014 and 5.0px from t021 — the annotation cannot say which"
+      "belongsTo": "t014",
+      "method": "perimeter-span",
+      "evidence": "3.5px inside t014's right edge span, and 24.5px beyond t021's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c027",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t016",
-        "t022"
-      ],
-      "evidence": "3.0px from t016 and 3.0px from t022 — the annotation cannot say which"
+      "belongsTo": "t016",
+      "method": "perimeter-span",
+      "evidence": "3.5px inside t016's left edge span, and 23.1px beyond t022's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c028",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t016",
-        "t022"
-      ],
-      "evidence": "5.0px from t016 and 5.0px from t022 — the annotation cannot say which"
+      "belongsTo": "t016",
+      "method": "perimeter-span",
+      "evidence": "3.0px inside t016's right edge span, and 23.9px beyond t022's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c029",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t014",
-        "t021"
-      ],
-      "evidence": "3.0px from t014 and 3.0px from t021 — the annotation cannot say which"
+      "belongsTo": "t014",
+      "method": "perimeter-span",
+      "evidence": "3.0px inside t014's left edge span, and 22.5px beyond t021's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c030",
@@ -2013,7 +1973,7 @@
         "t015",
         "t020"
       ],
-      "evidence": "2.0px from t015 and 2.0px from t020 — the annotation cannot say which"
+      "evidence": "t015 (edge, 0.0px) and t020 (corner, -21.1px) are not separated by edge position either — the drawing does not decide"
     },
     {
       "chair": "c031",
@@ -2023,37 +1983,25 @@
         "t015",
         "t020"
       ],
-      "evidence": "3.0px from t015 and 3.0px from t020 — the annotation cannot say which"
+      "evidence": "t020 (edge, 0.0px) and t015 (corner, -21.6px) are not separated by edge position either — the drawing does not decide"
     },
     {
       "chair": "c032",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t013",
-        "t019"
-      ],
-      "evidence": "3.0px from t013 and 3.0px from t019 — the annotation cannot say which"
+      "belongsTo": "t019",
+      "method": "perimeter-span",
+      "evidence": "2.5px inside t019's right edge span, and 22.8px beyond t013's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c033",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t019",
-        "t013"
-      ],
-      "evidence": "3.0px from t019 and 4.0px from t013 — the annotation cannot say which"
+      "belongsTo": "t019",
+      "method": "perimeter-span",
+      "evidence": "4.5px inside t019's left edge span, and 24.0px beyond t013's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c034",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t023",
-        "t027"
-      ],
-      "evidence": "5.0px from t023 and 6.0px from t027 — the annotation cannot say which"
+      "belongsTo": "t027",
+      "method": "perimeter-span",
+      "evidence": "3.5px inside t027's top edge span, and 25.0px beyond t023's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c035",
@@ -2069,13 +2017,9 @@
     },
     {
       "chair": "c037",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t026",
-        "t027"
-      ],
-      "evidence": "4.0px from t026 and 4.0px from t027 — the annotation cannot say which"
+      "belongsTo": "t027",
+      "method": "perimeter-span",
+      "evidence": "1.0px inside t027's top edge span, and 23.6px beyond t026's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c038",
@@ -2091,23 +2035,15 @@
     },
     {
       "chair": "c040",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t024",
-        "t025"
-      ],
-      "evidence": "3.0px from t024 and 3.0px from t025 — the annotation cannot say which"
+      "belongsTo": "t025",
+      "method": "perimeter-span",
+      "evidence": "3.0px inside t025's top edge span, and 22.5px beyond t024's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c041",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t025",
-        "t028"
-      ],
-      "evidence": "3.0px from t025 and 4.0px from t028 — the annotation cannot say which"
+      "belongsTo": "t025",
+      "method": "perimeter-span",
+      "evidence": "2.0px inside t025's top edge span, and 23.4px beyond t028's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c042",
@@ -2135,13 +2071,9 @@
     },
     {
       "chair": "c046",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t029",
-        "t019"
-      ],
-      "evidence": "4.0px from t029 and 5.0px from t019 — the annotation cannot say which"
+      "belongsTo": "t019",
+      "method": "perimeter-span",
+      "evidence": "4.0px inside t019's right edge span, and 23.8px beyond t029's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c047",
@@ -2151,23 +2083,15 @@
     },
     {
       "chair": "c048",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t020",
-        "t030"
-      ],
-      "evidence": "3.0px from t020 and 3.0px from t030 — the annotation cannot say which"
+      "belongsTo": "t020",
+      "method": "perimeter-span",
+      "evidence": "4.0px inside t020's right edge span, and 23.7px beyond t030's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c049",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t020",
-        "t030"
-      ],
-      "evidence": "5.0px from t020 and 6.0px from t030 — the annotation cannot say which"
+      "belongsTo": "t020",
+      "method": "perimeter-span",
+      "evidence": "0.5px inside t020's left edge span, and 25.1px beyond t030's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c050",
@@ -2219,23 +2143,15 @@
     },
     {
       "chair": "c058",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t026",
-        "t027"
-      ],
-      "evidence": "3.0px from t026 and 4.0px from t027 — the annotation cannot say which"
+      "belongsTo": "t027",
+      "method": "perimeter-span",
+      "evidence": "3.5px inside t027's bottom edge span, and 23.5px beyond t026's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c059",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t027",
-        "t023"
-      ],
-      "evidence": "4.0px from t027 and 5.0px from t023 — the annotation cannot say which"
+      "belongsTo": "t027",
+      "method": "perimeter-span",
+      "evidence": "1.0px inside t027's bottom edge span, and 24.3px beyond t023's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c060",
@@ -2245,13 +2161,9 @@
     },
     {
       "chair": "c061",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t024",
-        "t025"
-      ],
-      "evidence": "5.0px from t024 and 5.0px from t025 — the annotation cannot say which"
+      "belongsTo": "t025",
+      "method": "perimeter-span",
+      "evidence": "6.0px inside t025's bottom edge span, and 25.9px beyond t024's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c062",
@@ -2267,7 +2179,7 @@
         "t025",
         "t028"
       ],
-      "evidence": "7.0px from t025 and 9.0px from t028 — the annotation cannot say which"
+      "evidence": "t025 (edge, 0.0px) and t028 (corner, -27.7px) are not separated by edge position either — the drawing does not decide"
     },
     {
       "chair": "c064",
@@ -2289,13 +2201,9 @@
     },
     {
       "chair": "c067",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t034",
-        "t035"
-      ],
-      "evidence": "4.0px from t034 and 5.0px from t035 — the annotation cannot say which"
+      "belongsTo": "t034",
+      "method": "perimeter-span",
+      "evidence": "4.5px inside t034's top edge span, and 26.2px beyond t035's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c068",
@@ -2311,13 +2219,9 @@
     },
     {
       "chair": "c070",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t036",
-        "t037"
-      ],
-      "evidence": "3.0px from t036 and 3.0px from t037 — the annotation cannot say which"
+      "belongsTo": "t036",
+      "method": "perimeter-span",
+      "evidence": "7.5px inside t036's top edge span, and 24.9px beyond t037's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c071",
@@ -2351,7 +2255,7 @@
         "t034",
         "t036"
       ],
-      "evidence": "3.0px from t034 and 3.0px from t036 — the annotation cannot say which"
+      "evidence": "t036 (corner, -21.5px) and t034 (corner, -22.2px) are not separated by edge position either — the drawing does not decide"
     },
     {
       "chair": "c076",
@@ -2361,23 +2265,15 @@
     },
     {
       "chair": "c077",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t034",
-        "t035"
-      ],
-      "evidence": "4.0px from t034 and 4.0px from t035 — the annotation cannot say which"
+      "belongsTo": "t034",
+      "method": "perimeter-span",
+      "evidence": "9.5px inside t034's bottom edge span, and 27.9px beyond t035's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c078",
-      "belongsTo": null,
-      "method": "ambiguous",
-      "candidates": [
-        "t036",
-        "t037"
-      ],
-      "evidence": "4.0px from t036 and 4.0px from t037 — the annotation cannot say which"
+      "belongsTo": "t036",
+      "method": "perimeter-span",
+      "evidence": "3.5px inside t036's bottom edge span, and 24.1px beyond t037's corner — a chair off a corner is not a seat at that table"
     },
     {
       "chair": "c079",
@@ -2730,5 +2626,5 @@
       "note": "decorative planter"
     }
   ],
-  "relationshipMethod": "Chair-to-table relationships carry a `method`. `annulus` relationships come from build-real-annotation.mjs, which recovered those chairs by angular clustering just outside their table's disc, so the table is part of the finding. `derived` relationships are nearest-annotated-perimeter over the human-verified boxes, added by derive-relationships.mjs; they are weaker evidence than annulus ones because the detector's associator, while not the same computation, is the same idea. `ambiguous` and `unassigned` entries carry belongsTo:null and are never scored — a chair nearly equidistant from two tables has no derivable answer and guessing one would manufacture a disagreement the annotation cannot adjudicate."
+  "relationshipMethod": "Chair-to-table relationships carry a `method`. `annulus` relationships come from build-real-annotation.mjs, which recovered those chairs by angular clustering just outside their table's disc, so the table is part of the finding. `derived` relationships are nearest-annotated-perimeter over the human-verified boxes, added by derive-relationships.mjs; they are weaker evidence than annulus ones because the detector's associator, while not the same computation, is the same idea. `ambiguous` and `unassigned` entries carry belongsTo:null and are never scored — a chair nearly equidistant from two tables has no derivable answer and guessing one would manufacture a disagreement the annotation cannot adjudicate. `perimeter-span` relationships were re-derived by expand-relationships.mjs from where the chair sits relative to a table's EDGE rather than its distance to the perimeter: a chair whose centre lies within the span of one table's edge and beyond another's corner is seated at the first, because a chair off a corner is not a seat. That rule was first run against all 83 relationships that already had an answer, including the 20 `annulus` ones produced by a different computation, and agreed with every one of them; only then was it allowed to decide the abstentions. Four chairs remain `ambiguous` because edge position does not separate them either."
 }

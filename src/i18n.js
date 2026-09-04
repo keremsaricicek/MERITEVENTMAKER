@@ -177,6 +177,10 @@
     "contradiction.tablesNoDining": { en: "{tables} tables were found, but no part of the room reads as a dining area.", tr: "{tables} masa bulundu ama odanın hiçbir bölümü yemek alanı olarak okunmuyor." },
     "contradiction.seatsInsideBody": { en: "{n} object(s) contain every seat attached to them, which a table does not.", tr: "{n} nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz." },
     "contradiction.claim.seatsAround": { en: "a table's seats stand around it, not inside it", tr: "bir masanın koltukları etrafında durur, içinde değil" },
+    "contradiction.ambiguousSeat": { en: "{n} seat(s) sit almost exactly between two tables, across {tables} table(s). The drawing does not say which they belong to.", tr: "{n} koltuk iki masanın neredeyse tam ortasında duruyor ({tables} masayı ilgilendiriyor). Çizim bunların hangisine ait olduğunu söylemiyor." },
+    "contradiction.claim.seatedHere": { en: "{n} seat(s) were placed at the nearer table", tr: "{n} koltuk daha yakın masaya yerleştirildi" },
+    "contradiction.claim.couldBeThere": { en: "the neighbouring table's evidence is just as strong", tr: "komşu masanın kanıtı da aynı güçte" },
+    "contradiction.from.competingTable": { en: "the competing table", tr: "rakip masa" },
     "contradiction.claim.proposedTable": { en: "{n} of these are tables with seats", tr: "bunlardan {n} tanesi koltuklu masa" },
     // The review card's note on an object the analysis held back. It says what
     // was held and why, and that it is still the operator's call — nothing was
@@ -216,6 +220,9 @@
     "op.q.slow": { en: "Did anything feel slow?", tr: "Bir şey yavaş hissettirdi mi?" },
     "op.q.confusing": { en: "Did anything feel confusing or unsafe?", tr: "Bir şey kafa karıştırıcı veya güvensiz hissettirdi mi?" },
     "poi.lowEvidence": { en: "Held back from the floor plan", tr: "Kat planına aktarılmadı" },
+    "relation.ambiguousTitle": { en: "Uncertain seating", tr: "Belirsiz oturum" },
+    "relation.ambiguous": { en: "{n} seat(s) here sit almost exactly between this table and a neighbour.", tr: "Buradaki {n} koltuk bu masa ile komşusu arasında neredeyse tam ortada duruyor." },
+    "relation.ambiguousWith": { en: "{n} seat(s) here could belong to the {other} beside it instead.", tr: "Buradaki {n} koltuk yanındaki {other} nesnesine de ait olabilir." },
     "poi.lowEvidence.seatsInsideBody": { en: "Every seat attached to this object is inside it. A table's seats stand around it, so this is more likely a seat than a table. Nothing was deleted — confirm it to include it.", tr: "Bu nesneye bağlı tüm koltuklar içinde. Bir masanın koltukları etrafında durur, bu yüzden bu bir masadan çok bir koltuk olabilir. Hiçbir şey silinmedi — dahil etmek için onaylayın." },
     "contradiction.severity.high": { en: "serious", tr: "ciddi" },
     "contradiction.severity.medium": { en: "worth checking", tr: "kontrol edilmeli" },

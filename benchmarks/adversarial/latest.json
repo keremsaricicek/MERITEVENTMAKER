@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-09-04T11:34:55.896Z",
+  "ranAt": "2026-09-04T12:05:09.037Z",
   "realVenue": false,
   "note": "SYNTHETIC ADVERSARIAL FIXTURES — NOT REAL VENUES. These scores are never mixed into real-plan aggregates. REAL DISTINCT VENUE PLANS: 1. CROSS-VENUE GENERALIZATION: NOT VERIFIED.",
   "refusals": [],
@@ -17,10 +17,8 @@
         "precision": 1,
         "recall": 0.5,
         "f1": 0.667,
-        "heldBack": 8,
-        "heldBackReasons": {
-          "seatsInsideBody": 8
-        },
+        "heldBack": 0,
+        "heldBackReasons": {},
         "missedIds": [
           "OUT01",
           "OUT02",
@@ -97,9 +95,8 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "likely": 3,
-          "uncertain": 1,
-          "strong": 1
+          "strong": 2,
+          "likely": 3
         }
       },
       "regionFP": {
@@ -116,24 +113,21 @@
         "nodeCount": 57,
         "edges": 56
       },
-      "contradictions": 2,
+      "contradictions": 1,
       "contradictionIds": [
-        "contra:orphanSeats",
-        "contra:seatsInsideBody"
+        "contra:orphanSeats"
       ],
       "effort": {
         "reviewGroups": 1,
         "uncertainQuestions": 0,
-        "reviewPriorities": 3
+        "reviewPriorities": 2
       },
-      "detectionMs": 635,
+      "detectionMs": 628,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
-        "status": "FAIL",
-        "fail": [
-          "8 real table(s) detected then held back (seatsInsideBody x8)"
-        ],
+        "status": "PARTIAL",
+        "fail": [],
         "partial": [
           "48 detected chair(s) seated at no table at all",
           "table recall 0.5",
@@ -269,7 +263,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 6
       },
-      "detectionMs": 742,
+      "detectionMs": 759,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -392,7 +386,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 696,
+      "detectionMs": 634,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -522,7 +516,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 815,
+      "detectionMs": 749,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -634,7 +628,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 572,
+      "detectionMs": 548,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -758,7 +752,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 6
       },
-      "detectionMs": 655,
+      "detectionMs": 741,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -894,7 +888,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 714,
+      "detectionMs": 787,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -920,10 +914,8 @@
         "precision": 1,
         "recall": 0.741,
         "f1": 0.851,
-        "heldBack": 240,
-        "heldBackReasons": {
-          "seatsInsideBody": 240
-        },
+        "heldBack": 0,
+        "heldBackReasons": {},
         "missedIds": [
           "T090",
           "T099",
@@ -1012,9 +1004,8 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "likely": 3,
-          "uncertain": 2,
-          "strong": 1
+          "strong": 2,
+          "likely": 4
         }
       },
       "regionFP": {
@@ -1031,24 +1022,21 @@
         "nodeCount": 306,
         "edges": 480
       },
-      "contradictions": 2,
+      "contradictions": 1,
       "contradictionIds": [
-        "contra:orphanSeats",
-        "contra:seatsInsideBody"
+        "contra:orphanSeats"
       ],
       "effort": {
         "reviewGroups": 2,
         "uncertainQuestions": 0,
-        "reviewPriorities": 4
+        "reviewPriorities": 3
       },
-      "detectionMs": 1783,
+      "detectionMs": 1418,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
-        "status": "FAIL",
-        "fail": [
-          "240 real table(s) detected then held back (seatsInsideBody x240)"
-        ],
+        "status": "PARTIAL",
+        "fail": [],
         "partial": [
           "round tables typed 87/240",
           "table recall 0.741",

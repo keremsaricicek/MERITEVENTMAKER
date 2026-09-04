@@ -1,6 +1,6 @@
 {
-  "recordedAt": "2026-08-31T18:31:51.858Z",
-  "commit": "986a4c296e14d041d610aa5af1cb25953543d4f6",
+  "recordedAt": "2026-09-04T12:00:38.916Z",
+  "commit": "25946b5a3bce8c1a282c9e314bac96f673da01bb",
   "note": "Measured by benchmarks/run-benchmark.mjs against the annotations in benchmarks/annotations/. Classical computer vision (Assisted Detection); no trained model is involved in these numbers.",
   "guardedFields": [
     {
@@ -256,10 +256,10 @@
       "chairs.precision": 0.955,
       "chairs.recall": 0.947,
       "chairs.f1": 0.951,
-      "relationships.correct": 76,
-      "relationships.wrong": 0,
+      "relationships.correct": 100,
+      "relationships.wrong": 1,
       "relationships.orphan": 0,
-      "relationships.accuracy": 1,
+      "relationships.accuracy": 0.99,
       "tableTypeAccuracy.square.correct": 37,
       "tableTypeAccuracy.square.accuracy": 1,
       "tableTypeAccuracy.round.correct": 4,

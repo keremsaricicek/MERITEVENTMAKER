@@ -897,6 +897,32 @@
          side("chairAssociation", "seatsAround")],
         tableClaims(seatsInside.length), seatsInside.map(t => t.id));
 
+    // -- RELATIONSHIP: a seat two tables can both claim ------------------------
+    //
+    // Not a detection failure and not a low score: the relationship engine
+    // compared both candidates and found them separated by less than its
+    // ambiguity margin, which on a symmetric drawing is the correct answer.
+    // The seat stays where it is — it is real, and dropping it would lose
+    // capacity — but which table it belongs to is a question only the drawing's
+    // author can settle, so it goes to the operator instead of being answered
+    // silently.
+    //
+    // It disputes no fact. A seat whose table is uncertain does not make the
+    // seat COUNT uncertain, and downgrading the capacity claim over it would be
+    // the overreaction that makes `uncertain` stop meaning anything.
+    const ambiguousSeats = [];
+    for (const t of tables)
+      for (const ch of t.chairDetections || [])
+        if (ch.relation && ch.relation.ambiguous) ambiguousSeats.push({ table: t, seat: ch });
+    if (ambiguousSeats.length) {
+      const owners = [...new Set(ambiguousSeats.map(x => x.table.id))];
+      say("contra:ambiguousSeat", "RELATIONSHIP", "contradiction.ambiguousSeat",
+        { n: ambiguousSeats.length, tables: owners.length }, "medium",
+        [side("chairAssociation", "seatedHere", { n: ambiguousSeats.length }),
+         side("competingTable", "couldBeThere", { n: owners.length })],
+        [], owners);
+    }
+
     // -- ZONE: a table standing on the stage -----------------------------------
     //
     // Deliberately object containment, not zone-box overlap. A zone's box is
@@ -1052,6 +1078,10 @@
     "contra:orphanSeats": "prioritise",
     "contra:familyOutlier": "prioritise",
     "contra:seatingInStage": "prioritise",
+    // Raises the question, lowers nothing. It disputes no fact by construction
+    // (it is raised with an empty `affects` list), and this entry says so
+    // explicitly rather than leaving it to the default.
+    "contra:ambiguousSeat": "prioritise",
   };
   const policyFor = id => CONTRADICTION_POLICY[id] || "prioritise";
 
