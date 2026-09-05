@@ -46,14 +46,37 @@ Full detail: `.claude/skills/merit-product-contract/SKILL.md`.
 ## UI standard
 
 Premium, restrained, operational desktop software — not a generic AI
-dashboard, card wall, or gradient-heavy template. Dark graphite shell,
-warm-paper Floor Plan canvas, controlled cool-blue interaction state,
-semantic-only color, VERY restrained VIP gold. Body text ~12–14px; dense,
-not unreadable. Desktop-first at 1920×1080 / 2560×1440 / ~1440px.
+dashboard, card wall, or gradient-heavy template. One coherent light/warm
+palette app-wide (the old dark-graphite shell was fully retired, not just
+recolored — see `src/styles.css`'s root tokens and the `--pi-*` tokens
+they now cohere with), warm-paper Floor Plan canvas, controlled cool-blue/
+teal interaction state, semantic-only color, VERY restrained VIP gold.
+Body text ~12–14px; dense, not unreadable. Desktop-first at 1920×1080 /
+2560×1440 / ~1440px.
+
+The Floor Plan default editing view and the Plan Intelligence review
+screen ("Concept 3 — Live Map") still use their own `--pi-*`-scoped
+component patterns (no permanent left object list or right technical
+inspector — a floating minimal toolbar, a contextual card on selection, a
+bottom status pill) since each screen is designed for its own job, not a
+single reused component set; but the underlying color language is now the
+same one used everywhere else in the app. Don't reintroduce a second,
+visually distinct dark system for any screen.
 
 **A UI change is not done until it has been rendered and screenshotted** —
 source/markup review is not a substitute. Full detail:
 `.claude/skills/merit-ui-constitution/SKILL.md`.
+
+## Captured decisions
+
+Every human decision in the review screen stores a training example with the
+real image crop, the plan hash, the venue/layout/version it came from, what
+the detector had predicted, and which build predicted it — five decision
+types, including negatives ("Not important" is a stored example, never a
+delete). This is a data foundation: it trains nothing, and `trainedModel`
+stays false. Labels spread across a family are marked as not individually
+reviewed. Dataset splits are grouped by plan, never by example. Full detail:
+`benchmarks/TRAINING-DATA.md`.
 
 ## Plan Intelligence honesty
 
@@ -62,6 +85,15 @@ model — label it "Assisted Detection," never "AI." If no trained domain
 model exists, say **"DOMAIN MODEL NOT INSTALLED"** rather than implying
 one is running. Never fabricate detections, confidence scores, or model
 metrics. Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.
+
+## Tests
+
+`npm test` runs the regression suite in `tests/` (real UI, real Chromium, its
+own server, ~2 min). It is the first thing to run and the first thing to
+extend: a behaviour change no suite would have caught needs a suite. Detector
+changes are measured with `npm run benchmark` and checked against the
+committed `benchmarks/BASELINE.json` — never against remembered numbers. Full
+detail: `tests/README.md`, `benchmarks/README.md`, `.claude/rules/testing.md`.
 
 ## Data integrity
 

@@ -1,0 +1,197 @@
+#!/usr/bin/env node
+// The detector's recorded baseline, and the check against it.
+//
+//   node benchmarks/record-baseline.mjs            compare a fresh run to the baseline
+//   node benchmarks/record-baseline.mjs --record   overwrite the baseline with this run
+//
+// Why this exists: "the numbers were better before" is not evidence anybody
+// can act on, and neither is a folder of timestamped reports nobody diffs. The
+// committed baseline is a specific claim -- these exact per-plan numbers, from
+// this commit, on images with these hashes -- and this script is what makes a
+// later change contradict it out loud.
+//
+// It deliberately fails on any DROP and merely reports an improvement. A
+// detector change that trades table F1 for chair recall is exactly the case
+// the sprint rules say to revert, and it is invisible to a single overall
+// score, so every plan is compared field by field.
+import fs from "node:fs";
+import path from "node:path";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.dirname(fileURLToPath(import.meta.url));
+const BASELINE = path.join(ROOT, "BASELINE.json");
+const LATEST = path.join(ROOT, "reports", "latest.json");
+const RECORD = process.argv.includes("--record");
+
+// Fields worth guarding, and which direction is bad. Counts of mistakes
+// (FP/FN) are "lower is better"; everything else is "higher is better".
+const GUARDED = [
+  ["tables.tp", "up"],
+  ["tables.fp", "down"],
+  ["tables.fn", "down"],
+  ["tables.precision", "up"],
+  ["tables.recall", "up"],
+  ["tables.f1", "up"],
+  ["chairs.detectedTotal", "up"],
+  ["humanEffort.reviewGroups", "down"],
+  ["humanEffort.uncertainQuestions", "down"],
+];
+
+// Guarded only where the annotation carries chair->table relationships. A
+// detector can find every chair and every table and still seat them at the
+// wrong ones, so association is its own guarded number rather than something
+// implied by the object scores.
+const GUARDED_WHEN_RELATIONSHIPS = [
+  ["relationships.correct", "up"],
+  ["relationships.wrong", "down"],
+  ["relationships.orphan", "down"],
+  ["relationships.accuracy", "up"],
+];
+
+// Guarded only where the annotation carries chair positions. A plan whose
+// annotation records a chair TOTAL cannot report chair precision, and
+// pretending otherwise would compare a number against nothing.
+const GUARDED_WHEN_SPATIAL_CHAIRS = [
+  ["chairs.tp", "up"],
+  ["chairs.fp", "down"],
+  ["chairs.fn", "down"],
+  ["chairs.precision", "up"],
+  ["chairs.recall", "up"],
+  ["chairs.f1", "up"],
+];
+
+// Small movements in a float are noise from a rounding change, not a
+// regression; anything a person would notice is above this.
+const TOLERANCE = 0.005;
+
+function pick(obj, dotted) {
+  return dotted.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj);
+}
+
+// Guarded per type and per class actually present in the report, because a
+// plan's vocabulary belongs to the plan and not to this script. Two numbers
+// this file did not previously protect, and both are things the detector was
+// measured to get wrong before it got them right:
+//
+//   - TYPE accuracy. Detection recall and type accuracy are different numbers.
+//     The real plan found all five of its bistro tables while typing 0 of 5
+//     correctly, and no guarded field moved. Keyed by the GROUND TRUTH type, so
+//     re-typing a table correctly cannot look like a regression in the type it
+//     used to be called.
+//   - SEMANTIC objects. Column recall went 4/6 → 6/6 at precision 1.000; with
+//     nothing guarding it, a later change could hand that back in silence.
+function dynamicFields(report) {
+  const out = [];
+  for (const [type, v] of Object.entries(report.tableTypeAccuracy || {}))
+    if (v && v.matched > 0)
+      out.push([`tableTypeAccuracy.${type}.correct`, "up"], [`tableTypeAccuracy.${type}.accuracy`, "up"]);
+  for (const [cls, v] of Object.entries(report.semanticObjects || {}))
+    if (v && Number.isFinite(v.tp))
+      out.push([`semanticObjects.${cls}.tp`, "up"], [`semanticObjects.${cls}.fp`, "down"],
+               [`semanticObjects.${cls}.fn`, "down"]);
+  return out;
+}
+
+function fieldsFor(report) {
+  const fields = report.chairs && Number.isFinite(report.chairs.tp)
+    ? [...GUARDED, ...GUARDED_WHEN_SPATIAL_CHAIRS]
+    : [...GUARDED];
+  if (report.relationships && Number.isFinite(report.relationships.accuracy)) fields.push(...GUARDED_WHEN_RELATIONSHIPS);
+  return [...fields, ...dynamicFields(report)];
+}
+
+function summarise(report) {
+  const out = { planId: report.planId, imageShaMatches: report.imageShaMatches, provider: report.provider };
+  for (const [field] of fieldsFor(report)) out[field] = pick(report, field);
+  return out;
+}
+
+if (!fs.existsSync(LATEST)) {
+  console.error("No benchmark run found. Run `npm run benchmark` first.");
+  process.exit(2);
+}
+const latest = JSON.parse(fs.readFileSync(LATEST, "utf8"));
+const current = latest.reports.map(summarise);
+
+let commit = "unknown";
+try { commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: path.dirname(ROOT) }).toString().trim(); } catch {}
+
+// A guarded field that is not in the report compares to nothing, so a renamed
+// field would quietly turn this whole check into a no-op that still prints
+// "no regressions". Refuse to record one.
+const absent = current.flatMap((plan, i) =>
+  fieldsFor(latest.reports[i]).filter(([f]) => typeof plan[f] !== "number").map(([f]) => `${plan.planId}.${f}`));
+if (absent.length) {
+  console.error("These guarded fields are missing from the benchmark report, so they cannot be compared:");
+  for (const field of absent) console.error("  " + field);
+  console.error("\nFix the field paths in GUARDED (this script) to match benchmarks/run-benchmark.mjs.");
+  process.exit(2);
+}
+
+if (RECORD) {
+  const payload = {
+    recordedAt: new Date().toISOString(),
+    commit,
+    note: "Measured by benchmarks/run-benchmark.mjs against the annotations in benchmarks/annotations/. " +
+      "Classical computer vision (Assisted Detection); no trained model is involved in these numbers.",
+    guardedFields: [...new Map([...GUARDED, ...GUARDED_WHEN_SPATIAL_CHAIRS, ...GUARDED_WHEN_RELATIONSHIPS,
+      ...latest.reports.flatMap(dynamicFields)].map(([f, dir]) => [f, dir])).entries()]
+      .map(([f, dir]) => ({ field: f, worseWhen: dir === "up" ? "lower" : "higher" })),
+    tolerance: TOLERANCE,
+    plans: current,
+  };
+  fs.writeFileSync(BASELINE, JSON.stringify(payload, null, 2) + "\n");
+  console.log(`Recorded ${current.length} plans to ${path.relative(process.cwd(), BASELINE)} at commit ${commit.slice(0, 8)}.`);
+  for (const plan of current) console.log("  " + plan.planId + "  " +
+    Object.entries(plan).filter(([k]) => k.includes(".")).map(([k, v]) => `${k.split(".").pop()}=${v}`).join(" "));
+  process.exit(0);
+}
+
+if (!fs.existsSync(BASELINE)) {
+  console.error("No baseline recorded yet. Run `node benchmarks/record-baseline.mjs --record`.");
+  process.exit(2);
+}
+const baseline = JSON.parse(fs.readFileSync(BASELINE, "utf8"));
+const byPlan = new Map(baseline.plans.map(p => [p.planId, p]));
+
+const regressions = [];
+const improvements = [];
+const missing = [];
+
+for (const [i, plan] of current.entries()) {
+  const was = byPlan.get(plan.planId);
+  if (!was) { missing.push(`${plan.planId} is not in the baseline (new plan — re-record if intended)`); continue; }
+  if (plan.imageShaMatches === false) {
+    regressions.push(`${plan.planId}: the plan image no longer matches its annotation's sha256 — the numbers are not comparable`);
+  }
+  // The same field list the plan was summarised and recorded with. Comparing
+  // against a hard-coded subset is how the relationship fields came to be
+  // recorded on every run and compared on none of them.
+  for (const [field, betterDirection] of fieldsFor(latest.reports[i])) {
+    const before = was[field], after = plan[field];
+    if (typeof before !== "number" || typeof after !== "number") continue;
+    const delta = after - before;
+    if (Math.abs(delta) <= TOLERANCE) continue;
+    const worse = betterDirection === "up" ? delta < 0 : delta > 0;
+    const line = `${plan.planId} ${field}: ${before} → ${after}`;
+    (worse ? regressions : improvements).push(line);
+  }
+}
+for (const planId of byPlan.keys()) {
+  if (!current.some(p => p.planId === planId)) missing.push(`${planId} was in the baseline but this run did not produce it`);
+}
+
+console.log(`Baseline recorded ${baseline.recordedAt} at commit ${String(baseline.commit).slice(0, 8)}`);
+console.log(`This run: ${latest.ranAt}\n`);
+
+for (const line of improvements) console.log("  better  " + line);
+for (const line of missing) console.log("  note    " + line);
+for (const line of regressions) console.log("  WORSE   " + line);
+
+if (regressions.length) {
+  console.log(`\n${regressions.length} regression(s) against the recorded baseline.`);
+  console.log("If the change is a deliberate, measured trade, re-record with --record and say so in the commit message.");
+  process.exit(1);
+}
+console.log(`\nNo regressions. ${improvements.length} improvement(s), ${missing.length} note(s).`);

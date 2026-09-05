@@ -11,20 +11,27 @@
   <main id="app" class="app"></main>
   <input id="floorPlanFile" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg,.pdf" hidden>
   <input id="guestFileInput" type="file" accept=".xlsx,.xls,.csv,text/csv" hidden>
+  <input id="backupFileInput" type="file" accept="application/json,.json" hidden>
 
-  <dialog id="eventDialog" class="dialog-sm"><form id="eventForm" method="dialog">
-    <div class="dialog-head"><h2>Create Event</h2><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
-    <div class="dialog-body"><div class="form-grid"><div class="field full"><label>Event Name</label><input name="name" required value=""></div><div class="field"><label>Date</label><input name="date" type="date" required></div><div class="field"><label>Event Status</label><select name="status"><option>Planning</option><option>Confirmed</option><option>Live</option></select></div><div class="field full"><label>Venue</label><input name="venue" required value=""></div></div></div>
-    <div class="dialog-foot"><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="default">Create Event</button></div>
-  </form></dialog>
+  <!--
+    The old #eventDialog was removed deliberately. Its submit handler called
+    createDemoEvent(), which seeded 16 tables, 26 guests and a demo floor plan
+    into what the user had asked to be a new event — a direct violation of
+    "a blank event is actually blank". Event creation goes through the
+    dedicated setup screen (startNewEvent / createBlankEventFromSetup).
+  -->
 
-  <dialog id="guestDialog" class="dialog-sm"><form id="guestForm" method="dialog">
+  <!-- Every label is bound to its field with for/id. Without that binding a
+       screen reader announces each of these as "edit, blank" -- the visible
+       text is not enough. aria-labelledby names the dialog itself. -->
+  <dialog id="guestDialog" class="dialog-sm" aria-labelledby="guestDialogTitle"><form id="guestForm" method="dialog">
     <input type="hidden" name="id"><div class="dialog-head"><h2 id="guestDialogTitle">Add Guest</h2><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
-    <div class="dialog-body"><div class="form-grid"><div class="field full"><label>Name Surname</label><input name="name" required placeholder="KEREM SARICICEK"></div><div class="field"><label>Additional Guests</label><input name="additionalGuests" type="number" min="0" max="99" value="0" required></div><div class="field"><label>Planning Status</label><select name="planningStatus"><option>Confirmed</option><option>Tentative</option></select></div><div class="field full"><div class="total-pax-box"><span>Total Pax</span><b id="guestTotalPax">1</b></div></div><div class="field"><label>VIP Level</label><select name="vip"><option>Standard</option><option>VIP</option><option>VVIP</option></select></div><div class="field"><label>Invited By</label><input name="invitedBy"></div><div class="field full"><label>Notes</label><textarea name="notes"></textarea></div></div></div>
+    <div class="dialog-body"><div class="form-grid"><div class="field full"><label for="gfName">Name Surname</label><input id="gfName" name="name" required placeholder="KEREM SARICICEK"></div><div class="field"><label for="gfAdditional">Additional Guests</label><input id="gfAdditional" name="additionalGuests" type="number" min="0" max="99" value="0" required></div><div class="field"><label for="gfPlanning">Planning Status</label><select id="gfPlanning" name="planningStatus"><option>Confirmed</option><option>Tentative</option></select></div><div class="field full"><div class="total-pax-box"><span id="gfPaxLabel">Total Pax</span><b id="guestTotalPax" role="status" aria-labelledby="gfPaxLabel">1</b></div></div><div class="field"><label for="gfVip">VIP Level</label><select id="gfVip" name="vip"><option>Standard</option><option>VIP</option><option>VVIP</option></select></div><div class="field"><label for="gfInvitedBy">Invited By</label><input id="gfInvitedBy" name="invitedBy"></div><div class="field full"><label for="gfNotes">Notes</label><textarea id="gfNotes" name="notes"></textarea></div></div></div>
     <div class="dialog-foot"><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="default">Save Guest</button></div>
   </form></dialog>
 
-  <dialog id="excelDialog" class="dialog-wide"><div id="excelWizard"></div></dialog>
+  <!-- The wizard renders its own <h2 id="wizTitle"> from app-v8.js. -->
+  <dialog id="excelDialog" class="dialog-wide" aria-labelledby="wizTitle"><div id="excelWizard"></div></dialog>
   <dialog id="guideDialog" class="guide-dialog"><div id="guideRoot" class="guide-shell"></div></dialog>
   <div id="toastWrap" class="toast-wrap" aria-live="polite"></div>
 
@@ -42,8 +49,27 @@
     globalThis.MeritPdf = { getDocument: pdfjsLib.getDocument, GlobalWorkerOptions: pdfjsLib.GlobalWorkerOptions };
     globalThis.dispatchEvent(new CustomEvent("merit-pdf-ready"));
   </script>
+  <!--
+    Tesseract.js (MIT) — real client-side OCR for the Plan Intelligence
+    capacity auditor (reads printed pax notes / labels off the imported plan
+    image). Loaded from CDN like the two engines above; requires network on
+    first use to fetch its WASM core + language data. Not present in the
+    offline single-file build — see src/plan-ocr.js for why.
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+  <script src="src/storage-provider.js"></script>
+  <script src="src/venue-model.js"></script>
   <script src="src/app.js"></script>
   <script src="src/app-guests.js"></script>
+  <script src="src/i18n.js"></script>
+  <script src="src/plan-ocr.js"></script>
+  <script src="src/plan-encoder-weights.js"></script>
+  <script src="src/plan-embedding.js"></script>
+  <script src="src/plan-relationships.js"></script>
+  <script src="src/plan-representation.js"></script>
+  <script src="src/plan-memory.js"></script>
+  <script src="src/plan-intelligence.js"></script>
+  <script src="src/training-data.js"></script>
   <script src="src/app-v8.js"></script>
 </body>
 </html>

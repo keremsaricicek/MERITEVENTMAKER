@@ -1,0 +1,411 @@
+{
+ "ranAt": "2026-09-05T07:23:37.054Z",
+ "plan": "merit-real-venue",
+ "matchToleranceP": 3,
+ "candidates": 56,
+ "annotatedScoreable": 164,
+ "matched": 47,
+ "matching": {
+  "flatTolerancePx": 47,
+  "tightenedForNeighbours": 163,
+  "note": "A GT object's tolerance is capped at half the distance to its nearest neighbour, so an identity claim is decidable on a plan whose chairs are closer together than the flat tolerance."
+ },
+ "propagation": {
+  "trials": 47,
+  "spreadTrials": 41,
+  "reached": 108,
+  "scored": 108,
+  "correct": 108,
+  "wrong": 0,
+  "ontoUnannotated": 0,
+  "precision": 1,
+  "gate": 0.98,
+  "met": true,
+  "perTrial": [
+   {
+    "object": "t025",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t024",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t030",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t028",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t001",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t009",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t003",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t006",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t036",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t002",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t016",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t010",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t037",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t007",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t004",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t008",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t005",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t015",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t022",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t020",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t023",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t034",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t027",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t035",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t019",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t029",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t021",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t014",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 4,
+    "correct": 4,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t013",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t011",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t012",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 3,
+    "correct": 3,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t026",
+    "was": "table:square",
+    "taught": "table:square",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t040",
+    "was": "table:round",
+    "taught": "table:round",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t041",
+    "was": "table:round",
+    "taught": "table:round",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t038",
+    "was": "table:round",
+    "taught": "table:round",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t043",
+    "was": "table:bistro",
+    "taught": "table:bistro",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t042",
+    "was": "table:bistro",
+    "taught": "table:bistro",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t039",
+    "was": "table:round",
+    "taught": "table:round",
+    "reached": 1,
+    "correct": 1,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t045",
+    "was": "table:bistro",
+    "taught": "table:bistro",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t044",
+    "was": "table:bistro",
+    "taught": "table:bistro",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "t046",
+    "was": "table:bistro",
+    "taught": "table:bistro",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   }
+  ]
+ },
+ "reanalyze": {
+  "correctionsMade": 16,
+  "memoryEntries": 26,
+  "retained": 16,
+  "lost": 0,
+  "retention": 1,
+  "retentionGate": 0.98,
+  "retentionMet": true,
+  "wrongApplications": 0,
+  "wrongApplicationRate": 0,
+  "wrongApplicationGate": 0.01,
+  "wrongApplicationMet": true,
+  "lostDetail": []
+ },
+ "pageErrors": []
+}

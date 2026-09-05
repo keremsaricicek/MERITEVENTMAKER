@@ -1,0 +1,274 @@
+{
+  "recordedAt": "2026-09-04T12:00:38.916Z",
+  "commit": "25946b5a3bce8c1a282c9e314bac96f673da01bb",
+  "note": "Measured by benchmarks/run-benchmark.mjs against the annotations in benchmarks/annotations/. Classical computer vision (Assisted Detection); no trained model is involved in these numbers.",
+  "guardedFields": [
+    {
+      "field": "tables.tp",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tables.fp",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "tables.fn",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "tables.precision",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tables.recall",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tables.f1",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "chairs.detectedTotal",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "humanEffort.reviewGroups",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "humanEffort.uncertainQuestions",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "chairs.tp",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "chairs.fp",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "chairs.fn",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "chairs.precision",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "chairs.recall",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "chairs.f1",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "relationships.correct",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "relationships.wrong",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "relationships.orphan",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "relationships.accuracy",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.round.correct",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.round.accuracy",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "semanticObjects.column.tp",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "semanticObjects.column.fp",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "semanticObjects.column.fn",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "tableTypeAccuracy.square.correct",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.square.accuracy",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.bistro.correct",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.bistro.accuracy",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "semanticObjects.stage.tp",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "semanticObjects.stage.fp",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "semanticObjects.stage.fn",
+      "worseWhen": "higher"
+    }
+  ],
+  "tolerance": 0.005,
+  "plans": [
+    {
+      "planId": "adversarial-architecture-v1",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "colour-cluster",
+        "ocrEngine": null,
+        "ocrAvailable": false
+      },
+      "tables.tp": 10,
+      "tables.fp": 0,
+      "tables.fn": 0,
+      "tables.precision": 1,
+      "tables.recall": 1,
+      "tables.f1": 1,
+      "chairs.detectedTotal": 80,
+      "humanEffort.reviewGroups": 1,
+      "humanEffort.uncertainQuestions": 0,
+      "tableTypeAccuracy.round.correct": 10,
+      "tableTypeAccuracy.round.accuracy": 1,
+      "semanticObjects.column.tp": 6,
+      "semanticObjects.column.fp": 0,
+      "semanticObjects.column.fn": 0
+    },
+    {
+      "planId": "adversarial-bistro-v1",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "outline-interior",
+        "ocrEngine": null,
+        "ocrAvailable": false
+      },
+      "tables.tp": 18,
+      "tables.fp": 0,
+      "tables.fn": 5,
+      "tables.precision": 1,
+      "tables.recall": 0.783,
+      "tables.f1": 0.878,
+      "chairs.detectedTotal": 72,
+      "humanEffort.reviewGroups": 0,
+      "humanEffort.uncertainQuestions": 0,
+      "tableTypeAccuracy.square.correct": 18,
+      "tableTypeAccuracy.square.accuracy": 1
+    },
+    {
+      "planId": "adversarial-dense-v1",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "outline-interior",
+        "ocrEngine": null,
+        "ocrAvailable": false
+      },
+      "tables.tp": 24,
+      "tables.fp": 0,
+      "tables.fn": 0,
+      "tables.precision": 1,
+      "tables.recall": 1,
+      "tables.f1": 1,
+      "chairs.detectedTotal": 80,
+      "humanEffort.reviewGroups": 1,
+      "humanEffort.uncertainQuestions": 1,
+      "tableTypeAccuracy.square.correct": 24,
+      "tableTypeAccuracy.square.accuracy": 1
+    },
+    {
+      "planId": "adversarial-text-v1",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "colour-cluster",
+        "ocrEngine": null,
+        "ocrAvailable": false
+      },
+      "tables.tp": 12,
+      "tables.fp": 0,
+      "tables.fn": 0,
+      "tables.precision": 1,
+      "tables.recall": 1,
+      "tables.f1": 1,
+      "chairs.detectedTotal": 73,
+      "humanEffort.reviewGroups": 0,
+      "humanEffort.uncertainQuestions": 0,
+      "tableTypeAccuracy.square.correct": 12,
+      "tableTypeAccuracy.square.accuracy": 1
+    },
+    {
+      "planId": "merit-real-venue",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "colour-cluster",
+        "ocrEngine": null,
+        "ocrAvailable": false
+      },
+      "tables.tp": 46,
+      "tables.fp": 4,
+      "tables.fn": 0,
+      "tables.precision": 0.92,
+      "tables.recall": 1,
+      "tables.f1": 0.958,
+      "chairs.detectedTotal": 112,
+      "humanEffort.reviewGroups": 6,
+      "humanEffort.uncertainQuestions": 5,
+      "chairs.tp": 107,
+      "chairs.fp": 5,
+      "chairs.fn": 6,
+      "chairs.precision": 0.955,
+      "chairs.recall": 0.947,
+      "chairs.f1": 0.951,
+      "relationships.correct": 100,
+      "relationships.wrong": 1,
+      "relationships.orphan": 0,
+      "relationships.accuracy": 0.99,
+      "tableTypeAccuracy.square.correct": 37,
+      "tableTypeAccuracy.square.accuracy": 1,
+      "tableTypeAccuracy.round.correct": 4,
+      "tableTypeAccuracy.round.accuracy": 1,
+      "tableTypeAccuracy.bistro.correct": 5,
+      "tableTypeAccuracy.bistro.accuracy": 1,
+      "semanticObjects.stage.tp": 1,
+      "semanticObjects.stage.fp": 1,
+      "semanticObjects.stage.fn": 0
+    }
+  ]
+}

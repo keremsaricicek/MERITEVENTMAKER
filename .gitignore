@@ -1,2 +1,22 @@
 .vendor-cache/
 dist/
+node_modules/
+
+# Test run output: downloaded workbooks, backup fixtures, screenshots.
+tests/.artifacts/
+
+# Benchmark run output: timestamped reports are local run artifacts.
+# latest.json is kept so the committed numbers are reviewable, and
+# BASELINE.json is the recorded claim they are checked against.
+benchmarks/reports/benchmark-*.json
+
+# Embedding crop corpus: derived from the tracked plan images and annotations
+# by benchmarks/embedding/extract-crops.mjs in one command. 2.7MB of pixels
+# that regenerate identically, so they are a build artifact and not a source.
+benchmarks/embedding/crops.bin
+benchmarks/embedding/crops.json
+
+# Regenerated in one command by `npm run benchmark:false-positives`; ~9MB of
+# PNGs that would otherwise land in every clone. The README says how to make
+# them and what they show.
+benchmarks/false-positives/debug/
