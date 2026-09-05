@@ -16,6 +16,7 @@
 // Exits non-zero on any failure. Run it after touching either build script.
 
 import { launchChromium } from "../../tests/lib/env.mjs";
+import { appSourceFiles } from "../../scripts/lib/app-sources.mjs";
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -250,6 +251,34 @@ if (existsSync(LIGHT)) {
     return { missing, booted, xlsx: typeof globalThis.XLSX, ocr, encoder };
   });
   await lp.close();
+  // Is every source file the app loads actually IN the artifact?
+  //
+  // The `booted` probe below tests four hand-picked globals, and that is
+  // exactly why it did not notice when plan-relationships.js and
+  // plan-memory.js stopped being bundled: neither defines one of the four.
+  // Both offline artifacts shipped without the relationship engine and
+  // without plan memory, and both builds reported success.
+  //
+  // So this asks the question directly and without a list of its own: take
+  // the scripts index.html loads, and require a verbatim slice of each one's
+  // real content to be present in the built file. A file that was not
+  // bundled cannot pass, and a file added to the app tomorrow is covered the
+  // moment it is added, with nothing here to remember to update.
+  {
+    const artifact = await readFile(LIGHT, 'utf8');
+    const absent = [];
+    for (const rel of appSourceFiles(REPO)) {
+      const src = await readFile(join(REPO, rel), 'utf8');
+      // A slice from the middle, long enough to be unique to this file and
+      // clear of the header comment every one of them starts with.
+      const mid = Math.floor(src.length / 2);
+      const probe = src.slice(mid, mid + 160);
+      if (!artifact.includes(probe)) absent.push(rel);
+    }
+    checks.push(['light build: every script index.html loads is bundled'
+      + (absent.length ? ` (missing: ${absent.join(', ')})` : ''), absent.length === 0]);
+  }
+
   checks.push(
     ['light build: every source file executed', light.booted === true],
     ['light build: the trained encoder is inlined and runs offline',

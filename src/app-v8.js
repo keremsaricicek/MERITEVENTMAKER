@@ -374,10 +374,22 @@
     const bg=event.background||{};
     return`<div class="planmap-toolbar"><div class="tool-group"><button class="toolbar-btn lang-btn" data-v8-action="toggle-lang" title="Language / Dil">${ui.lang==="tr"?"TR":"EN"}</button></div><div class="tool-group">${toolbarBtn("mouse",t("toolbar.select"),`data-tool="select"`,ui.tool==="select")}${toolbarBtn("hand",t("toolbar.pan"),`data-tool="pan"`,ui.tool==="pan")}</div><div class="tool-group">${toolbarBtn("zoomOut",t("toolbar.zoomOut"),`data-canvas-action="zoom-out"`)}<span class="zoom-label">${Math.round(ui.zoom*100)}%</span>${toolbarBtn("zoomIn",t("toolbar.zoomIn"),`data-canvas-action="zoom-in"`)}${toolbarBtn("fit",t("toolbar.fit"),`data-canvas-action="fit"`)}</div><div class="tool-group">${toolbarBtn("eye",bg.visible?t("toolbar.hideOriginalPlan"):t("toolbar.showOriginalPlan"),`data-v8-action="toggle-bg"`,bg.visible)}${toolbarBtn("image",t("toolbar.replacePlan"),`data-v8-action="replace-bg"`)}</div><div class="tool-group">${toolbarBtn("fit",t("toolbar.focusMode"),`data-v8-action="focus"`,ui.focusMode)}</div>${bg.src?`<div class="tool-group">${toolbarBtn("image",t("toolbar.assistedDetection"),`data-v8-action="detect"`,false).replace('class="toolbar-btn','class="toolbar-btn ai')}</div>`:""}</div>`;
   }
+  // What the pill puts where a seat count goes. On a plan whose tables are
+  // drawn as symbols there is nothing to count: a bold "0 seats" in the
+  // headline reads as "this room seats nobody", when the truth is that this
+  // drawing does not show seats at all. The count is replaced by what kind of
+  // drawing it is, and the tables — which this plan really does state — take
+  // the number's place.
+  function planSeatsPill(pi){
+    const s=pi.planSummary||{};
+    if(s.representation==="SYMBOLIC")
+      return`<b>${s.tables??0}</b><small>${t("plan.symbolTables")}</small>`;
+    return`<b>${s.physicalSeats??0}</b><small>${t("plan.seats")}</small>`;
+  }
   function planStatusPillHTML(event){
     const pi=event.analysis?.planIntelligence;if(!pi)return"";
     const reviewCount=pi.reviewGroups.reduce((n,g)=>n+g.memberIds.length,0)+pi.uncertainQuestions.length;
-    return`<div class="planmap-status-pill"><span>${t("plan.understood")}</span><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i><b>${pi.planSummary.physicalSeats}</b><small>${t("plan.seats")}</small>${reviewCount?`<i class="pill-div"></i><button class="pill-chip" data-v8-action="open-review-center">${reviewCount} ${t("plan.needsReview")}</button>`:""}</div>`;
+    return`<div class="planmap-status-pill"><span>${t("plan.understood")}</span><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i>${planSeatsPill(pi)}${reviewCount?`<i class="pill-div"></i><button class="pill-chip" data-v8-action="open-review-center">${reviewCount} ${t("plan.needsReview")}</button>`:""}</div>`;
   }
   function contextualCardHTML(event){
     const t_=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId);
@@ -3666,22 +3678,90 @@
           evidence:{geometry:.6,chairs:0,repetition:columnComps.length,source:c.source||"structural",
             basis:"repeated compact object, aligned on a structural grid, no seating"}};
       });
-      const venues=venueCompsKept.slice(0,14).map(c=>{
+      let venues=venueCompsKept.slice(0,14).map(c=>{
         analyze([c],sources.find(s=>s.all.includes(c)).labels);
         const obb=c.shape?.obb||{cx:c.x+c.w/2,cy:c.y+c.h/2,w:c.w,h:c.h,rotation:c.pcaRotation||0};
-        return{id:uid("candidate"),kind:"venue",type:c.aspect>3?"stage":"column",...toPercentBox(obb),
+        // The type here is a bare aspect-ratio guess: long means stage, compact
+        // means column. That is a reasonable opening bid and a poor basis for
+        // certainty, and downstream stages were treating it as direct evidence
+        // — a "stage" zone built on it was reported as STRONG, which on a plan
+        // with no stage at all is a fabricated certainty. So the basis travels
+        // with the object, and whoever builds a claim on it can see what it
+        // rests on.
+        return{id:uid("candidate"),kind:"venue",type:c.aspect>3?"stage":"column",typeBasis:"aspectRatio",...toPercentBox(obb),
           rotation:obb.rotation,confidence:.52,status:"unreviewed",selected:false,chairDetections:[],
           evidence:{geometry:.62,chairs:0,repetition:0,source:c.source||"fill"}};
       }).concat(columnVenues).concat(chairVenues);
 
       mark("tables");
       const associatedSeats=candidates.reduce((n,c)=>n+c.chairDetections.length,0);
+
+      // ---- what kind of drawing is this? -----------------------------------
+      // Everything above reasons about size rank: the small repeated things
+      // are chairs, the bigger things they surround are tables. That holds
+      // on a plan which DRAWS its furniture, and it is why this pipeline
+      // works on the Golden Plan.
+      //
+      // A symbolic plan breaks it at the root. There, every table is the same
+      // identical symbol and nothing is larger, so the reasoning inverts and
+      // returns the architecture as tables and the tables as chairs. The test
+      // is the chair-first path's own result: a drawn chair sits at a table,
+      // so "how many of these chairs found a table" is a direct check on the
+      // hypothesis that they are chairs at all. See src/plan-representation.js
+      // for the measured separation — every plan that draws chairs is at or
+      // above 0.95, the one that does not is at 0.077.
+      let representation=null;
+      let representationSwap=null;
+      if(globalThis.MeritPlanRepresentation){
+        representation=globalThis.MeritPlanRepresentation.decide({
+          uniformFamily:chairUniform,
+          uniformObjects:chairs.length,
+          associatedToTable:associatedSeats,
+          standalone:chairVenues.length,
+          tablesFound:candidates.length,
+        });
+      }
+      if(representation&&representation.kind==="SYMBOLIC"&&chairVenues.length){
+        // The symbols ARE the tables. Promote them, and demote what size rank
+        // called tables: on a plan whose tables are one uniform symbol, an
+        // object that is not a member of that family is not a table. Both
+        // counts are reported, because this swap is a large claim and has to
+        // be visible rather than inferred from a changed number.
+        const demoted=candidates.splice(0,candidates.length);
+        for(const c of demoted){
+          c.kind="venue";
+          c.type="other";
+          c.selected=false;
+          c.chairDetections=[];
+          c.representationDemoted=true;
+        }
+        const promoted=chairVenues.map(c=>{
+          c.kind="table";
+          c.type="round";
+          c.selected=true;
+          c.chairDetections=[];
+          // No seat count is asserted. The drawing shows no seats to count,
+          // so a 0 here would read as "measured none" when the truth is
+          // "this drawing does not say, by drawing". What it does say, it
+          // says in print, and that is read elsewhere.
+          c.seatsUnknown=true;
+          c.evidence={...(c.evidence||{}),unassociated:false,
+            basis:"member of the plan's single uniform object family, on a drawing that shows no seating"};
+          return c;
+        });
+        candidates.push(...promoted);
+        // chairVenues objects are now tables; they must not also be venues.
+        const promotedSet=new Set(promoted);
+        venues=venues.filter(v=>!promotedSet.has(v)).concat(demoted);
+        representationSwap={promotedToTable:promoted.length,demotedFromTable:demoted.length};
+      }
+
       return{
-        candidates,venues,gray,binary,threshold,
+        candidates,venues,gray,binary,threshold,representation,
         diagnostics:{
           components:pool.length,wallSuppression:true,
           chairs:chairs.length,tables:candidates.length,
-          detectionPath,chairSource,
+          detectionPath,chairSource,representation,representationSwap,
           chairsDetected:chairs.length,chairsAssociated:associatedSeats,chairsUnassociated:chairVenues.length,
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
@@ -4654,7 +4734,7 @@
   function reviewPoiCardHTML(c){
     if(!c)return"";
     const opt=o=>`<option value="${o.kind}:${o.type}" ${c.kind===o.kind&&c.type===o.type?"selected":""}>${t("teach.type."+o.type)}</option>`;
-    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?`${(c.chairDetections||[]).length} ${t("poi.seats")} · `:""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${c.lowEvidence?`<div class="poi-lowevidence"><strong>${t("poi.lowEvidence")}</strong><span>${esc(t("poi.lowEvidence."+c.lowEvidence.reason))}</span></div>`:""}${visualEvidenceHTML(c)}${relationNoteHTML(c)}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
+    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?(c.seatsUnknown?`${t("poi.seatsNotShown")} · `:`${(c.chairDetections||[]).length} ${t("poi.seats")} · `):""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${c.lowEvidence?`<div class="poi-lowevidence"><strong>${t("poi.lowEvidence")}</strong><span>${esc(t("poi.lowEvidence."+c.lowEvidence.reason))}</span></div>`:""}${visualEvidenceHTML(c)}${relationNoteHTML(c)}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
   }
   // Real pixel crop of a candidate straight out of the actual imported plan
   // image — a CSS background-position/-size window, never a synthesized or
@@ -4793,7 +4873,7 @@
   function reviewGroupCount(pi){return pi.reviewGroups.length+pi.uncertainQuestions.length;}
   function planIntelBottomPillHTML(event){
     const pi=event.analysis.planIntelligence,groupCount=reviewGroupCount(pi);
-    return`<div class="planmap-status-pill wide"><span class="pill-check">${icon("check")}</span><b>${t("plan.understood")}</b><i class="pill-div"></i><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i><b>${pi.planSummary.physicalSeats}</b><small>${t("plan.seats")}</small>${groupCount?`<i class="pill-div"></i><button class="pill-chip" data-review-action="open-review-center">${groupCount} ${t(groupCount===1?"review.group":"review.groups")}</button>`:""}<span class="toolbar-spacer"></span><button class="btn sm quiet" data-review-action="back">${t("review.editManually")}</button><button class="btn sm primary" data-review-action="commit">${t("action.confirmPlan")}</button></div>`;
+    return`<div class="planmap-status-pill wide"><span class="pill-check">${icon("check")}</span><b>${t("plan.understood")}</b><i class="pill-div"></i><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i>${planSeatsPill(pi)}${groupCount?`<i class="pill-div"></i><button class="pill-chip" data-review-action="open-review-center">${groupCount} ${t(groupCount===1?"review.group":"review.groups")}</button>`:""}<span class="toolbar-spacer"></span><button class="btn sm quiet" data-review-action="back">${t("review.editManually")}</button><button class="btn sm primary" data-review-action="commit">${t("action.confirmPlan")}</button></div>`;
   }
   // One pin per REVIEW GROUP (at the centroid of its members), not one per
   // individual object — a plan with hundreds of similar chairs must not turn

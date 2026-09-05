@@ -1,5 +1,5 @@
 {
- "ranAt": "2026-09-04T12:50:22.893Z",
+ "ranAt": "2026-09-05T16:59:31.347Z",
  "note": "Stability is measured across renderings of ONE drawing, so disagreement is the product's and not the annotation's. REAL DISTINCT VENUE PLANS: 1.",
  "renderings": 16,
  "stability": 0.9891135303265941,
@@ -148,13 +148,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
@@ -180,19 +180,19 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 4,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
@@ -236,13 +236,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
@@ -280,13 +280,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 2,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
@@ -366,13 +366,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 2,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
@@ -440,13 +440,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 2,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
@@ -472,13 +472,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
@@ -504,13 +504,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
@@ -536,13 +536,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 3,
      "seats": 0
     },
@@ -574,13 +574,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
@@ -636,13 +636,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
@@ -674,13 +674,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
@@ -706,13 +706,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 2,
      "seats": 0
     },
@@ -732,13 +732,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
@@ -764,13 +764,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },
@@ -796,13 +796,13 @@
    "zones": [
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 2,
      "seats": 0
     },
     {
      "type": "stage",
-     "confidence": "strong",
+     "confidence": "likely",
      "objects": 1,
      "seats": 0
     },

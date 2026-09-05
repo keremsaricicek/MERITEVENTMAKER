@@ -15,6 +15,7 @@ import { mkdirSync, writeFileSync, readFileSync, existsSync, copyFileSync } from
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readAppSources } from "./lib/app-sources.mjs";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const CACHE = path.join(ROOT, ".vendor-cache");
@@ -65,9 +66,11 @@ const pdfCoreSrc = readFileSync(path.join(pdfjsDir, "build/pdf.min.mjs"), "utf8"
 const pdfWorkerSrc = readFileSync(path.join(pdfjsDir, "build/pdf.worker.min.mjs"), "utf8");
 
 const styles = readFileSync(path.join(ROOT, "src/styles.css"), "utf8");
-const appJs = ["src/storage-provider.js", "src/venue-model.js", "src/app.js", "src/app-guests.js", "src/i18n.js", "src/plan-ocr.js", "src/plan-encoder-weights.js", "src/plan-embedding.js", "src/plan-intelligence.js", "src/training-data.js", "src/app-v8.js"]
-  .map((f) => readFileSync(path.join(ROOT, f), "utf8"))
-  .join("\n");
+// Read from index.html, never listed here. The hand-written copy of this
+// list drifted once already: plan-relationships.js and plan-memory.js were
+// added to the app and never to the builders, so every offline artifact
+// built afterwards shipped without them while the build reported success.
+const { files: appJsFiles, code: appJs } = readAppSources(ROOT);
 
 const shell = readFileSync(path.join(ROOT, "index.html"), "utf8");
 const bodyStart = shell.indexOf("<body>");
@@ -144,5 +147,6 @@ copyFileSync(engTrainedData, path.join(OCR_OUT, "eng.traineddata.gz"));
 copyFileSync(turTrainedData, path.join(OCR_OUT, "tur.traineddata.gz"));
 
 const totalSize = execSync(`du -sh "${OUT}"`).toString().split("\t")[0];
+console.log(`Bundled ${appJsFiles.length} app sources from index.html: ${appJsFiles.map((f) => f.replace("src/", "")).join(", ")}`);
 console.log(`Wrote ${OUT}/ (${totalSize} total, including offline OCR assets)`);
 console.log("Open dist/merit-offline/index.html directly, or serve the folder — no network required, including Assisted Detection's capacity-audit OCR.");

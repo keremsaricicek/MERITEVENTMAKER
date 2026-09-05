@@ -670,10 +670,20 @@
     const stageObjects = venues.filter(c => c.type === "stage");
     if (stageObjects.length) {
       // Stage bands that touch are one performance area, not several.
-      for (const cluster of clusterByGap(stageObjects, s => Math.max(s.w, s.h) * 0.6))
-        add("stage", cluster, "strong",
+      // A zone is only as certain as the objects it stands on. An object typed
+      // "stage" purely because it is long is a shape guess, not a reading of
+      // the drawing, and a zone built entirely on shape guesses is `likely`.
+      // ORNEK is why: its four `servant` bars and its wide grey service bar
+      // are all long rectangles, and this claimed three stage areas as STRONG
+      // on a plan that has no stage.
+      for (const cluster of clusterByGap(stageObjects, s => Math.max(s.w, s.h) * 0.6)) {
+        const guessed = cluster.every(o => o.typeBasis === "aspectRatio");
+        add("stage", cluster, guessed ? "likely" : "strong",
           [`${cluster.length} stage object${cluster.length === 1 ? "" : "s"} detected`,
+           guessed ? "typed by shape alone — long enough to be a stage, with nothing else saying so"
+                   : "typed with more than shape",
            "no seating is counted inside a stage"]);
+      }
     }
 
     // -- bar, from objects typed as one --------------------------------------
@@ -687,10 +697,12 @@
     // there to check.
     const barObjects = venues.filter(c => c.type === "bar");
     if (barObjects.length)
-      for (const cluster of clusterByGap(barObjects, s => Math.max(s.w, s.h) * 0.6))
-        add("bar", cluster, "strong",
+      for (const cluster of clusterByGap(barObjects, s => Math.max(s.w, s.h) * 0.6)) {
+        const guessed = cluster.every(o => o.typeBasis === "aspectRatio");
+        add("bar", cluster, guessed ? "likely" : "strong",
           [`${cluster.length} bar object${cluster.length === 1 ? "" : "s"} detected`,
            "no dining seating is counted inside a bar"]);
+      }
 
     // -- entrance, only where wording was actually read -----------------------
     const entranceObjects = venues.filter(c => c.type === "entrance");
@@ -850,16 +862,41 @@
     }
 
     // -- seating --------------------------------------------------------------
-    // Never `strong`: a seat count is exactly as complete as detection recall,
-    // and claiming certainty about it would be the easiest lie in the product.
+    // What can honestly be said here depends on what kind of drawing this is,
+    // so it forks. A plan that draws its furniture gets a seat count; a plan
+    // whose tables are symbols has no seats to count and gets told so.
     const seatedTables = tables.filter(t => (t.chairDetections || []).length).length;
-    say("seats", "fact.seats", { seats: physicalSeats, tables: tables.length }, "likely",
-      [prov("chairsDetectedAssociated")],
-      { physicalSeats, seatedTables });
-    const unseated = tables.length - seatedTables;
-    if (unseated > 0)
-      say("unseated", "fact.unseatedTables", { n: unseated }, "likely",
-        [prov("tablesWithNoChair")], { unseated });
+    const representation = (extra && extra.representation) || null;
+    const symbolic = representation && representation.kind === "SYMBOLIC";
+    if (symbolic) {
+      // On a drawing whose tables are symbols there are no seats to count, and
+      // saying "0 seats detected" would be a capacity claim dressed as a
+      // measurement — the reader hears "this room seats nobody". What is
+      // actually true is a statement about the DRAWING, and it is strong
+      // because it is exactly what was measured: an object family that refuses
+      // to behave like seating. What the room really holds is printed on the
+      // sheet, and reading that is a separate job from counting shapes.
+      say("representation", "fact.symbolicPlan", { tables: tables.length }, "strong",
+        [prov("symbolFamilyNoSeating")],
+        { associationRate: representation.associationRate, ...representation.evidence });
+      // `unseatedTables` is skipped for the same reason. On this plan every
+      // table is unseated, by design; reporting it as a finding turns the
+      // drawing's own convention into 132 anomalies.
+    } else {
+      // Never `strong`: a seat count is exactly as complete as detection recall,
+      // and claiming certainty about it would be the easiest lie in the product.
+      say("seats", "fact.seats", { seats: physicalSeats, tables: tables.length }, "likely",
+        [prov("chairsDetectedAssociated")],
+        { physicalSeats, seatedTables });
+      const unseated = tables.length - seatedTables;
+      if (unseated > 0)
+        say("unseated", "fact.unseatedTables", { n: unseated }, "likely",
+          [prov("tablesWithNoChair")], { unseated });
+      if (representation && representation.kind === "NEEDS_REVIEW")
+        say("representationUnclear", "fact.representationUnclear",
+          { pct: Math.round((representation.associationRate || 0) * 100) }, "uncertain",
+          [prov("associationRateInGap")], representation.evidence);
+    }
 
     // -- logical groups -------------------------------------------------------
     const multi = (furnitureGroups || []).filter(g => (g.memberIds || []).length > 1);
@@ -879,9 +916,13 @@
           [prov("noZoneRule")], { n });
         continue;
       }
-      // A stage is an object the detector typed, so its presence is direct.
-      // Dining and bistro areas are clusters, which depend on recall.
-      say(`zone:${type}`, "fact.zone", { n, type }, type === "stage" ? "strong" : "likely",
+      // The claim inherits the zones' own confidence rather than asserting one
+      // of its own, and a claim about several areas is only as strong as the
+      // weakest of them. Hardcoding `strong` for stages here is what let a
+      // shape guess reach the operator as a certainty.
+      const ofType = zones.filter(z => z.type === type);
+      const weakest = ofType.some(z => z.confidence !== "strong") ? "likely" : "strong";
+      say(`zone:${type}`, "fact.zone", { n, type }, weakest,
         [prov("zoneTyped", { type })], { n });
     }
 
@@ -1458,6 +1499,7 @@
     const sceneGraph = buildSceneGraph(analysis.candidates, furnitureGroups, zones, similarityGroups);
     const conflictsIn = analysis.memoryConflicts || [];
     const facts = buildPlanFacts(analysis.candidates, zones, furnitureGroups, capacityAudit, physicalSeats, ocrText, {
+      representation: (analysis.diagnostics || {}).representation || null,
       memory: {
         reapplied: analysis.memoryReapplied || 0,
         lost: conflictsIn.filter(c => c.kind === "lost").length,
@@ -1494,7 +1536,13 @@
       },
       planSummary: {
         diningGroups: furnitureGroups.length,
-        physicalSeats,
+        // On a drawing whose tables are symbols there are no seats to count,
+        // and a prominent "0 seats" reads as "this room seats nobody" rather
+        // than "this drawing does not show seats". The status pill asks for
+        // this and must not be handed a zero it will present as a measurement.
+        physicalSeats: (diag.representation && diag.representation.kind === "SYMBOLIC") ? null : physicalSeats,
+        representation: diag.representation ? diag.representation.kind : null,
+        tables: analysis.candidates.filter(c => c.kind === "table" && c.status !== "rejected").length,
         associatedSeats: countAssociatedSeats(analysis.candidates),
         unassociatedChairs: countStandaloneChairs(analysis.candidates),
         detectionPath: diag.detectionPath || null,

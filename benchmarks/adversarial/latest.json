@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-09-05T07:21:46.922Z",
+  "ranAt": "2026-09-05T16:58:26.330Z",
   "realVenue": false,
   "note": "SYNTHETIC ADVERSARIAL FIXTURES — NOT REAL VENUES. These scores are never mixed into real-plan aggregates. REAL DISTINCT VENUE PLANS: 1. CROSS-VENUE GENERALIZATION: NOT VERIFIED.",
   "refusals": [],
@@ -86,7 +86,7 @@
         }
       },
       "facts": {
-        "total": 6,
+        "total": 7,
         "expected": 3,
         "expectedPresent": 3,
         "expectedMissing": [],
@@ -95,8 +95,9 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "strong": 2,
-          "likely": 4
+          "strong": 3,
+          "likely": 3,
+          "uncertain": 1
         }
       },
       "regionFP": {
@@ -122,7 +123,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 689,
+      "detectionMs": 808,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -262,7 +263,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 5
       },
-      "detectionMs": 768,
+      "detectionMs": 962,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -360,8 +361,8 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "strong": 2,
-          "likely": 4
+          "strong": 3,
+          "likely": 3
         }
       },
       "regionFP": {
@@ -387,7 +388,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 686,
+      "detectionMs": 830,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -516,7 +517,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 819,
+      "detectionMs": 994,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -629,7 +630,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 540,
+      "detectionMs": 652,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -754,7 +755,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 5
       },
-      "detectionMs": 690,
+      "detectionMs": 931,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -861,8 +862,8 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "strong": 2,
-          "likely": 4
+          "strong": 3,
+          "likely": 3
         }
       },
       "regionFP": {
@@ -887,7 +888,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 758,
+      "detectionMs": 909,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -1003,8 +1004,8 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "strong": 2,
-          "likely": 5
+          "strong": 3,
+          "likely": 4
         }
       },
       "regionFP": {
@@ -1030,7 +1031,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 1349,
+      "detectionMs": 1659,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {

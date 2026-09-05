@@ -1,4 +1,4 @@
-# Annotating the real Golden Plan
+# Annotating the real plans
 
 ```
 node benchmarks/annotate/build-real-annotation.mjs --overlay /tmp/check.png
@@ -77,3 +77,30 @@ centre. It is measured, not assumed, which is why these 24 chairs carry
 - **Banquette seat counts.** The drawing does not divide them.
 - **Orange chair orientation.** The armchair symbol is close to symmetric at
   this resolution; `orientationKnown` is false rather than invented.
+
+
+---
+
+# Real plan #2 — ORNEK
+
+```
+node benchmarks/annotate/ornek-circle-finder.mjs benchmarks/plans/ornek-upright.png /tmp/proposals.json
+node benchmarks/annotate/ornek-raw-frame.mjs      # the same truth, in the raw page's frame
+```
+
+The same rule applies and is stated in the finder's own header: **it shares
+nothing with the detector it produces truth for.** Its header also keeps the
+four approaches that failed before the one that worked, because each failure is
+a true statement about this document — the circles are light discs and not dark
+rings, a local-mean background sinks to the discs' own tone in dense rows, and
+one row is printed so faintly that no per-pixel threshold reaches it.
+
+`benchmarks/annotations/ornek-symbolic.json` is **not regenerable by running
+the finder**, and says so. The finder proposes; 27 proposals were rejected by
+eye as sitting on the plan's own furniture, 4 faint tables it could not see
+were added after being confirmed in a crop, and all 157 printed numbers were
+read by a person from crops at 1.7-4x. That review is the ground truth. See
+that file's `annotationMethod`.
+
+`ornek-raw-frame.mjs` derives the rotated copy used by `benchmarks/rotation/`.
+It is a coordinate change on the frozen file, never an independent annotation.
