@@ -358,6 +358,99 @@
     return Number.isFinite(stated) ? stated : null;
   }
 
+  // A capacity RULE, not just a total.
+  //
+  // Some plans do not leave their capacity to be counted — they print the
+  // arithmetic. ORNEK prints
+  //
+  //     SALON    : 166 * 12 : 1992 PAX
+  //     LOCALAR  :  72      PAX
+  //     TOPLAM   : 2064     PAX
+  //
+  // which says three things a seat count can never say: how many tables the
+  // room has, how many people sit at one, and what the two other figures add
+  // up to. On a drawing with no seats drawn at all, that is the only capacity
+  // there is — and it also gives the detector something to be checked against,
+  // because "the drawing says 166 tables and 132 were found" is a real,
+  // actionable gap where "132 tables" alone is just a number.
+  //
+  // Nothing here keys on this plan. The pattern is "a multiplication and its
+  // result", and the ARITHMETIC IS THE VALIDATOR: a triple is only accepted as
+  // a capacity rule when the multiplication actually comes out. That is what
+  // makes it safe to run over noisy OCR of an arbitrary document — three
+  // unrelated numbers that happen to sit near a "*" will not multiply out.
+  //
+  // Which matters here, because OCR does not read this cleanly. Tesseract
+  // returns "SALON 1166 * 12: 1992 PAX": the colon before 166 became a 1, so
+  // the first number reads 1166 and 1166 x 12 is not 1992. Rather than repair
+  // the token — guessing at what a character "should" have been is how OCR
+  // output becomes fiction — the count is DERIVED from the two figures that do
+  // check out (1992 / 12 = 166, exactly), and the number as read is reported
+  // beside it as corroboration that either agrees or does not.
+  function parseCapacityRule(text, expected) {
+    if (!text) return null;
+    // Each multiplication sign, the number before it, and the digits after it.
+    // The tail is taken loosely because OCR sprays and drops punctuation here:
+    // the same line came back as "1166 * 12: 1992" on one run and
+    // "1166 * 121992" on the next, the colon having disappeared and fused two
+    // numbers into one.
+    const starRe = /(\d{1,8})\s*[*x×X]\s*([\d\s:=.,\-]{1,24})/g;
+    const candidates = [];
+    if (expected != null) candidates.push(expected);
+    for (const m of text.matchAll(starRe)) {
+      const a = Number(m[1]);
+      const runs = [...String(m[2]).matchAll(/\d+/g)].map((r) => r[0]);
+      const options = [];
+      if (runs.length >= 2) options.push([Number(runs[0]), Number(runs[1])]);
+      if (runs.length === 1) {
+        // One fused run: the separator was lost. Every split is a reading, and
+        // the arithmetic plus the page's own other figures decide which one —
+        // rather than repairing the characters, which would be inventing them.
+        const d = runs[0];
+        for (let i = 1; i < d.length; i++) options.push([Number(d.slice(0, i)), Number(d.slice(i))]);
+      }
+      for (const [b, c] of options) {
+        if (!b || !c || c <= b || c % b !== 0) continue;
+        const units = c / b;
+        const exact = a * b === c;
+        // Corroboration, not repair: the product has to be a figure the page
+        // states somewhere else. Without that, a fused run would always yield
+        // SOME split that divides, and the parser would read capacity rules
+        // out of noise.
+        const corroborated = candidates.includes(c);
+        if (!exact && !corroborated) continue;
+        return {
+          units, perUnit: b, total: c,
+          unitsSource: exact ? "read" : "derived",
+          unitsAsRead: a,
+          unitsAgree: a === units,
+          corroboratedBy: exact ? null : c,
+          why: exact
+            ? `the drawing prints ${a} x ${b} = ${c}, and the multiplication comes out`
+            : `OCR read this line as "${a} x ${String(m[2]).trim()}"; ${c} is a figure the drawing states elsewhere, `
+              + `and ${c} / ${b} = ${units} exactly, so the count is taken as ${units} rather than the ${a} that does not multiply out`,
+        };
+      }
+    }
+    return null;
+  }
+
+  // The other figures a capacity block prints beside the rule, each tied to
+  // the word that labelled it, so a number is never lifted out of context.
+  function parseLabelledPax(text) {
+    if (!text) return {};
+    const out = {};
+    const grab = (label, re) => {
+      const m = text.match(re);
+      if (m) out[label] = Number(String(m[1]).replace(/[.,\s]/g, ""));
+    };
+    grab("total", /toplam[^0-9]{0,12}(\d{1,6})/i);
+    grab("total", /total[^0-9]{0,12}(\d{1,6})/i);
+    grab("boxes", /loca(?:lar)?[^0-9]{0,12}(\d{1,6})\s*(?:pax|kişi)/i);
+    grab("hall", /salon[^0-9]{0,12}(\d{1,6})\s*(?:pax|kişi)/i);
+    return out;
+  }
+
   // Rank the places a missing (or excess) seat is most likely hiding.
   //
   // The previous comparator was `(b.conf - a.conf) ? 0 : 0`, which evaluates
@@ -402,6 +495,13 @@
   // adjusted to make the others agree.
   function buildCapacityAudit(ocrText, systemCounted, candidates, furnitureGroups) {
     const stated = parsePaxFromText(ocrText);
+    // The labelled figures first, because they are what a multiplication has
+    // to agree with before it is believed.
+    const labelled = parseLabelledPax(ocrText);
+    const expected = labelled.total != null
+      ? labelled.total - (labelled.boxes || 0)
+      : null;
+    const rule = parseCapacityRule(ocrText, expected) || parseCapacityRule(ocrText, labelled.total ?? null);
     const unverifiedSeating = candidates.filter(c =>
       c.status !== "rejected" && c.seats == null &&
       ["sofa", "bench", "banquette"].includes(c.kind === "venue" ? c.type : c.kind));
@@ -418,6 +518,23 @@
       unverified: unverifiedSeating.map(c => ({ id: c.id, kind: c.kind, type: c.type,
         note: "seat count not determinable from the drawing — needs a human answer" })),
       drawingStated: stated,
+      // What the drawing states as a RULE rather than a total, when it does.
+      // `rule.units` is a table count the drawing asserts, which the detector
+      // can be measured against; `parts` are the other labelled figures, each
+      // still attached to the word that labelled it.
+      rule,
+      parts: labelled,
+      // Does the printed block agree with itself? A drawing whose own numbers
+      // do not add up is worth saying so about, and one whose numbers do add
+      // up has earned more trust than a single figure read in isolation.
+      arithmetic: (rule && labelled.total != null)
+        ? {
+            seating: rule.total,
+            others: labelled.total - rule.total,
+            total: labelled.total,
+            closes: labelled.total >= rule.total,
+          }
+        : null,
       difference: stated == null ? null : stated - systemCounted,
       sourceText: ocrText ? ocrText.slice(0, 400) : null,
       ocrAvailable: ocrText != null,
@@ -427,7 +544,7 @@
     audit.likelyAreaIds = audit.suspectRegions.map(s => s.id);
     // With no OCR there is no stated number to compare against, but the
     // physical/logical/unverified breakdown is still real and worth returning.
-    return (stated == null && !unverifiedSeating.length && !audit.suspectRegions.length) ? null : audit;
+    return (stated == null && !rule && !unverifiedSeating.length && !audit.suspectRegions.length) ? null : audit;
   }
 
   // ---- scene graph ---------------------------------------------------------
@@ -927,8 +1044,38 @@
     }
 
     // -- what the drawing itself says -----------------------------------------
+    // A printed capacity RULE is worth more than a printed total: it says how
+    // many tables the room has and how many people sit at one, which a seat
+    // count can never say and which the detector can be measured against.
+    const rule = capacityAudit && capacityAudit.rule;
+    if (rule) {
+      const parts = (capacityAudit && capacityAudit.parts) || {};
+      say("capacityRule", "fact.capacityRule",
+        { units: rule.units, perUnit: rule.perUnit, seats: rule.total,
+          others: parts.total != null ? parts.total - rule.total : null,
+          total: parts.total ?? null },
+        // Read off the page, and the multiplication checks out — but a count
+        // the OCR did not actually agree with is one step further from the
+        // page than one it did, and says so.
+        rule.unitsAgree ? "strong" : "likely",
+        [prov("capacityRuleFromOcr")],
+        { ...rule, parts });
+      const found = tables.length;
+      if (found !== rule.units)
+        say("capacityRuleVsFound", "fact.tablesVsStated",
+          { stated: rule.units, found, difference: Math.abs(rule.units - found) }, "strong",
+          [prov("capacityRuleFromOcr"), prov("tablesDetected")],
+          { stated: rule.units, found });
+    }
     const stated = capacityAudit && capacityAudit.drawingStated;
-    if (stated != null) {
+    // Comparing a printed pax figure against a SEAT COUNT only means something
+    // on a plan that draws seats. On a symbolic one it reads "the plan states
+    // 2064 pax but 0 seats were counted", which sounds like a finding and is
+    // really just a restatement of what kind of drawing this is. The
+    // comparison that does mean something there is tables against tables, and
+    // fact.tablesVsStated above makes it. The CAPACITY contradiction is built
+    // from this fact, so it stands down with it.
+    if (stated != null && !symbolic) {
       const diff = stated - physicalSeats;
       say("capacity", Math.abs(diff) <= Math.max(2, stated * 0.05) ? "fact.capacityAgrees" : "fact.capacityDiffers",
         { stated, counted: physicalSeats, difference: Math.abs(diff) },

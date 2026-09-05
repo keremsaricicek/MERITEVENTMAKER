@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-09-05T17:03:28.779Z",
+  "ranAt": "2026-09-05T17:19:28.364Z",
   "reports": [
     {
       "planId": "ornek-symbolic-raw",
@@ -128,12 +128,15 @@
           },
           "unverified": [],
           "drawingStated": null,
+          "rule": null,
+          "parts": {},
+          "arithmetic": null,
           "difference": null,
           "sourceText": null,
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_012c8b5e-7b54-40f7-96b2-5d709d36145a",
+              "id": "candidate_052e9cd8-d4b3-4c03-b4d6-63a17eb6e8e6",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -141,7 +144,7 @@
               ]
             },
             {
-              "id": "candidate_041a4d07-70ba-4017-9ce0-155bc90c6091",
+              "id": "candidate_087abda1-9a87-4928-9eab-9510d69ef958",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -149,7 +152,7 @@
               ]
             },
             {
-              "id": "candidate_0424bd23-d287-4467-8b76-3e80c8484639",
+              "id": "candidate_0b9f10c3-8c02-42ba-87c8-0d078632aca8",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -157,7 +160,7 @@
               ]
             },
             {
-              "id": "candidate_0578755d-0633-4a98-9c51-930b29793db8",
+              "id": "candidate_0c6a6f04-8162-40d9-b334-d07cbede6d9e",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -165,7 +168,7 @@
               ]
             },
             {
-              "id": "candidate_059a9a24-0b4c-4705-ada7-36ed7dc4491d",
+              "id": "candidate_0ec31967-dce1-48f4-88fa-c6fbb969ea98",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -173,7 +176,7 @@
               ]
             },
             {
-              "id": "candidate_06a61955-bbc3-4493-908a-3ab7d34d3a42",
+              "id": "candidate_1133373e-e442-4c0f-a959-4bcb998b71fd",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -181,7 +184,7 @@
               ]
             },
             {
-              "id": "candidate_0e1505dc-209a-46bf-851d-94bd032f067a",
+              "id": "candidate_13b5a00a-0452-4a9a-a372-5cd339d59ebc",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -189,7 +192,7 @@
               ]
             },
             {
-              "id": "candidate_0f92a9b7-640e-456b-911f-afcd062bb696",
+              "id": "candidate_161afbb5-d402-4555-944f-4ff81206c632",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -198,14 +201,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_012c8b5e-7b54-40f7-96b2-5d709d36145a",
-            "candidate_041a4d07-70ba-4017-9ce0-155bc90c6091",
-            "candidate_0424bd23-d287-4467-8b76-3e80c8484639",
-            "candidate_0578755d-0633-4a98-9c51-930b29793db8",
-            "candidate_059a9a24-0b4c-4705-ada7-36ed7dc4491d",
-            "candidate_06a61955-bbc3-4493-908a-3ab7d34d3a42",
-            "candidate_0e1505dc-209a-46bf-851d-94bd032f067a",
-            "candidate_0f92a9b7-640e-456b-911f-afcd062bb696"
+            "candidate_052e9cd8-d4b3-4c03-b4d6-63a17eb6e8e6",
+            "candidate_087abda1-9a87-4928-9eab-9510d69ef958",
+            "candidate_0b9f10c3-8c02-42ba-87c8-0d078632aca8",
+            "candidate_0c6a6f04-8162-40d9-b334-d07cbede6d9e",
+            "candidate_0ec31967-dce1-48f4-88fa-c6fbb969ea98",
+            "candidate_1133373e-e442-4c0f-a959-4bcb998b71fd",
+            "candidate_13b5a00a-0452-4a9a-a372-5cd339d59ebc",
+            "candidate_161afbb5-d402-4555-944f-4ff81206c632"
           ]
         }
       },
@@ -277,7 +280,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 1490,
+      "detectionMs": 1503,
       "pageErrors": [],
       "imageShaMatches": true
     }

@@ -3745,6 +3745,10 @@
           // "this drawing does not say, by drawing". What it does say, it
           // says in print, and that is read elsewhere.
           c.seatsUnknown=true;
+          // Membership of the plan's one symbol family, kept on the object so
+          // later stages can tell "a table with no chairs drawn at it" from "a
+          // table nothing was found at". Text suppression needs exactly that.
+          c.symbolFamily=true;
           c.evidence={...(c.evidence||{}),unassociated:false,
             basis:"member of the plan's single uniform object family, on a drawing that shows no seating"};
           return c;
@@ -4390,10 +4394,35 @@
       const cArea=Math.max(.0001,c.w*c.h);
       let textArea=0;for(const wb of wordBoxesPct)textArea+=overlapArea(c,wb);
       const overlapRatio=Math.min(1,textArea/cArea),hasChairs=(c.chairDetections?.length||0)>0;
-      if(overlapRatio>.4&&!hasChairs){removedCount++;}else{kept.push(c);}
+      // "It has chairs at it, so it is a real table and not printed text" is a
+      // good exemption on a plan that draws chairs. On a plan whose tables are
+      // numbered symbols it is unavailable BY CONSTRUCTION — no table there
+      // has a chair — and this rule then deleted 117 of ORNEK's 132 tables,
+      // because a table on that plan is a circle with a printed number inside
+      // it and OCR of a photographed printout throws big, sloppy word boxes
+      // across whole rows of them.
+      //
+      // It only ever happened with OCR running, so the benchmark never saw it:
+      // this sandbox has no network, the CDN build silently has no OCR, and
+      // the offline package — the one that actually ships with Tesseract —
+      // was the broken one.
+      //
+      // A candidate that is one of a hundred-odd identical, regularly spaced
+      // symbols is not printed text, whatever overlaps it. The evidence that
+      // made it a table is the same evidence that protects it here.
+      const isSymbol=c.symbolFamily===true;
+      if(overlapRatio>.4&&!hasChairs&&!isSymbol){removedCount++;}else{kept.push(c);}
     }
     return{kept,removedCount};
   }
+  // Exposed for the regression suite. This rule silently deleted 117 of
+  // ORNEK's 132 tables and only did so when OCR was running, which is a
+  // combination no benchmark in this repo exercises — the sandbox has no
+  // network, so the CDN build has no OCR, and the offline package is built
+  // rather than benchmarked. A pure function of (candidates, words) can be
+  // pinned directly, and now is.
+  globalThis.MeritSuppressTextFalsePositives = suppressTextFalsePositives;
+
   async function runAssistedDetection(){
     const event=activeEvent();if(!canMutate(event,"run plan analysis")||!event.background?.src)return toast("Import a floor plan first.","error");ui.analysisBusy=true;ui.analysisProgress=3;ui.analysisStage=t("analysis.stage.reading");ui.screen="review";
     // Import -> Confirm timing for the operator test. Local only, and carried
