@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-09-04T12:51:00.052Z",
+  "ranAt": "2026-09-05T07:21:46.922Z",
   "realVenue": false,
   "note": "SYNTHETIC ADVERSARIAL FIXTURES — NOT REAL VENUES. These scores are never mixed into real-plan aggregates. REAL DISTINCT VENUE PLANS: 1. CROSS-VENUE GENERALIZATION: NOT VERIFIED.",
   "refusals": [],
@@ -86,7 +86,7 @@
         }
       },
       "facts": {
-        "total": 5,
+        "total": 6,
         "expected": 3,
         "expectedPresent": 3,
         "expectedMissing": [],
@@ -96,7 +96,7 @@
         "withoutProvenance": [],
         "byStrength": {
           "strong": 2,
-          "likely": 3
+          "likely": 4
         }
       },
       "regionFP": {
@@ -108,10 +108,10 @@
       "sceneGraph": {
         "counts": {
           "belongsTo": 48,
-          "partOf": 8
+          "memberOf": 65
         },
         "nodeCount": 57,
-        "edges": 56
+        "edges": 113
       },
       "contradictions": 1,
       "contradictionIds": [
@@ -122,7 +122,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 654,
+      "detectionMs": 689,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -247,10 +247,11 @@
       "sceneGraph": {
         "counts": {
           "belongsTo": 32,
-          "partOf": 44
+          "memberOf": 120,
+          "structuralElementOf": 32
         },
         "nodeCount": 76,
-        "edges": 76
+        "edges": 184
       },
       "contradictions": 1,
       "contradictionIds": [
@@ -261,7 +262,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 5
       },
-      "detectionMs": 719,
+      "detectionMs": 768,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -350,7 +351,7 @@
         }
       },
       "facts": {
-        "total": 5,
+        "total": 6,
         "expected": 3,
         "expectedPresent": 3,
         "expectedMissing": [],
@@ -360,7 +361,7 @@
         "withoutProvenance": [],
         "byStrength": {
           "strong": 2,
-          "likely": 3
+          "likely": 4
         }
       },
       "regionFP": {
@@ -372,10 +373,12 @@
       "sceneGraph": {
         "counts": {
           "belongsTo": 240,
-          "partOf": 20
+          "faces": 120,
+          "memberOf": 60,
+          "structuralElementOf": 20
         },
         "nodeCount": 40,
-        "edges": 260
+        "edges": 440
       },
       "contradictions": 0,
       "contradictionIds": [],
@@ -384,7 +387,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 652,
+      "detectionMs": 686,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -500,10 +503,11 @@
       "sceneGraph": {
         "counts": {
           "belongsTo": 100,
-          "partOf": 25
+          "memberOf": 90,
+          "structuralElementOf": 37
         },
         "nodeCount": 65,
-        "edges": 125
+        "edges": 227
       },
       "contradictions": 0,
       "contradictionIds": [],
@@ -512,7 +516,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 740,
+      "detectionMs": 819,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -610,9 +614,11 @@
         "tablesInArchitecture": 0
       },
       "sceneGraph": {
-        "counts": {},
+        "counts": {
+          "memberOf": 8
+        },
         "nodeCount": 8,
-        "edges": 0
+        "edges": 8
       },
       "contradictions": 1,
       "contradictionIds": [
@@ -623,7 +629,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 523,
+      "detectionMs": 540,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -709,7 +715,7 @@
         }
       },
       "facts": {
-        "total": 8,
+        "total": 10,
         "expected": 2,
         "expectedPresent": 2,
         "expectedMissing": [],
@@ -718,7 +724,7 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "likely": 6,
+          "likely": 8,
           "uncertain": 1,
           "strong": 1
         }
@@ -732,10 +738,12 @@
       "sceneGraph": {
         "counts": {
           "belongsTo": 51,
-          "partOf": 54
+          "faces": 19,
+          "memberOf": 146,
+          "structuralElementOf": 38
         },
         "nodeCount": 92,
-        "edges": 105
+        "edges": 254
       },
       "contradictions": 1,
       "contradictionIds": [
@@ -746,7 +754,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 5
       },
-      "detectionMs": 675,
+      "detectionMs": 690,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -866,10 +874,11 @@
       "sceneGraph": {
         "counts": {
           "belongsTo": 37,
-          "partOf": 21
+          "memberOf": 59,
+          "structuralElementOf": 11
         },
         "nodeCount": 38,
-        "edges": 58
+        "edges": 107
       },
       "contradictions": 0,
       "contradictionIds": [],
@@ -878,7 +887,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 723,
+      "detectionMs": 758,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -985,7 +994,7 @@
         }
       },
       "facts": {
-        "total": 6,
+        "total": 7,
         "expected": 3,
         "expectedPresent": 3,
         "expectedMissing": [],
@@ -995,7 +1004,7 @@
         "withoutProvenance": [],
         "byStrength": {
           "strong": 2,
-          "likely": 4
+          "likely": 5
         }
       },
       "regionFP": {
@@ -1007,10 +1016,10 @@
       "sceneGraph": {
         "counts": {
           "belongsTo": 240,
-          "partOf": 240
+          "memberOf": 546
         },
         "nodeCount": 306,
-        "edges": 480
+        "edges": 786
       },
       "contradictions": 1,
       "contradictionIds": [
@@ -1021,7 +1030,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 1417,
+      "detectionMs": 1349,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
