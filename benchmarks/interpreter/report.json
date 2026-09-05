@@ -1,5 +1,5 @@
 {
- "ranAt": "2026-09-05T07:14:39.494Z",
+ "ranAt": "2026-09-05T07:48:20.434Z",
  "plans": [
   {
    "planId": "adversarial-architecture-v1",
@@ -118,7 +118,7 @@
    ],
    "priorities": [
     {
-     "id": "priority:reviewgroup_09b66698-1281-4790-bdbe-eb092e021666",
+     "id": "priority:reviewgroup_8cef7ccf-e062-433c-9ca6-fe481c9c7c43",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -127,12 +127,12 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_78246dc7-18f3-4a67-be83-e7d5931503e6",
-      "candidate_3cf86202-ebb1-4a5b-aaa0-7f0ea6d47b06",
-      "candidate_55d34d3c-7668-4a44-932b-cff71803dcea",
-      "candidate_e38b78b6-d92b-4ecd-b293-a7d39b589391",
-      "candidate_dd1d8377-8008-4f3d-a036-e3c4a6bd2f72",
-      "candidate_829569e0-75e6-4335-b72c-de223aeb8d88"
+      "candidate_fce330e1-72c8-4ea4-b867-306f63965983",
+      "candidate_27c0934b-89da-4a90-8ed0-cd26d3f1d779",
+      "candidate_77743868-88c3-4c1c-aba3-eda03d2d41bd",
+      "candidate_86035241-a354-4e31-958f-f53336fa1f1b",
+      "candidate_ea60ccf4-27d6-4338-b32d-09d4cb571bbb",
+      "candidate_d5bf3557-522b-4d41-a6a4-0ee8ea8980d3"
      ],
      "downstreamImpact": {
       "objects": 6,
@@ -421,46 +421,7 @@
    ],
    "priorities": [
     {
-     "id": "priority:contra:ambiguousSeat",
-     "key": "priority.contradiction",
-     "rank": 2,
-     "params": {
-      "kind": "contradiction.kind.RELATIONSHIP"
-     },
-     "contradictionId": "contra:ambiguousSeat",
-     "why": "contradiction.from.chairAssociation and contradiction.from.competingTable cannot both be right",
-     "targetIds": [
-      "candidate_04b80b59-4cc0-48e7-a331-91487344bfe9",
-      "candidate_d6a3d18a-2e0e-43cf-92fe-3878a00586c8",
-      "candidate_ca261aec-29e2-41f2-b181-5b06a723c9e4",
-      "candidate_f64a4c39-d18c-4563-82b9-86f6ddccd3cc",
-      "candidate_925a29ac-eecd-4c89-b2a0-add28d973e73",
-      "candidate_d4937380-867e-434d-bb5f-361548c78495",
-      "candidate_f3dafacf-6a6d-4fdc-9077-95aaccee495d",
-      "candidate_d45797a0-2b7a-472e-ae77-5d16d3c0d947",
-      "candidate_c21f00e2-d554-439d-bad6-2f818f706016",
-      "candidate_69060d4d-b3b8-456a-a3dd-7566ae7dff1f",
-      "candidate_4a5f7292-8e56-468b-80a8-bbea7b90072c",
-      "candidate_a8abaaff-40c2-477d-aa72-2996181642cb",
-      "candidate_bc777c4e-1d9a-4eed-bc38-2327f95e575b",
-      "candidate_5c2524c6-f54d-4061-ba20-95269373fdb4",
-      "candidate_3ff81456-9774-4d5d-a0c0-a10c405212f8",
-      "candidate_5852e0e5-ae24-45d6-9a0b-3ba65b75a68d",
-      "candidate_e8b3a29c-7ecc-4bf5-a19b-7d604feedbee",
-      "candidate_7b7eb102-95eb-43d8-bfcd-1459cada1522",
-      "candidate_287a6bb8-4635-43f7-84d5-11686f0d8b7a",
-      "candidate_99debe44-8bd9-4720-af82-49cf82cda687"
-     ],
-     "downstreamImpact": {
-      "objects": 20,
-      "seats": 64,
-      "facts": 0
-     },
-     "signature": "21,25;21,42;21,58;21,75;27,25;27,42;27,58;27,75;33,25;33,42;33,58;33,75;39,25;39,42;39,58;39,75;45,25;45,42;45,58;45,75",
-     "buildOrder": 0
-    },
-    {
-     "id": "priority:question_6e7adaad-7964-47ba-ac74-1eaf20d78a73",
+     "id": "priority:question_3f839996-4073-4b23-b200-397de8fc551d",
      "key": "priority.question",
      "rank": 5,
      "params": {
@@ -474,10 +435,10 @@
       "facts": 0
      },
      "signature": "",
-     "buildOrder": 1
+     "buildOrder": 0
     },
     {
-     "id": "priority:reviewgroup_7395aa99-b042-49a0-a38b-5b0adee3ee5e",
+     "id": "priority:reviewgroup_34fb5aca-ffc5-4333-a32f-0983ca3f4033",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -486,10 +447,10 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_720bd16c-4a11-4664-9c65-0c4c20248d50",
-      "candidate_9435a9fa-fe20-4b66-bdc1-0876de606076",
-      "candidate_afffbd24-ccb4-425b-b705-b5d3c9dc7186",
-      "candidate_64cefc89-081c-437d-adbf-6125814a14bd"
+      "candidate_024306f1-79eb-46e7-bb4f-4e61e47d3590",
+      "candidate_b9410bdb-b2ca-41d8-95aa-19e8b1ebacae",
+      "candidate_fe09a423-aeb3-4039-bbc0-414412adee66",
+      "candidate_9536ee22-8e59-4e8d-b2e8-825b08218f10"
      ],
      "downstreamImpact": {
       "objects": 4,
@@ -497,7 +458,7 @@
       "facts": 0
      },
      "signature": "17,8;20,8;20,94;66,94",
-     "buildOrder": 2
+     "buildOrder": 1
     }
    ],
    "untranslated": [],
@@ -975,7 +936,7 @@
      "contradictionId": "contra:seatsInsideBody",
      "why": "contradiction.from.tableDetection and contradiction.from.chairAssociation cannot both be right",
      "targetIds": [
-      "candidate_22c6d713-5d05-4c31-a118-03a2050591af"
+      "candidate_0d50596a-9bee-4e3d-852d-93a6acfd30e0"
      ],
      "downstreamImpact": {
       "objects": 1,
@@ -995,9 +956,9 @@
      "contradictionId": "contra:visualClass",
      "why": "contradiction.from.detectionAndShape and contradiction.from.visualSecondOpinion cannot both be right",
      "targetIds": [
-      "candidate_692ec1e0-fc5d-4f90-b9c0-2b54d2fb2b01",
-      "candidate_d6053ab5-9ddb-4fc6-a91d-145a5668e3f0",
-      "candidate_8b7c765a-190b-40dc-8f38-654033a8231f"
+      "candidate_1e3e78ca-8873-45e0-9b83-cb38ba6acce7",
+      "candidate_ba131d37-b105-4d5a-87a6-fc1fd838880c",
+      "candidate_3b544b21-cdbd-4c5a-8258-7ec9e0847695"
      ],
      "downstreamImpact": {
       "objects": 3,
@@ -1017,10 +978,10 @@
      "contradictionId": "contra:mixedGroupTypes",
      "why": "contradiction.from.geometricGrouping and contradiction.from.shapeClassification cannot both be right",
      "targetIds": [
-      "candidate_ccca6e28-9edb-454c-9e9c-cf363915ff8d",
-      "candidate_85e89aed-dba2-48d8-a323-3f4b54668640",
-      "candidate_b6bb0ac8-6c00-425b-9077-0fb2d12e1720",
-      "candidate_692ec1e0-fc5d-4f90-b9c0-2b54d2fb2b01"
+      "candidate_43c9832b-af73-4505-8ac0-a84b35b0514e",
+      "candidate_a2f6ec0b-f12c-44b4-96dc-5ac99e4289bb",
+      "candidate_618f958c-4e8f-45e5-a6c0-fd65641f4bd6",
+      "candidate_1e3e78ca-8873-45e0-9b83-cb38ba6acce7"
      ],
      "downstreamImpact": {
       "objects": 4,
@@ -1040,8 +1001,8 @@
      "contradictionId": "contra:emptyTablesOrphanSeats",
      "why": "contradiction.from.tableDetection and contradiction.from.chairDetection cannot both be right",
      "targetIds": [
-      "candidate_9011486a-38a8-4158-9e9d-a59093ce840d",
-      "candidate_8b7c765a-190b-40dc-8f38-654033a8231f"
+      "candidate_986fca23-949a-48a5-87d9-5179792f1786",
+      "candidate_3b544b21-cdbd-4c5a-8258-7ec9e0847695"
      ],
      "downstreamImpact": {
       "objects": 2,
@@ -1052,27 +1013,24 @@
      "buildOrder": 0
     },
     {
-     "id": "priority:contra:ambiguousSeat",
-     "key": "priority.contradiction",
-     "rank": 2,
+     "id": "priority:question_f7e4fb1b-466a-4674-97f1-a809006ef261",
+     "key": "priority.question",
+     "rank": 5,
      "params": {
-      "kind": "contradiction.kind.RELATIONSHIP"
+      "n": 1
      },
-     "contradictionId": "contra:ambiguousSeat",
-     "why": "contradiction.from.chairAssociation and contradiction.from.competingTable cannot both be right",
-     "targetIds": [
-      "candidate_9a081226-a36f-44fb-a414-2eb9de60d50b"
-     ],
+     "why": "a grouping the detector could not resolve",
+     "targetIds": [],
      "downstreamImpact": {
-      "objects": 1,
-      "seats": 4,
+      "objects": 0,
+      "seats": 0,
       "facts": 0
      },
-     "signature": "37,74",
+     "signature": "",
      "buildOrder": 4
     },
     {
-     "id": "priority:question_d758154f-6902-49c8-b49b-3acc88793a1b",
+     "id": "priority:question_1b96fc43-6c17-4ebf-8f47-72b2107a6b6c",
      "key": "priority.question",
      "rank": 5,
      "params": {
@@ -1089,7 +1047,7 @@
      "buildOrder": 5
     },
     {
-     "id": "priority:question_b4469b1c-78df-4dd9-8107-9f7e74a23d41",
+     "id": "priority:question_7fa9b2d6-ee5d-4f28-a754-1b73b6f63d44",
      "key": "priority.question",
      "rank": 5,
      "params": {
@@ -1106,7 +1064,7 @@
      "buildOrder": 6
     },
     {
-     "id": "priority:question_98b31801-dc8a-4a98-946c-42b6bf7f7800",
+     "id": "priority:question_4376a4ae-fdd0-4be7-90a5-ecd8028c409b",
      "key": "priority.question",
      "rank": 5,
      "params": {
@@ -1123,7 +1081,7 @@
      "buildOrder": 7
     },
     {
-     "id": "priority:question_20b48496-d667-432d-9530-40c43ddc0048",
+     "id": "priority:question_244eddf8-1236-43f1-b665-209d0b464006",
      "key": "priority.question",
      "rank": 5,
      "params": {
@@ -1140,24 +1098,7 @@
      "buildOrder": 8
     },
     {
-     "id": "priority:question_9c43415c-3e17-43c3-9dc9-75d4adf48334",
-     "key": "priority.question",
-     "rank": 5,
-     "params": {
-      "n": 1
-     },
-     "why": "a grouping the detector could not resolve",
-     "targetIds": [],
-     "downstreamImpact": {
-      "objects": 0,
-      "seats": 0,
-      "facts": 0
-     },
-     "signature": "",
-     "buildOrder": 9
-    },
-    {
-     "id": "priority:reviewgroup_e2bf2370-738d-45b3-ad64-5b99c27895b1",
+     "id": "priority:reviewgroup_55729088-3d6c-498a-84ca-5c6e7b03c6d1",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1166,21 +1107,21 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_77f79559-8aab-48b9-83c5-683dda1f7767",
-      "candidate_da52545c-95f0-48b4-b3d9-2233791bc064",
-      "candidate_e83e46c0-ce2d-4026-a8b4-f1e994abdb9d",
-      "candidate_1f34c7e0-1178-4dc1-9658-a6c0b7a4e01d",
-      "candidate_c5bd92ba-c17b-4bb9-8a1d-b7f95bfda650",
-      "candidate_f0de68d5-d644-4ddf-a761-e27cb4f3efa5",
-      "candidate_445ca516-3d8a-4a6e-bfc0-214501c27f57",
-      "candidate_98601602-cbe0-4a66-bc4b-2478c64663b7",
-      "candidate_b6bb0ac8-6c00-425b-9077-0fb2d12e1720",
-      "candidate_66b1af07-c40f-4447-879d-862ebf4b830f",
-      "candidate_9279350e-288a-4832-a127-3f59628b6cca",
-      "candidate_b20e742d-4429-40cc-969b-f888dca84e66",
-      "candidate_30b073b9-ec62-41ca-8631-01eb0c587f00",
-      "candidate_9011486a-38a8-4158-9e9d-a59093ce840d",
-      "candidate_8b7c765a-190b-40dc-8f38-654033a8231f"
+      "candidate_a1838b00-6b8a-41ed-aa83-41b4212a175d",
+      "candidate_307d1be2-c3ed-4420-b25d-13baa19cd49a",
+      "candidate_84c6236d-6933-4ada-b8d2-03095da10706",
+      "candidate_cd7c50a7-9d8b-4df7-a04d-baa83ee2623b",
+      "candidate_783b7bda-bf26-43c7-91b4-1a0c25ceffa9",
+      "candidate_e8c1dfe4-30d3-4403-9660-6fc7e23bd29c",
+      "candidate_d0255b70-19a6-4b28-8e56-fc3f91fc0884",
+      "candidate_3e93e141-6d3f-45fb-8c77-621278e4b993",
+      "candidate_618f958c-4e8f-45e5-a6c0-fd65641f4bd6",
+      "candidate_cffc276e-ee19-43c4-b457-8e95a3519bfb",
+      "candidate_fad72663-2217-4242-9c05-643c4a97c38d",
+      "candidate_2026b0da-3457-48ce-90e5-833e8832c92f",
+      "candidate_cb4c88af-bba5-4ba8-937d-f1e53c761798",
+      "candidate_986fca23-949a-48a5-87d9-5179792f1786",
+      "candidate_3b544b21-cdbd-4c5a-8258-7ec9e0847695"
      ],
      "downstreamImpact": {
       "objects": 27,
@@ -1188,10 +1129,10 @@
       "facts": 0
      },
      "signature": "16,54;20,54;24,54;24,73;30,74;34,74;47,43;47,49;47,56;48,64;58,36;70,36;70,43;71,49;83,63",
-     "buildOrder": 10
+     "buildOrder": 9
     },
     {
-     "id": "priority:reviewgroup_76c21de5-bb43-485b-8af4-829d18ebf65a",
+     "id": "priority:reviewgroup_5974a626-f40b-485c-b98d-07deb817dc4c",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1200,11 +1141,11 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_4138f6ab-b0eb-4ba2-8466-2f461bcfa495",
-      "candidate_b02efdf6-7682-43f3-8d33-dc3ba2102ac0",
-      "candidate_eb9de6f4-3900-43c4-a740-b1951ef71c40",
-      "candidate_cb963f76-3776-4d51-baf4-82961d2deac4",
-      "candidate_1cce79d1-edc1-4986-b9e1-5dda6d21c5ff"
+      "candidate_2c537384-a789-4b64-84de-731a414c1a31",
+      "candidate_ac8168e5-75c0-4fae-9f59-6b81bc85fa34",
+      "candidate_2bc1f0a4-3f3f-45e5-aaf6-76c115b12b43",
+      "candidate_e65b40b4-3188-40ad-afbf-269706a22524",
+      "candidate_2cc58398-35dd-455e-ac7d-7c44740056cd"
      ],
      "downstreamImpact": {
       "objects": 5,
@@ -1212,10 +1153,10 @@
       "facts": 0
      },
      "signature": "14,90;2,28;28,89;36,90;5,28",
-     "buildOrder": 11
+     "buildOrder": 10
     },
     {
-     "id": "priority:reviewgroup_09b6459b-cb22-4f36-bfa6-e52e0c74689e",
+     "id": "priority:reviewgroup_8e1ba929-78e2-448d-a683-401843656a24",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1224,10 +1165,10 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_6b52afdc-8cd2-4411-859e-a1f4f439d406",
-      "candidate_d0986c1b-e162-47c0-87a5-63f2855b97c2",
-      "candidate_d6053ab5-9ddb-4fc6-a91d-145a5668e3f0",
-      "candidate_ff31366b-7d63-47c6-a62e-a93071c83567"
+      "candidate_b055bc8b-705c-48d8-aa43-e73db28363b7",
+      "candidate_1680b054-ff64-470d-bee1-4cd87ff03f53",
+      "candidate_ba131d37-b105-4d5a-87a6-fc1fd838880c",
+      "candidate_58e047a1-4e0a-4f40-85a3-c649f79294be"
      ],
      "downstreamImpact": {
       "objects": 4,
@@ -1235,10 +1176,10 @@
       "facts": 0
      },
      "signature": "5,74;6,55;91,29;91,65",
-     "buildOrder": 12
+     "buildOrder": 11
     },
     {
-     "id": "priority:reviewgroup_590451fa-a234-40ec-8bac-1c418f375d26",
+     "id": "priority:reviewgroup_a58b8830-b465-4120-ae0c-1a7678fea2cd",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1247,10 +1188,10 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_ac3d172f-d4de-4db7-9f70-2ffb03647b14",
-      "candidate_ac3e030e-23ff-43c4-9e0a-de98539ac3b0",
-      "candidate_47c4cda2-0cad-4fbe-9f1c-1185b08070d8",
-      "candidate_74b6680e-91e8-4d77-8d7d-72b88cf6c2f3"
+      "candidate_97847409-e74d-448b-8919-8a4e175da16c",
+      "candidate_7fa363b6-3223-4741-a47e-29d7380884cd",
+      "candidate_022992a3-c222-4770-bf97-e82421612334",
+      "candidate_d1a859b8-7b92-41da-ac9d-6a8095e57b9c"
      ],
      "downstreamImpact": {
       "objects": 4,
@@ -1258,10 +1199,10 @@
       "facts": 0
      },
      "signature": "10,7;14,11;15,15;49,88",
-     "buildOrder": 13
+     "buildOrder": 12
     },
     {
-     "id": "priority:reviewgroup_72971fcc-55f1-4738-aa13-15ccc35105ec",
+     "id": "priority:reviewgroup_9f0e84ad-3fc6-456f-9ce8-37a180045b31",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1270,8 +1211,8 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_692ec1e0-fc5d-4f90-b9c0-2b54d2fb2b01",
-      "candidate_22c6d713-5d05-4c31-a118-03a2050591af"
+      "candidate_1e3e78ca-8873-45e0-9b83-cb38ba6acce7",
+      "candidate_0d50596a-9bee-4e3d-852d-93a6acfd30e0"
      ],
      "downstreamImpact": {
       "objects": 2,
@@ -1279,10 +1220,10 @@
       "facts": 0
      },
      "signature": "1,17;55,36",
-     "buildOrder": 14
+     "buildOrder": 13
     },
     {
-     "id": "priority:reviewgroup_115e0932-2a6a-43f1-a311-a65ee76d21e1",
+     "id": "priority:reviewgroup_c3c6521c-120c-4250-9347-563e7f4eab90",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1291,8 +1232,8 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_ba2c4ba0-cdf5-4401-8b5d-7acac7cce080",
-      "candidate_d8e5ed7a-4ea2-4893-b27f-700bad2c4291"
+      "candidate_a994cd0f-198d-4b46-aaa8-37098f2c94ba",
+      "candidate_ed5c9669-9ca0-4ba8-87dc-cf61bc2b653d"
      ],
      "downstreamImpact": {
       "objects": 2,
@@ -1300,7 +1241,7 @@
       "facts": 0
      },
      "signature": "51,88;8,33",
-     "buildOrder": 15
+     "buildOrder": 14
     }
    ],
    "untranslated": [],
