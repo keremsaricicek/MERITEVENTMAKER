@@ -1,23 +1,23 @@
 {
- "ranAt": "2026-09-01T13:31:31.965Z",
+ "ranAt": "2026-09-05T07:18:49.528Z",
  "variants": [
   {
    "variant": "ORIGINAL",
    "tables": 50,
    "falsePositives": 4,
    "baselineFalseRate": 0.08,
-   "contradictions": 4,
+   "contradictions": 5,
    "kinds": [
     "COUNT",
     "TYPE",
     "RELATIONSHIP"
    ],
-   "pointedAt": 8,
+   "pointedAt": 9,
    "pointedAtFalse": 4,
-   "targetedPrecision": 0.5,
-   "lift": 6.25,
+   "targetedPrecision": 0.4444,
+   "lift": 5.556,
    "severities": {
-    "medium": 3,
+    "medium": 4,
     "high": 1
    },
    "perContradiction": [
@@ -52,6 +52,14 @@
      "pointedAt": 1,
      "ofThoseFalse": 1,
      "precision": 1
+    },
+    {
+     "id": "contra:ambiguousSeat",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 1,
+     "ofThoseFalse": 0,
+     "precision": 0
     }
    ],
    "downgradedFacts": [
@@ -76,13 +84,15 @@
      "2 table(s) have no seat while 4 seat(s) have no table.",
      "3 object(s) called tables do not look like this plan's tables.",
      "1 seating unit(s) are made of tables typed as different kinds.",
-     "1 object(s) contain every seat attached to them, which a table does not."
+     "1 object(s) contain every seat attached to them, which a table does not.",
+     "1 seat(s) sit almost exactly between two tables, across 1 table(s). The drawing does not say which they belong to."
     ],
     "tr": [
      "2 masada hiç koltuk yok, buna karşılık 4 koltuğun masası yok.",
      "Masa denen 3 nesne bu planın masalarına benzemiyor.",
      "1 oturma biriminde farklı türde sınıflandırılmış masalar var.",
-     "1 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz."
+     "1 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz.",
+     "1 koltuk iki masanın neredeyse tam ortasında duruyor (1 masayı ilgilendiriyor). Çizim bunların hangisine ait olduğunu söylemiyor."
     ]
    }
   },
@@ -97,13 +107,12 @@
     "TYPE",
     "RELATIONSHIP"
    ],
-   "pointedAt": 8,
+   "pointedAt": 9,
    "pointedAtFalse": 4,
-   "targetedPrecision": 0.5,
-   "lift": 6.25,
+   "targetedPrecision": 0.4444,
+   "lift": 5.556,
    "severities": {
-    "medium": 3,
-    "high": 1
+    "medium": 4
    },
    "perContradiction": [
     {
@@ -131,12 +140,12 @@
      "precision": 0.2
     },
     {
-     "id": "contra:seatsInsideBody",
+     "id": "contra:ambiguousSeat",
      "kind": "RELATIONSHIP",
-     "severity": "high",
-     "pointedAt": 1,
-     "ofThoseFalse": 1,
-     "precision": 1
+     "severity": "medium",
+     "pointedAt": 3,
+     "ofThoseFalse": 0,
+     "precision": 0
     }
    ],
    "downgradedFacts": [
@@ -161,13 +170,13 @@
      "3 table(s) have no seat while 2 seat(s) have no table.",
      "1 object(s) called tables do not look like this plan's tables.",
      "1 seating unit(s) are made of tables typed as different kinds.",
-     "1 object(s) contain every seat attached to them, which a table does not."
+     "3 seat(s) sit almost exactly between two tables, across 3 table(s). The drawing does not say which they belong to."
     ],
     "tr": [
      "3 masada hiç koltuk yok, buna karşılık 2 koltuğun masası yok.",
      "Masa denen 1 nesne bu planın masalarına benzemiyor.",
      "1 oturma biriminde farklı türde sınıflandırılmış masalar var.",
-     "1 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz."
+     "3 koltuk iki masanın neredeyse tam ortasında duruyor (3 masayı ilgilendiriyor). Çizim bunların hangisine ait olduğunu söylemiyor."
     ]
    }
   },
@@ -176,18 +185,18 @@
    "tables": 48,
    "falsePositives": 5,
    "baselineFalseRate": 0.1042,
-   "contradictions": 4,
+   "contradictions": 5,
    "kinds": [
     "COUNT",
     "TYPE",
     "RELATIONSHIP"
    ],
-   "pointedAt": 13,
+   "pointedAt": 17,
    "pointedAtFalse": 4,
-   "targetedPrecision": 0.3077,
-   "lift": 2.954,
+   "targetedPrecision": 0.2353,
+   "lift": 2.259,
    "severities": {
-    "medium": 3,
+    "medium": 4,
     "high": 1
    },
    "perContradiction": [
@@ -219,9 +228,17 @@
      "id": "contra:seatsInsideBody",
      "kind": "RELATIONSHIP",
      "severity": "high",
-     "pointedAt": 2,
-     "ofThoseFalse": 2,
+     "pointedAt": 1,
+     "ofThoseFalse": 1,
      "precision": 1
+    },
+    {
+     "id": "contra:ambiguousSeat",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 4,
+     "ofThoseFalse": 0,
+     "precision": 0
     }
    ],
    "downgradedFacts": [
@@ -251,13 +268,15 @@
      "2 table(s) have no seat while 12 seat(s) have no table.",
      "6 object(s) called tables do not look like this plan's tables.",
      "2 seating unit(s) are made of tables typed as different kinds.",
-     "2 object(s) contain every seat attached to them, which a table does not."
+     "1 object(s) contain every seat attached to them, which a table does not.",
+     "4 seat(s) sit almost exactly between two tables, across 4 table(s). The drawing does not say which they belong to."
     ],
     "tr": [
      "2 masada hiç koltuk yok, buna karşılık 12 koltuğun masası yok.",
      "Masa denen 6 nesne bu planın masalarına benzemiyor.",
      "2 oturma biriminde farklı türde sınıflandırılmış masalar var.",
-     "2 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz."
+     "1 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz.",
+     "4 koltuk iki masanın neredeyse tam ortasında duruyor (4 masayı ilgilendiriyor). Çizim bunların hangisine ait olduğunu söylemiyor."
     ]
    }
   },
@@ -266,7 +285,7 @@
    "tables": 62,
    "falsePositives": 16,
    "baselineFalseRate": 0.2581,
-   "contradictions": 4,
+   "contradictions": 3,
    "kinds": [
     "COUNT",
     "TYPE",
@@ -277,17 +296,16 @@
    "targetedPrecision": 0.5,
    "lift": 1.938,
    "severities": {
-    "medium": 3,
-    "high": 1
+    "medium": 3
    },
    "perContradiction": [
     {
      "id": "contra:emptyTablesOrphanSeats",
      "kind": "COUNT",
      "severity": "medium",
-     "pointedAt": 7,
+     "pointedAt": 9,
      "ofThoseFalse": 3,
-     "precision": 0.4286
+     "precision": 0.3333
     },
     {
      "id": "contra:visualClass",
@@ -304,14 +322,6 @@
      "pointedAt": 29,
      "ofThoseFalse": 13,
      "precision": 0.4483
-    },
-    {
-     "id": "contra:seatsInsideBody",
-     "kind": "RELATIONSHIP",
-     "severity": "high",
-     "pointedAt": 1,
-     "ofThoseFalse": 1,
-     "precision": 1
     }
    ],
    "downgradedFacts": [
@@ -343,16 +353,14 @@
    ],
    "sample": {
     "en": [
-     "7 table(s) have no seat while 5 seat(s) have no table.",
+     "9 table(s) have no seat while 5 seat(s) have no table.",
      "4 object(s) called tables do not look like this plan's tables.",
-     "5 seating unit(s) are made of tables typed as different kinds.",
-     "1 object(s) contain every seat attached to them, which a table does not."
+     "5 seating unit(s) are made of tables typed as different kinds."
     ],
     "tr": [
-     "7 masada hiç koltuk yok, buna karşılık 5 koltuğun masası yok.",
+     "9 masada hiç koltuk yok, buna karşılık 5 koltuğun masası yok.",
      "Masa denen 4 nesne bu planın masalarına benzemiyor.",
-     "5 oturma biriminde farklı türde sınıflandırılmış masalar var.",
-     "1 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz."
+     "5 oturma biriminde farklı türde sınıflandırılmış masalar var."
     ]
    }
   },
@@ -361,18 +369,18 @@
    "tables": 45,
    "falsePositives": 4,
    "baselineFalseRate": 0.0889,
-   "contradictions": 3,
+   "contradictions": 4,
    "kinds": [
     "COUNT",
     "TYPE",
     "RELATIONSHIP"
    ],
-   "pointedAt": 11,
+   "pointedAt": 15,
    "pointedAtFalse": 3,
-   "targetedPrecision": 0.2727,
-   "lift": 3.068,
+   "targetedPrecision": 0.2,
+   "lift": 2.25,
    "severities": {
-    "medium": 3
+    "medium": 4
    },
    "perContradiction": [
     {
@@ -398,6 +406,14 @@
      "pointedAt": 8,
      "ofThoseFalse": 2,
      "precision": 0.25
+    },
+    {
+     "id": "contra:ambiguousSeat",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 5,
+     "ofThoseFalse": 0,
+     "precision": 0
     }
    ],
    "downgradedFacts": [
@@ -426,12 +442,14 @@
     "en": [
      "1 table(s) have no seat while 13 seat(s) have no table.",
      "4 object(s) called tables do not look like this plan's tables.",
-     "2 seating unit(s) are made of tables typed as different kinds."
+     "2 seating unit(s) are made of tables typed as different kinds.",
+     "5 seat(s) sit almost exactly between two tables, across 5 table(s). The drawing does not say which they belong to."
     ],
     "tr": [
      "1 masada hiç koltuk yok, buna karşılık 13 koltuğun masası yok.",
      "Masa denen 4 nesne bu planın masalarına benzemiyor.",
-     "2 oturma biriminde farklı türde sınıflandırılmış masalar var."
+     "2 oturma biriminde farklı türde sınıflandırılmış masalar var.",
+     "5 koltuk iki masanın neredeyse tam ortasında duruyor (5 masayı ilgilendiriyor). Çizim bunların hangisine ait olduğunu söylemiyor."
     ]
    }
   },
@@ -440,19 +458,19 @@
    "tables": 69,
    "falsePositives": 32,
    "baselineFalseRate": 0.4638,
-   "contradictions": 7,
+   "contradictions": 8,
    "kinds": [
     "COUNT",
     "TYPE",
     "RELATIONSHIP",
     "ZONE"
    ],
-   "pointedAt": 47,
-   "pointedAtFalse": 28,
-   "targetedPrecision": 0.5957,
-   "lift": 1.285,
+   "pointedAt": 50,
+   "pointedAtFalse": 29,
+   "targetedPrecision": 0.58,
+   "lift": 1.251,
    "severities": {
-    "medium": 4,
+    "medium": 5,
     "high": 3
    },
    "perContradiction": [
@@ -468,9 +486,9 @@
      "id": "contra:emptyTablesOrphanSeats",
      "kind": "COUNT",
      "severity": "high",
-     "pointedAt": 14,
+     "pointedAt": 16,
      "ofThoseFalse": 1,
-     "precision": 0.0714
+     "precision": 0.0625
     },
     {
      "id": "contra:visualClass",
@@ -500,9 +518,17 @@
      "id": "contra:seatsInsideBody",
      "kind": "RELATIONSHIP",
      "severity": "high",
-     "pointedAt": 16,
-     "ofThoseFalse": 16,
+     "pointedAt": 13,
+     "ofThoseFalse": 13,
      "precision": 1
+    },
+    {
+     "id": "contra:ambiguousSeat",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 7,
+     "ofThoseFalse": 3,
+     "precision": 0.4286
     },
     {
      "id": "contra:seatingInStage",
@@ -548,20 +574,22 @@
    "sample": {
     "en": [
      "33 of 115 detected seats belong to no table.",
-     "14 table(s) have no seat while 33 seat(s) have no table.",
+     "16 table(s) have no seat while 33 seat(s) have no table.",
      "5 object(s) called tables do not look like this plan's tables.",
      "1 object(s) were typed differently from the family they look like.",
      "9 seating unit(s) are made of tables typed as different kinds.",
-     "16 object(s) contain every seat attached to them, which a table does not.",
+     "13 object(s) contain every seat attached to them, which a table does not.",
+     "7 seat(s) sit almost exactly between two tables, across 7 table(s). The drawing does not say which they belong to.",
      "1 seating area(s) overlap a stage."
     ],
     "tr": [
      "Tespit edilen 115 koltuktan 33 tanesi hiçbir masaya ait değil.",
-     "14 masada hiç koltuk yok, buna karşılık 33 koltuğun masası yok.",
+     "16 masada hiç koltuk yok, buna karşılık 33 koltuğun masası yok.",
      "Masa denen 5 nesne bu planın masalarına benzemiyor.",
      "1 nesne, benzediği aileden farklı türde sınıflandırıldı.",
      "9 oturma biriminde farklı türde sınıflandırılmış masalar var.",
-     "16 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz.",
+     "13 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz.",
+     "7 koltuk iki masanın neredeyse tam ortasında duruyor (7 masayı ilgilendiriyor). Çizim bunların hangisine ait olduğunu söylemiyor.",
      "1 oturma alanı sahneyle çakışıyor."
     ]
    }
@@ -598,9 +626,9 @@
      "id": "contra:emptyTablesOrphanSeats",
      "kind": "COUNT",
      "severity": "high",
-     "pointedAt": 21,
+     "pointedAt": 22,
      "ofThoseFalse": 4,
-     "precision": 0.1905
+     "precision": 0.1818
     },
     {
      "id": "contra:visualClass",
@@ -622,8 +650,8 @@
      "id": "contra:seatsInsideBody",
      "kind": "RELATIONSHIP",
      "severity": "high",
-     "pointedAt": 39,
-     "ofThoseFalse": 39,
+     "pointedAt": 38,
+     "ofThoseFalse": 38,
      "precision": 1
     }
    ],
@@ -662,17 +690,17 @@
    "sample": {
     "en": [
      "33 of 119 detected seats belong to no table.",
-     "21 table(s) have no seat while 33 seat(s) have no table.",
+     "22 table(s) have no seat while 33 seat(s) have no table.",
      "6 object(s) called tables do not look like this plan's tables.",
      "8 seating unit(s) are made of tables typed as different kinds.",
-     "39 object(s) contain every seat attached to them, which a table does not."
+     "38 object(s) contain every seat attached to them, which a table does not."
     ],
     "tr": [
      "Tespit edilen 119 koltuktan 33 tanesi hiçbir masaya ait değil.",
-     "21 masada hiç koltuk yok, buna karşılık 33 koltuğun masası yok.",
+     "22 masada hiç koltuk yok, buna karşılık 33 koltuğun masası yok.",
      "Masa denen 6 nesne bu planın masalarına benzemiyor.",
      "8 oturma biriminde farklı türde sınıflandırılmış masalar var.",
-     "39 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz."
+     "38 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz."
     ]
    }
   },
@@ -681,7 +709,7 @@
    "tables": 86,
    "falsePositives": 49,
    "baselineFalseRate": 0.5698,
-   "contradictions": 6,
+   "contradictions": 7,
    "kinds": [
     "COUNT",
     "TYPE",
@@ -692,7 +720,7 @@
    "targetedPrecision": 0.6761,
    "lift": 1.187,
    "severities": {
-    "medium": 4,
+    "medium": 5,
     "high": 2
    },
    "perContradiction": [
@@ -708,9 +736,9 @@
      "id": "contra:emptyTablesOrphanSeats",
      "kind": "COUNT",
      "severity": "high",
-     "pointedAt": 22,
+     "pointedAt": 23,
      "ofThoseFalse": 5,
-     "precision": 0.2273
+     "precision": 0.2174
     },
     {
      "id": "contra:visualClass",
@@ -740,9 +768,17 @@
      "id": "contra:seatsInsideBody",
      "kind": "RELATIONSHIP",
      "severity": "high",
-     "pointedAt": 35,
-     "ofThoseFalse": 35,
+     "pointedAt": 32,
+     "ofThoseFalse": 32,
      "precision": 1
+    },
+    {
+     "id": "contra:ambiguousSeat",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 4,
+     "ofThoseFalse": 3,
+     "precision": 0.75
     }
    ],
    "downgradedFacts": [
@@ -780,19 +816,21 @@
    "sample": {
     "en": [
      "34 of 114 detected seats belong to no table.",
-     "22 table(s) have no seat while 34 seat(s) have no table.",
+     "23 table(s) have no seat while 34 seat(s) have no table.",
      "2 object(s) called tables do not look like this plan's tables.",
      "1 object(s) were typed differently from the family they look like.",
      "7 seating unit(s) are made of tables typed as different kinds.",
-     "35 object(s) contain every seat attached to them, which a table does not."
+     "32 object(s) contain every seat attached to them, which a table does not.",
+     "4 seat(s) sit almost exactly between two tables, across 4 table(s). The drawing does not say which they belong to."
     ],
     "tr": [
      "Tespit edilen 114 koltuktan 34 tanesi hiçbir masaya ait değil.",
-     "22 masada hiç koltuk yok, buna karşılık 34 koltuğun masası yok.",
+     "23 masada hiç koltuk yok, buna karşılık 34 koltuğun masası yok.",
      "Masa denen 2 nesne bu planın masalarına benzemiyor.",
      "1 nesne, benzediği aileden farklı türde sınıflandırıldı.",
      "7 oturma biriminde farklı türde sınıflandırılmış masalar var.",
-     "35 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz."
+     "32 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz.",
+     "4 koltuk iki masanın neredeyse tam ortasında duruyor (4 masayı ilgilendiriyor). Çizim bunların hangisine ait olduğunu söylemiyor."
     ]
    }
   },
@@ -807,10 +845,10 @@
     "TYPE",
     "RELATIONSHIP"
    ],
-   "pointedAt": 44,
-   "pointedAtFalse": 20,
-   "targetedPrecision": 0.4545,
-   "lift": 1.241,
+   "pointedAt": 46,
+   "pointedAtFalse": 21,
+   "targetedPrecision": 0.4565,
+   "lift": 1.247,
    "severities": {
     "medium": 3,
     "high": 1
@@ -828,17 +866,17 @@
      "id": "contra:emptyTablesOrphanSeats",
      "kind": "COUNT",
      "severity": "high",
-     "pointedAt": 32,
-     "ofThoseFalse": 17,
-     "precision": 0.5313
+     "pointedAt": 33,
+     "ofThoseFalse": 18,
+     "precision": 0.5455
     },
     {
      "id": "contra:visualClass",
      "kind": "TYPE",
      "severity": "medium",
-     "pointedAt": 15,
-     "ofThoseFalse": 3,
-     "precision": 0.2
+     "pointedAt": 23,
+     "ofThoseFalse": 7,
+     "precision": 0.3043
     },
     {
      "id": "contra:mixedGroupTypes",
@@ -879,44 +917,44 @@
    "sample": {
     "en": [
      "38 of 110 detected seats belong to no table.",
-     "32 table(s) have no seat while 38 seat(s) have no table.",
-     "15 object(s) called tables do not look like this plan's tables.",
+     "33 table(s) have no seat while 38 seat(s) have no table.",
+     "23 object(s) called tables do not look like this plan's tables.",
      "3 seating unit(s) are made of tables typed as different kinds."
     ],
     "tr": [
      "Tespit edilen 110 koltuktan 38 tanesi hiçbir masaya ait değil.",
-     "32 masada hiç koltuk yok, buna karşılık 38 koltuğun masası yok.",
-     "Masa denen 15 nesne bu planın masalarına benzemiyor.",
+     "33 masada hiç koltuk yok, buna karşılık 38 koltuğun masası yok.",
+     "Masa denen 23 nesne bu planın masalarına benzemiyor.",
      "3 oturma biriminde farklı türde sınıflandırılmış masalar var."
     ]
    }
   }
  ],
  "gates": {
-  "meanTargetedPrecision": 0.4966,
+  "meanTargetedPrecision": 0.4666,
   "meanBaselineFalseRate": 0.2876,
   "renderingsWherePointingBeatsChance": "9/9",
-  "contradictionsOnTheCleanOriginal": 4,
+  "contradictionsOnTheCleanOriginal": 5,
   "honestyFailures": 0
  },
  "perKind": {
   "COUNT": {
    "kind": "COUNT",
    "fired": 13,
-   "pointedAt": 104,
-   "ofThoseFalse": 37
+   "pointedAt": 111,
+   "ofThoseFalse": 38
   },
   "TYPE": {
    "kind": "TYPE",
    "fired": 11,
-   "pointedAt": 48,
-   "ofThoseFalse": 29
+   "pointedAt": 56,
+   "ofThoseFalse": 33
   },
   "RELATIONSHIP": {
    "kind": "RELATIONSHIP",
-   "fired": 16,
-   "pointedAt": 335,
-   "ofThoseFalse": 232
+   "fired": 20,
+   "pointedAt": 349,
+   "ofThoseFalse": 228
   },
   "ZONE": {
    "kind": "ZONE",
@@ -930,8 +968,8 @@
    "id": "contra:emptyTablesOrphanSeats",
    "kind": "COUNT",
    "fired": 9,
-   "pointedAt": 104,
-   "ofThoseFalse": 37,
+   "pointedAt": 111,
+   "ofThoseFalse": 38,
    "severities": {
     "medium": 5,
     "high": 4
@@ -941,8 +979,8 @@
    "id": "contra:visualClass",
    "kind": "TYPE",
    "fired": 9,
-   "pointedAt": 46,
-   "ofThoseFalse": 27,
+   "pointedAt": 54,
+   "ofThoseFalse": 31,
    "severities": {
     "medium": 9
    }
@@ -960,11 +998,21 @@
   "contra:seatsInsideBody": {
    "id": "contra:seatsInsideBody",
    "kind": "RELATIONSHIP",
-   "fired": 7,
-   "pointedAt": 95,
-   "ofThoseFalse": 95,
+   "fired": 5,
+   "pointedAt": 85,
+   "ofThoseFalse": 85,
    "severities": {
-    "high": 7
+    "high": 5
+   }
+  },
+  "contra:ambiguousSeat": {
+   "id": "contra:ambiguousSeat",
+   "kind": "RELATIONSHIP",
+   "fired": 6,
+   "pointedAt": 24,
+   "ofThoseFalse": 6,
+   "severities": {
+    "medium": 6
    }
   },
   "contra:orphanSeats": {

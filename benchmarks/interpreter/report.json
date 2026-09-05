@@ -1,5 +1,5 @@
 {
- "ranAt": "2026-09-01T13:24:41.283Z",
+ "ranAt": "2026-09-05T07:14:39.494Z",
  "plans": [
   {
    "planId": "adversarial-architecture-v1",
@@ -78,8 +78,8 @@
      "strength": "likely",
      "strengthBefore": null,
      "contradictedBy": null,
-     "en": "10 dining area(s).",
-     "tr": "10 dining alanı.",
+     "en": "1 dining area(s).",
+     "tr": "1 dining alanı.",
      "provenance": [
       {
        "key": "provenance.zoneTyped",
@@ -89,12 +89,12 @@
       }
      ],
      "basis": {
-      "n": 10
+      "n": 1
      },
      "checkable": true,
      "correct": true,
      "detail": {
-      "claimed": "10 dining areas",
+      "claimed": "1 dining areas",
       "annotated": "10 tables"
      }
     },
@@ -118,7 +118,7 @@
    ],
    "priorities": [
     {
-     "id": "priority:reviewgroup_8c796aaf-521c-4d9e-9947-9ca548d97882",
+     "id": "priority:reviewgroup_09b66698-1281-4790-bdbe-eb092e021666",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -127,12 +127,12 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_8ba4e5fe-d04d-419c-bc5c-28ca28f929b0",
-      "candidate_2f3304e9-8e3f-46d9-ae3b-cc01792b4061",
-      "candidate_aeb1999f-1aee-40c7-9a28-84bf3d939a6e",
-      "candidate_8c4c0ed5-68ad-4ff3-87d9-b552eacbde80",
-      "candidate_3b9e86bb-077d-4558-9a94-a681cf52bdb9",
-      "candidate_fcbb56fd-a744-48c8-8899-5cb131912ea1"
+      "candidate_78246dc7-18f3-4a67-be83-e7d5931503e6",
+      "candidate_3cf86202-ebb1-4a5b-aaa0-7f0ea6d47b06",
+      "candidate_55d34d3c-7668-4a44-932b-cff71803dcea",
+      "candidate_e38b78b6-d92b-4ecd-b293-a7d39b589391",
+      "candidate_dd1d8377-8008-4f3d-a036-e3c4a6bd2f72",
+      "candidate_829569e0-75e6-4335-b72c-de223aeb8d88"
      ],
      "downstreamImpact": {
       "objects": 6,
@@ -223,8 +223,8 @@
      "strength": "likely",
      "strengthBefore": null,
      "contradictedBy": null,
-     "en": "18 dining area(s).",
-     "tr": "18 dining alanı.",
+     "en": "1 dining area(s).",
+     "tr": "1 dining alanı.",
      "provenance": [
       {
        "key": "provenance.zoneTyped",
@@ -234,12 +234,12 @@
       }
      ],
      "basis": {
-      "n": 18
+      "n": 1
      },
      "checkable": true,
      "correct": true,
      "detail": {
-      "claimed": "18 dining areas",
+      "claimed": "1 dining areas",
       "annotated": "23 tables"
      }
     },
@@ -362,8 +362,8 @@
      "strength": "likely",
      "strengthBefore": null,
      "contradictedBy": null,
-     "en": "4 dining area(s).",
-     "tr": "4 dining alanı.",
+     "en": "1 dining area(s).",
+     "tr": "1 dining alanı.",
      "provenance": [
       {
        "key": "provenance.zoneTyped",
@@ -373,12 +373,12 @@
       }
      ],
      "basis": {
-      "n": 4
+      "n": 1
      },
      "checkable": true,
      "correct": true,
      "detail": {
-      "claimed": "4 dining areas",
+      "claimed": "1 dining areas",
       "annotated": "24 tables"
      }
     },
@@ -398,11 +398,69 @@
      "basis": {},
      "checkable": false,
      "why": "a statement about whether OCR ran, not about the plan"
+    },
+    {
+     "key": "fact.seatsAmbiguous",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "20 seat(s) sit almost exactly between two tables; which table they belong to is not settled.",
+     "tr": "20 koltuk iki masanın neredeyse tam ortasında; hangisine ait olduğu belirlenmedi.",
+     "provenance": [
+      {
+       "key": "provenance.competingTablesCompared",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "n": 20
+     },
+     "checkable": false,
+     "why": "this plan has no chair-to-table ground truth to compare against"
     }
    ],
    "priorities": [
     {
-     "id": "priority:question_66a093e6-3956-4d05-86cc-482aa4aef4ef",
+     "id": "priority:contra:ambiguousSeat",
+     "key": "priority.contradiction",
+     "rank": 2,
+     "params": {
+      "kind": "contradiction.kind.RELATIONSHIP"
+     },
+     "contradictionId": "contra:ambiguousSeat",
+     "why": "contradiction.from.chairAssociation and contradiction.from.competingTable cannot both be right",
+     "targetIds": [
+      "candidate_04b80b59-4cc0-48e7-a331-91487344bfe9",
+      "candidate_d6a3d18a-2e0e-43cf-92fe-3878a00586c8",
+      "candidate_ca261aec-29e2-41f2-b181-5b06a723c9e4",
+      "candidate_f64a4c39-d18c-4563-82b9-86f6ddccd3cc",
+      "candidate_925a29ac-eecd-4c89-b2a0-add28d973e73",
+      "candidate_d4937380-867e-434d-bb5f-361548c78495",
+      "candidate_f3dafacf-6a6d-4fdc-9077-95aaccee495d",
+      "candidate_d45797a0-2b7a-472e-ae77-5d16d3c0d947",
+      "candidate_c21f00e2-d554-439d-bad6-2f818f706016",
+      "candidate_69060d4d-b3b8-456a-a3dd-7566ae7dff1f",
+      "candidate_4a5f7292-8e56-468b-80a8-bbea7b90072c",
+      "candidate_a8abaaff-40c2-477d-aa72-2996181642cb",
+      "candidate_bc777c4e-1d9a-4eed-bc38-2327f95e575b",
+      "candidate_5c2524c6-f54d-4061-ba20-95269373fdb4",
+      "candidate_3ff81456-9774-4d5d-a0c0-a10c405212f8",
+      "candidate_5852e0e5-ae24-45d6-9a0b-3ba65b75a68d",
+      "candidate_e8b3a29c-7ecc-4bf5-a19b-7d604feedbee",
+      "candidate_7b7eb102-95eb-43d8-bfcd-1459cada1522",
+      "candidate_287a6bb8-4635-43f7-84d5-11686f0d8b7a",
+      "candidate_99debe44-8bd9-4720-af82-49cf82cda687"
+     ],
+     "downstreamImpact": {
+      "objects": 20,
+      "seats": 64,
+      "facts": 0
+     },
+     "signature": "21,25;21,42;21,58;21,75;27,25;27,42;27,58;27,75;33,25;33,42;33,58;33,75;39,25;39,42;39,58;39,75;45,25;45,42;45,58;45,75",
+     "buildOrder": 0
+    },
+    {
+     "id": "priority:question_6e7adaad-7964-47ba-ac74-1eaf20d78a73",
      "key": "priority.question",
      "rank": 5,
      "params": {
@@ -416,10 +474,10 @@
       "facts": 0
      },
      "signature": "",
-     "buildOrder": 0
+     "buildOrder": 1
     },
     {
-     "id": "priority:reviewgroup_d5a023c2-fc1f-4653-8936-5a76d2d065e4",
+     "id": "priority:reviewgroup_7395aa99-b042-49a0-a38b-5b0adee3ee5e",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -428,10 +486,10 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_440153ea-5fec-4fb7-a233-1dbb81482fa7",
-      "candidate_9b383a1c-9351-466c-b784-e00654900862",
-      "candidate_6ba2c412-a4bc-45a5-9c0a-629a655ce76a",
-      "candidate_74858282-32bf-49fb-a44f-d0b1398af639"
+      "candidate_720bd16c-4a11-4664-9c65-0c4c20248d50",
+      "candidate_9435a9fa-fe20-4b66-bdc1-0876de606076",
+      "candidate_afffbd24-ccb4-425b-b705-b5d3c9dc7186",
+      "candidate_64cefc89-081c-437d-adbf-6125814a14bd"
      ],
      "downstreamImpact": {
       "objects": 4,
@@ -439,7 +497,7 @@
       "facts": 0
      },
      "signature": "17,8;20,8;20,94;66,94",
-     "buildOrder": 1
+     "buildOrder": 2
     }
    ],
    "untranslated": [],
@@ -522,8 +580,8 @@
      "strength": "likely",
      "strengthBefore": null,
      "contradictedBy": null,
-     "en": "12 dining area(s).",
-     "tr": "12 dining alanı.",
+     "en": "1 dining area(s).",
+     "tr": "1 dining alanı.",
      "provenance": [
       {
        "key": "provenance.zoneTyped",
@@ -533,12 +591,12 @@
       }
      ],
      "basis": {
-      "n": 12
+      "n": 1
      },
      "checkable": true,
      "correct": true,
      "detail": {
-      "claimed": "12 dining areas",
+      "claimed": "1 dining areas",
       "annotated": "12 tables"
      }
     },
@@ -739,7 +797,7 @@
      "correct": true,
      "detail": {
       "claimed": 2,
-      "annotated": 7
+      "annotated": 0
      }
     },
     {
@@ -796,8 +854,8 @@
      "strength": "likely",
      "strengthBefore": null,
      "contradictedBy": null,
-     "en": "6 dining area(s).",
-     "tr": "6 dining alanı.",
+     "en": "1 dining area(s).",
+     "tr": "1 dining alanı.",
      "provenance": [
       {
        "key": "provenance.zoneTyped",
@@ -807,12 +865,12 @@
       }
      ],
      "basis": {
-      "n": 6
+      "n": 1
      },
      "checkable": true,
      "correct": true,
      "detail": {
-      "claimed": "6 dining areas",
+      "claimed": "1 dining areas",
       "annotated": "46 tables"
      }
     },
@@ -821,8 +879,8 @@
      "strength": "likely",
      "strengthBefore": null,
      "contradictedBy": null,
-     "en": "3 bistro area(s).",
-     "tr": "3 bistro alanı.",
+     "en": "1 bistro area(s).",
+     "tr": "1 bistro alanı.",
      "provenance": [
       {
        "key": "provenance.zoneTyped",
@@ -832,12 +890,12 @@
       }
      ],
      "basis": {
-      "n": 3
+      "n": 1
      },
      "checkable": true,
      "correct": true,
      "detail": {
-      "claimed": "3 bistro areas",
+      "claimed": "1 bistro areas",
       "annotated": "5 bistro tables"
      }
     },
@@ -857,6 +915,53 @@
      "basis": {},
      "checkable": false,
      "why": "a statement about whether OCR ran, not about the plan"
+    },
+    {
+     "key": "fact.seatsAmbiguous",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "1 seat(s) sit almost exactly between two tables; which table they belong to is not settled.",
+     "tr": "1 koltuk iki masanın neredeyse tam ortasında; hangisine ait olduğu belirlenmedi.",
+     "provenance": [
+      {
+       "key": "provenance.competingTablesCompared",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "n": 1
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": 1,
+      "annotatedAmbiguous": 4
+     }
+    },
+    {
+     "key": "fact.seatsFacing",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "19 of 108 seats are drawn with a direction, and each faces the table it was placed at.",
+     "tr": "108 koltuktan 19 tanesi yönlü çizilmiş ve her biri yerleştirildiği masaya bakıyor.",
+     "provenance": [
+      {
+       "key": "provenance.symbolAsymmetry",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "facing": 19,
+      "of": 108
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": 19,
+      "annotatedOrientable": 24
+     }
     }
    ],
    "priorities": [
@@ -870,7 +975,7 @@
      "contradictionId": "contra:seatsInsideBody",
      "why": "contradiction.from.tableDetection and contradiction.from.chairAssociation cannot both be right",
      "targetIds": [
-      "candidate_844c0b6c-e849-49bc-b8be-6ddae0962b2c"
+      "candidate_22c6d713-5d05-4c31-a118-03a2050591af"
      ],
      "downstreamImpact": {
       "objects": 1,
@@ -890,9 +995,9 @@
      "contradictionId": "contra:visualClass",
      "why": "contradiction.from.detectionAndShape and contradiction.from.visualSecondOpinion cannot both be right",
      "targetIds": [
-      "candidate_71037888-e4ef-48c7-abd9-3d335d83a6db",
-      "candidate_a8a7649f-5522-4ef9-8008-7c2fe9f18f43",
-      "candidate_ec95fbc3-b27a-40fe-94d7-3735c00ccb72"
+      "candidate_692ec1e0-fc5d-4f90-b9c0-2b54d2fb2b01",
+      "candidate_d6053ab5-9ddb-4fc6-a91d-145a5668e3f0",
+      "candidate_8b7c765a-190b-40dc-8f38-654033a8231f"
      ],
      "downstreamImpact": {
       "objects": 3,
@@ -912,10 +1017,10 @@
      "contradictionId": "contra:mixedGroupTypes",
      "why": "contradiction.from.geometricGrouping and contradiction.from.shapeClassification cannot both be right",
      "targetIds": [
-      "candidate_4e1900d1-a573-49a0-bf08-bbcfc5c1ca91",
-      "candidate_81f7041e-9275-40b2-a2e7-ef6824c15245",
-      "candidate_65af0895-18d6-42c5-ad0d-179f403f020e",
-      "candidate_71037888-e4ef-48c7-abd9-3d335d83a6db"
+      "candidate_ccca6e28-9edb-454c-9e9c-cf363915ff8d",
+      "candidate_85e89aed-dba2-48d8-a323-3f4b54668640",
+      "candidate_b6bb0ac8-6c00-425b-9077-0fb2d12e1720",
+      "candidate_692ec1e0-fc5d-4f90-b9c0-2b54d2fb2b01"
      ],
      "downstreamImpact": {
       "objects": 4,
@@ -935,8 +1040,8 @@
      "contradictionId": "contra:emptyTablesOrphanSeats",
      "why": "contradiction.from.tableDetection and contradiction.from.chairDetection cannot both be right",
      "targetIds": [
-      "candidate_d842a902-19e0-44ad-994e-927a4f33fd68",
-      "candidate_ec95fbc3-b27a-40fe-94d7-3735c00ccb72"
+      "candidate_9011486a-38a8-4158-9e9d-a59093ce840d",
+      "candidate_8b7c765a-190b-40dc-8f38-654033a8231f"
      ],
      "downstreamImpact": {
       "objects": 2,
@@ -947,24 +1052,27 @@
      "buildOrder": 0
     },
     {
-     "id": "priority:question_20eccd13-882d-49cb-8905-4792fbd89bc8",
-     "key": "priority.question",
-     "rank": 5,
+     "id": "priority:contra:ambiguousSeat",
+     "key": "priority.contradiction",
+     "rank": 2,
      "params": {
-      "n": 1
+      "kind": "contradiction.kind.RELATIONSHIP"
      },
-     "why": "a grouping the detector could not resolve",
-     "targetIds": [],
+     "contradictionId": "contra:ambiguousSeat",
+     "why": "contradiction.from.chairAssociation and contradiction.from.competingTable cannot both be right",
+     "targetIds": [
+      "candidate_9a081226-a36f-44fb-a414-2eb9de60d50b"
+     ],
      "downstreamImpact": {
-      "objects": 0,
-      "seats": 0,
+      "objects": 1,
+      "seats": 4,
       "facts": 0
      },
-     "signature": "",
+     "signature": "37,74",
      "buildOrder": 4
     },
     {
-     "id": "priority:question_def9de22-e5f7-4ae7-8f1f-07520925623f",
+     "id": "priority:question_d758154f-6902-49c8-b49b-3acc88793a1b",
      "key": "priority.question",
      "rank": 5,
      "params": {
@@ -981,7 +1089,7 @@
      "buildOrder": 5
     },
     {
-     "id": "priority:question_23c6cb04-806d-4630-9391-eccc7f099527",
+     "id": "priority:question_b4469b1c-78df-4dd9-8107-9f7e74a23d41",
      "key": "priority.question",
      "rank": 5,
      "params": {
@@ -998,7 +1106,7 @@
      "buildOrder": 6
     },
     {
-     "id": "priority:question_008edd37-adc0-43a1-a9e9-78c3519ac377",
+     "id": "priority:question_98b31801-dc8a-4a98-946c-42b6bf7f7800",
      "key": "priority.question",
      "rank": 5,
      "params": {
@@ -1015,7 +1123,7 @@
      "buildOrder": 7
     },
     {
-     "id": "priority:question_65a13936-4897-4df6-8118-b8d072282312",
+     "id": "priority:question_20b48496-d667-432d-9530-40c43ddc0048",
      "key": "priority.question",
      "rank": 5,
      "params": {
@@ -1032,7 +1140,24 @@
      "buildOrder": 8
     },
     {
-     "id": "priority:reviewgroup_b5f21a2d-3b19-4993-a11d-2d214d25daf2",
+     "id": "priority:question_9c43415c-3e17-43c3-9dc9-75d4adf48334",
+     "key": "priority.question",
+     "rank": 5,
+     "params": {
+      "n": 1
+     },
+     "why": "a grouping the detector could not resolve",
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 9
+    },
+    {
+     "id": "priority:reviewgroup_e2bf2370-738d-45b3-ad64-5b99c27895b1",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1041,32 +1166,32 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_13272e88-877f-41a5-a5a9-0f0169dd7a80",
-      "candidate_ad460ad5-5adb-4400-8425-9a364321795e",
-      "candidate_c4acebbf-0d14-4dd1-a53a-013bcc8006e3",
-      "candidate_082bf716-4366-43a2-b367-90e554b37e96",
-      "candidate_7cbf6d68-5d00-41a4-9cd3-84628e6a87af",
-      "candidate_f0ef6e94-eb45-4faf-aa78-df06a691c9f3",
-      "candidate_f7aefc8f-15f8-48e3-8ac4-555665817a4c",
-      "candidate_04176c86-fc06-4d36-801d-864abc33968c",
-      "candidate_65af0895-18d6-42c5-ad0d-179f403f020e",
-      "candidate_e2469148-0380-4377-a236-3a630faa91d6",
-      "candidate_6d5ad259-e445-4a58-923e-0094b94eb9e6",
-      "candidate_a441ec4a-28d3-4fe8-b16e-c4ff9cd7d171",
-      "candidate_e55c8056-7276-4926-9ca5-c11d73282911",
-      "candidate_d842a902-19e0-44ad-994e-927a4f33fd68",
-      "candidate_ec95fbc3-b27a-40fe-94d7-3735c00ccb72"
+      "candidate_77f79559-8aab-48b9-83c5-683dda1f7767",
+      "candidate_da52545c-95f0-48b4-b3d9-2233791bc064",
+      "candidate_e83e46c0-ce2d-4026-a8b4-f1e994abdb9d",
+      "candidate_1f34c7e0-1178-4dc1-9658-a6c0b7a4e01d",
+      "candidate_c5bd92ba-c17b-4bb9-8a1d-b7f95bfda650",
+      "candidate_f0de68d5-d644-4ddf-a761-e27cb4f3efa5",
+      "candidate_445ca516-3d8a-4a6e-bfc0-214501c27f57",
+      "candidate_98601602-cbe0-4a66-bc4b-2478c64663b7",
+      "candidate_b6bb0ac8-6c00-425b-9077-0fb2d12e1720",
+      "candidate_66b1af07-c40f-4447-879d-862ebf4b830f",
+      "candidate_9279350e-288a-4832-a127-3f59628b6cca",
+      "candidate_b20e742d-4429-40cc-969b-f888dca84e66",
+      "candidate_30b073b9-ec62-41ca-8631-01eb0c587f00",
+      "candidate_9011486a-38a8-4158-9e9d-a59093ce840d",
+      "candidate_8b7c765a-190b-40dc-8f38-654033a8231f"
      ],
      "downstreamImpact": {
       "objects": 27,
-      "seats": 32,
+      "seats": 31,
       "facts": 0
      },
      "signature": "16,54;20,54;24,54;24,73;30,74;34,74;47,43;47,49;47,56;48,64;58,36;70,36;70,43;71,49;83,63",
-     "buildOrder": 9
+     "buildOrder": 10
     },
     {
-     "id": "priority:reviewgroup_e329464f-baa5-4ded-813b-bb65410c7d69",
+     "id": "priority:reviewgroup_76c21de5-bb43-485b-8af4-829d18ebf65a",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1075,11 +1200,11 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_7ac3d8fb-7edf-4371-95d8-b08063a5a54a",
-      "candidate_239c968b-9fd5-4335-ab13-978491fa27e2",
-      "candidate_ee5ca23e-1449-43ab-8382-d468983d228b",
-      "candidate_17fdbf82-2226-4205-8855-953f177442ae",
-      "candidate_5131ac63-9d5f-4769-b6f2-040d8feab41d"
+      "candidate_4138f6ab-b0eb-4ba2-8466-2f461bcfa495",
+      "candidate_b02efdf6-7682-43f3-8d33-dc3ba2102ac0",
+      "candidate_eb9de6f4-3900-43c4-a740-b1951ef71c40",
+      "candidate_cb963f76-3776-4d51-baf4-82961d2deac4",
+      "candidate_1cce79d1-edc1-4986-b9e1-5dda6d21c5ff"
      ],
      "downstreamImpact": {
       "objects": 5,
@@ -1087,10 +1212,10 @@
       "facts": 0
      },
      "signature": "14,90;2,28;28,89;36,90;5,28",
-     "buildOrder": 10
+     "buildOrder": 11
     },
     {
-     "id": "priority:reviewgroup_0a4523e6-b7fd-48d9-9329-c034b2ea616d",
+     "id": "priority:reviewgroup_09b6459b-cb22-4f36-bfa6-e52e0c74689e",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1099,10 +1224,10 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_d81ddac4-c9a1-4a2c-aa37-6f873ab4ff45",
-      "candidate_ad84d7ba-a4ee-4007-8d77-28f7ed722736",
-      "candidate_a8a7649f-5522-4ef9-8008-7c2fe9f18f43",
-      "candidate_558a16ad-d8c1-4ce5-9482-440450441b6e"
+      "candidate_6b52afdc-8cd2-4411-859e-a1f4f439d406",
+      "candidate_d0986c1b-e162-47c0-87a5-63f2855b97c2",
+      "candidate_d6053ab5-9ddb-4fc6-a91d-145a5668e3f0",
+      "candidate_ff31366b-7d63-47c6-a62e-a93071c83567"
      ],
      "downstreamImpact": {
       "objects": 4,
@@ -1110,10 +1235,10 @@
       "facts": 0
      },
      "signature": "5,74;6,55;91,29;91,65",
-     "buildOrder": 11
+     "buildOrder": 12
     },
     {
-     "id": "priority:reviewgroup_42443a10-a39b-47a0-bce5-5b70dc8d5e37",
+     "id": "priority:reviewgroup_590451fa-a234-40ec-8bac-1c418f375d26",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1122,10 +1247,10 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_ae41137f-0991-4788-90da-df515b45b66b",
-      "candidate_395c5f5e-9772-4cab-963e-7516b6914c48",
-      "candidate_f7e465d3-5cee-426b-90d0-22b9e33f80d7",
-      "candidate_e7145240-f64b-4c46-8d92-5085bab45e63"
+      "candidate_ac3d172f-d4de-4db7-9f70-2ffb03647b14",
+      "candidate_ac3e030e-23ff-43c4-9e0a-de98539ac3b0",
+      "candidate_47c4cda2-0cad-4fbe-9f1c-1185b08070d8",
+      "candidate_74b6680e-91e8-4d77-8d7d-72b88cf6c2f3"
      ],
      "downstreamImpact": {
       "objects": 4,
@@ -1133,10 +1258,10 @@
       "facts": 0
      },
      "signature": "10,7;14,11;15,15;49,88",
-     "buildOrder": 12
+     "buildOrder": 13
     },
     {
-     "id": "priority:reviewgroup_31af51d9-5900-4408-b125-548153d83c39",
+     "id": "priority:reviewgroup_72971fcc-55f1-4738-aa13-15ccc35105ec",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1145,8 +1270,8 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_71037888-e4ef-48c7-abd9-3d335d83a6db",
-      "candidate_844c0b6c-e849-49bc-b8be-6ddae0962b2c"
+      "candidate_692ec1e0-fc5d-4f90-b9c0-2b54d2fb2b01",
+      "candidate_22c6d713-5d05-4c31-a118-03a2050591af"
      ],
      "downstreamImpact": {
       "objects": 2,
@@ -1154,10 +1279,10 @@
       "facts": 0
      },
      "signature": "1,17;55,36",
-     "buildOrder": 13
+     "buildOrder": 14
     },
     {
-     "id": "priority:reviewgroup_4951ff68-2007-45fc-99d9-6ce748fb015e",
+     "id": "priority:reviewgroup_115e0932-2a6a-43f1-a311-a65ee76d21e1",
      "key": "priority.reviewGroup",
      "rank": 6,
      "params": {
@@ -1166,8 +1291,8 @@
      },
      "why": "a batch of similar objects to confirm together",
      "targetIds": [
-      "candidate_99717bc2-100d-4cfc-bcba-b31a12025314",
-      "candidate_35c1d5ae-b9c2-414c-9957-427b5ea92435"
+      "candidate_ba2c4ba0-cdf5-4401-8b5d-7acac7cce080",
+      "candidate_d8e5ed7a-4ea2-4893-b27f-700bad2c4291"
      ],
      "downstreamImpact": {
       "objects": 2,
@@ -1175,7 +1300,7 @@
       "facts": 0
      },
      "signature": "51,88;8,33",
-     "buildOrder": 14
+     "buildOrder": 15
     }
    ],
    "untranslated": [],
@@ -1188,15 +1313,15 @@
    "wrong": 1
   },
   "untouched": {
-   "n": 21,
+   "n": 23,
    "wrong": 1
   },
   "downgradedWrongRate": 0.5,
-  "untouchedWrongRate": 0.047619047619047616
+  "untouchedWrongRate": 0.043478260869565216
  },
- "accuracy": 0.913,
- "checkable": 23,
- "correct": 21,
+ "accuracy": 0.92,
+ "checkable": 25,
+ "correct": 23,
  "fabricatedStrong": [],
  "untranslated": 0,
  "gates": {

@@ -435,18 +435,95 @@
   // asserts a relationship the pixels do not support: every edge records the
   // evidence that produced it, and objects with no qualifying evidence simply
   // get no edge rather than a guessed one.
-  function buildSceneGraph(candidates, furnitureGroups) {
+  // Every edge carries the same shape, so a consumer never has to know which
+  // stage produced one to know how much to trust it:
+  //
+  //   strength        strong | likely | uncertain
+  //   supporting      what argues FOR it, in words
+  //   contradicting   what argues against, where anything does — an edge with
+  //                   a real objection is not the same as one with none, and
+  //                   flattening them was how "every relationship looks equally
+  //                   certain" happened
+  //   humanVerified   whether a person ruled on this specific relation
+  //   source          which stage produced it
+  //   version         which build's rules, so an old graph is readable later
+  const GRAPH_VERSION = 2;
+  const edge = (from, type, to, { strength = "likely", supporting = [], contradicting = [],
+    humanVerified = false, source }) =>
+    ({ from, type, to, strength, supporting, contradicting, humanVerified, source, version: GRAPH_VERSION });
+
+  const NODE_TYPES = ["physicalObject", "visualFamily", "logicalGroup", "zone", "structuralAnchor"];
+
+  function buildSceneGraph(candidates, furnitureGroups, zones, similarityGroups) {
     const edges = [];
     const alive = candidates.filter(c => c.status !== "rejected");
     const tables = alive.filter(c => c.kind === "table");
+    const venues = alive.filter(c => c.kind === "venue");
     const byId = new Map(alive.map(c => [c.id, c]));
 
-    // chair -> belongsTo -> table. The association already happened in the
-    // detector (one chair, at most one table); this records it as a relation.
+    // chair -> belongsTo -> table, and chair -> faces -> table where the symbol
+    // actually carries a direction. Both come from the relationship engine,
+    // which records why it decided and how close the call was; an ambiguous
+    // association is a `likely` edge with the competing table named as the
+    // contradicting evidence rather than an edge that looks like any other.
     for (const t of tables)
-      for (const ch of t.chairDetections || [])
-        edges.push({ from: ch.id || `${t.id}:chair:${Math.round(ch.x)}x${Math.round(ch.y)}`,
-          type: "belongsTo", to: t.id, evidence: "chair-table association (nearest table within reach, one table per chair)" });
+      for (const ch of t.chairDetections || []) {
+        const id = ch.id || `${t.id}:chair:${Math.round(ch.x)}x${Math.round(ch.y)}`;
+        const rel = ch.relation || null;
+        const supporting = rel
+          ? [`seated ${rel.evidence.positionKind === "inside" ? "over the table body"
+              : rel.evidence.positionKind === "edge" ? `along its ${rel.evidence.positionSide} edge`
+              : "past a corner"}`,
+             `perimeter distance ${rel.evidence.distance}`]
+          : ["nearest table within reach, one table per chair"];
+        if (rel && rel.orientation && rel.orientation.facingKnown) supporting.push("the chair faces it");
+        edges.push(edge(id, "belongsTo", t.id, {
+          strength: !rel ? "likely" : rel.ambiguous ? "uncertain"
+            : rel.evidence.positionKind === "corner" ? "likely" : "strong",
+          supporting,
+          contradicting: rel && rel.ambiguous && rel.runnerUpId
+            ? [`another table fits almost as well (margin ${rel.margin})`] : [],
+          humanVerified: t.status === "confirmed",
+          source: rel ? "relationshipEngine2" : "chairAssociation",
+        }));
+        if (rel && rel.orientation && rel.orientation.facingKnown)
+          edges.push(edge(id, "faces", t.id, {
+            strength: rel.orientation.facingStrength > 0.5 ? "likely" : "uncertain",
+            supporting: [`the symbol is asymmetric (${rel.orientation.facingEvidence})`,
+              `facing ${Math.round(rel.orientation.facingAngle)} degrees`],
+            humanVerified: false, source: "orientationFromInkMass",
+          }));
+      }
+
+    // object -> memberOf -> visual family. A family is a node in its own right:
+    // it is the unit a correction spreads across, so a graph that cannot name
+    // one cannot explain why a decision reached thirty objects.
+    for (const g of similarityGroups || [])
+      for (const id of g.memberIds || [])
+        if (byId.has(id))
+          edges.push(edge(id, "memberOf", g.id, {
+            strength: "likely",
+            supporting: ["shares this plan's repeated visual signature"],
+            humanVerified: false, source: "similarityClustering",
+          }));
+
+    // structural and semantic anchors -> the zone they belong to. A column is
+    // not furniture and never was, but it IS part of a region, and saying so is
+    // the difference between "six objects we ignored" and a structural grid.
+    for (const z of zones || [])
+      for (const v of venues) {
+        const inside = z.bbox && containsCentre(z.bbox, v);
+        if (!inside) continue;
+        const type = v.type === "column" ? "structuralElementOf"
+          : v.type === "entrance" || v.type === "exit" ? "connectsTo"
+          : v.type === "bar" ? "locatedIn" : null;
+        if (!type) continue;
+        edges.push(edge(v.id, type, z.id, {
+          strength: "likely",
+          supporting: [`a ${v.type} standing inside the ${z.type} area`],
+          humanVerified: v.status === "confirmed", source: "zoneContainment",
+        }));
+      }
 
     // table -> touches -> table, and table -> partOf -> logical group.
     for (const g of furnitureGroups || []) {
@@ -456,11 +533,21 @@
           for (let j = i + 1; j < members.length; j++) {
             const a = byId.get(members[i]), b = byId.get(members[j]);
             if (gapBetween(a, b) <= Math.min(a.w, a.h, b.w, b.h) * 0.28 && aligned(a, b))
-              edges.push({ from: members[i], type: "touches", to: members[j], evidence: "boxes within a fraction of a table of each other and axis-aligned" });
+              edges.push(edge(members[i], "adjacentTo", members[j], {
+                strength: "strong",
+                supporting: ["their boxes are within a fraction of a table of each other", "and axis-aligned"],
+                humanVerified: !!g.decision, source: "touchAndAlign" }));
           }
       }
       for (const id of members)
-        edges.push({ from: id, type: "partOf", to: g.id, evidence: g.decision ? `human answer: ${g.decision}` : "geometric grouping (touch + alignment)" });
+        edges.push(edge(id, "memberOf", g.id, {
+          // A human answer about a grouping is the only evidence in this graph
+          // that outranks geometry, and it is marked as such rather than
+          // blended into the same confidence as a measurement.
+          strength: g.decision ? "strong" : "likely",
+          supporting: g.decision ? [`the operator answered: ${g.decision}`]
+            : ["these tables touch and line up"],
+          humanVerified: !!g.decision, source: g.decision ? "operatorDecision" : "touchAndAlign" }));
     }
 
     // seating furniture -> faces -> logical group, when it runs alongside one.
@@ -474,11 +561,34 @@
       }
       const reach = Math.max(s.w, s.h) * 0.9;
       if (best && bestGap <= reach)
-        edges.push({ from: s.id, type: "faces", to: best.id, evidence: `runs alongside the group, gap ${bestGap.toFixed(1)} within reach ${reach.toFixed(1)}` });
+        edges.push(edge(s.id, "faces", best.id, {
+          strength: "uncertain",
+          supporting: [`runs alongside the group, gap ${bestGap.toFixed(1)} within reach ${reach.toFixed(1)}`],
+          // Said out loud rather than left implicit: proximity is not facing,
+          // and this edge would be a real one only if the sofa's orientation
+          // were derivable. For most plan symbols it is not.
+          contradicting: ["the sofa's own orientation was not derivable, so this is proximity, not facing"],
+          humanVerified: false, source: "proximityToGroup" }));
     }
 
     const counts = edges.reduce((m, e) => (m[e.type] = (m[e.type] || 0) + 1, m), {});
-    return { edges, counts, nodeCount: alive.length };
+    const nodes = {
+      physicalObject: alive.length,
+      visualFamily: (similarityGroups || []).length,
+      logicalGroup: (furnitureGroups || []).length,
+      zone: (zones || []).length,
+      structuralAnchor: venues.filter(v => ["column", "entrance", "exit", "bar", "stage"].includes(v.type)).length,
+    };
+    return {
+      edges, counts, nodes, nodeTypes: NODE_TYPES, version: GRAPH_VERSION,
+      nodeCount: alive.length,
+      // How much of this graph rests on something a person actually said, and
+      // how much of it the graph itself doubts. Both reported, because a graph
+      // that only counts edges cannot be read for how much to trust it.
+      humanVerifiedEdges: edges.filter(e => e.humanVerified).length,
+      contradictedEdges: edges.filter(e => e.contradicting.length).length,
+      byStrength: edges.reduce((m, e) => (m[e.strength] = (m[e.strength] || 0) + 1, m), {}),
+    };
   }
 
   // ---- semantic zones ------------------------------------------------------
@@ -504,7 +614,39 @@
   //   actually read entrance wording or a human confirmed an entrance object.
   //   Where OCR is unavailable there is no entrance zone, rather than a guessed
   //   one.
-  const ZONE_LINK_OF_TABLE = 1.5;   // cluster link distance, in modal table sides
+  const ZONE_LINK_OF_TABLE = 1.5;   // floor for the cluster link distance, in modal table sides
+  // ...and a floor is all it is, because table size is the wrong yardstick for
+  // "are these in the same area".
+  //
+  // Measured on the Golden Plan, which is one dining floor: its tables are
+  // ~4.4% of the plan across, so the old link distance was 6.6%; its columns
+  // are pitched 11-12.5% apart, leaving a 7.7% gap. Vertical neighbours touch
+  // and link, horizontal ones do not, so the room was read as SIX dining zones
+  // standing in columns. On the plain-dining adversarial fixture it was five.
+  // A room split into stripes is not a wrong number, it is a wrong description
+  // of the drawing.
+  //
+  // What actually says "same area" is the plan's OWN spacing. Furniture set out
+  // at the spacing this drawing uses everywhere is one area; a gap several
+  // times that is a real separation — an aisle, a wall, another room. So the
+  // link distance is taken from the distribution of each table's nearest
+  // neighbours, at the 75th percentile so a few touching pairs cannot drag it
+  // to zero and one outlier cannot inflate it.
+  const ZONE_NEIGHBOURS = 4;        // per table, pooled across the plan
+  const ZONE_LINK_OF_SPACING = 1.3;
+  function planSpacing(tables) {
+    if (tables.length < 3) return 0;
+    const pool = [];
+    for (const a of tables) {
+      const gaps = [];
+      for (const b of tables) if (a !== b) gaps.push(gapBetween(a, b));
+      gaps.sort((x, y) => x - y);
+      for (const g of gaps.slice(0, ZONE_NEIGHBOURS)) pool.push(g);
+    }
+    if (!pool.length) return 0;
+    pool.sort((a, b) => a - b);
+    return pool[Math.min(pool.length - 1, Math.floor(pool.length * 0.75))];
+  }
   const ENTRANCE_WORDS = /\b(giri[sş]|entrance|entry|exit|[cç][iı]k[iı][sş])\b/i;
 
   function buildZones(candidates, furnitureGroups, ocrText) {
@@ -534,6 +676,22 @@
            "no seating is counted inside a stage"]);
     }
 
+    // -- bar, from objects typed as one --------------------------------------
+    //
+    // `bar` has been a first-class object type an operator can assign, and
+    // planSummary has counted them, but the zone model had no room for one — so
+    // a confirmed bar was an object in a dining area rather than a part of the
+    // room with its own job. Same rule as the stage: the zone exists because an
+    // object was typed as a bar, never because a cluster looked service-ish.
+    // A plan with no bar produces no bar zone, which is what the a3 fixture is
+    // there to check.
+    const barObjects = venues.filter(c => c.type === "bar");
+    if (barObjects.length)
+      for (const cluster of clusterByGap(barObjects, s => Math.max(s.w, s.h) * 0.6))
+        add("bar", cluster, "strong",
+          [`${cluster.length} bar object${cluster.length === 1 ? "" : "s"} detected`,
+           "no dining seating is counted inside a bar"]);
+
     // -- entrance, only where wording was actually read -----------------------
     const entranceObjects = venues.filter(c => c.type === "entrance");
     if (entranceObjects.length) {
@@ -551,7 +709,8 @@
     const modalTableSide = tables.length
       ? (() => { const v = tables.map(t => Math.sqrt(t.w * t.h)).sort((a, b) => a - b); return v[v.length >> 1]; })()
       : 0;
-    const link = (modalTableSide || 4) * ZONE_LINK_OF_TABLE;
+    const link = Math.max((modalTableSide || 4) * ZONE_LINK_OF_TABLE,
+      planSpacing(tables) * ZONE_LINK_OF_SPACING);
     const standalone = loungeFurniture.filter(s =>
       !tables.some(t => gapBetween(s, t) <= Math.max(s.w, s.h) * 0.9));
     for (const cluster of clusterByGap(standalone, () => link))
@@ -643,7 +802,7 @@
   // NOTHING HERE COUNTS AS A NEW MEASUREMENT. Every fact restates evidence
   // some earlier stage already produced. An interpreter that discovered new
   // objects would be a detector, and this is not one.
-  function buildPlanFacts(candidates, zones, furnitureGroups, capacityAudit, physicalSeats, ocrText) {
+  function buildPlanFacts(candidates, zones, furnitureGroups, capacityAudit, physicalSeats, ocrText, extra) {
     const alive = candidates.filter(c => c.status !== "rejected");
     const tables = alive.filter(c => c.kind === "table");
     const facts = [];
@@ -746,6 +905,53 @@
       say("unverifiedSeating", "fact.unverifiedSeating", { n: unverified.length }, "strong",
         [prov("unreadableCapacity")],
         { ids: unverified.map(u => u.id) });
+
+    // -- what the relationships say -------------------------------------------
+    //
+    // These exist only because Relationship Engine 2.0 does. Before it, the
+    // product had no way to know a seat was a close call, so a fact about one
+    // would have been invented. None of them is ever `strong`: a new and richer
+    // kind of claim does not get to arrive at the top confidence just because
+    // it is new (§42), and every one of them rests on detection recall.
+    const seatsWithRelation = [];
+    for (const t of tables) for (const ch of t.chairDetections || []) if (ch.relation) seatsWithRelation.push(ch);
+    if (seatsWithRelation.length) {
+      const ambiguous = seatsWithRelation.filter(ch => ch.relation.ambiguous);
+      if (ambiguous.length)
+        say("seatsAmbiguous", "fact.seatsAmbiguous", { n: ambiguous.length }, "likely",
+          [prov("competingTablesCompared")], { n: ambiguous.length });
+      const facing = seatsWithRelation.filter(ch => ch.relation.orientation && ch.relation.orientation.facingKnown);
+      if (facing.length)
+        say("seatsFacing", "fact.seatsFacing", { n: facing.length, total: seatsWithRelation.length },
+          // How many symbols carry a direction is a property of the drawing and
+          // does not depend on having found every seat, so it is not weakened
+          // by recall the way a count is — but it is still only `likely`,
+          // because the orientation itself is derived rather than read.
+          "likely", [prov("symbolAsymmetry")], { facing: facing.length, of: seatsWithRelation.length });
+      const tucked = seatsWithRelation.filter(ch => ch.relation.evidence
+        && ch.relation.evidence.positionKind === "inside");
+      if (tucked.length >= Math.max(3, seatsWithRelation.length * 0.25))
+        say("seatsTucked", "fact.seatsTucked", { n: tucked.length }, "likely",
+          [prov("seatPositionOnTable")], { n: tucked.length });
+    }
+
+    // -- what the memory says -------------------------------------------------
+    //
+    // Only from evidence the matcher actually produced. A plan with no earlier
+    // decisions produces none of these rather than a reassuring sentence about
+    // having nothing to compare.
+    const mem = (extra && extra.memory) || null;
+    if (mem && mem.reapplied > 0)
+      say("memoryReapplied", "fact.memoryReapplied", { n: mem.reapplied }, "strong",
+        // Direct: these decisions were re-applied, and the product can point at
+        // each one. It does not claim they were re-applied CORRECTLY.
+        [prov("decisionsMatchedBack")], { n: mem.reapplied });
+    if (mem && mem.lost > 0)
+      say("memoryLost", "fact.memoryLostObjects", { n: mem.lost }, "likely",
+        [prov("confirmedButNotFound")], { n: mem.lost });
+    if (mem && mem.ambiguous > 0)
+      say("memoryAmbiguous", "fact.memoryAmbiguousObjects", { n: mem.ambiguous }, "likely",
+        [prov("twoObjectsFitOneDecision")], { n: mem.ambiguous });
 
     return facts;
   }
@@ -1256,9 +1462,19 @@
     const uncertainQuestions = buildDifficultQuestions(analysis.candidates, furnitureGroups);
     const physicalSeats = computePhysicalCapacity(analysis.candidates);
     const capacityAudit = buildCapacityAudit(ocrText, physicalSeats, analysis.candidates, furnitureGroups);
-    const sceneGraph = buildSceneGraph(analysis.candidates, furnitureGroups);
+    // Zones before the graph, because the graph now attaches structural and
+    // semantic anchors to the region they stand in — a column belongs to a part
+    // of the room, and the graph cannot say so before the regions exist.
     const zones = buildZones(analysis.candidates, furnitureGroups, ocrText);
-    const facts = buildPlanFacts(analysis.candidates, zones, furnitureGroups, capacityAudit, physicalSeats, ocrText);
+    const sceneGraph = buildSceneGraph(analysis.candidates, furnitureGroups, zones, similarityGroups);
+    const conflictsIn = analysis.memoryConflicts || [];
+    const facts = buildPlanFacts(analysis.candidates, zones, furnitureGroups, capacityAudit, physicalSeats, ocrText, {
+      memory: {
+        reapplied: analysis.memoryReapplied || 0,
+        lost: conflictsIn.filter(c => c.kind === "lost").length,
+        ambiguous: conflictsIn.filter(c => c.kind === "ambiguous").length,
+      },
+    });
     // Built from the facts, then applied back to them: a claim another stage
     // disagrees with stops being stated in the same voice as one nothing
     // disputes. Nothing is deleted or reclassified on this evidence.
@@ -1339,9 +1555,63 @@
   }
 
   globalThis.buildPlanIntelligence = buildPlanIntelligence;
-  globalThis.MERIT_PLAN_INTELLIGENCE_STATUS = {
-    implemented: ["Geometric furniture grouping (touch+align)", "Similarity clustering using real pixel-derived visual descriptors (fill ratio, edge density, intensity histogram, quadrant fill signature) computed from the actual decoded plan image, not geometry alone — see computeVisualDescriptor() in app-v8.js", "Bulk review-group collapsing", "Difficult-item queue for multi-table groups", "OCR-based capacity audit (when plan-ocr.js/Tesseract is loaded)", "Grouping-question answers persist as real decisions (event.analysis.groupingDecisions) that force-split or force-merge tables on every recompute, and are undoable — never a log-only toast", "Current Plan Memory (event.planMemory, app-v8.js): reclassifications, confirm/reject, and manually-drawn missed objects are re-applied to freshly detected candidates after Re-Analyze by matching real geometry (position/size) — the underlying image and detector are deterministic, so this is a genuine match, not a fabricated one", "OCR-evidence false-positive suppression (app-v8.js suppressTextFalsePositives): a candidate whose area is dominated by real recognized OCR text is dropped unless it has real chair adjacency; table confidence also factors in real repetition (how many similarly-sized tables exist) and seat adjacency, not a flat raised threshold"],
-    foundationOnly: ["VisualEmbeddingProvider from a real trained model (ONNX Runtime Web + a pretrained vision model such as MobileNetV2) — evaluated and confirmed technically fetchable in this environment (onnxruntime-web is on the npm registry; a real ~14MB MobileNetV2 ONNX model is reachable via media.githubusercontent.com), but not integrated this pass; the classical pixel-descriptor implementation above is a real, working, swappable stand-in behind the same interface shape, not a placeholder that does nothing", "SemanticVisionProvider/GroundingProvider abstraction — interface not yet defined, no hosted model connected"],
-    future: ["Trained/learned object detection", "Sofa/bench automatic capacity estimation from pixels", "Cross-plan venue memory", "Layout change detection"],
-  };
+  // What this build actually is, derived at read time from the modules that are
+  // loaded rather than from a hand-maintained list.
+  //
+  // The list it replaces had gone stale in the way hand-maintained status
+  // always does: it still described a real trained visual encoder as
+  // "evaluated ... but not integrated this pass" long after the encoder was
+  // trained, shipped and measured, and it described the relationship engine as
+  // an association step. A status block that has to be remembered is a status
+  // block that will be wrong, and being wrong ABOUT HOW MUCH OF THIS IS
+  // LEARNED is the one kind of wrong this product cannot afford.
+  //
+  // So it is a getter over the real runtime. Anything it cannot read, it says
+  // it cannot read.
+  Object.defineProperty(globalThis, "MERIT_PLAN_INTELLIGENCE_STATUS", {
+    configurable: true,
+    get() {
+      const encoder = globalThis.MERIT_PLAN_ENCODER_WEIGHTS || null;
+      const provider = globalThis.MeritVisualEmbedding && globalThis.MeritVisualEmbedding.resolve
+        ? globalThis.MeritVisualEmbedding.resolve() : null;
+      return {
+        // The detector is classical computer vision. It has never been a
+        // trained model and this line must never say otherwise.
+        detector: { engine: "Assisted Detection (classical computer vision)", trainedModel: false,
+          note: "DOMAIN MODEL NOT INSTALLED — no trained object detector is running." },
+        visualRepresentation: {
+          provider: provider ? provider.id : "none",
+          // TRUE, and it means exactly one thing: real weights fitted by
+          // gradient descent multiply real pixels. It does NOT mean a trained
+          // DOMAIN model is detecting objects. Both stay true at once.
+          trainedModel: !!(encoder && provider && provider.id === "learned"),
+          parameters: encoder ? encoder.parameters : null,
+          modelId: encoder ? encoder.id : null,
+          trainedOn: encoder ? encoder.trainedOn : null,
+          usedFor: ["class second opinion (measured, promoted)",
+            "object identity in Plan Memory (measured, no contribution on the one real plan)"],
+        },
+        relationships: {
+          engine: globalThis.MeritRelationships ? `relationship engine v${globalThis.MeritRelationships.version}` : "none",
+          trainedModel: false,
+          evidence: ["perimeter position", "proximity", "facing where derivable",
+            "arrangement", "family", "competing tables with a margin"],
+        },
+        memory: {
+          engine: globalThis.MeritPlanMemory ? `plan memory v${globalThis.MeritPlanMemory.version}` : "none",
+          trainedModel: false,
+          grades: globalThis.MeritPlanMemory ? globalThis.MeritPlanMemory.grades : null,
+        },
+        sceneGraph: { version: GRAPH_VERSION, nodeTypes: NODE_TYPES },
+        zones: { types: ["dining", "bistro", "lounge", "stage", "bar", "entrance", "unknown"],
+          evidenceOnly: true },
+        interpreter: { engine: "Whole Plan Interpreter", trainedModel: false,
+          note: "restates evidence earlier stages produced; it never discovers an object" },
+        ocr: { available: typeof globalThis.runPlanOCR === "function",
+          engine: globalThis.MERIT_OCR_STATUS ? "Tesseract, local when the offline assets are present" : "not loaded" },
+        // The limit that outranks every capability above it.
+        corpus: { realDistinctVenuePlans: 1, crossVenueGeneralization: "NOT VERIFIED" },
+      };
+    },
+  });
 })();

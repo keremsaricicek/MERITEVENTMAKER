@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-09-04T12:05:09.037Z",
+  "ranAt": "2026-09-04T12:51:00.052Z",
   "realVenue": false,
   "note": "SYNTHETIC ADVERSARIAL FIXTURES — NOT REAL VENUES. These scores are never mixed into real-plan aggregates. REAL DISTINCT VENUE PLANS: 1. CROSS-VENUE GENERALIZATION: NOT VERIFIED.",
   "refusals": [],
@@ -73,16 +73,16 @@
       },
       "zones": {
         "expected": 1,
-        "detected": 2,
-        "detectedTyped": 2,
+        "detected": 1,
+        "detectedTyped": 1,
         "unknownZones": 0,
-        "matched": 0,
-        "precision": 0,
-        "recall": 0,
+        "matched": 1,
+        "precision": 1,
+        "recall": 1,
         "falseZoneInventions": 0,
         "inventedTypes": [],
         "byType": {
-          "dining": 2
+          "dining": 1
         }
       },
       "facts": {
@@ -122,7 +122,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 628,
+      "detectionMs": 654,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -130,8 +130,7 @@
         "fail": [],
         "partial": [
           "48 detected chair(s) seated at no table at all",
-          "table recall 0.5",
-          "zone precision 0 — 2 typed zones for 1 real ones"
+          "table recall 0.5"
         ]
       }
     },
@@ -212,21 +211,20 @@
       },
       "zones": {
         "expected": 1,
-        "detected": 22,
-        "detectedTyped": 8,
-        "unknownZones": 14,
+        "detected": 1,
+        "detectedTyped": 1,
+        "unknownZones": 0,
         "matched": 0,
         "precision": 0,
         "recall": 0,
         "falseZoneInventions": 0,
         "inventedTypes": [],
         "byType": {
-          "dining": 8,
-          "unknown": 14
+          "dining": 1
         }
       },
       "facts": {
-        "total": 9,
+        "total": 8,
         "expected": 3,
         "expectedPresent": 3,
         "expectedMissing": [],
@@ -236,7 +234,7 @@
         "withoutProvenance": [],
         "byStrength": {
           "likely": 6,
-          "uncertain": 2,
+          "uncertain": 1,
           "strong": 1
         }
       },
@@ -261,9 +259,9 @@
       "effort": {
         "reviewGroups": 4,
         "uncertainQuestions": 0,
-        "reviewPriorities": 6
+        "reviewPriorities": 5
       },
-      "detectionMs": 759,
+      "detectionMs": 719,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -275,7 +273,7 @@
         "partial": [
           "bistro tables typed 0/6",
           "chair recall 0.34",
-          "zone precision 0 — 8 typed zones for 1 real ones"
+          "zone precision 0 — 1 typed zones for 1 real ones"
         ]
       }
     },
@@ -339,16 +337,16 @@
       },
       "zones": {
         "expected": 1,
-        "detected": 5,
-        "detectedTyped": 5,
+        "detected": 1,
+        "detectedTyped": 1,
         "unknownZones": 0,
-        "matched": 0,
-        "precision": 0,
-        "recall": 0,
+        "matched": 1,
+        "precision": 1,
+        "recall": 1,
         "falseZoneInventions": 0,
         "inventedTypes": [],
         "byType": {
-          "dining": 5
+          "dining": 1
         }
       },
       "facts": {
@@ -386,15 +384,13 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 634,
+      "detectionMs": 652,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
-        "status": "PARTIAL",
+        "status": "PASS",
         "fail": [],
-        "partial": [
-          "zone precision 0 — 5 typed zones for 1 real ones"
-        ]
+        "partial": []
       }
     },
     {
@@ -467,17 +463,17 @@
       },
       "zones": {
         "expected": 3,
-        "detected": 19,
-        "detectedTyped": 11,
-        "unknownZones": 8,
+        "detected": 2,
+        "detectedTyped": 1,
+        "unknownZones": 1,
         "matched": 1,
-        "precision": 0.091,
+        "precision": 1,
         "recall": 0.333,
         "falseZoneInventions": 0,
         "inventedTypes": [],
         "byType": {
-          "dining": 11,
-          "unknown": 8
+          "dining": 1,
+          "unknown": 1
         }
       },
       "facts": {
@@ -516,7 +512,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 749,
+      "detectionMs": 740,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -524,8 +520,7 @@
         "fail": [],
         "partial": [
           "bistro tables typed 0/8",
-          "chair recall 0.586",
-          "zone precision 0.091 — 11 typed zones for 3 real ones"
+          "chair recall 0.586"
         ]
       }
     },
@@ -628,7 +623,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 548,
+      "detectionMs": 523,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -701,21 +696,20 @@
       },
       "zones": {
         "expected": 1,
-        "detected": 39,
-        "detectedTyped": 25,
-        "unknownZones": 14,
-        "matched": 0,
-        "precision": 0,
-        "recall": 0,
+        "detected": 1,
+        "detectedTyped": 1,
+        "unknownZones": 0,
+        "matched": 1,
+        "precision": 1,
+        "recall": 1,
         "falseZoneInventions": 0,
         "inventedTypes": [],
         "byType": {
-          "dining": 25,
-          "unknown": 14
+          "dining": 1
         }
       },
       "facts": {
-        "total": 9,
+        "total": 8,
         "expected": 2,
         "expectedPresent": 2,
         "expectedMissing": [],
@@ -725,7 +719,7 @@
         "withoutProvenance": [],
         "byStrength": {
           "likely": 6,
-          "uncertain": 2,
+          "uncertain": 1,
           "strong": 1
         }
       },
@@ -750,9 +744,9 @@
       "effort": {
         "reviewGroups": 4,
         "uncertainQuestions": 0,
-        "reviewPriorities": 6
+        "reviewPriorities": 5
       },
-      "detectionMs": 741,
+      "detectionMs": 675,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -760,9 +754,7 @@
         "fail": [
           "more phantom tables than real ones: 46 FP against 8 GT (precision 0.148)"
         ],
-        "partial": [
-          "zone precision 0 — 25 typed zones for 1 real ones"
-        ]
+        "partial": []
       }
     },
     {
@@ -839,21 +831,20 @@
       },
       "zones": {
         "expected": 0,
-        "detected": 3,
+        "detected": 2,
         "detectedTyped": 2,
-        "unknownZones": 1,
+        "unknownZones": 0,
         "matched": 0,
         "precision": 0,
         "recall": null,
         "falseZoneInventions": 0,
         "inventedTypes": [],
         "byType": {
-          "dining": 2,
-          "unknown": 1
+          "dining": 2
         }
       },
       "facts": {
-        "total": 7,
+        "total": 6,
         "expected": 2,
         "expectedPresent": 2,
         "expectedMissing": [],
@@ -863,8 +854,7 @@
         "withoutProvenance": [],
         "byStrength": {
           "strong": 2,
-          "likely": 4,
-          "uncertain": 1
+          "likely": 4
         }
       },
       "regionFP": {
@@ -886,9 +876,9 @@
       "effort": {
         "reviewGroups": 2,
         "uncertainQuestions": 0,
-        "reviewPriorities": 3
+        "reviewPriorities": 2
       },
-      "detectionMs": 787,
+      "detectionMs": 723,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -1031,7 +1021,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 1418,
+      "detectionMs": 1417,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {

@@ -53,6 +53,12 @@ function groundTruth(annot) {
     // A chair with no relationship in the annotation is one the annotation
     // declines to seat, which is not the same as one seated nowhere.
     seatedTables: new Set((annot.relationships || []).filter(r => r.belongsTo).map(r => r.belongsTo)).size,
+    // How many chair symbols on this drawing carry a direction at all, and how
+    // many relations the annotation itself refuses to settle. Both are ceilings
+    // the interpreter must not claim past.
+    orientableChairs: annot.objects.filter(o => o.class === "chair" && o.orientationKnown).length,
+    ambiguousRelations: (annot.relationships || []).filter(r => !r.belongsTo).length,
+    hasRelationGroundTruth: !!(annot.relationships && annot.relationships.length),
   };
 }
 
@@ -127,6 +133,30 @@ function checkFact(fact, gt) {
     case "fact.nothingFound":
       return { checkable: true, correct: gt.tables === 0,
         detail: { claimed: "nothing detected", annotated: `${gt.tables} tables annotated` } };
+    case "fact.seatsFacing": {
+      // The annotation records, per chair, whether its symbol carries a
+      // direction at all. Claiming MORE oriented seats than the drawing has
+      // orientable symbols is the failure mode — inventing a facing for a
+      // symmetric square. Claiming fewer is under-reading, not a false claim.
+      if (gt.orientableChairs == null)
+        return { checkable: false, why: "the annotation does not record which chair symbols carry a direction" };
+      return { checkable: true, correct: p.n <= gt.orientableChairs,
+        detail: { claimed: p.n, annotatedOrientable: gt.orientableChairs } };
+    }
+    case "fact.seatsAmbiguous": {
+      // The annotation abstains on the chairs it cannot adjudicate. A claim of
+      // MORE ambiguous seats than the drawing actually contains would be the
+      // product manufacturing doubt; fewer is simply not having noticed one.
+      // Only checkable where the annotation has relationship ground truth at
+      // all. An annotation with no relationships array records zero ambiguous
+      // ones, and scoring against that says "the plan has no ambiguous seats"
+      // when what it means is "nobody annotated them" — the same mistake as
+      // reporting recall on a fixture with nothing to recall.
+      if (!gt.hasRelationGroundTruth)
+        return { checkable: false, why: "this plan has no chair-to-table ground truth to compare against" };
+      return { checkable: true, correct: p.n <= gt.ambiguousRelations,
+        detail: { claimed: p.n, annotatedAmbiguous: gt.ambiguousRelations } };
+    }
     default:
       return { checkable: false, why: "no check is defined for this fact" };
   }
