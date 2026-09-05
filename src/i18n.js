@@ -186,10 +186,6 @@
     "contradiction.tablesNoDining": { en: "{tables} tables were found, but no part of the room reads as a dining area.", tr: "{tables} masa bulundu ama odanın hiçbir bölümü yemek alanı olarak okunmuyor." },
     "contradiction.seatsInsideBody": { en: "{n} object(s) contain every seat attached to them, which a table does not.", tr: "{n} nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz." },
     "contradiction.claim.seatsAround": { en: "a table's seats stand around it, not inside it", tr: "bir masanın koltukları etrafında durur, içinde değil" },
-    "contradiction.ambiguousSeat": { en: "{n} seat(s) sit almost exactly between two tables, across {tables} table(s). The drawing does not say which they belong to.", tr: "{n} koltuk iki masanın neredeyse tam ortasında duruyor ({tables} masayı ilgilendiriyor). Çizim bunların hangisine ait olduğunu söylemiyor." },
-    "contradiction.claim.seatedHere": { en: "{n} seat(s) were placed at the nearer table", tr: "{n} koltuk daha yakın masaya yerleştirildi" },
-    "contradiction.claim.couldBeThere": { en: "the neighbouring table's evidence is just as strong", tr: "komşu masanın kanıtı da aynı güçte" },
-    "contradiction.from.competingTable": { en: "the competing table", tr: "rakip masa" },
     "contradiction.claim.proposedTable": { en: "{n} of these are tables with seats", tr: "bunlardan {n} tanesi koltuklu masa" },
     // The review card's note on an object the analysis held back. It says what
     // was held and why, and that it is still the operator's call — nothing was
