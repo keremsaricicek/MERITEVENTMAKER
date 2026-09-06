@@ -1,5 +1,5 @@
 {
- "ranAt": "2026-09-05T17:18:46.860Z",
+ "ranAt": "2026-09-06T12:32:56.231Z",
  "variants": [
   {
    "variant": "ORIGINAL",
@@ -418,20 +418,19 @@
    "tables": 69,
    "falsePositives": 32,
    "baselineFalseRate": 0.4638,
-   "contradictions": 7,
+   "contradictions": 6,
    "kinds": [
     "COUNT",
     "TYPE",
-    "RELATIONSHIP",
-    "ZONE"
+    "RELATIONSHIP"
    ],
-   "pointedAt": 48,
-   "pointedAtFalse": 28,
-   "targetedPrecision": 0.5833,
-   "lift": 1.258,
+   "pointedAt": 47,
+   "pointedAtFalse": 27,
+   "targetedPrecision": 0.5745,
+   "lift": 1.239,
    "severities": {
     "medium": 4,
-    "high": 3
+    "high": 2
    },
    "perContradiction": [
     {
@@ -481,14 +480,6 @@
      "pointedAt": 13,
      "ofThoseFalse": 13,
      "precision": 1
-    },
-    {
-     "id": "contra:seatingInStage",
-     "kind": "ZONE",
-     "severity": "high",
-     "pointedAt": 1,
-     "ofThoseFalse": 1,
-     "precision": 1
     }
    ],
    "downgradedFacts": [
@@ -530,8 +521,7 @@
      "5 object(s) called tables do not look like this plan's tables.",
      "1 object(s) were typed differently from the family they look like.",
      "9 seating unit(s) are made of tables typed as different kinds.",
-     "13 object(s) contain every seat attached to them, which a table does not.",
-     "1 seating area(s) overlap a stage."
+     "13 object(s) contain every seat attached to them, which a table does not."
     ],
     "tr": [
      "Tespit edilen 115 koltuktan 33 tanesi hiçbir masaya ait değil.",
@@ -539,8 +529,7 @@
      "Masa denen 5 nesne bu planın masalarına benzemiyor.",
      "1 nesne, benzediği aileden farklı türde sınıflandırıldı.",
      "9 oturma biriminde farklı türde sınıflandırılmış masalar var.",
-     "13 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz.",
-     "1 oturma alanı sahneyle çakışıyor."
+     "13 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz."
     ]
    }
   },
@@ -871,7 +860,7 @@
   }
  ],
  "gates": {
-  "meanTargetedPrecision": 0.4954,
+  "meanTargetedPrecision": 0.4944,
   "meanBaselineFalseRate": 0.2876,
   "renderingsWherePointingBeatsChance": "9/9",
   "contradictionsOnTheCleanOriginal": 4,
@@ -895,12 +884,6 @@
    "fired": 14,
    "pointedAt": 325,
    "ofThoseFalse": 222
-  },
-  "ZONE": {
-   "kind": "ZONE",
-   "fired": 1,
-   "pointedAt": 1,
-   "ofThoseFalse": 1
   }
  },
  "perCheck": {
@@ -964,20 +947,9 @@
    "severities": {
     "medium": 2
    }
-  },
-  "contra:seatingInStage": {
-   "id": "contra:seatingInStage",
-   "kind": "ZONE",
-   "fired": 1,
-   "pointedAt": 1,
-   "ofThoseFalse": 1,
-   "severities": {
-    "high": 1
-   }
   }
  },
  "kindVerdict": {
-  "ZONE": "informative",
   "RELATIONSHIP": "TRUSTED",
   "TYPE": "TRUSTED",
   "COUNT": "informative"

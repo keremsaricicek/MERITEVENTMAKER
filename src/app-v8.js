@@ -1754,6 +1754,33 @@
     if(!modal||!modal.value||!(value>0))return .5;
     return Math.max(0,1-Math.abs(Math.log(value/modal.value)/Math.log(1.7)));
   }
+  // Does this box belong to the repeated symbol family the plan has declared?
+  //
+  // A plan whose tables are one repeated symbol may draw that symbol in more
+  // than one tone — ORNEK draws 157 open circles and 9 filled ones, the same
+  // object in different ink — and the two halves reach the pipeline through
+  // different sources. The question asked here is therefore about the FAMILY,
+  // never about tone: does this box agree with the vocabulary the plan stated
+  // through the members already found?
+  //
+  // Both thresholds are the ones the fragment filter already uses for these two
+  // agreement functions. Measured on ORNEK's 40 de-duplicated table-pool
+  // components against a modal taken from the open circles alone: the 9 filled
+  // discs score 0.89-0.94 on size and 0.96-0.97 on aspect; of the other 31,
+  // every one that agrees on size is a wall, door or bay at aspect 1.96-3.54,
+  // and every one that agrees on aspect is half the family's size or twice it.
+  // 9 of 9 and 0 of 31, with the nearest miss on either axis about four times
+  // the threshold away.
+  const SYMBOL_FAMILY_MIN_SIZE_AGREEMENT=.6,SYMBOL_FAMILY_MIN_ASPECT_AGREEMENT=.55;
+  function symbolFamilyMember(box,modal){
+    if(!modal||!modal.side||!modal.aspect)return false;
+    const w=box.w,h=box.h;
+    if(!(w>0)||!(h>0))return false;
+    if(sizeAgreement(Math.sqrt(w*h),modal.side)<SYMBOL_FAMILY_MIN_SIZE_AGREEMENT)return false;
+    const aspect=Math.max(w,h)/Math.min(w,h);
+    return Math.max(0,1-Math.abs(aspect-modal.aspect)/modal.aspect)>=SYMBOL_FAMILY_MIN_ASPECT_AGREEMENT;
+  }
+  globalThis.MeritSymbolFamilyMember=symbolFamilyMember;
   // FIX #2, part 2: an evidence-gated split for blobs that really did merge
   // (two filled tables touching with no drawn separator, which hole filling
   // cannot help with). A split is only made where the pixels actually show a
@@ -2112,6 +2139,11 @@
             verdict:furniture?"repeated compact family (chairs only)":"linework"});
           if(furniture)chairSources.push({name:"dark-tone-cluster"+di,labels,rawCount:comps.length,
             comps:comps.filter(c=>chairSizeOk(c)&&c.fill>=.3)});
+          if(globalThis.MERIT_DETECT_DEBUG&&furniture){
+            (globalThis.MERIT_DARK_FAMILY_PROBE||=[]).push({index:di,medSide:medSide,nearModal,rep,
+              comps:comps.map(c=>({x:c.x,y:c.y,w:c.w,h:c.h,fill:+c.fill.toFixed(3),
+                side:+Math.sqrt(c.w*c.h).toFixed(1),notWall:notWall(c),sizeOk:chairSizeOk(c)}))});
+          }
         }
         mark("toneMasks");
       }
@@ -2514,6 +2546,17 @@
           }
         }
       }
+      // Stage census, for the miss taxonomy only. Which objects existed as
+      // components at all, before size/shape acceptance narrowed them — the
+      // difference between "the detector never saw it" and "the detector saw
+      // it and a later rule discarded it" needs opposite fixes.
+      if(globalThis.MERIT_DETECT_DEBUG){
+        globalThis.MERIT_STAGE_CENSUS={
+          allSourceComps:sources.flatMap(s2=>s2.comps.map(c=>({x:c.x,y:c.y,w:c.w,h:c.h,source:s2.name}))),
+          allSourceAll:sources.flatMap(s2=>(s2.all||[]).map(c=>({x:c.x,y:c.y,w:c.w,h:c.h,fill:+((c.fill??0).toFixed(3)),source:s2.name}))),
+          chairEntries:chairEntries.map(e=>({x:e.comp.x,y:e.comp.y,w:e.comp.w,h:e.comp.h,family:chairFamilyOf(e)})),
+        };
+      }
       const chairComps=chairEntries.map(e=>e.comp);
       const primaryComps=chairEntries.filter(e=>chairFamilyOf(e)==="primary").map(e=>e.comp);
       // The modal is the PRIMARY family's, not the whole chair population's.
@@ -2637,6 +2680,17 @@
       const chairs=chairUniform
         ?chairEntries.filter(chairAccepted).map(e=>Object.assign(e.comp,{chairFamily:chairFamilyOf(e)}))
         :chairComps;
+      if(globalThis.MERIT_STAGE_CENSUS){
+        globalThis.MERIT_STAGE_CENSUS.accepted=chairs.map(c=>({x:c.x,y:c.y,w:c.w,h:c.h}));
+        globalThis.MERIT_STAGE_CENSUS.rejectedByAcceptance=chairEntries.filter(e=>!chairAccepted(e))
+          .map(e=>{const pr=profileFor(e);const modal=pr?.size||chairModal;
+            return{x:e.comp.x,y:e.comp.y,w:e.comp.w,h:e.comp.h,family:chairFamilyOf(e),
+              mag:+Math.sqrt(e.comp.w*e.comp.h).toFixed(1),modal:modal?+modal.value.toFixed(1):null,
+              agree:+sizeAgreement(Math.sqrt(e.comp.w*e.comp.h),modal).toFixed(3),
+              shapeOk:chairShapeOk(e.comp,pr),elong:+elongationOf(e.comp).toFixed(2)};});
+        globalThis.MERIT_STAGE_CENSUS.chairModal=chairModal?+chairModal.value.toFixed(1):null;
+        globalThis.MERIT_STAGE_CENSUS.chairUniform=chairUniform;
+      }
       const detectionPath=chairUniform?"chair-first":"table-first";
       mark("chairs");
 
@@ -2673,6 +2727,11 @@
         return s.long/Math.max(1,s.short)<=4;
       });
       const spanPool=furnitureish.length>=4?furnitureish:pool;
+      if(globalThis.MERIT_STAGE_CENSUS){
+        const cbox=c=>({x:c.x,y:c.y,w:c.w,h:c.h,src:c.source,fill:c.fill??null});
+        globalThis.MERIT_STAGE_CENSUS.stage_pool=pool.map(p2=>cbox(p2.comp));
+        globalThis.MERIT_STAGE_CENSUS.stage_furnitureish=furnitureish.map(p2=>cbox(p2.comp));
+      }
       const modalLong=modalMagnitude(spanPool.map(p=>spanOf(p).long));
       const modalShort=modalMagnitude(spanPool.map(p=>spanOf(p).short));
       let splitCount=0;
@@ -2783,7 +2842,7 @@
       // What the surface filter turned away. Not made of table is not the same
       // as not an object — see the column pass further down.
       const surfaceRejectedComps=[];
-      const uniqueBeforeSurface=globalThis.MERIT_DETECT_DEBUG?unique.map(u=>u.comp):null;
+      const uniqueBeforeSurface=unique.map(u=>u.comp);
       const surfaceFamilies=(masksTints&&masksTints.length)?masksTints:(surfaceMask?[surfaceMask]:[]);
       if(surfaceFamilies.length){
         // The best SINGLE family, never their union: a table is made of one
@@ -2851,6 +2910,64 @@
         if(surfaceKept.length>=Math.max(4,unique.length*.2)){unique.length=0;unique.push(...surfaceKept);}
         else surfaceRejected=0;
       }
+      if(globalThis.MERIT_STAGE_CENSUS){
+        const cbox=c=>({x:c.x,y:c.y,w:c.w,h:c.h,src:c.source,fill:c.fill??null,cov:c.surfaceCoverage??null,
+          minority:c.surfaceFromMinorityFinish??null,
+          obbW:c.shape?.obb?.w??null,obbH:c.shape?.obb?.h??null,
+          obbFill:c.shape?.obbFill??null,cornerVsEdge:c.shape?.cornerVsEdge??null,
+          count:c.count??null});
+        globalThis.MERIT_STAGE_CENSUS.stage_expanded=expanded.map(e=>cbox(e.comp));
+        globalThis.MERIT_STAGE_CENSUS.stage_unique=uniqueBeforeSurface.map(cbox);
+        globalThis.MERIT_STAGE_CENSUS.stage_surfaceRejected=surfaceRejectedComps.map(cbox);
+        globalThis.MERIT_STAGE_CENSUS.stage_afterSurface=unique.map(e=>cbox(e.comp));
+      }
+
+      // ---- the symbol family is a family, not a polarity --------------------
+      //
+      // A plan that draws its tables as one repeated symbol may draw that
+      // symbol in more than one tone. ORNEK draws 157 open circles and 9 filled
+      // ones, all the same object at the same size, and the two halves arrive
+      // through different code: the open ones through the chair sources (light
+      // interior, dark rim), the filled ones through the tone/fill TABLE
+      // sources, because a solid disc is a surface. The representation swap
+      // below promotes the chair-source family and demotes everything the table
+      // path proposed, so the filled half was thrown away with the
+      // architecture — nine real tables lost to a difference in ink.
+      //
+      // So membership is asked as a family question — "which family does this
+      // belong to", not "is this dark" — against the vocabulary the plan has
+      // already declared through the OTHER half. Nothing here looks at tone,
+      // and nothing here is specific to a plan or a coordinate.
+      //
+      // Both tests are agreement functions already used elsewhere in this file,
+      // at the thresholds already used there (the fragment filter's .6 on size
+      // and .55 on aspect). Measured on ORNEK's 40 de-duplicated table-pool
+      // components, against a family modal taken from the open circles alone:
+      //
+      //                     size agreement      aspect agreement
+      //   the 9 filled      0.89 – 0.94         0.96 – 0.97
+      //   the other 31      0.00 – 0.94         0.00 – 0.99
+      //   ...but none of the 31 passes BOTH: every component that agrees on
+      //   size is a wall, a door or a bay at aspect 1.96 – 3.54 (agreement
+      //   0.00 – 0.15), and every component that agrees on aspect is half the
+      //   family's size or twice it (agreement 0.00 – 0.22).
+      //
+      // 9 of 9 and 0 of 31, with the nearest miss on either axis four times the
+      // threshold away. It is not a knife edge, and if dark architecture ever
+      // did start arriving as tables this is the measurement that would show
+      // it: the aspect column is what holds the line.
+      const symbolFamilyModal=(()=>{
+        if(!chairUniform||!chairModal||chairs.length<8)return null;
+        const asp=chairs.map(c=>{const o=c.shape?.obb,w=o?o.w:c.w,h=o?o.h:c.h;
+          return Math.max(w,h)/Math.max(1,Math.min(w,h));}).sort((a,b)=>a-b);
+        return{side:chairModal,aspect:asp[asp.length>>1]};
+      })();
+      const familyFromTableSources=symbolFamilyModal
+        ?uniqueBeforeSurface.filter(c=>{
+          const o=c.shape?.obb,w=o?o.w:c.w,h=o?o.h:c.h;
+          return symbolFamilyMember({w,h},symbolFamilyModal);
+        })
+        :[];
       // Debug capture for benchmarks/run-benchmark.mjs: what each source
       // actually proposed, before and after de-duplication. Off unless asked.
       let debugPool=null;
@@ -3222,6 +3339,8 @@
       };
       const chosen=ranked.filter(s=>!droppedIds.has(s.box.index));
       const chosenIndexes=new Set(chosen.map(s=>s.box.index));
+      if(globalThis.MERIT_STAGE_CENSUS)globalThis.MERIT_STAGE_CENSUS.stage_chosen=
+        chosen.map(c2=>({x:c2.obb.cx-c2.obb.w/2,y:c2.obb.cy-c2.obb.h/2,w:c2.obb.w,h:c2.obb.h}));
 
       // ---- re-seat the chairs whose table did not survive -------------------
       //
@@ -3552,15 +3671,29 @@
       })();
       const chairVenues=[];
       let textGlyphChairsDropped=0;
-      for(let ci=0;ci<chairs.length;ci++){
-        const ti=chairAssign.get(ci);
-        if(ti!==undefined&&chosenIndexes.has(ti))continue;
-        if(textRunIndexes.has(ci)){textGlyphChairsDropped++;continue;}
-        const ch=chairs[ci],obb=chairOBB(ch);
-        chairVenues.push({id:uid("candidate"),kind:"venue",type:"chair",...toPercentBox(obb),rotation:obb.rotation,
+      // Where members of the uniform family go when they do NOT become
+      // standalone objects. On a plan that draws chairs these two exits are
+      // correct and uninteresting: a chair at a table belongs to that table,
+      // and a run of glyphs is printing. On a SYMBOLIC plan the same two
+      // exits silently delete tables, so the boxes are kept rather than only
+      // counted — a count says how many were lost, these say which.
+      const familyLostToAssociation=[],familyLostToTextRun=[];
+      // The object a family member becomes when it does reach the plan in its
+      // own right. Factored out because the representation swap below can send
+      // an exited member back through here, and a restored object that differed
+      // in shape from its neighbours would be a second bug.
+      const familyVenue=ch=>{
+        const obb=chairOBB(ch);
+        return{id:uid("candidate"),kind:"venue",type:"chair",...toPercentBox(obb),rotation:obb.rotation,
           confidence:chairEvidence(ch,false),status:"unreviewed",selected:false,chairDetections:[],
           evidence:{geometry:Number(Math.min(.95,ch.fill).toFixed(2)),chairs:1,repetition:chairs.length,
-            source:chairSource,unassociated:true}});
+            source:chairSource,unassociated:true}};
+      };
+      for(let ci=0;ci<chairs.length;ci++){
+        const ti=chairAssign.get(ci);
+        if(ti!==undefined&&chosenIndexes.has(ti)){familyLostToAssociation.push(chairs[ci]);continue;}
+        if(textRunIndexes.has(ci)){textGlyphChairsDropped++;familyLostToTextRun.push(chairs[ci]);continue;}
+        chairVenues.push(familyVenue(chairs[ci]));
       }
       // ---- venue-scale objects (stage band / long bar / column) ------------
       // ---- columns and structural repeats -----------------------------------
@@ -3681,16 +3814,52 @@
       let venues=venueCompsKept.slice(0,14).map(c=>{
         analyze([c],sources.find(s=>s.all.includes(c)).labels);
         const obb=c.shape?.obb||{cx:c.x+c.w/2,cy:c.y+c.h/2,w:c.w,h:c.h,rotation:c.pcaRotation||0};
-        // The type here is a bare aspect-ratio guess: long means stage, compact
-        // means column. That is a reasonable opening bid and a poor basis for
-        // certainty, and downstream stages were treating it as direct evidence
-        // — a "stage" zone built on it was reported as STRONG, which on a plan
-        // with no stage at all is a fabricated certainty. So the basis travels
-        // with the object, and whoever builds a claim on it can see what it
-        // rests on.
-        return{id:uid("candidate"),kind:"venue",type:c.aspect>3?"stage":"column",typeBasis:"aspectRatio",...toPercentBox(obb),
+        // These objects are NOT given a name.
+        //
+        // The type used to be a bare aspect-ratio guess: longer than 3:1 meant
+        // stage, compact meant column. Phase 4 stopped a zone built on that
+        // guess being reported as STRONG, which removed the fabricated
+        // certainty but not the fabrication — the claim was still made, just
+        // more quietly.
+        //
+        // Measured over both real plans, the rule names 8 objects `stage`:
+        //
+        //   merit-real-venue  aspect 6.00, 7.93   — 2 stage objects annotated
+        //   ornek-symbolic    aspect 2.80, 4.55, 5.43, 6.08, 8.97, 31.17
+        //                                         — 0 stage objects annotated
+        //
+        // Two right and six wrong, and the two right ones sit INSIDE the range
+        // of the six wrong ones. Aspect cannot be retuned to separate them,
+        // and neither can the other axes measured beside it — object size
+        // (10.9-13.4% of the plan against 12.9-13.1%), how many look-alike
+        // siblings the object has (0-2 against 0-1), or how much furniture
+        // faces it. Every one of them overlaps.
+        //
+        // So a long band with nothing else known about it is left unnamed. Its
+        // shape is recorded, its basis is recorded, and it is reported as an
+        // area that could not be identified. That is a real cost, honestly: the
+        // Golden Plan's stage is genuine and is no longer named. It buys the
+        // removal of six false ones, and it stops a 25%-precision label being
+        // presented to an operator as a finding.
+        //
+        // What WOULD corroborate it is the drawing's own word for it — the
+        // Golden Plan prints "SAHNE" beside its stage, and ORNEK prints nothing
+        // beside any of its six bands. That needs OCR, which this sandbox
+        // cannot run in the normal build (see benchmarks/CAPACITY-AS-A-RULE.md
+        // for what happened last time a rule was built where no benchmark could
+        // reach it), so it is recorded as the way forward and not written blind.
+        //
+        // Columns are unaffected: they are detected separately by the column
+        // pass above, which requires four independent facts to agree (repeated
+        // family, compact, unseated, standing on a two-axis grid) and scores
+        // 6 of 6 with no false positives on the architecture fixture. That
+        // pass is what a corroborated structural claim looks like; this is
+        // what an uncorroborated one looks like.
+        return{id:uid("candidate"),kind:"venue",type:"other",typeBasis:"aspectRatio",
+          shapeSuggests:c.aspect>3?"band":"block",...toPercentBox(obb),
           rotation:obb.rotation,confidence:.52,status:"unreviewed",selected:false,chairDetections:[],
-          evidence:{geometry:.62,chairs:0,repetition:0,source:c.source||"fill"}};
+          evidence:{geometry:.62,chairs:0,repetition:0,source:c.source||"fill",
+            basis:"a shape with no corroborating evidence of what it is"}};
       }).concat(columnVenues).concat(chairVenues);
 
       mark("tables");
@@ -3712,6 +3881,7 @@
       // above 0.95, the one that does not is at 0.077.
       let representation=null;
       let representationSwap=null;
+      let familyRestoredBySwap=null;
       if(globalThis.MeritPlanRepresentation){
         representation=globalThis.MeritPlanRepresentation.decide({
           uniformFamily:chairUniform,
@@ -3735,7 +3905,58 @@
           c.chairDetections=[];
           c.representationDemoted=true;
         }
-        const promoted=chairVenues.map(c=>{
+        // ---- family members that took an exit only a chair can take --------
+        //
+        // Two routes remove a member of the uniform family before it ever
+        // becomes an object. Both are correct on a plan that draws chairs, and
+        // both delete tables here, for the same reason the OCR text-suppression
+        // bug did: the exemption that makes them safe is unavailable by
+        // construction on a plan whose tables are numbered symbols.
+        //
+        //   ASSOCIATION — the member was counted as a seat of a table proposal.
+        //   Every one of those proposals has just been demoted two lines above,
+        //   so the seat relationship no longer stands: its table is not a table.
+        //   The pipeline already re-homes chairs whose table the fragment filter
+        //   deleted ("re-seat the chairs whose table did not survive"); the swap
+        //   deletes tables too and never did. Measured on ORNEK: 11 members
+        //   exit here, 10 of them annotated tables.
+        //
+        //   TEXT RUN — the member was read as a printed glyph. That test's own
+        //   discriminator is "this run sits at least 2 mark-widths from the
+        //   nearest DETECTED table", which is what separates a caption from a
+        //   row of seats. When the marks ARE the tables the quantity is
+        //   degenerate, and measured on ORNEK the population straddles the
+        //   threshold with no separation to find — min 0.62, median 1.97, max
+        //   5.46 against a threshold of 2.0 — so 11 of 11 flagged marks are
+        //   annotated tables and none is text. ORNEK is also the only plan in
+        //   the whole benchmark set that reaches this code at all: the Golden
+        //   Plan and all eight adversarial fixtures consider zero runs, because
+        //   their seats are associated and only unassociated marks are eligible.
+        //
+        // Restoring them changes no input to the representation decision, which
+        // was already taken above on the association rate as measured. It
+        // changes what happens once that decision says these marks are tables.
+        const exited=[...familyLostToAssociation,...familyLostToTextRun];
+        const restored=exited.map(familyVenue);
+        // ...and the other half of the family, which never came through the
+        // chair sources at all because it is drawn in solid ink. See the
+        // measured membership test where familyFromTableSources is built.
+        const alreadyHere=[...chairVenues,...restored];
+        const overlapsExisting=c=>alreadyHere.some(v=>{
+          const ix=Math.max(0,Math.min(c.x+c.w,v.x+v.w)-Math.max(c.x,v.x));
+          const iy=Math.max(0,Math.min(c.y+c.h,v.y+v.h)-Math.max(c.y,v.y));
+          return ix*iy>0;
+        });
+        const otherPolarity=familyFromTableSources
+          .map(comp=>{const o=comp.shape?.obb||{cx:comp.x+comp.w/2,cy:comp.y+comp.h/2,w:comp.w,h:comp.h,rotation:comp.pcaRotation||0};
+            return{id:uid("candidate"),kind:"venue",type:"chair",...toPercentBox(o),rotation:o.rotation,
+              confidence:.5,status:"unreviewed",selected:false,chairDetections:[],
+              evidence:{geometry:Number(Math.min(.95,comp.fill??.5).toFixed(2)),chairs:1,
+                repetition:chairs.length,source:comp.source||"tone",unassociated:true}};})
+          .filter(c=>!overlapsExisting(c));
+        familyRestoredBySwap={fromAssociation:familyLostToAssociation.length,
+          fromTextRun:familyLostToTextRun.length,otherPolarity:otherPolarity.length};
+        const promoted=[...chairVenues,...restored,...otherPolarity].map(c=>{
           c.kind="table";
           c.type="round";
           c.selected=true;
@@ -3755,9 +3976,23 @@
         });
         candidates.push(...promoted);
         // chairVenues objects are now tables; they must not also be venues.
+        // Neither may anything else standing where a promoted member stands —
+        // the solid half of the family reaches the surface filter, which turns
+        // it away as "not made of table", and the column pass reads what that
+        // filter turned away. A disc claimed by the family is spoken for, so it
+        // cannot also be reported as a column.
         const promotedSet=new Set(promoted);
-        venues=venues.filter(v=>!promotedSet.has(v)).concat(demoted);
-        representationSwap={promotedToTable:promoted.length,demotedFromTable:demoted.length};
+        const claimed=[...restored,...otherPolarity];
+        const standsOnAPromotedMember=v=>claimed.some(c=>{
+          const ix=Math.max(0,Math.min(c.x+c.w,v.x+v.w)-Math.max(c.x,v.x));
+          const iy=Math.max(0,Math.min(c.y+c.h,v.y+v.h)-Math.max(c.y,v.y));
+          return ix*iy>Math.min(c.w*c.h,v.w*v.h)*.5;
+        });
+        venues=venues.filter(v=>!promotedSet.has(v)&&!standsOnAPromotedMember(v)).concat(demoted);
+        representationSwap={promotedToTable:promoted.length,demotedFromTable:demoted.length,
+          restoredFromSeatOfADemotedTable:familyLostToAssociation.length,
+          restoredFromTextRun:familyLostToTextRun.length,
+          fromTheFamilysOtherPolarity:otherPolarity.length};
       }
 
       return{
@@ -3779,7 +4014,11 @@
           // even when it is zero.
           relations:relationStats,
           mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,surfaceMinorityFinishKept,secondaryChairFamilies:secondaryFamilyDiagnostics,fragmentSuppression:fragmentDiagnostics,
-          textGlyphChairsDropped,mergedRowVenuesDropped:mergedRowVenues.length,columnsDetected:columnComps.length,debugPool,
+          textGlyphChairsDropped,
+          familyLostToAssociation:familyLostToAssociation.map(ch=>toPercentBox(chairOBB(ch))),
+          familyLostToTextRun:familyLostToTextRun.map(ch=>toPercentBox(chairOBB(ch))),
+          familyRestoredBySwap,familyFromTableSources:familyFromTableSources.length,
+          mergedRowVenuesDropped:mergedRowVenues.length,columnsDetected:columnComps.length,debugPool,
           sources:diagnosticsSources,chairSourceBreakdown,phaseMs,
           colorModel:accentModel?{isColorPlan:accentModel.isColorPlan,accentHue:accentModel.accentHue,
             accentChroma:accentModel.accentChroma,accentFraction:Number(accentModel.accentFraction.toFixed(4)),

@@ -92,8 +92,16 @@ metrics. Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.
 own server, ~2 min). It is the first thing to run and the first thing to
 extend: a behaviour change no suite would have caught needs a suite. Detector
 changes are measured with `npm run benchmark` and checked against the
-committed `benchmarks/BASELINE.json` — never against remembered numbers. Full
-detail: `tests/README.md`, `benchmarks/README.md`, `.claude/rules/testing.md`.
+committed `benchmarks/BASELINE.json` — never against remembered numbers.
+
+When a detector count comes up short, **diagnose before theorising**:
+`benchmarks/heldout/ornek-stage-walk.mjs` names the stage each missed object
+died at, and `ornek-miss-taxonomy.mjs` reports found-vs-missed as distributions
+of the quantities the detector actually reasons about. Phase 6 guessed at three
+causes and measurement contradicted two of them.
+
+Full detail: `tests/README.md`, `benchmarks/README.md`,
+`.claude/rules/testing.md`.
 
 ## Data integrity
 

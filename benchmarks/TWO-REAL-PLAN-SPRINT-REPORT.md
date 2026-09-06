@@ -184,6 +184,12 @@ A real 13-point cost, not a collapse, and not the reason the plan was
 unreadable. Ranked below the work that lets the system state what the drawing
 prints. `benchmarks/rotation/`.
 
+> **Phase 6 update:** the gap is now **zero** — both the upright page and the
+> raw one score P 0.994 R 0.976 F1 0.985. The 13 points were the three
+> detection rules Phase 6 fixed, which fail the same way whichever way up the
+> sheet is. Deciding not to build for orientation was right, and for a better
+> reason than the one given here.
+
 **Per-table numbers.** Full-page OCR yields a usable digit for **21 of 132
 tables (16%)**. Too sparse to present as numbering; doing it properly needs OCR
 of each circle's own crop. Measured, recorded, not shipped — a 16% feature that
@@ -192,6 +198,13 @@ looks like a working one is exactly what this project forbids.
 ---
 
 ## Still red, honestly
+
+> **Superseded by Phase 6** — see `benchmarks/PHASE6-DETECTION-REPORT.md`.
+> ORNEK is now P 0.994 R 0.976 F1 0.985, semantic fact accuracy 0.9231, and the
+> false stages are gone. The three causes guessed at below were measured in
+> Phase 6 and two of the three were wrong. This section is left as it was
+> written, because a report that quietly rewrites its own wrong guesses is
+> worth less than one that shows them.
 
 | gate | value | why |
 |---|---|---|
@@ -211,10 +224,15 @@ The 34 tables still missed are a detection-layer weakness, not a naming one:
 Recovering every one of them would have moved table recall from 0 to 0 before
 the representation fix.
 
+*(Phase 6's measurement: the dark-filled group was real but its cause was not
+the one assumed; the fold band does not exist at all — the local paper level
+reads 255 at every table on the sheet; and 21 of the 34 were tables the
+detector had already found and three later rules threw away.)*
+
 ## Verification
 
 ```
-tests              18/18 suites, 468/468 checks
+tests              18/18 suites, 468/468 checks   (20/20, 516/516 after Phase 6)
 detection          merit-real-venue + 4 fixtures unchanged, 0 regressions
 adversarial        0 regressions, 9 improvements vs the frozen baseline
 fabricated STRONG  0
@@ -226,11 +244,14 @@ perf               all suites completed
 
 ## Not done
 
-- **Phase 6** — detection-layer failures a1/a2/a4/a5/a6, the dark-filled tables,
-  the faint row, and a structural-boundary (walls/room) layer. This is what
-  closes the semantic-accuracy gate.
-- **PDF normalisation** — orientation, deskew, crop, contrast, fold. Measured at
-  13 points of recall; the original must stay the hero background.
+- ~~**Phase 6**~~ — done; see `benchmarks/PHASE6-DETECTION-REPORT.md`. The
+  dark-filled tables and the semantic-accuracy gate are closed; the faint row
+  and the adversarial fixtures are not.
+- **PDF normalisation** — orientation, deskew, crop, contrast, fold. The
+  13-point recall cost measured here was re-measured after Phase 6 and is now
+  **zero**: the raw page scores identically to the upright one, because the
+  cost was those detection bugs rather than the rotation. The original must
+  still stay the hero background.
 - **Per-table numbering** — needs per-circle OCR.
 - **Operator test on both plans**, and **CI covering both real plans**.
 

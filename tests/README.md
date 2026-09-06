@@ -36,6 +36,14 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `structural-objects` | intelligence, **slow** | a column grid is split by a size-bin edge, a column is thrown out for someone else's chair, or printed text starts being read as a column grid |
 | `table-typing` | intelligence, **slow** | a table is typed bistro on its size alone, without evidence, or a plan of uniform tables starts producing bistros |
 | `training-data-capture` | intelligence, **slow** | a human decision stops storing a real crop with its provenance, or a capture log starts calling itself a model |
+| `relationship-engine` | intelligence | a seat is put at the wrong table, or an ambiguous seat is claimed as settled |
+| `plan-memory` | intelligence | a remembered correction stops surviving Re-Analyze, or leaks between plans |
+| `visual-second-opinion` | intelligence | the learned encoder's opinion is presented as more than a second opinion |
+| `plan-representation` | intelligence | a plan that draws chairs is read as symbolic, or one that draws none is read as physical |
+| `symbolic-plan-capacity` | intelligence | a numbered symbol is deleted as printed text, or a capacity rule is claimed from OCR nothing corroborates |
+| `symbol-family` | intelligence | family membership widens until architecture is admitted, or narrows until the family's own members fall out |
+| `symbolic-plan-detection` | intelligence | on a symbolic plan a detected family member fails to become a table — because it was drawn in solid ink, read as printing, or counted as the seat of an object that was then demoted |
+| `operator-session` | business | the operator's review session loses its place, its queue order, or its decisions |
 
 ## Environment
 

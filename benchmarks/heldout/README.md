@@ -89,6 +89,37 @@ benchmark.** The moment it is in the training set, the only chance to see this
 system's honest behaviour on an unseen venue is gone, and it cannot be recovered
 by holding out a third.
 
+## Diagnosing a held-out result once you have one
+
+A score is a number; "which stage lost this object" is a diagnosis. Two tools
+in this directory answer that, and both exist because the first attempt at
+Phase 6 guessed at the causes and got two of three wrong.
+
+```
+node benchmarks/heldout/ornek-miss-taxonomy.mjs   # what the pixels look like
+node benchmarks/heldout/ornek-stage-walk.mjs      # where in the pipeline it died
+```
+
+**`ornek-miss-taxonomy.mjs`** measures, for every annotated table, the
+quantities the detector actually reasons about — the *local* paper level, the
+interior grey, the contrast, the rim step, the ink fraction, the crowding — and
+reports found against missed as distributions rather than as a count. It is
+what showed that ORNEK's supposed fold band does not exist: the local paper
+estimate reads 255 at all 166 tables. Nothing in it is tuned; it exists so a
+rule proposed afterwards has a measured separation behind it, and so a rule
+with none can be rejected before it is written. Writes
+`ornek-miss-taxonomy.json`.
+
+**`ornek-stage-walk.mjs`** traces each table through every stage of the table
+path — source components, pool, split, de-duplication, surface filter, chosen —
+and names the exit any lost family member took. It reads the detector's
+`MERIT_STAGE_CENSUS`, which is populated only under `MERIT_DETECT_DEBUG`. It is
+what separated "the detector never saw it" from "the detector saw it and a
+later rule discarded it", which turned out to be 4 objects against 30 and
+needed opposite fixes.
+
+Both read the miss list from the last `npm run benchmark`, so run that first.
+
 ## Fail-closed, verified by breaking it
 
 Not asserted from reading the code — the manifest was actually corrupted and the

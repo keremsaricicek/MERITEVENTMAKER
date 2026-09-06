@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-09-05T17:19:28.364Z",
+  "ranAt": "2026-09-06T12:34:46.736Z",
   "reports": [
     {
       "planId": "ornek-symbolic-raw",
@@ -7,73 +7,28 @@
       "relationships": null,
       "tables": {
         "groundTruth": 166,
-        "detected": 110,
-        "tp": 110,
-        "fp": 0,
-        "fn": 56,
-        "precision": 1,
-        "recall": 0.663,
-        "f1": 0.797,
+        "detected": 163,
+        "tp": 162,
+        "fp": 1,
+        "fn": 4,
+        "precision": 0.994,
+        "recall": 0.976,
+        "f1": 0.985,
         "missedIds": [
-          "t001",
-          "t005",
-          "t011",
-          "t015",
-          "t016",
-          "t019",
-          "t020",
-          "t022",
-          "t026",
-          "t030",
-          "t031",
-          "t032",
-          "t034",
-          "t035",
-          "t036",
-          "t037",
-          "t038",
-          "t039",
-          "t040",
-          "t045",
-          "t046",
-          "t050",
-          "t051",
-          "t052",
-          "t055",
-          "t056",
-          "t061",
-          "t062",
-          "t066",
-          "t067",
-          "t068",
           "t074",
           "t075",
           "t076",
-          "t077",
-          "t079",
-          "t080",
-          "t081",
-          "t085",
-          "t134",
-          "t135",
-          "t145",
-          "t146",
-          "t147",
-          "t149",
-          "t150",
-          "t157",
-          "t158",
-          "t159",
-          "t160",
-          "t161",
-          "t162",
-          "t163",
-          "t164",
-          "t165",
-          "t166"
+          "t077"
         ],
-        "spuriousCount": 0,
-        "spurious": []
+        "spuriousCount": 1,
+        "spurious": [
+          {
+            "cx": 233,
+            "cy": 1159,
+            "w": 60,
+            "h": 51
+          }
+        ]
       },
       "tableTypeAccuracy": {
         "square": {
@@ -82,8 +37,8 @@
           "accuracy": null
         },
         "round": {
-          "matched": 110,
-          "correct": 110,
+          "matched": 162,
+          "correct": 162,
           "accuracy": 1
         },
         "bistro": {
@@ -123,7 +78,7 @@
           },
           "logical": {
             "seats": 0,
-            "groups": 109,
+            "groups": 162,
             "source": "seats summed over logical seating groups"
           },
           "unverified": [],
@@ -136,7 +91,7 @@
           "ocrAvailable": false,
           "suspectRegions": [
             {
-              "id": "candidate_052e9cd8-d4b3-4c03-b4d6-63a17eb6e8e6",
+              "id": "candidate_03d2f855-d087-4c35-bf95-d9b5748c61eb",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -144,7 +99,7 @@
               ]
             },
             {
-              "id": "candidate_087abda1-9a87-4928-9eab-9510d69ef958",
+              "id": "candidate_048c7759-7ea8-426c-8942-28cfae022ee4",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -152,7 +107,7 @@
               ]
             },
             {
-              "id": "candidate_0b9f10c3-8c02-42ba-87c8-0d078632aca8",
+              "id": "candidate_056904b9-2b8e-4b1f-a341-fd4383bff8a9",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -160,7 +115,7 @@
               ]
             },
             {
-              "id": "candidate_0c6a6f04-8162-40d9-b334-d07cbede6d9e",
+              "id": "candidate_069a0a32-127b-48f6-ba6f-0b1542ed7cf6",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -168,7 +123,7 @@
               ]
             },
             {
-              "id": "candidate_0ec31967-dce1-48f4-88fa-c6fbb969ea98",
+              "id": "candidate_0a8e3026-c9cb-4948-83a6-e03f5e357957",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -176,7 +131,7 @@
               ]
             },
             {
-              "id": "candidate_1133373e-e442-4c0f-a959-4bcb998b71fd",
+              "id": "candidate_0ea4ad84-903b-459e-903a-ca43597b17eb",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -184,7 +139,7 @@
               ]
             },
             {
-              "id": "candidate_13b5a00a-0452-4a9a-a372-5cd339d59ebc",
+              "id": "candidate_135c6f05-c362-4cfc-9293-9a23ef794f73",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -192,7 +147,7 @@
               ]
             },
             {
-              "id": "candidate_161afbb5-d402-4555-944f-4ff81206c632",
+              "id": "candidate_17a05899-9ddd-41d4-bcca-59c7ece7bc86",
               "score": 4,
               "reasons": [
                 "table with no seats found",
@@ -201,71 +156,48 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_052e9cd8-d4b3-4c03-b4d6-63a17eb6e8e6",
-            "candidate_087abda1-9a87-4928-9eab-9510d69ef958",
-            "candidate_0b9f10c3-8c02-42ba-87c8-0d078632aca8",
-            "candidate_0c6a6f04-8162-40d9-b334-d07cbede6d9e",
-            "candidate_0ec31967-dce1-48f4-88fa-c6fbb969ea98",
-            "candidate_1133373e-e442-4c0f-a959-4bcb998b71fd",
-            "candidate_13b5a00a-0452-4a9a-a372-5cd339d59ebc",
-            "candidate_161afbb5-d402-4555-944f-4ff81206c632"
+            "candidate_03d2f855-d087-4c35-bf95-d9b5748c61eb",
+            "candidate_048c7759-7ea8-426c-8942-28cfae022ee4",
+            "candidate_056904b9-2b8e-4b1f-a341-fd4383bff8a9",
+            "candidate_069a0a32-127b-48f6-ba6f-0b1542ed7cf6",
+            "candidate_0a8e3026-c9cb-4948-83a6-e03f5e357957",
+            "candidate_0ea4ad84-903b-459e-903a-ca43597b17eb",
+            "candidate_135c6f05-c362-4cfc-9293-9a23ef794f73",
+            "candidate_17a05899-9ddd-41d4-bcca-59c7ece7bc86"
           ]
         }
       },
-      "semanticObjects": {
-        "stage": {
-          "tp": 0,
-          "fp": 1,
-          "fn": 0,
-          "precision": 0,
-          "recall": 0,
-          "f1": 0
-        },
-        "column": {
-          "tp": 0,
-          "fp": 5,
-          "fn": 0,
-          "precision": 0,
-          "recall": 0,
-          "f1": 0
-        }
-      },
+      "semanticObjects": {},
       "falsePositiveRegions": {
         "textRegionsAnnotated": 3,
         "tablesInsideTextRegions": 0,
         "anyDetectionInsideTextRegions": 5,
         "worstTextRegions": [],
         "architectureRegionsAnnotated": 15,
-        "tablesInsideArchitectureRegions": 0,
-        "anyDetectionInsideArchitectureRegions": 13,
-        "worstArchitectureRegions": []
+        "tablesInsideArchitectureRegions": 1,
+        "anyDetectionInsideArchitectureRegions": 14,
+        "worstArchitectureRegions": [
+          {
+            "id": "system-kontrol",
+            "subclass": "control_point",
+            "tables": 1
+          }
+        ]
       },
       "humanEffort": {
-        "reviewGroups": 4,
+        "reviewGroups": 2,
         "reviewGroupDetail": [
           {
             "kind": "table",
             "type": "round",
-            "n": 110,
-            "clusters": 14
+            "n": 163,
+            "clusters": 22
           },
           {
             "kind": "venue",
             "type": "other",
-            "n": 14,
-            "clusters": 13
-          },
-          {
-            "kind": "venue",
-            "type": "column",
-            "n": 5,
-            "clusters": 4
-          },
-          {
-            "kind": "venue",
-            "type": "stage",
-            "n": 1,
-            "clusters": 1
+            "n": 20,
+            "clusters": 18
           }
         ],
         "uncertainQuestions": 1,
@@ -280,7 +212,7 @@
         "ocrEngine": null,
         "ocrAvailable": false
       },
-      "detectionMs": 1503,
+      "detectionMs": 1574,
       "pageErrors": [],
       "imageShaMatches": true
     }
