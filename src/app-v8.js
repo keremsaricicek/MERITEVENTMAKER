@@ -4183,6 +4183,11 @@
     const vector=c.visualDescriptor?.vector||null;
     const entry={id:uid("planmemory"),sourceCandidateId:c.id,kind:c.kind,type:c.type,status:c.status,
       geometry:{x:c.x,y:c.y,w:c.w,h:c.h,rotation:c.rotation||0},manual,correctedAt:nowISO(),
+      // The identifier the drawing prints on it, when two crops agreed on one.
+      // Stored with the memory so the same table can be recognised after a
+      // re-import by its number rather than by resembling a hundred siblings.
+      printedNumber:c.printedNumber&&c.printedNumber.state==="VERIFIED"
+        ?{state:"VERIFIED",value:c.printedNumber.value}:null,
       visual:vector?{vector:Array.from(vector),
         provider:globalThis.MeritVisualEmbedding?.resolve?.()?.id||null,
         version:globalThis.MERIT_PLAN_ENCODER_WEIGHTS?.id||null}:null,
@@ -4335,7 +4340,7 @@
     const memById=new Map(memory.map(m=>[m.id,m]));
     const result=globalThis.MeritPlanMemory.match(memory,
       freshCandidates.map(c=>({id:c.id,kind:c.kind,type:c.type,x:c.x,y:c.y,w:c.w,h:c.h,
-        vector:c.visualDescriptor?.vector||null})));
+        vector:c.visualDescriptor?.vector||null,printedNumber:c.printedNumber||null})));
     const usedC=new Set(),usedM=new Set();
     let reappliedCount=0;
     // Where the operator and the detector actually disagree. Re-applying a
@@ -4828,6 +4833,33 @@
       statedCountSource:rule?`the capacity rule the drawing prints (${rule.units} x ${rule.perUnit} = ${rule.total})`:null,
     });
   }
+  // ---- can the plan check itself? ------------------------------------------
+  //
+  // Not another detector: it reads nothing, measures nothing and adds no engine
+  // calls. It compares the numbers already known against each other — what the
+  // drawing states, what the detector found, what the arithmetic gives, what a
+  // person confirmed — and says where they agree.
+  //
+  // `drawsSeats` is the guard that keeps one particular false finding buried.
+  // Comparing a printed pax figure against a counted seat total means something
+  // on a plan that draws seats and nothing on one that does not; "2064 stated,
+  // 0 counted" is a restatement of what kind of drawing it is dressed up as a
+  // discovery. It was withdrawn in an earlier sprint and must not return
+  // through this layer, so the representation decision gates it.
+  function runSelfCheck(event){
+    const analysis=event?.analysis;
+    if(!analysis||!globalThis.MeritSelfCheck)return;
+    const pi=analysis.planIntelligence||{};
+    const representation=analysis.diagnostics?.representation||null;
+    const drawsSeats=!!representation&&representation.kind==="PHYSICAL";
+    analysis.selfCheck=globalThis.MeritSelfCheck.run({
+      capacityAudit:pi.capacityAudit||null,
+      tablesDetected:(analysis.candidates||[]).filter(c=>c.kind==="table"&&c.status!=="rejected").length,
+      seatsCounted:pi.planSummary?.physicalSeats??null,
+      drawsSeats,
+      numberIntegrity:analysis.numberIntegrity||null,
+    });
+  }
   // Exposed for the regression suite. This rule silently deleted 117 of
   // ORNEK's 132 tables and only did so when OCR was running, which is a
   // combination no benchmark in this repo exercises — the sandbox has no
@@ -5037,6 +5069,16 @@
       ui.analysisStage=t("analysis.stage.relating");ui.analysisProgress=90;render();await yieldFrame();
       ui.analysisStage=t("analysis.stage.capacity");ui.analysisProgress=95;render();await yieldFrame();
       event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText);
+      // LAST, and that position is the whole point. The self-check compares
+      // what the drawing states against what was found, and the statement only
+      // exists once planIntelligence has been rebuilt from the OCR text. Run
+      // any earlier and it reads the pre-OCR interpretation: on a plan whose
+      // tables are not numbered, readPrintedTableNumbers returns before it
+      // refreshes anything, so the capacity rule the drawing prints would
+      // simply not be there to check. It runs on every plan, not only numbered
+      // ones — a drawing that prints a capacity rule can be checked against
+      // itself whatever its tables look like.
+      runSelfCheck(event);
       ui.analysisStage=t("analysis.stage.review");ui.analysisProgress=100;ui.analysisBusy=false;
       event.analysis.timings={importedAtMs:event.background?.importedAtMs??null,analysisStartedAtMs,analysisCompletedAtMs:Date.now()};ui.selectedCandidateId=event.analysis.candidates[0]?.id||null;ui.difficultQuestionIndex=0;ui.activeReviewGroupId=null;ui.activeQuestionId=null;audit(event,"ASSISTED_DETECTION_COMPLETED",event.analysis.diagnostics);touchEvent(event);render();
     }catch(error){console.error(error);ui.analysisBusy=false;ui.analysisStage="Analysis failed";render();toast(`Assisted Detection failed: ${error.message}`,"error",7000);}
@@ -5047,7 +5089,10 @@
   // answers, cross-kind reclassification) so capacity, dining-group counts,
   // Review Center and overlays are never stale relative to what a human
   // actually decided.
-  function recomputePlanIntelligence(event){event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText??null);}
+  // The self-check goes with it: a reclassification changes how many tables
+  // were found, and a consistency report that still quotes the old count is
+  // worse than none — it disagrees with the screen it sits on.
+  function recomputePlanIntelligence(event){event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText??null);runSelfCheck(event);}
   function reviewCandidates(event){const a=event.analysis;if(!a)return[];return a.candidates.filter(c=>(ui.reviewFilter==="all"||c.status===ui.reviewFilter)&&(ui.reviewClass==="all"||c.kind===ui.reviewClass)&&c.confidence>=ui.reviewConfidence);}
   // Which candidate(s) the screen is actively asking a question about right
   // now — a difficult question's whole furniture group, an inspected Review

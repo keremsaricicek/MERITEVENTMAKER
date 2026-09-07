@@ -41,6 +41,7 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `visual-second-opinion` | intelligence | the learned encoder's opinion is presented as more than a second opinion |
 | `plan-representation` | intelligence | a plan that draws chairs is read as symbolic, or one that draws none is read as physical |
 | `symbolic-plan-capacity` | intelligence | a numbered symbol is deleted as printed text, or a capacity rule is claimed from OCR nothing corroborates |
+| `plan-self-check` | intelligence | arithmetic starts repairing its own inputs, a number loses its provenance, or the withdrawn "stated pax vs 0 counted seats" finding returns on a symbolic plan |
 | `plan-number-integrity` | intelligence | a gap in the numbering gets silently filled in, a numbering range gets hardcoded instead of discovered, or repeated uncertainty stops being grouped |
 | `plan-table-numbers` | intelligence | a table number is claimed on weaker evidence than two crops agreeing, or LIKELY starts being produced from OCR alone |
 | `plan-label-ocr` | intelligence | an object stops being named from the word the drawing prints on it, or starts being named from a scattered reading stitched back together |

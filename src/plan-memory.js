@@ -136,11 +136,46 @@
   };
   const APPLIES = new Set(["strong", "likely"]);
 
+  // A verified table number is not a similarity, it is an identifier.
+  //
+  // Everything else this function weighs — where a box sits, how big it is,
+  // what it looks like, what surrounds it — answers "how alike are these two
+  // objects". On a plan of a hundred identical numbered circles that question
+  // has no useful answer: the learned encoder rates every circle about 0.9
+  // similar to every other, which is correct and useless. "TABLE 137" answers a
+  // different question, the only one that matters here: is this the SAME table.
+  //
+  // So a number that both sides verified overrides the weighing in both
+  // directions, and the veto is the more important half:
+  //
+  //   same number      this is that table, wherever it now sits and whatever
+  //                    the embedding thinks of its neighbours
+  //   different number NOT that table, however identical the two circles look
+  //
+  // Only VERIFIED numbers count. A NEEDS_REVIEW reading is measured right 17%
+  // of the time (see src/plan-table-numbers.js) and would make identity worse,
+  // not better — an unread number says nothing and is treated as saying nothing.
+  //
+  // This makes matching STRICTER, never looser. The distance gate below is
+  // unchanged, so a number cannot reach out and claim a distant object; it can
+  // only decide between things geometry already considered plausible, and rule
+  // out things geometry liked. Widening the search on a number alone is exactly
+  // the aggressive matching that previously raised wrong applications, and it
+  // is not done here — the corpus that could measure it (the Golden Plan) draws
+  // no numbers at all, so there is nothing to measure it against yet.
+  function verifiedNumber(o) {
+    const p = o && o.printedNumber;
+    if (!p || p.state !== "VERIFIED" || typeof p.value !== "number") return null;
+    return p.value;
+  }
+
   function identity(memory, candidate, ctx) {
     const g = memory.geometry;
     const tol = toleranceFor(g), search = tol * SEARCH_OF_TOLERANCE;
     const dist = geometryDistance(candidate, g);
     if (dist > search) return null;
+    const memNumber = verifiedNumber(memory), candNumber = verifiedNumber(candidate);
+    if (memNumber !== null && candNumber !== null && memNumber !== candNumber) return null;
     const terms = {}, weights = {};
 
     terms.geometry = 1 - clamp(dist / search);
@@ -190,12 +225,21 @@
 
     let sum = 0, wsum = 0;
     for (const k in terms) { sum += terms[k] * weights[k]; wsum += weights[k]; }
+    let score = wsum ? sum / wsum : 0;
+    // Both sides carry the same verified number. Nothing the weighing could
+    // say would change the answer, so it does not get to: the score is taken
+    // to certainty and the basis is recorded, so a reader of the decision sees
+    // an identifier rather than a suspiciously high similarity.
+    const numberMatched = memNumber !== null && candNumber !== null && memNumber === candNumber;
+    if (numberMatched) score = 1;
     return {
-      score: wsum ? sum / wsum : 0, terms, weights,
+      score, terms, weights,
       distance: dist, tolerance: tol,
       withinOldTolerance: dist <= tol,
       visualUsed: cos !== null, contextUsed: terms.context !== undefined,
       visualCosine: cos,
+      number: numberMatched ? memNumber : null,
+      basis: numberMatched ? "the verified table number printed on both" : "geometry, size, appearance and neighbourhood",
     };
   }
 
@@ -325,6 +369,12 @@
         withinOldTolerance: row.withinOldTolerance,
         visualUsed: row.visualUsed, visualCosine: row.visualCosine == null ? null : +row.visualCosine.toFixed(4),
         contextUsed: row.contextUsed,
+        // What decided it. On a numbered plan a match can rest on an
+        // identifier rather than on a resemblance, and a reader of the record
+        // should be able to see which — a score of 1 with no explanation looks
+        // like a suspiciously confident similarity.
+        number: row.number ?? null,
+        basis: row.basis,
         terms: Object.fromEntries(Object.entries(row.terms).map(([k, v]) => [k, +v.toFixed(3)])),
         reclassifies: row.candidate.kind !== row.memory.kind || row.candidate.type !== row.memory.type,
         // Where this candidate sits relative to where the decision was made.

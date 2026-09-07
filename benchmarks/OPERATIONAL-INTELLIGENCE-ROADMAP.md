@@ -296,3 +296,148 @@ nothing was filled in.
 
 On the Golden Plan the layer is absent entirely — there are no numbered symbols
 to check.
+
+---
+
+## Phase 4 — a verified table number is an identifier, not a similarity
+
+Visual Plan Memory was **extended, not rewritten**. Everything it weighs —
+where a box sits, how big it is, what it looks like, what surrounds it —
+answers *how alike are these two objects*. On a plan of a hundred identical
+numbered circles that question has no useful answer: the learned encoder rates
+every circle about 0.9 similar to every other, which is correct and useless.
+
+"TABLE 137" answers the only question that matters: **is this the same table.**
+
+So a number both sides verified overrides the weighing, in both directions, and
+the veto is the more important half:
+
+| | outcome |
+|---|---|
+| same verified number | this is that table — score taken to certainty, `basis` records that an identifier decided it |
+| different verified numbers | **not** that table, however identical the two circles look — no match, not even ambiguous |
+| either side unverified | the ordinary weighing, unchanged |
+
+Only VERIFIED numbers count. A NEEDS REVIEW reading is right 17% of the time,
+so an unread number is treated as saying nothing rather than as weak evidence —
+which is also why the learned embedding can never be overridden by a *guess*.
+
+**This makes matching stricter, never looser.** The distance gate is unchanged,
+so a number cannot reach out and claim a distant object; it can only decide
+between things geometry already considered plausible, and rule out things
+geometry liked. Widening the search on a number alone is exactly the aggressive
+matching that previously raised wrong applications, and it is deliberately not
+done: the only corpus that could measure it is the Golden Plan, which draws no
+numbers at all. Recorded as a limitation rather than shipped on a hunch.
+
+AMBIGUOUS remains a valid answer throughout.
+
+---
+
+## Phase 5 — can the plan check itself?
+
+Every number the product shows an operator comes from one of four places, and
+they are not equally trustworthy:
+
+| | source |
+|---|---|
+| **A** | what the drawing **states** about itself — read by OCR from printed text |
+| **B** | what the detector **found** — counted from the analysis |
+| **C** | what the **arithmetic** gives — derived from A |
+| **D** | what a **person confirmed** — the strongest, and the rarest |
+
+`src/plan-self-check.js` compares them. It is not another detector: it reads
+nothing, measures nothing, and adds no engine calls. It only asks whether what
+is already known is self-consistent, and reports each answer as CONSISTENT,
+INCONSISTENT, NEEDS REVIEW or NOT CHECKABLE.
+
+**Arithmetic is corroboration, not permission to rewrite evidence.** When
+`166 × 12` does not equal the printed total the answer is NEEDS REVIEW — never
+a licence to adjust one of the numbers until it does. OCR of a photographed
+sheet misreads digits constantly; that is exactly why the check is worth having
+and exactly why it must not fix its own inputs. Where a digit was misread, the
+misread value is reported *as read*: the suite pins that `1166` stays `1166`.
+
+**Every number carries where it came from.** A check with anonymous inputs tells
+an operator that something disagrees but not which side to trust — the half of
+the message that decides what they do next. So the table count reports itself as
+*"derived from the printed seating figure (1992 / 12); OCR itself read 1166"*,
+and the found figure reports itself as *"Assisted Detection"*.
+
+### The finding that must never come back
+
+*"The plan states 2064 pax but 0 seats were counted"* was withdrawn in an
+earlier sprint: on a plan that draws no seats it is a restatement of what kind
+of drawing it is, dressed up as a discovery. The seat comparison is gated on the
+representation decision, so on a symbolic plan it returns **NOT CHECKABLE** with
+the reason stated, and on a physical plan it does its job. The suite pins both
+directions.
+
+A person's confirmed figure outranks everything above it, and when it disagrees
+with the system the detail says so without ambiguity: *"the person is right"*.
+
+### Where it runs, and why the position matters
+
+The self-check is the **last** thing the analysis does, after
+`buildPlanIntelligence` has been rebuilt from the OCR text. An earlier draft ran
+it immediately after the per-table number read, which is wrong in a way neither
+real plan would have exposed: `readPrintedTableNumbers` returns early on a plan
+whose tables are not numbered, and it is the only thing that refreshes
+`planIntelligence` at that point — so on a *physical* plan that prints a capacity
+rule, the check would have run against the pre-OCR interpretation and found no
+rule to check. Moved, with the reason recorded at the call site. It also re-runs
+after every operator decision that recomputes plan intelligence, so a
+consistency report never quotes a table count the screen has since changed.
+
+### Result, on both real plans through the offline build with real OCR
+
+| | Golden (PHYSICAL) | ORNEK (SYMBOLIC) |
+|---|---|---|
+| printed capacity rule | none | `166 × 12 = 1992`, parts `1992 + 72 = 2064` |
+| checks produced | **0** | **5** — 3 consistent, 1 inconsistent, 1 not checkable |
+| what it says | nothing, because the drawing states nothing to check | see below |
+
+Golden producing **zero** checks is the result, not a gap. The drawing prints no
+capacity rule, so there is nothing to compare, and a layer that manufactured a
+finding anyway would be doing exactly what this sprint exists to stop.
+
+On ORNEK, in the order it reports them:
+
+```
+[CONSISTENT]     166 x 12 = 1992              the drawing's own multiplication comes out
+[CONSISTENT]     1992 + 72 = 2064             the parts add up to the total it prints
+[INCONSISTENT]   states 166 tables; 163 found  3 not accounted for
+[CONSISTENT]     87 numbers, none claimed twice
+[NOT_CHECKABLE]  1992 seats stated             this drawing draws no seats
+```
+
+The one INCONSISTENT verdict is a **true** finding: the drawing does state 166
+and the detector does find 163 (recall 0.976). It is reported as a disagreement
+between two sources, each named, and nothing is adjusted to close it.
+
+---
+
+## Phases 4 and 5 — regression
+
+Both phases were measured together, on the artifacts, before either was
+committed.
+
+| | before | after |
+|---|---|---|
+| suites | 23/23, 629 checks | **24/24, 671 checks** (`plan-self-check` +32; `plan-memory` 48 → 58) |
+| ORNEK tables | P 0.994 R 0.976 F1 0.985 | **unchanged** |
+| Golden tables | P 0.92 R 1 F1 0.958 | **unchanged** |
+| Golden chairs | P 0.955 R 0.947 F1 0.951 | **unchanged** |
+| Golden relations | 0.99 | **unchanged** |
+| 4 adversarial fixtures | — | **unchanged** |
+| memory: retention / identity precision / wrong application | 0.786 / 0.945 / 0.055 | **0.7857 / 0.9448 / 0.0552** |
+| `verify:offline` | 27/27 | **27/27** |
+
+The memory figures are the honest limit of what Phase 4 could be measured
+against: **every scenario in that corpus is the Golden Plan transformed, and the
+Golden Plan draws no numbers at all.** So the identifier path is never exercised
+there and the numbers are byte-identical — which proves no regression and
+proves nothing about the feature's value. What Phase 4 actually does is pinned by
+`tests/suites/plan-memory.test.mjs` (58 checks), including the veto. Measuring
+it on real numbered plans needs a second numbered venue, which is Phase 11's
+job, and until one exists this stays recorded as unverified rather than claimed.

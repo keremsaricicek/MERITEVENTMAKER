@@ -190,4 +190,68 @@ export default async function run({ page, checks, baseUrl }) {
       "and an object that looks like the remembered one scores higher than one that does not",
       { looksSame: a.score, looksDifferent: b.score });
   }
+
+  // ---- a verified table number is an identifier, not a similarity ----------
+  //
+  // Everything else this engine weighs answers "how alike are these two
+  // objects". On a plan of a hundred identical numbered circles that question
+  // has no useful answer — the learned encoder rates every circle about 0.9
+  // similar to every other, which is correct and useless. "TABLE 137" answers
+  // the only question that matters: is this the SAME table.
+  //
+  // Only VERIFIED numbers count. A NEEDS_REVIEW reading is measured right 17%
+  // of the time (src/plan-table-numbers.js), so an unread number is treated as
+  // saying nothing rather than as weak evidence.
+  const numbered = (state, value) => ({ printedNumber: { state, value } });
+  const V = (n) => numbered("VERIFIED", n);
+  {
+    // The veto, which is the more important half. Two circles that look
+    // identical and sit almost on top of each other, with different numbers
+    // printed on them, are different tables.
+    const vec = Array.from({ length: 16 }, (_, i) => Math.sin(i));
+    const memory = [{ ...mem("m1", 10, 10, 4, 4, V(137)), visual: { vector: vec } }];
+    const r = await run1(memory, [cand("c1", 10.1, 10, 4, 4, { ...V(138), vector: vec })]);
+    checks.equal(r.matches.length, 0,
+      "a table with a different verified number does not match, however identical it looks", r.stats);
+    checks.equal(r.ambiguous.length, 0, "and is not even offered as ambiguous");
+  }
+  {
+    // The promotion. Same number, so the weighing does not get a vote.
+    const memory = [mem("m1", 10, 10, 4, 4, V(137))];
+    const r = await run1(memory, [cand("c1", 11.2, 10.4, 4, 4, V(137))]);
+    checks.equal(r.matches.length, 1, "the same verified number matches", r.stats);
+    checks.equal(r.matches[0].grade, "strong", "as a strong match");
+    checks.equal(r.matches[0].number, 137, "carrying the number it matched on");
+    checks.ok(/verified table number/.test(r.matches[0].basis || ""),
+      "and saying the identifier decided it, not a suspiciously high similarity",
+      r.matches[0].basis);
+  }
+  {
+    // A number nobody verified says nothing at all, in either direction.
+    const memory = [{ ...mem("m1", 10, 10, 4, 4), printedNumber: { state: "NEEDS_REVIEW", value: null } }];
+    const r = await run1(memory, [cand("c1", 10.1, 10, 4, 4,
+      { printedNumber: { state: "NEEDS_REVIEW", value: null } })]);
+    checks.equal(r.matches.length + r.ambiguous.length, 1,
+      "two unread numbers neither help nor block the ordinary weighing", r.stats);
+    checks.ok(!(r.matches[0] || r.ambiguous[0]).number,
+      "and no number is claimed to have decided it");
+  }
+  {
+    // Only one side numbered: the ordinary weighing still applies. This is the
+    // common case on a re-import where the new pass read fewer numbers.
+    const memory = [mem("m1", 10, 10, 4, 4, V(42))];
+    const r = await run1(memory, [cand("c1", 10.1, 10, 4, 4)]);
+    checks.equal(r.matches.length + r.ambiguous.length, 1,
+      "a remembered number against an unread candidate falls back to geometry", r.stats);
+  }
+  {
+    // The number does not widen the search. It decides between things geometry
+    // already considered plausible; it cannot reach out and claim a distant
+    // object, which is the aggressive matching that previously raised wrong
+    // applications.
+    const memory = [mem("m1", 10, 10, 4, 4, V(137))];
+    const r = await run1(memory, [cand("c1", 70, 70, 4, 4, V(137))]);
+    checks.equal(r.matches.length, 0,
+      "a matching number far outside the search radius still does not match", r.stats);
+  }
 }

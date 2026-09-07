@@ -94,6 +94,10 @@ src/plan-number-integrity.js  Whether a plan's numbering is intact —
                       duplicates, conflicts, gaps, count-vs-drawing. Repairs
                       nothing and discovers its range from the document rather
                       than from a constant
+src/plan-self-check.js  Compares what the drawing states, what the detector
+                      found, what the arithmetic gives and what a person
+                      confirmed. Adds no engine calls and never adjusts an
+                      input to make a check pass
 src/plan-intelligence.js  PlanIntelligenceResult contract + real geometric
                       heuristics (furniture grouping, similarity clustering,
                       bulk review groups, OCR capacity cross-check) built on
