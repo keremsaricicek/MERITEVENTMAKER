@@ -37,7 +37,7 @@
     lang:"en", reviewCenterOpen:false, difficultQuestionIndex:0, activeReviewGroupId:null, activeQuestionId:null, ocrText:null
   });
 
-  function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], operatorSessions:[], analyses:[], calibration:null, audit:[]}; }
+  function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[]}; }
   function isHistorical(event){ return !!event && (event.status === "Completed" || (!!event.date && event.date < todayKey())); }
   function audit(event, action, detail={}){
     state.audit ||= [];
@@ -107,6 +107,11 @@
     // no examples yet -- there is nothing to reconstruct, because the crops
     // it would have needed were never taken.
     parsed.trainingData ||= [];
+    // The Teach Area (src/plan-teach-area.js). Lives at the root rather than on
+    // an event because its whole point is reach: a lesson scoped to a venue has
+    // to outlive the event it was taught in. An install from before it has no
+    // lessons, which is the correct empty state -- nothing to reconstruct.
+    parsed.teachings ||= [];
     // Promote the old free-text hotel/salon strings into real Venue/Layout
     // records (src/venue-model.js). Additive: every event keeps its original
     // strings, and a venueRef is attached alongside, so nothing that reads
@@ -4860,6 +4865,122 @@
       numberIntegrity:analysis.numberIntegrity||null,
     });
   }
+  // ---- the Teach Area -------------------------------------------------------
+  //
+  // What a person who knows the room knows, kept with the reach they gave it.
+  // The engine is src/plan-teach-area.js; this is the wiring, and the wiring has
+  // two jobs the module deliberately does not do for itself: decide WHERE the
+  // open drawing sits, and decide what "applying" a lesson actually means.
+  //
+  // Nothing here trains anything. A lesson is a stored note, re-offered on a
+  // drawing it applies to; teaching a hundred of them leaves the detector
+  // exactly as good and exactly as bad as it was before the first one.
+  function teachWhere(event){
+    return{planHash:event?.analysis?.planHash??null,
+      layoutId:event?.venueRef?.layoutId??null,
+      layoutVersionId:event?.venueRef?.layoutVersionId??null,
+      venueId:event?.venueRef?.venueId??null};
+  }
+  // Applied lessons are RECORDED on the object, not folded in silently: the
+  // review card shows the scope and the reason, so an operator can always see
+  // that a change came from a note they wrote rather than from the detector.
+  // Only APPLY proposals are acted on — REVIEW and AMBIGUOUS are carried to the
+  // screen for a person to settle, which is the whole difference between this
+  // and spreading a correction across everything that looks similar.
+  function applyTeachArea(event){
+    const analysis=event?.analysis;
+    if(!analysis||!globalThis.MeritTeachArea)return;
+    const inForce=globalThis.MeritTeachArea.inForce(state.teachings||[],teachWhere(event));
+    const alive=(analysis.candidates||[]).filter(c=>c.status!=="rejected");
+    const result=globalThis.MeritTeachArea.propose(inForce.lessons,
+      alive.map(c=>({id:c.id,kind:c.kind,type:c.type,x:c.x,y:c.y,w:c.w,h:c.h,
+        vector:c.visualDescriptor?.vector||null,printedNumber:c.printedNumber||null})));
+    const byId=new Map(inForce.lessons.map(l=>[l.id,l]));
+    let applied=0,numbersChanged=false;
+    for(const p of result.proposals){
+      if(p.state!=="APPLY"||!p.candidateId)continue;
+      const c=analysis.candidates.find(x=>x.id===p.candidateId),l=byId.get(p.lessonId);
+      if(!c||!l)continue;
+      const was={kind:c.kind,type:c.type,status:c.status,printedNumber:c.printedNumber||null};
+      if(l.subject.kind==="objectIdentity"){
+        if(l.subject.objectKind&&l.subject.objectKind!==c.kind){
+          c.kind=l.subject.objectKind;
+          if(c.kind!=="table")c.chairDetections=[];
+        }
+        c.type=l.subject.type;
+        c.typeBasis="rememberedByAPerson";
+        c.status="confirmed";c.selected=true;
+      }else if(l.subject.kind==="tableNumber"&&typeof l.subject.value==="number"){
+        // A person outranks two agreeing crops, so this is VERIFIED — but the
+        // source says which of the two it was, because the reader of a number
+        // has to be able to tell "the drawing was read twice" from "someone
+        // told us".
+        c.printedNumber={value:l.subject.value,state:"VERIFIED",confidence:null,
+          suggestion:null,why:"a person confirmed this number",
+          readings:[],source:"confirmed by a person"};
+        numbersChanged=true;
+      }else continue;
+      c.taughtFrom={lessonId:l.id,scope:l.scope,why:p.why,at:nowISO(),was};
+      applied++;
+    }
+    // A number a person supplied is part of the numbering, so the integrity
+    // report has to be re-derived from it — otherwise the screen would show a
+    // gap the operator has just filled.
+    if(numbersChanged)checkNumberIntegrity(event);
+    analysis.teachArea={applied,summary:result.summary,proposals:result.proposals,
+      superseded:inForce.superseded,
+      lessons:inForce.lessons.map(l=>({id:l.id,scope:l.scope,text:globalThis.MeritTeachArea.describe(l)})),
+      statement:result.statement};
+  }
+  // Teaching is an explicit act with an explicit reach. The scope comes from a
+  // control the operator sets, never inferred, and a refusal is shown to them
+  // rather than swallowed: "not remembered, because across a venue an object has
+  // to be identified by its printed number" is the message that makes them pick
+  // the scope that works.
+  function teachSelectedObject(event,c,scope){
+    if(!globalThis.MeritTeachArea||!c)return;
+    const alive=(event.analysis?.candidates||[]).filter(x=>x.status!=="rejected");
+    const r=globalThis.MeritTeachArea.lesson({
+      scope,where:teachWhere(event),
+      subject:{kind:"objectIdentity",objectKind:c.kind,type:c.type,label:t("teach.type."+c.type)},
+      from:{candidateId:c.id,kind:c.kind,type:c.type,
+        geometry:{x:c.x,y:c.y,w:c.w,h:c.h,rotation:c.rotation||0},
+        printedNumber:c.printedNumber||null,
+        visual:c.visualDescriptor?.vector?{vector:Array.from(c.visualDescriptor.vector)}:null,
+        context:globalThis.MeritPlanMemory?globalThis.MeritPlanMemory.contextSignature(c,alive):null},
+    });
+    if(!r.ok)return toast(t("teachArea.refused",{reason:r.reason}),"error",8000);
+    state.teachings ||= [];
+    state.teachings.push(r.lesson);
+    saveState();
+    audit(event,"TEACH_AREA_LESSON_KEPT",{scope:r.lesson.scope,subject:r.lesson.subject,
+      text:globalThis.MeritTeachArea.describe(r.lesson)});
+    toast(t("teachArea.kept",{label:t("teach.type."+c.type),scope:t("teachArea.scope."+r.lesson.scope)}),"success",6000);
+    applyTeachArea(event);recomputePlanIntelligence(event);touchEvent(event);render();
+  }
+  // The other half of teaching. A note a person cannot take back is not a note,
+  // it is a decision made on their behalf: forgetting removes the lesson from
+  // the Teach Area entirely and puts the detector's own answer back, so the
+  // object is not left holding a classification with no author.
+  function forgetLesson(event,c){
+    const id=c?.taughtFrom?.lessonId;if(!id)return;
+    const scope=c.taughtFrom.scope;
+    state.teachings=(state.teachings||[]).filter(l=>l.id!==id);
+    const was=c.taughtFrom.was;
+    if(was){c.kind=was.kind;c.type=was.type;c.status=was.status;c.printedNumber=was.printedNumber;}
+    delete c.taughtFrom;
+    delete c.typeBasis;
+    saveState();
+    audit(event,"TEACH_AREA_LESSON_FORGOTTEN",{lessonId:id});
+    toast(t("teachArea.forgotten",{scope:t("teachArea.scope."+scope)}),"success",5000);
+    applyTeachArea(event);recomputePlanIntelligence(event);touchEvent(event);render();
+  }
+  // Exposed for the regression suite. The engine (src/plan-teach-area.js) can be
+  // tested on its own, but the two decisions that matter most live here: what
+  // "where am I" means for the open drawing, and what applying a lesson does to
+  // a candidate. Driving them directly is how the round trip — teach it, throw
+  // the answer away, get it back — is checked without a 30-second detection run.
+  globalThis.MeritTeachAreaWiring={teachWhere,applyTeachArea,teachSelectedObject,forgetLesson};
   // Exposed for the regression suite. This rule silently deleted 117 of
   // ORNEK's 132 tables and only did so when OCR was running, which is a
   // combination no benchmark in this repo exercises — the sandbox has no
@@ -5066,6 +5187,15 @@
       ui.analysisStage=t("analysis.stage.labels");render();await yieldFrame();
       await identifyLabelledVenueObjects(event,suppressedByText);
       await readPrintedTableNumbers(event);
+      // The drawing's own fingerprint, so a lesson taught on it can be found
+      // again after a re-import under a different filename. Failing to compute
+      // it is not fatal: plan-scope lessons simply do not match, which is the
+      // safe direction.
+      try{event.analysis.planHash=await planHashFor(event.background.src);}catch{event.analysis.planHash=null;}
+      // Before plan intelligence is rebuilt, because a lesson can move an
+      // object from table to venue and the capacity, relationship and
+      // consistency layers all have to see the corrected answer.
+      applyTeachArea(event);
       ui.analysisStage=t("analysis.stage.relating");ui.analysisProgress=90;render();await yieldFrame();
       ui.analysisStage=t("analysis.stage.capacity");ui.analysisProgress=95;render();await yieldFrame();
       event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText);
@@ -5226,7 +5356,7 @@
   function reviewPoiCardHTML(c){
     if(!c)return"";
     const opt=o=>`<option value="${o.kind}:${o.type}" ${c.kind===o.kind&&c.type===o.type?"selected":""}>${t("teach.type."+o.type)}</option>`;
-    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?(c.seatsUnknown?`${t("poi.seatsNotShown")} · `:`${(c.chairDetections||[]).length} ${t("poi.seats")} · `):""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${c.lowEvidence?`<div class="poi-lowevidence"><strong>${t("poi.lowEvidence")}</strong><span>${esc(t("poi.lowEvidence."+c.lowEvidence.reason))}</span></div>`:""}${visualEvidenceHTML(c)}${relationNoteHTML(c)}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
+    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?(c.seatsUnknown?`${t("poi.seatsNotShown")} · `:`${(c.chairDetections||[]).length} ${t("poi.seats")} · `):""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${c.taughtFrom?`<div class="poi-memory-note taught">${icon("check")}<span>${t("teachArea.appliedHere")} — ${t("teachArea.scope."+c.taughtFrom.scope)}</span><button class="btn sm quiet" data-review-action="forget">${t("teachArea.forget")}</button></div>`:""}${c.lowEvidence?`<div class="poi-lowevidence"><strong>${t("poi.lowEvidence")}</strong><span>${esc(t("poi.lowEvidence."+c.lowEvidence.reason))}</span></div>`:""}${visualEvidenceHTML(c)}${relationNoteHTML(c)}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}<div class="poi-teach"><label for="poiTeachScope">${t("teachArea.remember")}</label><div class="poi-teach-row"><select id="poiTeachScope" class="field-select" data-teach-scope>${["plan","layout","venue"].map(v=>`<option value="${v}" ${(ui.teachScope||"plan")===v?"selected":""}>${t("teachArea.scope."+v)}</option>`).join("")}</select><button class="btn sm" data-review-action="teach">${t("teachArea.keep")}</button></div><p class="poi-teach-note">${t("teachArea.notTraining")}</p></div><div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
   }
   // Real pixel crop of a candidate straight out of the actual imported plan
   // image — a CSS background-position/-size window, never a synthesized or
@@ -5363,9 +5493,22 @@
     return`<div class="difficult-question-overlay"><div class="difficult-question-card"><div class="eyebrow">${t("teach.needsHelp")}</div>${group?memberCropsHTML(event,group.memberIds):""}<p class="difficult-question-text">${esc(questionText(q))}</p><div class="difficult-question-actions"><button class="btn primary" data-question-action="yes" data-question="${q.id}">${t("question.yesGroup")}</button><button class="btn" data-question-action="no" data-question="${q.id}">${t("question.noSeparate")}</button></div></div></div>`;
   }
   function reviewGroupCount(pi){return pi.reviewGroups.length+pi.uncertainQuestions.length;}
+  // What the operator's own notes did to this plan, on the status bar rather
+  // than behind a diagnostics panel: a change that came from a note a person
+  // wrote must be visible as such, or it is indistinguishable from the detector
+  // having got cleverer — which it did not.
+  function teachAreaPillHTML(event){
+    const ta=event.analysis?.teachArea;if(!ta)return"";
+    const pending=ta.summary.review+ta.summary.ambiguous;
+    if(!ta.applied&&!pending)return"";
+    const parts=[];
+    if(ta.applied)parts.push(t("teachArea.chip.applied",{n:ta.applied}));
+    if(pending)parts.push(t("teachArea.chip.pending",{n:pending}));
+    return`<i class="pill-div"></i><span class="pill-chip static" title="${esc(t("teachArea.chipTitle"))}">${esc(parts.join(" · "))}</span>`;
+  }
   function planIntelBottomPillHTML(event){
     const pi=event.analysis.planIntelligence,groupCount=reviewGroupCount(pi);
-    return`<div class="planmap-status-pill wide"><span class="pill-check">${icon("check")}</span><b>${t("plan.understood")}</b><i class="pill-div"></i><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i>${planSeatsPill(pi)}${groupCount?`<i class="pill-div"></i><button class="pill-chip" data-review-action="open-review-center">${groupCount} ${t(groupCount===1?"review.group":"review.groups")}</button>`:""}<span class="toolbar-spacer"></span><button class="btn sm quiet" data-review-action="back">${t("review.editManually")}</button><button class="btn sm primary" data-review-action="commit">${t("action.confirmPlan")}</button></div>`;
+    return`<div class="planmap-status-pill wide"><span class="pill-check">${icon("check")}</span><b>${t("plan.understood")}</b><i class="pill-div"></i><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i>${planSeatsPill(pi)}${groupCount?`<i class="pill-div"></i><button class="pill-chip" data-review-action="open-review-center">${groupCount} ${t(groupCount===1?"review.group":"review.groups")}</button>`:""}${teachAreaPillHTML(event)}<span class="toolbar-spacer"></span><button class="btn sm quiet" data-review-action="back">${t("review.editManually")}</button><button class="btn sm primary" data-review-action="commit">${t("action.confirmPlan")}</button></div>`;
   }
   // One pin per REVIEW GROUP (at the centroid of its members), not one per
   // individual object — a plan with hundreds of similar chairs must not turn
@@ -5645,7 +5788,7 @@
   function saveVerified(){const event=activeEvent();if(!ui.teachAI)return toast("Enable Teach AI with corrections first.","error");const a=event.analysis;if(!a)return;state.verifiedExamples.push({id:uid("verified"),eventId:event.id,savedAt:nowISO(),engine:a.engine,trainedModel:false,threshold:a.threshold,imageSize:[a.imageWidth,a.imageHeight],predictions:a.candidates.map(clone),groundTruth:a.candidates.filter(c=>c.status!=="rejected").map(clone),rejected:a.candidates.filter(c=>c.status==="rejected").map(c=>c.id),missed:[...a.missed],hardExample:a.missed.length>0||a.candidates.some(c=>c.status==="rejected")});saveState();toast("Verified plan saved locally with predictions, corrections, rejections and missed detections.","success",6000);}
   function improveAI(){if(!state.verifiedExamples.length)return toast("Save at least one verified plan first.","error");const samples=state.verifiedExamples.flatMap(v=>v.groundTruth||[]),avg=samples.length?samples.reduce((n,c)=>n+(c.confidence||0),0)/samples.length:0;state.calibration={version:(state.calibration?.version||0)+1,updatedAt:nowISO(),examples:state.verifiedExamples.length,objects:samples.length,recommendedConfidence:Number(Math.max(.35,Math.min(.8,avg*.85)).toFixed(2)),trainedModel:false,label:"Local assisted-detection calibration; not a trained neural model"};saveState();toast(`Local calibration v${state.calibration.version} completed from ${state.verifiedExamples.length} verified plan(s). No trained model claim is made.`,"success",6500);}
   function bindReview(){
-    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.screen="workspace";ui.tab="floor";ui.activeReviewGroupId=null;ui.activeQuestionId=null;ui.selectedCandidateId=null;render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){const was=classOf(c);c.status="confirmed";c.selected=true;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was});recordOperatorAction(event,"confirm",c.id);recomputePlanIntelligence(event);touchEvent(event);render();}else if(action==="reject"&&c){const was=classOf(c);c.status="rejected";c.selected=false;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"falsePositive",predictionBefore:was});recordOperatorAction(event,"reject",c.id);recomputePlanIntelligence(event);touchEvent(event);render();}else if(action==="dismiss"&&c){const was=classOf(c);captureTrainingExample(event,c,{decisionType:"negative",predictionBefore:was,note:"operator dismissed this region as not important"});recordOperatorAction(event,"dismiss",c.id);event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;recomputePlanIntelligence(event);touchEvent(event);render();}else if(action==="draw"){if(!ui.reviewDrawMode)recordOperatorAction(event,"ai-missed-open",[]);ui.reviewDrawMode=!ui.reviewDrawMode;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="export-dataset")exportTrainingDataset();else if(action==="session-report"){ui.operatorReportOpen=true;render();}else if(action==="close-session-report"){ui.operatorReportOpen=false;render();}else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="focus-group"){ui.activeReviewGroupId=b.dataset.group;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=true;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
+    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.screen="workspace";ui.tab="floor";ui.activeReviewGroupId=null;ui.activeQuestionId=null;ui.selectedCandidateId=null;render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){const was=classOf(c);c.status="confirmed";c.selected=true;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was});recordOperatorAction(event,"confirm",c.id);recomputePlanIntelligence(event);touchEvent(event);render();}else if(action==="reject"&&c){const was=classOf(c);c.status="rejected";c.selected=false;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"falsePositive",predictionBefore:was});recordOperatorAction(event,"reject",c.id);recomputePlanIntelligence(event);touchEvent(event);render();}else if(action==="dismiss"&&c){const was=classOf(c);captureTrainingExample(event,c,{decisionType:"negative",predictionBefore:was,note:"operator dismissed this region as not important"});recordOperatorAction(event,"dismiss",c.id);event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;recomputePlanIntelligence(event);touchEvent(event);render();}else if(action==="teach"&&c){ui.teachScope=document.querySelector("[data-teach-scope]")?.value||"plan";teachSelectedObject(event,c,ui.teachScope);}else if(action==="forget"&&c){forgetLesson(event,c);}else if(action==="draw"){if(!ui.reviewDrawMode)recordOperatorAction(event,"ai-missed-open",[]);ui.reviewDrawMode=!ui.reviewDrawMode;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="export-dataset")exportTrainingDataset();else if(action==="session-report"){ui.operatorReportOpen=true;render();}else if(action==="close-session-report"){ui.operatorReportOpen=false;render();}else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="focus-group"){ui.activeReviewGroupId=b.dataset.group;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=true;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
     document.querySelectorAll("[data-candidate],[data-candidate-box]").forEach(node=>node.onclick=e=>{if(e.target.matches("input"))return;ui.selectedCandidateId=node.dataset.candidate||node.dataset.candidateBox;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();});document.querySelectorAll("[data-candidate-select]").forEach(input=>input.onchange=()=>{const c=activeEvent().analysis.candidates.find(x=>x.id===input.dataset.candidateSelect);c.selected=input.checked;touchEvent(activeEvent());});document.querySelectorAll("[data-candidate-edit]").forEach(input=>input.onchange=()=>{const f=input.dataset.candidateEdit,v=input.value;requestAnimationFrame(()=>updateCandidateField(f,v));});document.querySelectorAll("[data-review-filter]").forEach(input=>input.oninput=()=>{if(input.dataset.reviewFilter==="status")ui.reviewFilter=input.value;else if(input.dataset.reviewFilter==="class")ui.reviewClass=input.value;else ui.reviewConfidence=Number(input.value);render();});document.querySelector("[data-teach-ai]")?.addEventListener("change",e=>{ui.teachAI=e.target.checked;});
     document.querySelectorAll("[data-reviewgroup-action]").forEach(b=>b.onclick=()=>{
       const event=activeEvent(),pi=event.analysis?.planIntelligence,group=pi?.reviewGroups.find(g=>g.id===b.dataset.group);if(!group)return;

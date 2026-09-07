@@ -441,3 +441,134 @@ proves nothing about the feature's value. What Phase 4 actually does is pinned b
 `tests/suites/plan-memory.test.mjs` (58 checks), including the veto. Measuring
 it on real numbered plans needs a second numbered venue, which is Phase 11's
 job, and until one exists this stays recorded as unverified rather than claimed.
+
+---
+
+## Phase 6 — the Teach Area
+
+### Starting state
+
+The product already learns nothing, and everything up to here made it better at
+reading a drawing on its own. What it had no place for was the one source that
+outranks all of that: **a person who knows the room.** The head of banqueting
+knows the long block by the north wall is the stage, that the grey rectangle by
+the service door is a pillar the drawing has always shown badly, and that this
+venue numbers its tables 1 to 166. None of it is derivable from the pixels; all
+of it is worth keeping.
+
+Two mechanisms existed and neither is this one. `rememberCorrection` keeps an
+answer for **this plan only**, and dies with the event. `applyCorrectionToFamily`
+spreads one correction across every object the similarity clustering grouped with
+it — deliberately, and deliberately marked *"not individually reviewed by a
+person"*, because forty repaired objects are not forty human decisions.
+
+### What was built
+
+`src/plan-teach-area.js`. A lesson is a note with a **scope the operator picks**:
+
+| scope | reach | anchor |
+|---|---|---|
+| `plan` | this drawing | the plan's own fingerprint |
+| `layout` | every version this layout is re-issued in | `layoutId` |
+| `venue` | every layout in this venue | `venueId` |
+
+The scope is a claim about how far someone's knowledge travels, so **the evidence
+required scales with it.** On this drawing nothing moved, so resemblance is
+identity. Across a venue it is not — *"a circle that looks like the circle I
+ruled on"* describes a hundred tables in a ballroom — so a venue-scope lesson
+about a specific object is acted on **only when the object carries the same
+verified printed number the lesson carries** (Phase 2's per-table read, Phase 4's
+identifier). Without one it is offered for review and never applied, and a lesson
+that could never satisfy that is refused *at the moment it is written*, with the
+reason and the scope that would work.
+
+Identity is **not** re-implemented. A lesson is shaped into the row Visual Plan
+Memory already expects and handed to it, so the veto, the grading and AMBIGUOUS
+all come from the engine that was measured, not from a second opinion invented
+here.
+
+| answer | what happens |
+|---|---|
+| `APPLY` | the one object it was taught on, recorded on that object with the scope and the reason |
+| `REVIEW` | offered — a good match is not a certain one |
+| `AMBIGUOUS` | **nothing is touched.** Two objects fit equally well |
+| `NOT_ON_THIS_PLAN` | reported as absent, never forced onto something |
+| `STATED` | a fact about the drawing, not a claim about an object |
+
+**One lesson is about one object.** Forty near-identical circles and one lesson
+produce exactly one proposal — pinned by the suite. Spreading already exists
+elsewhere, with its own honesty label; this is not that feature.
+
+One answer stands per subject: **narrower wins** (the person could see the
+thing), then **more recent wins** at equal reach. The second rule is a product
+judgement, not a shortcut — an operator answering the same question again is
+correcting themselves, and treating that as an unresolvable conflict would lock
+them out of their own note. Nothing is dropped quietly: everything a winner
+displaced is reported with the reason.
+
+### It is not training, and the wording says so in both languages
+
+Nothing is fitted, no parameter moves, and no model exists to improve. Teaching a
+hundred lessons leaves the detector exactly as good and exactly as bad as it was
+before the first one. The suite greps the module's own operator-facing strings —
+the statement, every `describe()` line, every reason attached to a proposal — for
+`train / trained / training / model / learn / learning / neural / weights`, and
+fails if any of them appears. The Turkish string is written to the same rule
+(*"Hiçbir şey eğitilmez"*).
+
+### On screen
+
+The object card gains a **REMEMBER THIS** block: the reach control, the button,
+and the sentence that says what will happen. An object changed by a lesson says
+so — *"From a note you wrote — On every version of this layout"* — because a
+change that came from a person's note must never be mistaken for the detector
+having got cleverer. That badge carries **Forget**, and forgetting removes the
+lesson and puts the detector's own answer back rather than leaving the object
+holding a classification with no author: a note a person cannot withdraw is a
+decision made on their behalf. The status bar carries a chip: *"1 remembered"*.
+
+Rendered and screenshotted at 1920×1080, 2560×1440 and ~1440px. Two things the
+render caught that markup review had not:
+
+- `describe()` produced **"this is a other"**. The module now takes the app's own
+  word for the type, in the operator's language.
+- At 1440 the status bar wrapped its own labels with 200px of empty space beside
+  it. `left:50%` with no `right` makes an absolutely positioned box's
+  shrink-to-fit width `container − 50%`, so the bar could never exceed 720px at
+  that viewport — it was already wrapping before this phase, and the chip made it
+  obvious. Centred by auto margins instead: 673px → 788px on one line, same
+  height as before.
+
+### Result
+
+| | before | after |
+|---|---|---|
+| suites | 24/24, 671 checks | **25/25, 752 checks** (`plan-teach-area` +80, of which 12 drive the app's own wiring) |
+| ORNEK tables | P 0.994 R 0.976 F1 0.985 | **unchanged** |
+| Golden tables / chairs / relations | 0.958 / 0.951 / 0.99 | **unchanged** |
+| 4 adversarial fixtures | — | **unchanged** |
+| `verify:offline` | 27/27 | **27/27** |
+
+No detector code was touched. The Teach Area runs after detection and before
+plan intelligence is rebuilt, so a lesson that moves an object from table to
+venue is seen by the capacity, relationship and self-check layers.
+
+### What is not done yet
+
+`REVIEW` and `AMBIGUOUS` proposals are computed, counted and carried on the
+analysis, and the status chip says how many are waiting — but there is no screen
+yet on which to settle them one by one. That is deliberately **Phase 7's** job:
+"do not show the operator 50 warnings just because the system has 50 uncertain
+facts" is the same question, and building a second, worse review surface here
+only to replace it there would be waste. Until then the count is honest about
+itself rather than hidden.
+
+Teaching a **table number** and a **plan fact** are supported by the engine and
+stored; the number is applied (marked VERIFIED with the source *"confirmed by a
+person"*, which the self-check's wording now names alongside two-crop agreement).
+No UI writes either one yet — only object identity has a control.
+
+Cross-venue behaviour is **not verified on real data**: it is pinned by
+constructed cases in the suite, and the corpus contains one numbered venue. Until
+a second real numbered plan exists (Phase 11), that stays a statement about the
+code, not about the world.

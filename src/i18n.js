@@ -130,6 +130,26 @@
     "poi.confirmed": { en: "Confirmed", tr: "Onaylandı" },
     "poi.rejected": { en: "Rejected", tr: "Reddedildi" },
     "poi.fromMemory": { en: "Remembered from your earlier correction on this plan", tr: "Bu plandaki önceki düzeltmenizden hatırlandı" },
+
+    // ---- the Teach Area (src/plan-teach-area.js) --------------------------
+    //
+    // Deliberately free of the vocabulary of training in BOTH languages.
+    // Nothing here is fitted and no model exists to improve, so the operator is
+    // never told one does. What they are told is the reach of what they wrote.
+    "teachArea.remember": { en: "Remember this", tr: "Bunu hatırla" },
+    "teachArea.keep": { en: "Remember", tr: "Hatırla" },
+    "teachArea.scope.plan": { en: "On this plan", tr: "Bu planda" },
+    "teachArea.scope.layout": { en: "On every version of this layout", tr: "Bu yerleşimin her sürümünde" },
+    "teachArea.scope.venue": { en: "Everywhere in this venue", tr: "Bu mekânın her yerinde" },
+    "teachArea.notTraining": { en: "Kept as a note within the reach you choose, and offered again where it applies. Nothing is trained.", tr: "Seçtiğiniz kapsamda bir not olarak saklanır ve geçerli olduğu yerde yeniden sunulur. Hiçbir şey eğitilmez." },
+    "teachArea.kept": { en: "Remembered: {label} — {scope}", tr: "Hatırlandı: {label} — {scope}" },
+    "teachArea.refused": { en: "Not remembered — {reason}", tr: "Hatırlanmadı — {reason}" },
+    "teachArea.appliedHere": { en: "From a note you wrote", tr: "Yazdığınız bir nottan" },
+    "teachArea.forget": { en: "Forget", tr: "Unut" },
+    "teachArea.forgotten": { en: "Note forgotten — {scope}", tr: "Not unutuldu — {scope}" },
+    "teachArea.chip.applied": { en: "{n} remembered", tr: "{n} hatırlanan" },
+    "teachArea.chip.pending": { en: "{n} to confirm", tr: "{n} onay bekliyor" },
+    "teachArea.chipTitle": { en: "Notes you wrote, applied to this plan. Nothing was trained.", tr: "Yazdığınız notlar bu plana uygulandı. Hiçbir şey eğitilmedi." },
     "ocr.unavailable": { en: "OCR unavailable in this session ({reason}) — capacity audit skipped, not fabricated.", tr: "Bu oturumda OCR kullanılamıyor ({reason}) — kapasite denetimi atlandı, uydurulmadı." },
 
     "diag.notInstalled": { en: "DOMAIN MODEL NOT INSTALLED", tr: "ALAN MODELİ KURULU DEĞİL" },

@@ -78,6 +78,17 @@ stays false. Labels spread across a family are marked as not individually
 reviewed. Dataset splits are grouped by plan, never by example. Full detail:
 `benchmarks/TRAINING-DATA.md`.
 
+## The Teach Area
+
+What an operator knows about a room is kept as a **note with a scope** — this
+plan, this layout, this venue — and offered again where it applies. It is
+retrieval, not learning: nothing is fitted, and the wording never says
+otherwise in either language. One lesson changes one object, never everything
+that resembles it; identity comes from Visual Plan Memory, so AMBIGUOUS still
+means nothing is touched; and a venue-wide note about an object is only acted
+on when the object carries the same verified printed number. Full detail:
+`src/plan-teach-area.js` and `benchmarks/OPERATIONAL-INTELLIGENCE-ROADMAP.md`.
+
 ## Plan Intelligence honesty
 
 Assisted Detection today is classical computer vision, not a trained

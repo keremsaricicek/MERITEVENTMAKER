@@ -879,7 +879,7 @@ body{min-width:1180px}
 .contextual-card-actions .btn.danger{background:var(--pi-danger-soft);color:var(--pi-danger);border-color:transparent}
 .contextual-card-actions .btn svg{width:12px;height:12px}
 
-.planmap-status-pill{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:39;display:flex;align-items:center;gap:8px;padding:9px 16px;background:var(--pi-surface);border:1px solid var(--pi-line);border-radius:999px;box-shadow:var(--pi-shadow-2);font-size:11.5px;color:var(--pi-ink);white-space:nowrap}
+.planmap-status-pill{position:absolute;left:0;right:0;margin-inline:auto;width:max-content;bottom:18px;z-index:39;display:flex;align-items:center;gap:8px;padding:9px 16px;background:var(--pi-surface);border:1px solid var(--pi-line);border-radius:999px;box-shadow:var(--pi-shadow-2);font-size:11.5px;color:var(--pi-ink);white-space:nowrap}
 .planmap-status-pill.wide{max-width:min(920px,92vw);white-space:normal}
 .planmap-status-pill b{font-size:13px}
 .planmap-status-pill small{color:var(--pi-muted);margin-right:2px}
@@ -959,6 +959,27 @@ body{min-width:1180px}
 .poi-card-head strong{font-size:14px;display:block}
 .poi-card-head span{font-size:10.5px;color:var(--pi-muted)}
 .poi-card .field-select{width:100%;height:32px;margin:11px 0;border:1px solid var(--pi-line);border-radius:var(--pi-radius-sm);background:var(--pi-surface-2);color:var(--pi-ink);padding:0 8px;font-size:11.5px}
+/* The Teach Area row. Separated from the answer buttons by a rule, because it
+   is a different kind of act: those three settle THIS object, this one writes a
+   note that outlives the object and may reach the whole venue. The reach
+   control comes before the button so it is set, not discovered afterwards, and
+   the note under it is the honest sentence -- nothing is trained. */
+/* The badge that says an object came from a note carries the way to take that
+   note back. Quiet, because undoing is not the expected action -- but present,
+   because a note a person cannot withdraw is a decision made for them. */
+.poi-memory-note.taught{display:flex;align-items:flex-start;gap:6px}
+.poi-memory-note.taught span{flex:1 1 auto}
+.poi-memory-note.taught .btn{flex:0 0 auto;background:transparent;border:none;color:var(--pi-muted);font-size:10.5px;padding:0 2px;height:auto;text-decoration:underline}
+.poi-teach{margin:12px 0;padding-top:11px;border-top:1px solid var(--pi-line)}
+.poi-teach label{display:block;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--pi-muted,var(--muted-2));font-weight:700;margin-bottom:5px}
+.poi-teach-row{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end}
+.poi-teach-row .field-select{flex:1 1 100%;margin:0;min-width:0}
+.poi-teach-row .btn{flex:0 0 auto;height:30px;padding:0 14px;border-radius:var(--pi-radius-sm);font-size:11px;background:var(--pi-surface-2);border:1px solid var(--pi-line);color:var(--pi-ink)}
+.poi-teach-note{margin:7px 0 0;font-size:10.5px;line-height:1.45;color:var(--pi-muted,var(--muted))}
+/* Not a button: it reports, it does not act. Same shape as the review-group
+   chip so it reads as part of the same status line, muted so it never competes
+   with the one chip that is clickable. */
+.planmap-status-pill .pill-chip.static{background:var(--pi-surface-2);color:var(--pi-muted);cursor:default}
 /* Two rows, not three squeezed buttons. There is one affirmative answer and
    two ways of saying no ("not an object" = the detector saw nothing;
    "not important" = it is real and we do not track it), so the primary takes

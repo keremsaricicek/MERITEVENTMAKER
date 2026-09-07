@@ -24,6 +24,10 @@
   improving. Labels spread to a family are marked as not individually
   reviewed, and dataset splits group by plan so one venue cannot appear
   on both sides.
+- A Teach Area lesson is a scoped note, never training. It applies within the
+  scope the operator chose and nowhere else, changes ONE object rather than
+  every object that resembles it, and is only applied across a venue when a
+  verified printed number identifies the object. AMBIGUOUS applies to nothing.
 - `improveAI()`-style local calibration is not model training and must
   never be described as such; `trainedModel` flags must reflect reality.
 - Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.

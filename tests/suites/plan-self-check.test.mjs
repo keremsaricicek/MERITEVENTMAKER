@@ -118,8 +118,11 @@ export default async function run({ page, checks, baseUrl }) {
     const r = await run1({ numberIntegrity: { summary: { verified: 87 }, findings: [] } });
     const u = find(r, "tableNumbersUnique");
     checks.equal(u.verdict, "CONSISTENT", "no duplicate numbers is a consistent result");
-    checks.ok(/two different crops agreed/.test(u.inputs[0].source),
+    checks.ok(/two crops agreed/.test(u.inputs[0].source),
       "and the count of confident numbers says how it was earned", u.inputs[0].source);
+    checks.ok(/a person confirmed/.test(u.inputs[0].source),
+      "naming both routes to a confident number rather than implying every one was machine-read",
+      u.inputs[0].source);
   }
   {
     const r = await run1({ numberIntegrity: { summary: { verified: 87 },

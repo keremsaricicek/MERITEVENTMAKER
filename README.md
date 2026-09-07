@@ -98,6 +98,10 @@ src/plan-self-check.js  Compares what the drawing states, what the detector
                       found, what the arithmetic gives and what a person
                       confirmed. Adds no engine calls and never adjusts an
                       input to make a check pass
+src/plan-teach-area.js  What a person who knows the room knows, kept with the
+                      reach they gave it (this plan / this layout / this
+                      venue). Defers identity to Visual Plan Memory, applies
+                      one lesson to one object, and trains nothing
 src/plan-intelligence.js  PlanIntelligenceResult contract + real geometric
                       heuristics (furniture grouping, similarity clustering,
                       bulk review groups, OCR capacity cross-check) built on

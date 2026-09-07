@@ -117,8 +117,12 @@
         dupes.length ? `${dupes.length} number${dupes.length === 1 ? " is" : "s are"} claimed by more than one table`
           : `each of the ${s.verified} confidently read numbers belongs to one table`,
         dupes.length ? VERDICT.INCONSISTENT : VERDICT.CONSISTENT,
-        [value("numbers read confidently", s.verified,
-          "OCR of each table's own symbol, accepted only where two different crops agreed", "verified")],
+        // Two sources reach VERIFIED, and the wording names both rather than
+        // implying every confident number was machine-read: OCR of the table's
+        // own symbol accepted only where two differently-inset crops agreed,
+        // and a number a person confirmed in the Teach Area, which outranks it.
+        [value("numbers held confidently", s.verified,
+          "OCR of each table's own symbol where two crops agreed, plus any number a person confirmed", "verified")],
         dupes.length ? dupes.map((d) => `${d.number} on ${d.tableIds.length} tables`).join("; ")
           : "no number is claimed twice");
     }
