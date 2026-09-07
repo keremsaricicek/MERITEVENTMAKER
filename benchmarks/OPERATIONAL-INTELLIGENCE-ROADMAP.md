@@ -140,3 +140,159 @@ Golden stage still found at 90.
   readings. Reassembling it means choosing which characters to skip, which would
   find the word in almost any noisy crop. The variant ladder stops at 2x so the
   case does not arise, and where it does the answer is a miss.
+
+---
+
+## Phase 2 — the number printed inside each table symbol
+
+On a symbolic plan the number **is** the table's identity: what the operator
+says on the radio, what the guest list refers to, what has to survive a
+re-import. A wrong number is far worse than no number, and the whole design
+follows from that asymmetry.
+
+### The montage idea, measured and abandoned
+
+163 engine calls sounded unaffordable, so the first attempt tiled every table's
+crop onto one sheet and read it in a single call. It is fast and it is wrong —
+the engine's layout analysis runs straight across tile boundaries:
+
+| | calls | time | precision |
+|---|---|---|---|
+| montage, 64px tiles | 1 | 3.8s | **0.755** (`89→8`, `105→107`, `104→10`) |
+| montage, 96px tiles | 1 | 6.5s | **0.506** (`10→6`, `90→9`) |
+
+Per-table calls then turned out to cost almost nothing anyway: a warm worker
+reads a 150px crop in about 25ms, so all 163 take a few seconds. The montage was
+dropped on the measurement, not on taste.
+
+### One crop per table is not enough either
+
+| view | read | right | precision |
+|---|---|---|---|
+| inset 0.18, ×3 | 109 | 92 | 0.844 |
+| inset 0.18, ×4 | 105 | 91 | 0.867 |
+| inset 0.28, ×4 | 98 | 88 | 0.898 |
+| inset 0.28, ×6 | 99 | 83 | 0.838 |
+
+Every failure is the same shape — a digit lost off the end: `104→10`, `118→11`,
+`157→15`. Nothing in a single reading distinguishes that from a correct short
+number, so **no confidence threshold rescues it**.
+
+### What does work: two crops that see different amounts of the symbol
+
+| | agreeing | right | precision |
+|---|---|---|---|
+| inset 0.18 ×4 **+** inset 0.28 ×4 | 87 | 87 | **1.000** (0 conflicts) |
+| read by only one of the two | 29 | 5 | 0.172 |
+
+Two findings, both load-bearing:
+
+**Agreement is the evidence, not confidence.** Two independent crops do not lose
+the same digit in the same way.
+
+**The views must differ in what they SEE, not just in resolution.** Pairs
+differing only in scale agree more often *and are wrong more often* (0.18×3 +
+0.18×4: 99 agreeing, precision 0.909). Two views of the same crop share its
+mistakes; two different crops do not.
+
+### Result, end to end on the shipped path
+
+| | ORNEK (symbolic) | Golden (physical) |
+|---|---|---|
+| symbols examined | 163 | **pass does not run** |
+| **VERIFIED** | **87 — all 87 correct, precision 1.000** | — |
+| NEEDS REVIEW | 31 | — |
+| UNKNOWN | 45 | — |
+| number pass cost | 9.1s | 0s |
+| total detection | 31.8s | **6.4s, unchanged** |
+
+The pass runs only where tables *are* numbered symbols — the representation
+decision already established that, and each promoted table carries
+`symbolFamily`. On a plan that draws furniture it would spend engine time
+reading nothing, so it does not run.
+
+### LIKELY is deliberately not produced
+
+A number only one crop saw is right **17%** of the time. Calling that "likely"
+would be a lie told in the product's own vocabulary, so OCR alone never emits
+LIKELY: agreement is VERIFIED, everything weaker is NEEDS REVIEW with the
+reading offered as something to check, and nothing readable is UNKNOWN. LIKELY
+is reserved for corroboration from another source — verified layout memory, or a
+person — which is a different evidence source and belongs to a later phase.
+
+### What is still not solved
+
+- **Recall is 0.569.** 87 of 153 numbered tables are verified; the other 66 are
+  honestly NEEDS REVIEW or UNKNOWN rather than guessed.
+- **Detection on ORNEK now takes 31.8s** in the offline build with real OCR,
+  of which 9.1s is this pass. Whether that is acceptable is an operator
+  question, and Phase 8 is where it gets answered rather than assumed.
+- **A physical plan with printed table numbers is not covered.** The gate is
+  `symbolFamily`, which is honest for the two plans in hand and a known
+  limitation for a third.
+
+---
+
+## Phase 3 — is the numbering intact?
+
+Reading a symbol and trusting a numbering are different jobs. Only the whole set
+can answer whether anything is claimed twice, whether anything is missing, and
+whether the count agrees with what the drawing says about itself.
+
+`src/plan-number-integrity.js` is pure logic over the numbers Phase 2 produced —
+no image, no OCR, no DOM — and it is built on three rules.
+
+**Nothing is repaired.** A gap between 136 and 138 is reported as a gap. It is
+never filled in with 137, however obvious that looks, because "obvious" is
+exactly how a plan with a genuinely skipped number acquires a table that does
+not exist. Reading and inference stay separate all the way to the screen, and
+the wording says so: *"1 number between 136 and 138 is not accounted for — each
+is either a table whose number could not be read, or a number the drawing does
+not use."*
+
+**The range comes from the document.** What counts as "outside the expected
+range" is derived from numbers actually read, extended by any count the drawing
+prints about itself (the capacity rule OCR read). With no such figure there is
+nothing to be outside of, and the layer reports less rather than inventing a
+ceiling. No production path knows ORNEK runs 1..157; that lives only in the
+benchmark's ground truth, and the suite uses invented numbers throughout so a
+constant could not creep in unnoticed.
+
+**Repeated uncertainty is one finding, not fifty.** 66 unread numbers is one
+thing an operator needs to know. Consecutive gaps collapse into runs, and every
+table without a confident number is a single finding that keeps "needs a look"
+and "could not be read at all" separately counted.
+
+What it detects, each with its own severity so a review queue can be ordered:
+
+| finding | severity | why |
+|---|---|---|
+| the same number on two tables | high | an operator otherwise meets this at the door, with a guest in front of them |
+| one symbol whose two crops disagree | high | a decision, not a glance — both readings are shown |
+| a number past the count the drawing states | high | only checkable when the drawing states one |
+| the table count disagrees with the drawing | high | carries the stated figure's own provenance |
+| numbers unaccounted for | medium | as runs, never as individual holes |
+| tables with no confident number | medium/low | one finding, with the two cases counted apart |
+
+Every number it reports carries where it came from, in `provenance`.
+
+### Result, on ORNEK through the offline build with real OCR
+
+```
+tables 163   verified 87   needs review 31   unknown 45   DUPLICATES 0
+stated count 166, from "the capacity rule the drawing prints (166 x 12 = 1992)"
+discovered range 1..166, from "numbers read from the drawing, extended to the
+                               166 the drawing states"
+
+[high]   the drawing states 166 tables; 163 were found
+[medium] 79 numbers between 1 and 166 are not accounted for, in 7 runs
+[medium] 76 of 163 tables have no confident number
+         (31 need a look, 45 could not be read at all)
+```
+
+**Three lines for an operator**, not a hundred: 79 unaccounted positions arrive
+as 7 runs, and 76 unread tables as one finding. No number was claimed twice, and
+nothing was filled in.
+
+On the Golden Plan the layer is absent entirely — there are no numbered symbols
+to check.

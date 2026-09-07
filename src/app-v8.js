@@ -4756,6 +4756,78 @@
     analysis.diagnostics.labelledVenueObjects={examined:pool.length,identified,attempts:attempts.length};
     if(identified.length)analysis.planIntelligence=buildPlanIntelligence(event,analysis.ocrText??null);
   }
+  // ---- the number printed inside each table symbol -------------------------
+  //
+  // Only for plans whose tables ARE numbered symbols. That is not a guess: the
+  // representation decision has already established it, and each promoted table
+  // carries `symbolFamily`. On a plan that draws furniture the tables are
+  // identified by where they sit, the symbols carry no printed number, and this
+  // pass would spend engine time to read nothing — so it does not run.
+  //
+  // The cost is real and worth stating: 163 symbols at two crops each is about
+  // 9 seconds on top of detection. See src/plan-table-numbers.js for why two
+  // crops rather than one, and why a montage was measured and abandoned.
+  async function readPrintedTableNumbers(event){
+    const analysis=event?.analysis;
+    if(!analysis||!globalThis.MeritTableNumbers||!globalThis.MeritLabelOCR)return;
+    if(typeof globalThis.runPlanOCR!=="function"||!analysis.ocr?.available)return;
+    const src=event.background?.src;
+    if(!src)return;
+    const numbered=(analysis.candidates||[]).filter(c=>c.kind==="table"&&c.symbolFamily===true);
+    if(!numbered.length)return;
+    let image;
+    try{
+      image=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});
+    }catch{return;}
+    const startedAt=Date.now();
+    let read;
+    try{
+      read=await globalThis.MeritTableNumbers.readTableNumbers(globalThis.runPlanOCR,globalThis.MeritLabelOCR,image,numbered,{
+        onProgress:(done,total)=>{
+          ui.analysisProgress=84+Math.round((done/Math.max(1,total))*10);
+        },
+      });
+    }catch{return;}
+    for(const table of numbered){
+      const r=read.byId.get(table.id);
+      if(!r)continue;
+      // The reading travels WITH its evidence. A downstream layer that wants to
+      // know whether a number can be trusted must not have to guess.
+      table.printedNumber={
+        value:r.value,state:r.state,confidence:r.confidence??null,
+        suggestion:r.suggestion??null,why:r.why,
+        readings:r.readings,source:"OCR of this table's own symbol",
+      };
+    }
+    analysis.diagnostics.printedTableNumbers={
+      examined:numbered.length,...read.counts,views:read.views,ms:Date.now()-startedAt,
+    };
+    analysis.planIntelligence=buildPlanIntelligence(event,analysis.ocrText??null);
+    checkNumberIntegrity(event);
+  }
+  // ---- is the numbering intact? --------------------------------------------
+  //
+  // A separate layer over the numbers, because reading a symbol and trusting a
+  // numbering are different jobs: only the whole set can say whether anything
+  // is claimed twice or missing. It repairs nothing — a gap between 136 and 138
+  // is reported as a gap, never filled in with 137.
+  //
+  // What it compares against comes from the DRAWING, not from a constant. The
+  // stated table count is whatever the printed capacity rule said, if OCR read
+  // one; with no such figure there is simply no range to be outside of, and
+  // the layer says less rather than inventing a ceiling.
+  function checkNumberIntegrity(event){
+    const analysis=event?.analysis;
+    if(!analysis||!globalThis.MeritNumberIntegrity)return;
+    const tables=(analysis.candidates||[]).filter(c=>c.kind==="table"&&c.printedNumber);
+    if(!tables.length)return;
+    const rule=analysis.planIntelligence?.capacityAudit?.rule||null;
+    analysis.numberIntegrity=globalThis.MeritNumberIntegrity.analyse({
+      tables,
+      statedCount:rule&&typeof rule.units==="number"?rule.units:null,
+      statedCountSource:rule?`the capacity rule the drawing prints (${rule.units} x ${rule.perUnit} = ${rule.total})`:null,
+    });
+  }
   // Exposed for the regression suite. This rule silently deleted 117 of
   // ORNEK's 132 tables and only did so when OCR was running, which is a
   // combination no benchmark in this repo exercises — the sandbox has no
@@ -4961,6 +5033,7 @@
       }
       ui.analysisStage=t("analysis.stage.labels");render();await yieldFrame();
       await identifyLabelledVenueObjects(event,suppressedByText);
+      await readPrintedTableNumbers(event);
       ui.analysisStage=t("analysis.stage.relating");ui.analysisProgress=90;render();await yieldFrame();
       ui.analysisStage=t("analysis.stage.capacity");ui.analysisProgress=95;render();await yieldFrame();
       event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText);

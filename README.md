@@ -85,6 +85,15 @@ src/plan-label-ocr.js Reads the word a drawing prints ON one object, from that
                       detector already knows where its objects are, so each one
                       can be read at its own scale. Analysis-only — the crop is
                       a throwaway canvas and the plan is never altered
+src/plan-table-numbers.js  Reads the number printed inside each table symbol,
+                      from two crops that include different amounts of it. A
+                      number is claimed only where both agree (measured
+                      precision 1.000); a single reading is right 17% of the
+                      time and is offered for review, never claimed
+src/plan-number-integrity.js  Whether a plan's numbering is intact —
+                      duplicates, conflicts, gaps, count-vs-drawing. Repairs
+                      nothing and discovers its range from the document rather
+                      than from a constant
 src/plan-intelligence.js  PlanIntelligenceResult contract + real geometric
                       heuristics (furniture grouping, similarity clustering,
                       bulk review groups, OCR capacity cross-check) built on
