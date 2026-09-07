@@ -391,10 +391,37 @@
       return`<b>${s.tables??0}</b><small>${t("plan.symbolTables")}</small>`;
     return`<b>${s.physicalSeats??0}</b><small>${t("plan.seats")}</small>`;
   }
+  // ONE answer to "how much of this plan still needs a person", for every
+  // surface that asks it.
+  //
+  // Two pills used to compute this independently and disagree. Rendered on the
+  // same event, in the same component, in the same corner of the screen, both
+  // linking to the same Review Center, the product said:
+  //
+  //   Floor Plan tab   "37 items need review"   reviewGroups MEMBERS + questions
+  //   Review screen    "6 to decide"            the Confidence Budget
+  //
+  // The 37 is the raw, un-collapsed count -- precisely what the Confidence
+  // Budget exists to replace ("do not show the operator 50 warnings just
+  // because the system has 50 uncertain facts"). Sharing one function is the
+  // point: two call sites computing the same question separately is how they
+  // drifted apart in the first place.
+  //
+  // The click attribute differs because the two surfaces are bound by different
+  // binders, so it is a parameter rather than a reason to fork the function.
+  function planReviewChipHTML(event,actionAttr){
+    const budget=event.analysis?.confidenceBudget;
+    const shown=budget?budget.counts.shown:0;
+    if(shown)return`<i class="pill-div"></i><button class="pill-chip" data-${actionAttr}="open-review-center">${t("budget.chip",{n:shown})}</button>`;
+    // Before an analysis has produced a budget there is still something honest
+    // to say: how many groups are waiting. Never the member count.
+    const pi=event.analysis?.planIntelligence;
+    const groups=pi?reviewGroupCount(pi):0;
+    return groups?`<i class="pill-div"></i><button class="pill-chip" data-${actionAttr}="open-review-center">${groups} ${t(groups===1?"review.group":"review.groups")}</button>`:"";
+  }
   function planStatusPillHTML(event){
     const pi=event.analysis?.planIntelligence;if(!pi)return"";
-    const reviewCount=pi.reviewGroups.reduce((n,g)=>n+g.memberIds.length,0)+pi.uncertainQuestions.length;
-    return`<div class="planmap-status-pill"><span>${t("plan.understood")}</span><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i>${planSeatsPill(pi)}${reviewCount?`<i class="pill-div"></i><button class="pill-chip" data-v8-action="open-review-center">${reviewCount} ${t("plan.needsReview")}</button>`:""}</div>`;
+    return`<div class="planmap-status-pill"><span>${t("plan.understood")}</span><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i>${planSeatsPill(pi)}${planReviewChipHTML(event,"v8-action")}</div>`;
   }
   function contextualCardHTML(event){
     const t_=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId);
@@ -5583,10 +5610,8 @@
     return`<i class="pill-div"></i><span class="pill-chip static" title="${esc(t("teachArea.chipTitle"))}">${esc(parts.join(" · "))}</span>`;
   }
   function planIntelBottomPillHTML(event){
-    const pi=event.analysis.planIntelligence,groupCount=reviewGroupCount(pi);
-    return`<div class="planmap-status-pill wide"><span class="pill-check">${icon("check")}</span><b>${t("plan.understood")}</b><i class="pill-div"></i><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i>${planSeatsPill(pi)}${(()=>{const b=event.analysis.confidenceBudget;const n=b?b.counts.shown:0;
-      if(n)return`<i class="pill-div"></i><button class="pill-chip" data-review-action="open-review-center">${t("budget.chip",{n})}</button>`;
-      return groupCount?`<i class="pill-div"></i><button class="pill-chip" data-review-action="open-review-center">${groupCount} ${t(groupCount===1?"review.group":"review.groups")}</button>`:"";})()}${teachAreaPillHTML(event)}<span class="toolbar-spacer"></span><button class="btn sm quiet" data-review-action="back">${t("review.editManually")}</button><button class="btn sm primary" data-review-action="commit">${t("action.confirmPlan")}</button></div>`;
+    const pi=event.analysis.planIntelligence;
+    return`<div class="planmap-status-pill wide"><span class="pill-check">${icon("check")}</span><b>${t("plan.understood")}</b><i class="pill-div"></i><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i>${planSeatsPill(pi)}${planReviewChipHTML(event,"review-action")}${teachAreaPillHTML(event)}<span class="toolbar-spacer"></span><button class="btn sm quiet" data-review-action="back">${t("review.editManually")}</button><button class="btn sm primary" data-review-action="commit">${t("action.confirmPlan")}</button></div>`;
   }
   // One pin per REVIEW GROUP (at the centroid of its members), not one per
   // individual object — a plan with hundreds of similar chairs must not turn

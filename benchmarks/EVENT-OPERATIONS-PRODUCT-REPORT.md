@@ -110,7 +110,7 @@ every viewport.
 | workspace tabs | Floor Plan · Guests · Seating Plan · Live Event · Reports |
 | Command Center | **does not exist** |
 
-### The central finding: four surfaces answer "what needs your attention", and they disagree
+### The central finding: two surfaces answer the SAME question with different numbers
 
 This is not a style complaint. Rendered side by side on the same event, in the
 same visual component, in the same screen position, the product says:
@@ -122,12 +122,19 @@ same visual component, in the same screen position, the product says:
 | `planHealthHTML` | workspace header | `planIssues()` — 4 hard-coded rules | **"Plan Health · 1"** |
 | Review Center panel | inside Review | the Confidence Budget, ranked | 6 rows |
 
-Three different numbers for one question, two of them in an identically styled
-pill at the bottom of the screen, both linking to the same Review Center.
+**Two of these answer the same question and disagree.** "37 items need review"
+and "6 to decide" both mean *how much of this plan still needs a person* — same
+question, same component, same corner of the screen, both linking to the same
+Review Center, different numbers. The 37 is the raw un-collapsed count, which is
+exactly what the Confidence Budget was built to replace: *"do not show the
+operator 50 warnings just because the system has 50 uncertain facts."*
 
-The raw count is exactly what the Confidence Budget was built to replace — *"do
-not show the operator 50 warnings just because the system has 50 uncertain
-facts"* — and it is still the number the Floor Plan shows.
+**The third is not a contradiction and must not be merged away.** `planIssues()`
+answers a *different* question — duplicate table numbers, blank plan, capacity
+exceeded, unassigned guests. That is **event data readiness**, not plan-reading
+uncertainty. Folding it into one number would destroy real information. It is
+poorly placed, not wrong; it becomes an input to Plan Doctor and the Risk Radar
+(Phases E and J), which is where those rules belong.
 
 Meanwhile **Self-Check and Number Integrity have no surface at all** outside
 the Review Center's budget rows. Two layers that produce real findings are
@@ -204,8 +211,8 @@ Nineteen features, **one** new navigation item.
 
 | surface | decision |
 |---|---|
-| Floor Plan pill "N items need review" (raw count) | **retire the number.** One count, from the Confidence Budget, everywhere |
-| Review screen pill "N to decide" | keep the number, make the component shared |
+| Floor Plan pill "N items need review" (raw count) | **done in B1.** Both pills now call one shared `planReviewChipHTML()` |
+| Review screen pill "N to decide" | **done in B1.** Same function, same number |
 | `planHealthHTML` "Plan Health · N" | **demote to an input.** Its four rules feed the Risk Radar and Plan Doctor; it stops being its own header widget with its own number |
 | `ui.screen = "review"` separate shell | **fold into the Floor Plan tab as a mode**, so the shell, event identity and search persist |
 | two inspector architectures | converge on one contextual inspector, whatever the selection is |
@@ -247,7 +254,7 @@ shell must stop re-introducing the duplication the intelligence layer removed.
 | phase | state |
 |---|---|
 | A — freeze Beta Core | **done** — 14 commands recorded, `benchmarks/beta-core-baseline.json` |
-| B — UI/UX architecture pass | planned above, not implemented |
+| B — UI/UX architecture pass | **B1 done** (one question, one number). B2 Command Center, B3 shell unification to follow |
 | C — Confidence Budget actionable | not started |
 | D–X | not started |
 
@@ -264,3 +271,34 @@ shell must stop re-introducing the duplication the intelligence layer removed.
 - **`test:all` is not in CI.** The fast-core job runs `npm test`. Adding
   `test:all` would make CI red today, so the honest order is: fix the two
   contract failures first, then gate on it.
+
+---
+
+## PHASE B — the architecture pass
+
+### B1 — one question, one number
+
+The Floor Plan tab and the review screen each computed *"how much of this plan
+still needs a person"* independently, and disagreed: **37** against **6** on the
+same event. Both are now one function, `planReviewChipHTML()`, so they cannot
+drift again — two call sites computing the same question separately is how they
+diverged in the first place.
+
+Measured on the Golden Plan through the real UI, at all three viewports:
+
+| | before | after |
+|---|---|---|
+| Floor Plan tab pill | "37 items need review" | **"6 to decide"** |
+| Review screen pill | "6 to decide" | **"6 to decide"** |
+| agreement | **no** | **yes**, 1920 / 2560 / 1440, zero page errors |
+
+The fallback before an analysis has produced a budget is the number of review
+**groups**, never the member count — the un-collapsed number does not come back
+through the back door.
+
+`planIssues()` was deliberately **left alone**: "Plan Health · Ready" answers a
+different question and demoting it belongs with Plan Doctor, which does not
+exist yet. Removing a real signal before its replacement exists would lose
+information, which is the opposite of the point.
+
+The now-dead `plan.needsReview` translation was removed rather than left behind.

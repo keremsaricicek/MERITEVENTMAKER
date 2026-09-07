@@ -69,7 +69,6 @@
     "diag.minConfidence": { en: "Minimum confidence {pct}%", tr: "Minimum güven {pct}%" },
     "diag.undoLastDecision": { en: "Undo last decision ({n})", tr: "Son kararı geri al ({n})" },
     "diag.undoLastDecisionTitle": { en: "Undo the most recent plan decision", tr: "En son plan kararını geri al" },
-    "plan.needsReview": { en: "items need review", tr: "öğe incelenmeli" },
     "plan.stage": { en: "stage", tr: "sahne" },
     "plan.bar": { en: "bar", tr: "bar" },
     "plan.entrances": { en: "entrances", tr: "giriş" },
