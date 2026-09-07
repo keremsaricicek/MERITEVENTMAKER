@@ -902,12 +902,26 @@ gate to make CI green is the move this sprint forbids. So it runs,
 
 Nothing in any job downloads a model or trains anything.
 
-### What is not verified
+### Verified on the runner
 
-**These jobs have never run on GitHub Actions.** Every command in them was
-executed locally and passed, and the YAML parses into the five jobs described,
-but a workflow can still fail on a runner for reasons a local run cannot show —
-a cold `.vendor-cache` fetching the OCR engine and its language data over the
-network, a missing system dependency, a timeout under slower CPU. The first
-push is the real test, and if a job fails there it is a fault in this phase, not
-a discovery about the product.
+The commit that introduced these jobs was pushed and **all five passed on
+GitHub Actions on the first attempt** (run 91, ~7 minutes wall clock, five
+runners in parallel):
+
+| job | runner verdict | runner time |
+|---|---|---|
+| Offline — build both artifacts, then RUN them | **success** | 37s (the verify step itself: **5s**) |
+| Performance | **success** | 43s |
+| Detection — Golden, ORNEK and the fixtures | **success** | 56s |
+| Fast core — regression suite | **success** | — |
+| Intelligence | **success** | — |
+
+Two things worth recording. The cold `.vendor-cache` was the risk flagged before
+the push, and it resolved in **one second** — the OCR engine and both language
+files fetched and cached without incident. And the **baseline step passed**: the
+run immediately before this one, on the previous commit with the old single-job
+workflow, had **failed** on exactly that step. The gate now runs, means
+something, and is green.
+
+Nothing here is a claim about future runs on a cold cache or a slower runner;
+it is what happened on the first real execution.
