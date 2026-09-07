@@ -26,22 +26,72 @@ tree     clean
 
 ### BETA CORE BASELINE
 
-**Status: battery running at the time of this commit.** The full protected state
-— `npm test`, `test:all`, `benchmark`, `benchmark:baseline`, `adversarial`,
-`zones`, `facts`, `contradictions`, `review-order`, `false-positives`,
-`teaching`, `memory`, `perf`, `verify:offline` — is being run in order, each to
-its own log with its exit code and wall-clock cost. The recorded values land in
-the follow-up commit; this one carries the architecture work, which does not
-depend on them.
+Fourteen commands, each to its own log, with exit code and wall-clock cost.
+Machine-readable copy: `benchmarks/beta-core-baseline.json`.
 
-First result in:
+| command | exit | time | result |
+|---|---|---|---|
+| `npm test` | 0 | 213s | **27/27 suites, 818/818 checks** |
+| `npm run test:all` | **1** | 245s | 32/33 suites, 1011/1013 — see *known failing* |
+| `npm run benchmark` | 0 | 25s | detection table below |
+| `npm run benchmark:baseline` | 0 | 0s | **No regressions. 0 improvements, 0 notes.** |
+| `npm run benchmark:adversarial` | 0 | 33s | |
+| `npm run benchmark:zones` | 0 | 63s | |
+| `npm run benchmark:facts` | 0 | 22s | |
+| `npm run benchmark:contradictions` | 0 | 35s | |
+| `npm run benchmark:review-order` | 0 | 49s | |
+| `npm run benchmark:false-positives` | 0 | 45s | |
+| `npm run benchmark:teaching` | 0 | 17s | |
+| `npm run benchmark:memory` | **1** | 93s | gates unmet on *transformed* drawings — known |
+| `npm run perf` | 0 | 15s | |
+| `npm run verify:offline` | 0 | 8s | **27 passed, 0 failed** |
 
-| | |
+#### Detection — the numbers product work must not move
+
+| plan | | |
+|---|---|---|
+| **merit-real-venue** (PHYSICAL) | tables | P **0.92** · R **1** · F1 **0.958** (46/46, 4 fp) |
+| | chairs | P **0.955** · R **0.947** · F1 **0.951** |
+| | relations | **0.99** (100 correct, 1 wrong, 0 orphan) |
+| **ornek-symbolic** (SYMBOLIC) | tables | P **0.994** · R **0.976** · F1 **0.985** (162/166, 1 fp) |
+| adversarial architecture | | 10/10, F1 1 · columns 6/6 |
+| adversarial bistro | | 18/23, P 1, R 0.783, F1 0.878 |
+| adversarial dense | | 24/24, F1 1 |
+| adversarial text | | 12/12, F1 1 |
+
+Every figure matches the protected values in the programme brief. The detector
+baseline guard independently confirms it: **no regressions, per plan, per field.**
+
+Visual Plan Memory: retention **0.7857**, identity precision **0.9448**, wrong
+application **0.0552** — against gates of ≥0.98 / ≥0.98 / ≤0.01. Not met on
+transformed drawings, met on an unchanged one. Known, measured, accepted.
+
+#### Known failing — and one of them matters to this programme
+
+**`plan-intelligence-contract`, 2 of 90 checks.** Verified **pre-existing**: the
+identical two checks fail in a clean worktree at `cb263eb`, the commit this
+sprint started from. Nothing in the previous phases caused it.
+
+It has been invisible because it is a **slow** suite — `npm test` excludes it,
+so the CI *fast-core* job has never run it. That is a third CI gap, on top of
+the two found in the CI phase.
+
+| check | what is actually wrong |
 |---|---|
-| `npm test` | **27/27 suites, 818/818 checks**, exit 0, 213s |
+| every scene-graph edge connects two objects that actually exist | the graph emits `memberOf` edges into **similarity-group** ids; the contract's known id space is candidates + chairs + **furniture** groups. Similarity groups are a fourth id space the contract does not know about |
+| every relationship records the evidence that produced it | chair→table `belongsTo` edges carry **no evidence string** |
 
-Nothing in this commit changes application source, so the battery measures the
-same tree the numbers will describe.
+The second is **load-bearing for this programme.** The Risk Radar (§8), Plan
+Doctor (§13), Smart Seating (§16) and the recommendation UI (§37) all require
+the product to explain *why*. A relationship with no recorded evidence cannot be
+explained to an operator. This is not cosmetic and it is not a test-only
+problem — and the fix must be in the engine or in an argued contract change,
+never in quietly relaxing the assertion, which would be the same sin as moving
+Ground Truth.
+
+**Not fixed in Phase A.** Phase A freezes and records; changing behaviour here
+would defeat the freeze. Scheduled ahead of Phase D, which is the first phase
+that consumes relationship evidence in the UI.
 
 ---
 
@@ -196,7 +246,7 @@ shell must stop re-introducing the duplication the intelligence layer removed.
 
 | phase | state |
 |---|---|
-| A — freeze Beta Core | in progress |
+| A — freeze Beta Core | **done** — 14 commands recorded, `benchmarks/beta-core-baseline.json` |
 | B — UI/UX architecture pass | planned above, not implemented |
 | C — Confidence Budget actionable | not started |
 | D–X | not started |
@@ -208,3 +258,9 @@ shell must stop re-introducing the duplication the intelligence layer removed.
 - **Cross-venue generalisation.** One numbered venue in the corpus.
 - **Visual Plan Memory on transformed drawings.** Retention 0.786 against a
   0.98 gate — a known, measured, accepted limit, not a solved problem.
+- **Scene-graph referential integrity and relationship evidence.** Two contract
+  checks fail, pre-existing, and the second blocks the "explain why" requirement
+  that runs through the whole programme.
+- **`test:all` is not in CI.** The fast-core job runs `npm test`. Adding
+  `test:all` would make CI red today, so the honest order is: fix the two
+  contract failures first, then gate on it.
