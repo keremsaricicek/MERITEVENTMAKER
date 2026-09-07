@@ -4865,6 +4865,30 @@
       numberIntegrity:analysis.numberIntegrity||null,
     });
   }
+  // ---- the confidence budget ------------------------------------------------
+  //
+  // Runs LAST of everything, because it consumes what every other layer
+  // concluded and nothing consumes it. Counted one line per uncertain fact the
+  // two real plans produce 119 and 278 items; this decides which handful of
+  // them is worth an operator's attention, and reports the rest rather than
+  // dropping it. See src/plan-confidence-budget.js for what the measurement
+  // said and why the ranking has no tunable weights.
+  function runConfidenceBudget(event){
+    const analysis=event?.analysis;
+    if(!analysis||!globalThis.MeritConfidenceBudget)return;
+    const pi=analysis.planIntelligence||{};
+    const alive=(analysis.candidates||[]).filter(c=>c.status!=="rejected");
+    const withState=s=>alive.filter(c=>c.printedNumber&&c.printedNumber.state===s);
+    const needsReview=withState("NEEDS_REVIEW"),unknown=withState("UNKNOWN");
+    analysis.confidenceBudget=globalThis.MeritConfidenceBudget.run({
+      reviewPriorities:pi.reviewPriorities||[],
+      numbers:{needsReview:needsReview.length,needsReviewIds:needsReview.map(c=>c.id),
+        unknown:unknown.length,unknownIds:unknown.map(c=>c.id)},
+      numberIntegrity:analysis.numberIntegrity||null,
+      selfCheck:analysis.selfCheck||null,
+      teachArea:analysis.teachArea||null,
+    });
+  }
   // ---- the Teach Area -------------------------------------------------------
   //
   // What a person who knows the room knows, kept with the reach they gave it.
@@ -5209,6 +5233,8 @@
       // ones — a drawing that prints a capacity rule can be checked against
       // itself whatever its tables look like.
       runSelfCheck(event);
+      // Last, and only last: it ranks what every layer above it concluded.
+      runConfidenceBudget(event);
       ui.analysisStage=t("analysis.stage.review");ui.analysisProgress=100;ui.analysisBusy=false;
       event.analysis.timings={importedAtMs:event.background?.importedAtMs??null,analysisStartedAtMs,analysisCompletedAtMs:Date.now()};ui.selectedCandidateId=event.analysis.candidates[0]?.id||null;ui.difficultQuestionIndex=0;ui.activeReviewGroupId=null;ui.activeQuestionId=null;audit(event,"ASSISTED_DETECTION_COMPLETED",event.analysis.diagnostics);touchEvent(event);render();
     }catch(error){console.error(error);ui.analysisBusy=false;ui.analysisStage="Analysis failed";render();toast(`Assisted Detection failed: ${error.message}`,"error",7000);}
@@ -5222,7 +5248,7 @@
   // The self-check goes with it: a reclassification changes how many tables
   // were found, and a consistency report that still quotes the old count is
   // worse than none — it disagrees with the screen it sits on.
-  function recomputePlanIntelligence(event){event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText??null);runSelfCheck(event);}
+  function recomputePlanIntelligence(event){event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText??null);runSelfCheck(event);runConfidenceBudget(event);}
   function reviewCandidates(event){const a=event.analysis;if(!a)return[];return a.candidates.filter(c=>(ui.reviewFilter==="all"||c.status===ui.reviewFilter)&&(ui.reviewClass==="all"||c.kind===ui.reviewClass)&&c.confidence>=ui.reviewConfidence);}
   // Which candidate(s) the screen is actively asking a question about right
   // now — a difficult question's whole furniture group, an inspected Review
@@ -5452,9 +5478,33 @@
           +`</li>`).join("")}</ol>`:"")
       +`</details>`;
   }
+  // What is worth deciding, above the review groups, because it is the answer
+  // to "where do I start" and the groups are only one of the things competing
+  // for that answer. This is also the first surface the numbering-integrity
+  // report, the self-check and the Teach Area's unresolved proposals have ever
+  // had: three layers that produced data nobody could see.
+  //
+  // Everything below the line is stated, never dropped. A panel that showed six
+  // items and implied that was all of it would be a filter lying about its own
+  // coverage.
+  function budgetClaimHTML(c){
+    const label=t(c.key,{...c.params,n:c.count??c.params.n??0});
+    const cost=c.decisions===1?t("budget.oneDecision"):t("budget.nDecisions",{n:c.decisions});
+    const settles=[c.settles.facts?t("budget.settlesFacts",{n:c.settles.facts}):"",
+      c.settles.objects?t("budget.settlesObjects",{n:c.settles.objects}):""].filter(Boolean).join(" · ");
+    return`<li class="budget-claim"><span class="budget-claim-label">${esc(label)}</span><span class="budget-claim-meta">${esc(cost)}${settles?` · ${esc(settles)}`:""}${c.corroboratedBy.length?` · ${esc(t("budget.alsoCorroborated"))}`:""}</span></li>`;
+  }
+  function confidenceBudgetHTML(event){
+    const b=event.analysis?.confidenceBudget;
+    if(!b||!b.counts.claims)return"";
+    const below=[b.counts.deferred?t("budget.deferred",{n:b.counts.deferred}):"",
+      b.counts.nothingMeasurableDependsOnThem?t("budget.nothingDepends",{n:b.counts.nothingMeasurableDependsOnThem}):"",
+      b.counts.notAnswerableFromTheDrawing?t("budget.notAnswerable",{n:b.counts.notAnswerableFromTheDrawing}):""].filter(Boolean);
+    return`<section class="budget-block"><div class="budget-head"><strong>${t("budget.title")}</strong><span>${esc(t("budget.coverage",{pct:Math.round(b.coverage.objects*100)}))}</span></div><ol class="budget-list">${b.spend.map(budgetClaimHTML).join("")}</ol>${below.length?`<p class="budget-below"><b>${t("budget.belowTheLine")}</b> — ${esc(below.join(" · "))}</p>`:""}</section>`;
+  }
   function reviewCenterPanelHTML(event){
     const pi=event.analysis.planIntelligence,decisions=event.analysis.groupingDecisions||[];
-    return`<aside class="review-center-panel"><div class="review-center-head"><strong>${t("review.center")}</strong>${(ui.correctionUndo||[]).length?`<button class="btn sm quiet" data-review-decision-action="undo-correction" title="${t("review.undoCorrectionTitle")}">${icon("undo")} ${t("review.undoCorrection",{n:(ui.correctionUndo||[]).length})}</button>`:""}${decisions.length?`<button class="btn sm quiet" data-review-decision-action="undo-last" title="${t("diag.undoLastDecisionTitle")}">${icon("undo")} ${t("diag.undoLastDecision",{n:decisions.length})}</button>`:""}<button class="btn icon-only sm" data-review-action="close-review-center">${icon("x")}</button></div><div class="review-center-list">${explainPlanHTML(event)}${pi.reviewGroups.map(g=>`<div class="review-group-card"><div class="review-group-title">${esc(reviewGroupTitle(g))}</div>${memberCropsHTML(event,g.memberIds)}<div class="review-group-meta">${g.totalInFamily} ${t("review.similar")} · ${g.consistentCount} ${t("review.consistentOf")} · ${g.memberIds.length} ${t("review.needReview")}</div><div class="review-group-actions"><button class="btn sm primary" data-reviewgroup-action="confirm-family" data-group="${g.id}">${t("action.applyToAll")}</button><button class="btn sm" data-reviewgroup-action="inspect" data-group="${g.id}">${t("action.reviewOutliers")}</button></div></div>`).join("")||`<div class="inspector-empty">${t("review.noGroups")}</div>`}</div>${pi.uncertainQuestions.length?`<div class="review-center-difficult"><strong>${t("review.difficultQuestions")}</strong>${pi.uncertainQuestions.map(q=>`<div class="difficult-q-row"><span>${esc(questionText(q))}</span><button class="btn sm" data-question-action="open" data-question="${q.id}">${t("action.answer")}</button></div>`).join("")}</div>`:""}</aside>`;
+    return`<aside class="review-center-panel"><div class="review-center-head"><strong>${t("review.center")}</strong>${(ui.correctionUndo||[]).length?`<button class="btn sm quiet" data-review-decision-action="undo-correction" title="${t("review.undoCorrectionTitle")}">${icon("undo")} ${t("review.undoCorrection",{n:(ui.correctionUndo||[]).length})}</button>`:""}${decisions.length?`<button class="btn sm quiet" data-review-decision-action="undo-last" title="${t("diag.undoLastDecisionTitle")}">${icon("undo")} ${t("diag.undoLastDecision",{n:decisions.length})}</button>`:""}<button class="btn icon-only sm" data-review-action="close-review-center">${icon("x")}</button></div><div class="review-center-list">${confidenceBudgetHTML(event)}${explainPlanHTML(event)}${pi.reviewGroups.map(g=>`<div class="review-group-card"><div class="review-group-title">${esc(reviewGroupTitle(g))}</div>${memberCropsHTML(event,g.memberIds)}<div class="review-group-meta">${g.totalInFamily} ${t("review.similar")} · ${g.consistentCount} ${t("review.consistentOf")} · ${g.memberIds.length} ${t("review.needReview")}</div><div class="review-group-actions"><button class="btn sm primary" data-reviewgroup-action="confirm-family" data-group="${g.id}">${t("action.applyToAll")}</button><button class="btn sm" data-reviewgroup-action="inspect" data-group="${g.id}">${t("action.reviewOutliers")}</button></div></div>`).join("")||`<div class="inspector-empty">${t("review.noGroups")}</div>`}</div>${pi.uncertainQuestions.length?`<div class="review-center-difficult"><strong>${t("review.difficultQuestions")}</strong>${pi.uncertainQuestions.map(q=>`<div class="difficult-q-row"><span>${esc(questionText(q))}</span><button class="btn sm" data-question-action="open" data-question="${q.id}">${t("action.answer")}</button></div>`).join("")}</div>`:""}</aside>`;
   }
   // AI-generated review questions are stored as a semantic {questionType,
   // questionParams} pair (plan-intelligence.js), never a hardcoded English
@@ -5508,7 +5558,9 @@
   }
   function planIntelBottomPillHTML(event){
     const pi=event.analysis.planIntelligence,groupCount=reviewGroupCount(pi);
-    return`<div class="planmap-status-pill wide"><span class="pill-check">${icon("check")}</span><b>${t("plan.understood")}</b><i class="pill-div"></i><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i>${planSeatsPill(pi)}${groupCount?`<i class="pill-div"></i><button class="pill-chip" data-review-action="open-review-center">${groupCount} ${t(groupCount===1?"review.group":"review.groups")}</button>`:""}${teachAreaPillHTML(event)}<span class="toolbar-spacer"></span><button class="btn sm quiet" data-review-action="back">${t("review.editManually")}</button><button class="btn sm primary" data-review-action="commit">${t("action.confirmPlan")}</button></div>`;
+    return`<div class="planmap-status-pill wide"><span class="pill-check">${icon("check")}</span><b>${t("plan.understood")}</b><i class="pill-div"></i><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i>${planSeatsPill(pi)}${(()=>{const b=event.analysis.confidenceBudget;const n=b?b.counts.shown:0;
+      if(n)return`<i class="pill-div"></i><button class="pill-chip" data-review-action="open-review-center">${t("budget.chip",{n})}</button>`;
+      return groupCount?`<i class="pill-div"></i><button class="pill-chip" data-review-action="open-review-center">${groupCount} ${t(groupCount===1?"review.group":"review.groups")}</button>`:"";})()}${teachAreaPillHTML(event)}<span class="toolbar-spacer"></span><button class="btn sm quiet" data-review-action="back">${t("review.editManually")}</button><button class="btn sm primary" data-review-action="commit">${t("action.confirmPlan")}</button></div>`;
   }
   // One pin per REVIEW GROUP (at the centroid of its members), not one per
   // individual object — a plan with hundreds of similar chairs must not turn

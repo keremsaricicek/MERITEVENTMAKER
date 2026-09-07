@@ -188,6 +188,36 @@
     "priority.question": { en: "Answer a grouping question", tr: "Bir gruplama sorusunu yanıtlayın" },
     "priority.reviewGroup": { en: "Confirm {n} {type} object(s) together", tr: "{n} {type} nesneyi birlikte onaylayın" },
     "priority.contradiction": { en: "Settle a {kind} disagreement", tr: "{kind} çelişkisini çözün" },
+
+    // ---- the confidence budget (src/plan-confidence-budget.js) ------------
+    //
+    // These are the surface for three layers that produced data nobody could
+    // see: the numbering integrity report, the self-check, and the Teach Area's
+    // unresolved proposals. Each line says what to decide, never how uncertain
+    // the system feels.
+    "budget.title": { en: "Worth deciding", tr: "Karar vermeye değer" },
+    "budget.numbersUnconfirmed": { en: "Confirm {n} table number(s) read only once", tr: "Yalnızca bir kez okunan {n} masa numarasını doğrulayın" },
+    "budget.numbersUnread": { en: "{n} table(s) the drawing does not number legibly", tr: "Çizimin okunaklı biçimde numaralandırmadığı {n} masa" },
+    "budget.integrity.duplicateNumber": { en: "{n} number(s) claimed by more than one table", tr: "Birden fazla masaya ait görünen {n} numara" },
+    "budget.integrity.conflictingReadings": { en: "{n} table(s) read two different ways", tr: "İki farklı şekilde okunan {n} masa" },
+    "budget.integrity.missingNumbers": { en: "{n} number(s) in the range are on no table", tr: "Aralıktaki {n} numara hiçbir masada yok" },
+    "budget.integrity.tablesWithoutAConfidentNumber": { en: "{n} table(s) have no confirmed number", tr: "Doğrulanmış numarası olmayan {n} masa" },
+    "budget.integrity.numberOutsideTheStatedRange": { en: "{n} number(s) fall outside the range the drawing states", tr: "Çizimin belirttiği aralığın dışında kalan {n} numara" },
+    "budget.integrity.tableCountDisagreesWithTheDrawing": { en: "The drawing states a different number of tables from the one found", tr: "Çizim, bulunandan farklı sayıda masa belirtiyor" },
+    "budget.selfCheck": { en: "Two of the plan's own numbers disagree", tr: "Planın kendi sayılarından ikisi birbirini tutmuyor" },
+    "budget.teachReview": { en: "{n} of your notes probably belong to an object here", tr: "Notlarınızdan {n} tanesi büyük olasılıkla buradaki bir nesneye ait" },
+    "budget.teachAmbiguous": { en: "{n} of your notes fit more than one object", tr: "Notlarınızdan {n} tanesi birden fazla nesneye uyuyor" },
+    "budget.settlesObjects": { en: "settles {n}", tr: "{n} nesneyi çözer" },
+    "budget.settlesFacts": { en: "{n} disputed claim(s)", tr: "{n} tartışmalı iddia" },
+    "budget.oneDecision": { en: "one decision", tr: "tek karar" },
+    "budget.nDecisions": { en: "{n} decisions", tr: "{n} karar" },
+    "budget.alsoCorroborated": { en: "also reported by another check", tr: "başka bir denetim de bunu bildiriyor" },
+    "budget.belowTheLine": { en: "Below the line", tr: "Çizginin altında" },
+    "budget.deferred": { en: "{n} more worth deciding", tr: "karar vermeye değer {n} tane daha" },
+    "budget.nothingDepends": { en: "{n} where nothing measurable depends on the answer", tr: "yanıtına ölçülebilir hiçbir şeyin bağlı olmadığı {n} tane" },
+    "budget.notAnswerable": { en: "{n} the drawing cannot answer", tr: "çizimin yanıtlayamadığı {n} tane" },
+    "budget.coverage": { en: "These settle {pct}% of what can be settled", tr: "Bunlar çözülebilecek olanın %{pct}\u0027ini çözer" },
+    "budget.chip": { en: "{n} to decide", tr: "karar bekleyen {n}" },
     // ---- contradictions ----
     // Two stages of the pipeline that cannot both be right. Each sentence names
     // WHAT disagrees, never a verdict on which side is correct — the product

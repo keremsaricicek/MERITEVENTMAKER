@@ -572,3 +572,144 @@ Cross-venue behaviour is **not verified on real data**: it is pinned by
 constructed cases in the suite, and the corpus contains one numbered venue. Until
 a second real numbered plan exists (Phase 11), that stays a statement about the
 code, not about the world.
+
+---
+
+## Phase 7 — the confidence budget
+
+An operator has a finite number of decisions in them before a plan stops getting
+checked and starts getting clicked through. That is the budget. This phase
+decides how to spend it.
+
+### Starting state, measured before designing anything
+
+Counted **one line per uncertain fact**, on both real plans through the offline
+build with real OCR:
+
+| | Golden (PHYSICAL) | ORNEK (SYMBOLIC) |
+|---|---|---|
+| uncertain facts, one line each | **119** | **278** |
+| existing ranked priorities | 13 | 6 |
+| …of which settle **nothing** on any axis | **5** | **2** |
+| unconfirmed table numbers not in that list | 0 | **76** |
+| integrity findings not in that list | 0 | **3** |
+| open consistency checks not in that list | 0 | **1** |
+
+Two problems, both measured rather than assumed, and neither the one this phase
+was expected to find:
+
+**The newer layers never reached the ranked list.** `reviewPriorities` predates
+Phases 2, 3, 5 and 6. On ORNEK that is 80 uncertain facts sitting in four
+different places with no shared ranking — the operator is never pointed at any
+of them. The numbering-integrity report and the self-check had **no UI at all**:
+they produced data nobody could see.
+
+**The list already contained items that claim nothing.** Five of Golden's
+thirteen and two of ORNEK's six settle zero objects, zero seats and zero facts.
+Each costs a decision and fixes nothing measurable. That *is* "fifty warnings
+because there are fifty uncertain facts".
+
+### What was built
+
+`src/plan-confidence-budget.js`. It runs no detector, reads no pixels and
+changes no candidate — it consumes what every other layer concluded and decides
+what to say first. It is the last thing the analysis does.
+
+Every source contributes **claims** in one shared shape, so a numbering gap and
+a contradiction can finally be compared:
+
+| state | meaning |
+|---|---|
+| `WORTH_DECIDING` | resolving it demonstrably settles something |
+| `NOTHING_MEASURABLE_DEPENDS_ON_IT` | real uncertainty, nothing downstream depends on the answer — counted in one line, never ranked as work |
+| `NOT_ANSWERABLE_FROM_THE_DRAWING` | the drawing does not carry the answer; no amount of looking settles it |
+
+**Repeated uncertainty is one claim, not N.** Forty-five tables whose number the
+drawing never printed legibly is one thing to decide about, carrying the number
+45. A run of seven missing numbers is one line. The count is the information;
+the repetition is not.
+
+**One problem is said once.** Claims carry what they are *about*, independent of
+which layer raised it. This was not in the design — the first measurement of the
+finished budget produced it. On ORNEK, four of the six items shown were the same
+disagreement seen from four angles ("the drawing states 166, 163 were found",
+noticed separately by the contradiction engine, the integrity report and the
+self-check), which pushed 31 tables of real work below the line:
+
+| | before dedupe | after |
+|---|---|---|
+| claims | 12 | **10** |
+| shown | 6 | 6 |
+| deferred | 3 | **1** |
+| object coverage of what is shown | **0.61** | **0.974** |
+
+A merged claim keeps the **worst** case of each measure — the union of what is
+at stake and the true cost of settling it, never a flattering minimum — and
+records the corroborating layer rather than discarding it.
+
+**The ranking has no tunable weights, deliberately.** A weighted score would
+need numbers chosen to make the result look right, and nothing in this repo
+could then tell a good ordering from a tuned one. It is lexicographic, and the
+order of the tests is the argument: things that settle something first; then
+**facts** (a fact is a claim the *product* is making, and a wrong one is worse
+than an unresolved object because the operator will act on it); then how much of
+the plan **one decision** settles; then seats; then a stable key so the order
+never depends on iteration accidents.
+
+**Nothing is hidden, only ranked.** Everything below the line is counted and
+what it would settle is stated. A budget that quietly drops its tail is not a
+budget, it is a filter lying about its own coverage.
+
+### Result
+
+| | Golden | ORNEK |
+|---|---|---|
+| uncertain facts, one line each | 119 | 278 |
+| claims after grouping | **13** | **10** |
+| shown to the operator | **6** | **6** |
+| deferred, counted | 2 | 1 |
+| settle nothing measurable, counted | 5 | 2 |
+| the drawing cannot answer, counted | 0 | 1 (45 tables) |
+| object coverage of what is shown | **0.932** | **0.974** |
+
+### On screen
+
+The Review Center gains a **WORTH DECIDING** block above the review groups,
+because it answers "where do I start" and the groups are only one of the things
+competing for that answer. It is a numbered list — the order is the content —
+and each row says what one decision costs and what it settles. Under it, always:
+*"Below the line — 4 more worth deciding · 5 where nothing measurable depends on
+the answer"*. The status bar chip becomes *"6 to decide"* rather than a count of
+similarity families.
+
+This is also the first surface Phase 3's integrity report, Phase 5's self-check
+and Phase 6's unresolved Teach Area proposals have ever had.
+
+Rendered and screenshotted at 1920×1080, 2560×1440 and ~1440px. The render
+caught one thing markup review had not: the block's title and its coverage
+sentence side by side broke "WORTH DECIDING" across two lines at 1440, and would
+have been worse in Turkish, which is longer. Stacked instead.
+
+### Regression
+
+| | before | after |
+|---|---|---|
+| suites | 25/25, 752 checks | **26/26, 803 checks** |
+| ORNEK tables | P 0.994 R 0.976 F1 0.985 | **unchanged** |
+| Golden tables / chairs / relations | 0.958 / 0.951 / 0.99 | **unchanged** |
+| 4 adversarial fixtures | — | **unchanged** |
+| `verify:offline` | 27/27 | **27/27** |
+
+No detector code was touched.
+
+### What is not done yet
+
+The rows are **readable but not yet actionable**: clicking one does not take the
+operator to the object it is about. The existing review-group and question
+controls still work exactly as before, so nothing regressed — but a ranked list
+whose top item cannot be acted on in one click is half a feature, and closing
+that is the first thing the human operator test (Phase 8) should be pointed at
+rather than guessed about.
+
+`DEFAULT_MAX_ITEMS = 6` is set from two plans. It is a parameter, not a
+constant, so a third real venue can re-measure it rather than inherit it.

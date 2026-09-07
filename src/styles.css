@@ -959,6 +959,23 @@ body{min-width:1180px}
 .poi-card-head strong{font-size:14px;display:block}
 .poi-card-head span{font-size:10.5px;color:var(--pi-muted)}
 .poi-card .field-select{width:100%;height:32px;margin:11px 0;border:1px solid var(--pi-line);border-radius:var(--pi-radius-sm);background:var(--pi-surface-2);color:var(--pi-ink);padding:0 8px;font-size:11.5px}
+/* The confidence budget, at the top of the Review Center because it answers
+   "where do I start" and everything under it is one of the candidate answers.
+   An ordered list, because the order is the content: it is a ranking, not a
+   set. Numbered rather than bulleted so an operator can say "I did the first
+   three". The line below the list is muted but never absent -- a panel that
+   showed six items and implied that was all of them would be lying about its
+   own coverage. */
+.budget-block{border:1px solid var(--pi-line);border-radius:var(--pi-radius-sm,6px);background:var(--pi-surface-2);padding:11px 12px;margin-bottom:12px}
+.budget-head{margin-bottom:9px}
+.budget-head strong{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--pi-ink)}
+.budget-head span{display:block;margin-top:3px;font-size:10.5px;color:var(--pi-muted)}
+.budget-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px}
+.budget-claim{font-size:12px;line-height:1.4;color:var(--pi-ink)}
+.budget-claim-label{display:block}
+.budget-claim-meta{display:block;font-size:10.5px;color:var(--pi-muted);font-variant-numeric:tabular-nums}
+.budget-below{margin:9px 0 0;padding-top:8px;border-top:1px solid var(--pi-line);font-size:10.5px;line-height:1.45;color:var(--pi-muted)}
+.budget-below b{color:var(--pi-ink);font-weight:650}
 /* The Teach Area row. Separated from the answer buttons by a rule, because it
    is a different kind of act: those three settle THIS object, this one writes a
    note that outlives the object and may reach the whole venue. The reach

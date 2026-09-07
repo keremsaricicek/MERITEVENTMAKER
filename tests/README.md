@@ -42,6 +42,7 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `plan-representation` | intelligence | a plan that draws chairs is read as symbolic, or one that draws none is read as physical |
 | `symbolic-plan-capacity` | intelligence | a numbered symbol is deleted as printed text, or a capacity rule is claimed from OCR nothing corroborates |
 | `plan-self-check` | intelligence | arithmetic starts repairing its own inputs, a number loses its provenance, or the withdrawn "stated pax vs 0 counted seats" finding returns on a symbolic plan |
+| `plan-confidence-budget` | intelligence | repeated uncertainty stops being grouped, one disagreement gets listed once per layer that noticed it, an item that settles nothing is ranked as work, or the tail below the line is dropped instead of counted |
 | `plan-teach-area` | intelligence | a lesson reaches outside the scope it was given, one lesson spreads to every object that resembles it, an ambiguous match gets applied anyway, a venue-wide note acts on resemblance instead of a printed number, or the wording starts calling any of it training |
 | `plan-number-integrity` | intelligence | a gap in the numbering gets silently filled in, a numbering range gets hardcoded instead of discovered, or repeated uncertainty stops being grouped |
 | `plan-table-numbers` | intelligence | a table number is claimed on weaker evidence than two crops agreeing, or LIKELY starts being produced from OCR alone |

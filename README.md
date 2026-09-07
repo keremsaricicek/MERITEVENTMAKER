@@ -102,6 +102,10 @@ src/plan-teach-area.js  What a person who knows the room knows, kept with the
                       reach they gave it (this plan / this layout / this
                       venue). Defers identity to Visual Plan Memory, applies
                       one lesson to one object, and trains nothing
+src/plan-confidence-budget.js  What is worth an operator's attention. Groups
+                      repeated uncertainty into one claim, collapses the same
+                      disagreement seen by several layers, and states what is
+                      below the line rather than dropping it
 src/plan-intelligence.js  PlanIntelligenceResult contract + real geometric
                       heuristics (furniture grouping, similarity clustering,
                       bulk review groups, OCR capacity cross-check) built on
