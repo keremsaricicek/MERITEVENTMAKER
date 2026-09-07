@@ -2,15 +2,24 @@ name: CI
 
 # What a change has to survive before anyone looks at it.
 #
-# Scope is deliberate: the cheap deterministic checks that protect the business
-# rules, the workbook contract, storage and migration, the venue model, and the
-# detector's behaviour on synthetic fixtures whose truth is known by
-# construction. Nothing here downloads a model or trains anything.
+# Five jobs, in parallel, because a single job says "CI failed" and five say
+# WHICH KIND of thing broke. They are split by what a failure would mean, not by
+# how long they take:
 #
-# The real-venue detector numbers are measured too, but as a comparison against
-# the committed baseline in benchmarks/BASELINE.json rather than as a hardcoded
-# expectation, so an honest improvement is reported and a silent regression
-# fails.
+#   fast-core     the business rules, the workbook contract, storage and
+#                 migration, and every intelligence layer's own suite
+#   detection     the detector's numbers, compared per plan and per field
+#                 against the committed baseline
+#   offline       the artifacts an operator actually runs, SERVED AND DRIVEN
+#   intelligence  the measurements that say whether the reasoning layers still
+#                 reason; reported, and gated only where a gate is honest
+#   performance   the DOM and canvas cost, plus the one correctness suite that
+#                 must fail the run
+#
+# Nothing here downloads a model, trains anything, or touches Ground Truth. The
+# detector's real-plan numbers are a COMPARISON against benchmarks/BASELINE.json,
+# never a hardcoded expectation, so an honest improvement is reported and a
+# silent regression fails.
 
 on:
   push:
@@ -23,48 +32,56 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  regression:
-    name: Regression suite
+  fast-core:
+    name: Fast core — regression suite
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-
-      - name: Install Playwright
-        run: npm ci --no-audit --no-fund
-
-      # Cached separately from node_modules: the browser is ~150MB and changes
-      # only when the pinned Playwright version does.
+      - run: npm ci --no-audit --no-fund
       - name: Cache Chromium
-        id: browser-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-
+      - run: npx playwright install --with-deps chromium
       # Populates .vendor-cache/ with the pinned SheetJS and PDF.js tarballs,
-      # which the test run then serves locally instead of reaching a CDN, and
-      # proves the single-file offline artifact still builds.
+      # which the test run then serves locally instead of reaching a CDN.
       - name: Build the offline artifact
         run: npm run build:offline
-
       - name: Regression suite
         run: npm test
 
+  detection:
+    name: Detection — Golden, ORNEK and the adversarial fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --no-audit --no-fund
+      - name: Cache Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:offline
+
+      # One run, every plan. Splitting Golden and ORNEK into separate jobs would
+      # run detection twice to produce evidence the baseline step already gives
+      # per plan: it compares EVERY guarded field SEPARATELY for EVERY plan and
+      # fails on any drop in any one of them. A trade — chair recall up, table
+      # F1 down — is invisible to a single score and is a revert, not a win.
       - name: Detection benchmark
         run: npm run benchmark
 
-      # Fails on any drop against benchmarks/BASELINE.json, per field, per
-      # plan. A trade -- chair recall up, table F1 down -- is invisible to a
-      # single score, so every guarded field is compared on its own.
-      - name: Detector baseline
+      - name: Detector baseline, per plan and per field
         run: npm run benchmark:baseline
 
       - name: Upload benchmark report
@@ -74,3 +91,129 @@ jobs:
           name: benchmark-report
           path: benchmarks/reports/latest.json
           if-no-files-found: warn
+
+  offline:
+    name: Offline — build both artifacts, then RUN them
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --no-audit --no-fund
+      - name: Cache Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+
+      # The vendored OCR engine and its language data are fetched once and
+      # cached: ~30MB that changes only when the build script pins a new
+      # version. Keyed on both build scripts, so bumping either invalidates it.
+      - name: Cache vendored offline assets
+        uses: actions/cache@v4
+        with:
+          path: .vendor-cache
+          key: vendor-${{ runner.os }}-${{ hashFiles('scripts/build-offline.mjs', 'scripts/build-offline-full.mjs') }}
+
+      - name: Build the single-file artifact
+        run: npm run build:offline
+      - name: Build the folder artifact, with OCR
+        run: npm run build:offline-full
+
+      # THE CHECK THIS JOB EXISTS FOR, and it was missing from CI entirely.
+      #
+      # "The build succeeded" is not evidence. Both build scripts slice
+      # index.html's body by string index, and one of them once cut at the first
+      # HTML comment — which silently dropped #guestDialog, made app-guests.js
+      # throw, and killed every source file after it in the single concatenated
+      # script. The build reported success and shipped a package that booted to
+      # a dead shell with no OCR at all.
+      #
+      # This serves the real artifact, aborts every non-same-origin request, and
+      # drives real OCR. It costs about six seconds and is the only step here
+      # that would have caught that.
+      - name: Verify the built artifacts by running them
+        run: npm run verify:offline
+
+  intelligence:
+    name: Intelligence — do the reasoning layers still reason?
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --no-audit --no-fund
+      - name: Cache Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:offline
+
+      # Each of these fails the job on a real regression against its own
+      # committed expectations. None of them trains anything.
+      - name: Review ordering
+        run: npm run benchmark:review-order
+      - name: Plan facts
+        run: npm run benchmark:facts
+      - name: Contradictions
+        run: npm run benchmark:contradictions
+      - name: Semantic zones
+        run: npm run benchmark:zones
+      - name: Adversarial fixtures
+        run: npm run benchmark:adversarial
+      - name: False positives
+        run: npm run benchmark:false-positives
+      - name: Teaching propagation
+        run: npm run benchmark:teaching
+
+      # REPORTED, NOT GATED, and that is a deliberate decision rather than a
+      # convenience. Visual Plan Memory's gates are not met on TRANSFORMED
+      # renderings of the plan — retention 0.786 against a 0.98 gate — and that
+      # is recorded in benchmarks/memory/ as a known, measured, accepted state,
+      # not a bug waiting to be fixed. Gating on it would make CI permanently
+      # red; lowering the gate to make CI green is the thing this sprint
+      # forbids. So it runs, its numbers are uploaded, and its exit code is not
+      # allowed to lie in either direction.
+      - name: Visual Plan Memory (measured, not gated)
+        continue-on-error: true
+        run: npm run benchmark:memory
+      - name: Upload memory report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-report
+          path: benchmarks/memory/report.json
+          if-no-files-found: warn
+
+  performance:
+    name: Performance — DOM cost, and the one correctness suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --no-audit --no-fund
+      - name: Cache Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:offline
+
+      # Mostly measurements rather than assertions — there is no honest budget
+      # for "fast enough" and inventing one would be the overclaiming this
+      # product refuses everywhere else. The exception is the live-windowing
+      # correctness suite, which asserts that capping the DOM did not change
+      # what an operator sees, and that one does fail the run.
+      - name: Performance suites
+        run: npm run perf

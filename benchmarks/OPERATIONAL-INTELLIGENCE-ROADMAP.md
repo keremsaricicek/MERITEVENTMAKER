@@ -800,3 +800,114 @@ Everything a person is for. Sessions A and B have not been run, and until they
 are, this product's usability is unmeasured — which is a different statement
 from "poor", and a different statement again from the information quality, which
 the rest of `benchmarks/` does measure.
+
+---
+
+## Phase 9 — CI that would actually catch something
+
+### Starting state
+
+One job: install → build the single-file artifact → `npm test` → benchmark →
+baseline. Everything else this repository can measure ran only when someone
+remembered to run it.
+
+Two findings, and the second is the serious one.
+
+**The check the repo's own rules call mandatory was not in CI.**
+`npm run verify:offline` serves the built artifacts, aborts every non-same-origin
+request, and drives real OCR. `CLAUDE.md` describes exactly why it exists: both
+build scripts slice `index.html`'s body by string index, and one of them once cut
+at the first HTML comment, silently dropping `#guestDialog`, which made
+`app-guests.js` throw, which killed every source file after it in the single
+concatenated `<script>`. **The build reported success and shipped a package that
+booted to a dead shell with no OCR at all.** That check costs **six seconds** and
+CI never ran it. Neither did CI ever build the folder artifact at all.
+
+**The baseline gate was already red, and had been for a whole sprint.**
+`npm run benchmark:baseline` exits 1 on this branch:
+
+```
+WORSE   merit-real-venue semanticObjects.stage.tp: 1 → 0
+WORSE   merit-real-venue semanticObjects.stage.fn: 0 → 1
+note    ornek-symbolic is not in the baseline
+```
+
+A gate that always fails is not a gate. It trains everyone to ignore it, and a
+genuinely new regression hides inside the noise. Worse: **ORNEK was not in the
+baseline at all** — the numbers this entire sprint exists to protect
+(P 0.994 R 0.976 F1 0.985) were guarded by *nothing*.
+
+### The baseline was re-recorded — deliberately, and here is exactly what moved
+
+This needs stating plainly because the sprint forbids changing Ground Truth to
+make CI green.
+
+**Ground Truth was not touched.** `benchmarks/annotations/` — what is actually
+in the plans — is byte-identical; `git status` on that directory is empty.
+`BASELINE.json` is a different thing: a record of *measured detector performance
+at a commit*, and `record-baseline.mjs` prescribes re-recording it for exactly
+this case ("If the change is a deliberate, measured trade, re-record with
+`--record` and say so in the commit message").
+
+The complete diff, every field of every plan:
+
+| | change |
+|---|---|
+| `ornek-symbolic` | **added** — 14 guarded fields, including P 0.994 / R 0.976 / F1 0.985 |
+| `merit-real-venue semanticObjects.stage.tp` | 1 → 0 |
+| `merit-real-venue semanticObjects.stage.fn` | 0 → 1 |
+| `merit-real-venue semanticObjects.stage.fp` | 1 → 0 (better) |
+| everything else, every plan | **unchanged** |
+
+Those three stage fields are one already-documented trade: the earlier detection
+sprint removed `aspect ratio ⇒ stage` after measuring it right twice and wrong
+six times with no separating threshold, and Phase 1 of this sprint recovers the
+Golden stage through the drawing's own printed label — which the benchmark's
+build cannot see, because it has no OCR. That is written up in Phase 1 above and
+in `benchmarks/PHASE6-DETECTION-REPORT.md`, and re-recording does not erase it:
+the report is where an accepted trade is explained, the baseline is where "has
+anything moved since we accepted it" is enforced. Conflating the two is what
+made the gate useless.
+
+Net effect: **the gate is green and means something again, and ORNEK is guarded
+for the first time.**
+
+### The five jobs
+
+Split by what a failure would *mean*, not by how long it takes. Every command
+was run locally first and its exit code and cost measured — a workflow whose
+steps have never been executed is a guess.
+
+| job | what it protects | measured cost |
+|---|---|---|
+| **fast-core** | business rules, workbook contract, storage, migration, every intelligence layer's own suite — 27 suites, 818 checks | ~4 min |
+| **detection** | the detector's numbers, per plan and per field, against the baseline | ~3 min |
+| **offline** | both artifacts built **and run** | **6s** for the verify |
+| **intelligence** | review order 52s · facts 23s · contradictions 36s · zones 63s · adversarial 33s · false positives 45s · teaching 18s — **all exit 0** | ~4.5 min |
+| **performance** | DOM and canvas cost, plus the live-windowing correctness suite that does fail the run | **19s** |
+
+Golden and ORNEK are not separate jobs. Splitting them would run detection twice
+to produce evidence the baseline step already gives: it compares **every guarded
+field separately for every plan** and fails on a drop in any one. The sprint's
+rule is that a detector change must *independently* prove no regression on each
+— that is a property of the comparison, not of the job count, and paying twice
+for the same evidence is waste.
+
+**Visual Plan Memory runs but is not gated**, and that is a decision rather than
+a convenience. Its gates are not met on *transformed* renderings — retention
+0.786 against a 0.98 gate — which is a known, measured, accepted state recorded
+in `benchmarks/memory/`. Gating on it would make CI permanently red; lowering the
+gate to make CI green is the move this sprint forbids. So it runs,
+`continue-on-error`, and its report is uploaded.
+
+Nothing in any job downloads a model or trains anything.
+
+### What is not verified
+
+**These jobs have never run on GitHub Actions.** Every command in them was
+executed locally and passed, and the YAML parses into the five jobs described,
+but a workflow can still fail on a runner for reasons a local run cannot show —
+a cold `.vendor-cache` fetching the OCR engine and its language data over the
+network, a missing system dependency, a timeout under slower CPU. The first
+push is the real test, and if a job fails there it is a fault in this phase, not
+a discovery about the product.
