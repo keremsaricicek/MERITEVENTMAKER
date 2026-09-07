@@ -4623,12 +4623,18 @@
       x:w.bbox.x0/width*100,y:w.bbox.y0/height*100,
       w:(w.bbox.x1-w.bbox.x0)/width*100,h:(w.bbox.y1-w.bbox.y0)/height*100,
     }));
-    if(!wordBoxesPct.length)return{kept:candidates,removedCount:0};
+    if(!wordBoxesPct.length)return{kept:candidates,removedCount:0,removed:[]};
     const overlapArea=(a,b)=>{
       const x1=Math.max(a.x,b.x),y1=Math.max(a.y,b.y),x2=Math.min(a.x+a.w,b.x+b.w),y2=Math.min(a.y+a.h,b.y+b.h);
       return Math.max(0,x2-x1)*Math.max(0,y2-y1);
     };
-    const kept=[];let removedCount=0;
+    // What it removed, not only how many. A candidate deleted here is not
+    // thereby proved to be text: measured on the Golden Plan, four junk tokens
+    // ("EE", "N", "L", "NR") cover 82.7% of the drawing's real stage band and
+    // delete it. The stage-label pass reads the drawing's own word for an
+    // object from its own crop, and it cannot look at geometry that has already
+    // been thrown away. Nothing comes back unless the drawing names it.
+    const kept=[],removed=[];let removedCount=0;
     for(const c of candidates){
       const cArea=Math.max(.0001,c.w*c.h);
       let textArea=0;for(const wb of wordBoxesPct)textArea+=overlapArea(c,wb);
@@ -4650,9 +4656,105 @@
       // symbols is not printed text, whatever overlaps it. The evidence that
       // made it a table is the same evidence that protects it here.
       const isSymbol=c.symbolFamily===true;
-      if(overlapRatio>.4&&!hasChairs&&!isSymbol){removedCount++;}else{kept.push(c);}
+      if(overlapRatio>.4&&!hasChairs&&!isSymbol){removedCount++;removed.push(c);}else{kept.push(c);}
     }
-    return{kept,removedCount};
+    return{kept,removedCount,removed};
+  }
+  // ---- naming an object from the word the drawing prints on it -------------
+  //
+  // Phase 6 stopped typing a venue object `stage` from its aspect ratio.
+  // Measured across both real plans that rule named 8 objects and 6 of them
+  // were wrong, with the 2 right ones sitting inside the range of the 6 wrong
+  // ones — no threshold could separate them. Removing it cost the Golden Plan
+  // its one real stage, and that cost was recorded rather than hidden.
+  //
+  // This is the corroboration that replaces the guess: the drawing's own word.
+  // It needs no threshold at all, because it is not a measurement of shape —
+  // either the label is printed on the object or it is not.
+  //
+  // Why it needs a crop rather than the full-page OCR already in hand: the
+  // full-page pass runs on a canvas capped at 1920 and, on the Golden Plan,
+  // returns 53 tokens of noise with no SAHNE among them. The same engine on a
+  // crop of that one band reads SAHNE at confidence 96. The detector already
+  // knows where its objects are; that is the whole advantage being used here.
+  //
+  // Measured over every band-shaped object on both real plans:
+  //
+  //   merit-real-venue  annotated stage            SAHNE, confidence 96
+  //                     annotated stage extension  nothing  (unlabelled)
+  //                     other shape-only band      nothing
+  //   ornek-symbolic    all six bands              nothing
+  //
+  // 1 of 2 real stages, 0 of 7 everything else. The ORNEK result is the strong
+  // half: those crops are NOT unreadable — they return "SILA 29.08.2026",
+  // "Haluk Elver Salonu 1/2/3", "SALON 1166 * 12:1992 PAX". OCR worked on them
+  // and they simply are not stages. A silent engine would prove nothing; a
+  // talking engine that never says "stage" proves the rule.
+  //
+  // The unlabelled stage extension stays UNKNOWN. That is the honest outcome
+  // and the point of the design: an object is named when the drawing names it,
+  // and otherwise it keeps its geometry and loses only its label.
+  const LABELLED_VENUE_TYPES=[
+    {type:"stage",vocabulary:["SAHNE","STAGE","PODYUM","PLATFORM","SCENE","BUHNE"]},
+  ];
+  // OCR of a crop costs a full engine round-trip, so the pass is bounded. Bands
+  // are the only shape a stage is ever drawn as, and a plan with dozens of them
+  // is a plan whose bands mean something else.
+  const MAX_LABEL_CANDIDATES=14;
+  async function identifyLabelledVenueObjects(event,suppressedByText){
+    const analysis=event?.analysis;
+    if(!analysis||!globalThis.MeritLabelOCR||typeof globalThis.runPlanOCR!=="function")return;
+    if(!analysis.ocr?.available)return;
+    const src=event.background?.src;
+    if(!src)return;
+    // Only objects nothing else has explained: shape-only venue proposals, plus
+    // geometry text suppression removed. The second half is what makes this
+    // work at all on the Golden Plan, where the stage is deleted before it can
+    // be named — by four junk tokens covering 82.7% of it.
+    const shapeOnly=(analysis.candidates||[]).filter(c=>c.kind==="venue"&&c.typeBasis==="aspectRatio");
+    const pool=[...shapeOnly.map(c=>({box:c,fromSuppressed:false})),
+      ...(suppressedByText||[]).map(c=>({box:c,fromSuppressed:true}))]
+      .filter(e=>{
+        const aspect=Math.max(e.box.w,e.box.h)/Math.max(.0001,Math.min(e.box.w,e.box.h));
+        return aspect>=2;
+      })
+      .sort((a,b)=>(b.box.w*b.box.h)-(a.box.w*a.box.h))
+      .slice(0,MAX_LABEL_CANDIDATES);
+    if(!pool.length)return;
+    let image;
+    try{
+      image=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});
+    }catch{return;}
+    const identified=[],attempts=[];
+    for(const entry of pool){
+      for(const spec of LABELLED_VENUE_TYPES){
+        let reading;
+        try{
+          reading=await globalThis.MeritLabelOCR.readLabel(globalThis.runPlanOCR,image,entry.box,spec.vocabulary,{timeoutMs:20000});
+        }catch{continue;}
+        attempts.push({type:spec.type,found:reading.found,confidence:reading.confidence,
+          fromSuppressed:entry.fromSuppressed});
+        if(!reading.found)continue;
+        // The drawing named it. A suppressed object comes back ONLY here, and
+        // only as the thing the drawing called it.
+        const existing=entry.fromSuppressed?null:entry.box;
+        const obj=existing||{...entry.box,id:uid("candidate"),kind:"venue",
+          status:"unreviewed",selected:false,chairDetections:[]};
+        obj.kind="venue";
+        obj.type=spec.type;
+        obj.typeBasis="printedLabel";
+        obj.labelRead={term:reading.term,confidence:reading.confidence,variant:reading.variant,
+          source:"OCR of this object's own crop"};
+        obj.evidence={...(obj.evidence||{}),
+          basis:`the drawing prints "${reading.term}" on this object`};
+        if(!existing)analysis.candidates.push(obj);
+        identified.push({type:spec.type,term:reading.term,confidence:reading.confidence,
+          recoveredFromTextSuppression:entry.fromSuppressed});
+        break;
+      }
+    }
+    analysis.diagnostics.labelledVenueObjects={examined:pool.length,identified,attempts:attempts.length};
+    if(identified.length)analysis.planIntelligence=buildPlanIntelligence(event,analysis.ocrText??null);
   }
   // Exposed for the regression suite. This rule silently deleted 117 of
   // ORNEK's 132 tables and only did so when OCR was running, which is a
@@ -4850,11 +4952,15 @@
       // grouping/reclassification decision can recompute planIntelligence
       // later without re-running OCR.
       event.analysis.ocrText=ocrResult.available?ocrResult.text:null;
+      let suppressedByText=[];
       if(ocrResult.available&&ocrResult.words?.length){
         const suppression=suppressTextFalsePositives(event.analysis.candidates,ocrResult.words,width,height);
         event.analysis.candidates=suppression.kept;
         event.analysis.diagnostics.textSuppressed=suppression.removedCount;
+        suppressedByText=suppression.removed||[];
       }
+      ui.analysisStage=t("analysis.stage.labels");render();await yieldFrame();
+      await identifyLabelledVenueObjects(event,suppressedByText);
       ui.analysisStage=t("analysis.stage.relating");ui.analysisProgress=90;render();await yieldFrame();
       ui.analysisStage=t("analysis.stage.capacity");ui.analysisProgress=95;render();await yieldFrame();
       event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText);

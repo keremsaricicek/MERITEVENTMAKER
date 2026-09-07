@@ -79,6 +79,12 @@ src/i18n.js           Bilingual (tr-TR/en-US) string table + t() helper —
 src/plan-ocr.js       Real client-side OCR (Tesseract.js) for the capacity
                       auditor — requires network on first use; intentionally
                       not part of the offline build (see comments in the file)
+src/plan-label-ocr.js Reads the word a drawing prints ON one object, from that
+                      object's own crop. The full-page pass runs on a canvas
+                      capped at 1920 and misses small labels entirely; the
+                      detector already knows where its objects are, so each one
+                      can be read at its own scale. Analysis-only — the crop is
+                      a throwaway canvas and the plan is never altered
 src/plan-intelligence.js  PlanIntelligenceResult contract + real geometric
                       heuristics (furniture grouping, similarity clustering,
                       bulk review groups, OCR capacity cross-check) built on
