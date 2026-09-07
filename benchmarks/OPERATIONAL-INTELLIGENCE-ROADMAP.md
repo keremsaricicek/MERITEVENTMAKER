@@ -713,3 +713,90 @@ rather than guessed about.
 
 `DEFAULT_MAX_ITEMS = 6` is set from two plans. It is a parameter, not a
 constant, so a third real venue can re-measure it rather than inherit it.
+
+---
+
+## Phase 8 — the human operator test
+
+### What this phase can and cannot deliver
+
+The sprint is explicit: *"Do not assume automated tests prove usability."* That
+rule is binding on this phase's own report. **No person has run this test.** The
+status in `benchmarks/operator/README.md` stays
+
+> INFRASTRUCTURE READY. REAL OPERATOR USABILITY: NOT VERIFIED.
+
+and nothing below changes it. What this phase did is the part that does not
+need a person: prepare the two sessions the sprint asks for, and measure the
+half of *"unnecessary or repeated questions"* a machine can actually measure.
+
+### The protocol, extended to two sessions
+
+The existing protocol described one session with one plan. The sprint asks for
+two, because the two real plans ask an operator different things:
+
+| | Session A | Session B |
+|---|---|---|
+| plan | Golden — **PHYSICAL**, draws its chairs | ORNEK — **SYMBOLIC**, numbered circles |
+| the screen asks about | seating groups, seat counts, object kinds | printed numbers, a stated capacity, numbering gaps |
+| what "capacity" means | counted from chairs found | a figure the drawing prints about itself |
+| the trap | confident wrongness read as authority | the seat count is `null`, not `0`, and must never read as "seats nobody" |
+
+Same person, B second. Four questions were added for the surfaces built in
+Phases 6 and 7, and one known gap is written down *before* the session so it
+cannot be mistaken for a discovery: the **Worth deciding** rows are readable but
+not yet actionable — clicking one does not take the operator to the object it is
+about.
+
+### The measurable half, measured
+
+**Consolidation already works.** An earlier sprint took Golden from thirteen
+questions to five by asking once per repeated *arrangement*. Re-measured through
+the offline build with real OCR: 5 questions, 5 distinct arrangements, **0**
+whose object set repeats another's, **0** wholly contained in another. ORNEK
+asks 1.
+
+**But two of the five read identically to a person:**
+
+```
+"Do these 2 connected tables operate as one seating group?"   2 square tables
+"Do these 2 connected tables operate as one seating group?"   2 bistro tables
+```
+
+The product knew these were different questions — it had consolidated them under
+different arrangement keys and would record their answers separately. The
+operator could not tell them apart, and had no way to know which answer belonged
+to which.
+
+| | before | after |
+|---|---|---|
+| Golden: questions repeating another's exact wording | **1 of 5** | **0 of 5** |
+| ORNEK | 0 of 1 | 0 of 1 |
+
+The kind of table is now part of the sentence, as a parenthetical rather than
+inflected into it, so it stays correct in Turkish as well as English:
+*"Do these 2 connected tables (Bistro Table) operate as one seating group?"* A
+mixed arrangement says *"(mixed kinds)"* rather than naming one of its types,
+and a question stored before arrangements were recorded keeps its original
+wording instead of rendering `(undefined)`.
+
+**How it was missed is the point.** Every one of those strings is correct on its
+own. It only reads wrong when several are rendered together — which no review of
+one string at a time, and no check that existed, was going to catch.
+`tests/suites/operator-questions.test.mjs` renders the six real arrangements
+together in both languages and asserts they produce six different sentences.
+
+### Regression
+
+| | before | after |
+|---|---|---|
+| suites | 26/26, 803 checks | **27/27, 818 checks** |
+| ORNEK / Golden / fixtures | — | **unchanged** |
+| `verify:offline` | 27/27 | **27/27** |
+
+### What remains
+
+Everything a person is for. Sessions A and B have not been run, and until they
+are, this product's usability is unmeasured — which is a different statement
+from "poor", and a different statement again from the information quality, which
+the rest of `benchmarks/` does measure.

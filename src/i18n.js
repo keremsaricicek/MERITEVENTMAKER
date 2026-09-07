@@ -113,6 +113,16 @@
     // Turkish UI never leaks English question text.
     "question.combinedDiningGroup": { en: "Do these {memberCount} connected tables operate as one seating group?", tr: "Bu {memberCount} bitişik masa tek bir oturma grubu olarak mı kullanılıyor?" },
     "question.combinedDiningGroupRepeated": { en: "This arrangement of {memberCount} connected tables appears {count} times. Do they operate as one seating group?", tr: "{memberCount} bitişik masadan oluşan bu düzen planda {count} kez geçiyor. Tek bir oturma grubu olarak mı kullanılıyorlar?" },
+    // Two arrangements that differ only in table type produced the SAME
+    // sentence: "Do these 2 connected tables operate as one seating group?"
+    // appeared twice on the Golden Plan, once about two square tables and once
+    // about two bistro tables. The product knew they were different questions;
+    // the person reading them could not. The kind is appended as a parenthetical
+    // rather than inflected into the sentence, which keeps it correct in both
+    // languages and reuses the type labels that are already translated.
+    "question.combinedDiningGroupOf": { en: "Do these {memberCount} connected tables ({type}) operate as one seating group?", tr: "Bu {memberCount} bitişik masa ({type}) tek bir oturma grubu olarak mı kullanılıyor?" },
+    "question.combinedDiningGroupRepeatedOf": { en: "This arrangement of {memberCount} connected tables ({type}) appears {count} times. Do they operate as one seating group?", tr: "{memberCount} bitişik masadan oluşan bu düzen ({type}) planda {count} kez geçiyor. Tek bir oturma grubu olarak mı kullanılıyorlar?" },
+    "question.mixedTypes": { en: "mixed kinds", tr: "karışık türler" },
     "question.coversGroups": { en: "One answer resolves {count} identical arrangements.", tr: "Tek bir yanıt, birebir aynı {count} düzeni çözer." },
     "review.center": { en: "Review Center", tr: "İnceleme Merkezi" },
     "review.difficultQuestions": { en: "Difficult questions", tr: "Zor Sorular" },

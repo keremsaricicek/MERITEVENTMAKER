@@ -5525,17 +5525,43 @@
     const typeLabel=label===key?titleCase(p.type):label;
     return t(p.kind==="table"?"review.familyTitle.table":"review.familyTitle.object",{type:typeLabel});
   }
+  // What kind of tables an arrangement is made of, from the key the question
+  // was consolidated under ("2:square+square", "4:rectangle+square+square+
+  // square"). Uniform arrangements name their type; mixed ones say so. Returns
+  // null for a question stored before arrangements were recorded, so an older
+  // analysis keeps its original wording rather than showing "(undefined)".
+  function arrangementTypeLabel(arrangement){
+    const types=String(arrangement||"").split(":")[1];
+    if(!types)return null;
+    const list=types.split("+").filter(Boolean);
+    if(!list.length)return null;
+    return list.every(x=>x===list[0])?t("teach.type."+list[0]):t("question.mixedTypes");
+  }
   function questionText(q){
     if(q.questionType==="combinedDiningGroup"){
       const memberCount=q.questionParams?.memberCount??"?",count=q.coversGroups||1;
+      // The kind of table is part of the question, not decoration: two
+      // arrangements that differ only in type used to render as the same
+      // sentence, so the operator was asked what looked like the same question
+      // twice with no way to tell which was which.
+      const type=arrangementTypeLabel(q.arrangement);
       // A question standing for several identical arrangements says so, rather
       // than looking like a question about one of them.
-      return count>1
-        ?t("question.combinedDiningGroupRepeated",{memberCount,count})
+      if(count>1)return type
+        ?t("question.combinedDiningGroupRepeatedOf",{memberCount,count,type})
+        :t("question.combinedDiningGroupRepeated",{memberCount,count});
+      return type
+        ?t("question.combinedDiningGroupOf",{memberCount,type})
         :t("question.combinedDiningGroup",{memberCount});
     }
     return q.question||"";
   }
+  // Exposed for the regression suite. The property under test is not what any
+  // one question says, it is that no two DIFFERENT questions say the same
+  // thing -- which cannot be checked without rendering several of them
+  // together, and which markup review missed for as long as this wording
+  // existed.
+  globalThis.MeritOperatorQuestions={questionText,arrangementTypeLabel};
   function difficultQuestionCardHTML(event){
     const pi=event.analysis?.planIntelligence;if(!pi||!ui.activeQuestionId)return"";
     const q=pi.uncertainQuestions.find(x=>x.id===ui.activeQuestionId);if(!q)return"";
