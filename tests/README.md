@@ -56,6 +56,7 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `review-queue` | business | a ranked list of uncertainties stops becoming "this one, decide, next", or a settled item leaves the operator sitting on what they just settled |
 | `teach-number` | business | a number a person confirmed becomes indistinguishable from one two crops agreed on, or an unsafe scope is refused after the click instead of before |
 | `plan-doctor` | business | an uncertain OCR reading becomes a blocker, a finding has nowhere to go, a fixed problem lingers as a stale warning, or the pre-flight and the header disagree |
+| `layout-changes` | business | a moved table is reported as a removal plus an addition, a capacity change is lumped in with movement, the change view stops being a mode of the Floor Plan, or a published version is rewritten by reading it |
 
 ## Environment
 

@@ -882,8 +882,128 @@ dead end from a working one. The first version of that check could not fail.
 
 ```
 npm run test:all             38/38 suites, 1227/1227 checks
-npm run benchmark:baseline   no regressions, 0 improvements, 0 notes
+npm run benchmark:adversarial  identical to the pre-change run on every
+                             measured field (only timestamps and timings move)
 npm run verify:offline       27 passed, 0 failed
+npm run perf                 all suites completed
 rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
                              0px horizontal overflow at every viewport
+CI run 116 (pull_request)    all five jobs green, including Detection
+```
+
+### A correction about the detector proof
+
+`npm run benchmark:baseline` does **not** re-run detection. It compares the
+report `npm run benchmark` last wrote, so on its own it can report "no
+regressions" against a measurement taken before the change — which is what
+happened while this phase was being checked. It is not the evidence it looks
+like, and it is recorded here rather than quietly dropped.
+
+The real proof is CI's **Detection** job, which runs `npm run benchmark` and
+then the baseline comparison on a fresh run. It is green at `f3a3894`. The
+adversarial comparison above was genuinely fresh — run twice, once with the
+changes stashed. Neither this phase nor the next touches the detection path.
+
+The lesson for anything downstream: a green `benchmark:baseline` is only a
+detector proof when `npm run benchmark` ran first, in the same working tree.
+
+---
+
+## PHASE F — Layout Change Detection
+
+**No new detector.** `MeritVenueModel.compareToVersion` has done this comparison
+since the venue model was built, matching by table number first and geometry
+second, and it had **no UI at all** — it was reachable only from a test. Nothing
+in the product could answer "what did we change since v3?". Phase F is the
+product around it, plus the two classification defects that surfaced once a
+person could actually read the output.
+
+### A number outranks a position
+
+The identity order is verified table number → position, and there is
+deliberately **no visual-similarity rung**. "Never let embedding similarity
+override explicit verified identity" is honoured by not having the input at all:
+nothing in this comparison consults an embedding, so similarity cannot outrank
+a number it disagrees with.
+
+Removing the number pass is what shows why it matters. The suite's mutation run
+reports the moved table as **"T02 removed" plus "T02 added"** — one table
+counted twice, in a report whose whole value is telling an operator what is
+different. That is the failure §5A names, reproduced on demand.
+
+### A change is named, not lumped
+
+`compareToVersion` folded a capacity change into `moved`. A table that stayed
+exactly where it was and gained two seats came out as MOVED, and an operator
+reading "3 tables moved" would go looking for movement that never happened. One
+matched pair now emits **one change per aspect that differs** — MOVED,
+CAPACITY_CHANGED, TYPE_CHANGED, ZONE_CHANGED — rather than one label being
+chosen and the rest hidden. `moved` keeps its old meaning for the callers that
+read it; the named classes are what a screen shows.
+
+Venue objects were compared as **counts per type**, which is true and useless:
+"there is one more bar than there was" cannot say which bar, so nothing could be
+shown on the plan — and a stage that moved five metres did not change the count
+at all and was invisible. They are matched per object now, by their own label
+first and position second.
+
+### A stage that appeared is not a stage that changed
+
+Found by rendering, not by reading: an added stage came out as
+**"STAGE CHANGED · STAGE · — → stage"** — the object's type stated twice and its
+actual news not at all. ADDED, REMOVED and STAGE_CHANGED are peers in the
+taxonomy; the last one means the stage was there before and is different now.
+Unmatched objects are ADDED/REMOVED with no before/after, because the row
+already names them.
+
+### The plan stays the hero
+
+LAYOUT CHANGES is a **mode of the Floor Plan**, on the same canvas, with the
+same toolbar and the same pan and zoom — not a second drawing of the same room.
+A view that redrew the layout from the diff would have the operator comparing
+the product's picture of the night rather than their own. The overlay is the
+selection: choosing a change highlights the object it is about, on the plan
+already in front of them.
+
+The mode appears only where there is a published version to compare against. An
+event never taken from a layout has no "since when" to answer, and a tab that is
+always there and always empty teaches an operator to stop looking at it. The
+permanent navigation did not grow.
+
+### Confirmation only where it means something
+
+An UNCERTAIN change — an addition or a removal, matched by nothing — offers a
+Confirm. A change matched by its own table number does not: there is nothing for
+a person to ratify, and asking them to tick forty certainties would make the
+ticks meaningless on the four that matter. A confirmation is stored against the
+**version** it was made about, so "T05 is gone relative to v3" stays true and a
+table removed, re-added and removed again does not come back already ticked.
+
+### Evidence
+
+`tests/suites/layout-changes.test.mjs` — 46 checks: every named class on a
+change that is genuinely only that; the moved table is one MOVED entry matched
+by TABLE_NUMBER, not a removal plus an addition; an added stage is ADDED and a
+stage present in both is STAGE_CHANGED matched by its label; the view is the
+same canvas inside the workspace; every engine change reaches the screen in
+words; confirmation is offered only on uncertain changes and marks exactly one;
+the card states previous, current, confidence and evidence; no raw key or enum
+in either language; the published version is never rewritten; and a completed
+event reads its changes and cannot confirm them.
+
+Two mutations, to prove the checks bite:
+
+| Mutation | Result |
+| --- | --- |
+| identity-by-number pass removed | the moved table comes back as `T02 removed` + `T02 added`; 2 checks fail |
+| capacity change folded back into MOVED | `T01`, which never moved, is reported MOVED; 2 checks fail |
+
+```
+npm run test:all             39/39 suites, 1273/1273 checks
+npm run benchmark             fresh detection run, then
+npm run benchmark:baseline    no regressions, 0 improvements, 0 notes
+                              (in that order — see the correction above)
+npm run verify:offline        27 passed, 0 failed
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             0px horizontal overflow, no page errors
 ```

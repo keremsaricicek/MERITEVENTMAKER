@@ -45,7 +45,9 @@
     // tally are always on screen; the rows -- including the INFORMATION ones,
     // which are worth reading once and are noise in a list scanned every few
     // minutes -- appear when someone runs the pre-flight.
-    doctorOpen:false
+    doctorOpen:false,
+    // Which layout change the operator is looking at, if any.
+    selectedChangeId:null
   });
 
   function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[]}; }
@@ -663,7 +665,8 @@
     // One tab, two modes on the same drawing. Review used to be a screen that
     // replaced the shell; it is a mode now, so the event identity, the tab bar
     // and the global guest search survive the trip.
-    if(ui.tab==="floor")return ui.planMode==="review"?analysisHTML(event):floorPlanHTML(event);
+    if(ui.tab==="floor")return ui.planMode==="review"?analysisHTML(event)
+      :ui.planMode==="changes"?layoutChangesHTML(event):floorPlanHTML(event);
     if(ui.tab==="guests")return guestsHTML(event);if(ui.tab==="seating")return seatingHTML(event);if(ui.tab==="live")return liveHTML(event);return reportsHTML(event);
   };
   function readonlyGuestsHTML(event){
@@ -761,12 +764,52 @@
   // jobs on the same drawing, so they are two modes of one screen rather than
   // two screens -- and the switch between them must not look like navigation,
   // because it is not: the event, the tabs and the guest search do not move.
+  // ---- LAYOUT CHANGES -------------------------------------------------------
+  //
+  // What has moved since the room was published. No new detector:
+  // MeritVenueModel.compareToVersion has done this comparison since the venue
+  // model was built and had no UI at all, so nothing in the product could
+  // answer "what did we change since v3?" — the engine was reachable only from
+  // a test. This is that answer, as a MODE of the Floor Plan rather than a
+  // screen of its own: the plan stays the hero and the changes sit on it.
+  function layoutChangeSource(event){
+    const ref=event?.venueRef,VM=globalThis.MeritVenueModel;
+    if(!ref||!VM)return null;
+    const venue=VM.findVenue(state,ref.venueId),layout=VM.findLayout(venue,ref.layoutId);
+    if(!layout||!(layout.versions||[]).length)return null;
+    // The version this event was taken FROM. "What have I changed since the
+    // room was published" is the operator's question; comparing against the
+    // newest version would answer a different one the moment somebody else
+    // published after this event was created.
+    const version=VM.findVersion(layout,ref.layoutVersionId)||layout.versions[layout.versions.length-1];
+    return version?{venue,layout,version}:null;
+  }
+  function layoutChanges(event){
+    const src=layoutChangeSource(event);
+    if(!src)return null;
+    try{
+      const diff=globalThis.MeritVenueModel.compareToVersion(state,src.version.id,
+        {tables:event.tables,venueObjects:event.venueObjects,background:event.background});
+      return{...diff,source:src};
+    }catch{ return null; }
+  }
+  // A confirmation is stored against the VERSION it was made about, not just the
+  // change: "T05 is gone relative to v3" is a fact that stays true, and keying
+  // on the signature alone would let a table removed, re-added and removed again
+  // come back already ticked.
+  const changeKey=(versionId,c)=>`${versionId}::${c.type}|${c.kind}|${c.key}|${c.field||""}`;
   function planModeSwitchHTML(event){
-    if(!event.background?.src)return"";
+    const changes=layoutChanges(event);
+    if(!event.background?.src&&!changes)return"";
     const b=(mode,label)=>`<button class="${ui.planMode===mode?"active":""}" data-plan-mode="${mode}"${
       ui.planMode===mode?' aria-current="true"':""}>${label}</button>`;
+    // The third mode appears only where there is a previous version to compare
+    // against. An event that was never taken from a published layout has no
+    // "since when" to answer, and an empty tab that is always there teaches an
+    // operator to stop looking at it.
     return`<div class="planmode-switch" role="group" aria-label="${esc(t("plan.mode.label"))}">${
-      b("plan",t("plan.mode.plan"))}${b("review",t("plan.mode.review"))}</div>`;
+      event.background?.src?b("plan",t("plan.mode.plan"))+b("review",t("plan.mode.review")):""}${
+      changes?b("changes",t("plan.mode.changes")):""}</div>`;
   }
   function planMapToolbarHTML(event){
     const bg=event.background||{};
@@ -774,7 +817,12 @@
     // bar -- a global setting owned by two screen-local toolbars, and absent
     // from every other screen. It is in the workspace header now, with the rest
     // of the controls that are about the application rather than the drawing.
-    return`<div class="planmap-toolbar">${bg.src?`<div class="tool-group">${planModeSwitchHTML(event)}</div>`:""}<div class="tool-group">${toolbarBtn("mouse",t("toolbar.select"),`data-tool="select"`,ui.tool==="select")}${toolbarBtn("hand",t("toolbar.pan"),`data-tool="pan"`,ui.tool==="pan")}</div><div class="tool-group">${toolbarBtn("zoomOut",t("toolbar.zoomOut"),`data-canvas-action="zoom-out"`)}<span class="zoom-label">${Math.round(ui.zoom*100)}%</span>${toolbarBtn("zoomIn",t("toolbar.zoomIn"),`data-canvas-action="zoom-in"`)}${toolbarBtn("fit",t("toolbar.fit"),`data-canvas-action="fit"`)}</div><div class="tool-group">${toolbarBtn("eye",bg.visible?t("toolbar.hideOriginalPlan"):t("toolbar.showOriginalPlan"),`data-v8-action="toggle-bg"`,bg.visible)}${toolbarBtn("image",t("toolbar.replacePlan"),`data-v8-action="replace-bg"`)}</div><div class="tool-group">${toolbarBtn("fit",t("toolbar.focusMode"),`data-v8-action="focus"`,ui.focusMode)}</div>${bg.src?`<div class="tool-group">${toolbarBtn("image",t("toolbar.assistedDetection"),`data-v8-action="detect"`,false).replace('class="toolbar-btn','class="toolbar-btn ai')}</div>`:""}</div>`;
+    // The switch decides for itself whether it has anything to offer: a plan to
+    // review, a published version to compare against, or both. Gating the group
+    // on a background image instead meant an event with a layout history and no
+    // imported drawing had its change view built and unreachable.
+    const modes=planModeSwitchHTML(event);
+    return`<div class="planmap-toolbar">${modes?`<div class="tool-group">${modes}</div>`:""}<div class="tool-group">${toolbarBtn("mouse",t("toolbar.select"),`data-tool="select"`,ui.tool==="select")}${toolbarBtn("hand",t("toolbar.pan"),`data-tool="pan"`,ui.tool==="pan")}</div><div class="tool-group">${toolbarBtn("zoomOut",t("toolbar.zoomOut"),`data-canvas-action="zoom-out"`)}<span class="zoom-label">${Math.round(ui.zoom*100)}%</span>${toolbarBtn("zoomIn",t("toolbar.zoomIn"),`data-canvas-action="zoom-in"`)}${toolbarBtn("fit",t("toolbar.fit"),`data-canvas-action="fit"`)}</div><div class="tool-group">${toolbarBtn("eye",bg.visible?t("toolbar.hideOriginalPlan"):t("toolbar.showOriginalPlan"),`data-v8-action="toggle-bg"`,bg.visible)}${toolbarBtn("image",t("toolbar.replacePlan"),`data-v8-action="replace-bg"`)}</div><div class="tool-group">${toolbarBtn("fit",t("toolbar.focusMode"),`data-v8-action="focus"`,ui.focusMode)}</div>${bg.src?`<div class="tool-group">${toolbarBtn("image",t("toolbar.assistedDetection"),`data-v8-action="detect"`,false).replace('class="toolbar-btn','class="toolbar-btn ai')}</div>`:""}</div>`;
   }
   // What the pill puts where a seat count goes. On a plan whose tables are
   // drawn as symbols there is nothing to count: a bold "0 seats" in the
@@ -885,6 +933,106 @@
       .replace(t("canvas.editHint"),`${t("canvas.multiSelectHint")}<span class="status-right">${t("canvas.selectedCount",{n:ui.selectedObjectIds.length||0})}</span>`);
   };
   floorPlanHTML = function(event){return`<div class="planmap-shell">${planMapToolbarHTML(event)}${bulkPanel(event)}${canvasViewportHTML(event,false)}${contextualCardHTML(event)}${planStatusPillHTML(event)}${addManuallyFabHTML()}</div>`;};
+
+  // The changes view is the SAME canvas — same toolbar, same plan, same tables.
+  // Only the outlines and the panel are added, because "the original plan
+  // remains the hero" is not a slogan: a second canvas that redrew the room
+  // from the diff would be a different drawing of the same night, and the
+  // operator would be comparing the product's picture rather than their own.
+  function layoutChangesHTML(event){
+    return`<div class="planmap-shell in-changes">${planMapToolbarHTML(event)}${
+      canvasViewportHTML(event,false)}${layoutChangePanelHTML(event)}${layoutChangeCardHTML(event)}</div>`;
+  }
+  function changeLabel(c){
+    const k="changes.type."+c.type;
+    return t(k)!==k?t(k):c.type;
+  }
+  // Before and after, only where the change actually has two values. MOVED has
+  // none — it is a position, and "before: null → after: null" is noise dressed
+  // as information; the distance in its evidence line is the real statement.
+  function changeValuesHTML(c){
+    if(c.before==null&&c.after==null)return"";
+    const show=v=>v==null?"—":String(v);
+    return`<span class="lc-values">${esc(show(c.before))} <i>&rarr;</i> ${esc(show(c.after))}</span>`;
+  }
+  function layoutChangePanelHTML(event){
+    const d=layoutChanges(event);
+    if(!d)return"";
+    const seen=event.layoutChangesSeen||{};
+    const rows=d.changes.map(c=>{
+      const id=changeKey(d.source.version.id,c);
+      const confirmed=!!seen[id];
+      const uncertain=c.identity.confidence==="UNCERTAIN";
+      const conf=t("changes.confidence."+c.identity.confidence);
+      const selected=ui.selectedChangeId===id;
+      // Only an UNCERTAIN change offers a confirmation. A table matched by its
+      // own number is not a claim an operator needs to ratify, and asking them
+      // to tick 40 certainties would make the ticks meaningless on the four
+      // that matter.
+      const act=uncertain&&!confirmed&&!isHistorical(event)
+        ?`<button class="btn sm" data-change-confirm="${esc(id)}">${t("changes.confirm")}</button>`
+        :confirmed?`<span class="lc-confirmed">${t("changes.confirmed")}</span>`:"";
+      return`<li class="lc-row ${c.type} ${selected?"selected":""} ${confirmed?"is-confirmed":""}" data-change-select="${esc(id)}">
+        <span class="lc-type">${esc(changeLabel(c))}</span>
+        <span class="lc-key">${esc(c.key)}</span>
+        ${changeValuesHTML(c)}
+        <span class="lc-conf ${c.identity.confidence}">${esc(conf)}</span>
+        ${act}</li>`;
+    }).join("");
+    const src=d.source;
+    return`<aside class="layout-changes">
+      <div class="lc-head">
+        <div><strong>${t("changes.title")}</strong><span>${esc(t("changes.comparedTo",{
+          version:src.version.label,layout:src.layout.name}))}</span></div>
+        <span class="lc-count">${d.changes.length}</span>
+      </div>
+      ${d.changes.length?`<ul class="lc-rows">${rows}</ul>`
+        :`<p class="lc-empty">${t("changes.none")}</p>`}
+    </aside>`;
+  }
+  // The contextual card: previous, current, how confident, and on what evidence.
+  // Same shape as the review inspector, because it answers the same question
+  // about a different kind of claim.
+  function layoutChangeCardHTML(event){
+    const d=layoutChanges(event);
+    if(!d||!ui.selectedChangeId)return"";
+    const c=d.changes.find(x=>changeKey(d.source.version.id,x)===ui.selectedChangeId);
+    if(!c)return"";
+    const by=t("changes.identity."+c.identity.by);
+    return`<div class="poi-card lc-card">
+      <div class="poi-card-head"><strong>${esc(c.key)}</strong><span>${esc(changeLabel(c))}</span></div>
+      <div class="lc-card-body">
+        <div class="lc-pair"><em>${t("changes.before")}</em><b>${esc(c.before==null?"—":String(c.before))}</b></div>
+        <div class="lc-pair"><em>${t("changes.after")}</em><b>${esc(c.after==null?"—":String(c.after))}</b></div>
+        <div class="lc-pair"><em>${t("changes.confidenceLabel")}</em><b>${esc(t("changes.confidence."+c.identity.confidence))}</b></div>
+        <div class="lc-pair"><em>${t("changes.identityLabel")}</em><b>${esc(by===("changes.identity."+c.identity.by)?c.identity.by:by)}</b></div>
+        <p class="lc-evidence">${esc(c.identity.detail||"")}</p>
+      </div>
+    </div>`;
+  }
+  function confirmLayoutChange(event,id){
+    if(!canMutate(event,"confirm a layout change"))return;
+    event.layoutChangesSeen={...(event.layoutChangesSeen||{}),[id]:nowISO()};
+    audit(event,"LAYOUT_CHANGE_CONFIRMED",{change:id});
+    touchEvent(event);render();
+  }
+  function bindLayoutChanges(){
+    const event=activeEvent();
+    document.querySelectorAll("[data-change-select]").forEach(row=>row.onclick=e=>{
+      if(e.target.closest("[data-change-confirm]"))return;
+      const id=row.dataset.changeSelect;
+      ui.selectedChangeId=ui.selectedChangeId===id?null:id;
+      // Selecting a change highlights the object it is about, on the plan the
+      // operator is already looking at. That is the whole overlay: no second
+      // drawing, no ghost of the old layout on top of the new one.
+      const d=layoutChanges(event);
+      const c=d&&d.changes.find(x=>changeKey(d.source.version.id,x)===ui.selectedChangeId);
+      ui.highlightId=c?(c.tableIdAfter||c.tableIdBefore||null):null;
+      render();
+    });
+    document.querySelectorAll("[data-change-confirm]").forEach(b=>b.onclick=()=>
+      confirmLayoutChange(event,b.dataset.changeConfirm));
+  }
 
   function uniqueNumber(event,prefix,index){let n=index;while(event.tables.some(t=>t.number===prefix+String(n).padStart(2,"0")))n++;return prefix+String(n).padStart(2,"0");}
   function createTable(event,d,x,y,index){const dims=d.type==="round"?[120,120]:d.type==="square"?[105,105]:d.type==="bistro"?[82,72]:[170,86],number=uniqueNumber(event,(d.prefix|| (d.type==="bistro"?"B":"T")).toUpperCase(),index);return syncTableChairs({id:uid("table"),number,type:d.type,x,y,w:dims[0],h:dims[1],capacity:Number(d.chairs)||1,zone:d.type==="bistro"?"BISTRO":d.zone||"MAIN FLOOR",rotation:0,locked:false,z:10,hasPhysicalSeats:true});}
@@ -6659,7 +6807,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
     document.querySelectorAll("[data-plan-mode]").forEach(b=>b.onclick=()=>{
       ui.planMode=b.dataset.planMode;ui.tab="floor";
       ui.selectedCandidateId=null;ui.activeReviewGroupId=null;ui.activeQuestionId=null;
-      ui.reviewDrawMode=false;render();
+      ui.reviewDrawMode=false;ui.selectedChangeId=null;ui.highlightId=null;render();
     });
     const back=document.querySelector("[data-action='back-events']");if(back)back.onclick=()=>{ui.screen="events";ui.focusMode=false;render();};const save=document.querySelector("[data-action='save-now']");if(save)save.onclick=()=>saveState(true);const search=document.getElementById("globalGuestSearch");if(search){search.oninput=()=>renderGlobalSearch(search.value);search.onkeydown=e=>{if(e.key==="Escape")document.getElementById("globalSearchResults")?.classList.add("hidden");};}
     const backupExport=document.querySelector("[data-action='backup-export']");if(backupExport)backupExport.onclick=exportBackup;
@@ -6683,8 +6831,12 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
       // Review mode draws no editable canvas, so bindCanvas() must not run for
       // it -- it would query a viewport that is not on the page.
       const reviewing=ui.tab==="floor"&&ui.planMode==="review";
+      const changesMode=ui.tab==="floor"&&ui.planMode==="changes";
+      // The changes view is the same canvas, so it keeps the same bindings --
+      // pan, zoom and selection all still work while reading the diff.
       if(((ui.tab==="floor"&&!reviewing)||ui.tab==="seating")&&!historical)bindCanvas();
       if(reviewing&&!historical)bindReview();
+      if(changesMode)bindLayoutChanges();
       if(ui.tab==="command"&&!historical)bindCommand();
       if(ui.tab==="seating"&&!historical)bindSeating();if(ui.tab==="guests"&&!historical)bindGuests();if(ui.tab==="live"&&!historical)bindLive();if(ui.tab==="reports")bindReports();
       if(historical&&ui.tab==="seating")requestAnimationFrame(()=>fitCanvas(false));
