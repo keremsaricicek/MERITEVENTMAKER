@@ -217,9 +217,146 @@
     const unassigned=event.guests.filter(g=>!g.assignment).reduce((n,g)=>n+paxOf(g),0);if(unassigned)issues.push({level:"warn",code:"unassigned",fix:"seating",title:t("health.issue.unassigned"),text:t("health.issue.unassignedText",{n:unassigned})});
     return issues;
   }
+  // Two controls in one header row must not answer the same question twice.
+  // Once the Command Center exists it owns "is this event ready", so the header
+  // badge stops being a second, smaller, slightly different list and becomes
+  // the way in: same dot, same count, one place to act. It counts what the
+  // Command Center counts -- plan issues AND open plan questions AND
+  // inconsistent checks -- so the two can never disagree the way the status
+  // pill and the review chip did before B1.
+  //
+  // A historical event has no Command Center to open, so it keeps the popover.
   function planHealthHTML(event){
-    const issues=planIssues(event),level=issues.some(x=>x.level==="blocker")?"blocker":issues.length?"warn":"";
-    return`<details class="plan-health"><summary><i class="health-dot ${level}"></i>${t("health.planHealth")}${issues.length?` · ${issues.length}`:` · ${t("health.ready")}`}</summary><div class="health-pop">${issues.length?issues.map(x=>`<div class="health-item"><i class="health-dot ${x.level}"></i><div><b>${esc(x.title)}</b><span>${esc(x.text)}</span></div></div>`).join(""):`<div class="health-item"><i class="health-dot"></i><div><b>${t("health.noBlockingIssues")}</b><span>${t("health.consistent")}</span></div></div>`}</div></details>`;
+    if(isHistorical(event)){
+      const issues=planIssues(event),level=issues.some(x=>x.level==="blocker")?"blocker":issues.length?"warn":"";
+      return`<details class="plan-health"><summary><i class="health-dot ${level}"></i>${t("health.planHealth")}${issues.length?` · ${issues.length}`:` · ${t("health.ready")}`}</summary><div class="health-pop">${issues.length?issues.map(x=>`<div class="health-item"><i class="health-dot ${x.level}"></i><div><b>${esc(x.title)}</b><span>${esc(x.text)}</span></div></div>`).join(""):`<div class="health-item"><i class="health-dot"></i><div><b>${t("health.noBlockingIssues")}</b><span>${t("health.consistent")}</span></div></div>`}</div></details>`;
+    }
+    const r=eventReadiness(event);
+    const level=r.verdict==="notReady"||r.verdict==="liveRisk"?"blocker":r.verdict==="readyWithReview"?"warn":"";
+    const value=r.reasons.length?String(r.reasons.length):t("health.ready");
+    return`<button class="plan-health-badge ${level}" data-tab="command" title="${esc(t("cc.badge.title"))}"><i class="health-dot ${level}"></i>${t("cc.badge.label")} · ${esc(value)}</button>`;
+  }
+  // ---- the Event Command Center ---------------------------------------------
+  //
+  // One question: IS THIS EVENT READY, AND WHAT DESERVES MY ATTENTION NOW?
+  //
+  // It is not a dashboard and not a second Live screen. Live already owns the
+  // operational counts and the check-in flow, and none of that moves here --
+  // a number belongs where it is acted on. This states what is wrong, and
+  // takes you to the screen that owns the fix.
+  //
+  // It runs no engine of its own. Every line below comes from something that
+  // already concluded it: planIssues(), the Confidence Budget, the Self-Check,
+  // and the guest/seating state. Inventing a second opinion here would be the
+  // parallel-system mistake the programme forbids.
+  //
+  // PHASE (preparation / ready / live / closed) changes what is emphasised,
+  // never what is available.
+  function eventPhase(event){
+    if(isHistorical(event))return"closed";
+    if((event.guests||[]).some(g=>g.arrivalStatus==="Checked In"||g.arrivalStatus==="No Show"))return"live";
+    return"ready";
+  }
+  // The verdict is one of four named states, never a percentage. A number like
+  // "92% ready" has to come from somewhere, and there is no honest weighting of
+  // "one duplicate table number" against "twelve unseated guests" -- so the
+  // product says which of four situations it is in, and lists the reasons.
+  function eventReadiness(event){
+    const issues=planIssues(event);
+    const blockers=issues.filter(x=>x.level==="blocker");
+    const warns=issues.filter(x=>x.level!=="blocker");
+    const m=eventMetrics(event);
+    const budget=event.analysis?.confidenceBudget||null;
+    const toDecide=budget?budget.counts.shown:0;
+    const inconsistent=(event.analysis?.selfCheck?.checks||[]).filter(c=>c.verdict==="INCONSISTENT");
+    const phase=eventPhase(event);
+    const reasons=[];
+    for(const b of blockers)reasons.push({level:"blocker",text:b.title,detail:b.text,goTab:b.fix});
+    for(const w of warns)reasons.push({level:"review",text:w.title,detail:w.text,goTab:w.fix});
+    // Not the budget's chip string: "6 to decide" is a badge, and a badge makes
+    // a poor sentence at the head of a row that also carries an explanation.
+    if(toDecide)reasons.push({level:"review",
+      text:t(toDecide===1?"cc.reason.toDecideTitle1":"cc.reason.toDecideTitle",{n:toDecide}),
+      detail:t("cc.reason.toDecide"),goReview:true});
+    for(const c of inconsistent){const w=ccCheckText(c);reasons.push({level:"review",text:w.statement,detail:w.detail,goReview:true});}
+    const verdict=blockers.length?(phase==="live"?"liveRisk":"notReady")
+      :reasons.length?"readyWithReview":"ready";
+    return{phase,verdict,reasons,metrics:m,budget,inconsistent};
+  }
+  // The Self-Check writes its sentences in English -- it is also read by the
+  // benchmarks and the exported operator report. The Command Center is a
+  // product screen and has to speak the operator's language, so it restates
+  // each check from the structured `params` the check carries alongside its
+  // sentence. A check this table does not know falls back to the module's own
+  // wording: English in a Turkish screen is a visible gap, which is the point;
+  // a raw key would not be.
+  function ccCheckText(c){
+    const p=c.params||{},base="cc.check."+String(c.id).split(":")[0]+"."+c.verdict;
+    const has=k=>t(k)!==k;
+    // A ".1" variant exists only where a count of one would otherwise read as
+    // "1 numbers". English needs it; Turkish does not inflect the noun after a
+    // numeral, so its two forms are usually the same sentence -- which is fine,
+    // and cheaper than teaching the substituter about plural rules.
+    const pick=k=>(p.d===1&&has(k+".1"))?k+".1":k;
+    const s=pick(base),d=pick(base+".detail");
+    return{
+      statement:has(s)?t(s,p):c.statement,
+      detail:has(d)?t(d,p):(c.detail||""),
+    };
+  }
+  function ccReasonHTML(r){
+    const go=r.goReview
+      ?`<button class="btn sm" data-cc-action="review">${t("cc.goto.review")}</button>`
+      :r.goTab?`<button class="btn sm" data-tab="${r.goTab}">${t("cc.goto."+r.goTab)}</button>`:"";
+    return`<li class="cc-reason ${r.level}"><i class="health-dot ${r.level==="blocker"?"blocker":"warn"}"></i><div class="cc-reason-body"><b>${esc(r.text)}</b>${r.detail?`<span>${esc(r.detail)}</span>`:""}</div>${go}</li>`;
+  }
+  // The Self-Check's first surface anywhere in the product. It produced real
+  // findings that no operator could see unless they opened the review panel.
+  function ccPlanConsistencyHTML(event){
+    const sc=event.analysis?.selfCheck;
+    // Two different silences, and saying the wrong one is a lie the operator
+    // cannot detect. A plan that HAS been read but prints no figure about
+    // itself -- no "166 tables x 12 pax = 1992" -- gives the self-check nothing
+    // to compare, which is not the same as no plan having been read at all.
+    if(!sc||!sc.checks.length){
+      const analysed=!!event.analysis;
+      return`<section class="cc-block"><h3>${t("cc.plan.title")}</h3><p class="cc-empty">${t(analysed?"cc.plan.nothingStated":"cc.plan.none")}</p></section>`;
+    }
+    const mark=v=>v==="CONSISTENT"?"ok":v==="INCONSISTENT"?"bad":v==="NEEDS_REVIEW"?"warn":"muted";
+    const glyph=v=>v==="CONSISTENT"?"&#10003;":v==="INCONSISTENT"?"!":v==="NEEDS_REVIEW"?"?":"&#8212;";
+    return`<section class="cc-block"><h3>${t("cc.plan.title")}</h3><ul class="cc-checks">${sc.checks.map(c=>{
+      const w=ccCheckText(c);
+      return`<li class="cc-check ${mark(c.verdict)}"><i>${glyph(c.verdict)}</i><div><b>${esc(w.statement)}</b><span>${esc(w.detail)}</span></div></li>`;
+    }).join("")}</ul></section>`;
+  }
+  function ccSeatingHTML(event){
+    const m=eventMetrics(event),cap=physicalCapacity(event);
+    const cell=(v,l)=>`<div class="cc-metric"><b>${v}</b><span>${l}</span></div>`;
+    return`<section class="cc-block"><h3>${t("cc.seating.title")}</h3><div class="cc-metrics">${
+      cell(m.guests,t("cc.metric.pax"))}${cell(m.assigned,t("cc.metric.assigned"))}${
+      cell(m.unassigned,t("cc.metric.unassigned"))}${cell(cap,t("cc.metric.chairs"))}</div>${
+      m.unassigned?`<button class="btn sm" data-tab="seating">${t("cc.goto.seating")}</button>`:""}</section>`;
+  }
+  function commandCenterHTML(event){
+    const r=eventReadiness(event);
+    return`<div class="screen-scroll"><div class="screen-inner command-center">
+      <header class="cc-head verdict-${r.verdict}">
+        <div class="cc-phase phase-${r.phase}">${t("cc.phase."+r.phase)}</div>
+        <div class="cc-verdict">
+          <strong>${t("cc.verdict."+r.verdict)}</strong>
+          <span>${r.reasons.length?t(r.reasons.length===1?"cc.verdict.reasonCount1":"cc.verdict.reasonCount",{n:r.reasons.length}):t("cc.verdict.nothingOpen")}</span>
+        </div>
+      </header>
+      <section class="cc-block cc-primary"><h3>${t("cc.attention.title")}</h3>${
+        r.reasons.length?`<ul class="cc-reasons">${r.reasons.map(ccReasonHTML).join("")}</ul>`
+          :`<p class="cc-empty">${t("cc.attention.none")}</p>`}</section>
+      <div class="cc-columns">${ccPlanConsistencyHTML(event)}${ccSeatingHTML(event)}</div>
+    </div></div>`;
+  }
+  function bindCommand(){
+    document.querySelectorAll("[data-cc-action]").forEach(b=>b.onclick=()=>{
+      if(b.dataset.ccAction==="review"){ui.reviewCenterOpen=true;ui.screen="review";render();}
+    });
   }
   function eventCard(event){const m=eventMetrics(event),cover=event.coverImage?`<div class="event-cover" style="background-image:url('${event.coverImage}')"></div>`:`<div class="event-cover"><div class="event-cover-placeholder"></div></div>`;return`<article class="event-card" data-card-event="${event.id}">${cover}<div class="event-card-body"><div class="kicker">${esc(event.status)}</div><h3>${esc(event.name)}</h3><div class="event-meta">${esc(fmtDate(event.date))}<br>${esc([event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet"))}</div><div class="event-card-stats"><div class="event-card-stat"><b>${m.guests}</b><span>${t("home.col.guestPax")}</span></div><div class="event-card-stat"><b>${physicalCapacity(event)}</b><span>${t("home.col.physicalChairs")}</span></div></div><div class="event-card-actions"><button class="btn primary" data-open-event="${event.id}">${t("home.openEvent")}</button><button class="btn" data-duplicate-event="${event.id}" title="Duplicate">${icon("copy")}</button><button class="btn danger" data-delete-event="${event.id}" title="Delete">${icon("trash")}</button></div></div></article>`;}
   // The next event is what the operator came for 95% of the time, so it gets
@@ -270,7 +407,12 @@
     </div></div>`;
   };
 
-  const normalTabs=[["floor",()=>t("nav.floorPlanTab")],["guests",()=>t("nav.guestsTab")],["seating",()=>t("nav.seatingTab")],["live",()=>t("nav.liveTab")],["reports",()=>t("nav.reportsTab")]];
+  // The Command Center leads because it is the only screen that answers a
+  // question about the WHOLE event; every tab after it owns one part of the
+  // work. Historical events do not get one -- a finished event has no
+  // readiness to assess, and "12 guests unassigned" on a closed night is
+  // noise, not a finding.
+  const normalTabs=[["command",()=>t("nav.commandTab")],["floor",()=>t("nav.floorPlanTab")],["guests",()=>t("nav.guestsTab")],["seating",()=>t("nav.seatingTab")],["live",()=>t("nav.liveTab")],["reports",()=>t("nav.reportsTab")]];
   const historyTabs=[["guests",()=>t("nav.guestsTab")],["seating",()=>t("nav.seatingTab")],["reports",()=>t("nav.reportsTab")]];
   workspaceHTML = function(event){
     const historical=isHistorical(event),tabs=historical?historyTabs:normalTabs;
@@ -283,7 +425,7 @@
       if(ui.tab==="seating")return`<div class="v8-lock">${seatingHTML(event)}</div>`;
       return reportsHTML(event);
     }
-    if(ui.tab==="floor")return floorPlanHTML(event);if(ui.tab==="guests")return guestsHTML(event);if(ui.tab==="seating")return seatingHTML(event);if(ui.tab==="live")return liveHTML(event);return reportsHTML(event);
+    if(ui.tab==="command")return commandCenterHTML(event);if(ui.tab==="floor")return floorPlanHTML(event);if(ui.tab==="guests")return guestsHTML(event);if(ui.tab==="seating")return seatingHTML(event);if(ui.tab==="live")return liveHTML(event);return reportsHTML(event);
   };
   function readonlyGuestsHTML(event){
     return`<div class="screen-inner"><div class="readonly-note">${icon("lock")}This historical guest list is read-only.</div><div class="screen-titlebar"><div><h2>Guest List</h2><p>${event.guests.length} records · ${eventMetrics(event).guests} total pax</p></div></div><div class="guest-shell"><table class="guest-table"><thead><tr><th>Name Surname</th><th>Pax</th><th>Planning</th><th>Arrival</th><th>VIP</th><th>Invited By</th><th>Table / Seats</th><th>Notes</th></tr></thead><tbody>${event.guests.map(g=>{const t=event.tables.find(x=>x.id===g.assignment?.tableId);return`<tr><td><b>${esc(g.name)}</b></td><td>${paxOf(g)}</td><td>${esc(g.planningStatus)}</td><td>${esc(g.arrivalStatus)}</td><td>${esc(g.vip)}</td><td>${esc(g.invitedBy||"—")}</td><td>${t?esc(t.number)+" · "+esc(seatRange(g.assignment.seats)):"—"}</td><td>${esc(g.notes||"")}</td></tr>`}).join("")||`<tr><td colspan="8" class="muted" style="text-align:center;padding:30px">No guest records.</td></tr>`}</tbody></table></div></div>`;
@@ -6003,7 +6145,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
     if(backupInput){const fresh=backupInput.cloneNode(true);backupInput.replaceWith(fresh);fresh.addEventListener("change",e=>{const file=e.target.files[0];if(file)importBackupFile(file);e.target.value="";});}
   }
   bindCommon = bindV8Common;
-  openEvent = function(id){const event=state.events.find(e=>e.id===id);if(!event)return;ui.activeEventId=id;ui.screen="workspace";ui.tab=isHistorical(event)?"guests":"floor";ui.selectedObjectId=null;ui.selectedObjectIds=[];ui.selectedGuestIds=[];ui.operationalMode=false;ui.undo=[];ui.redo=[];render();};
+  openEvent = function(id){const event=state.events.find(e=>e.id===id);if(!event)return;ui.activeEventId=id;ui.screen="workspace";ui.tab=isHistorical(event)?"guests":"command";ui.selectedObjectId=null;ui.selectedObjectIds=[];ui.selectedGuestIds=[];ui.operationalMode=false;ui.undo=[];ui.redo=[];render();};
   duplicateEvent = function(id,open=false){const source=state.events.find(e=>e.id===id);if(!source)return;original.duplicateEvent(id,open);const copy=state.events[0];copy.hotel=copy.hotel||copy.venue||"";copy.salon=copy.salon||"";copy.tables.forEach(t=>{t.chairs=(t.chairs||[]).map((c,i)=>({...c,id:uid("chair"),parentTableId:t.id,seatNumber:i+1,occupancy:null}));});saveState();};
 
   render = function(){
@@ -6015,6 +6157,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
     if(ui.screen==="workspace"){
       const event=activeEvent(),historical=isHistorical(event);
       if((ui.tab==="floor"||ui.tab==="seating")&&!historical)bindCanvas();
+      if(ui.tab==="command"&&!historical)bindCommand();
       if(ui.tab==="seating"&&!historical)bindSeating();if(ui.tab==="guests"&&!historical)bindGuests();if(ui.tab==="live"&&!historical)bindLive();if(ui.tab==="reports")bindReports();
       if(historical&&ui.tab==="seating")requestAnimationFrame(()=>fitCanvas(false));
     }

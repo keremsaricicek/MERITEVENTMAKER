@@ -302,3 +302,89 @@ exist yet. Removing a real signal before its replacement exists would lose
 information, which is the opposite of the point.
 
 The now-dead `plan.needsReview` translation was removed rather than left behind.
+
+### B2 — the Event Command Center
+
+The one navigation item this programme adds, and the last one it will add. It
+answers a single question — **is this event ready, and what deserves my
+attention now?** — and it does it with facts the product already had.
+
+**No new engine.** It reads `planIssues()`, the Confidence Budget, the
+Self-Check, `eventMetrics()` and `physicalCapacity()`. It computes nothing about
+the plan itself and calls no detector.
+
+**The verdict is a named state, never a percentage.** One of four:
+
+| verdict | when |
+|---|---|
+| `ready` | no blockers, nothing open |
+| `readyWithReview` | no blockers, but open questions |
+| `notReady` | a blocker, doors not yet open |
+| `liveRisk` | a blocker, and guests are already arriving |
+
+There is no honest weighting of "one duplicate table number" against "twelve
+unseated guests", so no number is derived from one. The screen names the
+situation and lists what produced it, each row carrying a way into the screen
+that can fix it. A regression check in `tests/suites/command-center.test.mjs`
+fails if a readiness percentage ever appears in the header.
+
+**It gives the Self-Check its first surface anywhere in the product.** Phase A
+found that the arithmetic engine's findings existed only in the data. On the
+real ORNEK plan, through real OCR in `dist/merit-offline`, the screen now shows
+all five:
+
+```
+✓  166 × 12 = 1992                      the drawing's own multiplication comes out
+✓  1992 + 72 = 2064                     the parts the drawing prints add up to the total
+!  the drawing states 166 tables;       3 unaccounted for
+   163 were found
+✓  each of the 87 confidently read      no number is claimed twice
+   numbers belongs to one table
+—  the drawing's seating figure         this drawing shows its tables as symbols and
+   cannot be checked against a           draws no seats, so there is nothing to count
+   seat count                            against it
+```
+
+The INCONSISTENT one is also listed as something that needs a decision. That
+repetition between the summary and the audit below it is deliberate: a finding
+an operator has to act on belongs in the action list, and hiding it there to
+avoid an echo would be the worse trade.
+
+**Two Self-Check honesty fixes came out of rendering it.**
+
+1. The module writes its sentences in English, because the benchmarks and the
+   exported operator report read the same structure. Rendered into a Turkish
+   screen that produced English findings inside Turkish chrome. Each check now
+   also carries its numbers structurally in `params`, and the screen restates
+   the sentence from those — so the two forms are the same facts, and the
+   English text stays where the English artifacts need it.
+2. "No plan has been analysed for this event yet" was shown whenever the check
+   list was empty. On the Golden Plan a plan *had* been analysed; it simply
+   prints no figure about itself to check against. Two different silences, and
+   saying the wrong one is a lie the operator cannot detect. They are now
+   separate sentences.
+
+**The header badge stopped being a second answer.** "Plan Health · 3" listed
+`planIssues()` in its own popover — the same question the Command Center now
+owns, answered from a narrower source. It is now `Readiness · 3`, a button into
+the Command Center, counting exactly what the Command Center counts. A test
+holds the two numbers equal, and it is placed after a Self-Check finding is
+present, because before that the two sources coincidentally agree and the guard
+would not bite. (Verified by mutation: wiring the badge back to `planIssues`
+alone fails that check and only that check.) A historical event has no Command
+Center to open, so it keeps the popover.
+
+**What it deliberately does not do.** It does not restate Live's five-metric
+strip — a number belongs where it is acted on. It does not appear for completed
+events: a finished night has no readiness to assess, and "12 unassigned guests"
+on it is noise. And a newly created blank event still opens on Floor Plan, since
+there is nothing yet to summarise.
+
+Evidence: `tests/suites/command-center.test.mjs` (39 checks), rendered at
+1920×1080 / 2560×1440 / ~1440px in EN and TR, on both real plans through the
+OCR build — zero page errors, zero horizontal overflow.
+
+Regression after B2: `npm test` **28/28 suites, 857/857 checks** (from 27/818);
+`npm run benchmark:baseline` **no regressions, 0 improvements, 0 notes**;
+`npm run verify:offline` **27 passed, 0 failed**; `npm run perf` clean. The
+protected detection numbers are untouched.

@@ -854,6 +854,7 @@
     "appbar.venueNotSet": { en: "Venue not set", tr: "Mekan Belirtilmedi" },
 
     // ---- Nav tabs ----
+    "nav.commandTab": { en: "Command Center", tr: "Komuta Merkezi" },
     "nav.floorPlanTab": { en: "Floor Plan", tr: "Kat Planı" },
     "nav.guestsTab": { en: "Guests", tr: "Misafirler" },
     "nav.seatingTab": { en: "Seating Plan", tr: "Oturma Planı" },
@@ -861,6 +862,76 @@
     "nav.reportsTab": { en: "Reports", tr: "Raporlar" },
     "nav.historicalBanner": { en: "Historical event · Seating, guest and report records are immutable.", tr: "Geçmiş etkinlik · Oturma, misafir ve rapor kayıtları değiştirilemez." },
     "nav.exitFocus": { en: "Esc · Exit Focus Mode", tr: "Esc · Odak Modundan Çık" },
+
+    // ---- Event Command Center ----
+    //
+    // The verdict is one of four named states. There is no honest weighting of
+    // "one duplicate table number" against "twelve unseated guests", so the
+    // product never derives a readiness percentage from one -- it says which
+    // situation the event is in and lists what produced that answer.
+    "cc.phase.ready": { en: "In preparation", tr: "Hazırlık aşamasında" },
+    "cc.phase.live": { en: "Doors open", tr: "Kapılar açık" },
+    "cc.phase.closed": { en: "Closed", tr: "Kapandı" },
+    "cc.verdict.ready": { en: "Ready to open", tr: "Açılışa hazır" },
+    "cc.verdict.readyWithReview": { en: "Ready, with open questions", tr: "Hazır, açık sorularla" },
+    "cc.verdict.notReady": { en: "Not ready to open", tr: "Açılışa hazır değil" },
+    "cc.verdict.liveRisk": { en: "Open, with a problem on the floor", tr: "Açık, salonda bir sorun var" },
+    "cc.verdict.reasonCount": { en: "{n} things produced this answer", tr: "bu yanıtı üreten {n} konu" },
+    "cc.verdict.reasonCount1": { en: "one thing produced this answer", tr: "bu yanıtı üreten tek bir konu" },
+    "cc.verdict.nothingOpen": { en: "nothing is open", tr: "açık konu yok" },
+    "cc.badge.label": { en: "Readiness", tr: "Hazırlık" },
+    "cc.badge.title": { en: "Open the Command Center", tr: "Komuta Merkezini aç" },
+    "cc.attention.title": { en: "Needs a decision", tr: "Karar bekleyenler" },
+    "cc.attention.none": { en: "Nothing is waiting on you. Capacity, table numbers and assignments agree.", tr: "Sizi bekleyen bir şey yok. Kapasite, masa numaraları ve atamalar birbirini tutuyor." },
+    "cc.reason.toDecideTitle": { en: "{n} plan questions worth deciding", tr: "karar vermeye değer {n} plan sorusu" },
+    "cc.reason.toDecideTitle1": { en: "One plan question worth deciding", tr: "karar vermeye değer bir plan sorusu" },
+    "cc.reason.toDecide": { en: "Questions about the plan whose answers change what the product can tell you.", tr: "Yanıtları, ürünün size söyleyebileceklerini değiştiren plan soruları." },
+    "cc.plan.title": { en: "Does the plan agree with itself?", tr: "Plan kendisiyle tutarlı mı?" },
+    "cc.plan.none": { en: "No plan has been analysed for this event yet.", tr: "Bu etkinlik için henüz bir plan analiz edilmedi." },
+    "cc.plan.nothingStated": { en: "The plan has been read, but it prints no figure about itself to check against what was found.", tr: "Plan okundu, ancak bulunanlarla karşılaştırılabilecek bir sayı belirtmiyor." },
+    "cc.seating.title": { en: "Guests and seats", tr: "Misafirler ve koltuklar" },
+    "cc.metric.pax": { en: "Total pax", tr: "Toplam kişi" },
+    "cc.metric.assigned": { en: "Seated", tr: "Yerleştirildi" },
+    "cc.metric.unassigned": { en: "Unseated", tr: "Yerleştirilmedi" },
+    "cc.metric.chairs": { en: "Physical chairs", tr: "Fiziksel sandalye" },
+    "cc.goto.review": { en: "Open review", tr: "İncelemeyi aç" },
+    "cc.goto.floor": { en: "Open Floor Plan", tr: "Kat Planını aç" },
+    "cc.goto.seating": { en: "Open Seating Plan", tr: "Oturma Planını aç" },
+    "cc.goto.guests": { en: "Open Guests", tr: "Misafirleri aç" },
+    "cc.goto.live": { en: "Open Live Event", tr: "Canlı Etkinliği aç" },
+    "cc.goto.reports": { en: "Open Reports", tr: "Raporları aç" },
+
+    // Self-Check restated for the screen. The module writes its sentences in
+    // English for the benchmarks and the exported report; these say the same
+    // thing from the numbers the check carries in `params`, so a Turkish
+    // operator is not handed an English finding.
+    "cc.check.capacityRuleArithmetic.CONSISTENT": { en: "{a} × {b} = {c}", tr: "{a} × {b} = {c}" },
+    "cc.check.capacityRuleArithmetic.CONSISTENT.detail": { en: "the drawing's own multiplication comes out", tr: "çizimin kendi çarpımı tutuyor" },
+    "cc.check.capacityRuleArithmetic.NEEDS_REVIEW": { en: "{a} × {b} = {c}", tr: "{a} × {b} = {c}" },
+    "cc.check.capacityRuleArithmetic.NEEDS_REVIEW.detail": { en: "{a} × {b} is {p}, not the {c} printed — one of these three was misread, and none of them is adjusted to make it close", tr: "{a} × {b} işlemi {p} ediyor, basılı olan {c} değil — bu üçünden biri yanlış okundu ve sonucu yaklaştırmak için hiçbiri değiştirilmiyor" },
+    "cc.check.capacityPartsSum.CONSISTENT": { en: "{a} + {b} = {c}", tr: "{a} + {b} = {c}" },
+    "cc.check.capacityPartsSum.CONSISTENT.detail": { en: "the parts the drawing prints add up to the total it prints", tr: "çizimin bastığı parçalar, yine bastığı toplamı veriyor" },
+    "cc.check.capacityPartsSum.NEEDS_REVIEW": { en: "{a} + {b} = {c}", tr: "{a} + {b} = {c}" },
+    "cc.check.capacityPartsSum.NEEDS_REVIEW.detail": { en: "they add to {p}, not the {c} printed", tr: "toplamları {p}, basılı olan {c} değil" },
+    "cc.check.statedTablesVsDetected.CONSISTENT": { en: "the drawing states {a} tables; {b} were found", tr: "çizim {a} masa belirtiyor; {b} masa bulundu" },
+    "cc.check.statedTablesVsDetected.CONSISTENT.detail": { en: "the count agrees", tr: "sayılar birbirini tutuyor" },
+    "cc.check.statedTablesVsDetected.INCONSISTENT": { en: "the drawing states {a} tables; {b} were found", tr: "çizim {a} masa belirtiyor; {b} masa bulundu" },
+    "cc.check.statedTablesVsDetected.INCONSISTENT.detail": { en: "{d} unaccounted for", tr: "{d} masa hesaba katılamıyor" },
+    "cc.check.tableNumbersUnique.CONSISTENT": { en: "each of the {a} confidently read numbers belongs to one table", tr: "güvenle okunan {a} numaranın her biri tek bir masaya ait" },
+    "cc.check.tableNumbersUnique.CONSISTENT.detail": { en: "no number is claimed twice", tr: "hiçbir numara iki kez kullanılmıyor" },
+    "cc.check.tableNumbersUnique.INCONSISTENT": { en: "{d} numbers claimed by more than one table", tr: "birden fazla masaya ait görünen {d} numara" },
+    "cc.check.tableNumbersUnique.INCONSISTENT.1": { en: "one number is claimed by more than one table", tr: "bir numara birden fazla masaya ait görünüyor" },
+    "cc.check.tableNumbersUnique.INCONSISTENT.detail": { en: "{list}", tr: "{list}" },
+    "cc.check.statedSeatsVsCounted.CONSISTENT": { en: "the drawing states {a} seats; {b} were counted", tr: "çizim {a} koltuk belirtiyor; {b} koltuk sayıldı" },
+    "cc.check.statedSeatsVsCounted.CONSISTENT.detail": { en: "within a tenth of each other", tr: "aralarındaki fark onda birden az" },
+    "cc.check.statedSeatsVsCounted.INCONSISTENT": { en: "the drawing states {a} seats; {b} were counted", tr: "çizim {a} koltuk belirtiyor; {b} koltuk sayıldı" },
+    "cc.check.statedSeatsVsCounted.INCONSISTENT.detail": { en: "a difference of {d}", tr: "{d} fark var" },
+    "cc.check.statedSeatsVsCounted.NOT_CHECKABLE": { en: "the drawing's seating figure cannot be checked against a seat count", tr: "çizimin koltuk sayısı, sayılan koltuklarla karşılaştırılamıyor" },
+    "cc.check.statedSeatsVsCounted.NOT_CHECKABLE.detail": { en: "this drawing shows its tables as symbols and draws no seats, so there is nothing to count against it", tr: "bu çizim masalarını sembol olarak gösteriyor ve koltuk çizmiyor, dolayısıyla karşılaştırılacak bir sayım yok" },
+    "cc.check.humanVerified.CONSISTENT": { en: "{name}: a person confirmed {a}", tr: "{name}: bir kişi {a} olarak doğruladı" },
+    "cc.check.humanVerified.CONSISTENT.detail": { en: "and the system agrees", tr: "ve sistem de aynı fikirde" },
+    "cc.check.humanVerified.INCONSISTENT": { en: "{name}: a person confirmed {a}", tr: "{name}: bir kişi {a} olarak doğruladı" },
+    "cc.check.humanVerified.INCONSISTENT.detail": { en: "the system had {b} — the person is right", tr: "sistem {b} diyordu — doğru olan kişinin verdiği değer" },
 
     // ---- Plan Health ----
     "health.ready": { en: "Ready", tr: "Hazır" },

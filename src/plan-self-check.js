@@ -53,8 +53,14 @@
     const parts = (audit && audit.parts) || {};
     const checks = [];
 
-    const add = (id, statement, verdict, inputs, detail) =>
-      checks.push({ id, statement, verdict, inputs, detail });
+    // `statement` and `detail` are written in English here because this layer
+    // is also read by the benchmarks and the exported operator report, which
+    // are English artifacts. A UI that has to say the same thing in Turkish
+    // cannot re-parse an English sentence, so every number a sentence uses is
+    // also carried structurally in `params`. The sentence and the params are
+    // the same facts in two forms -- never two different facts.
+    const add = (id, statement, verdict, inputs, detail, params) =>
+      checks.push({ id, statement, verdict, inputs, detail, params: params || {} });
 
     // ---- A vs C: does the drawing's own multiplication come out? -----------
     if (rule) {
@@ -72,7 +78,8 @@
         [units, perUnit, seats],
         product === seats.value
           ? "the drawing's own multiplication comes out"
-          : `${units.value} x ${perUnit.value} is ${product}, not the ${seats.value} printed — one of these three was misread, and none of them is adjusted to make it close`);
+          : `${units.value} x ${perUnit.value} is ${product}, not the ${seats.value} printed — one of these three was misread, and none of them is adjusted to make it close`,
+        { a: units.value, b: perUnit.value, c: seats.value, p: product });
 
       // ---- A vs A: do the parts add up to the printed grand total? ---------
       if (typeof parts.total === "number") {
@@ -89,7 +96,8 @@
             [seats, others, grand],
             sum === grand.value
               ? "the parts the drawing prints add up to the total it prints"
-              : `they add to ${sum}, not the ${grand.value} printed`);
+              : `they add to ${sum}, not the ${grand.value} printed`,
+            { a: rule.total, b: others.value, c: grand.value, p: sum });
         }
       }
     }
@@ -105,7 +113,9 @@
         [stated, found],
         stated.value === found.value
           ? "the count agrees"
-          : `${Math.abs(stated.value - found.value)} ${stated.value > found.value ? "not accounted for" : "more than the drawing claims"}`);
+          : `${Math.abs(stated.value - found.value)} ${stated.value > found.value ? "not accounted for" : "more than the drawing claims"}`,
+        { a: stated.value, b: found.value, d: Math.abs(stated.value - found.value),
+          direction: stated.value > found.value ? "short" : "over" });
     }
 
     // ---- B vs B: are the numbers on those tables internally sound? ---------
@@ -124,7 +134,9 @@
         [value("numbers held confidently", s.verified,
           "OCR of each table's own symbol where two crops agreed, plus any number a person confirmed", "verified")],
         dupes.length ? dupes.map((d) => `${d.number} on ${d.tableIds.length} tables`).join("; ")
-          : "no number is claimed twice");
+          : "no number is claimed twice",
+        { a: s.verified, d: dupes.length,
+          list: dupes.map((x) => `${x.number} × ${x.tableIds.length}`).join(", ") });
     }
 
     // ---- A vs B, but only where B means something -------------------------
@@ -145,13 +157,15 @@
         `the drawing states ${stated.value} seats; ${counted.value} were counted`,
         within ? VERDICT.CONSISTENT : VERDICT.INCONSISTENT,
         [stated, counted],
-        within ? "within a tenth of each other" : `a difference of ${Math.abs(stated.value - counted.value)}`);
+        within ? "within a tenth of each other" : `a difference of ${Math.abs(stated.value - counted.value)}`,
+        { a: stated.value, b: counted.value, d: Math.abs(stated.value - counted.value) });
     } else if (rule && !drawsSeats) {
       add("statedSeatsVsCounted",
         "the drawing's seating figure cannot be checked against a seat count",
         VERDICT.NOT_CHECKABLE,
         [value("seating capacity the drawing states", rule.total, "printed on the drawing, read by OCR", "verified")],
-        "this drawing shows its tables as symbols and draws no seats, so there is nothing to count against it");
+        "this drawing shows its tables as symbols and draws no seats, so there is nothing to count against it",
+        { a: rule.total });
     }
 
     // ---- D: what a person confirmed outranks everything above -------------
@@ -162,7 +176,8 @@
         h.value === h.against ? VERDICT.CONSISTENT : VERDICT.INCONSISTENT,
         [value(h.name, h.value, "confirmed by a person", "verified"),
           value(`${h.name}, as the system had it`, h.against, h.againstSource || "the system", null)],
-        h.value === h.against ? "and the system agrees" : "and the system does not agree — the person is right");
+        h.value === h.against ? "and the system agrees" : "and the system does not agree — the person is right",
+        { name: h.name, a: h.value, b: h.against });
     }
 
     const count = (v) => checks.filter((c) => c.verdict === v).length;
