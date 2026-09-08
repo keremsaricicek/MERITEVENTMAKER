@@ -28,7 +28,7 @@
 // the plan cannot damage it.
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, importPlan, runDetection, reRunDetection, ocrAvailability } from "../lib/app-actions.mjs";
 
 export const meta = {
   name: "plan-memory-isolation",
@@ -39,27 +39,6 @@ export const meta = {
 
 const geometryKey = c => `${c.x.toFixed(3)},${c.y.toFixed(3)},${c.w.toFixed(3)},${c.h.toFixed(3)}`;
 
-// Review is a MODE of the Floor Plan, not a screen (see floor-plan-modes).
-// `ui.screen` stays "workspace" throughout; the Re-Analyze button and the
-// Assisted Detection button live in the two different modes of that one tab.
-const planMode = page => page.evaluate(() => { ui.tab = "floor"; ui.planMode = "plan"; render(); });
-const reviewMode = page => page.evaluate(() => { ui.tab = "floor"; ui.planMode = "review"; render(); });
-
-async function detect(page) {
-  await planMode(page);
-  await click(page, '[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis, null, { timeout: 240000 });
-  await page.waitForTimeout(700);
-}
-
-async function reanalyse(page) {
-  const previousId = await page.evaluate(() => state.events[0].analysis.id);
-  await page.evaluate(() => { ui.tab = "floor"; ui.planMode = "review"; ui.selectedCandidateId = null; render(); });
-  await click(page, '[data-review-action="reanalyze"]');
-  await page.waitForFunction(id => state.events[0].analysis && state.events[0].analysis.id !== id,
-    previousId, { timeout: 240000 });
-  await page.waitForTimeout(700);
-}
 
 const geometry = page => page.evaluate(() =>
   state.events[0].analysis.candidates.map(c => `${c.x.toFixed(3)},${c.y.toFixed(3)},${c.w.toFixed(3)},${c.h.toFixed(3)}`).sort());
@@ -70,20 +49,20 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
 
   await openApp(page, baseUrl);
   await createBlankEvent(page, { name: "Memory", hotel: "Merit", date: "2026-10-02" });
-  await page.evaluate(src => {
-    state.events[0].background = { src, name: "plan.png", opacity: 1, visible: true, locked: false, scale: 100 };
-    render();
-  }, "data:image/png;base64," + fs.readFileSync(planPath).toString("base64"));
-  await page.waitForTimeout(500);
+  await importPlan(page, "data:image/png;base64," + fs.readFileSync(planPath).toString("base64"));
 
-  await detect(page);
+  await runDetection(page);
+  // Reported so the two worlds are visible in the log: OCR runs where there is
+  // network (a CI runner) and does not in an offline sandbox, and the whole
+  // suppression tail runs only in the first of those.
+  checks.ok(true, "OCR availability on this machine", await ocrAvailability(page));
   const firstPass = await geometry(page);
   checks.ok(firstPass.length > 20, "the plan produced a substantial first pass", firstPass.length);
 
   // ---- a re-analysis with no decisions at all is identical ------------------
   // The control. Without it, a later assertion could pass because detection is
   // noisy rather than because protection is isolated.
-  await reanalyse(page);
+  await reRunDetection(page);
   const untouched = await geometry(page);
   checks.ok(untouched.join("|") === firstPass.join("|"),
     "re-analysing without any human decision reproduces the plan exactly",
@@ -112,7 +91,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "every decision was remembered (propagation may add more)", { decisions: toConfirm.length, memories });
 
   // ---- and the detector still finds exactly the same objects ---------------
-  await reanalyse(page);
+  await reRunDetection(page);
   const afterDecisions = await geometry(page);
   const lost = firstPass.filter(g => !afterDecisions.includes(g));
   const gained = afterDecisions.filter(g => !firstPass.includes(g));

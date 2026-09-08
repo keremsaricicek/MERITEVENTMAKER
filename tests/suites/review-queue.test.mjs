@@ -10,26 +10,16 @@
 // from the candidates on every render and never remembered by the queue. A
 // queue that kept its own tally would drift the moment a decision was undone
 // and would then be confidently wrong about how much work was left.
-import { click, openApp, createBlankEvent } from "../lib/app-actions.mjs";
+import fs from "node:fs";
+import path from "node:path";
+import { click, openApp, createBlankEvent, importPlan, runDetection, ocrAvailability } from "../lib/app-actions.mjs";
 
 export const meta = { name: "review-queue", tags: ["business", "fast"], timeout: 180000 };
 
-// Enough round tables in a grid that the detector produces a family worth
-// reviewing, drawn in the page so the suite carries no fixture.
-const MAKE_PLAN = `(function(){
-  const c = document.createElement("canvas");
-  c.width = 1000; c.height = 620;
-  const g = c.getContext("2d");
-  g.fillStyle = "#ffffff"; g.fillRect(0, 0, c.width, c.height);
-  g.strokeStyle = "#222"; g.lineWidth = 3;
-  for (let row = 0; row < 3; row++)
-    for (let i = 0; i < 5; i++) {
-      g.beginPath();
-      g.arc(120 + i * 190, 130 + row * 180, 54, 0, Math.PI * 2);
-      g.stroke();
-    }
-  return c.toDataURL("image/png");
-})()`;
+// The REAL committed plan, not a canvas drawn at runtime -- see the note in
+// app-actions.mjs: a runtime drawing is rasterised by whichever Chromium the
+// machine has, and where OCR is available (a CI runner, not an offline dev
+// sandbox) text suppression removes the very objects this suite needs.
 
 const QUEUE = `(function(){
   const q = ui.reviewQueue;
@@ -69,18 +59,15 @@ async function openAnyQueue(page) {
   return await page.evaluate(() => !!ui.reviewQueue);
 }
 
-export default async function run({ page, checks, baseUrl }) {
+export default async function run({ page, checks, baseUrl, repoRoot }) {
+  const planPath = path.join(repoRoot, "benchmarks/plans/merit-real-venue-plan.png");
+  checks.require(fs.existsSync(planPath), "the real venue plan is present", planPath);
+
   await openApp(page, baseUrl);
   await createBlankEvent(page, { name: "Queue", hotel: "Merit Royal", date: "2026-11-24" });
-
-  await page.evaluate(src => {
-    state.events[0].background = { src, name: "plan.png", opacity: 1, visible: true, locked: false, scale: 100 };
-    render();
-  }, await page.evaluate(MAKE_PLAN));
-  await page.waitForTimeout(300);
-  await click(page, '[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy, null, { timeout: 120000 });
-  await page.waitForTimeout(800);
+  await importPlan(page, "data:image/png;base64," + fs.readFileSync(planPath).toString("base64"));
+  await runDetection(page);
+  checks.ok(true, "OCR availability on this machine", await ocrAvailability(page));
 
   // --- 1. every ranked row either goes somewhere or says why it cannot ------
   await page.evaluate(() => { ui.reviewCenterOpen = true; render(); });

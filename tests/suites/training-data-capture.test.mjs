@@ -37,7 +37,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   await page.waitForTimeout(400);
 
   await click(page, '[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis, null, { timeout: 240000 });
+  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy, null, { timeout: 240000 });
   await page.waitForTimeout(800);
   checks.require(await page.evaluate(() => state.events[0].analysis.candidates.length > 4),
     "the detector produced candidates to decide about");

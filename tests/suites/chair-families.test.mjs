@@ -53,7 +53,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   await page.waitForTimeout(500);
 
   await click(page, '[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis, null, { timeout: 240000 });
+  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy, null, { timeout: 240000 });
   await page.waitForTimeout(1000);
 
   const result = await page.evaluate(() => {

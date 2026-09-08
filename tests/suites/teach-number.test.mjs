@@ -15,34 +15,35 @@
 //   A scope the Teach Area would refuse is disabled BEFORE the click, with the
 //   reason next to it. It used to refuse after: the operator chose, pressed,
 //   and was told no.
-import { click, openApp, createBlankEvent } from "../lib/app-actions.mjs";
+import fs from "node:fs";
+import path from "node:path";
+import { click, openApp, createBlankEvent, importPlan, runDetection, ocrAvailability } from "../lib/app-actions.mjs";
 
 export const meta = { name: "teach-number", tags: ["business", "fast"], timeout: 180000 };
 
-const MAKE_PLAN = `(function(){
-  const c = document.createElement("canvas");
-  c.width = 900; c.height = 500;
-  const g = c.getContext("2d");
-  g.fillStyle = "#ffffff"; g.fillRect(0, 0, c.width, c.height);
-  g.strokeStyle = "#222"; g.lineWidth = 3;
-  for (let row = 0; row < 2; row++)
-    for (let i = 0; i < 4; i++) {
-      g.beginPath();
-      g.arc(140 + i * 190, 160 + row * 190, 52, 0, Math.PI * 2);
-      g.stroke();
-    }
-  return c.toDataURL("image/png");
-})()`;
+// The REAL committed plan, for the reason given in app-actions.mjs.
 
 // Select a table candidate in review mode through the app's own state, then let
 // render() put the inspector on screen.
 const SELECT_TABLE = `(function(){
-  const t = state.events[0].analysis.candidates.find(c => c.kind === "table" && c.status !== "rejected");
+  const alive = state.events[0].analysis.candidates.filter(c => c.kind === "table" && c.status !== "rejected");
+  // Prefer one nobody has confirmed a number for: that is the state the
+  // venue-scope rule is about. Where OCR ran for real, some tables may already
+  // carry a verified number, and starting from one of those would test nothing.
+  const t = alive.find(c => !(c.printedNumber && c.printedNumber.state === "VERIFIED")) || alive[0];
   if (!t) return null;
   ui.tab = "floor"; ui.planMode = "review"; ui.reviewCenterOpen = false;
   ui.selectedCandidateId = t.id; render();
   return t.id;
 })()`;
+
+// Re-select the SAME table. `SELECT_TABLE` deliberately prefers an unconfirmed
+// one, so reusing it after a confirmation would silently move to a different
+// table and test nothing.
+const selectById = (page, id) => page.evaluate(tid => {
+  ui.tab = "floor"; ui.planMode = "review"; ui.reviewCenterOpen = false;
+  ui.selectedCandidateId = tid; render();
+}, id);
 
 const PANEL = `(function(){
   const sel = document.querySelector("[data-teach-scope]");
@@ -56,18 +57,15 @@ const PANEL = `(function(){
   };
 })()`;
 
-export default async function run({ page, checks, baseUrl }) {
+export default async function run({ page, checks, baseUrl, repoRoot }) {
+  const planPath = path.join(repoRoot, "benchmarks/plans/merit-real-venue-plan.png");
+  checks.require(fs.existsSync(planPath), "the real venue plan is present", planPath);
+
   await openApp(page, baseUrl);
   await createBlankEvent(page, { name: "Numbers", hotel: "Merit Royal", date: "2026-11-26" });
-
-  await page.evaluate(src => {
-    state.events[0].background = { src, name: "plan.png", opacity: 1, visible: true, locked: false, scale: 100 };
-    render();
-  }, await page.evaluate(MAKE_PLAN));
-  await page.waitForTimeout(300);
-  await click(page, '[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy, null, { timeout: 120000 });
-  await page.waitForTimeout(700);
+  await importPlan(page, "data:image/png;base64," + fs.readFileSync(planPath).toString("base64"));
+  await runDetection(page);
+  checks.ok(true, "OCR availability on this machine", await ocrAvailability(page));
 
   const tableId = await page.evaluate(SELECT_TABLE);
   checks.require(!!tableId, "the plan produced a table to work with");
@@ -80,8 +78,8 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(before.stateLine && !/^[a-z][a-zA-Z0-9]*\./.test(before.stateLine),
     "the number's state is stated in words, not as a raw key", before.stateLine);
 
-  // This build has no OCR, so nothing was read off the drawing — and the panel
-  // must say that rather than showing an empty box with no explanation.
+  // Where nothing was read off the drawing, the panel must say so rather than
+  // showing an empty box with no explanation.
   const storedBefore = await page.evaluate(id =>
     state.events[0].analysis.candidates.find(c => c.id === id).printedNumber || null, tableId);
   if (!storedBefore) {
@@ -90,6 +88,14 @@ export default async function run({ page, checks, baseUrl }) {
   }
 
   // --- 2. venue scope is refused BEFORE the click, with a reason -----------
+  //
+  // The precondition is stated rather than assumed: this only means anything
+  // for a table no person has confirmed a number for. Where real OCR has
+  // already produced one, the rule is satisfied and there is nothing to refuse.
+  const unconfirmed = !(storedBefore && storedBefore.state === "VERIFIED");
+  checks.ok(unconfirmed,
+    "the table chosen has no confirmed number yet, so the venue rule has something to say",
+    storedBefore);
   const venue = before.scopes.find(s => s.v === "venue");
   checks.ok(venue && venue.disabled,
     "venue scope is disabled while nothing identifies this table", before.scopes);
@@ -119,7 +125,7 @@ export default async function run({ page, checks, baseUrl }) {
     "a tableNumber lesson was kept, through the same Teach Area as everything else", stored.lessons);
 
   // --- 4. confirming the number unlocks venue scope ------------------------
-  await page.evaluate(SELECT_TABLE);
+  await selectById(page, tableId);
   await page.waitForTimeout(400);
   const after = await page.evaluate(PANEL);
   const venueAfter = after.scopes.find(s => s.v === "venue");
@@ -142,7 +148,7 @@ export default async function run({ page, checks, baseUrl }) {
   checks.equal(venueLesson.last.scope, "venue", "at venue scope");
 
   // --- 6. rubbish is refused, and says so ---------------------------------
-  await page.evaluate(SELECT_TABLE);
+  await selectById(page, tableId);
   await page.waitForTimeout(300);
   const lessonsBefore = await page.evaluate(() => (state.teachings || []).length);
   await page.fill("#poiNumber", "0");

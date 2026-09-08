@@ -250,3 +250,75 @@ export function firstEvent(page) {
     };
   });
 }
+
+// ---- Assisted Detection, waited for properly -------------------------------
+//
+// TWO THINGS HERE HAVE BITTEN, AND BOTH ONLY ON A GITHUB RUNNER.
+//
+// 1. `event.analysis` is assigned BEFORE the OCR tail runs. After the
+//    assignment the pipeline still awaits runPlanOCR(), then applies text-based
+//    false-positive suppression (which REPLACES event.analysis.candidates),
+//    identifies labelled venue objects and reads printed table numbers. A suite
+//    that waits only for `analysis` to exist is reading a half-built analysis,
+//    and whether it catches the before or the after depends purely on how long
+//    OCR takes.
+//
+// 2. OCR only runs where there is network. index.html loads Tesseract from a
+//    CDN, so on a GitHub runner that whole tail EXECUTES; in an offline
+//    development sandbox it never does. That is why the race is invisible here
+//    and reproducible there: on the first pass Tesseract is cold (download +
+//    init, seconds) and the suite reads 56 objects; on the second it is warm,
+//    suppression lands inside the wait, and the suite reads 48. The eight that
+//    vanish are slivers and wide bars — exactly what text suppression removes.
+//
+// So there is one way to wait, it is "the analysis is FINISHED", and everything
+// that runs detection goes through here.
+const SETTLED = () => !!state.events[0].analysis && !ui.analysisBusy;
+
+export async function runDetection(page, { timeout = 240000 } = {}) {
+  await click(page, '[data-v8-action="detect"]');
+  await page.waitForFunction(SETTLED, null, { timeout });
+  await page.waitForTimeout(400);
+}
+
+// Re-analysis needs the id to change as well: the previous analysis is still
+// on the event and already satisfies SETTLED on its own.
+export async function reRunDetection(page, { timeout = 240000 } = {}) {
+  const previousId = await page.evaluate(() => state.events[0].analysis.id);
+  await page.evaluate(() => {
+    ui.tab = "floor"; ui.planMode = "review"; ui.selectedCandidateId = null; render();
+  });
+  await page.waitForTimeout(200);
+  await click(page, '[data-review-action="reanalyze"]');
+  await page.waitForFunction(
+    id => state.events[0].analysis && state.events[0].analysis.id !== id && !ui.analysisBusy,
+    previousId, { timeout });
+  await page.waitForTimeout(400);
+}
+
+// Import a plan the operator's way: it becomes the event's background and the
+// canvas renders it. `dataUrl` should come from a COMMITTED image, never from a
+// canvas drawn at runtime — a runtime drawing is rasterised by whichever
+// Chromium the machine happens to have, and a detector reading marginal
+// thin-stroke shapes is not stable across builds. Every detection-dependent
+// suite in this repo uses a real committed plan for that reason.
+export async function importPlan(page, dataUrl) {
+  await page.evaluate(src => {
+    state.events[0].background = {
+      src, name: "plan.png", opacity: 1, visible: true, locked: false, scale: 100,
+    };
+    render();
+  }, dataUrl);
+  await page.waitForTimeout(300);
+}
+
+// Whether the OCR tail actually ran. Reported rather than asserted: an offline
+// development machine legitimately has no OCR, and a suite that demanded it
+// would fail for the wrong reason. What must not happen is a suite silently
+// assuming one of the two worlds.
+export function ocrAvailability(page) {
+  return page.evaluate(() => {
+    const a = state.events[0] && state.events[0].analysis;
+    return a && a.ocr ? { available: !!a.ocr.available, reason: a.ocr.reason || null } : null;
+  });
+}

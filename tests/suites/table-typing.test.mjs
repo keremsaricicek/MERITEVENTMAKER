@@ -45,7 +45,7 @@ async function analyse(page, baseUrl, imagePath, eventName) {
   }, [dataUrl, path.basename(imagePath)]);
   await page.waitForTimeout(500);
   await click(page, '[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis, null, { timeout: 240000 });
+  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy, null, { timeout: 240000 });
   await page.waitForTimeout(800);
   return page.evaluate(() => {
     const a = state.events[0].analysis;

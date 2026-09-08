@@ -10,28 +10,20 @@
 // checks below are about the shell surviving, not about the review UI itself,
 // because a future change that made review a screen again would look perfectly
 // reasonable in a diff and would undo exactly this.
-import { click, openApp, createBlankEvent, gotoTab } from "../lib/app-actions.mjs";
+import fs from "node:fs";
+import path from "node:path";
+import { click, openApp, createBlankEvent, gotoTab, importPlan, runDetection, ocrAvailability } from "../lib/app-actions.mjs";
 
 export const meta = { name: "floor-plan-modes", tags: ["business", "fast"], timeout: 180000 };
 
-// A small plan the detector can actually read, drawn in the page so the suite
-// stays fast and carries no fixture. Eight filled circles in a row read as
-// round tables; the exact count does not matter here, only that detection has
-// something real to find.
-const MAKE_PLAN = `(function(){
-  const c = document.createElement("canvas");
-  c.width = 900; c.height = 500;
-  const g = c.getContext("2d");
-  g.fillStyle = "#ffffff"; g.fillRect(0, 0, c.width, c.height);
-  g.strokeStyle = "#222"; g.lineWidth = 3;
-  for (let row = 0; row < 2; row++)
-    for (let i = 0; i < 4; i++) {
-      g.beginPath();
-      g.arc(140 + i * 190, 160 + row * 190, 52, 0, Math.PI * 2);
-      g.stroke();
-    }
-  return c.toDataURL("image/png");
-})()`;
+// The plan is the REAL committed one, not a canvas drawn at runtime.
+//
+// A runtime drawing is rasterised by whichever Chromium the machine has, and
+// thin-stroke outlines sit close enough to the detector's evidence gates that a
+// different build can read nothing at all from them. Worse, where OCR is
+// available -- it is on a CI runner and is not in an offline dev sandbox --
+// Tesseract finds "words" in bare circles and text suppression then removes the
+// very objects the suite needs. A committed PNG is byte-identical everywhere.
 
 const SHELL = `({
   eventName: document.querySelector(".workspace-head .event-id strong")?.textContent || null,
@@ -45,7 +37,11 @@ const SHELL = `({
   screen: ui.screen, tab: ui.tab, planMode: ui.planMode,
 })`;
 
-export default async function run({ page, checks, baseUrl }) {
+export default async function run({ page, checks, baseUrl, repoRoot }) {
+  const planPath = path.join(repoRoot, "benchmarks/plans/merit-real-venue-plan.png");
+  checks.require(fs.existsSync(planPath), "the real venue plan is present", planPath);
+  const planDataUrl = "data:image/png;base64," + fs.readFileSync(planPath).toString("base64");
+
   await openApp(page, baseUrl);
   await createBlankEvent(page, { name: "Modes", hotel: "Merit Royal", date: "2026-11-22" });
 
@@ -56,11 +52,7 @@ export default async function run({ page, checks, baseUrl }) {
     "an event with no plan imported offers no mode switch — there is nothing to review");
 
   // --- 2. importing a plan offers the switch, and nothing else moves -------
-  await page.evaluate(src => {
-    state.events[0].background = { src, name: "plan.png", opacity: 1, visible: true, locked: false, scale: 100 };
-    render();
-  }, await page.evaluate(MAKE_PLAN));
-  await page.waitForTimeout(300);
+  await importPlan(page, planDataUrl);
 
   const withPlan = await page.evaluate(SHELL);
   checks.equal(withPlan.modes.join(","), "plan*,review",
@@ -137,9 +129,10 @@ export default async function run({ page, checks, baseUrl }) {
   // --- 6. Assisted Detection lands in review MODE, not another screen ------
   await click(page, '[data-plan-mode="plan"]');
   await page.waitForTimeout(300);
-  await click(page, '[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy, null, { timeout: 120000 });
-  await page.waitForTimeout(600);
+  await runDetection(page);
+  // Reported, not asserted: an offline development machine legitimately has no
+  // OCR. What must never happen again is a suite silently assuming one world.
+  checks.ok(true, "OCR availability on this machine", await ocrAvailability(page));
   const afterDetect = await page.evaluate(SHELL);
   checks.equal(afterDetect.screen, "workspace",
     "running Assisted Detection does not take the operator out of the workspace");
