@@ -162,8 +162,21 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal(decided.status, "confirmed", "confirming from inside the queue decides that object");
   checks.equal(decided.unreviewed, beforeDecision.unreviewed - 1, "exactly one object left the undecided pile");
   checks.ok(decided.queueOpen, "the queue stays open");
-  checks.ok(decided.selected !== deciding,
-    "and moves to the next thing rather than leaving the operator on what they just settled");
+  // Either it moved on, or there was nothing left to move to and it said so.
+  // Both are correct; asserting only the first assumed a queue always has a
+  // next item, which is false the moment the last one is decided -- and which
+  // is reachable on a machine where OCR runs and the claim covers fewer
+  // objects.
+  const outstandingAfter = await page.evaluate(() => {
+    const q = ui.reviewQueue;
+    if (!q) return null;
+    const byId = new Map(state.events[0].analysis.candidates.map(c => [c.id, c]));
+    const skipped = new Set(q.skipped);
+    return q.ids.filter(id => byId.has(id) && byId.get(id).status === "unreviewed" && !skipped.has(id)).length;
+  });
+  checks.ok(decided.selected !== deciding || outstandingAfter === 0,
+    "and moves to the next undecided object, or reports that there is none left",
+    { was: deciding, now: decided.selected, outstanding: outstandingAfter });
   checks.ok(/\d/.test(decided.progress || ""), "the progress line is still readable", decided.progress);
 
   // The resolved count is READ from the candidates, so it went up on its own.

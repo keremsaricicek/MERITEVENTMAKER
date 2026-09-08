@@ -4876,7 +4876,21 @@
       // symbols is not printed text, whatever overlaps it. The evidence that
       // made it a table is the same evidence that protects it here.
       const isSymbol=c.symbolFamily===true;
-      if(overlapRatio>.4&&!hasChairs&&!isSymbol){removedCount++;removed.push(c);}else{kept.push(c);}
+      // And a column is not printed text either, for the same reason and by the
+      // same argument. The column pass admits an object only on STRUCTURAL
+      // evidence: repeated, compact, seatless, made of no table material, and
+      // standing on a grid that is aligned in TWO directions. A word is aligned
+      // in one. So the evidence that made it a column is precisely the evidence
+      // that rules out text, and letting an overlapping word delete it throws
+      // away the stronger finding for the weaker one.
+      //
+      // Measured on the adversarial architecture fixture with OCR live: without
+      // this, 3 of its 6 exact columns were removed and the survivors were left
+      // on a single axis -- the detector's own answer reduced to the very shape
+      // it exists to reject. This exemption can only ever KEEP an object, so it
+      // cannot move a table or chair number on either real plan.
+      const isStructural=c.kind==="venue"&&c.type==="column";
+      if(overlapRatio>.4&&!hasChairs&&!isSymbol&&!isStructural){removedCount++;removed.push(c);}else{kept.push(c);}
     }
     return{kept,removedCount,removed};
   }
