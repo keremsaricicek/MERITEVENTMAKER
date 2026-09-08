@@ -571,3 +571,89 @@ npm run test:all            35/35 suites, 1108/1108 checks
 npm run benchmark:baseline  no regressions, 0 improvements, 0 notes
 npm run verify:offline      27 passed, 0 failed
 ```
+
+---
+
+## PHASE C — the Confidence Budget becomes actionable
+
+### The defect
+
+The budget already knew **which** uncertainties were worth deciding and in what
+order. It said so as a list of sentences with no way in. An operator read *"31
+table numbers need review"*, agreed, and then had to go and find those 31 tables
+themselves. A ranked row that cannot be acted on spends the operator's attention
+twice — once to read it, once to work out where to go.
+
+### One workflow, not five
+
+The five claim sources (review priorities, numbering, integrity, self-check,
+Teach Area) do not need five destinations. Four of them name candidate objects,
+so all four resolve the same way: **take me to these objects and let me decide
+one at a time.** That single workflow is §4A and §4B at once.
+
+Every ranked row now carries a **Review N** button, and a claim that names no
+objects — the self-check's arithmetic is about the whole drawing — says *"About
+the drawing as a whole"* rather than offering a button that would land nowhere.
+A check holds that correspondence exactly: `(live objects > 0) === (button
+present)`.
+
+### The queue
+
+`ui.reviewQueue` holds an **order and a position, and nothing else.**
+
+What counts as *resolved* is read from the candidates on every render and never
+remembered. This is the load-bearing decision: a queue with its own tally would
+drift the moment a decision was undone and would then be confidently wrong about
+how much work is left. The suite proves it by reversing a decision behind the
+queue's back and asserting the resolved count drops.
+
+Opening a row lands the operator on the first object with the shell intact,
+reusing the machinery a manual click already uses rather than a second copy of
+it: selection highlights the object, opens its inspector, and — new — focuses
+the plan on it. Outside a queue a single selection is deliberately left unzoomed;
+someone clicking around a plan does not want the view jumping under them. Inside
+one, *"take me there"* is the request.
+
+`Previous · Skip · Next undecided · Exit`, with **Next undecided** searching
+forward from where you are and wrapping once — an operator who has worked
+halfway down does not want to be sent back to the top. Confirming, rejecting or
+dismissing advances automatically; recomputation has already run by then, so the
+progress line, the ranked row behind it and the readiness badge are all reading
+the new state. §4C falls out: a resolved item changes state by itself instead of
+sitting there as a stale warning.
+
+### Two i18n defects this surfaced
+
+**`why` is developer-facing English by design** — `plan-intelligence.js` says so
+at the call site, and some of it is composed from internal identifiers. Rendering
+it in the queue bar produced *"contradiction.from.detectionAndShape and
+contradiction.from.visualSecondOpinion cannot both be right"* inside an otherwise
+Turkish bar. It is not carried into the queue at all now; what an operator reads
+is the claim's own translated label plus what one decision settles.
+
+**The Assisted Detection notice was stored English rendered raw.** It is *data* —
+the contract suite asserts on it and the exported report carries it — so it stays
+as written and the screen says the same thing in the operator's language. An
+analysis whose notice this build does not recognise keeps its own words rather
+than being relabelled with a sentence that might not be true of it.
+
+A third, smaller one: the progress separator was a CSS-only dot, so the text read
+*"163 içinden 10 karara bağlandı"* — one number where there are two. It is a real
+character now.
+
+### Evidence
+
+`tests/suites/review-queue.test.mjs` — 36 checks, covering the path from a ranked
+row to a decided object and back, including the undo case above and the
+no-raw-key sweep in both languages.
+
+Rendered on the real ORNEK plan through real OCR at 1920×1080 / 2560×1440 /
+~1440px in EN and TR: queue bar without overflow, inspector card clearing the
+bar, plan focused on the queued object, zero page errors, zero horizontal
+overflow.
+
+```
+npm run test:all            36/36 suites, 1144/1144 checks
+npm run benchmark:baseline  no regressions, 0 improvements, 0 notes
+npm run verify:offline      27 passed, 0 failed
+```

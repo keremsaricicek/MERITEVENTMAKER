@@ -40,7 +40,7 @@
     // could no longer tell which event they were in, and could not look a guest
     // up without abandoning the review. `planMode` is where that lives now, and
     // `ui.screen` stays "workspace" throughout.
-    lang:"en", planMode:"plan", reviewCenterOpen:false, difficultQuestionIndex:0, activeReviewGroupId:null, activeQuestionId:null, ocrText:null
+    lang:"en", planMode:"plan", reviewQueue:null, reviewCenterOpen:false, difficultQuestionIndex:0, activeReviewGroupId:null, activeQuestionId:null, ocrText:null
   });
 
   function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[]}; }
@@ -5683,12 +5683,144 @@
   // Everything below the line is stated, never dropped. A panel that showed six
   // items and implied that was all of it would be a filter lying about its own
   // coverage.
-  function budgetClaimHTML(c){
+  // A ranked row that cannot be acted on is a ranked row that wastes the
+  // operator's attention twice: once to read it, once to work out where to go.
+  // Every claim that names objects opens a REVIEW QUEUE over exactly those
+  // objects; a claim that names none (the self-check's arithmetic, say) is a
+  // statement about the whole drawing and says so instead of offering a button
+  // that would land nowhere.
+  // What one decision buys, in the operator's language. One function, because
+  // the ranked row and the queue bar are stating the same fact and a second
+  // copy is a second thing to get wrong.
+  // `analysis.notice` is stored English: the contract suite asserts on it, and
+  // the exported operator report carries it, so it is DATA and stays as written.
+  // The screen says the same thing in the operator's language. An analysis whose
+  // notice this build does not recognise keeps its own words rather than being
+  // relabelled with a sentence that might not be true of it.
+  const ASSISTED_NOTICE="Classical computer vision is active; no trained Merit model is installed in this browser review.";
+  function analysisNoticeText(a){
+    return a && a.notice===ASSISTED_NOTICE ? t("plan.noticeAssisted") : (a && a.notice) || "";
+  }
+  function settlesText(s){
+    if(!s)return"";
+    return[s.facts?t(s.facts===1?"budget.settlesFacts1":"budget.settlesFacts",{n:s.facts}):"",
+      s.objects?t(s.objects===1?"budget.settlesObjects1":"budget.settlesObjects",{n:s.objects}):""]
+      .filter(Boolean).join(" · ");
+  }
+  function claimTargets(event,c){
+    const a=event.analysis;if(!a)return[];
+    const byId=new Map(a.candidates.map(x=>[x.id,x]));
+    return (c.targetIds||[]).filter(id=>byId.has(id));
+  }
+  function budgetClaimHTML(c,event){
     const label=t(c.key,{...c.params,n:c.count??c.params.n??0});
     const cost=c.decisions===1?t("budget.oneDecision"):t("budget.nDecisions",{n:c.decisions});
-    const settles=[c.settles.facts?t("budget.settlesFacts",{n:c.settles.facts}):"",
-      c.settles.objects?t("budget.settlesObjects",{n:c.settles.objects}):""].filter(Boolean).join(" · ");
-    return`<li class="budget-claim"><span class="budget-claim-label">${esc(label)}</span><span class="budget-claim-meta">${esc(cost)}${settles?` · ${esc(settles)}`:""}${c.corroboratedBy.length?` · ${esc(t("budget.alsoCorroborated"))}`:""}</span></li>`;
+    const settles=settlesText(c.settles);
+    const ids=event?claimTargets(event,c):[];
+    const go=ids.length
+      ?`<button class="btn sm budget-claim-go" data-budget-open="${esc(c.id)}">${t(ids.length===1?"budget.goOne":"budget.goN",{n:ids.length})}</button>`
+      :`<span class="budget-claim-nowhere">${t("budget.wholeDrawing")}</span>`;
+    return`<li class="budget-claim"><div class="budget-claim-body"><span class="budget-claim-label">${esc(label)}</span><span class="budget-claim-meta">${esc(cost)}${settles?` · ${esc(settles)}`:""}${c.corroboratedBy.length?` · ${esc(t("budget.alsoCorroborated"))}`:""}</span></div>${go}</li>`;
+  }
+  // ---- the review queue ----------------------------------------------------
+  //
+  // "31 table numbers need review" has to become "table 1 of 31, decide, next"
+  // and not "here are 31 things, good luck". The queue is deliberately thin: it
+  // holds an ORDER and a POSITION, and nothing else. What is resolved is read
+  // from the candidates themselves on every render, never remembered here --
+  // a queue that kept its own idea of "done" would drift from the data the
+  // moment a decision was undone, and would then be confidently wrong.
+  function openReviewQueue(event,claimId){
+    const b=event.analysis?.confidenceBudget;
+    const c=b&&b.spend.find(x=>x.id===claimId);
+    if(!c)return;
+    const ids=claimTargets(event,c);
+    if(!ids.length)return;
+    // `why` is deliberately NOT carried here. plan-intelligence.js writes it in
+    // English on purpose -- it explains the ORDERING to diagnostics and to the
+    // benchmarks, and some of it is composed from internal identifiers, so
+    // rendering it produced "contradiction.from.detectionAndShape and
+    // contradiction.from.visualSecondOpinion cannot both be right" inside an
+    // otherwise Turkish bar. What an operator reads is the claim's own label
+    // plus what one decision settles, both of which are already translated.
+    ui.reviewQueue={claimId,key:c.key,params:c.params,count:c.count,ids,index:0,skipped:[],
+      settles:c.settles,decisions:c.decisions};
+    ui.tab="floor";ui.planMode="review";ui.reviewCenterOpen=false;
+    ui.activeReviewGroupId=null;ui.activeQuestionId=null;
+    ui.selectedCandidateId=ids[0];
+    render();
+  }
+  function queueState(event){
+    const q=ui.reviewQueue;if(!q)return null;
+    const byId=new Map((event.analysis?.candidates||[]).map(c=>[c.id,c]));
+    // Present = still in the analysis. Resolved = a person has ruled on it, or
+    // it is gone because they said it was not an object at all.
+    const live=q.ids.filter(id=>byId.has(id));
+    const resolved=q.ids.filter(id=>{const c=byId.get(id);return !c||c.status!=="unreviewed";});
+    const skipped=new Set(q.skipped);
+    const outstanding=live.filter(id=>byId.get(id).status==="unreviewed"&&!skipped.has(id));
+    return{...q,live,resolvedCount:resolved.length,outstanding,total:q.ids.length,
+      position:Math.min(q.index+1,Math.max(1,q.ids.length))};
+  }
+  function queueGo(event,delta){
+    const q=ui.reviewQueue;if(!q)return;
+    const n=q.ids.length;if(!n)return;
+    q.index=(q.index+delta+n)%n;
+    ui.selectedCandidateId=q.ids[q.index];
+    ui.activeReviewGroupId=null;ui.activeQuestionId=null;
+    render();
+  }
+  function queueNextOutstanding(event){
+    const s=queueState(event);if(!s)return;
+    // Search forward from where we are, wrapping once, so "next" means the next
+    // one AFTER this rather than the first one in the list -- an operator who
+    // has worked halfway down does not want to be sent back to the top.
+    const n=s.ids.length;
+    for(let step=1;step<=n;step++){
+      const i=(s.index+step)%n,id=s.ids[i];
+      if(s.outstanding.includes(id)){
+        ui.reviewQueue.index=i;ui.selectedCandidateId=id;
+        ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();return;
+      }
+    }
+    // Nothing outstanding: say so rather than moving the operator somewhere
+    // arbitrary and letting them wonder whether the click registered.
+    toast(t("queue.allDone",{n:s.total}),"success");
+    render();
+  }
+  function closeReviewQueue(){
+    ui.reviewQueue=null;ui.selectedCandidateId=null;render();
+  }
+  // After a decision, the operator should be looking at the next thing rather
+  // than at the thing they just settled. Recomputation has already happened by
+  // the time this runs, so the queue's own progress line and the budget row
+  // behind it are both reading the new state -- a resolved item changes state
+  // by itself instead of sitting there as a stale warning.
+  function afterReviewDecision(event){
+    if(ui.reviewQueue)queueNextOutstanding(event);else render();
+  }
+  function reviewQueueBarHTML(event){
+    const s=queueState(event);if(!s)return"";
+    const label=t(s.key,{...s.params,n:s.count??s.params?.n??s.total});
+    const settles=settlesText(s.settles);
+    // The separator is a real character, not a styled empty element: a dot that
+    // exists only as CSS reads as "163 içinden 10 karara bağlandı" to anything
+    // that takes the text, which is one number where there are two.
+    const progress=[t("queue.position",{i:s.position,n:s.total}),
+      t("queue.resolved",{n:s.resolvedCount}),
+      s.skipped.length?t("queue.skipped",{n:s.skipped.length}):""].filter(Boolean).join(" · ");
+    return`<div class="review-queue-bar">
+      <div class="rq-what"><strong>${esc(label)}</strong>${
+        settles?`<span>${esc(settles)}</span>`:""}</div>
+      <div class="rq-progress">${esc(progress)}</div>
+      <div class="rq-actions">
+        <button class="btn sm" data-queue="prev">${t("queue.previous")}</button>
+        <button class="btn sm" data-queue="skip">${t("queue.skip")}</button>
+        <button class="btn sm primary" data-queue="next-outstanding"${
+          s.outstanding.length?"":" disabled"}>${t("queue.nextUnresolved")}</button>
+        <button class="btn sm quiet" data-queue="exit">${t("queue.exit")}</button>
+      </div>
+    </div>`;
   }
   function confidenceBudgetHTML(event){
     const b=event.analysis?.confidenceBudget;
@@ -5696,7 +5828,7 @@
     const below=[b.counts.deferred?t("budget.deferred",{n:b.counts.deferred}):"",
       b.counts.nothingMeasurableDependsOnThem?t("budget.nothingDepends",{n:b.counts.nothingMeasurableDependsOnThem}):"",
       b.counts.notAnswerableFromTheDrawing?t("budget.notAnswerable",{n:b.counts.notAnswerableFromTheDrawing}):""].filter(Boolean);
-    return`<section class="budget-block"><div class="budget-head"><strong>${t("budget.title")}</strong><span>${esc(t("budget.coverage",{pct:Math.round(b.coverage.objects*100)}))}</span></div><ol class="budget-list">${b.spend.map(budgetClaimHTML).join("")}</ol>${below.length?`<p class="budget-below"><b>${t("budget.belowTheLine")}</b> — ${esc(below.join(" · "))}</p>`:""}</section>`;
+    return`<section class="budget-block"><div class="budget-head"><strong>${t("budget.title")}</strong><span>${esc(t("budget.coverage",{pct:Math.round(b.coverage.objects*100)}))}</span></div><ol class="budget-list">${b.spend.map(c=>budgetClaimHTML(c,event)).join("")}</ol>${below.length?`<p class="budget-below"><b>${t("budget.belowTheLine")}</b> — ${esc(below.join(" · "))}</p>`:""}</section>`;
   }
   function reviewCenterPanelHTML(event){
     const pi=event.analysis.planIntelligence,decisions=event.analysis.groupingDecisions||[];
@@ -5822,10 +5954,16 @@
     const a=event.analysis,candidates=reviewCandidates(event),selected=a?.candidates.find(c=>c.id===ui.selectedCandidateId),pi=a?.planIntelligence;
     const pins=reviewMapPins(event,pi);
     const target=activeReviewTargetIds(pi),byId=a?new Map(a.candidates.map(c=>[c.id,c])):new Map();
-    const boundaryBox=target?.isGroup?unionBbox([...target.ids].map(id=>byId.get(id)).filter(Boolean)):null;
+    // Working through a queue means the plan should follow the operator to each
+    // object, not just to a group. Outside a queue a single selection is left
+    // unzoomed on purpose -- someone clicking around the plan does not want the
+    // view jumping under them -- but inside one, "take me there" is the request.
+    const queued=ui.reviewQueue&&ui.selectedCandidateId?byId.get(ui.selectedCandidateId):null;
+    const boundaryBox=target?.isGroup?unionBbox([...target.ids].map(id=>byId.get(id)).filter(Boolean))
+      :queued?{x:queued.x,y:queued.y,w:queued.w,h:queued.h}:null;
     requestAnimationFrame(()=>applyReviewZoom(boundaryBox));
     const statusLabel=v=>t(v==="unreviewed"?"poi.unreviewed":v==="confirmed"?"poi.confirmed":"poi.rejected");
-    return`<section class="planintel-screen"><header class="planintel-top">${planModeSwitchHTML(event)}<div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):t("plan.noAnalysisYet"))}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:a.ocr.reason||"no network"})):a.notice}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>${t("diag.advancedDiagnostics")}</summary><div class="diag-pop">${detectionDiagnosticsHTML(a)}<div class="field"><label>${t("diag.status")}</label><select data-review-filter="status"><option value="all">${t("diag.all")}</option>${["unreviewed","confirmed","rejected"].map(v=>`<option value="${v}" ${ui.reviewFilter===v?"selected":""}>${statusLabel(v)}</option>`).join("")}</select></div><div class="field full"><label>${t("diag.minConfidence",{pct:Math.round(ui.reviewConfidence*100)})}</label><input data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?t("action.cancelDrawing"):t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">${t("action.saveVerifiedPlan")}</button><button class="btn sm" data-review-action="improve">${t("action.improveAI")}</button><button class="btn sm" data-review-action="export-dataset" title="${t("action.exportDatasetTitle")}">${t("action.exportDataset")}</button><button class="btn sm" data-review-action="session-report">${t("op.report")}</button></div></details><button class="btn" data-review-action="reanalyze">${t("action.reanalyze")}</button>`:""}</header>${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><div class="planintel-map-inner" id="analysisSceneInner"><img src="${event.background.src}" alt="Floor plan analysis source">${candidates.map(c=>candidateBox(c,selected?.id===c.id,target?.ids||null)).join("")}${boundaryBox?`<div class="review-group-boundary" style="left:${Math.max(0,boundaryBox.x-2.5)}%;top:${Math.max(0,boundaryBox.y-2.5)}%;width:${boundaryBox.w+5}%;height:${boundaryBox.h+5}%"></div>`:""}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="focus-group" data-group="${p.groupId}" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="Difficult question">${p.label}</button>`).join("")}</div></div>${ui.operatorReportOpen?`<aside class="op-report-panel"><div class="op-report-head"><strong>${t("op.reportTitle")}</strong><button class="btn icon-only sm" data-review-action="close-session-report">${icon("x")}</button></div><div class="op-report-body">${operatorReportHTML(event)}</div></aside>`:""}${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?t("plan.analyzingLocally"):t("plan.noAnalysisYet")}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
+    return`<section class="planintel-screen ${ui.reviewQueue?"in-queue":""}"><header class="planintel-top">${planModeSwitchHTML(event)}<div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):t("plan.noAnalysisYet"))}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:a.ocr.reason||"no network"})):esc(analysisNoticeText(a))}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>${t("diag.advancedDiagnostics")}</summary><div class="diag-pop">${detectionDiagnosticsHTML(a)}<div class="field"><label>${t("diag.status")}</label><select data-review-filter="status"><option value="all">${t("diag.all")}</option>${["unreviewed","confirmed","rejected"].map(v=>`<option value="${v}" ${ui.reviewFilter===v?"selected":""}>${statusLabel(v)}</option>`).join("")}</select></div><div class="field full"><label>${t("diag.minConfidence",{pct:Math.round(ui.reviewConfidence*100)})}</label><input data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?t("action.cancelDrawing"):t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">${t("action.saveVerifiedPlan")}</button><button class="btn sm" data-review-action="improve">${t("action.improveAI")}</button><button class="btn sm" data-review-action="export-dataset" title="${t("action.exportDatasetTitle")}">${t("action.exportDataset")}</button><button class="btn sm" data-review-action="session-report">${t("op.report")}</button></div></details><button class="btn" data-review-action="reanalyze">${t("action.reanalyze")}</button>`:""}</header>${reviewQueueBarHTML(event)}${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><div class="planintel-map-inner" id="analysisSceneInner"><img src="${event.background.src}" alt="Floor plan analysis source">${candidates.map(c=>candidateBox(c,selected?.id===c.id,target?.ids||null)).join("")}${boundaryBox?`<div class="review-group-boundary" style="left:${Math.max(0,boundaryBox.x-2.5)}%;top:${Math.max(0,boundaryBox.y-2.5)}%;width:${boundaryBox.w+5}%;height:${boundaryBox.h+5}%"></div>`:""}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="focus-group" data-group="${p.groupId}" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="Difficult question">${p.label}</button>`).join("")}</div></div>${ui.operatorReportOpen?`<aside class="op-report-panel"><div class="op-report-head"><strong>${t("op.reportTitle")}</strong><button class="btn icon-only sm" data-review-action="close-session-report">${icon("x")}</button></div><div class="op-report-body">${operatorReportHTML(event)}</div></aside>`:""}${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?t("plan.analyzingLocally"):t("plan.noAnalysisYet")}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
   }
   // The confidence at which a fresh candidate arrives pre-selected. Local
   // calibration (improveAI) writes state.calibration.recommendedConfidence
@@ -6060,7 +6198,21 @@
   function saveVerified(){const event=activeEvent();if(!ui.teachAI)return toast("Enable Teach AI with corrections first.","error");const a=event.analysis;if(!a)return;state.verifiedExamples.push({id:uid("verified"),eventId:event.id,savedAt:nowISO(),engine:a.engine,trainedModel:false,threshold:a.threshold,imageSize:[a.imageWidth,a.imageHeight],predictions:a.candidates.map(clone),groundTruth:a.candidates.filter(c=>c.status!=="rejected").map(clone),rejected:a.candidates.filter(c=>c.status==="rejected").map(c=>c.id),missed:[...a.missed],hardExample:a.missed.length>0||a.candidates.some(c=>c.status==="rejected")});saveState();toast("Verified plan saved locally with predictions, corrections, rejections and missed detections.","success",6000);}
   function improveAI(){if(!state.verifiedExamples.length)return toast("Save at least one verified plan first.","error");const samples=state.verifiedExamples.flatMap(v=>v.groundTruth||[]),avg=samples.length?samples.reduce((n,c)=>n+(c.confidence||0),0)/samples.length:0;state.calibration={version:(state.calibration?.version||0)+1,updatedAt:nowISO(),examples:state.verifiedExamples.length,objects:samples.length,recommendedConfidence:Number(Math.max(.35,Math.min(.8,avg*.85)).toFixed(2)),trainedModel:false,label:"Local assisted-detection calibration; not a trained neural model"};saveState();toast(`Local calibration v${state.calibration.version} completed from ${state.verifiedExamples.length} verified plan(s). No trained model claim is made.`,"success",6500);}
   function bindReview(){
-    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.planMode="plan";ui.activeReviewGroupId=null;ui.activeQuestionId=null;ui.selectedCandidateId=null;render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){const was=classOf(c);c.status="confirmed";c.selected=true;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was});recordOperatorAction(event,"confirm",c.id);recomputePlanIntelligence(event);touchEvent(event);render();}else if(action==="reject"&&c){const was=classOf(c);c.status="rejected";c.selected=false;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"falsePositive",predictionBefore:was});recordOperatorAction(event,"reject",c.id);recomputePlanIntelligence(event);touchEvent(event);render();}else if(action==="dismiss"&&c){const was=classOf(c);captureTrainingExample(event,c,{decisionType:"negative",predictionBefore:was,note:"operator dismissed this region as not important"});recordOperatorAction(event,"dismiss",c.id);event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;recomputePlanIntelligence(event);touchEvent(event);render();}else if(action==="teach"&&c){ui.teachScope=document.querySelector("[data-teach-scope]")?.value||"plan";teachSelectedObject(event,c,ui.teachScope);}else if(action==="forget"&&c){forgetLesson(event,c);}else if(action==="draw"){if(!ui.reviewDrawMode)recordOperatorAction(event,"ai-missed-open",[]);ui.reviewDrawMode=!ui.reviewDrawMode;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="export-dataset")exportTrainingDataset();else if(action==="session-report"){ui.operatorReportOpen=true;render();}else if(action==="close-session-report"){ui.operatorReportOpen=false;render();}else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="focus-group"){ui.activeReviewGroupId=b.dataset.group;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=true;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
+    const ev=activeEvent();
+    document.querySelectorAll("[data-budget-open]").forEach(b=>b.onclick=()=>openReviewQueue(ev,b.dataset.budgetOpen));
+    document.querySelectorAll("[data-queue]").forEach(b=>b.onclick=()=>{
+      const a=b.dataset.queue;
+      if(a==="prev")queueGo(ev,-1);
+      else if(a==="skip"){
+        const q=ui.reviewQueue;if(!q)return;
+        const id=q.ids[q.index];
+        if(id&&!q.skipped.includes(id))q.skipped.push(id);
+        queueNextOutstanding(ev);
+      }
+      else if(a==="next-outstanding")queueNextOutstanding(ev);
+      else if(a==="exit")closeReviewQueue();
+    });
+    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.planMode="plan";ui.activeReviewGroupId=null;ui.activeQuestionId=null;ui.selectedCandidateId=null;render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){const was=classOf(c);c.status="confirmed";c.selected=true;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was});recordOperatorAction(event,"confirm",c.id);recomputePlanIntelligence(event);touchEvent(event);afterReviewDecision(event);}else if(action==="reject"&&c){const was=classOf(c);c.status="rejected";c.selected=false;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"falsePositive",predictionBefore:was});recordOperatorAction(event,"reject",c.id);recomputePlanIntelligence(event);touchEvent(event);afterReviewDecision(event);}else if(action==="dismiss"&&c){const was=classOf(c);captureTrainingExample(event,c,{decisionType:"negative",predictionBefore:was,note:"operator dismissed this region as not important"});recordOperatorAction(event,"dismiss",c.id);event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;recomputePlanIntelligence(event);touchEvent(event);afterReviewDecision(event);}else if(action==="teach"&&c){ui.teachScope=document.querySelector("[data-teach-scope]")?.value||"plan";teachSelectedObject(event,c,ui.teachScope);}else if(action==="forget"&&c){forgetLesson(event,c);}else if(action==="draw"){if(!ui.reviewDrawMode)recordOperatorAction(event,"ai-missed-open",[]);ui.reviewDrawMode=!ui.reviewDrawMode;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="export-dataset")exportTrainingDataset();else if(action==="session-report"){ui.operatorReportOpen=true;render();}else if(action==="close-session-report"){ui.operatorReportOpen=false;render();}else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="focus-group"){ui.activeReviewGroupId=b.dataset.group;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=true;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
     document.querySelectorAll("[data-candidate],[data-candidate-box]").forEach(node=>node.onclick=e=>{if(e.target.matches("input"))return;ui.selectedCandidateId=node.dataset.candidate||node.dataset.candidateBox;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();});document.querySelectorAll("[data-candidate-select]").forEach(input=>input.onchange=()=>{const c=activeEvent().analysis.candidates.find(x=>x.id===input.dataset.candidateSelect);c.selected=input.checked;touchEvent(activeEvent());});document.querySelectorAll("[data-candidate-edit]").forEach(input=>input.onchange=()=>{const f=input.dataset.candidateEdit,v=input.value;requestAnimationFrame(()=>updateCandidateField(f,v));});document.querySelectorAll("[data-review-filter]").forEach(input=>input.oninput=()=>{if(input.dataset.reviewFilter==="status")ui.reviewFilter=input.value;else if(input.dataset.reviewFilter==="class")ui.reviewClass=input.value;else ui.reviewConfidence=Number(input.value);render();});document.querySelector("[data-teach-ai]")?.addEventListener("change",e=>{ui.teachAI=e.target.checked;});
     document.querySelectorAll("[data-reviewgroup-action]").forEach(b=>b.onclick=()=>{
       const event=activeEvent(),pi=event.analysis?.planIntelligence,group=pi?.reviewGroups.find(g=>g.id===b.dataset.group);if(!group)return;
@@ -6265,7 +6417,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   }
 
   window.addEventListener("keydown",e=>{
-    if(e.key==="Escape"){if(ui.repeatPlacement){ui.repeatPlacement=null;toast("Repeated placement cancelled.");}if(ui.focusMode)ui.focusMode=false;if(ui.reviewDrawMode)ui.reviewDrawMode=false;if(ui.activeQuestionId)ui.activeQuestionId=null;if(ui.reviewCenterOpen)ui.reviewCenterOpen=false;render();return;}
+    if(e.key==="Escape"){if(ui.reviewQueue){ui.reviewQueue=null;ui.selectedCandidateId=null;}if(ui.repeatPlacement){ui.repeatPlacement=null;toast("Repeated placement cancelled.");}if(ui.focusMode)ui.focusMode=false;if(ui.reviewDrawMode)ui.reviewDrawMode=false;if(ui.activeQuestionId)ui.activeQuestionId=null;if(ui.reviewCenterOpen)ui.reviewCenterOpen=false;render();return;}
     if(ui.screen!=="workspace"||ui.tab!=="floor"||isHistorical(activeEvent()))return;
     if((e.key==="Delete"||e.key==="Backspace")&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)){e.preventDefault();deleteSelection();return;}
     if(e.ctrlKey&&e.key.toLowerCase()==="d"){e.preventDefault();duplicateSelection();return;}

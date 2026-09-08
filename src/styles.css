@@ -1061,9 +1061,37 @@ body{min-width:1180px}
 .budget-head strong{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--pi-ink)}
 .budget-head span{display:block;margin-top:3px;font-size:10.5px;color:var(--pi-muted)}
 .budget-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px}
-.budget-claim{font-size:12px;line-height:1.4;color:var(--pi-ink)}
+.budget-claim{font-size:12px;line-height:1.4;color:var(--pi-ink);
+  display:flex;align-items:flex-start;gap:10px}
+.budget-claim-body{flex:1;min-width:0}
 .budget-claim-label{display:block}
 .budget-claim-meta{display:block;font-size:10.5px;color:var(--pi-muted);font-variant-numeric:tabular-nums}
+.budget-claim-go{flex:none;margin-top:1px}
+.budget-claim-nowhere{flex:none;margin-top:2px;font-size:10px;color:var(--pi-muted-2);
+  max-width:96px;line-height:1.3;text-align:right}
+
+/* ---- the review queue bar --------------------------------------------------
+   A working strip, not a banner: it sits between the review header and the
+   plan, states what is being worked through and how far along it is, and gets
+   out of the way. The plan stays the hero. */
+.review-queue-bar{flex:0 0 auto;display:flex;align-items:center;gap:18px;
+  padding:9px 18px;background:var(--pi-surface);border-bottom:1px solid var(--pi-line);
+  box-shadow:var(--pi-shadow-1)}
+.rq-what{flex:1;min-width:0}
+.rq-what strong{display:block;font-size:12.5px;font-weight:650;color:var(--pi-ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rq-what span{display:block;margin-top:1px;font-size:10.5px;color:var(--pi-muted);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rq-progress{flex:none;display:flex;align-items:center;gap:8px;font-size:11px;
+  font-weight:600;color:var(--pi-muted);font-variant-numeric:tabular-nums}
+.rq-actions{flex:none;display:flex;align-items:center;gap:6px}
+.rq-actions .btn{background:var(--pi-surface-2);border:1px solid var(--pi-line);color:var(--pi-ink)}
+.rq-actions .btn.primary{background:var(--pi-accent);border-color:var(--pi-accent);color:#fff}
+.rq-actions .btn[disabled]{opacity:.45;pointer-events:none}
+@media (max-width:1500px){
+  .review-queue-bar{gap:12px}
+  .rq-what span{display:none}
+}
 .budget-below{margin:9px 0 0;padding-top:8px;border-top:1px solid var(--pi-line);font-size:10.5px;line-height:1.45;color:var(--pi-muted)}
 .budget-below b{color:var(--pi-ink);font-weight:650}
 /* The Teach Area row. Separated from the answer buttons by a rule, because it
@@ -1525,3 +1553,8 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
   text-transform:uppercase;color:var(--pi-muted)}
 .op-report-q{margin:0;padding-left:18px;font-size:11.5px;line-height:1.6;color:var(--pi-ink)}
 .op-report-empty{font-size:12px;color:var(--pi-muted)}
+
+/* The contextual card sits below the review header; with a queue bar between
+   them it has to clear that too, or the card lands on the controls. */
+.planintel-screen.in-queue .poi-card,
+.planintel-screen.in-queue .difficult-q-card{top:138px}

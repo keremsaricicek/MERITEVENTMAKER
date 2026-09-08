@@ -217,7 +217,9 @@
     "budget.teachReview": { en: "{n} of your notes probably belong to an object here", tr: "Notlarınızdan {n} tanesi büyük olasılıkla buradaki bir nesneye ait" },
     "budget.teachAmbiguous": { en: "{n} of your notes fit more than one object", tr: "Notlarınızdan {n} tanesi birden fazla nesneye uyuyor" },
     "budget.settlesObjects": { en: "settles {n}", tr: "{n} nesneyi çözer" },
-    "budget.settlesFacts": { en: "{n} disputed claim(s)", tr: "{n} tartışmalı iddia" },
+    "budget.settlesFacts": { en: "{n} disputed claims", tr: "{n} tartışmalı iddia" },
+    "budget.settlesFacts1": { en: "one disputed claim", tr: "bir tartışmalı iddia" },
+    "budget.settlesObjects1": { en: "settles one object", tr: "tek nesneyi çözer" },
     "budget.oneDecision": { en: "one decision", tr: "tek karar" },
     "budget.nDecisions": { en: "{n} decisions", tr: "{n} karar" },
     "budget.alsoCorroborated": { en: "also reported by another check", tr: "başka bir denetim de bunu bildiriyor" },
@@ -227,6 +229,21 @@
     "budget.notAnswerable": { en: "{n} the drawing cannot answer", tr: "çizimin yanıtlayamadığı {n} tane" },
     "budget.coverage": { en: "These settle {pct}% of what can be settled", tr: "Bunlar çözülebilecek olanın %{pct}\u0027ini çözer" },
     "budget.chip": { en: "{n} to decide", tr: "karar bekleyen {n}" },
+    "budget.goOne": { en: "Review it", tr: "İncele" },
+    "budget.goN": { en: "Review {n}", tr: "{n} tanesini incele" },
+    // A claim about the drawing as a whole names no objects, so it offers no
+    // button rather than one that would land nowhere.
+    "budget.wholeDrawing": { en: "About the drawing as a whole", tr: "Çizimin bütünü hakkında" },
+
+    // ---- the review queue ----
+    "queue.position": { en: "{i} of {n}", tr: "{n} içinden {i}" },
+    "queue.resolved": { en: "{n} decided", tr: "{n} karara bağlandı" },
+    "queue.skipped": { en: "{n} skipped", tr: "{n} atlandı" },
+    "queue.previous": { en: "Previous", tr: "Önceki" },
+    "queue.skip": { en: "Skip", tr: "Atla" },
+    "queue.nextUnresolved": { en: "Next undecided", tr: "Sonraki karar bekleyen" },
+    "queue.exit": { en: "Exit review", tr: "İncelemeden çık" },
+    "queue.allDone": { en: "All {n} have been decided or skipped.", tr: "{n} nesnenin tamamı karara bağlandı veya atlandı." },
     // ---- contradictions ----
     // Two stages of the pipeline that cannot both be right. Each sentence names
     // WHAT disagrees, never a verdict on which side is correct — the product
@@ -855,6 +872,7 @@
 
     // The Floor Plan's two modes. Deliberately not called "screens" or
     // "views" in either language: the operator has not gone anywhere.
+    "plan.noticeAssisted": { en: "Classical computer vision is active; no trained Merit model is installed in this browser review.", tr: "Klasik görüntü işleme çalışıyor; bu tarayıcı incelemesinde eğitilmiş bir Merit modeli kurulu değil." },
     "plan.mode.label": { en: "Floor Plan mode", tr: "Kat Planı modu" },
     "plan.mode.plan": { en: "Plan", tr: "Plan" },
     "plan.mode.review": { en: "Review", tr: "İnceleme" },
