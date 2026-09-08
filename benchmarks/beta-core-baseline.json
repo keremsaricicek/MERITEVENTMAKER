@@ -47,6 +47,7 @@
   },
   "knownFailing": [
     {
+      "status": "RESOLVED after this baseline was frozen. This entry is kept as the record of what was true at the freeze, not as a current state - see the 'Fixing the two slow contract failures' section of EVENT-OPERATIONS-PRODUCT-REPORT.md. Both root causes were fixed rather than the assertions weakened: the scene graph now emits its nodes so every edge endpoint resolves inside it, and every edge carries a one-sentence evidence composed from its own reasons. test:all is now 34/34 suites, 1066/1066 checks, and the slow suites are gated in CI's intelligence job.",
       "what": "tests/suites/plan-intelligence-contract.test.mjs - 2 of 90 checks",
       "checks": [
         "every scene-graph edge connects two objects that actually exist",

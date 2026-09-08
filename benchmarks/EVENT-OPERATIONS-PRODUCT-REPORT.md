@@ -388,3 +388,107 @@ Regression after B2: `npm test` **28/28 suites, 857/857 checks** (from 27/818);
 `npm run benchmark:baseline` **no regressions, 0 improvements, 0 notes**;
 `npm run verify:offline` **27 passed, 0 failed**; `npm run perf` clean. The
 protected detection numbers are untouched.
+
+---
+
+## Fixing the two slow contract failures
+
+Phase A froze the Beta Core with two checks in `plan-intelligence-contract`
+failing. They were invisible: the suite is tagged **slow**, so `npm test`
+excluded it and no CI job ran it. Both are fixed at the root cause, and the
+suite now runs in CI.
+
+### What was measured first
+
+A probe dumped the whole graph on the Golden Plan before anything was changed —
+every edge type, every endpoint's id space, every edge's supporting evidence:
+
+```
+edges 260   belongsTo 108   faces 19   memberOf 106   adjacentTo 27
+endpoint id spaces:  candidates 56 · chairs 108 · furnitureGroups 23
+                     similarityGroups 26 · zones 2
+edges with an empty `supporting` list:  0
+edges carrying an `evidence` string:    0
+```
+
+That contradicted the recorded diagnosis on both counts, so both were rewritten
+from the measurement rather than from the note.
+
+### A — nothing was dangling; the graph published no nodes
+
+Every endpoint resolved to a real object. What failed was the *check*: it
+rebuilt the id spaces from four other fields of `planIntelligence`, knew about
+three of the five, missed the visual families entirely, and reported 56
+perfectly real `memberOf` targets as dangling.
+
+The architecture question — are similarity groups real graph nodes, or an
+implementation-side grouping reference? — is answered **A, they are real
+nodes**, and the code already said so: `NODE_TYPES` contains `visualFamily`,
+`sceneGraph.nodes` counted them, and the builder's own comment reads *"a family
+is a node in its own right: it is the unit a correction spreads across, so a
+graph that cannot name one cannot explain why a decision reached thirty
+objects."* The defect was that the graph published node **counts** and never the
+nodes, so **nothing** holding a scene graph could resolve **any** id in it.
+
+So the graph now emits `nodeList` — all five kinds as first-class typed nodes
+with stable ids, a label, the stage that produced them, and their own
+provenance. Every edge endpoint resolves inside the graph itself. The per-type
+census is derived from that same list, so the counts and the nodes can no longer
+disagree.
+
+Two things fell out of doing it properly:
+
+- **`memberOf` means two different things.** Object → visual family ("looks like
+  these") and object → logical group ("physically joined to these") shared one
+  edge type — 56 and 50 edges on the Golden Plan. Every edge now carries
+  `fromType`/`toType`, so a surface explaining a decision never has to do a
+  lookup to tell them apart.
+- **`nodes.physicalObject` was wrong.** It counted 56 candidates while 108
+  `belongsTo` edges started from chair ids it did not count at all. It is now
+  164. `nodeCount` keeps its original name and meaning — candidates that
+  survived review — and `nodeTotal` is the graph's actual size.
+
+A structural anchor is a **role on** a physical object, not a second node for
+the same column.
+
+### B — evidence is composed from the reasons, not labelled
+
+No edge had an `evidence` field; all 260 had a non-empty `supporting` array. So
+`evidence` is now one readable sentence built from the edge's own supporting
+facts, with its objection appended where it has one:
+
+```
+seated along its top edge; perimeter distance 21.5
+runs alongside the group, gap 18.4 within reach 42.0
+  — but the sofa's own orientation was not derivable, so this is proximity, not facing
+```
+
+The structured fields all stay. The point of the sentence is that a product
+surface which has to answer *"why did you say that"* gets a sentence rather than
+an array to assemble — Risk Radar, Plan Doctor, Smart Seating and Impact Preview
+all need exactly that.
+
+`edge()` now **refuses** to build a relationship with nothing to say for it, and
+refusals are counted in `refusedEdges` rather than silently dropped. On both
+real plans that count is 0.
+
+Three checks stop a constant from passing where a reason is required: every
+`supporting` string must appear in the sentence, every `contradicting` string
+must too, and a chair's `belongsTo` must be explained by the measurement that
+decided it.
+
+### Result
+
+| | before | after |
+|---|---|---|
+| `plan-intelligence-contract` | 88/90 | **104/104** |
+| `npm run test:all` | 32/33 suites, 1011/1013 | **34/34 suites, 1066/1066** |
+| slow suites in CI | none | `npm run test:slow` gates the `intelligence` job |
+
+No assertion was weakened; the suite gained 14 checks.
+
+Detector unchanged, proven rather than argued: the diff is confined to lines
+567–800 of `plan-intelligence.js`, which is the scene-graph section, and
+`benchmark:adversarial` was run at `840efbe` and again after — the outputs are
+**byte-identical**, graph lines included. `benchmark:baseline` reports no
+regressions on either real plan; `verify:offline` 27/27.

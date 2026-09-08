@@ -156,6 +156,20 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run build:offline
 
+      # THE SLOW CONTRACT SUITES, and their absence was a real hole.
+      #
+      # Six suites run real detection on the real venue plan, so they are tagged
+      # slow and `npm test` excludes them — which meant fast-core never ran them
+      # and no other job did either. Two checks in plan-intelligence-contract
+      # were failing continuously and invisibly for that reason: scene-graph
+      # edges pointing at ids the contract could not resolve, and relationships
+      # carrying no evidence string. The second one is load-bearing for this
+      # product — Risk Radar, Plan Doctor and Smart Seating all have to explain
+      # WHY — so it goes where a failure means "the reasoning layers stopped
+      # being checkable", and it gates.
+      - name: Slow contract suites
+        run: npm run test:slow
+
       # Each of these fails the job on a real regression against its own
       # committed expectations. None of them trains anything.
       - name: Review ordering

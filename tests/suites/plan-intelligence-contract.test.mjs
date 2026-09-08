@@ -164,6 +164,11 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
       furnitureGroupIds: (pi?.furnitureGroups || []).map(g => g.id),
       pi: pi && {
         nodeCount: pi.sceneGraph.nodeCount,
+        nodeTotal: pi.sceneGraph.nodeTotal,
+        nodeList: pi.sceneGraph.nodeList,
+        nodeTypes: pi.sceneGraph.nodeTypes,
+        graphNodes: pi.sceneGraph.nodes,
+        refusedEdges: pi.sceneGraph.refusedEdges,
         counts: pi.sceneGraph.counts,
         edges: pi.sceneGraph.edges,
         groups: pi.furnitureGroups.map(g => ({ id: g.id, members: g.memberIds, reason: g.reason })),
@@ -208,18 +213,42 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "seats the drawing does not support are listed as unverified rather than guessed", audit.unverified);
 
   // --- referential integrity -------------------------------------------------
-  // Scene-graph nodes span three id spaces: candidates, the chairs hanging off
-  // them, and the logical furniture groups.
-  const known = new Set([
-    ...result.candidateIds,
-    ...result.chairs.map(c => c.id),
-    ...result.pi.groups.map(g => g.id),
-  ]);
-  const dangling = result.pi.edges.filter(e => !known.has(e.from) || !known.has(e.to));
+  //
+  // Resolved against the graph's OWN node list, not against id spaces gathered
+  // from four other fields. That reconstruction was how this check went wrong:
+  // it knew about candidates, chairs and furniture groups, missed the visual
+  // families entirely, and reported 56 perfectly real `memberOf` targets as
+  // dangling. A graph that publishes node counts but not nodes cannot be
+  // checked for referential integrity by anyone, which is the actual defect.
+  const nodes = new Map(result.pi.nodeList.map(n => [n.id, n]));
+  checks.equal(nodes.size, result.pi.nodeTotal, "every node in the list has a distinct id");
+  checks.ok(result.pi.nodeList.every(n => result.pi.nodeTypes.includes(n.type)),
+    "every node declares one of the graph's own node types", result.pi.nodeTypes);
+  checks.ok(result.pi.nodeList.every(n => typeof n.source === "string" && n.source.trim()),
+    "every node says which stage produced it",
+    result.pi.nodeList.filter(n => !n.source).slice(0, 3));
+
+  const dangling = result.pi.edges.filter(e => !nodes.has(e.from) || !nodes.has(e.to));
   checks.ok(dangling.length === 0,
     "every scene-graph edge connects two objects that actually exist",
     dangling.slice(0, 3).map(e => ({ from: e.from, to: e.to, type: e.type })));
 
+  // An edge also states what KIND of node each end is, so a consumer explaining
+  // a decision never has to do a lookup to tell a visual family ("looks like
+  // these") from a logical group ("physically joined to these") -- `memberOf`
+  // means both.
+  const mislabelled = result.pi.edges.filter(e =>
+    e.fromType !== nodes.get(e.from).type || e.toType !== nodes.get(e.to).type);
+  checks.ok(mislabelled.length === 0,
+    "every edge names the node type at each end, and names it correctly",
+    mislabelled.slice(0, 3).map(e => ({ type: e.type, said: [e.fromType, e.toType],
+      actual: [nodes.get(e.from).type, nodes.get(e.to).type] })));
+  const memberships = result.pi.edges.filter(e => e.type === "memberOf");
+  checks.ok(memberships.length > 0 && new Set(memberships.map(e => e.toType)).size > 1,
+    "the two kinds of membership are distinguishable at the edge",
+    [...new Set(memberships.map(e => e.toType))]);
+
+  const known = new Set(result.pi.nodeList.map(n => n.id));
   const danglingMembers = result.pi.groups.flatMap(g => g.members.filter(m => !known.has(m)));
   checks.ok(danglingMembers.length === 0,
     "every furniture-group member is a real detected object", danglingMembers.slice(0, 3));
@@ -230,15 +259,44 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(result.pi.nodeCount === result.alive,
     "the scene graph covers exactly the objects that survived review",
     { nodeCount: result.pi.nodeCount, alive: result.alive });
+  checks.ok(result.pi.nodeTotal >= result.alive + result.chairs.length,
+    "and the graph's own size counts the chairs its edges start from",
+    { nodeTotal: result.pi.nodeTotal, alive: result.alive, chairs: result.chairs.length });
+  // The per-type census is derived from the same list the edges resolve
+  // against, so the two can no longer disagree.
+  const census = result.pi.nodeList.reduce((m, n) => (m[n.type] = (m[n.type] || 0) + 1, m), {});
+  for (const type of result.pi.nodeTypes)
+    if (type !== "structuralAnchor")
+      checks.equal(result.pi.graphNodes[type], census[type] || 0,
+        `the reported ${type} count matches the nodes actually emitted`);
   checks.ok(result.pi.edges.length > 0,
     "the plan produced actual relationships, not just a bag of objects", result.pi.counts);
 
-  // Every edge states the evidence that produced it. An unexplained
-  // relationship is an assertion the pixels may not support.
+  // Every edge states the evidence that produced it, as one readable sentence.
+  // An unexplained relationship is an assertion the pixels may not support, and
+  // a product surface that has to answer "why did you say that" needs a
+  // sentence rather than an array to assemble.
   const unexplained = result.pi.edges.filter(e => typeof e.evidence !== "string" || !e.evidence.trim());
   checks.ok(unexplained.length === 0,
     "every relationship records the evidence that produced it",
     unexplained.slice(0, 3).map(e => ({ from: e.from, type: e.type })));
+  // The sentence must BE the reasons, not a label next to them. A constant
+  // string would pass the check above and explain nothing.
+  const notDerived = result.pi.edges.filter(e =>
+    !(e.supporting || []).filter(Boolean).every(s => e.evidence.includes(s)));
+  checks.ok(notDerived.length === 0,
+    "and the sentence is composed from the reasons themselves, not a label",
+    notDerived.slice(0, 2).map(e => ({ evidence: e.evidence, supporting: e.supporting })));
+  const objected = result.pi.edges.filter(e => (e.contradicting || []).filter(Boolean).length);
+  checks.ok(objected.every(e => e.contradicting.every(c => e.evidence.includes(c))),
+    "an edge with a real objection says so in the same sentence",
+    objected.slice(0, 2).map(e => e.evidence));
+  checks.equal(result.pi.refusedEdges, 0,
+    "no relationship was declined for want of anything to say for it — and if one were, it would be counted, not dropped");
+  const chairEdges = result.pi.edges.filter(e => e.type === "belongsTo");
+  checks.ok(chairEdges.length > 0 && chairEdges.every(e => /distance|reach|edge|body|corner|nearest/.test(e.evidence)),
+    "a chair's table is explained by the measurement that decided it",
+    chairEdges.slice(0, 2).map(e => e.evidence));
 
   const groupsWithoutReason = result.pi.groups.filter(g => !g.reason);
   checks.ok(groupsWithoutReason.length === 0,
