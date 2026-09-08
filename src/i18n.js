@@ -870,6 +870,26 @@
     "backup.badReference": { en: "This backup file has broken internal references and was not restored.", tr: "Bu yedek dosyasının iç referansları bozuk, bu yüzden geri yüklenmedi." },
     "appbar.venueNotSet": { en: "Venue not set", tr: "Mekan Belirtilmedi" },
 
+    // ---- a table's printed number, and who stands behind it ----
+    "number.printedNumber": { en: "Printed table number", tr: "Basılı masa numarası" },
+    "number.confirm": { en: "Confirm", tr: "Doğrula" },
+    "number.unread": { en: "not read", tr: "okunmadı" },
+    "number.notANumber": { en: "Enter the table number printed on the drawing — a whole number.", tr: "Çizimde basılı masa numarasını girin — tam sayı olmalı." },
+    "number.confirmedToast": { en: "Table {n} confirmed by you, and kept {scope}.", tr: "{n} numaralı masa tarafınızdan doğrulandı ve {scope} saklandı." },
+    // The states are the reader's own, and they are shown rather than smoothed
+    // over: "two crops agreed" is not "a person said so", and only the second
+    // is strong enough to identify a table across a whole venue.
+    // Exactly the states plan-table-numbers.js emits, plus NONE for a table it
+    // never produced a reading for at all.
+    "number.source.ocr": { en: "read from this table's own symbol", tr: "bu masanın kendi sembolünden okundu" },
+    "number.source.person": { en: "confirmed by a person", tr: "bir kişi tarafından doğrulandı" },
+    "number.state.VERIFIED": { en: "Confirmed", tr: "Doğrulandı" },
+    "number.state.LIKELY": { en: "Read once — not yet confirmed", tr: "Bir kez okundu — henüz doğrulanmadı" },
+    "number.state.NEEDS_REVIEW": { en: "Read two different ways — needs a person", tr: "İki farklı şekilde okundu — bir kişinin bakması gerekiyor" },
+    "number.state.UNKNOWN": { en: "The drawing does not number this legibly", tr: "Çizim bunu okunaklı biçimde numaralandırmıyor" },
+    "number.state.NONE": { en: "No number read from the drawing", tr: "Çizimden numara okunmadı" },
+    "teachArea.venueNeedsNumber": { en: "Across the whole venue an object has to be identified by its printed number. Confirm this table's number first, and this becomes available.", tr: "Mekanın tamamında bir nesne, basılı numarasıyla tanımlanmak zorundadır. Önce bu masanın numarasını doğrulayın, ardından bu seçenek açılır." },
+
     // The Floor Plan's two modes. Deliberately not called "screens" or
     // "views" in either language: the operator has not gone anywhere.
     "plan.noticeAssisted": { en: "Classical computer vision is active; no trained Merit model is installed in this browser review.", tr: "Klasik görüntü işleme çalışıyor; bu tarayıcı incelemesinde eğitilmiş bir Merit modeli kurulu değil." },
@@ -924,6 +944,15 @@
     "cc.goto.guests": { en: "Open Guests", tr: "Misafirleri aç" },
     "cc.goto.live": { en: "Open Live Event", tr: "Canlı Etkinliği aç" },
     "cc.goto.reports": { en: "Open Reports", tr: "Raporları aç" },
+
+    "cc.check.source": { en: "From", tr: "Kaynak" },
+    // The self-check's ORIGINS, in operator language. The engine's own source
+    // sentences stay in the data for the benchmarks and the exported report.
+    "cc.origin.printedOnTheDrawing": { en: "printed on the drawing", tr: "çizimde basılı" },
+    "cc.origin.derivedFromPrintedFigures": { en: "worked out from the printed figures", tr: "basılı sayılardan hesaplandı" },
+    "cc.origin.assistedDetection": { en: "Assisted Detection", tr: "Destekli Tespit" },
+    "cc.origin.confirmedByAPerson": { en: "confirmed by a person", tr: "bir kişi tarafından doğrulandı" },
+    "cc.origin.theSystem": { en: "the system's own figure", tr: "sistemin kendi sayısı" },
 
     // Self-Check restated for the screen. The module writes its sentences in
     // English for the benchmarks and the exported report; these say the same

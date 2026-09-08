@@ -38,8 +38,22 @@
   };
 
   // A number, with its origin attached. Nothing enters a check without one.
-  function value(name, v, source, confidence) {
-    return { name, value: v, source, confidence: confidence || null };
+  //
+  // `source` is the sentence -- free English, sometimes composed from the
+  // figures themselves, and read by the benchmarks and the exported report.
+  // `origin` is the same fact as a stable name, because a product screen has to
+  // say where a number came from in the operator's language and cannot re-parse
+  // an English phrase to do it. One of ORIGINS; never invented per call site.
+  const ORIGINS = {
+    PRINTED: "printedOnTheDrawing",
+    DERIVED: "derivedFromPrintedFigures",
+    DETECTED: "assistedDetection",
+    PERSON: "confirmedByAPerson",
+    SYSTEM: "theSystem",
+  };
+  function value(name, v, source, confidence, origin) {
+    return { name, value: v, source, confidence: confidence || null,
+      origin: origin || ORIGINS.PRINTED };
   }
 
   function checkable(...vals) {
@@ -68,9 +82,10 @@
         rule.unitsSource === "derived"
           ? `derived from the printed seating figure (${rule.total} / ${rule.perUnit}); OCR itself read "${rule.unitsAsRead}"`
           : "printed on the drawing, read by OCR",
-        rule.unitsAgree ? "verified" : "likely");
-      const perUnit = value("pax at each table", rule.perUnit, "printed on the drawing, read by OCR", "verified");
-      const seats = value("seating capacity the drawing states", rule.total, "printed on the drawing, read by OCR", "verified");
+        rule.unitsAgree ? "verified" : "likely",
+        rule.unitsSource === "derived" ? ORIGINS.DERIVED : ORIGINS.PRINTED);
+      const perUnit = value("pax at each table", rule.perUnit, "printed on the drawing, read by OCR", "verified", ORIGINS.PRINTED);
+      const seats = value("seating capacity the drawing states", rule.total, "printed on the drawing, read by OCR", "verified", ORIGINS.PRINTED);
       const product = units.value * perUnit.value;
       add("capacityRuleArithmetic",
         `${units.value} x ${perUnit.value} = ${seats.value}`,
@@ -85,9 +100,9 @@
       if (typeof parts.total === "number") {
         const others = value("capacity printed for the rest of the venue",
           typeof parts.boxes === "number" ? parts.boxes : parts.total - rule.total,
-          "printed on the drawing, read by OCR", "likely");
+          "printed on the drawing, read by OCR", "likely", ORIGINS.PRINTED);
         const grand = value("total capacity the drawing states", parts.total,
-          "printed on the drawing, read by OCR", "verified");
+          "printed on the drawing, read by OCR", "verified", ORIGINS.PRINTED);
         if (checkable(others, grand)) {
           const sum = rule.total + others.value;
           add("capacityPartsSum",
@@ -105,8 +120,8 @@
     // ---- A vs B: does what was found match what the drawing claims? --------
     const detected = typeof inp.tablesDetected === "number" ? inp.tablesDetected : null;
     if (rule && detected != null) {
-      const stated = value("tables the drawing states", rule.units, "printed on the drawing, read by OCR", "likely");
-      const found = value("tables the detector found", detected, "Assisted Detection", "measured");
+      const stated = value("tables the drawing states", rule.units, "printed on the drawing, read by OCR", "likely", ORIGINS.PRINTED);
+      const found = value("tables the detector found", detected, "Assisted Detection", "measured", ORIGINS.DETECTED);
       add("statedTablesVsDetected",
         `the drawing states ${stated.value} tables; ${found.value} were found`,
         stated.value === found.value ? VERDICT.CONSISTENT : VERDICT.INCONSISTENT,
@@ -132,7 +147,8 @@
         // own symbol accepted only where two differently-inset crops agreed,
         // and a number a person confirmed in the Teach Area, which outranks it.
         [value("numbers held confidently", s.verified,
-          "OCR of each table's own symbol where two crops agreed, plus any number a person confirmed", "verified")],
+          "OCR of each table's own symbol where two crops agreed, plus any number a person confirmed",
+          "verified", ORIGINS.PRINTED)],
         dupes.length ? dupes.map((d) => `${d.number} on ${d.tableIds.length} tables`).join("; ")
           : "no number is claimed twice",
         { a: s.verified, d: dupes.length,
@@ -150,8 +166,8 @@
     const seatsCounted = typeof inp.seatsCounted === "number" ? inp.seatsCounted : null;
     const drawsSeats = inp.drawsSeats === true;
     if (rule && seatsCounted != null && drawsSeats) {
-      const stated = value("seating capacity the drawing states", rule.total, "printed on the drawing, read by OCR", "verified");
-      const counted = value("seats the detector counted", seatsCounted, "Assisted Detection", "measured");
+      const stated = value("seating capacity the drawing states", rule.total, "printed on the drawing, read by OCR", "verified", ORIGINS.PRINTED);
+      const counted = value("seats the detector counted", seatsCounted, "Assisted Detection", "measured", ORIGINS.DETECTED);
       const within = Math.abs(stated.value - counted.value) <= Math.max(3, stated.value * 0.1);
       add("statedSeatsVsCounted",
         `the drawing states ${stated.value} seats; ${counted.value} were counted`,
@@ -163,7 +179,7 @@
       add("statedSeatsVsCounted",
         "the drawing's seating figure cannot be checked against a seat count",
         VERDICT.NOT_CHECKABLE,
-        [value("seating capacity the drawing states", rule.total, "printed on the drawing, read by OCR", "verified")],
+        [value("seating capacity the drawing states", rule.total, "printed on the drawing, read by OCR", "verified", ORIGINS.PRINTED)],
         "this drawing shows its tables as symbols and draws no seats, so there is nothing to count against it",
         { a: rule.total });
     }
@@ -174,8 +190,8 @@
       add(`humanVerified:${h.id || h.name}`,
         `${h.name}: a person confirmed ${h.value}`,
         h.value === h.against ? VERDICT.CONSISTENT : VERDICT.INCONSISTENT,
-        [value(h.name, h.value, "confirmed by a person", "verified"),
-          value(`${h.name}, as the system had it`, h.against, h.againstSource || "the system", null)],
+        [value(h.name, h.value, "confirmed by a person", "verified", ORIGINS.PERSON),
+          value(`${h.name}, as the system had it`, h.against, h.againstSource || "the system", null, ORIGINS.SYSTEM)],
         h.value === h.against ? "and the system agrees" : "and the system does not agree — the person is right",
         { name: h.name, a: h.value, b: h.against });
     }
@@ -196,5 +212,5 @@
     };
   }
 
-  globalThis.MeritSelfCheck = { version: 1, VERDICT, run };
+  globalThis.MeritSelfCheck = { version: 2, VERDICT, ORIGINS, run };
 })();

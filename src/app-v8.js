@@ -330,9 +330,23 @@
     }
     const mark=v=>v==="CONSISTENT"?"ok":v==="INCONSISTENT"?"bad":v==="NEEDS_REVIEW"?"warn":"muted";
     const glyph=v=>v==="CONSISTENT"?"&#10003;":v==="INCONSISTENT"?"!":v==="NEEDS_REVIEW"?"?":"&#8212;";
+    // RESULT, SOURCE and — where there is one — an ACTION. The sources come
+    // from the check's own inputs, which have carried them since the engine was
+    // built; nothing here invents provenance. The OCR internals stay out: an
+    // operator needs to know a number was read off the drawing, not which two
+    // crops agreed at what inset.
     return`<section class="cc-block"><h3>${t("cc.plan.title")}</h3><ul class="cc-checks">${sc.checks.map(c=>{
       const w=ccCheckText(c);
-      return`<li class="cc-check ${mark(c.verdict)}"><i>${glyph(c.verdict)}</i><div><b>${esc(w.statement)}</b><span>${esc(w.detail)}</span></div></li>`;
+      // The ORIGIN, not the source sentence. The sentences are free English and
+      // one of them is composed from the figures themselves; they also carry
+      // OCR internals ("two crops agreed at what inset") that an operator does
+      // not need and §5A says not to show by default.
+      const sources=[...new Set((c.inputs||[]).map(i=>i&&i.origin).filter(Boolean))]
+        .map(o=>t("cc.origin."+o)).filter(Boolean);
+      const act=c.verdict==="INCONSISTENT"||c.verdict==="NEEDS_REVIEW"
+        ?`<button class="btn sm" data-cc-action="review">${t("cc.goto.review")}</button>`:"";
+      return`<li class="cc-check ${mark(c.verdict)}"><i>${glyph(c.verdict)}</i><div class="cc-check-body"><b>${esc(w.statement)}</b><span>${esc(w.detail)}</span>${
+        sources.length?`<em class="cc-check-source">${esc(t("cc.check.source"))}: ${esc(sources.join("; "))}</em>`:""}</div>${act}</li>`;
     }).join("")}</ul></section>`;
   }
   function ccSeatingHTML(event){
@@ -5157,6 +5171,55 @@
   // rather than swallowed: "not remembered, because across a venue an object has
   // to be identified by its printed number" is the message that makes them pick
   // the scope that works.
+  // Confirming a table's printed number, which the Teach Area has supported
+  // since it was built and nothing ever offered. It is the same lesson
+  // machinery, with a `tableNumber` subject instead of an identity one -- and
+  // it is the thing that unlocks venue scope, because across a venue an object
+  // can only be identified by a number a person has stood behind.
+  function teachTableNumber(event,c,value,scope){
+    if(!globalThis.MeritTeachArea||!c)return;
+    const n=Number(value);
+    if(!Number.isFinite(n)||n<=0||n!==Math.round(n))
+      return toast(t("number.notANumber"),"error",5000);
+    const alive=(event.analysis?.candidates||[]).filter(x=>x.status!=="rejected");
+    const r=globalThis.MeritTeachArea.lesson({
+      scope,where:teachWhere(event),
+      subject:{kind:"tableNumber",value:n},
+      from:{candidateId:c.id,kind:c.kind,type:c.type,
+        geometry:{x:c.x,y:c.y,w:c.w,h:c.h,rotation:c.rotation||0},
+        // The number the operator is confirming is what identifies this object
+        // from here on, so it travels as the object's own printed number --
+        // otherwise a venue-scoped lesson about it would be refused by the very
+        // rule the operator has just satisfied.
+        printedNumber:{state:"VERIFIED",value:n},
+        visual:c.visualDescriptor?.vector?{vector:Array.from(c.visualDescriptor.vector)}:null,
+        context:globalThis.MeritPlanMemory?globalThis.MeritPlanMemory.contextSignature(c,alive):null},
+    });
+    if(!r.ok)return toast(t("teachArea.refused",{reason:r.reason}),"error",8000);
+    state.teachings ||= [];
+    state.teachings.push(r.lesson);
+    saveState();
+    audit(event,"TEACH_AREA_NUMBER_CONFIRMED",{scope:r.lesson.scope,value:n,
+      text:globalThis.MeritTeachArea.describe(r.lesson)});
+    toast(t("number.confirmedToast",{n,scope:t("teachArea.scope."+r.lesson.scope)}),"success",6000);
+    applyTeachArea(event);recomputePlanIntelligence(event);touchEvent(event);render();
+  }
+  // Whether a scope can be offered at all, and why not when it cannot.
+  //
+  // The Teach Area refuses a venue-wide lesson about an object with no
+  // confirmed number, and used to refuse it AFTER the click -- the operator
+  // chose a scope, pressed the button, and was told no. The rule is knowable
+  // beforehand, so it is stated beforehand, next to the option it disables.
+  function scopeAvailability(c){
+    const verified=c&&c.printedNumber&&c.printedNumber.state==="VERIFIED"
+      &&typeof c.printedNumber.value==="number";
+    return{
+      plan:{ok:true},
+      layout:{ok:true},
+      venue:verified?{ok:true}
+        :{ok:false,why:t("teachArea.venueNeedsNumber")},
+    };
+  }
   function teachSelectedObject(event,c,scope){
     if(!globalThis.MeritTeachArea||!c)return;
     const alive=(event.analysis?.candidates||[]).filter(x=>x.status!=="rejected");
@@ -5575,10 +5638,48 @@
       +`<span>${esc(others.length?t("relation.ambiguousWith",{n:seats.length,other:others[0]})
         :t("relation.ambiguous",{n:seats.length}))}</span></div>`;
   }
+  // What this table's number is, where that came from, and the one control that
+  // has been missing since the Teach Area was built: a person confirming it.
+  //
+  // The state is shown rather than smoothed over. A number two crops agreed on
+  // is not the same thing as a number a person stood behind, and the operator
+  // has to be able to tell them apart -- it is the difference between "the
+  // drawing was read twice" and "someone told us", and only the second one is
+  // strong enough to identify this table across the whole venue.
+  // `printedNumber.source` is stored English -- it travels with the reading into
+  // memory, the exported report and the benchmarks, so it stays as written and
+  // the screen says the same thing in the operator's language. A source this
+  // build does not recognise is shown as it stands rather than relabelled.
+  const NUMBER_SOURCES={
+    "OCR of this table's own symbol":"number.source.ocr",
+    "confirmed by a person":"number.source.person",
+  };
+  function numberSourceText(src){
+    const key=NUMBER_SOURCES[src];
+    return key?t(key):src;
+  }
+  function printedNumberHTML(c){
+    if(!c||c.kind!=="table")return"";
+    const p=c.printedNumber||null;
+    const state=p?p.state:"NONE";
+    const verified=state==="VERIFIED";
+    const value=p&&typeof p.value==="number"?p.value:"";
+    const mark=verified?"ok":state==="NONE"?"muted":"warn";
+    return`<div class="poi-number ${mark}">
+      <label for="poiNumber">${t("number.printedNumber")}</label>
+      <div class="poi-number-row">
+        <input id="poiNumber" class="field-input" type="number" min="1" max="9999" inputmode="numeric"
+          placeholder="${esc(t("number.unread"))}" value="${value}">
+        <button class="btn sm" data-review-action="confirm-number">${t("number.confirm")}</button>
+      </div>
+      <p class="poi-number-state">${esc(t("number.state."+state))}${
+        p&&p.source?` · ${esc(numberSourceText(p.source))}`:""}</p>
+    </div>`;
+  }
   function reviewPoiCardHTML(c){
     if(!c)return"";
     const opt=o=>`<option value="${o.kind}:${o.type}" ${c.kind===o.kind&&c.type===o.type?"selected":""}>${t("teach.type."+o.type)}</option>`;
-    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?(c.seatsUnknown?`${t("poi.seatsNotShown")} · `:`${(c.chairDetections||[]).length} ${t("poi.seats")} · `):""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${c.taughtFrom?`<div class="poi-memory-note taught">${icon("check")}<span>${t("teachArea.appliedHere")} — ${t("teachArea.scope."+c.taughtFrom.scope)}</span><button class="btn sm quiet" data-review-action="forget">${t("teachArea.forget")}</button></div>`:""}${c.lowEvidence?`<div class="poi-lowevidence"><strong>${t("poi.lowEvidence")}</strong><span>${esc(t("poi.lowEvidence."+c.lowEvidence.reason))}</span></div>`:""}${visualEvidenceHTML(c)}${relationNoteHTML(c)}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}<div class="poi-teach"><label for="poiTeachScope">${t("teachArea.remember")}</label><div class="poi-teach-row"><select id="poiTeachScope" class="field-select" data-teach-scope>${["plan","layout","venue"].map(v=>`<option value="${v}" ${(ui.teachScope||"plan")===v?"selected":""}>${t("teachArea.scope."+v)}</option>`).join("")}</select><button class="btn sm" data-review-action="teach">${t("teachArea.keep")}</button></div><p class="poi-teach-note">${t("teachArea.notTraining")}</p></div><div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
+    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?(c.seatsUnknown?`${t("poi.seatsNotShown")} · `:`${(c.chairDetections||[]).length} ${t("poi.seats")} · `):""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${c.taughtFrom?`<div class="poi-memory-note taught">${icon("check")}<span>${t("teachArea.appliedHere")} — ${t("teachArea.scope."+c.taughtFrom.scope)}</span><button class="btn sm quiet" data-review-action="forget">${t("teachArea.forget")}</button></div>`:""}${c.lowEvidence?`<div class="poi-lowevidence"><strong>${t("poi.lowEvidence")}</strong><span>${esc(t("poi.lowEvidence."+c.lowEvidence.reason))}</span></div>`:""}${visualEvidenceHTML(c)}${relationNoteHTML(c)}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}${printedNumberHTML(c)}${(()=>{const av=scopeAvailability(c);const blocked=Object.entries(av).filter(([,s])=>!s.ok);const chosen=av[ui.teachScope||"plan"]?.ok?(ui.teachScope||"plan"):"plan";return`<div class="poi-teach"><label for="poiTeachScope">${t("teachArea.remember")}</label><div class="poi-teach-row"><select id="poiTeachScope" class="field-select" data-teach-scope>${["plan","layout","venue"].map(v=>`<option value="${v}" ${chosen===v?"selected":""} ${av[v].ok?"":"disabled"}>${t("teachArea.scope."+v)}</option>`).join("")}</select><button class="btn sm" data-review-action="teach">${t("teachArea.keep")}</button></div>${blocked.map(([,s])=>`<p class="poi-teach-blocked">${esc(s.why)}</p>`).join("")}<p class="poi-teach-note">${t("teachArea.notTraining")}</p></div>`;})()}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
   }
   // Real pixel crop of a candidate straight out of the actual imported plan
   // image — a CSS background-position/-size window, never a synthesized or
@@ -6212,7 +6313,7 @@
       else if(a==="next-outstanding")queueNextOutstanding(ev);
       else if(a==="exit")closeReviewQueue();
     });
-    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.planMode="plan";ui.activeReviewGroupId=null;ui.activeQuestionId=null;ui.selectedCandidateId=null;render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){const was=classOf(c);c.status="confirmed";c.selected=true;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was});recordOperatorAction(event,"confirm",c.id);recomputePlanIntelligence(event);touchEvent(event);afterReviewDecision(event);}else if(action==="reject"&&c){const was=classOf(c);c.status="rejected";c.selected=false;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"falsePositive",predictionBefore:was});recordOperatorAction(event,"reject",c.id);recomputePlanIntelligence(event);touchEvent(event);afterReviewDecision(event);}else if(action==="dismiss"&&c){const was=classOf(c);captureTrainingExample(event,c,{decisionType:"negative",predictionBefore:was,note:"operator dismissed this region as not important"});recordOperatorAction(event,"dismiss",c.id);event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;recomputePlanIntelligence(event);touchEvent(event);afterReviewDecision(event);}else if(action==="teach"&&c){ui.teachScope=document.querySelector("[data-teach-scope]")?.value||"plan";teachSelectedObject(event,c,ui.teachScope);}else if(action==="forget"&&c){forgetLesson(event,c);}else if(action==="draw"){if(!ui.reviewDrawMode)recordOperatorAction(event,"ai-missed-open",[]);ui.reviewDrawMode=!ui.reviewDrawMode;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="export-dataset")exportTrainingDataset();else if(action==="session-report"){ui.operatorReportOpen=true;render();}else if(action==="close-session-report"){ui.operatorReportOpen=false;render();}else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="focus-group"){ui.activeReviewGroupId=b.dataset.group;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=true;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
+    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.planMode="plan";ui.activeReviewGroupId=null;ui.activeQuestionId=null;ui.selectedCandidateId=null;render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){const was=classOf(c);c.status="confirmed";c.selected=true;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was});recordOperatorAction(event,"confirm",c.id);recomputePlanIntelligence(event);touchEvent(event);afterReviewDecision(event);}else if(action==="reject"&&c){const was=classOf(c);c.status="rejected";c.selected=false;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"falsePositive",predictionBefore:was});recordOperatorAction(event,"reject",c.id);recomputePlanIntelligence(event);touchEvent(event);afterReviewDecision(event);}else if(action==="dismiss"&&c){const was=classOf(c);captureTrainingExample(event,c,{decisionType:"negative",predictionBefore:was,note:"operator dismissed this region as not important"});recordOperatorAction(event,"dismiss",c.id);event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;recomputePlanIntelligence(event);touchEvent(event);afterReviewDecision(event);}else if(action==="teach"&&c){ui.teachScope=document.querySelector("[data-teach-scope]")?.value||"plan";teachSelectedObject(event,c,ui.teachScope);}else if(action==="confirm-number"&&c){const scope=document.querySelector("[data-teach-scope]")?.value||"plan";teachTableNumber(event,c,document.getElementById("poiNumber")?.value,scope);}else if(action==="forget"&&c){forgetLesson(event,c);}else if(action==="draw"){if(!ui.reviewDrawMode)recordOperatorAction(event,"ai-missed-open",[]);ui.reviewDrawMode=!ui.reviewDrawMode;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="export-dataset")exportTrainingDataset();else if(action==="session-report"){ui.operatorReportOpen=true;render();}else if(action==="close-session-report"){ui.operatorReportOpen=false;render();}else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="focus-group"){ui.activeReviewGroupId=b.dataset.group;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=true;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
     document.querySelectorAll("[data-candidate],[data-candidate-box]").forEach(node=>node.onclick=e=>{if(e.target.matches("input"))return;ui.selectedCandidateId=node.dataset.candidate||node.dataset.candidateBox;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();});document.querySelectorAll("[data-candidate-select]").forEach(input=>input.onchange=()=>{const c=activeEvent().analysis.candidates.find(x=>x.id===input.dataset.candidateSelect);c.selected=input.checked;touchEvent(activeEvent());});document.querySelectorAll("[data-candidate-edit]").forEach(input=>input.onchange=()=>{const f=input.dataset.candidateEdit,v=input.value;requestAnimationFrame(()=>updateCandidateField(f,v));});document.querySelectorAll("[data-review-filter]").forEach(input=>input.oninput=()=>{if(input.dataset.reviewFilter==="status")ui.reviewFilter=input.value;else if(input.dataset.reviewFilter==="class")ui.reviewClass=input.value;else ui.reviewConfidence=Number(input.value);render();});document.querySelector("[data-teach-ai]")?.addEventListener("change",e=>{ui.teachAI=e.target.checked;});
     document.querySelectorAll("[data-reviewgroup-action]").forEach(b=>b.onclick=()=>{
       const event=activeEvent(),pi=event.analysis?.planIntelligence,group=pi?.reviewGroups.find(g=>g.id===b.dataset.group);if(!group)return;

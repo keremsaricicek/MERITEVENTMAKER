@@ -1558,3 +1558,33 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
    them it has to clear that too, or the card lands on the controls. */
 .planintel-screen.in-queue .poi-card,
 .planintel-screen.in-queue .difficult-q-card{top:138px}
+
+/* ---- a table's printed number, in the review inspector ---------------------
+   The state is shown rather than smoothed over: "two crops agreed" and "a
+   person said so" are different facts, and only the second identifies a table
+   across a whole venue. */
+.poi-number{margin:11px 0;padding:9px 10px;border-radius:var(--pi-radius-sm);
+  border:1px solid var(--pi-line);background:var(--pi-surface-2)}
+.poi-number.ok{border-color:rgba(47,111,102,.4)}
+.poi-number.warn{border-color:rgba(181,136,63,.45)}
+.poi-number>label{display:block;font-size:9px;font-weight:650;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--pi-muted-2);margin-bottom:6px}
+.poi-number-row{display:flex;gap:6px}
+.poi-number-row .field-input{flex:1;min-width:0;height:30px;border:1px solid var(--pi-line);
+  border-radius:var(--pi-radius-sm);background:var(--pi-surface);color:var(--pi-ink);
+  padding:0 8px;font-size:12px;font-variant-numeric:tabular-nums}
+.poi-number-row .btn{flex:none;background:var(--pi-surface);border:1px solid var(--pi-line);
+  color:var(--pi-ink)}
+.poi-number-state{margin-top:6px;font-size:10px;line-height:1.35;color:var(--pi-muted)}
+.poi-number.ok .poi-number-state{color:var(--pi-accent-strong)}
+
+/* A scope the Teach Area would refuse is disabled, with the reason next to it
+   rather than after the click. */
+.poi-teach-blocked{margin-top:6px;font-size:10px;line-height:1.4;color:var(--pi-muted);
+  padding-left:9px;border-left:2px solid var(--pi-warn)}
+
+/* Self-Check rows carry their origin and, where there is one, a way to act. */
+.cc-check-body{flex:1;min-width:0}
+.cc-check-source{display:block;margin-top:3px;font-size:10px;font-style:normal;
+  color:var(--muted-2)}
+.cc-check .btn{flex:none;margin-top:1px}

@@ -657,3 +657,91 @@ npm run test:all            36/36 suites, 1144/1144 checks
 npm run benchmark:baseline  no regressions, 0 improvements, 0 notes
 npm run verify:offline      27 passed, 0 failed
 ```
+
+---
+
+## PHASE D — Self-Check and the Teach Area, surfaced
+
+No engine was rebuilt. Both already worked; what was missing was the product
+around them, and in one case a control that had never existed at all.
+
+### 5A — Self-Check now states RESULT, SOURCE and, where there is one, ACTION
+
+Each finding in the Command Center carries where its numbers came from, and an
+INCONSISTENT or NEEDS_REVIEW one carries a way to act on it. On the real ORNEK
+plan, in Turkish:
+
+```
+✓  166 × 12 = 1992              Kaynak: basılı sayılardan hesaplandı; çizimde basılı
+✓  1992 + 72 = 2064             Kaynak: çizimde basılı
+!  çizim 166 masa belirtiyor;   Kaynak: çizimde basılı; Destekli Tespit   [İncelemeyi aç]
+   163 masa bulundu
+✓  güvenle okunan 87 numara…    Kaynak: çizimde basılı
+—  çizimin koltuk sayısı…       Kaynak: çizimde basılı
+```
+
+The sources are **not** the engine's `source` sentences. Those are free English,
+one of them is composed from the figures themselves, and they carry OCR
+internals — *"OCR of each table's own symbol where two crops agreed"* — which
+§5A says not to show by default. So `plan-self-check.js` now emits a stable
+`origin` alongside each `source`, one of five named values, and the screen
+renders that. Same pattern as the `params` fix: the sentence stays for the
+English artifacts, the enum is what a product screen can speak.
+
+### 5C — confirming a table's number, which nothing ever offered
+
+The Teach Area has supported a `tableNumber` subject since it was built, and the
+apply layer has written the result since then too. There was no way to reach it,
+so **the strongest evidence the product recognises — a person standing behind a
+number — was unreachable.**
+
+A table's inspector now shows its printed number, the state that number is in,
+and where that came from, with a **Confirm** control. The state is shown rather
+than smoothed over: *"read once — not yet confirmed"* is a different fact from
+*"confirmed"*, and only the second one identifies a table across a whole venue.
+A confirmed number is stored with `source: "confirmed by a person"` — never as
+though the drawing had been read.
+
+### 5B — an unsafe scope is refused before the click, not after
+
+Venue scope requires a verified printed number. The Teach Area enforced that
+correctly and enforced it **after** the operator chose a scope and pressed the
+button. The rule is knowable beforehand, so the option is now disabled with the
+reason beside it:
+
+> Across the whole venue an object has to be identified by its printed number.
+> Confirm this table's number first, and this becomes available.
+
+Confirming the number then unlocks it. That loop — *why can't I? · here's what
+would fix it · now you can* — is the whole of §5B, and the suite walks it.
+
+### Three more English strings that were reaching a Turkish screen
+
+All three were **stored data** rendered raw, and all three are fixed the same
+way: the data stays as written, the screen says the same thing in the operator's
+language, and a value this build does not recognise is shown as it stands rather
+than relabelled with a sentence that might not be true of it.
+
+| | was |
+|---|---|
+| the Assisted Detection notice | *"Classical computer vision is active…"* under a Turkish heading |
+| `printedNumber.source` | *"Doğrulandı · OCR of this table's own symbol"* |
+| self-check input sources | *"Kaynak: printed on the drawing, read by OCR"* |
+
+### Evidence
+
+`tests/suites/teach-number.test.mjs` — 23 checks: the panel and its state line,
+venue scope disabled with a reason, a confirmed number stored as a person's, the
+unlock, a venue-scoped lesson then accepted, rubbish refused with an
+explanation, and no raw key in either language.
+
+One defect the suite caught while being written: I had invented two number-state
+names (`CONFLICTED`, `UNREADABLE`) that `plan-table-numbers.js` does not emit —
+its states are `VERIFIED`, `LIKELY`, `NEEDS_REVIEW`, `UNKNOWN`. Those would have
+rendered as raw keys on the two states that matter most.
+
+```
+npm run test:all            37/37 suites, 1167/1167 checks
+npm run benchmark:baseline  no regressions, 0 improvements, 0 notes
+npm run verify:offline      27 passed, 0 failed
+```
