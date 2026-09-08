@@ -42,7 +42,19 @@
   function seatingStats(event){const physical=physicalTables(event),emptyTables=physical.filter(t=>tableAssignedPax(event,t.id)===0).length,emptyChairs=physical.reduce((n,t)=>n+Math.max(0,t.capacity-tableAssignedPax(event,t.id)),0);return{emptyTables,emptyChairs,physicalTables:physical.length}}
   function eventMetrics(event){const seated=event.tables.filter(t=>t.type!=="bistro").reduce((n,t)=>n+t.capacity,0),bistro=event.tables.filter(t=>t.type==="bistro").reduce((n,t)=>n+t.capacity,0),guests=event.guests.reduce((n,g)=>n+paxOf(g),0),assigned=event.guests.filter(g=>g.assignment).reduce((n,g)=>n+paxOf(g),0);return{seated,bistro,total:seated+bistro,guests,assigned,available:Math.max(0,seated+bistro-assigned),unassigned:guests-assigned}}
   function toast(message,type="info",duration=3200){const el=document.createElement("div");el.className="toast "+type;el.textContent=message;document.getElementById("toastWrap").appendChild(el);setTimeout(()=>el.remove(),duration)}
-  function relativeTime(value){const mins=Math.max(0,Math.floor((Date.now()-new Date(value).getTime())/60000));if(mins<1)return"Just now";if(mins<60)return mins+" min ago";if(mins<1440)return Math.floor(mins/60)+" hr ago";return fmtDate(value.slice(0,10))}
+  // Translated where i18n is loaded, English where it is not: this file is
+  // read before src/i18n.js, so the guard is real rather than defensive. The
+  // Plan Doctor's "last run" stamp is the only live caller, and an English
+  // "Just now" inside an otherwise Turkish panel is exactly the leak the
+  // programme forbids.
+  function relativeTime(value){
+    const mins=Math.max(0,Math.floor((Date.now()-new Date(value).getTime())/60000));
+    const say=(k,p)=>typeof t==="function"&&t(k,p)!==k?t(k,p):null;
+    if(mins<1)return say("time.justNow")||"Just now";
+    if(mins<60)return say("time.minutesAgo",{n:mins})||mins+" min ago";
+    if(mins<1440){const h=Math.floor(mins/60);return say("time.hoursAgo",{n:h})||h+" hr ago";}
+    return fmtDate(value.slice(0,10));
+  }
   function topBrand(){return`<div class="brand"><div class="brand-symbol">M✦</div><div class="brand-copy"><strong>MERIT ENTERTAINMENT</strong><span>EVENT MAKER</span></div></div>`}
   function helpButton(){return`<button class="btn quiet" data-action="help" title="Open English / Turkish user guide">${icon("help")}<span class="optional-label">${typeof t==="function"?t("appbar.help"):"Help / User Guide"}</span></button>`}
   function eventsHTML(){return`<header class="appbar">${topBrand()}<div class="crumb">Event Operations / <b>All Events</b></div><div class="appbar-actions">${helpButton()}<button class="btn primary" data-action="create-event">${icon("plus")}Create Event</button></div></header><section class="events-page"><div class="events-wrap"><div class="page-head"><div><div class="kicker">Event Operations</div><h1>Events</h1><p>Floor plans, guest records, seating and live arrival control.</p></div><span class="muted">${state.events.length} event${state.events.length===1?"":"s"}</span></div><div class="data-shell">${state.events.length?`<table class="event-table"><thead><tr><th>Event</th><th>Date & Venue</th><th>Event Status</th><th>Capacity</th><th>Total Guests</th><th>Assigned</th><th>Unassigned</th><th>Last Modified</th><th></th></tr></thead><tbody>${state.events.map(e=>{const m=eventMetrics(e);return`<tr><td><span class="event-name">${esc(e.name)}</span><span class="subline">Concert & VIP Entertainment</span></td><td>${esc(fmtDate(e.date))}<span class="subline">${esc(e.venue)}</span></td><td><span class="status-chip">${esc(e.status)}</span></td><td>${m.total}</td><td>${m.guests}</td><td>${m.assigned}</td><td>${m.unassigned}</td><td>${relativeTime(e.lastModified)}</td><td><div class="toolbar-row"><button class="btn sm primary" data-open-event="${e.id}">Open</button><button class="btn sm" data-duplicate-event="${e.id}">Duplicate</button><button class="btn sm danger" data-delete-event="${e.id}">Delete</button></div></td></tr>`}).join("")}</tbody></table>`:`<div class="inspector-empty">No events yet.</div>`}</div></div></section>`}

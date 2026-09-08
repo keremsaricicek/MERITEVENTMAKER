@@ -619,6 +619,51 @@ dialog::backdrop{background:rgba(32,28,20,.44)}
 .cc-reason-body span{display:block;margin-top:2px;font-size:11.5px;line-height:1.45;color:var(--muted)}
 .cc-reason .btn{flex:none;margin-top:1px}
 
+/* ---- the Plan Doctor -----------------------------------------------------
+   The pre-flight report. It sits last in the Command Center and is the only
+   block that can be expanded, so it is allowed one weight the other blocks
+   are not: a left edge in the verdict's colour. Everything else stays the
+   same restrained card -- three tally figures and a list, no gauges, no
+   progress rings, and nothing that could be mistaken for a score. */
+.cc-doctor{margin-top:var(--sp-6);border-left:2px solid var(--line)}
+.cc-doctor.ok{border-left-color:var(--green)}
+.cc-doctor.warn{border-left-color:var(--amber)}
+.cc-doctor.blocker{border-left-color:var(--red)}
+.cc-doctor-head{display:flex;align-items:flex-start;gap:var(--sp-6)}
+.cc-doctor-head>div:first-child{flex:1;min-width:0}
+.cc-doctor-head h3{margin-bottom:2px}
+.cc-doctor-q{font-size:14px;font-weight:600;color:var(--text);letter-spacing:-.005em}
+.cc-doctor-verdict{flex:none;text-align:right;max-width:230px}
+.cc-doctor-verdict strong{display:block;font-size:12.5px;font-weight:640;color:var(--text)}
+.cc-doctor-verdict span{display:block;margin-top:2px;font-size:10.5px;color:var(--muted-2)}
+.cc-doctor-head .btn{flex:none}
+.cc-doctor-tally{display:flex;gap:var(--sp-6);margin-top:var(--sp-5);
+  padding-top:var(--sp-5);border-top:1px solid var(--line-soft)}
+.doc-tally{display:flex;align-items:baseline;gap:6px;font-size:9px;font-weight:650;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--muted-2)}
+.doc-tally b{font-size:17px;font-weight:640;letter-spacing:0;color:var(--muted);
+  font-variant-numeric:tabular-nums}
+.doc-tally.BLOCKING b{color:var(--red-ink)}
+.doc-tally.NEEDS_REVIEW b{color:var(--amber-ink)}
+.cc-doctor-empty{margin-top:var(--sp-5);font-size:12px;color:var(--muted)}
+.doc-section{margin-top:var(--sp-6)}
+.doc-section h4{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:650;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);margin-bottom:var(--sp-4)}
+.doc-section h4 span{font-size:10px;letter-spacing:0;color:var(--muted-2)}
+.doc-section.BLOCKING h4{color:var(--red-ink)}
+.doc-section.NEEDS_REVIEW h4{color:var(--amber-ink)}
+.doc-rows{list-style:none}
+.doc-row{display:flex;align-items:flex-start;gap:var(--sp-4);padding:var(--sp-4) 0 var(--sp-4) var(--sp-5);
+  border-top:1px solid var(--line-soft);border-left:2px solid transparent}
+.doc-row:first-child{border-top:0}
+.doc-row.lvl-BLOCKING{border-left-color:var(--red)}
+.doc-row.lvl-NEEDS_REVIEW{border-left-color:var(--amber)}
+.doc-row-body{flex:1;min-width:0}
+.doc-row-body b{display:block;font-size:12.5px;font-weight:600;color:var(--text)}
+.doc-why{display:block;margin-top:2px;font-size:11px;line-height:1.45;color:var(--muted)}
+.doc-meta{display:block;margin-top:4px;font-size:10px;line-height:1.4;color:var(--muted-2)}
+.doc-row .btn{flex:none;margin-top:1px}
+
 /* A verdict glyph, not a status pill: four states in one narrow column keeps
    the statements themselves left-aligned and scannable. */
 .cc-check{display:flex;align-items:flex-start;gap:var(--sp-4);padding:var(--sp-4) 0;

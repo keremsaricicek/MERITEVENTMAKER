@@ -89,6 +89,20 @@ means nothing is touched; and a venue-wide note about an object is only acted
 on when the object carries the same verified printed number. Full detail:
 `src/plan-teach-area.js` and `benchmarks/OPERATIONAL-INTELLIGENCE-ROADMAP.md`.
 
+## The Plan Doctor
+
+One layer answers "can this event safely proceed?" and everything else reads
+it — the header badge, the Command Center's attention list and the pre-flight
+report all come from `src/plan-doctor.js`, so the product cannot say two
+different things about one event. It runs no engine of its own and stores
+nothing: the report is derived on every read, so a fixed problem disappears by
+itself. **A reading is not an operational fact** — two tables a person numbered
+the same is BLOCKING, two tables OCR *read* as the same number is NEEDS REVIEW,
+and collapsing those two is a revert. Every finding names what is wrong, why,
+its source, what it affects and where to go; a finding that cannot say where to
+go does not belong in this layer. Full detail:
+`benchmarks/EVENT-OPERATIONS-PRODUCT-REPORT.md`.
+
 ## Plan Intelligence honesty
 
 Assisted Detection today is classical computer vision, not a trained

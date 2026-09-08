@@ -40,7 +40,12 @@
     // could no longer tell which event they were in, and could not look a guest
     // up without abandoning the review. `planMode` is where that lives now, and
     // `ui.screen` stays "workspace" throughout.
-    lang:"en", planMode:"plan", reviewQueue:null, reviewCenterOpen:false, difficultQuestionIndex:0, activeReviewGroupId:null, activeQuestionId:null, ocrText:null
+    lang:"en", planMode:"plan", reviewQueue:null, reviewCenterOpen:false, difficultQuestionIndex:0, activeReviewGroupId:null, activeQuestionId:null, ocrText:null,
+    // The Plan Doctor's full report is opened deliberately. Its verdict and
+    // tally are always on screen; the rows -- including the INFORMATION ones,
+    // which are worth reading once and are noise in a list scanned every few
+    // minutes -- appear when someone runs the pre-flight.
+    doctorOpen:false
   });
 
   function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[]}; }
@@ -263,31 +268,85 @@
     if((event.guests||[]).some(g=>g.arrivalStatus==="Checked In"||g.arrivalStatus==="No Show"))return"live";
     return"ready";
   }
+  // ---- the Plan Doctor ------------------------------------------------------
+  //
+  // The pre-flight check, and now the ONE place the whole event is judged. The
+  // engine is src/plan-doctor.js; this is the wiring, and it exists so that
+  // nothing in the product forms a second opinion about whether the event is
+  // ready. Before it, the header badge, the readiness verdict and the reason
+  // list each assembled their own view from planIssues() and the analysis, and
+  // keeping three assemblies in agreement was a matter of care rather than
+  // architecture. There is one assembly now and everything reads it.
+  //
+  // Derived on every call, never stored: a problem an operator has just fixed
+  // is gone from the next render by construction, which is the only way to be
+  // sure a resolved warning never lingers.
+  function planDoctorReport(event){
+    if(!event||!globalThis.MeritPlanDoctor)return null;
+    return globalThis.MeritPlanDoctor.run({
+      phase:eventPhase(event),
+      tables:event.tables||[],
+      guests:event.guests||[],
+      // The rules planIssues() owns, handed over rather than re-implemented.
+      // Whatever the Doctor does not express itself still reaches the operator.
+      planIssues:planIssues(event),
+      analysis:event.analysis||null,
+    });
+  }
   // The verdict is one of four named states, never a percentage. A number like
   // "92% ready" has to come from somewhere, and there is no honest weighting of
   // "one duplicate table number" against "twelve unseated guests" -- so the
   // product says which of four situations it is in, and lists the reasons.
+  //
+  // BLOCKING and NEEDS REVIEW become reasons; INFORMATION does not. That is the
+  // difference between the two: information is worth knowing and demands
+  // nothing, and putting it in the attention list would teach an operator that
+  // the list is safe to ignore.
   function eventReadiness(event){
-    const issues=planIssues(event);
-    const blockers=issues.filter(x=>x.level==="blocker");
-    const warns=issues.filter(x=>x.level!=="blocker");
+    const doctor=planDoctorReport(event);
     const m=eventMetrics(event);
     const budget=event.analysis?.confidenceBudget||null;
-    const toDecide=budget?budget.counts.shown:0;
     const inconsistent=(event.analysis?.selfCheck?.checks||[]).filter(c=>c.verdict==="INCONSISTENT");
     const phase=eventPhase(event);
-    const reasons=[];
-    for(const b of blockers)reasons.push({level:"blocker",text:b.title,detail:b.text,goTab:b.fix});
-    for(const w of warns)reasons.push({level:"review",text:w.title,detail:w.text,goTab:w.fix});
-    // Not the budget's chip string: "6 to decide" is a badge, and a badge makes
-    // a poor sentence at the head of a row that also carries an explanation.
-    if(toDecide)reasons.push({level:"review",
-      text:t(toDecide===1?"cc.reason.toDecideTitle1":"cc.reason.toDecideTitle",{n:toDecide}),
-      detail:t("cc.reason.toDecide"),goReview:true});
-    for(const c of inconsistent){const w=ccCheckText(c);reasons.push({level:"review",text:w.statement,detail:w.detail,goReview:true});}
-    const verdict=blockers.length?(phase==="live"?"liveRisk":"notReady")
+    const reasons=doctor
+      ?[...doctor.blocking.map(f=>({level:"blocker",finding:f})),
+        ...doctor.needsReview.map(f=>({level:"review",finding:f}))]
+      :[];
+    const blocking=doctor?doctor.counts.blocking:0;
+    const verdict=blocking?(phase==="live"?"liveRisk":"notReady")
       :reasons.length?"readyWithReview":"ready";
-    return{phase,verdict,reasons,metrics:m,budget,inconsistent};
+    return{phase,verdict,reasons,metrics:m,budget,inconsistent,doctor};
+  }
+  // WHAT is wrong and WHY the system believes it, in the operator's language.
+  //
+  // plan-doctor.js writes both in English on purpose -- they are what the
+  // exported report and the regression suites read -- and carries the same fact
+  // structurally in `params`, which is what a screen can translate. Same
+  // pattern as the Self-Check's `params` and `origin`. A finding this table
+  // does not know falls back to the module's own wording: English inside a
+  // Turkish screen is a visible gap, which is the point; a raw key would not be.
+  function doctorText(f){
+    // planIssues() already wrote these through t(), so translating them again
+    // would put a key where a sentence belongs.
+    if(f.passthrough)return{what:f.what,detail:f.why};
+    // One disagreement, one wording. The Command Center already restates
+    // self-check findings from their own params, and a second phrasing of the
+    // same finding in the same screen would read as two different problems.
+    if(f.code==="planChecksDisagree"){
+      const w=ccCheckText({id:f.checkId,verdict:"INCONSISTENT",params:f.params,statement:f.what,detail:f.why});
+      return{what:w.statement,detail:w.detail};
+    }
+    const k="doctor."+f.code,has=x=>t(x)!==x;
+    // Same ".1" convention the Self-Check restatement uses: a singular variant
+    // exists only where a count of one would otherwise read as "1 tables". The
+    // module puts the finding's primary count in `params.n` so this does not
+    // have to know which of `guests`, `pax` or `seats` carries it. Turkish does
+    // not inflect after a numeral, so its two forms are usually identical --
+    // which is fine, and cheaper than teaching the substituter plural rules.
+    const one=f.params&&f.params.n===1;
+    const pick=x=>(one&&has(x+".1"))?x+".1":x;
+    return{what:has(k)?t(pick(k),f.params):f.what,
+      detail:has(k+".why")?t(pick(k+".why"),f.params):f.why};
   }
   // The Self-Check writes its sentences in English -- it is also read by the
   // benchmarks and the exported operator report. The Command Center is a
@@ -310,11 +369,97 @@
       detail:has(d)?t(d,p):(c.detail||""),
     };
   }
+  // Where a finding sends the operator, as a control rather than as a sentence.
+  //
+  // Three shapes, and the reason there are three rather than one is that two of
+  // them already existed and are bound elsewhere: a bare screen is a [data-tab]
+  // like every other navigation in the app, and the review centre has had its
+  // own action since B2. Only a finding that points at a specific table, guest
+  // or object needs the Doctor's own routing, and that is the one case where a
+  // plain tab switch would lose the thing the row is about.
+  //
+  // Every finding gets one. A row that could not say where to go would be the
+  // dead end the programme forbids, so `doctorGoHTML` returning "" is a defect
+  // the suite checks for rather than a state the UI is allowed to reach.
+  function doctorGoHTML(f){
+    const a=f.action||{};
+    const GO=globalThis.MeritPlanDoctor?.GO||{};
+    const targeted=a.tableId||a.guestIds?.length||a.candidateIds?.length||a.filter;
+    if(a.go===GO.REVIEW_CENTER&&!targeted)
+      return`<button class="btn sm" data-cc-action="review">${t("cc.goto.review")}</button>`;
+    if(!targeted&&(a.go===GO.SEATING||a.go===GO.GUESTS||a.go===GO.FLOOR))
+      return`<button class="btn sm" data-tab="${a.go.toLowerCase()}">${t("cc.goto."+a.go.toLowerCase())}</button>`;
+    // A finding whose destination this table does not recognise still gets a
+    // control, labelled generically rather than with a raw key -- an operator
+    // must never be shown "doctor.go.SOMETHING". That the case is unreachable
+    // is asserted against the module itself, where the defect would be, rather
+    // than left to be noticed as odd wording on a screen.
+    const label=t("doctor.go."+a.go);
+    return`<button class="btn sm" data-cc-go="${esc(f.code)}${f.checkId?":"+esc(f.checkId):""}">${label==="doctor.go."+a.go?t("doctor.go.open"):label}</button>`;
+  }
   function ccReasonHTML(r){
-    const go=r.goReview
-      ?`<button class="btn sm" data-cc-action="review">${t("cc.goto.review")}</button>`
-      :r.goTab?`<button class="btn sm" data-tab="${r.goTab}">${t("cc.goto."+r.goTab)}</button>`:"";
-    return`<li class="cc-reason ${r.level}"><i class="health-dot ${r.level==="blocker"?"blocker":"warn"}"></i><div class="cc-reason-body"><b>${esc(r.text)}</b>${r.detail?`<span>${esc(r.detail)}</span>`:""}</div>${go}</li>`;
+    const w=doctorText(r.finding);
+    return`<li class="cc-reason ${r.level}"><i class="health-dot ${r.level==="blocker"?"blocker":"warn"}"></i><div class="cc-reason-body"><b>${esc(w.what)}</b>${w.detail?`<span>${esc(w.detail)}</span>`:""}</div>${doctorGoHTML(r.finding)}</li>`;
+  }
+  // A full Plan Doctor row: WHAT, WHY, SOURCE, WHAT IT AFFECTS, and the way to
+  // act on it. The attention list above says the first and the last of those
+  // because it is a summary; this is the pre-flight report, where an operator
+  // is deciding whether to trust the answer, and provenance is the whole point.
+  function doctorRowHTML(f){
+    const w=doctorText(f);
+    // A name with no translation is dropped rather than printed: an unknown
+    // SOURCE would otherwise render as "doctor.source.WHATEVER" on the screen.
+    const named=(prefix,list)=>[...new Set(list||[])].map(v=>prefix+v).filter(k=>t(k)!==k).map(k=>t(k));
+    const sources=named("doctor.source.",f.sources);
+    const affects=named("doctor.affects.",f.affects);
+    return`<li class="doc-row lvl-${f.level}">
+      <div class="doc-row-body">
+        <b>${esc(w.what)}</b>
+        ${w.detail?`<span class="doc-why">${esc(w.detail)}</span>`:""}
+        <span class="doc-meta">${esc(t("doctor.sourceLabel"))}: ${esc(sources.join("; "))}${
+          affects.length?` · ${esc(t("doctor.affectsLabel"))}: ${esc(affects.join(", "))}`:""}</span>
+      </div>${doctorGoHTML(f)}</li>`;
+  }
+  // The report itself. Collapsed to its verdict until someone asks for it:
+  // the Command Center's job is "what deserves my attention now", and the
+  // pre-flight is the deliberate act of checking everything before the doors
+  // open -- including the INFORMATION rows, which are worth reading once and
+  // would be noise in a list an operator scans every few minutes.
+  function planDoctorHTML(event,r){
+    const d=r.doctor;
+    if(!d)return"";
+    const V=globalThis.MeritPlanDoctor.VERDICT;
+    const tone=d.verdict===V.NO?"blocker":d.verdict===V.WITH_REVIEW?"warn":"ok";
+    const section=(key,rows)=>rows.length
+      ?`<section class="doc-section ${key}"><h4>${t("doctor.level."+key)}<span>${rows.length}</span></h4><ul class="doc-rows">${rows.map(doctorRowHTML).join("")}</ul></section>`:"";
+    const open=ui.doctorOpen;
+    const ran=event.finalCheck||null;
+    // A recorded run is a record of an ACT, not a cached answer: the rows above
+    // are always current. Where the event has changed since, say so rather than
+    // letting a timestamp imply that what is on screen was what was checked.
+    const stamp=ran
+      ?(ran.signature===doctorSignature(d)
+        ?t("doctor.lastRun",{when:relativeTime(ran.at)})
+        :t("doctor.changedSince"))
+      :t("doctor.neverRun");
+    return`<section class="cc-block cc-doctor ${tone}">
+      <div class="cc-doctor-head">
+        <div><h3>${t("doctor.title")}</h3><p class="cc-doctor-q">${t("doctor.question")}</p></div>
+        <div class="cc-doctor-verdict"><strong>${t("doctor.verdict."+d.verdict)}</strong><span>${esc(stamp)}</span></div>
+        <button class="btn sm ${open?"":"primary"}" data-cc-doctor="${open?"close":"run"}">${t(open?"doctor.hide":"doctor.run")}</button>
+      </div>
+      <div class="cc-doctor-tally">${[["BLOCKING",d.counts.blocking],["NEEDS_REVIEW",d.counts.needsReview],["INFORMATION",d.counts.information]]
+        .map(([k,n])=>`<span class="doc-tally ${k}"><b>${n}</b>${t("doctor.level."+k)}</span>`).join("")}</div>
+      ${open?(d.all.length
+        ?`${section("BLOCKING",d.blocking)}${section("NEEDS_REVIEW",d.needsReview)}${section("INFORMATION",d.information)}`
+        :`<p class="cc-doctor-empty">${t("doctor.allClear")}</p>`):""}
+    </section>`;
+  }
+  // What was checked, reduced to something two runs can be compared on. Codes
+  // and counts, not wording: a translation change must not read as the event
+  // having changed underneath the operator.
+  function doctorSignature(d){
+    return d.all.map(f=>f.code+"="+(f.weight??0)).sort().join("|");
   }
   // The Self-Check's first surface anywhere in the product. It produced real
   // findings that no operator could see unless they opened the review panel.
@@ -341,8 +486,12 @@
       // one of them is composed from the figures themselves; they also carry
       // OCR internals ("two crops agreed at what inset") that an operator does
       // not need and §5A says not to show by default.
+      // An origin with no wording is DROPPED, not printed. It used to render as
+      // "cc.origin.WHATEVER" the moment the value was anything this table did
+      // not know -- which is one added ORIGIN away, and was found by rendering
+      // the screen rather than by reading it.
       const sources=[...new Set((c.inputs||[]).map(i=>i&&i.origin).filter(Boolean))]
-        .map(o=>t("cc.origin."+o)).filter(Boolean);
+        .map(o=>"cc.origin."+o).filter(k=>t(k)!==k).map(k=>t(k));
       const act=c.verdict==="INCONSISTENT"||c.verdict==="NEEDS_REVIEW"
         ?`<button class="btn sm" data-cc-action="review">${t("cc.goto.review")}</button>`:"";
       return`<li class="cc-check ${mark(c.verdict)}"><i>${glyph(c.verdict)}</i><div class="cc-check-body"><b>${esc(w.statement)}</b><span>${esc(w.detail)}</span>${
@@ -371,11 +520,76 @@
         r.reasons.length?`<ul class="cc-reasons">${r.reasons.map(ccReasonHTML).join("")}</ul>`
           :`<p class="cc-empty">${t("cc.attention.none")}</p>`}</section>
       <div class="cc-columns">${ccPlanConsistencyHTML(event)}${ccSeatingHTML(event)}</div>
+      ${planDoctorHTML(event,r)}
     </div></div>`;
   }
+  // Take the operator to the thing the row is about, not merely to the screen
+  // it lives on. A target that no longer resolves -- the table was deleted, the
+  // candidate was dismissed -- falls back to the screen rather than doing
+  // nothing: the row is about something that changed, and stranding the
+  // operator on the Command Center with a click that did nothing is worse than
+  // landing them one level too wide.
+  function doctorGo(event,f){
+    const a=(f&&f.action)||{};
+    const GO=globalThis.MeritPlanDoctor.GO;
+    const table=a.tableId?event.tables.find(x=>x.id===a.tableId):null;
+    const guest=(a.guestIds||[]).map(id=>event.guests.find(g=>g.id===id)).find(Boolean)||null;
+    if(a.go===GO.FLOOR){
+      ui.tab="floor";ui.planMode="plan";
+      ui.selectedObjectId=table?table.id:null;ui.selectedObjectIds=table?[table.id]:[];
+      ui.highlightId=table?table.id:null;
+    }else if(a.go===GO.GUESTS){
+      ui.tab="guests";
+      if(guest){ui.guestQuery=guest.name;ui.guestFilter="all";}
+    }else if(a.go===GO.SEATING){
+      ui.tab="seating";ui.operationalMode=false;
+      ui.seatingFilter=a.filter||"all";
+      ui.seatingQuery="";
+      ui.seatingGuestScope=guest&&!guest.assignment?"unassigned":"all";
+      ui.selectedGuestId=guest?guest.id:null;
+      ui.selectedTableId=table?table.id:(guest&&guest.assignment?guest.assignment.tableId:null);
+      ui.highlightId=ui.selectedTableId;
+    }else{
+      // REVIEW and REVIEW_CENTER. Both land in the Floor Plan's review mode --
+      // there is no separate review screen since B3 -- and differ only in
+      // whether an object or the budget is what the operator came for.
+      ui.tab="floor";ui.planMode="review";
+      const alive=new Set((event.analysis?.candidates||[]).map(c=>c.id));
+      const target=(a.candidateIds||[]).find(id=>alive.has(id))||null;
+      ui.selectedCandidateId=target;
+      ui.reviewCenterOpen=!target;
+      ui.activeReviewGroupId=null;ui.activeQuestionId=null;
+    }
+    render();
+  }
   function bindCommand(){
+    const event=activeEvent();
     document.querySelectorAll("[data-cc-action]").forEach(b=>b.onclick=()=>{
       if(b.dataset.ccAction==="review"){ui.reviewCenterOpen=true;ui.tab="floor";ui.planMode="review";render();}
+    });
+    // The row is matched back to the live report rather than carrying its own
+    // copy of the target: between render and click the operator may have fixed
+    // the problem in another tab, and acting on a stale payload would send them
+    // to a table that no longer exists.
+    document.querySelectorAll("[data-cc-go]").forEach(b=>b.onclick=()=>{
+      const [code,checkId]=String(b.dataset.ccGo).split(":");
+      const d=planDoctorReport(event);
+      const f=d&&d.all.find(x=>x.code===code&&(!checkId||x.checkId===checkId));
+      if(f)doctorGo(event,f);else render();
+    });
+    document.querySelectorAll("[data-cc-doctor]").forEach(b=>b.onclick=()=>{
+      if(b.dataset.ccDoctor==="close"){ui.doctorOpen=false;render();return;}
+      ui.doctorOpen=true;
+      // Recording that a person ran the pre-flight is a mutation of the event,
+      // so it goes through canMutate like everything else -- a historical event
+      // has no Command Center to run it from, and must not acquire one here.
+      const d=planDoctorReport(event);
+      if(d&&canMutate(event,"run the final check")){
+        event.finalCheck={at:nowISO(),verdict:d.verdict,signature:doctorSignature(d),
+          counts:{...d.counts}};
+        touchEvent(event);
+      }
+      render();
     });
   }
   function eventCard(event){const m=eventMetrics(event),cover=event.coverImage?`<div class="event-cover" style="background-image:url('${event.coverImage}')"></div>`:`<div class="event-cover"><div class="event-cover-placeholder"></div></div>`;return`<article class="event-card" data-card-event="${event.id}">${cover}<div class="event-card-body"><div class="kicker">${esc(event.status)}</div><h3>${esc(event.name)}</h3><div class="event-meta">${esc(fmtDate(event.date))}<br>${esc([event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet"))}</div><div class="event-card-stats"><div class="event-card-stat"><b>${m.guests}</b><span>${t("home.col.guestPax")}</span></div><div class="event-card-stat"><b>${physicalCapacity(event)}</b><span>${t("home.col.physicalChairs")}</span></div></div><div class="event-card-actions"><button class="btn primary" data-open-event="${event.id}">${t("home.openEvent")}</button><button class="btn" data-duplicate-event="${event.id}" title="Duplicate">${icon("copy")}</button><button class="btn danger" data-delete-event="${event.id}" title="Delete">${icon("trash")}</button></div></div></article>`;}

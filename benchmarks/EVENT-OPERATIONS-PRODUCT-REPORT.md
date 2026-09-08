@@ -745,3 +745,145 @@ npm run test:all            37/37 suites, 1167/1167 checks
 npm run benchmark:baseline  no regressions, 0 improvements, 0 notes
 npm run verify:offline      27 passed, 0 failed
 ```
+
+---
+
+## The CI that was red, and why a local green run was not enough
+
+Four checks failed on the real GitHub run at `d3f13e6` and two more at
+`dc1e703`, while every local run was green. The handoff's hypothesis was that
+the PR merge ref differed from the branch. It did not: `origin/main` is an
+ancestor of the branch, `git merge-base` returns main's own head, and the
+`push` run and the `pull_request` run at the same commit failed identically.
+The merge was never involved.
+
+**One root cause, measured, behind all four.** `index.html` loads Tesseract
+from a CDN. A GitHub runner has network, so Assisted Detection runs its whole
+OCR-dependent tail — OCR, text-based false-positive suppression, labelled-object
+identification, printed-number reading. This development sandbox has no network,
+so that tail had never run here. Every suite written here had been validated
+against half the pipeline.
+
+The fix was in the harness, not in any assertion. `tests/lib/app-actions.mjs`
+gained `runDetection` / `reRunDetection` / `importPlan`, and there is now ONE
+way to wait — *the analysis is finished* (`!!analysis && !ui.analysisBusy`),
+not *the analysis exists*. Six suites carried the same latent race and had been
+passing by luck. Three suites that drew their plans on a canvas at runtime moved
+to the committed `merit-real-venue-plan.png`, byte-identical on every machine.
+Each now reports OCR availability rather than assuming a world.
+
+**A real product defect only a machine with OCR could surface.** With OCR live,
+`suppressTextFalsePositives` deleted 3 of the adversarial fixture's 6 exact
+columns and left the survivors on a single axis — the very shape the column pass
+exists to reject, since what separates a structural grid from printed text is
+that a grid is aligned in two directions and a word in one. The rule already
+carried two exemptions in exactly this idiom (a candidate with chairs at it, a
+member of a repeated symbol family); a column is the third and was missing. The
+exemption can only ever KEEP an object, so it cannot move a table or chair
+number on either real plan — and the four measurements below say so.
+
+Green on the real PR run at `b15c4b1`: fast-core, detection, offline,
+intelligence (including the slow contract suites) and performance.
+
+---
+
+## PHASE E — the Plan Doctor
+
+**CAN THIS EVENT SAFELY PROCEED?** A pre-flight check, not a detector. It reads
+nothing off the drawing and calls no engine: `src/plan-doctor.js` compares facts
+other layers already concluded — the tables, the guests, where they are sitting,
+and what the plan reader, Self-Check, Number Integrity, Confidence Budget and
+Teach Area made of the drawing.
+
+### One assembly, not three
+
+The change that matters is not the new screen. Before this, the header badge,
+the readiness verdict and the reason list each assembled their own view of "is
+this event ready" from `planIssues()` and the analysis, and keeping three
+assemblies in agreement was a matter of care rather than architecture.
+`eventReadiness()` now reads the Doctor's report and nothing else does its own
+arithmetic. `planIssues()` is untouched and is one of the Doctor's inputs — the
+Reports pre-flight and the historical popover still use it directly, and a rule
+added to it tomorrow reaches the Doctor automatically rather than being dropped.
+
+### A reading is not an operational fact
+
+Two tables a person numbered the same is **BLOCKING**: a guest will be sent to
+the wrong table tonight. Two tables OCR *read* as the same number is **NEEDS
+REVIEW**: the room may be perfectly fine and the reader wrong. The same
+disagreement sits at two levels depending on where the number came from.
+Collapsing them — which looks like a simplification in a diff — would either cry
+wolf on every plan with imperfect OCR or bury a conflict that misdirects a guest.
+§4A's "do not turn uncertain OCR into BLOCKING" is this rule, and it is the one
+the suite mutation-tests first.
+
+### Every row says five things, and none is a dead end
+
+WHAT is wrong · WHY the system believes it · SOURCE · WHAT it affects · WHAT the
+operator can do. Sources are named values (`DRAWING`, `NUMBER_READING`,
+`RELATIONSHIPS`, …) that a screen translates, not English sentences — the same
+pattern as the Self-Check's `origin`. No raw arrays and no developer
+diagnostics: the scene graph appears as "12 chairs were found that no table
+claims", which is what an operator can act on, not as an edge count.
+
+Destinations are resolved from live data at click time, not baked into the row:
+between render and click the operator may have fixed the problem in another tab,
+and acting on a stale payload would send them to a table that no longer exists.
+
+### Nothing is remembered
+
+The report is derived on every read. Fix the duplicate number and the row is
+gone on the next render — there is no stored finding list to go stale and no
+"dismissed" flag that could hide a problem that has come back. RUN FINAL CHECK
+records that a *person* ran the pre-flight, which is a real operational fact;
+where the event has changed since, the panel says so rather than letting a
+timestamp imply that what is on screen is what was checked.
+
+### Three defects this surfaced, two of them mine
+
+1. **The provenance never matched.** `checkOrigins` compared each self-check
+   input's `origin` against the ORIGINS *key names* (`"PRINTED"`) when the values
+   are words (`"printedOnTheDrawing"`). It matched nothing, so a finding with
+   perfectly good provenance reported none of it. Found by rendering the screen,
+   not by reading the diff. It now reads the values from `MeritSelfCheck.ORIGINS`
+   rather than keeping a copy that a rename would silently break.
+2. **A raw key one origin away.** `ccPlanConsistencyHTML` rendered an
+   unrecognised origin as `cc.origin.WHATEVER`. Unreachable today, one added
+   ORIGIN from being reachable. Unknown values are now dropped rather than
+   printed, as everywhere else.
+3. **An English island in a Turkish panel.** The "last run" stamp read
+   "son çalıştırma: Just now": `relativeTime()` predates i18n and nothing else
+   live still called it. A raw-key sweep cannot see this — the leak is real
+   English — so the suite asserts the two languages differ.
+
+### Evidence
+
+`tests/suites/plan-doctor.test.mjs` — 52 checks: the verdict is one of three
+named states and never a score; every finding declares a destination, a source
+and what it affects; following each row on screen actually leaves the Command
+Center; a read duplicate is review while a plan duplicate blocks; fixing it
+removes the row with nothing dismissed; a guest at a deleted table is blocking
+and selects that guest; INFORMATION is reported and never enters the attention
+list; badge, attention list and report agree in both languages; no raw key and
+no English in either; and a completed event has no pre-flight and cannot acquire
+a final-check record.
+
+Two mutations, to prove the checks bite rather than merely pass:
+
+| Mutation | Result |
+| --- | --- |
+| `duplicateNumberReading` raised to BLOCKING | 4 checks fail, naming the collapsed distinction |
+| a finding's `action` removed | "every finding declares a destination the product can reach" fails |
+
+The second mutation is the reason the contract is asserted against the module
+rather than against the rendered row: the UI labels an unknown destination
+generically rather than printing a key, so a screen-only check could not tell a
+dead end from a working one. The first version of that check could not fail.
+
+```
+npm run test:all             38/38 suites, 1227/1227 checks
+npm run benchmark:baseline   no regressions, 0 improvements, 0 notes
+npm run verify:offline       27 passed, 0 failed
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             0px horizontal overflow at every viewport
+```

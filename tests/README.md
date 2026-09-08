@@ -51,6 +51,11 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `symbol-family` | intelligence | family membership widens until architecture is admitted, or narrows until the family's own members fall out |
 | `symbolic-plan-detection` | intelligence | on a symbolic plan a detected family member fails to become a table — because it was drawn in solid ink, read as printing, or counted as the seat of an object that was then demoted |
 | `operator-session` | business | the operator's review session loses its place, its queue order, or its decisions |
+| `command-center` | business | readiness becomes a percentage, the header badge and the screen count different things, or a self-check finding reaches a Turkish operator in English |
+| `floor-plan-modes` | business | reviewing a plan costs the operator the workspace around it — the event's name, the tabs, the guest search — or the uploaded plan stops being the hero |
+| `review-queue` | business | a ranked list of uncertainties stops becoming "this one, decide, next", or a settled item leaves the operator sitting on what they just settled |
+| `teach-number` | business | a number a person confirmed becomes indistinguishable from one two crops agreed on, or an unsafe scope is refused after the click instead of before |
+| `plan-doctor` | business | an uncertain OCR reading becomes a blocker, a finding has nowhere to go, a fixed problem lingers as a stale warning, or the pre-flight and the header disagree |
 
 ## Environment
 
