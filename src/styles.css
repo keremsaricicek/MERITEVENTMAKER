@@ -649,6 +649,25 @@ dialog::backdrop{background:rgba(32,28,20,.44)}
   font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;
   transition:border-color var(--dur-fast) var(--ease),background var(--dur-fast) var(--ease)}
 .plan-health-badge:hover{border-color:#423c2e;background:#f5f3f0}
+
+/* ---- Floor Plan mode switch ------------------------------------------------
+   One component, used in both of the Floor Plan's own chromes: inside the
+   floating map toolbar, and at the head of the review bar. It reads as a
+   segmented control rather than a link, because switching mode is not
+   navigation — the event, the tabs and the guest search do not move. */
+.planmode-switch{display:flex;align-items:center;gap:2px;padding:2px;
+  border-radius:var(--pi-radius-pill);background:var(--pi-surface-2);
+  border:1px solid var(--pi-line)}
+.planmode-switch button{height:26px;padding:0 12px;border:none;border-radius:999px;
+  background:transparent;color:var(--pi-muted);font-size:11px;font-weight:650;
+  letter-spacing:.01em;white-space:nowrap;
+  transition:background var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease)}
+.planmode-switch button:hover{color:var(--pi-ink)}
+.planmode-switch button.active{background:var(--pi-surface);color:var(--pi-accent-strong);
+  box-shadow:var(--pi-shadow-1)}
+.planintel-top .planmode-switch{flex:none}
+.workspace-actions .lang-btn{min-width:38px;justify-content:center;
+  font-variant-numeric:tabular-nums;letter-spacing:.04em}
 .plan-health-badge.warn{border-color:rgba(171,118,48,.4)}
 .plan-health-badge.blocker{border-color:rgba(182,61,61,.45)}
 

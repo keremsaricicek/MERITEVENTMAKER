@@ -39,7 +39,14 @@ export const meta = {
 
 const geometryKey = c => `${c.x.toFixed(3)},${c.y.toFixed(3)},${c.w.toFixed(3)},${c.h.toFixed(3)}`;
 
+// Review is a MODE of the Floor Plan, not a screen (see floor-plan-modes).
+// `ui.screen` stays "workspace" throughout; the Re-Analyze button and the
+// Assisted Detection button live in the two different modes of that one tab.
+const planMode = page => page.evaluate(() => { ui.tab = "floor"; ui.planMode = "plan"; render(); });
+const reviewMode = page => page.evaluate(() => { ui.tab = "floor"; ui.planMode = "review"; render(); });
+
 async function detect(page) {
+  await planMode(page);
   await click(page, '[data-v8-action="detect"]');
   await page.waitForFunction(() => !!state.events[0].analysis, null, { timeout: 240000 });
   await page.waitForTimeout(700);
@@ -47,7 +54,7 @@ async function detect(page) {
 
 async function reanalyse(page) {
   const previousId = await page.evaluate(() => state.events[0].analysis.id);
-  await page.evaluate(() => { ui.screen = "review"; ui.selectedCandidateId = null; render(); });
+  await page.evaluate(() => { ui.tab = "floor"; ui.planMode = "review"; ui.selectedCandidateId = null; render(); });
   await click(page, '[data-review-action="reanalyze"]');
   await page.waitForFunction(id => state.events[0].analysis && state.events[0].analysis.id !== id,
     previousId, { timeout: 240000 });
@@ -95,7 +102,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.require(toConfirm.length >= 4, "there are objects to confirm", toConfirm.length);
 
   for (const c of toConfirm) {
-    await page.evaluate(id => { ui.screen = "review"; ui.selectedCandidateId = id; ui.reviewDrawMode = false; render(); }, c.id);
+    await page.evaluate(id => { ui.tab = "floor"; ui.planMode = "review"; ui.selectedCandidateId = id; ui.reviewDrawMode = false; render(); }, c.id);
     await page.waitForSelector('select[data-candidate-edit="kindtype"]', { timeout: 5000 });
     await page.selectOption('select[data-candidate-edit="kindtype"]', `${c.kind}:${c.type}`);
     await page.waitForTimeout(50);

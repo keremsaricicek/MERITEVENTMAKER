@@ -135,7 +135,7 @@ async function analyse(page) {
 // rather than a timeout, so a slow pass cannot be read as a fast failure.
 async function reanalyse(page) {
   const previousId = await page.evaluate(() => state.events[0].analysis.id);
-  await page.evaluate(() => { ui.screen = "review"; ui.selectedCandidateId = null; render(); });
+  await page.evaluate(() => { ui.tab = "floor"; ui.planMode = "review"; ui.selectedCandidateId = null; render(); });
   await page.click('[data-review-action="reanalyze"]');
   await page.waitForFunction(id => state.events[0].analysis && state.events[0].analysis.id !== id,
     previousId, { timeout: 240000 });
@@ -145,7 +145,7 @@ async function reanalyse(page) {
 // One correction, made the way a person makes it: select the object, then use
 // the reclassify control on its card.
 async function reclassify(page, candidateId, label) {
-  await page.evaluate(id => { ui.screen = "review"; ui.selectedCandidateId = id; ui.reviewDrawMode = false; render(); }, candidateId);
+  await page.evaluate(id => { ui.tab = "floor"; ui.planMode = "review"; ui.selectedCandidateId = id; ui.reviewDrawMode = false; render(); }, candidateId);
   await page.waitForSelector('select[data-candidate-edit="kindtype"]', { timeout: 5000 });
   const has = await page.evaluate(l =>
     [...document.querySelectorAll('select[data-candidate-edit="kindtype"] option')].some(o => o.value === l), label);

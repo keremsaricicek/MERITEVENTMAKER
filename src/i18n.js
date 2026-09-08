@@ -853,6 +853,12 @@
     "backup.badReference": { en: "This backup file has broken internal references and was not restored.", tr: "Bu yedek dosyasının iç referansları bozuk, bu yüzden geri yüklenmedi." },
     "appbar.venueNotSet": { en: "Venue not set", tr: "Mekan Belirtilmedi" },
 
+    // The Floor Plan's two modes. Deliberately not called "screens" or
+    // "views" in either language: the operator has not gone anywhere.
+    "plan.mode.label": { en: "Floor Plan mode", tr: "Kat Planı modu" },
+    "plan.mode.plan": { en: "Plan", tr: "Plan" },
+    "plan.mode.review": { en: "Review", tr: "İnceleme" },
+
     // ---- Nav tabs ----
     "nav.commandTab": { en: "Command Center", tr: "Komuta Merkezi" },
     "nav.floorPlanTab": { en: "Floor Plan", tr: "Kat Planı" },

@@ -492,3 +492,82 @@ Detector unchanged, proven rather than argued: the diff is confined to lines
 `benchmark:adversarial` was run at `840efbe` and again after — the outputs are
 **byte-identical**, graph lines included. `benchmark:baseline` reports no
 regressions on either real plan; `verify:offline` 27/27.
+
+---
+
+## PHASE B3 — one shell for the whole workspace
+
+### The defect
+
+`ui.screen = "review"` was a **separate application**. Entering it called
+`app.innerHTML = analysisHTML(event)` and replaced everything: the event's
+name, the tab bar, the readiness badge, and the global guest search all left
+the page. An operator reviewing a plan could not answer *"which event am I
+in?"* or *"is Mr Yılmaz already seated?"* without abandoning the review.
+
+### The fix
+
+Review is a **mode of the Floor Plan tab** now — `ui.planMode` ∈
+`{plan, review}` — and `ui.screen` stays `"workspace"` throughout. The tab
+dispatch picks the mode; `render()` has no review branch left at all.
+
+```
+EVENT WORKSPACE  (header · tabs · guest search · readiness — never leave)
+└─ Floor Plan
+   ├─ Plan mode      the editable canvas
+   └─ Review mode    the analysed plan, its candidates and its questions
+```
+
+Every way in was rewired to the mode rather than the screen: the plan
+toolbar's Assisted Detection button, the Command Center's *Open review*, the
+status pill's review chip, and Re-Analyze. The review bar's old *← Floor
+Plan* button is gone; a **Plan | Review** segmented control replaces it, and
+the same control appears at the head of the floating map toolbar in plan
+mode. It is not navigation and does not look like it.
+
+### Two things this surfaced
+
+**The language toggle was owned by two screen-local toolbars.** One inside
+the plan toolbar, another inside the review bar, and none anywhere else — so
+Guests, Seating, Live, Reports and the Command Center had no language control
+at all. It is in the workspace header now, with the other controls that are
+about the application rather than the drawing. A check holds it to exactly
+one instance in the header and zero in either screen.
+
+**A real defect the new suite caught before any human saw it.** The header
+button rendered but did nothing: `[data-v8-action]` is bound inside
+`bindCanvas()`, which only runs where a canvas exists — and review mode has
+none. Moving a control into the shell means binding it in the shell.
+`bindV8Common()` owns it now.
+
+### Evidence
+
+`tests/suites/floor-plan-modes.test.mjs` — 42 checks. It asserts the *shell*,
+not the review UI, because a change that made review a screen again would look
+perfectly reasonable in a diff:
+
+- the round trip is checked on **each leg** — into review, back to plan, into
+  review again — and each leg must still show the event name, six tabs, the
+  active Floor Plan tab, the guest search and the readiness badge
+- the guest search is typed into from inside review mode, not merely counted
+- stepping into Guests and back does not abandon a review in progress
+- Assisted Detection lands in review **mode**, with the shell intact
+- the Command Center's *Open review* lands in the same place
+- the uploaded plan is still the hero in review mode — a data-URL image at
+  size, never a redraw
+
+Measured on the real ORNEK plan through real OCR at 1920×1080 / 2560×1440 /
+~1440px in EN and TR: `ui.screen` stayed `"workspace"` on every leg, all six
+tabs present, event identity and search intact, zero page errors, zero
+horizontal overflow.
+
+Two harnesses that drove the old screen were updated to the new architecture
+rather than worked around — `plan-memory-isolation` and the teaching
+benchmark. `benchmark:teaching` still reports precision 1.0000, retention
+1.0000, wrong-application 0.0000, all gates met.
+
+```
+npm run test:all            35/35 suites, 1108/1108 checks
+npm run benchmark:baseline  no regressions, 0 improvements, 0 notes
+npm run verify:offline      27 passed, 0 failed
+```
