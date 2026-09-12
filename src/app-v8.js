@@ -67,7 +67,11 @@
     // ARRIVAL WAVE. The bucket width an operator is reading the evening at, and
     // which wave (or the outstanding VIPs) the Live list is narrowed to. All
     // three are views, never facts: nothing here reaches stored state.
-    waveBucket:30, waveKey:null, waveVip:false
+    waveBucket:30, waveKey:null, waveVip:false,
+    // SERVICE LOAD. A layer on the same canvas, off by default: unlike a
+    // freeze, load is not a rule an operator can be blocked by, so a permanent
+    // tint over every table would be decoration rather than information.
+    loadLayer:false
   });
 
   function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[], lastBackupAt:null}; }
@@ -254,7 +258,11 @@
     // covered in filled shapes is a plan nobody can work on. Hidden entirely
     // when the layer is off, so the marks never become permanent chrome.
     const frozen=ui.freezeLayer&&frozenTableIdSet(event).has(table.id);
-    return`<div class="table-object ${esc(table.type)} ${selected?"selected multi-selected":""} ${highlighted?"highlighted":""} ${frozen?"frozen":""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match operational-match":""}" data-object-id="${table.id}" data-object-kind="table" style="left:${table.x}px;top:${table.y}px;width:${table.w}px;height:${table.h}px;transform:rotate(${table.rotation||0}deg);z-index:${table.z||10}">${chairs}<div class="table-surface"><span class="table-label">${esc(formatTableNumber(table.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${table.capacity}</span>${frozen?`<span class="table-frozen" title="${esc(t("freeze.tableFrozen"))}">${icon("lock")}</span>`:""}${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${empty} EMPTY</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`;
+    // THE SERVICE LOAD LAYER. A band on the table's own surface — never a blob
+    // over the drawing, and never a smooth field interpolated between tables,
+    // which would invent a figure for floor the product knows nothing about.
+    const loadRow=ui.loadLayer?loadBandMap(event)?.get(table.id):null;
+    return`<div class="table-object ${esc(table.type)} ${selected?"selected multi-selected":""} ${highlighted?"highlighted":""} ${frozen?"frozen":""} ${loadRow?"load-"+loadRow.band:""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match operational-match":""}" data-object-id="${table.id}" data-object-kind="table" style="left:${table.x}px;top:${table.y}px;width:${table.w}px;height:${table.h}px;transform:rotate(${table.rotation||0}deg);z-index:${table.z||10}">${chairs}<div class="table-surface"><span class="table-label">${esc(formatTableNumber(table.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${table.capacity}</span>${frozen?`<span class="table-frozen" title="${esc(t("freeze.tableFrozen"))}">${icon("lock")}</span>`:""}${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${empty} EMPTY</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`;
   };
 
   function planIssues(event){
@@ -636,7 +644,7 @@
       </header>
       ${riskRadarHTML(event,r)}
       <div class="cc-columns">${ccPlanConsistencyHTML(event)}${ccSeatingHTML(event)}</div>
-      ${arrivalWaveHTML(event,{compact:true})}
+      <div class="cc-columns">${arrivalWaveHTML(event,{compact:true})}${serviceLoadHTML(event,{compact:true})}</div>
       ${planDoctorHTML(event,r)}
     </div></div>`;
   }
@@ -1134,6 +1142,17 @@
       event.background?.src?b("plan",t("plan.mode.plan"))+b("review",t("plan.mode.review")):""}${
       changes?b("changes",t("plan.mode.changes")):""}</div>`;
   }
+  // Shared by both canvases: the Floor Plan is where an operator reads the
+  // room spatially, and Seating is where they act on occupancy, so the toggle
+  // belongs on both toolbars rather than only where it was easiest to add.
+  // Offered only where there is occupancy to show -- an empty room has no
+  // load, and a permanent toggle for an empty layer teaches an operator to
+  // stop reading the toolbar, the same rule the freeze layer and the changes
+  // mode follow.
+  function loadLayerToolHTML(event){
+    return(event.tables||[]).length&&(event.guests||[]).some(g=>g.assignment)
+      ?`<div class="tool-group">${toolbarBtn("users",t("load.layer"),`data-load-layer`,ui.loadLayer)}</div>`:"";
+  }
   function planMapToolbarHTML(event){
     const bg=event.background||{};
     // The language toggle used to live here AND in the review screen's own top
@@ -1145,7 +1164,7 @@
     // on a background image instead meant an event with a layout history and no
     // imported drawing had its change view built and unreachable.
     const modes=planModeSwitchHTML(event);
-    return`<div class="planmap-toolbar">${modes?`<div class="tool-group">${modes}</div>`:""}<div class="tool-group">${toolbarBtn("mouse",t("toolbar.select"),`data-tool="select"`,ui.tool==="select")}${toolbarBtn("hand",t("toolbar.pan"),`data-tool="pan"`,ui.tool==="pan")}</div><div class="tool-group">${toolbarBtn("zoomOut",t("toolbar.zoomOut"),`data-canvas-action="zoom-out"`)}<span class="zoom-label">${Math.round(ui.zoom*100)}%</span>${toolbarBtn("zoomIn",t("toolbar.zoomIn"),`data-canvas-action="zoom-in"`)}${toolbarBtn("fit",t("toolbar.fit"),`data-canvas-action="fit"`)}</div><div class="tool-group">${toolbarBtn("eye",bg.visible?t("toolbar.hideOriginalPlan"):t("toolbar.showOriginalPlan"),`data-v8-action="toggle-bg"`,bg.visible)}${toolbarBtn("image",t("toolbar.replacePlan"),`data-v8-action="replace-bg"`)}</div><div class="tool-group">${toolbarBtn("fit",t("toolbar.focusMode"),`data-v8-action="focus"`,ui.focusMode)}</div>${bg.src?`<div class="tool-group">${toolbarBtn("image",t("toolbar.assistedDetection"),`data-v8-action="detect"`,false).replace('class="toolbar-btn','class="toolbar-btn ai')}</div>`:""}</div>`;
+    return`<div class="planmap-toolbar">${modes?`<div class="tool-group">${modes}</div>`:""}<div class="tool-group">${toolbarBtn("mouse",t("toolbar.select"),`data-tool="select"`,ui.tool==="select")}${toolbarBtn("hand",t("toolbar.pan"),`data-tool="pan"`,ui.tool==="pan")}</div>${loadLayerToolHTML(event)}<div class="tool-group">${toolbarBtn("zoomOut",t("toolbar.zoomOut"),`data-canvas-action="zoom-out"`)}<span class="zoom-label">${Math.round(ui.zoom*100)}%</span>${toolbarBtn("zoomIn",t("toolbar.zoomIn"),`data-canvas-action="zoom-in"`)}${toolbarBtn("fit",t("toolbar.fit"),`data-canvas-action="fit"`)}</div><div class="tool-group">${toolbarBtn("eye",bg.visible?t("toolbar.hideOriginalPlan"):t("toolbar.showOriginalPlan"),`data-v8-action="toggle-bg"`,bg.visible)}${toolbarBtn("image",t("toolbar.replacePlan"),`data-v8-action="replace-bg"`)}</div><div class="tool-group">${toolbarBtn("fit",t("toolbar.focusMode"),`data-v8-action="focus"`,ui.focusMode)}</div>${bg.src?`<div class="tool-group">${toolbarBtn("image",t("toolbar.assistedDetection"),`data-v8-action="detect"`,false).replace('class="toolbar-btn','class="toolbar-btn ai')}</div>`:""}</div>`;
   }
   // What the pill puts where a seat count goes. On a plan whose tables are
   // drawn as symbols there is nothing to count: a bold "0 seats" in the
@@ -1207,7 +1226,7 @@
     // operator to stop reading it -- same rule as the Layout Changes mode.
     const freezeLayerBtn=eventFreezes(event).length
       ?`<div class="tool-group">${toolbarBtn("lock",t("freeze.layer"),`data-freeze-action="layer"`,ui.freezeLayer)}</div>`:"";
-    return`<div class="canvas-toolbar v8-toolbar"><div class="tool-group">${toolbarBtn("mouse",t("toolbar.select"),`data-tool="select"`,ui.tool==="select")}${toolbarBtn("hand",t("toolbar.pan"),`data-tool="pan"`,ui.tool==="pan")}</div>${freezeLayerBtn}${!seating?`<div class="tool-group">${toolbarBtn("plus",t("toolbar.addBulk"),`data-v8-action="add"`,ui.v8AddOpen)}${toolbarBtn("copy",t("toolbar.duplicate"),`data-v8-action="duplicate-selection"`)}${toolbarBtn("trash",t("toolbar.delete"),`data-v8-action="delete-selection"`)}</div><div class="tool-group">${toolbarBtn("undo",t("toolbar.undo"),`data-canvas-action="undo"`)}${toolbarBtn("redo",t("toolbar.redo"),`data-canvas-action="redo"`)}</div>`:""}<div class="tool-group">${toolbarBtn("zoomOut",t("toolbar.zoomOut"),`data-canvas-action="zoom-out"`)}<span class="zoom-label">${Math.round(ui.zoom*100)}%</span>${toolbarBtn("zoomIn",t("toolbar.zoomIn"),`data-canvas-action="zoom-in"`)}${toolbarBtn("fit",t("toolbar.fit"),`data-canvas-action="fit"`)}</div><div class="tool-group">${toolbarBtn("grid",t("toolbar.grid"),`data-canvas-action="grid"`,ui.grid)}${toolbarBtn("magnet",t("toolbar.snap"),`data-canvas-action="snap"`,ui.snap)}${toolbarBtn("seat",t("toolbar.seatLabels"),`data-canvas-action="seat-numbers"`,ui.showSeats)}</div><span class="toolbar-spacer"></span>${!seating?toolbarBtn("image",t("toolbar.assistedDetection"),`data-v8-action="detect" ${event.background?.src?"":"disabled"}`,false).replace('class="toolbar-btn','class="toolbar-btn ai'):""}${toolbarBtn("fit",t("toolbar.focusMode"),`data-v8-action="focus"`,ui.focusMode)}</div>`;
+    return`<div class="canvas-toolbar v8-toolbar"><div class="tool-group">${toolbarBtn("mouse",t("toolbar.select"),`data-tool="select"`,ui.tool==="select")}${toolbarBtn("hand",t("toolbar.pan"),`data-tool="pan"`,ui.tool==="pan")}</div>${freezeLayerBtn}${loadLayerToolHTML(event)}${!seating?`<div class="tool-group">${toolbarBtn("plus",t("toolbar.addBulk"),`data-v8-action="add"`,ui.v8AddOpen)}${toolbarBtn("copy",t("toolbar.duplicate"),`data-v8-action="duplicate-selection"`)}${toolbarBtn("trash",t("toolbar.delete"),`data-v8-action="delete-selection"`)}</div><div class="tool-group">${toolbarBtn("undo",t("toolbar.undo"),`data-canvas-action="undo"`)}${toolbarBtn("redo",t("toolbar.redo"),`data-canvas-action="redo"`)}</div>`:""}<div class="tool-group">${toolbarBtn("zoomOut",t("toolbar.zoomOut"),`data-canvas-action="zoom-out"`)}<span class="zoom-label">${Math.round(ui.zoom*100)}%</span>${toolbarBtn("zoomIn",t("toolbar.zoomIn"),`data-canvas-action="zoom-in"`)}${toolbarBtn("fit",t("toolbar.fit"),`data-canvas-action="fit"`)}</div><div class="tool-group">${toolbarBtn("grid",t("toolbar.grid"),`data-canvas-action="grid"`,ui.grid)}${toolbarBtn("magnet",t("toolbar.snap"),`data-canvas-action="snap"`,ui.snap)}${toolbarBtn("seat",t("toolbar.seatLabels"),`data-canvas-action="seat-numbers"`,ui.showSeats)}</div><span class="toolbar-spacer"></span>${!seating?toolbarBtn("image",t("toolbar.assistedDetection"),`data-v8-action="detect" ${event.background?.src?"":"disabled"}`,false).replace('class="toolbar-btn','class="toolbar-btn ai'):""}${toolbarBtn("fit",t("toolbar.focusMode"),`data-v8-action="focus"`,ui.focusMode)}</div>`;
   }
   function bulkPanel(event){
     if(!ui.v8AddOpen)return"";const d=ui.bulkDraft||={kind:"table",type:"round",chairs:8,quantity:4,rows:2,cols:2,placement:"grid",prefix:"T",zone:"MAIN FLOOR"};
@@ -1603,6 +1622,66 @@
     };
   }
 
+  // ---- SERVICE LOAD ---------------------------------------------------------
+  //
+  // src/service-load.js owns the arithmetic. The canvas draws bands, the
+  // Command Center states the totals, and neither computes anything of its own.
+  //
+  // PLANNED on the Floor Plan, LIVE once the doors are open: the same layer
+  // answers a different question in each, because a No Show's chairs are
+  // physically free tonight while the plan correctly still shows them taken.
+  let loadMemo={event:null,epoch:-1,mode:null,load:null};
+  function serviceLoad(event,mode){
+    const SL=globalThis.MeritServiceLoad;
+    if(!SL||!event)return null;
+    const m=mode||(eventPhase(event)==="live"?SL.MODE.LIVE:SL.MODE.PLANNED);
+    if(loadMemo.event===event&&loadMemo.epoch===mutationEpoch&&loadMemo.mode===m)return loadMemo.load;
+    loadMemo={event,epoch:mutationEpoch,mode:m,
+      load:SL.build({tables:event.tables||[],guests:event.guests||[],
+        venueObjects:event.venueObjects||[],mode:m})};
+    return loadMemo.load;
+  }
+  // tableObjectHTML runs once per table, so the band is looked up rather than
+  // recomputed — same reason the frozen set is memoised.
+  function loadBandMap(event){
+    const l=serviceLoad(event);
+    if(!l)return null;
+    if(!loadMemo.bands||loadMemo.bandsFor!==l)
+      {loadMemo.bands=new Map(l.tables.map(r=>[r.tableId,r]));loadMemo.bandsFor=l;}
+    return loadMemo.bands;
+  }
+  function loadBandText(band){const k="load.band."+band;return t(k)!==k?t(k):band;}
+  function serviceLoadHTML(event,{compact=false}={}){
+    const l=serviceLoad(event);
+    if(!l)return"";
+    const SL=globalThis.MeritServiceLoad;
+    const zones=l.zones.filter(z=>z.capacity>0).slice(0,compact?4:8);
+    const rows=zones.map(z=>`<div class="sl-zone">
+      <em>${esc(z.zone||t("load.noZone"))}</em>
+      <span class="sl-bar"><i class="sl-fill band-${z.band}" style="width:${
+        z.capacity?Math.round(z.pax/z.capacity*100):0}%"></i></span>
+      <b>${z.pax}/${z.capacity}</b>
+      <span class="sl-band band-${z.band}">${esc(loadBandText(z.band))}</span>
+    </div>`).join("");
+    // What it cannot see, from the engine's own list rather than a sentence
+    // typed here — so an aspect that ships stops being listed by itself.
+    const blind=l.notEvaluated.map(x=>t("load.notEvaluated."+x.aspect))
+      .filter((v,i)=>v!=="load.notEvaluated."+l.notEvaluated[i].aspect);
+    const service=l.servicePoints.known
+      ?`<p class="sl-service">${esc(t("load.servicePoints",{n:l.servicePoints.count}))}${
+        l.farthestFromService.length?` ${esc(t("load.farthest",{
+          number:formatTableNumber(l.farthestFromService[0].number)}))}`:""}</p>`
+      :`<p class="sl-service muted">${t("load.noServicePoints")}</p>`;
+    return`<section class="service-load ${compact?"compact":""}">
+      <div class="sl-head"><div><strong>${t("load.title")}</strong><p>${
+        t(l.mode===SL.MODE.LIVE?"load.questionLive":"load.questionPlanned")}</p></div>
+        <span class="sl-total">${l.room.seated}/${l.room.chairs}</span></div>
+      ${rows?`<div class="sl-zones">${rows}</div>`:`<p class="sl-empty">${t("load.nothing")}</p>`}
+      ${service}
+      ${blind.length?`<p class="sl-blind">${esc(t("load.doesNotCover",{aspects:blind.join(", ")}))}</p>`:""}
+    </section>`;
+  }
+
   // ---- FREEZE ZONES ---------------------------------------------------------
   //
   // Defined here, in Seating, because that is where an operator is thinking
@@ -1807,6 +1886,8 @@
       else if(action==="cancel-override"){ui.freezeChallenge=null;render();}
       else if(action==="override")authoriseFreezeOverride();
     });
+    const loadBtn=document.querySelector("[data-load-layer]");
+    if(loadBtn)loadBtn.onclick=()=>{ui.loadLayer=!ui.loadLayer;render();};
     document.querySelectorAll("[data-freeze-lift]").forEach(b=>b.onclick=()=>liftFreeze(b.dataset.freezeLift));
     document.querySelectorAll("[data-freeze-field]").forEach(el=>{
       const commit=()=>{

@@ -196,6 +196,26 @@ bucket. Lives in Live (working timeline, selecting a wave narrows the same door
 list) and on the Command Center (compact summary) — no new navigation item. Full
 detail: `src/arrival-wave.js` and `tests/suites/arrival-wave.test.mjs`.
 
+## Service load
+
+`src/service-load.js` answers one question — where is this room busy right
+now — from facts the product already has, and refuses everything more
+convincing than that. **No walking routes**: the drawing does not say where
+walls, doors or corridors are. **No distance in any unit**: nothing calibrates
+a plan's pixels to metres, so `farthestFromService` reports a **relative
+rank only**, never a figure. **No service times or staff load**: named in
+`notEvaluated` rather than silently absent. **No continuous heat field**:
+occupancy is known per table, so bands (`EMPTY`/`LIGHT`/`BUSY`/`FULL`) and
+per-zone totals are the honest granularity — never an interpolated surface.
+
+**PLANNED and LIVE are different rooms.** A No Show keeps the planned seat
+(the plan and reports are correct) and frees the chair tonight — the module
+takes a `mode` and excludes No Show pax only in `LIVE`. The layer toggle is
+shared by the Floor Plan and Seating toolbars (`loadLayerToolHTML`), off by
+default, and appears only once there is occupancy to show. The Command
+Center carries a compact summary beside the arrival wave. Full detail:
+`src/service-load.js` and `tests/suites/service-load.test.mjs`.
+
 ## Plan Intelligence honesty
 
 Assisted Detection today is classical computer vision, not a trained

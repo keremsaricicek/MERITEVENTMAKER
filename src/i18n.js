@@ -1252,6 +1252,27 @@
     "wave.noForecast": { en: "Nothing here is predicted. The product does not forecast arrivals.", tr: "Burada hiçbir şey tahmin edilmiyor. Ürün geliş tahmini yapmaz." },
     "guestDialog.expectedArrival": { en: "Expected Arrival", tr: "Beklenen Geliş" },
 
+    // ---- Service load ----
+    // Occupancy, per table and per zone. Never a route, never a distance in a
+    // unit nothing calibrates, never a service time.
+    "load.title": { en: "Service load", tr: "Servis yoğunluğu" },
+    "load.layer": { en: "Service load layer", tr: "Servis yoğunluğu katmanı" },
+    "load.questionPlanned": { en: "Where the seating plan concentrates people", tr: "Oturma planı insanları nerede yoğunlaştırıyor" },
+    "load.questionLive": { en: "Where the room is busy right now", tr: "Salon şu anda nerede yoğun" },
+    "load.noZone": { en: "No zone", tr: "Bölgesiz" },
+    "load.nothing": { en: "No table carries anybody yet.", tr: "Henüz hiçbir masada kimse yok." },
+    "load.band.EMPTY": { en: "empty", tr: "boş" },
+    "load.band.LIGHT": { en: "light", tr: "hafif" },
+    "load.band.BUSY": { en: "busy", tr: "yoğun" },
+    "load.band.FULL": { en: "full", tr: "dolu" },
+    "load.servicePoints": { en: "{n} service point(s) marked on this plan.", tr: "Bu planda {n} servis noktası işaretli." },
+    "load.farthest": { en: "Of the occupied tables, {number} sits furthest from any of them on this drawing — a relative position, not a distance or a walking route.", tr: "Dolu masalar arasında bu çizimde onlardan en uzakta duran {number}. Bu göreli bir konumdur; mesafe veya yürüyüş güzergâhı değildir." },
+    "load.noServicePoints": { en: "No service point is marked on this plan, so nothing about service position can be evaluated.", tr: "Bu planda servis noktası işaretlenmemiş, bu yüzden servis konumu hakkında bir değerlendirme yapılamaz." },
+    "load.doesNotCover": { en: "Not covered by this layer: {aspects}.", tr: "Bu katmanın kapsamadıkları: {aspects}." },
+    "load.notEvaluated.WALKING_ROUTES": { en: "walking routes", tr: "yürüyüş güzergâhları" },
+    "load.notEvaluated.SERVICE_TIMES": { en: "service times", tr: "servis süreleri" },
+    "load.notEvaluated.STAFF_LOAD": { en: "staff workload", tr: "personel iş yükü" },
+
     // ---- Event Risk Radar ----
     "radar.title": { en: "Event risk radar", tr: "Etkinlik risk radarı" },
     "radar.question": { en: "What could make this event fail operationally?", tr: "Bu etkinliği operasyonel olarak başarısız kılabilecek ne var?" },

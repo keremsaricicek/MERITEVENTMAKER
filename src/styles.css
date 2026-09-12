@@ -1900,3 +1900,44 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
   background:var(--blue-soft);font-size:11px;color:var(--text)}
 .wave-banner svg{width:13px;height:13px;color:var(--blue);flex:none}
 .wave-banner span{flex:1;min-width:0}
+
+/* ---- SERVICE LOAD --------------------------------------------------------
+   A band on the table's own surface and a bar per zone. Deliberately NOT a
+   heat field: occupancy is known per table, and interpolating a smooth surface
+   between them would invent a figure for every square of floor the product
+   knows nothing about. The plan stays readable through the layer. */
+.table-object.load-LIGHT .table-surface{box-shadow:inset 0 -3px 0 var(--green)}
+.table-object.load-BUSY .table-surface{box-shadow:inset 0 -3px 0 var(--amber)}
+.table-object.load-FULL .table-surface{box-shadow:inset 0 -3px 0 var(--red)}
+.table-object.load-LIGHT.frozen .table-surface{box-shadow:inset 0 0 0 1.5px var(--amber),inset 0 -3px 0 var(--green)}
+.table-object.load-BUSY.frozen .table-surface{box-shadow:inset 0 0 0 1.5px var(--amber),inset 0 -3px 0 var(--amber)}
+.table-object.load-FULL.frozen .table-surface{box-shadow:inset 0 0 0 1.5px var(--amber),inset 0 -3px 0 var(--red)}
+
+.service-load{border:1px solid var(--line);border-radius:var(--radius-lg);
+  background:var(--panel);padding:var(--sp-5)}
+.sl-head{display:flex;align-items:flex-start;justify-content:space-between;
+  gap:var(--sp-5);margin-bottom:var(--sp-4)}
+.sl-head strong{display:block;font-size:9px;font-weight:650;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted-2)}
+.sl-head p{margin:2px 0 0;font-size:11.5px;color:var(--text);font-weight:600}
+.sl-total{font-size:14px;font-weight:640;color:var(--text);font-variant-numeric:tabular-nums;flex:none}
+.sl-zones{display:flex;flex-direction:column;gap:5px}
+.sl-zone{display:grid;grid-template-columns:minmax(60px,1fr) minmax(40px,1.4fr) auto auto;
+  align-items:center;gap:var(--sp-3);font-size:11px}
+.sl-zone em{font-style:normal;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sl-bar{display:block;height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+.sl-fill{display:block;height:100%;border-radius:999px}
+.sl-fill.band-EMPTY{background:var(--line)}
+.sl-fill.band-LIGHT{background:var(--green)}
+.sl-fill.band-BUSY{background:var(--amber)}
+.sl-fill.band-FULL{background:var(--red)}
+.sl-zone b{font-weight:640;color:var(--text);font-variant-numeric:tabular-nums}
+.sl-band{font-size:9.5px;letter-spacing:.04em;text-transform:uppercase}
+.sl-band.band-LIGHT{color:var(--green-ink)}
+.sl-band.band-BUSY{color:var(--amber-ink)}
+.sl-band.band-FULL{color:var(--red-ink)}
+.sl-band.band-EMPTY{color:var(--muted-2)}
+.sl-empty,.sl-service{margin:var(--sp-4) 0 0;font-size:10.5px;line-height:1.45;color:var(--muted)}
+.sl-service.muted{color:var(--muted-2)}
+.sl-blind{margin:var(--sp-4) 0 0;padding-top:var(--sp-4);border-top:1px dashed var(--line);
+  font-size:10px;line-height:1.5;color:var(--muted-2)}

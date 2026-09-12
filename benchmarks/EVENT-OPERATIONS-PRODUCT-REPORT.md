@@ -1612,3 +1612,136 @@ pipeline stage is reachable from it — so no benchmark re-run was warranted.
   would order 00:30 before 23:30. Not modelled, and not pretended otherwise.
 - The Excel import does not yet map a stated-arrival column, so windows are
   typed one at a time in the guest dialog.
+
+## PHASE L — the Service Load Map
+
+### Problem
+
+An operator working the room needs one honest answer to "where is this room
+busy right now?" — using facts the product actually has (table positions,
+occupancy, zones, a marked bar) rather than facts it would need to invent
+(walking routes, calibrated distances, service times, staff load).
+
+### Measured first
+
+Before writing anything, the existing surfaces were checked for what they
+already answer:
+
+- `liveUsedIndexes` / `occupiedSeatIndexes` (`src/app-v8.js`) already compute
+  PLANNED vs LIVE occupancy per table, correctly excluding a No Show's chair
+  only in the live reading. Nothing new needed inventing here — Service Load
+  reuses the same domain distinction rather than recomputing it.
+- Venue objects already carry a `type` field (`bar`, `stage`, `entrance`,
+  `exit`, `column`, `text`) from the bulk-add tool. `bar` is the one type that
+  means "service comes from here" — nothing else in that list does.
+- Nothing anywhere records staff, service times, or the room's geometry beyond
+  object positions. These are true absences, not oversights, so the layer
+  reports them as `notEvaluated` rather than working around them.
+
+### Design decision: four refusals
+
+`src/service-load.js` runs no engine and answers one question. Four things it
+refuses, and why each was a real temptation:
+
+- **No walking routes.** The product knows where objects sit on a drawing. It
+  does not know where walls, doors or service corridors are, so a line from a
+  bar to a table would be a line, not a route.
+- **No distance in any unit.** A plan's pixels are not calibrated to metres.
+  `farthestFromService` reports a **rank**, computed from squared distance
+  internally and never exposed, because "14m from the bar" would be a number
+  with no referent while "furthest of these three" is a fact this drawing
+  supports.
+- **No service times or staff load.** Named in `NOT_EVALUATED` rather than
+  silently missing, the same discipline as the Risk Radar's blind spots.
+- **No continuous heat field.** Occupancy is known per table. A smooth
+  gradient between tables would invent a figure for floor the product knows
+  nothing about — bands (`EMPTY`/`LIGHT`/`BUSY`/`FULL`) and per-zone totals
+  are the honest granularity.
+
+**PLANNED and LIVE are different rooms**, reusing the No-Show rule rather than
+re-deriving it: a `mode` parameter (`PLANNED`/`LIVE`) decides whether a No
+Show's assignment counts, and the module contains exactly one line of domain
+logic that differs between them.
+
+### Implementation
+
+- The layer toggle (`loadLayerToolHTML`) is shared by the Floor Plan and
+  Seating toolbars — a single function, not two independent copies — and
+  appears only once an event has both tables and at least one seated guest.
+  Off by default: unlike a freeze, load is not a rule an operator can be
+  blocked by, so a permanent tint would be decoration rather than information.
+- On the canvas, a band renders as an `inset box-shadow` on the table's own
+  surface (not a filled overlay), composing cleanly with the freeze layer's
+  existing outline when both apply to the same table.
+- The Command Center carries a compact per-zone summary beside the arrival
+  wave, reusing the existing `.cc-columns` two-column grid rather than adding
+  a new layout primitive.
+
+### Defects found
+
+- **A real gap when the code was first wired up**: the load-layer toggle was
+  added only to `v8Toolbar` (Seating), and the Floor Plan uses a separate
+  `planMapToolbarHTML`. The Floor Plan is the primary map workspace — the one
+  place the layer most needs to be reachable — and had no way to turn it on.
+  Fixed by extracting `loadLayerToolHTML` as a function shared by both
+  toolbars, mirroring how the freeze-layer toggle should have been (and
+  wasn't) shared in Phase I.
+- **Test bugs caught by mutation testing, not the implementation**: an early
+  version of the suite asserted `farthestFromService` *excluded* the table
+  sitting on the marked service point. The engine was right to include it
+  (ranked last, closest) — the test's expectation was wrong. Also caught: a
+  regex checking for "not marked" against copy that actually reads "**No**
+  service point **is** marked", and a raw-JSON leak check that falsely
+  flagged a UUID's embedded digit run before the fix scoped it to exclude
+  `tableId` values.
+- **Pre-existing, out of scope**: `formatTableNumber` inserts a plain space
+  between a table's letter prefix and its digits ("T 05"), so table numbers
+  embedded in prose can wrap mid-token at narrow viewports (observed in the
+  Turkish Command Center at 1440×900). This exists everywhere the product
+  already renders a table number inline — Freeze Zones, the Plan Doctor,
+  Layout Changes — and predates this phase. A fix would touch a shared
+  formatting function used by every phase to date; not attempted here without
+  a dedicated regression pass across all of them.
+
+### Test evidence
+
+`tests/suites/service-load.test.mjs` — 52 checks, driving the real toolbar,
+the real canvas, and the real Command Center. Three mutations proved to bite:
+
+| Mutation | Result |
+|---|---|
+| bands scored as a percentage instead of named | 5 checks fail, showing `"100%"`/`"63%"` etc. in place of `FULL`/`BUSY` |
+| a No Show's chair still counted as occupied in `LIVE` mode | 2 checks fail: seated count and band both wrong |
+| `farthestFromService` leaking a computed distance under a new `distance` key | both the "no distance key" check and the raw-JSON check fail |
+
+### Visual QA
+
+Rendered at 1920×1080, 2560×1440 and 1440×900, English and Turkish, with the
+layer both off and on, on the Floor Plan and on the Command Center:
+
+- The layer draws as a thin band under each table's number — visible, but the
+  original drawing (the `BAR` object, the plan background) stays fully legible
+  underneath. No opaque block anywhere.
+- The Command Center's Service Load card sits beside the Arrival Wave card in
+  the existing two-column grid, states its one marked service point, states
+  the relative-only ordering in words ("a relative position, not a distance or
+  a walking route" / "göreli bir konumdur; mesafe veya yürüyüş güzergâhı
+  değildir"), and states its three uncovered aspects.
+- Zero horizontal overflow at any viewport. No page errors, English or
+  Turkish.
+
+### Regression
+
+Detection is not reachable from this phase — Service Load reads stored
+table/guest/venue-object state, never plan pixels or the detector pipeline —
+so `npm run benchmark` was not re-run; re-running it would only reproduce the
+existing baseline.
+
+```
+npm run test:all             45/45 suites, 1617/1617 checks
+npm run verify:offline       27 passed, 0 failed
+                             (service-load.js bundled into both artifacts)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             layer off/on, Floor Plan + Command Center —
+                             0px horizontal overflow, no page errors
+```

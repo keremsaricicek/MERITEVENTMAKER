@@ -62,6 +62,7 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `arrival-wave` | business | the expected axis is drawn as a zero curve when nobody stated a time, a No Show reaches the arrival curve, an arrival moment survives a status that contradicts it, an untimed check-in is dropped instead of counted, partial coverage is presented as complete, a forecast appears, or selecting a wave stops narrowing the door list |
 | `risk-radar` | business | the Command Center's radar invents a readiness percentage, stops naming the risks this build cannot evaluate, raises a No Show as a problem with the plan, treats every occupied frozen table as a contradiction, stops raising a checked-in guest with no table as BLOCKING, or leaves a resolved row on screen |
 | `seating-freeze` | business | a seating path crosses a freeze without a supervisor, an override lifts the freeze instead of authorising one operation, Smart Seating starts recommending frozen tables, the freeze stops being a rule (a table added to the zone afterwards is not covered), the canvas layer buries the plan under an opaque block, or a freeze does not survive a reload |
+| `service-load` | business | occupancy bands are scored as a percentage instead of named, PLANNED and LIVE occupancy stop being different rooms (a No Show's chair still reads as taken), a distance or route is computed from an unmarked or a marked service point, the layer paints an opaque block over the plan, or toggling it mutates the room |
 
 ## Environment
 
