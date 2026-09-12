@@ -1134,3 +1134,81 @@ Worth stating plainly because it cuts both ways: this failure was **not** caused
 by the phases in this report, and finding that out took reading the suite rather
 than the diff. A timeout on a selector is the least informative failure this
 harness produces, and it is exactly what a date-sensitive fixture yields.
+
+---
+
+## PHASE H + H2 — Smart Seating, and the Impact Preview
+
+Built as one phase because they are one workflow: recommend → preview → apply.
+Shipping recommendations with a dead Apply button would be the dead end the
+programme forbids, and shipping an Apply without a preview would be the silent
+mutation it forbids harder.
+
+### The boundary is the design
+
+`src/seating-advisor.js` **cannot seat anybody.** It takes a copy of the room and
+returns options and arithmetic; it has no path to an assignment at all. The only
+thing that ever writes one is the existing `assignGuestToTable()` — the same
+function a drag-and-drop calls — and exactly one line in the UI calls it, from
+the Apply button's handler.
+
+That is the whole point of the file rather than an implementation detail. "Smart
+seating" is precisely where a product starts quietly moving guests because it
+was confident, and this one structurally cannot.
+
+### Reasons, never a score
+
+An option carries named reasons — *enough seats for the whole party*, *the party
+stays together at one table*, *same zone as the rest of their host's guests*, *a
+VIP guest in a VIP zone*, *fills the table exactly*. A reason is a thing an
+operator can disagree with; "Table 58 (0.87)" is not. There is an internal
+`rank` that decides which four rows appear, and it is deliberately never shown.
+
+### A party is one record
+
+"Name +3" needs four seats at **one** table. A table with three free is not a
+near miss to be offered anyway — splitting a party to make the numbers work is
+the optimisation this must never make, and the engine reports `NOT_ENOUGH_SEATS`
+against that table rather than dropping it silently.
+
+### A constraint that cannot be evaluated says so
+
+Freeze Zones (Phase I) and unavailable tables (Phase N) do not exist yet.
+Reporting "no conflict" would be a claim about a feature that has never run, so
+both are reported as **not set up yet**, in the preview, every time. The day they
+arrive the same slot carries a real answer.
+
+### A locked assignment outranks the advisor
+
+A locked seat is a person's decision. Nothing is suggested over it, and the panel
+says why rather than showing an empty list.
+
+### Evidence
+
+`tests/suites/smart-seating.test.mjs` — 38 checks. The central one snapshots
+**every assignment in the event** and compares it byte for byte after asking for
+recommendations, after opening a preview, and after cancelling; a targeted check
+on the one guest being seated would miss a recommender that tidied somebody else
+up along the way. After Apply, the same snapshot proves exactly one record moved
+— the preview promised one, one moved.
+
+Two mutations, to prove the checks bite:
+
+| Mutation | Result |
+| --- | --- |
+| the preview applies itself on open | "NOTHING was seated, moved or unseated by opening it" fails, with the before/after assignments in the message |
+| a table one seat short is offered anyway | "a table with only three seats free is NOT offered — the party is not split" fails |
+
+One layout defect found by rendering: the preview's **Apply** button shared the
+bottom-right corner with the status pill and the toast band. A toast landing over
+Apply is a mis-click on the one control in this phase that actually moves a
+guest, so the card was lifted clear.
+
+```
+npm run test:all             41/41 suites, 1371/1371 checks
+npm run benchmark            fresh run, then
+npm run benchmark:baseline   no regressions, 0 improvements, 0 notes
+npm run verify:offline       27 passed, 0 failed
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             0px horizontal overflow, no page errors
+```

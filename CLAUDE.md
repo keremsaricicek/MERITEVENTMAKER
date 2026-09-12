@@ -128,6 +128,20 @@ disabled with its reason on the control. Speed is an index keyed on
 thousand guests rather than asserting one. Full detail: `src/app-v8.js`
 (`guestSearchIndex` / `findGuests`) and `tests/suites/guest-finder.test.mjs`.
 
+## Smart Seating
+
+`src/seating-advisor.js` **cannot seat anybody** — it returns options and
+arithmetic and has no path to an assignment. The only writer is the existing
+`assignGuestToTable()`, called from one line behind the Apply button. Keep that
+boundary: it is what makes "never silently move or seat guests" structural
+rather than a promise. Options carry **named reasons, never a score**; a party is
+one record and is never split across tables to make the numbers work; a locked
+assignment outranks every suggestion; and a constraint with no implementation yet
+(Freeze Zones, unavailable tables) reports **not set up yet** rather than "no
+conflict". Nothing mutates until a person presses Apply, and the preview shows
+the arithmetic they will get. Full detail: `src/seating-advisor.js` and
+`tests/suites/smart-seating.test.mjs`.
+
 ## Plan Intelligence honesty
 
 Assisted Detection today is classical computer vision, not a trained

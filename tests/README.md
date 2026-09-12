@@ -58,6 +58,7 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `plan-doctor` | business | an uncertain OCR reading becomes a blocker, a finding has nowhere to go, a fixed problem lingers as a stale warning, or the pre-flight and the header disagree |
 | `layout-changes` | business | a moved table is reported as a removal plus an addition, a capacity change is lumped in with movement, the change view stops being a mode of the Floor Plan, or a published version is rewritten by reading it |
 | `guest-finder` | business | the global search stops answering the whole question in the row, an action silently reseats or reclassifies a guest, the keyboard path breaks, or a four-thousand-guest search stops being fast |
+| `smart-seating` | business | a recommendation becomes a mutation before someone presses Apply, a party gets split across tables to make the numbers work, a constraint that has never run is reported as satisfied, or a locked assignment stops outranking the advisor |
 
 ## Environment
 

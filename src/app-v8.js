@@ -49,7 +49,11 @@
     // Which layout change the operator is looking at, if any.
     selectedChangeId:null,
     // Which guest-search result the keyboard is on. -1 means the list is shut.
-    findActive:-1
+    findActive:-1,
+    // The seating move being previewed, if any. Holding it here rather than in
+    // the event is deliberate: a preview is a question, not a change, and it
+    // must not survive into stored state.
+    seatPreview:null
   });
 
   function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[]}; }
@@ -1344,15 +1348,119 @@
           <input class="filter-input" id="seatingSearch" value="${esc(ui.seatingQuery)}" placeholder="${t("seating.search")}">
         </div>
         <div class="seat-queue-list">${queue}</div>
+        ${smartSeatingHTML(event)}
       </aside>
       <section class="seat-canvas-col">
         ${v8Toolbar(event,true)}
         ${canvasViewportHTML(event,true)}
         ${selectedTablePanelHTML(event)}
+        ${seatingPreviewHTML(event)}
         <div class="seat-pill">${t("seating.statusPill",{seated:seatedPax,total:totalPax,tables:event.tables.length,free:freeChairs})}</div>
       </section>
     </div>`;
   };
+  // ---- SMART SEATING --------------------------------------------------------
+  //
+  // Recommendations, a preview, and an Apply that goes through the SAME
+  // assignGuestToTable() a drag-and-drop does. src/seating-advisor.js cannot
+  // write an assignment at all; this is the only place its output can become a
+  // mutation, and only a person pressing Apply does it.
+  //
+  // The whole design rests on that one boundary. "Smart seating" is where a
+  // product starts quietly moving guests because it was confident, and the
+  // structure here makes that impossible rather than merely discouraged.
+  function seatingAdvice(event,guest){
+    if(!guest||!globalThis.MeritSeatingAdvisor)return null;
+    return globalThis.MeritSeatingAdvisor.recommend({
+      guest,tables:event.tables,guests:event.guests,limit:4});
+  }
+  function reasonText(r){
+    const k="seat.reason."+r;
+    return t(k)!==k?t(k):r;
+  }
+  function smartSeatingHTML(event){
+    const guest=event.guests.find(g=>g.id===ui.selectedGuestId);
+    if(!guest||isHistorical(event))return"";
+    const advice=seatingAdvice(event,guest);
+    if(!advice)return"";
+    const head=`<div class="ss-head"><strong>${t("seat.smartTitle")}</strong><span>${
+      esc(t("seat.forGuest",{name:guest.name,pax:paxOf(guest)}))}</span></div>`;
+    // A locked assignment is a person's decision and outranks anything this
+    // layer could propose, so nothing is proposed at all — said, not hidden.
+    if(advice.locked)
+      return`<aside class="smart-seating">${head}<p class="ss-empty">${t("seat.lockedNote")}</p></aside>`;
+    if(!advice.options.length)
+      return`<aside class="smart-seating">${head}<p class="ss-empty">${
+        t("seat.noneFit",{pax:paxOf(guest),tables:advice.considered})}</p></aside>`;
+    const rows=advice.options.map(o=>`<li class="ss-option${
+      ui.seatPreview&&ui.seatPreview.tableId===o.tableId?" active":""}">
+      <div class="ss-option-head"><b>${esc(formatTableNumber(o.number))}</b><span>${
+        esc(t("seat.freeOf",{free:o.free,capacity:o.capacity}))}${o.zone?` · ${esc(o.zone)}`:""}</span></div>
+      <ul class="ss-why">${o.reasons.map(r=>`<li>${esc(reasonText(r))}</li>`).join("")}</ul>
+      <button class="btn sm" data-seat-preview="${esc(o.tableId)}">${t("seat.previewImpact")}</button>
+    </li>`).join("");
+    return`<aside class="smart-seating">${head}
+      <ol class="ss-options">${rows}</ol>
+      <p class="ss-note">${t("seat.recommendationOnly")}</p>
+    </aside>`;
+  }
+  // WHAT WOULD CHANGE — computed, never promised. Nothing has moved when this
+  // is on screen; the numbers come from the advisor reading the same room.
+  function seatingPreviewHTML(event){
+    if(!ui.seatPreview||isHistorical(event))return"";
+    const guest=event.guests.find(g=>g.id===ui.seatPreview.guestId);
+    if(!guest)return"";
+    const p=globalThis.MeritSeatingAdvisor?.previewMove({
+      guest,tables:event.tables,guests:event.guests,toTableId:ui.seatPreview.tableId});
+    if(!p)return"";
+    const line=(label,before,after)=>`<div class="sp-row"><em>${esc(label)}</em><b>${
+      before}</b><i>&rarr;</i><b>${after}</b></div>`;
+    const notConfigured=t("seat.notConfigured");
+    return`<aside class="seat-preview">
+      <div class="sp-head"><strong>${t("seat.impactTitle")}</strong><span>${
+        esc(t("seat.impactSub",{name:guest.name,pax:p.guest.pax}))}</span></div>
+      <div class="sp-body">
+        ${p.from?line(t("seat.tableLabel",{number:formatTableNumber(p.from.number)}),
+          `${p.from.before}/${p.from.capacity}`,`${p.from.after}/${p.from.capacity}`):
+          `<div class="sp-row"><em>${t("seat.currently")}</em><b>${t("seat.noTable")}</b></div>`}
+        ${line(t("seat.tableLabel",{number:formatTableNumber(p.to.number)}),
+          `${p.to.before}/${p.to.capacity}`,`${p.to.after}/${p.to.capacity}`)}
+        ${line(t("seat.reserve"),p.reserve.before,p.reserve.after)}
+        <div class="sp-row"><em>${t("seat.affected")}</em><b>${
+          esc(t("seat.affectedValue",{guests:p.affectedGuests,pax:p.affectedPax}))}</b></div>
+        ${p.hostGuestsAlreadyAtTarget?`<div class="sp-row"><em>${t("seat.cohesion")}</em><b>${
+          esc(t("seat.cohesionValue",{n:p.hostGuestsAlreadyAtTarget}))}</b></div>`:""}
+        ${p.unevaluated.map(u=>`<div class="sp-row muted"><em>${
+          esc(t("seat.constraint."+u.constraint))}</em><b>${esc(notConfigured)}</b></div>`).join("")}
+      </div>
+      <div class="sp-foot">
+        <span class="sp-nothing">${t("seat.nothingYet")}</span>
+        <button class="btn sm" data-seat-cancel>${t("seat.cancel")}</button>
+        <button class="btn sm primary" data-seat-apply>${t("seat.apply")}</button>
+      </div>
+    </aside>`;
+  }
+  function bindSmartSeating(){
+    const event=activeEvent();
+    document.querySelectorAll("[data-seat-preview]").forEach(b=>b.onclick=()=>{
+      ui.seatPreview={guestId:ui.selectedGuestId,tableId:b.dataset.seatPreview};
+      render();
+    });
+    const cancel=document.querySelector("[data-seat-cancel]");
+    if(cancel)cancel.onclick=()=>{ui.seatPreview=null;render();};
+    const apply=document.querySelector("[data-seat-apply]");
+    if(apply)apply.onclick=()=>{
+      const p=ui.seatPreview;if(!p)return;
+      if(!canMutate(event,"seat a guest"))return;
+      recordUndo(event);
+      ui.seatPreview=null;
+      // The same function a drag-and-drop calls. The advisor has no path to it
+      // and never did: this line is the only way a recommendation becomes a
+      // seat, and it runs because a person pressed Apply.
+      assignGuestToTable(p.guestId,p.tableId);
+    };
+  }
+
   // Contextual card, not a permanent inspector: it exists only while a table
   // is selected, and closing it hands the space back to the plan.
   selectedTablePanelHTML = function(event){
@@ -7029,7 +7137,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
       if(reviewing&&!historical)bindReview();
       if(changesMode)bindLayoutChanges();
       if(ui.tab==="command"&&!historical)bindCommand();
-      if(ui.tab==="seating"&&!historical)bindSeating();if(ui.tab==="guests"&&!historical)bindGuests();if(ui.tab==="live"&&!historical)bindLive();if(ui.tab==="reports")bindReports();
+      if(ui.tab==="seating"&&!historical){bindSeating();bindSmartSeating();}if(ui.tab==="guests"&&!historical)bindGuests();if(ui.tab==="live"&&!historical)bindLive();if(ui.tab==="reports")bindReports();
       if(historical&&ui.tab==="seating")requestAnimationFrame(()=>fitCanvas(false));
     }
   };
