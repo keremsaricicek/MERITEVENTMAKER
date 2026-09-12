@@ -177,6 +177,25 @@ and find the button" is the dead end this layer forbids. INFORMATION never
 reaches the radar — that is the difference between it and the pre-flight report.
 Full detail: `src/plan-doctor.js` and `tests/suites/risk-radar.test.mjs`.
 
+## The arrival wave
+
+Two axes, kept apart by `src/arrival-wave.js`. **EXPECTED is what a person
+stated** — a guest has a window because somebody typed one, and nothing infers
+one. When nobody has, the expected axis **does not exist**: every bucket reports
+`null` rather than zero, because zero is a claim about the evening and null is
+the truth about the data. **ACTUAL is what happened**, from `guest.checkedInAt`.
+**Nothing is predicted** — there is no projection field and `forecast: null` is
+in the returned object so no caller can present one.
+
+The arrival axis has exactly one writer: `setArrival()` in `src/app-v8.js`
+maintains `arrivalStatus` and `checkedInAt` together and writes the audit entry.
+The moment never survives a status that contradicts it, a **No Show is never an
+arrival** (enforced in the module as well as by the caller), and a check-in with
+no recorded moment is counted as untimed rather than placed in an invented
+bucket. Lives in Live (working timeline, selecting a wave narrows the same door
+list) and on the Command Center (compact summary) — no new navigation item. Full
+detail: `src/arrival-wave.js` and `tests/suites/arrival-wave.test.mjs`.
+
 ## Plan Intelligence honesty
 
 Assisted Detection today is classical computer vision, not a trained

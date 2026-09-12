@@ -1484,3 +1484,131 @@ check that breaks when a new risk is added punishes the radar for doing its job
 — it now matches the unseated-guests row by its own translated wording and
 asserts that nothing is a blocker. `plan-doctor`'s dead-end rule was restated as
 described above.
+
+## PHASE K — the Arrival Wave Planner
+
+### Measured first: what facts actually existed
+
+| Fact | State before this phase |
+| --- | --- |
+| arrival status | on the guest record, three values |
+| party pax | on the guest record |
+| VIP level | on the guest record |
+| **when a guest actually checked in** | **nowhere on the guest record** — only as an `ARRIVAL_STATUS_CHANGED` line in `state.audit`, which is capped at 1,000 entries globally |
+| **a stated arrival window** | **did not exist in the schema at all** |
+| event start time | does not exist |
+
+So the honest reading was: the actual curve was *almost* derivable and would
+have silently truncated on any event with more than a thousand audited
+operations — a three-thousand-guest door — and the expected curve had no source
+whatsoever.
+
+### One writer for the arrival axis
+
+Four call sites wrote `arrivalStatus` independently — the Live Enter key, the
+Live status buttons, the Live undo, and the guest finder — each with its own
+audit line and none recording *when*. Four writers of one fact is how a fact
+drifts, and principle 5 forbids it.
+
+`setArrival(event, guest, next, source)` now owns the axis. It writes the
+status, maintains `checkedInAt` beside it, and records one audit entry carrying
+`from`, `to`, `at` and `source`. It writes the arrival axis and **nothing else**:
+`planningStatus` and the planned seat are separate facts and are untouched in
+both directions.
+
+The moment lives on the guest record rather than being reconstructed from the
+audit — one fact, one place, and it survives backup and restore with the guest
+it belongs to.
+
+**The moment never outlives the status.** Un-checking somebody in, or turning
+them into a No Show, clears `checkedInAt`. A stale timestamp would leave a
+person on the arrival curve who is not in the room.
+
+### The honest degraded mode is the DEFAULT
+
+No guest record carries a stated window unless a person typed one, so most
+events genuinely have no expected axis. The module reports `available: false`,
+`coverage: NONE` and a reason; every bucket's `expected` is `null`, not zero.
+The screen says so in a sentence instead of drawing a flat line along the
+bottom, which would read as "nobody is expected tonight".
+
+Three coverage states, named rather than scored: `NONE`, `PARTIAL`, `COMPLETE`.
+**PARTIAL is stated on the screen** — a stated curve covering half the room
+without saying so is worse than no curve at all.
+
+To make the comparison possible at all, the guest record gained an optional
+`expectedArrival` ("HH:MM"), typed in the guest dialog. Nothing infers one, and
+a half-typed value is rejected rather than becoming a point on a timeline.
+
+### Nothing is predicted
+
+There is no projection field, no extrapolation past the last real figure, and
+`forecast: null` is returned in the object itself so no caller can present one.
+The screen says it out loud as well. "310 guests expected in the next 20
+minutes" would need a model that does not exist.
+
+### Two defences, and only one was being tested
+
+The first mutation run exposed a real hole. Marking a No Show clears the
+timestamp in `setArrival`, so by the time the module ran there was nothing left
+to mishandle — which meant the module's **own** rule ("a No Show is never an
+arrival") was invisible to the suite. Mutating the module to keep No Shows on
+the curve passed.
+
+A restored older backup, or a hand-edited file, arrives with exactly that shape:
+a No Show that still carries a moment. The suite now builds that case directly
+and asserts the module refuses it, and the mutation then fails on precisely that
+line.
+
+### Placement
+
+Live carries the working timeline in the existing aside; selecting an interval
+**narrows the same door list** the search narrows, with a banner and a one-click
+way out. The Command Center carries a compact summary. No new navigation item.
+
+### A defect found by rendering
+
+The wave's filter banner reused `.filter-banner`, which is `position:absolute;
+top:10px; left:50%` because it was built for the canvas. Dropped into the Live
+column it landed over the header, and its icon-only `padding:0` button was not a
+click target anybody could hit at a door. It is its own inline component now,
+with a worded button. The rendered pass asserts the control's real bounding box
+rather than its presence.
+
+### Evidence
+
+`tests/suites/arrival-wave.test.mjs` — 64 checks. Six mutations bite:
+
+| Mutation | Result |
+| --- | --- |
+| an absent expected axis drawn as a zero curve | the count and the stated-bar checks fail |
+| a No Show kept on the arrival curve | (first attempt PASSED — see above; after the direct module check was added, it fails on both the curve and the total) |
+| the arrival moment surviving the status change | two checks fail with the stale timestamps |
+| an untimed check-in dropped instead of counted | "counted as untimed" fails |
+| partial coverage reported as complete | the coverage and the stated-partial checks fail |
+| selecting a wave narrows nothing | three door-list checks fail |
+
+```
+npm run test:all             44/44 suites, 1565/1565 checks
+npm run verify:offline       27 passed, 0 failed
+                             (arrival-wave.js bundled into both artifacts)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR —
+                             Live timeline, wave selected with the door list
+                             narrowed, Command Center summary; the way out of
+                             the filter measured as a real click target;
+                             no percentage, 0px horizontal overflow, no page
+                             errors
+```
+
+Detection was not touched by this phase — no detector input, threshold or
+pipeline stage is reachable from it — so no benchmark re-run was warranted.
+
+### Limitations, stated
+
+- An event has no start time, so the timeline is anchored on the data rather
+  than on a door time. When the first arrival is at 19:35, the timeline starts
+  at 19:30 and not earlier.
+- `expectedArrival` is a clock time with no date. An event crossing midnight
+  would order 00:30 before 23:30. Not modelled, and not pretended otherwise.
+- The Excel import does not yet map a stated-arrival column, so windows are
+  typed one at a time in the guest dialog.

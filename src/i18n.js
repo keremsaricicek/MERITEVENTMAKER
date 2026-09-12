@@ -1231,6 +1231,27 @@
     "doctor.spareCapacity": { en: "{spare} of {chairs} chairs are unassigned", tr: "{chairs} sandalyenin {spare} tanesi atanmamış" },
     "doctor.spareCapacity.1": { en: "one of {chairs} chairs is unassigned", tr: "{chairs} sandalyenin biri atanmamış" },
     "doctor.spareCapacity.why": { en: "chairs on seatable tables, less the pax already seated on them", tr: "oturulabilir masalardaki sandalyelerden, hâlihazırda oturan kişiler çıkarıldı" },
+    // ---- Arrival wave ----
+    // EXPECTED is what a person stated. ACTUAL is what happened. The wording
+    // must never let the first read as a prediction.
+    "wave.title": { en: "Arrival wave", tr: "Geliş dalgası" },
+    "wave.question": { en: "Expected against actual, over the evening", tr: "Gece boyunca beklenen ile gerçekleşen" },
+    "wave.bucketLabel": { en: "Time interval", tr: "Zaman aralığı" },
+    "wave.minutes": { en: "{n} min", tr: "{n} dk" },
+    "wave.expected": { en: "Stated", tr: "Bildirilen" },
+    "wave.actual": { en: "Arrived", tr: "Gelen" },
+    "wave.noExpected": { en: "No guest record states an arrival time, so there is nothing to compare against. Only actual arrivals are shown.", tr: "Hiçbir misafir kaydında geliş saati belirtilmemiş, bu yüzden karşılaştırılacak bir şey yok. Yalnızca gerçekleşen gelişler gösteriliyor." },
+    "wave.partial": { en: "{stated} of {total} records state a time; the rest are not on the stated line.", tr: "{total} kaydın {stated} tanesinde saat belirtilmiş; kalanlar bildirilen çizgide yer almıyor." },
+    "wave.nothingYet": { en: "Nobody has arrived yet and no arrival times have been stated.", tr: "Henüz kimse gelmedi ve hiçbir geliş saati bildirilmedi." },
+    "wave.bucketTitle": { en: "{from} – {to}", tr: "{from} – {to}" },
+    "wave.showingWave": { en: "Showing {from} – {to}: {expected} stated, {actual} arrived", tr: "{from} – {to} gösteriliyor: {expected} bildirilen, {actual} gelen" },
+    "wave.showingVip": { en: "Showing the {pax} VIP pax still outside", tr: "Hâlâ dışarıda olan {pax} VIP kişi gösteriliyor" },
+    "wave.vipOutstanding": { en: "{records} VIP records still expected · {pax} pax", tr: "{records} VIP kayıt hâlâ bekleniyor · {pax} kişi" },
+    "wave.untimed": { en: "{records} checked-in records carry no arrival time and are counted but not placed on the timeline.", tr: "Giriş yapmış {records} kayıtta geliş saati yok; sayılıyor ancak zaman çizelgesine yerleştirilmiyor." },
+    "wave.clearFilter": { en: "Show everyone", tr: "Tümünü göster" },
+    "wave.noForecast": { en: "Nothing here is predicted. The product does not forecast arrivals.", tr: "Burada hiçbir şey tahmin edilmiyor. Ürün geliş tahmini yapmaz." },
+    "guestDialog.expectedArrival": { en: "Expected Arrival", tr: "Beklenen Geliş" },
+
     // ---- Event Risk Radar ----
     "radar.title": { en: "Event risk radar", tr: "Etkinlik risk radarı" },
     "radar.question": { en: "What could make this event fail operationally?", tr: "Bu etkinliği operasyonel olarak başarısız kılabilecek ne var?" },

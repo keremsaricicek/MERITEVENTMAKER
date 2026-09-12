@@ -63,7 +63,11 @@
     // is set, and cancelling leaves the room exactly as it was.
     freezeChallenge:null,
     // The freeze being written, while the form is open.
-    freezeDraft:null
+    freezeDraft:null,
+    // ARRIVAL WAVE. The bucket width an operator is reading the evening at, and
+    // which wave (or the outstanding VIPs) the Live list is narrowed to. All
+    // three are views, never facts: nothing here reaches stored state.
+    waveBucket:30, waveKey:null, waveVip:false
   });
 
   function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[], lastBackupAt:null}; }
@@ -632,6 +636,7 @@
       </header>
       ${riskRadarHTML(event,r)}
       <div class="cc-columns">${ccPlanConsistencyHTML(event)}${ccSeatingHTML(event)}</div>
+      ${arrivalWaveHTML(event,{compact:true})}
       ${planDoctorHTML(event,r)}
     </div></div>`;
   }
@@ -1017,7 +1022,7 @@
       if(!canMutate(event,"check a guest in"))return;
       // Arrival status only. Planning status is a separate axis and nothing
       // here may write to it.
-      g.arrivalStatus="Checked In";
+      setArrival(event,g,"Checked In","finder");
       audit(event,"GUEST_CHECKED_IN",{guestId:g.id,from:"finder"});
       touchEvent(event);render();
       toast(t("find.checkedIn",{name:g.name}),"success");
@@ -1973,6 +1978,97 @@
     if(!t_)return`<span class="seat-tag none">${t("live.noTable")}</span>`;
     return`<span class="seat-tag">${esc(formatTableNumber(t_.number))}${g.assignment.seats?.length?` · ${esc(seatRange(g.assignment.seats))}`:""}</span>`;
   }
+  // ---- THE ARRIVAL WAVE -----------------------------------------------------
+  //
+  // Expected and actual, side by side, and never merged. src/arrival-wave.js
+  // owns the arithmetic; this renders it and nothing else computes it, so the
+  // Command Center's summary and the Live timeline cannot disagree.
+  //
+  // The degraded mode is the DEFAULT, not an error state: no guest record in
+  // this product carries a stated arrival window unless a person typed one, so
+  // most events will honestly have no expected axis at all. The screen says
+  // that plainly rather than drawing a flat line at zero.
+  let waveMemo={event:null,epoch:-1,step:null,wave:null};
+  function arrivalWave(event){
+    const W=globalThis.MeritArrivalWave;
+    if(!W||!event)return null;
+    const step=ui.waveBucket||30;
+    if(waveMemo.event===event&&waveMemo.epoch===mutationEpoch&&waveMemo.step===step)return waveMemo.wave;
+    waveMemo={event,epoch:mutationEpoch,step,
+      wave:W.build({guests:event.guests||[],bucketMinutes:step})};
+    return waveMemo.wave;
+  }
+  // The guests one selected wave is about, so the Live list can narrow to them.
+  function waveGuestIds(event,key){
+    const w=arrivalWave(event);
+    const b=w&&w.buckets.find(x=>x.key===key);
+    if(!b)return null;
+    return new Set([...(b.expected?b.expected.guestIds:[]),...b.actual.guestIds]);
+  }
+  // A bar pair per bucket. Heights are scaled to the busiest bucket in THIS
+  // event, which is a drawing decision and not a claim -- the numbers are on
+  // the row, and the tallest bar never means "full".
+  function arrivalWaveHTML(event,{compact=false}={}){
+    const w=arrivalWave(event);
+    if(!w)return"";
+    const head=`<div class="aw-head"><div><strong>${t("wave.title")}</strong><p>${t("wave.question")}</p></div>
+      ${compact?"":`<div class="aw-steps" role="group" aria-label="${esc(t("wave.bucketLabel"))}">${
+        [15,30,60].map(n=>`<button class="seg-btn ${w.bucketMinutes===n?"active":""}" data-wave-bucket="${n}">${
+          t("wave.minutes",{n})}</button>`).join("")}</div>`}</div>`;
+    if(!w.buckets.length)
+      return`<section class="arrival-wave ${compact?"compact":""}">${head}
+        <p class="aw-empty">${t("wave.nothingYet")}</p></section>`;
+    const peak=Math.max(1,...w.buckets.map(b=>Math.max(b.expected?b.expected.pax:0,b.actual.pax)));
+    const bars=w.buckets.map(b=>{
+      const on=ui.waveKey===b.key;
+      const eh=b.expected?Math.round(b.expected.pax/peak*100):0;
+      const ah=Math.round(b.actual.pax/peak*100);
+      return`<button class="aw-bucket ${on?"active":""}" data-wave-key="${esc(b.key)}"
+        title="${esc(t("wave.bucketTitle",{from:b.from,to:b.to}))}">
+        <span class="aw-bars">${b.expected
+          ?`<i class="aw-bar expected" style="height:${Math.max(eh,b.expected.pax?3:0)}%"></i>`:""}
+          <i class="aw-bar actual" style="height:${Math.max(ah,b.actual.pax?3:0)}%"></i></span>
+        <span class="aw-time">${esc(b.from)}</span>
+        <span class="aw-count">${b.expected?`${b.expected.pax}/`:""}${b.actual.pax}</span>
+      </button>`;
+    }).join("");
+    // The expected axis is either real or absent, and the legend says which.
+    const legend=w.expected.available
+      ?`<span class="aw-key"><i class="aw-bar expected"></i>${t("wave.expected")}</span>
+        <span class="aw-key"><i class="aw-bar actual"></i>${t("wave.actual")}</span>${
+        w.expected.coverage==="PARTIAL"?`<span class="aw-partial">${
+          esc(t("wave.partial",{stated:w.expected.statedRecords,total:w.expected.totalRecords}))}</span>`:""}`
+      :`<span class="aw-key"><i class="aw-bar actual"></i>${t("wave.actual")}</span>
+        <span class="aw-none">${t("wave.noExpected")}</span>`;
+    const untimed=w.actual.untimedRecords
+      ?`<p class="aw-untimed">${esc(t("wave.untimed",{records:w.actual.untimedRecords,pax:w.actual.untimedPax}))}</p>`:"";
+    const vip=w.vipStillExpected.records
+      ?`<button class="aw-vip" data-wave-vip>${esc(t("wave.vipOutstanding",{
+        records:w.vipStillExpected.records,pax:w.vipStillExpected.pax}))}</button>`:"";
+    return`<section class="arrival-wave ${compact?"compact":""}">${head}
+      <div class="aw-chart">${bars}</div>
+      <div class="aw-legend">${legend}</div>
+      ${vip}${untimed}
+      <p class="aw-note">${t("wave.noForecast")}</p>
+    </section>`;
+  }
+  // What the selection currently narrows the Live list to, and the way out.
+  function waveFilterBannerHTML(event){
+    if(!ui.waveKey&&!ui.waveVip)return"";
+    const w=arrivalWave(event);
+    if(!w)return"";
+    if(ui.waveVip)
+      return`<div class="wave-banner">${icon("users")}<span>${
+        esc(t("wave.showingVip",{pax:w.vipStillExpected.pax}))}</span><button class="btn sm" data-wave-clear>${
+        t("wave.clearFilter")}</button></div>`;
+    const b=w.buckets.find(x=>x.key===ui.waveKey);
+    if(!b)return"";
+    return`<div class="wave-banner">${icon("search")}<span>${
+      esc(t("wave.showingWave",{from:b.from,to:b.to,
+        expected:b.expected?b.expected.pax:0,actual:b.actual.pax}))}</span><button class="btn sm" data-wave-clear>${
+      t("wave.clearFilter")}</button></div>`;
+  }
+
   const ARRIVAL_ORDER={"Not Arrived":0,"Checked In":1,"No Show":2};
   // What the current search actually narrowed to, so the Enter key acts on
   // exactly the rows the operator can see. Deliberately a local, not ui state:
@@ -1986,7 +2082,14 @@
     const q=ui.liveQuery.trim().toLocaleLowerCase("tr"),s=liveStats(event);
     if(!ui.liveRecent)ui.liveRecent=[];
     const byId=tableIndex(event);
+    // The wave selection narrows the SAME list the search does, rather than
+    // opening a second one: selecting 19:30 is a filter on the door queue, and
+    // the operator has to be able to work straight out of it and then leave.
+    const waveIds=ui.waveKey?waveGuestIds(event,ui.waveKey):null;
+    const vipIds=ui.waveVip?new Set(arrivalWave(event)?.vipStillExpected.guestIds||[]):null;
     const rows=event.guests
+      .filter(g=>!waveIds||waveIds.has(g.id))
+      .filter(g=>!vipIds||vipIds.has(g.id))
       .filter(g=>!q||[g.name,g.vip,g.invitedBy,g.planningStatus,g.arrivalStatus,byId.get(g.assignment?.tableId)?.number].join(" ").toLocaleLowerCase("tr").includes(q))
       // Not Arrived first: on event night the operator's list is "who is still
       // outside", not an alphabetical roster.
@@ -2039,10 +2142,12 @@
         <div>
           <div class="live-search-hero"><span class="hero-icon">${icon("search")}</span><input id="liveSearch" value="${esc(ui.liveQuery)}" placeholder="${t("live.searchHero")}" autocomplete="off"></div>
           <p class="live-hint">${t("live.hint")}<br>${t("live.enterHint")}</p>
+          ${waveFilterBannerHTML(event)}
           <div class="mx-list" id="liveList" style="margin-top:12px">${list}</div>
           ${hiddenCount>0?`<div class="live-more" id="liveMore"><span>${t("live.showingOf",{shown:windowed.length,total:rows.length})}</span><button class="btn sm" data-live-action="show-more">${t("live.showMore")}</button></div>`:""}
         </div>
-        <aside class="live-aside"><div class="live-aside-head">${t("live.recentTitle")}</div>${recent}</aside>
+        <aside class="live-aside">${arrivalWaveHTML(event)}
+          <div class="live-aside-head">${t("live.recentTitle")}</div>${recent}</aside>
       </div>
     </div></div>`;
   };
@@ -2086,9 +2191,8 @@
         const from=g.arrivalStatus;
         // Same single axis as the buttons: arrivalStatus only. planningStatus
         // and the planned seat assignment are untouched.
-        g.arrivalStatus="Checked In";
+        setArrival(event,g,"Checked In","live-keyboard");
         recordArrival(g,from,"Checked In");
-        audit(event,"ARRIVAL_STATUS_CHANGED",{guestId:g.id,status:"Checked In"});
         ui.liveQuery="";
         touchEvent(event);render();focusLiveSearch();
         toast(t("live.checkedInToast",{name:g.name}),"success");
@@ -2097,6 +2201,17 @@
       // nothing else already has it, so this never steals from another field.
       if(document.activeElement===document.body)search.focus();
     }
+    document.querySelectorAll("[data-wave-bucket]").forEach(b=>b.onclick=()=>{
+      ui.waveBucket=Number(b.dataset.waveBucket);ui.waveKey=null;render();});
+    document.querySelectorAll("[data-wave-key]").forEach(b=>b.onclick=()=>{
+      // Selecting the wave already selected clears it: the way out of a filter
+      // is the control that put you in it, as well as the banner's own button.
+      ui.waveKey=ui.waveKey===b.dataset.waveKey?null:b.dataset.waveKey;
+      ui.waveVip=false;ui.liveWindow=null;render();});
+    const waveVip=document.querySelector("[data-wave-vip]");
+    if(waveVip)waveVip.onclick=()=>{ui.waveVip=!ui.waveVip;ui.waveKey=null;ui.liveWindow=null;render();};
+    const waveClear=document.querySelector("[data-wave-clear]");
+    if(waveClear)waveClear.onclick=()=>{ui.waveKey=null;ui.waveVip=false;render();};
     document.querySelectorAll("[data-live-kpi]").forEach(b=>b.onclick=()=>{
       ui.tab="seating";ui.seatingFilter=b.dataset.liveKpi;ui.seatingGuestScope="all";ui.seatingQuery="";
       ui.operationalMode=true;ui.selectedGuestIds=[];ui.selectedGuestId=null;ui.selectedTableId=null;render();
@@ -2107,9 +2222,8 @@
       const from=g.arrivalStatus;
       // Arrival status is its own axis: this writes arrivalStatus and nothing
       // else. planningStatus and the planned seat assignment are untouched.
-      g.arrivalStatus=from===status?"Not Arrived":status;
+      setArrival(event,g,from===status?"Not Arrived":status,"live-buttons");
       recordArrival(g,from,g.arrivalStatus);
-      audit(event,"ARRIVAL_STATUS_CHANGED",{guestId:g.id,status:g.arrivalStatus});
       touchEvent(event);render();
       if(g.arrivalStatus==="No Show")toast(t("live.noShowKeepsSeat"),"success",5200);
       else if(g.arrivalStatus==="Checked In")toast(t("live.checkedInToast",{name:g.name}),"success");
@@ -2142,14 +2256,42 @@
       const event=activeEvent();if(!canMutate(event,"change live arrival status"))return;
       const id=b.dataset.liveUndo,entry=(ui.liveRecent||[]).find(r=>r.guestId===id),g=event.guests.find(x=>x.id===id);
       if(!entry||!g)return;
-      g.arrivalStatus=entry.from;
+      setArrival(event,g,entry.from,"live-undo");
       ui.liveRecent=ui.liveRecent.filter(r=>r.guestId!==id);
-      audit(event,"ARRIVAL_STATUS_CHANGED",{guestId:g.id,status:g.arrivalStatus});
       touchEvent(event);render();toast(t("live.undoneToast",{name:g.name}));
     });
   };
   // Session-only trail so a mis-tap at the door is recoverable. Deliberately
   // ui state, not event data -- it must never reach the stored schema.
+  // ---- THE ARRIVAL AXIS, IN ONE PLACE ---------------------------------------
+  //
+  // Four call sites used to write arrivalStatus independently — the Live Enter
+  // key, the Live status buttons, the Live undo, and the guest finder — each
+  // with its own audit line and none of them recording WHEN. Four writers of
+  // one fact is how the fact drifts, and it is why the product could not draw
+  // an arrival curve it believed: the audit is capped at a thousand entries and
+  // a three-thousand-guest door would have overflowed it.
+  //
+  // So the moment lives on the guest record, next to the status it belongs to,
+  // and exactly one function maintains the pair. It writes the arrival axis and
+  // NOTHING else: planningStatus and the planned seat are separate facts and
+  // are not touched here, in either direction.
+  function setArrival(event,guest,next,source){
+    if(!event||!guest)return null;
+    const from=guest.arrivalStatus;
+    if(!["Not Arrived","Checked In","No Show"].includes(next))return null;
+    guest.arrivalStatus=next;
+    // The moment is kept only while the status it describes is true. A guest
+    // who is un-checked-in, or turned into a No Show, has no arrival time —
+    // leaving a stale one would put a person on the arrival curve who is not
+    // in the room.
+    if(next==="Checked In"){ if(!guest.checkedInAt)guest.checkedInAt=nowISO(); }
+    else guest.checkedInAt=null;
+    audit(event,"ARRIVAL_STATUS_CHANGED",{guestId:guest.id,from,to:next,
+      at:guest.checkedInAt||null,source:source||"live"});
+    return{from,to:next};
+  }
+
   function recordArrival(g,from,to){
     if(!ui.liveRecent)ui.liveRecent=[];
     ui.liveRecent=ui.liveRecent.filter(r=>r.guestId!==g.id);
@@ -2472,6 +2614,7 @@
     setLabel("gfPlanning","guestDialog.planningStatus");
     setLabel("gfVip","guestDialog.vipLevel");
     setLabel("gfInvitedBy","guestDialog.invitedBy");
+    setLabel("gfExpectedArrival","guestDialog.expectedArrival");
     setLabel("gfNotes","guestDialog.notes");
     const paxLabel=document.getElementById("gfPaxLabel");if(paxLabel)paxLabel.textContent=t("guestDialog.totalPax");
     const planningSel=form.elements.planningStatus;

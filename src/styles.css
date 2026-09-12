@@ -1852,3 +1852,51 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .cc-radar-head p{margin:0;font-size:11.5px;color:var(--muted-2)}
 .cc-radar-blind{margin:var(--sp-5) 0 0;padding-top:var(--sp-4);
   border-top:1px dashed var(--line);font-size:10.5px;line-height:1.5;color:var(--muted-2)}
+
+/* ---- ARRIVAL WAVE --------------------------------------------------------
+   Two bars per interval, never one stacked bar: stated and arrived are
+   different facts and a stacked column would read as one quantity split in
+   two. Bar HEIGHT is scaled to this event's busiest interval — a drawing
+   decision, not a claim — and the figure is on every column so the reader
+   never has to infer a number from a pixel height. */
+.arrival-wave{border:1px solid var(--line);border-radius:var(--radius-lg);
+  background:var(--panel);padding:var(--sp-5);margin-bottom:var(--sp-5)}
+.arrival-wave.compact{margin:var(--sp-5) 0 0}
+.aw-head{display:flex;align-items:flex-start;justify-content:space-between;
+  gap:var(--sp-5);flex-wrap:wrap;margin-bottom:var(--sp-5)}
+.aw-head strong{display:block;font-size:9px;font-weight:650;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted-2)}
+.aw-head p{margin:2px 0 0;font-size:11.5px;color:var(--text);font-weight:600}
+.aw-steps{display:flex;gap:4px}
+.aw-empty{margin:0;font-size:11px;line-height:1.5;color:var(--muted-2)}
+.aw-chart{display:flex;align-items:flex-end;gap:3px;overflow-x:auto;padding-bottom:2px}
+.aw-bucket{flex:1 0 34px;min-width:34px;display:flex;flex-direction:column;align-items:center;
+  gap:3px;padding:4px 2px;border:1px solid transparent;border-radius:var(--radius-md);
+  background:none;cursor:pointer;transition:background var(--dur-fast) var(--ease)}
+.aw-bucket:hover{background:var(--panel-2)}
+.aw-bucket.active{border-color:var(--blue);background:var(--blue-soft)}
+.aw-bars{display:flex;align-items:flex-end;gap:2px;height:64px}
+.aw-bar{display:block;width:7px;border-radius:2px 2px 0 0;min-height:1px}
+.aw-bar.expected{background:var(--muted-2);opacity:.45}
+.aw-bar.actual{background:var(--blue)}
+.aw-time{font-size:9.5px;color:var(--muted-2);font-variant-numeric:tabular-nums}
+.aw-count{font-size:10px;font-weight:640;color:var(--text);font-variant-numeric:tabular-nums}
+.aw-legend{display:flex;align-items:center;gap:var(--sp-5);flex-wrap:wrap;
+  margin-top:var(--sp-4);padding-top:var(--sp-4);border-top:1px solid var(--line-soft)}
+.aw-key{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--muted)}
+.aw-key .aw-bar{height:9px;width:7px}
+.aw-none,.aw-partial{font-size:10.5px;line-height:1.45;color:var(--muted-2);flex:1 1 180px}
+.aw-vip{display:block;width:100%;margin-top:var(--sp-4);padding:6px 9px;text-align:left;
+  font-size:10.5px;font-weight:600;color:var(--amber-ink);background:var(--amber-soft);
+  border:1px solid rgba(171,118,48,.3);border-radius:var(--radius-md);cursor:pointer}
+.aw-untimed{margin:var(--sp-4) 0 0;font-size:10px;line-height:1.45;color:var(--muted-2)}
+.aw-note{margin:var(--sp-4) 0 0;font-size:10px;line-height:1.45;color:var(--muted-2)}
+/* Its own component, in the flow. The canvas's .filter-banner is absolutely
+   positioned for a map and lands over the header when borrowed for a column —
+   and its icon-only button is not a click target an operator can hit at a
+   door. */
+.wave-banner{display:flex;align-items:center;gap:8px;margin-top:var(--sp-4);
+  padding:7px 10px;border:1px solid var(--blue);border-radius:var(--radius-md);
+  background:var(--blue-soft);font-size:11px;color:var(--text)}
+.wave-banner svg{width:13px;height:13px;color:var(--blue);flex:none}
+.wave-banner span{flex:1;min-width:0}

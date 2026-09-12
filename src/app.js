@@ -21,7 +21,17 @@
     const oldStatus=g.status;g.additionalGuests=Math.max(0,Number(g.additionalGuests??Math.max(0,(Number(g.pax)||1)-1))||0);g.pax=1+g.additionalGuests;
     g.planningStatus=["Confirmed","Tentative"].includes(g.planningStatus)?g.planningStatus:(oldStatus==="Tentative"?"Tentative":"Confirmed");
     g.arrivalStatus=["Not Arrived","Checked In","No Show"].includes(g.arrivalStatus)?g.arrivalStatus:(["Checked In","No Show"].includes(oldStatus)?oldStatus:"Not Arrived");
-    g.vip=["Standard","VIP","VVIP"].includes(g.vip)?g.vip:"Standard";g.assignment=g.assignment||null;return g;
+    g.vip=["Standard","VIP","VVIP"].includes(g.vip)?g.vip:"Standard";g.assignment=g.assignment||null;
+    // WHEN THEY SAID THEY WOULD COME, and WHEN THEY ACTUALLY DID. Two separate
+    // facts on two separate axes. The stated window is optional and is only
+    // ever typed by a person -- nothing infers one. The moment is maintained
+    // alongside arrivalStatus and must not survive a status that contradicts
+    // it: an install from before these fields simply has neither, which is the
+    // correct empty state rather than something to reconstruct.
+    g.expectedArrival=/^\s*\d{1,2}\s*[:.]\s*\d{2}\s*$/.test(String(g.expectedArrival||""))
+      ?String(g.expectedArrival).trim().replace(".",":"):null;
+    g.checkedInAt=g.arrivalStatus==="Checked In"&&g.checkedInAt?g.checkedInAt:null;
+    return g;
   }
   function seedTables(){const t=(number,type,x,y,w,h,capacity,zone,rotation=0)=>({id:uid("table"),number,type,x,y,w,h,capacity,zone,rotation,locked:false,z:10,hasPhysicalSeats:true});return[
     t("T01","rectangle",607,285,122,74,6,"VIP FRONT"),t("T02","rectangle",745,285,122,74,6,"VIP FRONT"),t("T03","rectangle",892,285,122,74,6,"VIP FRONT"),t("T04","rectangle",1038,285,122,74,6,"VIP FRONT"),
