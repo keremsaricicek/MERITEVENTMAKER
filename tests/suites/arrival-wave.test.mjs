@@ -203,6 +203,24 @@ export default async function run({ page, checks, baseUrl }) {
     "and the audit's moment is the guest record's moment — one fact, not two");
   checks.ok(doorCheckIn.source, "with where the change came from", doorCheckIn.source);
 
+  // The real click above already proved a door check-in stamps "now" — that
+  // assertion just ran, against the real moment. From here the suite reasons
+  // about a SPECIFIC bucket ("19:30" is g_a's only stated window, isolated
+  // below), so g_c's moment has to stop being whatever wall-clock minute a
+  // runner happens to execute this suite at. Left alone, "now" collides with
+  // the 19:30 bucket roughly one run in twelve and turns g_c into a second
+  // arrival inside the exact interval the checks below expect to hold only
+  // g_a — this is that collision, not a change in behaviour. Anchor it at a
+  // fixed point that still falls inside the 19:30–20:30 span the stated
+  // windows below create anyway, just in neither bucket, the same way g_a and
+  // g_b's moments a few lines up are fixed rather than left to real time.
+  await page.evaluate(async (iso) => {
+    const g = state.events[0].guests.find(x => x.id === "g_c");
+    g.checkedInAt = iso;
+    touchEvent(state.events[0]); render();
+  }, await page.evaluate(stampAt(20, 0)));
+  await page.waitForTimeout(300);
+
   // --- 6. a stated window creates the expected axis -------------------------
   await page.evaluate(() => {
     const e = state.events[0];
