@@ -4,13 +4,13 @@
 // still write type:"bistro", because the type identifier is read by the
 // detector, the reports and the seat geometry. This suite runs the panel in
 // Turkish precisely because that is where a label-vs-value slip would show.
-import { openApp, createBlankEvent, addTables } from "../lib/app-actions.mjs";
+import { openApp, createBlankEvent, addTables, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "bulk-add-integrity", tags: ["business", "fast"], timeout: 90000 };
 
 export default async function run({ page, checks, baseUrl }) {
   await openApp(page, baseUrl, { lang: "tr" });
-  await createBlankEvent(page, { name: "Deger", hotel: "H", date: "2026-10-02" });
+  await createBlankEvent(page, { name: "Deger", hotel: "H", date: futureDate() });
 
   const count = await addTables(page, { quantity: 6, type: "bistro", prefix: "B" });
   checks.ok(count === 6, "the Turkish panel created exactly the requested six tables", count);

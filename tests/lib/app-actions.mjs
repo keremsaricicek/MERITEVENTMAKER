@@ -47,7 +47,20 @@ export async function openApp(page, baseUrl, { file = "index.html", lang } = {})
   if (lang) await page.evaluate(l => { ui.lang = l; render(); }, lang);
 }
 
-export async function createBlankEvent(page, { name = "Test Event", hotel = "Merit Royal", date = "2026-09-10", salon } = {}) {
+// A date far enough ahead that the event is never historical, computed rather
+// than written down. Hardcoded fixture dates are a time bomb: an event dated in
+// the past is `isHistorical`, which makes it read-only with no Floor Plan tab
+// and no add-object control — so the suite fails at `click(".planmap-fab")`
+// with a timeout that says nothing about what actually broke. Two suites went
+// red exactly this way the day their 2026-09-10 fixture drifted into the past,
+// and nothing in the product had changed.
+//
+// Suites that WANT a finished event still pass a past date deliberately; this
+// is only the default for "an event you can still work on".
+export const futureDate = (daysAhead = 90) =>
+  new Date(Date.now() + daysAhead * 86400000).toLocaleDateString("en-CA");
+
+export async function createBlankEvent(page, { name = "Test Event", hotel = "Merit Royal", date = futureDate(), salon } = {}) {
   await click(page, '[data-action="create-event"]');
   await page.waitForSelector('input[name="name"]', { timeout: 10000 });
   await page.fill('input[name="name"]', name);

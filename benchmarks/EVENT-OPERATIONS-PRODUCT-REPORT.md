@@ -1007,3 +1007,130 @@ npm run verify:offline        27 passed, 0 failed
 rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
                              0px horizontal overflow, no page errors
 ```
+
+---
+
+## PHASE G — Smart Guest Finder
+
+The global search was a name-and-table lookup that offered one destination. At a
+door, with a queue behind somebody, the question is rarely "where is this name"
+on its own — it is *who is this, are they expected, have they arrived, where do
+they sit, who came with them* — and then one action. The row answers all of that
+now, and offers the four things an operator actually does next.
+
+### Speed is an index, not a promise
+
+The old search ran a table lookup **inside** the filter, so every keystroke cost
+O(guests × tables). On a four-thousand-guest event that is millions of
+comparisons per character typed. One lowercase haystack per guest is built once
+per change to the event — `lastModified` is the invalidation key, because
+`touchEvent()` stamps it on every mutation — and scanned linearly after that.
+
+Measured rather than asserted, through `renderGlobalSearch` (the whole cost of
+one keystroke: index, match, rank, build the rows), over 4,003 guests:
+
+| | ms |
+|---|---|
+| cold (pays for the index) | reported |
+| warm, mean of 8 queries | **gated < 25** |
+| warm, worst of 8 | **gated < 60** |
+
+The matcher underneath is closure-scoped and unreachable from a test, which is
+the right shape: the suite drives what the product exposes.
+
+### Every field the phase names, and nothing invented
+
+Name, host or company, VIP level, planning status, arrival status, table number
+and zone. **`invitedBy` is where this data model keeps both the host and the
+company** — there is no separate company field, and adding one would have
+created a field nobody fills in. Said plainly rather than papered over.
+
+Terms narrow rather than widen: `kerem yılmaz` matches guests satisfying both.
+An OR search over four thousand guests is the same as no search at all.
+
+### The party is the people the same host brought
+
+Not the guest's own companions — those are already inside the record as pax, and
+a "party" of one record showing itself tells an operator nothing. `invitedBy` is
+the only grouping in this data that survives a guest not being seated yet.
+
+### Nothing moves by itself
+
+CHANGE TABLE opens Seating with the guest selected and waits for a person.
+Silently reseating somebody is the one thing this product must never do, and a
+"smart" finder is exactly where that would creep in. CHECK IN writes **arrival
+status only** — planning status is a separate axis and nothing here touches it.
+
+Each action is offered only where it can do something, with the reason on the
+control: an unseated guest cannot be shown on a plan, a guest nobody shares a
+host with has no party, a completed event cannot be checked into.
+
+### Four defects this surfaced, two of them only by rendering
+
+1. **The keyboard died after the first Escape.** `ui.findActive` uses -1 for the
+   shut state, and the re-activation guard tested `== null` and `>= rows.length`
+   but not `< 0`. So after one Escape the list came back with nothing selected
+   and Enter did nothing — a door operator's whole path, silently broken.
+2. **My own axis check could not fail.** The check-in fixture used a guest who
+   was already `Confirmed`, so a mutation that wrote `planningStatus =
+   "Confirmed"` on check-in changed nothing and the suite stayed green. The most
+   important domain rule in this phase was unguarded. The fixture is `Tentative`
+   now, and the mutation fails it.
+3. **The results panel was invisible, and nothing was clipping it.** Rendered at
+   1920×1080 the finder showed a ~50px sliver of one row. Every ancestor's
+   `overflow` was `visible` and all four rows were in the DOM at full height —
+   the panel was simply painted UNDER the content, because `.workspace-head` is
+   `position: static` and had no stacking context of its own. Pre-existing: the
+   old short panel overlapped the screen too, just less visibly. The header is
+   positioned now.
+4. **Half the Turkish row was English.** Planning status is stored as
+   `Confirmed`/`Tentative` — domain values the workbook export and the contract
+   read — and was rendered straight through, so a Turkish operator saw
+   "2 kişi · VIP · **Confirmed** · giriş yaptı". Arrival status had already been
+   translated at the boundary; planning status had not. A raw-key sweep cannot
+   see this, so the suite now compares the two languages and rejects English
+   status words in the Turkish row.
+
+### Evidence
+
+`tests/suites/guest-finder.test.mjs` — 57 checks against a real 4,003-guest
+event: the measured timings; each searchable field; terms narrowing; the row
+carrying pax, VIP, both statuses, table, seats, zone and host; actions gated with
+reasons; SHOW ON PLAN landing on the guest's own table, selected and highlighted,
+inside the workspace; CHECK IN moving one axis and writing an audit entry;
+CHANGE TABLE moving nobody; arrow keys and Enter and Escape; a capped result set
+counting the rest; no raw key in either language; and a completed event that can
+be searched but not changed.
+
+Two mutations, to prove the checks bite:
+
+| Mutation | Result |
+| --- | --- |
+| CHANGE TABLE silently reseats the guest | "NOTHING was seated, moved or unseated" fails |
+| CHECK IN also sets planning status | "checking in does NOT touch planning status" fails — **only after the fixture was corrected**; with the original fixture it passed, which is why the fixture is part of the fix |
+| planning status rendered raw again | "no English status survives into the Turkish row" fails |
+
+### A time bomb in the fixtures, found by the calendar
+
+`test:all` went red on `guest-and-seating-rules` and `xlsx-contract` — the
+reports contract among them — with an identical, useless message:
+`click(".planmap-fab")` timed out. Nothing in the product had changed.
+
+Both suites created their event with a **hardcoded `date: "2026-09-10"`**, and
+the day had passed. A past-dated event is `isHistorical`: read-only, with no
+Floor Plan tab and no add-object control at all. The suite was not failing a
+check — it was waiting for a control the product correctly refuses to render,
+and reporting a timeout that says nothing about the cause.
+
+Every other fixture in the suite carried the same bomb with a later fuse; the
+next one was due in three weeks. Fixed as a class rather than as two instances:
+`futureDate(daysAhead = 90)` in `tests/lib/app-actions.mjs` computes the date,
+`createBlankEvent` defaults to it, and 26 suites now use it. The suites that
+deliberately want a finished event still pass a past date — `2020-01-01` in
+`historical-immutability` is untouched, and the event that starts workable and
+is later marked `Completed` correctly got a future date.
+
+Worth stating plainly because it cuts both ways: this failure was **not** caused
+by the phases in this report, and finding that out took reading the suite rather
+than the diff. A timeout on a selector is the least informative failure this
+harness produces, and it is exactly what a date-sensitive fixture yields.

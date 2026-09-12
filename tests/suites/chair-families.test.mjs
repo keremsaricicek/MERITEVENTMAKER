@@ -26,7 +26,7 @@
 // and in --all.
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = {
   name: "chair-families",
@@ -43,7 +43,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const annot = JSON.parse(fs.readFileSync(annotPath, "utf8"));
 
   await openApp(page, baseUrl);
-  await createBlankEvent(page, { name: "Families", hotel: "Merit", date: "2026-10-02" });
+  await createBlankEvent(page, { name: "Families", hotel: "Merit", date: futureDate() });
 
   const dataUrl = "data:image/png;base64," + fs.readFileSync(planPath).toString("base64");
   await page.evaluate(src => {

@@ -20,7 +20,7 @@
 //   canvas, not a second drawing of the same room. A future change that redrew
 //   the layout from the diff would look reasonable in a diff and would undo the
 //   thing that makes the view trustworthy.
-import { click, openApp, createBlankEvent, addTables, gotoTab } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, gotoTab, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "layout-changes", tags: ["business", "fast"], timeout: 120000 };
 
@@ -78,7 +78,7 @@ const CLASSES = `(function(){
 
 export default async function run({ page, checks, baseUrl }) {
   await openApp(page, baseUrl);
-  await createBlankEvent(page, { name: "Changes", hotel: "Merit Royal", date: "2026-12-11" });
+  await createBlankEvent(page, { name: "Changes", hotel: "Merit Royal", date: futureDate() });
   await addTables(page, { quantity: 4 });
 
   // --- 1. no published version, nothing to compare against -----------------

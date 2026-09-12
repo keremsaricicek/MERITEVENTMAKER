@@ -5,13 +5,13 @@
 // with a queue behind it. The dangerous failure is not "nothing happened", it
 // is "the wrong guest was checked in", so the ambiguous-query case is asserted
 // first and hardest.
-import { click, openApp, createBlankEvent, addGuest, gotoTab, settle, typeQuery } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addGuest, gotoTab, settle, typeQuery, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "live-door-keys", tags: ["business", "fast"], timeout: 120000 };
 
 export default async function run({ page, checks, baseUrl }) {
   await openApp(page, baseUrl);
-  await createBlankEvent(page, { name: "Door", hotel: "Merit", date: "2026-12-20" });
+  await createBlankEvent(page, { name: "Door", hotel: "Merit", date: futureDate() });
 
   await gotoTab(page, "guests");
   // Two guests sharing a first name, so a partial query is genuinely ambiguous.

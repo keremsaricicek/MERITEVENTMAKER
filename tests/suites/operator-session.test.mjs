@@ -21,7 +21,7 @@
 // requires a person, and until one has done it the answer is NOT VERIFIED.
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = {
   name: "operator-session",
@@ -53,7 +53,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   });
 
   await openApp(page, baseUrl);
-  await createBlankEvent(page, { name: "Operator", hotel: "Merit", date: "2026-10-02" });
+  await createBlankEvent(page, { name: "Operator", hotel: "Merit", date: futureDate() });
   await page.evaluate(src => {
     state.events[0].background = { src, name: "plan.png", opacity: 1, visible: true, locked: false, scale: 100 };
     render();

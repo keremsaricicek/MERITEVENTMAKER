@@ -12,7 +12,7 @@
 // reasonable in a diff and would undo exactly this.
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent, gotoTab, importPlan, runDetection, ocrAvailability } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, gotoTab, importPlan, runDetection, ocrAvailability, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "floor-plan-modes", tags: ["business", "fast"], timeout: 180000 };
 
@@ -43,7 +43,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const planDataUrl = "data:image/png;base64," + fs.readFileSync(planPath).toString("base64");
 
   await openApp(page, baseUrl);
-  await createBlankEvent(page, { name: "Modes", hotel: "Merit Royal", date: "2026-11-22" });
+  await createBlankEvent(page, { name: "Modes", hotel: "Merit Royal", date: futureDate() });
 
   // --- 1. no plan, no mode switch -----------------------------------------
   const blank = await page.evaluate(SHELL);

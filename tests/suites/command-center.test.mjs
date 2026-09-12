@@ -16,7 +16,7 @@
 //    English sentences for the benchmarks and the exported report, so the screen
 //    restates each check from the numbers the check carries. If that path breaks
 //    the screen silently falls back to English inside a Turkish UI.
-import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "command-center", tags: ["business", "fast"], timeout: 120000 };
 
@@ -30,7 +30,7 @@ const BREAK_THE_PLAN = `(function(){
 
 export default async function run({ page, checks, baseUrl }) {
   await openApp(page, baseUrl);
-  await createBlankEvent(page, { name: "Command", hotel: "Merit Royal", date: "2026-11-20" });
+  await createBlankEvent(page, { name: "Command", hotel: "Merit Royal", date: futureDate() });
 
   // --- 1. creating an event still lands on the plan, not on a summary -------
   const afterCreate = await page.evaluate(() => ui.tab);

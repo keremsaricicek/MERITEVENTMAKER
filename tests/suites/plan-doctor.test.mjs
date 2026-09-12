@@ -21,7 +21,7 @@
 //   THE PRODUCT ANSWERS ONCE. The header badge, the attention list and the
 //   Doctor all read one report. Three assemblies of the same facts is the
 //   defect B1 fixed for the status pill and the review chip.
-import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "plan-doctor", tags: ["business", "fast"], timeout: 150000 };
 
@@ -65,7 +65,7 @@ const openDoctor = async (page) => {
 
 export default async function run({ page, checks, baseUrl }) {
   await openApp(page, baseUrl);
-  await createBlankEvent(page, { name: "Doctor", hotel: "Merit Royal", date: "2026-12-04" });
+  await createBlankEvent(page, { name: "Doctor", hotel: "Merit Royal", date: futureDate() });
   await addTables(page, { quantity: 3 });
   await gotoTab(page, "guests");
   await addGuest(page, { name: "Ada Lovelace", additionalGuests: 3 });

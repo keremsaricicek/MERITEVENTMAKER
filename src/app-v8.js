@@ -47,7 +47,9 @@
     // minutes -- appear when someone runs the pre-flight.
     doctorOpen:false,
     // Which layout change the operator is looking at, if any.
-    selectedChangeId:null
+    selectedChangeId:null,
+    // Which guest-search result the keyboard is on. -1 means the list is shut.
+    findActive:-1
   });
 
   function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[]}; }
@@ -764,6 +766,195 @@
   // jobs on the same drawing, so they are two modes of one screen rather than
   // two screens -- and the switch between them must not look like navigation,
   // because it is not: the event, the tabs and the guest search do not move.
+  // ---- SMART GUEST FINDER ---------------------------------------------------
+  //
+  // The global search was a name-and-table lookup that offered one destination.
+  // At a door the question is rarely "where is this name" on its own — it is
+  // "who is this, are they expected, have they arrived, where do they sit, and
+  // who came with them", and then one action. This answers all of that in the
+  // row, and offers the four things an operator actually does next.
+  //
+  // SPEED IS AN INDEX, NOT A PROMISE. The old search ran a table lookup INSIDE
+  // the filter, so every keystroke cost O(guests x tables) — on a 4,000-seat
+  // event that is millions of comparisons per character typed. One lowercase
+  // haystack per guest is built once per change to the event and scanned
+  // linearly after that. The suite measures it rather than asserting it.
+  let guestIndexCache = null;
+  function guestSearchIndex(event){
+    // touchEvent() stamps lastModified on every mutation, so it is the cheapest
+    // honest invalidation signal there is. The lengths are in the key too,
+    // because an import can add guests inside one millisecond.
+    const sig=`${event.id}|${event.lastModified}|${event.guests.length}|${event.tables.length}`;
+    if(guestIndexCache&&guestIndexCache.sig===sig)return guestIndexCache;
+    const tables=new Map(event.tables.map(t=>[t.id,t]));
+    const rows=event.guests.map(g=>{
+      const table=g.assignment?tables.get(g.assignment.tableId)||null:null;
+      return{guest:g,table,
+        name:String(g.name||"").toLocaleLowerCase("tr"),
+        // Everything the phase asks to search by: names, the host or company
+        // that brought them, VIP level, planning and arrival status, the table
+        // number and its zone. `invitedBy` is where this data model keeps both
+        // the host and the company — there is no separate company field, and
+        // inventing one would be a field nobody fills in.
+        hay:[g.name,g.vip,g.invitedBy,g.notes,g.planningStatus,g.arrivalStatus,
+          table?table.number:"",table?formatTableNumber(table.number):"",table?table.zone:""]
+          .filter(Boolean).join(" ").toLocaleLowerCase("tr")};
+    });
+    guestIndexCache={sig,rows,tables};
+    return guestIndexCache;
+  }
+  // Every term must match, so "yilmaz vip" narrows instead of widening. Ranked
+  // by how the name matched, then alphabetically, so the order is stable
+  // between keystrokes rather than depending on record order.
+  function findGuests(event,query,limit=12){
+    const q=String(query||"").trim().toLocaleLowerCase("tr");
+    if(!q)return{rows:[],total:0};
+    const terms=q.split(/\s+/).filter(Boolean);
+    const index=guestSearchIndex(event);
+    const hits=[];
+    for(const row of index.rows){
+      if(!terms.every(term=>row.hay.includes(term)))continue;
+      const rank=row.name.startsWith(terms[0])?0:row.name.includes(terms[0])?1:2;
+      hits.push({row,rank});
+    }
+    hits.sort((a,b)=>a.rank-b.rank||a.row.name.localeCompare(b.row.name,"tr"));
+    return{rows:hits.slice(0,limit).map(h=>h.row),total:hits.length};
+  }
+  // The party is the people the same host brought. It is NOT the guest's own
+  // companions — those are already inside the record as pax, and a "party" of
+  // one record showing itself tells an operator nothing. `invitedBy` is the
+  // only grouping in this data that survives a guest not being seated yet.
+  function partyOf(event,guest){
+    const host=String(guest.invitedBy||"").trim();
+    if(!host)return[];
+    return event.guests.filter(g=>String(g.invitedBy||"").trim()===host);
+  }
+  function guestResultHTML(event,row,active){
+    const g=row.guest,table=row.table;
+    const extra=additionalOf(g);
+    const historical=isHistorical(event);
+    const party=partyOf(event,g);
+    const seatText=table?`${esc(formatTableNumber(table.number))} · ${esc(seatRange(g.assignment.seats))}`:t("find.noTable");
+    // Each action is offered only where it can do something, with the reason
+    // carried in the title rather than a dead control the operator presses and
+    // learns nothing from.
+    const act=(action,label,enabled,title)=>
+      `<button class="btn sm ${enabled?"":"is-off"}" data-find-action="${action}" data-find-guest="${g.id}"${
+        enabled?"":" disabled"}${title?` title="${esc(title)}"`:""}>${label}</button>`;
+    return`<div class="find-row ${active?"active":""}" data-search-guest="${g.id}" role="option"${active?' aria-selected="true"':""}>
+      <div class="find-who">
+        <strong>${esc(g.name)}${extra?` +${extra}`:""}</strong>
+        <span class="find-meta">${esc(t("find.pax",{n:paxOf(g)}))}${
+          g.vip&&g.vip!=="Standard"?` · <b class="find-vip">${esc(g.vip)}</b>`:""} · ${esc(planningText(g.planningStatus))} · ${esc(arrivalText(g.arrivalStatus))}</span>
+        <span class="find-meta">${seatText}${table&&table.zone?` · ${esc(table.zone)}`:""}${
+          g.invitedBy?` · ${esc(t("find.invitedBy",{host:g.invitedBy}))}`:""}</span>
+      </div>
+      <div class="find-actions">
+        ${act("plan",t("find.showOnPlan"),!!table,table?"":t("find.noTableReason"))}
+        ${act("party",t("find.viewParty"),party.length>1,party.length>1?"":t("find.noPartyReason"))}
+        ${act("checkin",t("find.checkIn"),!historical&&g.arrivalStatus!=="Checked In",
+          historical?t("find.historicalReason"):g.arrivalStatus==="Checked In"?t("find.alreadyIn"):"")}
+        ${act("table",t("find.changeTable"),!historical,historical?t("find.historicalReason"):"")}
+      </div>
+    </div>`;
+  }
+  // Both status axes are stored in English — they are domain values that the
+  // workbook export and the contract read — so both are translated at the
+  // render boundary and neither is translated in the data. An unrecognised
+  // value is shown as it stands rather than relabelled with a word that might
+  // not be true of it.
+  const statusText=(prefix,status)=>{
+    const k=prefix+String(status||"").replace(/\s+/g,"");
+    return t(k)!==k?t(k):String(status||"");
+  };
+  const arrivalText=status=>statusText("find.arrival.",status);
+  const planningText=status=>statusText("find.planning.",status);
+  // Four things an operator does after finding somebody. None of them moves a
+  // guest on its own: CHANGE TABLE opens Seating with the guest selected and
+  // waits for a person to choose, because silently reseating somebody is the
+  // one thing this product must never do.
+  function findAction(event,action,guestId){
+    const g=event.guests.find(x=>x.id===guestId);
+    if(!g)return;
+    const table=g.assignment?event.tables.find(t=>t.id===g.assignment.tableId):null;
+    closeGuestSearch();
+    if(action==="plan"&&table){
+      ui.tab="floor";ui.planMode="plan";
+      ui.selectedObjectId=table.id;ui.selectedObjectIds=[table.id];ui.highlightId=table.id;
+      ui.selectedGuestId=g.id;
+      render();
+    }else if(action==="party"){
+      const box=document.getElementById("globalGuestSearch");
+      if(box){box.value=g.invitedBy||"";renderGlobalSearch(box.value);box.focus();}
+    }else if(action==="checkin"){
+      if(!canMutate(event,"check a guest in"))return;
+      // Arrival status only. Planning status is a separate axis and nothing
+      // here may write to it.
+      g.arrivalStatus="Checked In";
+      audit(event,"GUEST_CHECKED_IN",{guestId:g.id,from:"finder"});
+      touchEvent(event);render();
+      toast(t("find.checkedIn",{name:g.name}),"success");
+    }else if(action==="table"){
+      if(!canMutate(event,"change a guest's table"))return;
+      ui.tab="seating";ui.selectedGuestId=g.id;
+      ui.seatingGuestScope="all";ui.seatingQuery=g.name;ui.seatingFilter="available";
+      ui.selectedTableId=table?table.id:null;ui.highlightId=ui.selectedTableId;
+      render();
+    }
+  }
+  function closeGuestSearch(){
+    ui.findActive=-1;
+    document.getElementById("globalSearchResults")?.classList.add("hidden");
+  }
+  // Reassigns the top-level binding from src/app.js, the same way eventsHTML
+  // and the other screen renderers are replaced by this file.
+  renderGlobalSearch = function(query){
+    const box=document.getElementById("globalSearchResults"),event=activeEvent();
+    if(!box||!event)return;
+    const {rows,total}=findGuests(event,query);
+    if(!String(query||"").trim()){box.classList.add("hidden");ui.findActive=-1;return;}
+    // -1 is the shut state, set by Escape and by the ui defaults. Without the
+    // <0 guard it survives the next keystroke, so the list came back with
+    // nothing selected and Enter did nothing — the keyboard path silently died
+    // after the first Escape.
+    if(ui.findActive==null||ui.findActive<0||ui.findActive>=rows.length)ui.findActive=rows.length?0:-1;
+    box.innerHTML=rows.length
+      ?`<div class="find-list" role="listbox">${rows.map((r,i)=>guestResultHTML(event,r,i===ui.findActive)).join("")}</div>${
+        total>rows.length?`<div class="find-more">${esc(t("find.more",{n:total-rows.length}))}</div>`:""}`
+      :`<div class="find-empty">${t("find.none")}</div>`;
+    box.classList.remove("hidden");
+    box.querySelectorAll("[data-find-action]").forEach(b=>b.onclick=e=>{
+      e.stopPropagation();
+      if(b.disabled)return;
+      findAction(event,b.dataset.findAction,b.dataset.findGuest);
+    });
+    // Clicking the row itself does the same as its primary action: show them on
+    // the plan if they are seated, otherwise go and seat them.
+    box.querySelectorAll("[data-search-guest]").forEach(row=>row.onclick=()=>{
+      const g=event.guests.find(x=>x.id===row.dataset.searchGuest);
+      findAction(event,g&&g.assignment?"plan":"table",row.dataset.searchGuest);
+    });
+  };
+  // A door operator types and presses Enter; they do not reach for a mouse.
+  function guestSearchKey(e){
+    const box=document.getElementById("globalSearchResults");
+    const input=document.getElementById("globalGuestSearch");
+    if(!box||!input)return;
+    if(e.key==="Escape"){closeGuestSearch();return;}
+    const open=!box.classList.contains("hidden");
+    if(!open)return;
+    const rows=[...box.querySelectorAll("[data-search-guest]")];
+    if(!rows.length)return;
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+      e.preventDefault();
+      ui.findActive=((ui.findActive??0)+(e.key==="ArrowDown"?1:-1)+rows.length)%rows.length;
+      renderGlobalSearch(input.value);
+    }else if(e.key==="Enter"){
+      e.preventDefault();
+      rows[Math.max(0,ui.findActive??0)]?.click();
+    }
+  }
+
   // ---- LAYOUT CHANGES -------------------------------------------------------
   //
   // What has moved since the room was published. No new detector:
@@ -6809,7 +7000,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
       ui.selectedCandidateId=null;ui.activeReviewGroupId=null;ui.activeQuestionId=null;
       ui.reviewDrawMode=false;ui.selectedChangeId=null;ui.highlightId=null;render();
     });
-    const back=document.querySelector("[data-action='back-events']");if(back)back.onclick=()=>{ui.screen="events";ui.focusMode=false;render();};const save=document.querySelector("[data-action='save-now']");if(save)save.onclick=()=>saveState(true);const search=document.getElementById("globalGuestSearch");if(search){search.oninput=()=>renderGlobalSearch(search.value);search.onkeydown=e=>{if(e.key==="Escape")document.getElementById("globalSearchResults")?.classList.add("hidden");};}
+    const back=document.querySelector("[data-action='back-events']");if(back)back.onclick=()=>{ui.screen="events";ui.focusMode=false;render();};const save=document.querySelector("[data-action='save-now']");if(save)save.onclick=()=>saveState(true);const search=document.getElementById("globalGuestSearch");if(search){search.oninput=()=>renderGlobalSearch(search.value);search.onkeydown=guestSearchKey;}
     const backupExport=document.querySelector("[data-action='backup-export']");if(backupExport)backupExport.onclick=exportBackup;
     const backupImport=document.querySelector("[data-action='backup-import']");if(backupImport)backupImport.onclick=()=>document.getElementById("backupFileInput").click();
     const backupInput=document.getElementById("backupFileInput");

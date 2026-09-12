@@ -28,7 +28,7 @@
 // Slow (two real detection runs), so it is out of the default run and in --all.
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = {
   name: "structural-objects",
@@ -39,7 +39,7 @@ export const meta = {
 
 async function analyse(page, baseUrl, imagePath, eventName) {
   await openApp(page, baseUrl);
-  await createBlankEvent(page, { name: eventName, hotel: "Merit", date: "2026-10-02" });
+  await createBlankEvent(page, { name: eventName, hotel: "Merit", date: futureDate() });
   const dataUrl = "data:image/png;base64," + fs.readFileSync(imagePath).toString("base64");
   await page.evaluate(([src, name]) => {
     state.events[0].background = { src, name, opacity: 1, visible: true, locked: false, scale: 100 };

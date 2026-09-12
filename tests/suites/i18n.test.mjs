@@ -5,7 +5,7 @@
 // suite hunts for: a literal "guestDialog.save" on a button is the shape a
 // missing translation takes. The original scratchpad version printed the
 // dialog text for a human to read; this one fails the build instead.
-import { click, openApp, createBlankEvent, addTables, gotoTab } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, gotoTab, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "i18n", tags: ["ui", "fast"], timeout: 120000 };
 
@@ -48,7 +48,7 @@ export default async function run({ page, checks, baseUrl }) {
 
   // --- 3. Turkish reaches the actual rendered dialog ------------------------
   await page.evaluate(() => { ui.lang = "tr"; });
-  await createBlankEvent(page, { name: "I18N", hotel: "Merit", date: "2026-11-01" });
+  await createBlankEvent(page, { name: "I18N", hotel: "Merit", date: futureDate() });
   await addTables(page, { quantity: 1 });
 
   await click(page, "#canvasViewport .table-object, #canvasViewport [data-object-id]");

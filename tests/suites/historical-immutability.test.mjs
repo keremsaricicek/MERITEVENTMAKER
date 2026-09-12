@@ -6,7 +6,7 @@
 // suite verifies both halves of the guarantee from outside: the mutation
 // surfaces are gone from the UI, AND the data does not move when the
 // keyboard paths that normally mutate are fired at it directly.
-import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "historical-immutability", tags: ["business", "fast"], timeout: 90000 };
 
@@ -33,7 +33,7 @@ export default async function run({ page, checks, baseUrl }) {
   // content is frozen rather than merely hidden.
   await click(page, '[data-action="back-events"]');
   await page.waitForTimeout(400);
-  await createBlankEvent(page, { name: "Goes Historical", hotel: "Merit Royal", date: "2026-12-01" });
+  await createBlankEvent(page, { name: "Goes Historical", hotel: "Merit Royal", date: futureDate() });
   await addTables(page, { quantity: 2 });
   await gotoTab(page, "guests");
   await addGuest(page, { name: "FROZEN GUEST" });

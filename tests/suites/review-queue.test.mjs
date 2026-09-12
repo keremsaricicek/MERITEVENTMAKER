@@ -12,7 +12,7 @@
 // and would then be confidently wrong about how much work was left.
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent, importPlan, runDetection, ocrAvailability } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, importPlan, runDetection, ocrAvailability, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "review-queue", tags: ["business", "fast"], timeout: 180000 };
 
@@ -64,7 +64,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.require(fs.existsSync(planPath), "the real venue plan is present", planPath);
 
   await openApp(page, baseUrl);
-  await createBlankEvent(page, { name: "Queue", hotel: "Merit Royal", date: "2026-11-24" });
+  await createBlankEvent(page, { name: "Queue", hotel: "Merit Royal", date: futureDate() });
   await importPlan(page, "data:image/png;base64," + fs.readFileSync(planPath).toString("base64"));
   await runDetection(page);
   checks.ok(true, "OCR availability on this machine", await ocrAvailability(page));

@@ -996,6 +996,27 @@
     "time.justNow": { en: "just now", tr: "az önce" },
     "time.minutesAgo": { en: "{n} min ago", tr: "{n} dk önce" },
     "time.hoursAgo": { en: "{n} hr ago", tr: "{n} sa önce" },
+    // ---- Smart Guest Finder ----
+    "find.pax": { en: "{n} pax", tr: "{n} kişi" },
+    "find.noTable": { en: "no table yet", tr: "henüz masası yok" },
+    "find.invitedBy": { en: "invited by {host}", tr: "davet eden: {host}" },
+    "find.showOnPlan": { en: "Show on plan", tr: "Planda göster" },
+    "find.viewParty": { en: "View party", tr: "Grubu gör" },
+    "find.checkIn": { en: "Check in", tr: "Giriş yap" },
+    "find.changeTable": { en: "Change table", tr: "Masayı değiştir" },
+    "find.noTableReason": { en: "This guest has no table to show yet.", tr: "Bu misafirin gösterilecek bir masası yok." },
+    "find.noPartyReason": { en: "Nobody else was invited by the same host.", tr: "Aynı kişi tarafından davet edilen başka misafir yok." },
+    "find.historicalReason": { en: "This event is finished and cannot be changed.", tr: "Bu etkinlik tamamlandı ve değiştirilemez." },
+    "find.alreadyIn": { en: "This guest is already checked in.", tr: "Bu misafir zaten giriş yaptı." },
+    "find.checkedIn": { en: "{name} checked in.", tr: "{name} giriş yaptı." },
+    "find.none": { en: "No guest matches that.", tr: "Bununla eşleşen misafir yok." },
+    "find.more": { en: "{n} more match — keep typing to narrow it", tr: "{n} eşleşme daha — daraltmak için yazmaya devam edin" },
+    "find.planning.Confirmed": { en: "Confirmed", tr: "Kesin" },
+    "find.planning.Tentative": { en: "Tentative", tr: "Belirsiz" },
+    "find.arrival.NotArrived": { en: "not arrived", tr: "gelmedi" },
+    "find.arrival.CheckedIn": { en: "checked in", tr: "giriş yaptı" },
+    "find.arrival.NoShow": { en: "no show", tr: "gelmedi (no show)" },
+
     // ---- Layout changes ----
     // MeritVenueModel.compareToVersion names each change with a stable enum;
     // these are the operator's words for them. A change class with no entry

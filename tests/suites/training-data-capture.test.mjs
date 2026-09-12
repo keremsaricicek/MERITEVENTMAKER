@@ -11,7 +11,7 @@
 // decide about.
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = {
   name: "training-data-capture",
@@ -28,7 +28,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.require(await page.evaluate(() => !!globalThis.MeritTrainingData),
     "the training-data module is loaded");
 
-  await createBlankEvent(page, { name: "Capture", hotel: "Merit Starlit", date: "2026-10-02", salon: "Main Ballroom" });
+  await createBlankEvent(page, { name: "Capture", hotel: "Merit Starlit", date: futureDate(), salon: "Main Ballroom" });
   const planBytes = fs.readFileSync(planPath);
   await page.evaluate(src => {
     state.events[0].background = { src, name: "merit-real-venue-plan.png", opacity: 1, visible: true, locked: false, scale: 100 };

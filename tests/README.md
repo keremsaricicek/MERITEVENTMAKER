@@ -57,6 +57,7 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `teach-number` | business | a number a person confirmed becomes indistinguishable from one two crops agreed on, or an unsafe scope is refused after the click instead of before |
 | `plan-doctor` | business | an uncertain OCR reading becomes a blocker, a finding has nowhere to go, a fixed problem lingers as a stale warning, or the pre-flight and the header disagree |
 | `layout-changes` | business | a moved table is reported as a removal plus an addition, a capacity change is lumped in with movement, the change view stops being a mode of the Floor Plan, or a published version is rewritten by reading it |
+| `guest-finder` | business | the global search stops answering the whole question in the row, an action silently reseats or reclassifies a guest, the keyboard path breaks, or a four-thousand-guest search stops being fast |
 
 ## Environment
 
@@ -96,7 +97,14 @@ export default async function run({ page, checks, baseUrl, artifactDir, repoRoot
 Add `downloads: true` to `meta` if the suite saves a file, and a `viewport` if
 1920×1080 is wrong for it.
 
-Two things this suite learned the hard way, both encoded in `lib/app-actions.mjs`:
+Three things this suite learned the hard way, all encoded in `lib/app-actions.mjs`:
+
+- **Never hardcode a fixture date.** An event dated in the past is
+  `isHistorical`: read-only, with no Floor Plan tab and no add-object control.
+  A suite that hardcodes a date fails the day it passes, with a
+  `click(".planmap-fab")` timeout that says nothing about the cause. Use
+  `futureDate()` — `createBlankEvent` already defaults to it. Pass a past date
+  only when the suite genuinely wants a finished event.
 
 - **Drive the real UI.** Nearly every domain function — `canMutate`,
   `setTableCapacity`, the seating logic — lives inside a closure and is not on

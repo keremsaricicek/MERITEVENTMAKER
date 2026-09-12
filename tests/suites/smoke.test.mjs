@@ -6,7 +6,7 @@
 // has already shipped once (the offline build dropped #guestDialog and the app
 // booted to a dead shell), and it is invisible to any check that only reads
 // source.
-import { openApp, createBlankEvent, addTables, gotoTab } from "../lib/app-actions.mjs";
+import { openApp, createBlankEvent, addTables, gotoTab, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "smoke", tags: ["business", "fast"], timeout: 90000 };
 
@@ -14,7 +14,7 @@ export default async function run({ page, checks, baseUrl }) {
   await openApp(page, baseUrl);
   checks.require(await page.evaluate(() => Array.isArray(state.events)), "app booted with a usable state object");
 
-  await createBlankEvent(page, { name: "Smoke", hotel: "H", date: "2026-10-02" });
+  await createBlankEvent(page, { name: "Smoke", hotel: "H", date: futureDate() });
   const blank = await page.evaluate(() => {
     const e = state.events[0];
     return { tables: e.tables.length, guests: e.guests.length, assignments: e.guests.filter(g => g.assignment).length };

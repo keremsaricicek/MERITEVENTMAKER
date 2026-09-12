@@ -17,7 +17,7 @@
 // run and in --all.
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = {
   name: "plan-intelligence-contract",
@@ -31,7 +31,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.require(fs.existsSync(planPath), "the real venue plan is present", planPath);
 
   await openApp(page, baseUrl);
-  await createBlankEvent(page, { name: "Scene", hotel: "Merit", date: "2026-10-02" });
+  await createBlankEvent(page, { name: "Scene", hotel: "Merit", date: futureDate() });
 
   const dataUrl = "data:image/png;base64," + fs.readFileSync(planPath).toString("base64");
   await page.evaluate(src => {

@@ -28,7 +28,7 @@
 // build actually wrote.
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = {
   name: "visual-second-opinion",
@@ -164,7 +164,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.require(fs.existsSync(plan), "the real venue plan fixture is present", plan);
 
   await openApp(page, baseUrl);
-  await createBlankEvent(page, { name: "Second opinion", hotel: "Merit", date: "2026-10-02" });
+  await createBlankEvent(page, { name: "Second opinion", hotel: "Merit", date: futureDate() });
   await page.evaluate(src => {
     state.events[0].background = { src, name: "plan.png", opacity: 1, visible: true, locked: false, scale: 100 };
     render();

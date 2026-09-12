@@ -4,7 +4,7 @@
 // could not fail. It is asserted here because the migration from localStorage
 // to IndexedDB is exactly the kind of change that appears to work in one
 // session and loses a venue's event list in the next.
-import { openApp, createBlankEvent, addTables, addGuest, gotoTab } from "../lib/app-actions.mjs";
+import { openApp, createBlankEvent, addTables, addGuest, gotoTab, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "storage-provider", tags: ["storage", "fast"], timeout: 90000 };
 
@@ -18,7 +18,7 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(status.provider === "IndexedDBStorageProvider",
     "IndexedDB is the active provider in a normal browser — not the localStorage fallback", status);
 
-  await createBlankEvent(page, { name: "StorageCheck", hotel: "Merit", date: "2026-12-05" });
+  await createBlankEvent(page, { name: "StorageCheck", hotel: "Merit", date: futureDate() });
   await addTables(page, { quantity: 2 });
   await gotoTab(page, "guests");
   await addGuest(page, { name: "PERSISTED GUEST", additionalGuests: 2 });

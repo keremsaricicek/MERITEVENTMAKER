@@ -5,7 +5,7 @@
 // from last year's plan. That is only true if editing the event never reaches
 // back into the version it was copied from, and if promoting an edited event
 // adds a version rather than rewriting one.
-import { click, openApp, createBlankEvent } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "venue-model", tags: ["storage", "fast"], timeout: 120000 };
 
@@ -15,7 +15,7 @@ export default async function run({ page, checks, baseUrl }) {
     "the venue model is reachable");
 
   // --- 1. the hotel string becomes a venue record, additively ---------------
-  await createBlankEvent(page, { name: "Concert A", hotel: "Merit Starlit", date: "2026-11-20", salon: "Main Ballroom" });
+  await createBlankEvent(page, { name: "Concert A", hotel: "Merit Starlit", date: futureDate(), salon: "Main Ballroom" });
   const migrated = await page.evaluate(() => ({
     venues: state.venues.map(v => ({ name: v.name, layouts: v.layouts.map(l => l.name) })),
     ref: state.events[0].venueRef,
@@ -30,7 +30,7 @@ export default async function run({ page, checks, baseUrl }) {
   // --- 2. the same venue typed sloppily is the same venue -------------------
   await click(page, '[data-action="back-events"]');
   await page.waitForTimeout(400);
-  await createBlankEvent(page, { name: "Concert B", hotel: "  merit starlit ", date: "2026-11-27", salon: "Main Ballroom" });
+  await createBlankEvent(page, { name: "Concert B", hotel: "  merit starlit ", date: futureDate(), salon: "Main Ballroom" });
   const reused = await page.evaluate(() => ({
     venues: state.venues.length,
     layouts: state.venues[0].layouts.length,

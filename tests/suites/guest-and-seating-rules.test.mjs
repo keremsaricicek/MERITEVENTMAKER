@@ -4,13 +4,13 @@
 // grouped in one suite on purpose: these rules interact (a "+N" party is one
 // record AND occupies N+1 seats AND keeps its seats when it goes No Show), and
 // a regression usually breaks the interaction rather than a single rule.
-import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab, seatGuestOnFirstTable } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab, seatGuestOnFirstTable, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "guest-and-seating-rules", tags: ["business", "fast"], timeout: 120000 };
 
 export default async function run({ page, checks, baseUrl }) {
   await openApp(page, baseUrl);
-  await createBlankEvent(page, { name: "Rules", hotel: "Merit Royal", date: "2026-09-10" });
+  await createBlankEvent(page, { name: "Rules", hotel: "Merit Royal", date: futureDate() });
   checks.require((await addTables(page)) === 4, "four tables exist to seat against");
 
   // --- table.capacity and table.chairs must move together -------------------

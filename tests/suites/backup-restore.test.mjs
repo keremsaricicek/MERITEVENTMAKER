@@ -6,14 +6,14 @@
 // exactly as it was, never half-applied.
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "backup-restore", tags: ["storage", "fast"], timeout: 120000, downloads: true };
 
 export default async function run({ page, checks, baseUrl, artifactDir }) {
   page.on("dialog", d => d.accept());
   await openApp(page, baseUrl);
-  await createBlankEvent(page, { name: "BackupCheck", hotel: "Merit", date: "2026-12-15" });
+  await createBlankEvent(page, { name: "BackupCheck", hotel: "Merit", date: futureDate() });
   await addTables(page);
   await gotoTab(page, "guests");
   await addGuest(page, { name: "BACKUP GUEST" });

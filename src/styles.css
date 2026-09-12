@@ -117,7 +117,13 @@ table{border-collapse:collapse}
 .status-chip.tentative{border-color:#7d6546;color:#c8903a;background:var(--amber-soft)}
 
 .workspace{height:100%;display:flex;flex-direction:column;min-height:0}
-.workspace-head{height:66px;flex:0 0 auto;display:flex;align-items:center;padding:0 16px;background:var(--chrome);border-bottom:1px solid var(--line)}
+/* Positioned, so the header's popovers — the guest finder above all — paint
+   over the screen below it. Nothing clipped them: the results panel rendered in
+   full and was simply painted UNDER the content, so only the sliver between the
+   header and the canvas was ever visible. The old panel was short enough that
+   this looked like a small overlap; the finder's taller rows made it obvious
+   that the header had no stacking context of its own. */
+.workspace-head{height:66px;flex:0 0 auto;display:flex;align-items:center;padding:0 16px;background:var(--chrome);border-bottom:1px solid var(--line);position:relative;z-index:300}
 .workspace-head .brand{width:262px}
 .event-id{flex:1;min-width:0;padding-left:18px;border-left:1px solid var(--line)}
 .event-id strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
@@ -1676,3 +1682,33 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .lc-evidence{margin-top:var(--sp-4);padding-top:var(--sp-4);border-top:1px solid var(--line-soft);
   font-size:11px;line-height:1.45;color:var(--muted)}
 @media (max-width:1500px){.layout-changes{width:284px}.lc-card{right:320px}}
+
+/* ---- Smart Guest Finder ---------------------------------------------------
+   The results panel widened because the row now carries the whole answer —
+   who, party size, VIP, planning and arrival status, table, seats, zone and
+   host — plus the four things an operator does next. It is a dense operational
+   list, not a card wall: one row per guest, actions on the right, nothing
+   decorative. */
+.search-results:has(.find-list),.search-results:has(.find-empty){width:560px}
+.find-list{max-height:min(60vh,520px);overflow-y:auto}
+.find-row{display:flex;align-items:center;gap:var(--sp-4);padding:9px 11px;
+  border-bottom:1px solid var(--line-soft);cursor:pointer;
+  transition:background var(--dur-fast) var(--ease)}
+.find-row:last-child{border-bottom:0}
+.find-row:hover,.find-row.active{background:#f3f2ee}
+.find-row.active{box-shadow:inset 2px 0 0 var(--blue)}
+.find-who{flex:1;min-width:0}
+.find-who strong{display:block;font-size:12.5px;font-weight:640;color:var(--text)}
+.find-meta{display:block;margin-top:2px;font-size:10.5px;line-height:1.4;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* VIP is the one place gold is allowed, and only where the record says VIP. */
+.find-vip{color:var(--vip-ink);font-weight:650}
+.find-actions{flex:none;display:flex;gap:4px}
+.find-actions .btn{padding:3px 8px;font-size:10px}
+.find-actions .btn.is-off{opacity:.38;cursor:not-allowed}
+.find-empty,.find-more{padding:11px;font-size:11px;color:var(--muted)}
+.find-more{border-top:1px solid var(--line-soft);color:var(--muted-2)}
+@media (max-width:1500px){
+  .search-results:has(.find-list),.search-results:has(.find-empty){width:470px}
+  .find-actions .btn{padding:3px 6px}
+}

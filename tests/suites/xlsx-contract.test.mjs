@@ -8,13 +8,13 @@
 // cards regrouping) produces a perfectly valid file with the wrong contents.
 import fs from "node:fs";
 import path from "node:path";
-import { openApp, createBlankEvent, addTables, addGuest, gotoTab, seatGuestOnFirstTable } from "../lib/app-actions.mjs";
+import { openApp, createBlankEvent, addTables, addGuest, gotoTab, seatGuestOnFirstTable, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "xlsx-contract", tags: ["business", "reports", "fast"], timeout: 120000, downloads: true };
 
 export default async function run({ page, checks, baseUrl, artifactDir }) {
   await openApp(page, baseUrl);
-  await createBlankEvent(page, { name: "XLSX Contract", hotel: "Merit Royal", date: "2026-09-10" });
+  await createBlankEvent(page, { name: "XLSX Contract", hotel: "Merit Royal", date: futureDate() });
   checks.require((await addTables(page)) === 4, "four tables for the four-card horizontal group");
 
   await gotoTab(page, "guests");
