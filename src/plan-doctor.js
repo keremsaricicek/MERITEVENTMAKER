@@ -105,6 +105,10 @@
     const guests = Array.isArray(inp.guests) ? inp.guests : [];
     const analysis = inp.analysis || null;
     const phase = inp.phase || "ready";
+    // Which tables a person has frozen, resolved by the caller. The Doctor
+    // does not evaluate freeze RULES — that is seating-freeze.js's single job
+    // — it only reports what a freeze does to the room's arithmetic.
+    const frozenIds = new Set(Array.isArray(inp.frozenTableIds) ? inp.frozenTableIds : []);
     const findings = [];
 
     const add = (f) => { findings.push(f); return f; };
@@ -299,6 +303,33 @@
       });
     }
 
+    // A freeze is a person's decision and never a problem in itself. It
+    // becomes a question only when the room cannot seat the people who are
+    // waiting WITHOUT it — "40 pax and 12 open chairs" reads as a capacity
+    // disaster until you know 60 chairs are being held on purpose, and the
+    // operator needs to be told which of those two evenings they are in.
+    const frozenSeatable = physical.filter((t) => frozenIds.has(t.id));
+    const heldChairs = frozenSeatable.reduce((n, t) => n + num(t.capacity), 0);
+    const heldSeated = seated.filter((g) => frozenIds.has(g.assignment.tableId))
+      .reduce((n, g) => n + paxOf(g), 0);
+    const heldOpen = Math.max(0, heldChairs - heldSeated);
+    const openOutside = Math.max(0, (chairs - heldChairs)
+      - (seated.filter((g) => byId.has(g.assignment.tableId) && !frozenIds.has(g.assignment.tableId))
+        .reduce((n, g) => n + paxOf(g), 0)));
+    if (heldOpen > 0 && unassignedPax > openOutside) {
+      add({
+        code: "frozenCapacityNeeded", level: LEVEL.NEEDS_REVIEW,
+        params: { n: unassignedPax, pax: unassignedPax, open: openOutside,
+          held: heldOpen, tables: frozenSeatable.length },
+        what: `${unassignedPax} pax still need a table and only ${openOutside} ${plural(openOutside, "chair is", "chairs are")} open outside the frozen area — ${heldOpen} held ${plural(heldOpen, "chair", "chairs")} would cover the difference`,
+        why: "a freeze holds part of the room on purpose; the chairs exist and are being kept back, so this is a decision to take rather than a shortage to fix",
+        sources: [SOURCE.OPERATOR, SOURCE.SEATING, SOURCE.FLOOR_PLAN],
+        affects: [AFFECTS.SEATING, AFFECTS.CAPACITY],
+        action: { go: GO.SEATING, tableIds: frozenSeatable.map((t) => t.id) },
+        weight: unassignedPax - openOutside,
+      });
+    }
+
     if (!tables.length) {
       add({
         code: "noTablesInPlan", level: LEVEL.NEEDS_REVIEW,
@@ -327,6 +358,24 @@
         affects: [AFFECTS.CAPACITY],
         action: { go: GO.SEATING, filter: "empty" },
         weight: chairs - assignedPax,
+      });
+    }
+
+    // What the freeze is holding, stated once whether or not it is in the way.
+    // The spare-capacity row above counts every chair in the room, and an
+    // operator reading "60 chairs are unassigned" without this line would go
+    // looking for 60 chairs they are not allowed to use.
+    if (heldChairs > 0) {
+      add({
+        code: "capacityHeldByFreeze", level: LEVEL.INFORMATION,
+        params: { n: heldChairs, chairs: heldChairs, tables: frozenSeatable.length,
+          open: heldOpen, seated: heldSeated },
+        what: `${heldChairs} ${plural(heldChairs, "chair is", "chairs are")} held by a freeze across ${frozenSeatable.length} ${plural(frozenSeatable.length, "table", "tables")} — ${heldOpen} of them empty`,
+        why: "a person froze part of the room; these chairs are deliberately not offered to the seating process",
+        sources: [SOURCE.OPERATOR, SOURCE.FLOOR_PLAN],
+        affects: [AFFECTS.CAPACITY, AFFECTS.SEATING],
+        action: { go: GO.SEATING, tableIds: frozenSeatable.map((t) => t.id) },
+        weight: heldChairs,
       });
     }
 

@@ -1447,7 +1447,7 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .seat-queue-controls{padding:9px 12px;display:flex;flex-direction:column;gap:7px;border-bottom:1px solid var(--line-soft)}
 .seat-queue-controls .guest-scope-strip,.seat-queue-controls .guest-filter-strip{display:flex;flex-wrap:wrap;gap:5px;width:100%}
 .seat-queue-controls .seg-btn{flex:1 1 auto;min-width:0;white-space:nowrap;font-size:11px;padding:5px 8px}
-.seat-queue-list{flex:1;min-height:0;overflow:auto;padding:7px}
+.seat-queue-list{flex:1 1 auto;min-height:96px;overflow:auto;padding:7px}
 .queue-card{padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--panel);margin-bottom:6px;cursor:grab;transition:border-color var(--dur-fast) var(--ease),background var(--dur-fast) var(--ease)}
 .queue-card:hover{border-color:var(--muted-2)}
 .queue-card.selected{border-color:var(--blue);background:var(--blue-soft);box-shadow:var(--ring)}
@@ -1647,7 +1647,7 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
    new one, no diff colours competing with the plan itself. */
 .layout-changes{position:absolute;right:var(--sp-5);top:64px;bottom:var(--sp-5);width:326px;
   display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);
-  border-radius:var(--radius-lg);box-shadow:var(--elev-2);overflow:hidden;z-index:6}
+  border-radius:var(--radius-lg);box-shadow:var(--shadow-2);overflow:hidden;z-index:6}
 .lc-head{display:flex;align-items:flex-start;gap:var(--sp-4);padding:var(--sp-5);
   border-bottom:1px solid var(--line-soft)}
 .lc-head>div{flex:1;min-width:0}
@@ -1718,7 +1718,7 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
    a contextual card over the canvas, like every other "here is what you
    selected" surface in this app. Neither is a permanent panel, and neither
    shows a score — the reasons are the justification. */
-.smart-seating{flex:none;border-top:1px solid var(--line);padding:var(--sp-5);
+.smart-seating{flex:none;padding:var(--sp-5);
   background:var(--panel);max-height:44%;overflow-y:auto}
 .ss-head strong{display:block;font-size:9px;font-weight:650;letter-spacing:.1em;
   text-transform:uppercase;color:var(--muted-2)}
@@ -1743,7 +1743,7 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
    in this phase that actually moves a guest. */
 .seat-preview{position:absolute;right:var(--sp-5);bottom:74px;width:330px;z-index:12;
   background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);
-  box-shadow:var(--elev-2);overflow:hidden}
+  box-shadow:var(--shadow-2);overflow:hidden}
 .sp-head{padding:var(--sp-5);border-bottom:1px solid var(--line-soft)}
 .sp-head strong{display:block;font-size:9px;font-weight:650;letter-spacing:.1em;
   text-transform:uppercase;color:var(--muted-2)}
@@ -1757,3 +1757,86 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .sp-foot{display:flex;align-items:center;gap:6px;padding:var(--sp-4) var(--sp-5);
   border-top:1px solid var(--line-soft);background:var(--bg)}
 .sp-nothing{flex:1;font-size:10px;color:var(--muted-2)}
+
+/* ---- FREEZE ZONES --------------------------------------------------------
+   Amber, because a freeze is a HOLD rather than an error: red is reserved for
+   things that have gone wrong, and a room where half the tables are marked in
+   red reads as a disaster instead of a plan. */
+.freeze-panel{flex:none;border-top:1px solid var(--line-soft);padding:var(--sp-5);
+  background:var(--panel-2)}
+.fz-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-4)}
+.fz-head strong{font-size:9px;font-weight:650;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted-2)}
+.fz-head span{font-size:10.5px;color:var(--amber-ink);font-variant-numeric:tabular-nums}
+.fz-empty{margin:var(--sp-4) 0;font-size:10.5px;line-height:1.45;color:var(--muted-2)}
+.fz-list{list-style:none;margin:var(--sp-4) 0 0;display:flex;flex-direction:column;gap:var(--sp-3)}
+.fz-row{border:1px solid var(--line);border-left:2px solid var(--amber);
+  border-radius:var(--radius-md);padding:var(--sp-4);background:var(--panel)}
+.fz-row-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-3)}
+.fz-row-head b{font-size:12px;font-weight:640;color:var(--text)}
+.fz-reason{font-size:10px;color:var(--amber-ink)}
+.fz-row-sub{margin:3px 0 var(--sp-3);font-size:10.5px;line-height:1.4;color:var(--muted)}
+.fz-row .btn{width:100%;justify-content:center}
+.fz-note{margin-top:var(--sp-4);font-size:10px;line-height:1.4;color:var(--muted-2)}
+.freeze-panel>.btn{width:100%;justify-content:center;margin-top:var(--sp-4)}
+.freeze-form{margin-top:var(--sp-4);display:flex;flex-direction:column;gap:var(--sp-3);
+  border-top:1px solid var(--line-soft);padding-top:var(--sp-4)}
+.freeze-range{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-3)}
+.freeze-form-actions{display:flex;gap:var(--sp-3)}
+.freeze-form-actions .btn{flex:1;justify-content:center}
+
+/* The LAYER on the canvas. An outline and a small mark, never a filled block:
+   the operator still has to read the room through it. */
+.table-object.frozen .table-surface{box-shadow:inset 0 0 0 1.5px var(--amber)}
+.table-object.frozen::after{content:"";position:absolute;inset:-5px;border-radius:inherit;
+  border:1px dashed rgba(171,118,48,.55);pointer-events:none}
+.table-object.round.frozen::after,.table-object.bistro.frozen::after{border-radius:999px}
+.table-frozen{position:absolute;top:2px;right:3px;display:inline-flex;color:var(--amber-ink);
+  opacity:.85;pointer-events:none}
+.table-frozen svg{width:10px;height:10px}
+.table-card-frozen{display:flex;align-items:center;gap:6px;padding:var(--sp-3) var(--sp-5);
+  background:var(--amber-soft);border-bottom:1px solid var(--line-soft)}
+.table-card-frozen svg{width:12px;height:12px;color:var(--amber-ink);flex:none}
+.table-card-frozen b{font-size:10px;font-weight:650;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--amber-ink)}
+.table-card-frozen span{font-size:10.5px;color:var(--muted)}
+.sp-row.is-frozen b{color:var(--amber-ink)}
+
+/* SUPERVISOR OVERRIDE REQUIRED. Blocking on purpose -- this is the one moment
+   in seating where a person is being asked to take responsibility, and a
+   dismissible corner toast would not be that. */
+.freeze-challenge-scrim{position:absolute;inset:0;z-index:90;display:flex;
+  align-items:center;justify-content:center;padding:var(--sp-6);
+  background:rgba(28,24,18,.34);backdrop-filter:blur(1.5px)}
+.freeze-challenge{width:min(460px,100%);max-height:100%;display:flex;flex-direction:column;
+  background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--amber);
+  border-radius:var(--radius-lg);box-shadow:var(--shadow-3);overflow:hidden}
+.fc-head{padding:var(--sp-5);border-bottom:1px solid var(--line-soft)}
+.fc-head strong{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;
+  color:var(--amber-ink)}
+.fc-head span{display:block;margin-top:2px;font-size:11.5px;color:var(--muted)}
+.fc-body{padding:var(--sp-5);overflow:auto;display:flex;flex-direction:column;gap:var(--sp-5)}
+.fc-block h4{margin:0 0 var(--sp-3);font-size:9px;font-weight:650;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted-2)}
+.fc-what{list-style:none;margin:0;display:flex;flex-direction:column;gap:var(--sp-3)}
+.fc-what li{border-left:2px solid var(--amber);padding-left:var(--sp-4)}
+.fc-what b{display:block;font-size:12px;font-weight:640;color:var(--text)}
+.fc-what span{display:block;font-size:10.5px;color:var(--amber-ink)}
+.fc-what em{display:block;margin-top:2px;font-size:10.5px;font-style:normal;color:var(--muted)}
+.fc-row{display:flex;align-items:baseline;gap:6px;padding:3px 0;font-size:11.5px}
+.fc-row em{flex:1;font-style:normal;color:var(--muted-2)}
+.fc-row b{font-weight:640;color:var(--text);font-variant-numeric:tabular-nums}
+.fc-row i{font-style:normal;color:var(--muted-2)}
+.fc-foot{display:flex;align-items:center;gap:6px;padding:var(--sp-4) var(--sp-5);
+  border-top:1px solid var(--line-soft);background:var(--bg)}
+.fc-nothing{flex:1;font-size:10px;color:var(--muted-2)}
+.fc-stays{margin:0;padding:0 var(--sp-5) var(--sp-5);font-size:10px;line-height:1.45;
+  color:var(--muted-2);background:var(--bg)}
+
+/* The two advisory panels share ONE bounded, scrollable band.
+   As separate flex:none children they could not shrink, so on a 900px-tall
+   screen Smart Seating's closing note was clipped by the Freeze Zones panel
+   and the second Lift button fell off the bottom of the column with no way to
+   reach it. The band gives the guest queue a floor and scrolls the advice. */
+.seat-advice{flex:0 1 auto;min-height:0;max-height:62%;overflow:auto;
+  display:flex;flex-direction:column;border-top:1px solid var(--line)}

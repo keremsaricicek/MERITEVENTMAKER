@@ -78,6 +78,9 @@
   <!-- Last of the reasoning layers, because it consumes every one of them and
        nothing consumes it. -->
   <script src="src/plan-doctor.js"></script>
+  <!-- What a person has held back, and what it would cost to cross it. Loaded
+       before the advisor because the advisor consumes its resolved answer. -->
+  <script src="src/seating-freeze.js"></script>
   <!-- Recommends where a party could sit. Cannot seat anybody: the only writer
        of an assignment is assignGuestToTable(), driven by a person. -->
   <script src="src/seating-advisor.js"></script>

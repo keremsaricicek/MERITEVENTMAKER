@@ -1212,3 +1212,183 @@ npm run verify:offline       27 passed, 0 failed
 rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
                              0px horizontal overflow, no page errors
 ```
+
+### H2 correction, after the fact
+
+The phase asked for a deterministic test proving **"preview predicts applied
+occupancy exactly"**. What shipped asserted the preview's numbers and the applied
+result *separately* — two checks that could both pass while the card showed an
+operator a figure the room never reached. That is the one failure mode a preview
+has, and nothing was watching it.
+
+Fixed in `03457ee`: the suite now reads the predicted target occupancy and
+predicted spare seats off the rendered card **before** pressing Apply, then
+recomputes both from the stored room afterwards and compares. Mutating
+`previewMove()`'s reserve arithmetic by one seat turns the suite red on exactly
+that line. 40 checks.
+
+## PHASE I — Freeze Zones
+
+### The question
+
+Part of a room is routinely not available to the seating process: the VIP area
+until the host confirms it, the head tables, the sponsor block, a management
+hold, seats kept back for late arrivals. Until this phase the product had no way
+to say so. An operator's only tools were `assignment.locked` — which protects one
+guest's chair, not a place — and remembering.
+
+### What a freeze is
+
+**A rule about a place, not a list of tables.** This is the decision the whole
+module rests on. A zone freeze covers the zone, so a table moved into VIP
+tomorrow is frozen tomorrow; a range freeze covers `T01–T10`, so a `T07` created
+next week is frozen the moment it exists. Resolving the rule to table ids at
+creation time would have produced a freeze that silently stopped covering the
+thing it was written about — and a held area that holds nothing looks exactly
+like a held area that does.
+
+Three scopes, because an operator says three different things: a **zone**, a
+**range of printed numbers**, or **one table**. Six reasons, closed: VIP area,
+head tables, sponsor tables, management hold, late-arrival reserve, other — plus
+the operator's own note, kept as well as rather than instead of the named
+reason, because "why" has to survive a handover to somebody who was not in the
+room.
+
+### The three states, and what the third one is about
+
+`OPEN` and `FROZEN` describe a **table**. `SUPERVISOR OVERRIDE REQUIRED`
+describes an **operation**. It is not a fourth kind of table, and naming it as
+one would imply some tables are pre-authorised — none are.
+
+### An override authorises one operation and never lifts the freeze
+
+This is structural rather than promised. The override travels as a **parameter
+to one call** (`{override:true}`), consumed by that call and gone. There is no
+stored flag for the next operation to find, and no function anywhere in the
+module clears a freeze as a side effect of anything. A freeze ends exactly one
+way: a person presses **Lift**, which is audited as their act.
+
+The suite proves it by attempting a second crossing immediately after a
+successful override and asserting it is challenged again.
+
+### Both directions are crossings
+
+Filling a held area breaks the hold. Emptying a frozen head table breaks the
+arrangement the freeze was protecting. `assignGuestGroup` and `unassignGuest`
+both run the same evaluation, and the card says which way the rule is being
+crossed.
+
+### What the challenge card has to say
+
+What is frozen (scope, reason, the operator's note), who it touches (**records
+being moved** and **people already sitting in the area**, reported separately —
+summing them into one "affected" number would be a lie in both directions), and
+what the occupancy becomes. All of it computed from the room, with nothing
+mutated: `mutated: false` is in the returned object so no caller can present an
+evaluation as a decision.
+
+"Who is already in the area" counts the **whole area the crossed rules cover**,
+not just the one table being touched. Seating into one VIP table affects the VIP
+arrangement, and an operator deciding whether to break it needs to know how many
+people that arrangement already holds. The first version of this counted only
+the touched table and reported zero on a two-table zone freeze; the suite caught
+it.
+
+### One resolution, read by four surfaces
+
+`src/seating-freeze.js` owns the rules. Nothing else evaluates them:
+
+| Surface | What it consumes |
+| --- | --- |
+| Smart Seating | a resolved `frozen` list — a frozen table is never recommended, and `FREEZE_ZONES` moved out of `unevaluated` into a real answer |
+| the canvas layer | a resolved id set, memoised per mutation epoch |
+| the Plan Doctor | a resolved id set, for `capacityHeldByFreeze` and `frozenCapacityNeeded` |
+| the override challenge | the full evaluation |
+
+The advisor deliberately learns the **outcome** and not the rules. That is what
+keeps freeze policy in one file.
+
+### What the Plan Doctor now says
+
+`capacityHeldByFreeze` (INFORMATION) — how many chairs are held and how many of
+them are empty. It exists because the pre-existing `spareCapacity` row counts
+every chair in the room: an operator reading "60 chairs are unassigned" without
+this line goes looking for 60 chairs they are not allowed to use.
+
+`frozenCapacityNeeded` (NEEDS REVIEW) — raised only when the people still
+waiting cannot be seated without the frozen chairs. **Not** a capacity shortage:
+the chairs exist and are being kept back on purpose, so this is a decision to
+take, not a problem to fix, and the wording says so.
+
+### The layer
+
+Defined in Seating, drawn on the Floor Plan. A dashed outline and a small lock
+mark — never a filled block. Amber, not red: red is for things that have gone
+wrong, and a room where half the tables are marked in red reads as a disaster
+instead of a plan. The toggle appears only once something is frozen; a permanent
+switch for an empty layer teaches an operator to stop reading the toolbar, which
+is the same rule the Layout Changes mode follows.
+
+The suite asserts the *computed* `::after` background alpha is at most 0.25, so
+"do not cover the plan with heavy opaque blocks" is enforced rather than
+remembered.
+
+### A defect found on the way
+
+The table card's primary button — **Assign / Move [guest]** — had no handler in
+the Seating screen. It was rendered by `app-v8.js` and bound only by the *old*
+`bindSeating` in `app-guests.js`, which `app-v8.js` replaces. The most prominent
+control on that card did nothing when pressed, and had been doing nothing since
+the v8 seating screen was built. Found because the freeze gate sits on exactly
+that path, and the suite could not reach the gate through it. Fixed.
+
+### Evidence
+
+`tests/suites/seating-freeze.test.mjs` — 79 checks, driving the real UI: the
+real freeze form, the real table card, the real unassign button, the real
+override card. The whole-room assignment snapshot is compared after every
+attempt, so a path that mutated and *then* challenged would fail here rather
+than in production.
+
+Five mutations, to prove the checks bite:
+
+| Mutation | Result |
+| --- | --- |
+| the freeze gate removed from the assignment path | "seating into a frozen area stops and asks" fails, and the snapshot check shows the guest was seated |
+| the override also clears `event.freezes` | "the freeze is STILL in place — an override is not an unlock" fails, and so does the next-crossing check |
+| the advisor ignores the resolved freeze list | "never recommends a frozen table" fails with `["T01","T04","T02","T03"]` |
+| only `INTO` counts as a crossing | "pulling somebody OUT of a frozen area is challenged as well" fails |
+| the layer paints a 0.75-alpha block | "none of them is covered by a heavy opaque block" fails |
+| the challenge scrim drops below the table card's z-index | "the card underneath it cannot be clicked through" fails |
+
+A second, unrelated correction: `--elev-2` and `--elev-3` were referenced by
+three components and defined nowhere. The real tokens are `--shadow-*`, so the
+Smart Seating preview and the Layout Changes panel had been rendering with no
+elevation at all. Fixed in the same pass.
+
+Two layout defects found by rendering rather than by reading the diff:
+
+- Smart Seating and Freeze Zones were separate `flex:none` children of the guest
+  column, so neither could shrink. On a 900px-tall screen Smart Seating's closing
+  note was clipped by the panel below it and the second **Lift** button fell off
+  the bottom with no way to reach it. They now share one bounded, scrollable
+  band that leaves the guest queue a floor.
+- The override scrim sat below the table card, so the very button that raised
+  the question was still clickable through a card that reads as blocking. The
+  suite now asserts `elementFromPoint` at the card's centre lands inside the
+  scrim.
+
+And one wording fix the render exposed: the card said "2 record · 5 pax".
+
+```
+npm run test:all             42/42 suites, 1456/1456 checks
+npm run verify:offline       27 passed, 0 failed
+                             (seating-freeze.js bundled into BOTH artifacts)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             seating / override card / freeze form / floor
+                             layer — 0px horizontal overflow, no page errors
+```
+
+Not done in this phase, and deliberately: the audit trail is **Phase P**. Freeze
+creation, lifting and every override are written to `state.audit` now so that
+phase has real entries to surface; nothing renders them yet.

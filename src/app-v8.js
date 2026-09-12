@@ -53,7 +53,17 @@
     // The seating move being previewed, if any. Holding it here rather than in
     // the event is deliberate: a preview is a question, not a change, and it
     // must not survive into stored state.
-    seatPreview:null
+    seatPreview:null,
+    // FREEZE ZONES. The layer is on by default: a freeze is an operational
+    // rule, not decoration, and an operator blocked by an invisible rule would
+    // have no way to find out what stopped them.
+    freezeLayer:true,
+    // The operation waiting for a supervisor, if any. It holds a DESCRIPTION of
+    // the operation, never a half-applied one -- nothing has moved while this
+    // is set, and cancelling leaves the room exactly as it was.
+    freezeChallenge:null,
+    // The freeze being written, while the form is open.
+    freezeDraft:null
   });
 
   function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[]}; }
@@ -113,6 +123,14 @@
     migrated.tables=(migrated.tables||[]).map(table=>syncTableChairs({...table,id:table.id||uid("table"),hasPhysicalSeats:table.hasPhysicalSeats!==false}));
     migrated.venueObjects=(migrated.venueObjects||[]).map(o=>({...o,id:o.id||uid("venue")}));
     migrated.guests=(migrated.guests||[]).map(normalizeGuest);
+    // FREEZE ZONES. An install from before them simply has none, which is the
+    // correct empty state -- there is nothing to reconstruct. Stored rules are
+    // re-normalized on every load rather than trusted: a hand-edited backup
+    // could otherwise carry a freeze whose scope covers nothing definable,
+    // which would show the operator a held area that holds nothing.
+    migrated.freezes=globalThis.MeritSeatingFreeze
+      ?MeritSeatingFreeze.normalizeAll(migrated.freezes)
+      :(Array.isArray(migrated.freezes)?migrated.freezes:[]);
     migrated.background={src:"",name:"",opacity:.28,visible:false,locked:true,isDefault:false,scale:100,...(migrated.background||{})};
     if(migrated.background.isDefault){migrated.background.src="";migrated.background.visible=false;migrated.background.isDefault=false;}
     migrated.analysis=migrated.analysis||null;
@@ -187,7 +205,11 @@
       })
       .catch(error=>{console.warn("StorageProvider save failed entirely.",error);toast("Browser storage is full. Export the workbook before closing.","error",6500);});
   };
-  touchEvent = function(event){event.lastModified=nowISO();audit(event,"EVENT_UPDATED");saveState();};
+  // Bumped by every mutation that goes through touchEvent, so render-scoped
+  // memos (see frozenTableIdSet) can be invalidated by a counter rather than
+  // by comparing structures that may have been edited in place.
+  let mutationEpoch=0;
+  touchEvent = function(event){mutationEpoch++;event.lastModified=nowISO();audit(event,"EVENT_UPDATED");saveState();};
   let bootReady=false;
   state=blankRoot();
 
@@ -223,7 +245,12 @@
     const used=seating&&ui.operationalMode?liveUsedIndexes(event,table.id):occupiedSeatIndexes(event,table.id);
     const assigned=used.size, empty=Math.max(0,table.capacity-assigned);
     const chairs=table.chairs.map((chair,index)=>`<i class="chair ${used.has(index)?"occupied":seating&&ui.operationalMode?"available-live":""}" data-chair-id="${chair.id}" style="left:${chair.x}%;top:${chair.y}%;transform:translate(-50%,-50%) rotate(${chair.rotation||0}deg)"></i>${ui.showSeats?`<span class="seat-number" style="left:${50+(chair.x-50)*.69}%;top:${50+(chair.y-50)*.69}">S${chair.seatNumber}</span>`:""}`).join("");
-    return`<div class="table-object ${esc(table.type)} ${selected?"selected multi-selected":""} ${highlighted?"highlighted":""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match operational-match":""}" data-object-id="${table.id}" data-object-kind="table" style="left:${table.x}px;top:${table.y}px;width:${table.w}px;height:${table.h}px;transform:rotate(${table.rotation||0}deg);z-index:${table.z||10}">${chairs}<div class="table-surface"><span class="table-label">${esc(formatTableNumber(table.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${table.capacity}</span>${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${empty} EMPTY</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`;
+    // THE FREEZE ZONES LAYER. A thin outline and a small mark, never an opaque
+    // block: the operator has to keep reading the room through it, and a plan
+    // covered in filled shapes is a plan nobody can work on. Hidden entirely
+    // when the layer is off, so the marks never become permanent chrome.
+    const frozen=ui.freezeLayer&&frozenTableIdSet(event).has(table.id);
+    return`<div class="table-object ${esc(table.type)} ${selected?"selected multi-selected":""} ${highlighted?"highlighted":""} ${frozen?"frozen":""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match operational-match":""}" data-object-id="${table.id}" data-object-kind="table" style="left:${table.x}px;top:${table.y}px;width:${table.w}px;height:${table.h}px;transform:rotate(${table.rotation||0}deg);z-index:${table.z||10}">${chairs}<div class="table-surface"><span class="table-label">${esc(formatTableNumber(table.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${table.capacity}</span>${frozen?`<span class="table-frozen" title="${esc(t("freeze.tableFrozen"))}">${icon("lock")}</span>`:""}${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${empty} EMPTY</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`;
   };
 
   function planIssues(event){
@@ -289,12 +316,44 @@
   // Derived on every call, never stored: a problem an operator has just fixed
   // is gone from the next render by construction, which is the only way to be
   // sure a resolved warning never lingers.
+  // ---- FREEZE ZONES: one resolution, read by everything ---------------------
+  //
+  // Every surface that needs to know whether a table is frozen goes through
+  // these two functions, so the recommender, the canvas, the Plan Doctor and
+  // the override challenge cannot end up disagreeing about which tables a rule
+  // covers. The RULES themselves live only in src/seating-freeze.js.
+  const FREEZE=()=>globalThis.MeritSeatingFreeze||null;
+  function eventFreezes(event){return (event&&event.freezes)||[];}
+  function resolvedFreezes(event){
+    const F=FREEZE();
+    if(!F||!event)return null;
+    return F.resolve(eventFreezes(event),event.tables||[]);
+  }
+  // tableObjectHTML runs once per table, so resolving the rules inside it would
+  // make the canvas O(tables x freezes) PER TABLE -- 160,000 comparisons a
+  // render on the 400-table fixture for a feature most events never use. The
+  // memo is invalidated by touchEvent()'s epoch rather than by comparing
+  // contents, because a freeze edited in place would not change any identity.
+  let frozenMemo={event:null,epoch:-1,set:new Set()};
+  function frozenTableIdSet(event){
+    const F=FREEZE();
+    if(!F||!event)return new Set();
+    if(frozenMemo.event===event&&frozenMemo.epoch===mutationEpoch)return frozenMemo.set;
+    frozenMemo={event,epoch:mutationEpoch,
+      set:F.frozenTableIds(eventFreezes(event),event.tables||[])};
+    return frozenMemo.set;
+  }
+  function isTableFrozen(event,tableId){return frozenTableIdSet(event).has(tableId);}
+
   function planDoctorReport(event){
     if(!event||!globalThis.MeritPlanDoctor)return null;
     return globalThis.MeritPlanDoctor.run({
       phase:eventPhase(event),
       tables:event.tables||[],
       guests:event.guests||[],
+      // What a person has held back, resolved here so the Doctor reports the
+      // arithmetic without owning the rules.
+      frozenTableIds:[...frozenTableIdSet(event)],
       // The rules planIssues() owns, handed over rather than re-implemented.
       // Whatever the Doctor does not express itself still reaches the operator.
       planIssues:planIssues(event),
@@ -1074,7 +1133,12 @@
   function addManuallyFabHTML(){return`<button class="planmap-fab" data-v8-action="add" title="${t("action.addManually")}">${icon(ui.v8AddOpen?"x":"plus")}<span>${t("action.addManually")}</span></button>`;}
 
   function v8Toolbar(event,seating=false){
-    return`<div class="canvas-toolbar v8-toolbar"><div class="tool-group">${toolbarBtn("mouse",t("toolbar.select"),`data-tool="select"`,ui.tool==="select")}${toolbarBtn("hand",t("toolbar.pan"),`data-tool="pan"`,ui.tool==="pan")}</div>${!seating?`<div class="tool-group">${toolbarBtn("plus",t("toolbar.addBulk"),`data-v8-action="add"`,ui.v8AddOpen)}${toolbarBtn("copy",t("toolbar.duplicate"),`data-v8-action="duplicate-selection"`)}${toolbarBtn("trash",t("toolbar.delete"),`data-v8-action="delete-selection"`)}</div><div class="tool-group">${toolbarBtn("undo",t("toolbar.undo"),`data-canvas-action="undo"`)}${toolbarBtn("redo",t("toolbar.redo"),`data-canvas-action="redo"`)}</div>`:""}<div class="tool-group">${toolbarBtn("zoomOut",t("toolbar.zoomOut"),`data-canvas-action="zoom-out"`)}<span class="zoom-label">${Math.round(ui.zoom*100)}%</span>${toolbarBtn("zoomIn",t("toolbar.zoomIn"),`data-canvas-action="zoom-in"`)}${toolbarBtn("fit",t("toolbar.fit"),`data-canvas-action="fit"`)}</div><div class="tool-group">${toolbarBtn("grid",t("toolbar.grid"),`data-canvas-action="grid"`,ui.grid)}${toolbarBtn("magnet",t("toolbar.snap"),`data-canvas-action="snap"`,ui.snap)}${toolbarBtn("seat",t("toolbar.seatLabels"),`data-canvas-action="seat-numbers"`,ui.showSeats)}</div><span class="toolbar-spacer"></span>${!seating?toolbarBtn("image",t("toolbar.assistedDetection"),`data-v8-action="detect" ${event.background?.src?"":"disabled"}`,false).replace('class="toolbar-btn','class="toolbar-btn ai'):""}${toolbarBtn("fit",t("toolbar.focusMode"),`data-v8-action="focus"`,ui.focusMode)}</div>`;
+    // The FREEZE ZONES layer button appears only where there is something to
+    // show. A permanent toggle for an empty layer is how a toolbar teaches an
+    // operator to stop reading it -- same rule as the Layout Changes mode.
+    const freezeLayerBtn=eventFreezes(event).length
+      ?`<div class="tool-group">${toolbarBtn("lock",t("freeze.layer"),`data-freeze-action="layer"`,ui.freezeLayer)}</div>`:"";
+    return`<div class="canvas-toolbar v8-toolbar"><div class="tool-group">${toolbarBtn("mouse",t("toolbar.select"),`data-tool="select"`,ui.tool==="select")}${toolbarBtn("hand",t("toolbar.pan"),`data-tool="pan"`,ui.tool==="pan")}</div>${freezeLayerBtn}${!seating?`<div class="tool-group">${toolbarBtn("plus",t("toolbar.addBulk"),`data-v8-action="add"`,ui.v8AddOpen)}${toolbarBtn("copy",t("toolbar.duplicate"),`data-v8-action="duplicate-selection"`)}${toolbarBtn("trash",t("toolbar.delete"),`data-v8-action="delete-selection"`)}</div><div class="tool-group">${toolbarBtn("undo",t("toolbar.undo"),`data-canvas-action="undo"`)}${toolbarBtn("redo",t("toolbar.redo"),`data-canvas-action="redo"`)}</div>`:""}<div class="tool-group">${toolbarBtn("zoomOut",t("toolbar.zoomOut"),`data-canvas-action="zoom-out"`)}<span class="zoom-label">${Math.round(ui.zoom*100)}%</span>${toolbarBtn("zoomIn",t("toolbar.zoomIn"),`data-canvas-action="zoom-in"`)}${toolbarBtn("fit",t("toolbar.fit"),`data-canvas-action="fit"`)}</div><div class="tool-group">${toolbarBtn("grid",t("toolbar.grid"),`data-canvas-action="grid"`,ui.grid)}${toolbarBtn("magnet",t("toolbar.snap"),`data-canvas-action="snap"`,ui.snap)}${toolbarBtn("seat",t("toolbar.seatLabels"),`data-canvas-action="seat-numbers"`,ui.showSeats)}</div><span class="toolbar-spacer"></span>${!seating?toolbarBtn("image",t("toolbar.assistedDetection"),`data-v8-action="detect" ${event.background?.src?"":"disabled"}`,false).replace('class="toolbar-btn','class="toolbar-btn ai'):""}${toolbarBtn("fit",t("toolbar.focusMode"),`data-v8-action="focus"`,ui.focusMode)}</div>`;
   }
   function bulkPanel(event){
     if(!ui.v8AddOpen)return"";const d=ui.bulkDraft||={kind:"table",type:"round",chairs:8,quantity:4,rows:2,cols:2,placement:"grid",prefix:"T",zone:"MAIN FLOOR"};
@@ -1348,7 +1412,7 @@
           <input class="filter-input" id="seatingSearch" value="${esc(ui.seatingQuery)}" placeholder="${t("seating.search")}">
         </div>
         <div class="seat-queue-list">${queue}</div>
-        ${smartSeatingHTML(event)}
+        <div class="seat-advice">${smartSeatingHTML(event)}${freezePanelHTML(event)}</div>
       </aside>
       <section class="seat-canvas-col">
         ${v8Toolbar(event,true)}
@@ -1356,6 +1420,7 @@
         ${selectedTablePanelHTML(event)}
         ${seatingPreviewHTML(event)}
         <div class="seat-pill">${t("seating.statusPill",{seated:seatedPax,total:totalPax,tables:event.tables.length,free:freeChairs})}</div>
+        ${freezeChallengeHTML(event)}
       </section>
     </div>`;
   };
@@ -1372,7 +1437,11 @@
   function seatingAdvice(event,guest){
     if(!guest||!globalThis.MeritSeatingAdvisor)return null;
     return globalThis.MeritSeatingAdvisor.recommend({
-      guest,tables:event.tables,guests:event.guests,limit:4});
+      guest,tables:event.tables,guests:event.guests,limit:4,
+      // Resolved, not the rules. Passing an ARRAY (even an empty one) is what
+      // tells the advisor the constraint was evaluated; passing nothing would
+      // leave it honestly saying "not set up yet".
+      frozen:resolvedFreezes(event)||undefined});
   }
   function reasonText(r){
     const k="seat.reason."+r;
@@ -1411,7 +1480,8 @@
     const guest=event.guests.find(g=>g.id===ui.seatPreview.guestId);
     if(!guest)return"";
     const p=globalThis.MeritSeatingAdvisor?.previewMove({
-      guest,tables:event.tables,guests:event.guests,toTableId:ui.seatPreview.tableId});
+      guest,tables:event.tables,guests:event.guests,toTableId:ui.seatPreview.tableId,
+      frozen:resolvedFreezes(event)||undefined});
     if(!p)return"";
     const line=(label,before,after)=>`<div class="sp-row"><em>${esc(label)}</em><b>${
       before}</b><i>&rarr;</i><b>${after}</b></div>`;
@@ -1427,9 +1497,12 @@
           `${p.to.before}/${p.to.capacity}`,`${p.to.after}/${p.to.capacity}`)}
         ${line(t("seat.reserve"),p.reserve.before,p.reserve.after)}
         <div class="sp-row"><em>${t("seat.affected")}</em><b>${
-          esc(t("seat.affectedValue",{guests:p.affectedGuests,pax:p.affectedPax}))}</b></div>
+          esc(affectedText(p.affectedGuests,p.affectedPax))}</b></div>
         ${p.hostGuestsAlreadyAtTarget?`<div class="sp-row"><em>${t("seat.cohesion")}</em><b>${
           esc(t("seat.cohesionValue",{n:p.hostGuestsAlreadyAtTarget}))}</b></div>`:""}
+        ${(p.constraints||[]).map(c=>`<div class="sp-row ${
+          c.state==="FROZEN"?"is-frozen":""}"><em>${esc(t("seat.constraint."+c.constraint))}</em><b>${
+          esc(t("freeze.state."+c.state))}</b></div>`).join("")}
         ${p.unevaluated.map(u=>`<div class="sp-row muted"><em>${
           esc(t("seat.constraint."+u.constraint))}</em><b>${esc(notConfigured)}</b></div>`).join("")}
       </div>
@@ -1461,6 +1534,233 @@
     };
   }
 
+  // ---- FREEZE ZONES ---------------------------------------------------------
+  //
+  // Defined here, in Seating, because that is where an operator is thinking
+  // about who sits where; drawn on the Floor Plan as a LAYER, because that is
+  // where they are thinking about the room. Same rules, two views, one store.
+  //
+  // The freeze is never enforced by hiding a control. Every path that changes
+  // an assignment runs the same evaluation (freezeBlocks), so an operator who
+  // reaches a frozen table from a drag, a seat row, the table card or a Smart
+  // Seating suggestion gets the same challenge and the same override.
+  const freezeReasons=()=>["VIP_AREA","HEAD_TABLES","SPONSOR_TABLES","MANAGEMENT_HOLD","LATE_ARRIVAL_RESERVE","OTHER"];
+  function freezeScopeText(event,f){
+    if(f.scope==="ZONE")return t("freeze.scope.zoneOf",{zone:f.zone});
+    if(f.scope==="TABLE"){
+      const tb=(event.tables||[]).find(x=>x.id===f.tableId);
+      return t("freeze.scope.tableOf",{number:tb?formatTableNumber(tb.number):"—"});
+    }
+    const pad=n=>`${f.prefix}${String(n).padStart(2,"0")}`;
+    return t("freeze.scope.rangeOf",{from:formatTableNumber(pad(f.from)),to:formatTableNumber(pad(f.to))});
+  }
+  const freezeReasonText=r=>{const k="freeze.reason."+r;return t(k)!==k?t(k):r;};
+  // "2 record - 5 pax" is the kind of small wrongness that makes an operator
+  // trust the rest of the card less. Picked in JS because the substituter does
+  // not do plurals and should not learn to.
+  const affectedText=(guests,pax)=>t(guests===1?"seat.affectedValue":"seat.affectedValue.n",{guests,pax});
+  function zonesInPlan(event){
+    return [...new Set((event.tables||[]).map(x=>String(x.zone||"").trim()).filter(Boolean))]
+      .sort((a,b)=>a.localeCompare(b,"tr"));
+  }
+  function freezeFormHTML(event){
+    const d=ui.freezeDraft;
+    if(!d)return"";
+    const zones=zonesInPlan(event);
+    const scopes=[["ZONE",t("freeze.scope.ZONE")],["TABLE_GROUP",t("freeze.scope.TABLE_GROUP")],["TABLE",t("freeze.scope.TABLE")]];
+    const tables=[...(event.tables||[])].sort((a,b)=>naturalSort(a.number,b.number));
+    return`<form class="freeze-form" data-freeze-form>
+      <div class="field"><label for="fzScope">${t("freeze.field.scope")}</label>
+        <select id="fzScope" data-freeze-field="scope">${scopes.map(([v,l])=>
+          `<option value="${v}" ${d.scope===v?"selected":""}>${esc(l)}</option>`).join("")}</select></div>
+      ${d.scope==="ZONE"?`<div class="field"><label for="fzZone">${t("freeze.field.zone")}</label>${
+        zones.length?`<select id="fzZone" data-freeze-field="zone">${zones.map(z=>
+          `<option value="${esc(z)}" ${d.zone===z?"selected":""}>${esc(z)}</option>`).join("")}</select>`
+        :`<input id="fzZone" data-freeze-field="zone" value="${esc(d.zone||"")}" placeholder="${esc(t("freeze.field.zonePlaceholder"))}">`}</div>`:""}
+      ${d.scope==="TABLE_GROUP"?`<div class="freeze-range">
+        <div class="field"><label for="fzPrefix">${t("freeze.field.prefix")}</label><input id="fzPrefix" data-freeze-field="prefix" maxlength="4" value="${esc(d.prefix||"")}"></div>
+        <div class="field"><label for="fzFrom">${t("freeze.field.from")}</label><input id="fzFrom" data-freeze-field="from" type="number" min="0" max="9999" value="${Number(d.from)||0}"></div>
+        <div class="field"><label for="fzTo">${t("freeze.field.to")}</label><input id="fzTo" data-freeze-field="to" type="number" min="0" max="9999" value="${Number(d.to)||0}"></div>
+      </div>`:""}
+      ${d.scope==="TABLE"?`<div class="field"><label for="fzTable">${t("freeze.field.table")}</label>
+        <select id="fzTable" data-freeze-field="tableId">${tables.map(x=>
+          `<option value="${x.id}" ${d.tableId===x.id?"selected":""}>${esc(formatTableNumber(x.number))}</option>`).join("")}</select></div>`:""}
+      <div class="field"><label for="fzReason">${t("freeze.field.reason")}</label>
+        <select id="fzReason" data-freeze-field="reason">${freezeReasons().map(r=>
+          `<option value="${r}" ${d.reason===r?"selected":""}>${esc(freezeReasonText(r))}</option>`).join("")}</select></div>
+      <div class="field"><label for="fzNote">${t("freeze.field.note")}</label>
+        <input id="fzNote" data-freeze-field="note" value="${esc(d.note||"")}" placeholder="${esc(t("freeze.field.notePlaceholder"))}"></div>
+      <div class="freeze-form-actions">
+        <button type="button" class="btn sm" data-freeze-action="cancel-form">${t("freeze.cancel")}</button>
+        <button type="button" class="btn sm primary" data-freeze-action="create">${t("freeze.create")}</button>
+      </div>
+    </form>`;
+  }
+  function freezePanelHTML(event){
+    const F=FREEZE();
+    if(!F||isHistorical(event))return"";
+    const raw=eventFreezes(event);
+    const list=F.normalizeAll(raw);
+    if(!list.length&&!ui.freezeDraft)
+      return`<aside class="freeze-panel">
+        <div class="fz-head"><strong>${t("freeze.title")}</strong></div>
+        <p class="fz-empty">${t("freeze.none")}</p>
+        <button class="btn sm" data-freeze-action="open-form">${t("freeze.add")}</button>
+      </aside>`;
+    const held=F.heldCapacity(raw,event.tables||[],event.guests||[]);
+    const rows=list.map(f=>{
+      const covered=F.tablesCovered(f,event.tables||[]);
+      const chairs=covered.filter(x=>x.hasPhysicalSeats!==false).reduce((n,x)=>n+(Number(x.capacity)||0),0);
+      return`<li class="fz-row">
+        <div class="fz-row-head"><b>${esc(freezeScopeText(event,f))}</b><span class="fz-reason">${esc(freezeReasonText(f.reason))}</span></div>
+        <div class="fz-row-sub">${esc(t("freeze.covers",{tables:covered.length,chairs}))}${
+          f.note?` · ${esc(f.note)}`:""}</div>
+        <button class="btn sm" data-freeze-lift="${esc(f.id)}">${t("freeze.lift")}</button>
+      </li>`;
+    }).join("");
+    return`<aside class="freeze-panel">
+      <div class="fz-head"><strong>${t("freeze.title")}</strong><span>${
+        esc(t("freeze.heldSummary",{chairs:held.chairs,open:held.open}))}</span></div>
+      <ul class="fz-list">${rows}</ul>
+      ${ui.freezeDraft?freezeFormHTML(event)
+        :`<button class="btn sm" data-freeze-action="open-form">${t("freeze.add")}</button>`}
+      <p class="fz-note">${t("freeze.panelNote")}</p>
+    </aside>`;
+  }
+  // SUPERVISOR OVERRIDE REQUIRED. The operation is described, never performed:
+  // nothing has moved while this is on screen, and Cancel leaves the room
+  // exactly as it was. An override authorises THIS operation and nothing else
+  // — the freeze is still standing afterwards, which is what "never silently
+  // unlock" means in code rather than in a sentence.
+  function freezeChallengeHTML(event){
+    const c=ui.freezeChallenge;
+    if(!c||isHistorical(event))return"";
+    const r=c.report;
+    const dir=r.directions.map(d=>t("freeze.direction."+d)).join(" · ");
+    const what=r.freezes.map(f=>`<li>
+      <b>${esc(freezeScopeText(event,f))}</b>
+      <span>${esc(freezeReasonText(f.reason))}</span>
+      ${f.note?`<em>${esc(f.note)}</em>`:""}
+    </li>`).join("");
+    const impact=r.tables.map(x=>`<div class="fc-row"><em>${
+      esc(t("seat.tableLabel",{number:formatTableNumber(x.number)}))}</em><b>${
+      x.before}/${x.capacity}</b><i>&rarr;</i><b>${x.after}/${x.capacity}</b></div>`).join("");
+    return`<div class="freeze-challenge-scrim" data-freeze-scrim>
+      <aside class="freeze-challenge" role="alertdialog" aria-labelledby="fcTitle">
+        <div class="fc-head"><strong id="fcTitle">${t("freeze.overrideRequired")}</strong><span>${esc(dir)}</span></div>
+        <div class="fc-body">
+          <div class="fc-block"><h4>${t("freeze.whatIsFrozen")}</h4><ul class="fc-what">${what}</ul></div>
+          <div class="fc-block"><h4>${t("freeze.affected")}</h4>
+            <div class="fc-row"><em>${t("freeze.beingMoved")}</em><b>${
+              esc(affectedText(r.movingRecords,r.movingPax))}</b></div>
+            <div class="fc-row"><em>${t("freeze.alreadyInArea")}</em><b>${
+              esc(affectedText(r.guestsInArea,r.paxInArea))}</b></div>
+          </div>
+          <div class="fc-block"><h4>${t("freeze.impact")}</h4>${impact}
+            <div class="fc-row"><em>${t("freeze.heldChairs")}</em><b>${r.held.open}</b><i>&rarr;</i><b>${r.heldAfter.open}</b></div>
+          </div>
+        </div>
+        <div class="fc-foot">
+          <span class="fc-nothing">${t("freeze.nothingYet")}</span>
+          <button class="btn sm" data-freeze-action="cancel-override">${t("seat.cancel")}</button>
+          <button class="btn sm danger" data-freeze-action="override">${t("freeze.override")}</button>
+        </div>
+        <p class="fc-stays">${t("freeze.staysInPlace")}</p>
+      </aside>
+    </div>`;
+  }
+  function createFreezeFromDraft(){
+    const event=activeEvent(),F=FREEZE(),d=ui.freezeDraft;
+    if(!event||!F||!d)return;
+    if(!canMutate(event,"freeze part of the room"))return;
+    const f=F.normalize({...d,id:uid("freeze"),createdAt:nowISO()});
+    if(!f)return toast(t("freeze.invalid"),"error",5000);
+    const covered=F.tablesCovered(f,event.tables||[]);
+    // A rule that covers nothing is refused rather than stored. It would show
+    // as a held area holding nothing, and the operator would believe the room
+    // was protected when it was not.
+    if(!covered.length)return toast(t("freeze.coversNothing"),"error",5500);
+    // Replaced, not pushed: the render memo keys on this array's identity.
+    event.freezes=[...eventFreezes(event),f];
+    ui.freezeDraft=null;
+    audit(event,"FREEZE_CREATED",{freezeId:f.id,scope:f.scope,reason:f.reason,
+      tables:covered.length,tableIds:covered.map(x=>x.id)});
+    touchEvent(event);render();
+    toast(t("freeze.created",{n:covered.length}),"success",4500);
+  }
+  function liftFreeze(id){
+    const event=activeEvent(),F=FREEZE();
+    if(!event||!F)return;
+    if(!canMutate(event,"lift a freeze"))return;
+    const f=F.normalizeAll(eventFreezes(event)).find(x=>x.id===id);
+    if(!f)return;
+    event.freezes=eventFreezes(event).filter(x=>String(x&&x.id)!==id);
+    // Lifting is a deliberate act by a person and is recorded as one. It is
+    // the ONLY way a freeze ends — no override, no seating operation and no
+    // migration removes one as a side effect.
+    audit(event,"FREEZE_LIFTED",{freezeId:id,scope:f.scope,reason:f.reason});
+    touchEvent(event);render();
+    toast(t("freeze.lifted"),"success",4000);
+  }
+  function authoriseFreezeOverride(){
+    const c=ui.freezeChallenge;
+    if(!c)return;
+    const event=activeEvent();
+    if(!canMutate(event,"override a freeze"))return;
+    audit(event,"FREEZE_OVERRIDDEN",{kind:c.kind,
+      freezeIds:c.report.freezes.map(f=>f.id),
+      reasons:c.report.freezes.map(f=>f.reason),
+      directions:c.report.directions,
+      tableIds:c.report.tables.map(x=>x.id),
+      guestIds:c.guestIds,pax:c.report.movingPax});
+    ui.freezeChallenge=null;
+    // The override is spent here, as an argument to ONE call. There is no
+    // stored "overridden" flag for the next operation to find.
+    if(c.kind==="assign")assignGuestGroup(c.guestIds,c.tableId,c.preferred,{override:true});
+    else unassignGuest(c.guestIds[0],{override:true});
+  }
+  function bindFreezeZones(){
+    const event=activeEvent();
+    document.querySelectorAll("[data-freeze-action]").forEach(b=>b.onclick=()=>{
+      const action=b.dataset.freezeAction;
+      if(action==="layer"){ui.freezeLayer=!ui.freezeLayer;render();}
+      else if(action==="open-form"){
+        const zones=zonesInPlan(event);
+        const first=[...(event.tables||[])].sort((a,b)=>naturalSort(a.number,b.number))[0];
+        const parsed=first&&FREEZE()?FREEZE().parseTableNumber(first.number):null;
+        ui.freezeDraft={scope:zones.length?"ZONE":"TABLE_GROUP",zone:zones[0]||"",
+          prefix:parsed?parsed.prefix:"T",from:parsed?parsed.n:1,to:parsed?parsed.n:1,
+          tableId:ui.selectedTableId||(first?first.id:""),reason:"MANAGEMENT_HOLD",note:""};
+        render();
+      }
+      else if(action==="cancel-form"){ui.freezeDraft=null;render();}
+      else if(action==="create")createFreezeFromDraft();
+      else if(action==="cancel-override"){ui.freezeChallenge=null;render();}
+      else if(action==="override")authoriseFreezeOverride();
+    });
+    document.querySelectorAll("[data-freeze-lift]").forEach(b=>b.onclick=()=>liftFreeze(b.dataset.freezeLift));
+    document.querySelectorAll("[data-freeze-field]").forEach(el=>{
+      const commit=()=>{
+        if(!ui.freezeDraft)return;
+        const key=el.dataset.freezeField;
+        ui.freezeDraft[key]=el.type==="number"?Number(el.value):el.value;
+        // Only the shape-changing fields need a re-render; re-rendering on
+        // every keystroke would take the caret out of the note field.
+        if(key==="scope")render();
+      };
+      if(el.tagName==="SELECT")el.onchange=commit; else el.oninput=commit;
+    });
+    // Escape closes the challenge without authorising anything. A blocking
+    // card with no keyboard way out is how an operator ends up clicking the
+    // dangerous button to make it go away.
+    const scrim=document.querySelector("[data-freeze-scrim]");
+    if(scrim){
+      scrim.onclick=e=>{if(e.target===scrim){ui.freezeChallenge=null;render();}};
+      const btn=scrim.querySelector("[data-freeze-action='cancel-override']");
+      if(btn)btn.focus();
+    }
+  }
+
   // Contextual card, not a permanent inspector: it exists only while a table
   // is selected, and closing it hands the space back to the plan.
   selectedTablePanelHTML = function(event){
@@ -1469,8 +1769,14 @@
     const map=tableSeatMap(event,t_.id),occupied=tableAssignedPax(event,t_.id),empty=Math.max(0,t_.capacity-occupied);
     const selected=event.guests.find(g=>g.id===ui.selectedGuestId);
     const moving=selected&&selected.assignment&&selected.assignment.tableId!==t_.id;
+    // Said on the card, not only on the canvas: the layer can be switched off,
+    // and an operator about to press "Seat here" has to know what will happen.
+    const F=FREEZE();
+    const onIt=F?F.freezesOnTable(eventFreezes(event),t_):[];
     return`<aside class="table-card">
       <div class="table-card-head"><h3>${esc(formatTableNumber(t_.number))}</h3><span class="muted" style="font-size:11px">${esc(t_.zone||"")}</span><button class="table-card-close" data-close-table-card title="${t("seating.closeCard")}">&times;</button></div>
+      ${onIt.length?`<div class="table-card-frozen">${icon("lock")}<b>${t("freeze.state.FROZEN")}</b><span>${
+        esc(onIt.map(f=>freezeReasonText(f.reason)).join(" · "))}</span></div>`:""}
       <div class="table-card-stats">
         <div><span>${t("seating.capacity")}</span><b>${t_.capacity}</b></div>
         <div><span>${t("seating.occupied")}</span><b>${occupied}</b></div>
@@ -1494,11 +1800,37 @@
     else ui.selectedGuestIds=[id];
     ui.selectedGuestId=ui.selectedGuestIds[0]||null;ui.guestAnchorId=id;
   }
-  function assignGuestGroup(ids,tableId,preferred=null){
+  // WOULD THIS OPERATION CROSS A FREEZE? The single gate, used by every path
+  // that changes an assignment. Returns the case for the decision, or null.
+  //
+  // `override` is a PARAMETER and never stored state: one supervisor decision
+  // authorises exactly one operation, and the freeze is still standing when
+  // the next one arrives. There is deliberately no function anywhere that
+  // clears a freeze as a side effect of an override.
+  function freezeBlocks(event,guestIds,toTableId,options){
+    if(options&&options.override)return null;
+    const F=FREEZE();
+    if(!F||!event)return null;
+    const report=F.evaluateOperation({freezes:eventFreezes(event),
+      tables:event.tables||[],guests:event.guests||[],guestIds,toTableId});
+    return report.state===F.STATE.OVERRIDE_REQUIRED?report:null;
+  }
+  function challengeFreeze(kind,report,guestIds,tableId,preferred){
+    ui.freezeChallenge={kind,report,guestIds,tableId:tableId||null,
+      preferred:preferred===undefined?null:preferred};
+    ui.seatPreview=null;
+    render();
+  }
+  function assignGuestGroup(ids,tableId,preferred=null,options=null){
     const event=activeEvent();if(!canMutate(event,"change seating assignments"))return;ids=[...new Set(ids)].filter(Boolean);const guests=ids.map(id=>event.guests.find(g=>g.id===id)).filter(Boolean),table=event.tables.find(t=>t.id===tableId);if(!guests.length||!table)return;
     const locked=guests.find(g=>g.assignment?.locked);if(locked)return toast(`${locked.name}'s assignment is locked.`,"error",5000);
     const used=occupiedSeatIndexes(event,tableId,null);for(const g of guests)if(g.assignment?.tableId===tableId)(g.assignment.seats||[]).forEach(s=>used.delete(Number(s)));
     let free=Array.from({length:table.capacity},(_,i)=>i).filter(i=>!used.has(i));if(preferred!==null&&free.includes(preferred))free=[preferred,...free.filter(i=>i!==preferred)];const required=guests.reduce((n,g)=>n+paxOf(g),0);if(free.length<required)return toast(`${table.number} has ${free.length} available chairs; the selected group needs ${required}. No assignments changed.`,"error",6000);
+    // After the capacity check on purpose: asking a supervisor to authorise a
+    // move that could not have happened anyway wastes the one thing this
+    // mechanism is spending, which is somebody's attention.
+    const blocked=freezeBlocks(event,ids,tableId,options);
+    if(blocked)return challengeFreeze("assign",blocked,ids,tableId,preferred);
     const snapshot=guests.map(g=>({id:g.id,assignment:clone(g.assignment)}));let cursor=0;
     // Undo only matters here when the group had somewhere to fall back to --
     // a first-time assignment from Unassigned has nothing destructive to
@@ -1530,7 +1862,7 @@
     }
     catch(error){snapshot.forEach(s=>{event.guests.find(g=>g.id===s.id).assignment=s.assignment;});toast("The group move was rolled back.","error");}
   }
-  assignGuestToTable = function(guestId,tableId,preferred=null){assignGuestGroup([guestId],tableId,preferred);};
+  assignGuestToTable = function(guestId,tableId,preferred=null,options=null){assignGuestGroup([guestId],tableId,preferred,options);};
   // unassignGuest is defined further down, where its undo lives.
   toggleAssignmentLock = function(id){const event=activeEvent();if(!canMutate(event,"change an assignment lock"))return;original.toggleAssignmentLock(id);};
   bindSeating = function(){
@@ -1541,6 +1873,16 @@
     document.querySelectorAll("[data-seating-scope]").forEach(b=>b.onclick=()=>{ui.seatingGuestScope=b.dataset.seatingScope;ui.selectedGuestIds=[];ui.selectedGuestId=null;render();});document.querySelectorAll("[data-seating-filter]").forEach(b=>b.onclick=()=>{ui.seatingFilter=b.dataset.seatingFilter;ui.operationalMode=false;render();});
     document.querySelectorAll("[data-seating-guest]").forEach(row=>{row.onclick=e=>{selectGuestRecord(row.dataset.seatingGuest,e,records);render();};row.ondragstart=e=>{if(!ui.selectedGuestIds.includes(row.dataset.seatingGuest))ui.selectedGuestIds=[row.dataset.seatingGuest];e.dataTransfer.setData("application/x-merit-guests",JSON.stringify(ui.selectedGuestIds));e.dataTransfer.setData("application/x-merit-guest",row.dataset.seatingGuest);};});
     document.querySelectorAll("[data-occupant-guest]").forEach(row=>{if(!row.dataset.occupantGuest)return;row.onclick=e=>{selectGuestRecord(row.dataset.occupantGuest,e,event.guests);render();};row.ondragstart=e=>{if(!ui.selectedGuestIds.includes(row.dataset.occupantGuest))ui.selectedGuestIds=[row.dataset.occupantGuest];e.dataTransfer.setData("application/x-merit-guests",JSON.stringify(ui.selectedGuestIds));};});
+    // The table card's primary button. It was rendered by this file and bound
+    // only by the OLD bindSeating in app-guests.js, which this file replaces --
+    // so the most prominent control on the card had no handler at all and did
+    // nothing when pressed. Found while building the freeze gate, which sits on
+    // exactly this path.
+    const assign=document.querySelector("[data-assign-selected]");
+    if(assign)assign.onclick=()=>{
+      const ids=ui.selectedGuestIds.length?ui.selectedGuestIds:[ui.selectedGuestId].filter(Boolean);
+      if(ids.length)assignGuestGroup(ids,assign.dataset.assignSelected);
+    };
     document.querySelectorAll("[data-empty-seat]").forEach(row=>row.onclick=()=>{const ids=ui.selectedGuestIds.length?ui.selectedGuestIds:[ui.selectedGuestId].filter(Boolean);if(ids.length)assignGuestGroup(ids,ui.selectedTableId,Number(row.dataset.emptySeat));});document.querySelectorAll("[data-unassign]").forEach(b=>b.onclick=()=>unassignGuest(b.dataset.unassign));document.querySelectorAll("[data-lock-assignment]").forEach(b=>b.onclick=()=>toggleAssignmentLock(b.dataset.lockAssignment));
   };
 
@@ -1989,11 +2331,17 @@
       toast(seatLost?t("guests.restoredNoSeat",{name:snapshot.name}):t("guests.restoredToast",{name:snapshot.name}),"success");
     });
   };
-  unassignGuest = function(id){
+  unassignGuest = function(id,options=null){
     const event=activeEvent(),g=event&&event.guests.find(x=>x.id===id);
     if(!g||!g.assignment)return;
     if(!canMutate(event,"unassign a guest"))return;
     if(g.assignment.locked){toast(t("seating.unlockFirst"),"error");return;}
+    // Emptying a frozen table is a crossing too. A head-table or sponsor
+    // freeze protects the arrangement that is THERE, and letting somebody be
+    // pulled out of it silently would defeat the rule as completely as
+    // filling it would.
+    const blocked=freezeBlocks(event,[id],null,options);
+    if(blocked)return challengeFreeze("unassign",blocked,[id],null,null);
     const snapshot=JSON.parse(JSON.stringify(g.assignment));
     const table=event.tables.find(x=>x.id===snapshot.tableId);
     const label=table?formatTableNumber(table.number):"";
@@ -7093,7 +7441,10 @@
     document.querySelectorAll("[data-action='create-event']").forEach(b=>b.onclick=startNewEvent);document.querySelectorAll("[data-action='help']").forEach(b=>b.onclick=openGuide);document.querySelectorAll("[data-open-event]").forEach(b=>b.onclick=()=>openEvent(b.dataset.openEvent));// Row-level open + per-row action buttons now coexist on Home, so the
 // buttons must not bubble into the row's open handler.
 document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.stopPropagation();duplicateEvent(b.dataset.duplicateEvent);});document.querySelectorAll("[data-delete-event]").forEach(b=>b.onclick=e=>{e.stopPropagation();deleteEvent(b.dataset.deleteEvent);});document.querySelectorAll("[data-history-event]").forEach(row=>row.ondblclick=()=>openEvent(row.dataset.historyEvent));document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondblclick=e=>e.stopPropagation());
-    document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{ui.tab=b.dataset.tab;ui.selectedObjectId=null;ui.selectedObjectIds=[];ui.highlightId=null;ui.operationalMode=false;render();});
+    // An unanswered override challenge and a half-written freeze are questions
+    // about THIS screen. Carrying them to another tab would put a blocking
+    // card over work the operator has moved on to.
+    document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{ui.tab=b.dataset.tab;ui.selectedObjectId=null;ui.selectedObjectIds=[];ui.highlightId=null;ui.operationalMode=false;ui.freezeChallenge=null;ui.freezeDraft=null;ui.seatPreview=null;render();});
     // The language toggle is a SHELL control now, so it is bound here rather
     // than in bindCanvas(). It used to be wired only where the canvas was, which
     // was fine while it lived in the plan toolbar and is not now: on the Command
@@ -7137,6 +7488,9 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
       if(reviewing&&!historical)bindReview();
       if(changesMode)bindLayoutChanges();
       if(ui.tab==="command"&&!historical)bindCommand();
+      // Freeze bindings run on both canvases: the layer toggle lives in the
+      // shared toolbar, and the panel and the override challenge in Seating.
+      if(((ui.tab==="floor"&&!reviewing)||ui.tab==="seating")&&!historical)bindFreezeZones();
       if(ui.tab==="seating"&&!historical){bindSeating();bindSmartSeating();}if(ui.tab==="guests"&&!historical)bindGuests();if(ui.tab==="live"&&!historical)bindLive();if(ui.tab==="reports")bindReports();
       if(historical&&ui.tab==="seating")requestAnimationFrame(()=>fitCanvas(false));
     }
@@ -7197,7 +7551,11 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   }
 
   window.addEventListener("keydown",e=>{
-    if(e.key==="Escape"){if(ui.reviewQueue){ui.reviewQueue=null;ui.selectedCandidateId=null;}if(ui.repeatPlacement){ui.repeatPlacement=null;toast("Repeated placement cancelled.");}if(ui.focusMode)ui.focusMode=false;if(ui.reviewDrawMode)ui.reviewDrawMode=false;if(ui.activeQuestionId)ui.activeQuestionId=null;if(ui.reviewCenterOpen)ui.reviewCenterOpen=false;render();return;}
+    // The override challenge is a blocking decision, so Escape means "no" and
+    // nothing else on the screen closes with it. Cancelling authorises
+    // nothing and leaves the room exactly as it was.
+    if(e.key==="Escape"&&ui.freezeChallenge){e.preventDefault();ui.freezeChallenge=null;render();return;}
+    if(e.key==="Escape"){if(ui.freezeDraft)ui.freezeDraft=null;if(ui.reviewQueue){ui.reviewQueue=null;ui.selectedCandidateId=null;}if(ui.repeatPlacement){ui.repeatPlacement=null;toast("Repeated placement cancelled.");}if(ui.focusMode)ui.focusMode=false;if(ui.reviewDrawMode)ui.reviewDrawMode=false;if(ui.activeQuestionId)ui.activeQuestionId=null;if(ui.reviewCenterOpen)ui.reviewCenterOpen=false;render();return;}
     if(ui.screen!=="workspace"||ui.tab!=="floor"||isHistorical(activeEvent()))return;
     if((e.key==="Delete"||e.key==="Backspace")&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)){e.preventDefault();deleteSelection();return;}
     if(e.ctrlKey&&e.key.toLowerCase()==="d"){e.preventDefault();duplicateSelection();return;}

@@ -17,9 +17,11 @@
 //   decision. Nothing is suggested over it, and the screen says why rather than
 //   showing an empty panel.
 //
-//   A CONSTRAINT THAT CANNOT BE EVALUATED SAYS SO. Freeze Zones and unavailable
-//   tables are later phases. Reporting "no conflict" would be a claim about a
-//   feature that has never run.
+//   A CONSTRAINT THAT CANNOT BE EVALUATED SAYS SO. Reporting "no conflict"
+//   would be a claim about a feature that has never run. Freeze Zones has since
+//   shipped and now answers for real; unavailable tables have not, and still say
+//   so. The suite checks both halves, because the interesting failure is a
+//   NOT_CONFIGURED row quietly turning into a reassuring one.
 import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "smart-seating", tags: ["business", "fast"], timeout: 150000 };
@@ -161,13 +163,25 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(reserve, "and the room's spare seats are shown before and after", reserve);
 
   // --- 5. a constraint that cannot be evaluated says so --------------------
+  //
+  // Freeze Zones USED to be one of these. It shipped, so the same slot now
+  // carries a real answer and only the unimplemented constraint is muted —
+  // which is the behaviour the NOT_CONFIGURED design promised: the row does
+  // not quietly become a clean bill of health, it becomes a true one.
   const unevaluated = preview.rows.filter(r => r.muted);
-  checks.equal(unevaluated.length, 2,
-    "freeze zones and unavailable tables are both reported", unevaluated);
+  checks.equal(unevaluated.length, 1,
+    "the one constraint this build still cannot evaluate is reported", unevaluated);
   const notSetUp = await page.evaluate(() => t("seat.notConfigured"));
   checks.ok(unevaluated.every(r => r.values[0] === notSetUp),
-    "as NOT SET UP rather than as a clean bill of health — neither feature has ever run",
+    "as NOT SET UP rather than as a clean bill of health — that feature has never run",
     unevaluated.map(r => r.values[0]));
+  const freezeLabel = await page.evaluate(() => t("seat.constraint.FREEZE_ZONES"));
+  const freezeRow = preview.rows.find(r => r.label === freezeLabel);
+  checks.ok(freezeRow && !freezeRow.muted,
+    "and the constraint that DID ship answers for real instead of saying not set up", freezeRow);
+  checks.equal(freezeRow && freezeRow.values[0],
+    await page.evaluate(() => t("freeze.state.OPEN")),
+    "this table is open — nothing is frozen in this event");
 
   // --- 6. cancelling changes nothing ---------------------------------------
   await click(page, "[data-seat-cancel]");

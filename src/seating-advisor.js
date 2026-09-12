@@ -15,11 +15,15 @@
 //   is not. The reasons are enum values a screen translates, so they can be
 //   argued with in either language.
 //
-//   A CONSTRAINT THAT CANNOT BE EVALUATED SAYS SO. Freeze Zones and unavailable
-//   tables are later phases and do not exist yet. Reporting "not frozen" would
-//   be a claim about a feature that has never run — the option reports
-//   NOT_CONFIGURED for those, which is the truth, and the day they arrive the
-//   same slot carries a real answer.
+//   A CONSTRAINT THAT CANNOT BE EVALUATED SAYS SO. Reporting "not frozen"
+//   would be a claim about a feature that has never run, so an unimplemented
+//   constraint reports NOT_CONFIGURED — and the day it arrives the same slot
+//   carries a real answer. Freeze Zones has now arrived: when the caller
+//   passes a resolved `frozen` list the constraint moves out of `unevaluated`
+//   and into `constraints` with a real state, and a frozen table is removed
+//   from the options with FROZEN as the reason. Unavailable tables have not
+//   arrived and still say so. The advisor never learns the freeze RULES — it
+//   consumes the resolved outcome, so freeze policy lives in exactly one file.
 //
 //   THE PREVIEW IS COMPUTED, NOT PROMISED. previewMove() derives every
 //   before/after figure from the same inputs the recommender used, WITHOUT
@@ -50,11 +54,14 @@
     ALREADY_THERE: "ALREADY_THERE",
     NO_PHYSICAL_SEATS: "NO_PHYSICAL_SEATS",
     LOCKED_ASSIGNMENT: "LOCKED_ASSIGNMENT",
+    FROZEN: "FROZEN",
   };
 
-  // Constraints the programme names that have no implementation yet. Reported
-  // as unanswered rather than answered favourably.
+  // Constraints the programme names. A constraint with no implementation is
+  // reported as unanswered rather than answered favourably.
   const NOT_CONFIGURED = "NOT_CONFIGURED";
+  const OPEN = "OPEN";
+  const FROZEN = "FROZEN";
   const CONSTRAINT = {
     FREEZE_ZONES: "FREEZE_ZONES",
     UNAVAILABLE_TABLES: "UNAVAILABLE_TABLES",
@@ -62,6 +69,34 @@
 
   const paxOf = (g) => Math.max(1, Number(g && g.pax) || 1);
   const num = (v) => (typeof v === "number" && isFinite(v) ? v : 0);
+
+  // The caller's resolved freeze answer, indexed. `undefined` means the caller
+  // did not evaluate freezes at all, which is NOT the same as "nothing is
+  // frozen" — an empty array says that, and this distinction is the whole
+  // reason NOT_CONFIGURED exists.
+  function freezeIndex(frozen) {
+    if (!Array.isArray(frozen)) return null;
+    const map = new Map();
+    for (const f of frozen) {
+      if (!f || !f.tableId) continue;
+      if (!map.has(f.tableId)) map.set(f.tableId, []);
+      map.get(f.tableId).push({ freezeId: f.freezeId || null, reason: f.reason || null });
+    }
+    return map;
+  }
+  // What a single option can say about the constraints, given what the caller
+  // supplied. Built once per call rather than inlined, so the recommendation
+  // and the preview cannot drift into answering the same question differently.
+  function constraintRows(index, tableId) {
+    const answered = [], unevaluated = [
+      { constraint: CONSTRAINT.UNAVAILABLE_TABLES, state: NOT_CONFIGURED },
+    ];
+    if (index) answered.push({ constraint: CONSTRAINT.FREEZE_ZONES,
+      state: index.has(tableId) ? FROZEN : OPEN,
+      freezes: index.get(tableId) || [] });
+    else unevaluated.unshift({ constraint: CONSTRAINT.FREEZE_ZONES, state: NOT_CONFIGURED });
+    return { constraints: answered, unevaluated };
+  }
 
   function seatsTaken(guests, tableId, exceptGuestId) {
     const used = new Set();
@@ -85,6 +120,7 @@
     const tables = Array.isArray(inp.tables) ? inp.tables : [];
     const guests = Array.isArray(inp.guests) ? inp.guests : [];
     const limit = num(inp.limit) || 4;
+    const frozen = freezeIndex(inp.frozen);
     if (!guest) return empty("no guest was given");
 
     const pax = paxOf(guest);
@@ -116,6 +152,14 @@
       const number = String(t.number);
       if (!seatable(t)) { blocked.push({ tableId: t.id, number, why: BLOCKED.NO_PHYSICAL_SEATS }); continue; }
       if (t.id === currentTableId) { blocked.push({ tableId: t.id, number, why: BLOCKED.ALREADY_THERE }); continue; }
+      // A frozen table is never RECOMMENDED. A person may still choose to seat
+      // there and be challenged for a supervisor override, but this layer
+      // proposing it would be the product quietly routing around a rule a
+      // person set — the exact behaviour freezes exist to prevent.
+      if (frozen && frozen.has(t.id)) {
+        blocked.push({ tableId: t.id, number, why: BLOCKED.FROZEN, freezes: frozen.get(t.id) });
+        continue;
+      }
       const used = seatsTaken(guests, t.id, guest.id);
       const free = num(t.capacity) - used.size;
       // The party is one record and sits at one table. A table with room for
@@ -135,12 +179,10 @@
         occupied: used.size, free, pax,
         freeAfter: free - pax,
         reasons,
-        // Constraints this build cannot evaluate, named so the UI can say
-        // "not configured" instead of implying a clean bill of health.
-        unevaluated: [
-          { constraint: CONSTRAINT.FREEZE_ZONES, state: NOT_CONFIGURED },
-          { constraint: CONSTRAINT.UNAVAILABLE_TABLES, state: NOT_CONFIGURED },
-        ],
+        // Constraints, split by whether this build can answer them. Anything
+        // it cannot is named rather than omitted, so the UI says "not set up"
+        // instead of implying a clean bill of health.
+        ...constraintRows(frozen, t.id),
         // Ordering only. Deliberately NOT shown to an operator and not a
         // confidence: it decides which four rows appear, and the reasons are
         // what justify them.
@@ -173,6 +215,7 @@
     const tables = Array.isArray(inp.tables) ? inp.tables : [];
     const guests = Array.isArray(inp.guests) ? inp.guests : [];
     const to = tables.find((t) => t.id === inp.toTableId) || null;
+    const frozen = freezeIndex(inp.frozen);
     if (!guest || !to) return null;
 
     const pax = paxOf(guest);
@@ -211,10 +254,7 @@
       affectedGuests: 1,
       affectedPax: pax,
       hostGuestsAlreadyAtTarget: hostAtTarget,
-      unevaluated: [
-        { constraint: CONSTRAINT.FREEZE_ZONES, state: NOT_CONFIGURED },
-        { constraint: CONSTRAINT.UNAVAILABLE_TABLES, state: NOT_CONFIGURED },
-      ],
+      ...constraintRows(frozen, to.id),
       // Said in the object itself so no caller can present this as done.
       mutated: false,
       statement: "nothing has changed; this is what would change",
@@ -222,7 +262,7 @@
   }
 
   globalThis.MeritSeatingAdvisor = {
-    version: 1, REASON, BLOCKED, CONSTRAINT, NOT_CONFIGURED,
+    version: 1, REASON, BLOCKED, CONSTRAINT, NOT_CONFIGURED, OPEN, FROZEN,
     recommend, previewMove,
   };
 })();

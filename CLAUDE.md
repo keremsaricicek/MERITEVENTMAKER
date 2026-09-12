@@ -137,10 +137,28 @@ boundary: it is what makes "never silently move or seat guests" structural
 rather than a promise. Options carry **named reasons, never a score**; a party is
 one record and is never split across tables to make the numbers work; a locked
 assignment outranks every suggestion; and a constraint with no implementation yet
-(Freeze Zones, unavailable tables) reports **not set up yet** rather than "no
-conflict". Nothing mutates until a person presses Apply, and the preview shows
-the arithmetic they will get. Full detail: `src/seating-advisor.js` and
+(unavailable tables) reports **not set up yet** rather than "no conflict" — the
+day it ships, that same slot carries a real answer, as Freeze Zones now does.
+Nothing mutates until a person presses Apply, and the preview shows the
+arithmetic they will get, exactly. Full detail: `src/seating-advisor.js` and
 `tests/suites/smart-seating.test.mjs`.
+
+## Freeze zones
+
+A freeze is a **rule about a place**, not a list of table ids: a zone freeze
+covers a table moved into the zone tomorrow, a range freeze covers a `T07`
+created tomorrow. `src/seating-freeze.js` owns those rules and nothing else
+evaluates them — the advisor, the canvas, the Plan Doctor and the override
+challenge all consume its resolved answer, so they cannot disagree about what is
+held. A table is OPEN or FROZEN; **SUPERVISOR OVERRIDE REQUIRED is the state of
+an OPERATION**, not a fourth kind of table. Every path that changes an
+assignment runs the same evaluation, in both directions — filling a held area
+and emptying a frozen head table are both crossings. An override is a
+**parameter spent on one call**, never stored state: the freeze is still
+standing for the next operation, and lifting it is a separate, recorded act by a
+person. Defined in Seating, drawn on the Floor Plan as a layer that outlines
+rather than covers. Full detail: `src/seating-freeze.js` and
+`tests/suites/seating-freeze.test.mjs`.
 
 ## Plan Intelligence honesty
 
