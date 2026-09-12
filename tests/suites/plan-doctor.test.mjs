@@ -124,17 +124,36 @@ export default async function run({ page, checks, baseUrl }) {
   const unlabelled = first.rows.filter(r => /^[a-z][a-zA-Z0-9]*\./.test(r.go.label));
   checks.equal(unlabelled.length, 0, "and the control is a sentence, not a key", unlabelled);
 
-  // Following each one has to actually move the operator. A control that
-  // renders and does nothing is the same dead end wearing a button.
+  // Following each one has to actually DO something. A control that renders and
+  // does nothing is the same dead end wearing a button.
+  //
+  // Almost every row's "something" is taking the operator to the screen that
+  // owns the problem. One row's is not: the backup risk is precisely that
+  // nobody pressed the export button, so its control presses it. Sending the
+  // operator off to go and find that button would be the dead end this rule
+  // exists to forbid, so the rule is "an observable effect", not "a tab
+  // change" — and the effect is checked, not assumed.
+  // Which control is the act rather than a destination, decided from the live
+  // translation rather than from a hardcoded code or an English word — this
+  // suite must keep working in either language.
+  const backupLabel = await page.evaluate(() => t("doctor.go.BACKUP"));
   for (const r of first.rows) {
     const sel = r.go.code ? `[data-cc-go="${r.go.code}"]`
       : r.go.cc ? `.doc-row [data-cc-action="${r.go.cc}"]`
         : `.doc-row [data-tab="${r.go.tab}"]`;
+    const actionRow = r.go.label === backupLabel;
+    const backedUpBefore = await page.evaluate(() => state.lastBackupAt || null);
     await click(page, sel);
     await page.waitForTimeout(350);
-    const where = await page.evaluate(() => ({ tab: ui.tab, screen: ui.screen }));
-    checks.ok(where.screen === "workspace" && where.tab !== "command",
-      `following "${r.text.slice(0, 46)}" leaves the Command Center for the screen that owns it`, where);
+    const where = await page.evaluate(() => ({ tab: ui.tab, screen: ui.screen,
+      backedUp: state.lastBackupAt || null }));
+    if (actionRow) {
+      checks.ok(where.backedUp && where.backedUp !== backedUpBefore,
+        `following "${r.text.slice(0, 46)}" performs the act the row is about`, where);
+    } else {
+      checks.ok(where.screen === "workspace" && where.tab !== "command",
+        `following "${r.text.slice(0, 46)}" leaves the Command Center for the screen that owns it`, where);
+    }
     await gotoTab(page, "command");
   }
 

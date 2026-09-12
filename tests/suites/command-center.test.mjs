@@ -64,14 +64,25 @@ export default async function run({ page, checks, baseUrl }) {
     "the verdict is never expressed as a readiness percentage", headText);
 
   // --- 4. unseated guests are a review reason, not a blocker ---------------
+  //
+  // Matched by the row's own translated wording rather than by counting rows.
+  // The count was incidental precision: the radar legitimately raises other
+  // open questions about the same event (an event with no exported copy, for
+  // one), and a check that breaks when a NEW risk is added is a check that
+  // punishes the radar for doing its job. What must hold is that THIS row is
+  // present, and that nothing here is a blocker.
   const withUnseated = await page.evaluate(() => ({
     verdict: document.querySelector(".cc-head").className,
     reasons: [...document.querySelectorAll(".cc-reason")].map(r => r.className),
+    texts: [...document.querySelectorAll(".cc-reason-body b")].map(b => b.textContent.trim()),
+    unseatedWording: t("doctor.guestsWithoutATable", { pax: 4, n: 4 }),
   }));
   checks.ok(withUnseated.verdict.includes("verdict-readyWithReview"),
     "four unseated pax make the event ready-with-open-questions, not un-openable", withUnseated);
-  checks.ok(withUnseated.reasons.length === 1 && withUnseated.reasons[0].includes("review"),
-    "the unseated guests appear as a review reason", withUnseated.reasons);
+  checks.ok(withUnseated.reasons.length >= 1 && withUnseated.reasons.every(c => c.includes("review")),
+    "nothing about this event is a blocker", withUnseated.reasons);
+  checks.ok(withUnseated.texts.includes(withUnseated.unseatedWording),
+    "and the unseated guests are there, in the operator's own wording", withUnseated);
 
   // --- 5. a blocker changes the verdict, and going live changes it again ----
   await page.evaluate(src => eval(src), BREAK_THE_PLAN);

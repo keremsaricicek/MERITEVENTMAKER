@@ -54,6 +54,8 @@
     RELATIONSHIPS: "RELATIONSHIPS",       // the scene graph's edges
     TEACH_AREA: "TEACH_AREA",
     OPERATOR: "OPERATOR",               // a person stood behind the figure
+    ARRIVALS: "ARRIVALS",               // who is actually in the room tonight
+    BACKUP: "BACKUP",                   // the exported copy, and when it was taken
   };
 
   // What is at stake. This is the "WHAT IT AFFECTS" of a finding, and it is a
@@ -65,6 +67,9 @@
     REPORTS: "REPORTS",
     CAPACITY: "CAPACITY",
     PLAN_READING: "PLAN_READING",
+    // Not an operational consequence inside tonight's room, but the one that
+    // ends the event entirely: this product keeps everything in a browser.
+    RECOVERY: "RECOVERY",
   };
 
   // Where a row takes the operator. The names are screens, not functions, so
@@ -75,7 +80,22 @@
     FLOOR: "FLOOR",
     REVIEW: "REVIEW",               // Floor Plan in review mode, at an object
     REVIEW_CENTER: "REVIEW_CENTER", // Floor Plan in review mode, budget open
+    LIVE: "LIVE",                   // the arrivals screen
+    BACKUP: "BACKUP",               // take a copy now — the action itself
   };
+
+  // RISKS THIS BUILD CANNOT EVALUATE.
+  //
+  // The programme names a list of things that could make an event fail
+  // operationally. Most of them this layer now answers. The ones it cannot are
+  // named here and reported ALONGSIDE the findings, because a radar that shows
+  // only what it can see teaches an operator that a quiet radar means a safe
+  // event. Same discipline as the seating advisor's NOT_CONFIGURED rows: the
+  // day the feature ships, the entry moves out of this list.
+  const NOT_EVALUATED = [
+    { risk: "UNAVAILABLE_TABLES",
+      why: "a table taken out of service, and which guests it would strand, is not modelled yet" },
+  ];
 
   // The answer to the question in the title. Three named states, never a score:
   // there is no honest weighting of "one duplicate table number" against
@@ -105,10 +125,21 @@
     const guests = Array.isArray(inp.guests) ? inp.guests : [];
     const analysis = inp.analysis || null;
     const phase = inp.phase || "ready";
-    // Which tables a person has frozen, resolved by the caller. The Doctor
-    // does not evaluate freeze RULES — that is seating-freeze.js's single job
-    // — it only reports what a freeze does to the room's arithmetic.
-    const frozenIds = new Set(Array.isArray(inp.frozenTableIds) ? inp.frozenTableIds : []);
+    // Which tables a person has frozen, WITH the reason each was held, resolved
+    // by the caller. The Doctor does not evaluate freeze RULES — that is
+    // seating-freeze.js's single job — it reports what a freeze does to the
+    // room. The reason matters: an area held in reserve that already has guests
+    // in it is a contradiction, and an area frozen to protect the people who
+    // are in it is not.
+    const frozen = Array.isArray(inp.frozen) ? inp.frozen.filter(Boolean) : [];
+    const frozenIds = new Set(frozen.map((f) => f.tableId));
+    const reasonsByTable = new Map();
+    for (const f of frozen) {
+      if (!reasonsByTable.has(f.tableId)) reasonsByTable.set(f.tableId, new Set());
+      reasonsByTable.get(f.tableId).add(f.reason);
+    }
+    // When the copy was last taken, and whether the event has changed since.
+    const backup = inp.backup || null;
     const findings = [];
 
     const add = (f) => { findings.push(f); return f; };
@@ -241,6 +272,26 @@
       });
     }
 
+    // SOMEBODY IS IN THE ROOM WITH NOWHERE TO SIT. The one risk that is
+    // already happening rather than forecast: they walked in, the door team
+    // checked them in, and no table was ever assigned. It is BLOCKING whenever
+    // it is true and cannot be true before the doors open, so it needs no
+    // phase condition — a phase test would only make it possible to hide.
+    const arrivedUnseated = guests.filter((g) => g && g.arrivalStatus === "Checked In" && !g.assignment);
+    if (arrivedUnseated.length) {
+      const pax = arrivedUnseated.reduce((n, g) => n + paxOf(g), 0);
+      add({
+        code: "checkedInWithoutATable", level: LEVEL.BLOCKING,
+        params: { n: arrivedUnseated.length, guests: arrivedUnseated.length, pax },
+        what: `${arrivedUnseated.length} checked-in ${plural(arrivedUnseated.length, "guest record has", "guest records have")} no table (${pax} pax, already in the room)`,
+        why: "the arrival status says they are here and the seating plan has nowhere to put them — this is happening now, not a forecast",
+        sources: [SOURCE.ARRIVALS, SOURCE.SEATING],
+        affects: [AFFECTS.ARRIVALS, AFFECTS.SEATING],
+        action: { go: GO.SEATING, guestIds: arrivedUnseated.map((g) => g.id) },
+        weight: pax + 1000,
+      });
+    }
+
     // Guests, but nowhere to put them.
     if (totalPax > 0 && chairs === 0) {
       add({
@@ -330,6 +381,57 @@
       });
     }
 
+    // A RESERVE THAT IS NOT RESERVED. An area held back for late arrivals or by
+    // management already has guests in it: two stated facts that contradict
+    // each other, and only a person can say which one is now true.
+    //
+    // Deliberately NOT every occupied frozen table. A VIP area, the head tables
+    // and the sponsor block are frozen precisely to protect the people sitting
+    // in them — raising those would be crying wolf at the normal case, which is
+    // how an operator learns to ignore the radar.
+    const HOLD_REASONS = new Set(["LATE_ARRIVAL_RESERVE", "MANAGEMENT_HOLD"]);
+    const heldButOccupied = [];
+    for (const t of tables) {
+      const rs = reasonsByTable.get(t.id);
+      if (!rs || ![...rs].some((r) => HOLD_REASONS.has(r))) continue;
+      const at = seated.filter((g) => g.assignment.tableId === t.id);
+      if (at.length) heldButOccupied.push({ table: t, guests: at,
+        pax: at.reduce((n, g) => n + paxOf(g), 0) });
+    }
+    if (heldButOccupied.length) {
+      const pax = heldButOccupied.reduce((n, x) => n + x.pax, 0);
+      add({
+        code: "reservedAreaOccupied", level: LEVEL.NEEDS_REVIEW,
+        params: { n: heldButOccupied.length, tables: heldButOccupied.length, pax,
+          number: String(heldButOccupied[0].table.number) },
+        what: `${heldButOccupied.length} ${plural(heldButOccupied.length, "table is", "tables are")} being held in reserve and already ${plural(pax, "has", "have")} ${pax} pax seated on ${plural(heldButOccupied.length, "it", "them")}`,
+        why: "the freeze says these seats are being kept back and the seating plan says they are taken — one of the two has to give, and only a person can say which",
+        sources: [SOURCE.OPERATOR, SOURCE.SEATING],
+        affects: [AFFECTS.SEATING, AFFECTS.CAPACITY],
+        action: { go: GO.SEATING, tableId: heldButOccupied[0].table.id,
+          tableIds: heldButOccupied.map((x) => x.table.id) },
+        weight: pax,
+      });
+    }
+
+    // NO COPY OF THIS EVENT EXISTS ANYWHERE. Everything this product knows
+    // lives in one browser profile. An event with real content and no export
+    // is one cleared cache away from gone, which is the only risk in this list
+    // that cannot be recovered from on the night.
+    const hasContent = tables.length > 0 || guests.length > 0;
+    if (backup && hasContent && !backup.at) {
+      add({
+        code: "neverBackedUp", level: LEVEL.NEEDS_REVIEW,
+        params: { n: guests.length, guests: guests.length, tables: tables.length },
+        what: "no backup of this event has ever been taken",
+        why: "everything this product knows lives in this browser — with no exported copy, clearing the browser's data ends the event",
+        sources: [SOURCE.BACKUP],
+        affects: [AFFECTS.RECOVERY],
+        action: { go: GO.BACKUP },
+        weight: guests.length + tables.length,
+      });
+    }
+
     if (!tables.length) {
       add({
         code: "noTablesInPlan", level: LEVEL.NEEDS_REVIEW,
@@ -358,6 +460,41 @@
         affects: [AFFECTS.CAPACITY],
         action: { go: GO.SEATING, filter: "empty" },
         weight: chairs - assignedPax,
+      });
+    }
+
+    // WHAT NO SHOW HAS PHYSICALLY FREED. Planned occupancy and live occupancy
+    // are two different things and must never be merged: a No Show keeps their
+    // planned seat (the table plan and the reports still say so) while the
+    // chair itself is free tonight. This states the second number WITHOUT
+    // implying the first is wrong — the wording is the whole point of the row.
+    const noShows = seated.filter((g) => g.arrivalStatus === "No Show");
+    if (noShows.length) {
+      const pax = noShows.reduce((n, g) => n + paxOf(g), 0);
+      add({
+        code: "chairsFreedByNoShow", level: LEVEL.INFORMATION,
+        params: { n: pax, pax, guests: noShows.length },
+        what: `${pax} ${plural(pax, "chair is", "chairs are")} physically free tonight that the table plan still shows as taken`,
+        why: "a No Show keeps its planned seat on purpose — the plan and the reports are correct, and these chairs can still be used on the night",
+        sources: [SOURCE.ARRIVALS, SOURCE.SEATING],
+        affects: [AFFECTS.CAPACITY, AFFECTS.ARRIVALS],
+        action: { go: GO.LIVE, guestIds: noShows.map((g) => g.id) },
+        weight: pax,
+      });
+    }
+
+    // The copy exists but predates the work. Not a problem, and worth knowing
+    // before the doors open.
+    if (backup && backup.at && backup.staleBy) {
+      add({
+        code: "backupOlderThanTheEvent", level: LEVEL.INFORMATION,
+        params: { n: 1, when: backup.at },
+        what: "this event has changed since the last backup was taken",
+        why: "the exported copy is older than the event's last modification — restoring it today would lose the work done since",
+        sources: [SOURCE.BACKUP],
+        affects: [AFFECTS.RECOVERY],
+        action: { go: GO.BACKUP },
+        weight: 0,
       });
     }
 
@@ -612,6 +749,11 @@
       // one list (the exported report, a regression suite) read this rather
       // than re-concatenating the three and getting the order wrong.
       all: [...blocking, ...needsReview, ...information],
+      // WHICH NAMED RISKS THIS BUILD ACTUALLY LOOKED AT. A radar that shows
+      // only what it can see teaches an operator that a quiet radar means a
+      // safe event, so the ones it cannot evaluate travel with the report and
+      // are stated on the screen next to the verdict.
+      notEvaluated: NOT_EVALUATED.map((r) => ({ ...r })),
       // What this layer did NOT do, stated so nothing downstream can imply it
       // did. No detector ran, no pixel was read, no model was consulted.
       provenance: {
@@ -623,5 +765,5 @@
     };
   }
 
-  globalThis.MeritPlanDoctor = { version: 1, LEVEL, SOURCE, AFFECTS, GO, VERDICT, run };
+  globalThis.MeritPlanDoctor = { version: 1, LEVEL, SOURCE, AFFECTS, GO, VERDICT, NOT_EVALUATED, run };
 })();

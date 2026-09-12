@@ -160,6 +160,23 @@ person. Defined in Seating, drawn on the Floor Plan as a layer that outlines
 rather than covers. Full detail: `src/seating-freeze.js` and
 `tests/suites/seating-freeze.test.mjs`.
 
+## The Event Risk Radar
+
+"What could make this event fail operationally?" — answered in the Command
+Center from the Plan Doctor and nothing else. It **runs no engine of its own**:
+every row is a fact another layer already concluded, so the radar cannot
+disagree with the pre-flight report. Two refusals are load-bearing. It shows
+**no percentage** — there is no honest weighting of one duplicate table number
+against twelve unseated guests, so it names one of four states (READY / READY
+WITH REVIEW / NOT READY / LIVE RISK) and lists the reasons. And it **says what
+it cannot see**: risks this build does not model (`MeritPlanDoctor.NOT_EVALUATED`)
+are printed under the verdict, because a radar that shows only what it knows how
+to look for teaches an operator that a quiet radar means a safe event. Every row
+carries a control; the backup row's control is the export itself, because "go
+and find the button" is the dead end this layer forbids. INFORMATION never
+reaches the radar — that is the difference between it and the pre-flight report.
+Full detail: `src/plan-doctor.js` and `tests/suites/risk-radar.test.mjs`.
+
 ## Plan Intelligence honesty
 
 Assisted Detection today is classical computer vision, not a trained

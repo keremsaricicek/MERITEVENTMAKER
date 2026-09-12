@@ -1392,3 +1392,95 @@ rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
 Not done in this phase, and deliberately: the audit trail is **Phase P**. Freeze
 creation, lifting and every override are written to `state.audit` now so that
 phase has real entries to surface; nothing renders them yet.
+
+## PHASE J — the Event Risk Radar
+
+### What was already there, and what was not
+
+Phase E built the Plan Doctor and the Command Center's attention list, and
+between them they already delivered most of §8: named verdicts rather than a
+score, findings with provenance, and a control on every row. Saying Phase J
+"built a Risk Radar" would be a relabel.
+
+What was missing is the risks §8 names that the product could not raise at all,
+and one refusal it was not making.
+
+### The risks it could not raise
+
+| Risk | Level | Why it is that level |
+| --- | --- | --- |
+| `checkedInWithoutATable` | BLOCKING | somebody is standing in the room and the seating plan has nowhere to put them. Not a forecast — already true. It carries no phase condition on purpose: a phase test would only make it possible to hide. |
+| `reservedAreaOccupied` | NEEDS REVIEW | an area held for late arrivals or by management already has guests on it. Two stated facts contradict each other and only a person can say which is now true. |
+| `neverBackedUp` | NEEDS REVIEW | everything this product knows lives in one browser profile. An event with real content and no exported copy is one cleared cache from gone — the only risk in the list that cannot be recovered from on the night. |
+| `backupOlderThanTheEvent` | INFORMATION | a copy that exists but predates the work. Worth knowing, demands nothing. |
+| `chairsFreedByNoShow` | INFORMATION | chairs a No Show physically freed that the plan still shows as taken. |
+
+Two of those were deliberately drawn narrowly, and the narrowness is the point:
+
+**`reservedAreaOccupied` is not "every occupied frozen table."** A VIP area, the
+head tables and the sponsor block are frozen *precisely to protect the people
+sitting in them*. Raising those would be crying wolf at the normal case, which
+is how an operator learns to ignore a radar. Only `LATE_ARRIVAL_RESERVE` and
+`MANAGEMENT_HOLD` — the two reasons that mean "keep these empty" — are a
+contradiction when occupied. The suite checks all five reasons, and mutating the
+set to include the protective three turns three checks red.
+
+**`chairsFreedByNoShow` must never read as "the plan is wrong."** No Show keeps
+its planned seat on purpose; the table plan and the reports are correct. The row
+says a second number exists, and its wording says the first one is right. It is
+INFORMATION, so it never reaches the radar — mutating it to NEEDS REVIEW fails
+the suite on exactly that line.
+
+### The refusal it was not making
+
+The radar showed the risks it knew how to evaluate and said nothing about the
+ones it did not, which teaches an operator that a quiet radar means a safe
+event. It now prints them under the verdict, from
+`MeritPlanDoctor.NOT_EVALUATED` rather than from a sentence somebody typed —
+so a risk that ships stops being listed by itself. Today that list is one entry:
+a table taken out of service (Phase N).
+
+The other refusal was already in place and is now asserted rather than assumed:
+**no percentage anywhere on the radar**. Injecting "92%" into the heading turns
+the suite red.
+
+### A row whose destination is an act
+
+Every Doctor row must say where to go. The backup row is the one whose honest
+destination is not a screen: the risk is precisely that nobody pressed the
+export button, so the button on the row *is* the export. The plan-doctor suite's
+"no dead ends" rule was restated from "leaves the Command Center" to "has an
+observable effect", and the effect is checked — `state.lastBackupAt` must change
+— rather than assumed.
+
+`state.lastBackupAt` is written only after the file has actually been handed to
+the browser, never when an export is merely offered, so "backed up" on the radar
+means a file really left.
+
+### A defect the suite found
+
+Pressing **Back up now** produced a file and a toast and left the row that asked
+for it sitting on screen — which reads as "it did not work". `doctorGo` returned
+before rendering. One `render()` fixes it, and because the report is derived on
+every read, nothing has to clear the row: it disappears by itself. The suite
+asserts that, and removing the render turns it red.
+
+### Evidence
+
+`tests/suites/risk-radar.test.mjs` — 43 checks. Six mutations bite:
+
+| Mutation | Result |
+| --- | --- |
+| the radar hides what it cannot evaluate | "shows them rather than implying it covers everything" fails |
+| "92%" injected into the heading | "no percentage anywhere on it" fails, with the rendered text |
+| every occupied frozen table treated as a contradiction | the three protective-reason checks fail |
+| a checked-in guest with no table downgraded to NEEDS REVIEW | the level check fails, and so does LIVE RISK |
+| the render removed after Back up now | "the risk is gone from the next read" fails |
+| `chairsFreedByNoShow` raised to NEEDS REVIEW | "the plan is not wrong, the room simply has room" fails |
+
+Two existing suites were corrected rather than weakened. `command-center`
+asserted *exactly one* review reason; that count was incidental precision, and a
+check that breaks when a new risk is added punishes the radar for doing its job
+— it now matches the unseated-guests row by its own translated wording and
+asserts that nothing is a blocker. `plan-doctor`'s dead-end rule was restated as
+described above.

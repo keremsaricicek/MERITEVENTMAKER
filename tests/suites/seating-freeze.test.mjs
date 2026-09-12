@@ -366,7 +366,7 @@ export default async function run({ page, checks, baseUrl }) {
     const e = state.events[0];
     const r = MeritPlanDoctor.run({
       tables: e.tables, guests: e.guests,
-      frozenTableIds: [...MeritSeatingFreeze.frozenTableIds(e.freezes, e.tables)],
+      frozen: MeritSeatingFreeze.resolve(e.freezes, e.tables),
     });
     const held = r.all.find(f => f.code === "capacityHeldByFreeze");
     return held ? { level: held.level, chairs: held.params.chairs, go: held.action.go,
@@ -395,7 +395,7 @@ export default async function run({ page, checks, baseUrl }) {
       planningStatus: "Confirmed", arrivalStatus: "Not Arrived", assignment: null });
     const r = MeritPlanDoctor.run({
       tables: e.tables, guests: e.guests,
-      frozenTableIds: frozen,
+      frozen: MeritSeatingFreeze.resolve(e.freezes, e.tables),
     });
     const f = r.all.find(x => x.code === "frozenCapacityNeeded");
     return f ? { level: f.level, pax: f.params.pax, open: f.params.open, held: f.params.held } : null;

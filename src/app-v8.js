@@ -66,7 +66,7 @@
     freezeDraft:null
   });
 
-  function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[]}; }
+  function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[], lastBackupAt:null}; }
   function isHistorical(event){ return !!event && (event.status === "Completed" || (!!event.date && event.date < todayKey())); }
   function audit(event, action, detail={}){
     state.audit ||= [];
@@ -345,15 +345,31 @@
   }
   function isTableFrozen(event,tableId){return frozenTableIdSet(event).has(tableId);}
 
+  // THE ONE RISK THAT CANNOT BE RECOVERED FROM ON THE NIGHT.
+  //
+  // Everything this product knows lives in one browser profile. `lastBackupAt`
+  // is recorded when an export actually succeeds — never when one is merely
+  // offered — so "backed up" on the radar means a file really left the browser.
+  function backupState(event){
+    const at=state.lastBackupAt||null;
+    if(!event)return{at,staleBy:false};
+    const changed=event.lastModified||event.createdAt||null;
+    return{at,staleBy:!!(at&&changed&&changed>at)};
+  }
+
   function planDoctorReport(event){
     if(!event||!globalThis.MeritPlanDoctor)return null;
     return globalThis.MeritPlanDoctor.run({
       phase:eventPhase(event),
       tables:event.tables||[],
       guests:event.guests||[],
-      // What a person has held back, resolved here so the Doctor reports the
-      // arithmetic without owning the rules.
-      frozenTableIds:[...frozenTableIdSet(event)],
+      // What a person has held back, resolved here — with the REASON each table
+      // was held, because "a reserve that already has guests in it" is a
+      // contradiction and "a VIP area protecting the people in it" is not.
+      frozen:resolvedFreezes(event)||[],
+      // When a copy was last taken, and whether this event has moved since.
+      // The Doctor stores nothing; this is read fresh like everything else.
+      backup:backupState(event),
       // The rules planIssues() owns, handed over rather than re-implemented.
       // Whatever the Doctor does not express itself still reaches the operator.
       planIssues:planIssues(event),
@@ -463,6 +479,37 @@
     // than left to be noticed as odd wording on a screen.
     const label=t("doctor.go."+a.go);
     return`<button class="btn sm" data-cc-go="${esc(f.code)}${f.checkId?":"+esc(f.checkId):""}">${label==="doctor.go."+a.go?t("doctor.go.open"):label}</button>`;
+  }
+  // THE EVENT RISK RADAR.
+  //
+  // "What could make this event fail operationally?" — and it runs no engine of
+  // its own, which is the point. Every row comes from the Plan Doctor, which in
+  // turn compares facts other layers already concluded; there is no second
+  // opinion here and no weighting.
+  //
+  // TWO THINGS IT REFUSES TO DO.
+  //
+  // It shows no percentage. "92% ready" has to come from somewhere, and there
+  // is no honest weighting of one duplicate table number against twelve
+  // unseated guests, so the radar says which of four named situations the
+  // event is in and lists the reasons.
+  //
+  // It says what it cannot see. A radar that shows only the risks it knows how
+  // to evaluate teaches an operator that a quiet radar means a safe event, so
+  // the risks this build does not yet model are named underneath, in the same
+  // breath as the verdict. The list comes from the Doctor rather than from a
+  // sentence written here, so a risk that ships stops being listed by itself.
+  function riskRadarHTML(event,r){
+    const notEvaluated=(r.doctor&&r.doctor.notEvaluated)||[];
+    const names=notEvaluated
+      .map(x=>t("radar.notEvaluated."+x.risk))
+      .filter((v,i)=>v!=="radar.notEvaluated."+notEvaluated[i].risk);
+    return`<section class="cc-block cc-primary cc-radar">
+      <div class="cc-radar-head"><h3>${t("radar.title")}</h3><p>${t("radar.question")}</p></div>
+      ${r.reasons.length?`<ul class="cc-reasons">${r.reasons.map(ccReasonHTML).join("")}</ul>`
+        :`<p class="cc-empty">${t("cc.attention.none")}</p>`}
+      ${names.length?`<p class="cc-radar-blind">${esc(t("radar.doesNotCover",{risks:names.join(", ")}))}</p>`:""}
+    </section>`;
   }
   function ccReasonHTML(r){
     const w=doctorText(r.finding);
@@ -583,9 +630,7 @@
           <span>${r.reasons.length?t(r.reasons.length===1?"cc.verdict.reasonCount1":"cc.verdict.reasonCount",{n:r.reasons.length}):t("cc.verdict.nothingOpen")}</span>
         </div>
       </header>
-      <section class="cc-block cc-primary"><h3>${t("cc.attention.title")}</h3>${
-        r.reasons.length?`<ul class="cc-reasons">${r.reasons.map(ccReasonHTML).join("")}</ul>`
-          :`<p class="cc-empty">${t("cc.attention.none")}</p>`}</section>
+      ${riskRadarHTML(event,r)}
       <div class="cc-columns">${ccPlanConsistencyHTML(event)}${ccSeatingHTML(event)}</div>
       ${planDoctorHTML(event,r)}
     </div></div>`;
@@ -616,6 +661,25 @@
       ui.selectedGuestId=guest?guest.id:null;
       ui.selectedTableId=table?table.id:(guest&&guest.assignment?guest.assignment.tableId:null);
       ui.highlightId=ui.selectedTableId;
+    }else if(a.go===GO.LIVE){
+      // The arrivals screen, narrowed to the person the row is about. A row
+      // about twelve No Shows opens the list; a row about one opens on them.
+      ui.tab="live";
+      ui.liveQuery=(a.guestIds||[]).length===1&&guest?guest.name:"";
+      ui.liveWindow=null;
+    }else if(a.go===GO.BACKUP){
+      // The only row whose destination is an ACTION rather than a screen.
+      // "Go and find the export button" is the dead end this layer forbids,
+      // and the risk is precisely that nobody got round to pressing it.
+      //
+      // The render below is not cosmetic: without it the operator presses the
+      // button, gets a file and a toast, and the row that asked for it is
+      // still sitting there — which reads as "it did not work". The report is
+      // derived on every read, so one render is all it takes for the risk to
+      // disappear by itself.
+      exportBackup();
+      render();
+      return;
     }else{
       // REVIEW and REVIEW_CENTER. Both land in the Floor Plan's review mode --
       // there is no separate review screen since B3 -- and differ only in
@@ -7411,6 +7475,12 @@
     const a=document.createElement("a");a.href=url;a.download=`merit-event-maker-yedek-${todayKey()}.json`;
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),4000);
+    // Recorded only here, after the file has actually been handed to the
+    // browser. The radar reads this to say whether a copy of the event exists
+    // anywhere, so it must never be set by opening a dialog or by an export
+    // that failed -- "backed up" has to mean a file really left.
+    state.lastBackupAt=nowISO();
+    saveState();
     toast(t("backup.exportedToast"),"success");
   }
   function backupReferencesIntact(payload){
