@@ -10,9 +10,11 @@ stored in the browser via `localStorage`; nothing is uploaded anywhere.
 ## Running it
 
 ```
-python3 -m http.server 8000   # or any static file server
-# open http://localhost:8000
+npm run serve                 # http://127.0.0.1:8000 — or any static file server
 ```
+
+There is no build step and no runtime dependency: `npm install` fetches
+Playwright for the test suite only, and is not needed just to open the app.
 
 `index.html` loads the SheetJS (Excel import/export) and PDF.js (PDF floor
 plan import) engines from jsDelivr, pinned to the exact versions this app
@@ -41,6 +43,25 @@ This downloads the two pinned npm packages once (cached in
 `.vendor-cache/`) and inlines them into `dist/index-offline.html`, mirroring
 how earlier versions of this app shipped as a single email-able file.
 
+## Tests and benchmarks
+
+```
+npm install                  # once — Playwright, for the tests only
+npm test                     # regression suite, ~2 min; exit code is the verdict
+npm run test:all             # plus the slow suites (real detection on the real plan)
+npm run benchmark            # object-level detection accuracy, per plan
+npm run benchmark:baseline   # compare that run to benchmarks/BASELINE.json
+npm run perf                 # performance runners
+npm run verify:offline       # boot and drive both offline artifacts
+```
+
+The suites drive the real UI in Chromium and serve the app themselves — no
+server to start first. `tests/README.md` lists what each one guards;
+`benchmarks/README.md` explains the recorded detector baseline and why a
+regression there is a revert rather than a new number;
+`benchmarks/TRAINING-DATA.md` documents what a human decision captures
+and how a dataset exported from it is split.
+
 ## Project structure
 
 ```
@@ -48,13 +69,61 @@ index.html          Page shell — dialogs, containers, vendor <script> tags
 src/styles.css       Full design system (tokens, components, both UI layers)
 src/app.js           Base app: events, floor plan editor, canvas interactions
 src/app-guests.js     Guests, Excel import wizard, seating, live, reports, guide
-src/app-v8.js         "V8" layer: overrides/extends the base app
+src/app-v8.js         "V8" layer: overrides/extends the base app; also the
+                      Concept 3 "Live Map" Floor Plan/Plan Intelligence
+                      workspace, Review Center, and difficult-item Teach AI
+src/i18n.js           Bilingual (tr-TR/en-US) string table + t() helper —
+                      covers Floor Plan/Plan Intelligence/Review Center/
+                      Teach AI/nav; see MERIT_I18N_STATUS in that file for
+                      what isn't migrated yet
+src/plan-ocr.js       Real client-side OCR (Tesseract.js) for the capacity
+                      auditor — requires network on first use; intentionally
+                      not part of the offline build (see comments in the file)
+src/plan-label-ocr.js Reads the word a drawing prints ON one object, from that
+                      object's own crop. The full-page pass runs on a canvas
+                      capped at 1920 and misses small labels entirely; the
+                      detector already knows where its objects are, so each one
+                      can be read at its own scale. Analysis-only — the crop is
+                      a throwaway canvas and the plan is never altered
+src/plan-table-numbers.js  Reads the number printed inside each table symbol,
+                      from two crops that include different amounts of it. A
+                      number is claimed only where both agree (measured
+                      precision 1.000); a single reading is right 17% of the
+                      time and is offered for review, never claimed
+src/plan-number-integrity.js  Whether a plan's numbering is intact —
+                      duplicates, conflicts, gaps, count-vs-drawing. Repairs
+                      nothing and discovers its range from the document rather
+                      than from a constant
+src/plan-self-check.js  Compares what the drawing states, what the detector
+                      found, what the arithmetic gives and what a person
+                      confirmed. Adds no engine calls and never adjusts an
+                      input to make a check pass
+src/plan-teach-area.js  What a person who knows the room knows, kept with the
+                      reach they gave it (this plan / this layout / this
+                      venue). Defers identity to Visual Plan Memory, applies
+                      one lesson to one object, and trains nothing
+src/plan-confidence-budget.js  What is worth an operator's attention. Groups
+                      repeated uncertainty into one claim, collapses the same
+                      disagreement seen by several layers, and states what is
+                      below the line rather than dropping it
+src/plan-intelligence.js  PlanIntelligenceResult contract + real geometric
+                      heuristics (furniture grouping, similarity clustering,
+                      bulk review groups, OCR capacity cross-check) built on
+                      top of the classical-CV Assisted Detection candidates
+src/training-data.js  What a human decision leaves behind: the record shape,
+                      the image crop, and leakage-safe dataset splitting.
+                      Captures data; trains nothing (benchmarks/TRAINING-DATA.md)
+src/storage-provider.js   The persistence boundary (IndexedDB, localStorage
+                      fallback) — see the desktop-architecture skill for why
+src/venue-model.js    Venue → Layout → LayoutVersion → Event, and layout memory
 scripts/build-offline.mjs   Produces the single-file offline build
+tests/                Regression suite (tests/README.md)
+benchmarks/           Detection accuracy, performance, offline verification
 ```
 
-The three `src/*.js` files are loaded as classic (non-module) scripts, in
-that order, and share one global scope by design — `src/app-v8.js` is a
-layer that overrides and extends functions defined in the first two
+The `src/*.js` files are loaded as classic (non-module) scripts, in the order
+listed in `index.html`, and share one global scope by design — `src/app-v8.js`
+is a layer that overrides and extends functions defined earlier
 (card-based event home screen, guided event setup, assisted floor-plan
 detection from an uploaded image, live operational mode). This mirrors how
 the app was actually built and shipped, so it's kept as-is rather than

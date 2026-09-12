@@ -1,0 +1,87 @@
+{
+  "frozenAt": "2026-09-04T11:32:24.743Z",
+  "note": "Hashes of the adversarial fixtures and their declarations at the moment they were frozen. run-adversarial.mjs refuses to score a fixture whose bytes differ from these, so a fixture cannot be quietly adjusted to agree with an algorithm change. Re-freezing is deliberate and shows up in the diff.",
+  "realVenue": false,
+  "entries": {
+    "a1-chair-under-table": {
+      "declaration": "6c0fd7b051713600fecb6aca46e121e4b6b70cc2e624844ec10d0203377a6d78",
+      "image": "5b05e5acd647b3f547bb68682a3452e49b5852bd5a1e524afa49904ec94a42c2",
+      "width": 1500,
+      "height": 950,
+      "tables": 16,
+      "chairs": 96,
+      "scoreableRelations": 96,
+      "ambiguousRelations": 0
+    },
+    "a2-mixed-families": {
+      "declaration": "fde74b67267f910e7d261af7545a8b9b60a40ab4678c718968499e3634dca9ee",
+      "image": "11c55c05312231f4c2aa4b9a02a4b7face39541377c4190bd81c1d84bed69713",
+      "width": 1600,
+      "height": 1000,
+      "tables": 21,
+      "chairs": 94,
+      "scoreableRelations": 94,
+      "ambiguousRelations": 0
+    },
+    "a3-no-anchors": {
+      "declaration": "fef595bb53aec47c6acbd6810a403e5a199cbc624d3ba4e4e002fa25fcdb166c",
+      "image": "e8ca6fa060092aeb2fde2ffdd614fcf19a54171b248cd73d47564554768adefc",
+      "width": 1400,
+      "height": 900,
+      "tables": 20,
+      "chairs": 160,
+      "scoreableRelations": 160,
+      "ambiguousRelations": 0
+    },
+    "a4-multi-room": {
+      "declaration": "998abcba04f8188d457881772bea10a3f866302bff682ac740300fb13e2f9bfc",
+      "image": "3e373f0abacc0ecdca73b831dddf40e96c63a72a7940953d25a532b4aa7d0970",
+      "width": 1600,
+      "height": 1100,
+      "tables": 25,
+      "chairs": 116,
+      "scoreableRelations": 116,
+      "ambiguousRelations": 0
+    },
+    "a5-architecture-only": {
+      "declaration": "360130a07ef6f331836d5ca83f52d1b4f2823a90e7c5f0dc2885991e469de973",
+      "image": "1d4d225b9f3fad5508588e5081de10ca823006c2046ecbe74edb4f94945fb68c",
+      "width": 1400,
+      "height": 900,
+      "tables": 0,
+      "chairs": 0,
+      "scoreableRelations": 0,
+      "ambiguousRelations": 0
+    },
+    "a6-architectural-confusion": {
+      "declaration": "3ce92daf7f43bf3bb7f3608150d9b97096036b637a0dd3f014594e485a6c799c",
+      "image": "7ad7d5bd0965e521f1736598f503e4060841aa64adc6168254fd080984df9290",
+      "width": 1500,
+      "height": 950,
+      "tables": 8,
+      "chairs": 32,
+      "scoreableRelations": 32,
+      "ambiguousRelations": 0
+    },
+    "a7-dense-overlap": {
+      "declaration": "5248ea0459ab8d5614bbb8fb36862d611296aef25079ff18537c5917e6c9d87e",
+      "image": "dd1fad51319283db0e2507869f9e147a758de94c25fba81972b205937318eb7c",
+      "width": 1600,
+      "height": 1000,
+      "tables": 29,
+      "chairs": 54,
+      "scoreableRelations": 49,
+      "ambiguousRelations": 5
+    },
+    "a8-large-venue": {
+      "declaration": "24894e318f653b9277d54f165788079c3cd073ce9b4d74461f15a14c6d6678a7",
+      "image": "7fdc1720b585099ceca1eda585772a2ecf4e105a3a070e4bf87820db8384c492",
+      "width": 2600,
+      "height": 2470,
+      "tables": 324,
+      "chairs": 3240,
+      "scoreableRelations": 3240,
+      "ambiguousRelations": 0
+    }
+  }
+}

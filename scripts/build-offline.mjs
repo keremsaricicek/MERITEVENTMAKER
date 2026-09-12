@@ -10,6 +10,7 @@ import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readAppSources } from "./lib/app-sources.mjs";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const CACHE = path.join(ROOT, ".vendor-cache");
@@ -45,15 +46,34 @@ const pdfCoreSrc = readFileSync(path.join(pdfjsDir, "build/pdf.min.mjs"), "utf8"
 const pdfWorkerSrc = readFileSync(path.join(pdfjsDir, "build/pdf.worker.min.mjs"), "utf8");
 
 const styles = readFileSync(path.join(ROOT, "src/styles.css"), "utf8");
-const appJs = ["src/app.js", "src/app-guests.js", "src/app-v8.js"]
-  .map((f) => readFileSync(path.join(ROOT, f), "utf8"))
-  .join("\n");
+// Tesseract.js (OCR) is intentionally NOT vendored here: this build's whole
+// point is zero network at runtime, which real OCR language data cannot
+// honor without embedding tens of MB. src/plan-ocr.js detects its absence
+// and reports the capacity auditor's OCR step as unavailable rather than
+// faking a result — see that file for the full rationale.
+// Read from index.html, never listed here. The hand-written copy of this
+// list drifted once already: plan-relationships.js and plan-memory.js were
+// added to the app and never to the builders, so every offline artifact
+// built afterwards shipped without them while the build reported success.
+const { files: appJsFiles, code: appJs } = readAppSources(ROOT);
 
 const shell = readFileSync(path.join(ROOT, "index.html"), "utf8");
 
 const bodyStart = shell.indexOf("<body>");
-const bodyEnd = shell.indexOf("<!--");
+// Cut at the first <script>, not at the first HTML comment: the markup this
+// build needs (the dialogs, the hidden file inputs, the toast host) sits
+// above the script block, and an explanatory comment anywhere in that markup
+// used to silently truncate the body and ship a build with no dialogs at all.
+const bodyEnd = shell.indexOf("<script");
+if (bodyStart < 0 || bodyEnd < 0 || bodyEnd <= bodyStart) {
+  throw new Error("build-offline: could not locate the body markup range in index.html");
+}
 const bodyMarkup = shell.slice(bodyStart, bodyEnd);
+for (const required of ['id="app"', 'id="guestForm"', 'id="excelDialog"', 'id="guideDialog"', 'id="toastWrap"', 'id="floorPlanFile"', 'id="guestFileInput"', 'id="backupFileInput"']) {
+  if (!bodyMarkup.includes(required)) {
+    throw new Error(`build-offline: body markup is missing ${required} — the offline build would be broken`);
+  }
+}
 
 const pdfBridge = `
 GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([${JSON.stringify(
@@ -90,4 +110,5 @@ ${appJs}
 mkdirSync(DIST, { recursive: true });
 const outPath = path.join(DIST, "index-offline.html");
 writeFileSync(outPath, html);
+console.log(`Bundled ${appJsFiles.length} app sources from index.html: ${appJsFiles.map((f) => f.replace("src/", "")).join(", ")}`);
 console.log(`Wrote ${outPath} (${(html.length / 1024 / 1024).toFixed(1)} MB)`);

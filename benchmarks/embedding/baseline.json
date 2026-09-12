@@ -1,0 +1,52 @@
+{
+  "ranAt": "2026-08-31T07:18:10.275Z",
+  "provider": {
+    "id": "handcrafted-descriptor-v1",
+    "kind": "handcrafted-descriptor",
+    "trainedModel": false,
+    "dimensions": 14,
+    "licence": "n/a — computed in-product, no third-party weights"
+  },
+  "plans": [
+    {
+      "planId": "merit-real-venue",
+      "detections": 90,
+      "matchedToGroundTruth": 42,
+      "classCounts": {
+        "table:square": 37,
+        "table:round": 4,
+        "entrance": 1
+      },
+      "usableForMetrics": 41,
+      "silhouette": {
+        "value": 0.5249,
+        "objects": 41
+      },
+      "nn1": {
+        "accuracy": 1,
+        "correct": 41,
+        "total": 41
+      }
+    },
+    {
+      "planId": "adversarial-text",
+      "detections": 12,
+      "matchedToGroundTruth": 12,
+      "classCounts": {
+        "table:square": 12
+      },
+      "usableForMetrics": 12,
+      "note": "not enough classes with 2+ matched objects to compute separation on this plan"
+    },
+    {
+      "planId": "adversarial-architecture",
+      "detections": 10,
+      "matchedToGroundTruth": 10,
+      "classCounts": {
+        "table:round": 10
+      },
+      "usableForMetrics": 10,
+      "note": "not enough classes with 2+ matched objects to compute separation on this plan"
+    }
+  ]
+}

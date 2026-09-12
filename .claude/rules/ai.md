@@ -14,7 +14,20 @@
   are written verbatim — never regenerated into a synthetic ring.
 - OCR is supporting evidence only; it never defines geometry by itself.
 - "Ignore/Not Important" in Teach AI is a stored negative example, not a
-  delete — it carries real training signal.
+  delete — it carries real training signal. It is the "Not important"
+  action, and is distinct from "Not an object": one says the thing is
+  real but untracked, the other says the detector hallucinated. Both are
+  captured.
+- Every human decision captures a training example with the real crop and
+  full provenance (`benchmarks/TRAINING-DATA.md`). Capturing examples is
+  not training: never let a growing dataset be described as a model
+  improving. Labels spread to a family are marked as not individually
+  reviewed, and dataset splits group by plan so one venue cannot appear
+  on both sides.
+- A Teach Area lesson is a scoped note, never training. It applies within the
+  scope the operator chose and nowhere else, changes ONE object rather than
+  every object that resembles it, and is only applied across a venue when a
+  verified printed number identifies the object. AMBIGUOUS applies to nothing.
 - `improveAI()`-style local calibration is not model training and must
   never be described as such; `trainedModel` flags must reflect reality.
 - Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.

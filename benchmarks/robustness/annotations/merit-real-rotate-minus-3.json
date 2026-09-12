@@ -1,0 +1,2044 @@
+{
+  "planId": "merit-real-rotate-minus-3",
+  "derivedFrom": "merit-real-venue",
+  "isRealVenue": false,
+  "transform": {
+    "id": "rotate-minus-3",
+    "why": "the same, the other way and further",
+    "filter": null,
+    "encode": null,
+    "noise": null,
+    "scale": 1,
+    "rotate": -3,
+    "roundTrip": null,
+    "pad": null
+  },
+  "source": {
+    "file": "robustness/variants/merit-real-rotate-minus-3.png",
+    "width": 1394,
+    "height": 858,
+    "sha256": "fc874e5d22bc367c8dcdeb31194e739eb50ac0034a58c3f7818fce17b8584748",
+    "venue": "Merit (real supplied venue plan)",
+    "layout": "Main floor — concert seating"
+  },
+  "annotationMethod": "Derived from benchmarks/annotations/merit-real-venue.json by benchmarks/robustness/make-variants.mjs. The image is the real Golden Plan with the \"rotate-minus-3\" transform applied (the same, the other way and further); every object and region was put through the same geometric map the pixels were, so the truth is exact rather than reused. THIS IS NOT A SECOND REAL VENUE PLAN — it is the same drawing rendered differently, and any accuracy it shows says nothing about a venue this system has not seen.",
+  "confidence": {
+    "tables": "high — every table is a solid tan component with a clean size band",
+    "chairsOrange": "high — separate saturated components, individually visible",
+    "chairsPale": "medium — recovered by angular clustering rather than as separate components, so the box is the crescent's extent in the annulus and may clip where it overlaps the table",
+    "banquettes": "high for position, none for seat count",
+    "architecture": "partial — see regions; columns are NOT annotated, see capacity.note"
+  },
+  "objects": [
+    {
+      "id": "t001",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 850.7,
+      "cy": 123,
+      "w": 48.2,
+      "h": 45.3
+    },
+    {
+      "id": "t002",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 1144.8,
+      "cy": 108.6,
+      "w": 49.2,
+      "h": 45.4
+    },
+    {
+      "id": "t003",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 998.2,
+      "cy": 118.8,
+      "w": 47.1,
+      "h": 44.3
+    },
+    {
+      "id": "t004",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 854.8,
+      "cy": 172.4,
+      "w": 47.1,
+      "h": 44.3
+    },
+    {
+      "id": "t005",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 1148.4,
+      "cy": 157,
+      "w": 47.1,
+      "h": 44.3
+    },
+    {
+      "id": "t006",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 1000.8,
+      "cy": 168.2,
+      "w": 47.2,
+      "h": 45.3
+    },
+    {
+      "id": "t007",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 856.9,
+      "cy": 222.3,
+      "w": 48.1,
+      "h": 44.3
+    },
+    {
+      "id": "t008",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 1150.5,
+      "cy": 207,
+      "w": 48.1,
+      "h": 44.3
+    },
+    {
+      "id": "t009",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 1003.9,
+      "cy": 218.1,
+      "w": 48.2,
+      "h": 45.3
+    },
+    {
+      "id": "t010",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 1139.5,
+      "cy": 321.2,
+      "w": 44.4,
+      "h": 49.1
+    },
+    {
+      "id": "t011",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 822.5,
+      "cy": 339.3,
+      "w": 45.5,
+      "h": 50.2
+    },
+    {
+      "id": "t012",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 991.2,
+      "cy": 329.5,
+      "w": 45.3,
+      "h": 48.2
+    },
+    {
+      "id": "t013",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 677.7,
+      "cy": 396,
+      "w": 44.3,
+      "h": 48.1
+    },
+    {
+      "id": "t014",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 993.9,
+      "cy": 381.4,
+      "w": 45.5,
+      "h": 50.2
+    },
+    {
+      "id": "t015",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 1142.7,
+      "cy": 373.1,
+      "w": 45.4,
+      "h": 49.2
+    },
+    {
+      "id": "t016",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 825.2,
+      "cy": 391.7,
+      "w": 45.4,
+      "h": 49.2
+    },
+    {
+      "id": "t017",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 1265.4,
+      "cy": 402.2,
+      "w": 47.2,
+      "h": 46.3
+    },
+    {
+      "id": "t018",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 1315.3,
+      "cy": 400.1,
+      "w": 47.3,
+      "h": 47.3
+    },
+    {
+      "id": "t019",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 680,
+      "cy": 447.9,
+      "w": 45.5,
+      "h": 50.2
+    },
+    {
+      "id": "t020",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 1145.4,
+      "cy": 424,
+      "w": 45.3,
+      "h": 47.2
+    },
+    {
+      "id": "t021",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 996.7,
+      "cy": 433.8,
+      "w": 45.4,
+      "h": 49.2
+    },
+    {
+      "id": "t022",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 827.9,
+      "cy": 443.2,
+      "w": 45.3,
+      "h": 48.2
+    },
+    {
+      "id": "t023",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 363.6,
+      "cy": 497.5,
+      "w": 48.1,
+      "h": 44.3
+    },
+    {
+      "id": "t024",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 461.5,
+      "cy": 493.4,
+      "w": 46.2,
+      "h": 46.2
+    },
+    {
+      "id": "t025",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 511.5,
+      "cy": 490.8,
+      "w": 48.2,
+      "h": 46.3
+    },
+    {
+      "id": "t026",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 262.3,
+      "cy": 504.4,
+      "w": 47.2,
+      "h": 45.3
+    },
+    {
+      "id": "t027",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 313.3,
+      "cy": 501.2,
+      "w": 47.1,
+      "h": 44.3
+    },
+    {
+      "id": "t028",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 562.9,
+      "cy": 487.6,
+      "w": 47.1,
+      "h": 43.3
+    },
+    {
+      "id": "t029",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 683.7,
+      "cy": 500.3,
+      "w": 45.4,
+      "h": 49.2
+    },
+    {
+      "id": "t030",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 1148.6,
+      "cy": 476.4,
+      "w": 44.3,
+      "h": 48.1
+    },
+    {
+      "id": "t031",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 372.6,
+      "cy": 649.3,
+      "w": 48.1,
+      "h": 44.3
+    },
+    {
+      "id": "t032",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 270.8,
+      "cy": 656.1,
+      "w": 48.2,
+      "h": 45.3
+    },
+    {
+      "id": "t033",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 321.2,
+      "cy": 653.5,
+      "w": 47.2,
+      "h": 45.3
+    },
+    {
+      "id": "t034",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 510.2,
+      "cy": 648.1,
+      "w": 47.2,
+      "h": 46.3
+    },
+    {
+      "id": "t035",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 458.3,
+      "cy": 651.3,
+      "w": 47.2,
+      "h": 45.3
+    },
+    {
+      "id": "t036",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 561.7,
+      "cy": 645.9,
+      "w": 48.2,
+      "h": 45.3
+    },
+    {
+      "id": "t037",
+      "class": "table",
+      "type": "square",
+      "rotation": 0,
+      "cx": 612.6,
+      "cy": 643.2,
+      "w": 48.2,
+      "h": 45.3
+    },
+    {
+      "id": "t038",
+      "class": "table",
+      "type": "round",
+      "rotation": 0,
+      "cx": 1278.8,
+      "cy": 266.8,
+      "w": 71.5,
+      "h": 72.5
+    },
+    {
+      "id": "t039",
+      "class": "table",
+      "type": "round",
+      "rotation": 0,
+      "cx": 136.1,
+      "cy": 531,
+      "w": 71.5,
+      "h": 72.5
+    },
+    {
+      "id": "t040",
+      "class": "table",
+      "type": "round",
+      "rotation": 0,
+      "cx": 1291.3,
+      "cy": 553.1,
+      "w": 72.6,
+      "h": 73.5
+    },
+    {
+      "id": "t041",
+      "class": "table",
+      "type": "round",
+      "rotation": 0,
+      "cx": 141.5,
+      "cy": 682.4,
+      "w": 70.5,
+      "h": 71.4
+    },
+    {
+      "id": "t042",
+      "class": "table",
+      "type": "bistro",
+      "rotation": 0,
+      "cx": 92,
+      "cy": 302,
+      "w": 36,
+      "h": 40.7
+    },
+    {
+      "id": "t043",
+      "class": "table",
+      "type": "bistro",
+      "rotation": 0,
+      "cx": 53.2,
+      "cy": 305.5,
+      "w": 37.9,
+      "h": 39.8
+    },
+    {
+      "id": "t044",
+      "class": "table",
+      "type": "bistro",
+      "rotation": 0,
+      "cx": 434.9,
+      "cy": 769.2,
+      "w": 39.6,
+      "h": 33.9
+    },
+    {
+      "id": "t045",
+      "class": "table",
+      "type": "bistro",
+      "rotation": 0,
+      "cx": 549.9,
+      "cy": 765.2,
+      "w": 39.6,
+      "h": 33.9
+    },
+    {
+      "id": "t046",
+      "class": "table",
+      "type": "bistro",
+      "rotation": 0,
+      "cx": 240.4,
+      "cy": 783.9,
+      "w": 39.7,
+      "h": 34.9
+    },
+    {
+      "id": "c001",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 896.1,
+      "cy": 119.2,
+      "w": 34.6,
+      "h": 33.7
+    },
+    {
+      "id": "c002",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1189.9,
+      "cy": 107.8,
+      "w": 34.6,
+      "h": 33.7
+    },
+    {
+      "id": "c003",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 951.8,
+      "cy": 121.7,
+      "w": 35.7,
+      "h": 34.7
+    },
+    {
+      "id": "c004",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 901.1,
+      "cy": 167,
+      "w": 35.6,
+      "h": 33.7
+    },
+    {
+      "id": "c005",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1194.6,
+      "cy": 151.1,
+      "w": 35.6,
+      "h": 32.7
+    },
+    {
+      "id": "c006",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 954.5,
+      "cy": 174.2,
+      "w": 35.6,
+      "h": 33.7
+    },
+    {
+      "id": "c007",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 903.8,
+      "cy": 219.4,
+      "w": 35.6,
+      "h": 32.7
+    },
+    {
+      "id": "c008",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1198.5,
+      "cy": 204.9,
+      "w": 35.6,
+      "h": 32.7
+    },
+    {
+      "id": "c009",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 960.1,
+      "cy": 222.4,
+      "w": 35.6,
+      "h": 32.7
+    },
+    {
+      "id": "c010",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 864.9,
+      "cy": 326.6,
+      "w": 38.7,
+      "h": 34.9
+    },
+    {
+      "id": "c011",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1033.6,
+      "cy": 317.7,
+      "w": 38.7,
+      "h": 34.9
+    },
+    {
+      "id": "c012",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 780.1,
+      "cy": 333.5,
+      "w": 38.7,
+      "h": 35.9
+    },
+    {
+      "id": "c013",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 948.3,
+      "cy": 323.7,
+      "w": 37.6,
+      "h": 33.8
+    },
+    {
+      "id": "c014",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1181.7,
+      "cy": 314.5,
+      "w": 38.7,
+      "h": 35.9
+    },
+    {
+      "id": "c015",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1096.9,
+      "cy": 320.4,
+      "w": 38.7,
+      "h": 34.9
+    },
+    {
+      "id": "c016",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1035.2,
+      "cy": 357.7,
+      "w": 37.7,
+      "h": 34.8
+    },
+    {
+      "id": "c017",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 866.5,
+      "cy": 367.5,
+      "w": 37.7,
+      "h": 34.8
+    },
+    {
+      "id": "c018",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1185.2,
+      "cy": 352.3,
+      "w": 37.6,
+      "h": 33.8
+    },
+    {
+      "id": "c019",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 780.8,
+      "cy": 375,
+      "w": 37.7,
+      "h": 34.8
+    },
+    {
+      "id": "c020",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 949.5,
+      "cy": 365.2,
+      "w": 37.6,
+      "h": 32.8
+    },
+    {
+      "id": "c021",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1099,
+      "cy": 361.4,
+      "w": 38.7,
+      "h": 34.9
+    },
+    {
+      "id": "c022",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 720.2,
+      "cy": 383.7,
+      "w": 37.7,
+      "h": 35.8
+    },
+    {
+      "id": "c023",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 634.9,
+      "cy": 390.2,
+      "w": 38.6,
+      "h": 33.9
+    },
+    {
+      "id": "c024",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1309.2,
+      "cy": 359.4,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c025",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1262.3,
+      "cy": 362.8,
+      "w": 32.9,
+      "h": 38.6
+    },
+    {
+      "id": "c026",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1039.4,
+      "cy": 399.5,
+      "w": 37.8,
+      "h": 36.8
+    },
+    {
+      "id": "c027",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 783.3,
+      "cy": 414,
+      "w": 38.7,
+      "h": 34.9
+    },
+    {
+      "id": "c028",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 870.2,
+      "cy": 409.9,
+      "w": 36.7,
+      "h": 35.8
+    },
+    {
+      "id": "c029",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 952.6,
+      "cy": 404.6,
+      "w": 37.6,
+      "h": 33.8
+    },
+    {
+      "id": "c030",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1185.9,
+      "cy": 394.4,
+      "w": 38.7,
+      "h": 35.9
+    },
+    {
+      "id": "c031",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1101.7,
+      "cy": 403.8,
+      "w": 37.7,
+      "h": 35.8
+    },
+    {
+      "id": "c032",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 721.8,
+      "cy": 424.2,
+      "w": 38.7,
+      "h": 34.9
+    },
+    {
+      "id": "c033",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 636.5,
+      "cy": 430.7,
+      "w": 37.7,
+      "h": 34.8
+    },
+    {
+      "id": "c034",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 329.8,
+      "cy": 454.8,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c035",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 369.3,
+      "cy": 452.7,
+      "w": 33.9,
+      "h": 38.6
+    },
+    {
+      "id": "c036",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 249,
+      "cy": 460,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c037",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 289.5,
+      "cy": 458.9,
+      "w": 33.9,
+      "h": 38.6
+    },
+    {
+      "id": "c038",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 449.8,
+      "cy": 450.5,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c039",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 568.6,
+      "cy": 444.2,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c040",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 489.3,
+      "cy": 448.9,
+      "w": 33.8,
+      "h": 37.6
+    },
+    {
+      "id": "c041",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 530.2,
+      "cy": 446.8,
+      "w": 33.8,
+      "h": 37.6
+    },
+    {
+      "id": "c042",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 954.6,
+      "cy": 443,
+      "w": 37.7,
+      "h": 34.8
+    },
+    {
+      "id": "c043",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1040.5,
+      "cy": 439,
+      "w": 37.7,
+      "h": 35.8
+    },
+    {
+      "id": "c044",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 786.4,
+      "cy": 453.9,
+      "w": 38.7,
+      "h": 34.9
+    },
+    {
+      "id": "c045",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 871.8,
+      "cy": 448.4,
+      "w": 37.6,
+      "h": 32.8
+    },
+    {
+      "id": "c046",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 725.5,
+      "cy": 465.6,
+      "w": 37.7,
+      "h": 35.8
+    },
+    {
+      "id": "c047",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 639.1,
+      "cy": 470.6,
+      "w": 38.7,
+      "h": 34.9
+    },
+    {
+      "id": "c048",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1188.8,
+      "cy": 440.3,
+      "w": 37.5,
+      "h": 31.8
+    },
+    {
+      "id": "c049",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1102.1,
+      "cy": 448.3,
+      "w": 37.7,
+      "h": 34.8
+    },
+    {
+      "id": "c050",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1272.6,
+      "cy": 444.4,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c051",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1319.5,
+      "cy": 440.9,
+      "w": 34.8,
+      "h": 36.7
+    },
+    {
+      "id": "c052",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 641.1,
+      "cy": 509.5,
+      "w": 38.7,
+      "h": 34.9
+    },
+    {
+      "id": "c053",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 727.6,
+      "cy": 506,
+      "w": 37.7,
+      "h": 34.8
+    },
+    {
+      "id": "c054",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1190.4,
+      "cy": 481.7,
+      "w": 38.7,
+      "h": 34.9
+    },
+    {
+      "id": "c055",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 1103.6,
+      "cy": 487.8,
+      "w": 38.7,
+      "h": 35.9
+    },
+    {
+      "id": "c056",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 374.4,
+      "cy": 540.5,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c057",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 256.1,
+      "cy": 546.7,
+      "w": 33.8,
+      "h": 36.6
+    },
+    {
+      "id": "c058",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 296.6,
+      "cy": 545.6,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c059",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 337,
+      "cy": 543.5,
+      "w": 33.9,
+      "h": 38.6
+    },
+    {
+      "id": "c060",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 455.4,
+      "cy": 539.3,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c061",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 496.9,
+      "cy": 537.1,
+      "w": 35.9,
+      "h": 38.7
+    },
+    {
+      "id": "c062",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 574.3,
+      "cy": 533.1,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c063",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 536.9,
+      "cy": 536.5,
+      "w": 33.8,
+      "h": 37.6
+    },
+    {
+      "id": "c064",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 317.9,
+      "cy": 608.6,
+      "w": 36.9,
+      "h": 38.8
+    },
+    {
+      "id": "c065",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 270,
+      "cy": 611.6,
+      "w": 34.8,
+      "h": 37.7
+    },
+    {
+      "id": "c066",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 366.8,
+      "cy": 606.5,
+      "w": 34.8,
+      "h": 37.7
+    },
+    {
+      "id": "c067",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 489.9,
+      "cy": 604.6,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c068",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 453.6,
+      "cy": 608.5,
+      "w": 35.9,
+      "h": 38.7
+    },
+    {
+      "id": "c069",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 532.5,
+      "cy": 604.4,
+      "w": 33.9,
+      "h": 38.6
+    },
+    {
+      "id": "c070",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 574.9,
+      "cy": 602.1,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c071",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 618.3,
+      "cy": 599.9,
+      "w": 35.9,
+      "h": 38.7
+    },
+    {
+      "id": "c072",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 275.5,
+      "cy": 698.4,
+      "w": 34.9,
+      "h": 39.7
+    },
+    {
+      "id": "c073",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 373.9,
+      "cy": 693.8,
+      "w": 33.9,
+      "h": 38.6
+    },
+    {
+      "id": "c074",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 324.1,
+      "cy": 697.9,
+      "w": 33.8,
+      "h": 37.6
+    },
+    {
+      "id": "c075",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 540.4,
+      "cy": 690.1,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c076",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 458.6,
+      "cy": 694.8,
+      "w": 34.8,
+      "h": 37.7
+    },
+    {
+      "id": "c077",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 499.6,
+      "cy": 693.2,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c078",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 583.4,
+      "cy": 688.8,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c079",
+      "class": "chair",
+      "family": "orange-armchair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 622.5,
+      "cy": 688.3,
+      "w": 34.8,
+      "h": 37.7
+    },
+    {
+      "id": "c080",
+      "class": "chair",
+      "family": "orange-bistro-chair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 51.2,
+      "cy": 278.6,
+      "w": 19.7,
+      "h": 15
+    },
+    {
+      "id": "c081",
+      "class": "chair",
+      "family": "orange-bistro-chair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 91.6,
+      "cy": 275.5,
+      "w": 18.6,
+      "h": 12.9
+    },
+    {
+      "id": "c082",
+      "class": "chair",
+      "family": "orange-bistro-chair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 95.5,
+      "cy": 329.8,
+      "w": 20.8,
+      "h": 16
+    },
+    {
+      "id": "c083",
+      "class": "chair",
+      "family": "orange-bistro-chair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 56.1,
+      "cy": 332.4,
+      "w": 19.7,
+      "h": 15
+    },
+    {
+      "id": "c084",
+      "class": "chair",
+      "family": "orange-bistro-chair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 463.4,
+      "cy": 767.2,
+      "w": 16,
+      "h": 19.8
+    },
+    {
+      "id": "c085",
+      "class": "chair",
+      "family": "orange-bistro-chair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 406.5,
+      "cy": 771.2,
+      "w": 16,
+      "h": 19.8
+    },
+    {
+      "id": "c086",
+      "class": "chair",
+      "family": "orange-bistro-chair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 577.9,
+      "cy": 763.7,
+      "w": 15,
+      "h": 20.7
+    },
+    {
+      "id": "c087",
+      "class": "chair",
+      "family": "orange-bistro-chair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 521,
+      "cy": 767.2,
+      "w": 16.9,
+      "h": 17.8
+    },
+    {
+      "id": "c088",
+      "class": "chair",
+      "family": "orange-bistro-chair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 268.9,
+      "cy": 782.9,
+      "w": 15.9,
+      "h": 18.8
+    },
+    {
+      "id": "c089",
+      "class": "chair",
+      "family": "orange-bistro-chair",
+      "rotation": 0,
+      "orientationKnown": false,
+      "cx": 211.6,
+      "cy": 787.4,
+      "w": 17,
+      "h": 19.8
+    },
+    {
+      "id": "c090",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 255.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 1291.8,
+      "cy": 294.2,
+      "w": 93.9,
+      "h": 61.7
+    },
+    {
+      "id": "c091",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 14,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 1237.8,
+      "cy": 259,
+      "w": 32.8,
+      "h": 36.6
+    },
+    {
+      "id": "c092",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 67.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 1262.7,
+      "cy": 227.1,
+      "w": 35.4,
+      "h": 29.7
+    },
+    {
+      "id": "c093",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 118,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 1298.8,
+      "cy": 228.7,
+      "w": 35.6,
+      "h": 32.7
+    },
+    {
+      "id": "c094",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 242.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 1291.3,
+      "cy": 285.2,
+      "w": 94.8,
+      "h": 79.7
+    },
+    {
+      "id": "c095",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 223,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 165.2,
+      "cy": 560.5,
+      "w": 34.8,
+      "h": 36.7
+    },
+    {
+      "id": "c096",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 286.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 126.2,
+      "cy": 572.1,
+      "w": 35.5,
+      "h": 31.7
+    },
+    {
+      "id": "c097",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 336.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 97,
+      "cy": 550.1,
+      "w": 29.8,
+      "h": 36.4
+    },
+    {
+      "id": "c098",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 31.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 99.4,
+      "cy": 508.9,
+      "w": 34.9,
+      "h": 38.7
+    },
+    {
+      "id": "c099",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 81.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 130.3,
+      "cy": 488.7,
+      "w": 36.3,
+      "h": 27.8
+    },
+    {
+      "id": "c100",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 134.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 165.6,
+      "cy": 501.4,
+      "w": 38,
+      "h": 40.8
+    },
+    {
+      "id": "c101",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 187,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 1338.2,
+      "cy": 559.1,
+      "w": 24.9,
+      "h": 18.2
+    },
+    {
+      "id": "c102",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 223,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 1323.9,
+      "cy": 581.9,
+      "w": 38.8,
+      "h": 36.9
+    },
+    {
+      "id": "c103",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 272.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 1288.2,
+      "cy": 598.3,
+      "w": 37.3,
+      "h": 27.8
+    },
+    {
+      "id": "c104",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 9.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 1248.9,
+      "cy": 546.3,
+      "w": 28.7,
+      "h": 35.4
+    },
+    {
+      "id": "c105",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 65.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 1275.3,
+      "cy": 514.4,
+      "w": 34.5,
+      "h": 30.7
+    },
+    {
+      "id": "c106",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 117,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 1311.8,
+      "cy": 514.9,
+      "w": 35.5,
+      "h": 31.7
+    },
+    {
+      "id": "c107",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 176,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 1337.7,
+      "cy": 550.1,
+      "w": 25.8,
+      "h": 36.2
+    },
+    {
+      "id": "c108",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 228,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 168.1,
+      "cy": 712.1,
+      "w": 36.6,
+      "h": 33.8
+    },
+    {
+      "id": "c109",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 281.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 132.6,
+      "cy": 723.4,
+      "w": 38.4,
+      "h": 28.9
+    },
+    {
+      "id": "c110",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 333,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 103.9,
+      "cy": 700.9,
+      "w": 31.7,
+      "h": 34.5
+    },
+    {
+      "id": "c111",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 33.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 105.2,
+      "cy": 658.8,
+      "w": 34.8,
+      "h": 36.7
+    },
+    {
+      "id": "c112",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 82.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 135.2,
+      "cy": 639.2,
+      "w": 34.3,
+      "h": 26.7
+    },
+    {
+      "id": "c113",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 131,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 169.4,
+      "cy": 650.9,
+      "w": 37.7,
+      "h": 35.8
+    },
+    {
+      "id": "s001",
+      "class": "banquette",
+      "rotation": 0,
+      "cx": 810.4,
+      "cy": 176.2,
+      "w": 39.2,
+      "h": 140.5
+    },
+    {
+      "id": "s002",
+      "class": "banquette",
+      "rotation": 0,
+      "cx": 1104.2,
+      "cy": 164.8,
+      "w": 38.9,
+      "h": 134.5
+    },
+    {
+      "id": "s003",
+      "class": "banquette",
+      "rotation": 0,
+      "cx": 1045.4,
+      "cy": 169.4,
+      "w": 38.7,
+      "h": 129.5
+    },
+    {
+      "id": "v01",
+      "class": "stage",
+      "cx": 939.9,
+      "cy": 660.1,
+      "w": 601.2,
+      "h": 221.7,
+      "rotation": 0
+    },
+    {
+      "id": "v02",
+      "class": "stage_extension",
+      "cx": 949.6,
+      "cy": 510.4,
+      "w": 74.7,
+      "h": 38.8,
+      "rotation": 0
+    }
+  ],
+  "relationships": [
+    {
+      "chair": "c090",
+      "belongsTo": "t038"
+    },
+    {
+      "chair": "c091",
+      "belongsTo": "t038"
+    },
+    {
+      "chair": "c092",
+      "belongsTo": "t038"
+    },
+    {
+      "chair": "c093",
+      "belongsTo": "t038"
+    },
+    {
+      "chair": "c094",
+      "belongsTo": "t038"
+    },
+    {
+      "chair": "c095",
+      "belongsTo": "t039"
+    },
+    {
+      "chair": "c096",
+      "belongsTo": "t039"
+    },
+    {
+      "chair": "c097",
+      "belongsTo": "t039"
+    },
+    {
+      "chair": "c098",
+      "belongsTo": "t039"
+    },
+    {
+      "chair": "c099",
+      "belongsTo": "t039"
+    },
+    {
+      "chair": "c100",
+      "belongsTo": "t039"
+    },
+    {
+      "chair": "c101",
+      "belongsTo": "t040"
+    },
+    {
+      "chair": "c102",
+      "belongsTo": "t040"
+    },
+    {
+      "chair": "c103",
+      "belongsTo": "t040"
+    },
+    {
+      "chair": "c104",
+      "belongsTo": "t040"
+    },
+    {
+      "chair": "c105",
+      "belongsTo": "t040"
+    },
+    {
+      "chair": "c106",
+      "belongsTo": "t040"
+    },
+    {
+      "chair": "c107",
+      "belongsTo": "t040"
+    },
+    {
+      "chair": "c108",
+      "belongsTo": "t041"
+    },
+    {
+      "chair": "c109",
+      "belongsTo": "t041"
+    },
+    {
+      "chair": "c110",
+      "belongsTo": "t041"
+    },
+    {
+      "chair": "c111",
+      "belongsTo": "t041"
+    },
+    {
+      "chair": "c112",
+      "belongsTo": "t041"
+    },
+    {
+      "chair": "c113",
+      "belongsTo": "t041"
+    }
+  ],
+  "logicalGroups": [
+    {
+      "id": "g1",
+      "members": [
+        "left-mid-A"
+      ],
+      "note": "3 square tables pushed together seating 8 as one long table",
+      "seats": 8
+    },
+    {
+      "id": "g2",
+      "members": [
+        "left-mid-B"
+      ],
+      "note": "3 square tables pushed together seating 8",
+      "seats": 8
+    },
+    {
+      "id": "g3",
+      "members": [
+        "left-bot-A"
+      ],
+      "note": "3 square tables pushed together seating 6",
+      "seats": 6
+    },
+    {
+      "id": "g4",
+      "members": [
+        "left-bot-B"
+      ],
+      "note": "4 square tables pushed together seating 10",
+      "seats": 10
+    }
+  ],
+  "capacity": {
+    "ocrStated": {
+      "seating": 114,
+      "bistro": 10,
+      "total": 124,
+      "source": "printed on the drawing, top-left"
+    },
+    "annotatedChairs": 113,
+    "chairsByFamily": {
+      "orange-armchair": 79,
+      "orange-bistro-chair": 10,
+      "pale-outlined-chair": 24
+    },
+    "annotatedChairsNote": "113 individually located chairs: 79 orange-armchair, 10 orange-bistro-chair, 24 pale-outlined-chair. This supersedes the earlier figure of 105, which was a count from zoomed crops with no positions and did not separate the bistro chairs from the armchairs. The drawing's own printed total is 124 pax, and the three banquettes have no drawn seat divisions, so the remaining difference is exactly the banquette capacity the drawing does not state.",
+    "unverified": [
+      {
+        "objectIds": [
+          "s01",
+          "s02",
+          "s03"
+        ],
+        "reason": "Three long banquettes in the top-right cluster. The drawing does not divide them into seat positions, so their capacity cannot be read off it. The gap between 105 counted chairs and the drawing's stated 124 is the size of this unknown; a capacity auditor should surface these three objects as the unresolved region rather than silently balancing the number."
+      }
+    ]
+  },
+  "regions": [
+    {
+      "id": "capacity-block",
+      "x": 102.4,
+      "y": 108.5,
+      "w": 179.5,
+      "h": 99,
+      "note": "114 pax seating / 10 pax bistro / Total : 124 pax",
+      "class": "text"
+    },
+    {
+      "id": "giris-left",
+      "x": 27.7,
+      "y": 218,
+      "w": 73.7,
+      "h": 37.7,
+      "note": "GIRIS (entrance label)",
+      "class": "text"
+    },
+    {
+      "id": "giris-right",
+      "x": 1264.4,
+      "y": 47,
+      "w": 39.2,
+      "h": 101.6,
+      "note": "GIRIS (entrance label, rotated)",
+      "class": "text"
+    },
+    {
+      "id": "bar-label",
+      "x": 324.6,
+      "y": 245.4,
+      "w": 94,
+      "h": 44.8,
+      "note": "BAR",
+      "class": "text"
+    },
+    {
+      "id": "sahne-label",
+      "x": 911.2,
+      "y": 642,
+      "w": 79.3,
+      "h": 30,
+      "note": "SAHNE (stage)",
+      "class": "text"
+    },
+    {
+      "id": "dim-8m",
+      "x": 910.1,
+      "y": 547.9,
+      "w": 41.2,
+      "h": 26.1,
+      "note": "8 m dimension",
+      "class": "text"
+    },
+    {
+      "id": "dim-310m",
+      "x": 737.9,
+      "y": 662.3,
+      "w": 57.2,
+      "h": 26.9,
+      "note": "3,10 m dimension",
+      "class": "text"
+    },
+    {
+      "class": "architecture",
+      "x": 8.4,
+      "y": 12.5,
+      "w": 1374.9,
+      "h": 809,
+      "note": "room outline / perimeter walls"
+    },
+    {
+      "class": "architecture",
+      "x": 632.1,
+      "y": 93.8,
+      "w": 85.6,
+      "h": 114,
+      "note": "decorative planter"
+    }
+  ]
+}

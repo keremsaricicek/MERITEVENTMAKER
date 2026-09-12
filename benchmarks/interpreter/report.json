@@ -1,0 +1,2006 @@
+{
+ "ranAt": "2026-09-07T21:24:02.107Z",
+ "plans": [
+  {
+   "planId": "adversarial-architecture-v1",
+   "facts": [
+    {
+     "key": "fact.tableTypeMix",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "Most of this plan's tables are round (10).",
+     "tr": "Bu planın masalarının çoğu round (10).",
+     "provenance": [
+      {
+       "key": "provenance.typeClassificationThreeStages",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "byType": {
+       "round": 10
+      },
+      "share": 1
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": "round",
+      "annotated": "round"
+     }
+    },
+    {
+     "key": "fact.tableCount",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "10 tables were detected.",
+     "tr": "10 masa tespit edildi.",
+     "provenance": [
+      {
+       "key": "provenance.tablesSurvivingDetection",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "total": 10
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": 10,
+      "annotated": 10
+     }
+    },
+    {
+     "key": "fact.seats",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "80 seats detected across 10 tables.",
+     "tr": "10 masada 80 koltuk tespit edildi.",
+     "provenance": [
+      {
+       "key": "provenance.chairsDetectedAssociated",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "physicalSeats": 80,
+      "seatedTables": 10
+     },
+     "checkable": false,
+     "why": "the annotation records no chairs"
+    },
+    {
+     "key": "fact.zone",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "1 dining area(s).",
+     "tr": "1 dining alanı.",
+     "provenance": [
+      {
+       "key": "provenance.zoneTyped",
+       "params": {
+        "type": "dining"
+       }
+      }
+     ],
+     "basis": {
+      "n": 1
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": "1 dining areas",
+      "annotated": "10 tables"
+     }
+    },
+    {
+     "key": "fact.noStatedCapacity",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "The drawing's own capacity figure was not read, because OCR did not run.",
+     "tr": "OCR çalışmadığı için çizimin kendi kapasite rakamı okunmadı.",
+     "provenance": [
+      {
+       "key": "provenance.ocrDidNotRun",
+       "params": {}
+      }
+     ],
+     "basis": {},
+     "checkable": false,
+     "why": "a statement about whether OCR ran, not about the plan"
+    }
+   ],
+   "priorities": [
+    {
+     "id": "priority:reviewgroup_81f25d14-5b03-4254-9cb7-b9d0d6911fe4",
+     "key": "priority.reviewGroup",
+     "rank": 6,
+     "params": {
+      "n": 6,
+      "type": "column"
+     },
+     "why": "a batch of similar objects to confirm together",
+     "targetIds": [
+      "candidate_11e81ef3-fdc1-4fa2-befe-c97d7b56b637",
+      "candidate_96442a59-8819-47e7-b617-8cc5ad9f695d",
+      "candidate_d30610ac-6101-47ea-8a6d-48b98d5ebb86",
+      "candidate_af3b0fd3-b335-4b77-b354-823dc5eff05b",
+      "candidate_6564835d-f97e-4b97-8609-4d58d6a49dd1",
+      "candidate_89163b93-888b-4635-8a22-d507ae62f4c0"
+     ],
+     "downstreamImpact": {
+      "objects": 6,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "10,20;10,75;49,20;49,76;87,20;87,76",
+     "buildOrder": 0
+    }
+   ],
+   "untranslated": [],
+   "pageErrors": 0
+  },
+  {
+   "planId": "adversarial-bistro-v1",
+   "facts": [
+    {
+     "key": "fact.tableTypeMix",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "Most of this plan's tables are square (18).",
+     "tr": "Bu planın masalarının çoğu square (18).",
+     "provenance": [
+      {
+       "key": "provenance.typeClassificationThreeStages",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "byType": {
+       "square": 18
+      },
+      "share": 1
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": "square",
+      "annotated": "square"
+     }
+    },
+    {
+     "key": "fact.tableCount",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "18 tables were detected.",
+     "tr": "18 masa tespit edildi.",
+     "provenance": [
+      {
+       "key": "provenance.tablesSurvivingDetection",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "total": 18
+     },
+     "checkable": true,
+     "correct": false,
+     "detail": {
+      "claimed": 18,
+      "annotated": 23
+     }
+    },
+    {
+     "key": "fact.seats",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "72 seats detected across 18 tables.",
+     "tr": "18 masada 72 koltuk tespit edildi.",
+     "provenance": [
+      {
+       "key": "provenance.chairsDetectedAssociated",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "physicalSeats": 72,
+      "seatedTables": 18
+     },
+     "checkable": false,
+     "why": "the annotation records no chairs"
+    },
+    {
+     "key": "fact.zone",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "1 dining area(s).",
+     "tr": "1 dining alanı.",
+     "provenance": [
+      {
+       "key": "provenance.zoneTyped",
+       "params": {
+        "type": "dining"
+       }
+      }
+     ],
+     "basis": {
+      "n": 1
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": "1 dining areas",
+      "annotated": "23 tables"
+     }
+    },
+    {
+     "key": "fact.noStatedCapacity",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "The drawing's own capacity figure was not read, because OCR did not run.",
+     "tr": "OCR çalışmadığı için çizimin kendi kapasite rakamı okunmadı.",
+     "provenance": [
+      {
+       "key": "provenance.ocrDidNotRun",
+       "params": {}
+      }
+     ],
+     "basis": {},
+     "checkable": false,
+     "why": "a statement about whether OCR ran, not about the plan"
+    }
+   ],
+   "priorities": [],
+   "untranslated": [],
+   "pageErrors": 0
+  },
+  {
+   "planId": "adversarial-dense-v1",
+   "facts": [
+    {
+     "key": "fact.tableTypeMix",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "Most of this plan's tables are square (24).",
+     "tr": "Bu planın masalarının çoğu square (24).",
+     "provenance": [
+      {
+       "key": "provenance.typeClassificationThreeStages",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "byType": {
+       "square": 24
+      },
+      "share": 1
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": "square",
+      "annotated": "square"
+     }
+    },
+    {
+     "key": "fact.tableCount",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "24 tables were detected.",
+     "tr": "24 masa tespit edildi.",
+     "provenance": [
+      {
+       "key": "provenance.tablesSurvivingDetection",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "total": 24
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": 24,
+      "annotated": 24
+     }
+    },
+    {
+     "key": "fact.seats",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "80 seats detected across 24 tables.",
+     "tr": "24 masada 80 koltuk tespit edildi.",
+     "provenance": [
+      {
+       "key": "provenance.chairsDetectedAssociated",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "physicalSeats": 80,
+      "seatedTables": 24
+     },
+     "checkable": false,
+     "why": "the annotation records no chairs"
+    },
+    {
+     "key": "fact.combinedTables",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "4 groups of tables are pushed together; the largest joins 6.",
+     "tr": "4 masa grubu birleştirilmiş; en büyüğü 6 masayı birleştiriyor.",
+     "provenance": [
+      {
+       "key": "provenance.touchAndAlign",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "groups": 4,
+      "largest": 6
+     },
+     "checkable": false,
+     "why": "the annotation records no logical groups"
+    },
+    {
+     "key": "fact.zone",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "1 dining area(s).",
+     "tr": "1 dining alanı.",
+     "provenance": [
+      {
+       "key": "provenance.zoneTyped",
+       "params": {
+        "type": "dining"
+       }
+      }
+     ],
+     "basis": {
+      "n": 1
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": "1 dining areas",
+      "annotated": "24 tables"
+     }
+    },
+    {
+     "key": "fact.noStatedCapacity",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "The drawing's own capacity figure was not read, because OCR did not run.",
+     "tr": "OCR çalışmadığı için çizimin kendi kapasite rakamı okunmadı.",
+     "provenance": [
+      {
+       "key": "provenance.ocrDidNotRun",
+       "params": {}
+      }
+     ],
+     "basis": {},
+     "checkable": false,
+     "why": "a statement about whether OCR ran, not about the plan"
+    },
+    {
+     "key": "fact.seatsAmbiguous",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "20 seat(s) sit almost exactly between two tables; which table they belong to is not settled.",
+     "tr": "20 koltuk iki masanın neredeyse tam ortasında; hangisine ait olduğu belirlenmedi.",
+     "provenance": [
+      {
+       "key": "provenance.competingTablesCompared",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "n": 20
+     },
+     "checkable": false,
+     "why": "this plan has no chair-to-table ground truth to compare against"
+    }
+   ],
+   "priorities": [
+    {
+     "id": "priority:question_b10206fa-0ab3-436f-b25c-1ddb1f37377f",
+     "key": "priority.question",
+     "rank": 5,
+     "params": {
+      "n": 1
+     },
+     "why": "a grouping the detector could not resolve",
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 0
+    },
+    {
+     "id": "priority:reviewgroup_951bc941-ccfc-405b-8cbc-de96be367aaa",
+     "key": "priority.reviewGroup",
+     "rank": 6,
+     "params": {
+      "n": 4,
+      "type": "chair"
+     },
+     "why": "a batch of similar objects to confirm together",
+     "targetIds": [
+      "candidate_20b9b310-c9e0-4a5d-bd2a-eaf749b16d3f",
+      "candidate_d654b443-100c-4503-9103-b2cfa2159aeb",
+      "candidate_b6fba8e7-08ab-4516-8d72-470565126e76",
+      "candidate_fb10b408-06a9-4f8e-83e8-c5309e7853be"
+     ],
+     "downstreamImpact": {
+      "objects": 4,
+      "seats": 4,
+      "facts": 0
+     },
+     "signature": "17,8;20,8;20,94;66,94",
+     "buildOrder": 1
+    }
+   ],
+   "untranslated": [],
+   "pageErrors": 0
+  },
+  {
+   "planId": "adversarial-text-v1",
+   "facts": [
+    {
+     "key": "fact.tableTypeMix",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "Most of this plan's tables are square (12).",
+     "tr": "Bu planın masalarının çoğu square (12).",
+     "provenance": [
+      {
+       "key": "provenance.typeClassificationThreeStages",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "byType": {
+       "square": 12
+      },
+      "share": 1
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": "square",
+      "annotated": "square"
+     }
+    },
+    {
+     "key": "fact.tableCount",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "12 tables were detected.",
+     "tr": "12 masa tespit edildi.",
+     "provenance": [
+      {
+       "key": "provenance.tablesSurvivingDetection",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "total": 12
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": 12,
+      "annotated": 12
+     }
+    },
+    {
+     "key": "fact.seats",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "73 seats detected across 12 tables.",
+     "tr": "12 masada 73 koltuk tespit edildi.",
+     "provenance": [
+      {
+       "key": "provenance.chairsDetectedAssociated",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "physicalSeats": 73,
+      "seatedTables": 12
+     },
+     "checkable": false,
+     "why": "the annotation records no chairs"
+    },
+    {
+     "key": "fact.zone",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "1 dining area(s).",
+     "tr": "1 dining alanı.",
+     "provenance": [
+      {
+       "key": "provenance.zoneTyped",
+       "params": {
+        "type": "dining"
+       }
+      }
+     ],
+     "basis": {
+      "n": 1
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": "1 dining areas",
+      "annotated": "12 tables"
+     }
+    },
+    {
+     "key": "fact.noStatedCapacity",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "The drawing's own capacity figure was not read, because OCR did not run.",
+     "tr": "OCR çalışmadığı için çizimin kendi kapasite rakamı okunmadı.",
+     "provenance": [
+      {
+       "key": "provenance.ocrDidNotRun",
+       "params": {}
+      }
+     ],
+     "basis": {},
+     "checkable": false,
+     "why": "a statement about whether OCR ran, not about the plan"
+    }
+   ],
+   "priorities": [],
+   "untranslated": [],
+   "pageErrors": 0
+  },
+  {
+   "planId": "merit-real-venue",
+   "facts": [
+    {
+     "key": "fact.tableTypeMix",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "Most of this plan's tables are square (39).",
+     "tr": "Bu planın masalarının çoğu square (39).",
+     "provenance": [
+      {
+       "key": "provenance.typeClassificationThreeStages",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "byType": {
+       "square": 39,
+       "rectangle": 2,
+       "round": 4,
+       "bistro": 5
+      },
+      "share": 0.78
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": "square",
+      "annotated": "square"
+     }
+    },
+    {
+     "key": "fact.tableCount",
+     "strength": "uncertain",
+     "strengthBefore": "likely",
+     "contradictedBy": [
+      "contra:visualClass",
+      "contra:seatsInsideBody"
+     ],
+     "en": "50 tables were detected.",
+     "tr": "50 masa tespit edildi.",
+     "provenance": [
+      {
+       "key": "provenance.tablesSurvivingDetection",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "total": 50
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": 50,
+      "annotated": 46
+     }
+    },
+    {
+     "key": "fact.alsoHas",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "Also 5 bistro.",
+     "tr": "Ayrıca 5 bistro.",
+     "provenance": [
+      {
+       "key": "provenance.typeClassification",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "count": 5
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": 5,
+      "annotated": 5
+     }
+    },
+    {
+     "key": "fact.alsoHas",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "Also 4 round.",
+     "tr": "Ayrıca 4 round.",
+     "provenance": [
+      {
+       "key": "provenance.typeClassification",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "count": 4
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": 4,
+      "annotated": 4
+     }
+    },
+    {
+     "key": "fact.alsoHas",
+     "strength": "uncertain",
+     "strengthBefore": "likely",
+     "contradictedBy": [
+      "contra:visualClass",
+      "contra:mixedGroupTypes",
+      "contra:seatsInsideBody"
+     ],
+     "en": "Also 2 rectangle.",
+     "tr": "Ayrıca 2 rectangle.",
+     "provenance": [
+      {
+       "key": "provenance.typeClassification",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "count": 2
+     },
+     "checkable": true,
+     "correct": false,
+     "detail": {
+      "claimed": "2 rectangle",
+      "annotated": "no rectangle tables annotated"
+     }
+    },
+    {
+     "key": "fact.seats",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "112 seats detected across 50 tables.",
+     "tr": "50 masada 112 koltuk tespit edildi.",
+     "provenance": [
+      {
+       "key": "provenance.chairsDetectedAssociated",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "physicalSeats": 112,
+      "seatedTables": 48
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": 112,
+      "annotated": 113
+     }
+    },
+    {
+     "key": "fact.unseatedTables",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "2 tables have no seats detected at them.",
+     "tr": "2 masada koltuk tespit edilmedi.",
+     "provenance": [
+      {
+       "key": "provenance.tablesWithNoChair",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "unseated": 2
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": 2,
+      "annotated": 0
+     }
+    },
+    {
+     "key": "fact.combinedTables",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "13 groups of tables are pushed together; the largest joins 4.",
+     "tr": "13 masa grubu birleştirilmiş; en büyüğü 4 masayı birleştiriyor.",
+     "provenance": [
+      {
+       "key": "provenance.touchAndAlign",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "groups": 13,
+      "largest": 4
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": 13,
+      "annotated": 4
+     }
+    },
+    {
+     "key": "fact.zone",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "1 dining area(s).",
+     "tr": "1 dining alanı.",
+     "provenance": [
+      {
+       "key": "provenance.zoneTyped",
+       "params": {
+        "type": "dining"
+       }
+      }
+     ],
+     "basis": {
+      "n": 1
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": "1 dining areas",
+      "annotated": "46 tables"
+     }
+    },
+    {
+     "key": "fact.zone",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "1 bistro area(s).",
+     "tr": "1 bistro alanı.",
+     "provenance": [
+      {
+       "key": "provenance.zoneTyped",
+       "params": {
+        "type": "bistro"
+       }
+      }
+     ],
+     "basis": {
+      "n": 1
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": "1 bistro areas",
+      "annotated": "5 bistro tables"
+     }
+    },
+    {
+     "key": "fact.noStatedCapacity",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "The drawing's own capacity figure was not read, because OCR did not run.",
+     "tr": "OCR çalışmadığı için çizimin kendi kapasite rakamı okunmadı.",
+     "provenance": [
+      {
+       "key": "provenance.ocrDidNotRun",
+       "params": {}
+      }
+     ],
+     "basis": {},
+     "checkable": false,
+     "why": "a statement about whether OCR ran, not about the plan"
+    },
+    {
+     "key": "fact.seatsAmbiguous",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "1 seat(s) sit almost exactly between two tables; which table they belong to is not settled.",
+     "tr": "1 koltuk iki masanın neredeyse tam ortasında; hangisine ait olduğu belirlenmedi.",
+     "provenance": [
+      {
+       "key": "provenance.competingTablesCompared",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "n": 1
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": 1,
+      "annotatedAmbiguous": 4
+     }
+    },
+    {
+     "key": "fact.seatsFacing",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "19 of 108 seats are drawn with a direction, and each faces the table it was placed at.",
+     "tr": "108 koltuktan 19 tanesi yönlü çizilmiş ve her biri yerleştirildiği masaya bakıyor.",
+     "provenance": [
+      {
+       "key": "provenance.symbolAsymmetry",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "facing": 19,
+      "of": 108
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": 19,
+      "annotatedOrientable": 24
+     }
+    }
+   ],
+   "priorities": [
+    {
+     "id": "priority:contra:seatsInsideBody",
+     "key": "priority.contradiction",
+     "rank": 0,
+     "params": {
+      "kind": "contradiction.kind.RELATIONSHIP"
+     },
+     "contradictionId": "contra:seatsInsideBody",
+     "why": "contradiction.from.tableDetection and contradiction.from.chairAssociation cannot both be right",
+     "targetIds": [
+      "candidate_747ec1e3-1e4b-4c3b-9b97-92d4ca380bf9"
+     ],
+     "downstreamImpact": {
+      "objects": 1,
+      "seats": 1,
+      "facts": 2
+     },
+     "signature": "1,17",
+     "buildOrder": 3
+    },
+    {
+     "id": "priority:contra:visualClass",
+     "key": "priority.contradiction",
+     "rank": 2,
+     "params": {
+      "kind": "contradiction.kind.TYPE"
+     },
+     "contradictionId": "contra:visualClass",
+     "why": "contradiction.from.detectionAndShape and contradiction.from.visualSecondOpinion cannot both be right",
+     "targetIds": [
+      "candidate_4fd19eb7-deb6-4d0e-a908-f2f012614bda",
+      "candidate_e6969050-cca2-4a81-9f21-93c39b87b360",
+      "candidate_0194d09c-85ee-45bc-bd22-605033b7d891"
+     ],
+     "downstreamImpact": {
+      "objects": 3,
+      "seats": 7,
+      "facts": 2
+     },
+     "signature": "48,64;5,74;55,36",
+     "buildOrder": 1
+    },
+    {
+     "id": "priority:contra:mixedGroupTypes",
+     "key": "priority.contradiction",
+     "rank": 2,
+     "params": {
+      "kind": "contradiction.kind.RELATIONSHIP"
+     },
+     "contradictionId": "contra:mixedGroupTypes",
+     "why": "contradiction.from.geometricGrouping and contradiction.from.shapeClassification cannot both be right",
+     "targetIds": [
+      "candidate_ff1ee834-6ff7-48bb-ae88-ffb1540d8976",
+      "candidate_96b55414-e61d-48ca-afe3-44c9e82124a7",
+      "candidate_05a834ca-d162-4aa9-af92-7a853487a2c1",
+      "candidate_4fd19eb7-deb6-4d0e-a908-f2f012614bda"
+     ],
+     "downstreamImpact": {
+      "objects": 4,
+      "seats": 8,
+      "facts": 1
+     },
+     "signature": "55,36;58,36;58,43;58,50",
+     "buildOrder": 2
+    },
+    {
+     "id": "priority:contra:emptyTablesOrphanSeats",
+     "key": "priority.contradiction",
+     "rank": 2,
+     "params": {
+      "kind": "contradiction.kind.COUNT"
+     },
+     "contradictionId": "contra:emptyTablesOrphanSeats",
+     "why": "contradiction.from.tableDetection and contradiction.from.chairDetection cannot both be right",
+     "targetIds": [
+      "candidate_0b20aeb3-869f-41d2-b30d-29f864f195d3",
+      "candidate_0194d09c-85ee-45bc-bd22-605033b7d891"
+     ],
+     "downstreamImpact": {
+      "objects": 2,
+      "seats": 0,
+      "facts": 1
+     },
+     "signature": "48,64;83,63",
+     "buildOrder": 0
+    },
+    {
+     "id": "priority:question_29c011db-a3dc-40c8-9418-93f32e57d876",
+     "key": "priority.question",
+     "rank": 5,
+     "params": {
+      "n": 1
+     },
+     "why": "a grouping the detector could not resolve",
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 4
+    },
+    {
+     "id": "priority:question_9ecb66fb-e3bd-4df2-94c6-0ed231b5ef25",
+     "key": "priority.question",
+     "rank": 5,
+     "params": {
+      "n": 1
+     },
+     "why": "a grouping the detector could not resolve",
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 5
+    },
+    {
+     "id": "priority:question_22d9018f-ad11-4d15-a155-2b82b675bb59",
+     "key": "priority.question",
+     "rank": 5,
+     "params": {
+      "n": 1
+     },
+     "why": "a grouping the detector could not resolve",
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 6
+    },
+    {
+     "id": "priority:question_c3c6e12e-8676-4dc7-a578-d26d24fe5de2",
+     "key": "priority.question",
+     "rank": 5,
+     "params": {
+      "n": 1
+     },
+     "why": "a grouping the detector could not resolve",
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 7
+    },
+    {
+     "id": "priority:question_616a7b70-e25a-488f-9337-6178f25217c4",
+     "key": "priority.question",
+     "rank": 5,
+     "params": {
+      "n": 1
+     },
+     "why": "a grouping the detector could not resolve",
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 8
+    },
+    {
+     "id": "priority:reviewgroup_cd68a571-ab87-4766-b6a0-736c12e8eec3",
+     "key": "priority.reviewGroup",
+     "rank": 6,
+     "params": {
+      "n": 15,
+      "type": "square"
+     },
+     "why": "a batch of similar objects to confirm together",
+     "targetIds": [
+      "candidate_2323aeeb-0000-42da-911a-3d9ea89273b9",
+      "candidate_f14fb430-9af7-4a27-a9c8-e612bbf3fb22",
+      "candidate_02e59882-6bd5-4959-9ed3-ed962ac8554f",
+      "candidate_784ac7b9-03fa-4b39-868a-9d3b37084d9c",
+      "candidate_7e31e1cb-fe6a-4eca-88e9-363f7be1de7e",
+      "candidate_a7e951d0-9b96-4f32-ae5e-cc4d9b464a16",
+      "candidate_2c9e5090-b112-49d2-93ca-041cef9ebe72",
+      "candidate_e0c17b30-29b9-4b0f-92fe-b987729f6512",
+      "candidate_05a834ca-d162-4aa9-af92-7a853487a2c1",
+      "candidate_686ece5d-2ff5-4189-b79e-ab77e8d4568e",
+      "candidate_d8ae3a6f-765f-48d5-9cc5-29cc12a14796",
+      "candidate_422c0ecf-ba68-4016-8739-7ec27ca60e83",
+      "candidate_233354cd-0ae6-49ed-8782-8fba19d74afd",
+      "candidate_0b20aeb3-869f-41d2-b30d-29f864f195d3",
+      "candidate_0194d09c-85ee-45bc-bd22-605033b7d891"
+     ],
+     "downstreamImpact": {
+      "objects": 27,
+      "seats": 31,
+      "facts": 0
+     },
+     "signature": "16,54;20,54;24,54;24,73;30,74;34,74;47,43;47,49;47,56;48,64;58,36;70,36;70,43;71,49;83,63",
+     "buildOrder": 9
+    },
+    {
+     "id": "priority:reviewgroup_3be46321-5b9c-41a0-b06d-b22a72b9362a",
+     "key": "priority.reviewGroup",
+     "rank": 6,
+     "params": {
+      "n": 5,
+      "type": "bistro"
+     },
+     "why": "a batch of similar objects to confirm together",
+     "targetIds": [
+      "candidate_48bd555e-e3f6-49bf-9429-8b26d71a32ab",
+      "candidate_c79e1036-8ef9-4ace-aa61-564e2a163ae8",
+      "candidate_d66ab5d3-3d34-4797-9d12-1695db3160a2",
+      "candidate_a0739f2d-4600-45dd-87c4-e69fca9738ae",
+      "candidate_173a07e5-24a9-4730-bc31-077277c886ae"
+     ],
+     "downstreamImpact": {
+      "objects": 5,
+      "seats": 8,
+      "facts": 0
+     },
+     "signature": "14,90;2,28;28,89;36,90;5,28",
+     "buildOrder": 10
+    },
+    {
+     "id": "priority:reviewgroup_7f6065d2-d3c8-4763-8b62-827c07779b51",
+     "key": "priority.reviewGroup",
+     "rank": 6,
+     "params": {
+      "n": 4,
+      "type": "round"
+     },
+     "why": "a batch of similar objects to confirm together",
+     "targetIds": [
+      "candidate_369ebfd6-fd39-4e30-8421-f1547578d452",
+      "candidate_9d359528-061d-4d06-8825-ca6694e2aed1",
+      "candidate_e6969050-cca2-4a81-9f21-93c39b87b360",
+      "candidate_e910da03-83c3-4439-978b-026ddc8dc242"
+     ],
+     "downstreamImpact": {
+      "objects": 4,
+      "seats": 20,
+      "facts": 0
+     },
+     "signature": "5,74;6,55;91,29;91,65",
+     "buildOrder": 11
+    },
+    {
+     "id": "priority:reviewgroup_355c9760-7ed8-42a1-9296-5c16b0389bcc",
+     "key": "priority.reviewGroup",
+     "rank": 6,
+     "params": {
+      "n": 4,
+      "type": "chair"
+     },
+     "why": "a batch of similar objects to confirm together",
+     "targetIds": [
+      "candidate_35732c9b-1842-4149-88a8-fb45e0ac02dc",
+      "candidate_674db050-4f16-4d73-b122-58dfbef24ec7",
+      "candidate_4c0a0beb-44b2-4dcb-af67-cbdb30d6e3be",
+      "candidate_1037e97c-032b-4fab-a246-88b5215de404"
+     ],
+     "downstreamImpact": {
+      "objects": 4,
+      "seats": 4,
+      "facts": 0
+     },
+     "signature": "10,7;14,11;15,15;49,88",
+     "buildOrder": 12
+    },
+    {
+     "id": "priority:reviewgroup_5d1de3ea-9bed-44c3-94fa-ba51a0ef63f3",
+     "key": "priority.reviewGroup",
+     "rank": 6,
+     "params": {
+      "n": 2,
+      "type": "rectangle"
+     },
+     "why": "a batch of similar objects to confirm together",
+     "targetIds": [
+      "candidate_4fd19eb7-deb6-4d0e-a908-f2f012614bda",
+      "candidate_747ec1e3-1e4b-4c3b-9b97-92d4ca380bf9"
+     ],
+     "downstreamImpact": {
+      "objects": 2,
+      "seats": 3,
+      "facts": 0
+     },
+     "signature": "1,17;55,36",
+     "buildOrder": 13
+    },
+    {
+     "id": "priority:reviewgroup_83d09777-9f5a-4012-aa25-1de56764ce64",
+     "key": "priority.reviewGroup",
+     "rank": 6,
+     "params": {
+      "n": 2,
+      "type": "other"
+     },
+     "why": "a batch of similar objects to confirm together",
+     "targetIds": [
+      "candidate_21cf0318-2a3a-4792-847f-13c279a36fe0",
+      "candidate_a4301041-4b32-4085-9254-2fb60bd7859c"
+     ],
+     "downstreamImpact": {
+      "objects": 2,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "51,88;8,33",
+     "buildOrder": 14
+    }
+   ],
+   "untranslated": [],
+   "pageErrors": 0
+  },
+  {
+   "planId": "ornek-symbolic",
+   "facts": [
+    {
+     "key": "fact.tableTypeMix",
+     "strength": "likely",
+     "strengthBefore": "strong",
+     "contradictedBy": [
+      "contra:visualClass"
+     ],
+     "en": "Most of this plan's tables are round (163).",
+     "tr": "Bu planın masalarının çoğu round (163).",
+     "provenance": [
+      {
+       "key": "provenance.typeClassificationThreeStages",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "byType": {
+       "round": 163
+      },
+      "share": 1
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": "round",
+      "annotated": "round"
+     }
+    },
+    {
+     "key": "fact.tableCount",
+     "strength": "uncertain",
+     "strengthBefore": "likely",
+     "contradictedBy": [
+      "contra:visualClass"
+     ],
+     "en": "163 tables were detected.",
+     "tr": "163 masa tespit edildi.",
+     "provenance": [
+      {
+       "key": "provenance.tablesSurvivingDetection",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "total": 163
+     },
+     "checkable": true,
+     "correct": true,
+     "detail": {
+      "claimed": 163,
+      "annotated": 166
+     }
+    },
+    {
+     "key": "fact.symbolicPlan",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "This drawing shows its 163 tables as symbols, not as furniture, and draws no seats at all — so there is nothing here to count seats from.",
+     "tr": "Bu çizim 163 masayı mobilya olarak değil sembol olarak gösteriyor ve hiç koltuk çizmiyor — dolayısıyla burada sayılacak koltuk yok.",
+     "provenance": [
+      {
+       "key": "provenance.symbolFamilyNoSeating",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "associationRate": 0.0714,
+      "uniformObjects": 154,
+      "associatedToTable": 11,
+      "standalone": 132,
+      "tablesFound": 10
+     },
+     "checkable": false,
+     "why": "no check is defined for this fact"
+    },
+    {
+     "key": "fact.combinedTables",
+     "strength": "likely",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "1 groups of tables are pushed together; the largest joins 2.",
+     "tr": "1 masa grubu birleştirilmiş; en büyüğü 2 masayı birleştiriyor.",
+     "provenance": [
+      {
+       "key": "provenance.touchAndAlign",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "groups": 1,
+      "largest": 2
+     },
+     "checkable": false,
+     "why": "the annotation records no logical groups"
+    },
+    {
+     "key": "fact.undeterminedAreas",
+     "strength": "uncertain",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "1 area(s) of the plan could not be identified.",
+     "tr": "Planın 1 alanı tanımlanamadı.",
+     "provenance": [
+      {
+       "key": "provenance.noZoneRule",
+       "params": {}
+      }
+     ],
+     "basis": {
+      "n": 1
+     },
+     "checkable": false,
+     "why": "an admission of uncertainty, which the annotation cannot contradict"
+    },
+    {
+     "key": "fact.noStatedCapacity",
+     "strength": "strong",
+     "strengthBefore": null,
+     "contradictedBy": null,
+     "en": "The drawing's own capacity figure was not read, because OCR did not run.",
+     "tr": "OCR çalışmadığı için çizimin kendi kapasite rakamı okunmadı.",
+     "provenance": [
+      {
+       "key": "provenance.ocrDidNotRun",
+       "params": {}
+      }
+     ],
+     "basis": {},
+     "checkable": false,
+     "why": "a statement about whether OCR ran, not about the plan"
+    }
+   ],
+   "priorities": [
+    {
+     "id": "priority:contra:visualClass",
+     "key": "priority.contradiction",
+     "rank": 2,
+     "params": {
+      "kind": "contradiction.kind.TYPE"
+     },
+     "contradictionId": "contra:visualClass",
+     "why": "contradiction.from.detectionAndShape and contradiction.from.visualSecondOpinion cannot both be right",
+     "targetIds": [
+      "candidate_0888175d-cdd5-4a2f-8615-758457de926a",
+      "candidate_d49c0f1a-1029-4e46-861d-2224a3c72d2a",
+      "candidate_db24ac16-0f45-4a73-9ceb-a338db9e93ce",
+      "candidate_d6664262-b73f-4734-90c0-f045d7644149",
+      "candidate_cef11743-85d8-44d4-83b0-c9cdf34c81b2",
+      "candidate_2f5bb13c-ca43-4bcf-ab7d-ef4e02a4719c",
+      "candidate_998c4ccf-a5b9-4833-a2d2-36ea1b70aad7",
+      "candidate_e40ebb8e-ed2c-4bf2-8e3d-28ba1dfaae03",
+      "candidate_5e53fa75-4024-46b2-86a8-c705bce96ecf",
+      "candidate_f34588cb-d7c3-4396-b9f8-6b0b1eefb41a",
+      "candidate_e0a83068-89ca-48d5-916a-0ddbdc831332",
+      "candidate_3c3945f4-0590-42ff-b430-0e258fda296e",
+      "candidate_c2c5eaad-c232-4b9e-9c8f-256b8da8a306",
+      "candidate_3e5a5ec3-d19e-47c3-9feb-244eec0b2eb5",
+      "candidate_58fe971b-2eeb-408a-b082-b3589992cf99",
+      "candidate_ad103309-f1cf-4619-8623-0299b3279a6b",
+      "candidate_a4ff38e6-ebb7-4438-b83d-cf37ba075f31",
+      "candidate_4b17e3ed-878a-4f4b-bdcc-7d8359e7ce16",
+      "candidate_444083a7-1253-4ef8-aeb5-453ac307d930",
+      "candidate_7c2aefc9-df93-4b69-858c-eb3f22f685c1",
+      "candidate_ba3d9c81-a2d2-4ee0-9860-23a808044487",
+      "candidate_06531fc9-bd8b-4836-abe5-75114081f4b5",
+      "candidate_a152209e-783c-41ef-8ed7-32c91e9504ad",
+      "candidate_6311de89-07dd-44c9-8e55-71fd2409e299",
+      "candidate_f2cb00e4-37df-4ebe-bb8d-22657394e653",
+      "candidate_270cb6c7-141c-437a-a373-5846769525aa",
+      "candidate_fc57e809-5491-44b6-86d6-86bf69846c34",
+      "candidate_a9f2e7f5-a6ef-444b-a42f-bd8ab734270d",
+      "candidate_374f4ecc-f053-4bdf-a6ca-f8f6c516751e",
+      "candidate_0d8b6180-c4c4-45d9-b78a-63fbfa689430",
+      "candidate_1ea620dd-3685-4257-8075-a8617d05240a",
+      "candidate_a76c49a1-7407-4c87-b780-081512f39738",
+      "candidate_6af2bc4b-0447-407e-ac0e-e5a9ac6b35bc",
+      "candidate_867978da-1d8b-4588-83d1-f7f193d204e8",
+      "candidate_9bc13e8b-e531-4242-9925-588b1cd93479",
+      "candidate_8e7c2702-1939-4bd0-b6fc-0c01f8bacbda",
+      "candidate_cb0873e8-8cb5-48c5-861c-f3e527c3e3ce",
+      "candidate_70114584-4e54-40a1-8754-90854f207711",
+      "candidate_14a49a76-a85c-4d96-ae5c-f1e56c8c70f2",
+      "candidate_a97a05a6-0eba-4ff7-8b42-1a0c52cfdb95",
+      "candidate_84e81731-92c7-49b3-9f11-7c66406bd8f9",
+      "candidate_d3991965-697d-4481-8c92-52c1a975b3fc",
+      "candidate_70158be2-23cb-4e9e-956e-bb1892193bfa",
+      "candidate_f3bdff15-ccaf-4136-9b18-8d90876cb3f4",
+      "candidate_d7798b2f-0b7f-4b19-85f1-86b44e29fcd9",
+      "candidate_a9e3ae66-d825-4085-9c19-b7c65cbbf9f7",
+      "candidate_96e62997-67f5-4066-a438-366e7135c929",
+      "candidate_4b72e838-a0cb-46de-a2d0-8bb4e67b35e4",
+      "candidate_c27ea2a6-eeb1-40ee-94ab-fea01c67ecc7",
+      "candidate_772b0735-b4af-4a30-b693-1fdff84511cf",
+      "candidate_1f94f634-b1da-4cfb-b5e3-190997221e44",
+      "candidate_2a5c3c94-1cc9-4ed1-a6c7-3e8de923e1a5",
+      "candidate_1c1d849b-6c07-4357-b21d-aee2ff675b38",
+      "candidate_31b5fd15-330e-4d9a-b6d8-1f48ec490dd1",
+      "candidate_0a10e5c1-4e86-4e99-a74d-3fdc0946a946",
+      "candidate_1cd0b3a2-e0e8-480c-8c69-5c25c71367fb",
+      "candidate_5ec5a6ef-0e47-4b3d-8b47-c5cd4de326e8",
+      "candidate_052b1da4-9d01-47a5-96d7-a9cc0d330370",
+      "candidate_7442b190-935f-4239-b9cf-3b5271a5e64b",
+      "candidate_f9ce529e-e749-44aa-add1-d5577fb77127",
+      "candidate_ec2b82a3-2f11-4163-8e60-c288dc87e398",
+      "candidate_7fc809da-8f95-40eb-b0d7-c102d573f973",
+      "candidate_f6949e76-cfb7-4d7f-9acd-48895ddb7874",
+      "candidate_eef9b475-b792-4ed2-a127-e6a8fda706a6",
+      "candidate_b7d3dbee-bd55-4506-bbe8-79f8e6c24daf",
+      "candidate_fa1b67f0-5fac-4138-970b-993d642aea25",
+      "candidate_53a4b7f0-6115-4801-92e2-313241fe6d71",
+      "candidate_e97a0ed5-01b5-464f-ac8f-63378548dce8",
+      "candidate_ab433c2b-75d2-455b-8da4-1900b3f78e6c",
+      "candidate_603bd77e-0076-4616-8c89-e1fcdf681fe7",
+      "candidate_e361f05e-54d6-4899-b2c3-a9176d2b8d5e",
+      "candidate_b1807e49-3f7a-4a4c-b98f-aa7b5a921db4",
+      "candidate_9e3460e4-498c-4f62-b4e7-7f8915a45376",
+      "candidate_8c64fd20-a623-4bce-a0e5-ff87772b339f",
+      "candidate_dcfdc2a1-16a3-4dcb-a78a-ffe2dcd1f36d",
+      "candidate_dfe31eb2-c0f8-4bcb-a999-b0965601b2e0",
+      "candidate_ca74eaa8-89bc-46e7-90d4-3b62a01b77ab",
+      "candidate_dec33e31-73af-4550-8dda-7340d8068134",
+      "candidate_05f07c44-c030-4f9b-bf70-e10f9597aaa2",
+      "candidate_a6adc650-7fb8-4c5d-babf-aa9f6a12dbe1",
+      "candidate_7be1d4c1-9d36-4f37-afe7-0ebd81da3407",
+      "candidate_74f8d858-ce75-4736-90b3-58048c525934",
+      "candidate_b4f55d2f-f314-48fb-8da1-719993df97c9",
+      "candidate_9e04772c-e634-465d-8cca-5c79f706440e",
+      "candidate_e34d1ec6-b8be-467a-9fbf-7f9cca3dc515",
+      "candidate_351fa870-159b-43aa-be15-795b27c668e9",
+      "candidate_634b89c2-a3da-4a22-a4c7-2980ae51755c",
+      "candidate_aa39fa7e-c090-4f59-ac0b-8f18ce505ebf",
+      "candidate_511ee319-b84d-4541-bda0-d1766eb2dc5e",
+      "candidate_71b69110-09c6-4e35-ad88-193154023f2e",
+      "candidate_6cbd4cce-9b80-4efd-97b6-9baec265b14d",
+      "candidate_b3a29c5d-1a7c-40a3-918d-65b8c2851f9a",
+      "candidate_c43a18de-20bf-4135-87d8-e7514eb347d9",
+      "candidate_8b8258ac-920b-472e-88eb-e670ea865556",
+      "candidate_f2c5b150-d31d-4486-a293-b837d442e03e",
+      "candidate_027b5da2-f1a4-4199-b8b1-d9cab43d32bf",
+      "candidate_5550ad9b-a825-4248-920c-0e647c2f7449",
+      "candidate_3e20f561-6428-42df-b5c6-27d8434f5611",
+      "candidate_b3c602e9-093d-48a0-904e-57843c7ea69a",
+      "candidate_637f5648-c257-4c58-ae99-f4900d941552",
+      "candidate_1299e9d6-8000-423f-ad8b-afd0d1236ff7",
+      "candidate_6770f203-353d-4ea7-ad94-c7af284f2c04",
+      "candidate_84275710-451b-406f-a57f-2624c7ac9ab1",
+      "candidate_e96c16d4-f537-4896-b509-6d5ced7ea62d",
+      "candidate_675abcf2-c315-4be8-92bb-017d30c42bb3",
+      "candidate_59c34586-2a16-4512-8c1b-062efd11d1d9",
+      "candidate_a309c42d-ce37-4c1e-9880-25b1ffb22784",
+      "candidate_f28f0e25-d8de-49c1-9998-216f1d65c1ae",
+      "candidate_fe8bd964-8a70-42f6-b08c-b035049257e6",
+      "candidate_c5acc9e3-48c1-4ecb-92f4-a8bd9ef169d0",
+      "candidate_6f54c30c-0df1-4572-8c06-01e99dac8825",
+      "candidate_173754ae-163e-45c8-a0e8-d418603f5101",
+      "candidate_c85bdaea-80d5-4247-bbfe-7ae99e147ed7",
+      "candidate_9a2a2738-72d0-4936-ab4a-8063078243f6",
+      "candidate_25c8759b-38e3-4a59-8871-4056af9a5b59",
+      "candidate_1e33186d-40f8-4d3c-8f92-ecaad0e56b3b",
+      "candidate_9462af7c-ebb5-4c82-afa9-4c65f82f78cf",
+      "candidate_1dc16f2a-21ce-4ef5-82fd-32b6d303aa19",
+      "candidate_fb3974d3-2d3c-4071-9642-696a20d3d12b",
+      "candidate_9a8065e4-1680-43d6-a09a-304d75733379",
+      "candidate_261f16f7-3a84-4db0-93df-3749db41ccce",
+      "candidate_c43fa407-c304-4986-92b7-a01e48a284d2",
+      "candidate_8f870129-98ea-492e-be19-93c313dd031a",
+      "candidate_afe724d7-b74c-4403-ab95-d2722b187718",
+      "candidate_ccb177fe-ddae-4083-ab82-6315b44e3b23",
+      "candidate_01cc0cf4-dcbc-47af-aa87-499cb4322167",
+      "candidate_9e38714a-cc77-4a66-9fc4-0c927155de1d",
+      "candidate_76f380ec-65cb-4b20-a924-2cfe787ee2ed",
+      "candidate_4ce2890f-3715-453c-8fbf-45dd7fc9828c",
+      "candidate_e282fbff-a2de-4a6b-ae91-0b5c87b80a96",
+      "candidate_5ad30053-9c51-495c-a289-c6d54979f19e",
+      "candidate_3f579173-5e40-4d47-8099-a6e1d0b7526f",
+      "candidate_832d35b3-31d3-431a-80f0-55d402ca2717",
+      "candidate_a58e7729-b063-44f9-a5d3-509616f779c8",
+      "candidate_90e81b6e-92c8-428c-af4d-cfefa75485cd",
+      "candidate_dd191727-1156-4441-83e1-6a3ebf6fdeae",
+      "candidate_f9317888-f527-4a10-99fa-2dc3f2d1459f",
+      "candidate_5b0f8685-3b95-4ef8-adc4-782e3719abd3",
+      "candidate_c558c614-1ae9-406b-bd56-db5c612dc710",
+      "candidate_a73bb8b7-246a-4834-9a59-298a42d28536",
+      "candidate_fb985397-cab2-43bc-a80b-7c8f4bc47c1d",
+      "candidate_3b523405-959d-4c2a-a634-71faada2435e",
+      "candidate_545563b1-dc63-457f-ad85-bbc5c513408c",
+      "candidate_8e5f3546-90ef-4c95-9b79-11a64711f6f8",
+      "candidate_ec8fbd63-3f62-4db8-95ef-41a360b6f7b4",
+      "candidate_238e3373-95fb-49be-aba7-c55820c8bf40",
+      "candidate_2cc34244-e575-4a77-8700-ebc548fd2b3e",
+      "candidate_14ba5f8f-7559-416a-ac1f-a8b3d15d1ca3",
+      "candidate_d9a316d2-a6b5-4cf6-9d8b-58238d6c090a",
+      "candidate_3bcb98b3-b56d-4884-bd1a-81fe4cbd6a5e",
+      "candidate_1bf2c66c-a88a-4459-aabe-a245fd028009",
+      "candidate_abb64b99-29ec-47df-9ee1-8ca2c848b416",
+      "candidate_fb2e86da-451a-487d-b07b-4390e3ce2d8b",
+      "candidate_92753dfc-218c-4746-af3e-ae14df42e6d2",
+      "candidate_56217ccd-2fc2-4fac-9942-9e10699ca0ec",
+      "candidate_c4df932f-ded8-458a-9064-4c06925ac76f",
+      "candidate_85f6ff3a-1fa7-4f92-99fa-2d3dd51437f9",
+      "candidate_a2adc352-3a77-4c1b-94dd-a2e0fa76883b",
+      "candidate_fa646c38-3083-4c9c-be16-7c58aa2f5426",
+      "candidate_8dada0e8-8cb6-4987-96e8-ec4203a68460",
+      "candidate_b8e3c883-a5f4-46e7-a66f-51f9aaf1b527",
+      "candidate_03d885b7-4648-4a15-b3b5-5e9272fb52be",
+      "candidate_bdf6e33a-ebbc-4431-af14-d9029cd91f6d"
+     ],
+     "downstreamImpact": {
+      "objects": 163,
+      "seats": 0,
+      "facts": 2
+     },
+     "signature": "11,40;11,46;11,76;12,58;13,16;13,28;13,81;14,22;14,70;15,34;15,40;15,53;16,46;16,65;16,75;17,28;18,16;18,58;18,82;19,22;19,53;19,70;20,34;20,40;20,46;20,65;21,76;22,58;22,81;23,16;23,28;23,70;24,22;24,40;24,52;25,34;25,46;25,65;25,76;27,58;27,81;28,16;28,28;28,40;28,70;29,22;29,34;29,46;29,53;30,64;31,58;31,75;32,81;33,16;33,28;33,34;33,40;33,70;34,22;34,46;34,52;36,64;36,75;37,33;37,57;37,81;38,40;38,70;39,46;39,52;41,65;41,75;42,34;42,57;42,81;43,40;44,52;44,61;44,69;46,65;47,57;47,85;48,69;49,52;49,60;51,65;52,57;53,34;53,69;54,40;54,52;54,60;55,64;56,57;57,46;58,34;58,69;59,40;59,52;60,64;60,79;61,57;61,74;62,46;62,69;63,22;63,34;64,40;64,52;64,63;65,17;65,28;65,74;65,79;66,46;66,57;67,69;68,22;68,34;69,40;69,52;70,16;70,28;70,63;70,74;71,57;72,69;73,34;74,22;74,40;74,52;74,74;75,16;75,28;75,63;76,57;77,69;78,34;78,80;79,22;79,28;79,40;79,52;79,74;80,16;80,63;81,57;82,69;83,80;84,22;84,28;84,34;84,40;84,52;85,16;85,63;85,74;86,57;87,69;88,22;88,28;89,34;89,40",
+     "buildOrder": 0
+    },
+    {
+     "id": "priority:contra:tablesNoDining",
+     "key": "priority.contradiction",
+     "rank": 2,
+     "params": {
+      "kind": "contradiction.kind.SEMANTIC"
+     },
+     "contradictionId": "contra:tablesNoDining",
+     "why": "contradiction.from.tableDetection and contradiction.from.semanticZones cannot both be right",
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 1
+    },
+    {
+     "id": "priority:unknownZones",
+     "key": "priority.undeterminedAreas",
+     "rank": 3,
+     "params": {
+      "n": 1
+     },
+     "why": "part of the room has no determined purpose",
+     "targetIds": [
+      "candidate_0888175d-cdd5-4a2f-8615-758457de926a",
+      "candidate_a58e7729-b063-44f9-a5d3-509616f779c8",
+      "candidate_832d35b3-31d3-431a-80f0-55d402ca2717",
+      "candidate_c43a18de-20bf-4135-87d8-e7514eb347d9",
+      "candidate_3e5a5ec3-d19e-47c3-9feb-244eec0b2eb5",
+      "candidate_3c3945f4-0590-42ff-b430-0e258fda296e",
+      "candidate_e0a83068-89ca-48d5-916a-0ddbdc831332",
+      "candidate_f34588cb-d7c3-4396-b9f8-6b0b1eefb41a",
+      "candidate_2f5bb13c-ca43-4bcf-ab7d-ef4e02a4719c",
+      "candidate_db24ac16-0f45-4a73-9ceb-a338db9e93ce",
+      "candidate_d49c0f1a-1029-4e46-861d-2224a3c72d2a",
+      "candidate_3b523405-959d-4c2a-a634-71faada2435e",
+      "candidate_1299e9d6-8000-423f-ad8b-afd0d1236ff7",
+      "candidate_637f5648-c257-4c58-ae99-f4900d941552",
+      "candidate_3e20f561-6428-42df-b5c6-27d8434f5611",
+      "candidate_5550ad9b-a825-4248-920c-0e647c2f7449",
+      "candidate_027b5da2-f1a4-4199-b8b1-d9cab43d32bf",
+      "candidate_8b8258ac-920b-472e-88eb-e670ea865556",
+      "candidate_7c2aefc9-df93-4b69-858c-eb3f22f685c1",
+      "candidate_444083a7-1253-4ef8-aeb5-453ac307d930",
+      "candidate_58fe971b-2eeb-408a-b082-b3589992cf99",
+      "candidate_fb2e86da-451a-487d-b07b-4390e3ce2d8b",
+      "candidate_abb64b99-29ec-47df-9ee1-8ca2c848b416",
+      "candidate_1bf2c66c-a88a-4459-aabe-a245fd028009",
+      "candidate_3bcb98b3-b56d-4884-bd1a-81fe4cbd6a5e",
+      "candidate_d9a316d2-a6b5-4cf6-9d8b-58238d6c090a",
+      "candidate_ec8fbd63-3f62-4db8-95ef-41a360b6f7b4",
+      "candidate_8e5f3546-90ef-4c95-9b79-11a64711f6f8",
+      "candidate_f9317888-f527-4a10-99fa-2dc3f2d1459f",
+      "candidate_90e81b6e-92c8-428c-af4d-cfefa75485cd",
+      "candidate_173754ae-163e-45c8-a0e8-d418603f5101",
+      "candidate_6f54c30c-0df1-4572-8c06-01e99dac8825",
+      "candidate_c5acc9e3-48c1-4ecb-92f4-a8bd9ef169d0",
+      "candidate_d3991965-697d-4481-8c92-52c1a975b3fc",
+      "candidate_84e81731-92c7-49b3-9f11-7c66406bd8f9",
+      "candidate_a76c49a1-7407-4c87-b780-081512f39738",
+      "candidate_1ea620dd-3685-4257-8075-a8617d05240a",
+      "candidate_0d8b6180-c4c4-45d9-b78a-63fbfa689430",
+      "candidate_374f4ecc-f053-4bdf-a6ca-f8f6c516751e",
+      "candidate_92753dfc-218c-4746-af3e-ae14df42e6d2",
+      "candidate_14ba5f8f-7559-416a-ac1f-a8b3d15d1ca3",
+      "candidate_2cc34244-e575-4a77-8700-ebc548fd2b3e",
+      "candidate_238e3373-95fb-49be-aba7-c55820c8bf40",
+      "candidate_c43fa407-c304-4986-92b7-a01e48a284d2",
+      "candidate_fb3974d3-2d3c-4071-9642-696a20d3d12b",
+      "candidate_1e33186d-40f8-4d3c-8f92-ecaad0e56b3b",
+      "candidate_25c8759b-38e3-4a59-8871-4056af9a5b59",
+      "candidate_9a2a2738-72d0-4936-ab4a-8063078243f6",
+      "candidate_05f07c44-c030-4f9b-bf70-e10f9597aaa2",
+      "candidate_dec33e31-73af-4550-8dda-7340d8068134",
+      "candidate_ca74eaa8-89bc-46e7-90d4-3b62a01b77ab",
+      "candidate_dfe31eb2-c0f8-4bcb-a999-b0965601b2e0",
+      "candidate_dcfdc2a1-16a3-4dcb-a78a-ffe2dcd1f36d",
+      "candidate_8c64fd20-a623-4bce-a0e5-ff87772b339f",
+      "candidate_9e3460e4-498c-4f62-b4e7-7f8915a45376",
+      "candidate_603bd77e-0076-4616-8c89-e1fcdf681fe7",
+      "candidate_fa1b67f0-5fac-4138-970b-993d642aea25",
+      "candidate_b7d3dbee-bd55-4506-bbe8-79f8e6c24daf",
+      "candidate_eef9b475-b792-4ed2-a127-e6a8fda706a6",
+      "candidate_f6949e76-cfb7-4d7f-9acd-48895ddb7874",
+      "candidate_7fc809da-8f95-40eb-b0d7-c102d573f973",
+      "candidate_ec2b82a3-2f11-4163-8e60-c288dc87e398",
+      "candidate_f9ce529e-e749-44aa-add1-d5577fb77127",
+      "candidate_7442b190-935f-4239-b9cf-3b5271a5e64b",
+      "candidate_052b1da4-9d01-47a5-96d7-a9cc0d330370",
+      "candidate_5ec5a6ef-0e47-4b3d-8b47-c5cd4de326e8",
+      "candidate_1cd0b3a2-e0e8-480c-8c69-5c25c71367fb",
+      "candidate_0a10e5c1-4e86-4e99-a74d-3fdc0946a946",
+      "candidate_31b5fd15-330e-4d9a-b6d8-1f48ec490dd1",
+      "candidate_1c1d849b-6c07-4357-b21d-aee2ff675b38",
+      "candidate_2a5c3c94-1cc9-4ed1-a6c7-3e8de923e1a5",
+      "candidate_1f94f634-b1da-4cfb-b5e3-190997221e44",
+      "candidate_772b0735-b4af-4a30-b693-1fdff84511cf",
+      "candidate_c27ea2a6-eeb1-40ee-94ab-fea01c67ecc7",
+      "candidate_4b72e838-a0cb-46de-a2d0-8bb4e67b35e4",
+      "candidate_96e62997-67f5-4066-a438-366e7135c929",
+      "candidate_a9e3ae66-d825-4085-9c19-b7c65cbbf9f7",
+      "candidate_d7798b2f-0b7f-4b19-85f1-86b44e29fcd9",
+      "candidate_f3bdff15-ccaf-4136-9b18-8d90876cb3f4",
+      "candidate_70158be2-23cb-4e9e-956e-bb1892193bfa",
+      "candidate_a97a05a6-0eba-4ff7-8b42-1a0c52cfdb95",
+      "candidate_14a49a76-a85c-4d96-ae5c-f1e56c8c70f2",
+      "candidate_70114584-4e54-40a1-8754-90854f207711",
+      "candidate_cb0873e8-8cb5-48c5-861c-f3e527c3e3ce",
+      "candidate_8e7c2702-1939-4bd0-b6fc-0c01f8bacbda",
+      "candidate_9bc13e8b-e531-4242-9925-588b1cd93479",
+      "candidate_867978da-1d8b-4588-83d1-f7f193d204e8",
+      "candidate_6af2bc4b-0447-407e-ac0e-e5a9ac6b35bc",
+      "candidate_fb985397-cab2-43bc-a80b-7c8f4bc47c1d",
+      "candidate_a73bb8b7-246a-4834-9a59-298a42d28536",
+      "candidate_c558c614-1ae9-406b-bd56-db5c612dc710",
+      "candidate_4ce2890f-3715-453c-8fbf-45dd7fc9828c",
+      "candidate_76f380ec-65cb-4b20-a924-2cfe787ee2ed",
+      "candidate_9e38714a-cc77-4a66-9fc4-0c927155de1d",
+      "candidate_ccb177fe-ddae-4083-ab82-6315b44e3b23",
+      "candidate_8f870129-98ea-492e-be19-93c313dd031a",
+      "candidate_261f16f7-3a84-4db0-93df-3749db41ccce",
+      "candidate_9a8065e4-1680-43d6-a09a-304d75733379",
+      "candidate_1dc16f2a-21ce-4ef5-82fd-32b6d303aa19",
+      "candidate_9462af7c-ebb5-4c82-afa9-4c65f82f78cf",
+      "candidate_c85bdaea-80d5-4247-bbfe-7ae99e147ed7",
+      "candidate_fe8bd964-8a70-42f6-b08c-b035049257e6",
+      "candidate_f28f0e25-d8de-49c1-9998-216f1d65c1ae",
+      "candidate_a309c42d-ce37-4c1e-9880-25b1ffb22784",
+      "candidate_351fa870-159b-43aa-be15-795b27c668e9",
+      "candidate_e34d1ec6-b8be-467a-9fbf-7f9cca3dc515",
+      "candidate_9e04772c-e634-465d-8cca-5c79f706440e",
+      "candidate_b4f55d2f-f314-48fb-8da1-719993df97c9",
+      "candidate_74f8d858-ce75-4736-90b3-58048c525934",
+      "candidate_7be1d4c1-9d36-4f37-afe7-0ebd81da3407",
+      "candidate_a6adc650-7fb8-4c5d-babf-aa9f6a12dbe1",
+      "candidate_b1807e49-3f7a-4a4c-b98f-aa7b5a921db4",
+      "candidate_e361f05e-54d6-4899-b2c3-a9176d2b8d5e",
+      "candidate_ab433c2b-75d2-455b-8da4-1900b3f78e6c",
+      "candidate_e97a0ed5-01b5-464f-ac8f-63378548dce8",
+      "candidate_53a4b7f0-6115-4801-92e2-313241fe6d71",
+      "candidate_a9f2e7f5-a6ef-444b-a42f-bd8ab734270d",
+      "candidate_fc57e809-5491-44b6-86d6-86bf69846c34",
+      "candidate_270cb6c7-141c-437a-a373-5846769525aa",
+      "candidate_f2cb00e4-37df-4ebe-bb8d-22657394e653",
+      "candidate_6311de89-07dd-44c9-8e55-71fd2409e299",
+      "candidate_a152209e-783c-41ef-8ed7-32c91e9504ad",
+      "candidate_06531fc9-bd8b-4836-abe5-75114081f4b5",
+      "candidate_ba3d9c81-a2d2-4ee0-9860-23a808044487",
+      "candidate_4b17e3ed-878a-4f4b-bdcc-7d8359e7ce16",
+      "candidate_a4ff38e6-ebb7-4438-b83d-cf37ba075f31",
+      "candidate_ad103309-f1cf-4619-8623-0299b3279a6b",
+      "candidate_c2c5eaad-c232-4b9e-9c8f-256b8da8a306",
+      "candidate_e40ebb8e-ed2c-4bf2-8e3d-28ba1dfaae03",
+      "candidate_998c4ccf-a5b9-4833-a2d2-36ea1b70aad7",
+      "candidate_cef11743-85d8-44d4-83b0-c9cdf34c81b2",
+      "candidate_d6664262-b73f-4734-90c0-f045d7644149",
+      "candidate_03d885b7-4648-4a15-b3b5-5e9272fb52be",
+      "candidate_b8e3c883-a5f4-46e7-a66f-51f9aaf1b527",
+      "candidate_8dada0e8-8cb6-4987-96e8-ec4203a68460",
+      "candidate_fa646c38-3083-4c9c-be16-7c58aa2f5426",
+      "candidate_a2adc352-3a77-4c1b-94dd-a2e0fa76883b",
+      "candidate_85f6ff3a-1fa7-4f92-99fa-2d3dd51437f9",
+      "candidate_c4df932f-ded8-458a-9064-4c06925ac76f",
+      "candidate_56217ccd-2fc2-4fac-9942-9e10699ca0ec",
+      "candidate_545563b1-dc63-457f-ad85-bbc5c513408c",
+      "candidate_5b0f8685-3b95-4ef8-adc4-782e3719abd3",
+      "candidate_dd191727-1156-4441-83e1-6a3ebf6fdeae",
+      "candidate_3f579173-5e40-4d47-8099-a6e1d0b7526f",
+      "candidate_5ad30053-9c51-495c-a289-c6d54979f19e",
+      "candidate_e282fbff-a2de-4a6b-ae91-0b5c87b80a96",
+      "candidate_01cc0cf4-dcbc-47af-aa87-499cb4322167",
+      "candidate_afe724d7-b74c-4403-ab95-d2722b187718",
+      "candidate_e96c16d4-f537-4896-b509-6d5ced7ea62d",
+      "candidate_6770f203-353d-4ea7-ad94-c7af284f2c04",
+      "candidate_b3c602e9-093d-48a0-904e-57843c7ea69a",
+      "candidate_f2c5b150-d31d-4486-a293-b837d442e03e",
+      "candidate_b3a29c5d-1a7c-40a3-918d-65b8c2851f9a",
+      "candidate_6cbd4cce-9b80-4efd-97b6-9baec265b14d",
+      "candidate_71b69110-09c6-4e35-ad88-193154023f2e",
+      "candidate_511ee319-b84d-4541-bda0-d1766eb2dc5e",
+      "candidate_aa39fa7e-c090-4f59-ac0b-8f18ce505ebf",
+      "candidate_634b89c2-a3da-4a22-a4c7-2980ae51755c",
+      "candidate_5e53fa75-4024-46b2-86a8-c705bce96ecf",
+      "candidate_bdf6e33a-ebbc-4431-af14-d9029cd91f6d",
+      "candidate_59c34586-2a16-4512-8c1b-062efd11d1d9",
+      "candidate_675abcf2-c315-4be8-92bb-017d30c42bb3",
+      "candidate_84275710-451b-406f-a57f-2624c7ac9ab1"
+     ],
+     "downstreamImpact": {
+      "objects": 163,
+      "seats": 0,
+      "facts": 1
+     },
+     "signature": "11,40;11,46;11,76;12,58;13,16;13,28;13,81;14,22;14,70;15,34;15,40;15,53;16,46;16,65;16,75;17,28;18,16;18,58;18,82;19,22;19,53;19,70;20,34;20,40;20,46;20,65;21,76;22,58;22,81;23,16;23,28;23,70;24,22;24,40;24,52;25,34;25,46;25,65;25,76;27,58;27,81;28,16;28,28;28,40;28,70;29,22;29,34;29,46;29,53;30,64;31,58;31,75;32,81;33,16;33,28;33,34;33,40;33,70;34,22;34,46;34,52;36,64;36,75;37,33;37,57;37,81;38,40;38,70;39,46;39,52;41,65;41,75;42,34;42,57;42,81;43,40;44,52;44,61;44,69;46,65;47,57;47,85;48,69;49,52;49,60;51,65;52,57;53,34;53,69;54,40;54,52;54,60;55,64;56,57;57,46;58,34;58,69;59,40;59,52;60,64;60,79;61,57;61,74;62,46;62,69;63,22;63,34;64,40;64,52;64,63;65,17;65,28;65,74;65,79;66,46;66,57;67,69;68,22;68,34;69,40;69,52;70,16;70,28;70,63;70,74;71,57;72,69;73,34;74,22;74,40;74,52;74,74;75,16;75,28;75,63;76,57;77,69;78,34;78,80;79,22;79,28;79,40;79,52;79,74;80,16;80,63;81,57;82,69;83,80;84,22;84,28;84,34;84,40;84,52;85,16;85,63;85,74;86,57;87,69;88,22;88,28;89,34;89,40",
+     "buildOrder": 2
+    },
+    {
+     "id": "priority:question_615c188c-cfda-4512-a2cd-b3101b21839e",
+     "key": "priority.question",
+     "rank": 5,
+     "params": {
+      "n": 1
+     },
+     "why": "a grouping the detector could not resolve",
+     "targetIds": [],
+     "downstreamImpact": {
+      "objects": 0,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "",
+     "buildOrder": 3
+    },
+    {
+     "id": "priority:reviewgroup_dbf5ad9c-bb0c-4539-9abf-0a4f35b505fe",
+     "key": "priority.reviewGroup",
+     "rank": 6,
+     "params": {
+      "n": 163,
+      "type": "round"
+     },
+     "why": "a batch of similar objects to confirm together",
+     "targetIds": [
+      "candidate_0888175d-cdd5-4a2f-8615-758457de926a",
+      "candidate_d49c0f1a-1029-4e46-861d-2224a3c72d2a",
+      "candidate_db24ac16-0f45-4a73-9ceb-a338db9e93ce",
+      "candidate_d6664262-b73f-4734-90c0-f045d7644149",
+      "candidate_cef11743-85d8-44d4-83b0-c9cdf34c81b2",
+      "candidate_2f5bb13c-ca43-4bcf-ab7d-ef4e02a4719c",
+      "candidate_998c4ccf-a5b9-4833-a2d2-36ea1b70aad7",
+      "candidate_e40ebb8e-ed2c-4bf2-8e3d-28ba1dfaae03",
+      "candidate_5e53fa75-4024-46b2-86a8-c705bce96ecf",
+      "candidate_f34588cb-d7c3-4396-b9f8-6b0b1eefb41a",
+      "candidate_e0a83068-89ca-48d5-916a-0ddbdc831332",
+      "candidate_3c3945f4-0590-42ff-b430-0e258fda296e",
+      "candidate_3e5a5ec3-d19e-47c3-9feb-244eec0b2eb5",
+      "candidate_58fe971b-2eeb-408a-b082-b3589992cf99",
+      "candidate_6311de89-07dd-44c9-8e55-71fd2409e299",
+      "candidate_0d8b6180-c4c4-45d9-b78a-63fbfa689430",
+      "candidate_8e7c2702-1939-4bd0-b6fc-0c01f8bacbda",
+      "candidate_14a49a76-a85c-4d96-ae5c-f1e56c8c70f2",
+      "candidate_84e81731-92c7-49b3-9f11-7c66406bd8f9",
+      "candidate_d7798b2f-0b7f-4b19-85f1-86b44e29fcd9",
+      "candidate_a9e3ae66-d825-4085-9c19-b7c65cbbf9f7",
+      "candidate_96e62997-67f5-4066-a438-366e7135c929",
+      "candidate_4b72e838-a0cb-46de-a2d0-8bb4e67b35e4",
+      "candidate_c27ea2a6-eeb1-40ee-94ab-fea01c67ecc7",
+      "candidate_772b0735-b4af-4a30-b693-1fdff84511cf",
+      "candidate_2a5c3c94-1cc9-4ed1-a6c7-3e8de923e1a5",
+      "candidate_5ec5a6ef-0e47-4b3d-8b47-c5cd4de326e8",
+      "candidate_7442b190-935f-4239-b9cf-3b5271a5e64b",
+      "candidate_ec2b82a3-2f11-4163-8e60-c288dc87e398",
+      "candidate_7fc809da-8f95-40eb-b0d7-c102d573f973",
+      "candidate_f6949e76-cfb7-4d7f-9acd-48895ddb7874",
+      "candidate_b7d3dbee-bd55-4506-bbe8-79f8e6c24daf",
+      "candidate_fa1b67f0-5fac-4138-970b-993d642aea25",
+      "candidate_6cbd4cce-9b80-4efd-97b6-9baec265b14d",
+      "candidate_8b8258ac-920b-472e-88eb-e670ea865556",
+      "candidate_637f5648-c257-4c58-ae99-f4900d941552",
+      "candidate_c5acc9e3-48c1-4ecb-92f4-a8bd9ef169d0",
+      "candidate_25c8759b-38e3-4a59-8871-4056af9a5b59",
+      "candidate_1e33186d-40f8-4d3c-8f92-ecaad0e56b3b",
+      "candidate_9e38714a-cc77-4a66-9fc4-0c927155de1d",
+      "candidate_76f380ec-65cb-4b20-a924-2cfe787ee2ed",
+      "candidate_e282fbff-a2de-4a6b-ae91-0b5c87b80a96",
+      "candidate_3f579173-5e40-4d47-8099-a6e1d0b7526f",
+      "candidate_dd191727-1156-4441-83e1-6a3ebf6fdeae",
+      "candidate_5b0f8685-3b95-4ef8-adc4-782e3719abd3",
+      "candidate_8e5f3546-90ef-4c95-9b79-11a64711f6f8",
+      "candidate_ec8fbd63-3f62-4db8-95ef-41a360b6f7b4",
+      "candidate_3bcb98b3-b56d-4884-bd1a-81fe4cbd6a5e",
+      "candidate_1bf2c66c-a88a-4459-aabe-a245fd028009",
+      "candidate_fb2e86da-451a-487d-b07b-4390e3ce2d8b",
+      "candidate_92753dfc-218c-4746-af3e-ae14df42e6d2",
+      "candidate_c2c5eaad-c232-4b9e-9c8f-256b8da8a306",
+      "candidate_ad103309-f1cf-4619-8623-0299b3279a6b",
+      "candidate_a4ff38e6-ebb7-4438-b83d-cf37ba075f31",
+      "candidate_4b17e3ed-878a-4f4b-bdcc-7d8359e7ce16",
+      "candidate_444083a7-1253-4ef8-aeb5-453ac307d930",
+      "candidate_7c2aefc9-df93-4b69-858c-eb3f22f685c1",
+      "candidate_ba3d9c81-a2d2-4ee0-9860-23a808044487",
+      "candidate_06531fc9-bd8b-4836-abe5-75114081f4b5",
+      "candidate_a152209e-783c-41ef-8ed7-32c91e9504ad",
+      "candidate_f2cb00e4-37df-4ebe-bb8d-22657394e653",
+      "candidate_270cb6c7-141c-437a-a373-5846769525aa",
+      "candidate_fc57e809-5491-44b6-86d6-86bf69846c34",
+      "candidate_a9f2e7f5-a6ef-444b-a42f-bd8ab734270d",
+      "candidate_374f4ecc-f053-4bdf-a6ca-f8f6c516751e",
+      "candidate_1ea620dd-3685-4257-8075-a8617d05240a",
+      "candidate_a76c49a1-7407-4c87-b780-081512f39738",
+      "candidate_6af2bc4b-0447-407e-ac0e-e5a9ac6b35bc",
+      "candidate_867978da-1d8b-4588-83d1-f7f193d204e8",
+      "candidate_d3991965-697d-4481-8c92-52c1a975b3fc",
+      "candidate_70158be2-23cb-4e9e-956e-bb1892193bfa",
+      "candidate_f3bdff15-ccaf-4136-9b18-8d90876cb3f4",
+      "candidate_1f94f634-b1da-4cfb-b5e3-190997221e44",
+      "candidate_0a10e5c1-4e86-4e99-a74d-3fdc0946a946",
+      "candidate_1cd0b3a2-e0e8-480c-8c69-5c25c71367fb",
+      "candidate_052b1da4-9d01-47a5-96d7-a9cc0d330370",
+      "candidate_f9ce529e-e749-44aa-add1-d5577fb77127",
+      "candidate_eef9b475-b792-4ed2-a127-e6a8fda706a6",
+      "candidate_ab433c2b-75d2-455b-8da4-1900b3f78e6c",
+      "candidate_a6adc650-7fb8-4c5d-babf-aa9f6a12dbe1",
+      "candidate_7be1d4c1-9d36-4f37-afe7-0ebd81da3407",
+      "candidate_74f8d858-ce75-4736-90b3-58048c525934",
+      "candidate_b4f55d2f-f314-48fb-8da1-719993df97c9",
+      "candidate_9e04772c-e634-465d-8cca-5c79f706440e",
+      "candidate_e34d1ec6-b8be-467a-9fbf-7f9cca3dc515",
+      "candidate_351fa870-159b-43aa-be15-795b27c668e9",
+      "candidate_634b89c2-a3da-4a22-a4c7-2980ae51755c",
+      "candidate_aa39fa7e-c090-4f59-ac0b-8f18ce505ebf",
+      "candidate_511ee319-b84d-4541-bda0-d1766eb2dc5e",
+      "candidate_71b69110-09c6-4e35-ad88-193154023f2e",
+      "candidate_b3a29c5d-1a7c-40a3-918d-65b8c2851f9a",
+      "candidate_c43a18de-20bf-4135-87d8-e7514eb347d9",
+      "candidate_f2c5b150-d31d-4486-a293-b837d442e03e",
+      "candidate_027b5da2-f1a4-4199-b8b1-d9cab43d32bf",
+      "candidate_5550ad9b-a825-4248-920c-0e647c2f7449",
+      "candidate_3e20f561-6428-42df-b5c6-27d8434f5611",
+      "candidate_b3c602e9-093d-48a0-904e-57843c7ea69a",
+      "candidate_1299e9d6-8000-423f-ad8b-afd0d1236ff7",
+      "candidate_6770f203-353d-4ea7-ad94-c7af284f2c04",
+      "candidate_e96c16d4-f537-4896-b509-6d5ced7ea62d",
+      "candidate_675abcf2-c315-4be8-92bb-017d30c42bb3",
+      "candidate_59c34586-2a16-4512-8c1b-062efd11d1d9",
+      "candidate_c85bdaea-80d5-4247-bbfe-7ae99e147ed7",
+      "candidate_9462af7c-ebb5-4c82-afa9-4c65f82f78cf",
+      "candidate_1dc16f2a-21ce-4ef5-82fd-32b6d303aa19",
+      "candidate_9a8065e4-1680-43d6-a09a-304d75733379",
+      "candidate_261f16f7-3a84-4db0-93df-3749db41ccce",
+      "candidate_c43fa407-c304-4986-92b7-a01e48a284d2",
+      "candidate_8f870129-98ea-492e-be19-93c313dd031a",
+      "candidate_afe724d7-b74c-4403-ab95-d2722b187718",
+      "candidate_ccb177fe-ddae-4083-ab82-6315b44e3b23",
+      "candidate_01cc0cf4-dcbc-47af-aa87-499cb4322167",
+      "candidate_5ad30053-9c51-495c-a289-c6d54979f19e",
+      "candidate_90e81b6e-92c8-428c-af4d-cfefa75485cd",
+      "candidate_f9317888-f527-4a10-99fa-2dc3f2d1459f",
+      "candidate_c558c614-1ae9-406b-bd56-db5c612dc710",
+      "candidate_a73bb8b7-246a-4834-9a59-298a42d28536",
+      "candidate_238e3373-95fb-49be-aba7-c55820c8bf40",
+      "candidate_2cc34244-e575-4a77-8700-ebc548fd2b3e",
+      "candidate_14ba5f8f-7559-416a-ac1f-a8b3d15d1ca3",
+      "candidate_d9a316d2-a6b5-4cf6-9d8b-58238d6c090a",
+      "candidate_9bc13e8b-e531-4242-9925-588b1cd93479",
+      "candidate_cb0873e8-8cb5-48c5-861c-f3e527c3e3ce",
+      "candidate_70114584-4e54-40a1-8754-90854f207711",
+      "candidate_a97a05a6-0eba-4ff7-8b42-1a0c52cfdb95",
+      "candidate_1c1d849b-6c07-4357-b21d-aee2ff675b38",
+      "candidate_31b5fd15-330e-4d9a-b6d8-1f48ec490dd1",
+      "candidate_53a4b7f0-6115-4801-92e2-313241fe6d71",
+      "candidate_e97a0ed5-01b5-464f-ac8f-63378548dce8",
+      "candidate_603bd77e-0076-4616-8c89-e1fcdf681fe7",
+      "candidate_e361f05e-54d6-4899-b2c3-a9176d2b8d5e",
+      "candidate_b1807e49-3f7a-4a4c-b98f-aa7b5a921db4",
+      "candidate_9e3460e4-498c-4f62-b4e7-7f8915a45376",
+      "candidate_8c64fd20-a623-4bce-a0e5-ff87772b339f",
+      "candidate_dcfdc2a1-16a3-4dcb-a78a-ffe2dcd1f36d",
+      "candidate_dfe31eb2-c0f8-4bcb-a999-b0965601b2e0",
+      "candidate_ca74eaa8-89bc-46e7-90d4-3b62a01b77ab",
+      "candidate_dec33e31-73af-4550-8dda-7340d8068134",
+      "candidate_05f07c44-c030-4f9b-bf70-e10f9597aaa2",
+      "candidate_fb985397-cab2-43bc-a80b-7c8f4bc47c1d",
+      "candidate_84275710-451b-406f-a57f-2624c7ac9ab1",
+      "candidate_a309c42d-ce37-4c1e-9880-25b1ffb22784",
+      "candidate_f28f0e25-d8de-49c1-9998-216f1d65c1ae",
+      "candidate_fe8bd964-8a70-42f6-b08c-b035049257e6",
+      "candidate_6f54c30c-0df1-4572-8c06-01e99dac8825",
+      "candidate_173754ae-163e-45c8-a0e8-d418603f5101",
+      "candidate_4ce2890f-3715-453c-8fbf-45dd7fc9828c",
+      "candidate_abb64b99-29ec-47df-9ee1-8ca2c848b416",
+      "candidate_9a2a2738-72d0-4936-ab4a-8063078243f6",
+      "candidate_fb3974d3-2d3c-4071-9642-696a20d3d12b",
+      "candidate_832d35b3-31d3-431a-80f0-55d402ca2717",
+      "candidate_a58e7729-b063-44f9-a5d3-509616f779c8",
+      "candidate_3b523405-959d-4c2a-a634-71faada2435e",
+      "candidate_545563b1-dc63-457f-ad85-bbc5c513408c",
+      "candidate_56217ccd-2fc2-4fac-9942-9e10699ca0ec",
+      "candidate_c4df932f-ded8-458a-9064-4c06925ac76f",
+      "candidate_85f6ff3a-1fa7-4f92-99fa-2d3dd51437f9",
+      "candidate_a2adc352-3a77-4c1b-94dd-a2e0fa76883b",
+      "candidate_fa646c38-3083-4c9c-be16-7c58aa2f5426",
+      "candidate_8dada0e8-8cb6-4987-96e8-ec4203a68460",
+      "candidate_b8e3c883-a5f4-46e7-a66f-51f9aaf1b527",
+      "candidate_03d885b7-4648-4a15-b3b5-5e9272fb52be",
+      "candidate_bdf6e33a-ebbc-4431-af14-d9029cd91f6d"
+     ],
+     "downstreamImpact": {
+      "objects": 163,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "11,40;11,46;11,76;12,58;13,16;13,28;13,81;14,22;14,70;15,34;15,40;15,53;16,46;16,65;16,75;17,28;18,16;18,58;18,82;19,22;19,53;19,70;20,34;20,40;20,46;20,65;21,76;22,58;22,81;23,16;23,28;23,70;24,22;24,40;24,52;25,34;25,46;25,65;25,76;27,58;27,81;28,16;28,28;28,40;28,70;29,22;29,34;29,46;29,53;30,64;31,58;31,75;32,81;33,16;33,28;33,34;33,40;33,70;34,22;34,46;34,52;36,64;36,75;37,33;37,57;37,81;38,40;38,70;39,46;39,52;41,65;41,75;42,34;42,57;42,81;43,40;44,52;44,61;44,69;46,65;47,57;47,85;48,69;49,52;49,60;51,65;52,57;53,34;53,69;54,40;54,52;54,60;55,64;56,57;57,46;58,34;58,69;59,40;59,52;60,64;60,79;61,57;61,74;62,46;62,69;63,22;63,34;64,40;64,52;64,63;65,17;65,28;65,74;65,79;66,46;66,57;67,69;68,22;68,34;69,40;69,52;70,16;70,28;70,63;70,74;71,57;72,69;73,34;74,22;74,40;74,52;74,74;75,16;75,28;75,63;76,57;77,69;78,34;78,80;79,22;79,28;79,40;79,52;79,74;80,16;80,63;81,57;82,69;83,80;84,22;84,28;84,34;84,40;84,52;85,16;85,63;85,74;86,57;87,69;88,22;88,28;89,34;89,40",
+     "buildOrder": 4
+    },
+    {
+     "id": "priority:reviewgroup_cb91b83e-42a4-4f9a-b976-11742c17c220",
+     "key": "priority.reviewGroup",
+     "rank": 6,
+     "params": {
+      "n": 17,
+      "type": "other"
+     },
+     "why": "a batch of similar objects to confirm together",
+     "targetIds": [
+      "candidate_b5cf3836-2fb0-4ee7-9d3d-e8d15614ed57",
+      "candidate_751ddf96-2d75-472f-8c90-81ae976fd559",
+      "candidate_61b3ef55-a5dc-4c78-936d-63f2504e0102",
+      "candidate_28dee269-fc2c-4417-85f6-a6d9a3ede56e",
+      "candidate_721a5489-5f95-40fc-9d4c-b0981fdd12ff",
+      "candidate_222d59ed-441d-45b4-a77f-c40b359e613a",
+      "candidate_ae225cd5-cdab-4c38-b62c-4eafbb76177f",
+      "candidate_caae6450-61e9-4072-8d09-4552748ec8a5",
+      "candidate_da2d3920-5734-4662-ba07-56d6e841f6f6",
+      "candidate_b145a083-f836-4f07-af3a-2055b6d5d708",
+      "candidate_7da2d2af-eeab-4ccc-a3b1-a45bce15f2dd",
+      "candidate_fc91269a-c80d-43a2-9f2f-edd1673675d2",
+      "candidate_f0ac9fae-3a13-48ab-b7a2-48638cb8aff6",
+      "candidate_f04ca450-ef1b-4b59-9770-4d213830c197",
+      "candidate_130ba92b-6e6a-4cc7-bd26-59ad2317683a",
+      "candidate_31086390-157e-4ed5-9cff-c8b3fae8ff43",
+      "candidate_1a188701-3bcd-4a2c-994c-625a861ccbc2"
+     ],
+     "downstreamImpact": {
+      "objects": 17,
+      "seats": 0,
+      "facts": 0
+     },
+     "signature": "11,20;11,93;37,91;37,98;38,10;38,17;39,22;43,91;45,79;48,32;55,50;57,17;58,79;70,89;77,90;85,90;99,0",
+     "buildOrder": 5
+    }
+   ],
+   "untranslated": [],
+   "pageErrors": 0
+  }
+ ],
+ "calibration": {
+  "downgraded": {
+   "n": 4,
+   "wrong": 1
+  },
+  "untouched": {
+   "n": 22,
+   "wrong": 1
+  },
+  "downgradedWrongRate": 0.25,
+  "untouchedWrongRate": 0.045454545454545456
+ },
+ "accuracy": 0.9231,
+ "checkable": 26,
+ "correct": 24,
+ "fabricatedStrong": [],
+ "untranslated": 0,
+ "gates": {
+  "accuracy": 0.9,
+  "accuracyMet": true,
+  "fabricatedStrongMet": true,
+  "untranslatedMet": true
+ }
+}
