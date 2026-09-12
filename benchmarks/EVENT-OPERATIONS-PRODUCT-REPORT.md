@@ -1745,3 +1745,125 @@ rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
                              layer off/on, Floor Plan + Command Center —
                              0px horizontal overflow, no page errors
 ```
+
+### CI (the actual PR run, not a local one)
+
+Commit `9302ab6`, PR #5. Both the push-triggered run (`34713128792`) and the
+pull_request-triggered run (`34713130392`) are fully green — all 10 check
+runs (5 job types × 2 triggers) `completed`/`success`: Fast core, Intelligence,
+Detection, Offline, Performance. Phase L is DONE.
+
+## PHASE M — Live Event hardening
+
+### Problem
+
+The programme named this phase critical for one specific reason: Live runs
+the door on event night, and its own inline guest search had quietly become
+a second, independently-written guest-search engine sitting next to the
+Global Finder built in Phase G — the exact thing the product's own rule
+forbids ("no parallel implementations of ... guest-status").
+
+### Measured first
+
+Reading both search paths side by side (`guestSearchIndex`/`findGuests` in
+`src/app-v8.js`, and `liveHTML`'s own row filter) found they were not the
+same engine wearing two skins — they disagreed on what a query means:
+
+- The Global Finder splits a query into terms and requires **every term to
+  match somewhere in the haystack** (AND-narrowing), independent of order.
+- Live tested the **whole typed string as one contiguous substring** against
+  its own hand-built haystack. "OZTURK VIP" only matched if those two words
+  happened to sit adjacent, in that order, in the fixed field layout — true
+  by accident for some guests, false for others.
+- Live's haystack was missing fields the Finder's has always had: `notes`,
+  the **formatted** table number, and the table's **zone**. A door operator
+  searching a guest's zone, or typing "T 05" the way the app itself displays
+  it, found nobody in Live and would have found them in the appbar search.
+
+Two engines that can disagree on the same typed word, at the one screen
+where disagreeing costs a queue behind a door, is not a hardening item to
+defer — it is the bug this phase exists to find.
+
+### Design decision: one engine, two presentations
+
+Rather than teach Live's filter the Finder's rules a second time (which
+just creates a THIRD place to keep them in sync), `matchGuestRows(event,
+query)` was extracted as the one function either surface uses to decide
+whether a query matches a guest — same cached haystack
+(`guestSearchIndex`), same term-AND-narrowing, same fields. `findGuests`
+now calls it and then applies its own ranking (name-prefix first) and
+12-row cap; `liveHTML` now calls it and then applies its own arrival-status
+sort and DOM-windowing. Ranking, limiting and rendering are legitimately
+different per screen; matching is not, and can no longer drift apart by
+one file being edited without the other.
+
+This did not touch `setArrival` (the arrival axis's one writer, from Phase
+K), the Enter-to-arm keyboard flow, the wave-filter integration, or the DOM
+windowing measured in Phase K/L — none of those needed changing, and the
+"smallest coherent flow" rule means they were left alone.
+
+### Implementation
+
+- `src/app-v8.js`: `matchGuestRows(event, query)` — the shared matcher.
+  `findGuests` reduced to ranking + limiting the rows it returns. `liveHTML`
+  reduced to sorting + windowing the same rows, replacing its own five-field
+  substring filter.
+- No new UI, no new CSS, no new i18n strings — this phase closes a domain
+  bug in a matching engine, not a visual surface.
+
+### Test evidence
+
+`tests/suites/live-door-keys.test.mjs` grew from 25 to 32 checks (this run:
+25 before, +7 new — total counted by `test:all` across the whole suite went
+1617 → 1624). Two new checks are direct proof of the fix, each impossible to
+pass against the old per-screen filter:
+
+| Check | What it proves |
+|---|---|
+| "VIP DEMIR" (reversed term order) finds the guest at the door | AND-narrowing over independent terms, not a whole-string substring test |
+| "TERRACE" (a table's zone, nothing else) finds the guest at the door | Live's haystack now includes zone, matching the Global Finder |
+
+A mutation proved both bite: reverting `liveHTML`'s filter to the old
+single-substring five-field version made exactly these two checks fail —
+`[]` (zero rows) where one guest was expected — with every other check
+(including the pre-existing ambiguous-query, arm-on-one-match, Enter-checks-
+in, Escape-clears and historical-event checks) still passing, confirming
+the mutation isolated the one thing this phase changed.
+
+Two more checks close scenarios named in the programme without needing new
+code: a +3 party still reads as one row ("party of 4"), never four records,
+after everything else in the suite ran; and an unseated guest (no table)
+still displays `No table` rather than being hidden, miscounted, or erroring.
+
+**Frozen destination**, named in the programme's scenario list, does not
+apply to this phase and is recorded here rather than skipped silently:
+Live's only writer is `setArrival`, which never touches `guest.assignment`
+or any table. A freeze governs seating assignment; Live has no code path
+that can cross one. **Guest changes table** is likewise not a Live action —
+it stays exclusively the Global Finder's `table` action, which navigates to
+Seating and waits for a person, per the existing "nothing it offers moves a
+guest" rule from Phase G.
+
+### Visual QA
+
+No markup or CSS changed, so this is a regression render rather than a new
+design: 1920×1080, 2560×1440 and 1440×900, English and Turkish, Live Event
+with a +N party, an unseated guest, a VIP, a No Show, and a zoned/seated
+guest on screen together, plus the same screen mid-search on the zone
+query. Zero horizontal overflow at any viewport, no console or page errors
+(the sandbox's three blocked CDN fetches for XLSX/Tesseract/PDF.js and the
+browser's own unconditional `favicon.ico` probe are pre-existing environment
+noise, confirmed unrelated by URL and present on an unmodified checkout).
+
+### Regression
+
+Detection is not reachable from this phase — the change is confined to
+in-memory guest-matching logic — so `npm run benchmark` was not re-run.
+
+```
+npm run test:all             45/45 suites, 1624/1624 checks
+npm run verify:offline       27 passed, 0 failed
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             Live Event idle + mid zone-search —
+                             0px horizontal overflow, no page errors
+```

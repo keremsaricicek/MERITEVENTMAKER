@@ -128,6 +128,14 @@ disabled with its reason on the control. Speed is an index keyed on
 thousand guests rather than asserting one. Full detail: `src/app-v8.js`
 (`guestSearchIndex` / `findGuests`) and `tests/suites/guest-finder.test.mjs`.
 
+`matchGuestRows(event, query)` is the one place either surface tests a query
+against a guest — the Global Finder's dropdown and Live's door search both
+call it, over the same haystack and the same term-AND-narrowing, so a query
+cannot mean one thing in the appbar and another thing at the door. Ranking
+(name-prefix first, 12-row cap) and Live's own arrival-sort-and-window are
+each layered on top by their own caller; only matching is shared. Full
+detail: `tests/suites/live-door-keys.test.mjs`.
+
 ## Smart Seating
 
 `src/seating-advisor.js` **cannot seat anybody** — it returns options and

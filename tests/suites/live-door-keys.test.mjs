@@ -5,7 +5,7 @@
 // with a queue behind it. The dangerous failure is not "nothing happened", it
 // is "the wrong guest was checked in", so the ambiguous-query case is asserted
 // first and hardest.
-import { click, openApp, createBlankEvent, addGuest, gotoTab, settle, typeQuery, futureDate } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addGuest, addTables, gotoTab, settle, typeQuery, futureDate, seatGuestOnFirstTable } from "../lib/app-actions.mjs";
 
 export const meta = { name: "live-door-keys", tags: ["business", "fast"], timeout: 120000 };
 
@@ -94,7 +94,64 @@ export default async function run({ page, checks, baseUrl }) {
   })));
   checks.ok((await page.inputValue("#liveSearch")) === "", "the field itself is empty too");
 
-  // --- 6. the whole path disappears when the event goes historical ----------
+  // --- 6. the door search is the SAME ENGINE as the Global Finder, not a
+  // second one. Before this phase, Live tested the whole typed query as one
+  // contiguous substring against a hand-built haystack that only had name,
+  // vip, invitedBy, both statuses and the raw table number — so term order
+  // mattered and zone was invisible. matchGuestRows() is now the one place
+  // either surface tests a query against a guest.
+  await gotoTab(page, "guests");
+  await addGuest(page, { name: "AYSE DEMIR", vip: "VIP" });
+  await gotoTab(page, "live");
+  await settle(page);
+  // Reversed term order: "vip demir" never appears as contiguous text in
+  // "ayse demir vip ..." (name comes before vip), so the old single-substring
+  // filter matched nobody here even though both words are true of this guest.
+  // AND-narrowing over independent terms — the Global Finder's own rule —
+  // must find her regardless of the order they were typed in.
+  await typeQuery(page, "#liveSearch", "VIP DEMIR", { state: "liveQuery" });
+  const reversedMatch = await page.evaluate(() =>
+    [...document.querySelectorAll(".arrival-row .party-name")].map(n => n.textContent.trim()));
+  checks.ok(reversedMatch.length === 1 && reversedMatch[0] === "AYSE DEMIR",
+    "a reversed-term query (\"VIP DEMIR\") finds the guest, not zero — same rule as the Global Finder", reversedMatch);
+  checks.ok((await page.locator(".arrival-row.is-armed").count()) === 1,
+    "the single match still arms for Enter-to-check-in");
+
+  // --- 7. the door search reaches a table's zone, exactly like the Global
+  // Finder does — the old Live filter never looked at zone at all.
+  await page.keyboard.press("Escape");
+  await gotoTab(page, "floor");
+  await addTables(page, { quantity: 1, prefix: "T" });
+  await page.evaluate(() => { state.events[0].tables[0].zone = "TERRACE"; render(); });
+  await seatGuestOnFirstTable(page, "AYSE DEMIR");
+  await gotoTab(page, "live");
+  await settle(page);
+  await typeQuery(page, "#liveSearch", "TERRACE", { state: "liveQuery" });
+  const zoneMatch = await page.evaluate(() =>
+    [...document.querySelectorAll(".arrival-row .party-name")].map(n => n.textContent.trim()));
+  checks.ok(zoneMatch.length === 1 && zoneMatch[0] === "AYSE DEMIR",
+    "a table's zone is searchable at the door, the same as in the Global Finder", zoneMatch);
+  await page.keyboard.press("Escape");
+
+  // --- 8. a +N party and an unseated guest both still read correctly here,
+  // after everything above ran on the same list.
+  await settle(page);
+  const oztur = await page.evaluate(() => {
+    const row = [...document.querySelectorAll(".arrival-row")]
+      .find(r => r.querySelector(".party-name")?.textContent.trim() === "MEHMET OZTURK");
+    return row ? {
+      partySub: row.querySelector(".party-sub")?.textContent || "",
+      seatTag: row.querySelector(".seat-tag")?.className || "",
+    } : null;
+  });
+  checks.require(!!oztur, "the +3 party is still on the door list", oztur);
+  checks.ok(/4/.test(oztur.partySub), "a +3 party reads as one party of 4, never four rows", oztur);
+  checks.ok(oztur.seatTag.includes("none"),
+    "an unseated guest shows as having no table rather than being hidden or erroring", oztur);
+  checks.ok((await page.evaluate(() => state.events[0].guests.length)) === 4,
+    "still exactly one record per party — nothing above split a +N party into separate guests");
+
+  // --- 9. the whole path disappears when the event goes historical ----------
   await page.evaluate(() => { state.events[0].status = "Completed"; render(); });
   await page.waitForFunction(() => document.querySelectorAll('[data-tab="live"]').length === 0,
     null, { timeout: 5000 }).catch(() => {});

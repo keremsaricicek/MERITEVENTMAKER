@@ -23,7 +23,7 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `historical-immutability` | business | a completed event can be edited |
 | `bulk-add-integrity` | business | the Turkish UI writes labels where identifiers belong |
 | `undo-operations` | business | one of twelve destructive operations no longer round-trips |
-| `live-door-keys` | business | the door keyboard flow checks in the wrong person |
+| `live-door-keys` | business | the door keyboard flow checks in the wrong person, or Live's search stops agreeing with the Global Finder on what a query matches (term order, zone, a +N party, an unseated guest) |
 | `xlsx-contract` | business, reports | the exported workbook's sheets, companion seats, or table numbering |
 | `storage-provider` | storage | data does not reach IndexedDB, or does not survive a reload |
 | `backup-restore` | storage | a bad backup file is accepted, or a good one does not restore |

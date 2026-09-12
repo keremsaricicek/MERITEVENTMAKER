@@ -943,20 +943,28 @@
     guestIndexCache={sig,rows,tables};
     return guestIndexCache;
   }
-  // Every term must match, so "yilmaz vip" narrows instead of widening. Ranked
-  // by how the name matched, then alphabetically, so the order is stable
-  // between keystrokes rather than depending on record order.
-  function findGuests(event,query,limit=12){
+  // THE ONE GUEST-MATCHING ENGINE. Every search surface in the product — the
+  // Global Finder's dropdown and Live's door search — must agree on WHICH
+  // guests a query matches, over the same cached haystack and the same
+  // term-AND-narrowing ("yilmaz vip" narrows, never widens). Two
+  // independently-written filters is exactly how a query finds someone here
+  // and finds nobody at the door. Ranking, limiting and presentation are left
+  // to the caller because those legitimately differ (a 12-row typeahead vs a
+  // full, arrival-sorted door list) — neither of those is a second engine.
+  function matchGuestRows(event,query){
     const q=String(query||"").trim().toLocaleLowerCase("tr");
-    if(!q)return{rows:[],total:0};
+    if(!q)return{rows:[],terms:[]};
     const terms=q.split(/\s+/).filter(Boolean);
     const index=guestSearchIndex(event);
-    const hits=[];
-    for(const row of index.rows){
-      if(!terms.every(term=>row.hay.includes(term)))continue;
-      const rank=row.name.startsWith(terms[0])?0:row.name.includes(terms[0])?1:2;
-      hits.push({row,rank});
-    }
+    return{rows:index.rows.filter(row=>terms.every(term=>row.hay.includes(term))),terms};
+  }
+  // Ranked by how the name matched, then alphabetically, so the order is
+  // stable between keystrokes rather than depending on record order.
+  function findGuests(event,query,limit=12){
+    const{rows:matched,terms}=matchGuestRows(event,query);
+    if(!terms.length)return{rows:[],total:0};
+    const hits=matched.map(row=>({row,
+      rank:row.name.startsWith(terms[0])?0:row.name.includes(terms[0])?1:2}));
     hits.sort((a,b)=>a.rank-b.rank||a.row.name.localeCompare(b.row.name,"tr"));
     return{rows:hits.slice(0,limit).map(h=>h.row),total:hits.length};
   }
@@ -2160,7 +2168,7 @@
   // screen is never short, without paying for 3,000 rows.
   const LIVE_WINDOW_STEP=60;
   liveHTML = function(event){
-    const q=ui.liveQuery.trim().toLocaleLowerCase("tr"),s=liveStats(event);
+    const q=ui.liveQuery.trim(),s=liveStats(event);
     if(!ui.liveRecent)ui.liveRecent=[];
     const byId=tableIndex(event);
     // The wave selection narrows the SAME list the search does, rather than
@@ -2168,10 +2176,16 @@
     // the operator has to be able to work straight out of it and then leave.
     const waveIds=ui.waveKey?waveGuestIds(event,ui.waveKey):null;
     const vipIds=ui.waveVip?new Set(arrivalWave(event)?.vipStillExpected.guestIds||[]):null;
+    // Same engine as the Global Finder (matchGuestRows): a query at the door
+    // matches exactly the guests it would match in the appbar search — same
+    // haystack (name, VIP, host, notes, both statuses, table number/zone),
+    // same AND-narrowing across terms. Only the sort differs, on purpose:
+    // Live orders "who is still outside" first, never by name-match rank.
+    const matchedIds=q?new Set(matchGuestRows(event,q).rows.map(r=>r.guest.id)):null;
     const rows=event.guests
       .filter(g=>!waveIds||waveIds.has(g.id))
       .filter(g=>!vipIds||vipIds.has(g.id))
-      .filter(g=>!q||[g.name,g.vip,g.invitedBy,g.planningStatus,g.arrivalStatus,byId.get(g.assignment?.tableId)?.number].join(" ").toLocaleLowerCase("tr").includes(q))
+      .filter(g=>!matchedIds||matchedIds.has(g.id))
       // Not Arrived first: on event night the operator's list is "who is still
       // outside", not an alphabetical roster.
       .sort((a,b)=>(ARRIVAL_ORDER[a.arrivalStatus]-ARRIVAL_ORDER[b.arrivalStatus])||naturalSort(a.name,b.name));
