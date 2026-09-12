@@ -175,9 +175,23 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(!(await page.evaluate(PREVIEW)), "cancelling closes the card");
   checks.equal(await page.evaluate(SNAPSHOT), before, "and still moved nobody");
 
-  // --- 7. ONLY Apply seats anybody -----------------------------------------
+  // --- 7. ONLY Apply seats anybody, and the preview predicted it exactly ----
+  //
+  // The phase requires the preview and the applied result to AGREE, not merely
+  // to each look right. So the predicted occupancy is captured from the card
+  // and compared against what the room actually becomes — a preview that is
+  // plausible but wrong is worse than none, because an operator acts on it.
   await click(page, `[data-seat-preview="${room.t02}"]`);
   await page.waitForTimeout(350);
+  const predicted = await page.evaluate(() => {
+    const rows = [...document.querySelectorAll(".seat-preview .sp-row")];
+    const read = (re) => {
+      const r = rows.find(x => re.test(x.querySelector("em")?.textContent || ""));
+      const b = r ? [...r.querySelectorAll("b")].map(v => v.textContent.trim()) : [];
+      return b.length === 2 ? b[1] : null;
+    };
+    return { target: read(/T\s*02/), reserve: read(/spare|yedek/i) };
+  });
   await click(page, "[data-seat-apply]");
   await page.waitForTimeout(500);
   const seated = await page.evaluate(() => {
@@ -188,6 +202,20 @@ export default async function run({ page, checks, baseUrl }) {
       others: e.guests.filter(x => x.id !== "g_party").map(x => x.assignment?.tableId || null),
       preview: ui.seatPreview };
   });
+  const actual = await page.evaluate(() => {
+    const e = state.events[0];
+    const t = e.tables.find(x => x.number === "T02");
+    const taken = e.guests.filter(g => g.assignment && g.assignment.tableId === t.id)
+      .reduce((n, g) => n + Math.max(1, g.pax || 1), 0);
+    const chairs = e.tables.filter(x => x.hasPhysicalSeats !== false && x.capacity > 0)
+      .reduce((n, x) => n + x.capacity, 0);
+    const seatedPax = e.guests.reduce((n, g) => n + (g.assignment ? Math.max(1, g.pax || 1) : 0), 0);
+    return { target: `${taken}/${t.capacity}`, reserve: String(chairs - seatedPax) };
+  });
+  checks.equal(actual.target, predicted.target,
+    "the preview predicted the target table's occupancy EXACTLY, and applying produced it");
+  checks.equal(actual.reserve, predicted.reserve,
+    "and predicted the room's spare seats exactly too");
   checks.equal(seated.table, "T02", "applying seats the party at the table that was previewed");
   checks.equal(seated.seats, 4, "with all four of them, together");
   checks.equal(seated.locked, false, "and not locked — the operator chose, they did not freeze it");
