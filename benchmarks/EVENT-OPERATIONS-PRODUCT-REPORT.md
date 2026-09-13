@@ -2513,3 +2513,167 @@ rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
                              the boot-time recovery toast — 0px
                              horizontal overflow, no new page errors
 ```
+
+### CI (the actual PR run, not a local one)
+
+Commit `0a3ad4b` pushed Phase Q. Both the push-triggered run (`34744003406`)
+and the pull_request-triggered run (`34744005076`) are fully green — all 10
+check runs `completed`/`success` across both. Phase Q is DONE.
+
+## PHASE R — Portable Event Package
+
+### Problem
+
+`exportBackup()` is whole-install: every event, replacing what is already
+there on import. There was no way to move ONE event to another machine —
+send a colleague a single night's plan, or archive one finished event
+outside the browser it was built in — without carrying every other event
+along, or destroying whatever was already on the receiving machine.
+
+### Measured first
+
+Reading `duplicateEvent()` (the one existing code path that already
+regenerates an event's internal ids, to avoid a duplicate colliding with
+its source) before writing anything surfaced a real, pre-existing defect:
+it remaps a guest's `assignment.tableId` when tables get new ids, but never
+a TABLE-scope freeze's own `tableId`. `seating-freeze.js`'s `covers()`
+simply returns `false` for an id that matches no table, so the bug is
+silent — a duplicated event with a per-table freeze reads as "never
+frozen," not as an error. Fixed directly, with the same map the function
+already builds for guest assignments.
+
+This mattered directly for Phase R's own design: a portable package needs
+the SAME class of id-renumbering (to avoid colliding with whatever ids
+already exist on the receiving machine) but touching MORE cross-references
+than `duplicateEvent()` does — chairs, freezes, and now, since Phase P, the
+audit trail's own `eventId` and the guest/table ids inside its `detail`.
+Getting this right in one place rather than copying `duplicateEvent()`'s
+incomplete version was the reason to build `regenerateIds()` as its own
+pure, fully-covered function instead.
+
+### Design decision: one event, added alongside — never a second backup
+
+`src/event-package.js` is a new, small, pure module carrying its own format
+marker (`merit-event-maker-event-package`), distinct from `backup.*`'s
+words in every piece of copy this phase writes:
+
+- **Adds, never replaces.** Importing a package always adds a new event
+  alongside whatever is already on the machine. Only `importBackupFile()`'s
+  whole-install path replaces anything, and a package's format marker
+  routes it away from that path entirely.
+- **Every id is renumbered, and every cross-reference follows.**
+  `regenerateIds(event, auditEntries, idFactory)` takes a plain event, plain
+  carried audit entries, and an id factory (dependency-injected so the
+  module stays pure and testable with a deterministic factory) — it
+  produces fresh ids for the event, every table, every chair, every guest
+  and every venue object, and rewrites every place that named an old one:
+  a guest's seat assignment, a TABLE-scope freeze's `tableId`, a chair's
+  `parentTableId`, and — carried alongside the event rather than merged
+  into the shared root log until import — the `eventId` and any
+  `tableId`/`guestId` inside an audit entry's own `detail`. Without that
+  last piece, an imported event's Audit Trail (Phase P) would read every
+  carried decision as pointing at "a guest/table no longer on this event,"
+  which is false — the guest and table ARE there, just under a new id.
+- **Never conflated with `exportBackup()`.** Exporting a package never
+  touches `lastBackupAt` — that fact means the whole install left the
+  browser, and a single event leaving says nothing about any other event
+  in it. Every string this phase writes (button title, confirm dialog,
+  both toasts) avoids `backup.*`'s vocabulary on purpose.
+- **One file input, routed by content, not by which button opened it.**
+  Rather than add a fourth appbar icon next to the three from Phases L/Q,
+  the existing `backup-import` picker now peeks at the parsed file's
+  `format` marker and routes to whichever import flow applies — a whole
+  backup and a single package are both "a file the operator picked to
+  bring data in," and two controls for what looks like one action would
+  have been the wrong kind of precision, especially with Phase Q's own
+  visual QA already flagging the appbar's icon count as a mild risk.
+
+### Implementation
+
+- `src/event-package.js` (new): `FORMAT`, `FORMAT_VERSION`, `buildPayload()`,
+  `isWellFormed()`, `referencesIntact()`, `regenerateIds()`. Pure.
+- `src/app.js`: `duplicateEvent()` now remaps a TABLE-scope freeze's
+  `tableId` through the same map it already builds for guest assignments —
+  the defect described above.
+- `src/app-v8.js`: `exportEventPackage(eventId)` builds the payload (the
+  event, its `venueRef`'d venue if any, and the `state.audit` entries whose
+  `eventId` matches it) and downloads it. `importEventPackagePayload()`
+  validates shape and referential integrity, confirms, regenerates ids,
+  adds any travelling venue as a new record only if one with that id does
+  not already exist locally (never merged into a same-named one), unshifts
+  the event through `migrateEvent()` for the same normalization every other
+  entry path gets, and prepends the remapped audit entries to the shared
+  log. `importBackupFile()` now peeks at `parsed.format` first and routes
+  event packages to this new flow before falling through to the existing
+  whole-install restore. A new "export as portable package" icon
+  (`data-export-event-package`, the existing `download` icon) sits next to
+  duplicate/delete on every per-event surface on the Events/Home screen —
+  the hero card, the upcoming list, and the history list, since archiving a
+  finished event is exactly as meaningful as archiving an upcoming one.
+- `src/i18n.js`: an `eventPackage.*` block plus the row action's own
+  label/a11y strings, none sharing vocabulary with `backup.*`.
+
+### Defects found
+
+- `duplicateEvent()`'s unmapped TABLE-scope freeze `tableId`, described
+  above — fixed at the source, in the same function, using the same map.
+
+### Test evidence
+
+`tests/suites/event-package.test.mjs` — 32 checks, driving the real export
+button, the real (shared) import file input, and the real duplicate button.
+Two mutations proved to bite:
+
+| Mutation | Result |
+|---|---|
+| reverted the `duplicateEvent()` freeze fix | 1 check fails — the duplicated event's freeze no longer covers its own table |
+| removed freeze `tableId` remapping from `regenerateIds()` | 3 checks fail — the domain-module unit check, and two real-UI checks (the imported freeze's `tableId` does not point at any of the imported event's own tables, and it no longer reads as `FROZEN`) |
+
+### Visual QA
+
+Rendered via the `visual-qa-reviewer` agent at 1920×1080, 2560×1440 and
+1440×900, English and Turkish, across all three surfaces the new export
+icon reaches (the hero card, the "other upcoming" list, and the history
+list). The two list surfaces passed cleanly — the icon matches the
+existing `.row-action` duplicate/delete controls exactly (size, spacing,
+style), and the history row's third element causes no crowding or wrap at
+any tested width.
+
+**One real defect found and fixed.** The hero card's `.next-event-side`
+container forces every button to `width:100%` with centered content —
+correct for Duplicate/Delete, which carry icon+text, but the export button
+was icon-only, rendering as a full-width button with a lone glyph adrift
+in empty space at every viewport and in both languages. Fixed by giving it
+the same icon+label composition as its siblings (a new, shorter
+`home.exportPackageShort` string — "Export package" / "Paketi dışa
+aktar" — distinct from the fuller `home.exportPackage` tooltip text used
+on the icon-only row variants, where space is tighter). Re-verified via
+`tests/suites/event-package.test.mjs` after the fix — still 32/32 — since
+the suite reads the button's `title` attribute, unaffected by adding a
+visible label.
+
+One judgment call raised, not a defect: the export icon reuses the same
+`download` glyph already used for `exportBackup()`'s whole-install button
+in the appbar. The reviewer's read: acceptable, since the two controls
+never appear adjacent (one lives in the top appbar, the others live inside
+per-event cards/rows) and each carries its own distinct tooltip scoping
+"this event" versus the whole install — noted, not changed. Zero new
+console/page errors (only the documented pre-existing CDN-block noise) and
+real, distinct Turkish translations confirmed throughout.
+
+### Regression
+
+Detection is not reachable from this phase — a package carries stored
+event data, never plan pixels — so `npm run benchmark` was not re-run.
+
+```
+npm run test:all             50/50 suites, 1788/1788 checks
+npm run verify:offline       27 passed, 0 failed
+                             (event-package.js bundled into both
+                             artifacts, 30 sources total, up from 29)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             all three per-event export surfaces — one
+                             hero-card layout defect found and fixed,
+                             re-verified; 0px horizontal overflow, no
+                             new page errors after the fix
+```

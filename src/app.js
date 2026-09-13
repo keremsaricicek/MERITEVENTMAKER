@@ -86,7 +86,14 @@
   // Kept as an inert stub: the dialog it opened is gone, and the live
   // binding for [data-action='create-event'] is bindV8Common's startNewEvent.
   function openEventDialog(){}
-  function duplicateEvent(id,open=false){const source=state.events.find(e=>e.id===id);if(!source)return;const copy=clone(source),map=new Map();copy.id=uid("event");copy.name=source.name+" — Copy";copy.status="Planning";copy.createdAt=copy.lastModified=nowISO();copy.tables.forEach((t,i)=>{const old=source.tables[i].id;t.id=uid("table");map.set(old,t.id)});copy.venueObjects.forEach(o=>o.id=uid("venue"));copy.guests.forEach(g=>{g.id=uid("guest");g.arrivalStatus="Not Arrived";if(g.assignment)g.assignment.tableId=map.get(g.assignment.tableId)});state.events.unshift(copy);saveState();toast("Event duplicated.","success");open?openEvent(copy.id):render()}
+  function duplicateEvent(id,open=false){const source=state.events.find(e=>e.id===id);if(!source)return;const copy=clone(source),map=new Map();copy.id=uid("event");copy.name=source.name+" — Copy";copy.status="Planning";copy.createdAt=copy.lastModified=nowISO();copy.tables.forEach((t,i)=>{const old=source.tables[i].id;t.id=uid("table");map.set(old,t.id)});copy.venueObjects.forEach(o=>o.id=uid("venue"));copy.guests.forEach(g=>{g.id=uid("guest");g.arrivalStatus="Not Arrived";if(g.assignment)g.assignment.tableId=map.get(g.assignment.tableId)});
+    // A TABLE-scope freeze names the table by id, same as a guest assignment
+    // does -- carried through `clone()` unchanged while every table just got
+    // a new one. Left unmapped, the freeze silently covers nothing in the
+    // copy (seating-freeze.js's covers() just returns false for an id that
+    // matches no table), which reads as "never frozen" rather than an error.
+    (copy.freezes||[]).forEach(f=>{if(f.scope==="TABLE"&&map.has(f.tableId))f.tableId=map.get(f.tableId);});
+    state.events.unshift(copy);saveState();toast("Event duplicated.","success");open?openEvent(copy.id):render()}
   function deleteEvent(id){const e=state.events.find(x=>x.id===id);if(!e||!confirm(`Delete "${e.name}"? This cannot be undone.`))return;state.events=state.events.filter(x=>x.id!==id);saveState();render();toast("Event deleted.")}
   // The #eventDialog submit handler that used to live here created a DEMO
   // event (16 seeded tables, 26 seeded guests, a demo background). Removed

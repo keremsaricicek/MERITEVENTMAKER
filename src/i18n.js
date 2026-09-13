@@ -521,6 +521,9 @@
     "guests.a11y.delete": { en: "Delete {name}", tr: "{name} kaydını sil" },
     "home.a11y.duplicate": { en: "Duplicate the event {name}", tr: "{name} etkinliğini kopyala" },
     "home.a11y.delete": { en: "Delete the event {name}", tr: "{name} etkinliğini sil" },
+    "home.a11y.exportPackage": { en: "Export {name} as a portable event package", tr: "{name} etkinliğini taşınabilir paket olarak dışa aktar" },
+    "home.exportPackage": { en: "Export as portable package", tr: "Taşınabilir paket olarak dışa aktar" },
+    "home.exportPackageShort": { en: "Export package", tr: "Paketi dışa aktar" },
     "guests.confirmDelete": { en: "Delete {name} from the guest list?", tr: "{name} misafir listesinden silinsin mi?" },
     "guests.deletedToast": { en: "{name} deleted.", tr: "{name} silindi." },
     "guests.restoredToast": { en: "{name} restored, with the same table and seats.", tr: "{name} aynı masa ve koltuklarla geri getirildi." },
@@ -879,6 +882,16 @@
     "recovery.confirmRestore": { en: "This replaces everything currently saved on this computer with an automatic recovery point from {when}. This is not the same as a backup file, and this cannot be undone. Continue?", tr: "Bu işlem, bu bilgisayarda kayıtlı her şeyi {when} tarihli otomatik kurtarma noktasıyla değiştirir. Bu bir yedek dosyası değildir ve geri alınamaz. Devam edilsin mi?" },
     "recovery.restoredToast": { en: "Restored from the automatic recovery point taken {when}.", tr: "{when} alınan otomatik kurtarma noktasından geri yüklendi." },
     "recovery.bootRecoveredToast": { en: "Your saved data could not be loaded normally. Recovered automatically from a recovery point taken {when} — this may not include your most recent changes.", tr: "Kayıtlı verileriniz normal şekilde yüklenemedi. {when} alınan bir otomatik kurtarma noktasından geri yüklendi — bu, en son değişikliklerinizi içermeyebilir." },
+
+    // ---- Portable Event Package ----
+    // ONE event, not the whole install -- never described with backup.*'s
+    // own words ("backup", "restore"), so an operator cannot mistake this
+    // for a substitute for exportBackup().
+    "eventPackage.exportedToast": { en: "{name} exported as a portable event package.", tr: "{name} taşınabilir etkinlik paketi olarak dışa aktarıldı." },
+    "eventPackage.invalidFile": { en: "This is not a MERIT EVENT MAKER event package.", tr: "Bu bir MERIT EVENT MAKER etkinlik paketi değil." },
+    "eventPackage.badReference": { en: "This event package has broken internal references and was not imported.", tr: "Bu etkinlik paketinin iç referansları bozuk, bu yüzden içe aktarılmadı." },
+    "eventPackage.confirmImport": { en: "Import \"{name}\" as a new event, alongside the events already on this computer?", tr: "\"{name}\" bu bilgisayardaki mevcut etkinliklerin yanına yeni bir etkinlik olarak içe aktarılsın mı?" },
+    "eventPackage.importedToast": { en: "\"{name}\" imported as a new event.", tr: "\"{name}\" yeni bir etkinlik olarak içe aktarıldı." },
     "appbar.venueNotSet": { en: "Venue not set", tr: "Mekan Belirtilmedi" },
 
     // ---- a table's printed number, and who stands behind it ----

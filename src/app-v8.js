@@ -924,7 +924,7 @@
       toast(t("handover.added"),"success");
     });
   }
-  function eventCard(event){const m=eventMetrics(event),cover=event.coverImage?`<div class="event-cover" style="background-image:url('${event.coverImage}')"></div>`:`<div class="event-cover"><div class="event-cover-placeholder"></div></div>`;return`<article class="event-card" data-card-event="${event.id}">${cover}<div class="event-card-body"><div class="kicker">${esc(event.status)}</div><h3>${esc(event.name)}</h3><div class="event-meta">${esc(fmtDate(event.date))}<br>${esc([event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet"))}</div><div class="event-card-stats"><div class="event-card-stat"><b>${m.guests}</b><span>${t("home.col.guestPax")}</span></div><div class="event-card-stat"><b>${physicalCapacity(event)}</b><span>${t("home.col.physicalChairs")}</span></div></div><div class="event-card-actions"><button class="btn primary" data-open-event="${event.id}">${t("home.openEvent")}</button><button class="btn" data-duplicate-event="${event.id}" title="Duplicate">${icon("copy")}</button><button class="btn danger" data-delete-event="${event.id}" title="Delete">${icon("trash")}</button></div></div></article>`;}
+  function eventCard(event){const m=eventMetrics(event),cover=event.coverImage?`<div class="event-cover" style="background-image:url('${event.coverImage}')"></div>`:`<div class="event-cover"><div class="event-cover-placeholder"></div></div>`;return`<article class="event-card" data-card-event="${event.id}">${cover}<div class="event-card-body"><div class="kicker">${esc(event.status)}</div><h3>${esc(event.name)}</h3><div class="event-meta">${esc(fmtDate(event.date))}<br>${esc([event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet"))}</div><div class="event-card-stats"><div class="event-card-stat"><b>${m.guests}</b><span>${t("home.col.guestPax")}</span></div><div class="event-card-stat"><b>${physicalCapacity(event)}</b><span>${t("home.col.physicalChairs")}</span></div></div><div class="event-card-actions"><button class="btn primary" data-open-event="${event.id}">${t("home.openEvent")}</button><button class="btn" data-duplicate-event="${event.id}" title="Duplicate">${icon("copy")}</button><button class="btn" data-export-event-package="${event.id}" title="${esc(t("home.exportPackage"))}">${icon("download")}</button><button class="btn danger" data-delete-event="${event.id}" title="Delete">${icon("trash")}</button></div></div></article>`;}
   // The next event is what the operator came for 95% of the time, so it gets
   // the hero treatment and everything else becomes a compact line.
   function nextEventHeroHTML(event){
@@ -946,6 +946,7 @@
       <div class="next-event-side">
         <button class="btn primary" data-open-event="${event.id}">${t("home.openEvent")}</button>
         <button class="btn" data-duplicate-event="${event.id}">${icon("copy")}${t("home.duplicate")}</button>
+        <button class="btn" data-export-event-package="${event.id}" title="${esc(t("home.exportPackage"))}">${icon("download")}${t("home.exportPackageShort")}</button>
         <button class="btn danger" data-delete-event="${event.id}">${icon("trash")}${t("home.delete")}</button>
       </div>
     </div>`;
@@ -958,7 +959,7 @@
       <div class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(venue)}</div>
       <div class="seat-tag">${eventMetrics(event).guests}</div>
       <div class="seat-tag">${physicalCapacity(event)}</div>
-      <div class="row-icons"><button class="row-action" data-duplicate-event="${event.id}" aria-label="${esc(t("home.a11y.duplicate",{name:event.name}))}" title="${t("home.duplicate")}">${icon("copy")}</button><button class="row-action" data-delete-event="${event.id}" aria-label="${esc(t("home.a11y.delete",{name:event.name}))}" title="${t("home.delete")}">${icon("trash")}</button></div>
+      <div class="row-icons"><button class="row-action" data-duplicate-event="${event.id}" aria-label="${esc(t("home.a11y.duplicate",{name:event.name}))}" title="${t("home.duplicate")}">${icon("copy")}</button><button class="row-action" data-export-event-package="${event.id}" aria-label="${esc(t("home.a11y.exportPackage",{name:event.name}))}" title="${esc(t("home.exportPackage"))}">${icon("download")}</button><button class="row-action" data-delete-event="${event.id}" aria-label="${esc(t("home.a11y.delete",{name:event.name}))}" title="${t("home.delete")}">${icon("trash")}</button></div>
     </div>`;
   }
   eventsHTML = function(){
@@ -969,7 +970,7 @@
       <div class="mx-head"><div><div class="kicker">${t("home.eyebrow")}</div><h1>${t("home.title")}</h1><p>${t("home.subtitle")}</p></div><span class="muted" style="font-size:12px">${t(state.events.length===1?"home.eventCount1":"home.eventsCount",{n:state.events.length})}</span></div>
       ${next?nextEventHeroHTML(next):`<div class="mx-empty"><h3>${t("home.noUpcoming")}</h3><p>${t("home.noUpcomingHint")}</p><button class="btn primary" data-action="create-event">${icon("plus")}${t("home.createEvent")}</button></div>`}
       ${rest.length?`<div class="mx-section"><div class="mx-section-head"><h2>${t("home.otherUpcoming")}</h2><span class="count">${rest.length}</span></div><div class="mx-list"><div class="mx-list-head event-line"><span>${t("home.col.event")}</span><span>${t("home.col.date")}</span><span>${t("home.col.hotelSalon")}</span><span>${t("home.col.guestPax")}</span><span>${t("home.col.physicalChairs")}</span><span></span></div>${rest.map(upcomingLineHTML).join("")}</div></div>`:""}
-      <div class="mx-section"><div class="mx-section-head"><h2>${t("home.eventsHistory")}</h2><span class="count">${t("home.historyNote")}</span></div>${history.length?`<div class="mx-list"><div class="mx-list-head event-line"><span>${t("home.col.event")}</span><span>${t("home.col.date")}</span><span>${t("home.col.hotelSalon")}</span><span>${t("home.col.guestPax")}</span><span>${t("home.col.physicalChairs")}</span><span></span></div>${history.map(e=>`<div class="event-line" data-history-event="${e.id}" title="${esc(t("home.historyOpenHint"))}"><div><b>${esc(e.name)}</b></div><div class="muted">${esc(fmtDate(e.date))}</div><div class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc([e.hotel,e.salon].filter(Boolean).join(" · ")||"—")}</div><div class="seat-tag">${eventMetrics(e).guests}</div><div class="seat-tag">${physicalCapacity(e)}</div><div class="row-icons"><span class="readonly-tag">${icon("lock")}${t("home.readOnly")}</span><button class="row-action" data-delete-event="${e.id}" aria-label="${esc(t("home.a11y.delete",{name:e.name}))}" title="${t("home.delete")}">${icon("trash")}</button></div></div>`).join("")}</div>`:`<div class="mx-empty" style="padding:30px">${t("home.noHistorical")}</div>`}</div>
+      <div class="mx-section"><div class="mx-section-head"><h2>${t("home.eventsHistory")}</h2><span class="count">${t("home.historyNote")}</span></div>${history.length?`<div class="mx-list"><div class="mx-list-head event-line"><span>${t("home.col.event")}</span><span>${t("home.col.date")}</span><span>${t("home.col.hotelSalon")}</span><span>${t("home.col.guestPax")}</span><span>${t("home.col.physicalChairs")}</span><span></span></div>${history.map(e=>`<div class="event-line" data-history-event="${e.id}" title="${esc(t("home.historyOpenHint"))}"><div><b>${esc(e.name)}</b></div><div class="muted">${esc(fmtDate(e.date))}</div><div class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc([e.hotel,e.salon].filter(Boolean).join(" · ")||"—")}</div><div class="seat-tag">${eventMetrics(e).guests}</div><div class="seat-tag">${physicalCapacity(e)}</div><div class="row-icons"><span class="readonly-tag">${icon("lock")}${t("home.readOnly")}</span><button class="row-action" data-export-event-package="${e.id}" aria-label="${esc(t("home.a11y.exportPackage",{name:e.name}))}" title="${esc(t("home.exportPackage"))}">${icon("download")}</button><button class="row-action" data-delete-event="${e.id}" aria-label="${esc(t("home.a11y.delete",{name:e.name}))}" title="${t("home.delete")}">${icon("trash")}</button></div></div>`).join("")}</div>`:`<div class="mx-empty" style="padding:30px">${t("home.noHistorical")}</div>`}</div>
     </div></div>`;
   };
 
@@ -8009,12 +8010,19 @@
     }
     return true;
   }
+  // The SAME file input serves both formats: a whole-install backup and a
+  // single portable event package are both "a file the operator picked to
+  // bring data in," and asking them to remember two different buttons for
+  // what looks like one action would be the wrong kind of precision. Which
+  // flow runs is decided from the file's own format marker, never the
+  // control that opened the picker.
   function importBackupFile(file){
     const reader=new FileReader();
     reader.onerror=()=>toast(t("backup.corruptFile"),"error",6000);
     reader.onload=()=>{
       let parsed;
       try{parsed=JSON.parse(reader.result);}catch{toast(t("backup.corruptFile"),"error",6000);return;}
+      if(parsed&&parsed.format==="merit-event-maker-event-package"){importEventPackagePayload(parsed);return;}
       if(!parsed||parsed.format!=="merit-event-maker-backup"||!parsed.payload||!Array.isArray(parsed.payload.events)){toast(t("backup.invalidFile"),"error",6000);return;}
       if(!backupReferencesIntact(parsed.payload)){toast(t("backup.badReference"),"error",6500);return;}
       const n=parsed.payload.events.length;
@@ -8025,6 +8033,50 @@
       toast(t("backup.restoredToast",{n}),"success");
     };
     reader.readAsText(file);
+  }
+
+  // ---- PORTABLE EVENT PACKAGE: one event, not the whole install --------------
+  //
+  // src/event-package.js owns the payload shape and the id-renumbering; this
+  // is the only code that touches state.events/state.audit for it. Never
+  // updates lastBackupAt -- that fact means the WHOLE install left the
+  // browser, and a single event leaving says nothing about any other event.
+  function exportEventPackage(eventId){
+    const event=state.events.find(e=>e.id===eventId);
+    const P=globalThis.MeritEventPackage;
+    if(!event||!P)return;
+    const venue=event.venueRef?(state.venues||[]).find(v=>v.id===event.venueRef.venueId)||null:null;
+    const auditEntries=(state.audit||[]).filter(a=>a.eventId===eventId);
+    const payload=P.buildPayload(JSON.parse(JSON.stringify(event)),{venue,auditEntries});
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;
+    a.download=`merit-event-package-${String(event.name||"event").toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,60)}-${todayKey()}.json`;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+    toast(t("eventPackage.exportedToast",{name:event.name}),"success");
+  }
+  function importEventPackagePayload(parsed){
+    const P=globalThis.MeritEventPackage;
+    if(!P||!P.isWellFormed(parsed)){toast(t("eventPackage.invalidFile"),"error",6000);return;}
+    if(!P.referencesIntact(parsed.event)){toast(t("eventPackage.badReference"),"error",6500);return;}
+    if(!confirm(t("eventPackage.confirmImport",{name:parsed.event.name||""})))return;
+    const{event,auditEntries}=P.regenerateIds(parsed.event,parsed.auditEntries,uid);
+    if(parsed.venue&&!state.venues.some(v=>v.id===event.venueRef?.venueId)){
+      // The referenced venue travelled with the package but does not exist
+      // here yet -- added as its own new record rather than merged into a
+      // same-named one, so this import never silently rewrites a venue an
+      // operator on this machine already relies on.
+      const newVenue={...JSON.parse(JSON.stringify(parsed.venue)),id:uid("venue")};
+      if(event.venueRef)event.venueRef={...event.venueRef,venueId:newVenue.id};
+      state.venues.push(newVenue);
+    }
+    const migrated=migrateEvent(event);
+    state.events.unshift(migrated);
+    state.audit=[...auditEntries,...(state.audit||[])].slice(0,1000);
+    ui.screen="events";ui.activeEventId=null;
+    saveState();render();
+    toast(t("eventPackage.importedToast",{name:migrated.name}),"success");
   }
 
   // ---- OFFLINE RECOVERY: an automatic safety net, distinct from backup ------
@@ -8065,7 +8117,7 @@
   function bindV8Common(){
     document.querySelectorAll("[data-action='create-event']").forEach(b=>b.onclick=startNewEvent);document.querySelectorAll("[data-action='help']").forEach(b=>b.onclick=openGuide);document.querySelectorAll("[data-open-event]").forEach(b=>b.onclick=()=>openEvent(b.dataset.openEvent));// Row-level open + per-row action buttons now coexist on Home, so the
 // buttons must not bubble into the row's open handler.
-document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.stopPropagation();duplicateEvent(b.dataset.duplicateEvent);});document.querySelectorAll("[data-delete-event]").forEach(b=>b.onclick=e=>{e.stopPropagation();deleteEvent(b.dataset.deleteEvent);});document.querySelectorAll("[data-history-event]").forEach(row=>row.ondblclick=()=>openEvent(row.dataset.historyEvent));document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondblclick=e=>e.stopPropagation());
+document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.stopPropagation();duplicateEvent(b.dataset.duplicateEvent);});document.querySelectorAll("[data-export-event-package]").forEach(b=>b.onclick=e=>{e.stopPropagation();exportEventPackage(b.dataset.exportEventPackage);});document.querySelectorAll("[data-delete-event]").forEach(b=>b.onclick=e=>{e.stopPropagation();deleteEvent(b.dataset.deleteEvent);});document.querySelectorAll("[data-history-event]").forEach(row=>row.ondblclick=()=>openEvent(row.dataset.historyEvent));document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondblclick=e=>e.stopPropagation());
     // An unanswered override challenge and a half-written freeze are questions
     // about THIS screen. Carrying them to another tab would put a blocking
     // card over work the operator has moved on to.
