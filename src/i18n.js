@@ -868,6 +868,17 @@
     "backup.invalidFile": { en: "This is not a MERIT EVENT MAKER backup file.", tr: "Bu bir MERIT EVENT MAKER yedek dosyası değil." },
     "backup.corruptFile": { en: "This backup file could not be read (it may be damaged or incomplete).", tr: "Bu yedek dosyası okunamadı (bozuk veya eksik olabilir)." },
     "backup.badReference": { en: "This backup file has broken internal references and was not restored.", tr: "Bu yedek dosyasının iç referansları bozuk, bu yüzden geri yüklenmedi." },
+
+    // ---- Offline Recovery ----
+    // An automatic, unattended safety net -- distinct from backup.*, which
+    // always means a file left the browser. This never claims that: it is
+    // protection against a corrupted local record or an in-session mistake,
+    // never against losing the device or the browser profile itself.
+    "recovery.buttonTitle": { en: "Restore from an automatic recovery point", tr: "Otomatik kurtarma noktasından geri yükle" },
+    "recovery.none": { en: "No automatic recovery point exists yet.", tr: "Henüz bir otomatik kurtarma noktası yok." },
+    "recovery.confirmRestore": { en: "This replaces everything currently saved on this computer with an automatic recovery point from {when}. This is not the same as a backup file, and this cannot be undone. Continue?", tr: "Bu işlem, bu bilgisayarda kayıtlı her şeyi {when} tarihli otomatik kurtarma noktasıyla değiştirir. Bu bir yedek dosyası değildir ve geri alınamaz. Devam edilsin mi?" },
+    "recovery.restoredToast": { en: "Restored from the automatic recovery point taken {when}.", tr: "{when} alınan otomatik kurtarma noktasından geri yüklendi." },
+    "recovery.bootRecoveredToast": { en: "Your saved data could not be loaded normally. Recovered automatically from a recovery point taken {when} — this may not include your most recent changes.", tr: "Kayıtlı verileriniz normal şekilde yüklenemedi. {when} alınan bir otomatik kurtarma noktasından geri yüklendi — bu, en son değişikliklerinizi içermeyebilir." },
     "appbar.venueNotSet": { en: "Venue not set", tr: "Mekan Belirtilmedi" },
 
     // ---- a table's printed number, and who stands behind it ----

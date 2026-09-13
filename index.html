@@ -103,6 +103,10 @@
        An allowlist, not a filter on the noisy generic entry every mutation
        writes — a code this module was never told about stays invisible. -->
   <script src="src/audit-trail.js"></script>
+  <!-- An automatic, unattended ring buffer of recent full-state snapshots,
+       distinct from exportBackup() -- protects against a corrupted primary
+       record or an in-session mistake, never against losing the device. -->
+  <script src="src/offline-recovery.js"></script>
   <script src="src/training-data.js"></script>
   <script src="src/app-v8.js"></script>
 </body>

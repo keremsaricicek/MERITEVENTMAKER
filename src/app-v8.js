@@ -187,7 +187,7 @@
   async function loadV8Async(){
     try{
       const fromProvider=await storageProvider.load();
-      if(fromProvider) return parseRoot(fromProvider);
+      if(fromProvider) return{data:parseRoot(fromProvider),recoveredAt:null};
     }catch(error){console.warn("StorageProvider load failed, checking legacy localStorage.",error);}
     const legacy=loadFromLegacyLocalStorage();
     if(legacy){
@@ -195,9 +195,24 @@
       // has to run once, even if the provider load above merely came back
       // empty (first run after switching to IndexedDB) rather than erroring.
       storageProvider.save(JSON.stringify(legacy)).catch(error=>console.warn("Could not persist migrated legacy state.",error));
-      return legacy;
+      return{data:legacy,recoveredAt:null};
     }
-    return blankRoot();
+    // The primary record is gone or unreadable, and there is no legacy
+    // install to fall back to either. Before conceding a blank slate that
+    // silently discards whatever the operator had, try the automatic
+    // recovery snapshot -- exactly the case offline-recovery.js exists for.
+    // A snapshot that itself fails to parse is treated the same as none.
+    try{
+      const R=RECOVERY();
+      const stored=R&&await storageProvider.load("autosnapshots");
+      const snap=R&&R.latestSnapshot(stored);
+      if(snap){
+        const data=parseRoot(snap.payload);
+        storageProvider.save(JSON.stringify(data)).catch(error=>console.warn("Could not persist auto-recovered state.",error));
+        return{data,recoveredAt:snap.at};
+      }
+    }catch(error){console.warn("Automatic recovery snapshot could not be read either.",error);}
+    return{data:blankRoot(),recoveredAt:null};
   }
   saveState = function(show=false){
     // Nothing to persist yet, and persisting now would be actively harmful:
@@ -211,7 +226,7 @@
     try{payload=JSON.stringify(state);}
     catch(error){toast("Browser storage is full. Export the workbook before closing.","error",6500);return;}
     storageProvider.save(payload)
-      .then(()=>{if(show)toast("Saved locally in this browser.","success");})
+      .then(()=>{if(show)toast("Saved locally in this browser.","success");autoSnapshot(payload);})
       .catch(error=>{
         // Large embedded images are the only realistic reason a save this
         // size fails -- strip them and retry once before giving up.
@@ -950,7 +965,7 @@
     const upcoming=state.events.filter(e=>!isHistorical(e)).sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
     const history=state.events.filter(isHistorical).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
     const [next,...rest]=upcoming;
-    return`<header class="appbar">${topBrand()}<div class="crumb">${t("home.crumb")} / <b>${t("home.portfolio")}</b></div><div class="appbar-actions">${helpButton()}<button class="btn quiet icon-only" data-action="backup-export" title="${t("backup.export")}">${icon("download")}</button><button class="btn quiet icon-only" data-action="backup-import" title="${t("backup.import")}">${icon("upload")}</button><button class="btn primary" data-action="create-event">${icon("plus")}${t("home.createEvent")}</button></div></header><div class="mx-screen"><div class="mx-wrap">
+    return`<header class="appbar">${topBrand()}<div class="crumb">${t("home.crumb")} / <b>${t("home.portfolio")}</b></div><div class="appbar-actions">${helpButton()}<button class="btn quiet icon-only" data-action="backup-export" title="${t("backup.export")}">${icon("download")}</button><button class="btn quiet icon-only" data-action="backup-import" title="${t("backup.import")}">${icon("upload")}</button><button class="btn quiet icon-only" data-action="recovery-restore" title="${t("recovery.buttonTitle")}">${icon("undo")}</button><button class="btn primary" data-action="create-event">${icon("plus")}${t("home.createEvent")}</button></div></header><div class="mx-screen"><div class="mx-wrap">
       <div class="mx-head"><div><div class="kicker">${t("home.eyebrow")}</div><h1>${t("home.title")}</h1><p>${t("home.subtitle")}</p></div><span class="muted" style="font-size:12px">${t(state.events.length===1?"home.eventCount1":"home.eventsCount",{n:state.events.length})}</span></div>
       ${next?nextEventHeroHTML(next):`<div class="mx-empty"><h3>${t("home.noUpcoming")}</h3><p>${t("home.noUpcomingHint")}</p><button class="btn primary" data-action="create-event">${icon("plus")}${t("home.createEvent")}</button></div>`}
       ${rest.length?`<div class="mx-section"><div class="mx-section-head"><h2>${t("home.otherUpcoming")}</h2><span class="count">${rest.length}</span></div><div class="mx-list"><div class="mx-list-head event-line"><span>${t("home.col.event")}</span><span>${t("home.col.date")}</span><span>${t("home.col.hotelSalon")}</span><span>${t("home.col.guestPax")}</span><span>${t("home.col.physicalChairs")}</span><span></span></div>${rest.map(upcomingLineHTML).join("")}</div></div>`:""}
@@ -8011,6 +8026,42 @@
     };
     reader.readAsText(file);
   }
+
+  // ---- OFFLINE RECOVERY: an automatic safety net, distinct from backup ------
+  //
+  // src/offline-recovery.js decides whether a moment is worth keeping and how
+  // many to keep; this is the only code that touches storage for it. Snapshots
+  // live under their own StorageProvider key ("autosnapshots"), never the
+  // primary "root" record, so a corrupted primary record cannot take its own
+  // safety net down with it.
+  const RECOVERY=()=>globalThis.MeritOfflineRecovery||null;
+  function autoSnapshot(payload){
+    const R=RECOVERY();
+    if(!R||!state.events.length)return;
+    storageProvider.load("autosnapshots").then(stored=>{
+      const list=Array.isArray(stored)?stored:[];
+      const last=R.latestSnapshot(list);
+      if(!R.shouldSnapshot({hasContent:true,lastSnapshotAt:last&&last.at,now:Date.now()}))return;
+      return storageProvider.save(R.withSnapshot(list,{at:nowISO(),payload}),"autosnapshots");
+    }).catch(error=>console.warn("Automatic recovery snapshot failed.",error));
+  }
+  // A deliberate, operator-initiated restore while the app is otherwise
+  // healthy -- e.g. undo did not reach far enough back. Confirmed exactly
+  // like importBackupFile(), because it replaces the whole working state the
+  // same way a backup file does.
+  function restoreLatestSnapshot(){
+    const R=RECOVERY();
+    if(!R)return;
+    storageProvider.load("autosnapshots").then(stored=>{
+      const snap=R.latestSnapshot(stored);
+      if(!snap){toast(t("recovery.none"),"error");return;}
+      if(!confirm(t("recovery.confirmRestore",{when:relativeTime(snap.at)})))return;
+      state=parseRoot(snap.payload);
+      ui.screen="events";ui.activeEventId=null;ui.undo=[];ui.redo=[];
+      saveState();render();
+      toast(t("recovery.restoredToast",{when:relativeTime(snap.at)}),"success");
+    }).catch(error=>{console.warn("Automatic recovery restore failed.",error);toast(t("recovery.none"),"error");});
+  }
   function bindV8Common(){
     document.querySelectorAll("[data-action='create-event']").forEach(b=>b.onclick=startNewEvent);document.querySelectorAll("[data-action='help']").forEach(b=>b.onclick=openGuide);document.querySelectorAll("[data-open-event]").forEach(b=>b.onclick=()=>openEvent(b.dataset.openEvent));// Row-level open + per-row action buttons now coexist on Home, so the
 // buttons must not bubble into the row's open handler.
@@ -8036,6 +8087,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
     const back=document.querySelector("[data-action='back-events']");if(back)back.onclick=()=>{ui.screen="events";ui.focusMode=false;render();};const save=document.querySelector("[data-action='save-now']");if(save)save.onclick=()=>saveState(true);const search=document.getElementById("globalGuestSearch");if(search){search.oninput=()=>renderGlobalSearch(search.value);search.onkeydown=guestSearchKey;}
     const backupExport=document.querySelector("[data-action='backup-export']");if(backupExport)backupExport.onclick=exportBackup;
     const backupImport=document.querySelector("[data-action='backup-import']");if(backupImport)backupImport.onclick=()=>document.getElementById("backupFileInput").click();
+    const recoveryBtn=document.querySelector("[data-action='recovery-restore']");if(recoveryBtn)recoveryBtn.onclick=restoreLatestSnapshot;
     const backupInput=document.getElementById("backupFileInput");
     if(backupInput){const fresh=backupInput.cloneNode(true);backupInput.replaceWith(fresh);fresh.addEventListener("change",e=>{const file=e.target.files[0];if(file)importBackupFile(file);e.target.value="";});}
   }
@@ -8141,7 +8193,13 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   // The very first render must wait on the async StorageProvider load --
   // every render() after this one is driven by user interaction and needs
   // nothing more than the in-memory `state` object already being current.
-  loadV8Async().then(loaded=>{state=loaded;bootReady=true;render();}).catch(error=>{
+  loadV8Async().then(({data,recoveredAt})=>{
+    state=data;bootReady=true;render();
+    // Never a silent swap: if the primary record could not be read at all
+    // and an automatic snapshot stood in for it, the operator is told
+    // plainly, including that it may not hold the most recent changes.
+    if(recoveredAt)toast(t("recovery.bootRecoveredToast",{when:relativeTime(recoveredAt)}),"error",9000);
+  }).catch(error=>{
     console.error("Storage load failed entirely; starting from a blank state.",error);
     state=blankRoot();bootReady=true;render();
   });

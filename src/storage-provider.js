@@ -122,14 +122,20 @@
 
   // Synchronous by nature -- kept async-shaped so callers never need to know
   // which provider is live.
+    // A second argument namespaces a value under its own slot, exactly like
+    // IndexedDBStorageProvider's own `key` parameter -- offline-recovery's
+    // automatic snapshots use this to live beside the main record rather
+    // than silently overwriting it. Omitting it keeps the original
+    // single-slot behaviour any existing call site already relies on.
   class LocalStorageStorageProvider {
     constructor(key) { this.key = key; }
-    async load() {
-      const raw = localStorage.getItem(this.key);
+    slot(key) { return key ? `${this.key}:${key}` : this.key; }
+    async load(key) {
+      const raw = localStorage.getItem(this.slot(key));
       return raw ? JSON.parse(raw) : null;
     }
-    async save(data) {
-      localStorage.setItem(this.key, JSON.stringify(data));
+    async save(data, key) {
+      localStorage.setItem(this.slot(key), JSON.stringify(data));
       return true;
     }
     // The blob API exists here so callers never branch on provider, but this

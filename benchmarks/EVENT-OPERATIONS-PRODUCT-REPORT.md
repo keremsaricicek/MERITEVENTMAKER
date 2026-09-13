@@ -2348,3 +2348,168 @@ rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
                              check, and a forced multi-line wrap test —
                              0px horizontal overflow, no new page errors
 ```
+
+### CI (the actual PR run, not a local one)
+
+Commit `217d3ce` pushed Phase P. Both the push-triggered run (`34742827236`)
+and the pull_request-triggered run (`34742829111`) are fully green — all 10
+check runs `completed`/`success` across both. Phase P is DONE.
+
+## PHASE Q — Offline Recovery / Automatic Backup
+
+### Problem
+
+`exportBackup()` (Gate L) is the product's only backup mechanism, and it is
+entirely manual — a person has to remember to click it. Nothing protects an
+operator from a corrupted local record or an in-session mistake that undo
+does not reach far enough back to fix.
+
+### Measured first
+
+Reading `loadV8Async()` before writing anything surfaced a real, silent
+defect: when the primary StorageProvider record cannot be read (corrupted,
+or `JSON.parse` throws) and there is no legacy install to fall back to
+either, the function has always quietly returned a brand-new `blankRoot()`.
+The only trace was a `console.warn` — an operator would open the app and
+see every event gone, with no indication anything had gone wrong, let alone
+that anything could be done about it. There was no automatic, unattended
+copy of the state anywhere to fall back to in the first place.
+
+A second latent defect surfaced while designing the fix:
+`LocalStorageStorageProvider.load()/save()` already accepted the SAME `key`
+parameter `IndexedDBStorageProvider` uses to address more than one record,
+but silently ignored it — every call, regardless of key, read and wrote the
+single slot `this.key`. Writing an automatic snapshot under a second key on
+this fallback provider would have silently overwritten the live primary
+record instead of writing beside it. Fixed before it could ever be
+exercised: `slot(key)` now namespaces a given key under `` `${this.key}:${key}` ``,
+falling back to the original single-slot behaviour when no key is given, so
+every existing call site is unaffected.
+
+### Design decision: two different guarantees, never presented as one
+
+`src/offline-recovery.js` is a new, small, pure module. It is not a second
+`exportBackup()` and must never be described as equivalent to one:
+
+- **`exportBackup()` means one specific fact — a file left the browser.**
+  It is the only real protection against losing the device or the browser
+  profile itself, and the Risk Radar's `backupState()` (Phase — Event Risk
+  Radar) reads exactly that fact and nothing added by this phase.
+- **Automatic recovery lives in the SAME browser storage the live state
+  already occupies.** It protects against a corrupted primary record or an
+  in-session mistake undo cannot reach — never against losing the device.
+  Every piece of copy this phase writes (the button title, the confirm
+  dialog, both toasts) says this plainly rather than letting "recovery
+  point" and "backup" blur into one idea.
+- **A small ring buffer, not a version history.** `KEEP = 3`, and a
+  snapshot is taken only when real time (`MIN_INTERVAL_MS`, 5 minutes) has
+  actually passed since the last one — otherwise ordinary saves would
+  duplicate the same moment for no benefit. `shouldSnapshot()`/
+  `withSnapshot()`/`latestSnapshot()` are pure; the module has no idea what
+  storage is.
+- **Boot recovery is never silent, and a deliberate restore is always
+  confirmed.** Falling back to a snapshot at boot (the primary record could
+  not be read at all) shows a long, honest toast naming what happened and
+  that it may not hold the most recent changes. Restoring a snapshot
+  on-demand, while the app is otherwise healthy, is confirmed exactly like
+  `importBackupFile()` — it replaces the whole working state the same way a
+  backup file does, and gets the same care.
+
+### Implementation
+
+- `src/storage-provider.js`: `LocalStorageStorageProvider` gained `slot(key)`
+  and both `load`/`save` now accept the same optional `key` their
+  IndexedDB counterpart already did, instead of silently ignoring it.
+- `src/offline-recovery.js` (new): `KEEP`, `MIN_INTERVAL_MS`,
+  `shouldSnapshot()`, `withSnapshot()`, `latestSnapshot()`. Pure.
+- `src/app-v8.js`: `autoSnapshot(payload)` — called from `saveState()`'s own
+  success callback, reusing the JSON already serialised for the primary
+  save rather than re-stringifying `state` a second time — writes under the
+  `"autosnapshots"` StorageProvider key, gated by the domain module's
+  throttle. `loadV8Async()` now returns `{data, recoveredAt}`; when the
+  primary record and any legacy install both fail, it tries the latest
+  automatic snapshot before conceding a blank slate, and persists the
+  recovered state back to the primary record so the recovery becomes
+  durable going forward. The boot call site shows a long `"error"`-toned
+  toast whenever `recoveredAt` is set. `restoreLatestSnapshot()` is a
+  deliberate, operator-initiated restore, confirmed first, wired to a new
+  icon button (`data-action="recovery-restore"`, reusing the existing
+  `undo` icon) placed next to the existing backup export/import controls in
+  the appbar.
+- `src/i18n.js`: a `recovery.*` block — button title, no-recovery-point
+  toast, the confirm dialog, the manual-restore toast, and the boot-time
+  recovery toast, all explicit that this is not a backup file.
+
+### Defects found
+
+- `loadV8Async()`'s silent fall-through to a blank slate on a corrupted
+  primary record with no legacy install — the central problem this phase
+  exists to close, described above.
+- `LocalStorageStorageProvider`'s ignored `key` parameter — fixed before
+  this phase's own new code could have been the first to trigger it
+  silently corrupting the primary record on that fallback provider.
+
+### Test evidence
+
+`tests/suites/offline-recovery.test.mjs` — 21 checks. The independent-
+storage guarantee could not be proven with a plain `page.reload()`:
+`app-guests.js` registers a `beforeunload` handler that calls `saveState()`
+with whatever good in-memory state the page still holds, which would
+silently heal a manually corrupted primary record before the reloaded
+document ever started reading it. The suite instead corrupts storage from
+the original page, then opens a second page in the same browser context
+(same origin storage, `context.newPage()`) to read it fresh — proving the
+recovery without a same-page reload's own safety net masking the result.
+Two mutations proved to bite:
+
+| Mutation | Result |
+|---|---|
+| removed the boot-time snapshot fallback from `loadV8Async()` | 3 checks fail — the fresh page boots blank instead of recovering the event, the boot toast never appears, and a later step throws outright once the expected event no longer exists to rename |
+| removed the throttle from `shouldSnapshot()` (always returns true when there is content) | 6 checks fail — a second snapshot is taken one second later, the ring buffer no longer holds the earlier moment, and every later assertion in the flow inherits the wrong (renamed) snapshot content |
+
+### Visual QA
+
+Rendered via the `visual-qa-reviewer` agent at 1920×1080, 2560×1440 and
+1440×900, English and Turkish. The one new persistent control — a third
+icon button in the Events/Home appbar, next to the existing backup
+export/import icons — measures identically to its siblings (same `btn
+quiet icon-only` class, same 30×34px box, same ~37px pitch) and reads as a
+natural third sibling, not an outlier. Both easily-triggered toast states
+("no recovery point exists yet" and the manual-restore confirmation)
+render fully within the toast's width, wrap sensibly, and use vocabulary
+clearly distinct from the existing backup toasts. The rarer boot-time
+recovery toast was also captured (three lines, still within the toast's
+max-width, no clipping) using the same fresh-second-page technique the
+test suite uses. Real, distinct Turkish translations throughout, and the
+Turkish boot-toast string was confirmed directly against source since
+`ui.lang` is in-memory-only and resets before a second boot can be driven
+in that language. Zero horizontal overflow, zero new console/page errors.
+
+One judgment call raised, not a defect: the new button reuses the existing
+"undo" icon glyph, which the app already uses for two unrelated concepts
+(canvas Ctrl+Z, Plan Intelligence's per-decision undo). The reviewer's
+read: on a persistent home-screen control sitting next to the backup
+icons, an undo-shaped glyph risks being misread as "undo my last change"
+rather than "restore a whole-database snapshot" before an operator reads
+the tooltip. The distinct tooltip, the two distinct toast strings, and the
+confirm dialog's explicit "this is not the same as a backup file" line all
+mitigate this once engaged, so no functional risk exists — but the icon
+choice itself is noted here as a design tradeoff rather than silently
+accepted or changed unilaterally.
+
+### Regression
+
+Detection is not reachable from this phase — recovery reads and writes a
+serialized copy of the whole app state, never plan pixels — so `npm run
+benchmark` was not re-run.
+
+```
+npm run test:all             49/49 suites, 1756/1756 checks
+npm run verify:offline       27 passed, 0 failed
+                             (offline-recovery.js bundled into both
+                             artifacts, 29 sources total, up from 28)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             plus both easily-triggered toast states and
+                             the boot-time recovery toast — 0px
+                             horizontal overflow, no new page errors
+```
