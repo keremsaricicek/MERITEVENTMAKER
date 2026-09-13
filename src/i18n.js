@@ -595,6 +595,18 @@
     "inspector.removeSeat": { en: "Remove one seat", tr: "Bir koltuk azalt" },
     "inspector.addSeat": { en: "Add one seat", tr: "Bir koltuk ekle" },
     "inspector.object": { en: "{type} object", tr: "{type} nesnesi" },
+    // table.capacitySource — src/capacity-provenance.js. Only the first
+    // three are producible by this build today; the other five are named
+    // (and translated) so the day a feature fills them, the copy already
+    // exists rather than being invented under deadline.
+    "capacitySource.detectedPhysicalSeats": { en: "Detected physical seats", tr: "Tespit Edilen Fiziksel Sandalyeler" },
+    "capacitySource.humanConfirmed": { en: "Confirmed by a person", tr: "Bir Kişi Tarafından Onaylandı" },
+    "capacitySource.unknown": { en: "Unknown", tr: "Bilinmiyor" },
+    "capacitySource.printedTableCapacity": { en: "Printed table capacity", tr: "Basılı Masa Kapasitesi" },
+    "capacitySource.printedZoneCapacity": { en: "Printed zone capacity", tr: "Basılı Bölge Kapasitesi" },
+    "capacitySource.printedTotalCapacity": { en: "Printed total capacity", tr: "Basılı Toplam Kapasite" },
+    "capacitySource.derivedPrintedRule": { en: "Derived from the printed rule", tr: "Basılı Kuraldan Türetildi" },
+    "capacitySource.verifiedVenueMemory": { en: "Verified venue memory", tr: "Doğrulanmış Mekan Hafızası" },
     "seating.statusPill": { en: "{seated} of {total} pax seated · {tables} tables · {free} chairs free", tr: "{total} kişiden {seated} tanesi oturtuldu · {tables} masa · {free} boş koltuk" },
     "seating.guestQueue": { en: "Guests to seat", tr: "Oturtulacak misafirler" },
     "seating.allGuests": { en: "All guests", tr: "Tüm misafirler" },

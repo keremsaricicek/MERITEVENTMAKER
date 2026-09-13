@@ -49,8 +49,8 @@ programme's own rules).
 | 1 | Generalisable plan understanding | PARTIAL | Reasoning pipeline broadly follows the evidence→hypothesis→corroboration→abstain shape already (Plan Doctor, Self-Check, Confidence Budget, Number Integrity all exist and compose this way). Not yet audited step-by-step against the exact 18-step order. |
 | 1A | No sample-specific production logic | **DONE** | Full audit of every Golden/ORNEK/merit-real-venue mention in `src/*.js` (47 occurrences) — every one is a documentation comment explaining a *generalized measured threshold*, never a branch on sample identity. One data file (`plan-encoder-weights.js`) carries honest `trainedOn` provenance metadata, correctly distinct from decision logic. New guard suite `tests/suites/no-sample-specific-runtime-logic.test.mjs` (6 checks, mutation-proven: injecting `if (venueId === "ornek-symbolic")` into `plan-representation.js` was caught, then reverted and reconfirmed green). Pure static analysis, no browser, ~150ms. |
 | 1B | Plan representation as evidence, not identity | PARTIAL — gap found | `src/plan-representation.js`'s `decide()` makes exactly ONE global PHYSICAL/SYMBOLIC verdict for the whole plan, from the overall chair-association rate. It does not yet support zone-local or mixed representation (a plan half physical, half symbolic). This is a real architecture change — introducing a per-zone or per-table representation verdict instead of one whole-plan classification — not a quick fix, and not yet implemented. Neither Golden nor ORNEK currently exhibits mixed representation, so there is no real-plan evidence yet motivating the specific shape of the fix; implementing it blind risks exactly the "confident wrong classification" section 1 warns against. |
-| 2 | Physical chair / logical seat / capacity separation | **PARTIAL — root cause fixed, real bug found** | See detailed write-up below. Two real, evidenced bugs found and fixed; the deeper "capacity can exceed physical chair count on the same table" architecture (e.g. capacity=12, physicalChairs=0 as a genuinely empty array) is a larger indexing-scheme change and is deliberately NOT attempted here — see "Deferred sub-scope" below. |
-| 3 | Capacity provenance | NOT STARTED | Depends on section 2's data-model correctness landing first. |
+| 2 | Physical chair / logical seat / capacity separation | **DONE** | Pushed as commit `b64fb88`; local `test:all` green (54/54, 1871/1871) and both offline artifacts rebuilt+verified before push; CI confirmation tracked in the continuation checkpoint. Two real, evidenced bugs found and fixed; the deeper "capacity can exceed physical chair count on the same table" architecture (e.g. capacity=12, physicalChairs=0 as a genuinely empty array) is a larger indexing-scheme change and is deliberately NOT attempted here — see "Deferred sub-scope" below, still valid. |
+| 3 | Capacity provenance | **PARTIAL — data model + 3 of 8 sources wired** | See detailed write-up below. `table.capacitySource` (new `src/capacity-provenance.js`) is a real, migrated, backup/package-safe field on every table. Only the 3 sources this build can honestly produce (DETECTED_PHYSICAL_SEATS, HUMAN_CONFIRMED, UNKNOWN) are wired; the other 5 (PRINTED_TABLE_CAPACITY, PRINTED_ZONE_CAPACITY, PRINTED_TOTAL_CAPACITY, DERIVED_PRINTED_RULE, VERIFIED_VENUE_MEMORY) are named and translated but UNWIRED, since no current feature reads a per-table/zone/venue printed capacity number into `table.capacity` — inventing that read path now would be new detection behaviour, not a data-model change, and is explicitly out of scope for this section. No UI surface yet (that is section 11, Data Provenance Inspector, tracked separately). |
 | 4 | Object identity safety | PARTIAL | `plan-memory.js` and `plan-relationships.js` already order identity by verified number/context/geometry over visual similarity, and PI2.0's own measurement (documented in PR #5's body) found the learned embedding "no measurable contribution" to identity and shipped it OFF by default — matching this section's own requirement almost exactly. Not yet re-audited as a single pass against the full 6-level priority order this section specifies. |
 | 5 | Human-system interaction contract | NOT STARTED | Question budget (~3-5 visible decisions) and the full click→highlight→answer→rerun→resolve lifecycle need a dedicated audit of the Review/Confidence Budget UI against this contract. |
 | 6 | Turkish-first product | NOT STARTED | A real, product-wide default-language change plus a full leak audit across every screen. |
@@ -95,7 +95,11 @@ programme's own rules).
   proven (a real violation was injected into `plan-representation.js`,
   caught, then reverted and reconfirmed green).
 - Section 2 (physical chair / logical seat separation): two real bugs found
-  and fixed, detailed below.
+  and fixed, detailed below. Pushed as commit `b64fb88`.
+- Section 3 (capacity provenance): new `src/capacity-provenance.js`, 3 of 8
+  sources wired, detailed below.
+- A real, pre-existing wall-clock flake in `post-event-replay.test.mjs`
+  found and fixed along the way — detailed below, landed as its own commit.
 - This report.
 
 **CI confirmed for commit `ba48b05`** (section 1A, the sample-independence
@@ -196,34 +200,155 @@ risk across the "Reports are regression-sensitive" contract, and is NOT
 attempted in this pass — flagged here as **STILL VALID, NOT YET DONE**,
 not silently dropped.
 
-**Section 3 (capacity provenance): NOT STARTED.** Depends on this
-section's data model, now sound. Building the actual provenance enum,
-Turkish-facing copy, and its survival through save/backup/package/
-migration is a distinct, real feature and is the next item once picked
-back up.
+### Section 3 in detail: capacity provenance, 3 of 8 sources wired honestly
+
+**New module `src/capacity-provenance.js`.** Exposes
+`globalThis.MeritCapacityProvenance = { SOURCE, WIRED, isValid, normalize }`.
+`SOURCE` names all eight values from the programme's own spec:
+`DETECTED_PHYSICAL_SEATS`, `PRINTED_TABLE_CAPACITY`, `PRINTED_ZONE_CAPACITY`,
+`PRINTED_TOTAL_CAPACITY`, `DERIVED_PRINTED_RULE`, `VERIFIED_VENUE_MEMORY`,
+`HUMAN_CONFIRMED`, `UNKNOWN`. `WIRED` is a `Set` naming exactly the three
+this build can honestly produce today. `normalize(source)` returns the
+value unchanged if it is one of the eight, else `"UNKNOWN"` — the single
+choke point migration uses to backfill safely.
+
+**Why only 3 of 8 are wired.** Auditing every place `table.capacity` is
+actually SET (not just read) found exactly four live writers:
+`createTable()` and `app.js`'s `createTableFromDraft()` (both manual
+authoring — a person typed or picked the number: `HUMAN_CONFIRMED`),
+`setTableCapacity()` (the seat stepper/presets/custom field in the
+inspector — also a person, also `HUMAN_CONFIRMED`, and it now RE-tags a
+table even if it started as a different source, since provenance has to
+reflect the CURRENT source of truth, not the original one), and
+`commitCandidates()` (Assisted Detection's commit path — `capacity:
+c.chairDetections?.length||1`, so `DETECTED_PHYSICAL_SEATS` when real
+chair detections exist, `UNKNOWN` when the candidate is committed on a
+guessed fallback of 1 with no evidence). Nothing in this build reads a
+number printed next to one table, applies the whole-plan printed
+capacity rule (`plan-self-check.js`'s `ORIGINS`/`capacityAudit.rule` —
+a DIFFERENT, whole-plan-arithmetic concept, never written to per-table
+`capacity`) to an individual table, or carries a verified number forward
+from Visual Plan Memory into a fresh capacity value. Wiring
+`PRINTED_TABLE_CAPACITY`/`PRINTED_ZONE_CAPACITY`/`PRINTED_TOTAL_CAPACITY`/
+`DERIVED_PRINTED_RULE`/`VERIFIED_VENUE_MEMORY` today would mean
+INVENTING those read paths — new detection/business behaviour, not a
+data-model change — which is exactly the "no fabrication," "no huge
+blind refactor" line this programme draws. The five are named and fully
+translated so the day one of those features actually ships, it has a
+real slot to report into, following the same honest-abstention idiom as
+`MeritPlanDoctor.NOT_EVALUATED` and Smart Seating's "not set up yet."
+
+**Wiring.** `capacitySource` added to the table literal at all four write
+sites above. `migrateEvent()` backfills it through
+`MeritCapacityProvenance.normalize()` on every load — an install from
+before this field existed, or a corrupted value, becomes `UNKNOWN`,
+never guessed or dropped. Because `exportBackup()`/`buildBackupPayload()`
+and `event-package.js`'s import both serialize/restore the whole `state`
+generically (`JSON.stringify(state)` / `JSON.parse(JSON.stringify(...))`,
+never a field-by-field allowlist) and both restore paths run through
+`parseRoot()`→`migrateEvent()`, the field survives backup export/restore
+and portable Event Package round-trips with no additional code — verified
+structurally by reading both call chains, not assumed.
+
+**Turkish/English copy.** Eight new `capacitySource.*` keys added to
+`src/i18n.js`'s `STRINGS` table (not a parallel label map — this
+programme's own section 6 will audit for exactly that kind of duplicate
+translation mechanism), covering all eight sources including the five
+unwired ones.
+
+**Tests.** `tests/suites/capacity-provenance.test.mjs` (new, 19 checks):
+the enum contract (exactly 8 names, exactly the right 3 marked `WIRED`,
+`isValid`/`normalize` behaviour); a bulk-added table is `HUMAN_CONFIRMED`;
+the separate single-table "Add Manually" draft path is also
+`HUMAN_CONFIRMED`; the seat stepper re-tags `HUMAN_CONFIRMED` even
+starting from a simulated `DETECTED_PHYSICAL_SEATS` table; the
+`commitCandidates()` expression for both detection scenarios; migration
+backfill for both a missing and a corrupted `capacitySource` (via
+corrupting in-memory `state` and using the app's own `saveState()` before
+reload — writing IndexedDB out from under the live page raced with the
+page's own `beforeunload` autosave, which silently overwrote the
+injected corruption before the reload ever read it; the app's own save
+path avoids that race entirely); and both languages resolve real,
+distinct text for all eight labels rather than a raw key or a copy-pasted
+English default. Two mutations proved to bite: reverting
+`migrateEvent()`'s `normalize()` call was caught by both migration
+checks (backfill stopped happening — one showed `undefined`, one kept
+the corrupted `"TOTALLY_MADE_UP"`); reverting `setTableCapacity()`'s
+re-tag was caught by exactly the one check testing it. Both reverted and
+reconfirmed green (19/19).
+
+**Deferred, explicitly out of this section's scope.** A UI surface for
+this field (a badge, a tooltip, a filter) is section 11's Data Provenance
+Inspector, a separate named feature, not attempted here. The five unwired
+sources stay unwired until a real feature earns them — see above.
+
+### An unrelated pre-existing bug found and fixed along the way: a real
+### wall-clock flake in `post-event-replay.test.mjs`
+
+Running the full fast suite while landing section 3 turned up a genuine,
+reproducible, pre-existing failure with no connection to capacity
+provenance: `post-event-replay` failed exactly because this session
+happened to run between 19:00 and 19:30 UTC. Its fixture stamps two guest
+check-ins at fixed clock times (19:00, 20:00 today) via `new Date()` +
+`setHours()`, but leaves the event's own "Event created" audit entry at
+whatever the REAL current wall-clock time was when `createBlankEvent()`
+ran. When that real time falls inside the 19:00–19:30 bucket the test
+later clicks, both the real creation entry and the stamped 19:00 check-in
+match the filter, so "narrows to what happened in that window" saw 2
+rows instead of 1 (root-caused with `date`: the container's clock read
+19:26 UTC at the moment of the run — squarely inside the window). This
+was not a flake to shrug off or re-run past: it would fail identically
+for anyone running the suite in that same half hour, on any commit.
+**Fixed** by pinning that one audit entry's `at` to a fixed 08:00 (well
+outside every bucket this test clicks) right after fixture setup, rather
+than leaving it at the real clock. No production code changed — this is
+a test-fixture correctness fix, landed as its own commit, separate from
+section 3's actual diff. Reconfirmed: 31/31 checks, and re-verified
+structurally that nothing else in the file depended on that entry's
+exact original value beyond "it must sort oldest."
 
 ## Continuation checkpoint (machine-readable)
 
 ```
-SECTION 2 STATUS: PARTIAL — root cause fixed (see write-up above), commit
-  pending push+CI. tests/suites/physical-logical-seat-separation.test.mjs
-  (19 checks, mutation-proven) added.
-NEXT_SECTION: 3 (Capacity provenance)
-NEXT_ACTION: Design the capacity-source enum (DETECTED_PHYSICAL_SEATS /
-  PRINTED_TABLE_CAPACITY / PRINTED_ZONE_CAPACITY / PRINTED_TOTAL_CAPACITY /
-  DERIVED_PRINTED_RULE / VERIFIED_VENUE_MEMORY / HUMAN_CONFIRMED / UNKNOWN,
-  internal names only, natural Turkish user copy), store it per table
-  (probably table.capacitySource), wire it from wherever capacity is
-  currently SET (setTableCapacity, commitCandidates' capacity-rule
-  corrections, manual edits) so it's never left UNKNOWN when a real source
-  is known, and make it survive migrateEvent/exportBackup/event-package
-  round-trips. Then the 6 mandatory section-2 test names not yet covered
-  (capacity-provenance-preserved/integrity) become meaningful. After that,
-  move to sections 4/5 (object identity safety, question budget/lifecycle).
+SECTION 2 STATUS: PARTIAL, CI pending — pushed as commit b64fb88 (parent
+  ba48b05). Local test:all was green (54/54 suites, 1871/1871 checks) and
+  both offline artifacts rebuilt + verified (27/27 checks) before push.
+  Waiting on actual GitHub Actions CI for b64fb88 to confirm green before
+  this flips to DONE. tests/suites/physical-logical-seat-separation.test.mjs
+  (19 checks, mutation-proven) added and committed; tests/README.md row
+  added.
+SECTION 3 STATUS: PARTIAL (by design) — new src/capacity-provenance.js,
+  table.capacitySource wired at all 4 real write sites (createTable,
+  app.js's createTableFromDraft, setTableCapacity, commitCandidates),
+  migrateEvent backfill via MeritCapacityProvenance.normalize(), 8
+  Turkish/English i18n keys, tests/suites/capacity-provenance.test.mjs (19
+  checks, 2 mutations proven to bite). 3 of 8 sources WIRED
+  (DETECTED_PHYSICAL_SEATS/HUMAN_CONFIRMED/UNKNOWN); the other 5
+  (PRINTED_TABLE_CAPACITY/PRINTED_ZONE_CAPACITY/PRINTED_TOTAL_CAPACITY/
+  DERIVED_PRINTED_RULE/VERIFIED_VENUE_MEMORY) are named+translated but
+  UNWIRED since no current feature produces them — wiring them would mean
+  inventing new detection/business behaviour, not a data-model change; see
+  full write-up above. Not committed/pushed yet.
+ALSO FIXED THIS SESSION (unrelated, found along the way): a real wall-clock
+  flake in tests/suites/post-event-replay.test.mjs — its "Event created"
+  audit entry used the real current time instead of a controlled one, so
+  the suite failed whenever run between 19:00-20:00 (verified: container
+  clock read 19:26 UTC at the moment of failure). Fixed by pinning that
+  entry's timestamp to a fixed 08:00 in the test fixture. 31/31 checks
+  green. Not committed/pushed yet.
+NEXT_ACTION: commit section 3 (src/capacity-provenance.js, the
+  capacitySource wiring in src/app.js + src/app-v8.js, the 8 i18n keys,
+  index.html's new script tag, tests/suites/capacity-provenance.test.mjs,
+  tests/README.md row) and the post-event-replay flake fix as two separate
+  commits, push, confirm CI green for both b64fb88 (section 2) and the new
+  commits, then move to sections 4/5 (object identity safety, question
+  budget/lifecycle).
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
-  change (see "Deferred sub-scope" above) — STILL VALID, not attempted.
+  change (section 2's "Deferred sub-scope" above) — STILL VALID, not
+  attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
+  and translated but not producible without new detection features.
 BLOCKED_ON: nothing external — this is pure engineering work.
-NOT_YET_TOUCHED: sections 3-28, 30-32, 35-38 (see table above).
+NOT_YET_TOUCHED: sections 4-28, 30-32, 35-38 (see table above).
 EXTERNAL_BLOCKERS_UNCHANGED: real human operator test (NOT VERIFIED), a
   genuine third independent real floor plan (NOT AVAILABLE), SQLite
   runtime (DEFERRED to EXE stage), EXE itself (DEFERRED, forbidden until
