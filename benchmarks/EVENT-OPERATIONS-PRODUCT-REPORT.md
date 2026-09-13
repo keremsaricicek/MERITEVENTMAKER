@@ -2019,3 +2019,164 @@ rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
                              Command Center radar — 0px horizontal
                              overflow, no page errors
 ```
+
+### CI (the actual PR run, not a local one)
+
+Commit `96ed3b7` pushed Phase N. Both the push-triggered run (`34728032899`)
+and the pull_request-triggered run (`34728031231`) are fully green — all 10
+check runs `completed`/`success` across both. Phase N is DONE.
+
+## PHASE O — Event Handover
+
+### Problem
+
+Two operators cross paths at shift change while an event is still live —
+the day team who ran arrivals, the night team taking over the room. What
+does the next shift need to know that no existing screen tells them in one
+place: how ready the event is, who has not arrived, who is a no-show, which
+tables are held or out of service, and anything a person needs to say in
+their own words that no system fact captures (a leg being fixed, a VIP
+running late per a phone call)?
+
+### Measured first
+
+Every fact this phase needed already existed, resolved, with a single
+owner: `eventReadiness()`/`planDoctorReport()` for the verdict,
+`liveStats()` for not-arrived/no-show pax, `eventMetrics()` for unassigned
+pax, `resolvedFreezes()` for held tables, `resolvedUnavailable()` and
+`MeritTableAvailability.strandedGuests()` for tables out of service and who
+it strands. Nothing needed computing that was not already computed
+somewhere else on the same Command Center. The only genuinely new thing is
+the note log — free text a person writes, which by definition no existing
+module could already own.
+
+### Design decision: a digest that reads, a log that never interprets
+
+Deliberately two halves, kept apart:
+
+- **The digest computes nothing.** `eventHandoverHTML()` in `src/app-v8.js`
+  is composition only — it calls the same functions `ccSeatingHTML()`,
+  `arrivalWaveHTML()` and `planDoctorHTML()` already call, on the same
+  render, so Handover cannot say a number the rest of the screen would
+  disagree with. There is no `event-handover.js` function that recomputes
+  readiness, arrivals, freezes or availability — the module owns only the
+  note shape.
+- **The note log is never interpreted.** `src/event-handover.js` owns one
+  thing: `normalizeNote()`/`resolve()` for a `{text, by, at}` record — text
+  trimmed and capped, author optional and capped, order preserved exactly as
+  written. Nothing parses a note for a table number, a guest name, or a
+  time; nothing here is training, matching, or promoted into a system fact.
+  This is the same "never interpreted" discipline the Teach Area (`.claude/
+  rules/ai.md`) holds for a lesson's free-text note, applied to a completely
+  unrelated feature for the same reason: a person's words stay a person's
+  words.
+- **Append-only, no edit, no delete.** `addHandoverNote()` — the single
+  writer, next to `setArrival()` and `setTableAvailability()` — only ever
+  unshifts. A handover log a person could quietly rewrite afterwards would
+  not be trustworthy as a record of what one shift actually told the next.
+  This is also what keeps it distinct from the future Audit Trail (Phase
+  P): a note is what a person chose to say, not a decision the system
+  recorded, and the two lists must never merge.
+- **No new tab, no new screen.** Handover is a card at the bottom of the
+  Command Center, the same restrained-navigation choice every phase since
+  Freeze Zones has made — Table Availability lives on the table card, the
+  Risk Radar and Arrival Wave live on the Command Center, and now Handover
+  does too.
+- **Historical events do not get a special case — they inherit the existing
+  one.** The Command Center already has no tab at all for a completed event
+  (`workspaceHTML`'s `historyTabs` vs. `normalTabs` — "a finished event has
+  no readiness to assess," predating this phase). Handover lives inside the
+  Command Center, so it disappears with it, by construction; the composer
+  additionally carries its own `historical` guard as defense in depth, the
+  same layered pattern `bindCommand()` already uses (bound only when
+  `!historical`), never relying on a single check.
+
+### Implementation
+
+- `src/event-handover.js` (new): `NOTE_MAX`/`BY_MAX`, `normalizeNote()`,
+  `resolve()`. Pure; no DOM, no knowledge of guests or tables.
+- `src/app-v8.js`: `HANDOVER()`/`resolvedHandoverNotes()` mirror `FREEZE()`/
+  `resolvedFreezes()`. `addHandoverNote()` is the single writer, auditing
+  `HANDOVER_NOTE_ADDED`. `eventHandoverHTML()` renders the digest (six
+  `.cc-metric` cells reusing the existing grid component), the stranded-
+  guest alert (only when `strandedGuests().records > 0`), the note list, and
+  — for a non-historical event only — the composer. Wired into
+  `commandCenterHTML()` right after `planDoctorHTML()`. `bindCommand()`
+  gained the `[data-handover-add]` handler, gated on `canMutate()` exactly
+  like every other mutation in that function. `migrateEvent()` defaults
+  `handoverNotes` the same way it already defaults `freezes` — an
+  install from before this phase, or a brand-new blank event, simply has
+  none.
+- `src/i18n.js`: a `handover.*` block (title, question, six metric labels,
+  the stranded alert with a `.1` singular variant, empty state, composer
+  placeholders, add/added/empty-input toasts).
+- `src/styles.css`: `.cc-handover` and its children reuse the existing
+  `.cc-metrics`/`.cc-metric`/`.cc-empty` tokens (a `cc-metrics-handover`
+  modifier only changes the grid to 3 columns for six cells instead of
+  four); the composer's textarea/input are styled to match the existing
+  `.field` form-control look (border, background, focus ring) rather than
+  left as unstyled browser defaults.
+
+### Defects found
+
+- None in existing code. This phase only added a new leaf composition and
+  one new writer; no existing call site needed correction.
+
+### Test evidence
+
+`tests/suites/event-handover.test.mjs` — 42 checks, driving the real
+Command Center and the real note composer. Two mutations proved to bite:
+
+| Mutation | Result |
+|---|---|
+| changed `unshift` to `push` in `addHandoverNote` | 3 checks fail — the newer note no longer reads first, the older note no longer stays second, and the note order no longer survives a reload in the expected sequence |
+| removed the blank-text guard in `addHandoverNote` | 1 check fails — the operator is told "Handover note added" instead of the write-something warning for whitespace-only input (the read-side `normalizeNote()` trim still filtered the malformed record out of what renders, so the note-count checks stayed green — only the operator-facing toast exposed the defect, which is itself evidence the two layers are independently defensive) |
+
+### Visual QA
+
+Rendered via the `visual-qa-reviewer` agent at 1920×1080, 2560×1440 and
+1440×900, English and Turkish, plus a dedicated stranded-alert state, a
+long-unbroken-token wrap stress test, and the historical-event tab check.
+Pass at all six required viewport/language combinations: the six-cell
+digest grid reads as a true 3×2 layout using the same `.cc-metrics`
+typography and card rhythm as the existing "Guests and seats" card above
+it (not a new visual language); the longest Turkish label
+("KULLANILAMAYAN MASA") stays on one line at 1440×900 with no wrap or
+collision; the composer's textarea/input match the app's existing
+`.field`-style border/background/focus-ring language; a long unbroken
+token wraps via `overflow-wrap:anywhere` with no forced horizontal
+expansion; the stranded-guest alert renders in `red-ink` and stays in sync
+with the Plan Doctor's own verdict shown above it on the same screen (no
+disagreement between the two blocks); zero horizontal overflow
+(`scrollWidth === clientWidth`, checked programmatically) at any of the
+six combinations; zero new console/page errors beyond the pre-existing,
+documented, blocked-CDN noise (XLSX/Tesseract/PDF.js).
+
+One non-blocking observation, out of scope for this phase: `.toast-wrap`
+is fixed at `right:16px;bottom:16px` app-wide (pre-existing, unrelated to
+this change), and because the composer's "Add note" button is the first
+control in the app to sit at the literal bottom of a long scroll
+(Command Center is the longest screen, and Handover is now its last
+card), a toast confirming a just-added note can visually sit over that
+same button at 1440×900, momentarily in the way of adding a second note
+in quick succession. This is existing toast-positioning behaviour, not a
+defect in `eventHandoverHTML()`, and is noted here rather than fixed —
+repositioning `.toast-wrap` is a cross-cutting change well outside a
+Handover-scoped phase and was not requested.
+
+### Regression
+
+Detection is not reachable from this phase — Handover is composed from
+existing facts and a stored note list, never plan pixels — so `npm run
+benchmark` was not re-run.
+
+```
+npm run test:all             47/47 suites, 1705/1705 checks
+npm run verify:offline       27 passed, 0 failed
+                             (event-handover.js bundled into both artifacts,
+                             27 sources total, up from 26)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             plus stranded-alert state and historical
+                             tab-bar check — 0px horizontal overflow,
+                             no new console/page errors
+```

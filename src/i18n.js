@@ -1051,6 +1051,30 @@
     "avail.stranded": { en: "{n} guest records here, {pax} pax — this table cannot hold them tonight", tr: "burada {n} misafir kaydı, {pax} kişi — bu masa bu gece onları taşıyamaz" },
     "avail.stranded.1": { en: "one guest record here, {pax} pax — this table cannot hold them tonight", tr: "burada bir misafir kaydı, {pax} kişi — bu masa bu gece onları taşıyamaz" },
     "avail.relocate": { en: "relocate in Smart Seating", tr: "Akıllı Yerleştirme'de taşı" },
+
+    // ---- Event Handover ----
+    // One shift tells the next what it needs to know. The digest is read
+    // straight from Plan Doctor, arrivals, Freeze Zones and Table
+    // Availability — never a second opinion about any of them. The notes
+    // below are free text, kept verbatim: never call this "training" or
+    // imply it is the (future) structured Audit Trail.
+    "handover.title": { en: "Event handover", tr: "Vardiya devri" },
+    "handover.question": { en: "What does the next shift need to know?", tr: "Bir sonraki vardiyanın bilmesi gereken ne?" },
+    "handover.metric.verdict": { en: "readiness", tr: "hazır olma durumu" },
+    "handover.metric.unassigned": { en: "unassigned pax", tr: "oturtulmamış kişi" },
+    "handover.metric.notArrived": { en: "not arrived", tr: "gelmedi" },
+    "handover.metric.noShow": { en: "no show", tr: "gelmeyecek" },
+    "handover.metric.frozen": { en: "tables held", tr: "ayrılmış masa" },
+    "handover.metric.unavailable": { en: "tables unavailable", tr: "kullanılamayan masa" },
+    "handover.stranded": { en: "{n} guest records are still seated at unavailable tables ({pax} pax) — relocate them in Smart Seating", tr: "{n} misafir kaydı hâlâ kullanılamayan masalarda ({pax} kişi) — Akıllı Yerleştirme'de taşıyın" },
+    "handover.stranded.1": { en: "one guest record is still seated at an unavailable table ({pax} pax) — relocate it in Smart Seating", tr: "bir misafir kaydı hâlâ kullanılamayan bir masada ({pax} kişi) — Akıllı Yerleştirme'de taşıyın" },
+    "handover.none": { en: "No handover notes yet.", tr: "Henüz vardiya notu yok." },
+    "handover.placeholder": { en: "What should the next shift know? (e.g. T14 leg is being fixed by 8pm)", tr: "Bir sonraki vardiya ne bilmeli? (örn. T14'ün ayağı saat 20:00'a kadar tamir ediliyor)" },
+    "handover.byPlaceholder": { en: "Your name (optional)", tr: "Adınız (isteğe bağlı)" },
+    "handover.add": { en: "Add note", tr: "Not ekle" },
+    "handover.added": { en: "Handover note added.", tr: "Vardiya notu eklendi." },
+    "handover.empty": { en: "Write something before adding a note.", tr: "Not eklemeden önce bir şey yazın." },
+
     "seat.nothingYet": { en: "Nothing has changed yet.", tr: "Henüz hiçbir şey değişmedi." },
     "seat.cancel": { en: "Cancel", tr: "Vazgeç" },
     "seat.apply": { en: "Apply change", tr: "Değişikliği uygula" },

@@ -139,6 +139,14 @@
     migrated.freezes=globalThis.MeritSeatingFreeze
       ?MeritSeatingFreeze.normalizeAll(migrated.freezes)
       :(Array.isArray(migrated.freezes)?migrated.freezes:[]);
+    // HANDOVER NOTES. An install from before them, or a brand-new blank event,
+    // simply has none -- the correct empty state, nothing to reconstruct.
+    // Re-normalized on every load like freezes: a hand-edited backup could
+    // otherwise carry a note with no text, which would render as a blank line
+    // in a log an operator is trusting for what the last shift actually said.
+    migrated.handoverNotes=globalThis.MeritEventHandover
+      ?MeritEventHandover.resolve(migrated.handoverNotes)
+      :(Array.isArray(migrated.handoverNotes)?migrated.handoverNotes:[]);
     migrated.background={src:"",name:"",opacity:.28,visible:false,locked:true,isDefault:false,scale:100,...(migrated.background||{})};
     if(migrated.background.isDefault){migrated.background.src="";migrated.background.visible=false;migrated.background.isDefault=false;}
     migrated.analysis=migrated.analysis||null;
@@ -376,6 +384,36 @@
     return frozenMemo.set;
   }
   function isTableFrozen(event,tableId){return frozenTableIdSet(event).has(tableId);}
+
+  // ---- EVENT HANDOVER: the note log, one writer -----------------------------
+  //
+  // src/event-handover.js owns the shape of a note and nothing else — it does
+  // not know what a table or a guest is. The "state of the event" half of
+  // Handover is composed directly in eventHandoverHTML() below from facts that
+  // already have a single source (Plan Doctor, liveStats, eventMetrics, Freeze
+  // Zones, Table Availability), so this never becomes a second place those
+  // numbers could disagree.
+  const HANDOVER=()=>globalThis.MeritEventHandover||null;
+  function resolvedHandoverNotes(event){
+    const H=HANDOVER();
+    if(!H||!event)return[];
+    return H.resolve(event.handoverNotes);
+  }
+  // The only writer. A note is appended, never edited or replaced — a
+  // handover log a person could rewrite afterwards would not be trustworthy
+  // as a record of what one shift actually told the next.
+  function addHandoverNote(event,text,by){
+    const H=HANDOVER();
+    if(!H||!event)return null;
+    const trimmed=String(text||"").trim();
+    if(!trimmed)return null;
+    event.handoverNotes=Array.isArray(event.handoverNotes)?event.handoverNotes:[];
+    const note={id:uid("handover"),text:trimmed.slice(0,H.NOTE_MAX),
+      by:String(by||"").trim().slice(0,H.BY_MAX),at:nowISO()};
+    event.handoverNotes.unshift(note);
+    audit(event,"HANDOVER_NOTE_ADDED",{noteId:note.id});
+    return note;
+  }
 
   // THE ONE RISK THAT CANNOT BE RECOVERED FROM ON THE NIGHT.
   //
@@ -656,6 +694,49 @@
       cell(m.unassigned,t("cc.metric.unassigned"))}${cell(cap,t("cc.metric.chairs"))}</div>${
       m.unassigned?`<button class="btn sm" data-tab="seating">${t("cc.goto.seating")}</button>`:""}</section>`;
   }
+  // One shift tells the next what it needs to know. The digest computes
+  // nothing new — every figure here is read straight from the module that
+  // already owns it, so Handover cannot say something the rest of the screen
+  // would disagree with. The notes below the digest are the ONLY thing this
+  // section itself owns: free text, kept verbatim, newest first, with no edit
+  // and no delete — and deliberately not the future Audit Trail (Phase P),
+  // which will be a structured log of decisions the system itself recorded.
+  function eventHandoverHTML(event,r){
+    const H=HANDOVER();
+    if(!H)return"";
+    const m=eventMetrics(event),live=liveStats(event);
+    const frozenCount=new Set((resolvedFreezes(event)||[]).map(f=>f.tableId)).size;
+    const A=AVAIL();
+    const unavailable=resolvedUnavailable(event)||[];
+    const stranded=A?A.strandedGuests(event.tables||[],event.guests||[]):{records:0,pax:0};
+    const notes=resolvedHandoverNotes(event);
+    const historical=isHistorical(event);
+    const cell=(v,l)=>`<div class="cc-metric"><b>${v}</b><span>${l}</span></div>`;
+    return`<section class="cc-block cc-handover">
+      <h3>${t("handover.title")}</h3>
+      <p class="cc-handover-q">${t("handover.question")}</p>
+      <div class="cc-metrics cc-metrics-handover">
+        ${cell(t("cc.verdict."+r.verdict),t("handover.metric.verdict"))}
+        ${cell(m.unassigned,t("handover.metric.unassigned"))}
+        ${cell(live.notArrived,t("handover.metric.notArrived"))}
+        ${cell(live.noShow,t("handover.metric.noShow"))}
+        ${cell(frozenCount,t("handover.metric.frozen"))}
+        ${cell(unavailable.length,t("handover.metric.unavailable"))}
+      </div>
+      ${stranded.records?`<p class="cc-handover-alert">${esc(t(stranded.records===1?"handover.stranded.1":"handover.stranded",{n:stranded.records,pax:stranded.pax}))}</p>`:""}
+      <div class="cc-handover-notes">${notes.length
+        ?`<ul class="handover-list">${notes.map(n=>`<li class="handover-note"><p>${esc(n.text)}</p><span>${
+            n.by?esc(n.by)+" · ":""}${esc(relativeTime(n.at))}</span></li>`).join("")}</ul>`
+        :`<p class="cc-empty">${t("handover.none")}</p>`}</div>
+      ${historical?"":`<div class="cc-handover-form">
+        <textarea data-handover-text placeholder="${esc(t("handover.placeholder"))}" maxlength="${H.NOTE_MAX}"></textarea>
+        <div class="cc-handover-form-row">
+          <input type="text" data-handover-by placeholder="${esc(t("handover.byPlaceholder"))}" maxlength="${H.BY_MAX}">
+          <button class="btn sm primary" data-handover-add>${t("handover.add")}</button>
+        </div>
+      </div>`}
+    </section>`;
+  }
   function commandCenterHTML(event){
     const r=eventReadiness(event);
     return`<div class="screen-scroll"><div class="screen-inner command-center">
@@ -670,6 +751,7 @@
       <div class="cc-columns">${ccPlanConsistencyHTML(event)}${ccSeatingHTML(event)}</div>
       <div class="cc-columns">${arrivalWaveHTML(event,{compact:true})}${serviceLoadHTML(event,{compact:true})}</div>
       ${planDoctorHTML(event,r)}
+      ${eventHandoverHTML(event,r)}
     </div></div>`;
   }
   // Take the operator to the thing the row is about, not merely to the screen
@@ -758,6 +840,16 @@
         touchEvent(event);
       }
       render();
+    });
+    document.querySelectorAll("[data-handover-add]").forEach(b=>b.onclick=()=>{
+      if(!canMutate(event,"add a handover note"))return;
+      const textEl=document.querySelector("[data-handover-text]");
+      const byEl=document.querySelector("[data-handover-by]");
+      const note=addHandoverNote(event,textEl?textEl.value:"",byEl?byEl.value:"");
+      if(!note){toast(t("handover.empty"),"error");return;}
+      touchEvent(event);
+      render();
+      toast(t("handover.added"),"success");
     });
   }
   function eventCard(event){const m=eventMetrics(event),cover=event.coverImage?`<div class="event-cover" style="background-image:url('${event.coverImage}')"></div>`:`<div class="event-cover"><div class="event-cover-placeholder"></div></div>`;return`<article class="event-card" data-card-event="${event.id}">${cover}<div class="event-card-body"><div class="kicker">${esc(event.status)}</div><h3>${esc(event.name)}</h3><div class="event-meta">${esc(fmtDate(event.date))}<br>${esc([event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet"))}</div><div class="event-card-stats"><div class="event-card-stat"><b>${m.guests}</b><span>${t("home.col.guestPax")}</span></div><div class="event-card-stat"><b>${physicalCapacity(event)}</b><span>${t("home.col.physicalChairs")}</span></div></div><div class="event-card-actions"><button class="btn primary" data-open-event="${event.id}">${t("home.openEvent")}</button><button class="btn" data-duplicate-event="${event.id}" title="Duplicate">${icon("copy")}</button><button class="btn danger" data-delete-event="${event.id}" title="Delete">${icon("trash")}</button></div></div></article>`;}

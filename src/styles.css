@@ -691,6 +691,35 @@ dialog::backdrop{background:rgba(32,28,20,.44)}
 .cc-metric span{display:block;margin-top:2px;font-size:8.5px;letter-spacing:.08em;
   text-transform:uppercase;color:var(--muted-2)}
 
+/* ---- Event Handover --------------------------------------------------
+   The digest reuses .cc-metrics/.cc-metric but in a 3-column grid (six
+   figures, not four) so nothing squeezes at 1440px. The notes list and the
+   composer below it are the only markup this feature owns. */
+.cc-handover{margin-top:var(--sp-6)}
+.cc-handover-q{font-size:12.5px;color:var(--muted);margin-bottom:var(--sp-5)}
+.cc-metrics.cc-metrics-handover{grid-template-columns:repeat(3,minmax(0,1fr));
+  row-gap:var(--sp-6)}
+.cc-handover-alert{margin:-2px 0 var(--sp-5);font-size:11.5px;font-weight:600;
+  color:var(--red-ink)}
+.cc-handover-notes{border-top:1px solid var(--line-soft);padding-top:var(--sp-5)}
+.handover-list{list-style:none;display:flex;flex-direction:column;gap:var(--sp-4);
+  max-height:220px;overflow-y:auto}
+.handover-note p{font-size:12px;line-height:1.45;color:var(--text);
+  white-space:pre-wrap;overflow-wrap:anywhere}
+.handover-note span{display:block;margin-top:2px;font-size:10px;color:var(--muted-2)}
+.cc-handover-form{margin-top:var(--sp-5);padding-top:var(--sp-5);
+  border-top:1px solid var(--line-soft);display:flex;flex-direction:column;gap:var(--sp-3)}
+.cc-handover-form textarea{width:100%;height:56px;padding:7px 9px;resize:vertical;
+  border:1px solid #e7e4dc;border-radius:var(--radius-sm);background:#f9f9f7;outline:none;
+  transition:border-color var(--dur-fast) var(--ease),box-shadow var(--dur-fast) var(--ease)}
+.cc-handover-form textarea:focus{border-color:#5a86ad;box-shadow:var(--ring)}
+.cc-handover-form-row{display:flex;gap:var(--sp-3)}
+.cc-handover-form-row input{flex:1;min-width:0;height:31px;padding:0 8px;
+  border:1px solid #e7e4dc;border-radius:var(--radius-sm);background:#f9f9f7;outline:none;
+  transition:border-color var(--dur-fast) var(--ease),box-shadow var(--dur-fast) var(--ease)}
+.cc-handover-form-row input:focus{border-color:#5a86ad;box-shadow:var(--ring)}
+.cc-handover-form-row .btn{flex:none}
+
 /* The workspace header's way into the Command Center. Deliberately the same
    shape as the popover it replaced, so the control an operator already reaches
    for still sits where it was -- it just now goes somewhere instead of
