@@ -962,6 +962,40 @@
       <div class="row-icons"><button class="row-action" data-duplicate-event="${event.id}" aria-label="${esc(t("home.a11y.duplicate",{name:event.name}))}" title="${t("home.duplicate")}">${icon("copy")}</button><button class="row-action" data-export-event-package="${event.id}" aria-label="${esc(t("home.a11y.exportPackage",{name:event.name}))}" title="${esc(t("home.exportPackage"))}">${icon("download")}</button><button class="row-action" data-delete-event="${event.id}" aria-label="${esc(t("home.a11y.delete",{name:event.name}))}" title="${t("home.delete")}">${icon("trash")}</button></div>
     </div>`;
   }
+  // ---- EVENT HISTORY & LEARNING ----------------------------------------
+  //
+  // Not a second Reports screen and not a model: src/event-history.js
+  // averages exactly two real per-event facts (room utilization, no-show
+  // rate) that MeritArrivalWave and eventMetrics()/physicalCapacity()
+  // already computed for each completed event -- this function reads and
+  // combines them, and computes nothing of its own. Shown only once there
+  // is at least one completed event to read from.
+  function eventHistoryLearningHTML(historyEvents){
+    const M=globalThis.MeritEventHistory,AW=globalThis.MeritArrivalWave;
+    if(!M||!AW||!historyEvents.length)return"";
+    const outcomes=historyEvents.map(e=>{
+      const w=AW.build({guests:e.guests||[],bucketMinutes:30});
+      return M.outcome({
+        totalPax:eventMetrics(e).guests,
+        actualPax:w.actual.pax,
+        capacity:physicalCapacity(e),
+        noShowPax:w.noShow.pax,
+        noShowRecords:w.noShow.records,
+      });
+    });
+    const L=M.learning(outcomes);
+    const pct=x=>(x===null||x===undefined)?null:Math.round(x*100);
+    const util=pct(L.averageUtilization),noShow=pct(L.averageNoShowRate);
+    const sampleNote=sample=>sample===1?t("history.sampleNote1"):t("history.sampleNote",{n:sample});
+    const tile=(label,value,sample)=>`<div class="mx-metric"><span class="mx-metric-label">${label}</span><span class="mx-metric-value">${value===null?"—":value+"%"}</span><span class="mx-metric-note">${sample?sampleNote(sample):t("history.noData")}</span></div>`;
+    return`<div class="mx-section history-learning"><div class="mx-section-head"><h2>${t("history.title")}</h2></div>
+      <p class="history-note">${t("history.note")}</p>
+      <div class="mx-metrics" style="margin-bottom:0">
+        ${tile(t("history.avgUtilization"),util,L.utilizationSampleSize)}
+        ${tile(t("history.avgNoShow"),noShow,L.noShowSampleSize)}
+      </div>
+    </div>`;
+  }
   eventsHTML = function(){
     const upcoming=state.events.filter(e=>!isHistorical(e)).sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
     const history=state.events.filter(isHistorical).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
@@ -970,6 +1004,7 @@
       <div class="mx-head"><div><div class="kicker">${t("home.eyebrow")}</div><h1>${t("home.title")}</h1><p>${t("home.subtitle")}</p></div><span class="muted" style="font-size:12px">${t(state.events.length===1?"home.eventCount1":"home.eventsCount",{n:state.events.length})}</span></div>
       ${next?nextEventHeroHTML(next):`<div class="mx-empty"><h3>${t("home.noUpcoming")}</h3><p>${t("home.noUpcomingHint")}</p><button class="btn primary" data-action="create-event">${icon("plus")}${t("home.createEvent")}</button></div>`}
       ${rest.length?`<div class="mx-section"><div class="mx-section-head"><h2>${t("home.otherUpcoming")}</h2><span class="count">${rest.length}</span></div><div class="mx-list"><div class="mx-list-head event-line"><span>${t("home.col.event")}</span><span>${t("home.col.date")}</span><span>${t("home.col.hotelSalon")}</span><span>${t("home.col.guestPax")}</span><span>${t("home.col.physicalChairs")}</span><span></span></div>${rest.map(upcomingLineHTML).join("")}</div></div>`:""}
+      ${eventHistoryLearningHTML(history)}
       <div class="mx-section"><div class="mx-section-head"><h2>${t("home.eventsHistory")}</h2><span class="count">${t("home.historyNote")}</span></div>${history.length?`<div class="mx-list"><div class="mx-list-head event-line"><span>${t("home.col.event")}</span><span>${t("home.col.date")}</span><span>${t("home.col.hotelSalon")}</span><span>${t("home.col.guestPax")}</span><span>${t("home.col.physicalChairs")}</span><span></span></div>${history.map(e=>`<div class="event-line" data-history-event="${e.id}" title="${esc(t("home.historyOpenHint"))}"><div><b>${esc(e.name)}</b></div><div class="muted">${esc(fmtDate(e.date))}</div><div class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc([e.hotel,e.salon].filter(Boolean).join(" · ")||"—")}</div><div class="seat-tag">${eventMetrics(e).guests}</div><div class="seat-tag">${physicalCapacity(e)}</div><div class="row-icons"><span class="readonly-tag">${icon("lock")}${t("home.readOnly")}</span><button class="row-action" data-export-event-package="${e.id}" aria-label="${esc(t("home.a11y.exportPackage",{name:e.name}))}" title="${esc(t("home.exportPackage"))}">${icon("download")}</button><button class="row-action" data-delete-event="${e.id}" aria-label="${esc(t("home.a11y.delete",{name:e.name}))}" title="${t("home.delete")}">${icon("trash")}</button></div></div>`).join("")}</div>`:`<div class="mx-empty" style="padding:30px">${t("home.noHistorical")}</div>`}</div>
     </div></div>`;
   };

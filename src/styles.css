@@ -1375,6 +1375,15 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .replay-when{flex:none;font-size:10.5px;font-variant-numeric:tabular-nums;color:var(--muted-2);white-space:nowrap}
 .replay-text{font-size:12px;line-height:1.4;color:var(--text)}
 
+/* Event History & Learning -- same .mx-metric tiles Reports' capacity
+   summary already uses, so this reads as a native sibling rather than a
+   new component. Only two tiles, and this section has no side rail to
+   narrow it (unlike Reports' own four-tile row next to the export panel),
+   so the row is capped rather than let two tiles stretch across the full
+   width of a wide desktop screen. */
+.history-note{font-size:11.5px;color:var(--muted);margin:-3px 0 10px}
+.history-learning .mx-metrics{max-width:560px}
+
 .mx-empty{text-align:center;padding:52px 20px;border:1px dashed var(--line);border-radius:var(--radius-lg);background:var(--panel);color:var(--muted)}
 .mx-empty h3{font-size:15px;font-weight:600;color:var(--text);margin:0 0 5px}
 .mx-empty p{font-size:12.5px;margin:0 0 14px}

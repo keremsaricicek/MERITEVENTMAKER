@@ -1456,6 +1456,15 @@
     "home.col.access": { en: "Access", tr: "Erişim" },
     "home.readOnly": { en: "Read-only", tr: "Salt Okunur" },
     "home.noHistorical": { en: "No historical events.", tr: "Geçmiş etkinlik yok." },
+
+    "history.title": { en: "What your history shows", tr: "Geçmişiniz ne gösteriyor" },
+    "history.note": { en: "Measured across your completed events — nothing here is predicted.", tr: "Tamamlanmış etkinlikleriniz üzerinden ölçüldü — burada hiçbir şey tahmin edilmiyor." },
+    "history.avgUtilization": { en: "Average room used", tr: "Ortalama doluluk" },
+    "history.avgNoShow": { en: "Average no-show rate", tr: "Ortalama gelmeme oranı" },
+    "history.sampleNote1": { en: "from your only completed event", tr: "tek tamamlanmış etkinliğinizden" },
+    "history.sampleNote": { en: "across {n} completed events", tr: "{n} tamamlanmış etkinlik üzerinden" },
+    "history.noData": { en: "not enough data yet", tr: "henüz yeterli veri yok" },
+
     "home.openEvent": { en: "Open Event", tr: "Etkinliği Aç" },
     "home.duplicate": { en: "Duplicate", tr: "Çoğalt" },
     "home.delete": { en: "Delete", tr: "Sil" },

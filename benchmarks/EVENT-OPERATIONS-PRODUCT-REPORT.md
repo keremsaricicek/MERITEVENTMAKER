@@ -2859,3 +2859,161 @@ rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
                              non-historical negative case — no defects,
                              0px horizontal overflow, no new page errors
 ```
+
+### CI (the actual PR run, not a local one)
+
+Commit `9f6de61` pushed Phase S. Both the push-triggered run (`34757873005`)
+and the pull_request-triggered run (`34757875335`) are fully green — all 10
+check runs `completed`/`success` across both. Phase S is DONE.
+
+## PHASE T — Event History & Learning
+
+### Problem
+
+The Events/Home screen already lists every historical event (name, date,
+venue, guest pax, physical chairs), but nothing reads ACROSS that list.
+An operator planning event #12 has no way to see what their own last 11
+completed events actually looked like — whether the room usually fills up,
+whether a meaningful fraction of confirmed guests tend not to show — short
+of opening each one and doing the arithmetic by hand.
+
+### Measured first
+
+Reading `eventMetrics()`, `physicalCapacity()` and `src/arrival-wave.js`'s
+`build()` output before writing anything confirmed every fact this phase
+needed already existed per-event: `eventMetrics(event).guests` (total
+invited pax), `physicalCapacity(event)` (real chair count), and
+`MeritArrivalWave.build({guests}).actual.pax` / `.noShow.pax` (who actually
+walked in, who didn't). Nothing needed to be computed that a domain module
+did not already establish — the gap was purely that no layer read these
+facts ACROSS more than one event at a time.
+
+### Design decision: an operator reading their own past, never a trained model
+
+`src/event-history.js` is a new, small, pure module. Its own header quotes
+the same discipline the Teach Area and the captured-decision log already
+hold to: "Learning" means a person reading real numbers, never a model
+fitting anything.
+
+- **Two facts only, both already real.** `outcome()` derives exactly a
+  utilization ratio (checked-in pax over physical chair capacity — the
+  ACTUAL room on the night, not the planned seating, matching Service
+  Load's own PLANNED-vs-LIVE distinction) and a no-show rate (no-show pax
+  over total invited pax) from facts passed in, never recomputed.
+- **Null means no data, never zero.** A historical event with no tables
+  yet contributes no utilization figure; one with no guests contributes no
+  no-show figure. Reporting either as 0% would claim something about a
+  room or a guest list that never existed.
+- **Each fact tracks its own sample size, independently.** `learning()`
+  averages whichever outcomes actually carry a given figure, and reports
+  how many that was — an event missing capacity can still contribute its
+  no-show rate, and vice versa, without either average being silently
+  diluted by the other's gap. This is the exact same honesty Arrival
+  Wave's own PARTIAL-coverage reporting already established for a single
+  event; this phase applies it across many.
+- **No window, no cap, no ranking.** Every currently-historical event
+  contributes — the same "list everything, no pagination" choice the
+  existing Events History section already makes. Nothing is windowed to
+  "recent," nothing is weighted, nothing decays: a deliberately plain mean.
+- **Reuses the Reports screen's own tile component.** The panel is built
+  from the same `.mx-metric`/`.mx-metrics` markup Reports' Capacity
+  Summary already uses, so it reads as a native sibling of an existing,
+  already-tested component rather than a new visual pattern needing its
+  own review.
+
+### Implementation
+
+- `src/event-history.js` (new): `outcome()`, `learning()`. Pure.
+- `src/app-v8.js`: `eventHistoryLearningHTML(historyEvents)` — builds one
+  `outcome()` per historical event from `eventMetrics()`, `physicalCapacity()`
+  and a fresh `MeritArrivalWave.build()` call (reused, not recomputed),
+  averages them via `learning()`, and renders two `.mx-metric` tiles. Wired
+  into `eventsHTML()` between the "other upcoming" list and the existing
+  "Events History" section, returning `""` when there are no historical
+  events yet.
+- `src/i18n.js`: `history.*` block, including a singular `sampleNote1`
+  ("from your only completed event") alongside the plural `sampleNote`
+  ("across {n} completed events"), matching the existing `home.eventCount1`/
+  `home.eventsCount` singular/plural convention rather than reading oddly
+  at n=1.
+- `src/styles.css`: one new rule, `.history-note` (identical shape to
+  `.audit-question`/`.replay-question`) — everything else is the existing
+  `.mx-metric` component.
+- `index.html`: script tag added after `post-event-replay.js`.
+
+### Defects found
+
+None. This phase found no pre-existing bug — every fact it reads was
+already correctly computed by `eventMetrics()`, `physicalCapacity()` and
+`arrival-wave.js`; the only new code is the per-event derivation and the
+cross-event average.
+
+### Test evidence
+
+`tests/suites/event-history.test.mjs` — 27 checks: a domain-module unit
+section (zero capacity/zero pax produce `null`, never a fabricated 0%; a
+mixed batch of outcomes tracks each fact's sample size independently) and
+a real-UI section building three historical events through the actual
+create-event/add-tables flow, with the third event carrying zero tables to
+prove it is excluded from the utilization average but still counted in the
+no-show average. Two mutations proved to bite:
+
+| Mutation | Result |
+|---|---|
+| `outcome()`'s zero-capacity guard widened from `cap > 0` to `cap >= 0` | 5 checks fail — the domain-module null check, both cross-event sample-size/average checks for utilization, and the two real-UI checks that depend on the excluded third event |
+| `learning()` stopped filtering by fact before averaging (averaged every outcome for both facts, substituting 0 for a missing figure) | 6 checks fail — both domain-module sample-size checks, both domain-module average checks, and both real-UI checks (average value and its sample-size caption) |
+
+Both mutations were applied to a scratch-directory backup of
+`src/event-history.js`, confirmed to produce exactly the expected failures
+and no others, then reverted and re-confirmed green (27/27).
+
+### Visual QA
+
+Rendered via the `visual-qa-reviewer` agent at 1920×1080, 2560×1440 and
+1440×900, English and Turkish, building the exact three-event fixture the
+test suite uses (a fresh zero-history baseline, then one event, then all
+three). **No defects found.** The panel is absent (confirmed in the DOM,
+not just visually) with zero historical events; with events present it
+sits between "Other upcoming events" and "Events History" with the exact
+same 24px section spacing used everywhere else on the screen; every number
+and every sample-size caption (singular at n=1, plural with the correct N
+at n>1, independently per tile) matched the suite's own hand-computed
+values in both languages; Turkish rendered with no wrapping or truncation;
+and the title/subtitle carry the same plain uppercase kicker treatment as
+every other section header on the screen — no icon, no badge, no gold, no
+"insight" styling that would read as an AI/analytics callout rather than a
+plain factual summary.
+
+**One judgment call acted on.** The reviewer flagged that with only two
+tiles and no side rail (unlike Reports' four-tile row sitting next to the
+export panel), the row stretched to the section's full width at 2560×1440,
+leaving a large empty area inside each tile — the only place in the app
+this component is used at 2-of-a-row and full viewport width. Fixed with
+one scoped rule, `.history-learning .mx-metrics{max-width:560px}`, rather
+than touching the shared `.mx-metric`/`.mx-metrics` component every other
+screen already relies on. Two further observations were left as-is,
+correctly identified by the reviewer as pre-existing and unrelated to this
+phase: `.mx-metric-label`'s 9.5px kicker size (the same token Reports'
+Capacity Summary already uses) and toast copy not retranslating in place
+after a language switch (existing toast lifecycle behaviour). Zero new
+console/page errors beyond the documented pre-existing CDN-block noise.
+
+### Regression
+
+Detection is not reachable from this phase — the panel reads stored guest/
+table data and Arrival Wave's own output, never plan pixels — so `npm run
+benchmark` was not re-run.
+
+```
+npm run test:all             52/52 suites, 1846/1846 checks
+npm run verify:offline       27 passed, 0 failed
+                             (event-history.js bundled into both
+                             artifacts, 32 sources total, up from 31)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             zero-history absence, one-event singular
+                             wording, three-event averaging with
+                             independent per-fact sample sizes — one
+                             minor tile-width fix applied and
+                             re-verified; 0px horizontal overflow, no
+                             new page errors
+```
