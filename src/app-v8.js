@@ -258,11 +258,17 @@
     // covered in filled shapes is a plan nobody can work on. Hidden entirely
     // when the layer is off, so the marks never become permanent chrome.
     const frozen=ui.freezeLayer&&frozenTableIdSet(event).has(table.id);
+    // A TABLE OUT OF SERVICE. Unlike the freeze layer above, this is never
+    // gated behind a toggle: it is a fact about whether the table exists for
+    // this event tonight, not an optional advisory layer, so it stays visible
+    // whichever layers are on or off.
+    const A=AVAIL();
+    const unavailable=A&&A.isUnavailable(table);
     // THE SERVICE LOAD LAYER. A band on the table's own surface — never a blob
     // over the drawing, and never a smooth field interpolated between tables,
     // which would invent a figure for floor the product knows nothing about.
     const loadRow=ui.loadLayer?loadBandMap(event)?.get(table.id):null;
-    return`<div class="table-object ${esc(table.type)} ${selected?"selected multi-selected":""} ${highlighted?"highlighted":""} ${frozen?"frozen":""} ${loadRow?"load-"+loadRow.band:""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match operational-match":""}" data-object-id="${table.id}" data-object-kind="table" style="left:${table.x}px;top:${table.y}px;width:${table.w}px;height:${table.h}px;transform:rotate(${table.rotation||0}deg);z-index:${table.z||10}">${chairs}<div class="table-surface"><span class="table-label">${esc(formatTableNumber(table.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${table.capacity}</span>${frozen?`<span class="table-frozen" title="${esc(t("freeze.tableFrozen"))}">${icon("lock")}</span>`:""}${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${empty} EMPTY</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`;
+    return`<div class="table-object ${esc(table.type)} ${selected?"selected multi-selected":""} ${highlighted?"highlighted":""} ${frozen?"frozen":""} ${unavailable?"unavailable":""} ${loadRow?"load-"+loadRow.band:""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match operational-match":""}" data-object-id="${table.id}" data-object-kind="table" style="left:${table.x}px;top:${table.y}px;width:${table.w}px;height:${table.h}px;transform:rotate(${table.rotation||0}deg);z-index:${table.z||10}">${chairs}<div class="table-surface"><span class="table-label">${esc(formatTableNumber(table.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${table.capacity}</span>${frozen?`<span class="table-frozen" title="${esc(t("freeze.tableFrozen"))}">${icon("lock")}</span>`:""}${unavailable?`<span class="table-unavailable" title="${esc(t("avail.tableUnavailable"))}">${icon("alert")}</span>`:""}${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${empty} EMPTY</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`;
   };
 
   function planIssues(event){
@@ -341,6 +347,20 @@
     if(!F||!event)return null;
     return F.resolve(eventFreezes(event),event.tables||[]);
   }
+  // ---- TABLE AVAILABILITY: one resolution, read by everything ---------------
+  //
+  // Same discipline as freezes, one line up: the recommender, the Plan
+  // Doctor and the canvas all read the SAME resolved answer, so none of them
+  // can end up disagreeing about which tables cannot be used tonight. The
+  // RULE itself — what UNAVAILABLE means — lives only in
+  // src/table-availability.js; a table's own `.availability` field is set by
+  // setTableAvailability(), the single writer, below.
+  const AVAIL=()=>globalThis.MeritTableAvailability||null;
+  function resolvedUnavailable(event){
+    const A=AVAIL();
+    if(!A||!event)return null;
+    return A.resolve(event.tables||[]);
+  }
   // tableObjectHTML runs once per table, so resolving the rules inside it would
   // make the canvas O(tables x freezes) PER TABLE -- 160,000 comparisons a
   // render on the 400-table fixture for a feature most events never use. The
@@ -379,6 +399,10 @@
       // was held, because "a reserve that already has guests in it" is a
       // contradiction and "a VIP area protecting the people in it" is not.
       frozen:resolvedFreezes(event)||[],
+      // Tables a person took out of service, resolved the same way. The
+      // Doctor does not decide WHICH tables fail — table-availability.js does
+      // — it only reports what a failed one does to the room.
+      unavailable:resolvedUnavailable(event)||[],
       // When a copy was last taken, and whether this event has moved since.
       // The Doctor stores nothing; this is read fresh like everything else.
       backup:backupState(event),
@@ -1537,7 +1561,8 @@
       // Resolved, not the rules. Passing an ARRAY (even an empty one) is what
       // tells the advisor the constraint was evaluated; passing nothing would
       // leave it honestly saying "not set up yet".
-      frozen:resolvedFreezes(event)||undefined});
+      frozen:resolvedFreezes(event)||undefined,
+      unavailable:resolvedUnavailable(event)||undefined});
   }
   function reasonText(r){
     const k="seat.reason."+r;
@@ -1577,7 +1602,8 @@
     if(!guest)return"";
     const p=globalThis.MeritSeatingAdvisor?.previewMove({
       guest,tables:event.tables,guests:event.guests,toTableId:ui.seatPreview.tableId,
-      frozen:resolvedFreezes(event)||undefined});
+      frozen:resolvedFreezes(event)||undefined,
+      unavailable:resolvedUnavailable(event)||undefined});
     if(!p)return"";
     const line=(label,before,after)=>`<div class="sp-row"><em>${esc(label)}</em><b>${
       before}</b><i>&rarr;</i><b>${after}</b></div>`;
@@ -1597,7 +1623,7 @@
         ${p.hostGuestsAlreadyAtTarget?`<div class="sp-row"><em>${t("seat.cohesion")}</em><b>${
           esc(t("seat.cohesionValue",{n:p.hostGuestsAlreadyAtTarget}))}</b></div>`:""}
         ${(p.constraints||[]).map(c=>`<div class="sp-row ${
-          c.state==="FROZEN"?"is-frozen":""}"><em>${esc(t("seat.constraint."+c.constraint))}</em><b>${
+          c.state==="FROZEN"||c.state==="UNAVAILABLE"?"is-frozen":""}"><em>${esc(t("seat.constraint."+c.constraint))}</em><b>${
           esc(t("freeze.state."+c.state))}</b></div>`).join("")}
         ${p.unevaluated.map(u=>`<div class="sp-row muted"><em>${
           esc(t("seat.constraint."+u.constraint))}</em><b>${esc(notConfigured)}</b></div>`).join("")}
@@ -1711,6 +1737,7 @@
     return t("freeze.scope.rangeOf",{from:formatTableNumber(pad(f.from)),to:formatTableNumber(pad(f.to))});
   }
   const freezeReasonText=r=>{const k="freeze.reason."+r;return t(k)!==k?t(k):r;};
+  const availReasonText=r=>{const k="avail.reason."+r;return t(k)!==k?t(k):r;};
   // "2 record - 5 pax" is the kind of small wrongness that makes an operator
   // trust the rest of the card less. Picked in JS because the substituter does
   // not do plurals and should not learn to.
@@ -1931,17 +1958,35 @@
     // and an operator about to press "Seat here" has to know what will happen.
     const F=FREEZE();
     const onIt=F?F.freezesOnTable(eventFreezes(event),t_):[];
+    // A fact about the table, distinct from the freeze above: a freeze says
+    // the PLACE is off-limits to the seating process until a person allows
+    // it, and can be overridden for one move. Unavailable says the TABLE
+    // ITSELF cannot be used tonight, and this card offers no override for it.
+    const A=AVAIL();
+    const unavailable=A&&A.isUnavailable(t_);
+    const stranded=unavailable?Array.from({length:t_.capacity},(_,i)=>map.get(i)).filter(o=>o&&o.index===0):[];
     return`<aside class="table-card">
       <div class="table-card-head"><h3>${esc(formatTableNumber(t_.number))}</h3><span class="muted" style="font-size:11px">${esc(t_.zone||"")}</span><button class="table-card-close" data-close-table-card title="${t("seating.closeCard")}">&times;</button></div>
       ${onIt.length?`<div class="table-card-frozen">${icon("lock")}<b>${t("freeze.state.FROZEN")}</b><span>${
         esc(onIt.map(f=>freezeReasonText(f.reason)).join(" · "))}</span></div>`:""}
+      ${unavailable?`<div class="table-card-unavailable">${icon("alert")}<b>${t("avail.state.UNAVAILABLE")}</b><span>${
+        esc(availReasonText(t_.unavailableReason))}${t_.unavailableNote?` · ${esc(t_.unavailableNote)}`:""}</span></div>
+        ${stranded.length?`<div class="table-card-stranded"><span>${esc(t(stranded.length===1?"avail.stranded.1":"avail.stranded",{n:stranded.length,pax:stranded.reduce((n,o)=>n+paxOf(o.guest),0)}))}</span>${
+          stranded.map(o=>`<button class="btn sm" data-avail-select-guest="${o.guest.id}">${esc(o.guest.name)} — ${t("avail.relocate")}</button>`).join("")}</div>`:""}
+      `:""}
       <div class="table-card-stats">
         <div><span>${t("seating.capacity")}</span><b>${t_.capacity}</b></div>
         <div><span>${t("seating.occupied")}</span><b>${occupied}</b></div>
         <div><span>${t("seating.empty")}</span><b>${empty}</b></div>
       </div>
+      ${A?`<div class="table-card-avail">${unavailable
+        ?`<button class="btn sm" data-avail-mark="${t_.id}" data-avail-next="AVAILABLE">${t("avail.markAvailable")}</button>`
+        :`<select data-avail-reason>${Object.keys(A.REASON).map(r=>
+            `<option value="${r}">${esc(availReasonText(r))}</option>`).join("")}</select>
+          <button class="btn sm danger" data-avail-mark="${t_.id}" data-avail-next="UNAVAILABLE">${t("avail.markUnavailable")}</button>`
+      }</div>`:""}
       <div class="table-card-cta">${selected
-        ?`<button class="btn primary sm" data-assign-selected="${t_.id}">${t(moving?"seating.moveGuest":"seating.assignGuest",{name:selected.name,n:paxOf(selected)})}</button>`
+        ?`<button class="btn primary sm" data-assign-selected="${t_.id}" ${unavailable?"disabled":""} title="${unavailable?esc(t("avail.cannotSeatHere")):""}">${t(moving?"seating.moveGuest":"seating.assignGuest",{name:selected.name,n:paxOf(selected)})}</button>`
         :`<div class="table-card-hint">${t("seating.pickGuestFirst")}</div>`}</div>
       <div class="table-card-seats">${Array.from({length:t_.capacity},(_,i)=>seatRowHTML(i,map.get(i),selected)).join("")}</div>
     </aside>`;
@@ -1981,6 +2026,12 @@
   }
   function assignGuestGroup(ids,tableId,preferred=null,options=null){
     const event=activeEvent();if(!canMutate(event,"change seating assignments"))return;ids=[...new Set(ids)].filter(Boolean);const guests=ids.map(id=>event.guests.find(g=>g.id===id)).filter(Boolean),table=event.tables.find(t=>t.id===tableId);if(!guests.length||!table)return;
+    // A table marked unavailable cannot receive a NEW assignment, and unlike
+    // a freeze there is no override: the table itself cannot hold anyone
+    // tonight, the same hard stop as a table with zero capacity. Existing
+    // occupants are untouched -- this only blocks writing MORE people onto it.
+    const AV=AVAIL();
+    if(AV&&AV.isUnavailable(table))return toast(t("avail.cannotSeatToast",{number:formatTableNumber(table.number)}),"error",6000);
     const locked=guests.find(g=>g.assignment?.locked);if(locked)return toast(`${locked.name}'s assignment is locked.`,"error",5000);
     const used=occupiedSeatIndexes(event,tableId,null);for(const g of guests)if(g.assignment?.tableId===tableId)(g.assignment.seats||[]).forEach(s=>used.delete(Number(s)));
     let free=Array.from({length:table.capacity},(_,i)=>i).filter(i=>!used.has(i));if(preferred!==null&&free.includes(preferred))free=[preferred,...free.filter(i=>i!==preferred)];const required=guests.reduce((n,g)=>n+paxOf(g),0);if(free.length<required)return toast(`${table.number} has ${free.length} available chairs; the selected group needs ${required}. No assignments changed.`,"error",6000);
@@ -2042,6 +2093,26 @@
       if(ids.length)assignGuestGroup(ids,assign.dataset.assignSelected);
     };
     document.querySelectorAll("[data-empty-seat]").forEach(row=>row.onclick=()=>{const ids=ui.selectedGuestIds.length?ui.selectedGuestIds:[ui.selectedGuestId].filter(Boolean);if(ids.length)assignGuestGroup(ids,ui.selectedTableId,Number(row.dataset.emptySeat));});document.querySelectorAll("[data-unassign]").forEach(b=>b.onclick=()=>unassignGuest(b.dataset.unassign));document.querySelectorAll("[data-lock-assignment]").forEach(b=>b.onclick=()=>toggleAssignmentLock(b.dataset.lockAssignment));
+    // Mark unavailable / mark available — the table card's own axis, next to
+    // the freeze indicator but never touching it: marking a table unavailable
+    // writes nothing but `availability` and its provenance.
+    const availBtn=document.querySelector("[data-avail-mark]");
+    if(availBtn)availBtn.onclick=()=>{
+      const ev=activeEvent();if(!canMutate(ev,"change a table's availability"))return;
+      const table=ev.tables.find(x=>x.id===availBtn.dataset.availMark);if(!table)return;
+      const next=availBtn.dataset.availNext;
+      const reasonEl=document.querySelector("[data-avail-reason]");
+      setTableAvailability(ev,table,next,reasonEl?reasonEl.value:null);
+      touchEvent(ev);render();
+      toast(t(next==="UNAVAILABLE"?"avail.markedUnavailableToast":"avail.markedAvailableToast",
+        {number:formatTableNumber(table.number)}),next==="UNAVAILABLE"?"error":"success");
+    };
+    // Selecting a stranded guest reuses the exact selection Smart Seating
+    // already reads — this never moves anyone; it only shows recommendations
+    // for the person selected, the same as picking them from the queue.
+    document.querySelectorAll("[data-avail-select-guest]").forEach(b=>b.onclick=()=>{
+      ui.selectedGuestId=b.dataset.availSelectGuest;ui.selectedGuestIds=[b.dataset.availSelectGuest];render();
+    });
   };
 
   // A party of N renders as N dots — one solid for the named guest, the rest
@@ -2384,6 +2455,33 @@
     else guest.checkedInAt=null;
     audit(event,"ARRIVAL_STATUS_CHANGED",{guestId:guest.id,from,to:next,
       at:guest.checkedInAt||null,source:source||"live"});
+    return{from,to:next};
+  }
+
+  // ---- TABLE AVAILABILITY, THE SAME WAY: ONE WRITER --------------------------
+  //
+  // Same discipline as setArrival(): one function maintains `availability`
+  // and its provenance fields together, so the reason and the moment can
+  // never drift from the state they describe. Marking a table unavailable
+  // touches NOTHING else — no assignment, no capacity, no chairs — the whole
+  // point of this axis being separate from every other fact about the table.
+  function setTableAvailability(event,table,next,reason,note){
+    if(!event||!table)return null;
+    const A=AVAIL();
+    if(!A||!["AVAILABLE","UNAVAILABLE"].includes(next))return null;
+    const from=table.availability||A.STATE.AVAILABLE;
+    table.availability=next;
+    if(next==="UNAVAILABLE"){
+      table.unavailableReason=A.REASON[reason]||A.REASON.OTHER;
+      table.unavailableNote=String(note||"").slice(0,400);
+      // Kept from the first time this table failed tonight, not reset on a
+      // second edit -- a table cannot become "more recently" unavailable.
+      table.unavailableSince=table.unavailableSince||nowISO();
+    }else{
+      table.unavailableReason=null;table.unavailableNote="";table.unavailableSince=null;
+    }
+    audit(event,"TABLE_AVAILABILITY_CHANGED",{tableId:table.id,from,to:next,
+      reason:table.unavailableReason});
     return{from,to:next};
   }
 

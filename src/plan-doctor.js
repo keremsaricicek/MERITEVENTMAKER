@@ -92,10 +92,13 @@
   // only what it can see teaches an operator that a quiet radar means a safe
   // event. Same discipline as the seating advisor's NOT_CONFIGURED rows: the
   // day the feature ships, the entry moves out of this list.
-  const NOT_EVALUATED = [
-    { risk: "UNAVAILABLE_TABLES",
-      why: "a table taken out of service, and which guests it would strand, is not modelled yet" },
-  ];
+  //
+  // UNAVAILABLE_TABLES used to be the only entry here — "a table taken out of
+  // service, and which guests it would strand, is not modelled yet." It
+  // shipped (table-availability.js, the guestsAtUnavailableTable and
+  // capacityLostToUnavailable findings below), so this list is honestly
+  // empty for now rather than kept non-empty by habit.
+  const NOT_EVALUATED = [];
 
   // The answer to the question in the title. Three named states, never a score:
   // there is no honest weighting of "one duplicate table number" against
@@ -138,6 +141,11 @@
       if (!reasonsByTable.has(f.tableId)) reasonsByTable.set(f.tableId, new Set());
       reasonsByTable.get(f.tableId).add(f.reason);
     }
+    // A table taken out of service, resolved by the caller the same way a
+    // freeze is — the Doctor does not evaluate WHICH tables fail, only what a
+    // failed one does to the room. table-availability.js owns the rule.
+    const unavailable = Array.isArray(inp.unavailable) ? inp.unavailable.filter(Boolean) : [];
+    const unavailableIds = new Set(unavailable.map((u) => u.tableId));
     // When the copy was last taken, and whether the event has changed since.
     const backup = inp.backup || null;
     const findings = [];
@@ -272,6 +280,28 @@
       });
     }
 
+    // A GUEST SEATED AT A TABLE THAT CANNOT HOLD THEM TONIGHT. The table is
+    // still in the plan — unlike the orphan case above — but a person marked
+    // it out of service, and the assignment on paper did not move with that.
+    // This is the fact the risk used to be named NOT_EVALUATED for: which
+    // guests a failed table would strand.
+    const stranded = seated.filter((g) => unavailableIds.has(g.assignment.tableId));
+    if (stranded.length) {
+      const pax = stranded.reduce((n, g) => n + paxOf(g), 0);
+      const tableNumbers = [...new Set(stranded.map((g) => byId.get(g.assignment.tableId))
+        .filter(Boolean).map((t) => String(t.number)))];
+      add({
+        code: "guestsAtUnavailableTable", level: LEVEL.BLOCKING,
+        params: { n: stranded.length, guests: stranded.length, pax, number: tableNumbers[0] },
+        what: `${stranded.length} guest ${plural(stranded.length, "record is", "records are")} seated at a table marked unavailable (${pax} pax, ${tableNumbers.join(", ")})`,
+        why: "the table was taken out of service and the seating plan still points guests at it — marking a table unavailable never moves anyone by itself",
+        sources: [SOURCE.FLOOR_PLAN, SOURCE.SEATING],
+        affects: [AFFECTS.SEATING, AFFECTS.ARRIVALS],
+        action: { go: GO.SEATING, guestIds: stranded.map((g) => g.id) },
+        weight: pax + 500,
+      });
+    }
+
     // SOMEBODY IS IN THE ROOM WITH NOWHERE TO SIT. The one risk that is
     // already happening rather than forecast: they walked in, the door team
     // checked them in, and no table was ever assigned. It is BLOCKING whenever
@@ -359,6 +389,11 @@
     // waiting WITHOUT it — "40 pax and 12 open chairs" reads as a capacity
     // disaster until you know 60 chairs are being held on purpose, and the
     // operator needs to be told which of those two evenings they are in.
+    // Chairs an unavailable table removes from tonight entirely — distinct
+    // from a freeze's held chairs, which still exist and could open later.
+    const unavailableSeatable = physical.filter((t) => unavailableIds.has(t.id));
+    const lostChairs = unavailableSeatable.reduce((n, t) => n + num(t.capacity), 0);
+
     const frozenSeatable = physical.filter((t) => frozenIds.has(t.id));
     const heldChairs = frozenSeatable.reduce((n, t) => n + num(t.capacity), 0);
     const heldSeated = seated.filter((g) => frozenIds.has(g.assignment.tableId))
@@ -460,6 +495,26 @@
         affects: [AFFECTS.CAPACITY],
         action: { go: GO.SEATING, filter: "empty" },
         weight: chairs - assignedPax,
+      });
+    }
+
+    // WHAT AN UNAVAILABLE TABLE HAS REMOVED. The spare-capacity row above
+    // counts every seatable chair in the room, and a table taken out of
+    // service still counts as "seatable" by construction (it has physical
+    // seats; they just cannot be used tonight) — so an operator reading
+    // "40 chairs are unassigned" without this line would go looking for
+    // chairs that do not exist for this event at all. Distinct from a freeze:
+    // those chairs still exist and could open later the same night.
+    if (lostChairs > 0) {
+      add({
+        code: "capacityLostToUnavailable", level: LEVEL.INFORMATION,
+        params: { n: lostChairs, chairs: lostChairs, tables: unavailableSeatable.length },
+        what: `${lostChairs} ${plural(lostChairs, "chair is", "chairs are")} removed from tonight by ${unavailableSeatable.length} unavailable ${plural(unavailableSeatable.length, "table", "tables")}`,
+        why: "a table marked unavailable does not exist for this event tonight, even though it is still counted as seatable capacity elsewhere",
+        sources: [SOURCE.OPERATOR, SOURCE.FLOOR_PLAN],
+        affects: [AFFECTS.CAPACITY, AFFECTS.SEATING],
+        action: { go: GO.SEATING, tableIds: unavailableSeatable.map((t) => t.id) },
+        weight: lostChairs,
       });
     }
 

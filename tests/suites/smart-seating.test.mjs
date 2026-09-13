@@ -162,26 +162,64 @@ export default async function run({ page, checks, baseUrl }) {
   const reserve = preview.rows.find(r => !/T\s*0/.test(r.label) && r.values.length === 2);
   checks.ok(reserve, "and the room's spare seats are shown before and after", reserve);
 
-  // --- 5. a constraint that cannot be evaluated says so --------------------
+  // --- 5. both constraints the programme named now answer for real ---------
   //
-  // Freeze Zones USED to be one of these. It shipped, so the same slot now
-  // carries a real answer and only the unimplemented constraint is muted —
-  // which is the behaviour the NOT_CONFIGURED design promised: the row does
-  // not quietly become a clean bill of health, it becomes a true one.
+  // Both used to be NOT_CONFIGURED rows. Freeze Zones shipped first, and
+  // table availability (Phase N) closes the last one — the suite that used
+  // to check "one real answer, one honest not-set-up" now checks "both
+  // real", because the interesting failure is a resolved constraint quietly
+  // reverting to muted, not the other way round.
   const unevaluated = preview.rows.filter(r => r.muted);
-  checks.equal(unevaluated.length, 1,
-    "the one constraint this build still cannot evaluate is reported", unevaluated);
-  const notSetUp = await page.evaluate(() => t("seat.notConfigured"));
-  checks.ok(unevaluated.every(r => r.values[0] === notSetUp),
-    "as NOT SET UP rather than as a clean bill of health — that feature has never run",
-    unevaluated.map(r => r.values[0]));
+  checks.equal(unevaluated.length, 0,
+    "no constraint this build names is left unanswered", unevaluated);
   const freezeLabel = await page.evaluate(() => t("seat.constraint.FREEZE_ZONES"));
   const freezeRow = preview.rows.find(r => r.label === freezeLabel);
   checks.ok(freezeRow && !freezeRow.muted,
-    "and the constraint that DID ship answers for real instead of saying not set up", freezeRow);
+    "freeze zones answers for real instead of saying not set up", freezeRow);
   checks.equal(freezeRow && freezeRow.values[0],
     await page.evaluate(() => t("freeze.state.OPEN")),
     "this table is open — nothing is frozen in this event");
+  const availLabel = await page.evaluate(() => t("seat.constraint.UNAVAILABLE_TABLES"));
+  const availRow = preview.rows.find(r => r.label === availLabel);
+  checks.ok(availRow && !availRow.muted,
+    "table availability answers for real too, now that Phase N shipped it", availRow);
+  checks.equal(availRow && availRow.values[0],
+    await page.evaluate(() => t("freeze.state.OPEN")),
+    "this table is open — nothing marked it unavailable");
+
+  // --- 5b. an unavailable table is excluded, with no override -------------
+  // Unlike a freeze, marking a table unavailable removes it from the
+  // recommendations outright — there is no challenge flow to accept, because
+  // the table itself cannot hold anyone tonight. Closes the T02 preview
+  // still open from step 4 first, then reopens one on T03 afterwards so
+  // step 6 below still has a card to cancel.
+  await click(page, "[data-seat-cancel]");
+  await page.waitForTimeout(300);
+  await page.evaluate((tableId) => {
+    const t_ = state.events[0].tables.find(x => x.id === tableId);
+    t_.availability = "UNAVAILABLE"; t_.unavailableReason = "DAMAGED";
+    touchEvent(state.events[0]); render();
+  }, room.t02);
+  await page.waitForTimeout(300);
+  const afterUnavailable = await page.evaluate(PANEL);
+  checks.ok(!afterUnavailable.options.some(o => /T\s*02/.test(o.number)),
+    "the unavailable table is no longer recommended", afterUnavailable.options);
+  const blockedNow = await page.evaluate(() =>
+    MeritSeatingAdvisor.recommend({
+      guest: state.events[0].guests.find(g => g.id === "g_party"),
+      tables: state.events[0].tables, guests: state.events[0].guests, limit: 4,
+      unavailable: MeritTableAvailability.resolve(state.events[0].tables),
+    }).blocked.find(b => /T\s*02/.test(b.number)));
+  checks.equal(blockedNow && blockedNow.why, "UNAVAILABLE",
+    "and the reason it was removed is named, not silently omitted", blockedNow);
+  await page.evaluate((tableId) => {
+    const t_ = state.events[0].tables.find(x => x.id === tableId);
+    t_.availability = "AVAILABLE"; t_.unavailableReason = null; t_.unavailableSince = null;
+    touchEvent(state.events[0]); render();
+  }, room.t02);
+  await page.waitForTimeout(300);
+  await click(page, `[data-seat-preview="${room.t03}"]`);
+  await page.waitForTimeout(300);
 
   // --- 6. cancelling changes nothing ---------------------------------------
   await click(page, "[data-seat-cancel]");

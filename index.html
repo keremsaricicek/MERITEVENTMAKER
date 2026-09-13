@@ -81,6 +81,11 @@
   <!-- What a person has held back, and what it would cost to cross it. Loaded
        before the advisor because the advisor consumes its resolved answer. -->
   <script src="src/seating-freeze.js"></script>
+  <!-- Is this table usable tonight, and who would it strand if not. A fact
+       about the table, never a rule about a place — loaded before the
+       advisor, which consumes its resolved answer the same way it does
+       freezes. -->
+  <script src="src/table-availability.js"></script>
   <!-- Recommends where a party could sit. Cannot seat anybody: the only writer
        of an assignment is assignGuestToTable(), driven by a person. -->
   <script src="src/seating-advisor.js"></script>

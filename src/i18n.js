@@ -1031,6 +1031,26 @@
     "seat.constraint.FREEZE_ZONES": { en: "Freeze zones", tr: "Dondurulmuş bölgeler" },
     "seat.constraint.UNAVAILABLE_TABLES": { en: "Unavailable tables", tr: "Kullanılamayan masalar" },
     "seat.notConfigured": { en: "not set up yet", tr: "henüz yapılandırılmadı" },
+
+    // A table taken out of service. Distinct from a freeze: no override
+    // exists anywhere for this state, because the table itself cannot hold
+    // anyone tonight rather than a person needing permission to use it.
+    "avail.state.UNAVAILABLE": { en: "UNAVAILABLE", tr: "KULLANILAMAZ" },
+    "avail.reason.DAMAGED": { en: "Damaged", tr: "Hasarlı" },
+    "avail.reason.RELOCATED": { en: "Relocated", tr: "Yeri değiştirildi" },
+    "avail.reason.AV_HOLD": { en: "AV / production hold", tr: "Ses-ışık ekibi için ayrıldı" },
+    "avail.reason.SAFETY": { en: "Safety", tr: "Güvenlik" },
+    "avail.reason.OTHER": { en: "Another reason", tr: "Başka bir neden" },
+    "avail.markUnavailable": { en: "Mark unavailable", tr: "Kullanılamaz işaretle" },
+    "avail.markAvailable": { en: "Mark available", tr: "Kullanılabilir işaretle" },
+    "avail.tableUnavailable": { en: "This table is marked unavailable", tr: "Bu masa kullanılamaz olarak işaretlendi" },
+    "avail.cannotSeatHere": { en: "This table is unavailable — nobody can be seated here", tr: "Bu masa kullanılamaz — buraya kimse oturtulamaz" },
+    "avail.cannotSeatToast": { en: "{number} is marked unavailable and cannot be seated tonight.", tr: "{number} kullanılamaz olarak işaretli, bu gece kimse oturtulamaz." },
+    "avail.markedUnavailableToast": { en: "{number} is now marked unavailable.", tr: "{number} artık kullanılamaz olarak işaretli." },
+    "avail.markedAvailableToast": { en: "{number} is available again.", tr: "{number} yeniden kullanılabilir." },
+    "avail.stranded": { en: "{n} guest records here, {pax} pax — this table cannot hold them tonight", tr: "burada {n} misafir kaydı, {pax} kişi — bu masa bu gece onları taşıyamaz" },
+    "avail.stranded.1": { en: "one guest record here, {pax} pax — this table cannot hold them tonight", tr: "burada bir misafir kaydı, {pax} kişi — bu masa bu gece onları taşıyamaz" },
+    "avail.relocate": { en: "relocate in Smart Seating", tr: "Akıllı Yerleştirme'de taşı" },
     "seat.nothingYet": { en: "Nothing has changed yet.", tr: "Henüz hiçbir şey değişmedi." },
     "seat.cancel": { en: "Cancel", tr: "Vazgeç" },
     "seat.apply": { en: "Apply change", tr: "Değişikliği uygula" },
@@ -1056,6 +1076,10 @@
     "freeze.state.OPEN": { en: "open", tr: "açık" },
     "freeze.state.FROZEN": { en: "frozen", tr: "donduruldu" },
     "freeze.state.OVERRIDE_REQUIRED": { en: "supervisor override required", tr: "amir onayı gerekli" },
+    // Shared with the UNAVAILABLE_TABLES constraint row (src/seating-advisor.js)
+    // — the seating preview reads every constraint's state through this same
+    // "freeze.state.*" lookup regardless of which constraint it belongs to.
+    "freeze.state.UNAVAILABLE": { en: "table unavailable", tr: "masa kullanılamaz" },
     "freeze.scope.ZONE": { en: "A zone", tr: "Bir bölge" },
     "freeze.scope.TABLE_GROUP": { en: "A range of tables", tr: "Bir masa aralığı" },
     "freeze.scope.TABLE": { en: "One table", tr: "Tek masa" },
@@ -1288,6 +1312,9 @@
     "doctor.checkedInWithoutATable": { en: "{guests} checked-in guest records have no table ({pax} pax, already in the room)", tr: "giriş yapmış {guests} misafir kaydının masası yok (salonda, {pax} kişi)" },
     "doctor.checkedInWithoutATable.1": { en: "one checked-in guest record has no table ({pax} pax, already in the room)", tr: "giriş yapmış bir misafir kaydının masası yok (salonda, {pax} kişi)" },
     "doctor.checkedInWithoutATable.why": { en: "the arrival status says they are here and the seating plan has nowhere to put them — this is happening now, not a forecast", tr: "varış durumu burada olduklarını söylüyor, oturma planında ise yerleri yok — bu bir tahmin değil, şu anda yaşanıyor" },
+    "doctor.guestsAtUnavailableTable": { en: "{guests} guest records are seated at a table marked unavailable ({pax} pax, {number})", tr: "{guests} misafir kaydı kullanılamaz olarak işaretlenmiş bir masada oturuyor ({pax} kişi, {number})" },
+    "doctor.guestsAtUnavailableTable.1": { en: "one guest record is seated at a table marked unavailable ({pax} pax, {number})", tr: "bir misafir kaydı kullanılamaz olarak işaretlenmiş bir masada oturuyor ({pax} kişi, {number})" },
+    "doctor.guestsAtUnavailableTable.why": { en: "the table was taken out of service and the seating plan still points guests at it — marking a table unavailable never moves anyone by itself", tr: "masa servis dışı bırakıldı ve oturma planı hâlâ misafirleri o masaya yönlendiriyor — bir masayı kullanılamaz işaretlemek kimseyi kendiliğinden taşımaz" },
     "doctor.reservedAreaOccupied": { en: "{tables} tables are being held in reserve and already have {pax} pax seated on them", tr: "{tables} masa yedekte tutuluyor ve üzerlerinde hâlihazırda {pax} kişi oturuyor" },
     "doctor.reservedAreaOccupied.1": { en: "one table is being held in reserve and already has {pax} pax seated on it", tr: "bir masa yedekte tutuluyor ve üzerinde hâlihazırda {pax} kişi oturuyor" },
     "doctor.reservedAreaOccupied.why": { en: "the freeze says these seats are being kept back and the seating plan says they are taken — one of the two has to give, and only a person can say which", tr: "dondurma bu koltukların ayrıldığını, oturma planı ise dolu olduklarını söylüyor — ikisinden biri geçerli olmalı ve bunu yalnızca bir kişi söyleyebilir" },
@@ -1302,6 +1329,9 @@
     "doctor.capacityHeldByFreeze": { en: "{chairs} chairs across {tables} table(s) are held by a freeze — {open} of them empty", tr: "{tables} masadaki {chairs} koltuk dondurma ile ayrıldı — {open} tanesi boş" },
     "doctor.capacityHeldByFreeze.1": { en: "one chair across {tables} table(s) is held by a freeze — {open} of them empty", tr: "{tables} masadaki bir koltuk dondurma ile ayrıldı — {open} tanesi boş" },
     "doctor.capacityHeldByFreeze.why": { en: "a person froze part of the room; these chairs are deliberately not offered to the seating process", tr: "bir kişi salonun bir bölümünü dondurdu; bu koltuklar bilerek oturma sürecine sunulmuyor" },
+    "doctor.capacityLostToUnavailable": { en: "{chairs} chairs are removed from tonight by {tables} unavailable table(s)", tr: "{tables} kullanılamaz masa bu geceden {chairs} koltuğu düşürüyor" },
+    "doctor.capacityLostToUnavailable.1": { en: "one chair is removed from tonight by {tables} unavailable table(s)", tr: "{tables} kullanılamaz masa bu geceden bir koltuğu düşürüyor" },
+    "doctor.capacityLostToUnavailable.why": { en: "a table marked unavailable does not exist for this event tonight, even though it is still counted as seatable capacity elsewhere", tr: "kullanılamaz olarak işaretlenen bir masa bu etkinlik için bu gece yok sayılır — yine de başka yerlerde oturulabilir kapasiteye dahil edilir" },
     "doctor.frozenCapacityNeeded": { en: "{pax} pax still need a table and only {open} chairs are open outside the frozen area — {held} held chairs would cover the difference", tr: "{pax} kişinin hâlâ masası yok ve dondurulmuş alan dışında yalnızca {open} koltuk açık — ayrılmış {held} koltuk farkı kapatır" },
     "doctor.frozenCapacityNeeded.1": { en: "one pax still needs a table and only {open} chairs are open outside the frozen area — {held} held chairs would cover the difference", tr: "bir kişinin hâlâ masası yok ve dondurulmuş alan dışında yalnızca {open} koltuk açık — ayrılmış {held} koltuk farkı kapatır" },
     "doctor.frozenCapacityNeeded.why": { en: "a freeze holds part of the room on purpose; the chairs exist and are being kept back, so this is a decision to take rather than a shortage to fix", tr: "bir dondurma salonun bir bölümünü bilerek tutuyor; koltuklar var ve ayrılmış durumda, yani bu giderilecek bir eksiklik değil verilecek bir karar" },

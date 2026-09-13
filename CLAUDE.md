@@ -168,6 +168,25 @@ person. Defined in Seating, drawn on the Floor Plan as a layer that outlines
 rather than covers. Full detail: `src/seating-freeze.js` and
 `tests/suites/seating-freeze.test.mjs`.
 
+## Table availability
+
+`src/table-availability.js` answers one question — is this table usable
+tonight — and the one real consequence of UNAVAILABLE: who it would strand.
+**Distinct from a freeze, in both directions**: a freeze is a rule about a
+PLACE, gated by permission, and a supervisor can override one operation
+without lifting it; unavailable is a fact about the TABLE ITSELF, and there
+is **no override anywhere** for it — the same hard stop as a table with no
+physical seats. Marking or clearing a table unavailable never touches a
+freeze on it, and lifting a freeze never touches its availability. **Marking
+unavailable moves nobody** — a guest already seated there keeps that
+assignment on paper until a person relocates them through the existing
+seating flow (Smart Seating's recommendations, or a manual reassignment);
+this module has no path to an assignment. The canvas mark is unconditional,
+never gated behind a layer toggle, because it is a fact about whether the
+table exists tonight, not an optional advisory. Closed the one risk
+`MeritPlanDoctor.NOT_EVALUATED` used to name. Full detail:
+`src/table-availability.js` and `tests/suites/table-availability.test.mjs`.
+
 ## The Event Risk Radar
 
 "What could make this event fail operationally?" — answered in the Command

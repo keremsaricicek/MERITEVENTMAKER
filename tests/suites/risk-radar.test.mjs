@@ -79,16 +79,28 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(/verdict-(ready|readyWithReview|notReady|liveRisk)/.test(verdict),
     "the verdict is one of the four named states", verdict);
 
-  // --- 2. it says what it cannot see ---------------------------------------
+  // --- 2. it says what it cannot see, whenever there is something to say ---
+  //
+  // NOT_EVALUATED is a fixed list that is SUPPOSED to shrink as features
+  // ship — Phase N closed the only entry it used to carry ("a table taken
+  // out of service, and which guests it would strand, is not modelled
+  // yet"), the same way Freeze Zones closed one before it. `run()` closes
+  // over the module's own `NOT_EVALUATED` constant directly, so this suite
+  // cannot plant a fake entry into the live pipeline from outside without
+  // rewriting the module to suit the test — instead it checks the build's
+  // actual, current, honest state: nothing is left unevaluated, and the
+  // radar does not fabricate a blind-spot line to fill the space where one
+  // used to be. The render-if-nonempty mechanism itself (`${names.length?
+  // ...}`) is the same pattern already proven by the reasons list above,
+  // which renders on the same page from the same conditional shape.
   const blind = await page.evaluate(() => {
     const list = MeritPlanDoctor.NOT_EVALUATED.map(x => t("radar.notEvaluated." + x.risk));
     return { list, shown: document.querySelector(".cc-radar-blind")?.textContent.trim() || null };
   });
-  checks.ok(blind.list.length > 0,
-    "the engine names risks this build does not evaluate", blind.list);
-  checks.ok(blind.shown, "and the radar shows them rather than implying it covers everything");
-  checks.ok(blind.list.every(name => blind.shown.includes(name)),
-    "every one of them, in words rather than as an enum", blind);
+  checks.equal(blind.list.length, 0,
+    "Phase N closed the one risk this build used to admit it could not model", blind.list);
+  checks.ok(!blind.shown,
+    "so the radar has nothing left to disclaim and renders no blind-spot line at all", blind);
 
   // --- 3. an event with no copy of itself is a risk ------------------------
   const backupRisk = await page.evaluate(() => {
@@ -291,9 +303,14 @@ export default async function run({ page, checks, baseUrl }) {
     return out;
   });
   for (const lang of ["en", "tr"]) {
-    checks.ok(Object.values(words[lang]).every(v => v.length > 0), `${lang}: the radar is written`, words[lang]);
+    checks.ok(words[lang].title.length > 0 && words[lang].question.length > 0,
+      `${lang}: the radar is written`, words[lang]);
+    // Not "> 0" here on purpose: Phase N closed the one risk this build used
+    // to admit it could not model, so the honest blind-spot line is empty in
+    // both languages — a raw key or leftover English would still fail below.
+    checks.equal(words[lang].blind, "",
+      `${lang}: nothing left to disclaim, so no blind-spot line renders`, words[lang]);
   }
   checks.ok(words.en.question !== words.tr.question,
     "and Turkish is really Turkish, not English left in place", words);
-  checks.ok(words.en.blind !== words.tr.blind, "including what it says it cannot see", words);
 }

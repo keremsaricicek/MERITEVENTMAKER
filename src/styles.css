@@ -1802,6 +1802,31 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .table-card-frozen span{font-size:10.5px;color:var(--muted)}
 .sp-row.is-frozen b{color:var(--amber-ink)}
 
+/* A TABLE OUT OF SERVICE. Distinct from a freeze on purpose -- a hazard-
+   stripe fill rather than a dashed outline, red rather than amber, and never
+   gated behind a layer toggle, because this is a fact about whether the
+   table exists for the event tonight, not an optional advisory. Still never
+   an opaque block: the drawing stays legible through it, same rule as every
+   other canvas layer in this product. */
+.table-object.unavailable .table-surface{box-shadow:inset 0 0 0 1.5px var(--red-ink);
+  background-image:repeating-linear-gradient(135deg,rgba(167,56,56,.14) 0 5px,transparent 5px 10px)}
+.table-unavailable{position:absolute;top:2px;left:3px;display:inline-flex;color:var(--red-ink);
+  opacity:.9;pointer-events:none}
+.table-unavailable svg{width:10px;height:10px}
+.table-card-unavailable{display:flex;align-items:center;gap:6px;padding:var(--sp-3) var(--sp-5);
+  background:var(--red-soft);border-bottom:1px solid var(--line-soft)}
+.table-card-unavailable svg{width:12px;height:12px;color:var(--red-ink);flex:none}
+.table-card-unavailable b{font-size:10px;font-weight:650;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--red-ink)}
+.table-card-unavailable span{font-size:10.5px;color:var(--muted)}
+.table-card-stranded{padding:var(--sp-3) var(--sp-5);background:var(--red-soft);
+  border-bottom:1px solid var(--line-soft);display:flex;flex-direction:column;gap:5px}
+.table-card-stranded>span{font-size:10.5px;font-weight:600;color:var(--red-ink)}
+.table-card-stranded button{align-self:flex-start}
+.table-card-avail{display:flex;gap:6px;padding:var(--sp-3) var(--sp-5);
+  border-bottom:1px solid var(--line-soft)}
+.table-card-avail select{flex:1;min-width:0;font-size:11px}
+
 /* SUPERVISOR OVERRIDE REQUIRED. Blocking on purpose -- this is the one moment
    in seating where a person is being asked to take responsibility, and a
    dismissible corner toast would not be that. */

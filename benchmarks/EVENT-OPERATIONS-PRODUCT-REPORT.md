@@ -1867,3 +1867,155 @@ rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
                              Live Event idle + mid zone-search —
                              0px horizontal overflow, no page errors
 ```
+
+### CI (the actual PR run, not a local one)
+
+Commit `52551d8` pushed Phase M and CI's "Fast core" job came back red on
+both triggering runs — `arrival-wave` failing two checks with
+`{"expected":0,"actual":3}` and `{"expected":1,"actual":2}`. Root-caused
+rather than re-run: `arrival-wave.test.mjs` checks a guest in through the
+real door click and leaves that guest's arrival at the real wall-clock
+moment, then later hardcodes a "19:30" bucket for an unrelated assertion —
+on any run whose real clock falls inside 19:30–19:59, the two collide.
+Reproduced the exact failure locally by forcing the same collision (same
+two checks, same numbers, same 62-check count), which excluded Phase M's
+own change as the cause before touching anything. Fixed by anchoring that
+guest's moment to a fixed stamp immediately after the real-click assertions
+already prove a door check-in stamps "now" — the same fixed-stamp pattern
+the file already uses for two other guests. `npm test` (CI's exact fast
+set): 39/39 suites, 1414/1414 checks. Pushed as `71579a1`.
+
+Both the push-triggered run (`34725401311`) and the pull_request-triggered
+run (`34725405326`) are fully green on `71579a1` — all 10 check runs
+`completed`/`success`. Phase M is DONE.
+
+## PHASE N — Emergency Table Failure / Unavailable Table
+
+### Problem
+
+A table can fail during the event itself — water damage, a broken base, an
+AV crew that needs the space, a fire-safety call. The programme named this
+exactly once already, as the single entry in the Plan Doctor's own
+`NOT_EVALUATED` list: "a table taken out of service, and which guests it
+would strand, is not modelled yet." Phase N models it.
+
+### Measured first
+
+Before writing anything, the seating advisor's own comments and the Plan
+Doctor's own blind-spot list were read as the spec: `seating-advisor.js`
+already carried `CONSTRAINT.UNAVAILABLE_TABLES` at `NOT_CONFIGURED` — a slot
+deliberately left open for exactly this phase, mirroring how Freeze Zones
+arrived. `plan-doctor.js`'s `NOT_EVALUATED` array had exactly one entry,
+naming exactly this. Nothing was invented; both call sites already existed
+and named the shape of the answer they were waiting for.
+
+### Design decision: distinct from a freeze, in both directions
+
+`src/table-availability.js` is a new, small, pure module — deliberately not
+a rule-about-a-place like `seating-freeze.js`, because "unavailable" is a
+fact about ONE table, not a scope that ages as the room changes. Four
+things it refuses:
+
+- **No override, anywhere.** A freeze can be crossed by a supervisor for one
+  operation; unavailable cannot be crossed at all. The seating advisor gained
+  `BLOCKED.UNAVAILABLE` with no corresponding override parameter, and
+  `assignGuestGroup()` (the sole assignment writer) refuses a NEW assignment
+  to an unavailable table unconditionally — the same hard stop as a table
+  with no physical seats, checked before the freeze gate, not routed through
+  it.
+- **No cross-talk with freezes.** Marking a table unavailable does not read
+  or write `event.freezes`, and freezing/unfreezing does not read or write
+  `table.availability`. A table can be both; each layer answers only its own
+  question. Proved by direct mutation test, not just by code review.
+- **No mutation on marking it.** `setTableAvailability()` writes exactly
+  `availability`, `unavailableReason`, `unavailableNote`, `unavailableSince`
+  — never `guest.assignment`, `table.capacity`, or `table.chairs`. A guest
+  already seated there keeps that seat on paper, per the exact "marking a
+  table unavailable never moves anyone by itself" rule the programme stated.
+- **No new relocation mechanism.** The table card's stranded-guest row has a
+  "relocate" button that does exactly one thing: `ui.selectedGuestId =
+  guest.id`. That is the same selection the guest queue itself sets — Smart
+  Seating (Phase H) populates for them, unmodified. Relocation is 100% the
+  existing Apply-driven flow; this phase added zero lines to it.
+
+### Implementation
+
+- `src/table-availability.js`: `STATE` (AVAILABLE/UNAVAILABLE), `REASON`
+  (closed set — DAMAGED/RELOCATED/AV_HOLD/SAFETY/OTHER, plus a note, same
+  shape discipline as a freeze's reason), `resolve()`, `unavailableTableIds()`,
+  `strandedGuests()`, `lostCapacity()`. Pure; no mutation, no DOM.
+- `src/seating-advisor.js`: `unavailableIndex()` mirrors `freezeIndex()`;
+  `constraintRows()` now answers `UNAVAILABLE_TABLES` for real (state
+  OPEN/UNAVAILABLE) whenever a resolved list is passed, closing the last
+  `NOT_CONFIGURED` slot this build named. `recommend()` excludes an
+  unavailable table with `BLOCKED.UNAVAILABLE`; `previewMove()` reports the
+  same constraint for a manually-chosen destination.
+- `src/plan-doctor.js`: accepts a resolved `unavailable` list the same way it
+  accepts `frozen`. Two new findings — `guestsAtUnavailableTable` (BLOCKING:
+  who is stranded, by record and pax) and `capacityLostToUnavailable`
+  (INFORMATION: chairs removed from tonight, caveating the `spareCapacity`
+  row the same way `capacityHeldByFreeze` caveats it for a freeze).
+  `NOT_EVALUATED` is now honestly `[]`.
+- `src/app-v8.js`: `AVAIL()`/`resolvedUnavailable()` mirror `FREEZE()`/
+  `resolvedFreezes()`. `setTableAvailability()` is the single writer, next to
+  `setArrival()`. The table card gained a red UNAVAILABLE banner (reason +
+  note), a stranded-guest list with relocate buttons, and a reason-picker +
+  mark/unmark control; the primary "seat here" button is `disabled` while
+  unavailable. `assignGuestGroup()` gained the hard block. The canvas gained
+  a hazard-stripe fill + alert icon, **unconditional** — unlike the freeze
+  and service-load layers, there is no toggle to hide it, because this is a
+  fact about whether the table exists tonight, not an optional advisory.
+
+### Defects found
+
+- None in existing code — the two call sites the programme pointed at
+  (`seating-advisor.js`'s `NOT_CONFIGURED` slot, `plan-doctor.js`'s
+  `NOT_EVALUATED` entry) were exactly right and needed no correction, only
+  filling in.
+
+### Test evidence
+
+`tests/suites/table-availability.test.mjs` — 36 checks, driving the real
+table card, the real canvas, the real Smart Seating panel and a direct call
+into the Plan Doctor. Two mutations proved to bite:
+
+| Mutation | Result |
+|---|---|
+| removed the hard block in `assignGuestGroup` | 5 checks fail — a direct empty-seat click seats the guest, the toast becomes a success message, Smart Seating's blocked reason flips to `ALREADY_THERE`, and the Doctor's stranded pax comes out wrong (4 instead of 3) |
+| disabled the `guestsAtUnavailableTable` finding | 3 checks fail — the Doctor no longer raises it, the Command Center's radar text disappears |
+
+Existing suites required updates because two real constraints — not one —
+now answer for real: `smart-seating.test.mjs`'s "one constraint still
+NOT_CONFIGURED" check became "zero," with a new section proving the
+unavailable table is excluded with no override; `risk-radar.test.mjs`'s
+"the engine names something it cannot see" check became "the engine now
+honestly names nothing," since Phase N closed the only entry that list ever
+held.
+
+### Visual QA
+
+Rendered at 1920×1080, 2560×1440 and 1440×900, English and Turkish: the
+table card in both states (available with the reason picker; unavailable
+with the red banner, stranded-guest row and "Mark available"), the disabled
+seat-here button next to Smart Seating correctly omitting the unavailable
+table from its recommendations, the canvas hazard-stripe mark with no layer
+switched on, and the Command Center radar showing the new BLOCKING finding
+ranked first, in both languages, with no blind-spot line left to show. Zero
+horizontal overflow at any viewport, no console or page errors beyond the
+same pre-existing sandbox CDN/favicon noise documented in Phase M.
+
+### Regression
+
+Detection is not reachable from this phase — table availability is a status
+flag on stored table state, never plan pixels — so `npm run benchmark` was
+not re-run.
+
+```
+npm run test:all             46/46 suites, 1663/1663 checks
+npm run verify:offline       27 passed, 0 failed
+                             (table-availability.js bundled into both artifacts)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             table card (both states), canvas mark,
+                             Command Center radar — 0px horizontal
+                             overflow, no page errors
+```
