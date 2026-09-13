@@ -51,8 +51,8 @@ programme's own rules).
 | 1B | Plan representation as evidence, not identity | PARTIAL — gap found | `src/plan-representation.js`'s `decide()` makes exactly ONE global PHYSICAL/SYMBOLIC verdict for the whole plan, from the overall chair-association rate. It does not yet support zone-local or mixed representation (a plan half physical, half symbolic). This is a real architecture change — introducing a per-zone or per-table representation verdict instead of one whole-plan classification — not a quick fix, and not yet implemented. Neither Golden nor ORNEK currently exhibits mixed representation, so there is no real-plan evidence yet motivating the specific shape of the fix; implementing it blind risks exactly the "confident wrong classification" section 1 warns against. |
 | 2 | Physical chair / logical seat / capacity separation | **DONE** | Pushed as commit `b64fb88`, CI CONFIRMED GREEN on the branch head (commit `dcde06c`, all 10 checks across both push- and pull_request-triggered runs). Two real, evidenced bugs found and fixed; the deeper "capacity can exceed physical chair count on the same table" architecture (e.g. capacity=12, physicalChairs=0 as a genuinely empty array) is a larger indexing-scheme change and is deliberately NOT attempted here — see "Deferred sub-scope" below, still valid. |
 | 3 | Capacity provenance | **DONE (by design, 3 of 8 sources wired)** | Pushed as commit `9f09e2d`, CI CONFIRMED GREEN (commit `dcde06c`, all 10 checks). See detailed write-up below. `table.capacitySource` (new `src/capacity-provenance.js`) is a real, migrated, backup/package-safe field on every table. Only the 3 sources this build can honestly produce (DETECTED_PHYSICAL_SEATS, HUMAN_CONFIRMED, UNKNOWN) are wired; the other 5 (PRINTED_TABLE_CAPACITY, PRINTED_ZONE_CAPACITY, PRINTED_TOTAL_CAPACITY, DERIVED_PRINTED_RULE, VERIFIED_VENUE_MEMORY) are named and translated but UNWIRED, since no current feature reads a per-table/zone/venue printed capacity number into `table.capacity` — inventing that read path now would be new detection behaviour, not a data-model change, and is explicitly out of scope for this section. This is the section's designed end state, not a partial result awaiting more work. No UI surface yet (that is section 11, Data Provenance Inspector, tracked separately). |
-| 4 | Object identity safety | PARTIAL | `plan-memory.js` and `plan-relationships.js` already order identity by verified number/context/geometry over visual similarity, and PI2.0's own measurement (documented in PR #5's body) found the learned embedding "no measurable contribution" to identity and shipped it OFF by default — matching this section's own requirement almost exactly. Not yet re-audited as a single pass against the full 6-level priority order this section specifies. |
-| 5 | Human-system interaction contract | NOT STARTED | Question budget (~3-5 visible decisions) and the full click→highlight→answer→rerun→resolve lifecycle need a dedicated audit of the Review/Confidence Budget UI against this contract. |
+| 4 | Object identity safety | **DONE (audit, no gap found)** | Re-audited this session; see detailed write-up below. `plan-memory.js`'s `identity()` already implements exactly the safety property this section protects: a VERIFIED printed number is an absolute veto in both directions (checked before any weighing), geometry dominates the weighted score, visual similarity's weight is scaled by `1 - geometryCertainty` (near-zero when geometry already agrees, largest only when an object has moved beyond tolerance), and family mismatch is evidence that lowers the score but never blocks a match. Correction to an earlier note: visual similarity is not "off by default" — it is always computed and always wired in (mandatory per the module's own §24 requirement), but its WEIGHT is what stays governed. `venue-model.js`'s layout-change comparison uses a stricter, purely deterministic ladder for its own different task (verified table number, then position, no visual similarity at all). Both are already covered by existing suites (`plan-memory`, `layout-changes`); no gap found, no new code needed. |
+| 5 | Human-system interaction contract | **DONE (audit, no gap found)** | Re-audited this session; see detailed write-up below. `plan-confidence-budget.js`'s `DEFAULT_MAX_ITEMS=6` is a real, measured, justified budget ("with the two real plans, six covers every claim that settles anything... overridable so the measurement can be redone on a third plan"), with everything below the line counted and disclosed rather than hidden. `review-queue.js` implements the click→highlight→answer→resolve lifecycle with resolution state read live from the candidates on every render (never a separate tally that could drift), tested in `review-queue.test.mjs` (38 checks). `operator-questions.test.mjs` (15 checks) separately guards against two different underlying questions reading as identical text. No gap found, no new code needed. |
 | 6 | Turkish-first product | NOT STARTED | A real, product-wide default-language change plus a full leak audit across every screen. |
 | 7 | UI/business logic separation | PARTIAL | The single-writer pattern already exists for several domain facts (`setArrival`, `addHandoverNote`, `autoSnapshot`, `regenerateIds`, etc., documented across the K–T phases) — not yet audited as a complete, enforced architecture rule. |
 | 8 | Floor Plan experience simplification | NOT STARTED | |
@@ -100,6 +100,11 @@ programme's own rules).
   sources wired, detailed below.
 - A real, pre-existing wall-clock flake in `post-event-replay.test.mjs`
   found and fixed along the way — detailed below, landed as its own commit.
+- Sections 4/5 (object identity safety, question budget/lifecycle):
+  re-audited, no gap found, detailed below — including a correction to
+  this report's own earlier claim that visual similarity ships off by
+  default in `plan-memory.js` (it does not; its weight, not its presence,
+  is what stays governed).
 - This report.
 
 **CI confirmed for commit `ba48b05`** (section 1A, the sample-independence
@@ -307,6 +312,96 @@ section 3's actual diff. Reconfirmed: 31/31 checks, and re-verified
 structurally that nothing else in the file depended on that entry's
 exact original value beyond "it must sort oldest."
 
+### Sections 4/5 in detail: audited, no gap found, no new code
+
+Both sections asked for a re-audit of existing behaviour against a
+safety/UX contract, not new implementation. The audit was real (source
+read, not assumed) and its honest conclusion is that both are already
+compliant — completing an audit by confirming compliance is the audit
+doing its job, not a shortcut past it.
+
+**Section 4 — object identity safety.** Read `src/plan-memory.js`'s
+`identity()` end to end. The priority order it actually implements:
+
+1. **A distance gate first.** A candidate beyond `tolerance *
+   SEARCH_OF_TOLERANCE` from the remembered geometry is never considered
+   at all — visual or contextual similarity cannot reach out and claim a
+   distant object.
+2. **A verified printed number is an absolute veto, both directions**,
+   checked before any weighing: two objects with different VERIFIED
+   numbers never match "however identical the two circles look" (its own
+   comment, and its own test at `plan-memory.test.mjs`); two with the SAME
+   verified number match at certainty regardless of what the weighing
+   would have said. Only VERIFIED readings count — a NEEDS_REVIEW number
+   is treated as saying nothing, since it is measured right only 17% of
+   the time.
+3. **Geometry dominates the weighted score** for everything the veto
+   didn't already settle.
+4. **Visual similarity's WEIGHT is scaled by geometric uncertainty**
+   (`weights.visual = W.visual * (1 - geometryCertainty)`) — near-zero
+   when geometry already agrees, largest only for an object that moved
+   beyond its own tolerance. This is where a correction to an earlier
+   note in this report is needed: visual similarity is not "off by
+   default" — §24 of the module's own history makes it mandatory to wire
+   in, and production calls `MeritPlanMemory.match()` with no `opts`,
+   so `useVisual` defaults true. What stays governed is its WEIGHT, not
+   whether it runs. The module's own measurement (in its header comment)
+   found it does not help on this corpus — "the embedding cost four
+   decisions... the neighbourhood signature cost three" — and reports
+   that honestly rather than pretending it doesn't matter.
+5. **Family is evidence, never a gate** — a reclassification (detector
+   said table, operator said chair) is exactly the correction this
+   layer exists to preserve, and requiring kind-matching would make the
+   most valuable corrections impossible to re-apply.
+
+Separately, `src/venue-model.js`'s `compareToVersion` (Layout Changes,
+CLAUDE.md's own worked example) uses a stricter, purely deterministic
+ladder for a different task — real published-layout comparison, where a
+false positive is worse than a missed one: verified table number first,
+position second, no visual similarity at all. The two modules solving two
+different problems (re-identifying across a re-analysis of possibly-
+different pixels, vs. comparing two published, human-confirmed layouts)
+correctly use different-strength versions of the same underlying
+principle — verified facts always outrank appearance — rather than one
+sharing an inappropriately loose or tight rule with the other.
+
+Both are already covered: `plan-memory.test.mjs` tests the veto in both
+directions, family-never-gates, and that the embedding is "actually
+consulted" and changes the score when present; `layout-changes.test.mjs`
+tests the deterministic ladder. No gap found. No source or test changed
+for this section.
+
+**Section 5 — human-system interaction contract.** Read
+`src/plan-confidence-budget.js` and `src/review-queue` render logic
+(`app-v8.js`'s queue/review binding) plus their test suites.
+`DEFAULT_MAX_ITEMS = 6` is not an arbitrary UX guess — its own header
+states it was measured against both real plans ("with the two real
+plans, six covers every claim that settles anything on the physical plan
+and every claim that settles an object or a fact on the symbolic one")
+and is explicitly overridable so a third real plan can redo the
+measurement rather than inherit this one. Two governing rules are
+enforced structurally, not just documented: repeated uncertainty across
+N identical objects is one claim carrying the count N, not N separate
+warnings; and everything below the visible line is counted and
+summarised rather than silently dropped — "a budget that quietly drops
+the tail is not a budget, it is a filter that lies about its own
+coverage" (its own words).
+
+The click→highlight→answer→resolve lifecycle lives in the review queue
+(`ui.reviewQueue`/`queueState`), and its one load-bearing property —
+what counts as RESOLVED is read from the live candidates on every
+render, never a separately-tracked tally — is exactly what prevents the
+queue from drifting the moment a decision is undone. `review-queue.test.
+mjs` (38 checks) covers the row→highlight→decide→next path end to end
+against the real committed plan (not a synthetic canvas drawing, since
+OCR-based text suppression behaves differently on a real vs. a runtime-
+rasterised image). `operator-questions.test.mjs` (15 checks) separately
+guards the one failure mode a lifecycle test can't see on its own: two
+DIFFERENT underlying questions rendering as the identical sentence,
+which a person reading one row at a time has no way to detect.
+
+No gap found. No source or test changed for this section.
+
 ## Continuation checkpoint (machine-readable)
 
 ```
@@ -339,23 +434,44 @@ ALSO FIXED THIS SESSION (unrelated, found along the way), pushed as commit
   2's actual diff. Fixed by pinning that entry's timestamp to a fixed
   08:00 in the test fixture. Both locally (31/31) and now on real CI
   (10/10 on dcde06c), the fix holds.
-NEXT_SECTION: 4/5 (object identity safety, human question budget and
-  lifecycle) — task #156.
-NEXT_ACTION: Audit plan-memory.js/plan-relationships.js against section
-  4's exact 6-level identity priority order (verified number > venue
-  memory > position > ... > visual similarity last), confirming the
-  already-measured "learned embedding: no measurable contribution"
-  finding from PI2.0 still holds as the reason visual similarity stays
-  off by default. Then audit the Review/Confidence Budget UI's question
-  flow against section 5's ~3-5 visible decisions budget and the full
-  click→highlight→answer→rerun→resolve lifecycle. Add whatever named
-  test suite(s) the audit's findings require.
+SECTIONS 4/5 STATUS: DONE (audit, no gap found). See detailed write-up
+  above. Section 4: `plan-memory.js`'s `identity()` already implements
+  verified-number veto (both directions) > geometry > uncertainty-scaled
+  visual > family-as-evidence-never-gate, already tested in
+  `plan-memory.test.mjs`; `venue-model.js`'s layout-change comparison uses
+  a stricter deterministic version for its own different task, tested in
+  `layout-changes.test.mjs`. NOTE: corrects an earlier (pre-this-session)
+  claim in this report that visual similarity "ships off by default" —
+  it does not; it is always wired in (mandatory per the module's own
+  history) and its WEIGHT is what stays governed by geometric certainty.
+  Section 5: `plan-confidence-budget.js`'s `DEFAULT_MAX_ITEMS=6` is
+  measured against both real plans and overridable for a third; the
+  review queue's resolution state is read live from candidates every
+  render (never a driftable tally); `review-queue.test.mjs` (38 checks)
+  and `operator-questions.test.mjs` (15 checks) already cover the
+  lifecycle and the no-duplicate-question-wording guarantee. No source or
+  test code changed for either section — the audit found no gap to fix.
+NEXT_SECTION: 6 (Turkish-first default language + full leak audit) —
+  task #157.
+NEXT_ACTION: Determine the CURRENT default language the app boots to
+  (check `ui.lang`'s initial value / any persisted default in
+  storage-provider.js or app.js's blank-state constructor). If it is not
+  already Turkish, this is a real, product-wide default-language change,
+  not just a copy fix — every screen's first paint, not just labels
+  reachable via `t()`, needs auditing for a hardcoded English fallback or
+  literal string that never went through i18n (the existing `i18n.test.
+  mjs` and `MERIT_I18N_STATUS` note that some older Guests/Seating/Live/
+  Reports templates keep literal English strings pending migration — this
+  section's "full leak audit" is exactly closing that gap, not a new
+  scan from zero). Add a suite (or extend `i18n.test.mjs`) that boots the
+  app with no explicit language choice and asserts the FIRST rendered
+  screen is Turkish, not just that `t()` can produce Turkish when asked.
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   change (section 2's "Deferred sub-scope" above) — STILL VALID, not
   attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
   and translated but not producible without new detection features.
 BLOCKED_ON: nothing external — this is pure engineering work.
-NOT_YET_TOUCHED: sections 4-28, 30-32, 35-38 (see table above).
+NOT_YET_TOUCHED: sections 6-28, 30-32, 35-38 (see table above).
 EXTERNAL_BLOCKERS_UNCHANGED: real human operator test (NOT VERIFIED), a
   genuine third independent real floor plan (NOT AVAILABLE), SQLite
   runtime (DEFERRED to EXE stage), EXE itself (DEFERRED, forbidden until
