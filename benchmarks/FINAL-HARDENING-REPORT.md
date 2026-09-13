@@ -317,32 +317,36 @@ SECTION 2 STATUS: PARTIAL, CI pending — pushed as commit b64fb88 (parent
   this flips to DONE. tests/suites/physical-logical-seat-separation.test.mjs
   (19 checks, mutation-proven) added and committed; tests/README.md row
   added.
-SECTION 3 STATUS: PARTIAL (by design) — new src/capacity-provenance.js,
-  table.capacitySource wired at all 4 real write sites (createTable,
-  app.js's createTableFromDraft, setTableCapacity, commitCandidates),
-  migrateEvent backfill via MeritCapacityProvenance.normalize(), 8
-  Turkish/English i18n keys, tests/suites/capacity-provenance.test.mjs (19
-  checks, 2 mutations proven to bite). 3 of 8 sources WIRED
+SECTION 3 STATUS: PARTIAL (by design), pushed as commit 9f09e2d — new
+  src/capacity-provenance.js, table.capacitySource wired at all 4 real
+  write sites (createTable, app.js's createTableFromDraft,
+  setTableCapacity, commitCandidates), migrateEvent backfill via
+  MeritCapacityProvenance.normalize(), 8 Turkish/English i18n keys,
+  tests/suites/capacity-provenance.test.mjs (19 checks, 2 mutations proven
+  to bite). 3 of 8 sources WIRED
   (DETECTED_PHYSICAL_SEATS/HUMAN_CONFIRMED/UNKNOWN); the other 5
   (PRINTED_TABLE_CAPACITY/PRINTED_ZONE_CAPACITY/PRINTED_TOTAL_CAPACITY/
   DERIVED_PRINTED_RULE/VERIFIED_VENUE_MEMORY) are named+translated but
   UNWIRED since no current feature produces them — wiring them would mean
   inventing new detection/business behaviour, not a data-model change; see
-  full write-up above. Not committed/pushed yet.
-ALSO FIXED THIS SESSION (unrelated, found along the way): a real wall-clock
-  flake in tests/suites/post-event-replay.test.mjs — its "Event created"
-  audit entry used the real current time instead of a controlled one, so
-  the suite failed whenever run between 19:00-20:00 (verified: container
-  clock read 19:26 UTC at the moment of failure). Fixed by pinning that
-  entry's timestamp to a fixed 08:00 in the test fixture. 31/31 checks
-  green. Not committed/pushed yet.
-NEXT_ACTION: commit section 3 (src/capacity-provenance.js, the
-  capacitySource wiring in src/app.js + src/app-v8.js, the 8 i18n keys,
-  index.html's new script tag, tests/suites/capacity-provenance.test.mjs,
-  tests/README.md row) and the post-event-replay flake fix as two separate
-  commits, push, confirm CI green for both b64fb88 (section 2) and the new
-  commits, then move to sections 4/5 (object identity safety, question
-  budget/lifecycle).
+  full write-up above.
+ALSO FIXED THIS SESSION (unrelated, found along the way), pushed as commit
+  e9742f1: a real wall-clock flake in tests/suites/post-event-replay.test.mjs
+  — its "Event created" audit entry used the real current time instead of
+  a controlled one, so the suite failed whenever run between 19:00-19:30.
+  This was CONFIRMED to be the actual cause of PR #5's own CI failure on
+  commit b64fb886 (both the push- and pull_request-triggered "Fast core"
+  runs failed with the identical symptom, CI's own runner clock reading
+  19:08 UTC at the moment of failure) — not a regression from section 2's
+  actual diff. Fixed by pinning that entry's timestamp to a fixed 08:00 in
+  the test fixture. 31/31 checks green, reproduced and fixed both locally
+  and verified against the real CI log via get_job_logs.
+NEXT_ACTION: confirm GitHub Actions CI is green on commit e9742f1 (which
+  should also retroactively confirm b64fb88/9f09e2d's actual content was
+  fine all along — the only failure was the flake, now fixed on the branch
+  head). Once confirmed, sections 2 and 3 both flip from PARTIAL to DONE
+  in the table above, then move to sections 4/5 (object identity safety,
+  question budget/lifecycle).
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   change (section 2's "Deferred sub-scope" above) — STILL VALID, not
   attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
