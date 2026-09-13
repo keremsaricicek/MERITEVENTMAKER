@@ -49,8 +49,8 @@ programme's own rules).
 | 1 | Generalisable plan understanding | PARTIAL | Reasoning pipeline broadly follows the evidence→hypothesis→corroboration→abstain shape already (Plan Doctor, Self-Check, Confidence Budget, Number Integrity all exist and compose this way). Not yet audited step-by-step against the exact 18-step order. |
 | 1A | No sample-specific production logic | **DONE** | Full audit of every Golden/ORNEK/merit-real-venue mention in `src/*.js` (47 occurrences) — every one is a documentation comment explaining a *generalized measured threshold*, never a branch on sample identity. One data file (`plan-encoder-weights.js`) carries honest `trainedOn` provenance metadata, correctly distinct from decision logic. New guard suite `tests/suites/no-sample-specific-runtime-logic.test.mjs` (6 checks, mutation-proven: injecting `if (venueId === "ornek-symbolic")` into `plan-representation.js` was caught, then reverted and reconfirmed green). Pure static analysis, no browser, ~150ms. |
 | 1B | Plan representation as evidence, not identity | PARTIAL — gap found | `src/plan-representation.js`'s `decide()` makes exactly ONE global PHYSICAL/SYMBOLIC verdict for the whole plan, from the overall chair-association rate. It does not yet support zone-local or mixed representation (a plan half physical, half symbolic). This is a real architecture change — introducing a per-zone or per-table representation verdict instead of one whole-plan classification — not a quick fix, and not yet implemented. Neither Golden nor ORNEK currently exhibits mixed representation, so there is no real-plan evidence yet motivating the specific shape of the fix; implementing it blind risks exactly the "confident wrong classification" section 1 warns against. |
-| 2 | Physical chair / logical seat / capacity separation | **DONE** | Pushed as commit `b64fb88`; local `test:all` green (54/54, 1871/1871) and both offline artifacts rebuilt+verified before push; CI confirmation tracked in the continuation checkpoint. Two real, evidenced bugs found and fixed; the deeper "capacity can exceed physical chair count on the same table" architecture (e.g. capacity=12, physicalChairs=0 as a genuinely empty array) is a larger indexing-scheme change and is deliberately NOT attempted here — see "Deferred sub-scope" below, still valid. |
-| 3 | Capacity provenance | **PARTIAL — data model + 3 of 8 sources wired** | See detailed write-up below. `table.capacitySource` (new `src/capacity-provenance.js`) is a real, migrated, backup/package-safe field on every table. Only the 3 sources this build can honestly produce (DETECTED_PHYSICAL_SEATS, HUMAN_CONFIRMED, UNKNOWN) are wired; the other 5 (PRINTED_TABLE_CAPACITY, PRINTED_ZONE_CAPACITY, PRINTED_TOTAL_CAPACITY, DERIVED_PRINTED_RULE, VERIFIED_VENUE_MEMORY) are named and translated but UNWIRED, since no current feature reads a per-table/zone/venue printed capacity number into `table.capacity` — inventing that read path now would be new detection behaviour, not a data-model change, and is explicitly out of scope for this section. No UI surface yet (that is section 11, Data Provenance Inspector, tracked separately). |
+| 2 | Physical chair / logical seat / capacity separation | **DONE** | Pushed as commit `b64fb88`, CI CONFIRMED GREEN on the branch head (commit `dcde06c`, all 10 checks across both push- and pull_request-triggered runs). Two real, evidenced bugs found and fixed; the deeper "capacity can exceed physical chair count on the same table" architecture (e.g. capacity=12, physicalChairs=0 as a genuinely empty array) is a larger indexing-scheme change and is deliberately NOT attempted here — see "Deferred sub-scope" below, still valid. |
+| 3 | Capacity provenance | **DONE (by design, 3 of 8 sources wired)** | Pushed as commit `9f09e2d`, CI CONFIRMED GREEN (commit `dcde06c`, all 10 checks). See detailed write-up below. `table.capacitySource` (new `src/capacity-provenance.js`) is a real, migrated, backup/package-safe field on every table. Only the 3 sources this build can honestly produce (DETECTED_PHYSICAL_SEATS, HUMAN_CONFIRMED, UNKNOWN) are wired; the other 5 (PRINTED_TABLE_CAPACITY, PRINTED_ZONE_CAPACITY, PRINTED_TOTAL_CAPACITY, DERIVED_PRINTED_RULE, VERIFIED_VENUE_MEMORY) are named and translated but UNWIRED, since no current feature reads a per-table/zone/venue printed capacity number into `table.capacity` — inventing that read path now would be new detection behaviour, not a data-model change, and is explicitly out of scope for this section. This is the section's designed end state, not a partial result awaiting more work. No UI surface yet (that is section 11, Data Provenance Inspector, tracked separately). |
 | 4 | Object identity safety | PARTIAL | `plan-memory.js` and `plan-relationships.js` already order identity by verified number/context/geometry over visual similarity, and PI2.0's own measurement (documented in PR #5's body) found the learned embedding "no measurable contribution" to identity and shipped it OFF by default — matching this section's own requirement almost exactly. Not yet re-audited as a single pass against the full 6-level priority order this section specifies. |
 | 5 | Human-system interaction contract | NOT STARTED | Question budget (~3-5 visible decisions) and the full click→highlight→answer→rerun→resolve lifecycle need a dedicated audit of the Review/Confidence Budget UI against this contract. |
 | 6 | Turkish-first product | NOT STARTED | A real, product-wide default-language change plus a full leak audit across every screen. |
@@ -310,43 +310,46 @@ exact original value beyond "it must sort oldest."
 ## Continuation checkpoint (machine-readable)
 
 ```
-SECTION 2 STATUS: PARTIAL, CI pending — pushed as commit b64fb88 (parent
-  ba48b05). Local test:all was green (54/54 suites, 1871/1871 checks) and
-  both offline artifacts rebuilt + verified (27/27 checks) before push.
-  Waiting on actual GitHub Actions CI for b64fb88 to confirm green before
-  this flips to DONE. tests/suites/physical-logical-seat-separation.test.mjs
-  (19 checks, mutation-proven) added and committed; tests/README.md row
-  added.
-SECTION 3 STATUS: PARTIAL (by design), pushed as commit 9f09e2d — new
-  src/capacity-provenance.js, table.capacitySource wired at all 4 real
-  write sites (createTable, app.js's createTableFromDraft,
-  setTableCapacity, commitCandidates), migrateEvent backfill via
-  MeritCapacityProvenance.normalize(), 8 Turkish/English i18n keys,
-  tests/suites/capacity-provenance.test.mjs (19 checks, 2 mutations proven
-  to bite). 3 of 8 sources WIRED
+SECTION 2 STATUS: DONE. Pushed as commit b64fb88 (parent ba48b05). CI
+  CONFIRMED GREEN on the branch head, commit dcde06c — all 10 checks
+  (both push- and pull_request-triggered "Fast core", "Offline",
+  "Detection", "Intelligence", "Performance" jobs) succeeded.
+  tests/suites/physical-logical-seat-separation.test.mjs (19 checks,
+  mutation-proven) added; tests/README.md row added.
+SECTION 3 STATUS: DONE (by design, 3 of 8 capacity sources wired). Pushed
+  as commit 9f09e2d. CI CONFIRMED GREEN on the branch head, commit
+  dcde06c — same 10/10 as above. New src/capacity-provenance.js,
+  table.capacitySource wired at all 4 real write sites (createTable,
+  app.js's createTableFromDraft, setTableCapacity, commitCandidates),
+  migrateEvent backfill via MeritCapacityProvenance.normalize(), 8
+  Turkish/English i18n keys, tests/suites/capacity-provenance.test.mjs (19
+  checks, 2 mutations proven to bite). 3 of 8 sources WIRED
   (DETECTED_PHYSICAL_SEATS/HUMAN_CONFIRMED/UNKNOWN); the other 5
   (PRINTED_TABLE_CAPACITY/PRINTED_ZONE_CAPACITY/PRINTED_TOTAL_CAPACITY/
   DERIVED_PRINTED_RULE/VERIFIED_VENUE_MEMORY) are named+translated but
   UNWIRED since no current feature produces them — wiring them would mean
-  inventing new detection/business behaviour, not a data-model change; see
-  full write-up above.
+  inventing new detection/business behaviour, not a data-model change;
+  this is the section's designed end state. See full write-up above.
 ALSO FIXED THIS SESSION (unrelated, found along the way), pushed as commit
   e9742f1: a real wall-clock flake in tests/suites/post-event-replay.test.mjs
   — its "Event created" audit entry used the real current time instead of
   a controlled one, so the suite failed whenever run between 19:00-19:30.
-  This was CONFIRMED to be the actual cause of PR #5's own CI failure on
-  commit b64fb886 (both the push- and pull_request-triggered "Fast core"
-  runs failed with the identical symptom, CI's own runner clock reading
-  19:08 UTC at the moment of failure) — not a regression from section 2's
-  actual diff. Fixed by pinning that entry's timestamp to a fixed 08:00 in
-  the test fixture. 31/31 checks green, reproduced and fixed both locally
-  and verified against the real CI log via get_job_logs.
-NEXT_ACTION: confirm GitHub Actions CI is green on commit e9742f1 (which
-  should also retroactively confirm b64fb88/9f09e2d's actual content was
-  fine all along — the only failure was the flake, now fixed on the branch
-  head). Once confirmed, sections 2 and 3 both flip from PARTIAL to DONE
-  in the table above, then move to sections 4/5 (object identity safety,
-  question budget/lifecycle).
+  CONFIRMED (via get_job_logs on the actual CI run) to be the sole cause
+  of PR #5's CI failure on commit b64fb886 — not a regression from section
+  2's actual diff. Fixed by pinning that entry's timestamp to a fixed
+  08:00 in the test fixture. Both locally (31/31) and now on real CI
+  (10/10 on dcde06c), the fix holds.
+NEXT_SECTION: 4/5 (object identity safety, human question budget and
+  lifecycle) — task #156.
+NEXT_ACTION: Audit plan-memory.js/plan-relationships.js against section
+  4's exact 6-level identity priority order (verified number > venue
+  memory > position > ... > visual similarity last), confirming the
+  already-measured "learned embedding: no measurable contribution"
+  finding from PI2.0 still holds as the reason visual similarity stays
+  off by default. Then audit the Review/Confidence Budget UI's question
+  flow against section 5's ~3-5 visible decisions budget and the full
+  click→highlight→answer→rerun→resolve lifecycle. Add whatever named
+  test suite(s) the audit's findings require.
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   change (section 2's "Deferred sub-scope" above) — STILL VALID, not
   attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
