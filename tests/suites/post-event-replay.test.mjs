@@ -86,6 +86,17 @@ export default async function run({ page, checks, baseUrl }) {
     });
     const stampAtFn = (h, m) => { const d = new Date(); d.setHours(h, m, 0, 0); return d.toISOString(); };
     const early = stampAtFn(19, 0), late = stampAtFn(20, 0);
+    // createBlankEvent() wrote its own "Event created" audit entry at the
+    // REAL current wall-clock time, not a controlled one. Whenever that
+    // happens to land inside 19:00-20:00 (the two windows this fixture
+    // exercises below), it silently joins the "19:00 wave" bucket alongside
+    // the early check-in and inflates its count — a real, reproducible
+    // failure this test would otherwise carry for up to two hours a day,
+    // depending only on when someone happens to run it. Pinned to a fixed
+    // hour well outside every window this test clicks, so the suite's
+    // result never depends on the clock it runs on.
+    const created = state.audit.find(a => a.eventId === e.id && a.action === "EVENT_CREATED");
+    if (created) created.at = stampAtFn(8, 0);
     e.guests = [
       g("g_early", "Erken Misafir", { arrivalStatus: "Checked In", checkedInAt: early }),
       g("g_late", "Geç Misafir", { arrivalStatus: "Checked In", checkedInAt: late }),
