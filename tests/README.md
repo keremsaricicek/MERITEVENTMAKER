@@ -21,6 +21,7 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `smoke` | business | the app does not boot, or a screen throws |
 | `no-sample-specific-runtime-logic` | business | a Golden/ORNEK/merit-real-venue reference in `src/*.js` stops being a documentation comment and becomes a branch on which specific sample was uploaded — the product must understand the language of a plan, never recognise the identity of the image |
 | `guest-and-seating-rules` | business | pax semantics, chair/capacity sync, the planning-vs-arrival split |
+| `physical-logical-seat-separation` | business | a symbolic table (no drawn seats) starts rendering fabricated chair glyphs, a physical/symbolic flip changes logical seat count or chair geometry, or Assisted Detection's commit path stops sourcing `hasPhysicalSeats` from the plan's own representation verdict |
 | `historical-immutability` | business | a completed event can be edited |
 | `bulk-add-integrity` | business | the Turkish UI writes labels where identifiers belong |
 | `undo-operations` | business | one of twelve destructive operations no longer round-trips |

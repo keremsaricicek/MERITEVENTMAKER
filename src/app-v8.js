@@ -103,14 +103,27 @@
     }
     return out;
   }
+  // Every table needs exactly `capacity` LOGICAL seat slots -- guest
+  // assignment, seat numbering and the exported seat count all index into
+  // this array by position, and that indexing scheme is unchanged here.
+  // What this array must never do is claim those slots are PHYSICAL chairs
+  // when the plan drew none: `physical` is an honest per-chair record of
+  // hasPhysicalSeats, computed fresh every call rather than carried over
+  // from the old array, since a table can be corrected (e.g. by Teach AI)
+  // from symbolic to physical or back after its chairs already exist.
+  // Geometry is still generated for every slot either way -- seating logic,
+  // Reports and exports read chair.x/y for nothing but seat ordering -- but
+  // a `physical:false` position is a placeholder for assignment, never a
+  // claim that a chair sits there, and rendering must not draw one.
   function syncTableChairs(table, count=table.capacity){
     count=Math.max(1,Math.min(99,Number(count)||1));
     const old=Array.isArray(table.chairs)?table.chairs:[], geometry=chairGeometry({...table,capacity:count},count);
     table.capacity=count;
+    const physical=table.hasPhysicalSeats!==false;
     table.chairs=geometry.map((p,index)=>({
       id:old[index]?.id||uid("chair"), parentTableId:table.id, seatNumber:index+1,
       x:Number.isFinite(old[index]?.x)?old[index].x:p.x, y:Number.isFinite(old[index]?.y)?old[index].y:p.y,
-      rotation:Number.isFinite(old[index]?.rotation)?old[index].rotation:p.rotation, occupancy:null
+      rotation:Number.isFinite(old[index]?.rotation)?old[index].rotation:p.rotation, occupancy:null, physical
     }));
     return table;
   }
@@ -275,7 +288,14 @@
     const highlighted=ui.highlightId===table.id,match=!seating||tableMatchesFilter(event,table);
     const used=seating&&ui.operationalMode?liveUsedIndexes(event,table.id):occupiedSeatIndexes(event,table.id);
     const assigned=used.size, empty=Math.max(0,table.capacity-assigned);
-    const chairs=table.chairs.map((chair,index)=>`<i class="chair ${used.has(index)?"occupied":seating&&ui.operationalMode?"available-live":""}" data-chair-id="${chair.id}" style="left:${chair.x}%;top:${chair.y}%;transform:translate(-50%,-50%) rotate(${chair.rotation||0}deg)"></i>${ui.showSeats?`<span class="seat-number" style="left:${50+(chair.x-50)*.69}%;top:${50+(chair.y-50)*.69}">S${chair.seatNumber}</span>`:""}`).join("");
+    // A `physical:false` slot is a logical seat number for assignment, not
+    // a claim the plan drew a chair there -- painting one anyway (or a seat
+    // label floating at its fabricated coordinate) would show geometry the
+    // source drawing never had. Nothing about assignment, occupancy or seat
+    // numbering depends on this element existing, so a symbolic table's
+    // capacity ring is silent until Assisted Detection or a person actually
+    // places a real chair.
+    const chairs=table.chairs.map((chair,index)=>chair.physical===false?"":`<i class="chair ${used.has(index)?"occupied":seating&&ui.operationalMode?"available-live":""}" data-chair-id="${chair.id}" style="left:${chair.x}%;top:${chair.y}%;transform:translate(-50%,-50%) rotate(${chair.rotation||0}deg)"></i>${ui.showSeats?`<span class="seat-number" style="left:${50+(chair.x-50)*.69}%;top:${50+(chair.y-50)*.69}">S${chair.seatNumber}</span>`:""}`).join("");
     // THE FREEZE ZONES LAYER. A thin outline and a small mark, never an opaque
     // block: the operator has to keep reading the room through it, and a plan
     // covered in filled shapes is a plan nobody can work on. Hidden entirely
@@ -7903,7 +7923,15 @@
     touchEvent(event);render();
   }
   function commitCandidates(){
-    const event=activeEvent(),chosen=event.analysis?.candidates.filter(c=>c.selected&&c.status!=="rejected")||[];if(!chosen.length)return toast("Select at least one detection to confirm.","error");recordUndo(event);let tables=0,venues=0;for(const c of chosen){if(c.committedId)continue;const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);if(c.kind==="table"){const table=syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||1),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:true});if(c.chairDetections?.length){table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0,occupancy:null}));table.capacity=table.chairs.length;}event.tables.push(table);c.committedId=table.id;tables++;}else{const object={id:uid("venue"),type:c.type||"text",label:String(c.type||"OBJECT").toUpperCase(),x,y,w,h,rotation:c.rotation||0,locked:false,z:4};
+    const event=activeEvent(),chosen=event.analysis?.candidates.filter(c=>c.selected&&c.status!=="rejected")||[];if(!chosen.length)return toast("Select at least one detection to confirm.","error");
+    // The same verdict runSelfCheck() already reads (analysis.diagnostics.
+    // representation.kind==="PHYSICAL") -- one fact, one source. A table
+    // committed off a SYMBOLIC plan (or one with no verdict at all, since
+    // absence of evidence is not evidence of drawn chairs) gets
+    // hasPhysicalSeats:false, so syncTableChairs never paints a ring of
+    // fabricated chairs around a symbol the drawing never gave one.
+    const drawsSeats=!!(event.analysis?.diagnostics?.representation?.kind==="PHYSICAL");
+    recordUndo(event);let tables=0,venues=0;for(const c of chosen){if(c.committedId)continue;const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);if(c.kind==="table"){const table=syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||1),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length});if(c.chairDetections?.length){table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0,occupancy:null,physical:true}));table.capacity=table.chairs.length;}event.tables.push(table);c.committedId=table.id;tables++;}else{const object={id:uid("venue"),type:c.type||"text",label:String(c.type||"OBJECT").toUpperCase(),x,y,w,h,rotation:c.rotation||0,locked:false,z:4};
       // Seating furniture keeps its capacity state on the committed object, so
       // "we do not know how many this banquette seats" survives leaving the
       // review screen instead of silently becoming zero on the floor plan.

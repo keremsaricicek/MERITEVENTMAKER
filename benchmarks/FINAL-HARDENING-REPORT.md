@@ -49,7 +49,7 @@ programme's own rules).
 | 1 | Generalisable plan understanding | PARTIAL | Reasoning pipeline broadly follows the evidence→hypothesis→corroboration→abstain shape already (Plan Doctor, Self-Check, Confidence Budget, Number Integrity all exist and compose this way). Not yet audited step-by-step against the exact 18-step order. |
 | 1A | No sample-specific production logic | **DONE** | Full audit of every Golden/ORNEK/merit-real-venue mention in `src/*.js` (47 occurrences) — every one is a documentation comment explaining a *generalized measured threshold*, never a branch on sample identity. One data file (`plan-encoder-weights.js`) carries honest `trainedOn` provenance metadata, correctly distinct from decision logic. New guard suite `tests/suites/no-sample-specific-runtime-logic.test.mjs` (6 checks, mutation-proven: injecting `if (venueId === "ornek-symbolic")` into `plan-representation.js` was caught, then reverted and reconfirmed green). Pure static analysis, no browser, ~150ms. |
 | 1B | Plan representation as evidence, not identity | PARTIAL — gap found | `src/plan-representation.js`'s `decide()` makes exactly ONE global PHYSICAL/SYMBOLIC verdict for the whole plan, from the overall chair-association rate. It does not yet support zone-local or mixed representation (a plan half physical, half symbolic). This is a real architecture change — introducing a per-zone or per-table representation verdict instead of one whole-plan classification — not a quick fix, and not yet implemented. Neither Golden nor ORNEK currently exhibits mixed representation, so there is no real-plan evidence yet motivating the specific shape of the fix; implementing it blind risks exactly the "confident wrong classification" section 1 warns against. |
-| 2 | Physical chair / logical seat / capacity separation | NOT STARTED | Full audit of `syncTableChairs`, `seatPositions`, `hasPhysicalSeats`, `commitCandidates`, table creation, migrations, seating, Live, exports, imports, backup, replay, history, recovery, and plan rendering for capacity-fabricates-chairs bugs. This is the single largest item in the programme — it touches nearly every subsystem below it (provenance, exports, package, migration). |
+| 2 | Physical chair / logical seat / capacity separation | **PARTIAL — root cause fixed, real bug found** | See detailed write-up below. Two real, evidenced bugs found and fixed; the deeper "capacity can exceed physical chair count on the same table" architecture (e.g. capacity=12, physicalChairs=0 as a genuinely empty array) is a larger indexing-scheme change and is deliberately NOT attempted here — see "Deferred sub-scope" below. |
 | 3 | Capacity provenance | NOT STARTED | Depends on section 2's data-model correctness landing first. |
 | 4 | Object identity safety | PARTIAL | `plan-memory.js` and `plan-relationships.js` already order identity by verified number/context/geometry over visual similarity, and PI2.0's own measurement (documented in PR #5's body) found the learned embedding "no measurable contribution" to identity and shipped it OFF by default — matching this section's own requirement almost exactly. Not yet re-audited as a single pass against the full 6-level priority order this section specifies. |
 | 5 | Human-system interaction contract | NOT STARTED | Question budget (~3-5 visible decisions) and the full click→highlight→answer→rerun→resolve lifecycle need a dedicated audit of the Review/Confidence Budget UI against this contract. |
@@ -94,19 +94,134 @@ programme's own rules).
   in `src/*.js` is documentation, never runtime identity logic. Mutation-
   proven (a real violation was injected into `plan-representation.js`,
   caught, then reverted and reconfirmed green).
+- Section 2 (physical chair / logical seat separation): two real bugs found
+  and fixed, detailed below.
 - This report.
+
+**CI confirmed for commit `ba48b05`** (section 1A, the sample-independence
+guard): both the push-triggered (`34773812436`) and pull_request-triggered
+(`34773815530`) runs are fully green, all 10 checks each. Section 1A is
+DONE, not just locally green.
+
+### Section 2 in detail: two real bugs, root-caused and fixed
+
+**Measured first.** `syncTableChairs()` (`src/app-v8.js`) is the ONE place
+that (re)builds `table.chairs` — called from `migrateEvent()`,
+`createTable()`, `commitCandidates()`, `refreshChairOccupancy()`, and
+`tableObjectHTML()` on every render. Read all five call sites before
+touching anything.
+
+**Bug 1 — `syncTableChairs()` fabricated chair geometry regardless of
+`hasPhysicalSeats`.** The per-table boolean `hasPhysicalSeats` already
+existed and was already correctly consulted by `physicalCapacity()` and
+every `seatable()` helper (`seating-freeze.js`, `table-availability.js`,
+`seating-advisor.js`, `service-load.js`, `plan-doctor.js`) for AGGREGATE
+counting — that part of the separation was already sound. But
+`syncTableChairs()` itself always generated exactly `capacity` chair
+objects with real-looking `(x, y, rotation)` from `chairGeometry()`,
+completely ignoring `hasPhysicalSeats`. A symbolic table (capacity read
+from a printed number, zero chairs drawn) therefore still had
+`table.chairs.length === capacity`, each with fabricated coordinates —
+and `tableObjectHTML()` drew every one of them as a real chair glyph on
+the canvas. **Fixed**: each chair object now carries its own honest
+`physical` field (`table.hasPhysicalSeats !== false`, recomputed fresh on
+every sync rather than carried over, since a table's physical/symbolic
+status can change after Teach AI corrections). `tableObjectHTML()` skips
+drawing the glyph and the floating seat-number label for any
+`physical:false` chair. Nothing about seat COUNT, indexing, assignment or
+pax numbering changed — `table.chairs.length` still equals `capacity`
+either way, so guest assignment and seat numbering are byte-identical.
+Confirmed safe to change purely visually: `data-chair-id` has no click
+handler anywhere in the codebase, so no interaction depends on the glyph
+existing.
+
+**Bug 2 (the real-world instance) — `commitCandidates()` hardcoded
+`hasPhysicalSeats:true` for every confirmed table, regardless of the
+plan's own PHYSICAL/SYMBOLIC verdict.** `runSelfCheck()` already reads
+`analysis.diagnostics.representation.kind==="PHYSICAL"` as its own
+"does this plan draw seats" signal — the exact fact `commitCandidates()`
+needed and wasn't using. On an ORNEK-shaped plan (every table the same
+numbered symbol, capacity read from a printed rule, zero drawn chairs),
+confirming a detected table always set `hasPhysicalSeats:true`, and once
+the printed-capacity-rule engine later corrected that table's capacity
+upward, the render-time `syncTableChairs()` call would have painted a
+full ring of fabricated "physical" chairs around a symbol the drawing
+never gave one — a direct, real-world instance of exactly the bug this
+section exists to close. **Fixed**: `commitCandidates()` now derives
+`hasPhysicalSeats` from the same representation verdict
+(`kind==="PHYSICAL"`), OR'd with whether that SPECIFIC candidate carries
+real confirmed chair detections (so a manually-corrected table on an
+otherwise-symbolic plan is still honestly physical). With no verdict
+computed at all, the default is now `false` (abstain — never claim
+physical chairs without evidence) rather than the old unconditional
+`true`.
+
+**Deliberately left unchanged: manually-created tables
+(`createTable()`, blank-event authoring) still default to
+`hasPhysicalSeats:true`.** This is a different scenario from a symbolic
+PLAN's chairs being fabricated — there is no plan image at all here, and
+the generated seat ring is a deliberate, useful authoring affordance for
+building a floor plan from scratch (`CLAUDE.md`: "Blank events are
+actually blank" — the operator is directly, manually stating "this table
+seats N," which is exactly what a physical-authoring flow is for).
+Changing this default would remove a normal, expected visual for the
+most common table-creation path in the product, far outside this
+section's actual concern (chairs fabricated FROM PLAN EVIDENCE that
+was never really there).
+
+**Tests.** `tests/suites/physical-logical-seat-separation.test.mjs` (new,
+19 checks): a manually-created table defaults physical and renders 8
+chair glyphs for capacity 8; flipping `hasPhysicalSeats` to false keeps
+`chairs.length===8` (logical seats, assignment and numbering unaffected)
+but renders zero glyphs, with every chair honestly marked
+`physical:false`; flipping back to physical redraws all 8 with
+byte-identical geometry (no chair silently moved across the round trip);
+the exact `commitCandidates()` expression is proven correct for all four
+representation/detection combinations; and the Home screen's own physical-
+capacity fact (already gated by `hasPhysicalSeats` before this fix) is
+confirmed to still correctly exclude a symbolic table's seats. Two
+mutations proved to bite: reverting the `physical===false` skip in
+`tableObjectHTML()` was caught (a symbolic table's 8 chairs render again),
+then reverted and reconfirmed green.
+
+**Deferred sub-scope, explicitly out of this pass.** The full
+`{capacity: 12, physicalChairs: 0}` shape — a table whose PHYSICAL chair
+array is genuinely SHORTER than its capacity (not just visually
+suppressed, actually a different-length array) — would require changing
+how `assignment.seats` indexes into `table.chairs` everywhere it's read
+(Floor Plan rendering, Live, Reports/XLSX seat numbering, exports), since
+today seat index and chair-array index are the same number. That is a
+real, larger, separate architecture change with much higher regression
+risk across the "Reports are regression-sensitive" contract, and is NOT
+attempted in this pass — flagged here as **STILL VALID, NOT YET DONE**,
+not silently dropped.
+
+**Section 3 (capacity provenance): NOT STARTED.** Depends on this
+section's data model, now sound. Building the actual provenance enum,
+Turkish-facing copy, and its survival through save/backup/package/
+migration is a distinct, real feature and is the next item once picked
+back up.
 
 ## Continuation checkpoint (machine-readable)
 
 ```
-NEXT_SECTION: 2 (Physical chair / logical seat / capacity separation)
-NEXT_ACTION: Audit syncTableChairs, seatPositions, hasPhysicalSeats,
-  commitCandidates in src/app.js and src/app-v8.js for any code path where
-  `capacity > 0` alone causes a physical chair object to be fabricated.
-  Design the fix (capacity as a number, physical chairs as a real array
-  that can legitimately be empty), then implement + add the 6 mandatory
-  tests from section 2, then move to section 3 (capacity provenance) on
-  the same commit or the next one.
+SECTION 2 STATUS: PARTIAL — root cause fixed (see write-up above), commit
+  pending push+CI. tests/suites/physical-logical-seat-separation.test.mjs
+  (19 checks, mutation-proven) added.
+NEXT_SECTION: 3 (Capacity provenance)
+NEXT_ACTION: Design the capacity-source enum (DETECTED_PHYSICAL_SEATS /
+  PRINTED_TABLE_CAPACITY / PRINTED_ZONE_CAPACITY / PRINTED_TOTAL_CAPACITY /
+  DERIVED_PRINTED_RULE / VERIFIED_VENUE_MEMORY / HUMAN_CONFIRMED / UNKNOWN,
+  internal names only, natural Turkish user copy), store it per table
+  (probably table.capacitySource), wire it from wherever capacity is
+  currently SET (setTableCapacity, commitCandidates' capacity-rule
+  corrections, manual edits) so it's never left UNKNOWN when a real source
+  is known, and make it survive migrateEvent/exportBackup/event-package
+  round-trips. Then the 6 mandatory section-2 test names not yet covered
+  (capacity-provenance-preserved/integrity) become meaningful. After that,
+  move to sections 4/5 (object identity safety, question budget/lifecycle).
+DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
+  change (see "Deferred sub-scope" above) — STILL VALID, not attempted.
 BLOCKED_ON: nothing external — this is pure engineering work.
 NOT_YET_TOUCHED: sections 3-28, 30-32, 35-38 (see table above).
 EXTERNAL_BLOCKERS_UNCHANGED: real human operator test (NOT VERIFIED), a
