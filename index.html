@@ -99,6 +99,10 @@
        fact about the event: the "state of the event" half of Handover is
        composed in app-v8.js from the modules already loaded above. -->
   <script src="src/event-handover.js"></script>
+  <!-- Which raw audit-log entries are a decision worth showing in the trail.
+       An allowlist, not a filter on the noisy generic entry every mutation
+       writes — a code this module was never told about stays invisible. -->
+  <script src="src/audit-trail.js"></script>
   <script src="src/training-data.js"></script>
   <script src="src/app-v8.js"></script>
 </body>

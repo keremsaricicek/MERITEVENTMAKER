@@ -2180,3 +2180,171 @@ rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
                              tab-bar check — 0px horizontal overflow,
                              no new console/page errors
 ```
+
+### CI (the actual PR run, not a local one)
+
+Commit `0aa1428` pushed Phase O. Both the push-triggered run (`34741623945`)
+and the pull_request-triggered run (`34741582103`) are fully green — all 10
+check runs `completed`/`success` across both. Phase O is DONE.
+
+## PHASE P — Audit Trail / Decision Replay foundation
+
+### Problem
+
+"What actually happened to this event?" has no answer anywhere in the
+product today. Every domain module writes to `state.audit` when it makes a
+decision, but nothing ever reads that log back to a person — it exists
+purely as an internal record. This phase is named a *foundation*
+deliberately: it names and orders the decisions that were made; it does
+not play the room back visually — that is Phase S, a later and separate
+feature, and the two must not be confused.
+
+### Measured first
+
+Reading every `audit(event, "CODE", detail)` call site in `app-v8.js`
+before writing anything surfaced two facts that shaped the whole design:
+
+1. `touchEvent()` — called by nearly every mutation path in the product —
+   writes a generic `EVENT_UPDATED` entry on its own, as a side effect of
+   saving. The raw log is mostly this one code, repeated. A trail that
+   printed `state.audit` verbatim would show an operator dozens of
+   meaningless "event updated" lines burying the real decisions.
+2. A real, pre-existing defect: checking a guest in from the Global Finder
+   wrote **two** audit entries for one decision — `setArrival()`'s own
+   `ARRIVAL_STATUS_CHANGED` (guestId, from, to, source), and a second,
+   separately-written `GUEST_CHECKED_IN` at the call site
+   (`{guestId, from:"finder"}`). The `from` field meant two different
+   things across the two entries — the guest's previous status in one, the
+   calling UI surface in the other — a genuine trap for a human reading the
+   log. `setArrival()` already recorded `source:"finder"` on its own entry,
+   making the second one pure duplication. Fixed at the source: the
+   redundant call is deleted, `setArrival()` stays the one writer of both
+   the field and its audit entry. `guest-finder.test.mjs` (which already
+   asserted the old, duplicated behaviour) was updated to assert the
+   correct one — one entry, tagged `source:"finder"` — and `audit-
+   trail.test.mjs` asserts the same invariant independently, so a future
+   regression is caught by two suites, not one.
+
+### Design decision: an allowlist, not a filter on noise
+
+`src/audit-trail.js` is a new, small, pure module. It owns exactly one
+thing — `DECISION_CODES`, a Set naming every code that counts as a
+decision worth showing — and `resolve(auditEntries, eventId)`, which
+filters the shared root-level log down to one event's allowlisted entries,
+in the order `audit()` already writes them (newest first; nothing here
+re-sorts). It is an **allowlist**, not an exclude-list on `EVENT_UPDATED`:
+a future audit code this module was never told about stays invisible
+rather than leaking into the trail unreviewed. Showing nothing is honest;
+showing noise is not.
+
+Turning one entry into a sentence is deliberately NOT this module's job —
+`auditTrailText(event, entry)` lives in `app-v8.js`, next to `t()` and the
+guest/table lookups a sentence needs, mirroring exactly where
+`doctorText()` and `ccCheckText()` already live for the same reason. A
+`HANDOVER_NOTE_ADDED` entry only stores a `noteId`; the sentence looks the
+real text up live from `event.handoverNotes` rather than caching a copy,
+so the trail can never show a note that has since been superseded — though
+in this foundation, handover notes are themselves append-only, so nothing
+supersedes them yet. An entry pointing at a guest or table id that no
+longer resolves (the record was deleted since) falls back to an honest "no
+longer on this event" phrase rather than blanking the row or throwing —
+the same "falls back to the screen" discipline `doctorGo()` already uses
+for a stale finding.
+
+**Lives in Reports, not the Command Center.** The original navigation plan
+(§"Where each feature lives") already named this: "Audit Trail | Reports /
+History | it is history." Reports is reachable for a historical event
+(`historyTabs` includes it) where the Command Center is not — exactly the
+moment an operator most wants to know what happened, which the Command
+Center's own "a finished event has no readiness to assess" design would
+otherwise deny them.
+
+**The shared log's cap is disclosed, not silently hidden.** `state.audit`
+is one array shared by every event in the install, capped at 1000 entries
+total. An old event's own decisions can fall off the back of that cap
+purely because OTHER events kept generating activity — a real limitation
+of reusing the existing log rather than giving each event its own. Rather
+than solve that (a genuine architecture change, out of scope for a
+foundation phase) or hide it, the trail shows a plain caveat whenever the
+shared log is at its cap, so an operator reading an unusually short trail
+on an old, busy install is told why rather than left to assume nothing
+happened.
+
+### Implementation
+
+- `src/audit-trail.js` (new): `DECISION_CODES`, `resolve()`. Pure; no i18n,
+  no DOM, no knowledge of guests or tables.
+- `src/app-v8.js`: `TRAIL()`/`resolvedAuditTrail()` mirror the same
+  `FREEZE()`/`resolvedFreezes()` pattern every prior phase has used.
+  `auditTrailText()` renders each of the thirteen allowlisted codes to a
+  sentence from its own `detail` plus current guest/table/note lookups.
+  `auditTrailHTML()` renders the section (question line, cap notice where
+  relevant, the list, or an honest empty state) and is wired into
+  `reportsHTML()` right after the existing table list. The redundant
+  `GUEST_CHECKED_IN` audit call in the Global Finder's check-in handler is
+  removed.
+- `src/i18n.js`: an `audit.*` block — title, question, empty state, the cap
+  notice, unknown-guest/unknown-table/note-gone fallbacks, and one sentence
+  key per allowlisted code.
+- `src/styles.css`: `.audit-trail`/`.audit-row` reuse `.mx-list`'s borders
+  and hover from the existing Reports screen, with rows that wrap a
+  sentence instead of a fixed grid, plus `.audit-cap-notice` styled as a
+  quiet amber disclosure, not an alarm.
+
+### Defects found
+
+- The `GUEST_CHECKED_IN` double-logging described above — fixed at the
+  source (`src/app-v8.js`, the Global Finder's check-in handler), not
+  papered over in the trail's own rendering. Both `guest-finder.test.mjs`
+  and `audit-trail.test.mjs` now assert the corrected behaviour.
+
+### Test evidence
+
+`tests/suites/audit-trail.test.mjs` — 27 checks, driving the real Global
+Finder check-in, the real table-availability control, the real handover
+composer, and Reports itself. Two mutations proved to bite:
+
+| Mutation | Result |
+|---|---|
+| re-introduced the redundant `GUEST_CHECKED_IN` audit call | 2 checks fail across two suites — `audit-trail.test.mjs`'s own "never a second entry" check, and `guest-finder.test.mjs`'s matching assertion (added specifically so this defect is caught by the suite that owns the flow, not only by the unrelated suite that happened to find it) |
+| added `EVENT_UPDATED` to the allowlist | 3 checks fail — the domain-module check that the noise code is excluded, the scoped-resolve count, and the real-UI check that no raw `EVENT_UPDATED` line reaches the screen |
+
+### Visual QA
+
+Rendered via the `visual-qa-reviewer` agent at 1920×1080, 2560×1440 and
+1440×900, English and Turkish, plus a dedicated cap-notice state, a
+historical-event check, and a forced multi-line wrap stress test (the
+handover-note case truncates to 80 characters before it ever reaches the
+DOM, so a `GUEST_DELETED` entry with a ~300-character injected name was
+used to force a genuine 3-line row instead). Pass at all six required
+viewport/language combinations, no defects: `.audit-trail`/`.audit-row`
+are visually and rule-for-rule identical to the existing `.mx-list`/
+`.mx-row` styling the "Table list" section above it already uses — this
+reads as a continuation of Reports, not a bolted-on block. The forced
+wrap case grows the row cleanly to three lines with no overflow of the
+row or its container, and `.audit-when` stays pinned rather than being
+pushed off; zero horizontal overflow at any of the six combinations. The
+cap-notice renders as a calm amber disclosure, not an alarm. Turkish
+strings are real, distinct translations that fit the row at every tested
+width despite running longer than their English counterparts. Historical
+event confirmed: Reports and the trail inside it stay fully visible and
+populated on a Completed event, with the Command Center tab correctly
+absent. Zero new console/page errors beyond the pre-existing, documented,
+blocked-CDN noise (XLSX/Tesseract/PDF.js).
+
+### Regression
+
+Detection is not reachable from this phase — the trail reads a stored log
+and stored guest/table/note data, never plan pixels — so `npm run
+benchmark` was not re-run.
+
+```
+npm run test:all             48/48 suites, 1735/1735 checks
+npm run verify:offline       27 passed, 0 failed
+                             (audit-trail.js bundled into both artifacts,
+                             28 sources total, up from 27)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             plus cap-notice state, historical-event
+                             check, and a forced multi-line wrap test —
+                             0px horizontal overflow, no new page errors
+```

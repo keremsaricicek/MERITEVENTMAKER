@@ -1075,6 +1075,34 @@
     "handover.added": { en: "Handover note added.", tr: "Vardiya notu eklendi." },
     "handover.empty": { en: "Write something before adding a note.", tr: "Not eklemeden önce bir şey yazın." },
 
+    // ---- Audit Trail ----
+    // The foundation, not the replay: a reverse-chronological list of the
+    // decisions made about this event, named in a person's language. Only
+    // the codes src/audit-trail.js allowlists ever reach this screen — the
+    // generic "event updated" entry every mutation writes is not one of them.
+    "audit.title": { en: "Audit trail", tr: "İşlem geçmişi" },
+    "audit.question": { en: "What actually happened to this event?", tr: "Bu etkinlikte gerçekte ne oldu?" },
+    "audit.none": { en: "No recorded decisions yet.", tr: "Henüz kaydedilmiş bir işlem yok." },
+    "audit.unknownGuest": { en: "a guest no longer on this event", tr: "artık bu etkinlikte olmayan bir misafir" },
+    "audit.unknownTable": { en: "a table no longer on this plan", tr: "artık bu planda olmayan bir masa" },
+    "audit.noteGone": { en: "(note no longer available)", tr: "(not artık mevcut değil)" },
+    "audit.capNotice": { en: "The shared activity log is at its limit — the oldest entries across ALL events may have been superseded and are no longer available here.", tr: "Paylaşılan işlem günlüğü sınırına ulaştı — TÜM etkinliklerdeki en eski kayıtların yerini yenileri almış olabilir ve burada artık görünmeyebilirler." },
+    "audit.eventCreatedBlank": { en: "Event created, blank", tr: "Etkinlik oluşturuldu, boş" },
+    "audit.eventCreatedFromPlan": { en: "Event created from an uploaded floor plan", tr: "Etkinlik yüklenen bir kat planından oluşturuldu" },
+    "audit.guestDeleted": { en: "Guest record deleted: {name}", tr: "Misafir kaydı silindi: {name}" },
+    "audit.arrivalChanged": { en: "{name}: {from} → {to}", tr: "{name}: {from} → {to}" },
+    "audit.tableMarkedUnavailable": { en: "{number} marked unavailable ({reason})", tr: "{number} kullanılamaz olarak işaretlendi ({reason})" },
+    "audit.tableMarkedAvailable": { en: "{number} marked available again", tr: "{number} yeniden kullanılabilir olarak işaretlendi" },
+    "audit.freezeCreated": { en: "An area was frozen ({reason})", tr: "Bir alan donduruldu ({reason})" },
+    "audit.freezeLifted": { en: "A freeze was lifted ({reason})", tr: "Bir dondurma kaldırıldı ({reason})" },
+    "audit.freezeOverridden": { en: "A supervisor override crossed a freeze for one operation", tr: "Bir amir onayı, tek bir işlem için dondurmayı geçti" },
+    "audit.layoutChangeConfirmed": { en: "A layout change was confirmed", tr: "Bir yerleşim değişikliği onaylandı" },
+    "audit.handoverNoteAdded": { en: "Handover note: “{text}”", tr: "Vardiya notu: “{text}”" },
+    "audit.teachNumberConfirmed": { en: "A table number was confirmed: {value}", tr: "Bir masa numarası onaylandı: {value}" },
+    "audit.teachLessonKept": { en: "A Teach Area lesson was kept", tr: "Bir Öğret alanı notu tutuldu" },
+    "audit.teachLessonForgotten": { en: "A Teach Area lesson was forgotten", tr: "Bir Öğret alanı notu unutuldu" },
+    "audit.detectionCompleted": { en: "Assisted Detection finished analysing the plan", tr: "Yardımcı Tespit, planı analiz etmeyi tamamladı" },
+
     "seat.nothingYet": { en: "Nothing has changed yet.", tr: "Henüz hiçbir şey değişmedi." },
     "seat.cancel": { en: "Cancel", tr: "Vazgeç" },
     "seat.apply": { en: "Apply change", tr: "Değişikliği uygula" },

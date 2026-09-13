@@ -221,7 +221,7 @@ export default async function run({ page, checks, baseUrl }) {
     // the recent window rather than assuming the newest slot.
     return { planning: g.planningStatus, arrival: g.arrivalStatus,
       assignment: g.assignment,
-      audit: (state.audit || []).slice(0, 5).map(a => a.action) };
+      audit: (state.audit || []).slice(0, 5) };
   });
   checks.equal(after.arrival, "Checked In", "checking in sets arrival status");
   checks.equal(before.planning, "Tentative",
@@ -229,8 +229,17 @@ export default async function run({ page, checks, baseUrl }) {
   checks.equal(after.planning, "Tentative",
     "and checking in does NOT touch planning status — they are independent axes");
   checks.equal(after.assignment, null, "nor does it seat anybody");
-  checks.ok(after.audit.includes("GUEST_CHECKED_IN"),
-    "the arrival is recorded in the audit trail", after.audit);
+  // setArrival() is the sole writer of both the field and its audit entry —
+  // one decision, one entry, not a second "GUEST_CHECKED_IN" line under a
+  // different code for the same action.
+  const checkinEntry = after.audit.find(a => a.action === "ARRIVAL_STATUS_CHANGED");
+  checks.ok(checkinEntry, "the arrival is recorded in the audit trail", after.audit.map(a => a.action));
+  checks.equal(checkinEntry && checkinEntry.detail.source, "finder",
+    "tagged with the surface that triggered it", checkinEntry);
+  checks.equal(after.audit.filter(a => a.action === "ARRIVAL_STATUS_CHANGED").length, 1,
+    "exactly one entry for this one decision, not two under different codes", after.audit.map(a => a.action));
+  checks.equal(after.audit.filter(a => a.action === "GUEST_CHECKED_IN").length, 0,
+    "and never a legacy GUEST_CHECKED_IN entry alongside it", after.audit.map(a => a.action));
 
   // Checking in again is not offered.
   const again = (await type(page, "Sofia Rossi")).rows[0];

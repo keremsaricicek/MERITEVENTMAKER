@@ -415,6 +415,63 @@
     return note;
   }
 
+  // ---- AUDIT TRAIL: the foundation, not the replay ---------------------------
+  //
+  // src/audit-trail.js decides which raw `state.audit` entries are a decision
+  // worth showing — an allowlist, so the generic EVENT_UPDATED entry every
+  // single mutation writes never leaks in as if it were one. This resolves
+  // the list for one event; auditTrailText() below turns one entry into a
+  // sentence, reaching into the CURRENT guest/table/freeze data for names,
+  // never trusting a stale copy — a deleted guest's own audit line still
+  // needs to read sensibly, so it falls back to the id it can no longer
+  // resolve rather than throwing.
+  const TRAIL=()=>globalThis.MeritAuditTrail||null;
+  function resolvedAuditTrail(event){
+    const T=TRAIL();
+    if(!T||!event)return[];
+    return T.resolve(state.audit,event.id);
+  }
+  function auditTrailText(event,entry){
+    const d=entry.detail||{};
+    const guestName=id=>{const g=(event.guests||[]).find(x=>x.id===id);return g?g.name:t("audit.unknownGuest");};
+    const tableNumber=id=>{const tb=(event.tables||[]).find(x=>x.id===id);return tb?formatTableNumber(tb.number):t("audit.unknownTable");};
+    switch(entry.action){
+      case"EVENT_CREATED":
+        return t(d.blank?"audit.eventCreatedBlank":"audit.eventCreatedFromPlan");
+      case"GUEST_DELETED":
+        return t("audit.guestDeleted",{name:d.name||t("audit.unknownGuest")});
+      case"ARRIVAL_STATUS_CHANGED":
+        return t("audit.arrivalChanged",{name:guestName(d.guestId),
+          from:t("status.arrival."+d.from),to:t("status.arrival."+d.to)});
+      case"TABLE_AVAILABILITY_CHANGED":
+        return d.to==="UNAVAILABLE"
+          ?t("audit.tableMarkedUnavailable",{number:tableNumber(d.tableId),reason:availReasonText(d.reason)})
+          :t("audit.tableMarkedAvailable",{number:tableNumber(d.tableId)});
+      case"FREEZE_CREATED":
+        return t("audit.freezeCreated",{reason:freezeReasonText(d.reason)});
+      case"FREEZE_LIFTED":
+        return t("audit.freezeLifted",{reason:freezeReasonText(d.reason)});
+      case"FREEZE_OVERRIDDEN":
+        return t("audit.freezeOverridden");
+      case"LAYOUT_CHANGE_CONFIRMED":
+        return t("audit.layoutChangeConfirmed");
+      case"HANDOVER_NOTE_ADDED":{
+        const note=(event.handoverNotes||[]).find(n=>n.id===d.noteId);
+        return t("audit.handoverNoteAdded",{text:note?note.text.slice(0,80):t("audit.noteGone")});
+      }
+      case"TEACH_AREA_NUMBER_CONFIRMED":
+        return t("audit.teachNumberConfirmed",{value:d.value});
+      case"TEACH_AREA_LESSON_KEPT":
+        return t("audit.teachLessonKept");
+      case"TEACH_AREA_LESSON_FORGOTTEN":
+        return t("audit.teachLessonForgotten");
+      case"ASSISTED_DETECTION_COMPLETED":
+        return t("audit.detectionCompleted");
+      default:
+        return entry.action;
+    }
+  }
+
   // THE ONE RISK THAT CANNOT BE RECOVERED FROM ON THE NIGHT.
   //
   // Everything this product knows lives in one browser profile. `lastBackupAt`
@@ -1153,9 +1210,12 @@
     }else if(action==="checkin"){
       if(!canMutate(event,"check a guest in"))return;
       // Arrival status only. Planning status is a separate axis and nothing
-      // here may write to it.
+      // here may write to it. setArrival() is the sole writer of the audit
+      // entry too (ARRIVAL_STATUS_CHANGED, source:"finder") — a second,
+      // differently-named entry here would log the same decision twice under
+      // two codes, with a colliding "from" field meaning the guest's PREVIOUS
+      // status in one and the calling UI surface in the other.
       setArrival(event,g,"Checked In","finder");
-      audit(event,"GUEST_CHECKED_IN",{guestId:g.id,from:"finder"});
       touchEvent(event);render();
       toast(t("find.checkedIn",{name:g.name}),"success");
     }else if(action==="table"){
@@ -2656,6 +2716,21 @@
   // ---- Reports: catch problems BEFORE the workbook leaves the building --
   // The screen is free to change; the workbook contract is frozen. Nothing
   // here touches makeTablePlanSheet / makeListSheet / seatExportName.
+  // The Audit Trail lives in Reports because it is history, not a live
+  // screen — it stays reachable for a completed event exactly when an
+  // operator most wants it, unlike the Command Center. Newest first, exactly
+  // the order state.audit already keeps; nothing here re-sorts or groups.
+  function auditTrailHTML(event){
+    const trail=resolvedAuditTrail(event);
+    const atCap=(state.audit||[]).length>=1000;
+    return`<div class="mx-section"><div class="mx-section-head"><h2>${t("audit.title")}</h2><span class="count">${trail.length}</span></div>
+      <p class="audit-question">${t("audit.question")}</p>
+      ${atCap?`<p class="audit-cap-notice">${t("audit.capNotice")}</p>`:""}
+      ${trail.length
+        ?`<ul class="audit-trail">${trail.map(entry=>`<li class="audit-row"><span class="audit-text">${esc(auditTrailText(event,entry))}</span><span class="audit-when">${esc(relativeTime(entry.at))}</span></li>`).join("")}</ul>`
+        :`<div class="mx-empty" style="padding:28px">${t("audit.none")}</div>`}
+    </div>`;
+  }
   reportsHTML = function(event){
     const m=eventMetrics(event),s=seatingStats(event),issues=planIssues(event);
     const unassigned=event.guests.filter(g=>!g.assignment),unassignedPax=unassigned.reduce((n,g)=>n+paxOf(g),0);
@@ -2678,6 +2753,7 @@
           <div class="mx-section" style="margin-top:0"><div class="mx-section-head"><h2>${t("reports.preflight")}</h2><span class="count">${issues.length||""}</span></div><div class="preflight">${preflight}</div></div>
           <div class="mx-section"><div class="mx-section-head"><h2>${t("reports.capacitySummary")}</h2></div><div class="mx-metrics" style="margin-bottom:0">${capacity}</div></div>
           <div class="mx-section"><div class="mx-section-head"><h2>${t("reports.tableList")}</h2><span class="count">${t("reports.tablesCount",{n:event.tables.length})}</span></div>${event.tables.length?`<div class="mx-list">${tableRows}</div>`:`<div class="mx-empty" style="padding:28px">${t("reports.tablesCount",{n:0})}</div>`}</div>
+          ${auditTrailHTML(event)}
         </div>
         <aside class="export-panel">
           <h3>${t("reports.workbook")}</h3>
