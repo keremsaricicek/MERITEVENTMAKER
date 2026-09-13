@@ -3017,3 +3017,117 @@ rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
                              re-verified; 0px horizontal overflow, no
                              new page errors
 ```
+
+### CI (the actual PR run, not a local one)
+
+Commit `767997b` pushed Phase T. Both the push-triggered run (`34759875659`)
+and the pull_request-triggered run (`34759876978`) are fully green — all 10
+check runs `completed`/`success` across both. Phase T is DONE.
+
+This is the last phase of the K–T programme. Every phase from K through T
+is implemented, tested with real mutation evidence, visually verified at
+three viewports in both languages, covered by the full regression suite,
+rebuilt and verified in both offline artifacts, and confirmed green on the
+actual GitHub Actions run for its own commit — not a local pass, not an
+assumption.
+
+## FINAL PRODUCT VALIDATION
+
+Six checks, each a real, reproducible result rather than a claim — this
+section states what was actually done and what was actually found, and
+says plainly which questions this validation cannot answer.
+
+1. **Full regression suite, every phase, one final run.** `npm run
+   test:all` on the current head (commit `767997b`): **52/52 suites,
+   1846/1846 checks passed.** Every suite added across the K–T programme
+   (`arrival-wave`, `service-load`, `table-availability`, `event-handover`,
+   `audit-trail`, `offline-recovery`, `event-package`, `post-event-replay`,
+   `event-history`, and every pre-existing business/storage/intelligence
+   suite) ran together, in one process, against one build.
+
+2. **Both offline artifacts, rebuilt and actually run, not just built.**
+   `node scripts/build-offline.mjs` and `build-offline-full.mjs` against
+   the current head, then `node benchmarks/offline/verify-offline-package.mjs`:
+   **27/27 passed, 0 failed.** 32 app sources bundled into both artifacts
+   in the order `index.html` loads them; the single-file build boots with
+   the trained plan-encoder inlined and OCR honestly reporting itself
+   unavailable, and the full folder build performs real, local OCR
+   (capacity auditor, contradiction engine) with zero off-origin requests
+   attempted by either.
+
+3. **Visual QA at three viewports, two languages, every phase.** Recorded
+   individually in each phase's own section above (Phases K through T).
+   Across the whole programme this surfaced exactly one real, fixed defect
+   (Phase R's icon-only hero-card export button) and one applied judgment
+   call (Phase T's two-tile row width); every other pass came back clean.
+   No phase's UI work was marked complete from markup review alone —
+   every one was rendered in a real browser first, per this repo's own
+   `merit-ui-constitution` rule.
+
+4. **The actual GitHub Actions CI run, per phase, not a local pass.**
+   Phases L through T each carry their own recorded confirmation above —
+   commit hash, both the push- and pull_request-triggered workflow run
+   IDs, and all 10 check runs read back as `completed`/`success` via the
+   GitHub API itself, not inferred from a local `exit 0`. Phase K's own
+   completion was established earlier in this same programme, before this
+   document adopted the per-phase "CI" subsection as its own convention;
+   it is not re-verified here, and this validation does not claim a commit
+   hash for it it does not have on record.
+
+5. **A real operator, a real event, a real session.** **NOT VERIFIED.**
+   Every "operator" in every suite in this repository and every visual QA
+   pass in this programme has been a Playwright script or an agent driving
+   the real UI — never a person running an actual event night on this
+   build. Nothing in this validation should be read as claiming this
+   product has been used operationally.
+
+6. **A third, independent real floor plan, held out end-to-end.** **NOT
+   AVAILABLE.** This programme has ever had two real plans (the original
+   real plan from the early Gates, and `ORNEK.pdf` from the 2PLAN track).
+   `2PLAN Phase 7` — the robustness suite and CI run across both real
+   plans together — remains its own separate, still-open item (task
+   tracked, not part of K–T) precisely because a third plan to validate
+   against has never been supplied. This K–T validation does not close it
+   and does not pretend to.
+
+### Carried-over items, explicitly still open
+
+Three items predate the K–T programme, are not part of it, and are not
+closed by anything in this document — named here so "K–T is done" is never
+misread as "everything is done":
+
+- **2PLAN Phase 7** — the ORNEK robustness suite and a CI run covering
+  both real plans together, plus the report/PR that would follow.
+- **2PLAN Phase 4b** — PDF orientation normalisation, measured rather than
+  assumed.
+- **OI Phase 10–13** — real-operator-test session-recording scaffolding,
+  the third-real-plan held-out procedure, and OPERATIONAL-INTELLIGENCE-
+  ROADMAP.md's own final report.
+
+None of these were touched during Phases K–T. They stay exactly as open as
+they were before this programme began.
+
+## FINAL COMPLETION MATRIX
+
+| Item | Status |
+|---|---|
+| K–T programme (Phases K through T) | **DONE** — each phase implemented, mutation-tested, visually verified, regression-tested, offline-verified, and CI-confirmed green on its own commit |
+| Full regression suite (`npm run test:all`) | **PASSING** — 52/52 suites, 1846/1846 checks on the current head |
+| Offline artifacts, both builds | **VERIFIED** — 27/27, real OCR/XLSX/encoder execution confirmed, not just "the build succeeded" |
+| Visual QA, all K–T phases | **DONE** — 3 viewports × 2 languages per phase, one real defect found and fixed, everything else clean |
+| Real GitHub Actions CI, phases L–T | **GREEN** — every phase's own commit confirmed via the GitHub API, both workflow triggers, all 10 checks each |
+| Desktop packaging / EXE | **NOT DONE** — the gate has not been opened this conversation |
+| Real operator test (an actual person, an actual event night) | **NOT VERIFIED** — every test/QA pass in this programme was automated |
+| Third real held-out floor plan | **NOT AVAILABLE** — only two real plans have ever existed for this product |
+| 2PLAN Phase 7 (ORNEK robustness suite, CI for both plans, report + PR) | **NOT DONE** — separate, older, still open |
+| 2PLAN Phase 4b (PDF orientation normalisation, measured) | **NOT DONE** — separate, older, still open |
+| OI Phase 10–13 (operator-test scaffolding, third-plan procedure, final report) | **NOT DONE** — separate, older, still open |
+
+### NO EXE
+
+Desktop packaging remains forbidden. Nothing in this session builds,
+scaffolds, or prepares an EXE, an Electron package, an installer, or any
+production desktop bundle. That gate stays closed until the user types the
+exact phrase **"EXE YAP"** in the conversation — which has not happened —
+per `CLAUDE.md` and `.claude/rules/desktop.md`. This document's own
+completion does not change that.
