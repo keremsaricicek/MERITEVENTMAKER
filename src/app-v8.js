@@ -2333,6 +2333,23 @@
     if(!b)return null;
     return new Set([...(b.expected?b.expected.guestIds:[]),...b.actual.guestIds]);
   }
+  // The wave's own controls (bucket size, click-a-bar, VIP toggle, clear).
+  // Shared by Live (the working timeline) and Reports' Post-Event Replay for
+  // a historical event -- one binding, so a bucket click means the same
+  // thing on either screen rather than two handlers drifting apart.
+  function bindArrivalWaveControls(){
+    document.querySelectorAll("[data-wave-bucket]").forEach(b=>b.onclick=()=>{
+      ui.waveBucket=Number(b.dataset.waveBucket);ui.waveKey=null;render();});
+    document.querySelectorAll("[data-wave-key]").forEach(b=>b.onclick=()=>{
+      // Selecting the wave already selected clears it: the way out of a filter
+      // is the control that put you in it, as well as the banner's own button.
+      ui.waveKey=ui.waveKey===b.dataset.waveKey?null:b.dataset.waveKey;
+      ui.waveVip=false;ui.liveWindow=null;render();});
+    const waveVip=document.querySelector("[data-wave-vip]");
+    if(waveVip)waveVip.onclick=()=>{ui.waveVip=!ui.waveVip;ui.waveKey=null;ui.liveWindow=null;render();};
+    const waveClear=document.querySelector("[data-wave-clear]");
+    if(waveClear)waveClear.onclick=()=>{ui.waveKey=null;ui.waveVip=false;render();};
+  }
   // A bar pair per bucket. Heights are scaled to the busiest bucket in THIS
   // event, which is a drawing decision and not a claim -- the numbers are on
   // the row, and the tallest bar never means "full".
@@ -2535,17 +2552,7 @@
       // nothing else already has it, so this never steals from another field.
       if(document.activeElement===document.body)search.focus();
     }
-    document.querySelectorAll("[data-wave-bucket]").forEach(b=>b.onclick=()=>{
-      ui.waveBucket=Number(b.dataset.waveBucket);ui.waveKey=null;render();});
-    document.querySelectorAll("[data-wave-key]").forEach(b=>b.onclick=()=>{
-      // Selecting the wave already selected clears it: the way out of a filter
-      // is the control that put you in it, as well as the banner's own button.
-      ui.waveKey=ui.waveKey===b.dataset.waveKey?null:b.dataset.waveKey;
-      ui.waveVip=false;ui.liveWindow=null;render();});
-    const waveVip=document.querySelector("[data-wave-vip]");
-    if(waveVip)waveVip.onclick=()=>{ui.waveVip=!ui.waveVip;ui.waveKey=null;ui.liveWindow=null;render();};
-    const waveClear=document.querySelector("[data-wave-clear]");
-    if(waveClear)waveClear.onclick=()=>{ui.waveKey=null;ui.waveVip=false;render();};
+    bindArrivalWaveControls();
     document.querySelectorAll("[data-live-kpi]").forEach(b=>b.onclick=()=>{
       ui.tab="seating";ui.seatingFilter=b.dataset.liveKpi;ui.seatingGuestScope="all";ui.seatingQuery="";
       ui.operationalMode=true;ui.selectedGuestIds=[];ui.selectedGuestId=null;ui.selectedTableId=null;render();
@@ -2747,6 +2754,41 @@
         :`<div class="mx-empty" style="padding:28px">${t("audit.none")}</div>`}
     </div>`;
   }
+  // ---- POST-EVENT REPLAY -----------------------------------------------
+  //
+  // Only for a finished event, and only ever a different VIEW of two facts
+  // this build already owns -- the Audit Trail's own decisions (src/audit-
+  // trail.js, reused via resolvedAuditTrail/auditTrailText, never re-scoped
+  // here) and the Arrival Wave's own chart (arrivalWaveHTML, reused as-is,
+  // since a closed event's arrival data is now a stable historical record).
+  // src/post-event-replay.js supplies the one thing neither already does:
+  // oldest-first order, and "did this happen inside that bucket's window."
+  //
+  // The Audit Trail section (auditTrailHTML, above) stays exactly as it was
+  // for a historical event -- unrelated concept (a decision log, newest-
+  // first, always reachable) with its own suite; Replay sits above it as an
+  // additional, richer read of the same underlying decisions.
+  function postEventReplayHTML(event){
+    const R=globalThis.MeritPostEventReplay,AW=globalThis.MeritArrivalWave;
+    if(!R||!AW||!isHistorical(event))return"";
+    const all=R.chronological(resolvedAuditTrail(event));
+    const w=arrivalWave(event);
+    const bucket=w&&ui.waveKey?w.buckets.find(b=>b.key===ui.waveKey):null;
+    const entries=bucket?R.windowed(all,bucket,{minutesOfStamp:AW.minutesOfStamp,minutesOfClock:AW.minutesOfClock}):all;
+    const rowHTML=entry=>{
+      const mins=AW.minutesOfStamp(entry.at);
+      const when=mins===null?relativeTime(entry.at):AW.clockOfMinutes(mins);
+      return`<li class="replay-row"><span class="replay-when">${esc(when)}</span><span class="replay-text">${esc(auditTrailText(event,entry))}</span></li>`;
+    };
+    return`<div class="mx-section replay-section"><div class="mx-section-head"><h2>${t("replay.title")}</h2><span class="count">${entries.length}</span></div>
+      <p class="replay-question">${t("replay.question")}</p>
+      ${arrivalWaveHTML(event)}
+      ${bucket?`<div class="wave-banner">${icon("search")}<span>${esc(t("replay.filteredCount",{n:entries.length}))}</span><button class="btn sm" data-wave-clear>${t("wave.clearFilter")}</button></div>`:""}
+      ${entries.length
+        ?`<ol class="replay-trail">${entries.map(rowHTML).join("")}</ol>`
+        :`<div class="mx-empty" style="padding:28px">${t(bucket?"replay.noneInWindow":"replay.none")}</div>`}
+    </div>`;
+  }
   reportsHTML = function(event){
     const m=eventMetrics(event),s=seatingStats(event),issues=planIssues(event);
     const unassigned=event.guests.filter(g=>!g.assignment),unassignedPax=unassigned.reduce((n,g)=>n+paxOf(g),0);
@@ -2766,6 +2808,7 @@
       <div class="mx-head"><div><h1>${t("reports.title")}</h1><p>${t("reports.subtitle")}</p></div></div>
       <div class="reports-stage">
         <div>
+          ${postEventReplayHTML(event)}
           <div class="mx-section" style="margin-top:0"><div class="mx-section-head"><h2>${t("reports.preflight")}</h2><span class="count">${issues.length||""}</span></div><div class="preflight">${preflight}</div></div>
           <div class="mx-section"><div class="mx-section-head"><h2>${t("reports.capacitySummary")}</h2></div><div class="mx-metrics" style="margin-bottom:0">${capacity}</div></div>
           <div class="mx-section"><div class="mx-section-head"><h2>${t("reports.tableList")}</h2><span class="count">${t("reports.tablesCount",{n:event.tables.length})}</span></div>${event.tables.length?`<div class="mx-list">${tableRows}</div>`:`<div class="mx-empty" style="padding:28px">${t("reports.tablesCount",{n:0})}</div>`}</div>
@@ -2794,6 +2837,10 @@
     app.querySelectorAll("[data-report='xlsx']").forEach(b=>b.onclick=exportTablePlanXLSX);
     app.querySelectorAll("[data-report='print']").forEach(b=>b.onclick=printTablePlan);
     app.querySelectorAll("[data-report-fix]").forEach(b=>b.onclick=()=>{ui.tab=b.dataset.reportFix;render();});
+    // Post-Event Replay's wave chart (historical events only) needs the same
+    // bucket-click/VIP/clear wiring Live uses -- a historical event has no
+    // Live tab to have bound them already.
+    bindArrivalWaveControls();
   };
 
   // ---- Paper table plan -----------------------------------------------

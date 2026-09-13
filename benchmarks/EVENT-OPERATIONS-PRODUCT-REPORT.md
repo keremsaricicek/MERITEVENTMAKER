@@ -2677,3 +2677,185 @@ rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
                              re-verified; 0px horizontal overflow, no
                              new page errors after the fix
 ```
+
+### CI (the actual PR run, not a local one)
+
+Commit `cb533c7` pushed Phase R. Both the push-triggered run (`34755466823`)
+and the pull_request-triggered run (`34755465014`) are fully green — all 10
+check runs `completed`/`success` across both. Phase R is DONE.
+
+## PHASE S — Post-Event Replay
+
+### Problem
+
+Once an event is Completed, its Reports screen still shows the Audit Trail
+(Phase P) — but newest-first, the ordering a LIVE event wants ("what just
+happened"). Nobody reviewing a finished night wants that: they want the
+story from the doors opening to the last decision, and they want to be able
+to ask "what happened around 19:30" without cross-referencing the Arrival
+Wave chart and the Audit Trail list by eye.
+
+### Measured first
+
+Reading `src/arrival-wave.js` in full before writing anything confirmed the
+module already exports exactly the two clock helpers a replay would need —
+`minutesOfStamp(iso)` (a stored timestamp to minutes-past-midnight in the
+browser's own timezone) and `minutesOfClock("HH:MM")` (the reverse) — and
+that each wave bucket already carries `fromMinutes` and a `to` clock string.
+Nothing needed to be added to that module; a bucket's own window is fully
+recoverable from data it already returns. Reading `src/audit-trail.js`
+confirmed `resolve()` deliberately never re-sorts, trusting `audit()`'s own
+insertion order (newest-first, via `unshift`) — so "oldest-first" is a pure
+reversal of that order, never a re-sort by timestamp, which matters because
+insertion order is the real record of what happened even if two entries
+somehow shared a timestamp.
+
+### Design decision: two views of the same decisions, never a third source
+
+`src/post-event-replay.js` is a new, small, pure module. It computes nothing
+either `arrival-wave.js` or `audit-trail.js` could disagree with it about:
+
+- **`chronological(auditEntries)`** reverses an already-resolved,
+  already-scoped audit trail into oldest-first order. It does not sort by
+  timestamp and does not mutate its input, since the newest-first array may
+  still be in use elsewhere on the same render (the Audit Trail section
+  itself, directly below Replay on the same screen).
+- **`inWindow(entry, bucket, helpers)`** decides whether one entry's `at`
+  falls inside a wave bucket's window, using `minutesOfStamp`/
+  `minutesOfClock` **injected** rather than reached for on `globalThis` — the
+  same dependency-injection discipline Phase R's `regenerateIds(event,
+  auditEntries, idFactory)` established, so the module stays a pure function
+  of its inputs, is directly unit-testable with fake helpers, and can never
+  silently drift if the wave module's own clock handling changes. Without
+  both helpers, or without a resolvable timestamp, it returns `false` rather
+  than guessing — mirroring Arrival Wave's own "a check-in without a time is
+  not guessed at" rule.
+- **The Audit Trail section is never replaced, only joined.** Phase P's own
+  suite asserts `.audit-row`/`.audit-text`/`.audit-when` stay present and
+  newest-first on a historical event's Reports screen — Replay uses its own
+  classes (`.replay-row`/`.replay-text`/`.replay-when`) precisely so the two
+  lists can coexist on one screen without either suite's selectors ever
+  matching the other's rows, and without one silently becoming a
+  reordering of the other.
+- **The Arrival Wave chart is reused exactly as it renders on Live, not
+  redrawn.** A closed event's arrival data is now a stable historical
+  record, so `arrivalWaveHTML(event)` — bucket-size toggle, VIP-outstanding
+  button, and all — is called unchanged. Its bucket-click, VIP-toggle, and
+  clear-filter bindings were previously wired only inside `bindLive()`;
+  extracted into a shared `bindArrivalWaveControls()` so a bucket click
+  means the same thing on Live and on Replay rather than two handlers
+  drifting apart, and so a historical event (which has no Live tab to have
+  bound them already) still gets a working chart.
+- **No new persisted field, no migration.** Replay is a derived view over
+  `state.audit` and `event.guests`, both already stored — there is nothing
+  for `migrateEvent()` to default.
+
+### Implementation
+
+- `src/post-event-replay.js` (new): `chronological()`, `inWindow()`,
+  `windowed()`. Pure, dependency-injected, no `globalThis` reads.
+- `src/app-v8.js`:
+  - `bindArrivalWaveControls()` extracted from the tail of `bindLive()`
+    (the `[data-wave-bucket]`/`[data-wave-key]`/`[data-wave-vip]`/
+    `[data-wave-clear]` bindings) with no behavior change; called from both
+    `bindLive()` and the new call in `bindReports()`.
+  - `postEventReplayHTML(event)` — returns `""` unless the event is
+    historical; otherwise combines `resolvedAuditTrail(event)` (Phase P,
+    reused) run through `MeritPostEventReplay.chronological()`, narrowed to
+    the selected wave bucket (`ui.waveKey`, the same selection state Live
+    already uses — safe to share since a historical event has no Live tab
+    to also be reading it) via `MeritPostEventReplay.windowed()`, and
+    rendered as a numbered, oldest-first list using `auditTrailText()`
+    (Phase P, reused) for each sentence and `AW.clockOfMinutes(AW.minutesOfStamp(entry.at))`
+    for each row's clock time (falling back to `relativeTime()` for an
+    entry with no resolvable timestamp, the same honest-fallback shape
+    Phase P's own unresolvable-guest-id case uses).
+  - Wired into `reportsHTML()` as the first section in the left column,
+    above the pre-flight/capacity/table-list sections and above the
+    unchanged Audit Trail section further down.
+- `src/i18n.js`: `replay.title`, `replay.question`, `replay.filteredCount`,
+  `replay.none`, `replay.noneInWindow` — EN and TR, sharing no vocabulary
+  with `audit.*`.
+- `src/styles.css`: `.replay-question`, `.replay-trail`, `.replay-row`,
+  `.replay-when`, `.replay-text` — same row language as `.audit-trail`'s
+  existing rules (border, hover, sentence-plus-timestamp layout) under their
+  own class names, plus a `counter()`-based row index.
+- `index.html`: script tag added after `event-package.js`.
+
+### Defects found
+
+None. This phase found no pre-existing bug — `arrival-wave.js` and
+`audit-trail.js` already exposed everything Replay needed; the only new
+code is the reversal/windowing logic and its UI composition.
+
+### Test evidence
+
+`tests/suites/post-event-replay.test.mjs` — 31 checks: a domain-module unit
+section (`chronological()` reverses without mutating; `windowed()`/
+`inWindow()` keep only what's in a bucket's window and refuse to guess
+without both helpers or a valid entry/bucket) followed by a real-UI section
+driving an actual historical event's Reports screen. Two mutations proved
+to bite:
+
+| Mutation | Result |
+|---|---|
+| `chronological()` stopped reversing (returned its input as-is) | 4 checks fail — the domain-module ordering check, and three real-UI checks (the creation entry no longer leads, the later arrival is no longer last, its clock time no longer matches) |
+| `windowed()` stopped filtering (returned every entry regardless of bucket) | 6 checks fail — the domain-module windowing check, both bucket-click checks (narrowing to one entry, and the empty-window case), the filtered-count banner, and the "says so explicitly" empty-state check |
+
+Both mutations were applied to a scratch-directory backup of
+`src/post-event-replay.js`, confirmed to produce exactly the expected
+failures and no others, then reverted and re-confirmed green (31/31).
+
+### Visual QA
+
+Rendered via the `visual-qa-reviewer` agent at 1920×1080, 2560×1440 and
+1440×900, English and Turkish, driving the same fixture recipe as the test
+suite plus a second, non-historical event for the negative check. **No
+defects found.** `.replay-section` renders directly above the pre-flight/
+capacity/table-list sections and above the unchanged `.audit-trail` section
+at every viewport and in both languages; the reused Arrival Wave chart is
+legible and uncramped in the narrower Reports column, including its
+VIP-outstanding pill; bucket-click → filter → clear all work and match the
+"N decisions in this window" / empty-window copy exactly; the numbered rows
+hold their three-column alignment in both languages, including the longer
+Turkish sentences; the section reads as a native sibling of the other
+Reports sections (same `mx-section-head` tokens) rather than a bolted-on
+card; the negative case (a Planning event's Reports screen) shows no
+`.replay-section` at all while its own `.audit-trail` is unaffected; and
+zero JavaScript errors were attributable to this feature across every
+viewport/language/interaction pass.
+
+One fragility was raised, not a defect: `chronological()` trusts
+`state.audit`'s own insertion order rather than re-sorting by timestamp
+(matching `audit-trail.js`'s own "never re-sorts" design), so an audit array
+hand-constructed with an insertion order that contradicts its own `at`
+values would replay out of order. The reviewer traced every real write path
+(`audit()`, `logHandoverNote()`) and confirmed there is no way for an
+operator to produce such an array today — `at` is always `nowISO()` at the
+moment of the real `unshift()` — so this is a documented design property,
+not a reachable bug, and was left unchanged. Two judgment calls were raised
+and left as-is: Replay's section count reflects the current filter while
+Audit Trail's always shows the true total (each is internally consistent
+with what its own banner already says), and a pre-existing wide right-hand
+margin on the whole Reports screen at 2560×1440 that predates this phase.
+Console noise from the sandbox's blocked `cdn.jsdelivr.net` egress and a
+missing favicon were also present on an unrelated screen and are unrelated
+to this feature.
+
+### Regression
+
+Detection is not reachable from this phase — Replay reads stored audit
+entries and guest data, never plan pixels — so `npm run benchmark` was not
+re-run.
+
+```
+npm run test:all             51/51 suites, 1819/1819 checks
+npm run verify:offline       27 passed, 0 failed
+                             (post-event-replay.js bundled into both
+                             artifacts, 31 sources total, up from 30)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             replay section, reused wave chart, bucket
+                             filter/clear, empty-window state, and the
+                             non-historical negative case — no defects,
+                             0px horizontal overflow, no new page errors
+```

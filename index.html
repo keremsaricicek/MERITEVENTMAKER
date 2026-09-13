@@ -110,6 +110,10 @@
   <!-- One event, made portable -- distinct from exportBackup()'s whole
        install. Owns the payload shape and id-renumbering, never storage. -->
   <script src="src/event-package.js"></script>
+  <!-- Reorders the audit trail oldest-first and narrows it to a wave bucket's
+       own window, using the wave module's own clock helpers — the story of
+       the night, computed from nothing this build didn't already know. -->
+  <script src="src/post-event-replay.js"></script>
   <script src="src/training-data.js"></script>
   <script src="src/app-v8.js"></script>
 </body>

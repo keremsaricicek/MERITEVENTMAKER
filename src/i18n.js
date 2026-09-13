@@ -1127,6 +1127,12 @@
     "audit.teachLessonForgotten": { en: "A Teach Area lesson was forgotten", tr: "Bir Öğret alanı notu unutuldu" },
     "audit.detectionCompleted": { en: "Assisted Detection finished analysing the plan", tr: "Yardımcı Tespit, planı analiz etmeyi tamamladı" },
 
+    "replay.title": { en: "Post-event replay", tr: "Etkinlik sonrası tekrar" },
+    "replay.question": { en: "The story of the night, from the first decision to the last. Select a wave to see only what happened then.", tr: "Gecenin hikayesi, ilk karardan sonuncusuna kadar. O sırada ne olduğunu görmek için bir dalga seçin." },
+    "replay.filteredCount": { en: "{n} decisions in this window", tr: "Bu aralıkta {n} karar" },
+    "replay.none": { en: "No recorded decisions for this event.", tr: "Bu etkinlik için kaydedilmiş bir karar yok." },
+    "replay.noneInWindow": { en: "Nothing happened in this window.", tr: "Bu aralıkta hiçbir şey olmadı." },
+
     "seat.nothingYet": { en: "Nothing has changed yet.", tr: "Henüz hiçbir şey değişmedi." },
     "seat.cancel": { en: "Cancel", tr: "Vazgeç" },
     "seat.apply": { en: "Apply change", tr: "Değişikliği uygula" },
