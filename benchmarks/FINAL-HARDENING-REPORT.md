@@ -523,12 +523,11 @@ SECTIONS 4/5 STATUS: DONE (audit, no gap found). See detailed write-up
   and `operator-questions.test.mjs` (15 checks) already cover the
   lifecycle and the no-duplicate-question-wording guarantee. No source or
   test code changed for either section — the audit found no gap to fix.
-SECTION 6 STATUS: DONE. Pushed as commit 5600bce, checkpoint commit
-  2a67e17. CI on 2a67e17: 8 of 10 checks confirmed green (both
-  push+pull_request "Offline", "Performance", "Detection" jobs); "Fast
-  core" and "Intelligence" were still in_progress as of this checkpoint
-  — check the PR before treating section 6 as CI-CONFIRMED rather than
-  locally-green-CI-pending. Real bug found and fixed: ui.lang was never
+SECTION 6 STATUS: DONE, CI CONFIRMED GREEN. Pushed as commit 5600bce,
+  checkpoint commits 2a67e17 and 76859e4. CI on the branch head (76859e4)
+  is 10/10 green (both push- and pull_request-triggered "Fast core",
+  "Offline", "Detection", "Intelligence", "Performance" jobs). Real bug
+  found and fixed: ui.lang was never
   initialized in app.js (so i18n.js's lang() helper treated a fresh boot
   as English), and app-v8.js's own Object.assign(ui,{...}) independently
   hardcoded lang:"en", silently overriding a first attempted fix to
@@ -560,9 +559,8 @@ SECTIONS 8/9 STATUS: NOT STARTED. These need a fresh, focused UI-review
   deliberately not rushed into the tail of this session's work.
 NEXT_SECTION: 8/9 (Floor Plan UX hardening, Live Event UX hardening) —
   task #158 continues, or split into its own task if picked up separately.
-NEXT_ACTION: Confirm section 6's remaining 2 CI checks (Fast core,
-  Intelligence) went green on commit 2a67e17 — if either failed, root-
-  cause before anything else. Then: (a) if section 7 is to be completed
+NEXT_ACTION: Section 6's CI is fully confirmed (10/10 on 76859e4) — no
+  follow-up needed there. Next: (a) if section 7 is to be completed
   further, build the AST-based single-writer lint rule rather than more
   grep spot-checks; (b) for sections 8/9, do a real UI walkthrough of
   Floor Plan and Live Event (Smart Seating, Freeze Zones, Table
