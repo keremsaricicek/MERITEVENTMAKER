@@ -36,7 +36,9 @@ const PANEL = `(function(){
 
 
 export default async function run({ page, checks, baseUrl }) {
-  await openApp(page, baseUrl);
+  // Behavioural checks (wording logic, sample-size math), not translation —
+  // pinned to English since the product now boots in Turkish by default.
+  await openApp(page, baseUrl, { lang: "en" });
 
   // --- 1. the domain module itself: pure arithmetic, null means no data ----
   const unit = await page.evaluate(() => {

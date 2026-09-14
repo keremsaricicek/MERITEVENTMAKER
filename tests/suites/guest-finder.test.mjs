@@ -95,7 +95,10 @@ const type = async (page, text) => {
 };
 
 export default async function run({ page, checks, baseUrl }) {
-  await openApp(page, baseUrl);
+  // Behavioural checks (search matching, ranking), not translation — pinned
+  // to English since the product now boots Turkish; the dedicated bilingual
+  // check further below explicitly exercises both languages on its own.
+  await openApp(page, baseUrl, { lang: "en" });
   await createBlankEvent(page, { name: "Finder", hotel: "Merit Royal", date: futureDate() });
   await addTables(page, { quantity: 4 });
   const seeded = await page.evaluate(SEED);

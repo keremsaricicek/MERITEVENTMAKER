@@ -43,7 +43,10 @@ const REPLAY = `(function(){
 const AUDIT_ROWS = `[...document.querySelectorAll(".audit-row .audit-text")].map(n => n.textContent.trim())`;
 
 export default async function run({ page, checks, baseUrl }) {
-  await openApp(page, baseUrl);
+  // Behavioural checks (ordering, windowing), not translation — pinned to
+  // English since the product now boots Turkish; check 8 below explicitly
+  // exercises both languages on its own.
+  await openApp(page, baseUrl, { lang: "en" });
 
   // --- 1. the domain module itself: pure, injected, non-mutating -----------
   const unit = await page.evaluate(() => {

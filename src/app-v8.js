@@ -40,7 +40,12 @@
     // could no longer tell which event they were in, and could not look a guest
     // up without abandoning the review. `planMode` is where that lives now, and
     // `ui.screen` stays "workspace" throughout.
-    lang:"en", planMode:"plan", reviewQueue:null, reviewCenterOpen:false, difficultQuestionIndex:0, activeReviewGroupId:null, activeQuestionId:null, ocrText:null,
+    // This is Turkish hospitality/casino operations software: a fresh boot
+    // must open in Turkish, not require finding the language toggle first.
+    // (This Object.assign runs after app.js's own `const ui={...,lang:"tr"}`
+    // and would silently re-clobber it back to English if it disagreed —
+    // keep both in sync rather than relying on exactly one of them.)
+    lang:"tr", planMode:"plan", reviewQueue:null, reviewCenterOpen:false, difficultQuestionIndex:0, activeReviewGroupId:null, activeQuestionId:null, ocrText:null,
     // The Plan Doctor's full report is opened deliberately. Its verdict and
     // tally are always on screen; the rows -- including the INFORMATION ones,
     // which are worth reading once and are noise in a list scanned every few

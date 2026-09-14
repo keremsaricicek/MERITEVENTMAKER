@@ -22,6 +22,30 @@ const GUEST_DIALOG_KEYS = [
 export default async function run({ page, checks, baseUrl }) {
   await openApp(page, baseUrl);
 
+  // --- 0. a FRESH boot, with no explicit language choice, is Turkish -------
+  //
+  // This is this suite's only check of the state before any test (or any
+  // operator) ever touches the language toggle. Every other check below
+  // sets ui.lang explicitly first, which is right for testing that language
+  // — but means none of them would have caught the product's actual
+  // default silently reverting to English, since nothing ever observed
+  // that default on its own. openApp() here is called with no `lang`
+  // option, so this is genuinely the boot state.
+  const bootDefault = await page.evaluate(() => ({
+    lang: ui.lang,
+    guideLang: ui.guideLang,
+    homeTitle: document.querySelector(".mx-head h1")?.textContent.trim() || "",
+    createEventLabel: document.querySelector('[data-action="create-event"]')?.textContent.trim() || "",
+  }));
+  checks.equal(bootDefault.lang, "tr",
+    "a fresh boot, before any language choice, defaults to Turkish — this is Turkish hospitality/casino operations software", bootDefault);
+  checks.equal(bootDefault.guideLang, "tr",
+    "the User Guide/help panel also defaults to Turkish, not just the main UI", bootDefault);
+  checks.ok(bootDefault.homeTitle === "Etkinlik Oluşturucu",
+    "the very first rendered screen (Home) actually shows Turkish text, not just an internal flag", bootDefault);
+  checks.ok(/Oluştur/.test(bootDefault.createEventLabel) && !/^Create Event$/.test(bootDefault.createEventLabel),
+    "the Home screen's primary action reads in Turkish by default", bootDefault);
+
   // --- 1. every dialog key resolves in both languages -----------------------
   for (const lang of ["tr", "en"]) {
     const unresolved = await page.evaluate(({ keys, l }) => {

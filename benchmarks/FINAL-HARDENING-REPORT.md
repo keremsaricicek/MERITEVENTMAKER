@@ -53,7 +53,7 @@ programme's own rules).
 | 3 | Capacity provenance | **DONE (by design, 3 of 8 sources wired)** | Pushed as commit `9f09e2d`, CI CONFIRMED GREEN (commit `dcde06c`, all 10 checks). See detailed write-up below. `table.capacitySource` (new `src/capacity-provenance.js`) is a real, migrated, backup/package-safe field on every table. Only the 3 sources this build can honestly produce (DETECTED_PHYSICAL_SEATS, HUMAN_CONFIRMED, UNKNOWN) are wired; the other 5 (PRINTED_TABLE_CAPACITY, PRINTED_ZONE_CAPACITY, PRINTED_TOTAL_CAPACITY, DERIVED_PRINTED_RULE, VERIFIED_VENUE_MEMORY) are named and translated but UNWIRED, since no current feature reads a per-table/zone/venue printed capacity number into `table.capacity` — inventing that read path now would be new detection behaviour, not a data-model change, and is explicitly out of scope for this section. This is the section's designed end state, not a partial result awaiting more work. No UI surface yet (that is section 11, Data Provenance Inspector, tracked separately). |
 | 4 | Object identity safety | **DONE (audit, no gap found)** | Re-audited this session; see detailed write-up below. `plan-memory.js`'s `identity()` already implements exactly the safety property this section protects: a VERIFIED printed number is an absolute veto in both directions (checked before any weighing), geometry dominates the weighted score, visual similarity's weight is scaled by `1 - geometryCertainty` (near-zero when geometry already agrees, largest only when an object has moved beyond tolerance), and family mismatch is evidence that lowers the score but never blocks a match. Correction to an earlier note: visual similarity is not "off by default" — it is always computed and always wired in (mandatory per the module's own §24 requirement), but its WEIGHT is what stays governed. `venue-model.js`'s layout-change comparison uses a stricter, purely deterministic ladder for its own different task (verified table number, then position, no visual similarity at all). Both are already covered by existing suites (`plan-memory`, `layout-changes`); no gap found, no new code needed. |
 | 5 | Human-system interaction contract | **DONE (audit, no gap found)** | Re-audited this session; see detailed write-up below. `plan-confidence-budget.js`'s `DEFAULT_MAX_ITEMS=6` is a real, measured, justified budget ("with the two real plans, six covers every claim that settles anything... overridable so the measurement can be redone on a third plan"), with everything below the line counted and disclosed rather than hidden. `review-queue.js` implements the click→highlight→answer→resolve lifecycle with resolution state read live from the candidates on every render (never a separate tally that could drift), tested in `review-queue.test.mjs` (38 checks). `operator-questions.test.mjs` (15 checks) separately guards against two different underlying questions reading as identical text. No gap found, no new code needed. |
-| 6 | Turkish-first product | NOT STARTED | A real, product-wide default-language change plus a full leak audit across every screen. |
+| 6 | Turkish-first product | **DONE** | See detailed write-up below. Found and fixed a real bug: the product actually booted in English by default (`ui.lang` was never initialized, and `app-v8.js`'s own `Object.assign(ui,{...lang:"en"...})` clobbered app.js's default even after a first attempted fix), despite the whole product's UI being fully bilingual. Now boots Turkish, verified with a real rendered screenshot. New default-boot regression check in `i18n.test.mjs`. Fixing this correctly surfaced 12 suites (382 checks) whose assertions had silently depended on the old implicit English default — each fixed on its merits (pinned to explicit English for suites testing behaviour, not translation; two suites had assertions whose expected VALUE needed updating, not just their language, since the default flip changed which value a first toggle-click produces). Zero checks removed or weakened — same check counts before and after, all passing. |
 | 7 | UI/business logic separation | PARTIAL | The single-writer pattern already exists for several domain facts (`setArrival`, `addHandoverNote`, `autoSnapshot`, `regenerateIds`, etc., documented across the K–T phases) — not yet audited as a complete, enforced architecture rule. |
 | 8 | Floor Plan experience simplification | NOT STARTED | |
 | 9 | Live Event operational flows | PARTIAL | Flows A/B/C/D/E substantially exist (Phase M/N and Smart Seating already implement find+checkin, No Show, find-space-for-party with named reasons and human Apply, table failure with impact preview) — not yet audited/optimized against this section's specific interaction-count and warning-deduplication requirements. |
@@ -105,6 +105,10 @@ programme's own rules).
   this report's own earlier claim that visual similarity ships off by
   default in `plan-memory.js` (it does not; its weight, not its presence,
   is what stays governed).
+- Section 6 (Turkish-first product): found and fixed a real bug — the
+  product actually booted in English by default — plus fixed 12 suites
+  (382 checks) whose assertions silently depended on that bug, detailed
+  below.
 - This report.
 
 **CI confirmed for commit `ba48b05`** (section 1A, the sample-independence
@@ -401,6 +405,74 @@ DIFFERENT underlying questions rendering as the identical sentence,
 which a person reading one row at a time has no way to detect.
 
 No gap found. No source or test changed for this section.
+
+### Section 6 in detail: the product actually booted in English, fixed, and 12 suites' hidden dependency on that bug fixed with it
+
+**The bug.** `src/app.js`'s `ui` object literal had no `lang` field at all,
+so `i18n.js`'s `lang()` helper (`ui.lang === "tr" ? "tr" : "en"`) treated
+every fresh boot as English. `ui.guideLang` (the separate User Guide/help
+language) defaulted to `"en"` explicitly. Neither was ever persisted —
+`ui` is pure in-memory state, reset on every reload — so this was not an
+edge case: every single session of this Turkish hospitality/casino
+operations product opened in English until someone found and clicked the
+language toggle.
+
+**First fix attempt was incomplete.** Adding `lang:"tr", guideLang:"tr"`
+to `app.js`'s `ui` literal fixed `guideLang` but not `lang` — because
+`app-v8.js` (loaded after `app.js`, per `index.html`'s script order) runs
+`Object.assign(ui, {..., lang:"en", ...})` at its own IIFE's top level,
+unconditionally re-clobbering whatever `app.js` had just set. This is the
+actual, sole place the real default lived. Found by testing the fix
+before declaring it done — the first version passed `guideLang` but
+failed `lang` in the exact same test run, which is what surfaced the
+second write site rather than accepting a partially-working result.
+Both are now `"tr"`, with a comment at the `Object.assign` site
+explaining why keeping them in sync matters (it silently overrides
+`app.js`'s value otherwise).
+
+**Verified, not just asserted.** A real rendered screenshot at 1920x1080
+(sent to the user) shows the Home screen booting fully in Turkish —
+"Etkinlik Oluşturucu", "Yaklaşan etkinlik yok", "Etkinlik Oluştur",
+"Yardım / Kullanım Kılavuzu" — with zero language-toggle interaction.
+New regression check in `i18n.test.mjs` ("check 0", run before any other
+check sets `ui.lang` explicitly) asserts a fresh `openApp()` with no
+`lang` option produces `ui.lang==="tr"`, `ui.guideLang==="tr"`, and real
+Turkish text in the rendered DOM — not just the internal flag, since a
+flag can be right while the render path that reads it is wrong.
+Mutation-tested: reverting the `Object.assign` site alone reproduced
+exactly the 3 checks that depend on it; reverted back, reconfirmed
+27/27.
+
+**The 12-suite fallout, and why it is not scope creep.** Running the full
+fast suite after the fix turned red in 12 suites (382 checks) that had
+never explicitly set a language and had silently relied on the old
+English default — hardcoded English string/regex assertions
+(`event-handover`, `event-history`, `event-package`, `guest-finder`,
+`offline-recovery`, `plan-doctor`, `post-event-replay`, `audit-trail`,
+`backup-restore`), a Playwright `:has-text("Export Table Plan")` selector
+that stopped matching anything once the button read in Turkish
+(`xlsx-contract`), and two suites whose language-TOGGLE assumption
+(`floor-plan-modes`, `operator-questions`) flipped: a test that clicked
+the language button once and expected Turkish now correctly gets English
+first, since Turkish is the state it started in. This is not scope creep
+— section 6 explicitly asked for a leak audit, and a test suite that
+silently depended on the very default being fixed is exactly the kind of
+leak that audit exists to find. Every fix was on the test's own terms:
+suites testing BEHAVIOUR (ordering, validation, wording logic), not
+translation quality, were pinned to explicit English via `openApp(page,
+baseUrl, { lang: "en" })` or an explicit `"en"` argument to an existing
+per-call language parameter — never by weakening an assertion or
+accepting a different observed value as newly "correct." The two
+toggle-assumption suites got their expected VALUE corrected (English
+after one click from a Turkish start, not Turkish), with a comment
+explaining why. Suites with their own dedicated bilingual sections
+(`guest-finder`, `audit-trail`, `post-event-replay`) were checked to
+confirm those sections already set `ui.lang` explicitly per iteration
+before pinning the boot default, so the pin could not interfere with
+them. Zero checks were removed; every suite's check count after the fix
+matches its count before section 6 began (48/48 fast suites → still
+48/48, 12 previously-failing suites → 382/382 on their own, then
+confirmed together with the rest via `test:all`).
 
 ## Continuation checkpoint (machine-readable)
 

@@ -1,7 +1,10 @@
   "use strict";
   const DEFAULT_FLOOR_PLAN = "";
   const STORAGE_KEY="meritEventMaker.v1",WORLD={width:1355,height:788},ZONES=["VIP FRONT","VIP","MAIN FLOOR","BISTRO","RESERVED"];
-  const ui={screen:"events",activeEventId:null,tab:"floor",selectedObjectId:null,selectedGuestId:null,selectedTableId:null,tool:"select",zoom:.72,pan:{x:28,y:24},grid:false,snap:true,showSeats:false,leftCollapsed:false,rightCollapsed:false,tableDraft:null,guestQuery:"",guestFilter:"all",seatingQuery:"",seatingFilter:"all",seatingGuestScope:"unassigned",liveQuery:"",undo:[],redo:[],highlightId:null,guideLang:"en"};
+  // lang/guideLang default to "tr": this is Turkish hospitality/casino
+  // operations software, and a fresh boot must open in Turkish rather than
+  // requiring a person to find and click the language toggle first.
+  const ui={screen:"events",activeEventId:null,tab:"floor",selectedObjectId:null,selectedGuestId:null,selectedTableId:null,tool:"select",zoom:.72,pan:{x:28,y:24},grid:false,snap:true,showSeats:false,leftCollapsed:false,rightCollapsed:false,tableDraft:null,guestQuery:"",guestFilter:"all",seatingQuery:"",seatingFilter:"all",seatingGuestScope:"unassigned",liveQuery:"",undo:[],redo:[],highlightId:null,lang:"tr",guideLang:"tr"};
   let state,pendingImport=null,quotaToastShown=false;
   const app=document.getElementById("app"),uid=p=>p+"_"+(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)),clone=v=>JSON.parse(JSON.stringify(v));
   const esc=v=>String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));

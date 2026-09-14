@@ -27,7 +27,9 @@ export const meta = { name: "event-package", tags: ["storage", "fast"], timeout:
 
 export default async function run({ page, checks, baseUrl, artifactDir }) {
   page.on("dialog", d => d.accept());
-  await openApp(page, baseUrl);
+  // Behavioural checks (payload validation, reference integrity), not
+  // translation — pinned to English since the product now boots Turkish.
+  await openApp(page, baseUrl, { lang: "en" });
 
   // --- 1. the domain module itself --------------------------------------
   const bare = await page.evaluate(() => {

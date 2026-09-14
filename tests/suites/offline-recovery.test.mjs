@@ -24,7 +24,9 @@ export const meta = { name: "offline-recovery", tags: ["storage", "fast"], timeo
 
 export default async function run({ page, context, checks, baseUrl }) {
   page.on("dialog", d => d.accept());
-  await openApp(page, baseUrl);
+  // Behavioural checks (snapshot cadence, restore messaging), not
+  // translation — pinned to English since the product now boots Turkish.
+  await openApp(page, baseUrl, { lang: "en" });
 
   // --- 1. the domain module itself -------------------------------------------
   const bare = await page.evaluate(() => {
@@ -89,7 +91,7 @@ export default async function run({ page, context, checks, baseUrl }) {
     "corrupting the primary record does not touch the automatic snapshot living under its own key", stillHasSnapshot);
 
   const page2 = await context.newPage();
-  await openApp(page2, baseUrl);
+  await openApp(page2, baseUrl, { lang: "en" });
   await page2.waitForTimeout(500);
   const afterCorruption = await page2.evaluate(() => ({
     events: state.events.map(e => e.name),

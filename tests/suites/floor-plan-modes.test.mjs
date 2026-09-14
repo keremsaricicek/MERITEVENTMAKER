@@ -115,14 +115,18 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal(langs.inToolbar, 0, "not also inside the plan toolbar");
   checks.equal(langs.inReviewBar, 0, "and not also inside the review bar");
 
+  // The app now boots in Turkish by default (section 6), so one click from
+  // here flips to English -- the property under test is that the toggle
+  // actually responds from inside review mode, not which language it lands
+  // on.
   await click(page, ".workspace-actions .lang-btn");
   await page.waitForTimeout(300);
-  checks.equal(await page.evaluate(() => ui.lang), "tr",
+  checks.equal(await page.evaluate(() => ui.lang), "en",
     "and it works from inside review mode");
-  const trModes = await page.evaluate(() =>
+  const modeLabels = await page.evaluate(() =>
     [...document.querySelectorAll("[data-plan-mode]")].map(b => b.textContent.trim()));
-  checks.ok(trModes.length === 2 && trModes.every(x => x && !/^[a-z]+\.[a-z]/i.test(x)),
-    "the mode switch is translated, not showing a raw key", trModes);
+  checks.ok(modeLabels.length === 2 && modeLabels.every(x => x && !/^[a-z]+\.[a-z]/i.test(x)),
+    "the mode switch is translated, not showing a raw key", modeLabels);
   await click(page, ".workspace-actions .lang-btn");
   await page.waitForTimeout(300);
 

@@ -64,7 +64,9 @@ const openDoctor = async (page) => {
 };
 
 export default async function run({ page, checks, baseUrl }) {
-  await openApp(page, baseUrl);
+  // Behavioural checks (verdict logic, finding classification), not
+  // translation — pinned to English since the product now boots Turkish.
+  await openApp(page, baseUrl, { lang: "en" });
   await createBlankEvent(page, { name: "Doctor", hotel: "Merit Royal", date: futureDate() });
   await addTables(page, { quantity: 3 });
   await gotoTab(page, "guests");

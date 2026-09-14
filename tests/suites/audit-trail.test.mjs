@@ -32,7 +32,10 @@ const TRAIL = `[...document.querySelectorAll(".audit-row")].map(li => ({
 }))`;
 
 export default async function run({ page, checks, baseUrl }) {
-  await openApp(page, baseUrl);
+  // Behavioural checks (ordering, cap disclosure), not translation — pinned
+  // to English since the product now boots Turkish; the bilingual check
+  // further below explicitly exercises both languages on its own.
+  await openApp(page, baseUrl, { lang: "en" });
   await createBlankEvent(page, { name: "Audit Trail", hotel: "Merit Royal", date: futureDate() });
   await addTables(page, { quantity: 2 });
 

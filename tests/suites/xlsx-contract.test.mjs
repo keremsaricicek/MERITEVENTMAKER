@@ -13,7 +13,9 @@ import { openApp, createBlankEvent, addTables, addGuest, gotoTab, seatGuestOnFir
 export const meta = { name: "xlsx-contract", tags: ["business", "reports", "fast"], timeout: 120000, downloads: true };
 
 export default async function run({ page, checks, baseUrl, artifactDir }) {
-  await openApp(page, baseUrl);
+  // Workbook contract checks, not translation — pinned to English since the
+  // product now boots Turkish and the export button is found by its label.
+  await openApp(page, baseUrl, { lang: "en" });
   await createBlankEvent(page, { name: "XLSX Contract", hotel: "Merit Royal", date: futureDate() });
   checks.require((await addTables(page)) === 4, "four tables for the four-card horizontal group");
 

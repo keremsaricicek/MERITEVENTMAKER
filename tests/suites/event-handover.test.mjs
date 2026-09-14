@@ -42,7 +42,11 @@ const PANEL = `(function(){
 })()`;
 
 export default async function run({ page, checks, baseUrl }) {
-  await openApp(page, baseUrl);
+  // This suite tests behaviour (note ordering, empty-state honesty), not
+  // translation quality — i18n.test.mjs owns that. Pinned to English since
+  // the product now boots in Turkish by default (section 6) and several
+  // assertions below check literal English copy.
+  await openApp(page, baseUrl, { lang: "en" });
   await createBlankEvent(page, { name: "Handover", hotel: "Merit Royal", date: futureDate() });
   await addTables(page, { quantity: 3 });
 

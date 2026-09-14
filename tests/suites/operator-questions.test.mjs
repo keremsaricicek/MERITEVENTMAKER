@@ -60,22 +60,22 @@ export default async function run({ page, checks, baseUrl }) {
   }
 
   {
-    // The exact pair that used to collide.
-    const [square, bistro] = await render([REAL[2], REAL[4]]);
+    // The exact pair that used to collide. English regexes below, so pinned.
+    const [square, bistro] = await render([REAL[2], REAL[4]], "en");
     checks.ok(square !== bistro,
       "two connected tables of one kind and two of another are not the same question", [square, bistro]);
     checks.ok(/Square/.test(square), "the kind is what tells them apart", square);
     checks.ok(/Bistro/.test(bistro), "for both of them", bistro);
   }
   {
-    const [mixed] = await render([REAL[3]]);
+    const [mixed] = await render([REAL[3]], "en");
     checks.ok(/mixed kinds/.test(mixed),
       "an arrangement of several kinds says so rather than naming one of them", mixed);
   }
   {
     // A question standing for eight identical arrangements must still say so —
     // the kind is added to that sentence, not instead of it.
-    const [repeated] = await render([REAL[0]]);
+    const [repeated] = await render([REAL[0]], "en");
     checks.ok(/appears 8 times/.test(repeated),
       "a consolidated question still says how many arrangements it stands for", repeated);
     checks.ok(/Square/.test(repeated), "and which kind they are", repeated);
@@ -84,7 +84,7 @@ export default async function run({ page, checks, baseUrl }) {
     // An analysis stored before arrangements were recorded keeps its original
     // wording rather than rendering "(undefined)".
     const [old] = await render([{ id: "old", questionType: "combinedDiningGroup",
-      coversGroups: 1, questionParams: { memberCount: 2 } }]);
+      coversGroups: 1, questionParams: { memberCount: 2 } }], "en");
     checks.ok(!/undefined|\(\)/.test(old),
       "a question with no recorded arrangement degrades to the plain wording", old);
     checks.ok(/2 connected tables/.test(old), "which is still a readable question", old);
