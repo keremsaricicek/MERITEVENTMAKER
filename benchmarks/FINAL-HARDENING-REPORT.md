@@ -523,27 +523,46 @@ SECTIONS 4/5 STATUS: DONE (audit, no gap found). See detailed write-up
   and `operator-questions.test.mjs` (15 checks) already cover the
   lifecycle and the no-duplicate-question-wording guarantee. No source or
   test code changed for either section — the audit found no gap to fix.
-NEXT_SECTION: 6 (Turkish-first default language + full leak audit) —
-  task #157.
-NEXT_ACTION: Determine the CURRENT default language the app boots to
-  (check `ui.lang`'s initial value / any persisted default in
-  storage-provider.js or app.js's blank-state constructor). If it is not
-  already Turkish, this is a real, product-wide default-language change,
-  not just a copy fix — every screen's first paint, not just labels
-  reachable via `t()`, needs auditing for a hardcoded English fallback or
-  literal string that never went through i18n (the existing `i18n.test.
-  mjs` and `MERIT_I18N_STATUS` note that some older Guests/Seating/Live/
-  Reports templates keep literal English strings pending migration — this
-  section's "full leak audit" is exactly closing that gap, not a new
-  scan from zero). Add a suite (or extend `i18n.test.mjs`) that boots the
-  app with no explicit language choice and asserts the FIRST rendered
-  screen is Turkish, not just that `t()` can produce Turkish when asked.
+SECTION 6 STATUS: DONE. Pushed as commit 5600bce. CI status: pushed,
+  awaiting confirmation on the branch head (check the actual PR before
+  treating as fully DONE vs. locally-green-CI-pending). Real bug found
+  and fixed: ui.lang was never initialized in app.js (so i18n.js's
+  lang() helper treated a fresh boot as English), and app-v8.js's own
+  Object.assign(ui,{...}) independently hardcoded lang:"en", silently
+  overriding a first attempted fix to app.js alone — found by testing
+  that first fix before declaring it done. Both sites now say "tr".
+  ui.guideLang (the User Guide's language) had the same bug, fixed the
+  same way. Verified with a real rendered screenshot (sent to the user)
+  and a new i18n.test.mjs boot-default check (mutation-tested: reverting
+  the Object.assign site reproduces exactly 3 failures). Fixing this
+  correctly turned 12 suites (382 checks) red — each depended on the old
+  implicit English default via a hardcoded string/regex assertion or a
+  Playwright :has-text() selector — and each was fixed on its own terms
+  (pinned to explicit English for behavioural suites, corrected expected
+  VALUES for the two suites whose toggle-click assumption flipped), never
+  by weakening a check. Zero checks removed; full regression green
+  (55/55, 1894/1894 via test:all); both offline artifacts rebuilt and
+  verified (27/27).
+NEXT_SECTION: 7/8/9 (domain command architecture, Floor Plan UX
+  hardening, Live Event UX hardening) — task #158.
+NEXT_ACTION: Audit the existing single-writer domain-function pattern
+  (setArrival, addHandoverNote, autoSnapshot, regenerateIds, setTableCapacity,
+  etc. — already documented across the K–T phases and section 2/3's own
+  work this session) against section 7's exact "UI never computes a
+  business fact itself" requirement, as a single pass rather than
+  assuming the existing pattern already satisfies it everywhere. Then
+  audit the Floor Plan and Live Event screens against sections 8/9's
+  specific interaction-count and warning-deduplication requirements
+  (Smart Seating, Freeze Zones, Table Availability, and the Global Finder
+  are the likely areas needing a fresh look, since they are the newest
+  additions and may not have been audited against this specific lens
+  yet). Add whatever named test suite(s) the audit's findings require.
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   change (section 2's "Deferred sub-scope" above) — STILL VALID, not
   attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
   and translated but not producible without new detection features.
 BLOCKED_ON: nothing external — this is pure engineering work.
-NOT_YET_TOUCHED: sections 6-28, 30-32, 35-38 (see table above).
+NOT_YET_TOUCHED: sections 7-28, 30-32, 35-38 (see table above).
 EXTERNAL_BLOCKERS_UNCHANGED: real human operator test (NOT VERIFIED), a
   genuine third independent real floor plan (NOT AVAILABLE), SQLite
   runtime (DEFERRED to EXE stage), EXE itself (DEFERRED, forbidden until
