@@ -54,7 +54,7 @@ programme's own rules).
 | 4 | Object identity safety | **DONE (audit, no gap found)** | Re-audited this session; see detailed write-up below. `plan-memory.js`'s `identity()` already implements exactly the safety property this section protects: a VERIFIED printed number is an absolute veto in both directions (checked before any weighing), geometry dominates the weighted score, visual similarity's weight is scaled by `1 - geometryCertainty` (near-zero when geometry already agrees, largest only when an object has moved beyond tolerance), and family mismatch is evidence that lowers the score but never blocks a match. Correction to an earlier note: visual similarity is not "off by default" — it is always computed and always wired in (mandatory per the module's own §24 requirement), but its WEIGHT is what stays governed. `venue-model.js`'s layout-change comparison uses a stricter, purely deterministic ladder for its own different task (verified table number, then position, no visual similarity at all). Both are already covered by existing suites (`plan-memory`, `layout-changes`); no gap found, no new code needed. |
 | 5 | Human-system interaction contract | **DONE (audit, no gap found)** | Re-audited this session; see detailed write-up below. `plan-confidence-budget.js`'s `DEFAULT_MAX_ITEMS=6` is a real, measured, justified budget ("with the two real plans, six covers every claim that settles anything... overridable so the measurement can be redone on a third plan"), with everything below the line counted and disclosed rather than hidden. `review-queue.js` implements the click→highlight→answer→resolve lifecycle with resolution state read live from the candidates on every render (never a separate tally that could drift), tested in `review-queue.test.mjs` (38 checks). `operator-questions.test.mjs` (15 checks) separately guards against two different underlying questions reading as identical text. No gap found, no new code needed. |
 | 6 | Turkish-first product | **DONE** | See detailed write-up below. Found and fixed a real bug: the product actually booted in English by default (`ui.lang` was never initialized, and `app-v8.js`'s own `Object.assign(ui,{...lang:"en"...})` clobbered app.js's default even after a first attempted fix), despite the whole product's UI being fully bilingual. Now boots Turkish, verified with a real rendered screenshot. New default-boot regression check in `i18n.test.mjs`. Fixing this correctly surfaced 12 suites (382 checks) whose assertions had silently depended on the old implicit English default — each fixed on its merits (pinned to explicit English for suites testing behaviour, not translation; two suites had assertions whose expected VALUE needed updating, not just their language, since the default flip changed which value a first toggle-click produces). Zero checks removed or weakened — same check counts before and after, all passing. |
-| 7 | UI/business logic separation | PARTIAL | The single-writer pattern already exists for several domain facts (`setArrival`, `addHandoverNote`, `autoSnapshot`, `regenerateIds`, etc., documented across the K–T phases) — not yet audited as a complete, enforced architecture rule. |
+| 7 | UI/business logic separation | PARTIAL — spot-checked, no violation found | This session grepped every direct write of 4 representative domain facts across `app-v8.js`: `guest.arrivalStatus` (exactly one write site, inside `setArrival()`), `table.availability` (exactly one write site, inside `setTableAvailability()`), freeze creation/lift (exactly one call site each, `createFreezeFromDraft()`/`liftFreeze()`), and `guest.planningStatus` (the one non-migration write is legitimate free-form operator editing, not a derived/paired fact the way arrival status is, so it correctly has no dedicated writer). Zero violations found on this sample. NOT exhaustively verified as "a complete, enforced architecture rule" across the full ~8000-line file — that would need AST-based tooling (an ESLint rule forbidding direct assignment to a named list of guarded fields outside their writer function) rather than grep, and is the concrete next step if this section is picked up again, not a re-scan by hand. |
 | 8 | Floor Plan experience simplification | NOT STARTED | |
 | 9 | Live Event operational flows | PARTIAL | Flows A/B/C/D/E substantially exist (Phase M/N and Smart Seating already implement find+checkin, No Show, find-space-for-party with named reasons and human Apply, table failure with impact preview) — not yet audited/optimized against this section's specific interaction-count and warning-deduplication requirements. |
 | 10 | Event Readiness Timeline | NOT STARTED | New feature. |
@@ -523,46 +523,61 @@ SECTIONS 4/5 STATUS: DONE (audit, no gap found). See detailed write-up
   and `operator-questions.test.mjs` (15 checks) already cover the
   lifecycle and the no-duplicate-question-wording guarantee. No source or
   test code changed for either section — the audit found no gap to fix.
-SECTION 6 STATUS: DONE. Pushed as commit 5600bce. CI status: pushed,
-  awaiting confirmation on the branch head (check the actual PR before
-  treating as fully DONE vs. locally-green-CI-pending). Real bug found
-  and fixed: ui.lang was never initialized in app.js (so i18n.js's
-  lang() helper treated a fresh boot as English), and app-v8.js's own
-  Object.assign(ui,{...}) independently hardcoded lang:"en", silently
-  overriding a first attempted fix to app.js alone — found by testing
-  that first fix before declaring it done. Both sites now say "tr".
-  ui.guideLang (the User Guide's language) had the same bug, fixed the
-  same way. Verified with a real rendered screenshot (sent to the user)
-  and a new i18n.test.mjs boot-default check (mutation-tested: reverting
-  the Object.assign site reproduces exactly 3 failures). Fixing this
-  correctly turned 12 suites (382 checks) red — each depended on the old
-  implicit English default via a hardcoded string/regex assertion or a
-  Playwright :has-text() selector — and each was fixed on its own terms
-  (pinned to explicit English for behavioural suites, corrected expected
-  VALUES for the two suites whose toggle-click assumption flipped), never
-  by weakening a check. Zero checks removed; full regression green
-  (55/55, 1894/1894 via test:all); both offline artifacts rebuilt and
-  verified (27/27).
-NEXT_SECTION: 7/8/9 (domain command architecture, Floor Plan UX
-  hardening, Live Event UX hardening) — task #158.
-NEXT_ACTION: Audit the existing single-writer domain-function pattern
-  (setArrival, addHandoverNote, autoSnapshot, regenerateIds, setTableCapacity,
-  etc. — already documented across the K–T phases and section 2/3's own
-  work this session) against section 7's exact "UI never computes a
-  business fact itself" requirement, as a single pass rather than
-  assuming the existing pattern already satisfies it everywhere. Then
-  audit the Floor Plan and Live Event screens against sections 8/9's
-  specific interaction-count and warning-deduplication requirements
-  (Smart Seating, Freeze Zones, Table Availability, and the Global Finder
-  are the likely areas needing a fresh look, since they are the newest
-  additions and may not have been audited against this specific lens
-  yet). Add whatever named test suite(s) the audit's findings require.
+SECTION 6 STATUS: DONE. Pushed as commit 5600bce, checkpoint commit
+  2a67e17. CI on 2a67e17: 8 of 10 checks confirmed green (both
+  push+pull_request "Offline", "Performance", "Detection" jobs); "Fast
+  core" and "Intelligence" were still in_progress as of this checkpoint
+  — check the PR before treating section 6 as CI-CONFIRMED rather than
+  locally-green-CI-pending. Real bug found and fixed: ui.lang was never
+  initialized in app.js (so i18n.js's lang() helper treated a fresh boot
+  as English), and app-v8.js's own Object.assign(ui,{...}) independently
+  hardcoded lang:"en", silently overriding a first attempted fix to
+  app.js alone — found by testing that first fix before declaring it
+  done. Both sites now say "tr". ui.guideLang had the same bug, fixed
+  the same way. Verified with a real rendered screenshot (sent to the
+  user) and a new i18n.test.mjs boot-default check (mutation-tested).
+  Fixing this correctly turned 12 suites (382 checks) red — each
+  depended on the old implicit English default — and each was fixed on
+  its own terms, never by weakening a check. Zero checks removed; full
+  regression green (55/55, 1894/1894 via test:all); both offline
+  artifacts rebuilt and verified (27/27).
+SECTION 7 STATUS: PARTIAL — spot-checked 4 representative domain facts
+  (guest.arrivalStatus, table.availability, freeze create/lift,
+  guest.planningStatus) via grep for every direct write site in
+  app-v8.js. Zero violations found: each guarded fact has exactly one
+  write site (its designated function), and planningStatus's one
+  non-migration write is legitimate free-form operator editing, not a
+  derived fact needing a dedicated writer. NOT exhaustive — a real
+  "complete, enforced architecture rule" needs AST-based tooling (an
+  ESLint rule forbidding direct assignment to a named list of guarded
+  fields outside their writer), not a grep spot-check. See the status
+  table's section-7 row for the exact fields checked.
+SECTIONS 8/9 STATUS: NOT STARTED. These need a fresh, focused UI-review
+  pass (real interaction counting on Floor Plan and Live Event, screenshot
+  verification per the UI constitution) against sections 8/9's specific
+  interaction-count and warning-deduplication requirements — genuinely
+  new work, not extractable from what this session already touched, and
+  deliberately not rushed into the tail of this session's work.
+NEXT_SECTION: 8/9 (Floor Plan UX hardening, Live Event UX hardening) —
+  task #158 continues, or split into its own task if picked up separately.
+NEXT_ACTION: Confirm section 6's remaining 2 CI checks (Fast core,
+  Intelligence) went green on commit 2a67e17 — if either failed, root-
+  cause before anything else. Then: (a) if section 7 is to be completed
+  further, build the AST-based single-writer lint rule rather than more
+  grep spot-checks; (b) for sections 8/9, do a real UI walkthrough of
+  Floor Plan and Live Event (Smart Seating, Freeze Zones, Table
+  Availability, the Global Finder are the newest additions and the most
+  likely to need a fresh look), counting actual interactions for the
+  named flows and checking for duplicate/redundant warnings, screenshot-
+  verified at the three standard viewports before any code change.
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   change (section 2's "Deferred sub-scope" above) — STILL VALID, not
   attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
   and translated but not producible without new detection features.
+  Section 7's exhaustive AST-based audit — STILL VALID, not attempted;
+  the grep spot-check is real evidence but not the complete audit.
 BLOCKED_ON: nothing external — this is pure engineering work.
-NOT_YET_TOUCHED: sections 7-28, 30-32, 35-38 (see table above).
+NOT_YET_TOUCHED: sections 8-28, 30-32, 35-38 (see table above).
 EXTERNAL_BLOCKERS_UNCHANGED: real human operator test (NOT VERIFIED), a
   genuine third independent real floor plan (NOT AVAILABLE), SQLite
   runtime (DEFERRED to EXE stage), EXE itself (DEFERRED, forbidden until
