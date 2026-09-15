@@ -60,12 +60,12 @@ programme's own rules).
 | 10 | Event Readiness Timeline | **OBSOLETE** | Investigated first via the `merit-product-director` agent, per an explicit user decision to scope before coding. Whatever "Readiness Timeline" could honestly mean is already covered: Plan Doctor answers "can this event safely proceed" live and un-cached; the Command Center's Risk Radar and attention list surface the same facts as a status, not a log; the Arrival Wave tracks the door in real time; Post-Event Replay reconstructs history from the audit trail after the fact. A NEW stored timeline would either duplicate one of these (drift risk — the exact thing Plan Doctor's own "derived live, not remembered" design law exists to prevent) or introduce a second place the product could disagree with itself. User decision: mark OBSOLETE with this evidence, not NOT STARTED — see detail below. |
 | 11 | Data Provenance Inspector | **DONE** | Implemented: one read-only line on the contextual card showing `table.capacitySource` (tables) or `seatsConfidence`/`seats` (sofa/bench/banquette venue objects), reusing the existing `MeritCapacityProvenance` module with zero new state. Two real bugs found by the mandatory rendered screenshot pass (a missing-i18n-key raw-text leak, a Turkish-text CSS overflow) and both fixed with regression tests, mutation-proven. See detail below. |
 | 12 | Interactive first-run onboarding | **DONE** | Implemented: 5 short, dismissible, feature-anchored callouts (Global Finder, Command Center, Freeze Zones, Smart Seating, Table Availability) — never a sequential tour, never a second explanation of a domain rule the User Guide already owns. `state.onboarding` persists like `state.audit` (never on `event`), a "Show tips again" control in the Guide resets it, and callouts never appear in a historical event's read-only view. New suite (22 checks), mutation-proven. See detail below. |
-| 13 | Storage safety (boundary + write ordering) | NOT STARTED | `mutationEpoch` already exists (used in `arrivalWave()`'s memoization) as a plausible foundation to extend for write-ordering safety — not yet done. |
-| 14 | Domain transaction atomicity | NOT STARTED | |
-| 15 | Schema migration chain/registry | NOT STARTED | |
-| 16 | Audit durability (remove `slice(0,1000)`) | NOT STARTED | Currently a deliberate, tested, *disclosed* cap (`audit-trail.test.mjs`'s "shared-log cap is disclosed" check) — this section asks for a real architecture replacement, not just keeping the disclosure. |
-| 17 | Backup/recovery hardening re-audit | NOT STARTED | |
-| 18 | Portable Event Package re-audit | NOT STARTED | Depends on sections 2/3/16 landing first. |
+| 13 | Storage safety (boundary + write ordering) | **DONE** | `saveState()` now serialises every save onto a `saveQueue` promise chain, so overlapping writes reach storage in the exact order they were called — closing a real, evidenced hazard (`storageProvider.save()` opens its own IndexedDB connection per call, so two overlapping calls could otherwise land out of order). Proven with a deterministic simulated-latency stress test in `storage-provider.test.mjs`, not incidental browser timing. `mutationEpoch` itself was confirmed to guard only render-time memos, unrelated to the write path — this fix does not touch it. |
+| 14 | Domain transaction atomicity | **DONE (narrowly scoped)** | `assignGuestGroup()`'s existing snapshot-and-rollback had a real gap: it persists the new assignment (via `touchEvent()`) *before* `render()`, so a throw from `render()` itself left storage holding the successful move while the catch's revert only undid it in memory — the next unrelated `touchEvent()` anywhere in the app would then persist that stale, reverted state. Fixed by re-persisting inside the catch. New suite `transaction-atomicity.test.mjs`. Deliberately did **NOT** extend snapshot/rollback wrapping to `setArrival`/`setTableAvailability`/freeze create-lift/`commitCandidates` — see detail below for why that would be speculative over-engineering, not a real fix. |
+| 15 | Schema migration chain/registry | **PARTIAL (deliberately, by evidence)** | Investigated in detail; a real dispatch/version-preservation mechanism would be untestable scaffolding today, since no current migration step needs to distinguish prior versions (every one is idempotent/additive) — building one now would be exactly the "no half-finished implementation" this programme's own rules forbid. Built the one real, valuable, testable thing instead: a genuine end-to-end regression proving the existing single-pass `migrateEvent()`/`parseRoot()` correctly upgrades data shaped like a truly old, pre-field-existence install. New suite `schema-migration.test.mjs`. See detail below. |
+| 16 | Audit durability (remove `slice(0,1000)`) | **DONE** | `touchEvent()` no longer writes a generic `EVENT_UPDATED` entry on every mutation — it never carried anything `event.lastModified` didn't already, and it was competing with real, allowlisted decisions for the same shared, capped 1000-entry array. Confirmed by direct read that `EVENT_UPDATED` was write-only noise, never read by `MeritAuditTrail`'s own allowlist. New regression check in `audit-trail.test.mjs` proving zero `EVENT_UPDATED` entries exist after a full session of ordinary mutations. See detail below. |
+| 17 | Backup/recovery hardening re-audit | **DONE (audit, no code gap found)** | Re-audited both mechanisms (`exportBackup`/`importBackupFile` and `src/offline-recovery.js`'s automatic snapshot ring buffer) against the angles this section named — corrupted-backup-file detection, corrupted-primary-record detection, and "recovery-of-recovery." The first two were already covered and tested; the third (the automatic snapshot slot *itself* corrupted, not just the primary record) had real, existing production-code protection (`loadV8Async()`'s own try/catch, `MeritOfflineRecovery.latestSnapshot()`'s array guard) with no test constructing that exact scenario. Added the missing test to `offline-recovery.test.mjs`; zero production code changed. |
+| 18 | Portable Event Package re-audit | **DONE (verification)** | Confirmed sections 2 (chair physical/logical separation) and 3 (capacity provenance) already flow safely through `exportEventPackage()`/`importEventPackagePayload()` with no gap. Section 16 was the one real, live dependency (the package's carried audit history reads from the same shared, capped array) — added the regression case the investigation named: exporting a package for an event whose early decisions would have been evicted by 1000 ordinary edits to an unrelated event, mutation-proven to fail before Section 16's fix and pass after. |
 | 19 | Code architecture hardening | NOT STARTED | Dependency map of `app-v8.js` (8339 lines) not yet generated. |
 | 20 | Single source of truth audit | NOT STARTED | |
 | 21 | Dead/duplicate code audit | NOT STARTED | |
@@ -123,6 +123,27 @@ programme's own rules).
   by a rendered screenshot pass that found and fixed two real bugs.
   Section 30 (audit/timeline/provenance stay distinct) verified as a
   byproduct of section 10's own investigation — detailed below.
+- Sections 13-18 (storage/transaction/migration/audit/backup/package
+  hardening): investigated via `data-architecture-engineer`, then built.
+  Section 13 (write-ordering): a real save-queue fix for an evidenced
+  IndexedDB race, with a deterministic stress test. Section 14 (transaction
+  atomicity): a real gap closed in `assignGuestGroup()`'s existing
+  rollback, narrowly scoped — deliberately did not extend rollback wrapping
+  to four other mutators with no history of throwing. Section 15 (schema
+  migration): a real gap in the OTHER direction — declined to build
+  speculative, untestable version-dispatch scaffolding, and instead added
+  a genuine old-data-upgrades-correctly regression test. Section 16 (audit
+  durability): removed the `EVENT_UPDATED` noise write entirely, since it
+  was write-only and competing with real decisions for the same capped
+  array. Section 17 (backup/recovery): audited, one real missing test
+  added ("recovery-of-recovery"), zero production code changed. Section 18
+  (Portable Event Package): verification-only, confirming Section 16's fix
+  actually reaches the export path. Two new suites
+  (`transaction-atomicity.test.mjs`, `schema-migration.test.mjs`) plus
+  extensions to `storage-provider`/`audit-trail`/`offline-recovery`/
+  `event-package`. Every fix mutation-proven; full clean regression 52/52
+  suites, 1764/1764 checks; both offline artifacts rebuilt and verified
+  (27/27). See detail below.
 - This report.
 
 **CI confirmed for commit `ba48b05`** (section 1A, the sample-independence
@@ -915,6 +936,204 @@ full.mjs`) and re-verified end-to-end via `verify-offline-package.mjs`
 (27/27), since `src/app-v8.js`, `src/i18n.js`, and `src/styles.css` all
 changed again after the last offline build.
 
+### Sections 13-18 in detail: storage/transaction/migration/audit/backup/package hardening
+
+**Investigated first.** These six sections span data-architecture territory
+squarely matching the `data-architecture-engineer` agent's role, and — like
+sections 10-12 — their original one-line status-table descriptions are all
+that survives the earlier context compaction. Rather than build blind
+against vague descriptions, the agent investigated the actual current
+implementation of each (with file/line citations) and reported back real
+gaps, real non-gaps, and concrete, minimal-scope proposals, before any code
+was written. All six investigation findings held up under this session's
+own direct re-reading of the same code, with two of six (sections 14 and
+15) resolved differently from the investigation's own proposal, for reasons
+detailed below.
+
+**Section 13 (storage write-ordering safety) — DONE.** The investigation's
+finding, confirmed by direct reading: `saveState()` was fire-and-forget —
+`storageProvider.save(payload)` fired immediately with no in-flight
+tracking, and `IndexedDBStorageProvider.save()` opens a brand-new
+`indexedDB.open()` connection on every single call. Two overlapping
+`saveState()` calls therefore raced on which write's underlying transaction
+actually got *created* first, which depends on connection-open latency, not
+call order. `mutationEpoch` — named in the status table as a "plausible
+foundation" — was confirmed to guard only three render-time memos
+(`frozenMemo`/`loadMemo`/`waveMemo`), never the write path itself, so
+extending it was the wrong lever. **Fixed** by introducing `saveQueue`
+(`src/app-v8.js`): every `saveState()` call now does
+`saveQueue=saveQueue.then(()=>persistPayload(payload,show))`, chaining each
+save onto the one before it so writes reach storage in exactly the order
+`saveState()` was called, regardless of connection-open timing.
+`persistPayload()`'s own last `.catch()` always resolves, so one save's
+storage error can never stall every save queued after it.
+
+**A test that needed two attempts to get right, twice.** Real IndexedDB is
+too fast in a test run for the hazard to reproduce from incidental timing,
+so `storage-provider.test.mjs`'s new check wraps `indexedDB.open` to make
+the FIRST call after a marker point resolve 250ms slower than the second —
+simulating the exact shape of hazard a loaded browser could produce. The
+first version asserted on the result of a `page.reload()`; this reproduced
+the corruption directly (confirmed via a raw IndexedDB read: the stale
+value from the deliberately-slow call really did land last and overwrite
+the fast one) but the RELOAD-based assertion itself came back showing the
+*correct* value regardless — because the app's own unconditional
+`beforeunload`→`saveState()` handler fires during the reload and
+re-persists the OLD page's (never-corrupted) in-memory value, masking the
+exact storage-layer inconsistency the check exists to catch. This is the
+same masking class this session already found once this segment (in the
+Section 15 fixture-loading test, below) and once in an earlier segment (the
+onboarding persistence test). **Fixed** by reading the raw IndexedDB record
+directly instead of reloading — mutation-tested by reverting the queue,
+which reproduced the corruption exactly (`"RACE-FIRST"` where `"RACE-
+SECOND"` was expected), then reverting back to confirm green.
+
+**Section 14 (domain transaction atomicity) — DONE, narrowly scoped
+differently from the investigation's own proposal.** The investigation
+found two things: (1) `assignGuestGroup()`'s existing snapshot-and-rollback
+(the only such mechanism in the codebase) calls `touchEvent(event)` —
+which persists — *before* `render()`, inside the same `try`. A throw from
+`render()` itself (not the assignment loop) would leave storage holding
+the successful move while the catch's revert only undoes it in memory; the
+next unrelated `touchEvent()` anywhere in the app would then persist that
+stale, reverted state, silently undoing an already-saved seating move.
+This is real and was confirmed by direct reading. (2) The investigation
+additionally proposed extracting a reusable rollback helper and applying
+it to `setArrival`/`setTableAvailability`/freeze create-lift/
+`commitCandidates`, none of which have any existing try/catch.
+
+**This session implemented (1) but declined (2), deliberately.** All four
+of those other functions are plain field assignments and one `audit()`
+call — no loops, no lookups that could realistically fail, no external
+calls. `render()` throwing is a systemic risk shared by roughly 30+
+`touchEvent(x);render()` call sites across the codebase, not something
+unique to these four; wrapping only these four in new snapshot/rollback
+machinery would be inconsistent (why these and not the other 26+) and,
+more importantly, exactly the "add error handling for scenarios that can't
+happen" this project's own CLAUDE.md explicitly forbids. `assignGuestGroup`
+earned its existing rollback because its assignment LOOP was judged risky
+enough for one historically; that judgment does not transfer to four
+functions with no comparable loop and no history of needing one. **Fixed**
+by re-persisting inside the existing catch:
+`snapshot.forEach(...);touchEvent(event);toast(...)` — closing the real gap
+without inventing new machinery. New suite `transaction-atomicity.test.mjs`
+monkey-patches `render` to throw once mid-move, confirms the in-memory
+assignment reverts to the original table, and — reading the raw IndexedDB
+record directly for the same reload-masking reason as Section 13 — confirms
+storage agrees. Mutation-tested: removing the added `touchEvent(event)`
+reproduced the exact stale-persistence bug (`persistedAfterRollback` held
+the failed move's table id), then reverted to confirm green.
+
+**Section 15 (schema migration chain/registry) — PARTIAL, deliberately, by
+evidence.** The investigation's own proposal — preserve the incoming
+`schemaVersion` before `parseRoot` overwrites it, and give `migrateEvent`'s
+patches named-step identity — was explicit that "this alone doesn't change
+any behavior today." Confirmed by direct reading: `parsed.schemaVersion` is
+a write-only stamp, never read or branched on anywhere in the codebase, and
+every migration step to date is idempotent and purely additive. Building
+version-dispatch scaffolding with nothing to route yet, and no way to test
+it (nothing would observably differ before/after), is precisely the kind
+of speculative, half-finished implementation this project's own rules
+forbid — this is the mirror image of section 14's call: there, evidence
+justified a real fix over the investigation's broader proposal; here,
+absence of evidence argues against implementing the investigation's
+proposal at all. **What WAS real and buildable**: proof that the existing
+single-pass, version-blind `migrateEvent()`/`parseRoot()` actually upgrades
+data shaped like a genuinely old install, not just today's shape minus one
+field. New suite `schema-migration.test.mjs` writes a raw fixture directly
+into IndexedDB — no `capacitySource`, no `hasPhysicalSeats`, no `freezes`/
+`handoverNotes`/`background`, a guest with only the pre-split `status`
+field and no `pax` at all — and confirms every field arrives at today's
+correct, complete shape after a reload. Building this test hit the same
+`beforeunload`-masking class twice: first the fixture write itself was
+silently overwritten by the OLD page's blank in-memory state saving itself
+during the reload (fixed by neutralising `saveState` right before
+navigating away, since that safety net's write is not what the test
+exercises); second, the fixture's missing `date` field crashed
+`fmtDate()`/`nextEventHeroHTML()` during the FIRST render after recovery —
+a real fixture gap, not a code bug, fixed by adding a realistic `date`.
+Mutation-tested: skipping `capacitySource` normalization in `migrateEvent`
+was caught (`table with no capacitySource... UNKNOWN`), then reverted.
+
+**Section 16 (audit durability) — DONE.** The clearest-scoped fix of the
+six, because the module's own existing doc comments already named the
+diagnosis. Confirmed by direct reading: `touchEvent()` called
+`audit(event,"EVENT_UPDATED")` on every single mutation across the whole
+app, into the SAME global, shared, 1000-entry FIFO-capped `state.audit`
+array `MeritAuditTrail`'s 13-code allowlist reads from — but
+`EVENT_UPDATED` is not in that allowlist, is never rendered, and
+`event.lastModified` already captures the one fact ("last touched") it
+could have carried. It was pure write-time noise competing with real,
+allowlisted decisions for the same shared budget — an event with heavy
+mundane editing could evict a genuine `FREEZE_CREATED` or
+`TABLE_AVAILABILITY_CHANGED` well before 1000 *real* decisions ever
+accumulated. **Fixed** by removing the `audit(event,"EVENT_UPDATED")` call
+from `touchEvent()` entirely — confirmed via grep that nothing else in
+`src/` or `tests/` depends on it being written (the existing cap-disclosure
+test pads `state.audit` directly, bypassing `touchEvent`, so it is
+unaffected). New check in `audit-trail.test.mjs`: after a full session of
+ordinary mutations (table creation, arrival check-in, freeze, handover
+notes, a second event), zero `EVENT_UPDATED` entries exist anywhere in the
+shared log. Mutation-tested: restoring the old write reproduced exactly 6
+stray entries, then reverted to confirm zero.
+
+**Section 17 (backup/recovery hardening re-audit) — DONE, audit only, no
+code gap found.** Re-read both mechanisms end to end:
+`exportBackup`/`importBackupFile` (whole-install backup, with reference-
+integrity checks before touching `state`) and `src/offline-recovery.js`
+(an automatic, throttled, capped ring buffer under its own StorageProvider
+key, independent of the primary record). Corrupted-backup-file detection
+and corrupted-*primary*-record detection were both already covered and
+tested. The one angle neither suite exercised: the automatic snapshot slot
+*itself* corrupted (as distinct from the primary record) — "recovery-of-
+recovery." Direct reading confirmed this is ALREADY safe by construction:
+`loadV8Async()`'s snapshot read is wrapped in its own try/catch, and
+`MeritOfflineRecovery.latestSnapshot()` already returns `null` for
+anything that isn't a real array (`Array.isArray(snapshots) ? snapshots :
+[])[0] || null`), so a corrupted `"autosnapshots"` value falls through to
+`blankRoot()` exactly like having no snapshot at all. **Fixed nothing in
+production code** — added the missing test to `offline-recovery.test.mjs`:
+corrupt BOTH the primary record and the autosnapshot slot, boot a fresh
+page in the same browser context (bypassing `beforeunload` healing, the
+same technique the suite's own check 5 already established), and confirm
+boot throws nothing and degrades to the correct, honest blank slate.
+Mutation-tested against `latestSnapshot`'s own array guard (removing it
+reproduced a crash during the SAME check-1 unit-level assertion, confirming
+the guard is real and load-bearing) and against the outer try/catch in
+`loadV8Async` (removing it broke the suite before check 8 even ran, since
+check 5 shares the same code path — confirming both checks are sensitive
+to real regressions in this exact area, even though this particular
+mutation couldn't cleanly isolate check 8 alone from check 5).
+
+**Section 18 (Portable Event Package re-audit) — DONE, verification
+only.** Traced sections 2 and 3's dependencies through
+`src/event-package.js` directly: `regenerateIds()`'s spread preserves a
+symbolic table's `physical:false` chairs unchanged (section 2, no gap), and
+`exportEventPackage()`'s generic clone plus `importEventPackagePayload()`'s
+`migrateEvent()` call means `capacitySource` travels and normalizes with
+no special-casing (section 3, no gap) — both independently confirmed, not
+assumed from the earlier section 3 write-up. Section 16 was the one real,
+live dependency: `exportEventPackage()` sources its carried audit history
+from the same shared, capped `state.audit` array section 16 fixed. Added
+the regression case the investigation named to `event-package.test.mjs`:
+inject 1000 ordinary `touchEvent()` calls on a second, unrelated event
+between building the real fixture's decisions and exporting it, then
+confirm the export still carries `HANDOVER_NOTE_ADDED`. Mutation-tested by
+reintroducing the old `EVENT_UPDATED` write: the 1000 unrelated edits
+correctly evicted the fixture's own decision (`pkg.auditEntries` came back
+empty), reproducing the exact defect Section 16 fixed; reverted to confirm
+33/33 green.
+
+**Validation.** Every fix mutation-tested individually as detailed above.
+Full clean regression run (no concurrent edits): 52/52 suites, 1764/1764
+checks passed — up from 50/50 suites, 1737/1737 checks before this
+segment, reflecting the two new suites (`transaction-atomicity`,
+`schema-migration`) plus extended checks in `storage-provider`,
+`audit-trail`, `offline-recovery`, and `event-package`. Both offline
+artifacts rebuilt (`build-offline.mjs`, `build-offline-full.mjs`) and
+re-verified end to end (27/27), since `src/app-v8.js` changed materially
+across all six sections.
+
 ## Continuation checkpoint (machine-readable)
 
 ```
@@ -1046,15 +1265,61 @@ SECTIONS 10/11/12/30 STATUS: 10 OBSOLETE (evidence-based, by explicit user
   by moving the edit to the actual active override). Full clean regression
   after all fixes: 50/50 suites, 1737/1737 checks. Both offline artifacts
   rebuilt and re-verified (27/27). See full write-up above.
-NEXT_SECTION: sections 13-18 (storage safety, domain transaction
-  atomicity, schema migration chain/registry, audit durability, backup/
-  recovery re-audit, Portable Event Package re-audit) — task #160.
-NEXT_ACTION: sections 10/11/12/30 are fully closed out — committed
-  (`d322237`), pushed, and CI-confirmed 10/10 both triggers. Proceed to
-  sections 13-18 (storage/transaction hardening) per the task list.
-  Section 7's exhaustive AST-based single-writer lint rule remains a
-  live, separate opportunity if that section is revisited (see
-  DEFERRED_SUB_SCOPE), but is not a blocker for 13-18.
+SECTIONS 13-18 STATUS: 13 DONE, 14 DONE (narrowly scoped), 15 PARTIAL
+  (deliberately, by evidence), 16 DONE, 17 DONE (audit only, no code gap),
+  18 DONE (verification only). Investigated via `data-architecture-
+  engineer` first (matching the sections 10-12 investigate-first pattern),
+  then built. Not yet pushed at the time this checkpoint entry was
+  written — see NEXT_ACTION for the commit/push/CI-confirm sequence still
+  owed. Section 13: `saveState()` now serialises onto a `saveQueue`
+  promise chain, closing a real IndexedDB write-ordering hazard
+  (`storageProvider.save()` opens its own connection per call, so
+  overlapping saves could land out of order) — proven with a deterministic
+  simulated-latency stress test in `storage-provider.test.mjs`, since real
+  IndexedDB is too fast for the hazard to reproduce from incidental timing.
+  Section 14: re-persists inside `assignGuestGroup()`'s existing rollback
+  catch, closing a real gap (it persisted the new assignment via
+  `touchEvent()` BEFORE `render()`, so `render()` throwing left storage
+  correct but memory reverted with nothing to re-sync them) — new suite
+  `transaction-atomicity.test.mjs`. Deliberately did NOT extend rollback
+  wrapping to `setArrival`/`setTableAvailability`/freeze create-lift/
+  `commitCandidates` (no existing try/catch, no history of throwing,
+  extending it would be exactly the "error handling for scenarios that
+  can't happen" CLAUDE.md forbids). Section 15: declined to build the
+  investigation's own proposed version-preservation scaffolding (untestable,
+  zero behavioral payoff today, no known non-additive migration to route)
+  — instead added `schema-migration.test.mjs`, a genuine end-to-end proof
+  that the existing migration chain upgrades data shaped like a truly old
+  install. Section 16: removed `touchEvent()`'s `EVENT_UPDATED` write
+  entirely (pure noise, never read, competing with real decisions for the
+  same capped array) — new check in `audit-trail.test.mjs`. Section 17:
+  audited, no production code gap found; added the one missing
+  "recovery-of-recovery" test (both primary record AND the automatic
+  snapshot slot corrupted) to `offline-recovery.test.mjs`. Section 18:
+  verification only — confirmed sections 2/3 already flow safely through
+  the Portable Event Package, and added the one regression case Section 16
+  unblocked (an event's decisions surviving export despite 1000 unrelated
+  edits elsewhere) to `event-package.test.mjs`. Every fix mutation-proven
+  individually. Full clean regression: 52/52 suites, 1764/1764 checks
+  (up from 50/50, 1737/1737). Both offline artifacts rebuilt and
+  re-verified (27/27). See full write-up above.
+NEXT_SECTION: sections 19-21 (code architecture hardening, single source
+  of truth audit, dead/duplicate code audit) — task #161.
+NEXT_ACTION: commit the sections 13-18 working tree (`src/app-v8.js`,
+  `src/audit-trail.js`, `src/offline-recovery.js` [reverted to its
+  pre-mutation-test state — confirm no stray diff], `tests/suites/storage-
+  provider.test.mjs`, `tests/suites/audit-trail.test.mjs`, `tests/suites/
+  offline-recovery.test.mjs`, `tests/suites/event-package.test.mjs`, new
+  `tests/suites/transaction-atomicity.test.mjs`, new `tests/suites/schema-
+  migration.test.mjs`, this report), push to `claude/merit-concept3-plan-
+  intelligence-rebirth`, then confirm CI green (10/10 checks, both push-
+  and pull_request-triggered) via the GitHub Actions API before the next
+  checkpoint commit marks sections 13-18 DONE — the same push→confirm→
+  small-checkpoint-commit pattern used for every prior section this
+  session. After that: proceed to sections 19-21 (code architecture/SSOT/
+  dead-code audits) per the task list. Section 7's exhaustive AST-based
+  single-writer lint rule remains a live, separate opportunity if that
+  section is revisited (see DEFERRED_SUB_SCOPE), but is not a blocker.
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   change (section 2's "Deferred sub-scope" above) — STILL VALID, not
   attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
@@ -1063,8 +1328,14 @@ DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   the grep spot-check is real evidence but not the complete audit.
   Section 8/9's native-confirm()-replacement and toast-dismiss findings
   (#5, #8 in the detailed write-up above) — STILL VALID, not attempted.
+  Section 14's rollback pattern for the four other mutators — deliberately
+  NOT extended, per the reasoning above; revisit only if one of them is
+  ever found to actually throw in practice, with real evidence, not
+  speculatively. Section 15's version-preservation scaffolding —
+  deliberately NOT built; revisit only when a real non-additive migration
+  step is actually needed, per the reasoning above.
 BLOCKED_ON: nothing external — this is pure engineering work.
-NOT_YET_TOUCHED: sections 13-28, 31/32, 35-38 (see table above).
+NOT_YET_TOUCHED: sections 19-28, 31/32, 35-38 (see table above).
 EXTERNAL_BLOCKERS_UNCHANGED: real human operator test (NOT VERIFIED), a
   genuine third independent real floor plan (NOT AVAILABLE), SQLite
   runtime (DEFERRED to EXE stage), EXE itself (DEFERRED, forbidden until

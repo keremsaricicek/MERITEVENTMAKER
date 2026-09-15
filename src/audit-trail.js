@@ -4,12 +4,14 @@
 // orders the decisions that were made, it does not play the room back.
 //
 // The raw log it reads (`state.audit`, written by `audit()` in app-v8.js) is
-// not itself a decision record — `touchEvent()` writes an EVENT_UPDATED entry
-// on every single mutation, as a side effect of saving, so most of that log
-// is noise a human never asked to see. This module is an ALLOWLIST, not an
-// exclude-list: a future audit code this module has not been told about
-// stays invisible rather than leaking into the trail unreviewed — showing
-// nothing is honest, showing noise is not.
+// not itself a decision record. `touchEvent()` no longer writes a generic
+// EVENT_UPDATED entry on every mutation (Section 16 removed that write: it
+// never carried anything `event.lastModified` didn't already, and it was
+// competing with real decisions for the same shared, capped array) — but
+// this module stays an ALLOWLIST, not an exclude-list, on principle: a
+// future audit code this module has not been told about stays invisible
+// rather than leaking into the trail unreviewed — showing nothing is
+// honest, showing noise is not.
 //
 // It resolves nothing else. What each code MEANS in a person's language is
 // decided in app-v8.js, next to t() and the guest/table lookups a sentence

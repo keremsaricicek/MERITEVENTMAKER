@@ -236,6 +236,30 @@
     }catch(error){console.warn("Automatic recovery snapshot could not be read either.",error);}
     return{data:blankRoot(),recoveredAt:null};
   }
+  // Section 13 (storage write-ordering safety): `storageProvider.save()` is
+  // async (IndexedDBStorageProvider opens its own connection per call), so
+  // two `saveState()` calls close together race on which write actually
+  // lands last -- nothing structurally guaranteed the second call to START
+  // was also the second call to LAND. `saveQueue` fixes this the direct
+  // way, not by comparing epochs after the fact: every save chains onto the
+  // one before it, so writes reach storage in exactly the order saveState()
+  // was called, whichever caller (touchEvent or a direct saveState() call)
+  // made them. persistPayload() never lets a failure break the chain --
+  // its own last .catch() always resolves -- so one save's storage error
+  // can never stall every save queued after it.
+  let saveQueue=Promise.resolve();
+  function persistPayload(payload,show){
+    return storageProvider.save(payload)
+      .then(()=>{if(show)toast("Saved locally in this browser.","success");autoSnapshot(payload);})
+      .catch(error=>{
+        // Large embedded images are the only realistic reason a save this
+        // size fails -- strip them and retry once before giving up.
+        console.warn("StorageProvider save failed, retrying with images stripped.",error);
+        const compact=clone(state);compact.events.forEach(e=>{if(e.background)e.background.src="";if(e.coverImage)e.coverImage="";});
+        return storageProvider.save(JSON.stringify(compact)).then(()=>toast("Event data was saved, but large images exceeded browser storage.","error",6500));
+      })
+      .catch(error=>{console.warn("StorageProvider save failed entirely.",error);toast("Browser storage is full. Export the workbook before closing.","error",6500);});
+  }
   saveState = function(show=false){
     // Nothing to persist yet, and persisting now would be actively harmful:
     // `state` is still the boot placeholder until loadV8Async() resolves, so
@@ -247,22 +271,19 @@
     let payload;
     try{payload=JSON.stringify(state);}
     catch(error){toast("Browser storage is full. Export the workbook before closing.","error",6500);return;}
-    storageProvider.save(payload)
-      .then(()=>{if(show)toast("Saved locally in this browser.","success");autoSnapshot(payload);})
-      .catch(error=>{
-        // Large embedded images are the only realistic reason a save this
-        // size fails -- strip them and retry once before giving up.
-        console.warn("StorageProvider save failed, retrying with images stripped.",error);
-        const compact=clone(state);compact.events.forEach(e=>{if(e.background)e.background.src="";if(e.coverImage)e.coverImage="";});
-        return storageProvider.save(JSON.stringify(compact)).then(()=>toast("Event data was saved, but large images exceeded browser storage.","error",6500));
-      })
-      .catch(error=>{console.warn("StorageProvider save failed entirely.",error);toast("Browser storage is full. Export the workbook before closing.","error",6500);});
+    saveQueue=saveQueue.then(()=>persistPayload(payload,show));
   };
   // Bumped by every mutation that goes through touchEvent, so render-scoped
   // memos (see frozenTableIdSet) can be invalidated by a counter rather than
   // by comparing structures that may have been edited in place.
   let mutationEpoch=0;
-  touchEvent = function(event){mutationEpoch++;event.lastModified=nowISO();audit(event,"EVENT_UPDATED");saveState();};
+  // touchEvent() itself writes no audit entry -- EVENT_UPDATED never carried
+  // information nothing else already has (event.lastModified is the same
+  // fact, at a single value), and writing one on every single mutation
+  // competed with genuine decisions for the same shared, capped audit array
+  // (Section 16). Callers that made a real decision call audit() themselves,
+  // with a real allowlisted code, before or after touchEvent().
+  touchEvent = function(event){mutationEpoch++;event.lastModified=nowISO();saveState();};
   let bootReady=false;
   state=blankRoot();
 
@@ -503,9 +524,13 @@
   // ---- AUDIT TRAIL: the foundation, not the replay ---------------------------
   //
   // src/audit-trail.js decides which raw `state.audit` entries are a decision
-  // worth showing — an allowlist, so the generic EVENT_UPDATED entry every
-  // single mutation writes never leaks in as if it were one. This resolves
-  // the list for one event; auditTrailText() below turns one entry into a
+  // worth showing — an allowlist, kept even though touchEvent() itself no
+  // longer writes a generic entry on every mutation (Section 16: that entry
+  // never carried anything event.lastModified didn't already, and it was
+  // competing with real decisions for the same shared, capped array) —
+  // a future write-path can still only add a code this module already
+  // named, never leak an unreviewed one in by default. This resolves the
+  // list for one event; auditTrailText() below turns one entry into a
   // sentence, reaching into the CURRENT guest/table/freeze data for names,
   // never trusting a stale copy — a deleted guest's own audit line still
   // needs to read sensibly, so it falls back to the id it can no longer
@@ -2403,7 +2428,20 @@
         toast(anyClash?t("seating.groupSeatTaken"):t("seating.groupRestoredToast"),anyClash?"error":"success",5200);
       });
     }
-    catch(error){snapshot.forEach(s=>{event.guests.find(g=>g.id===s.id).assignment=s.assignment;});toast("The group move was rolled back.","error");}
+    catch(error){
+      // Section 14: touchEvent(event) above this try's own assignment loop
+      // already persisted the NEW assignment before render() ever ran, so a
+      // throw from render() itself (not the loop) would otherwise leave
+      // storage holding the successful move while this revert only undoes
+      // it in memory -- the next UNRELATED touchEvent() anywhere in the app
+      // would then persist this stale, reverted `state`, silently undoing an
+      // already-saved seating move. Re-persisting the rollback here closes
+      // that gap; it never calls render() again, since re-running whatever
+      // just threw could throw a second time.
+      snapshot.forEach(s=>{event.guests.find(g=>g.id===s.id).assignment=s.assignment;});
+      touchEvent(event);
+      toast("The group move was rolled back.","error");
+    }
   }
   assignGuestToTable = function(guestId,tableId,preferred=null,options=null){assignGuestGroup([guestId],tableId,preferred,options);};
   // unassignGuest is defined further down, where its undo lives.

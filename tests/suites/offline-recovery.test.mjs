@@ -139,5 +139,32 @@ export default async function run({ page, context, checks, baseUrl }) {
   });
   checks.ok(words.en && words.tr, "both languages have a real button title", words);
   checks.ok(words.en !== words.tr, "and Turkish is really Turkish", words);
+
+  // --- 8. recovery-of-recovery: the safety net's OWN slot corrupted too ------
+  // (Section 17.) Check 5 corrupts the primary record while the snapshot is
+  // fine. This corrupts BOTH -- the one scenario neither this suite nor
+  // backup-restore.test.mjs exercised -- and proves boot still degrades to
+  // an honest blank slate instead of throwing. loadV8Async()'s own snapshot
+  // read (src/app-v8.js) is already wrapped in a try/catch for exactly this
+  // ("a snapshot that itself fails to parse is treated the same as none"),
+  // and MeritOfflineRecovery.latestSnapshot() already returns null for
+  // anything that isn't a real array -- this is a missing test for existing
+  // protection, not a new code path.
+  await page2.evaluate(() => MERIT_STORAGE_PROVIDER.save("{not valid json"));
+  await page2.evaluate(() => MERIT_STORAGE_PROVIDER.save("{not valid json either", "autosnapshots"));
+  const page3 = await context.newPage();
+  const pageErrors = [];
+  page3.on("pageerror", (err) => pageErrors.push(err.message));
+  await openApp(page3, baseUrl, { lang: "en" });
+  await page3.waitForTimeout(500);
+  const afterDoubleCorruption = await page3.evaluate(() => ({
+    eventsLen: state.events.length,
+    toast: document.getElementById("toastWrap")?.textContent || "",
+  }));
+  checks.equal(pageErrors.length, 0,
+    "booting with BOTH the primary record and the automatic snapshot corrupted throws nothing", pageErrors);
+  checks.equal(afterDoubleCorruption.eventsLen, 0,
+    "and degrades to the correct, honest blank slate rather than a half-built or crashed screen", afterDoubleCorruption);
   await page2.close().catch(() => {});
+  await page3.close().catch(() => {});
 }

@@ -74,4 +74,63 @@ export default async function run({ page, checks, baseUrl }) {
     "chairs and capacity are still in sync after a save/load round trip", reloaded);
   checks.ok(reloaded.guest && reloaded.guest.pax === 3 && reloaded.guest.additional === 2,
     "the guest's party size survived serialisation", reloaded.guest);
+
+  // --- write ordering (Section 13) ------------------------------------------
+  // storageProvider.save() is async -- IndexedDBStorageProvider opens its own
+  // connection per call -- so two overlapping saveState() calls race on which
+  // write actually lands last. saveQueue (app-v8.js) fixes this by chaining
+  // every save onto the one before it. To prove that deterministically
+  // (real IndexedDB is fast enough in a test run that the two calls' opens
+  // rarely land out of order on their own), indexedDB.open is wrapped so the
+  // FIRST call after this point resolves slower than the second -- exactly
+  // the shape of hazard a real browser could produce under load. Without the
+  // queue, the fast second write lands first and the slow first write then
+  // overwrites it moments later with stale data.
+  //
+  // Read the raw IndexedDB record directly rather than reloading the page:
+  // a reload also fires the app's own unconditional beforeunload->saveState(),
+  // which would re-persist the in-memory value (never itself corrupted --
+  // only the earlier WRITE ORDER was wrong) and mask exactly the storage-layer
+  // corruption this check exists to catch.
+  await page.waitForTimeout(700);
+  await page.evaluate(async () => {
+    const origOpen = indexedDB.open.bind(indexedDB);
+    let callIndex = 0;
+    indexedDB.open = function (name, version) {
+      const idx = callIndex++;
+      const real = origOpen(name, version);
+      const fake = {};
+      real.onupgradeneeded = (ev) => { if (fake.onupgradeneeded) fake.onupgradeneeded(ev); };
+      real.onblocked = (ev) => { if (fake.onblocked) fake.onblocked(ev); };
+      real.onerror = () => {
+        const fire = () => { fake.error = real.error; if (fake.onerror) fake.onerror(); };
+        idx === 0 ? setTimeout(fire, 250) : fire();
+      };
+      real.onsuccess = () => {
+        const fire = () => { fake.result = real.result; if (fake.onsuccess) fake.onsuccess(); };
+        idx === 0 ? setTimeout(fire, 250) : fire();
+      };
+      return fake;
+    };
+    const e = state.events[0];
+    e.name = "RACE-FIRST"; saveState();   // queued first, but its own connection opens slower
+    e.name = "RACE-SECOND"; saveState();  // queued second, opens fast
+    await new Promise((r) => setTimeout(r, 600));
+    indexedDB.open = origOpen;
+  });
+  const raceResult = await page.evaluate(async (dbName) => {
+    const db = await new Promise((res, rej) => {
+      const r = indexedDB.open(dbName); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    });
+    const raw = await new Promise((res, rej) => {
+      const tx = db.transaction("state", "readonly");
+      const req = tx.objectStore("state").get("root");
+      req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error);
+    });
+    db.close();
+    return JSON.parse(raw).events[0].name;
+  }, DB_NAME);
+  checks.ok(raceResult === "RACE-SECOND",
+    "the write made second is what's actually stored, even though its own storage connection opened faster than the write made first",
+    raceResult);
 }

@@ -97,6 +97,29 @@ export default async function run({ page, checks, baseUrl, artifactDir }) {
   await page.fill("[data-handover-text]", "Package test note.");
   await click(page, "[data-handover-add]");
   await page.waitForTimeout(300);
+
+  // Section 18: does the package still carry this event's real decisions
+  // once the shared, capped audit log (Section 16) has taken heavy UNRELATED
+  // activity elsewhere in the install? Before Section 16, touchEvent() wrote
+  // a generic EVENT_UPDATED entry on every single mutation, competing with
+  // real decisions for the same 1000-slot budget -- 1000 ordinary edits to a
+  // second, unrelated event would have pushed this event's own
+  // HANDOVER_NOTE_ADDED entry out of the shared array before it was ever
+  // exported. Proving that no longer happens is the one real, evidenced
+  // dependency Section 18 has on Section 16, per the investigation that
+  // scoped this section.
+  await page.evaluate(() => {
+    const busy = { id: "busy_event", name: "Busy Unrelated Event", tables: [], guests: [],
+      createdAt: new Date().toISOString(), date: new Date().toISOString().slice(0, 10) };
+    state.events.push(busy);
+    for (let i = 0; i < 1000; i++) { busy.name = "Busy Unrelated Event " + i; touchEvent(busy); }
+    state.events = state.events.filter((e) => e.id !== "busy_event");
+  });
+  await page.waitForTimeout(200);
+  const noiseImmune = await page.evaluate(() => state.audit.filter((a) => a.eventId === "busy_event").length);
+  checks.equal(noiseImmune, 0,
+    "1000 ordinary edits to an unrelated event write zero entries into the shared audit log", noiseImmune);
+
   await click(page, '[data-action="back-events"]');
   await page.waitForTimeout(300);
 

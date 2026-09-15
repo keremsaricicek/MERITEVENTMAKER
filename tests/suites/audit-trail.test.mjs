@@ -2,11 +2,14 @@
 //
 // This suite exists to keep four properties true:
 //
-//   AN ALLOWLIST, NOT A FILTER ON NOISE. touchEvent() writes a generic
-//   EVENT_UPDATED entry on every single mutation. If the trail ever showed
-//   that entry, an operator would see dozens of meaningless "event updated"
-//   lines drowning the real decisions. src/audit-trail.js names exactly
-//   which codes belong; nothing else reaches the screen.
+//   AN ALLOWLIST, NOT A FILTER ON NOISE. touchEvent() no longer writes a
+//   generic EVENT_UPDATED entry on every mutation at all (Section 16 — see
+//   check 11 below) — but the trail still names exactly which codes belong,
+//   on principle, rather than trusting write-time discipline alone: if a
+//   future writer ever reintroduced noise, an operator would otherwise see
+//   dozens of meaningless "event updated" lines drowning the real decisions.
+//   src/audit-trail.js names exactly which codes belong; nothing else
+//   reaches the screen.
 //
 //   ONE DECISION, ONE LINE. A guest checked in from the Global Finder used
 //   to write TWO audit entries under two different codes with a colliding
@@ -180,6 +183,21 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(withGhost.some(r => /Ghost Guest/.test(r.text)), "a deleted guest's own name (carried in the entry) still renders", withGhost);
   checks.ok(withGhost.some(r => /no longer on this event|artık bu etkinlikte olmayan/i.test(r.text)),
     "an arrival change pointing at a guest id that no longer resolves falls back honestly instead of blanking or crashing", withGhost);
+
+  // --- 7b. touchEvent() itself writes no noise into the shared log ---------
+  // (Section 16.) By this point the test has already driven dozens of
+  // ordinary mutations across two events -- table creation, an arrival
+  // check-in, a freeze, handover notes, a second event's own creation --
+  // every one of which calls touchEvent(). If it still wrote a generic
+  // EVENT_UPDATED entry per mutation the way it used to, this array would
+  // already be full of them. Checked here, BEFORE the next step's own
+  // synthetic EVENT_UPDATED padding (which tests something else entirely --
+  // the cap-disclosure banner -- and would otherwise mask this check).
+  const noiseCount = await page.evaluate(() =>
+    state.audit.filter(a => a.action === "EVENT_UPDATED").length);
+  checks.equal(noiseCount, 0,
+    "no EVENT_UPDATED entries exist anywhere in the shared audit log after a session of ordinary mutations",
+    noiseCount);
 
   // --- 8. the shared-log cap is disclosed, not silently hidden --------------
   // Padding is APPENDED after this event's real entries (not a full
