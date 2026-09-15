@@ -1,0 +1,358 @@
+{
+ "ranAt": "2026-09-07T21:24:59.263Z",
+ "maxGroups": 8,
+ "variants": [
+  {
+   "variant": "ORIGINAL",
+   "errors": 4,
+   "items": 15,
+   "reviewGroups": 6,
+   "shipped": {
+    "1": 1,
+    "3": 3,
+    "5": 4
+   },
+   "rankOnly": {
+    "1": 1,
+    "3": 4,
+    "5": 4
+   },
+   "randomMean": {
+    "1": 0.7,
+    "3": 1.8,
+    "5": 2.57
+   },
+   "biggestBatch": 15,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 1,
+     "seats": 1,
+     "facts": 2
+    }
+   }
+  },
+  {
+   "variant": "jpeg-q40",
+   "errors": 4,
+   "items": 15,
+   "reviewGroups": 7,
+   "shipped": {
+    "1": 3,
+    "3": 4,
+    "5": 4
+   },
+   "rankOnly": {
+    "1": 3,
+    "3": 4,
+    "5": 4
+   },
+   "randomMean": {
+    "1": 0.56,
+    "3": 1.59,
+    "5": 2.35
+   },
+   "biggestBatch": 27,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 3,
+     "seats": 0,
+     "facts": 2
+    }
+   }
+  },
+  {
+   "variant": "grayscale",
+   "errors": 8,
+   "items": 16,
+   "reviewGroups": 7,
+   "shipped": {
+    "1": 1,
+    "3": 4,
+    "5": 4
+   },
+   "rankOnly": {
+    "1": 1,
+    "3": 4,
+    "5": 4
+   },
+   "randomMean": {
+    "1": 0.91,
+    "3": 2.46,
+    "5": 3.75
+   },
+   "biggestBatch": 35,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 1,
+     "seats": 1,
+     "facts": 1
+    }
+   }
+  },
+  {
+   "variant": "noise",
+   "errors": 16,
+   "items": 16,
+   "reviewGroups": 6,
+   "shipped": {
+    "1": 13,
+    "3": 16,
+    "5": 16
+   },
+   "rankOnly": {
+    "1": 3,
+    "3": 16,
+    "5": 16
+   },
+   "randomMean": {
+    "1": 2.15,
+    "3": 6.69,
+    "5": 9.77
+   },
+   "biggestBatch": 16,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 29,
+     "seats": 42,
+     "facts": 3
+    }
+   }
+  },
+  {
+   "variant": "downscale-70",
+   "errors": 9,
+   "items": 13,
+   "reviewGroups": 6,
+   "shipped": {
+    "1": 1,
+    "3": 3,
+    "5": 3
+   },
+   "rankOnly": {
+    "1": 1,
+    "3": 3,
+    "5": 3
+   },
+   "randomMean": {
+    "1": 0.84,
+    "3": 2.75,
+    "5": 4.16
+   },
+   "biggestBatch": 24,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 4,
+     "seats": 24,
+     "facts": 3
+    }
+   }
+  },
+  {
+   "variant": "rotate-2",
+   "errors": 3,
+   "items": 12,
+   "reviewGroups": 7,
+   "shipped": {
+    "1": 1,
+    "3": 1,
+    "5": 1
+   },
+   "rankOnly": {
+    "1": 1,
+    "3": 1,
+    "5": 1
+   },
+   "randomMean": {
+    "1": 0.39,
+    "3": 1.11,
+    "5": 1.66
+   },
+   "biggestBatch": 29,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 2,
+     "seats": 5,
+     "facts": 2
+    }
+   }
+  },
+  {
+   "variant": "contrast-low",
+   "errors": 7,
+   "items": 11,
+   "reviewGroups": 6,
+   "shipped": {
+    "1": 0,
+    "3": 1,
+    "5": 1
+   },
+   "rankOnly": {
+    "1": 1,
+    "3": 1,
+    "5": 1
+   },
+   "randomMean": {
+    "1": 0.88,
+    "3": 2.48,
+    "5": 3.54
+   },
+   "biggestBatch": 31,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 1,
+     "seats": 5,
+     "facts": 1
+    }
+   }
+  },
+  {
+   "variant": "blur",
+   "errors": 41,
+   "items": 19,
+   "reviewGroups": 4,
+   "shipped": {
+    "1": 13,
+    "3": 27,
+    "5": 36
+   },
+   "rankOnly": {
+    "1": 1,
+    "3": 23,
+    "5": 25
+   },
+   "randomMean": {
+    "1": 4.76,
+    "3": 13.05,
+    "5": 20.61
+   },
+   "biggestBatch": 34,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 13,
+     "seats": 13,
+     "facts": 3
+    }
+   }
+  },
+  {
+   "variant": "jpeg-q20",
+   "errors": 27,
+   "items": 16,
+   "reviewGroups": 6,
+   "shipped": {
+    "1": 18,
+    "3": 20,
+    "5": 22
+   },
+   "rankOnly": {
+    "1": 18,
+    "3": 20,
+    "5": 22
+   },
+   "randomMean": {
+    "1": 3.79,
+    "3": 10.09,
+    "5": 14.76
+   },
+   "biggestBatch": 34,
+   "firstItem": {
+    "key": "priority.contradiction",
+    "impact": {
+     "objects": 33,
+     "seats": 0,
+     "facts": 3
+    }
+   }
+  }
+ ],
+ "dynamic": [
+  {
+   "items": 15,
+   "groups": 6,
+   "questions": 5,
+   "unreviewed": 56,
+   "top": {
+    "key": "priority.contradiction",
+    "signature": "1,17",
+    "impact": {
+     "objects": 1,
+     "seats": 1,
+     "facts": 2
+    }
+   }
+  },
+  {
+   "items": 14,
+   "groups": 6,
+   "questions": 5,
+   "unreviewed": 55,
+   "top": {
+    "key": "priority.contradiction",
+    "signature": "48,64;5,74;55,36",
+    "impact": {
+     "objects": 3,
+     "seats": 7,
+     "facts": 2
+    }
+   }
+  },
+  {
+   "items": 13,
+   "groups": 5,
+   "questions": 5,
+   "unreviewed": 54,
+   "top": {
+    "key": "priority.contradiction",
+    "signature": "48,64;5,74;55,36",
+    "impact": {
+     "objects": 3,
+     "seats": 7,
+     "facts": 2
+    }
+   }
+  },
+  {
+   "items": 13,
+   "groups": 5,
+   "questions": 5,
+   "unreviewed": 54,
+   "top": {
+    "key": "priority.contradiction",
+    "signature": "48,64;5,74;55,36",
+    "impact": {
+     "objects": 3,
+     "seats": 7,
+     "facts": 2
+    }
+   }
+  }
+ ],
+ "dynamicShrank": true,
+ "dynamicRequeued": true,
+ "deterministic": true,
+ "totals": {
+  "shipped": {
+   "1": 51,
+   "3": 79,
+   "5": 91
+  },
+  "rankOnly": {
+   "1": 30,
+   "3": 76,
+   "5": 80
+  },
+  "randomMean": {
+   "1": 14.98,
+   "3": 42.02,
+   "5": 63.17
+  }
+ }
+}
