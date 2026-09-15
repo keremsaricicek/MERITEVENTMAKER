@@ -804,20 +804,31 @@ SECTION 7 STATUS: PARTIAL — spot-checked 4 representative domain facts
   ESLint rule forbidding direct assignment to a named list of guarded
   fields outside their writer), not a grep spot-check. See the status
   table's section-7 row for the exact fields checked.
-SECTIONS 8/9 STATUS: PARTIAL, not the original scope. The original numeric
-  interaction-count/warning-deduplication targets were lost to context
-  compaction and are unrecoverable; fabricating compliance against them
-  would violate section 42's own rules. Instead, ran a genuine
-  visual-qa-reviewer-driven UX audit of Floor Plan/Seating/Live and fixed
-  6 of 8 real findings surfaced (multi-select scope disclosure on the
-  contextual card, forced-choice unavailable-reason, freeze pre-commit
-  scope/count preview with a whole-room warning, consistent
-  unavailable-block toast on the primary CTA, three sub-floor typography
-  spots bumped to the ~11px range, Smart Seating's "why nothing fits"
-  message naming frozen/unavailable tables). 2 deferred (native
-  confirm() dialogs — multi-site refactor; unbounded toast stacking —
-  cosmetic). See detailed write-up above for exact file/line-level
-  changes, i18n keys, and per-fix mutation-testing evidence.
+SECTIONS 8/9 STATUS: PARTIAL, not the original scope, but CI CONFIRMED
+  GREEN. Pushed as commit 6adca31 (parent d42d84f). Both the push- and
+  pull_request-triggered CI runs on the branch head (6adca31, runs
+  34925774240 and 34925777211) are fully green, all 10 checks each
+  ("Fast core", "Offline", "Detection", "Intelligence", "Performance" ×
+  2 triggers). The original numeric interaction-count/warning-
+  deduplication targets were lost to context compaction and are
+  unrecoverable; fabricating compliance against them would violate
+  section 42's own rules. Instead, ran a genuine visual-qa-reviewer-
+  driven UX audit of Floor Plan/Seating/Live and fixed 6 of 8 real
+  findings surfaced (multi-select scope disclosure on the contextual
+  card, forced-choice unavailable-reason, freeze pre-commit scope/count
+  preview with a whole-room warning — including a real reactivity bug
+  the mandatory post-fix screenshot pass caught and a real gap in that
+  fix's own first test, both closed — consistent unavailable-block toast
+  on the primary CTA, three sub-floor typography spots bumped to the
+  ~11px range, Smart Seating's "why nothing fits" message naming
+  frozen/unavailable tables). 2 deferred (native confirm() dialogs —
+  multi-site refactor; unbounded toast stacking — cosmetic). A second,
+  independent visual-qa-reviewer pass re-verified all three
+  post-screenshot-QA follow-ups (the reactivity fix, a contrast fix on
+  the new banner, and a styling fix on the reason select) live in a
+  rendered browser with no remaining issues. See detailed write-up above
+  for exact file/line-level changes, i18n keys, and per-fix
+  mutation-testing evidence.
 NEXT_SECTION: 10/11/12/30 (Readiness Timeline, Data Provenance Inspector,
   Interactive Onboarding, audit/timeline/provenance distinctness) — all
   new features, task #159.
