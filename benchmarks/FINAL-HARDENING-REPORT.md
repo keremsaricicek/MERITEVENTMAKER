@@ -1267,11 +1267,14 @@ SECTIONS 10/11/12/30 STATUS: 10 OBSOLETE (evidence-based, by explicit user
   rebuilt and re-verified (27/27). See full write-up above.
 SECTIONS 13-18 STATUS: 13 DONE, 14 DONE (narrowly scoped), 15 PARTIAL
   (deliberately, by evidence), 16 DONE, 17 DONE (audit only, no code gap),
-  18 DONE (verification only). Investigated via `data-architecture-
-  engineer` first (matching the sections 10-12 investigate-first pattern),
-  then built. Not yet pushed at the time this checkpoint entry was
-  written — see NEXT_ACTION for the commit/push/CI-confirm sequence still
-  owed. Section 13: `saveState()` now serialises onto a `saveQueue`
+  18 DONE (verification only). Pushed as commit a19c2fe (parent 977628c).
+  CI CONFIRMED GREEN on the branch head, commit a19c2fe — both the
+  push-triggered (run 34949715080) and pull_request-triggered (run
+  34949719153) workflow runs are fully green, all 10 checks each ("Fast
+  core", "Offline", "Detection", "Intelligence", "Performance" × 2
+  triggers), verified job-by-job via the GitHub Actions API. Investigated
+  via `data-architecture-engineer` first (matching the sections 10-12
+  investigate-first pattern), then built. Section 13: `saveState()` now serialises onto a `saveQueue`
   promise chain, closing a real IndexedDB write-ordering hazard
   (`storageProvider.save()` opens its own connection per call, so
   overlapping saves could land out of order) — proven with a deterministic
@@ -1305,21 +1308,12 @@ SECTIONS 13-18 STATUS: 13 DONE, 14 DONE (narrowly scoped), 15 PARTIAL
   re-verified (27/27). See full write-up above.
 NEXT_SECTION: sections 19-21 (code architecture hardening, single source
   of truth audit, dead/duplicate code audit) — task #161.
-NEXT_ACTION: commit the sections 13-18 working tree (`src/app-v8.js`,
-  `src/audit-trail.js`, `src/offline-recovery.js` [reverted to its
-  pre-mutation-test state — confirm no stray diff], `tests/suites/storage-
-  provider.test.mjs`, `tests/suites/audit-trail.test.mjs`, `tests/suites/
-  offline-recovery.test.mjs`, `tests/suites/event-package.test.mjs`, new
-  `tests/suites/transaction-atomicity.test.mjs`, new `tests/suites/schema-
-  migration.test.mjs`, this report), push to `claude/merit-concept3-plan-
-  intelligence-rebirth`, then confirm CI green (10/10 checks, both push-
-  and pull_request-triggered) via the GitHub Actions API before the next
-  checkpoint commit marks sections 13-18 DONE — the same push→confirm→
-  small-checkpoint-commit pattern used for every prior section this
-  session. After that: proceed to sections 19-21 (code architecture/SSOT/
-  dead-code audits) per the task list. Section 7's exhaustive AST-based
-  single-writer lint rule remains a live, separate opportunity if that
-  section is revisited (see DEFERRED_SUB_SCOPE), but is not a blocker.
+NEXT_ACTION: sections 13-18 are fully closed out — committed (`a19c2fe`),
+  pushed, and CI-confirmed 10/10 both triggers. Proceed to sections 19-21
+  (code architecture/SSOT/dead-code audits) per the task list. Section 7's
+  exhaustive AST-based single-writer lint rule remains a live, separate
+  opportunity if that section is revisited (see DEFERRED_SUB_SCOPE), but
+  is not a blocker.
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   change (section 2's "Deferred sub-scope" above) — STILL VALID, not
   attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
