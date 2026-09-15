@@ -1019,10 +1019,13 @@ SECTIONS 8/9 STATUS: PARTIAL, not the original scope, but CI CONFIRMED
   mutation-testing evidence.
 SECTIONS 10/11/12/30 STATUS: 10 OBSOLETE (evidence-based, by explicit user
   decision), 11 DONE, 12 DONE, 30 DONE (verified as a byproduct of 10's
-  investigation). Not yet pushed at the time this checkpoint entry was
-  written — see NEXT_ACTION for the exact commit/push/CI-confirm sequence
-  still owed before these four can be called DONE in the same sense as
-  sections 2/3/6. Two user decisions this segment: (1) investigate-and-
+  investigation). Pushed as commit d322237 (parent a358749). CI CONFIRMED
+  GREEN on the branch head, commit d322237 — both the push-triggered
+  (run 34930824597) and pull_request-triggered (run 34930831053) workflow
+  runs are fully green, all 10 checks each ("Fast core", "Offline",
+  "Detection", "Intelligence", "Performance" × 2 triggers), verified job-
+  by-job via the GitHub Actions API, not just the run-level conclusion.
+  Two user decisions this segment: (1) investigate-and-
   propose-scope-first for sections 10-12 (net-new features with lost
   specs, unlike 8/9's audit-of-existing-code approach) via `merit-product-
   director`; (2) build 11+12 only, skip 10, mark 10 OBSOLETE with the
@@ -1043,22 +1046,15 @@ SECTIONS 10/11/12/30 STATUS: 10 OBSOLETE (evidence-based, by explicit user
   by moving the edit to the actual active override). Full clean regression
   after all fixes: 50/50 suites, 1737/1737 checks. Both offline artifacts
   rebuilt and re-verified (27/27). See full write-up above.
-NEXT_SECTION: after sections 10/11/12/30 are committed/pushed/CI-confirmed,
-  sections 13-18 (storage safety, domain transaction atomicity, schema
-  migration chain/registry, audit durability, backup/recovery re-audit,
-  Portable Event Package re-audit) — task #160.
-NEXT_ACTION: commit the Section 11/12 working tree (`src/app-v8.js`,
-  `src/i18n.js`, `src/styles.css`, `tests/suites/capacity-provenance.
-  test.mjs`, new `tests/suites/onboarding.test.mjs`, this report), push to
-  `claude/merit-concept3-plan-intelligence-rebirth`, then confirm CI green
-  (10/10 checks, both push- and pull_request-triggered) via the GitHub
-  Actions API before the next checkpoint commit marks sections 10/11/12/30
-  DONE — the same push→confirm→small-checkpoint-commit pattern used for
-  every prior section this session (e.g. `6adca31` then `a358749` for
-  sections 8/9). After that: (a) if section 7 is to be completed further,
-  build the AST-based single-writer lint rule rather than more grep
-  spot-checks; (b) proceed to sections 13-18 (storage/transaction
-  hardening) per the task list.
+NEXT_SECTION: sections 13-18 (storage safety, domain transaction
+  atomicity, schema migration chain/registry, audit durability, backup/
+  recovery re-audit, Portable Event Package re-audit) — task #160.
+NEXT_ACTION: sections 10/11/12/30 are fully closed out — committed
+  (`d322237`), pushed, and CI-confirmed 10/10 both triggers. Proceed to
+  sections 13-18 (storage/transaction hardening) per the task list.
+  Section 7's exhaustive AST-based single-writer lint rule remains a
+  live, separate opportunity if that section is revisited (see
+  DEFERRED_SUB_SCOPE), but is not a blocker for 13-18.
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   change (section 2's "Deferred sub-scope" above) — STILL VALID, not
   attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
