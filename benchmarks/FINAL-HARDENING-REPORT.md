@@ -55,8 +55,8 @@ programme's own rules).
 | 5 | Human-system interaction contract | **DONE (audit, no gap found)** | Re-audited this session; see detailed write-up below. `plan-confidence-budget.js`'s `DEFAULT_MAX_ITEMS=6` is a real, measured, justified budget ("with the two real plans, six covers every claim that settles anything... overridable so the measurement can be redone on a third plan"), with everything below the line counted and disclosed rather than hidden. `review-queue.js` implements the click→highlight→answer→resolve lifecycle with resolution state read live from the candidates on every render (never a separate tally that could drift), tested in `review-queue.test.mjs` (38 checks). `operator-questions.test.mjs` (15 checks) separately guards against two different underlying questions reading as identical text. No gap found, no new code needed. |
 | 6 | Turkish-first product | **DONE** | See detailed write-up below. Found and fixed a real bug: the product actually booted in English by default (`ui.lang` was never initialized, and `app-v8.js`'s own `Object.assign(ui,{...lang:"en"...})` clobbered app.js's default even after a first attempted fix), despite the whole product's UI being fully bilingual. Now boots Turkish, verified with a real rendered screenshot. New default-boot regression check in `i18n.test.mjs`. Fixing this correctly surfaced 12 suites (382 checks) whose assertions had silently depended on the old implicit English default — each fixed on its merits (pinned to explicit English for suites testing behaviour, not translation; two suites had assertions whose expected VALUE needed updating, not just their language, since the default flip changed which value a first toggle-click produces). Zero checks removed or weakened — same check counts before and after, all passing. |
 | 7 | UI/business logic separation | PARTIAL — spot-checked, no violation found | This session grepped every direct write of 4 representative domain facts across `app-v8.js`: `guest.arrivalStatus` (exactly one write site, inside `setArrival()`), `table.availability` (exactly one write site, inside `setTableAvailability()`), freeze creation/lift (exactly one call site each, `createFreezeFromDraft()`/`liftFreeze()`), and `guest.planningStatus` (the one non-migration write is legitimate free-form operator editing, not a derived/paired fact the way arrival status is, so it correctly has no dedicated writer). Zero violations found on this sample. NOT exhaustively verified as "a complete, enforced architecture rule" across the full ~8000-line file — that would need AST-based tooling (an ESLint rule forbidding direct assignment to a named list of guarded fields outside their writer function) rather than grep, and is the concrete next step if this section is picked up again, not a re-scan by hand. |
-| 8 | Floor Plan experience simplification | NOT STARTED | |
-| 9 | Live Event operational flows | PARTIAL | Flows A/B/C/D/E substantially exist (Phase M/N and Smart Seating already implement find+checkin, No Show, find-space-for-party with named reasons and human Apply, table failure with impact preview) — not yet audited/optimized against this section's specific interaction-count and warning-deduplication requirements. |
+| 8 | Floor Plan experience simplification | PARTIAL | This section's original exact interaction-count/warning-deduplication numeric targets were lost to an earlier context compaction and are not recoverable — rather than fabricate compliance against unknown numbers, this session commissioned a fresh, evidence-based UX audit (`visual-qa-reviewer` agent, real DOM/console/screenshot inspection) of Floor Plan and Live Event and fixed every real, well-scoped finding it surfaced. One CRITICAL finding fixed: the contextual card's capacity stepper/presets always edit `ui.selectedObjectId` alone but gave no indication of that when `ui.selectedObjectIds` held more (bulk-add, marquee) — see detail below. Not a re-verification of the original section 8 requirements, since those requirements are gone; a real, different, and honestly-scoped pass on the same screen. |
+| 9 | Live Event operational flows | PARTIAL | Same audit (see section 8's row and detail below) surfaced and fixed 5 more real findings spanning Seating/Freeze Zones/Table Availability/Smart Seating: a reason dropdown silently defaulting instead of forcing a choice, a freeze form with no pre-commit scope warning, an inconsistent disabled-vs-toast affordance for the same "table unavailable" rule, sub-floor operational text, and a "no table fits" message that did not name frozen/unavailable tables as the reason. Two findings (native `confirm()` dialogs, unbounded toast stacking) are real but deliberately deferred — see detail below. Flows A/B/C/D/E from the original section 9 description still substantially exist as previously noted; the specific interaction-count/warning-dedup numeric targets remain unverifiable for the same reason as section 8. |
 | 10 | Event Readiness Timeline | NOT STARTED | New feature. |
 | 11 | Data Provenance Inspector | NOT STARTED | New feature. |
 | 12 | Interactive first-run onboarding | NOT STARTED | New feature. |
@@ -109,6 +109,12 @@ programme's own rules).
   product actually booted in English by default — plus fixed 12 suites
   (382 checks) whose assertions silently depended on that bug, detailed
   below.
+- Sections 8/9 (Floor Plan/Live UX hardening): a fresh, evidence-based UX
+  audit of Floor Plan and Seating surfaced 8 real findings; 6 fixed
+  (multi-select scope disclosure, forced-choice unavailable-reason,
+  freeze pre-commit scope preview, consistent unavailable-block toast,
+  three areas of sub-floor typography, Smart Seating's "why nothing fits"
+  message), 2 deliberately deferred, detailed below.
 - This report.
 
 **CI confirmed for commit `ba48b05`** (section 1A, the sample-independence
@@ -474,6 +480,253 @@ matches its count before section 6 began (48/48 fast suites → still
 48/48, 12 previously-failing suites → 382/382 on their own, then
 confirmed together with the rest via `test:all`).
 
+### Sections 8/9 in detail: a fresh UX audit, since the original numeric targets were unrecoverable
+
+**Why this is not the original section 8/9 work.** This report's own
+earlier NEXT_ACTION entry described sections 8/9 as needing "real
+interaction counting on Floor Plan and Live Event... against sections
+8/9's specific interaction-count and warning-deduplication requirements."
+Those specific numeric targets were part of the original 42-section
+programme text, which is not recoverable in this session (lost to an
+earlier context compaction). Rather than invent numbers to satisfy an
+unknown target — which section 42's own rules forbid ("never fabricate
+results") — this session commissioned a genuine, fresh UX audit of the
+same screens (Floor Plan, Seating, Live Event) via the `visual-qa-reviewer`
+agent: real rendered Chromium, real DOM/`getComputedStyle` inspection,
+`page.on("dialog")` capture, and screenshots at the standard viewports —
+not a design-document comparison. The agent's role is read-only/reporting
+per its own definition; all triage and fixes below are this session's own.
+
+**The audit exercised:** bulk-add, capacity edit via the contextual card,
+marking a table unavailable, creating a freeze zone, attempting to seat
+into a frozen/unavailable table, Global Finder check-in, Live door-search
+check-in, No Show, and Smart Seating from Live. One environment caveat:
+CDN requests are blocked in this sandbox, so xlsx.js/tesseract.js/pdf.js
+never load — Excel import/export, OCR, and PDF plan import were
+unverified in this pass (a pre-existing sandbox restriction, not a new
+finding).
+
+**8 real findings surfaced, one confirmed non-finding.** Triage below;
+6 fixed this session, 2 deliberately deferred as real but larger/lower-
+priority than a "no huge blind refactor" pass should absorb.
+
+**Fixed #1 — CRITICAL: silent multi-select scope mismatch.**
+`contextualCardHTML()` (`src/app-v8.js`) always resolves every field —
+capacity stepper, presets, type, zone, rotation — against
+`ui.selectedObjectId` alone, never the rest of `ui.selectedObjectIds`.
+Bulk-add creating 4 tables, or a marquee catching several, leaves the
+canvas showing a multi-select highlight while the always-visible card
+implies (by giving no indication otherwise) that a capacity click would
+apply to all of them — it would only ever touch one. Fixed by computing
+`alsoSelected = max(0, selectedObjectIds.length - 1)` and rendering a new
+`.contextual-card-also-selected` banner ("Editing this one only — N more
+also selected" / Turkish equivalent) whenever it is nonzero, on both the
+table card and the venue-object card. New i18n keys
+`inspector.alsoSelected`/`inspector.object`. New test in
+`tests/suites/guest-and-seating-rules.test.mjs`: confirms no banner with
+one object selected, confirms the banner and its count with two selected,
+and confirms a capacity-preset click changes only the primary selection's
+capacity — mutation-proven (zeroing the `alsoSelected` computation was
+caught, then reverted and reconfirmed).
+**Follow-up from the post-fix screenshot pass:** the banner's text/
+background pairing measured at ≈3:1 contrast (computed against the near-
+white card background this sits on, `color-mix(...,8%,transparent)` of
+`--pi-warn` over `--pi-surface: #fff`) — under WCAG AA's 4.5:1 floor for
+11px text. This exact `--pi-warn`-on-8%-tint pairing is inherited from an
+existing pattern used in several other places already (`.poi-lowevidence`,
+`.poi-visual-note.disagree`, `.plan-contradictions>strong`), so a
+token-level fix was out of scope here; instead this one new component's
+text color was switched to `--amber-ink` (~5.7:1 against the same
+background, same warning hue family, border/background tint unchanged) —
+a locally-scoped fix since this is new code, not a patch applied
+inconsistently to a shared token used elsewhere.
+
+**Fixed #2 — MEDIUM: unavailable-reason silently defaults to "Damaged."**
+The reason `<select>` (`src/app-v8.js`, the table card's availability
+block) built its options via `Object.keys(A.REASON).map(...)` with no
+blank/placeholder entry, so the browser pre-selects whichever `REASON` key
+happens to be listed first (`DAMAGED`) — a click on "Mark unavailable"
+that never opens the dropdown silently records "Damaged" for a table that
+might be relocated, on AV hold, or anything else. Fixed with a disabled,
+selected placeholder option (`avail.reason.CHOOSE`, "Choose a reason…")
+as the first entry, plus a guard in the click handler
+(`if(next==="UNAVAILABLE"&&reasonEl&&!reasonEl.value){toast(...);return;}`)
+that refuses to proceed and shows `avail.reasonRequiredToast` if the
+placeholder is still selected. `setTableAvailability()` itself was already
+safe (`A.REASON[reason]||A.REASON.OTHER`); the bug was purely that the UI
+always handed it *some* value even when the operator chose nothing. New
+checks in `tests/suites/table-availability.test.mjs`: the select starts on
+the empty placeholder value; clicking Mark Unavailable without choosing a
+reason marks nothing and toasts the explanation; choosing a real reason
+then works normally. Mutation-proven (removing the guard was caught by
+both the new check and, transitively, by the existing "since"/"reason
+recorded" checks further down the same suite, then reverted). This also
+required updating `tests/suites/audit-trail.test.mjs`'s own
+mark-unavailable step to select a reason first — it was relying on the
+old implicit default, the same class of hidden dependency section 6 found
+around the language default.
+**Follow-up from the post-fix screenshot pass:** the same pass found the
+`[data-avail-reason]` select renders in native, unstyled browser grey —
+pre-existing (it sits in `.table-card-avail`, never inside a `.field`
+wrapper, so it never picked up the app's `.field select` input styling),
+not introduced by this diff, but tightly coupled to this fix's own goal
+of "reads as a placeholder, not a real choice." Fixed by giving
+`.table-card-avail select` the same background/border/radius/focus-ring
+treatment as `.field select`, plus a `required` attribute on the element
+(purely for the `:invalid` CSS hook — nothing here calls
+`checkValidity()`/`reportValidity()`, so it changes no runtime behaviour)
+so the still-placeholder state visibly reads as muted via
+`:invalid{color:var(--muted-2)}`.
+
+**Fixed #3 — MEDIUM: Freeze Zone form's fast path could freeze 100% of
+the room with no warning.** Opening the freeze form defaults to
+`scope: "ZONE"` with `zone: zones[0]`, so a room with one dominant zone
+covering every table could be entirely held back by opening the form and
+clicking Freeze without changing anything — `createFreezeFromDraft()`
+already refuses a rule that covers *nothing*, but nothing warned about a
+rule that covers *everything*. Fixed with a live preview computed from
+the in-progress draft on every render (`freezeFormHTML()`, `src/app-v8.js`):
+a `.freeze-preview` line ("This will cover N of M tables · C chairs") using
+`FREEZE().tablesCovered()` against the current draft, and an additional,
+more strongly-styled `.freeze-preview-all` warning line when the scope
+covers every seatable table in the plan. New i18n keys
+`freeze.preview`/`freeze.previewNone`/`freeze.previewAll`. New checks in
+`tests/suites/seating-freeze.test.mjs`: the partial-scope preview names
+the right table/chair counts with no whole-room warning; a deliberately
+whole-room-covering scope (TABLE_GROUP, prefix T, 0–99, matching every
+table in that suite's room) raises both the count line and the warning
+line, with the right total. Mutation-proven (forcing `coversAll` to always
+`false` was caught, then reverted).
+
+**A real reactivity bug in this fix, found by actually rendering it — and
+a real gap in the first test that let it through.** The mandatory
+post-fix screenshot pass (`visual-qa-reviewer`, per this project's own
+"not done until rendered and screenshotted" rule) found that the preview
+box only updated when the SCOPE field itself changed
+(`if(key==="scope")render();` in `bindFreezeZones`'s field-commit
+handler) — changing zone, prefix, from, or to committed to
+`ui.freezeDraft` but never re-rendered, so the box could sit on a stale
+"1 of 4 tables" number right up to the click that would actually freeze
+all 4. Re-running the ORIGINAL version of this fix's own test against the
+unfixed code showed it passing anyway — a real gap in the test, not just
+in the code: the test happened to reselect the scope dropdown to a value
+it already held immediately before checking the zone-driven number, and
+that incidental full re-render (triggered by the scope field alone)
+masked the exact bug it was meant to catch. Confirmed by mutation: the
+original test, run against the reverted (buggy) commit-handler, stayed
+green. Fixed properly in two parts: (1) `freezeCoveragePreviewHTML()` was
+pulled out of `freezeFormHTML()` into its own function so the field-commit
+handler can refresh just the preview `<div id="freezePreviewBox">` for
+any field that changes coverage (`zone`/`prefix`/`from`/`to`/`tableId`),
+without a full `render()` — deliberately not a full re-render on every
+keystroke, since that would replace the input DOM nodes themselves and
+throw the caret out of whatever field is being typed into, the exact
+failure mode the original code's own comment was written to avoid for the
+note field; (2) the test was rewritten to isolate the exact non-scope-field
+case — switch to `TABLE_GROUP` once (a real, expected-to-render scope
+change), then change ONLY the `to` field, with no further scope touch at
+all, and assert the box moves immediately and raises the whole-room
+warning. Re-run against the reverted commit-handler, this rewritten test
+now fails exactly as expected (`afterToChangeOnly` stays byte-identical to
+`beforeToChange`); reverted back to the fix, 89/89 green. This is the same
+"first fix attempt was incomplete, found by testing before declaring it
+done" discipline section 6 already established, this time catching a gap
+in the TEST rather than the first code fix.
+
+**Fixed #4 — LOW-MEDIUM: the same "table is unavailable" rule gave two
+different affordances.** The seat-row path already gave a clear toast via
+`assignGuestGroup()`'s own guard; the primary "Seat/Move here" CTA on the
+table card used a native `disabled` attribute instead, which swallows the
+click entirely — a dead click with no explanation beyond a hover tooltip.
+Fixed by dropping the native `disabled` attribute in favour of a purely
+visual `.is-blocked` class (same dimmed look, `cursor:not-allowed`) so the
+click still reaches `assignGuestGroup()`'s existing guard and produces the
+identical toast the seat-row already gives. Discovered mid-fix that
+`aria-disabled="true"` has the same swallowing effect (Playwright's own
+actionability model — and some assistive tech — treat it as non-
+interactive the same as native `disabled`), so the button carries neither
+attribute, only the `is-blocked` class and its `title` tooltip; this is
+also the more honest a11y shape here, since the control genuinely does
+something when activated (explains why, rather than being truly inert).
+New checks in `tests/suites/table-availability.test.mjs`: the CTA is
+`is-blocked` but not natively disabled, and clicking it directly (not just
+the seat row) seats nobody and shows the same toast. Mutation-proven
+(reverting to native `disabled` was caught by both the class check and a
+real click timeout, then reverted).
+
+**Fixed #6 — LOW: sub-floor typography on real operational content.**
+Three elements the UI constitution's ~12–14px floor applies to (they are
+content an operator reads continuously, not decorative micro-labels) were
+measured via `getComputedStyle` at 9–9.5px: the seat-row list inside the
+table card (seat numbers, occupant names, "Empty"), the Floor Plan/Seating
+canvas toolbar's zoom-percentage label, and the table card's
+CAPACITY/OCCUPIED/EMPTY stat labels. Bumped in `src/styles.css`:
+`.seat-row` 9px→11px, `.zoom-label` 9px→11px, `.table-card-stats span`
+9.5px→10.5px (a smaller bump — this one is a genuine uppercase kicker
+label pattern used consistently across dozens of other labels app-wide,
+and its adjacent value is already 17px, so a full jump would be
+inconsistent with the rest of the app's established hierarchy language
+rather than a correction). Deliberately not a sweep of every 9px kicker
+label in the app — those are a consistent, intentional hierarchy device
+per the UI constitution's own "use hierarchy, not extreme shrinking"
+language, and the finding named these three specific, content-bearing
+spots, not the whole app's label system.
+
+**Fixed #7 — LOW: Smart Seating's "no table fits" message didn't explain
+frozen/unavailable tables as the reason.** `smartSeatingHTML()` showed
+`seat.noneFit` ("No table has N seats free together. M were considered.")
+whenever `advice.options.length === 0`, with no distinction between "the
+room is genuinely full" and "most of the room is frozen or failed
+tonight" — the latter could read as a broken recommender to a first-time
+operator. Fixed by counting `advice.blocked` entries with
+`why === "FROZEN"`/`"UNAVAILABLE"` and appending
+`seat.noneFitFrozen`/`seat.noneFitUnavailable` ("N of them are frozen." /
+"N of them are marked unavailable.") whenever those counts are nonzero —
+`seating-advisor.js` itself was untouched, since it already reported these
+reasons in `blocked`; only the empty-state message composition in
+`app-v8.js` needed to read them. New check in
+`tests/suites/smart-seating.test.mjs`: a scenario with one table
+unavailable and one frozen produces a message naming both, in whichever
+language is active; the suite's existing "genuinely full room" scenario
+(no frozen/unavailable tables involved) continues to pass unchanged,
+proving the addition is additive, not a rewording of the base case.
+Mutation-proven (zeroing both counts was caught, then reverted).
+
+**Deferred #5 — LOW: native `browser confirm()` for destructive actions**
+(table delete, backup restore, event-package import, offline-recovery
+restore) is inconsistent with the app's own styled modal system
+elsewhere. Real, but a multi-site refactor touching several independent
+flows — STILL VALID, not attempted, consistent with the "no huge blind
+refactor" constraint.
+
+**Deferred #8 — LOW: toasts stack indefinitely with no dismiss control.**
+Real, but cosmetic and lower priority than the six fixed above — STILL
+VALID, not attempted.
+
+**Confirmed non-finding:** Live Event has no direct Smart Seating control
+on a guest row. This matches this project's own documented, intentional
+design (`CLAUDE.md`'s guest-finder section: "CHANGE TABLE opens Seating
+with the guest selected and waits for a person") — not a gap.
+
+**Validation, in two rounds.** Round one (source/logic review + mutation
+testing, before any rendering): all new/modified suites green individually
+and together, plus the full fast suite (49/49 suites, 1701/1701 checks)
+and both offline artifacts rebuilt and verified. Round two was the
+mandatory rendered-and-screenshotted pass this project's own UI
+constitution requires before any UI change counts as done
+(`visual-qa-reviewer`, real Chromium, at 1920×1080/2560×1440/~1440px) —
+and it is the round that actually earned its keep: it found the fix #3
+reactivity bug (detailed above) that round one's own mutation testing had
+missed, plus the two styling follow-ups on fixes #1 and #2. Every fix
+that changed after round two was re-validated the same way as round one
+— mutation-proven, then the full fast suite re-run green — before being
+called done. Final counts: `table-availability` (42 checks),
+`seating-freeze` (89, +4 from the reactivity-bug test rewrite),
+`smart-seating` (48), `guest-and-seating-rules` (16), `audit-trail` (27,
+one pre-existing step updated for fix #2's new required-reason
+behaviour), full fast suite 49/49 suites green, both offline artifacts
+rebuilt and re-verified (27/27) after every code change in this section.
+
 ## Continuation checkpoint (machine-readable)
 
 ```
@@ -551,31 +804,42 @@ SECTION 7 STATUS: PARTIAL — spot-checked 4 representative domain facts
   ESLint rule forbidding direct assignment to a named list of guarded
   fields outside their writer), not a grep spot-check. See the status
   table's section-7 row for the exact fields checked.
-SECTIONS 8/9 STATUS: NOT STARTED. These need a fresh, focused UI-review
-  pass (real interaction counting on Floor Plan and Live Event, screenshot
-  verification per the UI constitution) against sections 8/9's specific
-  interaction-count and warning-deduplication requirements — genuinely
-  new work, not extractable from what this session already touched, and
-  deliberately not rushed into the tail of this session's work.
-NEXT_SECTION: 8/9 (Floor Plan UX hardening, Live Event UX hardening) —
-  task #158 continues, or split into its own task if picked up separately.
-NEXT_ACTION: Section 6's CI is fully confirmed (10/10 on 76859e4) — no
-  follow-up needed there. Next: (a) if section 7 is to be completed
-  further, build the AST-based single-writer lint rule rather than more
-  grep spot-checks; (b) for sections 8/9, do a real UI walkthrough of
-  Floor Plan and Live Event (Smart Seating, Freeze Zones, Table
-  Availability, the Global Finder are the newest additions and the most
-  likely to need a fresh look), counting actual interactions for the
-  named flows and checking for duplicate/redundant warnings, screenshot-
-  verified at the three standard viewports before any code change.
+SECTIONS 8/9 STATUS: PARTIAL, not the original scope. The original numeric
+  interaction-count/warning-deduplication targets were lost to context
+  compaction and are unrecoverable; fabricating compliance against them
+  would violate section 42's own rules. Instead, ran a genuine
+  visual-qa-reviewer-driven UX audit of Floor Plan/Seating/Live and fixed
+  6 of 8 real findings surfaced (multi-select scope disclosure on the
+  contextual card, forced-choice unavailable-reason, freeze pre-commit
+  scope/count preview with a whole-room warning, consistent
+  unavailable-block toast on the primary CTA, three sub-floor typography
+  spots bumped to the ~11px range, Smart Seating's "why nothing fits"
+  message naming frozen/unavailable tables). 2 deferred (native
+  confirm() dialogs — multi-site refactor; unbounded toast stacking —
+  cosmetic). See detailed write-up above for exact file/line-level
+  changes, i18n keys, and per-fix mutation-testing evidence.
+NEXT_SECTION: 10/11/12/30 (Readiness Timeline, Data Provenance Inspector,
+  Interactive Onboarding, audit/timeline/provenance distinctness) — all
+  new features, task #159.
+NEXT_ACTION: Sections 8/9 as re-scoped above are done to the extent this
+  session could honestly complete them without the original numeric
+  targets. If the original section 8/9 numeric requirements are ever
+  recovered (e.g. from an earlier saved copy of the 42-section prompt),
+  re-open this section and measure against them directly rather than
+  re-auditing from scratch. Otherwise: (a) if section 7 is to be
+  completed further, build the AST-based single-writer lint rule rather
+  than more grep spot-checks; (b) proceed to sections 10/11/12/30 (new
+  features) or 13-18 (storage/transaction hardening) per the task list.
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   change (section 2's "Deferred sub-scope" above) — STILL VALID, not
   attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
   and translated but not producible without new detection features.
   Section 7's exhaustive AST-based audit — STILL VALID, not attempted;
   the grep spot-check is real evidence but not the complete audit.
+  Section 8/9's native-confirm()-replacement and toast-dismiss findings
+  (#5, #8 in the detailed write-up above) — STILL VALID, not attempted.
 BLOCKED_ON: nothing external — this is pure engineering work.
-NOT_YET_TOUCHED: sections 8-28, 30-32, 35-38 (see table above).
+NOT_YET_TOUCHED: sections 10-28, 30-32, 35-38 (see table above).
 EXTERNAL_BLOCKERS_UNCHANGED: real human operator test (NOT VERIFIED), a
   genuine third independent real floor plan (NOT AVAILABLE), SQLite
   runtime (DEFERRED to EXE stage), EXE itself (DEFERRED, forbidden until

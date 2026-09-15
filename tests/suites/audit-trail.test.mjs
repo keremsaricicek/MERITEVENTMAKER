@@ -114,6 +114,10 @@ export default async function run({ page, checks, baseUrl }) {
   await gotoTab(page, "seating");
   await page.evaluate((t01) => { ui.selectedTableId = t01; render(); }, room.t01);
   await page.waitForTimeout(300);
+  // The reason select has a forced placeholder rather than defaulting to the
+  // first REASON key, so an explicit choice is required before this button
+  // does anything (table-availability.test.mjs covers that behaviour itself).
+  await page.selectOption("[data-avail-reason]", "DAMAGED");
   await click(page, `[data-avail-mark="${room.t01}"][data-avail-next="UNAVAILABLE"]`);
   await page.waitForTimeout(350);
   await page.evaluate((t02) => {

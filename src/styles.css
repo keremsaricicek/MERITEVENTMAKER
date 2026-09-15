@@ -93,6 +93,11 @@ dialog:focus-visible{outline:none}
 .btn.icon-only{width:30px;padding:0}
 .btn.active{background:var(--blue-soft);border-color:#558bb5;color:#213a4f}
 .btn:disabled{opacity:.42;cursor:not-allowed;transform:none;box-shadow:none}
+/* Looks disabled but is NOT: the click still reaches the handler, which
+   explains why with the same toast the seat-row path already gives -- a
+   truly disabled button gives a silent dead click instead. */
+.btn.is-blocked{opacity:.42;cursor:not-allowed}
+.btn.is-blocked:hover{transform:none;box-shadow:none}
 .btn:focus-visible{box-shadow:var(--ring)}
 
 .events-page{height:calc(100% - 58px);overflow:auto;padding:36px 42px;background:#faf9f8}
@@ -220,7 +225,7 @@ table{border-collapse:collapse}
 .toolbar-btn:hover{background:#f3f1ee;color:#2e2e1f}
 .toolbar-btn.active{background:var(--blue-soft);border-color:#507ba3;color:#172836}
 .toolbar-btn svg{width:14px;height:14px}
-.zoom-label{width:45px;text-align:center;color:#5f5642;font-size:9px;font-variant-numeric:tabular-nums}
+.zoom-label{width:45px;text-align:center;color:#5f5642;font-size:11px;font-variant-numeric:tabular-nums}
 
 .canvas-viewport{flex:1;min-height:0;position:relative;overflow:hidden;background:#fbfbf9;touch-action:none;background-image:radial-gradient(circle at 1px 1px,rgba(253,253,252,.035) 1px,transparent 0);background-size:22px 22px}
 .canvas-viewport.pan-mode{cursor:grab}
@@ -335,7 +340,7 @@ table{border-collapse:collapse}
 .occupancy-stat span{display:block;color:#776c54;font-size:7px;letter-spacing:.07em;text-transform:uppercase}
 .occupancy-stat b{display:block;margin-top:3px;font-size:14px}
 .seat-list{padding:5px 8px}
-.seat-row{min-height:34px;display:grid;grid-template-columns:33px 1fr auto;align-items:center;border-bottom:1px solid #f3f2ee;font-size:9px}
+.seat-row{min-height:34px;display:grid;grid-template-columns:33px 1fr auto;align-items:center;border-bottom:1px solid #f3f2ee;font-size:11px}
 .seat-no{color:#6d644d;font-weight:650}
 .seat-person{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .seat-person small{color:#756b54}
@@ -1034,6 +1039,12 @@ body{min-width:1180px}
 .contextual-card-head{margin-bottom:12px}
 .contextual-card-head strong{font-size:14px;display:block}
 .contextual-card-head span{font-size:10.5px;color:var(--pi-muted);text-transform:uppercase;letter-spacing:.04em}
+.contextual-card-also-selected{margin:-4px 0 12px;padding:6px 9px;border:1px solid var(--pi-warn);
+  border-radius:var(--pi-radius-sm);background:color-mix(in srgb,var(--pi-warn) 8%,transparent);
+  /* --pi-warn itself is ~3:1 against this near-white tint, under WCAG AA's
+     4.5:1 floor for 11px text -- --amber-ink keeps the same warning hue
+     family at real reading contrast (~5.7:1), border/background unchanged. */
+  color:var(--amber-ink);font-size:11px;line-height:1.4}
 .contextual-card .seat-editor{margin-bottom:12px}
 .contextual-card .seat-stepper{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .contextual-card .seat-stepper button{width:26px;height:26px;border-radius:999px;border:1px solid var(--pi-line);background:var(--pi-surface-2);color:var(--pi-ink)}
@@ -1533,7 +1544,7 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .table-card-stats{display:flex;border-bottom:1px solid var(--line-soft)}
 .table-card-stats div{flex:1;padding:9px 12px;border-left:1px solid var(--line-soft);display:flex;flex-direction:column;gap:1px}
 .table-card-stats div:first-child{border-left:none}
-.table-card-stats span{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted-2);font-weight:700}
+.table-card-stats span{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2);font-weight:700}
 .table-card-stats b{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
 .table-card-cta{padding:10px 12px;border-bottom:1px solid var(--line-soft)}
 .table-card-cta .btn{width:100%;justify-content:center}
@@ -1854,6 +1865,11 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .freeze-range{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-3)}
 .freeze-form-actions{display:flex;gap:var(--sp-3)}
 .freeze-form-actions .btn{flex:1;justify-content:center}
+.freeze-preview{margin:0;font-size:10.5px;line-height:1.4;color:var(--muted);
+  font-variant-numeric:tabular-nums}
+.freeze-preview-empty{color:var(--muted-2)}
+.freeze-preview-all{color:var(--red-ink);font-weight:600;background:var(--red-soft);
+  border-radius:var(--radius-sm);padding:6px 9px;margin:2px 0}
 
 /* The LAYER on the canvas. An outline and a small mark, never a filled block:
    the operator still has to read the room through it. */
@@ -1895,7 +1911,11 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .table-card-stranded button{align-self:flex-start}
 .table-card-avail{display:flex;gap:6px;padding:var(--sp-3) var(--sp-5);
   border-bottom:1px solid var(--line-soft)}
-.table-card-avail select{flex:1;min-width:0;font-size:11px}
+.table-card-avail select{flex:1;min-width:0;font-size:11px;height:31px;padding:0 8px;
+  border:1px solid #e7e4dc;border-radius:var(--radius-sm);background:#f9f9f7;
+  color:var(--text);outline:none;transition:border-color var(--dur-fast) var(--ease),box-shadow var(--dur-fast) var(--ease)}
+.table-card-avail select:focus{border-color:#5a86ad;box-shadow:var(--ring)}
+.table-card-avail select:invalid{color:var(--muted-2)}
 
 /* SUPERVISOR OVERRIDE REQUIRED. Blocking on purpose -- this is the one moment
    in seating where a person is being asked to take responsibility, and a

@@ -124,11 +124,53 @@ export default async function run({ page, checks, baseUrl }) {
   // --- 2. freezing a zone, through the real form ---------------------------
   await click(page, "[data-freeze-action='open-form']");
   await page.waitForSelector("[data-freeze-form]", { timeout: 8000 });
+
+  // --- 1b. the preview updates from a NON-scope field alone, live --------
+  // The fast path (open the form, change something other than scope, click
+  // Freeze) must not leave the count stuck on whatever the form opened with:
+  // only the scope field used to trigger a re-render, so changing zone,
+  // prefix, from or to committed to ui.freezeDraft but the box on screen
+  // never moved until scope was ALSO touched — exactly the "1 of 4" it kept
+  // showing right up to the click that would have frozen all 4. Proven here
+  // by switching to TABLE_GROUP once (a real scope change, expected to
+  // render) and then changing ONLY "to" — no further scope touch at all.
+  await page.selectOption("[data-freeze-field='scope']", "TABLE_GROUP");
+  await page.waitForTimeout(250);
+  const beforeToChange = await page.evaluate(() => document.querySelector(".freeze-preview")?.textContent.trim() || null);
+  checks.ok(beforeToChange && /1/.test(beforeToChange),
+    "TABLE_GROUP opens on a single-table range (T01 only)", beforeToChange);
+  await page.fill("[data-freeze-field='to']", "4");
+  await page.waitForTimeout(250);
+  const afterToChangeOnly = await page.evaluate(() => ({
+    text: document.querySelector(".freeze-preview")?.textContent.trim() || null,
+    warnsAll: !!document.querySelector(".freeze-preview-all"),
+  }));
+  checks.ok(afterToChangeOnly.text && afterToChangeOnly.text !== beforeToChange,
+    "changing ONLY the range's \"to\" field (no scope touch) moves the preview immediately", { beforeToChange, afterToChangeOnly });
+  checks.ok(afterToChangeOnly.text && /4/.test(afterToChangeOnly.text),
+    "and the range T01-T04 now correctly reads as covering all 4 tables", afterToChangeOnly);
+  checks.ok(afterToChangeOnly.warnsAll,
+    "raising the whole-room warning the instant the range actually covers everything, not after a further click", afterToChangeOnly);
+
+  // Back to a real zone freeze for the rest of this suite -- switching scope
+  // back to ZONE is itself a scope change (expected to render); the zone
+  // pick after it is the non-scope field this fix is actually about.
   await page.selectOption("[data-freeze-field='scope']", "ZONE");
   await page.waitForTimeout(250);
   await page.selectOption("[data-freeze-field='zone']", "VIP FRONT");
   await page.selectOption("[data-freeze-field='reason']", "VIP_AREA");
   await page.fill("[data-freeze-field='note']", "Host confirms at 20:00");
+
+  // VIP FRONT is 2 of the 4 tables here (16 of 32 chairs) — a real but
+  // partial hold, so no "covers everything" warning.
+  const partialPreview = await page.evaluate(() => {
+    const p = document.querySelector(".freeze-preview");
+    return { text: p?.textContent.trim() || null, warnsAll: !!document.querySelector(".freeze-preview-all") };
+  });
+  checks.ok(partialPreview.text && /2/.test(partialPreview.text) && /4/.test(partialPreview.text) && /16/.test(partialPreview.text),
+    "the preview names how many tables and chairs this scope covers before commit, updated by the zone pick alone", partialPreview);
+  checks.ok(!partialPreview.warnsAll, "and does not raise the whole-room warning for a partial scope", partialPreview);
+
   await click(page, "[data-freeze-action='create']");
   await page.waitForTimeout(500);
 
@@ -360,6 +402,27 @@ export default async function run({ page, checks, baseUrl }) {
   await page.waitForTimeout(400);
   checks.equal(await page.evaluate(() => (state.events[0].freezes || []).length), refused,
     "a freeze matching no table is refused — it would look like protection and be none");
+
+  // --- 11b. the form warns before commit when a scope covers the whole room -
+  // Every table in this event is T-prefixed, so a wide-open range covers all
+  // of them — exactly the fast-path trap the preview exists to surface before
+  // a click, not after.
+  const roomSize = await page.evaluate(() => state.events[0].tables.length);
+  await page.evaluate(() => {
+    ui.freezeDraft = { scope: "TABLE_GROUP", prefix: "T", from: 0, to: 99, reason: "OTHER", note: "" };
+    render();
+  });
+  await page.waitForTimeout(250);
+  const allPreview = await page.evaluate(() => {
+    const warn = document.querySelector(".freeze-preview-all");
+    return { count: document.querySelectorAll(".freeze-preview-all").length, text: warn?.textContent.trim() || null };
+  });
+  checks.ok(allPreview.count >= 2,
+    "covering the entire room shows both the count line and the explicit whole-room warning", allPreview);
+  checks.ok(allPreview.text && new RegExp(String(roomSize)).test(allPreview.text),
+    "and the count line's total matches every table currently in the plan", { allPreview, roomSize });
+  await page.evaluate(() => { ui.freezeDraft = null; render(); });
+  await page.waitForTimeout(250);
 
   // --- 12. the Plan Doctor reports what is held ----------------------------
   const doctor = await page.evaluate(() => {

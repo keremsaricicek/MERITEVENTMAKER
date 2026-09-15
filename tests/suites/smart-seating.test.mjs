@@ -311,6 +311,36 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(full.empty && /\d/.test(full.empty),
     "and the panel says how many tables were considered rather than going blank", full.empty);
 
+  // --- 9b. when frozen/unavailable tables are the reason, it says so -------
+  // "No table fits" alone reads as a broken recommender when the real cause
+  // is that most of the room is held or failed tonight — a fact worth naming
+  // rather than leaving the operator to go find out for themselves.
+  await page.evaluate((ids) => {
+    const e = state.events[0];
+    const t01 = e.tables.find(x => x.id === ids.t01);
+    t01.availability = "UNAVAILABLE"; t01.unavailableReason = "DAMAGED";
+    e.freezes = [{ id: "f_smart", scope: "TABLE", tableId: ids.t03, reason: "OTHER",
+      note: "", createdAt: new Date().toISOString() }];
+    touchEvent(e); render();
+  }, room);
+  await selectGuest(page, "g_party");
+  const whyBlocked = await page.evaluate(PANEL);
+  checks.equal(whyBlocked.options.length, 0,
+    "still nothing fits once T01 is unavailable and T03 is frozen", whyBlocked.options);
+  checks.ok(whyBlocked.empty && /frozen|donduruldu/i.test(whyBlocked.empty),
+    "and the panel names frozen tables as part of why, not just a bare count", whyBlocked.empty);
+  checks.ok(whyBlocked.empty && /unavailable|kullanılamaz/i.test(whyBlocked.empty),
+    "and unavailable tables too, in the same message", whyBlocked.empty);
+
+  // Clean up before the language-leak sweep and remaining steps below.
+  await page.evaluate((ids) => {
+    const e = state.events[0];
+    const t01 = e.tables.find(x => x.id === ids.t01);
+    t01.availability = "AVAILABLE"; t01.unavailableReason = null; t01.unavailableSince = null;
+    e.freezes = [];
+    touchEvent(e); render();
+  }, room);
+
   // --- 10. no raw key or enum in either language ---------------------------
   await page.evaluate(() => {
     const e = state.events[0];

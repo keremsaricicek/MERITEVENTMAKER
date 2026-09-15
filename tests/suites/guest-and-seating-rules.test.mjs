@@ -81,4 +81,34 @@ export default async function run({ page, checks, baseUrl }) {
   await page.waitForTimeout(400);
   const duplicated = await page.evaluate(() => state.events[0].tables.length);
   checks.ok(duplicated === 5, "Ctrl+D duplicates the selected table", duplicated);
+
+  // --- the contextual card edits ui.selectedObjectId ALONE, and says so -----
+  // Every field on this card (capacity stepper included) resolves against the
+  // single ui.selectedObjectId, never the rest of ui.selectedObjectIds. With
+  // only one object selected there is nothing to disclose; a canvas
+  // multi-select (bulk-add, a marquee) must say so rather than let the blue
+  // multi-select outlines imply a preset click is about to touch all of them.
+  const singleSelect = await page.evaluate(() => {
+    const t = state.events[0].tables[0];
+    ui.selectedObjectId = t.id; ui.selectedObjectIds = [t.id]; render();
+    return !!document.querySelector(".contextual-card-also-selected");
+  });
+  checks.ok(!singleSelect, "with one object selected, no multi-select disclosure appears");
+
+  const multi = await page.evaluate(() => {
+    const [a, b] = state.events[0].tables;
+    ui.selectedObjectId = a.id; ui.selectedObjectIds = [a.id, b.id]; render();
+    const el = document.querySelector(".contextual-card-also-selected");
+    return { text: el?.textContent.trim() || null, capacityBefore: [a.capacity, b.capacity] };
+  });
+  checks.ok(multi.text && /1/.test(multi.text),
+    "with two objects selected, the card discloses exactly one more is also selected", multi.text);
+
+  await click(page, '.contextual-card [data-seat-capacity="10"]');
+  await page.waitForTimeout(300);
+  const afterPreset = await page.evaluate(() => state.events[0].tables.map(t => t.capacity));
+  checks.equal(afterPreset[0], 10,
+    "the preset changed the primary selection (ui.selectedObjectId)", afterPreset);
+  checks.equal(afterPreset[1], multi.capacityBefore[1],
+    "and left the other multi-selected table untouched — the card never edits more than one object", afterPreset);
 }

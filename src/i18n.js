@@ -595,6 +595,11 @@
     "inspector.removeSeat": { en: "Remove one seat", tr: "Bir koltuk azalt" },
     "inspector.addSeat": { en: "Add one seat", tr: "Bir koltuk ekle" },
     "inspector.object": { en: "{type} object", tr: "{type} nesnesi" },
+    // Shown on the contextual card whenever more than one object is
+    // selected, since every field below only ever edits THIS one object —
+    // a multi-select highlight elsewhere on the canvas must never be read
+    // as "these fields apply to all of them."
+    "inspector.alsoSelected": { en: "Editing this one only — {n} more also selected", tr: "Yalnızca bu düzenleniyor — {n} tane daha seçili" },
     // table.capacitySource — src/capacity-provenance.js. Only the first
     // three are producible by this build today; the other five are named
     // (and translated) so the day a feature fills them, the copy already
@@ -1041,6 +1046,11 @@
     "seat.recommendationOnly": { en: "Suggestions only. Nothing moves until you apply it.", tr: "Yalnızca öneri. Siz uygulayana kadar hiçbir şey değişmez." },
     "seat.lockedNote": { en: "This assignment is locked. Unlock it first — a locked seat is somebody's decision, and nothing is suggested over it.", tr: "Bu atama kilitli. Önce kilidi açın — kilitli bir koltuk birinin kararıdır ve üzerine öneri yapılmaz." },
     "seat.noneFit": { en: "No table has {pax} seats free together. {tables} were considered.", tr: "Hiçbir masada birlikte {pax} boş koltuk yok. {tables} masa değerlendirildi." },
+    // Appended to seat.noneFit only when frozen/unavailable tables are actually
+    // why nothing qualified -- without this, a room that is mostly frozen or
+    // failed reads as a broken recommender rather than as the room it is.
+    "seat.noneFitFrozen": { en: "{n} of them are frozen.", tr: "Bunlardan {n} tanesi donduruldu." },
+    "seat.noneFitUnavailable": { en: "{n} of them are marked unavailable.", tr: "Bunlardan {n} tanesi kullanılamaz olarak işaretli." },
     "seat.freeOf": { en: "{free} of {capacity} free", tr: "{capacity} koltuğun {free} tanesi boş" },
     "seat.previewImpact": { en: "Preview impact", tr: "Etkiyi önizle" },
     "seat.reason.SEATS_AVAILABLE": { en: "enough seats for the whole party", tr: "tüm grup için yeterli koltuk" },
@@ -1077,6 +1087,12 @@
     "avail.reason.AV_HOLD": { en: "AV / production hold", tr: "Ses-ışık ekibi için ayrıldı" },
     "avail.reason.SAFETY": { en: "Safety", tr: "Güvenlik" },
     "avail.reason.OTHER": { en: "Another reason", tr: "Başka bir neden" },
+    // The reason <select>'s forced first option -- without this, the browser
+    // pre-selects whichever REASON key is listed first (DAMAGED) and a click
+    // that never opens the dropdown silently records "Damaged" for a table
+    // that might be RELOCATED, on AV hold, or anything else.
+    "avail.reason.CHOOSE": { en: "Choose a reason…", tr: "Bir neden seçin…" },
+    "avail.reasonRequiredToast": { en: "Choose a reason before marking this table unavailable.", tr: "Bu masayı kullanılamaz işaretlemeden önce bir neden seçin." },
     "avail.markUnavailable": { en: "Mark unavailable", tr: "Kullanılamaz işaretle" },
     "avail.markAvailable": { en: "Mark available", tr: "Kullanılabilir işaretle" },
     "avail.tableUnavailable": { en: "This table is marked unavailable", tr: "Bu masa kullanılamaz olarak işaretlendi" },
@@ -1196,6 +1212,13 @@
     "freeze.field.reason": { en: "Why", tr: "Neden" },
     "freeze.field.note": { en: "Note", tr: "Not" },
     "freeze.field.notePlaceholder": { en: "Who decided, and until when", tr: "Kim karar verdi, ne zamana kadar" },
+    // Shown live in the form BEFORE the operator presses Freeze -- the fast
+    // path (open the form, change nothing, click Freeze) can otherwise hold
+    // back an entire zone or range with no indication of how much of the
+    // room that actually is until after it is already frozen.
+    "freeze.preview": { en: "This will cover {tables} of {total} tables · {chairs} chairs", tr: "Bu, {total} masadan {tables} tanesini kapsayacak · {chairs} koltuk" },
+    "freeze.previewNone": { en: "This does not match any table yet.", tr: "Bu henüz hiçbir masayla eşleşmiyor." },
+    "freeze.previewAll": { en: "This covers every table in the plan — nobody could be seated anywhere without a supervisor override.", tr: "Bu, plandaki her masayı kapsıyor — amir onayı olmadan hiçbir yere kimse oturtulamaz." },
     "freeze.overrideRequired": { en: "SUPERVISOR OVERRIDE REQUIRED", tr: "AMİR ONAYI GEREKLİ" },
     "freeze.direction.INTO": { en: "seating into a frozen area", tr: "dondurulmuş alana oturtma" },
     "freeze.direction.OUT_OF": { en: "moving someone out of a frozen area", tr: "dondurulmuş alandan çıkarma" },

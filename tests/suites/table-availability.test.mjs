@@ -37,7 +37,14 @@ const CARD = `(function(){
     strandedButtons: [...c.querySelectorAll("[data-avail-select-guest]")].map(b => b.textContent.trim()),
     markUnavailableBtn: !!c.querySelector("[data-avail-mark][data-avail-next='UNAVAILABLE']"),
     markAvailableBtn: !!c.querySelector("[data-avail-mark][data-avail-next='AVAILABLE']"),
-    assignDisabled: c.querySelector("[data-assign-selected]")?.disabled ?? null,
+    // Deliberately NOT the native "disabled" property (or aria-disabled, which
+    // Playwright and some assistive tech treat as non-interactive the same
+    // way): a truly disabled control swallows the click, so the same toast
+    // the empty-seat row already gives would never fire from here. It only
+    // LOOKS blocked (a CSS class + title) while the click still reaches
+    // assignGuestGroup()'s own unavailable guard, the same as any seat row.
+    assignBlocked: c.querySelector("[data-assign-selected]")?.classList.contains("is-blocked") ?? null,
+    assignNativelyDisabled: c.querySelector("[data-assign-selected]")?.disabled ?? null,
   };
 })()`;
 
@@ -98,6 +105,26 @@ export default async function run({ page, checks, baseUrl }) {
   const cardBefore = await page.evaluate(CARD);
   checks.ok(cardBefore.markUnavailableBtn && !cardBefore.unavailableBanner,
     "an available table offers to mark it unavailable, with no banner yet", cardBefore);
+
+  // The reason select has a disabled placeholder as its first entry rather
+  // than defaulting to whichever REASON key happens to be listed first
+  // (DAMAGED) -- a click that never opens the dropdown must not silently
+  // record "Damaged" for a table that might be RELOCATED, on AV hold, or
+  // anything else. Clicking Mark Unavailable without choosing a reason first
+  // must do nothing but explain why.
+  const reasonDefault = await page.evaluate(() => document.querySelector("[data-avail-reason]")?.value ?? null);
+  checks.equal(reasonDefault, "", "the reason select starts on the forced placeholder, not a real reason", reasonDefault);
+  await click(page, `[data-avail-mark="${room.t01}"][data-avail-next="UNAVAILABLE"]`);
+  await page.waitForTimeout(350);
+  const stillAvailable = await page.evaluate(
+    (tid) => state.events[0].tables.find(t => t.id === tid).availability, room.t01);
+  checks.ok(!stillAvailable, "clicking Mark Unavailable without choosing a reason marks nothing", stillAvailable);
+  const guardToastText = (await page.locator("#toastWrap").allTextContents()).join(" ");
+  checks.ok(/reason|neden/i.test(guardToastText),
+    "and explains that a reason is needed, rather than a silent no-op", guardToastText);
+
+  // Now choose a real reason and confirm the button actually works.
+  await page.selectOption("[data-avail-reason]", "DAMAGED");
   await click(page, `[data-avail-mark="${room.t01}"][data-avail-next="UNAVAILABLE"]`);
   await page.waitForTimeout(350);
 
@@ -143,14 +170,16 @@ export default async function run({ page, checks, baseUrl }) {
   await selectTable(page, room.t01);
 
   // --- 5. no override anywhere: a NEW assignment cannot land here -----------
-  // The disabled Assign button is the affordance; the real gate is
+  // The blocked-looking Assign button is the affordance; the real gate is
   // assignGuestGroup() itself, so this drives the lower-level empty-seat row
   // too, the same way a drag-and-drop would reach it.
   await selectGuest(page, "g_new");
   await selectTable(page, room.t01);
   const cardBlocking = await page.evaluate(CARD);
-  checks.equal(cardBlocking.assignDisabled, true,
-    "the primary seat-here action is disabled while the table is unavailable", cardBlocking);
+  checks.equal(cardBlocking.assignBlocked, true,
+    "the primary seat-here action reads as blocked while the table is unavailable", cardBlocking);
+  checks.equal(cardBlocking.assignNativelyDisabled, false,
+    "but is not a native disabled control, so the click itself still reaches the guard", cardBlocking);
   const beforeAttempt = await page.evaluate(SNAPSHOT);
   const emptySeat = page.locator("[data-empty-seat]").first();
   if (await emptySeat.count()) await emptySeat.click({ force: true });
@@ -160,6 +189,16 @@ export default async function run({ page, checks, baseUrl }) {
   const toastText = (await page.locator("#toastWrap").allTextContents()).join(" ");
   checks.ok(/unavailable|kullanılamaz/i.test(toastText),
     "and the operator is told why, not left with a silent no-op", toastText);
+
+  // The primary CTA itself must give the SAME feedback as the empty-seat row
+  // — a native disabled control would swallow this click with no toast at all.
+  await click(page, "[data-assign-selected]");
+  await page.waitForTimeout(400);
+  checks.equal(await page.evaluate(SNAPSHOT), beforeAttempt,
+    "clicking the primary CTA itself also seats nobody at an unavailable table");
+  const ctaToastText = (await page.locator("#toastWrap").allTextContents()).join(" ");
+  checks.ok(/unavailable|kullanılamaz/i.test(ctaToastText),
+    "and gives the same explanation the empty-seat row gives, not a silent dead click", ctaToastText);
 
   // --- 6. Smart Seating excludes it, and names the reason -------------------
   const advice = await page.evaluate(() => {

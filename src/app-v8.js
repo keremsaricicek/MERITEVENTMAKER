@@ -1477,10 +1477,17 @@
   function contextualCardHTML(event){
     const t_=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId);
     if(!t_&&!o)return"";
+    // Every field this card renders edits ui.selectedObjectId ALONE, never
+    // the rest of ui.selectedObjectIds -- so a canvas multi-select (bulk-add
+    // just created 4 tables, a marquee caught several) must say so here,
+    // rather than letting the blue multi-select outlines imply a stepper
+    // click is about to change all of them.
+    const alsoSelected=Math.max(0,(ui.selectedObjectIds||[]).length-1);
+    const alsoSelectedHTML=alsoSelected?`<div class="contextual-card-also-selected">${t("inspector.alsoSelected",{n:alsoSelected})}</div>`:"";
     if(t_){const assigned=tableAssignedPax(event,t_.id),presets=t_.type==="round"?[6,8,10,12]:[2,4,6,8];
-      return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(formatTableNumber(t_.number))}</strong><span>${esc(t_.zone)} · ${assigned} ${t("seating.occupied").toLowerCase()}</span></div><div class="seat-editor"><div class="seat-stepper"><button data-seat-step="-1" title="${t("inspector.removeSeat")}">−</button><b>${t_.capacity}</b><button data-seat-step="1" title="${t("inspector.addSeat")}">+</button></div><div class="seat-presets">${presets.map(n=>`<button class="${t_.capacity===n?"active":""}" data-seat-capacity="${n}">${n}</button>`).join("")}<button data-seat-custom>${t("inspector.custom")}</button></div></div><div class="form-grid compact"><div class="field"><label>${t("inspector.type")}</label><select data-inspector="type">${["rectangle","square","round","bistro"].map(x=>`<option value="${x}" ${t_.type===x?"selected":""}>${t("bulk.type."+x)}</option>`).join("")}</select></div><div class="field"><label>${t("inspector.rotation")}</label><input data-inspector="rotation" type="number" value="${Math.round(t_.rotation||0)}"></div><div class="field full"><label>${t("inspector.zone")}</label><select data-inspector="zone">${ZONES.map(z=>`<option ${t_.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div><div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${t_.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
+      return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(formatTableNumber(t_.number))}</strong><span>${esc(t_.zone)} · ${assigned} ${t("seating.occupied").toLowerCase()}</span></div>${alsoSelectedHTML}<div class="seat-editor"><div class="seat-stepper"><button data-seat-step="-1" title="${t("inspector.removeSeat")}">−</button><b>${t_.capacity}</b><button data-seat-step="1" title="${t("inspector.addSeat")}">+</button></div><div class="seat-presets">${presets.map(n=>`<button class="${t_.capacity===n?"active":""}" data-seat-capacity="${n}">${n}</button>`).join("")}<button data-seat-custom>${t("inspector.custom")}</button></div></div><div class="form-grid compact"><div class="field"><label>${t("inspector.type")}</label><select data-inspector="type">${["rectangle","square","round","bistro"].map(x=>`<option value="${x}" ${t_.type===x?"selected":""}>${t("bulk.type."+x)}</option>`).join("")}</select></div><div class="field"><label>${t("inspector.rotation")}</label><input data-inspector="rotation" type="number" value="${Math.round(t_.rotation||0)}"></div><div class="field full"><label>${t("inspector.zone")}</label><select data-inspector="zone">${ZONES.map(z=>`<option ${t_.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div><div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${t_.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
     }
-    return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(o.label)}</strong><span>${t("inspector.object",{type:t("bulk.type."+o.type)})}</span></div><div class="form-grid compact"><div class="field full"><label>${t("inspector.label")}</label><input data-inspector="label" value="${esc(o.label)}"></div><div class="field"><label>${t("inspector.rotation")}</label><input data-inspector="rotation" type="number" value="${Math.round(o.rotation||0)}"></div></div><div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${o.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
+    return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(o.label)}</strong><span>${t("inspector.object",{type:t("bulk.type."+o.type)})}</span></div>${alsoSelectedHTML}<div class="form-grid compact"><div class="field full"><label>${t("inspector.label")}</label><input data-inspector="label" value="${esc(o.label)}"></div><div class="field"><label>${t("inspector.rotation")}</label><input data-inspector="rotation" type="number" value="${Math.round(o.rotation||0)}"></div></div><div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${o.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
   }
   function addManuallyFabHTML(){return`<button class="planmap-fab" data-v8-action="add" title="${t("action.addManually")}">${icon(ui.v8AddOpen?"x":"plus")}<span>${t("action.addManually")}</span></button>`;}
 
@@ -1811,9 +1818,20 @@
     // layer could propose, so nothing is proposed at all — said, not hidden.
     if(advice.locked)
       return`<aside class="smart-seating">${head}<p class="ss-empty">${t("seat.lockedNote")}</p></aside>`;
-    if(!advice.options.length)
+    if(!advice.options.length){
+      // "No table fits" reads as a broken feature unless it says WHY -- a room
+      // that is mostly frozen or failed tonight is a real, explainable state,
+      // not silence the operator has to go investigate on their own.
+      const frozenCount=advice.blocked.filter(b=>b.why==="FROZEN").length;
+      const unavailCount=advice.blocked.filter(b=>b.why==="UNAVAILABLE").length;
+      const why=[
+        frozenCount?t("seat.noneFitFrozen",{n:frozenCount}):"",
+        unavailCount?t("seat.noneFitUnavailable",{n:unavailCount}):"",
+      ].filter(Boolean).join(" ");
       return`<aside class="smart-seating">${head}<p class="ss-empty">${
-        t("seat.noneFit",{pax:paxOf(guest),tables:advice.considered})}</p></aside>`;
+        t("seat.noneFit",{pax:paxOf(guest),tables:advice.considered})}${
+        why?` ${why}`:""}</p></aside>`;
+    }
     const rows=advice.options.map(o=>`<li class="ss-option${
       ui.seatPreview&&ui.seatPreview.tableId===o.tableId?" active":""}">
       <div class="ss-option-head"><b>${esc(formatTableNumber(o.number))}</b><span>${
@@ -1978,12 +1996,36 @@
     return [...new Set((event.tables||[]).map(x=>String(x.zone||"").trim()).filter(Boolean))]
       .sort((a,b)=>a.localeCompare(b,"tr"));
   }
+  // Extracted so the field-commit handler can refresh JUST this box after a
+  // zone/prefix/from/to edit, without a full render() -- re-rendering the
+  // whole form on every keystroke would replace the input DOM nodes
+  // themselves and throw the caret out of whichever field is being typed
+  // into, the exact thing the field-commit handler's own comment warns
+  // against for the note field.
+  function freezeCoveragePreviewHTML(event,d){
+    const F=FREEZE();
+    if(!F||!d)return"";
+    const allSeatable=(event.tables||[]).filter(x=>x.hasPhysicalSeats!==false&&Number(x.capacity)>0);
+    const previewCovered=F.tablesCovered({...d,id:"__preview__"},event.tables||[]);
+    const previewSeatable=previewCovered.filter(x=>x.hasPhysicalSeats!==false&&Number(x.capacity)>0);
+    const previewChairs=previewSeatable.reduce((n,x)=>n+(Number(x.capacity)||0),0);
+    const coversAll=allSeatable.length>0&&previewSeatable.length>=allSeatable.length;
+    return!previewCovered.length
+      ?`<p class="freeze-preview freeze-preview-empty">${t("freeze.previewNone")}</p>`
+      :`<p class="freeze-preview ${coversAll?"freeze-preview-all":""}">${t("freeze.preview",
+          {tables:previewSeatable.length,total:allSeatable.length,chairs:previewChairs})}</p>${
+        coversAll?`<p class="freeze-preview freeze-preview-all">${t("freeze.previewAll")}</p>`:""}`;
+  }
   function freezeFormHTML(event){
     const d=ui.freezeDraft;
     if(!d)return"";
     const zones=zonesInPlan(event);
     const scopes=[["ZONE",t("freeze.scope.ZONE")],["TABLE_GROUP",t("freeze.scope.TABLE_GROUP")],["TABLE",t("freeze.scope.TABLE")]];
     const tables=[...(event.tables||[])].sort((a,b)=>naturalSort(a.number,b.number));
+    // Live scope preview, computed from the draft exactly as it stands right
+    // now -- so the fast path (open the form, touch nothing, click Freeze)
+    // shows what it is about to hold back before it holds it back, not after.
+    const previewHTML=`<div id="freezePreviewBox">${freezeCoveragePreviewHTML(event,d)}</div>`;
     return`<form class="freeze-form" data-freeze-form>
       <div class="field"><label for="fzScope">${t("freeze.field.scope")}</label>
         <select id="fzScope" data-freeze-field="scope">${scopes.map(([v,l])=>
@@ -2005,6 +2047,7 @@
           `<option value="${r}" ${d.reason===r?"selected":""}>${esc(freezeReasonText(r))}</option>`).join("")}</select></div>
       <div class="field"><label for="fzNote">${t("freeze.field.note")}</label>
         <input id="fzNote" data-freeze-field="note" value="${esc(d.note||"")}" placeholder="${esc(t("freeze.field.notePlaceholder"))}"></div>
+      ${previewHTML}
       <div class="freeze-form-actions">
         <button type="button" class="btn sm" data-freeze-action="cancel-form">${t("freeze.cancel")}</button>
         <button type="button" class="btn sm primary" data-freeze-action="create">${t("freeze.create")}</button>
@@ -2156,14 +2199,22 @@
     const loadBtn=document.querySelector("[data-load-layer]");
     if(loadBtn)loadBtn.onclick=()=>{ui.loadLayer=!ui.loadLayer;render();};
     document.querySelectorAll("[data-freeze-lift]").forEach(b=>b.onclick=()=>liftFreeze(b.dataset.freezeLift));
+    // Fields whose value changes which tables the draft covers -- the coverage
+    // preview box is refreshed directly for these, never via a full render(),
+    // so typing in fzPrefix/fzFrom/fzTo never throws the caret out mid-edit.
+    const COVERAGE_FIELDS=new Set(["zone","prefix","from","to","tableId"]);
     document.querySelectorAll("[data-freeze-field]").forEach(el=>{
       const commit=()=>{
         if(!ui.freezeDraft)return;
         const key=el.dataset.freezeField;
         ui.freezeDraft[key]=el.type==="number"?Number(el.value):el.value;
-        // Only the shape-changing fields need a re-render; re-rendering on
-        // every keystroke would take the caret out of the note field.
-        if(key==="scope")render();
+        // The scope field changes which OTHER fields the form shows at all,
+        // so it alone needs the full form rebuilt.
+        if(key==="scope"){render();return;}
+        if(COVERAGE_FIELDS.has(key)){
+          const box=document.getElementById("freezePreviewBox");
+          if(box)box.innerHTML=freezeCoveragePreviewHTML(event,ui.freezeDraft);
+        }
       };
       if(el.tagName==="SELECT")el.onchange=commit; else el.oninput=commit;
     });
@@ -2213,12 +2264,12 @@
       </div>
       ${A?`<div class="table-card-avail">${unavailable
         ?`<button class="btn sm" data-avail-mark="${t_.id}" data-avail-next="AVAILABLE">${t("avail.markAvailable")}</button>`
-        :`<select data-avail-reason>${Object.keys(A.REASON).map(r=>
+        :`<select data-avail-reason required><option value="" disabled selected>${esc(t("avail.reason.CHOOSE"))}</option>${Object.keys(A.REASON).map(r=>
             `<option value="${r}">${esc(availReasonText(r))}</option>`).join("")}</select>
           <button class="btn sm danger" data-avail-mark="${t_.id}" data-avail-next="UNAVAILABLE">${t("avail.markUnavailable")}</button>`
       }</div>`:""}
       <div class="table-card-cta">${selected
-        ?`<button class="btn primary sm" data-assign-selected="${t_.id}" ${unavailable?"disabled":""} title="${unavailable?esc(t("avail.cannotSeatHere")):""}">${t(moving?"seating.moveGuest":"seating.assignGuest",{name:selected.name,n:paxOf(selected)})}</button>`
+        ?`<button class="btn primary sm ${unavailable?"is-blocked":""}" data-assign-selected="${t_.id}" title="${unavailable?esc(t("avail.cannotSeatHere")):""}">${t(moving?"seating.moveGuest":"seating.assignGuest",{name:selected.name,n:paxOf(selected)})}</button>`
         :`<div class="table-card-hint">${t("seating.pickGuestFirst")}</div>`}</div>
       <div class="table-card-seats">${Array.from({length:t_.capacity},(_,i)=>seatRowHTML(i,map.get(i),selected)).join("")}</div>
     </aside>`;
@@ -2334,6 +2385,7 @@
       const table=ev.tables.find(x=>x.id===availBtn.dataset.availMark);if(!table)return;
       const next=availBtn.dataset.availNext;
       const reasonEl=document.querySelector("[data-avail-reason]");
+      if(next==="UNAVAILABLE"&&reasonEl&&!reasonEl.value){toast(t("avail.reasonRequiredToast"),"error");return;}
       setTableAvailability(ev,table,next,reasonEl?reasonEl.value:null);
       touchEvent(ev);render();
       toast(t(next==="UNAVAILABLE"?"avail.markedUnavailableToast":"avail.markedAvailableToast",
