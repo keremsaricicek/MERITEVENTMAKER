@@ -66,9 +66,9 @@ programme's own rules).
 | 16 | Audit durability (remove `slice(0,1000)`) | **DONE** | `touchEvent()` no longer writes a generic `EVENT_UPDATED` entry on every mutation — it never carried anything `event.lastModified` didn't already, and it was competing with real, allowlisted decisions for the same shared, capped 1000-entry array. Confirmed by direct read that `EVENT_UPDATED` was write-only noise, never read by `MeritAuditTrail`'s own allowlist. New regression check in `audit-trail.test.mjs` proving zero `EVENT_UPDATED` entries exist after a full session of ordinary mutations. See detail below. |
 | 17 | Backup/recovery hardening re-audit | **DONE (audit, no code gap found)** | Re-audited both mechanisms (`exportBackup`/`importBackupFile` and `src/offline-recovery.js`'s automatic snapshot ring buffer) against the angles this section named — corrupted-backup-file detection, corrupted-primary-record detection, and "recovery-of-recovery." The first two were already covered and tested; the third (the automatic snapshot slot *itself* corrupted, not just the primary record) had real, existing production-code protection (`loadV8Async()`'s own try/catch, `MeritOfflineRecovery.latestSnapshot()`'s array guard) with no test constructing that exact scenario. Added the missing test to `offline-recovery.test.mjs`; zero production code changed. |
 | 18 | Portable Event Package re-audit | **DONE (verification)** | Confirmed sections 2 (chair physical/logical separation) and 3 (capacity provenance) already flow safely through `exportEventPackage()`/`importEventPackagePayload()` with no gap. Section 16 was the one real, live dependency (the package's carried audit history reads from the same shared, capped array) — added the regression case the investigation named: exporting a package for an event whose early decisions would have been evicted by 1000 ordinary edits to an unrelated event, mutation-proven to fail before Section 16's fix and pass after. |
-| 19 | Code architecture hardening | NOT STARTED | Dependency map of `app-v8.js` (8339 lines) not yet generated. |
-| 20 | Single source of truth audit | NOT STARTED | |
-| 21 | Dead/duplicate code audit | NOT STARTED | |
+| 19 | Code architecture hardening | **DONE (audit, real architecture already sound)** | Investigated via `frontend-architect`, independently re-verified. `app-v8.js` (8,527 lines) is the sink for the whole 32-file, 18,710-line `src/` tree, loaded last, with every one of ~28 smaller domain modules confirmed to depend on app-v8.js's mutable globals in exactly zero places (`state.`/`ui.`/`render(`/`touchEvent(` all grep-clean) — the intended one-directional-via-`globalThis.MeritXxx` architecture already holds with no exceptions found. What was real: the boundary between that clean small-module graph and app-v8.js's OWN `original={...}` override capture (of app.js/app-guests.js's pre-V8 functions) was undocumented and unenforced — closed with a new static-analysis test, not a restructure. See detail below. |
+| 20 | Single source of truth audit | **DONE (one real, narrow gap, guarded not refactored)** | Checked table capacity/chairs, `isHistorical`, and `occupiedSeatIndexes`/`liveUsedIndexes` — no violation found in any of the three; each is already correctly single-sourced or deliberately, correctly separate. Found one real, narrow, currently-latent risk: `guest.pax` is a redundant cached field (`1+additionalGuests`) written correctly at all 5 current sites but with no single setter enforcing it, so a future write site could drift silently. New regression test guards the invariant across real UI flows; deliberately did NOT convert `pax` to a computed property, since every current site is already correct and that refactor would touch reports/exports with no real bug driving it. See detail below. |
+| 21 | Dead/duplicate code audit | **DONE (5 confirmed dead functions removed)** | Investigated via `frontend-architect`, each candidate independently re-verified by direct grep (zero occurrences across `src/`, `tests/`, `index.html`, `scripts/`, `benchmarks/` besides the declaration itself) before deletion. Removed `eventCard` (app-v8.js — superseded by the hero/list Events layout), `isTableFrozen` (app-v8.js — its one caller inlines the identical check), `memoryDistance` (app-v8.js — `matchCandidatesByGeometry` inlines the same formula), `migrateState` (app.js — `loadState()` never calls it, a pre-V8-storage relic), `numberOf` (plan-number-integrity.js — `analyse()` inlines the identical check). A separate, much larger finding — 21 of `app-v8.js`'s own `original={...}` capture's ~32 names are confirmed, deterministically unreachable under the current boot sequence — was deliberately NOT acted on by deletion this pass; see Section 19's detail for why (multi-file blast radius, no existing test coverage of the boot-sequence assumption it rests on). |
 | 22 | Performance at scale | NOT STARTED | |
 | 23 | Offline guarantee re-verification | NOT STARTED (ongoing) | Re-verified after every commit in this programme via the existing `verify:offline` gate; a dedicated final pass happens in section 36. |
 | 24 | Accessibility/keyboard | NOT STARTED | |
@@ -144,6 +144,22 @@ programme's own rules).
   `event-package`. Every fix mutation-proven; full clean regression 52/52
   suites, 1764/1764 checks; both offline artifacts rebuilt and verified
   (27/27). See detail below.
+- Sections 19-21 (code architecture/SSOT/dead-code audits): investigated
+  via `frontend-architect`, then acted on selectively. Section 19: the
+  small-module dependency graph is already clean (zero exceptions found);
+  the real gap was the undocumented app.js/app-guests.js override
+  boundary, closed with a new static-analysis test rather than a
+  restructure. Section 20: one real, narrow, currently-latent SSOT risk
+  found (`guest.pax` vs. `additionalGuests`) and guarded with a
+  regression test, not refactored into a computed property. Section 21:
+  5 confirmed-dead functions removed (each independently re-verified,
+  zero call sites anywhere), after finding a much larger candidate (21
+  unreachable functions in app-v8.js's own override-capture object) and
+  deliberately declining to delete those this pass — multi-file blast
+  radius, no existing test coverage of the boot-sequence assumption the
+  claim rests on. Two new suites (`override-boundary`, `pax-invariant`),
+  every fix/guard mutation-proven. Full clean regression: 54/54 suites,
+  1779/1779 checks. Both offline artifacts rebuilt and verified (27/27).
 - This report.
 
 **CI confirmed for commit `ba48b05`** (section 1A, the sample-independence
@@ -1134,6 +1150,133 @@ artifacts rebuilt (`build-offline.mjs`, `build-offline-full.mjs`) and
 re-verified end to end (27/27), since `src/app-v8.js` changed materially
 across all six sections.
 
+### Sections 19-21 in detail: code architecture, SSOT, and dead-code audits
+
+**Investigated first, then independently re-verified.** These three sections
+are squarely `frontend-architect`'s domain (code health, modularization,
+dependency boundaries). Their one-line status-table descriptions were all
+that survived the earlier context compaction, so the agent investigated
+the actual codebase — real line counts, a real cross-reference graph, grep
+evidence for every claim — before proposing scope. This session then
+independently re-verified the two most consequential and most destructive-
+if-wrong claims (the 5 "confirmed dead" functions, and the 21-vs-12 split
+of `original`'s captured names) by direct grep before acting on either,
+per this project's own "trust but verify" standard for anything a delete
+depends on.
+
+**Section 19 (code architecture hardening) — DONE, audit only.**
+`src/app-v8.js` is 8,527 lines; the full `src/` tree is 18,710 lines across
+32 files. Confirmed by grepping every one of the ~28 smaller domain modules
+for `state.`/`ui.`/`render(`/`touchEvent(`/`toast(`/`canMutate(`: zero real
+hits (the handful of matches are comments or same-named local parameters,
+not the global). Every smaller module is a pure function taking its inputs
+as arguments — none reaches into app-v8.js's mutable globals. Two apparent
+"forward references" (`plan-embedding.js`'s `MeritRegisterPlanEncoder`,
+`plan-intelligence.js`'s lazy read of `MeritVisualEmbedding`) are both
+lazy, guarded, and already documented — not a genuine circular dependency.
+**No restructuring was warranted**: the one-directional-via-`globalThis`
+architecture is already the intended, working shape. What WAS real and
+previously unenforced: the boundary between that clean graph and
+app-v8.js's OWN `const original={...}` capture of app.js/app-guests.js's
+pre-V8 bare functions (`render`, `saveState`, `touchEvent`, and ~30 others)
+— some are genuinely delegated to later in the file, most are captured and
+never referenced again, and which is which was an undocumented,
+unenforced fact. **Fixed** with a new pure-Node static-analysis suite,
+`override-boundary.test.mjs` (matching the existing
+`no-sample-specific-runtime-logic.test.mjs` pattern — no browser): it
+parses the `original={...}` object, checks every name against a real
+`original.<name>` call site elsewhere in the file, and asserts the
+computed unreferenced set matches an explicit, reviewed allowlist exactly
+in both directions — a name added to `original` without being reviewed
+fails loudly, and so does a name on the allowlist that quietly gained a
+real delegation since it was last reviewed. Mutation-tested: adding an
+unreviewed new name (`canMutate`) to the capture object was caught, then
+reverted.
+
+**Section 20 (single source of truth audit) — DONE, one real narrow gap
+found and guarded.** Checked three candidates directly: table
+capacity/chairs (all four write sites — `createTable`, `createTableFromDraft`'s
+override, `setTableCapacity`, `commitCandidates` — call `syncTableChairs`
+at the same statement; no drift path); `isHistorical` (exactly one
+definition, confirmed by grep); `occupiedSeatIndexes` vs. `liveUsedIndexes`
+(deliberately separate functions over different fields, exactly as the
+product contract requires — not a violation). Found one real, narrow risk:
+`guest.pax` is a redundant cached field (`1+additionalGuests`), correctly
+recomputed at all 5 current write sites (`normalizeGuest`, the guest-dialog
+submit handler, the import wizard's `revalidateInterpreted`/
+`importInterpretedGuests`, and the demo-seed data) — but `paxOf()` reads
+the cached field directly rather than recomputing it, and nothing enforces
+the relationship, so a future write site could drift silently with nothing
+to catch it. **Fixed** with a new suite, `pax-invariant.test.mjs`, checking
+the invariant across three real, UI-driven paths: manually adding a guest
+via the dialog, manually editing one's party size down via the same
+dialog, and the demo-seed generators (`seedGuests()`/`createDemoEvent()`,
+called directly as the production seed-data functions they are).
+Deliberately did **NOT** convert `pax` into a computed getter — every
+current site is already correct, and that refactor would touch every read
+site (`paxOf`, exports, reports, Excel import/export) with no real bug
+driving it, exactly the kind of wide change this programme's own rules
+argue against absent evidence. Mutation-tested: making the edit-dialog's
+submit handler preserve the OLD cached `pax` instead of recomputing it
+(exploiting the fact that the assignment-branch's own early `pax` write is
+overwritten by a later `Object.assign` for unassigned guests) reproduced
+the exact drift (`expected:1, actual:4`), then reverted.
+
+**Section 21 (dead/duplicate code audit) — DONE, 5 confirmed dead
+functions removed.** Every candidate was independently re-verified by
+direct grep (`grep -rn '\bname\b' src/ tests/ index.html scripts/
+benchmarks/`) before deletion, confirming exactly one occurrence (the
+declaration) in every case:
+- `eventCard(event)` (`app-v8.js`) — a card-grid Events-screen layout
+  superseded by the current hero/list layout (`nextEventHeroHTML`); never
+  called by the live `eventsHTML`.
+- `isTableFrozen(event,tableId)` (`app-v8.js`) — its one real caller
+  inlines the identical `frozenTableIdSet(event).has(table.id)` check.
+- `memoryDistance(c,m)` (`app-v8.js`) — `matchCandidatesByGeometry`
+  immediately below it inlines the identical `Math.hypot(...)` formula
+  with different variable names.
+- `migrateState(parsed)` (`app.js`) — `loadState()` is a hardcoded stub
+  (`return{version:8,events:[]}`) that never calls it, a relic from before
+  the V8 IndexedDB storage rewrite.
+- `numberOf(table)` (`plan-number-integrity.js`) — `analyse()` in the same
+  file inlines the identical `p.state==="VERIFIED"&&typeof p.value===
+  "number"` check.
+
+**A much larger finding, deliberately NOT acted on this pass.** Of the
+`original={...}` object's ~32 captured names (Section 19), 21 are never
+referenced again as `original.<name>` anywhere in the file — independently
+confirmed by this session's own grep, not just trusted from the
+investigation. The chain of reasoning for why this is safe (traced, not
+assumed): `app-guests.js` calls bare `render()` once at script-load time,
+before app-v8.js has reassigned anything; that call's workspace branch
+(`bindCanvas`/`bindGuests`/etc.) only runs when `state.events.length>0`;
+and `state` at that point comes from `loadState()`, which — per the
+confirmed-dead `migrateState` finding above — is a hardcoded
+`{events:[]}` stub for every user, always. So all 21 are confirmed,
+deterministically unreachable under the current boot sequence. **Deleting
+them was deliberately declined this pass**: it would touch two files
+outside app-v8.js, several of the functions are substantial HTML-builders
+(`seatingHTML`, `guestsHTML`, `reportsHTML`, `floorPlanHTML`,
+`inspectorHTML`), and there is currently zero test coverage of the
+boot-sequence assumption (`loadState()` always returning empty) the whole
+conclusion rests on — exactly the "no huge blind refactor" case this
+programme's rules exist to catch. Section 19's new `override-boundary`
+suite makes the 21-vs-12 split an explicit, checked fact instead; actual
+deletion is a separate, later, evidence-gated step per that suite's own
+comment.
+
+**Validation.** Both mutation tests confirmed to fail exactly as expected
+against the reverted code, then pass again once restored. Full clean
+regression (no concurrent edits): 54/54 suites, 1779/1779 checks — up from
+52/52, 1764/1764 before this segment, reflecting the two new suites
+(`override-boundary`, `pax-invariant`). Both offline artifacts rebuilt and
+re-verified (27/27). No rendered-screenshot pass was run for the 5 dead-
+code removals specifically: each was independently confirmed to have zero
+call sites anywhere, so removing it cannot change any rendered output by
+construction, not merely by inspection — the full regression suite's
+existing Events-screen coverage is the applicable check, not a new
+screenshot of behavior that was already unreachable.
+
 ## Continuation checkpoint (machine-readable)
 
 ```
@@ -1306,14 +1449,43 @@ SECTIONS 13-18 STATUS: 13 DONE, 14 DONE (narrowly scoped), 15 PARTIAL
   individually. Full clean regression: 52/52 suites, 1764/1764 checks
   (up from 50/50, 1737/1737). Both offline artifacts rebuilt and
   re-verified (27/27). See full write-up above.
-NEXT_SECTION: sections 19-21 (code architecture hardening, single source
-  of truth audit, dead/duplicate code audit) — task #161.
-NEXT_ACTION: sections 13-18 are fully closed out — committed (`a19c2fe`),
-  pushed, and CI-confirmed 10/10 both triggers. Proceed to sections 19-21
-  (code architecture/SSOT/dead-code audits) per the task list. Section 7's
-  exhaustive AST-based single-writer lint rule remains a live, separate
-  opportunity if that section is revisited (see DEFERRED_SUB_SCOPE), but
-  is not a blocker.
+SECTIONS 19-21 STATUS: 19 DONE (audit, architecture already sound — the
+  small-module dependency graph has zero exceptions; the real gap was the
+  undocumented app.js/app-guests.js override boundary, closed with a new
+  static-analysis test), 20 DONE (one real narrow SSOT risk found —
+  guest.pax vs. additionalGuests — guarded with a regression test, not
+  refactored), 21 DONE (5 confirmed-dead functions removed, each
+  independently re-verified by direct grep before deletion; a much larger
+  candidate — 21 unreachable functions in app-v8.js's own override-capture
+  object — deliberately NOT deleted this pass, multi-file blast radius
+  with no test coverage of the boot-sequence assumption it rests on). Not
+  yet pushed at the time this checkpoint entry was written — see
+  NEXT_ACTION. Investigated via `frontend-architect` first, then two of
+  its most consequential/destructive claims (the 5 dead functions, the
+  21-vs-12 original split) independently re-verified by this session's
+  own direct grep before acting on either. New suites
+  `override-boundary.test.mjs` (parses app-v8.js's `original={...}`
+  capture, asserts the unreferenced set matches a reviewed allowlist
+  exactly in both directions) and `pax-invariant.test.mjs` (checks
+  pax===1+additionalGuests across manual add, manual edit, and demo-seed
+  paths). Both mutation-tested (an unreviewed new override name caught;
+  a simulated pax-drift edit caught with the exact expected/actual
+  mismatch). Full clean regression: 54/54 suites, 1779/1779 checks (up
+  from 52/52, 1764/1764). Both offline artifacts rebuilt and re-verified
+  (27/27). See full write-up above.
+NEXT_SECTION: sections 22-25 (performance at scale, offline guarantee
+  re-verification, accessibility/keyboard, error messages) — task #162.
+NEXT_ACTION: commit the sections 19-21 working tree (`src/app-v8.js`,
+  `src/app.js`, `src/plan-number-integrity.js`, new
+  `tests/suites/override-boundary.test.mjs`, new
+  `tests/suites/pax-invariant.test.mjs`, this report), push to
+  `claude/merit-concept3-plan-intelligence-rebirth`, then confirm CI green
+  (10/10 checks, both push- and pull_request-triggered) via the GitHub
+  Actions API before the next checkpoint commit marks sections 19-21
+  DONE. After that: proceed to sections 22-25 per the task list. Section
+  7's exhaustive AST-based single-writer lint rule remains a live,
+  separate opportunity if that section is revisited (see
+  DEFERRED_SUB_SCOPE), but is not a blocker.
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   change (section 2's "Deferred sub-scope" above) — STILL VALID, not
   attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
@@ -1327,9 +1499,14 @@ DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   ever found to actually throw in practice, with real evidence, not
   speculatively. Section 15's version-preservation scaffolding —
   deliberately NOT built; revisit only when a real non-additive migration
-  step is actually needed, per the reasoning above.
+  step is actually needed, per the reasoning above. Section 21's 21
+  unreachable original-capture functions in app.js/app-guests.js —
+  STILL VALID and evidenced, deliberately NOT deleted; the
+  `override-boundary` suite now tracks the fact explicitly, so revisit
+  only as a deliberate, separate, evidence-gated deletion pass, ideally
+  after adding real boot-sequence test coverage first.
 BLOCKED_ON: nothing external — this is pure engineering work.
-NOT_YET_TOUCHED: sections 19-28, 31/32, 35-38 (see table above).
+NOT_YET_TOUCHED: sections 22-28, 31/32, 35-38 (see table above).
 EXTERNAL_BLOCKERS_UNCHANGED: real human operator test (NOT VERIFIED), a
   genuine third independent real floor plan (NOT AVAILABLE), SQLite
   runtime (DEFERRED to EXE stage), EXE itself (DEFERRED, forbidden until

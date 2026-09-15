@@ -489,8 +489,6 @@
       set:F.frozenTableIds(eventFreezes(event),event.tables||[])};
     return frozenMemo.set;
   }
-  function isTableFrozen(event,tableId){return frozenTableIdSet(event).has(tableId);}
-
   // ---- EVENT HANDOVER: the note log, one writer -----------------------------
   //
   // src/event-handover.js owns the shape of a note and nothing else — it does
@@ -1020,7 +1018,6 @@
       toast(t("handover.added"),"success");
     });
   }
-  function eventCard(event){const m=eventMetrics(event),cover=event.coverImage?`<div class="event-cover" style="background-image:url('${event.coverImage}')"></div>`:`<div class="event-cover"><div class="event-cover-placeholder"></div></div>`;return`<article class="event-card" data-card-event="${event.id}">${cover}<div class="event-card-body"><div class="kicker">${esc(event.status)}</div><h3>${esc(event.name)}</h3><div class="event-meta">${esc(fmtDate(event.date))}<br>${esc([event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet"))}</div><div class="event-card-stats"><div class="event-card-stat"><b>${m.guests}</b><span>${t("home.col.guestPax")}</span></div><div class="event-card-stat"><b>${physicalCapacity(event)}</b><span>${t("home.col.physicalChairs")}</span></div></div><div class="event-card-actions"><button class="btn primary" data-open-event="${event.id}">${t("home.openEvent")}</button><button class="btn" data-duplicate-event="${event.id}" title="Duplicate">${icon("copy")}</button><button class="btn" data-export-event-package="${event.id}" title="${esc(t("home.exportPackage"))}">${icon("download")}</button><button class="btn danger" data-delete-event="${event.id}" title="Delete">${icon("trash")}</button></div></div></article>`;}
   // The next event is what the operator came for 95% of the time, so it gets
   // the hero treatment and everything else becomes a compact line.
   function nextEventHeroHTML(event){
@@ -6329,7 +6326,6 @@
       return null;
     }
   }
-  function memoryDistance(c,m){const g=m.geometry;return Math.hypot(c.x-g.x,c.y-g.y,(c.w-g.w)*.5,(c.h-g.h)*.5);}
   // General old-candidate -> new-candidate geometry remap, used to carry
   // grouping decisions (which reference every member of a furniture group,
   // not just ones a human individually confirmed/reclassified) across a

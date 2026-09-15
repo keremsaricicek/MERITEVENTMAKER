@@ -37,12 +37,6 @@
   // to sort a review queue, and Phase 7 turns them into a budget.
   const SEVERITY = { HIGH: "high", MEDIUM: "medium", LOW: "low" };
 
-  function numberOf(table) {
-    const p = table && table.printedNumber;
-    if (!p || p.state !== "VERIFIED" || typeof p.value !== "number") return null;
-    return p.value;
-  }
-
   // Consecutive integers collapse into one run, so "137, 138, 139" is reported
   // as 137-139 rather than three separate holes.
   function toRuns(sorted) {
