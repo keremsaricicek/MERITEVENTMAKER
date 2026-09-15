@@ -100,6 +100,17 @@ dialog:focus-visible{outline:none}
 .btn.is-blocked:hover{transform:none;box-shadow:none}
 .btn:focus-visible{box-shadow:var(--ring)}
 
+/* Section 12: interactive first-run onboarding. A short, dismissible,
+   feature-anchored tip -- never a warning (that is --pi-warn's job) and
+   never a fact (--pi-muted's job) -- so it gets the app's own controlled
+   cool-blue interaction color, the same family as .btn.active. */
+.onboarding-callout{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin:0 0 10px;padding:9px 11px;border-left:3px solid var(--blue);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;background:var(--blue-soft);
+  color:#213a4f;font-size:12px;line-height:1.4}
+.onboarding-callout span{flex:1}
+.onboarding-callout .btn{flex:none}
+
 .events-page{height:calc(100% - 58px);overflow:auto;padding:36px 42px;background:#faf9f8}
 .events-wrap{max-width:1480px;margin:auto}
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px}
@@ -1045,6 +1056,22 @@ body{min-width:1180px}
      4.5:1 floor for 11px text -- --amber-ink keeps the same warning hue
      family at real reading contrast (~5.7:1), border/background unchanged. */
   color:var(--amber-ink);font-size:11px;line-height:1.4}
+/* Data Provenance Inspector (Section 11): a quiet, neutral fact row -- never
+   a warning, since a known source is the normal case, not a problem.
+   Deliberately a stacked block, not a single nowrap flex row: the table
+   variant is label+value, the sofa/bench/banquette variant is label+value+
+   a confidence word, and Turkish runs longer than English on every one of
+   them ("BURADAKİ KOLTUK" / "DOĞRULANMADI") -- a fixed-width nowrap row
+   overflowed the 272px card in that language. Wrapping like ordinary text
+   cannot overflow regardless of which language or variant is showing. */
+.contextual-card-provenance{margin:0 0 12px;padding:7px 9px;border:1px solid var(--pi-line);
+  border-radius:var(--pi-radius-sm);background:var(--pi-surface-2);font-size:11px;
+  overflow-wrap:anywhere}
+.contextual-card-provenance span{display:block;color:var(--pi-muted);text-transform:uppercase;
+  letter-spacing:.04em;font-size:9.5px;margin-bottom:2px}
+.contextual-card-provenance b{color:var(--pi-ink);font-weight:650}
+.contextual-card-provenance i{color:var(--pi-muted-2);font-style:normal;font-size:9.5px;
+  text-transform:uppercase;letter-spacing:.04em;margin-left:6px}
 .contextual-card .seat-editor{margin-bottom:12px}
 .contextual-card .seat-stepper{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .contextual-card .seat-stepper button{width:26px;height:26px;border-radius:999px;border:1px solid var(--pi-line);background:var(--pi-surface-2);color:var(--pi-ink)}

@@ -408,10 +408,51 @@
   // src/table-availability.js; a table's own `.availability` field is set by
   // setTableAvailability(), the single writer, below.
   const AVAIL=()=>globalThis.MeritTableAvailability||null;
+  // ---- CAPACITY PROVENANCE: read-only, never set from a render path ---------
+  //
+  // The Data Provenance Inspector only ever DISPLAYS table.capacitySource --
+  // it has no write path of its own. Letting an operator hand-pick a source
+  // value here would let them claim DETECTED_PHYSICAL_SEATS or
+  // HUMAN_CONFIRMED without the fact actually being true, the same failure
+  // mode "DOMAIN MODEL NOT INSTALLED" exists to prevent for AI claims. The
+  // only writers remain createTable/createTableFromDraft/setTableCapacity/
+  // commitCandidates, per src/capacity-provenance.js.
+  const CAPPROV=()=>globalThis.MeritCapacityProvenance||null;
+  const capacitySourceKey=s=>"capacitySource."+String(s||"UNKNOWN").toLowerCase().replace(/_([a-z])/g,(_,c)=>c.toUpperCase());
   function resolvedUnavailable(event){
     const A=AVAIL();
     if(!A||!event)return null;
     return A.resolve(event.tables||[]);
+  }
+  // ---- INTERACTIVE FIRST-RUN ONBOARDING (Section 12) -------------------------
+  //
+  // A handful of short, dismissible, feature-anchored callouts -- never a
+  // sequential "step N of M" tour, and never a second, driftable explanation
+  // of domain rules the User Guide (app-guests.js's renderGuide()) already
+  // owns. `state.onboarding` lives on `state` itself, exactly like
+  // `state.audit` -- local-only, never part of an `event`, so it is never
+  // subject to canMutate/isHistorical, never exported in a package, and
+  // never resets when a person switches events. dismissOnboarding() is the
+  // one writer; every callout site below only READS onboardingSeen().
+  function onboardingSeen(key){return !!(state.onboarding&&state.onboarding.seen&&state.onboarding.seen[key]);}
+  function dismissOnboarding(key){
+    state.onboarding=state.onboarding||{seen:{}};
+    state.onboarding.seen=state.onboarding.seen||{};
+    state.onboarding.seen[key]=true;
+    saveState();render();
+  }
+  // Reachable again anytime from Help -- staff turnover means a new hire
+  // starts on day 40 of the product's life, not day 1, so this is never a
+  // one-shot the operator can permanently lose. Called from this file's own
+  // renderGuide() override below (app-guests.js's version of renderGuide is
+  // shadowed the same way contextualCardHTML and friends are).
+  function resetOnboarding(){
+    state.onboarding={seen:{}};
+    saveState();render();
+  }
+  function onboardingCalloutHTML(key){
+    if(onboardingSeen(key))return"";
+    return`<div class="onboarding-callout" data-onboarding="${key}"><span>${t("onboarding."+key)}</span><button class="btn sm quiet" data-onboarding-dismiss="${key}">${t("onboarding.gotIt")}</button></div>`;
   }
   // tableObjectHTML runs once per table, so resolving the rules inside it would
   // make the canvas O(tables x freezes) PER TABLE -- 160,000 comparisons a
@@ -681,6 +722,7 @@
       .filter((v,i)=>v!=="radar.notEvaluated."+notEvaluated[i].risk);
     return`<section class="cc-block cc-primary cc-radar">
       <div class="cc-radar-head"><h3>${t("radar.title")}</h3><p>${t("radar.question")}</p></div>
+      ${onboardingCalloutHTML("commandCenter")}
       ${r.reasons.length?`<ul class="cc-reasons">${r.reasons.map(ccReasonHTML).join("")}</ul>`
         :`<p class="cc-empty">${t("cc.attention.none")}</p>`}
       ${names.length?`<p class="cc-radar-blind">${esc(t("radar.doesNotCover",{risks:names.join(", ")}))}</p>`:""}
@@ -1048,7 +1090,7 @@
   workspaceHTML = function(event){
     const historical=isHistorical(event),tabs=historical?historyTabs:normalTabs;
     if(!tabs.some(([id])=>id===ui.tab))ui.tab=tabs[0][0];
-    return`<section class="workspace ${ui.focusMode?"v8-focus":""}"><header class="workspace-head">${topBrand()}<div class="event-id"><strong>${esc(event.name)}</strong><span>${esc(fmtDate(event.date))} · ${esc([event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet"))}</span></div><div class="workspace-actions"><div class="global-search">${icon("search")}<input id="globalGuestSearch" placeholder="${t("appbar.search")}" autocomplete="off"><div id="globalSearchResults" class="search-results hidden"></div></div>${planHealthHTML(event)}<button class="btn quiet sm lang-btn" data-v8-action="toggle-lang" title="Language / Dil">${ui.lang==="tr"?"TR":"EN"}</button><button class="btn quiet icon-only" data-action="save-now" title="${t("appbar.saveNow")}">${icon("save")}</button>${helpButton()}<button class="btn sm" data-action="back-events">${t("appbar.allEvents")}</button></div></header><nav class="tabs">${tabs.map(([id,label])=>`<button class="tab ${ui.tab===id?"active":""}" data-tab="${id}">${label()}</button>`).join("")}</nav>${historical?`<div class="workspace-readonly-banner">${icon("lock")}${t("nav.historicalBanner")}</div>`:""}<div class="content">${tabContent(event)}</div>${ui.focusMode?`<button class="focus-exit" data-v8-action="focus">${t("nav.exitFocus")}</button>`:""}</section>`;
+    return`<section class="workspace ${ui.focusMode?"v8-focus":""}"><header class="workspace-head">${topBrand()}<div class="event-id"><strong>${esc(event.name)}</strong><span>${esc(fmtDate(event.date))} · ${esc([event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet"))}</span></div><div class="workspace-actions"><div class="global-search">${icon("search")}<input id="globalGuestSearch" placeholder="${t("appbar.search")}" autocomplete="off"><div id="globalSearchResults" class="search-results hidden"></div></div>${planHealthHTML(event)}<button class="btn quiet sm lang-btn" data-v8-action="toggle-lang" title="Language / Dil">${ui.lang==="tr"?"TR":"EN"}</button><button class="btn quiet icon-only" data-action="save-now" title="${t("appbar.saveNow")}">${icon("save")}</button>${helpButton()}<button class="btn sm" data-action="back-events">${t("appbar.allEvents")}</button></div></header><nav class="tabs">${tabs.map(([id,label])=>`<button class="tab ${ui.tab===id?"active":""}" data-tab="${id}">${label()}</button>`).join("")}</nav>${historical?`<div class="workspace-readonly-banner">${icon("lock")}${t("nav.historicalBanner")}</div>`:ui.focusMode?"":onboardingCalloutHTML("globalFinder")}<div class="content">${tabContent(event)}</div>${ui.focusMode?`<button class="focus-exit" data-v8-action="focus">${t("nav.exitFocus")}</button>`:""}</section>`;
   };
   tabContent = function(event){
     if(isHistorical(event)){
@@ -1485,9 +1527,17 @@
     const alsoSelected=Math.max(0,(ui.selectedObjectIds||[]).length-1);
     const alsoSelectedHTML=alsoSelected?`<div class="contextual-card-also-selected">${t("inspector.alsoSelected",{n:alsoSelected})}</div>`:"";
     if(t_){const assigned=tableAssignedPax(event,t_.id),presets=t_.type==="round"?[6,8,10,12]:[2,4,6,8];
-      return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(formatTableNumber(t_.number))}</strong><span>${esc(t_.zone)} · ${assigned} ${t("seating.occupied").toLowerCase()}</span></div>${alsoSelectedHTML}<div class="seat-editor"><div class="seat-stepper"><button data-seat-step="-1" title="${t("inspector.removeSeat")}">−</button><b>${t_.capacity}</b><button data-seat-step="1" title="${t("inspector.addSeat")}">+</button></div><div class="seat-presets">${presets.map(n=>`<button class="${t_.capacity===n?"active":""}" data-seat-capacity="${n}">${n}</button>`).join("")}<button data-seat-custom>${t("inspector.custom")}</button></div></div><div class="form-grid compact"><div class="field"><label>${t("inspector.type")}</label><select data-inspector="type">${["rectangle","square","round","bistro"].map(x=>`<option value="${x}" ${t_.type===x?"selected":""}>${t("bulk.type."+x)}</option>`).join("")}</select></div><div class="field"><label>${t("inspector.rotation")}</label><input data-inspector="rotation" type="number" value="${Math.round(t_.rotation||0)}"></div><div class="field full"><label>${t("inspector.zone")}</label><select data-inspector="zone">${ZONES.map(z=>`<option ${t_.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div><div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${t_.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
+      // Data Provenance Inspector (Section 11): a read-only fact, never an
+      // editable field -- capacitySource is set only by the writers named in
+      // src/capacity-provenance.js, never chosen here.
+      const provenanceHTML=CAPPROV()?`<div class="contextual-card-provenance"><span>${t("inspector.capacitySource")}</span><b>${esc(t(capacitySourceKey(t_.capacitySource)))}</b></div>`:"";
+      return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(formatTableNumber(t_.number))}</strong><span>${esc(t_.zone)} · ${assigned} ${t("seating.occupied").toLowerCase()}</span></div>${alsoSelectedHTML}<div class="seat-editor"><div class="seat-stepper"><button data-seat-step="-1" title="${t("inspector.removeSeat")}">−</button><b>${t_.capacity}</b><button data-seat-step="1" title="${t("inspector.addSeat")}">+</button></div><div class="seat-presets">${presets.map(n=>`<button class="${t_.capacity===n?"active":""}" data-seat-capacity="${n}">${n}</button>`).join("")}<button data-seat-custom>${t("inspector.custom")}</button></div></div><div class="form-grid compact"><div class="field"><label>${t("inspector.type")}</label><select data-inspector="type">${["rectangle","square","round","bistro"].map(x=>`<option value="${x}" ${t_.type===x?"selected":""}>${t("bulk.type."+x)}</option>`).join("")}</select></div><div class="field"><label>${t("inspector.rotation")}</label><input data-inspector="rotation" type="number" value="${Math.round(t_.rotation||0)}"></div><div class="field full"><label>${t("inspector.zone")}</label><select data-inspector="zone">${ZONES.map(z=>`<option ${t_.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div>${provenanceHTML}<div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${t_.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
     }
-    return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(o.label)}</strong><span>${t("inspector.object",{type:t("bulk.type."+o.type)})}</span></div>${alsoSelectedHTML}<div class="form-grid compact"><div class="field full"><label>${t("inspector.label")}</label><input data-inspector="label" value="${esc(o.label)}"></div><div class="field"><label>${t("inspector.rotation")}</label><input data-inspector="rotation" type="number" value="${Math.round(o.rotation||0)}"></div></div><div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${o.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
+    // Sofa/bench/banquette pax cannot be read off a drawing, so its seat
+    // count is either a person's verified number or explicitly unverified --
+    // never silently treated as zero. Same provenance discipline as capacity.
+    const seatProvenanceHTML=UNVERIFIED_SEATING.has(o.type)&&o.seatsConfidence?`<div class="contextual-card-provenance"><span>${t("poi.seatsOnThis")}</span><b>${o.seats==null?t("poi.seatsUnset"):o.seats}</b><i>${t(o.seatsConfidence==="verified"?"inspector.seatsVerified":"inspector.seatsUnverified")}</i></div>`:"";
+    return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(o.label)}</strong><span>${t("inspector.object",{type:t("bulk.type."+o.type)})}</span></div>${alsoSelectedHTML}<div class="form-grid compact"><div class="field full"><label>${t("inspector.label")}</label><input data-inspector="label" value="${esc(o.label)}"></div><div class="field"><label>${t("inspector.rotation")}</label><input data-inspector="rotation" type="number" value="${Math.round(o.rotation||0)}"></div></div>${seatProvenanceHTML}<div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${o.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
   }
   function addManuallyFabHTML(){return`<button class="planmap-fab" data-v8-action="add" title="${t("action.addManually")}">${icon(ui.v8AddOpen?"x":"plus")}<span>${t("action.addManually")}</span></button>`;}
 
@@ -1813,7 +1863,7 @@
     const advice=seatingAdvice(event,guest);
     if(!advice)return"";
     const head=`<div class="ss-head"><strong>${t("seat.smartTitle")}</strong><span>${
-      esc(t("seat.forGuest",{name:guest.name,pax:paxOf(guest)}))}</span></div>`;
+      esc(t("seat.forGuest",{name:guest.name,pax:paxOf(guest)}))}</span></div>${onboardingCalloutHTML("smartSeating")}`;
     // A locked assignment is a person's decision and outranks anything this
     // layer could propose, so nothing is proposed at all — said, not hidden.
     if(advice.locked)
@@ -2062,6 +2112,7 @@
     if(!list.length&&!ui.freezeDraft)
       return`<aside class="freeze-panel">
         <div class="fz-head"><strong>${t("freeze.title")}</strong></div>
+        ${onboardingCalloutHTML("freezeZones")}
         <p class="fz-empty">${t("freeze.none")}</p>
         <button class="btn sm" data-freeze-action="open-form">${t("freeze.add")}</button>
       </aside>`;
@@ -2262,7 +2313,7 @@
         <div><span>${t("seating.occupied")}</span><b>${occupied}</b></div>
         <div><span>${t("seating.empty")}</span><b>${empty}</b></div>
       </div>
-      ${A?`<div class="table-card-avail">${unavailable
+      ${A?`${unavailable?"":onboardingCalloutHTML("tableAvailability")}<div class="table-card-avail">${unavailable
         ?`<button class="btn sm" data-avail-mark="${t_.id}" data-avail-next="AVAILABLE">${t("avail.markAvailable")}</button>`
         :`<select data-avail-reason required><option value="" disabled selected>${esc(t("avail.reason.CHOOSE"))}</option>${Object.keys(A.REASON).map(r=>
             `<option value="${r}">${esc(availReasonText(r))}</option>`).join("")}</select>
@@ -8351,7 +8402,8 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
       ["Etkinlikler","Yaklaşan etkinlikler kartlarda, geçmiş etkinlikler kilitli tabloda görünür. Geçmiş satırına çift tıklayın."],["Plan ve PDF","PNG/JPG/PDF yerelde açılır. PDF sayfasını küçük önizlemelerden seçin; hiçbir dosya yüklenmez."],["Assisted Detection","Klasik görüntü işleme adayları üretir. Sonuçlar AI değildir; onaylamadan plana eklenmez."],["Koltuk Yerleşimi","Ctrl/Shift ile çoklu seçim yapın. Grup taşıma tek işlem olarak doğrulanır; kapasite yetmezse hiçbir kayıt değişmez."],["Canlı Operasyon","No Show planlanan yeri korur ancak canlı kapasiteyi serbest bırakır. Empty Chairs kırmızı ışıklı koltuk görünümünü açar."],["Excel ve Kayıt","XLSX tamamen çevrimdışıdır. Table Plan, Guest List ve Unassigned sayfaları korunur; veriler tarayıcıda otomatik kaydedilir."]
     ]:[
       ["Events","Upcoming work appears as cards; past and Completed events are locked in History. Double-click a history row."],["Plans and PDF","PNG/JPG/PDF opens locally. Select PDF pages from thumbnails; no file is uploaded."],["Assisted Detection","Classical computer vision proposes candidates. It is not a trained AI model, and nothing is added until confirmation."],["Seating","Use Ctrl/Shift for multi-selection. Group moves validate as one transaction; insufficient capacity changes nothing."],["Live Operations","No Show preserves the planned assignment but releases live capacity. Empty Chairs opens the red-glow operational view."],["Excel and Storage","XLSX works offline. Table Plan, Guest List and Unassigned sheets remain available; browser autosave is automatic."]
-    ];root.innerHTML=`<aside class="guide-nav"><div class="guide-brand"><strong>MERIT EVENT MAKER</strong><span>${title}</span></div></aside><section class="guide-main"><header class="guide-top"><h2>${title}</h2><div class="guide-actions"><div class="lang-toggle"><button data-guide-lang="en" class="${!tr?"active":""}">EN</button><button data-guide-lang="tr" class="${tr?"active":""}">TR</button></div><button class="btn" data-guide-print>${icon("print")}Print / PDF</button><button class="btn icon-only" data-guide-close>${icon("x")}</button></div></header><div class="guide-content"><div class="guide-hero"><div class="kicker">MERIT ENTERTAINMENT · V8 BROWSER REVIEW</div><h1>${title}</h1><p>${tr?"Masa planı, fiziksel koltuklar, misafirler, canlı operasyon ve doğrulanmış plan düzeltmeleri için çevrimdışı başvuru.":"Offline reference for plan objects, physical chairs, guests, live operations and verified plan corrections."}</p></div><div class="guide-v8-grid">${cards.map(([h,p])=>`<article class="guide-v8-card"><h3>${h}</h3><p>${p}</p></article>`).join("")}</div><div class="guide-tip">${tr?"Bu sürüm tarayıcı incelemesidir; EXE veya masaüstü çalışma zamanı içermez.":"This is a browser review build; it does not include an EXE or desktop runtime."}</div></div></section>`;root.querySelectorAll("[data-guide-lang]").forEach(b=>b.onclick=()=>{ui.guideLang=b.dataset.guideLang;renderGuide();});root.querySelector("[data-guide-close]").onclick=()=>document.getElementById("guideDialog").close();root.querySelector("[data-guide-print]").onclick=()=>window.print();
+    ];root.innerHTML=`<aside class="guide-nav"><div class="guide-brand"><strong>MERIT EVENT MAKER</strong><span>${title}</span></div></aside><section class="guide-main"><header class="guide-top"><h2>${title}</h2><div class="guide-actions"><div class="lang-toggle"><button data-guide-lang="en" class="${!tr?"active":""}">EN</button><button data-guide-lang="tr" class="${tr?"active":""}">TR</button></div><button class="btn quiet" data-guide-reset-onboarding>${tr?"İpuçlarını yeniden göster":"Show tips again"}</button><button class="btn" data-guide-print>${icon("print")}Print / PDF</button><button class="btn icon-only" data-guide-close>${icon("x")}</button></div></header><div class="guide-content"><div class="guide-hero"><div class="kicker">MERIT ENTERTAINMENT · V8 BROWSER REVIEW</div><h1>${title}</h1><p>${tr?"Masa planı, fiziksel koltuklar, misafirler, canlı operasyon ve doğrulanmış plan düzeltmeleri için çevrimdışı başvuru.":"Offline reference for plan objects, physical chairs, guests, live operations and verified plan corrections."}</p></div><div class="guide-v8-grid">${cards.map(([h,p])=>`<article class="guide-v8-card"><h3>${h}</h3><p>${p}</p></article>`).join("")}</div><div class="guide-tip">${tr?"Bu sürüm tarayıcı incelemesidir; EXE veya masaüstü çalışma zamanı içermez.":"This is a browser review build; it does not include an EXE or desktop runtime."}</div></div></section>`;root.querySelectorAll("[data-guide-lang]").forEach(b=>b.onclick=()=>{ui.guideLang=b.dataset.guideLang;renderGuide();});root.querySelector("[data-guide-close]").onclick=()=>document.getElementById("guideDialog").close();root.querySelector("[data-guide-print]").onclick=()=>window.print();
+    root.querySelector("[data-guide-reset-onboarding]").onclick=()=>{resetOnboarding();toast(tr?"İpuçları yeniden gösterilecek.":"Onboarding tips will show again.","success");};
   };
   openGuide = function(){renderGuide();document.getElementById("guideDialog").showModal();};
 
@@ -8382,6 +8434,15 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
     const el=e.target;
     if(el&&el.closest&&!el.closest("dialog")&&/BUTTON|A/.test(el.tagName))dialogOpener=openerSelector(el);
   },true);
+  // One delegated listener for the life of the app, not a per-render bind --
+  // onboarding callouts appear inside many different screens' own render
+  // output (Smart Seating, Freeze Zones, Table Availability, the workspace
+  // header, Command Center), and none of those screens' own bind*()
+  // functions should need to know this feature exists.
+  document.addEventListener("click",e=>{
+    const btn=e.target.closest&&e.target.closest("[data-onboarding-dismiss]");
+    if(btn)dismissOnboarding(btn.dataset.onboardingDismiss);
+  });
   for(const id of ["guestDialog","excelDialog","guideDialog"]){
     const dlg=document.getElementById(id);if(!dlg)continue;
     dlg.addEventListener("close",()=>{

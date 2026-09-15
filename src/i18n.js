@@ -612,6 +612,23 @@
     "capacitySource.printedTotalCapacity": { en: "Printed total capacity", tr: "Basılı Toplam Kapasite" },
     "capacitySource.derivedPrintedRule": { en: "Derived from the printed rule", tr: "Basılı Kuraldan Türetildi" },
     "capacitySource.verifiedVenueMemory": { en: "Verified venue memory", tr: "Doğrulanmış Mekan Hafızası" },
+    // The Data Provenance Inspector: a read-only line on the contextual card
+    // naming WHERE the capacity/seat-count number came from. Never editable
+    // from here — the source is a fact about how the number was set, not a
+    // choice an operator makes by picking from a menu.
+    "inspector.capacitySource": { en: "Capacity source", tr: "Kapasite kaynağı" },
+    "inspector.seatsVerified": { en: "Verified", tr: "Doğrulandı" },
+    "inspector.seatsUnverified": { en: "Unverified", tr: "Doğrulanmadı" },
+    // Section 12: interactive first-run onboarding. Five short, dismissible,
+    // feature-anchored callouts -- never a sequential tour, and never a
+    // second explanation of a domain rule the User Guide already owns.
+    // Reachable again anytime from Help ("Show tips again" / app-guests.js).
+    "onboarding.gotIt": { en: "Got it", tr: "Anladım" },
+    "onboarding.smartSeating": { en: "Smart Seating suggests tables with real reasons — nothing is seated until you press Apply.", tr: "Akıllı Yerleştirme gerçek nedenlerle masa önerir — siz Uygula'ya basana kadar kimse oturtulmaz." },
+    "onboarding.freezeZones": { en: "Freeze an area to hold it back from Smart Seating's suggestions — a VIP section or the head tables, for example.", tr: "Bir alanı, Akıllı Yerleştirme'nin önerilerinden ayırmak için dondurun — örneğin bir VIP bölgesi ya da protokol masaları." },
+    "onboarding.tableAvailability": { en: "Mark a table unavailable if it fails tonight — anyone already seated there keeps that seat on paper until you move them.", tr: "Bir masa bu gece arıza yaparsa kullanılamaz işaretleyin — orada oturan misafirler siz taşıyana kadar kağıt üzerinde yerlerini korur." },
+    "onboarding.globalFinder": { en: "Search any guest, table or seat number here — it works from every screen.", tr: "Herhangi bir misafiri, masayı veya koltuk numarasını burada arayın — her ekrandan çalışır." },
+    "onboarding.commandCenter": { en: "This list is the one place readiness and risk are decided — every badge elsewhere in the app points back to it.", tr: "Hazırlık ve risk kararının verildiği tek yer burasıdır — uygulamadaki diğer tüm rozetler buraya yönlendirir." },
     "seating.statusPill": { en: "{seated} of {total} pax seated · {tables} tables · {free} chairs free", tr: "{total} kişiden {seated} tanesi oturtuldu · {tables} masa · {free} boş koltuk" },
     "seating.guestQueue": { en: "Guests to seat", tr: "Oturtulacak misafirler" },
     "seating.allGuests": { en: "All guests", tr: "Tüm misafirler" },
@@ -645,6 +662,16 @@
     "bulk.type.exit": { en: "Exit", tr: "Çıkış" },
     "bulk.type.column": { en: "Column", tr: "Kolon" },
     "bulk.type.text": { en: "Text", tr: "Metin" },
+    // Sofa/bench/banquette are venue objects (contextualCardHTML's "inspector.object"
+    // header reads bulk.type.* for ANY venue object type), but until now only
+    // teach.type.* had copy for them -- reachable exclusively through Assisted
+    // Detection review, never through this card. Section 11's Data Provenance
+    // Inspector is the first thing that renders this card for one of these
+    // types after commit, and it surfaced the gap: the header showed the raw
+    // key ("bulk.type.sofa object") instead of real words.
+    "bulk.type.sofa": { en: "Sofa", tr: "Kanepe" },
+    "bulk.type.bench": { en: "Bench", tr: "Sedir" },
+    "bulk.type.banquette": { en: "Banquette", tr: "Duvar Oturması" },
     "bulk.placement.grid": { en: "Grid", tr: "Izgara" },
     "bulk.placement.row": { en: "Row", tr: "Satır" },
     "bulk.placement.repeated": { en: "Repeated (click to place)", tr: "Tekrarlı (tıklayarak yerleştir)" },

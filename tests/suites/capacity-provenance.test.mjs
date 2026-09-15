@@ -18,7 +18,12 @@
 // A migration/backfill check protects the other real risk: an install from
 // before this field existed, or a corrupted value, must become UNKNOWN on
 // load rather than being dropped or guessed at.
-import { openApp, createBlankEvent, addTables, futureDate } from "../lib/app-actions.mjs";
+//
+// Section 11 (Data Provenance Inspector) put the first UI surface on this
+// data: a read-only line on the Floor Plan contextual card. It must show
+// the CURRENT source honestly (no fabricated fuller story than the 3 wired
+// values support) and never itself become a place to hand-pick a source.
+import { openApp, createBlankEvent, addTables, gotoTab, click, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "capacity-provenance", tags: ["business", "fast"], timeout: 90000 };
 
@@ -135,4 +140,146 @@ export default async function run({ page, checks, baseUrl }) {
     "all eight capacitySource labels resolve to real text in both languages, not a raw translation key", labels);
   checks.ok(labels.tr.every((s, i) => s !== labels.en[i]),
     "every capacitySource label actually differs between Turkish and English (no copy-pasted English default)", labels);
+
+  // --- 8. Section 11: the Data Provenance Inspector actually renders -------
+  //
+  // A read-only line on the Floor Plan contextual card is the first (and,
+  // for this pass, only) UI surface for this data. It must show the CURRENT
+  // source honestly and offer no way to change it from here.
+  // Check 6's page.reload() dropped us back to a fresh boot outside any
+  // event's workspace -- re-enter it before navigating to a tab.
+  await page.evaluate(() => openEvent(state.events[0].id));
+  await page.waitForTimeout(300);
+  await gotoTab(page, "floor");
+  const PROVENANCE = `(function(){
+    const box = document.querySelector(".contextual-card-provenance");
+    return box ? {
+      present: true,
+      text: box.textContent.trim(),
+      hasInput: !!box.querySelector("input,select,button"),
+    } : { present: false };
+  })()`;
+  const selectTable = async (id) => { await page.evaluate((tid) => { ui.selectedObjectId = tid; render(); }, id); await page.waitForTimeout(200); };
+
+  // tables[0] is UNKNOWN right now (backfilled by check 6's reload).
+  const t0 = await page.evaluate(() => state.events[0].tables[0].id);
+  await selectTable(t0);
+  const unknownView = await page.evaluate(PROVENANCE);
+  checks.require(unknownView.present, "selecting a table shows the provenance row on its contextual card", unknownView);
+  checks.ok(!unknownView.hasInput,
+    "the row is read-only -- no input/select/button lets an operator hand-pick a source from here", unknownView);
+  checks.ok(unknownView.text.includes(await page.evaluate(() => t("capacitySource.unknown"))),
+    "an UNKNOWN table honestly shows Unknown, not a fabricated fuller story", { unknownView, key: "capacitySource.unknown" });
+
+  // Flip the SAME table's source in memory (no UI action needed to prove the
+  // row reads live state) and confirm the row updates to match.
+  const detectedView = await page.evaluate((tid) => {
+    const table = state.events[0].tables.find(x => x.id === tid);
+    table.capacitySource = "DETECTED_PHYSICAL_SEATS";
+    render();
+    const box = document.querySelector(".contextual-card-provenance");
+    return box ? box.textContent.trim() : null;
+  }, t0);
+  checks.ok(detectedView && detectedView.includes(await page.evaluate(() => t("capacitySource.detectedPhysicalSeats"))),
+    "the row reflects the table's CURRENT source, not whatever it opened with", detectedView);
+
+  const humanView = await page.evaluate((tid) => {
+    const table = state.events[0].tables.find(x => x.id === tid);
+    table.capacitySource = "HUMAN_CONFIRMED";
+    render();
+    const box = document.querySelector(".contextual-card-provenance");
+    return box ? box.textContent.trim() : null;
+  }, t0);
+  checks.ok(humanView && humanView.includes(await page.evaluate(() => t("capacitySource.humanConfirmed"))),
+    "and updates again when the source changes a second time", humanView);
+
+  // --- 9. the same Inspector on a sofa/bench/banquette's seat count --------
+  //
+  // seatsConfidence ("verified"/"unverified") is the analogous fact for
+  // furniture whose pax cannot be read off a drawing (src/app-v8.js's
+  // UNVERIFIED_SEATING). Same discipline: shown honestly, never editable
+  // from this card.
+  const sofaId = await page.evaluate(() => {
+    const e = state.events[0];
+    const sofa = { id: "sofa_prov_test", type: "sofa", label: "Sofa", x: 300, y: 300,
+      width: 80, height: 40, rotation: 0, locked: false, seats: null, seatsConfidence: "unverified" };
+    e.venueObjects = [...(e.venueObjects || []), sofa];
+    touchEvent(e); render();
+    return sofa.id;
+  });
+  await selectTable(sofaId);
+  const unverifiedSofa = await page.evaluate(PROVENANCE);
+  checks.require(unverifiedSofa.present, "an unverified-seating object also shows a provenance row", unverifiedSofa);
+  checks.ok(!unverifiedSofa.hasInput, "read-only here too", unverifiedSofa);
+  checks.ok(unverifiedSofa.text.includes(await page.evaluate(() => t("inspector.seatsUnverified"))),
+    "and reports the seat count as unverified rather than implying zero", unverifiedSofa);
+
+  // A real bug found by the mandatory post-code screenshot pass: the card's
+  // OWN HEADER (not the provenance row) reads bulk.type.<type> for every
+  // venue object type, but sofa/bench/banquette only had teach.type.* copy
+  // (reachable through Assisted Detection review) until this Inspector
+  // became the first thing that renders this card for a COMMITTED object of
+  // one of those types -- the header showed the raw key.
+  const headerLeaks = await page.evaluate(() => {
+    const out = {};
+    for (const lang of ["en", "tr"]) {
+      ui.lang = lang; render();
+      out[lang] = document.querySelector(".contextual-card-head span")?.textContent.trim() || null;
+    }
+    ui.lang = "en"; render();
+    return out;
+  });
+  const KEY = /^[a-z][a-zA-Z0-9]*(\.[a-zA-Z0-9]+)+/i;
+  checks.ok(headerLeaks.en && !KEY.test(headerLeaks.en) && headerLeaks.tr && !KEY.test(headerLeaks.tr),
+    "the card's own header names a sofa in real words too, not a raw bulk.type.sofa key", headerLeaks);
+  checks.ok(headerLeaks.en !== headerLeaks.tr, "and the two languages actually differ", headerLeaks);
+
+  // Also found by the same pass: Turkish's longer strings ("BURADAKİ KOLTUK",
+  // "DOĞRULANMADI") overflowed the fixed-width card. The row's OWN box
+  // stayed at its assigned width the whole time -- a nowrap flex child that
+  // cannot shrink below its content's minimum size overflows the box
+  // visually without the box itself reporting a wider bounding rect, which
+  // is exactly what let this bug through a first, weaker version of this
+  // check. Measuring each CHILD element (the label, value, and confidence
+  // word) against the card's own right edge is what actually catches it.
+  const overflow = await page.evaluate(() => {
+    ui.lang = "tr"; render();
+    const card = document.querySelector(".contextual-card");
+    const row = document.querySelector(".contextual-card-provenance");
+    if (!card || !row) return null;
+    const cardRight = card.getBoundingClientRect().right;
+    const childRights = [...row.children].map(el => el.getBoundingClientRect().right);
+    ui.lang = "en"; render();
+    return { cardRight, childRights, childCount: row.children.length };
+  });
+  checks.require(overflow && overflow.childCount >= 2,
+    "the provenance row and at least two child elements were found for the overflow measurement", overflow);
+  checks.ok(overflow.childRights.every(right => right <= overflow.cardRight + 0.5),
+    "in Turkish, none of the row's label/value/confidence elements render past the card's own right edge", overflow);
+
+  const verifiedSofa = await page.evaluate((id) => {
+    const o = state.events[0].venueObjects.find(x => x.id === id);
+    o.seats = 4; o.seatsConfidence = "verified";
+    render();
+    const box = document.querySelector(".contextual-card-provenance");
+    return box ? box.textContent.trim() : null;
+  }, sofaId);
+  checks.ok(verifiedSofa && verifiedSofa.includes("4") && verifiedSofa.includes(await page.evaluate(() => t("inspector.seatsVerified"))),
+    "once a real count is set, the row shows the number and Verified", verifiedSofa);
+
+  // A regular table-type venue object (not sofa/bench/banquette) never shows
+  // this row at all -- seatsConfidence is specifically for the furniture
+  // types whose pax genuinely cannot be read off a drawing.
+  const plainObjectId = await page.evaluate(() => {
+    const e = state.events[0];
+    const obj = { id: "plant_prov_test", type: "plant", label: "Plant", x: 400, y: 400,
+      width: 30, height: 30, rotation: 0, locked: false };
+    e.venueObjects = [...(e.venueObjects || []), obj];
+    touchEvent(e); render();
+    return obj.id;
+  });
+  await selectTable(plainObjectId);
+  const plainView = await page.evaluate(PROVENANCE);
+  checks.ok(!plainView.present,
+    "an ordinary venue object with no seat-count concept shows no provenance row at all", plainView);
 }

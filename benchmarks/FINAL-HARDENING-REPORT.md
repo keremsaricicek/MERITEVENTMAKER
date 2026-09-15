@@ -57,9 +57,9 @@ programme's own rules).
 | 7 | UI/business logic separation | PARTIAL — spot-checked, no violation found | This session grepped every direct write of 4 representative domain facts across `app-v8.js`: `guest.arrivalStatus` (exactly one write site, inside `setArrival()`), `table.availability` (exactly one write site, inside `setTableAvailability()`), freeze creation/lift (exactly one call site each, `createFreezeFromDraft()`/`liftFreeze()`), and `guest.planningStatus` (the one non-migration write is legitimate free-form operator editing, not a derived/paired fact the way arrival status is, so it correctly has no dedicated writer). Zero violations found on this sample. NOT exhaustively verified as "a complete, enforced architecture rule" across the full ~8000-line file — that would need AST-based tooling (an ESLint rule forbidding direct assignment to a named list of guarded fields outside their writer function) rather than grep, and is the concrete next step if this section is picked up again, not a re-scan by hand. |
 | 8 | Floor Plan experience simplification | PARTIAL | This section's original exact interaction-count/warning-deduplication numeric targets were lost to an earlier context compaction and are not recoverable — rather than fabricate compliance against unknown numbers, this session commissioned a fresh, evidence-based UX audit (`visual-qa-reviewer` agent, real DOM/console/screenshot inspection) of Floor Plan and Live Event and fixed every real, well-scoped finding it surfaced. One CRITICAL finding fixed: the contextual card's capacity stepper/presets always edit `ui.selectedObjectId` alone but gave no indication of that when `ui.selectedObjectIds` held more (bulk-add, marquee) — see detail below. Not a re-verification of the original section 8 requirements, since those requirements are gone; a real, different, and honestly-scoped pass on the same screen. |
 | 9 | Live Event operational flows | PARTIAL | Same audit (see section 8's row and detail below) surfaced and fixed 5 more real findings spanning Seating/Freeze Zones/Table Availability/Smart Seating: a reason dropdown silently defaulting instead of forcing a choice, a freeze form with no pre-commit scope warning, an inconsistent disabled-vs-toast affordance for the same "table unavailable" rule, sub-floor operational text, and a "no table fits" message that did not name frozen/unavailable tables as the reason. Two findings (native `confirm()` dialogs, unbounded toast stacking) are real but deliberately deferred — see detail below. Flows A/B/C/D/E from the original section 9 description still substantially exist as previously noted; the specific interaction-count/warning-dedup numeric targets remain unverifiable for the same reason as section 8. |
-| 10 | Event Readiness Timeline | NOT STARTED | New feature. |
-| 11 | Data Provenance Inspector | NOT STARTED | New feature. |
-| 12 | Interactive first-run onboarding | NOT STARTED | New feature. |
+| 10 | Event Readiness Timeline | **OBSOLETE** | Investigated first via the `merit-product-director` agent, per an explicit user decision to scope before coding. Whatever "Readiness Timeline" could honestly mean is already covered: Plan Doctor answers "can this event safely proceed" live and un-cached; the Command Center's Risk Radar and attention list surface the same facts as a status, not a log; the Arrival Wave tracks the door in real time; Post-Event Replay reconstructs history from the audit trail after the fact. A NEW stored timeline would either duplicate one of these (drift risk — the exact thing Plan Doctor's own "derived live, not remembered" design law exists to prevent) or introduce a second place the product could disagree with itself. User decision: mark OBSOLETE with this evidence, not NOT STARTED — see detail below. |
+| 11 | Data Provenance Inspector | **DONE** | Implemented: one read-only line on the contextual card showing `table.capacitySource` (tables) or `seatsConfidence`/`seats` (sofa/bench/banquette venue objects), reusing the existing `MeritCapacityProvenance` module with zero new state. Two real bugs found by the mandatory rendered screenshot pass (a missing-i18n-key raw-text leak, a Turkish-text CSS overflow) and both fixed with regression tests, mutation-proven. See detail below. |
+| 12 | Interactive first-run onboarding | **DONE** | Implemented: 5 short, dismissible, feature-anchored callouts (Global Finder, Command Center, Freeze Zones, Smart Seating, Table Availability) — never a sequential tour, never a second explanation of a domain rule the User Guide already owns. `state.onboarding` persists like `state.audit` (never on `event`), a "Show tips again" control in the Guide resets it, and callouts never appear in a historical event's read-only view. New suite (22 checks), mutation-proven. See detail below. |
 | 13 | Storage safety (boundary + write ordering) | NOT STARTED | `mutationEpoch` already exists (used in `arrivalWave()`'s memoization) as a plausible foundation to extend for write-ordering safety — not yet done. |
 | 14 | Domain transaction atomicity | NOT STARTED | |
 | 15 | Schema migration chain/registry | NOT STARTED | |
@@ -77,7 +77,7 @@ programme's own rules).
 | 27 | Real human test follow-up contract | NOT STARTED | |
 | 28 | Third real plan procedure | NOT STARTED (doc) | Status remains **NOT AVAILABLE** — no third real plan has been supplied. Documenting the held-out procedure is separate from having a plan to run it on. |
 | 29 | 2-real-plan open debt audit | **DONE (classification)** | **Task #131** (ORNEK robustness suite, CI for both plans, report+PR): **MOSTLY RESOLVED** — CI already runs `npm run benchmark` on Golden+ORNEK together in one job, `BASELINE.json` tracks both, PR #5's own body is the report. Remaining gap, **STILL VALID**: no ORNEK-specific rendering-variant robustness suite (rotation/blur/exposure) analogous to Golden's `benchmarks/robustness/` variants. **Task #132** (PDF orientation normalisation): **OBSOLETE** — PR #5's own Phase 6 section measured "the raw sideways page now scores identically to the upright one... the 13-point orientation cost was almost entirely these three [now-fixed] rules failing, and they fail the same way whichever way up the sheet is." The problem normalisation would have solved no longer exists. |
-| 30 | Audit/timeline/provenance stay distinct | N/A yet | Applies once sections 10/11/16 are implemented; will be verified then. |
+| 30 | Audit/timeline/provenance stay distinct | **DONE (verified)** | Section 10's own investigation is this verification: the audit trail (what happened, `audit-trail.js`), the Plan Doctor/Risk Radar (can this event safely proceed, derived live from current state), and Section 11's new provenance line (where did this one number come from) each answer a different question from a different data source, and none of the three sections implemented this round introduced a fourth overlapping concept. No new code was needed to keep them distinct — the boundary already held. |
 | 31 | SQLite desktop migration design | NOT STARTED | |
 | 32 | Desktop readiness document | NOT STARTED | |
 | 33 | Remaining quality gates | PARTIAL | 1 of 24 landed (`no-sample-specific-runtime-logic`); the other 23 depend on the feature/hardening sections above landing first. |
@@ -115,6 +115,14 @@ programme's own rules).
   freeze pre-commit scope preview, consistent unavailable-block toast,
   three areas of sub-floor typography, Smart Seating's "why nothing fits"
   message), 2 deliberately deferred, detailed below.
+- Sections 10/11/12/30: section 10 (Event Readiness Timeline) investigated
+  via `merit-product-director` and marked OBSOLETE with evidence, per an
+  explicit user decision to scope before coding, then to build 11+12 only.
+  Section 11 (Data Provenance Inspector) and Section 12 (interactive
+  first-run onboarding) implemented, tested, mutation-proven, and verified
+  by a rendered screenshot pass that found and fixed two real bugs.
+  Section 30 (audit/timeline/provenance stay distinct) verified as a
+  byproduct of section 10's own investigation — detailed below.
 - This report.
 
 **CI confirmed for commit `ba48b05`** (section 1A, the sample-independence
@@ -727,6 +735,186 @@ one pre-existing step updated for fix #2's new required-reason
 behaviour), full fast suite 49/49 suites green, both offline artifacts
 rebuilt and re-verified (27/27) after every code change in this section.
 
+### Sections 10/11/12/30 in detail: investigate-first on net-new features, then build only the real gaps
+
+**Why this section was handled differently from 8/9.** Sections 8/9 audited
+EXISTING screens against lost numeric targets — there was real code to
+measure against, even without the original numbers. Sections 10-12 describe
+three NET-NEW features with no existing implementation to audit, and the
+same context compaction that cost sections 8/9 their numeric targets also
+cost these three their detailed specs. Building three net-new features from
+guessed specs risks exactly what section 42 forbids — implementing
+something and calling it done against a requirement nobody can actually
+check. This session asked the user how to proceed (the first of two genuine
+decision points in this segment); the user chose **investigate and propose
+scope first**, so the `merit-product-director` agent (read-only,
+product-semantics specialist) was sent to establish what the surrounding
+product already covers for each of the three, before any code was written.
+
+**The investigation's findings, and the second user decision.** The agent
+found: **Section 10** (Event Readiness Timeline) is substantially redundant
+— Plan Doctor already answers "can this event proceed" live and derived
+(never stored, never stale), the Command Center's Risk Radar and attention
+list already surface the same underlying facts as a status rather than a
+log, the Arrival Wave already tracks the door in real time, and Post-Event
+Replay already reconstructs what happened after the fact from the audit
+trail. A genuinely new stored "timeline" would either restate one of these
+in a second place (a drift risk Plan Doctor's own "nothing is remembered,
+derived live" design law exists specifically to prevent) or add a feature
+whose only job is to summarize features that already exist. **Section 11**
+(Data Provenance Inspector) is a real, narrow, clean gap: `table.
+capacitySource` (from Section 3, this same session) and venue-object
+`seatsConfidence`/`seats` (pre-existing, sofa/bench/banquette only) are both
+fully computed and persisted, but neither had ANY rendering path anywhere
+in the UI after being set — confirmed by grep, zero hits. **Section 12**
+(interactive first-run onboarding) is genuinely unbuilt — no onboarding
+concept of any kind existed in the codebase. Presented with this, the user
+chose the second explicit decision of this segment: **build 11 and 12 only,
+skip 10, and mark 10 OBSOLETE with the evidence rather than NOT STARTED** —
+since NOT STARTED would wrongly imply the feature is still owed, when the
+investigation showed the problem it would solve does not exist.
+
+**Section 11 implementation.** `contextualCardHTML()` (`src/app-v8.js`)
+gained one new read-only block per object kind, inserted between the
+existing form/stats and the action row — never editable, since provenance
+is a fact about where a number came from, not a field to correct (a
+correction happens through the object's own existing edit path, which
+already re-derives provenance on write). For a **table**: `capacitySource`
+is read through a new accessor mirroring the existing `FREEZE()`/`AVAIL()`
+pattern (`const CAPPROV=()=>globalThis.MeritCapacityProvenance||null;`),
+and a `capacitySourceKey()` helper does a pure mechanical camelCase
+conversion (`"DETECTED_PHYSICAL_SEATS"` → `"capacitySource.
+detectedPhysicalSeats"`) to reach the already-existing i18n keys from
+Section 3 — no new enum, no new state, the whole feature is a read of data
+that already existed. For a **sofa/bench/banquette venue object** (the
+`UNVERIFIED_SEATING` set): the seat count and its verified/unverified badge
+render the same way, reusing the exact fields Section 11's own audit
+confirmed were being computed and silently dropped. New i18n keys:
+`inspector.capacitySource`, `inspector.seatsVerified`, `inspector.
+seatsUnverified`.
+
+**Two real bugs, found by the mandatory rendered screenshot pass, both
+fixed.** Consistent with this project's own "not done until rendered and
+screenshotted" rule, a `visual-qa-reviewer` pass on the new card content
+surfaced two genuine defects neither source review nor the first round of
+tests had caught:
+
+1. **Raw i18n key leak.** The venue-object header composes as `t("inspector.
+   object",{type:t("bulk.type."+o.type)})`, but `bulk.type.sofa`/`bench`/
+   `banquette` had never been defined — those three types were previously
+   reachable only through Assisted Detection's review flow, which uses a
+   parallel `teach.type.*` key family, never through a committed venue
+   object's contextual card until Section 11 made that path render for the
+   first time. The result was a literal raw key on screen: "BULK.TYPE.SOFA
+   NESNESİ" in Turkish. Fixed by adding the three missing keys (`src/
+   i18n.js`, EN/TR pairs, with a comment explaining why they were missing).
+2. **CSS overflow in Turkish.** `.contextual-card-provenance`'s original
+   layout was a non-wrapping `display:flex;justify-content:space-between`
+   row with `white-space:nowrap` on its label/value spans — sized to fit
+   the English strings, but Turkish equivalents run longer and pushed the
+   confidence badge past the fixed 272px card's right edge. Fixed by
+   rewriting the block to a stacked layout (label on its own line via
+   `span{display:block}`, value/badge flowing as normal inline text below,
+   `overflow-wrap:anywhere`) that cannot overflow regardless of language or
+   content length.
+
+Both fixes got new regression tests in `tests/suites/capacity-provenance.
+test.mjs`, and both were mutation-proven: removing the three i18n keys
+reproduced the exact raw-key text the new header-leak check asserts
+against; reverting the CSS reproduced the exact overflow the new check
+catches. The overflow check needed a second attempt to get right — see
+"A test-writing lesson" below. Final suite count: 33 checks (`capacity-
+provenance`), all passing alongside the existing 27 in `i18n`.
+
+**A test-writing lesson: measure the child, not the container.** The first
+version of the overflow check measured the ROW's own `getBoundingClientRect
+().right` against the card's — and it passed even against the reverted,
+genuinely-overflowing CSS (confirmed by mutation-testing, a false
+negative). The reason: a `display:flex` block-level child with `width:auto`
+sizes its own box to the parent's available width regardless of its
+children's content, while flex ITEMS with `white-space:nowrap` (default
+`min-width:auto`) cannot shrink below their own content's intrinsic
+minimum — when the combined minimums exceed the available space, the
+CHILDREN visually spill past the container's edge while the container's own
+measured box is untouched. The check only became meaningful once rewritten
+to measure each child's own `getBoundingClientRect().right`
+(`[...row.children].map(el => el.getBoundingClientRect().right)`) against
+the card's edge, which then correctly failed against the buggy CSS
+(`childRights: [1749.2, 1807.4, 1903.5]` vs. `cardRight: 1900`, a ~3.5px
+overflow matching the visual bug exactly) and passed once fixed.
+
+**Section 12 implementation.** New functions in `src/app-v8.js`:
+`onboardingSeen(key)`, `dismissOnboarding(key)`, `resetOnboarding()`, and
+`onboardingCalloutHTML(key)` (returns `""` once a key is seen, so every
+call site is a plain, unconditional call with no caller-side branching).
+`state.onboarding` follows the exact same lazy-init, `state`-not-`event`
+pattern as `state.audit` — never subject to `canMutate`/`isHistorical`,
+never exported in a portable event package, never reset by switching
+events. Five anchor points, each gated behind `!historical` at its call
+site: the workspace header (`workspaceHTML()`, key `globalFinder`), the
+Command Center's Risk Radar (`riskRadarHTML()`, key `commandCenter`), the
+Freeze Zones empty state (`freezePanelHTML()`, key `freezeZones`), Smart
+Seating once a guest is selected (`smartSeatingHTML()`, key
+`smartSeating`), and an available table's card (only when NOT already
+unavailable — the tip is about the mark-unavailable control itself, which
+isn't even on screen once a table has already failed, key
+`tableAvailability`). A single delegated `document.addEventListener
+("click", ...)` handles every `[data-onboarding-dismiss]` click from one
+place, so no per-screen bind function needs to know the feature exists —
+modeled on this file's existing persistent listeners (`pointerdown`,
+`focusin`) at the same top-level location. The Guide modal gained a "Show
+tips again" button calling `resetOnboarding()`, which clears every key back
+to unseen.
+
+**A real override-pattern trap, caught before it shipped.** The first
+attempt at the Guide's reset button was written into `app-guests.js`'s
+`renderGuide()` — the ORIGINAL implementation of that function. But
+`app-v8.js` (loaded last, per `index.html`'s script order) reassigns the
+bare `renderGuide` identifier to its own, entirely different card-grid
+implementation — a top-level `let`/`function` in a non-module classic
+script is a plain global, and the later script's bare reassignment silently
+shadows the earlier one for every caller from that point on. The button
+never appeared in the actually-rendered Guide; a debug dump of the live
+DOM's Guide markup showed a template with no trace of the edit, which is
+what surfaced the mistake. Fixed by reverting the `app-guests.js` edit
+(restoring it to original, plus a comment explaining the override for the
+next person who reads that function first) and applying the real button +
+`resetOnboarding()` wiring to the ACTIVE override inside `app-v8.js`.
+
+**A false-negative persistence test, caught by mutation-testing the test
+itself.** The "dismissal survives a reload" check passed even when
+`dismissOnboarding()`'s own `saveState()` call was deliberately removed,
+because the app's unconditional `window.addEventListener("beforeunload",
+() => saveState())` safety net saves current state before any `page.
+reload()` completes — masking a missing explicit save inside the function
+under test. Fixed by spying on the bare `saveState` global immediately
+before the one dismiss click under test (reassigning it to a counting
+wrapper via `page.evaluate`, restorable since it is a plain top-level
+binding) and asserting the spy fired from that action alone, independent
+of the later reload's own safety-net save.
+
+**Validation.** New suite `tests/suites/onboarding.test.mjs` (22 checks)
+covers: callout presence on first view of the workspace, dismissal removes
+it and persists (via the `saveState` spy above) and survives reload,
+`state.onboarding` never lives on the event object, each of the 4 other
+anchors dismisses independently under its own key, the Table Availability
+callout is absent when a table is already unavailable even with its key
+force-reset to unseen, "Show tips again" clears every key at once, zero
+callouts render anywhere once an event is historical, and both languages
+carry real, different copy. Mutation-proven across 3 distinct mutations
+(a missing `saveState()` call, `resetOnboarding()` not clearing `seen`, and
+`onboardingCalloutHTML()` ignoring seen/historical state — all three
+correctly caught, then reverted). A `visual-qa-reviewer` pass at the
+standard viewports found zero remaining issues.
+
+**Full validation after both sections' bug fixes.** A clean, full fast
+regression run (no concurrent edits, per this session's own earlier
+methodology correction) came back 50/50 suites, 1737/1737 checks passed.
+Both offline artifacts were rebuilt (`build-offline.mjs`, `build-offline-
+full.mjs`) and re-verified end-to-end via `verify-offline-package.mjs`
+(27/27), since `src/app-v8.js`, `src/i18n.js`, and `src/styles.css` all
+changed again after the last offline build.
+
 ## Continuation checkpoint (machine-readable)
 
 ```
@@ -829,18 +1017,48 @@ SECTIONS 8/9 STATUS: PARTIAL, not the original scope, but CI CONFIRMED
   rendered browser with no remaining issues. See detailed write-up above
   for exact file/line-level changes, i18n keys, and per-fix
   mutation-testing evidence.
-NEXT_SECTION: 10/11/12/30 (Readiness Timeline, Data Provenance Inspector,
-  Interactive Onboarding, audit/timeline/provenance distinctness) — all
-  new features, task #159.
-NEXT_ACTION: Sections 8/9 as re-scoped above are done to the extent this
-  session could honestly complete them without the original numeric
-  targets. If the original section 8/9 numeric requirements are ever
-  recovered (e.g. from an earlier saved copy of the 42-section prompt),
-  re-open this section and measure against them directly rather than
-  re-auditing from scratch. Otherwise: (a) if section 7 is to be
-  completed further, build the AST-based single-writer lint rule rather
-  than more grep spot-checks; (b) proceed to sections 10/11/12/30 (new
-  features) or 13-18 (storage/transaction hardening) per the task list.
+SECTIONS 10/11/12/30 STATUS: 10 OBSOLETE (evidence-based, by explicit user
+  decision), 11 DONE, 12 DONE, 30 DONE (verified as a byproduct of 10's
+  investigation). Not yet pushed at the time this checkpoint entry was
+  written — see NEXT_ACTION for the exact commit/push/CI-confirm sequence
+  still owed before these four can be called DONE in the same sense as
+  sections 2/3/6. Two user decisions this segment: (1) investigate-and-
+  propose-scope-first for sections 10-12 (net-new features with lost
+  specs, unlike 8/9's audit-of-existing-code approach) via `merit-product-
+  director`; (2) build 11+12 only, skip 10, mark 10 OBSOLETE with the
+  evidence rather than NOT STARTED. Section 11 (Data Provenance Inspector):
+  one read-only line on the contextual card reusing Section 3's
+  `MeritCapacityProvenance` module and existing i18n keys — zero new state.
+  Two real bugs found by the mandatory rendered screenshot pass (missing
+  `bulk.type.sofa/bench/banquette` i18n keys causing a raw-key leak; a
+  non-wrapping flex layout overflowing in Turkish) — both fixed, both
+  mutation-proven, both covered by new regression checks in `capacity-
+  provenance.test.mjs` (now 33 checks). Section 12 (onboarding): 5 anchor
+  points, `state.onboarding` persisted like `state.audit` (never on
+  `event`), one delegated click listener, Guide-modal reset control — new
+  `tests/suites/onboarding.test.mjs` (22 checks), mutation-proven across 3
+  distinct mutations. A real override-pattern trap was caught before
+  shipping (the first attempt edited `app-guests.js`'s `renderGuide()`,
+  which `app-v8.js` shadows with its own reassignment loaded last — fixed
+  by moving the edit to the actual active override). Full clean regression
+  after all fixes: 50/50 suites, 1737/1737 checks. Both offline artifacts
+  rebuilt and re-verified (27/27). See full write-up above.
+NEXT_SECTION: after sections 10/11/12/30 are committed/pushed/CI-confirmed,
+  sections 13-18 (storage safety, domain transaction atomicity, schema
+  migration chain/registry, audit durability, backup/recovery re-audit,
+  Portable Event Package re-audit) — task #160.
+NEXT_ACTION: commit the Section 11/12 working tree (`src/app-v8.js`,
+  `src/i18n.js`, `src/styles.css`, `tests/suites/capacity-provenance.
+  test.mjs`, new `tests/suites/onboarding.test.mjs`, this report), push to
+  `claude/merit-concept3-plan-intelligence-rebirth`, then confirm CI green
+  (10/10 checks, both push- and pull_request-triggered) via the GitHub
+  Actions API before the next checkpoint commit marks sections 10/11/12/30
+  DONE — the same push→confirm→small-checkpoint-commit pattern used for
+  every prior section this session (e.g. `6adca31` then `a358749` for
+  sections 8/9). After that: (a) if section 7 is to be completed further,
+  build the AST-based single-writer lint rule rather than more grep
+  spot-checks; (b) proceed to sections 13-18 (storage/transaction
+  hardening) per the task list.
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   change (section 2's "Deferred sub-scope" above) — STILL VALID, not
   attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
@@ -850,7 +1068,7 @@ DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   Section 8/9's native-confirm()-replacement and toast-dismiss findings
   (#5, #8 in the detailed write-up above) — STILL VALID, not attempted.
 BLOCKED_ON: nothing external — this is pure engineering work.
-NOT_YET_TOUCHED: sections 10-28, 30-32, 35-38 (see table above).
+NOT_YET_TOUCHED: sections 13-28, 31/32, 35-38 (see table above).
 EXTERNAL_BLOCKERS_UNCHANGED: real human operator test (NOT VERIFIED), a
   genuine third independent real floor plan (NOT AVAILABLE), SQLite
   runtime (DEFERRED to EXE stage), EXE itself (DEFERRED, forbidden until
