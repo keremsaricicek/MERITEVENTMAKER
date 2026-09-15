@@ -1458,9 +1458,12 @@ SECTIONS 19-21 STATUS: 19 DONE (audit, architecture already sound — the
   independently re-verified by direct grep before deletion; a much larger
   candidate — 21 unreachable functions in app-v8.js's own override-capture
   object — deliberately NOT deleted this pass, multi-file blast radius
-  with no test coverage of the boot-sequence assumption it rests on). Not
-  yet pushed at the time this checkpoint entry was written — see
-  NEXT_ACTION. Investigated via `frontend-architect` first, then two of
+  with no test coverage of the boot-sequence assumption it rests on).
+  Pushed as commit b499dbe (parent af123a0). CI CONFIRMED GREEN on the
+  branch head, commit b499dbe — both the push-triggered (run 34954004952)
+  and pull_request-triggered (run 34954009456) workflow runs are fully
+  green, all 10 checks each, verified job-by-job via the GitHub Actions
+  API. Investigated via `frontend-architect` first, then two of
   its most consequential/destructive claims (the 5 dead functions, the
   21-vs-12 original split) independently re-verified by this session's
   own direct grep before acting on either. New suites
@@ -1475,17 +1478,11 @@ SECTIONS 19-21 STATUS: 19 DONE (audit, architecture already sound — the
   (27/27). See full write-up above.
 NEXT_SECTION: sections 22-25 (performance at scale, offline guarantee
   re-verification, accessibility/keyboard, error messages) — task #162.
-NEXT_ACTION: commit the sections 19-21 working tree (`src/app-v8.js`,
-  `src/app.js`, `src/plan-number-integrity.js`, new
-  `tests/suites/override-boundary.test.mjs`, new
-  `tests/suites/pax-invariant.test.mjs`, this report), push to
-  `claude/merit-concept3-plan-intelligence-rebirth`, then confirm CI green
-  (10/10 checks, both push- and pull_request-triggered) via the GitHub
-  Actions API before the next checkpoint commit marks sections 19-21
-  DONE. After that: proceed to sections 22-25 per the task list. Section
-  7's exhaustive AST-based single-writer lint rule remains a live,
-  separate opportunity if that section is revisited (see
-  DEFERRED_SUB_SCOPE), but is not a blocker.
+NEXT_ACTION: sections 19-21 are fully closed out — committed (`b499dbe`),
+  pushed, and CI-confirmed 10/10 both triggers. Proceed to sections 22-25
+  per the task list. Section 7's exhaustive AST-based single-writer lint
+  rule remains a live, separate opportunity if that section is revisited
+  (see DEFERRED_SUB_SCOPE), but is not a blocker.
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   change (section 2's "Deferred sub-scope" above) — STILL VALID, not
   attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
