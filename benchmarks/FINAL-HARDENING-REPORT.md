@@ -73,9 +73,9 @@ programme's own rules).
 | 23 | Offline guarantee re-verification | **DONE (continuously, plus this pass)** | Both artifacts rebuilt and the real built package re-verified after every commit in this programme, 27/27 each time, including this one. A dedicated final pass still happens in section 36. |
 | 24 | Accessibility/keyboard | **DONE (one real gap, closed and mutation-proven)** | Audited directly rather than assumed: a global `:focus-visible` ring already exists (`src/styles.css:70`) and the app's three native `<dialog>` elements get focus containment and Escape-close from the platform. The one real gap was the freeze-challenge `<aside role="alertdialog">` — the app's only custom scrim — which had initial focus and Escape but no Tab containment, so Tab walked out of an alertdialog into the page behind it. Trap implemented; 6 new checks in `tests/suites/seating-freeze.test.mjs` (89→96). |
 | 25 | Error messages | **DONE (two real defects + a static guard)** | Audited all 104 `toast()` call sites (80 in app-v8.js, 12 each in app-guests.js/app.js; 31 error-level). Most already name the object, the reason and the next step. Two did not: the Create Event and Replace Plan paths each toasted a bare `error.message` — a raw pdf.js/FileReader string naming no action, offering no next step, and arriving in English on a Turkish-default product. Both now build a real message from a new i18n key, keeping the library's `{reason}`. Separately found that **nothing statically verified that a `t()` key exists** — and error-path keys are precisely the ones no rendering test ever reaches. New suite `i18n-key-integrity` closes that. No live missing key found. |
-| 26 | Real operator test infrastructure | NOT STARTED | `benchmarks/operator/README.md` exists; `REAL-OPERATOR-TEST-KIT.md` not yet written. |
-| 27 | Real human test follow-up contract | NOT STARTED | |
-| 28 | Third real plan procedure | NOT STARTED (doc) | Status remains **NOT AVAILABLE** — no third real plan has been supplied. Documenting the held-out procedure is separate from having a plan to run it on. |
+| 26 | Real operator test infrastructure | **DONE (kit written) / session NOT VERIFIED** | `benchmarks/operator/REAL-OPERATOR-TEST-KIT.md` written — the runnable facilitator kit (pre-day setup against the real offline artifact, the verbatim script, the how-to-answer-their-questions table, the observer sheet, the end-of-session sequence), distinct from the existing `README.md`, which is the rationale. Also **corrected a stale known-gap** in that README: it told facilitators to discount an operator who could not get from a Worth deciding row to the object — that gap was closed by the click-to-act work (`data-budget-open` → `openReviewQueue`), so the note would have caused a real finding to be dismissed. **No session has been run**; real operator usability stays NOT VERIFIED. |
+| 27 | Real human test follow-up contract | **DONE (contract written, unexercised)** | `benchmarks/operator/HUMAN-TEST-CONTRACT.md` — written *before* any session, which is the only time it can be written honestly. Fixes in advance: a 7-class finding taxonomy (DEFECT/BLOCKER/FRICTION/VOCABULARY/MISSING/PREFERENCE/CONTAMINATED) with a per-class obligation; what does and does not oblige a fix; the rule that an operator finding beats a measured internal result when they conflict; the exact permitted status strings, with `MEASURED ONCE` explicitly not a stepping stone to VERIFIED; and what obliges a re-run with a *new* operator. |
+| 28 | Third real plan procedure | **DONE (doc) / plan NOT AVAILABLE** | `benchmarks/heldout/THIRD-PLAN-PROCEDURE.md` — 9 ordered steps, every one of them what was actually done for ORNEK rather than an invention, including the permanent-first-run-record practice (`ORNEK-FIRST-RUN.md`) that sits alongside the `benchmark:heldout` leakage guard. Status of the thing itself is unchanged: **NOT AVAILABLE** — no third real plan has been supplied, and documenting the procedure is not having a plan to run it on. |
 | 29 | 2-real-plan open debt audit | **DONE (classification)** | **Task #131** (ORNEK robustness suite, CI for both plans, report+PR): **MOSTLY RESOLVED** — CI already runs `npm run benchmark` on Golden+ORNEK together in one job, `BASELINE.json` tracks both, PR #5's own body is the report. Remaining gap, **STILL VALID**: no ORNEK-specific rendering-variant robustness suite (rotation/blur/exposure) analogous to Golden's `benchmarks/robustness/` variants. **Task #132** (PDF orientation normalisation): **OBSOLETE** — PR #5's own Phase 6 section measured "the raw sideways page now scores identically to the upright one... the 13-point orientation cost was almost entirely these three [now-fixed] rules failing, and they fail the same way whichever way up the sheet is." The problem normalisation would have solved no longer exists. |
 | 30 | Audit/timeline/provenance stay distinct | **DONE (verified)** | Section 10's own investigation is this verification: the audit trail (what happened, `audit-trail.js`), the Plan Doctor/Risk Radar (can this event safely proceed, derived live from current state), and Section 11's new provenance line (where did this one number come from) each answer a different question from a different data source, and none of the three sections implemented this round introduced a fourth overlapping concept. No new code was needed to keep them distinct — the boundary already held. |
 | 31 | SQLite desktop migration design | NOT STARTED | |
@@ -1437,6 +1437,108 @@ for this property), and the two error messages change toast *text* on
 failure paths a screenshot pass does not reach. The Section 35 visual sweep
 remains the applicable visual gate.
 
+### Sections 26-28 — the externally-blocked three
+
+All three of these sections are blocked on something this session cannot
+produce: a real event operator who has never seen the screen, and a third real
+venue drawing. What is *not* blocked is the thing that has to exist before
+either would be worth doing, and that is what landed.
+
+The distinction is kept sharp in every status line: the kit, the contract and
+the procedure are DONE; the session is NOT VERIFIED and the third plan is NOT
+AVAILABLE. Neither document may be read as evidence about the thing it prepares
+for, and each says so in its own status block rather than relying on this file
+to qualify it.
+
+**Section 26 — `benchmarks/operator/REAL-OPERATOR-TEST-KIT.md`.** The existing
+`README.md` in that directory is a genuinely good document, but it is a
+*rationale*: why the test exists, what is instrumented, the two failure modes it
+hunts, the 14 questions. A facilitator could not run a session from it without
+assembling half a dozen things themselves. The kit is what is carried into the
+room: build the folder artifact (not `npm run serve` — the folder build is the
+one with real offline OCR, and OCR is load-bearing on the symbolic plan, so
+Session B against a light build tests a product the operator will never be
+given), verify 27/27, take the machine offline, start from a blank profile, have
+both plan files ready; the script to read verbatim; a table of what to say when
+they ask what a button does; the observer sheet with the three things the
+recording *cannot* capture (what they looked at and did not click, their own
+words for product concepts, hesitation before "apply to all"); and the
+end-of-session order — open the report **before** discussing it, because it
+lives in `state.operatorSessions` and a cleared profile takes it away.
+
+The 14 questions are deliberately **not** duplicated into the kit. They are in
+`README.md` and on the report page itself; a third copy is a third thing to keep
+correct.
+
+One real correction came out of writing it. The README's "Known before the
+session starts" section recorded that Worth deciding rows were readable but not
+actionable, and instructed the facilitator to treat an operator hunting for the
+object as a known gap rather than a discovery. That gap is **closed** — verified
+in the source, not assumed: `budgetClaimHTML()` now emits
+`data-budget-open` → `openReviewQueue(ev, …)` for every row with targets, and
+for a claim about the whole drawing with no target it says so
+(`budget.wholeDrawing`) instead of offering a dead control. A stale known-gap
+list is worse than none, because it tells the facilitator *in advance* to ignore
+the exact behaviour the session exists to observe. Corrected, with a standing
+instruction to re-check that section before every session.
+
+**Section 27 — `benchmarks/operator/HUMAN-TEST-CONTRACT.md`.** Written before
+any session, on purpose: a test whose consequences are decided after seeing its
+outcome is not a test, and the rules can only be set honestly while nobody knows
+what the result will be.
+
+It fixes seven finding classes with a per-class obligation, so that a count of
+findings can never be reported without the classes and BLOCKER can never quietly
+become FRICTION because it was fixed quickly. It states that speed is not a
+finding on its own — there is no baseline for a good review time and this
+project refuses to invent one, so a timing becomes a finding only when attached
+to an observation. It contains the clause the whole file exists for: when an
+operator's behaviour contradicts a measured internal result, **the operator
+wins** — if they work entirely off-queue, `benchmarks/review-order/`'s measured
+40% improvement is an improvement to an artefact nobody reads, and must not be
+quoted afterwards as though the session had not happened. And it fixes the
+permitted status strings, with `USABILITY: MEASURED ONCE` named explicitly as a
+status rather than a stepping stone to VERIFIED — the threshold for VERIFIED is
+deliberately left undefined, because defining it before seeing what one session
+looks like would be inventing rigour rather than having it.
+
+**Section 28 — `benchmarks/heldout/THIRD-PLAN-PROCEDURE.md`.** Nine ordered
+steps, and the reason to trust them is that none is invented: every one is what
+was actually done for ORNEK. Take the file in by hash and write the provenance
+while the only thing known about the drawing is its hash; measure what the file
+*is* before looking at what it draws (for ORNEK that step alone killed a planned
+vector parser — `/Font 0`, `/FontFile 0`, one `/DCTDecode` image); classify the
+representation, because PHYSICAL vs SYMBOLIC changes what capacity *means* and
+whether an unknown seat count is `0` or `null`; annotate ground truth by a
+person looking at the drawing and **freeze it in a commit** before any detector
+output is seen; run once untouched; diagnose before theorising.
+
+Step 5 was corrected after checking what the repo actually did rather than what
+its tooling offers. `run-heldout.mjs` and its `history.json` are the leakage
+guard, but ORNEK's first run was recorded through a separate permanent record —
+`ORNEK-FIRST-RUN.md` plus `ornek-first-run.json`, naming the commit under test
+and the reproduce command. Both belong in the procedure, and the record is the
+more important half: ORNEK's first run scored `TABLES … TP=0 FP=10 FN=166 P=0
+R=0 F1=0`, that number is still in the repository unedited, and it is what makes
+every later improvement measurable against a starting point nobody was tempted
+to soften.
+
+The procedure ends by naming the failure mode it exists to prevent, which is not
+a bad score but a **good one arrived at by having looked first** — open the
+plan, notice a missed cluster, adjust a threshold, then annotate, then run, then
+report a strong held-out result. Every step there feels reasonable in isolation
+and the number is worthless, and once the session is over it is
+indistinguishable from a real one. The freeze commits in steps 1 and 4 are what
+make the ordering checkable by somebody who was not there.
+
+**Validation.** These three are documentation, and this report does not call
+documentation implementation — the status lines above say DONE for the
+documents and NOT VERIFIED / NOT AVAILABLE for the things they prepare for. The
+one code-adjacent claim made (that the Worth deciding gap is closed) was
+verified by reading the emitting function and its handler, not assumed from the
+CLAUDE.md summary. No suite changes and no regression re-run were needed for
+this segment: nothing under `src/` was touched.
+
 ## Continuation checkpoint (machine-readable)
 
 ```
@@ -1664,16 +1766,40 @@ SECTIONS 22-25 STATUS: ALL FOUR DONE. 22 DONE (re-measured the full perf
   uncovered risk, stated as such). Full clean regression: 55/55 suites,
   1799/1799 checks (up from 54/54, 1779/1779). Both offline artifacts
   rebuilt and re-verified (27/27). See full write-up above.
-NEXT_SECTION: sections 26-28 (real operator test kit, human test contract,
-  third-plan procedure docs) — task #163. Note these are the
-  externally-blocked ones: see EXTERNAL_BLOCKERS_UNCHANGED.
-NEXT_ACTION: sections 22-25 are code-complete, fully regression-validated
-  and offline-verified locally; they still need commit -> push -> CI
-  confirmation (10/10, both push and pull_request triggers) -> checkpoint
-  commit, the same pattern used for every prior section group. Then
-  proceed to sections 26-28. Section 7's exhaustive AST-based single-writer
-  lint rule remains a live, separate opportunity if that section is
-  revisited (see DEFERRED_SUB_SCOPE), but is not a blocker.
+SECTIONS 26-28 STATUS: ALL THREE DOCUMENTS DONE; the things they prepare
+  for remain externally blocked and are NOT claimed. 26 DONE
+  (benchmarks/operator/REAL-OPERATOR-TEST-KIT.md — the runnable facilitator
+  kit, distinct from the existing README.md rationale; also CORRECTED a
+  stale known-gap in that README which told facilitators to discount an
+  operator who could not reach the object behind a Worth deciding row —
+  that gap is closed, verified in budgetClaimHTML()'s data-budget-open ->
+  openReviewQueue, so the note would have suppressed a real finding). REAL
+  OPERATOR USABILITY: still NOT VERIFIED — no session has been run. 27
+  DONE (benchmarks/operator/HUMAN-TEST-CONTRACT.md — 7 finding classes with
+  per-class obligations, what does/does not oblige a fix, the
+  operator-beats-the-metric clause, permitted status strings with
+  MEASURED ONCE explicitly NOT a stepping stone to VERIFIED, and re-run
+  triggers requiring a NEW operator). Unexercised. 28 DONE
+  (benchmarks/heldout/THIRD-PLAN-PROCEDURE.md — 9 ordered steps, each one
+  what was actually done for ORNEK; step 5 corrected after checking the
+  repo rather than the tooling: benchmark:heldout/history.json is the
+  leakage guard, but ORNEK's first run was recorded via the permanent
+  ORNEK-FIRST-RUN.md + ornek-first-run.json record, and BOTH belong in the
+  procedure). THIRD REAL PLAN: still NOT AVAILABLE. Nothing under src/ was
+  touched, so no regression re-run was required for this segment.
+NEXT_SECTION: sections 31/32 (SQLite desktop migration design + export
+  format v1 + desktop readiness doc) — task #164. DESIGN AND DOCUMENTS
+  ONLY: .claude/rules/data.md forbids introducing SQLite or any new storage
+  engine while the product is in browser-review stage, and the EXE gate is
+  still shut.
+NEXT_ACTION: sections 22-25 were committed as 7d0aa49 and pushed; CI was
+  observed with Detection, Offline and Performance already green and Fast
+  core + Intelligence still running at the time of writing — CONFIRM the
+  full 10/10 (both push and pull_request triggers) before treating that
+  group as closed, then commit the sections 26-28 documents. Section 7's
+  exhaustive AST-based single-writer lint rule remains a live, separate
+  opportunity if that section is revisited (see DEFERRED_SUB_SCOPE), but is
+  not a blocker.
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   change (section 2's "Deferred sub-scope" above) — STILL VALID, not
   attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
@@ -1701,8 +1827,11 @@ DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   real render paths would close it; not attempted, and the existing
   DOM-walking `i18n` suite already covers the composed keys that any
   default-state screen renders.
-BLOCKED_ON: nothing external — this is pure engineering work.
-NOT_YET_TOUCHED: sections 26-28, 31/32, 33/34, 35-38 (see table above).
+BLOCKED_ON: nothing external for the next section. Sections 26-28's
+  DOCUMENTS are done; their EXECUTION (a real operator session, a third
+  real plan) is blocked on inputs only the user can supply, and is
+  correctly left as NOT VERIFIED / NOT AVAILABLE rather than closed.
+NOT_YET_TOUCHED: sections 31/32, 33/34, 35-38 (see table above).
 EXTERNAL_BLOCKERS_UNCHANGED: real human operator test (NOT VERIFIED), a
   genuine third independent real floor plan (NOT AVAILABLE), SQLite
   runtime (DEFERRED to EXE stage), EXE itself (DEFERRED, forbidden until

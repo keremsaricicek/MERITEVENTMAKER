@@ -136,13 +136,23 @@ who works entirely off-queue is telling you the ordering is not usable, whatever
 
 ## Known before the session starts
 
-One thing does not need a person to be found, and should not be blamed on them
-if it comes up: **the Worth deciding rows are readable but not actionable.**
-Clicking one does not take the operator to the object it is about. Every
-existing control still works — the review-group cards, the questions, the
-canvas — so nothing regressed, but if an operator reads the top item and then
-hunts for it on the plan, that is a known gap and not a discovery. Closing it is
-the first thing this session should be pointed at.
+**Nothing, as of the pre-desktop programme.** This section previously recorded
+one: the Worth deciding rows were readable but not actionable, so an operator
+who read the top item then had to hunt for it on the plan. That is **closed** —
+every row now either carries a control that opens the review queue on exactly
+the objects the row is about (`data-budget-open` → `openReviewQueue`), or, when
+the claim is about the whole drawing and has no specific target, says so instead
+of offering a dead button.
+
+This matters for how the session is run: the note used to instruct the
+facilitator to *discount* an operator who hunted for the object, as a known gap
+rather than a finding. It is no longer a known gap. **If an operator now reads a
+Worth deciding row and cannot get to the thing it is about, that is a real
+finding and must be written down**, not explained away by this file.
+
+Re-check this section before every session. A stale "known gap" is worse than no
+list, because it tells the facilitator in advance to ignore the exact behaviour
+the session exists to observe.
 
 ## Two failure modes this test exists to catch
 
