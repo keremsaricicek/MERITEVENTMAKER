@@ -50,17 +50,56 @@ just copy.
 
 VIP levels: `Standard` | `VIP` | `VVIP` (`g.vip` in `normalizeGuest`).
 
-## Chairs are first-class physical objects
+## Physical chair, logical seat and capacity are THREE different things
 
-A table's `capacity` is not a bare number — it is backed by an array of
-`chairs` on the table (`syncTableChairs` / `chairGeometry` in
-`src/app-v8.js`). Each chair carries `id`, `parentTableId`, `seatNumber`,
-position (`x`/`y`), `rotation`, and `occupancy`. `physicalCapacity()` sums
-real chair counts, not a capacity field in isolation. Any change to table
-capacity must go through `setTableCapacity` → `repackTableAssignments`, which
-refuses to shrink capacity below the number of currently occupied seats and
-repacks seat indices safely. Do not introduce a code path that sets
-`table.capacity` without keeping `table.chairs` in sync.
+This is the permanent domain contract. It is not a description of the
+current data structure, and the current data structure must not be read
+back as the contract.
+
+| Concept | What it is | What it may never do |
+|---|---|---|
+| **PHYSICAL CHAIR** | A real object seen on the plan, or confirmed by a person. May carry real coordinates and orientation. | **Never invented from a capacity number.** If a plan draws no chairs, the system produces **no** physical chairs — it does not synthesise them |
+| **LOGICAL SEAT** | A seating position used to assign a guest. May come from printed capacity, human confirmation, or another trustworthy capacity source. | **Never claims to be a physical chair** |
+| **CAPACITY** | The operational/logical capacity of the table. | **Never required to equal the physical chair count.** Its provenance is tracked separately (`capacitySource`, `src/capacity-provenance.js`) |
+
+A completely valid table:
+
+```
+capacity        = 12
+logicalSeats    = 12
+physicalChairs  =  0
+```
+
+This is **normal**, not a defect — it is the ordinary case on a SYMBOLIC
+plan (numbered circles, no drawn furniture, capacity printed as a rule).
+`hasPhysicalSeats === false` and an unknown seat count is `null`, never `0`.
+
+### CURRENT LEGACY IMPLEMENTATION
+
+The shipping code does **not** yet model these three separately. Today
+`table.chairs` is a single array that holds **both** real detected/confirmed
+physical chairs **and** non-physical logical placeholders generated to match
+`capacity` (`syncTableChairs` / `chairGeometry` in `src/app-v8.js`; each
+entry carries `id`, `parentTableId`, `seatNumber`, `x`/`y`, `rotation`,
+`occupancy`). `physicalCapacity()` sums entries of that array, so on a
+symbolic plan it counts placeholders that correspond to no real object.
+
+Treat that as **legacy implementation detail to be migrated away from**, not
+as the target architecture and not as an invariant to preserve. When the
+three concepts are separated, the array's dual use is the thing that gets
+fixed.
+
+### What IS an invariant today
+
+While the legacy shape stands, `table.capacity` and `table.chairs` must not
+drift apart: go through `setTableCapacity` → `repackTableAssignments`, which
+refuses to shrink capacity below currently occupied seats and repacks seat
+indices safely. Do not add a code path that sets one without the other.
+
+This is a **consistency rule for the current representation** — it keeps
+today's code honest. It is not a claim that capacity is *defined by* a
+physical chair count, and it must not be cited to justify generating fake
+chairs to satisfy a capacity figure.
 
 ## No Show: planned assignment vs. live occupancy
 
