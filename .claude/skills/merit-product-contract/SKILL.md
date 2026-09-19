@@ -6,11 +6,19 @@ description: The permanent domain contract for MERIT ENTERTAINMENT — EVENT MAK
 # Merit Product Contract
 
 MERIT ENTERTAINMENT — EVENT MAKER is internal, browser-only event-operations
-software for premium hospitality/casino event management. No backend —
-everything lives in `localStorage` (`meritEventMaker.v1`). This skill
-documents the domain rules **as actually implemented** in `src/app.js`,
-`src/app-guests.js`, and `src/app-v8.js`. It is a contract, not aspiration:
-verify against the current source before assuming behavior has drifted.
+software for premium hospitality/casino event management. No backend — all
+state stays in the browser, behind the `StorageProvider` boundary in
+`src/storage-provider.js`: **IndexedDB is the live engine** (database
+`meritEventMaker`, version 2, state record plus a separate blob store for
+image crops), with `LocalStorageStorageProvider` kept only as a boot-time
+fallback when IndexedDB is unavailable. An earlier version of this file said
+everything lives in `localStorage` — that is no longer true, and a refactor
+planned on that assumption would be planned against the wrong layer.
+
+This skill documents the domain rules **as actually implemented** in
+`src/app.js`, `src/app-guests.js`, and `src/app-v8.js`. It is a contract,
+not aspiration: verify against the current source before assuming behavior
+has drifted.
 
 ## Core screens
 
