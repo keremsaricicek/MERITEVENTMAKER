@@ -713,6 +713,16 @@
     "setup.planEyebrow": { en: "Floor plan", tr: "Kat planı" },
     "setup.planTitle": { en: "Import a plan, or start blank", tr: "Plan içe aktarın veya boş başlayın" },
     "setup.planSubtitle": { en: "PNG, JPG, JPEG and every page of a PDF are processed here in your browser.", tr: "PNG, JPG, JPEG ve PDF'in her sayfası burada, tarayıcınızda işlenir." },
+    // Section 25. Both of these wrap a failure thrown by the PDF renderer or
+    // the file reader. The library's own {reason} is kept -- it is the only
+    // thing that says WHY -- but it is never shown on its own: a bare
+    // "Invalid PDF structure." names no action, offers no next step, and
+    // arrives in English at an operator whose product defaults to Turkish.
+    "setup.planReadFailed": { en: "This floor plan could not be read ({reason}). Choose a different PNG, JPG, JPEG or PDF file.", tr: "Bu kat planı okunamadı ({reason}). Farklı bir PNG, JPG, JPEG veya PDF dosyası seçin." },
+    // The replace path can additionally promise something the import path
+    // cannot: every mutation in it happens after the awaits that throw, so a
+    // failure genuinely leaves the existing plan untouched.
+    "plan.replaceFailed": { en: "The floor plan could not be replaced ({reason}). The current plan is unchanged — choose a different PNG, JPG, JPEG or PDF file.", tr: "Kat planı değiştirilemedi ({reason}). Mevcut plan olduğu gibi kaldı — farklı bir PNG, JPG, JPEG veya PDF dosyası seçin." },
     "setup.dropPlan": { en: "Drop a floor plan here", tr: "Kat planını buraya bırakın" },
     "setup.dropPlanHint": { en: "or click to choose PNG, JPG, JPEG or PDF", tr: "veya tıklayıp PNG, JPG, JPEG ya da PDF seçin" },
     "setup.page": { en: "Page {n}", tr: "Sayfa {n}" },

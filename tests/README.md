@@ -31,6 +31,7 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `backup-restore` | storage | a bad backup file is accepted, or a good one does not restore |
 | `venue-model` | storage | a published layout version is no longer frozen |
 | `i18n` | ui | a raw translation key reaches the screen, or a language stops rendering |
+| `i18n-key-integrity` | business | a `t()` key stops existing, or loses one of its two languages — statically, across every call site, because the strings this matters most for (error paths) are the ones no rendering test ever reaches. Also guards that no toast shows a bare `error.message` |
 | `plan-intelligence-contract` | intelligence, **slow** | the detector fabricates, or its scene graph points at objects that do not exist |
 | `chair-families` | intelligence, **slow** | the detector can only describe one kind of chair again, or printed text gets in as the second kind |
 | `plan-memory-isolation` | intelligence, **slow** | a human decision changes what the detector finds — confirming one object deletes or conjures others, or a confirmed object does not come back after Re-Analyze |

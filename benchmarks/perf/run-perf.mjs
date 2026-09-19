@@ -18,6 +18,8 @@ const RUNNERS = [
     why: "400 tables / 4,000 chairs / 3,000 guests through the app's own model" },
   { file: "profile-render-phases.mjs", asserts: false,
     why: "where render time actually goes, with a forced layout flush inside the timed region" },
+  { file: "save-queue-burst.mjs", asserts: true,
+    why: "what Section 13's write queue costs in drain latency and retained heap — and that it still ends last-write-wins" },
 ];
 
 let failed = 0;

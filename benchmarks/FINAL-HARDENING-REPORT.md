@@ -69,10 +69,10 @@ programme's own rules).
 | 19 | Code architecture hardening | **DONE (audit, real architecture already sound)** | Investigated via `frontend-architect`, independently re-verified. `app-v8.js` (8,527 lines) is the sink for the whole 32-file, 18,710-line `src/` tree, loaded last, with every one of ~28 smaller domain modules confirmed to depend on app-v8.js's mutable globals in exactly zero places (`state.`/`ui.`/`render(`/`touchEvent(` all grep-clean) — the intended one-directional-via-`globalThis.MeritXxx` architecture already holds with no exceptions found. What was real: the boundary between that clean small-module graph and app-v8.js's OWN `original={...}` override capture (of app.js/app-guests.js's pre-V8 functions) was undocumented and unenforced — closed with a new static-analysis test, not a restructure. See detail below. |
 | 20 | Single source of truth audit | **DONE (one real, narrow gap, guarded not refactored)** | Checked table capacity/chairs, `isHistorical`, and `occupiedSeatIndexes`/`liveUsedIndexes` — no violation found in any of the three; each is already correctly single-sourced or deliberately, correctly separate. Found one real, narrow, currently-latent risk: `guest.pax` is a redundant cached field (`1+additionalGuests`) written correctly at all 5 current sites but with no single setter enforcing it, so a future write site could drift silently. New regression test guards the invariant across real UI flows; deliberately did NOT convert `pax` to a computed property, since every current site is already correct and that refactor would touch reports/exports with no real bug driving it. See detail below. |
 | 21 | Dead/duplicate code audit | **DONE (5 confirmed dead functions removed)** | Investigated via `frontend-architect`, each candidate independently re-verified by direct grep (zero occurrences across `src/`, `tests/`, `index.html`, `scripts/`, `benchmarks/` besides the declaration itself) before deletion. Removed `eventCard` (app-v8.js — superseded by the hero/list Events layout), `isTableFrozen` (app-v8.js — its one caller inlines the identical check), `memoryDistance` (app-v8.js — `matchCandidatesByGeometry` inlines the same formula), `migrateState` (app.js — `loadState()` never calls it, a pre-V8-storage relic), `numberOf` (plan-number-integrity.js — `analyse()` inlines the identical check). A separate, much larger finding — 21 of `app-v8.js`'s own `original={...}` capture's ~32 names are confirmed, deterministically unreachable under the current boot sequence — was deliberately NOT acted on by deletion this pass; see Section 19's detail for why (multi-file blast radius, no existing test coverage of the boot-sequence assumption it rests on). |
-| 22 | Performance at scale | NOT STARTED | |
-| 23 | Offline guarantee re-verification | NOT STARTED (ongoing) | Re-verified after every commit in this programme via the existing `verify:offline` gate; a dedicated final pass happens in section 36. |
-| 24 | Accessibility/keyboard | NOT STARTED | |
-| 25 | Error messages | NOT STARTED | |
+| 22 | Performance at scale | **DONE (re-measured; one new per-change runner)** | Re-ran the full existing perf harness on the 4,000-seat fixture (400 tables / 4,000 chairs / 3,000 guests / 4,500 pax): data integrity after reload exact, console clean, no suite failed. Built a new runner, `benchmarks/perf/save-queue-burst.mjs`, to measure the one thing this programme changed that the existing harness structurally could not see — Section 13's `saveState()` write queue. Result: **the queue costs, it does not save** — drain roughly doubles and peak heap rises ~16–42 MB, in exchange for deterministic last-write-wins. Measured, judged acceptable, and now guarded. The first version of that runner reported the opposite and was wrong; see detail below. |
+| 23 | Offline guarantee re-verification | **DONE (continuously, plus this pass)** | Both artifacts rebuilt and the real built package re-verified after every commit in this programme, 27/27 each time, including this one. A dedicated final pass still happens in section 36. |
+| 24 | Accessibility/keyboard | **DONE (one real gap, closed and mutation-proven)** | Audited directly rather than assumed: a global `:focus-visible` ring already exists (`src/styles.css:70`) and the app's three native `<dialog>` elements get focus containment and Escape-close from the platform. The one real gap was the freeze-challenge `<aside role="alertdialog">` — the app's only custom scrim — which had initial focus and Escape but no Tab containment, so Tab walked out of an alertdialog into the page behind it. Trap implemented; 6 new checks in `tests/suites/seating-freeze.test.mjs` (89→96). |
+| 25 | Error messages | **DONE (two real defects + a static guard)** | Audited all 104 `toast()` call sites (80 in app-v8.js, 12 each in app-guests.js/app.js; 31 error-level). Most already name the object, the reason and the next step. Two did not: the Create Event and Replace Plan paths each toasted a bare `error.message` — a raw pdf.js/FileReader string naming no action, offering no next step, and arriving in English on a Turkish-default product. Both now build a real message from a new i18n key, keeping the library's `{reason}`. Separately found that **nothing statically verified that a `t()` key exists** — and error-path keys are precisely the ones no rendering test ever reaches. New suite `i18n-key-integrity` closes that. No live missing key found. |
 | 26 | Real operator test infrastructure | NOT STARTED | `benchmarks/operator/README.md` exists; `REAL-OPERATOR-TEST-KIT.md` not yet written. |
 | 27 | Real human test follow-up contract | NOT STARTED | |
 | 28 | Third real plan procedure | NOT STARTED (doc) | Status remains **NOT AVAILABLE** — no third real plan has been supplied. Documenting the held-out procedure is separate from having a plan to run it on. |
@@ -1277,6 +1277,166 @@ construction, not merely by inspection — the full regression suite's
 existing Events-screen coverage is the applicable check, not a new
 screenshot of behavior that was already unreachable.
 
+### Sections 22-25 — performance, offline, accessibility, error messages
+
+**Section 22 — performance at scale.** The existing harness
+(`benchmarks/perf/`, `npm run perf`) was re-run in full on the 4,000-seat
+fixture: 400 tables, 4,000 chairs, 3,000 guest records, 4,500 pax. Data
+integrity after reload exact (all five counts preserved), console clean,
+the one asserting runner (live windowing correctness, 17 checks) green.
+
+The numbers moved against the table recorded in `benchmarks/perf/README.md`
+— several up, several down, heap 20-27MB → 72MB. That comparison is **not**
+a regression measurement and the README now says so explicitly: the
+recorded column predates Command Center, Plan Doctor, freeze zones, table
+availability, arrival wave, service load, risk radar and the audit trail,
+all of which render and persist real work, and the two columns were taken
+on different machines under different load. Quoting it as before/after
+would be exactly the kind of claim this programme forbids.
+
+What *is* a real before/after is the one thing this programme changed that
+the existing harness structurally cannot see. Section 13 made `saveState()`
+serialise its writes through a promise queue. `stress-4000-seats.mjs` times
+`saveState()` as `p.evaluate(() => { saveState(); })` — the synchronous part
+only, returning before a byte reaches IndexedDB — so it is blind to the
+queue by construction. The two things a queue actually risks (drain latency,
+and retained memory from N payload strings alive at once) went unmeasured.
+
+New runner `benchmarks/perf/save-queue-burst.mjs` measures both, by firing
+40 back-to-back `saveState()` calls on the 4,000-seat event (1.20 MB payload
+per save) and polling the **raw IndexedDB record** until the last value
+lands — then rebuilding the pre-Section-13 unqueued `saveState()` in the
+page and running the identical burst through it.
+
+| | sync | drain | peak heap | last write wins |
+| --- | ---: | ---: | ---: | :---: |
+| queued (today) | 210 / 189 ms | 795 / 564 ms | 123 / 97 MB | yes |
+| unqueued (before) | 150 / 151 ms | 380 / 399 ms | 81 MB | yes |
+
+**The queue costs; it does not save.** Drain roughly doubles — writes that
+overlapped now run strictly in sequence — and peak heap rises ~16-42 MB,
+which is the predicted retention (up to 40 × 1.20 MB payload strings alive
+simultaneously, each held in its own closure until its turn). Judged
+acceptable and stated as a trade, not a win: 40 saves back-to-back is well
+past what an operator generates, the drain happens off the main thread, and
+123 MB sits against a 4,096 MB limit. The runner asserts only the property
+the queue exists for — last-write-wins — and reports the timings.
+
+Two honesty notes are recorded in the README rather than buried. First, the
+unqueued variant **also** reports last-write-wins here; that does not
+retire the race, it means an intermittent race did not fire in this run —
+`tests/suites/storage-provider.test.mjs` is what proves it deterministically,
+by delaying the first `indexedDB.open`. Second, and more important: **the
+first version of this runner reported the exact opposite** (queue faster on
+every axis). That was an artifact twice over — the second burst started on
+the first burst's uncollected garbage, and running second also meant a
+warmed JIT and an already-extended IndexedDB file. Forcing
+`HeapProfiler.collectGarbage` between bursts and running the pair again in
+the reversed order flipped the drain and heap findings and made both passes
+agree. The runner now prints whether the two passes agree on direction and
+refuses to name a winner when they do not. The wrong first reading is
+written down because the repo's own README already carries the same lesson
+from the misattributed 1.2s of layout, and a measurement that quietly
+replaces an earlier one teaches nothing.
+
+The unqueued side omits `refreshChairOccupancy()` (IIFE-scoped, unreachable
+from the harness), so its sync figure is an under-estimate — a bias in
+favour of the *old* code, which is the safe direction.
+
+**Section 23 — offline guarantee.** Both artifacts rebuilt
+(`build-offline.mjs`, `build-offline-full.mjs`) and the real built package
+re-verified (`verify-offline-package.mjs`, 27/27) as part of this segment,
+as after every commit in this programme. The verifier serves the artifact,
+aborts every non-same-origin request and drives real OCR, so this is the
+built package running, not a build that reported success. The dedicated
+final pass remains section 36.
+
+**Section 24 — accessibility/keyboard.** Audited rather than assumed. A
+global `:focus-visible` ring already exists (`src/styles.css:70`); the app's
+three native `<dialog>` elements get focus containment and Escape-close from
+the platform for free; `trapFocus`/`focus-trap` appear nowhere in `src/`,
+which is correct for those three and was the gap for the fourth.
+
+The one real defect: `.freeze-challenge-scrim` — the app's only custom
+scrim — carries `<aside class="freeze-challenge" role="alertdialog">` with
+initial focus management and Escape-to-close, but **no Tab containment**.
+An element with `role="alertdialog"` that lets Tab walk out into the page
+behind it is making a promise the markup does not keep, and the supervisor-
+override challenge is exactly the moment where wandering focus matters.
+Trap added to the existing global keydown handler (forward wrap, backward
+wrap, and re-entry when focus is already outside the scrim). Six new checks
+in `tests/suites/seating-freeze.test.mjs` (89 → 96); reverting the trap
+produced `✗ Tab from the challenge's last control wraps back to its first
+:: {"insideScrim":false,"isFirst":false}`.
+
+**Section 25 — error messages.** All 104 `toast()` call sites read (80 in
+`app-v8.js`, 12 each in `app-guests.js` and `app.js`; 31 error-level). The
+large majority already do the right thing — they name the object, state the
+reason, and imply the next step (`"T07 has 6 assigned pax. Capacity cannot
+drop below occupancy."`). Two did not, and both were the same shape:
+
+- Create Event's plan import (`app-v8.js:1186`) and Floor Plan's replace-plan
+  handler (`app-v8.js:8444`) each toasted a **bare `error.message`** — a raw
+  pdf.js or FileReader string such as `"Invalid PDF structure."`. It names no
+  action, offers no next step, and passes straight through the toast
+  translation boundary untouched, so a Turkish-default operator gets an
+  English library internal at the moment something broke.
+
+Both now build their message from a new bilingual key
+(`setup.planReadFailed`, `plan.replaceFailed`) that names the failed action,
+gives the next step, and **keeps the library's `{reason}`** — the fix was to
+add an instruction, not to discard the one text that says why. The replace
+path additionally states that the current plan is unchanged, which was
+verified in the code rather than assumed: every mutation in that handler
+(`recordUndo`, `event.background = …`) happens *after* the awaits that throw.
+
+The second finding is the structural one. `t()` falls back to returning the
+key itself when a string is missing — correct behaviour, and what the
+existing `i18n` suite hunts for by walking the rendered DOM of five screens
+in both languages. But **error messages are by definition the strings
+nothing renders**: `backup.badReference` appears only when a restore file has
+broken references, `teachArea.refused` only when a lesson is refused,
+`recovery.none` only when recovery finds no snapshot. No suite drives those
+paths, so deleting or mistyping one of those keys today ships a raw dotted
+identifier to an operator at the worst possible moment — invisibly.
+
+New suite `tests/suites/i18n-key-integrity.test.mjs` (13 checks, static,
+pure Node) extracts every complete literal `t("key")` in `src/` and every
+entry in the string table, and asserts every used key exists **with both an
+`en` and a `tr` string**. The second half matters independently: `t()`
+resolves `entry[currentLang()] || entry.en`, so an English-only key resolves
+silently with no raw identifier for the DOM-walking suite to catch, on a
+product whose default language is Turkish.
+
+**No live bug was found** — all 682 complete literal keys resolve in both
+languages today. This is a guard for an uncovered risk, in the same spirit
+as `pax-invariant` (Section 20), and it is stated as such rather than dressed
+up as a fix. Keys assembled by concatenation (`t("status.planning." + x)`)
+are deliberately excluded: their full key is not knowable statically, and
+enumerating the enum values would assert this suite's idea of the domain
+rather than the product's. `src/app.js`'s demo-seed builder uses a *local*
+helper also named `t` — those 16 matches are excluded by shape (no dot), not
+by filename, so a genuine one-word key would still be caught.
+
+**Validation.** Four mutations proven against the new i18n suite — delete an
+error-path key (fails check 1), strip one key's Turkish (check 2), revert
+the replace-plan fix to a bare exception (checks 4 + the sweep), drop
+`{reason}` from a message (the substitution check) — each failing exactly
+its intended check and nothing else, then restored and reconfirmed. Six
+mutation-proven checks for the focus trap. Full clean regression with no
+concurrent edits: **55/55 suites, 1799/1799 checks**, up from 54/54 and
+1779/1779, reflecting the new `i18n-key-integrity` suite and the 6 added
+freeze checks plus the rest. Both offline artifacts rebuilt and re-verified,
+27/27.
+
+No rendered-screenshot pass was run for this segment. The UI rules require
+one for a UI change, and neither change is one: the focus trap alters
+keyboard behaviour with no visual output (and is verified by asserting where
+focus actually lands in a real browser, which is stronger than a screenshot
+for this property), and the two error messages change toast *text* on
+failure paths a screenshot pass does not reach. The Section 35 visual sweep
+remains the applicable visual gate.
+
 ## Continuation checkpoint (machine-readable)
 
 ```
@@ -1476,13 +1636,44 @@ SECTIONS 19-21 STATUS: 19 DONE (audit, architecture already sound — the
   mismatch). Full clean regression: 54/54 suites, 1779/1779 checks (up
   from 52/52, 1764/1764). Both offline artifacts rebuilt and re-verified
   (27/27). See full write-up above.
-NEXT_SECTION: sections 22-25 (performance at scale, offline guarantee
-  re-verification, accessibility/keyboard, error messages) — task #162.
-NEXT_ACTION: sections 19-21 are fully closed out — committed (`b499dbe`),
-  pushed, and CI-confirmed 10/10 both triggers. Proceed to sections 22-25
-  per the task list. Section 7's exhaustive AST-based single-writer lint
-  rule remains a live, separate opportunity if that section is revisited
-  (see DEFERRED_SUB_SCOPE), but is not a blocker.
+SECTIONS 22-25 STATUS: ALL FOUR DONE. 22 DONE (re-measured the full perf
+  harness on the 4,000-seat fixture — integrity exact, console clean,
+  windowing-correctness 17/17 — and built one new per-change runner,
+  `benchmarks/perf/save-queue-burst.mjs`, wired into `npm run perf`, for
+  the one thing this programme changed that the existing harness
+  structurally cannot see: Section 13's saveState() write queue. Finding:
+  the queue COSTS — drain ~2x (795/564ms vs 380/399ms), peak heap
+  +16-42MB — in exchange for deterministic last-write-wins. Recorded as a
+  trade, not a win. The runner's FIRST version reported the opposite and
+  was wrong (no forced GC, no order control); both the corrected result
+  and the wrong first reading are written into
+  benchmarks/perf/README.md). 23 DONE (both artifacts rebuilt, real built
+  package re-verified 27/27; dedicated final pass still section 36). 24
+  DONE (one real gap: the freeze-challenge role="alertdialog" over the
+  app's only custom scrim had initial focus + Escape but no Tab
+  containment — trap added, 6 new checks in seating-freeze, 89->96,
+  mutation-proven). 25 DONE (all 104 toast() sites audited; two real
+  defects — Create Event's plan import and Floor Plan's replace-plan each
+  toasted a bare error.message, untranslated, naming no action and no next
+  step. Both now build from new bilingual keys setup.planReadFailed /
+  plan.replaceFailed, keeping the library's {reason}. Plus a structural
+  finding: nothing statically verified that a t() key exists, and
+  error-path keys are exactly the ones no rendering test reaches — new
+  static suite tests/suites/i18n-key-integrity.test.mjs, 13 checks, 4
+  mutations proven. NO live missing key found; this is a guard for an
+  uncovered risk, stated as such). Full clean regression: 55/55 suites,
+  1799/1799 checks (up from 54/54, 1779/1779). Both offline artifacts
+  rebuilt and re-verified (27/27). See full write-up above.
+NEXT_SECTION: sections 26-28 (real operator test kit, human test contract,
+  third-plan procedure docs) — task #163. Note these are the
+  externally-blocked ones: see EXTERNAL_BLOCKERS_UNCHANGED.
+NEXT_ACTION: sections 22-25 are code-complete, fully regression-validated
+  and offline-verified locally; they still need commit -> push -> CI
+  confirmation (10/10, both push and pull_request triggers) -> checkpoint
+  commit, the same pattern used for every prior section group. Then
+  proceed to sections 26-28. Section 7's exhaustive AST-based single-writer
+  lint rule remains a live, separate opportunity if that section is
+  revisited (see DEFERRED_SUB_SCOPE), but is not a blocker.
 DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   change (section 2's "Deferred sub-scope" above) — STILL VALID, not
   attempted. Section 3's 5 unwired capacity sources — STILL VALID, named
@@ -1502,8 +1693,16 @@ DEFERRED_SUB_SCOPE: full physicalChairs-shorter-than-capacity indexing
   `override-boundary` suite now tracks the fact explicitly, so revisit
   only as a deliberate, separate, evidence-gated deletion pass, ideally
   after adding real boot-sequence test coverage first.
+  Section 25's dynamically-composed i18n keys (t("status.planning." + x)
+  and ~27 other prefixes) — deliberately NOT covered by the new static
+  suite; their full key is not knowable statically and enumerating the
+  enum values would assert the suite's idea of the domain rather than the
+  product's. A runtime sweep that exercises every enum value through the
+  real render paths would close it; not attempted, and the existing
+  DOM-walking `i18n` suite already covers the composed keys that any
+  default-state screen renders.
 BLOCKED_ON: nothing external — this is pure engineering work.
-NOT_YET_TOUCHED: sections 22-28, 31/32, 35-38 (see table above).
+NOT_YET_TOUCHED: sections 26-28, 31/32, 33/34, 35-38 (see table above).
 EXTERNAL_BLOCKERS_UNCHANGED: real human operator test (NOT VERIFIED), a
   genuine third independent real floor plan (NOT AVAILABLE), SQLite
   runtime (DEFERRED to EXE stage), EXE itself (DEFERRED, forbidden until

@@ -318,6 +318,53 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(!(await page.evaluate(CHALLENGE)), "Escape declines it");
   checks.equal(await page.evaluate(SNAPSHOT), before, "having authorised nothing");
 
+  // --- 6b. Tab cannot walk keyboard focus past the challenge (Section 24) --
+  // The challenge is a plain <aside role="alertdialog"> over a scrim, not a
+  // native <dialog> -- so unlike guestDialog/excelDialog/guideDialog, it gets
+  // no Tab-trap or Escape-close for free. The scrim already blocks pointer
+  // clicks from reaching the room behind it; without an explicit trap, Tab
+  // could still walk keyboard focus straight through onto the floor plan
+  // while the room stays blocked to a mouse -- a real, keyboard-only escape
+  // from a decision this suite's own check 6 already proved is meant to be
+  // forced.
+  const FOCUSABLES = `[...document.querySelectorAll("[data-freeze-scrim] button,[data-freeze-scrim] [href],[data-freeze-scrim] input,[data-freeze-scrim] select,[data-freeze-scrim] textarea,[data-freeze-scrim] [tabindex]:not([tabindex='-1'])")].filter(el => !el.disabled && el.offsetParent !== null)`;
+  await seatVia(page, room.t04, "g_move");
+  checks.require(await page.evaluate(CHALLENGE), "the challenge is open for the keyboard-trap check");
+  const trapSetup = await page.evaluate(`(function(){
+    const scrim = document.querySelector("[data-freeze-scrim]");
+    const focusables = ${FOCUSABLES};
+    return { count: focusables.length, activeIsInside: scrim.contains(document.activeElement) };
+  })()`);
+  checks.require(trapSetup.count >= 2, "the challenge card has at least two focusable controls to trap between", trapSetup);
+  checks.ok(trapSetup.activeIsInside, "opening the challenge already put focus inside it, not left on the page behind it", trapSetup);
+
+  await page.evaluate(`(function(){
+    const focusables = ${FOCUSABLES};
+    focusables[focusables.length - 1].focus();
+  })()`);
+  await page.keyboard.press("Tab");
+  const forwardWrap = await page.evaluate(`(function(){
+    const scrim = document.querySelector("[data-freeze-scrim]");
+    const focusables = ${FOCUSABLES};
+    return { insideScrim: scrim.contains(document.activeElement), isFirst: document.activeElement === focusables[0] };
+  })()`);
+  checks.ok(forwardWrap.insideScrim && forwardWrap.isFirst,
+    "Tab from the challenge's last control wraps back to its first, never landing on the floor plan behind the scrim", forwardWrap);
+
+  await page.keyboard.press("Shift+Tab");
+  const backwardWrap = await page.evaluate(`(function(){
+    const scrim = document.querySelector("[data-freeze-scrim]");
+    const focusables = ${FOCUSABLES};
+    return { insideScrim: scrim.contains(document.activeElement), isLast: document.activeElement === focusables[focusables.length - 1] };
+  })()`);
+  checks.ok(backwardWrap.insideScrim && backwardWrap.isLast,
+    "Shift+Tab from the first control wraps to the last, the same containment in the other direction", backwardWrap);
+
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(350);
+  checks.ok(!(await page.evaluate(CHALLENGE)), "closed again before the next check reopens it");
+  checks.equal(await page.evaluate(SNAPSHOT), before, "still nobody seated");
+
   // --- 7. only an explicit override seats anybody --------------------------
   await seatVia(page, room.t04, "g_move");
   await click(page, "[data-freeze-action='override']");
