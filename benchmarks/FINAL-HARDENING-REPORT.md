@@ -2141,7 +2141,13 @@ CI_CONFIRMED: commit 7d0aa49 (sections 22-25) — 10/10, both triggers.
   while it was still running. 2084b38 contains those commits, so the
   confirmation covers them. Commit e0c9c2e (sections 35-38) — 10/10, both
   triggers, runs 35441013558 (push) and 35441016226 (pull_request), both
-  conclusion "success". THE PROGRAMME'S FINAL HEAD IS CI-CONFIRMED GREEN.
+  conclusion "success". Commit cbbf950, the checkpoint commit that RECORDS
+  those confirmations and is the actual branch head — 10/10, both triggers,
+  runs 35441520963 (push) and 35441522454 (pull_request), both conclusion
+  "success", all 5 jobs each. THE BRANCH HEAD ITSELF IS CI-CONFIRMED GREEN,
+  not merely the commit before it: a checkpoint commit still changes the
+  head, and "the final head is green" has to mean the head that is actually
+  there.
 NEXT_SECTION: none. All 38 sections are resolved as far as they can
   honestly go. What remains is not a section: the real operator session
   (NOT VERIFIED), a third real plan (NOT AVAILABLE), and the desktop build
