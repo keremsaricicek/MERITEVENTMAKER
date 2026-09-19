@@ -226,9 +226,23 @@ await useQueued();
 const queuedB = await burst("QUEUEDB");
 
 // ---- report ---------------------------------------------------------------
+// performance.memory is not always live. It is absent outside Chromium, and
+// in a CI container it comes back COARSENED -- the same quantized value for
+// before, peak and after, however much was actually allocated. Printing
+// "13.6→13.6→13.6 MB" as though it were a measurement is worse than printing
+// nothing: it reads as "the burst allocated nothing", which is the opposite of
+// what this runner exists to check. So a heap reading that never moves across
+// a burst that allocated 40 payloads of over a megabyte each is reported as
+// UNAVAILABLE, not as zero growth.
+const heapText = (r) => {
+  if (!r.heapPeakMB) return "heap UNAVAILABLE (performance.memory absent)";
+  if (r.heapBeforeMB === r.heapPeakMB && r.heapPeakMB === r.heapAfterMB)
+    return "heap UNAVAILABLE (performance.memory coarsened — same value throughout)";
+  return `heap ${r.heapBeforeMB.toFixed(1)}→${r.heapPeakMB.toFixed(1)}→${r.heapAfterMB.toFixed(1)} MB`;
+};
 const row = (label, r) =>
   `  ${label.padEnd(10)} sync ${String(r.syncMs).padStart(5)} ms   drain ${String(r.drainMs ?? "TIMEOUT").padStart(6)} ms   ` +
-  `heap ${r.heapBeforeMB.toFixed(1)}→${r.heapPeakMB.toFixed(1)}→${r.heapAfterMB.toFixed(1)} MB   last-write-wins ${r.lastWins ? "YES" : "NO (" + r.finalOnDisk + ")"}`;
+  `${heapText(r)}   last-write-wins ${r.lastWins ? "YES" : "NO (" + r.finalOnDisk + ")"}`;
 
 console.log(`\n=== ${BURST} back-to-back saveState() calls on a 4,000-seat event ===`);
 console.log("  pass 1 — queued first:");
@@ -241,7 +255,9 @@ console.log("\n  sync  = the main-thread cost the operator feels (stringify + di
 console.log("          UNQUEUED omits refreshChairOccupancy (IIFE-scoped, unreachable),");
 console.log("          so its sync figure is an under-estimate — biased toward the old code.");
 console.log("  drain = until the LAST value is actually the record on disk");
-console.log("  heap  = before → peak during the burst → after it drained");
+console.log("  heap  = before → peak during the burst → after it drained.");
+console.log("          Reported UNAVAILABLE where performance.memory is absent or");
+console.log("          coarsened (CI containers), rather than printed as no growth.");
 
 console.log("\nERRORS:", errs.length ? errs : "clean");
 

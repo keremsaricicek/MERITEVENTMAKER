@@ -80,8 +80,8 @@ programme's own rules).
 | 30 | Audit/timeline/provenance stay distinct | **DONE (verified)** | Section 10's own investigation is this verification: the audit trail (what happened, `audit-trail.js`), the Plan Doctor/Risk Radar (can this event safely proceed, derived live from current state), and Section 11's new provenance line (where did this one number come from) each answer a different question from a different data source, and none of the three sections implemented this round introduced a fourth overlapping concept. No new code was needed to keep them distinct — the boundary already held. |
 | 31 | SQLite desktop migration design | **DONE (design only, as the rules require)** | `benchmarks/SQLITE-MIGRATION-DESIGN.md`. Nothing implemented — `.claude/rules/data.md` forbids introducing SQLite speculatively during browser review, so no dependency, no schema, no code. **Main finding: "export format v1" does not need designing — it already exists twice** (`merit-event-maker-backup` whole-install and `merit-event-maker-event-package` single-event), both `formatVersion: 1`, both validating rather than trusting on import, and the package format already solves id collision by renumbering. The real design work is therefore the schema mapping and the adapter contract, plus the one genuine improvement SQLite buys the domain (`pax` as a generated column, retiring the Section 20 cached-field risk structurally) and the one rule it explicitly **cannot** enforce (No Show keeping the planned seat is a rule about which fields an operation may touch, not about which states are valid — no CHECK expresses it; `setArrival()` stays the single writer). |
 | 32 | Desktop readiness document | **DONE (inventory; gate still shut)** | `benchmarks/DESKTOP-READINESS.md`. Separates what genuinely is ready and shipping (the `StorageProvider` boundary, offline operation verified by *running* the built artifact 27/27, no network dependency proven by absence-of-`fetch` assertions, two versioned interchange formats, an idempotent migration proven against an old fixture, 55 suites/1799 checks that are about domain behaviour rather than about being in a tab, corrupted-store recovery) from what is deliberately not (no packaging technology chosen — that choice is itself behind the gate; no SQLite; no IPC surface; no updater/signing/installer; no private AI runtime). Also carries forward the honest gaps a desktop build would inherit, and states that **the operator session is best run before packaging, not after**. |
-| 33 | Remaining quality gates | PARTIAL | 1 of 24 landed (`no-sample-specific-runtime-logic`); the other 23 depend on the feature/hardening sections above landing first. |
-| 34 | CI integration | PARTIAL | New suite runs locally via the existing `npm test`/`test:all` entry points, which the "Fast core" CI job already calls — no CI config change was needed for this one. |
+| 33 | Remaining quality gates | **DONE (coverage audit; every behaviour change landed with its guard)** | The earlier "1 of 24" note was written when the feature/hardening sections it depended on had not landed. They have. Counted, not estimated: **9 new suites** this programme (`no-sample-specific-runtime-logic`, `physical-logical-seat-separation`, `capacity-provenance`, `onboarding`, `transaction-atomicity`, `schema-migration`, `override-boundary`, `pax-invariant`, `i18n-key-integrity`) and **18 existing suites extended**, against the frozen baseline `3ef11bb`. Every section that changed behaviour shipped with the guard that would catch its revert, and each was mutation-proven individually at the time. Suite files on disk: **61. Declared and reachable: 61. Orphaned: 0** — verified by diffing the filenames against the runner's own declared list, not by counting. |
+| 34 | CI integration | **DONE (verified against the real workflow and a real run log)** | Every suite reaches CI: `npm test` runs the 55 fast suites in the *Fast core* job and `npm run test:slow` runs the 6 slow ones in *Intelligence* — union 61, nothing unreached. `npm run perf` runs in the *Performance* job, so this programme's new asserting runner (`save-queue-burst.mjs`) is genuinely gated, **confirmed by reading the run log rather than by inference**. The three npm scripts not in CI are correctly absent: `benchmark:retrieval` and `benchmark:separation` assert nothing (no regression gate to fail), and `benchmark:heldout` would refuse, because there is no held-out plan. **One real defect found by reading that log**: in CI the burst runner printed `heap 13.6→13.6→13.6 MB` on every row — `performance.memory` is coarsened in a container, so the column was rendering non-data as data, and read as "the burst allocated nothing", the opposite of the finding. Now reported as UNAVAILABLE; fix proven both ways (real numbers locally, UNAVAILABLE under a simulated coarsened `performance.memory`). |
 | 35 | Visual quality check | NOT STARTED | |
 | 36 | Final full validation | NOT STARTED | |
 | 37 | Final documentation | IN PROGRESS | This file. |
@@ -1642,6 +1642,82 @@ collection list, `migrateEvent()`'s additive backfills, and the two
 `StorageProvider` implementations. Nothing under `src/` was touched, so no
 regression re-run was required.
 
+### Sections 33/34 — what guards what, and whether CI actually runs it
+
+Section 33's earlier status ("1 of 24 landed; the other 23 depend on the
+feature/hardening sections above landing first") was written before those
+sections landed. They have, and the honest closing move is a coverage audit
+rather than a burst of new suites written to reach a number — a suite added to
+make a count look complete guards nothing.
+
+**Counted against the frozen baseline `3ef11bb`, not estimated:**
+
+| | |
+|---|---:|
+| new suites this programme | **9** |
+| existing suites extended | **18** |
+| suite files on disk | **61** |
+| suites declared and reachable by the runner | **61** |
+| orphaned (a file the runner would never run) | **0** |
+
+The nine: `no-sample-specific-runtime-logic` (§1A),
+`physical-logical-seat-separation` (§2), `capacity-provenance` (§3),
+`onboarding` (§10/11/12/30), `transaction-atomicity` (§14),
+`schema-migration` (§15), `override-boundary` (§19), `pax-invariant` (§20),
+`i18n-key-integrity` (§25). Every section that changed behaviour shipped with
+the guard that would catch its revert, and each guard was mutation-proven
+individually at the time rather than assumed.
+
+The orphan count matters more than it looks. A suite file that exists but is
+not in the runner's declared list runs nowhere and fails nothing, while still
+reading as coverage to anybody scanning the directory. It was checked by
+diffing the filenames on disk against the runner's own list — 61 = 61, empty
+difference — not by counting files and trusting they are wired up.
+
+**Section 34 — CI, verified against the workflow and against a real run log.**
+
+Every suite reaches CI, and the two halves are in different jobs on purpose:
+`npm test` runs the 55 fast suites in *Fast core*, `npm run test:slow` runs the
+6 slow ones in *Intelligence* — union 61, nothing unreached. That split is
+itself a repaired hole the workflow documents: the slow contract suites were
+once excluded by `npm test` and run by no other job, so two checks failed
+continuously and invisibly.
+
+`npm run perf` runs in the *Performance* job, so this programme's new asserting
+runner is genuinely gated. That was **confirmed by reading the run log**, not
+inferred from the workflow file — and reading it was worth it, because the
+Performance job completed in eighteen seconds, which looked impossible for four
+runners. It was not impossible (the CI runner is simply faster on this work),
+and the log shows the burst runner executing, reporting, and agreeing with the
+local measurement on direction: queued drain 374/354 ms against unqueued
+256/252 ms, on a different machine.
+
+Three npm scripts are not in CI and are correctly absent, which is worth
+stating so their absence is not later mistaken for a gap:
+`benchmark:retrieval` and `benchmark:separation` assert nothing — there is no
+regression gate in either to fail — and `benchmark:heldout` would *refuse*,
+because there is no held-out plan to run it on.
+
+**The one real defect, found by reading the log rather than trusting the green
+tick.** In CI, every row of the burst runner printed `heap 13.6→13.6→13.6 MB`.
+`performance.memory` is coarsened inside a container, so the column was
+rendering non-data as data — and rendering it in the shape of a finding: three
+identical numbers read as *"the burst allocated nothing"*, which is the exact
+opposite of what the runner exists to show. A green job was reporting a false
+reassurance.
+
+It now reports `heap UNAVAILABLE (performance.memory coarsened — same value
+throughout)`, and the fix was proven in both directions rather than one: the
+runner still prints real figures locally (13.3→126.5→146.3 MB), and under a
+simulated coarsened `performance.memory` it prints UNAVAILABLE on every row.
+The simulation was reverted and the file reconfirmed clean.
+
+This is the same class of error as the one the perf README already records
+about misattributed layout time, and as Section 22's own wrong first reading —
+which is three in this programme. The pattern is consistent enough to name: the
+measurement ran, the job passed, and the number meant nothing. "It ran" is not
+evidence, in exactly the way "the build succeeded" is not.
+
 ## Continuation checkpoint (machine-readable)
 
 ```
@@ -1919,8 +1995,31 @@ SECTIONS 31/32 STATUS: BOTH DONE as design/documentation, which is what
   presenting a clean bill of health, and naming the one packaging makes
   worse: the operator session is best run BEFORE packaging, not after).
   Nothing under src/ touched; no regression re-run required.
-NEXT_SECTION: sections 33/34 (remaining quality-gate suites + CI
-  integration) — task #165. Both are currently PARTIAL in the table above.
+SECTIONS 33/34 STATUS: BOTH DONE. 33 DONE as a coverage audit rather than
+  a burst of new suites written to reach a number (a suite added to make a
+  count look complete guards nothing). Counted against baseline 3ef11bb:
+  9 new suites this programme, 18 existing extended, 61 suite files on
+  disk, 61 declared and reachable, 0 orphaned — the orphan count verified
+  by diffing filenames against the runner's own declared list, not by
+  counting files and trusting they are wired up. 34 DONE and verified
+  against the real workflow AND a real run log: npm test (55 fast) in Fast
+  core + npm run test:slow (6) in Intelligence = 61, nothing unreached;
+  npm run perf in Performance, so save-queue-burst.mjs is genuinely gated
+  (confirmed by reading the log, not inferred). The 3 npm scripts absent
+  from CI are correctly absent (benchmark:retrieval and
+  benchmark:separation assert nothing; benchmark:heldout would refuse,
+  there being no held-out plan). ONE REAL DEFECT found by reading that
+  log: the burst runner printed "heap 13.6→13.6→13.6 MB" in CI because
+  performance.memory is coarsened in a container — non-data rendered as
+  data, reading as "the burst allocated nothing", the opposite of the
+  finding. Now reports UNAVAILABLE; fix proven BOTH ways (real numbers
+  locally, UNAVAILABLE under a simulated coarsened performance.memory),
+  simulation reverted and file reconfirmed clean.
+NEXT_SECTION: sections 35-38 (final visual QA sweep, final full
+  validation, final documentation, final completion matrix) — task #166.
+  These are the closing sections; 38's matrix must use ONLY the permitted
+  vocabulary: DONE, PARTIAL, NOT VERIFIED, NOT AVAILABLE, DEFERRED,
+  BLOCKED.
 NEXT_ACTION: sections 22-25 are fully closed out — committed (7d0aa49),
   pushed, CI-confirmed 10/10 both triggers. Sections 26-28 are committed
   locally as 4eaa5e6 and sections 31/32 follow; both are documentation and
