@@ -45,6 +45,38 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   await openApp(page, baseUrl);
   await createBlankEvent(page, { name: "Modes", hotel: "Merit Royal", date: futureDate() });
 
+  // --- 0. the toast stack does not cover the Floor Plan's own action -------
+  //
+  // Section 35's rendered sweep caught this. `.planmap-fab` ("Add Manually")
+  // sits bottom-right at bottom:20px and is 44px tall; `.toast-wrap` is fixed
+  // at bottom:16px with z-index 2000, so the toast rendered ON TOP of the
+  // button -- and the toast an operator sees on creating a blank event says
+  // "add the plan objects when you are ready" while covering the one control
+  // that adds them.
+  //
+  // Checked here, immediately after createBlankEvent(), because that is the
+  // exact moment the real product shows that toast on that screen. Measured as
+  // rendered geometry in a real browser rather than read off the CSS: what was
+  // wrong was the rendered result of two rules that each look correct alone,
+  // and a future change to either offset -- or to the button's height -- puts
+  // them back on top of each other without touching anything a source-reading
+  // check could see.
+  const stack = await page.evaluate(() => {
+    const fab = document.querySelector(".planmap-fab");
+    const wrap = document.querySelector(".toast-wrap");
+    if (!fab || !wrap || !wrap.textContent.trim()) return null;
+    const f = fab.getBoundingClientRect(), t = wrap.getBoundingClientRect();
+    const box = (x) => ({ top: Math.round(x.top), bottom: Math.round(x.bottom), left: Math.round(x.left), right: Math.round(x.right) });
+    return {
+      fab: box(f), toast: box(t),
+      overlap: !(t.bottom <= f.top || t.top >= f.bottom || t.right <= f.left || t.left >= f.right),
+    };
+  });
+  checks.require(stack, "the Add Manually button and a visible toast were both on screen to compare");
+  checks.ok(!stack.overlap,
+    "a toast never covers the Floor Plan's Add Manually button — the message telling an operator to add plan objects must not sit on top of the control that adds them",
+    stack);
+
   // --- 1. no plan, no mode switch -----------------------------------------
   const blank = await page.evaluate(SHELL);
   checks.equal(blank.planMode, "plan", "the Floor Plan starts in plan-editing mode");
@@ -173,3 +205,4 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(hero && hero.src.startsWith("data:image") && hero.w > 200 && hero.h > 100,
     "review mode still shows the uploaded plan itself, at size — never a redraw", hero);
 }
+

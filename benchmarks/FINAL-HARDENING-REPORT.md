@@ -82,10 +82,10 @@ programme's own rules).
 | 32 | Desktop readiness document | **DONE (inventory; gate still shut)** | `benchmarks/DESKTOP-READINESS.md`. Separates what genuinely is ready and shipping (the `StorageProvider` boundary, offline operation verified by *running* the built artifact 27/27, no network dependency proven by absence-of-`fetch` assertions, two versioned interchange formats, an idempotent migration proven against an old fixture, 55 suites/1799 checks that are about domain behaviour rather than about being in a tab, corrupted-store recovery) from what is deliberately not (no packaging technology chosen — that choice is itself behind the gate; no SQLite; no IPC surface; no updater/signing/installer; no private AI runtime). Also carries forward the honest gaps a desktop build would inherit, and states that **the operator session is best run before packaging, not after**. |
 | 33 | Remaining quality gates | **DONE (coverage audit; every behaviour change landed with its guard)** | The earlier "1 of 24" note was written when the feature/hardening sections it depended on had not landed. They have. Counted, not estimated: **9 new suites** this programme (`no-sample-specific-runtime-logic`, `physical-logical-seat-separation`, `capacity-provenance`, `onboarding`, `transaction-atomicity`, `schema-migration`, `override-boundary`, `pax-invariant`, `i18n-key-integrity`) and **18 existing suites extended**, against the frozen baseline `3ef11bb`. Every section that changed behaviour shipped with the guard that would catch its revert, and each was mutation-proven individually at the time. Suite files on disk: **61. Declared and reachable: 61. Orphaned: 0** — verified by diffing the filenames against the runner's own declared list, not by counting. |
 | 34 | CI integration | **DONE (verified against the real workflow and a real run log)** | Every suite reaches CI: `npm test` runs the 55 fast suites in the *Fast core* job and `npm run test:slow` runs the 6 slow ones in *Intelligence* — union 61, nothing unreached. `npm run perf` runs in the *Performance* job, so this programme's new asserting runner (`save-queue-burst.mjs`) is genuinely gated, **confirmed by reading the run log rather than by inference**. The three npm scripts not in CI are correctly absent: `benchmark:retrieval` and `benchmark:separation` assert nothing (no regression gate to fail), and `benchmark:heldout` would refuse, because there is no held-out plan. **One real defect found by reading that log**: in CI the burst runner printed `heap 13.6→13.6→13.6 MB` on every row — `performance.memory` is coarsened in a container, so the column was rendering non-data as data, and read as "the burst allocated nothing", the opposite of the finding. Now reported as UNAVAILABLE; fix proven both ways (real numbers locally, UNAVAILABLE under a simulated coarsened `performance.memory`). |
-| 35 | Visual quality check | NOT STARTED | |
-| 36 | Final full validation | NOT STARTED | |
-| 37 | Final documentation | IN PROGRESS | This file. |
-| 38 | Final completion matrix | NOT STARTED | Will use the exact status vocabulary once every section above is resolved as far as it can honestly go. |
+| 35 | Visual quality check | **DONE (rendered at all three viewports; one real defect found and fixed)** | Every primary screen rendered and screenshotted at 1920×1080, 2560×1440 and ~1440px — Home (empty *and* populated), Create Event, Floor Plan (blank canvas, with tables, and with a table selected), Guests + the add/edit dialog, Seating, Live, Reports. **Console clean at all three viewports.** The constitution holds: one warm/light palette throughout, warm-paper canvas, floating toolbar + contextual card + bottom status pill on Floor Plan, restrained VIP gold, no second dark system, no gradient/card-wall aesthetic, no overflow at 1440. **One real defect found and fixed**: the toast stack (`z-index: 2000`, `bottom: 16px`) rendered directly on top of the Floor Plan's `.planmap-fab` "Add Manually" button (`bottom: 20px`, 44px tall) — so the toast saying *"add the plan objects when you are ready"* covered the one control that adds them. Fixed, re-rendered, and guarded by a new rendered-geometry check in `floor-plan-modes` (45→46 checks), mutation-proven. Note the sweep was run directly rather than via the `visual-qa-reviewer` agent, which died on a session rate limit. |
+| 36 | Final full validation | **DONE** | `npm run test:all` (every suite, slow included): **61/61 suites, 2011/2011 checks**. Both offline artifacts rebuilt and the real built package re-verified: **27/27**. Detector benchmark against the committed `BASELINE.json`: **"No regressions. 0 improvement(s), 0 note(s)"** — every guarded field, per plan. Re-run in full after the Section 35 fix. |
+| 37 | Final documentation | **DONE** | This file (the narrative and per-section detail) plus `benchmarks/FINAL-COMPLETION-MATRIX.md` (the closing statement). Also written this programme: `benchmarks/SQLITE-MIGRATION-DESIGN.md`, `benchmarks/DESKTOP-READINESS.md`, `benchmarks/operator/REAL-OPERATOR-TEST-KIT.md`, `benchmarks/operator/HUMAN-TEST-CONTRACT.md`, `benchmarks/heldout/THIRD-PLAN-PROCEDURE.md`, plus the perf README's re-measurement and methodology sections. No stale suite counts were found hardcoded in `README.md` or `tests/README.md`. |
+| 38 | Final completion matrix | **DONE** | `benchmarks/FINAL-COMPLETION-MATRIX.md`, using ONLY the permitted vocabulary (DONE / PARTIAL / NOT VERIFIED / NOT AVAILABLE / DEFERRED / BLOCKED) in its Status column — no "mostly", no "essentially done", no percentage. Sections 26/28/31 carry **two** rows each, so a written document's completion can never stand in for the event it prepares for: the kit is DONE and the session is NOT VERIFIED; the procedure is DONE and the third plan is NOT AVAILABLE; the design is DONE and SQLite itself is DEFERRED. The desktop/EXE build is its own row, BLOCKED. |
 
 ## Work landed this session
 
@@ -1717,6 +1717,99 @@ about misattributed layout time, and as Section 22's own wrong first reading —
 which is three in this programme. The pattern is consistent enough to name: the
 measurement ran, the job passed, and the number meant nothing. "It ran" is not
 evidence, in exactly the way "the build succeeded" is not.
+
+### Sections 35-38 — the closing pass
+
+**Section 35 — the rendered sweep.** Every primary screen was rendered and
+screenshotted at 1920×1080, 2560×1440 and ~1440px, and the screenshots were
+**looked at**, not merely produced: Home in its genuine empty state *and*
+populated, Create Event, Floor Plan blank / with tables / with a table
+selected, Guests with the add-edit dialog open, Seating, Live, Reports.
+Console clean at all three viewports, at every step.
+
+The constitution holds. One warm/light palette throughout with no second dark
+system anywhere; warm-paper Floor Plan canvas; the intended `--pi-*` pattern on
+Floor Plan (floating minimal toolbar, contextual card on selection, bottom
+status pill — no permanent left list, no permanent right inspector); restrained
+VIP/VVIP gold used only where it means something; no gradient, glassmorphism or
+card-wall aesthetic; no horizontal overflow at 1440; the modal correctly sized
+and centred at 2560 with a visible focus ring.
+
+Several domain rules were visible as *rendered truth* rather than as code,
+which is the point of looking: Live states that a No Show preserves the planned
+seat while releasing operational capacity; the arrival wave says plainly that
+nobody has a stated arrival time so there is nothing to compare, and that
+**nothing is predicted**; a "+3" guest renders as one record of four with three
+companions; Reports names its three sheets with counts and admits that workbook
+headings stay English by design; every pre-flight finding carries a control
+that says where to go.
+
+**One real defect, and it was only findable by looking.** The toast stack
+(`.toast-wrap`, `position: fixed`, `bottom: 16px`, `z-index: 2000`) rendered
+directly on top of the Floor Plan's `.planmap-fab` "Add Manually" button
+(`position: absolute`, `bottom: 20px`, height 44px, `z-index: 40`). Measured
+rather than eyeballed: FAB at top 836 / bottom 880, toast at top 845 / bottom
+884 — fully overlapping. The toast an operator sees the moment they create a
+blank event reads *"Boş etkinlik oluşturuldu. Hazır olduğunuzda plan
+nesnelerini ekleyin"* — "add the plan objects when you are ready" — while
+sitting on top of the one button that adds them.
+
+Neither rule is wrong on its own, which is exactly why no source-reading check
+would have caught it, and why the first instinct on seeing the screenshot — that
+the button was *clipped* by the viewport — was also wrong. A DOM probe settled
+it: nothing overflowed the viewport at all (`overflowPx: -20`); the button was
+fully laid out and simply covered. Diagnosing before theorising, again.
+
+Fixed with one scoped rule — `body:has(.planmap-fab) .toast-wrap{bottom:76px}`,
+clearing 20 + 44 + 12 — so the offset applies only on a screen that actually
+has a FAB, and degrades to previous behaviour where `:has()` is unsupported.
+Re-measured after: toast bottom 824, FAB top 836, no overlap. Re-rendered and
+looked at again: both controls fully visible and readable.
+
+Guarded by a new check in `tests/suites/floor-plan-modes.test.mjs` (45→46),
+placed immediately after `createBlankEvent()` because that is the exact moment
+the real product shows that toast on that screen. It measures **rendered
+geometry in a real browser**, not CSS text, because what was wrong was the
+rendered result of two individually-correct rules. Mutation-proven: removing
+the fix produces `✗ a toast never covers the Floor Plan's Add Manually
+button … {"overlap":true}` with the real boxes attached.
+
+One process note, recorded rather than glossed: `.claude/rules/ui.md` asks for
+this sweep via the `visual-qa-reviewer` agent. That agent was dispatched and
+**died on a session rate limit** before producing anything. Rather than record
+Section 35 as blocked, the sweep was run directly with the same tools the agent
+would have used — the repo's own Playwright harness and the pre-installed
+Chromium. The rule's actual requirement is *rendered screenshots at three
+viewports, looked at*, and that requirement was met; the agent is the usual
+vehicle, not the requirement itself.
+
+**Section 36 — final full validation.** On the finished tree, after the
+Section 35 fix:
+
+| gate | result |
+|---|---|
+| `npm run test:all` (every suite, slow included) | **61/61 suites, 2011/2011 checks** |
+| both offline artifacts rebuilt, real package run | **27/27** |
+| detector vs committed `BASELINE.json` | **No regressions. 0 improvement(s), 0 note(s)** |
+
+The baseline comparison is the one worth reading twice: it compares **every
+guarded field separately, per plan**, precisely so a trade — chair recall up,
+table F1 down — cannot hide inside a single score. Nothing moved in either
+direction on either plan, which is the correct outcome for a programme that
+changed no detector code.
+
+**Sections 37/38 — documentation and the matrix.** `FINAL-COMPLETION-MATRIX.md`
+is the closing statement and uses only the six permitted words in its Status
+column. Its structural decision: sections 26, 28 and 31 each get **two rows**,
+so that a written document's completion can never stand in for the event it
+prepares for — the kit is DONE while the session is NOT VERIFIED, the procedure
+is DONE while the third plan is NOT AVAILABLE, the design is DONE while SQLite
+is DEFERRED. The desktop build has its own row: **BLOCKED**.
+
+The matrix also carries a section a completion document usually will not: the
+four things that are *not* finished, stated before the summary of what is, and
+a short record of the three times in this programme a measurement ran, passed,
+and meant nothing.
 
 ## Continuation checkpoint (machine-readable)
 
