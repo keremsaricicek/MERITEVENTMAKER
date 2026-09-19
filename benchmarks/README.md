@@ -95,6 +95,18 @@ other way. Set `MERIT_BASE_URL` to point it at a server you already have.
 - `detection/ERROR-CATEGORIES.md` — every remaining error on the real plan.
 - `TRAINING-DATA.md` — what a human decision captures.
 
+## Code health, before `app-v8.js` is broken up
+
+- `APP-V8-OWNERSHIP-MAP.md` — 26 business areas, measured: line ranges,
+  globals read and written, Merit modules called, callers, protecting suites,
+  single-writer risk, extraction difficulty, target file, and the
+  characterization test each area is missing.
+- `CODE-INVENTORY.md` — dead code and duplication. **Nothing deleted.** Read
+  it for the measurement that first reported fourteen dead functions, all of
+  them live.
+- `MODULARIZATION-ORDER.md` — the proposed order and why it is not
+  screen-by-screen. Two of its first four steps move no code at all.
+
 ## The recorded baseline
 
 `BASELINE.json` is the committed claim about what the detector currently does:

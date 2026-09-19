@@ -73,6 +73,26 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `event-package` | storage | importing a package replaces or touches any event already present instead of adding one alongside, a table freeze/chair/guest-assignment/audit-trail reference is left pointing at an old id after renumbering, exporting a package sets `lastBackupAt` as if the whole install had been backed up, or `duplicateEvent()`'s own TABLE-scope freeze regresses to pointing at the wrong table |
 | `post-event-replay` | business | the replay reaches a non-historical event, it reorders or restyles the Audit Trail section it sits above instead of leaving it alone, a bucket click fails to narrow to that window (or an empty window looks like a bare list instead of saying so), the clock-time shown on a row stops using the wave module's own helpers, or `MeritPostEventReplay` mutates its input or guesses without both clock helpers injected |
 | `event-history` | business | the history panel reports a percentage for an event with no capacity or no invited pax instead of naming the gap, one fact's missing data drags down the other fact's average, an average's own sample size stops being independent per fact, the panel appears with zero historical events, or its wording starts implying a trained model instead of a plain average of real past events |
+| `dependency-direction` | business | a `globalThis.Merit*` module reaches back into the app shell (`state`, `ui`, `render()`, `touchEvent()`, `saveState()`, `activeEvent()`) and the one-way graph that makes extraction safe stops holding. Also guards the scanner it depends on: prose mentions must stay invisible, `venue-model.js`'s injected `state` parameter must stay recognised as injection rather than coupling, and code inside a **nested** template interpolation must stay visible — a scanner blind to those reports live functions as dead |
+| `boot-contract` | business | the 33 classic scripts change order, `app-v8.js` stops being last, a script is loaded twice, or — the one static analysis cannot see — an overridden function silently resolves to its **pre-v8 body at runtime**, which is what an extraction from `app-v8.js` is most likely to cause and what does not look wrong in a diff. Also pins the `original` capture's classification (12 delegated / 20 shadowed / 1 untouched), so a future dead-code pass cannot read "21 unreachable" as 21 dead functions |
+| `offline-bundle-contract` | business | an element the app looks up by id ends up **below** the first `<script>` tag and is silently dropped from both offline artifacts while both builds report success (this already shipped a dead package once), or the bundle stops concatenating the sources in `index.html`'s document order — which keeps every file present, builds clean, and breaks the app, because `app-v8.js`'s overrides would run before the files they override |
+
+## Structural suites
+
+Three of the suites above guard *structure* rather than behaviour, and exist
+so `app-v8.js` can be broken up safely: `dependency-direction`,
+`boot-contract`, `offline-bundle-contract`. Run them before and after every
+structural step. The plan they serve is in
+`benchmarks/MODULARIZATION-ORDER.md`, the map it is derived from is
+`benchmarks/APP-V8-OWNERSHIP-MAP.md`, and the evidence behind "delete
+nothing yet" is `benchmarks/CODE-INVENTORY.md`.
+
+They share `tests/lib/js-scan.mjs`, which strips comments and string literals
+so a rule can be written about *code* rather than about text. Use it instead
+of grep for any question of the form "does this file really reference X?" —
+and note its one hard-won property: it keeps the contents of **nested**
+template interpolations, because that is where nearly every call in this
+codebase's render functions lives.
 
 ## Environment
 

@@ -104,10 +104,23 @@ Required order:
 
 ### Step A — map before moving
 
-Produce a written ownership map before any extraction: for each candidate
-region of `app-v8.js`, record what it owns, which globals it reads, which
-globals it writes, who calls it, and which suite covers it. Extraction
-without this map is guesswork.
+**The map exists: `benchmarks/APP-V8-OWNERSHIP-MAP.md`** — 26 business areas,
+measured, each with its line range, functions, globals read and written,
+Merit modules called, callers, protecting suites, single-writer risk,
+extraction difficulty, proposed boundary and target file, and the
+characterization test that is missing. The proposed order derived from it is
+`benchmarks/MODULARIZATION-ORDER.md`. Read both before proposing an
+extraction; update the map when one lands.
+
+Two findings from it change how a candidate is chosen:
+
+- **Size does not predict difficulty.** The largest area (the detection
+  pipeline, 2,926 lines, 34% of the file) is the *easiest* to extract — it
+  reads no shell global and is reached through one provider interface. The
+  hardest areas are 74 and 171 lines. Never pick an extraction by line count.
+- **`guest.assignment` is written from 8 sites across 3 areas** (Seating,
+  Guests, the canvas). Those three cannot be extracted independently while
+  that holds. Consolidating the writer is not an extraction and comes first.
 
 ### Step B — one screen or one business capability at a time
 
@@ -177,17 +190,35 @@ past failures. Preserve that character; do not strip a comment that records
 
 Delete only after **proving** unreachability:
 
-1. Grep for the name across `src/`, `tests/`, `index.html`, `scripts/`,
+1. Search for the name across `src/`, `tests/`, `index.html`, `scripts/`,
    `benchmarks/` — every occurrence besides the declaration itself.
+   **Not with grep, and not with a scanner that cannot read nested template
+   literals.** Use `tests/lib/js-scan.mjs`. Nearly every call in this
+   codebase's render functions sits inside a template inside a template; a
+   scanner that loses those reports live functions as dead. That is not
+   hypothetical — measured against `app-v8.js`, a flat scanner named
+   **fourteen live functions** as unreferenced, every one of them reachable.
 2. Consider the override layer: a function can look unused because it is
    *shadowed*, which is not the same as unused.
 3. Record the evidence in the commit message.
 
-**Known, evidenced, deliberately NOT deleted:** 21 of the ~32 names captured
-in `app-v8.js`'s `const original = {...}` are unreachable under the current
-boot sequence. This is tracked by `override-boundary.test.mjs` on purpose.
-Do not delete them opportunistically — they need boot-sequence test coverage
-first, and that is their own task.
+**Current measured count of removable functions in `app-v8.js`: zero** (of
+266 top-level functions). The full evidence, including the wrong measurement
+and why it was wrong, is `benchmarks/CODE-INVENTORY.md`.
+
+**The `original` capture — read this before acting on any "21 unreachable"
+figure.** `app-v8.js` captures 33 pre-v8 references in `const original =
+{...}`. Measured classification (`tests/suites/boot-contract.test.mjs`):
+**12 delegated, 20 shadowed, 1 untouched.** The 21 shadowed-plus-untouched
+entries are unreachable **capture entries — not 21 dead functions.** All 21
+names are live at runtime: 20 running v8's version, 1 (`inspectorHTML`)
+running `app.js`'s. Deleting them breaks the app. One of the 20,
+`bindCommon`, is overridden **by alias** (`bindCommon = bindV8Common`), which
+a `= function`-shaped classifier misfiles as untouched.
+
+That coverage now exists — `boot-contract` boots the real app and reads each
+function back out of the page — so this is no longer a blocked task. It is a
+closed question with the answer "do not delete."
 
 ---
 
@@ -210,29 +241,66 @@ while the build printed success.
 Therefore:
 
 - Any change to `index.html` structure runs all four gates, no exceptions.
-- **Do not "improve" the slicing blindly.** If it is to be made robust,
-  first add a test that pins the current extraction result, prove it bites,
-  and only then change the mechanism.
+- **Do not "improve" the slicing blindly.** The test that pins the current
+  behaviour now exists — `tests/suites/offline-bundle-contract.test.mjs` —
+  so the sequence is: change nothing until it is green, change the
+  mechanism, keep it green.
 - Adding a `<script>` tag, moving one, or inserting markup near `<body>` or
   the first `<script>` all count as touching this.
 
+**What that suite adds, and what `verify:offline` already did.**
+`verify:offline` boots both built artifacts and asserts no page errors, zero
+off-origin requests, SheetJS/OCR inlined, real OCR running, and — for the
+light build — that every script `index.html` loads is **present** in the
+bundle. It never checks **order**, and it checks markup against a hardcoded
+list of eight ids that both builders and the verifier each keep their own
+copy of. So the new suite covers exactly those two gaps:
+
+- **Order.** A "tidy-up" that sorted or deduped the source list would keep
+  every file present, build clean, pass `verify:offline`'s completeness probe
+  (measured: it does), and still break the app — because `app-v8.js`'s
+  reassignments would run before the files they override.
+- **The slice boundary, derived not listed.** The required element set is
+  read from the app's own `getElementById` calls intersected with the ids
+  `index.html` declares — 14 today against the builders' hardcoded 8 — so an
+  element added tomorrow is covered the day it is added. It also asserts that
+  **nothing carrying an id sits after the first `<script>`**, which is the
+  forward-looking half: appending a dialog at the end of `<body>` is the
+  natural thing to do and is exactly what the slice throws away.
+
 ---
 
-## 8. Dependency direction must become test-enforced
+## 8. Dependency direction is test-enforced
 
-**Current state, measured:** the one-way rule holds with zero exceptions —
-but it is verified by grep, not by a suite. That means nothing prevents the
-next extraction from breaking it.
+**Delivered: `tests/suites/dependency-direction.test.mjs`.** It fails when any
+`globalThis.Merit*` module reads `state` or `ui`, or calls `render()`,
+`touchEvent()`, `saveState()` or `activeEvent()` in code. It discovers the
+pure layer from source (the `globalThis.Merit` marker) rather than from a
+hand-kept list, so a new module is covered the day it is added.
 
-**Required before the first screen extraction from `app-v8.js`:** a static
-suite (the `override-boundary` / `no-sample-specific-runtime-logic` pattern —
-pure Node, no browser) that fails when any `globalThis.Merit*` module reads
-`state`, `ui`, `render(` or `touchEvent(` in code. It must ignore comments,
-or it will fire on the three existing comment-only mentions in
-`seating-freeze.js` and `table-availability.js` and be disabled as noisy.
+Two properties to preserve if you touch it:
 
-Until that suite exists, treat every extraction as unguarded on this axis
-and say so.
+- **It reads code, not text.** The comment-only mentions in
+  `seating-freeze.js` and `table-availability.js` stay invisible, which is
+  what keeps the rule from being called noisy and switched off. The suite
+  asserts that directly.
+- **Injection is not coupling.** `venue-model.js` is full of `state.venues`
+  and that is correct: every function takes `state` as a **parameter**
+  (`findVenue(state, venueId)`). Receiving the root as an argument is the
+  pure pattern. The suite reports such modules in an asserted `injected`
+  list, so the allowance is visible rather than hidden inside the rule.
+
+Two more structural suites landed with it, and all three run before and after
+every structural step:
+
+- **`boot-contract`** — load order, `app-v8.js` last, no duplicate script
+  tag, the `original` capture's classification, and the part static analysis
+  cannot do: it boots the real app and reads each overridden function's live
+  body back out of the page, so an override that silently resolved to its
+  pre-v8 body is caught. That failure does not look wrong in a diff and is
+  the one extraction is most likely to cause.
+- **`offline-bundle-contract`** — the body-markup slice and the bundle's
+  script order (see §7).
 
 ---
 

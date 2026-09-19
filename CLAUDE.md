@@ -251,6 +251,32 @@ model exists, say **"DOMAIN MODEL NOT INSTALLED"** rather than implying
 one is running. Never fabricate detections, confidence scores, or model
 metrics. Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.
 
+## Code health
+
+`app-v8.js` is 8,543 lines and 266 top-level functions. Before any of it moves,
+three things are written down and measured, not remembered:
+`benchmarks/APP-V8-OWNERSHIP-MAP.md` (26 business areas, each with its globals
+read and written, callers, protecting suites, single-writer risk and the
+characterization test it is missing), `benchmarks/CODE-INVENTORY.md` (dead code
+and duplication — **nothing deleted**, and the measurement that first said
+fourteen dead functions and was wrong), and `benchmarks/MODULARIZATION-ORDER.md`
+(the order, which is deliberately not screen-by-screen).
+
+Two findings govern how work is chosen. **Size does not predict difficulty** —
+the largest area, the detection pipeline at 34% of the file, is the easiest to
+extract because it touches no shell global; the hardest are 74 and 171 lines.
+And **`guest.assignment` is written from 8 sites across 3 areas**, which blocks
+the Guests, Seating and canvas extractions until it has one writer, the way
+`setArrival()` is already the one writer of the arrival axis.
+
+Three suites guard the structure itself and run before and after every step:
+`dependency-direction` (the one-way rule, reading code rather than text, and
+treating injection as distinct from coupling), `boot-contract` (load order plus
+the runtime check that no overridden function silently resolved to its pre-v8
+body) and `offline-bundle-contract` (the build's markup slice and the bundle's
+script order). Full detail: `.claude/rules/code-health.md` and
+`.claude/skills/merit-maintainability-hardening/SKILL.md`.
+
 ## Tests
 
 `npm test` runs the regression suite in `tests/` (real UI, real Chromium, its
