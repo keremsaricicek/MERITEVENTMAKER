@@ -2108,11 +2108,44 @@ SECTIONS 33/34 STATUS: BOTH DONE. 33 DONE as a coverage audit rather than
   finding. Now reports UNAVAILABLE; fix proven BOTH ways (real numbers
   locally, UNAVAILABLE under a simulated coarsened performance.memory),
   simulation reverted and file reconfirmed clean.
-NEXT_SECTION: sections 35-38 (final visual QA sweep, final full
-  validation, final documentation, final completion matrix) — task #166.
-  These are the closing sections; 38's matrix must use ONLY the permitted
-  vocabulary: DONE, PARTIAL, NOT VERIFIED, NOT AVAILABLE, DEFERRED,
-  BLOCKED.
+SECTIONS 35-38 STATUS: ALL FOUR DONE. 35 DONE — rendered and
+  screenshotted at 1920x1080, 2560x1440 and ~1440px, console clean at all
+  three, and the screenshots LOOKED AT rather than merely produced. ONE
+  REAL DEFECT found and fixed: the toast stack (fixed, bottom:16px,
+  z-index 2000) rendered directly on top of the Floor Plan's .planmap-fab
+  "Add Manually" button (absolute, bottom:20px, 44px tall) — the toast
+  saying "add the plan objects when you are ready" covering the one button
+  that adds them. FAB 836/880 vs toast 845/884, measured. Fixed with
+  body:has(.planmap-fab) .toast-wrap{bottom:76px}; re-measured 824 vs 836,
+  no overlap; guarded by a new RENDERED-GEOMETRY check in floor-plan-modes
+  (45->46), mutation-proven. The first reading of that screenshot — that
+  the button was CLIPPED — was itself wrong; a DOM probe showed
+  overflowPx -20, i.e. fully laid out and simply covered. The sweep was run
+  directly rather than via the visual-qa-reviewer agent, which died on a
+  session rate limit; the rule's requirement (rendered screenshots at three
+  viewports, looked at) was met with the same tools the agent would have
+  used. 36 DONE — npm run test:all 61/61 suites, 2011/2011 checks; both
+  offline artifacts rebuilt and the real package RUN, 27/27; detector vs
+  committed BASELINE.json "No regressions. 0 improvement(s), 0 note(s)",
+  every guarded field per plan. 37 DONE (this file plus the matrix and the
+  five other documents this programme wrote). 38 DONE
+  (benchmarks/FINAL-COMPLETION-MATRIX.md, six permitted words only;
+  sections 26/28/31 each carry TWO rows so a document's completion cannot
+  stand in for the event it prepares for; the desktop build is its own row,
+  BLOCKED).
+CI_CONFIRMED: commit 7d0aa49 (sections 22-25) — 10/10, both triggers.
+  Commit 2084b38 (sections 26-28, 31/32, 33/34) — 10/10, both triggers,
+  runs 35427789080 (push) and 35427791578 (pull_request), conclusion
+  "success". Note commit 202f47d's own run was CANCELLED, not failed: the
+  workflow sets concurrency cancel-in-progress, and 2084b38 superseded it
+  while it was still running. 2084b38 contains those commits, so the
+  confirmation covers them. Commit e0c9c2e (sections 35-38) — 10/10, both
+  triggers, runs 35441013558 (push) and 35441016226 (pull_request), both
+  conclusion "success". THE PROGRAMME'S FINAL HEAD IS CI-CONFIRMED GREEN.
+NEXT_SECTION: none. All 38 sections are resolved as far as they can
+  honestly go. What remains is not a section: the real operator session
+  (NOT VERIFIED), a third real plan (NOT AVAILABLE), and the desktop build
+  (BLOCKED until the user types "EXE YAP").
 NEXT_ACTION: sections 22-25 are fully closed out — committed (7d0aa49),
   pushed, CI-confirmed 10/10 both triggers. Sections 26-28 are committed
   locally as 4eaa5e6 and sections 31/32 follow; both are documentation and
