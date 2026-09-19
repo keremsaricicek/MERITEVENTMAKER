@@ -78,8 +78,8 @@ programme's own rules).
 | 28 | Third real plan procedure | **DONE (doc) / plan NOT AVAILABLE** | `benchmarks/heldout/THIRD-PLAN-PROCEDURE.md` — 9 ordered steps, every one of them what was actually done for ORNEK rather than an invention, including the permanent-first-run-record practice (`ORNEK-FIRST-RUN.md`) that sits alongside the `benchmark:heldout` leakage guard. Status of the thing itself is unchanged: **NOT AVAILABLE** — no third real plan has been supplied, and documenting the procedure is not having a plan to run it on. |
 | 29 | 2-real-plan open debt audit | **DONE (classification)** | **Task #131** (ORNEK robustness suite, CI for both plans, report+PR): **MOSTLY RESOLVED** — CI already runs `npm run benchmark` on Golden+ORNEK together in one job, `BASELINE.json` tracks both, PR #5's own body is the report. Remaining gap, **STILL VALID**: no ORNEK-specific rendering-variant robustness suite (rotation/blur/exposure) analogous to Golden's `benchmarks/robustness/` variants. **Task #132** (PDF orientation normalisation): **OBSOLETE** — PR #5's own Phase 6 section measured "the raw sideways page now scores identically to the upright one... the 13-point orientation cost was almost entirely these three [now-fixed] rules failing, and they fail the same way whichever way up the sheet is." The problem normalisation would have solved no longer exists. |
 | 30 | Audit/timeline/provenance stay distinct | **DONE (verified)** | Section 10's own investigation is this verification: the audit trail (what happened, `audit-trail.js`), the Plan Doctor/Risk Radar (can this event safely proceed, derived live from current state), and Section 11's new provenance line (where did this one number come from) each answer a different question from a different data source, and none of the three sections implemented this round introduced a fourth overlapping concept. No new code was needed to keep them distinct — the boundary already held. |
-| 31 | SQLite desktop migration design | NOT STARTED | |
-| 32 | Desktop readiness document | NOT STARTED | |
+| 31 | SQLite desktop migration design | **DONE (design only, as the rules require)** | `benchmarks/SQLITE-MIGRATION-DESIGN.md`. Nothing implemented — `.claude/rules/data.md` forbids introducing SQLite speculatively during browser review, so no dependency, no schema, no code. **Main finding: "export format v1" does not need designing — it already exists twice** (`merit-event-maker-backup` whole-install and `merit-event-maker-event-package` single-event), both `formatVersion: 1`, both validating rather than trusting on import, and the package format already solves id collision by renumbering. The real design work is therefore the schema mapping and the adapter contract, plus the one genuine improvement SQLite buys the domain (`pax` as a generated column, retiring the Section 20 cached-field risk structurally) and the one rule it explicitly **cannot** enforce (No Show keeping the planned seat is a rule about which fields an operation may touch, not about which states are valid — no CHECK expresses it; `setArrival()` stays the single writer). |
+| 32 | Desktop readiness document | **DONE (inventory; gate still shut)** | `benchmarks/DESKTOP-READINESS.md`. Separates what genuinely is ready and shipping (the `StorageProvider` boundary, offline operation verified by *running* the built artifact 27/27, no network dependency proven by absence-of-`fetch` assertions, two versioned interchange formats, an idempotent migration proven against an old fixture, 55 suites/1799 checks that are about domain behaviour rather than about being in a tab, corrupted-store recovery) from what is deliberately not (no packaging technology chosen — that choice is itself behind the gate; no SQLite; no IPC surface; no updater/signing/installer; no private AI runtime). Also carries forward the honest gaps a desktop build would inherit, and states that **the operator session is best run before packaging, not after**. |
 | 33 | Remaining quality gates | PARTIAL | 1 of 24 landed (`no-sample-specific-runtime-logic`); the other 23 depend on the feature/hardening sections above landing first. |
 | 34 | CI integration | PARTIAL | New suite runs locally via the existing `npm test`/`test:all` entry points, which the "Fast core" CI job already calls — no CI config change was needed for this one. |
 | 35 | Visual quality check | NOT STARTED | |
@@ -1539,6 +1539,109 @@ verified by reading the emitting function and its handler, not assumed from the
 CLAUDE.md summary. No suite changes and no regression re-run were needed for
 this segment: nothing under `src/` was touched.
 
+### Sections 31/32 — the desktop path, prepared and not taken
+
+Both are design and documentation **by rule, not by choice of effort**.
+`.claude/rules/data.md` forbids introducing SQLite or any new storage engine
+speculatively while the product is in browser-review stage, and
+`.claude/rules/desktop.md` forbids packaging until the user types **"EXE YAP"**
+— which they have not. So: no dependency added, no schema created, no adapter
+written, and **no packaging technology chosen** — that last one matters, because
+the rule names "packaging-technology choice" explicitly, and a choice made in a
+design document is a choice made.
+
+**Section 31 — `benchmarks/SQLITE-MIGRATION-DESIGN.md`.** The section's title
+contains a premise worth checking before designing anything, and checking it was
+the most useful thing in this segment: **"export format v1" does not need
+designing, because it already exists twice.**
+
+| format | scope | version | guarded by |
+|---|---|---|---|
+| `merit-event-maker-backup` | whole install | `formatVersion: 1` | `backup-restore` |
+| `merit-event-maker-event-package` | one event | `formatVersion: 1` | `event-package` |
+
+Both plain JSON, both carrying a `format` discriminator *and* a `formatVersion`,
+both validating on import rather than trusting the file, and the package format
+already solves the hardest interchange problem — id collision — by renumbering
+every id the incoming event owns and rewriting every reference to it, including
+a freeze that names a table by id. Inventing a third would have been pure cost.
+The design adds exactly one field, and deliberately does not implement it now
+because nothing consumes it: a `schemaVersion` beside `formatVersion`, needed the
+first time a migration is non-additive, with the rule that an importer refuses a
+version it does not know rather than guessing.
+
+The schema itself is the uninteresting part. Two things in it are not:
+
+- **`pax` becomes a generated column.** Section 20 found `guest.pax` is a
+  redundant cached field (`1 + additionalGuests`), correct at all five write
+  sites but with no single setter enforcing it, and added `pax-invariant` to
+  guard a risk it could not remove. A relational store removes it —
+  `GENERATED ALWAYS AS (1 + additional_guests)` makes drift impossible rather
+  than merely detected. This is the one genuine improvement the engine buys the
+  domain model, as opposed to a re-expression of what already works.
+- **One rule a schema cannot enforce, stated as such.** "No Show releases live
+  capacity but never clears the planned seat" is a rule about *which fields an
+  operation may touch*, not about which states are valid: a No Show row with a
+  live assignment is perfectly valid, and so is one without. No CHECK constraint
+  expresses it, and `setArrival()` stays the single writer. Writing that down
+  matters more than the schema does, because the temptation on moving to a
+  relational store is to believe the constraints now hold the domain and to
+  relax the code that actually holds it.
+
+Two smaller decisions carry their reasoning rather than being left implicit.
+**No `ON DELETE CASCADE` from `tables` to `assignments`**: deleting a table with
+guests on it is precisely the operation the product must refuse, and a cascade
+would silently unseat them, so the absent cascade turns it into a foreign-key
+error the application must handle. And **historical immutability is not a
+trigger**: `migrateEvent()` legitimately rewrites historical events on every
+load to backfill fields honestly (`capacitySource: UNKNOWN`, normalised
+freezes), a trigger cannot tell a migration from an edit, so enforcement stays
+at `canMutate()`.
+
+The migration path needs no new boundary, because one exists: `StorageProvider`
+already has two implementations selected at boot, and a SQLite adapter is a
+third. Two ordered steps, and the order is the whole point — ship the adapter
+behind the *existing* interface writing real rows, proven by **every existing
+suite passing unchanged** rather than by a new suite written to match the new
+behaviour; and only then, only where a measurement justifies it, narrow the
+whole-root reads. Step 2 is optional forever. The design also records what it
+does **not** decide: which binding (that depends on the packaging decision,
+which is gated), and whether SQLite is needed at all — the 4,000-seat fixture is
+a 1.20 MB payload reloading in ~780 ms, and nothing measured says the current
+engine is the constraint.
+
+**Section 32 — `benchmarks/DESKTOP-READINESS.md`.** An inventory, so "how far
+away is the desktop build?" has a written answer rather than one estimated on
+the spot. What is genuinely ready turned out to be more than expected, and every
+item is shipping and covered: the storage boundary; offline operation verified
+by **running** the built artifact (27/27) rather than by building it; no network
+dependency, proven by the operator-session suite asserting `fetch`,
+`XMLHttpRequest`, `sendBeacon`, `WebSocket` and `EventSource` are *absent from
+the source* rather than merely unused; two versioned interchange formats; an
+idempotent migration proven against a genuinely old fixture; 55 suites and 1,799
+checks that are about domain behaviour rather than about being in a browser tab,
+and so survive the move; and recovery from a store whose primary record *and*
+snapshot slot are both corrupted.
+
+The document refuses to let its own existence read as progress — the
+architecture skill's specific warning is that reading a desktop skill is not
+authorization, and the readiness doc says the same about itself. It carries the
+inherited gaps forward rather than presenting a clean bill of health (operator
+usability NOT VERIFIED, cross-venue generalization MEASURED TWICE, no third
+plan, no ORNEK robustness suite, the 21 evidenced-but-undeleted unreachable
+functions), and names the one that packaging makes *worse*: it is harder to
+watch somebody use software shipped as an installer than software you can put in
+front of them in a browser, so **the operator session is best run before
+packaging, not after.**
+
+**Validation.** Documentation, and not called implementation: the status lines
+say DONE for the documents while SQLite stays unbuilt and the EXE gate stays
+shut. Every factual claim was checked against the source rather than recalled —
+the two format strings and their `formatVersion`s, `blankRoot()`'s actual
+collection list, `migrateEvent()`'s additive backfills, and the two
+`StorageProvider` implementations. Nothing under `src/` was touched, so no
+regression re-run was required.
+
 ## Continuation checkpoint (machine-readable)
 
 ```
@@ -1765,7 +1868,12 @@ SECTIONS 22-25 STATUS: ALL FOUR DONE. 22 DONE (re-measured the full perf
   mutations proven. NO live missing key found; this is a guard for an
   uncovered risk, stated as such). Full clean regression: 55/55 suites,
   1799/1799 checks (up from 54/54, 1779/1779). Both offline artifacts
-  rebuilt and re-verified (27/27). See full write-up above.
+  rebuilt and re-verified (27/27). Pushed as commit 7d0aa49 (parent
+  4b33fdb). CI CONFIRMED GREEN on that commit — both the push-triggered
+  run 35427154716 and the pull_request-triggered run 35427155926 completed
+  with conclusion "success", all 5 jobs each (Fast core, Offline,
+  Detection, Intelligence, Performance) = 10/10 checks. See full write-up
+  above.
 SECTIONS 26-28 STATUS: ALL THREE DOCUMENTS DONE; the things they prepare
   for remain externally blocked and are NOT claimed. 26 DONE
   (benchmarks/operator/REAL-OPERATOR-TEST-KIT.md — the runnable facilitator
@@ -1787,16 +1895,36 @@ SECTIONS 26-28 STATUS: ALL THREE DOCUMENTS DONE; the things they prepare
   ORNEK-FIRST-RUN.md + ornek-first-run.json record, and BOTH belong in the
   procedure). THIRD REAL PLAN: still NOT AVAILABLE. Nothing under src/ was
   touched, so no regression re-run was required for this segment.
-NEXT_SECTION: sections 31/32 (SQLite desktop migration design + export
-  format v1 + desktop readiness doc) — task #164. DESIGN AND DOCUMENTS
-  ONLY: .claude/rules/data.md forbids introducing SQLite or any new storage
-  engine while the product is in browser-review stage, and the EXE gate is
-  still shut.
-NEXT_ACTION: sections 22-25 were committed as 7d0aa49 and pushed; CI was
-  observed with Detection, Offline and Performance already green and Fast
-  core + Intelligence still running at the time of writing — CONFIRM the
-  full 10/10 (both push and pull_request triggers) before treating that
-  group as closed, then commit the sections 26-28 documents. Section 7's
+SECTIONS 31/32 STATUS: BOTH DONE as design/documentation, which is what
+  the rules permit — no dependency added, no schema created, no adapter
+  written, and NO PACKAGING TECHNOLOGY CHOSEN (the rule names
+  "packaging-technology choice" explicitly; a choice made in a design
+  document is a choice made). 31 DONE
+  (benchmarks/SQLITE-MIGRATION-DESIGN.md — main finding is that "export
+  format v1" needs no designing because it already exists twice,
+  merit-event-maker-backup and merit-event-maker-event-package, both
+  formatVersion 1, both validating on import, the package format already
+  solving id collision by renumbering; the design adds exactly one field,
+  schemaVersion beside formatVersion, unimplemented because nothing
+  consumes it yet. Schema records pax as a GENERATED column — the one
+  genuine improvement SQLite buys the domain, structurally retiring
+  Section 20's cached-field risk — and states plainly the one rule a
+  schema CANNOT enforce: No Show keeping the planned seat is about which
+  fields an operation may touch, not which states are valid, so
+  setArrival() stays the single writer. Migration path is 2 ordered steps
+  behind the EXISTING StorageProvider interface, proven by every existing
+  suite passing unchanged). 32 DONE (benchmarks/DESKTOP-READINESS.md — an
+  inventory separating what is shipping and covered from what is
+  deliberately absent, carrying the inherited gaps forward rather than
+  presenting a clean bill of health, and naming the one packaging makes
+  worse: the operator session is best run BEFORE packaging, not after).
+  Nothing under src/ touched; no regression re-run required.
+NEXT_SECTION: sections 33/34 (remaining quality-gate suites + CI
+  integration) — task #165. Both are currently PARTIAL in the table above.
+NEXT_ACTION: sections 22-25 are fully closed out — committed (7d0aa49),
+  pushed, CI-confirmed 10/10 both triggers. Sections 26-28 are committed
+  locally as 4eaa5e6 and sections 31/32 follow; both are documentation and
+  still need push -> CI confirmation, then proceed to 33/34. Section 7's
   exhaustive AST-based single-writer lint rule remains a live, separate
   opportunity if that section is revisited (see DEFERRED_SUB_SCOPE), but is
   not a blocker.
@@ -1831,7 +1959,7 @@ BLOCKED_ON: nothing external for the next section. Sections 26-28's
   DOCUMENTS are done; their EXECUTION (a real operator session, a third
   real plan) is blocked on inputs only the user can supply, and is
   correctly left as NOT VERIFIED / NOT AVAILABLE rather than closed.
-NOT_YET_TOUCHED: sections 31/32, 33/34, 35-38 (see table above).
+NOT_YET_TOUCHED: sections 33/34, 35-38 (see table above).
 EXTERNAL_BLOCKERS_UNCHANGED: real human operator test (NOT VERIFIED), a
   genuine third independent real floor plan (NOT AVAILABLE), SQLite
   runtime (DEFERRED to EXE stage), EXE itself (DEFERRED, forbidden until
