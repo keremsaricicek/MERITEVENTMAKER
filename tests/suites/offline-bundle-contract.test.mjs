@@ -124,14 +124,17 @@ export default async function run({ checks, repoRoot }) {
   }
 
   // --- 5. the bundle's ORDER, in the real artifact ------------------------
-  // CI's fast job builds this before running the suite; locally it is built
-  // on demand and takes well under a second against the vendor cache.
+  // The artifact is REBUILT here, every run, rather than inspected wherever
+  // `dist/` happens to be. An earlier version built it only when the file was
+  // missing, and a `dist/` left over from before a source change then made the
+  // order check report on the previous build — once as a false failure, and in
+  // the other direction it would have been a false pass, which is worse. The
+  // build reads the vendor cache and takes well under a second, so there is no
+  // reason to trust a file someone else left.
   const artifactPath = path.join(repoRoot, "dist", "index-offline.html");
-  if (!fs.existsSync(artifactPath)) {
-    execFileSync(process.execPath, [path.join(repoRoot, "scripts", "build-offline.mjs")], {
-      cwd: repoRoot, stdio: "ignore",
-    });
-  }
+  execFileSync(process.execPath, [path.join(repoRoot, "scripts", "build-offline.mjs")], {
+    cwd: repoRoot, stdio: "ignore",
+  });
   checks.require(fs.existsSync(artifactPath), "the single-file offline artifact exists to inspect", artifactPath);
   const artifact = fs.readFileSync(artifactPath, "utf8");
 

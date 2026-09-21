@@ -120,6 +120,11 @@
        history, never a trained model; null means no data, never zero. -->
   <script src="src/event-history.js"></script>
   <script src="src/training-data.js"></script>
+  <!-- Assisted Detection: the classical CV pipeline, extracted from app-v8.js.
+       Loads BEFORE app-v8.js because app-v8.js reads the registry it publishes
+       (globalThis.MERIT_PLAN_DETECTION), and AFTER the Merit* modules it calls
+       at detect() time. It is NOT a trained model. -->
+  <script src="src/plan-detection-classical.js"></script>
   <script src="src/app-v8.js"></script>
 </body>
 </html>

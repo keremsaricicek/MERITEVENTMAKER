@@ -496,9 +496,16 @@ broken measurement would have deleted fourteen working functions.
   covers the restore, not the contested-seat case (`snapshot.assignment=null;
   seatLost=true` at line 3157 is real logic with no suite).
 
-## A22 · Assisted Detection pipeline
+## A22 · Assisted Detection pipeline — **EXTRACTED**
 
-- **Lines** 3288–6213 (2,926 — **34% of the file**)
+> **Moved out.** Lines 3290–6098 (2,809) are now
+> `src/plan-detection-classical.js`, reached only through
+> `globalThis.MERIT_PLAN_DETECTION`. `app-v8.js` is 5,741 lines as a result.
+> The entry below is the map as it stood before the move, kept because it is
+> the reasoning the move was made on. The new file's own internal map is
+> `benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`.
+
+- **Lines** 3288–6213 (2,926 — **34% of the file**), *before extraction*
 - **Main functions** `buildAccentModel`, `buildToneModel`, `buildClassMasks`,
   `labelComponents`, `minAreaRect`, `shapeAnalysis`, `classifyTableShape`,
   `modalMagnitude`, `symbolFamilyMember`, `splitAlongAxis`, `sameObject`,

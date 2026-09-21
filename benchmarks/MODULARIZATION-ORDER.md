@@ -52,9 +52,44 @@ extraction cannot be verified against a rule nothing checks.
 
 ---
 
-## Step 1 — extract the detection pipeline (A22)
+## Step 1 — extract the detection pipeline (A22) *(DONE)*
 
-`src/app-v8.js:3288–6213` → `src/plan-detection-classical.js`
+`src/app-v8.js:3290–6098` → `src/plan-detection-classical.js`
+
+**Outcome.** 2,809 lines moved. `app-v8.js` 8,543 → 5,741 (−32.8%). Four
+crossings had to be resolved, and naming them is what made the move safe:
+
+| Crossing | Was | Is |
+|---|---|---|
+| the pipeline read `state.calibration` | `calibratedThreshold()` called inside the candidate map | injected as `confidenceThreshold`, a function passed on every `detect()` call |
+| the shell decided the deskew deadband | `Math.abs(skew.deg)>=SKEW_MIN_DEG && skew.gain>=SKEW_MIN_GAIN` in `runAssistedDetection` | decided where the thresholds live and returned as `applyDeg` |
+| the shell called deskew by name | `estimatePlanSkew(canvas,w,h)` | `MERIT_PLAN_DETECTION.resolve().estimatePlanSkew(…)` — deskew joined the provider surface |
+| the shell resolved the provider by name | `resolvePlanDetectionProvider()` | `globalThis.MERIT_PLAN_DETECTION.resolve()` at both call sites, with no local alias |
+
+Everything else moved verbatim. `yieldFrame`, `sourceBlob` and `otsu` were
+re-homed by usage rather than by line range: the first two are shell utilities
+that happened to sit in the region and stayed behind; `otsu` is called only by
+the pipeline and went with it.
+
+**The deadband crossing was missed on the first attempt and is worth recording.**
+`const SKEW_MAX_DEG=6,SKEW_STEP=.25,SKEW_MIN_DEG=.35,SKEW_MIN_GAIN=1.08;`
+declares four names on one line; the crossing analysis captured only the first,
+so `SKEW_MIN_DEG` was never reported. Both files parsed, the app booted, and
+`smoke`, `boot-contract`, `dependency-direction` and the boundary suite all
+passed — while every **real detection** threw `ReferenceError`. It was caught by
+`symbolic-plan-detection`, which runs the actual detector. **Booting is not
+detecting**, and a structural step is not verified until something exercises the
+behaviour it moved.
+
+The file is **not** presented as a finished module — 2,858 lines is a
+transitional checkpoint, and its internal split is mapped in
+`benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md` (16 natural boundaries).
+
+**Guarded by** `tests/suites/plan-detection-boundary.test.mjs`, which fails if
+either side resolves a name bound only in the other (counting every declarator
+on a multi-name line), if the file exports anything beyond its three public
+names, if a function was copied rather than moved, or if `trainedModel` stops
+being `false`.
 
 **Why this order.** It is the largest single reduction available (−34% of the
 file) at the lowest risk in the file. The area reads no `state`, no `ui`,

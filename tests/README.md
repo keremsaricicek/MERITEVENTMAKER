@@ -77,12 +77,20 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `boot-contract` | business | the 33 classic scripts change order, `app-v8.js` stops being last, a script is loaded twice, or — the one static analysis cannot see — an overridden function silently resolves to its **pre-v8 body at runtime**, which is what an extraction from `app-v8.js` is most likely to cause and what does not look wrong in a diff. Also pins the `original` capture's classification (12 delegated / 20 shadowed / 1 untouched), so a future dead-code pass cannot read "21 unreachable" as 21 dead functions |
 | `offline-bundle-contract` | business | an element the app looks up by id ends up **below** the first `<script>` tag and is silently dropped from both offline artifacts while both builds report success (this already shipped a dead package once), or the bundle stops concatenating the sources in `index.html`'s document order — which keeps every file present, builds clean, and breaks the app, because `app-v8.js`'s overrides would run before the files they override |
 
+| `plan-detection-boundary` | business | the Assisted Detection pipeline's seam closes again: `app-v8.js` resolves a name bound only inside `plan-detection-classical.js` (or the reverse) — a ReferenceError at runtime, not a style complaint; the file exports something beyond its three public names; a function was COPIED rather than moved (two detectors that drift is worse than one in the wrong file); the injected `confidenceThreshold` or the returned `applyDeg` stops crossing, so calibration or the deskew deadband silently stops applying; or `trainedModel` stops being `false`, which a refactor is exactly the kind of change to drop and which would make the product imply a trained model exists |
+
 ## Structural suites
 
-Three of the suites above guard *structure* rather than behaviour, and exist
+Four of the suites above guard *structure* rather than behaviour, and exist
 so `app-v8.js` can be broken up safely: `dependency-direction`,
-`boot-contract`, `offline-bundle-contract`. Run them before and after every
-structural step. The plan they serve is in
+`boot-contract`, `offline-bundle-contract` and `plan-detection-boundary`.
+Run them before and after every structural step.
+
+**None of them proves a detector still detects.** The first attempt at the
+detection extraction passed all four, booted cleanly, and threw
+`ReferenceError` on every real analysis. Pair them with a suite that exercises
+the behaviour being moved — for detection that is `symbolic-plan-detection`,
+plus `npm run benchmark` against the committed baseline. The plan they serve is in
 `benchmarks/MODULARIZATION-ORDER.md`, the map it is derived from is
 `benchmarks/APP-V8-OWNERSHIP-MAP.md`, and the evidence behind "delete
 nothing yet" is `benchmarks/CODE-INVENTORY.md`.

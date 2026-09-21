@@ -253,7 +253,8 @@ metrics. Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.
 
 ## Code health
 
-`app-v8.js` is 8,543 lines and 266 top-level functions. Before any of it moves,
+`app-v8.js` is 5,741 lines after the first extraction (8,543 before). Before
+any more of it moves,
 three things are written down and measured, not remembered:
 `benchmarks/APP-V8-OWNERSHIP-MAP.md` (26 business areas, each with its globals
 read and written, callers, protecting suites, single-writer risk and the
@@ -269,12 +270,22 @@ And **`guest.assignment` is written from 8 sites across 3 areas**, which blocks
 the Guests, Seating and canvas extractions until it has one writer, the way
 `setArrival()` is already the one writer of the arrival axis.
 
-Three suites guard the structure itself and run before and after every step:
+Four suites guard the structure itself and run before and after every step:
 `dependency-direction` (the one-way rule, reading code rather than text, and
 treating injection as distinct from coupling), `boot-contract` (load order plus
 the runtime check that no overridden function silently resolved to its pre-v8
-body) and `offline-bundle-contract` (the build's markup slice and the bundle's
-script order). Full detail: `.claude/rules/code-health.md` and
+body), `offline-bundle-contract` (the build's markup slice and the bundle's
+script order) and `plan-detection-boundary` (the detection pipeline's seam).
+
+**Step 1 is done.** The classical detection pipeline is
+`src/plan-detection-classical.js` — 2,809 lines out of `app-v8.js`, reached
+only through `globalThis.MERIT_PLAN_DETECTION`, reading no shell state. It is a
+**transitional extraction, not a finished module**; its internal split is
+mapped in `benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`. The move also recorded
+a lesson the four structural suites could not teach on their own: all of them
+passed on a build whose detector threw `ReferenceError` on every real plan.
+**Booting is not detecting** — a structural step needs a suite that exercises
+the behaviour it moved. Full detail: `.claude/rules/code-health.md` and
 `.claude/skills/merit-maintainability-hardening/SKILL.md`.
 
 ## Tests

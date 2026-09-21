@@ -23,10 +23,30 @@
   `benchmarks/CODE-INVENTORY.md` (dead code / duplication, nothing deleted)
   and `benchmarks/MODULARIZATION-ORDER.md` (the proposed order and why it is
   not screen-by-screen). Read all three before proposing an extraction.
-- **Size does not predict difficulty.** The map measured it: the largest area
-  (the detection pipeline, 34% of the file) is the easiest to move because it
-  touches no shell global; the hardest are 74 and 171 lines. Do not pick an
-  extraction by line count.
+- **Size does not predict difficulty.** The map measured it and the first
+  extraction proved it: the largest area (the detection pipeline, 34% of the
+  file) moved with four crossings to resolve, because it touches no shell
+  global; the hardest areas are 74 and 171 lines. Do not pick an extraction by
+  line count.
+- **Step 1 is done.** The classical detection pipeline is
+  `src/plan-detection-classical.js`, reached only through
+  `globalThis.MERIT_PLAN_DETECTION`; `app-v8.js` is 5,741 lines. It is a
+  **transitional extraction, not a finished module** — do not cite its 2,858
+  lines as a problem or as done. Internal split:
+  `benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`. Seam guarded by
+  `plan-detection-boundary`.
+- **A structural move names its crossings first.** Measure, in stripped code,
+  what the region reads from the shell's scope and what the shell reads from
+  it. Count **every declarator** on a comma-separated `const` line: missing the
+  third name on a four-name line is what shipped a `ReferenceError` into every
+  real detection on the first attempt. What the module reads from the app
+  becomes an injected ARGUMENT; what the app reads from the module goes through
+  the module's one published object — never a local alias sharing a name with
+  an internal, which makes "did we reach past the boundary?" unanswerable.
+- **Booting is not behaving.** A structural change is not verified until a
+  suite exercises the behaviour that moved. Syntax checks, `smoke`, and all
+  four structural suites passed on a build whose detector threw on every real
+  plan.
 - **`guest.assignment` is written from 8 sites across 3 areas.** Consolidating
   that to one writer blocks the Guests, Seating and canvas extractions and is
   not itself an extraction. It comes before them.

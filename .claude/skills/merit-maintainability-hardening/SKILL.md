@@ -49,8 +49,10 @@ npm run test:list                                     # what already guards what
 Snapshot at the time of writing (verify, do not trust):
 
 - 33 `src/*.js`, **18,729 lines**
-- `app-v8.js`: **8,543 lines (46% of all source)**, **266** top-level
-  functions, longest line **3,369 characters**, 41 lines over 500
+- `app-v8.js`: **5,741 lines** after Step 1 (8,543 before), longest line
+  **3,369 characters**
+- `plan-detection-classical.js`: **2,858 lines** — the extracted detection
+  pipeline, a transitional checkpoint and not a finished module
 - 28 of 33 files export `globalThis.Merit*`
 - **64 suites (58 fast + 6 slow) / 2,058 checks**; 5 parallel CI jobs;
   offline verification 27
@@ -104,6 +106,16 @@ job beats eight 500-line files that all reach into each other.
 Required order:
 
 ### Step A — map before moving
+
+**Step 1 is done and is the worked example.** The detection pipeline moved out
+(2,809 lines) with four crossings resolved: two values that used to be read
+across the seam became an injected argument (`confidenceThreshold`) and a
+returned field (`applyDeg`), and two bare-name calls became calls on the
+published registry. What it cost: one crossing was missed because
+`const A=1,B=2,C=3,D=4;` declares four names and the analysis captured one.
+Both files parsed, the app booted, and every structural suite passed — while
+real detection threw `ReferenceError`. **Count every declarator, and never
+treat "it boots" as evidence a detector still detects.**
 
 **The map exists: `benchmarks/APP-V8-OWNERSHIP-MAP.md`** — 26 business areas,
 measured, each with its line range, functions, globals read and written,
