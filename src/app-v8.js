@@ -309,24 +309,72 @@
       .catch(error=>{
         // Large embedded images are the only realistic reason a save this
         // size fails -- strip them and retry once before giving up.
+        //
+        // Stripped from THIS PAYLOAD, not from live `state`. Rebuilding the
+        // retry from `state` meant a save of one snapshot could persist a
+        // different one: mutate memory while the first attempt is in flight
+        // and the retry writes whatever `state` had become, under the
+        // identity of a save that was supposed to write the earlier picture.
+        // "This save writes this snapshot" is the promise the queue exists
+        // to keep, and the failure path was the one place it did not hold.
         console.warn("StorageProvider save failed, retrying with images stripped.",error);
-        const compact=clone(state);compact.events.forEach(e=>{if(e.background)e.background.src="";if(e.coverImage)e.coverImage="";});
-        return storageProvider.save(JSON.stringify(compact)).then(()=>toast("Event data was saved, but large images exceeded browser storage.","error",6500));
+        let stripped;
+        try{
+          const compact=JSON.parse(payload);
+          (compact.events||[]).forEach(e=>{if(e.background)e.background.src="";if(e.coverImage)e.coverImage="";});
+          stripped=JSON.stringify(compact);
+        }catch(parseError){
+          // The payload is the only copy of what this save meant; if it
+          // cannot be reshaped, fail rather than substitute a different one.
+          console.warn("Could not strip images from the queued payload.",parseError);
+          throw error;
+        }
+        return storageProvider.save(stripped).then(()=>toast("Event data was saved, but large images exceeded browser storage.","error",6500));
       })
       .catch(error=>{console.warn("StorageProvider save failed entirely.",error);toast("Browser storage is full. Export the workbook before closing.","error",6500);});
   }
+  // A save that is QUEUED but has not started yet. Each payload is a
+  // COMPLETE snapshot of `state`, so a waiting one is not partial work to
+  // preserve -- it is an older photograph of the same subject, and replacing
+  // it collapses a burst of writes without changing what finally lands.
+  let pendingSave=null;
+  // Returns the queued write, so a caller can wait for it. It used to return
+  // undefined while chaining onto saveQueue, which made `await saveState()`
+  // wait for nothing and resolve before a single byte was written -- a test
+  // can poll around that; an export about to hand somebody a file cannot.
+  // The returned promise never rejects: persistPayload()'s final .catch()
+  // always resolves, so awaiting is safe and NOT awaiting raises no
+  // unhandled rejection.
   saveState = function(show=false){
     // Nothing to persist yet, and persisting now would be actively harmful:
     // `state` is still the boot placeholder until loadV8Async() resolves, so
     // writing it (e.g. from the beforeunload handler firing on a reload that
     // races ahead of the async load) would overwrite real data with a blank
     // slate. See the isMigrationRace regression check in scratchpad.
-    if(!bootReady)return;
+    if(!bootReady)return Promise.resolve();
     state.events.forEach(refreshChairOccupancy);
     let payload;
     try{payload=JSON.stringify(state);}
-    catch(error){toast("Browser storage is full. Export the workbook before closing.","error",6500);return;}
-    saveQueue=saveQueue.then(()=>persistPayload(payload,show));
+    catch(error){toast("Browser storage is full. Export the workbook before closing.","error",6500);return Promise.resolve();}
+    // COALESCE. The pending slot is already the tail of the queue, so
+    // handing it a newer payload keeps last-write-wins exactly: the newest
+    // snapshot is still the one that lands, and it still lands last. `show`
+    // is OR-ed because a coalesced save must not swallow somebody's request
+    // for a confirmation toast.
+    if(pendingSave){
+      pendingSave.payload=payload;
+      pendingSave.show=pendingSave.show||show;
+      return pendingSave.promise;
+    }
+    const slot={payload,show,promise:null};
+    pendingSave=slot;
+    // Reading slot.payload INSIDE the callback, not closing over the value:
+    // everything coalesced between queueing and starting must be picked up.
+    slot.promise=saveQueue=saveQueue.then(()=>{
+      pendingSave=null;
+      return persistPayload(slot.payload,slot.show);
+    });
+    return slot.promise;
   };
   // Bumped by every mutation that goes through touchEvent, so render-scoped
   // memos (see frozenTableIdSet) can be invalidated by a counter rather than
@@ -338,7 +386,10 @@
   // competed with genuine decisions for the same shared, capped audit array
   // (Section 16). Callers that made a real decision call audit() themselves,
   // with a real allowlisted code, before or after touchEvent().
-  touchEvent = function(event){mutationEpoch++;event.lastModified=nowISO();saveState();};
+  // Returns the queued write as well, so a caller that must know a mutation
+  // reached storage can await it. Every existing caller uses it as a
+  // statement, which is unchanged.
+  touchEvent = function(event){mutationEpoch++;event.lastModified=nowISO();return saveState();};
   let bootReady=false;
   state=blankRoot();
 

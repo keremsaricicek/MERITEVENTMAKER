@@ -204,6 +204,50 @@ nothing was lost, and a banner naming **402** when something was. The
 `audit.capNotice` key is removed — the product can no longer produce that
 sentence.
 
+### E. §13 — write ordering and save atomicity — DONE
+
+`saveQueue` already chained writes, so ORDER was correct. Three things it
+did not cover, and all three were real:
+
+**No caller could wait for a save.** `saveState()` chained onto the queue and
+returned `undefined`, so `await saveState()` waited for nothing and resolved
+before a byte was written. Found while writing §8's round-trip check, which
+had to poll the store to work around it. A test can poll; an export about to
+hand somebody a file cannot. It now returns the queued write, and the
+returned promise never rejects (`persistPayload`'s final `.catch()` always
+resolves), so awaiting is safe and not awaiting raises no unhandled
+rejection. `touchEvent()` returns it too.
+
+**A burst wrote every snapshot.** Each payload is a COMPLETE picture of
+`state`, so twenty saves in one tick serialised and wrote twenty full copies
+of the same room, nineteen superseded before anyone could read them. A
+`pendingSave` slot now absorbs newer payloads until its write STARTS. This
+cannot weaken last-write-wins — the pending slot is already the queue's
+tail, so the newest snapshot still lands, and still lands last. Measured: 20
+saves in one tick become **1** write; 3 saves each awaited before the next
+produce **3**, in order.
+
+**The retry wrote something else.** On failure, the image-stripping retry
+rebuilt its payload from live `state` rather than from the payload it had
+been handed. Mutate memory while the first attempt is in flight and the
+retry persists whatever `state` had become, under the identity of a save
+that was supposed to write the earlier picture. It now strips images from
+THAT payload, and if the payload cannot be reshaped it fails rather than
+substituting a different one.
+
+New suite `save-ordering` (18 checks), including a delayed-storage reorder
+test, an injected rejection, and a real page-reload equality check.
+**Mutation-proved three times**, one per fix: returning `undefined` breaks
+awaitability and collapses 3 sequential writes to 2; removing coalescing
+turns 1 write into 20; rebuilding the retry from `state` persists an event
+that was added mid-flight and that nobody asked to save.
+
+One suite expectation of mine was wrong and was corrected rather than
+worked around: I first asserted a 20-save burst should produce ≥2 writes.
+It produces exactly 1, which is the correct behaviour for one tick — the
+real property worth guarding is that saves separated IN TIME are not
+folded, and that is now its own check.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
