@@ -1182,6 +1182,10 @@
     // The activity log's display window states its own total. Distinct from
     // the eviction notice below: this one is about what is on screen, that
     // one about what is no longer stored.
+    // Shown when the stored record was written by a NEWER build. The product
+    // refuses to read it and refuses to write over it, and says both.
+    "schema.futureTitle": { en: "This data was saved by a newer version", tr: "Bu veri daha yeni bir sürümle kaydedilmiş" },
+    "schema.futureBody": { en: "The stored record is schema {stored}; this build understands {build}. Nothing has been changed or overwritten — update the application to open it.", tr: "Kayıtlı veri şema {stored}; bu sürüm {build} okuyabiliyor. Hiçbir şey değiştirilmedi veya üzerine yazılmadı — açmak için uygulamayı güncelleyin." },
     "audit.showingNewest": { en: "Showing the newest {shown} of {total} decisions.", tr: "{total} işlemin en yeni {shown} tanesi gösteriliyor." },
     // Shown ONLY when entries were really removed, with the count. Replaces a
     // banner that could only say the oldest entries "may have been"

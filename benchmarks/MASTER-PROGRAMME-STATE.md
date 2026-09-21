@@ -248,6 +248,54 @@ It produces exactly 1, which is the correct behaviour for one tick — the
 real property worth guarding is that saves separated IN TIME are not
 folded, and that is now its own check.
 
+### F. §12 — real schema migration registry — DONE
+
+`parseRoot()` opened with `parsed.version=8; parsed.schemaVersion=8;`. It
+**stamped** the version rather than reading it, and everything after was one
+unconditional additive pass. Three consequences, worst last:
+
+- Corruption was indistinguishable from age — `{}`, a string, an array, a
+  root whose `events` was not a list, all "version 8".
+- Nothing could be version-gated, so a step that changes what a field MEANS
+  had nowhere to live.
+- **A record from a newer build was silently downgraded and then
+  overwritten.** Its version was replaced with 8, its unknown fields ignored,
+  and the first mutation saved over it. The data was not misread; it was
+  destroyed. The destructive half is the WRITE.
+
+`src/schema-migrations.js` (script 5 of 36, before `app.js`) reads the
+declared version, runs a sequential chain of named steps to
+`CURRENT_VERSION = 9`, and returns one of three verdicts: `OK`, `FUTURE`,
+`UNREADABLE`. `FUTURE` hands the root back **unchanged** and latches
+`MERIT_SCHEMA_GUARD.readOnly`, which `saveState()` now honours — refusing to
+read also refuses to write. The load path short-circuits too: falling through
+to the legacy reader or a recovery snapshot would put something OLDER on
+screen as though it were the record. The screen says which schema is stored
+and which this build understands, in both languages.
+
+The 8→9 step is **real, not scaffolding**: it is this programme's own §4
+change expressed as a migration — a symbolic table's fabricated chairs are
+emptied and the retired per-chair `physical` flag is dropped, with
+`table.capacity` untouched. That is precisely the kind of non-additive step
+the old unconditional pass could not express, so a v8 record and a v9 record
+are now genuinely distinguishable.
+
+There is deliberately **no `else` that stamps a version** when the module is
+absent: that branch would silently reintroduce the defect, so a record keeps
+whatever version it declared and nothing claims to have migrated it.
+
+New suite `schema-registry` (33 checks). **Mutation-proved three times:**
+removing the future guard downgrades a version-12 record to 9 and lets the
+app write 8 over a version-99 record on disk, erasing its content; removing
+the save guard alone does the same; ungating the chain makes an
+already-current record run a step again, breaking idempotence.
+
+**Found while mutating, deferred to §19:** `fmtDate()` throws
+`RangeError: Invalid time value` on an event with no `date`. It only
+surfaces when a malformed record is loaded, which the guard now prevents —
+but a hand-edited backup could still carry one. Resilience work, not schema
+work.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |

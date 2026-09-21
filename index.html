@@ -67,6 +67,11 @@
     shell's benefit rather than a hard ordering requirement.
   -->
   <script src="src/seat-model.js"></script>
+  <!--
+    The schema migration registry. Loaded before app.js because parseRoot()
+    consults it on the very first load, before anything else reads state.
+  -->
+  <script src="src/schema-migrations.js"></script>
   <script src="src/app.js"></script>
   <script src="src/app-guests.js"></script>
   <script src="src/i18n.js"></script>

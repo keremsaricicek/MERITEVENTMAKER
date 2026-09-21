@@ -224,8 +224,38 @@
     refreshChairOccupancy(migrated);
     return migrated;
   }
+  // A record this build must not read AND must not write over. Set once, by
+  // parseRoot, when the stored schemaVersion is newer than this build knows.
+  // Exposed so the UI and the suites can see the state rather than infer it.
+  globalThis.MERIT_SCHEMA_GUARD={readOnly:false,storedVersion:null,buildVersion:null};
+  // Thrown by parseRoot so every caller -- the normal load, the legacy
+  // migration, the recovery snapshot -- gets the same containment without
+  // each having to remember to check.
+  function FutureSchemaError(storedVersion){
+    const e=new Error("Stored data was written by a newer version of this application.");
+    e.name="FutureSchemaError"; e.storedVersion=storedVersion; return e;
+  }
   function parseRoot(raw){
-    const parsed=JSON.parse(raw); parsed.version=8; parsed.schemaVersion=8;
+    const parsed=JSON.parse(raw);
+    // READ the version, do not stamp it. `parsed.schemaVersion=8` used to sit
+    // here: a record from a newer build had its version overwritten, its
+    // unknown fields ignored, and was then saved over on the first mutation.
+    // That is not a misread, it is data destruction, and the write is the
+    // destructive half -- so FUTURE latches a read-only guard rather than
+    // merely declining to migrate.
+    const SM=globalThis.MeritSchemaMigrations;
+    if(SM){
+      const result=SM.migrate(parsed);
+      if(result.status===SM.STATUS.FUTURE){
+        MERIT_SCHEMA_GUARD={readOnly:true,storedVersion:result.from,buildVersion:SM.CURRENT_VERSION};
+        throw FutureSchemaError(result.from);
+      }
+      if(result.status===SM.STATUS.UNREADABLE)throw new Error("Stored data is not a readable record.");
+    }
+    // No `else` that stamps a version. If the registry were ever missing from
+    // the bundle, stamping would silently reintroduce the exact defect this
+    // check exists to prevent -- so the record keeps whatever version it
+    // declared and nothing claims to have migrated it.
     parsed.events=(parsed.events||[]).map(migrateEvent); parsed.verifiedExamples ||= []; parsed.analyses ||= []; parsed.audit ||= [];
     // Re-normalized on every load, like freezes and handover notes: a
     // hand-edited backup must not be able to claim a loss that never
@@ -266,6 +296,11 @@
       const fromProvider=await storageProvider.load();
       if(fromProvider) return{data:parseRoot(fromProvider),recoveredAt:null};
     }catch(error){console.warn("StorageProvider load failed, checking legacy localStorage.",error);}
+    // A record from a newer build is not a missing record. Falling through to
+    // the legacy reader or a recovery snapshot would present something OLDER
+    // as though it were the current one -- harmless to the file, since the
+    // guard blocks writes, but a lie on screen.
+    if(globalThis.MERIT_SCHEMA_GUARD&&MERIT_SCHEMA_GUARD.readOnly)return{data:blankRoot(),recoveredAt:null};
     const legacy=loadFromLegacyLocalStorage();
     if(legacy){
       // Get it into the real store right away so this migration only ever
@@ -352,6 +387,11 @@
     // races ahead of the async load) would overwrite real data with a blank
     // slate. See the isMigrationRace regression check in scratchpad.
     if(!bootReady)return Promise.resolve();
+    // REFUSING TO READ MEANS REFUSING TO WRITE. The stored record was
+    // written by a newer build; its unrecognised fields are the only copy of
+    // somebody's work, and this build saving its own reduced picture over
+    // them is exactly the destruction the version check exists to prevent.
+    if(globalThis.MERIT_SCHEMA_GUARD&&MERIT_SCHEMA_GUARD.readOnly)return Promise.resolve();
     state.events.forEach(refreshChairOccupancy);
     let payload;
     try{payload=JSON.stringify(state);}
@@ -5758,13 +5798,26 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   openEvent = function(id){const event=state.events.find(e=>e.id===id);if(!event)return;ui.activeEventId=id;ui.screen="workspace";ui.tab=isHistorical(event)?"guests":"command";ui.selectedObjectId=null;ui.selectedObjectIds=[];ui.selectedGuestIds=[];ui.operationalMode=false;ui.undo=[];ui.redo=[];render();};
   duplicateEvent = function(id,open=false){const source=state.events.find(e=>e.id===id);if(!source)return;original.duplicateEvent(id,open);const copy=state.events[0];copy.hotel=copy.hotel||copy.venue||"";copy.salon=copy.salon||"";copy.tables.forEach(t=>{t.chairs=(t.chairs||[]).map((c,i)=>({...c,id:uid("chair"),parentTableId:t.id,seatNumber:i+1,occupancy:null}));});saveState();};
 
+  // What the operator sees when the stored record was written by a newer
+  // build: the reason, both version numbers, and what to do -- not an empty
+  // app with no explanation. Rendered ABOVE everything else and never
+  // dismissed, because every control below it is operating on a blank slate
+  // that will not be saved.
+  function futureSchemaBannerHTML(){
+    const g=globalThis.MERIT_SCHEMA_GUARD;
+    if(!g||!g.readOnly)return"";
+    return`<div class="schema-future-banner" data-schema-future role="alert">${icon("alert")}<div>
+      <b>${esc(t("schema.futureTitle"))}</b>
+      <span>${esc(t("schema.futureBody",{stored:g.storedVersion,build:g.buildVersion}))}</span>
+    </div></div>`;
+  }
   render = function(){
     translateStaticDialogs();
     if(ui.screen==="new-event"){app.innerHTML=setupHTML();bindSetup();return;}
     // No review branch here any more: review renders inside the workspace's
     // content area like every other mode, so the shell above it never leaves.
     if(!state.events.length&&ui.screen!=="events")ui.screen="events";
-    app.innerHTML=ui.screen==="events"?eventsHTML():workspaceHTML(activeEvent());bindV8Common();
+    app.innerHTML=futureSchemaBannerHTML()+(ui.screen==="events"?eventsHTML():workspaceHTML(activeEvent()));bindV8Common();
     if(ui.screen==="workspace"){
       const event=activeEvent(),historical=isHistorical(event);
       // Review mode draws no editable canvas, so bindCanvas() must not run for

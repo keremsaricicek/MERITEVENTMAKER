@@ -2093,3 +2093,15 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .sl-service.muted{color:var(--muted-2)}
 .sl-blind{margin:var(--sp-4) 0 0;padding-top:var(--sp-4);border-top:1px dashed var(--line);
   font-size:10px;line-height:1.5;color:var(--muted-2)}
+
+/* A record written by a newer build. Never dismissible: every control below
+   it is operating on a blank slate that will not be saved, so this is the
+   one fact on screen that matters. Semantic amber, no decoration. */
+.schema-future-banner{display:flex;gap:10px;align-items:flex-start;margin:0 0 14px;padding:12px 14px;
+  border:1px solid var(--amber);border-left-width:3px;border-radius:var(--radius-sm);
+  background:color-mix(in srgb, var(--amber) 8%, transparent);color:var(--text)}
+.schema-future-banner svg{flex:0 0 auto;margin-top:1px;color:var(--amber)}
+.schema-future-banner b{display:block;font-size:13px;margin-bottom:2px}
+.schema-future-banner span{display:block;font-size:12px;color:var(--muted);line-height:1.5}
+/* The activity log's display window states its own total. */
+.audit-more{margin:2px 0 10px;font-size:12px;color:var(--muted)}
