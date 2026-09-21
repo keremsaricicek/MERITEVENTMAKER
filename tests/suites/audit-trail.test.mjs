@@ -199,24 +199,49 @@ export default async function run({ page, checks, baseUrl }) {
     "no EVENT_UPDATED entries exist anywhere in the shared audit log after a session of ordinary mutations",
     noiseCount);
 
-  // --- 8. the shared-log cap is disclosed, not silently hidden --------------
-  // Padding is APPENDED after this event's real entries (not a full
-  // replacement) so its genuine EVENT_CREATED decision survives for the
-  // historical-event check in the next section — only the cap banner itself
-  // is under test here.
-  const capped = await page.evaluate(() => {
+  // --- 8. a loss is DISCLOSED WITH A NUMBER, and only when it happened -----
+  // This section used to assert that crossing 1,000 entries raised a banner
+  // reading "the oldest entries across ALL events MAY have been superseded."
+  // That sentence was the shape of the defect: the log truncated on every
+  // write without counting, so the product could only warn that it might
+  // have lost something. It now keeps what happened (see audit-durability)
+  // and, if a real ceiling is ever reached, says exactly how much went.
+  const beyondOldCap = await page.evaluate(() => {
     const e = state.events.find(x => x.name === "Second Event");
-    const padding = Array.from({ length: 1000 }, (_, i) => ({
-      id: "pad" + i, eventId: e.id, action: "EVENT_UPDATED", detail: {}, at: new Date().toISOString(),
-    }));
-    state.audit = [...state.audit, ...padding];
+    let retention = state.auditRetention || null;
+    for (let i = 0; i < 1000; i++) {
+      const r = MeritAuditTrail.append(state.audit,
+        { id: "pad" + i, eventId: e.id, action: "ARRIVAL_STATUS_CHANGED",
+          detail: { guestId: "g", from: "Not Arrived", to: "Checked In" },
+          at: new Date(Date.now() + i).toISOString() });
+      state.audit = r.log;
+      retention = MeritAuditTrail.recordEviction(retention, r);
+    }
+    state.auditRetention = retention;
     render();
-    return state.audit.length;
+    return { total: state.audit.length, retention, notice: document.querySelector(".audit-cap-notice") ? true : false };
   });
-  checks.ok(capped >= 1000, "fixture really is at or beyond the shared cap", capped);
+  checks.ok(beyondOldCap.total > 1000, "the log now holds more than the old cap ever allowed", beyondOldCap.total);
+  checks.equal(beyondOldCap.retention, null,
+    "and nothing was evicted, so there is no loss to disclose", beyondOldCap.retention);
+  checks.equal(beyondOldCap.notice, false,
+    "so no banner is shown. Warning about a loss that did not happen is the same dishonesty as hiding one that did", beyondOldCap.notice);
   await settle(page);
-  const capNotice = await page.evaluate(() => document.querySelector(".audit-cap-notice")?.textContent.trim() || null);
-  checks.ok(capNotice, "at the shared cap, the trail discloses that older entries across ALL events may be gone", capNotice);
+
+  // Now a real eviction, recorded, and the banner that reports it.
+  const disclosed = await page.evaluate(() => {
+    state.auditRetention = MeritAuditTrail.recordEviction(null,
+      { evicted: 402, oldestDroppedAt: "2026-03-01T10:00:00.000Z" });
+    render();
+    const el = document.querySelector(".audit-cap-notice");
+    return { text: el ? el.textContent.trim() : null, evicted: state.auditRetention.evicted };
+  });
+  checks.ok(disclosed.text && /402/.test(disclosed.text),
+    "when entries really were removed, the trail says HOW MANY — a counted fact, not a 'may have'", disclosed.text);
+  checks.ok(disclosed.text && !/may have/i.test(disclosed.text),
+    "and no longer hedges about whether anything was lost", disclosed.text);
+  await page.evaluate(() => { state.auditRetention = null; render(); });
+  await settle(page);
 
   // --- 9. historical events keep the trail (unlike the Command Center) -----
   await page.evaluate(() => { state.events.find(x => x.name === "Second Event").status = "Completed"; render(); });

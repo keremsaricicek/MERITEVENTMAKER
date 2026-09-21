@@ -166,6 +166,44 @@ Docs corrected to match measured reality: `CLAUDE.md`,
 
 ---
 
+### D. §11 — audit durability — DONE
+
+`state.audit` is ONE root-level log shared by every event, and every write
+ended with `state.audit.slice(0, 1000)`. Two kinds of loss followed. A
+four-thousand-guest event audits one entry per arrival, so a busy door
+erased that same event's `EVENT_CREATED`, its freezes and every teach
+decision made while the room was set up. And because the log is shared, a
+second event's check-ins evicted the FIRST event's decisions.
+
+The product could not say what it had lost: the banner read "the oldest
+entries across ALL events MAY have been superseded" — a warning shaped like
+the defect, because nothing had been counted.
+
+`src/audit-trail.js` (v2) now owns retention: `RETENTION_LIMIT` 100,000 and
+`DISPLAY_LIMIT` 200 are two different constants answering two different
+questions. `append` / `merge` report exactly what they dropped;
+`recordEviction` accumulates it into `state.auditRetention`, which is
+persisted and normalized on load and is never itself evicted. Storage is
+IndexedDB (disk-sized quota), so 1,000 was never a storage constraint — it
+was an arbitrary number below real operational volume, the same error as
+`MAX_TABLES=240`.
+
+`TRAIL()` moved to line 95, above `audit()`: a `const` arrow declared at line
+600 is in its temporal dead zone for any call made while the IIFE body is
+still running, and both `audit()` and `parseRoot()` can run during boot.
+
+New suite `audit-durability` (33 checks). **Mutation-proved twice.** Putting
+`RETENTION_LIMIT` back to 1,000 reproduces the original defect exactly — of
+three events writing 601 entries each, `ev_0` ends with **0** and `ev_1` with
+399, and the suite names it. Collapsing `displayWindow` to return everything
+paints 1,504 rows instead of 200.
+
+`audit-trail`'s cap section is re-specified: it asserted the "may have been
+superseded" banner appears at 1,000 entries. It now asserts no banner when
+nothing was lost, and a banner naming **402** when something was. The
+`audit.capNotice` key is removed — the product can no longer produce that
+sentence.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |

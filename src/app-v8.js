@@ -79,12 +79,27 @@
     loadLayer:false
   });
 
-  function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[], lastBackupAt:null}; }
+  function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[], auditRetention:null, lastBackupAt:null}; }
   function isHistorical(event){ return !!event && (event.status === "Completed" || (!!event.date && event.date < todayKey())); }
+  // The one writer of the shared activity log. It used to end with
+  // `state.audit.slice(0, 1000)` on EVERY write -- a shared log, so a busy
+  // door erased its own event's opening entries and the previous event's
+  // history with them, and the screen could only warn that something "may
+  // have" gone. Retention now lives in src/audit-trail.js, which reports
+  // exactly what it dropped; the count is accumulated into
+  // state.auditRetention, which is persisted and never itself evicted.
+  // Declared HERE, above its earliest caller, not beside the trail
+  // rendering further down: a `const` arrow is in its temporal dead zone
+  // until the IIFE body reaches it, so audit() and parseRoot() -- both of
+  // which can run during boot -- would have thrown ReferenceError.
+  const TRAIL=()=>globalThis.MeritAuditTrail||null;
   function audit(event, action, detail={}){
-    state.audit ||= [];
-    state.audit.unshift({id:uid("audit"), eventId:event?.id||null, action, detail, at:nowISO()});
-    state.audit = state.audit.slice(0, 1000);
+    const T=TRAIL();
+    const entry={id:uid("audit"), eventId:event?.id||null, action, detail, at:nowISO()};
+    if(!T){state.audit=[entry,...(state.audit||[])];return;}
+    const r=T.append(state.audit||[],entry);
+    state.audit=r.log;
+    state.auditRetention=T.recordEviction(state.auditRetention||null,r);
   }
   function canMutate(event, action="change this event"){
     if(!event) return false;
@@ -212,6 +227,12 @@
   function parseRoot(raw){
     const parsed=JSON.parse(raw); parsed.version=8; parsed.schemaVersion=8;
     parsed.events=(parsed.events||[]).map(migrateEvent); parsed.verifiedExamples ||= []; parsed.analyses ||= []; parsed.audit ||= [];
+    // Re-normalized on every load, like freezes and handover notes: a
+    // hand-edited backup must not be able to claim a loss that never
+    // happened, or to lose the record of one that did.
+    parsed.auditRetention=globalThis.MeritAuditTrail
+      ?MeritAuditTrail.normalizeRetention(parsed.auditRetention)
+      :(parsed.auditRetention||null);
     // Added with training-data capture. An install from before it simply has
     // no examples yet -- there is nothing to reconstruct, because the crops
     // it would have needed were never taken.
@@ -581,7 +602,6 @@
   // never trusting a stale copy — a deleted guest's own audit line still
   // needs to read sensibly, so it falls back to the id it can no longer
   // resolve rather than throwing.
-  const TRAIL=()=>globalThis.MeritAuditTrail||null;
   function resolvedAuditTrail(event){
     const T=TRAIL();
     if(!T||!event)return[];
@@ -3005,13 +3025,30 @@
   // operator most wants it, unlike the Command Center. Newest first, exactly
   // the order state.audit already keeps; nothing here re-sorts or groups.
   function auditTrailHTML(event){
+    const T=TRAIL();
     const trail=resolvedAuditTrail(event);
-    const atCap=(state.audit||[]).length>=1000;
-    return`<div class="mx-section"><div class="mx-section-head"><h2>${t("audit.title")}</h2><span class="count">${trail.length}</span></div>
+    // HOW MANY ROWS TO PAINT is a rendering decision and nothing else. It
+    // used to be answered by DELETING entries at 1,000, which is why this
+    // window and the retention ceiling are now two different numbers from
+    // two different constants. The window always states its own total --
+    // a window that does not reads as the whole truth.
+    const w=T?T.displayWindow(trail):{rows:trail,total:trail.length,hidden:0};
+    // WHAT WAS ACTUALLY LOST, if anything. The old banner said the oldest
+    // entries "may have been superseded", because nothing had counted them.
+    // This one appears only when something really went, and says how much
+    // and from when.
+    const r=state.auditRetention;
+    const lost=r&&r.evicted
+      ?`<p class="audit-cap-notice">${esc(r.oldestDroppedAt
+          ?t("audit.evictedSince",{n:r.evicted,since:fmtDate(String(r.oldestDroppedAt).slice(0,10))})
+          :t("audit.evicted",{n:r.evicted}))}</p>`
+      :"";
+    return`<div class="mx-section"><div class="mx-section-head"><h2>${t("audit.title")}</h2><span class="count">${w.total}</span></div>
       <p class="audit-question">${t("audit.question")}</p>
-      ${atCap?`<p class="audit-cap-notice">${t("audit.capNotice")}</p>`:""}
-      ${trail.length
-        ?`<ul class="audit-trail">${trail.map(entry=>`<li class="audit-row"><span class="audit-text">${esc(auditTrailText(event,entry))}</span><span class="audit-when">${esc(relativeTime(entry.at))}</span></li>`).join("")}</ul>`
+      ${lost}
+      ${w.hidden?`<p class="audit-more">${esc(t("audit.showingNewest",{shown:w.rows.length,total:w.total}))}</p>`:""}
+      ${w.rows.length
+        ?`<ul class="audit-trail">${w.rows.map(entry=>`<li class="audit-row"><span class="audit-text">${esc(auditTrailText(event,entry))}</span><span class="audit-when">${esc(relativeTime(entry.at))}</span></li>`).join("")}</ul>`
         :`<div class="mx-empty" style="padding:28px">${t("audit.none")}</div>`}
     </div>`;
   }
@@ -5585,7 +5622,18 @@
     }
     const migrated=migrateEvent(event);
     state.events.unshift(migrated);
-    state.audit=[...auditEntries,...(state.audit||[])].slice(0,1000);
+    // Merge, never truncate. This line ran slice(0,1000) over the
+    // concatenation, so importing an event whose history was larger than the
+    // cap threw most of it away AND evicted the host install's own decisions
+    // to make room for what survived.
+    {
+      const T=TRAIL();
+      if(T){
+        const r=T.merge(state.audit||[],auditEntries);
+        state.audit=r.log;
+        state.auditRetention=T.recordEviction(state.auditRetention||null,r);
+      } else state.audit=[...auditEntries,...(state.audit||[])];
+    }
     ui.screen="events";ui.activeEventId=null;
     saveState();render();
     toast(t("eventPackage.importedToast",{name:migrated.name}),"success");

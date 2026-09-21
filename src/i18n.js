@@ -1179,7 +1179,15 @@
     "audit.unknownGuest": { en: "a guest no longer on this event", tr: "artık bu etkinlikte olmayan bir misafir" },
     "audit.unknownTable": { en: "a table no longer on this plan", tr: "artık bu planda olmayan bir masa" },
     "audit.noteGone": { en: "(note no longer available)", tr: "(not artık mevcut değil)" },
-    "audit.capNotice": { en: "The shared activity log is at its limit — the oldest entries across ALL events may have been superseded and are no longer available here.", tr: "Paylaşılan işlem günlüğü sınırına ulaştı — TÜM etkinliklerdeki en eski kayıtların yerini yenileri almış olabilir ve burada artık görünmeyebilirler." },
+    // The activity log's display window states its own total. Distinct from
+    // the eviction notice below: this one is about what is on screen, that
+    // one about what is no longer stored.
+    "audit.showingNewest": { en: "Showing the newest {shown} of {total} decisions.", tr: "{total} işlemin en yeni {shown} tanesi gösteriliyor." },
+    // Shown ONLY when entries were really removed, with the count. Replaces a
+    // banner that could only say the oldest entries "may have been"
+    // superseded, because nothing had counted them.
+    "audit.evicted": { en: "{n} older entries were removed to keep the activity log within its limit.", tr: "İşlem günlüğü sınırı içinde kalsın diye {n} eski kayıt kaldırıldı." },
+    "audit.evictedSince": { en: "{n} older entries were removed to keep the activity log within its limit — it now begins at {since}.", tr: "İşlem günlüğü sınırı içinde kalsın diye {n} eski kayıt kaldırıldı — günlük artık {since} tarihinden başlıyor." },
     "audit.eventCreatedBlank": { en: "Event created, blank", tr: "Etkinlik oluşturuldu, boş" },
     "audit.eventCreatedFromPlan": { en: "Event created from an uploaded floor plan", tr: "Etkinlik yüklenen bir kat planından oluşturuldu" },
     "audit.guestDeleted": { en: "Guest record deleted: {name}", tr: "Misafir kaydı silindi: {name}" },
