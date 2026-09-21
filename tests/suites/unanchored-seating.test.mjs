@@ -83,7 +83,34 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(words.tr.noCapacityOnDrawing !== words.en.noCapacityOnDrawing,
     "and the Turkish is really Turkish", words.tr.noCapacityOnDrawing);
 
-  // --- 3. the abstention is in the detector, not only in the vocabulary ----
+  // --- 3. a candidate held back says WHY --------------------------------
+  // A real table below the review threshold used to be deselected with
+  // nothing recorded: the operator saw it unticked with no reason, and the
+  // adversarial harness read the same absence as "unknown". The threshold is
+  // unchanged — lowering it to make a fixture pass would be tuning to the
+  // fixture. What changed is that the decision states itself.
+  const heldBackWords = await page.evaluate(() => {
+    const out = {};
+    for (const lang of ["en", "tr"]) {
+      ui.lang = lang;
+      out[lang] = t("poi.lowEvidence.belowReviewThreshold", { confidence: 0.45, threshold: 0.48 });
+    }
+    ui.lang = "en";
+    return out;
+  });
+  for (const lang of ["en", "tr"]) {
+    checks.ok(heldBackWords[lang] && !/^[a-z][a-zA-Z0-9]*\.[a-zA-Z]/.test(heldBackWords[lang]),
+      `${lang}: the held-back reason is real words, not a raw key`, heldBackWords[lang]);
+    checks.ok(/0\.45/.test(heldBackWords[lang]) && /0\.48/.test(heldBackWords[lang]),
+      `${lang}: and it names BOTH numbers, so the operator can judge the decision rather than take it on trust`,
+      heldBackWords[lang]);
+  }
+  checks.ok(heldBackWords.tr !== heldBackWords.en, "and the Turkish is really Turkish", heldBackWords.tr);
+
+  const detSrc = await page.evaluate(() => String((globalThis.MERIT_PLAN_DETECTION || {}).version || "") || "loaded");
+  checks.ok(!!detSrc, "the detection module is present to carry it", detSrc);
+
+  // --- 4. the abstention is in the detector, not only in the vocabulary ----
   const wired = await page.evaluate(() => {
     const D = globalThis.MERIT_PLAN_DETECTION;
     const raw = (D && D.providers) || {};

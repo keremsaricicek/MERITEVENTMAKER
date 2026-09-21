@@ -380,9 +380,22 @@ table, `standalone: 0`, so the representation classifier concludes PHYSICAL
 at a 100% association rate — the phantom tables supplied the anchors that
 justified the phantom chairs, which justified keeping both.
 
-`a2-mixed-families` — not yet diagnosed. 7 real tables are detected and then
-**held back as unknown** while 23 phantoms are kept, which is the reverse of
-the abstention the product is supposed to have.
+`a2-mixed-families` — **diagnosed, one half fixed, still FAIL.** The
+held-back 7 were deselected by `selected: s.confidence >= confidenceThreshold()`
+and nothing recorded the decision, so the operator saw a real table unticked
+with no reason and the harness read the same absence as `unknown`. The
+candidate now carries `lowEvidence: {reason: "belowReviewThreshold",
+confidence, threshold}`, surfaced in both languages with BOTH numbers so the
+decision can be judged rather than taken on trust. Measured:
+`{"unknown": 7}` → `{"belowReviewThreshold": 7}`.
+
+**The threshold is unchanged, and the fixture still FAILs.** Lowering 0.48
+to make those seven tables pass would be tuning to a fixture, which this
+contract forbids. The harness fails on `heldBack > 0` whatever the reason,
+and a2's second FAIL line — 23 phantom tables against 21 real ones — is
+untouched. What is fixed is the silence, not the verdict, and saying
+otherwise would be the exact "true and misleading in the same sentence"
+this skill exists to prevent.
 
 Neither open FAIL is "accepted" — they are recorded here as in progress,
 which is the state the reliability contract requires instead of a silent

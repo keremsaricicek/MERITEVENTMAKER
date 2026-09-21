@@ -314,6 +314,10 @@
     "relation.ambiguousTitle": { en: "Uncertain seating", tr: "Belirsiz oturum" },
     "relation.ambiguous": { en: "{n} seat(s) here sit almost exactly between this table and a neighbour.", tr: "Buradaki {n} koltuk bu masa ile komşusu arasında neredeyse tam ortada duruyor." },
     "relation.ambiguousWith": { en: "{n} seat(s) here could belong to the {other} beside it instead.", tr: "Buradaki {n} koltuk yanındaki {other} nesnesine de ait olabilir." },
+    // Held back by the review threshold itself. Distinct from a reason about
+    // the OBJECT: this one is about how sure the reader is, and it names both
+    // numbers so the operator can judge rather than take it on trust.
+    "poi.lowEvidence.belowReviewThreshold": { en: "Read with {confidence} confidence, below the {threshold} needed to place it on the floor plan unreviewed. It is still here to accept or reject.", tr: "{confidence} güvenle okundu; kat planına incelenmeden yerleştirilmesi için gereken {threshold} eşiğinin altında. Kabul veya reddetmeniz için burada duruyor." },
     "poi.lowEvidence.seatsInsideBody": { en: "Every seat attached to this object is inside it. A table's seats stand around it, so this is more likely a seat than a table. Nothing was deleted — confirm it to include it.", tr: "Bu nesneye bağlı tüm koltuklar içinde. Bir masanın koltukları etrafında durur, bu yüzden bu bir masadan çok bir koltuk olabilir. Hiçbir şey silinmedi — dahil etmek için onaylayın." },
     "contradiction.severity.high": { en: "serious", tr: "ciddi" },
     "contradiction.severity.medium": { en: "worth checking", tr: "kontrol edilmeli" },

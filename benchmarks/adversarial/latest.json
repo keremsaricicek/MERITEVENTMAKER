@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-09-21T18:01:17.739Z",
+  "ranAt": "2026-09-21T18:20:15.329Z",
   "realVenue": false,
   "note": "SYNTHETIC ADVERSARIAL FIXTURES — NOT REAL VENUES. These scores are never mixed into real-plan aggregates. REAL DISTINCT VENUE PLANS: 1. CROSS-VENUE GENERALIZATION: NOT VERIFIED.",
   "refusals": [],
@@ -123,7 +123,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 993,
+      "detectionMs": 1085,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -150,7 +150,7 @@
         "f1": 0.646,
         "heldBack": 7,
         "heldBackReasons": {
-          "unknown": 7
+          "belowReviewThreshold": 7
         },
         "missedIds": []
       },
@@ -263,13 +263,13 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 5
       },
-      "detectionMs": 1210,
+      "detectionMs": 1193,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
         "status": "FAIL",
         "fail": [
-          "7 real table(s) detected then held back (unknown x7)",
+          "7 real table(s) detected then held back (belowReviewThreshold x7)",
           "more phantom tables than real ones: 23 FP against 21 GT (precision 0.477)"
         ],
         "partial": [
@@ -388,7 +388,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 1099,
+      "detectionMs": 1006,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -517,7 +517,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 1251,
+      "detectionMs": 1279,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -626,7 +626,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 816,
+      "detectionMs": 813,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -747,7 +747,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 6
       },
-      "detectionMs": 1142,
+      "detectionMs": 1098,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -880,7 +880,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 1168,
+      "detectionMs": 1199,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -1021,7 +1021,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 2962,
+      "detectionMs": 2439,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {

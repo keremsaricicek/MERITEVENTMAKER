@@ -2284,6 +2284,20 @@
         return{id:uid("candidate"),kind:"table",type:bistro.length?"bistro":s.shape.type,
           typeEvidence:bistro.length?bistro:null,...toPercentBox(s.obb),rotation:s.obb.rotation,
           confidence:s.confidence,status:"unreviewed",selected:s.confidence>=confidenceThreshold(),
+          // WHY IT WAS HELD BACK, recorded where the decision is made. A
+          // candidate below the review threshold was deselected silently:
+          // the operator saw it unticked with nothing saying why, and the
+          // adversarial harness read the same absence as "unknown". An
+          // abstention the product cannot explain is a silent absence, which
+          // is the one thing the reliability contract rules out. The
+          // THRESHOLD IS UNCHANGED -- lowering it to make a fixture pass
+          // would be tuning to the fixture; this states the reason for the
+          // decision the threshold already made. A more specific reason set
+          // further down (seatsInsideBody) is applied after this and wins.
+          lowEvidence:s.confidence>=confidenceThreshold()?null:{
+            reason:"belowReviewThreshold",
+            confidence:Number(s.confidence.toFixed(2)),
+            threshold:Number(confidenceThreshold().toFixed(2))},
           chairDetections:seatIndexes.map(ci=>{
             const obb=chairOBB(chairs[ci]),rel=chairRelation.get(ci);
             return{id:uid("candidate-chair"),x:obb.cx/width*100,y:obb.cy/height*100,
