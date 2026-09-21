@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-09-21T07:12:11.823Z",
+  "ranAt": "2026-09-21T08:34:21.432Z",
   "realVenue": false,
   "note": "SYNTHETIC ADVERSARIAL FIXTURES — NOT REAL VENUES. These scores are never mixed into real-plan aggregates. REAL DISTINCT VENUE PLANS: 1. CROSS-VENUE GENERALIZATION: NOT VERIFIED.",
   "refusals": [],
@@ -123,7 +123,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 779,
+      "detectionMs": 1055,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -263,7 +263,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 5
       },
-      "detectionMs": 1020,
+      "detectionMs": 934,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -388,7 +388,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 769,
+      "detectionMs": 794,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -517,7 +517,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 927,
+      "detectionMs": 955,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -630,7 +630,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 631,
+      "detectionMs": 618,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -755,7 +755,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 6
       },
-      "detectionMs": 807,
+      "detectionMs": 808,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -888,7 +888,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 920,
+      "detectionMs": 1000,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -1031,7 +1031,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 2131,
+      "detectionMs": 2086,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {

@@ -29,7 +29,7 @@ re-measuring** — that is the failure mode this repo has already had twice.
 | Suites / checks | 65 / 2,080 | `npm run test:all` |
 | Offline verification | 27 / 27 | `npm run verify:offline` |
 | Detector baseline | no regressions, per field per plan | `npm run benchmark:baseline` |
-| Adversarial | 1 PASS · 4 PARTIAL · **3 FAIL** | `npm run benchmark:adversarial` |
+| Adversarial | 1 PASS · 4 PARTIAL · **3 FAIL** (re-measured at `02edac7`; see note) | `npm run benchmark:adversarial` |
 | `app-v8.js` | 5,740 lines | `wc -l src/app-v8.js` |
 | `plan-detection-classical.js` | 2,857 lines — transitional | `wc -l src/plan-detection-classical.js` |
 | `aria-*` / `role=` | **23 / 8** | `grep -o 'aria-[a-z]*' src/*.js index.html \| wc -l` |
@@ -40,6 +40,35 @@ re-measuring** — that is the failure mode this repo has already had twice.
 | Accessibility suites | **0** | `ls tests/suites \| grep -iE 'access\|a11y'` |
 | Security suites | **0** | `ls tests/suites \| grep -iE 'secur\|xss'` |
 | Resilience suites | **0** | `ls tests/suites \| grep -iE 'resilien'` |
+
+### Adversarial re-measurement, `02edac7`
+
+Re-run at this HEAD three times during the programme's opening: **1 PASS,
+4 PARTIAL, 3 FAIL**, stable. The table above was already correct and needed
+no correction.
+
+A figure of 1 PASS / 5 PARTIAL / 2 FAIL was cited from an external
+verification. It does **not** reproduce at this HEAD. Rather than adopt a
+number this repository cannot produce, the measured result stands and the
+discrepancy is recorded here. Whoever holds the external run can resolve it
+by naming the commit it was taken at.
+
+Per-fixture reasons at `02edac7`, which are the programme's §7 targets:
+
+| Fixture | Verdict | Why |
+|---|---|---|
+| `a1-chair-under-table` | PARTIAL | 48 chairs seated at no table; table recall 0.500 |
+| `a2-mixed-families` | **FAIL** | 7 real tables detected then **held back** as unknown; 23 FP vs 21 GT (precision 0.477) |
+| `a3-no-anchors` | PASS | — |
+| `a4-multi-room` | PARTIAL | bistro typed 0/8; chair recall 0.586 |
+| `a5-architecture-only` | **FAIL** | **8 chairs proposed on a drawing with no furniture**; expected `capacityUnknown` fact absent |
+| `a6-architectural-confusion` | **FAIL** | 46 FP vs 8 GT (precision 0.148) — architecture read as furniture |
+| `a7-dense-overlap` | PARTIAL | bistro typed 0/7; table recall 0.724; chair recall 0.685 |
+| `a8-large-venue` | PARTIAL | table recall **0.741 = 240/324** — the `MAX_TABLES=240` cap, arithmetically; chair recall 0.074 |
+
+`a8`'s root cause is **proven rather than suspected**: 324 ground-truth
+tables, 240 detected, and 240/324 is exactly 0.7407. That is the hard cap in
+`plan-detection-classical.js`, not a detection weakness.
 
 ## The five things the programme must decide, not discover
 

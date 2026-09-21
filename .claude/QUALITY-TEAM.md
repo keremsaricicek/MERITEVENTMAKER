@@ -19,7 +19,7 @@ The dimensions, the scoring scale and the anti-inflation rules live in
 | 6 | Performance | `performance-qa-engineer` | `merit-performance-hardening`, `web-performance` | `performance-qa-engineer` | median + p95 over ≥3 runs at full load |
 | 7 | AI honesty | `computer-vision-engineer` | `merit-plan-intelligence` | `computer-vision-engineer` | `plan-detection-boundary` asserts `trainedModel:false` live |
 | 8 | Plan intelligence reliability | `computer-vision-engineer` | `merit-plan-reliability`, `merit-plan-intelligence`, `senior-computer-vision` | `computer-vision-engineer` | zero FAIL fixtures, or each accepted in writing with an owner |
-| 9 | UI / UX quality | `premium-ui-director` (direction) · `visual-qa-reviewer` (verification) | `merit-ui-quality-gates`, `merit-ui-constitution`, `product-design-and-ux` | `visual-qa-reviewer` | rendered at 3 viewports × 2 languages; task completion counted |
+| 9 | UI / UX quality | `premium-ui-director` | `merit-ui-quality-gates`, `merit-ui-constitution`, `product-design-and-ux` | `visual-qa-reviewer` | rendered at 3 viewports × 2 languages; task completion counted |
 | 10 | Accessibility | `accessibility-guardian` | `merit-accessibility-hardening`, `web-accessibility` | `accessibility-guardian` | every operator task completable by keyboard; no trap |
 | 11 | Localization | `localization-guardian` | `merit-localization-hardening` | `localization-guardian` | `i18n` · `i18n-key-integrity` · hardcoded-English scan |
 | 12 | Error handling / resilience | `resilience-engineer` | `merit-resilience-hardening` | `resilience-engineer` | every failure path meets DETECT/CONTAIN/INFORM/RECOVER/PRESERVE |
@@ -53,6 +53,12 @@ that has caused, or would cause, two agents to touch the same thing.
 - **Accessibility vs. UI direction** — `accessibility-guardian` owns that a
   dialog traps and restores focus. `premium-ui-director` owns what it looks
   like. Neither ships without the other.
+- **UI owner vs. UI verifier** — area 9 has ONE owner,
+  `premium-ui-director`. `visual-qa-reviewer` is the **measurement owner**:
+  it produces the rendered evidence and can refuse to sign it off, but it
+  does not set direction and does not score the dimension. An earlier
+  version of this table listed both in the owner cell, which contradicted
+  the one-owner rule this file states.
 - **Accessibility vs. localization** — accessibility owns the `aria-label`
   being correct; localization owns it being Turkish.
 - **AI honesty vs. plan reliability** — honesty is *never claiming a model
