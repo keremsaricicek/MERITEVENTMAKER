@@ -70,14 +70,21 @@ export default async function run({ page, checks, baseUrl }) {
   await addTables(page, { quantity: 4 });
 
   // A room with deliberately different shapes: one table nearly full, one with
-  // exactly the party's size free, one empty, one with no physical seats.
+  // exactly the party's size free, one empty, and one SYMBOLIC — a table whose
+  // plan drew no chairs but which carries a printed capacity of eight. That
+  // last one used to be excluded here on the grounds that it was "a symbol,
+  // not a place to sit". It is a place to sit: Seating assigns guests to it,
+  // so an advisor that refuses to offer it recommends nothing at all on a
+  // whole class of real venue plans. The genuine hard stop — a table with no
+  // seats whatsoever — is asserted against the engine below, because the
+  // shell clamps capacity to at least one and cannot express it.
   const room = await page.evaluate(() => {
     const e = state.events[0];
     e.tables[0].number = "T01"; e.tables[0].capacity = 8; e.tables[0].zone = "VIP FRONT";
     e.tables[1].number = "T02"; e.tables[1].capacity = 8; e.tables[1].zone = "MAIN FLOOR";
     e.tables[2].number = "T03"; e.tables[2].capacity = 8; e.tables[2].zone = "MAIN FLOOR";
     e.tables[3].number = "T04"; e.tables[3].capacity = 8; e.tables[3].zone = "MAIN FLOOR";
-    e.tables[3].hasPhysicalSeats = false;    // a symbol, not a place to sit
+    e.tables[3].hasPhysicalSeats = false;    // symbolic: no chairs drawn, 8 printed seats
     e.guests = [
       // The party being seated: four pax, VIP, invited by Kerem.
       { id: "g_party", name: "Mehmet Yılmaz", additionalGuests: 3, pax: 4, vip: "VVIP",
@@ -116,22 +123,29 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(!numbers.includes("T01"),
     "a table with only three seats free is NOT offered for a four-pax record — the party is not split",
     numbers);
-  checks.ok(!numbers.includes("T04"),
-    "and a table with no physical seats is not a place to sit", numbers);
+  checks.ok(numbers.includes("T04"),
+    "and a SYMBOLIC table is offered like any other — its plan drew no chairs, but eight people can sit at it and the seating screen will seat them there",
+    numbers);
 
   // Asserted against the engine too, so a UI that merely hides T01 cannot pass.
   const engine = await page.evaluate(() => {
     const e = state.events[0];
+    // Plus one table that genuinely cannot hold anybody: no seats at all.
+    const noSeats = { id: "t_zero", number: "T09", capacity: 0, zone: "MAIN FLOOR" };
     const r = MeritSeatingAdvisor.recommend({
-      guest: e.guests.find(g => g.id === "g_party"), tables: e.tables, guests: e.guests });
+      guest: e.guests.find(g => g.id === "g_party"), tables: [...e.tables, noSeats], guests: e.guests });
     return { offered: r.options.map(o => o.number),
       blocked: r.blocked.map(b => ({ number: b.number, why: b.why })),
       statement: r.statement };
   });
   checks.ok(engine.blocked.some(b => b.number === "T01" && b.why === "NOT_ENOUGH_SEATS"),
     "the engine says WHY T01 was left out, rather than silently dropping it", engine.blocked);
-  checks.ok(engine.blocked.some(b => b.number === "T04" && b.why === "NO_PHYSICAL_SEATS"),
-    "and why T04 was", engine.blocked);
+  checks.ok(!engine.blocked.some(b => b.number === "T04"),
+    "T04 is not blocked at all — 'the drawing showed no chair' is not a reason a guest cannot sit somewhere",
+    engine.blocked);
+  checks.ok(engine.blocked.some(b => b.number === "T09" && b.why === "NO_SEATS"),
+    "while a table with NO SEATS is blocked, and says so — that is the real hard stop, and it is about capacity, not about what the drawing depicted",
+    engine.blocked);
 
   // --- 3. every option carries reasons, in words ---------------------------
   const t02 = panel.options.find(o => o.number.replace(/\s+/g, "") === "T02");
@@ -259,7 +273,9 @@ export default async function run({ page, checks, baseUrl }) {
     const t = e.tables.find(x => x.number === "T02");
     const taken = e.guests.filter(g => g.assignment && g.assignment.tableId === t.id)
       .reduce((n, g) => n + Math.max(1, g.pax || 1), 0);
-    const chairs = e.tables.filter(x => x.hasPhysicalSeats !== false && x.capacity > 0)
+    // Operational capacity — every seat in the room, the same question
+    // MeritSeatModel.seatingCapacity() answers for the app.
+    const chairs = e.tables.filter(x => x.capacity > 0)
       .reduce((n, x) => n + x.capacity, 0);
     const seatedPax = e.guests.reduce((n, g) => n + (g.assignment ? Math.max(1, g.pax || 1) : 0), 0);
     return { target: `${taken}/${t.capacity}`, reserve: String(chairs - seatedPax) };
@@ -303,6 +319,12 @@ export default async function run({ page, checks, baseUrl }) {
       invitedBy: "Other", notes: "", planningStatus: "Confirmed", arrivalStatus: "Not Arrived",
       assignment: { tableId: e.tables[2].id, seats: [0,1,2,3,4,5,6,7], locked: false },
       createdAt: new Date().toISOString() });
+    // The symbolic table is part of the room now, so filling the room means
+    // filling it too.
+    e.guests.push({ id: "g_hog2", name: "Hog Party Two", additionalGuests: 7, pax: 8, vip: "Standard",
+      invitedBy: "Other", notes: "", planningStatus: "Confirmed", arrivalStatus: "Not Arrived",
+      assignment: { tableId: e.tables[3].id, seats: [0,1,2,3,4,5,6,7], locked: false },
+      createdAt: new Date().toISOString() });
     touchEvent(e); render();
   });
   await selectGuest(page, "g_party");
@@ -344,7 +366,7 @@ export default async function run({ page, checks, baseUrl }) {
   // --- 10. no raw key or enum in either language ---------------------------
   await page.evaluate(() => {
     const e = state.events[0];
-    e.guests = e.guests.filter(g => g.id !== "g_hog");
+    e.guests = e.guests.filter(g => g.id !== "g_hog" && g.id !== "g_hog2");
     e.guests.find(g => g.id === "g_party").assignment = null;
     touchEvent(e); render();
   });

@@ -1016,6 +1016,10 @@
     "cc.metric.assigned": { en: "Seated", tr: "Yerleştirildi" },
     "cc.metric.unassigned": { en: "Unseated", tr: "Yerleştirilmedi" },
     "cc.metric.chairs": { en: "Physical chairs", tr: "Fiziksel sandalye" },
+    // Operational capacity, not drawn chairs -- a symbolic plan has the
+    // second and not the first, and the Command Center's seating block is
+    // asking how many people the room holds.
+    "cc.metric.seats": { en: "Seats", tr: "Koltuk" },
     "cc.goto.review": { en: "Open review", tr: "İncelemeyi aç" },
     "cc.goto.floor": { en: "Open Floor Plan", tr: "Kat Planını aç" },
     "cc.goto.seating": { en: "Open Seating Plan", tr: "Oturma Planını aç" },

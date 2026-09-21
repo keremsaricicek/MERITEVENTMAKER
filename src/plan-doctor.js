@@ -155,11 +155,24 @@
     const byId = new Map(tables.map((t) => [t.id, t]));
     const seated = guests.filter((g) => g && g.assignment && g.assignment.tableId);
     const totalPax = guests.reduce((n, g) => n + paxOf(g), 0);
-    // Chairs that can actually hold somebody. A table marked as having no
-    // physical seats is a symbol on a drawing, not a place to sit, and counting
-    // it would turn "we are 30 chairs short" into "we have room".
-    const physical = tables.filter((t) => t.hasPhysicalSeats !== false && num(t.capacity) > 0);
-    const chairs = physical.reduce((n, t) => n + num(t.capacity), 0);
+    // SEATS THAT CAN ACTUALLY HOLD SOMEBODY. Logical seats on tables that
+    // can seat: this is what "the plan carries N chairs" means to an
+    // operator, and it is the number the seating screen enforces.
+    //
+    // This filter also required `hasPhysicalSeats !== false`, on the
+    // reasoning that a table with no drawn chairs is "a symbol on a
+    // drawing, not a place to sit". That reasoning is wrong about the
+    // product: a numbered circle with "10 PAX" printed beside it IS a
+    // place to sit, assignGuestGroup() seats ten people at it, and the
+    // consequence was that every event built from a symbolic plan opened
+    // with "the plan carries no chairs" BLOCKING while the same plan was
+    // seating guests without complaint. Two different answers about one
+    // event, which is the one thing this layer exists to prevent.
+    const canSeat = (t) => (globalThis.MeritSeatModel
+      ? globalThis.MeritSeatModel.canSeat(t)
+      : !!t && num(t.capacity) > 0);
+    const seatableTables = tables.filter(canSeat);
+    const chairs = seatableTables.reduce((n, t) => n + num(t.capacity), 0);
 
     // ---- BLOCKING: what would actually go wrong tonight ---------------------
 
@@ -391,10 +404,10 @@
     // operator needs to be told which of those two evenings they are in.
     // Chairs an unavailable table removes from tonight entirely — distinct
     // from a freeze's held chairs, which still exist and could open later.
-    const unavailableSeatable = physical.filter((t) => unavailableIds.has(t.id));
+    const unavailableSeatable = seatableTables.filter((t) => unavailableIds.has(t.id));
     const lostChairs = unavailableSeatable.reduce((n, t) => n + num(t.capacity), 0);
 
-    const frozenSeatable = physical.filter((t) => frozenIds.has(t.id));
+    const frozenSeatable = seatableTables.filter((t) => frozenIds.has(t.id));
     const heldChairs = frozenSeatable.reduce((n, t) => n + num(t.capacity), 0);
     const heldSeated = seated.filter((g) => frozenIds.has(g.assignment.tableId))
       .reduce((n, g) => n + paxOf(g), 0);
@@ -500,8 +513,8 @@
 
     // WHAT AN UNAVAILABLE TABLE HAS REMOVED. The spare-capacity row above
     // counts every seatable chair in the room, and a table taken out of
-    // service still counts as "seatable" by construction (it has physical
-    // seats; they just cannot be used tonight) — so an operator reading
+    // service still counts as "seatable" by construction (it has seats;
+    // they just cannot be used tonight) — so an operator reading
     // "40 chairs are unassigned" without this line would go looking for
     // chairs that do not exist for this event at all. Distinct from a freeze:
     // those chairs still exist and could open later the same night.

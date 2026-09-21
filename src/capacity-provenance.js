@@ -1,8 +1,8 @@
 // WHY DOES THIS TABLE HAVE THIS CAPACITY NUMBER?
 //
-// `table.capacity` and `table.hasPhysicalSeats`/`chair.physical` (see the
-// syncTableChairs() comment in app-v8.js) answer "how many seats, and are
-// they real chairs" -- neither says WHERE the number came from. A capacity
+// `table.capacity` and `table.chairs` (see the syncTableChairs() comment in
+// app-v8.js) answer "how many seats, and how many chairs did the plan
+// actually draw" -- neither says WHERE the capacity number came from. A capacity
 // read by counting confirmed chair detections is a different kind of fact
 // than one a person typed into the seat-count field, and an operator
 // deciding whether to trust a number needs to know which one they are

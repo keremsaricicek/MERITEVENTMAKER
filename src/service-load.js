@@ -65,7 +65,11 @@
 
   const paxOf = (g) => Math.max(1, Number(g && g.pax) || 1);
   const num = (v) => (typeof v === "number" && isFinite(v) ? v : 0);
-  const seatable = (t) => t && t.hasPhysicalSeats !== false && num(t.capacity) > 0;
+  // Logical seats, not drawn chairs -- defined in src/seat-model.js, which
+  // says why. The fallback keeps this module usable on its own.
+  const seatable = (t) => (globalThis.MeritSeatModel
+    ? globalThis.MeritSeatModel.canSeat(t)
+    : !!t && num(t.capacity) > 0);
   const centre = (o) => ({ x: num(o.x) + num(o.w) / 2, y: num(o.y) + num(o.h) / 2 });
 
   function bandOf(pax, capacity) {

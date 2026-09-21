@@ -141,20 +141,43 @@ export default async function run({ checks, repoRoot }) {
   const files = appSourceFiles(repoRoot);
   checks.require(files.length > 25, "index.html's script list was read for ordering", files.length);
 
-  // One probe per file: a slice from the middle, clear of the header comment
-  // every file starts with, long enough to be unique to that file.
-  const probes = files.map((rel) => {
-    const src = fs.readFileSync(path.join(repoRoot, rel), "utf8");
+  // One probe per file: a 160-character window that occurs EXACTLY ONCE in
+  // the artifact, searched for rather than assumed.
+  //
+  // This used to take the slice at each file's midpoint and require that to
+  // be unique, which made the ordering check depend on luck. Two modules
+  // that legitimately share a short passage — the same two-line delegation
+  // to a module both of them consume, say — collide the moment one file's
+  // midpoint happens to land on it, and adding six lines of comment
+  // anywhere above the midpoint is enough to move it there. That reported a
+  // BUNDLE ORDER failure when nothing about the order had changed.
+  //
+  // The positive control it was reaching for is still asserted, and is now
+  // the honest version of it: every source file must contain SOME window
+  // that identifies it uniquely. A file with none really is
+  // indistinguishable from another inside the bundle, and the ordering
+  // check below really would be arbitrary for it.
+  const WINDOW = 160;
+  const uniqueProbe = (src) => {
     const mid = Math.floor(src.length / 2);
-    return { rel, probe: src.slice(mid, mid + 160) };
-  });
+    // Walk outward from the middle: away from the header comment every file
+    // opens with, and away from the closing boilerplate.
+    for (let step = 0; step * 64 < src.length; step++) {
+      for (const at of step === 0 ? [mid] : [mid + step * 64, mid - step * 64]) {
+        if (at < 0 || at + WINDOW > src.length) continue;
+        const probe = src.slice(at, at + WINDOW);
+        if (artifact.split(probe).length - 1 === 1) return probe;
+      }
+    }
+    return null;
+  };
+  const probes = files.map((rel) => ({
+    rel, probe: uniqueProbe(fs.readFileSync(path.join(repoRoot, rel), "utf8")),
+  }));
 
-  // Positive control: comparing positions is only meaningful if each probe
-  // occurs exactly once. A probe appearing twice would make the ordering
-  // check quietly arbitrary.
-  const ambiguous = probes.filter((p) => artifact.split(p.probe).length - 1 !== 1).map((p) => p.rel);
+  const ambiguous = probes.filter((p) => p.probe === null).map((p) => p.rel);
   checks.equal(ambiguous.length, 0,
-    "each source file's probe occurs exactly once in the artifact, so a position comparison between them means something",
+    `every source file carries at least one ${WINDOW}-character window that appears exactly once in the artifact, so a position comparison between files means something — a file with none is genuinely indistinguishable inside the bundle`,
     ambiguous);
 
   const positions = probes.map((p) => ({ rel: p.rel, at: artifact.indexOf(p.probe) }));

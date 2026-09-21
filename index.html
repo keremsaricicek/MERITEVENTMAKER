@@ -60,6 +60,13 @@
   <script src="src/storage-provider.js"></script>
   <script src="src/venue-model.js"></script>
   <script src="src/capacity-provenance.js"></script>
+  <!--
+    Physical chair vs. logical seat vs. operational capacity. Loaded before
+    app.js because the shell's own seating arithmetic reads it; every later
+    module reaches it lazily through globalThis, so this position is for the
+    shell's benefit rather than a hard ordering requirement.
+  -->
+  <script src="src/seat-model.js"></script>
   <script src="src/app.js"></script>
   <script src="src/app-guests.js"></script>
   <script src="src/i18n.js"></script>

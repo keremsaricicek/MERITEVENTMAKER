@@ -6,7 +6,7 @@
 - Forbidden without explicit written approval: large-scale rewrite,
   framework migration, TypeScript conversion, introducing a bundler/build
   step, converting `src/*.js` to ES modules, and silently changing the
-  classic-script load order in `index.html` (34 scripts, fixed order,
+  classic-script load order in `index.html` (35 scripts, fixed order,
   `app-v8.js` LAST).
 - **Four gates after EVERY structural step**, not at the end:
   `npm run test:all` · `npm run build:offline` ·
@@ -30,7 +30,7 @@
   line count.
 - **Step 1 is done.** The classical detection pipeline is
   `src/plan-detection-classical.js`, reached only through
-  `globalThis.MERIT_PLAN_DETECTION`; `app-v8.js` is 5,740 lines. It is a
+  `globalThis.MERIT_PLAN_DETECTION`; `app-v8.js` is 5799 lines. It is a
   **transitional extraction, not a finished module** — do not cite its 2,857
   lines as a problem or as done. Internal split:
   `benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`. Seam guarded by

@@ -107,6 +107,8 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
       tables: e.tables.length,
       logicalSeats: e.tables.reduce((n, t) => n + (Number(t.capacity) || 0), 0),
       physicalChairs: e.tables.reduce((n, t) => n + (t.chairs || []).length, 0),
+      physicalCapacity: MeritSeatModel.physicalCapacity(e),
+      seatingCapacity: MeritSeatModel.seatingCapacity(e),
       zones: [...new Set(e.tables.map(t => t.zone))].sort(),
       numbersUnique: new Set(e.tables.map(t => t.number)).size,
     };
@@ -118,6 +120,11 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal(model.physicalChairs, 0,
     "and ZERO physical chairs, because nothing drew any. capacity=10 with physicalChairs=0 is the ordinary symbolic-plan case, not a defect — inventing 4,200 chair coordinates from a capacity number is what the contract forbids",
     model.physicalChairs);
+  checks.equal(model.physicalCapacity, 0,
+    "the room's PHYSICAL chair count is honestly zero — nothing drew one", model.physicalCapacity);
+  checks.equal(model.seatingCapacity, model.logicalSeats,
+    "while its OPERATIONAL capacity is all 4,200 seats. Answering the capacity question with the physical-chair number reported an empty room for a whole class of real venue plans",
+    { seating: model.seatingCapacity, logical: model.logicalSeats });
   checks.equal(model.numbersUnique, TABLES,
     "every table kept a distinct number at this scale — a collision here would strand guests at the door", model.numbersUnique);
 
@@ -147,11 +154,13 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
       tables: (ev.tables || []).length,
       guests: (ev.guests || []).length,
       seats: (ev.tables || []).reduce((n, t) => n + (Number(t.capacity) || 0), 0),
+      chairs: (ev.tables || []).reduce((n, t) => n + (t.chairs || []).length, 0),
     };
   });
   checks.equal(after.tables, TABLES, "every table survived the round trip to storage", after.tables);
   checks.equal(after.guests, GUESTS, "every guest survived it", after.guests);
   checks.equal(after.seats, model.logicalSeats, "and the logical seat total is unchanged", after.seats);
+  checks.equal(after.chairs, 0, "no chair was synthesised on the way to storage", after.chairs);
 
   // --- 4. assignment arithmetic holds at scale -----------------------------
   const seating = await page.evaluate(() => {

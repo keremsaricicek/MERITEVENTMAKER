@@ -92,7 +92,10 @@ broken measurement would have deleted fourteen working functions.
   `physical-logical-seat-separation`, `capacity-provenance`, `audit-trail`
 - **Single-writer risk** MEDIUM. `syncTableChairs` is the sanctioned writer of
   `capacity`+`chairs`, but three other sites write `chairs` directly (see
-  `CODE-INVENTORY.md`) — two deliberately.
+  `CODE-INVENTORY.md`) — two deliberately. The three QUANTITIES
+  (logical seat / physical chair / operational capacity) are now defined once,
+  in `src/seat-model.js`; this area consumes those definitions rather than
+  restating them.
 - **Difficulty** LOW — pure functions of an event/table, zero `ui` contact.
 - **Boundary** the cleanest first extraction in the file. `isHistorical` +
   `canMutate` need a toast callback injected rather than calling `toast`
@@ -105,8 +108,9 @@ broken measurement would have deleted fourteen working functions.
 ## A03 · Occupancy & live statistics
 
 - **Lines** 291–346 (56)
-- **Main functions** `physicalCapacity`, `liveUsedIndexes`, `liveStats`,
-  `tableObjectHTML`, `tableMatchesFilter`, `filterBannerHTML`
+- **Main functions** `seatingCapacity`, `physicalCapacity`, `liveUsedIndexes`,
+  `liveStats`, `tableObjectHTML`, `tableMatchesFilter`, `filterBannerHTML`
+  (the first two are thin aliases over `MeritSeatModel`)
 - **Reads** none of `state`; `ui.freezeLayer`, `ui.loadLayer`,
   `ui.operationalMode`, `ui.seatingFilter`, `ui.selectedObjectId(s)`,
   `ui.selectedTableId`, `ui.showSeats`, `ui.highlightId`
@@ -119,7 +123,8 @@ broken measurement would have deleted fourteen working functions.
   `tableObjectHTML` reads eight `ui` fields and is rendering, not domain.
 - **Boundary** split the area: `physicalCapacity`/`liveUsedIndexes`/`liveStats`
   are domain; the three HTML/filter functions are Floor Plan rendering and
-  belong with A11.
+  belong with A11. The capacity half is already out — `src/seat-model.js` owns
+  it and this area only aliases it.
 - **Target file** `src/occupancy.js` (domain half only)
 - **Missing test** that `liveUsedIndexes` and `app.js`'s `occupiedSeatIndexes`
   **disagree** for a No Show — the difference is the product rule, and no
@@ -500,7 +505,8 @@ broken measurement would have deleted fourteen working functions.
 
 > **Moved out.** Lines 3290–6098 (2,809) are now
 > `src/plan-detection-classical.js`, reached only through
-> `globalThis.MERIT_PLAN_DETECTION`. `app-v8.js` is 5,741 lines as a result.
+> `globalThis.MERIT_PLAN_DETECTION`. `app-v8.js` is 5741 lines as a result
+> (5799 after the seat-model separation added its vocabulary and notes).
 > The entry below is the map as it stood before the move, kept because it is
 > the reasoning the move was made on. The new file's own internal map is
 > `benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`.

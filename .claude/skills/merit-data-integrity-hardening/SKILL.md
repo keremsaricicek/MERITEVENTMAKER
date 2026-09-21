@@ -56,11 +56,14 @@ These are the contract items most likely to be damaged by a refactor:
 - **No Show keeps `guest.assignment`.** `occupiedSeatIndexes` (planned) and
   `liveUsedIndexes` (live) are two different facts —
   `benchmarks/CODE-INVENTORY.md` §2.4 records why merging them is a revert.
-- **Physical chair / logical seat / capacity are three separate concepts.**
+- **Physical chair / logical seat / capacity are three separate concepts**,
+  and `src/seat-model.js` holds the one definition of each.
   `capacity=12, logicalSeats=12, physicalChairs=0` is valid and ordinary on
-  a symbolic plan. Chairs are never invented from a capacity number.
-  Today `table.chairs` holds both real and placeholder entries — that is
-  **current legacy implementation**, explicitly not the target model. See
+  a symbolic plan. Chairs are never invented from a capacity number:
+  `table.chairs` holds physical chairs only and is `[]` where the plan drew
+  none, so a stored event carries no fabricated coordinates. The
+  `chair.physical` flag is retired — presence in the array IS the claim.
+  Seatability is `capacity > 0`, never `hasPhysicalSeats`. See
   `merit-product-contract`.
 - **`capacitySource` provenance persists.** A capacity that loses its source
   becomes unfalsifiable.

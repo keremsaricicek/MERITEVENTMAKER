@@ -199,6 +199,16 @@ Confirmed safe to change purely visually: `data-chair-id` has no click
 handler anywhere in the codebase, so no interaction depends on the glyph
 existing.
 
+> **SUPERSEDED by the FINAL MASTER PROGRAMME's §4.** This fix hid the
+> fabricated chairs; it did not stop them being written. A 420-table
+> symbolic plan still stored 4,200 chair objects at invented coordinates,
+> re-derived on every save. The `physical` flag is now retired entirely:
+> `table.chairs` holds physical chairs only and is `[]` where the plan drew
+> none, so `table.chairs.length` no longer equals `capacity` on a symbolic
+> table — the logical seat space is `capacity` and lives nowhere else. One
+> definition, in `src/seat-model.js`. Everything below this line about
+> `physical:false` chairs describes the older shape.
+
 **Bug 2 (the real-world instance) — `commitCandidates()` hardcoded
 `hasPhysicalSeats:true` for every confirmed table, regardless of the
 plan's own PHYSICAL/SYMBOLIC verdict.** `runSelfCheck()` already reads

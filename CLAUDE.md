@@ -31,8 +31,20 @@ build is a developer-time concern only.
 - **No Show** preserves the guest's planned seating assignment but
   releases live operational capacity — these are two different concepts
   (`occupiedSeatIndexes` vs. `liveUsedIndexes`), never merge them.
-- **Chairs are first-class objects** backing table capacity — never let
-  `table.capacity` drift out of sync with `table.chairs`.
+- **Physical chair ≠ logical seat ≠ capacity.** `table.capacity` is the
+  LOGICAL SEAT space (assignment indexes `0..capacity-1`) and exists whether
+  or not a chair was ever drawn. `table.chairs` holds PHYSICAL chairs and is
+  **empty** unless the plan drew one, Assisted Detection found one, or a
+  person placed one — a capacity number never becomes a chair, and a
+  fabricated coordinate carrying a `physical:false` label is not an
+  acceptable substitute for not writing it. OPERATIONAL capacity is
+  `MeritSeatModel.seatingCapacity(event)`; the drawn-chair count is
+  `physicalCapacity(event)` and is shown only where the label says so. "Can
+  this table seat somebody" is `capacity > 0`, **never** gated on
+  `hasPhysicalSeats` — that gate made a symbolic plan (numbered circles with
+  a printed pax figure) present as an empty room across Smart Seating,
+  freezes, service load and the Plan Doctor while Seating was assigning
+  guests to those same tables. One definition, in `src/seat-model.js`.
 - **Historical events are immutable** (`status === "Completed"` or a past
   date) — enforce this in domain logic (`canMutate`), not only in the UI.
 - **Reports are regression-sensitive.** TABLE PLAN / GUEST LIST /
@@ -253,7 +265,7 @@ metrics. Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.
 
 ## Code health
 
-`app-v8.js` is 5,741 lines after the first extraction (8,543 before). Before
+`app-v8.js` is 5799 lines after the first extraction (8,543 before). Before
 any more of it moves,
 three things are written down and measured, not remembered:
 `benchmarks/APP-V8-OWNERSHIP-MAP.md` (26 business areas, each with its globals

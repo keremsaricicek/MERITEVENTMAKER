@@ -57,7 +57,11 @@
   const BLOCKED = {
     NOT_ENOUGH_SEATS: "NOT_ENOUGH_SEATS",
     ALREADY_THERE: "ALREADY_THERE",
-    NO_PHYSICAL_SEATS: "NO_PHYSICAL_SEATS",
+    // No seats at all — capacity zero. Renamed from NO_PHYSICAL_SEATS,
+    // which named the wrong fact: a table whose plan drew no chairs still
+    // seats the number printed on it, and blocking it here made Smart
+    // Seating offer nothing at all on a symbolic plan.
+    NO_SEATS: "NO_SEATS",
     LOCKED_ASSIGNMENT: "LOCKED_ASSIGNMENT",
     FROZEN: "FROZEN",
     UNAVAILABLE: "UNAVAILABLE",
@@ -130,7 +134,11 @@
     return used;
   }
 
-  const seatable = (t) => t && t.hasPhysicalSeats !== false && num(t.capacity) > 0;
+  // Logical seats, not drawn chairs -- defined in src/seat-model.js, which
+  // says why. The fallback keeps this module usable on its own.
+  const seatable = (t) => (globalThis.MeritSeatModel
+    ? globalThis.MeritSeatModel.canSeat(t)
+    : !!t && num(t.capacity) > 0);
 
   // ---------------------------------------------------------------------------
 
@@ -173,11 +181,11 @@
     const options = [], blocked = [];
     for (const t of tables) {
       const number = String(t.number);
-      if (!seatable(t)) { blocked.push({ tableId: t.id, number, why: BLOCKED.NO_PHYSICAL_SEATS }); continue; }
+      if (!seatable(t)) { blocked.push({ tableId: t.id, number, why: BLOCKED.NO_SEATS }); continue; }
       if (t.id === currentTableId) { blocked.push({ tableId: t.id, number, why: BLOCKED.ALREADY_THERE }); continue; }
       // An unavailable table is never recommended, and unlike a freeze there
       // is nothing to override: the table itself cannot hold anyone tonight,
-      // the same hard stop as NO_PHYSICAL_SEATS above.
+      // the same hard stop as NO_SEATS above.
       if (unavail && unavail.has(t.id)) {
         blocked.push({ tableId: t.id, number, why: BLOCKED.UNAVAILABLE, ...unavail.get(t.id) });
         continue;

@@ -50,7 +50,12 @@
   function saveState(show=false){const serial=clone(state);serial.events.forEach(e=>{if(e.background?.isDefault)e.background.src=""});try{localStorage.setItem(STORAGE_KEY,JSON.stringify(serial));if(show)toast("Saved locally in this browser.","success")}catch(err){try{serial.events.forEach(e=>{if(e.background)e.background.src=""});localStorage.setItem(STORAGE_KEY,JSON.stringify(serial));if(!quotaToastShown){toast("Layout and guests were saved. The imported image was too large for browser storage.","error",5200);quotaToastShown=true}}catch{toast("Browser storage is full. Export your workbook before closing.","error",5200)}}}
   function activeEvent(){return state.events.find(e=>e.id===ui.activeEventId)||state.events[0]}function touchEvent(e){e.lastModified=nowISO();saveState()}
   function tableAssignedPax(event,tableId){return event.guests.filter(g=>g.assignment?.tableId===tableId).reduce((n,g)=>n+paxOf(g),0)}
-  function physicalTables(event){return event.tables.filter(t=>t.hasPhysicalSeats!==false&&Number(t.capacity)>0)}
+  // Tables that can seat somebody. A table whose plan drew no chairs still
+  // seats the number printed on it -- gating this on hasPhysicalSeats made
+  // the Reports screen and the pre-flight report count a symbolic room as
+  // having no tables at all. Physical chairs are a separate fact, counted
+  // by physicalCapacity() in app-v8.js.
+  function physicalTables(event){return MeritSeatModel.seatableTables(event)}
   function seatingStats(event){const physical=physicalTables(event),emptyTables=physical.filter(t=>tableAssignedPax(event,t.id)===0).length,emptyChairs=physical.reduce((n,t)=>n+Math.max(0,t.capacity-tableAssignedPax(event,t.id)),0);return{emptyTables,emptyChairs,physicalTables:physical.length}}
   function eventMetrics(event){const seated=event.tables.filter(t=>t.type!=="bistro").reduce((n,t)=>n+t.capacity,0),bistro=event.tables.filter(t=>t.type==="bistro").reduce((n,t)=>n+t.capacity,0),guests=event.guests.reduce((n,g)=>n+paxOf(g),0),assigned=event.guests.filter(g=>g.assignment).reduce((n,g)=>n+paxOf(g),0);return{seated,bistro,total:seated+bistro,guests,assigned,available:Math.max(0,seated+bistro-assigned),unassigned:guests-assigned}}
   function toast(message,type="info",duration=3200){const el=document.createElement("div");el.className="toast "+type;el.textContent=message;document.getElementById("toastWrap").appendChild(el);setTimeout(()=>el.remove(),duration)}

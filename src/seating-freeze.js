@@ -72,7 +72,11 @@
   const num = (v) => (typeof v === "number" && isFinite(v) ? v : 0);
   const paxOf = (g) => Math.max(1, Number(g && g.pax) || 1);
   const upper = (s) => String(s == null ? "" : s).trim().toLocaleUpperCase("tr");
-  const seatable = (t) => t && t.hasPhysicalSeats !== false && num(t.capacity) > 0;
+  // Logical seats, not drawn chairs -- defined in src/seat-model.js, which
+  // says why. The fallback keeps this module usable on its own.
+  const seatable = (t) => (globalThis.MeritSeatModel
+    ? globalThis.MeritSeatModel.canSeat(t)
+    : !!t && num(t.capacity) > 0);
 
   // "T01" -> { prefix:"T", n:1 }. The same shape the table numbering uses
   // everywhere else in the product (letters then digits, leading zeros
