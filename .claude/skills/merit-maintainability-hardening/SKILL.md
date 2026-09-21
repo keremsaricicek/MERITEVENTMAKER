@@ -20,7 +20,7 @@ nothing checked the behaviour it moved has proved nothing.
 
 | Forbidden | Why |
 |---|---|
-| Large-scale rewrite | A working product with 2,011 passing checks is not a candidate for a clean slate |
+| Large-scale rewrite | A working product with 2,058 passing checks is not a candidate for a clean slate |
 | Framework migration | React / Vue / Svelte / any framework |
 | TypeScript conversion | Needs its own approved decision, not a side effect of a cleanup |
 | Vite / bundler / build-step introduction | The app deliberately has **no build step**; the offline builds are concatenators, not bundlers |
@@ -49,17 +49,18 @@ npm run test:list                                     # what already guards what
 Snapshot at the time of writing (verify, do not trust):
 
 - 33 `src/*.js`, **18,729 lines**
-- `app-v8.js`: **8,543 lines (46% of all source)**, 274 functions, longest
-  line **3,369 characters**, 41 lines over 500
+- `app-v8.js`: **8,543 lines (46% of all source)**, **266** top-level
+  functions, longest line **3,369 characters**, 41 lines over 500
 - 28 of 33 files export `globalThis.Merit*`
-- 61 suites / **2,011 checks**; 5 parallel CI jobs; offline verification 27
+- **64 suites (58 fast + 6 slow) / 2,058 checks**; 5 parallel CI jobs;
+  offline verification 27
 
 ---
 
 ## 2. The four mandatory gates — after EVERY step, not at the end
 
 ```bash
-npm run test:all          # 61 suites, 2,011 checks — slow suites included
+npm run test:all          # 64 suites, 2,058 checks — slow suites included
 npm run build:offline     # single-file artifact
 npm run build:offline-full # folder artifact, with local OCR
 npm run verify:offline    # 27 checks — RUNS the artifact, aborts off-origin, drives real OCR
@@ -159,8 +160,9 @@ dangerous failure mode of this work, and it will not look wrong in a diff.
   new global.
 - **Dependency direction is one-way and must stay so.** The 28 `Merit*`
   modules never read `state`, `ui`, `render()` or `touchEvent()`;
-  `app-v8.js` reads them. This currently holds with **zero exceptions** —
-  but it is enforced only by manual grep, **not by a test**. See §8.
+  `app-v8.js` reads them. This holds with **zero exceptions** and is
+  **enforced by `tests/suites/dependency-direction.test.mjs`**, not by
+  manual grep. See §8.
 - **Collapse duplicated logic to one source** — but only when the
   duplicates are genuinely the same rule, not two rules that happen to look
   alike today. (`occupiedSeatIndexes` vs `liveUsedIndexes` look similar and

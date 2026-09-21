@@ -42,11 +42,11 @@ fact in this file is the exact failure mode it exists to prevent.
 |---|---|---|
 | `src/*.js` files | **33** | `ls src/*.js \| wc -l` |
 | `src/` total lines | **18,729** | `wc -l src/*.js` |
-| `app-v8.js` | **8,543 lines — 46% of all source**, 274 functions | `wc -l src/app-v8.js` |
+| `app-v8.js` | **8,543 lines — 46% of all source**, 266 top-level functions | `wc -l src/app-v8.js` |
 | Longest single line in `app-v8.js` | **3,369 chars** (41 lines exceed 500) | `awk '{print length}' src/app-v8.js \| sort -rn \| head -1` |
 | Files exporting `globalThis.Merit*` | **28 of 33** | `grep -l "globalThis.Merit" src/*.js \| wc -l` |
 | Classic `<script>` tags in `index.html` | **33**, fixed order, `app-v8.js` LAST | `grep -c 'src="src/' index.html` |
-| Test suites | **61** (55 fast + 6 slow), **2,011 checks** | `npm run test:all` |
+| Test suites | **64** (58 fast + 6 slow), **2,058 checks** | `npm run test:all` |
 | CI jobs | **5 parallel**, split by what a failure means | `.github/workflows/ci.yml` |
 | Offline verification | **27 checks**, by RUNNING the built artifact | `npm run verify:offline` |
 
@@ -56,6 +56,22 @@ corrected: the suite is the single strongest asset you have, it is the
 thing that makes refactoring safe here, and your first move on any
 structural change is to make it prove the behaviour BEFORE you move
 anything.
+
+**Three of those suites guard structure rather than behaviour**, and they are
+what make an extraction from `app-v8.js` verifiable: `dependency-direction`
+(the one-way rule — enforced by a suite now, not by grep; it reads code rather
+than text and treats a `state` **parameter** as injection, not coupling),
+`boot-contract` (load order plus the runtime check that no overridden function
+silently resolved to its pre-v8 body) and `offline-bundle-contract` (the
+build's markup slice and the bundle's script order). Run all three before and
+after every structural step.
+
+**The map is written, so do not re-derive it by reading:**
+`benchmarks/APP-V8-OWNERSHIP-MAP.md` (26 areas, measured),
+`benchmarks/CODE-INVENTORY.md` (0 removable functions — read the measurement
+that first said fourteen and was wrong) and
+`benchmarks/MODULARIZATION-ORDER.md` (the order, deliberately not
+screen-by-screen).
 
 ## Hard constraints
 
