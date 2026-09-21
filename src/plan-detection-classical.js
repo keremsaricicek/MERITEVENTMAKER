@@ -1914,7 +1914,29 @@
           score:agreement*2+Math.min(1,seats/6)+Math.min(.5,(repetition-1)*.08)};
       });
       scored.sort((a,b)=>b.score-a.score||b.confidence-a.confidence);
-      const MAX_TABLES=240,capReached=scored.length>MAX_TABLES,ranked=scored.slice(0,MAX_TABLES);
+      // A RESOURCE SAFETY CEILING, NOT A CORRECTNESS LIMIT.
+      //
+      // This was 240, and 240 is inside the range real venues occupy: the
+      // large-venue fixture has 324 tables, so the detector returned exactly
+      // 240 of them and reported table recall 0.741 — which is 240/324 to
+      // four figures. Eighty-four real tables were dropped by arithmetic, not
+      // by any judgement about them, and the operator's only clue was one row
+      // in a diagnostics panel.
+      //
+      // The cap exists to bound work on pathological input (a photograph of
+      // noise can label tens of thousands of components), and that is worth
+      // keeping. It must simply sit far above any plan a venue could actually
+      // draw. 2,000 is ~6x the largest fixture and ~2.5x the largest plausible
+      // real venue, while still refusing to let a degenerate image run
+      // unbounded.
+      //
+      // Note what this slice is NOT: it is not the junk filter. Fragment
+      // suppression runs below and is what removes false candidates. Raising
+      // this ceiling therefore cannot admit junk that suppression would have
+      // caught — it only stops real objects being discarded before the filter
+      // ever sees them. Plans under the ceiling are bit-identical either way,
+      // which is why Golden (41 tables) and ORNEK (166) are unaffected.
+      const MAX_TABLES=2000,capReached=scored.length>MAX_TABLES,ranked=scored.slice(0,MAX_TABLES);
 
       // ---- fragment suppression (Gate C/D) --------------------------------
       // Measured on the real venue plan: of 82 proposed tables, 41 were real

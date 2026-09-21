@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-09-21T08:34:21.432Z",
+  "ranAt": "2026-09-21T08:36:30.673Z",
   "realVenue": false,
   "note": "SYNTHETIC ADVERSARIAL FIXTURES — NOT REAL VENUES. These scores are never mixed into real-plan aggregates. REAL DISTINCT VENUE PLANS: 1. CROSS-VENUE GENERALIZATION: NOT VERIFIED.",
   "refusals": [],
@@ -123,7 +123,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 1055,
+      "detectionMs": 781,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -263,7 +263,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 5
       },
-      "detectionMs": 934,
+      "detectionMs": 897,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -388,7 +388,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 794,
+      "detectionMs": 792,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -517,7 +517,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 955,
+      "detectionMs": 1062,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -630,7 +630,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 618,
+      "detectionMs": 636,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -755,7 +755,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 6
       },
-      "detectionMs": 808,
+      "detectionMs": 821,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -888,7 +888,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 1000,
+      "detectionMs": 883,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -907,13 +907,13 @@
       "hypothesis": "Every measurement in this repository was taken on 46 tables. At 324 tables and 3,240 seats the relationship pass, the scene graph, the zone clustering and the review queue must all still complete, and the detector's internal table cap must be visible rather than silently truncating the plan.",
       "tables": {
         "groundTruth": 324,
-        "detected": 240,
-        "tp": 240,
+        "detected": 289,
+        "tp": 289,
         "fp": 0,
-        "fn": 84,
+        "fn": 35,
         "precision": 1,
-        "recall": 0.741,
-        "f1": 0.851,
+        "recall": 0.892,
+        "f1": 0.943,
         "heldBack": 0,
         "heldBackReasons": {},
         "missedIds": [
@@ -936,15 +936,15 @@
           "T242",
           "T243",
           "T252",
-          "T260"
+          "T261"
         ]
       },
       "tableTypes": {
         "byType": {
           "round": {
-            "matched": 240,
-            "correct": 87,
-            "accuracy": 0.362
+            "matched": 289,
+            "correct": 136,
+            "accuracy": 0.471
           }
         },
         "distinctFound": 2,
@@ -954,23 +954,23 @@
       "chairs": {
         "groundTruth": 3240,
         "detected": 306,
-        "tp": 240,
-        "fp": 66,
-        "fn": 3000,
-        "precision": 0.784,
-        "recall": 0.074,
-        "f1": 0.135
+        "tp": 289,
+        "fp": 17,
+        "fn": 2951,
+        "precision": 0.944,
+        "recall": 0.089,
+        "f1": 0.163
       },
       "relations": {
         "groundTruthScoreable": 3240,
         "groundTruthAmbiguous": 0,
-        "scored": 240,
-        "correct": 240,
+        "scored": 289,
+        "correct": 289,
         "wrong": 0,
         "orphan": 0,
-        "unscoreable": 3000,
+        "unscoreable": 2951,
         "accuracy": 1,
-        "coverage": 0.074,
+        "coverage": 0.089,
         "forcedOnAmbiguous": 0,
         "ambiguousDeclared": 0,
         "ambiguousChairsNotDetected": 0,
@@ -985,9 +985,9 @@
         "detected": 2,
         "detectedTyped": 2,
         "unknownZones": 0,
-        "matched": 2,
-        "precision": 1,
-        "recall": 0.5,
+        "matched": 1,
+        "precision": 0.5,
+        "recall": 0.25,
         "falseZoneInventions": 0,
         "inventedTypes": [],
         "byType": {
@@ -1004,8 +1004,8 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "strong": 3,
-          "likely": 4
+          "likely": 5,
+          "strong": 2
         }
       },
       "regionFP": {
@@ -1016,31 +1016,29 @@
       },
       "sceneGraph": {
         "counts": {
-          "belongsTo": 240,
-          "memberOf": 546
+          "belongsTo": 289,
+          "memberOf": 595
         },
         "nodeCount": 306,
-        "edges": 786
+        "edges": 884
       },
-      "contradictions": 1,
-      "contradictionIds": [
-        "contra:orphanSeats"
-      ],
+      "contradictions": 0,
+      "contradictionIds": [],
       "effort": {
         "reviewGroups": 2,
         "uncertainQuestions": 0,
-        "reviewPriorities": 3
+        "reviewPriorities": 2
       },
-      "detectionMs": 2086,
+      "detectionMs": 2180,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
         "status": "PARTIAL",
         "fail": [],
         "partial": [
-          "round tables typed 87/240",
-          "table recall 0.741",
-          "chair recall 0.074"
+          "round tables typed 136/289",
+          "table recall 0.892",
+          "chair recall 0.089"
         ]
       }
     }
