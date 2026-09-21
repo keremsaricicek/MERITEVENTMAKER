@@ -92,6 +92,11 @@
   // rendering further down: a `const` arrow is in its temporal dead zone
   // until the IIFE body reaches it, so audit() and parseRoot() -- both of
   // which can run during boot -- would have thrown ReferenceError.
+  // THE ONE WRITER of guest.assignment (src/seat-assignment.js). Eight
+  // sites in this file used to assign the field directly; every one of
+  // them now goes through here, which is what lets the Guests, Seating
+  // and canvas extractions move at all.
+  const SEAT=()=>globalThis.MeritSeatAssignment;
   const TRAIL=()=>globalThis.MeritAuditTrail||null;
   function audit(event, action, detail={}){
     const T=TRAIL();
@@ -1897,7 +1902,7 @@
   function commitBulk(){syncBulkFields();const event=activeEvent(),d=ui.bulkDraft;if(!canMutate(event,"add plan objects"))return;if(d.placement==="repeated"){ui.repeatPlacement={...d,remaining:Math.max(1,Number(d.quantity)||1),index:1};ui.v8AddOpen=false;render();toast("Repeated placement active. Click the canvas for each object; Esc cancels.","success",5000);return;}const positions=bulkPositions(d);if(!positions.length)return;recordUndo(event);const created=[];positions.forEach((p,i)=>{if(d.kind==="table"){const t=createTable(event,d,p.x,p.y,i+1);event.tables.push(t);created.push(t.id);}else{const sizes={stage:[380,180],bar:[300,70],entrance:[110,40],exit:[90,40],column:[55,55],text:[150,42]},s=sizes[d.type]||[120,50],o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:p.x,y:p.y,w:s[0],h:s[1],rotation:0,locked:false,z:4};event.venueObjects.push(o);created.push(o.id);}});ui.selectedObjectIds=created;ui.selectedObjectId=created[0];ui.v8AddOpen=false;touchEvent(event);render();toast(`${created.length} object${created.length===1?"":"s"} added with physical chair records.`,"success");}
   function placeRepeated(pointerEvent){const r=document.getElementById("canvasViewport").getBoundingClientRect(),d=ui.repeatPlacement,event=activeEvent(),x=(pointerEvent.clientX-r.left-ui.pan.x)/ui.zoom,y=(pointerEvent.clientY-r.top-ui.pan.y)/ui.zoom;if(!d||!canMutate(event,"place plan objects"))return;recordUndo(event);let id;if(d.kind==="table"){const t=createTable(event,d,x-60,y-45,d.index);event.tables.push(t);id=t.id;}else{const o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:x-60,y:y-30,w:120,h:60,rotation:0,locked:false,z:4};event.venueObjects.push(o);id=o.id;}d.remaining--;d.index++;ui.selectedObjectId=id;ui.selectedObjectIds=[id];if(d.remaining<=0)ui.repeatPlacement=null;touchEvent(event);render();}
   function duplicateSelection(){const event=activeEvent();if(!canMutate(event,"duplicate plan objects"))return;const ids=ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean);if(!ids.length)return toast("Select one or more objects first.");recordUndo(event);const created=[];for(const id of ids){const t=event.tables.find(x=>x.id===id),o=event.venueObjects.find(x=>x.id===id),c=clone(t||o);if(!c)continue;c.id=uid(t?"table":"venue");c.x+=24;c.y+=24;c.locked=false;if(t){c.number=uniqueNumber(event,t.type==="bistro"?"B":"T",1);c.chairs=(c.chairs||[]).map((chair,index)=>({...chair,id:uid("chair"),parentTableId:c.id,seatNumber:index+1,occupancy:null}));event.tables.push(c);}else event.venueObjects.push(c);created.push(c.id);}ui.selectedObjectIds=created;ui.selectedObjectId=created[0]||null;touchEvent(event);render();}
-  function deleteSelection(){const event=activeEvent();if(!canMutate(event,"delete plan objects"))return;const ids=new Set(ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean));if(!ids.size)return;const affected=event.guests.filter(g=>ids.has(g.assignment?.tableId));if(!confirm(`Delete ${ids.size} selected object${ids.size===1?"":"s"}${affected.length?` and return ${affected.length} guest record(s) to Unassigned`:""}?`))return;recordUndo(event);affected.forEach(g=>g.assignment=null);event.tables=event.tables.filter(t=>!ids.has(t.id));event.venueObjects=event.venueObjects.filter(o=>!ids.has(o.id));ui.selectedObjectIds=[];ui.selectedObjectId=null;touchEvent(event);render();}
+  function deleteSelection(){const event=activeEvent();if(!canMutate(event,"delete plan objects"))return;const ids=new Set(ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean));if(!ids.size)return;const affected=event.guests.filter(g=>ids.has(g.assignment?.tableId));if(!confirm(`Delete ${ids.size} selected object${ids.size===1?"":"s"}${affected.length?` and return ${affected.length} guest record(s) to Unassigned`:""}?`))return;recordUndo(event);affected.forEach(g=>SEAT().clear(g));event.tables=event.tables.filter(t=>!ids.has(t.id));event.venueObjects=event.venueObjects.filter(o=>!ids.has(o.id));ui.selectedObjectIds=[];ui.selectedObjectId=null;touchEvent(event);render();}
 
   function startMarquee(e){
     if(e.button!==0||ui.tool!=="select"||ui.repeatPlacement)return;const viewport=document.getElementById("canvasViewport"),world=document.getElementById("canvasWorld");if(![viewport,world,world.querySelector(".reference-layer")].includes(e.target))return;e.preventDefault();const box=document.createElement("div");box.className="marquee";viewport.appendChild(box);const r=viewport.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top;let current=[];
@@ -2573,7 +2578,7 @@
     // put an undo toast on every single seating instead of only real moves.
     const isMove=snapshot.some(s=>s.assignment);
     try{
-      for(const g of guests){const count=paxOf(g),seats=free.slice(cursor,cursor+count);cursor+=count;g.assignment={tableId,seats,locked:false};}
+      for(const g of guests){const count=paxOf(g),seats=free.slice(cursor,cursor+count);cursor+=count;SEAT().write(g,{tableId,seats,locked:false});}
       ui.selectedTableId=tableId;ui.highlightId=tableId;touchEvent(event);render();
       const message=t("seating.groupMovedToast",{n:guests.length,plural:guests.length===1?"":"s",table:table.number,seats:required});
       if(!isMove){toast(message,"success",5000);return;}
@@ -2585,11 +2590,11 @@
         let anyClash=false;
         for(const s of snapshot){
           const guest=now.guests.find(x=>x.id===s.id);if(!guest)continue;
-          if(!s.assignment){guest.assignment=null;continue;}
+          if(!s.assignment){SEAT().clear(guest);continue;}
           const back=now.tables.find(x=>x.id===s.assignment.tableId);
           const used=back?occupiedSeatIndexes(now,back.id,s.id):null;
           if(!back||(s.assignment.seats||[]).some(seat=>used.has(Number(seat)))){anyClash=true;continue;}
-          guest.assignment=s.assignment;
+          SEAT().write(guest,s.assignment);
         }
         refreshChairOccupancy(now);touchEvent(now);render();
         toast(anyClash?t("seating.groupSeatTaken"):t("seating.groupRestoredToast"),anyClash?"error":"success",5200);
@@ -2605,7 +2610,7 @@
       // already-saved seating move. Re-persisting the rollback here closes
       // that gap; it never calls render() again, since re-running whatever
       // just threw could throw a second time.
-      snapshot.forEach(s=>{event.guests.find(g=>g.id===s.id).assignment=s.assignment;});
+      snapshot.forEach(s=>{SEAT().write(event.guests.find(g=>g.id===s.id),s.assignment);});
       touchEvent(event);
       toast("The group move was rolled back.","error");
     }
@@ -3341,7 +3346,7 @@
         const table=now.tables.find(x=>x.id===snapshot.assignment.tableId);
         const used=table?occupiedSeatIndexes(now,table.id):null;
         const clash=!table||(snapshot.assignment.seats||[]).some(s=>used.has(Number(s)));
-        if(clash){snapshot.assignment=null;seatLost=true;}
+        if(clash){SEAT().clear(snapshot);seatLost=true;}
       }
       now.guests.splice(Math.min(index,now.guests.length),0,snapshot);
       refreshChairOccupancy(now);
@@ -3364,7 +3369,7 @@
     const snapshot=JSON.parse(JSON.stringify(g.assignment));
     const table=event.tables.find(x=>x.id===snapshot.tableId);
     const label=table?formatTableNumber(table.number):"";
-    g.assignment=null;ui.selectedGuestId=id;
+    SEAT().clear(g);ui.selectedGuestId=id;
     refreshChairOccupancy(event);
     touchEvent(event);render();
     toastAction(t("seating.unassignedToast",{name:g.name}),t("live.undo"),()=>{
@@ -3376,7 +3381,7 @@
       if(!back||(snapshot.seats||[]).some(s=>used.has(Number(s)))){
         toast(t("seating.seatTaken",{name:guest.name}),"error",5200);return;
       }
-      guest.assignment=snapshot;
+      SEAT().write(guest,snapshot);
       refreshChairOccupancy(now);
       audit(now,"GUEST_REASSIGNED",{guestId:id,tableId:snapshot.tableId});
       touchEvent(now);render();

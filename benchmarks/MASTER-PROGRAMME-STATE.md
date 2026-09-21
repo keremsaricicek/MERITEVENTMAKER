@@ -296,6 +296,45 @@ surfaces when a malformed record is loaded, which the guard now prevents —
 but a hand-edited backup could still carry one. Resilience work, not schema
 work.
 
+### G. §3C — `guest.assignment` single writer — DONE
+
+The ownership map called this a **blocker**: the Guests, Seating and canvas
+extractions cannot move while the field is written from everywhere, and it is
+not itself an extraction, so it comes before them.
+
+Measured before: **eleven** raw write sites across three files — eight in
+`app-v8.js` (assign, two undo arms, rollback, table deletion, guest
+restoration, unassign, unassign-undo), one live in `app-guests.js` (the
+spreadsheet import), and two in `app.js` (the normalization default, and the
+dead `seedAssignments` reachable only from `createDemoEvent`, which has no
+caller). After: **zero** outside `src/seat-assignment.js`.
+
+`MeritSeatAssignment` (script 6 of 37, before `app.js`) is the one writer.
+It reads no `state`, no `ui`, and calls no `render()`/`touchEvent()` — a
+guest and an assignment go in, the guest comes back normalized. It refuses an
+assignment naming no table (which is the Plan Doctor's own
+`guestAtMissingTable` blocker, prevented at the source), coerces seat indexes
+to numbers and drops what is not one, and defaults `locked` to false.
+
+**Two things it deliberately does not do.** It does not sort `seats` — the
+order maps a party to its companions and `refreshChairOccupancy` walks it by
+index, so tidying would silently reseat somebody. And it decides nothing
+about capacity, freezes or locks; folding those in would make "the one
+writer" quietly the one decision-maker.
+
+The dead `seedAssignments` was routed through the writer rather than
+allowlisted, so the static guard carries **zero exceptions**. Nothing was
+deleted — `CODE-INVENTORY.md`'s removable count stays zero.
+
+New suite `assignment-writer` (27 checks): a static scan of every `.assignment =`
+in `src/`, plus assign / move / unassign / undo / locked / contested-seat /
+table-deletion behaviour. **Mutation-proved twice:** reintroducing a single
+raw writer is caught by the scan; sorting the seat order is caught by the
+companion-ordering check.
+
+Noted in passing, for §16: `deleteSelection()` still asks through a native
+`confirm()`, which the suite has to accept.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |

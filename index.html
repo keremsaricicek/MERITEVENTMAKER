@@ -72,6 +72,11 @@
     consults it on the very first load, before anything else reads state.
   -->
   <script src="src/schema-migrations.js"></script>
+  <!--
+    The ONE writer of guest.assignment. Before app.js, app-guests.js and
+    app-v8.js because all three of them seat guests through it.
+  -->
+  <script src="src/seat-assignment.js"></script>
   <script src="src/app.js"></script>
   <script src="src/app-guests.js"></script>
   <script src="src/i18n.js"></script>
