@@ -400,12 +400,38 @@ chairs" would delete a8-large-venue entirely: 289 tables there carry roughly
 one chair each (chair recall 0.089). A trade like that is a revert, not a
 win.
 
-**The next step, stated so it need not be re-derived:** the usable form is
-conditional on whether the chair signal is working on that plan at all — a6
-yields ~6.4 chairs per table, a8 ~0.94. A rule may only lean on chair count
-where chair detection is demonstrably productive. That needs measuring
-across a1/a4/a7/a8 and both golden plans before it is written, not reasoned
-into.
+**A FOURTH theory then died, and it was my own proposed next step.** The
+conditional form — "only lean on chair count where chair detection is
+productive on that plan" — was measured across every fixture and does not
+separate them:
+
+| fixture | chairs per detected table | table precision | verdict |
+|---|---|---|---|
+| a1 | 12.13 | 1.000 | PARTIAL |
+| a3 | 12.00 | 1.000 | PASS |
+| a4 | 4.00 | 1.000 | PARTIAL |
+| a7 | 1.76 | 1.000 | PARTIAL |
+| **a8** | **1.06** | **1.000** | PARTIAL |
+| **a6** | **0.94** | **0.148** | **FAIL** |
+| a2 | 0.73 | 0.477 | FAIL |
+
+a6 and a8 sit at essentially the same ratio — 0.94 against 1.06 — while one
+is almost entirely phantoms and the other is perfect. The plan-level mean
+carries no signal. (It also corrects a figure in the previous version of
+this entry: a6 is 0.94 chairs per DETECTED table, not 6.4.)
+
+**What is left, as a hypothesis and not a plan:** the difference is the
+SHAPE of the distribution, not its mean. a6 is bimodal — 8 tables with four
+seats each, 19 with one, 27 with none — while a8 is flat at roughly one
+seat per table across 289 of them. A rule would have to say that a table
+with markedly fewer seats than its own plan's well-seated population is
+weaker evidence, which is a relative ranking rather than a threshold. That
+is plausible and untested. It must be measured against a1 (12.13), a4
+(4.00), a7 (1.76), a8 (1.06) and both golden plans before any of it is
+written.
+
+**a6 stays an open FAIL. It is not accepted**, and four theories about it
+are now recorded as refuted so the next attempt does not re-derive them.
 
 `a2-mixed-families` — **diagnosed, one half fixed, still FAIL.** The
 held-back 7 were deselected by `selected: s.confidence >= confidenceThreshold()`
