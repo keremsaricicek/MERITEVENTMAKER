@@ -166,6 +166,47 @@ Docs corrected to match measured reality: `CLAUDE.md`,
 
 ---
 
+## Gates re-measured at `3451f67` (post-§8 + §4)
+
+| Gate | Result |
+|---|---|
+| `npm run test:all` | **66 / 66 suites · 2,104 / 2,104 checks** |
+| `npm run build:offline` · `build:offline-full` | 35 sources, `index.html` order |
+| `npm run verify:offline` | **27 / 27** — both artifacts RUN |
+| `npm run benchmark:baseline` | **No regressions. 0 improvement(s), 0 note(s).** |
+| CI on head commit | 10 / 10 check runs green |
+
+Golden plans unchanged: `merit-real-venue` square 37/37, round 4/4, bistro
+5/5, chair F1 0.951, chair→table accuracy 0.99; `ornek-symbolic` tables
+162/166, F1 0.985. `pageErrors=0` on both. Adding `seat-model.js` to
+`index.html` changed nothing the detector does — which is what §4's script
+tag needed to prove, rather than be assumed.
+
+### Adversarial at `3451f67` — 1 PASS · 4 PARTIAL · 3 FAIL
+
+Same distribution as `02edac7`; the run exits 0 because it gates on
+regression against a baseline that already contains the three FAILs. That
+is CI's first false-green mechanism, and it is why these numbers are read
+here rather than taken from the badge.
+
+| Fixture | Verdict | Table recall | Why |
+|---|---|---|---|
+| `a1-chair-under-table` | PARTIAL | 0.500 | 48 chairs seated at no table |
+| `a2-mixed-families` | **FAIL** | 1.000 | 7 real tables detected then held back (unknown ×7); 23 FP vs 21 GT (precision 0.477) |
+| `a3-no-anchors` | PASS | 1.000 | — |
+| `a4-multi-room` | PARTIAL | 1.000 | bistro typed 0/8; chair recall 0.586 |
+| `a5-architecture-only` | **FAIL** | 0.000 | 8 chairs proposed on a drawing with no furniture |
+| `a6-architectural-confusion` | **FAIL** | 1.000 | 46 FP vs 8 GT (precision 0.148) |
+| `a7-dense-overlap` | PARTIAL | 0.724 | bistro typed 0/7; chair recall 0.685 |
+| `a8-large-venue` | PARTIAL | **0.892** | round typed 136/289; chair recall 0.089 |
+
+**§8 confirmed at this HEAD.** `a8` was 0.741 = 240/324 exactly, the hard
+cap. It is now **0.892** (289/324) with **precision 1.000 and zero false
+positives** — the ceiling admitted 49 more real tables and no junk, which is
+what "the fragment filter runs below the slice" predicted. `a8` remains
+PARTIAL for reasons the ceiling never touched: chair recall 0.089 and round
+typing 136/289.
+
 ## Next step
 
 §7 — plan reliability. The three FAIL fixtures at `02edac7` are `a2`
