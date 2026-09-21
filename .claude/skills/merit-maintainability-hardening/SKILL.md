@@ -20,11 +20,11 @@ nothing checked the behaviour it moved has proved nothing.
 
 | Forbidden | Why |
 |---|---|
-| Large-scale rewrite | A working product with 2,058 passing checks is not a candidate for a clean slate |
+| Large-scale rewrite | A working product with 2,080 passing checks is not a candidate for a clean slate |
 | Framework migration | React / Vue / Svelte / any framework |
 | TypeScript conversion | Needs its own approved decision, not a side effect of a cleanup |
 | Vite / bundler / build-step introduction | The app deliberately has **no build step**; the offline builds are concatenators, not bundlers |
-| Silently changing classic-script load order | `index.html` loads 33 scripts in a fixed order ending with `app-v8.js`; the order is structural |
+| Silently changing classic-script load order | `index.html` loads 34 scripts in a fixed order ending with `app-v8.js`; the order is structural |
 | Converting `src/*.js` to ES modules | Same reason — they share one global scope by design |
 | Behaviour change inside a refactor commit | A refactor commit's diff must be provably behaviour-neutral |
 | **Building an EXE / desktop package** | Forbidden until the user types exactly **"EXE YAP"**. Nothing in this skill authorizes it |
@@ -48,13 +48,13 @@ npm run test:list                                     # what already guards what
 
 Snapshot at the time of writing (verify, do not trust):
 
-- 33 `src/*.js`, **18,729 lines**
-- `app-v8.js`: **5,741 lines** after Step 1 (8,543 before), longest line
+- 34 `src/*.js`, **18,783 lines**
+- `app-v8.js`: **5,740 lines** after Step 1 (8,543 before), longest line
   **3,369 characters**
-- `plan-detection-classical.js`: **2,858 lines** — the extracted detection
+- `plan-detection-classical.js`: **2,857 lines** — the extracted detection
   pipeline, a transitional checkpoint and not a finished module
-- 28 of 33 files export `globalThis.Merit*`
-- **64 suites (58 fast + 6 slow) / 2,058 checks**; 5 parallel CI jobs;
+- 29 of 34 files export `globalThis.Merit*`
+- **65 suites (59 fast + 6 slow) / 2,080 checks**; 5 parallel CI jobs;
   offline verification 27
 
 ---
@@ -62,7 +62,7 @@ Snapshot at the time of writing (verify, do not trust):
 ## 2. The four mandatory gates — after EVERY step, not at the end
 
 ```bash
-npm run test:all          # 64 suites, 2,058 checks — slow suites included
+npm run test:all          # 65 suites, 2,080 checks — slow suites included
 npm run build:offline     # single-file artifact
 npm run build:offline-full # folder artifact, with local OCR
 npm run verify:offline    # 27 checks — RUNS the artifact, aborts off-origin, drives real OCR
@@ -128,9 +128,10 @@ extraction; update the map when one lands.
 Two findings from it change how a candidate is chosen:
 
 - **Size does not predict difficulty.** The largest area (the detection
-  pipeline, 2,926 lines, 34% of the file) is the *easiest* to extract — it
-  reads no shell global and is reached through one provider interface. The
-  hardest areas are 74 and 171 lines. Never pick an extraction by line count.
+  pipeline, 2,809 lines, 34% of the file as it then was) was the *easiest* to
+  extract — it read no shell global and was reached through one provider
+  interface. The hardest areas are 74 and 171 lines. Never pick an extraction
+  by line count.
 - **`guest.assignment` is written from 8 sites across 3 areas** (Seating,
   Guests, the canvas). Those three cannot be extracted independently while
   that holds. Consolidating the writer is not an extraction and comes first.

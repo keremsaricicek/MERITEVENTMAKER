@@ -6,7 +6,7 @@
 - Forbidden without explicit written approval: large-scale rewrite,
   framework migration, TypeScript conversion, introducing a bundler/build
   step, converting `src/*.js` to ES modules, and silently changing the
-  classic-script load order in `index.html` (33 scripts, fixed order,
+  classic-script load order in `index.html` (34 scripts, fixed order,
   `app-v8.js` LAST).
 - **Four gates after EVERY structural step**, not at the end:
   `npm run test:all` · `npm run build:offline` ·
@@ -30,8 +30,8 @@
   line count.
 - **Step 1 is done.** The classical detection pipeline is
   `src/plan-detection-classical.js`, reached only through
-  `globalThis.MERIT_PLAN_DETECTION`; `app-v8.js` is 5,741 lines. It is a
-  **transitional extraction, not a finished module** — do not cite its 2,858
+  `globalThis.MERIT_PLAN_DETECTION`; `app-v8.js` is 5,740 lines. It is a
+  **transitional extraction, not a finished module** — do not cite its 2,857
   lines as a problem or as done. Internal split:
   `benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`. Seam guarded by
   `plan-detection-boundary`.
@@ -61,12 +61,13 @@
   from source, so a new module is covered the day it is added, and it
   distinguishes **injection from coupling** — `venue-model.js` takes `state`
   as a parameter, which is the pure pattern, not a violation.
-- Three structural suites guard the moves themselves; run them before and
+- Four structural suites guard the moves themselves; run them before and
   after every step: `dependency-direction` (the one-way rule),
   `boot-contract` (load order, plus the check that no overridden function
   silently resolves to its pre-v8 body **at runtime**),
   `offline-bundle-contract` (the build's markup slice and the bundle's
-  script order).
+  script order) and `plan-detection-boundary` (the detection pipeline's seam).
+  None of the four proves behaviour — see "Booting is not behaving" above.
 - Dead code is deleted only with recorded proof of unreachability, and a
   shadowed function is not an unused one. Current count of removable
   functions: **zero** — see `benchmarks/CODE-INVENTORY.md`, including the

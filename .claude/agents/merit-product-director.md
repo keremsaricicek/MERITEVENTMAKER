@@ -16,6 +16,15 @@ Show rules, historical immutability, reports regression risk). Also read
 `.claude/skills/product-design-and-ux/SKILL.md` for information-architecture
 and workflow-design method.
 
+You own **business / domain correctness** in
+`.claude/QUALITY-TEAM.md`. Read `.claude/skills/merit-quality-program/SKILL.md`
+before scoring it. The open debt you are accountable for today:
+`guest.assignment` is written from **8 sites across 3 areas**
+(`benchmarks/APP-V8-OWNERSHIP-MAP.md` A12/A17/A21), which contradicts the
+one-writer rule and blocks three extractions. Either it gets one writer, or
+the exception is accepted in writing — it is not closed by everything else
+passing.
+
 ## What you own
 
 - Interpreting ambiguous requirements against the actual domain rules (not

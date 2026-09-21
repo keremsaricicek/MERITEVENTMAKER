@@ -13,6 +13,13 @@ Before starting, read
 every code-health, refactor, extraction, dead-code or modularization task.
 It is the operating procedure; the skills below are the reasoning material.**
 
+You own two quality dimensions in `.claude/QUALITY-TEAM.md`: **architecture
+/ modularity** and **offline**. Read
+`.claude/skills/merit-quality-program/SKILL.md` before scoring either — in
+particular the rule that a 2,857-line file is a **transitional extraction,
+not a finished module**, and that "the build succeeded" is never evidence
+where `verify:offline` exists.
+
 Then read `.claude/skills/programming-principles/SKILL.md`,
 `.claude/skills/software-architecture/SKILL.md`,
 `.claude/skills/merit-product-contract/SKILL.md`, and
@@ -40,13 +47,14 @@ fact in this file is the exact failure mode it exists to prevent.
 
 | Fact | Value | How to re-measure |
 |---|---|---|
-| `src/*.js` files | **33** | `ls src/*.js \| wc -l` |
-| `src/` total lines | **18,729** | `wc -l src/*.js` |
-| `app-v8.js` | **8,543 lines — 46% of all source**, 266 top-level functions | `wc -l src/app-v8.js` |
+| `src/*.js` files | **34** | `ls src/*.js \| wc -l` |
+| `src/` total lines | **18,783** | `wc -l src/*.js` |
+| `app-v8.js` | **5,740 lines — 31% of all source**, 242 top-level functions (was 8,543 / 266 before the detection extraction) | `wc -l src/app-v8.js` |
 | Longest single line in `app-v8.js` | **3,369 chars** (41 lines exceed 500) | `awk '{print length}' src/app-v8.js \| sort -rn \| head -1` |
-| Files exporting `globalThis.Merit*` | **28 of 33** | `grep -l "globalThis.Merit" src/*.js \| wc -l` |
-| Classic `<script>` tags in `index.html` | **33**, fixed order, `app-v8.js` LAST | `grep -c 'src="src/' index.html` |
-| Test suites | **64** (58 fast + 6 slow), **2,058 checks** | `npm run test:all` |
+| `plan-detection-classical.js` | **2,857 lines** — the extracted detection pipeline, a **transitional checkpoint**, not a finished module | `wc -l src/plan-detection-classical.js` |
+| Files exporting `globalThis.Merit*` | **29 of 34** | `grep -l "globalThis.Merit" src/*.js \| wc -l` |
+| Classic `<script>` tags in `index.html` | **34**, fixed order, `app-v8.js` LAST | `grep -c 'src="src/' index.html` |
+| Test suites | **65** (59 fast + 6 slow), **2,080 checks** | `npm run test:all` |
 | CI jobs | **5 parallel**, split by what a failure means | `.github/workflows/ci.yml` |
 | Offline verification | **27 checks**, by RUNNING the built artifact | `npm run verify:offline` |
 
@@ -57,21 +65,29 @@ thing that makes refactoring safe here, and your first move on any
 structural change is to make it prove the behaviour BEFORE you move
 anything.
 
-**Three of those suites guard structure rather than behaviour**, and they are
+**Four of those suites guard structure rather than behaviour**, and they are
 what make an extraction from `app-v8.js` verifiable: `dependency-direction`
 (the one-way rule — enforced by a suite now, not by grep; it reads code rather
 than text and treats a `state` **parameter** as injection, not coupling),
 `boot-contract` (load order plus the runtime check that no overridden function
-silently resolved to its pre-v8 body) and `offline-bundle-contract` (the
-build's markup slice and the bundle's script order). Run all three before and
-after every structural step.
+silently resolved to its pre-v8 body), `offline-bundle-contract` (the build's
+markup slice and the bundle's script order) and `plan-detection-boundary` (the
+detection pipeline's seam). Run all four before and after every structural
+step.
+
+**None of them proves behaviour.** All four passed on a build whose detector
+threw `ReferenceError` on every real plan — the crossing that broke it was the
+third declarator on a four-name `const` line. Pair them with a suite that
+exercises what you moved.
 
 **The map is written, so do not re-derive it by reading:**
 `benchmarks/APP-V8-OWNERSHIP-MAP.md` (26 areas, measured),
 `benchmarks/CODE-INVENTORY.md` (0 removable functions — read the measurement
 that first said fourteen and was wrong) and
 `benchmarks/MODULARIZATION-ORDER.md` (the order, deliberately not
-screen-by-screen).
+screen-by-screen — Step 1, the detection extraction, is done) and
+`benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md` (the 16 boundaries inside the
+extracted pipeline).
 
 ## Hard constraints
 
