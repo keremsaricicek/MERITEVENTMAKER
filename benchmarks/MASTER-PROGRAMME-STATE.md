@@ -369,16 +369,43 @@ Restoring the chair claims brings back 8 phantom chairs **and** pushes
 `capacityAudit.physical.seats` from 0 to 8 — the phantoms were not merely
 visible, they were being counted as real seats.
 
-`a6-architectural-confusion` — **diagnosed, NOT yet fixed.** 46 phantoms is
-exactly the count of the fixture's 24 floor boxes + 10 plinths + 12
-mullions. Two theories died on measurement: the phantoms are **not**
-separable by "has an associated chair" (27 tables have one, 27 do not — not
-8 / 46), and the architecture regions the harness scores against come from
-the DECLARATION, so they are not a signal the product can read. The real
-finding is **circularity**: 51 of 51 chair candidates associate to some
-table, `standalone: 0`, so the representation classifier concludes PHYSICAL
-at a 100% association rate — the phantom tables supplied the anchors that
-justified the phantom chairs, which justified keeping both.
+`a6-architectural-confusion` — **measured, NOT fixed, and the next step is
+specific.** 46 phantoms is exactly the fixture's 24 floor boxes + 10 plinths
++ 12 mullions. THREE theories died on measurement:
+
+1. "Phantoms have no associated chair" — false. 27 tables have one, 27 do
+   not, which is not the 8 / 46 split.
+2. "Use the architecture regions" — impossible. Those come from the
+   fixture's DECLARATION, so they are not a signal the product can read. A
+   signal that needs ground truth is not a signal.
+3. "The representation verdict is circular" — **my own over-claim, and
+   wrong.** a6 has 8 real tables with 32 real drawn chairs, so `PHYSICAL` is
+   the CORRECT verdict. The classifier is not the defect.
+
+What the fields actually say, matched against ground truth (validation only
+— no runtime branch may key on it):
+
+| field | 8 real tables | 46 phantoms |
+|---|---|---|
+| `evidence.chairs` | **4** (min = med = max) | min 0, **med 0, max 1** |
+| `confidence` | 0.66 | med **0.716**, max 0.753 |
+| `sizeAgreement` | **0** | med 0.98 |
+| `evidence.repetition` | 18 | med 18 |
+
+So `evidence.chairs` separates them perfectly at ≥2 — and `confidence` is
+**actively misleading**, scoring phantoms HIGHER than real tables.
+
+**Why the obvious rule is not the fix.** "A table needs ≥2 associated
+chairs" would delete a8-large-venue entirely: 289 tables there carry roughly
+one chair each (chair recall 0.089). A trade like that is a revert, not a
+win.
+
+**The next step, stated so it need not be re-derived:** the usable form is
+conditional on whether the chair signal is working on that plan at all — a6
+yields ~6.4 chairs per table, a8 ~0.94. A rule may only lean on chair count
+where chair detection is demonstrably productive. That needs measuring
+across a1/a4/a7/a8 and both golden plans before it is written, not reasoned
+into.
 
 `a2-mixed-families` — **diagnosed, one half fixed, still FAIL.** The
 held-back 7 were deselected by `selected: s.confidence >= confidenceThreshold()`
