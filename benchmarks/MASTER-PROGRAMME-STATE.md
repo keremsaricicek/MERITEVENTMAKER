@@ -454,6 +454,48 @@ Neither open FAIL is "accepted" — they are recorded here as in progress,
 which is the state the reliability contract requires instead of a silent
 "known issue".
 
+### I. §9 — Visual Plan Memory / identity safety — MEASURED, next step specific
+
+`npm run benchmark:memory`, 196 scoreable decisions across every scenario:
+
+| gate | measured | required | met |
+|---|---|---|---|
+| retention | 0.7857 | ≥ 0.98 | no |
+| identity precision | 0.9448 | ≥ 0.98 | no |
+| **wrong application rate** | **0.0552** | ≤ 0.01 | **no** |
+
+The gates are met on an UNCHANGED plan and missed on transformed ones.
+The third row is the one that matters for identity safety: 5.5% of
+remembered corrections are applied to the wrong object, against a 1%
+ceiling. A wrongly applied correction is silent — the operator sees a
+confident answer about the wrong table.
+
+**The abstention machinery already exists and is well built.**
+`src/plan-memory.js` grades every match on BOTH a score and a MARGIN
+("a score alone cannot tell 'this is clearly the object' from 'two objects
+fit equally well', and the second is how a decision quietly lands on the
+wrong one"), and only `strong` and `likely` are applied. So the 5.5% are
+matches that cleared `likely` — score ≥ 0.62 with margin ≥ 0.04 — and were
+still wrong.
+
+**The module's own doctrine names the fix.** The global-transform correction
+ships OFF because it "recovers 3 decision(s) and misapplies 3 more", with
+the reason recorded as: *a lost decision is reported and re-made; a wrongly
+applied one is invisible.* The current grade thresholds violate that same
+priority — they accept a 5.5% invisible-error rate to hold retention at
+0.79.
+
+**Next step:** move the `likely` margin (and if needed its score) until the
+wrong-application rate meets its 1% gate, and report the retention cost
+rather than hiding it. This is tuning against a DEFINED gate with a measured
+trade-off curve, not tuning to a fixture — but the trade must be stated per
+field, because retention down and precision up is still a trade.
+
+Two things the benchmark already reports honestly and that must not be
+"fixed" by making them sound better: the learned embedding contributes
+**nothing measurable** on this corpus (−2 decisions) and the neighbourhood
+signature contributes nothing (−1).
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
