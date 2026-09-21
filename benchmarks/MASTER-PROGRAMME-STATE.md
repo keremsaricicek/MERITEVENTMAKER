@@ -335,6 +335,59 @@ companion-ordering check.
 Noted in passing, for §16: `deleteSelection()` still asks through a native
 `confirm()`, which the suite has to accept.
 
+### H. §7 — plan reliability — `a5` FIXED, `a2`/`a6` diagnosed
+
+Adversarial moved from **1 PASS / 4 PARTIAL / 3 FAIL** to
+**2 PASS / 4 PARTIAL / 2 FAIL**. Golden and ORNEK: *No regressions. 0
+improvement(s), 0 note(s).* Every other fixture's metrics are unchanged —
+no trade.
+
+**Diagnosed before theorising, and two guesses were wrong.** A new
+diagnostic, `benchmarks/adversarial/explain-candidates.mjs`, runs one
+fixture through the real detector and prints the evidence attached to every
+candidate. It reads only the product's own fields, never the declaration: a
+signal that needs ground truth to compute is not a signal the detector could
+use.
+
+`a5-architecture-only` — **FIXED, now PASS.** The product already said
+`kind: "UNKNOWN"` ("only 8 repeated objects, below the 20 needed") with
+`tablesFound: 0`, and then typed 8 shapes as chairs anyway. Abstention was
+reachable and not used. Two fixes, neither a threshold nor keyed to a
+sample:
+- A standalone chair is a claim about SEATING. When the plan reader returns
+  UNKNOWN and its own evidence records no table at all, nothing anchors the
+  claim: the shapes stay, the claim does not, in the "uncorroborated shape"
+  vocabulary the size path already uses.
+- `capacityUnknown` fired only when OCR could not run AT ALL, and the whole
+  capacity block sat below an early return taken when nothing was found — so
+  the one drawing that most needs the fact was guaranteed not to get it. The
+  fact now follows the OUTCOME and names which route failed, in both
+  languages.
+
+Mutation-proved twice. Restoring the capacity silence drops the fact.
+Restoring the chair claims brings back 8 phantom chairs **and** pushes
+`capacityAudit.physical.seats` from 0 to 8 — the phantoms were not merely
+visible, they were being counted as real seats.
+
+`a6-architectural-confusion` — **diagnosed, NOT yet fixed.** 46 phantoms is
+exactly the count of the fixture's 24 floor boxes + 10 plinths + 12
+mullions. Two theories died on measurement: the phantoms are **not**
+separable by "has an associated chair" (27 tables have one, 27 do not — not
+8 / 46), and the architecture regions the harness scores against come from
+the DECLARATION, so they are not a signal the product can read. The real
+finding is **circularity**: 51 of 51 chair candidates associate to some
+table, `standalone: 0`, so the representation classifier concludes PHYSICAL
+at a 100% association rate — the phantom tables supplied the anchors that
+justified the phantom chairs, which justified keeping both.
+
+`a2-mixed-families` — not yet diagnosed. 7 real tables are detected and then
+**held back as unknown** while 23 phantoms are kept, which is the reverse of
+the abstention the product is supposed to have.
+
+Neither open FAIL is "accepted" — they are recorded here as in progress,
+which is the state the reliability contract requires instead of a silent
+"known issue".
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |

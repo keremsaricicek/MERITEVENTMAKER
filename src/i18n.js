@@ -186,6 +186,10 @@
     "fact.undeterminedAreas": { en: "{n} area(s) of the plan could not be identified.", tr: "Planın {n} alanı tanımlanamadı." },
     "fact.capacityAgrees": { en: "The plan states {stated} pax; {counted} seats were counted — they agree.", tr: "Plan {stated} kişi belirtiyor; {counted} koltuk sayıldı — uyuşuyorlar." },
     "fact.capacityDiffers": { en: "The plan states {stated} pax but {counted} seats were counted — a difference of {difference}.", tr: "Plan {stated} kişi belirtiyor ancak {counted} koltuk sayıldı — {difference} fark var." },
+    // OCR ran and read the page; the page simply carries no capacity figure.
+    // Distinct from noStatedCapacity, where the reading itself never happened
+    // -- an operator can act on the second (run OCR) and not on the first.
+    "fact.noCapacityOnDrawing": { en: "The drawing states no capacity figure of its own, so there is nothing to check the counted seats against.", tr: "Çizimin kendi kapasite rakamı yok, bu yüzden sayılan koltukları karşılaştıracak bir şey bulunmuyor." },
     "fact.noStatedCapacity": { en: "The drawing's own capacity figure was not read, because OCR did not run.", tr: "OCR çalışmadığı için çizimin kendi kapasite rakamı okunmadı." },
     "fact.unverifiedSeating": { en: "{n} piece(s) of seating furniture whose capacity a drawing cannot show.", tr: "Kapasitesi çizimden okunamayan {n} oturma mobilyası." },
     "fact.strength.strong": { en: "certain", tr: "kesin" },
@@ -418,6 +422,7 @@
     "provenance.tablesDetected": { en: "the tables this run actually found", tr: "bu çalışmanın gerçekten bulduğu masalar" },
     "provenance.symbolFamilyNoSeating": { en: "the plan's one repeated object family does not behave like seating: almost none of it sits at a table", tr: "planın tek tekrar eden nesne ailesi koltuk gibi davranmıyor: neredeyse hiçbiri bir masada durmuyor" },
     "provenance.associationRateInGap": { en: "the share of repeated objects that sit at a table falls between the two known behaviours", tr: "bir masada duran tekrar eden nesnelerin oranı bilinen iki davranışın arasına düşüyor" },
+    "provenance.ocrReadNoCapacity": { en: "OCR read the drawing and found no pax or capacity figure on it", tr: "OCR çizimi okudu ve üzerinde kişi sayısı veya kapasite rakamı bulamadı" },
     "provenance.ocrDidNotRun": { en: "OCR did not run, so the drawing's own pax figure was never read", tr: "OCR çalışmadı, bu yüzden çizimin kendi kişi sayısı hiç okunmadı" },
     "provenance.unreadableCapacity": { en: "seating furniture whose capacity cannot be read off a drawing", tr: "kapasitesi çizimden okunamayan oturma mobilyası" },
     "action.explainPlan": { en: "Explain this plan", tr: "Bu planı açıkla" },

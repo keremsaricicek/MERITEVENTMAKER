@@ -1044,9 +1044,27 @@
     // the string table like everything else an operator reads.
     const prov = (key, params) => ({ key: `provenance.${key}`, params: params || {} });
 
+    // WHAT THE DRAWING ITSELF SAYS ITS CAPACITY IS -- unknown, and said so.
+    // Defined here because BOTH exits below need it: an architect's shell
+    // produces "nothing found" AND "no capacity stated", and those are two
+    // different silences. Answering only the first reads as "nothing to
+    // report" about the second.
+    const sayCapacityUnknown = () => {
+      const stated = capacityAudit && capacityAudit.drawingStated;
+      if (stated != null) return false;
+      const ocrRan = !(capacityAudit && capacityAudit.ocrAvailable === false);
+      say("capacityUnknown", ocrRan ? "fact.noCapacityOnDrawing" : "fact.noStatedCapacity", {}, "strong",
+        [prov(ocrRan ? "ocrReadNoCapacity" : "ocrDidNotRun")], {});
+      return true;
+    };
+
     if (!tables.length && !zones.length) {
       say("empty", "fact.nothingFound", {}, "strong",
         [prov("nothingSurvived")], {});
+      // The drawing may still carry a printed capacity, or may carry none.
+      // Either way the product states which, rather than falling silent on
+      // the question because it found no furniture to count against.
+      sayCapacityUnknown();
       return facts;
     }
 
@@ -1186,9 +1204,15 @@
         "strong",
         [prov("paxFromOcr"), prov("seatsCounted")],
         { stated, counted: physicalSeats, difference: diff });
-    } else if (capacityAudit && capacityAudit.ocrAvailable === false) {
-      say("capacityUnknown", "fact.noStatedCapacity", {}, "strong",
-        [prov("ocrDidNotRun")], {});
+    } else {
+      // SILENCE IS NOT AN ANSWER. This used to fire only when OCR could not
+      // run at all -- so on a drawing where OCR ran perfectly well and simply
+      // found no capacity figure, the product said NOTHING about capacity.
+      // An operator reads that as "nothing to report", which is the opposite
+      // of the truth: the drawing's own figure is unknown. The fact now
+      // follows the OUTCOME (no capacity could be established) rather than
+      // the REASON one particular route failed, and names which route it was.
+      sayCapacityUnknown();
     }
     const unverified = (capacityAudit && capacityAudit.unverified) || [];
     if (unverified.length)

@@ -2728,6 +2728,40 @@
           tablesFound:candidates.length,
         });
       }
+      // NOTHING ANCHORS A SEATING CLAIM HERE.
+      //
+      // A standalone chair is a claim that somebody can sit somewhere. The
+      // plan reader has just said it cannot tell what kind of drawing this
+      // is -- UNKNOWN, because there were too few repeated objects for their
+      // association rate to mean anything -- and not ONE table was found for
+      // a chair to sit at. On an architect's shell issued before any
+      // furniture exists, every filled shape is at furniture scale, so size
+      // and repetition cannot separate a column from a chair; what separates
+      // them is that a chair is a seat AT something, and here there is
+      // nothing.
+      //
+      // The shapes are kept, because they are really on the drawing and an
+      // operator may want to see them. What is dropped is the CLAIM about
+      // what they are: they become the same uncorroborated shape the size
+      // path already emits, with a basis that says so. Abstention is
+      // surfaced in the product's own vocabulary rather than as a silent
+      // absence -- and rather than as a confident default, which is what
+      // "chair" was.
+      //
+      // Deliberately NOT a threshold and NOT keyed to any fixture: the
+      // condition is the plan reader's own verdict plus its own recorded
+      // evidence that no table exists. A drawing with even one table, or one
+      // the reader could classify, is untouched.
+      if(representation&&representation.kind==="UNKNOWN"&&chairVenues.length
+         &&representation.evidence&&representation.evidence.tablesFound===0){
+        for(const c of chairVenues){
+          c.type="other";
+          c.typeBasis="unanchoredSeat";
+          c.shapeSuggests="block";
+          c.evidence={...(c.evidence||{}),unassociated:true,
+            basis:"a chair-sized shape with no table anywhere to be a seat at, on a drawing this reader could not classify"};
+        }
+      }
       if(representation&&representation.kind==="SYMBOLIC"&&chairVenues.length){
         // The symbols ARE the tables. Promote them, and demote what size rank
         // called tables: on a plan whose tables are one uniform symbol, an

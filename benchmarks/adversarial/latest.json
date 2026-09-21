@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-09-21T13:00:46.130Z",
+  "ranAt": "2026-09-21T18:01:17.739Z",
   "realVenue": false,
   "note": "SYNTHETIC ADVERSARIAL FIXTURES — NOT REAL VENUES. These scores are never mixed into real-plan aggregates. REAL DISTINCT VENUE PLANS: 1. CROSS-VENUE GENERALIZATION: NOT VERIFIED.",
   "refusals": [],
@@ -123,7 +123,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 851,
+      "detectionMs": 993,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -263,7 +263,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 5
       },
-      "detectionMs": 970,
+      "detectionMs": 1210,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -388,7 +388,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 894,
+      "detectionMs": 1099,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -517,7 +517,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 1031,
+      "detectionMs": 1251,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -554,9 +554,9 @@
       },
       "chairs": {
         "groundTruth": 0,
-        "detected": 8,
+        "detected": 0,
         "tp": 0,
-        "fp": 8,
+        "fp": 0,
         "fn": 0,
         "precision": 0,
         "recall": 0,
@@ -594,18 +594,16 @@
         "byType": {}
       },
       "facts": {
-        "total": 1,
+        "total": 2,
         "expected": 1,
-        "expectedPresent": 0,
-        "expectedMissing": [
-          "capacityUnknown"
-        ],
+        "expectedPresent": 1,
+        "expectedMissing": [],
         "forbidden": 11,
         "forbiddenPresent": [],
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "strong": 1
+          "strong": 2
         }
       },
       "regionFP": {
@@ -621,26 +619,20 @@
         "nodeCount": 8,
         "edges": 8
       },
-      "contradictions": 1,
-      "contradictionIds": [
-        "contra:orphanSeats"
-      ],
+      "contradictions": 0,
+      "contradictionIds": [],
       "effort": {
         "reviewGroups": 1,
         "uncertainQuestions": 0,
-        "reviewPriorities": 2
+        "reviewPriorities": 1
       },
-      "detectionMs": 724,
+      "detectionMs": 816,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
-        "status": "FAIL",
-        "fail": [
-          "8 chair(s) proposed on a drawing with no furniture"
-        ],
-        "partial": [
-          "missing expected fact(s): capacityUnknown"
-        ]
+        "status": "PASS",
+        "fail": [],
+        "partial": []
       }
     },
     {
@@ -755,7 +747,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 6
       },
-      "detectionMs": 987,
+      "detectionMs": 1142,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -888,7 +880,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 1002,
+      "detectionMs": 1168,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -1029,7 +1021,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 1775,
+      "detectionMs": 2962,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
