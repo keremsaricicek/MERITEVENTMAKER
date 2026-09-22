@@ -146,6 +146,29 @@ rename a surface something else already reaches for.
 
 `plan-detection-classical.js` **3,090 → 3,053**.
 
+**A-5 followed**, into `src/plan-detection-shape.js`
+(`globalThis.MeritPlanShape`, `SHAPE.` at both call sites).
+`plan-detection-classical.js` **3,053 → 2,971** — under 3,000 for the first
+time, and **down 174 lines from 3,145** across three steps.
+
+Its crossing report names one outward name, `GEO`, and the tool now labels
+that a **MODULE HANDLE** rather than shell coupling: a region depending on
+another module is the one-way direction this codebase wants, and the new file
+binds its own handle. Reporting it as "the cut is in the wrong place" would
+have argued against exactly the moves that are going well.
+
+**And this map was wrong about A-5.** It recorded the group's dependency as
+`maskSolidity` (A-3), which would have tied a clean move to the component
+labeller and its module-level `SCRATCH_QUEUE` — the one MEDIUM-risk item in
+Split A. Measured: `shapeAnalysis` does not name `maskSolidity` at all. **A map
+is the record of a measurement, not a substitute for taking one again.**
+
+One consequence worth naming, because it is what a layered split looks like
+when it is working: A-5 took `minAreaRect`'s last remaining caller with it, so
+the pipeline no longer calls it at all. The boundary suite's geometry check
+now asserts the handle over every CALLER rather than over the one file that
+used to be the only one.
+
 **A-2 was measured and is NOT next, against the map's own LOW rating.** Its
 five constants (`RGB_BITS`/`RGB_LEVELS`/`RGB_BINS`/`RGB_SHIFT` on one
 four-declarator line, plus `LOW_CHROMA`/`MID_CHROMA`) are used on BOTH sides —
@@ -219,11 +242,11 @@ Line numbers are within `src/plan-detection-classical.js`.
 - **Risk** **LOWEST in the file.** Pure, self-contained, no state.
 - **Protected by** `.claude/rules/ai.md` (preserve rotation); `plan-intelligence-contract`
 
-### A-5 · Shape analysis and table typing
+### A-5 · Shape analysis and table typing — **MOVED**
 - **Lines** 476–553 (78)
 - **Responsibility** round / square / rectangle from **real pixels**, not the
   bounding-box aspect ratio
-- **Dependencies** `maskSolidity` (A-3)
+- **Dependencies** `GEO.minAreaRect` only. **This entry used to say `maskSolidity` (A-3) and that was wrong** — measured before the move, `shapeAnalysis` does not name `maskSolidity` at all. The error mattered: it tied A-5 to the component labeller and its module-level scratch buffer, the one MEDIUM-risk item in Split A, and would have deferred a clean move behind a hard one.
 - **Natural split** yes, with A-4
 - **Risk** **LOW**
 - **Protected by** `table-typing`; benchmark field `TYPES round n/n`

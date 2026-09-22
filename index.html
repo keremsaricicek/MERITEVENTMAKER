@@ -147,6 +147,10 @@
        pipeline, which reads it through globalThis.MeritPlanSizePrior, and
        publishes MeritSymbolFamilyMember under the name it always had. -->
   <script src="src/plan-detection-size-prior.js"></script>
+  <!-- Assisted Detection's shape analysis: round / square / rectangle decided
+       from the component's real filled pixels, never from its bounding box.
+       Loads after the geometry it uses and before the pipeline that calls it. -->
+  <script src="src/plan-detection-shape.js"></script>
   <!-- Assisted Detection: the classical CV pipeline, extracted from app-v8.js.
        Loads BEFORE app-v8.js because app-v8.js reads the registry it publishes
        (globalThis.MERIT_PLAN_DETECTION), and AFTER the Merit* modules it calls

@@ -206,6 +206,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const geoCode = stripCommentsAndStrings(fs.readFileSync(geoPath, "utf8"));
   const GEO_PUBLIC = ["minAreaRect", "sameObject", "boxIoU", "distanceToOBB"];
   const PRIOR_PUBLIC = ["modalMagnitude", "sizeAgreement", "symbolFamilyMember"];
+  const SHAPE_PUBLIC = ["shapeAnalysis", "classifyTableShape"];
 
   checks.ok(geoCode.trimStart().startsWith("(function"),
     "it is wrapped in its own IIFE", geoCode.trimStart().slice(0, 30));
@@ -213,12 +214,19 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal(geoExported.join(","), "MeritPlanGeometry",
     "and publishes exactly one name — four functions arrived, one name entered the app's vocabulary", geoExported);
 
+  // The geometry module's consumers are the pipeline AND the shape module,
+  // which is the shape of a layered split working: A-5 took `minAreaRect`'s
+  // only remaining caller with it, so the pipeline now makes no call to it at
+  // all. The rule is about how a CALLER reaches it, so it is asserted over
+  // every caller rather than over one file that used to be the only one.
+  const geoConsumers = () => detCode + "\n" + stripCommentsAndStrings(
+    fs.readFileSync(path.join(repoRoot, "src", "plan-detection-shape.js"), "utf8"));
   for (const n of GEO_PUBLIC) {
     checks.equal(matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
       `the pipeline makes no BARE call to ${n}() — a local alias of that name would hide the crossing at every call site`,
       matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
-    checks.ok(new RegExp(`GEO\\.${n}\\s*\\(`).test(detCode),
-      `and reaches ${n} through the published object instead`, true);
+    checks.ok(new RegExp(`GEO\\.${n}\\s*\\(`).test(geoConsumers()),
+      `and whoever calls ${n} reaches it through the published object`, true);
   }
 
   // Copied rather than moved is the other way this goes wrong, and here it
@@ -328,4 +336,67 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(livePrior.symbolStillGlobal,
     "MeritSymbolFamilyMember is still reachable through the global it was always reached by",
     livePrior.symbolStillGlobal);
+
+  // --- 7. THE FOURTH SEAM: shape analysis --------------------------------
+  //
+  // Split A-5, and the one group that depends on another MODULE rather than on
+  // nothing: it binds its own `GEO` handle for `MeritPlanGeometry`. That is
+  // the one-way direction this codebase wants, and it is only safe because
+  // `boot-contract` now derives the load-order rule — without that, `GEO` is
+  // `undefined` at the moment this file reads it and every shape comes back
+  // as a thrown error rather than a wrong answer.
+  const shapePath = path.join(repoRoot, "src", "plan-detection-shape.js");
+  checks.require(fs.existsSync(shapePath),
+    "shape analysis lives in its own file", "src/plan-detection-shape.js");
+  const shapeCode = stripCommentsAndStrings(fs.readFileSync(shapePath, "utf8"));
+  const shapeExported = [...shapeCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)]
+    .map((m) => m[1]).filter((n) => !n.startsWith("Merit") ? true : n !== "MeritPlanShape" ? true : true);
+  checks.equal([...new Set(shapeExported)].sort().join(","), "MeritPlanShape",
+    "it publishes exactly one name", shapeExported);
+
+  for (const n of SHAPE_PUBLIC) {
+    checks.equal(matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
+      `the pipeline makes no BARE call to ${n}()`,
+      matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
+    checks.ok(new RegExp(`SHAPE\\.${n}\\s*\\(`).test(detCode),
+      `and reaches ${n} through the published object instead`, true);
+  }
+  checks.equal(SHAPE_PUBLIC.filter((n) => detBindings.has(n) || v8Bindings.has(n)).length, 0,
+    "neither is still defined in the pipeline or the shell — moved, not copied",
+    SHAPE_PUBLIC.filter((n) => detBindings.has(n) || v8Bindings.has(n)));
+
+  // It may reach MeritPlanGeometry and nothing else. A module depending on a
+  // module is fine; a module depending on the pipeline would be the loop this
+  // whole split exists to prevent.
+  const shapeBare = bareUses(shapeCode);
+  const shapeReaches = [...detBindings, ...v8Bindings]
+    .filter((n) => shapeBare.has(n) && !bindings(shapeCode).has(n) && n !== "GEO");
+  checks.equal(shapeReaches.length, 0,
+    "and it resolves no name bound only in the pipeline or the shell — its one dependency is another module, reached through that module's published object",
+    shapeReaches);
+
+  // Live, because booting is not computing — and here the wrong answer would
+  // be silent rather than thrown. A disc is round; a filled box is not.
+  const liveShape = await page.evaluate(() => {
+    const s = globalThis.MeritPlanShape;
+    if (!s) return null;
+    return {
+      keys: Object.keys(s).sort(),
+      // The real input shape, read off `classifyTableShape` rather than
+      // invented: a filled OBB whose four corner squares are empty is a disc,
+      // and the same box with its corners covered is not.
+      round: s.classifyTableShape({ obb: { w: 100, h: 100 }, obbFill: 0.9,
+        cornerOccupancy: 0.05, cornerVsEdge: 0.1, quadrantFill: [0.8, 0.8, 0.8, 0.8] }),
+      rect: s.classifyTableShape({ obb: { w: 240, h: 90 }, obbFill: 0.95,
+        cornerOccupancy: 0.92, cornerVsEdge: 0.9, quadrantFill: [0.9, 0.9, 0.9, 0.9] }),
+    };
+  });
+  checks.require(liveShape, "MeritPlanShape is published on the page after boot");
+  checks.equal(liveShape.keys.join(","), "classifyTableShape,shapeAnalysis,version",
+    "with exactly its two functions and a version", liveShape.keys);
+  checks.equal(liveShape.round?.type, "round",
+    "and it still computes: a filled square OBB with empty corners is a disc", liveShape.round);
+  checks.equal(liveShape.rect?.type, "rectangle",
+    "while a long box that fills its corners is a rectangle — decided from pixels, not from the bounding box",
+    liveShape.rect);
 }

@@ -79,6 +79,16 @@ const count = (text, n) => (text.match(new RegExp(`\\b${n}\\b`, "g")) || []).len
 const regionBinds = bindings(rs);
 const outerBinds = bindings(os);
 
+// A HANDLE TO A PUBLISHED MODULE IS NOT SHELL COUPLING. `const GEO =
+// globalThis.MeritPlanGeometry` reads as an outward crossing by the letter of
+// the rule and is nothing of the kind: the region depends on another MODULE,
+// which is the one-way direction this codebase wants, and the new file can
+// simply bind its own handle. Reporting it as "the cut is in the wrong place"
+// would argue against exactly the moves that are going well.
+const handles = new Map();
+for (const m of os.matchAll(/(?:^|\n)\s*const\s+([A-Za-z_$][\w$]*)\s*=\s*globalThis\.((?:Merit|MERIT_)[A-Za-z0-9_$]*)/g))
+  handles.set(m[1], m[2]);
+
 const outward = [...outerBinds].filter((n) => count(rs, n) > 0 && !regionBinds.has(n));
 const inward = [...regionBinds].filter((n) => count(os, n) > 0);
 const priv = [...regionBinds].filter((n) => count(os, n) === 0);
@@ -94,9 +104,11 @@ for (const n of outward) {
   // A name used on BOTH sides cannot simply travel with the region: moving it
   // breaks the other side, copying it creates two sources of truth. That is
   // the cut being in the wrong place, and it is the most useful line here.
-  const verdict = outN > 0 && inN > 0
-    ? (outN > 0 ? "SHARED — used on both sides; the cut does not separate it" : "")
-    : "moves with the region";
+  const verdict = handles.has(n)
+    ? `MODULE HANDLE for globalThis.${handles.get(n)} — the new file binds its own; not shell coupling`
+    : outN > 0
+      ? "SHARED — used on both sides; the cut does not separate it"
+      : "moves with the region";
   console.log(`  ${pad(n, 20)} region=${pad(inN, 4)} outside=${pad(outN, 4)} ${verdict}`);
 }
 

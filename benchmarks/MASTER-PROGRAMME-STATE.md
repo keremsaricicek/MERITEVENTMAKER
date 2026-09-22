@@ -882,8 +882,28 @@ move. That is the map's "size does not predict difficulty" finding arriving
 again from the other direction — this time a group rated LOW that measurement
 says is not available yet.
 
-**Gates.** `npm run test:all` **72 / 72 suites · 2,299 / 2,299 checks** (+37
-from the three new seam guards; 2,283 after step 1). `build:offline` · `build:offline-full` ·
+**Step 3 — A-5** → `src/plan-detection-shape.js` (`globalThis.MeritPlanShape`,
+`SHAPE.` at both call sites). `plan-detection-classical.js` **3,053 → 2,971** —
+under 3,000 for the first time, **down 174 lines from 3,145** across three
+steps. Its one outward name is `GEO`, and the tool now labels that a **MODULE
+HANDLE** rather than shell coupling: a region depending on another module is
+the direction this codebase wants, and the new file binds its own.
+
+**The map was wrong about A-5, and the error was load-bearing.** It recorded
+the dependency as `maskSolidity` (A-3), which would have tied a clean move to
+the component labeller and its module-level `SCRATCH_QUEUE` — the one
+MEDIUM-risk item in Split A. Measured: `shapeAnalysis` does not name
+`maskSolidity` at all. **A map is the record of a measurement, not a substitute
+for taking one again**, which is the same lesson the stale line numbers taught
+one commit earlier.
+
+A-5 also took `minAreaRect`'s last caller with it, so the pipeline no longer
+calls it at all. The boundary suite's geometry check now asserts the handle
+over every CALLER rather than over the one file that used to be the only one —
+which is what a layered split looks like when it is working.
+
+**Gates.** `npm run test:all` **72 / 72 suites · 2,311 / 2,311 checks** (+49
+from the four seam guards; 2,283 after step 1, 2,299 after step 2). `build:offline` · `build:offline-full` ·
 `verify:offline` **27 / 27**, both artifacts run, 38 sources bundled.
 `npm run benchmark` then `benchmark:baseline` — measured fresh after **each**
 step, not re-read — **No regressions. 0 improvement(s), 0 note(s)** both
