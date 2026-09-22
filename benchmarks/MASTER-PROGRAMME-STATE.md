@@ -524,6 +524,52 @@ Two things the benchmark already reports honestly and that must not be
 **nothing measurable** on this corpus (−2 decisions) and the neighbourhood
 signature contributes nothing (−1).
 
+### J. §10 — ORNEK robustness — RE-MEASURED, two findings retired, one real
+
+`node benchmarks/robustness/run-robustness.mjs`: **no regressions against the
+recorded baseline**, original tables F1 0.958 / 4 FP, chairs 107 TP / 5 FP.
+Triage across the fifteen renderings of the one real plan: 6 HEALTHY,
+2 ACCEPTABLE, 1 WEAK, **7 SEVERE**.
+
+**The README's own findings were stale, and two of the three were wrong.**
+Anyone reading it would have chased work that is already done:
+
+- *"Padding alone costs 0.24 of table F1"* — **fixed.** `crop-pad` is now
+  F1 0.968, 3 FP, recall 1.000: better than the original. Detection is
+  translation-invariant on this corpus.
+- *"Grayscale invents 561 chairs"* — **fixed.** Now 5 table FPs, chair F1
+  0.897, ACCEPTABLE.
+
+The README is rewritten from the current run.
+
+**What is actually open, and it is one mechanism, not seven bugs.** Six of
+the seven SEVERE rows fail identically — a global photometric change
+explodes table FALSE POSITIVES:
+
+| rendering | table FP | table F1 | chair F1 |
+|---|---|---|---|
+| original | 4 | 0.958 | — |
+| jpeg-q20 | 26 | 0.769 | 0.960 |
+| blur | 32 | 0.643 | **0.991** |
+| bright-up | 48 | 0.586 | 0.935 |
+| contrast-high | 49 | 0.561 | 0.978 |
+| hue-shift | 52 | 0.559 | 0.974 |
+
+Chair detection barely moves — blur posts its **best chair F1 anywhere**,
+0.991 — so this is not "the image degraded". It is the TABLE path, and the
+mechanism is in the source rather than inferred: `detect()` builds its luma
+histogram, its **Otsu threshold**, its RGB colour model and its low/mid
+chroma tone histograms over **every pixel of the canvas**. A global
+brightness, contrast or hue shift moves all of them together and the
+binarisation begins admitting background texture as components. The
+remaining two SEVERE rows are the same statistics failing the other way:
+`bright-down` recall 0.522, `lowres-roundtrip` 0.609.
+
+**Next step:** make those global statistics robust to a photometric shift —
+this is not a threshold to nudge. It changes the answer on every plan, so
+the golden baseline, all eight adversarial fixtures and all fifteen
+robustness variants must be measured together before and after.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |

@@ -29,46 +29,69 @@ verified that way before any number below was believed.
 
 ## What it found
 
-The original plan scores tables F1 0.882 and chairs 79/113 with zero false
-chairs. Against that:
+**Re-measured; the table below is the current run, and it replaces an earlier
+one that is now wrong in two of its three conclusions.** The original plan
+scores tables F1 **0.958** with 4 false positives and chairs 107 TP / 5 FP.
 
-| variant | tbl F1 | chr TP | chr FP | note |
-|---|---|---|---|---|
-| **contrast-low** | **0.921** | 79 | 0 | better than the original |
-| **downscale-70** | 0.911 | 79 | 0 | holds |
-| **jpeg-q40** | 0.901 | 79 | 0 | holds |
-| noise | 0.811 | 79 | 0 | holds |
-| grayscale | 0.739 | **113** | **561** | see below |
-| rotate-2 | 0.695 | 89 | 119 | |
-| blur | 0.667 | 79 | 0 | |
-| bright-down | 0.649 | 79 | 0 | 24 of 46 tables |
-| **crop-pad** | **0.646** | 79 | 0 | *nothing changed but the margin* |
-| bright-up | 0.578 | 79 | 0 | 45 false tables |
-| hue-shift | 0.563 | 79 | 0 | 51 false tables |
-| jpeg-q20 | 0.476 | 69 | 1 | 15 of 46 tables |
-| **lowres-roundtrip** | **0.133** | 66 | 0 | 4 of 46 tables |
+| variant | tbl F1 | tbl FP | tbl recall | chr F1 | triage |
+|---|---|---|---|---|---|
+| crop-pad | **0.968** | 3 | 1.000 | 0.951 | HEALTHY |
+| rotate-2 | 0.968 | 2 | 0.978 | 0.949 | HEALTHY |
+| jpeg-q40 | 0.958 | 4 | 1.000 | 0.973 | HEALTHY |
+| contrast-low | 0.921 | 2 | 0.891 | 0.959 | HEALTHY |
+| grayscale | 0.915 | 5 | 0.935 | 0.897 | ACCEPTABLE |
+| rotate-minus-3 | 0.901 | 4 | 0.891 | 0.970 | HEALTHY |
+| downscale-70 | 0.901 | 4 | 0.891 | **0.752** | WEAK |
+| noise | 0.852 | 16 | 1.000 | 0.965 | ACCEPTABLE |
+| jpeg-q20 | 0.769 | **26** | 0.978 | 0.960 | SEVERE |
+| bright-down | 0.649 | 4 | **0.522** | 0.944 | SEVERE |
+| blur | 0.643 | **32** | 0.804 | 0.991 | SEVERE |
+| lowres-roundtrip | 0.636 | 14 | **0.609** | 0.941 | SEVERE |
+| bright-up | 0.586 | **48** | 0.848 | 0.935 | SEVERE |
+| hue-shift | 0.559 | **52** | 0.826 | 0.974 | SEVERE |
+| contrast-high | 0.561 | **49** | 0.804 | 0.978 | SEVERE |
 
-Three findings worth acting on, in order:
+Median across all renderings: table F1 0.877, chair F1 0.955.
 
-**1. Grayscale finds every chair.** 113 of 113, including all 24 pale outlined
-chairs and all 10 bistro chairs that the colour path misses entirely on the
-original. It also invents 561. So the pale and bistro families are not
-invisible to this pipeline — the *colour* path discards them. That is the same
-"one global decision deletes minority families" pattern as the table-size,
-table-aspect and chair-shape findings in `../BISTRO-MERGE.md`, and it is the
-strongest lead for the 34 missed chairs.
+### Two of the three earlier findings no longer hold
 
-**2. Padding alone costs 0.24 of table F1.** `crop-pad` changes no pixel of the
-drawing — it adds margin. Table F1 falls 0.882 to 0.646 and false positives go
-6 to 42. Detection should be close to translation-invariant and is not.
+The previous version of this section named padding and grayscale as the
+leading problems. Both have moved, and leaving them here would send the next
+reader after work that is already done:
 
-**3. Resolution loss is catastrophic, brightness is not far behind.** A
-downscale-and-upscale round trip leaves 4 tables of 46. Brightness ±18% costs
-0.23–0.30 of F1 and, upward, produces 45 false tables. These are the thresholds
-adapting badly, and they are the difference between a plan that arrives as a
-clean export and one photographed off a desk.
+- **"Padding alone costs 0.24 of table F1" is FIXED.** `crop-pad` is now
+  0.968 F1 with 3 false positives and perfect recall — better than the
+  original. Detection is translation-invariant on this corpus.
+- **"Grayscale invents 561 chairs" is FIXED.** Grayscale is now 5 table FPs
+  and chair F1 0.897, triaged ACCEPTABLE.
+- **Resolution loss is still real**, and is now joined by a larger family.
 
-## What this does not claim
+### The one finding that remains, and what it actually is
 
-Only rendering robustness on one drawing. Cross-venue generalisation is
-**unverified** and cannot be verified from this repository's contents.
+**Seven of fifteen renderings are SEVERE, and six of them fail the same way:
+a global photometric change explodes table FALSE POSITIVES.**
+
+    original        4 false tables
+    jpeg-q20       26
+    blur           32
+    bright-up      48
+    contrast-high  49
+    hue-shift      52
+
+Chair detection barely moves on any of them — blur scores chair F1 **0.991**,
+its best row anywhere. So this is not "the image got worse". It is the TABLE
+path specifically, and the mechanism is visible in the source: `detect()`
+builds its luma histogram, its Otsu threshold, its RGB colour model and its
+low/mid-chroma tone histograms over **every pixel of the canvas**. Shift the
+whole image's brightness, contrast or hue and every one of those global
+statistics moves with it, and the binarisation starts admitting background
+texture as components.
+
+The other two SEVERE rows are the same statistics failing in the opposite
+direction: `bright-down` keeps false positives at 4 but loses recall to
+0.522, and `lowres-roundtrip` to 0.609.
+
+**This is the open §10 work.** It is not a threshold to nudge: the fix has to
+make those global statistics robust to a photometric shift, and it changes
+the answer on every plan, so it needs the golden baseline, all eight
+adversarial fixtures and all fifteen variants measured together.
