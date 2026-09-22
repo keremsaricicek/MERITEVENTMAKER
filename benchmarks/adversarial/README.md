@@ -1,7 +1,7 @@
-# Eight layouts this system had never been allowed to fail on
+# Nine layouts this system had never been allowed to fail on
 
 ```
-node benchmarks/adversarial/make-fixtures.mjs        # regenerate the eight images + declarations
+node benchmarks/adversarial/make-fixtures.mjs        # regenerate the nine images + declarations
 npm run benchmark:adversarial                        # score the current build against them
 npm run benchmark:adversarial -- --compare           # against the frozen baseline, field by field
 npm run benchmark:adversarial -- a7                  # one fixture
@@ -61,6 +61,7 @@ shows up in the diff, and it cannot happen quietly in the middle of tuning.
 | **a6** architectural-confusion | repetition at a consistent size is read as furniture; repeated architecture that outnumbers the furniture must not become tables |
 | **a7** dense-overlap | association is nearest-table-within-reach and has never had to choose, or to decline to |
 | **a8** large-venue | every measurement so far was taken on 46 tables; at 324 tables and 3,240 seats everything still has to complete |
+| **a9** mixed-representation | the plan reader answers "what KIND of drawing is this?" once and the detector acts on that answer everywhere; a sheet carrying a symbolic hall AND a drawn terrace must keep both |
 
 Every declaration carries `hypothesis`, `expectedFacts`, `forbiddenFacts`,
 `forbiddenZoneTypes`, ground-truth objects, ground-truth chair→table relations,
@@ -81,6 +82,31 @@ The benchmark scores that separately:
   failure.
 - `ambiguousDeclared` — attached **and flagged**. Allowed: the seat is real, so
   dropping it would lose capacity; what must not happen is a silent answer.
+
+## Two diagnostics, for when a number is wrong
+
+A verdict says a fixture produced 46 phantom tables or lost 24 chairs. It does
+not say why, and *diagnose before theorising* is this repository's rule: Phase 6
+guessed at three causes and measurement contradicted two of them.
+
+```
+node benchmarks/adversarial/explain-candidates.mjs a6-architectural-confusion [out.json]
+node benchmarks/adversarial/family-anchors.mjs
+```
+
+`explain-candidates` runs ONE fixture through the real detector and prints the
+evidence the pipeline attached to every candidate, so a separating signal can be
+looked for rather than assumed. It prints the product's own fields only and
+never reads the declaration: a signal that needs the ground truth to compute is
+not a signal the detector could ever use.
+
+`family-anchors` runs every fixture **and both real plans**, and prints what the
+secondary-chair-family size band is anchored to — `referenceSide`,
+`surfaceSide`, their ratio, and where each considered family fell. It exists
+because the alternative to measuring that distribution is moving a constant
+until one fixture passes. It is what showed that the band's floor, at 0.4,
+rejects exactly one family across eleven plans and that the family is a real
+one.
 
 ## The verdict rules
 
@@ -118,6 +144,12 @@ ones.
 | a8 | **FAIL** | the `MAX_TABLES` cap reached (240 of 324) and **all 240 held back by `seatsInsideBody`** |
 
 **5 FAIL, 3 PARTIAL, 0 PASS.**
+
+`a9` was added later and has no line in `BASELINE.json`; `--compare` says so
+rather than inventing one. Its own first run, on the build before §6:
+**PARTIAL** — 72 of 75 tables (the symbolic hall, correct), and **0 of 24
+chairs**, because the terrace was erased before the plan reader was ever
+consulted. See `benchmarks/MASTER-PROGRAMME-STATE.md` section K.
 
 The two most important lines in that table are `a1` and `a8`, and they are the
 same defect. On `a8` the table and its ring of chairs merge into one component,

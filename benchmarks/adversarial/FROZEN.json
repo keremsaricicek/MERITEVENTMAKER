@@ -1,5 +1,5 @@
 {
-  "frozenAt": "2026-09-04T11:32:24.743Z",
+  "frozenAt": "2026-09-22T06:28:20.019Z",
   "note": "Hashes of the adversarial fixtures and their declarations at the moment they were frozen. run-adversarial.mjs refuses to score a fixture whose bytes differ from these, so a fixture cannot be quietly adjusted to agree with an algorithm change. Re-freezing is deliberate and shows up in the diff.",
   "realVenue": false,
   "entries": {
@@ -81,6 +81,16 @@
       "tables": 324,
       "chairs": 3240,
       "scoreableRelations": 3240,
+      "ambiguousRelations": 0
+    },
+    "a9-mixed-representation": {
+      "declaration": "7e88f753d9b41eb0d275a0a939dc2419a064f8ad979a3295369a94d8cdbb25c7",
+      "image": "043a782947f28176a8e638a0046335e56f35b084a030d6c04ad7758d523813f7",
+      "width": 1700,
+      "height": 1100,
+      "tables": 75,
+      "chairs": 24,
+      "scoreableRelations": 24,
       "ambiguousRelations": 0
     }
   }

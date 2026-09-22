@@ -113,6 +113,62 @@ these are the tonal inverse), the faint row 73–76, and a band in the
 photograph's fold. Fixing every one of them would have moved table recall from
 0 to 0 before this change.
 
+## One sheet, two languages
+
+The verdict above is **one answer for the whole drawing**, and the swap it
+triggers used to act on the whole drawing: it began
+`candidates.splice(0, candidates.length)`. That is sound while a drawing speaks
+one language. A venue that publishes ONE sheet for a symbolically-numbered
+ballroom and a physically-drawn terrace speaks two, and a plan-wide verdict then
+lets the majority decide what the minority is.
+
+`a9-mixed-representation` (synthetic) draws exactly that: 72 numbered discs with
+a printed capacity rule beside 3 round tables with 24 chairs. Measured on the
+build before the fix, the terrace was not merely inverted — it was **erased
+before the plan reader was ever consulted**:
+
+```
+uniformObjects 72   associatedToTable 0   tablesFound 0   ->  SYMBOLIC
+24 real chairs detected, then dropped;  3 real tables never proposed
+```
+
+Three plan-wide statistics did it, each applied in a room it was not measured
+in:
+
+1. the **multi-family chair pass** — the machinery that exists so one plan can
+   carry two seat vocabularies — sat behind a colour test that an ink plan never
+   passes, so the sheet got ONE vocabulary, set by the 72 discs at 48px;
+2. the **size floor** of that pass is anchored to "the plan's main seat", and
+   nothing checked the main population was a seat: here `referenceSide` and
+   `surfaceSide` are the same 48px, *the same objects*, and the band opened
+   1.2px above the terrace's chairs;
+3. the **swap** demoted every table on the sheet, though its argument — "these
+   repeated marks sit at nothing, so they are not chairs" — is a claim about
+   the primary family alone.
+
+All three are fixed without moving a threshold: the pass is reachable from ink,
+the floor is skipped where its own premise fails, and the swap is scoped to the
+family the verdict was reached about, recording what it left alone
+(`keptAsDrawnFurniture`, `keptDrawnSeats`, `drawnSeatFamilies`). On a
+one-vocabulary plan there are no such families and the swap reduces object for
+object to what it did before — measured identical on ORNEK and on the golden
+plan.
+
+| a9 | before | after |
+|---|---|---|
+| chairs P / R / F1 | 0 / 0 / 0 | **1.000 / 1.000 / 1.000** |
+| tables P / R | 1.000 / 0.960 | 1.000 / 0.960 |
+| terrace chairs read as tables | — | **0** |
+
+**The terrace's three TABLES are still missed**, and the cause is measured
+rather than guessed: the plan-wide modal table area is 347px², taken from the
+title's eleven glyphs once the furniture is outnumbered, so 104px tables are
+pruned as "six times the modal". Abstaining from that fallback recovers all
+three and costs `a5-architecture-only` two real abstentions — PASS to FAIL —
+so it was reverted and recorded at the line. The fix is a modal local to a
+region, which is the same mechanism the robustness work names for the
+photometric statistics.
+
 ## What this does not show
 
 **REAL DISTINCT VENUE PLANS: 2. CROSS-VENUE GENERALIZATION: NOT VERIFIED.**

@@ -1,4 +1,4 @@
-// The eight layouts this system has never been allowed to fail on.
+// The nine layouts this system has never been allowed to fail on.
 //
 // Everything measured in benchmarks/ so far comes from ONE drawing and sixteen
 // re-renderings of it. That corpus can tell you a change did not break what
@@ -191,6 +191,27 @@ class Fixture {
         size, style, family, belongsTo: tableId, facingDeg, colour }));
     }
     return ids;
+  }
+
+  // A table drawn as a SYMBOL: one identical disc carrying a printed number,
+  // with no seat drawn anywhere near it. This is how the ORNEK plan states a
+  // room — the number is part of the table's mark, not a caption about it, so
+  // it is deliberately NOT registered as a text region. Registering it would
+  // assert that printed matter sits on top of the furniture, which is false,
+  // and would then score every correct detection as a text-region intrusion.
+  //
+  // `seats` is 0 because the DRAWING states none. What the room holds is
+  // printed as a rule elsewhere on the sheet; reading that is a different job
+  // and this annotation must not pre-empt it.
+  symbolTable({ id, cx, cy, d, label, fill = WHITE }) {
+    this.ops.push({ t: "circle", cx, cy, r: d / 2, fill, stroke: INK, lw: 2.5 });
+    const size = Math.round(d * 0.34);
+    this.ops.push({ t: "text", x: cx - label.length * size * 0.29, y: cy - size * 0.6,
+      s: label, size, weight: "bold", fill: INK });
+    this.objects.push({ id, class: "table", type: "round", cx, cy, w: d, h: d,
+      rotation: 0, seats: 0, seatsConfidence: "not-drawn",
+      drawnAs: "symbol", printedNumber: label });
+    return this;
   }
 
   venue({ id, cls, cx, cy, w, h, fill = ARCH_FILL, shape = "rect" }) {
@@ -696,6 +717,79 @@ function a8LargeVenue() {
 }
 
 // ---------------------------------------------------------------------------
+// A9 — MIXED REPRESENTATION
+//
+// Hypothesis under test: the plan reader answers "what KIND of drawing is
+// this?" ONCE, for the whole sheet, and the detector acts on that one answer
+// EVERYWHERE. `src/plan-representation.js` takes plan-wide totals and returns
+// a single verdict; the swap that verdict triggers begins
+// `candidates.splice(0, candidates.length)` — every table on the drawing,
+// wherever it is.
+//
+// That is sound while a drawing speaks one language. A venue that publishes
+// one sheet for a symbolically-numbered ballroom AND a physically-drawn
+// terrace speaks two, and the majority decides for the minority. Here the
+// symbolic hall outnumbers the drawn one 24:1, so if the verdict is global
+// the terrace's three real tables are demoted to "not a table" and its
+// twenty-four real chairs are re-read as tables — a whole room silently
+// inverted because of what was drawn in a different room.
+//
+// The control is the terrace itself: it is an ordinary drawn-furniture layout,
+// identical in kind to what a3/a8 already prove this pipeline handles. If it
+// survives when it is the only thing on a sheet and dies when a symbolic hall
+// is drawn beside it, the loss is the verdict's locality and nothing else.
+// ---------------------------------------------------------------------------
+function a9MixedRepresentation() {
+  const f = new Fixture({
+    id: "a9-mixed-representation", W: 1700, H: 1100,
+    hypothesis: "The representation verdict is global and is acted on globally. One sheet carrying a symbolic hall " +
+      "(72 numbered discs, no seat drawn) and a drawn-furniture terrace (3 round tables, 24 chairs) must keep BOTH: " +
+      "the discs read as tables, and the terrace's tables and chairs still read as tables and chairs. A majority " +
+      "drawn in one language must not decide what the minority is.",
+    notes: "Two halls, one sheet, separated by a wall. Nothing here is unusual for a venue that numbers its ballroom " +
+      "and draws its terrace; it is only unusual for a reader that asks the question once.",
+  });
+  f.wall("hall-a", 40, 110, 1030, 950);
+  f.wall("hall-b", 1110, 110, 550, 950);
+  f.text("title", 60, 46, "GRAND HOTEL — HALL A + TERRACE", 28, "bold");
+
+  // ---- Hall A: stated in symbols. 72 identical numbered discs, no seats. ---
+  const hallA = [];
+  let n = 0;
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 9; c++) {
+    n++;
+    const id = `S${String(n).padStart(2, "0")}`;
+    f.symbolTable({ id, cx: 130 + c * 108, cy: 215 + r * 105, d: 54, label: String(n) });
+    hallA.push(id);
+  }
+  // The capacity this hall holds is PRINTED, in the ORNEK idiom, because the
+  // drawing itself shows no seat to count. The fixture states it on the sheet
+  // and does not annotate a seat count on any symbol.
+  f.text("rule-a", 90, 1075, "HALL A : 72 * 10 : 720 PAX", 22, "bold");
+
+  // ---- Hall B: drawn. Three round tables, eight chairs each, seats countable.
+  const hallB = [];
+  for (let i = 0; i < 3; i++) {
+    const id = `TB${i + 1}`;
+    const cx = 1385, cy = 290 + i * 290;
+    f.table({ id, type: "round", cx, cy, w: 104, h: 104, seats: 8 });
+    f.chairRing({ tableId: id, cx, cy, radius: 72, count: 8, size: 20, style: "filled",
+      family: "terrace-chair", colour: SEAT });
+    hallB.push(id);
+  }
+  f.text("label-b", 1150, 1075, "TERRACE", 22, "bold");
+
+  f.zone({ id: "z-hall-a", type: "dining", memberIds: hallA,
+    note: "the symbolic hall: every member is a numbered disc and no seat is drawn at any of them" });
+  f.zone({ id: "z-terrace", type: "dining", memberIds: hallB,
+    note: "the drawn hall: ordinary furniture, and the control for this fixture" });
+  f.expect("tableCount", "zone:dining");
+  f.forbid("zone:stage", "zone:bar", "zone:lounge", "empty");
+  f.forbidZones("stage", "bar", "lounge");
+  return f;
+}
+
+// ---------------------------------------------------------------------------
 // Rendering: one interpreter for the op list, so a fixture's drawing code and
 // its ground truth cannot be edited apart.
 // ---------------------------------------------------------------------------
@@ -813,7 +907,8 @@ function write(f, dataUrl) {
 }
 
 const builders = [a1ChairUnderTable, a2MixedFamilies, a3NoSemanticAnchors, a4MultiRoom,
-  a5ArchitectureOnly, a6ArchitecturalConfusion, a7DenseOverlap, a8LargeVenue];
+  a5ArchitectureOnly, a6ArchitecturalConfusion, a7DenseOverlap, a8LargeVenue,
+  a9MixedRepresentation];
 
 const browser = await launchChromium();
 const page = await browser.newPage({ viewport: { width: 900, height: 600 } });

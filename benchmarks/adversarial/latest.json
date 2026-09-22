@@ -1,5 +1,5 @@
 {
-  "ranAt": "2026-09-21T18:20:15.329Z",
+  "ranAt": "2026-09-22T07:25:51.621Z",
   "realVenue": false,
   "note": "SYNTHETIC ADVERSARIAL FIXTURES — NOT REAL VENUES. These scores are never mixed into real-plan aggregates. REAL DISTINCT VENUE PLANS: 1. CROSS-VENUE GENERALIZATION: NOT VERIFIED.",
   "refusals": [],
@@ -123,7 +123,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 1085,
+      "detectionMs": 674,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -263,7 +263,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 5
       },
-      "detectionMs": 1193,
+      "detectionMs": 764,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -388,7 +388,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 1006,
+      "detectionMs": 696,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -517,7 +517,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 1279,
+      "detectionMs": 862,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -626,7 +626,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 813,
+      "detectionMs": 524,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -747,7 +747,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 6
       },
-      "detectionMs": 1098,
+      "detectionMs": 716,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -880,7 +880,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 1199,
+      "detectionMs": 851,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -1021,7 +1021,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 2439,
+      "detectionMs": 1393,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -1031,6 +1031,136 @@
           "round tables typed 136/289",
           "table recall 0.892",
           "chair recall 0.089"
+        ]
+      }
+    },
+    {
+      "planId": "a9-mixed-representation",
+      "realVenue": false,
+      "hypothesis": "The representation verdict is global and is acted on globally. One sheet carrying a symbolic hall (72 numbered discs, no seat drawn) and a drawn-furniture terrace (3 round tables, 24 chairs) must keep BOTH: the discs read as tables, and the terrace's tables and chairs still read as tables and chairs. A majority drawn in one language must not decide what the minority is.",
+      "tables": {
+        "groundTruth": 75,
+        "detected": 72,
+        "tp": 72,
+        "fp": 0,
+        "fn": 3,
+        "precision": 1,
+        "recall": 0.96,
+        "f1": 0.98,
+        "heldBack": 0,
+        "heldBackReasons": {},
+        "missedIds": [
+          "TB1",
+          "TB2",
+          "TB3"
+        ]
+      },
+      "tableTypes": {
+        "byType": {
+          "round": {
+            "matched": 72,
+            "correct": 72,
+            "accuracy": 1
+          }
+        },
+        "distinctFound": 1,
+        "required": null,
+        "meetsRequirement": null
+      },
+      "chairs": {
+        "groundTruth": 24,
+        "detected": 24,
+        "tp": 24,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      "relations": {
+        "groundTruthScoreable": 24,
+        "groundTruthAmbiguous": 0,
+        "scored": 24,
+        "correct": 0,
+        "wrong": 0,
+        "orphan": 24,
+        "unscoreable": 0,
+        "accuracy": 0,
+        "coverage": 1,
+        "forcedOnAmbiguous": 0,
+        "ambiguousDeclared": 0,
+        "ambiguousChairsNotDetected": 0,
+        "declaredAmbiguousAmongScoreable": {
+          "count": 0,
+          "correct": 0
+        },
+        "wrongExamples": []
+      },
+      "zones": {
+        "expected": 2,
+        "detected": 1,
+        "detectedTyped": 0,
+        "unknownZones": 1,
+        "matched": 0,
+        "precision": null,
+        "recall": 0,
+        "falseZoneInventions": 0,
+        "inventedTypes": [],
+        "byType": {
+          "unknown": 1
+        }
+      },
+      "facts": {
+        "total": 5,
+        "expected": 2,
+        "expectedPresent": 1,
+        "expectedMissing": [
+          "zone:dining"
+        ],
+        "forbidden": 4,
+        "forbiddenPresent": [],
+        "fabricatedStrong": 0,
+        "withoutProvenance": [],
+        "byStrength": {
+          "likely": 1,
+          "uncertain": 2,
+          "strong": 2
+        }
+      },
+      "regionFP": {
+        "textRegions": 3,
+        "tablesInText": 0,
+        "architectureRegions": 1,
+        "tablesInArchitecture": 0
+      },
+      "sceneGraph": {
+        "counts": {
+          "memberOf": 179
+        },
+        "nodeCount": 107,
+        "edges": 179
+      },
+      "contradictions": 4,
+      "contradictionIds": [
+        "contra:orphanSeats",
+        "contra:emptyTablesOrphanSeats",
+        "contra:visualClass",
+        "contra:tablesNoDining"
+      ],
+      "effort": {
+        "reviewGroups": 3,
+        "uncertainQuestions": 0,
+        "reviewPriorities": 8
+      },
+      "detectionMs": 968,
+      "timedOut": false,
+      "pageErrors": [],
+      "verdict": {
+        "status": "PARTIAL",
+        "fail": [],
+        "partial": [
+          "missing expected fact(s): zone:dining",
+          "24 detected chair(s) seated at no table at all"
         ]
       }
     }

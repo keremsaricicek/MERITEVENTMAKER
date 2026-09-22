@@ -1146,8 +1146,45 @@
       // may be claimed as a chair; the table pool needs it more.
       const SECONDARY_MIN_SIDE_RATIO=.4,SECONDARY_MAX_SURFACE_RATIO=.75;
       const secondaryFamilies=[];
-      let primaryFamilyComps=colourChairs?colourChairs.comps:[];
-      if(useColourOnly&&!globalThis.MERIT_ALL_CHAIR_SOURCES){
+      // WHICH POPULATION DEFINES WHAT A SEAT LOOKS LIKE HERE.
+      //
+      // It used to be the colour cluster and nothing else: the whole family
+      // pass below sat inside `if (useColourOnly)`. On a plan drawn in ink
+      // that gate never opens, and the consequence is not "no second family is
+      // admitted" — it is that the sheet is allowed exactly ONE seat
+      // vocabulary, set by whichever population happens to be the largest, and
+      // that one vocabulary is applied to every room on it.
+      //
+      // Measured on `a9-mixed-representation`, a sheet carrying a symbolic
+      // hall and a drawn terrace: the 72 numbered discs of the hall set the
+      // modal seat at 48px, and the terrace's 24 real chairs — 22px, every
+      // one of them detected, every one of them against a table — were
+      // dropped by `chairAccepted` for not resembling a symbol in a different
+      // room. With no seats, the terrace's three tables were never proposed:
+      // `tablesFound: 0` and `associatedToTable: 0` were facts about a
+      // statistic taken over the whole drawing, not about the terrace.
+      //
+      // So the reference is the largest chair source, whatever it is made of.
+      // Colour, where a plan has it, is still the strongest evidence and is
+      // still preferred; ink is what is left when there is none. Nothing below
+      // is loosened — a family still needs four members, a size inside the
+      // band, and most of its members sitting against a table surface.
+      const SECONDARY_PRIMARY_MIN=6;
+      // The two anchors the size band is measured against, hoisted so they are
+      // always visible in diagnostics — including when no family was
+      // considered at all. They are the quantities that decide whether a
+      // second seat vocabulary can exist on this plan, and a bound whose
+      // anchor is never printed cannot be argued with.
+      let primaryReferenceSide=null,planSurfaceSide=null;
+      // A real boolean: `useColourOnly` is the colour source itself when there
+      // is none, so this used to report `null` on every ink plan and `false`
+      // on none of them. A diagnostic that says "no" in two different ways is
+      // a diagnostic somebody will misread.
+      const colourPrimary=!!(useColourOnly&&!globalThis.MERIT_ALL_CHAIR_SOURCES);
+      const primarySource=colourPrimary?colourChairs
+        :chairSources.slice().sort((a,b)=>b.comps.length-a.comps.length)[0]||null;
+      let primaryFamilyComps=primarySource?primarySource.comps:[];
+      if(primarySource&&primarySource.comps.length>=SECONDARY_PRIMARY_MIN){
         // The PRIMARY source is not one family either, and assuming it was is
         // what hid the bistro seats for so long. On the real plan the accent
         // colour belongs to both the 34px armchairs and the 17px bistro
@@ -1164,14 +1201,14 @@
         // trusted because it shares a colour -- printed matter in the accent
         // colour would share it too -- it is trusted because most of its
         // members sit against a table surface.
-        const primaryModal=modalMagnitude(colourChairs.comps.map(c=>Math.sqrt(c.w*c.h)));
+        const primaryModal=modalMagnitude(primarySource.comps.map(c=>Math.sqrt(c.w*c.h)));
         const inPrimaryFamily=c=>!primaryModal||sizeAgreement(Math.sqrt(c.w*c.h),primaryModal)>=.25;
-        const claimed=colourChairs.comps.filter(inPrimaryFamily);
+        const claimed=primarySource.comps.filter(inPrimaryFamily);
         primaryFamilyComps=claimed;
-        const extra=colourChairs.comps.filter(c=>!inPrimaryFamily(c))
-          .map(c=>({comp:c,source:colourChairs}));
+        const extra=primarySource.comps.filter(c=>!inPrimaryFamily(c))
+          .map(c=>({comp:c,source:primarySource}));
         for(const src of chairSources){
-          if(src===colourChairs)continue;
+          if(src===primarySource)continue;
           for(const c of src.comps){
             if(claimed.some(k=>sameObject(k,c))||extra.some(k=>sameObject(k.comp,c)))continue;
             extra.push({comp:c,source:src});
@@ -1188,6 +1225,7 @@
           return v.length?v[v.length>>1]:0;
         };
         const referenceSide=medianSide(claimed);
+        primaryReferenceSide=referenceSide;
         // How far apart the primary family's own seats stand, and how close a
         // candidate is to the nearest of them. A genuinely distinct seat family
         // sits at ITS OWN tables; a family of debris shed by the primary one
@@ -1213,13 +1251,44 @@
         }).filter(Number.isFinite).sort((a,b)=>a-b);
         const primarySpacing=spacings.length?spacings[spacings.length>>1]:0;
         const surfaceSide=medianSide(surfaces.filter(c=>Math.min(c.w,c.h)>=6));
+        planSurfaceSide=surfaceSide;
+        // IS THE FLOOR'S ANCHOR A SEAT AT ALL?
+        //
+        // The floor below says a minority seat is not an order of magnitude
+        // smaller than the plan's MAIN SEAT. That premise is never checked,
+        // and on a sheet drawn in two languages it is false: where the largest
+        // repeated population is a hall of numbered symbols, `referenceSide`
+        // is the size of a TABLE and the band it opens — [0.4R, 0.75S] with
+        // R and S the same objects — sits entirely above every real seat on
+        // the drawing.
+        //
+        // The check is the premise itself, and it needs no new constant: a
+        // seat is smaller than the surface it is served on. This file already
+        // states that three times (`seatSurfaceFor`'s `min side > longSide`,
+        // its 3x area rule, and the ceiling immediately below). Where the
+        // reference is NOT smaller than the plan's surfaces, it is not a seat
+        // population, and a floor measured against it is measuring nothing.
+        // The ceiling still applies — nothing at surface scale becomes a
+        // chair — as do four members and the adjacency share, which is the
+        // evidence that actually says "these are seats".
+        //
+        // Measured across every plan available here (family-anchors.mjs):
+        // referenceSide < surfaceSide on a1, a2, a3, a4, a6, a7, a8 and the
+        // real venue plan, so the floor is unchanged on all of them and its
+        // value is untouched. The three where they are EQUAL are exactly the
+        // three with no seating drawn or none detected — a5, ORNEK and the
+        // mixed sheet. Setting the ratio to 0 instead was tried, as the
+        // experiment that establishes what the floor protects: across eleven
+        // plans it changed ONE admission, and that admission was a real seat
+        // family. The constant is kept for the plans whose premise holds.
+        const referenceIsSeatSized=!surfaceSide||referenceSide<surfaceSide;
         const groups=new Map();
         for(const e of extra){const k=keyOf(e.comp);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(e);}
         for(const [key,members] of groups){
           if(members.length<SECONDARY_MIN_MEMBERS)continue;
           const sides=members.map(m=>Math.sqrt(m.comp.w*m.comp.h)).sort((a,b)=>a-b);
           const side=sides[sides.length>>1];
-          const sizeOk=(!referenceSide||side>=referenceSide*SECONDARY_MIN_SIDE_RATIO)
+          const sizeOk=(!referenceSide||!referenceIsSeatSized||side>=referenceSide*SECONDARY_MIN_SIDE_RATIO)
             &&(!surfaceSide||side<=surfaceSide*SECONDARY_MAX_SURFACE_RATIO);
           // Two questions, not one. The family answers "is a second kind of
           // seat drawn on this plan at all", and only a family most of whose
@@ -1236,7 +1305,12 @@
           const share=adjacent/members.length;
           // How much of this family is standing among the primary family's own
           // seats rather than at tables of its own.
-          // Reported, not gated on. A genuinely distinct seat family sits at its
+          //
+          // GATED ONLY WHERE THE SIZE FLOOR CANNOT BE — see `standsClear`
+          // below. Everywhere else it is reported and nothing depends on it,
+          // for the reason the rest of this paragraph gives.
+          //
+          // A genuinely distinct seat family sits at its
           // own tables and so stands well clear of the primary family's seats;
           // a family of debris shed by the primary one interleaves with them.
           // Measured, in units of the primary family's own seat spacing: the
@@ -1249,11 +1323,47 @@
           const nearDists=members.map(m=>nearestPrimaryDistance(m.comp)).filter(Number.isFinite).sort((a,b)=>a-b);
           const medianNearPrimary=nearDists.length?nearDists[nearDists.length>>1]:Infinity;
           const crowding=primarySpacing?medianNearPrimary/primarySpacing:Infinity;
-          const admitted=sizeOk&&share>=SECONDARY_MIN_ADJACENT;
+          // WHAT REPLACES THE FLOOR WHEN THE FLOOR HAS NO ANCHOR.
+          //
+          // The floor's job is "this is not debris shed by the primary
+          // family", and it does that job by size, against the primary
+          // family's median. Where the reference is not smaller than the
+          // plan's own surfaces that anchor is meaningless (see
+          // `referenceIsSeatSized`), and dropping the floor there with nothing
+          // in its place admitted a family of four 12px fragments standing
+          // among the symbols of `symbolic-plan-detection`'s drawing — a sheet
+          // with no seat on it at all — which then kept four symbols out of
+          // the swap as "tables with drawn seats". Measured: 48 tables for 44
+          // symbols and 6 seats claimed where none exist.
+          //
+          // So the same question is asked with the measurement that answers it
+          // without that anchor: does this family stand at its OWN tables, or
+          // among the primary family's members? Everything measured so far, in
+          // units of the primary family's own spacing:
+          //
+          //   debris    downscale-70            1.04, 1.07
+          //   debris    the symbolic drawing    1.07
+          //   real      merit-real-venue        1.75, 2.06, 2.34, 2.91, 3.34
+          //   real      a9's terrace            3.73
+          //
+          // 1.07 against 1.75. The gate sits between them, and it applies ONLY
+          // on the plans where the floor cannot — on every plan whose
+          // reference really is seat-sized, nothing here changes and this
+          // quantity stays what it has always been: reported, not gated on.
+          //
+          // It fails conservatively and it is worth saying how: a second
+          // vocabulary drawn right among the first — a drawn top table at the
+          // front of a symbolic ballroom — would read low and be refused. That
+          // loses a family rather than inventing one, which is the direction
+          // this contract requires when the evidence is genuinely ambiguous.
+          const SECONDARY_MIN_CLEARANCE=1.4;
+          const standsClear=referenceIsSeatSized||crowding>=SECONDARY_MIN_CLEARANCE;
+          const admitted=sizeOk&&standsClear&&share>=SECONDARY_MIN_ADJACENT;
           secondaryFamilies.push({key,members:members.length,adjacent,
-            share:Number(share.toFixed(2)),admitted,sizeOk,
+            share:Number(share.toFixed(2)),admitted,sizeOk,standsClear,
             side:Math.round(side),referenceSide:Math.round(referenceSide),surfaceSide:Math.round(surfaceSide),
             crowding:Number(crowding.toFixed(2)),primarySpacing:Math.round(primarySpacing),
+            minClearance:referenceIsSeatSized?null:SECONDARY_MIN_CLEARANCE,
             source:members[0].source.name});
           // One entry per originating source, all under the same family name.
           // The label map a component was found in is what shape analysis has
@@ -1272,10 +1382,19 @@
         }
       }
       const admittedFamilies=secondaryFamilies.filter(f=>f.admitted);
-      const activeChairSources=(useColourOnly&&!globalThis.MERIT_ALL_CHAIR_SOURCES)
-        ?[{...colourChairs,comps:primaryFamilyComps},
-          ...chairSources.filter(src=>src.name.startsWith("family:"))]
-        :chairSources;
+      const familySources=chairSources.filter(src=>src.name.startsWith("family:"));
+      const activeChairSources=colourPrimary
+        ?[{...colourChairs,comps:primaryFamilyComps},...familySources]
+        // On an ink plan every source still contributes exactly what it did
+        // before; what changes is the NAME a component arrives under. An
+        // admitted family is offered first so its members carry their family's
+        // label instead of their mask's, and `addChairs` keeps the first name
+        // a component is seen with. That label is the whole point: it is what
+        // gives the family its own modal size and its own elongation
+        // downstream, instead of being measured against the plan's majority.
+        // Same components, same count — a second vocabulary now gets to be
+        // measured as one.
+        :[...familySources,...chairSources.filter(src=>!src.name.startsWith("family:"))];
       const specificCount=activeChairSources.reduce((n,src)=>n+src.comps.length,0);
       // What each chair source actually offered, kept in diagnostics. Without
       // this the only visible fact is the final count, which cannot tell "the
@@ -1292,6 +1411,19 @@
         considered:secondaryFamilies.length,
         admitted:admittedFamilies.length,
         minMembers:SECONDARY_MIN_MEMBERS,minAdjacentShare:SECONDARY_MIN_ADJACENT,
+        primary:primarySource?primarySource.name:null,
+        primaryColour:colourPrimary,
+        referenceSide:primaryReferenceSide===null?null:Math.round(primaryReferenceSide),
+        surfaceSide:planSurfaceSide===null?null:Math.round(planSurfaceSide),
+        // A SEAT IS SMALLER THAN THE TABLE IT SERVES. Both bounds below are
+        // anchored to plan-wide medians, so this ratio says whether the two
+        // populations they come from are actually different populations. Where
+        // it approaches 1 the "reference seat" and the "reference table" are
+        // the same objects, the band collapses onto them, and no real seat
+        // anywhere on the sheet can fall inside it.
+        referenceToSurface:primaryReferenceSide&&planSurfaceSide
+          ?Number((primaryReferenceSide/planSurfaceSide).toFixed(3)):null,
+        minSideRatio:SECONDARY_MIN_SIDE_RATIO,maxSurfaceRatio:SECONDARY_MAX_SURFACE_RATIO,
         families:secondaryFamilies.slice().sort((a,b)=>b.members-a.members).slice(0,12),
       };
       if(specificCount>=6){
@@ -1806,6 +1938,30 @@
       const chairAreaForModal=chairUniform&&chairModal?chairModal.value**2:null;
       const areaOf=u=>{const o=u.comp.shape?.obb;return o?o.w*o.h:u.comp.w*u.comp.h;};
       const modalPool=chairAreaForModal?unique.filter(u=>areaOf(u)>chairAreaForModal*1.3):unique;
+      // THE `>= 4` FALLBACK IS KNOWN TO BE WRONG ON A MIXED SHEET, AND
+      // ABSTAINING FROM IT WAS MEASURED AND REVERTED. Recorded here so it is
+      // not re-derived: when fewer than four components survive the chair-area
+      // filter, this reaches back to the UNFILTERED pool and takes the modal
+      // from the very components the line above excluded for being smaller
+      // than a chair. On `a9-mixed-representation` that is eleven title
+      // glyphs setting a "modal table" of 347px², against which the terrace's
+      // three real 104px tables are pruned as "six times the modal" —
+      // `tableModalPool: 3`, and the three tables are the fixture's whole
+      // remaining table gap.
+      //
+      // Returning `null` instead (the off-modal rule below already runs
+      // without a modal, on the `chairSized` floor alone) recovers them and
+      // costs more than it gains: on `a5-architecture-only` two architecture
+      // components then survive as tables, which disables the unanchored-seat
+      // abstention — that one requires `tablesFound === 0` — and brings back
+      // the eight phantom chairs §7 removed. PASS to FAIL, two real
+      // abstentions lost, for three tables on one synthetic fixture.
+      // Narrowing it to "few, but not none" was tried too and changed
+      // nothing, because a5's pool is itself between 1 and 3.
+      //
+      // The real fix is a modal that is local to a region rather than to a
+      // sheet, which is the same mechanism §10 names for the photometric
+      // statistics. It is not a threshold move and is not attempted here.
       const modalArea=modalMagnitude((modalPool.length>=4?modalPool:unique).map(areaOf));
       // Off-modal rejection. When the plan really is repetitive (a modal object
       // size supported by several objects), something a fifth the size of every
@@ -2298,6 +2454,14 @@
             reason:"belowReviewThreshold",
             confidence:Number(s.confidence.toFixed(2)),
             threshold:Number(confidenceThreshold().toFixed(2))},
+          // WHICH SEAT VOCABULARY PUT SEATS HERE. A sheet can carry more than
+          // one — the secondary-family pass above exists for exactly that —
+          // and the representation swap further down needs to know. Its whole
+          // argument is "these repeated marks sit at nothing, so they are not
+          // chairs", which is an argument about the PRIMARY family and about
+          // the tables size rank proposed out of it. A table whose seats came
+          // from a separately admitted family was never part of that argument.
+          seatFamilies:[...new Set(seatIndexes.map(ci=>chairs[ci].chairFamily||"primary"))],
           chairDetections:seatIndexes.map(ci=>{
             const obb=chairOBB(chairs[ci]),rel=chairRelation.get(ci);
             return{id:uid("candidate-chair"),x:obb.cx/width*100,y:obb.cy/height*100,
@@ -2537,6 +2701,10 @@
         const obb=chairOBB(ch);
         return{id:uid("candidate"),kind:"venue",type:"chair",...toPercentBox(obb),rotation:obb.rotation,
           confidence:chairEvidence(ch,false),status:"unreviewed",selected:false,chairDetections:[],
+          // Which vocabulary this mark belongs to, carried onto the object so
+          // the swap can tell a symbol of the plan's one family from a member
+          // of a second, separately admitted seat family.
+          seatFamily:ch.chairFamily||"primary",
           evidence:{geometry:Number(Math.min(.95,ch.fill).toFixed(2)),chairs:1,repetition:chairs.length,
             source:chairSource,unassociated:true}};
       };
@@ -2776,13 +2944,46 @@
             basis:"a chair-sized shape with no table anywhere to be a seat at, on a drawing this reader could not classify"};
         }
       }
-      if(representation&&representation.kind==="SYMBOLIC"&&chairVenues.length){
+      const isPrimaryFamily=f=>(f||"primary")==="primary";
+      const symbolVenues=chairVenues.filter(v=>isPrimaryFamily(v.seatFamily));
+      const drawnSeatVenues=chairVenues.filter(v=>!isPrimaryFamily(v.seatFamily));
+      if(representation&&representation.kind==="SYMBOLIC"&&symbolVenues.length){
         // The symbols ARE the tables. Promote them, and demote what size rank
         // called tables: on a plan whose tables are one uniform symbol, an
         // object that is not a member of that family is not a table. Both
         // counts are reported, because this swap is a large claim and has to
         // be visible rather than inferred from a changed number.
-        const demoted=candidates.splice(0,candidates.length);
+        //
+        // THE SWAP ACTS ON THE FAMILY THE VERDICT WAS REACHED ABOUT, AND ON
+        // NOTHING ELSE.
+        //
+        // It used to begin `candidates.splice(0, candidates.length)` — every
+        // table on the sheet, wherever it stood. That is right while a drawing
+        // speaks one language. A venue that publishes ONE sheet for a
+        // symbolically-numbered ballroom and a physically-drawn terrace speaks
+        // two, and a plan-wide verdict then lets the majority decide what the
+        // minority is. Measured on `a9-mixed-representation`: the terrace's
+        // three real tables were demoted to "not a table" and its
+        // twenty-four real chairs re-read as tables, because of what was drawn
+        // in a different room.
+        //
+        // The scope is not a threshold and not a region: it is the argument's
+        // own subject. "These repeated marks sit at nothing, so they are not
+        // chairs" is a statement about the PRIMARY uniform family and the
+        // tables size rank proposed out of it. A separately admitted seat
+        // family earned its place on its OWN adjacency evidence — most of its
+        // members sitting against a table surface — which is the very evidence
+        // this verdict says the primary family lacks. Neither it nor the
+        // tables it seats was ever part of the claim, so neither is touched.
+        //
+        // On a plan with one vocabulary there are no such families and this
+        // reduces, object for object, to what it did before: measured
+        // identical on ORNEK, whose symbols are the only family on the sheet.
+        const drawnSeatAnchored=c=>Array.isArray(c.seatFamilies)
+          &&c.seatFamilies.some(f=>!isPrimaryFamily(f));
+        const keptTables=candidates.filter(drawnSeatAnchored);
+        const demoted=candidates.filter(c=>!drawnSeatAnchored(c));
+        candidates.length=0;
         for(const c of demoted){
           c.kind="venue";
           c.type="other";
@@ -2821,12 +3022,20 @@
         // Restoring them changes no input to the representation decision, which
         // was already taken above on the association rate as measured. It
         // changes what happens once that decision says these marks are tables.
-        const exited=[...familyLostToAssociation,...familyLostToTextRun];
+        //
+        // Both exits are filtered to the primary family for the reason the
+        // first bullet gives: the restoration is justified by "its table has
+        // just been demoted". A member of a second seat family whose table was
+        // KEPT is still a seat of that table, and restoring it would unseat a
+        // real guest's chair to make it a table of its own.
+        const exitedPrimary=ch=>isPrimaryFamily(ch.chairFamily);
+        const exited=[...familyLostToAssociation.filter(exitedPrimary),
+          ...familyLostToTextRun.filter(exitedPrimary)];
         const restored=exited.map(familyVenue);
         // ...and the other half of the family, which never came through the
         // chair sources at all because it is drawn in solid ink. See the
         // measured membership test where familyFromTableSources is built.
-        const alreadyHere=[...chairVenues,...restored];
+        const alreadyHere=[...symbolVenues,...drawnSeatVenues,...restored];
         const overlapsExisting=c=>alreadyHere.some(v=>{
           const ix=Math.max(0,Math.min(c.x+c.w,v.x+v.w)-Math.max(c.x,v.x));
           const iy=Math.max(0,Math.min(c.y+c.h,v.y+v.h)-Math.max(c.y,v.y));
@@ -2839,9 +3048,9 @@
               evidence:{geometry:Number(Math.min(.95,comp.fill??.5).toFixed(2)),chairs:1,
                 repetition:chairs.length,source:comp.source||"tone",unassociated:true}};})
           .filter(c=>!overlapsExisting(c));
-        familyRestoredBySwap={fromAssociation:familyLostToAssociation.length,
-          fromTextRun:familyLostToTextRun.length,otherPolarity:otherPolarity.length};
-        const promoted=[...chairVenues,...restored,...otherPolarity].map(c=>{
+        familyRestoredBySwap={fromAssociation:familyLostToAssociation.filter(exitedPrimary).length,
+          fromTextRun:familyLostToTextRun.filter(exitedPrimary).length,otherPolarity:otherPolarity.length};
+        const promoted=[...symbolVenues,...restored,...otherPolarity].map(c=>{
           c.kind="table";
           c.type="round";
           c.selected=true;
@@ -2859,8 +3068,8 @@
             basis:"member of the plan's single uniform object family, on a drawing that shows no seating"};
           return c;
         });
-        candidates.push(...promoted);
-        // chairVenues objects are now tables; they must not also be venues.
+        candidates.push(...keptTables,...promoted);
+        // the promoted symbols are now tables; they must not also be venues.
         // Neither may anything else standing where a promoted member stands —
         // the solid half of the family reaches the surface filter, which turns
         // it away as "not made of table", and the column pass reads what that
@@ -2875,9 +3084,17 @@
         });
         venues=venues.filter(v=>!promotedSet.has(v)&&!standsOnAPromotedMember(v)).concat(demoted);
         representationSwap={promotedToTable:promoted.length,demotedFromTable:demoted.length,
-          restoredFromSeatOfADemotedTable:familyLostToAssociation.length,
-          restoredFromTextRun:familyLostToTextRun.length,
-          fromTheFamilysOtherPolarity:otherPolarity.length};
+          restoredFromSeatOfADemotedTable:familyLostToAssociation.filter(exitedPrimary).length,
+          restoredFromTextRun:familyLostToTextRun.filter(exitedPrimary).length,
+          fromTheFamilysOtherPolarity:otherPolarity.length,
+          // WHAT THE SWAP DID NOT TOUCH, and why. A swap that silently leaves
+          // part of the sheet alone is as large a claim as one that changes it
+          // all, so the exemption is counted here rather than inferred from a
+          // number that did not move. Zero on a plan drawn in one vocabulary.
+          keptAsDrawnFurniture:keptTables.length,
+          keptDrawnSeats:drawnSeatVenues.length,
+          drawnSeatFamilies:[...new Set(drawnSeatVenues.map(v=>v.seatFamily)
+            .concat(keptTables.flatMap(c=>(c.seatFamilies||[]).filter(f=>!isPrimaryFamily(f)))))]};
       }
 
       return{
@@ -2889,6 +3106,7 @@
           chairsDetected:chairs.length,chairsAssociated:associatedSeats,chairsUnassociated:chairVenues.length,
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
+          tableModalPool:modalPool.length,
           tableModalSeats:modalSeats||null,bistrosTyped,chairsReseated:reseated,seatsInsideBody,
           // Present only when the seat-containment gate stood down because it
           // would have claimed most of the plan. Its absence means it ran.

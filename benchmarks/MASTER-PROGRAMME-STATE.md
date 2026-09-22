@@ -7,7 +7,7 @@ own recollection.
 - **Programme start SHA** `02edac7`
 - **Branch** `claude/merit-concept3-plan-intelligence-rebirth`
 - **PR** #5 — OPEN, must not be merged
-- **Current SHA** `02edac7`
+- **Current SHA** see `git log` — §6 (mixed representation) is the last entry
 - **Status** IN PROGRESS
 
 ## How to resume
@@ -570,6 +570,186 @@ this is not a threshold to nudge. It changes the answer on every plan, so
 the golden baseline, all eight adversarial fixtures and all fifteen
 robustness variants must be measured together before and after.
 
+### K. §6 — mixed / local representation — DONE, with the remaining gap named
+
+**The defect, stated structurally.** The product answers "what KIND of
+drawing is this?" **once, for the whole sheet**, and then acts on that one
+answer **everywhere**. `src/plan-representation.js` takes plan-wide totals; the
+swap that verdict triggers used to begin
+`candidates.splice(0, candidates.length)` — every table on the drawing,
+wherever it stood. That is sound while a drawing speaks one language. A venue
+that publishes ONE sheet for a symbolically-numbered ballroom and a
+physically-drawn terrace speaks two, and the majority then decides what the
+minority is.
+
+**New fixture `a9-mixed-representation`** (SYNTHETIC — does not count toward
+REAL DISTINCT VENUE PLANS, still **1**). One sheet: a symbolic hall of 72
+identical numbered discs with a printed capacity rule and not one seat drawn,
+beside a drawn terrace of 3 round tables with 24 chairs. The terrace is the
+control — an ordinary drawn-furniture layout of the kind a3 and a8 already
+prove this pipeline handles. `make-fixtures.mjs` regenerates all nine
+deterministically; the other eight are byte-identical (`git status` clean
+after a regeneration), and FROZEN.json now covers nine.
+
+**Measured first, and the first hypothesis was wrong.** The predicted failure
+was the swap inverting the terrace. The actual first measurement was worse and
+simpler: `associatedToTable: 0`, `tablesFound: 0`, **`uniformObjects: 72`** —
+the terrace was already invisible before representation was ever consulted.
+Its 24 chairs were detected (`dark-tone-cluster0`, 24 compact near-modal
+components) and then dropped; its 3 tables were never proposed for want of
+seats; and its chairs surfaced as 24 **columns**.
+
+**Three root causes, each located at a line, each fixed without moving a
+threshold.**
+
+1. **The multi-family pass was unreachable on an ink plan.** The machinery
+   that exists so "a 17px crescent is not asked to resemble a 34px armchair"
+   sat inside `if (useColourOnly)`. A monochrome plan never opens that gate,
+   so the sheet got ONE seat vocabulary set by whichever population was
+   largest — here Hall A's 72 discs at 48px, applied to a room they are not
+   in. The primary reference is now the largest chair source whatever it is
+   made of; colour is still preferred where a plan has one. None of the pass's
+   own safeguards was loosened.
+
+2. **The size floor's anchor had an unchecked premise.** The floor says a
+   minority seat is not an order of magnitude smaller than the plan's MAIN
+   seat. Nothing checked that the main population was a seat. On this sheet
+   `referenceSide` and `surfaceSide` are the same 48px — *the same objects* —
+   so the band opened at 19.2px and the terrace's 18px family missed it by
+   1.2px, with 24 of 24 members sitting against a table. The constant is
+   **untouched**; the floor is now skipped only where the reference is not
+   smaller than the plan's own surfaces, which is the premise itself and is
+   stated three times elsewhere in the file.
+
+   Measured across all eleven plans (`benchmarks/adversarial/family-anchors.mjs`,
+   new): `referenceSide < surfaceSide` on a1, a2, a3, a4, a6, a7, a8 and the
+   real venue plan — floor unchanged on every one. Equal on exactly three:
+   a5, ORNEK and a9, which are exactly the plans with no seating drawn or none
+   detected. **The decisive experiment**: setting the ratio to 0 outright
+   changed **one** admission across eleven plans, and it was a real seat
+   family. The floor, at 0.4, currently rejects exactly one family in the whole
+   corpus and it is the correct one.
+
+   Measured across all eleven plans (`benchmarks/adversarial/family-anchors.mjs`,
+   new): `referenceSide < surfaceSide` on a1, a2, a3, a4, a6, a7, a8 and the
+   real venue plan — floor unchanged on every one. Equal on exactly three:
+   a5, ORNEK and a9, which are exactly the plans with no seating drawn or none
+   detected. **The decisive experiment**: setting the ratio to 0 outright
+   changed **one** admission across eleven plans, and it was a real seat
+   family.
+
+   **And that measurement was incomplete, which `npm run test:all` caught.**
+   A twelfth plan exists — the drawing `symbolic-plan-detection` constructs in
+   the browser, which is not in `benchmarks/` and so not in the sweep. There
+   the floor WAS protecting something: dropping it admitted a family of four
+   12px fragments standing among the symbols of a sheet with no seat on it,
+   which then held four symbols out of the swap as "tables with drawn seats" —
+   **48 tables for 44 symbols, and 6 seats claimed where none exist**. A
+   diagnostic that reads only `benchmarks/` is not a sweep of the corpus.
+
+   So the floor is replaced, where its anchor fails, by the measurement that
+   answers the same question without that anchor: **does this family stand at
+   its own tables, or among the primary family's members?** `crowding` was
+   already computed and already written down as "reported, not gated on".
+   Everything measured, in units of the primary family's own spacing:
+
+   | | plan | crowding |
+   |---|---|---|
+   | debris | `downscale-70` | 1.04, 1.07 |
+   | debris | the symbolic drawing | **1.07** |
+   | real | `merit-real-venue` (5 admitted) | 1.75, 2.06, 2.34, 2.91, 3.34 |
+   | real | a9's terrace | **3.73** |
+
+   The gate sits at 1.4, between 1.07 and 1.75, and **applies only where the
+   floor cannot** — on every plan whose reference really is seat-sized nothing
+   changes and `crowding` stays reported and ungated, exactly as the code's own
+   note asked. It fails conservatively, and the source says how: a second
+   vocabulary drawn right among the first (a drawn top table at the front of a
+   symbolic ballroom) reads low and is refused, which loses a family rather
+   than inventing one.
+
+3. **The swap acted beyond its own argument.** "These repeated marks sit at
+   nothing, so they are not chairs" is a claim about the PRIMARY family and the
+   tables size rank proposed out of it. A separately admitted family earned its
+   place on the *opposite* evidence — most of its members against a table
+   surface — so neither it nor the tables it seats was ever part of the claim.
+   The swap is now scoped to the primary family; both exits
+   (`familyLostToAssociation`, `familyLostToTextRun`) are filtered the same
+   way, since their restoration is justified by "its table has just been
+   demoted". `representationSwap` records `keptAsDrawnFurniture`,
+   `keptDrawnSeats` and `drawnSeatFamilies`, because a swap that silently
+   leaves part of a sheet alone is as large a claim as one that changes all of
+   it. On a one-vocabulary plan there are no such families and this reduces
+   object for object to the old behaviour — measured identical on ORNEK.
+
+**Result on `a9`:** chairs **0 → 24 detected, recall 0 → 1.000, precision
+1.000, F1 0 → 1.000**. Tables 72/75, precision 1.000. Verdict PARTIAL.
+
+**What is NOT fixed, and the attempt that was measured and reverted.** The
+terrace's three TABLES are still missed. Root cause located: the plan-wide
+modal table area is 347px², taken from the **eleven title glyphs**, once the
+furniture is outnumbered — the 104px tables are then pruned as "six times the
+modal". The `modalPool.length >= 4` fallback reaches back to the unfiltered
+pool, i.e. to the very components excluded on the line above for being smaller
+than a chair. Returning `null` there recovers all three tables **and costs
+more than it gains**: on `a5-architecture-only` two architecture components
+then survive as tables, which disables the unanchored-seat abstention (it
+requires `tablesFound === 0`) and brings back the eight phantom chairs §7
+removed — **PASS → FAIL, two real abstentions lost, for three tables on one
+synthetic fixture**. Narrowing it to "few, but not none" changed nothing,
+because a5's own pool is between 1 and 3. Reverted, and recorded in the source
+at the line so it is not re-derived. The real fix is a modal **local to a
+region**, which is the same mechanism §10 names for the photometric
+statistics.
+
+**Suite** `mixed-representation` (intelligence, slow, 17 checks, real
+detection on the real image). Mutation-proved three ways, each biting its own
+claim and nothing else:
+
+| mutation | result |
+|---|---|
+| family pass re-gated behind colour | 11/17 — families considered 0, 24 chairs lost |
+| `referenceIsSeatSized` forced true | 13/17 — family considered 1, admitted 0 |
+| swap made global again | 15/17 — **the 24 terrace chairs become 24 terrace tables** |
+
+`symbolic-plan-detection` is the counterweight and is unchanged at 17/17: it
+asserts that on a sheet with no seating every member of the family becomes a
+table, no seat is claimed, and no chair is invented.
+
+**Gates.** `npm run test:all` **72 / 72 suites · 2,258 / 2,258 checks**.
+`build:offline` · `build:offline-full` · `verify:offline` **27 / 27**, both
+artifacts run. Adversarial: **5 PARTIAL · 2 FAIL · 2 PASS** with a9 added —
+the same distribution as before §6, **no new regressions**, a5 still PASS.
+`npm run benchmark` then `benchmark:baseline`: **No regressions.
+0 improvement(s), 0 note(s)** — golden `merit-real-venue` square 37/37, round
+4/4, bistro 5/5, chair F1 0.951, chair→table 0.99; `ornek-symbolic` tables
+P 0.994 / R 0.976 / F1 0.985, zero invented chairs. Unchanged is the point:
+it is what confines this change to mixed sheets.
+
+**A false green found in the gate itself.** `npm run benchmark:baseline` does
+**not measure anything**. `record-baseline.mjs` reads
+`benchmarks/reports/latest.json`, which only `npm run benchmark` writes, and
+compares *that* to `BASELINE.json`. Run on its own it re-reports a stored
+result and prints "No regressions" with full confidence. It was run twice
+during this section and both times compared a run dated **2026-09-21**, from
+before any of these changes — the numbers above are from the re-run after
+`npm run benchmark`, dated 2026-09-22T07:24:37Z. Anywhere this programme or
+its documents say "benchmark:baseline: no regressions", the question to ask is
+whether `npm run benchmark` ran first. §27 owns the fix; it is recorded here
+because it is exactly the kind of green that is worse than a red.
+
+**And `benchmark:adversarial -- --compare` now exits 1**, where entry C at
+`3451f67` recorded it exiting 0. The cause is the same a8 zone movement §8 left
+unrecorded, not anything in §6.
+
+**A correction to entry B.** §8 reported "every other fixture byte-identical",
+which was true of the *other* fixtures and silently passed over a8's own zone
+rows: detecting 289 tables instead of 240 moved `a8 zones.precision 1 → 0.5`
+and `zones.recall 0.5 → 0.25`, because the four annotated quadrants bleed
+together once the aisles between them are filled. Both still show as
+REGRESSED against the frozen baseline. Not caused by §6 and not fixed by it;
+recorded here because it was not recorded then.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
@@ -613,18 +793,41 @@ typing 136/289.
 
 ## Next step
 
-§7 — plan reliability. The three FAIL fixtures at `02edac7` are `a2`
-(7 real tables detected then held back as unknown; 23 FP vs 21 GT), `a5`
-(8 chairs proposed on a drawing with no furniture), `a6` (46 FP vs 8 GT,
-architecture read as furniture). §8's ceiling fix already moved `a8`'s
-table recall to 0.892. Re-measure `npm run benchmark:adversarial` before
-choosing which to attack.
+**§3A + §3B — detector modularization.** `plan-detection-classical.js` is a
+transitional extraction, not a finished module; its internal split is mapped in
+`benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`. Read
+`.claude/skills/merit-maintainability-hardening/SKILL.md`,
+`benchmarks/APP-V8-OWNERSHIP-MAP.md`, `CODE-INVENTORY.md` and
+`MODULARIZATION-ORDER.md` before proposing any move, and name the crossings
+first — counting **every declarator** on each comma-separated `const` line.
+Booting is not detecting: a structural step needs a suite that exercises the
+behaviour it moved.
 
-Also still open from the audit: §11 audit durability (`slice(0,1000)` at
-`app-v8.js:87` and `:5529`, silent), §13 write ordering (`saveState()`
-chains onto `saveQueue` but returns `undefined`, so no caller can await a
-save), §14/§15/§19 security / accessibility / resilience (zero suites each),
-§16 `confirm()`/`prompt()` removal (9 / 2).
+Then, in the order given: §3D + §3E (app-v8 modularization / duplication /
+dead code — blocked behind nothing now that `guest.assignment` has one
+writer), **§14 security · §15 accessibility · §19 resilience** (zero suites
+each, the largest single block left), §16 `confirm()` × 9 / `prompt()` × 2,
+§17 toast, §18 localization, §20–§25 UX, §26 performance, §27 real CI release
+gates, §28–30, then the final review and completion matrix.
+
+### Open, measured, NOT accepted
+
+| item | state |
+|---|---|
+| `a6` | FAIL. Four theories refuted and recorded. Surviving hypothesis is the SHAPE of the chairs-per-table distribution, not its mean; untested. |
+| `a2` | FAIL. The silence is fixed (`lowEvidence` names confidence and threshold in both languages); the verdict is unchanged and the threshold is deliberately not lowered. |
+| `a9` tables | 3 of 75 missed. Cause measured: the plan-wide modal table area is set by the title's glyphs. Abstaining costs a5 two abstentions — reverted, recorded at the line. Needs a modal local to a region. |
+| §9 identity | Wrong-application rate 0.0552 against a 0.01 ceiling. A signal problem, not threshold placement: no setting reaches the gate. |
+| §10 photometry | Six SEVERE robustness rows share one mechanism — Otsu, colour and tone statistics computed over the whole canvas. |
+| §19 | `fmtDate()` RangeError on a dateless event, deferred to §19. |
+| a8 zones | `zones.precision 1 → 0.5`, `recall 0.5 → 0.25` since §8 detected 289 tables instead of 240. Arithmetic consequence, not a defect in §8, but it makes `--compare` exit 1. |
+
+**One mechanism keeps recurring across §6, §9 and §10, and it is worth naming
+once:** a statistic computed over the WHOLE drawing — Otsu's threshold, the
+modal chair size, the modal table area, the family size band's two anchors —
+applied to a part of the drawing it was not measured in. §6 fixed three
+instances of it by fixing anchors and scopes rather than constants. The ones
+left are the ones that need the statistic itself to become local.
 
 ## Permanent constraints (do not re-derive)
 
