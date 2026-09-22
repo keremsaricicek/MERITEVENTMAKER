@@ -4120,7 +4120,41 @@
       // it exists to reject. This exemption can only ever KEEP an object, so it
       // cannot move a table or chair number on either real plan.
       const isStructural=c.kind==="venue"&&c.type==="column";
-      if(overlapRatio>.4&&!hasChairs&&!isSymbol&&!isStructural){removedCount++;removed.push(c);}else{kept.push(c);}
+      // AND A MEMBER OF AN ADMITTED SEAT FAMILY IS NOT PRINTED TEXT EITHER,
+      // for the third time and by the same argument.
+      //
+      // The two exemptions above were written when a plan was one thing or the
+      // other: a symbolic sheet has symbols and columns, a drawn sheet has
+      // tables with chairs at them. A sheet that is symbolic in one hall and
+      // drawn in another has a third kind of object — a DRAWN SEAT standing on
+      // its own, because its table was not detected — and it qualifies for
+      // none of them. `hasChairs` is false (a chair has no chairs),
+      // `symbolFamily` is false (it is a real seat, not a symbol) and it is
+      // not a column. So the text filter deleted every one of them.
+      //
+      // Measured on `a9-mixed-representation`, and only on CI, because this
+      // sandbox has no network and Tesseract loads from a CDN: identical to
+      // the local run through the whole detector — `keptDrawnSeats: 24` — and
+      // then 0 chair objects in the result. The one environment where OCR
+      // actually runs is the one where the whole terrace disappears.
+      //
+      // The exemption is the family's own admission evidence, which is
+      // precisely the evidence a run of glyphs cannot produce: four or more
+      // members at ONE repeated size and ONE repeated shape, at least 70% of
+      // them against a surface broad enough to be a table, and standing clear
+      // of the plan's primary family. `plan-detection-classical.js` says it
+      // where the family is admitted — "a run of printed glyphs still fails,
+      // now for the reason it should: it never becomes a family".
+      //
+      // Deliberately NOT extended to the primary family. An unassociated
+      // primary-family chair really can be an OCR'd glyph — that is the
+      // `a5-architecture-only` phantom-chair case — and it has no adjacency
+      // evidence behind it. Like the column exemption, this can only ever KEEP
+      // an object, and it is inert on a plan with no admitted second family,
+      // so neither real plan can move on it.
+      const isDrawnSeat=c.kind==="venue"&&c.type==="chair"
+        &&!!c.seatFamily&&c.seatFamily!=="primary";
+      if(overlapRatio>.4&&!hasChairs&&!isSymbol&&!isStructural&&!isDrawnSeat){removedCount++;removed.push(c);}else{kept.push(c);}
     }
     return{kept,removedCount,removed};
   }

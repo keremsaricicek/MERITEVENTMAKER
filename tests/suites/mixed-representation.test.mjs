@@ -167,4 +167,74 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // --- 4. none of this became a model claim --------------------------------
   checks.ok(!out.anyTrained,
     "and no trained model is claimed — a representation fix must not quietly become one", out.anyTrained);
+
+  // --- 5. AND THE TEXT FILTER DOES NOT DELETE THEM -------------------------
+  //
+  // The run above had no OCR: Tesseract loads from a CDN and the sandbox this
+  // was written in has no network, so `suppressTextFalsePositives` returned
+  // early and never saw a word box. CI has network, and there the whole
+  // terrace vanished — identical through the entire detector
+  // (`keptDrawnSeats: 24`) and then zero chair objects in the result.
+  //
+  // The filter's exemptions were written for a sheet that is one thing or the
+  // other: a symbol is not text, a column is not text. A DRAWN SEAT standing
+  // on its own is a third kind of object and qualified for neither.
+  //
+  // So OCR is stubbed here rather than waited for. The stub claims the ENTIRE
+  // sheet is printed text, which is not a plausible OCR result and is not
+  // meant to be — it is the BOUND. Under it every candidate's overlap ratio
+  // is 1, so only the exempt survive, and the question "is a drawn seat
+  // exempt?" is asked with nothing else able to answer it.
+  //
+  // A fresh load, because the shell leaves no detect control on the screen it
+  // moves to once an analysis exists, and the stub is installed BEFORE boot so
+  // it is in place when `plan-ocr.js` would otherwise define the real one.
+  await page.addInitScript(() => {
+    globalThis.__meritOcrStub = true;
+    Object.defineProperty(globalThis, "runPlanOCR", {
+      configurable: true,
+      get: () => async () => ({
+        available: true,
+        text: "TERRACE",
+        // One word box larger than any canvas this can run on. `overlapArea`
+        // clamps to each candidate's own box, so the ratio is 1 for everything.
+        words: [{ text: "TERRACE", bbox: { x0: 0, y0: 0, x1: 100000, y1: 100000 } }],
+      }),
+      set: () => {},
+    });
+  });
+  await openApp(page, baseUrl);
+  await createBlankEvent(page, { name: "MixedOCR", hotel: "Grand", date: futureDate() });
+  await page.evaluate(src => {
+    state.events[0].background = { src, name: "a9-mixed-representation.png", opacity: 1, visible: true, locked: false, scale: 100 };
+    render();
+  }, "data:image/png;base64," + fs.readFileSync(planPath).toString("base64"));
+  await page.waitForTimeout(500);
+  await click(page, '[data-v8-action="detect"]');
+  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy, null, { timeout: 240000 });
+  await page.waitForTimeout(800);
+
+  const withOcr = await page.evaluate(() => {
+    const a = state.events[0].analysis || {};
+    const cands = a.candidates || [];
+    const inTerrace = c => c.x > 63;
+    return {
+      ocrAvailable: !!(a.ocr && a.ocr.available),
+      textSuppressed: (a.diagnostics || {}).textSuppressed ?? null,
+      drawnSeats: cands.filter(c => c.kind === "venue" && c.type === "chair"
+        && c.seatFamily && c.seatFamily !== "primary").length,
+      seatsOnTerraceTables: cands.filter(c => c.kind === "table" && inTerrace(c))
+        .reduce((n, c) => n + (c.chairDetections || []).length, 0),
+      tables: cands.filter(c => c.kind === "table").length,
+      tally: cands.reduce((m, c) => (m[c.kind + "/" + c.type] = (m[c.kind + "/" + c.type] || 0) + 1, m), {}),
+    };
+  });
+  checks.ok(withOcr.ocrAvailable, "the stubbed OCR really ran, so the text filter was really exercised", withOcr);
+  checks.ok(withOcr.textSuppressed > 0,
+    "and it really suppressed things — a filter that removed nothing would make the next check vacuous", withOcr);
+  checks.ok(withOcr.drawnSeats + withOcr.seatsOnTerraceTables === drawnChairs,
+    "all 24 drawn seats survive a claim that the whole sheet is printed text. A seat family is admitted on evidence a run of glyphs cannot produce — one repeated size and shape, most of its members against a table — which is exactly the evidence that rules out text",
+    withOcr);
+  checks.ok(withOcr.tables >= 60,
+    "and the hall's symbols survive it too, as they already did", withOcr);
 }

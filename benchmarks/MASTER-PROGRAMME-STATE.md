@@ -742,6 +742,57 @@ because it is exactly the kind of green that is worse than a red.
 `3451f67` recorded it exiting 0. The cause is the same a8 zone movement §8 left
 unrecorded, not anything in §6.
 
+### K2. §6 — the fourth instance, which only CI could see
+
+The commit above was green on every local gate and **failed on CI**, on the
+suite §6 had just added. Two separate faults, and the second is the more
+important one.
+
+**My assertion was wrong before the environments were.** It asserted that the
+24 drawn seats arrive as 24 standalone chair objects *inside the terrace* —
+a statement about how this sheet happens to be detected today, not about what
+must be true. If the terrace's three tables were ever found, those same chairs
+would become their seats, the better outcome, and the suite would have called
+it a regression. It now counts the seats wherever the pipeline files them and
+allows the terrace up to the 3 tables actually drawn there; 24 there still
+fails, which is the inversion the fixture exists for. Re-proved with the same
+mutation.
+
+**And there was a real fourth instance of the mechanism, hidden by this
+sandbox having no network.** Tesseract loads from a CDN, so OCR never ran
+here; CI has network, so it did. The CI payload was identical to the local one
+through the whole detector — `keptDrawnSeats: 24`, `promotedToTable: 72`,
+`demotedFromTable: 11`, same anchors — and then **zero chair objects in the
+result**. `suppressTextFalsePositives` in `app-v8.js` deletes any candidate
+whose area is dominated by an OCR word box, exempting three things: it has
+chairs at it, it is a member of the symbol family, or it is a column. A DRAWN
+SEAT standing on its own qualifies for none of them — a chair has no chairs,
+it is a real seat rather than a symbol, and it is not a column — so the filter
+deleted the entire terrace.
+
+The exemption list was written when a sheet was one thing or the other. The
+fix is the same argument the other two exemptions already make: a family is
+admitted on evidence a run of glyphs cannot produce — four or more members at
+ONE repeated size and ONE repeated shape, ≥70% against a surface broad enough
+to be a table, standing clear of the primary family — so the evidence that
+made it a seat is the evidence that rules out text. Deliberately **not**
+extended to the primary family: an unassociated primary chair really can be an
+OCR'd glyph (that is a5's phantom-chair case) and has no adjacency evidence
+behind it. Like the column exemption it can only ever KEEP an object, and it
+is inert where no second family was admitted, so neither real plan can move.
+
+**It is now provable here, not only on CI.** The suite stubs
+`globalThis.runPlanOCR` before boot and claims the ENTIRE sheet is printed
+text — not a plausible OCR result, the BOUND: every candidate's overlap ratio
+is 1, so only the exempt survive and nothing else can answer the question.
+Mutation (`isDrawnSeat = false`) reproduces CI exactly: `textSuppressed: 35`,
+`drawnSeats: 0`, `tally: {table/round: 72}`.
+
+**The lesson worth keeping:** a capability that is absent in the development
+environment is not a capability that is absent in the product. Three of this
+programme's gates ran green on a build whose text filter deleted a whole room,
+because the thing that triggers it needs a network.
+
 **A correction to entry B.** §8 reported "every other fixture byte-identical",
 which was true of the *other* fixtures and silently passed over a8's own zone
 rows: detecting 289 tables instead of 240 moved `a8 zones.precision 1 → 0.5`
