@@ -1,8 +1,17 @@
 # `plan-detection-classical.js` — internal ownership map
 
 **Status of the file this describes: TRANSITIONAL EXTRACTION, not a finished
-module.** 2,858 lines in one file is not a healthy unit and is not reported as
-one. What the extraction bought is a **boundary** the pipeline did not have:
+module.** 3,145 lines in one file is not a healthy unit and is not reported as
+one.
+
+> **Re-measured after §6 (mixed representation).** The file was 2,858 lines
+> when this map was written and is **3,145** now; the §6 work added 287, nearly
+> all of it comment and diagnostics inside the chair stage. **Every line number
+> below Split A's A-1 has moved**, so the ranges in this document are the
+> re-measured ones and the older ones in the git history are not
+> interchangeable with them. The helper region (A-1 to A-9) is unchanged in
+> size and character — the growth is entirely inside `detect()`, which is the
+> argument for doing Split A first, not against it. What the extraction bought is a **boundary** the pipeline did not have:
 the app now reaches it through one registry, and it reaches back into nothing.
 That boundary is what makes the split below safe to do next.
 
@@ -12,8 +21,8 @@ This document is the map for that split. **Nothing here has been moved.**
 
 | | |
 |---|---|
-| Lines | 2,858 (2,809 moved + 49 of header and IIFE) |
-| Top-level functions | 24 |
+| Lines | **3,145** (2,809 moved + 49 of header and IIFE + 287 from §6) |
+| Top-level functions | 24 (23 helpers, lines 43–701, plus the registry resolver at 3,139) |
 | Public surface | 3 names |
 | Shell globals read | **0** — no `state`, `ui`, `render()`, `touchEvent()` |
 | Entry point | `globalThis.MERIT_PLAN_DETECTION` |
@@ -100,7 +109,7 @@ data structures before any of it can leave the function.
 Line numbers are within `src/plan-detection-classical.js`.
 
 ### A-1 · Image preprocessing — deskew
-- **Lines** 44–110 (67)
+- **Lines** 43–157 (115) — `otsu` + `estimatePlanSkew`
 - **Responsibility** estimate page skew, and decide whether it clears the
   deadband worth correcting
 - **In → Out** `(canvas, width, height)` → `{deg, gain, measured, applyDeg}`
@@ -114,7 +123,7 @@ Line numbers are within `src/plan-detection-classical.js`.
   existed, armchair recall fell 1.000 → 0.823)
 
 ### A-2 · Colour and tone models
-- **Lines** 133–316 (184)
+- **Lines** 158–317 (160)
 - **Responsibility** derive the drawing's own palette — accent hue, chroma,
   background luma, tone bands. **No hue and no grey level is hardcoded.**
 - **In → Out** RGB/luma histograms → `{accentModel, toneModel}`
@@ -124,7 +133,7 @@ Line numbers are within `src/plan-detection-classical.js`.
 - **Protected by** `table-typing`, `chair-families`, `benchmarks/BISTRO-MERGE.md`
 
 ### A-3 · Masks and connected components
-- **Lines** 317–430 (114)
+- **Lines** 318–437 (120)
 - **Responsibility** labelled components from a binarized image; enclosed
   regions; mask solidity
 - **Dependencies** `scratchQueue`
@@ -136,7 +145,7 @@ Line numbers are within `src/plan-detection-classical.js`.
 - **Protected by** `structural-objects`, `symbolic-plan-detection`
 
 ### A-4 · Oriented bounding box
-- **Lines** 431–465 (35)
+- **Lines** 438–475 (38)
 - **Responsibility** real minimum-area rectangle — never forced axis-aligned
 - **Dependencies** none
 - **Natural split** yes — `plan-detection-geometry.js`, with A-9
@@ -144,7 +153,7 @@ Line numbers are within `src/plan-detection-classical.js`.
 - **Protected by** `.claude/rules/ai.md` (preserve rotation); `plan-intelligence-contract`
 
 ### A-5 · Shape analysis and table typing
-- **Lines** 466–546 (81)
+- **Lines** 476–553 (78)
 - **Responsibility** round / square / rectangle from **real pixels**, not the
   bounding-box aspect ratio
 - **Dependencies** `maskSolidity` (A-3)
@@ -153,7 +162,7 @@ Line numbers are within `src/plan-detection-classical.js`.
 - **Protected by** `table-typing`; benchmark field `TYPES round n/n`
 
 ### A-6 · Modal-size prior and size agreement
-- **Lines** 547–674 (128)
+- **Lines** 554–588 (35) — `modalMagnitude`, `sizeAgreement`
 - **Responsibility** the modal object size, and how well a candidate agrees
   with it — the prior that replaced "biggest area first"
 - **Shared helpers** `sizeAgreement` is called from **12 places** inside
@@ -165,7 +174,7 @@ Line numbers are within `src/plan-detection-classical.js`.
 - **Protected by** `symbol-family`, `chair-families`, `table-typing`
 
 ### A-7 · Symbol family membership
-- **Lines** within A-6's range (~595–625)
+- **Lines** 589–606 (18) — `symbolFamilyMember`
 - **Responsibility** is this component a member of the plan's repeated symbol
   family?
 - **Shared helpers** exported as `MeritSymbolFamilyMember` — **already public**
@@ -175,7 +184,7 @@ Line numbers are within `src/plan-detection-classical.js`.
 - **Protected by** `symbol-family` (the suite exists for exactly this)
 
 ### A-8 · Splitting merged components
-- **Lines** 626–674 (49)
+- **Lines** 607–679 (73) — `splitAlongAxis`, `splitAtValley`
 - **Responsibility** split a component that merged two objects, along an axis
   or at a density valley
 - **Natural split** yes, with A-4/A-5
@@ -185,7 +194,7 @@ Line numbers are within `src/plan-detection-classical.js`.
   `mergesSplit`
 
 ### A-9 · Candidate geometry helpers
-- **Lines** 675–702 (28)
+- **Lines** 680–701 (22) — `sameObject`, `boxIoU`, `distanceToOBB`
 - **Responsibility** `sameObject`, `boxIoU`, `distanceToOBB`, box conversions
 - **Natural split** yes, with A-4
 - **Risk** **LOW to move.** **`sameObject` and `boxIoU` must not be merged** —
@@ -195,7 +204,7 @@ Line numbers are within `src/plan-detection-classical.js`.
 - **Protected by** `plan-intelligence-contract`
 
 ### A-10 · The provider object and registry
-- **Lines** 703–2858 — `detect()` plus the registry tail
+- **Lines** 703–3,145 — the provider object (`detect()` starts at 709) plus the registry tail from 3,134
 - **Natural split** the registry (last ~15 lines) is trivially separable; the
   rest is Split B
 - **Protected by** `plan-detection-boundary`
@@ -205,8 +214,26 @@ Line numbers are within `src/plan-detection-classical.js`.
 ## Split B — inside `detect()`
 
 The stages in execution order, with the `mark()` timing label each reports.
-Everything between two marks is one responsibility. Line numbers are relative
-to the start of `detect()` (file line 703).
+Everything between two marks is one responsibility.
+
+**Re-measured after §6.** The table below keeps its original relative line
+numbers for continuity; the ABSOLUTE line each `mark()` now sits on, read out
+of the current file, is:
+
+| `mark()` | line | stage ends here |
+|---|---|---|
+| `pixels` | 740 | luma + RGB histograms |
+| `binarize` | 762 | fill mask + Sobel edges, kept separate |
+| `colourModel` | 765 | A-2 |
+| `interiors` | 833 | |
+| `toneMasks` | 963 | |
+| `fillMask` | 975 | |
+| **`chairs`** | **1,642** | 667 lines — the largest stage, and where §6 landed |
+| **`tables`** | **2,884** | 1,242 lines from the chair mark |
+
+Those two stages are 61% of the file between them. Split B is a design job and
+this is the measurement that says why: `detect()` is not many stages, it is two
+very large ones with a short preamble.
 
 | # | Stage | Rel. lines | `mark()` | Note |
 |---|---|---|---|---|
