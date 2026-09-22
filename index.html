@@ -154,6 +154,10 @@
   <!-- Assisted Detection's merged-blob splitting: two touching objects are
        separated only where the pixel profile shows a real density valley and
        every part lands near the modal object size. -->
+  <!-- Assisted Detection's mask-to-objects layer: connected components,
+       enclosed regions and mask solidity, sharing one module-level scratch
+       buffer that must not be reallocated per call. -->
+  <script src="src/plan-detection-components.js"></script>
   <script src="src/plan-detection-split.js"></script>
   <!-- Assisted Detection: the classical CV pipeline, extracted from app-v8.js.
        Loads BEFORE app-v8.js because app-v8.js reads the registry it publishes

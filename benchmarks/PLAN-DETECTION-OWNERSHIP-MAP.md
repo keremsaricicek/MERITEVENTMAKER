@@ -184,6 +184,35 @@ The move also cleared a `// ---- Candidate geometry helpers ----` banner that
 A-9 orphaned: a section header pointing at nothing is the decay a split leaves
 behind if nobody looks.
 
+**A-3's component layer followed**, into
+`src/plan-detection-components.js` (`globalThis.MeritPlanComponents`).
+`plan-detection-classical.js` **2,888 → 2,793** — **352 lines out of 3,145
+across five steps**.
+
+**Not the whole group, and the reason is A-2.** The map's A-3 opens with
+`buildClassMasks`, and that function calls `rgbBinIndex`, which belongs to the
+colour model — the group already measured as unavailable because its `RGB_*`
+and `*_CHROMA` constants are used on both sides of any cut. So A-3 splits
+along a line the map did not draw: the part that is about PIXELS-TO-OBJECTS
+moves, and `buildClassMasks`, which is about WHICH PIXELS, stays with the
+colour work it depends on. Measured after that split: outward crossings
+**zero**; inward `maskSolidity` 1, `enclosedRegions` 1, `labelComponents` 5;
+private `scratchQueue` and `SCRATCH_QUEUE`.
+
+**The MEDIUM rating was right, and it is about the buffer rather than any
+coupling.** `SCRATCH_QUEUE` is one `Int32Array` reused across every flood
+fill; allocating one per component would dominate the cost on a large plan and
+change **nothing** about the output. The map's warning was exact — "moving the
+labeller without the buffer would silently reallocate per call" — and *silent*
+is the operative word.
+
+So it is asserted statically, and the mutation shows why that is not
+belt-and-braces: with the buffer moved inside its own allocator,
+`plan-detection-boundary` fails both checks while **`structural-objects` — a
+real-detection suite on a real plan — passes**. A behaviour test cannot see
+this one. It is the counterpart to "booting is not detecting": *detecting is
+not the whole contract either.*
+
 **And it broke a check by succeeding.** `plan-detection-boundary` asserted
 `detBindings.size > 30` as its guard against the seam checks going vacuous —
 if the binding extractor ever returned an empty set, "app-v8 resolves no
@@ -249,7 +278,7 @@ Line numbers are within `src/plan-detection-classical.js`.
 - **Risk** **LOW** — pure arithmetic over histograms, no geometry
 - **Protected by** `table-typing`, `chair-families`, `benchmarks/BISTRO-MERGE.md`
 
-### A-3 · Masks and connected components
+### A-3 · Masks and connected components — **PART MOVED**
 - **Lines** 318–437 (120)
 - **Responsibility** labelled components from a binarized image; enclosed
   regions; mask solidity

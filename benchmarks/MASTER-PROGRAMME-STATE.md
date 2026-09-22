@@ -923,8 +923,28 @@ number each time it bites is a check that never says anything, so it is now a
 breaking the extractor's function-declaration regex fails the control while
 leaving the old count above its floor.
 
-**Gates.** `npm run test:all` **72 / 72 suites · 2,322 / 2,322 checks** (+60
-from the five seam guards; 2,283 / 2,299 / 2,311 after steps 1–3). `build:offline` · `build:offline-full` ·
+**Step 5 — A-3's component layer** → `src/plan-detection-components.js`
+(`globalThis.MeritPlanComponents`). `plan-detection-classical.js` **2,888 →
+2,793** — **352 lines out of 3,145 across five steps**.
+
+**Not the whole group, and A-2 is the reason.** The map's A-3 opens with
+`buildClassMasks`, which calls `rgbBinIndex` from the colour model — the group
+already measured as unavailable. So A-3 splits along a line the map did not
+draw: PIXELS-TO-OBJECTS moves, and WHICH-PIXELS stays with the colour work it
+depends on. After that split, outward **zero**.
+
+**The MEDIUM rating was right, and it is about the buffer, not coupling.**
+`SCRATCH_QUEUE` is one `Int32Array` reused across every flood fill;
+per-component allocation would dominate the cost on a large plan and change
+**nothing** about the output. It is asserted statically, and the mutation
+shows why that is not belt-and-braces: with the buffer moved inside its own
+allocator, `plan-detection-boundary` fails both checks while
+**`structural-objects` — real detection on a real plan — passes**. A behaviour
+test cannot see this one. It is the counterpart to "booting is not detecting":
+**detecting is not the whole contract either.**
+
+**Gates.** `npm run test:all` **72 / 72 suites · 2,338 / 2,338 checks** (+76
+from the six seam guards; 2,283 / 2,299 / 2,311 / 2,322 after steps 1–4). `build:offline` · `build:offline-full` ·
 `verify:offline` **27 / 27**, both artifacts run, 38 sources bundled.
 `npm run benchmark` then `benchmark:baseline` — measured fresh after **each**
 step, not re-read — **No regressions. 0 improvement(s), 0 note(s)** both

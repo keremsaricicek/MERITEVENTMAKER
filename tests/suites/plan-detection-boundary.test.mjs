@@ -228,6 +228,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const PRIOR_PUBLIC = ["modalMagnitude", "sizeAgreement", "symbolFamilyMember"];
   const SHAPE_PUBLIC = ["shapeAnalysis", "classifyTableShape"];
   const SPLIT_PUBLIC = ["splitAtValley"];
+  const COMP_PUBLIC = ["maskSolidity", "enclosedRegions", "labelComponents"];
 
   checks.ok(geoCode.trimStart().startsWith("(function"),
     "it is wrapped in its own IIFE", geoCode.trimStart().slice(0, 30));
@@ -470,4 +471,70 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal(liveSplit.keys.join(","), "splitAtValley,version",
     "with exactly its one function and a version — splitAlongAxis is not on it", liveSplit.keys);
   checks.equal(liveSplit.fn, "function", "and it is callable", liveSplit.fn);
+
+  // --- 9. THE SIXTH SEAM: mask to objects --------------------------------
+  //
+  // The group the map rated MEDIUM, and the reason is a single module-level
+  // buffer rather than any coupling. `SCRATCH_QUEUE` is one Int32Array reused
+  // across every flood fill; allocating one per component would dominate the
+  // cost on a large plan and change NOTHING about the output. That is what
+  // makes it dangerous to move: no correctness test would notice, so the
+  // property is asserted here directly.
+  const compPath = path.join(repoRoot, "src", "plan-detection-components.js");
+  checks.require(fs.existsSync(compPath),
+    "the component layer lives in its own file", "src/plan-detection-components.js");
+  const compCode = stripCommentsAndStrings(fs.readFileSync(compPath, "utf8"));
+  const compExported = [...compCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]);
+  checks.equal([...new Set(compExported)].join(","), "MeritPlanComponents",
+    "it publishes exactly one name", compExported);
+
+  for (const n of COMP_PUBLIC) {
+    checks.equal(matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
+      `the pipeline makes no BARE call to ${n}()`,
+      matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
+    checks.ok(new RegExp(`COMP\\.${n}\\s*\\(`).test(detCode),
+      `and reaches ${n} through the published object instead`, true);
+  }
+
+  // THE BUFFER, asserted as the property the map warned about. Declared once
+  // at module level, and GROWN rather than replaced — `scratchQueue` must
+  // return the existing array whenever it is already big enough.
+  checks.ok(/\n\s{2}let SCRATCH_QUEUE\s*=\s*null/.test(compCode),
+    "SCRATCH_QUEUE is declared once at MODULE level, not inside the function that hands it out — a per-call allocation would be invisible in every output and would only show up as time",
+    true);
+  checks.ok(/if\s*\(\s*!SCRATCH_QUEUE\s*\|\|\s*SCRATCH_QUEUE\.length\s*<\s*size\s*\)/.test(compCode),
+    "and it is only replaced when the existing one is too small — the reuse this group was rated MEDIUM for",
+    true);
+  checks.ok(!/globalThis[^\n]*SCRATCH_QUEUE|globalThis[^\n]*scratchQueue/.test(compCode),
+    "neither the buffer nor its allocator is published — they are the module's own business",
+    true);
+  checks.equal([...COMP_PUBLIC, "scratchQueue", "SCRATCH_QUEUE"]
+    .filter((n) => detBindings.has(n) || v8Bindings.has(n)).length, 0,
+    "and none of the five is still defined in the pipeline or the shell — moved, not copied", true);
+
+  const compBare = bareUses(compCode);
+  const compReaches = [...detBindings, ...v8Bindings]
+    .filter((n) => compBare.has(n) && !bindings(compCode).has(n));
+  checks.equal(compReaches.length, 0,
+    "and it resolves no name bound only in the pipeline or the shell. `buildClassMasks` stayed behind precisely so this would be true: it calls rgbBinIndex, which belongs to the colour model, so it travels with the colour work instead",
+    compReaches);
+
+  // Live, because booting is not labelling. Two separated 2x2 blocks on a
+  // 6x6 mask are two components, not one and not four.
+  const liveComp = await page.evaluate(() => {
+    const c = globalThis.MeritPlanComponents;
+    if (!c) return null;
+    const w = 6, h = 6, mask = new Uint8Array(w * h);
+    const set = (x, y) => { mask[y * w + x] = 1; };
+    for (const [ox, oy] of [[0, 0], [4, 4]])
+      for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) set(ox + dx, oy + dy);
+    const out = c.labelComponents(mask, w, h, 1, false);
+    return { keys: Object.keys(c).sort(), count: (out.comps || []).length };
+  });
+  checks.require(liveComp, "MeritPlanComponents is published on the page after boot");
+  checks.equal(liveComp.keys.join(","), "enclosedRegions,labelComponents,maskSolidity,version",
+    "with exactly its three functions and a version — the scratch buffer is not on it", liveComp.keys);
+  checks.equal(liveComp.count, 2,
+    "and it still labels: two separated 2x2 blocks on a 6x6 mask are two components",
+    liveComp.count);
 }
