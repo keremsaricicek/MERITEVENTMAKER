@@ -40,6 +40,13 @@
 // runAssistedDetection() or plan-intelligence.js changing.
 (() => {
   "use strict";
+  // The geometry group's one published object. NOT destructured and NOT
+  // aliased to the names it holds: a local `minAreaRect` sharing a name with
+  // the function that used to live here would make "did this reach past the
+  // boundary?" unanswerable, which is the rule `.claude/rules/code-health.md`
+  // states for exactly this move. Every call below reads `GEO.`, so the
+  // crossing is visible at the call site rather than only in a diff.
+  const GEO = globalThis.MeritPlanGeometry;
   function otsu(hist,total,sum){let bg=0,bgSum=0,best=-1,threshold=150;for(let value=0;value<256;value++){bg+=hist[value];if(!bg)continue;const fg=total-bg;if(!fg)break;bgSum+=value*hist[value];const score=bg*fg*((bgSum/bg)-((sum-bgSum)/fg))**2;if(score>best){best=score;threshold=value;}}return threshold;}
   // ---- deskew -------------------------------------------------------------
   // A scan is never quite square to the page, and this pipeline is unusually
@@ -435,34 +442,6 @@
   // carried end to end. Axis-aligned wins near-ties on purpose — a square or a
   // circle has (near-)equal area at every angle, and printing a spurious 37°
   // tilt for an axis-aligned object would be a fabricated orientation.
-  function minAreaRect(pointsX,pointsY){
-    const n=pointsX.length;
-    if(n<3)return null;
-    const step=Math.max(1,Math.ceil(n/220)),xs=[],ys=[];
-    for(let i=0;i<n;i+=step){xs.push(pointsX[i]);ys.push(pointsY[i]);}
-    const measure=deg=>{
-      const rad=deg*Math.PI/180,cos=Math.cos(rad),sin=Math.sin(rad);
-      let minU=Infinity,maxU=-Infinity,minV=Infinity,maxV=-Infinity;
-      for(let i=0;i<xs.length;i++){
-        const u=xs[i]*cos+ys[i]*sin,v=-xs[i]*sin+ys[i]*cos;
-        if(u<minU)minU=u;if(u>maxU)maxU=u;if(v<minV)minV=v;if(v>maxV)maxV=v;
-      }
-      const w=maxU-minU+1,h=maxV-minV+1;
-      return{deg,cos,sin,w,h,area:w*h,cu:(minU+maxU)/2,cv:(minV+maxV)/2};
-    };
-    const axis=measure(0);
-    let best=axis;
-    for(let deg=3;deg<90;deg+=3){const m=measure(deg);if(m.area<best.area)best=m;}
-    for(let deg=best.deg-2;deg<=best.deg+2;deg++){
-      if(deg===best.deg||deg<0||deg>=90)continue;
-      const m=measure(deg);if(m.area<best.area)best=m;
-    }
-    if(axis.area<=best.area*1.03)best=axis;
-    let w=best.w,h=best.h,rotation=best.deg;
-    if(rotation>45){const swap=w;w=h;h=swap;rotation-=90;} // keep rotation in (-45,45]; same physical rectangle
-    return{cx:best.cu*best.cos-best.cv*best.sin,cy:best.cu*best.sin+best.cv*best.cos,w,h,rotation};
-  }
-
   // ---- FIX #4: shape decided from real pixels, not the bbox aspect --------
   // The component is hole-filled locally (flood from the padded window border;
   // whatever the outline encloses becomes solid), then measured in its own OBB
@@ -504,7 +483,7 @@
       const i=y*lw+x;if(!filled[i])continue;
       if(x===0||y===0||x===lw-1||y===lh-1||!filled[i-1]||!filled[i+1]||!filled[i-lw]||!filled[i+lw]){bx.push(x0+x);by.push(y0+y);}
     }
-    const obb=minAreaRect(bx,by);
+    const obb=GEO.minAreaRect(bx,by);
     if(!obb)return null;
     const rad=obb.rotation*Math.PI/180,cos=Math.cos(rad),sin=Math.sin(rad);
     const hw=Math.max(1,obb.w/2),hh=Math.max(1,obb.h/2);
@@ -673,33 +652,6 @@
   }
 
   // ---- Candidate geometry helpers ----------------------------------------
-  // "Are these two boxes the SAME physical object?" — overlap measured against
-  // the smaller box (two masks rarely agree on the exact extent of one object)
-  // AND a size sanity check, because a chair sitting inside a table's bounding
-  // box also overlaps it completely without being the same object.
-  function sameObject(a,b,sizeRatio=2.5){
-    const x1=Math.max(a.x,b.x),y1=Math.max(a.y,b.y);
-    const x2=Math.min(a.x+a.w,b.x+b.w),y2=Math.min(a.y+a.h,b.y+b.h);
-    const inter=Math.max(0,x2-x1)*Math.max(0,y2-y1);
-    if(!inter)return false;
-    const areaA=a.w*a.h,areaB=b.w*b.h;
-    return inter/Math.min(areaA,areaB)>.5&&Math.max(areaA,areaB)<=Math.min(areaA,areaB)*sizeRatio;
-  }
-  function boxIoU(a,b){
-    const x1=Math.max(a.x,b.x),y1=Math.max(a.y,b.y);
-    const x2=Math.min(a.x+a.w,b.x+b.w),y2=Math.min(a.y+a.h,b.y+b.h);
-    const inter=Math.max(0,x2-x1)*Math.max(0,y2-y1);
-    if(!inter)return 0;
-    return inter/(a.w*a.h+b.w*b.h-inter);
-  }
-  // Distance from a point to an oriented rectangle's boundary (0 when inside).
-  function distanceToOBB(px,py,obb){
-    const rad=(obb.rotation||0)*Math.PI/180,cos=Math.cos(rad),sin=Math.sin(rad);
-    const dx=px-obb.cx,dy=py-obb.cy;
-    const u=Math.abs(dx*cos+dy*sin)-obb.w/2,v=Math.abs(-dx*sin+dy*cos)-obb.h/2;
-    return Math.hypot(Math.max(0,u),Math.max(0,v));
-  }
-
   // ---- The provider -------------------------------------------------------
   const CLASSICAL_CV_PROVIDER={
     id:"classical-cv",
@@ -999,7 +951,7 @@
       const chairFamilyOf=e=>(e.source||"").startsWith("family:")?e.source:"primary";
       const addChairs=(comps,labels,name)=>{
         for(const c of comps){
-          if(chairEntries.some(e=>sameObject(e.comp,c)))continue;
+          if(chairEntries.some(e=>GEO.sameObject(e.comp,c)))continue;
           c.source=name;
           chairEntries.push({comp:c,labels,source:name});
         }
@@ -1117,7 +1069,7 @@
       const SEAT_SURFACE_MIN_AREA=3;
       const seatSurfaceFor=c=>{
         const reach=Math.max(c.w,c.h)*.7,area=c.w*c.h,longSide=Math.max(c.w,c.h);
-        return surfaceEntries.find(e=>e.comp!==c&&!sameObject(e.comp,c)
+        return surfaceEntries.find(e=>e.comp!==c&&!GEO.sameObject(e.comp,c)
           &&gapTo(c,e.comp)<=reach
           &&Math.min(e.comp.w,e.comp.h)>longSide
           &&e.comp.w*e.comp.h>=area*SEAT_SURFACE_MIN_AREA
@@ -1210,7 +1162,7 @@
         for(const src of chairSources){
           if(src===primarySource)continue;
           for(const c of src.comps){
-            if(claimed.some(k=>sameObject(k,c))||extra.some(k=>sameObject(k.comp,c)))continue;
+            if(claimed.some(k=>GEO.sameObject(k,c))||extra.some(k=>GEO.sameObject(k.comp,c)))continue;
             extra.push({comp:c,source:src});
           }
         }
@@ -1649,7 +1601,7 @@
       // small tables (they did before — a 17px chair passes the table size
       // floor on a 1000px-tall plan) and cannot drag the modal table size down.
       if(chairUniform&&chairs.length){
-        pool=pool.filter(p=>!chairs.some(ch=>sameObject(p.comp,ch)));
+        pool=pool.filter(p=>!chairs.some(ch=>GEO.sameObject(p.comp,ch)));
       }
       // The modal has to describe a TABLE, not the pool. Walls, printed text and
       // venue objects are all still in here, and a modal dragged out toward a
@@ -1730,7 +1682,7 @@
       const unique=[];
       for(const entry of expanded){
         const dup=unique.some(u=>{
-          if(boxIoU(entry.comp,u.comp)>=.45)return true;
+          if(GEO.boxIoU(entry.comp,u.comp)>=.45)return true;
           if(!modalSpanForDedup)return false;
           // Same object seen twice: the boxes actually touch AND their centres
           // are much closer than one repeated object apart.
@@ -1836,7 +1788,7 @@
         const dominantSurface=surfaceMask;
         const minoritySurfaces=(masksTints||[])
           .filter((m,i)=>m!==dominantSurface&&!tintIsChairMaterial[i]);
-        const seatedAgainst=c=>chairs.some(ch=>!sameObject(ch,c)&&gapTo(c,ch)<=Math.max(ch.w,ch.h)*.35);
+        const seatedAgainst=c=>chairs.some(ch=>!GEO.sameObject(ch,c)&&gapTo(c,ch)<=Math.max(ch.w,ch.h)*.35);
         const surfaceKept=unique.filter(u=>{
           const dominant=dominantSurface?coverageIn(u.comp,dominantSurface):0;
           let best=dominant,fromMinority=false;
@@ -2040,7 +1992,7 @@
           const ch=chairs[ci],px=ch.shape?.obb.cx??ch.x+ch.w/2,py=ch.shape?.obb.cy??ch.y+ch.h/2,span=Math.max(ch.w,ch.h);
           for(const box of tableBoxes){
             const margin=globalThis.MeritRelationships.reachFor(span,box.obb);
-            const d=distanceToOBB(px,py,box.obb);
+            const d=GEO.distanceToOBB(px,py,box.obb);
             if(d<=margin)pairs.push({ci,ti:box.index,d});
           }
         }
@@ -2811,7 +2763,7 @@
         return out;
       })();
       const venueComps=[];
-      for(const s of sources)for(const c of s.all)if(venueSizeOk(c)&&!venueComps.some(o=>boxIoU(o,c)>=.5))venueComps.push(c);
+      for(const s of sources)for(const c of s.all)if(venueSizeOk(c)&&!venueComps.some(o=>GEO.boxIoU(o,c)>=.5))venueComps.push(c);
       // A venue-scale blob that geometrically CONTAINS several detected tables
       // is not a stage -- it is the merged blob those tables were cut out of.
       // Measured on the dense fixture: three 511x102 "stages" at aspect 5.0,

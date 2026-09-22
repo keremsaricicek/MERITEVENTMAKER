@@ -181,4 +181,83 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     true);
   checks.equal(matchLines(v8Code, /(^|[^\w.$])SKEW_MIN_(DEG|GAIN)\b/).length, 0,
     "app-v8.js names neither skew threshold — they moved with the measurement that uses them", 0);
+
+  // --- 5. THE SECOND SEAM: the geometry group -----------------------------
+  //
+  // Split A-4 and A-9 left the pipeline for `src/plan-detection-geometry.js`.
+  // A seam nothing enforces closes again the first time someone needs a helper
+  // "just this once", so this one is asserted the same way as the first — and
+  // with the one extra rule this move had to obey.
+  //
+  // THE EXTRA RULE. What the pipeline reads from the module goes through the
+  // module's one published object, never through a local alias sharing a name
+  // with the function that used to live there. `const minAreaRect =
+  // MeritPlanGeometry.minAreaRect` would leave every call site reading exactly
+  // as it did before the move, which makes "did this reach past the boundary?"
+  // unanswerable by reading the code — the question this whole suite exists to
+  // answer. The handle is `GEO`, and the check below is that no bare call to
+  // any of the four survives.
+  const geoPath = path.join(repoRoot, "src", "plan-detection-geometry.js");
+  checks.require(fs.existsSync(geoPath),
+    "the geometry group lives in its own file", "src/plan-detection-geometry.js");
+  const geoCode = stripCommentsAndStrings(fs.readFileSync(geoPath, "utf8"));
+  const GEO_PUBLIC = ["minAreaRect", "sameObject", "boxIoU", "distanceToOBB"];
+
+  checks.ok(geoCode.trimStart().startsWith("(function"),
+    "it is wrapped in its own IIFE", geoCode.trimStart().slice(0, 30));
+  const geoExported = [...geoCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]);
+  checks.equal(geoExported.join(","), "MeritPlanGeometry",
+    "and publishes exactly one name — four functions arrived, one name entered the app's vocabulary", geoExported);
+
+  for (const n of GEO_PUBLIC) {
+    checks.equal(matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
+      `the pipeline makes no BARE call to ${n}() — a local alias of that name would hide the crossing at every call site`,
+      matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
+    checks.ok(new RegExp(`GEO\\.${n}\\s*\\(`).test(detCode),
+      `and reaches ${n} through the published object instead`, true);
+  }
+
+  // Copied rather than moved is the other way this goes wrong, and here it
+  // would be silent: two minimum-area rectangles that drift apart would still
+  // both look right in isolation.
+  const geoDefines = new Set();
+  for (const m of geoCode.matchAll(/(?:^|\n)  (?:async )?function ([A-Za-z_$][\w$]*)/g)) geoDefines.add(m[1]);
+  checks.equal(GEO_PUBLIC.filter((n) => !geoDefines.has(n)).length, 0,
+    "all four are DEFINED in the geometry file", [...geoDefines]);
+  checks.equal(GEO_PUBLIC.filter((n) => detBindings.has(n) || v8Bindings.has(n)).length, 0,
+    "and none of them is still defined in the pipeline or the shell — moved, not copied",
+    GEO_PUBLIC.filter((n) => detBindings.has(n) || v8Bindings.has(n)));
+
+  // The module is pure in the sense that matters for a one-way dependency: it
+  // resolves nothing bound only in the pipeline or the shell. Measured the
+  // same way as the first seam, counting every declarator.
+  const geoBare = bareUses(geoCode);
+  const geoReaches = [...detBindings, ...v8Bindings]
+    .filter((n) => geoBare.has(n) && !bindings(geoCode).has(n) && n !== "GEO");
+  checks.equal(geoReaches.length, 0,
+    "the geometry module resolves no name bound only in the pipeline or the shell — it reads its arguments and Math, and nothing else",
+    geoReaches);
+
+  // And it is really loaded, in order, before the pipeline that calls it.
+  const live = await page.evaluate(() => {
+    const g = globalThis.MeritPlanGeometry;
+    if (!g) return null;
+    return {
+      keys: Object.keys(g).sort(),
+      // A real answer, not just a function reference: a square of side 10 at
+      // the origin is 10x10 at rotation 0, whichever file it lives in.
+      square: g.minAreaRect([0, 10, 10, 0], [0, 0, 10, 10]),
+      same: g.sameObject({ x: 0, y: 0, w: 10, h: 10 }, { x: 1, y: 1, w: 10, h: 10 }),
+      iou: Number(g.boxIoU({ x: 0, y: 0, w: 10, h: 10 }, { x: 0, y: 0, w: 10, h: 10 }).toFixed(3)),
+    };
+  });
+  checks.require(live, "MeritPlanGeometry is published on the page after boot");
+  checks.equal(live.keys.join(","), "boxIoU,distanceToOBB,minAreaRect,sameObject,version",
+    "with exactly the four functions and its version", live.keys);
+  checks.ok(live.square && Math.round(live.square.w) === 11 && Math.round(live.square.h) === 11
+    && live.square.rotation === 0,
+    "and it still computes: a 10x10 square of points is an axis-aligned rectangle, not a rotated one. Booting is not computing — the same lesson the first split had to learn the hard way",
+    live.square);
+  checks.equal(live.same, true, "sameObject still answers same-object", live.same);
+  checks.equal(live.iou, 1, "and boxIoU still answers 1 for identical boxes", live.iou);
 }

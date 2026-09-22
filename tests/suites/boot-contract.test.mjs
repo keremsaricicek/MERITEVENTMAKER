@@ -22,6 +22,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { openApp } from "../lib/app-actions.mjs";
+import { stripCommentsAndStrings } from "../lib/js-scan.mjs";
 
 export const meta = { name: "boot-contract", tags: ["business", "fast"], timeout: 60000 };
 
@@ -47,6 +48,56 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
 
   checks.equal(new Set(scripts).size, scripts.length,
     "no script is loaded twice — a duplicate tag re-runs a file and can undo a later override", scripts.length);
+
+  // --- 1b. a module loads before whoever reads it AT LOAD TIME -------------
+  //
+  // The checks above name three orderings by hand, which covers the three that
+  // were known to matter and nothing that arrives later. Extracting the
+  // geometry group exposed the gap: `plan-detection-geometry.js` loaded AFTER
+  // the pipeline that binds `const GEO = globalThis.MeritPlanGeometry` at the
+  // top of its IIFE passed `boot-contract`, `smoke` AND
+  // `plan-detection-boundary`, and threw
+  // `Cannot read properties of undefined (reading 'sameObject')` on every real
+  // detection. That is the file's own "booting is not detecting" lesson
+  // arriving a second time, from the other direction.
+  //
+  // So the rule is DERIVED rather than listed: whatever a file publishes as
+  // `globalThis.Merit*` / `globalThis.MERIT_*` must load before any file that
+  // reads that name at LOAD TIME. A new module is covered the day it is added,
+  // the way `dependency-direction` already discovers the pure layer for itself.
+  //
+  // LOAD TIME is the distinction that makes this rule true rather than merely
+  // strict. A read inside a function body runs whenever that function is
+  // called, long after boot, and ordering cannot affect it — `plan-embedding`
+  // and `plan-intelligence` both reach for `MeritVisualEmbedding`, which
+  // `app-v8.js` publishes last of all, and both are correct because both do it
+  // inside a guarded function. Load-time statements sit at the top level of a
+  // module's IIFE, which in this codebase is indentation 0 or 2; a function
+  // body is indented further. Measured: zero violations on the current tree.
+  const srcCode = new Map(scripts.map((f) =>
+    [f, stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", f), "utf8"))]));
+  const publisher = new Map();
+  for (const f of scripts)
+    for (const m of srcCode.get(f).matchAll(/globalThis\.((?:Merit|MERIT_)[A-Za-z0-9_$]*)\s*=/g))
+      if (!publisher.has(m[1])) publisher.set(m[1], f);
+  checks.ok(publisher.size > 20,
+    "the app really is built out of published modules — which is what makes the next check meaningful rather than vacuous",
+    publisher.size);
+
+  const lateReads = [];
+  for (const f of scripts) {
+    const consumerIndex = scripts.indexOf(f);
+    const loadTime = srcCode.get(f).split("\n").filter((l) => /^ {0,2}\S/.test(l)).join("\n");
+    for (const [name, owner] of publisher) {
+      if (owner === f) continue;
+      if (!new RegExp(`\\b${name}\\b`).test(loadTime)) continue;
+      const ownerIndex = scripts.indexOf(owner);
+      if (ownerIndex > consumerIndex) lateReads.push(`${f} reads ${name} at load time; ${owner} publishes it later`);
+    }
+  }
+  checks.equal(lateReads.length, 0,
+    "every module published on globalThis loads BEFORE any file that reads it at load time. A name here is not a style complaint — it is `undefined` at the moment the consumer binds it, and the failure surfaces only when the feature actually runs",
+    lateReads);
 
   // --- 2. the capture, classified ------------------------------------------
   // Three different things have been called "unreachable" in this repo, and

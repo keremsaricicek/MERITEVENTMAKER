@@ -104,6 +104,43 @@ data structures before any of it can leave the function.
 
 ---
 
+## Split A — progress
+
+**A-4 and A-9 are done.** `minAreaRect`, `sameObject`, `boxIoU` and
+`distanceToOBB` live in `src/plan-detection-geometry.js`, published as
+`globalThis.MeritPlanGeometry` and reached through a `GEO.` handle at all ten
+call sites — never through a local alias sharing a name with the function that
+used to be there, which is what would make "did this reach past the boundary?"
+unanswerable by reading the code.
+
+The crossing analysis, measured in stripped code across every file in `src/`
+and `index.html` before anything moved:
+
+| direction | result |
+|---|---|
+| outward (region → file's scope) | **zero** — every identifier in all four bodies is a parameter, a local, or `Math` |
+| inward (file → region) | four names, counts including each definition: `minAreaRect` 2, `sameObject` 7, `boxIoU` 3, `distanceToOBB` 2 |
+| any other file, or `index.html` | **none** — one name entered the app's vocabulary, not four |
+
+`plan-detection-classical.js` 3,145 → **3,090**; `plan-detection-geometry.js`
+is 103 lines including its header.
+
+**And the move found a hole in the safety net, which is the more useful
+outcome.** Loading the new script AFTER the pipeline that binds
+`const GEO = globalThis.MeritPlanGeometry` at the top of its IIFE passed
+`boot-contract`, `smoke` AND `plan-detection-boundary`, and threw
+`Cannot read properties of undefined (reading 'sameObject')` on every real
+detection — this file's own "booting is not detecting" lesson arriving a second
+time, from the other direction. `boot-contract` now DERIVES the rule instead of
+listing three orderings by hand: whatever a file publishes as `globalThis.Merit*`
+must load before any file that reads it **at load time**, where load time means
+the top level of a module rather than inside a function body (`plan-embedding`
+and `plan-intelligence` both reach for `MeritVisualEmbedding`, which `app-v8.js`
+publishes last, and both are correct because both do it inside a guarded
+function). Zero violations on the current tree; the mutation is caught in one
+second instead of a 102-second detection timeout, and every future module is
+covered the day it is added.
+
 ## Split A — the helper groups
 
 Line numbers are within `src/plan-detection-classical.js`.
@@ -144,7 +181,7 @@ Line numbers are within `src/plan-detection-classical.js`.
   without the buffer would silently reallocate per call
 - **Protected by** `structural-objects`, `symbolic-plan-detection`
 
-### A-4 · Oriented bounding box
+### A-4 · Oriented bounding box — **MOVED**
 - **Lines** 438–475 (38)
 - **Responsibility** real minimum-area rectangle — never forced axis-aligned
 - **Dependencies** none
@@ -193,7 +230,7 @@ Line numbers are within `src/plan-detection-classical.js`.
 - **Protected by** `benchmarks/BISTRO-MERGE.md`'s fixture; benchmark field
   `mergesSplit`
 
-### A-9 · Candidate geometry helpers
+### A-9 · Candidate geometry helpers — **MOVED**
 - **Lines** 680–701 (22) — `sameObject`, `boxIoU`, `distanceToOBB`
 - **Responsibility** `sameObject`, `boxIoU`, `distanceToOBB`, box conversions
 - **Natural split** yes, with A-4

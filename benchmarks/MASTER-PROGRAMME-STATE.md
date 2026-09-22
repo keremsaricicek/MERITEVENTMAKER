@@ -801,6 +801,66 @@ together once the aisles between them are filled. Both still show as
 REGRESSED against the frozen baseline. Not caused by §6 and not fixed by it;
 recorded here because it was not recorded then.
 
+### L. §3A — detector modularization, Split A step 1 — DONE
+
+**What moved.** `minAreaRect` (A-4) and `sameObject` / `boxIoU` /
+`distanceToOBB` (A-9) → `src/plan-detection-geometry.js`, published as
+`globalThis.MeritPlanGeometry`. `plan-detection-classical.js` **3,145 →
+3,090**; the new file is 103 lines including its header. Chosen by the
+ownership map's own risk ranking, not by line count: these four are pure
+functions of their arguments, with no state, no DOM and no pixels.
+
+**The crossing analysis came first**, measured in stripped code with
+`tests/lib/js-scan.mjs` across every file in `src/` and `index.html`:
+
+| direction | result |
+|---|---|
+| outward (region → file's scope) | **zero** — every identifier in all four bodies is a parameter, a local, or `Math` |
+| inward (file → region) | four names; counts including each definition: `minAreaRect` 2, `sameObject` 7, `boxIoU` 3, `distanceToOBB` 2 |
+| any other file, or `index.html` | **none** — one name entered the app's vocabulary, not four |
+
+All ten call sites read `GEO.`, never a local alias sharing a name with the
+function that used to live there. That is the rule `.claude/rules/code-health.md`
+states for this move, and the reason is not style: an alias leaves every call
+site reading exactly as before, which makes "did this reach past the boundary?"
+unanswerable by reading the code.
+
+**The seam is guarded.** `plan-detection-boundary` grew a section 5 (41 checks
+total): the geometry file is an IIFE, publishes exactly one name, defines all
+four, neither the pipeline nor the shell still defines any of them, the pipeline
+makes **no bare call** to any of the four, it reaches each through `GEO.`, the
+module resolves no name bound only in the pipeline or the shell, and — live in
+the browser — a 10×10 square of points still comes back as an axis-aligned
+rectangle. Mutation (`const sameObject = GEO.sameObject` plus the call sites
+rewritten back) fails exactly three of those checks.
+
+**And the move found a hole in the safety net, which is the more valuable
+outcome.** Loading the new script AFTER the pipeline — which binds
+`const GEO = globalThis.MeritPlanGeometry` at the top of its IIFE — passed
+`boot-contract`, `smoke` **and** `plan-detection-boundary`, and threw
+`Cannot read properties of undefined (reading 'sameObject')` on every real
+detection. That is this file's own "booting is not detecting" lesson arriving a
+second time, from the other direction: the first split lost `SKEW_MIN_DEG` and
+the structural suites were blind to it; this one would have lost the whole
+geometry group the same way.
+
+`boot-contract` now **derives** the rule instead of listing three orderings by
+hand: whatever a file publishes as `globalThis.Merit*` / `MERIT_*` must load
+before any file that reads that name **at load time**. Load time is what makes
+the rule true rather than merely strict — a read inside a function body runs
+long after boot, which is why `plan-embedding` and `plan-intelligence` may both
+reach for `MeritVisualEmbedding` although `app-v8.js` publishes it last. Zero
+violations on the current tree; the mutation is now caught in **one second**
+instead of a 102-second detection timeout, and every future module is covered
+the day it is added — the property `dependency-direction` already had.
+
+**Gates.** `npm run test:all` **72 / 72 suites · 2,283 / 2,283 checks** (+21
+from the two new guards). `build:offline` · `build:offline-full` ·
+`verify:offline` **27 / 27**, both artifacts run, 38 sources bundled.
+`npm run benchmark` then `benchmark:baseline` — measured fresh, not re-read —
+**No regressions. 0 improvement(s), 0 note(s)**, which is the whole claim a
+behaviour-preserving move is allowed to make.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
@@ -844,15 +904,23 @@ typing 136/289.
 
 ## Next step
 
-**§3A + §3B — detector modularization.** `plan-detection-classical.js` is a
-transitional extraction, not a finished module; its internal split is mapped in
-`benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`. Read
-`.claude/skills/merit-maintainability-hardening/SKILL.md`,
-`benchmarks/APP-V8-OWNERSHIP-MAP.md`, `CODE-INVENTORY.md` and
-`MODULARIZATION-ORDER.md` before proposing any move, and name the crossings
-first — counting **every declarator** on each comma-separated `const` line.
-Booting is not detecting: a structural step needs a suite that exercises the
-behaviour it moved.
+**§3A + §3B — the rest of Split A.** Step 1 (A-4 + A-9 → geometry) is done;
+entry L records it. The remaining groups in
+`benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`, in the map's own risk order:
+**A-5** shape analysis and table typing (LOW, but it depends on `maskSolidity`
+in A-3), **A-2** colour and tone models (LOW, pure arithmetic over histograms),
+**A-6/A-7** the modal-size prior and the symbol-family predicate (LOW to move,
+HIGH to change — `sizeAgreement` is called from 12 places and
+`MeritSymbolFamilyMember` is already public), **A-8** splitting (MEDIUM — it
+changes the object count), **A-3** masks and components (MEDIUM, entirely
+because of the module-level `SCRATCH_QUEUE`), **A-1** deskew (LOW, and the only
+part of the file that touches the DOM). Split B — inside `detect()` — is a
+design job and not a move: the chairs stage ends at line 1,642 and the tables
+stage at 2,884, so those two are 61% of the file between them.
+
+Name the crossings first, counting **every declarator** on each comma-separated
+`const` line, and remember that booting is not detecting — three structural
+suites passed on the broken load order in step 1.
 
 Then, in the order given: §3D + §3E (app-v8 modularization / duplication /
 dead code — blocked behind nothing now that `guest.assignment` has one
