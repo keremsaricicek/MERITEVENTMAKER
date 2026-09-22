@@ -485,11 +485,39 @@ applied one is invisible.* The current grade thresholds violate that same
 priority — they accept a 5.5% invisible-error rate to hold retention at
 0.79.
 
-**Next step:** move the `likely` margin (and if needed its score) until the
-wrong-application rate meets its 1% gate, and report the retention cost
-rather than hiding it. This is tuning against a DEFINED gate with a measured
-trade-off curve, not tuning to a fixture — but the trade must be stated per
-field, because retention down and precision up is still a trade.
+**That next step was measured and it FAILED — the third of my own proposed
+steps this programme has killed.** Sweeping the `likely` grade over 196
+decisions:
+
+| score | margin | retention | precision | wrong-rate |
+|---|---|---|---|---|
+| 0.62 | 0.04 *(was)* | 0.7857 | 0.9448 | 0.0552 |
+| 0.62 | 0.08 | 0.7347 | 0.9412 | **0.0588 — worse** |
+| 0.62 | 0.12 | 0.7194 | 0.9592 | 0.0408 |
+| 0.68 | 0.08 | 0.7296 | 0.9470 | 0.0530 |
+| **0.68** | **0.12** *(is)* | 0.7143 | 0.9655 | **0.0345** |
+| 0.72 | 0.12 | 0.6990 | 0.9648 | 0.0352 |
+
+**No setting reaches the 0.01 gate**; the best is 3.5× over it. And the
+curve is not even monotone — tightening the margin from 0.04 to 0.08 makes
+the wrong rate WORSE. Threshold placement is therefore not the fix. The
+score cannot separate a right match from a wrong one on a transformed plan,
+which is the same conclusion the ablation reaches when it reports the
+learned embedding contributing **nothing measurable**. That is a SIGNAL
+problem: a better feature, or a narrower claim about when memory may be
+applied at all. It stays open.
+
+**What shipped, and why.** `likely` moved to 0.68 / 0.12. Between two
+settings that both miss the gate, this module's own doctrine decides — *a
+lost decision is reported and re-made; a wrongly applied one is invisible*.
+The change costs 7 points of retention (0.786 → 0.714) and removes **37% of
+the invisible errors** (0.0552 → 0.0345), with precision rising 0.945 →
+0.966. The numbers are in the source beside the constant so the next reader
+does not re-sweep.
+
+**The gate is still NOT MET and is not reported as met.** `benchmark:memory`
+still prints `MEMORY GATES NOT MET on transformed plans`, and §9 is not
+closed.
 
 Two things the benchmark already reports honestly and that must not be
 "fixed" by making them sound better: the learned embedding contributes

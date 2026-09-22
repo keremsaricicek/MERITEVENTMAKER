@@ -129,9 +129,37 @@
   // Grades. A match must clear BOTH a score and a margin: a score alone cannot
   // tell "this is clearly the object" from "two objects fit equally well", and
   // the second is how a decision quietly lands on the wrong one.
+  //
+  // The `likely` numbers were MEASURED, not chosen. benchmark:memory over 196
+  // scoreable decisions, sweeping score x margin:
+  //
+  //     score margin | retention precision wrong-rate
+  //      0.62  0.04  |   0.7857    0.9448    0.0552   <- was
+  //      0.62  0.08  |   0.7347    0.9412    0.0588
+  //      0.62  0.12  |   0.7194    0.9592    0.0408
+  //      0.68  0.08  |   0.7296    0.9470    0.0530
+  //      0.68  0.12  |   0.7143    0.9655    0.0345   <- is
+  //      0.72  0.12  |   0.6990    0.9648    0.0352
+  //
+  // Two things that sweep says, and both matter.
+  //
+  // NO SETTING MEETS THE GATE. The wrong-application ceiling is 0.01 and the
+  // best point on this curve is 0.0345. Tightening the grade is not the fix
+  // for it: 0.04 -> 0.08 makes the wrong rate WORSE, so this is not even a
+  // monotone trade. The score cannot separate a right match from a wrong one
+  // on a transformed plan, which is the same thing the ablation says when it
+  // reports that the learned embedding contributes nothing measurable. That
+  // is a signal problem and it is recorded as open, not closed.
+  //
+  // BETWEEN TWO SETTINGS THAT BOTH MISS, THIS MODULE'S OWN DOCTRINE DECIDES.
+  // A lost decision is reported and re-made; a wrongly applied one is
+  // invisible. 0.68/0.12 costs 7 points of retention (0.786 -> 0.714) and
+  // removes 37% of the invisible errors (0.0552 -> 0.0345), and precision
+  // rises with it. Taking the visible cost to cut the invisible one is the
+  // same call that keeps the global-transform correction switched off.
   const GRADE = {
     strong: { score: 0.78, margin: 0.08 },
-    likely: { score: 0.62, margin: 0.04 },
+    likely: { score: 0.68, margin: 0.12 },
     ambiguous: { score: 0.52, margin: 0 },
   };
   const APPLIES = new Set(["strong", "likely"]);
