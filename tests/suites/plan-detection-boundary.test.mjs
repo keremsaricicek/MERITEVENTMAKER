@@ -112,7 +112,11 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // So the guard is a POSITIVE CONTROL instead — names that are still in the
   // file and must be found — plus a floor low enough to survive the rest of
   // Split A and high enough to catch an extractor that collapsed.
-  const mustFind = ["otsu", "CLASSICAL_CV_PROVIDER", "estimatePlanSkew", "GEO", "PRIOR"];
+  // These are names still bound in the pipeline. The list is maintained
+  // deliberately: it held `otsu` and `estimatePlanSkew` until Split A-1 moved
+  // them, and the control failing at that moment is it working rather than a
+  // nuisance — it noticed the file changed under it.
+  const mustFind = ["CLASSICAL_CV_PROVIDER", "resolvePlanDetectionProvider", "GEO", "PRIOR", "DESKEW"];
   const missing = mustFind.filter((n) => !detBindings.has(n));
   checks.equal(missing.length, 0,
     "the binding extractor really found the pipeline's own names — a positive control, so an extractor that silently stopped matching cannot leave the next two checks vacuously green",
@@ -199,7 +203,13 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "and the pipeline no longer names calibratedThreshold at all", 0);
 
   // (b) the skew deadband, returned instead of re-decided by the caller.
-  checks.ok(/applyDeg/.test(detCode) && /skew\.applyDeg/.test(v8Code.replace(/\s/g, "")),
+  // `applyDeg` used to be looked for in the pipeline. Split A-1 moved deskew
+  // into its own module, so the decision now lives one file further from the
+  // shell than when this was written — the claim is MORE true, and the check
+  // has to look where the thresholds actually are.
+  const deskewSrc = stripCommentsAndStrings(
+    fs.readFileSync(path.join(repoRoot, "src", "plan-detection-deskew.js"), "utf8"));
+  checks.ok(/applyDeg/.test(deskewSrc) && /skew\.applyDeg/.test(v8Code.replace(/\s/g, "")),
     "the deskew deadband is decided where its thresholds live and returned as applyDeg; the shell applies the answer rather than re-deriving it from SKEW_MIN_DEG/SKEW_MIN_GAIN",
     true);
   checks.equal(matchLines(v8Code, /(^|[^\w.$])SKEW_MIN_(DEG|GAIN)\b/).length, 0,
@@ -229,6 +239,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const SHAPE_PUBLIC = ["shapeAnalysis", "classifyTableShape"];
   const SPLIT_PUBLIC = ["splitAtValley"];
   const COMP_PUBLIC = ["maskSolidity", "enclosedRegions", "labelComponents"];
+  const DESKEW_PUBLIC = ["otsu", "estimatePlanSkew"];
 
   checks.ok(geoCode.trimStart().startsWith("(function"),
     "it is wrapped in its own IIFE", geoCode.trimStart().slice(0, 30));
@@ -537,4 +548,79 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal(liveComp.count, 2,
     "and it still labels: two separated 2x2 blocks on a 6x6 mask are two components",
     liveComp.count);
+
+  // --- 10. THE SEVENTH SEAM: deskew and the ink threshold ----------------
+  //
+  // The group that carries the four names the FIRST attempt at splitting this
+  // pipeline got wrong. `SKEW_MAX_DEG`, `SKEW_STEP`, `SKEW_MIN_DEG` and
+  // `SKEW_MIN_GAIN` are declared on one comma-separated line; that attempt
+  // captured only the first, left `SKEW_MIN_DEG` in the shell while its value
+  // moved, and every REAL detection threw ReferenceError while the syntax
+  // checks, `smoke` and all four structural suites passed. They are now
+  // entirely private to the module that uses them, and this asserts it.
+  const deskewPath = path.join(repoRoot, "src", "plan-detection-deskew.js");
+  checks.require(fs.existsSync(deskewPath),
+    "deskew lives in its own file", "src/plan-detection-deskew.js");
+  const deskewCode = stripCommentsAndStrings(fs.readFileSync(deskewPath, "utf8"));
+  const deskewExported = [...deskewCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]);
+  checks.equal([...new Set(deskewExported)].join(","), "MeritPlanDeskew",
+    "it publishes exactly one name", deskewExported);
+
+  for (const n of DESKEW_PUBLIC) {
+    checks.equal(matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
+      `the pipeline makes no BARE call to ${n}()`,
+      matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
+  }
+  checks.ok(/DESKEW\.otsu\s*\(/.test(detCode),
+    "the binarize stage reaches otsu through the published object", true);
+  checks.ok(/estimatePlanSkew:\s*DESKEW\.estimatePlanSkew/.test(detCode),
+    "and the provider's own estimatePlanSkew names the module's function rather than a shorthand for a local that no longer exists — the shorthand is exactly how a move like this goes silently wrong",
+    true);
+
+  const SKEW_CONSTS = ["SKEW_MAX_DEG", "SKEW_STEP", "SKEW_MIN_DEG", "SKEW_MIN_GAIN"];
+  const deskewBinds = bindings(deskewCode);
+  checks.equal(SKEW_CONSTS.filter((n) => !deskewBinds.has(n)).length, 0,
+    "ALL FOUR skew constants are bound in the deskew module — every declarator on the comma-separated line, which is the one the first extraction attempt read only the first name of",
+    SKEW_CONSTS.filter((n) => !deskewBinds.has(n)));
+  checks.equal(SKEW_CONSTS.filter((n) => detBindings.has(n) || v8Bindings.has(n)).length, 0,
+    "and none of them is left behind in the pipeline or the shell",
+    SKEW_CONSTS.filter((n) => detBindings.has(n) || v8Bindings.has(n)));
+  checks.ok(!new RegExp(`globalThis[^\\n]*(${SKEW_CONSTS.join("|")})`).test(deskewCode),
+    "nor published — the deadband is the module's own business, which is why applyDeg is returned instead of the thresholds",
+    true);
+
+  const deskewBare = bareUses(deskewCode);
+  const deskewReaches = [...detBindings, ...v8Bindings]
+    .filter((n) => deskewBare.has(n) && !deskewBinds.has(n));
+  checks.equal(deskewReaches.length, 0,
+    "and it resolves no name bound only in the pipeline or the shell", deskewReaches);
+
+  // Live, because booting is not thresholding. A histogram with all its mass
+  // at 0 and 255 has its Otsu threshold somewhere strictly between them.
+  const liveDeskew = await page.evaluate(() => {
+    const d = globalThis.MeritPlanDeskew;
+    if (!d) return null;
+    // This otsu returns the value at which between-class variance is FIRST
+    // maximal, which for two spikes is the lower one — not a midpoint. The
+    // first version of this check assumed a midpoint and failed on correct
+    // code, so what is asserted is the property that actually holds: the
+    // threshold sits below the upper population, and it MOVES with the data.
+    const at = (lo, hi) => {
+      const hist = new Array(256).fill(0);
+      hist[lo] = 500; hist[hi] = 500;
+      let sum = 0;
+      for (let i = 0; i < 256; i++) sum += i * hist[i];
+      return d.otsu(hist, 1000, sum);
+    };
+    return { keys: Object.keys(d).sort(), low: at(10, 200), high: at(100, 250) };
+  });
+  checks.require(liveDeskew, "MeritPlanDeskew is published on the page after boot");
+  checks.equal(liveDeskew.keys.join(","), "estimatePlanSkew,otsu,version",
+    "with exactly its two functions and a version — no skew constant on it", liveDeskew.keys);
+  checks.ok(liveDeskew.low < 200 && liveDeskew.high < 250,
+    "and it still thresholds: each threshold lands below the upper population it has to separate",
+    liveDeskew);
+  checks.ok(liveDeskew.high > liveDeskew.low,
+    "and it MOVES with the data rather than returning a constant — two histograms with different populations get different thresholds",
+    liveDeskew);
 }

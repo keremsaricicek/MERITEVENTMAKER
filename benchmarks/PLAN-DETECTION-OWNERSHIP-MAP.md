@@ -213,6 +213,28 @@ real-detection suite on a real plan — passes**. A behaviour test cannot see
 this one. It is the counterpart to "booting is not detecting": *detecting is
 not the whole contract either.*
 
+**A-1 followed**, into `src/plan-detection-deskew.js`
+(`globalThis.MeritPlanDeskew`). `plan-detection-classical.js` **2,793 →
+2,682** — **463 lines out of 3,145 across six steps, −14.7%**.
+
+Outward **zero**; inward `otsu` (the binarize stage) and `estimatePlanSkew`
+(the provider's own surface, which now names the module's function instead of
+a shorthand for a local that no longer exists — the shorthand is exactly how a
+move like this goes silently wrong). Private: the four `SKEW_*` constants.
+
+**Those four are THE four.** They are declared on one comma-separated line,
+and the first attempt at extracting this pipeline captured only the first —
+leaving `SKEW_MIN_DEG` in the shell while its value moved, so every REAL
+detection threw `ReferenceError` while the syntax checks, `smoke` and all four
+structural suites passed. They are now entirely private to the module that
+uses them. The mutation reproduces the original failure exactly (drop the
+fourth declarator, re-declare it in the pipeline) and fails three checks.
+
+This is also **the only part of the detector that touches the DOM** —
+`estimatePlanSkew` needs a canvas 2D context to re-render the page at trial
+angles. A worker-based detector cannot use one, and that problem is now a
+156-line file rather than a paragraph inside a three-thousand-line one.
+
 **And it broke a check by succeeding.** `plan-detection-boundary` asserted
 `detBindings.size > 30` as its guard against the seam checks going vacuous —
 if the binding extractor ever returned an empty set, "app-v8 resolves no
@@ -254,7 +276,7 @@ covered the day it is added.
 
 Line numbers are within `src/plan-detection-classical.js`.
 
-### A-1 · Image preprocessing — deskew
+### A-1 · Image preprocessing — deskew — **MOVED**
 - **Lines** 43–157 (115) — `otsu` + `estimatePlanSkew`
 - **Responsibility** estimate page skew, and decide whether it clears the
   deadband worth correcting

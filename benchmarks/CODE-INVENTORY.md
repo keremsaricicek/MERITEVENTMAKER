@@ -143,6 +143,30 @@ asserting the venue-scope refusal through the app path is listed as missing in
 `APP-V8-OWNERSHIP-MAP.md` (A23) and should be written before this extraction,
 not after.**
 
+### 2.1b Two `otsu` implementations — **NEEDS TEST FIRST**
+
+Found by Split A-1's crossing analysis, which reported that
+`src/plan-embedding.js` names `otsu` — and it does, its own:
+
+| | `plan-detection-deskew.js:otsu` | `plan-embedding.js:otsu` |
+|---|---|---|
+| signature | `otsu(hist, total, sum)` | `otsu(pixels)` |
+| input | a histogram the caller already has | raw pixels of a 32×32 crop |
+| why | `detect()` builds luma and colour histograms in ONE pass over the image; re-walking it to threshold would undo that | the descriptor reads the same crop the encoder sees, and has no histogram to hand |
+
+Same algorithm, two different input contracts, and each contract exists for a
+stated reason. The mergeable shape would be one `otsuFromHistogram` plus a
+caller-side histogram build — which is what both already are, differing only
+in who builds the histogram.
+
+**Not merged, and not while a structural move is in flight.** The embedding's
+copy carries a comment explaining that it deliberately does not reuse the
+app's descriptor path, so that "two halves of one vector come from one input";
+merging the threshold without re-reading that argument risks changing what the
+descriptor measures, and `benchmarks/embedding/descriptor.mjs` is what would
+have to say whether it did. **A structural move is not the place to decide a
+duplication question**, which is why this is recorded rather than acted on.
+
 ### 2.2 `sameObject` / `boxIoU` — **KEEP — DOMAIN DIFFERENCE**
 
 `src/app-v8.js:3923` and `:3931`. Similarity 0.54.
@@ -241,7 +265,7 @@ prerequisite for any work in this area.
 |---|---|---|
 | SAFE TO REMOVE | **0** | — |
 | SAFE TO EXTRACT | **1** | `teachTableNumber`/`teachSelectedObject` (2.1) |
-| NEEDS TEST FIRST | **2** | the `original` capture (1.2, now covered); verbatim chair writes (3) |
+| NEEDS TEST FIRST | **3** | the `original` capture (1.2, now covered); verbatim chair writes (3); the two `otsu`s (2.1b) |
 | DO NOT MERGE | **3** | the three chair-write exceptions (3) |
 | KEEP — DOMAIN DIFFERENCE | **3** | `sameObject`/`boxIoU`; `partyMetaHTML`/`guestPartyCellHTML`; `occupiedSeatIndexes`/`liveUsedIndexes` |
 

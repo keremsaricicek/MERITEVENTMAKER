@@ -943,8 +943,36 @@ allocator, `plan-detection-boundary` fails both checks while
 test cannot see this one. It is the counterpart to "booting is not detecting":
 **detecting is not the whole contract either.**
 
-**Gates.** `npm run test:all` **72 / 72 suites · 2,338 / 2,338 checks** (+76
-from the six seam guards; 2,283 / 2,299 / 2,311 / 2,322 after steps 1–4). `build:offline` · `build:offline-full` ·
+**Step 6 — A-1 deskew** → `src/plan-detection-deskew.js`
+(`globalThis.MeritPlanDeskew`). `plan-detection-classical.js` **2,793 →
+2,682** — **463 lines out of 3,145 across six steps, −14.7%**.
+
+**It carries THE four names.** `SKEW_MAX_DEG`, `SKEW_STEP`, `SKEW_MIN_DEG`
+and `SKEW_MIN_GAIN` are declared on one comma-separated line, and the first
+attempt at extracting this pipeline captured only the first — leaving
+`SKEW_MIN_DEG` in the shell while its value moved, so every REAL detection
+threw `ReferenceError` while the syntax checks, `smoke` and all four
+structural suites passed. They are now entirely private to the module that
+uses them, and the mutation reproduces the original failure exactly: drop the
+fourth declarator, re-declare it in the pipeline, and three checks fail.
+
+The provider's `estimatePlanSkew` shorthand became
+`estimatePlanSkew: DESKEW.estimatePlanSkew` — a shorthand for a local that no
+longer exists is precisely how a move like this goes silently wrong, so the
+suite asserts the explicit form. And this is **the only DOM-touching part of
+the detector**; a worker-based detector cannot use a canvas, and that problem
+is now a 156-line file instead of a paragraph inside a three-thousand-line one.
+
+**A duplication finding, recorded not acted on.** The crossing report flagged
+that `src/plan-embedding.js` names `otsu`, and it does — its own, taking raw
+pixels of a 32×32 crop where the detector's takes a histogram the caller
+already built in one pass. Same algorithm, two input contracts, each with a
+stated reason. `benchmarks/CODE-INVENTORY.md` §2.1b records it as NEEDS TEST
+FIRST: **a structural move is not the place to decide a duplication question.**
+
+**Gates.** `npm run test:all` **72 / 72 suites · 2,352 / 2,352 checks** (+90
+from the seven seam guards; 2,283 / 2,299 / 2,311 / 2,322 / 2,338 after steps
+1–5). `build:offline` · `build:offline-full` ·
 `verify:offline` **27 / 27**, both artifacts run, 38 sources bundled.
 `npm run benchmark` then `benchmark:baseline` — measured fresh after **each**
 step, not re-read — **No regressions. 0 improvement(s), 0 note(s)** both

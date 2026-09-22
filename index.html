@@ -141,6 +141,10 @@
        the three box predicates. Loads BEFORE the pipeline, which reads them
        through globalThis.MeritPlanGeometry at call time, and reads nothing
        itself — no state, no DOM, no pixels. -->
+  <!-- Assisted Detection's deskew and ink threshold. The only DOM-touching
+       part of the detector: it re-renders the page at trial angles on a
+       canvas. Loads first of the detection modules. -->
+  <script src="src/plan-detection-deskew.js"></script>
   <script src="src/plan-detection-geometry.js"></script>
   <!-- Assisted Detection's modal-size prior: how big the thing this plan
        repeats is, and whether a candidate agrees with it. Loads BEFORE the
