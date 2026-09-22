@@ -854,12 +854,41 @@ violations on the current tree; the mutation is now caught in **one second**
 instead of a 102-second detection timeout, and every future module is covered
 the day it is added — the property `dependency-direction` already had.
 
-**Gates.** `npm run test:all` **72 / 72 suites · 2,283 / 2,283 checks** (+21
-from the two new guards). `build:offline` · `build:offline-full` ·
+**Step 2 — A-6 + A-7** → `src/plan-detection-size-prior.js`
+(`globalThis.MeritPlanSizePrior`, `PRIOR.` at all eighteen call sites).
+`plan-detection-classical.js` **3,090 → 3,053**. Crossing analysis: outward
+**zero**, inward `modalMagnitude` 11 / `sizeAgreement` 8 /
+`symbolFamilyMember` 1, private the two symbol-family thresholds.
+`MeritSymbolFamilyMember` was already public and is published under exactly
+that name by the new file, so `symbol-family` is untouched — a move must not
+rename a surface something else already reaches for.
+
+The analysis is a tool now, `scripts/crossing-analysis.mjs`, because it is
+about to be run six more times and doing it by eye is how the first split
+failed. It reports OUTWARD / INWARD / PRIVATE and flags a name used on BOTH
+sides as the cut being in the wrong place. **It is a place to start looking,
+not a verdict**: it said `app-v8.js` names `sizeAgreement`, and app-v8 reads
+`c.evidence?.sizeAgreement`, a property that happens to share the word.
+
+**A-2 was measured and is NOT next, against the map's own LOW rating.** Its
+five constants — `RGB_BITS`/`RGB_LEVELS`/`RGB_BINS`/`RGB_SHIFT` on one
+four-declarator line, plus `LOW_CHROMA`/`MID_CHROMA` — are used on BOTH sides,
+because `detect()`'s own pixel loop bins and thresholds chroma directly
+(`RGB_BINS` 4 inside / 5 outside, `LOW_CHROMA` 1 / 2, `MID_CHROMA` 2 / 2).
+Moving them breaks the other side; copying them creates two sources of truth
+for one quantisation scheme. The colour/tone concern does not separate from
+the histogram pass that feeds it, so it is Split B work rather than a helper
+move. That is the map's "size does not predict difficulty" finding arriving
+again from the other direction — this time a group rated LOW that measurement
+says is not available yet.
+
+**Gates.** `npm run test:all` **72 / 72 suites · 2,299 / 2,299 checks** (+37
+from the three new seam guards; 2,283 after step 1). `build:offline` · `build:offline-full` ·
 `verify:offline` **27 / 27**, both artifacts run, 38 sources bundled.
-`npm run benchmark` then `benchmark:baseline` — measured fresh, not re-read —
-**No regressions. 0 improvement(s), 0 note(s)**, which is the whole claim a
-behaviour-preserving move is allowed to make.
+`npm run benchmark` then `benchmark:baseline` — measured fresh after **each**
+step, not re-read — **No regressions. 0 improvement(s), 0 note(s)** both
+times, which is the whole claim a behaviour-preserving move is allowed to
+make.
 
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 

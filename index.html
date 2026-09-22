@@ -142,6 +142,11 @@
        through globalThis.MeritPlanGeometry at call time, and reads nothing
        itself — no state, no DOM, no pixels. -->
   <script src="src/plan-detection-geometry.js"></script>
+  <!-- Assisted Detection's modal-size prior: how big the thing this plan
+       repeats is, and whether a candidate agrees with it. Loads BEFORE the
+       pipeline, which reads it through globalThis.MeritPlanSizePrior, and
+       publishes MeritSymbolFamilyMember under the name it always had. -->
+  <script src="src/plan-detection-size-prior.js"></script>
   <!-- Assisted Detection: the classical CV pipeline, extracted from app-v8.js.
        Loads BEFORE app-v8.js because app-v8.js reads the registry it publishes
        (globalThis.MERIT_PLAN_DETECTION), and AFTER the Merit* modules it calls

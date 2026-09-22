@@ -47,6 +47,10 @@
   // states for exactly this move. Every call below reads `GEO.`, so the
   // crossing is visible at the call site rather than only in a diff.
   const GEO = globalThis.MeritPlanGeometry;
+  // The modal-size prior's one published object, reached the same way and for
+  // the same reason. See the note above: no local alias may share a name with
+  // a function that used to live here.
+  const PRIOR = globalThis.MeritPlanSizePrior;
   function otsu(hist,total,sum){let bg=0,bgSum=0,best=-1,threshold=150;for(let value=0;value<256;value++){bg+=hist[value];if(!bg)continue;const fg=total-bg;if(!fg)break;bgSum+=value*hist[value];const score=bg*fg*((bgSum/bg)-((sum-bgSum)/fg))**2;if(score>best){best=score;threshold=value;}}return threshold;}
   // ---- deskew -------------------------------------------------------------
   // A scan is never quite square to the page, and this pipeline is unusually
@@ -530,50 +534,6 @@
   // one bin boundary cannot swing the answer. Ranking by agreement with the
   // mode means a merged double-table blob (~2x modal) is demoted, where the
   // old "sort by area, cap 100" actively promoted it.
-  function modalMagnitude(values){
-    const vals=values.filter(v=>Number.isFinite(v)&&v>0);
-    if(!vals.length)return null;
-    const BIN=Math.log(1.15),counts=new Map();
-    for(const v of vals){const k=Math.round(Math.log(v)/BIN);counts.set(k,(counts.get(k)||0)+1);}
-    let bestK=null,bestN=-1;
-    for(const k of [...counts.keys()].sort((a,b)=>a-b)){
-      const support=(counts.get(k)||0)+(counts.get(k-1)||0)+(counts.get(k+1)||0);
-      if(support>bestN){bestN=support;bestK=k;}
-    }
-    const pool=vals.filter(v=>Math.abs(Math.round(Math.log(v)/BIN)-bestK)<=1);
-    return{value:pool.reduce((a,b)=>a+b,0)/pool.length,support:pool.length,total:vals.length};
-  }
-  function sizeAgreement(value,modal){
-    if(!modal||!modal.value||!(value>0))return .5;
-    return Math.max(0,1-Math.abs(Math.log(value/modal.value)/Math.log(1.7)));
-  }
-  // Does this box belong to the repeated symbol family the plan has declared?
-  //
-  // A plan whose tables are one repeated symbol may draw that symbol in more
-  // than one tone — ORNEK draws 157 open circles and 9 filled ones, the same
-  // object in different ink — and the two halves reach the pipeline through
-  // different sources. The question asked here is therefore about the FAMILY,
-  // never about tone: does this box agree with the vocabulary the plan stated
-  // through the members already found?
-  //
-  // Both thresholds are the ones the fragment filter already uses for these two
-  // agreement functions. Measured on ORNEK's 40 de-duplicated table-pool
-  // components against a modal taken from the open circles alone: the 9 filled
-  // discs score 0.89-0.94 on size and 0.96-0.97 on aspect; of the other 31,
-  // every one that agrees on size is a wall, door or bay at aspect 1.96-3.54,
-  // and every one that agrees on aspect is half the family's size or twice it.
-  // 9 of 9 and 0 of 31, with the nearest miss on either axis about four times
-  // the threshold away.
-  const SYMBOL_FAMILY_MIN_SIZE_AGREEMENT=.6,SYMBOL_FAMILY_MIN_ASPECT_AGREEMENT=.55;
-  function symbolFamilyMember(box,modal){
-    if(!modal||!modal.side||!modal.aspect)return false;
-    const w=box.w,h=box.h;
-    if(!(w>0)||!(h>0))return false;
-    if(sizeAgreement(Math.sqrt(w*h),modal.side)<SYMBOL_FAMILY_MIN_SIZE_AGREEMENT)return false;
-    const aspect=Math.max(w,h)/Math.min(w,h);
-    return Math.max(0,1-Math.abs(aspect-modal.aspect)/modal.aspect)>=SYMBOL_FAMILY_MIN_ASPECT_AGREEMENT;
-  }
-  globalThis.MeritSymbolFamilyMember=symbolFamilyMember;
   // FIX #2, part 2: an evidence-gated split for blobs that really did merge
   // (two filled tables touching with no drawn separator, which hole filling
   // cannot help with). A split is only made where the pixels actually show a
@@ -1153,8 +1113,8 @@
         // trusted because it shares a colour -- printed matter in the accent
         // colour would share it too -- it is trusted because most of its
         // members sit against a table surface.
-        const primaryModal=modalMagnitude(primarySource.comps.map(c=>Math.sqrt(c.w*c.h)));
-        const inPrimaryFamily=c=>!primaryModal||sizeAgreement(Math.sqrt(c.w*c.h),primaryModal)>=.25;
+        const primaryModal=PRIOR.modalMagnitude(primarySource.comps.map(c=>Math.sqrt(c.w*c.h)));
+        const inPrimaryFamily=c=>!primaryModal||PRIOR.sizeAgreement(Math.sqrt(c.w*c.h),primaryModal)>=.25;
         const claimed=primarySource.comps.filter(inPrimaryFamily);
         primaryFamilyComps=claimed;
         const extra=primarySource.comps.filter(c=>!inPrimaryFamily(c))
@@ -1388,7 +1348,7 @@
       // Two chairs drawn a pixel or two apart merge into one blob. Where the
       // pixels actually show the gap, the same evidence-gated valley split used
       // for tables recovers both — measured, never assumed.
-      const chairModalPre=modalMagnitude(chairEntries.map(e=>Math.sqrt(e.comp.w*e.comp.h)));
+      const chairModalPre=PRIOR.modalMagnitude(chairEntries.map(e=>Math.sqrt(e.comp.w*e.comp.h)));
       if(chairModalPre){
         const modalSide=chairModalPre.value;
         for(let i=chairEntries.length-1;i>=0;i--){
@@ -1414,7 +1374,7 @@
       // blob each — the families would be recovered above and then quietly
       // destroyed here.
       {
-        const provisionalOf=list=>modalMagnitude(list.map(e=>Math.sqrt(e.comp.w*e.comp.h)));
+        const provisionalOf=list=>PRIOR.modalMagnitude(list.map(e=>Math.sqrt(e.comp.w*e.comp.h)));
         const gapByFamily=new Map();
         for(const e of chairEntries){
           const k=chairFamilyOf(e);
@@ -1464,7 +1424,7 @@
       // thresholds, and a minority family of smaller seats must not drag it
       // down — a chair-scale short modal is exactly what over-split real
       // tables the last time it moved.
-      const chairModal=modalMagnitude((primaryComps.length?primaryComps:chairComps).map(c=>Math.sqrt(c.w*c.h)));
+      const chairModal=PRIOR.modalMagnitude((primaryComps.length?primaryComps:chairComps).map(c=>Math.sqrt(c.w*c.h)));
       // A trustworthy chair population is MANY objects of ONE size. If the
       // population is not uniform we say so in the result and fall back to the
       // table-first path instead of reporting a seat count we cannot defend.
@@ -1479,7 +1439,7 @@
       // is the same object rotated 90 degrees, not a different one. This is
       // what tells a chair-sized printed glyph from a chair without OCR.
       const elongationOf=c=>Math.max(c.w,c.h)/Math.max(1,Math.min(c.w,c.h));
-      const chairModalElongation=modalMagnitude((primaryComps.length?primaryComps:chairComps).map(elongationOf));
+      const chairModalElongation=PRIOR.modalMagnitude((primaryComps.length?primaryComps:chairComps).map(elongationOf));
       // One elongation mode, deliberately. A second mode was implemented here
       // and REVERTED once the real plan had per-chair ground truth to measure
       // against -- see benchmarks/BISTRO-MERGE.md.
@@ -1519,8 +1479,8 @@
       for(const [k,comps] of familyProfiles){
         familyProfiles.set(k,{
           count:comps.length,
-          size:k==="primary"?chairModal:modalMagnitude(comps.map(c=>Math.sqrt(c.w*c.h))),
-          elongation:k==="primary"?chairModalElongation:modalMagnitude(comps.map(elongationOf)),
+          size:k==="primary"?chairModal:PRIOR.modalMagnitude(comps.map(c=>Math.sqrt(c.w*c.h))),
+          elongation:k==="primary"?chairModalElongation:PRIOR.modalMagnitude(comps.map(elongationOf)),
         });
       }
       const profileFor=e=>familyProfiles.get(chairFamilyOf(e))||null;
@@ -1555,7 +1515,7 @@
       const chairAccepted=e=>{
         const profile=profileFor(e);
         const modalSize=profile?.size||chairModal;
-        return sizeAgreement(Math.sqrt(e.comp.w*e.comp.h),modalSize)>=.25&&chairShapeOk(e.comp,profile);
+        return PRIOR.sizeAgreement(Math.sqrt(e.comp.w*e.comp.h),modalSize)>=.25&&chairShapeOk(e.comp,profile);
       };
       // Cross-family duplicate suppression was tried here and is NOT in the
       // code, because it measured as a no-op on every plan and variant.
@@ -1585,7 +1545,7 @@
           .map(e=>{const pr=profileFor(e);const modal=pr?.size||chairModal;
             return{x:e.comp.x,y:e.comp.y,w:e.comp.w,h:e.comp.h,family:chairFamilyOf(e),
               mag:+Math.sqrt(e.comp.w*e.comp.h).toFixed(1),modal:modal?+modal.value.toFixed(1):null,
-              agree:+sizeAgreement(Math.sqrt(e.comp.w*e.comp.h),modal).toFixed(3),
+              agree:+PRIOR.sizeAgreement(Math.sqrt(e.comp.w*e.comp.h),modal).toFixed(3),
               shapeOk:chairShapeOk(e.comp,pr),elong:+elongationOf(e.comp).toFixed(2)};});
         globalThis.MERIT_STAGE_CENSUS.chairModal=chairModal?+chairModal.value.toFixed(1):null;
         globalThis.MERIT_STAGE_CENSUS.chairUniform=chairUniform;
@@ -1631,8 +1591,8 @@
         globalThis.MERIT_STAGE_CENSUS.stage_pool=pool.map(p2=>cbox(p2.comp));
         globalThis.MERIT_STAGE_CENSUS.stage_furnitureish=furnitureish.map(p2=>cbox(p2.comp));
       }
-      const modalLong=modalMagnitude(spanPool.map(p=>spanOf(p).long));
-      const modalShort=modalMagnitude(spanPool.map(p=>spanOf(p).short));
+      const modalLong=PRIOR.modalMagnitude(spanPool.map(p=>spanOf(p).long));
+      const modalShort=PRIOR.modalMagnitude(spanPool.map(p=>spanOf(p).short));
       let splitCount=0;
       const expanded=[];
       for(const entry of pool){
@@ -1657,12 +1617,12 @@
       // Order by agreement with the repeated object size instead, using a
       // provisional modal measured over the furniture-shaped pool before any
       // splitting or de-duplication has happened.
-      const provisionalModalArea=modalMagnitude(furnitureish.map(p=>{
+      const provisionalModalArea=PRIOR.modalMagnitude(furnitureish.map(p=>{
         const s=spanOf(p);return s.long*s.short;
       }));
       const dedupFitness=comp=>{
         const o=comp.shape?.obb,a=o?o.w*o.h:comp.w*comp.h;
-        return provisionalModalArea?sizeAgreement(Math.sqrt(a),{value:Math.sqrt(provisionalModalArea.value)}):0;
+        return provisionalModalArea?PRIOR.sizeAgreement(Math.sqrt(a),{value:Math.sqrt(provisionalModalArea.value)}):0;
       };
       const sourceRank={tone:3,interior:2,fill:1};
       expanded.sort((a,b)=>(sourceRank[b.comp.source]||0)-(sourceRank[a.comp.source]||0)
@@ -1864,7 +1824,7 @@
       const familyFromTableSources=symbolFamilyModal
         ?uniqueBeforeSurface.filter(c=>{
           const o=c.shape?.obb,w=o?o.w:c.w,h=o?o.h:c.h;
-          return symbolFamilyMember({w,h},symbolFamilyModal);
+          return PRIOR.symbolFamilyMember({w,h},symbolFamilyModal);
         })
         :[];
       // Debug capture for benchmarks/run-benchmark.mjs: what each source
@@ -1914,7 +1874,7 @@
       // The real fix is a modal that is local to a region rather than to a
       // sheet, which is the same mechanism §10 names for the photometric
       // statistics. It is not a threshold move and is not attempted here.
-      const modalArea=modalMagnitude((modalPool.length>=4?modalPool:unique).map(areaOf));
+      const modalArea=PRIOR.modalMagnitude((modalPool.length>=4?modalPool:unique).map(areaOf));
       // Off-modal rejection. When the plan really is repetitive (a modal object
       // size supported by several objects), something a fifth the size of every
       // repeated object — a printed character, a dimension tick — is not a
@@ -2009,7 +1969,7 @@
       const scored=tableBoxes.map(box=>{
         const c=box.entry.comp,obb=box.obb;
         const seats=(chairsByTable.get(box.index)||[]).length;
-        const agreement=sizeAgreement(obb.w*obb.h,modalArea);
+        const agreement=PRIOR.sizeAgreement(obb.w*obb.h,modalArea);
         const repetition=tableBoxes.filter(o=>Math.abs(o.obb.w-obb.w)<obb.w*.2&&Math.abs(o.obb.h-obb.h)<obb.h*.2).length;
         const shape=classifyTableShape(c.shape);
         // Deterministic evidence score, NOT a model probability: measured seat
@@ -2342,7 +2302,7 @@
       // plan's own modal chair size, plus whether it came from a real colour
       // cluster or only from the luma fallback. Never a random number.
       const chairEvidence=(ch,associated)=>Math.max(.2,Math.min(.9,
-        .34+sizeAgreement(Math.sqrt(ch.w*ch.h),chairModal)*.3+(chairSource==="colour-cluster"?.16:0)+(associated?.05:0)));
+        .34+PRIOR.sizeAgreement(Math.sqrt(ch.w*ch.h),chairModal)*.3+(chairSource==="colour-cluster"?.16:0)+(associated?.05:0)));
       // ---- bistro, which is a semantic type and not a shape -----------------
       //
       // Finding a table and knowing WHAT it is are two different jobs, and the

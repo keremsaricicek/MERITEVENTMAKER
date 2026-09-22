@@ -31,8 +31,6 @@ export const meta = { name: "plan-detection-boundary", tags: ["business", "fast"
 // The whole public surface. Everything else in the file is internal.
 //
 //   MERIT_PLAN_DETECTION    the registry — the app's only way in.
-//   MeritSymbolFamilyMember the family predicate the detection benchmarks
-//                           already called directly before the move.
 //   MERIT_STAGE_CENSUS      the per-stage diagnostic census, populated only
 //                           under MERIT_DETECT_DEBUG and read by
 //                           benchmarks/heldout/ornek-stage-walk.mjs — the tool
@@ -41,7 +39,12 @@ export const meta = { name: "plan-detection-boundary", tags: ["business", "fast"
 //
 // Adding to this set is a decision about what the pipeline promises. Do not
 // widen it to make a failing check pass.
-const PUBLIC = new Set(["MERIT_PLAN_DETECTION", "MeritSymbolFamilyMember", "MERIT_STAGE_CENSUS"]);
+// `MeritSymbolFamilyMember` was here until Split A-7 moved the predicate to
+// `src/plan-detection-size-prior.js`. It is still published under exactly that
+// name, by that file now, and `symbol-family` still reaches it through the
+// global — a move must not rename a published surface. The pipeline no longer
+// exports it, which is what the check below now means.
+const PUBLIC = new Set(["MERIT_PLAN_DETECTION", "MERIT_STAGE_CENSUS"]);
 
 export default async function run({ page, checks, baseUrl, repoRoot }) {
   const detFile = path.join(repoRoot, "src", "plan-detection-classical.js");
@@ -59,7 +62,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const exported = [...detCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]);
   const unexpected = exported.filter((n) => !PUBLIC.has(n));
   checks.equal(unexpected.length, 0,
-    "the file exports ONLY its registry, the symbol-family predicate the benchmarks already depended on, and the debug census — every other name stays inside the IIFE",
+    "the file exports ONLY its registry and the debug census — every other name stays inside the IIFE",
     { exported: [...new Set(exported)], unexpected });
 
   // --- 2. neither side reaches past the seam ------------------------------
@@ -202,6 +205,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "the geometry group lives in its own file", "src/plan-detection-geometry.js");
   const geoCode = stripCommentsAndStrings(fs.readFileSync(geoPath, "utf8"));
   const GEO_PUBLIC = ["minAreaRect", "sameObject", "boxIoU", "distanceToOBB"];
+  const PRIOR_PUBLIC = ["modalMagnitude", "sizeAgreement", "symbolFamilyMember"];
 
   checks.ok(geoCode.trimStart().startsWith("(function"),
     "it is wrapped in its own IIFE", geoCode.trimStart().slice(0, 30));
@@ -260,4 +264,68 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     live.square);
   checks.equal(live.same, true, "sameObject still answers same-object", live.same);
   checks.equal(live.iou, 1, "and boxIoU still answers 1 for identical boxes", live.iou);
+
+  // --- 6. THE THIRD SEAM: the modal-size prior ----------------------------
+  //
+  // Split A-6 and A-7. Asserted exactly as the geometry seam is, with one
+  // extra obligation: `MeritSymbolFamilyMember` was already a published name
+  // before the move, so it has to still be published, under that name, by
+  // whichever file holds the predicate now. A move must not rename a surface
+  // something else already reaches for — `symbol-family` calls it through the
+  // global and knows nothing about which file it came from.
+  const priorPath = path.join(repoRoot, "src", "plan-detection-size-prior.js");
+  checks.require(fs.existsSync(priorPath),
+    "the modal-size prior lives in its own file", "src/plan-detection-size-prior.js");
+  const priorCode = stripCommentsAndStrings(fs.readFileSync(priorPath, "utf8"));
+
+  const priorExported = [...priorCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]).sort();
+  checks.equal(priorExported.join(","), "MeritPlanSizePrior,MeritSymbolFamilyMember",
+    "it publishes its own object AND keeps MeritSymbolFamilyMember — the name that was public before the move is public after it",
+    priorExported);
+
+  for (const n of PRIOR_PUBLIC) {
+    checks.equal(matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
+      `the pipeline makes no BARE call to ${n}()`,
+      matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
+    checks.ok(new RegExp(`PRIOR\\.${n}\\s*\\(`).test(detCode),
+      `and reaches ${n} through the published object instead`, true);
+  }
+  checks.equal(PRIOR_PUBLIC.filter((n) => detBindings.has(n) || v8Bindings.has(n)).length, 0,
+    "none of the three is still defined in the pipeline or the shell — moved, not copied",
+    PRIOR_PUBLIC.filter((n) => detBindings.has(n) || v8Bindings.has(n)));
+
+  const priorBare = bareUses(priorCode);
+  const priorReaches = [...detBindings, ...v8Bindings]
+    .filter((n) => priorBare.has(n) && !bindings(priorCode).has(n) && n !== "PRIOR");
+  checks.equal(priorReaches.length, 0,
+    "and it resolves no name bound only in the pipeline or the shell — the crossing analysis said ZERO outward, and this is that claim held over time",
+    priorReaches);
+
+  // Live, because booting is not computing. A modal over a cluster of ~20s
+  // with one outlier is still ~20, and a magnitude equal to its modal still
+  // agrees with it perfectly.
+  const livePrior = await page.evaluate(() => {
+    const p = globalThis.MeritPlanSizePrior;
+    if (!p) return null;
+    const modal = p.modalMagnitude([20, 21, 19, 20, 20, 97]);
+    return {
+      keys: Object.keys(p).sort(),
+      modalValue: modal && Math.round(modal.value),
+      modalSupport: modal && modal.support,
+      agreesWithItself: Number(p.sizeAgreement(20, { value: 20 }).toFixed(3)),
+      symbolStillGlobal: typeof globalThis.MeritSymbolFamilyMember === "function",
+    };
+  });
+  checks.require(livePrior, "MeritPlanSizePrior is published on the page after boot");
+  checks.equal(livePrior.keys.join(","), "modalMagnitude,sizeAgreement,symbolFamilyMember,version",
+    "with exactly its three functions and a version", livePrior.keys);
+  checks.equal(livePrior.modalValue, 20,
+    "and it still computes: the modal of five ~20s and one 97 is 20, not the mean",
+    livePrior.modalValue);
+  checks.equal(livePrior.modalSupport, 5, "supported by the five, not by all six", livePrior.modalSupport);
+  checks.equal(livePrior.agreesWithItself, 1,
+    "and a magnitude equal to its modal agrees with it perfectly", livePrior.agreesWithItself);
+  checks.ok(livePrior.symbolStillGlobal,
+    "MeritSymbolFamilyMember is still reachable through the global it was always reached by",
+    livePrior.symbolStillGlobal);
 }

@@ -125,6 +125,36 @@ and `index.html` before anything moved:
 `plan-detection-classical.js` 3,145 → **3,090**; `plan-detection-geometry.js`
 is 103 lines including its header.
 
+**A-6 and A-7 followed**, into `src/plan-detection-size-prior.js`
+(`globalThis.MeritPlanSizePrior`, reached through a `PRIOR.` handle at all
+eighteen call sites). The crossing analysis — now a tool,
+`scripts/crossing-analysis.mjs`, because it is about to be run six more times
+and doing it by eye is how the first split failed:
+
+| direction | result |
+|---|---|
+| outward | **zero** — the region is closed over its own arguments |
+| inward | `modalMagnitude` 11, `sizeAgreement` 8, `symbolFamilyMember` 1 |
+| private | the two symbol-family thresholds, which move with the predicate whose measurement chose them |
+
+`app-v8.js` appeared to name `sizeAgreement` and does not: it reads
+`c.evidence?.sizeAgreement`, a PROPERTY that happens to share the word. **A
+crossing report is a place to start looking, not a verdict.**
+`MeritSymbolFamilyMember` was already public and is published under exactly
+that name by the new file, so `symbol-family` is untouched — a move must not
+rename a surface something else already reaches for.
+
+`plan-detection-classical.js` **3,090 → 3,053**.
+
+**A-2 was measured and is NOT next, against the map's own LOW rating.** Its
+five constants (`RGB_BITS`/`RGB_LEVELS`/`RGB_BINS`/`RGB_SHIFT` on one
+four-declarator line, plus `LOW_CHROMA`/`MID_CHROMA`) are used on BOTH sides —
+`RGB_BINS` 4 inside and 5 outside, `LOW_CHROMA` 1 and 2, `MID_CHROMA` 2 and 2 —
+because `detect()`'s own pixel loop bins and thresholds chroma directly. Moving
+them breaks the other side and copying them creates two sources of truth for
+one quantisation scheme, so the colour/tone concern does not separate from the
+histogram pass that feeds it. That is Split B work, not a helper move.
+
 **And the move found a hole in the safety net, which is the more useful
 outcome.** Loading the new script AFTER the pipeline that binds
 `const GEO = globalThis.MeritPlanGeometry` at the top of its IIFE passed
@@ -198,7 +228,7 @@ Line numbers are within `src/plan-detection-classical.js`.
 - **Risk** **LOW**
 - **Protected by** `table-typing`; benchmark field `TYPES round n/n`
 
-### A-6 · Modal-size prior and size agreement
+### A-6 · Modal-size prior and size agreement — **MOVED**
 - **Lines** 554–588 (35) — `modalMagnitude`, `sizeAgreement`
 - **Responsibility** the modal object size, and how well a candidate agrees
   with it — the prior that replaced "biggest area first"
@@ -210,7 +240,7 @@ Line numbers are within `src/plan-detection-classical.js`.
   never be merged with `boxIoU`.
 - **Protected by** `symbol-family`, `chair-families`, `table-typing`
 
-### A-7 · Symbol family membership
+### A-7 · Symbol family membership — **MOVED**
 - **Lines** 589–606 (18) — `symbolFamilyMember`
 - **Responsibility** is this component a member of the plan's repeated symbol
   family?
