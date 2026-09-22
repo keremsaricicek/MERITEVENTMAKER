@@ -379,7 +379,54 @@ Line numbers are within `src/plan-detection-classical.js`.
 
 ---
 
-## Split B — inside `detect()`
+## Split B — measured, and NOT started
+
+`scripts/stage-boundaries.mjs`, run on the post-Split-A file. Each stage is
+the code between two `mark()` calls; the tail is where the result object is
+assembled.
+
+| stage | lines | declared | escapes | inherited |
+|---|---|---|---|---|
+| `pixels` | 30 | 19 | 12 | 0 |
+| `binarize` | 21 | 11 | 4 | 6 |
+| `colourModel` | 2 | 2 | 2 | 2 |
+| `interiors` | 67 | 19 | 14 | 4 |
+| `toneMasks` | 129 | 32 | 2 | 17 |
+| `fillMask` | 11 | 2 | **0** | 9 |
+| **`chairs`** | **666** | 108 | 14 | 12 |
+| **`tables`** | **1,241** | 193 | 29 | 17 |
+| `(assemble)` | 261 | 32 | 0 | **44** |
+
+**The escape count is an UPPER BOUND, ~73, and is labelled as one in the
+tool.** Scope in JavaScript cannot be read with regexes. Successive
+refinements — excluding names a later stage re-declares, then counting
+function and arrow parameters as declarations — took it from 92 to 73, and the
+remainder (destructuring, catch bindings, nested callback parameters) needs a
+real parser. Publishing 73 as a count would be a precise-looking number
+standing on an imprecise method.
+
+**What survives the noise is what the measurement is for:**
+
+- **`chairs` and `tables` are 1,907 of detect()'s ~2,436 lines — 78%.** Split B
+  is those two stages and little else. Everything before them totals 260 lines.
+- **`(assemble)` inherits from every stage and escapes nothing.** It is the
+  return value, not a stage; it cannot move.
+- **`fillMask` escapes NOTHING.** A stage that hands nothing forward is where a
+  cut actually exists — it is 11 lines, so the cut is not worth taking on its
+  own, but it is the shape to look for.
+- **The `chairs` → `tables` ordering is real, not incidental.** `chairModal`,
+  `chairUniform`, `chairs` and `chairSource` all cross that boundary, which is
+  precisely the reason this document already gave for the ordering: table
+  scoring uses the chair modal size. It is now measured rather than asserted.
+
+**So Split B stays a design job, and the design is now stated:** the two large
+stages cannot leave `detect()` until the values they hand forward become an
+explicit structure — a returned record, or a context object passed along —
+rather than shared locals. That is a behaviour-preserving refactor of ~1,900
+lines with a detector at the end of it, and it belongs in its own session with
+`npm run benchmark` after every step, not appended to a run of helper moves.
+
+## Split B — the stages, in execution order
 
 The stages in execution order, with the `mark()` timing label each reports.
 Everything between two marks is one responsibility.
