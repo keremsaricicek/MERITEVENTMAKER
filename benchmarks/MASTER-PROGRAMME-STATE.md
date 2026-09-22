@@ -902,8 +902,29 @@ calls it at all. The boundary suite's geometry check now asserts the handle
 over every CALLER rather than over the one file that used to be the only one —
 which is what a layered split looks like when it is working.
 
-**Gates.** `npm run test:all` **72 / 72 suites · 2,311 / 2,311 checks** (+49
-from the four seam guards; 2,283 after step 1, 2,299 after step 2). `build:offline` · `build:offline-full` ·
+**Step 4 — A-8** → `src/plan-detection-split.js`
+(`globalThis.MeritPlanSplit`). `plan-detection-classical.js` **2,971 →
+2,888** — **257 lines out of 3,145 across four steps**. Outward zero; the
+modal sizes it judges parts against arrive as parameters, which is what keeps
+it from inventing a boundary. Inward one name. And `splitAlongAxis` became
+**genuinely private**, internal to its one caller — the thing a split is for,
+which moving lines does not achieve on its own. It also cleared a
+`// ---- Candidate geometry helpers ----` banner A-9 had orphaned.
+
+**It broke a check by succeeding, and the replacement is stronger.**
+`plan-detection-boundary` guarded against its seam checks going vacuous with
+`detBindings.size > 30`: if the binding extractor ever returned an empty set,
+"app-v8 resolves no pipeline-only name" would be trivially true. Split A is
+shrinking that surface on purpose and it reached exactly 30. Lowering the
+number each time it bites is a check that never says anything, so it is now a
+**positive control** — names that must still be found (`otsu`,
+`CLASSICAL_CV_PROVIDER`, `estimatePlanSkew`, `GEO`, `PRIOR`) — plus a floor of
+10 stated as a parser sanity check rather than a target. Mutation proof:
+breaking the extractor's function-declaration regex fails the control while
+leaving the old count above its floor.
+
+**Gates.** `npm run test:all` **72 / 72 suites · 2,322 / 2,322 checks** (+60
+from the five seam guards; 2,283 / 2,299 / 2,311 after steps 1–3). `build:offline` · `build:offline-full` ·
 `verify:offline` **27 / 27**, both artifacts run, 38 sources bundled.
 `npm run benchmark` then `benchmark:baseline` — measured fresh after **each**
 step, not re-read — **No regressions. 0 improvement(s), 0 note(s)** both

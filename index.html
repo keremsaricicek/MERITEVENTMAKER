@@ -151,6 +151,10 @@
        from the component's real filled pixels, never from its bounding box.
        Loads after the geometry it uses and before the pipeline that calls it. -->
   <script src="src/plan-detection-shape.js"></script>
+  <!-- Assisted Detection's merged-blob splitting: two touching objects are
+       separated only where the pixel profile shows a real density valley and
+       every part lands near the modal object size. -->
+  <script src="src/plan-detection-split.js"></script>
   <!-- Assisted Detection: the classical CV pipeline, extracted from app-v8.js.
        Loads BEFORE app-v8.js because app-v8.js reads the registry it publishes
        (globalThis.MERIT_PLAN_DETECTION), and AFTER the Merit* modules it calls

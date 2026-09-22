@@ -169,6 +169,33 @@ the pipeline no longer calls it at all. The boundary suite's geometry check
 now asserts the handle over every CALLER rather than over the one file that
 used to be the only one.
 
+**A-8 followed**, into `src/plan-detection-split.js`
+(`globalThis.MeritPlanSplit`). `plan-detection-classical.js` **2,971 →
+2,888** — **257 lines out across four steps**, from 3,145.
+
+Outward **zero**; the modal sizes it judges parts against arrive as
+parameters, which is what keeps it from inventing a boundary. Inward one name,
+`splitAtValley`. And `splitAlongAxis` became **genuinely private** — a name
+that was top-level in a three-thousand-line file is now internal to its one
+caller, which is the thing a split is for and which no amount of moving lines
+achieves on its own. The suite asserts it is defined there and NOT published.
+
+The move also cleared a `// ---- Candidate geometry helpers ----` banner that
+A-9 orphaned: a section header pointing at nothing is the decay a split leaves
+behind if nobody looks.
+
+**And it broke a check by succeeding.** `plan-detection-boundary` asserted
+`detBindings.size > 30` as its guard against the seam checks going vacuous —
+if the binding extractor ever returned an empty set, "app-v8 resolves no
+pipeline-only name" would be trivially true. Split A is shrinking that surface
+on purpose, and it reached exactly 30. Lowering the number each time it bites
+is a check that never says anything, so it was replaced by a **positive
+control**: names that must still be found (`otsu`, `CLASSICAL_CV_PROVIDER`,
+`estimatePlanSkew`, `GEO`, `PRIOR`) plus a floor of 10 stated as a parser
+sanity check rather than a target. Mutation — breaking the extractor's
+function-declaration regex — fails the control while leaving the old count
+above its floor, so it is strictly the stronger guard.
+
 **A-2 was measured and is NOT next, against the map's own LOW rating.** Its
 five constants (`RGB_BITS`/`RGB_LEVELS`/`RGB_BINS`/`RGB_SHIFT` on one
 four-declarator line, plus `LOW_CHROMA`/`MID_CHROMA`) are used on BOTH sides —
@@ -273,7 +300,7 @@ Line numbers are within `src/plan-detection-classical.js`.
 - **Risk** **LOW**
 - **Protected by** `symbol-family` (the suite exists for exactly this)
 
-### A-8 · Splitting merged components
+### A-8 · Splitting merged components — **MOVED**
 - **Lines** 607–679 (73) — `splitAlongAxis`, `splitAtValley`
 - **Responsibility** split a component that merged two objects, along an axis
   or at a density valley

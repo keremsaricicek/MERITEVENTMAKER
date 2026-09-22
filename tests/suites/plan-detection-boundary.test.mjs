@@ -97,8 +97,28 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const v8Bindings = bindings(v8Code);
   for (const n of PUBLIC) detBindings.delete(n);
 
-  checks.ok(detBindings.size > 30,
-    "the detection file really does have a large private surface — which is what makes the next two checks meaningful rather than vacuous",
+  // THE NEXT TWO CHECKS ARE ONLY WORTH ANYTHING IF `bindings()` REALLY WORKED.
+  // If it ever returned an empty or tiny set — a parser change, a style change
+  // in the file, a regex that stopped matching — `reaches` and `shellOnly`
+  // would both be trivially empty and this suite would be green while checking
+  // nothing.
+  //
+  // That used to be asserted as `size > 30`, and Split A broke it by
+  // succeeding: the pipeline's private surface is SHRINKING on purpose, one
+  // group at a time, and the count reached exactly 30. A floor that fails as
+  // the intended work proceeds is a miscalibrated proxy, and lowering it each
+  // time it bites would be a check that never says anything.
+  //
+  // So the guard is a POSITIVE CONTROL instead — names that are still in the
+  // file and must be found — plus a floor low enough to survive the rest of
+  // Split A and high enough to catch an extractor that collapsed.
+  const mustFind = ["otsu", "CLASSICAL_CV_PROVIDER", "estimatePlanSkew", "GEO", "PRIOR"];
+  const missing = mustFind.filter((n) => !detBindings.has(n));
+  checks.equal(missing.length, 0,
+    "the binding extractor really found the pipeline's own names — a positive control, so an extractor that silently stopped matching cannot leave the next two checks vacuously green",
+    { missing, found: detBindings.size });
+  checks.ok(detBindings.size >= 10,
+    "and the private surface is still substantial. This floor is a sanity check on the parser, NOT a target: it is expected to keep falling as Split A proceeds",
     detBindings.size);
 
   // A bare identifier, never a property access: `provider.estimatePlanSkew()`
@@ -207,6 +227,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const GEO_PUBLIC = ["minAreaRect", "sameObject", "boxIoU", "distanceToOBB"];
   const PRIOR_PUBLIC = ["modalMagnitude", "sizeAgreement", "symbolFamilyMember"];
   const SHAPE_PUBLIC = ["shapeAnalysis", "classifyTableShape"];
+  const SPLIT_PUBLIC = ["splitAtValley"];
 
   checks.ok(geoCode.trimStart().startsWith("(function"),
     "it is wrapped in its own IIFE", geoCode.trimStart().slice(0, 30));
@@ -399,4 +420,54 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal(liveShape.rect?.type, "rectangle",
     "while a long box that fills its corners is a rectangle — decided from pixels, not from the bounding box",
     liveShape.rect);
+
+  // --- 8. THE FIFTH SEAM: merged-blob splitting ---------------------------
+  //
+  // The one group whose risk is not about coupling: it CHANGES THE OBJECT
+  // COUNT, so a mistake moves every number downstream. The structural checks
+  // below are the same as the others; what actually guards the behaviour is
+  // `npm run benchmark` against `BASELINE.json`, where the golden plan's split
+  // pairs are a measured field.
+  //
+  // It is also the first move where a name became genuinely PRIVATE rather
+  // than merely relocated: `splitAlongAxis` was top-level in a
+  // three-thousand-line file and is now internal to the one function that
+  // calls it. That is the thing a split is for, and it is asserted here
+  // because nothing else would notice it being published "just in case".
+  const splitPath = path.join(repoRoot, "src", "plan-detection-split.js");
+  checks.require(fs.existsSync(splitPath),
+    "merged-blob splitting lives in its own file", "src/plan-detection-split.js");
+  const splitCode = stripCommentsAndStrings(fs.readFileSync(splitPath, "utf8"));
+  const splitExported = [...splitCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]);
+  checks.equal([...new Set(splitExported)].join(","), "MeritPlanSplit",
+    "it publishes exactly one name", splitExported);
+
+  for (const n of SPLIT_PUBLIC) {
+    checks.equal(matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
+      `the pipeline makes no BARE call to ${n}()`,
+      matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
+    checks.ok(new RegExp(`SPLIT\\.${n}\\s*\\(`).test(detCode),
+      `and reaches ${n} through the published object instead`, true);
+  }
+  checks.ok(/function splitAlongAxis/.test(splitCode) && !/globalThis[^\n]*splitAlongAxis/.test(splitCode),
+    "splitAlongAxis is defined in the module and NOT published — a helper that was top-level in a three-thousand-line file is now internal to its one caller",
+    true);
+  checks.equal(["splitAtValley", "splitAlongAxis"].filter((n) => detBindings.has(n) || v8Bindings.has(n)).length, 0,
+    "and neither is still defined in the pipeline or the shell — moved, not copied", true);
+
+  const splitBare = bareUses(splitCode);
+  const splitReaches = [...detBindings, ...v8Bindings]
+    .filter((n) => splitBare.has(n) && !bindings(splitCode).has(n));
+  checks.equal(splitReaches.length, 0,
+    "and it resolves no name bound only in the pipeline or the shell — the modal sizes it judges parts against arrive as arguments, which is what keeps it from inventing a boundary",
+    splitReaches);
+
+  const liveSplit = await page.evaluate(() => {
+    const s = globalThis.MeritPlanSplit;
+    return s ? { keys: Object.keys(s).sort(), fn: typeof s.splitAtValley } : null;
+  });
+  checks.require(liveSplit, "MeritPlanSplit is published on the page after boot");
+  checks.equal(liveSplit.keys.join(","), "splitAtValley,version",
+    "with exactly its one function and a version — splitAlongAxis is not on it", liveSplit.keys);
+  checks.equal(liveSplit.fn, "function", "and it is callable", liveSplit.fn);
 }
