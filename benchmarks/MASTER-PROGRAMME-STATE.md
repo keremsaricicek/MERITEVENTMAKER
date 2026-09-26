@@ -1120,6 +1120,51 @@ an escaped-key fixture cannot distinguish a sound fast path from an unsound
 one on that path — the package path reads once and is where mutation M4
 bites. SheetJS renames a `__proto__` header to `__proto___NaN`.
 
+### P. §15 — accessibility — DONE to the skill's "9" bar, one row NOT VERIFIED
+
+The rule that decided the approach: "Adding `aria-*` attributes is not
+accessibility work. The evidence that counts here is a completed operator
+task without a mouse." At entry: 21 `aria-*`, 9 `role=`, **0 suites**.
+
+| evidence the skill requires | suite | measured before | now |
+|---|---|---|---|
+| automated scan, every screen, both languages | `a11y-scan` (42 screen states) | **202 failing nodes, 69 distinct** — `--pi-muted` 4.46:1, `--pi-muted-2` **2.80:1**, 35 visible labels tied to nothing, unnamed selects/inputs in the wizard, the finder's listbox rows containing buttons | **0** WCAG A/AA violations, EN and TR |
+| real keyboard workflows | `a11y-keyboard-workflows` (11 tasks) | "number a table" and "seat a guest" **could not be finished**: canvas tables and Seating guest cards were pointer-only `<div>`s | all 11 finish with Tab/Enter/arrows only, each reached control shows visible focus |
+| focus enters, is trapped, is restored | `a11y-dialog-focus` | Tab from the last control of **all three** native dialogs dropped focus to `<body>`; the import wizard opened on its close button and lost focus on every step | wrapped, first meaningful control, restored to the invoker after Escape AND after the close control |
+| live region announces an arrival | `a11y-announce-contrast` | a check-in was announced by nothing; every toast, errors included, was polite | a boot-time polite region outside `#app` says only "NAME: Checked In"; errors are `role=alert` |
+| contrast from rendered pixels | `a11y-announce-contrast` | — | measured from screenshots on the shell and the `--pi-*` surfaces, all ≥ 4.5:1 |
+
+**Also guarded there:** frozen, unavailable, VIP and No Show each carry a
+non-colour cue (icon + dashed outline, icon + hazard stripes, written text);
+the guest list is a named `role=table` with one cell per column header;
+`prefers-reduced-motion` collapses transitions.
+
+**Mutation proof, nine:** `--pi-muted` restored (12 scan failures), one label
+un-associated (2), no Tab wrap (4), wizard focus left to `showModal` (1), no
+keyboard activation, tables without a tab stop, a silent announcer, polite
+errors, the guest list back to divs — each fails its suite. One of them
+exposed a hollow check first: adding tables SELECTS them, so "table 1 is
+selected after Enter" was true before any key. The suite now targets a table
+that is provably not selected and asserts that precondition.
+
+**Colour, not just numbers:** same hues, darkened until AA; `--pi-muted` /
+`--pi-muted-2` stay one visible step apart (6.6 vs 5.3:1). Rendered before
+and after at 1920×1080, 2560×1440 and 1440×900 on Floor Plan (card
+selected), Live and Guests: the hierarchy reads the same, the Check In
+button is a deeper green, zero page errors at every size.
+
+**Written limitations, with the alternative path, as the skill requires:**
+- A 420-table venue is 420 tab stops on the canvas. Not a trap — Tab leaves
+  — but long. The alternative path to one table is the global finder.
+- The OS file picker cannot be driven by keyboard in any harness; the
+  import is OPENED by keyboard and the file handed over at the picker.
+- `a11y` needs `axe-core` (MPL-2.0), pinned exactly, a TEST-only dependency:
+  neither offline build contains it.
+
+**NOT VERIFIED — and not claimed:** the skill's "10" is "verified with a real
+screen reader". No screen-reader session has been run; none is fabricated
+here. That row stays open until a person runs NVDA or VoiceOver against it.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
@@ -1163,18 +1208,15 @@ typing 136/289.
 
 ## Next step
 
-**§15 — accessibility**, then §19 resilience: the two dimensions that still
-have ZERO suites. §15 per `.claude/skills/merit-accessibility-hardening/SKILL.md` (and the
-`accessibility-guardian` agent's standard): judged by COMPLETED keyboard
-workflows — create an event, add and seat a guest, check a guest in at the
-door, confirm a detection — never by counting `aria-*` attributes. Dialog
-semantics and focus return, live-region announcements for toasts, names on
-icon-only controls, contrast, zoom, reduced motion, and the Floor Plan
-canvas, which is the hard one.
+**§19 — resilience**, per `.claude/skills/` resilience guidance and the
+`resilience-engineer` standard: every failure path held to DETECT / CONTAIN /
+INFORM / RECOVER / PRESERVE — storage exhaustion (quota), IndexedDB failure,
+corrupted persisted data at boot (`privacy-logs` and `malformed-import`
+already cover part of it), detector and OCR failure, async races, save and
+restore failure. Measure each path through the real product first.
 
-Then, in the order given: §19 resilience (storage exhaustion, corrupted
-persisted data at boot — `privacy-logs` and `malformed-import` already cover
-part of it), §16 `confirm()` × 9 / `prompt()` × 2, §17 toast, §18
+Then, in the order given: §16 `confirm()` × 9 / `prompt()` × 2 (the
+replacement dialogs must pass `a11y-dialog-focus`), §17 toast, §18
 localization, §20–§25 UX, §26 performance, §27 real CI release gates (incl.
 the `benchmark:baseline` false green and `--compare` exit 1), §28–30, then
 the final review and completion matrix.
