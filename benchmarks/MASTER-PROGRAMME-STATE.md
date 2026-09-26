@@ -1234,6 +1234,65 @@ starts, because the answer is no longer synchronous.
 Gates: `npm run test:all` **88 / 88 suites · 2,851 / 2,851 checks**;
 `verify:offline` **27 / 27** on both rebuilt artifacts.
 
+### S. §17 — toast — DONE: measured first, five defects, all closed
+
+Measured before any change (`toast-discipline` run against `21e13bf`:
+17 / 44 checks):
+
+| measured | before | after |
+|---|---|---|
+| toast call sites passing English text | **62 of 132** (37 literals, 20 templates, 5 conditionals), translated afterwards by pattern-matching the finished sentence. "Event created. Review the plan, then run Assisted Detection." had no pattern and reached a Turkish screen in English | **0** — every message is one `t()`; the 7 composed sites are listed with their source |
+| cap / de-duplication | none: a burst of 8 left 8; the same refusal 5× left 5 copies | 3 on screen; the newest always shows; routine leaves before error, error before an Undo offer; a repeat is one toast counted ×N |
+| toast raised inside a modal dialog | drawn **behind the backdrop** — the guest dialog's own "Name Surname is required." (topmost element at its centre: the dialog) | shown inside the dialog's top layer; handed back to the page when the dialog closes |
+| controls covered by a 3-toast stack, 6 screens × 3 viewports | **23** at bottom-right — Guests' row actions, and at 1440 Live's **No Show** buttons at the door | **0**, incl. Seating with Smart Seating's preview open |
+| lasting conditions told ONLY by a toast | **3**: plan images dropped from storage; an unserialisable state (misreported as "storage is full", then silence); a boot that fell back to an older recovery point because the record was MISSING | each is a persistent notice with its control, cleared when it stops being true |
+
+Placement was chosen by measurement, not taste: bottom-right, bottom-left,
+bottom-centre and top-right were each measured on every screen at three
+viewports. Bottom-left covered nothing except Seating's queue column; on
+Seating the stack starts at the canvas's left edge.
+
+Found on the way: `t()` substituted with a replacement STRING, so a guest
+named `PAY $& CASH` became `PAY {name} CASH` in any translated sentence.
+Fixed with a function replacer. And `dialog[open]{transform:translateY(0)
+scale(1)}` made every open dialog the containing block of its fixed children;
+it is now `transform:none`, which renders identically.
+
+Every toast raised as an error is now classified in the suite — REFUSAL,
+CONFIRMATION, INFORMATION or CONDITION — and a CONDITION must name its
+persistent carrier. `translateToast()`'s pattern tables no longer receive any
+English (the static check proves it); they are left in place, and their
+removal is a §18 item that needs the same proof recorded.
+
+**Seen and NOT fixed here (§18):** the Turkish for "Assisted Detection" in
+one `i18n.js` entry is "Yapay Zeka Destekli Tespit" — literally "AI-assisted
+detection", which the honesty rule forbids.
+
+Mutations — 11 of 11 fail the suite: cap removed · ONCE removed · never
+inside a dialog · bottom-right again · one literal toast restored · images
+condition back to toast-only · `t()` string replacer restored · hover-hold
+removed · dialog `transform` restored · recovery condition back to toast-only
+· Undo evicted first. The transform mutation first SURVIVED: the only claim
+behind it was a CSS comment. Measured, the old transform put the guest
+dialog's toast inside the dialog's own box (x 707–994 of 690–1230) — over
+its form, not demonstrably over its footer — so the comment was corrected to
+what was measured, and a check was added that a toast in a dialog appears in
+the same viewport corner as every other toast. With it, the mutation bites.
+
+Rendered at 1920, 2560 and 1440 (Live, Guests, Seating with the preview open,
+the guest dialog, the two new notices), Turkish UI, and looked at: the first
+Live/Seating shots showed NO toast — the screenshot fired at frame 0 of the
+fade-in; retaken after it. On Live the stack now covers guest names, not the
+door's buttons; that trade is the one the measurement chose.
+
+Gates: `verify:offline` **27 / 27** on both rebuilt artifacts. `test:all`
+**88 / 89 suites, 2,897 / 2,898 checks** — the one failure was
+`transaction-atomicity` asserting the rollback toast with `/rolled back/`
+on the message it intercepts BEFORE display; that message used to be English
+and translated later, and is now translated where it is raised. The
+assertion now compares with `t("toast.groupMoveRolledBack")`, and the suite
+passes (5 / 5). No product behaviour changed for it.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
@@ -1277,15 +1336,19 @@ typing 136/289.
 
 ## Next step
 
-**§17 — toast.** Per `merit-ui-quality-gates`: a toast is a transient
-confirmation, never the only carrier of an error an operator must act on
-(§15 and §19 already moved the two worst cases — failing saves and
-unreadable storage — to persistent notices). Measure every `toast(` call by
-type and message, find errors that exist ONLY as a toast, and hardcoded
-English passed straight to toast() (`translateToast` maps some; measure how
-many reach the screen untranslated in TR).
+**§18 — localization.** Per `merit-localization-hardening`: zero hardcoded
+user-facing English in `src/`, the second language complete, and "key
+integrity is necessary but not sufficient". Measure first, by surface —
+aria-labels, `title=`, placeholders, button text, error text, Plan
+Intelligence findings, export UI — the strings that render in English on a
+Turkish screen, from the RENDERED DOM in TR on every screen (the toast work
+showed a pattern table can look complete and still leak). Known on entry:
+"Yapay Zeka Destekli Tespit" (the honesty rule forbids "AI" for Assisted
+Detection), `helpButton()`'s English `title`, the English `tabDefs` in
+`app.js`, and `translateToast()`'s tables, now fed nothing (remove with the
+static proof `toast-discipline` provides).
 
-Then, in the order given: §18 localization, §20–§25 UX, §26 performance,
+Then, in the order given: §20–§25 UX, §26 performance,
 §27 real CI release gates (incl. the `benchmark:baseline` false green and
 `--compare` exit 1), §28–30, then the final review and completion matrix.
 
