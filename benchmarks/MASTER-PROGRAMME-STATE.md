@@ -1293,6 +1293,54 @@ and translated later, and is now translated where it is raised. The
 assertion now compares with `t("toast.groupMoveRolledBack")`, and the suite
 passes (5 / 5). No product behaviour changed for it.
 
+### T. §18 — localization — DONE: two scans, because each misses what the other sees
+
+The skill's rule — "key integrity proves the keys are complete, not that the
+strings went through keys" — measured two ways:
+
+| method | what it found (before) |
+|---|---|
+| **static**, reachable shell code only (markup text + `aria-label`/`title`/`placeholder`/`alt`) | **25** in live code: a Completed event's **entire guest list** in English with raw stored statuses (`Confirmed`, `Not Arrived`) as labels; Seating's filter and operational banners; the review image's `alt`; the Help button's `title`; the guide's "Print / PDF" |
+| **rendered**, 21 states walked in TR and again in EN, each from a fresh open | the guest dialog's `aria-label="Close"` (static `index.html`); `Standard` shown as the raw stored VIP value; **the guide ignoring the app language** — `ui.guideLang` defaulted to Turkish and nothing changed it, so Help on an English screen opened the Turkish guide |
+| key table | `"Yapay Zeka Destekli Tespit"` — "AI-assisted detection" — for classical CV, which the honesty rule forbids |
+
+Reachability was the hard part. A first version treated every name app-v8.js
+reassigns as dead; app-v8.js still calls **twelve** of those bodies back through
+`original.NAME` (`addVenue`, `bindGuests`, `undoCanvas`, …). The analysis now
+computes it to a fixpoint (overridden and never called back, or referenced only
+from unreachable code) and the suite asserts its shape: 66 bodies unreachable,
+12 called back. Plan Doctor's English is by design (exports and suites read it)
+and is translated by `code` on screen — so the check there is "every code has a
+sentence in both languages" (28 of 28, `planChecksDisagree` restated through the
+Self-Check), not "no English".
+
+After: static **25 → 0** outside a four-entry allowlist (the bilingual language
+switch; `· page`, part of a STORED plan name; `TOTAL GUEST:`, the printed plan
+mirroring the workbook contract; the brand). Rendered: **0** either way. A stored
+VIP level keeps its value; only its label is translated.
+
+Mutations — 8 of 8 fail `i18n-hardcoded-english`: history list English again ·
+filter banner English · the AI wording · guide ignoring the app language · raw
+VIP value · untranslated close label · a new English `title` · a Plan Doctor code
+without a key.
+
+Rendered at 1920/2560/1440 in Turkish (historical guest list, Seating's
+operational banner): no layout break. **Seen and NOT fixed here (§25):** the
+read-only historical screen has no left gutter — title and table sit on the
+viewport edge. Pre-existing, visual, recorded for the visual-quality section.
+
+Gates: `test:all` **89 / 90 suites, 2,906 / 2,908** — the one failure was
+`html-sink-inventory`, correctly: the first VIP-label fix wrote the options
+with `innerHTML`, a new markup sink nobody had reviewed. Rewritten with
+`createElement` + `textContent` (no sink); `html-sink-inventory`,
+`i18n-hardcoded-english`, `toast-discipline`, `i18n`, `i18n-key-integrity`,
+`onboarding` and `a11y-dialog-focus` re-run green (161 / 161), and mutation N5
+re-proven against the rewrite. `verify:offline` **27 / 27** after the rebuild.
+
+`translateToast()`'s pattern tables still exist and are fed nothing
+(`toast-discipline` proves it). Removing them is a no-behaviour code-health
+commit of its own, not part of this one.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
@@ -1336,19 +1384,16 @@ typing 136/289.
 
 ## Next step
 
-**§18 — localization.** Per `merit-localization-hardening`: zero hardcoded
-user-facing English in `src/`, the second language complete, and "key
-integrity is necessary but not sufficient". Measure first, by surface —
-aria-labels, `title=`, placeholders, button text, error text, Plan
-Intelligence findings, export UI — the strings that render in English on a
-Turkish screen, from the RENDERED DOM in TR on every screen (the toast work
-showed a pattern table can look complete and still leak). Known on entry:
-"Yapay Zeka Destekli Tespit" (the honesty rule forbids "AI" for Assisted
-Detection), `helpButton()`'s English `title`, the English `tabDefs` in
-`app.js`, and `translateToast()`'s tables, now fed nothing (remove with the
-static proof `toast-discipline` provides).
+**§20 — onboarding.** Per `merit-ui-quality-gates` ("every screen has four
+states: empty · loading · error · populated; an empty state explains what to do
+next"). Measure first: open a brand-new install and a brand-new blank event,
+walk every screen and record what each empty state says and whether it names a
+next action with its control. The existing onboarding callouts
+(`onboardingCalloutHTML`, dismissible "Anladım") are part of the surface —
+measure how many can be on one screen at once (Seating showed two stacked at
+1440) against "no warning flood".
 
-Then, in the order given: §20–§25 UX, §26 performance,
+Then, in the order given: §21–§25 UX, §26 performance,
 §27 real CI release gates (incl. the `benchmark:baseline` false green and
 `--compare` exit 1), §28–30, then the final review and completion matrix.
 
