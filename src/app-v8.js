@@ -90,7 +90,10 @@
     loadLayer:false
   });
 
-  function blankRoot(){ return {version:8, schemaVersion:8, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[], auditRetention:null, lastBackupAt:null}; }
+  // Stamped with the version this build WRITES. It said 8 after the registry
+  // moved to 9, so a brand-new install saved itself as an old record and ran
+  // the 8→9 step over data that step never needed.
+  function blankRoot(){ const v=globalThis.MeritSchemaMigrations?.CURRENT_VERSION??9; return {version:v, schemaVersion:v, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[], auditRetention:null, lastBackupAt:null}; }
   function isHistorical(event){ return !!event && (event.status === "Completed" || (!!event.date && event.date < todayKey())); }
   // The one writer of the shared activity log. It used to end with
   // `state.audit.slice(0, 1000)` on EVERY write -- a shared log, so a busy
@@ -320,11 +323,49 @@
     }catch(error){console.warn("Legacy localStorage restore failed",loggableError(error));}
     return null;
   }
-  async function loadV8Async(){
+  // WHAT THE OPERATOR MUST BE TOLD ABOUT STORAGE, kept until it stops being
+  // true -- never only a toast, which disappears before anyone reads it.
+  //   unreadable   the stored record could not be read at boot (see below)
+  //   saveFailing  the last save failed entirely; cleared by the next success
+  globalThis.MERIT_STORAGE_NOTICE={unreadable:null,saveFailing:null,dismissed:false};
+  // THE STORED RECORD COULD NOT BE READ. It used to be dropped on the floor:
+  // the app opened empty with no word said, and the first save wrote the new,
+  // almost-empty state over it -- destroying a record that was, more often
+  // than not, one hand-edited quote away from readable
+  // (tests/suites/resilience-storage.test.mjs). It is now copied to its own
+  // key before anything else happens. If even that copy cannot be written,
+  // this session does not save at all, so the only copy is never overwritten.
+  async function quarantineUnreadable(raw){
+    const at=nowISO(),key="quarantine:"+at;
     try{
-      const fromProvider=await storageProvider.load();
-      if(fromProvider) return{data:parseRoot(fromProvider),recoveredAt:null};
-    }catch(error){console.warn("StorageProvider load failed, checking legacy localStorage.",loggableError(error));}
+      await storageProvider.save(raw,key);
+      MERIT_STORAGE_NOTICE.unreadable={kept:true,key,at,raw};
+    }catch(error){
+      console.warn("Could not keep a copy of the unreadable record; this session will not save.",loggableError(error));
+      MERIT_STORAGE_NOTICE.unreadable={kept:false,key:null,at,raw};
+    }
+  }
+  async function loadV8Async(){
+    let raw=null;
+    try{
+      raw=await storageProvider.load();
+      if(raw) return{data:parseRoot(raw),recoveredAt:null};
+    }catch(error){
+      console.warn("StorageProvider load failed, checking legacy localStorage.",loggableError(error));
+      // A record from a NEWER build is not unreadable -- the schema guard owns
+      // that case and already refuses to write over it.
+      if(!(globalThis.MERIT_SCHEMA_GUARD&&MERIT_SCHEMA_GUARD.readOnly)){
+        // The record was read and would not parse: keep a copy. Or the READ
+        // itself failed (storage blocked by another tab, a broken database):
+        // nothing is known about what is stored, so nothing may be written
+        // over it this session either.
+        if(raw!=null)await quarantineUnreadable(raw);
+        else MERIT_STORAGE_NOTICE.unreadable={kept:false,key:null,at:nowISO(),raw:null};
+      }
+    }
+    // Writing the recovered picture straight into the primary record is only
+    // safe once whatever was there has been copied aside.
+    const mayOverwrite=!MERIT_STORAGE_NOTICE.unreadable||MERIT_STORAGE_NOTICE.unreadable.kept;
     // A record from a newer build is not a missing record. Falling through to
     // the legacy reader or a recovery snapshot would present something OLDER
     // as though it were the current one -- harmless to the file, since the
@@ -335,7 +376,7 @@
       // Get it into the real store right away so this migration only ever
       // has to run once, even if the provider load above merely came back
       // empty (first run after switching to IndexedDB) rather than erroring.
-      storageProvider.save(JSON.stringify(legacy)).catch(error=>console.warn("Could not persist migrated legacy state.",loggableError(error)));
+      if(mayOverwrite)storageProvider.save(JSON.stringify(legacy)).catch(error=>console.warn("Could not persist migrated legacy state.",loggableError(error)));
       return{data:legacy,recoveredAt:null};
     }
     // The primary record is gone or unreadable, and there is no legacy
@@ -349,7 +390,7 @@
       const snap=R&&R.latestSnapshot(stored);
       if(snap){
         const data=parseRoot(snap.payload);
-        storageProvider.save(JSON.stringify(data)).catch(error=>console.warn("Could not persist auto-recovered state.",loggableError(error)));
+        if(mayOverwrite)storageProvider.save(JSON.stringify(data)).catch(error=>console.warn("Could not persist auto-recovered state.",loggableError(error)));
         return{data,recoveredAt:snap.at};
       }
     }catch(error){console.warn("Automatic recovery snapshot could not be read either.",loggableError(error));}
@@ -367,9 +408,13 @@
   // its own last .catch() always resolves -- so one save's storage error
   // can never stall every save queued after it.
   let saveQueue=Promise.resolve();
+  // A save that lands after failing ones ends the "not being saved" notice:
+  // every save is a whole snapshot, so the first success after a failure has
+  // written everything the failures could not.
+  function storageRecovered(){if(MERIT_STORAGE_NOTICE.saveFailing){MERIT_STORAGE_NOTICE.saveFailing=null;if(bootReady)render();}}
   function persistPayload(payload,show){
     return storageProvider.save(payload)
-      .then(()=>{if(show)toast("Saved locally in this browser.","success");autoSnapshot(payload);})
+      .then(()=>{if(show)toast("Saved locally in this browser.","success");autoSnapshot(payload);storageRecovered();})
       .catch(error=>{
         // Large embedded images are the only realistic reason a save this
         // size fails -- strip them and retry once before giving up.
@@ -393,9 +438,12 @@
           console.warn("Could not strip images from the queued payload.",loggableError(parseError));
           throw error;
         }
-        return storageProvider.save(stripped).then(()=>toast("Event data was saved, but large images exceeded browser storage.","error",6500));
+        return storageProvider.save(stripped).then(()=>{storageRecovered();toast("Event data was saved, but large images exceeded browser storage.","error",6500);});
       })
-      .catch(error=>{console.warn("StorageProvider save failed entirely.",loggableError(error));toast("Browser storage is full. Export the workbook before closing.","error",6500);});
+      .catch(error=>{console.warn("StorageProvider save failed entirely.",loggableError(error));
+        const first=!MERIT_STORAGE_NOTICE.saveFailing;
+        MERIT_STORAGE_NOTICE.saveFailing={at:nowISO()};MERIT_STORAGE_NOTICE.dismissed=false;
+        if(first){toast("Browser storage is full. Export the workbook before closing.","error",6500);if(bootReady)render();}});
   }
   // A save that is QUEUED but has not started yet. Each payload is a
   // COMPLETE snapshot of `state`, so a waiting one is not partial work to
@@ -421,6 +469,9 @@
     // somebody's work, and this build saving its own reduced picture over
     // them is exactly the destruction the version check exists to prevent.
     if(globalThis.MERIT_SCHEMA_GUARD&&MERIT_SCHEMA_GUARD.readOnly)return Promise.resolve();
+    // The same rule for a record that could not be read AND could not be
+    // copied aside: saving would overwrite the only copy.
+    if(MERIT_STORAGE_NOTICE.unreadable&&!MERIT_STORAGE_NOTICE.unreadable.kept)return Promise.resolve();
     state.events.forEach(refreshChairOccupancy);
     let payload;
     try{payload=JSON.stringify(state);}
@@ -4631,6 +4682,10 @@
   globalThis.MeritSuppressTextFalsePositives = suppressTextFalsePositives;
 
   async function runAssistedDetection(){
+    // ONE ANALYSIS AT A TIME. A second press (a double click, Re-Analyze while
+    // the first run is still going) started a second pipeline that interleaved
+    // its writes to event.analysis with the first one's.
+    if(ui.analysisBusy)return;
     const event=activeEvent();if(!canMutate(event,"run plan analysis")||!event.background?.src)return toast("Import a floor plan first.","error");ui.analysisBusy=true;ui.analysisProgress=3;ui.analysisStage=t("analysis.stage.reading");ui.tab="floor";ui.planMode="review";
     // Import -> Confirm timing for the operator test. Local only, and carried
     // on objects that already survive the event migration: the background for
@@ -4639,6 +4694,11 @@
     // exactly the kind of thing a test that reads the value catches and a test
     // that reads the code does not.
     const analysisStartedAtMs=Date.now();
+    // What the plan's analysis was before this run. The new one REPLACES it
+    // part-way through (before OCR, labels, numbers and the teach area run),
+    // so a failure after that point used to leave a half-built analysis where
+    // a complete one had been -- under a toast saying nothing was changed.
+    const priorAnalysis=event.analysis;
     render();await yieldFrame();
     try{
       const blob=await sourceBlob(event.background.src),bitmap=await createImageBitmap(blob),max=1920,ratio=Math.min(1,max/Math.max(bitmap.width,bitmap.height)),width=Math.max(1,Math.round(bitmap.width*ratio)),height=Math.max(1,Math.round(bitmap.height*ratio)),canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,height);bitmap.close();
@@ -4854,7 +4914,11 @@
       runConfidenceBudget(event);
       ui.analysisStage=t("analysis.stage.review");ui.analysisProgress=100;ui.analysisBusy=false;
       event.analysis.timings={importedAtMs:event.background?.importedAtMs??null,analysisStartedAtMs,analysisCompletedAtMs:Date.now()};ui.selectedCandidateId=event.analysis.candidates[0]?.id||null;ui.difficultQuestionIndex=0;ui.activeReviewGroupId=null;ui.activeQuestionId=null;audit(event,"ASSISTED_DETECTION_COMPLETED",event.analysis.diagnostics);touchEvent(event);render();
-    }catch(error){console.error(error);ui.analysisBusy=false;ui.analysisStage="Analysis failed";render();toast(t("detect.failed"),"error",7000);}
+    }catch(error){
+      console.warn("Assisted Detection failed; the previous analysis is kept.",error);
+      event.analysis=priorAnalysis;
+      ui.analysisBusy=false;ui.analysisStage=t("analysis.stage.failed");render();toast(t("detect.failed"),"error",7000);
+    }
   }
   // Re-derives the whole PlanIntelligenceResult from the CURRENT candidates +
   // any recorded grouping/reclassification decisions. Called after every
@@ -5969,6 +6033,40 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   // app with no explanation. Rendered ABOVE everything else and never
   // dismissed, because every control below it is operating on a blank slate
   // that will not be saved.
+  // The storage notices, persistent until true no longer. Each names what
+  // happened, what was NOT lost, and the next step -- with the control for it.
+  function storageNoticeHTML(){
+    const n=MERIT_STORAGE_NOTICE;
+    const parts=[];
+    if(n.unreadable&&!n.dismissed){
+      parts.push(`<div class="schema-future-banner" data-storage-notice="unreadable" role="alert">${icon("alert")}<div>
+        <b>${esc(t("storage.unreadableTitle"))}</b>
+        <span>${esc(t(n.unreadable.kept?"storage.unreadableKept":n.unreadable.raw==null?"storage.unavailable":"storage.unreadableNotKept",{when:fmtDate(String(n.unreadable.at).slice(0,10))}))}</span>
+        <span class="storage-notice-actions">${n.unreadable.raw!=null?`<button class="btn sm" data-storage-action="download-unreadable">${esc(t("storage.downloadUnreadable"))}</button>`:""}<button class="btn sm" data-storage-action="restore">${esc(t("storage.restoreBackup"))}</button>${n.unreadable.kept?`<button class="btn sm" data-storage-action="dismiss">${esc(t("storage.dismiss"))}</button>`:""}</span>
+      </div></div>`);
+    }
+    if(n.saveFailing){
+      parts.push(`<div class="schema-future-banner" data-storage-notice="save-failing" role="alert">${icon("alert")}<div>
+        <b>${esc(t("storage.saveFailingTitle"))}</b>
+        <span>${esc(t("storage.saveFailingBody"))}</span>
+        <span class="storage-notice-actions"><button class="btn sm" data-storage-action="backup">${esc(t("storage.downloadBackup"))}</button></span>
+      </div></div>`);
+    }
+    return parts.join("");
+  }
+  document.addEventListener("click",e=>{
+    const b=e.target.closest&&e.target.closest("[data-storage-action]");
+    if(!b)return;
+    const a=b.dataset.storageAction,n=MERIT_STORAGE_NOTICE;
+    if(a==="download-unreadable"&&n.unreadable){
+      const url=URL.createObjectURL(new Blob([String(n.unreadable.raw)],{type:"application/json"}));
+      const link=document.createElement("a");link.href=url;link.download=`merit-event-maker-unreadable-${todayKey()}.json`;
+      document.body.appendChild(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),4000);
+    }else if(a==="restore"){document.getElementById("backupFileInput")?.click();}
+    else if(a==="backup"){exportBackup();}
+    else if(a==="dismiss"){n.dismissed=true;render();}
+  });
   function futureSchemaBannerHTML(){
     const g=globalThis.MERIT_SCHEMA_GUARD;
     if(!g||!g.readOnly)return"";
@@ -5977,13 +6075,39 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
       <span>${esc(t("schema.futureBody",{stored:g.storedVersion,build:g.buildVersion}))}</span>
     </div></div>`;
   }
+  // A SCREEN THAT THROWS IS CONTAINED. It used to escape render() as an
+  // uncaught error, leaving whatever was on screen before -- stale, and bound
+  // to state that had moved on -- with no word to the operator. It now shows a
+  // recovery screen that names what happened and offers the two ways forward
+  // that never need the broken screen: the events list, and a backup of
+  // everything in memory. Still logged as an ERROR, on purpose: a render bug
+  // must stay loud in every suite that does not set out to cause one.
   render = function(){
+    try{return renderScreen();}
+    catch(error){renderFailure(error);}
+  };
+  function renderFailure(error){
+    console.error("A screen failed to render; the recovery screen is shown instead.",error);
+    app.innerHTML=`<section class="render-failure" data-render-failure role="alert">
+      <h2>${esc(t("renderFailed.title"))}</h2>
+      <p>${esc(t("renderFailed.body"))}</p>
+      <div class="render-failure-actions"><button class="btn primary" data-render-recover="events">${esc(t("renderFailed.toEvents"))}</button><button class="btn" data-render-recover="backup">${esc(t("storage.downloadBackup"))}</button></div>
+    </section>`;
+    app.querySelector('[data-render-recover="events"]')?.focus();
+  }
+  document.addEventListener("click",e=>{
+    const b=e.target.closest&&e.target.closest("[data-render-recover]");
+    if(!b)return;
+    if(b.dataset.renderRecover==="backup"){exportBackup();return;}
+    ui.screen="events";ui.activeEventId=null;ui.selectedObjectId=null;ui.selectedObjectIds=[];render();
+  });
+  function renderScreen(){
     translateStaticDialogs();
     if(ui.screen==="new-event"){app.innerHTML=setupHTML();bindSetup();return;}
     // No review branch here any more: review renders inside the workspace's
     // content area like every other mode, so the shell above it never leaves.
     if(!state.events.length&&ui.screen!=="events")ui.screen="events";
-    app.innerHTML=futureSchemaBannerHTML()+(ui.screen==="events"?eventsHTML():workspaceHTML(activeEvent()));bindV8Common();
+    app.innerHTML=futureSchemaBannerHTML()+storageNoticeHTML()+(ui.screen==="events"?eventsHTML():workspaceHTML(activeEvent()));bindV8Common();
     if(ui.screen==="workspace"){
       const event=activeEvent(),historical=isHistorical(event);
       // Review mode draws no editable canvas, so bindCanvas() must not run for

@@ -35,8 +35,10 @@ import { stripCommentsAndStrings } from "../lib/js-scan.mjs";
 export const meta = { name: "html-sink-inventory", tags: ["security", "fast"], timeout: 20000 };
 
 const INVENTORY = [
-  { file: "app-v8.js", fn: "render", target: "app.innerHTML", count: 2, evidence: "hostile-input",
-    trace: "The live render: setupHTML() for the new-event screen, and futureSchemaBannerHTML() + eventsHTML() / workspaceHTML() for everything else. Interpolates every stored text field of every screen; covered by fixture, not by reading." },
+  { file: "app-v8.js", fn: "renderScreen", target: "app.innerHTML", count: 2, evidence: "hostile-input",
+    trace: "The live render (render() calls it inside a boundary): setupHTML() for the new-event screen, and futureSchemaBannerHTML() + storageNoticeHTML() + eventsHTML() / workspaceHTML() for everything else. Interpolates every stored text field of every screen; covered by fixture, not by reading." },
+  { file: "app-v8.js", fn: "renderFailure", target: "app.innerHTML", evidence: "literal",
+    trace: "The recovery screen shown when a screen throws: four t() strings of fixed keys, each through esc(). The error itself is never interpolated — it goes to the console only." },
   { file: "app.js", fn: "render", target: "app.innerHTML", evidence: "boot-contract",
     trace: "The pre-v8 render. Overridden by app-v8.js's render before first use; boot-contract proves at runtime that the override is the body that runs." },
   { file: "app-v8.js", fn: "renderGlobalSearch", target: "box.innerHTML", evidence: "hostile-input",

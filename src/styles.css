@@ -69,6 +69,11 @@ h1,h2,h3,h4,p{margin:0}
 /* keyboard focus */
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible,.tab:focus-visible,.library-row:focus-visible,.guest-row-card:focus-visible{outline:none;box-shadow:var(--ring);border-radius:var(--radius-sm)}
 dialog:focus-visible{outline:none}
+.render-failure{max-width:560px;margin:12vh auto;padding:var(--sp-8);background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg)}
+.render-failure h2{margin:0 0 var(--sp-3);font-size:18px}
+.render-failure p{margin:0 0 var(--sp-6);color:var(--muted);font-size:13px;line-height:1.5}
+.render-failure-actions{display:flex;gap:8px;flex-wrap:wrap}
+.storage-notice-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 /* Present to assistive technology, absent from the screen: the status live
    region (#a11yAnnouncer) and nothing decorative. */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
