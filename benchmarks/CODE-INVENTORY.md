@@ -111,7 +111,7 @@ pairs with Jaccard >= 0.45: 3
 
 Three pairs in 210 functions. The file is long; it is not repetitive.
 
-### 2.1 `teachTableNumber` / `teachSelectedObject` — **SAFE TO EXTRACT**
+### 2.1 `teachTableNumber` / `teachSelectedObject` — **EXTRACTED** (was SAFE TO EXTRACT)
 
 `src/app-v8.js:7034` and `:7078`. Similarity 0.65.
 
@@ -152,6 +152,22 @@ is exactly what a careless shared helper would default to — fails the new
 suite on the load-bearing claim while **`plan-teach-area` and `teach-number`
 both pass**. The coverage this entry cited was real and was blind to the one
 line that matters; that is now closed, and the extraction is unblocked.
+
+**Extracted as `keepLesson(event, c, {scope, subject, printedNumber,
+auditAction, auditDetail, toastText})`.** Everything that differs is passed in
+and nothing is defaulted — and `printedNumber` is made **required**: `null` is
+an honest "no number", `undefined` throws
+`keepLesson: printedNumber must be passed explicitly`. A convention written in a
+comment is what the extraction was at risk of losing; an error on the first
+call is not. Mutation (the caller simply forgets the field) surfaces that error
+as a page error and fails `teach-venue-scope`.
+
+**Saved 3 code lines, not the ~18 estimated above.** The estimate counted the
+duplicated body; the helper's parameter object and the explanatory comments
+take most of it back. That is the honest result, and it is fine: the value was
+never the line count — it is that the store / audit / re-apply sequence can no
+longer drift between the two paths, and that the one load-bearing difference
+is now enforced rather than remembered.
 
 ### 2.1b Two `otsu` implementations — **NEEDS TEST FIRST**
 
@@ -292,7 +308,7 @@ committed off a SYMBOLIC plan carries **no chair objects at all**, with
 | Classification | Count | Items |
 |---|---|---|
 | SAFE TO REMOVE | **0** | — |
-| SAFE TO EXTRACT | **1** | `teachTableNumber`/`teachSelectedObject` (2.1) |
+| SAFE TO EXTRACT | **0** | — (`teachTableNumber`/`teachSelectedObject`, 2.1, **extracted**) |
 | NEEDS TEST FIRST | **3** | the `original` capture (1.2, now covered); verbatim chair writes (3); the two `otsu`s (2.1b) |
 | DO NOT MERGE | **3** | the three chair-write exceptions (3) |
 | KEEP — DOMAIN DIFFERENCE | **3** | `sameObject`/`boxIoU`; `partyMetaHTML`/`guestPartyCellHTML`; `occupiedSeatIndexes`/`liveUsedIndexes` |

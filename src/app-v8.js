@@ -4454,22 +4454,29 @@
   // machinery, with a `tableNumber` subject instead of an identity one -- and
   // it is the thing that unlocks venue scope, because across a venue an object
   // can only be identified by a number a person has stood behind.
-  function teachTableNumber(event,c,value,scope){
-    if(!globalThis.MeritTeachArea||!c)return;
-    const n=Number(value);
-    if(!Number.isFinite(n)||n<=0||n!==Math.round(n))
-      return toast(t("number.notANumber"),"error",5000);
+  // THE SHARED BODY OF KEEPING A LESSON: build it, refuse visibly, store it,
+  // audit it, say so, re-apply. `teachTableNumber` and `teachSelectedObject`
+  // did these seven steps identically; what differs is passed in, never
+  // defaulted (`benchmarks/CODE-INVENTORY.md` §2.1).
+  //
+  // `printedNumber` IS REQUIRED AND HAS NO DEFAULT. It is the one field that
+  // differs for a load-bearing reason: confirming a number makes that number
+  // the object's verified identity, and a venue-scoped lesson is refused for an
+  // object without one. A helper that filled it in from the candidate would
+  // refuse the operator's venue-scoped number confirmation by the very rule
+  // they had just satisfied — `teach-venue-scope` fails on exactly that
+  // mutation, while the two suites that already covered this area pass. So an
+  // omitted value THROWS rather than falling back; `null` is the honest "no
+  // number", `undefined` is a caller that forgot.
+  function keepLesson(event,c,{scope,subject,printedNumber,auditAction,auditDetail,toastText}){
+    if(printedNumber===undefined)
+      throw new Error("keepLesson: printedNumber must be passed explicitly — null for none, never omitted");
     const alive=(event.analysis?.candidates||[]).filter(x=>x.status!=="rejected");
     const r=globalThis.MeritTeachArea.lesson({
-      scope,where:teachWhere(event),
-      subject:{kind:"tableNumber",value:n},
+      scope,where:teachWhere(event),subject,
       from:{candidateId:c.id,kind:c.kind,type:c.type,
         geometry:{x:c.x,y:c.y,w:c.w,h:c.h,rotation:c.rotation||0},
-        // The number the operator is confirming is what identifies this object
-        // from here on, so it travels as the object's own printed number --
-        // otherwise a venue-scoped lesson about it would be refused by the very
-        // rule the operator has just satisfied.
-        printedNumber:{state:"VERIFIED",value:n},
+        printedNumber,
         visual:c.visualDescriptor?.vector?{vector:Array.from(c.visualDescriptor.vector)}:null,
         context:globalThis.MeritPlanMemory?globalThis.MeritPlanMemory.contextSignature(c,alive):null},
     });
@@ -4477,10 +4484,26 @@
     state.teachings ||= [];
     state.teachings.push(r.lesson);
     saveState();
-    audit(event,"TEACH_AREA_NUMBER_CONFIRMED",{scope:r.lesson.scope,value:n,
+    audit(event,auditAction,{scope:r.lesson.scope,...auditDetail(r.lesson),
       text:globalThis.MeritTeachArea.describe(r.lesson)});
-    toast(t("number.confirmedToast",{n,scope:t("teachArea.scope."+r.lesson.scope)}),"success",6000);
+    toast(toastText(r.lesson),"success",6000);
     applyTeachArea(event);recomputePlanIntelligence(event);touchEvent(event);render();
+  }
+  function teachTableNumber(event,c,value,scope){
+    if(!globalThis.MeritTeachArea||!c)return;
+    const n=Number(value);
+    if(!Number.isFinite(n)||n<=0||n!==Math.round(n))
+      return toast(t("number.notANumber"),"error",5000);
+    keepLesson(event,c,{scope,
+      subject:{kind:"tableNumber",value:n},
+      // The number the operator is confirming is what identifies this object
+      // from here on, so it travels as the object's own printed number --
+      // otherwise a venue-scoped lesson about it would be refused by the very
+      // rule the operator has just satisfied.
+      printedNumber:{state:"VERIFIED",value:n},
+      auditAction:"TEACH_AREA_NUMBER_CONFIRMED",
+      auditDetail:()=>({value:n}),
+      toastText:l=>t("number.confirmedToast",{n,scope:t("teachArea.scope."+l.scope)})});
   }
   // Whether a scope can be offered at all, and why not when it cannot.
   //
@@ -4500,24 +4523,14 @@
   }
   function teachSelectedObject(event,c,scope){
     if(!globalThis.MeritTeachArea||!c)return;
-    const alive=(event.analysis?.candidates||[]).filter(x=>x.status!=="rejected");
-    const r=globalThis.MeritTeachArea.lesson({
-      scope,where:teachWhere(event),
+    keepLesson(event,c,{scope,
       subject:{kind:"objectIdentity",objectKind:c.kind,type:c.type,label:t("teach.type."+c.type)},
-      from:{candidateId:c.id,kind:c.kind,type:c.type,
-        geometry:{x:c.x,y:c.y,w:c.w,h:c.h,rotation:c.rotation||0},
-        printedNumber:c.printedNumber||null,
-        visual:c.visualDescriptor?.vector?{vector:Array.from(c.visualDescriptor.vector)}:null,
-        context:globalThis.MeritPlanMemory?globalThis.MeritPlanMemory.contextSignature(c,alive):null},
-    });
-    if(!r.ok)return toast(t("teachArea.refused",{reason:r.reason}),"error",8000);
-    state.teachings ||= [];
-    state.teachings.push(r.lesson);
-    saveState();
-    audit(event,"TEACH_AREA_LESSON_KEPT",{scope:r.lesson.scope,subject:r.lesson.subject,
-      text:globalThis.MeritTeachArea.describe(r.lesson)});
-    toast(t("teachArea.kept",{label:t("teach.type."+c.type),scope:t("teachArea.scope."+r.lesson.scope)}),"success",6000);
-    applyTeachArea(event);recomputePlanIntelligence(event);touchEvent(event);render();
+      // The object's OWN number, whatever state it is in. Passed explicitly,
+      // including when it is null, because the helper refuses to guess.
+      printedNumber:c.printedNumber||null,
+      auditAction:"TEACH_AREA_LESSON_KEPT",
+      auditDetail:l=>({subject:l.subject}),
+      toastText:l=>t("teachArea.kept",{label:t("teach.type."+c.type),scope:t("teachArea.scope."+l.scope)})});
   }
   // The other half of teaching. A note a person cannot take back is not a note,
   // it is a decision made on their behalf: forgetting removes the lesson from
