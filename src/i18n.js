@@ -922,7 +922,9 @@
     "toolbar.grid": { en: "Grid", tr: "Izgara" },
     "toolbar.snap": { en: "Snap", tr: "Yasla" },
     "toolbar.seatLabels": { en: "Seat labels", tr: "Koltuk numaraları" },
-    "toolbar.assistedDetection": { en: "Assisted Detection", tr: "Yapay Zeka Destekli Tespit" },
+    // Never "Yapay Zeka": Assisted Detection is classical computer vision, and
+    // the honesty rule forbids calling it AI in either language (§18).
+    "toolbar.assistedDetection": { en: "Assisted Detection", tr: "Destekli Tespit" },
     "toolbar.focusMode": { en: "Focus Mode", tr: "Odak Modu" },
 
     // ---- Global appbar ----
@@ -1738,6 +1740,25 @@
     "storage.imagesDroppedBody": { en: "Tables, guests and seating were saved, but the browser had no room for the large plan image, so it will be missing the next time this event is opened. Download a backup now — it includes the image — or keep the original plan file.", tr: "Masalar, misafirler ve yerleşim kaydedildi; ancak tarayıcıda büyük plan görseline yer yoktu, bu yüzden etkinlik bir sonraki açılışta görselsiz gelecek. Şimdi yedek indirin — görsel yedeğe dahildir — ya da orijinal plan dosyasını saklayın." },
     "storage.saveFailingSerializeBody": { en: "This session's data could not be prepared for saving, so nothing changed since then is stored. Export the workbook before closing. This notice clears itself as soon as a save succeeds.", tr: "Bu oturumun verisi kayda hazırlanamadı; o andan beri yapılan değişiklikler saklanmıyor. Kapatmadan önce çalışma kitabını dışa aktarın. Bu uyarı ilk başarılı kayıtta kendiliğinden kalkar." },
     "storage.exportWorkbook": { en: "Export the workbook", tr: "Çalışma kitabını dışa aktar" },
+    // ---- §18: strings that reached a Turkish screen in English -------------
+    "seating.opView": { en: "Live operational view:", tr: "Canlı operasyon görünümü:" },
+    "seating.opViewBody": { en: "red glow marks physically available chairs after No Show release.", tr: "kırmızı parıltı, Gelmedi sonrası boşalan fiziksel sandalyeleri gösterir." },
+    "seating.clearFilter": { en: "Clear", tr: "Temizle" },
+    "seating.showingEmpty": { en: "Showing empty tables", tr: "Boş masalar gösteriliyor" },
+    "seating.showingAvailable": { en: "Showing tables with available seats", tr: "Boş koltuğu olan masalar gösteriliyor" },
+    "seating.showingFull": { en: "Showing full tables", tr: "Dolu masalar gösteriliyor" },
+    "seating.emptySeats": { en: "{n} EMPTY", tr: "{n} BOŞ" },
+    "history.guestsReadOnly": { en: "This historical guest list is read-only.", tr: "Bu geçmiş misafir listesi salt okunurdur." },
+    "history.guestsCount": { en: "{n} records · {pax} total pax", tr: "{n} kayıt · toplam {pax} kişi" },
+    "history.col.planning": { en: "Planning", tr: "Planlama" },
+    "history.col.arrival": { en: "Arrival", tr: "Geliş" },
+    "history.noGuests": { en: "No guest records.", tr: "Misafir kaydı yok." },
+    "vip.level.Standard": { en: "Standard", tr: "Standart" },
+    "vip.level.VIP": { en: "VIP", tr: "VIP" },
+    "vip.level.VVIP": { en: "VVIP", tr: "VVIP" },
+    "review.planImageAlt": { en: "Floor plan being reviewed", tr: "İncelenen kat planı" },
+    "review.difficultQuestion": { en: "Difficult question", tr: "Zor soru" },
+    "appbar.helpTitle": { en: "Open English / Turkish user guide", tr: "İngilizce / Türkçe kullanım kılavuzunu aç" },
     "storage.recoveredTitle": { en: "Opened from an automatic recovery point", tr: "Otomatik kurtarma noktasından açıldı" },
     "storage.recoveredBody": { en: "The saved record was missing, so this session opened the recovery point taken {when}. Anything changed after that moment may not be here — check the latest guests and seating before relying on them.", tr: "Kayıtlı kayıt bulunamadı; bu oturum {when} alınan kurtarma noktasını açtı. O andan sonra yapılan değişiklikler burada olmayabilir — güvenmeden önce son misafirleri ve yerleşimi kontrol edin." },
   };
