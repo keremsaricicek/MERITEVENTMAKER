@@ -138,10 +138,20 @@ toastFn})`, with `printedNumber` passed in by each caller. Saves ~18 lines and
 removes the risk of the two paths drifting on the store/audit/re-apply
 sequence.
 
-Covered by `plan-teach-area` and `teach-number`. **A characterization test
-asserting the venue-scope refusal through the app path is listed as missing in
-`APP-V8-OWNERSHIP-MAP.md` (A23) and should be written before this extraction,
-not after.**
+Covered by `plan-teach-area` and `teach-number` — **and neither of them sees
+the load-bearing line.** The characterization test this entry asked for is now
+`tests/suites/teach-venue-scope.test.mjs`, written before the extraction as
+required. Through the real review-screen controls it asserts that (1) with no
+verified number the venue option is disabled before the click, (2) forcing it
+anyway is still REFUSED by the domain and nothing is stored — a disabled
+`<option>` is a courtesy, not the rule — and (3) confirming a NUMBER at venue
+scope on that same object is ACCEPTED, stored as `VERIFIED 42`.
+
+Mutation — `printedNumber: c.printedNumber||null` in `teachTableNumber`, which
+is exactly what a careless shared helper would default to — fails the new
+suite on the load-bearing claim while **`plan-teach-area` and `teach-number`
+both pass**. The coverage this entry cited was real and was blind to the one
+line that matters; that is now closed, and the extraction is unblocked.
 
 ### 2.1b Two `otsu` implementations — **NEEDS TEST FIRST**
 
