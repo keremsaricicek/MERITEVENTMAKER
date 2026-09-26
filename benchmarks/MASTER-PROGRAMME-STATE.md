@@ -1031,6 +1031,51 @@ the suite cannot pass against a structure the product would never produce.
 `build:offline` · `build:offline-full` · `verify:offline` **27 / 27**. No
 production file changed in this step.
 
+### N. §3D + §3E — the inventory's actionable items, closed
+
+`benchmarks/CODE-INVENTORY.md` is the recorded evidence this section works
+from, and every actionable line in it is now closed:
+
+| inventory item | before | now |
+|---|---|---|
+| unreferenced functions | 0 | **0** — nothing to delete, re-confirmed rather than assumed |
+| SAFE TO EXTRACT | 1 | **0** — `keepLesson` extracted (`dae3d66`) |
+| verbatim chair write, "no suite would fail" | unguarded | **guarded** — `confirmed-chair-coordinates` (`d956cdc`) |
+| venue-scope refusal, "write before extracting" | missing | **written first** — `teach-venue-scope` (`4a5361c`) |
+| two `otsu` implementations | unrecorded | **recorded** NEEDS TEST FIRST (§2.1b) |
+
+**The two characterization suites share one finding, and it is the reason this
+section was worth doing.** In both cases the inventory cited existing coverage
+for the area, and in both cases the mutation that matters — routing confirmed
+chairs through the ring generator; defaulting a confirmed number to the
+object's absent one — **failed only the new suite while the cited ones
+passed**: `physical-logical-seat-separation` in the first, `plan-teach-area`
+and `teach-number` in the second. Coverage that is real and blind to the one
+line that matters is what "characterization before restructuring" exists to
+catch.
+
+**`keepLesson` saved 3 code lines, not the ~18 estimated.** Recorded as such.
+Its value is that the store / audit / re-apply sequence can no longer drift
+between two paths, and that `printedNumber` is **required** — `undefined`
+throws a named error — so the load-bearing difference is enforced rather than
+remembered.
+
+**What §3D does NOT include, and why — an ordering decision, written down as
+the programme requires.** `benchmarks/MODULARIZATION-ORDER.md` puts the screen
+extractions (Guests A21, Seating A17, canvas A12) after the `guest.assignment`
+single-writer step, which §3C completed, so they are technically unblocked.
+They are also the three HIGH-difficulty areas in the ownership map, measured,
+and each moves UI and domain code together. Doing them now would put the
+largest-risk refactors of the programme ahead of **§14 security, §15
+accessibility and §19 resilience, which have ZERO suites between them** — the
+largest measured gap left. That is not reordering the user's list: §14–§19
+follow §3D/§3E in it. It is declining to expand §3D beyond its inventory into
+work the map itself rates hardest, and leaving that work recorded with its
+prerequisites met.
+
+**Gates.** `npm run test:all` **74 / 74 suites · 2,383 / 2,383 checks**.
+`build:offline` · `build:offline-full` · `verify:offline` **27 / 27**.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
