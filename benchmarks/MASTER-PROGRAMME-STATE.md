@@ -1076,6 +1076,50 @@ prerequisites met.
 **Gates.** `npm run test:all` **74 / 74 suites · 2,383 / 2,383 checks**.
 `build:offline` · `build:offline-full` · `verify:offline` **27 / 27**.
 
+### O. §14 — security — DONE, from zero suites to five
+
+The skill's rule decided the approach: "'We use `esc()`' is not evidence. A
+hostile-input fixture that passes is." Measured at entry: 335 `esc()` calls,
+13 `innerHTML` + 1 `insertAdjacentHTML`, 0 `eval`, object URLs 4/4, and **no
+security suite at all**. Every row below was a measured failure through the
+real controls before it was fixed, not a hypothetical.
+
+| finding | measured | now |
+|---|---|---|
+| `__proto__`/`constructor`/`prototype` in a backup or package | Object.prototype clean (every copy spreads) — but the keys rode into state, were saved and re-exported, dormant until the first `Object.assign` | dropped at the record boundary by `MeritSchemaMigrations.parseRecord`, incl. `\u`-escaped spellings (`4ee0935`) |
+| backup from a newer build | uncaught throw, no message, **and the read-only guard latched on the healthy CURRENT install** — it silently stopped saving | refused with a message; an import never latches the guard (`3cf39fa`) |
+| `guests:[null]`, `tables:"abc"` | TypeError out of the file reader, no message | refused whole, naming the path, before confirm() |
+| unreadable event date | accepted, saved, then `fmtDate()` threw out of every render — **the install was dead across reloads** | import refuses it; `fmtDate()` is total ("—") — closes the §19 row below |
+| `additionalGuests: 1e9`; sheet `"1e9"`, `"0x10"` | a guest of a billion; `Number()` read hex | 0–99 (the dialog's own bound), plain decimals only; `"3.00"` still 3 |
+| an id carrying a quote | restored; ids are interpolated as attribute values | refused (`[A-Za-z0-9_.:-]`) |
+| noise named `.xlsx`; a broken PNG | reached the preview (SheetJS sniffs content); became the floor plan | ZIP signature required for `.xlsx`; plan, cover and replace images must DECODE |
+| a corrupt stored record | its JSON `SyntaxError` quoted the guest name into the console **three times per boot** | `loggableError()` withholds the excerpt (and the stack that repeats it) |
+| any payload through any screen | — | **nothing fired**: `hostile-input` walks every screen with a payload in every field, typed, imported and read off a plan by OCR |
+
+**Five suites, each mutation-proven:** `prototype-pollution` (29) ·
+`malformed-import` (125) · `hostile-input` (73) · `html-sink-inventory` (9) ·
+`privacy-logs` (5). The one that carries the skill's claim is
+`hostile-input`'s mutation H2: removing ONE `esc()` from the finder's result
+row is found at the finder, which no count of escape calls could do.
+
+**All 14 sinks traced**, keyed by file + enclosing function (brace-matched —
+"nearest function above" named three of them wrongly) + target. Twelve are
+small enough to read and their inputs are written down; the two `render`
+sinks write every screen and their evidence is the fixture, not a reading.
+
+**CSP readiness, measured:** 0 inline event-handler attributes (now guarded),
+1 inline `<script>` (the pdf.js bootstrap — needs a hash; guarded at 1),
+66 inline `style=""` (needs `style-src-attr`; a policy decision, recorded not
+guarded), a `blob:` OCR worker in the CDN build only (the offline-full build
+spawns it directly). Nothing here authorises writing a CSP before the
+desktop gate; it records what one would cost.
+
+**Also found while writing the suites, recorded rather than fixed:** a
+restore reads its payload TWICE (once to validate, once in `parseRoot`), so
+an escaped-key fixture cannot distinguish a sound fast path from an unsound
+one on that path — the package path reads once and is where mutation M4
+bites. SheetJS renames a `__proto__` header to `__proto___NaN`.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
@@ -1119,30 +1163,24 @@ typing 136/289.
 
 ## Next step
 
-**§3A + §3B — the rest of Split A.** Step 1 (A-4 + A-9 → geometry) is done;
-entry L records it. The remaining groups in
-`benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`, in the map's own risk order:
-**A-5** shape analysis and table typing (LOW, but it depends on `maskSolidity`
-in A-3), **A-2** colour and tone models (LOW, pure arithmetic over histograms),
-**A-6/A-7** the modal-size prior and the symbol-family predicate (LOW to move,
-HIGH to change — `sizeAgreement` is called from 12 places and
-`MeritSymbolFamilyMember` is already public), **A-8** splitting (MEDIUM — it
-changes the object count), **A-3** masks and components (MEDIUM, entirely
-because of the module-level `SCRATCH_QUEUE`), **A-1** deskew (LOW, and the only
-part of the file that touches the DOM). Split B — inside `detect()` — is a
-design job and not a move: the chairs stage ends at line 1,642 and the tables
-stage at 2,884, so those two are 61% of the file between them.
+**§15 — accessibility**, then §19 resilience: the two dimensions that still
+have ZERO suites. §15 per `.claude/skills/merit-accessibility-hardening/SKILL.md` (and the
+`accessibility-guardian` agent's standard): judged by COMPLETED keyboard
+workflows — create an event, add and seat a guest, check a guest in at the
+door, confirm a detection — never by counting `aria-*` attributes. Dialog
+semantics and focus return, live-region announcements for toasts, names on
+icon-only controls, contrast, zoom, reduced motion, and the Floor Plan
+canvas, which is the hard one.
 
-Name the crossings first, counting **every declarator** on each comma-separated
-`const` line, and remember that booting is not detecting — three structural
-suites passed on the broken load order in step 1.
+Then, in the order given: §19 resilience (storage exhaustion, corrupted
+persisted data at boot — `privacy-logs` and `malformed-import` already cover
+part of it), §16 `confirm()` × 9 / `prompt()` × 2, §17 toast, §18
+localization, §20–§25 UX, §26 performance, §27 real CI release gates (incl.
+the `benchmark:baseline` false green and `--compare` exit 1), §28–30, then
+the final review and completion matrix.
 
-Then, in the order given: §3D + §3E (app-v8 modularization / duplication /
-dead code — blocked behind nothing now that `guest.assignment` has one
-writer), **§14 security · §15 accessibility · §19 resilience** (zero suites
-each, the largest single block left), §16 `confirm()` × 9 / `prompt()` × 2,
-§17 toast, §18 localization, §20–§25 UX, §26 performance, §27 real CI release
-gates, §28–30, then the final review and completion matrix.
+Deferred with recorded prerequisites met, not forgotten: Split B (a design
+job, §3B measured), the screen extractions A21/A17/A12 (entry N).
 
 ### Open, measured, NOT accepted
 
@@ -1153,7 +1191,7 @@ gates, §28–30, then the final review and completion matrix.
 | `a9` tables | 3 of 75 missed. Cause measured: the plan-wide modal table area is set by the title's glyphs. Abstaining costs a5 two abstentions — reverted, recorded at the line. Needs a modal local to a region. |
 | §9 identity | Wrong-application rate 0.0552 against a 0.01 ceiling. A signal problem, not threshold placement: no setting reaches the gate. |
 | §10 photometry | Six SEVERE robustness rows share one mechanism — Otsu, colour and tone statistics computed over the whole canvas. |
-| §19 | `fmtDate()` RangeError on a dateless event, deferred to §19. |
+| §19 | ~~`fmtDate()` RangeError on a dateless event~~ — **closed in §14** (`3cf39fa`): `fmtDate()` is total, and imports refuse an unreadable date. |
 | a8 zones | `zones.precision 1 → 0.5`, `recall 0.5 → 0.25` since §8 detected 289 tables instead of 240. Arithmetic consequence, not a defect in §8, but it makes `--compare` exit 1. |
 
 **One mechanism keeps recurring across §6, §9 and §10, and it is worth naming
