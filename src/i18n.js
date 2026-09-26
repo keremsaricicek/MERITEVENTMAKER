@@ -1648,18 +1648,111 @@
     "toolbar.hideOriginalPlan": { en: "Hide original plan", tr: "Orijinal planı gizle" },
     "toolbar.showOriginalPlan": { en: "Show original plan", tr: "Orijinal planı göster" },
     "toolbar.replacePlan": { en: "Replace plan", tr: "Planı değiştir" },
+
+    // ---- Toasts (§17) --------------------------------------------------------
+    // Every message a toast shows comes from here. They used to be English
+    // literals translated afterwards by pattern-matching the finished sentence
+    // (translateToast); a sentence nobody wrote a pattern for reached a Turkish
+    // screen in English, and "Event created. Review the plan…" did exactly that.
+    // tests/suites/toast-discipline.test.mjs refuses a literal at any call site.
+    "toast.savedLocally": { en: "Saved locally in this browser.", tr: "Bu tarayıcıya yerel olarak kaydedildi." },
+    "toast.imageTooLargeLegacy": { en: "Layout and guests were saved. The imported image was too large for browser storage.", tr: "Yerleşim ve misafirler kaydedildi. İçe aktarılan görsel tarayıcı depolaması için fazla büyüktü." },
+    "toast.storageFullLegacy": { en: "Browser storage is full. Export your workbook before closing.", tr: "Tarayıcı depolaması dolu. Kapatmadan önce çalışma kitabınızı dışa aktarın." },
+    "toast.storageFull": { en: "Browser storage is full. Export the workbook before closing.", tr: "Tarayıcı depolaması dolu. Kapatmadan önce çalışma kitabını dışa aktarın." },
+    "toast.imagesNotStored": { en: "Event data was saved, but large images exceeded browser storage.", tr: "Etkinlik verisi kaydedildi, ancak büyük görseller tarayıcı depolamasını aştı." },
+    "toast.notSerializable": { en: "Changes could not be saved. Export the workbook before closing.", tr: "Değişiklikler kaydedilemedi. Kapatmadan önce çalışma kitabını dışa aktarın." },
+    "toast.eventDuplicated": { en: "Event duplicated.", tr: "Etkinlik çoğaltıldı." },
+    "toast.eventDeleted": { en: "Event deleted.", tr: "Etkinlik silindi." },
+    "toast.nothingToUndo": { en: "Nothing to undo.", tr: "Geri alınacak bir şey yok." },
+    "toast.nothingToRedo": { en: "Nothing to redo.", tr: "Yinelenecek bir şey yok." },
+    "toast.tableNumberInUse": { en: "That table number is already in use.", tr: "Bu masa numarası zaten kullanımda." },
+    "toast.tableAdded": { en: "{table} added with {n} chairs.", tr: "{table}, {n} sandalyeyle eklendi." },
+    "toast.objectAdded": { en: "{type} added.", tr: "{type} eklendi." },
+    "toast.objectLocked": { en: "This object is locked. Unlock it in the Inspector.", tr: "Bu nesne kilitli. Kilidini denetçi panelinden açın." },
+    "toast.unlockToResize": { en: "Unlock this object before resizing.", tr: "Yeniden boyutlandırmadan önce bu nesnenin kilidini açın." },
+    "toast.unlockToRotate": { en: "Unlock this object before rotating.", tr: "Döndürmeden önce bu nesnenin kilidini açın." },
+    "toast.capacityBelowOccupied": { en: "{table} currently has {n} occupied seats. Capacity cannot be reduced below {n}.", tr: "{table} masasında şu anda {n} dolu koltuk var. Kapasite {n} altına düşürülemez." },
+    "toast.capacityBelowPax": { en: "{table} has {n} assigned pax. Capacity cannot drop below occupancy.", tr: "{table} masasında {n} yerleştirilmiş kişi var. Kapasite doluluğun altına düşürülemez." },
+    "toast.nameRequired": { en: "Name Surname is required.", tr: "Ad Soyad zorunludur." },
+    "toast.recordSeatsShort": { en: "{table} has only {n} seats available for this record.", tr: "{table} masasında bu kayıt için yalnızca {n} koltuk var." },
+    "toast.guestAdded": { en: "Guest added.", tr: "Misafir eklendi." },
+    "toast.guestUpdated": { en: "Guest updated.", tr: "Misafir güncellendi." },
+    "toast.guestDeleted": { en: "Guest deleted.", tr: "Misafir silindi." },
+    "toast.mapNameColumn": { en: "Map one column to Name Surname.", tr: "Bir sütunu Ad Soyad ile eşleştirin." },
+    "toast.fixBlockingErrors": { en: "Fix blocking import errors first.", tr: "Önce engelleyici içe aktarma hatalarını düzeltin." },
+    "toast.guestsImported": { en: "{n} guest records imported.", tr: "{n} misafir kaydı içe aktarıldı." },
+    "toast.guestsImportedAssigned": { en: "{n} guest records imported · {assigned} assigned.", tr: "{n} misafir kaydı içe aktarıldı · {assigned} tanesi yerleştirildi." },
+    "toast.templateDownloaded": { en: "Excel template downloaded.", tr: "Excel şablonu indirildi." },
+    "toast.assignmentLockedMove": { en: "{name}'s assignment is locked. Unlock it before moving.", tr: "{name} ataması kilitli. Taşımadan önce kilidini açın." },
+    "toast.assignmentLockedName": { en: "{name}'s assignment is locked.", tr: "{name} ataması kilitli." },
+    "toast.seatsShort": { en: "{table} has only {n} available seats. {name} requires {need}.", tr: "{table} masasında yalnızca {n} boş koltuk var. {name} için {need} koltuk gerekiyor." },
+    "toast.guestMoved": { en: "{name} moved to {table} · {n} seats reserved.", tr: "{name} {table} masasına taşındı · {n} koltuk ayrıldı." },
+    "toast.guestAssigned": { en: "{name} assigned to {table} · {n} seats reserved.", tr: "{name} {table} masasına yerleştirildi · {n} koltuk ayrıldı." },
+    "toast.unlockAssignmentFirst": { en: "Unlock this assignment before removing it.", tr: "Kaldırmadan önce bu atamanın kilidini açın." },
+    "toast.returnedUnassigned": { en: "{name} returned to Unassigned.", tr: "{name} atanmamışlara döndü." },
+    "toast.assignmentLocked": { en: "Assignment locked.", tr: "Atama kilitlendi." },
+    "toast.assignmentUnlocked": { en: "Assignment unlocked.", tr: "Atamanın kilidi açıldı." },
+    "toast.arrivalSet": { en: "{name}: {status}.", tr: "{name}: {status}." },
+    "toast.csvExported": { en: "Guest CSV exported.", tr: "Misafir CSV'si dışa aktarıldı." },
+    "toast.workbookExported": { en: "Table Plan workbook exported with three worksheets.", tr: "Masa planı çalışma kitabı üç sayfayla dışa aktarıldı." },
+    "toast.historicalReadOnly": { en: "Historical events are read-only. You cannot {action}.", tr: "Geçmiş etkinlikler salt okunurdur; bu işlem yapılamaz." },
+    "toast.pdfPageOne": { en: "{n} PDF page rendered locally. Choose a page thumbnail.", tr: "{n} PDF sayfası yerel olarak oluşturuldu. Bir sayfa küçük resmi seçin." },
+    "toast.pdfPages": { en: "{n} PDF pages rendered locally. Choose a page thumbnail.", tr: "{n} PDF sayfası yerel olarak oluşturuldu. Bir sayfa küçük resmi seçin." },
+    "toast.chooseImageType": { en: "Choose PNG, JPG, JPEG or PDF.", tr: "PNG, JPG, JPEG veya PDF seçin." },
+    "toast.eventFieldsRequired": { en: "Event name, date and hotel are required.", tr: "Etkinlik adı, tarih ve otel zorunludur." },
+    "toast.eventCreatedWithPlan": { en: "Event created. Review the plan, then run Assisted Detection.", tr: "Etkinlik oluşturuldu. Planı inceleyin, ardından Destekli Tespit'i çalıştırın." },
+    "toast.blankEventCreated": { en: "Blank event created. Add plan objects when ready.", tr: "Boş etkinlik oluşturuldu. Hazır olduğunuzda plan nesnelerini ekleyin." },
+    "toast.repeatedPlacementActive": { en: "Repeated placement active. Click the canvas for each object; Esc cancels.", tr: "Tekrarlı yerleştirme açık. Her nesne için tuvale tıklayın; Esc iptal eder." },
+    "toast.repeatedPlacementCancelled": { en: "Repeated placement cancelled.", tr: "Tekrarlı yerleştirme iptal edildi." },
+    "toast.objectAddedChairsOne": { en: "{n} object added with physical chair records.", tr: "{n} nesne fiziksel sandalye kayıtlarıyla eklendi." },
+    "toast.objectsAddedChairs": { en: "{n} objects added with physical chair records.", tr: "{n} nesne fiziksel sandalye kayıtlarıyla eklendi." },
+    "toast.selectObjectsFirst": { en: "Select one or more objects first.", tr: "Önce bir veya daha fazla nesne seçin." },
+    "toast.unlockSelectedFirst": { en: "Unlock every selected object before moving.", tr: "Taşımadan önce seçili tüm nesnelerin kilidini açın." },
+    "toast.groupSeatsShort": { en: "{table} has {n} available chairs; the selected group needs {need}. No assignments changed.", tr: "{table} masasında {n} boş sandalye var; seçili grup {need} sandalye gerektiriyor. Hiçbir atama değişmedi." },
+    "toast.groupMoveRolledBack": { en: "The group move was rolled back.", tr: "Grup taşıma geri alındı." },
+    "toast.importPlanFirst": { en: "Import a floor plan first.", tr: "Önce bir kat planı içe aktarın." },
+    "toast.selectDetectionFirst": { en: "Select at least one detection to confirm.", tr: "Onaylamak için en az bir tespit seçin." },
+    "toast.detectionsConfirmed": { en: "{tables} {tableWord}, {venues} {venueWord} confirmed. Chair coordinates were preserved.", tr: "{tables} masa, {venues} plan nesnesi onaylandı. Sandalye koordinatları korundu." },
+    "word.table": { en: "table", tr: "masa" },
+    "word.tables": { en: "tables", tr: "masa" },
+    "word.venueObject": { en: "venue object", tr: "plan nesnesi" },
+    "word.venueObjects": { en: "venue objects", tr: "plan nesnesi" },
+    "word.object": { en: "object", tr: "nesne" },
+    "word.objects": { en: "objects", tr: "nesne" },
+    "toast.enableTeachFirst": { en: "Enable Teach AI with corrections first.", tr: "Önce düzeltmelerle Yapay Zekâya Öğret'i etkinleştirin." },
+    "toast.verifiedPlanSaved": { en: "Verified plan saved locally with predictions, corrections, rejections and missed detections.", tr: "Doğrulanmış plan; tahminler, düzeltmeler, reddedilenler ve kaçırılan tespitlerle birlikte yerel olarak kaydedildi." },
+    "toast.saveVerifiedFirst": { en: "Save at least one verified plan first.", tr: "Önce en az bir doğrulanmış plan kaydedin." },
+    "toast.calibrationDone": { en: "Local calibration v{v} completed from {n} verified plan(s). No trained model claim is made.", tr: "Yerel kalibrasyon v{v}, {n} doğrulanmış plandan tamamlandı. Eğitilmiş model iddiası yapılmıyor." },
+    "toast.groupConfirmed": { en: "{n} {objectWord} confirmed as {title}.", tr: "{n} nesne \"{title}\" olarak onaylandı." },
+    "toast.outliersRemain": { en: "{n} outlier(s) still need review.", tr: "{n} aykırı nesne incelemeyi bekliyor." },
+    "toast.confirmedOneGroup": { en: "Confirmed as one seating group. Plan now shows {n} dining group(s). Undo is available in Review Center.", tr: "Tek oturma grubu olarak onaylandı. Plan artık {n} yemek grubu gösteriyor. Geri alma İnceleme Merkezi'nde." },
+    "toast.splitIntoTables": { en: "Split into {count} separate tables. Plan now shows {n} dining group(s). Undo is available in Review Center.", tr: "{count} ayrı masaya bölündü. Plan artık {n} yemek grubu gösteriyor. Geri alma İnceleme Merkezi'nde." },
+    "toast.decisionUndone": { en: "Undone: {what} decision reverted.", tr: "Geri alındı: {what} kararı geri döndürüldü." },
+    "toast.decisionOneGroup": { en: "one seating group", tr: "tek oturma grubu" },
+    "toast.decisionSeparate": { en: "separate tables", tr: "ayrı masalar" },
+    "toast.tipsReset": { en: "Onboarding tips will show again.", tr: "İpuçları yeniden gösterilecek." },
+    "toast.planImported": { en: "Floor plan imported locally. Assisted Detection is ready.", tr: "Kat planı yerel olarak içe aktarıldı. Destekli Tespit hazır." },
+    "toast.dismiss": { en: "Dismiss", tr: "Kapat" },
+    "toast.repeated": { en: "Shown {n} times", tr: "{n} kez gösterildi" },
+    "storage.imagesDroppedTitle": { en: "The plan image is NOT stored on this computer", tr: "Plan görseli bu bilgisayarda SAKLANMIYOR" },
+    "storage.imagesDroppedBody": { en: "Tables, guests and seating were saved, but the browser had no room for the large plan image, so it will be missing the next time this event is opened. Download a backup now — it includes the image — or keep the original plan file.", tr: "Masalar, misafirler ve yerleşim kaydedildi; ancak tarayıcıda büyük plan görseline yer yoktu, bu yüzden etkinlik bir sonraki açılışta görselsiz gelecek. Şimdi yedek indirin — görsel yedeğe dahildir — ya da orijinal plan dosyasını saklayın." },
+    "storage.saveFailingSerializeBody": { en: "This session's data could not be prepared for saving, so nothing changed since then is stored. Export the workbook before closing. This notice clears itself as soon as a save succeeds.", tr: "Bu oturumun verisi kayda hazırlanamadı; o andan beri yapılan değişiklikler saklanmıyor. Kapatmadan önce çalışma kitabını dışa aktarın. Bu uyarı ilk başarılı kayıtta kendiliğinden kalkar." },
+    "storage.exportWorkbook": { en: "Export the workbook", tr: "Çalışma kitabını dışa aktar" },
+    "storage.recoveredTitle": { en: "Opened from an automatic recovery point", tr: "Otomatik kurtarma noktasından açıldı" },
+    "storage.recoveredBody": { en: "The saved record was missing, so this session opened the recovery point taken {when}. Anything changed after that moment may not be here — check the latest guests and seating before relying on them.", tr: "Kayıtlı kayıt bulunamadı; bu oturum {when} alınan kurtarma noktasını açtı. O andan sonra yapılan değişiklikler burada olmayabilir — güvenmeden önce son misafirleri ve yerleşimi kontrol edin." },
   };
 
   function currentLang() {
     return (typeof ui !== "undefined" && ui.lang === "tr") ? "tr" : "en";
   }
 
-  // ---- Toast translation -------------------------------------------------
-  // Toasts are raised from ~40 call sites across three files, many with
-  // interpolated data. Rather than rewrite every call, translation happens at
-  // the toast boundary: an exact-match table for fixed messages, then ordered
-  // patterns for the interpolated ones. Anything unmatched passes through in
-  // English -- visible, and therefore fixable, rather than silently wrong.
+  // ---- Toast translation (superseded) --------------------------------------
+  // Translation used to happen here, AFTER the fact: an exact-match table for
+  // fixed English messages, then patterns for interpolated ones, and anything
+  // unmatched reached a Turkish screen in English. Since §17 every toast call
+  // site passes a t() key ("toast.*" above) and toast-discipline refuses a
+  // literal, so nothing English reaches these tables any more. They are left
+  // in place until their removal is recorded with that proof.
   const TOAST_TR = {
     "Guest added.": "Misafir eklendi.",
     "Guest updated.": "Misafir güncellendi.",
@@ -1779,7 +1872,9 @@
     if (vars) for (const k in vars) {
       const v = vars[k];
       const resolved = typeof v === "string" && v.includes(".") && STRINGS[v] ? t(v) : v;
-      str = str.replace(new RegExp(`\\{${k}\\}`, "g"), resolved);
+      // A function replacer: with a replacement STRING, "$&" in a guest's
+      // name became the placeholder itself and "$$" became "$".
+      str = str.replace(new RegExp(`\\{${k}\\}`, "g"), () => resolved);
     }
     return str;
   }
@@ -1787,7 +1882,7 @@
   globalThis.t = t;
   globalThis.MERIT_I18N_LANG = currentLang;
   globalThis.MERIT_I18N_STATUS = {
-    coverage: "Floor Plan (toolbar + canvas + contextual card + Plan Intelligence review + Advanced Diagnostics + Review Center + Teach AI + AI-generated question text), Guests (including the add/edit dialog, which is static markup in index.html re-translated via translateStaticDialogs() on every render()), Seating (both panels), Live Event, Reports, Home/Events, Create Event, the Excel import wizard (including its validation messages), the shared workspace header/tabs/appbar, the fixed planning/arrival status enums, the Guide/User Manual modal (its own bilingual renderGuide() override), and toast messages (translated at the toast boundary; an unmatched string passes through in English so the gap stays visible).",
+    coverage: "Floor Plan (toolbar + canvas + contextual card + Plan Intelligence review + Advanced Diagnostics + Review Center + Teach AI + AI-generated question text), Guests (including the add/edit dialog, which is static markup in index.html re-translated via translateStaticDialogs() on every render()), Seating (both panels), Live Event, Reports, Home/Events, Create Event, the Excel import wizard (including its validation messages), the shared workspace header/tabs/appbar, the fixed planning/arrival status enums, the Guide/User Manual modal (its own bilingual renderGuide() override), and toast messages (every call site passes one t() key since §17 -- tests/suites/toast-discipline.test.mjs refuses a literal; translateToast() at the boundary no longer receives English).",
     notMigrated: ["A handful of Plan Intelligence review-group titles (e.g. \"Round Table\") are generated from internal English type identifiers via titleCase() rather than t(), so they can appear untranslated inside an otherwise-Turkish sentence in Review Center", "Reports XLSX workbook content itself (by design -- exported files stay in the documented English/uppercase business format regardless of UI language, since the workbook is a shared operational artifact, not a UI screen)"],
     note: "Coverage now spans every primary screen's main content, including every dialog and diagnostics panel found in a full re-audit of live (non-overridden) render paths and toast() call sites. The remaining item above is real and flagged, not silently ignored.",
   };

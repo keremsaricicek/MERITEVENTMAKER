@@ -80,8 +80,11 @@ export default async function run({ page, checks, baseUrl }) {
   }, { guestId: setup.guestId, t2: setup.t2 });
   checks.ok(outcome.inMemoryTableId === setup.t1,
     "when render() throws mid-move, the in-memory assignment is rolled back to the original table", outcome);
-  checks.ok(/rolled back/i.test(outcome.toastMsg || ""),
-    "and the operator is told the move was rolled back", outcome.toastMsg);
+  // The message is translated where it is raised (§17), so it is compared
+  // with the key's text in the current language, not with English.
+  const rolledBack = await page.evaluate(() => t("toast.groupMoveRolledBack"));
+  checks.ok(outcome.toastMsg === rolledBack,
+    "and the operator is told the move was rolled back", { got: outcome.toastMsg, expected: rolledBack });
 
   await page.waitForTimeout(500);
   const persistedAfterRollback = await readPersistedAssignment(page, setup.guestId);

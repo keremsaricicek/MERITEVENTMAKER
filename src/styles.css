@@ -414,7 +414,12 @@ dialog{padding:0;border:1px solid #dfdad0;border-radius:var(--radius-lg);backgro
 dialog::backdrop{background:rgba(32,28,20,.44)}
 @supports (transition-behavior:allow-discrete){
   dialog{opacity:0;transform:translateY(6px) scale(.985);transition:opacity var(--dur-base) var(--ease),transform var(--dur-base) var(--ease),display var(--dur-base) allow-discrete,overlay var(--dur-base) allow-discrete}
-  dialog[open]{opacity:1;transform:translateY(0) scale(1)}
+  /* none, not translateY(0) scale(1): any transform makes the dialog the
+     containing block of its fixed children, which put a toast raised inside
+     it INTO the dialog's own box, over its form (measured: the guest dialog's
+     error landed at its lower-left, 700-990px across), instead of in the one
+     place every other toast appears (§17). Renders identically. */
+  dialog[open]{opacity:1;transform:none}
   @starting-style{dialog[open]{opacity:0;transform:translateY(6px) scale(.985)}}
   dialog::backdrop{opacity:0;transition:opacity var(--dur-base) var(--ease),display var(--dur-base) allow-discrete,overlay var(--dur-base) allow-discrete}
   dialog[open]::backdrop{opacity:1}
@@ -518,7 +523,20 @@ dialog::backdrop{background:rgba(32,28,20,.44)}
 .guide-tip{margin-top:12px;padding:10px;border-left:3px solid #4e7da5;border-radius:0 var(--radius-sm) var(--radius-sm) 0;background:#e7eef4;color:#46545f;font-size:9px}
 .guide-warning{border-left-color:#b77e42;background:#f4ece1}
 
-.toast-wrap{position:fixed;right:16px;bottom:16px;z-index:2000;display:flex;flex-direction:column;gap:7px}
+/* §17. Bottom-LEFT, by measurement: a three-toast stack at bottom-right
+   covered 23 controls over six screens at 1920/2560/1440 -- Guests' row
+   actions, and at 1440 the Live door list's No Show buttons. Bottom-left
+   covered none, except on Seating, whose left column is the unassigned-guest
+   queue (and Smart Seating); there the stack starts at the canvas's own left
+   edge, clear of the queue, of the preview card's Apply at the canvas's right,
+   and of the centred status pill. tests/suites/toast-discipline.test.mjs
+   re-measures all of it on every run. */
+.toast-wrap{position:fixed;left:16px;bottom:16px;z-index:2000;display:flex;flex-direction:column;gap:7px}
+body:has(.seat-stage) .toast-wrap{left:302px}
+body:has(.seat-stage) .toast{min-width:0;max-width:340px}
+/* Raised while a modal dialog is open, a toast lives INSIDE that dialog so it
+   is drawn in its top layer rather than under the backdrop. */
+.toast-wrap.in-dialog{position:fixed;left:16px;right:auto;bottom:16px;z-index:1}
 /* Section 35. The Floor Plan's "Add Manually" FAB is bottom-right at
    bottom:20px and 44px tall; the toast stack is fixed at bottom:16px with
    z-index 2000, so it rendered directly ON TOP of that button. The toast an
@@ -529,11 +547,16 @@ dialog::backdrop{background:rgba(32,28,20,.44)}
    unsupported this rule simply does not match and nothing is worse than it
    was. */
 body:has(.planmap-fab) .toast-wrap{bottom:76px}
+/* The stack now sits bottom-left (§17), clear of the FAB; the lift is kept
+   because the canvas's own status readout occupies the same bottom band. */
 /* 10px was below the readable floor for a message the operator has to act on. */
 .toast{min-width:270px;max-width:410px;padding:10px 13px;border:1px solid #ddd9d0;border-left:3px solid var(--blue);border-radius:var(--radius-md);background:#f4f3f0;box-shadow:var(--shadow-3);font-size:12px;line-height:1.45;animation:toastIn var(--dur-slow) var(--ease)}
 @keyframes toastIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 .toast.error{border-left-color:var(--red)}
 .toast.success{border-left-color:var(--green)}
+/* The same message again is one toast that says how often (§17). Drawn, not
+   written into the text, so the message itself stays exactly what was said. */
+.toast[data-count]::after{content:"\00d7" attr(data-count);margin-left:8px;padding:0 5px;border-radius:var(--radius-sm);background:rgba(0,0,0,.06);font-size:11px;font-weight:650;color:var(--muted)}
 .toast.has-action{display:flex;align-items:center;gap:12px}
 .toast-text{flex:1;min-width:0}
 .toast-action{flex:none;padding:5px 11px;border:1px solid var(--blue-soft-strong);border-radius:var(--radius-sm);background:var(--panel);color:var(--blue);font:inherit;font-size:11.5px;font-weight:650;cursor:pointer;transition:background var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease)}

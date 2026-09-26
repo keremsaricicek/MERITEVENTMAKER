@@ -123,7 +123,7 @@
   function canMutate(event, action="change this event"){
     if(!event) return false;
     if(isHistorical(event)){
-      toast(`Historical events are read-only. You cannot ${action}.`, "error", 5200);
+      toast(t("toast.historicalReadOnly",{action}), "error", 5200);
       return false;
     }
     return true;
@@ -325,9 +325,16 @@
   }
   // WHAT THE OPERATOR MUST BE TOLD ABOUT STORAGE, kept until it stops being
   // true -- never only a toast, which disappears before anyone reads it.
-  //   unreadable   the stored record could not be read at boot (see below)
-  //   saveFailing  the last save failed entirely; cleared by the next success
-  globalThis.MERIT_STORAGE_NOTICE={unreadable:null,saveFailing:null,dismissed:false};
+  //   unreadable     the stored record could not be read at boot (see below)
+  //   saveFailing    the last save failed entirely; cleared by the next success.
+  //                  {reason:"serialize"} when the state could not even be
+  //                  turned into a record -- not a storage refusal at all
+  //   imagesDropped  saves succeed only WITHOUT the plan images, so the next
+  //                  open has no plan; cleared by a save that keeps them
+  //   recovered      this session opened an automatic recovery point because
+  //                  the saved record was missing; later changes may be gone
+  // The last three were each told by one toast and nothing else (§17).
+  globalThis.MERIT_STORAGE_NOTICE={unreadable:null,saveFailing:null,dismissed:false,imagesDropped:null,recovered:null};
   // THE STORED RECORD COULD NOT BE READ. It used to be dropped on the floor:
   // the app opened empty with no word said, and the first save wrote the new,
   // almost-empty state over it -- destroying a record that was, more often
@@ -412,9 +419,21 @@
   // every save is a whole snapshot, so the first success after a failure has
   // written everything the failures could not.
   function storageRecovered(){if(MERIT_STORAGE_NOTICE.saveFailing){MERIT_STORAGE_NOTICE.saveFailing=null;if(bootReady)render();}}
+  // The whole payload -- images included -- was stored, so whatever the
+  // "images not stored" notice said is no longer true.
+  function imagesStored(){if(MERIT_STORAGE_NOTICE.imagesDropped){MERIT_STORAGE_NOTICE.imagesDropped=null;if(bootReady)render();}}
+  // Every autosave repeats the strip while the image does not fit, so the
+  // notice and its toast are raised once, when the condition begins -- not
+  // on every keystroke that saves.
+  function imagesDropped(){
+    if(MERIT_STORAGE_NOTICE.imagesDropped)return;
+    MERIT_STORAGE_NOTICE.imagesDropped={at:nowISO(),hidden:false};
+    toast(t("toast.imagesNotStored"),"error",6500);
+    if(bootReady)render();
+  }
   function persistPayload(payload,show){
     return storageProvider.save(payload)
-      .then(()=>{if(show)toast("Saved locally in this browser.","success");autoSnapshot(payload);storageRecovered();})
+      .then(()=>{if(show)toast(t("toast.savedLocally"),"success");autoSnapshot(payload);storageRecovered();imagesStored();})
       .catch(error=>{
         // Large embedded images are the only realistic reason a save this
         // size fails -- strip them and retry once before giving up.
@@ -438,12 +457,12 @@
           console.warn("Could not strip images from the queued payload.",loggableError(parseError));
           throw error;
         }
-        return storageProvider.save(stripped).then(()=>{storageRecovered();toast("Event data was saved, but large images exceeded browser storage.","error",6500);});
+        return storageProvider.save(stripped).then(()=>{storageRecovered();imagesDropped();});
       })
       .catch(error=>{console.warn("StorageProvider save failed entirely.",loggableError(error));
         const first=!MERIT_STORAGE_NOTICE.saveFailing;
         MERIT_STORAGE_NOTICE.saveFailing={at:nowISO()};MERIT_STORAGE_NOTICE.dismissed=false;
-        if(first){toast("Browser storage is full. Export the workbook before closing.","error",6500);if(bootReady)render();}});
+        if(first){toast(t("toast.storageFull"),"error",6500);if(bootReady)render();}});
   }
   // A save that is QUEUED but has not started yet. Each payload is a
   // COMPLETE snapshot of `state`, so a waiting one is not partial work to
@@ -475,7 +494,17 @@
     state.events.forEach(refreshChairOccupancy);
     let payload;
     try{payload=JSON.stringify(state);}
-    catch(error){toast("Browser storage is full. Export the workbook before closing.","error",6500);return Promise.resolve();}
+    // Not a storage refusal: the state could not be turned into a record at
+    // all (a value JSON cannot hold). It used to toast "Browser storage is
+    // full" -- which was not what happened -- and then say nothing more
+    // while every later save failed the same way.
+    catch(error){
+      console.warn("State could not be serialised for saving.",loggableError(error));
+      const first=!MERIT_STORAGE_NOTICE.saveFailing;
+      MERIT_STORAGE_NOTICE.saveFailing={at:nowISO(),reason:"serialize"};
+      if(first){toast(t("toast.notSerializable"),"error",6500);if(bootReady)render();}
+      return Promise.resolve();
+    }
     // COALESCE. The pending slot is already the tail of the queue, so
     // handing it a newer payload keeps last-write-wins exactly: the newest
     // snapshot is still the one that lands, and it still lands last. `show`
@@ -1438,9 +1467,9 @@
   async function handlePlanFile(file){
     if(!file)return;syncSetupFields();const lower=file.name.toLowerCase();
     if(file.type==="application/pdf"||lower.endsWith(".pdf")){
-      try{ui.setupBusy=true;render();const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;newEventDraft.pdfDoc=doc;newEventDraft.pdfName=file.name;newEventDraft.pdfPages=Array.from({length:doc.numPages},(_,i)=>i);ui.setupBusy=false;await selectPdfPage(0);toast(`${doc.numPages} PDF page${doc.numPages===1?"":"s"} rendered locally. Choose a page thumbnail.`,"success",4500);}catch(error){ui.setupBusy=false;render();toast(t("setup.planReadFailed",{reason:userMessage(error,"plan.fileUnreadable")}),"error",6000);}return;
+      try{ui.setupBusy=true;render();const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;newEventDraft.pdfDoc=doc;newEventDraft.pdfName=file.name;newEventDraft.pdfPages=Array.from({length:doc.numPages},(_,i)=>i);ui.setupBusy=false;await selectPdfPage(0);toast(t(doc.numPages===1?"toast.pdfPageOne":"toast.pdfPages",{n:doc.numPages}),"success",4500);}catch(error){ui.setupBusy=false;render();toast(t("setup.planReadFailed",{reason:userMessage(error,"plan.fileUnreadable")}),"error",6000);}return;
     }
-    if(!(file.type==="image/png"||file.type==="image/jpeg"||/\.(png|jpe?g)$/.test(lower)))return toast("Choose PNG, JPG, JPEG or PDF.","error");
+    if(!(file.type==="image/png"||file.type==="image/jpeg"||/\.(png|jpe?g)$/.test(lower)))return toast(t("toast.chooseImageType"),"error");
     let planSrc;try{planSrc=await readImageFile(file);}catch{return toast(t("plan.unreadableImage"),"error",6500);}
     newEventDraft.planSrc=planSrc;newEventDraft.planName=file.name;newEventDraft.pdfDoc=null;newEventDraft.pdfPages=[];render();
   }
@@ -1449,9 +1478,9 @@
     for(const canvas of document.querySelectorAll("[data-pdf-thumb]")){const index=Number(canvas.dataset.pdfThumb),page=await doc.getPage(index+1),v=page.getViewport({scale:.28});canvas.width=Math.ceil(v.width);canvas.height=Math.ceil(v.height);await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;}
   }
   function createBlankEventFromSetup(usePlan){
-    syncSetupFields();const d=newEventDraft;if(!d.name.trim()||!d.date||!d.hotel.trim()){toast("Event name, date and hotel are required.","error");return;}
+    syncSetupFields();const d=newEventDraft;if(!d.name.trim()||!d.date||!d.hotel.trim()){toast(t("toast.eventFieldsRequired"),"error");return;}
     const event=migrateEvent({id:uid("event"),name:d.name.trim(),date:d.date,hotel:d.hotel.trim(),salon:d.salon.trim(),status:d.status,coverImage:d.coverImage,tables:[],venueObjects:[],guests:[],background:{src:usePlan?d.planSrc:"",name:usePlan?d.planName:"",opacity:.34,visible:!!(usePlan&&d.planSrc),locked:true,isDefault:false,scale:100},createdAt:nowISO(),lastModified:nowISO()});
-    state.events.unshift(event);if(globalThis.MeritVenueModel)MeritVenueModel.migrateVenues(state);audit(event,"EVENT_CREATED",{blank:!event.background.src,hotel:event.hotel,salon:event.salon});saveState();ui.activeEventId=event.id;ui.screen="workspace";ui.tab="floor";ui.leftCollapsed=true;render();toast(event.background.src?"Event created. Review the plan, then run Assisted Detection.":"Blank event created. Add plan objects when ready.","success",5000);
+    state.events.unshift(event);if(globalThis.MeritVenueModel)MeritVenueModel.migrateVenues(state);audit(event,"EVENT_CREATED",{blank:!event.background.src,hotel:event.hotel,salon:event.salon});saveState();ui.activeEventId=event.id;ui.screen="workspace";ui.tab="floor";ui.leftCollapsed=true;render();toast(t(event.background.src?"toast.eventCreatedWithPlan":"toast.blankEventCreated"),"success",5000);
   }
   function bindSetup(){
     document.querySelector("[data-setup='cancel']").onclick=()=>{ui.screen="events";render();};
@@ -1982,9 +2011,9 @@
 
   function uniqueNumber(event,prefix,index){let n=index;while(event.tables.some(t=>t.number===prefix+String(n).padStart(2,"0")))n++;return prefix+String(n).padStart(2,"0");}
   function createTable(event,d,x,y,index){const dims=d.type==="round"?[120,120]:d.type==="square"?[105,105]:d.type==="bistro"?[82,72]:[170,86],number=uniqueNumber(event,(d.prefix|| (d.type==="bistro"?"B":"T")).toUpperCase(),index);return syncTableChairs({id:uid("table"),number,type:d.type,x,y,w:dims[0],h:dims[1],capacity:Number(d.chairs)||1,zone:d.type==="bistro"?"BISTRO":d.zone||"MAIN FLOOR",rotation:0,locked:false,z:10,hasPhysicalSeats:true,capacitySource:"HUMAN_CONFIRMED"});}
-  function commitBulk(){syncBulkFields();const event=activeEvent(),d=ui.bulkDraft;if(!canMutate(event,"add plan objects"))return;if(d.placement==="repeated"){ui.repeatPlacement={...d,remaining:Math.max(1,Number(d.quantity)||1),index:1};ui.v8AddOpen=false;render();toast("Repeated placement active. Click the canvas for each object; Esc cancels.","success",5000);return;}const positions=bulkPositions(d);if(!positions.length)return;recordUndo(event);const created=[];positions.forEach((p,i)=>{if(d.kind==="table"){const t=createTable(event,d,p.x,p.y,i+1);event.tables.push(t);created.push(t.id);}else{const sizes={stage:[380,180],bar:[300,70],entrance:[110,40],exit:[90,40],column:[55,55],text:[150,42]},s=sizes[d.type]||[120,50],o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:p.x,y:p.y,w:s[0],h:s[1],rotation:0,locked:false,z:4};event.venueObjects.push(o);created.push(o.id);}});ui.selectedObjectIds=created;ui.selectedObjectId=created[0];ui.v8AddOpen=false;touchEvent(event);render();toast(`${created.length} object${created.length===1?"":"s"} added with physical chair records.`,"success");}
+  function commitBulk(){syncBulkFields();const event=activeEvent(),d=ui.bulkDraft;if(!canMutate(event,"add plan objects"))return;if(d.placement==="repeated"){ui.repeatPlacement={...d,remaining:Math.max(1,Number(d.quantity)||1),index:1};ui.v8AddOpen=false;render();toast(t("toast.repeatedPlacementActive"),"success",5000);return;}const positions=bulkPositions(d);if(!positions.length)return;recordUndo(event);const created=[];positions.forEach((p,i)=>{if(d.kind==="table"){const t=createTable(event,d,p.x,p.y,i+1);event.tables.push(t);created.push(t.id);}else{const sizes={stage:[380,180],bar:[300,70],entrance:[110,40],exit:[90,40],column:[55,55],text:[150,42]},s=sizes[d.type]||[120,50],o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:p.x,y:p.y,w:s[0],h:s[1],rotation:0,locked:false,z:4};event.venueObjects.push(o);created.push(o.id);}});ui.selectedObjectIds=created;ui.selectedObjectId=created[0];ui.v8AddOpen=false;touchEvent(event);render();toast(t(created.length===1?"toast.objectAddedChairsOne":"toast.objectsAddedChairs",{n:created.length}),"success");}
   function placeRepeated(pointerEvent){const r=document.getElementById("canvasViewport").getBoundingClientRect(),d=ui.repeatPlacement,event=activeEvent(),x=(pointerEvent.clientX-r.left-ui.pan.x)/ui.zoom,y=(pointerEvent.clientY-r.top-ui.pan.y)/ui.zoom;if(!d||!canMutate(event,"place plan objects"))return;recordUndo(event);let id;if(d.kind==="table"){const t=createTable(event,d,x-60,y-45,d.index);event.tables.push(t);id=t.id;}else{const o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:x-60,y:y-30,w:120,h:60,rotation:0,locked:false,z:4};event.venueObjects.push(o);id=o.id;}d.remaining--;d.index++;ui.selectedObjectId=id;ui.selectedObjectIds=[id];if(d.remaining<=0)ui.repeatPlacement=null;touchEvent(event);render();}
-  function duplicateSelection(){const event=activeEvent();if(!canMutate(event,"duplicate plan objects"))return;const ids=ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean);if(!ids.length)return toast("Select one or more objects first.");recordUndo(event);const created=[];for(const id of ids){const t=event.tables.find(x=>x.id===id),o=event.venueObjects.find(x=>x.id===id),c=clone(t||o);if(!c)continue;c.id=uid(t?"table":"venue");c.x+=24;c.y+=24;c.locked=false;if(t){c.number=uniqueNumber(event,t.type==="bistro"?"B":"T",1);c.chairs=(c.chairs||[]).map((chair,index)=>({...chair,id:uid("chair"),parentTableId:c.id,seatNumber:index+1,occupancy:null}));event.tables.push(c);}else event.venueObjects.push(c);created.push(c.id);}ui.selectedObjectIds=created;ui.selectedObjectId=created[0]||null;touchEvent(event);render();}
+  function duplicateSelection(){const event=activeEvent();if(!canMutate(event,"duplicate plan objects"))return;const ids=ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean);if(!ids.length)return toast(t("toast.selectObjectsFirst"));recordUndo(event);const created=[];for(const id of ids){const t=event.tables.find(x=>x.id===id),o=event.venueObjects.find(x=>x.id===id),c=clone(t||o);if(!c)continue;c.id=uid(t?"table":"venue");c.x+=24;c.y+=24;c.locked=false;if(t){c.number=uniqueNumber(event,t.type==="bistro"?"B":"T",1);c.chairs=(c.chairs||[]).map((chair,index)=>({...chair,id:uid("chair"),parentTableId:c.id,seatNumber:index+1,occupancy:null}));event.tables.push(c);}else event.venueObjects.push(c);created.push(c.id);}ui.selectedObjectIds=created;ui.selectedObjectId=created[0]||null;touchEvent(event);render();}
   async function deleteSelection(){const event=activeEvent();if(!canMutate(event,"delete plan objects"))return;const ids=new Set(ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean));if(!ids.size)return;const affected=event.guests.filter(g=>ids.has(g.assignment?.tableId));if(!(await ask({title:t("ask.deleteObjectsTitle",{n:ids.size}),body:affected.length?t("ask.deleteObjectsGuests",{n:ids.size,guests:affected.length}):"",confirmLabel:t("ask.delete"),danger:true})))return;recordUndo(event);affected.forEach(g=>SEAT().clear(g));event.tables=event.tables.filter(t=>!ids.has(t.id));event.venueObjects=event.venueObjects.filter(o=>!ids.has(o.id));ui.selectedObjectIds=[];ui.selectedObjectId=null;touchEvent(event);render();}
 
   function startMarquee(e){
@@ -1996,13 +2025,13 @@
     const event=activeEvent();if(!canMutate(event,"move plan objects")||ui.tool!=="select")return;
     if(e.ctrlKey||e.shiftKey){e.preventDefault();e.stopPropagation();ui.selectedObjectIds=ui.selectedObjectIds.includes(id)?ui.selectedObjectIds.filter(x=>x!==id):[...ui.selectedObjectIds,id];ui.selectedObjectId=ui.selectedObjectIds[0]||null;render();return;}
     if(!ui.selectedObjectIds.includes(id))ui.selectedObjectIds=[id];ui.selectedObjectId=id;
-    const selected=ui.selectedObjectIds.map(objectId=>event.tables.find(x=>x.id===objectId)||event.venueObjects.find(x=>x.id===objectId)).filter(Boolean);if(selected.some(o=>o.locked))return toast("Unlock every selected object before moving.","error");
+    const selected=ui.selectedObjectIds.map(objectId=>event.tables.find(x=>x.id===objectId)||event.venueObjects.find(x=>x.id===objectId)).filter(Boolean);if(selected.some(o=>o.locked))return toast(t("toast.unlockSelectedFirst"),"error");
     e.preventDefault();e.stopPropagation();const snap=canvasSnapshot(event),sx=e.clientX,sy=e.clientY,start=selected.map(o=>({o,x:o.x,y:o.y}));let moved=false;
     const move=ev=>{const dx=(ev.clientX-sx)/ui.zoom,dy=(ev.clientY-sy)/ui.zoom;start.forEach(({o,x,y})=>{o.x=ui.snap?Math.round((x+dx)/10)*10:x+dx;o.y=ui.snap?Math.round((y+dy)/10)*10:y+dy;const node=document.querySelector(`[data-object-id="${o.id}"]`);if(node){node.style.left=o.x+"px";node.style.top=o.y+"px";}});moved=true;};
     const up=()=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);if(moved){recordUndo(event,snap);touchEvent(event);}render();};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);
   };
 
-  setTableCapacity = function(event,table,newCap){if(!canMutate(event,"change chair capacity"))return false;newCap=Math.max(1,Math.min(99,Number(newCap)||1));const occupied=tableAssignedPax(event,table.id);if(newCap<occupied){toast(`${table.number} has ${occupied} assigned pax. Capacity cannot drop below occupancy.`,"error",5000);return false;}recordUndo(event);repackTableAssignments(event,table,newCap);table.capacitySource="HUMAN_CONFIRMED";syncTableChairs(table,newCap);touchEvent(event);render();return true;};
+  setTableCapacity = function(event,table,newCap){if(!canMutate(event,"change chair capacity"))return false;newCap=Math.max(1,Math.min(99,Number(newCap)||1));const occupied=tableAssignedPax(event,table.id);if(newCap<occupied){toast(t("toast.capacityBelowPax",{table:table.number,n:occupied}),"error",5000);return false;}recordUndo(event);repackTableAssignments(event,table,newCap);table.capacitySource="HUMAN_CONFIRMED";syncTableChairs(table,newCap);touchEvent(event);render();return true;};
   updateInspectorField = function(event,field,value){if(!canMutate(event,"edit plan objects"))return;original.updateInspectorField(event,field,value);const table=event.tables.find(x=>x.id===ui.selectedObjectId);if(table)syncTableChairs(table);};
   inspectorAction = function(event,action){if(!canMutate(event,`${action} plan objects`))return;if(action==="duplicate")return duplicateSelection();if(action==="delete")return deleteSelection();original.inspectorAction(event,action);};
   deleteSelectedObject = function(){return deleteSelection();};
@@ -2646,9 +2675,9 @@
     // occupants are untouched -- this only blocks writing MORE people onto it.
     const AV=AVAIL();
     if(AV&&AV.isUnavailable(table))return toast(t("avail.cannotSeatToast",{number:formatTableNumber(table.number)}),"error",6000);
-    const locked=guests.find(g=>g.assignment?.locked);if(locked)return toast(`${locked.name}'s assignment is locked.`,"error",5000);
+    const locked=guests.find(g=>g.assignment?.locked);if(locked)return toast(t("toast.assignmentLockedName",{name:locked.name}),"error",5000);
     const used=occupiedSeatIndexes(event,tableId,null);for(const g of guests)if(g.assignment?.tableId===tableId)(g.assignment.seats||[]).forEach(s=>used.delete(Number(s)));
-    let free=Array.from({length:table.capacity},(_,i)=>i).filter(i=>!used.has(i));if(preferred!==null&&free.includes(preferred))free=[preferred,...free.filter(i=>i!==preferred)];const required=guests.reduce((n,g)=>n+paxOf(g),0);if(free.length<required)return toast(`${table.number} has ${free.length} available chairs; the selected group needs ${required}. No assignments changed.`,"error",6000);
+    let free=Array.from({length:table.capacity},(_,i)=>i).filter(i=>!used.has(i));if(preferred!==null&&free.includes(preferred))free=[preferred,...free.filter(i=>i!==preferred)];const required=guests.reduce((n,g)=>n+paxOf(g),0);if(free.length<required)return toast(t("toast.groupSeatsShort",{table:table.number,n:free.length,need:required}),"error",6000);
     // After the capacity check on purpose: asking a supervisor to authorise a
     // move that could not have happened anyway wastes the one thing this
     // mechanism is spending, which is somebody's attention.
@@ -2695,7 +2724,7 @@
       // just threw could throw a second time.
       snapshot.forEach(s=>{SEAT().write(event.guests.find(g=>g.id===s.id),s.assignment);});
       touchEvent(event);
-      toast("The group move was rolled back.","error");
+      toast(t("toast.groupMoveRolledBack"),"error");
     }
   }
   assignGuestToTable = function(guestId,tableId,preferred=null,options=null){assignGuestGroup([guestId],tableId,preferred,options);};
@@ -3429,15 +3458,18 @@
   // is the kind of mistake a non-technical operator cannot recover from. These
   // replace the thin canMutate wrappers that used to delegate to the base
   // implementations -- the guard is kept, the recovery is new.
+  // Through pushToast() like every other toast, so an Undo offer is capped,
+  // held and placed by the same rules -- and is the LAST thing a burst of
+  // confirmations pushes off the screen.
   function toastAction(message,label,onAction,type="info",duration=8000){
-    const wrap=document.getElementById("toastWrap");if(!wrap)return;
     const el=document.createElement("div");el.className="toast has-action "+type;
+    el.setAttribute("role",type==="error"?"alert":"status");
     const text=document.createElement("span");text.className="toast-text";text.textContent=message;
     const btn=document.createElement("button");btn.type="button";btn.className="toast-action";btn.textContent=label;
     let done=false;
-    btn.onclick=()=>{if(done)return;done=true;el.remove();onAction();};
-    el.append(text,btn);wrap.appendChild(el);
-    setTimeout(()=>el.remove(),duration);
+    btn.onclick=()=>{if(done)return;done=true;clearTimeout(el._toastTimer);el.remove();onAction();};
+    el.append(text,btn);
+    pushToast(el,{duration});
   }
   deleteGuest = async function(id){
     const event=activeEvent(),g=event&&event.guests.find(x=>x.id===id);
@@ -4686,7 +4718,7 @@
     // the first run is still going) started a second pipeline that interleaved
     // its writes to event.analysis with the first one's.
     if(ui.analysisBusy)return;
-    const event=activeEvent();if(!canMutate(event,"run plan analysis")||!event.background?.src)return toast("Import a floor plan first.","error");ui.analysisBusy=true;ui.analysisProgress=3;ui.analysisStage=t("analysis.stage.reading");ui.tab="floor";ui.planMode="review";
+    const event=activeEvent();if(!canMutate(event,"run plan analysis")||!event.background?.src)return toast(t("toast.importPlanFirst"),"error");ui.analysisBusy=true;ui.analysisProgress=3;ui.analysisStage=t("analysis.stage.reading");ui.tab="floor";ui.planMode="review";
     // Import -> Confirm timing for the operator test. Local only, and carried
     // on objects that already survive the event migration: the background for
     // the import moment, the analysis for everything after it. A `planTimings`
@@ -5636,7 +5668,7 @@
     touchEvent(event);render();
   }
   function commitCandidates(){
-    const event=activeEvent(),chosen=event.analysis?.candidates.filter(c=>c.selected&&c.status!=="rejected")||[];if(!chosen.length)return toast("Select at least one detection to confirm.","error");
+    const event=activeEvent(),chosen=event.analysis?.candidates.filter(c=>c.selected&&c.status!=="rejected")||[];if(!chosen.length)return toast(t("toast.selectDetectionFirst"),"error");
     // The same verdict runSelfCheck() already reads (analysis.diagnostics.
     // representation.kind==="PHYSICAL") -- one fact, one source. A table
     // committed off a SYMBOLIC plan (or one with no verdict at all, since
@@ -5649,7 +5681,7 @@
       // "we do not know how many this banquette seats" survives leaving the
       // review screen instead of silently becoming zero on the floor plan.
       if(UNVERIFIED_SEATING.has(object.type)){object.seats=c.seats??null;object.seatsConfidence=c.seats==null?"unverified":"verified";}
-      event.venueObjects.push(object);c.committedId=object.id;venues++;}c.status="confirmed";}if(event.analysis.timings)event.analysis.timings.confirmedAtMs=Date.now();recordOperatorAction(event,"confirm-plan",chosen.map(c=>c.id));touchEvent(event);ui.tab="floor";ui.planMode="plan";render();toast(`${tables} table${tables===1?"":"s"}, ${venues} venue object${venues===1?"":"s"} confirmed. Chair coordinates were preserved.`,"success",6000);
+      event.venueObjects.push(object);c.committedId=object.id;venues++;}c.status="confirmed";}if(event.analysis.timings)event.analysis.timings.confirmedAtMs=Date.now();recordOperatorAction(event,"confirm-plan",chosen.map(c=>c.id));touchEvent(event);ui.tab="floor";ui.planMode="plan";render();toast(t("toast.detectionsConfirmed",{tables,venues,tableWord:t(tables===1?"word.table":"word.tables"),venueWord:t(venues===1?"word.venueObject":"word.venueObjects")}),"success",6000);
   }
   function bindReviewDrawing(){const scene=document.getElementById("analysisScene");if(!scene||!ui.reviewDrawMode)return;scene.onpointerdown=e=>{if(e.target!==scene&&e.target.tagName!=="IMG")return;e.preventDefault();const r=scene.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top,box=document.createElement("div");box.className="candidate-box selected";scene.appendChild(box);const move=ev=>{const x=ev.clientX-r.left,y=ev.clientY-r.top;Object.assign(box.style,{left:Math.min(sx,x)+"px",top:Math.min(sy,y)+"px",width:Math.abs(x-sx)+"px",height:Math.abs(y-sy)+"px"});};const up=ev=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);const x=Math.min(sx,ev.clientX-r.left)/r.width*100,y=Math.min(sy,ev.clientY-r.top)/r.height*100,w=Math.abs(ev.clientX-r.left-sx)/r.width*100,h=Math.abs(ev.clientY-r.top-sy)/r.height*100;if(w>1&&h>1){const event=activeEvent();const c={id:uid("candidate"),kind:"table",type:"rectangle",x,y,w,h,rotation:0,confidence:1,status:"unreviewed",selected:true,missed:true,chairDetections:[],evidence:{geometry:"manual",chairs:0,repetition:0}};event.analysis.candidates.push(c);event.analysis.missed.push(c.id);rememberCorrection(event,c,{manual:true});captureTrainingExample(event,c,{decisionType:"missedObject",note:"drawn by the operator on a region the detector never proposed"});ui.selectedCandidateId=c.id;ui.reviewDrawMode=false;touchEvent(event);}render();};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);};}
   // ---- dataset export (Gates H-J) ----------------------------------------
@@ -5728,8 +5760,8 @@
   }
   globalThis.MERIT_TRAINING_EXPORT=buildTrainingDatasetExport;
 
-  function saveVerified(){const event=activeEvent();if(!ui.teachAI)return toast("Enable Teach AI with corrections first.","error");const a=event.analysis;if(!a)return;state.verifiedExamples.push({id:uid("verified"),eventId:event.id,savedAt:nowISO(),engine:a.engine,trainedModel:false,threshold:a.threshold,imageSize:[a.imageWidth,a.imageHeight],predictions:a.candidates.map(clone),groundTruth:a.candidates.filter(c=>c.status!=="rejected").map(clone),rejected:a.candidates.filter(c=>c.status==="rejected").map(c=>c.id),missed:[...a.missed],hardExample:a.missed.length>0||a.candidates.some(c=>c.status==="rejected")});saveState();toast("Verified plan saved locally with predictions, corrections, rejections and missed detections.","success",6000);}
-  function improveAI(){if(!state.verifiedExamples.length)return toast("Save at least one verified plan first.","error");const samples=state.verifiedExamples.flatMap(v=>v.groundTruth||[]),avg=samples.length?samples.reduce((n,c)=>n+(c.confidence||0),0)/samples.length:0;state.calibration={version:(state.calibration?.version||0)+1,updatedAt:nowISO(),examples:state.verifiedExamples.length,objects:samples.length,recommendedConfidence:Number(Math.max(.35,Math.min(.8,avg*.85)).toFixed(2)),trainedModel:false,label:"Local assisted-detection calibration; not a trained neural model"};saveState();toast(`Local calibration v${state.calibration.version} completed from ${state.verifiedExamples.length} verified plan(s). No trained model claim is made.`,"success",6500);}
+  function saveVerified(){const event=activeEvent();if(!ui.teachAI)return toast(t("toast.enableTeachFirst"),"error");const a=event.analysis;if(!a)return;state.verifiedExamples.push({id:uid("verified"),eventId:event.id,savedAt:nowISO(),engine:a.engine,trainedModel:false,threshold:a.threshold,imageSize:[a.imageWidth,a.imageHeight],predictions:a.candidates.map(clone),groundTruth:a.candidates.filter(c=>c.status!=="rejected").map(clone),rejected:a.candidates.filter(c=>c.status==="rejected").map(c=>c.id),missed:[...a.missed],hardExample:a.missed.length>0||a.candidates.some(c=>c.status==="rejected")});saveState();toast(t("toast.verifiedPlanSaved"),"success",6000);}
+  function improveAI(){if(!state.verifiedExamples.length)return toast(t("toast.saveVerifiedFirst"),"error");const samples=state.verifiedExamples.flatMap(v=>v.groundTruth||[]),avg=samples.length?samples.reduce((n,c)=>n+(c.confidence||0),0)/samples.length:0;state.calibration={version:(state.calibration?.version||0)+1,updatedAt:nowISO(),examples:state.verifiedExamples.length,objects:samples.length,recommendedConfidence:Number(Math.max(.35,Math.min(.8,avg*.85)).toFixed(2)),trainedModel:false,label:"Local assisted-detection calibration; not a trained neural model"};saveState();toast(t("toast.calibrationDone",{v:state.calibration.version,n:state.verifiedExamples.length}),"success",6500);}
   function bindReview(){
     const ev=activeEvent();
     document.querySelectorAll("[data-budget-open]").forEach(b=>b.onclick=()=>openReviewQueue(ev,b.dataset.budgetOpen));
@@ -5762,7 +5794,7 @@
         // from the plan as it is now, not as it was at import.
         recomputePlanIntelligence(event);
         touchEvent(event);ui.reviewCenterOpen=group.outlierIds.length>0;render();
-        toast(`${strong.length} object${strong.length===1?"":"s"} confirmed as ${group.title}. ${group.outlierIds.length?group.outlierIds.length+" outlier(s) still need review.":""}`,"success",5000);
+        toast(t("toast.groupConfirmed",{n:strong.length,objectWord:t(strong.length===1?"word.object":"word.objects"),title:group.title})+(group.outlierIds.length?" "+t("toast.outliersRemain",{n:group.outlierIds.length}):""),"success",5000);
       } else if(b.dataset.reviewgroupAction==="inspect"){
         ui.activeReviewGroupId=group.id;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=false;render();
       }
@@ -5790,8 +5822,8 @@
       const newPi=event.analysis.planIntelligence;
       touchEvent(event);ui.activeQuestionId=null;render();
       toast(decision==="merged"
-        ?`Confirmed as one seating group. Plan now shows ${newPi.planSummary.diningGroups} dining group(s). Undo is available in Review Center.`
-        :`Split into ${memberIds.length} separate tables. Plan now shows ${newPi.planSummary.diningGroups} dining group(s). Undo is available in Review Center.`,
+        ?t("toast.confirmedOneGroup",{n:newPi.planSummary.diningGroups})
+        :t("toast.splitIntoTables",{count:memberIds.length,n:newPi.planSummary.diningGroups}),
         "success",6000);
     });
     document.querySelectorAll("[data-review-decision-action='undo-correction']").forEach(b=>b.onclick=()=>{
@@ -5803,7 +5835,7 @@
       const event=activeEvent();if(!canMutate(event,"undo a plan decision"))return;
       const decisions=event.analysis?.groupingDecisions;if(!decisions?.length)return;
       const undone=decisions.pop();recomputePlanIntelligence(event);touchEvent(event);render();
-      toast(`Undone: ${undone.decision==="merged"?"one seating group":"separate tables"} decision reverted.`,"success",5000);
+      toast(t("toast.decisionUndone",{what:t(undone.decision==="merged"?"toast.decisionOneGroup":"toast.decisionSeparate")}),"success",5000);
     });
     bindReviewDrawing();
   }
@@ -6048,8 +6080,26 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
     if(n.saveFailing){
       parts.push(`<div class="schema-future-banner" data-storage-notice="save-failing" role="alert">${icon("alert")}<div>
         <b>${esc(t("storage.saveFailingTitle"))}</b>
-        <span>${esc(t("storage.saveFailingBody"))}</span>
-        <span class="storage-notice-actions"><button class="btn sm" data-storage-action="backup">${esc(t("storage.downloadBackup"))}</button></span>
+        <span>${esc(t(n.saveFailing.reason==="serialize"?"storage.saveFailingSerializeBody":"storage.saveFailingBody"))}</span>
+        <span class="storage-notice-actions">${n.saveFailing.reason==="serialize"
+          // A backup is the same record that could not be made; the workbook
+          // is built from the screen, not from it.
+          ?`<button class="btn sm" data-storage-action="workbook">${esc(t("storage.exportWorkbook"))}</button>`
+          :`<button class="btn sm" data-storage-action="backup">${esc(t("storage.downloadBackup"))}</button>`}</span>
+      </div></div>`);
+    }
+    if(n.imagesDropped&&!n.imagesDropped.hidden){
+      parts.push(`<div class="schema-future-banner" data-storage-notice="images-dropped" role="alert">${icon("alert")}<div>
+        <b>${esc(t("storage.imagesDroppedTitle"))}</b>
+        <span>${esc(t("storage.imagesDroppedBody"))}</span>
+        <span class="storage-notice-actions"><button class="btn sm" data-storage-action="backup">${esc(t("storage.downloadBackup"))}</button><button class="btn sm" data-storage-action="dismiss">${esc(t("storage.dismiss"))}</button></span>
+      </div></div>`);
+    }
+    if(n.recovered){
+      parts.push(`<div class="schema-future-banner" data-storage-notice="recovered" role="alert">${icon("alert")}<div>
+        <b>${esc(t("storage.recoveredTitle"))}</b>
+        <span>${esc(t("storage.recoveredBody",{when:relativeTime(n.recovered.at)}))}</span>
+        <span class="storage-notice-actions"><button class="btn sm" data-storage-action="dismiss">${esc(t("storage.dismiss"))}</button></span>
       </div></div>`);
     }
     return parts.join("");
@@ -6065,7 +6115,16 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
       setTimeout(()=>URL.revokeObjectURL(url),4000);
     }else if(a==="restore"){document.getElementById("backupFileInput")?.click();}
     else if(a==="backup"){exportBackup();}
-    else if(a==="dismiss"){n.dismissed=true;render();}
+    else if(a==="workbook"){exportTablePlanXLSX();}
+    else if(a==="dismiss"){
+      // Hide THIS notice: each one is dismissed on its own, and hiding one
+      // never hides another that is still true.
+      const kind=b.closest("[data-storage-notice]")?.dataset.storageNotice;
+      if(kind==="recovered")n.recovered=null;
+      else if(kind==="images-dropped"&&n.imagesDropped)n.imagesDropped.hidden=true;
+      else n.dismissed=true;
+      render();
+    }
   });
   function futureSchemaBannerHTML(){
     const g=globalThis.MERIT_SCHEMA_GUARD;
@@ -6135,11 +6194,11 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
     ]:[
       ["Events","Upcoming work appears as cards; past and Completed events are locked in History. Double-click a history row."],["Plans and PDF","PNG/JPG/PDF opens locally. Select PDF pages from thumbnails; no file is uploaded."],["Assisted Detection","Classical computer vision proposes candidates. It is not a trained AI model, and nothing is added until confirmation."],["Seating","Use Ctrl/Shift for multi-selection. Group moves validate as one transaction; insufficient capacity changes nothing."],["Live Operations","No Show preserves the planned assignment but releases live capacity. Empty Chairs opens the red-glow operational view."],["Excel and Storage","XLSX works offline. Table Plan, Guest List and Unassigned sheets remain available; browser autosave is automatic."]
     ];root.innerHTML=`<aside class="guide-nav"><div class="guide-brand"><strong>MERIT EVENT MAKER</strong><span>${title}</span></div></aside><section class="guide-main"><header class="guide-top"><h2>${title}</h2><div class="guide-actions"><div class="lang-toggle"><button data-guide-lang="en" class="${!tr?"active":""}">EN</button><button data-guide-lang="tr" class="${tr?"active":""}">TR</button></div><button class="btn quiet" data-guide-reset-onboarding>${tr?"İpuçlarını yeniden göster":"Show tips again"}</button><button class="btn" data-guide-print>${icon("print")}Print / PDF</button><button class="btn icon-only" data-guide-close aria-label="${esc(t("a11y.close"))}" title="${esc(t("a11y.close"))}">${icon("x")}</button></div></header><div class="guide-content"><div class="guide-hero"><div class="kicker">MERIT ENTERTAINMENT · V8 BROWSER REVIEW</div><h1>${title}</h1><p>${tr?"Masa planı, fiziksel koltuklar, misafirler, canlı operasyon ve doğrulanmış plan düzeltmeleri için çevrimdışı başvuru.":"Offline reference for plan objects, physical chairs, guests, live operations and verified plan corrections."}</p></div><div class="guide-v8-grid">${cards.map(([h,p])=>`<article class="guide-v8-card"><h3>${h}</h3><p>${p}</p></article>`).join("")}</div><div class="guide-tip">${tr?"Bu sürüm tarayıcı incelemesidir; EXE veya masaüstü çalışma zamanı içermez.":"This is a browser review build; it does not include an EXE or desktop runtime."}</div></div></section>`;root.querySelectorAll("[data-guide-lang]").forEach(b=>b.onclick=()=>{ui.guideLang=b.dataset.guideLang;renderGuide();});root.querySelector("[data-guide-close]").onclick=()=>document.getElementById("guideDialog").close();root.querySelector("[data-guide-print]").onclick=()=>window.print();
-    root.querySelector("[data-guide-reset-onboarding]").onclick=()=>{resetOnboarding();toast(tr?"İpuçları yeniden gösterilecek.":"Onboarding tips will show again.","success");};
+    root.querySelector("[data-guide-reset-onboarding]").onclick=()=>{resetOnboarding();toast(t("toast.tipsReset"),"success");};
   };
   openGuide = function(){renderGuide();document.getElementById("guideDialog").showModal();};
 
-  const oldFloorInput=document.getElementById("floorPlanFile"),freshFloorInput=oldFloorInput.cloneNode(true);oldFloorInput.replaceWith(freshFloorInput);freshFloorInput.addEventListener("change",async e=>{const file=e.target.files[0],event=activeEvent();if(!file||!event||!canMutate(event,"replace the floor plan"))return;try{let src,name=file.name;if(file.type==="application/pdf"||file.name.toLowerCase().endsWith(".pdf")){const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise,pageNumber=doc.numPages>1?await ask({title:t("ask.pdfPageTitle"),body:t("ask.pdfPageBody",{n:doc.numPages}),confirmLabel:t("ask.usePage"),number:{label:t("ask.pdfPageLabel"),min:1,max:doc.numPages,value:1}}):1;if(pageNumber===null)return;const page=await doc.getPage(pageNumber),v=page.getViewport({scale:2.6}),canvas=document.createElement("canvas");canvas.width=Math.ceil(v.width);canvas.height=Math.ceil(v.height);await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;src=canvas.toDataURL("image/png",.96);name=`${file.name} · page ${pageNumber}`;}else src=await readImageFile(file);recordUndo(event);event.background={src,name,opacity:.34,visible:true,locked:true,isDefault:false,scale:100,importedAtMs:Date.now()};touchEvent(event);render();toast("Floor plan imported locally. Assisted Detection is ready.","success");}catch(error){toast(t("plan.replaceFailed",{reason:userMessage(error,"plan.fileUnreadable")}),"error",6500);}finally{e.target.value="";}});
+  const oldFloorInput=document.getElementById("floorPlanFile"),freshFloorInput=oldFloorInput.cloneNode(true);oldFloorInput.replaceWith(freshFloorInput);freshFloorInput.addEventListener("change",async e=>{const file=e.target.files[0],event=activeEvent();if(!file||!event||!canMutate(event,"replace the floor plan"))return;try{let src,name=file.name;if(file.type==="application/pdf"||file.name.toLowerCase().endsWith(".pdf")){const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise,pageNumber=doc.numPages>1?await ask({title:t("ask.pdfPageTitle"),body:t("ask.pdfPageBody",{n:doc.numPages}),confirmLabel:t("ask.usePage"),number:{label:t("ask.pdfPageLabel"),min:1,max:doc.numPages,value:1}}):1;if(pageNumber===null)return;const page=await doc.getPage(pageNumber),v=page.getViewport({scale:2.6}),canvas=document.createElement("canvas");canvas.width=Math.ceil(v.width);canvas.height=Math.ceil(v.height);await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;src=canvas.toDataURL("image/png",.96);name=`${file.name} · page ${pageNumber}`;}else src=await readImageFile(file);recordUndo(event);event.background={src,name,opacity:.34,visible:true,locked:true,isDefault:false,scale:100,importedAtMs:Date.now()};touchEvent(event);render();toast(t("toast.planImported"),"success");}catch(error){toast(t("plan.replaceFailed",{reason:userMessage(error,"plan.fileUnreadable")}),"error",6500);}finally{e.target.value="";}});
 
   // ---- Focus return after a dialog closes -----------------------------
   // A native <dialog> restores focus to whatever had it when showModal() ran.
@@ -6283,7 +6342,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
       }
       return;
     }
-    if(e.key==="Escape"){if(ui.freezeDraft)ui.freezeDraft=null;if(ui.reviewQueue){ui.reviewQueue=null;ui.selectedCandidateId=null;}if(ui.repeatPlacement){ui.repeatPlacement=null;toast("Repeated placement cancelled.");}if(ui.focusMode)ui.focusMode=false;if(ui.reviewDrawMode)ui.reviewDrawMode=false;if(ui.activeQuestionId)ui.activeQuestionId=null;if(ui.reviewCenterOpen)ui.reviewCenterOpen=false;render();return;}
+    if(e.key==="Escape"){if(ui.freezeDraft)ui.freezeDraft=null;if(ui.reviewQueue){ui.reviewQueue=null;ui.selectedCandidateId=null;}if(ui.repeatPlacement){ui.repeatPlacement=null;toast(t("toast.repeatedPlacementCancelled"));}if(ui.focusMode)ui.focusMode=false;if(ui.reviewDrawMode)ui.reviewDrawMode=false;if(ui.activeQuestionId)ui.activeQuestionId=null;if(ui.reviewCenterOpen)ui.reviewCenterOpen=false;render();return;}
     if(ui.screen!=="workspace"||ui.tab!=="floor"||isHistorical(activeEvent()))return;
     if((e.key==="Delete"||e.key==="Backspace")&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)){e.preventDefault();deleteSelection();return;}
     if(e.ctrlKey&&e.key.toLowerCase()==="d"){e.preventDefault();duplicateSelection();return;}
@@ -6296,10 +6355,12 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   // every render() after this one is driven by user interaction and needs
   // nothing more than the in-memory `state` object already being current.
   loadV8Async().then(({data,recoveredAt})=>{
-    state=data;bootReady=true;render();
     // Never a silent swap: if the primary record could not be read at all
     // and an automatic snapshot stood in for it, the operator is told
-    // plainly, including that it may not hold the most recent changes.
+    // plainly, including that it may not hold the most recent changes --
+    // in a notice that stays until they put it away, not only a toast.
+    if(recoveredAt)MERIT_STORAGE_NOTICE.recovered={at:recoveredAt};
+    state=data;bootReady=true;render();
     if(recoveredAt)toast(t("recovery.bootRecoveredToast",{when:relativeTime(recoveredAt)}),"error",9000);
   }).catch(error=>{
     console.error("Storage load failed entirely; starting from a blank state.",loggableError(error));

@@ -19,7 +19,11 @@ export async function installStorageFaults(page, initial = {}) {
     IDBObjectStore.prototype.put = function (value, key) {
       // Only the product's own records: the suite's direct writes go through
       // `window.__faultsBypass`.
-      if (!window.__faultsBypass && window.__faults.put === "quota")
+      // "quota": every write is refused. A NUMBER: only a string record longer
+      // than that is refused — the realistic shape, where a large plan image
+      // does not fit and the same record without it does.
+      const f = window.__faults.put;
+      if (!window.__faultsBypass && (f === "quota" || (typeof f === "number" && typeof value === "string" && value.length > f)))
         throw new DOMException("The quota has been exceeded.", "QuotaExceededError");
       return put.call(this, value, key);
     };
