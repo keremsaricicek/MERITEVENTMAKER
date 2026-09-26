@@ -979,6 +979,58 @@ step, not re-read — **No regressions. 0 improvement(s), 0 note(s)** both
 times, which is the whole claim a behaviour-preserving move is allowed to
 make.
 
+### M. §3B measured, §3D/§3E started with the prerequisite the inventory named
+
+**§3B — Split B was measured, not started.** `scripts/stage-boundaries.mjs`
+counts, per stage of `detect()`, what it declares, hands forward, and inherits.
+`chairs` (666 lines) and `tables` (1,241) are **78%** of the function;
+`(assemble)` inherits from every stage and is the return value, not a stage;
+`fillMask` hands nothing forward, which is the shape of a real cut; and the
+`chairs → tables` ordering is measured rather than asserted — `chairModal`,
+`chairUniform`, `chairs` and `chairSource` all cross it.
+
+The crossing count is reported as an **upper bound (~73)** and the tool says so
+in its own output. Scope in JavaScript cannot be read with regexes: two
+refinements took it from 92 to 73 and the remainder needs a real parser.
+Publishing 73 as a count would be a precise-looking number standing on an
+imprecise method. Split B stays a design job, now with the design stated: the
+two large stages cannot leave `detect()` until what they hand forward becomes an
+explicit structure. ~1,900 lines with a detector at the end of it — its own
+session, `npm run benchmark` after every step.
+
+**§3D/§3E — the prerequisite first.** `benchmarks/CODE-INVENTORY.md` §3 named
+one missing test as "a prerequisite for any work in this area":
+`commitCandidates` writes confirmed chair coordinates directly rather than
+through `syncTableChairs`, deliberately, and **nothing protected that**. A
+"keep capacity and chairs in sync" cleanup would replace every confirmed chair
+with a synthetic ring, and no suite would fail.
+
+New suite `confirmed-chair-coordinates` (business, fast, 21 checks) drives the
+real review-screen confirm button and asserts the committed chairs **exactly**,
+on position and rotation, against coordinates derived from the same inputs. The
+planted chairs are deliberately irregular — three along one side at uneven
+spacing, one alone opposite — because a generator's four points at 90° on a
+circle are plausible, tidy, and a fabrication nobody can spot on the floor plan.
+It also covers the negative half: a table committed off a SYMBOLIC plan carries
+**no chair objects at all**, with `capacitySource: "UNKNOWN"`.
+
+**The mutation is the exact refactor the inventory warned about**, and it
+proves the claim in full: routing through `syncTableChairs` replaces the
+detector's coordinates with a ring at 0°/90°/180°/270°, the new suite fails
+eight checks — and **`physical-logical-seat-separation`, the existing suite in
+this area, passes**.
+
+Two things the suite had to learn, both recorded in it: the review screen is
+`ui.tab = "floor"`, not `"plan"`; and a hand-built analysis must carry the
+fields the real pipeline writes (`comparison`, `memory*`, `ocr`, `timings`) or
+`render()` throws before the control exists. `planIntelligence` is built with
+the product's own published `buildPlanIntelligence` rather than hand-shaped, so
+the suite cannot pass against a structure the product would never produce.
+
+**Gates.** `npm run test:all` **73 / 73 suites · 2,373 / 2,373 checks**.
+`build:offline` · `build:offline-full` · `verify:offline` **27 / 27**. No
+production file changed in this step.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |

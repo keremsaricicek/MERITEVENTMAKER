@@ -248,14 +248,32 @@ Measured write sites:
 | `app-v8.js:8404` (`duplicateEvent`) | `chairs` | **DO NOT MERGE** — same, for a duplicated event |
 | `app-v8.js:8080` (`commitCandidates`) | both | **DO NOT MERGE** — writes detected chair coordinates **verbatim**, then sets `capacity = chairs.length`. `.claude/rules/ai.md`: "Confirmed chair coordinates from a candidate are written verbatim — never regenerated into a synthetic ring." |
 
-All three exceptions are correct. The problem is that **none of them is
-protected by a test**: if a future de-duplication pass routed
+All three exceptions are correct, and the problem used to be that **none of
+them was protected by a test**: if a future de-duplication pass routed
 `commitCandidates` through `syncTableChairs` to "keep capacity and chairs in
 sync," every confirmed chair would be replaced by a synthetic ring, the
 detector's real coordinates would be lost, and no suite would fail.
 
-The missing test is listed against A24 in `APP-V8-OWNERSHIP-MAP.md`. It is a
-prerequisite for any work in this area.
+**`commitCandidates` is now covered** by
+`tests/suites/confirmed-chair-coordinates.test.mjs`, which drives the real
+review-screen confirm button and asserts the committed chairs EXACTLY, on
+position and rotation, against coordinates derived from the same inputs rather
+than copied from a passing run. The chairs it plants are deliberately
+irregular — three along one side at uneven spacing, one alone opposite —
+because a generator produces four points at 90° on a circle, which is
+plausible, tidy, and a fabrication an operator cannot spot on the floor plan.
+
+**The mutation is the exact refactor named above**, and it confirms the whole
+claim: routing through `syncTableChairs` replaces the detector's coordinates
+with a ring at 0°/90°/180°/270°, the new suite fails eight checks — and
+`physical-logical-seat-separation`, the existing suite in this area, **passes**.
+
+The suite also covers the negative half through the same path: a table
+committed off a SYMBOLIC plan carries **no chair objects at all**, with
+`capacitySource: "UNKNOWN"` rather than a ring flagged as unreal.
+
+`duplicateSelection` and `duplicateEvent` remain uncovered; both are
+**DO NOT MERGE** for the same reason and neither is on the detector's path.
 
 ---
 
