@@ -1,4 +1,18 @@
   "use strict";
+  // pdf.js 5.x calls Map.prototype.getOrInsertComputed -- a JavaScript method
+  // this browser generation does not have yet (Chromium 141 lacks it). Without
+  // it, getting ANY page of ANY PDF threw "getOrInsertComputed is not a
+  // function": PDF plan import was broken in the new-event form and in
+  // Replace Plan alike, and no suite rendered a PDF page, so nothing said so
+  // (found by tests/suites/native-dialogs.test.mjs). The standard semantics,
+  // defined only where the browser has none; this classic script runs before
+  // the deferred pdf.js module in all three builds.
+  for(const C of [Map,WeakMap]){
+    if(!C.prototype.getOrInsertComputed)Object.defineProperty(C.prototype,"getOrInsertComputed",{configurable:true,writable:true,
+      value(key,compute){if(this.has(key))return this.get(key);const v=compute(key);this.set(key,v);return v;}});
+    if(!C.prototype.getOrInsert)Object.defineProperty(C.prototype,"getOrInsert",{configurable:true,writable:true,
+      value(key,value){if(!this.has(key))this.set(key,value);return this.get(key);}});
+  }
   const DEFAULT_FLOOR_PLAN = "";
   const STORAGE_KEY="meritEventMaker.v1",WORLD={width:1355,height:788},ZONES=["VIP FRONT","VIP","MAIN FLOOR","BISTRO","RESERVED"];
   // lang/guideLang default to "tr": this is Turkish hospitality/casino
@@ -72,6 +86,73 @@
   function physicalTables(event){return MeritSeatModel.seatableTables(event)}
   function seatingStats(event){const physical=physicalTables(event),emptyTables=physical.filter(t=>tableAssignedPax(event,t.id)===0).length,emptyChairs=physical.reduce((n,t)=>n+Math.max(0,t.capacity-tableAssignedPax(event,t.id)),0);return{emptyTables,emptyChairs,physicalTables:physical.length}}
   function eventMetrics(event){const seated=event.tables.filter(t=>t.type!=="bistro").reduce((n,t)=>n+t.capacity,0),bistro=event.tables.filter(t=>t.type==="bistro").reduce((n,t)=>n+t.capacity,0),guests=event.guests.reduce((n,g)=>n+paxOf(g),0),assigned=event.guests.filter(g=>g.assignment).reduce((n,g)=>n+paxOf(g),0);return{seated,bistro,total:seated+bistro,guests,assigned,available:Math.max(0,seated+bistro-assigned),unassigned:guests-assigned}}
+  // THE PRODUCT'S OWN CONFIRM AND NUMBER DIALOG, in place of the browser's
+  // confirm() and prompt(): those cannot be styled, translated as a whole, or
+  // held to the product's focus rules, and their semantics vary by browser
+  // (merit-ui-quality-gates, native dialogs). One <dialog>, created at load so
+  // the focus-return mechanism knows it exists; every text in it is set with
+  // textContent, so a guest's name inside a question can never become markup.
+  //   ask({title, body, confirmLabel, danger})          -> Promise<boolean>
+  //   ask({title, body, number:{label,min,max,value}})  -> Promise<number|null>
+  // Escape and Cancel always mean NO. A destructive question opens with focus
+  // on Cancel; a number opens in its field, and an out-of-range answer is
+  // refused IN the dialog with the reason tied to the field.
+  const askDialog=(()=>{
+    const d=document.createElement("dialog");
+    d.id="meritAskDialog";d.className="dialog-sm ask-dialog";
+    d.setAttribute("aria-labelledby","meritAskTitle");d.setAttribute("aria-describedby","meritAskBody");
+    const form=document.createElement("div");form.className="ask-form";
+    const head=document.createElement("div");head.className="dialog-head";
+    const h=document.createElement("h2");h.id="meritAskTitle";head.appendChild(h);
+    const body=document.createElement("div");body.className="dialog-body";
+    const p=document.createElement("p");p.id="meritAskBody";p.className="ask-body";
+    const field=document.createElement("div");field.className="field ask-field";field.hidden=true;
+    const label=document.createElement("label");label.htmlFor="meritAskInput";label.id="meritAskLabel";
+    const input=document.createElement("input");input.id="meritAskInput";input.type="number";input.inputMode="numeric";input.setAttribute("aria-describedby","meritAskError");
+    const err=document.createElement("span");err.id="meritAskError";err.className="ask-error";
+    field.append(label,input,err);body.append(p,field);
+    const foot=document.createElement("div");foot.className="dialog-foot";
+    const no=document.createElement("button");no.type="button";no.className="btn";no.dataset.ask="cancel";
+    const ok=document.createElement("button");ok.type="button";ok.className="btn primary";ok.dataset.ask="confirm";
+    foot.append(no,ok);form.append(head,body,foot);d.appendChild(form);
+    document.body.appendChild(d);
+    return d;
+  })();
+  // For callers whose own local `t` is a table: the translation function by another name.
+  const t_=(...args)=>t(...args);
+  let pendingAsk=null;
+  function ask({title,body="",confirmLabel,cancelLabel,danger=false,number=null}){
+    // A question still open when a new one arrives is answered NO, never left
+    // unresolved: its caller must not wait forever or act on a stale yes.
+    if(pendingAsk)pendingAsk();
+    const d=askDialog,$=s=>d.querySelector(s);
+    const ok=$('[data-ask="confirm"]'),no=$('[data-ask="cancel"]'),field=$(".ask-field"),input=$("#meritAskInput"),err=$("#meritAskError");
+    $("#meritAskTitle").textContent=title;$("#meritAskBody").textContent=body;
+    ok.textContent=confirmLabel||t("ask.confirm");no.textContent=cancelLabel||t("ask.cancel");
+    ok.className="btn "+(danger?"danger":"primary");
+    field.hidden=!number;err.textContent="";input.removeAttribute("aria-invalid");
+    if(number){$("#meritAskLabel").textContent=number.label;input.min=number.min;input.max=number.max;input.value=number.value??"";}
+    if(d.open)d.close();
+    return new Promise(resolve=>{
+      const finish=v=>{pendingAsk=null;ok.onclick=no.onclick=input.onkeydown=null;d.removeEventListener("cancel",onCancel);if(d.open)d.close();resolve(v);};
+      pendingAsk=()=>finish(number?null:false);
+      const accept=()=>{
+        if(!number)return finish(true);
+        const raw=String(input.value).trim(),n=Number(raw);
+        if(!/^\d+$/.test(raw)||n<number.min||n>number.max){
+          input.setAttribute("aria-invalid","true");err.textContent=t("ask.numberRange",{min:number.min,max:number.max});
+          input.focus();input.select();return;
+        }
+        finish(n);
+      };
+      const onCancel=e=>{e.preventDefault();finish(number?null:false);};
+      ok.onclick=accept;no.onclick=()=>finish(number?null:false);
+      input.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();accept();}};
+      d.addEventListener("cancel",onCancel);
+      d.showModal();
+      (number?input:danger?no:ok).focus();
+    });
+  }
   function toast(message,type="info",duration=3200){const el=document.createElement("div");el.className="toast "+type;el.setAttribute("role",type==="error"?"alert":"status");el.textContent=message;document.getElementById("toastWrap").appendChild(el);setTimeout(()=>el.remove(),duration)}
   // Translated where i18n is loaded, English where it is not: this file is
   // read before src/i18n.js, so the guard is real rather than defensive. The
@@ -115,7 +196,7 @@
     // matches no table), which reads as "never frozen" rather than an error.
     (copy.freezes||[]).forEach(f=>{if(f.scope==="TABLE"&&map.has(f.tableId))f.tableId=map.get(f.tableId);});
     state.events.unshift(copy);saveState();toast("Event duplicated.","success");open?openEvent(copy.id):render()}
-  function deleteEvent(id){const e=state.events.find(x=>x.id===id);if(!e||!confirm(`Delete "${e.name}"? This cannot be undone.`))return;state.events=state.events.filter(x=>x.id!==id);saveState();render();toast("Event deleted.")}
+  async function deleteEvent(id){const e=state.events.find(x=>x.id===id);if(!e||!(await ask({title:t("ask.deleteEventTitle"),body:t("ask.deleteEventBody",{name:e.name}),confirmLabel:t("ask.delete"),danger:true})))return;state.events=state.events.filter(x=>x.id!==id);saveState();render();toast("Event deleted.")}
   // The #eventDialog submit handler that used to live here created a DEMO
   // event (16 seeded tables, 26 seeded guests, a demo background). Removed
   // with the dialog: new events are created blank via the setup screen.
@@ -155,9 +236,9 @@
   function nextTableNumber(event,bistro){const prefix=bistro?"B":"T",nums=event.tables.filter(t=>t.number.startsWith(prefix)).map(t=>parseInt(t.number.slice(prefix.length),10)||0);return prefix+String(Math.max(0,...nums)+1).padStart(2,"0")}
   function repackTableAssignments(event,table,newCap){const guests=event.guests.filter(g=>g.assignment?.tableId===table.id).sort((a,b)=>Math.min(...a.assignment.seats)-Math.min(...b.assignment.seats)),occupied=guests.reduce((n,g)=>n+paxOf(g),0);if(occupied>newCap)return false;let cursor=0;guests.forEach(g=>{g.assignment.seats=Array.from({length:paxOf(g)},(_,i)=>cursor+i);cursor+=paxOf(g)});return true}
   function setTableCapacity(event,table,newCap){newCap=Math.max(1,Math.min(99,Number(newCap)||1));const occupied=tableAssignedPax(event,table.id);if(newCap<occupied){toast(`${table.number} currently has ${occupied} occupied seats. Capacity cannot be reduced below ${occupied}.`,"error",5000);return false}recordUndo(event);repackTableAssignments(event,table,newCap);table.capacity=newCap;touchEvent(event);render();return true}
-  function bindInspector(event){app.querySelectorAll("[data-inspector]").forEach(el=>el.onchange=()=>updateInspectorField(event,el.dataset.inspector,el.value));app.querySelectorAll("[data-inspector-action]").forEach(b=>b.onclick=()=>inspectorAction(event,b.dataset.inspectorAction));app.querySelectorAll("[data-seat-step]").forEach(b=>b.onclick=()=>{const t=event.tables.find(x=>x.id===ui.selectedObjectId);if(t)setTableCapacity(event,t,t.capacity+Number(b.dataset.seatStep))});app.querySelectorAll("[data-seat-capacity]").forEach(b=>b.onclick=()=>{const t=event.tables.find(x=>x.id===ui.selectedObjectId);if(t)setTableCapacity(event,t,Number(b.dataset.seatCapacity))});const custom=app.querySelector("[data-seat-custom]");if(custom)custom.onclick=()=>{const t=event.tables.find(x=>x.id===ui.selectedObjectId),value=prompt("Enter custom seat count",t.capacity);if(value!==null)setTableCapacity(event,t,value)}}
+  function bindInspector(event){app.querySelectorAll("[data-inspector]").forEach(el=>el.onchange=()=>updateInspectorField(event,el.dataset.inspector,el.value));app.querySelectorAll("[data-inspector-action]").forEach(b=>b.onclick=()=>inspectorAction(event,b.dataset.inspectorAction));app.querySelectorAll("[data-seat-step]").forEach(b=>b.onclick=()=>{const t=event.tables.find(x=>x.id===ui.selectedObjectId);if(t)setTableCapacity(event,t,t.capacity+Number(b.dataset.seatStep))});app.querySelectorAll("[data-seat-capacity]").forEach(b=>b.onclick=()=>{const t=event.tables.find(x=>x.id===ui.selectedObjectId);if(t)setTableCapacity(event,t,Number(b.dataset.seatCapacity))});const custom=app.querySelector("[data-seat-custom]");if(custom)custom.onclick=async()=>{const t=event.tables.find(x=>x.id===ui.selectedObjectId),value=await ask({title:t_("ask.seatsTitle"),body:t_("ask.seatsBody",{number:t.number}),confirmLabel:t_("ask.set"),number:{label:t_("ask.seatsLabel"),min:1,max:99,value:t.capacity}});if(value!==null)setTableCapacity(event,t,value)}}
   function updateInspectorField(event,field,value){const t=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId),obj=t||o;if(!obj)return;if(t&&field==="number"){value=String(value).trim().toUpperCase();if(!value)return render();if(event.tables.some(x=>x.id!==t.id&&x.number===value)){toast("That table number is already in use.","error");return render()}}recordUndo(event);if(["rotation","w","h"].includes(field))value=Number(value);obj[field]=value;if(t&&field==="type"){if(value==="round")t.w=t.h=120;else if(value==="square")t.w=t.h=105;else if(value==="bistro"){t.w=82;t.h=72;t.zone="BISTRO"}else{t.w=170;t.h=86}}touchEvent(event);render()}
   function inspectorAction(event,action){const t=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId),obj=t||o;if(!obj)return;if(action==="lock"){recordUndo(event);obj.locked=!obj.locked;touchEvent(event);return render()}if(action==="delete")return deleteSelectedObject(event);if(action==="duplicate"){recordUndo(event);const c=clone(obj);c.id=uid(t?"table":"venue");c.x+=20;c.y+=20;c.locked=false;if(t){c.number=nextTableNumber(event,t.type==="bistro");event.tables.push(c)}else event.venueObjects.push(c);ui.selectedObjectId=c.id;touchEvent(event);return render()}if(action==="forward"||action==="backward"){recordUndo(event);obj.z=Math.max(1,(obj.z||10)+(action==="forward"?1:-1));touchEvent(event);render()}}
-  function deleteSelectedObject(event){const t=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId);if(!t&&!o)return;const assigned=t?event.guests.filter(g=>g.assignment?.tableId===t.id):[];if(assigned.length&&!confirm(`${t.number} has ${tableAssignedPax(event,t.id)} assigned guests. Delete it and return them to Unassigned?`))return;if(!assigned.length&&!confirm(`Delete ${t?t.number:o.label}?`))return;recordUndo(event);assigned.forEach(g=>MeritSeatAssignment.clear(g));if(t)event.tables=event.tables.filter(x=>x.id!==t.id);else event.venueObjects=event.venueObjects.filter(x=>x.id!==o.id);ui.selectedObjectId=null;touchEvent(event);render()}
+  async function deleteSelectedObject(event){const t=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId);if(!t&&!o)return;const assigned=t?event.guests.filter(g=>g.assignment?.tableId===t.id):[];if(!(await ask({title:t_("ask.deleteObjectsTitle",{n:1}),body:assigned.length?t_("ask.deleteObjectsGuests",{n:1,guests:assigned.length}):"",confirmLabel:t_("ask.delete"),danger:true})))return;recordUndo(event);assigned.forEach(g=>MeritSeatAssignment.clear(g));if(t)event.tables=event.tables.filter(x=>x.id!==t.id);else event.venueObjects=event.venueObjects.filter(x=>x.id!==o.id);ui.selectedObjectId=null;touchEvent(event);render()}
   function bindBackground(event){const opacity=document.getElementById("bgOpacity");if(opacity){opacity.oninput=()=>{event.background.opacity=Number(opacity.value);const l=document.querySelector(".reference-layer");if(l)l.style.opacity=opacity.value};opacity.onchange=()=>touchEvent(event)}const scale=document.getElementById("bgScale");if(scale){scale.oninput=()=>{event.background.scale=Number(scale.value);const l=document.querySelector(".reference-layer");if(l)l.style.backgroundSize=scale.value+"% auto"};scale.onchange=()=>touchEvent(event)}app.querySelectorAll("[data-bg-action]").forEach(b=>b.onclick=()=>{const a=b.dataset.bgAction;if(a==="import")return document.getElementById("floorPlanFile").click();if(a==="fit")return fitCanvas();recordUndo(event);if(a==="visible")event.background.visible=!event.background.visible;if(a==="lock")event.background.locked=!event.background.locked;if(a==="remove")event.background={src:"",name:"",opacity:.25,visible:false,locked:true,isDefault:false,scale:100};touchEvent(event);render()})}
   /* Floor-plan input is bound by the V8 offline PNG/JPG/PDF importer. */

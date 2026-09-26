@@ -73,6 +73,8 @@ dialog:focus-visible{outline:none}
 .render-failure h2{margin:0 0 var(--sp-3);font-size:18px}
 .render-failure p{margin:0 0 var(--sp-6);color:var(--muted);font-size:13px;line-height:1.5}
 .render-failure-actions{display:flex;gap:8px;flex-wrap:wrap}
+.ask-body{margin:0 0 var(--sp-5);font-size:13px;line-height:1.5;color:var(--text)}
+.ask-error{display:block;min-height:16px;margin-top:4px;font-size:11.5px;color:var(--red-ink)}
 .storage-notice-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 /* Present to assistive technology, absent from the screen: the status live
    region (#a11yAnnouncer) and nothing decorative. */

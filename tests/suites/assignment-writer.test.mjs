@@ -29,7 +29,7 @@
 //   would be a worse outcome than eleven that did not.
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent, addTables, gotoTab, futureDate, settle } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, gotoTab, futureDate, settle, autoAnswer } from "../lib/app-actions.mjs";
 
 export const meta = { name: "assignment-writer", tags: ["business", "fast"], timeout: 150000 };
 
@@ -38,6 +38,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // keeps this suite about the assignment writer; removing the native dialog
   // itself is its own section of the programme.
   page.on("dialog", d => d.accept());
+  await autoAnswer(page);
 
   // --- 1. the static boundary ----------------------------------------------
   // Every assignment to `.assignment` in src/, with comments stripped so the
@@ -176,13 +177,15 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "and the guest already there keeps every one of their seats", contested.hogSeats);
 
   // --- 6. deleting a table returns its guests to Unassigned ---------------
-  const afterDelete = await page.evaluate(({ t03 }) => {
+  const afterDelete = await page.evaluate(async ({ t03 }) => {
     const e = state.events[0];
     // Through the same path the canvas uses.
     ui.selectedObjectId = t03; ui.selectedObjectIds = [t03];
     const before = e.guests.filter(g => g.assignment?.tableId === t03).length;
     // The global the canvas binds; app-v8 overrides it onto deleteSelection().
-    deleteSelectedObject();
+    // Awaited: since §16 the deletion is confirmed in the product's own dialog
+    // (answered by autoAnswer), not by a blocking native confirm().
+    await deleteSelectedObject();
     const stranded = e.guests.filter(g => g.assignment && !e.tables.some(t => t.id === g.assignment.tableId));
     return { before, stranded: stranded.length, tableGone: !e.tables.some(t => t.id === t03) };
   }, room);

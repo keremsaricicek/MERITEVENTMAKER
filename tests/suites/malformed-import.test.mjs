@@ -31,7 +31,7 @@
 // and a normal save afterwards still lands (the guard was not latched).
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent, addTables, futureDate, gotoTab } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, futureDate, gotoTab, autoAnswer } from "../lib/app-actions.mjs";
 
 export const meta = { name: "malformed-import", tags: ["security", "storage", "fast"], timeout: 200000, downloads: true };
 
@@ -39,6 +39,7 @@ export default async function run({ page, checks, baseUrl, artifactDir }) {
   const pageErrors = [];
   page.on("pageerror", (e) => pageErrors.push(e.message));
   page.on("dialog", (d) => d.accept());
+  await autoAnswer(page);
   await openApp(page, baseUrl, { lang: "en" });
   await createBlankEvent(page, { name: "Malformed Source", hotel: "Merit Royal", date: futureDate() });
   await addTables(page, { quantity: 2 });

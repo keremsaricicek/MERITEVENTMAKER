@@ -23,7 +23,7 @@
 //   until a save succeeds, with the backup download beside it.
 //
 //   A BLANK INSTALL SAVED ITSELF AS SCHEMA 8 while the registry was at 9.
-import { openApp, createBlankEvent, futureDate } from "../lib/app-actions.mjs";
+import { openApp, createBlankEvent, futureDate, autoAnswer } from "../lib/app-actions.mjs";
 import { installStorageFaults, setFault, readRecord, writeRecord, deleteRecord, listKeys, gotoBlank, bootApp } from "../lib/faults.mjs";
 
 export const meta = { name: "resilience-storage", tags: ["resilience", "storage", "fast"], timeout: 180000, downloads: true };
@@ -34,6 +34,7 @@ export default async function run({ page, checks, baseUrl }) {
   const pageErrors = [];
   page.on("pageerror", (e) => pageErrors.push(e.message));
   page.on("dialog", (d) => d.accept());
+  await autoAnswer(page);
   await installStorageFaults(page);
   await openApp(page, baseUrl, { lang: "en" });
 

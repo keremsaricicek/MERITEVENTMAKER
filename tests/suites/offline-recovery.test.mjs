@@ -18,12 +18,13 @@
 //   automatic snapshot must always come with a visible, honest notice, and
 //   restoring one deliberately must always be confirmed first, the same as
 //   restoring a backup file.
-import { click, openApp, createBlankEvent, futureDate } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, futureDate, autoAnswer } from "../lib/app-actions.mjs";
 
 export const meta = { name: "offline-recovery", tags: ["storage", "fast"], timeout: 120000 };
 
 export default async function run({ page, context, checks, baseUrl }) {
   page.on("dialog", d => d.accept());
+  await autoAnswer(page);
   // Behavioural checks (snapshot cadence, restore messaging), not
   // translation — pinned to English since the product now boots Turkish.
   await openApp(page, baseUrl, { lang: "en" });
@@ -108,6 +109,7 @@ export default async function run({ page, context, checks, baseUrl }) {
   // automatic snapshot on purpose (the scenario: undo did not reach far
   // enough back).
   page2.on("dialog", d => d.accept());
+  await autoAnswer(page2);
   await page2.evaluate(() => { const e = state.events[0]; e.name = "Post-Recovery Edit"; touchEvent(e); });
   await page2.waitForTimeout(300);
   const beforeManualRestore = await page2.evaluate(() => state.events[0].name);

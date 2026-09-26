@@ -55,7 +55,7 @@
 // sheet by name, so the rows import. Neither reaches the language or state.
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent, addTables, gotoTab, futureDate, settle } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, gotoTab, futureDate, settle, autoAnswer } from "../lib/app-actions.mjs";
 
 export const meta = { name: "prototype-pollution", tags: ["security", "storage", "fast"], timeout: 150000, downloads: true };
 
@@ -110,6 +110,7 @@ async function inspect(page) {
 
 export default async function run({ page, checks, baseUrl, artifactDir }) {
   page.on("dialog", (d) => d.accept());
+  await autoAnswer(page);
   await openApp(page, baseUrl, { lang: "en" });
   const clean = await inspect(page);
   checks.require(clean.polluted.length === 0 && clean.inherited.length === 0,

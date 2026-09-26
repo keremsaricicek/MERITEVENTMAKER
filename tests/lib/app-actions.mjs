@@ -335,3 +335,32 @@ export function ocrAvailability(page) {
     return a && a.ocr ? { available: !!a.ocr.available, reason: a.ocr.reason || null } : null;
   });
 }
+
+// The product's own confirm / number dialog (src/app.js ask()), answered the
+// way `page.on("dialog", d => d.accept())` answered the browser's confirm()
+// before §16 replaced it — for suites whose subject is not the dialog itself.
+// A number question is confirmed with the value it was opened with. Install
+// BEFORE the page loads (it rides on addInitScript), once per page.
+export async function autoAnswer(page, answer = "confirm") {
+  await page.addInitScript((answer) => {
+    const arm = () => {
+      const d = document.getElementById("meritAskDialog");
+      if (!d || d.__autoAnswer) return !!d;
+      d.__autoAnswer = true;
+      new MutationObserver(() => {
+        if (d.open) setTimeout(() => d.querySelector(`[data-ask="${answer}"]`)?.click(), 0);
+      }).observe(d, { attributes: true, attributeFilter: ["open"] });
+      return true;
+    };
+    if (!arm()) document.addEventListener("DOMContentLoaded", arm);
+  }, answer);
+  // And the page that is already open, for a suite that arms it after load.
+  await page.evaluate((answer) => {
+    const d = document.getElementById("meritAskDialog");
+    if (!d || d.__autoAnswer) return;
+    d.__autoAnswer = true;
+    new MutationObserver(() => {
+      if (d.open) setTimeout(() => d.querySelector(`[data-ask="${answer}"]`)?.click(), 0);
+    }).observe(d, { attributes: true, attributeFilter: ["open"] });
+  }, answer).catch(() => {});
+}

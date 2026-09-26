@@ -19,12 +19,13 @@
 //   NOT COLOUR ALONE. "VIP, No Show, frozen and unavailable states each need
 //     a non-colour cue."
 //   REDUCED MOTION. "prefers-reduced-motion respected."
-import { openApp, createBlankEvent, addTables, futureDate, gotoTab, settle, addGuest } from "../lib/app-actions.mjs";
+import { openApp, createBlankEvent, addTables, futureDate, gotoTab, settle, addGuest, autoAnswer } from "../lib/app-actions.mjs";
 
 export const meta = { name: "a11y-announce-contrast", tags: ["accessibility", "ui", "fast"], timeout: 150000 };
 
 export default async function run({ page, checks, baseUrl }) {
   page.on("dialog", (d) => d.accept());
+  await autoAnswer(page);
   await openApp(page, baseUrl, { lang: "en" });
 
   // --- 1. the live region exists before anything happens --------------------

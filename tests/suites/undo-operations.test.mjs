@@ -4,12 +4,13 @@
 // Undo that "mostly works" is worse than no undo, because an operator trusts
 // it. So each block asserts the restored value equals the recorded original,
 // not merely that something changed back.
-import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab, futureDate } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab, futureDate, autoAnswer } from "../lib/app-actions.mjs";
 
 export const meta = { name: "undo-operations", tags: ["business", "fast"], timeout: 150000 };
 
 export default async function run({ page, checks, baseUrl }) {
   page.on("dialog", d => d.accept());
+  await autoAnswer(page);
   await openApp(page, baseUrl);
   await createBlankEvent(page, { name: "Undo", hotel: "Merit", date: futureDate() });
 

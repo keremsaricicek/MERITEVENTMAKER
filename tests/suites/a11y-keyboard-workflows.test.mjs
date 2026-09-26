@@ -27,12 +27,13 @@
 // "number a table" nor "assign a guest" could be finished at all; and the
 // import wizard's every step re-render destroyed the focused Continue button.
 import fs from "node:fs";
-import { openApp, futureDate } from "../lib/app-actions.mjs";
+import { openApp, futureDate, autoAnswer } from "../lib/app-actions.mjs";
 
 export const meta = { name: "a11y-keyboard-workflows", tags: ["accessibility", "business", "fast"], timeout: 240000, downloads: true };
 
 export default async function run({ page, checks, baseUrl }) {
   page.on("dialog", (d) => d.accept());
+  await autoAnswer(page);
   await openApp(page, baseUrl, { lang: "en" });
 
   const focusInfo = () => page.evaluate(() => {

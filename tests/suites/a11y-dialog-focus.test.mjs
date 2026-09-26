@@ -71,6 +71,10 @@ export default async function run({ page, checks, baseUrl }) {
       firstMeaningful: '#guestForm input[name="name"]', closer: "#guestForm .dialog-close" },
     { name: "guest-list import wizard", tab: "guests", invoker: '[data-guest-command="import"]', id: "excelDialog",
       firstMeaningful: "[data-wizard-choose], [data-wizard-template]", closer: "#excelDialog [data-wizard-close]" },
+    // The product's own confirmation (§16), which replaced the browser's
+    // confirm(). Cancelled both ways, so the guest — and the invoker — stay.
+    { name: "delete-guest confirmation", tab: "guests", invoker: "[data-guest-delete]", id: "meritAskDialog",
+      firstMeaningful: '#meritAskDialog [data-ask="cancel"]', closer: '#meritAskDialog [data-ask="cancel"]' },
     { name: "user guide", tab: "guests", invoker: '[data-action="help"]', id: "guideDialog",
       firstMeaningful: "#guideDialog [data-guide-lang], #guideDialog .guide-nav a, #guideDialog [data-guide-print]", closer: "[data-guide-close]" },
   ];

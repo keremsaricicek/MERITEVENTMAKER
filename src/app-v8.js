@@ -1985,7 +1985,7 @@
   function commitBulk(){syncBulkFields();const event=activeEvent(),d=ui.bulkDraft;if(!canMutate(event,"add plan objects"))return;if(d.placement==="repeated"){ui.repeatPlacement={...d,remaining:Math.max(1,Number(d.quantity)||1),index:1};ui.v8AddOpen=false;render();toast("Repeated placement active. Click the canvas for each object; Esc cancels.","success",5000);return;}const positions=bulkPositions(d);if(!positions.length)return;recordUndo(event);const created=[];positions.forEach((p,i)=>{if(d.kind==="table"){const t=createTable(event,d,p.x,p.y,i+1);event.tables.push(t);created.push(t.id);}else{const sizes={stage:[380,180],bar:[300,70],entrance:[110,40],exit:[90,40],column:[55,55],text:[150,42]},s=sizes[d.type]||[120,50],o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:p.x,y:p.y,w:s[0],h:s[1],rotation:0,locked:false,z:4};event.venueObjects.push(o);created.push(o.id);}});ui.selectedObjectIds=created;ui.selectedObjectId=created[0];ui.v8AddOpen=false;touchEvent(event);render();toast(`${created.length} object${created.length===1?"":"s"} added with physical chair records.`,"success");}
   function placeRepeated(pointerEvent){const r=document.getElementById("canvasViewport").getBoundingClientRect(),d=ui.repeatPlacement,event=activeEvent(),x=(pointerEvent.clientX-r.left-ui.pan.x)/ui.zoom,y=(pointerEvent.clientY-r.top-ui.pan.y)/ui.zoom;if(!d||!canMutate(event,"place plan objects"))return;recordUndo(event);let id;if(d.kind==="table"){const t=createTable(event,d,x-60,y-45,d.index);event.tables.push(t);id=t.id;}else{const o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:x-60,y:y-30,w:120,h:60,rotation:0,locked:false,z:4};event.venueObjects.push(o);id=o.id;}d.remaining--;d.index++;ui.selectedObjectId=id;ui.selectedObjectIds=[id];if(d.remaining<=0)ui.repeatPlacement=null;touchEvent(event);render();}
   function duplicateSelection(){const event=activeEvent();if(!canMutate(event,"duplicate plan objects"))return;const ids=ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean);if(!ids.length)return toast("Select one or more objects first.");recordUndo(event);const created=[];for(const id of ids){const t=event.tables.find(x=>x.id===id),o=event.venueObjects.find(x=>x.id===id),c=clone(t||o);if(!c)continue;c.id=uid(t?"table":"venue");c.x+=24;c.y+=24;c.locked=false;if(t){c.number=uniqueNumber(event,t.type==="bistro"?"B":"T",1);c.chairs=(c.chairs||[]).map((chair,index)=>({...chair,id:uid("chair"),parentTableId:c.id,seatNumber:index+1,occupancy:null}));event.tables.push(c);}else event.venueObjects.push(c);created.push(c.id);}ui.selectedObjectIds=created;ui.selectedObjectId=created[0]||null;touchEvent(event);render();}
-  function deleteSelection(){const event=activeEvent();if(!canMutate(event,"delete plan objects"))return;const ids=new Set(ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean));if(!ids.size)return;const affected=event.guests.filter(g=>ids.has(g.assignment?.tableId));if(!confirm(`Delete ${ids.size} selected object${ids.size===1?"":"s"}${affected.length?` and return ${affected.length} guest record(s) to Unassigned`:""}?`))return;recordUndo(event);affected.forEach(g=>SEAT().clear(g));event.tables=event.tables.filter(t=>!ids.has(t.id));event.venueObjects=event.venueObjects.filter(o=>!ids.has(o.id));ui.selectedObjectIds=[];ui.selectedObjectId=null;touchEvent(event);render();}
+  async function deleteSelection(){const event=activeEvent();if(!canMutate(event,"delete plan objects"))return;const ids=new Set(ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean));if(!ids.size)return;const affected=event.guests.filter(g=>ids.has(g.assignment?.tableId));if(!(await ask({title:t("ask.deleteObjectsTitle",{n:ids.size}),body:affected.length?t("ask.deleteObjectsGuests",{n:ids.size,guests:affected.length}):"",confirmLabel:t("ask.delete"),danger:true})))return;recordUndo(event);affected.forEach(g=>SEAT().clear(g));event.tables=event.tables.filter(t=>!ids.has(t.id));event.venueObjects=event.venueObjects.filter(o=>!ids.has(o.id));ui.selectedObjectIds=[];ui.selectedObjectId=null;touchEvent(event);render();}
 
   function startMarquee(e){
     if(e.button!==0||ui.tool!=="select"||ui.repeatPlacement)return;const viewport=document.getElementById("canvasViewport"),world=document.getElementById("canvasWorld");if(![viewport,world,world.querySelector(".reference-layer")].includes(e.target))return;e.preventDefault();const box=document.createElement("div");box.className="marquee";viewport.appendChild(box);const r=viewport.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top;let current=[];
@@ -2005,7 +2005,7 @@
   setTableCapacity = function(event,table,newCap){if(!canMutate(event,"change chair capacity"))return false;newCap=Math.max(1,Math.min(99,Number(newCap)||1));const occupied=tableAssignedPax(event,table.id);if(newCap<occupied){toast(`${table.number} has ${occupied} assigned pax. Capacity cannot drop below occupancy.`,"error",5000);return false;}recordUndo(event);repackTableAssignments(event,table,newCap);table.capacitySource="HUMAN_CONFIRMED";syncTableChairs(table,newCap);touchEvent(event);render();return true;};
   updateInspectorField = function(event,field,value){if(!canMutate(event,"edit plan objects"))return;original.updateInspectorField(event,field,value);const table=event.tables.find(x=>x.id===ui.selectedObjectId);if(table)syncTableChairs(table);};
   inspectorAction = function(event,action){if(!canMutate(event,`${action} plan objects`))return;if(action==="duplicate")return duplicateSelection();if(action==="delete")return deleteSelection();original.inspectorAction(event,action);};
-  deleteSelectedObject = function(){deleteSelection();};
+  deleteSelectedObject = function(){return deleteSelection();};
   startResize = function(...args){if(canMutate(activeEvent(),"resize plan objects"))original.startResize(...args);};
   startRotate = function(...args){if(canMutate(activeEvent(),"rotate plan objects"))original.startRotate(...args);};
   createTableFromDraft = function(){if(canMutate(activeEvent(),"add a table")){original.createTableFromDraft();const e=activeEvent(),t=e.tables.find(x=>x.id===ui.selectedObjectId);if(t){syncTableChairs(t);saveState();}}};
@@ -3439,10 +3439,10 @@
     el.append(text,btn);wrap.appendChild(el);
     setTimeout(()=>el.remove(),duration);
   }
-  deleteGuest = function(id){
+  deleteGuest = async function(id){
     const event=activeEvent(),g=event&&event.guests.find(x=>x.id===id);
     if(!g||!canMutate(event,"delete a guest"))return;
-    if(!confirm(t("guests.confirmDelete",{name:g.name})))return;
+    if(!(await ask({title:t("ask.deleteGuestTitle"),body:t("guests.confirmDelete",{name:g.name}),confirmLabel:t("ask.delete"),danger:true})))return;
     // The whole record is kept, including its planned assignment, so undo puts
     // the guest back exactly where they were rather than as a fresh unassigned
     // record. Position is kept too, so the list does not reshuffle on undo.
@@ -5857,7 +5857,7 @@
   function importBackupFile(file){
     const reader=new FileReader();
     reader.onerror=()=>toast(t("backup.corruptFile"),"error",6000);
-    reader.onload=()=>{
+    reader.onload=async()=>{
       let parsed;
       try{parsed=parseRecordText(reader.result);}catch{toast(t("backup.corruptFile"),"error",6000);return;}
       if(parsed&&parsed.format==="merit-event-maker-event-package"){importEventPackagePayload(parsed);return;}
@@ -5869,7 +5869,7 @@
       if(problem){toast(t("backup.invalidRecord",{path:problem.path,rule:importRuleText(problem.rule)}),"error",9000);return;}
       if(!backupReferencesIntact(parsed.payload)){toast(t("backup.badReference"),"error",6500);return;}
       const n=parsed.payload.events.length;
-      if(!confirm(t("backup.confirmRestore",{n})))return;
+      if(!(await ask({title:t("ask.restoreTitle"),body:t("backup.confirmRestore",{n}),confirmLabel:t("ask.restore"),danger:true})))return;
       // Built into a local first and only then assigned: whatever the
       // migration chain meets that the checks above did not anticipate, the
       // current state is still the current state when it throws.
@@ -5909,7 +5909,7 @@
     setTimeout(()=>URL.revokeObjectURL(url),4000);
     toast(t("eventPackage.exportedToast",{name:event.name}),"success");
   }
-  function importEventPackagePayload(parsed){
+  async function importEventPackagePayload(parsed){
     const P=globalThis.MeritEventPackage;
     if(!P||!P.isWellFormed(parsed)){toast(t("eventPackage.invalidFile"),"error",6000);return;}
     if(Number(parsed.formatVersion)>P.FORMAT_VERSION){toast(t("eventPackage.futureVersion"),"error",9000);return;}
@@ -5919,7 +5919,7 @@
     const problem=P.eventProblem(parsed.event,"event");
     if(problem){toast(t("eventPackage.invalidRecord",{path:problem.path,rule:importRuleText(problem.rule)}),"error",9000);return;}
     if(!P.referencesIntact(parsed.event)){toast(t("eventPackage.badReference"),"error",6500);return;}
-    if(!confirm(t("eventPackage.confirmImport",{name:parsed.event.name||""})))return;
+    if(!(await ask({title:t("ask.importTitle"),body:t("eventPackage.confirmImport",{name:parsed.event.name||""}),confirmLabel:t("ask.import")})))return;
     // Everything is computed BEFORE state is touched. The venue used to be
     // pushed first and the event migrated after, so a migration that threw
     // left a venue behind with no event -- half an import.
@@ -5985,10 +5985,10 @@
   function restoreLatestSnapshot(){
     const R=RECOVERY();
     if(!R)return;
-    storageProvider.load("autosnapshots").then(stored=>{
+    storageProvider.load("autosnapshots").then(async stored=>{
       const snap=R.latestSnapshot(stored);
       if(!snap){toast(t("recovery.none"),"error");return;}
-      if(!confirm(t("recovery.confirmRestore",{when:relativeTime(snap.at)})))return;
+      if(!(await ask({title:t("ask.recoveryTitle"),body:t("recovery.confirmRestore",{when:relativeTime(snap.at)}),confirmLabel:t("ask.restore"),danger:true})))return;
       state=parseRoot(snap.payload);
       ui.screen="events";ui.activeEventId=null;ui.undo=[];ui.redo=[];
       saveState();render();
@@ -6139,7 +6139,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   };
   openGuide = function(){renderGuide();document.getElementById("guideDialog").showModal();};
 
-  const oldFloorInput=document.getElementById("floorPlanFile"),freshFloorInput=oldFloorInput.cloneNode(true);oldFloorInput.replaceWith(freshFloorInput);freshFloorInput.addEventListener("change",async e=>{const file=e.target.files[0],event=activeEvent();if(!file||!event||!canMutate(event,"replace the floor plan"))return;try{let src,name=file.name;if(file.type==="application/pdf"||file.name.toLowerCase().endsWith(".pdf")){const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise,pageNumber=Math.max(1,Math.min(doc.numPages,Number(prompt(`PDF contains ${doc.numPages} pages. Enter page number:`,"1"))||1)),page=await doc.getPage(pageNumber),v=page.getViewport({scale:2.6}),canvas=document.createElement("canvas");canvas.width=Math.ceil(v.width);canvas.height=Math.ceil(v.height);await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;src=canvas.toDataURL("image/png",.96);name=`${file.name} · page ${pageNumber}`;}else src=await readImageFile(file);recordUndo(event);event.background={src,name,opacity:.34,visible:true,locked:true,isDefault:false,scale:100,importedAtMs:Date.now()};touchEvent(event);render();toast("Floor plan imported locally. Assisted Detection is ready.","success");}catch(error){toast(t("plan.replaceFailed",{reason:userMessage(error,"plan.fileUnreadable")}),"error",6500);}finally{e.target.value="";}});
+  const oldFloorInput=document.getElementById("floorPlanFile"),freshFloorInput=oldFloorInput.cloneNode(true);oldFloorInput.replaceWith(freshFloorInput);freshFloorInput.addEventListener("change",async e=>{const file=e.target.files[0],event=activeEvent();if(!file||!event||!canMutate(event,"replace the floor plan"))return;try{let src,name=file.name;if(file.type==="application/pdf"||file.name.toLowerCase().endsWith(".pdf")){const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise,pageNumber=doc.numPages>1?await ask({title:t("ask.pdfPageTitle"),body:t("ask.pdfPageBody",{n:doc.numPages}),confirmLabel:t("ask.usePage"),number:{label:t("ask.pdfPageLabel"),min:1,max:doc.numPages,value:1}}):1;if(pageNumber===null)return;const page=await doc.getPage(pageNumber),v=page.getViewport({scale:2.6}),canvas=document.createElement("canvas");canvas.width=Math.ceil(v.width);canvas.height=Math.ceil(v.height);await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;src=canvas.toDataURL("image/png",.96);name=`${file.name} · page ${pageNumber}`;}else src=await readImageFile(file);recordUndo(event);event.background={src,name,opacity:.34,visible:true,locked:true,isDefault:false,scale:100,importedAtMs:Date.now()};touchEvent(event);render();toast("Floor plan imported locally. Assisted Detection is ready.","success");}catch(error){toast(t("plan.replaceFailed",{reason:userMessage(error,"plan.fileUnreadable")}),"error",6500);}finally{e.target.value="";}});
 
   // ---- Focus return after a dialog closes -----------------------------
   // A native <dialog> restores focus to whatever had it when showModal() ran.
@@ -6235,7 +6235,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
     if(e.shiftKey&&(a===first||!dlg.contains(a))){e.preventDefault();last.focus();}
     else if(!e.shiftKey&&(a===last||!dlg.contains(a))){e.preventDefault();first.focus();}
   },true);
-  for(const id of ["guestDialog","excelDialog","guideDialog"]){
+  for(const id of ["guestDialog","excelDialog","guideDialog","meritAskDialog"]){
     const dlg=document.getElementById(id);if(!dlg)continue;
     dlg.addEventListener("close",()=>{
       const sel=dialogOpener;
@@ -6253,6 +6253,12 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   }
 
   window.addEventListener("keydown",e=>{
+    // AN OPEN DIALOG OWNS THE KEYBOARD. Escape inside one used to reach this
+    // handler as well and clear the canvas selection behind it -- "Escape
+    // closes the topmost layer and nothing else" -- and Delete or an arrow
+    // pressed on a dialog's button deleted or nudged the selected table under
+    // it. The dialog handles its own keys; nothing behind it does.
+    if(document.querySelector("dialog[open]"))return;
     // The override challenge is a blocking decision, so Escape means "no" and
     // nothing else on the screen closes with it. Cancelling authorises
     // nothing and leaves the room exactly as it was.

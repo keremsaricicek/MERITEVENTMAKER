@@ -19,12 +19,13 @@
 // candidate selected, the global finder's results, the freeze form, the
 // guest dialog, every step of the import wizard, and the user guide.
 import path from "node:path";
-import { openApp, createBlankEvent, addTables, futureDate, gotoTab, settle, click, addGuest } from "../lib/app-actions.mjs";
+import { openApp, createBlankEvent, addTables, futureDate, gotoTab, settle, click, addGuest, autoAnswer } from "../lib/app-actions.mjs";
 
 export const meta = { name: "a11y-scan", tags: ["accessibility", "ui", "fast"], timeout: 240000 };
 
 export default async function run({ page, checks, baseUrl, repoRoot }) {
   page.on("dialog", (d) => d.accept());
+  await autoAnswer(page);
   const axePath = path.join(repoRoot, "node_modules/axe-core/axe.min.js");
   let scanned = 0;
   const scan = async (label) => {

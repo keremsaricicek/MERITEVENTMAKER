@@ -21,12 +21,13 @@
 //   duplicating an event never remapped a TABLE-scope freeze's tableId, so
 //   the freeze silently covered nothing in the copy.
 import fs from "node:fs";
-import { click, openApp, createBlankEvent, addTables, gotoTab, futureDate, settle } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, gotoTab, futureDate, settle, autoAnswer } from "../lib/app-actions.mjs";
 
 export const meta = { name: "event-package", tags: ["storage", "fast"], timeout: 120000, downloads: true };
 
 export default async function run({ page, checks, baseUrl, artifactDir }) {
   page.on("dialog", d => d.accept());
+  await autoAnswer(page);
   // Behavioural checks (payload validation, reference integrity), not
   // translation — pinned to English since the product now boots Turkish.
   await openApp(page, baseUrl, { lang: "en" });

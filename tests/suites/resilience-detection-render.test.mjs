@@ -26,7 +26,7 @@
 //   out of the runner's list itself, after asserting it is there.
 import fs from "node:fs";
 import path from "node:path";
-import { openApp, createBlankEvent, futureDate, gotoTab } from "../lib/app-actions.mjs";
+import { openApp, createBlankEvent, futureDate, gotoTab, autoAnswer } from "../lib/app-actions.mjs";
 import { throwFrom, liftFault } from "../lib/faults.mjs";
 
 export const meta = { name: "resilience-detection-render", tags: ["resilience", "intelligence", "slow"], timeout: 300000, downloads: true };
@@ -37,6 +37,7 @@ export default async function run({ page, checks, baseUrl, repoRoot, errors }) {
   const pageErrors = [];
   page.on("pageerror", (e) => pageErrors.push(e.message));
   page.on("dialog", (d) => d.accept());
+  await autoAnswer(page);
   await openApp(page, baseUrl, { lang: "en" });
   await createBlankEvent(page, { name: "Fault Plan", hotel: "Merit", date: futureDate() });
   const plan = fs.readFileSync(path.join(repoRoot, "benchmarks/adversarial/fixtures/a1-chair-under-table.png"));

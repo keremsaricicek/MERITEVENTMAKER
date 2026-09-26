@@ -6,12 +6,13 @@
 // exactly as it was, never half-applied.
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab, futureDate } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, addGuest, gotoTab, futureDate, autoAnswer } from "../lib/app-actions.mjs";
 
 export const meta = { name: "backup-restore", tags: ["storage", "fast"], timeout: 120000, downloads: true };
 
 export default async function run({ page, checks, baseUrl, artifactDir }) {
   page.on("dialog", d => d.accept());
+  await autoAnswer(page);
   // Behavioural checks (file validation, restore refusal), not translation
   // — pinned to English since the product now boots Turkish.
   await openApp(page, baseUrl, { lang: "en" });

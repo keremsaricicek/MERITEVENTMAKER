@@ -48,7 +48,7 @@
 //   hundreds is found by walking the screens, which counting could not do.
 import fs from "node:fs";
 import path from "node:path";
-import { click, openApp, createBlankEvent, addTables, futureDate, gotoTab, settle, typeQuery } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, futureDate, gotoTab, settle, typeQuery, autoAnswer } from "../lib/app-actions.mjs";
 
 export const meta = { name: "hostile-input", tags: ["security", "ui", "fast"], timeout: 240000, downloads: true };
 
@@ -99,6 +99,7 @@ export default async function run({ page, checks, baseUrl, artifactDir, repoRoot
   // recorded rather than lost.
   await page.addInitScript(() => { window.__pwned = []; });
   page.on("dialog", (d) => d.accept());
+  await autoAnswer(page);
   await openApp(page, baseUrl, { lang: "en" });
 
   // ======================= IMPORTED: A WHOLE EVENT =========================
