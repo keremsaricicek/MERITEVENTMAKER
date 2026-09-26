@@ -526,7 +526,7 @@
     // over the drawing, and never a smooth field interpolated between tables,
     // which would invent a figure for floor the product knows nothing about.
     const loadRow=ui.loadLayer?loadBandMap(event)?.get(table.id):null;
-    return`<div class="table-object ${esc(table.type)} ${selected?"selected multi-selected":""} ${highlighted?"highlighted":""} ${frozen?"frozen":""} ${unavailable?"unavailable":""} ${loadRow?"load-"+loadRow.band:""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match operational-match":""}" data-object-id="${table.id}" data-object-kind="table" style="left:${table.x}px;top:${table.y}px;width:${table.w}px;height:${table.h}px;transform:rotate(${table.rotation||0}deg);z-index:${table.z||10}">${chairs}<div class="table-surface"><span class="table-label">${esc(formatTableNumber(table.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${table.capacity}</span>${frozen?`<span class="table-frozen" title="${esc(t("freeze.tableFrozen"))}">${icon("lock")}</span>`:""}${unavailable?`<span class="table-unavailable" title="${esc(t("avail.tableUnavailable"))}">${icon("alert")}</span>`:""}${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${empty} EMPTY</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`;
+    return`<div class="table-object ${esc(table.type)} ${selected?"selected multi-selected":""} ${highlighted?"highlighted":""} ${frozen?"frozen":""} ${unavailable?"unavailable":""} ${loadRow?"load-"+loadRow.band:""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match operational-match":""}" data-object-id="${table.id}" data-object-kind="table" tabindex="0" role="button" aria-pressed="${selected?"true":"false"}" aria-label="${esc([t("a11y.table",{number:formatTableNumber(table.number),seated:assigned,capacity:table.capacity}),frozen?t("a11y.frozen"):"",unavailable?t("a11y.unavailable"):""].filter(Boolean).join(", "))}" style="left:${table.x}px;top:${table.y}px;width:${table.w}px;height:${table.h}px;transform:rotate(${table.rotation||0}deg);z-index:${table.z||10}">${chairs}<div class="table-surface"><span class="table-label">${esc(formatTableNumber(table.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${table.capacity}</span>${frozen?`<span class="table-frozen" title="${esc(t("freeze.tableFrozen"))}">${icon("lock")}</span>`:""}${unavailable?`<span class="table-unavailable" title="${esc(t("avail.tableUnavailable"))}">${icon("alert")}</span>`:""}${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${empty} EMPTY</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`;
   };
 
   function planIssues(event){
@@ -1340,11 +1340,11 @@
           <h2>${t("setup.title")}</h2>
           <p>${t("setup.subtitle")}</p>
           <form id="v8EventForm" class="mx-form">
-            <div class="field full"><label>${t("setup.eventName")}</label><input name="name" required autocomplete="off" value="${esc(d.name)}" placeholder="${t("setup.eventNamePh")}"></div>
-            <div class="field"><label>${t("setup.date")}</label><input name="date" type="date" required value="${esc(d.date)}"></div>
-            <div class="field"><label>${t("setup.status")}</label><select name="status">${statuses.map(s=>`<option value="${s}" ${d.status===s?"selected":""}>${t("setup.status."+s)}</option>`).join("")}</select></div>
-            <div class="field"><label>${t("setup.hotel")}</label><input name="hotel" required value="${esc(d.hotel)}" placeholder="${t("setup.hotelPh")}"></div>
-            <div class="field"><label>${t("setup.salon")}</label><input name="salon" value="${esc(d.salon)}" placeholder="${t("setup.salonPh")}"></div>
+            <div class="field full"><label for="fld-name-name">${t("setup.eventName")}</label><input id="fld-name-name" name="name" required autocomplete="off" value="${esc(d.name)}" placeholder="${t("setup.eventNamePh")}"></div>
+            <div class="field"><label for="fld-name-date">${t("setup.date")}</label><input id="fld-name-date" name="date" type="date" required value="${esc(d.date)}"></div>
+            <div class="field"><label for="fld-name-status">${t("setup.status")}</label><select id="fld-name-status" name="status">${statuses.map(s=>`<option value="${s}" ${d.status===s?"selected":""}>${t("setup.status."+s)}</option>`).join("")}</select></div>
+            <div class="field"><label for="fld-name-hotel">${t("setup.hotel")}</label><input id="fld-name-hotel" name="hotel" required value="${esc(d.hotel)}" placeholder="${t("setup.hotelPh")}"></div>
+            <div class="field"><label for="fld-name-salon">${t("setup.salon")}</label><input id="fld-name-salon" name="salon" value="${esc(d.salon)}" placeholder="${t("setup.salonPh")}"></div>
             <div class="field full"><label>${t("setup.cover")} · ${t("setup.coverOptional")}</label>
               <label class="mx-drop cover" data-cover-drop>${d.coverImage?`<img src="${d.coverImage}" alt="">`:`<span>${icon("image")} ${t("setup.chooseCover")}</span>`}<input id="v8CoverFile" type="file" accept="image/png,image/jpeg" hidden></label>
               ${d.coverImage?`<div class="mx-setup-actions" style="margin-top:9px"><button class="btn sm" type="button" data-setup="remove-cover">${t("setup.removeCover")}</button></div>`:""}
@@ -1511,7 +1511,7 @@
     const act=(action,label,enabled,title)=>
       `<button class="btn sm ${enabled?"":"is-off"}" data-find-action="${action}" data-find-guest="${g.id}"${
         enabled?"":" disabled"}${title?` title="${esc(title)}"`:""}>${label}</button>`;
-    return`<div class="find-row ${active?"active":""}" data-search-guest="${g.id}" role="option"${active?' aria-selected="true"':""}>
+    return`<div class="find-row ${active?"active":""}" data-search-guest="${g.id}" role="listitem"${active?' aria-current="true"':""}>
       <div class="find-who">
         <strong>${esc(g.name)}${extra?` +${extra}`:""}</strong>
         <span class="find-meta">${esc(t("find.pax",{n:paxOf(g)}))}${
@@ -1592,7 +1592,7 @@
     // after the first Escape.
     if(ui.findActive==null||ui.findActive<0||ui.findActive>=rows.length)ui.findActive=rows.length?0:-1;
     box.innerHTML=rows.length
-      ?`<div class="find-list" role="listbox">${rows.map((r,i)=>guestResultHTML(event,r,i===ui.findActive)).join("")}</div>${
+      ?`<div class="find-list" role="list" aria-label="${esc(t("find.resultsLabel"))}">${rows.map((r,i)=>guestResultHTML(event,r,i===ui.findActive)).join("")}</div>${
         total>rows.length?`<div class="find-more">${esc(t("find.more",{n:total-rows.length}))}</div>`:""}`
       :`<div class="find-empty">${t("find.none")}</div>`;
     box.classList.remove("hidden");
@@ -1758,13 +1758,13 @@
       // editable field -- capacitySource is set only by the writers named in
       // src/capacity-provenance.js, never chosen here.
       const provenanceHTML=CAPPROV()?`<div class="contextual-card-provenance"><span>${t("inspector.capacitySource")}</span><b>${esc(t(capacitySourceKey(t_.capacitySource)))}</b></div>`:"";
-      return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(formatTableNumber(t_.number))}</strong><span>${esc(t_.zone)} · ${assigned} ${t("seating.occupied").toLowerCase()}</span></div>${alsoSelectedHTML}<div class="seat-editor"><div class="seat-stepper"><button data-seat-step="-1" title="${t("inspector.removeSeat")}">−</button><b>${t_.capacity}</b><button data-seat-step="1" title="${t("inspector.addSeat")}">+</button></div><div class="seat-presets">${presets.map(n=>`<button class="${t_.capacity===n?"active":""}" data-seat-capacity="${n}">${n}</button>`).join("")}<button data-seat-custom>${t("inspector.custom")}</button></div></div><div class="form-grid compact"><div class="field"><label>${t("inspector.type")}</label><select data-inspector="type">${["rectangle","square","round","bistro"].map(x=>`<option value="${x}" ${t_.type===x?"selected":""}>${t("bulk.type."+x)}</option>`).join("")}</select></div><div class="field"><label>${t("inspector.rotation")}</label><input data-inspector="rotation" type="number" value="${Math.round(t_.rotation||0)}"></div><div class="field full"><label>${t("inspector.zone")}</label><select data-inspector="zone">${ZONES.map(z=>`<option ${t_.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div>${provenanceHTML}<div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${t_.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
+      return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(formatTableNumber(t_.number))}</strong><span>${esc(t_.zone)} · ${assigned} ${t("seating.occupied").toLowerCase()}</span></div>${alsoSelectedHTML}<div class="seat-editor"><div class="seat-stepper"><button data-seat-step="-1" title="${t("inspector.removeSeat")}">−</button><b>${t_.capacity}</b><button data-seat-step="1" title="${t("inspector.addSeat")}">+</button></div><div class="seat-presets">${presets.map(n=>`<button class="${t_.capacity===n?"active":""}" data-seat-capacity="${n}">${n}</button>`).join("")}<button data-seat-custom>${t("inspector.custom")}</button></div></div><div class="form-grid compact"><div class="field"><label for="fld-inspector-type">${t("inspector.type")}</label><select id="fld-inspector-type" data-inspector="type">${["rectangle","square","round","bistro"].map(x=>`<option value="${x}" ${t_.type===x?"selected":""}>${t("bulk.type."+x)}</option>`).join("")}</select></div><div class="field"><label for="fld-inspector-rotation">${t("inspector.rotation")}</label><input id="fld-inspector-rotation" data-inspector="rotation" type="number" value="${Math.round(t_.rotation||0)}"></div><div class="field full"><label for="fld-inspector-zone">${t("inspector.zone")}</label><select id="fld-inspector-zone" data-inspector="zone">${ZONES.map(z=>`<option ${t_.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div>${provenanceHTML}<div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${t_.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
     }
     // Sofa/bench/banquette pax cannot be read off a drawing, so its seat
     // count is either a person's verified number or explicitly unverified --
     // never silently treated as zero. Same provenance discipline as capacity.
     const seatProvenanceHTML=UNVERIFIED_SEATING.has(o.type)&&o.seatsConfidence?`<div class="contextual-card-provenance"><span>${t("poi.seatsOnThis")}</span><b>${o.seats==null?t("poi.seatsUnset"):o.seats}</b><i>${t(o.seatsConfidence==="verified"?"inspector.seatsVerified":"inspector.seatsUnverified")}</i></div>`:"";
-    return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(o.label)}</strong><span>${t("inspector.object",{type:t("bulk.type."+o.type)})}</span></div>${alsoSelectedHTML}<div class="form-grid compact"><div class="field full"><label>${t("inspector.label")}</label><input data-inspector="label" value="${esc(o.label)}"></div><div class="field"><label>${t("inspector.rotation")}</label><input data-inspector="rotation" type="number" value="${Math.round(o.rotation||0)}"></div></div>${seatProvenanceHTML}<div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${o.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
+    return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(o.label)}</strong><span>${t("inspector.object",{type:t("bulk.type."+o.type)})}</span></div>${alsoSelectedHTML}<div class="form-grid compact"><div class="field full"><label for="fld-inspector-label">${t("inspector.label")}</label><input id="fld-inspector-label" data-inspector="label" value="${esc(o.label)}"></div><div class="field"><label for="fld-inspector-rotation-2">${t("inspector.rotation")}</label><input id="fld-inspector-rotation-2" data-inspector="rotation" type="number" value="${Math.round(o.rotation||0)}"></div></div>${seatProvenanceHTML}<div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${o.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
   }
   function addManuallyFabHTML(){return`<button class="planmap-fab" data-v8-action="add" title="${t("action.addManually")}">${icon(ui.v8AddOpen?"x":"plus")}<span>${t("action.addManually")}</span></button>`;}
 
@@ -1785,7 +1785,7 @@
     const opt=(v,sel)=>`<option value="${v}" ${sel===v?"selected":""}>${t("bulk.type."+v)}</option>`;
     const typeValues=d.kind==="venue"?["stage","bar","entrance","exit","column","text"]:["rectangle","square","round","bistro"];
     const placeValues=["grid","row","repeated","array"];
-    return`<div class="v8-create-pop"><h3>${t("bulk.title")}</h3><p>${t("bulk.subtitle")}</p><div class="bulk-grid"><div class="field"><label>${t("bulk.kind")}</label><select data-bulk="kind"><option value="table" ${d.kind==="table"?"selected":""}>${t("bulk.kind.table")}</option><option value="venue" ${d.kind==="venue"?"selected":""}>${t("bulk.kind.venue")}</option></select></div><div class="field"><label>${t("bulk.type")}</label><select data-bulk="type">${typeValues.map(v=>opt(v,d.type)).join("")}</select></div>${d.kind==="table"?`<div class="field"><label>${t("bulk.chairsEach")}</label><input data-bulk="chairs" type="number" min="1" max="99" value="${d.chairs}"></div><div class="field"><label>${t("bulk.numberPrefix")}</label><input data-bulk="prefix" value="${esc(d.prefix)}" maxlength="4"></div>`:""}<div class="field"><label>${t("bulk.quantity")}</label><input data-bulk="quantity" type="number" min="1" max="60" value="${d.quantity}"></div><div class="field"><label>${t("bulk.placement")}</label><select data-bulk="placement">${placeValues.map(v=>`<option value="${v}" ${d.placement===v?"selected":""}>${t("bulk.placement."+v)}</option>`).join("")}</select></div><div class="field"><label>${t("bulk.rows")}</label><input data-bulk="rows" type="number" min="1" max="12" value="${d.rows}"></div><div class="field"><label>${t("bulk.columns")}</label><input data-bulk="cols" type="number" min="1" max="12" value="${d.cols}"></div></div><div class="bulk-actions"><button class="btn sm" data-v8-action="close-add">${t("bulk.cancel")}</button><button class="btn sm primary" data-v8-action="commit-add">${t(d.placement==="repeated"?"bulk.startPlacement":"bulk.addToPlan")}</button></div></div>`;
+    return`<div class="v8-create-pop"><h3>${t("bulk.title")}</h3><p>${t("bulk.subtitle")}</p><div class="bulk-grid"><div class="field"><label for="fld-bulk-kind">${t("bulk.kind")}</label><select id="fld-bulk-kind" data-bulk="kind"><option value="table" ${d.kind==="table"?"selected":""}>${t("bulk.kind.table")}</option><option value="venue" ${d.kind==="venue"?"selected":""}>${t("bulk.kind.venue")}</option></select></div><div class="field"><label for="fld-bulk-type">${t("bulk.type")}</label><select id="fld-bulk-type" data-bulk="type">${typeValues.map(v=>opt(v,d.type)).join("")}</select></div>${d.kind==="table"?`<div class="field"><label for="fld-bulk-chairs">${t("bulk.chairsEach")}</label><input id="fld-bulk-chairs" data-bulk="chairs" type="number" min="1" max="99" value="${d.chairs}"></div><div class="field"><label for="fld-bulk-prefix">${t("bulk.numberPrefix")}</label><input id="fld-bulk-prefix" data-bulk="prefix" value="${esc(d.prefix)}" maxlength="4"></div>`:""}<div class="field"><label for="fld-bulk-quantity">${t("bulk.quantity")}</label><input id="fld-bulk-quantity" data-bulk="quantity" type="number" min="1" max="60" value="${d.quantity}"></div><div class="field"><label for="fld-bulk-placement">${t("bulk.placement")}</label><select id="fld-bulk-placement" data-bulk="placement">${placeValues.map(v=>`<option value="${v}" ${d.placement===v?"selected":""}>${t("bulk.placement."+v)}</option>`).join("")}</select></div><div class="field"><label for="fld-bulk-rows">${t("bulk.rows")}</label><input id="fld-bulk-rows" data-bulk="rows" type="number" min="1" max="12" value="${d.rows}"></div><div class="field"><label for="fld-bulk-cols">${t("bulk.columns")}</label><input id="fld-bulk-cols" data-bulk="cols" type="number" min="1" max="12" value="${d.cols}"></div></div><div class="bulk-actions"><button class="btn sm" data-v8-action="close-add">${t("bulk.cancel")}</button><button class="btn sm primary" data-v8-action="commit-add">${t(d.placement==="repeated"?"bulk.startPlacement":"bulk.addToPlan")}</button></div></div>`;
   }
   // Quantity is authoritative everywhere except "array", where rows x cols is.
   // Grid used to silently truncate to rows*cols, so asking for 25 tables in a
@@ -2034,7 +2034,7 @@
     const byId=tableIndex(event);
     const queue=records.length?records.map(g=>{
       const t_=g.assignment&&byId.get(g.assignment.tableId);
-      return`<div class="queue-card ${selectedIds.includes(g.id)?"selected multi-selected":""}" draggable="true" data-seating-guest="${g.id}">
+      return`<div class="queue-card ${selectedIds.includes(g.id)?"selected multi-selected":""}" draggable="true" data-seating-guest="${g.id}" tabindex="0" role="button" aria-pressed="${selectedIds.includes(g.id)?"true":"false"}">
         <div class="party-name">${esc(g.name)}</div>
         <div class="party-sub">${paxDotsHTML(g)}<span>${t("guests.partyOf",{n:paxOf(g)})}</span>${g.vip&&g.vip!=="Standard"?`<span class="vip-tag">${esc(g.vip)}</span>`:""}${t_?`<span class="seat-tag">${esc(formatTableNumber(t_.number))}</span>`:""}</div>
       </div>`;
@@ -3069,7 +3069,25 @@
     return{from,to:next};
   }
 
+  // ONE LIVE REGION FOR STATUS CHANGES, outside #app so render() never
+  // replaces it: a region created in the same moment as its content is not
+  // announced, and the recent-arrivals strip is rebuilt with the whole screen
+  // on every check-in. It carries only THE CHANGE -- "AYŞE KAYA: Checked In" --
+  // never the re-rendered list, and it is polite: a door check-in must not
+  // interrupt whatever the screen reader was saying. Errors are the
+  // assertive channel, and that is the toast's own role="alert".
+  const announcer=(()=>{
+    let el=document.getElementById("a11yAnnouncer");
+    if(!el){el=document.createElement("div");el.id="a11yAnnouncer";el.className="sr-only";
+      el.setAttribute("role","status");el.setAttribute("aria-live","polite");el.setAttribute("aria-atomic","true");
+      document.body.appendChild(el);}
+    return el;
+  })();
+  // Cleared first and set a tick later, so announcing the same words twice in
+  // a row (two guests of the same name, one after the other) is still a change.
+  function announce(text){announcer.textContent="";setTimeout(()=>{announcer.textContent=text;},40);}
   function recordArrival(g,from,to){
+    if(from!==to)announce(t("a11y.arrivalChanged",{name:g.name,status:t("status.arrival."+to)}));
     if(!ui.liveRecent)ui.liveRecent=[];
     ui.liveRecent=ui.liveRecent.filter(r=>r.guestId!==g.id);
     if(from!==to)ui.liveRecent.unshift({guestId:g.id,name:g.name,from,to});
@@ -3087,7 +3105,7 @@
   // Labels are translated; the option VALUE stays the identifier the importer
   // writes against, so a Turkish UI never changes what a column maps to.
   mappingRowsHTML = function(p){
-    return p.headers.map(h=>`<div class="wz-map"><div class="wz-map-src" title="${esc(h)}">${esc(h)}</div><div class="wz-map-arrow">→</div><select data-map-header="${esc(h)}">${MAP_FIELDS.map(([v])=>`<option value="${v}" ${p.mapping[h]===v?"selected":""}>${t(v?"wiz.map."+v:"wiz.map.ignore")}</option>`).join("")}</select></div>`).join("");
+    return p.headers.map(h=>`<div class="wz-map"><div class="wz-map-src" title="${esc(h)}">${esc(h)}</div><div class="wz-map-arrow">→</div><select data-map-header="${esc(h)}" aria-label="${esc(t("wiz.mapColumn",{column:h}))}">${MAP_FIELDS.map(([v])=>`<option value="${v}" ${p.mapping[h]===v?"selected":""}>${t(v?"wiz.map."+v:"wiz.map.ignore")}</option>`).join("")}</select></div>`).join("");
   };
   sourcePreviewHTML = function(p){
     return`<table class="wz-table"><thead><tr><th>#</th>${p.headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${p.rows.slice(0,15).map((row,i)=>`<tr><td>${i+1}</td>${p.headers.map(h=>`<td>${esc(row[h])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
@@ -3099,16 +3117,17 @@
   }
   interpretRowHTML = function(r,i){
     const issues=r.issues||[];
-    const sel=(field,values,current)=>`<select data-interp-row="${i}" data-interp-field="${field}">${values.map(v=>`<option value="${v}" ${current===v?"selected":""}>${field==="planningStatus"?t("status.planning."+v):esc(v)}</option>`).join("")}</select>`;
+    const cellName=key=>esc(t("wiz.rowField",{field:t(key),n:i+1}));
+    const sel=(field,values,current,key)=>`<select data-interp-row="${i}" data-interp-field="${field}" aria-label="${cellName(key)}">${values.map(v=>`<option value="${v}" ${current===v?"selected":""}>${field==="planningStatus"?t("status.planning."+v):esc(v)}</option>`).join("")}</select>`;
     return`<tr>
       <td class="src" title="${esc(r.sourceName)}">${esc(r.sourceName)}</td>
-      <td><input data-interp-row="${i}" data-interp-field="name" value="${esc(r.name)}"></td>
-      <td class="num"><input data-interp-row="${i}" data-interp-field="additionalGuests" type="number" min="0" value="${r.additionalGuests}"></td>
+      <td><input data-interp-row="${i}" data-interp-field="name" aria-label="${cellName("wiz.map.name")}" value="${esc(r.name)}"></td>
+      <td class="num"><input data-interp-row="${i}" data-interp-field="additionalGuests" aria-label="${cellName("wiz.col.additional")}" type="number" min="0" value="${r.additionalGuests}"></td>
       <td class="pax"><b>${r.pax}</b></td>
-      <td>${sel("planningStatus",["Confirmed","Tentative"],r.planningStatus)}</td>
-      <td>${sel("vip",["Standard","VIP","VVIP"],r.vip)}</td>
-      <td><input data-interp-row="${i}" data-interp-field="tableNumber" value="${esc(r.tableNumber||"")}"></td>
-      <td><input data-interp-row="${i}" data-interp-field="seatText" value="${esc(r.seatText||"")}"></td>
+      <td>${sel("planningStatus",["Confirmed","Tentative"],r.planningStatus,"wiz.map.planningStatus")}</td>
+      <td>${sel("vip",["Standard","VIP","VVIP"],r.vip,"wiz.map.vip")}</td>
+      <td><input data-interp-row="${i}" data-interp-field="tableNumber" aria-label="${cellName("wiz.col.table")}" value="${esc(r.tableNumber||"")}"></td>
+      <td><input data-interp-row="${i}" data-interp-field="seatText" aria-label="${cellName("wiz.col.seat")}" value="${esc(r.seatText||"")}"></td>
       <td>${issues.length?issues.map(x=>`<div class="wz-issue ${x.level}">⚠ ${esc(wizIssueText(x.message))}</div>`).join(""):`<span class="wz-ok">✓ ${t("wiz.ready")}</span>`}</td>
     </tr>`;
   };
@@ -3141,8 +3160,23 @@
     const root=document.getElementById("excelWizard"),p=pendingImport;if(!p||!root)return;
     // id="wizTitle" is what #excelDialog's aria-labelledby points at, so the
     // dialog announces itself by name rather than as an unnamed dialog.
+    // Every step re-renders the whole dialog, which destroys the control that
+    // had focus -- the Continue button just pressed, or the cell just edited.
+    // Remember WHERE focus was, by attribute, and put it back afterwards;
+    // failing that, land on the step's own primary control. Never the close
+    // button, which showModal() would otherwise pick as the first focusable.
+    const was=document.activeElement&&root.contains(document.activeElement)?document.activeElement:null;
+    const wasSel=was&&(was.dataset.interpRow!=null?`[data-interp-row="${was.dataset.interpRow}"][data-interp-field="${was.dataset.interpField}"]`
+      :was.dataset.mapHeader!=null?`[data-map-header="${CSS.escape(was.dataset.mapHeader)}"]`:null);
     root.innerHTML=`<div class="wz-head"><h2 id="wizTitle">${t("wiz.title")}</h2><button class="table-card-close" data-wizard-close aria-label="${t("wiz.close")}" title="${t("wiz.close")}">&times;</button></div>${wizardStepsHTML(p.step)}<div class="wz-body">${wizardBodyHTML(p)}</div><div class="wz-foot">${wizardFootHTML(p)}</div>`;
     bindExcelWizard();
+    // In PRIORITY order, not document order: Back precedes Continue in the footer.
+    const primary=(wasSel&&root.querySelector(wasSel))||["[data-wizard-choose]","[data-wizard-next]","[data-wizard-import]:not([disabled])","[data-wizard-back]"].map(q=>root.querySelector(q)).find(Boolean);
+    if(primary){
+      root.querySelectorAll("[autofocus]").forEach(el=>el.removeAttribute("autofocus"));
+      primary.setAttribute("autofocus","");
+      if(document.getElementById("excelDialog")?.open)primary.focus();
+    }
   };
 
   // ---- Reports: catch problems BEFORE the workbook leaves the building --
@@ -3337,7 +3371,7 @@
     if(add)bits.push(`<span>${t("guests.companions",{n:add})}</span>`);
     if(g.vip&&g.vip!=="Standard")bits.push(`<span class="vip-tag">${esc(g.vip)}</span>`);
     if(g.notes)bits.push(`<span class="note-dot" title="${esc(g.notes)}">${icon("edit")}${t("guests.hasNote")}</span>`);
-    return`<div><div class="party-name">${esc(g.name)}</div><div class="party-sub">${bits.join("")}</div></div>`;
+    return`<div role="cell"><div class="party-name">${esc(g.name)}</div><div class="party-sub">${bits.join("")}</div></div>`;
   }
   // ---- Undo for the two actions that destroy work ---------------------
   // A guest record is typed by hand or imported once; losing one to a mis-click
@@ -3436,14 +3470,14 @@
     const filters=[["all",t("guests.filter.all")],["assigned",t("guests.filter.assigned")],["unassigned",t("guests.filter.unassigned")],["confirmed",t("guests.filter.confirmed")],["tentative",t("guests.filter.tentative")]];
     const body=!c.records
       ?`<div class="mx-empty"><h3>${t("guests.emptyTitle")}</h3><p>${t("guests.emptyHint")}</p><div class="toolbar-row" style="justify-content:center"><button class="btn" data-guest-command="import">${icon("image")}${t("guests.importExcel")}</button><button class="btn primary" data-guest-command="add">${icon("plus")}${t("guests.addGuest")}</button></div></div>`
-      :`<div class="mx-list"><div class="mx-list-head cols-guest"><span>${t("guests.col.guest")}</span><span>${t("guests.col.status")}</span><span>${t("guests.col.invitedBy")}</span><span>${t("guests.col.tableSeat")}</span><span></span></div>${
-        guests.length?guests.map(g=>`<div class="mx-row cols-guest">${guestPartyCellHTML(event,g)}<div><span class="plan-tag ${g.planningStatus.toLowerCase()}">${esc(t("status.planning."+g.planningStatus))}</span></div><div class="muted" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(g.invitedBy||"—")}</div><div>${seatTagHTML(event,g,byId)}${g.assignment?.locked?" 🔒":""}</div><div class="row-icons"><button class="row-action" aria-label="${esc(t("guests.a11y.seat",{name:g.name}))}" title="${t("guests.col.tableSeat")}" data-guest-seat="${g.id}">${icon("seat")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.edit",{name:g.name}))}" data-guest-edit="${g.id}">${icon("edit")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.delete",{name:g.name}))}" data-guest-delete="${g.id}">${icon("trash")}</button></div></div>`).join(""):`<div class="mx-empty" style="border:none;background:none">${t("guests.noMatches")}</div>`
+      :`<div class="mx-list" role="table" aria-label="${esc(t("guests.title"))}"><div class="mx-list-head cols-guest" role="row"><span role="columnheader">${t("guests.col.guest")}</span><span role="columnheader">${t("guests.col.status")}</span><span role="columnheader">${t("guests.col.invitedBy")}</span><span role="columnheader">${t("guests.col.tableSeat")}</span><span role="columnheader"><span class="sr-only">${t("guests.col.actions")}</span></span></div>${
+        guests.length?guests.map(g=>`<div class="mx-row cols-guest" role="row">${guestPartyCellHTML(event,g)}<div role="cell"><span class="plan-tag ${g.planningStatus.toLowerCase()}">${esc(t("status.planning."+g.planningStatus))}</span></div><div class="muted" role="cell" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(g.invitedBy||"—")}</div><div role="cell">${seatTagHTML(event,g,byId)}${g.assignment?.locked?" 🔒":""}</div><div class="row-icons" role="cell"><button class="row-action" aria-label="${esc(t("guests.a11y.seat",{name:g.name}))}" title="${t("guests.col.tableSeat")}" data-guest-seat="${g.id}">${icon("seat")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.edit",{name:g.name}))}" data-guest-edit="${g.id}">${icon("edit")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.delete",{name:g.name}))}" data-guest-delete="${g.id}">${icon("trash")}</button></div></div>`).join(""):`<div class="mx-empty" style="border:none;background:none">${t("guests.noMatches")}</div>`
       }</div>`;
     return`<div class="mx-screen"><div class="mx-wrap">
       <div class="mx-head"><div><h1>${t("guests.title")}</h1><p>${t("guests.recordsSummary",{records:c.records,total:c.totalPax})}</p></div><div class="mx-head-actions"><button class="btn" data-guest-command="template">${icon("download")}${t("guests.excelTemplate")}</button><button class="btn" data-guest-command="import">${icon("image")}${t("guests.importExcel")}</button><button class="btn primary" data-guest-command="add">${icon("plus")}${t("guests.addGuest")}</button></div></div>
       <div class="mx-metrics">${metrics}</div>
       ${queue}
-      <div class="mx-toolbar"><div class="grow"><input class="filter-input" id="guestSearch" style="width:100%" value="${esc(ui.guestQuery)}" placeholder="${t("guests.search")}"></div><select class="filter-input" id="guestFilter" style="width:170px">${filters.map(([v,l])=>`<option value="${v}" ${ui.guestFilter===v?"selected":""}>${l}</option>`).join("")}</select></div>
+      <div class="mx-toolbar"><div class="grow"><input class="filter-input" id="guestSearch" style="width:100%" value="${esc(ui.guestQuery)}" placeholder="${t("guests.search")}"></div><select class="filter-input" id="guestFilter" aria-label="${esc(t("guests.filter.label"))}" style="width:170px">${filters.map(([v,l])=>`<option value="${v}" ${ui.guestFilter===v?"selected":""}>${l}</option>`).join("")}</select></div>
       ${body}
     </div></div>`;
   };
@@ -5002,7 +5036,7 @@
   function reviewPoiCardHTML(c){
     if(!c)return"";
     const opt=o=>`<option value="${o.kind}:${o.type}" ${c.kind===o.kind&&c.type===o.type?"selected":""}>${t("teach.type."+o.type)}</option>`;
-    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?(c.seatsUnknown?`${t("poi.seatsNotShown")} · `:`${(c.chairDetections||[]).length} ${t("poi.seats")} · `):""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${c.taughtFrom?`<div class="poi-memory-note taught">${icon("check")}<span>${t("teachArea.appliedHere")} — ${t("teachArea.scope."+c.taughtFrom.scope)}</span><button class="btn sm quiet" data-review-action="forget">${t("teachArea.forget")}</button></div>`:""}${c.lowEvidence?`<div class="poi-lowevidence"><strong>${t("poi.lowEvidence")}</strong><span>${esc(t("poi.lowEvidence."+c.lowEvidence.reason))}</span></div>`:""}${visualEvidenceHTML(c)}${relationNoteHTML(c)}<select class="field-select" data-candidate-edit="kindtype"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}${printedNumberHTML(c)}${(()=>{const av=scopeAvailability(c);const blocked=Object.entries(av).filter(([,s])=>!s.ok);const chosen=av[ui.teachScope||"plan"]?.ok?(ui.teachScope||"plan"):"plan";return`<div class="poi-teach"><label for="poiTeachScope">${t("teachArea.remember")}</label><div class="poi-teach-row"><select id="poiTeachScope" class="field-select" data-teach-scope>${["plan","layout","venue"].map(v=>`<option value="${v}" ${chosen===v?"selected":""} ${av[v].ok?"":"disabled"}>${t("teachArea.scope."+v)}</option>`).join("")}</select><button class="btn sm" data-review-action="teach">${t("teachArea.keep")}</button></div>${blocked.map(([,s])=>`<p class="poi-teach-blocked">${esc(s.why)}</p>`).join("")}<p class="poi-teach-note">${t("teachArea.notTraining")}</p></div>`;})()}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
+    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?(c.seatsUnknown?`${t("poi.seatsNotShown")} · `:`${(c.chairDetections||[]).length} ${t("poi.seats")} · `):""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${c.taughtFrom?`<div class="poi-memory-note taught">${icon("check")}<span>${t("teachArea.appliedHere")} — ${t("teachArea.scope."+c.taughtFrom.scope)}</span><button class="btn sm quiet" data-review-action="forget">${t("teachArea.forget")}</button></div>`:""}${c.lowEvidence?`<div class="poi-lowevidence"><strong>${t("poi.lowEvidence")}</strong><span>${esc(t("poi.lowEvidence."+c.lowEvidence.reason))}</span></div>`:""}${visualEvidenceHTML(c)}${relationNoteHTML(c)}<select class="field-select" data-candidate-edit="kindtype" aria-label="${esc(t("review.kindType"))}"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}${printedNumberHTML(c)}${(()=>{const av=scopeAvailability(c);const blocked=Object.entries(av).filter(([,s])=>!s.ok);const chosen=av[ui.teachScope||"plan"]?.ok?(ui.teachScope||"plan"):"plan";return`<div class="poi-teach"><label for="poiTeachScope">${t("teachArea.remember")}</label><div class="poi-teach-row"><select id="poiTeachScope" class="field-select" data-teach-scope>${["plan","layout","venue"].map(v=>`<option value="${v}" ${chosen===v?"selected":""} ${av[v].ok?"":"disabled"}>${t("teachArea.scope."+v)}</option>`).join("")}</select><button class="btn sm" data-review-action="teach">${t("teachArea.keep")}</button></div>${blocked.map(([,s])=>`<p class="poi-teach-blocked">${esc(s.why)}</p>`).join("")}<p class="poi-teach-note">${t("teachArea.notTraining")}</p></div>`;})()}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
   }
   // Real pixel crop of a candidate straight out of the actual imported plan
   // image — a CSS background-position/-size window, never a synthesized or
@@ -5387,7 +5421,7 @@
       :queued?{x:queued.x,y:queued.y,w:queued.w,h:queued.h}:null;
     requestAnimationFrame(()=>applyReviewZoom(boundaryBox));
     const statusLabel=v=>t(v==="unreviewed"?"poi.unreviewed":v==="confirmed"?"poi.confirmed":"poi.rejected");
-    return`<section class="planintel-screen ${ui.reviewQueue?"in-queue":""}"><header class="planintel-top">${planModeSwitchHTML(event)}<div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):t("plan.noAnalysisYet"))}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:a.ocr.reason||"no network"})):esc(analysisNoticeText(a))}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>${t("diag.advancedDiagnostics")}</summary><div class="diag-pop">${detectionDiagnosticsHTML(a)}<div class="field"><label>${t("diag.status")}</label><select data-review-filter="status"><option value="all">${t("diag.all")}</option>${["unreviewed","confirmed","rejected"].map(v=>`<option value="${v}" ${ui.reviewFilter===v?"selected":""}>${statusLabel(v)}</option>`).join("")}</select></div><div class="field full"><label>${t("diag.minConfidence",{pct:Math.round(ui.reviewConfidence*100)})}</label><input data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?t("action.cancelDrawing"):t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">${t("action.saveVerifiedPlan")}</button><button class="btn sm" data-review-action="improve">${t("action.improveAI")}</button><button class="btn sm" data-review-action="export-dataset" title="${t("action.exportDatasetTitle")}">${t("action.exportDataset")}</button><button class="btn sm" data-review-action="session-report">${t("op.report")}</button></div></details><button class="btn" data-review-action="reanalyze">${t("action.reanalyze")}</button>`:""}</header>${reviewQueueBarHTML(event)}${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><div class="planintel-map-inner" id="analysisSceneInner"><img src="${event.background.src}" alt="Floor plan analysis source">${candidates.map(c=>candidateBox(c,selected?.id===c.id,target?.ids||null)).join("")}${boundaryBox?`<div class="review-group-boundary" style="left:${Math.max(0,boundaryBox.x-2.5)}%;top:${Math.max(0,boundaryBox.y-2.5)}%;width:${boundaryBox.w+5}%;height:${boundaryBox.h+5}%"></div>`:""}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="focus-group" data-group="${p.groupId}" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="Difficult question">${p.label}</button>`).join("")}</div></div>${ui.operatorReportOpen?`<aside class="op-report-panel"><div class="op-report-head"><strong>${t("op.reportTitle")}</strong><button class="btn icon-only sm" data-review-action="close-session-report">${icon("x")}</button></div><div class="op-report-body">${operatorReportHTML(event)}</div></aside>`:""}${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?t("plan.analyzingLocally"):t("plan.noAnalysisYet")}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
+    return`<section class="planintel-screen ${ui.reviewQueue?"in-queue":""}"><header class="planintel-top">${planModeSwitchHTML(event)}<div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):t("plan.noAnalysisYet"))}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:a.ocr.reason||"no network"})):esc(analysisNoticeText(a))}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>${t("diag.advancedDiagnostics")}</summary><div class="diag-pop">${detectionDiagnosticsHTML(a)}<div class="field"><label for="fld-review-filter-status">${t("diag.status")}</label><select id="fld-review-filter-status" data-review-filter="status"><option value="all">${t("diag.all")}</option>${["unreviewed","confirmed","rejected"].map(v=>`<option value="${v}" ${ui.reviewFilter===v?"selected":""}>${statusLabel(v)}</option>`).join("")}</select></div><div class="field full"><label for="fld-review-filter-confidence">${t("diag.minConfidence",{pct:Math.round(ui.reviewConfidence*100)})}</label><input id="fld-review-filter-confidence" data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?t("action.cancelDrawing"):t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">${t("action.saveVerifiedPlan")}</button><button class="btn sm" data-review-action="improve">${t("action.improveAI")}</button><button class="btn sm" data-review-action="export-dataset" title="${t("action.exportDatasetTitle")}">${t("action.exportDataset")}</button><button class="btn sm" data-review-action="session-report">${t("op.report")}</button></div></details><button class="btn" data-review-action="reanalyze">${t("action.reanalyze")}</button>`:""}</header>${reviewQueueBarHTML(event)}${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><div class="planintel-map-inner" id="analysisSceneInner"><img src="${event.background.src}" alt="Floor plan analysis source">${candidates.map(c=>candidateBox(c,selected?.id===c.id,target?.ids||null)).join("")}${boundaryBox?`<div class="review-group-boundary" style="left:${Math.max(0,boundaryBox.x-2.5)}%;top:${Math.max(0,boundaryBox.y-2.5)}%;width:${boundaryBox.w+5}%;height:${boundaryBox.h+5}%"></div>`:""}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="focus-group" data-group="${p.groupId}" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="Difficult question">${p.label}</button>`).join("")}</div></div>${ui.operatorReportOpen?`<aside class="op-report-panel"><div class="op-report-head"><strong>${t("op.reportTitle")}</strong><button class="btn icon-only sm" data-review-action="close-session-report">${icon("x")}</button></div><div class="op-report-body">${operatorReportHTML(event)}</div></aside>`:""}${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?t("plan.analyzingLocally"):t("plan.noAnalysisYet")}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
   }
   // The confidence at which a fresh candidate arrives pre-selected. Local
   // calibration (improveAI) writes state.calibration.recommendedConfidence
@@ -5973,7 +6007,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
       ["Etkinlikler","Yaklaşan etkinlikler kartlarda, geçmiş etkinlikler kilitli tabloda görünür. Geçmiş satırına çift tıklayın."],["Plan ve PDF","PNG/JPG/PDF yerelde açılır. PDF sayfasını küçük önizlemelerden seçin; hiçbir dosya yüklenmez."],["Assisted Detection","Klasik görüntü işleme adayları üretir. Sonuçlar AI değildir; onaylamadan plana eklenmez."],["Koltuk Yerleşimi","Ctrl/Shift ile çoklu seçim yapın. Grup taşıma tek işlem olarak doğrulanır; kapasite yetmezse hiçbir kayıt değişmez."],["Canlı Operasyon","No Show planlanan yeri korur ancak canlı kapasiteyi serbest bırakır. Empty Chairs kırmızı ışıklı koltuk görünümünü açar."],["Excel ve Kayıt","XLSX tamamen çevrimdışıdır. Table Plan, Guest List ve Unassigned sayfaları korunur; veriler tarayıcıda otomatik kaydedilir."]
     ]:[
       ["Events","Upcoming work appears as cards; past and Completed events are locked in History. Double-click a history row."],["Plans and PDF","PNG/JPG/PDF opens locally. Select PDF pages from thumbnails; no file is uploaded."],["Assisted Detection","Classical computer vision proposes candidates. It is not a trained AI model, and nothing is added until confirmation."],["Seating","Use Ctrl/Shift for multi-selection. Group moves validate as one transaction; insufficient capacity changes nothing."],["Live Operations","No Show preserves the planned assignment but releases live capacity. Empty Chairs opens the red-glow operational view."],["Excel and Storage","XLSX works offline. Table Plan, Guest List and Unassigned sheets remain available; browser autosave is automatic."]
-    ];root.innerHTML=`<aside class="guide-nav"><div class="guide-brand"><strong>MERIT EVENT MAKER</strong><span>${title}</span></div></aside><section class="guide-main"><header class="guide-top"><h2>${title}</h2><div class="guide-actions"><div class="lang-toggle"><button data-guide-lang="en" class="${!tr?"active":""}">EN</button><button data-guide-lang="tr" class="${tr?"active":""}">TR</button></div><button class="btn quiet" data-guide-reset-onboarding>${tr?"İpuçlarını yeniden göster":"Show tips again"}</button><button class="btn" data-guide-print>${icon("print")}Print / PDF</button><button class="btn icon-only" data-guide-close>${icon("x")}</button></div></header><div class="guide-content"><div class="guide-hero"><div class="kicker">MERIT ENTERTAINMENT · V8 BROWSER REVIEW</div><h1>${title}</h1><p>${tr?"Masa planı, fiziksel koltuklar, misafirler, canlı operasyon ve doğrulanmış plan düzeltmeleri için çevrimdışı başvuru.":"Offline reference for plan objects, physical chairs, guests, live operations and verified plan corrections."}</p></div><div class="guide-v8-grid">${cards.map(([h,p])=>`<article class="guide-v8-card"><h3>${h}</h3><p>${p}</p></article>`).join("")}</div><div class="guide-tip">${tr?"Bu sürüm tarayıcı incelemesidir; EXE veya masaüstü çalışma zamanı içermez.":"This is a browser review build; it does not include an EXE or desktop runtime."}</div></div></section>`;root.querySelectorAll("[data-guide-lang]").forEach(b=>b.onclick=()=>{ui.guideLang=b.dataset.guideLang;renderGuide();});root.querySelector("[data-guide-close]").onclick=()=>document.getElementById("guideDialog").close();root.querySelector("[data-guide-print]").onclick=()=>window.print();
+    ];root.innerHTML=`<aside class="guide-nav"><div class="guide-brand"><strong>MERIT EVENT MAKER</strong><span>${title}</span></div></aside><section class="guide-main"><header class="guide-top"><h2>${title}</h2><div class="guide-actions"><div class="lang-toggle"><button data-guide-lang="en" class="${!tr?"active":""}">EN</button><button data-guide-lang="tr" class="${tr?"active":""}">TR</button></div><button class="btn quiet" data-guide-reset-onboarding>${tr?"İpuçlarını yeniden göster":"Show tips again"}</button><button class="btn" data-guide-print>${icon("print")}Print / PDF</button><button class="btn icon-only" data-guide-close aria-label="${esc(t("a11y.close"))}" title="${esc(t("a11y.close"))}">${icon("x")}</button></div></header><div class="guide-content"><div class="guide-hero"><div class="kicker">MERIT ENTERTAINMENT · V8 BROWSER REVIEW</div><h1>${title}</h1><p>${tr?"Masa planı, fiziksel koltuklar, misafirler, canlı operasyon ve doğrulanmış plan düzeltmeleri için çevrimdışı başvuru.":"Offline reference for plan objects, physical chairs, guests, live operations and verified plan corrections."}</p></div><div class="guide-v8-grid">${cards.map(([h,p])=>`<article class="guide-v8-card"><h3>${h}</h3><p>${p}</p></article>`).join("")}</div><div class="guide-tip">${tr?"Bu sürüm tarayıcı incelemesidir; EXE veya masaüstü çalışma zamanı içermez.":"This is a browser review build; it does not include an EXE or desktop runtime."}</div></div></section>`;root.querySelectorAll("[data-guide-lang]").forEach(b=>b.onclick=()=>{ui.guideLang=b.dataset.guideLang;renderGuide();});root.querySelector("[data-guide-close]").onclick=()=>document.getElementById("guideDialog").close();root.querySelector("[data-guide-print]").onclick=()=>window.print();
     root.querySelector("[data-guide-reset-onboarding]").onclick=()=>{resetOnboarding();toast(tr?"İpuçları yeniden gösterilecek.":"Onboarding tips will show again.","success");};
   };
   openGuide = function(){renderGuide();document.getElementById("guideDialog").showModal();};
@@ -6014,6 +6048,66 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
     const btn=e.target.closest&&e.target.closest("[data-onboarding-dismiss]");
     if(btn)dismissOnboarding(btn.dataset.onboardingDismiss);
   });
+  // KEYBOARD ACTIVATION for the click-only surfaces: the tables and objects
+  // on the canvas and the guest cards in Seating are <div>s selected by a
+  // pointer, so a keyboard user could reach neither a table nor a guest
+  // (tests/suites/a11y-keyboard-workflows.test.mjs). They carry
+  // role="button" and a tab stop; Enter or Space does what the pointer does,
+  // through the same state -- selection on the Floor Plan (Ctrl/Shift adds to
+  // it), the table on Seating, the card's own click handler for a guest --
+  // and focus is put back on the same thing after render() replaces it.
+  // Nudging, deleting and duplicating a selection by keyboard already existed.
+  document.addEventListener("keydown",e=>{
+    if(e.key!=="Enter"&&e.key!==" ")return;
+    const el=e.target;
+    if(!el||el.tagName==="BUTTON"||!el.matches||!el.matches('[role="button"][tabindex="0"]'))return;
+    e.preventDefault();
+    const sel=openerSelector(el),id=el.dataset.objectId,kind=el.dataset.objectKind;
+    if(id){
+      if(ui.tab==="seating"){if(kind==="table"){ui.selectedTableId=id;ui.highlightId=null;}}
+      else{
+        // The pointer's own gate (startObjectDrag): a read-only event or a
+        // non-select tool selects nothing, by mouse or by key.
+        if(!canMutate(activeEvent(),"move plan objects")||ui.tool!=="select")return;
+        if(e.ctrlKey||e.shiftKey){ui.selectedObjectIds=ui.selectedObjectIds.includes(id)?ui.selectedObjectIds.filter(x=>x!==id):[...ui.selectedObjectIds,id];ui.selectedObjectId=ui.selectedObjectIds[0]||null;}
+        else{ui.selectedObjectIds=[id];ui.selectedObjectId=id;}
+      }
+      render();
+    }else el.click();
+    requestAnimationFrame(()=>{const again=sel&&document.querySelector(sel);if(again)again.focus({preventScroll:true});});
+  });
+  // Focusing an object the pan has put off-screen would make the browser
+  // SCROLL the overflow:hidden viewport to reveal it -- an offset the pan
+  // state knows nothing about, so the map would sit shifted from then on.
+  // Undo the scroll and move the pan instead, through the same transform
+  // the pointer's pan uses.
+  document.addEventListener("focusin",e=>{
+    const obj=e.target&&e.target.closest&&e.target.closest("[data-object-id]");
+    const vp=obj&&document.getElementById("canvasViewport");
+    if(!vp||!vp.contains(obj))return;
+    vp.scrollLeft=0;vp.scrollTop=0;
+    const v=vp.getBoundingClientRect(),o=obj.getBoundingClientRect();
+    if(o.left<v.left||o.right>v.right||o.top<v.top||o.bottom>v.bottom){
+      ui.pan.x+=(v.left+v.width/2)-(o.left+o.width/2);ui.pan.y+=(v.top+v.height/2)-(o.top+o.height/2);
+      if(typeof applyCanvasTransform==="function")applyCanvasTransform();
+    }
+  });
+  // Chromium does not wrap Tab inside a modal <dialog>: from the last control
+  // focus leaves the document for the browser's own UI and activeElement
+  // becomes <body>, and Shift+Tab from the first does the same
+  // (tests/suites/a11y-dialog-focus.test.mjs measured it on all three). In
+  // the desktop build there is no browser UI to leave to at all. Wrap it, for
+  // whichever native dialog is open.
+  const DIALOG_FOCUSABLE='button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])';
+  document.addEventListener("keydown",e=>{
+    if(e.key!=="Tab")return;
+    const dlg=document.querySelector("dialog[open]");if(!dlg)return;
+    const f=[...dlg.querySelectorAll(DIALOG_FOCUSABLE)].filter(el=>!el.disabled&&el.offsetParent!==null&&el.getAttribute("tabindex")!=="-1");
+    if(!f.length)return;
+    const first=f[0],last=f[f.length-1],a=document.activeElement;
+    if(e.shiftKey&&(a===first||!dlg.contains(a))){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&(a===last||!dlg.contains(a))){e.preventDefault();first.focus();}
+  },true);
   for(const id of ["guestDialog","excelDialog","guideDialog"]){
     const dlg=document.getElementById(id);if(!dlg)continue;
     dlg.addEventListener("close",()=>{

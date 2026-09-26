@@ -55,7 +55,7 @@ h1,h2,h3,h4,p{margin:0}
 .hidden{display:none!important}
 .muted{color:var(--muted)}
 .mono{font-variant-numeric:tabular-nums}
-.danger-text{color:#cb4e4e}
+.danger-text{color:var(--red)}
 
 ::selection{background:var(--blue-soft-strong);color:#2e2e1f}
 
@@ -69,6 +69,9 @@ h1,h2,h3,h4,p{margin:0}
 /* keyboard focus */
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible,.tab:focus-visible,.library-row:focus-visible,.guest-row-card:focus-visible{outline:none;box-shadow:var(--ring);border-radius:var(--radius-sm)}
 dialog:focus-visible{outline:none}
+/* Present to assistive technology, absent from the screen: the status live
+   region (#a11yAnnouncer) and nothing decorative. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
 .appbar{height:58px;flex:0 0 auto;display:flex;align-items:center;padding:0 16px;background:var(--chrome);border-bottom:1px solid var(--line)}
 
@@ -87,7 +90,7 @@ dialog:focus-visible{outline:none}
 .btn.primary:hover{background:#478bb8;box-shadow:var(--shadow-1)}
 .btn.quiet{background:transparent;border-color:transparent;color:#574f3c}
 .btn.quiet:hover{background:#f4f3f0;color:#2e2e1f}
-.btn.danger{color:#cb4e4e}
+.btn.danger{color:var(--red)}
 .btn.danger:hover{border-color:#7b4545;background:rgba(157,55,55,.1)}
 .btn.sm{height:27px;padding:0 9px;font-size:11px}
 .btn.icon-only{width:30px;padding:0}
@@ -457,7 +460,7 @@ dialog::backdrop{background:rgba(32,28,20,.44)}
 .guide-nav{min-height:0;overflow:auto;border-right:1px solid var(--line);background:#f0ede6;padding:14px 10px}
 .guide-brand{padding:0 8px 14px;border-bottom:1px solid var(--line)}
 .guide-brand strong{display:block;font-size:11px}
-.guide-brand span{display:block;margin-top:3px;color:#7d7768;font-size:8px}
+.guide-brand span{display:block;margin-top:3px;color:var(--pi-muted);font-size:8px}
 .guide-nav a{display:block;padding:7px 8px;border-radius:var(--radius-sm);color:#5e676e;text-decoration:none;font-size:9px;transition:background var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease)}
 .guide-nav a:hover{background:#e6e2d8;color:#1f252a}
 .guide-main{min-height:0;display:flex;flex-direction:column;background:#f6f4ef;color:#1f252a}
@@ -466,12 +469,12 @@ dialog::backdrop{background:rgba(32,28,20,.44)}
 .guide-actions{display:flex;gap:6px}
 .guide-actions .btn{background:#fff;color:#242a2f;border-color:#575142}
 .lang-toggle{display:flex;border:1px solid #c5c1b9;border-radius:var(--radius-sm);overflow:hidden}
-.lang-toggle button{height:29px;width:38px;border:0;border-right:1px solid #c5c1b9;background:#ece9e2;color:#626970;font-size:9px;transition:background var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease)}
+.lang-toggle button{height:29px;width:38px;border:0;border-right:1px solid #c5c1b9;background:#ece9e2;color:#51575d;font-size:9px;transition:background var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease)}
 .lang-toggle button:last-child{border:0}
 .lang-toggle button.active{background:#2f6f66;color:#fff}
 .guide-content{flex:1;overflow:auto;padding:24px 28px 50px;counter-reset:manual}
 .guide-hero{padding-bottom:20px;border-bottom:1px solid #d2cec6}
-.guide-hero .kicker{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#66727c}
+.guide-hero .kicker{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5f6a74}
 .guide-hero h1{margin-top:6px;font-size:28px;letter-spacing:-.02em}
 .guide-hero p{max-width:720px;margin-top:8px;color:#5e676e;font-size:11px}
 .manual-section{padding:24px 0;border-bottom:1px solid #d4d0c8}
@@ -1020,7 +1023,12 @@ body{min-width:1180px}
    soft depth instead of heavy borders. */
 :root{
   --pi-bg:#f6f4ef;--pi-surface:#ffffff;--pi-surface-2:#fbfaf6;
-  --pi-ink:#242018;--pi-muted:#7d7768;--pi-muted-2:#a19a89;
+  /* --pi-muted was #7d7768 (4.46:1 on white, 4.06 on --pi-bg) and
+     --pi-muted-2 was #a19a89 (2.80:1) -- both colour TEXT, so both were
+     WCAG AA failures on every planmap / review / card surface
+     (tests/suites/a11y-scan.test.mjs). Same hue, darkened until each clears
+     4.5:1 on --pi-bg, and still one visible step apart. */
+  --pi-ink:#242018;--pi-muted:#625c4f;--pi-muted-2:#716b5d;
   --pi-line:#e6e1d5;--pi-line-soft:#eeeae0;
   --pi-accent:#2f6f66;--pi-accent-strong:#1f4f48;--pi-accent-soft:rgba(47,111,102,.12);
   --pi-danger:#b4483f;--pi-danger-soft:rgba(180,72,63,.1);
@@ -1487,7 +1495,8 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .enter-key{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border:1px solid var(--blue-soft-strong);border-radius:var(--radius-sm);background:var(--blue-soft);color:var(--blue-dim);font:inherit;font-size:10.5px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
 .btn-arrive{height:34px;padding:0 15px;font-size:12.5px;font-weight:600;font-family:inherit;border-radius:var(--radius-md);cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--text);transition:all var(--dur-fast) var(--ease);white-space:nowrap}
 .btn-arrive:hover{border-color:var(--muted-2)}
-.btn-arrive.go{border-color:var(--green);background:var(--green);color:#fff}
+/* White on --green was 4.14:1; --green-ink is the same hue at 6.44:1. */
+.btn-arrive.go{border-color:var(--green-ink);background:var(--green-ink);color:#fff}
 .btn-arrive.go:hover{filter:brightness(1.06)}
 .btn-arrive.undo{border-color:var(--line);background:var(--chrome);color:var(--muted)}
 .btn-arrive.no{border-color:rgba(182,61,61,.4);color:var(--red);background:var(--chrome)}
@@ -1658,7 +1667,7 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .wz-issue{font-size:11.5px;line-height:1.4;margin-bottom:2px}
 .wz-issue.error{color:var(--red);font-weight:600}
 .wz-issue.warn{color:var(--amber)}
-.wz-ok{font-size:11.5px;color:var(--green);font-weight:600;white-space:nowrap}
+.wz-ok{font-size:11.5px;color:var(--green-ink);font-weight:600;white-space:nowrap}
 
 /* Create Event: two panels, same tokens as every other screen. */
 .mx-setup{min-height:100%;background:var(--shell);display:flex;flex-direction:column}

@@ -2,7 +2,7 @@
   "name": "merit-event-maker",
   "version": "0.0.0",
   "private": true,
-  "description": "MERIT Entertainment \u2014 Event Maker. Browser-only event operations software. This manifest exists for the developer test/build tooling only; the app itself has no build step and no runtime dependencies.",
+  "description": "MERIT Entertainment — Event Maker. Browser-only event operations software. This manifest exists for the developer test/build tooling only; the app itself has no build step and no runtime dependencies.",
   "type": "module",
   "scripts": {
     "test": "node tests/run.mjs",
@@ -29,6 +29,7 @@
     "verify:offline": "node benchmarks/offline/verify-offline-package.mjs"
   },
   "devDependencies": {
+    "axe-core": "4.13.0",
     "playwright": "1.56.1"
   },
   "engines": {

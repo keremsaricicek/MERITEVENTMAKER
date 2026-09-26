@@ -939,6 +939,19 @@
     // Refusals that say WHAT is wrong and that nothing changed. {path} is built
     // from the validator's own field names and indexes, never from content.
     "guests.notAWorkbook": { en: "This file is named .xlsx but is not an Excel workbook. Nothing was imported.", tr: "Bu dosyanın adı .xlsx ama bir Excel çalışma kitabı değil. Hiçbir şey içe aktarılmadı." },
+    // Accessible names for controls with no visible label of their own. Each
+    // is what a screen reader announces, so each is translated like any
+    // other string on screen.
+    "a11y.close": { en: "Close", tr: "Kapat" },
+    "a11y.table": { en: "Table {number}, {seated} of {capacity} seats taken", tr: "Masa {number}, {capacity} koltuğun {seated} tanesi dolu" },
+    "a11y.frozen": { en: "frozen", tr: "donduruldu" },
+    "a11y.unavailable": { en: "unavailable tonight", tr: "bu gece kullanılamaz" },
+    "a11y.arrivalChanged": { en: "{name}: {status}", tr: "{name}: {status}" },
+    "guests.filter.label": { en: "Filter guests", tr: "Misafirleri filtrele" },
+    "find.resultsLabel": { en: "Guest search results", tr: "Misafir arama sonuçları" },
+    "wiz.mapColumn": { en: "Column \u201c{column}\u201d maps to", tr: "\u201c{column}\u201d sütununun karşılığı" },
+    "wiz.rowField": { en: "{field}, row {n}", tr: "{field}, satır {n}" },
+    "review.kindType": { en: "Object type", tr: "Nesne türü" },
     "backup.futureVersion": { en: "This backup was made by a newer version of MERIT EVENT MAKER and cannot be restored by this one. Nothing was changed.", tr: "Bu yedek MERIT EVENT MAKER'ın daha yeni bir sürümüyle alınmış; bu sürüm onu geri yükleyemez. Hiçbir şey değiştirilmedi." },
     "backup.invalidRecord": { en: "This backup file was not restored: {path} {rule}. Nothing was changed.", tr: "Bu yedek dosyası geri yüklenmedi: {path} {rule}. Hiçbir şey değiştirilmedi." },
     "import.rule.notRecord": { en: "is not a record", tr: "bir kayıt değil" },
