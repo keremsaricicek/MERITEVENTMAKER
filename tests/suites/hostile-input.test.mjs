@@ -192,16 +192,31 @@ export default async function run({ page, checks, baseUrl, artifactDir, repoRoot
   await page.fill("#globalGuestSearch", "");
 
   // The guest dialog, typed the way a coordinator types.
+  // The form is read back before saving, the way tests/lib addGuest does and
+  // for the reason it records: a fill focuses and then inserts, and a render()
+  // landing in between (a toast clearing, a save completing) moves the text.
+  // This step failed once in six runs before it verified what it typed.
   await gotoTab(page, "guests");
-  await click(page, '[data-guest-command="add"]');
-  await page.waitForSelector("#guestForm", { state: "visible" });
-  await page.fill('#guestForm input[name="name"]', tagged("typedName"));
-  await page.fill('#guestForm [name="invitedBy"]', tagged("typedInvitedBy"));
-  await page.fill('#guestForm [name="notes"]', tagged("typedNotes"));
+  await settle(page);
+  const want = { name: tagged("typedName"), invitedBy: tagged("typedInvitedBy"), notes: tagged("typedNotes") };
+  let typed = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await click(page, '[data-guest-command="add"]');
+    await page.waitForSelector("#guestForm", { state: "visible" });
+    await page.fill('#guestForm input[name="name"]', want.name);
+    await page.fill('#guestForm [name="invitedBy"]', want.invitedBy);
+    await page.fill('#guestForm [name="notes"]', want.notes);
+    typed = await page.evaluate(() => ({ name: document.querySelector('#guestForm input[name="name"]').value,
+      invitedBy: document.querySelector('#guestForm [name="invitedBy"]').value, notes: document.querySelector('#guestForm [name="notes"]').value }));
+    if (typed.name === want.name && typed.invitedBy === want.invitedBy && typed.notes === want.notes) break;
+    await page.keyboard.press("Escape");
+    await settle(page);
+  }
   await click(page, "#guestForm .dialog-foot .btn.primary");
   await page.waitForTimeout(400);
-  checks.ok(await page.evaluate((n) => state.events[0].guests.some((g) => g.name === n), tagged("typedName")),
-    "a guest TYPED with the payload as a name is saved with exactly that name");
+  const savedNames = await page.evaluate(() => state.events[0].guests.map((g) => g.name.slice(0, 40)));
+  checks.ok(savedNames.includes(want.name.slice(0, 40)) && await page.evaluate((n) => state.events[0].guests.some((g) => g.name === n), want.name),
+    "a guest TYPED with the payload as a name is saved with exactly that name", { savedNames, typedOk: typed && typed.name === want.name });
   await audit(page, "Guests, after typing a hostile guest", checks, { mustShow: [visibleMark("typedName")] });
 
   // A handover note typed at the Command Center.

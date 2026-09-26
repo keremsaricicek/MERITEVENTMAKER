@@ -18,7 +18,7 @@
 
   let workerPromise = null;
   function getWorker() {
-    if (!globalThis.Tesseract) return Promise.reject(new Error("Tesseract.js did not load (no network, or CDN blocked)."));
+    if (!globalThis.Tesseract) return Promise.reject(Object.assign(new Error("Tesseract.js did not load (no network, or CDN blocked)."), { ocrCode: "ENGINE_NOT_LOADED" }));
     if (!workerPromise) {
       // scripts/build-offline-full.mjs sets MERIT_OCR_ASSET_PATHS to local
       // relative paths (worker/core/lang files shipped alongside the HTML)
@@ -49,12 +49,16 @@
     try {
       const worker = await Promise.race([
         getWorker(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("OCR engine load timed out.")), timeoutMs)),
+        new Promise((_, reject) => setTimeout(() => reject(Object.assign(new Error("OCR engine load timed out."), { ocrCode: "TIMEOUT" })), timeoutMs)),
       ]);
       const { data } = await worker.recognize(imageSrc);
       return { available: true, text: data.text || "", words: (data.words || []).map(w => ({ text: w.text, confidence: w.confidence, bbox: w.bbox })) };
     } catch (error) {
-      return { available: false, text: null, reason: error.message || String(error) };
+      // `reason` is the engine's own words, kept for diagnostics (the suites
+      // print it). What an operator reads is `reasonCode`, translated -- the
+      // raw message is English in a Turkish UI and sometimes internals.
+      return { available: false, text: null, reason: error.message || String(error),
+        reasonCode: (error && error.ocrCode) || "FAILED" };
     }
   }
 

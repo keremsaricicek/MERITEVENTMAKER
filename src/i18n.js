@@ -159,6 +159,9 @@
     "teachArea.chip.applied": { en: "{n} remembered", tr: "{n} hatırlanan" },
     "teachArea.chip.pending": { en: "{n} to confirm", tr: "{n} onay bekliyor" },
     "teachArea.chipTitle": { en: "Notes you wrote, applied to this plan. Nothing was trained.", tr: "Yazdığınız notlar bu plana uygulandı. Hiçbir şey eğitilmedi." },
+    "ocr.reason.ENGINE_NOT_LOADED": { en: "the OCR engine did not load — no network, or it is blocked", tr: "OCR motoru yüklenmedi — ağ yok ya da engellendi" },
+    "ocr.reason.TIMEOUT": { en: "the OCR engine took too long to start", tr: "OCR motoru zamanında başlamadı" },
+    "ocr.reason.FAILED": { en: "the OCR engine could not read this plan", tr: "OCR motoru bu planı okuyamadı" },
     "ocr.unavailable": { en: "OCR unavailable in this session ({reason}) — capacity audit skipped, not fabricated.", tr: "Bu oturumda OCR kullanılamıyor ({reason}) — kapasite denetimi atlandı, uydurulmadı." },
 
     "diag.notInstalled": { en: "DOMAIN MODEL NOT INSTALLED", tr: "ALAN MODELİ KURULU DEĞİL" },
@@ -938,6 +941,15 @@
     "backup.badReference": { en: "This backup file has broken internal references and was not restored.", tr: "Bu yedek dosyasının iç referansları bozuk, bu yüzden geri yüklenmedi." },
     // Refusals that say WHAT is wrong and that nothing changed. {path} is built
     // from the validator's own field names and indexes, never from content.
+    "guests.readFailed": { en: "This guest list could not be read. Nothing was imported.", tr: "Bu misafir listesi okunamadı. Hiçbir şey içe aktarılmadı." },
+    "guests.noRows": { en: "The selected file contains no data rows. Nothing was imported.", tr: "Seçilen dosyada veri satırı yok. Hiçbir şey içe aktarılmadı." },
+    "guests.engineMissing": { en: "The built-in spreadsheet reader did not start. Reload the page and try again.", tr: "Yerleşik tablo okuyucu başlatılamadı. Sayfayı yenileyip tekrar deneyin." },
+    "guests.templateFailed": { en: "The Excel template could not be created.", tr: "Excel şablonu oluşturulamadı." },
+    "reports.workbookFailed": { en: "The Table Plan workbook could not be created. Nothing was downloaded.", tr: "Masa Planı çalışma kitabı oluşturulamadı. Hiçbir şey indirilmedi." },
+    "plan.fileUnreadable": { en: "the file could not be read", tr: "dosya okunamadı" },
+    "training.captureFailed": { en: "The correction was applied, but it could not be kept as a training example.", tr: "Düzeltme uygulandı, ancak eğitim örneği olarak saklanamadı." },
+    "detect.failed": { en: "Assisted Detection could not finish on this plan. Nothing was changed — try again, or place tables by hand.", tr: "Destekli Algılama bu planda tamamlanamadı. Hiçbir şey değiştirilmedi — yeniden deneyin ya da masaları elle yerleştirin." },
+    "dataset.exportFailed": { en: "The training dataset could not be exported.", tr: "Eğitim veri kümesi dışa aktarılamadı." },
     "guests.notAWorkbook": { en: "This file is named .xlsx but is not an Excel workbook. Nothing was imported.", tr: "Bu dosyanın adı .xlsx ama bir Excel çalışma kitabı değil. Hiçbir şey içe aktarılmadı." },
     // Accessible names for controls with no visible label of their own. Each
     // is what a screen reader announces, so each is translated like any

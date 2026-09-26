@@ -17,6 +17,13 @@
   // Events screen -- and, since the restore had already been saved, every
   // reload after it. The placeholder is a constant, never the raw value:
   // callers interpolate the result into markup unescaped.
+  // AN ERROR RAISED FOR THE OPERATOR carries its own translated sentence in
+  // `meritUserMessage`; anything else -- a library's own Error, a TypeError --
+  // never reaches a toast, because its message is untranslated and sometimes
+  // internals (merit-resilience-hardening: "Raw error.message never reaches
+  // the operator"). Callers show `userMessage(err, fallbackKey)`.
+  const userError=message=>Object.assign(new Error(message),{meritUserMessage:message});
+  const userMessage=(err,fallbackKey)=>(err&&err.meritUserMessage)||t(fallbackKey);
   const nowISO=()=>new Date().toISOString(),fmtDate=v=>{const d=new Date(v+"T12:00:00");return Number.isNaN(d.getTime())?"—":new Intl.DateTimeFormat(ui&&ui.lang==="tr"?"tr-TR":"en-GB",{day:"2-digit",month:"short",year:"numeric"}).format(d);};
   const naturalSort=(a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true,sensitivity:"base"});
   function naturalTableSort(a,b){const prefix=v=>(String(v).replace(/\s+/g,"").match(/^([A-Za-z]+)/)?.[1]||"").toUpperCase(),rank={T:0,VIP:1,B:2},pa=prefix(a),pb=prefix(b),ra=rank[pa]??3,rb=rank[pb]??3;return ra-rb||naturalSort(a,b)}
