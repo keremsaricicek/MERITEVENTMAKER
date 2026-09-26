@@ -1199,6 +1199,41 @@ unload" have no suite of their own; the unload race is guarded by
 `bootReady` (`save-ordering`). 50k-row XLSX and a 40-page PDF are
 performance questions and belong to §26.
 
+### R. §16 — native `confirm()` × 9 / `prompt()` × 2 — DONE, and three real bugs found on the way
+
+All eleven are gone (nine were live; two sat in overridden pre-v8 bodies and
+were converted so the count is a clean zero, now enforced statically). One
+in-app dialog replaces them — `ask()` in `src/app.js`: yes/no or a bounded
+integer, translated, every text set with `textContent` (a guest's name in a
+question cannot become markup), Escape and Cancel always NO, a destructive
+question opening on Cancel, a number opening in its field with an
+out-of-range answer refused IN the dialog and the reason tied to the field.
+It is registered with the focus-return mechanism and passes
+`a11y-dialog-focus` (now 33 checks) like the other dialogs.
+
+`native-dialogs` (29 checks) drives every live site twice — Cancel/Escape must
+leave state byte-identical, yes must act. Writing it found:
+
+| bug | what happened | fix |
+|---|---|---|
+| **Cancel on "delete table" asked again** | two global key handlers (app-guests.js, pre-v8 but live, and app-v8.js) both handled Delete; with a blocking `confirm()`, Cancel on the first produced the same question a second time | the duplicate branch removed; one press asks once (counted) |
+| **Escape in a dialog cleared the selection behind it** | the app's global Escape handler ran as well; Delete / arrows on a dialog button could delete or nudge the table under it | an open dialog owns the keyboard: both global handlers yield to it |
+| **PDF plan import was broken on Chromium 141** | pdf.js 5.7 calls `Map.prototype.getOrInsertComputed`, which this browser generation lacks; getting ANY page threw — the new-event form and Replace Plan alike. No suite rendered a PDF page, so nothing said so | the standard polyfill, defined only where missing, in a classic script that runs before the deferred pdf.js module in all three builds |
+
+Mutations: a native `confirm()` restored (4 fail), Escape leaking past the
+dialog (2), the polyfill removed (1), the number range unenforced (4). The
+duplicate Delete handler, restored, is now HARMLESS — the dialog-owns-keyboard
+guard makes the second handler yield — so its removal is recorded as cleanup
+and the one-question-per-press count guards the behaviour instead.
+
+Fourteen suites answered the browser's confirm with `page.on("dialog")`; they
+now use `autoAnswer(page)` (tests/lib/app-actions.mjs), which answers the
+product's dialog the same way. `assignment-writer` awaits the deletion it
+starts, because the answer is no longer synchronous.
+
+Gates: `npm run test:all` **88 / 88 suites · 2,851 / 2,851 checks**;
+`verify:offline` **27 / 27** on both rebuilt artifacts.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
@@ -1242,16 +1277,17 @@ typing 136/289.
 
 ## Next step
 
-**§16 — browser-native `confirm()` × 9 and `prompt()` × 2.** Each becomes an
-in-app dialog that passes `a11y-dialog-focus` (focus in, trapped, restored)
-and is translated — `merit-ui-quality-gates` §native dialogs. Measure the
-eleven call sites first; several guard destructive operations, so each
-replacement must keep its "nothing happens on Cancel" contract under a test.
+**§17 — toast.** Per `merit-ui-quality-gates`: a toast is a transient
+confirmation, never the only carrier of an error an operator must act on
+(§15 and §19 already moved the two worst cases — failing saves and
+unreadable storage — to persistent notices). Measure every `toast(` call by
+type and message, find errors that exist ONLY as a toast, and hardcoded
+English passed straight to toast() (`translateToast` maps some; measure how
+many reach the screen untranslated in TR).
 
-Then, in the order given: §17 toast, §18 localization, §20–§25 UX, §26
-performance, §27 real CI release gates (incl. the `benchmark:baseline` false
-green and `--compare` exit 1), §28–30, then the final review and completion
-matrix.
+Then, in the order given: §18 localization, §20–§25 UX, §26 performance,
+§27 real CI release gates (incl. the `benchmark:baseline` false green and
+`--compare` exit 1), §28–30, then the final review and completion matrix.
 
 Deferred with recorded prerequisites met, not forgotten: Split B (a design
 job, §3B measured), the screen extractions A21/A17/A12 (entry N).
