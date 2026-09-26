@@ -35,6 +35,7 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `xlsx-contract` | business, reports | the exported workbook's sheets, companion seats, or table numbering |
 | `storage-provider` | storage | data does not reach IndexedDB, or does not survive a reload |
 | `backup-restore` | storage | a bad backup file is accepted, or a good one does not restore |
+| `prototype-pollution` | security, storage | a `__proto__` / `constructor` / `prototype` key in a backup, an event package (literal or `\u`-escaped) or a spreadsheet header reaches `Object.prototype`, swaps a record's prototype, or is carried into state, onto disk and back out in the next export — where the first careless `Object.assign` would arm it |
 | `venue-model` | storage | a published layout version is no longer frozen |
 | `i18n` | ui | a raw translation key reaches the screen, or a language stops rendering |
 | `i18n-key-integrity` | business | a `t()` key stops existing, or loses one of its two languages — statically, across every call site, because the strings this matters most for (error paths) are the ones no rendering test ever reaches. Also guards that no toast shows a bare `error.message` |

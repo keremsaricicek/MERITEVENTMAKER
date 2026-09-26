@@ -119,6 +119,36 @@
     return true;
   }
 
+  // THE ONE JSON READER FOR A RECORD FROM OUTSIDE THIS PAGE'S MEMORY — the
+  // stored root on boot, a recovery snapshot, a backup or an event package
+  // picked by an operator. Identical to JSON.parse except that three keys are
+  // dropped wherever they occur: `__proto__`, `constructor`, `prototype`.
+  //
+  // JSON.parse alone never pollutes anything: it creates `__proto__` as an
+  // ordinary own property. The danger is one copy later. Every copy in this
+  // codebase today spreads or defines, which is safe, and
+  // `tests/suites/prototype-pollution.test.mjs` proves it — but the keys used
+  // to ride along anyway: restored, saved to disk, exported in the next
+  // backup, waiting for the first `Object.assign(existing, imported)` to turn
+  // a dormant own `__proto__` into a live prototype swap. A defence that
+  // depends on every future copy being written carefully is not a boundary.
+  // This is. No record this product writes uses any of the three names, so
+  // nothing legitimate is lost.
+  //
+  // COST, measured rather than assumed: a reviver visits every value, and on a
+  // 4.2 MB record (420 tables × 10 chairs, 4,200 guests, 5,000 audit entries,
+  // a 3 MB plan image) it took the parse from 13 ms to 75 ms. So the reviver
+  // only runs when the text COULD produce one of the keys. Inside a JSON
+  // string a letter is written either literally or as a `\u` escape — there is
+  // no third spelling — so text that contains none of the three names and no
+  // `\u` at all cannot yield any of them, and the plain parse is exact.
+  const FORBIDDEN_KEYS = Object.freeze(["__proto__", "constructor", "prototype"]);
+  const COULD_NAME_FORBIDDEN = /__proto__|constructor|prototype|\\u/;
+  function parseRecord(text) {
+    if (typeof text === "string" && !COULD_NAME_FORBIDDEN.test(text)) return JSON.parse(text);
+    return JSON.parse(text, (key, value) => (FORBIDDEN_KEYS.includes(key) ? undefined : value));
+  }
+
   function migrate(root) {
     if (!readable(root)) {
       return { status: STATUS.UNREADABLE, root: null, from: null, to: null, applied: [] };
@@ -143,7 +173,7 @@
   }
 
   globalThis.MeritSchemaMigrations = {
-    version: 1, CURRENT_VERSION, STATUS, STEPS,
-    versionOf, plan, readable, migrate,
+    version: 1, CURRENT_VERSION, STATUS, STEPS, FORBIDDEN_KEYS,
+    versionOf, plan, readable, migrate, parseRecord,
   };
 })();

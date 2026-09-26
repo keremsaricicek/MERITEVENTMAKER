@@ -240,8 +240,15 @@
     const e=new Error("Stored data was written by a newer version of this application.");
     e.name="FutureSchemaError"; e.storedVersion=storedVersion; return e;
   }
+  // Every record read from outside memory goes through the registry's reader,
+  // which drops `__proto__`/`constructor`/`prototype` keys before anything can
+  // copy them (src/schema-migrations.js, parseRecord).
+  function parseRecordText(raw){
+    const SM=globalThis.MeritSchemaMigrations;
+    return SM&&SM.parseRecord?SM.parseRecord(raw):JSON.parse(raw);
+  }
   function parseRoot(raw){
-    const parsed=JSON.parse(raw);
+    const parsed=parseRecordText(raw);
     // READ the version, do not stamp it. `parsed.schemaVersion=8` used to sit
     // here: a record from a newer build had its version overwritten, its
     // unknown fields ignored, and was then saved over on the first mutation.
@@ -5713,7 +5720,7 @@
     reader.onerror=()=>toast(t("backup.corruptFile"),"error",6000);
     reader.onload=()=>{
       let parsed;
-      try{parsed=JSON.parse(reader.result);}catch{toast(t("backup.corruptFile"),"error",6000);return;}
+      try{parsed=parseRecordText(reader.result);}catch{toast(t("backup.corruptFile"),"error",6000);return;}
       if(parsed&&parsed.format==="merit-event-maker-event-package"){importEventPackagePayload(parsed);return;}
       if(!parsed||parsed.format!=="merit-event-maker-backup"||!parsed.payload||!Array.isArray(parsed.payload.events)){toast(t("backup.invalidFile"),"error",6000);return;}
       if(!backupReferencesIntact(parsed.payload)){toast(t("backup.badReference"),"error",6500);return;}
