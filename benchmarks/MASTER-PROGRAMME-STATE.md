@@ -1165,6 +1165,40 @@ button is a deeper green, zero page errors at every size.
 screen reader". No screen-reader session has been run; none is fabricated
 here. That row stays open until a person runs NVDA or VoiceOver against it.
 
+### Q. §19 — resilience — DONE for the failure modes the skill lists, each measured first
+
+The skill: "The data is the event … the one that matters most is PRESERVE." At
+entry: **zero** resilience suites. Every row below failed through the real
+product BEFORE its fix, proven by running the new suite against the previous
+commit, not assumed.
+
+| failure | measured before | now | suite |
+|---|---|---|---|
+| **the stored record cannot be read at boot** | app opened EMPTY with no word said; the **first save overwrote the unreadable record** — destroyed a record one hand-edited quote from readable | copied aside byte-for-byte (`quarantine:<time>`) before anything runs; a persistent notice says it was NOT deleted, with Download and Restore; if even the copy fails, the session refuses to save | `resilience-storage` (12 fail on the old code) |
+| storage will not open at all | same silent blank, then saves written over a record never read | announced; nothing written over it this session | `resilience-storage` |
+| quota exhausted mid-save | one toast, gone in 6 s | a notice that STAYS until a save succeeds, backup download beside it (works while storage fails); disk keeps the last good record | `resilience-storage` |
+| a blank install's schema stamp | saved as version 8 with the registry at 9 | `CURRENT_VERSION` | `resilience-storage` |
+| detector fails mid-run | the new analysis replaces the old one PART-WAY through, so a failure after that left a half-built analysis — under "Nothing was changed" | the previous analysis is restored; the sentence is now true | `resilience-detection-render` |
+| Re-Analyze while running | 3 presses → **3 pipelines** interleaving writes | 1 | `resilience-detection-render` |
+| a screen that throws | escaped `render()` uncaught; stale DOM left bound to moved-on state | a translated recovery screen (`role=alert`): back to events, or a backup; still logged as an ERROR so render bugs stay loud elsewhere | `resilience-detection-render` |
+| a raw `error.message` on screen | **8 surfaces** + the OCR engine's own sentence in the review title | translated text; `meritUserMessage` for errors raised FOR the operator; `reasonCode` for OCR | `resilience-static` |
+| empty `catch` / swallowed rejection | 0 empty; one `.catch(()=>null)` (a genuine abstention) | guarded; the abstention carries its marker | `resilience-static` |
+| dangling table / seat beyond capacity | already right: opens, BLOCKING Plan Doctor findings on screen, **not** silently repaired | characterised; a silent-repair mutation fails 4 checks | `resilience-persisted` |
+
+**Fault injection (evidence 1)** is `tests/lib/faults.mjs`: switchable faults
+in the browser's own IndexedDB `put`/`open`, armable before boot, a bypass for
+the suite's own reads and writes, and `throwFrom("Module.method")` for a named
+boundary. It never stubs the product's functions.
+
+**Also found:** `hostile-input` failed 1 run in 6 when a render landed
+mid-fill — the step now reads the form back before saving, the way `addGuest`
+already did.
+
+**Not covered, named:** "write succeeds, read-back differs" and "save during
+unload" have no suite of their own; the unload race is guarded by
+`bootReady` (`save-ordering`). 50k-row XLSX and a 40-page PDF are
+performance questions and belong to §26.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
@@ -1208,18 +1242,16 @@ typing 136/289.
 
 ## Next step
 
-**§19 — resilience**, per `.claude/skills/` resilience guidance and the
-`resilience-engineer` standard: every failure path held to DETECT / CONTAIN /
-INFORM / RECOVER / PRESERVE — storage exhaustion (quota), IndexedDB failure,
-corrupted persisted data at boot (`privacy-logs` and `malformed-import`
-already cover part of it), detector and OCR failure, async races, save and
-restore failure. Measure each path through the real product first.
+**§16 — browser-native `confirm()` × 9 and `prompt()` × 2.** Each becomes an
+in-app dialog that passes `a11y-dialog-focus` (focus in, trapped, restored)
+and is translated — `merit-ui-quality-gates` §native dialogs. Measure the
+eleven call sites first; several guard destructive operations, so each
+replacement must keep its "nothing happens on Cancel" contract under a test.
 
-Then, in the order given: §16 `confirm()` × 9 / `prompt()` × 2 (the
-replacement dialogs must pass `a11y-dialog-focus`), §17 toast, §18
-localization, §20–§25 UX, §26 performance, §27 real CI release gates (incl.
-the `benchmark:baseline` false green and `--compare` exit 1), §28–30, then
-the final review and completion matrix.
+Then, in the order given: §17 toast, §18 localization, §20–§25 UX, §26
+performance, §27 real CI release gates (incl. the `benchmark:baseline` false
+green and `--compare` exit 1), §28–30, then the final review and completion
+matrix.
 
 Deferred with recorded prerequisites met, not forgotten: Split B (a design
 job, §3B measured), the screen extractions A21/A17/A12 (entry N).
