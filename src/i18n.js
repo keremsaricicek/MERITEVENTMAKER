@@ -731,6 +731,8 @@
     // The replace path can additionally promise something the import path
     // cannot: every mutation in it happens after the awaits that throw, so a
     // failure genuinely leaves the existing plan untouched.
+    "plan.notAnImage": { en: "the file is not a readable PNG or JPG image", tr: "dosya okunabilir bir PNG veya JPG görüntüsü değil" },
+    "plan.unreadableImage": { en: "This file is not a readable PNG or JPG image. Nothing was changed — choose a different file.", tr: "Bu dosya okunabilir bir PNG veya JPG görüntüsü değil. Hiçbir şey değiştirilmedi — başka bir dosya seçin." },
     "plan.replaceFailed": { en: "The floor plan could not be replaced ({reason}). The current plan is unchanged — choose a different PNG, JPG, JPEG or PDF file.", tr: "Kat planı değiştirilemedi ({reason}). Mevcut plan olduğu gibi kaldı — farklı bir PNG, JPG, JPEG veya PDF dosyası seçin." },
     "setup.dropPlan": { en: "Drop a floor plan here", tr: "Kat planını buraya bırakın" },
     "setup.dropPlanHint": { en: "or click to choose PNG, JPG, JPEG or PDF", tr: "veya tıklayıp PNG, JPG, JPEG ya da PDF seçin" },
@@ -934,6 +936,18 @@
     "backup.invalidFile": { en: "This is not a MERIT EVENT MAKER backup file.", tr: "Bu bir MERIT EVENT MAKER yedek dosyası değil." },
     "backup.corruptFile": { en: "This backup file could not be read (it may be damaged or incomplete).", tr: "Bu yedek dosyası okunamadı (bozuk veya eksik olabilir)." },
     "backup.badReference": { en: "This backup file has broken internal references and was not restored.", tr: "Bu yedek dosyasının iç referansları bozuk, bu yüzden geri yüklenmedi." },
+    // Refusals that say WHAT is wrong and that nothing changed. {path} is built
+    // from the validator's own field names and indexes, never from content.
+    "guests.notAWorkbook": { en: "This file is named .xlsx but is not an Excel workbook. Nothing was imported.", tr: "Bu dosyanın adı .xlsx ama bir Excel çalışma kitabı değil. Hiçbir şey içe aktarılmadı." },
+    "backup.futureVersion": { en: "This backup was made by a newer version of MERIT EVENT MAKER and cannot be restored by this one. Nothing was changed.", tr: "Bu yedek MERIT EVENT MAKER'ın daha yeni bir sürümüyle alınmış; bu sürüm onu geri yükleyemez. Hiçbir şey değiştirilmedi." },
+    "backup.invalidRecord": { en: "This backup file was not restored: {path} {rule}. Nothing was changed.", tr: "Bu yedek dosyası geri yüklenmedi: {path} {rule}. Hiçbir şey değiştirilmedi." },
+    "import.rule.notRecord": { en: "is not a record", tr: "bir kayıt değil" },
+    "import.rule.notList": { en: "is not a list", tr: "bir liste değil" },
+    "import.rule.notText": { en: "is not text", tr: "metin değil" },
+    "import.rule.badDate": { en: "is not a valid date", tr: "geçerli bir tarih değil" },
+    "import.rule.badPax": { en: "is not a valid party size (0–99 additional guests)", tr: "geçerli bir kişi sayısı değil (0–99 ek misafir)" },
+    "import.rule.badAssignment": { en: "is not a valid seat assignment", tr: "geçerli bir oturma ataması değil" },
+    "import.rule.badId": { en: "is not an identifier this product writes", tr: "bu ürünün yazdığı bir kimlik değil" },
 
     // ---- Offline Recovery ----
     // An automatic, unattended safety net -- distinct from backup.*, which
@@ -953,6 +967,9 @@
     "eventPackage.exportedToast": { en: "{name} exported as a portable event package.", tr: "{name} taşınabilir etkinlik paketi olarak dışa aktarıldı." },
     "eventPackage.invalidFile": { en: "This is not a MERIT EVENT MAKER event package.", tr: "Bu bir MERIT EVENT MAKER etkinlik paketi değil." },
     "eventPackage.badReference": { en: "This event package has broken internal references and was not imported.", tr: "Bu etkinlik paketinin iç referansları bozuk, bu yüzden içe aktarılmadı." },
+    "eventPackage.futureVersion": { en: "This event package was made by a newer version of MERIT EVENT MAKER and cannot be imported by this one. Nothing was changed.", tr: "Bu etkinlik paketi MERIT EVENT MAKER'ın daha yeni bir sürümüyle oluşturulmuş; bu sürüm onu içe aktaramaz. Hiçbir şey değiştirilmedi." },
+    "eventPackage.invalidRecord": { en: "This event package was not imported: {path} {rule}. Nothing was changed.", tr: "Bu etkinlik paketi içe aktarılmadı: {path} {rule}. Hiçbir şey değiştirilmedi." },
+    "eventPackage.importFailed": { en: "This event package could not be imported (it may be damaged). Nothing was changed.", tr: "Bu etkinlik paketi içe aktarılamadı (bozuk olabilir). Hiçbir şey değiştirilmedi." },
     "eventPackage.confirmImport": { en: "Import \"{name}\" as a new event, alongside the events already on this computer?", tr: "\"{name}\" bu bilgisayardaki mevcut etkinliklerin yanına yeni bir etkinlik olarak içe aktarılsın mı?" },
     "eventPackage.importedToast": { en: "\"{name}\" imported as a new event.", tr: "\"{name}\" yeni bir etkinlik olarak içe aktarıldı." },
     "appbar.venueNotSet": { en: "Venue not set", tr: "Mekan Belirtilmedi" },

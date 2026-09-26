@@ -10,7 +10,14 @@
   const esc=v=>String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
   // Dates follow the active UI language; resolved per call, not at load, so
   // the language toggle takes effect without a reload.
-  const nowISO=()=>new Date().toISOString(),fmtDate=v=>new Intl.DateTimeFormat(ui&&ui.lang==="tr"?"tr-TR":"en-GB",{day:"2-digit",month:"short",year:"numeric"}).format(new Date(v+"T12:00:00"));
+  //
+  // TOTAL, not partial: a date this cannot read renders as "—" rather than
+  // throwing. It used to throw `RangeError: Invalid time value` from inside
+  // render(), so one unreadable date in a restored backup took down the
+  // Events screen -- and, since the restore had already been saved, every
+  // reload after it. The placeholder is a constant, never the raw value:
+  // callers interpolate the result into markup unescaped.
+  const nowISO=()=>new Date().toISOString(),fmtDate=v=>{const d=new Date(v+"T12:00:00");return Number.isNaN(d.getTime())?"—":new Intl.DateTimeFormat(ui&&ui.lang==="tr"?"tr-TR":"en-GB",{day:"2-digit",month:"short",year:"numeric"}).format(d);};
   const naturalSort=(a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true,sensitivity:"base"});
   function naturalTableSort(a,b){const prefix=v=>(String(v).replace(/\s+/g,"").match(/^([A-Za-z]+)/)?.[1]||"").toUpperCase(),rank={T:0,VIP:1,B:2},pa=prefix(a),pb=prefix(b),ra=rank[pa]??3,rb=rank[pb]??3;return ra-rb||naturalSort(a,b)}
   const ICONS={

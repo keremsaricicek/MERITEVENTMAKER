@@ -35,6 +35,7 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `xlsx-contract` | business, reports | the exported workbook's sheets, companion seats, or table numbering |
 | `storage-provider` | storage | data does not reach IndexedDB, or does not survive a reload |
 | `backup-restore` | storage | a bad backup file is accepted, or a good one does not restore |
+| `malformed-import` | security, storage | a bad file is half-applied, fails silently or bricks the install: a backup from a newer build latching the read-only guard on the CURRENT install, a null or wrong-typed record throwing out of the file reader, an unreadable date saved and then killing every render, a party of a billion, an id carrying markup, a sheet count read by `Number()` (`"1e9"`, `"0x10"`), noise named `.xlsx`, or a broken image becoming the floor plan |
 | `prototype-pollution` | security, storage | a `__proto__` / `constructor` / `prototype` key in a backup, an event package (literal or `\u`-escaped) or a spreadsheet header reaches `Object.prototype`, swaps a record's prototype, or is carried into state, onto disk and back out in the next export — where the first careless `Object.assign` would arm it |
 | `venue-model` | storage | a published layout version is no longer frozen |
 | `i18n` | ui | a raw translation key reaches the screen, or a language stops rendering |

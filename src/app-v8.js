@@ -247,7 +247,13 @@
     const SM=globalThis.MeritSchemaMigrations;
     return SM&&SM.parseRecord?SM.parseRecord(raw):JSON.parse(raw);
   }
-  function parseRoot(raw){
+  // `forImport`: the record is a FILE an operator picked, not this install's
+  // own stored record. A file from a newer build is refused exactly the same
+  // way, but the read-only guard is NOT latched -- the guard protects the
+  // stored record from being written over, and a refused file is not that
+  // record. Latching it here used to leave a healthy install silently unable
+  // to save after one wrong file was picked.
+  function parseRoot(raw,{forImport=false}={}){
     const parsed=parseRecordText(raw);
     // READ the version, do not stamp it. `parsed.schemaVersion=8` used to sit
     // here: a record from a newer build had its version overwritten, its
@@ -259,7 +265,7 @@
     if(SM){
       const result=SM.migrate(parsed);
       if(result.status===SM.STATUS.FUTURE){
-        MERIT_SCHEMA_GUARD={readOnly:true,storedVersion:result.from,buildVersion:SM.CURRENT_VERSION};
+        if(!forImport)MERIT_SCHEMA_GUARD={readOnly:true,storedVersion:result.from,buildVersion:SM.CURRENT_VERSION};
         throw FutureSchemaError(result.from);
       }
       if(result.status===SM.STATUS.UNREADABLE)throw new Error("Stored data is not a readable record.");
@@ -1354,6 +1360,13 @@
   function startNewEvent(){newEventDraft={name:"",date:new Date(Date.now()+7*86400000).toLocaleDateString("en-CA"),hotel:"",salon:"",status:"Planning",coverImage:"",planSrc:"",planName:"",pdfDoc:null,pdfPages:[],pdfPage:0};ui.screen="new-event";render();}
   function syncSetupFields(){const f=document.getElementById("v8EventForm");if(!f)return;const data=new FormData(f);for(const k of ["name","date","hotel","salon","status"])newEventDraft[k]=String(data.get(k)||"");}
   function readDataURL(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.readAsDataURL(file);});}
+  // An image is accepted only once the browser has actually DECODED it. The
+  // plan, cover and replace paths used to store whatever bytes a .png/.jpg
+  // name carried, so a truncated or mislabelled file became the event's floor
+  // plan: a broken image under every table, and Assisted Detection run on
+  // nothing. Refusing here leaves the current plan exactly as it was.
+  function decodableImage(src){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>img.naturalWidth>0?resolve(src):reject(new Error(t("plan.notAnImage")));img.onerror=()=>reject(new Error(t("plan.notAnImage")));img.src=src;});}
+  async function readImageFile(file){return decodableImage(await readDataURL(file));}
   function waitForPdf(){if(globalThis.MeritPdf)return Promise.resolve(globalThis.MeritPdf);return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error("Offline PDF renderer did not initialize.")),15000);addEventListener("merit-pdf-ready",()=>{clearTimeout(timer);resolve(globalThis.MeritPdf);},{once:true});});}
   async function selectPdfPage(index){
     const doc=newEventDraft.pdfDoc;if(!doc)return;ui.setupBusy=true;render();
@@ -1366,7 +1379,8 @@
       try{ui.setupBusy=true;render();const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;newEventDraft.pdfDoc=doc;newEventDraft.pdfName=file.name;newEventDraft.pdfPages=Array.from({length:doc.numPages},(_,i)=>i);ui.setupBusy=false;await selectPdfPage(0);toast(`${doc.numPages} PDF page${doc.numPages===1?"":"s"} rendered locally. Choose a page thumbnail.`,"success",4500);}catch(error){ui.setupBusy=false;render();toast(t("setup.planReadFailed",{reason:error.message}),"error",6000);}return;
     }
     if(!(file.type==="image/png"||file.type==="image/jpeg"||/\.(png|jpe?g)$/.test(lower)))return toast("Choose PNG, JPG, JPEG or PDF.","error");
-    newEventDraft.planSrc=await readDataURL(file);newEventDraft.planName=file.name;newEventDraft.pdfDoc=null;newEventDraft.pdfPages=[];render();
+    let planSrc;try{planSrc=await readImageFile(file);}catch{return toast(t("plan.unreadableImage"),"error",6500);}
+    newEventDraft.planSrc=planSrc;newEventDraft.planName=file.name;newEventDraft.pdfDoc=null;newEventDraft.pdfPages=[];render();
   }
   async function renderPdfThumbs(){
     const doc=newEventDraft.pdfDoc;if(!doc)return;
@@ -1381,7 +1395,7 @@
     document.querySelector("[data-setup='cancel']").onclick=()=>{ui.screen="events";render();};
     const drop=document.getElementById("v8PlanDrop"),input=document.getElementById("v8PlanFile");drop.onclick=e=>{e.preventDefault();input.click();};input.onchange=()=>handlePlanFile(input.files[0]);
     drop.ondragover=e=>{e.preventDefault();drop.classList.add("dragging")};drop.ondragleave=()=>drop.classList.remove("dragging");drop.ondrop=e=>{e.preventDefault();drop.classList.remove("dragging");handlePlanFile(e.dataTransfer.files[0]);};
-    document.querySelector("[data-cover-drop]").onclick=e=>{e.preventDefault();document.getElementById("v8CoverFile").click();};document.getElementById("v8CoverFile").onchange=async e=>{const f=e.target.files[0];if(f){syncSetupFields();newEventDraft.coverImage=await readDataURL(f);render();}};
+    document.querySelector("[data-cover-drop]").onclick=e=>{e.preventDefault();document.getElementById("v8CoverFile").click();};document.getElementById("v8CoverFile").onchange=async e=>{const f=e.target.files[0];if(f){syncSetupFields();let cover;try{cover=await readImageFile(f);}catch{return toast(t("plan.unreadableImage"),"error",6500);}newEventDraft.coverImage=cover;render();}};
     document.querySelectorAll("[data-pdf-page]").forEach(b=>b.onclick=e=>{e.stopPropagation();syncSetupFields();selectPdfPage(Number(b.dataset.pdfPage));});
     document.querySelector("[data-setup='remove-cover']")?.addEventListener("click",e=>{e.preventDefault();syncSetupFields();newEventDraft.coverImage="";render();});
     document.querySelector("[data-setup='replace-plan']")?.addEventListener("click",e=>{e.preventDefault();input.click();});
@@ -5715,6 +5729,19 @@
   // what looks like one action would be the wrong kind of precision. Which
   // flow runs is decided from the file's own format marker, never the
   // control that opened the picker.
+  // A file is refused WHOLE, with a message, before anything is replaced --
+  // never half-applied and never a silent TypeError out of the file reader.
+  // tests/suites/malformed-import.test.mjs feeds every refusal below through
+  // this control.
+  const IMPORT_RULE_KEY={notRecord:"import.rule.notRecord",notList:"import.rule.notList",notText:"import.rule.notText",
+    badDate:"import.rule.badDate",badPax:"import.rule.badPax",badAssignment:"import.rule.badAssignment",badId:"import.rule.badId"};
+  const importRuleText=rule=>t(IMPORT_RULE_KEY[rule]||"import.rule.notRecord");
+  function firstEventProblem(events,at){
+    const P=globalThis.MeritEventPackage;
+    if(!P)return null;
+    for(let i=0;i<events.length;i++){const p=P.eventProblem(events[i],`${at}[${i}]`);if(p)return p;}
+    return null;
+  }
   function importBackupFile(file){
     const reader=new FileReader();
     reader.onerror=()=>toast(t("backup.corruptFile"),"error",6000);
@@ -5723,10 +5750,25 @@
       try{parsed=parseRecordText(reader.result);}catch{toast(t("backup.corruptFile"),"error",6000);return;}
       if(parsed&&parsed.format==="merit-event-maker-event-package"){importEventPackagePayload(parsed);return;}
       if(!parsed||parsed.format!=="merit-event-maker-backup"||!parsed.payload||!Array.isArray(parsed.payload.events)){toast(t("backup.invalidFile"),"error",6000);return;}
+      const SM=globalThis.MeritSchemaMigrations;
+      if(SM&&!SM.readable(parsed.payload)){toast(t("backup.invalidFile"),"error",6000);return;}
+      if(SM&&SM.versionOf(parsed.payload)>SM.CURRENT_VERSION){toast(t("backup.futureVersion"),"error",9000);return;}
+      const problem=firstEventProblem(parsed.payload.events,"events");
+      if(problem){toast(t("backup.invalidRecord",{path:problem.path,rule:importRuleText(problem.rule)}),"error",9000);return;}
       if(!backupReferencesIntact(parsed.payload)){toast(t("backup.badReference"),"error",6500);return;}
       const n=parsed.payload.events.length;
       if(!confirm(t("backup.confirmRestore",{n})))return;
-      state=parseRoot(JSON.stringify(parsed.payload));
+      // Built into a local first and only then assigned: whatever the
+      // migration chain meets that the checks above did not anticipate, the
+      // current state is still the current state when it throws.
+      let next;
+      try{next=parseRoot(JSON.stringify(parsed.payload),{forImport:true});}
+      catch(error){
+        console.warn("Backup restore refused while migrating the file.",error&&error.name);
+        toast(t(error&&error.name==="FutureSchemaError"?"backup.futureVersion":"backup.corruptFile"),"error",9000);
+        return;
+      }
+      state=next;
       ui.screen="events";ui.activeEventId=null;ui.undo=[];ui.redo=[];
       saveState();render();
       toast(t("backup.restoredToast",{n}),"success");
@@ -5758,19 +5800,36 @@
   function importEventPackagePayload(parsed){
     const P=globalThis.MeritEventPackage;
     if(!P||!P.isWellFormed(parsed)){toast(t("eventPackage.invalidFile"),"error",6000);return;}
+    if(Number(parsed.formatVersion)>P.FORMAT_VERSION){toast(t("eventPackage.futureVersion"),"error",9000);return;}
+    const isRecord=v=>!!v&&typeof v==="object"&&!Array.isArray(v);
+    if(parsed.auditEntries!=null&&!(Array.isArray(parsed.auditEntries)&&parsed.auditEntries.every(isRecord))){toast(t("eventPackage.invalidFile"),"error",6000);return;}
+    if(parsed.venue!=null&&!isRecord(parsed.venue)){toast(t("eventPackage.invalidFile"),"error",6000);return;}
+    const problem=P.eventProblem(parsed.event,"event");
+    if(problem){toast(t("eventPackage.invalidRecord",{path:problem.path,rule:importRuleText(problem.rule)}),"error",9000);return;}
     if(!P.referencesIntact(parsed.event)){toast(t("eventPackage.badReference"),"error",6500);return;}
     if(!confirm(t("eventPackage.confirmImport",{name:parsed.event.name||""})))return;
-    const{event,auditEntries}=P.regenerateIds(parsed.event,parsed.auditEntries,uid);
-    if(parsed.venue&&!state.venues.some(v=>v.id===event.venueRef?.venueId)){
-      // The referenced venue travelled with the package but does not exist
-      // here yet -- added as its own new record rather than merged into a
-      // same-named one, so this import never silently rewrites a venue an
-      // operator on this machine already relies on.
-      const newVenue={...JSON.parse(JSON.stringify(parsed.venue)),id:uid("venue")};
-      if(event.venueRef)event.venueRef={...event.venueRef,venueId:newVenue.id};
-      state.venues.push(newVenue);
+    // Everything is computed BEFORE state is touched. The venue used to be
+    // pushed first and the event migrated after, so a migration that threw
+    // left a venue behind with no event -- half an import.
+    let migrated,auditEntries,newVenue=null;
+    try{
+      const renumbered=P.regenerateIds(parsed.event,parsed.auditEntries,uid);
+      const event=renumbered.event;auditEntries=renumbered.auditEntries;
+      if(parsed.venue&&!state.venues.some(v=>v.id===event.venueRef?.venueId)){
+        // The referenced venue travelled with the package but does not exist
+        // here yet -- added as its own new record rather than merged into a
+        // same-named one, so this import never silently rewrites a venue an
+        // operator on this machine already relies on.
+        newVenue={...JSON.parse(JSON.stringify(parsed.venue)),id:uid("venue")};
+        if(event.venueRef)event.venueRef={...event.venueRef,venueId:newVenue.id};
+      }
+      migrated=migrateEvent(event);
+    }catch(error){
+      console.warn("Event package refused while migrating the file.",error&&error.name);
+      toast(t("eventPackage.importFailed"),"error",9000);
+      return;
     }
-    const migrated=migrateEvent(event);
+    if(newVenue)state.venues.push(newVenue);
     state.events.unshift(migrated);
     // Merge, never truncate. This line ran slice(0,1000) over the
     // concatenation, so importing an event whose history was larger than the
@@ -5908,7 +5967,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   };
   openGuide = function(){renderGuide();document.getElementById("guideDialog").showModal();};
 
-  const oldFloorInput=document.getElementById("floorPlanFile"),freshFloorInput=oldFloorInput.cloneNode(true);oldFloorInput.replaceWith(freshFloorInput);freshFloorInput.addEventListener("change",async e=>{const file=e.target.files[0],event=activeEvent();if(!file||!event||!canMutate(event,"replace the floor plan"))return;try{let src,name=file.name;if(file.type==="application/pdf"||file.name.toLowerCase().endsWith(".pdf")){const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise,pageNumber=Math.max(1,Math.min(doc.numPages,Number(prompt(`PDF contains ${doc.numPages} pages. Enter page number:`,"1"))||1)),page=await doc.getPage(pageNumber),v=page.getViewport({scale:2.6}),canvas=document.createElement("canvas");canvas.width=Math.ceil(v.width);canvas.height=Math.ceil(v.height);await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;src=canvas.toDataURL("image/png",.96);name=`${file.name} · page ${pageNumber}`;}else src=await readDataURL(file);recordUndo(event);event.background={src,name,opacity:.34,visible:true,locked:true,isDefault:false,scale:100,importedAtMs:Date.now()};touchEvent(event);render();toast("Floor plan imported locally. Assisted Detection is ready.","success");}catch(error){toast(t("plan.replaceFailed",{reason:error.message}),"error",6500);}finally{e.target.value="";}});
+  const oldFloorInput=document.getElementById("floorPlanFile"),freshFloorInput=oldFloorInput.cloneNode(true);oldFloorInput.replaceWith(freshFloorInput);freshFloorInput.addEventListener("change",async e=>{const file=e.target.files[0],event=activeEvent();if(!file||!event||!canMutate(event,"replace the floor plan"))return;try{let src,name=file.name;if(file.type==="application/pdf"||file.name.toLowerCase().endsWith(".pdf")){const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise,pageNumber=Math.max(1,Math.min(doc.numPages,Number(prompt(`PDF contains ${doc.numPages} pages. Enter page number:`,"1"))||1)),page=await doc.getPage(pageNumber),v=page.getViewport({scale:2.6}),canvas=document.createElement("canvas");canvas.width=Math.ceil(v.width);canvas.height=Math.ceil(v.height);await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;src=canvas.toDataURL("image/png",.96);name=`${file.name} · page ${pageNumber}`;}else src=await readImageFile(file);recordUndo(event);event.background={src,name,opacity:.34,visible:true,locked:true,isDefault:false,scale:100,importedAtMs:Date.now()};touchEvent(event);render();toast("Floor plan imported locally. Assisted Detection is ready.","success");}catch(error){toast(t("plan.replaceFailed",{reason:error.message}),"error",6500);}finally{e.target.value="";}});
 
   // ---- Focus return after a dialog closes -----------------------------
   // A native <dialog> restores focus to whatever had it when showModal() ran.
