@@ -3,13 +3,24 @@
   ICONS.upload='<path d="M12 21V9M7 14l5-5 5 5M4 21h16"></path>';
   const V8_STORAGE_KEY = "meritEventMaker.v8";
   const LEGACY_KEYS = ["meritEventMaker.v7", "meritEventMaker.v3", "meritEventMaker.v2", "meritEventMaker.v1"];
+  // What a storage failure may put in the console. A SyntaxError from
+  // JSON.parse QUOTES the text it failed on -- and a stored record's text is
+  // guest names: a record with one missing quote logged `"name": ZEYNEP KAY`
+  // three times on a single boot (tests/suites/privacy-logs.test.mjs). For
+  // those only the kind of failure survives; the excerpt, and the stack that
+  // repeats it, do not. Any other error is logged whole, stack included,
+  // because its message names a property or a quota, never a value.
+  function loggableError(error){
+    if(error&&error.name==="SyntaxError")return "SyntaxError: the stored record is not valid JSON (excerpt withheld: it may contain guest data)";
+    return error;
+  }
   // StorageProvider selection (src/storage-provider.js). IndexedDB is primary;
   // localStorage under V8_STORAGE_KEY/LEGACY_KEYS is now read-only -- it is
   // still where a pre-existing install's data lives, so it's the migration
   // source on first load, but nothing writes to it again after that.
   const storageProvider = (() => {
     try { if (globalThis.MeritStorageProviders?.IndexedDBStorageProvider) return new MeritStorageProviders.IndexedDBStorageProvider(); }
-    catch (error) { console.warn("IndexedDB provider unavailable, falling back to localStorage.", error); }
+    catch (error) { console.warn("IndexedDB provider unavailable, falling back to localStorage.", loggableError(error)); }
     return new MeritStorageProviders.LocalStorageStorageProvider(V8_STORAGE_KEY);
   })();
   globalThis.MERIT_STORAGE_STATUS = { provider: storageProvider.constructor.name };
@@ -306,14 +317,14 @@
     try{
       const own=localStorage.getItem(V8_STORAGE_KEY); if(own) return parseRoot(own);
       for(const key of LEGACY_KEYS){const raw=localStorage.getItem(key);if(raw){const migrated=parseRoot(raw);migrated.audit.unshift({id:uid("audit"),eventId:null,action:"LEGACY_MIGRATION",detail:{source:key,venueToHotel:true,salonInvented:false},at:nowISO()});return migrated;}}
-    }catch(error){console.warn("Legacy localStorage restore failed",error);}
+    }catch(error){console.warn("Legacy localStorage restore failed",loggableError(error));}
     return null;
   }
   async function loadV8Async(){
     try{
       const fromProvider=await storageProvider.load();
       if(fromProvider) return{data:parseRoot(fromProvider),recoveredAt:null};
-    }catch(error){console.warn("StorageProvider load failed, checking legacy localStorage.",error);}
+    }catch(error){console.warn("StorageProvider load failed, checking legacy localStorage.",loggableError(error));}
     // A record from a newer build is not a missing record. Falling through to
     // the legacy reader or a recovery snapshot would present something OLDER
     // as though it were the current one -- harmless to the file, since the
@@ -324,7 +335,7 @@
       // Get it into the real store right away so this migration only ever
       // has to run once, even if the provider load above merely came back
       // empty (first run after switching to IndexedDB) rather than erroring.
-      storageProvider.save(JSON.stringify(legacy)).catch(error=>console.warn("Could not persist migrated legacy state.",error));
+      storageProvider.save(JSON.stringify(legacy)).catch(error=>console.warn("Could not persist migrated legacy state.",loggableError(error)));
       return{data:legacy,recoveredAt:null};
     }
     // The primary record is gone or unreadable, and there is no legacy
@@ -338,10 +349,10 @@
       const snap=R&&R.latestSnapshot(stored);
       if(snap){
         const data=parseRoot(snap.payload);
-        storageProvider.save(JSON.stringify(data)).catch(error=>console.warn("Could not persist auto-recovered state.",error));
+        storageProvider.save(JSON.stringify(data)).catch(error=>console.warn("Could not persist auto-recovered state.",loggableError(error)));
         return{data,recoveredAt:snap.at};
       }
-    }catch(error){console.warn("Automatic recovery snapshot could not be read either.",error);}
+    }catch(error){console.warn("Automatic recovery snapshot could not be read either.",loggableError(error));}
     return{data:blankRoot(),recoveredAt:null};
   }
   // Section 13 (storage write-ordering safety): `storageProvider.save()` is
@@ -370,7 +381,7 @@
         // identity of a save that was supposed to write the earlier picture.
         // "This save writes this snapshot" is the promise the queue exists
         // to keep, and the failure path was the one place it did not hold.
-        console.warn("StorageProvider save failed, retrying with images stripped.",error);
+        console.warn("StorageProvider save failed, retrying with images stripped.",loggableError(error));
         let stripped;
         try{
           const compact=JSON.parse(payload);
@@ -379,12 +390,12 @@
         }catch(parseError){
           // The payload is the only copy of what this save meant; if it
           // cannot be reshaped, fail rather than substitute a different one.
-          console.warn("Could not strip images from the queued payload.",parseError);
+          console.warn("Could not strip images from the queued payload.",loggableError(parseError));
           throw error;
         }
         return storageProvider.save(stripped).then(()=>toast("Event data was saved, but large images exceeded browser storage.","error",6500));
       })
-      .catch(error=>{console.warn("StorageProvider save failed entirely.",error);toast("Browser storage is full. Export the workbook before closing.","error",6500);});
+      .catch(error=>{console.warn("StorageProvider save failed entirely.",loggableError(error));toast("Browser storage is full. Export the workbook before closing.","error",6500);});
   }
   // A save that is QUEUED but has not started yet. Each payload is a
   // COMPLETE snapshot of `state`, so a waiting one is not partial work to
@@ -5864,7 +5875,7 @@
       const last=R.latestSnapshot(list);
       if(!R.shouldSnapshot({hasContent:true,lastSnapshotAt:last&&last.at,now:Date.now()}))return;
       return storageProvider.save(R.withSnapshot(list,{at:nowISO(),payload}),"autosnapshots");
-    }).catch(error=>console.warn("Automatic recovery snapshot failed.",error));
+    }).catch(error=>console.warn("Automatic recovery snapshot failed.",loggableError(error)));
   }
   // A deliberate, operator-initiated restore while the app is otherwise
   // healthy -- e.g. undo did not reach far enough back. Confirmed exactly
@@ -5881,7 +5892,7 @@
       ui.screen="events";ui.activeEventId=null;ui.undo=[];ui.redo=[];
       saveState();render();
       toast(t("recovery.restoredToast",{when:relativeTime(snap.at)}),"success");
-    }).catch(error=>{console.warn("Automatic recovery restore failed.",error);toast(t("recovery.none"),"error");});
+    }).catch(error=>{console.warn("Automatic recovery restore failed.",loggableError(error));toast(t("recovery.none"),"error");});
   }
   function bindV8Common(){
     document.querySelectorAll("[data-action='create-event']").forEach(b=>b.onclick=startNewEvent);document.querySelectorAll("[data-action='help']").forEach(b=>b.onclick=openGuide);document.querySelectorAll("[data-open-event]").forEach(b=>b.onclick=()=>openEvent(b.dataset.openEvent));// Row-level open + per-row action buttons now coexist on Home, so the
@@ -6064,7 +6075,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
     // plainly, including that it may not hold the most recent changes.
     if(recoveredAt)toast(t("recovery.bootRecoveredToast",{when:relativeTime(recoveredAt)}),"error",9000);
   }).catch(error=>{
-    console.error("Storage load failed entirely; starting from a blank state.",error);
+    console.error("Storage load failed entirely; starting from a blank state.",loggableError(error));
     state=blankRoot();bootReady=true;render();
   });
 })();

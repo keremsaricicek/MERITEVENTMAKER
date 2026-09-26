@@ -116,4 +116,28 @@ export default async function run({ checks, repoRoot }) {
   checks.equal(evalish, [], "no API that evaluates a string as code or parses it as a document — eval, new Function, document.write, string timers, srcdoc, DOMParser, createContextualFragment", evalish);
   checks.equal(objectUrls.create, objectUrls.revoke,
     "every createObjectURL has a matching revokeObjectURL, by count", objectUrls);
+
+  // CSP READINESS. The skill's goal is "CSP-ready before desktop packaging",
+  // and measured at the time of writing the product is close: ZERO inline
+  // event-handler attributes anywhere (every handler is bound in code), ONE
+  // inline <script> (the pdf.js module bootstrap in index.html, which a CSP
+  // would admit by hash), 66 inline style="" attributes (style-src-attr), a
+  // blob: worker for OCR in the CDN build only. The two numbers that decide
+  // `script-src` are held here, so neither can grow without someone reading
+  // this. Inline style is recorded, not guarded: it needs a policy decision,
+  // not a test.
+  const handlerAttr = /[\s<"'`]on[a-z]+\s*=\s*["'`$\\]/g;
+  const inlineHandlers = [];
+  for (const f of [...fs.readdirSync(dir).filter((x) => x.endsWith(".js")).map((x) => path.join(dir, x)), path.join(repoRoot, "index.html")]) {
+    const raw = fs.readFileSync(f, "utf8");
+    for (const m of raw.matchAll(handlerAttr)) inlineHandlers.push(`${path.basename(f)}: ${m[0].trim()}`);
+  }
+  checks.equal(inlineHandlers, [],
+    "no inline event-handler attribute in any markup this product writes — the one pattern a CSP forbids outright AND the one an escaping slip turns into execution",
+    inlineHandlers.slice(0, 5));
+  const html = fs.readFileSync(path.join(repoRoot, "index.html"), "utf8");
+  const inlineScripts = [...html.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>/g)].length;
+  checks.equal(inlineScripts, 1,
+    "index.html has exactly one inline <script> (the pdf.js bootstrap) — another one needs a CSP hash, so it needs a decision",
+    inlineScripts);
 }
