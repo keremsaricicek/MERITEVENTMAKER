@@ -6,11 +6,19 @@ description: The permanent domain contract for MERIT ENTERTAINMENT — EVENT MAK
 # Merit Product Contract
 
 MERIT ENTERTAINMENT — EVENT MAKER is internal, browser-only event-operations
-software for premium hospitality/casino event management. No backend —
-everything lives in `localStorage` (`meritEventMaker.v1`). This skill
-documents the domain rules **as actually implemented** in `src/app.js`,
-`src/app-guests.js`, and `src/app-v8.js`. It is a contract, not aspiration:
-verify against the current source before assuming behavior has drifted.
+software for premium hospitality/casino event management. No backend — all
+state stays in the browser, behind the `StorageProvider` boundary in
+`src/storage-provider.js`: **IndexedDB is the live engine** (database
+`meritEventMaker`, version 2, state record plus a separate blob store for
+image crops), with `LocalStorageStorageProvider` kept only as a boot-time
+fallback when IndexedDB is unavailable. An earlier version of this file said
+everything lives in `localStorage` — that is no longer true, and a refactor
+planned on that assumption would be planned against the wrong layer.
+
+This skill documents the domain rules **as actually implemented** in
+`src/app.js`, `src/app-guests.js`, and `src/app-v8.js`. It is a contract,
+not aspiration: verify against the current source before assuming behavior
+has drifted.
 
 ## Core screens
 
@@ -42,17 +50,77 @@ just copy.
 
 VIP levels: `Standard` | `VIP` | `VVIP` (`g.vip` in `normalizeGuest`).
 
-## Chairs are first-class physical objects
+## Physical chair, logical seat and capacity are THREE different things
 
-A table's `capacity` is not a bare number — it is backed by an array of
-`chairs` on the table (`syncTableChairs` / `chairGeometry` in
-`src/app-v8.js`). Each chair carries `id`, `parentTableId`, `seatNumber`,
-position (`x`/`y`), `rotation`, and `occupancy`. `physicalCapacity()` sums
-real chair counts, not a capacity field in isolation. Any change to table
-capacity must go through `setTableCapacity` → `repackTableAssignments`, which
-refuses to shrink capacity below the number of currently occupied seats and
-repacks seat indices safely. Do not introduce a code path that sets
-`table.capacity` without keeping `table.chairs` in sync.
+This is the permanent domain contract. It is not a description of the
+current data structure, and the current data structure must not be read
+back as the contract.
+
+| Concept | What it is | What it may never do |
+|---|---|---|
+| **PHYSICAL CHAIR** | A real object seen on the plan, or confirmed by a person. May carry real coordinates and orientation. | **Never invented from a capacity number.** If a plan draws no chairs, the system produces **no** physical chairs — it does not synthesise them |
+| **LOGICAL SEAT** | A seating position used to assign a guest. May come from printed capacity, human confirmation, or another trustworthy capacity source. | **Never claims to be a physical chair** |
+| **CAPACITY** | The operational/logical capacity of the table. | **Never required to equal the physical chair count.** Its provenance is tracked separately (`capacitySource`, `src/capacity-provenance.js`) |
+
+A completely valid table:
+
+```
+capacity        = 12
+logicalSeats    = 12
+physicalChairs  =  0
+```
+
+This is **normal**, not a defect — it is the ordinary case on a SYMBOLIC
+plan (numbered circles, no drawn furniture, capacity printed as a rule).
+`hasPhysicalSeats === false` and an unknown seat count is `null`, never `0`.
+
+### HOW THE SHIPPING CODE MODELS IT
+
+The three concepts are separated in code, and `src/seat-model.js`
+(`globalThis.MeritSeatModel`) holds the one definition of each:
+
+| Concept | Where it lives | Read it with |
+|---|---|---|
+| LOGICAL SEAT | `table.capacity` — the assignment index space `0..capacity-1` | `MeritSeatModel.logicalSeatCount(table)` |
+| PHYSICAL CHAIR | `table.chairs` — objects with real coordinates, **empty** where nothing drew, detected or placed a chair | `MeritSeatModel.physicalChairCount(table)` |
+| OPERATIONAL CAPACITY | summed logical seats over tables that can seat | `MeritSeatModel.seatingCapacity(event)` |
+
+`MeritSeatModel.physicalCapacity(event)` is the drawn-chair total and belongs
+only where the label says "physical chairs".
+
+**"Can this table seat somebody" is `capacity > 0`** — `MeritSeatModel.canSeat`
+— and never `hasPhysicalSeats !== false`. `hasPhysicalSeats` says whether the
+DRAWING depicted chairs. It decides whether `syncTableChairs` produces chair
+objects; it decides nothing about where a guest may sit.
+
+Two collapses had shipped, and both are now closed:
+
+- **In storage.** `syncTableChairs` synthesised one chair object per capacity
+  slot for every table and tagged the invented ones `physical:false`. A
+  420-table symbolic plan stored 4,200 chairs at coordinates nothing had ever
+  observed, re-derived on every save. The `physical` flag is retired:
+  presence in `table.chairs` IS the claim that a chair exists, so there is no
+  fabricated coordinate left to disown. Existing installs shed theirs on the
+  first load, through `migrateEvent`.
+- **In judgement.** Smart Seating, freezes, service load, table availability
+  and the Plan Doctor's room total all asked `hasPhysicalSeats !== false &&
+  capacity > 0`. On a symbolic plan that answered NO for every table: the
+  advisor offered nothing, the Plan Doctor opened the event with "the plan
+  carries no chairs" BLOCKING, and the Home hero printed "No tables in the
+  plan yet" — all while Seating was assigning guests to those same tables.
+
+### What IS an invariant
+
+On a table that draws its chairs, `table.capacity` and `table.chairs` must not
+drift apart: go through `setTableCapacity` → `repackTableAssignments`, which
+refuses to shrink capacity below currently occupied seats and repacks seat
+indices safely. Do not add a code path that sets one without the other.
+
+On a table that draws none (`hasPhysicalSeats === false`), `table.chairs` is
+`[]` at every capacity. That is not drift — it is the contract.
+
+Confirmed chair coordinates are written **verbatim** and survive every
+capacity sync; nothing regenerates them into a synthetic ring.
 
 ## No Show: planned assignment vs. live occupancy
 

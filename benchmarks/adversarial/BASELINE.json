@@ -1,0 +1,1060 @@
+{
+  "ranAt": "2026-09-04T11:34:55.896Z",
+  "realVenue": false,
+  "note": "SYNTHETIC ADVERSARIAL FIXTURES — NOT REAL VENUES. These scores are never mixed into real-plan aggregates. REAL DISTINCT VENUE PLANS: 1. CROSS-VENUE GENERALIZATION: NOT VERIFIED.",
+  "refusals": [],
+  "results": [
+    {
+      "planId": "a1-chair-under-table",
+      "realVenue": false,
+      "hypothesis": "The seat-containment rule ('a table's seats surround it, they do not lie inside it') is over-general. A banquet plan drawn with chairs tucked under the table has every seat centre inside the table footprint, and a table so drawn must still be detected, selected and kept.",
+      "tables": {
+        "groundTruth": 16,
+        "detected": 8,
+        "tp": 8,
+        "fp": 0,
+        "fn": 8,
+        "precision": 1,
+        "recall": 0.5,
+        "f1": 0.667,
+        "heldBack": 8,
+        "heldBackReasons": {
+          "seatsInsideBody": 8
+        },
+        "missedIds": [
+          "OUT01",
+          "OUT02",
+          "OUT03",
+          "OUT04",
+          "OUT05",
+          "OUT06",
+          "OUT07",
+          "OUT08"
+        ]
+      },
+      "tableTypes": {
+        "byType": {
+          "rectangle": {
+            "matched": 8,
+            "correct": 8,
+            "accuracy": 1
+          }
+        },
+        "distinctFound": 1,
+        "required": 1,
+        "meetsRequirement": true
+      },
+      "chairs": {
+        "groundTruth": 96,
+        "detected": 97,
+        "tp": 96,
+        "fp": 1,
+        "fn": 0,
+        "precision": 0.99,
+        "recall": 1,
+        "f1": 0.995
+      },
+      "relations": {
+        "groundTruthScoreable": 96,
+        "groundTruthAmbiguous": 0,
+        "scored": 96,
+        "correct": 48,
+        "wrong": 0,
+        "orphan": 48,
+        "unscoreable": 0,
+        "accuracy": 0.5,
+        "coverage": 1,
+        "forcedOnAmbiguous": 0,
+        "ambiguousDeclared": 0,
+        "ambiguousChairsNotDetected": 0,
+        "declaredAmbiguousAmongScoreable": {
+          "count": 0,
+          "correct": 0
+        },
+        "wrongExamples": []
+      },
+      "zones": {
+        "expected": 1,
+        "detected": 2,
+        "detectedTyped": 2,
+        "unknownZones": 0,
+        "matched": 0,
+        "precision": 0,
+        "recall": 0,
+        "falseZoneInventions": 0,
+        "inventedTypes": [],
+        "byType": {
+          "dining": 2
+        }
+      },
+      "facts": {
+        "total": 5,
+        "expected": 3,
+        "expectedPresent": 3,
+        "expectedMissing": [],
+        "forbidden": 4,
+        "forbiddenPresent": [],
+        "fabricatedStrong": 0,
+        "withoutProvenance": [],
+        "byStrength": {
+          "likely": 3,
+          "uncertain": 1,
+          "strong": 1
+        }
+      },
+      "regionFP": {
+        "textRegions": 1,
+        "tablesInText": 0,
+        "architectureRegions": 0,
+        "tablesInArchitecture": 0
+      },
+      "sceneGraph": {
+        "counts": {
+          "belongsTo": 48,
+          "partOf": 8
+        },
+        "nodeCount": 57,
+        "edges": 56
+      },
+      "contradictions": 2,
+      "contradictionIds": [
+        "contra:orphanSeats",
+        "contra:seatsInsideBody"
+      ],
+      "effort": {
+        "reviewGroups": 1,
+        "uncertainQuestions": 0,
+        "reviewPriorities": 3
+      },
+      "detectionMs": 635,
+      "timedOut": false,
+      "pageErrors": [],
+      "verdict": {
+        "status": "FAIL",
+        "fail": [
+          "8 real table(s) detected then held back (seatsInsideBody x8)"
+        ],
+        "partial": [
+          "48 detected chair(s) seated at no table at all",
+          "table recall 0.5",
+          "zone precision 0 — 2 typed zones for 1 real ones"
+        ]
+      }
+    },
+    {
+      "planId": "a2-mixed-families",
+      "realVenue": false,
+      "hypothesis": "Plan-relative size reasoning silently deletes minority furniture families. A plan with square, round, rectangle and bistro tables, two chair sizes in two drawing styles, and a lounge group must keep all of them: the minority families must survive detection and must still be visible in the interpreter's type mix.",
+      "tables": {
+        "groundTruth": 21,
+        "detected": 44,
+        "tp": 21,
+        "fp": 23,
+        "fn": 0,
+        "precision": 0.477,
+        "recall": 1,
+        "f1": 0.646,
+        "heldBack": 7,
+        "heldBackReasons": {
+          "unknown": 7
+        },
+        "missedIds": []
+      },
+      "tableTypes": {
+        "byType": {
+          "rectangle": {
+            "matched": 3,
+            "correct": 3,
+            "accuracy": 1
+          },
+          "bistro": {
+            "matched": 6,
+            "correct": 0,
+            "accuracy": 0
+          },
+          "square": {
+            "matched": 8,
+            "correct": 8,
+            "accuracy": 1
+          },
+          "round": {
+            "matched": 4,
+            "correct": 4,
+            "accuracy": 1
+          }
+        },
+        "distinctFound": 3,
+        "required": 3,
+        "meetsRequirement": true
+      },
+      "chairs": {
+        "groundTruth": 94,
+        "detected": 32,
+        "tp": 32,
+        "fp": 0,
+        "fn": 62,
+        "precision": 1,
+        "recall": 0.34,
+        "f1": 0.508
+      },
+      "relations": {
+        "groundTruthScoreable": 94,
+        "groundTruthAmbiguous": 0,
+        "scored": 32,
+        "correct": 32,
+        "wrong": 0,
+        "orphan": 0,
+        "unscoreable": 62,
+        "accuracy": 1,
+        "coverage": 0.34,
+        "forcedOnAmbiguous": 0,
+        "ambiguousDeclared": 0,
+        "ambiguousChairsNotDetected": 0,
+        "declaredAmbiguousAmongScoreable": {
+          "count": 0,
+          "correct": 0
+        },
+        "wrongExamples": []
+      },
+      "zones": {
+        "expected": 1,
+        "detected": 22,
+        "detectedTyped": 8,
+        "unknownZones": 14,
+        "matched": 0,
+        "precision": 0,
+        "recall": 0,
+        "falseZoneInventions": 0,
+        "inventedTypes": [],
+        "byType": {
+          "dining": 8,
+          "unknown": 14
+        }
+      },
+      "facts": {
+        "total": 9,
+        "expected": 3,
+        "expectedPresent": 3,
+        "expectedMissing": [],
+        "forbidden": 1,
+        "forbiddenPresent": [],
+        "fabricatedStrong": 0,
+        "withoutProvenance": [],
+        "byStrength": {
+          "likely": 6,
+          "uncertain": 2,
+          "strong": 1
+        }
+      },
+      "regionFP": {
+        "textRegions": 1,
+        "tablesInText": 1,
+        "architectureRegions": 0,
+        "tablesInArchitecture": 0
+      },
+      "sceneGraph": {
+        "counts": {
+          "belongsTo": 32,
+          "partOf": 44
+        },
+        "nodeCount": 76,
+        "edges": 76
+      },
+      "contradictions": 1,
+      "contradictionIds": [
+        "contra:visualClass"
+      ],
+      "effort": {
+        "reviewGroups": 4,
+        "uncertainQuestions": 0,
+        "reviewPriorities": 6
+      },
+      "detectionMs": 742,
+      "timedOut": false,
+      "pageErrors": [],
+      "verdict": {
+        "status": "FAIL",
+        "fail": [
+          "7 real table(s) detected then held back (unknown x7)",
+          "more phantom tables than real ones: 23 FP against 21 GT (precision 0.477)"
+        ],
+        "partial": [
+          "bistro tables typed 0/6",
+          "chair recall 0.34",
+          "zone precision 0 — 8 typed zones for 1 real ones"
+        ]
+      }
+    },
+    {
+      "planId": "a3-no-anchors",
+      "realVenue": false,
+      "hypothesis": "The interpreter invents semantic anchors that are not drawn. A plain dining plan with no stage, no bar, no lounge furniture and no entrance wording must produce none of those zones and no fact claiming them.",
+      "tables": {
+        "groundTruth": 20,
+        "detected": 20,
+        "tp": 20,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "heldBack": 0,
+        "heldBackReasons": {},
+        "missedIds": []
+      },
+      "tableTypes": {
+        "byType": {
+          "round": {
+            "matched": 20,
+            "correct": 20,
+            "accuracy": 1
+          }
+        },
+        "distinctFound": 1,
+        "required": null,
+        "meetsRequirement": null
+      },
+      "chairs": {
+        "groundTruth": 160,
+        "detected": 240,
+        "tp": 160,
+        "fp": 80,
+        "fn": 0,
+        "precision": 0.667,
+        "recall": 1,
+        "f1": 0.8
+      },
+      "relations": {
+        "groundTruthScoreable": 160,
+        "groundTruthAmbiguous": 0,
+        "scored": 160,
+        "correct": 160,
+        "wrong": 0,
+        "orphan": 0,
+        "unscoreable": 0,
+        "accuracy": 1,
+        "coverage": 1,
+        "forcedOnAmbiguous": 0,
+        "ambiguousDeclared": 0,
+        "ambiguousChairsNotDetected": 0,
+        "declaredAmbiguousAmongScoreable": {
+          "count": 0,
+          "correct": 0
+        },
+        "wrongExamples": []
+      },
+      "zones": {
+        "expected": 1,
+        "detected": 5,
+        "detectedTyped": 5,
+        "unknownZones": 0,
+        "matched": 0,
+        "precision": 0,
+        "recall": 0,
+        "falseZoneInventions": 0,
+        "inventedTypes": [],
+        "byType": {
+          "dining": 5
+        }
+      },
+      "facts": {
+        "total": 5,
+        "expected": 3,
+        "expectedPresent": 3,
+        "expectedMissing": [],
+        "forbidden": 5,
+        "forbiddenPresent": [],
+        "fabricatedStrong": 0,
+        "withoutProvenance": [],
+        "byStrength": {
+          "strong": 2,
+          "likely": 3
+        }
+      },
+      "regionFP": {
+        "textRegions": 2,
+        "tablesInText": 0,
+        "architectureRegions": 0,
+        "tablesInArchitecture": 0
+      },
+      "sceneGraph": {
+        "counts": {
+          "belongsTo": 240,
+          "partOf": 20
+        },
+        "nodeCount": 40,
+        "edges": 260
+      },
+      "contradictions": 0,
+      "contradictionIds": [],
+      "effort": {
+        "reviewGroups": 1,
+        "uncertainQuestions": 0,
+        "reviewPriorities": 1
+      },
+      "detectionMs": 696,
+      "timedOut": false,
+      "pageErrors": [],
+      "verdict": {
+        "status": "PARTIAL",
+        "fail": [],
+        "partial": [
+          "zone precision 0 — 5 typed zones for 1 real ones"
+        ]
+      }
+    },
+    {
+      "planId": "a4-multi-room",
+      "realVenue": false,
+      "hypothesis": "Zone clustering is distance-only and cannot see a wall. An L-shaped venue of two halls joined by a corridor must produce at least two furniture zones, not one zone spanning both halls and the empty corridor.",
+      "tables": {
+        "groundTruth": 25,
+        "detected": 25,
+        "tp": 25,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "heldBack": 0,
+        "heldBackReasons": {},
+        "missedIds": []
+      },
+      "tableTypes": {
+        "byType": {
+          "bistro": {
+            "matched": 8,
+            "correct": 0,
+            "accuracy": 0
+          },
+          "square": {
+            "matched": 9,
+            "correct": 9,
+            "accuracy": 1
+          },
+          "round": {
+            "matched": 8,
+            "correct": 8,
+            "accuracy": 1
+          }
+        },
+        "distinctFound": 2,
+        "required": 2,
+        "meetsRequirement": true
+      },
+      "chairs": {
+        "groundTruth": 116,
+        "detected": 100,
+        "tp": 68,
+        "fp": 32,
+        "fn": 48,
+        "precision": 0.68,
+        "recall": 0.586,
+        "f1": 0.63
+      },
+      "relations": {
+        "groundTruthScoreable": 116,
+        "groundTruthAmbiguous": 0,
+        "scored": 68,
+        "correct": 68,
+        "wrong": 0,
+        "orphan": 0,
+        "unscoreable": 48,
+        "accuracy": 1,
+        "coverage": 0.586,
+        "forcedOnAmbiguous": 0,
+        "ambiguousDeclared": 0,
+        "ambiguousChairsNotDetected": 0,
+        "declaredAmbiguousAmongScoreable": {
+          "count": 0,
+          "correct": 0
+        },
+        "wrongExamples": []
+      },
+      "zones": {
+        "expected": 3,
+        "detected": 19,
+        "detectedTyped": 11,
+        "unknownZones": 8,
+        "matched": 1,
+        "precision": 0.091,
+        "recall": 0.333,
+        "falseZoneInventions": 0,
+        "inventedTypes": [],
+        "byType": {
+          "dining": 11,
+          "unknown": 8
+        }
+      },
+      "facts": {
+        "total": 8,
+        "expected": 2,
+        "expectedPresent": 2,
+        "expectedMissing": [],
+        "forbidden": 4,
+        "forbiddenPresent": [],
+        "fabricatedStrong": 0,
+        "withoutProvenance": [],
+        "byStrength": {
+          "strong": 2,
+          "likely": 5,
+          "uncertain": 1
+        }
+      },
+      "regionFP": {
+        "textRegions": 3,
+        "tablesInText": 0,
+        "architectureRegions": 5,
+        "tablesInArchitecture": 25
+      },
+      "sceneGraph": {
+        "counts": {
+          "belongsTo": 100,
+          "partOf": 25
+        },
+        "nodeCount": 65,
+        "edges": 125
+      },
+      "contradictions": 0,
+      "contradictionIds": [],
+      "effort": {
+        "reviewGroups": 2,
+        "uncertainQuestions": 0,
+        "reviewPriorities": 3
+      },
+      "detectionMs": 815,
+      "timedOut": false,
+      "pageErrors": [],
+      "verdict": {
+        "status": "PARTIAL",
+        "fail": [],
+        "partial": [
+          "bistro tables typed 0/8",
+          "chair recall 0.586",
+          "zone precision 0.091 — 11 typed zones for 3 real ones"
+        ]
+      }
+    },
+    {
+      "planId": "a5-architecture-only",
+      "realVenue": false,
+      "hypothesis": "The system cannot say 'nothing'. A shell drawing with walls, columns, doors, stairs, dimensions and printed notes but no furniture must produce no table facts, no seat count, no dining zone and no capacity claim.",
+      "tables": {
+        "groundTruth": 0,
+        "detected": 0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0,
+        "precision": 0,
+        "recall": 0,
+        "f1": 0,
+        "heldBack": 0,
+        "heldBackReasons": {},
+        "missedIds": []
+      },
+      "tableTypes": {
+        "byType": {},
+        "distinctFound": 0,
+        "required": null,
+        "meetsRequirement": null
+      },
+      "chairs": {
+        "groundTruth": 0,
+        "detected": 8,
+        "tp": 0,
+        "fp": 8,
+        "fn": 0,
+        "precision": 0,
+        "recall": 0,
+        "f1": 0
+      },
+      "relations": {
+        "groundTruthScoreable": 0,
+        "groundTruthAmbiguous": 0,
+        "scored": 0,
+        "correct": 0,
+        "wrong": 0,
+        "orphan": 0,
+        "unscoreable": 0,
+        "accuracy": null,
+        "coverage": null,
+        "forcedOnAmbiguous": 0,
+        "ambiguousDeclared": 0,
+        "ambiguousChairsNotDetected": 0,
+        "declaredAmbiguousAmongScoreable": {
+          "count": 0,
+          "correct": 0
+        },
+        "wrongExamples": []
+      },
+      "zones": {
+        "expected": 0,
+        "detected": 0,
+        "detectedTyped": 0,
+        "unknownZones": 0,
+        "matched": 0,
+        "precision": null,
+        "recall": null,
+        "falseZoneInventions": 0,
+        "inventedTypes": [],
+        "byType": {}
+      },
+      "facts": {
+        "total": 1,
+        "expected": 1,
+        "expectedPresent": 0,
+        "expectedMissing": [
+          "capacityUnknown"
+        ],
+        "forbidden": 11,
+        "forbiddenPresent": [],
+        "fabricatedStrong": 0,
+        "withoutProvenance": [],
+        "byStrength": {
+          "strong": 1
+        }
+      },
+      "regionFP": {
+        "textRegions": 4,
+        "tablesInText": 0,
+        "architectureRegions": 11,
+        "tablesInArchitecture": 0
+      },
+      "sceneGraph": {
+        "counts": {},
+        "nodeCount": 8,
+        "edges": 0
+      },
+      "contradictions": 1,
+      "contradictionIds": [
+        "contra:orphanSeats"
+      ],
+      "effort": {
+        "reviewGroups": 1,
+        "uncertainQuestions": 0,
+        "reviewPriorities": 2
+      },
+      "detectionMs": 572,
+      "timedOut": false,
+      "pageErrors": [],
+      "verdict": {
+        "status": "FAIL",
+        "fail": [
+          "8 chair(s) proposed on a drawing with no furniture"
+        ],
+        "partial": [
+          "missing expected fact(s): capacityUnknown"
+        ]
+      }
+    },
+    {
+      "planId": "a6-architectural-confusion",
+      "realVenue": false,
+      "hypothesis": "Repetition at a consistent size is read as furniture. When repeated architecture outnumbers the real furniture and sets the plan's modal size, the furniture must still be found and the architecture must not be proposed as tables.",
+      "tables": {
+        "groundTruth": 8,
+        "detected": 54,
+        "tp": 8,
+        "fp": 46,
+        "fn": 0,
+        "precision": 0.148,
+        "recall": 1,
+        "f1": 0.258,
+        "heldBack": 0,
+        "heldBackReasons": {},
+        "missedIds": []
+      },
+      "tableTypes": {
+        "byType": {
+          "square": {
+            "matched": 8,
+            "correct": 8,
+            "accuracy": 1
+          }
+        },
+        "distinctFound": 1,
+        "required": null,
+        "meetsRequirement": null
+      },
+      "chairs": {
+        "groundTruth": 32,
+        "detected": 51,
+        "tp": 32,
+        "fp": 19,
+        "fn": 0,
+        "precision": 0.627,
+        "recall": 1,
+        "f1": 0.771
+      },
+      "relations": {
+        "groundTruthScoreable": 32,
+        "groundTruthAmbiguous": 0,
+        "scored": 32,
+        "correct": 32,
+        "wrong": 0,
+        "orphan": 0,
+        "unscoreable": 0,
+        "accuracy": 1,
+        "coverage": 1,
+        "forcedOnAmbiguous": 0,
+        "ambiguousDeclared": 0,
+        "ambiguousChairsNotDetected": 0,
+        "declaredAmbiguousAmongScoreable": {
+          "count": 0,
+          "correct": 0
+        },
+        "wrongExamples": []
+      },
+      "zones": {
+        "expected": 1,
+        "detected": 39,
+        "detectedTyped": 25,
+        "unknownZones": 14,
+        "matched": 0,
+        "precision": 0,
+        "recall": 0,
+        "falseZoneInventions": 0,
+        "inventedTypes": [],
+        "byType": {
+          "dining": 25,
+          "unknown": 14
+        }
+      },
+      "facts": {
+        "total": 9,
+        "expected": 2,
+        "expectedPresent": 2,
+        "expectedMissing": [],
+        "forbidden": 4,
+        "forbiddenPresent": [],
+        "fabricatedStrong": 0,
+        "withoutProvenance": [],
+        "byStrength": {
+          "likely": 6,
+          "uncertain": 2,
+          "strong": 1
+        }
+      },
+      "regionFP": {
+        "textRegions": 1,
+        "tablesInText": 5,
+        "architectureRegions": 47,
+        "tablesInArchitecture": 41
+      },
+      "sceneGraph": {
+        "counts": {
+          "belongsTo": 51,
+          "partOf": 54
+        },
+        "nodeCount": 92,
+        "edges": 105
+      },
+      "contradictions": 1,
+      "contradictionIds": [
+        "contra:seatsInsideBody"
+      ],
+      "effort": {
+        "reviewGroups": 4,
+        "uncertainQuestions": 0,
+        "reviewPriorities": 6
+      },
+      "detectionMs": 655,
+      "timedOut": false,
+      "pageErrors": [],
+      "verdict": {
+        "status": "FAIL",
+        "fail": [
+          "more phantom tables than real ones: 46 FP against 8 GT (precision 0.148)"
+        ],
+        "partial": [
+          "zone precision 0 — 25 typed zones for 1 real ones"
+        ]
+      }
+    },
+    {
+      "planId": "a7-dense-overlap",
+      "realVenue": false,
+      "hypothesis": "Chair association is distance-only and cannot express doubt. Between two nearly equidistant tables it must compare both candidates and report a margin; where the drawing is genuinely symmetric it must say ambiguous rather than pick the nearest by a rounding error.",
+      "tables": {
+        "groundTruth": 29,
+        "detected": 21,
+        "tp": 21,
+        "fp": 0,
+        "fn": 8,
+        "precision": 1,
+        "recall": 0.724,
+        "f1": 0.84,
+        "heldBack": 0,
+        "heldBackReasons": {},
+        "missedIds": [
+          "D01",
+          "D02",
+          "D03",
+          "D04",
+          "D05",
+          "D06",
+          "D07",
+          "D08"
+        ]
+      },
+      "tableTypes": {
+        "byType": {
+          "bistro": {
+            "matched": 7,
+            "correct": 0,
+            "accuracy": 0
+          },
+          "square": {
+            "matched": 14,
+            "correct": 14,
+            "accuracy": 1
+          }
+        },
+        "distinctFound": 1,
+        "required": null,
+        "meetsRequirement": null
+      },
+      "chairs": {
+        "groundTruth": 54,
+        "detected": 37,
+        "tp": 37,
+        "fp": 0,
+        "fn": 17,
+        "precision": 1,
+        "recall": 0.685,
+        "f1": 0.813
+      },
+      "relations": {
+        "groundTruthScoreable": 49,
+        "groundTruthAmbiguous": 5,
+        "scored": 37,
+        "correct": 37,
+        "wrong": 0,
+        "orphan": 0,
+        "unscoreable": 12,
+        "accuracy": 1,
+        "coverage": 0.755,
+        "forcedOnAmbiguous": 0,
+        "ambiguousDeclared": 0,
+        "ambiguousChairsNotDetected": 5,
+        "declaredAmbiguousAmongScoreable": {
+          "count": 0,
+          "correct": 0
+        },
+        "wrongExamples": []
+      },
+      "zones": {
+        "expected": 0,
+        "detected": 3,
+        "detectedTyped": 2,
+        "unknownZones": 1,
+        "matched": 0,
+        "precision": 0,
+        "recall": null,
+        "falseZoneInventions": 0,
+        "inventedTypes": [],
+        "byType": {
+          "dining": 2,
+          "unknown": 1
+        }
+      },
+      "facts": {
+        "total": 7,
+        "expected": 2,
+        "expectedPresent": 2,
+        "expectedMissing": [],
+        "forbidden": 4,
+        "forbiddenPresent": [],
+        "fabricatedStrong": 0,
+        "withoutProvenance": [],
+        "byStrength": {
+          "strong": 2,
+          "likely": 4,
+          "uncertain": 1
+        }
+      },
+      "regionFP": {
+        "textRegions": 1,
+        "tablesInText": 0,
+        "architectureRegions": 0,
+        "tablesInArchitecture": 0
+      },
+      "sceneGraph": {
+        "counts": {
+          "belongsTo": 37,
+          "partOf": 21
+        },
+        "nodeCount": 38,
+        "edges": 58
+      },
+      "contradictions": 0,
+      "contradictionIds": [],
+      "effort": {
+        "reviewGroups": 2,
+        "uncertainQuestions": 0,
+        "reviewPriorities": 3
+      },
+      "detectionMs": 714,
+      "timedOut": false,
+      "pageErrors": [],
+      "verdict": {
+        "status": "PARTIAL",
+        "fail": [],
+        "partial": [
+          "bistro tables typed 0/7",
+          "table recall 0.724",
+          "chair recall 0.685"
+        ]
+      }
+    },
+    {
+      "planId": "a8-large-venue",
+      "realVenue": false,
+      "hypothesis": "Every measurement in this repository was taken on 46 tables. At 324 tables and 3,240 seats the relationship pass, the scene graph, the zone clustering and the review queue must all still complete, and the detector's internal table cap must be visible rather than silently truncating the plan.",
+      "tables": {
+        "groundTruth": 324,
+        "detected": 240,
+        "tp": 240,
+        "fp": 0,
+        "fn": 84,
+        "precision": 1,
+        "recall": 0.741,
+        "f1": 0.851,
+        "heldBack": 240,
+        "heldBackReasons": {
+          "seatsInsideBody": 240
+        },
+        "missedIds": [
+          "T090",
+          "T099",
+          "T108",
+          "T117",
+          "T126",
+          "T135",
+          "T144",
+          "T153",
+          "T162",
+          "T235",
+          "T236",
+          "T237",
+          "T238",
+          "T239",
+          "T240",
+          "T241",
+          "T242",
+          "T243",
+          "T252",
+          "T260"
+        ]
+      },
+      "tableTypes": {
+        "byType": {
+          "round": {
+            "matched": 240,
+            "correct": 87,
+            "accuracy": 0.362
+          }
+        },
+        "distinctFound": 2,
+        "required": null,
+        "meetsRequirement": null
+      },
+      "chairs": {
+        "groundTruth": 3240,
+        "detected": 306,
+        "tp": 240,
+        "fp": 66,
+        "fn": 3000,
+        "precision": 0.784,
+        "recall": 0.074,
+        "f1": 0.135
+      },
+      "relations": {
+        "groundTruthScoreable": 3240,
+        "groundTruthAmbiguous": 0,
+        "scored": 240,
+        "correct": 240,
+        "wrong": 0,
+        "orphan": 0,
+        "unscoreable": 3000,
+        "accuracy": 1,
+        "coverage": 0.074,
+        "forcedOnAmbiguous": 0,
+        "ambiguousDeclared": 0,
+        "ambiguousChairsNotDetected": 0,
+        "declaredAmbiguousAmongScoreable": {
+          "count": 0,
+          "correct": 0
+        },
+        "wrongExamples": []
+      },
+      "zones": {
+        "expected": 4,
+        "detected": 2,
+        "detectedTyped": 2,
+        "unknownZones": 0,
+        "matched": 2,
+        "precision": 1,
+        "recall": 0.5,
+        "falseZoneInventions": 0,
+        "inventedTypes": [],
+        "byType": {
+          "dining": 2
+        }
+      },
+      "facts": {
+        "total": 6,
+        "expected": 3,
+        "expectedPresent": 3,
+        "expectedMissing": [],
+        "forbidden": 4,
+        "forbiddenPresent": [],
+        "fabricatedStrong": 0,
+        "withoutProvenance": [],
+        "byStrength": {
+          "likely": 3,
+          "uncertain": 2,
+          "strong": 1
+        }
+      },
+      "regionFP": {
+        "textRegions": 1,
+        "tablesInText": 0,
+        "architectureRegions": 0,
+        "tablesInArchitecture": 0
+      },
+      "sceneGraph": {
+        "counts": {
+          "belongsTo": 240,
+          "partOf": 240
+        },
+        "nodeCount": 306,
+        "edges": 480
+      },
+      "contradictions": 2,
+      "contradictionIds": [
+        "contra:orphanSeats",
+        "contra:seatsInsideBody"
+      ],
+      "effort": {
+        "reviewGroups": 2,
+        "uncertainQuestions": 0,
+        "reviewPriorities": 4
+      },
+      "detectionMs": 1783,
+      "timedOut": false,
+      "pageErrors": [],
+      "verdict": {
+        "status": "FAIL",
+        "fail": [
+          "240 real table(s) detected then held back (seatsInsideBody x240)"
+        ],
+        "partial": [
+          "round tables typed 87/240",
+          "table recall 0.741",
+          "chair recall 0.074"
+        ]
+      }
+    }
+  ]
+}

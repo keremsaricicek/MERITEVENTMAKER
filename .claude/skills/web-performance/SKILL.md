@@ -1,5 +1,5 @@
 ---
-name: web-performance-web-performance
+name: web-performance
 description: Bundle optimization, render performance, Core Web Vitals
 ---
 

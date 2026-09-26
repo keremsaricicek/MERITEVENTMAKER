@@ -31,8 +31,20 @@ build is a developer-time concern only.
 - **No Show** preserves the guest's planned seating assignment but
   releases live operational capacity — these are two different concepts
   (`occupiedSeatIndexes` vs. `liveUsedIndexes`), never merge them.
-- **Chairs are first-class objects** backing table capacity — never let
-  `table.capacity` drift out of sync with `table.chairs`.
+- **Physical chair ≠ logical seat ≠ capacity.** `table.capacity` is the
+  LOGICAL SEAT space (assignment indexes `0..capacity-1`) and exists whether
+  or not a chair was ever drawn. `table.chairs` holds PHYSICAL chairs and is
+  **empty** unless the plan drew one, Assisted Detection found one, or a
+  person placed one — a capacity number never becomes a chair, and a
+  fabricated coordinate carrying a `physical:false` label is not an
+  acceptable substitute for not writing it. OPERATIONAL capacity is
+  `MeritSeatModel.seatingCapacity(event)`; the drawn-chair count is
+  `physicalCapacity(event)` and is shown only where the label says so. "Can
+  this table seat somebody" is `capacity > 0`, **never** gated on
+  `hasPhysicalSeats` — that gate made a symbolic plan (numbered circles with
+  a printed pax figure) present as an empty room across Smart Seating,
+  freezes, service load and the Plan Doctor while Seating was assigning
+  guests to those same tables. One definition, in `src/seat-model.js`.
 - **Historical events are immutable** (`status === "Completed"` or a past
   date) — enforce this in domain logic (`canMutate`), not only in the UI.
 - **Reports are regression-sensitive.** TABLE PLAN / GUEST LIST /
@@ -46,14 +58,202 @@ Full detail: `.claude/skills/merit-product-contract/SKILL.md`.
 ## UI standard
 
 Premium, restrained, operational desktop software — not a generic AI
-dashboard, card wall, or gradient-heavy template. Dark graphite shell,
-warm-paper Floor Plan canvas, controlled cool-blue interaction state,
-semantic-only color, VERY restrained VIP gold. Body text ~12–14px; dense,
-not unreadable. Desktop-first at 1920×1080 / 2560×1440 / ~1440px.
+dashboard, card wall, or gradient-heavy template. One coherent light/warm
+palette app-wide (the old dark-graphite shell was fully retired, not just
+recolored — see `src/styles.css`'s root tokens and the `--pi-*` tokens
+they now cohere with), warm-paper Floor Plan canvas, controlled cool-blue/
+teal interaction state, semantic-only color, VERY restrained VIP gold.
+Body text ~12–14px; dense, not unreadable. Desktop-first at 1920×1080 /
+2560×1440 / ~1440px.
+
+The Floor Plan default editing view and the Plan Intelligence review
+screen ("Concept 3 — Live Map") still use their own `--pi-*`-scoped
+component patterns (no permanent left object list or right technical
+inspector — a floating minimal toolbar, a contextual card on selection, a
+bottom status pill) since each screen is designed for its own job, not a
+single reused component set; but the underlying color language is now the
+same one used everywhere else in the app. Don't reintroduce a second,
+visually distinct dark system for any screen.
 
 **A UI change is not done until it has been rendered and screenshotted** —
 source/markup review is not a substitute. Full detail:
 `.claude/skills/merit-ui-constitution/SKILL.md`.
+
+## Captured decisions
+
+Every human decision in the review screen stores a training example with the
+real image crop, the plan hash, the venue/layout/version it came from, what
+the detector had predicted, and which build predicted it — five decision
+types, including negatives ("Not important" is a stored example, never a
+delete). This is a data foundation: it trains nothing, and `trainedModel`
+stays false. Labels spread across a family are marked as not individually
+reviewed. Dataset splits are grouped by plan, never by example. Full detail:
+`benchmarks/TRAINING-DATA.md`.
+
+## The Teach Area
+
+What an operator knows about a room is kept as a **note with a scope** — this
+plan, this layout, this venue — and offered again where it applies. It is
+retrieval, not learning: nothing is fitted, and the wording never says
+otherwise in either language. One lesson changes one object, never everything
+that resembles it; identity comes from Visual Plan Memory, so AMBIGUOUS still
+means nothing is touched; and a venue-wide note about an object is only acted
+on when the object carries the same verified printed number. Full detail:
+`src/plan-teach-area.js` and `benchmarks/OPERATIONAL-INTELLIGENCE-ROADMAP.md`.
+
+## The Plan Doctor
+
+One layer answers "can this event safely proceed?" and everything else reads
+it — the header badge, the Command Center's attention list and the pre-flight
+report all come from `src/plan-doctor.js`, so the product cannot say two
+different things about one event. It runs no engine of its own and stores
+nothing: the report is derived on every read, so a fixed problem disappears by
+itself. **A reading is not an operational fact** — two tables a person numbered
+the same is BLOCKING, two tables OCR *read* as the same number is NEEDS REVIEW,
+and collapsing those two is a revert. Every finding names what is wrong, why,
+its source, what it affects and where to go; a finding that cannot say where to
+go does not belong in this layer. Full detail:
+`benchmarks/EVENT-OPERATIONS-PRODUCT-REPORT.md`.
+
+## Layout changes
+
+What moved since the room was published is `MeritVenueModel.compareToVersion`,
+surfaced as a MODE of the Floor Plan on the same canvas — never a second drawing
+of the room. Identity is **verified table number first, position second, and no
+visual similarity at all**: Table 42 that moved is `TABLE 42 MOVED`, never a
+removal plus an addition. One matched pair emits one change per aspect that
+differs, so a table that gained seats without moving is `CAPACITY_CHANGED` and
+not `MOVED`. `ADDED`, `REMOVED` and `STAGE_CHANGED` are peers — a stage that
+appeared is added, not changed. Confirmation is offered only where identity is
+UNCERTAIN, and is stored against the version it was made about. Full detail:
+`src/venue-model.js` and `benchmarks/EVENT-OPERATIONS-PRODUCT-REPORT.md`.
+
+## The guest finder
+
+The global search answers the whole question in the row — pax, VIP, planning
+status, arrival status, table, seats, zone and who invited them — and offers the
+four things an operator does next. **Nothing it offers moves a guest**: CHANGE
+TABLE opens Seating with the guest selected and waits for a person, and CHECK IN
+writes arrival status only, never planning status. An action that cannot apply is
+disabled with its reason on the control. Speed is an index keyed on
+`event.lastModified`, not a promise — the suite measures a search over four
+thousand guests rather than asserting one. Full detail: `src/app-v8.js`
+(`guestSearchIndex` / `findGuests`) and `tests/suites/guest-finder.test.mjs`.
+
+`matchGuestRows(event, query)` is the one place either surface tests a query
+against a guest — the Global Finder's dropdown and Live's door search both
+call it, over the same haystack and the same term-AND-narrowing, so a query
+cannot mean one thing in the appbar and another thing at the door. Ranking
+(name-prefix first, 12-row cap) and Live's own arrival-sort-and-window are
+each layered on top by their own caller; only matching is shared. Full
+detail: `tests/suites/live-door-keys.test.mjs`.
+
+## Smart Seating
+
+`src/seating-advisor.js` **cannot seat anybody** — it returns options and
+arithmetic and has no path to an assignment. The only writer is the existing
+`assignGuestToTable()`, called from one line behind the Apply button. Keep that
+boundary: it is what makes "never silently move or seat guests" structural
+rather than a promise. Options carry **named reasons, never a score**; a party is
+one record and is never split across tables to make the numbers work; a locked
+assignment outranks every suggestion; and a constraint with no implementation yet
+(unavailable tables) reports **not set up yet** rather than "no conflict" — the
+day it ships, that same slot carries a real answer, as Freeze Zones now does.
+Nothing mutates until a person presses Apply, and the preview shows the
+arithmetic they will get, exactly. Full detail: `src/seating-advisor.js` and
+`tests/suites/smart-seating.test.mjs`.
+
+## Freeze zones
+
+A freeze is a **rule about a place**, not a list of table ids: a zone freeze
+covers a table moved into the zone tomorrow, a range freeze covers a `T07`
+created tomorrow. `src/seating-freeze.js` owns those rules and nothing else
+evaluates them — the advisor, the canvas, the Plan Doctor and the override
+challenge all consume its resolved answer, so they cannot disagree about what is
+held. A table is OPEN or FROZEN; **SUPERVISOR OVERRIDE REQUIRED is the state of
+an OPERATION**, not a fourth kind of table. Every path that changes an
+assignment runs the same evaluation, in both directions — filling a held area
+and emptying a frozen head table are both crossings. An override is a
+**parameter spent on one call**, never stored state: the freeze is still
+standing for the next operation, and lifting it is a separate, recorded act by a
+person. Defined in Seating, drawn on the Floor Plan as a layer that outlines
+rather than covers. Full detail: `src/seating-freeze.js` and
+`tests/suites/seating-freeze.test.mjs`.
+
+## Table availability
+
+`src/table-availability.js` answers one question — is this table usable
+tonight — and the one real consequence of UNAVAILABLE: who it would strand.
+**Distinct from a freeze, in both directions**: a freeze is a rule about a
+PLACE, gated by permission, and a supervisor can override one operation
+without lifting it; unavailable is a fact about the TABLE ITSELF, and there
+is **no override anywhere** for it — the same hard stop as a table with no
+physical seats. Marking or clearing a table unavailable never touches a
+freeze on it, and lifting a freeze never touches its availability. **Marking
+unavailable moves nobody** — a guest already seated there keeps that
+assignment on paper until a person relocates them through the existing
+seating flow (Smart Seating's recommendations, or a manual reassignment);
+this module has no path to an assignment. The canvas mark is unconditional,
+never gated behind a layer toggle, because it is a fact about whether the
+table exists tonight, not an optional advisory. Closed the one risk
+`MeritPlanDoctor.NOT_EVALUATED` used to name. Full detail:
+`src/table-availability.js` and `tests/suites/table-availability.test.mjs`.
+
+## The Event Risk Radar
+
+"What could make this event fail operationally?" — answered in the Command
+Center from the Plan Doctor and nothing else. It **runs no engine of its own**:
+every row is a fact another layer already concluded, so the radar cannot
+disagree with the pre-flight report. Two refusals are load-bearing. It shows
+**no percentage** — there is no honest weighting of one duplicate table number
+against twelve unseated guests, so it names one of four states (READY / READY
+WITH REVIEW / NOT READY / LIVE RISK) and lists the reasons. And it **says what
+it cannot see**: risks this build does not model (`MeritPlanDoctor.NOT_EVALUATED`)
+are printed under the verdict, because a radar that shows only what it knows how
+to look for teaches an operator that a quiet radar means a safe event. Every row
+carries a control; the backup row's control is the export itself, because "go
+and find the button" is the dead end this layer forbids. INFORMATION never
+reaches the radar — that is the difference between it and the pre-flight report.
+Full detail: `src/plan-doctor.js` and `tests/suites/risk-radar.test.mjs`.
+
+## The arrival wave
+
+Two axes, kept apart by `src/arrival-wave.js`. **EXPECTED is what a person
+stated** — a guest has a window because somebody typed one, and nothing infers
+one. When nobody has, the expected axis **does not exist**: every bucket reports
+`null` rather than zero, because zero is a claim about the evening and null is
+the truth about the data. **ACTUAL is what happened**, from `guest.checkedInAt`.
+**Nothing is predicted** — there is no projection field and `forecast: null` is
+in the returned object so no caller can present one.
+
+The arrival axis has exactly one writer: `setArrival()` in `src/app-v8.js`
+maintains `arrivalStatus` and `checkedInAt` together and writes the audit entry.
+The moment never survives a status that contradicts it, a **No Show is never an
+arrival** (enforced in the module as well as by the caller), and a check-in with
+no recorded moment is counted as untimed rather than placed in an invented
+bucket. Lives in Live (working timeline, selecting a wave narrows the same door
+list) and on the Command Center (compact summary) — no new navigation item. Full
+detail: `src/arrival-wave.js` and `tests/suites/arrival-wave.test.mjs`.
+
+## Service load
+
+`src/service-load.js` answers one question — where is this room busy right
+now — from facts the product already has, and refuses everything more
+convincing than that. **No walking routes**: the drawing does not say where
+walls, doors or corridors are. **No distance in any unit**: nothing calibrates
+a plan's pixels to metres, so `farthestFromService` reports a **relative
+rank only**, never a figure. **No service times or staff load**: named in
+`notEvaluated` rather than silently absent. **No continuous heat field**:
+occupancy is known per table, so bands (`EMPTY`/`LIGHT`/`BUSY`/`FULL`) and
+per-zone totals are the honest granularity — never an interpolated surface.
+
+**PLANNED and LIVE are different rooms.** A No Show keeps the planned seat
+(the plan and reports are correct) and frees the chair tonight — the module
+takes a `mode` and excludes No Show pax only in `LIVE`. The layer toggle is
+shared by the Floor Plan and Seating toolbars (`loadLayerToolHTML`), off by
+default, and appears only once there is occupancy to show. The Command
+Center carries a compact summary beside the arrival wave. Full detail:
+`src/service-load.js` and `tests/suites/service-load.test.mjs`.
 
 ## Plan Intelligence honesty
 
@@ -62,6 +262,60 @@ model — label it "Assisted Detection," never "AI." If no trained domain
 model exists, say **"DOMAIN MODEL NOT INSTALLED"** rather than implying
 one is running. Never fabricate detections, confidence scores, or model
 metrics. Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.
+
+## Code health
+
+`app-v8.js` is 5799 lines after the first extraction (8,543 before). Before
+any more of it moves,
+three things are written down and measured, not remembered:
+`benchmarks/APP-V8-OWNERSHIP-MAP.md` (26 business areas, each with its globals
+read and written, callers, protecting suites, single-writer risk and the
+characterization test it is missing), `benchmarks/CODE-INVENTORY.md` (dead code
+and duplication — **nothing deleted**, and the measurement that first said
+fourteen dead functions and was wrong), and `benchmarks/MODULARIZATION-ORDER.md`
+(the order, which is deliberately not screen-by-screen).
+
+Two findings govern how work is chosen. **Size does not predict difficulty** —
+the largest area, the detection pipeline at 34% of the file, is the easiest to
+extract because it touches no shell global; the hardest are 74 and 171 lines.
+And **`guest.assignment` is written from 8 sites across 3 areas**, which blocks
+the Guests, Seating and canvas extractions until it has one writer, the way
+`setArrival()` is already the one writer of the arrival axis.
+
+Four suites guard the structure itself and run before and after every step:
+`dependency-direction` (the one-way rule, reading code rather than text, and
+treating injection as distinct from coupling), `boot-contract` (load order plus
+the runtime check that no overridden function silently resolved to its pre-v8
+body), `offline-bundle-contract` (the build's markup slice and the bundle's
+script order) and `plan-detection-boundary` (the detection pipeline's seam).
+
+**Step 1 is done.** The classical detection pipeline is
+`src/plan-detection-classical.js` — 2,809 lines out of `app-v8.js`, reached
+only through `globalThis.MERIT_PLAN_DETECTION`, reading no shell state. It is a
+**transitional extraction, not a finished module**; its internal split is
+mapped in `benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`. The move also recorded
+a lesson the four structural suites could not teach on their own: all of them
+passed on a build whose detector threw `ReferenceError` on every real plan.
+**Booting is not detecting** — a structural step needs a suite that exercises
+the behaviour it moved. Full detail: `.claude/rules/code-health.md` and
+`.claude/skills/merit-maintainability-hardening/SKILL.md`.
+
+## Tests
+
+`npm test` runs the regression suite in `tests/` (real UI, real Chromium, its
+own server, ~2 min). It is the first thing to run and the first thing to
+extend: a behaviour change no suite would have caught needs a suite. Detector
+changes are measured with `npm run benchmark` and checked against the
+committed `benchmarks/BASELINE.json` — never against remembered numbers.
+
+When a detector count comes up short, **diagnose before theorising**:
+`benchmarks/heldout/ornek-stage-walk.mjs` names the stage each missed object
+died at, and `ornek-miss-taxonomy.mjs` reports found-vs-missed as distributions
+of the quantities the detector actually reasons about. Phase 6 guessed at three
+causes and measurement contradicted two of them.
+
+Full detail: `tests/README.md`, `benchmarks/README.md`,
+`.claude/rules/testing.md`.
 
 ## Data integrity
 

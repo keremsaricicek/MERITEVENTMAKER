@@ -11,20 +11,27 @@
   <main id="app" class="app"></main>
   <input id="floorPlanFile" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg,.pdf" hidden>
   <input id="guestFileInput" type="file" accept=".xlsx,.xls,.csv,text/csv" hidden>
+  <input id="backupFileInput" type="file" accept="application/json,.json" hidden>
 
-  <dialog id="eventDialog" class="dialog-sm"><form id="eventForm" method="dialog">
-    <div class="dialog-head"><h2>Create Event</h2><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
-    <div class="dialog-body"><div class="form-grid"><div class="field full"><label>Event Name</label><input name="name" required value=""></div><div class="field"><label>Date</label><input name="date" type="date" required></div><div class="field"><label>Event Status</label><select name="status"><option>Planning</option><option>Confirmed</option><option>Live</option></select></div><div class="field full"><label>Venue</label><input name="venue" required value=""></div></div></div>
-    <div class="dialog-foot"><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="default">Create Event</button></div>
-  </form></dialog>
+  <!--
+    The old #eventDialog was removed deliberately. Its submit handler called
+    createDemoEvent(), which seeded 16 tables, 26 guests and a demo floor plan
+    into what the user had asked to be a new event — a direct violation of
+    "a blank event is actually blank". Event creation goes through the
+    dedicated setup screen (startNewEvent / createBlankEventFromSetup).
+  -->
 
-  <dialog id="guestDialog" class="dialog-sm"><form id="guestForm" method="dialog">
+  <!-- Every label is bound to its field with for/id. Without that binding a
+       screen reader announces each of these as "edit, blank" -- the visible
+       text is not enough. aria-labelledby names the dialog itself. -->
+  <dialog id="guestDialog" class="dialog-sm" aria-labelledby="guestDialogTitle"><form id="guestForm" method="dialog">
     <input type="hidden" name="id"><div class="dialog-head"><h2 id="guestDialogTitle">Add Guest</h2><button class="dialog-close" value="cancel" aria-label="Close">×</button></div>
-    <div class="dialog-body"><div class="form-grid"><div class="field full"><label>Name Surname</label><input name="name" required placeholder="KEREM SARICICEK"></div><div class="field"><label>Additional Guests</label><input name="additionalGuests" type="number" min="0" max="99" value="0" required></div><div class="field"><label>Planning Status</label><select name="planningStatus"><option>Confirmed</option><option>Tentative</option></select></div><div class="field full"><div class="total-pax-box"><span>Total Pax</span><b id="guestTotalPax">1</b></div></div><div class="field"><label>VIP Level</label><select name="vip"><option>Standard</option><option>VIP</option><option>VVIP</option></select></div><div class="field"><label>Invited By</label><input name="invitedBy"></div><div class="field full"><label>Notes</label><textarea name="notes"></textarea></div></div></div>
+    <div class="dialog-body"><div class="form-grid"><div class="field full"><label for="gfName">Name Surname</label><input id="gfName" name="name" required placeholder="KEREM SARICICEK"></div><div class="field"><label for="gfAdditional">Additional Guests</label><input id="gfAdditional" name="additionalGuests" type="number" min="0" max="99" value="0" required></div><div class="field"><label for="gfPlanning">Planning Status</label><select id="gfPlanning" name="planningStatus"><option>Confirmed</option><option>Tentative</option></select></div><div class="field full"><div class="total-pax-box"><span id="gfPaxLabel">Total Pax</span><b id="guestTotalPax" role="status" aria-labelledby="gfPaxLabel">1</b></div></div><div class="field"><label for="gfVip">VIP Level</label><select id="gfVip" name="vip"><option>Standard</option><option>VIP</option><option>VVIP</option></select></div><div class="field"><label for="gfInvitedBy">Invited By</label><input id="gfInvitedBy" name="invitedBy"></div><div class="field"><label for="gfExpectedArrival">Expected Arrival</label><input id="gfExpectedArrival" name="expectedArrival" placeholder="19:30" maxlength="5" inputmode="numeric"></div><div class="field full"><label for="gfNotes">Notes</label><textarea id="gfNotes" name="notes"></textarea></div></div></div>
     <div class="dialog-foot"><button class="btn" value="cancel">Cancel</button><button class="btn primary" value="default">Save Guest</button></div>
   </form></dialog>
 
-  <dialog id="excelDialog" class="dialog-wide"><div id="excelWizard"></div></dialog>
+  <!-- The wizard renders its own <h2 id="wizTitle"> from app-v8.js. -->
+  <dialog id="excelDialog" class="dialog-wide" aria-labelledby="wizTitle"><div id="excelWizard"></div></dialog>
   <dialog id="guideDialog" class="guide-dialog"><div id="guideRoot" class="guide-shell"></div></dialog>
   <div id="toastWrap" class="toast-wrap" aria-live="polite"></div>
 
@@ -42,8 +49,125 @@
     globalThis.MeritPdf = { getDocument: pdfjsLib.getDocument, GlobalWorkerOptions: pdfjsLib.GlobalWorkerOptions };
     globalThis.dispatchEvent(new CustomEvent("merit-pdf-ready"));
   </script>
+  <!--
+    Tesseract.js (MIT) — real client-side OCR for the Plan Intelligence
+    capacity auditor (reads printed pax notes / labels off the imported plan
+    image). Loaded from CDN like the two engines above; requires network on
+    first use to fetch its WASM core + language data. Not present in the
+    offline single-file build — see src/plan-ocr.js for why.
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+  <script src="src/storage-provider.js"></script>
+  <script src="src/venue-model.js"></script>
+  <script src="src/capacity-provenance.js"></script>
+  <!--
+    Physical chair vs. logical seat vs. operational capacity. Loaded before
+    app.js because the shell's own seating arithmetic reads it; every later
+    module reaches it lazily through globalThis, so this position is for the
+    shell's benefit rather than a hard ordering requirement.
+  -->
+  <script src="src/seat-model.js"></script>
+  <!--
+    The schema migration registry. Loaded before app.js because parseRoot()
+    consults it on the very first load, before anything else reads state.
+  -->
+  <script src="src/schema-migrations.js"></script>
+  <!--
+    The ONE writer of guest.assignment. Before app.js, app-guests.js and
+    app-v8.js because all three of them seat guests through it.
+  -->
+  <script src="src/seat-assignment.js"></script>
   <script src="src/app.js"></script>
   <script src="src/app-guests.js"></script>
+  <script src="src/i18n.js"></script>
+  <script src="src/plan-ocr.js"></script>
+  <script src="src/plan-label-ocr.js"></script>
+  <script src="src/plan-table-numbers.js"></script>
+  <script src="src/plan-number-integrity.js"></script>
+  <script src="src/plan-self-check.js"></script>
+  <script src="src/plan-encoder-weights.js"></script>
+  <script src="src/plan-embedding.js"></script>
+  <script src="src/plan-relationships.js"></script>
+  <script src="src/plan-representation.js"></script>
+  <script src="src/plan-memory.js"></script>
+  <script src="src/plan-teach-area.js"></script>
+  <script src="src/plan-confidence-budget.js"></script>
+  <script src="src/plan-intelligence.js"></script>
+  <!-- Last of the reasoning layers, because it consumes every one of them and
+       nothing consumes it. -->
+  <script src="src/plan-doctor.js"></script>
+  <!-- What a person has held back, and what it would cost to cross it. Loaded
+       before the advisor because the advisor consumes its resolved answer. -->
+  <script src="src/seating-freeze.js"></script>
+  <!-- Is this table usable tonight, and who would it strand if not. A fact
+       about the table, never a rule about a place — loaded before the
+       advisor, which consumes its resolved answer the same way it does
+       freezes. -->
+  <script src="src/table-availability.js"></script>
+  <!-- Recommends where a party could sit. Cannot seat anybody: the only writer
+       of an assignment is assignGuestToTable(), driven by a person. -->
+  <script src="src/seating-advisor.js"></script>
+  <!-- Expected versus actual arrivals. Reads the guest records and nothing
+       else; it predicts nothing, and says so in its own output. -->
+  <script src="src/arrival-wave.js"></script>
+  <!-- Where the room is busy. Reads positions, occupancy and zones; computes no
+       route, no distance in any unit and no timing. -->
+  <script src="src/service-load.js"></script>
+  <!-- The handover note log — free text one operator leaves the next. Owns no
+       fact about the event: the "state of the event" half of Handover is
+       composed in app-v8.js from the modules already loaded above. -->
+  <script src="src/event-handover.js"></script>
+  <!-- Which raw audit-log entries are a decision worth showing in the trail.
+       An allowlist, not a filter on the noisy generic entry every mutation
+       writes — a code this module was never told about stays invisible. -->
+  <script src="src/audit-trail.js"></script>
+  <!-- An automatic, unattended ring buffer of recent full-state snapshots,
+       distinct from exportBackup() -- protects against a corrupted primary
+       record or an in-session mistake, never against losing the device. -->
+  <script src="src/offline-recovery.js"></script>
+  <!-- One event, made portable -- distinct from exportBackup()'s whole
+       install. Owns the payload shape and id-renumbering, never storage. -->
+  <script src="src/event-package.js"></script>
+  <!-- Reorders the audit trail oldest-first and narrows it to a wave bucket's
+       own window, using the wave module's own clock helpers — the story of
+       the night, computed from nothing this build didn't already know. -->
+  <script src="src/post-event-replay.js"></script>
+  <!-- Averages real per-event facts (utilization, no-show rate) across an
+       operator's own completed events -- an operator reading their own
+       history, never a trained model; null means no data, never zero. -->
+  <script src="src/event-history.js"></script>
+  <script src="src/training-data.js"></script>
+  <!-- Assisted Detection's pure geometry: the real minimum-area rectangle and
+       the three box predicates. Loads BEFORE the pipeline, which reads them
+       through globalThis.MeritPlanGeometry at call time, and reads nothing
+       itself — no state, no DOM, no pixels. -->
+  <!-- Assisted Detection's deskew and ink threshold. The only DOM-touching
+       part of the detector: it re-renders the page at trial angles on a
+       canvas. Loads first of the detection modules. -->
+  <script src="src/plan-detection-deskew.js"></script>
+  <script src="src/plan-detection-geometry.js"></script>
+  <!-- Assisted Detection's modal-size prior: how big the thing this plan
+       repeats is, and whether a candidate agrees with it. Loads BEFORE the
+       pipeline, which reads it through globalThis.MeritPlanSizePrior, and
+       publishes MeritSymbolFamilyMember under the name it always had. -->
+  <script src="src/plan-detection-size-prior.js"></script>
+  <!-- Assisted Detection's shape analysis: round / square / rectangle decided
+       from the component's real filled pixels, never from its bounding box.
+       Loads after the geometry it uses and before the pipeline that calls it. -->
+  <script src="src/plan-detection-shape.js"></script>
+  <!-- Assisted Detection's merged-blob splitting: two touching objects are
+       separated only where the pixel profile shows a real density valley and
+       every part lands near the modal object size. -->
+  <!-- Assisted Detection's mask-to-objects layer: connected components,
+       enclosed regions and mask solidity, sharing one module-level scratch
+       buffer that must not be reallocated per call. -->
+  <script src="src/plan-detection-components.js"></script>
+  <script src="src/plan-detection-split.js"></script>
+  <!-- Assisted Detection: the classical CV pipeline, extracted from app-v8.js.
+       Loads BEFORE app-v8.js because app-v8.js reads the registry it publishes
+       (globalThis.MERIT_PLAN_DETECTION), and AFTER the Merit* modules it calls
+       at detect() time. It is NOT a trained model. -->
+  <script src="src/plan-detection-classical.js"></script>
   <script src="src/app-v8.js"></script>
 </body>
 </html>
