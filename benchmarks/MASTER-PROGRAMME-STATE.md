@@ -1341,6 +1341,35 @@ re-proven against the rewrite. `verify:offline` **27 / 27** after the rebuild.
 (`toast-discipline` proves it). Removing them is a no-behaviour code-health
 commit of its own, not part of this one.
 
+### U. §20 — onboarding and empty states — DONE: measured on a blank event, five defects
+
+Walked a brand-new install and a blank event on every screen, Turkish, 1440,
+and looked at each render:
+
+| screen | before | after |
+|---|---|---|
+| Events (no events) | says so, offers Create — **already right** | unchanged |
+| Guests (no guests) | says so, offers Import and Add — **already right** | unchanged |
+| Live (no guests) | **"Tüm misafirler geldi" — "everyone has arrived"**. The list includes checked-in guests, so it is empty only with no guests or a filter matching nobody: the sentence was never true where it was shown | "no guests yet" + Add or import; a filter that matches nobody says so |
+| Seating queue | **"no MATCHING guests"** with no guests at all, and again with everyone seated | three causes, three sentences; everyone-seated offers Show all |
+| Floor Plan canvas | **a blank panel**; the only instruction was the creation toast | "This plan is empty" + Import a plan / Add manually |
+| Seating canvas (no tables) | **a blank panel** | "No tables to seat guests at" + Open the Floor Plan |
+| Plan toolbar, no plan | **"Show original plan"** (toggles nothing) and **"Replace plan"** (nothing to replace) | the toggle is absent; the button says Import |
+| onboarding tips | **3 at once** on Seating (Global Finder + Freeze Zones + Smart Seating), 2 on the Command Center | one per screen; the next appears when it is dismissed |
+
+`empty-states` presses every control rather than finding it. Mutations — 8 of 8
+fail it. One first SURVIVED: the historical check was written against Live, and
+a Completed event has no Live tab — `ui.tab = "live"` fell back to the read-only
+guest list, so the assertion passed without testing anything. Moved to Seating,
+which history does show; with the guard removed it now fails. The historical
+guard in `liveEmptyHTML` stays as defence but is unreachable today, and is
+recorded as such.
+
+Gates: `test:all` **91 / 91 suites · 2,934 / 2,934 checks**; `verify:offline` **27 / 27**.
+
+Rendered at 1440 TR, 1920 EN, 2560 TR: no break. The "everyone has arrived" key
+is deleted, not left for reuse.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
@@ -1384,16 +1413,15 @@ typing 136/289.
 
 ## Next step
 
-**§20 — onboarding.** Per `merit-ui-quality-gates` ("every screen has four
-states: empty · loading · error · populated; an empty state explains what to do
-next"). Measure first: open a brand-new install and a brand-new blank event,
-walk every screen and record what each empty state says and whether it names a
-next action with its control. The existing onboarding callouts
-(`onboardingCalloutHTML`, dismissible "Anladım") are part of the surface —
-measure how many can be on one screen at once (Seating showed two stacked at
-1440) against "no warning flood".
+**§21 — provenance inspector.** Per `merit-ui-quality-gates`: "where a number
+came from is reachable — capacity provenance, printed numbers, detector source.
+A figure an operator cannot trace is a figure they will not trust."
+`src/capacity-provenance.js` exists. Measure first: on a detected plan and on a
+hand-built one, list every number the operator sees for a table (capacity,
+printed number, chair count, occupancy) and whether its source is reachable from
+where it is shown, in how many interactions.
 
-Then, in the order given: §21–§25 UX, §26 performance,
+Then, in the order given: §22–§25 UX, §26 performance,
 §27 real CI release gates (incl. the `benchmark:baseline` false green and
 `--compare` exit 1), §28–30, then the final review and completion matrix.
 
