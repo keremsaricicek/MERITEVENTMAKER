@@ -41,10 +41,10 @@ failures are what you exist to catch, and each has happened in this repo:
    the dimension is NOT VERIFIED.
 
 2. **Green CI hiding a non-blocking gate.** A passing badge is not evidence.
-   Read the workflow and each script's exit semantics. This repo currently
-   has two live examples — the adversarial runner exits non-zero only on
-   regression against a baseline that already contains three FAIL fixtures,
-   and the memory gate runs under `continue-on-error`. Both are green today.
+   Read the workflow and each script's exit semantics. This repo had five
+   live examples until §27 — among them an adversarial step that compared
+   nothing and a memory gate under `continue-on-error` — recorded with what
+   closed each in `merit-ci-quality-gates`. Check they are still closed.
 
 3. **A stale artifact presented as a measurement.** A `dist/`, a baseline or
    a report older than the code it describes proves nothing. Check

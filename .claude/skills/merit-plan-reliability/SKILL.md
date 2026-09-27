@@ -36,13 +36,23 @@ Measured at `65ea956`, `npm run benchmark:adversarial`:
 | PARTIAL | 4 | `a1-chair-under-table`, `a4-multi-room`, `a7-dense-overlap`, `a8-large-venue` |
 | **FAIL** | **3** | `a2-mixed-families`, `a5-architecture-only`, `a6-architectural-confusion` |
 
+**Since then (2026-09-27, §27 of the master programme) — re-measure with
+`npm run benchmark:adversarial -- --compare`.** The table above, like every
+adversarial number recorded before §27, was measured on a machine where OCR
+never loaded. With the pinned OCR engine — what CI has always measured — it is
+**2 PASS (`a3`, `a5`) · 5 PARTIAL · 2 FAIL (`a2`, `a6`)**. Both FAILs are
+**accepted in writing** in `benchmarks/adversarial/KNOWN-FAILS.json` (reason,
+operator-visible consequence, owner), printed as FAIL on every run, and a new
+FAIL — or a listed one that stops failing — turns CI red. The paragraph below
+describes the state §27 closed.
+
 FAIL in this harness means **actively wrong output** — a confident claim
 that is false, or a phantom object placed on the floor. Not "scored low."
 
-**These three do not turn CI red.** The runner exits non-zero only on
-regression against a frozen baseline that already contains them — see
-`merit-ci-quality-gates` §Mechanism 1. So the three FAILs are, right now,
-silently accepted by the pipeline.
+**At `65ea956` these three did not turn CI red** — the runner exited non-zero
+only on regression against a frozen baseline that already contained them, and
+CI did not even pass `--compare` (`merit-ci-quality-gates`, mechanism 1). §27
+closed that: a FAIL not accepted in writing now fails CI.
 
 ## The rule about known FAILs
 
@@ -138,6 +148,7 @@ Detector changes are **measured, never asserted** (`.claude/rules/testing.md`).
 - **10** — plus a third independent real plan, measured, with no
   sample-specific runtime logic.
 
-With three FAIL fixtures open, this dimension cannot exceed **6**, and
+With FAIL fixtures open (two, `a2` and `a6`, on 2026-09-27 — accepted in
+writing, not fixed), this dimension cannot exceed **6**, and
 **10 is unreachable** until a third real plan exists. Say that plainly
 rather than scoring around it.

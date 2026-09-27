@@ -20,7 +20,7 @@ nothing checked the behaviour it moved has proved nothing.
 
 | Forbidden | Why |
 |---|---|
-| Large-scale rewrite | A working product with 2,080 passing checks is not a candidate for a clean slate |
+| Large-scale rewrite | A working product with thousands of passing checks (`npm run test:all` counts them) is not a candidate for a clean slate |
 | Framework migration | React / Vue / Svelte / any framework |
 | TypeScript conversion | Needs its own approved decision, not a side effect of a cleanup |
 | Vite / bundler / build-step introduction | The app deliberately has **no build step**; the offline builds are concatenators, not bundlers |
@@ -46,23 +46,26 @@ grep -c 'src="src/' index.html                        # script count + order
 npm run test:list                                     # what already guards what
 ```
 
-Snapshot at the time of writing (verify, do not trust):
+Two dated snapshots (verify, do not trust — the commands above are the
+source of truth):
 
-- 34 `src/*.js`, **18,783 lines**
-- `app-v8.js`: **5,740 lines** after Step 1 (8,543 before), longest line
-  **3,369 characters**
-- `plan-detection-classical.js`: **2,857 lines** — the extracted detection
-  pipeline, a transitional checkpoint and not a finished module
-- 29 of 34 files export `globalThis.Merit*`
-- **65 suites (59 fast + 6 slow) / 2,080 checks**; 5 parallel CI jobs;
-  offline verification 27
+| | at `65ea956` (skill written) | 2026-09-27 (§30) |
+|---|--:|--:|
+| `src/*.js` files / lines | 34 / 18,783 | 43 / 21,281 |
+| `app-v8.js` lines (8,543 before Step 1) | 5,740 | 6,582 |
+| longest line in `app-v8.js` | 3,369 chars | 3,554 chars |
+| `plan-detection-classical.js` — a transitional checkpoint, not a finished module | 2,857 | 2,682 |
+| files exporting `globalThis.Merit*` | 29 | 39 |
+| suites / checks | 65 / 2,080 | 96 (8 slow) / see `npm run test:all` |
+
+5 parallel CI jobs; offline verification 27 checks.
 
 ---
 
 ## 2. The four mandatory gates — after EVERY step, not at the end
 
 ```bash
-npm run test:all          # 65 suites, 2,080 checks — slow suites included
+npm run test:all          # every suite, slow ones included; prints suites and checks
 npm run build:offline     # single-file artifact
 npm run build:offline-full # folder artifact, with local OCR
 npm run verify:offline    # 27 checks — RUNS the artifact, aborts off-origin, drives real OCR
@@ -132,9 +135,10 @@ Two findings from it change how a candidate is chosen:
   extract — it read no shell global and was reached through one provider
   interface. The hardest areas are 74 and 171 lines. Never pick an extraction
   by line count.
-- **`guest.assignment` is written from 8 sites across 3 areas** (Seating,
-  Guests, the canvas). Those three cannot be extracted independently while
-  that holds. Consolidating the writer is not an extraction and comes first.
+- **`guest.assignment` was written from eleven sites across three files**
+  (Seating, Guests, the canvas), which blocked all three extractions. §3C gave
+  it one writer, `src/seat-assignment.js`, guarded by `assignment-writer` —
+  the prerequisite is met; the extractions themselves have not happened.
 
 ### Step B — one screen or one business capability at a time
 

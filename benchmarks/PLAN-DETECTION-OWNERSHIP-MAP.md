@@ -1,8 +1,16 @@
 # `plan-detection-classical.js` — internal ownership map
 
 **Status of the file this describes: TRANSITIONAL EXTRACTION, not a finished
-module.** 3,145 lines in one file is not a healthy unit and is not reported as
-one.
+module.** 3,145 lines in one file was not a healthy unit and was not reported
+as one.
+
+> **Dated status, 2026-09-27 (§30).** Re-measure with
+> `wc -l src/plan-detection-*.js`. Split A has since moved six helper groups
+> into their own files (`plan-detection-geometry`, `-components`, `-shape`,
+> `-deskew`, `-split`, `-size-prior`; 708 lines together), and
+> `plan-detection-classical.js` is **2,682** lines. The line ranges in the
+> sections below were measured at the sizes they name; before acting on one,
+> re-derive it from the current file.
 
 > **Re-measured after §6 (mixed representation).** The file was 2,858 lines
 > when this map was written and is **3,145** now; the §6 work added 287, nearly

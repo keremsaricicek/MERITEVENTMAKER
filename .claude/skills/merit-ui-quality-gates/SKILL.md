@@ -48,7 +48,10 @@ drawing of the room (`floor-plan-modes`, `layout-changes`).
   gold carries VIP meaning only.
 
 ### No browser-native dialogs on a primary flow
-Measured at `65ea956`: **9 `confirm()` and 2 `prompt()`** remain in `src/`.
+Measured at `65ea956`: **9 `confirm()` and 2 `prompt()`** remained in `src/`.
+**All eleven were replaced in §16 (2026-09); 0 calls remain** — re-check with
+`grep -n '\bconfirm(\|\bprompt(' src/*.js` (one match is the comment that
+says why).
 
 These cannot be styled, cannot be translated, cannot be made accessible, and
 look nothing like the product. Replacing them is shared work:

@@ -5,9 +5,18 @@ IIFE. Before any of it is extracted, this document records **who owns what** —
 so an extraction is a decision about a business capability with a known blast
 radius, not a decision about a line count.
 
-**Status: reference document. Nothing here has been extracted.** This is the
-"ownership map first" step that `.claude/rules/code-health.md` requires before
-the first screen comes out.
+**Status: reference document.** This is the "ownership map first" step that
+`.claude/rules/code-health.md` requires before the first screen comes out.
+
+> **Dated status, 2026-09-27 (§30).** The map was measured when `app-v8.js`
+> was 8,543 lines. Since then A22 (the Assisted Detection pipeline) is
+> **extracted**; `guest.assignment` has **one writer**,
+> `src/seat-assignment.js` (§3C — the blocker this map named for A12/A17/A21
+> is closed; those extractions have not happened); and the master programme's
+> product work grew the file back to **6,582** lines. The areas and their
+> relationships are still the reference; the line ranges and per-area counts
+> are from the original measurement — re-derive them with
+> `tests/lib/js-scan.mjs` before acting on one.
 
 ## How this was produced
 

@@ -6,8 +6,8 @@
 - Forbidden without explicit written approval: large-scale rewrite,
   framework migration, TypeScript conversion, introducing a bundler/build
   step, converting `src/*.js` to ES modules, and silently changing the
-  classic-script load order in `index.html` (35 scripts, fixed order,
-  `app-v8.js` LAST).
+  classic-script load order in `index.html` (fixed order, `app-v8.js`
+  LAST; count with `grep -c 'src="src/' index.html` — 43 on 2026-09-27).
 - **Four gates after EVERY structural step**, not at the end:
   `npm run test:all` · `npm run build:offline` ·
   `npm run build:offline-full` · `npm run verify:offline`.
@@ -30,9 +30,9 @@
   line count.
 - **Step 1 is done.** The classical detection pipeline is
   `src/plan-detection-classical.js`, reached only through
-  `globalThis.MERIT_PLAN_DETECTION`; `app-v8.js` is 5799 lines. It is a
-  **transitional extraction, not a finished module** — do not cite its 2,857
-  lines as a problem or as done. Internal split:
+  `globalThis.MERIT_PLAN_DETECTION`. It is a **transitional extraction, not a
+  finished module** — do not cite its size (re-measure with `wc -l`) as a
+  problem or as done. Internal split:
   `benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`. Seam guarded by
   `plan-detection-boundary`.
 - **A structural move names its crossings first.** Measure, in stripped code,
@@ -47,9 +47,10 @@
   suite exercises the behaviour that moved. Syntax checks, `smoke`, and all
   four structural suites passed on a build whose detector threw on every real
   plan.
-- **`guest.assignment` is written from 8 sites across 3 areas.** Consolidating
-  that to one writer blocks the Guests, Seating and canvas extractions and is
-  not itself an extraction. It comes before them.
+- **`guest.assignment` has ONE writer**, `src/seat-assignment.js` (§3C closed
+  eleven raw write sites across three files). `assignment-writer` fails on a
+  new one. Keep it that way: every new assignment path goes through
+  `MeritSeatAssignment`.
 - After every extraction, verify source order and that overridden functions
   still resolve to the `app-v8.js` versions — a silent revert to a pre-v8
   body does not look wrong in a diff.

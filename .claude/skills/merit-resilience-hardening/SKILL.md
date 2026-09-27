@@ -17,8 +17,14 @@ produce, worse than a crash, because a crash is at least visible.
 ## Where this dimension actually stands
 
 Measured at `65ea956`: **zero suites named for resilience.**
-`offline-recovery` and `backup-restore` cover two real paths well. Every
-other failure mode in the table below is unmeasured.
+`offline-recovery` and `backup-restore` covered two real paths well; every
+other failure mode in the table below was unmeasured.
+
+**Since then (2026-09-27, §19) — re-measure with `npm run test:list`:** four
+resilience suites (`resilience-static`, `resilience-storage`,
+`resilience-persisted`, `resilience-detection-render`) driven by the fault
+helper in `tests/lib/faults.mjs`, plus `toast-discipline`, which fails when a
+failure is reported only in a toast.
 
 ## THE MODEL — five things, every failure path
 
@@ -110,5 +116,5 @@ that passes before the handling exists is asserting nothing.
 - **9** — every failure mode above verified against all five model steps.
 - **10** — plus fault injection running in CI.
 
-With zero suites, this dimension cannot currently exceed **4**: two paths
+With zero suites (as at `65ea956`), this dimension could not exceed **4**: two paths
 are genuinely covered and the rest is unmeasured.

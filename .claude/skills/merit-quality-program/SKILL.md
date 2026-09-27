@@ -77,8 +77,8 @@ before using them.** They are a starting point, not a result.
   `xlsx-contract`, `arrival-wave`, `seating-freeze`, `table-availability`
 - **Evidence** the domain rules in `.claude/rules/product.md` each have a
   suite; the workbook export is opened and diffed, not merely run
-- **Open debt** `guest.assignment` has 8 writers across 3 areas
-  (`benchmarks/APP-V8-OWNERSHIP-MAP.md` A12/A17/A21)
+- **Open debt** ~~`guest.assignment` has 8 writers across 3 areas~~ — closed
+  in §3C (`benchmarks/MASTER-PROGRAMME-STATE.md` entry G): one writer
 - **Minimum gate** every rule in `.claude/rules/product.md` has a suite that
   fails when the rule is violated
 - **9** the above, plus the single-writer violation closed or explicitly
@@ -91,8 +91,9 @@ before using them.** They are a starting point, not a result.
 - **Measurement** `npm run test:all`; suite count and check count; the
   mutation record for each structural suite
 - **Evidence** 65 suites / 2,080 checks at `65ea956`
-- **Open debt** **no accessibility, security or resilience suite exists** —
-  three dimensions have zero executable coverage
+- **Open debt** ~~no accessibility, security or resilience suite exists~~ —
+  closed in §14/§15/§19: five security, four accessibility and four resilience
+  suites, all in `npm test`/`test:all` and so in CI (`npm run test:list`)
 - **Minimum gate** `test:all` green; no skipped/quarantined test
 - **9** every dimension in this file has at least one suite that fails when
   it regresses
@@ -104,9 +105,9 @@ before using them.** They are a starting point, not a result.
   `offline-bundle-contract`, `plan-detection-boundary`; line counts
 - **Evidence** `app-v8.js` 5,740 lines (was 8,543); detection pipeline
   extracted behind one registry, reading no shell state
-- **Open debt** `plan-detection-classical.js` is 2,857 lines — a
-  **transitional extraction, not a finished module**; 25 of 26 app-v8 areas
-  unextracted
+- **Open debt** `plan-detection-classical.js` is a **transitional extraction,
+  not a finished module** (`wc -l`: 2,857 at `65ea956`, 2,682 on 2026-09-27);
+  most app-v8 areas unextracted (`benchmarks/APP-V8-OWNERSHIP-MAP.md`)
 - **Minimum gate** the four structural suites green
 - **9** no file over ~1,500 lines is presented as final architecture, and
   every extracted module has a seam suite
@@ -161,10 +162,13 @@ before using them.** They are a starting point, not a result.
 - **Owner** `computer-vision-engineer` · skill `merit-plan-reliability`
 - **Measurement** `npm run benchmark:adversarial`, `benchmark:baseline`,
   `benchmark:memory`, `benchmark:false-positives`
-- **Evidence** 8 adversarial fixtures: **1 PASS, 4 PARTIAL, 3 FAIL**
-- **Open debt** three fixtures are **actively wrong**, and the runner exits
-  non-zero only on *regression vs a frozen baseline that already contains
-  those FAILs* — so CI is green while they fail (see §14)
+- **Evidence** adversarial fixtures, re-measure with `npm run benchmark:adversarial
+  -- --compare`: 1 PASS · 4 PARTIAL · 3 FAIL of 8 at `65ea956` (without OCR);
+  **2 PASS · 5 PARTIAL · 2 FAIL of 9** on 2026-09-27 with the pinned OCR engine
+- **Open debt** two fixtures are **actively wrong** (`a2`, `a6`, with the
+  pinned OCR engine; `a5` was fixed in §7). Since §27 a new FAIL turns CI red;
+  these two are accepted in writing in `benchmarks/adversarial/KNOWN-FAILS.json`
+  and printed as FAIL on every run
 - **Ceiling without new evidence** this dimension is bounded by the plans we
   have. Two real venue plans is not a population.
 - **Minimum gate** no fabricated object; abstention available; identity never
@@ -179,8 +183,8 @@ before using them.** They are a starting point, not a result.
   (verification) · skill `merit-ui-quality-gates`
 - **Measurement** rendered screenshots at 1920×1080 / 2560×1440 / ~1440px ×
   TR+EN; task-completion and interaction counts
-- **Open debt** **9 `confirm()` and 2 `prompt()` calls** remain in `src/` —
-  browser-native dialogs in a premium product
+- **Open debt** ~~9 `confirm()` and 2 `prompt()` calls~~ — all replaced in
+  §16; 0 remain
 - **Minimum gate** rendered evidence at 3 viewports; no console errors
 - **9** no browser-native dialog on a primary flow; every screen has real
   empty/loading/error states
@@ -203,8 +207,9 @@ before using them.** They are a starting point, not a result.
   scan of `src/`
 - **Evidence** 838 `t()` calls, 1,164 keys; key integrity is asserted
   statically across every call site
-- **Open debt** key integrity ≠ absence of hardcoded English. No check
-  currently looks for a literal user-facing English sentence in source.
+- **Open debt** key integrity ≠ absence of hardcoded English — closed in §18
+  by `i18n-hardcoded-english` (a reachability-aware static scan plus a rendered
+  walk of 21 states in both languages)
 - **Minimum gate** no raw key reaches the screen; both languages complete
 - **9** plus zero hardcoded user-facing English in `src/`, including
   `aria-label`, `title`, placeholders and error text
@@ -236,8 +241,10 @@ before using them.** They are a starting point, not a result.
 - **Owner** `ci-quality-gate-engineer` · skill `merit-ci-quality-gates`
 - **Measurement** read `.github/workflows/ci.yml` **and** each script's exit
   semantics — not the green badge
-- **Evidence, measured at `65ea956`** — this is the dimension most at risk of
-  a false 9:
+- **Evidence** — closed in §27; `merit-ci-quality-gates` records five
+  mechanisms, what closed each, and the classification of every CI command.
+  What follows is the state at `65ea956`, kept because it is the dimension
+  most at risk of a false 9:
   - `benchmarks/adversarial/run-adversarial.mjs` sets a non-zero exit **only
     on regression vs the frozen baseline**. Three fixtures are permanently
     FAIL inside that baseline, so they never turn CI red.
@@ -256,8 +263,9 @@ before using them.** They are a starting point, not a result.
 - **Evidence** 331 `esc()` calls, **13 `innerHTML` assignments**, 0
   `eval`/`new Function`, `createObjectURL`/`revokeObjectURL` balanced 4/4.
   **Zero security suites.**
-- **Open debt** "`esc()` is used" is not proof. Each of the 13 `innerHTML`
-  sites needs its inputs traced.
+- **Open debt** "`esc()` is used" is not proof — closed in §14:
+  `html-sink-inventory` traces every `innerHTML` site and fails on an
+  unreviewed one; `hostile-input` feeds payloads through each entry point
 - **Minimum gate** no XSS from any imported or typed string
 - **9** hostile-input fixtures for guest names, notes, venue/event names, OCR
   text and Teach AI input all pass, and each `innerHTML` site is accounted for

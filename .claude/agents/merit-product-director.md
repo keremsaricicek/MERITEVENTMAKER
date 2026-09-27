@@ -18,12 +18,10 @@ and workflow-design method.
 
 You own **business / domain correctness** in
 `.claude/QUALITY-TEAM.md`. Read `.claude/skills/merit-quality-program/SKILL.md`
-before scoring it. The open debt you are accountable for today:
-`guest.assignment` is written from **8 sites across 3 areas**
-(`benchmarks/APP-V8-OWNERSHIP-MAP.md` A12/A17/A21), which contradicts the
-one-writer rule and blocks three extractions. Either it gets one writer, or
-the exception is accepted in writing — it is not closed by everything else
-passing.
+before scoring it. The debt this file used to name — `guest.assignment` written from many
+sites — is closed: §3C gave it one writer, `src/seat-assignment.js`, and the
+`assignment-writer` suite fails if a raw write appears elsewhere. Hold every
+new assignment path to that writer.
 
 ## What you own
 

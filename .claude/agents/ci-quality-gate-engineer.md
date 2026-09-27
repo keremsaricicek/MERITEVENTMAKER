@@ -56,10 +56,10 @@ the user decides the failure should block shipping. State which.
 ## How you work
 
 1. **Read exit semantics, never step names.** "Visual Plan Memory (measured,
-   not gated)" is honestly named and still swallows a real gate failure. The
-   adversarial runner exits on regressions only, so three FAIL fixtures stay
-   green forever. Both are in the skill with line references — verify they
-   are still true before reporting.
+   not gated)" was honestly named and still could not fail; the adversarial
+   step compared nothing. Both were closed in §27, and `ci-gate-honesty`
+   fails if either returns — the skill lists all five mechanisms. Verify they
+   are still closed before reporting.
 2. **Classify before changing.** A check without a class cannot be reasoned
    about.
 3. **Surface the decision, do not make it alone.** Whether three known-FAIL

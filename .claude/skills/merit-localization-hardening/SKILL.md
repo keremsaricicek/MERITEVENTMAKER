@@ -20,6 +20,12 @@ Measured at `65ea956`:
 | Translation keys | **1,164** |
 | Suites | `i18n`, `i18n-key-integrity` |
 
+**Since then (2026-09-27, §17/§18):** about 1,000 `t("…")` call sites
+(`grep -o '\bt("' src/*.js | wc -l`), and a third suite,
+`i18n-hardcoded-english`, which scans reachable code for English and walks 21
+rendered states in both languages. `toast-discipline` holds every toast to a
+key.
+
 `i18n-key-integrity` is genuinely strong: it checks statically, across every
 call site, that each key exists and carries both languages — including the
 error paths no rendering test reaches. It also guards against a bare

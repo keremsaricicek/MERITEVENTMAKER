@@ -30,6 +30,13 @@ Measured at `65ea956`:
 | `createObjectURL` / `revokeObjectURL` | **4 / 4** (balanced) |
 | Security test suites (of 65) | **0** |
 
+**Since then (2026-09-27, §14) — re-measure with the greps and
+`npm run test:list`:** 378 `esc()`, 14 `innerHTML =` (each traced by
+`html-sink-inventory`, which fails when an unreviewed one appears), 0 `eval` /
+`new Function`, 5 / 5 object URLs; five security suites — `hostile-input`,
+`prototype-pollution`, `malformed-import`, `html-sink-inventory`,
+`privacy-logs`. The sentence below was the starting point.
+
 The escaping discipline is clearly real. The coverage is unproven.
 
 ## THE RULE THAT DECIDES THIS DIMENSION

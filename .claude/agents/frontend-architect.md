@@ -16,7 +16,7 @@ It is the operating procedure; the skills below are the reasoning material.**
 You own two quality dimensions in `.claude/QUALITY-TEAM.md`: **architecture
 / modularity** and **offline**. Read
 `.claude/skills/merit-quality-program/SKILL.md` before scoring either — in
-particular the rule that a 2,857-line file is a **transitional extraction,
+particular the rule that `plan-detection-classical.js` is a **transitional extraction,
 not a finished module**, and that "the build succeeded" is never evidence
 where `verify:offline` exists.
 
@@ -42,19 +42,19 @@ Then read `.claude/skills/programming-principles/SKILL.md`,
 
 ## Repo facts — measured, not remembered
 
-Re-measure before relying on any of these; they are a snapshot, and a stale
+Re-measure before relying on any of these; they are a snapshot (2026-09-27), and a stale
 fact in this file is the exact failure mode it exists to prevent.
 
 | Fact | Value | How to re-measure |
 |---|---|---|
-| `src/*.js` files | **34** | `ls src/*.js \| wc -l` |
-| `src/` total lines | **18,783** | `wc -l src/*.js` |
-| `app-v8.js` | **5,740 lines — 31% of all source**, 242 top-level functions (was 8,543 / 266 before the detection extraction) | `wc -l src/app-v8.js` |
-| Longest single line in `app-v8.js` | **3,369 chars** (41 lines exceed 500) | `awk '{print length}' src/app-v8.js \| sort -rn \| head -1` |
-| `plan-detection-classical.js` | **2,857 lines** — the extracted detection pipeline, a **transitional checkpoint**, not a finished module | `wc -l src/plan-detection-classical.js` |
-| Files exporting `globalThis.Merit*` | **29 of 34** | `grep -l "globalThis.Merit" src/*.js \| wc -l` |
-| Classic `<script>` tags in `index.html` | **34**, fixed order, `app-v8.js` LAST | `grep -c 'src="src/' index.html` |
-| Test suites | **65** (59 fast + 6 slow), **2,080 checks** | `npm run test:all` |
+| `src/*.js` files | **43** | `ls src/*.js \| wc -l` |
+| `src/` total lines | **21,281** | `wc -l src/*.js` |
+| `app-v8.js` | **6,582 lines — 31% of all source** (5,740 right after the detection extraction; 8,543 before it) | `wc -l src/app-v8.js` |
+| Longest single line in `app-v8.js` | **3,554 chars** (40 lines exceed 500) | `awk '{print length}' src/app-v8.js \| sort -rn \| head -1` |
+| `plan-detection-classical.js` | **2,682 lines** — the extracted detection pipeline, a **transitional checkpoint**, not a finished module | `wc -l src/plan-detection-classical.js` |
+| Files exporting `globalThis.Merit*` | **39 of 43** | `grep -l "globalThis.Merit" src/*.js \| wc -l` |
+| Classic `<script>` tags in `index.html` | **43**, fixed order, `app-v8.js` LAST | `grep -c 'src="src/' index.html` |
+| Test suites | **96** (8 slow); checks printed by the run | `npm run test:all` |
 | CI jobs | **5 parallel**, split by what a failure means | `.github/workflows/ci.yml` |
 | Offline verification | **27 checks**, by RUNNING the built artifact | `npm run verify:offline` |
 

@@ -21,6 +21,12 @@ Measured at `65ea956`:
 | Accessibility test suites (of 65) | **0** |
 | Browser-native `confirm()` / `prompt()` in `src/` | **9 / 2** |
 
+**Since then (2026-09-27, §15/§16) — re-measure with the greps above and
+`npm run test:list`:** 51 `aria-*` and 34 `role=`; four accessibility suites
+(`a11y-scan`, `a11y-dialog-focus`, `a11y-keyboard-workflows`,
+`a11y-announce-contrast`); **0** native `confirm()` / `prompt()` calls. The
+paragraph below is the starting point it was written against.
+
 For an application with eight screens, a canvas editor, a live door
 workflow and a dozen dialogs, those numbers describe an app that has not
 been made accessible yet. Start from that, not from a hopeful reading.

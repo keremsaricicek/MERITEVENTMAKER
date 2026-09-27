@@ -265,8 +265,9 @@ metrics. Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.
 
 ## Code health
 
-`app-v8.js` is 5799 lines after the first extraction (8,543 before). Before
-any more of it moves,
+`app-v8.js` was 5,799 lines after the first extraction (8,543 before) and has
+grown with the product work since — re-measure with `wc -l src/app-v8.js`
+(6,582 on 2026-09-27). Before any more of it moves,
 three things are written down and measured, not remembered:
 `benchmarks/APP-V8-OWNERSHIP-MAP.md` (26 business areas, each with its globals
 read and written, callers, protecting suites, single-writer risk and the
@@ -278,9 +279,12 @@ fourteen dead functions and was wrong), and `benchmarks/MODULARIZATION-ORDER.md`
 Two findings govern how work is chosen. **Size does not predict difficulty** —
 the largest area, the detection pipeline at 34% of the file, is the easiest to
 extract because it touches no shell global; the hardest are 74 and 171 lines.
-And **`guest.assignment` is written from 8 sites across 3 areas**, which blocks
-the Guests, Seating and canvas extractions until it has one writer, the way
-`setArrival()` is already the one writer of the arrival axis.
+And `guest.assignment` was written from eleven sites across three files, which
+blocked the Guests, Seating and canvas extractions. It now has one writer —
+`src/seat-assignment.js` (`MeritSeatAssignment`), the way `setArrival()` is the
+one writer of the arrival axis — and the `assignment-writer` suite fails if a
+raw write appears anywhere else (§3C, `benchmarks/MASTER-PROGRAMME-STATE.md`
+entry G).
 
 Four suites guard the structure itself and run before and after every step:
 `dependency-direction` (the one-way rule, reading code rather than text, and
