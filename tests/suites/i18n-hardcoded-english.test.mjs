@@ -60,6 +60,12 @@ function staticFindings(repoRoot) {
   const v8 = CODE["app-v8.js"];
   const overridden = new Set([...v8.matchAll(/(?:^|[;{}\s])([A-Za-z_$][\w$]*)\s*=\s*(?:async\s+)?function\b/g)].map((m) => m[1]));
   const calledBack = new Set([...v8.matchAll(/\boriginal\.([A-Za-z_$][\w$]*)/g)].map((m) => m[1]));
+  // …and through a local ALIAS: `const oldBindCanvas=bindCanvas; … oldBindCanvas()`.
+  // A first version modelled only original.NAME, so it marked the pre-v8
+  // bindCanvas -- and bindInspector, which only it calls -- as dead, while the
+  // Floor Plan card's Type/Rotation/Zone fields run through them every day.
+  for (const m of v8.matchAll(/\b(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=\s*([A-Za-z_$][\w$]*)\s*;/g))
+    if (new RegExp(`(?<![\\w$.])${m[1].replace(/\$/g, "\\$")}\\s*\\(`).test(v8)) calledBack.add(m[2]);
   const capStart = v8.search(/const\s+original\s*=\s*\{/), capEnd = capStart < 0 ? -1 : v8.indexOf("}", capStart);
   const defs = [];
   for (const f of ["app.js", "app-guests.js"]) {

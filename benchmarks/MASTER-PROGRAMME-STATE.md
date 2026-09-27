@@ -1308,8 +1308,14 @@ Reachability was the hard part. A first version treated every name app-v8.js
 reassigns as dead; app-v8.js still calls **twelve** of those bodies back through
 `original.NAME` (`addVenue`, `bindGuests`, `undoCanvas`, …). The analysis now
 computes it to a fixpoint (overridden and never called back, or referenced only
-from unreachable code) and the suite asserts its shape: 66 bodies unreachable,
-12 called back. Plan Doctor's English is by design (exports and suites read it)
+from unreachable code) and the suite asserts its shape. **Correction (found in
+§24):** that analysis modelled call-backs through `original.NAME` only; app-v8.js
+also reaches pre-v8 bodies through local aliases (`const oldBindCanvas=bindCanvas;
+… oldBindCanvas()`, likewise `canvasViewportHTML` and `toast`). So it called
+`bindCanvas` — and `bindInspector`, which only it calls — dead, while the Floor
+Plan card's Type/Rotation/Zone fields run through them. With aliases modelled:
+**55** unreachable (not 66). Re-scanning the eleven bodies that became live found
+no English, so §18's result stands; its reachability figure did not. Plan Doctor's English is by design (exports and suites read it)
 and is translated by `code` on screen — so the check there is "every code has a
 sentence in both languages" (28 of 28, `planChecksDisagree` restated through the
 Self-Check), not "no English".
