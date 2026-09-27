@@ -536,6 +536,21 @@ body:has(.seat-stage) .toast-wrap{left:302px}
 body:has(.seat-stage) .toast{min-width:0;max-width:340px}
 /* Raised while a modal dialog is open, a toast lives INSIDE that dialog so it
    is drawn in its top layer rather than under the backdrop. */
+/* §22: readiness timeline -- a quiet strip of recorded facts, one colour per
+   meaning (done green, needs a look amber, open neutral); no progress bar. */
+.cc-timeline{margin:0 0 var(--sp-6);padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--panel)}
+.cc-timeline h3{margin:0 0 10px;font-size:10px;font-weight:650;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.cc-timeline ol{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:0;padding:0;list-style:none}
+.tl-step{display:flex;flex-direction:column;gap:6px;min-width:0;padding:10px;border:1px solid var(--line-soft,var(--line));border-radius:var(--radius-md);background:var(--shell,transparent)}
+.tl-mark{font-size:13px;line-height:1;color:var(--muted)}
+.tl-step.done .tl-mark{color:var(--green)}
+.tl-step.stale .tl-mark,.tl-step.partial .tl-mark,.tl-step.today .tl-mark{color:var(--amber)}
+.tl-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tl-body b{font-size:12px;font-weight:650;color:var(--text)}
+.tl-body span{font-size:12px;line-height:1.35;color:var(--muted)}
+.tl-body time{font-size:11px;color:var(--muted-2,var(--muted))}
+.tl-step .btn{align-self:flex-start}
+@media(max-width:1450px){.cc-timeline ol{grid-template-columns:repeat(3,minmax(0,1fr))}}
 /* §21: a printed number that disagrees with the table's own is stated, in the
    caution colour -- a fact to notice, not an error to clear. */
 .contextual-card-provenance.is-mismatch{display:block;color:var(--amber-ink);font-weight:600;line-height:1.4}

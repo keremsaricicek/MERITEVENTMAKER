@@ -1415,6 +1415,29 @@ be reproduced by hand either. Whether confirmation should ADOPT a verified
 printed number is a product-semantics decision (identity for layout versions
 keys on the table number) and is left to be made deliberately, not by default.
 
+### W. §22 — readiness timeline — DONE: time on the Command Center, from records only
+
+Measured before: the Command Center had a phase and a verdict and **no time at
+all** — nothing said how far away the event is, what had been done and when,
+or that the last final check was older than the latest change (that lived only
+inside the collapsed Plan Doctor).
+
+Now a six-step strip at the top — floor plan · guest list · seating · final
+check · handover · event day — DERIVED from what is recorded: the plan's
+confirmation moment, the first guest's `createdAt`, `finalCheck.at` and its
+signature, handover notes' `at`, the event date. Three refusals, each asserted:
+a step whose moment was never recorded shows **no date** (tables added by hand
+have none); **no percentage, no forecast** — seating is "1 of 3 pax"; a final
+check the event has moved past is **stale, not done**, and offers to run again.
+Every open step carries its control. A Completed event has no Command Center, so
+the timeline's historical guard is defensive and unreachable today.
+
+Mutations — 6 written, 2 first SURVIVED, both hollow checks of mine: the
+no-percentage assertion ran on a blank event where there was nothing to count
+(moved to where guests exist; now bites), and the historical check targeted a
+tab history does not have (removed, recorded above). 5 of 5 remaining bite.
+Found while writing it: zero of two seated read as "partial" — fixed in the rule.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
@@ -1458,14 +1481,14 @@ typing 136/289.
 
 ## Next step
 
-**§22 — readiness timeline.** The Plan Doctor answers "can this event safely
-proceed?" now; a timeline answers "what must be true by when?" Measure first:
-what the product already knows about time (event date, `expectedArrival`
-windows, `checkedInAt`, handover notes, the audit trail) and what the Command
-Center shows about it today. Honesty rules carry over: nothing inferred, no
-predicted arrival, absence stated as absence (`arrival-wave` model).
+**§23 — Live Event UX.** Per `merit-ui-quality-gates`: "Live Event is a speed
+surface. Door workflows are measured in seconds. Keyboard-first, minimal
+confirmation on the common path." Measure first, as counted interactions and
+timings on a realistic list (hundreds of guests): find a guest and check them
+in, mark a No Show, undo a wrong check-in, check in a +3 party — mouse path and
+keyboard path, TR, 1440. Record the counts before changing anything.
 
-Then, in the order given: §23–§25 UX, §26 performance,
+Then, in the order given: §24–§25 UX, §26 performance,
 §27 real CI release gates (incl. the `benchmark:baseline` false green and
 `--compare` exit 1), §28–30, then the final review and completion matrix.
 

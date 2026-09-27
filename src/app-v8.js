@@ -1219,6 +1219,65 @@
       </div>`}
     </section>`;
   }
+  // ---- READINESS TIMELINE (§22) ---------------------------------------------
+  // The Command Center answered "can this event proceed?" with no sense of
+  // time: nothing said how far away the event is, what had been done and when,
+  // or that the last final check is older than the latest change. This strip
+  // is DERIVED from what is already recorded -- the event date, the plan's
+  // confirmation moment, guests' createdAt, the recorded final check, the
+  // handover notes -- and invents nothing: a step whose moment was never
+  // recorded says "done" without a date, never a guessed one, and nothing is
+  // forecast (no "on track", no projected completion).
+  function readinessSteps(event){
+    const d=globalThis.MeritPlanDoctor?planDoctorReport(event):null;
+    const guests=event.guests||[],total=guests.reduce((n,g)=>n+paxOf(g),0);
+    const seated=guests.filter(g=>g.assignment).reduce((n,g)=>n+paxOf(g),0);
+    const firstGuestAt=guests.map(g=>g.createdAt).filter(Boolean).sort()[0]||null;
+    const confirmedMs=event.analysis?.timings?.confirmedAtMs;
+    const ran=event.finalCheck||null;
+    const stale=!!(ran&&d&&ran.signature!==doctorSignature(d));
+    const notes=(event.handoverNotes||[]).filter(n=>n&&n.at).map(n=>n.at).sort();
+    const days=daysUntil(event.date);
+    return[
+      {key:"plan",state:event.tables.length?"done":"open",at:event.tables.length&&confirmedMs?new Date(confirmedMs).toISOString():null,
+        detail:event.tables.length?t("timeline.plan.done",{n:event.tables.length}):t("timeline.plan.open"),go:"floor"},
+      {key:"guests",state:guests.length?"done":"open",at:firstGuestAt,
+        detail:guests.length?t("timeline.guests.done",{n:guests.length,pax:total}):t("timeline.guests.open"),go:"guests"},
+      {key:"seating",state:!total||!seated?"open":seated===total?"done":"partial",at:null,
+        detail:total?t("timeline.seating.progress",{seated,total}):t("timeline.seating.none"),go:"seating"},
+      {key:"check",state:!ran?"open":stale?"stale":"done",at:ran?ran.at:null,
+        detail:t(!ran?"timeline.check.never":stale?"timeline.check.stale":"timeline.check.done"),go:"check"},
+      {key:"handover",state:notes.length?"done":"open",at:notes.length?notes[notes.length-1]:null,
+        detail:notes.length?t("timeline.handover.done",{n:notes.length}):t("timeline.handover.open"),go:"handover"},
+      {key:"day",state:days==null?"open":days<0?"done":days===0?"today":"upcoming",at:null,
+        detail:days==null?t("timeline.day.noDate"):days<0?t("timeline.day.past",{n:-days}):days===0?t("timeline.day.today"):t(days===1?"timeline.day.tomorrow":"timeline.day.inDays",{n:days}),go:null},
+    ];
+  }
+  // Whole calendar days from today to the event date, in local time. A
+  // calendar fact, not a forecast.
+  function daysUntil(dateText){
+    const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateText||""));if(!m)return null;
+    const day=new Date(+m[1],+m[2]-1,+m[3]),now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    return Math.round((day-today)/86400000);
+  }
+  function readinessTimelineHTML(event){
+    if(isHistorical(event))return"";
+    const steps=readinessSteps(event);
+    const mark={done:"✓",partial:"◐",stale:"!",open:"○",today:"●",upcoming:"○"};
+    return`<section class="cc-timeline" data-readiness-timeline aria-label="${esc(t("timeline.title"))}"><h3>${t("timeline.title")}</h3><ol>${steps.map(s=>`<li class="tl-step ${s.state}" data-step="${s.key}" data-state="${s.state}">
+      <span class="tl-mark" aria-hidden="true">${mark[s.state]}</span>
+      <div class="tl-body"><b>${t("timeline.step."+s.key)}</b><span>${esc(s.detail)}</span>${s.at?`<time datetime="${esc(s.at)}">${esc(fmtDate(String(s.at).slice(0,10)))}</time>`:""}</div>
+      ${s.go&&s.state!=="done"?`<button class="btn sm quiet" data-timeline-go="${s.go}">${t("timeline.go."+s.go)}</button>`:""}
+    </li>`).join("")}</ol></section>`;
+  }
+  document.addEventListener("click",e=>{
+    const b=e.target.closest&&e.target.closest("[data-timeline-go]");
+    if(!b)return;
+    const g=b.dataset.timelineGo;
+    if(g==="check"){document.querySelector('[data-cc-doctor="run"]')?.click();return;}
+    if(g==="handover"){document.querySelector("[data-handover-text]")?.focus();return;}
+    ui.tab=g;if(g==="floor")ui.planMode="plan";render();
+  });
   function commandCenterHTML(event){
     const r=eventReadiness(event);
     return`<div class="screen-scroll"><div class="screen-inner command-center">
@@ -1229,6 +1288,7 @@
           <span>${r.reasons.length?t(r.reasons.length===1?"cc.verdict.reasonCount1":"cc.verdict.reasonCount",{n:r.reasons.length}):t("cc.verdict.nothingOpen")}</span>
         </div>
       </header>
+      ${readinessTimelineHTML(event)}
       ${riskRadarHTML(event,r)}
       <div class="cc-columns">${ccPlanConsistencyHTML(event)}${ccSeatingHTML(event)}</div>
       <div class="cc-columns">${arrivalWaveHTML(event,{compact:true})}${serviceLoadHTML(event,{compact:true})}</div>
