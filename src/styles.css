@@ -894,7 +894,10 @@ body{min-width:1180px}
 .tabs{background:#f9f8f7}
 .tab{min-height:41px}
 .workspace-head .event-id span{color:#5a523f}
-.v8-lock{opacity:.85}
+/* §25: read-only is said by the history banner and the absent controls, not by
+   dimming the page. A blanket opacity:.85 here pushed muted text under AA (the
+   Seating queue header measured 3.71:1) on every historical screen. */
+.v8-lock{}
 
 .v8-workspace-tools{display:flex;align-items:center;gap:7px}
 .plan-health{position:relative}
@@ -1040,9 +1043,13 @@ body{min-width:1180px}
 .live-kpi.available b{color:var(--v8-red)}
 .arrival-summary.v8-arrival{display:none}
 
-.readonly-screen{height:100%;overflow:auto}
+/* §25: the page gutter every other screen has (.screen-scroll's 20px); without
+   it the title and table sat on the viewport edge. */
+.readonly-screen{height:100%;overflow:auto;padding:20px}
 .readonly-screen .screen-inner{padding-top:24px}
-.readonly-note{display:flex;gap:9px;align-items:center;padding:11px 13px;border:1px solid #5e4e37;background:#f8f7f4;border-radius:var(--radius-md);color:#d49b44;margin-bottom:14px}
+/* §25: the old dark-shell colours (#d49b44 on #f8f7f4 measured 2.28:1) replaced
+   by the caution tokens the rest of the light palette uses. */
+.readonly-note{display:flex;gap:9px;align-items:center;padding:11px 13px;border:1px solid var(--line);background:var(--amber-soft);border-radius:var(--radius-md);color:var(--amber-ink);margin-bottom:14px}
 
 .modal-layer{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:28px;background:rgba(32,28,20,.42);backdrop-filter:blur(8px);animation:fadeIn var(--dur-base) var(--ease)}
 .modal-card{width:min(560px,100%);max-height:90vh;overflow:auto;border:1px solid #dfdad0;border-radius:var(--radius-lg);background:#f7f5f3;box-shadow:var(--shadow-4);animation:popIn var(--dur-base) var(--ease)}

@@ -1263,7 +1263,8 @@
   function readinessTimelineHTML(event){
     if(isHistorical(event))return"";
     const steps=readinessSteps(event);
-    const mark={done:"✓",partial:"◐",stale:"!",open:"○",today:"●",upcoming:"○"};
+    // Characters the UI font carries: "◐" rendered as a clipped half-glyph (§25).
+    const mark={done:"✓",partial:"…",stale:"!",open:"○",today:"●",upcoming:"○"};
     return`<section class="cc-timeline" data-readiness-timeline aria-label="${esc(t("timeline.title"))}"><h3>${t("timeline.title")}</h3><ol>${steps.map(s=>`<li class="tl-step ${s.state}" data-step="${s.key}" data-state="${s.state}">
       <span class="tl-mark" aria-hidden="true">${mark[s.state]}</span>
       <div class="tl-body"><b>${t("timeline.step."+s.key)}</b><span>${esc(s.detail)}</span>${s.at?`<time datetime="${esc(s.at)}">${esc(fmtDate(String(s.at).slice(0,10)))}</time>`:""}</div>

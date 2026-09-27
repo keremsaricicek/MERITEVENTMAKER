@@ -1501,6 +1501,31 @@ Mutations — 5 of 5 fail `table-number-edit`.
 Found on the way (committed separately, `bf732a6`): the §18 reachability
 analysis missed alias call-backs — see the correction in entry T.
 
+### Z. §25 — visual quality — the sweep, and what it found
+
+A rendered sweep, TR, realistic data (24 tables, 60 guests), every main screen
+and a Completed event at 1920 / 2560 / 1440, looked at, plus `a11y-scan`
+extended to the Completed event's own screens — which it had never opened
+though it claimed "every screen":
+
+| found | measured | fix |
+|---|---|---|
+| historical guest list, no gutter | title and table on the viewport edge | the page's 20 px padding |
+| read-only note | amber `#d49b44` on `#f8f7f4` = **2.28 : 1** | the light palette's caution tokens |
+| every historical screen dimmed | `.v8-lock{opacity:.85}` pushed muted text under AA — Seating's queue header **3.71 : 1** | removed: read-only is said by the banner and the absent controls, not by fading the page |
+| readiness timeline "partial" mark | `◐` rendered as a clipped half-glyph in the UI font | `…` |
+
+`a11y-scan` now 50 checks (from 46), and its run before the fixes is the
+mutation evidence: it failed on exactly the two contrast values above.
+
+**Measured and NOT changed (Floor Plan):** bulk "Add Manually" lays tables out
+in the operator's column count (default 2) at a fixed spacing, so 24 tables
+become 12 rows running past the plan's 788 px world height, and Seating then
+opens with most of them off-screen until Fit. The ghost preview shows this
+before commit and the column count is the operator's; re-flowing the grid would
+move positions other suites rely on. Recorded as a Floor Plan follow-up, not
+fixed by default.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
@@ -1544,13 +1569,13 @@ typing 136/289.
 
 ## Next step
 
-**§25 — visual quality.** Known on entry: the read-only historical screen has
-no left gutter (§18); the readiness timeline's "partial" mark renders as a
-half-glyph in the UI font (§22). Measure first: a rendered sweep of every screen
-and dialog at 1920/2560/1440 in TR, checked by eye for alignment, gutters,
-truncation and overflow, before changing anything.
+**§26 — performance.** Per `merit-performance-hardening`: median AND p95 over
+repeated runs, never a single number. Measure first, at realistic and at stress
+sizes (4,000 guests, 400 tables): first paint of each screen, a keystroke in the
+door search and the global finder, a seat assignment, a save, an XLSX export.
+Compare against whatever `benchmarks/` already records before changing code.
 
-Then, in the order given: §26 performance,
+Then, in the order given:
 §27 real CI release gates (incl. the `benchmark:baseline` false green and
 `--compare` exit 1), §28–30, then the final review and completion matrix.
 

@@ -127,6 +127,21 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     await scan(`${L} global finder results`);
     await page.fill("#globalGuestSearch", "");
 
+    // A Completed event's own screens (§25). The walk above created one for the
+    // History table but never opened it, so its read-only guest list — whose
+    // amber note sat at about 2.3:1 on its background — was never scanned.
+    await to(() => {
+      const past = state.events.find((x) => x.name === "Past Gala");
+      if (!past.guests.length) past.guests.push({ id: "g-past", name: "PAST GUEST", additionalGuests: 0, pax: 1, planningStatus: "Confirmed",
+        arrivalStatus: "Checked In", checkedInAt: "2024-05-01T19:00:00.000Z", assignment: null, vip: "Standard", invitedBy: "", notes: "", createdAt: "2024-04-01T10:00:00.000Z" });
+      ui.activeEventId = past.id; ui.screen = "workspace"; render();
+    });
+    for (const tab of ["guests", "seating", "reports"]) {
+      await to((t) => { ui.tab = t; render(); }, tab);
+      await scan(`${L} completed event, ${tab}`);
+    }
+    await to(() => { ui.activeEventId = state.events.find((x) => x.name === "Scan Event").id; ui.tab = "guests"; render(); });
+
     await page.evaluate(() => (typeof openGuide === "function" ? openGuide() : document.querySelector('[data-action="help"]')?.click()));
     await scan(`${L} user guide`);
     await to(() => document.getElementById("guideDialog").close());
