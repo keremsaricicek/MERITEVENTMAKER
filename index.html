@@ -77,6 +77,13 @@
     app-v8.js because all three of them seat guests through it.
   -->
   <script src="src/seat-assignment.js"></script>
+  <!--
+    Live occupancy: who is using a table's seats TONIGHT (a No Show's are
+    free; the plan keeps them). Pure; app-v8.js reaches it through
+    MeritOccupancy. Position is not load-critical — every reader is inside a
+    function — it sits beside the other seat modules.
+  -->
+  <script src="src/occupancy.js"></script>
   <script src="src/app.js"></script>
   <script src="src/app-guests.js"></script>
   <script src="src/i18n.js"></script>

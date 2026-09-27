@@ -68,4 +68,9 @@ export default async function run({ page, checks, baseUrl }) {
   checks.equal(both, { emptyChairs: 4, emptyTables: 1 }, "with both parties No Show, Live has the whole table free…");
   checks.equal(await page.evaluate(() => { const e = activeEvent(); return occupiedSeatIndexes(e, e.tables[0].id).size; }), 3,
     "…while the plan still seats all three people exactly where they were");
+
+  // --- 4. and at the module boundary itself (after step 3a) ------------------
+  const pair = await page.evaluate(() => { const e = activeEvent(), id = e.tables[0].id;
+    return { planned: occupiedSeatIndexes(e, id).size, live: MeritOccupancy.liveUsedIndexes(e, id).size, stats: MeritOccupancy.liveStats(e, { paxOf }).noShow }; });
+  checks.equal(pair, { planned: 3, live: 0, stats: 3 }, "MeritOccupancy, reached directly, gives the live answer; the shell's planned answer is unchanged");
 }

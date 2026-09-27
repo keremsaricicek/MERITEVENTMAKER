@@ -7,7 +7,7 @@ own recollection.
 - **Programme start SHA** `02edac7`
 - **Branch** `claude/merit-concept3-plan-intelligence-rebirth`
 - **PR** #5 — OPEN, must not be merged
-- **Current SHA** see `git log` — §5 (capacity provenance, entry AD) is the last completed entry
+- **Current SHA** see `git log` — modularization step 3a (entry AE) is the last completed entry
 - **Status** IN PROGRESS
 
 ## How to resume
@@ -1702,6 +1702,24 @@ with the rule produced by the product's own OCR-text parser; 10 of 10 mutations
 fail it. `capacity-provenance`'s contract names five WIRED. Rendered at 1920,
 2560 and 1440: the table card's rule row and the Command Center line, no
 console errors.
+
+### AE. Modularization step 3a — live occupancy out of app-v8.js
+
+The next structural step in `benchmarks/MODULARIZATION-ORDER.md`, now that
+§3C gave `guest.assignment` one writer. **Characterization first:** the
+ownership map's missing A03 test — that planned and live occupancy DISAGREE for
+a No Show — did not exist. `occupancy-pair` reads the pair through the Seating
+badge (planned vs live mode) and Live's figures; it passed on the old code and
+3 of 3 mutations fail it. Committed on its own, before the move.
+
+**The move:** `liveUsedIndexes` and `liveStats` → `src/occupancy.js`
+(`MeritOccupancy`). Crossings, in stripped code: the region read `canSeat` and
+`logicalSeatCount` (now read from `MeritSeatModel`, the definitions they
+aliased) and `paxOf` (injected); the shell read the two functions at four call
+sites, which now go through `OCC()` — no same-named local alias. No behaviour
+change: the suites that exercise live occupancy (`arrival-wave`,
+`service-load`, `live-door-speed`, `guest-and-seating-rules`) and the four
+structural suites pass. **3b** (A02) and **3c** (A04) remain.
 
 ### Adversarial at `3451f67` — 1 PASS · 4 PARTIAL · 3 FAIL
 

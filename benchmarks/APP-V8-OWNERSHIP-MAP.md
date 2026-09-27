@@ -114,7 +114,13 @@ broken measurement would have deleted fourteen working functions.
   mutation is rejected **and** the toast reason is produced) as a unit, not
   only through the UI.
 
-## A03 · Occupancy & live statistics
+## A03 · Occupancy & live statistics — domain half **EXTRACTED** (step 3a)
+
+> `liveUsedIndexes` and `liveStats` are `src/occupancy.js` (`MeritOccupancy`),
+> reached only through the published object; `paxOf` is injected. The
+> missing test named below now exists: `occupancy-pair`. The rendering half
+> (`tableObjectHTML`, `tableMatchesFilter`, `filterBannerHTML`) stays for A11.
+
 
 - **Lines** 291–346 (56)
 - **Main functions** `seatingCapacity`, `physicalCapacity`, `liveUsedIndexes`,

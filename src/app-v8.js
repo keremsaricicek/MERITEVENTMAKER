@@ -554,24 +554,12 @@
   // two different questions, two different numbers, one definition each.
   function seatingCapacity(event){return SEATS().seatingCapacity(event);}
   function physicalCapacity(event){return SEATS().physicalCapacity(event);}
-  function liveUsedIndexes(event,tableId,exceptIds=[]){
-    const except=new Set(exceptIds), used=new Set();
-    event.guests.forEach(g=>{if(except.has(g.id)||g.arrivalStatus==="No Show")return;if(g.assignment?.tableId===tableId)(g.assignment.seats||[]).forEach(index=>used.add(Number(index)));});
-    return used;
-  }
-  function liveStats(event){
-    let emptyTables=0,emptyChairs=0;
-    // Seats free at the door, counted on the logical seat space. Reading
-    // `chairs.length` here made a symbolic table report zero free seats
-    // while the same table was happily accepting assignments.
-    for(const table of event.tables.filter(canSeat)){
-      const used=liveUsedIndexes(event,table.id); if(used.size===0)emptyTables++; emptyChairs+=Math.max(0,logicalSeatCount(table)-used.size);
-    }
-    const sum=status=>event.guests.filter(g=>g.arrivalStatus===status).reduce((n,g)=>n+paxOf(g),0);
-    return {total:event.guests.reduce((n,g)=>n+paxOf(g),0),checked:sum("Checked In"),notArrived:sum("Not Arrived"),noShow:sum("No Show"),emptyTables,emptyChairs};
-  }
+  // Live occupancy — liveUsedIndexes / liveStats — lives in src/occupancy.js
+  // (MODULARIZATION-ORDER step 3a) and is reached only through its published
+  // object, so a call site says which side of the boundary it is on.
+  const OCC=()=>globalThis.MeritOccupancy;
   tableMatchesFilter = function(event,table){
-    const used=ui.operationalMode?liveUsedIndexes(event,table.id):occupiedSeatIndexes(event,table.id);
+    const used=ui.operationalMode?OCC().liveUsedIndexes(event,table.id):occupiedSeatIndexes(event,table.id);
     // Logical seats, matching the "N EMPTY" badge tableObjectHTML() draws
     // one function below -- the filter and the badge used to disagree on a
     // table whose chairs array was not its capacity.
@@ -587,7 +575,7 @@
     syncTableChairs(table);
     const selected=(!seating&&(ui.selectedObjectId===table.id||ui.selectedObjectIds.includes(table.id)))||(seating&&ui.selectedTableId===table.id);
     const highlighted=ui.highlightId===table.id,match=!seating||tableMatchesFilter(event,table);
-    const used=seating&&ui.operationalMode?liveUsedIndexes(event,table.id):occupiedSeatIndexes(event,table.id);
+    const used=seating&&ui.operationalMode?OCC().liveUsedIndexes(event,table.id):occupiedSeatIndexes(event,table.id);
     const assigned=used.size, empty=Math.max(0,table.capacity-assigned);
     // Every entry in `table.chairs` is a chair the plan really has, so all
     // of them draw. A symbolic table's ring stays silent because it has no
@@ -1199,7 +1187,7 @@
   function eventHandoverHTML(event,r){
     const H=HANDOVER();
     if(!H)return"";
-    const m=eventMetrics(event),live=liveStats(event);
+    const m=eventMetrics(event),live=OCC().liveStats(event,{paxOf});
     const frozenCount=new Set((resolvedFreezes(event)||[]).map(f=>f.tableId)).size;
     const A=AVAIL();
     const unavailable=resolvedUnavailable(event)||[];
@@ -3124,7 +3112,7 @@
   // screen is never short, without paying for 3,000 rows.
   const LIVE_WINDOW_STEP=60;
   liveHTML = function(event){
-    const q=ui.liveQuery.trim(),s=liveStats(event);
+    const q=ui.liveQuery.trim(),s=OCC().liveStats(event,{paxOf});
     if(!ui.liveRecent)ui.liveRecent=[];
     const byId=tableIndex(event);
     // The wave selection narrows the SAME list the search does, rather than

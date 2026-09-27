@@ -177,6 +177,12 @@ clean.
 
 ## Step 3 — extract the domain primitives (A02 + A03-domain + A04)
 
+> **3a DONE** — A03's domain half is `src/occupancy.js` (`MeritOccupancy`:
+> `liveUsedIndexes`, `liveStats`, `paxOf` injected), characterized first by
+> `occupancy-pair` (3 of 3 mutations bite). **3b** (A02 → `src/event-rules.js`)
+> and **3c** (A04 → `src/event-resolution.js`) remain, each its own commit.
+
+
 `src/event-rules.js`, `src/occupancy.js`, `src/event-resolution.js`
 
 **Why this order.** These are the functions every screen calls, so they must
