@@ -740,8 +740,16 @@
     state.onboarding={seen:{}};
     saveState();render();
   }
+  // ONE AT A TIME (§20). A first-day operator on Seating saw three tips at
+  // once -- the Global Finder banner, Freeze Zones and Smart Seating -- which
+  // is the warning flood the quality gates forbid. The first callout a render
+  // asks for is shown; the others wait until it is dismissed. render() clears
+  // the slot, and a partial re-render of the SAME callout is still allowed.
+  let calloutThisRender=null;
   function onboardingCalloutHTML(key){
     if(onboardingSeen(key))return"";
+    if(calloutThisRender&&calloutThisRender!==key)return"";
+    calloutThisRender=key;
     return`<div class="onboarding-callout" data-onboarding="${key}"><span>${t("onboarding."+key)}</span><button class="btn sm quiet" data-onboarding-dismiss="${key}">${t("onboarding.gotIt")}</button></div>`;
   }
   // tableObjectHTML runs once per table, so resolving the rules inside it would
@@ -1779,7 +1787,7 @@
     // on a background image instead meant an event with a layout history and no
     // imported drawing had its change view built and unreachable.
     const modes=planModeSwitchHTML(event);
-    return`<div class="planmap-toolbar">${modes?`<div class="tool-group">${modes}</div>`:""}<div class="tool-group">${toolbarBtn("mouse",t("toolbar.select"),`data-tool="select"`,ui.tool==="select")}${toolbarBtn("hand",t("toolbar.pan"),`data-tool="pan"`,ui.tool==="pan")}</div>${loadLayerToolHTML(event)}<div class="tool-group">${toolbarBtn("zoomOut",t("toolbar.zoomOut"),`data-canvas-action="zoom-out"`)}<span class="zoom-label">${Math.round(ui.zoom*100)}%</span>${toolbarBtn("zoomIn",t("toolbar.zoomIn"),`data-canvas-action="zoom-in"`)}${toolbarBtn("fit",t("toolbar.fit"),`data-canvas-action="fit"`)}</div><div class="tool-group">${toolbarBtn("eye",bg.visible?t("toolbar.hideOriginalPlan"):t("toolbar.showOriginalPlan"),`data-v8-action="toggle-bg"`,bg.visible)}${toolbarBtn("image",t("toolbar.replacePlan"),`data-v8-action="replace-bg"`)}</div><div class="tool-group">${toolbarBtn("fit",t("toolbar.focusMode"),`data-v8-action="focus"`,ui.focusMode)}</div>${bg.src?`<div class="tool-group">${toolbarBtn("image",t("toolbar.assistedDetection"),`data-v8-action="detect"`,false).replace('class="toolbar-btn','class="toolbar-btn ai')}</div>`:""}</div>`;
+    return`<div class="planmap-toolbar">${modes?`<div class="tool-group">${modes}</div>`:""}<div class="tool-group">${toolbarBtn("mouse",t("toolbar.select"),`data-tool="select"`,ui.tool==="select")}${toolbarBtn("hand",t("toolbar.pan"),`data-tool="pan"`,ui.tool==="pan")}</div>${loadLayerToolHTML(event)}<div class="tool-group">${toolbarBtn("zoomOut",t("toolbar.zoomOut"),`data-canvas-action="zoom-out"`)}<span class="zoom-label">${Math.round(ui.zoom*100)}%</span>${toolbarBtn("zoomIn",t("toolbar.zoomIn"),`data-canvas-action="zoom-in"`)}${toolbarBtn("fit",t("toolbar.fit"),`data-canvas-action="fit"`)}</div><div class="tool-group">${bg.src?toolbarBtn("eye",bg.visible?t("toolbar.hideOriginalPlan"):t("toolbar.showOriginalPlan"),`data-v8-action="toggle-bg"`,bg.visible):""}${toolbarBtn("image",t(bg.src?"toolbar.replacePlan":"toolbar.importPlan"),`data-v8-action="replace-bg"`)}</div><div class="tool-group">${toolbarBtn("fit",t("toolbar.focusMode"),`data-v8-action="focus"`,ui.focusMode)}</div>${bg.src?`<div class="tool-group">${toolbarBtn("image",t("toolbar.assistedDetection"),`data-v8-action="detect"`,false).replace('class="toolbar-btn','class="toolbar-btn ai')}</div>`:""}</div>`;
   }
   // What the pill puts where a seat count goes. On a plan whose tables are
   // drawn as symbols there is nothing to count: a bold "0 seats" in the
@@ -1909,7 +1917,46 @@
     return html.replace("</div><div class=\"canvas-status\"",`${ghostHTML()}</div><div class="canvas-status v8-status"`)
       .replace(t("canvas.editHint"),`${t("canvas.multiSelectHint")}<span class="status-right">${t("canvas.selectedCount",{n:ui.selectedObjectIds.length||0})}</span>`);
   };
-  floorPlanHTML = function(event){return`<div class="planmap-shell">${planMapToolbarHTML(event)}${bulkPanel(event)}${canvasViewportHTML(event,false)}${contextualCardHTML(event)}${planStatusPillHTML(event)}${addManuallyFabHTML()}</div>`;};
+  floorPlanHTML = function(event){return`<div class="planmap-shell">${planMapToolbarHTML(event)}${bulkPanel(event)}${canvasViewportHTML(event,false)}${floorEmptyHTML(event)}${contextualCardHTML(event)}${planStatusPillHTML(event)}${addManuallyFabHTML()}</div>`;};
+  // ---- EMPTY STATES THAT SAY WHAT TO DO NEXT (§20) -------------------------
+  // A blank canvas used to be a blank panel: the only sentence telling the
+  // operator what to do was the toast raised when the event was created --
+  // the transient carrier §17 ruled out for anything that stays true. Each
+  // empty state now names what is missing and carries the control for the
+  // next step. The card lets clicks through everywhere but itself.
+  function canvasEmptyHTML(title,body,actions){
+    return`<div class="canvas-empty" data-canvas-empty role="status"><div class="canvas-empty-card"><b>${esc(title)}</b><span>${esc(body)}</span>${actions?`<div class="canvas-empty-actions">${actions}</div>`:""}</div></div>`;
+  }
+  function floorEmptyHTML(event){
+    if(event.tables.length||(event.venueObjects||[]).length||event.background?.src||isHistorical(event))return"";
+    if(ui.v8AddOpen||ui.repeatPlacement)return"";   // already adding: the card would sit in the way
+    return canvasEmptyHTML(t("empty.floor.title"),t("empty.floor.body"),
+      `<button class="btn primary" data-v8-action="replace-bg">${icon("image")}${t("empty.floor.import")}</button><button class="btn" data-v8-action="add">${icon("plus")}${t("action.addManually")}</button>`);
+  }
+  // "Everyone has arrived" was shown whenever the list was empty -- but the
+  // list includes checked-in guests, so it is empty only when there are no
+  // guests at all or a filter matches nobody. It was never true where shown.
+  function liveEmptyHTML(event,q){
+    if(q)return`<h3>${t("live.noResults")}</h3>`;
+    if(!event.guests.length)return`<h3>${t("empty.noGuests")}</h3>${isHistorical(event)?"":`<button class="btn primary" data-empty-action="go-guests">${t("empty.goGuests")}</button>`}`;
+    return`<h3>${t("live.waveEmpty")}</h3>`;
+  }
+  // "No matching guest records" was shown for three different situations; only
+  // one of them involves matching.
+  function seatingQueueEmptyHTML(event){
+    if(!event.guests.length)return`<p>${t("empty.noGuests")}</p>${isHistorical(event)?"":`<button class="btn sm" data-empty-action="go-guests">${t("empty.goGuests")}</button>`}`;
+    if(ui.seatingQuery.trim())return t("seating.noMatches");
+    if(ui.seatingGuestScope!=="all")return`<p>${t("seating.allSeated")}</p><button class="btn sm" data-empty-action="seating-scope-all">${t("seating.showAll")}</button>`;
+    return t("seating.noMatches");
+  }
+  document.addEventListener("click",e=>{
+    const b=e.target.closest&&e.target.closest("[data-empty-action]");
+    if(!b)return;
+    const a=b.dataset.emptyAction;
+    if(a==="go-floor"){ui.tab="floor";ui.planMode="plan";render();}
+    else if(a==="go-guests"){ui.tab="guests";render();}
+    else if(a==="seating-scope-all"){ui.seatingGuestScope="all";render();}
+  });
 
   // The changes view is the SAME canvas — same toolbar, same plan, same tables.
   // Only the outlines and the panel are added, because "the original plan
@@ -2120,7 +2167,7 @@
         <div class="party-name">${esc(g.name)}</div>
         <div class="party-sub">${paxDotsHTML(g)}<span>${t("guests.partyOf",{n:paxOf(g)})}</span>${g.vip&&g.vip!=="Standard"?`<span class="vip-tag">${esc(g.vip)}</span>`:""}${t_?`<span class="seat-tag">${esc(formatTableNumber(t_.number))}</span>`:""}</div>
       </div>`;
-    }).join(""):`<div class="mx-empty" style="border:none;background:none;padding:26px 12px">${t("seating.noMatches")}</div>`;
+    }).join(""):`<div class="mx-empty" style="border:none;background:none;padding:26px 12px">${seatingQueueEmptyHTML(event)}</div>`;
     return`<div class="seat-stage">
       <aside class="seat-queue">
         <div class="seat-queue-head"><strong>${ui.seatingGuestScope==="all"?t("seating.allGuests"):t("seating.guestQueue")}</strong>${selectedIds.length?`<span class="sel">${t("seating.recordsSelected",{n:selectedIds.length,pax:selPax})}</span>`:""}</div>
@@ -2135,6 +2182,8 @@
       <section class="seat-canvas-col">
         ${v8Toolbar(event,true)}
         ${canvasViewportHTML(event,true)}
+        ${event.tables.length?"":canvasEmptyHTML(t("empty.seating.title"),t("empty.seating.body"),
+          isHistorical(event)?"":`<button class="btn primary" data-empty-action="go-floor">${t("empty.goFloor")}</button>`)}
         ${selectedTablePanelHTML(event)}
         ${seatingPreviewHTML(event)}
         <div class="seat-pill">${t("seating.statusPill",{seated:seatedPax,total:totalPax,tables:event.tables.length,free:freeChairs})}</div>
@@ -2976,7 +3025,7 @@
           <button class="btn-arrive ${isNo?"undo":"no"}" data-arrival="No Show" data-live-guest="${g.id}">${isNo?t("live.undo"):t("live.noShow")}</button>
         </div>
       </div>`;
-    }).join(""):`<div class="mx-empty"><h3>${q?t("live.noResults"):t("live.allArrived")}</h3></div>`;
+    }).join(""):`<div class="mx-empty">${liveEmptyHTML(event,q)}</div>`;
     return`<div class="mx-screen"><div class="mx-wrap">
       <div class="mx-head"><div><h1>${t("live.title")}</h1><p>${t("live.subtitle")}</p></div></div>
       <div class="mx-metrics">${metrics}</div>
@@ -6153,6 +6202,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   // everything in memory. Still logged as an ERROR, on purpose: a render bug
   // must stay loud in every suite that does not set out to cause one.
   render = function(){
+    calloutThisRender=null;
     try{return renderScreen();}
     catch(error){renderFailure(error);}
   };

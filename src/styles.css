@@ -536,6 +536,14 @@ body:has(.seat-stage) .toast-wrap{left:302px}
 body:has(.seat-stage) .toast{min-width:0;max-width:340px}
 /* Raised while a modal dialog is open, a toast lives INSIDE that dialog so it
    is drawn in its top layer rather than under the backdrop. */
+/* §20: an empty canvas says what is missing and offers the next step. The
+   layer lets clicks through; only the card takes them. */
+.canvas-empty{position:absolute;inset:0;z-index:30;display:grid;place-items:center;pointer-events:none;padding:var(--sp-6)}
+.canvas-empty-card{pointer-events:auto;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px 26px;border:1px dashed var(--line);border-radius:var(--radius-lg);background:var(--panel);box-shadow:var(--shadow-2);text-align:center}
+.canvas-empty-card b{font-size:15px;font-weight:650;color:var(--text)}
+.canvas-empty-card span{font-size:13px;line-height:1.45;color:var(--muted)}
+.canvas-empty-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:6px}
+.mx-empty .btn{margin-top:10px}
 .toast-wrap.in-dialog{position:fixed;left:16px;right:auto;bottom:16px;z-index:1}
 /* Section 35. The Floor Plan's "Add Manually" FAB is bottom-right at
    bottom:20px and 44px tall; the toast stack is fixed at bottom:16px with
