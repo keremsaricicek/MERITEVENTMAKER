@@ -69,7 +69,7 @@ const COMPOSED = [
 //                 below.
 const REFUSAL = "REFUSAL", CONFIRMATION = "CONFIRMATION", INFORMATION = "INFORMATION", CONDITION = "CONDITION";
 const ERROR_CLASS = {
-  "toast.tableNumberInUse": REFUSAL, "toast.capacityBelowOccupied": REFUSAL, "toast.capacityBelowPax": REFUSAL,
+  "toast.tableNumberInUse": REFUSAL, "toast.tableNumberInvalid": REFUSAL, "toast.capacityBelowOccupied": REFUSAL, "toast.capacityBelowPax": REFUSAL,
   "toast.nameRequired": REFUSAL, "toast.recordSeatsShort": REFUSAL, "toast.mapNameColumn": REFUSAL,
   "guests.readFailed": REFUSAL, "toast.fixBlockingErrors": REFUSAL, "guests.templateFailed": REFUSAL,
   "toast.assignmentLockedMove": REFUSAL, "toast.seatsShort": REFUSAL, "toast.unlockAssignmentFirst": REFUSAL,
