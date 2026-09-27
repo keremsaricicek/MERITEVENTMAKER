@@ -836,10 +836,10 @@
     // "Not Arrived" is "Bekleniyor" everywhere else -- "Gelmedi" is No Show, and
     // at a door the two must never read the same.
     "live.undoneToast": { en: "{name} set back to Not Arrived.", tr: "{name} tekrar Bekleniyor durumuna alındı." },
-    "live.enterHint": { en: "Or type a name and press Enter — when one guest is left, Enter checks them in.", tr: "Ya da bir isim yazıp Enter'a basın — tek kişi kaldığında Enter girişini alır." },
+    "live.enterHint": { en: "Or type a name and press Enter — when one guest is left, Enter checks them in; with several, choose with ↑ ↓. Ctrl+Z takes back the last change.", tr: "Ya da bir isim yazıp Enter'a basın — tek kişi kaldığında Enter girişini alır; birden fazlaysa ↑ ↓ ile seçin. Ctrl+Z son değişikliği geri alır." },
     "live.armed": { en: "Enter", tr: "Enter" },
     "live.armedTitle": { en: "Press Enter to check this guest in", tr: "Bu misafirin girişini almak için Enter'a basın" },
-    "live.tooMany": { en: "{n} guests match. Keep typing until one is left.", tr: "{n} misafir eşleşiyor. Tek kişi kalana kadar yazmaya devam edin." },
+    "live.tooMany": { en: "{n} guests match. Keep typing, or choose one with ↑ ↓.", tr: "{n} misafir eşleşiyor. Yazmaya devam edin ya da ↑ ↓ ile birini seçin." },
     "live.alreadyIn": { en: "{name} has already checked in.", tr: "{name} zaten giriş yapmış." },
     "live.companionsOf": { en: "{n} companions", tr: "{n} refakatçi" },
     "live.partyOf": { en: "party of {n}", tr: "{n} kişilik" },

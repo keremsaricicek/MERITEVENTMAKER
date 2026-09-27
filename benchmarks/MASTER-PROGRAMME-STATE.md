@@ -1438,6 +1438,30 @@ no-percentage assertion ran on a blank event where there was nothing to count
 tab history does not have (removed, recorded above). 5 of 5 remaining bite.
 Found while writing it: zero of two seated read as "partial" — fixed in the rule.
 
+§22 gates, run on a frozen snapshot of `ff023c0`: `test:all` **93 / 93 suites ·
+2,966 / 2,966 checks**; `verify:offline` **27 / 27**. (From §22 on, gates run on a
+snapshot of the local commit while the next section proceeds; nothing is pushed
+until its snapshot is green.)
+
+### X. §23 — Live Event door — DONE: one real bug, one real capability, one honest count
+
+Measured on 300 guests with twelve "Mehmet"s and two guests who share a full
+name, at the door, keyboard only:
+
+| | before | after |
+|---|---|---|
+| typing at full speed | **"Mehmet" arrived as "metMeh"** — every keystroke re-renders, and focus returned to the new box on the NEXT animation frame with a stale caret; keys landing in between were reordered. Invisible to every suite because `typeQuery()` types with a 20 ms delay and retries | focus and caret restored synchronously; six keys with no delay arrive in order |
+| two guests named exactly "Deniz Çelik" | **not possible by keyboard** — typing can never narrow to one; only the mouse | "Deniz Çelik" + ↓ + Enter (13 keys), the marked row and only it |
+| "Mehmet Özdemir" among 12 Mehmets | 11 keys (type until unique + Enter) | still 11 that way; ↓-choice is 13 — **not faster here, and not claimed to be** |
+| undo a wrong check-in | mouse only (Recent list) | Ctrl+Z in the empty search; with text in the box it stays text undo |
+| several matches, no choice, Enter | refuses | still refuses — asserted first |
+
+Mutations — 6 of 6 fail `live-door-speed`; two first SURVIVED as hollow checks
+(a Ctrl+Z check with nothing left to wrongly undo; a clear-on-typing check whose
+typing emptied the list anyway) and were rewritten until they bite. No Show still
+has no keyboard shortcut, deliberately: it is a status marked late in the
+evening, and a one-key way to mark the wrong person is not a speed win.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
@@ -1481,14 +1505,13 @@ typing 136/289.
 
 ## Next step
 
-**§23 — Live Event UX.** Per `merit-ui-quality-gates`: "Live Event is a speed
-surface. Door workflows are measured in seconds. Keyboard-first, minimal
-confirmation on the common path." Measure first, as counted interactions and
-timings on a realistic list (hundreds of guests): find a guest and check them
-in, mark a No Show, undo a wrong check-in, check in a +3 party — mouse path and
-keyboard path, TR, 1440. Record the counts before changing anything.
+**§24 — Floor Plan UX.** Known on entry (§21): an operator cannot change a
+table's number at all in the v8 product — the only number field is in the
+pre-v8 inspector, which is never rendered. Measure first: the core floor-plan
+tasks by counted interactions (add N tables, rename one, resize its capacity,
+move, rotate, duplicate, delete, undo), and which of them have no path.
 
-Then, in the order given: §24–§25 UX, §26 performance,
+Then, in the order given: §25 UX, §26 performance,
 §27 real CI release gates (incl. the `benchmark:baseline` false green and
 `--compare` exit 1), §28–30, then the final review and completion matrix.
 

@@ -3088,7 +3088,13 @@
     // Enter only fires when the search has narrowed to a single person, and the
     // screen says whose door it is about to open. Checking in the wrong guest
     // is worse than one more keystroke, so there is no "top match wins" rule.
-    const armedId=q&&rows.length===1&&rows[0].arrivalStatus!=="Checked In"?rows[0].id:null;
+    // Armed = the one row Enter will act on: the only match, or -- with several
+    // -- the row the operator CHOSE with the arrow keys (§23). With several and
+    // no choice, nothing is armed and Enter still refuses: typing a first name
+    // must never check in whoever happens to sort first.
+    const chosen=q&&rows.length>1&&ui.liveCursor&&rows.some(g=>g.id===ui.liveCursor)?ui.liveCursor:null;
+    const armedId=chosen&&rows.find(g=>g.id===chosen).arrivalStatus!=="Checked In"?chosen
+      :q&&rows.length===1&&rows[0].arrivalStatus!=="Checked In"?rows[0].id:null;
     const metrics=[
       `<div class="mx-metric is-hero is-good"><span class="mx-metric-label">${t("live.arrived")}</span><span class="mx-metric-value">${s.checked}</span><span class="mx-metric-note">${t("live.arrivedNote",{total:s.total})}</span></div>`,
       `<div class="mx-metric"><span class="mx-metric-label">${t("live.stillExpected")}</span><span class="mx-metric-value">${s.notArrived}</span><span class="mx-metric-note">${t("live.stillExpectedNote")}</span></div>`,
@@ -3157,11 +3163,18 @@
     if(search){
       search.oninput=()=>{
         ui.liveQuery=search.value;
+        ui.liveCursor=null;   // a new search is a new list: no row stays chosen
         // A new search is a new list, so the window starts again from the top.
         ui.liveWindow=LIVE_WINDOW_STEP;
         const pos=search.selectionStart;
         render();
-        focusLiveSearch(pos);
+        // Focus and caret go back SYNCHRONOUSLY (§23). They used to wait for the
+        // next animation frame, so a keystroke landing in between -- a fast
+        // typist, a badge or barcode scanner at the door -- met a stale caret
+        // and "Mehmet" became "metMeh". The test helper typed with a 20ms delay
+        // and retried, which is why no suite saw it.
+        const n=document.getElementById("liveSearch");
+        if(n){n.focus();n.setSelectionRange(pos,pos);}
       };
       // The door flow: type a name, press Enter, type the next name. The query
       // clears on a successful check-in so the operator never has to reach for
@@ -3169,21 +3182,40 @@
       search.onkeydown=e=>{
         // stopPropagation: the window-level Escape handler would otherwise fire a
         // second render for a key that means only "clear this field".
-        if(e.key==="Escape"){e.preventDefault();e.stopPropagation();ui.liveQuery="";render();focusLiveSearch();return;}
+        if(e.key==="Escape"){e.preventDefault();e.stopPropagation();ui.liveQuery="";ui.liveCursor=null;render();focusLiveSearch();return;}
+        // ↑/↓ choose among several matches; the chosen row is marked exactly as
+        // a unique match is, so the operator sees whose door Enter will open.
+        if((e.key==="ArrowDown"||e.key==="ArrowUp")&&ui.liveQuery.trim()&&liveVisibleIds.length>1){
+          e.preventDefault();
+          const i=liveVisibleIds.indexOf(ui.liveCursor),n=liveVisibleIds.length;
+          ui.liveCursor=liveVisibleIds[i<0?(e.key==="ArrowDown"?0:n-1):(i+(e.key==="ArrowDown"?1:n-1))%n];
+          render();focusLiveSearch();
+          document.querySelector(".arrival-row.is-armed, .arrival-row.is-chosen")?.scrollIntoView({block:"nearest"});
+          return;
+        }
+        // Ctrl/⌘+Z with an empty search takes back the last arrival change --
+        // the same as its Undo in Recent. With text in the box it stays the
+        // box's own text undo.
+        if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==="z"&&!search.value){
+          const last=(ui.liveRecent||[])[0];
+          if(last){e.preventDefault();document.querySelector(`[data-live-undo="${CSS.escape(last.guestId)}"]`)?.click();focusLiveSearch();}
+          return;
+        }
         if(e.key!=="Enter")return;
         e.preventDefault();
         if(!ui.liveQuery.trim())return;
         const event=activeEvent();if(!canMutate(event,"change live arrival status"))return;
         if(!liveVisibleIds.length)return;
-        if(liveVisibleIds.length>1){toast(t("live.tooMany",{n:liveVisibleIds.length}));return;}
-        const g=event.guests.find(x=>x.id===liveVisibleIds[0]);if(!g)return;
+        const pick=liveVisibleIds.length>1?(liveVisibleIds.includes(ui.liveCursor)?ui.liveCursor:null):liveVisibleIds[0];
+        if(!pick){toast(t("live.tooMany",{n:liveVisibleIds.length}));return;}
+        const g=event.guests.find(x=>x.id===pick);if(!g)return;
         if(g.arrivalStatus==="Checked In"){toast(t("live.alreadyIn",{name:g.name}));return;}
         const from=g.arrivalStatus;
         // Same single axis as the buttons: arrivalStatus only. planningStatus
         // and the planned seat assignment are untouched.
         setArrival(event,g,"Checked In","live-keyboard");
         recordArrival(g,from,"Checked In");
-        ui.liveQuery="";
+        ui.liveQuery="";ui.liveCursor=null;
         touchEvent(event);render();focusLiveSearch();
         toast(t("live.checkedInToast",{name:g.name}),"success");
       };
