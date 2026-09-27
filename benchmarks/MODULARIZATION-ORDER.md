@@ -181,6 +181,23 @@ clean.
 > `liveUsedIndexes`, `liveStats`, `paxOf` injected), characterized first by
 > `occupancy-pair` (3 of 3 mutations bite). **3b** (A02 → `src/event-rules.js`)
 > and **3c** (A04 → `src/event-resolution.js`) remain, each its own commit.
+>
+> **Crossings measured for what remains (2026-09-27, stripped code):**
+>
+> | | callers in app-v8 | reads from the shell | plan |
+> |---|--:|---|---|
+> | `isHistorical` | 24 | `todayKey` | move both; call sites go through `MeritEventRules` |
+> | `canMutate` | 42 | `isHistorical`, `toast`, `t` | the DECISION moves (`mutationRefusal(event, action)` → null or a named refusal); the toast stays in the shell, which owns the operator message |
+> | `chairGeometry` | 1 | — | moves |
+> | `syncTableChairs` | 9 | `chairGeometry`, `uid` | moves; `uid` injected |
+> | `refreshChairOccupancy` | 6 | `syncTableChairs`, `t` | stays: it writes translated labels |
+> | `audit` | 14 | `state`, `uid`, `nowISO`, `MeritAuditTrail` | stays: it is the shell's one writer of `state.audit`, and retention is already `MeritAuditTrail`'s |
+>
+> **A04 is not the thin adapter the map rated LOW.** Its readers reach
+> `isHistorical` (A02 — so 3b must precede 3c), `backupState`, `eventMetrics`,
+> `paxOf`, `t()` (inside `planIssues`, which writes translated titles — its
+> RULES move, its wording stays), and a shell memo (`frozenMemo` /
+> `mutationEpoch`). Five injected dependencies, not zero.
 
 
 `src/event-rules.js`, `src/occupancy.js`, `src/event-resolution.js`
