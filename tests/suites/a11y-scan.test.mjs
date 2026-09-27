@@ -30,6 +30,17 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   let scanned = 0;
   const scan = async (label) => {
     if (!(await page.evaluate(() => typeof window.axe === "object"))) await page.addScriptTag({ path: axePath });
+    // Contrast is a property of the RESTING screen. A dialog scanned during its
+    // fade-in is measured blended with the backdrop: 40ms into the guide's
+    // opening it sat at opacity 0.31 and axe reported 23 contrast violations,
+    // 0 at rest — which failed this suite on timing alone under load. Wait for
+    // every finite animation or transition to finish (bounded, so an infinite
+    // one cannot hang the scan).
+    await page.evaluate(() => Promise.race([
+      Promise.all(document.getAnimations().filter((a) => a.effect && a.effect.getComputedTiming().endTime !== Infinity)
+        .map((a) => a.finished.catch(() => {}))),
+      new Promise((r) => setTimeout(r, 3000)),
+    ]));
     await settle(page);
     const violations = await page.evaluate(async () => {
       const res = await axe.run(document, {
