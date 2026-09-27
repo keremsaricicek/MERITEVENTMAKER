@@ -70,6 +70,17 @@ logicalSeats    = 12
 physicalChairs  =  0
 ```
 
+That table is exactly what a symbolic plan now produces when the drawing
+prints its rule (§5): "SALON : 166 * 12 : 1992 PAX" gives each seatless table
+symbol `capacity = 12` with `capacitySource = DERIVED_PRINTED_RULE` and the
+rule stored as `capacityEvidence` — and **zero chairs**. Provenance is kept at
+the level its evidence reaches: the printed TOTAL is a fact about the PLAN
+(`PRINTED_TOTAL_CAPACITY`, shown on the Command Center) and a table can never
+carry it. The rule is applied only when `ruleApplication()` says it describes
+these symbols — symbolic plan, seatless symbol, no more symbols than the rule
+states, arithmetic that comes out, a per-table figure ≤ 99 — and a person's
+change turns it into `HUMAN_CONFIRMED` while keeping the rule in the evidence.
+
 This is **normal**, not a defect — it is the ordinary case on a SYMBOLIC
 plan (numbered circles, no drawn furniture, capacity printed as a rule).
 `hasPhysicalSeats === false` and an unknown seat count is `null`, never `0`.

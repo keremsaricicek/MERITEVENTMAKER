@@ -2177,3 +2177,4 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .schema-future-banner span{display:block;font-size:12px;color:var(--muted);line-height:1.5}
 /* The activity log's display window states its own total. */
 .audit-more{margin:2px 0 10px;font-size:12px;color:var(--muted)}
+.cc-note{margin:8px 0 0;font-size:12px;line-height:1.45;color:var(--muted)}

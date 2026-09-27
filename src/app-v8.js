@@ -225,7 +225,7 @@
     // first load. Nothing operational rides on them: capacity, assignments
     // and seat indexes are untouched, and a physical table's real chair
     // coordinates are carried across verbatim.
-    migrated.tables=(migrated.tables||[]).map(table=>syncTableChairs({...table,id:table.id||uid("table"),hasPhysicalSeats:table.hasPhysicalSeats!==false,capacitySource:globalThis.MeritCapacityProvenance.normalize(table.capacitySource)}));
+    migrated.tables=(migrated.tables||[]).map(table=>syncTableChairs({...table,id:table.id||uid("table"),hasPhysicalSeats:table.hasPhysicalSeats!==false,capacitySource:globalThis.MeritCapacityProvenance.normalizeForTable(table.capacitySource)}));
     migrated.venueObjects=(migrated.venueObjects||[]).map(o=>({...o,id:o.id||uid("venue")}));
     migrated.guests=(migrated.guests||[]).map(normalizeGuest);
     // FREEZE ZONES. An install from before them simply has none, which is the
@@ -740,6 +740,8 @@
     const origin=TABLE_ORIGINS.has(t_.origin)?t_.origin:"UNKNOWN";
     const rows=[];
     if(CAPPROV())rows.push(row("inspector.capacitySource",t(capacitySourceKey(t_.capacitySource))));
+    const ev_=t_.capacityEvidence;
+    if(ev_&&ev_.rule)rows.push(`<div class="contextual-card-provenance" data-capacity-evidence><span>${esc(t("provenance.capacityRule"))}</span><b>${esc(ev_.confirmedBy?t("provenance.capacityRuleConfirmed",{rule:ev_.rule,previous:ev_.previous??"—"}):t("provenance.capacityRuleValue",{rule:ev_.rule}))}</b></div>`);
     rows.push(row("provenance.origin",t("provenance.origin."+origin)));
     const p=printedEvidence(t_.printedNumber);
     if(origin==="DETECTED"){
@@ -1181,6 +1183,10 @@
     return`<section class="cc-block"><h3>${t("cc.seating.title")}</h3><div class="cc-metrics">${
       cell(m.guests,t("cc.metric.pax"))}${cell(m.assigned,t("cc.metric.assigned"))}${
       cell(m.unassigned,t("cc.metric.unassigned"))}${cell(cap,t("cc.metric.seats"))}</div>${
+      (()=>{const st=globalThis.MeritCapacityProvenance?.planStatedCapacity?.(event.analysis?.planIntelligence?.capacityAudit);
+        // PRINTED_TOTAL_CAPACITY is a fact about the PLAN: stated beside the
+        // counted seats, never spread across tables.
+        return st?`<p class="cc-note" data-plan-stated-capacity>${esc(t(st.rule?"cc.planStatedRule":"cc.planStated",{total:st.total,units:st.rule?.units,perUnit:st.rule?.perUnit}))}</p>`:"";})()}${
       m.unassigned?`<button class="btn sm" data-tab="seating">${t("cc.goto.seating")}</button>`:""}</section>`;
   }
   // One shift tells the next what it needs to know. The digest computes
@@ -2198,7 +2204,7 @@
     const up=()=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);if(moved){recordUndo(event,snap);touchEvent(event);}render();};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);
   };
 
-  setTableCapacity = function(event,table,newCap){if(!canMutate(event,"change chair capacity"))return false;newCap=Math.max(1,Math.min(99,Number(newCap)||1));const occupied=tableAssignedPax(event,table.id);if(newCap<occupied){toast(t("toast.capacityBelowPax",{table:table.number,n:occupied}),"error",5000);return false;}recordUndo(event);repackTableAssignments(event,table,newCap);table.capacitySource="HUMAN_CONFIRMED";syncTableChairs(table,newCap);touchEvent(event);render();return true;};
+  setTableCapacity = function(event,table,newCap){if(!canMutate(event,"change chair capacity"))return false;newCap=Math.max(1,Math.min(99,Number(newCap)||1));const occupied=tableAssignedPax(event,table.id);if(newCap<occupied){toast(t("toast.capacityBelowPax",{table:table.number,n:occupied}),"error",5000);return false;}recordUndo(event);repackTableAssignments(event,table,newCap);if(table.capacityEvidence&&table.capacitySource!=="HUMAN_CONFIRMED")table.capacityEvidence={...table.capacityEvidence,confirmedBy:"person",confirmedAt:nowISO(),previous:table.capacity};table.capacitySource="HUMAN_CONFIRMED";syncTableChairs(table,newCap);touchEvent(event);render();return true;};
   // A person can now type a table's number (§24): it was the one plan fact with
   // no path at all -- the only number field lived in the pre-v8 inspector,
   // which v8 never renders. Validated HERE before the base writer runs: letters,
@@ -5949,12 +5955,21 @@
     // hasPhysicalSeats:false, so it carries NO chair objects at all --
     // not a ring of fabricated positions flagged as unreal.
     const drawsSeats=!!(event.analysis?.diagnostics?.representation?.kind==="PHYSICAL");
-    recordUndo(event);let tables=0,venues=0;for(const c of chosen){if(c.committedId)continue;const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);if(c.kind==="table"){const table=syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||1),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":"UNKNOWN",origin:"DETECTED",printedNumber:printedEvidence(c.printedNumber)});if(c.chairDetections?.length){table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0,occupancy:null}));table.capacity=table.chairs.length;}event.tables.push(table);c.committedId=table.id;tables++;}else{const object={id:uid("venue"),type:c.type||"text",label:String(c.type||"OBJECT").toUpperCase(),x,y,w,h,rotation:c.rotation||0,locked:false,z:4};
+    // §5: the drawing's printed capacity rule gives a seatless symbol its
+    // capacity ONLY when MeritCapacityProvenance.ruleApplication() says the
+    // rule describes these symbols — one decision for the whole commit, with
+    // its reason, never a per-table guess. The capacity is a logical seat
+    // space: no chair is created for it.
+    const CP=globalThis.MeritCapacityProvenance;
+    const ruleUse=CP&&CP.ruleApplication?CP.ruleApplication({rule:event.analysis?.planIntelligence?.capacityAudit?.rule||null,
+      representationKind:event.analysis?.diagnostics?.representation?.kind||null,
+      seatlessTables:(event.analysis?.candidates||[]).filter(c=>c.kind==="table"&&c.status!=="rejected"&&!c.chairDetections?.length).length}):{applies:false};
+    recordUndo(event);let tables=0,venues=0,chairsKept=0,derived=0;for(const c of chosen){if(c.committedId)continue;const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);if(c.kind==="table"){const table=syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||(ruleUse.applies?ruleUse.perUnit:1)),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":ruleUse.applies?"DERIVED_PRINTED_RULE":"UNKNOWN",origin:"DETECTED",printedNumber:printedEvidence(c.printedNumber),...(!c.chairDetections?.length&&ruleUse.applies?{capacityEvidence:{...ruleUse.evidence,at:nowISO()}}:{})});if(c.chairDetections?.length){table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0,occupancy:null}));table.capacity=table.chairs.length;}event.tables.push(table);c.committedId=table.id;tables++;chairsKept+=(table.chairs||[]).length;if(table.capacitySource==="DERIVED_PRINTED_RULE")derived++;}else{const object={id:uid("venue"),type:c.type||"text",label:String(c.type||"OBJECT").toUpperCase(),x,y,w,h,rotation:c.rotation||0,locked:false,z:4};
       // Seating furniture keeps its capacity state on the committed object, so
       // "we do not know how many this banquette seats" survives leaving the
       // review screen instead of silently becoming zero on the floor plan.
       if(UNVERIFIED_SEATING.has(object.type)){object.seats=c.seats??null;object.seatsConfidence=c.seats==null?"unverified":"verified";}
-      event.venueObjects.push(object);c.committedId=object.id;venues++;}c.status="confirmed";}if(event.analysis.timings)event.analysis.timings.confirmedAtMs=Date.now();recordOperatorAction(event,"confirm-plan",chosen.map(c=>c.id));touchEvent(event);ui.tab="floor";ui.planMode="plan";render();toast(t("toast.detectionsConfirmed",{tables,venues,tableWord:t(tables===1?"word.table":"word.tables"),venueWord:t(venues===1?"word.venueObject":"word.venueObjects")}),"success",6000);
+      event.venueObjects.push(object);c.committedId=object.id;venues++;}c.status="confirmed";}if(event.analysis.timings)event.analysis.timings.confirmedAtMs=Date.now();recordOperatorAction(event,"confirm-plan",chosen.map(c=>c.id));touchEvent(event);ui.tab="floor";ui.planMode="plan";render();toast(t(chairsKept?"toast.detectionsConfirmed":derived?"toast.detectionsConfirmedRule":"toast.detectionsConfirmedPlain",{tables,venues,perUnit:ruleUse.perUnit,tableWord:t(tables===1?"word.table":"word.tables"),venueWord:t(venues===1?"word.venueObject":"word.venueObjects")}),"success",6000);
   }
   function bindReviewDrawing(){const scene=document.getElementById("analysisScene");if(!scene||!ui.reviewDrawMode)return;scene.onpointerdown=e=>{if(e.target!==scene&&e.target.tagName!=="IMG")return;e.preventDefault();const r=scene.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top,box=document.createElement("div");box.className="candidate-box selected";scene.appendChild(box);const move=ev=>{const x=ev.clientX-r.left,y=ev.clientY-r.top;Object.assign(box.style,{left:Math.min(sx,x)+"px",top:Math.min(sy,y)+"px",width:Math.abs(x-sx)+"px",height:Math.abs(y-sy)+"px"});};const up=ev=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);const x=Math.min(sx,ev.clientX-r.left)/r.width*100,y=Math.min(sy,ev.clientY-r.top)/r.height*100,w=Math.abs(ev.clientX-r.left-sx)/r.width*100,h=Math.abs(ev.clientY-r.top-sy)/r.height*100;if(w>1&&h>1){const event=activeEvent();const c={id:uid("candidate"),kind:"table",type:"rectangle",x,y,w,h,rotation:0,confidence:1,status:"unreviewed",selected:true,missed:true,chairDetections:[],evidence:{geometry:"manual",chairs:0,repetition:0}};event.analysis.candidates.push(c);event.analysis.missed.push(c.id);rememberCorrection(event,c,{manual:true});captureTrainingExample(event,c,{decisionType:"missedObject",note:"drawn by the operator on a region the detector never proposed"});ui.selectedCandidateId=c.id;ui.reviewDrawMode=false;touchEvent(event);}render();};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);};}
   // ---- dataset export (Gates H-J) ----------------------------------------

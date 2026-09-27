@@ -623,6 +623,11 @@
     "capacitySource.printedZoneCapacity": { en: "Printed zone capacity", tr: "Basılı Bölge Kapasitesi" },
     "capacitySource.printedTotalCapacity": { en: "Printed total capacity", tr: "Basılı Toplam Kapasite" },
     "capacitySource.derivedPrintedRule": { en: "Derived from the printed rule", tr: "Basılı Kuraldan Türetildi" },
+    "provenance.capacityRule": { en: "Capacity rule", tr: "Kapasite kuralı" },
+    "cc.planStated": { en: "The drawing states {total} pax for the whole plan (printed total — a plan figure, not a table's).", tr: "Çizim planın tamamı için {total} kişi belirtiyor (basılı toplam — masa değil, plan bilgisi)." },
+    "cc.planStatedRule": { en: "The drawing states {total} pax for the whole plan, including {units} tables × {perUnit} (printed — a plan figure).", tr: "Çizim planın tamamı için {total} kişi belirtiyor; {units} masa × {perUnit} dahil (basılı — plan bilgisi)." },
+    "provenance.capacityRuleValue": { en: "{rule} — printed on the drawing; seats are not drawn", tr: "{rule} — çizimde basılı; koltuklar çizilmemiş" },
+    "provenance.capacityRuleConfirmed": { en: "was {previous} from {rule}; a person set it since", tr: "{rule} kuralından {previous} idi; sonra bir kişi değiştirdi" },
     "capacitySource.verifiedVenueMemory": { en: "Verified venue memory", tr: "Doğrulanmış Mekan Hafızası" },
     // The Data Provenance Inspector: a read-only line on the contextual card
     // naming WHERE the capacity/seat-count number came from. Never editable
@@ -1716,6 +1721,11 @@
     "toast.groupMoveRolledBack": { en: "The group move was rolled back.", tr: "Grup taşıma geri alındı." },
     "toast.importPlanFirst": { en: "Import a floor plan first.", tr: "Önce bir kat planı içe aktarın." },
     "toast.selectDetectionFirst": { en: "Select at least one detection to confirm.", tr: "Onaylamak için en az bir tespit seçin." },
+    // Which sentence follows the count depends on what the commit did: a
+    // symbolic plan has no chair coordinates to preserve, and saying so
+    // anyway was a claim about chairs that do not exist.
+    "toast.detectionsConfirmedPlain": { en: "{tables} {tableWord}, {venues} {venueWord} confirmed.", tr: "{tables} masa, {venues} plan nesnesi onaylandı." },
+    "toast.detectionsConfirmedRule": { en: "{tables} {tableWord}, {venues} {venueWord} confirmed. Capacity is from the rule printed on the drawing: {perUnit} per table, no chairs drawn.", tr: "{tables} masa, {venues} plan nesnesi onaylandı. Kapasite çizimde basılı kuraldan: masa başına {perUnit}, sandalye çizilmedi." },
     "toast.detectionsConfirmed": { en: "{tables} {tableWord}, {venues} {venueWord} confirmed. Chair coordinates were preserved.", tr: "{tables} masa, {venues} plan nesnesi onaylandı. Sandalye koordinatları korundu." },
     "word.table": { en: "table", tr: "masa" },
     "word.tables": { en: "tables", tr: "masa" },

@@ -7,7 +7,7 @@ own recollection.
 - **Programme start SHA** `02edac7`
 - **Branch** `claude/merit-concept3-plan-intelligence-rebirth`
 - **PR** #5 — OPEN, must not be merged
-- **Current SHA** see `git log` — §28 (coverage discipline, entry AC) is the last completed entry
+- **Current SHA** see `git log` — §5 (capacity provenance, entry AD) is the last completed entry
 - **Status** IN PROGRESS
 
 ## How to resume
@@ -1671,6 +1671,38 @@ the 8→9 placeholder-chair branch, malformed package chairs.
 **Recorded, not changed:** three dead exports with their proof; IndexedDB
 request-level error handlers still unexercised by a real failure.
 
+### AD. §5 — capacity provenance — the printed rule reaches the tables, as seats, never as chairs
+
+**Measured first:** 3 of the 8 named sources were wired. A table committed from
+a symbolic plan got capacity **1** / UNKNOWN even when the drawing printed
+"SALON : 166 * 12 : 1992 PAX" and the self-check had verified the arithmetic —
+so the ORNEK room arrived as one seat per table, and the one number on the page
+that says how many people sit at a table was ignored.
+
+**Now five sources, at three levels** (`src/capacity-provenance.js`):
+DETECTED_PHYSICAL_SEATS, HUMAN_CONFIRMED, **DERIVED_PRINTED_RULE** and UNKNOWN
+per table; **PRINTED_TOTAL_CAPACITY per plan**. `ruleApplication()` is the one
+pure decision — symbolic plan, seatless symbol, no more symbols than the rule
+counts, arithmetic that comes out (checked again, not trusted from the parser),
+per-table figure ≤ 99 — and each refusal is named. A derived table carries the
+rule as `capacityEvidence` and **no chairs**. A person's change makes it
+HUMAN_CONFIRMED and keeps the rule as history. `normalizeForTable()` refuses a
+plan- or zone-level source on a table, at load too. The Command Center states
+the drawing's total beside the counted seats as a plan figure. The commit
+confirmation no longer says "chair coordinates were preserved" on a plan that
+has none.
+
+**Named, not produced, each with its reason:** PRINTED_TABLE_CAPACITY (nothing
+reads a pax figure beside one table), PRINTED_ZONE_CAPACITY (the labelled
+figures name printed areas, not the product's zones), VERIFIED_VENUE_MEMORY
+(memory carries identity, not capacity).
+
+**Evidence.** `capacity-rule-commit` (23 checks) drives the real Commit button
+with the rule produced by the product's own OCR-text parser; 10 of 10 mutations
+fail it. `capacity-provenance`'s contract names five WIRED. Rendered at 1920,
+2560 and 1440: the table card's rule row and the Command Center line, no
+console errors.
+
 ### Adversarial at `3451f67` — 1 PASS · 4 PARTIAL · 3 FAIL
 
 Same distribution as `02edac7`; the run exits 0 because it gates on
@@ -1698,17 +1730,14 @@ typing 136/289.
 
 ## Next step
 
-**§5 — capacity provenance.** The build wires 3 of 8 named sources. A table
-committed from a symbolic plan gets capacity 1 / UNKNOWN even when the drawing
-prints "166 × 12 = 1992" and the self-check has verified it. Wire
-DERIVED_PRINTED_RULE per table (only where the rule applies: symbolic plan,
-seatless symbol, no more symbols than the rule states, per-table figure ≤ 99),
-PRINTED_TOTAL_CAPACITY at PLAN level, never as chairs; a table may not carry a
-plan-level source. The suite is written (`capacity-rule-commit`).
-
-Then §29 (verify the security / accessibility / resilience suites are in CI),
-the final coverage re-run, and the final review and completion matrix. §2
-(third real plan) stays not-available with its procedure ready.
+**§29 check, the final coverage re-run, and the final quality review +
+completion matrix.** §29: the security, accessibility and resilience suites
+exist and run in CI (`npm run test:list`; `resilience-detection-render` is slow
+and runs in the intelligence job's `test:slow`). Re-run `MERIT_COVERAGE=1 npm
+run test:all` so `benchmarks/coverage/report.json` describes the build after
+§28's fixes. Then the review: every section's verdict re-measured, not
+remembered, in `benchmarks/FINAL-COMPLETION-MATRIX.md`. §2 (third real plan)
+stays not-available with its procedure ready.
 
 Deferred with recorded prerequisites met, not forgotten: Split B (a design
 job, §3B measured), the screen extractions A21/A17/A12 (entry N).

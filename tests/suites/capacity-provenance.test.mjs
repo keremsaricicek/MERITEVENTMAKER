@@ -47,8 +47,8 @@ export default async function run({ page, checks, baseUrl }) {
   checks.equal(JSON.stringify(contract.names),
     JSON.stringify(["DERIVED_PRINTED_RULE","DETECTED_PHYSICAL_SEATS","HUMAN_CONFIRMED","PRINTED_TABLE_CAPACITY","PRINTED_TOTAL_CAPACITY","PRINTED_ZONE_CAPACITY","UNKNOWN","VERIFIED_VENUE_MEMORY"]),
     "exactly the eight named sources exist — no sixth invented, none of the eight silently dropped");
-  checks.equal(JSON.stringify(contract.wired), JSON.stringify(["DETECTED_PHYSICAL_SEATS","HUMAN_CONFIRMED","UNKNOWN"]),
-    "exactly the three sources this build can honestly produce are marked WIRED — the other five are named, not claimed");
+  checks.equal(JSON.stringify(contract.wired), JSON.stringify(["DERIVED_PRINTED_RULE","DETECTED_PHYSICAL_SEATS","HUMAN_CONFIRMED","PRINTED_TOTAL_CAPACITY","UNKNOWN"]),
+    "exactly the five sources this build can honestly produce are WIRED (§5: the printed rule per table, the printed total per plan) — the other three are named, not claimed");
   checks.ok(contract.validKnown && !contract.validUnknown, "isValid() accepts only the eight real names", contract);
   checks.equal(contract.normalizeGood, "DETECTED_PHYSICAL_SEATS", "normalize() passes a real value through untouched", contract);
   checks.equal(contract.normalizeBad, "UNKNOWN", "normalize() turns an unrecognised value into UNKNOWN rather than keeping garbage", contract);
