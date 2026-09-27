@@ -19,11 +19,34 @@ import fs from "node:fs";
 import path from "node:path";
 import { REPO_ROOT } from "./server.mjs";
 
-const CACHE = path.join(REPO_ROOT, ".vendor-cache");
+export const CACHE = path.join(REPO_ROOT, ".vendor-cache");
 const JSDELIVR = /^https:\/\/cdn\.jsdelivr\.net\/npm\/((?:@[^/]+\/)?[^@/]+)@([^/]+)\/(.+)$/;
 
+// What the app fetches for OCR under index.html, pinned. Tesseract.js asks
+// jsDelivr for its language data WITHOUT a version
+// (`npm/@tesseract.js-data/eng/4.0.0_best_int/...`), so whichever package
+// version jsDelivr calls latest is what OCR reads. Measured in §27: CI reached
+// the CDN and ran OCR, this container could not and ran none, and the
+// benchmarks reported two different products under one name — 182 against
+// 196 memory decisions, 3 against 23 phantom tables on a2. Serving these from
+// the cache, pinned, makes every machine measure the same thing.
+export const OCR_PACKAGES = [
+  ["tesseract.js", "5.1.1"],
+  ["tesseract.js-core", "5.1.1"],
+  ["@tesseract.js-data/eng", "1.0.0"],
+  ["@tesseract.js-data/tur", "1.0.0"],
+];
+const TESSDATA = /^https:\/\/cdn\.jsdelivr\.net\/npm\/(@tesseract\.js-data\/[a-z_]+)\/(.+)$/;
+
 export function vendorFileFor(url) {
-  const m = JSDELIVR.exec(url.split("?")[0]);
+  const bare = url.split("?")[0];
+  const data = TESSDATA.exec(bare);
+  if (data) {
+    const pin = OCR_PACKAGES.find(([name]) => name === data[1]);
+    const file = pin && path.join(CACHE, `${pin[0].replace("/", "-")}-${pin[1]}`, "package", data[2]);
+    return file && fs.existsSync(file) ? file : null;
+  }
+  const m = JSDELIVR.exec(bare);
   if (!m) return null;
   const [, pkg, version, rest] = m;
   // Tesseract asks its own worker for "@v5.1.1" -- a leading "v" the npm
@@ -45,16 +68,19 @@ const CONTENT_TYPE = {
 };
 
 // Returns what actually happened, so a suite can report "ran without the
-// vendor engines" instead of silently testing a crippled app.
-export async function routeVendorFromCache(page) {
+// vendor engines" instead of silently testing a crippled app. `target` is a
+// page or a browser context (a context also covers the OCR worker's own
+// requests). With `offline`, a CDN request the cache cannot answer is aborted
+// rather than sent, so a measurement can never quietly depend on the network.
+export async function routeVendorFromCache(target, { offline = false } = {}) {
   const served = [];
   const passedThrough = [];
-  await page.route("https://cdn.jsdelivr.net/**", async route => {
+  await target.route("https://cdn.jsdelivr.net/**", async route => {
     const url = route.request().url();
     const file = vendorFileFor(url);
     if (!file) {
       passedThrough.push(url);
-      return route.continue();
+      return offline ? route.abort("blockedbyclient") : route.continue();
     }
     served.push(url);
     return route.fulfill({
@@ -64,4 +90,10 @@ export async function routeVendorFromCache(page) {
     });
   });
   return { served, passedThrough, cacheAvailable: fs.existsSync(CACHE) };
+}
+
+// Every OCR file index.html asks for, present in the cache? The benchmark
+// runners refuse to start without them (tests/lib/env.mjs).
+export function ocrCacheComplete() {
+  return OCR_PACKAGES.every(([name, version]) => fs.existsSync(path.join(CACHE, `${name.replace("/", "-")}-${version}`, "package")));
 }

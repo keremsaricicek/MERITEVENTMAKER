@@ -47,6 +47,7 @@ if any check failed, any suite threw, or any suite saw a page error.
 | `readiness-timeline` | business, ui | the Command Center's readiness timeline stops being DERIVED from records: a step whose moment was never recorded shows a date anyway (tables added by hand have none), a count becomes a percentage or a forecast, a final check older than the event's latest change still reads as done, nobody seated reads as partial, an open step loses the control that takes the operator there, or the event day stops being counted in whole calendar days (today, no date recorded) |
 | `live-door-speed` | business, ui | the door search stops receiving keys in order at full speed (no delay between keys — a scanner or fast typist; the shared typeQuery() helper types with a 20ms delay, which hid a reorder bug); Enter with several matches and no explicit choice checks anybody in; ↑/↓ stop marking a chosen row, or Enter takes something other than the marked row; two guests with the SAME full name cannot be told apart by keyboard; typing after choosing keeps the old choice; Ctrl+Z in an empty search stops taking back the last change, or reaches into arrivals while the box has text; a +3 party needs more than one Enter. Logs the counted keystrokes |
 | `table-number-edit` | business, ui | a person can no longer set a table's number from its own card (select, type, Enter), or the number is accepted when another table already SHOWS it ("T3" beside T03), or when it is empty, markup, or over 12 characters; the typed number stops recording `numberSource: TYPED`, is lost on undo or reload, or stops reaching Seating; the §21 printed-number disagreement stays after the table has been given the printed number; a seated party loses its table on rename |
+| `ci-gate-honesty` | business | `benchmark:baseline` compares (or `--record`s) a report measured on different source, or treats a plan the run did not score as a note; the adversarial gate stops blocking on a new FAIL code, a listed FAIL that stopped failing, a regression, a missing, unbaselined, refused or erroring fixture; the memory gate stops blocking on one more wrong application or a changed corpus; a `continue-on-error` appears in the workflow; CI stops running either gate with `--compare`; an npm command CI runs has no class in `merit-ci-quality-gates`; OCR stops being pinned, or a benchmark browser can reach the network; a CI job with Chromium stops fetching the pins; a perf runner that can exit non-zero is not propagated |
 | `resilience-storage` | resilience, storage | storage fails and the evening does not survive it: a full quota stops being a persistent "not being saved" notice with a working backup beside it, a failed save writes half a record, an UNREADABLE stored record is overwritten by the first save instead of copied aside, a session that could not copy it saves anyway, an unopenable store is written over blind, or a blank install is stamped with an old schema version. Faults go into the browser's own IndexedDB (`tests/lib/faults.mjs`) |
 | `resilience-persisted` | resilience, storage | a stored guest pointing at a missing table, or at a seat the table does not have, stops opening cleanly, stops being a BLOCKING Plan Doctor finding on screen, or is silently "repaired" on load instead of kept as the plan said |
 | `resilience-detection-render` | resilience, intelligence, **slow** | a detection that fails after the new analysis replaced the old one leaves the half-built one behind, a second press starts a second pipeline, or a screen that throws escapes render() instead of becoming a translated recovery screen (still logged as an error) |
@@ -141,12 +142,20 @@ the same files run here and in CI:
 | `MERIT_BASE_URL` | use an already-running server instead of starting one |
 | `MERIT_TEST_ARTIFACTS` | where downloaded workbooks and backup fixtures are written |
 
-The two pinned CDN engines (SheetJS, PDF.js) and Tesseract are served from
-`.vendor-cache/` when it exists, which `node scripts/build-offline.mjs`
-populates. Without it the tests still run wherever there is network, but a
-sandbox with no outbound access boots the app with `XLSX` undefined — the
-workbook export then produces nothing and looks fine. Run the offline build
-once and the whole suite is hermetic.
+The pinned CDN engines (SheetJS, PDF.js) and Tesseract with its language
+data are served from `.vendor-cache/`: `npm run build:offline` puts SheetJS
+and PDF.js there, `npm run vendor:test` the OCR engine and language data.
+Without them the suite still runs wherever there is network, but a sandbox
+with no outbound access boots the app with `XLSX` undefined — the workbook
+export then produces nothing and looks fine — and without OCR, which changes
+what Assisted Detection finds. Run both once and the whole suite is hermetic.
+
+The benchmark runners are stricter: `launchChromium()` serves every CDN
+engine from the cache, sends nothing to the network, and refuses to start
+without the OCR files. §27 measured why: a machine that could reach the CDN
+measured detection WITH OCR (`a2`: 3 phantom tables) and one that could not
+measured it without (`a2`: 23), and both wrote their numbers under the same
+name.
 
 ## Writing a suite
 

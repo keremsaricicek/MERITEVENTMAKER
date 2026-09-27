@@ -1,5 +1,5 @@
 {
- "ranAt": "2026-09-07T21:24:24.391Z",
+ "ranAt": "2026-09-27T15:00:40.532Z",
  "variants": [
   {
    "variant": "ORIGINAL",
@@ -162,9 +162,9 @@
   },
   {
    "variant": "grayscale",
-   "tables": 48,
+   "tables": 47,
    "falsePositives": 5,
-   "baselineFalseRate": 0.1042,
+   "baselineFalseRate": 0.1064,
    "contradictions": 4,
    "kinds": [
     "COUNT",
@@ -174,7 +174,7 @@
    "pointedAt": 13,
    "pointedAtFalse": 4,
    "targetedPrecision": 0.3077,
-   "lift": 2.954,
+   "lift": 2.892,
    "severities": {
     "medium": 3,
     "high": 1
@@ -226,6 +226,11 @@
     },
     {
      "id": "has:rectangle",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:bistro",
      "from": "likely",
      "to": "uncertain"
     }
@@ -861,7 +866,7 @@
  ],
  "gates": {
   "meanTargetedPrecision": 0.4944,
-  "meanBaselineFalseRate": 0.2876,
+  "meanBaselineFalseRate": 0.2879,
   "renderingsWherePointingBeatsChance": "9/9",
   "contradictionsOnTheCleanOriginal": 4,
   "honestyFailures": 0
@@ -954,5 +959,5 @@
   "TYPE": "TRUSTED",
   "COUNT": "informative"
  },
- "chanceRate": 0.2876
+ "chanceRate": 0.2879
 }

@@ -68,10 +68,34 @@ export function resolveChromium() {
 // One place that knows how to start a browser here. Every runner in the repo
 // goes through it, so a new machine is one env var away from working rather
 // than a hunt through a dozen hardcoded paths.
+//
+// Every context it creates serves the pinned CDN engines — SheetJS, PDF.js,
+// Tesseract and its language data — from .vendor-cache and sends nothing to
+// the network. Before §27 the benchmark runners did not, so a machine that
+// could reach jsDelivr measured Assisted Detection WITH OCR and one that could
+// not measured it without, and both wrote numbers under the same name. It
+// refuses to start with the OCR files missing, rather than measure a
+// different product: `npm run vendor:test` fetches them from the npm registry.
+// MERIT_VENDOR_NETWORK=1 restores the old behaviour for a deliberate look.
 export async function launchChromium(options = {}) {
   const { chromium } = await loadPlaywright();
   const executablePath = resolveChromium();
-  return chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}), ...options });
+  const browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}), ...options });
+  if (process.env.MERIT_VENDOR_NETWORK === "1") return browser;
+  const { routeVendorFromCache, ocrCacheComplete } = await import("./vendor.mjs");
+  if (!ocrCacheComplete()) {
+    await browser.close();
+    throw new Error("The pinned OCR engine is not in .vendor-cache, so this run would measure the app without OCR. " +
+      "Run `npm run vendor:test` once (developer-time only; the product never downloads anything).");
+  }
+  // Browser.newPage goes through newContext, so this one wrapper covers both.
+  const newContext = browser.newContext.bind(browser);
+  browser.newContext = async (...args) => {
+    const context = await newContext(...args);
+    await routeVendorFromCache(context, { offline: true });
+    return context;
+  };
+  return browser;
 }
 
 export function describeEnvironment() {

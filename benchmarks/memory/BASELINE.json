@@ -1,5 +1,5 @@
 {
- "ranAt": "2026-09-27T14:59:27.852Z",
+ "ranAt": "2026-09-27T14:57:11.506Z",
  "source": {
   "digest": "a060bdd03b18da5cc302927bfd4665c5ce69c9c5cf2c8172e8dedacfb6f2ac33",
   "files": 64,
@@ -568,5 +568,10 @@
   "identityPrecisionWithGlobalTransform": 0.9098,
   "identityPrecisionFull": 0.958,
   "wrongApplicationRateFull": 0.042
+ },
+ "recorded": {
+  "at": "2026-09-27T14:57:11.506Z",
+  "commit": "0eb7ad95348468e7dd1b91c5a30f62d9ed8d23c9",
+  "reason": "First memory baseline, recorded in §27 when this benchmark became a regression gate instead of a threshold check under continue-on-error. Measured with the pinned OCR engine; the result (182 scoreable decisions, retention 0.6264, identity precision 0.958, wrong application 0.042) equals CI's printed output at ff023c0 in every scenario's retained, wrong, lost and ambiguous counts. The earlier committed report (196 decisions, retention 0.7143) was measured without OCR and describes a different configuration. The §23 targets are not met and are reported, not gated."
  }
 }

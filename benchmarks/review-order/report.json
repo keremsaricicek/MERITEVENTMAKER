@@ -1,5 +1,5 @@
 {
- "ranAt": "2026-09-07T21:24:59.263Z",
+ "ranAt": "2026-09-27T14:59:28.602Z",
  "maxGroups": 8,
  "variants": [
   {
@@ -64,7 +64,7 @@
   },
   {
    "variant": "grayscale",
-   "errors": 8,
+   "errors": 9,
    "items": 16,
    "reviewGroups": 7,
    "shipped": {
@@ -78,17 +78,17 @@
     "5": 4
    },
    "randomMean": {
-    "1": 0.91,
-    "3": 2.46,
-    "5": 3.75
+    "1": 0.96,
+    "3": 2.65,
+    "5": 4.04
    },
-   "biggestBatch": 35,
+   "biggestBatch": 36,
    "firstItem": {
     "key": "priority.contradiction",
     "impact": {
      "objects": 1,
      "seats": 1,
-     "facts": 1
+     "facts": 2
     }
    }
   },
@@ -323,7 +323,7 @@
    "items": 13,
    "groups": 5,
    "questions": 5,
-   "unreviewed": 54,
+   "unreviewed": 50,
    "top": {
     "key": "priority.contradiction",
     "signature": "48,64;5,74;55,36",
@@ -350,9 +350,9 @@
    "5": 80
   },
   "randomMean": {
-   "1": 14.98,
-   "3": 42.02,
-   "5": 63.17
+   "1": 15.03,
+   "3": 42.21,
+   "5": 63.46
   }
  }
 }

@@ -18,10 +18,15 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { sourceDigest, staleReason, INPUTS } from "./lib/source-digest.mjs";
+import { ciSummary } from "./lib/ci-summary.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
-const BASELINE = path.join(ROOT, "BASELINE.json");
-const LATEST = path.join(ROOT, "reports", "latest.json");
+// --baseline and --latest exist for tests/suites/ci-gate-honesty, which
+// must be able to exercise --record without ever writing the real file.
+const argAt = (flag) => { const i = process.argv.indexOf(flag); return i >= 0 ? path.resolve(process.argv[i + 1]) : null; };
+const BASELINE = argAt("--baseline") || path.join(ROOT, "BASELINE.json");
+const LATEST = argAt("--latest") || path.join(ROOT, "reports", "latest.json");
 const RECORD = process.argv.includes("--record");
 
 // Fields worth guarding, and which direction is bad. Counts of mistakes
@@ -112,6 +117,17 @@ if (!fs.existsSync(LATEST)) {
   process.exit(2);
 }
 const latest = JSON.parse(fs.readFileSync(LATEST, "utf8"));
+
+// A stored result is only evidence about the code it was measured on. This
+// used to compare whatever latest.json held — committed, and rewritten only by
+// `npm run benchmark` — and print "No regressions" about code it had never
+// seen. Refused for --record as well: recording a stale run as the baseline is
+// the same false claim, made permanent.
+const stale = staleReason(latest.source, sourceDigest(path.dirname(ROOT), INPUTS.detection), "npm run benchmark");
+if (stale) {
+  console.error(`REFUSED: ${path.relative(process.cwd(), LATEST)} (run ${latest.ranAt}) — ${stale}`);
+  process.exit(2);
+}
 const current = latest.reports.map(summarise);
 
 let commit = "unknown";
@@ -178,8 +194,11 @@ for (const [i, plan] of current.entries()) {
     (worse ? regressions : improvements).push(line);
   }
 }
+// A plan the baseline guards and this run did not score is not a note: a run
+// that silently skipped a plan — a filter, a crash, a missing image — would
+// otherwise pass on the plans that were left.
 for (const planId of byPlan.keys()) {
-  if (!current.some(p => p.planId === planId)) missing.push(`${planId} was in the baseline but this run did not produce it`);
+  if (!current.some(p => p.planId === planId)) regressions.push(`${planId} was in the baseline but this run did not produce it`);
 }
 
 console.log(`Baseline recorded ${baseline.recordedAt} at commit ${String(baseline.commit).slice(0, 8)}`);
@@ -189,6 +208,8 @@ for (const line of improvements) console.log("  better  " + line);
 for (const line of missing) console.log("  note    " + line);
 for (const line of regressions) console.log("  WORSE   " + line);
 
+ciSummary("Detector baseline (per plan, per field)", [{ cls: "RELEASE GATE", text: regressions.length
+  ? `FAILED — ${regressions.join("; ")}` : `passed: no regressions, ${improvements.length} improvement(s)` }]);
 if (regressions.length) {
   console.log(`\n${regressions.length} regression(s) against the recorded baseline.`);
   console.log("If the change is a deliberate, measured trade, re-record with --record and say so in the commit message.");

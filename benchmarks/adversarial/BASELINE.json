@@ -1,5 +1,17 @@
 {
-  "ranAt": "2026-09-04T11:34:55.896Z",
+  "ranAt": "2026-09-27T14:53:56.129Z",
+  "source": {
+    "digest": "138ade96813a4b237830a341477124d3ac12751d24277ad043a44df98fc937f0",
+    "files": 65,
+    "inputs": [
+      "index.html",
+      "src",
+      "benchmarks/adversarial/declarations",
+      "benchmarks/adversarial/fixtures",
+      "benchmarks/adversarial/run-adversarial.mjs",
+      "tests/lib/vendor.mjs"
+    ]
+  },
   "realVenue": false,
   "note": "SYNTHETIC ADVERSARIAL FIXTURES — NOT REAL VENUES. These scores are never mixed into real-plan aggregates. REAL DISTINCT VENUE PLANS: 1. CROSS-VENUE GENERALIZATION: NOT VERIFIED.",
   "refusals": [],
@@ -17,10 +29,8 @@
         "precision": 1,
         "recall": 0.5,
         "f1": 0.667,
-        "heldBack": 8,
-        "heldBackReasons": {
-          "seatsInsideBody": 8
-        },
+        "heldBack": 0,
+        "heldBackReasons": {},
         "missedIds": [
           "OUT01",
           "OUT02",
@@ -46,24 +56,24 @@
       },
       "chairs": {
         "groundTruth": 96,
-        "detected": 97,
-        "tp": 96,
-        "fp": 1,
-        "fn": 0,
-        "precision": 0.99,
-        "recall": 1,
-        "f1": 0.995
+        "detected": 64,
+        "tp": 64,
+        "fp": 0,
+        "fn": 32,
+        "precision": 1,
+        "recall": 0.667,
+        "f1": 0.8
       },
       "relations": {
         "groundTruthScoreable": 96,
         "groundTruthAmbiguous": 0,
-        "scored": 96,
+        "scored": 64,
         "correct": 48,
         "wrong": 0,
-        "orphan": 48,
-        "unscoreable": 0,
-        "accuracy": 0.5,
-        "coverage": 1,
+        "orphan": 16,
+        "unscoreable": 32,
+        "accuracy": 0.75,
+        "coverage": 0.667,
         "forcedOnAmbiguous": 0,
         "ambiguousDeclared": 0,
         "ambiguousChairsNotDetected": 0,
@@ -75,20 +85,20 @@
       },
       "zones": {
         "expected": 1,
-        "detected": 2,
-        "detectedTyped": 2,
+        "detected": 1,
+        "detectedTyped": 1,
         "unknownZones": 0,
-        "matched": 0,
-        "precision": 0,
-        "recall": 0,
+        "matched": 1,
+        "precision": 1,
+        "recall": 1,
         "falseZoneInventions": 0,
         "inventedTypes": [],
         "byType": {
-          "dining": 2
+          "dining": 1
         }
       },
       "facts": {
-        "total": 5,
+        "total": 7,
         "expected": 3,
         "expectedPresent": 3,
         "expectedMissing": [],
@@ -97,9 +107,9 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
+          "strong": 3,
           "likely": 3,
-          "uncertain": 1,
-          "strong": 1
+          "uncertain": 1
         }
       },
       "regionFP": {
@@ -111,33 +121,31 @@
       "sceneGraph": {
         "counts": {
           "belongsTo": 48,
-          "partOf": 8
+          "memberOf": 32
         },
-        "nodeCount": 57,
-        "edges": 56
+        "nodeCount": 24,
+        "edges": 80
       },
-      "contradictions": 2,
+      "contradictions": 1,
       "contradictionIds": [
-        "contra:orphanSeats",
-        "contra:seatsInsideBody"
+        "contra:orphanSeats"
       ],
       "effort": {
         "reviewGroups": 1,
         "uncertainQuestions": 0,
-        "reviewPriorities": 3
+        "reviewPriorities": 2
       },
-      "detectionMs": 635,
+      "detectionMs": 2497,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
-        "status": "FAIL",
-        "fail": [
-          "8 real table(s) detected then held back (seatsInsideBody x8)"
-        ],
+        "status": "PARTIAL",
+        "fail": [],
+        "failCodes": [],
         "partial": [
-          "48 detected chair(s) seated at no table at all",
+          "16 detected chair(s) seated at no table at all",
           "table recall 0.5",
-          "zone precision 0 — 2 typed zones for 1 real ones"
+          "chair recall 0.667"
         ]
       }
     },
@@ -147,18 +155,28 @@
       "hypothesis": "Plan-relative size reasoning silently deletes minority furniture families. A plan with square, round, rectangle and bistro tables, two chair sizes in two drawing styles, and a lounge group must keep all of them: the minority families must survive detection and must still be visible in the interpreter's type mix.",
       "tables": {
         "groundTruth": 21,
-        "detected": 44,
-        "tp": 21,
-        "fp": 23,
-        "fn": 0,
-        "precision": 0.477,
-        "recall": 1,
-        "f1": 0.646,
-        "heldBack": 7,
+        "detected": 15,
+        "tp": 12,
+        "fp": 3,
+        "fn": 9,
+        "precision": 0.8,
+        "recall": 0.571,
+        "f1": 0.667,
+        "heldBack": 3,
         "heldBackReasons": {
-          "unknown": 7
+          "belowReviewThreshold": 3
         },
-        "missedIds": []
+        "missedIds": [
+          "RD01",
+          "RD02",
+          "RD03",
+          "RD04",
+          "BI01",
+          "BI02",
+          "BI04",
+          "BI05",
+          "BI06"
+        ]
       },
       "tableTypes": {
         "byType": {
@@ -168,7 +186,7 @@
             "accuracy": 1
           },
           "bistro": {
-            "matched": 6,
+            "matched": 1,
             "correct": 0,
             "accuracy": 0
           },
@@ -176,16 +194,11 @@
             "matched": 8,
             "correct": 8,
             "accuracy": 1
-          },
-          "round": {
-            "matched": 4,
-            "correct": 4,
-            "accuracy": 1
           }
         },
-        "distinctFound": 3,
+        "distinctFound": 2,
         "required": 3,
-        "meetsRequirement": true
+        "meetsRequirement": false
       },
       "chairs": {
         "groundTruth": 94,
@@ -218,21 +231,20 @@
       },
       "zones": {
         "expected": 1,
-        "detected": 22,
-        "detectedTyped": 8,
-        "unknownZones": 14,
+        "detected": 1,
+        "detectedTyped": 1,
+        "unknownZones": 0,
         "matched": 0,
         "precision": 0,
         "recall": 0,
         "falseZoneInventions": 0,
         "inventedTypes": [],
         "byType": {
-          "dining": 8,
-          "unknown": 14
+          "dining": 1
         }
       },
       "facts": {
-        "total": 9,
+        "total": 7,
         "expected": 3,
         "expectedPresent": 3,
         "expectedMissing": [],
@@ -241,47 +253,52 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "likely": 6,
-          "uncertain": 2,
-          "strong": 1
+          "strong": 2,
+          "uncertain": 1,
+          "likely": 4
         }
       },
       "regionFP": {
         "textRegions": 1,
-        "tablesInText": 1,
+        "tablesInText": 0,
         "architectureRegions": 0,
         "tablesInArchitecture": 0
       },
       "sceneGraph": {
         "counts": {
           "belongsTo": 32,
-          "partOf": 44
+          "memberOf": 62,
+          "structuralElementOf": 28
         },
-        "nodeCount": 76,
-        "edges": 76
+        "nodeCount": 47,
+        "edges": 122
       },
       "contradictions": 1,
       "contradictionIds": [
         "contra:visualClass"
       ],
       "effort": {
-        "reviewGroups": 4,
+        "reviewGroups": 3,
         "uncertainQuestions": 0,
-        "reviewPriorities": 6
+        "reviewPriorities": 4
       },
-      "detectionMs": 742,
+      "detectionMs": 3476,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
         "status": "FAIL",
         "fail": [
-          "7 real table(s) detected then held back (unknown x7)",
-          "more phantom tables than real ones: 23 FP against 21 GT (precision 0.477)"
+          "3 real table(s) detected then held back (belowReviewThreshold x3)"
+        ],
+        "failCodes": [
+          "HELD_BACK_REAL"
         ],
         "partial": [
-          "bistro tables typed 0/6",
+          "2 table type(s) survived, 3 required",
+          "table recall 0.571",
           "chair recall 0.34",
-          "zone precision 0 — 8 typed zones for 1 real ones"
+          "3 phantom table(s) (precision 0.8)",
+          "zone precision 0 — 1 typed zones for 1 real ones"
         ]
       }
     },
@@ -345,20 +362,20 @@
       },
       "zones": {
         "expected": 1,
-        "detected": 5,
-        "detectedTyped": 5,
+        "detected": 1,
+        "detectedTyped": 1,
         "unknownZones": 0,
-        "matched": 0,
-        "precision": 0,
-        "recall": 0,
+        "matched": 1,
+        "precision": 1,
+        "recall": 1,
         "falseZoneInventions": 0,
         "inventedTypes": [],
         "byType": {
-          "dining": 5
+          "dining": 1
         }
       },
       "facts": {
-        "total": 5,
+        "total": 6,
         "expected": 3,
         "expectedPresent": 3,
         "expectedMissing": [],
@@ -367,7 +384,7 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "strong": 2,
+          "strong": 3,
           "likely": 3
         }
       },
@@ -380,27 +397,30 @@
       "sceneGraph": {
         "counts": {
           "belongsTo": 240,
-          "partOf": 20
+          "faces": 120,
+          "memberOf": 60,
+          "structuralElementOf": 20
         },
         "nodeCount": 40,
-        "edges": 260
+        "edges": 440
       },
-      "contradictions": 0,
-      "contradictionIds": [],
+      "contradictions": 1,
+      "contradictionIds": [
+        "contra:capacity"
+      ],
       "effort": {
         "reviewGroups": 1,
         "uncertainQuestions": 0,
-        "reviewPriorities": 1
+        "reviewPriorities": 2
       },
-      "detectionMs": 696,
+      "detectionMs": 3722,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
-        "status": "PARTIAL",
+        "status": "PASS",
         "fail": [],
-        "partial": [
-          "zone precision 0 — 5 typed zones for 1 real ones"
-        ]
+        "failCodes": [],
+        "partial": []
       }
     },
     {
@@ -409,24 +429,28 @@
       "hypothesis": "Zone clustering is distance-only and cannot see a wall. An L-shaped venue of two halls joined by a corridor must produce at least two furniture zones, not one zone spanning both halls and the empty corridor.",
       "tables": {
         "groundTruth": 25,
-        "detected": 25,
-        "tp": 25,
+        "detected": 17,
+        "tp": 17,
         "fp": 0,
-        "fn": 0,
+        "fn": 8,
         "precision": 1,
-        "recall": 1,
-        "f1": 1,
+        "recall": 0.68,
+        "f1": 0.81,
         "heldBack": 0,
         "heldBackReasons": {},
-        "missedIds": []
+        "missedIds": [
+          "C01",
+          "C02",
+          "C03",
+          "C04",
+          "C05",
+          "C06",
+          "C07",
+          "C08"
+        ]
       },
       "tableTypes": {
         "byType": {
-          "bistro": {
-            "matched": 8,
-            "correct": 0,
-            "accuracy": 0
-          },
           "square": {
             "matched": 9,
             "correct": 9,
@@ -473,21 +497,20 @@
       },
       "zones": {
         "expected": 3,
-        "detected": 19,
-        "detectedTyped": 11,
-        "unknownZones": 8,
+        "detected": 1,
+        "detectedTyped": 1,
+        "unknownZones": 0,
         "matched": 1,
-        "precision": 0.091,
+        "precision": 1,
         "recall": 0.333,
         "falseZoneInventions": 0,
         "inventedTypes": [],
         "byType": {
-          "dining": 11,
-          "unknown": 8
+          "dining": 1
         }
       },
       "facts": {
-        "total": 8,
+        "total": 6,
         "expected": 2,
         "expectedPresent": 2,
         "expectedMissing": [],
@@ -496,42 +519,42 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "strong": 2,
           "likely": 5,
-          "uncertain": 1
+          "strong": 1
         }
       },
       "regionFP": {
         "textRegions": 3,
         "tablesInText": 0,
         "architectureRegions": 5,
-        "tablesInArchitecture": 25
+        "tablesInArchitecture": 17
       },
       "sceneGraph": {
         "counts": {
           "belongsTo": 100,
-          "partOf": 25
+          "memberOf": 74,
+          "structuralElementOf": 23
         },
-        "nodeCount": 65,
-        "edges": 125
+        "nodeCount": 57,
+        "edges": 197
       },
       "contradictions": 0,
       "contradictionIds": [],
       "effort": {
-        "reviewGroups": 2,
+        "reviewGroups": 1,
         "uncertainQuestions": 0,
-        "reviewPriorities": 3
+        "reviewPriorities": 1
       },
-      "detectionMs": 815,
+      "detectionMs": 3639,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
         "status": "PARTIAL",
         "fail": [],
+        "failCodes": [],
         "partial": [
-          "bistro tables typed 0/8",
-          "chair recall 0.586",
-          "zone precision 0.091 — 11 typed zones for 3 real ones"
+          "table recall 0.68",
+          "chair recall 0.586"
         ]
       }
     },
@@ -560,9 +583,9 @@
       },
       "chairs": {
         "groundTruth": 0,
-        "detected": 8,
+        "detected": 0,
         "tp": 0,
-        "fp": 8,
+        "fp": 0,
         "fn": 0,
         "precision": 0,
         "recall": 0,
@@ -600,18 +623,16 @@
         "byType": {}
       },
       "facts": {
-        "total": 1,
+        "total": 2,
         "expected": 1,
-        "expectedPresent": 0,
-        "expectedMissing": [
-          "capacityUnknown"
-        ],
+        "expectedPresent": 1,
+        "expectedMissing": [],
         "forbidden": 11,
         "forbiddenPresent": [],
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "strong": 1
+          "strong": 2
         }
       },
       "regionFP": {
@@ -622,29 +643,24 @@
       },
       "sceneGraph": {
         "counts": {},
-        "nodeCount": 8,
+        "nodeCount": 0,
         "edges": 0
       },
-      "contradictions": 1,
-      "contradictionIds": [
-        "contra:orphanSeats"
-      ],
+      "contradictions": 0,
+      "contradictionIds": [],
       "effort": {
-        "reviewGroups": 1,
+        "reviewGroups": 0,
         "uncertainQuestions": 0,
-        "reviewPriorities": 2
+        "reviewPriorities": 0
       },
-      "detectionMs": 572,
+      "detectionMs": 1883,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
-        "status": "FAIL",
-        "fail": [
-          "8 chair(s) proposed on a drawing with no furniture"
-        ],
-        "partial": [
-          "missing expected fact(s): capacityUnknown"
-        ]
+        "status": "PASS",
+        "fail": [],
+        "failCodes": [],
+        "partial": []
       }
     },
     {
@@ -653,13 +669,13 @@
       "hypothesis": "Repetition at a consistent size is read as furniture. When repeated architecture outnumbers the real furniture and sets the plan's modal size, the furniture must still be found and the architecture must not be proposed as tables.",
       "tables": {
         "groundTruth": 8,
-        "detected": 54,
+        "detected": 29,
         "tp": 8,
-        "fp": 46,
+        "fp": 21,
         "fn": 0,
-        "precision": 0.148,
+        "precision": 0.276,
         "recall": 1,
-        "f1": 0.258,
+        "f1": 0.432,
         "heldBack": 0,
         "heldBackReasons": {},
         "missedIds": []
@@ -707,21 +723,20 @@
       },
       "zones": {
         "expected": 1,
-        "detected": 39,
-        "detectedTyped": 25,
-        "unknownZones": 14,
-        "matched": 0,
-        "precision": 0,
-        "recall": 0,
+        "detected": 1,
+        "detectedTyped": 1,
+        "unknownZones": 0,
+        "matched": 1,
+        "precision": 1,
+        "recall": 1,
         "falseZoneInventions": 0,
         "inventedTypes": [],
         "byType": {
-          "dining": 25,
-          "unknown": 14
+          "dining": 1
         }
       },
       "facts": {
-        "total": 9,
+        "total": 8,
         "expected": 2,
         "expectedPresent": 2,
         "expectedMissing": [],
@@ -730,45 +745,48 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "likely": 6,
-          "uncertain": 2,
-          "strong": 1
+          "likely": 5,
+          "uncertain": 1,
+          "strong": 2
         }
       },
       "regionFP": {
         "textRegions": 1,
-        "tablesInText": 5,
+        "tablesInText": 2,
         "architectureRegions": 47,
-        "tablesInArchitecture": 41
+        "tablesInArchitecture": 19
       },
       "sceneGraph": {
         "counts": {
           "belongsTo": 51,
-          "partOf": 54
+          "faces": 19,
+          "memberOf": 95,
+          "structuralElementOf": 32
         },
-        "nodeCount": 92,
-        "edges": 105
+        "nodeCount": 66,
+        "edges": 197
       },
       "contradictions": 1,
       "contradictionIds": [
         "contra:seatsInsideBody"
       ],
       "effort": {
-        "reviewGroups": 4,
+        "reviewGroups": 2,
         "uncertainQuestions": 0,
-        "reviewPriorities": 6
+        "reviewPriorities": 3
       },
-      "detectionMs": 655,
+      "detectionMs": 2582,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
         "status": "FAIL",
         "fail": [
-          "more phantom tables than real ones: 46 FP against 8 GT (precision 0.148)"
+          "more phantom tables than real ones: 21 FP against 8 GT (precision 0.276)"
         ],
-        "partial": [
-          "zone precision 0 — 25 typed zones for 1 real ones"
-        ]
+        "failCodes": [
+          "PHANTOM_MAJORITY"
+        ],
+        "partial": []
       }
     },
     {
@@ -777,16 +795,22 @@
       "hypothesis": "Chair association is distance-only and cannot express doubt. Between two nearly equidistant tables it must compare both candidates and report a margin; where the drawing is genuinely symmetric it must say ambiguous rather than pick the nearest by a rounding error.",
       "tables": {
         "groundTruth": 29,
-        "detected": 21,
-        "tp": 21,
+        "detected": 15,
+        "tp": 15,
         "fp": 0,
-        "fn": 8,
+        "fn": 14,
         "precision": 1,
-        "recall": 0.724,
-        "f1": 0.84,
+        "recall": 0.517,
+        "f1": 0.682,
         "heldBack": 0,
         "heldBackReasons": {},
         "missedIds": [
+          "B01",
+          "B02",
+          "B03",
+          "B04",
+          "B05",
+          "B06",
           "D01",
           "D02",
           "D03",
@@ -805,8 +829,8 @@
             "accuracy": 0
           },
           "square": {
-            "matched": 14,
-            "correct": 14,
+            "matched": 8,
+            "correct": 8,
             "accuracy": 1
           }
         },
@@ -845,21 +869,20 @@
       },
       "zones": {
         "expected": 0,
-        "detected": 3,
+        "detected": 2,
         "detectedTyped": 2,
-        "unknownZones": 1,
+        "unknownZones": 0,
         "matched": 0,
         "precision": 0,
         "recall": null,
         "falseZoneInventions": 0,
         "inventedTypes": [],
         "byType": {
-          "dining": 2,
-          "unknown": 1
+          "dining": 2
         }
       },
       "facts": {
-        "total": 7,
+        "total": 5,
         "expected": 2,
         "expectedPresent": 2,
         "expectedMissing": [],
@@ -868,9 +891,8 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "strong": 2,
-          "likely": 4,
-          "uncertain": 1
+          "strong": 3,
+          "likely": 2
         }
       },
       "regionFP": {
@@ -882,27 +904,28 @@
       "sceneGraph": {
         "counts": {
           "belongsTo": 37,
-          "partOf": 21
+          "memberOf": 47
         },
-        "nodeCount": 38,
-        "edges": 58
+        "nodeCount": 32,
+        "edges": 84
       },
       "contradictions": 0,
       "contradictionIds": [],
       "effort": {
         "reviewGroups": 2,
         "uncertainQuestions": 0,
-        "reviewPriorities": 3
+        "reviewPriorities": 2
       },
-      "detectionMs": 714,
+      "detectionMs": 2463,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
         "status": "PARTIAL",
         "fail": [],
+        "failCodes": [],
         "partial": [
           "bistro tables typed 0/7",
-          "table recall 0.724",
+          "table recall 0.517",
           "chair recall 0.685"
         ]
       }
@@ -913,17 +936,15 @@
       "hypothesis": "Every measurement in this repository was taken on 46 tables. At 324 tables and 3,240 seats the relationship pass, the scene graph, the zone clustering and the review queue must all still complete, and the detector's internal table cap must be visible rather than silently truncating the plan.",
       "tables": {
         "groundTruth": 324,
-        "detected": 240,
-        "tp": 240,
+        "detected": 289,
+        "tp": 289,
         "fp": 0,
-        "fn": 84,
+        "fn": 35,
         "precision": 1,
-        "recall": 0.741,
-        "f1": 0.851,
-        "heldBack": 240,
-        "heldBackReasons": {
-          "seatsInsideBody": 240
-        },
+        "recall": 0.892,
+        "f1": 0.943,
+        "heldBack": 0,
+        "heldBackReasons": {},
         "missedIds": [
           "T090",
           "T099",
@@ -944,15 +965,15 @@
           "T242",
           "T243",
           "T252",
-          "T260"
+          "T261"
         ]
       },
       "tableTypes": {
         "byType": {
           "round": {
-            "matched": 240,
-            "correct": 87,
-            "accuracy": 0.362
+            "matched": 289,
+            "correct": 136,
+            "accuracy": 0.471
           }
         },
         "distinctFound": 2,
@@ -961,24 +982,24 @@
       },
       "chairs": {
         "groundTruth": 3240,
-        "detected": 306,
-        "tp": 240,
-        "fp": 66,
-        "fn": 3000,
-        "precision": 0.784,
-        "recall": 0.074,
-        "f1": 0.135
+        "detected": 289,
+        "tp": 289,
+        "fp": 0,
+        "fn": 2951,
+        "precision": 1,
+        "recall": 0.089,
+        "f1": 0.164
       },
       "relations": {
         "groundTruthScoreable": 3240,
         "groundTruthAmbiguous": 0,
-        "scored": 240,
-        "correct": 240,
+        "scored": 289,
+        "correct": 289,
         "wrong": 0,
         "orphan": 0,
-        "unscoreable": 3000,
+        "unscoreable": 2951,
         "accuracy": 1,
-        "coverage": 0.074,
+        "coverage": 0.089,
         "forcedOnAmbiguous": 0,
         "ambiguousDeclared": 0,
         "ambiguousChairsNotDetected": 0,
@@ -993,9 +1014,9 @@
         "detected": 2,
         "detectedTyped": 2,
         "unknownZones": 0,
-        "matched": 2,
-        "precision": 1,
-        "recall": 0.5,
+        "matched": 1,
+        "precision": 0.5,
+        "recall": 0.25,
         "falseZoneInventions": 0,
         "inventedTypes": [],
         "byType": {
@@ -1003,7 +1024,7 @@
         }
       },
       "facts": {
-        "total": 6,
+        "total": 7,
         "expected": 3,
         "expectedPresent": 3,
         "expectedMissing": [],
@@ -1012,9 +1033,8 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "likely": 3,
-          "uncertain": 2,
-          "strong": 1
+          "likely": 5,
+          "strong": 2
         }
       },
       "regionFP": {
@@ -1025,36 +1045,168 @@
       },
       "sceneGraph": {
         "counts": {
-          "belongsTo": 240,
-          "partOf": 240
+          "belongsTo": 289,
+          "memberOf": 578
         },
-        "nodeCount": 306,
-        "edges": 480
+        "nodeCount": 289,
+        "edges": 867
       },
-      "contradictions": 2,
-      "contradictionIds": [
-        "contra:orphanSeats",
-        "contra:seatsInsideBody"
-      ],
+      "contradictions": 0,
+      "contradictionIds": [],
       "effort": {
-        "reviewGroups": 2,
+        "reviewGroups": 1,
         "uncertainQuestions": 0,
-        "reviewPriorities": 4
+        "reviewPriorities": 1
       },
-      "detectionMs": 1783,
+      "detectionMs": 8278,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
-        "status": "FAIL",
-        "fail": [
-          "240 real table(s) detected then held back (seatsInsideBody x240)"
-        ],
+        "status": "PARTIAL",
+        "fail": [],
+        "failCodes": [],
         "partial": [
-          "round tables typed 87/240",
-          "table recall 0.741",
-          "chair recall 0.074"
+          "round tables typed 136/289",
+          "table recall 0.892",
+          "chair recall 0.089"
+        ]
+      }
+    },
+    {
+      "planId": "a9-mixed-representation",
+      "realVenue": false,
+      "hypothesis": "The representation verdict is global and is acted on globally. One sheet carrying a symbolic hall (72 numbered discs, no seat drawn) and a drawn-furniture terrace (3 round tables, 24 chairs) must keep BOTH: the discs read as tables, and the terrace's tables and chairs still read as tables and chairs. A majority drawn in one language must not decide what the minority is.",
+      "tables": {
+        "groundTruth": 75,
+        "detected": 72,
+        "tp": 72,
+        "fp": 0,
+        "fn": 3,
+        "precision": 1,
+        "recall": 0.96,
+        "f1": 0.98,
+        "heldBack": 0,
+        "heldBackReasons": {},
+        "missedIds": [
+          "TB1",
+          "TB2",
+          "TB3"
+        ]
+      },
+      "tableTypes": {
+        "byType": {
+          "round": {
+            "matched": 72,
+            "correct": 72,
+            "accuracy": 1
+          }
+        },
+        "distinctFound": 1,
+        "required": null,
+        "meetsRequirement": null
+      },
+      "chairs": {
+        "groundTruth": 24,
+        "detected": 24,
+        "tp": 24,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1,
+        "f1": 1
+      },
+      "relations": {
+        "groundTruthScoreable": 24,
+        "groundTruthAmbiguous": 0,
+        "scored": 24,
+        "correct": 0,
+        "wrong": 0,
+        "orphan": 24,
+        "unscoreable": 0,
+        "accuracy": 0,
+        "coverage": 1,
+        "forcedOnAmbiguous": 0,
+        "ambiguousDeclared": 0,
+        "ambiguousChairsNotDetected": 0,
+        "declaredAmbiguousAmongScoreable": {
+          "count": 0,
+          "correct": 0
+        },
+        "wrongExamples": []
+      },
+      "zones": {
+        "expected": 2,
+        "detected": 1,
+        "detectedTyped": 0,
+        "unknownZones": 1,
+        "matched": 0,
+        "precision": null,
+        "recall": 0,
+        "falseZoneInventions": 0,
+        "inventedTypes": [],
+        "byType": {
+          "unknown": 1
+        }
+      },
+      "facts": {
+        "total": 5,
+        "expected": 2,
+        "expectedPresent": 1,
+        "expectedMissing": [
+          "zone:dining"
+        ],
+        "forbidden": 4,
+        "forbiddenPresent": [],
+        "fabricatedStrong": 0,
+        "withoutProvenance": [],
+        "byStrength": {
+          "likely": 1,
+          "uncertain": 2,
+          "strong": 2
+        }
+      },
+      "regionFP": {
+        "textRegions": 3,
+        "tablesInText": 0,
+        "architectureRegions": 1,
+        "tablesInArchitecture": 0
+      },
+      "sceneGraph": {
+        "counts": {
+          "memberOf": 179
+        },
+        "nodeCount": 107,
+        "edges": 179
+      },
+      "contradictions": 4,
+      "contradictionIds": [
+        "contra:orphanSeats",
+        "contra:emptyTablesOrphanSeats",
+        "contra:visualClass",
+        "contra:tablesNoDining"
+      ],
+      "effort": {
+        "reviewGroups": 3,
+        "uncertainQuestions": 0,
+        "reviewPriorities": 8
+      },
+      "detectionMs": 4132,
+      "timedOut": false,
+      "pageErrors": [],
+      "verdict": {
+        "status": "PARTIAL",
+        "fail": [],
+        "failCodes": [],
+        "partial": [
+          "missing expected fact(s): zone:dining",
+          "24 detected chair(s) seated at no table at all"
         ]
       }
     }
-  ]
+  ],
+  "recorded": {
+    "at": "2026-09-27T14:53:56.129Z",
+    "commit": "0eb7ad95348468e7dd1b91c5a30f62d9ed8d23c9",
+    "reason": "Re-recorded in §27 with the pinned OCR engine, which is what CI has always measured: until §27 the benchmark runners fetched OCR from jsDelivr, CI could reach it and this container could not, so every adversarial number recorded here (including the 2026-09-04 baseline) described the app without OCR. The TABLES, CHAIRS and ZONES lines of all nine fixtures were checked equal to CI's printed output at ff023c0 before recording. Against the 2026-09-04 baseline the with-OCR build differs on nearly every fixture, so a field-by-field reason is not meaningful: the old baseline measured a different configuration. The two FAILs (a2 HELD_BACK_REAL, a6 PHANTOM_MAJORITY) are listed with reasons in KNOWN-FAILS.json and are not accepted as correct."
+  }
 }

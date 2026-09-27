@@ -1,15 +1,15 @@
 {
- "ranAt": "2026-09-07T21:24:01.550Z",
+ "ranAt": "2026-09-27T15:02:17.712Z",
  "note": "Stability is measured across renderings of ONE drawing, so disagreement is the product's and not the annotation's. REAL DISTINCT VENUE PLANS: 1.",
  "renderings": 16,
- "stability": 0.9891135303265941,
+ "stability": 0.9890965732087228,
  "gate": 0.9,
  "met": true,
  "originalSignature": "bistrox1,diningx1",
  "stabilityMethod": "per annotated table: the share of (object, rendering) pairs whose zone TYPE matches that object's modal reading across renderings",
  "tablesCompared": 46,
- "comparisons": 643,
- "agreements": 636,
+ "comparisons": 642,
+ "agreements": 635,
  "disagreeingObjects": [
   {
    "object": "t038",
@@ -40,12 +40,12 @@
   },
   {
    "object": "t043",
-   "modal": "dining",
+   "modal": "bistro",
    "tally": {
     "bistro": 4,
-    "dining": 5
+    "dining": 4
    },
-   "seenIn": 9
+   "seenIn": 8
   }
  ],
  "zoneCountRange": [
@@ -419,9 +419,9 @@
     },
     {
      "type": "dining",
-     "confidence": "likely",
-     "objects": 2,
-     "seats": 2
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 1
     },
     {
      "type": "dining",

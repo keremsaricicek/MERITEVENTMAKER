@@ -10,6 +10,7 @@
 
 import { launchChromium } from "../tests/lib/env.mjs";
 import { serveApp } from "../tests/lib/server.mjs";
+import { sourceDigest, INPUTS } from "./lib/source-digest.mjs";
 
 import fs from "node:fs";
 import path from "node:path";
@@ -428,7 +429,10 @@ for (const f of files) {
 }
 await browser.close();
 
-const payload = { ranAt: new Date().toISOString(), reports };
+// What these numbers were measured on, so a reader can refuse them once the
+// code has moved on (benchmarks/lib/source-digest.mjs says why).
+const payload = { ranAt: new Date().toISOString(), source: sourceDigest(path.dirname(ROOT), INPUTS.detection),
+  scope: { filter: FILTER || null, annotations: ANNOT_DIR ? path.resolve(ANNOT_DIR) : "benchmarks/annotations" }, reports };
 if (OUT_FILE) {
   fs.mkdirSync(path.dirname(path.resolve(OUT_FILE)), { recursive: true });
   fs.writeFileSync(path.resolve(OUT_FILE), JSON.stringify(payload, null, 2));

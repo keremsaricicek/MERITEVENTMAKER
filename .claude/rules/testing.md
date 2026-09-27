@@ -23,6 +23,7 @@
 - Detector changes are measured, never asserted from memory:
 
   ```
+  npm run vendor:test          # once: the pinned OCR engine + language data
   npm run benchmark            # object-level, per plan, against annotations
   npm run benchmark:baseline   # compare to the committed benchmarks/BASELINE.json
   ```
@@ -30,7 +31,17 @@
   The baseline compares every guarded field separately per plan, because a
   trade (chair recall up, table F1 down) is invisible in a single score and
   is a revert, not a win. Re-record it only as a deliberate, explained
-  decision.
+  decision — the adversarial and memory baselines refuse to record without
+  `--reason`, and store it. `benchmark:baseline` refuses a report measured on
+  different source.
+- Every benchmark runner serves OCR from the pinned cache and refuses the
+  network (`tests/lib/env.mjs`). A number measured with the CDN reachable and
+  one measured without it are two different products: §27 found `a2` at 3
+  phantom tables with OCR and 23 without. Never compare across that line.
+- What each CI step proves is written in
+  `.claude/skills/merit-ci-quality-gates/SKILL.md` (INFO / WARNING / RELEASE
+  GATE). "CI green" means the RELEASE GATE rows passed — not that the listed
+  adversarial FAILs or the §23 memory targets are met.
 - After any change to `index.html` or `src/*.js`/`src/styles.css`
   structure, rebuild BOTH offline artifacts and then **run the built
   artifacts**:

@@ -3,11 +3,19 @@
 ```
 node benchmarks/adversarial/make-fixtures.mjs        # regenerate the nine images + declarations
 npm run benchmark:adversarial                        # score the current build against them
-npm run benchmark:adversarial -- --compare           # against the frozen baseline, field by field
+npm run benchmark:adversarial -- --compare           # THE GATE CI RUNS (gate.mjs)
 npm run benchmark:adversarial -- a7                  # one fixture
 node benchmarks/adversarial/run-adversarial.mjs --freeze          # (re)freeze, deliberately
-node benchmarks/adversarial/run-adversarial.mjs --record-baseline # replace BASELINE.json
+node benchmarks/adversarial/run-adversarial.mjs --record-baseline --reason "why"  # replace BASELINE.json
 ```
+
+`--compare` blocks on a regression against `BASELINE.json`, on any FAIL code not
+listed for that fixture in `KNOWN-FAILS.json`, on a listed code the fixture no
+longer produces, and on a fixture that is missing, unbaselined, refused or
+erroring. Every listed FAIL is printed on every run with its reason and owner.
+Listing a FAIL is not accepting the output — it is still wrong, and still says
+so. Until §27, CI ran this without `--compare`, so the step could fail on
+nothing short of a crash.
 
 > **SYNTHETIC ADVERSARIAL FIXTURES. NOT REAL VENUES.**
 > They do not count toward **REAL DISTINCT VENUE PLANS: 1**. The learned encoder
@@ -127,6 +135,23 @@ on the fixture with no furniture, where it is 0 by arithmetic and means nothing.
 And precision was not scored at all, so `a6` — whose entire purpose is false-
 positive resistance — passed while proposing 46 phantom tables against 8 real
 ones.
+
+## Where it stands now
+
+Re-measure with `npm run benchmark:adversarial -- --compare`. Dated snapshot
+(§27, 2026-09-27), measured with the pinned OCR engine and equal, line for
+line on tables, chairs and zones, to CI's printed run at `ff023c0`:
+
+**2 PASS (`a3`, `a5`) · 5 PARTIAL · 2 FAIL (`a2`, `a6`).** Both FAILs are
+accepted in writing in `KNOWN-FAILS.json` — reason, operator-visible
+consequence, owner — and printed as FAIL on every run.
+
+> **Every earlier table in this file, and the 2026-09-04 baseline, was
+> measured without OCR.** The runner fetched the OCR engine from jsDelivr; CI
+> could reach it and the development container could not. The difference is
+> large — `a2` has 3 phantom tables with OCR and 23 without, `a6` 21 and 46 —
+> so the sections below describe a different configuration of the app. They
+> are kept because the reasoning in them is still the record of what was tried.
 
 ## The first run, on the untouched build
 

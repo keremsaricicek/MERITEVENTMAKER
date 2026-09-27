@@ -48,6 +48,11 @@ jobs:
           path: ~/.cache/ms-playwright
           key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium
+      # The pinned OCR engine and language data, served locally to every test
+      # and benchmark. Without it the runners stop rather than measure the app
+      # without OCR — which is what this container did for the whole programme
+      # while CI, reaching the CDN, measured it with OCR (§27).
+      - run: npm run vendor:test
       # Populates .vendor-cache/ with the pinned SheetJS and PDF.js tarballs,
       # which the test run then serves locally instead of reaching a CDN.
       - name: Build the offline artifact
@@ -71,6 +76,11 @@ jobs:
           path: ~/.cache/ms-playwright
           key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium
+      # The pinned OCR engine and language data, served locally to every test
+      # and benchmark. Without it the runners stop rather than measure the app
+      # without OCR — which is what this container did for the whole programme
+      # while CI, reaching the CDN, measured it with OCR (§27).
+      - run: npm run vendor:test
       - run: npm run build:offline
 
       # One run, every plan. Splitting Golden and ORNEK into separate jobs would
@@ -108,6 +118,11 @@ jobs:
           path: ~/.cache/ms-playwright
           key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium
+      # The pinned OCR engine and language data, served locally to every test
+      # and benchmark. Without it the runners stop rather than measure the app
+      # without OCR — which is what this container did for the whole programme
+      # while CI, reaching the CDN, measured it with OCR (§27).
+      - run: npm run vendor:test
 
       # The vendored OCR engine and its language data are fetched once and
       # cached: ~30MB that changes only when the build script pins a new
@@ -116,7 +131,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .vendor-cache
-          key: vendor-${{ runner.os }}-${{ hashFiles('scripts/build-offline.mjs', 'scripts/build-offline-full.mjs') }}
+          key: vendor-${{ runner.os }}-${{ hashFiles('scripts/build-offline.mjs', 'scripts/build-offline-full.mjs', 'tests/lib/vendor.mjs') }}
 
       - name: Build the single-file artifact
         run: npm run build:offline
@@ -154,6 +169,11 @@ jobs:
           path: ~/.cache/ms-playwright
           key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium
+      # The pinned OCR engine and language data, served locally to every test
+      # and benchmark. Without it the runners stop rather than measure the app
+      # without OCR — which is what this container did for the whole programme
+      # while CI, reaching the CDN, measured it with OCR (§27).
+      - run: npm run vendor:test
       - run: npm run build:offline
 
       # THE SLOW CONTRACT SUITES, and their absence was a real hole.
@@ -171,7 +191,10 @@ jobs:
         run: npm run test:slow
 
       # Each of these fails the job on a real regression against its own
-      # committed expectations. None of them trains anything.
+      # committed expectations. None of them trains anything. The class of
+      # every step in this file is written down in
+      # .claude/skills/merit-ci-quality-gates/SKILL.md, and a suite
+      # (ci-gate-honesty) fails when a step here has no row there.
       - name: Review ordering
         run: npm run benchmark:review-order
       - name: Plan facts
@@ -180,24 +203,29 @@ jobs:
         run: npm run benchmark:contradictions
       - name: Semantic zones
         run: npm run benchmark:zones
+      # --compare is the gate. Without it this step measured and printed, and
+      # could fail on nothing short of a crash while two fixtures were FAIL. It
+      # now blocks on a regression against the frozen baseline, on any FAIL
+      # not listed in benchmarks/adversarial/KNOWN-FAILS.json (each listed one
+      # names its reason and owner and is printed on every run), on a listed
+      # FAIL that stopped failing, and on a refused or erroring fixture.
       - name: Adversarial fixtures
-        run: npm run benchmark:adversarial
+        run: npm run benchmark:adversarial -- --compare
       - name: False positives
         run: npm run benchmark:false-positives
       - name: Teaching propagation
         run: npm run benchmark:teaching
 
-      # REPORTED, NOT GATED, and that is a deliberate decision rather than a
-      # convenience. Visual Plan Memory's gates are not met on TRANSFORMED
-      # renderings of the plan — retention 0.786 against a 0.98 gate — and that
-      # is recorded in benchmarks/memory/ as a known, measured, accepted state,
-      # not a bug waiting to be fixed. Gating on it would make CI permanently
-      # red; lowering the gate to make CI green is the thing this sprint
-      # forbids. So it runs, its numbers are uploaded, and its exit code is not
-      # allowed to lie in either direction.
-      - name: Visual Plan Memory (measured, not gated)
-        continue-on-error: true
-        run: npm run benchmark:memory
+      # A REGRESSION GATE, and deliberately not the §23 gate. The §23
+      # thresholds are not met on transformed renderings of the plan, and no
+      # setting reaches them (a signal problem, measured in §9). This step used
+      # to run the threshold check under continue-on-error, which meant it
+      # could not fail at all. --compare fails on anything worse than
+      # benchmarks/memory/BASELINE.json — above all one more WRONG application,
+      # which an operator cannot see — and prints the §23 thresholds as NOT MET
+      # on every run, so the green is never read as those being met.
+      - name: Visual Plan Memory (regression gate; §23 thresholds reported)
+        run: npm run benchmark:memory -- --compare
       - name: Upload memory report
         if: always()
         uses: actions/upload-artifact@v4
@@ -222,12 +250,18 @@ jobs:
           path: ~/.cache/ms-playwright
           key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium
+      # The pinned OCR engine and language data, served locally to every test
+      # and benchmark. Without it the runners stop rather than measure the app
+      # without OCR — which is what this container did for the whole programme
+      # while CI, reaching the CDN, measured it with OCR (§27).
+      - run: npm run vendor:test
       - run: npm run build:offline
 
-      # Mostly measurements rather than assertions — there is no honest budget
+      # Timings are measurements, not assertions — there is no honest budget
       # for "fast enough" and inventing one would be the overclaiming this
-      # product refuses everywhere else. The exception is the live-windowing
-      # correctness suite, which asserts that capping the DOM did not change
-      # what an operator sees, and that one does fail the run.
+      # product refuses everywhere else. Three runners also assert something
+      # an operator depends on, and those fail the run: live windowing did not
+      # change what the door sees, the 4,000-seat event survives a reload
+      # intact, and the save queue still ends last-write-wins.
       - name: Performance suites
         run: npm run perf

@@ -31,8 +31,11 @@
 //   node benchmarks/adversarial/run-adversarial.mjs                 # all
 //   node benchmarks/adversarial/run-adversarial.mjs a1              # one
 //   node benchmarks/adversarial/run-adversarial.mjs --freeze        # (re)freeze
-//   node benchmarks/adversarial/run-adversarial.mjs --record-baseline
-//   node benchmarks/adversarial/run-adversarial.mjs --compare       # vs baseline
+//   node benchmarks/adversarial/run-adversarial.mjs --record-baseline --reason "why"
+//   node benchmarks/adversarial/run-adversarial.mjs --compare       # the CI gate
+//
+// --compare is the gate CI runs: see gate.mjs for exactly what blocks. A
+// baseline is never recorded without a written reason, which is stored in it.
 //
 // SYNTHETIC ADVERSARIAL FIXTURES. NOT REAL VENUES. They do not count toward
 // REAL DISTINCT VENUE PLANS, which is 1.
@@ -43,6 +46,10 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
+import { adversarialGate } from "./gate.mjs";
+import { ciSummary } from "../lib/ci-summary.mjs";
+import { sourceDigest, INPUTS } from "../lib/source-digest.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const BENCH = path.join(ROOT, "..");
@@ -50,10 +57,11 @@ const DECL_DIR = path.join(ROOT, "declarations");
 const FROZEN = path.join(ROOT, "FROZEN.json");
 const BASELINE = path.join(ROOT, "BASELINE.json");
 const LATEST = path.join(ROOT, "latest.json");
+const KNOWN = path.join(ROOT, "KNOWN-FAILS.json");
 
 const argv = process.argv.slice(2);
 const has = f => argv.includes(f);
-const FILTER = argv.find(a => !a.startsWith("--")) || "";
+const FILTER = argv.find((a, i) => !a.startsWith("--") && argv[i - 1] !== "--reason") || "";
 
 const sha = buf => crypto.createHash("sha256").update(buf).digest("hex");
 const declFiles = () => fs.readdirSync(DECL_DIR).filter(f => f.endsWith(".json")).sort();
@@ -381,20 +389,25 @@ function evaluate(decl, det) {
 // and then threw away. PARTIAL is for missing or degraded results, which are
 // honest failures of recall rather than false statements.
 function verdict(r) {
-  const fail = [], partial = [];
+  // Each FAIL carries a stable code beside its sentence. The sentence has
+  // numbers in it and changes run to run; the code is what KNOWN-FAILS.json
+  // names, so a fixture known to fail one way cannot start failing another
+  // way without the gate noticing.
+  const fail = [], failCodes = [], partial = [];
+  const failWith = (code, text) => { failCodes.push(code); fail.push(text); };
   const gtTables = r.tables.groundTruth, gtChairs = r.chairs.groundTruth;
-  if (r.facts.fabricatedStrong > 0) fail.push(`${r.facts.fabricatedStrong} forbidden fact(s) stated as STRONG`);
-  if (r.zones.falseZoneInventions > 0) fail.push(`${r.zones.falseZoneInventions} invented zone(s): ${r.zones.inventedTypes.join(", ")}`);
-  if (r.tables.heldBack > 0) fail.push(`${r.tables.heldBack} real table(s) detected then held back (${Object.entries(r.tables.heldBackReasons).map(([k, v]) => `${k} x${v}`).join(", ")})`);
+  if (r.facts.fabricatedStrong > 0) failWith("FABRICATED_STRONG", `${r.facts.fabricatedStrong} forbidden fact(s) stated as STRONG`);
+  if (r.zones.falseZoneInventions > 0) failWith("INVENTED_ZONE", `${r.zones.falseZoneInventions} invented zone(s): ${r.zones.inventedTypes.join(", ")}`);
+  if (r.tables.heldBack > 0) failWith("HELD_BACK_REAL", `${r.tables.heldBack} real table(s) detected then held back (${Object.entries(r.tables.heldBackReasons).map(([k, v]) => `${k} x${v}`).join(", ")})`);
   // Precision is a FAIL, not a nuance: a phantom table goes onto the floor
   // plan and into the capacity total. A fixture with no furniture at all is
   // the strictest case — any table there is invented by definition.
   if (gtTables === 0 && r.tables.detected > 0)
-    fail.push(`${r.tables.detected} table(s) proposed on a drawing with no furniture`);
+    failWith("TABLES_ON_EMPTY", `${r.tables.detected} table(s) proposed on a drawing with no furniture`);
   else if (gtTables > 0 && r.tables.fp > gtTables)
-    fail.push(`more phantom tables than real ones: ${r.tables.fp} FP against ${gtTables} GT (precision ${r.tables.precision})`);
+    failWith("PHANTOM_MAJORITY", `more phantom tables than real ones: ${r.tables.fp} FP against ${gtTables} GT (precision ${r.tables.precision})`);
   if (gtChairs === 0 && r.chairs.detected > 0)
-    fail.push(`${r.chairs.detected} chair(s) proposed on a drawing with no furniture`);
+    failWith("CHAIRS_ON_EMPTY", `${r.chairs.detected} chair(s) proposed on a drawing with no furniture`);
 
   if (r.facts.forbiddenPresent.length > r.facts.fabricatedStrong)
     partial.push(`${r.facts.forbiddenPresent.length - r.facts.fabricatedStrong} forbidden fact(s) below STRONG`);
@@ -416,7 +429,7 @@ function verdict(r) {
     partial.push(`${r.tables.fp} phantom table(s) (precision ${r.tables.precision})`);
   if (r.zones.expected > 0 && r.zones.precision !== null && r.zones.precision < 0.5)
     partial.push(`zone precision ${r.zones.precision} — ${r.zones.detectedTyped} typed zones for ${r.zones.expected} real ones`);
-  return { status: fail.length ? "FAIL" : partial.length ? "PARTIAL" : "PASS", fail, partial };
+  return { status: fail.length ? "FAIL" : partial.length ? "PARTIAL" : "PASS", fail, failCodes, partial };
 }
 
 // ---- main ------------------------------------------------------------------
@@ -482,6 +495,7 @@ await app.close?.();
 
 const payload = {
   ranAt: new Date().toISOString(),
+  source: sourceDigest(path.join(BENCH, ".."), INPUTS.adversarial),
   realVenue: false,
   note: "SYNTHETIC ADVERSARIAL FIXTURES — NOT REAL VENUES. These scores are never mixed into real-plan aggregates. " +
     "REAL DISTINCT VENUE PLANS: 1. CROSS-VENUE GENERALIZATION: NOT VERIFIED.",
@@ -490,41 +504,34 @@ const payload = {
 fs.writeFileSync(LATEST, JSON.stringify(payload, null, 2) + "\n");
 
 if (has("--record-baseline")) {
-  fs.writeFileSync(BASELINE, JSON.stringify(payload, null, 2) + "\n");
-  console.log(`\nrecorded adversarial baseline -> ${path.relative(process.cwd(), BASELINE)}`);
+  const reasonAt = argv.indexOf("--reason"), reason = reasonAt >= 0 ? argv[reasonAt + 1] : "";
+  if (!reason || reason.startsWith("--") || FILTER) {
+    console.error("\nREFUSED to record: a baseline needs --reason \"...\" and an unfiltered run. Re-recording absorbs every " +
+      "difference at once, so the reason is stored in the file beside the numbers.");
+    process.exitCode = 2;
+  } else {
+    let commit = "unknown";
+    try { commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: path.join(BENCH, "..") }).toString().trim(); } catch {}
+    fs.writeFileSync(BASELINE, JSON.stringify({ ...payload, recorded: { at: payload.ranAt, commit, reason } }, null, 2) + "\n");
+    console.log(`\nrecorded adversarial baseline -> ${path.relative(process.cwd(), BASELINE)}`);
+  }
 }
 
-if (has("--compare") && fs.existsSync(BASELINE)) {
-  const base = JSON.parse(fs.readFileSync(BASELINE, "utf8"));
-  const byId = new Map(base.results.map(r => [r.planId, r]));
-  console.log("\n=== against the frozen adversarial baseline ===");
-  // Every guarded field compared separately, because a trade (relations up,
-  // table recall down) is invisible in one score and is a revert, not a win.
-  const fields = [
-    ["tables.f1", r => r.tables?.f1], ["tables.recall", r => r.tables?.recall],
-    ["tables.heldBack", r => r.tables?.heldBack, "lower"],
-    ["chairs.f1", r => r.chairs?.f1],
-    ["relations.accuracy", r => r.relations?.accuracy], ["relations.coverage", r => r.relations?.coverage],
-    ["relations.forcedOnAmbiguous", r => r.relations?.forcedOnAmbiguous, "lower"],
-    ["zones.precision", r => r.zones?.precision], ["zones.recall", r => r.zones?.recall],
-    ["zones.falseZoneInventions", r => r.zones?.falseZoneInventions, "lower"],
-    ["facts.fabricatedStrong", r => r.facts?.fabricatedStrong, "lower"],
-    ["facts.expectedPresent", r => r.facts?.expectedPresent],
-  ];
-  let regressions = 0, improvements = 0;
-  for (const r of results) {
-    const b = byId.get(r.planId);
-    if (!b) { console.log(`  ${r.planId}: new fixture, no baseline`); continue; }
-    for (const [name, get, dir] of fields) {
-      const now = get(r), was = get(b);
-      if (now == null || was == null || now === was) continue;
-      const better = dir === "lower" ? now < was : now > was;
-      console.log(`  ${better ? "IMPROVED " : "REGRESSED"} ${r.planId} ${name}: ${was} -> ${now}`);
-      better ? improvements++ : regressions++;
-    }
-  }
-  console.log(`\n${regressions} regression(s), ${improvements} improvement(s)`);
-  if (regressions) process.exitCode = 1;
+if (has("--compare")) {
+  const base = fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, "utf8")) : null;
+  const known = fs.existsSync(KNOWN) ? JSON.parse(fs.readFileSync(KNOWN, "utf8")) : { fails: [] };
+  const gate = adversarialGate({ results, refusals, baseline: base, known, filtered: !!FILTER });
+  console.log(`\n=== the adversarial gate (baseline ${base?.recorded?.at || base?.ranAt || "MISSING"}) ===`);
+  for (const line of gate.improvements) console.log(`  IMPROVED  ${line}`);
+  for (const k of gate.knownFails) console.log(`  KNOWN FAIL ${k.planId} ${k.code} — owner ${k.owner}. ${k.why} (${k.ref})`);
+  for (const line of gate.blocking) console.log(`  BLOCKING  ${line}`);
+  console.log(`\n${gate.blocking.length} blocking, ${gate.knownFails.length} known FAIL(s) listed in KNOWN-FAILS.json, ` +
+    `${gate.improvements.length} improvement(s)`);
+  ciSummary("Adversarial fixtures (synthetic — not real venues)", [
+    { cls: "RELEASE GATE", text: gate.pass ? `passed: no regression, no new FAIL (${gate.improvements.length} improvement(s))` : `FAILED — ${gate.blocking.join("; ")}` },
+    ...gate.knownFails.map(k => ({ cls: "INFO", text: `KNOWN FAIL, accepted in writing: ${k.planId} ${k.code} — owner ${k.owner}` })),
+  ]);
+  if (!gate.pass) process.exitCode = 1;
 }
 
 const counts = results.reduce((m, r) => (m[r.verdict?.status || "ERROR"] = (m[r.verdict?.status || "ERROR"] || 0) + 1, m), {});

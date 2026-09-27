@@ -111,8 +111,15 @@ other way. Set `MERIT_BASE_URL` to point it at a server you already have.
 
 `BASELINE.json` is the committed claim about what the detector currently does:
 per plan, per field, at a named commit, against images with recorded hashes.
-`npm run benchmark:baseline` compares a fresh run to it and exits non-zero on
-any drop.
+`npm run benchmark:baseline` compares the last `npm run benchmark` run to it and
+exits non-zero on any drop, and on any baseline plan the run did not score.
+
+It compares a report, not the code, so the report says what it measured: every
+run writes a digest of the served app, the annotations and the runner itself
+into `reports/latest.json` (`lib/source-digest.mjs`), and the compare — and
+`--record` — refuse with exit 2 when the checkout's digest differs. Before that,
+run on its own it printed "No regressions" about whatever run was last
+committed.
 
 Fields are compared one at a time and per plan, on purpose. A single overall
 score hides the trade this project cares most about — chair recall rising

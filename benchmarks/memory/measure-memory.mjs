@@ -1,6 +1,17 @@
 // Does a human decision survive a plan that changed?
 //
-//   node benchmarks/memory/measure-memory.mjs
+//   node benchmarks/memory/measure-memory.mjs                      # exits 1 while the §23 gates are unmet
+//   node benchmarks/memory/measure-memory.mjs --compare            # the CI gate: no regression vs BASELINE.json
+//   node benchmarks/memory/measure-memory.mjs --record-baseline --reason "why"
+//
+// Two different questions, two exit codes. Without flags this answers "are the
+// §23 gates met?" — they are not on transformed plans, and no setting reaches
+// them (a signal problem, measured in §9). CI used to ask that question under
+// `continue-on-error`, so the step could not fail at all: a memory change that
+// made twice as many wrong applications would have shown the same yellow as
+// today. With --compare it asks "did anything get worse than the recorded
+// baseline?", which CAN fail and does, and still prints the §23 gates as
+// NOT MET every run so nobody reads the green as those being met.
 //
 // benchmarks/teach-ai/ already measures retention across a re-analysis of the
 // SAME image, and reports 1.0000. That number is real and it is also the easy
@@ -34,12 +45,18 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { launchChromium } from "../../tests/lib/env.mjs";
 import { serveApp } from "../../tests/lib/server.mjs";
+import { execFileSync } from "node:child_process";
+import { sourceDigest, INPUTS } from "../lib/source-digest.mjs";
+import { memoryGate } from "./gate.mjs";
+import { ciSummary } from "../lib/ci-summary.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const BENCH = path.dirname(HERE);
 const PLAN = path.join(BENCH, "plans", "merit-real-venue-plan.png");
 const ANNOT = JSON.parse(fs.readFileSync(path.join(BENCH, "annotations", "merit-real-venue.json"), "utf8"));
 const VARIANTS = path.join(BENCH, "robustness", "variants");
+const BASELINE = path.join(HERE, "BASELINE.json");
+const argv = process.argv.slice(2);
 
 // The transformations a decision has to survive. `identical` is the control:
 // if it is not 1.0 something is broken in the harness, not in the product.
@@ -298,6 +315,7 @@ const totals = {
 const rate = (n, d) => (d ? +(n / d).toFixed(4) : null);
 const report = {
   ranAt: new Date().toISOString(),
+  source: sourceDigest(path.dirname(BENCH), INPUTS.memory),
   realVenue: true,
   note: "REAL DISTINCT VENUE PLANS: 1. Every scenario is the same drawing transformed.",
   scenarios: results,
@@ -317,9 +335,9 @@ fs.writeFileSync(path.join(HERE, "report.json"), JSON.stringify(report, null, 1)
 
 console.log("\n\nACROSS EVERY SCENARIO");
 console.log(`  scoreable decisions            ${totals.scoreable}`);
-console.log(`  retention, full model          ${report.totals.retentionFull}   gate >= 0.98`);
-console.log(`  identity precision, full model ${report.totals.identityPrecisionFull}   gate >= 0.98`);
-console.log(`  wrong application rate         ${report.totals.wrongApplicationRateFull}   gate <= 0.01`);
+console.log(`  retention, full model          ${report.totals.retentionFull}   §23 target >= 0.98`);
+console.log(`  identity precision, full model ${report.totals.identityPrecisionFull}   §23 target >= 0.98`);
+console.log(`  wrong application rate         ${report.totals.wrongApplicationRateFull}   §23 target <= 0.01`);
 console.log("\nDOES THE LEARNED EMBEDDING CONTRIBUTE?  (§24 — the answer has to be measured, not assumed)");
 console.log(`  retention with it              ${report.totals.retentionFull}`);
 console.log(`  retention without it           ${report.totals.retentionNoVisual}`);
@@ -341,6 +359,30 @@ console.log(`  retention          ${report.totals.retentionFull} -> ${report.tot
 console.log(`  identity precision ${report.totals.identityPrecisionFull} -> ${report.totals.identityPrecisionWithGlobalTransform}`);
 console.log(`  it recovers ${totals.retainedShifted - totals.retainedFull} decision(s) and misapplies ${totals.wrongShifted - totals.wrongFull} more.`);
 console.log("  A lost decision is reported and re-made; a wrongly applied one is invisible. Not promoted.");
-console.log(`\n${gatesMet ? "All memory gates met." : "MEMORY GATES NOT MET on transformed plans (they are met on an unchanged one)."}`);
+console.log(`\n${gatesMet ? "All §23 memory targets met." : "§23 MEMORY TARGETS NOT MET on transformed plans (they are met on an unchanged one)."}`);
 console.log("REAL DISTINCT VENUE PLANS: 1. CROSS-VENUE GENERALIZATION: NOT VERIFIED.");
-if (!gatesMet) process.exitCode = 1;
+
+if (argv.includes("--record-baseline")) {
+  const at = argv.indexOf("--reason"), reason = at >= 0 ? argv[at + 1] : "";
+  if (!reason || reason.startsWith("--")) {
+    console.error("\nREFUSED to record: a baseline needs --reason \"...\"; it is stored beside the numbers.");
+    process.exit(2);
+  }
+  let commit = "unknown";
+  try { commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: path.dirname(BENCH) }).toString().trim(); } catch {}
+  fs.writeFileSync(BASELINE, JSON.stringify({ ...report, recorded: { at: report.ranAt, commit, reason } }, null, 1) + "\n");
+  console.log(`\nrecorded memory baseline -> ${path.relative(process.cwd(), BASELINE)}`);
+} else if (argv.includes("--compare")) {
+  const base = fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, "utf8")) : null;
+  const gate = memoryGate(report, base);
+  console.log(`\n=== the memory gate: no regression against ${base ? `the baseline recorded ${base.recorded?.at}` : "a MISSING baseline"} ===`);
+  for (const line of gate.improvements) console.log(`  IMPROVED  ${line}`);
+  for (const line of gate.blocking) console.log(`  BLOCKING  ${line}`);
+  console.log(`  §23 targets: ${gatesMet ? "met" : "NOT MET — reported, not gated (INFO); see benchmarks/memory/README.md"}`);
+  ciSummary("Visual Plan Memory", [
+    { cls: "RELEASE GATE", text: gate.pass ? `no regression against the baseline (${gate.improvements.length} improvement(s))` : `FAILED — ${gate.blocking.join("; ")}` },
+    { cls: "INFO", text: `§23 targets ${gatesMet ? "met" : "NOT MET"}: retention ${report.totals.retentionFull} (≥ 0.98), identity precision ` +
+      `${report.totals.identityPrecisionFull} (≥ 0.98), wrong application ${report.totals.wrongApplicationRateFull} (≤ 0.01)` },
+  ]);
+  process.exitCode = gate.pass ? 0 : 1;
+} else if (!gatesMet) process.exitCode = 1;

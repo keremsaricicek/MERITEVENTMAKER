@@ -1,5 +1,5 @@
 {
- "ranAt": "2026-09-08T10:26:31.584Z",
+ "ranAt": "2026-09-27T15:03:22.544Z",
  "plan": "merit-real-venue",
  "matchToleranceP": 3,
  "candidates": 56,
@@ -13,9 +13,9 @@
  "propagation": {
   "trials": 47,
   "spreadTrials": 41,
-  "reached": 108,
-  "scored": 108,
-  "correct": 108,
+  "reached": 109,
+  "scored": 109,
+  "correct": 109,
   "wrong": 0,
   "ontoUnannotated": 0,
   "precision": 1,
@@ -71,8 +71,8 @@
     "object": "t009",
     "was": "table:square",
     "taught": "table:square",
-    "reached": 4,
-    "correct": 4,
+    "reached": 5,
+    "correct": 5,
     "wrong": 0,
     "ontoUnannotated": 0
    },

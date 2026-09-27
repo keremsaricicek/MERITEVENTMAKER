@@ -98,7 +98,7 @@ for (const suite of selected) {
   if (!vendorWarned && !vendor.cacheAvailable) {
     vendorWarned = true;
     console.log("  note: .vendor-cache is empty, so the CDN engines load over the network.");
-    console.log("        Run `npm run build:offline` once to make the run fully offline.\n");
+    console.log("        Run `npm run build:offline` and `npm run vendor:test` once to make the run fully offline.\n");
   }
 
   try {

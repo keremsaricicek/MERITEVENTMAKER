@@ -26,7 +26,8 @@
     "perf": "node benchmarks/perf/run-perf.mjs",
     "build:offline": "node scripts/build-offline.mjs",
     "build:offline-full": "node scripts/build-offline-full.mjs",
-    "verify:offline": "node benchmarks/offline/verify-offline-package.mjs"
+    "verify:offline": "node benchmarks/offline/verify-offline-package.mjs",
+    "vendor:test": "node scripts/fetch-test-vendor.mjs"
   },
   "devDependencies": {
     "axe-core": "4.13.0",

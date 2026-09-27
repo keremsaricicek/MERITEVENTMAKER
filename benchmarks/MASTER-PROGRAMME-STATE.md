@@ -1542,6 +1542,71 @@ Golden plans unchanged: `merit-real-venue` square 37/37, round 4/4, bistro
 `index.html` changed nothing the detector does — which is what §4's script
 tag needed to prove, rather than be assumed.
 
+### AA. §27 — CI release gates — DONE, and the biggest finding was not in CI at all
+
+**Order.** §27 ran before §26's measurement. The §26 runner is written
+(`benchmarks/perf/repeat-stress.mjs`), but its numbers need an idle machine
+and the §24/§25 gate held this one; §27's work needed none. §26 is next.
+
+**Measured first — five mechanisms, three of them new:**
+
+1. **Adversarial.** CI ran `benchmark:adversarial` *without* `--compare`, so the
+   step compared nothing and could fail on nothing short of a crash, while
+   `a2` and `a6` were FAIL. (The skill had recorded the weaker version: FAIL
+   ignored even with `--compare`.)
+2. **Memory.** `continue-on-error`, so it could not fail at all.
+3. **`benchmark:baseline`** compared whatever `reports/latest.json` held, and a
+   plan missing from the run was a "note" (entry K named the first half).
+4. **`npm run perf`** listed `stress-4000-seats.mjs` as a profiler, so its
+   4,000-seat reload-integrity assertion could exit 1 and the run still passed.
+5. **Two products under one name.** Found while checking whether a memory
+   baseline recorded here would hold on CI: CI's memory run scored **182**
+   decisions, this container **196**. Timing was the first theory and was
+   refuted (a 4× CPU-throttled run gave 196 again). The cause was OCR: the
+   benchmark runners loaded Tesseract and its language data from jsDelivr, CI
+   could reach it, this container's proxy could not. With the OCR assets
+   pinned and served locally, this container reproduced CI's adversarial
+   TABLES/CHAIRS/ZONES lines for all nine fixtures and CI's memory numbers in
+   every scenario, exactly. **Every benchmark number committed from this
+   container during the programme was measured without OCR** — including both
+   old baselines and the §7 diagnoses of `a2` (23 phantoms without OCR, 3
+   with) and `a6` (46 without, 21 with). The detection baseline
+   (`benchmarks/BASELINE.json`) is unaffected: its guarded fields are equal
+   with and without OCR, which is why it has always passed on CI.
+
+**Changed:**
+
+| | before | after |
+|---|---|---|
+| adversarial in CI | measured, never compared | `--compare` through `benchmarks/adversarial/gate.mjs`: blocks on a regression, a FAIL code not in `KNOWN-FAILS.json`, a listed code that stopped occurring, a missing / unbaselined / refused / erroring fixture |
+| `a2`, `a6` | FAIL, silently waved through | **accepted in writing** per `merit-plan-reliability` — reason, operator-visible consequence, owner — and printed as FAIL on every run. Not accepted as correct |
+| memory in CI | `continue-on-error` | `--compare`, a regression gate (`benchmarks/memory/gate.mjs`); §23 targets printed as NOT MET, classified INFO |
+| `benchmark:baseline` | trusted any `latest.json` | refuses a report whose source digest differs from the checkout (`benchmarks/lib/source-digest.mjs`); a missing plan is a regression |
+| perf | integrity failure ignored | propagated |
+| OCR in runners | from the network, when reachable | pinned (`tests/lib/vendor.mjs`), served from `.vendor-cache`, network refused; `npm run vendor:test` fetches the pins; every CI job runs it |
+| classification | a table at `65ea956`, partly wrong | every npm command in `ci.yml` classified in `merit-ci-quality-gates`; `ci-gate-honesty` fails if one is not |
+
+**Baselines re-recorded, each with its reason stored in the file.** The
+adversarial baseline twice: once without OCR (a mistake, superseded within
+the hour — its stored reason also claimed an unmeasured cause for the a8 zone
+drop and was corrected before the second recording) and then with OCR, after
+the numbers were checked equal to CI's. The first memory baseline, with OCR.
+
+**Evidence.** `ci-gate-honesty` (47 checks) feeds every gate's decision
+function each case, runs `record-baseline.mjs` against stale, moved and
+partial reports, launches a benchmark browser and proves an unpinned CDN
+request is refused. 14 of 14 deliberate mutations fail it on the check they
+target: stale report compared, missing plan as a note, a new FAIL waved
+through, a stale known entry kept, a missing fixture ignored, a page error
+ignored, one more wrong memory application ignored, `continue-on-error` back,
+adversarial without `--compare`, perf integrity as a profiler, an unpinned
+CDN request reaching the network, the language data unpinned, an
+unclassified CI command, a job without the vendor step. With pinned OCR,
+locally: `benchmark` + `benchmark:baseline` no regressions; adversarial and
+memory `--compare` 0 blocking; review-order, facts, contradictions, zones,
+false-positives and teaching all exit 0 — the same set CI runs. Their
+committed `report.json` files are rewritten from these with-OCR runs.
+
 ### Adversarial at `3451f67` — 1 PASS · 4 PARTIAL · 3 FAIL
 
 Same distribution as `02edac7`; the run exits 0 because it gates on
@@ -1569,30 +1634,37 @@ typing 136/289.
 
 ## Next step
 
-**§26 — performance.** Per `merit-performance-hardening`: median AND p95 over
-repeated runs, never a single number. Measure first, at realistic and at stress
-sizes (4,000 guests, 400 tables): first paint of each screen, a keystroke in the
-door search and the global finder, a seat assignment, a save, an XLSX export.
-Compare against whatever `benchmarks/` already records before changing code.
+**§26 — performance.** The runner is written, and is committed with §26's
+results rather than §27's (`benchmarks/perf/repeat-stress.mjs`): 400 tables / 4,000 chairs /
+3,000 guests, every screen and both search keystrokes, 20 samples per
+operation in two passes of opposite order, median / p95 / max, a 100-render
+degradation check and DOM growth over three laps. Run it with NOTHING else on
+the machine and compare against `benchmarks/perf/README.md`'s previous
+single-run numbers before changing any code.
 
-Then, in the order given:
-§27 real CI release gates (incl. the `benchmark:baseline` false green and
-`--compare` exit 1), §28–30, then the final review and completion matrix.
+Then §28 test-coverage discipline (unreachable regions, critical paths and
+error branches with no behaviour test — not a line-coverage percentage), §29
+(security / accessibility / resilience suites exist and are CI-visible —
+verify, they were built in §14/§15/§19), §30 documentation health (no stale
+current-state figures in CLAUDE.md, `.claude/*`, benchmark READMEs, ownership
+maps — §27 already found two READMEs quoting OCR-less numbers), then the final
+review and completion matrix. §2 (third real plan) stays not-available with
+its procedure ready; §5 (capacity provenance) needs its completion checked.
 
 Deferred with recorded prerequisites met, not forgotten: Split B (a design
 job, §3B measured), the screen extractions A21/A17/A12 (entry N).
 
-### Open, measured, NOT accepted
+### Open, measured — none accepted as correct
 
 | item | state |
 |---|---|
-| `a6` | FAIL. Four theories refuted and recorded. Surviving hypothesis is the SHAPE of the chairs-per-table distribution, not its mean; untested. |
-| `a2` | FAIL. The silence is fixed (`lowEvidence` names confidence and threshold in both languages); the verdict is unchanged and the threshold is deliberately not lowered. |
+| `a6` | FAIL — **accepted in writing** for the CI gate (`benchmarks/adversarial/KNOWN-FAILS.json`: reason, consequence, owner), not as correct. With OCR (§27): 21 phantom tables against 8 real. The four theories §7 refuted were measured WITHOUT OCR (46 phantoms) and have not been re-checked; the surviving hypothesis — the SHAPE of the chairs-per-table distribution — is untested in either configuration. |
+| `a2` | FAIL — **accepted in writing** for the CI gate, not as correct. With OCR (§27) the only FAIL code is HELD_BACK_REAL: 3 real tables held back below the review threshold (without OCR: 7, plus 23 phantoms). The silence is fixed (`lowEvidence`); the threshold is deliberately not lowered. |
 | `a9` tables | 3 of 75 missed. Cause measured: the plan-wide modal table area is set by the title's glyphs. Abstaining costs a5 two abstentions — reverted, recorded at the line. Needs a modal local to a region. |
-| §9 identity | Wrong-application rate 0.0552 against a 0.01 ceiling. A signal problem, not threshold placement: no setting reaches the gate. |
-| §10 photometry | Six SEVERE robustness rows share one mechanism — Otsu, colour and tone statistics computed over the whole canvas. |
+| §9 identity | Wrong-application rate **0.042** with OCR (§27; 0.0345–0.0552 in earlier OCR-less runs) against a 0.01 target. A signal problem, not threshold placement: no setting reaches it. Now INFO beside a real regression gate. |
+| §10 photometry | Six SEVERE robustness rows share one mechanism — Otsu, colour and tone statistics computed over the whole canvas. Measured in the container, i.e. WITHOUT OCR (§27); not re-measured with it. |
 | §19 | ~~`fmtDate()` RangeError on a dateless event~~ — **closed in §14** (`3cf39fa`): `fmtDate()` is total, and imports refuse an unreadable date. |
-| a8 zones | `zones.precision 1 → 0.5`, `recall 0.5 → 0.25` since §8 detected 289 tables instead of 240. Arithmetic consequence, not a defect in §8, but it makes `--compare` exit 1. |
+| a8 zones | P 0.5 / R 0.25: one of two detected zones matches no declared room at Jaccard ≥ 0.5 since §8 lifted the 240-table ceiling. Why it stopped matching was not measured. Absorbed into the §27 baseline as the starting point, with that reason stored in the file. |
 
 **One mechanism keeps recurring across §6, §9 and §10, and it is worth naming
 once:** a statistic computed over the WHOLE drawing — Otsu's threshold, the

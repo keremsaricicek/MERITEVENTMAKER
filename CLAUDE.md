@@ -307,6 +307,13 @@ own server, ~2 min). It is the first thing to run and the first thing to
 extend: a behaviour change no suite would have caught needs a suite. Detector
 changes are measured with `npm run benchmark` and checked against the
 committed `benchmarks/BASELINE.json` — never against remembered numbers.
+Every runner serves the pinned OCR engine from `.vendor-cache`
+(`npm run vendor:test` once) and refuses the network: with the CDN reachable
+the app is measured WITH OCR, without it the app is measured without, and
+those are two different products (`a2`: 3 phantom tables against 23). A green
+CI means the RELEASE GATE rows in `.claude/skills/merit-ci-quality-gates/`
+passed — not that the two accepted adversarial FAILs or the §23 memory targets
+are met.
 
 When a detector count comes up short, **diagnose before theorising**:
 `benchmarks/heldout/ornek-stage-walk.mjs` names the stage each missed object
