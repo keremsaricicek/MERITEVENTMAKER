@@ -86,6 +86,68 @@ Section 13 write queue. That measurement is synchronous and returns before the
 queue does anything, `saveStateFull` moved the other way (37 → 25) under the
 identical method, and the queue's real cost is measured directly below.
 
+## §26 — repeated, at the full workload (2026-09-27)
+
+`node benchmarks/perf/repeat-stress.mjs` — the performance contract's rule is
+median AND p95 over repeated runs, never one number. 400 tables · 4,000 chairs
+· 3,000 guests (500 seated) · a 6000×4000 background · 5,000 audit entries ·
+twelve past events. Every operation 20× per run in two passes of opposite
+order, in-page with a forced layout flush inside the timed region; the whole
+runner three times. Columns: the median of the three runs' medians / the worst
+p95 of the three. Nothing else ran on the machine.
+
+| operation | before | after windowing |
+|---|--:|--:|
+| Guests screen render | 256 / **733** | **21 / 39** |
+| Seating screen render | 247 / 481 | **148 / 254** |
+| Floor Plan render | 161 / 258 | 165 / 207 |
+| select a table (floor re-render) | 153 / 497 | 106 / 174 |
+| Live screen render | 60 / 207 | 50 / 73 |
+| Command Center render | 24 / 54 | 27 / 65 |
+| Reports render | 50 / 108 | 43 / 147 |
+| keystroke, Guests search | 13 / 43 | 13 / 21 |
+| keystroke, Live door search | 23 / 35 | 25 / 38 |
+| events list (12 past events) | 6 / 18 | 6 / 8 |
+| serialise all state | 17 / 30 | 16 / 22 |
+| event package: build + serialise | 6 / 19 | 4 / 9 |
+| event package: import checks | 12 / 20 | 10 / 17 |
+| **plan analysis**, real plan, OCR pinned (9 runs) | 4,137–5,436 ms, median 4,290 | 4,093–5,552 ms, median 4,295 |
+
+**What changed, and why.** Both lists mounted every record. The Guests screen
+at 3,000 guests was ~70,000 DOM nodes; the Seating queue mounted every
+unassigned guest (23,833 nodes, the drawing only 5,601). That breaks this
+contract's standing rule — a large list is never O(n) nodes in the guest count
+— and it was the worst p95 on the board. Both are now windowed like Live's door
+list (200 rows / 150 cards, "showing X of Y", Show more; search, filter, order
+and counts over every record), held by `list-windowing` (31 checks, 12 of 12
+mutations fail it). Rows the change does not touch also moved (table select,
+Reports p95): read as run-to-run variance and less garbage per render, not
+claimed as results.
+
+**Found on the way, fixed, and tested:** both searches restored focus on the
+next animation frame with a caret read before render — the §23 door bug.
+Typing at full speed, "Mehmet Yılmaz" arrived in the Guests search as "MeheYm"
+and "misafir 1" as "mifir".
+
+**Repeated action.** 300 Seating renders, median per block of 25: a steady
+~160–235 ms, with 0–3 single blocks per run at ~440–490 ms, in varying
+positions, each followed by a block back at the steady level — and the DOM
+node count unchanged (2,242 after one and after three laps of every screen).
+Collection phases, not growth: nothing climbs. The first
+version of this check compared the first ten renders with the last ten and once
+read 267 → 1,020 ms; that measured where the collection landed, and was
+replaced by the series.
+
+**Single-number runner, three runs each** (`stress-4000-seats.mjs`, wall clock,
+median / worst): Guests render 250 / 284 → **43 / 59**; guest filter 154 → **33**;
+guest search 131 → **45**; Seating render 199 → **91**; Live render 332 → 270;
+XLSX export 447 → 325 (not touched — variance); reload 755 → 737. Data
+integrity after reload exact in all six.
+
+**Budgets.** None exists and none is invented here: this contract says budgets
+are set with the user. Heap is not reported — `performance.memory` is
+coarsened in this browser.
+
 ## What the bottleneck actually was
 
 The first hypothesis was the O(guests x tables) table lookup inside the guest

@@ -20,6 +20,10 @@ const RUNNERS = [
   // profiler, so that failure was printed and the run still passed (§27).
   { file: "stress-4000-seats.mjs", asserts: true,
     why: "400 tables / 4,000 chairs / 3,000 guests through the app's own model — and intact after a reload" },
+  // §26: median / p95 / max over repeated runs at the full workload. Its
+  // numbers are INFO; it exits 1 only on a page error, which is a failure.
+  { file: "repeat-stress.mjs", asserts: true,
+    why: "§26: every screen and keystroke 20×, two passes in opposite order, a 300-render series, plan analysis 3× — median/p95/max" },
   { file: "profile-render-phases.mjs", asserts: false,
     why: "where render time actually goes, with a forced layout flush inside the timed region" },
   { file: "save-queue-burst.mjs", asserts: true,

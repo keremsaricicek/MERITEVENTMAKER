@@ -1314,7 +1314,7 @@
       ui.highlightId=table?table.id:null;
     }else if(a.go===GO.GUESTS){
       ui.tab="guests";
-      if(guest){ui.guestQuery=guest.name;ui.guestFilter="all";}
+      if(guest){ui.guestQuery=guest.name;ui.guestFilter="all";ui.guestWindow=null;}
     }else if(a.go===GO.SEATING){
       ui.tab="seating";ui.operationalMode=false;
       ui.seatingFilter=a.filter||"all";
@@ -2263,6 +2263,7 @@
       [g.name,g.vip,g.invitedBy,g.planningStatus,byId.get(g.assignment?.tableId)?.number]
         .join(" ").toLocaleLowerCase("tr").includes(q));
   }
+  const SEAT_QUEUE_STEP=150;
   seatingHTML = function(event){
     // Floor Plan collapses the side panels for its own map-first layout.
     // Seating's whole job is "move this guest onto that seat", so the guest
@@ -2278,13 +2279,21 @@
     const seatedPax=event.guests.filter(g=>g.assignment).reduce((n,g)=>n+paxOf(g),0);
     const freeChairs=Math.max(0,seatingCapacity(event)-seatedPax);
     const byId=tableIndex(event);
-    const queue=records.length?records.map(g=>{
+    // WINDOWED, like the Guests list and the door (§26: the queue mounted
+    // every unassigned guest, so at 3,000 guests Seating was 23,833 DOM nodes
+    // of which the drawing was 5,601). Keyed on scope + query: whatever
+    // changes either — a search, a scope button, the finder's CHANGE TABLE —
+    // starts again from the top without every writer having to remember.
+    const qKey=ui.seatingGuestScope+"\n"+ui.seatingQuery;
+    if(!ui.seatQueueWindow||ui.seatQueueWindow.key!==qKey)ui.seatQueueWindow={key:qKey,n:SEAT_QUEUE_STEP};
+    const shownRecords=records.slice(0,ui.seatQueueWindow.n),hiddenRecords=records.length-shownRecords.length;
+    const queue=records.length?shownRecords.map(g=>{
       const t_=g.assignment&&byId.get(g.assignment.tableId);
       return`<div class="queue-card ${selectedIds.includes(g.id)?"selected multi-selected":""}" draggable="true" data-seating-guest="${g.id}" tabindex="0" role="button" aria-pressed="${selectedIds.includes(g.id)?"true":"false"}">
         <div class="party-name">${esc(g.name)}</div>
         <div class="party-sub">${paxDotsHTML(g)}<span>${t("guests.partyOf",{n:paxOf(g)})}</span>${g.vip&&g.vip!=="Standard"?`<span class="vip-tag">${esc(g.vip)}</span>`:""}${t_?`<span class="seat-tag">${esc(formatTableNumber(t_.number))}</span>`:""}</div>
       </div>`;
-    }).join(""):`<div class="mx-empty" style="border:none;background:none;padding:26px 12px">${seatingQueueEmptyHTML(event)}</div>`;
+    }).join("")+(hiddenRecords>0?`<div class="live-more seat-queue-more"><span>${t("seating.showingOf",{shown:shownRecords.length,total:records.length})}</span><button class="btn sm" data-seating-action="queue-more">${t("guests.showMore")}</button></div>`:""):`<div class="mx-empty" style="border:none;background:none;padding:26px 12px">${seatingQueueEmptyHTML(event)}</div>`;
     return`<div class="seat-stage">
       <aside class="seat-queue">
         <div class="seat-queue-head"><strong>${ui.seatingGuestScope==="all"?t("seating.allGuests"):t("seating.guestQueue")}</strong>${selectedIds.length?`<span class="sel">${t("seating.recordsSelected",{n:selectedIds.length,pax:selPax})}</span>`:""}</div>
@@ -2900,7 +2909,17 @@
   toggleAssignmentLock = function(id){const event=activeEvent();if(!canMutate(event,"change an assignment lock"))return;original.toggleAssignmentLock(id);};
   bindSeating = function(){
     bindPanelToggles();const event=activeEvent(),records=guestSelectionRows(event),search=document.getElementById("seatingSearch");
-    if(search){search.oninput=()=>{ui.seatingQuery=search.value;const pos=search.selectionStart;render();requestAnimationFrame(()=>{const n=document.getElementById("seatingSearch");if(n){n.focus();n.setSelectionRange(pos,pos);}});};}
+    // Focus and caret come back synchronously — the next-frame version
+    // reordered fast typing, as §23 measured at the door and §26 here.
+    if(search){search.oninput=()=>{ui.seatingQuery=search.value;const pos=search.selectionStart;render();const n=document.getElementById("seatingSearch");if(n){n.focus();n.setSelectionRange(pos,pos);}};}
+    const queueMore=document.querySelector("[data-seating-action='queue-more']");
+    if(queueMore)queueMore.onclick=()=>{
+      ui.seatQueueWindow.n+=SEAT_QUEUE_STEP;
+      const list=document.querySelector(".seat-queue-list"),keep=list?list.scrollTop:0;
+      render();
+      const again=document.querySelector(".seat-queue-list");if(again)again.scrollTop=keep;
+      (document.querySelector("[data-seating-action='queue-more']")||document.getElementById("seatingSearch"))?.focus({preventScroll:true});
+    };
     const closeCard=document.querySelector("[data-close-table-card]");
     if(closeCard)closeCard.onclick=()=>{ui.selectedTableId=null;render();};
     document.querySelectorAll("[data-seating-scope]").forEach(b=>b.onclick=()=>{ui.seatingGuestScope=b.dataset.seatingScope;ui.selectedGuestIds=[];ui.selectedGuestId=null;render();});document.querySelectorAll("[data-seating-filter]").forEach(b=>b.onclick=()=>{ui.seatingFilter=b.dataset.seatingFilter;ui.operationalMode=false;render();});
@@ -3737,8 +3756,16 @@
       toast(t("seating.reassignedToast",{name:guest.name,table:label}),"success");
     });
   };
+  // The Guests list is WINDOWED, like Live's door list. §26 measured it
+  // rendering every record: 3,000 guests became ~70,000 DOM nodes and a
+  // render with a p95 up to 733 ms, which breaks the rule that a large list is
+  // never O(n) nodes in the guest count. Search, filter, counts and order are
+  // computed over every guest exactly as before; only how many rows are
+  // MOUNTED changes, and "showing X of Y" says so.
+  const GUEST_WINDOW_STEP=200;
   guestsHTML = function(event){
-    const guests=filteredGuests(event),c=guestCounts(event),byId=tableIndex(event);
+    const all=filteredGuests(event),c=guestCounts(event),byId=tableIndex(event);
+    const guests=all.slice(0,ui.guestWindow||GUEST_WINDOW_STEP),hiddenGuests=all.length-guests.length;
     const metrics=[
       `<div class="mx-metric is-hero"><span class="mx-metric-label">${t("guests.m.totalPax")}</span><span class="mx-metric-value">${c.totalPax}</span><span class="mx-metric-note">${t("guests.m.totalPaxNote",{n:c.records})}</span></div>`,
       `<div class="mx-metric ${c.seatedPax?"is-good":""}"><span class="mx-metric-label">${t("guests.m.seated")}</span><span class="mx-metric-value">${c.seatedPax}</span><span class="mx-metric-note">${t("guests.m.seatedNote")}</span></div>`,
@@ -3755,7 +3782,7 @@
       ?`<div class="mx-empty"><h3>${t("guests.emptyTitle")}</h3><p>${t("guests.emptyHint")}</p><div class="toolbar-row" style="justify-content:center"><button class="btn" data-guest-command="import">${icon("image")}${t("guests.importExcel")}</button><button class="btn primary" data-guest-command="add">${icon("plus")}${t("guests.addGuest")}</button></div></div>`
       :`<div class="mx-list" role="table" aria-label="${esc(t("guests.title"))}"><div class="mx-list-head cols-guest" role="row"><span role="columnheader">${t("guests.col.guest")}</span><span role="columnheader">${t("guests.col.status")}</span><span role="columnheader">${t("guests.col.invitedBy")}</span><span role="columnheader">${t("guests.col.tableSeat")}</span><span role="columnheader"><span class="sr-only">${t("guests.col.actions")}</span></span></div>${
         guests.length?guests.map(g=>`<div class="mx-row cols-guest" role="row">${guestPartyCellHTML(event,g)}<div role="cell"><span class="plan-tag ${g.planningStatus.toLowerCase()}">${esc(t("status.planning."+g.planningStatus))}</span></div><div class="muted" role="cell" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(g.invitedBy||"—")}</div><div role="cell">${seatTagHTML(event,g,byId)}${g.assignment?.locked?" 🔒":""}</div><div class="row-icons" role="cell"><button class="row-action" aria-label="${esc(t("guests.a11y.seat",{name:g.name}))}" title="${t("guests.col.tableSeat")}" data-guest-seat="${g.id}">${icon("seat")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.edit",{name:g.name}))}" data-guest-edit="${g.id}">${icon("edit")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.delete",{name:g.name}))}" data-guest-delete="${g.id}">${icon("trash")}</button></div></div>`).join(""):`<div class="mx-empty" style="border:none;background:none">${t("guests.noMatches")}</div>`
-      }</div>`;
+      }</div>${hiddenGuests>0?`<div class="live-more" id="guestMore"><span>${t("guests.showingOf",{shown:guests.length,total:all.length})}</span><button class="btn sm" data-guest-command="show-more">${t("guests.showMore")}</button></div>`:""}`;
     return`<div class="mx-screen"><div class="mx-wrap">
       <div class="mx-head"><div><h1>${t("guests.title")}</h1><p>${t("guests.recordsSummary",{records:c.records,total:c.totalPax})}</p></div><div class="mx-head-actions"><button class="btn" data-guest-command="template">${icon("download")}${t("guests.excelTemplate")}</button><button class="btn" data-guest-command="import">${icon("image")}${t("guests.importExcel")}</button><button class="btn primary" data-guest-command="add">${icon("plus")}${t("guests.addGuest")}</button></div></div>
       <div class="mx-metrics">${metrics}</div>
@@ -3808,6 +3835,25 @@
     app.querySelectorAll("[data-guest-command='add']").forEach(b=>b.onclick=()=>openGuestDialog());
     app.querySelectorAll("[data-guest-command='import']").forEach(b=>b.onclick=openExcelWizard);
     app.querySelectorAll("[data-guest-command='template']").forEach(b=>b.onclick=downloadExcelTemplate);
+    // A new search or filter starts from the top of the window again. Focus
+    // and caret come back SYNCHRONOUSLY: the base binder restored them on the
+    // next animation frame with a caret read before render, which is the bug
+    // §23 measured at the door ("Mehmet" typed at full speed arriving as
+    // "metMeh") in the same shape here.
+    const search=document.getElementById("guestSearch");
+    if(search)search.oninput=()=>{ui.guestQuery=search.value;ui.guestWindow=null;const pos=search.selectionStart;render();
+      const n=document.getElementById("guestSearch");if(n){n.focus();n.setSelectionRange(pos,pos);}};
+    const filter=document.getElementById("guestFilter");
+    if(filter)filter.onchange=e=>{ui.guestFilter=e.target.value;ui.guestWindow=null;render();};
+    // Growing the window keeps the scroll position and the keyboard's place.
+    const more=app.querySelector("[data-guest-command='show-more']");
+    if(more)more.onclick=()=>{
+      ui.guestWindow=(ui.guestWindow||GUEST_WINDOW_STEP)+GUEST_WINDOW_STEP;
+      const scroller=document.querySelector(".mx-screen")||document.scrollingElement,keep=scroller?scroller.scrollTop:0;
+      render();
+      if(scroller)scroller.scrollTop=keep;
+      (app.querySelector("[data-guest-command='show-more']")||document.getElementById("guestSearch"))?.focus({preventScroll:true});
+    };
     const toSeating=app.querySelector("[data-guest-command='seating']");
     if(toSeating)toSeating.onclick=()=>{ui.tab="seating";ui.seatingGuestScope="unassigned";ui.seatingQuery="";ui.selectedGuestId=null;ui.selectedGuestIds=[];render();};
   };

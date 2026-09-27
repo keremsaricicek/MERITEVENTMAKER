@@ -7,7 +7,7 @@ own recollection.
 - **Programme start SHA** `02edac7`
 - **Branch** `claude/merit-concept3-plan-intelligence-rebirth`
 - **PR** #5 — OPEN, must not be merged
-- **Current SHA** see `git log` — §6 (mixed representation) is the last entry
+- **Current SHA** see `git log` — §26 (performance, entry AB) is the last completed entry
 - **Status** IN PROGRESS
 
 ## How to resume
@@ -1607,6 +1607,40 @@ memory `--compare` 0 blocking; review-order, facts, contradictions, zones,
 false-positives and teaching all exit 0 — the same set CI runs. Their
 committed `report.json` files are rewritten from these with-OCR runs.
 
+### AB. §26 — performance — measured three ways, one real defect, fixed
+
+**Measured first**, per `merit-performance-hardening`: `repeat-stress.mjs`
+(new) at §26's full workload — 3,000 guests, 400 tables, 4,000 chairs, a
+6000×4000 background, 5,000 audit entries, twelve past events — every screen,
+both search keystrokes, table selection, event-package build and import
+checks, 20× per run in two passes of opposite order, the whole runner three
+times; plan analysis 3× per run; `stress-4000-seats.mjs` three times for the
+comparison with the Section 22 table. Nothing else on the machine.
+
+**The defect.** The contract's standing rule — a large list is never O(n) DOM
+nodes in the guest count — was broken twice. The Guests screen mounted all
+3,000 records (~70,000 nodes; render median 256 ms, p95 up to 733 ms), and
+Seating's queue mounted every unassigned guest (23,833 nodes, of which the
+drawing was 5,601). Both are now windowed the way Live's door list already was.
+After, same method: Guests render **21 ms median / 39 ms p95**, Seating
+**148 / 254**. Held by `list-windowing` (31 checks; 12 of 12 mutations fail it).
+
+**Found on the way:** both searches carried the §23 door bug — focus restored on
+the next frame with a stale caret. "Mehmet Yılmaz" typed at full speed arrived
+as "MeheYm". Fixed in both, and in the suite.
+
+**Not a leak, and a check corrected.** The first repeated-action check (first
+ten vs last ten of 100 renders) read 267 → 1,020 ms once. A 300-render series
+showed single slow blocks that recover the next block, in varying positions,
+with the DOM node count flat — collection, not growth. The runner now reports
+the series.
+
+**Not done, deliberately:** no budget is set, because the contract says
+budgets are agreed with the user; heap is not reported (coarsened). The
+dimension stays below the skill's "9", which requires "within budget".
+Full tables: `benchmarks/perf/README.md` §26. `repeat-stress.mjs` now runs in
+`npm run perf` (and so in CI), failing only on a page error.
+
 ### Adversarial at `3451f67` — 1 PASS · 4 PARTIAL · 3 FAIL
 
 Same distribution as `02edac7`; the run exits 0 because it gates on
@@ -1634,22 +1668,20 @@ typing 136/289.
 
 ## Next step
 
-**§26 — performance.** The runner is written, and is committed with §26's
-results rather than §27's (`benchmarks/perf/repeat-stress.mjs`): 400 tables / 4,000 chairs /
-3,000 guests, every screen and both search keystrokes, 20 samples per
-operation in two passes of opposite order, median / p95 / max, a 100-render
-degradation check and DOM growth over three laps. Run it with NOTHING else on
-the machine and compare against `benchmarks/perf/README.md`'s previous
-single-run numbers before changing any code.
+**§28 — test coverage discipline.** Not a percentage. `MERIT_COVERAGE=1 npm
+run test:all` (tooling written, `tests/lib/coverage.mjs`, committed with §28) merges V8 block
+coverage across every suite; read it for functions and branches no suite ever
+executes in the critical modules (seat assignment, storage, migrations,
+backup/package import, workbook export, Live arrival), cross-check the static
+reachability model, and add behaviour tests — with mutation proof — only where
+an unexecuted branch is a real operator path.
 
-Then §28 test-coverage discipline (unreachable regions, critical paths and
-error branches with no behaviour test — not a line-coverage percentage), §29
-(security / accessibility / resilience suites exist and are CI-visible —
-verify, they were built in §14/§15/§19), §30 documentation health (no stale
-current-state figures in CLAUDE.md, `.claude/*`, benchmark READMEs, ownership
-maps — §27 already found two READMEs quoting OCR-less numbers), then the final
-review and completion matrix. §2 (third real plan) stays not-available with
-its procedure ready; §5 (capacity provenance) needs its completion checked.
+Then §29 (verify the security / accessibility / resilience suites are in CI —
+they are, per `npm run test:list` and ci.yml), §30 documentation health (a
+first pass is in the working tree: stale sizes, counts and closed debts in
+CLAUDE.md, `.claude/*` and both ownership maps), then the final review and
+completion matrix. §2 (third real plan) stays not-available with its
+procedure ready; §5 (capacity provenance) needs its completion checked.
 
 Deferred with recorded prerequisites met, not forgotten: Split B (a design
 job, §3B measured), the screen extractions A21/A17/A12 (entry N).
