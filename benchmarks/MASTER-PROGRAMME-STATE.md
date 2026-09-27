@@ -7,7 +7,7 @@ own recollection.
 - **Programme start SHA** `02edac7`
 - **Branch** `claude/merit-concept3-plan-intelligence-rebirth`
 - **PR** #5 — OPEN, must not be merged
-- **Current SHA** see `git log` — §26 (performance, entry AB) is the last completed entry
+- **Current SHA** see `git log` — §28 (coverage discipline, entry AC) is the last completed entry
 - **Status** IN PROGRESS
 
 ## How to resume
@@ -1641,6 +1641,36 @@ dimension stays below the skill's "9", which requires "within budget".
 Full tables: `benchmarks/perf/README.md` §26. `repeat-stress.mjs` now runs in
 `npm run perf` (and so in CI), failing only on a page error.
 
+### AC. §28 — test coverage discipline — three defects found by asking what never ran
+
+Not a percentage. `MERIT_COVERAGE=1 npm run test:all` merges V8 block coverage
+across all 97 suites; `benchmarks/coverage/analyse.mjs` answers §28's four
+questions from it and cross-checks the static reachability model (now shared,
+`tests/lib/reachability.mjs`). Full record: `benchmarks/coverage/README.md`.
+
+**Defects that no suite could have caught, because no suite ran the path:**
+1. **Every boot flashed the retired English shell** for ~50–90 ms —
+   `app-guests.js` ended with `render()`. Found because the static model called
+   those bodies dead and coverage showed them running. Removed; first real
+   frame now at 178 ms instead of 251.
+2. **Choosing a PDF page threw** into the page (two thumbnail passes on one
+   canvas). Fixed; the suite forces the race and holds the result.
+3. **The localStorage fallback could not engage** — with IndexedDB missing,
+   every save failed and a reload came back empty. `ResilientStorageProvider`
+   falls back only when IndexedDB is absent or refuses to exist; blocked or
+   full does not move the data. Both sides tested.
+
+**Two hollow checks** (a copy of `commitCandidates()`'s expression, asserted)
+now press the real Commit button; each fails when the real expression is
+mutated. **Untested operator paths now covered** by `critical-paths`: plan
+import from a file, the audit cap, the assignment lock, the Excel template,
+the 8→9 placeholder-chair branch, malformed package chairs.
+
+**Mutation proof:** `critical-paths` 23 checks — 8 of 8 mutations fail it
+(including reverting each of the three fixes); the two replaced checks 2 of 2.
+**Recorded, not changed:** three dead exports with their proof; IndexedDB
+request-level error handlers still unexercised by a real failure.
+
 ### Adversarial at `3451f67` — 1 PASS · 4 PARTIAL · 3 FAIL
 
 Same distribution as `02edac7`; the run exits 0 because it gates on
@@ -1668,20 +1698,17 @@ typing 136/289.
 
 ## Next step
 
-**§28 — test coverage discipline.** Not a percentage. `MERIT_COVERAGE=1 npm
-run test:all` (tooling written, `tests/lib/coverage.mjs`, committed with §28) merges V8 block
-coverage across every suite; read it for functions and branches no suite ever
-executes in the critical modules (seat assignment, storage, migrations,
-backup/package import, workbook export, Live arrival), cross-check the static
-reachability model, and add behaviour tests — with mutation proof — only where
-an unexecuted branch is a real operator path.
+**§5 — capacity provenance.** The build wires 3 of 8 named sources. A table
+committed from a symbolic plan gets capacity 1 / UNKNOWN even when the drawing
+prints "166 × 12 = 1992" and the self-check has verified it. Wire
+DERIVED_PRINTED_RULE per table (only where the rule applies: symbolic plan,
+seatless symbol, no more symbols than the rule states, per-table figure ≤ 99),
+PRINTED_TOTAL_CAPACITY at PLAN level, never as chairs; a table may not carry a
+plan-level source. The suite is written (`capacity-rule-commit`).
 
-Then §29 (verify the security / accessibility / resilience suites are in CI —
-they are, per `npm run test:list` and ci.yml), §30 documentation health (a
-first pass is in the working tree: stale sizes, counts and closed debts in
-CLAUDE.md, `.claude/*` and both ownership maps), then the final review and
-completion matrix. §2 (third real plan) stays not-available with its
-procedure ready; §5 (capacity provenance) needs its completion checked.
+Then §29 (verify the security / accessibility / resilience suites are in CI),
+the final coverage re-run, and the final review and completion matrix. §2
+(third real plan) stays not-available with its procedure ready.
 
 Deferred with recorded prerequisites met, not forgotten: Split B (a design
 job, §3B measured), the screen extractions A21/A17/A12 (entry N).

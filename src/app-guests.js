@@ -184,4 +184,7 @@
   // produced a second, identical prompt.
   window.addEventListener("keydown",e=>{if(document.querySelector("dialog[open]"))return;const editing=["INPUT","TEXTAREA","SELECT"].includes(document.activeElement?.tagName);if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"&&!editing){e.preventDefault();e.shiftKey?redoCanvas():undoCanvas()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="y"&&!editing){e.preventDefault();redoCanvas()}if(e.key==="Escape"&&ui.screen==="workspace"&&(ui.tab==="floor"||ui.tab==="seating")){ui.selectedObjectId=null;ui.highlightId=null;render()}});
   window.addEventListener("beforeunload",()=>saveState());
-  render();
+  // No render() here. This file used to end by rendering, which drew the
+  // RETIRED pre-v8 shell — in English — for the ~50-90 ms before app-v8.js
+  // (always loaded last) booted and replaced it; measured in §28 on every
+  // start. app-v8.js's boot renders the real screen.

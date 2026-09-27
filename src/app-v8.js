@@ -18,12 +18,19 @@
   // localStorage under V8_STORAGE_KEY/LEGACY_KEYS is now read-only -- it is
   // still where a pre-existing install's data lives, so it's the migration
   // source on first load, but nothing writes to it again after that.
+  // MERIT_STORAGE_STATUS names the store that ACTUALLY holds the data, and
+  // is updated if the resilient provider has to fall back after boot.
   const storageProvider = (() => {
-    try { if (globalThis.MeritStorageProviders?.IndexedDBStorageProvider) return new MeritStorageProviders.IndexedDBStorageProvider(); }
+    const P = globalThis.MeritStorageProviders;
+    if (P?.ResilientStorageProvider) return new P.ResilientStorageProvider(V8_STORAGE_KEY, (p) => {
+      globalThis.MERIT_STORAGE_STATUS = { provider: p.name, fallbackReason: p.fallbackReason };
+      console.warn("IndexedDB refused to open; persisting to localStorage.");
+    });
+    try { if (P?.IndexedDBStorageProvider) return new P.IndexedDBStorageProvider(); }
     catch (error) { console.warn("IndexedDB provider unavailable, falling back to localStorage.", loggableError(error)); }
-    return new MeritStorageProviders.LocalStorageStorageProvider(V8_STORAGE_KEY);
+    return new P.LocalStorageStorageProvider(V8_STORAGE_KEY);
   })();
-  globalThis.MERIT_STORAGE_STATUS = { provider: storageProvider.constructor.name };
+  globalThis.MERIT_STORAGE_STATUS = { provider: storageProvider.name || storageProvider.constructor.name, fallbackReason: storageProvider.fallbackReason || null };
   // Exposed so the training-data crops can be read back and exported without
   // routing image bytes through the state record. Read/write access to the
   // blob store only -- the state record still goes through saveState().
@@ -1582,7 +1589,18 @@
   }
   async function renderPdfThumbs(){
     const doc=newEventDraft.pdfDoc;if(!doc)return;
-    for(const canvas of document.querySelectorAll("[data-pdf-thumb]")){const index=Number(canvas.dataset.pdfThumb),page=await doc.getPage(index+1),v=page.getViewport({scale:.28});canvas.width=Math.ceil(v.width);canvas.height=Math.ceil(v.height);await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;}
+    // bindSetup() runs on every render and schedules this each time, and
+    // choosing a page renders twice — so two passes could reach the SAME
+    // canvas, and PDF.js throws "Cannot use the same canvas during multiple
+    // render() operations" into the page (§28: the first suite to pick a PDF
+    // page found it). A canvas is claimed before its first await, and a
+    // thumbnail that cannot be drawn stays blank rather than throwing: it is
+    // a preview, and the page itself is rendered separately on selection.
+    for(const canvas of document.querySelectorAll("[data-pdf-thumb]")){
+      if(canvas.dataset.thumbState)continue;canvas.dataset.thumbState="rendering";
+      try{const index=Number(canvas.dataset.pdfThumb),page=await doc.getPage(index+1),v=page.getViewport({scale:.28});canvas.width=Math.ceil(v.width);canvas.height=Math.ceil(v.height);await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;canvas.dataset.thumbState="done";}
+      catch(error){canvas.dataset.thumbState="failed";}
+    }
   }
   function createBlankEventFromSetup(usePlan){
     syncSetupFields();const d=newEventDraft;if(!d.name.trim()||!d.date||!d.hotel.trim()){toast(t("toast.eventFieldsRequired"),"error");return;}

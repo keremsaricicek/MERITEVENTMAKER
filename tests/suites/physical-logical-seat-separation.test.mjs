@@ -175,21 +175,35 @@ export default async function run({ page, checks, baseUrl }) {
   // Whether a committed table gets physical chairs is decided by what the
   // plan reader concluded about the drawing. Absence of a verdict is not
   // evidence of drawn chairs, so it abstains.
-  const commitScenarios = await page.evaluate(() => {
-    // The exact expression commitCandidates() uses, exercised without a full
-    // detection run: the same representation-kind check runSelfCheck() reads
-    // from analysis.diagnostics.
-    const drawsSeatsFor = (repKind, chairDetectionsLength) =>
-      !!(repKind === "PHYSICAL") || !!chairDetectionsLength;
-    return {
-      physicalPlanNoDetections: drawsSeatsFor("PHYSICAL", 0),
-      symbolicPlanNoDetections: drawsSeatsFor("SYMBOLIC", 0),
-      symbolicPlanButConfirmedChairs: drawsSeatsFor("SYMBOLIC", 4),
-      noVerdictYet: drawsSeatsFor(null, 0),
-    };
-  });
-  checks.equal(commitScenarios.physicalPlanNoDetections, true, "a PHYSICAL-verdict plan's committed tables start hasPhysicalSeats:true", commitScenarios);
-  checks.equal(commitScenarios.symbolicPlanNoDetections, false, "a SYMBOLIC-verdict plan's committed tables start hasPhysicalSeats:false — no fabricated chairs from a printed-number table", commitScenarios);
-  checks.equal(commitScenarios.symbolicPlanButConfirmedChairs, true, "a specific candidate with real confirmed chair detections is still physical even on an otherwise-symbolic plan", commitScenarios);
-  checks.equal(commitScenarios.noVerdictYet, false, "with no representation verdict at all, the default is symbolic (abstain from claiming physical chairs), never an unconditional true", commitScenarios);
+  const physicalPlan = await commitThroughReview(page, { kind: "PHYSICAL", chairs: [0] });
+  const symbolicPlan = await commitThroughReview(page, { kind: "SYMBOLIC", chairs: [0, 4] });
+  const noVerdict = await commitThroughReview(page, { kind: null, chairs: [0] });
+  checks.equal(physicalPlan[0].physical, true, "a PHYSICAL-verdict plan's committed tables start hasPhysicalSeats:true", physicalPlan);
+  checks.ok(symbolicPlan[0].physical === false && symbolicPlan[0].chairs === 0, "a SYMBOLIC-verdict plan's committed tables start hasPhysicalSeats:false, with no chair fabricated from anything", symbolicPlan);
+  checks.ok(symbolicPlan[1].physical === true && symbolicPlan[1].chairs === 4, "a candidate with real confirmed chair detections is still physical, with exactly its 4 chairs, on an otherwise-symbolic plan", symbolicPlan);
+  checks.equal(noVerdict[0].physical, false, "with no representation verdict at all, the committed table abstains (symbolic), never an unconditional true", noVerdict);
+}
+
+async function commitThroughReview(page, { kind, chairs }) {
+  // An analysis shaped as the pipeline writes it, committed by pressing the
+  // real Commit button — so the check reads what commitCandidates() DID, not
+  // a copy of its expression. (§28: the copy could not fail when the product
+  // changed; it was a test of itself.)
+  await page.evaluate(({ kind, chairs }) => {
+    const candidates = chairs.map((n, i) => ({ id: "c" + i, kind: "table", type: "round", x: 10 + i * 15, y: 30, w: 6, h: 6, rotation: 0,
+      confidence: 0.9, status: "unreviewed", selected: true, printedNumber: null, evidence: { geometry: 0.8, chairs: 0, repetition: 1 },
+      chairDetections: Array.from({ length: n }, (_, s) => ({ x: 10 + i * 15 + s, y: 29, w: 1, h: 1, rotation: 0 })) }));
+    const event = { id: "ev-" + Math.random().toString(36).slice(2), name: "Commit", hotel: "Merit", salon: "", date: "2026-12-31", status: "Planning",
+      tables: [], venueObjects: [], guests: [], background: { src: "", visible: true }, audit: [], handoverNotes: [] };
+    event.analysis = { id: "an", planHash: "h", engine: "ASSISTED_DETECTION", trainedModel: false, createdAt: new Date().toISOString(), imageWidth: 1000, imageHeight: 800,
+      threshold: 128, candidates, missed: [], groupingDecisions: [], comparison: { added: candidates.length, removed: 0, changed: 0 }, memoryReapplied: 0, memoryRestored: 0,
+      memoryConflicts: [], ocr: { available: false, engine: "tesseract.js" }, ocrText: null, timings: {},
+      diagnostics: kind ? { representation: { kind, associationRate: kind === "PHYSICAL" ? 0.95 : 0.05, evidence: {} } } : {} };
+    event.analysis.planIntelligence = globalThis.buildPlanIntelligence(event, null);
+    state.events.push(event); ui.activeEventId = event.id; ui.screen = "workspace"; ui.tab = "floor"; ui.planMode = "review"; render();
+  }, { kind, chairs });
+  await page.waitForTimeout(200);
+  await page.click('[data-review-action="commit"]');
+  await page.waitForTimeout(200);
+  return page.evaluate(() => activeEvent().tables.map((t) => ({ source: t.capacitySource, physical: t.hasPhysicalSeats, chairs: (t.chairs || []).length, capacity: t.capacity })));
 }

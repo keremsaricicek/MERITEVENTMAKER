@@ -88,17 +88,12 @@ export default async function run({ page, checks, baseUrl }) {
   // --- 5. Assisted Detection's commit path: the same expression
   //        commitCandidates() uses, exercised directly (matching the pattern
   //        already established in physical-logical-seat-separation) --------
-  const commitScenarios = await page.evaluate(() => {
-    const sourceFor = chairDetectionsLength => (chairDetectionsLength ? "DETECTED_PHYSICAL_SEATS" : "UNKNOWN");
-    return {
-      withDetections: sourceFor(4),
-      withoutDetections: sourceFor(0),
-    };
-  });
-  checks.equal(commitScenarios.withDetections, "DETECTED_PHYSICAL_SEATS",
-    "a committed candidate with real confirmed chair detections is tagged DETECTED_PHYSICAL_SEATS", commitScenarios);
-  checks.equal(commitScenarios.withoutDetections, "UNKNOWN",
-    "a committed candidate with no chair detections is tagged UNKNOWN — a guessed starting capacity is never claimed as detected or human-confirmed", commitScenarios);
+  const committed = await commitThroughReview(page, { kind: "PHYSICAL", chairs: [4, 0] });
+  checks.equal(committed[0].source, "DETECTED_PHYSICAL_SEATS",
+    "a committed candidate with real confirmed chair detections is tagged DETECTED_PHYSICAL_SEATS", committed);
+  checks.equal(committed[1].source, "UNKNOWN",
+    "a committed candidate with no chair detections and no printed rule that applies is tagged UNKNOWN — a guessed starting capacity is never claimed (the rule's own cases: capacity-rule-commit)", committed);
+  await page.evaluate(() => { state.events = state.events.filter((e) => e.name !== "Commit"); ui.activeEventId = state.events[0].id; render(); });
 
   // --- 6. migration backfill: an old table with no capacitySource becomes
   //        UNKNOWN on load; one with a corrupted value is also normalized to
@@ -282,4 +277,28 @@ export default async function run({ page, checks, baseUrl }) {
   const plainView = await page.evaluate(PROVENANCE);
   checks.ok(!plainView.present,
     "an ordinary venue object with no seat-count concept shows no provenance row at all", plainView);
+}
+
+async function commitThroughReview(page, { kind, chairs }) {
+  // An analysis shaped as the pipeline writes it, committed by pressing the
+  // real Commit button — so the check reads what commitCandidates() DID, not
+  // a copy of its expression. (§28: the copy could not fail when the product
+  // changed; it was a test of itself.)
+  await page.evaluate(({ kind, chairs }) => {
+    const candidates = chairs.map((n, i) => ({ id: "c" + i, kind: "table", type: "round", x: 10 + i * 15, y: 30, w: 6, h: 6, rotation: 0,
+      confidence: 0.9, status: "unreviewed", selected: true, printedNumber: null, evidence: { geometry: 0.8, chairs: 0, repetition: 1 },
+      chairDetections: Array.from({ length: n }, (_, s) => ({ x: 10 + i * 15 + s, y: 29, w: 1, h: 1, rotation: 0 })) }));
+    const event = { id: "ev-" + Math.random().toString(36).slice(2), name: "Commit", hotel: "Merit", salon: "", date: "2026-12-31", status: "Planning",
+      tables: [], venueObjects: [], guests: [], background: { src: "", visible: true }, audit: [], handoverNotes: [] };
+    event.analysis = { id: "an", planHash: "h", engine: "ASSISTED_DETECTION", trainedModel: false, createdAt: new Date().toISOString(), imageWidth: 1000, imageHeight: 800,
+      threshold: 128, candidates, missed: [], groupingDecisions: [], comparison: { added: candidates.length, removed: 0, changed: 0 }, memoryReapplied: 0, memoryRestored: 0,
+      memoryConflicts: [], ocr: { available: false, engine: "tesseract.js" }, ocrText: null, timings: {},
+      diagnostics: kind ? { representation: { kind, associationRate: kind === "PHYSICAL" ? 0.95 : 0.05, evidence: {} } } : {} };
+    event.analysis.planIntelligence = globalThis.buildPlanIntelligence(event, null);
+    state.events.push(event); ui.activeEventId = event.id; ui.screen = "workspace"; ui.tab = "floor"; ui.planMode = "review"; render();
+  }, { kind, chairs });
+  await page.waitForTimeout(200);
+  await page.click('[data-review-action="commit"]');
+  await page.waitForTimeout(200);
+  return page.evaluate(() => activeEvent().tables.map((t) => ({ source: t.capacitySource, physical: t.hasPhysicalSeats, chairs: (t.chairs || []).length, capacity: t.capacity })));
 }

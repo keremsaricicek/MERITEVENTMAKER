@@ -82,6 +82,9 @@ console.log(`  suites     ${selected.length} of ${suites.length}${includeSlow ? 
 
 const browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
 const results = [];
+// MERIT_COVERAGE=1: V8 block coverage of src/, merged across suites, written
+// to benchmarks/coverage/report.json. INFO for §28 — see tests/lib/coverage.mjs.
+const coverage = process.env.MERIT_COVERAGE === "1" ? await import("./lib/coverage.mjs") : null;
 let vendorWarned = false;
 
 for (const suite of selected) {
@@ -92,6 +95,7 @@ for (const suite of selected) {
     ...(suite.downloads ? { acceptDownloads: true } : {}),
   });
   const page = await context.newPage();
+  if (coverage) await page.coverage.startJSCoverage({ resetOnNavigation: false });
   const vendor = await routeVendorFromCache(page);
   const errors = watchForErrors(page, { baseUrl: server.baseUrl });
   let thrown = null;
@@ -112,6 +116,10 @@ for (const suite of selected) {
     if (!(err instanceof SuiteAborted)) thrown = err;
   }
 
+  if (coverage) {
+    try { coverage.addCoverage(await page.coverage.stopJSCoverage(), server.baseUrl); }
+    catch (err) { console.log(`  coverage for ${suite.name} not collected: ${err.message.split("\n")[0]}`); }
+  }
   await context.close().catch(() => {});
   const ms = Date.now() - started;
   const consoleClean = checks.ok(errors.length === 0, "console and page errors: none", errors.slice(0, 3));
@@ -131,6 +139,8 @@ for (const suite of selected) {
 
 await browser.close();
 await server.close();
+
+if (coverage) coverage.writeCoverage(path.join(REPO_ROOT, "benchmarks", "coverage"));
 
 const failedSuites = results.filter(r => r.failed);
 const totalChecks = results.reduce((n, r) => n + r.checks.passed + r.checks.failures.length, 0);

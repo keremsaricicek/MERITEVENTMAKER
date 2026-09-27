@@ -159,5 +159,47 @@
     }
   }
 
-  globalThis.MeritStorageProviders = { IndexedDBStorageProvider, LocalStorageStorageProvider };
+  // Which store actually holds the data on THIS browser. §28 found the old
+  // selection could not fall back at all: `new IndexedDBStorageProvider()`
+  // never throws (it opens per call), so with IndexedDB missing every save
+  // failed and a reload came back empty — while this file documented a
+  // localStorage fallback that no path ever reached. This switches ONLY when
+  // IndexedDB is absent or refuses to exist (the InvalidStateError /
+  // SecurityError a locked-down or private browser raises). Any other failure
+  // — a blocked upgrade, a full disk — is NOT a reason to move the data: it
+  // is thrown to the caller, whose save-failure notice tells the operator,
+  // because writing to a second store would hide those writes on the next
+  // boot, when IndexedDB answers again.
+  const refusesToExist = (error) => !globalThis.indexedDB
+    || (!!error && (error.name === "InvalidStateError" || error.name === "SecurityError" || /not available/i.test(String(error.message || ""))));
+  class ResilientStorageProvider {
+    constructor(key, onFallback) {
+      this.idb = new IndexedDBStorageProvider();
+      this.ls = new LocalStorageStorageProvider(key);
+      this.active = globalThis.indexedDB ? this.idb : this.ls;
+      this.fallbackReason = globalThis.indexedDB ? null : "IndexedDB is not available in this environment.";
+      this.onFallback = onFallback || null;
+    }
+    get name() { return this.active.constructor.name; }
+    async call(method, args) {
+      if (this.active === this.idb) {
+        try { return await this.idb[method](...args); }
+        catch (error) {
+          if (!refusesToExist(error)) throw error;
+          this.active = this.ls;
+          this.fallbackReason = String(error && (error.name || error.message) || "IndexedDB refused to open.");
+          if (this.onFallback) this.onFallback(this);
+        }
+      }
+      return this.ls[method](...args);
+    }
+    load(...a) { return this.call("load", a); }
+    save(...a) { return this.call("save", a); }
+    putBlob(...a) { return this.call("putBlob", a); }
+    getBlob(...a) { return this.call("getBlob", a); }
+    deleteBlob(...a) { return this.call("deleteBlob", a); }
+    listBlobIds(...a) { return this.call("listBlobIds", a); }
+  }
+
+  globalThis.MeritStorageProviders = { IndexedDBStorageProvider, LocalStorageStorageProvider, ResilientStorageProvider };
 })();
