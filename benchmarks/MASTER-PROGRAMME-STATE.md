@@ -1370,6 +1370,51 @@ Gates: `test:all` **91 / 91 suites · 2,934 / 2,934 checks**; `verify:offline` *
 Rendered at 1440 TR, 1920 EN, 2560 TR: no break. The "everyone has arrived" key
 is deleted, not left for reuse.
 
+### V. §21 — provenance — DONE for tables: what the plan prints now travels with the table
+
+Measured before: for a table the operator selects, only **capacity** said
+where it came from (`capacity-provenance`, Section 11). Two facts were lost
+or invisible:
+
+- **The printed number.** OCR's reading of the number printed on a table's own
+  symbol (value, state, confidence) lived on the detection CANDIDATE. The
+  moment a person confirmed it, the table was numbered `T01, T02…` in
+  confirmation order and the reading was dropped — a plan printing "42" showed
+  "T 01" with nothing to say the two disagree.
+- **Where the table came from** — detected-and-confirmed, added by hand, or
+  copied — was recorded nowhere.
+
+Now, written only where each fact is made (`commitCandidates`, `createTable`,
+`duplicateSelection`) and shown read-only on the table's card: its origin; the
+printed reading with its state (`Doğrulandı` / `Bir kez okundu` / `bakması
+gerekiyor`); and, only for a VERIFIED reading that disagrees, a plain statement
+"the plan prints 42 on this table; the event calls it T 01". Nothing renames
+anything — which number the room uses is a person's decision. A copy is a
+person's act: origin `COPY`, the original's reading does not come with it, and
+a copied `DETECTED_PHYSICAL_SEATS` capacity becomes `HUMAN_CONFIRMED` (its
+chairs were never detected). A table from before this was tracked says "not
+recorded" instead of being guessed. An imported reading of unknown shape is
+not carried (untrusted input).
+
+Mutations — 8 of 8 fail `table-provenance`, including a reading that renames
+the table and an unverified reading that raises a disagreement.
+
+Gates: `verify:offline` **27 / 27**; `test:all` **91 / 92, 2,949 / 2,951** — the
+failure was `a11y-scan` on the user guide's contrast (ratios 4.05–4.35), passing
+2 / 2 in isolation. Not called a flake: proven. Opening the guide and scanning
+40 ms later found it at opacity 0.31 with **23** contrast violations; at rest,
+**0**. The scan was sampling the dialog's fade-in, blended with the backdrop.
+`scan()` now waits for every finite animation to finish (bounded at 3 s) — it
+measures the resting screen, which is what contrast is — and passes.
+
+**Measured and NOT fixed here (§24, Floor Plan UX):** in the v8 product an
+operator **cannot change a table's number at all**. The only number field is
+in the pre-v8 inspector, which the §18 reachability analysis shows is never
+rendered. So every number is generated, and a plan's printed numbering cannot
+be reproduced by hand either. Whether confirmation should ADOPT a verified
+printed number is a product-semantics decision (identity for layout versions
+keys on the table number) and is left to be made deliberately, not by default.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
@@ -1413,15 +1458,14 @@ typing 136/289.
 
 ## Next step
 
-**§21 — provenance inspector.** Per `merit-ui-quality-gates`: "where a number
-came from is reachable — capacity provenance, printed numbers, detector source.
-A figure an operator cannot trace is a figure they will not trust."
-`src/capacity-provenance.js` exists. Measure first: on a detected plan and on a
-hand-built one, list every number the operator sees for a table (capacity,
-printed number, chair count, occupancy) and whether its source is reachable from
-where it is shown, in how many interactions.
+**§22 — readiness timeline.** The Plan Doctor answers "can this event safely
+proceed?" now; a timeline answers "what must be true by when?" Measure first:
+what the product already knows about time (event date, `expectedArrival`
+windows, `checkedInAt`, handover notes, the audit trail) and what the Command
+Center shows about it today. Honesty rules carry over: nothing inferred, no
+predicted arrival, absence stated as absence (`arrival-wave` model).
 
-Then, in the order given: §22–§25 UX, §26 performance,
+Then, in the order given: §23–§25 UX, §26 performance,
 §27 real CI release gates (incl. the `benchmark:baseline` false green and
 `--compare` exit 1), §28–30, then the final review and completion matrix.
 
