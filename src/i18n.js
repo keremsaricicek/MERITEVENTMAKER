@@ -1771,6 +1771,16 @@
     "seating.showAll": { en: "Show all guests", tr: "Tüm misafirleri göster" },
     "live.waveEmpty": { en: "No guests in the selected arrival window.", tr: "Seçili geliş aralığında misafir yok." },
     "toolbar.importPlan": { en: "Import plan", tr: "Plan içe aktar" },
+    // ---- §21: where a table's facts came from ------------------------------
+    "provenance.origin": { en: "Came from", tr: "Kaynağı" },
+    "provenance.origin.DETECTED": { en: "Assisted Detection proposed it; a person confirmed it", tr: "Destekli Tespit önerdi, bir kişi onayladı" },
+    "provenance.origin.MANUAL": { en: "Added by hand", tr: "Elle eklendi" },
+    "provenance.origin.COPY": { en: "Copied by hand from another table", tr: "Başka bir masadan elle kopyalandı" },
+    "provenance.origin.UNKNOWN": { en: "Not recorded — made before this was tracked", tr: "Kaydedilmemiş — bu bilgi tutulmadan önce oluşturuldu" },
+    "provenance.printed": { en: "Printed on the plan", tr: "Planda basılı" },
+    "provenance.printedValue": { en: "{value} · OCR: {state}", tr: "{value} · OCR: {state}" },
+    "provenance.printedNone": { en: "no number read", tr: "numara okunmadı" },
+    "provenance.printedMismatch": { en: "The plan prints {printed} on this table; the event calls it {number}.", tr: "Plan bu masaya {printed} yazıyor; etkinlikte adı {number}." },
     "storage.recoveredTitle": { en: "Opened from an automatic recovery point", tr: "Otomatik kurtarma noktasından açıldı" },
     "storage.recoveredBody": { en: "The saved record was missing, so this session opened the recovery point taken {when}. Anything changed after that moment may not be here — check the latest guests and seating before relying on them.", tr: "Kayıtlı kayıt bulunamadı; bu oturum {when} alınan kurtarma noktasını açtı. O andan sonra yapılan değişiklikler burada olmayabilir — güvenmeden önce son misafirleri ve yerleşimi kontrol edin." },
   };

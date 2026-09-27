@@ -709,6 +709,42 @@
   // commitCandidates, per src/capacity-provenance.js.
   const CAPPROV=()=>globalThis.MeritCapacityProvenance||null;
   const capacitySourceKey=s=>"capacitySource."+String(s||"UNKNOWN").toLowerCase().replace(/_([a-z])/g,(_,c)=>c.toUpperCase());
+  // ---- WHERE A TABLE'S FACTS CAME FROM (§21) ---------------------------------
+  // Measured before this: of the facts shown for a table, only its capacity
+  // said where it came from. A table confirmed from Assisted Detection lost the
+  // OCR reading of the number printed on its own symbol the moment it was
+  // confirmed, and was numbered T01, T02... in confirmation order -- so a plan
+  // that prints "42" on a table showed "T 01" with nothing to say the two
+  // disagree. The evidence now travels with the table and is shown beside it.
+  // All read-only: these are written only where the fact is made
+  // (commitCandidates, createTable, duplicateSelection), never picked here.
+  const TABLE_ORIGINS=new Set(["DETECTED","MANUAL","COPY"]);
+  const PRINTED_STATES=new Set(["VERIFIED","LIKELY","NEEDS_REVIEW","UNKNOWN"]);
+  // What survives of a reading: its value, its state and where it came from --
+  // nothing else, and nothing of a shape this build does not know (a package
+  // from elsewhere is untrusted input).
+  function printedEvidence(p){
+    if(!p||typeof p!=="object"||!PRINTED_STATES.has(p.state))return null;
+    const value=typeof p.value==="number"&&Number.isFinite(p.value)?p.value:typeof p.value==="string"&&p.value.length<=12?p.value:null;
+    return{value,state:p.state,confidence:typeof p.confidence==="number"?p.confidence:null,source:"OCR"};
+  }
+  function tableProvenanceHTML(t_){
+    const row=(k,v,extra="")=>`<div class="contextual-card-provenance${extra}"><span>${esc(t(k))}</span><b>${esc(v)}</b></div>`;
+    const origin=TABLE_ORIGINS.has(t_.origin)?t_.origin:"UNKNOWN";
+    const rows=[];
+    if(CAPPROV())rows.push(row("inspector.capacitySource",t(capacitySourceKey(t_.capacitySource))));
+    rows.push(row("provenance.origin",t("provenance.origin."+origin)));
+    const p=printedEvidence(t_.printedNumber);
+    if(origin==="DETECTED"){
+      rows.push(row("provenance.printed",p&&p.value!=null?t("provenance.printedValue",{value:p.value,state:t("number.state."+p.state)}):t("provenance.printedNone")));
+      // The disagreement is stated, not resolved: which number the room uses
+      // is a person's decision, and nothing here renames anything.
+      const digits=String(t_.number||"").replace(/\D+/g,"").replace(/^0+/,"");
+      if(p&&p.state==="VERIFIED"&&p.value!=null&&String(p.value).replace(/^0+/,"")!==digits)
+        rows.push(`<div class="contextual-card-provenance is-mismatch" data-printed-mismatch>${esc(t("provenance.printedMismatch",{printed:p.value,number:formatTableNumber(t_.number)}))}</div>`);
+    }
+    return rows.join("");
+  }
   function resolvedUnavailable(event){
     const A=AVAIL();
     if(!A||!event)return null;
@@ -1847,7 +1883,7 @@
       // Data Provenance Inspector (Section 11): a read-only fact, never an
       // editable field -- capacitySource is set only by the writers named in
       // src/capacity-provenance.js, never chosen here.
-      const provenanceHTML=CAPPROV()?`<div class="contextual-card-provenance"><span>${t("inspector.capacitySource")}</span><b>${esc(t(capacitySourceKey(t_.capacitySource)))}</b></div>`:"";
+      const provenanceHTML=tableProvenanceHTML(t_);
       return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(formatTableNumber(t_.number))}</strong><span>${esc(t_.zone)} · ${assigned} ${t("seating.occupied").toLowerCase()}</span></div>${alsoSelectedHTML}<div class="seat-editor"><div class="seat-stepper"><button data-seat-step="-1" title="${t("inspector.removeSeat")}">−</button><b>${t_.capacity}</b><button data-seat-step="1" title="${t("inspector.addSeat")}">+</button></div><div class="seat-presets">${presets.map(n=>`<button class="${t_.capacity===n?"active":""}" data-seat-capacity="${n}">${n}</button>`).join("")}<button data-seat-custom>${t("inspector.custom")}</button></div></div><div class="form-grid compact"><div class="field"><label for="fld-inspector-type">${t("inspector.type")}</label><select id="fld-inspector-type" data-inspector="type">${["rectangle","square","round","bistro"].map(x=>`<option value="${x}" ${t_.type===x?"selected":""}>${t("bulk.type."+x)}</option>`).join("")}</select></div><div class="field"><label for="fld-inspector-rotation">${t("inspector.rotation")}</label><input id="fld-inspector-rotation" data-inspector="rotation" type="number" value="${Math.round(t_.rotation||0)}"></div><div class="field full"><label for="fld-inspector-zone">${t("inspector.zone")}</label><select id="fld-inspector-zone" data-inspector="zone">${ZONES.map(z=>`<option ${t_.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div>${provenanceHTML}<div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${t_.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
     }
     // Sofa/bench/banquette pax cannot be read off a drawing, so its seat
@@ -2059,10 +2095,13 @@
   }
 
   function uniqueNumber(event,prefix,index){let n=index;while(event.tables.some(t=>t.number===prefix+String(n).padStart(2,"0")))n++;return prefix+String(n).padStart(2,"0");}
-  function createTable(event,d,x,y,index){const dims=d.type==="round"?[120,120]:d.type==="square"?[105,105]:d.type==="bistro"?[82,72]:[170,86],number=uniqueNumber(event,(d.prefix|| (d.type==="bistro"?"B":"T")).toUpperCase(),index);return syncTableChairs({id:uid("table"),number,type:d.type,x,y,w:dims[0],h:dims[1],capacity:Number(d.chairs)||1,zone:d.type==="bistro"?"BISTRO":d.zone||"MAIN FLOOR",rotation:0,locked:false,z:10,hasPhysicalSeats:true,capacitySource:"HUMAN_CONFIRMED"});}
+  function createTable(event,d,x,y,index){const dims=d.type==="round"?[120,120]:d.type==="square"?[105,105]:d.type==="bistro"?[82,72]:[170,86],number=uniqueNumber(event,(d.prefix|| (d.type==="bistro"?"B":"T")).toUpperCase(),index);return syncTableChairs({id:uid("table"),number,origin:"MANUAL",type:d.type,x,y,w:dims[0],h:dims[1],capacity:Number(d.chairs)||1,zone:d.type==="bistro"?"BISTRO":d.zone||"MAIN FLOOR",rotation:0,locked:false,z:10,hasPhysicalSeats:true,capacitySource:"HUMAN_CONFIRMED"});}
   function commitBulk(){syncBulkFields();const event=activeEvent(),d=ui.bulkDraft;if(!canMutate(event,"add plan objects"))return;if(d.placement==="repeated"){ui.repeatPlacement={...d,remaining:Math.max(1,Number(d.quantity)||1),index:1};ui.v8AddOpen=false;render();toast(t("toast.repeatedPlacementActive"),"success",5000);return;}const positions=bulkPositions(d);if(!positions.length)return;recordUndo(event);const created=[];positions.forEach((p,i)=>{if(d.kind==="table"){const t=createTable(event,d,p.x,p.y,i+1);event.tables.push(t);created.push(t.id);}else{const sizes={stage:[380,180],bar:[300,70],entrance:[110,40],exit:[90,40],column:[55,55],text:[150,42]},s=sizes[d.type]||[120,50],o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:p.x,y:p.y,w:s[0],h:s[1],rotation:0,locked:false,z:4};event.venueObjects.push(o);created.push(o.id);}});ui.selectedObjectIds=created;ui.selectedObjectId=created[0];ui.v8AddOpen=false;touchEvent(event);render();toast(t(created.length===1?"toast.objectAddedChairsOne":"toast.objectsAddedChairs",{n:created.length}),"success");}
   function placeRepeated(pointerEvent){const r=document.getElementById("canvasViewport").getBoundingClientRect(),d=ui.repeatPlacement,event=activeEvent(),x=(pointerEvent.clientX-r.left-ui.pan.x)/ui.zoom,y=(pointerEvent.clientY-r.top-ui.pan.y)/ui.zoom;if(!d||!canMutate(event,"place plan objects"))return;recordUndo(event);let id;if(d.kind==="table"){const t=createTable(event,d,x-60,y-45,d.index);event.tables.push(t);id=t.id;}else{const o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:x-60,y:y-30,w:120,h:60,rotation:0,locked:false,z:4};event.venueObjects.push(o);id=o.id;}d.remaining--;d.index++;ui.selectedObjectId=id;ui.selectedObjectIds=[id];if(d.remaining<=0)ui.repeatPlacement=null;touchEvent(event);render();}
-  function duplicateSelection(){const event=activeEvent();if(!canMutate(event,"duplicate plan objects"))return;const ids=ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean);if(!ids.length)return toast(t("toast.selectObjectsFirst"));recordUndo(event);const created=[];for(const id of ids){const t=event.tables.find(x=>x.id===id),o=event.venueObjects.find(x=>x.id===id),c=clone(t||o);if(!c)continue;c.id=uid(t?"table":"venue");c.x+=24;c.y+=24;c.locked=false;if(t){c.number=uniqueNumber(event,t.type==="bistro"?"B":"T",1);c.chairs=(c.chairs||[]).map((chair,index)=>({...chair,id:uid("chair"),parentTableId:c.id,seatNumber:index+1,occupancy:null}));event.tables.push(c);}else event.venueObjects.push(c);created.push(c.id);}ui.selectedObjectIds=created;ui.selectedObjectId=created[0]||null;touchEvent(event);render();}
+  function duplicateSelection(){const event=activeEvent();if(!canMutate(event,"duplicate plan objects"))return;const ids=ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean);if(!ids.length)return toast(t("toast.selectObjectsFirst"));recordUndo(event);const created=[];for(const id of ids){const t=event.tables.find(x=>x.id===id),o=event.venueObjects.find(x=>x.id===id),c=clone(t||o);if(!c)continue;c.id=uid(t?"table":"venue");c.x+=24;c.y+=24;c.locked=false;if(t){c.number=uniqueNumber(event,t.type==="bistro"?"B":"T",1);
+        // A copy is a person's act: nothing about it was detected, and the
+        // number printed on the ORIGINAL's symbol is not this table's (§21).
+        c.origin="COPY";delete c.printedNumber;if(c.capacitySource==="DETECTED_PHYSICAL_SEATS")c.capacitySource="HUMAN_CONFIRMED";c.chairs=(c.chairs||[]).map((chair,index)=>({...chair,id:uid("chair"),parentTableId:c.id,seatNumber:index+1,occupancy:null}));event.tables.push(c);}else event.venueObjects.push(c);created.push(c.id);}ui.selectedObjectIds=created;ui.selectedObjectId=created[0]||null;touchEvent(event);render();}
   async function deleteSelection(){const event=activeEvent();if(!canMutate(event,"delete plan objects"))return;const ids=new Set(ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean));if(!ids.size)return;const affected=event.guests.filter(g=>ids.has(g.assignment?.tableId));if(!(await ask({title:t("ask.deleteObjectsTitle",{n:ids.size}),body:affected.length?t("ask.deleteObjectsGuests",{n:ids.size,guests:affected.length}):"",confirmLabel:t("ask.delete"),danger:true})))return;recordUndo(event);affected.forEach(g=>SEAT().clear(g));event.tables=event.tables.filter(t=>!ids.has(t.id));event.venueObjects=event.venueObjects.filter(o=>!ids.has(o.id));ui.selectedObjectIds=[];ui.selectedObjectId=null;touchEvent(event);render();}
 
   function startMarquee(e){
@@ -5736,7 +5775,7 @@
     // hasPhysicalSeats:false, so it carries NO chair objects at all --
     // not a ring of fabricated positions flagged as unreal.
     const drawsSeats=!!(event.analysis?.diagnostics?.representation?.kind==="PHYSICAL");
-    recordUndo(event);let tables=0,venues=0;for(const c of chosen){if(c.committedId)continue;const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);if(c.kind==="table"){const table=syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||1),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":"UNKNOWN"});if(c.chairDetections?.length){table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0,occupancy:null}));table.capacity=table.chairs.length;}event.tables.push(table);c.committedId=table.id;tables++;}else{const object={id:uid("venue"),type:c.type||"text",label:String(c.type||"OBJECT").toUpperCase(),x,y,w,h,rotation:c.rotation||0,locked:false,z:4};
+    recordUndo(event);let tables=0,venues=0;for(const c of chosen){if(c.committedId)continue;const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);if(c.kind==="table"){const table=syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||1),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":"UNKNOWN",origin:"DETECTED",printedNumber:printedEvidence(c.printedNumber)});if(c.chairDetections?.length){table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0,occupancy:null}));table.capacity=table.chairs.length;}event.tables.push(table);c.committedId=table.id;tables++;}else{const object={id:uid("venue"),type:c.type||"text",label:String(c.type||"OBJECT").toUpperCase(),x,y,w,h,rotation:c.rotation||0,locked:false,z:4};
       // Seating furniture keeps its capacity state on the committed object, so
       // "we do not know how many this banquette seats" survives leaving the
       // review screen instead of silently becoming zero on the floor plan.

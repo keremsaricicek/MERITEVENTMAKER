@@ -536,6 +536,9 @@ body:has(.seat-stage) .toast-wrap{left:302px}
 body:has(.seat-stage) .toast{min-width:0;max-width:340px}
 /* Raised while a modal dialog is open, a toast lives INSIDE that dialog so it
    is drawn in its top layer rather than under the backdrop. */
+/* §21: a printed number that disagrees with the table's own is stated, in the
+   caution colour -- a fact to notice, not an error to clear. */
+.contextual-card-provenance.is-mismatch{display:block;color:var(--amber-ink);font-weight:600;line-height:1.4}
 /* §20: an empty canvas says what is missing and offers the next step. The
    layer lets clicks through; only the card takes them. */
 .canvas-empty{position:absolute;inset:0;z-index:30;display:grid;place-items:center;pointer-events:none;padding:var(--sp-6)}
