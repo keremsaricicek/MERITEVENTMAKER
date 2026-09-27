@@ -1810,6 +1810,9 @@
     "timeline.go.seating": { en: "Seating", tr: "Oturma" },
     "timeline.go.check": { en: "Run it", tr: "Çalıştır" },
     "timeline.go.handover": { en: "Write one", tr: "Not yaz" },
+    // ---- §24: a person can set a table's number ----------------------------
+    "inspector.tableNumber": { en: "Table number", tr: "Masa numarası" },
+    "toast.tableNumberInvalid": { en: "A table number is 1–12 letters, digits, spaces or hyphens.", tr: "Masa numarası 1–12 harf, rakam, boşluk ya da tireden oluşur." },
     "storage.recoveredTitle": { en: "Opened from an automatic recovery point", tr: "Otomatik kurtarma noktasından açıldı" },
     "storage.recoveredBody": { en: "The saved record was missing, so this session opened the recovery point taken {when}. Anything changed after that moment may not be here — check the latest guests and seating before relying on them.", tr: "Kayıtlı kayıt bulunamadı; bu oturum {when} alınan kurtarma noktasını açtı. O andan sonra yapılan değişiklikler burada olmayabilir — güvenmeden önce son misafirleri ve yerleşimi kontrol edin." },
   };

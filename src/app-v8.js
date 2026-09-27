@@ -1944,7 +1944,7 @@
       // editable field -- capacitySource is set only by the writers named in
       // src/capacity-provenance.js, never chosen here.
       const provenanceHTML=tableProvenanceHTML(t_);
-      return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(formatTableNumber(t_.number))}</strong><span>${esc(t_.zone)} · ${assigned} ${t("seating.occupied").toLowerCase()}</span></div>${alsoSelectedHTML}<div class="seat-editor"><div class="seat-stepper"><button data-seat-step="-1" title="${t("inspector.removeSeat")}">−</button><b>${t_.capacity}</b><button data-seat-step="1" title="${t("inspector.addSeat")}">+</button></div><div class="seat-presets">${presets.map(n=>`<button class="${t_.capacity===n?"active":""}" data-seat-capacity="${n}">${n}</button>`).join("")}<button data-seat-custom>${t("inspector.custom")}</button></div></div><div class="form-grid compact"><div class="field"><label for="fld-inspector-type">${t("inspector.type")}</label><select id="fld-inspector-type" data-inspector="type">${["rectangle","square","round","bistro"].map(x=>`<option value="${x}" ${t_.type===x?"selected":""}>${t("bulk.type."+x)}</option>`).join("")}</select></div><div class="field"><label for="fld-inspector-rotation">${t("inspector.rotation")}</label><input id="fld-inspector-rotation" data-inspector="rotation" type="number" value="${Math.round(t_.rotation||0)}"></div><div class="field full"><label for="fld-inspector-zone">${t("inspector.zone")}</label><select id="fld-inspector-zone" data-inspector="zone">${ZONES.map(z=>`<option ${t_.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div>${provenanceHTML}<div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${t_.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
+      return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(formatTableNumber(t_.number))}</strong><span>${esc(t_.zone)} · ${assigned} ${t("seating.occupied").toLowerCase()}</span></div>${alsoSelectedHTML}<div class="seat-editor"><div class="seat-stepper"><button data-seat-step="-1" title="${t("inspector.removeSeat")}">−</button><b>${t_.capacity}</b><button data-seat-step="1" title="${t("inspector.addSeat")}">+</button></div><div class="seat-presets">${presets.map(n=>`<button class="${t_.capacity===n?"active":""}" data-seat-capacity="${n}">${n}</button>`).join("")}<button data-seat-custom>${t("inspector.custom")}</button></div></div><div class="form-grid compact"><div class="field full"><label for="fld-inspector-number">${t("inspector.tableNumber")}</label><input id="fld-inspector-number" data-inspector="number" value="${esc(t_.number)}" maxlength="12" autocomplete="off" spellcheck="false"></div><div class="field"><label for="fld-inspector-type">${t("inspector.type")}</label><select id="fld-inspector-type" data-inspector="type">${["rectangle","square","round","bistro"].map(x=>`<option value="${x}" ${t_.type===x?"selected":""}>${t("bulk.type."+x)}</option>`).join("")}</select></div><div class="field"><label for="fld-inspector-rotation">${t("inspector.rotation")}</label><input id="fld-inspector-rotation" data-inspector="rotation" type="number" value="${Math.round(t_.rotation||0)}"></div><div class="field full"><label for="fld-inspector-zone">${t("inspector.zone")}</label><select id="fld-inspector-zone" data-inspector="zone">${ZONES.map(z=>`<option ${t_.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div>${provenanceHTML}<div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${t_.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
     }
     // Sofa/bench/banquette pax cannot be read off a drawing, so its seat
     // count is either a person's verified number or explicitly unverified --
@@ -2180,7 +2180,24 @@
   };
 
   setTableCapacity = function(event,table,newCap){if(!canMutate(event,"change chair capacity"))return false;newCap=Math.max(1,Math.min(99,Number(newCap)||1));const occupied=tableAssignedPax(event,table.id);if(newCap<occupied){toast(t("toast.capacityBelowPax",{table:table.number,n:occupied}),"error",5000);return false;}recordUndo(event);repackTableAssignments(event,table,newCap);table.capacitySource="HUMAN_CONFIRMED";syncTableChairs(table,newCap);touchEvent(event);render();return true;};
-  updateInspectorField = function(event,field,value){if(!canMutate(event,"edit plan objects"))return;original.updateInspectorField(event,field,value);const table=event.tables.find(x=>x.id===ui.selectedObjectId);if(table)syncTableChairs(table);};
+  // A person can now type a table's number (§24): it was the one plan fact with
+  // no path at all -- the only number field lived in the pre-v8 inspector,
+  // which v8 never renders. Validated HERE before the base writer runs: letters,
+  // digits, space, hyphen; at most 12; and unique by how the number is SHOWN,
+  // so "T1" is refused beside an existing "T01" rather than becoming a second
+  // "T 01" that the Plan Doctor would then have to call BLOCKING.
+  updateInspectorField = function(event,field,value){if(!canMutate(event,"edit plan objects"))return;
+    const table=event.tables.find(x=>x.id===ui.selectedObjectId);
+    if(field==="number"&&table){
+      const v=String(value??"").trim().toUpperCase().replace(/\s+/g," ");
+      if(!v||v.length>12||!/^[A-Z0-9ÇĞİÖŞÜ][A-Z0-9ÇĞİÖŞÜ -]*$/.test(v)){toast(t("toast.tableNumberInvalid"),"error");render();return;}
+      if(v===table.number){render();return;}
+      if(event.tables.some(x=>x.id!==table.id&&formatTableNumber(x.number)===formatTableNumber(v))){toast(t("toast.tableNumberInUse"),"error");render();return;}
+      original.updateInspectorField(event,field,v);
+      table.numberSource="TYPED";touchEvent(event);
+      return;
+    }
+    original.updateInspectorField(event,field,value);if(table)syncTableChairs(table);};
   inspectorAction = function(event,action){if(!canMutate(event,`${action} plan objects`))return;if(action==="duplicate")return duplicateSelection();if(action==="delete")return deleteSelection();original.inspectorAction(event,action);};
   deleteSelectedObject = function(){return deleteSelection();};
   startResize = function(...args){if(canMutate(activeEvent(),"resize plan objects"))original.startResize(...args);};

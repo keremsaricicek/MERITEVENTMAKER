@@ -1468,6 +1468,39 @@ typing emptied the list anyway) and were rewritten until they bite. No Show stil
 has no keyboard shortcut, deliberately: it is a status marked late in the
 evening, and a one-key way to mark the wrong person is not a speed win.
 
+### Y. §24 — Floor Plan UX — the missing task closed; the rest counted
+
+Core Floor Plan tasks, counted in the v8 product (select = one click on the
+table):
+
+| task | path | count |
+|---|---|---|
+| add N tables | Add Manually → type, quantity → Add | 3 + typing |
+| **set a table's number** | **none** before — the only number field lived in the pre-v8 inspector, never rendered | **select → type → Enter** |
+| change capacity | select → stepper or preset | 2 |
+| move | drag | 1 |
+| rotate | handle drag, or select → Rotation field | 1–2 |
+| duplicate | select → Duplicate | 2 |
+| delete | select → Delete → confirm (§16's dialog) | 3 |
+| undo | Ctrl+Z | 1 |
+
+The number field sits in the table's own card, bound by the same inspector path
+as Type/Rotation/Zone, and is validated before the base writer runs: 1–12
+letters, digits, spaces or hyphens, upper-cased, and unique by how a number is
+SHOWN (`formatTableNumber`) — "T3" is refused beside T03 instead of becoming a
+second "T 03" the Plan Doctor would have to call BLOCKING. It records
+`numberSource: TYPED`, undoes, survives a reload, reaches Seating, and a seated
+party keeps its table (assignments name the table, not its number). It closes
+§21's loop: once a person gives the table the printed "42", the disagreement
+note disappears because there is none. Whether CONFIRMATION should adopt a
+verified printed number automatically stays a deliberate product decision, not
+made here.
+
+Mutations — 5 of 5 fail `table-number-edit`.
+
+Found on the way (committed separately, `bf732a6`): the §18 reachability
+analysis missed alias call-backs — see the correction in entry T.
+
 ## Gates re-measured at `3451f67` (post-§8 + §4)
 
 | Gate | Result |
@@ -1511,13 +1544,13 @@ typing 136/289.
 
 ## Next step
 
-**§24 — Floor Plan UX.** Known on entry (§21): an operator cannot change a
-table's number at all in the v8 product — the only number field is in the
-pre-v8 inspector, which is never rendered. Measure first: the core floor-plan
-tasks by counted interactions (add N tables, rename one, resize its capacity,
-move, rotate, duplicate, delete, undo), and which of them have no path.
+**§25 — visual quality.** Known on entry: the read-only historical screen has
+no left gutter (§18); the readiness timeline's "partial" mark renders as a
+half-glyph in the UI font (§22). Measure first: a rendered sweep of every screen
+and dialog at 1920/2560/1440 in TR, checked by eye for alignment, gutters,
+truncation and overflow, before changing anything.
 
-Then, in the order given: §25 UX, §26 performance,
+Then, in the order given: §26 performance,
 §27 real CI release gates (incl. the `benchmark:baseline` false green and
 `--compare` exit 1), §28–30, then the final review and completion matrix.
 
