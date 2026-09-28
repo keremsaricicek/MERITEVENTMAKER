@@ -882,6 +882,9 @@
     "reports.recordsCount": { en: "{n} records", tr: "{n} kayıt" },
     "reports.unassigned": { en: "Unassigned", tr: "Atanmamış" },
     "reports.guestsCount": { en: "{n} guests", tr: "{n} misafir" },
+    "reports.guestsCount.1": { en: "1 guest", tr: "1 misafir" },
+    "reports.assignedPax": { en: "Assigned pax", tr: "Yerleştirilmiş kişi" },
+    "reports.emptySeats": { en: "Empty seats", tr: "Boş koltuklar" },
     "reports.allAssigned": { en: "All guests assigned", tr: "Tüm misafirler atandı" },
     "reports.ready": { en: "Ready", tr: "Hazır" },
 

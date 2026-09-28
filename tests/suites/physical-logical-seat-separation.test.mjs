@@ -170,6 +170,40 @@ export default async function run({ page, checks, baseUrl }) {
     "and the hero's capacity bar still reads against 16 seats. Driving it from physical chairs printed 'No tables in the plan yet' over a plan carrying two tables and sixteen seats",
     hero);
 
+  // --- 6b. Reports names the figure it shows ----------------------------------
+  // Measured 2026-09-28: on this same symbolic plan Reports printed "EMPTY
+  // PHYSICAL CHAIRS 13" — thirteen empty LOGICAL seats under a label claiming
+  // chairs the drawing never had — and "ASSIGNED GUESTS 3 · Live": a planned
+  // pax figure, labelled as guest records, noted as live.
+  const reportsFigures = await page.evaluate(() => {
+    const e = state.events[0];
+    const g = (id, name, pax) => ({ id, name, additionalGuests: pax - 1, pax, planningStatus: "Confirmed", vip: "Standard", arrivalStatus: "Not Arrived",
+      checkedInAt: null, invitedBy: "", notes: "", assignment: null, createdAt: new Date().toISOString() });
+    e.guests = [g("gp", "Party Of Three", 3), g("gs", "Single Guest", 1)];
+    touchEvent(e);
+    ui.activeEventId = e.id; ui.screen = "workspace";
+    assignGuestToTable("gp", e.tables[0].id);
+    ui.tab = "reports"; render();
+    return [...document.querySelectorAll(".reports-stage .mx-metric")].map((m) => ({
+      label: m.querySelector(".mx-metric-label")?.textContent.trim() || "",
+      value: m.querySelector(".mx-metric-value")?.textContent.trim() || "",
+      note: m.querySelector(".mx-metric-note")?.textContent.trim() || "" }));
+  });
+  const physicalWord = await page.evaluate(() => [t("reports.emptyChairs"), "physical", "fiziksel"]);
+  checks.ok(reportsFigures.length === 4 && !reportsFigures.some((m) => /physical|fiziksel/i.test(m.label)),
+    "on a plan with no physical chairs, no Reports figure is labelled as physical chairs", { reportsFigures, physicalWord });
+  const empty = reportsFigures.find((m) => m.value === "13");
+  checks.ok(!!empty && empty.label === (await page.evaluate(() => t("reports.emptySeats"))), "the 13 empty logical seats are labelled as seats", reportsFigures);
+  const assigned = reportsFigures[1];
+  const expectAssigned = await page.evaluate(() => ({ label: t("reports.assignedPax"), note: t("reports.guestsCount.1", { n: 1 }), live: t("reports.live") }));
+  checks.ok(assigned && assigned.value === "3" && assigned.label === expectAssigned.label && assigned.note === expectAssigned.note && assigned.note !== expectAssigned.live,
+    "3 assigned pax are labelled as pax, noted as one guest record — not as live", { assigned, expectAssigned });
+  // Turkish does not inflect after a number, so the singular is read in English.
+  const englishNotes = await page.evaluate(() => { const was = ui.lang; ui.lang = "en"; render();
+    const notes = [...document.querySelectorAll(".reports-stage .mx-metric .mx-metric-note")].map((x) => x.textContent.trim());
+    ui.lang = was; render(); return notes; });
+  checks.equal([englishNotes[1], englishNotes[3]], ["1 guest", "1 guest"], "and one guest record reads as \"1 guest\", not \"1 guests\"", englishNotes);
+
   // --- 7. the Assisted Detection commit path follows the plan's own
   //        representation verdict, not a hardcoded default ------------------
   // Whether a committed table gets physical chairs is decided by what the

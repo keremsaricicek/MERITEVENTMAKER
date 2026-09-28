@@ -3519,11 +3519,16 @@
     const preflight=rows.length
       ?rows.map(r=>`<div class="pf-item ${r.level}"><i class="pf-dot"></i><div class="pf-text"><b>${esc(r.what)}</b>${r.detail?`<span>${esc(r.detail)}</span>`:""}</div>${r.go}</div>`).join("")
       :`<div class="pf-item ok"><i class="pf-dot"></i><div class="pf-text"><b>${t("reports.preflightOk")}</b><span>${t("reports.preflightOkNote")}</span></div></div>`;
+    // Each figure is named for what it counts. The empty figure is LOGICAL
+    // seats (seatingStats sums capacity), so it is not labelled as physical
+    // chairs -- on a symbolic plan there are none. The assigned figure is the
+    // PLAN's pax, noted with its guest records, never as "live".
+    const guestsNote=n=>t(n===1?"reports.guestsCount.1":"reports.guestsCount",{n});
     const capacity=[
       `<div class="mx-metric is-hero"><span class="mx-metric-label">${t("reports.totalCapacity")}</span><span class="mx-metric-value">${m.total}</span><span class="mx-metric-note">${t("reports.tablesCount",{n:event.tables.length})}</span></div>`,
-      `<div class="mx-metric"><span class="mx-metric-label">${t("reports.assignedGuests")}</span><span class="mx-metric-value">${m.assigned}</span><span class="mx-metric-note">${t("reports.live")}</span></div>`,
-      `<div class="mx-metric"><span class="mx-metric-label">${t("reports.emptyChairs")}</span><span class="mx-metric-value">${s.emptyChairs}</span><span class="mx-metric-note">${t("reports.emptyTables")}: ${s.emptyTables}</span></div>`,
-      `<div class="mx-metric ${unassignedPax?"is-warn":""}"><span class="mx-metric-label">${t("reports.unassigned")}</span><span class="mx-metric-value">${unassignedPax}</span><span class="mx-metric-note">${t("reports.guestsCount",{n:unassigned.length})}</span></div>`,
+      `<div class="mx-metric"><span class="mx-metric-label">${t("reports.assignedPax")}</span><span class="mx-metric-value">${m.assigned}</span><span class="mx-metric-note">${guestsNote(event.guests.filter(g=>g.assignment).length)}</span></div>`,
+      `<div class="mx-metric"><span class="mx-metric-label">${t("reports.emptySeats")}</span><span class="mx-metric-value">${s.emptyChairs}</span><span class="mx-metric-note">${t("reports.emptyTables")}: ${s.emptyTables}</span></div>`,
+      `<div class="mx-metric ${unassignedPax?"is-warn":""}"><span class="mx-metric-label">${t("reports.unassigned")}</span><span class="mx-metric-value">${unassignedPax}</span><span class="mx-metric-note">${guestsNote(unassigned.length)}</span></div>`,
     ].join("");
     const tableRows=[...event.tables].sort((a,b)=>naturalSort(a.number,b.number))
       .map(t_=>`<div class="mx-row cols-report"><div><b style="font-size:12.5px">${esc(formatTableNumber(t_.number))}</b> <span class="muted" style="font-size:11.5px">${esc(t_.zone)}</span></div><div class="seat-tag">${tableAssignedPax(event,t_.id)} / ${t_.capacity}</div></div>`).join("");
