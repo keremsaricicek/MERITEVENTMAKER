@@ -195,10 +195,12 @@ export default async function run({ page, checks, baseUrl, repoRoot, browser }) 
   checks.equal(errs, [], "and nothing threw on the way");
   await ctx.close();
 
-  // IndexedDB that EXISTS but refuses to open (a locked-down or private
-  // browser raises InvalidStateError) falls back too — and a blocked or
-  // failing IndexedDB does NOT: moving the data then would hide those writes
-  // on the next boot, when IndexedDB answers again.
+  // IndexedDB FORBIDDEN by policy (SecurityError) falls back too: this product
+  // could never have written there. One that EXISTS but will not open
+  // (InvalidStateError), is blocked, or is full does NOT — it may hold the
+  // evening's data, and moving to a second store would show an empty app and
+  // hide this session's writes on the next boot. What the operator sees then
+  // is resilience-storage's section 4.
   const decisions = await page.evaluate(async () => {
     const make = (error) => {
       const fallbacks = [];
@@ -206,17 +208,20 @@ export default async function run({ page, checks, baseUrl, repoRoot, browser }) 
       p.idb = p.active = { save: async () => { throw error; } };
       return { p, fallbacks };
     };
-    const refused = make(new DOMException("refused", "InvalidStateError"));
+    const refused = make(new DOMException("refused", "SecurityError"));
     await refused.p.save(JSON.stringify({ ok: 1 }), "probe");
+    const unopened = make(new DOMException("The database could not be opened.", "InvalidStateError"));
+    let unopenedThrew = false; try { await unopened.p.save("{}", "probe"); } catch { unopenedThrew = true; }
     const blocked = make(new Error("IndexedDB open blocked (another tab holds an older version)."));
     let threw = false; try { await blocked.p.save("{}", "probe"); } catch { threw = true; }
     const full = make(new DOMException("disk full", "QuotaExceededError"));
     let fullThrew = false; try { await full.p.save("{}", "probe"); } catch { fullThrew = true; }
     localStorage.removeItem("merit.probe:probe");
     return { refused: [refused.p.name, refused.fallbacks.length, !!refused.p.fallbackReason], blocked: [blocked.p.name === "LocalStorageStorageProvider", threw],
-      full: [full.p.name === "LocalStorageStorageProvider", fullThrew] };
+      full: [full.p.name === "LocalStorageStorageProvider", fullThrew], unopened: [unopened.p.name === "LocalStorageStorageProvider", unopenedThrew, unopened.fallbacks.length] };
   });
-  checks.equal(decisions.refused, ["LocalStorageStorageProvider", 1, true], "an IndexedDB that refuses to exist (InvalidStateError) falls back, once, and records why", decisions);
+  checks.equal(decisions.refused, ["LocalStorageStorageProvider", 1, true], "an IndexedDB forbidden by policy (SecurityError) falls back, once, and records why", decisions);
+  checks.equal(decisions.unopened, [false, true, 0], "an IndexedDB that exists but will not open does NOT move the data: it may hold the evening, and the load path announces it instead", decisions);
   checks.equal(decisions.blocked, [false, true], "a BLOCKED IndexedDB does not move the data — the failure goes to the caller's save-failure notice", decisions);
   checks.equal(decisions.full, [false, true], "nor does a full one", decisions);
 }

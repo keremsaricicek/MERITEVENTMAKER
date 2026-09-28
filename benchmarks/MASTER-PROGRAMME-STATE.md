@@ -1657,8 +1657,15 @@ questions from it and cross-checks the static reachability model (now shared,
    canvas). Fixed; the suite forces the race and holds the result.
 3. **The localStorage fallback could not engage** — with IndexedDB missing,
    every save failed and a reload came back empty. `ResilientStorageProvider`
-   falls back only when IndexedDB is absent or refuses to exist; blocked or
-   full does not move the data. Both sides tested.
+   falls back only when IndexedDB is absent or forbidden by policy
+   (`SecurityError`); one that exists but will not open, is blocked, or is
+   full does not move the data. Both sides tested. **Caught on the gate run,
+   not before commit:** the first version also fell back on
+   `InvalidStateError`, which `resilience-storage` §4 uses for "a store that
+   exists and may hold the evening but will not open" — the app then showed
+   an empty screen instead of the "could not be opened" notice. 463e687 was
+   not pushed; the fix narrows the rule and `critical-paths` now asserts that
+   case does NOT fall back.
 
 **Two hollow checks** (a copy of `commitCandidates()`'s expression, asserted)
 now press the real Commit button; each fails when the real expression is

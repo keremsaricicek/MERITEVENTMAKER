@@ -164,14 +164,19 @@
   // never throws (it opens per call), so with IndexedDB missing every save
   // failed and a reload came back empty — while this file documented a
   // localStorage fallback that no path ever reached. This switches ONLY when
-  // IndexedDB is absent or refuses to exist (the InvalidStateError /
-  // SecurityError a locked-down or private browser raises). Any other failure
-  // — a blocked upgrade, a full disk — is NOT a reason to move the data: it
-  // is thrown to the caller, whose save-failure notice tells the operator,
-  // because writing to a second store would hide those writes on the next
-  // boot, when IndexedDB answers again.
+  // IndexedDB is absent, or forbidden by policy (SecurityError): a store this
+  // product could never have written to. Any other failure is NOT a reason to
+  // move the data, and is thrown to the caller:
+  //   - an IndexedDB that EXISTS but will not open (InvalidStateError) may
+  //     hold the evening's data. Switching stores would show the operator an
+  //     empty app with no word said, and hide this session's writes on the
+  //     next boot, when IndexedDB answers again. The load path announces it
+  //     and refuses to save instead (resilience-storage, section 4). A first
+  //     version of this class treated it as "refuses to exist"; that suite
+  //     caught the contradiction on the gate run.
+  //   - a blocked upgrade or a full disk goes to the save-failure notice.
   const refusesToExist = (error) => !globalThis.indexedDB
-    || (!!error && (error.name === "InvalidStateError" || error.name === "SecurityError" || /not available/i.test(String(error.message || ""))));
+    || (!!error && (error.name === "SecurityError" || /not available/i.test(String(error.message || ""))));
   class ResilientStorageProvider {
     constructor(key, onFallback) {
       this.idb = new IndexedDBStorageProvider();
