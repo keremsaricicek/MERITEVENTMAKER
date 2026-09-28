@@ -84,6 +84,13 @@
     function — it sits beside the other seat modules.
   -->
   <script src="src/occupancy.js"></script>
+  <!--
+    Event rules: whether a change to an event may go ahead (a completed or
+    past-dated event is a record), and the physical chairs a table carries.
+    Pure; app-v8.js reaches it through MeritEventRules and keeps the message.
+    Must load before app-v8.js, which migrates stored events at boot.
+  -->
+  <script src="src/event-rules.js"></script>
   <script src="src/app.js"></script>
   <script src="src/app-guests.js"></script>
   <script src="src/i18n.js"></script>

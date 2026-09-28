@@ -1,7 +1,10 @@
-# Modularization order — proposal
+# Modularization order
 
-**Status: proposal. Nothing here has been implemented.** This document is the
-output of the ownership map, not a plan that has started.
+**Status (2026-09-28): in progress.** Steps 0, 1 and 2 are done (step 2 as
+§3C, `src/seat-assignment.js`); step 3 is done for 3a (`src/occupancy.js`)
+and 3b (`src/event-rules.js`); 3c onward remain. Each step below says which.
+This document began as the output of the ownership map, before anything
+moved; the reasoning for the order is kept as it was written.
 
 The order below is **derived from measurement**, and it is not the order that
 seems obvious. The obvious order is by screen — Guests, then Seating, then
@@ -179,8 +182,19 @@ clean.
 
 > **3a DONE** — A03's domain half is `src/occupancy.js` (`MeritOccupancy`:
 > `liveUsedIndexes`, `liveStats`, `paxOf` injected), characterized first by
-> `occupancy-pair` (3 of 3 mutations bite). **3b** (A02 → `src/event-rules.js`)
-> and **3c** (A04 → `src/event-resolution.js`) remain, each its own commit.
+> `occupancy-pair` (3 of 3 mutations bite).
+>
+> **3b DONE** — A02 is `src/event-rules.js` (`MeritEventRules`: `todayKey`,
+> `isHistorical`, `mutationRefusal`, `chairGeometry`, `syncTableChairs`,
+> `refreshChairOccupancy`). Characterized first by `event-rules` (committed
+> alone, 8 of 8 mutations bite on the old code; 9 of 9 on the new). The
+> DECISION moved; `canMutate` stays in the shell because it owns the toast.
+> Chair ids are made in the module with the shell's id shape rather than
+> injected — the precedent `venue-model.js` and `training-data.js` set.
+> `audit` stays (see the table). One measurement below was **wrong** and is
+> corrected: `refreshChairOccupancy` does not read `t()` — the `t` in its
+> stripped code is the parameter of `tables.find(t=>…)` — so it moved too.
+> **3c** (A04 → `src/event-resolution.js`) remains.
 >
 > **Crossings measured for what remains (2026-09-27, stripped code):**
 >

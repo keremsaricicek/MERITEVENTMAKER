@@ -7,7 +7,7 @@ own recollection.
 - **Programme start SHA** `02edac7`
 - **Branch** `claude/merit-concept3-plan-intelligence-rebirth`
 - **PR** #5 — OPEN, must not be merged
-- **Current SHA** see `git log` — modularization step 3a (entry AE) is the last completed entry
+- **Current SHA** see `git log` — modularization step 3b (entry AF) is the last completed entry
 - **Status** IN PROGRESS
 
 ## How to resume
@@ -1728,6 +1728,39 @@ change: the suites that exercise live occupancy (`arrival-wave`,
 `service-load`, `live-door-speed`, `guest-and-seating-rules`) and the four
 structural suites pass. **3b** (A02) and **3c** (A04) remain.
 
+### AF. Modularization step 3b — event rules out of app-v8.js
+
+**Characterization first**, committed alone: `event-rules` (18 checks) pins
+what A02 guarantees through the product's own paths — that a refused change
+**names its reason** (nothing had asserted the message, only the refusal; the
+old suite called `canMutate` "unreachable from a test"), the **day boundary**
+(today is tonight's event, yesterday a record, Completed a record whatever
+its date), each table type's chair positions, a placed chair surviving a
+capacity change, zero chairs on a symbolic table, the 1..99 clamp on load,
+and planned occupancy rebuilt past an unseated guest. 8 of 8 mutations fail
+it on the old code.
+
+**The move:** `isHistorical`, `mutationRefusal` (the decision),
+`chairGeometry`, `syncTableChairs`, `refreshChairOccupancy` and `todayKey` →
+`src/event-rules.js` (`MeritEventRules`). `canMutate` stays in the shell and
+owns the toast. Every call site says `RULES().name(…)` — 24 + 9 + 7 + 3,
+including the two that passed the function as a callback
+(`filter(isHistorical)`, `forEach(refreshChairOccupancy)`), which a
+call-pattern rewrite would have missed. `app-v8.js` 6,649 → **6,585**. 9 of 9
+mutations fail the suite on the new code, including the shell's message.
+
+**Found on the way, recorded, not changed:** `chair.occupancy` is persisted
+and read by nothing, and stale between an in-session assignment and the next
+load (`CODE-INVENTORY.md` §3.1). The recorded crossing "refreshChairOccupancy
+reads `t()`" was a lambda parameter named `t`; corrected in
+`MODULARIZATION-ORDER.md`.
+
+**Also this stretch:** the gate run on 463e687 (§28 + §5) went red on
+`resilience-storage` §4 — the §28 fallback treated `InvalidStateError` as
+"IndexedDB does not exist here" and hid the "could not be opened" notice.
+Narrowed to absent or `SecurityError` (`f07db9b`), both suites mutation-proven.
+463e687 was never pushed on its own.
+
 ### Adversarial at `3451f67` — 1 PASS · 4 PARTIAL · 3 FAIL
 
 Same distribution as `02edac7`; the run exits 0 because it gates on
@@ -1755,17 +1788,17 @@ typing 136/289.
 
 ## Next step
 
-**§29 check, the final coverage re-run, and the final quality review +
-completion matrix.** §29: the security, accessibility and resilience suites
-exist and run in CI (`npm run test:list`; `resilience-detection-render` is slow
-and runs in the intelligence job's `test:slow`). Re-run `MERIT_COVERAGE=1 npm
-run test:all` so `benchmarks/coverage/report.json` describes the build after
-§28's fixes. Then the review: every section's verdict re-measured, not
-remembered, in `benchmarks/FINAL-COMPLETION-MATRIX.md`. §2 (third real plan)
-stays not-available with its procedure ready.
-
-Deferred with recorded prerequisites met, not forgotten: Split B (a design
-job, §3B measured), the screen extractions A21/A17/A12 (entry N).
+**Continue the modularization (§3), then the final review.** The programme's
+§37 forbids ending on a technically fixable PARTIAL, and §3B/§3D are exactly
+that. In order: 3c (A04 → `src/event-resolution.js`, five injected
+dependencies measured), the dead exports §28 proved (`CODE-INVENTORY.md`),
+`chair.occupancy` (§3.1), then step 4 (layout changes) and step 5 (the
+adapters) of `MODULARIZATION-ORDER.md`, then detector Split B. After that:
+`MERIT_COVERAGE=1 npm run test:all` re-run, §35 validation with every
+benchmark, and `benchmarks/FINAL-COMPLETION-MATRIX.md` rewritten from
+measurement. §29 verified 2026-09-28: every non-slow suite runs in CI's
+`npm test` (`tests/run.mjs:50` selects by exclusion) and the one slow
+resilience suite in `test:slow`.
 
 ### Open, measured — none accepted as correct
 

@@ -35,7 +35,6 @@
   // routing image bytes through the state record. Read/write access to the
   // blob store only -- the state record still goes through saveState().
   globalThis.MERIT_STORAGE_PROVIDER = storageProvider;
-  const todayKey = () => new Date().toLocaleDateString("en-CA");
   const original = {
     render, bindCommon, bindCanvas, bindGuests, bindSeating, bindLive, bindReports,
     floorPlanHTML, seatingHTML, guestsHTML, reportsHTML, inspectorHTML,
@@ -101,7 +100,6 @@
   // moved to 9, so a brand-new install saved itself as an old record and ran
   // the 8→9 step over data that step never needed.
   function blankRoot(){ const v=globalThis.MeritSchemaMigrations?.CURRENT_VERSION??9; return {version:v, schemaVersion:v, events:[], venues:[], verifiedExamples:[], trainingData:[], teachings:[], operatorSessions:[], analyses:[], calibration:null, audit:[], auditRetention:null, lastBackupAt:null}; }
-  function isHistorical(event){ return !!event && (event.status === "Completed" || (!!event.date && event.date < todayKey())); }
   // The one writer of the shared activity log. It used to end with
   // `state.audit.slice(0, 1000)` on EVERY write -- a shared log, so a busy
   // door erased its own event's opening entries and the previous event's
@@ -127,69 +125,13 @@
     state.audit=r.log;
     state.auditRetention=T.recordEviction(state.auditRetention||null,r);
   }
+  // The event rules (src/event-rules.js, step 3b): whether a change may go
+  // ahead is the module's decision; telling the operator why is this shell's.
+  const RULES=()=>globalThis.MeritEventRules;
   function canMutate(event, action="change this event"){
-    if(!event) return false;
-    if(isHistorical(event)){
-      toast(t("toast.historicalReadOnly",{action}), "error", 5200);
-      return false;
-    }
-    return true;
-  }
-  function chairGeometry(table, count=Math.max(1, Number(table.capacity)||1)){
-    const out=[];
-    if(table.type==="round"||table.type==="bistro"){
-      const rx=table.type==="bistro"?43:45, ry=table.type==="bistro"?43:46;
-      for(let i=0;i<count;i++){const a=-Math.PI/2+i/count*Math.PI*2;out.push({x:50+Math.cos(a)*rx,y:50+Math.sin(a)*ry,rotation:a*180/Math.PI+90});}
-    } else if(table.type==="square"){
-      for(let i=0;i<count;i++){const u=i/count*4;if(u<1)out.push({x:15+u*70,y:7,rotation:0});else if(u<2)out.push({x:93,y:15+(u-1)*70,rotation:90});else if(u<3)out.push({x:85-(u-2)*70,y:93,rotation:180});else out.push({x:7,y:85-(u-3)*70,rotation:270});}
-    } else {
-      const top=Math.ceil(count/2),bottom=count-top;
-      for(let i=0;i<top;i++)out.push({x:top===1?50:12+i*76/(top-1),y:8,rotation:0});
-      for(let i=0;i<bottom;i++)out.push({x:bottom===1?50:88-i*76/(bottom-1),y:92,rotation:180});
-    }
-    return out;
-  }
-  // THREE QUANTITIES, AND THEY ARE NOT THE SAME NUMBER.
-  //
-  //   LOGICAL SEATS -- `table.capacity`. The assignment index space: seats
-  //   0..capacity-1. Every guest assignment, seat number, report row and
-  //   pax check indexes into this and nothing else. It exists whether or
-  //   not anybody ever drew a chair.
-  //
-  //   PHYSICAL CHAIRS -- `table.chairs`. Objects with real coordinates,
-  //   existing ONLY where the plan genuinely drew a chair, Assisted
-  //   Detection found one, or a person placed one. When none of those
-  //   happened the array is EMPTY -- not a ring of invented positions
-  //   wearing a `physical:false` label.
-  //
-  //   OPERATIONAL CAPACITY -- see seatingCapacity() below: what the room
-  //   can seat tonight, summed from logical seats.
-  //
-  // This function used to fabricate one chair object per capacity slot for
-  // every table, symbolic or not, and mark the fake ones `physical:false`.
-  // A 420-table symbolic plan therefore stored 4,200 chairs at coordinates
-  // nothing had ever observed, re-derived and re-persisted on every single
-  // save. A flag saying "this coordinate is not real" is not the same as
-  // not writing the coordinate: the contract's rule is that no physical
-  // chair is ever synthesised from a capacity number, and that is now
-  // structural rather than annotated.
-  //
-  // `hasPhysicalSeats` decides WHETHER physical chairs exist; capacity
-  // decides HOW MANY, when they do. Coordinates already on a chair survive
-  // (Assisted Detection writes detected positions verbatim, and those must
-  // never be regenerated into a synthetic ring) -- only the count follows
-  // capacity.
-  function syncTableChairs(table, count=table.capacity){
-    count=Math.max(1,Math.min(99,Number(count)||1));
-    table.capacity=count;
-    if(table.hasPhysicalSeats===false){table.chairs=[];return table;}
-    const old=Array.isArray(table.chairs)?table.chairs:[], geometry=chairGeometry({...table,capacity:count},count);
-    table.chairs=geometry.map((p,index)=>({
-      id:old[index]?.id||uid("chair"), parentTableId:table.id, seatNumber:index+1,
-      x:Number.isFinite(old[index]?.x)?old[index].x:p.x, y:Number.isFinite(old[index]?.y)?old[index].y:p.y,
-      rotation:Number.isFinite(old[index]?.rotation)?old[index].rotation:p.rotation, occupancy:null
-    }));
-    return table;
+    const refusal=RULES().mutationRefusal(event);
+    if(refusal==="HISTORICAL")toast(t("toast.historicalReadOnly",{action}), "error", 5200);
+    return !refusal;
   }
   // The three quantities live in src/seat-model.js, which owns their
   // definitions for the shell and for every pure module. Aliased here so
@@ -199,12 +141,6 @@
   const logicalSeatCount=table=>SEATS().logicalSeatCount(table);
   const physicalChairCount=table=>SEATS().physicalChairCount(table);
   const canSeat=table=>SEATS().canSeat(table);
-  function refreshChairOccupancy(event){
-    for(const table of event.tables||[])syncTableChairs(table).chairs.forEach(chair=>chair.occupancy=null);
-    // `continue`, not `return`: this used to abort the whole loop at the first
-    // unassigned guest, leaving every later guest's chairs marked unoccupied.
-    for(const guest of event.guests||[]){if(!guest.assignment)continue;const table=event.tables.find(t=>t.id===guest.assignment.tableId);if(!table)continue;(guest.assignment.seats||[]).forEach((seatIndex,partyIndex)=>{const chair=table.chairs[Number(seatIndex)];if(chair)chair.occupancy={guestId:guest.id,partyIndex,planned:true};});}
-  }
   function migrateEvent(event){
     const migrated={...event};
     migrated.id ||= uid("event"); migrated.name=String(migrated.name||"Untitled Event");
@@ -219,13 +155,13 @@
     // discipline as hasPhysicalSeats one line above.
     //
     // This is also where a stored event stops carrying fabricated chairs.
-    // syncTableChairs() empties `chairs` on a symbolic table and rebuilds a
+    // syncTableChairs() (src/event-rules.js) empties `chairs` on a symbolic table and rebuilds a
     // physical table's chairs without the retired `physical` flag, so an
     // install that saved 4,200 invented chair coordinates sheds them on the
     // first load. Nothing operational rides on them: capacity, assignments
     // and seat indexes are untouched, and a physical table's real chair
     // coordinates are carried across verbatim.
-    migrated.tables=(migrated.tables||[]).map(table=>syncTableChairs({...table,id:table.id||uid("table"),hasPhysicalSeats:table.hasPhysicalSeats!==false,capacitySource:globalThis.MeritCapacityProvenance.normalizeForTable(table.capacitySource)}));
+    migrated.tables=(migrated.tables||[]).map(table=>RULES().syncTableChairs({...table,id:table.id||uid("table"),hasPhysicalSeats:table.hasPhysicalSeats!==false,capacitySource:globalThis.MeritCapacityProvenance.normalizeForTable(table.capacitySource)}));
     migrated.venueObjects=(migrated.venueObjects||[]).map(o=>({...o,id:o.id||uid("venue")}));
     migrated.guests=(migrated.guests||[]).map(normalizeGuest);
     // FREEZE ZONES. An install from before them simply has none, which is the
@@ -247,7 +183,7 @@
     migrated.background={src:"",name:"",opacity:.28,visible:false,locked:true,isDefault:false,scale:100,...(migrated.background||{})};
     if(migrated.background.isDefault){migrated.background.src="";migrated.background.visible=false;migrated.background.isDefault=false;}
     migrated.analysis=migrated.analysis||null;
-    refreshChairOccupancy(migrated);
+    RULES().refreshChairOccupancy(migrated);
     return migrated;
   }
   // A record this build must not read AND must not write over. Set once, by
@@ -498,7 +434,7 @@
     // The same rule for a record that could not be read AND could not be
     // copied aside: saving would overwrite the only copy.
     if(MERIT_STORAGE_NOTICE.unreadable&&!MERIT_STORAGE_NOTICE.unreadable.kept)return Promise.resolve();
-    state.events.forEach(refreshChairOccupancy);
+    state.events.forEach(e=>RULES().refreshChairOccupancy(e));
     let payload;
     try{payload=JSON.stringify(state);}
     // Not a storage refusal: the state could not be turned into a record at
@@ -549,7 +485,7 @@
   let bootReady=false;
   state=blankRoot();
 
-  seatPositions = function(table){syncTableChairs(table);return table.chairs.map(c=>({x:c.x,y:c.y,rotation:c.rotation,id:c.id,seatNumber:c.seatNumber}));};
+  seatPositions = function(table){RULES().syncTableChairs(table);return table.chairs.map(c=>({x:c.x,y:c.y,rotation:c.rotation,id:c.id,seatNumber:c.seatNumber}));};
   // WHAT THE ROOM CAN SEAT TONIGHT, and HOW MANY CHAIRS THE PLAN DREW --
   // two different questions, two different numbers, one definition each.
   function seatingCapacity(event){return SEATS().seatingCapacity(event);}
@@ -572,7 +508,7 @@
     return`<div class="filter-banner">${icon("search")}<span>${t({empty:"seating.showingEmpty",available:"seating.showingAvailable",full:"seating.showingFull"}[ui.seatingFilter])}</span><button data-clear-seating-filter aria-label="${esc(t("seating.clearFilter"))}">${icon("x")}</button></div>`;
   };
   tableObjectHTML = function(event,table,seating){
-    syncTableChairs(table);
+    RULES().syncTableChairs(table);
     const selected=(!seating&&(ui.selectedObjectId===table.id||ui.selectedObjectIds.includes(table.id)))||(seating&&ui.selectedTableId===table.id);
     const highlighted=ui.highlightId===table.id,match=!seating||tableMatchesFilter(event,table);
     const used=seating&&ui.operationalMode?OCC().liveUsedIndexes(event,table.id):occupiedSeatIndexes(event,table.id);
@@ -628,7 +564,7 @@
   //
   // A historical event has no Command Center to open, so it keeps the popover.
   function planHealthHTML(event){
-    if(isHistorical(event)){
+    if(RULES().isHistorical(event)){
       const issues=planIssues(event),level=issues.some(x=>x.level==="blocker")?"blocker":issues.length?"warn":"";
       return`<details class="plan-health"><summary><i class="health-dot ${level}"></i>${t("health.planHealth")}${issues.length?` · ${issues.length}`:` · ${t("health.ready")}`}</summary><div class="health-pop">${issues.length?issues.map(x=>`<div class="health-item"><i class="health-dot ${x.level}"></i><div><b>${esc(x.title)}</b><span>${esc(x.text)}</span></div></div>`).join(""):`<div class="health-item"><i class="health-dot"></i><div><b>${t("health.noBlockingIssues")}</b><span>${t("health.consistent")}</span></div></div>`}</div></details>`;
     }
@@ -654,7 +590,7 @@
   // PHASE (preparation / ready / live / closed) changes what is emphasised,
   // never what is available.
   function eventPhase(event){
-    if(isHistorical(event))return"closed";
+    if(RULES().isHistorical(event))return"closed";
     if((event.guests||[]).some(g=>g.arrivalStatus==="Checked In"||g.arrivalStatus==="No Show"))return"live";
     return"ready";
   }
@@ -1193,7 +1129,7 @@
     const unavailable=resolvedUnavailable(event)||[];
     const stranded=A?A.strandedGuests(event.tables||[],event.guests||[]):{records:0,pax:0};
     const notes=resolvedHandoverNotes(event);
-    const historical=isHistorical(event);
+    const historical=RULES().isHistorical(event);
     const cell=(v,l)=>`<div class="cc-metric"><b>${v}</b><span>${l}</span></div>`;
     return`<section class="cc-block cc-handover">
       <h3>${t("handover.title")}</h3>
@@ -1262,7 +1198,7 @@
     return Math.round((day-today)/86400000);
   }
   function readinessTimelineHTML(event){
-    if(isHistorical(event))return"";
+    if(RULES().isHistorical(event))return"";
     const steps=readinessSteps(event);
     // Characters the UI font carries: "◐" rendered as a clipped half-glyph (§25).
     const mark={done:"✓",partial:"…",stale:"!",open:"○",today:"●",upcoming:"○"};
@@ -1473,8 +1409,8 @@
     </div>`;
   }
   eventsHTML = function(){
-    const upcoming=state.events.filter(e=>!isHistorical(e)).sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
-    const history=state.events.filter(isHistorical).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+    const upcoming=state.events.filter(e=>!RULES().isHistorical(e)).sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
+    const history=state.events.filter(e=>RULES().isHistorical(e)).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
     const [next,...rest]=upcoming;
     return`<header class="appbar">${topBrand()}<div class="crumb">${t("home.crumb")} / <b>${t("home.portfolio")}</b></div><div class="appbar-actions">${helpButton()}<button class="btn quiet icon-only" data-action="backup-export" title="${t("backup.export")}">${icon("download")}</button><button class="btn quiet icon-only" data-action="backup-import" title="${t("backup.import")}">${icon("upload")}</button><button class="btn quiet icon-only" data-action="recovery-restore" title="${t("recovery.buttonTitle")}">${icon("undo")}</button><button class="btn primary" data-action="create-event">${icon("plus")}${t("home.createEvent")}</button></div></header><div class="mx-screen"><div class="mx-wrap">
       <div class="mx-head"><div><div class="kicker">${t("home.eyebrow")}</div><h1>${t("home.title")}</h1><p>${t("home.subtitle")}</p></div><span class="muted" style="font-size:12px">${t(state.events.length===1?"home.eventCount1":"home.eventsCount",{n:state.events.length})}</span></div>
@@ -1493,12 +1429,12 @@
   const normalTabs=[["command",()=>t("nav.commandTab")],["floor",()=>t("nav.floorPlanTab")],["guests",()=>t("nav.guestsTab")],["seating",()=>t("nav.seatingTab")],["live",()=>t("nav.liveTab")],["reports",()=>t("nav.reportsTab")]];
   const historyTabs=[["guests",()=>t("nav.guestsTab")],["seating",()=>t("nav.seatingTab")],["reports",()=>t("nav.reportsTab")]];
   workspaceHTML = function(event){
-    const historical=isHistorical(event),tabs=historical?historyTabs:normalTabs;
+    const historical=RULES().isHistorical(event),tabs=historical?historyTabs:normalTabs;
     if(!tabs.some(([id])=>id===ui.tab))ui.tab=tabs[0][0];
     return`<section class="workspace ${ui.focusMode?"v8-focus":""}"><header class="workspace-head">${topBrand()}<div class="event-id"><strong>${esc(event.name)}</strong><span>${esc(fmtDate(event.date))} · ${esc([event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet"))}</span></div><div class="workspace-actions"><div class="global-search">${icon("search")}<input id="globalGuestSearch" placeholder="${t("appbar.search")}" autocomplete="off"><div id="globalSearchResults" class="search-results hidden"></div></div>${planHealthHTML(event)}<button class="btn quiet sm lang-btn" data-v8-action="toggle-lang" title="Language / Dil">${ui.lang==="tr"?"TR":"EN"}</button><button class="btn quiet icon-only" data-action="save-now" title="${t("appbar.saveNow")}">${icon("save")}</button>${helpButton()}<button class="btn sm" data-action="back-events">${t("appbar.allEvents")}</button></div></header><nav class="tabs">${tabs.map(([id,label])=>`<button class="tab ${ui.tab===id?"active":""}" data-tab="${id}">${label()}</button>`).join("")}</nav>${historical?`<div class="workspace-readonly-banner">${icon("lock")}${t("nav.historicalBanner")}</div>`:ui.focusMode?"":onboardingCalloutHTML("globalFinder")}<div class="content">${tabContent(event)}</div>${ui.focusMode?`<button class="focus-exit" data-v8-action="focus">${t("nav.exitFocus")}</button>`:""}</section>`;
   };
   tabContent = function(event){
-    if(isHistorical(event)){
+    if(RULES().isHistorical(event)){
       if(ui.tab==="guests")return`<div class="readonly-screen">${readonlyGuestsHTML(event)}</div>`;
       if(ui.tab==="seating")return`<div class="v8-lock">${seatingHTML(event)}</div>`;
       return reportsHTML(event);
@@ -1701,7 +1637,7 @@
   function guestResultHTML(event,row,active){
     const g=row.guest,table=row.table;
     const extra=additionalOf(g);
-    const historical=isHistorical(event);
+    const historical=RULES().isHistorical(event);
     const party=partyOf(event,g);
     const seatText=table?`${esc(formatTableNumber(table.number))} · ${esc(seatRange(g.assignment.seats))}`:t("find.noTable");
     // Each action is offered only where it can do something, with the reason
@@ -2037,7 +1973,7 @@
     return`<div class="canvas-empty" data-canvas-empty role="status"><div class="canvas-empty-card"><b>${esc(title)}</b><span>${esc(body)}</span>${actions?`<div class="canvas-empty-actions">${actions}</div>`:""}</div></div>`;
   }
   function floorEmptyHTML(event){
-    if(event.tables.length||(event.venueObjects||[]).length||event.background?.src||isHistorical(event))return"";
+    if(event.tables.length||(event.venueObjects||[]).length||event.background?.src||RULES().isHistorical(event))return"";
     if(ui.v8AddOpen||ui.repeatPlacement)return"";   // already adding: the card would sit in the way
     return canvasEmptyHTML(t("empty.floor.title"),t("empty.floor.body"),
       `<button class="btn primary" data-v8-action="replace-bg">${icon("image")}${t("empty.floor.import")}</button><button class="btn" data-v8-action="add">${icon("plus")}${t("action.addManually")}</button>`);
@@ -2047,13 +1983,13 @@
   // guests at all or a filter matches nobody. It was never true where shown.
   function liveEmptyHTML(event,q){
     if(q)return`<h3>${t("live.noResults")}</h3>`;
-    if(!event.guests.length)return`<h3>${t("empty.noGuests")}</h3>${isHistorical(event)?"":`<button class="btn primary" data-empty-action="go-guests">${t("empty.goGuests")}</button>`}`;
+    if(!event.guests.length)return`<h3>${t("empty.noGuests")}</h3>${RULES().isHistorical(event)?"":`<button class="btn primary" data-empty-action="go-guests">${t("empty.goGuests")}</button>`}`;
     return`<h3>${t("live.waveEmpty")}</h3>`;
   }
   // "No matching guest records" was shown for three different situations; only
   // one of them involves matching.
   function seatingQueueEmptyHTML(event){
-    if(!event.guests.length)return`<p>${t("empty.noGuests")}</p>${isHistorical(event)?"":`<button class="btn sm" data-empty-action="go-guests">${t("empty.goGuests")}</button>`}`;
+    if(!event.guests.length)return`<p>${t("empty.noGuests")}</p>${RULES().isHistorical(event)?"":`<button class="btn sm" data-empty-action="go-guests">${t("empty.goGuests")}</button>`}`;
     if(ui.seatingQuery.trim())return t("seating.noMatches");
     if(ui.seatingGuestScope!=="all")return`<p>${t("seating.allSeated")}</p><button class="btn sm" data-empty-action="seating-scope-all">${t("seating.showAll")}</button>`;
     return t("seating.noMatches");
@@ -2102,7 +2038,7 @@
       // own number is not a claim an operator needs to ratify, and asking them
       // to tick 40 certainties would make the ticks meaningless on the four
       // that matter.
-      const act=uncertain&&!confirmed&&!isHistorical(event)
+      const act=uncertain&&!confirmed&&!RULES().isHistorical(event)
         ?`<button class="btn sm" data-change-confirm="${esc(id)}">${t("changes.confirm")}</button>`
         :confirmed?`<span class="lc-confirmed">${t("changes.confirmed")}</span>`:"";
       return`<li class="lc-row ${c.type} ${selected?"selected":""} ${confirmed?"is-confirmed":""}" data-change-select="${esc(id)}">
@@ -2168,7 +2104,7 @@
   }
 
   function uniqueNumber(event,prefix,index){let n=index;while(event.tables.some(t=>t.number===prefix+String(n).padStart(2,"0")))n++;return prefix+String(n).padStart(2,"0");}
-  function createTable(event,d,x,y,index){const dims=d.type==="round"?[120,120]:d.type==="square"?[105,105]:d.type==="bistro"?[82,72]:[170,86],number=uniqueNumber(event,(d.prefix|| (d.type==="bistro"?"B":"T")).toUpperCase(),index);return syncTableChairs({id:uid("table"),number,origin:"MANUAL",type:d.type,x,y,w:dims[0],h:dims[1],capacity:Number(d.chairs)||1,zone:d.type==="bistro"?"BISTRO":d.zone||"MAIN FLOOR",rotation:0,locked:false,z:10,hasPhysicalSeats:true,capacitySource:"HUMAN_CONFIRMED"});}
+  function createTable(event,d,x,y,index){const dims=d.type==="round"?[120,120]:d.type==="square"?[105,105]:d.type==="bistro"?[82,72]:[170,86],number=uniqueNumber(event,(d.prefix|| (d.type==="bistro"?"B":"T")).toUpperCase(),index);return RULES().syncTableChairs({id:uid("table"),number,origin:"MANUAL",type:d.type,x,y,w:dims[0],h:dims[1],capacity:Number(d.chairs)||1,zone:d.type==="bistro"?"BISTRO":d.zone||"MAIN FLOOR",rotation:0,locked:false,z:10,hasPhysicalSeats:true,capacitySource:"HUMAN_CONFIRMED"});}
   function commitBulk(){syncBulkFields();const event=activeEvent(),d=ui.bulkDraft;if(!canMutate(event,"add plan objects"))return;if(d.placement==="repeated"){ui.repeatPlacement={...d,remaining:Math.max(1,Number(d.quantity)||1),index:1};ui.v8AddOpen=false;render();toast(t("toast.repeatedPlacementActive"),"success",5000);return;}const positions=bulkPositions(d);if(!positions.length)return;recordUndo(event);const created=[];positions.forEach((p,i)=>{if(d.kind==="table"){const t=createTable(event,d,p.x,p.y,i+1);event.tables.push(t);created.push(t.id);}else{const sizes={stage:[380,180],bar:[300,70],entrance:[110,40],exit:[90,40],column:[55,55],text:[150,42]},s=sizes[d.type]||[120,50],o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:p.x,y:p.y,w:s[0],h:s[1],rotation:0,locked:false,z:4};event.venueObjects.push(o);created.push(o.id);}});ui.selectedObjectIds=created;ui.selectedObjectId=created[0];ui.v8AddOpen=false;touchEvent(event);render();toast(t(created.length===1?"toast.objectAddedChairsOne":"toast.objectsAddedChairs",{n:created.length}),"success");}
   function placeRepeated(pointerEvent){const r=document.getElementById("canvasViewport").getBoundingClientRect(),d=ui.repeatPlacement,event=activeEvent(),x=(pointerEvent.clientX-r.left-ui.pan.x)/ui.zoom,y=(pointerEvent.clientY-r.top-ui.pan.y)/ui.zoom;if(!d||!canMutate(event,"place plan objects"))return;recordUndo(event);let id;if(d.kind==="table"){const t=createTable(event,d,x-60,y-45,d.index);event.tables.push(t);id=t.id;}else{const o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:x-60,y:y-30,w:120,h:60,rotation:0,locked:false,z:4};event.venueObjects.push(o);id=o.id;}d.remaining--;d.index++;ui.selectedObjectId=id;ui.selectedObjectIds=[id];if(d.remaining<=0)ui.repeatPlacement=null;touchEvent(event);render();}
   function duplicateSelection(){const event=activeEvent();if(!canMutate(event,"duplicate plan objects"))return;const ids=ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean);if(!ids.length)return toast(t("toast.selectObjectsFirst"));recordUndo(event);const created=[];for(const id of ids){const t=event.tables.find(x=>x.id===id),o=event.venueObjects.find(x=>x.id===id),c=clone(t||o);if(!c)continue;c.id=uid(t?"table":"venue");c.x+=24;c.y+=24;c.locked=false;if(t){c.number=uniqueNumber(event,t.type==="bistro"?"B":"T",1);
@@ -2192,7 +2128,7 @@
     const up=()=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);if(moved){recordUndo(event,snap);touchEvent(event);}render();};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);
   };
 
-  setTableCapacity = function(event,table,newCap){if(!canMutate(event,"change chair capacity"))return false;newCap=Math.max(1,Math.min(99,Number(newCap)||1));const occupied=tableAssignedPax(event,table.id);if(newCap<occupied){toast(t("toast.capacityBelowPax",{table:table.number,n:occupied}),"error",5000);return false;}recordUndo(event);repackTableAssignments(event,table,newCap);if(table.capacityEvidence&&table.capacitySource!=="HUMAN_CONFIRMED")table.capacityEvidence={...table.capacityEvidence,confirmedBy:"person",confirmedAt:nowISO(),previous:table.capacity};table.capacitySource="HUMAN_CONFIRMED";syncTableChairs(table,newCap);touchEvent(event);render();return true;};
+  setTableCapacity = function(event,table,newCap){if(!canMutate(event,"change chair capacity"))return false;newCap=Math.max(1,Math.min(99,Number(newCap)||1));const occupied=tableAssignedPax(event,table.id);if(newCap<occupied){toast(t("toast.capacityBelowPax",{table:table.number,n:occupied}),"error",5000);return false;}recordUndo(event);repackTableAssignments(event,table,newCap);if(table.capacityEvidence&&table.capacitySource!=="HUMAN_CONFIRMED")table.capacityEvidence={...table.capacityEvidence,confirmedBy:"person",confirmedAt:nowISO(),previous:table.capacity};table.capacitySource="HUMAN_CONFIRMED";RULES().syncTableChairs(table,newCap);touchEvent(event);render();return true;};
   // A person can now type a table's number (§24): it was the one plan fact with
   // no path at all -- the only number field lived in the pre-v8 inspector,
   // which v8 never renders. Validated HERE before the base writer runs: letters,
@@ -2210,12 +2146,12 @@
       table.numberSource="TYPED";touchEvent(event);
       return;
     }
-    original.updateInspectorField(event,field,value);if(table)syncTableChairs(table);};
+    original.updateInspectorField(event,field,value);if(table)RULES().syncTableChairs(table);};
   inspectorAction = function(event,action){if(!canMutate(event,`${action} plan objects`))return;if(action==="duplicate")return duplicateSelection();if(action==="delete")return deleteSelection();original.inspectorAction(event,action);};
   deleteSelectedObject = function(){return deleteSelection();};
   startResize = function(...args){if(canMutate(activeEvent(),"resize plan objects"))original.startResize(...args);};
   startRotate = function(...args){if(canMutate(activeEvent(),"rotate plan objects"))original.startRotate(...args);};
-  createTableFromDraft = function(){if(canMutate(activeEvent(),"add a table")){original.createTableFromDraft();const e=activeEvent(),t=e.tables.find(x=>x.id===ui.selectedObjectId);if(t){syncTableChairs(t);saveState();}}};
+  createTableFromDraft = function(){if(canMutate(activeEvent(),"add a table")){original.createTableFromDraft();const e=activeEvent(),t=e.tables.find(x=>x.id===ui.selectedObjectId);if(t){RULES().syncTableChairs(t);saveState();}}};
   addVenue = function(...args){if(canMutate(activeEvent(),"add a venue object"))original.addVenue(...args);};
   // Undo/redo were the last canvas mutation path with no historical guard, and
   // the most reachable one: the Ctrl+Z handler in app-guests.js is bound to
@@ -2231,7 +2167,7 @@
   const oldBindCanvas=bindCanvas;
   bindCanvas = function(){
     oldBindCanvas();const event=activeEvent(),viewport=document.getElementById("canvasViewport"),world=document.getElementById("canvasWorld");
-    if(isHistorical(event))return;
+    if(RULES().isHistorical(event))return;
     document.querySelectorAll("[data-v8-action]").forEach(button=>button.onclick=()=>{const action=button.dataset.v8Action;if(action==="add"){ui.v8AddOpen=!ui.v8AddOpen;ui.bulkDraft ||= {kind:"table",type:"round",chairs:8,quantity:4,rows:2,cols:2,placement:"grid",prefix:"T",zone:"MAIN FLOOR"};render();}else if(action==="close-add"){ui.v8AddOpen=false;render();}else if(action==="commit-add")commitBulk();else if(action==="duplicate-selection")duplicateSelection();else if(action==="delete-selection")deleteSelection();else if(action==="focus"){ui.focusMode=!ui.focusMode;render();}else if(action==="detect")runAssistedDetection();else if(action==="toggle-bg"){recordUndo(event);event.background.visible=!event.background.visible;touchEvent(event);}else if(action==="replace-bg")document.getElementById("floorPlanFile").click();else if(action==="open-review-center"){ui.reviewCenterOpen=true;ui.tab="floor";ui.planMode="review";render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
     // Typed fields update the draft and refresh only the ghost preview. A full
     // re-render on every change replaced the "Add to plan" button mid-click --
@@ -2321,7 +2257,7 @@
         ${v8Toolbar(event,true)}
         ${canvasViewportHTML(event,true)}
         ${event.tables.length?"":canvasEmptyHTML(t("empty.seating.title"),t("empty.seating.body"),
-          isHistorical(event)?"":`<button class="btn primary" data-empty-action="go-floor">${t("empty.goFloor")}</button>`)}
+          RULES().isHistorical(event)?"":`<button class="btn primary" data-empty-action="go-floor">${t("empty.goFloor")}</button>`)}
         ${selectedTablePanelHTML(event)}
         ${seatingPreviewHTML(event)}
         <div class="seat-pill">${t("seating.statusPill",{seated:seatedPax,total:totalPax,tables:event.tables.length,free:freeChairs})}</div>
@@ -2355,7 +2291,7 @@
   }
   function smartSeatingHTML(event){
     const guest=event.guests.find(g=>g.id===ui.selectedGuestId);
-    if(!guest||isHistorical(event))return"";
+    if(!guest||RULES().isHistorical(event))return"";
     const advice=seatingAdvice(event,guest);
     if(!advice)return"";
     const head=`<div class="ss-head"><strong>${t("seat.smartTitle")}</strong><span>${
@@ -2393,7 +2329,7 @@
   // WHAT WOULD CHANGE — computed, never promised. Nothing has moved when this
   // is on screen; the numbers come from the advisor reading the same room.
   function seatingPreviewHTML(event){
-    if(!ui.seatPreview||isHistorical(event))return"";
+    if(!ui.seatPreview||RULES().isHistorical(event))return"";
     const guest=event.guests.find(g=>g.id===ui.seatPreview.guestId);
     if(!guest)return"";
     const p=globalThis.MeritSeatingAdvisor?.previewMove({
@@ -2604,7 +2540,7 @@
   }
   function freezePanelHTML(event){
     const F=FREEZE();
-    if(!F||isHistorical(event))return"";
+    if(!F||RULES().isHistorical(event))return"";
     const raw=eventFreezes(event);
     const list=F.normalizeAll(raw);
     if(!list.length&&!ui.freezeDraft)
@@ -2641,7 +2577,7 @@
   // unlock" means in code rather than in a sentence.
   function freezeChallengeHTML(event){
     const c=ui.freezeChallenge;
-    if(!c||isHistorical(event))return"";
+    if(!c||RULES().isHistorical(event))return"";
     const r=c.report;
     const dir=r.directions.map(d=>t("freeze.direction."+d)).join(" · ");
     const what=r.freezes.map(f=>`<li>
@@ -2897,7 +2833,7 @@
           if(!back||(s.assignment.seats||[]).some(seat=>used.has(Number(seat)))){anyClash=true;continue;}
           SEAT().write(guest,s.assignment);
         }
-        refreshChairOccupancy(now);touchEvent(now);render();
+        RULES().refreshChairOccupancy(now);touchEvent(now);render();
         toast(anyClash?t("seating.groupSeatTaken"):t("seating.groupRestoredToast"),anyClash?"error":"success",5200);
       });
     }
@@ -3541,7 +3477,7 @@
   // additional, richer read of the same underlying decisions.
   function postEventReplayHTML(event){
     const R=globalThis.MeritPostEventReplay,AW=globalThis.MeritArrivalWave;
-    if(!R||!AW||!isHistorical(event))return"";
+    if(!R||!AW||!RULES().isHistorical(event))return"";
     const all=R.chronological(resolvedAuditTrail(event));
     const w=arrivalWave(event);
     const bucket=w&&ui.waveKey?w.buckets.find(b=>b.key===ui.waveKey):null;
@@ -3711,7 +3647,7 @@
     // record. Position is kept too, so the list does not reshuffle on undo.
     const index=event.guests.indexOf(g),snapshot=JSON.parse(JSON.stringify(g));
     event.guests.splice(index,1);
-    refreshChairOccupancy(event);
+    RULES().refreshChairOccupancy(event);
     audit(event,"GUEST_DELETED",{guestId:g.id,name:g.name});
     touchEvent(event);render();
     toastAction(t("guests.deletedToast",{name:g.name}),t("live.undo"),()=>{
@@ -3729,7 +3665,7 @@
         if(clash){SEAT().clear(snapshot);seatLost=true;}
       }
       now.guests.splice(Math.min(index,now.guests.length),0,snapshot);
-      refreshChairOccupancy(now);
+      RULES().refreshChairOccupancy(now);
       audit(now,"GUEST_RESTORED",{guestId:snapshot.id,name:snapshot.name});
       touchEvent(now);render();
       toast(seatLost?t("guests.restoredNoSeat",{name:snapshot.name}):t("guests.restoredToast",{name:snapshot.name}),"success");
@@ -3750,7 +3686,7 @@
     const table=event.tables.find(x=>x.id===snapshot.tableId);
     const label=table?formatTableNumber(table.number):"";
     SEAT().clear(g);ui.selectedGuestId=id;
-    refreshChairOccupancy(event);
+    RULES().refreshChairOccupancy(event);
     touchEvent(event);render();
     toastAction(t("seating.unassignedToast",{name:g.name}),t("live.undo"),()=>{
       const now=activeEvent();
@@ -3762,7 +3698,7 @@
         toast(t("seating.seatTaken",{name:guest.name}),"error",5200);return;
       }
       SEAT().write(guest,snapshot);
-      refreshChairOccupancy(now);
+      RULES().refreshChairOccupancy(now);
       audit(now,"GUEST_REASSIGNED",{guestId:id,tableId:snapshot.tableId});
       touchEvent(now);render();
       toast(t("seating.reassignedToast",{name:guest.name,table:label}),"success");
@@ -3840,7 +3776,7 @@
   translateStaticDialogs();
   // deleteGuest is defined further up, where its undo lives.
   bindGuests = function(){
-    if(isHistorical(activeEvent()))return;
+    if(RULES().isHistorical(activeEvent()))return;
     original.bindGuests();
     // The empty state repeats Import/Add, and the base binder uses
     // querySelector -- first match only -- so the duplicates would be inert.
@@ -5952,7 +5888,7 @@
     const ruleUse=CP&&CP.ruleApplication?CP.ruleApplication({rule:event.analysis?.planIntelligence?.capacityAudit?.rule||null,
       representationKind:event.analysis?.diagnostics?.representation?.kind||null,
       seatlessTables:(event.analysis?.candidates||[]).filter(c=>c.kind==="table"&&c.status!=="rejected"&&!c.chairDetections?.length).length}):{applies:false};
-    recordUndo(event);let tables=0,venues=0,chairsKept=0,derived=0;for(const c of chosen){if(c.committedId)continue;const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);if(c.kind==="table"){const table=syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||(ruleUse.applies?ruleUse.perUnit:1)),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":ruleUse.applies?"DERIVED_PRINTED_RULE":"UNKNOWN",origin:"DETECTED",printedNumber:printedEvidence(c.printedNumber),...(!c.chairDetections?.length&&ruleUse.applies?{capacityEvidence:{...ruleUse.evidence,at:nowISO()}}:{})});if(c.chairDetections?.length){table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0,occupancy:null}));table.capacity=table.chairs.length;}event.tables.push(table);c.committedId=table.id;tables++;chairsKept+=(table.chairs||[]).length;if(table.capacitySource==="DERIVED_PRINTED_RULE")derived++;}else{const object={id:uid("venue"),type:c.type||"text",label:String(c.type||"OBJECT").toUpperCase(),x,y,w,h,rotation:c.rotation||0,locked:false,z:4};
+    recordUndo(event);let tables=0,venues=0,chairsKept=0,derived=0;for(const c of chosen){if(c.committedId)continue;const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);if(c.kind==="table"){const table=RULES().syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||(ruleUse.applies?ruleUse.perUnit:1)),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":ruleUse.applies?"DERIVED_PRINTED_RULE":"UNKNOWN",origin:"DETECTED",printedNumber:printedEvidence(c.printedNumber),...(!c.chairDetections?.length&&ruleUse.applies?{capacityEvidence:{...ruleUse.evidence,at:nowISO()}}:{})});if(c.chairDetections?.length){table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0,occupancy:null}));table.capacity=table.chairs.length;}event.tables.push(table);c.committedId=table.id;tables++;chairsKept+=(table.chairs||[]).length;if(table.capacitySource==="DERIVED_PRINTED_RULE")derived++;}else{const object={id:uid("venue"),type:c.type||"text",label:String(c.type||"OBJECT").toUpperCase(),x,y,w,h,rotation:c.rotation||0,locked:false,z:4};
       // Seating furniture keeps its capacity state on the committed object, so
       // "we do not know how many this banquette seats" survives leaving the
       // review screen instead of silently becoming zero on the floor plan.
@@ -6125,7 +6061,7 @@
   function exportBackup(){
     const blob=new Blob([JSON.stringify(buildBackupPayload(),null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");a.href=url;a.download=`merit-event-maker-yedek-${todayKey()}.json`;
+    const a=document.createElement("a");a.href=url;a.download=`merit-event-maker-yedek-${RULES().todayKey()}.json`;
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),4000);
     // Recorded only here, after the file has actually been handed to the
@@ -6212,7 +6148,7 @@
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");a.href=url;
-    a.download=`merit-event-package-${String(event.name||"event").toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,60)}-${todayKey()}.json`;
+    a.download=`merit-event-package-${String(event.name||"event").toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,60)}-${RULES().todayKey()}.json`;
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),4000);
     toast(t("eventPackage.exportedToast",{name:event.name}),"success");
@@ -6333,7 +6269,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
     if(backupInput){const fresh=backupInput.cloneNode(true);backupInput.replaceWith(fresh);fresh.addEventListener("change",e=>{const file=e.target.files[0];if(file)importBackupFile(file);e.target.value="";});}
   }
   bindCommon = bindV8Common;
-  openEvent = function(id){const event=state.events.find(e=>e.id===id);if(!event)return;ui.activeEventId=id;ui.screen="workspace";ui.tab=isHistorical(event)?"guests":"command";ui.selectedObjectId=null;ui.selectedObjectIds=[];ui.selectedGuestIds=[];ui.operationalMode=false;ui.undo=[];ui.redo=[];render();};
+  openEvent = function(id){const event=state.events.find(e=>e.id===id);if(!event)return;ui.activeEventId=id;ui.screen="workspace";ui.tab=RULES().isHistorical(event)?"guests":"command";ui.selectedObjectId=null;ui.selectedObjectIds=[];ui.selectedGuestIds=[];ui.operationalMode=false;ui.undo=[];ui.redo=[];render();};
   duplicateEvent = function(id,open=false){const source=state.events.find(e=>e.id===id);if(!source)return;original.duplicateEvent(id,open);const copy=state.events[0];copy.hotel=copy.hotel||copy.venue||"";copy.salon=copy.salon||"";copy.tables.forEach(t=>{t.chairs=(t.chairs||[]).map((c,i)=>({...c,id:uid("chair"),parentTableId:t.id,seatNumber:i+1,occupancy:null}));});saveState();};
 
   // What the operator sees when the stored record was written by a newer
@@ -6386,7 +6322,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
     const a=b.dataset.storageAction,n=MERIT_STORAGE_NOTICE;
     if(a==="download-unreadable"&&n.unreadable){
       const url=URL.createObjectURL(new Blob([String(n.unreadable.raw)],{type:"application/json"}));
-      const link=document.createElement("a");link.href=url;link.download=`merit-event-maker-unreadable-${todayKey()}.json`;
+      const link=document.createElement("a");link.href=url;link.download=`merit-event-maker-unreadable-${RULES().todayKey()}.json`;
       document.body.appendChild(link);link.click();link.remove();
       setTimeout(()=>URL.revokeObjectURL(url),4000);
     }else if(a==="restore"){document.getElementById("backupFileInput")?.click();}
@@ -6445,7 +6381,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
     if(!state.events.length&&ui.screen!=="events")ui.screen="events";
     app.innerHTML=futureSchemaBannerHTML()+storageNoticeHTML()+(ui.screen==="events"?eventsHTML():workspaceHTML(activeEvent()));bindV8Common();
     if(ui.screen==="workspace"){
-      const event=activeEvent(),historical=isHistorical(event);
+      const event=activeEvent(),historical=RULES().isHistorical(event);
       // Review mode draws no editable canvas, so bindCanvas() must not run for
       // it -- it would query a viewport that is not on the page.
       const reviewing=ui.tab==="floor"&&ui.planMode==="review";
@@ -6624,7 +6560,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
       return;
     }
     if(e.key==="Escape"){if(ui.freezeDraft)ui.freezeDraft=null;if(ui.reviewQueue){ui.reviewQueue=null;ui.selectedCandidateId=null;}if(ui.repeatPlacement){ui.repeatPlacement=null;toast(t("toast.repeatedPlacementCancelled"));}if(ui.focusMode)ui.focusMode=false;if(ui.reviewDrawMode)ui.reviewDrawMode=false;if(ui.activeQuestionId)ui.activeQuestionId=null;if(ui.reviewCenterOpen)ui.reviewCenterOpen=false;render();return;}
-    if(ui.screen!=="workspace"||ui.tab!=="floor"||isHistorical(activeEvent()))return;
+    if(ui.screen!=="workspace"||ui.tab!=="floor"||RULES().isHistorical(activeEvent()))return;
     if((e.key==="Delete"||e.key==="Backspace")&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)){e.preventDefault();deleteSelection();return;}
     if(e.ctrlKey&&e.key.toLowerCase()==="d"){e.preventDefault();duplicateSelection();return;}
     if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)){

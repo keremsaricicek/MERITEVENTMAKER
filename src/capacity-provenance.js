@@ -1,7 +1,7 @@
 // WHY DOES THIS TABLE HAVE THIS CAPACITY NUMBER?
 //
 // `table.capacity` and `table.chairs` (see the syncTableChairs() comment in
-// app-v8.js) answer "how many seats, and how many chairs did the plan
+// src/event-rules.js) answer "how many seats, and how many chairs did the plan
 // actually draw" -- neither says WHERE the capacity number came from. A capacity
 // read by counting confirmed chair detections is a different kind of fact
 // than one a person typed into the seat-count field, and an operator

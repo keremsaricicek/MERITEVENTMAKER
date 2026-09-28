@@ -269,7 +269,7 @@ Measured write sites:
 
 | Site | Field | Verdict |
 |---|---|---|
-| `app-v8.js:126,128` (`syncTableChairs`) | both | the sanctioned writer |
+| `event-rules.js` (`syncTableChairs`, moved from `app-v8.js` in step 3b) | both | the sanctioned writer |
 | `app-v8.js:1731` (`duplicateSelection`) | `chairs` | **DO NOT MERGE** — re-ids chairs onto a cloned table; routing through `syncTableChairs` would regenerate geometry and lose a hand-placed layout |
 | `app-v8.js:8404` (`duplicateEvent`) | `chairs` | **DO NOT MERGE** — same, for a duplicated event |
 | `app-v8.js:8080` (`commitCandidates`) | both | **DO NOT MERGE** — writes detected chair coordinates **verbatim**, then sets `capacity = chairs.length`. `.claude/rules/ai.md`: "Confirmed chair coordinates from a candidate are written verbatim — never regenerated into a synthetic ring." |
@@ -300,6 +300,21 @@ committed off a SYMBOLIC plan carries **no chair objects at all**, with
 
 `duplicateSelection` and `duplicateEvent` remain uncovered; both are
 **DO NOT MERGE** for the same reason and neither is on the detector's path.
+
+### 3.1 `chair.occupancy` — a persisted field nothing reads (found 2026-09-28)
+
+Found writing `event-rules`, the characterization for step 3b.
+`refreshChairOccupancy` writes `{guestId, partyIndex, planned}` onto each
+physical chair a seated party uses; the field is saved with the event. **No
+renderer, report, module or suite reads it** — every read of `.occupancy` in
+`src/` is the writer itself (stripped-code search, 2026-09-28). And it is
+**stale by construction**: it is rebuilt on load, on undo and on unassign, but
+not on an assignment, so between an in-session seating and the next reload the
+stored value is wrong. Nothing is harmed today because nothing reads it; the
+hazard is the first reader, which would get a plausible, wrong answer.
+`event-rules` holds only what the rebuild guarantees (on load). Removing the
+field changes the stored shape and gets its own commit with a round-trip
+check, not this one.
 
 ---
 

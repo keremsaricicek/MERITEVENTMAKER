@@ -87,7 +87,14 @@ broken measurement would have deleted fourteen working functions.
 - **Missing test** none material — `schema-migration` covers the migration
   path with real stored payloads.
 
-## A02 · Domain primitives — historical, audit, chair/capacity
+## A02 · Domain primitives — historical, audit, chair/capacity — **EXTRACTED** (step 3b)
+
+> `isHistorical`, the refusal decision (`mutationRefusal`), `chairGeometry`,
+> `syncTableChairs` and `refreshChairOccupancy` are `src/event-rules.js`
+> (`MeritEventRules`), reached only through the published object.
+> `canMutate` stays as the shell's thin gate: it asks the module and owns the
+> operator's message. `audit` stays: it is the shell's one writer of
+> `state.audit`. The missing test named below now exists: `event-rules`.
 
 - **Lines** 82–140 (59)
 - **Main functions** `isHistorical`, `canMutate`, `audit`, `chairGeometry`,

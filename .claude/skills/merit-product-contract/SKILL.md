@@ -153,8 +153,10 @@ deliberately separate functions — keep them separate in any future change.
 ## Historical events are immutable
 
 `isHistorical(event)` is true when `event.status === "Completed"` or the
-event date is in the past (`src/app-v8.js`). `canMutate(event, action)`
-gates every mutation (guest edits, floor plan edits, plan analysis,
+event date is before today — an event dated today is tonight's, and stays
+editable (`MeritEventRules`, `src/event-rules.js`). `canMutate(event, action)`
+in `src/app-v8.js` asks the module's `mutationRefusal(event)` and owns the
+message the operator sees; it gates every mutation (guest edits, floor plan edits, plan analysis,
 background replacement) and refuses on historical events. Historical events
 may still be viewed, searched, reported on, and deleted where policy
 permits — but never silently editable. Protect this in domain logic
