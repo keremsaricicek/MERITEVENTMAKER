@@ -554,8 +554,6 @@
     "reports.preflight": { en: "Before you export", tr: "Dışa aktarmadan önce" },
     "reports.preflightOk": { en: "Everything checks out", tr: "Her şey hazır" },
     "reports.preflightOkNote": { en: "No blocking issues in this plan.", tr: "Bu planda engelleyici sorun yok." },
-    "reports.fixSeating": { en: "Fix in Seating", tr: "Oturma Planında düzelt" },
-    "reports.fixFloor": { en: "Fix in Floor Plan", tr: "Kat Planında düzelt" },
     "reports.workbook": { en: "Excel workbook", tr: "Excel çalışma kitabı" },
     "reports.workbookNote": { en: "Three worksheets, formatted for operational use at the venue.", tr: "Mekânda operasyonel kullanım için biçimlendirilmiş üç sayfa." },
     "reports.sheetTablePlan": { en: "TABLE PLAN", tr: "TABLE PLAN" },

@@ -948,21 +948,21 @@
   // Every finding gets one. A row that could not say where to go would be the
   // dead end the programme forbids, so `doctorGoHTML` returning "" is a defect
   // the suite checks for rather than a state the UI is allowed to reach.
-  function doctorGoHTML(f){
+  function doctorGoHTML(f,cls="btn sm"){
     const a=f.action||{};
     const GO=globalThis.MeritPlanDoctor?.GO||{};
     const targeted=a.tableId||a.guestIds?.length||a.candidateIds?.length||a.filter;
     if(a.go===GO.REVIEW_CENTER&&!targeted)
-      return`<button class="btn sm" data-cc-action="review">${t("cc.goto.review")}</button>`;
+      return`<button class="${cls}" data-cc-action="review">${t("cc.goto.review")}</button>`;
     if(!targeted&&(a.go===GO.SEATING||a.go===GO.GUESTS||a.go===GO.FLOOR))
-      return`<button class="btn sm" data-tab="${a.go.toLowerCase()}">${t("cc.goto."+a.go.toLowerCase())}</button>`;
+      return`<button class="${cls}" data-tab="${a.go.toLowerCase()}">${t("cc.goto."+a.go.toLowerCase())}</button>`;
     // A finding whose destination this table does not recognise still gets a
     // control, labelled generically rather than with a raw key -- an operator
     // must never be shown "doctor.go.SOMETHING". That the case is unreachable
     // is asserted against the module itself, where the defect would be, rather
     // than left to be noticed as odd wording on a screen.
     const label=t("doctor.go."+a.go);
-    return`<button class="btn sm" data-cc-go="${esc(f.code)}${f.checkId?":"+esc(f.checkId):""}">${label==="doctor.go."+a.go?t("doctor.go.open"):label}</button>`;
+    return`<button class="${cls}" data-cc-go="${esc(f.code)}${f.checkId?":"+esc(f.checkId):""}">${label==="doctor.go."+a.go?t("doctor.go.open"):label}</button>`;
   }
   // THE EVENT RISK RADAR.
   //
@@ -1292,8 +1292,10 @@
     }
     render();
   }
-  function bindCommand(){
-    const event=activeEvent();
+  // The Doctor's controls, wherever its reasons are shown -- the Command
+  // Center and Reports' "Before you export" -- so a reason goes to the same
+  // place from either.
+  function bindDoctorGo(event){
     document.querySelectorAll("[data-cc-action]").forEach(b=>b.onclick=()=>{
       if(b.dataset.ccAction==="review"){ui.reviewCenterOpen=true;ui.tab="floor";ui.planMode="review";render();}
     });
@@ -1307,6 +1309,10 @@
       const f=d&&d.all.find(x=>x.code===code&&(!checkId||x.checkId===checkId));
       if(f)doctorGo(event,f);else render();
     });
+  }
+  function bindCommand(){
+    const event=activeEvent();
+    bindDoctorGo(event);
     document.querySelectorAll("[data-cc-doctor]").forEach(b=>b.onclick=()=>{
       if(b.dataset.ccDoctor==="close"){ui.doctorOpen=false;render();return;}
       ui.doctorOpen=true;
@@ -3497,11 +3503,21 @@
     </div>`;
   }
   reportsHTML = function(event){
-    const m=eventMetrics(event),s=seatingStats(event),issues=planIssues(event);
+    const m=eventMetrics(event),s=seatingStats(event);
     const unassigned=event.guests.filter(g=>!g.assignment),unassignedPax=unassigned.reduce((n,g)=>n+paxOf(g),0);
-    const fixFor=i=>`<button class="pf-fix" data-report-fix="${i.fix||"seating"}">${t(i.fix==="floor"?"reports.fixFloor":"reports.fixSeating")}</button>`;
-    const preflight=issues.length
-      ?issues.map(i=>`<div class="pf-item ${i.level}"><i class="pf-dot"></i><div class="pf-text"><b>${esc(i.title)}</b><span>${esc(i.text)}</span></div>${fixFor(i)}</div>`).join("")
+    // "Before you export" is the Command Center's attention list, read from
+    // the same Plan Doctor with the same words and the same controls. It used
+    // to be planIssues()' four rules, and said "Everything checks out" above
+    // the export button while the Command Center said NOT READY -- guests at a
+    // table marked unavailable is not one of the four. A finished event has no
+    // pre-flight (it is a record, with nothing left to make ready), so it
+    // keeps the plan's own consistency rules.
+    const historical=RULES().isHistorical(event);
+    const rows=historical
+      ?planIssues(event).map(i=>({level:i.level,what:i.title,detail:i.text,go:""}))
+      :eventReadiness(event).reasons.map(r=>{const w=doctorText(r.finding);return{level:r.level==="blocker"?"blocker":"warn",what:w.what,detail:w.detail,go:doctorGoHTML(r.finding,"pf-fix")};});
+    const preflight=rows.length
+      ?rows.map(r=>`<div class="pf-item ${r.level}"><i class="pf-dot"></i><div class="pf-text"><b>${esc(r.what)}</b>${r.detail?`<span>${esc(r.detail)}</span>`:""}</div>${r.go}</div>`).join("")
       :`<div class="pf-item ok"><i class="pf-dot"></i><div class="pf-text"><b>${t("reports.preflightOk")}</b><span>${t("reports.preflightOkNote")}</span></div></div>`;
     const capacity=[
       `<div class="mx-metric is-hero"><span class="mx-metric-label">${t("reports.totalCapacity")}</span><span class="mx-metric-value">${m.total}</span><span class="mx-metric-note">${t("reports.tablesCount",{n:event.tables.length})}</span></div>`,
@@ -3516,7 +3532,7 @@
       <div class="reports-stage">
         <div>
           ${postEventReplayHTML(event)}
-          <div class="mx-section" style="margin-top:0"><div class="mx-section-head"><h2>${t("reports.preflight")}</h2><span class="count">${issues.length||""}</span></div><div class="preflight">${preflight}</div></div>
+          <div class="mx-section" style="margin-top:0"><div class="mx-section-head"><h2>${t("reports.preflight")}</h2><span class="count">${rows.length||""}</span></div><div class="preflight">${preflight}</div></div>
           <div class="mx-section"><div class="mx-section-head"><h2>${t("reports.capacitySummary")}</h2></div><div class="mx-metrics" style="margin-bottom:0">${capacity}</div></div>
           <div class="mx-section"><div class="mx-section-head"><h2>${t("reports.tableList")}</h2><span class="count">${t("reports.tablesCount",{n:event.tables.length})}</span></div>${event.tables.length?`<div class="mx-list">${tableRows}</div>`:`<div class="mx-empty" style="padding:28px">${t("reports.tablesCount",{n:0})}</div>`}</div>
           ${auditTrailHTML(event)}
@@ -3543,7 +3559,7 @@
     app.querySelectorAll("[data-report='csv']").forEach(b=>b.onclick=exportGuestCSV);
     app.querySelectorAll("[data-report='xlsx']").forEach(b=>b.onclick=exportTablePlanXLSX);
     app.querySelectorAll("[data-report='print']").forEach(b=>b.onclick=printTablePlan);
-    app.querySelectorAll("[data-report-fix]").forEach(b=>b.onclick=()=>{ui.tab=b.dataset.reportFix;render();});
+    bindDoctorGo(activeEvent());
     // Post-Event Replay's wave chart (historical events only) needs the same
     // bucket-click/VIP/clear wiring Live uses -- a historical event has no
     // Live tab to have bound them already.

@@ -104,9 +104,11 @@ on when the object carries the same verified printed number. Full detail:
 ## The Plan Doctor
 
 One layer answers "can this event safely proceed?" and everything else reads
-it — the header badge, the Command Center's attention list and the pre-flight
-report all come from `src/plan-doctor.js`, so the product cannot say two
-different things about one event. It runs no engine of its own and stores
+it — the header badge, the Command Center's attention list, the pre-flight
+report and Reports' "Before you export" all come from `src/plan-doctor.js`, so
+the product cannot say two different things about one event (Reports read four
+rules of its own until 2026-09-28 and said "Everything checks out" beside a NOT
+READY Command Center; `reports-preflight` holds it now). It runs no engine of its own and stores
 nothing: the report is derived on every read, so a fixed problem disappears by
 itself. **A reading is not an operational fact** — two tables a person numbered
 the same is BLOCKING, two tables OCR *read* as the same number is NEEDS REVIEW,
