@@ -88,6 +88,23 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   });
   checks.equal(unguarded, [], `each single writer (${GUARDED.join(", ")}) refuses a historical event itself, not only through its callers`);
 
+  // Seating: every function that writes an assignment through the one writer
+  // refuses a historical event too. Two exceptions, both building a record
+  // rather than changing an event: the load-time normalizer and the demo
+  // seeder that only a suite calls.
+  const SEAT_EXEMPT = ["app.js:normalizeGuest", "app.js:seedAssignments"];
+  const seatWriters = new Map();
+  for (const f of ["app.js", "app-guests.js", "app-v8.js"]) {
+    const lines = stripped[f].split("\n");
+    lines.forEach((l, i) => {
+      if (/(SEAT\(\)|MeritSeatAssignment)\.(write|clear)\s*\(/.test(l)) seatWriters.set(`${f}:${enclosingFunction(lines, i)}`, f);
+    });
+  }
+  const seatUnguarded = [...seatWriters].filter(([where, f]) => !SEAT_EXEMPT.includes(where) &&
+    !/mutationRefusal\s*\(|canMutate\s*\(/.test(functionBody(stripped[f], where.split(":")[1]) || ""));
+  checks.ok(seatWriters.size >= 5, "the assignment's writing functions were found", [...seatWriters.keys()]);
+  checks.equal(seatUnguarded.map(([w]) => w), [], "every function that seats or unseats somebody refuses a historical event itself");
+
   // --- 3. the bypass an operator can produce: a stale screen ----------------
   await openApp(page, baseUrl, { lang: "en" });
   await createBlankEvent(page, { name: "Writers Night", hotel: "Merit", date: futureDate() });
@@ -157,6 +174,23 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   if (lift) await click(page, "[data-freeze-lift]");
   checks.ok(lift > 0, "FREEZE: a lift control was on screen to try", lift);
   checks.equal(await snapshot(), before, "FREEZE: a freeze lifted on a stale screen stays standing on a historical event");
+  await goLive();
+
+  // e) Guests: an import wizard left open
+  await page.evaluate(() => { ui.tab = "guests"; render(); });
+  await settle(page);
+  await click(page, "[data-guest-command='import']");
+  await page.setInputFiles("#guestFileInput", { name: "late.csv", mimeType: "text/csv",
+    buffer: Buffer.from("NAME SURNAME,ADDITIONAL GUESTS,STATUS\nLate Import,0,Confirmed\n") });
+  await page.waitForTimeout(400);
+  for (let i = 0; i < 3; i++) { await click(page, "[data-wizard-next]"); await page.waitForTimeout(200); }
+  const guestsBefore = await page.evaluate(() => activeEvent().guests.length);
+  await goHistorical();
+  await click(page, "[data-wizard-import]");
+  await page.waitForTimeout(300);
+  checks.equal(await page.evaluate(() => activeEvent().guests.length), guestsBefore,
+    "IMPORT: a guest list imported from a wizard left open lands nothing on a historical event");
+  await page.evaluate(() => { document.querySelector("dialog[open]")?.close(); });
   await goLive();
 
   // --- 4. duplicating an event starts its night fresh ------------------------

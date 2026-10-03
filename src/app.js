@@ -727,18 +727,11 @@
       render()
     }
   }
-  async function deleteSelectedObject(event){
-    const t=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId);
-    if(!t&&!o)return;
-    const assigned=t?event.guests.filter(g=>g.assignment?.tableId===t.id):[];
-    if(!(await ask({title:t_("ask.deleteObjectsTitle",{n:1}),body:assigned.length?t_("ask.deleteObjectsGuests",{n:1,guests:assigned.length}):"",confirmLabel:t_("ask.delete"),danger:true})))return;
-    recordUndo(event);
-    assigned.forEach(g=>MeritSeatAssignment.clear(g));
-    if(t)event.tables=event.tables.filter(x=>x.id!==t.id);else event.venueObjects=event.venueObjects.filter(x=>x.id!==o.id);
-    ui.selectedObjectId=null;
-    touchEvent(event);
-    render()
-  }
+  async function deleteSelectedObject(event){}
+  // ^ Replaced at load by app-v8.js (boot-contract reads the live function
+  // back out of the page; nothing calls original.deleteSelectedObject). The body that stood
+  // here wrote assignments without refusing a historical event — unreachable,
+  // and removed so the domain-writers rule holds over every body in src/.
   function bindBackground(event){
     const opacity=document.getElementById("bgOpacity");
     if(opacity){

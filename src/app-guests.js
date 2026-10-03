@@ -303,6 +303,9 @@
   function importSummary(rows){return{records:rows.length,guests:rows.reduce((n,r)=>n+r.pax,0),confirmed:rows.filter(r=>r.planningStatus==="Confirmed").length,tentative:rows.filter(r=>r.planningStatus==="Tentative").length,attention:rows.filter(r=>r.issues?.length).length,errors:rows.filter(r=>r.issues?.some(x=>x.level==="error")).length}}
   function importInterpretedGuests(){
     const p=pendingImport,event=activeEvent(),summary=importSummary(p.interpreted);
+    // The wizard can stay open while the event becomes historical: the import
+    // itself refuses, not only the button that opened the wizard.
+    if(globalThis.MeritEventRules.mutationRefusal(event)){toast(t_("toast.historicalReadOnly",{action:"import guests"}),"error",5200);return;}
     if(summary.errors){
       toast(t_("toast.fixBlockingErrors"),"error");
       return
@@ -396,29 +399,16 @@
     app.querySelectorAll("[data-unassign]").forEach(b=>b.onclick=()=>unassignGuest(b.dataset.unassign));
     app.querySelectorAll("[data-lock-assignment]").forEach(b=>b.onclick=()=>toggleAssignmentLock(b.dataset.lockAssignment))
   }
-  function assignGuestToTable(guestId,tableId,preferred=null){
-    const event=activeEvent(),g=event.guests.find(x=>x.id===guestId),t=event.tables.find(x=>x.id===tableId);
-    if(!g||!t)return;
-    const moving=!!g.assignment&&g.assignment.tableId!==tableId;
-    if(g.assignment?.locked){
-      toast(t_("toast.assignmentLockedMove",{name:g.name}),"error");
-      return
-    }
-    const used=occupiedSeatIndexes(event,tableId,g.id),free=Array.from({length:t.capacity},(_,i)=>i).filter(i=>!used.has(i));
-    if(free.length<paxOf(g)){
-      toast(t_("toast.seatsShort",{table:t.number,n:free.length,name:g.name,need:paxOf(g)}),"error",5000);
-      return
-    }
-    let seats=[];
-    if(preferred!==null&&free.includes(preferred)){seats=[preferred,...free.filter(i=>i!==preferred).slice(0,paxOf(g)-1)]}else seats=free.slice(0,paxOf(g));
-    MeritSeatAssignment.write(g,{tableId,seats,locked:false});
-    ui.selectedTableId=tableId;
-    ui.highlightId=tableId;
-    touchEvent(event);
-    render();
-    toast(t_(moving?"toast.guestMoved":"toast.guestAssigned",{name:g.name,table:t.number,n:paxOf(g)}),"success")
-  }
-  function unassignGuest(id){const event=activeEvent(),g=event.guests.find(x=>x.id===id);if(!g?.assignment)return;if(g.assignment.locked){toast(t_("toast.unlockAssignmentFirst"),"error");return}MeritSeatAssignment.clear(g);ui.selectedGuestId=id;touchEvent(event);render();toast(t_("toast.returnedUnassigned",{name:g.name}))}
+  function assignGuestToTable(guestId,tableId,preferred=null){}
+  // ^ Replaced at load by app-v8.js (boot-contract reads the live function
+  // back out of the page; nothing calls original.assignGuestToTable). The body that stood
+  // here wrote assignments without refusing a historical event — unreachable,
+  // and removed so the domain-writers rule holds over every body in src/.
+  function unassignGuest(id){}
+  // ^ Replaced at load by app-v8.js (boot-contract reads the live function
+  // back out of the page; nothing calls original.unassignGuest). The body that stood
+  // here wrote assignments without refusing a historical event — unreachable,
+  // and removed so the domain-writers rule holds over every body in src/.
   function toggleAssignmentLock(id){const event=activeEvent(),g=event.guests.find(x=>x.id===id);if(!g?.assignment)return;g.assignment.locked=!g.assignment.locked;touchEvent(event);render();toast(t_(g.assignment.locked?"toast.assignmentLocked":"toast.assignmentUnlocked"))}
 
   function liveHTML(event){
