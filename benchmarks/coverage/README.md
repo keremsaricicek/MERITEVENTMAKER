@@ -59,9 +59,8 @@ was shown to fail when the real expression is mutated.
 - **Dead exports** — `MeritSeatingFreeze.openCapacityOutsideFreeze`,
   `MeritSeatAssignment.isSeated`, `MeritSeatModel.drawsChairs`: no reference
   outside their own module (stripped-code scan, `index.html` included) and
-  never executed in 97 suites. That is the recorded proof
-  `benchmarks/CODE-INVENTORY.md` asks for; removing them is a refactor commit
-  of its own, not part of a test section.
+  never executed in 97 suites. **Removed 2026-10-03** in a refactor commit of
+  their own, with the proof re-measured there (`CODE-INVENTORY.md` §1.3).
 - **IndexedDB request-level error handlers** (`req.onerror`, `tx.onabort`, …)
   are still not executed by a real IndexedDB failure. The fallback decision is
   tested with a provider whose store throws; forcing a real IndexedDB request

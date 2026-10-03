@@ -80,11 +80,7 @@
     return write(guest, null);
   }
 
-  function isSeated(guest) {
-    return !!(isPlainObject(guest) && normalize(guest.assignment));
-  }
-
   globalThis.MeritSeatAssignment = {
-    version: 1, normalize, normalizeSeats, write, clear, isSeated,
+    version: 1, normalize, normalizeSeats, write, clear,
   };
 })();

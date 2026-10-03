@@ -178,21 +178,6 @@
     return { tables: held.length, chairs, seated, open: Math.max(0, chairs - seated) };
   }
 
-  // Chairs the seating process may actually use right now: seatable, not
-  // frozen, not already sat on.
-  function openCapacityOutsideFreeze(freezes, tables, guests) {
-    const frozen = frozenTableIds(freezes, tables);
-    const usable = (tables || []).filter((t) => seatable(t) && !frozen.has(t.id));
-    const usableIds = new Set(usable.map((t) => t.id));
-    const chairs = usable.reduce((n, t) => n + num(t.capacity), 0);
-    // Guests at a table that no longer exists are NOT counted as occupying an
-    // open chair — the Plan Doctor reports them as orphans, and counting them
-    // here would hide chairs that are genuinely free.
-    const seated = (guests || []).reduce(
-      (n, g) => n + (g && g.assignment && usableIds.has(g.assignment.tableId) ? paxOf(g) : 0), 0);
-    return { tables: usable.length, chairs, seated, open: Math.max(0, chairs - seated) };
-  }
-
   // ---------------------------------------------------------------------------
 
   // WOULD THIS OPERATION CROSS A FREEZE, AND WHAT WOULD IT COST?
@@ -323,7 +308,7 @@
     SCOPE, STATE, REASON, DIRECTION,
     normalize, normalizeAll, covers, freezesOnTable, tablesCovered,
     tableState, resolve, frozenTableIds,
-    heldCapacity, openCapacityOutsideFreeze,
+    heldCapacity,
     evaluateOperation, parseTableNumber,
   };
 })();

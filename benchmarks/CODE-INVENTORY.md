@@ -88,11 +88,28 @@ One of the 20 is worth naming: **`bindCommon` is overridden by *alias*** —
 matching `= function` or `= (` misfiles it as untouched. The suite's positive
 control caught exactly that.
 
-### 1.3 Removable, with proof: none found
+### 1.3 Removable, with proof — three exports, REMOVED 2026-10-03
 
-No unreferenced function, no unreachable branch with recorded proof. The one
-category that would qualify — the 21 capture entries — is covered above and is
-**not** removable.
+No unreferenced function in `app-v8.js`, no unreachable branch with recorded
+proof. The one category that would qualify there — the 21 capture entries —
+is covered above and is **not** removable.
+
+Outside `app-v8.js`, §28's coverage run found three module exports nothing
+calls, and they were deleted in their own refactor commit with this proof,
+re-measured at the commit, not remembered from §28:
+
+| export | references outside its definition and export line | executed by 97 suites (§28 V8 coverage) |
+|---|---|---|
+| `MeritSeatingFreeze.openCapacityOutsideFreeze` | none — `src/`, `index.html`, `tests/`, `benchmarks/`, `scripts/` | never |
+| `MeritSeatAssignment.isSeated` | none | never |
+| `MeritSeatModel.drawsChairs` | none | never |
+
+And no dynamic access: no `Object.keys(Merit…)`, `Object.entries(Merit…)` or
+`Merit…[name]` anywhere in `src/` or `tests/`. One was checked for being a
+duplicate rule rather than dead: the Plan Doctor computes its own "open outside
+the freeze" figure, but from the frozen set the shell has already resolved — it
+must not re-resolve freeze rules — so the two are not one rule, and the Doctor's
+is the live one.
 
 ---
 
@@ -322,7 +339,7 @@ check, not this one.
 
 | Classification | Count | Items |
 |---|---|---|
-| SAFE TO REMOVE | **0** | — |
+| SAFE TO REMOVE | **0** remaining | three module exports removed 2026-10-03 (1.3) |
 | SAFE TO EXTRACT | **0** | — (`teachTableNumber`/`teachSelectedObject`, 2.1, **extracted**) |
 | NEEDS TEST FIRST | **3** | the `original` capture (1.2, now covered); verbatim chair writes (3); the two `otsu`s (2.1b) |
 | DO NOT MERGE | **3** | the three chair-write exceptions (3) |

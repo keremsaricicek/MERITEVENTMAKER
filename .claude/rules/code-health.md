@@ -72,7 +72,8 @@
 - Dead code is deleted only with recorded proof of unreachability, and a
   shadowed function is not an unused one. Current count of removable
   functions: **zero** — see `benchmarks/CODE-INVENTORY.md`, including the
-  measurement that first said fourteen and was wrong.
+  measurement that first said fourteen and was wrong, and the three dead
+  module exports removed with proof on 2026-10-03 (§1.3).
 - **Do not measure reachability with grep, or with a scanner that cannot read
   nested template literals.** Nearly every call in this codebase's render
   functions sits inside a template inside a template; a scanner that loses

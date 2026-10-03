@@ -222,7 +222,8 @@ Delete only after **proving** unreachability:
 3. Record the evidence in the commit message.
 
 **Current measured count of removable functions in `app-v8.js`: zero** (of
-266 top-level functions). The full evidence, including the wrong measurement
+266 top-level functions). Three dead module exports elsewhere were removed
+2026-10-03 with recorded proof (`CODE-INVENTORY.md` §1.3). The full evidence, including the wrong measurement
 and why it was wrong, is `benchmarks/CODE-INVENTORY.md`.
 
 **The `original` capture — read this before acting on any "21 unreachable"

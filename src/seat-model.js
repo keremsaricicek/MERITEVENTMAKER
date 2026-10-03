@@ -59,11 +59,6 @@
   // `hasPhysicalSeats` — see the note at the top of this file.
   const canSeat = (table) => !!table && logicalSeatCount(table) > 0;
 
-  // Does this table's plan draw its chairs? A property of the drawing, used
-  // for the "physical chairs" fact and for deciding whether syncing capacity
-  // should produce chair objects. Never for deciding seatability.
-  const drawsChairs = (table) => !!table && table.hasPhysicalSeats !== false;
-
   const tablesOf = (event) => (event && Array.isArray(event.tables) ? event.tables : []);
 
   // WHAT THE ROOM CAN SEAT TONIGHT.
@@ -83,7 +78,6 @@
     logicalSeatCount,
     physicalChairCount,
     canSeat,
-    drawsChairs,
     seatingCapacity,
     physicalCapacity,
     seatableTables,
