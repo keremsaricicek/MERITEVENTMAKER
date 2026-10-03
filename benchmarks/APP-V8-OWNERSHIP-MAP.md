@@ -469,7 +469,12 @@ broken measurement would have deleted fourteen working functions.
   than a parallel one — `arrival-wave` covers the buckets, `live-door-keys`
   the search; neither asserts they are one list.
 
-## A19 · Arrival & availability writers
+## A19 · Arrival & availability writers — rules **EXTRACTED** (step 5)
+
+> The rules of change are `MeritArrivalWave.arrivalTransition` and
+> `MeritTableAvailability.availabilityTransition`; `setArrival` and
+> `setTableAvailability` write their answer and the audit entry. Five of
+> their rules had no suite before `writer-transitions`.
 
 - **Lines** 2809–2871 (63)
 - **Main functions** `setArrival`, `recordArrival`, `setTableAvailability`

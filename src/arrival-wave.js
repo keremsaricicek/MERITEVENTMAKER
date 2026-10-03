@@ -178,8 +178,28 @@
     };
   }
 
+  // THE ARRIVAL AXIS'S ONE RULE OF CHANGE. setArrival() in app-v8.js is the
+  // only writer and applies exactly this; until modularization step 5 it was
+  // written inline there, where no suite could reach the half of it the UI
+  // never exercises.
+  //
+  // The two fields change together. The moment is kept only while the status
+  // it describes is true: a guest un-checked-in, or turned into a No Show, has
+  // no arrival time — a stale one would put somebody on the curve who is not
+  // in the room. A guest already checked in keeps the moment they first
+  // arrived. A status that does not exist is refused (null), never stored.
+  const ARRIVAL_STATUSES = ["Not Arrived", "Checked In", "No Show"];
+  function arrivalTransition(guest, next, now) {
+    if (!ARRIVAL_STATUSES.includes(next)) return null;
+    return {
+      arrivalStatus: next,
+      checkedInAt: next === "Checked In" ? (guest && guest.checkedInAt) || now : null,
+    };
+  }
+
   globalThis.MeritArrivalWave = {
     version: 1, COVERAGE,
     build, minutesOfClock, clockOfMinutes, minutesOfStamp,
+    ARRIVAL_STATUSES, arrivalTransition,
   };
 })();

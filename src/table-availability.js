@@ -86,8 +86,27 @@
     return { tables: lost.length, chairs: lost.reduce((n, t) => n + num(t.capacity), 0) };
   }
 
+  // THE AVAILABILITY AXIS'S ONE RULE OF CHANGE. setTableAvailability() in
+  // app-v8.js is the only writer and applies exactly this (moved here in
+  // modularization step 5). The state and its provenance change together:
+  // an unknown reason is recorded as OTHER, never stored raw; a table that
+  // fails twice tonight keeps the moment it FIRST failed — it cannot become
+  // "more recently" unavailable; and a table back in service carries no
+  // reason, note or moment of the failure. Touches nothing else on the table.
+  function availabilityTransition(table, next, reason, note, now) {
+    if (next !== STATE.AVAILABLE && next !== STATE.UNAVAILABLE) return null;
+    if (next === STATE.UNAVAILABLE) return {
+      availability: next,
+      unavailableReason: REASON[reason] || REASON.OTHER,
+      unavailableNote: String(note || "").slice(0, 400),
+      unavailableSince: (table && table.unavailableSince) || now,
+    };
+    return { availability: next, unavailableReason: null, unavailableNote: "", unavailableSince: null };
+  }
+
   globalThis.MeritTableAvailability = {
     version: 1, STATE, REASON,
     isUnavailable, resolve, unavailableTableIds, strandedGuests, lostCapacity,
+    availabilityTransition,
   };
 })();

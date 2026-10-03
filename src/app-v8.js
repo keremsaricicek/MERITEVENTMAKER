@@ -747,14 +747,15 @@
   // The only writer. A note is appended, never edited or replaced — a
   // handover log a person could rewrite afterwards would not be trustworthy
   // as a record of what one shift actually told the next.
+  // The note's shape -- trimmed, capped, refused when empty -- is
+  // MeritEventHandover.normalizeNote, the same rule that reads stored notes;
+  // this used to restate it.
   function addHandoverNote(event,text,by){
     const H=HANDOVER();
     if(!H||!event)return null;
-    const trimmed=String(text||"").trim();
-    if(!trimmed)return null;
+    const note=H.normalizeNote({id:uid("handover"),text:String(text||""),by:String(by||""),at:nowISO()});
+    if(!note)return null;
     event.handoverNotes=Array.isArray(event.handoverNotes)?event.handoverNotes:[];
-    const note={id:uid("handover"),text:trimmed.slice(0,H.NOTE_MAX),
-      by:String(by||"").trim().slice(0,H.BY_MAX),at:nowISO()};
     event.handoverNotes.unshift(note);
     audit(event,"HANDOVER_NOTE_ADDED",{noteId:note.id});
     return note;
@@ -3244,17 +3245,15 @@
   // and exactly one function maintains the pair. It writes the arrival axis and
   // NOTHING else: planningStatus and the planned seat are separate facts and
   // are not touched here, in either direction.
+  // The rule of change is MeritArrivalWave.arrivalTransition; this writes its
+  // answer and the audit entry, and nothing else writes the arrival axis.
   function setArrival(event,guest,next,source){
     if(!event||!guest)return null;
     const from=guest.arrivalStatus;
-    if(!["Not Arrived","Checked In","No Show"].includes(next))return null;
-    guest.arrivalStatus=next;
-    // The moment is kept only while the status it describes is true. A guest
-    // who is un-checked-in, or turned into a No Show, has no arrival time —
-    // leaving a stale one would put a person on the arrival curve who is not
-    // in the room.
-    if(next==="Checked In"){ if(!guest.checkedInAt)guest.checkedInAt=nowISO(); }
-    else guest.checkedInAt=null;
+    const change=globalThis.MeritArrivalWave.arrivalTransition(guest,next,nowISO());
+    if(!change)return null;
+    guest.arrivalStatus=change.arrivalStatus;
+    guest.checkedInAt=change.checkedInAt;
     audit(event,"ARRIVAL_STATUS_CHANGED",{guestId:guest.id,from,to:next,
       at:guest.checkedInAt||null,source:source||"live"});
     return{from,to:next};
@@ -3270,18 +3269,10 @@
   function setTableAvailability(event,table,next,reason,note){
     if(!event||!table)return null;
     const A=AVAIL();
-    if(!A||!["AVAILABLE","UNAVAILABLE"].includes(next))return null;
+    const change=A&&A.availabilityTransition(table,next,reason,note,nowISO());
+    if(!change)return null;
     const from=table.availability||A.STATE.AVAILABLE;
-    table.availability=next;
-    if(next==="UNAVAILABLE"){
-      table.unavailableReason=A.REASON[reason]||A.REASON.OTHER;
-      table.unavailableNote=String(note||"").slice(0,400);
-      // Kept from the first time this table failed tonight, not reset on a
-      // second edit -- a table cannot become "more recently" unavailable.
-      table.unavailableSince=table.unavailableSince||nowISO();
-    }else{
-      table.unavailableReason=null;table.unavailableNote="";table.unavailableSince=null;
-    }
+    Object.assign(table,change);
     audit(event,"TABLE_AVAILABILITY_CHANGED",{tableId:table.id,from,to:next,
       reason:table.unavailableReason});
     return{from,to:next};

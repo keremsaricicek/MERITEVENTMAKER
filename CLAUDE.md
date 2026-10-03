@@ -232,7 +232,8 @@ the truth about the data. **ACTUAL is what happened**, from `guest.checkedInAt`.
 in the returned object so no caller can present one.
 
 The arrival axis has exactly one writer: `setArrival()` in `src/app-v8.js`
-maintains `arrivalStatus` and `checkedInAt` together and writes the audit entry.
+maintains `arrivalStatus` and `checkedInAt` together, by the module's
+`arrivalTransition` rule, and writes the audit entry.
 The moment never survives a status that contradicts it, a **No Show is never an
 arrival** (enforced in the module as well as by the caller), and a check-in with
 no recorded moment is counted as untimed rather than placed in an invented

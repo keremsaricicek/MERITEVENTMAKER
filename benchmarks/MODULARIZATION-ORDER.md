@@ -313,6 +313,21 @@ a partial rollback possible.
 
 ## Step 5 — the clean adapters (A05, A06, A07, A14, A15, A19, A25)
 
+> **Done for the writers (2026-10-03), and the measurement is why.** The
+> three single writers in these areas — `setArrival`, `setTableAvailability`,
+> `addHandoverNote` — each applied a rule as it wrote. Mutating those rules
+> one at a time against every suite that touched them: **six of seven
+> survived.** `writer-transitions` pins them (`2b352bc`): through the controls
+> where a control reaches the rule, at the module boundary where none does.
+> The rules now live with their facts — `MeritArrivalWave.arrivalTransition`,
+> `MeritTableAvailability.availabilityTransition`, and the handover writer
+> uses `MeritEventHandover.normalizeNote` instead of restating it. The shell
+> keeps the write and the audit entry, so each is still the one writer. 7 of 7
+> mutations fail on the new code. The remaining adapters (onboarding's
+> seen/dismiss, the audit-trail and handover READERS) are null-guarded reads
+> of a module with no rule of their own; moving them would make pass-through
+> wrappers, so they stay.
+
 Onboarding, handover, audit trail, Smart Seating, service load, the arrival
 writer, data portability.
 

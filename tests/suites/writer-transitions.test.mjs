@@ -59,4 +59,33 @@ export default async function run({ page, checks, baseUrl }) {
   await click(page, "[data-handover-add]");
   await settle(page);
   checks.equal(await page.evaluate(() => (activeEvent().handoverNotes || []).length), before, "a note of only spaces is not a note: nothing is stored");
+
+  // --- 3. the rules no control reaches, at the module boundary ------------
+  const unit = await page.evaluate(() => {
+    const AW = MeritArrivalWave, TA = MeritTableAvailability, H = MeritEventHandover;
+    const first = "2026-01-01T19:00:00.000Z", later = "2026-01-01T21:30:00.000Z";
+    const big = "y".repeat(H.NOTE_MAX + 50);
+    return {
+      recheckin: AW.arrivalTransition({ arrivalStatus: "Checked In", checkedInAt: first }, "Checked In", later),
+      firstIn: AW.arrivalTransition({ arrivalStatus: "Not Arrived", checkedInAt: null }, "Checked In", later),
+      noShow: AW.arrivalTransition({ arrivalStatus: "Checked In", checkedInAt: first }, "No Show", later),
+      bogus: AW.arrivalTransition({ arrivalStatus: "Not Arrived" }, "Arrived", later),
+      secondFailure: TA.availabilityTransition({ availability: "UNAVAILABLE", unavailableSince: first }, "UNAVAILABLE", "SAFETY", "", later),
+      unknownReason: TA.availabilityTransition({}, "UNAVAILABLE", "GREMLINS", "n", later).unavailableReason,
+      bogusState: TA.availabilityTransition({}, "BROKEN", "DAMAGED", "", later),
+      capped: H.normalizeNote({ id: "handover_x", text: big, by: "z".repeat(H.BY_MAX + 9), at: later }),
+      caps: [H.NOTE_MAX, H.BY_MAX],
+    };
+  });
+  checks.equal(unit.recheckin, { arrivalStatus: "Checked In", checkedInAt: "2026-01-01T19:00:00.000Z" },
+    "a repeat check-in keeps the moment the guest FIRST arrived — pressing it again does not move them on the curve");
+  checks.equal(unit.firstIn, { arrivalStatus: "Checked In", checkedInAt: "2026-01-01T21:30:00.000Z" }, "a first check-in records now");
+  checks.equal(unit.noShow, { arrivalStatus: "No Show", checkedInAt: null }, "a No Show has no arrival moment");
+  checks.equal(unit.bogus, null, "a status that does not exist is refused, never stored");
+  checks.ok(unit.secondFailure && unit.secondFailure.unavailableSince === "2026-01-01T19:00:00.000Z" && unit.secondFailure.unavailableReason === "SAFETY",
+    "a table that fails again keeps the moment it FIRST failed tonight, with the new reason", unit.secondFailure);
+  checks.equal(unit.unknownReason, "OTHER", "an unknown reason is recorded as OTHER, never stored raw");
+  checks.equal(unit.bogusState, null, "an availability that does not exist is refused");
+  checks.ok(unit.capped && unit.capped.text.length === unit.caps[0] && unit.capped.by.length === unit.caps[1],
+    "a note and its author are capped at the module's lengths, whatever path wrote them", { text: unit.capped?.text.length, by: unit.capped?.by.length, caps: unit.caps });
 }
