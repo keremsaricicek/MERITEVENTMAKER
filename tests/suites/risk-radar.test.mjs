@@ -313,4 +313,20 @@ export default async function run({ page, checks, baseUrl }) {
   }
   checks.ok(words.en.question !== words.tr.question,
     "and Turkish is really Turkish, not English left in place", words);
+
+  // --- INFORMATION never reaches the radar ---------------------------------
+  // The difference between the radar and the pre-flight report (CLAUDE.md):
+  // information is worth reading once and demands nothing, and an attention
+  // list it sat in would teach an operator that the list is safe to ignore.
+  // No suite held it — adding the INFORMATION rows to the radar passed every
+  // check until this one.
+  const split = await page.evaluate((radarSrc) => {
+    ui.lang = "en"; ui.tab = "command"; ui.doctorOpen = true; render();
+    const info = [...document.querySelectorAll(".doc-section.INFORMATION .doc-row b")].map((b) => b.textContent.trim());
+    const radar = (0, eval)(radarSrc);
+    ui.doctorOpen = false; render();
+    return { info, radar: radar ? radar.rows.map((r) => r.what) : null };
+  }, RADAR);
+  checks.ok(split.info.length > 0, "the pre-flight report carries INFORMATION rows for this event", split);
+  checks.ok(split.radar && split.info.every((w) => !split.radar.includes(w)), "and not one of them is on the radar", split);
 }

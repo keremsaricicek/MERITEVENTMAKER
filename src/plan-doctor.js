@@ -833,5 +833,21 @@
     };
   }
 
-  globalThis.MeritPlanDoctor = { version: 1, LEVEL, SOURCE, AFFECTS, GO, VERDICT, NOT_EVALUATED, run };
+  // THE RISK RADAR'S FOUR STATES, from a report and nothing else. BLOCKING
+  // and NEEDS REVIEW become reasons; INFORMATION never does — worth knowing,
+  // demanding nothing, and an attention list it sat in would teach an
+  // operator the list is safe to ignore. A blocker once the night is live is
+  // a problem on the floor (LIVE RISK), not a preparation task (NOT READY).
+  // Computed in app-v8.js until modularization step 3c; it is this layer's
+  // answer, so it lives with the layer.
+  function radar(rep) {
+    const reasons = rep
+      ? [...rep.blocking.map((f) => ({ level: "blocker", finding: f })), ...rep.needsReview.map((f) => ({ level: "review", finding: f }))]
+      : [];
+    const blocking = rep ? rep.counts.blocking : 0;
+    const verdict = blocking ? (rep.phase === "live" ? "liveRisk" : "notReady") : reasons.length ? "readyWithReview" : "ready";
+    return { verdict, reasons };
+  }
+
+  globalThis.MeritPlanDoctor = { version: 1, LEVEL, SOURCE, AFFECTS, GO, VERDICT, NOT_EVALUATED, run, radar };
 })();

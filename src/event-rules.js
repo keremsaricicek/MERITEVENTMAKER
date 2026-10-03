@@ -18,6 +18,15 @@
   function isHistorical(event) {
     return !!event && (event.status === "Completed" || (!!event.date && event.date < todayKey()));
   }
+  // ready → live → closed. The night is live from the first arrival-axis fact,
+  // a check-in or a No Show; a finished one is the plan of record. Decides
+  // which room the load layer shows and whether a blocker is NOT READY or
+  // LIVE RISK.
+  function phase(event) {
+    if (isHistorical(event)) return "closed";
+    if ((event.guests || []).some((g) => g.arrivalStatus === "Checked In" || g.arrivalStatus === "No Show")) return "live";
+    return "ready";
+  }
   // null when the change may go ahead; otherwise why it may not.
   function mutationRefusal(event) {
     if (!event) return "NO_EVENT";
@@ -104,5 +113,5 @@
     }
   }
 
-  globalThis.MeritEventRules = { version: 1, todayKey, isHistorical, mutationRefusal, chairGeometry, syncTableChairs, refreshChairOccupancy };
+  globalThis.MeritEventRules = { version: 1, todayKey, isHistorical, phase, mutationRefusal, chairGeometry, syncTableChairs, refreshChairOccupancy };
 })();

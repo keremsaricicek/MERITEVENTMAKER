@@ -152,7 +152,11 @@ broken measurement would have deleted fourteen working functions.
   **disagree** for a No Show — the difference is the product rule, and no
   suite asserts the pair directly.
 
-## A04 · Plan Doctor, readiness & the resolution readers
+## A04 · Plan Doctor, readiness & the resolution readers — rules **EXTRACTED** (step 3c)
+
+> The phase rule is `MeritEventRules.phase`; the radar's four states are
+> `MeritPlanDoctor.radar`. The resolution readers stay as shell wiring — see
+> `MODULARIZATION-ORDER.md` step 3c for why no `event-resolution.js` exists.
 
 - **Lines** 347–457, 484–491, 595–740 (265)
 - **Main functions** `planIssues`, `planHealthHTML`, `eventPhase`,

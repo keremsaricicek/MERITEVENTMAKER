@@ -7,7 +7,7 @@ own recollection.
 - **Programme start SHA** `02edac7`
 - **Branch** `claude/merit-concept3-plan-intelligence-rebirth`
 - **PR** #5 — OPEN, must not be merged
-- **Current SHA** see `git log` — modularization step 3b (entry AF) is the last completed entry
+- **Current SHA** see `git log` — step 3c and entry AG are the last completed work
 - **Status** IN PROGRESS
 
 ## How to resume
@@ -1761,6 +1761,38 @@ reads `t()`" was a lambda parameter named `t`; corrected in
 Narrowed to absent or `SecurityError` (`f07db9b`), both suites mutation-proven.
 463e687 was never pushed on its own.
 
+### AG. Three defects found while modularizing, and step 3c
+
+Each was found by looking at the screen a structural step touched, not by a
+failing suite — and each now has one.
+
+1. **Reports contradicted the Command Center** (`89473d1`). "Before you
+   export" was built from `planIssues()`' four rules; the Plan Doctor already
+   expresses all four natively. With guests seated at an unavailable table the
+   Command Center said NOT READY and Reports said "Everything checks out".
+   Reports now lists the radar's reasons with the Doctor's words and controls.
+   `reports-preflight` (13 checks) failed 9 on the old code; 5 of 5 mutations.
+2. **Reports labelled logical seats as physical chairs** (`92b6ff7`).
+   "EMPTY PHYSICAL CHAIRS 13" on a plan with no chairs; "ASSIGNED GUESTS 3 ·
+   Live" for planned pax. Relabelled; figures unchanged.
+   `physical-logical-seat-separation` +4 checks, 3 of 3 mutations.
+3. **The page was always English** (`fed6019`). `<html lang="en">` never
+   changed, so in the Turkish default every uppercased label took English
+   capitals (MISAFIRLER for MİSAFİRLER) and a screen reader used an English
+   voice. axe could not see it. `i18n` +4 checks, 2 of 2 mutations.
+
+**Step 3c** — the phase rule → `MeritEventRules.phase`, the radar's four
+states → `MeritPlanDoctor.radar`. No `event-resolution.js`: the remaining
+readers are shell wiring, and moving them would have made pass-through
+wrappers (`MODULARIZATION-ORDER.md`). Three branches no suite held were pinned
+first (No Show → live; finished → plan of record; INFORMATION off the radar).
+
+**CI on `f07db9b`, read from the job logs** (not the badge): 10/10 check runs
+green; Detection — `benchmark:baseline` "No regressions"; Intelligence — the
+memory gate on 182 decisions (the same count as locally, now that OCR is
+pinned), §23 targets reported INFO, not met. One warning recorded: the v4
+actions run forced onto Node 24.
+
 ### Adversarial at `3451f67` — 1 PASS · 4 PARTIAL · 3 FAIL
 
 Same distribution as `02edac7`; the run exits 0 because it gates on
@@ -1788,12 +1820,10 @@ typing 136/289.
 
 ## Next step
 
-**Continue the modularization (§3), then the final review.** The programme's
-§37 forbids ending on a technically fixable PARTIAL, and §3B/§3D are exactly
-that. In order: 3c (A04 → `src/event-resolution.js`, five injected
-dependencies measured), the dead exports §28 proved (`CODE-INVENTORY.md`),
-`chair.occupancy` (§3.1), then step 4 (layout changes) and step 5 (the
-adapters) of `MODULARIZATION-ORDER.md`, then detector Split B. After that:
+**Continue the modularization (§3), then the final review.** Done: 3a, 3b,
+3c. Next, in order: the dead exports §28 proved (`CODE-INVENTORY.md`),
+`chair.occupancy` (§3.1), step 4 (layout changes) and step 5 (the adapters)
+of `MODULARIZATION-ORDER.md`, then detector Split B. After that:
 `MERIT_COVERAGE=1 npm run test:all` re-run, §35 validation with every
 benchmark, and `benchmarks/FINAL-COMPLETION-MATRIX.md` rewritten from
 measurement. §29 verified 2026-09-28: every non-slow suite runs in CI's

@@ -194,7 +194,22 @@ clean.
 > `audit` stays (see the table). One measurement below was **wrong** and is
 > corrected: `refreshChairOccupancy` does not read `t()` — the `t` in its
 > stripped code is the parameter of `tables.find(t=>…)` — so it moved too.
-> **3c** (A04 → `src/event-resolution.js`) remains.
+> **3c DONE, and not as planned.** Measured before moving, A04 was not one
+> thing. Its two RULES had homes already: the phase of the night (ready →
+> live → closed) is an event rule and is now `MeritEventRules.phase`; the
+> Risk Radar's four states are the Plan Doctor's own answer and are now
+> `MeritPlanDoctor.radar(report)` — the documented contract ("answered from
+> the Plan Doctor and nothing else") had been computed in the shell. What is
+> left in the shell is wiring: `planDoctorReport` assembles inputs from shell
+> state (`state.lastBackupAt`), `resolvedFreezes`/`resolvedUnavailable` are
+> null-guarded one-liners over two modules, and `frozenTableIdSet` is a memo
+> keyed on the shell's own mutation epoch. Moving those to a new
+> `src/event-resolution.js` would have built the pass-through wrappers §3B
+> forbids, so the file was not created. Characterized first: two phase
+> branches (a No Show makes the night live; a finished night shows the plan)
+> survived every suite and were pinned in `event-rules` before the move; the
+> rule that INFORMATION never reaches the radar survived every suite and is
+> pinned in `risk-radar`. 5 of 5 mutations fail on the new code.
 >
 > **Crossings measured for what remains (2026-09-27, stripped code):**
 >

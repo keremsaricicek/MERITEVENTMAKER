@@ -204,7 +204,8 @@ table exists tonight, not an optional advisory. Closed the one risk
 ## The Event Risk Radar
 
 "What could make this event fail operationally?" — answered in the Command
-Center from the Plan Doctor and nothing else. It **runs no engine of its own**:
+Center from the Plan Doctor and nothing else — its four states are
+`MeritPlanDoctor.radar(report)`. It **runs no engine of its own**:
 every row is a fact another layer already concluded, so the radar cannot
 disagree with the pre-flight report. Two refusals are load-bearing. It shows
 **no percentage** — there is no honest weighting of one duplicate table number

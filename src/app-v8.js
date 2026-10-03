@@ -587,13 +587,8 @@
   // and the guest/seating state. Inventing a second opinion here would be the
   // parallel-system mistake the programme forbids.
   //
-  // PHASE (preparation / ready / live / closed) changes what is emphasised,
-  // never what is available.
-  function eventPhase(event){
-    if(RULES().isHistorical(event))return"closed";
-    if((event.guests||[]).some(g=>g.arrivalStatus==="Checked In"||g.arrivalStatus==="No Show"))return"live";
-    return"ready";
-  }
+  // PHASE (ready / live / closed, MeritEventRules.phase) changes what is
+  // emphasised, never what is available.
   // ---- the Plan Doctor ------------------------------------------------------
   //
   // The pre-flight check, and now the ONE place the whole event is judged. The
@@ -840,7 +835,7 @@
   function planDoctorReport(event){
     if(!event||!globalThis.MeritPlanDoctor)return null;
     return globalThis.MeritPlanDoctor.run({
-      phase:eventPhase(event),
+      phase:RULES().phase(event),
       tables:event.tables||[],
       guests:event.guests||[],
       // What a person has held back, resolved here — with the REASON each table
@@ -869,20 +864,15 @@
   // difference between the two: information is worth knowing and demands
   // nothing, and putting it in the attention list would teach an operator that
   // the list is safe to ignore.
+  // The four states are the Plan Doctor's own answer (MeritPlanDoctor.radar);
+  // this only gathers what the Command Center shows beside it.
   function eventReadiness(event){
     const doctor=planDoctorReport(event);
     const m=eventMetrics(event);
     const budget=event.analysis?.confidenceBudget||null;
     const inconsistent=(event.analysis?.selfCheck?.checks||[]).filter(c=>c.verdict==="INCONSISTENT");
-    const phase=eventPhase(event);
-    const reasons=doctor
-      ?[...doctor.blocking.map(f=>({level:"blocker",finding:f})),
-        ...doctor.needsReview.map(f=>({level:"review",finding:f}))]
-      :[];
-    const blocking=doctor?doctor.counts.blocking:0;
-    const verdict=blocking?(phase==="live"?"liveRisk":"notReady")
-      :reasons.length?"readyWithReview":"ready";
-    return{phase,verdict,reasons,metrics:m,budget,inconsistent,doctor};
+    const {verdict,reasons}=globalThis.MeritPlanDoctor?globalThis.MeritPlanDoctor.radar(doctor):{verdict:"ready",reasons:[]};
+    return{phase:RULES().phase(event),verdict,reasons,metrics:m,budget,inconsistent,doctor};
   }
   // WHAT is wrong and WHY the system believes it, in the operator's language.
   //
@@ -2406,7 +2396,7 @@
   function serviceLoad(event,mode){
     const SL=globalThis.MeritServiceLoad;
     if(!SL||!event)return null;
-    const m=mode||(eventPhase(event)==="live"?SL.MODE.LIVE:SL.MODE.PLANNED);
+    const m=mode||(RULES().phase(event)==="live"?SL.MODE.LIVE:SL.MODE.PLANNED);
     if(loadMemo.event===event&&loadMemo.epoch===mutationEpoch&&loadMemo.mode===m)return loadMemo.load;
     loadMemo={event,epoch:mutationEpoch,mode:m,
       load:SL.build({tables:event.tables||[],guests:event.guests||[],
