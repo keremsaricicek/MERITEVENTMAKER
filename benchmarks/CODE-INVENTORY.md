@@ -333,6 +333,17 @@ hazard is the first reader, which would get a plausible, wrong answer.
 field changes the stored shape and gets its own commit with a round-trip
 check, not this one.
 
+**REMOVED 2026-10-03.** Chairs no longer carry the field; `refreshChairOccupancy`
+is `syncEventChairs`, which only brings each table's chairs in line with its
+capacity. A stored record that carries the field loads without it
+(`syncTableChairs` builds each chair from an explicit field list) — `event-rules`
+plants a stale entry and reloads. Seat ORDER still matters and is still
+preserved: `seats[0]` is the named guest's chair and the rest print as
+`GUEST OF [NAME]` (`tableSeatMap`). The Table Plan workbook was exported
+before and after for an event with physical and symbolic tables, a +2 party, a
+No Show and an unseated guest: TABLE PLAN, GUEST LIST and UNASSIGNED are
+cell-for-cell identical, including the three `GUEST OF` cells.
+
 ---
 
 ## 4 · Summary

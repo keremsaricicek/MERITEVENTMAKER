@@ -38,10 +38,10 @@ export default async function run({ page, checks, baseUrl }) {
   // --- 1. the geometry a new table's chairs get, per type -------------------
   const geometry = await page.evaluate(() => activeEvent().tables.map((t) => ({ type: t.type, capacity: t.capacity,
     chairs: t.chairs.map((c) => [Math.round(c.x * 100) / 100, Math.round(c.y * 100) / 100, Math.round(c.rotation * 10) / 10, c.seatNumber]),
-    owned: t.chairs.every((c) => /^chair_/.test(c.id) && c.parentTableId === t.id && c.occupancy === null) })));
+    owned: t.chairs.every((c) => /^chair_/.test(c.id) && c.parentTableId === t.id && !("occupancy" in c)) })));
   checks.equal(geometry.map((g) => ({ type: g.type, capacity: g.capacity, chairs: g.chairs })), PINNED,
     "each table type's chairs take exactly the positions they always have");
-  checks.ok(geometry.every((g) => g.owned), "every chair is its table's, with its own id and no occupancy yet", geometry.map((g) => g.owned));
+  checks.ok(geometry.every((g) => g.owned), "every chair is its table's, with its own id — and says where it is, not who sits on it", geometry.map((g) => g.owned));
 
   // --- 2. growing a drawn table keeps the chairs a person already placed ----
   const grown = await page.evaluate(() => {
@@ -64,11 +64,12 @@ export default async function run({ page, checks, baseUrl }) {
   });
   checks.equal(symbolic, { ok: true, capacity: 9, chairs: 0 }, "a symbolic table takes capacity 9 and still has zero chair objects");
 
-  // --- 4. a seated party, with an unseated guest listed before it -----------
-  // Checked after the reload below: planned occupancy on a chair is rebuilt
-  // when an event loads (and on undo/unassign), not on every assignment —
-  // and nothing reads it. That field is recorded in CODE-INVENTORY.md; this
-  // suite holds only what the rebuild guarantees.
+  // --- 4. a seated party, and a record saved by an older build -------------
+  // Chairs used to carry `occupancy` = {guestId, partyIndex, planned}: stored,
+  // read by nothing, and stale between an assignment and the next load
+  // (CODE-INVENTORY.md §3.1). Who sits where is guest.assignment. A record
+  // saved before the field was removed still carries it — planted below,
+  // stale on purpose — and must load without it, with the party untouched.
   await page.evaluate(() => {
     const e = activeEvent(), t = e.tables.find((x) => x.type === "rectangle");
     const g = (id, name, pax) => ({ id, name, additionalGuests: pax - 1, pax, planningStatus: "Confirmed", vip: "Standard", arrivalStatus: "Not Arrived",
@@ -78,6 +79,8 @@ export default async function run({ page, checks, baseUrl }) {
     e.guests.push(g("gNone", "Nobody Seated", 1), g("gPair", "Pair Seated", 2));
     touchEvent(e);
     assignGuestToTable("gPair", t.id);
+    t.chairs[0].occupancy = { guestId: "gPair", partyIndex: 0, planned: true };
+    t.chairs[2].occupancy = { guestId: "someoneLongGone", partyIndex: 0, planned: true };
   });
 
   // --- 5. what a stored record cannot make a table be -----------------------
@@ -87,12 +90,13 @@ export default async function run({ page, checks, baseUrl }) {
   await page.waitForFunction(() => { try { return state.events.length === 1 && state.events[0].tables.length === 4; } catch { return false; } }, null, { timeout: 15000 });
   const clamped = await page.evaluate(() => { const e = state.events[0]; const by = (ty) => e.tables.find((x) => x.type === ty);
     return { bistro: [by("bistro").capacity, by("bistro").chairs.length], round: [by("round").capacity, by("round").chairs.length],
-      occupancy: by("rectangle").chairs.slice(0, 3).map((c) => c.occupancy), placed: [by("round").chairs[0].x, by("round").chairs[0].y] }; });
+      oldField: by("rectangle").chairs.filter((c) => "occupancy" in c).length,
+      pair: { seats: e.guests.find((g) => g.id === "gPair").assignment?.seats, used: [...occupiedSeatIndexes(e, by("rectangle").id)].sort() }, placed: [by("round").chairs[0].x, by("round").chairs[0].y] }; });
   await page.evaluate(() => { ui.lang = "en"; render(); });
   checks.equal(clamped.bistro, [1, 1], "a stored capacity of 0 loads as one seat with one chair — a table is never zero seats wide");
   checks.equal(clamped.round, [99, 99], "a stored capacity of 500 loads as 99, the most a person can type");
-  checks.equal(clamped.occupancy, [{ guestId: "gPair", partyIndex: 0, planned: true }, { guestId: "gPair", partyIndex: 1, planned: true }, null],
-    "on load a seated party's chairs carry it, one chair per person — even with an unseated guest listed first");
+  checks.equal(clamped.oldField, 0, "a record saved with the retired chair.occupancy field loads without it — the stale entry is not carried forward");
+  checks.equal(clamped.pair, { seats: [0, 1], used: [0, 1] }, "and the seated party keeps its two seats, in order, past an unseated guest listed first");
   checks.equal(clamped.placed, [12.5, 7.25], "and a placed chair's position survives the reload");
 
   // --- 6. the refusal: who is refused, and that they are told why -----------

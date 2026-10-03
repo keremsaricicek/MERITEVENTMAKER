@@ -183,7 +183,7 @@
     migrated.background={src:"",name:"",opacity:.28,visible:false,locked:true,isDefault:false,scale:100,...(migrated.background||{})};
     if(migrated.background.isDefault){migrated.background.src="";migrated.background.visible=false;migrated.background.isDefault=false;}
     migrated.analysis=migrated.analysis||null;
-    RULES().refreshChairOccupancy(migrated);
+    RULES().syncEventChairs(migrated);
     return migrated;
   }
   // A record this build must not read AND must not write over. Set once, by
@@ -434,7 +434,7 @@
     // The same rule for a record that could not be read AND could not be
     // copied aside: saving would overwrite the only copy.
     if(MERIT_STORAGE_NOTICE.unreadable&&!MERIT_STORAGE_NOTICE.unreadable.kept)return Promise.resolve();
-    state.events.forEach(e=>RULES().refreshChairOccupancy(e));
+    state.events.forEach(e=>RULES().syncEventChairs(e));
     let payload;
     try{payload=JSON.stringify(state);}
     // Not a storage refusal: the state could not be turned into a record at
@@ -2106,7 +2106,7 @@
   function duplicateSelection(){const event=activeEvent();if(!canMutate(event,"duplicate plan objects"))return;const ids=ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean);if(!ids.length)return toast(t("toast.selectObjectsFirst"));recordUndo(event);const created=[];for(const id of ids){const t=event.tables.find(x=>x.id===id),o=event.venueObjects.find(x=>x.id===id),c=clone(t||o);if(!c)continue;c.id=uid(t?"table":"venue");c.x+=24;c.y+=24;c.locked=false;if(t){c.number=uniqueNumber(event,t.type==="bistro"?"B":"T",1);
         // A copy is a person's act: nothing about it was detected, and the
         // number printed on the ORIGINAL's symbol is not this table's (§21).
-        c.origin="COPY";delete c.printedNumber;if(c.capacitySource==="DETECTED_PHYSICAL_SEATS")c.capacitySource="HUMAN_CONFIRMED";c.chairs=(c.chairs||[]).map((chair,index)=>({...chair,id:uid("chair"),parentTableId:c.id,seatNumber:index+1,occupancy:null}));event.tables.push(c);}else event.venueObjects.push(c);created.push(c.id);}ui.selectedObjectIds=created;ui.selectedObjectId=created[0]||null;touchEvent(event);render();}
+        c.origin="COPY";delete c.printedNumber;if(c.capacitySource==="DETECTED_PHYSICAL_SEATS")c.capacitySource="HUMAN_CONFIRMED";c.chairs=(c.chairs||[]).map((chair,index)=>({...chair,id:uid("chair"),parentTableId:c.id,seatNumber:index+1}));event.tables.push(c);}else event.venueObjects.push(c);created.push(c.id);}ui.selectedObjectIds=created;ui.selectedObjectId=created[0]||null;touchEvent(event);render();}
   async function deleteSelection(){const event=activeEvent();if(!canMutate(event,"delete plan objects"))return;const ids=new Set(ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean));if(!ids.size)return;const affected=event.guests.filter(g=>ids.has(g.assignment?.tableId));if(!(await ask({title:t("ask.deleteObjectsTitle",{n:ids.size}),body:affected.length?t("ask.deleteObjectsGuests",{n:ids.size,guests:affected.length}):"",confirmLabel:t("ask.delete"),danger:true})))return;recordUndo(event);affected.forEach(g=>SEAT().clear(g));event.tables=event.tables.filter(t=>!ids.has(t.id));event.venueObjects=event.venueObjects.filter(o=>!ids.has(o.id));ui.selectedObjectIds=[];ui.selectedObjectId=null;touchEvent(event);render();}
 
   function startMarquee(e){
@@ -2829,7 +2829,7 @@
           if(!back||(s.assignment.seats||[]).some(seat=>used.has(Number(seat)))){anyClash=true;continue;}
           SEAT().write(guest,s.assignment);
         }
-        RULES().refreshChairOccupancy(now);touchEvent(now);render();
+        RULES().syncEventChairs(now);touchEvent(now);render();
         toast(anyClash?t("seating.groupSeatTaken"):t("seating.groupRestoredToast"),anyClash?"error":"success",5200);
       });
     }
@@ -3658,7 +3658,7 @@
     // record. Position is kept too, so the list does not reshuffle on undo.
     const index=event.guests.indexOf(g),snapshot=JSON.parse(JSON.stringify(g));
     event.guests.splice(index,1);
-    RULES().refreshChairOccupancy(event);
+    RULES().syncEventChairs(event);
     audit(event,"GUEST_DELETED",{guestId:g.id,name:g.name});
     touchEvent(event);render();
     toastAction(t("guests.deletedToast",{name:g.name}),t("live.undo"),()=>{
@@ -3676,7 +3676,7 @@
         if(clash){SEAT().clear(snapshot);seatLost=true;}
       }
       now.guests.splice(Math.min(index,now.guests.length),0,snapshot);
-      RULES().refreshChairOccupancy(now);
+      RULES().syncEventChairs(now);
       audit(now,"GUEST_RESTORED",{guestId:snapshot.id,name:snapshot.name});
       touchEvent(now);render();
       toast(seatLost?t("guests.restoredNoSeat",{name:snapshot.name}):t("guests.restoredToast",{name:snapshot.name}),"success");
@@ -3697,7 +3697,7 @@
     const table=event.tables.find(x=>x.id===snapshot.tableId);
     const label=table?formatTableNumber(table.number):"";
     SEAT().clear(g);ui.selectedGuestId=id;
-    RULES().refreshChairOccupancy(event);
+    RULES().syncEventChairs(event);
     touchEvent(event);render();
     toastAction(t("seating.unassignedToast",{name:g.name}),t("live.undo"),()=>{
       const now=activeEvent();
@@ -3709,7 +3709,7 @@
         toast(t("seating.seatTaken",{name:guest.name}),"error",5200);return;
       }
       SEAT().write(guest,snapshot);
-      RULES().refreshChairOccupancy(now);
+      RULES().syncEventChairs(now);
       audit(now,"GUEST_REASSIGNED",{guestId:id,tableId:snapshot.tableId});
       touchEvent(now);render();
       toast(t("seating.reassignedToast",{name:guest.name,table:label}),"success");
@@ -5899,7 +5899,7 @@
     const ruleUse=CP&&CP.ruleApplication?CP.ruleApplication({rule:event.analysis?.planIntelligence?.capacityAudit?.rule||null,
       representationKind:event.analysis?.diagnostics?.representation?.kind||null,
       seatlessTables:(event.analysis?.candidates||[]).filter(c=>c.kind==="table"&&c.status!=="rejected"&&!c.chairDetections?.length).length}):{applies:false};
-    recordUndo(event);let tables=0,venues=0,chairsKept=0,derived=0;for(const c of chosen){if(c.committedId)continue;const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);if(c.kind==="table"){const table=RULES().syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||(ruleUse.applies?ruleUse.perUnit:1)),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":ruleUse.applies?"DERIVED_PRINTED_RULE":"UNKNOWN",origin:"DETECTED",printedNumber:printedEvidence(c.printedNumber),...(!c.chairDetections?.length&&ruleUse.applies?{capacityEvidence:{...ruleUse.evidence,at:nowISO()}}:{})});if(c.chairDetections?.length){table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0,occupancy:null}));table.capacity=table.chairs.length;}event.tables.push(table);c.committedId=table.id;tables++;chairsKept+=(table.chairs||[]).length;if(table.capacitySource==="DERIVED_PRINTED_RULE")derived++;}else{const object={id:uid("venue"),type:c.type||"text",label:String(c.type||"OBJECT").toUpperCase(),x,y,w,h,rotation:c.rotation||0,locked:false,z:4};
+    recordUndo(event);let tables=0,venues=0,chairsKept=0,derived=0;for(const c of chosen){if(c.committedId)continue;const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);if(c.kind==="table"){const table=RULES().syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||(ruleUse.applies?ruleUse.perUnit:1)),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":ruleUse.applies?"DERIVED_PRINTED_RULE":"UNKNOWN",origin:"DETECTED",printedNumber:printedEvidence(c.printedNumber),...(!c.chairDetections?.length&&ruleUse.applies?{capacityEvidence:{...ruleUse.evidence,at:nowISO()}}:{})});if(c.chairDetections?.length){table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0}));table.capacity=table.chairs.length;}event.tables.push(table);c.committedId=table.id;tables++;chairsKept+=(table.chairs||[]).length;if(table.capacitySource==="DERIVED_PRINTED_RULE")derived++;}else{const object={id:uid("venue"),type:c.type||"text",label:String(c.type||"OBJECT").toUpperCase(),x,y,w,h,rotation:c.rotation||0,locked:false,z:4};
       // Seating furniture keeps its capacity state on the committed object, so
       // "we do not know how many this banquette seats" survives leaving the
       // review screen instead of silently becoming zero on the floor plan.
@@ -6281,7 +6281,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   }
   bindCommon = bindV8Common;
   openEvent = function(id){const event=state.events.find(e=>e.id===id);if(!event)return;ui.activeEventId=id;ui.screen="workspace";ui.tab=RULES().isHistorical(event)?"guests":"command";ui.selectedObjectId=null;ui.selectedObjectIds=[];ui.selectedGuestIds=[];ui.operationalMode=false;ui.undo=[];ui.redo=[];render();};
-  duplicateEvent = function(id,open=false){const source=state.events.find(e=>e.id===id);if(!source)return;original.duplicateEvent(id,open);const copy=state.events[0];copy.hotel=copy.hotel||copy.venue||"";copy.salon=copy.salon||"";copy.tables.forEach(t=>{t.chairs=(t.chairs||[]).map((c,i)=>({...c,id:uid("chair"),parentTableId:t.id,seatNumber:i+1,occupancy:null}));});saveState();};
+  duplicateEvent = function(id,open=false){const source=state.events.find(e=>e.id===id);if(!source)return;original.duplicateEvent(id,open);const copy=state.events[0];copy.hotel=copy.hotel||copy.venue||"";copy.salon=copy.salon||"";copy.tables.forEach(t=>{t.chairs=(t.chairs||[]).map((c,i)=>({...c,id:uid("chair"),parentTableId:t.id,seatNumber:i+1}));});saveState();};
 
   // What the operator sees when the stored record was written by a newer
   // build: the reason, both version numbers, and what to do -- not an empty

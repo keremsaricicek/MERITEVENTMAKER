@@ -25,9 +25,9 @@
 // TWO THINGS IT DELIBERATELY DOES NOT DO.
 //
 //   It does not sort seats. The order maps a party to its companions —
-//   refreshChairOccupancy() walks `seats` by index and pairs each with a
-//   partyIndex — so tidying the array would silently reseat somebody's
-//   companion into a different chair.
+//   seats[0] is the named guest's chair and every later one is a companion
+//   (tableSeatMap, which the workbook prints as GUEST OF [NAME]) — so tidying
+//   the array would silently move the name onto a companion's chair.
 //
 //   It does not decide capacity, freezes or locks. A locked assignment
 //   outranks a suggestion, and a frozen table needs an override; both are

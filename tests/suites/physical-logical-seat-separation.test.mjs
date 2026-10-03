@@ -114,7 +114,7 @@ export default async function run({ page, checks, baseUrl }) {
       { id: "c3", parentTableId: t.id, seatNumber: 3, x: 33.5, y: 34.5, rotation: 41, occupancy: null },
     ];
     const sent = t.chairs.map(c => ({ x: c.x, y: c.y, rotation: c.rotation }));
-    // saveState() runs refreshChairOccupancy over every event, which is the
+    // saveState() runs syncEventChairs over every event, which is the
     // path that re-syncs chairs to capacity — the exact operation that must
     // not overwrite a detected coordinate.
     saveState();

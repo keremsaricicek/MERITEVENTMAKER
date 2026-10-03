@@ -85,7 +85,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal(shapes.noTable, null,
     "an assignment naming no table is not an assignment — it would strand the guest at a table that does not exist", shapes.noTable);
   checks.equal(shapes.seatOrderKept, "5,3,4",
-    "SEAT ORDER IS PRESERVED, never sorted. The order maps a party to its companions — refreshChairOccupancy walks it by index — so tidying it would silently reseat a companion",
+    "SEAT ORDER IS PRESERVED, never sorted. The order maps a party to its companions — seats[0] is the named guest, the rest print as GUEST OF in the workbook — so tidying it would move the name onto a companion's chair",
     shapes.seatOrderKept);
   checks.equal(JSON.stringify(shapes.stringSeats), JSON.stringify([3, 4]),
     "seat indexes are coerced to numbers and anything that is not one is dropped, rather than being carried as a string that no index lookup would match",

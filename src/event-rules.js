@@ -93,25 +93,23 @@
     table.chairs = geometry.map((p, index) => ({
       id: old[index]?.id || uid("chair"), parentTableId: table.id, seatNumber: index + 1,
       x: Number.isFinite(old[index]?.x) ? old[index].x : p.x, y: Number.isFinite(old[index]?.y) ? old[index].y : p.y,
-      rotation: Number.isFinite(old[index]?.rotation) ? old[index].rotation : p.rotation, occupancy: null,
+      rotation: Number.isFinite(old[index]?.rotation) ? old[index].rotation : p.rotation,
     }));
     return table;
   }
 
-  function refreshChairOccupancy(event) {
-    for (const table of event.tables || []) syncTableChairs(table).chairs.forEach((chair) => { chair.occupancy = null; });
-    // `continue`, not `return`: this used to abort the whole loop at the first
-    // unassigned guest, leaving every later guest's chairs marked unoccupied.
-    for (const guest of event.guests || []) {
-      if (!guest.assignment) continue;
-      const table = event.tables.find((x) => x.id === guest.assignment.tableId);
-      if (!table) continue;
-      (guest.assignment.seats || []).forEach((seatIndex, partyIndex) => {
-        const chair = table.chairs[Number(seatIndex)];
-        if (chair) chair.occupancy = { guestId: guest.id, partyIndex, planned: true };
-      });
-    }
+  // Every table's chairs brought in line with its capacity -- on load, and
+  // after an undo restores assignments. This was refreshChairOccupancy(), and
+  // also wrote `chair.occupancy` = {guestId, partyIndex, planned}: a persisted
+  // field nothing read, rebuilt on load and undo but not on an assignment, so
+  // stale in between (CODE-INVENTORY.md §3.1). Who sits where is
+  // guest.assignment, read through occupiedSeatIndexes and tableSeatMap; a
+  // chair object says where a chair IS, never who is on it. A stored record's
+  // old field is dropped by syncTableChairs, which builds each chair from an
+  // explicit field list.
+  function syncEventChairs(event) {
+    for (const table of event.tables || []) syncTableChairs(table);
   }
 
-  globalThis.MeritEventRules = { version: 1, todayKey, isHistorical, phase, mutationRefusal, chairGeometry, syncTableChairs, refreshChairOccupancy };
+  globalThis.MeritEventRules = { version: 1, todayKey, isHistorical, phase, mutationRefusal, chairGeometry, syncTableChairs, syncEventChairs };
 })();
