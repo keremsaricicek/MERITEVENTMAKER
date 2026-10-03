@@ -433,7 +433,18 @@ Line numbers are within `src/plan-detection-classical.js`.
 > tightened family-membership threshold makes all fourteen real-venue plans
 > differ. Its debug probe (`MERIT_STAGE_CENSUS`, only under
 > `MERIT_DETECT_DEBUG`) moved with it and `ornek-stage-walk` still reads it.
-> `detect()` is now stage calls around the `tables` stage.
+> **And the tables stage (B-6 … B-14)**, `src/plan-detection-tables.js`
+> (`MeritPlanTables.findTables`): eighteen inputs plus `uid`, thirty outputs
+> (most of them the diagnostics `detect()` reports), nothing earlier
+> reassigned. 28 of 28 byte-identical; rounding the candidate confidence
+> makes ORNEK differ. Moving it briefly re-opened the `app.js` `uid` crossing
+> — the stage's `uid(...)` calls resolved to app.js's global again, which the
+> fingerprint cannot see (ids are drawn the same way) and the boundary suite
+> caught; `uid` is now an input. **`detect()` is an orchestrator: one call per
+> stage, in data order, under 200 lines** (`plan-detection-boundary` checks
+> it). What remains is INSIDE the tables stage: its nine sub-stages still
+> share locals in one 1,100-line function — the next cut, in the order this
+> document gives, with the fingerprint as its gate.
 > **What remains is the hard part, measured below and unchanged:** `chairs`
 > and `tables` are 78% of `detect()` and hand ~30 values forward through shared
 > locals. They need their hand-off made an explicit record before they can

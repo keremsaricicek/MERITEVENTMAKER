@@ -194,6 +194,9 @@
   <script src="src/plan-detection-sources.js"></script>
   <!-- Assisted Detection's chairs-first stage. After every module it captures. -->
   <script src="src/plan-detection-chairs.js"></script>
+  <!-- Assisted Detection's tables stage. After every module it captures,
+       the venue-scale objects stage among them. -->
+  <script src="src/plan-detection-tables.js"></script>
   <!-- Assisted Detection: the classical CV pipeline, extracted from app-v8.js.
        Loads BEFORE app-v8.js because app-v8.js reads the registry it publishes
        (globalThis.MERIT_PLAN_DETECTION), and AFTER the Merit* modules it calls

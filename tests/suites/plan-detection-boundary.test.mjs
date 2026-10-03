@@ -55,7 +55,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // detect() and the stages taken out of it (Split B). A call that moved
   // with its stage is still held to the same rule: no bare call, reached
   // through the collaborator's published object.
-  const STAGE_FILES = ["plan-detection-preprocess.js", "plan-detection-sources.js", "plan-detection-chairs.js", "plan-detection-venues.js", "plan-detection-verdict.js"];
+  const STAGE_FILES = ["plan-detection-preprocess.js", "plan-detection-sources.js", "plan-detection-chairs.js", "plan-detection-tables.js", "plan-detection-venues.js", "plan-detection-verdict.js"];
   const pipelineCode = [detCode, ...STAGE_FILES.map((f) => stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", f), "utf8")))].join("\n");
   const v8Code = stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", "app-v8.js"), "utf8"));
 
@@ -285,7 +285,9 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // only remaining caller with it, so the pipeline now makes no call to it at
   // all. The rule is about how a CALLER reaches it, so it is asserted over
   // every caller rather than over one file that used to be the only one.
-  const geoConsumers = () => detCode + "\n" + stripCommentsAndStrings(
+  // The geometry group's callers: detect()'s file, its stage modules, and
+  // shape analysis.
+  const geoConsumers = () => pipelineCode + "\n" + stripCommentsAndStrings(
     fs.readFileSync(path.join(repoRoot, "src", "plan-detection-shape.js"), "utf8"));
   for (const n of GEO_PUBLIC) {
     checks.equal(matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
@@ -749,8 +751,11 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const venuesCode = stripCommentsAndStrings(fs.readFileSync(venuesPath, "utf8"));
   const venuesExported = [...venuesCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]);
   checks.equal([...new Set(venuesExported)].join(","), "MeritPlanVenueObjects", "it publishes exactly one name", venuesExported);
-  checks.ok(/VENUE_OBJECTS\.venueScaleObjects\s*\(/.test(detCode) && !/(^|[^\w.$])venueScaleObjects\s*\(/m.test(detCode),
-    "detect() reaches it only through the published object", true);
+  // Its caller is now the tables stage, which ends by asking for the
+  // venue-scale objects around the tables it found.
+  const venueCallers = detCode + "\n" + stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", "plan-detection-tables.js"), "utf8"));
+  checks.ok(/VENUE_OBJECTS\.venueScaleObjects\s*\(/.test(venueCallers) && !/(^|[^\w.$])venueScaleObjects\s*\(/m.test(venueCallers),
+    "its caller reaches it only through the published object", true);
   const venuesBinds = new Set([...bindings(venuesCode), ...destructured(venuesCode)]), venuesBare = bareUses(venuesCode);
   checks.equal([...detBindings, ...v8Bindings].filter((n) => venuesBare.has(n) && !venuesBinds.has(n)), [],
     "and it resolves no name bound only in the pipeline or the shell — the size test, analyser and constructors arrive as input");
@@ -784,6 +789,22 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const chairsBinds = new Set([...bindings(chairsCode), ...destructured(chairsCode)]), chairsBare = bareUses(chairsCode);
   checks.equal([...detBindings, ...v8Bindings].filter((n) => chairsBare.has(n) && !chairsBinds.has(n)), [],
     "and it resolves no name bound only in the pipeline or the shell — its twelve inputs arrive as input");
+
+  // ---- Split B-6 … B-14: the tables stage -----------------------------------
+  const tablesPath = path.join(repoRoot, "src", "plan-detection-tables.js");
+  checks.require(fs.existsSync(tablesPath), "the tables stage lives in its own file", "src/plan-detection-tables.js");
+  const tablesCode = stripCommentsAndStrings(fs.readFileSync(tablesPath, "utf8"));
+  checks.equal([...new Set([...tablesCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]))].join(","), "MeritPlanTables", "it publishes exactly one name");
+  checks.ok(/TABLES\.findTables\s*\(/.test(detCode) && !/(^|[^\w.$])findTables\s*\(/m.test(detCode),
+    "detect() reaches it only through the published object", true);
+  const tablesBinds = new Set([...bindings(tablesCode), ...destructured(tablesCode)]), tablesBare = bareUses(tablesCode);
+  checks.equal([...detBindings, ...v8Bindings].filter((n) => tablesBare.has(n) && !tablesBinds.has(n)), [],
+    "and it resolves no name bound only in the pipeline or the shell — its nineteen inputs, uid among them, arrive as input");
+  // What the stage split is FOR: detect() as an orchestrator, not a body.
+  const detectLines = fs.readFileSync(detFile, "utf8").split("\n");
+  const dStart = detectLines.findIndex((l) => /^    async detect\(pixels/.test(l));
+  const dEnd = detectLines.findIndex((l, i) => i > dStart && /^    \},?$/.test(l));
+  checks.ok(dStart > 0 && dEnd - dStart < 200, "detect() is now an orchestrator of stage calls — under 200 lines, from ~2,100", dEnd - dStart);
 
   // ---- every module a detection file captures at load time is ALREADY loaded
   // A stage module captures its collaborators once, at load
