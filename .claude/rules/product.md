@@ -7,9 +7,16 @@
   never write to the other.
 - No Show releases live capacity (`liveUsedIndexes`) but must never clear
   or overwrite `guest.assignment` (the planned seat).
-- `table.capacity` and `table.chairs` must always be kept in sync — go
-  through `setTableCapacity`/`syncTableChairs`, never set one without the
-  other.
+- `table.capacity` is the LOGICAL seat space; `table.chairs` holds PHYSICAL
+  chairs and is empty when the plan drew none. On a table that does draw its
+  chairs the two stay in sync — go through `setTableCapacity`/
+  `syncTableChairs`, never set one without the other. Never synthesise a
+  chair object from a capacity number.
+- "Can this table seat somebody" is `capacity > 0`
+  (`MeritSeatModel.canSeat`), never `hasPhysicalSeats !== false`. Room
+  capacity is `MeritSeatModel.seatingCapacity(event)`; `physicalCapacity`
+  answers a different question (how many chairs the drawing carried) and
+  belongs only where the label says "physical chairs".
 - `isHistorical(event)` events (Completed or past-dated) must be rejected
   by `canMutate` for every mutation path — new mutation code must call it,
   not just rely on the UI hiding controls.

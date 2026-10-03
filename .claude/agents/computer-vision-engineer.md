@@ -20,6 +20,15 @@ evaluate/export, and the fallback-provider architecture) whenever a task
 involves actual future detector work, not just the current classical-CV
 pipeline.
 
+**You also own PLAN INTELLIGENCE RELIABILITY**, which is a different
+question from accuracy. Accuracy asks how many objects you found;
+reliability asks how wrong you are when wrong, and whether you said so.
+Read `.claude/skills/merit-plan-reliability/SKILL.md` before changing any
+detection behaviour or interpreting any adversarial result. Its law —
+**a wrong confident answer is worse than UNKNOWN** — outranks any benchmark
+improvement, and "baseline unchanged" is not success while three adversarial
+fixtures are FAIL.
+
 No Ultralytics (or any other vendor) skill package is vendored in this
 repository — `merit-yolo-obb-workflow` was written from scratch precisely
 so this project's guidance doesn't depend on vendoring AGPL-3.0-licensed
