@@ -218,6 +218,17 @@
     // That is not a misread, it is data destruction, and the write is the
     // destructive half -- so FUTURE latches a read-only guard rather than
     // merely declining to migrate.
+    // Root lists other than `events` are set aside before the schema chain
+    // reads the record (see the per-event pass below for why). A root whose
+    // `events` is not a list stays unreadable: there is nothing to open, and
+    // the whole record is copied aside by the loader, as before.
+    const setAside=[],setAt=nowISO();
+    const isRec=v=>!!v&&typeof v==="object"&&!Array.isArray(v);
+    if(isRec(parsed))for(const key of ["venues","audit","verifiedExamples","analyses","trainingData","teachings","operatorSessions"]){
+      if(parsed[key]==null)continue;
+      if(!Array.isArray(parsed[key])){setAside.push({where:key,rule:"notList",at:setAt,raw:parsed[key]});parsed[key]=[];continue;}
+      parsed[key]=parsed[key].filter(x=>isRec(x)||(setAside.push({where:key,rule:"notRecord",at:setAt,raw:x}),false));
+    }
     const SM=globalThis.MeritSchemaMigrations;
     if(SM){
       const result=SM.migrate(parsed);
@@ -231,7 +242,27 @@
     // the bundle, stamping would silently reintroduce the exact defect this
     // check exists to prevent -- so the record keeps whatever version it
     // declared and nothing claims to have migrated it.
-    parsed.events=(parsed.events||[]).map(migrateEvent); parsed.verifiedExamples ||= []; parsed.analyses ||= []; parsed.audit ||= [];
+    // ONE UNREADABLE RECORD IS SET ASIDE, NOT THE WHOLE STORE. Measured
+    // 2026-10-03: a single event whose `guests` was not a list (or a null
+    // guest, or an `audit` that was not a list) made this function throw, the
+    // whole record went to quarantine and the operator faced an empty app —
+    // every intact event out of reach on the night. A null entry, meanwhile,
+    // was "migrated" into a fabricated "Untitled Event". Now each part that
+    // cannot be read is moved, unchanged, into `setAside` (persisted, carried
+    // by every backup), the rest opens, and the operator is told. An IMPORT
+    // stays all-or-nothing: a backup is refused whole rather than half-applied.
+    const PKG=globalThis.MeritEventPackage;
+    parsed.events=(parsed.events||[]).flatMap(e=>{
+      const problem=PKG?PKG.structureProblem(e):(isRec(e)?null:{path:"event",rule:"notRecord"});
+      const label=isRec(e)?{eventId:typeof e.id==="string"?e.id:null,name:typeof e.name==="string"?e.name:null}:{};
+      if(problem){setAside.push({where:"event",rule:problem.rule,path:problem.path,...label,at:setAt,raw:e});return[];}
+      try{return[migrateEvent(e)];}
+      catch{setAside.push({where:"event",rule:"migrationFailed",...label,at:setAt,raw:e});return[];}
+    });
+    if(setAside.length&&forImport)throw new Error("The record contains parts that cannot be read.");
+    parsed.setAside=[...(Array.isArray(parsed.setAside)?parsed.setAside:[]),...setAside];
+    if(setAside.length)MERIT_STORAGE_NOTICE.setAside={count:setAside.length,at:setAt,hidden:false};
+    parsed.verifiedExamples ||= []; parsed.analyses ||= []; parsed.audit ||= [];
     // Re-normalized on every load, like freezes and handover notes: a
     // hand-edited backup must not be able to claim a loss that never
     // happened, or to lose the record of one that did.
@@ -277,7 +308,7 @@
   //   recovered      this session opened an automatic recovery point because
   //                  the saved record was missing; later changes may be gone
   // The last three were each told by one toast and nothing else (§17).
-  globalThis.MERIT_STORAGE_NOTICE={unreadable:null,saveFailing:null,dismissed:false,imagesDropped:null,recovered:null};
+  globalThis.MERIT_STORAGE_NOTICE={unreadable:null,saveFailing:null,dismissed:false,imagesDropped:null,recovered:null,setAside:null};
   // THE STORED RECORD COULD NOT BE READ. It used to be dropped on the floor:
   // the app opened empty with no word said, and the first save wrote the new,
   // almost-empty state over it -- destroying a record that was, more often
@@ -374,10 +405,22 @@
     toast(t("toast.imagesNotStored"),"error",6500);
     if(bootReady)render();
   }
+  // READ IT BACK. A save that resolved is a promise from the storage layer,
+  // not a record on disk: a failing disk or a browser that truncates a value
+  // resolves just the same. Each save is read back and compared; a record that
+  // reads back different is a failing save, said so with its own message, and
+  // is never "fixed" by the image-strip retry, which answers a different
+  // failure (resilience-records injects it).
+  async function saveAndReadBack(payload){
+    await storageProvider.save(payload);
+    const back=await storageProvider.load();
+    if(back!==payload)throw Object.assign(new Error("The saved record read back different from what was written."),{readBack:true});
+  }
   function persistPayload(payload,show){
-    return storageProvider.save(payload)
+    return saveAndReadBack(payload)
       .then(()=>{if(show)toast(t("toast.savedLocally"),"success");autoSnapshot(payload);storageRecovered();imagesStored();})
       .catch(error=>{
+        if(error&&error.readBack)throw error;
         // Large embedded images are the only realistic reason a save this
         // size fails -- strip them and retry once before giving up.
         //
@@ -400,12 +443,12 @@
           console.warn("Could not strip images from the queued payload.",loggableError(parseError));
           throw error;
         }
-        return storageProvider.save(stripped).then(()=>{storageRecovered();imagesDropped();});
+        return saveAndReadBack(stripped).then(()=>{storageRecovered();imagesDropped();});
       })
       .catch(error=>{console.warn("StorageProvider save failed entirely.",loggableError(error));
-        const first=!MERIT_STORAGE_NOTICE.saveFailing;
-        MERIT_STORAGE_NOTICE.saveFailing={at:nowISO()};MERIT_STORAGE_NOTICE.dismissed=false;
-        if(first){toast(t("toast.storageFull"),"error",6500);if(bootReady)render();}});
+        const first=!MERIT_STORAGE_NOTICE.saveFailing,readBack=!!(error&&error.readBack);
+        MERIT_STORAGE_NOTICE.saveFailing={at:nowISO(),reason:readBack?"readback":"write"};MERIT_STORAGE_NOTICE.dismissed=false;
+        if(first){toast(t(readBack?"toast.storageReadBack":"toast.storageFull"),"error",6500);if(bootReady)render();}});
   }
   // A save that is QUEUED but has not started yet. Each payload is a
   // COMPLETE snapshot of `state`, so a waiting one is not partial work to
@@ -6544,10 +6587,17 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
         <span class="storage-notice-actions">${n.unreadable.raw!=null?`<button class="btn sm" data-storage-action="download-unreadable">${esc(t("storage.downloadUnreadable"))}</button>`:""}<button class="btn sm" data-storage-action="restore">${esc(t("storage.restoreBackup"))}</button>${n.unreadable.kept?`<button class="btn sm" data-storage-action="dismiss">${esc(t("storage.dismiss"))}</button>`:""}</span>
       </div></div>`);
     }
+    if(n.setAside&&!n.setAside.hidden){
+      parts.push(`<div class="schema-future-banner" data-storage-notice="set-aside" role="alert">${icon("alert")}<div>
+        <b>${esc(t("storage.setAsideTitle",{n:n.setAside.count}))}</b>
+        <span>${esc(t("storage.setAsideBody"))}</span>
+        <span class="storage-notice-actions"><button class="btn sm" data-storage-action="download-set-aside">${esc(t("storage.downloadSetAside"))}</button><button class="btn sm" data-storage-action="dismiss">${esc(t("storage.dismiss"))}</button></span>
+      </div></div>`);
+    }
     if(n.saveFailing){
       parts.push(`<div class="schema-future-banner" data-storage-notice="save-failing" role="alert">${icon("alert")}<div>
         <b>${esc(t("storage.saveFailingTitle"))}</b>
-        <span>${esc(t(n.saveFailing.reason==="serialize"?"storage.saveFailingSerializeBody":"storage.saveFailingBody"))}</span>
+        <span>${esc(t(n.saveFailing.reason==="serialize"?"storage.saveFailingSerializeBody":n.saveFailing.reason==="readback"?"storage.saveFailingReadBackBody":"storage.saveFailingBody"))}</span>
         <span class="storage-notice-actions">${n.saveFailing.reason==="serialize"
           // A backup is the same record that could not be made; the workbook
           // is built from the screen, not from it.
@@ -6580,6 +6630,11 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
       const link=document.createElement("a");link.href=url;link.download=`merit-event-maker-unreadable-${RULES().todayKey()}.json`;
       document.body.appendChild(link);link.click();link.remove();
       setTimeout(()=>URL.revokeObjectURL(url),4000);
+    }else if(a==="download-set-aside"){
+      const url=URL.createObjectURL(new Blob([JSON.stringify(state.setAside||[],null,2)],{type:"application/json"}));
+      const link=document.createElement("a");link.href=url;link.download=`merit-event-maker-set-aside-${RULES().todayKey()}.json`;
+      document.body.appendChild(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),4000);
     }else if(a==="restore"){document.getElementById("backupFileInput")?.click();}
     else if(a==="backup"){exportBackup();}
     else if(a==="workbook"){exportTablePlanXLSX();}
@@ -6589,6 +6644,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
       const kind=b.closest("[data-storage-notice]")?.dataset.storageNotice;
       if(kind==="recovered")n.recovered=null;
       else if(kind==="images-dropped"&&n.imagesDropped)n.imagesDropped.hidden=true;
+      else if(kind==="set-aside"&&n.setAside)n.setAside.hidden=true;
       else n.dismissed=true;
       render();
     }

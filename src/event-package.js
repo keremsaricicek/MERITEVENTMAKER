@@ -71,6 +71,33 @@
     return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
   };
   const MAX_ADDITIONAL = 99;
+  // THE STRUCTURE A STORED EVENT NEEDS TO OPEN AT ALL — record-ness and
+  // list-ness only. Deliberately weaker than eventProblem(): a package from
+  // outside is refused for a bad date or id, but an event already on this
+  // computer must not be set aside for being dateless or carrying a numeric
+  // table number from an older build. What it catches is what made the whole
+  // store unreadable: a `guests` that is not a list, a null guest, a chair
+  // that is not a record. Used by parseRoot() to set aside ONE such event
+  // instead of losing them all.
+  function structureProblem(event, at = "event") {
+    if (!isRecord(event)) return { path: at, rule: "notRecord" };
+    for (const list of ["tables", "guests", "venueObjects", "freezes", "handoverNotes"]) {
+      const v = event[list];
+      if (v === undefined || v === null) continue;
+      if (!Array.isArray(v)) return { path: `${at}.${list}`, rule: "notList" };
+      const i = v.findIndex((item) => !isRecord(item));
+      if (i >= 0) return { path: `${at}.${list}[${i}]`, rule: "notRecord" };
+    }
+    for (let i = 0; i < (event.tables || []).length; i++) {
+      const c = event.tables[i].chairs;
+      if (c === undefined || c === null) continue;
+      if (!Array.isArray(c)) return { path: `${at}.tables[${i}].chairs`, rule: "notList" };
+      const j = c.findIndex((x) => !isRecord(x));
+      if (j >= 0) return { path: `${at}.tables[${i}].chairs[${j}]`, rule: "notRecord" };
+    }
+    return null;
+  }
+
   function eventProblem(event, at = "event") {
     if (!isRecord(event)) return { path: at, rule: "notRecord" };
     if (event.id !== undefined && !(typeof event.id === "string" && ID.test(event.id))) return { path: `${at}.id`, rule: "badId" };
@@ -152,5 +179,5 @@
     return { event: remappedEvent, auditEntries: remappedAudit };
   }
 
-  globalThis.MeritEventPackage = { version: 1, FORMAT, FORMAT_VERSION, MAX_ADDITIONAL, buildPayload, isWellFormed, referencesIntact, eventProblem, regenerateIds };
+  globalThis.MeritEventPackage = { version: 1, FORMAT, FORMAT_VERSION, MAX_ADDITIONAL, buildPayload, isWellFormed, referencesIntact, eventProblem, structureProblem, regenerateIds };
 })();

@@ -72,7 +72,6 @@ const ERROR_CLASS = {
   "toast.tableNumberInUse": REFUSAL, "toast.tableNumberInvalid": REFUSAL, "toast.capacityBelowOccupied": REFUSAL, "toast.capacityBelowPax": REFUSAL,
   "toast.nameRequired": REFUSAL, "toast.recordSeatsShort": REFUSAL, "toast.mapNameColumn": REFUSAL,
   "guests.readFailed": REFUSAL, "toast.fixBlockingErrors": REFUSAL, "guests.templateFailed": REFUSAL,
-  "toast.assignmentLockedMove": REFUSAL, "toast.seatsShort": REFUSAL, "toast.unlockAssignmentFirst": REFUSAL,
   "reports.workbookFailed": REFUSAL, "toast.historicalReadOnly": REFUSAL, "handover.empty": REFUSAL,
   "setup.planReadFailed": REFUSAL, "toast.chooseImageType": REFUSAL, "plan.unreadableImage": REFUSAL,
   "toast.eventFieldsRequired": REFUSAL, "toast.unlockSelectedFirst": REFUSAL, "freeze.invalid": REFUSAL,
@@ -93,11 +92,12 @@ const ERROR_CLASS = {
   "seating.groupRestoredToast": CONFIRMATION,
   "training.captureFailed": INFORMATION, "teach.exportMissingCrops": INFORMATION,
   // The persistent carrier of each, asserted by the dynamic checks below.
-  "toast.storageFull": CONDITION, "toast.storageFullLegacy": CONDITION, "toast.imageTooLargeLegacy": CONDITION,
+  "toast.storageFull": CONDITION, "toast.storageReadBack": CONDITION, "toast.storageFullLegacy": CONDITION, "toast.imageTooLargeLegacy": CONDITION,
   "toast.imagesNotStored": CONDITION, "toast.notSerializable": CONDITION, "recovery.bootRecoveredToast": CONDITION,
 };
 const CARRIER = {
   "toast.storageFull": 'data-storage-notice="save-failing" (resilience-storage)',
+  "toast.storageReadBack": 'data-storage-notice="save-failing" (resilience-records)',
   "toast.imagesNotStored": 'data-storage-notice="images-dropped" (asserted here)',
   "toast.notSerializable": 'data-storage-notice="save-failing", its serialise wording (asserted here)',
   "recovery.bootRecoveredToast": 'data-storage-notice="recovered" (asserted here)',

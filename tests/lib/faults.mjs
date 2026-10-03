@@ -25,6 +25,11 @@ export async function installStorageFaults(page, initial = {}) {
       const f = window.__faults.put;
       if (!window.__faultsBypass && (f === "quota" || (typeof f === "number" && typeof value === "string" && value.length > f)))
         throw new DOMException("The quota has been exceeded.", "QuotaExceededError");
+      // "truncate": the write SUCCEEDS but keeps only the first 90% of a
+      // string record — a failing disk, or a browser that cuts a value short,
+      // reports success either way.
+      if (!window.__faultsBypass && f === "truncate" && typeof value === "string")
+        return put.call(this, value.slice(0, Math.floor(value.length * 0.9)), key);
       return put.call(this, value, key);
     };
     const open = IDBFactory.prototype.open;
