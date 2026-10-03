@@ -1825,6 +1825,28 @@ second declaration after `;` on a line (fixed), and the pipeline borrowed
 `plan-detection-classical.js` 2,682 → **2,114**. What remains of `detect()`:
 B-4 (three object sources) and the `chairs` / `tables` stages.
 
+### AI. Split B finished — detect() an orchestrator, the tables stage nine named functions (2026-10-03)
+
+**B-4, B-5 and the tables stage (B-6 … B-14) left `detect()`**, each into its
+own module with a written contract (`plan-detection-sources.js`,
+`plan-detection-chairs.js`, `plan-detection-tables.js`); every move 28 of 28
+byte-identical on the fingerprint and `benchmark:baseline` "No regressions".
+`detect()` is an orchestrator under 200 lines; `plan-detection-classical.js`
+is **221 lines** (2,682 when Split A began). Inside the tables stage the nine
+sub-stages are now named functions with IN / OUT / MUTATES headers —
+`findTables()` is only the calls — and `plan-detection-boundary` holds that
+shape (each check mutation-proven). The mutation for the cut itself, a
+sub-stage narrowing a copy of the candidate list, makes 7 of 13 adversarial
+plans differ.
+
+**The full gate caught what the detector gate did not.** The tables move
+carried the `MAX_TABLES` ceiling into the stage module; `large-venue-scale`
+read only `plan-detection-classical.js` and failed on a constant that was
+still there at the same value. The detector-move gate (fingerprint plus the
+detection suites) never ran that suite; the snapshot gate before push did.
+The suite now reads the whole pipeline and requires exactly one definition.
+Nothing was pushed red.
+
 ### Adversarial at `3451f67` — 1 PASS · 4 PARTIAL · 3 FAIL
 
 Same distribution as `02edac7`; the run exits 0 because it gates on
@@ -1852,11 +1874,12 @@ typing 136/289.
 
 ## Next step
 
-**Split B continues: B-4 (the three object sources), then the `chairs` and
-`tables` stages**, each gated on `node benchmarks/detector-fingerprint.mjs
---compare` (28 of 28 IDENTICAL) and `benchmark:baseline`. Then: coverage
-re-run, §35 validation with every benchmark, and
-`benchmarks/FINAL-COMPLETION-MATRIX.md` rewritten from measurement.
+**Step 6 / §3D — the rules still inside screen code**, the same way steps 4
+and 5 moved rules rather than screens: the guest-matching engine (A10) to
+`src/guest-search.js`, then the restore-a-deleted-guest seat decision (A21),
+each characterized and mutation-proven first. Then: coverage re-run, §35
+validation with every benchmark, and `benchmarks/FINAL-COMPLETION-MATRIX.md`
+rewritten from measurement.
 
 ### Open, measured — none accepted as correct
 

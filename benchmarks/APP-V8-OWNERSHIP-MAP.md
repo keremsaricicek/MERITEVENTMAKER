@@ -274,7 +274,15 @@ broken measurement would have deleted fourteen working functions.
 - **Missing test** that a **PDF** import path produces a blank event with zero
   tables/guests — `no-sample-specific-runtime-logic` covers the image path.
 
-## A10 · Smart Guest Finder
+## A10 · Smart Guest Finder — engine **EXTRACTED** (step 6)
+
+> **Moved 2026-10-03.** The matching engine — index, `matchRows`,
+> `findGuests`, `partyOf` — is `src/guest-search.js` (`MeritGuestSearch`, the
+> table-number format injected). The row, the actions and the keyboard stay
+> in the shell. "Missing test: none material" below was **wrong**: mutating
+> the engine's fifteen rules, NINE survived both suites (the printed table
+> number, all three cache-key parts, ranking and tie-break, the party's
+> trimmed non-empty host). `guest-finder` 2b/2c now pins all fifteen.
 
 - **Lines** 1226–1425 (200)
 - **Main functions** `guestSearchIndex`, `matchGuestRows`, `findGuests`,

@@ -151,6 +151,10 @@
        history, never a trained model; null means no data, never zero. -->
   <script src="src/event-history.js"></script>
   <script src="src/training-data.js"></script>
+  <!-- The one guest-matching engine: which guests a query means, for the
+       Global Finder and Live's door search alike. Pure; the table-number
+       format is injected by the shell. -->
+  <script src="src/guest-search.js"></script>
   <!-- Assisted Detection's pure geometry: the real minimum-area rectangle and
        the three box predicates. Loads BEFORE the pipeline, which reads them
        through globalThis.MeritPlanGeometry at call time, and reads nothing

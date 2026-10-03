@@ -1,8 +1,11 @@
 # Modularization order
 
-**Status (2026-09-28): in progress.** Steps 0, 1 and 2 are done (step 2 as
-§3C, `src/seat-assignment.js`); step 3 is done for 3a (`src/occupancy.js`)
-and 3b (`src/event-rules.js`); 3c onward remain. Each step below says which.
+**Status (2026-10-03): steps 0–5 are done; step 6 is done for the rules it found (the guest-matching engine).**
+Step 2 was done as §3C (`src/seat-assignment.js`); step 3 as 3a
+(`src/occupancy.js`), 3b (`src/event-rules.js`) and 3c (the phase and the
+radar verdict into their modules); step 4 and step 5 by moving RULES out of
+screen adapters rather than moving the screens. Each step below says what
+was done and what was measured first.
 This document began as the output of the ownership map, before anything
 moved; the reasoning for the order is kept as it was written.
 
@@ -186,7 +189,9 @@ clean.
 >
 > **3b DONE** — A02 is `src/event-rules.js` (`MeritEventRules`: `todayKey`,
 > `isHistorical`, `mutationRefusal`, `chairGeometry`, `syncTableChairs`,
-> `refreshChairOccupancy`). Characterized first by `event-rules` (committed
+> `refreshChairOccupancy` — since renamed `syncEventChairs`, when the
+> write-only `chair.occupancy` field it maintained was removed with proof,
+> `CODE-INVENTORY.md` §3.1). Characterized first by `event-rules` (committed
 > alone, 8 of 8 mutations bite on the old code; 9 of 9 on the new). The
 > DECISION moved; `canMutate` stays in the shell because it owns the toast.
 > Chair ids are made in the module with the shell's id shape rather than
@@ -356,6 +361,19 @@ existing suites (`onboarding`, `event-handover`, `audit-trail`,
 ---
 
 ## Step 6 — the screens
+
+> **Begun 2026-10-03 the way steps 4 and 5 were done: rules out of screen
+> code, not screens out of the file.** First, the guest-matching engine (A10)
+> → `src/guest-search.js`. Characterized first (`571993e`): of fifteen
+> mutations of its rules, nine survived every suite; all fifteen fail on the
+> moved code. In the same pass, the restore-a-deleted-guest seat decision
+> (A21) got the suite it never had — "two people on one chair" survived every
+> suite that deletes a guest — and stays in the shell's `deleteGuest`, where
+> the writer and its audit entry are: its one real input, planned occupancy,
+> is `occupiedSeatIndexes` in app.js's base layer. The screens themselves
+> (HTML builders and binders reading closure-scoped shell helpers) are not
+> moved: measured across steps 4–6, what they held that was a RULE has now
+> left, and what is left is presentation over modules.
 
 **Only now**, and in this order: Seating (A13+A17) → Guests (A21) → Live
 (A18) → Reports (A20) → Plan review (A24) → Command Center (A08).

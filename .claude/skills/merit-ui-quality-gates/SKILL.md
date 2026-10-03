@@ -73,7 +73,7 @@ state does not shift layout when it resolves.
 ### Live Event is a speed surface
 Door workflows are measured in seconds. Keyboard-first
 (`live-door-keys`), minimal confirmation on the common path, and the search
-must mean the same thing as the appbar's (`matchGuestRows` is shared).
+must mean the same thing as the appbar's (`MeritGuestSearch.matchRows` is shared).
 
 ## Required evidence
 

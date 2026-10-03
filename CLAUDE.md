@@ -141,10 +141,10 @@ TABLE opens Seating with the guest selected and waits for a person, and CHECK IN
 writes arrival status only, never planning status. An action that cannot apply is
 disabled with its reason on the control. Speed is an index keyed on
 `event.lastModified`, not a promise — the suite measures a search over four
-thousand guests rather than asserting one. Full detail: `src/app-v8.js`
-(`guestSearchIndex` / `findGuests`) and `tests/suites/guest-finder.test.mjs`.
+thousand guests rather than asserting one. Full detail: `src/guest-search.js`
+(`MeritGuestSearch`) and `tests/suites/guest-finder.test.mjs`.
 
-`matchGuestRows(event, query)` is the one place either surface tests a query
+`MeritGuestSearch`'s `matchRows(event, query)` is the one place either surface tests a query
 against a guest — the Global Finder's dropdown and Live's door search both
 call it, over the same haystack and the same term-AND-narrowing, so a query
 cannot mean one thing in the appbar and another thing at the door. Ranking

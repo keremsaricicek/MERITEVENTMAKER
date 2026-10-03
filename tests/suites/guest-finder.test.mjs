@@ -112,8 +112,8 @@ export default async function run({ page, checks, baseUrl }) {
   // Measured through renderGlobalSearch, not the matcher underneath it: that is
   // the whole cost of one keystroke — index, match, rank, and build the rows —
   // and it is the only one of the two an operator can feel. (The matcher itself
-  // is closure-scoped and unreachable from here, which is the right shape: the
-  // test drives what the product exposes.)
+  // is MeritGuestSearch, src/guest-search.js; its own boundary is checked in
+  // 2c, but the gate is on what an operator feels.)
   const timing = await page.evaluate(() => {
     const t0 = performance.now();
     renderGlobalSearch("yıl");
@@ -219,6 +219,30 @@ export default async function run({ page, checks, baseUrl }) {
   const back = await page.evaluate(() => { ui.activeEventId = state.events[0].id; state.events.pop(); render(); return true; });
   checks.ok(otherEvent.sameStamp && twin.rows.some(r => r.name.startsWith("Twin Zeynep")),
     "and another event with the same stamp and counts gets its OWN guests, never the last event's — the event id is in the key", { otherEvent, rows: twin.rows.map(r => r.name), back });
+
+  // --- 2c. the engine at its own boundary ----------------------------------
+  // One engine, published once, for both surfaces. What no surface can reach
+  // is checked here: an empty query matches NOBODY (both callers happen to
+  // guard it today, which is why mutating it survived every UI check), and
+  // the engine writes nothing to the event it reads.
+  const unit = await page.evaluate(() => {
+    const e = state.events[0], before = JSON.stringify(e);
+    const S = MeritGuestSearch.create({ formatNumber: (n) => formatTableNumber(n) });
+    const r = {
+      empty: S.matchRows(e, "   ").rows.length, emptyFind: S.findGuests(e, "").total,
+      sofia: S.matchRows(e, "rossi Sofia").rows.map((x) => x.guest.id),
+      capped: S.findGuests(e, "guest", 5).rows.length,
+      party: MeritGuestSearch.partyOf(e, e.guests.find((g) => g.id === "g_lonely")).length,
+      unchanged: JSON.stringify(e) === before,
+    };
+    return r;
+  });
+  checks.equal({ empty: unit.empty, emptyFind: unit.emptyFind }, { empty: 0, emptyFind: 0 },
+    "an empty or blank query matches nobody — never the whole guest list", unit);
+  checks.equal(unit.sofia, ["g_rossi"], "terms are AND-ed in any order at the engine itself", unit.sofia);
+  checks.equal(unit.capped, 5, "the caller's limit is the engine's limit", unit.capped);
+  checks.equal(unit.party, 0, "a guest with no host has no party at all, not a party of everybody hostless", unit.party);
+  checks.ok(unit.unchanged, "and searching writes nothing to the event — nothing it offers moves a guest", unit.unchanged);
 
   // --- 3. the row is the answer --------------------------------------------
   const found = (await type(page, "Mehmet Yılmaz")).rows[0];
