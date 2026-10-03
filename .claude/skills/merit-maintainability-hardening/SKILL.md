@@ -49,14 +49,14 @@ npm run test:list                                     # what already guards what
 Two dated snapshots (verify, do not trust — the commands above are the
 source of truth):
 
-| | at `65ea956` (skill written) | 2026-09-27 (§30) |
-|---|--:|--:|
-| `src/*.js` files / lines | 34 / 18,783 | 43 / 21,281 |
-| `app-v8.js` lines (8,543 before Step 1) | 5,740 | 6,582 |
-| longest line in `app-v8.js` | 3,369 chars | 3,554 chars |
-| `plan-detection-classical.js` — a transitional checkpoint, not a finished module | 2,857 | 2,682 |
-| files exporting `globalThis.Merit*` | 29 | 39 |
-| suites / checks | 65 / 2,080 | 96 (8 slow) / see `npm run test:all` |
+| | at `65ea956` (skill written) | 2026-09-27 (§30) | 2026-10-03 |
+|---|--:|--:|--:|
+| `src/*.js` files / lines | 34 / 18,783 | 43 / 21,281 | 53 / 23,475 |
+| `app-v8.js` lines (8,543 before Step 1) | 5,740 | 6,582 | 6,874 (6,511 before the §3E one-statement-per-line pass) |
+| longest line in `app-v8.js` | 3,369 chars | 3,554 chars | 3,554 chars (a single markup template) |
+| `plan-detection-classical.js` — a transitional checkpoint, not a finished module | 2,857 | 2,682 | 221 — `detect()` an orchestrator of seven stage modules |
+| files exporting `globalThis.Merit*` | 29 | 39 | 46 |
+| suites / checks | 65 / 2,080 | 96 (8 slow) / see `npm run test:all` | 104 (8 slow) / see `npm run test:all` |
 
 5 parallel CI jobs; offline verification 27 checks.
 

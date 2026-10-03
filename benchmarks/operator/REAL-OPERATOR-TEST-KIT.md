@@ -152,6 +152,58 @@ Three things to catch in the moment, because the report cannot:
 
 ---
 
+## Session C — the event, end to end
+
+Sessions A and B test getting a plan in. Session C tests running the night on
+it. Same operator, after B, on the event B produced (or A's, if B was not
+completed — write down which). Hand over **one task card at a time**, read the
+card aloud, then stop talking; the observer's sheet and the "when they ask"
+rules above apply unchanged.
+
+The guest list is `benchmarks/operator/session-c-guests.SYNTHETIC.csv` —
+**SYNTHETIC**, written for this session, not a real guest list. It carries the
+traps on purpose: a guest with three companions (one record, pax 4), two
+different people called Ayşe Demir, a duplicated Sofia Rossi row, a
+companion count written "three", a negative one, a row with no name, and a
+table (T99) that is not on the plan. Measured 2026-10-03 through the real
+wizard: 20 records, 43 pax, 8 rows flagged, 4 of them blocking until fixed.
+That is what the observer should see at the end of task C3 — the operator is
+not told it.
+
+| # | task card (read aloud) | done when | observe |
+|---|---|---|---|
+| C1 | "This is your first time in the product. Find your way to a new event." | an event exists | onboarding: did the empty states tell them where to go? |
+| C2 | "Save your work, close the browser tab, and open the event again." | the event reopens with its plan | did they look for a save button? did they trust it? |
+| C3 | "Import this guest list." | records imported, or they stop | each trap: noticed? fixed how? did "+3" read as one guest? |
+| C4 | "Find Mehmet Yılmaz. Then find Sofia Rossi." | the guest's row is open | the finder; what they typed (keyboard, spelling, caps) |
+| C5 | "Seat everyone you can. Keep Mehmet Yılmaz's party together." | guests seated | Seating and Smart Seating; was the advice read or ignored? |
+| C6 | "The head table must not change from now on. Make sure nobody can move people there by accident." | a freeze exists | the freeze — found? understood as a rule about a place? |
+| C7 | "Is this event ready to run? What would stop it?" | they give an answer | the Plan Doctor / readiness — did they find it, and believe it? |
+| C8 | "Doors are open. Check in the first five guests." | five checked in | Live; the door search; keyboard vs mouse |
+| C9 | "Zeynep Kaya will not come tonight." | marked No Show | did they look for "delete"? did the seat stay planned? |
+| C10 | "A walk-in has arrived: Kemal Er, alone. Seat him and check him in." | walk-in seated and in | **there is no walk-in control** — how did they do it, and how long did it take? |
+| C11 | "Elif Arslan (VVIP) must move closer to the stage, now." | she is moved | move during live; did the freeze or a lock stop them, and did they understand why? |
+| C12 | "Table [pick one with guests] has just broken. Deal with it." | table unavailable, guests relocated | stranded guests found? relocated through Seating? |
+| C13 | "Take a backup. Then restore it." | restored | did they find it; did the confirmation reassure or alarm? |
+| C14 | "Send this event to a colleague as a file." | package exported | event package — found under which name? |
+| C15 | "Leave a note for the next shift: what they need to know." | a handover note | handover — found? |
+| C16 | "The night is over. Show what happened, and when." | replay viewed | post-event replay — found? readable? |
+
+Write the clock time at the start and end of each card. A card abandoned is
+recorded as abandoned, with why, and the next card is handed over.
+
+### The second round — after the fixes
+
+`HUMAN-TEST-CONTRACT.md` decides which findings oblige a code change. **When
+those changes ship, Session C is run again** — with a *different* operator who
+has not seen the product, on the rebuilt artifact, with the same cards and
+the same CSV. Only that second round can say a fix worked: the first
+operator has learned the screen and would find it easier either way. Until
+the second round has happened, a fixed finding is reported as **FIXED, NOT
+RE-VERIFIED**, never as resolved.
+
+---
+
 ## The moment it ends
 
 **Open the session report first, before you talk about it.**
@@ -188,7 +240,8 @@ Two you must not skip even though they feel rude:
 
 Per session: one report (copied out), one observer sheet, 14 answers. Both
 sessions: the same again, plus whether B was faster than A and whether the
-symbolic plan was harder.
+symbolic plan was harder. Session C: the sixteen cards' start/end times,
+what was abandoned and why, and the observer's notes per card.
 
 That is the input to `HUMAN-TEST-CONTRACT.md`, which governs what happens to it
 — how a finding is classified, what obliges a code change, and what may be

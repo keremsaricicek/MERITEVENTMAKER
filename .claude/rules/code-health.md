@@ -7,7 +7,7 @@
   framework migration, TypeScript conversion, introducing a bundler/build
   step, converting `src/*.js` to ES modules, and silently changing the
   classic-script load order in `index.html` (fixed order, `app-v8.js`
-  LAST; count with `grep -c 'src="src/' index.html` — 43 on 2026-09-27).
+  LAST; count with `grep -c 'src="src/' index.html` — 53 on 2026-10-03).
 - **Four gates after EVERY structural step**, not at the end:
   `npm run test:all` · `npm run build:offline` ·
   `npm run build:offline-full` · `npm run verify:offline`.
@@ -30,9 +30,12 @@
   line count.
 - **Step 1 is done.** The classical detection pipeline is
   `src/plan-detection-classical.js`, reached only through
-  `globalThis.MERIT_PLAN_DETECTION`. It is a **transitional extraction, not a
-  finished module** — do not cite its size (re-measure with `wc -l`) as a
-  problem or as done. Internal split:
+  `globalThis.MERIT_PLAN_DETECTION`. Split A and Split B are done
+  (2026-10-03): `detect()` orchestrates seven stage modules, the tables
+  stage is nine named sub-stages. A structural detector move is gated on
+  `node benchmarks/detector-fingerprint.mjs --compare` (28 of 28 IDENTICAL)
+  AND the full suite — the detector gate alone missed a suite that read the
+  moved constant from the old file. Map:
   `benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`. Seam guarded by
   `plan-detection-boundary`.
 - **A structural move names its crossings first.** Measure, in stripped code,

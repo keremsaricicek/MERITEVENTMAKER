@@ -273,7 +273,8 @@ metrics. Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.
 
 `app-v8.js` was 5,799 lines after the first extraction (8,543 before) and has
 grown with the product work since — re-measure with `wc -l src/app-v8.js`
-(6,582 on 2026-09-27). Before any more of it moves,
+(6,874 on 2026-10-03: 6,511 before §3E put one statement per line on its
+500+ character lines; 30% of `src/` by bytes). Before any more of it moves,
 three things are written down and measured, not remembered:
 `benchmarks/APP-V8-OWNERSHIP-MAP.md` (26 business areas, each with its globals
 read and written, callers, protecting suites, single-writer risk and the
@@ -301,9 +302,12 @@ script order) and `plan-detection-boundary` (the detection pipeline's seam).
 
 **Step 1 is done.** The classical detection pipeline is
 `src/plan-detection-classical.js` — 2,809 lines out of `app-v8.js`, reached
-only through `globalThis.MERIT_PLAN_DETECTION`, reading no shell state. It is a
-**transitional extraction, not a finished module**; its internal split is
-mapped in `benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`. The move also recorded
+only through `globalThis.MERIT_PLAN_DETECTION`, reading no shell state. Split A
+and Split B have since taken it apart (2026-10-03): `detect()` is an
+orchestrator under 200 lines over seven stage modules, each with a written
+IN/OUT contract, and the tables stage is nine named sub-stages — every move
+byte-identical on `benchmarks/detector-fingerprint.mjs` (28 plans). Map:
+`benchmarks/PLAN-DETECTION-OWNERSHIP-MAP.md`. The first move also recorded
 a lesson the four structural suites could not teach on their own: all of them
 passed on a build whose detector threw `ReferenceError` on every real plan.
 **Booting is not detecting** — a structural step needs a suite that exercises
