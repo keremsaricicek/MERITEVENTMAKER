@@ -39,15 +39,14 @@ it, including a freeze that names a table by id.
 build reads and writes these two. What follows is how SQLite sits underneath
 them, not beside them.
 
-The one thing worth adding before a desktop build, and deliberately *not* added
-now because nothing consumes it yet: neither format records the `schemaVersion`
-of the install that produced it. Today that is harmless — `migrateEvent()` is
-additive and idempotent, and runs on every load whatever the source. It stops
-being harmless the first time a migration is non-additive, which is also the
-first time a desktop build could receive a file from a newer browser build. The
-field to add at that point is `schemaVersion` alongside `formatVersion`, and the
-rule is that an importer refuses a `schemaVersion` it does not know rather than
-guessing.
+**Updated 2026-10-03 (§12, the schema migration registry).** The backup half
+of this is done: a backup's payload is the state root, which carries the
+producing install's `schemaVersion`, and `parseRoot` refuses a `schemaVersion`
+newer than the build knows rather than guessing (`src/schema-migrations.js`,
+`schema-registry` suite). The **event package** still carries only its own
+`formatVersion` — adding the event's `schemaVersion` beside it, with the same
+refusal on import, is the one piece left before a desktop build could receive
+a package from a newer browser build.
 
 ## 2. What is actually being migrated
 

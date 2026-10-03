@@ -71,8 +71,8 @@ npm run build:offline-full # folder artifact, with local OCR
 npm run verify:offline    # 27 checks — RUNS the artifact, aborts off-origin, drives real OCR
 ```
 
-All four. Every step. `npm test` alone is not enough (it skips the 6 slow
-suites). **A green build is not a gate — `verify:offline` is**, because it
+All four. Every step. `npm test` alone is not enough (it skips the slow
+suites — 8 on 2026-10-03; `npm run test:list` names them). **A green build is not a gate — `verify:offline` is**, because it
 serves the real artifact rather than trusting that it was produced.
 
 If a step cannot pass all four, the step is wrong. Revert it; do not
