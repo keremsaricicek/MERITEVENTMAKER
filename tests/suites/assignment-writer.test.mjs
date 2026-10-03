@@ -219,4 +219,73 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   } else {
     checks.ok(false, "an undo control was offered after unassigning", undoBtn);
   }
+
+  // --- 8. guest deletion and restore ---------------------------------------
+  // The undo of a deleted guest puts the WHOLE record back, assignment
+  // included — unless the seat was given away in the meantime. Restoring the
+  // record matters more than restoring the seat, so the guest comes back
+  // either way: in the same seats if they are free, unassigned and TOLD if
+  // they are not. Until this section (2026-10-03) nothing exercised that
+  // decision: forcing the "seat is free" branch every time — two people on
+  // one chair — survived every suite that deletes a guest or undoes a seating
+  // change (toast-discipline, native-dialogs, a11y-dialog-focus,
+  // undo-operations, guest-and-seating-rules, pax-invariant; APP-V8-OWNERSHIP-MAP
+  // A21 had named it). All four mutations of the rule fail this section.
+  const restoreToast = (name) => page.locator(".toast", { hasText: `${name} deleted.` }).locator(".toast-action").last();
+  const deleteSeated = (id, tableId) => page.evaluate(async ({ id, tableId }) => {
+    const e = state.events[0];
+    assignGuestToTable(id, tableId);
+    const before = { ...e.guests.find(g => g.id === id).assignment, index: e.guests.findIndex(g => g.id === id) };
+    await deleteGuest(id);
+    return { before, gone: !e.guests.some(g => g.id === id) };
+  }, { id, tableId });
+  const restoredState = (id) => page.evaluate((id) => {
+    const e = state.events[0], i = e.guests.findIndex(g => g.id === id), g = e.guests[i];
+    return g ? { index: i, assignment: g.assignment ? { tableId: g.assignment.tableId, seats: g.assignment.seats } : null,
+      toast: [...document.querySelectorAll(".toast")].map(x => x.textContent).join(" | ") } : null;
+  }, id);
+
+  // a) the seat is still free: the guest comes back exactly where they were.
+  const free = await deleteSeated("g_solo", room.t02);
+  checks.ok(free.gone && free.before.tableId === room.t02, "DELETE GUEST: a seated guest is deleted", free);
+  await restoreToast("Ayse Demir").click();
+  await page.waitForTimeout(300);   // read the message before it times out (settle() waits for it to go)
+  const back = await restoredState("g_solo");
+  checks.equal(back && back.assignment, { tableId: room.t02, seats: free.before.seats },
+    "RESTORE: with the seat still free, the guest comes back to the same table and the same seats", back);
+  checks.equal(back && back.index, free.before.index, "in the same place in the list, so nothing reshuffles", back);
+  checks.ok(/same table and seats/.test(back?.toast || ""), "and the operator is told it was a full restore", back?.toast);
+
+  // b) the seat was given away in between: the guest comes back unassigned,
+  //    the person now in the seat keeps it, and the operator is told.
+  const taken = await deleteSeated("g_solo", room.t02);
+  const taker = await page.evaluate(({ t02, seats }) => {
+    const e = state.events[0];
+    e.guests.push({ id: "g_taker", name: "Can Taker", additionalGuests: 7, pax: 8, vip: "Standard",
+      invitedBy: "", notes: "", planningStatus: "Confirmed", arrivalStatus: "Not Arrived",
+      assignment: null, createdAt: new Date().toISOString() });
+    touchEvent(e);
+    assignGuestToTable("g_taker", t02);
+    const g = e.guests.find(x => x.id === "g_taker");
+    return { tableId: g.assignment?.tableId || null, seats: g.assignment?.seats || [], overlaps: seats.some(s => (g.assignment?.seats || []).includes(s)) };
+  }, { t02: room.t02, seats: taken.before.seats });
+  checks.ok(taker.tableId === room.t02 && taker.overlaps, "someone else is seated in the deleted guest's old seat", taker);
+  await restoreToast("Ayse Demir").click();
+  await page.waitForTimeout(300);   // read the message before it times out (settle() waits for it to go)
+  const lost = await restoredState("g_solo");
+  checks.ok(!!lost, "RESTORE, SEAT TAKEN: the guest record still comes back", lost);
+  checks.equal(lost && lost.assignment, null, "but unassigned — never two people in one seat", lost);
+  const takerAfter = await page.evaluate(() => state.events[0].guests.find(x => x.id === "g_taker").assignment?.seats || []);
+  checks.equal(takerAfter, taker.seats, "the person now in the seat keeps every seat they hold", takerAfter);
+  checks.ok(/old seats were taken/.test(lost?.toast || ""), "and the operator is told the seats were taken, not left to find out", lost?.toast);
+
+  // c) the table itself is gone: same answer — back, unassigned, told.
+  await page.evaluate(() => { const e = state.events[0]; e.guests = e.guests.filter(g => g.id !== "g_taker"); touchEvent(e); });
+  const orphan = await deleteSeated("g_solo", room.t02);
+  await page.evaluate(async ({ t02 }) => { ui.selectedObjectId = t02; ui.selectedObjectIds = [t02]; await deleteSelectedObject(); }, room);
+  await restoreToast("Ayse Demir").click();
+  await page.waitForTimeout(300);   // read the message before it times out (settle() waits for it to go)
+  const noTable = await restoredState("g_solo");
+  checks.ok(orphan.before.tableId === room.t02 && !!noTable && noTable.assignment === null,
+    "RESTORE, TABLE GONE: the guest comes back unassigned, never pointing at a table that no longer exists", { orphan, noTable });
 }

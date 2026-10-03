@@ -155,6 +155,71 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(narrow.rows.every(r => /Yılmaz/i.test(r.name)),
     "every remaining row matches both terms", narrow.rows.map(r => r.name));
 
+  // --- 2b. the rules underneath the match -----------------------------------
+  // Measured 2026-10-03, before the matching engine left app-v8.js: of fifteen
+  // mutations of its rules, NINE survived this suite and live-door-keys — the
+  // printed table number in the haystack, all three parts of the index's cache
+  // key, the name-prefix ranking and its alphabetical tie-break, and the
+  // party's trimmed, non-empty host. Each is pinned here, through the finder.
+  const seat = await page.evaluate(() => {
+    const e = state.events[0], t = e.tables[1];
+    t.number = "T7";   // stored unpadded; the product prints it "T 07"
+    const mk = (id, name, invitedBy, extra = {}) => ({ id, name, additionalGuests: 0, pax: 1, vip: "Standard",
+      invitedBy, notes: "", planningStatus: "Confirmed", arrivalStatus: "Not Arrived", assignment: null,
+      createdAt: new Date().toISOString(), ...extra });
+    // Record order deliberately reversed against the expected ranking.
+    e.guests.push(
+      mk("g_holding", "Can Ak", "Demir Holding"),
+      mk("g_burak", "Burak Demir", ""),
+      mk("g_ayse", "Ayşe Demir", ""),
+      mk("g_demirci", "Demirci Ali", "", { assignment: MeritSeatAssignment.normalize({ tableId: t.id, seats: [0], locked: false }) }),
+      mk("g_trimA", "Pelin Kaya", "  Solo Host  "),
+      mk("g_trimB", "Ece Kaya", "Solo Host"));
+    touchEvent(e); render();
+    return { printed: formatTableNumber(t.number) };
+  });
+  // Narrowed by name so the "07" term can be met ONLY by the printed form:
+  // the stored "T7" does not contain it.
+  const printed = await type(page, `Demirci ${seat.printed}`);
+  checks.ok(printed.rows.some(r => r.name.startsWith("Demirci Ali")),
+    `a guest is found by the table number AS PRINTED ("${seat.printed}"), not only as stored ("T7")`, printed.rows.map(r => r.name));
+  const ranked = (await type(page, "demir")).rows.map(r => r.name.replace(/ \+\d+$/, ""));
+  checks.equal(ranked.slice(0, 4), ["Demirci Ali", "Ayşe Demir", "Burak Demir", "Can Ak"],
+    "ranked by how the NAME matched: starts with the term, then contains it (alphabetically), then matched elsewhere (the host)", ranked);
+  const trimmed = (await type(page, "Pelin Kaya")).rows[0];
+  checks.ok(trimmed && trimmed.actions.find(a => a.action === "party").enabled,
+    "a host typed with stray spaces is the same host — the party is found", trimmed && trimmed.actions);
+
+  // The index is cached; these pin what invalidates it.
+  await type(page, "Zeynep");
+  await page.evaluate(() => { const e = state.events[0]; e.guests.find(g => g.id === "g_burak").name = "Burak Renamed"; touchEvent(e); });
+  const renamed = await type(page, "Burak Renamed");
+  checks.ok(renamed.rows.some(r => r.name.startsWith("Burak Renamed")),
+    "an edit that changes no count (a rename) still reaches the next search — lastModified is in the cache key", renamed.rows.map(r => r.name));
+  await page.evaluate(() => {
+    // An import can add guests inside one millisecond: same stamp, more guests.
+    const e = state.events[0], stamp = e.lastModified;
+    e.guests.push({ id: "g_samems", name: "Same Millisecond", additionalGuests: 0, pax: 1, vip: "Standard", invitedBy: "Host X",
+      notes: "", planningStatus: "Confirmed", arrivalStatus: "Not Arrived", assignment: null, createdAt: stamp });
+    e.lastModified = stamp;
+  });
+  const sameMs = await type(page, "Same Millisecond");
+  checks.ok(sameMs.rows.some(r => r.name.startsWith("Same Millisecond")),
+    "guests added within the same millisecond are still found — the counts are in the cache key", sameMs.rows.map(r => r.name));
+  const otherEvent = await page.evaluate(() => {
+    // A second event with the SAME stamp and the same counts, and other names.
+    const e = state.events[0], twin = JSON.parse(JSON.stringify(e));
+    twin.id = "event_twin";
+    twin.guests.forEach(g => { g.name = "Twin " + g.name; });
+    state.events.push(twin);
+    ui.activeEventId = twin.id;
+    return { sameStamp: twin.lastModified === e.lastModified };
+  });
+  const twin = await type(page, "Twin Zeynep");
+  const back = await page.evaluate(() => { ui.activeEventId = state.events[0].id; state.events.pop(); render(); return true; });
+  checks.ok(otherEvent.sameStamp && twin.rows.some(r => r.name.startsWith("Twin Zeynep")),
+    "and another event with the same stamp and counts gets its OWN guests, never the last event's — the event id is in the key", { otherEvent, rows: twin.rows.map(r => r.name), back });
+
   // --- 3. the row is the answer --------------------------------------------
   const found = (await type(page, "Mehmet Yılmaz")).rows[0];
   checks.ok(found, "the guest is found");
