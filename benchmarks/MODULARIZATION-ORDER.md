@@ -265,6 +265,20 @@ is the guard, and it is why Step 0 came first.
 
 ## Step 4 — untangle layout changes from the Floor Plan (A11)
 
+> **DONE (2026-10-03), by moving the rules rather than the screen.** Measured
+> first: the layout-change code in `app-v8.js` was a screen adapter (panel,
+> card, binder, all reading closure-scoped shell helpers) wrapped around two
+> RULES — which version an event is compared to, and what a confirmation is
+> keyed on — plus the query that joins them. Neither rule had a suite;
+> `layout-changes` pinned both first (`c7331a2`, both mutations bite). The
+> rules and the query are now `MeritVenueModel.eventSourceVersion`,
+> `changesSinceSource` and `confirmationKey`, taking `state` as a parameter like
+> the rest of that module. With them gone, the screen half is one contiguous
+> block in `app-v8.js` — which is what 4a was for, done as a consequence rather
+> than as a separate move. Extracting the screen itself (4b) would need about a
+> dozen closure-scoped shell helpers injected; it stays in the shell, the
+> orchestration layer, until a screen-extraction seam exists.
+
 **Two commits, in this order, and the first moves no file.**
 
 **Why this order.** Layout changes occupies `1426–1459` and `1632–1726`, with

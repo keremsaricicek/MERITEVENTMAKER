@@ -119,15 +119,17 @@ go does not belong in this layer. Full detail:
 
 ## Layout changes
 
-What moved since the room was published is `MeritVenueModel.compareToVersion`,
-surfaced as a MODE of the Floor Plan on the same canvas — never a second drawing
-of the room. Identity is **verified table number first, position second, and no
+What moved since the room was published is `MeritVenueModel.compareToVersion`
+(asked through `changesSinceSource`, against the version the event was taken
+FROM, never the newest), surfaced as a MODE of the Floor Plan on the same
+canvas — never a second drawing of the room. Identity is **verified table number first, position second, and no
 visual similarity at all**: Table 42 that moved is `TABLE 42 MOVED`, never a
 removal plus an addition. One matched pair emits one change per aspect that
 differs, so a table that gained seats without moving is `CAPACITY_CHANGED` and
 not `MOVED`. `ADDED`, `REMOVED` and `STAGE_CHANGED` are peers — a stage that
 appeared is added, not changed. Confirmation is offered only where identity is
-UNCERTAIN, and is stored against the version it was made about. Full detail:
+UNCERTAIN, and is stored against the version it was made about
+(`confirmationKey`). Full detail:
 `src/venue-model.js` and `benchmarks/EVENT-OPERATIONS-PRODUCT-REPORT.md`.
 
 ## The guest finder

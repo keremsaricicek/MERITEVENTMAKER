@@ -1759,42 +1759,8 @@
     }
   }
 
-  // ---- LAYOUT CHANGES -------------------------------------------------------
-  //
-  // What has moved since the room was published. No new detector:
-  // MeritVenueModel.compareToVersion has done this comparison since the venue
-  // model was built and had no UI at all, so nothing in the product could
-  // answer "what did we change since v3?" — the engine was reachable only from
-  // a test. This is that answer, as a MODE of the Floor Plan rather than a
-  // screen of its own: the plan stays the hero and the changes sit on it.
-  function layoutChangeSource(event){
-    const ref=event?.venueRef,VM=globalThis.MeritVenueModel;
-    if(!ref||!VM)return null;
-    const venue=VM.findVenue(state,ref.venueId),layout=VM.findLayout(venue,ref.layoutId);
-    if(!layout||!(layout.versions||[]).length)return null;
-    // The version this event was taken FROM. "What have I changed since the
-    // room was published" is the operator's question; comparing against the
-    // newest version would answer a different one the moment somebody else
-    // published after this event was created.
-    const version=VM.findVersion(layout,ref.layoutVersionId)||layout.versions[layout.versions.length-1];
-    return version?{venue,layout,version}:null;
-  }
-  function layoutChanges(event){
-    const src=layoutChangeSource(event);
-    if(!src)return null;
-    try{
-      const diff=globalThis.MeritVenueModel.compareToVersion(state,src.version.id,
-        {tables:event.tables,venueObjects:event.venueObjects,background:event.background});
-      return{...diff,source:src};
-    }catch{ return null; }
-  }
-  // A confirmation is stored against the VERSION it was made about, not just the
-  // change: "T05 is gone relative to v3" is a fact that stays true, and keying
-  // on the signature alone would let a table removed, re-added and removed again
-  // come back already ticked.
-  const changeKey=(versionId,c)=>`${versionId}::${c.type}|${c.kind}|${c.key}|${c.field||""}`;
   function planModeSwitchHTML(event){
-    const changes=layoutChanges(event);
+    const changes=VENUE().changesSinceSource(state,event);
     if(!event.background?.src&&!changes)return"";
     const b=(mode,label)=>`<button class="${ui.planMode===mode?"active":""}" data-plan-mode="${mode}"${
       ui.planMode===mode?' aria-current="true"':""}>${label}</button>`;
@@ -2004,6 +1970,15 @@
   // remains the hero" is not a slogan: a second canvas that redrew the room
   // from the diff would be a different drawing of the same night, and the
   // operator would be comparing the product's picture rather than their own.
+  // ---- LAYOUT CHANGES -------------------------------------------------------
+  //
+  // What has moved since the room was published, as a MODE of the Floor Plan
+  // rather than a screen of its own: the plan stays the hero and the changes
+  // sit on it. The rules -- which version this event is compared to, what a
+  // confirmation is keyed on -- and the comparison itself are MeritVenueModel's
+  // (eventSourceVersion, changesSinceSource, confirmationKey,
+  // compareToVersion); what follows is the screen.
+  const VENUE=()=>globalThis.MeritVenueModel;
   function layoutChangesHTML(event){
     return`<div class="planmap-shell in-changes">${planMapToolbarHTML(event)}${
       canvasViewportHTML(event,false)}${layoutChangePanelHTML(event)}${layoutChangeCardHTML(event)}</div>`;
@@ -2021,11 +1996,11 @@
     return`<span class="lc-values">${esc(show(c.before))} <i>&rarr;</i> ${esc(show(c.after))}</span>`;
   }
   function layoutChangePanelHTML(event){
-    const d=layoutChanges(event);
+    const d=VENUE().changesSinceSource(state,event);
     if(!d)return"";
     const seen=event.layoutChangesSeen||{};
     const rows=d.changes.map(c=>{
-      const id=changeKey(d.source.version.id,c);
+      const id=VENUE().confirmationKey(d.source.version.id,c);
       const confirmed=!!seen[id];
       const uncertain=c.identity.confidence==="UNCERTAIN";
       const conf=t("changes.confidence."+c.identity.confidence);
@@ -2059,9 +2034,9 @@
   // Same shape as the review inspector, because it answers the same question
   // about a different kind of claim.
   function layoutChangeCardHTML(event){
-    const d=layoutChanges(event);
+    const d=VENUE().changesSinceSource(state,event);
     if(!d||!ui.selectedChangeId)return"";
-    const c=d.changes.find(x=>changeKey(d.source.version.id,x)===ui.selectedChangeId);
+    const c=d.changes.find(x=>VENUE().confirmationKey(d.source.version.id,x)===ui.selectedChangeId);
     if(!c)return"";
     const by=t("changes.identity."+c.identity.by);
     return`<div class="poi-card lc-card">
@@ -2090,8 +2065,8 @@
       // Selecting a change highlights the object it is about, on the plan the
       // operator is already looking at. That is the whole overlay: no second
       // drawing, no ghost of the old layout on top of the new one.
-      const d=layoutChanges(event);
-      const c=d&&d.changes.find(x=>changeKey(d.source.version.id,x)===ui.selectedChangeId);
+      const d=VENUE().changesSinceSource(state,event);
+      const c=d&&d.changes.find(x=>VENUE().confirmationKey(d.source.version.id,x)===ui.selectedChangeId);
       ui.highlightId=c?(c.tableIdAfter||c.tableIdBefore||null):null;
       render();
     });

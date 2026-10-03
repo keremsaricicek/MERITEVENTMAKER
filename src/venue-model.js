@@ -437,10 +437,45 @@
     return { venuesCreated, layoutsCreated, linked };
   }
 
+  // ---- WHAT HAS CHANGED SINCE THE ROOM THIS EVENT WAS TAKEN FROM -----------
+  //
+  // The Floor Plan's layout-change mode asks this; the rules were in app-v8.js
+  // until modularization step 4.
+  //
+  // "Since when" is the version the event was taken FROM. Comparing against
+  // the newest version would answer a different question the moment somebody
+  // published after this event was created. The newest is used only when the
+  // event's own version no longer resolves.
+  function eventSourceVersion(state, event) {
+    const ref = event && event.venueRef;
+    if (!ref) return null;
+    const venue = findVenue(state, ref.venueId), layout = findLayout(venue, ref.layoutId);
+    if (!layout || !(layout.versions || []).length) return null;
+    const version = findVersion(layout, ref.layoutVersionId) || layout.versions[layout.versions.length - 1];
+    return version ? { venue, layout, version } : null;
+  }
+  // null when there is nothing to compare against, or the comparison cannot
+  // be made — the caller then offers no change view rather than a wrong one.
+  function changesSinceSource(state, event) {
+    const source = eventSourceVersion(state, event);
+    if (!source) return null;
+    try {
+      return { ...compareToVersion(state, source.version.id,
+        { tables: event.tables, venueObjects: event.venueObjects, background: event.background }), source };
+    } catch { return null; }
+  }
+  // A confirmation is recorded about the VERSION it was made about, not just
+  // the change: "T05 is gone relative to v3" is a fact that stays true, and
+  // keying on the signature alone would let a table removed, re-added and
+  // removed again come back already ticked.
+  const confirmationKey = (versionId, change) =>
+    `${versionId}::${change.type}|${change.kind}|${change.key}|${change.field || ""}`;
+
   globalThis.MeritVenueModel = {
     createVenue, createLayout, createLayoutVersion,
     snapshotVersionIntoEvent, promoteEventToNewVersion,
     compareToVersion, CHANGE, IDENTITY, CONFIDENCE,
+    eventSourceVersion, changesSinceSource, confirmationKey,
     rememberVerifiedExample, layoutMemory,
     migrateVenues,
     findVenue, findLayout, findVersion,

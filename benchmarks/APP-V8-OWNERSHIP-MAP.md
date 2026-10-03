@@ -297,7 +297,12 @@ broken measurement would have deleted fourteen working functions.
 - **Missing test** none material — two suites cover it, including the shared
   haystack property.
 
-## A11 · Floor Plan workspace & layout-change mode
+## A11 · Floor Plan workspace & layout-change mode — rules **EXTRACTED** (step 4)
+
+> Which version an event compares to, what a confirmation is keyed on, and the
+> change query are `MeritVenueModel` (`eventSourceVersion`,
+> `changesSinceSource`, `confirmationKey`). The layout-change screen is now
+> contiguous in `app-v8.js`; the interleaving described below is gone.
 
 - **Lines** 1426–1726 (301)
 - **Main functions** `floorPlanHTML`, `planMapToolbarHTML`,
