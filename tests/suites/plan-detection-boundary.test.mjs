@@ -52,6 +52,11 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "the detection pipeline lives in its own file", "src/plan-detection-classical.js");
 
   const detCode = stripCommentsAndStrings(fs.readFileSync(detFile, "utf8"));
+  // detect() and the stages taken out of it (Split B). A call that moved
+  // with its stage is still held to the same rule: no bare call, reached
+  // through the collaborator's published object.
+  const STAGE_FILES = ["plan-detection-preprocess.js", "plan-detection-sources.js", "plan-detection-venues.js", "plan-detection-verdict.js"];
+  const pipelineCode = [detCode, ...STAGE_FILES.map((f) => stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", f), "utf8")))].join("\n");
   const v8Code = stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", "app-v8.js"), "utf8"));
 
   // --- 1. the file is a closed scope -------------------------------------
@@ -353,10 +358,10 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     priorExported);
 
   for (const n of PRIOR_PUBLIC) {
-    checks.equal(matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
+    checks.equal(matchLines(pipelineCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
       `the pipeline makes no BARE call to ${n}()`,
-      matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
-    checks.ok(new RegExp(`PRIOR\\.${n}\\s*\\(`).test(detCode),
+      matchLines(pipelineCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
+    checks.ok(new RegExp(`PRIOR\\.${n}\\s*\\(`).test(pipelineCode),
       `and reaches ${n} through the published object instead`, true);
   }
   checks.equal(PRIOR_PUBLIC.filter((n) => detBindings.has(n) || v8Bindings.has(n)).length, 0,
@@ -416,10 +421,10 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "it publishes exactly one name", shapeExported);
 
   for (const n of SHAPE_PUBLIC) {
-    checks.equal(matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
+    checks.equal(matchLines(pipelineCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
       `the pipeline makes no BARE call to ${n}()`,
-      matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
-    checks.ok(new RegExp(`SHAPE\\.${n}\\s*\\(`).test(detCode),
+      matchLines(pipelineCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
+    checks.ok(new RegExp(`SHAPE\\.${n}\\s*\\(`).test(pipelineCode),
       `and reaches ${n} through the published object instead`, true);
   }
   checks.equal(SHAPE_PUBLIC.filter((n) => detBindings.has(n) || v8Bindings.has(n)).length, 0,
@@ -483,10 +488,10 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "it publishes exactly one name", splitExported);
 
   for (const n of SPLIT_PUBLIC) {
-    checks.equal(matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
+    checks.equal(matchLines(pipelineCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
       `the pipeline makes no BARE call to ${n}()`,
-      matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
-    checks.ok(new RegExp(`SPLIT\\.${n}\\s*\\(`).test(detCode),
+      matchLines(pipelineCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
+    checks.ok(new RegExp(`SPLIT\\.${n}\\s*\\(`).test(pipelineCode),
       `and reaches ${n} through the published object instead`, true);
   }
   checks.ok(/function splitAlongAxis/.test(splitCode) && !/globalThis[^\n]*splitAlongAxis/.test(splitCode),
@@ -528,10 +533,10 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "it publishes exactly one name", compExported);
 
   for (const n of COMP_PUBLIC) {
-    checks.equal(matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
+    checks.equal(matchLines(pipelineCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
       `the pipeline makes no BARE call to ${n}()`,
-      matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
-    checks.ok(new RegExp(`COMP\\.${n}\\s*\\(`).test(detCode),
+      matchLines(pipelineCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
+    checks.ok(new RegExp(`COMP\\.${n}\\s*\\(`).test(pipelineCode),
       `and reaches ${n} through the published object instead`, true);
   }
 
@@ -595,9 +600,9 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "it publishes exactly one name", deskewExported);
 
   for (const n of DESKEW_PUBLIC) {
-    checks.equal(matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
+    checks.equal(matchLines(pipelineCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length, 0,
       `the pipeline makes no BARE call to ${n}()`,
-      matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
+      matchLines(pipelineCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
   }
   // The pixels stage (Split B-1) computes the threshold, and since it left
   // detect() it lives in the preprocess module — which must still reach otsu
@@ -751,6 +756,39 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "and it resolves no name bound only in the pipeline or the shell — the size test, analyser and constructors arrive as input");
   checks.equal(["COLUMN_MIN_MEMBERS", "COLUMN_MAX_ASPECT", "COLUMN_ALIGN_SHARE", "COLUMN_SIZE_RATIO"].filter((n) => new RegExp(`\\b${n}\\b`).test(detCode)), [],
     "all three declarators of the COLUMN_* line, and the size ratio, moved with the column pass");
+
+  // ---- Split B-4: the object sources ---------------------------------------
+  const sourcesPath = path.join(repoRoot, "src", "plan-detection-sources.js");
+  checks.require(fs.existsSync(sourcesPath), "the object sources stage lives in its own file", "src/plan-detection-sources.js");
+  const sourcesCode = stripCommentsAndStrings(fs.readFileSync(sourcesPath, "utf8"));
+  checks.equal([...new Set([...sourcesCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]))].join(","), "MeritPlanSources", "it publishes exactly one name");
+  checks.ok(/SOURCES\.collectSources\s*\(/.test(detCode) && !/(^|[^\w.$])collectSources\s*\(/m.test(detCode),
+    "detect() reaches it only through the published object", true);
+  const sourcesBinds = new Set([...bindings(sourcesCode), ...destructured(sourcesCode)]), sourcesBare = bareUses(sourcesCode);
+  checks.equal([...detBindings, ...v8Bindings].filter((n) => sourcesBare.has(n) && !sourcesBinds.has(n)), [],
+    "and it resolves no name bound only in the pipeline or the shell — the size tests and the phase timer arrive as input");
+
+  // ---- every module a detection file captures at load time is ALREADY loaded
+  // A stage module captures its collaborators once, at load
+  // (`const COMP = globalThis.MeritPlanComponents`). Loaded before them, the
+  // handle is undefined and every real detection throws — which is what the
+  // first placement of plan-detection-sources.js did (caught by the
+  // fingerprint, 2026-10-03). Read from index.html's order, not remembered.
+  const order = [...fs.readFileSync(path.join(repoRoot, "index.html"), "utf8").matchAll(/src="src\/([^"]+\.js)"/g)].map((m) => m[1]);
+  const publisher = new Map();
+  for (const f of order) {
+    const code = stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", f), "utf8"));
+    for (const m of code.matchAll(/globalThis\.(Merit[A-Za-z]+)\s*=/g)) if (!publisher.has(m[1])) publisher.set(m[1], f);
+  }
+  const lateCaptures = [];
+  for (const f of order.filter((x) => /^plan-detection-/.test(x))) {
+    const code = stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", f), "utf8"));
+    for (const m of code.matchAll(/(?:^|\n)  const [A-Z_]+ = globalThis\.(Merit[A-Za-z]+);/g)) {
+      const from = publisher.get(m[1]);
+      if (!from || order.indexOf(from) > order.indexOf(f)) lateCaptures.push(`${f} captures ${m[1]} from ${from || "nowhere"}`);
+    }
+  }
+  checks.equal(lateCaptures, [], "every module a detection file captures at load is published by a script that loads before it");
 
   // ---- nothing in detection resolves a name bound only in app.js ----------
   // app.js is not wrapped in a function, so its top-level bindings are global

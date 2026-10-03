@@ -418,8 +418,15 @@ Line numbers are within `src/plan-detection-classical.js`.
 > (`MeritPlanVenueObjects.venueScaleObjects`): eleven named inputs, three
 > outputs, all three declarators of the `COLUMN_*` line moved with it. 28 of
 > 28 byte-identical; dropping the column-grid alignment requirement makes
-> eight adversarial plans differ. `detect()` is now preamble calls, the
-> `chairs` and `tables` stages, and two stage calls at the end.
+> eight adversarial plans differ. **And B-4** — the three object sources
+> (interiors, tone families, fill mask), `src/plan-detection-sources.js`
+> (`MeritPlanSources.collectSources`): sixteen named inputs (the phase timer
+> among them, so its three timings are still recorded where they were), nine
+> outputs. 28 of 28 byte-identical. Its first placement in `index.html` came
+> BEFORE the components module it captures, which the fingerprint caught as
+> page errors; `plan-detection-boundary` now checks every load-time capture
+> against `index.html`'s order. `detect()` is now stage calls around the
+> `chairs` and `tables` stages.
 > **What remains is the hard part, measured below and unchanged:** `chairs`
 > and `tables` are 78% of `detect()` and hand ~30 values forward through shared
 > locals. They need their hand-off made an explicit record before they can
