@@ -413,6 +413,13 @@ Line numbers are within `src/plan-detection-classical.js`.
 > named inputs (`uid` and `toPercentBox` among them, injected), four outputs,
 > and one stated in-place mutation of `candidates`. 28 of 28 plans
 > byte-identical; flipping one flag the swap sets makes ORNEK differ.
+> **And B-15** — the venue-scale objects (columns on a structural grid,
+> merged-row blobs, unnamed bands), `src/plan-detection-venues.js`
+> (`MeritPlanVenueObjects.venueScaleObjects`): eleven named inputs, three
+> outputs, all three declarators of the `COLUMN_*` line moved with it. 28 of
+> 28 byte-identical; dropping the column-grid alignment requirement makes
+> eight adversarial plans differ. `detect()` is now preamble calls, the
+> `chairs` and `tables` stages, and two stage calls at the end.
 > **What remains is the hard part, measured below and unchanged:** `chairs`
 > and `tables` are 78% of `detect()` and hand ~30 values forward through shared
 > locals. They need their hand-off made an explicit record before they can

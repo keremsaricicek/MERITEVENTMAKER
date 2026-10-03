@@ -738,6 +738,20 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal([...detBindings, ...v8Bindings].filter((n) => verdictBare.has(n) && !verdictBinds.has(n)), [],
     "and it resolves no name bound only in the pipeline or the shell — what it needs, uid and toPercentBox included, arrives as input");
 
+  // ---- Split B-15: the venue-scale objects ---------------------------------
+  const venuesPath = path.join(repoRoot, "src", "plan-detection-venues.js");
+  checks.require(fs.existsSync(venuesPath), "the venue-scale objects stage lives in its own file", "src/plan-detection-venues.js");
+  const venuesCode = stripCommentsAndStrings(fs.readFileSync(venuesPath, "utf8"));
+  const venuesExported = [...venuesCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]);
+  checks.equal([...new Set(venuesExported)].join(","), "MeritPlanVenueObjects", "it publishes exactly one name", venuesExported);
+  checks.ok(/VENUE_OBJECTS\.venueScaleObjects\s*\(/.test(detCode) && !/(^|[^\w.$])venueScaleObjects\s*\(/m.test(detCode),
+    "detect() reaches it only through the published object", true);
+  const venuesBinds = new Set([...bindings(venuesCode), ...destructured(venuesCode)]), venuesBare = bareUses(venuesCode);
+  checks.equal([...detBindings, ...v8Bindings].filter((n) => venuesBare.has(n) && !venuesBinds.has(n)), [],
+    "and it resolves no name bound only in the pipeline or the shell — the size test, analyser and constructors arrive as input");
+  checks.equal(["COLUMN_MIN_MEMBERS", "COLUMN_MAX_ASPECT", "COLUMN_ALIGN_SHARE", "COLUMN_SIZE_RATIO"].filter((n) => new RegExp(`\\b${n}\\b`).test(detCode)), [],
+    "all three declarators of the COLUMN_* line, and the size ratio, moved with the column pass");
+
   // ---- nothing in detection resolves a name bound only in app.js ----------
   // app.js is not wrapped in a function, so its top-level bindings are global
   // to every later classic script. The pipeline used `uid` from there without
