@@ -156,7 +156,10 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     new Set([...text.matchAll(/(^|[^\w.$])([A-Za-z_$][\w$]*)\s*(?![\s]*:)/g)].map((m) => m[2]));
 
   const v8Bare = bareUses(v8Code);
-  const reaches = [...detBindings].filter((n) => v8Bare.has(n) && !v8Bindings.has(n));
+  // app.js is unwrapped, so its top-level names are globals: app-v8.js's
+  // `uid` resolves THERE, not to the pipeline's private one of the same name.
+  const appGlobals = bindings(stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", "app.js"), "utf8")));
+  const reaches = [...detBindings].filter((n) => v8Bare.has(n) && !v8Bindings.has(n) && !appGlobals.has(n));
   checks.equal(reaches.length, 0,
     "app-v8.js resolves no name that is bound only inside the detection pipeline — it goes through the registry. A name here is not a style complaint: it is a ReferenceError at runtime, and it is how the first attempt at this extraction broke every real detection",
     reaches);
@@ -727,7 +730,28 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal([...new Set(verdictExported)].join(","), "MeritPlanVerdict", "it publishes exactly one name", verdictExported);
   checks.ok(/VERDICT\.applyVerdict\s*\(/.test(detCode) && !/(^|[^\w.$])applyVerdict\s*\(/m.test(detCode),
     "detect() reaches it only through the published object", true);
-  const verdictBinds = bindings(verdictCode), verdictBare = bareUses(verdictCode);
+  // Its inputs arrive DESTRUCTURED inside applyVerdict, below the top level
+  // bindings() reads, so they are added here: `const { …, uid, … } = input`.
+  const destructured = (code) => new Set([...code.matchAll(/\b(?:const|let|var)\s*\{([^}]*)\}\s*=/g)]
+    .flatMap((m) => m[1].split(",").map((x) => x.split(":").pop().trim()).filter((x) => /^[A-Za-z_$][\w$]*$/.test(x))));
+  const verdictBinds = new Set([...bindings(verdictCode), ...destructured(verdictCode)]), verdictBare = bareUses(verdictCode);
   checks.equal([...detBindings, ...v8Bindings].filter((n) => verdictBare.has(n) && !verdictBinds.has(n)), [],
     "and it resolves no name bound only in the pipeline or the shell — what it needs, uid and toPercentBox included, arrives as input");
+
+  // ---- nothing in detection resolves a name bound only in app.js ----------
+  // app.js is not wrapped in a function, so its top-level bindings are global
+  // to every later classic script. The pipeline used `uid` from there without
+  // anything saying so — a dependency on app.js loading first that the checks
+  // above, which read only app-v8.js as "the shell", could not see.
+  const appCode = stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", "app.js"), "utf8"));
+  const appBindings = bindings(appCode);
+  checks.ok(appBindings.has("uid") && appBindings.size > 20, "app.js's top-level bindings are read (uid among them)", appBindings.size);
+  const detectionFiles = fs.readdirSync(path.join(repoRoot, "src")).filter((f) => /^plan-detection-.*\.js$/.test(f));
+  const reachIntoApp = [];
+  for (const f of detectionFiles) {
+    const code = stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", f), "utf8"));
+    const own = new Set([...bindings(code), ...destructured(code)]), bare = bareUses(code);
+    for (const n of appBindings) if (bare.has(n) && !own.has(n)) reachIntoApp.push(`${f}: ${n}`);
+  }
+  checks.equal(reachIntoApp, [], `no detection file (${detectionFiles.length}) resolves a name bound only in app.js`);
 }

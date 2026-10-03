@@ -65,6 +65,12 @@
   const PRE = globalThis.MeritPlanPreprocess;
   // The representation verdict and its swap (Split B-16).
   const VERDICT = globalThis.MeritPlanVerdict;
+  // The detector's own ids, in the shell's shape (`candidate_<uuid>`). Until
+  // 2026-10-03 every `uid(...)` here resolved to app.js's top-level `uid` — a
+  // crossing into the shell no suite modelled, which made the pipeline depend
+  // on app.js having loaded first. plan-detection-boundary now reads app.js's
+  // bindings too.
+  const uid=p=>p+"_"+(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2));
   // ---- The provider -------------------------------------------------------
   const CLASSICAL_CV_PROVIDER={
     id:"classical-cv",
