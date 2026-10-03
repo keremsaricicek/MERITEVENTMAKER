@@ -6376,6 +6376,13 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   // must stay loud in every suite that does not set out to cause one.
   render = function(){
     calloutThisRender=null;
+    // The page's language is the UI's. It was fixed at "en", so in Turkish
+    // every CSS-uppercased label took English capitals -- "MISAFIRLER" for
+    // MİSAFİRLER, "KOMUTA MERKEZI" -- and a screen reader read Turkish text
+    // with an English voice. Set before the screen, so a render failure's
+    // recovery screen is announced in the right language too.
+    const lang=ui.lang==="en"?"en":"tr";
+    if(document.documentElement.lang!==lang)document.documentElement.lang=lang;
     try{return renderScreen();}
     catch(error){renderFailure(error);}
   };

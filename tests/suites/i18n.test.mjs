@@ -46,6 +46,24 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(/Oluştur/.test(bootDefault.createEventLabel) && !/^Create Event$/.test(bootDefault.createEventLabel),
     "the Home screen's primary action reads in Turkish by default", bootDefault);
 
+  // --- 0b. the page says which language it is in ----------------------------
+  // `<html lang>` was fixed at "en". In Turkish every CSS-uppercased label then
+  // took English capitals — "ETKINLIK GEÇMIŞI" for ETKİNLİK GEÇMİŞİ, "MISAFIRLER"
+  // for MİSAFİRLER — and a screen reader read the whole Turkish UI with an
+  // English voice. innerText is the text as rendered, text-transform included.
+  const pageLang = async (l) => page.evaluate((lang) => {
+    if (lang) { ui.lang = lang; render(); }
+    const h = [...document.querySelectorAll("#app h2")].find((x) => getComputedStyle(x).textTransform === "uppercase" && /i/.test(x.textContent));
+    return { lang: document.documentElement.lang, raw: h?.textContent.trim() || null, shown: h?.innerText.trim() || null };
+  }, l);
+  const trBoot = await pageLang(null);
+  checks.equal(trBoot.lang, "tr", "a Turkish screen is marked as Turkish", trBoot);
+  checks.ok(trBoot.raw && trBoot.shown === trBoot.raw.toLocaleUpperCase("tr") && /İ/.test(trBoot.shown),
+    "so an uppercased Turkish heading keeps its dotted capitals (İ), not English ones", trBoot);
+  const enNow = await pageLang("en");
+  checks.equal(enNow.lang, "en", "switching to English marks the page English", enNow);
+  checks.equal((await pageLang("tr")).lang, "tr", "and switching back marks it Turkish again");
+
   // --- 1. every dialog key resolves in both languages -----------------------
   for (const lang of ["tr", "en"]) {
     const unresolved = await page.evaluate(({ keys, l }) => {
