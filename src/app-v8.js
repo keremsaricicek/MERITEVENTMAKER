@@ -752,7 +752,10 @@
   // this used to restate it.
   function addHandoverNote(event,text,by){
     const H=HANDOVER();
-    if(!H||!event)return null;
+    // The writer refuses a historical event itself, whatever its caller
+    // checked: a screen left open past midnight is a caller that checked
+    // yesterday (domain-writers suite).
+    if(!H||!event||RULES().mutationRefusal(event))return null;
     const note=H.normalizeNote({id:uid("handover"),text:String(text||""),by:String(by||""),at:nowISO()});
     if(!note)return null;
     event.handoverNotes=Array.isArray(event.handoverNotes)?event.handoverNotes:[];
@@ -3340,7 +3343,7 @@
   // The rule of change is MeritArrivalWave.arrivalTransition; this writes its
   // answer and the audit entry, and nothing else writes the arrival axis.
   function setArrival(event,guest,next,source){
-    if(!event||!guest)return null;
+    if(!event||!guest||RULES().mutationRefusal(event))return null;
     const from=guest.arrivalStatus;
     const change=globalThis.MeritArrivalWave.arrivalTransition(guest,next,nowISO());
     if(!change)return null;
@@ -3359,7 +3362,7 @@
   // touches NOTHING else — no assignment, no capacity, no chairs — the whole
   // point of this axis being separate from every other fact about the table.
   function setTableAvailability(event,table,next,reason,note){
-    if(!event||!table)return null;
+    if(!event||!table||RULES().mutationRefusal(event))return null;
     const A=AVAIL();
     const change=A&&A.availabilityTransition(table,next,reason,note,nowISO());
     if(!change)return null;

@@ -200,7 +200,7 @@ export default async function run({ page, checks, baseUrl, repoRoot, errors }) {
   }, toastKeys);
   checks.equal(toastKeys.filter((k) => both.en[k] === k || both.tr[k] === k || !both.en[k] || !both.tr[k]), [],
     `every toast.*/word.* key used in the source exists in English and Turkish (${toastKeys.length} keys)`);
-  const SAME_IN_BOTH = new Set(["toast.arrivalSet"]);   // "{name}: {status}." — both parts translated separately
+  const SAME_IN_BOTH = new Set([]);   // none left: toast.arrivalSet went with the dead Live binder it served
   checks.equal(toastKeys.filter((k) => k.startsWith("toast.") && both.en[k] === both.tr[k] && !SAME_IN_BOTH.has(k)), [],
     "and no Turkish entry is the English sentence copied across");
 

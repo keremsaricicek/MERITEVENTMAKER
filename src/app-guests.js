@@ -428,36 +428,12 @@
       return`<div class="live-row"><span><b>${esc(g.name)}${additionalOf(g)?` +${additionalOf(g)}`:""}</b><small class="subline">${esc(g.vip)}</small></span><span>${paxOf(g)}</span><span>${t?esc(t.number):"—"}</span><span>${esc(g.planningStatus)}</span><span class="${g.arrivalStatus==="Checked In"?"arrival-checked":g.arrivalStatus==="No Show"?"arrival-no-show":""}">${esc(g.arrivalStatus)}</span><span class="live-actions"><button class="btn sm ${g.arrivalStatus==="Checked In"?"active":""}" data-arrival="Checked In" data-live-guest="${g.id}">Check In</button><button class="btn sm ${g.arrivalStatus==="No Show"?"danger":""}" data-arrival="No Show" data-live-guest="${g.id}">No Show</button></span></div>`
     }).join("")}</div></div></div>`
   }
-  function bindLive(){
-    const search=document.getElementById("liveSearch");
-    search.oninput=()=>{
-      ui.liveQuery=search.value;
-      const p=search.selectionStart;
-      render();
-      requestAnimationFrame(()=>{
-        const n=document.getElementById("liveSearch");
-        n?.focus();
-        n?.setSelectionRange(p,p)
-      })
-    };
-    app.querySelectorAll("[data-live-kpi]").forEach(b=>b.onclick=()=>{
-      const target=b.dataset.liveKpi;
-      ui.tab="seating";
-      ui.seatingFilter=target;
-      ui.seatingGuestScope=target==="all"?"all":"unassigned";
-      ui.seatingQuery="";
-      ui.selectedGuestId=null;
-      ui.selectedTableId=null;
-      render()
-    });
-    app.querySelectorAll("[data-live-guest]").forEach(b=>b.onclick=()=>{
-      const event=activeEvent(),g=event.guests.find(x=>x.id===b.dataset.liveGuest),status=b.dataset.arrival;
-      g.arrivalStatus=g.arrivalStatus===status?"Not Arrived":status;
-      touchEvent(event);
-      render();
-      toast(t_("toast.arrivalSet",{name:g.name,status:"status.arrival."+g.arrivalStatus}),"success")
-    })
-  }
+  // Replaced at load by app-v8.js's bindLive (boot-contract reads the live
+  // function back out of the page; nothing calls original.bindLive). The body
+  // that stood here wrote guest.arrivalStatus directly — the one writer is
+  // setArrival() — so it was removed rather than left as a second writer
+  // that only the load order kept unreachable.
+  function bindLive(){}
 
   function reportsHTML(event){
     const m=eventMetrics(event),s=seatingStats(event),alphabetical=[...event.guests].sort((a,b)=>naturalSort(a.name,b.name)),unassigned=alphabetical.filter(g=>!g.assignment),pax=t("unit.pax");

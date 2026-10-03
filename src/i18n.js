@@ -1702,7 +1702,6 @@
     "toast.returnedUnassigned": { en: "{name} returned to Unassigned.", tr: "{name} atanmamışlara döndü." },
     "toast.assignmentLocked": { en: "Assignment locked.", tr: "Atama kilitlendi." },
     "toast.assignmentUnlocked": { en: "Assignment unlocked.", tr: "Atamanın kilidi açıldı." },
-    "toast.arrivalSet": { en: "{name}: {status}.", tr: "{name}: {status}." },
     "toast.csvExported": { en: "Guest CSV exported.", tr: "Misafir CSV'si dışa aktarıldı." },
     "toast.workbookExported": { en: "Table Plan workbook exported with three worksheets.", tr: "Masa planı çalışma kitabı üç sayfayla dışa aktarıldı." },
     "toast.historicalReadOnly": { en: "Historical events are read-only. You cannot {action}.", tr: "Geçmiş etkinlikler salt okunurdur; bu işlem yapılamaz." },

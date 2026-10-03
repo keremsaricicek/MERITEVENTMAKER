@@ -351,7 +351,9 @@
     copy.venueObjects.forEach(o=>o.id=uid("venue"));
     copy.guests.forEach(g=>{
       g.id=uid("guest");
-      g.arrivalStatus="Not Arrived";
+      // A copy starts before its night: through the arrival axis's own rule,
+      // so the arrival moment goes with the status (it used to survive).
+      Object.assign(g,globalThis.MeritArrivalWave.arrivalTransition(g,"Not Arrived",nowISO()));
       if(g.assignment)g.assignment.tableId=map.get(g.assignment.tableId)
     });
     // A TABLE-scope freeze names the table by id, same as a guest assignment
