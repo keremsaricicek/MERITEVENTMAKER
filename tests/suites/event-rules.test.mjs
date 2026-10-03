@@ -127,4 +127,34 @@ export default async function run({ page, checks, baseUrl }) {
   const turkish = await attempt(yesterday, "Planning");
   checks.ok(!turkish.ok && turkish.toasts.some((x) => x === "Geçmiş etkinlikler salt okunurdur; bu işlem yapılamaz."),
     "in Turkish the refusal is Turkish, with no English action phrase spliced into it", turkish.toasts);
+
+  // --- 7. the phase of the night ---------------------------------------------
+  // ready → live → closed decides which room the load layer shows: the PLAN
+  // keeps a No Show's chairs, the LIVE room frees them, and a finished night
+  // is the plan of record. Read through what an operator sees: the Command
+  // Center's phase and the band a table is drawn in.
+  const phaseOf = async ({ arrival, date, status }) => page.evaluate(({ arrival, date, status }) => {
+    const e = state.events[0];
+    e.date = date; e.status = status;
+    e.tables = e.tables.slice(0, 1); const t = e.tables[0];
+    t.hasPhysicalSeats = false; t.chairs = []; t.capacity = 4; t.availability = "AVAILABLE";
+    e.guests = [{ id: "gq", name: "Party Of Four", additionalGuests: 3, pax: 4, planningStatus: "Confirmed", vip: "Standard", arrivalStatus: arrival,
+      checkedInAt: arrival === "Checked In" ? new Date().toISOString() : null, invitedBy: "", notes: "", assignment: { tableId: t.id, seats: [0, 1, 2, 3], locked: false },
+      createdAt: new Date().toISOString() }];
+    touchEvent(e);
+    ui.screen = "workspace"; ui.activeEventId = e.id;
+    ui.lang = "en"; ui.loadLayer = true; ui.tab = "command"; render();
+    const phase = document.querySelector(".cc-phase")?.className || null;
+    ui.tab = "seating"; render();
+    const band = ((document.querySelector(".table-object")?.className.match(/load-(\w+)/) || [])[1] || "").toLowerCase() || null;
+    ui.loadLayer = false;
+    return { phase, band };
+  }, { arrival, date, status });
+  const before = await phaseOf({ arrival: "Not Arrived", date: futureDate(), status: "Planning" });
+  checks.ok(/phase-ready/.test(before.phase || "") && before.band === "full", "before anyone arrives the night is ready, and the room shows the plan: the party's table is full", before);
+  const noShow = await phaseOf({ arrival: "No Show", date: futureDate(), status: "Planning" });
+  checks.ok(/phase-live/.test(noShow.phase || "") && noShow.band === "empty",
+    "a No Show is an arrival-axis fact, so the night is live — and the live room frees that table", noShow);
+  const finished = await phaseOf({ arrival: "No Show", date: futureDate(), status: "Completed" });
+  checks.equal(finished.band, "full", "a finished night is the plan of record: the No Show's table still reads as taken, not as freed", finished);
 }
