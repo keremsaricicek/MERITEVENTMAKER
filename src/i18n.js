@@ -19,7 +19,7 @@
     "action.confirmPlan": { en: "Confirm Plan", tr: "Planı Onayla" },
     "action.reviewCenter": { en: "Review Center", tr: "İnceleme Merkezi" },
     "action.addManually": { en: "Add Manually", tr: "Manuel Ekle" },
-    "action.teachAI": { en: "Teach AI", tr: "AI'ya Öğret" },
+    "action.teachAI": { en: "Teach the Plan", tr: "Plan Öğretimi" },
     "action.correct": { en: "Correct", tr: "Doğru" },
     "action.change": { en: "Change", tr: "Değiştir" },
     "action.notAnObject": { en: "Not an object", tr: "Nesne Değil" },
@@ -309,7 +309,7 @@
     "op.q.obviouslyWrong": { en: "Was anything obviously wrong?", tr: "Açıkça yanlış bir şey var mıydı?" },
     "op.q.missedSomething": { en: "Did it miss something important?", tr: "Önemli bir şeyi atladı mı?" },
     "op.q.unnecessary": { en: "Did it ask unnecessary questions?", tr: "Gereksiz sorular sordu mu?" },
-    "op.q.teachAI": { en: "Was Teach AI understandable?", tr: "AI'ya Öğret anlaşılır mıydı?" },
+    "op.q.teachAI": { en: "Was Teach the Plan understandable?", tr: "Plan Öğretimi anlaşılır mıydı?" },
     "op.q.explainUseful": { en: "Was \"What this plan says\" useful?", tr: "\"Bu plan ne diyor\" faydalı mıydı?" },
     "op.q.slow": { en: "Did anything feel slow?", tr: "Bir şey yavaş hissettirdi mi?" },
     "op.q.confusing": { en: "Did anything feel confusing or unsafe?", tr: "Bir şey kafa karıştırıcı veya güvensiz hissettirdi mi?" },
@@ -1734,7 +1734,7 @@
     "word.venueObjects": { en: "venue objects", tr: "plan nesnesi" },
     "word.object": { en: "object", tr: "nesne" },
     "word.objects": { en: "objects", tr: "nesne" },
-    "toast.enableTeachFirst": { en: "Enable Teach AI with corrections first.", tr: "Önce düzeltmelerle AI'ya Öğret'i etkinleştirin." },
+    "toast.enableTeachFirst": { en: "Turn on Teach the Plan and make corrections first.", tr: "Önce Plan Öğretimi'ni açıp düzeltme yapın." },
     "toast.verifiedPlanSaved": { en: "Verified plan saved locally with predictions, corrections, rejections and missed detections.", tr: "Doğrulanmış plan; tahminler, düzeltmeler, reddedilenler ve kaçırılan tespitlerle birlikte yerel olarak kaydedildi." },
     "toast.saveVerifiedFirst": { en: "Save at least one verified plan first.", tr: "Önce en az bir doğrulanmış plan kaydedin." },
     "toast.calibrationDone": { en: "Local calibration v{v} completed from {n} verified plan(s). No trained model claim is made.", tr: "Yerel kalibrasyon v{v}, {n} doğrulanmış plandan tamamlandı. Eğitilmiş model iddiası yapılmıyor." },
@@ -1867,7 +1867,7 @@
     "Import a floor plan first.": "Önce bir kat planı içe aktarın.",
     "Choose PNG, JPG, JPEG or PDF.": "PNG, JPG, JPEG veya PDF seçin.",
     "Floor plan imported locally. Assisted Detection is ready.": "Kat planı yerel olarak içe aktarıldı. Destekli Tespit hazır.",
-    "Enable Teach AI with corrections first.": "Önce düzeltmelerle Yapay Zekâya Öğret'i etkinleştirin.",
+    "Turn on Teach the Plan and make corrections first.": "Önce Plan Öğretimi'ni açıp düzeltme yapın.",
     "Save at least one verified plan first.": "Önce en az bir doğrulanmış plan kaydedin.",
     "Excel template downloaded.": "Excel şablonu indirildi.",
     "Guest CSV exported.": "Misafir CSV'si dışa aktarıldı.",
@@ -1971,7 +1971,7 @@
   globalThis.t = t;
   globalThis.MERIT_I18N_LANG = currentLang;
   globalThis.MERIT_I18N_STATUS = {
-    coverage: "Floor Plan (toolbar + canvas + contextual card + Plan Intelligence review + Advanced Diagnostics + Review Center + Teach AI + AI-generated question text), Guests (including the add/edit dialog, which is static markup in index.html re-translated via translateStaticDialogs() on every render()), Seating (both panels), Live Event, Reports, Home/Events, Create Event, the Excel import wizard (including its validation messages), the shared workspace header/tabs/appbar, the fixed planning/arrival status enums, the Guide/User Manual modal (its own bilingual renderGuide() override), and toast messages (every call site passes one t() key since §17 -- tests/suites/toast-discipline.test.mjs refuses a literal; translateToast() at the boundary no longer receives English).",
+    coverage: "Floor Plan (toolbar + canvas + contextual card + Plan Intelligence review + Advanced Diagnostics + Review Center + Teach the Plan + generated question text), Guests (including the add/edit dialog, which is static markup in index.html re-translated via translateStaticDialogs() on every render()), Seating (both panels), Live Event, Reports, Home/Events, Create Event, the Excel import wizard (including its validation messages), the shared workspace header/tabs/appbar, the fixed planning/arrival status enums, the Guide/User Manual modal (its own bilingual renderGuide() override), and toast messages (every call site passes one t() key since §17 -- tests/suites/toast-discipline.test.mjs refuses a literal; translateToast() at the boundary no longer receives English).",
     notMigrated: ["A handful of Plan Intelligence review-group titles (e.g. \"Round Table\") are generated from internal English type identifiers via titleCase() rather than t(), so they can appear untranslated inside an otherwise-Turkish sentence in Review Center", "Reports XLSX workbook content itself (by design -- exported files stay in the documented English/uppercase business format regardless of UI language, since the workbook is a shared operational artifact, not a UI screen)"],
     note: "Coverage now spans every primary screen's main content, including every dialog and diagnostics panel found in a full re-audit of live (non-overridden) render paths and toast() call sites. The remaining item above is real and flagged, not silently ignored.",
   };

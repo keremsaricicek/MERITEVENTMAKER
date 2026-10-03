@@ -125,8 +125,8 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // Every string, not one key. The classical detector is Assisted Detection;
   // "AI Missed This", "Improve AI" and "AI Needs Your Help" credited it to an
   // AI on the review screen until 2026-10-03 (the release-quality-director
-  // cross-check found them; this check covered one key). The only "AI" left is
-  // the product area's own name, Teach AI / AI'ya Öğret.
+  // cross-check found them; this check covered one key). The area once called
+  // Teach AI is "Teach the Plan" / "Plan Öğretimi": no exemption remains.
   const allKeys = [...fs.readFileSync(path.join(repoRoot, "src/i18n.js"), "utf8").matchAll(/^\s*"([\w.-]+)": \{ en:/gm)].map((m) => m[1]);
   checks.ok(allKeys.length > 1000, "every key in the table is read", allKeys.length);
   const aiClaims = await page.evaluate((keys) => {
@@ -134,14 +134,14 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     for (const lang of ["en", "tr"]) {
       ui.lang = lang;
       for (const key of keys) {
-        const v = t(key).replace(/Teach AI|AI'ya Öğret/g, "");
+        const v = t(key);
         if (/\bAI\b|Yapay Zek|artificial intelligence/i.test(v)) out.push(`${lang}:${key}: ${t(key)}`);
       }
     }
     ui.lang = "tr";
     return out;
   }, allKeys);
-  checks.equal(aiClaims, [], "no screen string calls the classical detector an AI, in either language — only the Teach AI area keeps the word in its name");
+  checks.equal(aiClaims, [], "no screen string calls the classical detector an AI, in either language — not even an area name");
 
   // --- 3. rendered: walk everything in Turkish, then in English -------------
   await createBlankEvent(page, { name: "Gala Yemeği", hotel: "Merit Royal", date: futureDate() });

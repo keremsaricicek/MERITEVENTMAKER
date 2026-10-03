@@ -2,7 +2,7 @@
 
 Internal, browser-only event-operations software for premium hospitality/
 casino event management (Events, Floor Plan, Guests, Seating Plan, Live
-Event, Reports, Plan Intelligence, Teach AI). No backend — state lives in
+Event, Reports, Plan Intelligence, Teach the Plan — "Plan Öğretimi", formerly Teach AI). No backend — state lives in
 `localStorage`. See `README.md` for how to run it and the project
 structure; see `.claude/skills/merit-product-contract/SKILL.md` for the
 full domain contract.

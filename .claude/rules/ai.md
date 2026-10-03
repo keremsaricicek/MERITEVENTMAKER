@@ -13,7 +13,7 @@
   seat count on the table. Confirmed chair coordinates from a candidate
   are written verbatim — never regenerated into a synthetic ring.
 - OCR is supporting evidence only; it never defines geometry by itself.
-- "Ignore/Not Important" in Teach AI is a stored negative example, not a
+- "Ignore/Not Important" in Teach the Plan (formerly Teach AI) is a stored negative example, not a
   delete — it carries real training signal. It is the "Not important"
   action, and is distinct from "Not an object": one says the thing is
   real but untracked, the other says the detector hallucinated. Both are
