@@ -7,7 +7,7 @@ own recollection.
 - **Programme start SHA** `02edac7`
 - **Branch** `claude/merit-concept3-plan-intelligence-rebirth`
 - **PR** #5 — OPEN, must not be merged
-- **Current SHA** see `git log` — step 3c and entry AG are the last completed work
+- **Current SHA** see `git log` — entry AH is the last completed work
 - **Status** IN PROGRESS
 
 ## How to resume
@@ -1793,6 +1793,38 @@ memory gate on 182 decisions (the same count as locally, now that OCR is
 pinned), §23 targets reported INFO, not met. One warning recorded: the v4
 actions run forced onto Node 24.
 
+### AH. Steps 4–5, the calendar, and the detector split (2026-10-03)
+
+**Rules moved to their modules, each characterized first and mutation-proven:**
+step 4 — which version an event is compared to and what a confirmation is keyed
+on → `MeritVenueModel` (2 rules had no suite); step 5 — the single writers'
+rules → `MeritArrivalWave.arrivalTransition`,
+`MeritTableAvailability.availabilityTransition`, handover via `normalizeNote`
+(**6 of 7 writer rules survived every suite** before `writer-transitions`).
+Three dead module exports and the write-only `chair.occupancy` field removed
+with proof (the workbook diffed cell-for-cell before and after).
+
+**The calendar broke CI.** Every benchmark runner and one suite typed
+"2026-10-02" into the event form; on 2026-10-03 those events were historical
+(no Detect button). Fixed with `futureDate()` everywhere; `fixture-dates`
+fails on any literal typed into the form or expiring within two years. CI on
+`0d4d2f4`: 10/10 green, job by job.
+
+**The detector split, measured on the whole output.**
+`benchmarks/detector-fingerprint.mjs` hashes the full analysis of 28 plans
+with seeded randomness (the first version was not deterministic — measured).
+Every move below: **28 of 28 byte-identical**, plus `benchmark:baseline`.
+Split A-2 (colour/tone) → `plan-detection-tone.js`; Split B-1/B-2 (pixels,
+binarize) → `plan-detection-preprocess.js`; B-16 (representation verdict and
+swap) → `plan-detection-verdict.js`; B-15 (venue-scale objects) →
+`plan-detection-venues.js`. Each with a written contract; each mutation-proven
+against the fingerprint. Found on the way: the boundary suite's parser missed a
+second declaration after `;` on a line (fixed), and the pipeline borrowed
+`app.js`'s global `uid` (now its own; the suite reads `app.js` too).
+
+`plan-detection-classical.js` 2,682 → **2,114**. What remains of `detect()`:
+B-4 (three object sources) and the `chairs` / `tables` stages.
+
 ### Adversarial at `3451f67` — 1 PASS · 4 PARTIAL · 3 FAIL
 
 Same distribution as `02edac7`; the run exits 0 because it gates on
@@ -1820,15 +1852,11 @@ typing 136/289.
 
 ## Next step
 
-**Continue the modularization (§3), then the final review.** Done: 3a, 3b,
-3c. Next, in order: the dead exports §28 proved (`CODE-INVENTORY.md`),
-`chair.occupancy` (§3.1), step 4 (layout changes) and step 5 (the adapters)
-of `MODULARIZATION-ORDER.md`, then detector Split B. After that:
-`MERIT_COVERAGE=1 npm run test:all` re-run, §35 validation with every
-benchmark, and `benchmarks/FINAL-COMPLETION-MATRIX.md` rewritten from
-measurement. §29 verified 2026-09-28: every non-slow suite runs in CI's
-`npm test` (`tests/run.mjs:50` selects by exclusion) and the one slow
-resilience suite in `test:slow`.
+**Split B continues: B-4 (the three object sources), then the `chairs` and
+`tables` stages**, each gated on `node benchmarks/detector-fingerprint.mjs
+--compare` (28 of 28 IDENTICAL) and `benchmark:baseline`. Then: coverage
+re-run, §35 validation with every benchmark, and
+`benchmarks/FINAL-COMPLETION-MATRIX.md` rewritten from measurement.
 
 ### Open, measured — none accepted as correct
 
