@@ -1956,9 +1956,17 @@
   // "contradiction.kind.COUNT çelişkisini çözün". Fixing it at the one place
   // that does substitution makes every consumer correct rather than every
   // consumer responsible.
+  // A MISSING KEY COMES BACK ESCAPED. Keys are often built from data —
+  // "teach.type." + an object's type — and a type that arrives in a restored
+  // backup can be anything. Returned raw, a missing key went straight into
+  // markup: hostile-input measured a lesson type running as an <img onerror>
+  // on the review screen (2026-10-03). Every real key is letters, digits and
+  // dots, so escaping changes nothing for a merely missing one (the `t(k) === k`
+  // checks still work); only a key carrying markup is neutralised.
+  const escapeKey = (k) => String(k).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   function t(key, vars) {
     const entry = STRINGS[key];
-    let str = entry ? (entry[currentLang()] || entry.en) : key;
+    let str = entry ? (entry[currentLang()] || entry.en) : escapeKey(key);
     if (vars) for (const k in vars) {
       const v = vars[k];
       const resolved = typeof v === "string" && v.includes(".") && STRINGS[v] ? t(v) : v;

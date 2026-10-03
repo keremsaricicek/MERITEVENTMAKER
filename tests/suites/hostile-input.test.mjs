@@ -312,4 +312,23 @@ export default async function run({ page, checks, baseUrl, artifactDir, repoRoot
     await settle(page);
     await audit(page, "Plan review, a candidate selected", checks);
   }
+
+  // ============== TEACH THE PLAN: A LESSON FROM SOMEWHERE ELSE =============
+  // The typed number is validated as a number, so markup never reaches a
+  // lesson from the keyboard. A lesson that arrives in a backup carries
+  // whatever its file says: its type becomes the object's type, its scope and
+  // reason are shown back. Planted the way a restored backup would leave them,
+  // then applied by the product's own Teach the Plan pass.
+  const teach = await page.evaluate((P) => {
+    const e = state.events.find((x) => x.name === "Hostile OCR"), c = e.analysis.candidates[0];
+    if (!c) return null;
+    c.type = P.type; c.kind = "venue";
+    state.teachings = [...(state.teachings || []), { id: "lesson_hostile", scope: "plan", scopeKey: null,
+      subject: { kind: "objectIdentity", type: P.type, objectKind: "venue" }, note: P.note, from: { context: P.note } }];
+    ui.selectedCandidateId = c.id; render();
+    return c.id;
+  }, { type: tagged("teachType"), note: tagged("teachNote") });
+  checks.ok(!!teach, "a detected object exists to carry a hostile lesson type");
+  await settle(page);
+  await audit(page, "Plan review, an object carrying a hostile type", checks);
 }
