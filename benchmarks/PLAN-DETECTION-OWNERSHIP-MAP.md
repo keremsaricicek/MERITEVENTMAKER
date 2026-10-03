@@ -298,7 +298,16 @@ Line numbers are within `src/plan-detection-classical.js`.
 - **Protected by** `npm run benchmark` (the rotate variants; before deskew
   existed, armchair recall fell 1.000 → 0.823)
 
-### A-2 · Colour and tone models
+### A-2 · Colour and tone models — **MOVED** (2026-10-03)
+> `src/plan-detection-tone.js` (`globalThis.MeritPlanTone`), reached through a
+> `TONE.` handle at every call site. Crossings: zero outward; seven inward
+> (`rgbBinIndex`, the three builders, `RGB_BINS` ×4, `LOW_CHROMA`,
+> `MID_CHROMA`); five private, including three of the four declarators on the
+> `RGB_*` line. Verified by `benchmarks/detector-fingerprint.mjs`: **28 of 28
+> plans byte-identical** — the first structural detector move measured on the
+> whole output rather than on guarded metrics. Moving it found a blind spot in
+> `plan-detection-boundary`'s own parser (a second declaration after `;` on a
+> line was invisible), fixed and mutation-proven in the same commit.
 - **Lines** 158–317 (160)
 - **Responsibility** derive the drawing's own palette — accent hue, chroma,
   background luma, tone bands. **No hue and no grey level is hardcoded.**

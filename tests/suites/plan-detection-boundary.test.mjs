@@ -72,22 +72,47 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // `const` line) behind in the shell while its value moved, and every real
   // detection threw ReferenceError. Static checks that only see the first
   // declarator would have called that extraction clean.
+  // Top-level bindings: every statement on a line indented exactly two
+  // spaces (the IIFE body), split at depth-0 semicolons. The first version
+  // read only the FIRST statement of a line, so `const A=1; const B=2;`
+  // bound A and hid B — the same one-line blind spot as the comma-separated
+  // declarators the first extraction tripped on. Found by mutation while
+  // adding the tone module's checks (2026-10-03): a constant left behind
+  // after a semicolon passed every check here.
+  const declaratorNames = (list, names) => {
+    let depth = 0, cur = "";
+    const parts = [];
+    for (const ch of list) {
+      if ("([{".includes(ch)) depth++;
+      else if (")]}".includes(ch)) depth--;
+      if (ch === "," && depth === 0) { parts.push(cur); cur = ""; continue; }
+      cur += ch;
+    }
+    parts.push(cur);
+    for (const p of parts) {
+      const n = p.trim().match(/^([A-Za-z_$][\w$]*)/);
+      if (n) names.add(n[1]);
+    }
+  };
   const bindings = (text) => {
     const names = new Set();
-    for (const m of text.matchAll(/(?:^|\n)  (?:async )?function ([A-Za-z_$][\w$]*)/g)) names.add(m[1]);
-    for (const m of text.matchAll(/(?:^|\n)  (?:const|let|var)\s+([^\n;]*)/g)) {
+    for (const line of text.split("\n")) {
+      if (!/^  \S/.test(line)) continue;
       let depth = 0, cur = "";
-      const parts = [];
-      for (const ch of m[1]) {
+      const statements = [];
+      for (const ch of line) {
         if ("([{".includes(ch)) depth++;
         else if (")]}".includes(ch)) depth--;
-        if (ch === "," && depth === 0) { parts.push(cur); cur = ""; continue; }
+        if (ch === ";" && depth === 0) { statements.push(cur); cur = ""; continue; }
         cur += ch;
       }
-      parts.push(cur);
-      for (const p of parts) {
-        const n = p.trim().match(/^([A-Za-z_$][\w$]*)/);
-        if (n) names.add(n[1]);
+      statements.push(cur);
+      for (const st of statements) {
+        const t = st.trim();
+        const fn = t.match(/^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/);
+        if (fn) { names.add(fn[1]); continue; }
+        const decl = t.match(/^(?:const|let|var)\s+(.*)$/);
+        if (decl) declaratorNames(decl[1], names);
       }
     }
     return names;
@@ -623,4 +648,35 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(liveDeskew.high > liveDeskew.low,
     "and it MOVES with the data rather than returning a constant — two histograms with different populations get different thresholds",
     liveDeskew);
+
+  // ---- Split A-2: the colour and tone models ------------------------------
+  // `RGB_BITS,RGB_LEVELS,RGB_BINS,RGB_SHIFT` is one comma-separated line of
+  // four names — the shape that broke the first extraction. All four must be
+  // bound in the tone module, none left in the pipeline or the shell, and the
+  // pipeline must reach the published seven only through `TONE.`.
+  const tonePath = path.join(repoRoot, "src", "plan-detection-tone.js");
+  checks.require(fs.existsSync(tonePath), "the colour and tone models live in their own file", "src/plan-detection-tone.js");
+  const toneCode = stripCommentsAndStrings(fs.readFileSync(tonePath, "utf8"));
+  const toneExported = [...toneCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]);
+  checks.equal([...new Set(toneExported)].join(","), "MeritPlanTone", "it publishes exactly one name", toneExported);
+  const TONE_PUBLIC = ["rgbBinIndex", "buildAccentModel", "buildToneModel", "buildClassMasks", "RGB_BINS", "LOW_CHROMA", "MID_CHROMA"];
+  const TONE_PRIVATE = ["rgbHue", "hueGap", "RGB_BITS", "RGB_LEVELS", "RGB_SHIFT"];
+  const toneBinds = bindings(toneCode);
+  checks.equal([...TONE_PUBLIC, ...TONE_PRIVATE].filter((n) => !toneBinds.has(n)), [],
+    "every one of its names is bound in the tone module — all four declarators of the RGB line included");
+  checks.equal([...TONE_PUBLIC, ...TONE_PRIVATE].filter((n) => detBindings.has(n) || v8Bindings.has(n)), [],
+    "and none is left behind in the pipeline or the shell");
+  checks.equal(TONE_PUBLIC.filter((n) => matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\b`)).length), [],
+    "the pipeline names none of the seven bare — every use reads TONE.");
+  const toneBare = bareUses(toneCode);
+  checks.equal([...detBindings, ...v8Bindings].filter((n) => toneBare.has(n) && !toneBinds.has(n)), [],
+    "and the tone module resolves no name bound only in the pipeline or the shell");
+  const liveTone = await page.evaluate(() => {
+    const T = globalThis.MeritPlanTone;
+    return T ? { keys: Object.keys(T).sort(), bins: T.RGB_BINS, bin: T.rgbBinIndex(255, 0, 0) } : null;
+  });
+  checks.require(liveTone, "MeritPlanTone is published on the page after boot");
+  checks.equal(liveTone.keys.join(","), "LOW_CHROMA,MID_CHROMA,RGB_BINS,buildAccentModel,buildClassMasks,buildToneModel,rgbBinIndex,version",
+    "with exactly its seven public names and a version — the private three-bit arithmetic stays inside", liveTone.keys);
+  checks.equal([liveTone.bins, liveTone.bin], [512, 448], "and the bins are the 8×8×8 cube the pipeline sizes its histograms by (pure red is bin 448)");
 }

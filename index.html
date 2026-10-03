@@ -175,6 +175,9 @@
   <!-- Assisted Detection's mask-to-objects layer: connected components,
        enclosed regions and mask solidity, sharing one module-level scratch
        buffer that must not be reallocated per call. -->
+  <!-- Assisted Detection's colour and tone models: the drawing's own palette,
+       derived from its histograms, and the class masks built from it. -->
+  <script src="src/plan-detection-tone.js"></script>
   <script src="src/plan-detection-components.js"></script>
   <script src="src/plan-detection-split.js"></script>
   <!-- Assisted Detection: the classical CV pipeline, extracted from app-v8.js.
