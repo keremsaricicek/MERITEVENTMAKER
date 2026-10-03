@@ -192,6 +192,8 @@
   <!-- Assisted Detection's object sources: interiors, tone families, fill.
        After components.js and tone.js, whose published objects it captures. -->
   <script src="src/plan-detection-sources.js"></script>
+  <!-- Assisted Detection's chairs-first stage. After every module it captures. -->
+  <script src="src/plan-detection-chairs.js"></script>
   <!-- Assisted Detection: the classical CV pipeline, extracted from app-v8.js.
        Loads BEFORE app-v8.js because app-v8.js reads the registry it publishes
        (globalThis.MERIT_PLAN_DETECTION), and AFTER the Merit* modules it calls

@@ -55,7 +55,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // detect() and the stages taken out of it (Split B). A call that moved
   // with its stage is still held to the same rule: no bare call, reached
   // through the collaborator's published object.
-  const STAGE_FILES = ["plan-detection-preprocess.js", "plan-detection-sources.js", "plan-detection-venues.js", "plan-detection-verdict.js"];
+  const STAGE_FILES = ["plan-detection-preprocess.js", "plan-detection-sources.js", "plan-detection-chairs.js", "plan-detection-venues.js", "plan-detection-verdict.js"];
   const pipelineCode = [detCode, ...STAGE_FILES.map((f) => stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", f), "utf8")))].join("\n");
   const v8Code = stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", "app-v8.js"), "utf8"));
 
@@ -767,6 +767,23 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const sourcesBinds = new Set([...bindings(sourcesCode), ...destructured(sourcesCode)]), sourcesBare = bareUses(sourcesCode);
   checks.equal([...detBindings, ...v8Bindings].filter((n) => sourcesBare.has(n) && !sourcesBinds.has(n)), [],
     "and it resolves no name bound only in the pipeline or the shell — the size tests and the phase timer arrive as input");
+
+  // ---- Split B-5: chairs first ----------------------------------------------
+  const chairsPath = path.join(repoRoot, "src", "plan-detection-chairs.js");
+  checks.require(fs.existsSync(chairsPath), "the chairs-first stage lives in its own file", "src/plan-detection-chairs.js");
+  const chairsCode = stripCommentsAndStrings(fs.readFileSync(chairsPath, "utf8"));
+  // MERIT_STAGE_CENSUS is the stage's debug probe, written only when
+  // MERIT_DETECT_DEBUG is set (benchmarks/heldout/ornek-stage-walk.mjs reads
+  // it); it moved with the stage it describes. Anything else is a leak.
+  const chairsWrites = [...new Set([...chairsCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]))];
+  checks.equal(chairsWrites.filter((n) => n !== "MERIT_STAGE_CENSUS").join(","), "MeritPlanChairs", "it publishes exactly one name, besides its debug probe", chairsWrites);
+  checks.ok(/if\s*\(\s*globalThis\.MERIT_DETECT_DEBUG\s*\)\s*\{\s*globalThis\.MERIT_STAGE_CENSUS\s*=/.test(chairsCode),
+    "and that probe is written only under MERIT_DETECT_DEBUG", true);
+  checks.ok(/CHAIRS\.findChairs\s*\(/.test(detCode) && !/(^|[^\w.$])findChairs\s*\(/m.test(detCode),
+    "detect() reaches it only through the published object", true);
+  const chairsBinds = new Set([...bindings(chairsCode), ...destructured(chairsCode)]), chairsBare = bareUses(chairsCode);
+  checks.equal([...detBindings, ...v8Bindings].filter((n) => chairsBare.has(n) && !chairsBinds.has(n)), [],
+    "and it resolves no name bound only in the pipeline or the shell — its twelve inputs arrive as input");
 
   // ---- every module a detection file captures at load time is ALREADY loaded
   // A stage module captures its collaborators once, at load
