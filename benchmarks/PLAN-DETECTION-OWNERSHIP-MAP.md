@@ -442,13 +442,30 @@ Line numbers are within `src/plan-detection-classical.js`.
 > fingerprint cannot see (ids are drawn the same way) and the boundary suite
 > caught; `uid` is now an input. **`detect()` is an orchestrator: one call per
 > stage, in data order, under 200 lines** (`plan-detection-boundary` checks
-> it). What remains is INSIDE the tables stage: its nine sub-stages still
-> share locals in one 1,100-line function — the next cut, in the order this
-> document gives, with the fingerprint as its gate.
-> **What remains is the hard part, measured below and unchanged:** `chairs`
-> and `tables` are 78% of `detect()` and hand ~30 values forward through shared
-> locals. They need their hand-off made an explicit record before they can
-> move — a design step with the fingerprint as its gate, not a file move.
+> it). **And inside the tables stage, B-6 … B-14 are nine named functions**
+> — `tablePool`, `madeOfTable`, `symbolFamilySupport`, `associateChairs`,
+> `scoreAndRank`, `suppressFragments`, `reseatChairs`, `typeBistros`,
+> `containedSeatsAndUnseatedChairs` — each headed by what it reads (IN), hands
+> on (OUT) and changes in place (MUTATES); `findTables()` is only the calls.
+> Measured before the cut, per sub-stage: no early return, and no sub-stage
+> reassigns anything it is given — so every input is `const`. The one value
+> that crossed as a reassignment, `relationStats`, was declared `null` at
+> association and only ever filled after the re-seat; it is now plainly an
+> output of `reseatChairs`. The in-place changes are stated rather than
+> hidden: `madeOfTable` and `symbolFamilySupport` narrow the shared candidate
+> list, `reseatChairs` rebuilds the chair↔table maps over the surviving
+> tables. A scan of each function for any name it neither receives nor
+> declares found none. 28 of 28 byte-identical. The mutation is the mistake
+> this cut invites — a sub-stage narrowing a COPY of the candidate list, so
+> the narrowing never reaches the caller: the real venue plan stays identical
+> (its off-size filter drops nothing), 7 of 13 adversarial plans differ.
+> `plan-detection-boundary` now holds the shape: `findTables()` under 80
+> lines, every sub-stage headed IN/OUT, every input taken as `const` (each
+> mutation-proven).
+> **The measurement below is the one Split B started from**, kept as the
+> record of why it was a design job and not a file move: `chairs` and
+> `tables` were 78% of `detect()` and handed ~30 values forward through
+> shared locals.
 
 ## Split B — measured
 

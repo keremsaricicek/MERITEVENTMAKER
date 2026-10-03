@@ -23,12 +23,15 @@
 //             byte-identical), `benchmark:baseline` (every guarded table
 //             field), `benchmarks/false-positives/`, `table-typing`.
 //
-// NOT YET SPLIT INSIDE. The nine sub-stages (candidate pool, made-of-table,
-// symbol family, chair association, scoring, fragment suppression, re-seat,
-// bistro typing, containment) still share their locals in this one function;
-// the map records the order to take them apart in. Measured with scratchpad
-// stage-io at detect()'s statement level: eighteen inputs plus uid, thirty outputs,
-// nothing earlier reassigned.
+// INSIDE, nine named sub-stages below findTables(), each stating what it
+// reads (IN), what it hands on (OUT) and what it changes in place (MUTATES):
+// tablePool (B-6), madeOfTable (B-7), symbolFamilySupport (B-8),
+// associateChairs (B-9), scoreAndRank (B-10), suppressFragments (B-11),
+// reseatChairs (B-12), typeBistros (B-13), containedSeatsAndUnseatedChairs
+// (B-14). findTables() itself is only the calls, in data order. No sub-stage
+// reassigns anything it is given; `relationStats`, which detect() once
+// declared null at association and filled after the re-seat, is now simply
+// an output of reseatChairs.
 (() => {
   "use strict";
   const GEO = globalThis.MeritPlanGeometry;
@@ -42,6 +45,58 @@
     const { uid, width, height, area, sources, analyze, venueSizeOk,
       threshold, masksTints, surfaceMask, tintIsChairMaterial, chairs, chairModal,
       chairUniform, chairSource, chairFloorSide, gapTo, protectedRegions, confidenceThreshold } = input;
+    // B-6 the table candidate pool — tablePool(), below findTables().
+    const { dedupFitness, expanded, modalLong, modalShort, pool, provisionalModalArea, splitCount, unique } = tablePool({
+      analyze, chairModal, chairUniform, chairs, height, sources, width });
+    // B-7 is this candidate actually made of table? — madeOfTable(), below findTables().
+    const { surfaceMinorityFinishKept, surfaceRejected, surfaceRejectedComps, uniqueBeforeSurface } = madeOfTable({
+      chairs, dedupFitness, expanded, gapTo, height, masksTints, surfaceMask,
+      tintIsChairMaterial, unique, width });
+    // B-8 the symbol family as a family, not a polarity — symbolFamilySupport(), below findTables().
+    const { debugPool, familyFromTableSources, modalArea, modalPool, offModalDropped } = symbolFamilySupport({
+      analyze, chairFloorSide, chairModal, chairUniform, chairs, dedupFitness, expanded,
+      provisionalModalArea, unique, uniqueBeforeSurface });
+    // B-9 chair → table association — associateChairs(), below findTables().
+    const { chairAssign, chairOBB, chairRelation, chairsByTable, relationInput, tableBoxes } = associateChairs({
+      chairSource, chairs, unique });
+    // B-10 scoring and ranking — the modal-size prior — scoreAndRank(), below findTables().
+    const { capReached, ranked } = scoreAndRank({
+      chairsByTable, modalArea, tableBoxes });
+    // B-11 fragment suppression (Gate C/D) — suppressFragments(), below findTables().
+    const { chosen, chosenIndexes, flagged, fragmentDiagnostics } = suppressFragments({
+      height, protectedRegions, ranked, width });
+    // B-12 re-seat the chairs whose table did not survive — reseatChairs(), below findTables().
+    const { chairEvidence, reseated, toPercentBox, relationStats } = reseatChairs({
+      chairAssign, chairModal, chairRelation, chairSource, chairsByTable, chosenIndexes, height,
+      relationInput, tableBoxes, width });
+    // B-13 bistro typing — a semantic type, not a shape — typeBistros(), below findTables().
+    const { bistrosTyped, candidates, modalSeats } = typeBistros({
+      area, chairEvidence, chairOBB, chairRelation, chairs, chairsByTable, chosen,
+      confidenceThreshold, height, modalArea, threshold, toPercentBox, uid, width });
+    // B-14 a table containing all of its own seats; unseated chairs become venues — containedSeatsAndUnseatedChairs(), below findTables().
+    const { chairVenues, familyLostToAssociation, familyLostToTextRun, familyVenue, seatsInsideBody, seatsInsideBodyStoodDown, textGlyphChairsDropped } = containedSeatsAndUnseatedChairs({
+      candidates, chairAssign, chairEvidence, chairOBB, chairSource, chairs, chosen,
+      chosenIndexes, flagged, toPercentBox, uid });
+    // B-15 — columns, merged-row blobs and unnamed venue-scale shapes — is
+    // MeritPlanVenueObjects (src/plan-detection-venues.js), contract there.
+    const venueScale=VENUE_OBJECTS.venueScaleObjects({chosen,chairAssign,surfaceRejectedComps,chairs,gapTo,
+      sources,venueSizeOk,analyze,uid,toPercentBox,chairVenues});
+    const {columnComps,mergedRowVenues}=venueScale;
+    const venues=venueScale.venues;
+
+    return { candidates, venues, chairVenues, pool, debugPool, modalPool,
+      modalArea, modalSeats, modalLong, modalShort, bistrosTyped, reseated,
+      seatsInsideBody, seatsInsideBodyStoodDown, relationStats, splitCount, capReached, offModalDropped,
+      surfaceRejected, surfaceMinorityFinishKept, fragmentDiagnostics, textGlyphChairsDropped, familyLostToAssociation, familyLostToTextRun,
+      familyFromTableSources, familyVenue, mergedRowVenues, columnComps, chairOBB, toPercentBox };
+  }
+
+  // B-6 the table candidate pool
+  //   IN   analyze, chairModal, chairUniform, chairs, height, sources, width
+  //   OUT  dedupFitness, expanded, modalLong, modalShort, pool, provisionalModalArea, splitCount, unique
+  function tablePool(input) {
+    const { analyze, chairModal, chairUniform, chairs, height, sources,
+      width } = input;
     // ---- table candidate pool --------------------------------------------
     let pool=[];
     for(const s of sources)for(const c of s.comps)pool.push({comp:c,labels:s.labels});
@@ -140,6 +195,19 @@
       if(dup)continue;
       unique.push(entry);
     }
+    return { dedupFitness, expanded, modalLong, modalShort, pool, provisionalModalArea,
+      splitCount, unique };
+  }
+
+
+  // B-7 is this candidate actually made of table?
+  //   IN   chairs, dedupFitness, expanded, gapTo, height, masksTints, surfaceMask, tintIsChairMaterial, unique, width
+  //   OUT  surfaceMinorityFinishKept, surfaceRejected, surfaceRejectedComps, uniqueBeforeSurface
+  //   MUTATES unique, narrowed in place to the candidates made of table surface;
+  //        each candidate's comp.surfaceCoverage / surfaceFromMinorityFinish
+  function madeOfTable(input) {
+    const { chairs, dedupFitness, expanded, gapTo, height, masksTints,
+      surfaceMask, tintIsChairMaterial, unique, width } = input;
     // ---- is this candidate actually made of table? ------------------------
     // A table drawn with a filled surface is mostly that surface colour. A
     // row of chairs, a wall fragment, a block of printed text and a door
@@ -270,6 +338,17 @@
       globalThis.MERIT_STAGE_CENSUS.stage_afterSurface=unique.map(e=>cbox(e.comp));
     }
 
+    return { surfaceMinorityFinishKept, surfaceRejected, surfaceRejectedComps, uniqueBeforeSurface };
+  }
+
+
+  // B-8 the symbol family as a family, not a polarity
+  //   IN   analyze, chairFloorSide, chairModal, chairUniform, chairs, dedupFitness, expanded, provisionalModalArea, unique, uniqueBeforeSurface
+  //   OUT  debugPool, familyFromTableSources, modalArea, modalPool, offModalDropped
+  //   MUTATES unique, narrowed in place to the symbol family
+  function symbolFamilySupport(input) {
+    const { analyze, chairFloorSide, chairModal, chairUniform, chairs, dedupFitness,
+      expanded, provisionalModalArea, unique, uniqueBeforeSurface } = input;
     // ---- the symbol family is a family, not a polarity --------------------
     //
     // A plan that draws its tables as one repeated symbol may draw that
@@ -392,6 +471,15 @@
       unique.length=0;unique.push(...kept);
     }
 
+    return { debugPool, familyFromTableSources, modalArea, modalPool, offModalDropped };
+  }
+
+
+  // B-9 chair → table association
+  //   IN   chairSource, chairs, unique
+  //   OUT  chairAssign, chairOBB, chairRelation, chairsByTable, relationInput, tableBoxes
+  function associateChairs(input) {
+    const { chairSource, chairs, unique } = input;
     // ---- chair -> table association --------------------------------------
     // merit-plan-intelligence requires each chair to belong to at most one
     // table. The old pipeline evaluated proximity per table independently, so
@@ -434,7 +522,6 @@
       id:i,family:ch.chairFamily||chairSource||"unknown",
       obb:chairOBB(ch),inkOffset:inkOffsetOf(ch)}));
     const chairAssign=new Map(),chairsByTable=new Map(),chairRelation=new Map();
-    let relationStats=null;
     {
       const pairs=[];
       for(let ci=0;ci<chairs.length;ci++){
@@ -454,6 +541,15 @@
       }
     }
 
+    return { chairAssign, chairOBB, chairRelation, chairsByTable, relationInput, tableBoxes };
+  }
+
+
+  // B-10 scoring and ranking — the modal-size prior
+  //   IN   chairsByTable, modalArea, tableBoxes
+  //   OUT  capReached, ranked
+  function scoreAndRank(input) {
+    const { chairsByTable, modalArea, tableBoxes } = input;
     // ---- scoring and ranking (FIX #3) ------------------------------------
     const scored=tableBoxes.map(box=>{
       const c=box.entry.comp,obb=box.obb;
@@ -495,6 +591,15 @@
     // which is why Golden (41 tables) and ORNEK (166) are unaffected.
     const MAX_TABLES=2000,capReached=scored.length>MAX_TABLES,ranked=scored.slice(0,MAX_TABLES);
 
+    return { capReached, ranked };
+  }
+
+
+  // B-11 fragment suppression (Gate C/D)
+  //   IN   height, protectedRegions, ranked, width
+  //   OUT  chosen, chosenIndexes, flagged, fragmentDiagnostics
+  function suppressFragments(input) {
+    const { height, protectedRegions, ranked, width } = input;
     // ---- fragment suppression (Gate C/D) --------------------------------
     // Measured on the real venue plan: of 82 proposed tables, 41 were real
     // and 41 were fragments -- mostly pieces the valley-split step cut out
@@ -736,6 +841,18 @@
     if(globalThis.MERIT_STAGE_CENSUS)globalThis.MERIT_STAGE_CENSUS.stage_chosen=
       chosen.map(c2=>({x:c2.obb.cx-c2.obb.w/2,y:c2.obb.cy-c2.obb.h/2,w:c2.obb.w,h:c2.obb.h}));
 
+    return { chosen, chosenIndexes, flagged, fragmentDiagnostics };
+  }
+
+
+  // B-12 re-seat the chairs whose table did not survive
+  //   IN   chairAssign, chairModal, chairRelation, chairSource, chairsByTable, chosenIndexes, height, relationInput, tableBoxes, width
+  //   OUT  chairEvidence, relationStats, reseated, toPercentBox
+  //   MUTATES chairAssign and chairsByTable, rebuilt in place over the surviving
+  //        tables; chairRelation, filled
+  function reseatChairs(input) {
+    const { chairAssign, chairModal, chairRelation, chairSource, chairsByTable, chosenIndexes,
+      height, relationInput, tableBoxes, width } = input;
     // ---- re-seat the chairs whose table did not survive -------------------
     //
     // Association runs over every table PROPOSAL, and the fragment filter
@@ -784,7 +901,7 @@
     // pass put them. Most of these are seats whose nearest table was a
     // proposal the suppression stage then deleted — the failure that used to
     // drop them from seating entirely.
-    relationStats={...finalRelations.stats,seatedElsewhereThanAdjacency:reseated};
+    const relationStats={...finalRelations.stats,seatedElsewhereThanAdjacency:reseated};
 
     const toPercentBox=obb=>({x:(obb.cx-obb.w/2)/width*100,y:(obb.cy-obb.h/2)/height*100,w:obb.w/width*100,h:obb.h/height*100});
     // Deterministic evidence score for a chair: how well it agrees with the
@@ -792,6 +909,18 @@
     // cluster or only from the luma fallback. Never a random number.
     const chairEvidence=(ch,associated)=>Math.max(.2,Math.min(.9,
       .34+PRIOR.sizeAgreement(Math.sqrt(ch.w*ch.h),chairModal)*.3+(chairSource==="colour-cluster"?.16:0)+(associated?.05:0)));
+    return { chairEvidence, relationStats, reseated, toPercentBox };
+  }
+
+
+  // B-13 bistro typing — a semantic type, not a shape
+  //   IN   area, chairEvidence, chairOBB, chairRelation, chairs, chairsByTable, chosen, confidenceThreshold, height, modalArea, threshold, toPercentBox, uid, width
+  //   OUT  bistrosTyped, candidates, modalSeats
+  //   MUTATES each chair's relation: the runner-up table index becomes its id
+  function typeBistros(input) {
+    const { area, chairEvidence, chairOBB, chairRelation, chairs, chairsByTable,
+      chosen, confidenceThreshold, height, modalArea, threshold, toPercentBox,
+      uid, width } = input;
     // ---- bistro, which is a semantic type and not a shape -----------------
     //
     // Finding a table and knowing WHAT it is are two different jobs, and the
@@ -904,6 +1033,17 @@
         delete ch.relation.runnerUpTableIndex;
       }
     }
+    return { bistrosTyped, candidates, modalSeats };
+  }
+
+
+  // B-14 a table containing all of its own seats; unseated chairs become venues
+  //   IN   candidates, chairAssign, chairEvidence, chairOBB, chairSource, chairs, chosen, chosenIndexes, flagged, toPercentBox, uid
+  //   OUT  chairVenues, familyLostToAssociation, familyLostToTextRun, familyVenue, seatsInsideBody, seatsInsideBodyStoodDown, textGlyphChairsDropped
+  //   MUTATES candidates' selected / lowEvidence
+  function containedSeatsAndUnseatedChairs(input) {
+    const { candidates, chairAssign, chairEvidence, chairOBB, chairSource, chairs,
+      chosen, chosenIndexes, flagged, toPercentBox, uid } = input;
     // ---- a table that contains all of its own seats ---------------------
     //
     // Measured across eleven renderings (benchmarks/false-positives/): of 424
@@ -1115,19 +1255,10 @@
       if(textRunIndexes.has(ci)){textGlyphChairsDropped++;familyLostToTextRun.push(chairs[ci]);continue;}
       chairVenues.push(familyVenue(chairs[ci]));
     }
-    // B-15 — columns, merged-row blobs and unnamed venue-scale shapes — is
-    // MeritPlanVenueObjects (src/plan-detection-venues.js), contract there.
-    const venueScale=VENUE_OBJECTS.venueScaleObjects({chosen,chairAssign,surfaceRejectedComps,chairs,gapTo,
-      sources,venueSizeOk,analyze,uid,toPercentBox,chairVenues});
-    const {columnComps,mergedRowVenues}=venueScale;
-    let venues=venueScale.venues;
-
-    return { candidates, venues, chairVenues, pool, debugPool, modalPool,
-      modalArea, modalSeats, modalLong, modalShort, bistrosTyped, reseated,
-      seatsInsideBody, seatsInsideBodyStoodDown, relationStats, splitCount, capReached, offModalDropped,
-      surfaceRejected, surfaceMinorityFinishKept, fragmentDiagnostics, textGlyphChairsDropped, familyLostToAssociation, familyLostToTextRun,
-      familyFromTableSources, familyVenue, mergedRowVenues, columnComps, chairOBB, toPercentBox };
+    return { chairVenues, familyLostToAssociation, familyLostToTextRun, familyVenue, seatsInsideBody, seatsInsideBodyStoodDown,
+      textGlyphChairsDropped };
   }
+
 
   globalThis.MeritPlanTables = { version: 1, findTables };
 })();

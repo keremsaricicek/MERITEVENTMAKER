@@ -805,6 +805,20 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const dStart = detectLines.findIndex((l) => /^    async detect\(pixels/.test(l));
   const dEnd = detectLines.findIndex((l, i) => i > dStart && /^    \},?$/.test(l));
   checks.ok(dStart > 0 && dEnd - dStart < 200, "detect() is now an orchestrator of stage calls — under 200 lines, from ~2,100", dEnd - dStart);
+  // The same shape one level down: findTables() is the calls to its nine
+  // sub-stages, each stating what it reads and hands on, none reassigning what
+  // it is given (so a value cannot leave a sub-stage except as an output).
+  const tablesLines = fs.readFileSync(tablesPath, "utf8").split("\n");
+  const fStart = tablesLines.findIndex((l) => /^  function findTables\(input\)/.test(l));
+  const fEnd = tablesLines.findIndex((l, i) => i > fStart && /^  \}$/.test(l));
+  checks.ok(fStart > 0 && fEnd - fStart < 80, "findTables() is the calls to its sub-stages — under 80 lines, from ~1,100", fEnd - fStart);
+  const subStages = tablesLines.map((l, i) => ({ m: l.match(/^  function (\w+)\(input\)/), i })).filter((x) => x.m && x.m[1] !== "findTables")
+    .map(({ m, i }) => ({ name: m[1], header: tablesLines.slice(Math.max(0, i - 8), i).join("\n"), head: tablesLines.slice(i + 1, i + 4).join(" ") }));
+  checks.ok(subStages.length >= 9, "the tables stage is nine named sub-stages", subStages.map((s) => s.name));
+  checks.equal(subStages.filter((s) => !/\/\/   IN  /.test(s.header) || !/\/\/   OUT /.test(s.header)).map((s) => s.name), [],
+    "every sub-stage states what it reads (IN) and what it hands on (OUT)");
+  checks.equal(subStages.filter((s) => !/^\s*const \{[^}]*\} = input;/.test(s.head)).map((s) => s.name), [],
+    "and takes its inputs as const — no sub-stage reassigns what it is given");
 
   // ---- every module a detection file captures at load time is ALREADY loaded
   // A stage module captures its collaborators once, at load
