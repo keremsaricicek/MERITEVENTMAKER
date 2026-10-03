@@ -7,7 +7,8 @@ the commit it names, by the command it names. The work log behind each row is
 `benchmarks/MASTER-PROGRAMME-STATE.md` (entries A–AI).
 
 - **Programme start** `02edac7` · **final validation** `f34b855` (§35, below) ·
-  **final head** `fb8238e` (last code commit; the commit carrying this file adds documents only`. After `f34b855` there is one code change —
+  **final head** `fb8238e` (the last code commit; the commit carrying this
+  file adds documents only). After `f34b855` there is one code change —
   `fb8238e`, three i18n strings and the check that pins them, gated by the
   i18n suites, offline 27/27 and CI — and the rest is documents.
 - **Not done, by instruction:** no EXE or desktop package; PR #5 not merged; no
