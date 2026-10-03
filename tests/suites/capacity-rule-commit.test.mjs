@@ -30,7 +30,7 @@ export default async function run({ page, checks, baseUrl }) {
       for (let i = 0; i < tables; i++) candidates.push({ id: "cand" + i, kind: "table", type: "round", x: 10 + i * 12, y: 30, w: 6, h: 6, rotation: 0,
         confidence: 0.9, status: "unreviewed", selected: true, printedNumber: null, evidence: { geometry: 0.8, chairs: 0, repetition: 1 },
         chairDetections: chairsOn.includes(i) ? [0, 1, 2, 3].map((s) => ({ x: 10 + i * 12 + (s % 2) * 6, y: 30 + (s > 1 ? 6 : -1), w: 1, h: 1, rotation: 0 })) : [] });
-      const event = { id: "ev-" + Math.random().toString(36).slice(2), name: "Kural", hotel: "Merit", salon: "", date: "2026-12-31", status: "Planning",
+      const event = { id: "ev-" + Math.random().toString(36).slice(2), name: "Kural", hotel: "Merit", salon: "", date: new Date(Date.now() + 90 * 864e5).toLocaleDateString("en-CA"), status: "Planning",
         tables: [], venueObjects: [], guests: [], background: { src: "", visible: true }, audit: [], handoverNotes: [] };
       event.analysis = { id: "an", planHash: "h", engine: "ASSISTED_DETECTION", trainedModel: false, createdAt: new Date().toISOString(),
         imageWidth: 1000, imageHeight: 800, threshold: 128, candidates, missed: [], groupingDecisions: [], comparison: { added: tables, removed: 0, changed: 0 },

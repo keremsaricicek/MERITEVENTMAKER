@@ -31,7 +31,7 @@
 // has decided is symbolic, every detected member of the uniform family must end
 // up as a table. That is what all three fixes establish together, and it holds
 // however a drawing happens to route its members.
-import { openApp } from "../lib/app-actions.mjs";
+import { openApp, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = {
   name: "symbolic-plan-detection",
@@ -88,7 +88,7 @@ export default async function run({ page, checks, baseUrl }) {
   await page.waitForTimeout(300);
   await page.fill('input[name="name"]', "Symbolic fixture");
   await page.fill('input[name="hotel"]', "Merit");
-  await page.fill('input[name="date"]', "2026-10-02");
+  await page.fill('input[name="date"]', futureDate());
   await page.click('button[data-setup="blank"]');
   await page.waitForTimeout(600);
 

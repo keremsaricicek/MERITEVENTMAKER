@@ -14,6 +14,7 @@ import { serveApp } from "../../tests/lib/server.mjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { futureDate } from "../../tests/lib/app-actions.mjs";
 
 // The runner serves the app itself; nothing here depends on a server a
 // person remembered to start. MERIT_BASE_URL overrides it.
@@ -29,7 +30,7 @@ const ok = (c, l, d) => { if (c) { passed++; console.log('OK: ' + l); } else { f
 await p.goto(app.baseUrl + '/index.html'); await p.waitForLoadState('networkidle');
 await p.click('.appbar [data-action="create-event"]'); await p.waitForTimeout(300);
 await p.fill('input[name="name"]', 'Seating'); await p.fill('input[name="hotel"]', 'Seating');
-await p.fill('input[name="date"]', '2026-10-02');
+await p.fill('input[name="date"]', futureDate());
 await p.click('button[data-setup="blank"]'); await p.waitForTimeout(700);
 const b64 = fs.readFileSync(path.join(REPO, 'benchmarks/plans/merit-real-venue-plan.png')).toString('base64');
 await p.evaluate(src => { state.events[0].background = { src, name: 'p.png', opacity: 1, visible: true, locked: false, scale: 100 }; render(); }, `data:image/png;base64,${b64}`);

@@ -167,7 +167,7 @@ export default async function run({ page, checks, baseUrl, repoRoot, browser }) 
 
   // --- 6. an event package with malformed chairs is refused, precisely ------
   const problems = await page.evaluate(() => {
-    const base = () => ({ id: "e1", name: "P", date: "2026-12-31", tables: [{ id: "t1", number: "T01", chairs: [] }], guests: [], venueObjects: [] });
+    const base = () => ({ id: "e1", name: "P", date: new Date(Date.now() + 90 * 864e5).toLocaleDateString("en-CA"), tables: [{ id: "t1", number: "T01", chairs: [] }], guests: [], venueObjects: [] });
     const cases = { notList: (e) => { e.tables[0].chairs = "x"; }, notRecord: (e) => { e.tables[0].chairs = [42]; }, badId: (e) => { e.tables[0].chairs = [{ id: "bad id with spaces" }]; } };
     const out = {};
     for (const [k, f] of Object.entries(cases)) { const e = base(); f(e); out[k] = MeritEventPackage.eventProblem(e); }

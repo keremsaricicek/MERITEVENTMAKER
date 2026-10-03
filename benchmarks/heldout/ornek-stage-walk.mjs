@@ -21,6 +21,7 @@ import { serveApp } from "../../tests/lib/server.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { futureDate } from "../../tests/lib/app-actions.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.dirname(path.dirname(here));
@@ -45,7 +46,7 @@ await page.click('.appbar [data-action="create-event"]');
 await page.waitForTimeout(300);
 await page.fill('input[name="name"]', "ORNEK");
 await page.fill('input[name="hotel"]', "Merit");
-await page.fill('input[name="date"]', "2026-10-02");
+await page.fill('input[name="date"]', futureDate());
 await page.click('button[data-setup="blank"]');
 await page.waitForTimeout(600);
 await page.evaluate((src) => {

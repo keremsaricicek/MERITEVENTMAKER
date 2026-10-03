@@ -49,6 +49,7 @@ import { execFileSync } from "node:child_process";
 import { sourceDigest, INPUTS } from "../lib/source-digest.mjs";
 import { memoryGate } from "./gate.mjs";
 import { ciSummary } from "../lib/ci-summary.mjs";
+import { futureDate } from "../../tests/lib/app-actions.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const BENCH = path.dirname(HERE);
@@ -86,7 +87,7 @@ async function open(page) {
   await page.waitForTimeout(300);
   await page.fill('input[name="name"]', "Memory");
   await page.fill('input[name="hotel"]', "Memory");
-  await page.fill('input[name="date"]', "2026-10-02");
+  await page.fill('input[name="date"]', futureDate());
   await page.click('button[data-setup="blank"]');
   await page.waitForTimeout(600);
 }

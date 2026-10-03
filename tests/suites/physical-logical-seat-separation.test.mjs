@@ -227,7 +227,7 @@ async function commitThroughReview(page, { kind, chairs }) {
     const candidates = chairs.map((n, i) => ({ id: "c" + i, kind: "table", type: "round", x: 10 + i * 15, y: 30, w: 6, h: 6, rotation: 0,
       confidence: 0.9, status: "unreviewed", selected: true, printedNumber: null, evidence: { geometry: 0.8, chairs: 0, repetition: 1 },
       chairDetections: Array.from({ length: n }, (_, s) => ({ x: 10 + i * 15 + s, y: 29, w: 1, h: 1, rotation: 0 })) }));
-    const event = { id: "ev-" + Math.random().toString(36).slice(2), name: "Commit", hotel: "Merit", salon: "", date: "2026-12-31", status: "Planning",
+    const event = { id: "ev-" + Math.random().toString(36).slice(2), name: "Commit", hotel: "Merit", salon: "", date: new Date(Date.now() + 90 * 864e5).toLocaleDateString("en-CA"), status: "Planning",
       tables: [], venueObjects: [], guests: [], background: { src: "", visible: true }, audit: [], handoverNotes: [] };
     event.analysis = { id: "an", planHash: "h", engine: "ASSISTED_DETECTION", trainedModel: false, createdAt: new Date().toISOString(), imageWidth: 1000, imageHeight: 800,
       threshold: 128, candidates, missed: [], groupingDecisions: [], comparison: { added: candidates.length, removed: 0, changed: 0 }, memoryReapplied: 0, memoryRestored: 0,

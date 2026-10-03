@@ -22,6 +22,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { launchChromium } from "../../tests/lib/env.mjs";
 import { serveApp } from "../../tests/lib/server.mjs";
+import { futureDate } from "../../tests/lib/app-actions.mjs";
 
 const REPS = Number(process.env.REPS || 20);
 const app = await serveApp();
@@ -33,7 +34,7 @@ page.on("pageerror", (e) => errs.push(e.message));
 await page.goto(app.baseUrl + "/index.html");
 await page.waitForFunction(() => { try { return Array.isArray(state.events); } catch { return false; } });
 await page.evaluate(() => {
-  const e = { id: "ev-stress", name: "Stress 4000", hotel: "Merit Arena", salon: "", date: "2026-12-31", status: "Planning",
+  const e = { id: "ev-stress", name: "Stress 4000", hotel: "Merit Arena", salon: "", date: new Date(Date.now() + 90 * 864e5).toLocaleDateString("en-CA"), status: "Planning",
     tables: [], venueObjects: [], guests: [], background: { src: "", visible: true }, audit: [], handoverNotes: [] };
   for (let i = 0; i < 400; i++) {
     const t = { id: "tbl" + i, number: "T" + String(i + 1).padStart(3, "0"), type: ["round", "square", "rectangle", "bistro"][i % 4],
@@ -145,7 +146,7 @@ for (let i = 0; i < 3; i++) {
   await p2.goto(app.baseUrl + "/index.html");
   await p2.waitForLoadState("networkidle");
   await p2.click('.appbar [data-action="create-event"]');
-  await p2.fill('input[name="name"]', "Analysis"); await p2.fill('input[name="hotel"]', "Merit"); await p2.fill('input[name="date"]', "2026-12-31");
+  await p2.fill('input[name="name"]', "Analysis"); await p2.fill('input[name="hotel"]', "Merit"); await p2.fill('input[name="date"]', futureDate());
   await p2.click('button[data-setup="blank"]');
   await p2.waitForFunction(() => { try { return state.events.length === 1; } catch { return false; } });
   await p2.evaluate((src) => { state.events[0].background = { src, name: "plan", opacity: 1, visible: true, locked: false, scale: 100 }; ui.tab = "floor"; render(); }, planSrc);

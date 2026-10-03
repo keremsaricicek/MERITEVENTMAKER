@@ -4,6 +4,7 @@
 // bind / layout.
 import { launchChromium } from "../../tests/lib/env.mjs";
 import { serveApp } from "../../tests/lib/server.mjs";
+import { futureDate } from "../../tests/lib/app-actions.mjs";
 
 // The runner serves the app itself; nothing here depends on a server a
 // person remembered to start. MERIT_BASE_URL overrides it.
@@ -14,7 +15,7 @@ const p=await b.newPage({viewport:{width:1920,height:1080}});
 await p.goto(app.baseUrl + '/index.html');await p.waitForLoadState('networkidle');
 await p.click('.appbar [data-action="create-event"]');await p.waitForTimeout(300);
 await p.fill('input[name="name"]','Profile 4000');await p.fill('input[name="hotel"]','Merit Arena');
-await p.fill('input[name="date"]','2026-12-31');
+await p.fill('input[name="date"]',futureDate());
 await p.click('button[data-setup="blank"]');await p.waitForTimeout(700);
 await p.evaluate(()=>{
   const e=state.events[0];const tables=[];

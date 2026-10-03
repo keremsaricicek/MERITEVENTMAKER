@@ -32,6 +32,7 @@ import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { launchChromium } from "../../tests/lib/env.mjs";
 import { serveApp } from "../../tests/lib/server.mjs";
+import { futureDate } from "../../tests/lib/app-actions.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const BENCH = path.dirname(HERE);
@@ -142,7 +143,7 @@ await page.click('.appbar [data-action="create-event"]');
 await page.waitForTimeout(250);
 await page.fill('input[name="name"]', "Held out");
 await page.fill('input[name="hotel"]', "Held out");
-await page.fill('input[name="date"]', "2026-10-02");
+await page.fill('input[name="date"]', futureDate());
 await page.click('button[data-setup="blank"]');
 await page.waitForTimeout(600);
 await page.evaluate(src => {

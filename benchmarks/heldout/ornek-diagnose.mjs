@@ -15,6 +15,7 @@
 import { launchChromium } from "../../tests/lib/env.mjs";
 import { serveApp } from "../../tests/lib/server.mjs";
 import fs from "node:fs";
+import { futureDate } from "../../tests/lib/app-actions.mjs";
 
 const app = await serveApp();
 const gt = JSON.parse(fs.readFileSync(new URL("../annotations/ornek-symbolic.json", import.meta.url), "utf8"));
@@ -30,7 +31,7 @@ await page.click('.appbar [data-action="create-event"]');
 await page.waitForTimeout(300);
 await page.fill('input[name="name"]', "ORNEK probe");
 await page.fill('input[name="hotel"]', "ORNEK probe");
-await page.fill('input[name="date"]', "2026-10-02");
+await page.fill('input[name="date"]', futureDate());
 await page.click('button[data-setup="blank"]');
 await page.waitForTimeout(700);
 await page.evaluate((src) => {

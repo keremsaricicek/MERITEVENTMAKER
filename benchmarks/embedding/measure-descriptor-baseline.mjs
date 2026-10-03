@@ -27,6 +27,7 @@ import { serveApp } from "../../tests/lib/server.mjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { futureDate } from "../../tests/lib/app-actions.mjs";
 
 // The runner serves the app itself; nothing here depends on a server a
 // person remembered to start. MERIT_BASE_URL overrides it.
@@ -103,7 +104,7 @@ for (const plan of PLANS) {
   await page.waitForLoadState('networkidle');
   await page.click('.appbar [data-action="create-event"]'); await page.waitForTimeout(300);
   await page.fill('input[name="name"]', 'Emb'); await page.fill('input[name="hotel"]', 'Emb');
-  await page.fill('input[name="date"]', '2026-10-02');
+  await page.fill('input[name="date"]', futureDate());
   await page.click('button[data-setup="blank"]'); await page.waitForTimeout(700);
   const b64 = fs.readFileSync(path.join(ROOT, plan.img)).toString('base64');
   await page.evaluate(src => { state.events[0].background = { src, name: 'p.png', opacity: 1, visible: true, locked: false, scale: 100 }; render(); }, `data:image/png;base64,${b64}`);

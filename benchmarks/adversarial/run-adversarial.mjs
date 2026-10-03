@@ -50,6 +50,7 @@ import { execFileSync } from "node:child_process";
 import { adversarialGate } from "./gate.mjs";
 import { ciSummary } from "../lib/ci-summary.mjs";
 import { sourceDigest, INPUTS } from "../lib/source-digest.mjs";
+import { futureDate } from "../../tests/lib/app-actions.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const BENCH = path.join(ROOT, "..");
@@ -151,7 +152,7 @@ async function detect(browser, imagePath, baseUrl, timeoutMs) {
   await page.waitForTimeout(300);
   await page.fill('input[name="name"]', "Adversarial");
   await page.fill('input[name="hotel"]', "Adversarial");
-  await page.fill('input[name="date"]', "2026-10-02");
+  await page.fill('input[name="date"]', futureDate());
   await page.click('button[data-setup="blank"]');
   await page.waitForTimeout(700);
   await page.evaluate(src => {

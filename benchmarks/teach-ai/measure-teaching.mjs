@@ -31,6 +31,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { launchChromium } from "../../tests/lib/env.mjs";
 import { serveApp } from "../../tests/lib/server.mjs";
+import { futureDate } from "../../tests/lib/app-actions.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const BENCH = path.dirname(HERE);
@@ -112,7 +113,7 @@ async function openWithPlan(browser, baseUrl) {
   await page.waitForTimeout(300);
   await page.fill('input[name="name"]', "Teach");
   await page.fill('input[name="hotel"]', "Teach");
-  await page.fill('input[name="date"]', "2026-10-02");
+  await page.fill('input[name="date"]', futureDate());
   await page.click('button[data-setup="blank"]');
   await page.waitForTimeout(700);
   await page.evaluate(src => {

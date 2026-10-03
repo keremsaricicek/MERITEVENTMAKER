@@ -10,6 +10,7 @@
 // Usage: node benchmarks/perf/live-windowing-correctness.mjs
 import { launchChromium } from "../../tests/lib/env.mjs";
 import { serveApp } from "../../tests/lib/server.mjs";
+import { futureDate } from "../../tests/lib/app-actions.mjs";
 
 // The runner serves the app itself; nothing here depends on a server a
 // person remembered to start. MERIT_BASE_URL overrides it.
@@ -25,7 +26,7 @@ const ok = (c, l, d) => { if (c) { passed++; console.log('OK: ' + l); } else { f
 await p.goto(app.baseUrl + '/index.html'); await p.waitForLoadState('networkidle');
 await p.click('.appbar [data-action="create-event"]'); await p.waitForTimeout(300);
 await p.fill('input[name="name"]', 'LiveWin'); await p.fill('input[name="hotel"]', 'M');
-await p.fill('input[name="date"]', '2026-12-31');
+await p.fill('input[name="date"]', futureDate());
 await p.click('button[data-setup="blank"]'); await p.waitForTimeout(700);
 
 const built = await p.evaluate(() => {

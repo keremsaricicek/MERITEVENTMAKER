@@ -23,6 +23,7 @@ import { serveApp } from "../../tests/lib/server.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { futureDate } from "../../tests/lib/app-actions.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "../..");
@@ -55,7 +56,7 @@ for (const plan of plans) {
   await page.waitForTimeout(300);
   await page.fill('input[name="name"]', "Anchors");
   await page.fill('input[name="hotel"]', "Anchors");
-  await page.fill('input[name="date"]', "2026-10-02");
+  await page.fill('input[name="date"]', futureDate());
   await page.click('button[data-setup="blank"]');
   await page.waitForTimeout(700);
   await page.evaluate((src) => {

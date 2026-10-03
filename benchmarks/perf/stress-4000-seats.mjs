@@ -5,6 +5,7 @@
 import { launchChromium } from "../../tests/lib/env.mjs";
 import { serveApp } from "../../tests/lib/server.mjs";
 import { routeVendorFromCache } from "../../tests/lib/vendor.mjs";
+import { futureDate } from "../../tests/lib/app-actions.mjs";
 
 // The runner serves the app itself; nothing here depends on a server a
 // person remembered to start. MERIT_BASE_URL overrides it.
@@ -25,7 +26,7 @@ const time=async(label,fn)=>{const t0=Date.now();const r=await fn();T[label]=Dat
 await p.goto(app.baseUrl + '/index.html');await p.waitForLoadState('networkidle');
 await p.click('.appbar [data-action="create-event"]');await p.waitForTimeout(300);
 await p.fill('input[name="name"]','Stress 4000');await p.fill('input[name="hotel"]','Merit Arena');
-await p.fill('input[name="date"]','2026-12-31');
+await p.fill('input[name="date"]',futureDate());
 await p.click('button[data-setup="blank"]');await p.waitForTimeout(700);
 
 // ---- build the dataset ----------------------------------------------------

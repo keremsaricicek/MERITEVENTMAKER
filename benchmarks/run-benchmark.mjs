@@ -16,6 +16,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { futureDate } from "../tests/lib/app-actions.mjs";
 
 // The runner serves the app itself; nothing here depends on a server a
 // person remembered to start. MERIT_BASE_URL overrides it.
@@ -85,7 +86,7 @@ async function detect(browser, imagePath) {
   await page.waitForTimeout(300);
   await page.fill('input[name="name"]', "Benchmark");
   await page.fill('input[name="hotel"]', "Benchmark");
-  await page.fill('input[name="date"]', "2026-10-02");
+  await page.fill('input[name="date"]', futureDate());
   await page.click('button[data-setup="blank"]');
   await page.waitForTimeout(700);
 
