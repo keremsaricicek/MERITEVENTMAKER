@@ -396,7 +396,24 @@ Line numbers are within `src/plan-detection-classical.js`.
 
 ---
 
-## Split B — measured, and NOT started
+## Split B — STARTED (2026-10-03): B-1 and B-2 are out of `detect()`
+
+> The first two stages, in the order this document gives — they consume nothing
+> but pixels — are `src/plan-detection-preprocess.js` (`MeritPlanPreprocess`:
+> `measurePixels`, `binarize`), each with its INPUT / OUTPUT / OWNS / CONSUMERS /
+> FAILS / TEST OWNER contract written at the top of the file. Each returns an
+> explicit record and `detect()` destructures exactly the names that escape;
+> the histogram, running sum, edge mask and integral image stay private, which
+> `plan-detection-boundary` checks. Measured on the whole output: **28 of 28
+> plans byte-identical** (`benchmarks/detector-fingerprint.mjs`), and the same
+> tool tells a reverted FIX #2 (edges OR-ed back into the labelled mask) apart.
+> B-3 (the colour model) was already two calls into Split A-2's module.
+> **What remains is the hard part, measured below and unchanged:** `chairs`
+> and `tables` are 78% of `detect()` and hand ~30 values forward through shared
+> locals. They need their hand-off made an explicit record before they can
+> move — a design step with the fingerprint as its gate, not a file move.
+
+## Split B — measured
 
 `scripts/stage-boundaries.mjs`, run on the post-Split-A file. Each stage is
 the code between two `mark()` calls; the tail is where the result object is

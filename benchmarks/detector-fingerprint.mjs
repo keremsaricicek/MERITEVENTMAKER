@@ -131,7 +131,8 @@ if (mode === "record") {
   console.log(`\nrecorded ${Object.keys(result).length} plans → ${path.relative(ROOT, STORE)}`);
 } else if (mode === "compare") {
   const stored = JSON.parse(fs.readFileSync(STORE, "utf8")).plans;
-  const names = [...new Set([...Object.keys(stored), ...Object.keys(result)])];
+  // With --only, judge the plans that ran; a full run judges every recorded plan.
+  const names = ONLY ? Object.keys(result) : [...new Set([...Object.keys(stored), ...Object.keys(result)])];
   const differ = names.filter((n) => !stored[n] || !result[n] || stored[n].hash !== result[n].hash);
   const errored = names.filter((n) => result[n] && result[n].pageErrors);
   console.log(`\n${names.length - differ.length} of ${names.length} plans IDENTICAL to the recorded fingerprint.`);

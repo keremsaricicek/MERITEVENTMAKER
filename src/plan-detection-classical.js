@@ -61,6 +61,8 @@
   const DESKEW = globalThis.MeritPlanDeskew;
   // The drawing's own palette — accent, tone bands, class masks (Split A-2).
   const TONE = globalThis.MeritPlanTone;
+  // detect()'s first two stages, pixels and binarize (Split B-1/B-2).
+  const PRE = globalThis.MeritPlanPreprocess;
   // ---- The provider -------------------------------------------------------
   const CLASSICAL_CV_PROVIDER={
     id:"classical-cv",
@@ -74,51 +76,12 @@
       // performance change can be judged against numbers instead of a feeling.
       const phaseMs={};let phaseFrom=performance.now();
       const mark=name=>{const now=performance.now();phaseMs[name]=Math.round(now-phaseFrom);phaseFrom=now;};
-      // ---- pass 1: luma + histogram + RGB colour histogram, one loop ----
-      const gray=new Uint8Array(total),hist=new Uint32Array(256);
-      // The colour model is a global statistic, so it is built from a fixed 2x2
-      // subsample (deterministic, ~25% of the pixels) instead of every pixel.
-      const binCount=new Uint32Array(TONE.RGB_BINS),binR=new Uint32Array(TONE.RGB_BINS),binG=new Uint32Array(TONE.RGB_BINS),binB=new Uint32Array(TONE.RGB_BINS);
-      // Luma histograms split by how saturated the pixel is, so the tone model
-      // can look at the drawing's fills without the accent objects skewing it.
-      const lumaLowChroma=new Uint32Array(256),lumaMidChroma=new Uint32Array(256);
-      let sum=0,sampled=0;
-      for(let y=0;y<height;y++){
-        const rowSampled=(y&1)===0;
-        for(let x=0,i=y*width,o=i*4;x<width;x++,i++,o+=4){
-          const r=data[o],g=data[o+1],b=data[o+2];
-          const v=Math.round(r*.299+g*.587+b*.114);
-          gray[i]=v;hist[v]++;sum+=v;
-          if(rowSampled&&(x&1)===0){
-            const bin=TONE.rgbBinIndex(r,g,b);
-            binCount[bin]++;binR[bin]+=r;binG[bin]+=g;binB[bin]+=b;sampled++;
-            const chroma=Math.max(r,g,b)-Math.min(r,g,b);
-            if(chroma<TONE.LOW_CHROMA)lumaLowChroma[v]++;else if(chroma<TONE.MID_CHROMA)lumaMidChroma[v]++;
-          }
-        }
-      }
-      const threshold=DESKEW.otsu(hist,total,sum);
+      // B-1 and B-2 are MeritPlanPreprocess (src/plan-detection-preprocess.js),
+      // each with its contract stated there.
+      const {gray,threshold,binCount,binR,binG,binB,sampled,lumaLowChroma,lumaMidChroma}=PRE.measurePixels(data,width,height);
       mark("pixels");
       await stage("understanding",30);phaseFrom=performance.now();
-      // ---- pass 2: adaptive fill mask and Sobel edge map, kept SEPARATE ----
-      // FIX #2: the edge map is no longer OR-ed into the mask that gets
-      // labelled. It is used only as a BARRIER for enclosed-region extraction
-      // (where a shared outline helps by separating two interiors) and as the
-      // union mask handed to computeVisualDescriptor, whose descriptor
-      // semantics stay exactly as before.
-      const fillMask=new Uint8Array(total),edgeMask=new Uint8Array(total),barrier=new Uint8Array(total);
-      const integral=new Uint32Array((width+1)*(height+1));
-      for(let y=1;y<=height;y++){let row=0;for(let x=1;x<=width;x++){row+=gray[(y-1)*width+x-1];integral[y*(width+1)+x]=integral[(y-1)*(width+1)+x]+row;}}
-      const stride=width+1;
-      for(let y=1;y<height-1;y++)for(let x=1;x<width-1;x++){
-        const i=y*width+x,r=18,x0=Math.max(0,x-r),x1=Math.min(width-1,x+r),y0=Math.max(0,y-r),y1=Math.min(height-1,y+r);
-        const local=(integral[(y1+1)*stride+x1+1]-integral[y0*stride+x1+1]-integral[(y1+1)*stride+x0]+integral[y0*stride+x0])/((x1-x0+1)*(y1-y0+1));
-        const gx=-gray[i-width-1]+gray[i-width+1]-2*gray[i-1]+2*gray[i+1]-gray[i+width-1]+gray[i+width+1];
-        const gy=-gray[i-width-1]-2*gray[i-width]-gray[i-width+1]+gray[i+width-1]+2*gray[i+width]+gray[i+width+1];
-        if(gray[i]<Math.min(threshold+12,local-7))fillMask[i]=1;
-        if(Math.abs(gx)+Math.abs(gy)>150)edgeMask[i]=1;
-        barrier[i]=(fillMask[i]||edgeMask[i])?1:0;
-      }
+      const {fillMask,barrier}=PRE.binarize(gray,width,height,threshold);
       const binary=barrier; // same union the previous pipeline labelled; kept for computeVisualDescriptor
       mark("binarize");
       const accentModel=TONE.buildAccentModel(binCount,binR,binG,binB,sampled);

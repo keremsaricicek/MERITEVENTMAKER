@@ -596,8 +596,12 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
       `the pipeline makes no BARE call to ${n}()`,
       matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).slice(0, 3));
   }
-  checks.ok(/DESKEW\.otsu\s*\(/.test(detCode),
-    "the binarize stage reaches otsu through the published object", true);
+  // The pixels stage (Split B-1) computes the threshold, and since it left
+  // detect() it lives in the preprocess module — which must still reach otsu
+  // through the deskew module's published object.
+  const preCodeForOtsu = stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", "plan-detection-preprocess.js"), "utf8"));
+  checks.ok(/DESKEW\.otsu\s*\(/.test(preCodeForOtsu),
+    "the pixels stage reaches otsu through the deskew module's published object", true);
   checks.ok(/estimatePlanSkew:\s*DESKEW\.estimatePlanSkew/.test(detCode),
     "and the provider's own estimatePlanSkew names the module's function rather than a shorthand for a local that no longer exists — the shorthand is exactly how a move like this goes silently wrong",
     true);
@@ -679,4 +683,39 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal(liveTone.keys.join(","), "LOW_CHROMA,MID_CHROMA,RGB_BINS,buildAccentModel,buildClassMasks,buildToneModel,rgbBinIndex,version",
     "with exactly its seven public names and a version — the private three-bit arithmetic stays inside", liveTone.keys);
   checks.equal([liveTone.bins, liveTone.bin], [512, 448], "and the bins are the 8×8×8 cube the pipeline sizes its histograms by (pure red is bin 448)");
+
+  // ---- Split B-1/B-2: detect()'s first two stages -------------------------
+  // The first stages to leave detect() itself. Each returns an explicit
+  // record; detect() destructures exactly the names that escape and nothing
+  // else (the histogram, sum, edge mask and integral image stay private).
+  const prePath = path.join(repoRoot, "src", "plan-detection-preprocess.js");
+  checks.require(fs.existsSync(prePath), "the pixels and binarize stages live in their own file", "src/plan-detection-preprocess.js");
+  const preCode = stripCommentsAndStrings(fs.readFileSync(prePath, "utf8"));
+  const preExported = [...preCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]);
+  checks.equal([...new Set(preExported)].join(","), "MeritPlanPreprocess", "it publishes exactly one name", preExported);
+  checks.ok(/PRE\.measurePixels\s*\(/.test(detCode) && /PRE\.binarize\s*\(/.test(detCode),
+    "detect() reaches both stages through the published object", true);
+  checks.equal(["measurePixels", "binarize"].filter((n) => matchLines(detCode, new RegExp(`(^|[^\\w.$])${n}\\s*\\(`)).length), [],
+    "and calls neither bare");
+  const preBinds = bindings(preCode), preBare = bareUses(preCode);
+  checks.equal([...detBindings, ...v8Bindings].filter((n) => preBare.has(n) && !preBinds.has(n)), [],
+    "the stages resolve no name bound only in the pipeline or the shell — their inputs are their arguments");
+  checks.equal(["integral", "edgeMask", "hist"].filter((n) => new RegExp(`\\b${n}\\b`).test(detCode)), [],
+    "what each stage owns stays owned: the histogram, the edge mask and the integral image are not in detect()");
+  const livePre = await page.evaluate(() => {
+    const P = globalThis.MeritPlanPreprocess;
+    if (!P) return null;
+    // A 4×4 image: dark left half, white right half.
+    const w = 4, h = 4, data = new Uint8ClampedArray(w * h * 4);
+    for (let i = 0; i < w * h; i++) { const v = (i % w) < 2 ? 20 : 240; data.set([v, v, v, 255], i * 4); }
+    const px = P.measurePixels(data, w, h), bin = P.binarize(px.gray, w, h, px.threshold);
+    return { keys: Object.keys(P).sort(), pxKeys: Object.keys(px).sort(), binKeys: Object.keys(bin).sort(),
+      gray: Array.from(px.gray.slice(0, 4)), thresholdBetween: px.threshold >= 20 && px.threshold < 240 };
+  });
+  checks.require(livePre, "MeritPlanPreprocess is published on the page after boot");
+  checks.equal(livePre.keys.join(","), "binarize,measurePixels,version", "with exactly its two stages and a version", livePre.keys);
+  checks.equal([livePre.pxKeys.join(","), livePre.binKeys.join(",")],
+    ["binB,binCount,binG,binR,gray,lumaLowChroma,lumaMidChroma,sampled,threshold", "barrier,fillMask"],
+    "each stage returns exactly the record its contract states");
+  checks.ok(livePre.thresholdBetween && livePre.gray.join(",") === "20,20,240,240", "and it still measures: luma per pixel, an ink threshold between the two populations", livePre);
 }
