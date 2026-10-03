@@ -26,6 +26,17 @@
 (() => {
   "use strict";
 
+  // ONE FOLD FOR BOTH SIDES. An operator at a door types on whatever keyboard
+  // is in front of them: "yilmaz" for Yılmaz, "sarıcicek" or "saricicek" for
+  // Sarıçiçek, "ROSSI" with caps lock on. Lowercasing alone cannot meet them
+  // — Turkish lowercasing turns "ROSSI" into "rossı", which matched nobody,
+  // and a US keyboard cannot type "ı" at all (measured 2026-10-03: both
+  // missed). So the haystack and the query are folded the same way: Turkish
+  // lowercase, accents dropped, dotless ı read as i. Display and the
+  // alphabetical order keep the real Turkish name; only matching is folded.
+  const fold = (s) => String(s || "").toLocaleLowerCase("tr").normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "").replace(/ı/g, "i");
+
   // One engine per caller, each with its own cached index.
   function create({ formatNumber }) {
     let cache = null;
@@ -38,8 +49,8 @@
       const tables = new Map(event.tables.map((t) => [t.id, t]));
       const rows = event.guests.map((g) => {
         const table = g.assignment ? tables.get(g.assignment.tableId) || null : null;
-        return { guest: g, table,
-          name: String(g.name || "").toLocaleLowerCase("tr"),
+        const name = String(g.name || "").toLocaleLowerCase("tr");
+        return { guest: g, table, name, key: fold(name),
           // Everything the phase asks to search by: names, the host or company
           // that brought them, VIP level, planning and arrival status, the
           // table number and its zone. `invitedBy` is where this data model
@@ -47,14 +58,14 @@
           // field, and inventing one would be a field nobody fills in.
           hay: [g.name, g.vip, g.invitedBy, g.notes, g.planningStatus, g.arrivalStatus,
             table ? table.number : "", table ? formatNumber(table.number) : "", table ? table.zone : ""]
-            .filter(Boolean).join(" ").toLocaleLowerCase("tr") };
+            .filter(Boolean).map(fold).join(" ") };
       });
       cache = { sig, rows, tables };
       return cache;
     }
     // Every guest the query matches, and the terms it was split into.
     function matchRows(event, query) {
-      const q = String(query || "").trim().toLocaleLowerCase("tr");
+      const q = fold(String(query || "").trim());
       if (!q) return { rows: [], terms: [] };
       const terms = q.split(/\s+/).filter(Boolean);
       return { rows: index(event).rows.filter((row) => terms.every((term) => row.hay.includes(term))), terms };
@@ -66,7 +77,7 @@
       const { rows: matched, terms } = matchRows(event, query);
       if (!terms.length) return { rows: [], total: 0 };
       const hits = matched.map((row) => ({ row,
-        rank: row.name.startsWith(terms[0]) ? 0 : row.name.includes(terms[0]) ? 1 : 2 }));
+        rank: row.key.startsWith(terms[0]) ? 0 : row.key.includes(terms[0]) ? 1 : 2 }));
       hits.sort((a, b) => a.rank - b.rank || a.row.name.localeCompare(b.row.name, "tr"));
       return { rows: hits.slice(0, limit).map((h) => h.row), total: hits.length };
     }

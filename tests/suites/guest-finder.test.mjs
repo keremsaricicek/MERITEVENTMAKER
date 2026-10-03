@@ -220,6 +220,17 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(otherEvent.sameStamp && twin.rows.some(r => r.name.startsWith("Twin Zeynep")),
     "and another event with the same stamp and counts gets its OWN guests, never the last event's — the event id is in the key", { otherEvent, rows: twin.rows.map(r => r.name), back });
 
+  // --- 2d. typed on whatever keyboard is at the door -----------------------
+  // Turkish lowercasing alone turned "ROSSI" into "rossı" and matched nobody,
+  // and "yilmaz" — the only spelling a US keyboard can type — never met
+  // "Yılmaz" (both measured before the fold, 2026-10-03).
+  for (const [query, who] of [["yilmaz", "Mehmet Yılmaz"], ["ROSSI", "Sofia Rossi"], ["SOFIA", "Sofia Rossi"], ["saricicek mehmet", "Mehmet Yılmaz"], ["YILMAZ", "Mehmet Yılmaz"]]) {
+    const r = await type(page, query);
+    checks.ok(r.rows.some((x) => x.name.startsWith(who)), `"${query}" finds ${who} — case and Turkish letters do not decide who is found`, r.rows.slice(0, 3).map((x) => x.name));
+  }
+  const tr = await type(page, "Yılmaz");
+  checks.ok(tr.rows.some((x) => x.name.startsWith("Mehmet Yılmaz")), "and the Turkish spelling still finds them", tr.rows.slice(0, 3).map((x) => x.name));
+
   // --- 2c. the engine at its own boundary ----------------------------------
   // One engine, published once, for both surfaces. What no surface can reach
   // is checked here: an empty query matches NOBODY (both callers happen to
