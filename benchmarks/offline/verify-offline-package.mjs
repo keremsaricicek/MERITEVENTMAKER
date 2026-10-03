@@ -166,7 +166,7 @@ const checks = [
   ['every source file in the bundle executed', notBooted.length === 0, notBooted],
   ['all required dialogs/inputs are present in the markup', boot.dialogs.length === 0, boot.dialogs],
   ['Tesseract + SheetJS loaded from local assets', boot.tesseract === 'object' && boot.xlsx === 'object'],
-  ['OCR asset paths point at local files', !!boot.assetPaths && String(boot.assetPaths.workerPath).startsWith('./')],
+  ['OCR engine is embedded in the package, not fetched', !!boot.assetPaths && String(boot.assetPaths.embedded).startsWith('./')],
   ['OCR reported available', ocr.available === true, ocr.reason],
   ['zero off-origin requests were even attempted', offOrigin.length === 0, offOrigin.slice(0, 6)],
   ['read the printed total "124"', text.includes('124')],
@@ -210,6 +210,63 @@ const labelWords = (ocr.words || []).filter(w => /^T[O0]{1,2}\d?$/i.test(w.t));
 console.log('\nNOTE — alphanumeric table labels, evidence only, not asserted:',
   JSON.stringify(labelWords), labelWords.some(w => /O/.test(w.t))
     ? '(letter-O for digit-0 confusion present, as documented in MERIT_OCR_STATUS)' : '(read cleanly this run)');
+
+// THE SAME FOLDER, OPENED BY DOUBLE-CLICK. An operator does not run a server.
+// Served over HTTP (above) the package read its OCR; opened from disk, Chrome
+// would not start the OCR worker from a file:// script and OCR was simply
+// unavailable — measured 2026-10-03 on the package handed to the user. So the
+// package is opened as a file too, and must read the same text with zero
+// off-origin requests.
+{
+  const fp = await ctx.newPage();
+  const fileErrs = [];
+  fp.on('pageerror', e => fileErrs.push(e.message));
+  await fp.goto('file://' + join(ROOT, 'index.html'));
+  await fp.waitForTimeout(1500);
+  const fileOcr = await fp.evaluate(async (pdfB64) => {
+    const c = document.createElement('canvas'); c.width = 1000; c.height = 200;
+    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 1000, 200);
+    x.fillStyle = '#000'; x.font = 'bold 44px sans-serif'; x.fillText('TOTAL 124 PAX SAHNE', 60, 90);
+    const r = await runPlanOCR(c.toDataURL('image/png'), { timeoutMs: 120000 });
+    // A PDF plan, rendered through the package's own pdf.js worker.
+    let pdf = null;
+    try {
+      const bin = atob(pdfB64), u = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      const doc = await MeritPdf.getDocument({ data: u }).promise, page = await doc.getPage(1);
+      const vp = page.getViewport({ scale: 0.5 }), pc = document.createElement('canvas');
+      pc.width = vp.width; pc.height = vp.height;
+      await page.render({ canvasContext: pc.getContext('2d'), viewport: vp }).promise;
+      pdf = { pages: doc.numPages, width: Math.round(vp.width) };
+    } catch (e) { pdf = { error: String(e) }; }
+    return { available: r.available, text: r.text, reason: r.reason, booted: typeof globalThis.t === 'function', pdf };
+  }, (await readFile(join(REPO, 'benchmarks', 'plans', 'ORNEK.pdf'))).toString('base64'));
+  await fp.close();
+  const ft = (fileOcr.text || '').toUpperCase();
+  checks.push(
+    ['opened by double-click (file://): the app boots', fileOcr.booted === true],
+    ['opened by double-click (file://): OCR is available', fileOcr.available === true, fileOcr.reason],
+    ['opened by double-click (file://): OCR reads "124" and "SAHNE"', ft.includes('124') && ft.includes('SAHNE'), fileOcr.text],
+    ['opened by double-click (file://): a PDF plan renders', !!fileOcr.pdf && fileOcr.pdf.pages >= 1 && fileOcr.pdf.width > 0, fileOcr.pdf],
+    ['opened by double-click (file://): no page errors', fileErrs.length === 0, fileErrs.slice(0, 3)],
+  );
+  console.log('\nFILE:// OCR:', JSON.stringify(fileOcr));
+}
+
+// Is every source file the app loads actually IN the folder build? The same
+// question the light build is asked below, asked of the deliverable an
+// operator is told to use.
+{
+  const artifact = await readFile(join(ROOT, 'index.html'), 'utf8');
+  const absent = [];
+  for (const rel of appSourceFiles(REPO)) {
+    const src = await readFile(join(REPO, rel), 'utf8');
+    const mid = Math.floor(src.length / 2);
+    if (!artifact.includes(src.slice(mid, mid + 160))) absent.push(rel);
+  }
+  checks.push(['folder build: every script index.html loads is bundled'
+    + (absent.length ? ` (missing: ${absent.join(', ')})` : ''), absent.length === 0]);
+}
 
 // ---- the other deliverable: the single email-able file -------------------
 // It ships without OCR on purpose. The contract is that it says so rather

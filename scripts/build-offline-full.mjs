@@ -11,7 +11,7 @@
 //
 // Usage: node scripts/build-offline-full.mjs
 
-import { mkdirSync, writeFileSync, readFileSync, existsSync, copyFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync, existsSync, copyFileSync, rmSync } from "node:fs";
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -100,15 +100,16 @@ globalThis.MeritPdf = { getDocument, GlobalWorkerOptions };
 globalThis.dispatchEvent(new CustomEvent("merit-pdf-ready"));
 `;
 
-// Tells src/plan-ocr.js to point Tesseract.js at these LOCAL relative paths
-// instead of its CDN defaults, so OCR works with zero network access.
+// Tells src/plan-ocr.js where the EMBEDDED OCR engine is. A page opened by
+// double-click (file://) cannot fetch its sibling files, and Chrome refuses to
+// start a worker from a file:// script — measured 2026-10-03: OCR did not run
+// in this package opened from disk, though it did when served. So the worker
+// script, the core (wasm inlined) and both language files ship as plain
+// <script> files that set strings on a global; plan-ocr.js loads them on first
+// use and starts ONE blob worker that carries all of it. One path, whether the
+// folder is served or opened from disk.
 const ocrPathsBridge = `<script>
-globalThis.MERIT_OCR_ASSET_PATHS = {
-  workerPath: "./assets/ocr/worker.min.js",
-  corePath: "./assets/ocr/tesseract-core-simd-lstm.js",
-  langPath: "./assets/ocr",
-  gzip: true,
-};
+globalThis.MERIT_OCR_ASSET_PATHS = { embedded: "./assets/ocr/" };
 </script>`;
 
 const html = `<!doctype html>
@@ -137,16 +138,23 @@ ${appJs}
 </html>
 `;
 
+// Cleared first: a file a previous build shipped and this one no longer uses
+// must not ride along in the package.
+rmSync(OCR_OUT, { recursive: true, force: true });
 mkdirSync(OCR_OUT, { recursive: true });
 writeFileSync(path.join(OUT, "index.html"), html);
 copyFileSync(path.join(tesseractDir, "dist/tesseract.min.js"), path.join(OCR_OUT, "tesseract.min.js"));
-copyFileSync(path.join(tesseractDir, "dist/worker.min.js"), path.join(OCR_OUT, "worker.min.js"));
-copyFileSync(path.join(tesseractCoreDir, "tesseract-core-simd-lstm.js"), path.join(OCR_OUT, "tesseract-core-simd-lstm.js"));
-copyFileSync(path.join(tesseractCoreDir, "tesseract-core-simd-lstm.wasm"), path.join(OCR_OUT, "tesseract-core-simd-lstm.wasm"));
-copyFileSync(engTrainedData, path.join(OCR_OUT, "eng.traineddata.gz"));
-copyFileSync(turTrainedData, path.join(OCR_OUT, "tur.traineddata.gz"));
+// Each embedded asset is `(globalThis.MERIT_OCR_EMBED ||= {})[key] = "<text>"`:
+// the worker and core as their JavaScript source, the language data as base64
+// of the .gz file the worker un-gzips itself.
+const embed = (name, key, text) => writeFileSync(path.join(OCR_OUT, name),
+  `(globalThis.MERIT_OCR_EMBED=globalThis.MERIT_OCR_EMBED||{})[${JSON.stringify(key)}]=${JSON.stringify(text)};\n`);
+embed("embed-worker.js", "worker", readFileSync(path.join(tesseractDir, "dist/worker.min.js"), "utf8"));
+embed("embed-core.js", "core", readFileSync(path.join(tesseractCoreDir, "tesseract-core-simd-lstm.wasm.js"), "utf8"));
+embed("embed-eng.js", "eng", readFileSync(engTrainedData).toString("base64"));
+embed("embed-tur.js", "tur", readFileSync(turTrainedData).toString("base64"));
 
 const totalSize = execSync(`du -sh "${OUT}"`).toString().split("\t")[0];
 console.log(`Bundled ${appJsFiles.length} app sources from index.html: ${appJsFiles.map((f) => f.replace("src/", "")).join(", ")}`);
 console.log(`Wrote ${OUT}/ (${totalSize} total, including offline OCR assets)`);
-console.log("Open dist/merit-offline/index.html directly, or serve the folder — no network required, including Assisted Detection's capacity-audit OCR.");
+console.log("Open dist/merit-offline/index.html by double-click, or serve the folder — OCR runs either way with no network (verify-offline-package checks both).");

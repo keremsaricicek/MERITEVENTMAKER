@@ -1,0 +1,9 @@
+# Technical gaps — progress
+
+The one short progress file for closing the gaps `FINAL-COMPLETION-MATRIX.md`
+lists. Fixed test copy: commit `3bfb246` (packages delivered from it; the
+`test-kopya-3bfb246` tag could not be pushed through this session's git proxy).
+
+| # | area | state | evidence |
+|---|---|---|---|
+| 4 | offline packages | OCR now runs when the folder package is opened by double-click (it did not: Chrome refused the OCR worker from `file://`). Verifier opens it from disk: OCR reads the text, a PDF renders, zero off-origin requests; folder build source completeness asserted. The single-file build stays OCR-less by design and says so. | `verify-offline-package` 33/33; the old delivered package fails 4 of the new checks |
