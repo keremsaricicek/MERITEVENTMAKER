@@ -1847,6 +1847,35 @@ detection suites) never ran that suite; the snapshot gate before push did.
 The suite now reads the whole pipeline and requires exactly one definition.
 Nothing was pushed red.
 
+### AJ. Step 6, three defects, §3E, §32's kit, §35 and the §36 cross-check (2026-10-03)
+
+**The guest-matching engine left app-v8.js** (`src/guest-search.js`, `1c226dc`)
+— characterized first (`571993e`): of fifteen mutations of its rules, NINE
+survived every suite; all fifteen fail now. The ownership map's "missing test:
+none material" for A10 was wrong.
+
+**Three defects, each found by a check written for something else:**
+- the door search could not find "yilmaz" or "ROSSI" — Turkish lowercasing
+  turned "ROSSI" into "rossı" (`3f860a0`, fold on both sides);
+- undo of a deleted guest could seat two people on one chair — no suite
+  exercised it; `assignment-writer` §8 now does (`571993e`);
+- the review screen called the classical detector "AI" in three strings,
+  found by the release-quality-director cross-check (`fb8238e`; the honesty
+  check now reads every key).
+
+**§3E:** shell lines over 500 characters 110 → 59, at statement boundaries
+only, each file proven to parse to the identical program (`f34b855`).
+
+**§32:** the operator kit gained Session C — sixteen task cards for §32's list
+with a SYNTHETIC guest list that the real wizard reads as 20 records / 43 pax /
+8 flagged / 4 blocking — and the second round after fixes (`311fed7`).
+
+**§35 at `f34b855`:** see `benchmarks/FINAL-COMPLETION-MATRIX.md`, which also
+carries the §36 table. The cross-check downgraded 8 of 17 rows; every
+downgrade was accepted except AI honesty, whose cause was fixed in the same
+pass. Eight technically controllable dimensions remain below 9, each with its
+blocker stated there.
+
 ### Adversarial at `3451f67` — 1 PASS · 4 PARTIAL · 3 FAIL
 
 Same distribution as `02edac7`; the run exits 0 because it gates on
@@ -1874,12 +1903,14 @@ typing 136/289.
 
 ## Next step
 
-**Step 6 / §3D — the rules still inside screen code**, the same way steps 4
-and 5 moved rules rather than screens: the guest-matching engine (A10) to
-`src/guest-search.js`, then the restore-a-deleted-guest seat decision (A21),
-each characterized and mutation-proven first. Then: coverage re-run, §35
-validation with every benchmark, and `benchmarks/FINAL-COMPLETION-MATRIX.md`
-rewritten from measurement.
+**The programme's final validation and matrix are done** (`FINAL-COMPLETION-MATRIX.md`).
+What a next programme would take, in the order the matrix gives it: the eight
+dimensions below 9 (test discipline — suites for docs, timings and desktop;
+architecture — the screens' injected-context redesign;
+plan reliability — `a2`/`a6` and region-local statistics; performance budgets;
+resilience's two unsuited modes; security's Teach Area fixture and CSP; UI's
+Add-Manually finding and loading states; a documentation drift check). External:
+a real operator session (kit ready), a third real plan, and the EXE gate.
 
 ### Open, measured — none accepted as correct
 
