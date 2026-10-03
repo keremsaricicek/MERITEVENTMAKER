@@ -314,4 +314,39 @@ export default async function run({ page, checks, baseUrl }) {
     "and offers no confirmation — a finished night is read-only", historical);
   checks.equal(historical.seen, 1,
     "the one confirmation made while it was open is still exactly one", historical);
+
+  // --- 10. "since when" is the version this event was taken FROM -----------
+  // Somebody publishes v2 after this event was created. The operator's
+  // question is still "what have I changed since the room I started from",
+  // so the comparison stays on v1 — answering against the newest version
+  // would change the answer underneath them.
+  await page.evaluate(() => { state.events[0].status = "Planning"; ui.tab = "floor"; ui.planMode = "changes"; render(); });
+  await page.waitForTimeout(300);
+  const onV1 = await page.evaluate(PANEL);
+  const v2 = await page.evaluate(() => {
+    const e = state.events[0], ref = e.venueRef;
+    const venue = MeritVenueModel.findVenue(state, ref.venueId), layout = MeritVenueModel.findLayout(venue, ref.layoutId);
+    const v1 = MeritVenueModel.findVersion(layout, ref.layoutVersionId);
+    // v2 holds exactly v1's room: compared to it, the event shows the same changes.
+    const v2 = MeritVenueModel.createLayoutVersion(state, venue.id, layout.id, { structure: v1.structure, label: "v2" });
+    render();
+    return { id: v2.id, label: v2.label };
+  });
+  await page.waitForTimeout(300);
+  const afterPublish = await page.evaluate(PANEL);
+  checks.ok(onV1.heading && /v1/.test(onV1.heading) && afterPublish.heading === onV1.heading,
+    "a newer published version does not move the comparison: it is still against v1, the version this event was taken from", { before: onV1.heading, after: afterPublish.heading });
+  checks.equal(afterPublish.rows.map((r) => r.type + ":" + r.key), onV1.rows.map((r) => r.type + ":" + r.key), "and lists the same changes");
+
+  // --- 11. a confirmation is about a version, not about a change -----------
+  // Pointed at v2 — the same room as v1 — the same changes appear. The one an
+  // operator confirmed was confirmed ABOUT v1; it must not arrive already
+  // ticked against v2.
+  await page.evaluate((v) => { const r = state.events[0].venueRef; r.layoutVersionId = v.id; r.layoutVersionLabel = v.label; render(); }, v2);
+  await page.waitForTimeout(300);
+  const onV2 = await page.evaluate(PANEL);
+  checks.ok(onV2.heading && /v2/.test(onV2.heading), "pointed at v2, the view says so", onV2.heading);
+  checks.equal(onV2.rows.map((r) => r.type + ":" + r.key), onV1.rows.map((r) => r.type + ":" + r.key), "the same room gives the same changes");
+  checks.equal([onV1.rows.filter((r) => r.confirmed).length, onV2.rows.filter((r) => r.confirmed).length], [1, 0],
+    "the change confirmed about v1 is not confirmed about v2 — the record of it stays where it was made");
 }
