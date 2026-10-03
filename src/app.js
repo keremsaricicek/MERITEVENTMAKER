@@ -69,13 +69,34 @@
     t("T05","rectangle",195,370,180,90,8,"MAIN FLOOR"),t("T06","rectangle",400,370,180,90,8,"MAIN FLOOR"),t("T07","rectangle",195,525,180,90,8,"MAIN FLOOR"),t("T08","rectangle",400,525,180,90,8,"MAIN FLOOR"),
     t("T09","round",48,382,120,120,8,"VIP"),t("T10","round",48,545,120,120,8,"VIP"),t("T11","round",1193,415,120,120,8,"VIP"),t("T12","round",1193,575,120,120,8,"VIP"),
     t("B01","bistro",155,683,82,72,2,"BISTRO"),t("B02","bistro",340,683,82,72,2,"BISTRO"),t("B03","bistro",500,683,82,72,2,"BISTRO"),t("B04","bistro",1167,194,78,72,2,"BISTRO")];}
-  function seedGuests(){const rows=[["Mehmet Yılmaz",1,"VVIP","Kerem Sarıçiçek","Prefers stage view","Confirmed"],["John Smith",1,"VIP","International Marketing","English speaking","Confirmed"],["Anna Petrović",2,"VIP","Milica V.","Vegetarian menu","Confirmed"],["Marko Jovanović",1,"VIP","Nikola R.","","Tentative"],["Ahmet Kaya",3,"VVIP","Kerem Sarıçiçek","Host table","Confirmed"],["Selin Demir",1,"VIP","Ayşe T.","","Confirmed"],["Emir Aksoy",0,"Standard","Digital Campaign","","Tentative"],["Elena Vuković",1,"VIP","Montenegro Sales","","Confirmed"],["Miloš Popović",2,"Standard","Loyalty Desk","","Tentative"],["Ivana Nikolić",1,"VIP","Milica V.","Anniversary","Confirmed"],["Burak Aydın",3,"Standard","Kerem Sarıçiçek","","Confirmed"],["Sofia Rossi",1,"VVIP","International Marketing","Italian speaking","Confirmed"],["Can Öztürk",0,"Standard","CRM Campaign","","Tentative"],["Maja Kovačević",1,"VIP","Nikola R.","","Confirmed"],["Daniel Weber",2,"VIP","International Marketing","Airport transfer","Confirmed"],["Ece Arslan",1,"Standard","Ayşe T.","","Tentative"],["Aleksandar Savić",3,"VIP","Montenegro Sales","","Confirmed"],["Luka Radović",1,"Standard","Loyalty Desk","","Tentative"],["Zeynep Koç",0,"VIP","Kerem Sarıçiçek","No seafood","Confirmed"],["Michael Brown",1,"Standard","Hotel Relations","","Tentative"],["Jelena Đurić",2,"VIP","Milica V.","","Confirmed"],["Ozan Şahin",1,"Standard","CRM Campaign","","Tentative"],["Nina Horvat",1,"VIP","International Marketing","","Confirmed"],["Kerim Çelik",3,"Standard","Digital Campaign","","Confirmed"],["Tamara Ilić",0,"Standard","Loyalty Desk","","Tentative"],["George Wilson",1,"VIP","Hotel Relations","Wheelchair access","Confirmed"]];return rows.map((r,i)=>({id:uid("guest"),name:r[0],additionalGuests:r[1],pax:r[1]+1,vip:r[2],invitedBy:r[3],notes:r[4],planningStatus:r[5],arrivalStatus:i===1?"Checked In":"Not Arrived",assignment:null,createdAt:nowISO()}));}
-  function createDemoEvent(name="Artist Concert",date="2026-08-23",venue="Merit Starlit"){const event={id:uid("event"),name,date,venue,status:"Planning",lastModified:nowISO(),tables:seedTables(),venueObjects:[{id:uid("venue"),type:"stage",label:"STAGE",x:625,y:493,w:537,h:248,rotation:0,locked:true,z:3},{id:uid("venue"),type:"bar",label:"BAR",x:96,y:143,w:505,h:112,rotation:0,locked:true,z:2},{id:uid("venue"),type:"entrance",label:"ENTRANCE",x:18,y:118,w:92,h:38,rotation:0,locked:true,z:2}],guests:seedGuests(),background:{src:DEFAULT_FLOOR_PLAN,name:"Starlit concert plan.png",opacity:.22,visible:true,locked:true,isDefault:true,scale:100},createdAt:nowISO()};seedAssignments(event);return event;}
+  function seedGuests(){
+    const rows=[["Mehmet Yılmaz",1,"VVIP","Kerem Sarıçiçek","Prefers stage view","Confirmed"],["John Smith",1,"VIP","International Marketing","English speaking","Confirmed"],["Anna Petrović",2,"VIP","Milica V.","Vegetarian menu","Confirmed"],["Marko Jovanović",1,"VIP","Nikola R.","","Tentative"],["Ahmet Kaya",3,"VVIP","Kerem Sarıçiçek","Host table","Confirmed"],["Selin Demir",1,"VIP","Ayşe T.","","Confirmed"],["Emir Aksoy",0,"Standard","Digital Campaign","","Tentative"],["Elena Vuković",1,"VIP","Montenegro Sales","","Confirmed"],["Miloš Popović",2,"Standard","Loyalty Desk","","Tentative"],["Ivana Nikolić",1,"VIP","Milica V.","Anniversary","Confirmed"],["Burak Aydın",3,"Standard","Kerem Sarıçiçek","","Confirmed"],["Sofia Rossi",1,"VVIP","International Marketing","Italian speaking","Confirmed"],["Can Öztürk",0,"Standard","CRM Campaign","","Tentative"],["Maja Kovačević",1,"VIP","Nikola R.","","Confirmed"],["Daniel Weber",2,"VIP","International Marketing","Airport transfer","Confirmed"],["Ece Arslan",1,"Standard","Ayşe T.","","Tentative"],["Aleksandar Savić",3,"VIP","Montenegro Sales","","Confirmed"],["Luka Radović",1,"Standard","Loyalty Desk","","Tentative"],["Zeynep Koç",0,"VIP","Kerem Sarıçiçek","No seafood","Confirmed"],["Michael Brown",1,"Standard","Hotel Relations","","Tentative"],["Jelena Đurić",2,"VIP","Milica V.","","Confirmed"],["Ozan Şahin",1,"Standard","CRM Campaign","","Tentative"],["Nina Horvat",1,"VIP","International Marketing","","Confirmed"],["Kerim Çelik",3,"Standard","Digital Campaign","","Confirmed"],["Tamara Ilić",0,"Standard","Loyalty Desk","","Tentative"],["George Wilson",1,"VIP","Hotel Relations","Wheelchair access","Confirmed"]];
+    return rows.map((r,i)=>({id:uid("guest"),name:r[0],additionalGuests:r[1],pax:r[1]+1,vip:r[2],invitedBy:r[3],notes:r[4],planningStatus:r[5],arrivalStatus:i===1?"Checked In":"Not Arrived",assignment:null,createdAt:nowISO()}));
+  }
+  function createDemoEvent(name="Artist Concert",date="2026-08-23",venue="Merit Starlit"){
+    const event={id:uid("event"),name,date,venue,status:"Planning",lastModified:nowISO(),tables:seedTables(),venueObjects:[{id:uid("venue"),type:"stage",label:"STAGE",x:625,y:493,w:537,h:248,rotation:0,locked:true,z:3},{id:uid("venue"),type:"bar",label:"BAR",x:96,y:143,w:505,h:112,rotation:0,locked:true,z:2},{id:uid("venue"),type:"entrance",label:"ENTRANCE",x:18,y:118,w:92,h:38,rotation:0,locked:true,z:2}],guests:seedGuests(),background:{src:DEFAULT_FLOOR_PLAN,name:"Starlit concert plan.png",opacity:.22,visible:true,locked:true,isDefault:true,scale:100},createdAt:nowISO()};
+    seedAssignments(event);
+    return event;
+  }
   function occupiedSeatIndexes(event,tableId,exceptGuestId=null){const used=new Set();event.guests.forEach(g=>{if(g.id!==exceptGuestId&&g.assignment?.tableId===tableId)(g.assignment.seats||[]).forEach(s=>used.add(Number(s)));});return used}
   function seedAssignments(event){const targets=["T01","T01","T02","T03","T05","T06","T07","T08","T09","T10","T11","T12"];for(let i=0;i<12;i++){const table=event.tables.find(t=>t.number===targets[i]);if(!table)continue;const used=occupiedSeatIndexes(event,table.id),free=Array.from({length:table.capacity},(_,n)=>n).filter(n=>!used.has(n)),g=event.guests[i];if(free.length>=paxOf(g))MeritSeatAssignment.write(g,{tableId:table.id,seats:free.slice(0,paxOf(g)),locked:i===0});}}
   function loadState(){return{version:8,events:[]}}
   state=loadState();
-  function saveState(show=false){const serial=clone(state);serial.events.forEach(e=>{if(e.background?.isDefault)e.background.src=""});try{localStorage.setItem(STORAGE_KEY,JSON.stringify(serial));if(show)toast(t_("toast.savedLocally"),"success")}catch(err){try{serial.events.forEach(e=>{if(e.background)e.background.src=""});localStorage.setItem(STORAGE_KEY,JSON.stringify(serial));if(!quotaToastShown){toast(t_("toast.imageTooLargeLegacy"),"error",5200);quotaToastShown=true}}catch{toast(t_("toast.storageFullLegacy"),"error",5200)}}}
+  function saveState(show=false){
+    const serial=clone(state);
+    serial.events.forEach(e=>{if(e.background?.isDefault)e.background.src=""});
+    try{
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(serial));
+      if(show)toast(t_("toast.savedLocally"),"success")
+    }catch(err){try{
+      serial.events.forEach(e=>{if(e.background)e.background.src=""});
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(serial));
+      if(!quotaToastShown){
+        toast(t_("toast.imageTooLargeLegacy"),"error",5200);
+        quotaToastShown=true
+      }
+    }catch{toast(t_("toast.storageFullLegacy"),"error",5200)}}
+  }
   function activeEvent(){return state.events.find(e=>e.id===ui.activeEventId)||state.events[0]}function touchEvent(e){e.lastModified=nowISO();saveState()}
   function tableAssignedPax(event,tableId){return event.guests.filter(g=>g.assignment?.tableId===tableId).reduce((n,g)=>n+paxOf(g),0)}
   // Tables that can seat somebody. A table whose plan drew no chairs still
@@ -246,26 +267,93 @@
   }
   function topBrand(){return`<div class="brand"><div class="brand-symbol">M✦</div><div class="brand-copy"><strong>MERIT ENTERTAINMENT</strong><span>EVENT MAKER</span></div></div>`}
   function helpButton(){return`<button class="btn quiet" data-action="help" title="${typeof t==="function"?t("appbar.helpTitle"):"Open English / Turkish user guide"}">${icon("help")}<span class="optional-label">${typeof t==="function"?t("appbar.help"):"Help / User Guide"}</span></button>`}
-  function eventsHTML(){return`<header class="appbar">${topBrand()}<div class="crumb">Event Operations / <b>All Events</b></div><div class="appbar-actions">${helpButton()}<button class="btn primary" data-action="create-event">${icon("plus")}Create Event</button></div></header><section class="events-page"><div class="events-wrap"><div class="page-head"><div><div class="kicker">Event Operations</div><h1>Events</h1><p>Floor plans, guest records, seating and live arrival control.</p></div><span class="muted">${state.events.length} event${state.events.length===1?"":"s"}</span></div><div class="data-shell">${state.events.length?`<table class="event-table"><thead><tr><th>Event</th><th>Date & Venue</th><th>Event Status</th><th>Capacity</th><th>Total Guests</th><th>Assigned</th><th>Unassigned</th><th>Last Modified</th><th></th></tr></thead><tbody>${state.events.map(e=>{const m=eventMetrics(e);return`<tr><td><span class="event-name">${esc(e.name)}</span><span class="subline">Concert & VIP Entertainment</span></td><td>${esc(fmtDate(e.date))}<span class="subline">${esc(e.venue)}</span></td><td><span class="status-chip">${esc(e.status)}</span></td><td>${m.total}</td><td>${m.guests}</td><td>${m.assigned}</td><td>${m.unassigned}</td><td>${relativeTime(e.lastModified)}</td><td><div class="toolbar-row"><button class="btn sm primary" data-open-event="${e.id}">Open</button><button class="btn sm" data-duplicate-event="${e.id}">Duplicate</button><button class="btn sm danger" data-delete-event="${e.id}">Delete</button></div></td></tr>`}).join("")}</tbody></table>`:`<div class="inspector-empty">No events yet.</div>`}</div></div></section>`}
+  function eventsHTML(){return`<header class="appbar">${topBrand()}<div class="crumb">Event Operations / <b>All Events</b></div><div class="appbar-actions">${helpButton()}<button class="btn primary" data-action="create-event">${icon("plus")}Create Event</button></div></header><section class="events-page"><div class="events-wrap"><div class="page-head"><div><div class="kicker">Event Operations</div><h1>Events</h1><p>Floor plans, guest records, seating and live arrival control.</p></div><span class="muted">${state.events.length} event${state.events.length===1?"":"s"}</span></div><div class="data-shell">${state.events.length?`<table class="event-table"><thead><tr><th>Event</th><th>Date & Venue</th><th>Event Status</th><th>Capacity</th><th>Total Guests</th><th>Assigned</th><th>Unassigned</th><th>Last Modified</th><th></th></tr></thead><tbody>${state.events.map(e=>{
+    const m=eventMetrics(e);
+    return`<tr><td><span class="event-name">${esc(e.name)}</span><span class="subline">Concert & VIP Entertainment</span></td><td>${esc(fmtDate(e.date))}<span class="subline">${esc(e.venue)}</span></td><td><span class="status-chip">${esc(e.status)}</span></td><td>${m.total}</td><td>${m.guests}</td><td>${m.assigned}</td><td>${m.unassigned}</td><td>${relativeTime(e.lastModified)}</td><td><div class="toolbar-row"><button class="btn sm primary" data-open-event="${e.id}">Open</button><button class="btn sm" data-duplicate-event="${e.id}">Duplicate</button><button class="btn sm danger" data-delete-event="${e.id}">Delete</button></div></td></tr>`
+  }).join("")}</tbody></table>`:`<div class="inspector-empty">No events yet.</div>`}</div></div></section>`}
   const tabDefs=[["floor","Floor Plan"],["guests","Guests"],["seating","Seating Plan"],["live","Live Event"],["reports","Reports"]];
   function metricHTML(label,value){return`<div class="metric"><b>${value}</b><span>${label}</span></div>`}
-  function workspaceHTML(event){const m=eventMetrics(event);return`<section class="workspace"><header class="workspace-head">${topBrand()}<div class="event-id"><strong>${esc(event.name)}</strong><span>${esc(fmtDate(event.date))} · ${esc(event.venue)}</span></div><div class="workspace-actions"><div class="global-search">${icon("search")}<input id="globalGuestSearch" placeholder="Find guest, table or seat" autocomplete="off"><div id="globalSearchResults" class="search-results hidden"></div></div><div class="autosave">Local autosave</div><button class="btn quiet icon-only" data-action="save-now" title="Save now">${icon("save")}</button>${helpButton()}<button class="btn sm" data-action="back-events">All Events</button></div></header><nav class="tabs">${tabDefs.map(([id,label])=>`<button class="tab ${ui.tab===id?"active":""}" data-tab="${id}">${label}</button>`).join("")}</nav><div class="ops-strip">${metricHTML("Total Capacity",m.total)}${metricHTML("Seated",m.seated)}${metricHTML("Bistro",m.bistro)}${metricHTML("Total Guests",m.guests)}${metricHTML("Assigned",m.assigned)}${metricHTML("Available",m.available)}${metricHTML("Unassigned",m.unassigned)}</div><div class="content">${tabContent(event)}</div></section>`}
+  function workspaceHTML(event){
+    const m=eventMetrics(event);
+    return`<section class="workspace"><header class="workspace-head">${topBrand()}<div class="event-id"><strong>${esc(event.name)}</strong><span>${esc(fmtDate(event.date))} · ${esc(event.venue)}</span></div><div class="workspace-actions"><div class="global-search">${icon("search")}<input id="globalGuestSearch" placeholder="Find guest, table or seat" autocomplete="off"><div id="globalSearchResults" class="search-results hidden"></div></div><div class="autosave">Local autosave</div><button class="btn quiet icon-only" data-action="save-now" title="Save now">${icon("save")}</button>${helpButton()}<button class="btn sm" data-action="back-events">All Events</button></div></header><nav class="tabs">${tabDefs.map(([id,label])=>`<button class="tab ${ui.tab===id?"active":""}" data-tab="${id}">${label}</button>`).join("")}</nav><div class="ops-strip">${metricHTML("Total Capacity",m.total)}${metricHTML("Seated",m.seated)}${metricHTML("Bistro",m.bistro)}${metricHTML("Total Guests",m.guests)}${metricHTML("Assigned",m.assigned)}${metricHTML("Available",m.available)}${metricHTML("Unassigned",m.unassigned)}</div><div class="content">${tabContent(event)}</div></section>`
+  }
   function tabContent(e){if(ui.tab==="overview")return overviewHTML(e);if(ui.tab==="floor")return floorPlanHTML(e);if(ui.tab==="guests")return guestsHTML(e);if(ui.tab==="seating")return seatingHTML(e);if(ui.tab==="live")return liveHTML(e);return reportsHTML(e)}
   function readyRow(label,value,complete){return`<div class="readiness-row"><div class="readiness-icon">${complete?"✓":"·"}</div><div><b>${label}</b><span>${value}</span></div><div class="readiness-value">${complete?"Ready":"Review"}</div></div>`}
-  function overviewHTML(event){const m=eventMetrics(event),unassigned=event.guests.filter(g=>!g.assignment).length;return`<div class="screen-scroll"><div class="screen-inner"><div class="screen-titlebar"><div><h2>Event Overview</h2><p>Operational readiness for ${esc(event.name)}.</p></div><button class="btn primary" data-tab-jump="floor">Continue Planning${icon("arrow")}</button></div><div class="overview-grid"><section class="surface"><div class="surface-head"><h3>Planning Readiness</h3><span class="muted">Updated ${relativeTime(event.lastModified)}</span></div><div class="surface-body">${readyRow("Floor plan",`${event.tables.length} tables placed`,event.tables.length>0)}${readyRow("Guest records",`${event.guests.length} records · ${m.guests} total guests`,event.guests.length>0)}${readyRow("Seating assignments",`${m.assigned} of ${m.guests} guests assigned`,m.unassigned===0)}${readyRow("Unassigned records",`${unassigned} records need attention`,unassigned===0)}</div></section><section class="surface"><div class="surface-head"><h3>Event Details</h3><button class="btn sm" data-action="duplicate-current">Duplicate</button></div><div class="surface-body"><div class="form-grid"><div class="field full"><label for="fld-v7-event-field-name">Event</label><input id="fld-v7-event-field-name" value="${esc(event.name)}" data-event-field="name"></div><div class="field"><label for="fld-v7-event-field-date">Date</label><input id="fld-v7-event-field-date" type="date" value="${esc(event.date)}" data-event-field="date"></div><div class="field"><label for="fld-v7-event-field-status">Event Status</label><select id="fld-v7-event-field-status" data-event-field="status">${["Planning","Confirmed","Live","Completed"].map(s=>`<option ${event.status===s?"selected":""}>${s}</option>`).join("")}</select></div><div class="field full"><label for="fld-v7-event-field-venue">Venue</label><input id="fld-v7-event-field-venue" value="${esc(event.venue)}" data-event-field="venue"></div></div></div></section></div></div></div>`}
+  function overviewHTML(event){
+    const m=eventMetrics(event),unassigned=event.guests.filter(g=>!g.assignment).length;
+    return`<div class="screen-scroll"><div class="screen-inner"><div class="screen-titlebar"><div><h2>Event Overview</h2><p>Operational readiness for ${esc(event.name)}.</p></div><button class="btn primary" data-tab-jump="floor">Continue Planning${icon("arrow")}</button></div><div class="overview-grid"><section class="surface"><div class="surface-head"><h3>Planning Readiness</h3><span class="muted">Updated ${relativeTime(event.lastModified)}</span></div><div class="surface-body">${readyRow("Floor plan",`${event.tables.length} tables placed`,event.tables.length>0)}${readyRow("Guest records",`${event.guests.length} records · ${m.guests} total guests`,event.guests.length>0)}${readyRow("Seating assignments",`${m.assigned} of ${m.guests} guests assigned`,m.unassigned===0)}${readyRow("Unassigned records",`${unassigned} records need attention`,unassigned===0)}</div></section><section class="surface"><div class="surface-head"><h3>Event Details</h3><button class="btn sm" data-action="duplicate-current">Duplicate</button></div><div class="surface-body"><div class="form-grid"><div class="field full"><label for="fld-v7-event-field-name">Event</label><input id="fld-v7-event-field-name" value="${esc(event.name)}" data-event-field="name"></div><div class="field"><label for="fld-v7-event-field-date">Date</label><input id="fld-v7-event-field-date" type="date" value="${esc(event.date)}" data-event-field="date"></div><div class="field"><label for="fld-v7-event-field-status">Event Status</label><select id="fld-v7-event-field-status" data-event-field="status">${["Planning","Confirmed","Live","Completed"].map(s=>`<option ${event.status===s?"selected":""}>${s}</option>`).join("")}</select></div><div class="field full"><label for="fld-v7-event-field-venue">Venue</label><input id="fld-v7-event-field-venue" value="${esc(event.venue)}" data-event-field="venue"></div></div></div></section></div></div></div>`
+  }
   function render(){if(!state.events.length)ui.screen="events";app.innerHTML=ui.screen==="events"?eventsHTML():workspaceHTML(activeEvent());bindCommon();if(ui.screen==="workspace"){if(ui.tab==="floor"||ui.tab==="seating")bindCanvas();if(ui.tab==="guests")bindGuests();if(ui.tab==="seating")bindSeating();if(ui.tab==="live")bindLive();if(ui.tab==="reports")bindReports()}}
   function bindCommon(){
     app.querySelectorAll("[data-action='create-event']").forEach(b=>b.onclick=openEventDialog);app.querySelectorAll("[data-action='help']").forEach(b=>b.onclick=openGuide);app.querySelectorAll("[data-open-event]").forEach(b=>b.onclick=()=>openEvent(b.dataset.openEvent));app.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=()=>duplicateEvent(b.dataset.duplicateEvent));app.querySelectorAll("[data-delete-event]").forEach(b=>b.onclick=()=>deleteEvent(b.dataset.deleteEvent));
-    app.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{ui.tab=b.dataset.tab;ui.selectedObjectId=null;ui.highlightId=null;render()});app.querySelectorAll("[data-tab-jump]").forEach(b=>b.onclick=()=>{ui.tab=b.dataset.tabJump;render()});const back=app.querySelector("[data-action='back-events']");if(back)back.onclick=()=>{ui.screen="events";render()};const save=app.querySelector("[data-action='save-now']");if(save)save.onclick=()=>saveState(true);const dup=app.querySelector("[data-action='duplicate-current']");if(dup)dup.onclick=()=>duplicateEvent(activeEvent().id,true);app.querySelectorAll("[data-event-field]").forEach(el=>el.onchange=()=>{const e=activeEvent();e[el.dataset.eventField]=el.value;touchEvent(e);render()});
+    app.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{
+      ui.tab=b.dataset.tab;
+      ui.selectedObjectId=null;
+      ui.highlightId=null;
+      render()
+    });
+    app.querySelectorAll("[data-tab-jump]").forEach(b=>b.onclick=()=>{
+      ui.tab=b.dataset.tabJump;
+      render()
+    });
+    const back=app.querySelector("[data-action='back-events']");
+    if(back)back.onclick=()=>{
+      ui.screen="events";
+      render()
+    };
+    const save=app.querySelector("[data-action='save-now']");
+    if(save)save.onclick=()=>saveState(true);
+    const dup=app.querySelector("[data-action='duplicate-current']");
+    if(dup)dup.onclick=()=>duplicateEvent(activeEvent().id,true);
+    app.querySelectorAll("[data-event-field]").forEach(el=>el.onchange=()=>{
+      const e=activeEvent();
+      e[el.dataset.eventField]=el.value;
+      touchEvent(e);
+      render()
+    });
     const gs=app.querySelector("#globalGuestSearch");if(gs){gs.oninput=()=>renderGlobalSearch(gs.value);gs.onkeydown=e=>{if(e.key==="Escape")document.getElementById("globalSearchResults").classList.add("hidden")}}
   }
-  function renderGlobalSearch(query){const box=document.getElementById("globalSearchResults"),event=activeEvent(),q=query.trim().toLocaleLowerCase("tr");if(!q){box.classList.add("hidden");return}const results=event.guests.filter(g=>{const t=g.assignment&&event.tables.find(x=>x.id===g.assignment.tableId);return[g.name,g.vip,g.invitedBy,t?.number].join(" ").toLocaleLowerCase("tr").includes(q)}).slice(0,8);box.innerHTML=results.length?results.map(g=>{const t=g.assignment&&event.tables.find(x=>x.id===g.assignment.tableId);return`<div class="search-result" data-search-guest="${g.id}"><strong>${esc(g.name)}${additionalOf(g)?` +${additionalOf(g)}`:""}</strong><span>${esc(g.vip)} · ${t?esc(t.number)+" · "+seatRange(g.assignment.seats):"Unassigned"} · ${paxOf(g)} pax</span></div>`}).join(""):`<div class="search-result"><span>No matching guest</span></div>`;box.classList.remove("hidden");box.querySelectorAll("[data-search-guest]").forEach(row=>row.onclick=()=>focusGuest(row.dataset.searchGuest))}
+  function renderGlobalSearch(query){
+    const box=document.getElementById("globalSearchResults"),event=activeEvent(),q=query.trim().toLocaleLowerCase("tr");
+    if(!q){
+      box.classList.add("hidden");
+      return
+    }
+    const results=event.guests.filter(g=>{
+      const t=g.assignment&&event.tables.find(x=>x.id===g.assignment.tableId);
+      return[g.name,g.vip,g.invitedBy,t?.number].join(" ").toLocaleLowerCase("tr").includes(q)
+    }).slice(0,8);
+    box.innerHTML=results.length?results.map(g=>{
+      const t=g.assignment&&event.tables.find(x=>x.id===g.assignment.tableId);
+      return`<div class="search-result" data-search-guest="${g.id}"><strong>${esc(g.name)}${additionalOf(g)?` +${additionalOf(g)}`:""}</strong><span>${esc(g.vip)} · ${t?esc(t.number)+" · "+seatRange(g.assignment.seats):"Unassigned"} · ${paxOf(g)} pax</span></div>`
+    }).join(""):`<div class="search-result"><span>No matching guest</span></div>`;
+    box.classList.remove("hidden");
+    box.querySelectorAll("[data-search-guest]").forEach(row=>row.onclick=()=>focusGuest(row.dataset.searchGuest))
+  }
   function focusGuest(id){const event=activeEvent(),g=event.guests.find(x=>x.id===id);ui.selectedGuestId=id;ui.tab="seating";ui.seatingQuery=g?.name||"";ui.seatingFilter="all";ui.seatingGuestScope="all";if(g?.assignment){ui.selectedTableId=g.assignment.tableId;ui.highlightId=g.assignment.tableId}render()}
   function openEvent(id){ui.activeEventId=id;ui.screen="workspace";ui.tab="overview";ui.selectedObjectId=null;ui.undo=[];ui.redo=[];render()}
   // Kept as an inert stub: the dialog it opened is gone, and the live
   // binding for [data-action='create-event'] is bindV8Common's startNewEvent.
   function openEventDialog(){}
-  function duplicateEvent(id,open=false){const source=state.events.find(e=>e.id===id);if(!source)return;const copy=clone(source),map=new Map();copy.id=uid("event");copy.name=source.name+" — Copy";copy.status="Planning";copy.createdAt=copy.lastModified=nowISO();copy.tables.forEach((t,i)=>{const old=source.tables[i].id;t.id=uid("table");map.set(old,t.id)});copy.venueObjects.forEach(o=>o.id=uid("venue"));copy.guests.forEach(g=>{g.id=uid("guest");g.arrivalStatus="Not Arrived";if(g.assignment)g.assignment.tableId=map.get(g.assignment.tableId)});
+  function duplicateEvent(id,open=false){
+    const source=state.events.find(e=>e.id===id);
+    if(!source)return;
+    const copy=clone(source),map=new Map();
+    copy.id=uid("event");
+    copy.name=source.name+" — Copy";
+    copy.status="Planning";
+    copy.createdAt=copy.lastModified=nowISO();
+    copy.tables.forEach((t,i)=>{
+      const old=source.tables[i].id;
+      t.id=uid("table");
+      map.set(old,t.id)
+    });
+    copy.venueObjects.forEach(o=>o.id=uid("venue"));
+    copy.guests.forEach(g=>{
+      g.id=uid("guest");
+      g.arrivalStatus="Not Arrived";
+      if(g.assignment)g.assignment.tableId=map.get(g.assignment.tableId)
+    });
     // A TABLE-scope freeze names the table by id, same as a guest assignment
     // does -- carried through `clone()` unchanged while every table just got
     // a new one. Left unmapped, the freeze silently covers nothing in the
@@ -281,41 +369,403 @@
   function editorClasses(seating=false){return`editor-layout ${seating?"seating-layout":""} ${ui.leftCollapsed?"left-collapsed":""} ${ui.rightCollapsed?"right-collapsed":""}`}
   function collapsedPanel(side){return`<aside class="side-panel ${side}"><div class="panel-collapsed"><button class="panel-toggle" data-panel-toggle="${side}" title="Expand ${side} panel">${icon("chevron")}</button></div></aside>`}
   function libraryRow(type,label,sub,kind="table",iconName="table"){return`<button class="library-row ${ui.tableDraft?.type===type?"active":""}" data-library-type="${type}" data-library-kind="${kind}" title="${esc(label)} · ${esc(sub)}"><span class="tool-icon">${icon(iconName)}</span><span><b>${esc(label)}</b><small>${esc(sub)}</small></span><span class="row-chevron">${icon("chevron")}</span></button>`}
-  function tableCreatorHTML(event){if(!ui.tableDraft)return"";const d=ui.tableDraft,presets=d.type==="round"?[6,8,10,12]:d.type==="square"?[2,4,6,8]:d.type==="bistro"?[2,3,4,6]:[2,4,6,8];return`<div class="create-panel"><h4>Create ${titleCase(d.type)} Table</h4><p class="hint">Choose seats before placing the table.</p><div class="preset-row">${presets.map(n=>`<button class="preset ${d.seats===n?"active":""}" data-create-seats="${n}">${n}</button>`).join("")}</div><div class="compact-fields"><div class="mini-field"><label for="createCustomSeats">Custom Seats</label><input id="createCustomSeats" type="number" min="1" max="99" value="${d.seats}"></div><div class="mini-field"><label for="createTableNumber">Table Number</label><input id="createTableNumber" value="${esc(d.number)}" placeholder="Auto"></div><div class="mini-field" style="grid-column:1/-1"><label for="createTableZone">Zone</label><select id="createTableZone">${ZONES.map(z=>`<option ${d.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div><div class="create-total"><span>Physical chairs</span><b>${d.seats}</b></div><div class="create-actions"><button class="btn sm" data-create-cancel>Cancel</button><button class="btn sm primary" data-create-add>${icon("plus")}Add to Plan</button></div></div>`}
-  function objectLibraryHTML(event){if(ui.leftCollapsed)return collapsedPanel("left");const bg=event.background||{};return`<aside class="side-panel left"><div class="panel-head"><strong>Build</strong><div class="toolbar-row"><span class="panel-count">${event.tables.length} tables</span><button class="panel-toggle" data-panel-toggle="left" title="Collapse tool library">${icon("chevron")}</button></div></div><div class="panel-section"><div class="section-label">Tables</div><div class="tool-list">${libraryRow("rectangle","Rectangle Table","Choose seats before placing","table","table")}${libraryRow("square","Square Table","Choose seats before placing","table","square")}${libraryRow("round","Round Table","Choose seats before placing","table","circle")}${libraryRow("bistro","Bistro Table","Modeled seats included","table","bistro")}</div>${tableCreatorHTML(event)}</div><div class="panel-section"><div class="section-label">Venue</div><div class="tool-list">${libraryRow("stage","Stage","Resizable venue object","venue","stage")}${libraryRow("bar","Bar","Service area","venue","bar")}${libraryRow("entrance","Entrance","Guest access point","venue","door")}${libraryRow("exit","Exit","Emergency or guest exit","venue","door")}${libraryRow("column","Column","Structural marker","venue","column")}${libraryRow("text","Text / Label","Plan annotation","venue","text")}</div></div><div class="panel-section"><div class="section-label">Plan</div><div class="plan-control"><span>Reference</span><div class="plan-actions"><button class="tiny-btn" data-bg-action="import" title="Import PNG or JPG">Import</button><button class="tiny-btn ${bg.visible?"active":""}" data-bg-action="visible" title="Show or hide reference">${bg.visible?"On":"Off"}</button></div></div><div class="plan-control"><span>Background lock</span><button class="tiny-btn ${bg.locked?"active":""}" data-bg-action="lock">${bg.locked?"Locked":"Unlocked"}</button></div><div class="plan-control"><span>Opacity</span><input id="bgOpacity" class="range-control" type="range" min="0" max="1" step=".05" value="${bg.opacity??.25}"></div><div class="plan-control"><span>Scale</span><input id="bgScale" class="range-control" type="range" min="60" max="140" step="5" value="${bg.scale||100}" title="Reference image scale"></div><div class="plan-control"><span>Grid</span><button class="tiny-btn ${ui.grid?"active":""}" data-canvas-action="grid">${ui.grid?"Visible":"Hidden"}</button></div><div class="plan-control"><span>Canvas</span><div class="plan-actions"><button class="tiny-btn" data-bg-action="fit">Fit</button><button class="tiny-btn danger-text" data-bg-action="remove">Remove</button></div></div></div></aside>`}
+  function tableCreatorHTML(event){
+    if(!ui.tableDraft)return"";
+    const d=ui.tableDraft,presets=d.type==="round"?[6,8,10,12]:d.type==="square"?[2,4,6,8]:d.type==="bistro"?[2,3,4,6]:[2,4,6,8];
+    return`<div class="create-panel"><h4>Create ${titleCase(d.type)} Table</h4><p class="hint">Choose seats before placing the table.</p><div class="preset-row">${presets.map(n=>`<button class="preset ${d.seats===n?"active":""}" data-create-seats="${n}">${n}</button>`).join("")}</div><div class="compact-fields"><div class="mini-field"><label for="createCustomSeats">Custom Seats</label><input id="createCustomSeats" type="number" min="1" max="99" value="${d.seats}"></div><div class="mini-field"><label for="createTableNumber">Table Number</label><input id="createTableNumber" value="${esc(d.number)}" placeholder="Auto"></div><div class="mini-field" style="grid-column:1/-1"><label for="createTableZone">Zone</label><select id="createTableZone">${ZONES.map(z=>`<option ${d.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div><div class="create-total"><span>Physical chairs</span><b>${d.seats}</b></div><div class="create-actions"><button class="btn sm" data-create-cancel>Cancel</button><button class="btn sm primary" data-create-add>${icon("plus")}Add to Plan</button></div></div>`
+  }
+  function objectLibraryHTML(event){
+    if(ui.leftCollapsed)return collapsedPanel("left");
+    const bg=event.background||{};
+    return`<aside class="side-panel left"><div class="panel-head"><strong>Build</strong><div class="toolbar-row"><span class="panel-count">${event.tables.length} tables</span><button class="panel-toggle" data-panel-toggle="left" title="Collapse tool library">${icon("chevron")}</button></div></div><div class="panel-section"><div class="section-label">Tables</div><div class="tool-list">${libraryRow("rectangle","Rectangle Table","Choose seats before placing","table","table")}${libraryRow("square","Square Table","Choose seats before placing","table","square")}${libraryRow("round","Round Table","Choose seats before placing","table","circle")}${libraryRow("bistro","Bistro Table","Modeled seats included","table","bistro")}</div>${tableCreatorHTML(event)}</div><div class="panel-section"><div class="section-label">Venue</div><div class="tool-list">${libraryRow("stage","Stage","Resizable venue object","venue","stage")}${libraryRow("bar","Bar","Service area","venue","bar")}${libraryRow("entrance","Entrance","Guest access point","venue","door")}${libraryRow("exit","Exit","Emergency or guest exit","venue","door")}${libraryRow("column","Column","Structural marker","venue","column")}${libraryRow("text","Text / Label","Plan annotation","venue","text")}</div></div><div class="panel-section"><div class="section-label">Plan</div><div class="plan-control"><span>Reference</span><div class="plan-actions"><button class="tiny-btn" data-bg-action="import" title="Import PNG or JPG">Import</button><button class="tiny-btn ${bg.visible?"active":""}" data-bg-action="visible" title="Show or hide reference">${bg.visible?"On":"Off"}</button></div></div><div class="plan-control"><span>Background lock</span><button class="tiny-btn ${bg.locked?"active":""}" data-bg-action="lock">${bg.locked?"Locked":"Unlocked"}</button></div><div class="plan-control"><span>Opacity</span><input id="bgOpacity" class="range-control" type="range" min="0" max="1" step=".05" value="${bg.opacity??.25}"></div><div class="plan-control"><span>Scale</span><input id="bgScale" class="range-control" type="range" min="60" max="140" step="5" value="${bg.scale||100}" title="Reference image scale"></div><div class="plan-control"><span>Grid</span><button class="tiny-btn ${ui.grid?"active":""}" data-canvas-action="grid">${ui.grid?"Visible":"Hidden"}</button></div><div class="plan-control"><span>Canvas</span><div class="plan-actions"><button class="tiny-btn" data-bg-action="fit">Fit</button><button class="tiny-btn danger-text" data-bg-action="remove">Remove</button></div></div></div></aside>`
+  }
   function toolbarBtn(iconName,label,attrs="",active=false){return`<button class="toolbar-btn ${active?"active":""}" ${attrs} title="${esc(label)}">${icon(iconName)}<span>${label}</span></button>`}
   function canvasToolbarHTML(seating=false){return`<div class="canvas-toolbar"><div class="tool-group">${toolbarBtn("mouse","Select",`data-tool="select"`,ui.tool==="select")}${toolbarBtn("hand","Pan",`data-tool="pan"`,ui.tool==="pan")}</div>${seating?"":`<div class="tool-group">${toolbarBtn("undo","Undo",`data-canvas-action="undo"`)}${toolbarBtn("redo","Redo",`data-canvas-action="redo"`)}</div>`}<div class="tool-group">${toolbarBtn("zoomOut","Zoom out",`data-canvas-action="zoom-out"`)}<span class="zoom-label">${Math.round(ui.zoom*100)}%</span>${toolbarBtn("zoomIn","Zoom in",`data-canvas-action="zoom-in"`)}${toolbarBtn("fit","Fit",`data-canvas-action="fit"`)}</div><div class="tool-group">${toolbarBtn("grid","Grid",`data-canvas-action="grid"`,ui.grid)}${toolbarBtn("magnet","Snap",`data-canvas-action="snap"`,ui.snap)}</div><div class="tool-group">${toolbarBtn("seat","Seat labels",`data-canvas-action="seat-numbers"`,ui.showSeats)}</div></div>`}
   function floorPlanHTML(event){return`<div class="${editorClasses(false)}">${objectLibraryHTML(event)}<section class="canvas-column">${canvasToolbarHTML(false)}${canvasViewportHTML(event,false)}</section>${inspectorHTML(event)}</div>`}
   function tableMatchesFilter(event,t){const occ=tableAssignedPax(event,t.id),empty=Math.max(0,t.capacity-occ);if(ui.seatingFilter==="empty")return occ===0;if(ui.seatingFilter==="available")return empty>0;if(ui.seatingFilter==="full")return empty===0;return true}
   function filterBannerHTML(){if(ui.seatingFilter==="all")return"";const text={empty:"Showing tables with zero assigned guests",available:"Showing tables with available seats",full:"Showing full tables"}[ui.seatingFilter];return`<div class="filter-banner">${icon("search")}<span>${text}</span><button data-clear-seating-filter title="Clear filter">${icon("x")}</button></div>`}
-  function canvasViewportHTML(event,seating){const bg=event.background||{};return`<div class="canvas-viewport ${ui.tool==="pan"?"pan-mode":""}" id="canvasViewport"><div class="canvas-world ${ui.grid?"grid-on":""} ${seating?"seating-canvas":""}" id="canvasWorld" style="transform:translate(${ui.pan.x}px,${ui.pan.y}px) scale(${ui.zoom})"><div class="reference-layer" style="display:${bg.visible&&bg.src?"block":"none"};opacity:${bg.opacity??.25};background-image:${bg.src?`url('${bg.src}')`:"none"};background-size:${bg.scale||100}% auto"></div>${event.venueObjects.map(o=>venueObjectHTML(o,seating)).join("")}${event.tables.map(t=>tableObjectHTML(event,t,seating)).join("")}</div>${seating?filterBannerHTML():""}${seating?"":`<div class="canvas-status">${typeof t==="function"?t("canvas.editHint"):"Drag to move · Handles resize and rotate · Delete removes selection"}</div>`}</div>`}
-  function venueObjectHTML(o,seating){const selected=!seating&&ui.selectedObjectId===o.id;return`<div class="venue-object ${esc(o.type)} ${selected?"selected":""}" data-object-id="${o.id}" data-object-kind="venue" tabindex="0" role="button" aria-pressed="${selected?"true":"false"}" aria-label="${esc(o.label||o.type)}" style="left:${o.x}px;top:${o.y}px;width:${o.w}px;height:${o.h}px;transform:rotate(${o.rotation||0}deg);z-index:${o.z||3}"><span>${esc(o.label)}</span>${selected?handlesHTML():""}</div>`}
-  function tableObjectHTML(event,t,seating){const selected=(!seating&&ui.selectedObjectId===t.id)||(seating&&ui.selectedTableId===t.id),highlighted=ui.highlightId===t.id,match=!seating||tableMatchesFilter(event,t),used=occupiedSeatIndexes(event,t.id),positions=seatPositions(t),assigned=tableAssignedPax(event,t.id),empty=Math.max(0,t.capacity-assigned),chairs=positions.map((p,i)=>`<i class="chair ${used.has(i)?"occupied":""}" style="left:${p.x}%;top:${p.y}%"></i>${ui.showSeats?`<span class="seat-number" style="left:${50+(p.x-50)*.69}%;top:${50+(p.y-50)*.69}%">S${i+1}</span>`:""}`).join("");return`<div class="table-object ${esc(t.type)} ${selected?"selected":""} ${highlighted?"highlighted":""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match":""}" data-object-id="${t.id}" data-object-kind="table" style="left:${t.x}px;top:${t.y}px;width:${t.w}px;height:${t.h}px;transform:rotate(${t.rotation||0}deg);z-index:${t.z||10}">${chairs}<div class="table-surface"><span class="table-label">${esc(formatTableNumber(t.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${t.capacity}</span>${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${empty} EMPTY</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`}
+  function canvasViewportHTML(event,seating){
+    const bg=event.background||{};
+    return`<div class="canvas-viewport ${ui.tool==="pan"?"pan-mode":""}" id="canvasViewport"><div class="canvas-world ${ui.grid?"grid-on":""} ${seating?"seating-canvas":""}" id="canvasWorld" style="transform:translate(${ui.pan.x}px,${ui.pan.y}px) scale(${ui.zoom})"><div class="reference-layer" style="display:${bg.visible&&bg.src?"block":"none"};opacity:${bg.opacity??.25};background-image:${bg.src?`url('${bg.src}')`:"none"};background-size:${bg.scale||100}% auto"></div>${event.venueObjects.map(o=>venueObjectHTML(o,seating)).join("")}${event.tables.map(t=>tableObjectHTML(event,t,seating)).join("")}</div>${seating?filterBannerHTML():""}${seating?"":`<div class="canvas-status">${typeof t==="function"?t("canvas.editHint"):"Drag to move · Handles resize and rotate · Delete removes selection"}</div>`}</div>`
+  }
+  function venueObjectHTML(o,seating){
+    const selected=!seating&&ui.selectedObjectId===o.id;
+    return`<div class="venue-object ${esc(o.type)} ${selected?"selected":""}" data-object-id="${o.id}" data-object-kind="venue" tabindex="0" role="button" aria-pressed="${selected?"true":"false"}" aria-label="${esc(o.label||o.type)}" style="left:${o.x}px;top:${o.y}px;width:${o.w}px;height:${o.h}px;transform:rotate(${o.rotation||0}deg);z-index:${o.z||3}"><span>${esc(o.label)}</span>${selected?handlesHTML():""}</div>`
+  }
+  function tableObjectHTML(event,t,seating){
+    const selected=(!seating&&ui.selectedObjectId===t.id)||(seating&&ui.selectedTableId===t.id),highlighted=ui.highlightId===t.id,match=!seating||tableMatchesFilter(event,t),used=occupiedSeatIndexes(event,t.id),positions=seatPositions(t),assigned=tableAssignedPax(event,t.id),empty=Math.max(0,t.capacity-assigned),chairs=positions.map((p,i)=>`<i class="chair ${used.has(i)?"occupied":""}" style="left:${p.x}%;top:${p.y}%"></i>${ui.showSeats?`<span class="seat-number" style="left:${50+(p.x-50)*.69}%;top:${50+(p.y-50)*.69}%">S${i+1}</span>`:""}`).join("");
+    return`<div class="table-object ${esc(t.type)} ${selected?"selected":""} ${highlighted?"highlighted":""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match":""}" data-object-id="${t.id}" data-object-kind="table" style="left:${t.x}px;top:${t.y}px;width:${t.w}px;height:${t.h}px;transform:rotate(${t.rotation||0}deg);z-index:${t.z||10}">${chairs}<div class="table-surface"><span class="table-label">${esc(formatTableNumber(t.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${t.capacity}</span>${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${empty} EMPTY</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`
+  }
   function handlesHTML(){return`<i class="rotate-handle" data-handle="rotate"></i><i class="resize-handle" data-handle="resize"></i>`}
-  function seatPositions(table){const count=Math.max(1,Number(table.capacity)||1),out=[];if(table.type==="round"||table.type==="bistro"){const rx=table.type==="bistro"?43:45,ry=table.type==="bistro"?43:46;for(let i=0;i<count;i++){const a=-Math.PI/2+i/count*Math.PI*2;out.push({x:50+Math.cos(a)*rx,y:50+Math.sin(a)*ry})}return out}if(table.type==="square"){for(let i=0;i<count;i++){const u=i/count*4;if(u<1)out.push({x:15+u*70,y:7});else if(u<2)out.push({x:93,y:15+(u-1)*70});else if(u<3)out.push({x:85-(u-2)*70,y:93});else out.push({x:7,y:85-(u-3)*70})}return out}const top=Math.ceil(count/2),bottom=count-top;for(let i=0;i<top;i++)out.push({x:top===1?50:12+i*76/(top-1),y:8});for(let i=0;i<bottom;i++)out.push({x:bottom===1?50:88-i*76/(bottom-1),y:92});return out}
-  function inspectorHTML(event){if(ui.rightCollapsed)return collapsedPanel("right");const t=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId);if(t){const assigned=tableAssignedPax(event,t.id),presets=t.type==="round"?[6,8,10,12]:[2,4,6,8];return`<aside class="side-panel right"><div class="panel-head"><strong>Inspector</strong><button class="panel-toggle" data-panel-toggle="right" title="Collapse Inspector">${icon("chevron")}</button></div><div class="inspector-title"><strong>${esc(formatTableNumber(t.number))}</strong><span>${esc(t.zone)} · ${assigned} occupied</span></div><div class="seat-editor"><div class="seat-editor-head"><strong>Seating</strong><span class="muted">Physical chairs</span></div><div class="seat-stepper"><button data-seat-step="-1" title="Remove one seat">−</button><b>${t.capacity}</b><button data-seat-step="1" title="Add one seat">+</button></div><div class="seat-presets">${presets.map(n=>`<button class="${t.capacity===n?"active":""}" data-seat-capacity="${n}">${n}</button>`).join("")}<button data-seat-custom title="Enter custom seat count">Custom</button></div></div><div class="panel-section"><div class="form-grid"><div class="field full"><label for="fld-v7-inspector-type">Table Type</label><select id="fld-v7-inspector-type" data-inspector="type">${["rectangle","square","round","bistro"].map(x=>`<option value="${x}" ${t.type===x?"selected":""}>${titleCase(x)}</option>`).join("")}</select></div><div class="field"><label for="fld-v7-inspector-number">Table Number</label><input id="fld-v7-inspector-number" data-inspector="number" value="${esc(t.number)}"></div><div class="field"><label for="fld-v7-inspector-rotation">Rotation</label><input id="fld-v7-inspector-rotation" data-inspector="rotation" type="number" value="${Math.round(t.rotation||0)}"></div><div class="field full"><label for="fld-v7-inspector-zone">Zone</label><select id="fld-v7-inspector-zone" data-inspector="zone">${ZONES.map(z=>`<option ${t.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div><div class="inspector-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}Duplicate</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${t.locked?"Unlock":"Lock"}</button><button class="btn sm" data-inspector-action="forward">Bring Forward</button><button class="btn sm" data-inspector-action="backward">Send Back</button><button class="btn sm danger" style="grid-column:1/-1" data-inspector-action="delete">${icon("trash")}Delete Table</button></div></div></aside>`}if(o)return`<aside class="side-panel right"><div class="panel-head"><strong>Inspector</strong><button class="panel-toggle" data-panel-toggle="right">${icon("chevron")}</button></div><div class="inspector-title"><strong>${esc(o.label)}</strong><span>${titleCase(o.type)} object</span></div><div class="panel-section"><div class="form-grid"><div class="field full"><label for="fld-v7-inspector-label">Label</label><input id="fld-v7-inspector-label" data-inspector="label" value="${esc(o.label)}"></div><div class="field"><label for="fld-v7-inspector-w">Width</label><input id="fld-v7-inspector-w" data-inspector="w" type="number" min="30" value="${Math.round(o.w)}"></div><div class="field"><label for="fld-v7-inspector-h">Height</label><input id="fld-v7-inspector-h" data-inspector="h" type="number" min="30" value="${Math.round(o.h)}"></div><div class="field full"><label for="fld-v7-inspector-rotation-2">Rotation</label><input id="fld-v7-inspector-rotation-2" data-inspector="rotation" type="number" value="${Math.round(o.rotation||0)}"></div></div><div class="inspector-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}Duplicate</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${o.locked?"Unlock":"Lock"}</button><button class="btn sm danger" style="grid-column:1/-1" data-inspector-action="delete">${icon("trash")}Delete Object</button></div></div></aside>`;return`<aside class="side-panel right"><div class="panel-head"><strong>Inspector</strong><button class="panel-toggle" data-panel-toggle="right">${icon("chevron")}</button></div><div class="inspector-empty">Select a table or venue object. Seat count appears as a dedicated control when a table is selected.</div></aside>`}
-  function titleCase(v){return String(v).replace(/\b\w/g,c=>c.toUpperCase())}function canvasSnapshot(event){return clone({tables:event.tables,venueObjects:event.venueObjects,background:event.background})}function restoreSnapshot(event,snap){event.tables=snap.tables;event.venueObjects=snap.venueObjects;event.background=snap.background;touchEvent(event)}function recordUndo(event,snap=canvasSnapshot(event)){ui.undo.push(snap);if(ui.undo.length>60)ui.undo.shift();ui.redo=[]}function undoCanvas(){const e=activeEvent();if(!ui.undo.length)return toast(t_("toast.nothingToUndo"));ui.redo.push(canvasSnapshot(e));restoreSnapshot(e,ui.undo.pop());ui.selectedObjectId=null;render()}function redoCanvas(){const e=activeEvent();if(!ui.redo.length)return toast(t_("toast.nothingToRedo"));ui.undo.push(canvasSnapshot(e));restoreSnapshot(e,ui.redo.pop());ui.selectedObjectId=null;render()}
+  function seatPositions(table){
+    const count=Math.max(1,Number(table.capacity)||1),out=[];
+    if(table.type==="round"||table.type==="bistro"){
+      const rx=table.type==="bistro"?43:45,ry=table.type==="bistro"?43:46;
+      for(let i=0;i<count;i++){
+        const a=-Math.PI/2+i/count*Math.PI*2;
+        out.push({x:50+Math.cos(a)*rx,y:50+Math.sin(a)*ry})
+      }
+      return out
+    }
+    if(table.type==="square"){
+      for(let i=0;i<count;i++){
+        const u=i/count*4;
+        if(u<1)out.push({x:15+u*70,y:7});else if(u<2)out.push({x:93,y:15+(u-1)*70});else if(u<3)out.push({x:85-(u-2)*70,y:93});else out.push({x:7,y:85-(u-3)*70})
+      }
+      return out
+    }
+    const top=Math.ceil(count/2),bottom=count-top;
+    for(let i=0;i<top;i++)out.push({x:top===1?50:12+i*76/(top-1),y:8});
+    for(let i=0;i<bottom;i++)out.push({x:bottom===1?50:88-i*76/(bottom-1),y:92});
+    return out
+  }
+  function inspectorHTML(event){
+    if(ui.rightCollapsed)return collapsedPanel("right");
+    const t=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId);
+    if(t){
+      const assigned=tableAssignedPax(event,t.id),presets=t.type==="round"?[6,8,10,12]:[2,4,6,8];
+      return`<aside class="side-panel right"><div class="panel-head"><strong>Inspector</strong><button class="panel-toggle" data-panel-toggle="right" title="Collapse Inspector">${icon("chevron")}</button></div><div class="inspector-title"><strong>${esc(formatTableNumber(t.number))}</strong><span>${esc(t.zone)} · ${assigned} occupied</span></div><div class="seat-editor"><div class="seat-editor-head"><strong>Seating</strong><span class="muted">Physical chairs</span></div><div class="seat-stepper"><button data-seat-step="-1" title="Remove one seat">−</button><b>${t.capacity}</b><button data-seat-step="1" title="Add one seat">+</button></div><div class="seat-presets">${presets.map(n=>`<button class="${t.capacity===n?"active":""}" data-seat-capacity="${n}">${n}</button>`).join("")}<button data-seat-custom title="Enter custom seat count">Custom</button></div></div><div class="panel-section"><div class="form-grid"><div class="field full"><label for="fld-v7-inspector-type">Table Type</label><select id="fld-v7-inspector-type" data-inspector="type">${["rectangle","square","round","bistro"].map(x=>`<option value="${x}" ${t.type===x?"selected":""}>${titleCase(x)}</option>`).join("")}</select></div><div class="field"><label for="fld-v7-inspector-number">Table Number</label><input id="fld-v7-inspector-number" data-inspector="number" value="${esc(t.number)}"></div><div class="field"><label for="fld-v7-inspector-rotation">Rotation</label><input id="fld-v7-inspector-rotation" data-inspector="rotation" type="number" value="${Math.round(t.rotation||0)}"></div><div class="field full"><label for="fld-v7-inspector-zone">Zone</label><select id="fld-v7-inspector-zone" data-inspector="zone">${ZONES.map(z=>`<option ${t.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div><div class="inspector-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}Duplicate</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${t.locked?"Unlock":"Lock"}</button><button class="btn sm" data-inspector-action="forward">Bring Forward</button><button class="btn sm" data-inspector-action="backward">Send Back</button><button class="btn sm danger" style="grid-column:1/-1" data-inspector-action="delete">${icon("trash")}Delete Table</button></div></div></aside>`
+    }
+    if(o)return`<aside class="side-panel right"><div class="panel-head"><strong>Inspector</strong><button class="panel-toggle" data-panel-toggle="right">${icon("chevron")}</button></div><div class="inspector-title"><strong>${esc(o.label)}</strong><span>${titleCase(o.type)} object</span></div><div class="panel-section"><div class="form-grid"><div class="field full"><label for="fld-v7-inspector-label">Label</label><input id="fld-v7-inspector-label" data-inspector="label" value="${esc(o.label)}"></div><div class="field"><label for="fld-v7-inspector-w">Width</label><input id="fld-v7-inspector-w" data-inspector="w" type="number" min="30" value="${Math.round(o.w)}"></div><div class="field"><label for="fld-v7-inspector-h">Height</label><input id="fld-v7-inspector-h" data-inspector="h" type="number" min="30" value="${Math.round(o.h)}"></div><div class="field full"><label for="fld-v7-inspector-rotation-2">Rotation</label><input id="fld-v7-inspector-rotation-2" data-inspector="rotation" type="number" value="${Math.round(o.rotation||0)}"></div></div><div class="inspector-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}Duplicate</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${o.locked?"Unlock":"Lock"}</button><button class="btn sm danger" style="grid-column:1/-1" data-inspector-action="delete">${icon("trash")}Delete Object</button></div></div></aside>`;
+    return`<aside class="side-panel right"><div class="panel-head"><strong>Inspector</strong><button class="panel-toggle" data-panel-toggle="right">${icon("chevron")}</button></div><div class="inspector-empty">Select a table or venue object. Seat count appears as a dedicated control when a table is selected.</div></aside>`
+  }
+  function titleCase(v){return String(v).replace(/\b\w/g,c=>c.toUpperCase())}
+  function canvasSnapshot(event){return clone({tables:event.tables,venueObjects:event.venueObjects,background:event.background})}
+  function restoreSnapshot(event,snap){
+    event.tables=snap.tables;
+    event.venueObjects=snap.venueObjects;
+    event.background=snap.background;
+    touchEvent(event)
+  }
+  function recordUndo(event,snap=canvasSnapshot(event)){
+    ui.undo.push(snap);
+    if(ui.undo.length>60)ui.undo.shift();
+    ui.redo=[]
+  }
+  function undoCanvas(){
+    const e=activeEvent();
+    if(!ui.undo.length)return toast(t_("toast.nothingToUndo"));
+    ui.redo.push(canvasSnapshot(e));
+    restoreSnapshot(e,ui.undo.pop());
+    ui.selectedObjectId=null;
+    render()
+  }
+  function redoCanvas(){
+    const e=activeEvent();
+    if(!ui.redo.length)return toast(t_("toast.nothingToRedo"));
+    ui.undo.push(canvasSnapshot(e));
+    restoreSnapshot(e,ui.redo.pop());
+    ui.selectedObjectId=null;
+    render()
+  }
   function bindPanelToggles(){app.querySelectorAll("[data-panel-toggle]").forEach(b=>b.onclick=()=>{if(b.dataset.panelToggle==="left")ui.leftCollapsed=!ui.leftCollapsed;else ui.rightCollapsed=!ui.rightCollapsed;render()})}
-  function bindCanvas(){const event=activeEvent(),viewport=document.getElementById("canvasViewport"),world=document.getElementById("canvasWorld"),seating=ui.tab==="seating";bindPanelToggles();app.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{ui.tool=b.dataset.tool;render()});app.querySelectorAll("[data-canvas-action]").forEach(b=>b.onclick=()=>canvasAction(b.dataset.canvasAction));viewport.addEventListener("wheel",e=>{e.preventDefault();zoomAt(e.deltaY>0?-.08:.08,e.clientX,e.clientY)},{passive:false});viewport.addEventListener("pointerdown",e=>{if(ui.tool==="pan"&&(e.target===viewport||e.target===world))startPan(e,viewport)});world.querySelectorAll("[data-object-id]").forEach(el=>{el.addEventListener("pointerdown",e=>{if(e.target.dataset.handle)return;if(seating){if(el.dataset.objectKind==="table"){ui.selectedTableId=el.dataset.objectId;ui.highlightId=null;render()}return}startObjectDrag(e,el.dataset.objectId,el.dataset.objectKind,el)});if(seating&&el.dataset.objectKind==="table"){el.addEventListener("dragover",e=>e.preventDefault());el.addEventListener("drop",e=>{e.preventDefault();e.stopPropagation();const gid=e.dataTransfer.getData("application/x-merit-guest");if(gid){ui.selectedGuestId=gid;assignGuestToTable(gid,el.dataset.objectId)}})}});world.querySelectorAll("[data-handle='resize']").forEach(h=>h.onpointerdown=e=>startResize(e,h.parentElement.dataset.objectId,h.parentElement.dataset.objectKind,h.parentElement));world.querySelectorAll("[data-handle='rotate']").forEach(h=>h.onpointerdown=e=>startRotate(e,h.parentElement.dataset.objectId,h.parentElement.dataset.objectKind,h.parentElement));const clear=app.querySelector("[data-clear-seating-filter]");if(clear)clear.onclick=()=>{ui.seatingFilter="all";render()};if(!seating){bindObjectLibrary(event);bindInspector(event);bindBackground(event)}requestAnimationFrame(()=>{if(ui.pan.x===28&&ui.pan.y===24)fitCanvas(false)})}
-  function bindObjectLibrary(event){app.querySelectorAll("[data-library-type]").forEach(item=>item.onclick=()=>{if(item.dataset.libraryKind==="table")openTableCreator(item.dataset.libraryType);else addVenue(item.dataset.libraryType)});app.querySelectorAll("[data-create-seats]").forEach(b=>b.onclick=()=>{ui.tableDraft.seats=Number(b.dataset.createSeats);render()});const custom=document.getElementById("createCustomSeats");if(custom)custom.oninput=()=>{ui.tableDraft.seats=Math.max(1,Math.min(99,Number(custom.value)||1));const total=app.querySelector(".create-total b");if(total)total.textContent=ui.tableDraft.seats};const num=document.getElementById("createTableNumber");if(num)num.oninput=()=>ui.tableDraft.number=num.value.toUpperCase();const zone=document.getElementById("createTableZone");if(zone)zone.onchange=()=>ui.tableDraft.zone=zone.value;const cancel=app.querySelector("[data-create-cancel]");if(cancel)cancel.onclick=()=>{ui.tableDraft=null;render()};const add=app.querySelector("[data-create-add]");if(add)add.onclick=createTableFromDraft}
+  function bindCanvas(){
+    const event=activeEvent(),viewport=document.getElementById("canvasViewport"),world=document.getElementById("canvasWorld"),seating=ui.tab==="seating";
+    bindPanelToggles();
+    app.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{
+      ui.tool=b.dataset.tool;
+      render()
+    });
+    app.querySelectorAll("[data-canvas-action]").forEach(b=>b.onclick=()=>canvasAction(b.dataset.canvasAction));
+    viewport.addEventListener("wheel",e=>{
+      e.preventDefault();
+      zoomAt(e.deltaY>0?-.08:.08,e.clientX,e.clientY)
+    },{passive:false});
+    viewport.addEventListener("pointerdown",e=>{if(ui.tool==="pan"&&(e.target===viewport||e.target===world))startPan(e,viewport)});
+    world.querySelectorAll("[data-object-id]").forEach(el=>{
+      el.addEventListener("pointerdown",e=>{
+        if(e.target.dataset.handle)return;
+        if(seating){
+          if(el.dataset.objectKind==="table"){
+            ui.selectedTableId=el.dataset.objectId;
+            ui.highlightId=null;
+            render()
+          }
+          return
+        }
+        startObjectDrag(e,el.dataset.objectId,el.dataset.objectKind,el)
+      });
+      if(seating&&el.dataset.objectKind==="table"){
+        el.addEventListener("dragover",e=>e.preventDefault());
+        el.addEventListener("drop",e=>{
+          e.preventDefault();
+          e.stopPropagation();
+          const gid=e.dataTransfer.getData("application/x-merit-guest");
+          if(gid){
+            ui.selectedGuestId=gid;
+            assignGuestToTable(gid,el.dataset.objectId)
+          }
+        })
+      }
+    });
+    world.querySelectorAll("[data-handle='resize']").forEach(h=>h.onpointerdown=e=>startResize(e,h.parentElement.dataset.objectId,h.parentElement.dataset.objectKind,h.parentElement));
+    world.querySelectorAll("[data-handle='rotate']").forEach(h=>h.onpointerdown=e=>startRotate(e,h.parentElement.dataset.objectId,h.parentElement.dataset.objectKind,h.parentElement));
+    const clear=app.querySelector("[data-clear-seating-filter]");
+    if(clear)clear.onclick=()=>{
+      ui.seatingFilter="all";
+      render()
+    };
+    if(!seating){
+      bindObjectLibrary(event);
+      bindInspector(event);
+      bindBackground(event)
+    }
+    requestAnimationFrame(()=>{if(ui.pan.x===28&&ui.pan.y===24)fitCanvas(false)})
+  }
+  function bindObjectLibrary(event){
+    app.querySelectorAll("[data-library-type]").forEach(item=>item.onclick=()=>{if(item.dataset.libraryKind==="table")openTableCreator(item.dataset.libraryType);else addVenue(item.dataset.libraryType)});
+    app.querySelectorAll("[data-create-seats]").forEach(b=>b.onclick=()=>{
+      ui.tableDraft.seats=Number(b.dataset.createSeats);
+      render()
+    });
+    const custom=document.getElementById("createCustomSeats");
+    if(custom)custom.oninput=()=>{
+      ui.tableDraft.seats=Math.max(1,Math.min(99,Number(custom.value)||1));
+      const total=app.querySelector(".create-total b");
+      if(total)total.textContent=ui.tableDraft.seats
+    };
+    const num=document.getElementById("createTableNumber");
+    if(num)num.oninput=()=>ui.tableDraft.number=num.value.toUpperCase();
+    const zone=document.getElementById("createTableZone");
+    if(zone)zone.onchange=()=>ui.tableDraft.zone=zone.value;
+    const cancel=app.querySelector("[data-create-cancel]");
+    if(cancel)cancel.onclick=()=>{
+      ui.tableDraft=null;
+      render()
+    };
+    const add=app.querySelector("[data-create-add]");
+    if(add)add.onclick=createTableFromDraft
+  }
   function openTableCreator(type){const e=activeEvent(),isB=type==="bistro",defaults={rectangle:6,square:4,round:8,bistro:2};ui.tableDraft={type,seats:defaults[type],number:nextTableNumber(e,isB),zone:isB?"BISTRO":"MAIN FLOOR"};render()}
-  function createTableFromDraft(){const e=activeEvent(),d=ui.tableDraft;if(!d)return;let number=String(d.number||nextTableNumber(e,d.type==="bistro")).trim().toUpperCase();if(e.tables.some(t=>t.number===number)){toast(t_("toast.tableNumberInUse"),"error");return}recordUndo(e);const dims=d.type==="round"?[120,120]:d.type==="square"?[105,105]:d.type==="bistro"?[82,72]:[170,86],obj={id:uid("table"),number,type:d.type,x:WORLD.width/2-dims[0]/2,y:WORLD.height/2-dims[1]/2,w:dims[0],h:dims[1],capacity:Math.max(1,Number(d.seats)||1),zone:d.zone,rotation:0,locked:false,z:10,hasPhysicalSeats:true,capacitySource:"HUMAN_CONFIRMED"};e.tables.push(obj);ui.selectedObjectId=obj.id;ui.tableDraft=null;touchEvent(e);render();toast(t_("toast.tableAdded",{table:formatTableNumber(number),n:obj.capacity}),"success")}
-  function addVenue(type){const e=activeEvent();recordUndo(e);const sizes={stage:[380,180],bar:[300,70],entrance:[110,40],exit:[90,40],column:[55,55],text:[150,42]},s=sizes[type]||[120,50],obj={id:uid("venue"),type,label:type==="text"?"TEXT":type.toUpperCase(),x:WORLD.width/2-s[0]/2,y:WORLD.height/2-s[1]/2,w:s[0],h:s[1],rotation:0,locked:false,z:4};e.venueObjects.push(obj);ui.selectedObjectId=obj.id;touchEvent(e);render();toast(t_("toast.objectAdded",{type:(k=>t_(k)!==k?t_(k):titleCase(type))("teach.type."+type)}),"success")}
+  function createTableFromDraft(){
+    const e=activeEvent(),d=ui.tableDraft;
+    if(!d)return;
+    let number=String(d.number||nextTableNumber(e,d.type==="bistro")).trim().toUpperCase();
+    if(e.tables.some(t=>t.number===number)){
+      toast(t_("toast.tableNumberInUse"),"error");
+      return
+    }
+    recordUndo(e);
+    const dims=d.type==="round"?[120,120]:d.type==="square"?[105,105]:d.type==="bistro"?[82,72]:[170,86],obj={id:uid("table"),number,type:d.type,x:WORLD.width/2-dims[0]/2,y:WORLD.height/2-dims[1]/2,w:dims[0],h:dims[1],capacity:Math.max(1,Number(d.seats)||1),zone:d.zone,rotation:0,locked:false,z:10,hasPhysicalSeats:true,capacitySource:"HUMAN_CONFIRMED"};
+    e.tables.push(obj);
+    ui.selectedObjectId=obj.id;
+    ui.tableDraft=null;
+    touchEvent(e);
+    render();
+    toast(t_("toast.tableAdded",{table:formatTableNumber(number),n:obj.capacity}),"success")
+  }
+  function addVenue(type){
+    const e=activeEvent();
+    recordUndo(e);
+    const sizes={stage:[380,180],bar:[300,70],entrance:[110,40],exit:[90,40],column:[55,55],text:[150,42]},s=sizes[type]||[120,50],obj={id:uid("venue"),type,label:type==="text"?"TEXT":type.toUpperCase(),x:WORLD.width/2-s[0]/2,y:WORLD.height/2-s[1]/2,w:s[0],h:s[1],rotation:0,locked:false,z:4};
+    e.venueObjects.push(obj);
+    ui.selectedObjectId=obj.id;
+    touchEvent(e);
+    render();
+    toast(t_("toast.objectAdded",{type:(k=>t_(k)!==k?t_(k):titleCase(type))("teach.type."+type)}),"success")
+  }
   function canvasAction(action){if(action==="undo")return undoCanvas();if(action==="redo")return redoCanvas();if(action==="zoom-in"){ui.zoom=Math.min(2.5,ui.zoom+.1);return applyCanvasTransform()}if(action==="zoom-out"){ui.zoom=Math.max(.2,ui.zoom-.1);return applyCanvasTransform()}if(action==="fit")return fitCanvas();if(action==="grid"){ui.grid=!ui.grid;return render()}if(action==="snap"){ui.snap=!ui.snap;return render()}if(action==="seat-numbers"){ui.showSeats=!ui.showSeats;return render()}}
   function applyCanvasTransform(){const w=document.getElementById("canvasWorld");if(w)w.style.transform=`translate(${ui.pan.x}px,${ui.pan.y}px) scale(${ui.zoom})`;const z=app.querySelector(".zoom-label");if(z)z.textContent=Math.round(ui.zoom*100)+"%"}
   function fitCanvas(){const v=document.getElementById("canvasViewport");if(!v)return;ui.zoom=Math.max(.2,Math.min((v.clientWidth-42)/WORLD.width,(v.clientHeight-42)/WORLD.height));ui.pan.x=(v.clientWidth-WORLD.width*ui.zoom)/2;ui.pan.y=(v.clientHeight-WORLD.height*ui.zoom)/2;applyCanvasTransform()}
   function zoomAt(delta,cx,cy){const v=document.getElementById("canvasViewport"),r=v.getBoundingClientRect(),old=ui.zoom,next=Math.max(.2,Math.min(2.5,old+delta)),wx=(cx-r.left-ui.pan.x)/old,wy=(cy-r.top-ui.pan.y)/old;ui.zoom=next;ui.pan.x=cx-r.left-wx*next;ui.pan.y=cy-r.top-wy*next;applyCanvasTransform()}
   function startPan(e,v){const sx=e.clientX,sy=e.clientY,px=ui.pan.x,py=ui.pan.y;v.classList.add("panning");const move=ev=>{ui.pan.x=px+ev.clientX-sx;ui.pan.y=py+ev.clientY-sy;applyCanvasTransform()},up=()=>{v.classList.remove("panning");document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up)};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up)}
   function findObject(event,id,kind){return kind==="table"?event.tables.find(x=>x.id===id):event.venueObjects.find(x=>x.id===id)}
-  function startObjectDrag(e,id,kind,el){if(ui.tool!=="select")return;e.preventDefault();e.stopPropagation();const event=activeEvent(),obj=findObject(event,id,kind);ui.selectedObjectId=id;document.querySelectorAll(".selected").forEach(x=>x.classList.remove("selected"));el.classList.add("selected");if(obj.locked){toast(t_("toast.objectLocked"));return render()}const snap=canvasSnapshot(event),sx=e.clientX,sy=e.clientY,ox=obj.x,oy=obj.y;let moved=false;const move=ev=>{let nx=ox+(ev.clientX-sx)/ui.zoom,ny=oy+(ev.clientY-sy)/ui.zoom;if(ui.snap){nx=Math.round(nx/10)*10;ny=Math.round(ny/10)*10}obj.x=Math.max(-obj.w+20,Math.min(WORLD.width-20,nx));obj.y=Math.max(-obj.h+20,Math.min(WORLD.height-20,ny));el.style.left=obj.x+"px";el.style.top=obj.y+"px";moved=true},up=()=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);if(moved){recordUndo(event,snap);touchEvent(event)}render()};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up)}
-  function startResize(e,id,kind,el){e.preventDefault();e.stopPropagation();const event=activeEvent(),obj=findObject(event,id,kind);if(obj.locked)return toast(t_("toast.unlockToResize"));const snap=canvasSnapshot(event),sx=e.clientX,sy=e.clientY,ow=obj.w,oh=obj.h,move=ev=>{obj.w=Math.max(kind==="table"?64:30,ow+(ev.clientX-sx)/ui.zoom);obj.h=Math.max(kind==="table"?54:30,oh+(ev.clientY-sy)/ui.zoom);el.style.width=obj.w+"px";el.style.height=obj.h+"px"},up=()=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);recordUndo(event,snap);touchEvent(event);render()};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up)}
-  function startRotate(e,id,kind,el){e.preventDefault();e.stopPropagation();const event=activeEvent(),obj=findObject(event,id,kind);if(obj.locked)return toast(t_("toast.unlockToRotate"));const snap=canvasSnapshot(event),v=document.getElementById("canvasViewport"),r=v.getBoundingClientRect(),move=ev=>{const cx=r.left+ui.pan.x+(obj.x+obj.w/2)*ui.zoom,cy=r.top+ui.pan.y+(obj.y+obj.h/2)*ui.zoom;let deg=Math.atan2(ev.clientY-cy,ev.clientX-cx)*180/Math.PI+90;if(ui.snap)deg=Math.round(deg/15)*15;obj.rotation=deg;el.style.transform=`rotate(${deg}deg)`},up=()=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);recordUndo(event,snap);touchEvent(event);render()};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up)}
+  function startObjectDrag(e,id,kind,el){
+    if(ui.tool!=="select")return;
+    e.preventDefault();
+    e.stopPropagation();
+    const event=activeEvent(),obj=findObject(event,id,kind);
+    ui.selectedObjectId=id;
+    document.querySelectorAll(".selected").forEach(x=>x.classList.remove("selected"));
+    el.classList.add("selected");
+    if(obj.locked){
+      toast(t_("toast.objectLocked"));
+      return render()
+    }
+    const snap=canvasSnapshot(event),sx=e.clientX,sy=e.clientY,ox=obj.x,oy=obj.y;
+    let moved=false;
+    const move=ev=>{
+      let nx=ox+(ev.clientX-sx)/ui.zoom,ny=oy+(ev.clientY-sy)/ui.zoom;
+      if(ui.snap){
+        nx=Math.round(nx/10)*10;
+        ny=Math.round(ny/10)*10
+      }
+      obj.x=Math.max(-obj.w+20,Math.min(WORLD.width-20,nx));
+      obj.y=Math.max(-obj.h+20,Math.min(WORLD.height-20,ny));
+      el.style.left=obj.x+"px";
+      el.style.top=obj.y+"px";
+      moved=true
+    },up=()=>{
+      document.removeEventListener("pointermove",move);
+      document.removeEventListener("pointerup",up);
+      if(moved){
+        recordUndo(event,snap);
+        touchEvent(event)
+      }
+      render()
+    };
+    document.addEventListener("pointermove",move);
+    document.addEventListener("pointerup",up)
+  }
+  function startResize(e,id,kind,el){
+    e.preventDefault();
+    e.stopPropagation();
+    const event=activeEvent(),obj=findObject(event,id,kind);
+    if(obj.locked)return toast(t_("toast.unlockToResize"));
+    const snap=canvasSnapshot(event),sx=e.clientX,sy=e.clientY,ow=obj.w,oh=obj.h,move=ev=>{
+      obj.w=Math.max(kind==="table"?64:30,ow+(ev.clientX-sx)/ui.zoom);
+      obj.h=Math.max(kind==="table"?54:30,oh+(ev.clientY-sy)/ui.zoom);
+      el.style.width=obj.w+"px";
+      el.style.height=obj.h+"px"
+    },up=()=>{
+      document.removeEventListener("pointermove",move);
+      document.removeEventListener("pointerup",up);
+      recordUndo(event,snap);
+      touchEvent(event);
+      render()
+    };
+    document.addEventListener("pointermove",move);
+    document.addEventListener("pointerup",up)
+  }
+  function startRotate(e,id,kind,el){
+    e.preventDefault();
+    e.stopPropagation();
+    const event=activeEvent(),obj=findObject(event,id,kind);
+    if(obj.locked)return toast(t_("toast.unlockToRotate"));
+    const snap=canvasSnapshot(event),v=document.getElementById("canvasViewport"),r=v.getBoundingClientRect(),move=ev=>{
+      const cx=r.left+ui.pan.x+(obj.x+obj.w/2)*ui.zoom,cy=r.top+ui.pan.y+(obj.y+obj.h/2)*ui.zoom;
+      let deg=Math.atan2(ev.clientY-cy,ev.clientX-cx)*180/Math.PI+90;
+      if(ui.snap)deg=Math.round(deg/15)*15;
+      obj.rotation=deg;
+      el.style.transform=`rotate(${deg}deg)`
+    },up=()=>{
+      document.removeEventListener("pointermove",move);
+      document.removeEventListener("pointerup",up);
+      recordUndo(event,snap);
+      touchEvent(event);
+      render()
+    };
+    document.addEventListener("pointermove",move);
+    document.addEventListener("pointerup",up)
+  }
   function nextTableNumber(event,bistro){const prefix=bistro?"B":"T",nums=event.tables.filter(t=>t.number.startsWith(prefix)).map(t=>parseInt(t.number.slice(prefix.length),10)||0);return prefix+String(Math.max(0,...nums)+1).padStart(2,"0")}
   function repackTableAssignments(event,table,newCap){const guests=event.guests.filter(g=>g.assignment?.tableId===table.id).sort((a,b)=>Math.min(...a.assignment.seats)-Math.min(...b.assignment.seats)),occupied=guests.reduce((n,g)=>n+paxOf(g),0);if(occupied>newCap)return false;let cursor=0;guests.forEach(g=>{g.assignment.seats=Array.from({length:paxOf(g)},(_,i)=>cursor+i);cursor+=paxOf(g)});return true}
   function setTableCapacity(event,table,newCap){newCap=Math.max(1,Math.min(99,Number(newCap)||1));const occupied=tableAssignedPax(event,table.id);if(newCap<occupied){toast(t_("toast.capacityBelowOccupied",{table:table.number,n:occupied}),"error",5000);return false}recordUndo(event);repackTableAssignments(event,table,newCap);table.capacity=newCap;touchEvent(event);render();return true}
-  function bindInspector(event){app.querySelectorAll("[data-inspector]").forEach(el=>el.onchange=()=>updateInspectorField(event,el.dataset.inspector,el.value));app.querySelectorAll("[data-inspector-action]").forEach(b=>b.onclick=()=>inspectorAction(event,b.dataset.inspectorAction));app.querySelectorAll("[data-seat-step]").forEach(b=>b.onclick=()=>{const t=event.tables.find(x=>x.id===ui.selectedObjectId);if(t)setTableCapacity(event,t,t.capacity+Number(b.dataset.seatStep))});app.querySelectorAll("[data-seat-capacity]").forEach(b=>b.onclick=()=>{const t=event.tables.find(x=>x.id===ui.selectedObjectId);if(t)setTableCapacity(event,t,Number(b.dataset.seatCapacity))});const custom=app.querySelector("[data-seat-custom]");if(custom)custom.onclick=async()=>{const t=event.tables.find(x=>x.id===ui.selectedObjectId),value=await ask({title:t_("ask.seatsTitle"),body:t_("ask.seatsBody",{number:t.number}),confirmLabel:t_("ask.set"),number:{label:t_("ask.seatsLabel"),min:1,max:99,value:t.capacity}});if(value!==null)setTableCapacity(event,t,value)}}
-  function updateInspectorField(event,field,value){const t=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId),obj=t||o;if(!obj)return;if(t&&field==="number"){value=String(value).trim().toUpperCase();if(!value)return render();if(event.tables.some(x=>x.id!==t.id&&x.number===value)){toast(t_("toast.tableNumberInUse"),"error");return render()}}recordUndo(event);if(["rotation","w","h"].includes(field))value=Number(value);obj[field]=value;if(t&&field==="type"){if(value==="round")t.w=t.h=120;else if(value==="square")t.w=t.h=105;else if(value==="bistro"){t.w=82;t.h=72;t.zone="BISTRO"}else{t.w=170;t.h=86}}touchEvent(event);render()}
-  function inspectorAction(event,action){const t=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId),obj=t||o;if(!obj)return;if(action==="lock"){recordUndo(event);obj.locked=!obj.locked;touchEvent(event);return render()}if(action==="delete")return deleteSelectedObject(event);if(action==="duplicate"){recordUndo(event);const c=clone(obj);c.id=uid(t?"table":"venue");c.x+=20;c.y+=20;c.locked=false;if(t){c.number=nextTableNumber(event,t.type==="bistro");event.tables.push(c)}else event.venueObjects.push(c);ui.selectedObjectId=c.id;touchEvent(event);return render()}if(action==="forward"||action==="backward"){recordUndo(event);obj.z=Math.max(1,(obj.z||10)+(action==="forward"?1:-1));touchEvent(event);render()}}
-  async function deleteSelectedObject(event){const t=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId);if(!t&&!o)return;const assigned=t?event.guests.filter(g=>g.assignment?.tableId===t.id):[];if(!(await ask({title:t_("ask.deleteObjectsTitle",{n:1}),body:assigned.length?t_("ask.deleteObjectsGuests",{n:1,guests:assigned.length}):"",confirmLabel:t_("ask.delete"),danger:true})))return;recordUndo(event);assigned.forEach(g=>MeritSeatAssignment.clear(g));if(t)event.tables=event.tables.filter(x=>x.id!==t.id);else event.venueObjects=event.venueObjects.filter(x=>x.id!==o.id);ui.selectedObjectId=null;touchEvent(event);render()}
-  function bindBackground(event){const opacity=document.getElementById("bgOpacity");if(opacity){opacity.oninput=()=>{event.background.opacity=Number(opacity.value);const l=document.querySelector(".reference-layer");if(l)l.style.opacity=opacity.value};opacity.onchange=()=>touchEvent(event)}const scale=document.getElementById("bgScale");if(scale){scale.oninput=()=>{event.background.scale=Number(scale.value);const l=document.querySelector(".reference-layer");if(l)l.style.backgroundSize=scale.value+"% auto"};scale.onchange=()=>touchEvent(event)}app.querySelectorAll("[data-bg-action]").forEach(b=>b.onclick=()=>{const a=b.dataset.bgAction;if(a==="import")return document.getElementById("floorPlanFile").click();if(a==="fit")return fitCanvas();recordUndo(event);if(a==="visible")event.background.visible=!event.background.visible;if(a==="lock")event.background.locked=!event.background.locked;if(a==="remove")event.background={src:"",name:"",opacity:.25,visible:false,locked:true,isDefault:false,scale:100};touchEvent(event);render()})}
+  function bindInspector(event){
+    app.querySelectorAll("[data-inspector]").forEach(el=>el.onchange=()=>updateInspectorField(event,el.dataset.inspector,el.value));
+    app.querySelectorAll("[data-inspector-action]").forEach(b=>b.onclick=()=>inspectorAction(event,b.dataset.inspectorAction));
+    app.querySelectorAll("[data-seat-step]").forEach(b=>b.onclick=()=>{
+      const t=event.tables.find(x=>x.id===ui.selectedObjectId);
+      if(t)setTableCapacity(event,t,t.capacity+Number(b.dataset.seatStep))
+    });
+    app.querySelectorAll("[data-seat-capacity]").forEach(b=>b.onclick=()=>{
+      const t=event.tables.find(x=>x.id===ui.selectedObjectId);
+      if(t)setTableCapacity(event,t,Number(b.dataset.seatCapacity))
+    });
+    const custom=app.querySelector("[data-seat-custom]");
+    if(custom)custom.onclick=async()=>{
+      const t=event.tables.find(x=>x.id===ui.selectedObjectId),value=await ask({title:t_("ask.seatsTitle"),body:t_("ask.seatsBody",{number:t.number}),confirmLabel:t_("ask.set"),number:{label:t_("ask.seatsLabel"),min:1,max:99,value:t.capacity}});
+      if(value!==null)setTableCapacity(event,t,value)
+    }
+  }
+  function updateInspectorField(event,field,value){
+    const t=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId),obj=t||o;
+    if(!obj)return;
+    if(t&&field==="number"){
+      value=String(value).trim().toUpperCase();
+      if(!value)return render();
+      if(event.tables.some(x=>x.id!==t.id&&x.number===value)){
+        toast(t_("toast.tableNumberInUse"),"error");
+        return render()
+      }
+    }
+    recordUndo(event);
+    if(["rotation","w","h"].includes(field))value=Number(value);
+    obj[field]=value;
+    if(t&&field==="type"){if(value==="round")t.w=t.h=120;else if(value==="square")t.w=t.h=105;else if(value==="bistro"){
+      t.w=82;
+      t.h=72;
+      t.zone="BISTRO"
+    }else{
+      t.w=170;
+      t.h=86
+    }}
+    touchEvent(event);
+    render()
+  }
+  function inspectorAction(event,action){
+    const t=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId),obj=t||o;
+    if(!obj)return;
+    if(action==="lock"){
+      recordUndo(event);
+      obj.locked=!obj.locked;
+      touchEvent(event);
+      return render()
+    }
+    if(action==="delete")return deleteSelectedObject(event);
+    if(action==="duplicate"){
+      recordUndo(event);
+      const c=clone(obj);
+      c.id=uid(t?"table":"venue");
+      c.x+=20;
+      c.y+=20;
+      c.locked=false;
+      if(t){
+        c.number=nextTableNumber(event,t.type==="bistro");
+        event.tables.push(c)
+      }else event.venueObjects.push(c);
+      ui.selectedObjectId=c.id;
+      touchEvent(event);
+      return render()
+    }
+    if(action==="forward"||action==="backward"){
+      recordUndo(event);
+      obj.z=Math.max(1,(obj.z||10)+(action==="forward"?1:-1));
+      touchEvent(event);
+      render()
+    }
+  }
+  async function deleteSelectedObject(event){
+    const t=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId);
+    if(!t&&!o)return;
+    const assigned=t?event.guests.filter(g=>g.assignment?.tableId===t.id):[];
+    if(!(await ask({title:t_("ask.deleteObjectsTitle",{n:1}),body:assigned.length?t_("ask.deleteObjectsGuests",{n:1,guests:assigned.length}):"",confirmLabel:t_("ask.delete"),danger:true})))return;
+    recordUndo(event);
+    assigned.forEach(g=>MeritSeatAssignment.clear(g));
+    if(t)event.tables=event.tables.filter(x=>x.id!==t.id);else event.venueObjects=event.venueObjects.filter(x=>x.id!==o.id);
+    ui.selectedObjectId=null;
+    touchEvent(event);
+    render()
+  }
+  function bindBackground(event){
+    const opacity=document.getElementById("bgOpacity");
+    if(opacity){
+      opacity.oninput=()=>{
+        event.background.opacity=Number(opacity.value);
+        const l=document.querySelector(".reference-layer");
+        if(l)l.style.opacity=opacity.value
+      };
+      opacity.onchange=()=>touchEvent(event)
+    }
+    const scale=document.getElementById("bgScale");
+    if(scale){
+      scale.oninput=()=>{
+        event.background.scale=Number(scale.value);
+        const l=document.querySelector(".reference-layer");
+        if(l)l.style.backgroundSize=scale.value+"% auto"
+      };
+      scale.onchange=()=>touchEvent(event)
+    }
+    app.querySelectorAll("[data-bg-action]").forEach(b=>b.onclick=()=>{
+      const a=b.dataset.bgAction;
+      if(a==="import")return document.getElementById("floorPlanFile").click();
+      if(a==="fit")return fitCanvas();
+      recordUndo(event);
+      if(a==="visible")event.background.visible=!event.background.visible;
+      if(a==="lock")event.background.locked=!event.background.locked;
+      if(a==="remove")event.background={src:"",name:"",opacity:.25,visible:false,locked:true,isDefault:false,scale:100};
+      touchEvent(event);
+      render()
+    })
+  }
   /* Floor-plan input is bound by the V8 offline PNG/JPG/PDF importer. */

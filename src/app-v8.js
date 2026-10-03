@@ -1447,7 +1447,10 @@
   function readonlyGuestsHTML(event){
     // Stored values (planning / arrival status, VIP level) are shown through
     // their labels; the records themselves are untouched (§18).
-    return`<div class="screen-inner"><div class="readonly-note">${icon("lock")}${t("history.guestsReadOnly")}</div><div class="screen-titlebar"><div><h2>${t("guests.title")}</h2><p>${t("history.guestsCount",{n:event.guests.length,pax:eventMetrics(event).guests})}</p></div></div><div class="guest-shell"><table class="guest-table"><thead><tr><th>${t("guests.col.name")}</th><th>${t("guests.col.pax")}</th><th>${t("history.col.planning")}</th><th>${t("history.col.arrival")}</th><th>${t("guests.col.vip")}</th><th>${t("guests.col.invitedBy")}</th><th>${t("guests.col.tableSeat")}</th><th>${t("guests.col.notes")}</th></tr></thead><tbody>${event.guests.map(g=>{const tb=event.tables.find(x=>x.id===g.assignment?.tableId);return`<tr><td><b>${esc(g.name)}</b></td><td>${paxOf(g)}</td><td>${esc(t("status.planning."+g.planningStatus))}</td><td>${esc(t("status.arrival."+g.arrivalStatus))}</td><td>${esc(vipLabel(g.vip))}</td><td>${esc(g.invitedBy||"—")}</td><td>${tb?esc(tb.number)+" · "+esc(seatRange(g.assignment.seats)):"—"}</td><td>${esc(g.notes||"")}</td></tr>`}).join("")||`<tr><td colspan="8" class="muted" style="text-align:center;padding:30px">${t("history.noGuests")}</td></tr>`}</tbody></table></div></div>`;
+    return`<div class="screen-inner"><div class="readonly-note">${icon("lock")}${t("history.guestsReadOnly")}</div><div class="screen-titlebar"><div><h2>${t("guests.title")}</h2><p>${t("history.guestsCount",{n:event.guests.length,pax:eventMetrics(event).guests})}</p></div></div><div class="guest-shell"><table class="guest-table"><thead><tr><th>${t("guests.col.name")}</th><th>${t("guests.col.pax")}</th><th>${t("history.col.planning")}</th><th>${t("history.col.arrival")}</th><th>${t("guests.col.vip")}</th><th>${t("guests.col.invitedBy")}</th><th>${t("guests.col.tableSeat")}</th><th>${t("guests.col.notes")}</th></tr></thead><tbody>${event.guests.map(g=>{
+      const tb=event.tables.find(x=>x.id===g.assignment?.tableId);
+      return`<tr><td><b>${esc(g.name)}</b></td><td>${paxOf(g)}</td><td>${esc(t("status.planning."+g.planningStatus))}</td><td>${esc(t("status.arrival."+g.arrivalStatus))}</td><td>${esc(vipLabel(g.vip))}</td><td>${esc(g.invitedBy||"—")}</td><td>${tb?esc(tb.number)+" · "+esc(seatRange(g.assignment.seats)):"—"}</td><td>${esc(g.notes||"")}</td></tr>`
+    }).join("")||`<tr><td colspan="8" class="muted" style="text-align:center;padding:30px">${t("history.noGuests")}</td></tr>`}</tbody></table></div></div>`;
   }
 
   function setupHTML(){
@@ -1508,7 +1511,22 @@
   async function handlePlanFile(file){
     if(!file)return;syncSetupFields();const lower=file.name.toLowerCase();
     if(file.type==="application/pdf"||lower.endsWith(".pdf")){
-      try{ui.setupBusy=true;render();const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;newEventDraft.pdfDoc=doc;newEventDraft.pdfName=file.name;newEventDraft.pdfPages=Array.from({length:doc.numPages},(_,i)=>i);ui.setupBusy=false;await selectPdfPage(0);toast(t(doc.numPages===1?"toast.pdfPageOne":"toast.pdfPages",{n:doc.numPages}),"success",4500);}catch(error){ui.setupBusy=false;render();toast(t("setup.planReadFailed",{reason:userMessage(error,"plan.fileUnreadable")}),"error",6000);}return;
+      try{
+        ui.setupBusy=true;
+        render();
+        const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+        newEventDraft.pdfDoc=doc;
+        newEventDraft.pdfName=file.name;
+        newEventDraft.pdfPages=Array.from({length:doc.numPages},(_,i)=>i);
+        ui.setupBusy=false;
+        await selectPdfPage(0);
+        toast(t(doc.numPages===1?"toast.pdfPageOne":"toast.pdfPages",{n:doc.numPages}),"success",4500);
+      }catch(error){
+        ui.setupBusy=false;
+        render();
+        toast(t("setup.planReadFailed",{reason:userMessage(error,"plan.fileUnreadable")}),"error",6000);
+      }
+      return;
     }
     if(!(file.type==="image/png"||file.type==="image/jpeg"||/\.(png|jpe?g)$/.test(lower)))return toast(t("toast.chooseImageType"),"error");
     let planSrc;try{planSrc=await readImageFile(file);}catch{return toast(t("plan.unreadableImage"),"error",6500);}
@@ -2017,18 +2035,110 @@
   }
 
   function uniqueNumber(event,prefix,index){let n=index;while(event.tables.some(t=>t.number===prefix+String(n).padStart(2,"0")))n++;return prefix+String(n).padStart(2,"0");}
-  function createTable(event,d,x,y,index){const dims=d.type==="round"?[120,120]:d.type==="square"?[105,105]:d.type==="bistro"?[82,72]:[170,86],number=uniqueNumber(event,(d.prefix|| (d.type==="bistro"?"B":"T")).toUpperCase(),index);return RULES().syncTableChairs({id:uid("table"),number,origin:"MANUAL",type:d.type,x,y,w:dims[0],h:dims[1],capacity:Number(d.chairs)||1,zone:d.type==="bistro"?"BISTRO":d.zone||"MAIN FLOOR",rotation:0,locked:false,z:10,hasPhysicalSeats:true,capacitySource:"HUMAN_CONFIRMED"});}
-  function commitBulk(){syncBulkFields();const event=activeEvent(),d=ui.bulkDraft;if(!canMutate(event,"add plan objects"))return;if(d.placement==="repeated"){ui.repeatPlacement={...d,remaining:Math.max(1,Number(d.quantity)||1),index:1};ui.v8AddOpen=false;render();toast(t("toast.repeatedPlacementActive"),"success",5000);return;}const positions=bulkPositions(d);if(!positions.length)return;recordUndo(event);const created=[];positions.forEach((p,i)=>{if(d.kind==="table"){const t=createTable(event,d,p.x,p.y,i+1);event.tables.push(t);created.push(t.id);}else{const sizes={stage:[380,180],bar:[300,70],entrance:[110,40],exit:[90,40],column:[55,55],text:[150,42]},s=sizes[d.type]||[120,50],o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:p.x,y:p.y,w:s[0],h:s[1],rotation:0,locked:false,z:4};event.venueObjects.push(o);created.push(o.id);}});ui.selectedObjectIds=created;ui.selectedObjectId=created[0];ui.v8AddOpen=false;touchEvent(event);render();toast(t(created.length===1?"toast.objectAddedChairsOne":"toast.objectsAddedChairs",{n:created.length}),"success");}
-  function placeRepeated(pointerEvent){const r=document.getElementById("canvasViewport").getBoundingClientRect(),d=ui.repeatPlacement,event=activeEvent(),x=(pointerEvent.clientX-r.left-ui.pan.x)/ui.zoom,y=(pointerEvent.clientY-r.top-ui.pan.y)/ui.zoom;if(!d||!canMutate(event,"place plan objects"))return;recordUndo(event);let id;if(d.kind==="table"){const t=createTable(event,d,x-60,y-45,d.index);event.tables.push(t);id=t.id;}else{const o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:x-60,y:y-30,w:120,h:60,rotation:0,locked:false,z:4};event.venueObjects.push(o);id=o.id;}d.remaining--;d.index++;ui.selectedObjectId=id;ui.selectedObjectIds=[id];if(d.remaining<=0)ui.repeatPlacement=null;touchEvent(event);render();}
-  function duplicateSelection(){const event=activeEvent();if(!canMutate(event,"duplicate plan objects"))return;const ids=ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean);if(!ids.length)return toast(t("toast.selectObjectsFirst"));recordUndo(event);const created=[];for(const id of ids){const t=event.tables.find(x=>x.id===id),o=event.venueObjects.find(x=>x.id===id),c=clone(t||o);if(!c)continue;c.id=uid(t?"table":"venue");c.x+=24;c.y+=24;c.locked=false;if(t){c.number=uniqueNumber(event,t.type==="bistro"?"B":"T",1);
+  function createTable(event,d,x,y,index){
+    const dims=d.type==="round"?[120,120]:d.type==="square"?[105,105]:d.type==="bistro"?[82,72]:[170,86],number=uniqueNumber(event,(d.prefix|| (d.type==="bistro"?"B":"T")).toUpperCase(),index);
+    return RULES().syncTableChairs({id:uid("table"),number,origin:"MANUAL",type:d.type,x,y,w:dims[0],h:dims[1],capacity:Number(d.chairs)||1,zone:d.type==="bistro"?"BISTRO":d.zone||"MAIN FLOOR",rotation:0,locked:false,z:10,hasPhysicalSeats:true,capacitySource:"HUMAN_CONFIRMED"});
+  }
+  function commitBulk(){
+    syncBulkFields();
+    const event=activeEvent(),d=ui.bulkDraft;
+    if(!canMutate(event,"add plan objects"))return;
+    if(d.placement==="repeated"){
+      ui.repeatPlacement={...d,remaining:Math.max(1,Number(d.quantity)||1),index:1};
+      ui.v8AddOpen=false;
+      render();
+      toast(t("toast.repeatedPlacementActive"),"success",5000);
+      return;
+    }
+    const positions=bulkPositions(d);
+    if(!positions.length)return;
+    recordUndo(event);
+    const created=[];
+    positions.forEach((p,i)=>{if(d.kind==="table"){
+      const t=createTable(event,d,p.x,p.y,i+1);
+      event.tables.push(t);
+      created.push(t.id);
+    }else{
+      const sizes={stage:[380,180],bar:[300,70],entrance:[110,40],exit:[90,40],column:[55,55],text:[150,42]},s=sizes[d.type]||[120,50],o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:p.x,y:p.y,w:s[0],h:s[1],rotation:0,locked:false,z:4};
+      event.venueObjects.push(o);
+      created.push(o.id);
+    }});
+    ui.selectedObjectIds=created;
+    ui.selectedObjectId=created[0];
+    ui.v8AddOpen=false;
+    touchEvent(event);
+    render();
+    toast(t(created.length===1?"toast.objectAddedChairsOne":"toast.objectsAddedChairs",{n:created.length}),"success");
+  }
+  function placeRepeated(pointerEvent){
+    const r=document.getElementById("canvasViewport").getBoundingClientRect(),d=ui.repeatPlacement,event=activeEvent(),x=(pointerEvent.clientX-r.left-ui.pan.x)/ui.zoom,y=(pointerEvent.clientY-r.top-ui.pan.y)/ui.zoom;
+    if(!d||!canMutate(event,"place plan objects"))return;
+    recordUndo(event);
+    let id;
+    if(d.kind==="table"){
+      const t=createTable(event,d,x-60,y-45,d.index);
+      event.tables.push(t);
+      id=t.id;
+    }else{
+      const o={id:uid("venue"),type:d.type,label:d.type.toUpperCase(),x:x-60,y:y-30,w:120,h:60,rotation:0,locked:false,z:4};
+      event.venueObjects.push(o);
+      id=o.id;
+    }
+    d.remaining--;
+    d.index++;
+    ui.selectedObjectId=id;
+    ui.selectedObjectIds=[id];
+    if(d.remaining<=0)ui.repeatPlacement=null;
+    touchEvent(event);
+    render();
+  }
+  function duplicateSelection(){
+    const event=activeEvent();
+    if(!canMutate(event,"duplicate plan objects"))return;
+    const ids=ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean);
+    if(!ids.length)return toast(t("toast.selectObjectsFirst"));
+    recordUndo(event);
+    const created=[];
+    for(const id of ids){
+      const t=event.tables.find(x=>x.id===id),o=event.venueObjects.find(x=>x.id===id),c=clone(t||o);
+      if(!c)continue;
+      c.id=uid(t?"table":"venue");
+      c.x+=24;
+      c.y+=24;
+      c.locked=false;
+      if(t){
+        c.number=uniqueNumber(event,t.type==="bistro"?"B":"T",1);
         // A copy is a person's act: nothing about it was detected, and the
         // number printed on the ORIGINAL's symbol is not this table's (§21).
         c.origin="COPY";delete c.printedNumber;if(c.capacitySource==="DETECTED_PHYSICAL_SEATS")c.capacitySource="HUMAN_CONFIRMED";c.chairs=(c.chairs||[]).map((chair,index)=>({...chair,id:uid("chair"),parentTableId:c.id,seatNumber:index+1}));event.tables.push(c);}else event.venueObjects.push(c);created.push(c.id);}ui.selectedObjectIds=created;ui.selectedObjectId=created[0]||null;touchEvent(event);render();}
-  async function deleteSelection(){const event=activeEvent();if(!canMutate(event,"delete plan objects"))return;const ids=new Set(ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean));if(!ids.size)return;const affected=event.guests.filter(g=>ids.has(g.assignment?.tableId));if(!(await ask({title:t("ask.deleteObjectsTitle",{n:ids.size}),body:affected.length?t("ask.deleteObjectsGuests",{n:ids.size,guests:affected.length}):"",confirmLabel:t("ask.delete"),danger:true})))return;recordUndo(event);affected.forEach(g=>SEAT().clear(g));event.tables=event.tables.filter(t=>!ids.has(t.id));event.venueObjects=event.venueObjects.filter(o=>!ids.has(o.id));ui.selectedObjectIds=[];ui.selectedObjectId=null;touchEvent(event);render();}
+  async function deleteSelection(){
+    const event=activeEvent();
+    if(!canMutate(event,"delete plan objects"))return;
+    const ids=new Set(ui.selectedObjectIds.length?ui.selectedObjectIds:[ui.selectedObjectId].filter(Boolean));
+    if(!ids.size)return;
+    const affected=event.guests.filter(g=>ids.has(g.assignment?.tableId));
+    if(!(await ask({title:t("ask.deleteObjectsTitle",{n:ids.size}),body:affected.length?t("ask.deleteObjectsGuests",{n:ids.size,guests:affected.length}):"",confirmLabel:t("ask.delete"),danger:true})))return;
+    recordUndo(event);
+    affected.forEach(g=>SEAT().clear(g));
+    event.tables=event.tables.filter(t=>!ids.has(t.id));
+    event.venueObjects=event.venueObjects.filter(o=>!ids.has(o.id));
+    ui.selectedObjectIds=[];
+    ui.selectedObjectId=null;
+    touchEvent(event);
+    render();
+  }
 
   function startMarquee(e){
     if(e.button!==0||ui.tool!=="select"||ui.repeatPlacement)return;const viewport=document.getElementById("canvasViewport"),world=document.getElementById("canvasWorld");if(![viewport,world,world.querySelector(".reference-layer")].includes(e.target))return;e.preventDefault();const box=document.createElement("div");box.className="marquee";viewport.appendChild(box);const r=viewport.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top;let current=[];
-    const move=ev=>{const x=ev.clientX-r.left,y=ev.clientY-r.top,left=Math.min(sx,x),top=Math.min(sy,y),w=Math.abs(x-sx),h=Math.abs(y-sy);Object.assign(box.style,{left:left+"px",top:top+"px",width:w+"px",height:h+"px"});const br={left:r.left+left,top:r.top+top,right:r.left+left+w,bottom:r.top+top+h};current=[...world.querySelectorAll("[data-object-id]")].filter(el=>{const q=el.getBoundingClientRect();return q.right>=br.left&&q.left<=br.right&&q.bottom>=br.top&&q.top<=br.bottom;}).map(el=>el.dataset.objectId);};
+    const move=ev=>{
+      const x=ev.clientX-r.left,y=ev.clientY-r.top,left=Math.min(sx,x),top=Math.min(sy,y),w=Math.abs(x-sx),h=Math.abs(y-sy);
+      Object.assign(box.style,{left:left+"px",top:top+"px",width:w+"px",height:h+"px"});
+      const br={left:r.left+left,top:r.top+top,right:r.left+left+w,bottom:r.top+top+h};
+      current=[...world.querySelectorAll("[data-object-id]")].filter(el=>{
+        const q=el.getBoundingClientRect();
+        return q.right>=br.left&&q.left<=br.right&&q.bottom>=br.top&&q.top<=br.bottom;
+      }).map(el=>el.dataset.objectId);
+    };
     const up=()=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);box.remove();ui.selectedObjectIds=e.ctrlKey?[...new Set([...ui.selectedObjectIds,...current])]:current;ui.selectedObjectId=ui.selectedObjectIds[0]||null;render();};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);
   }
   startObjectDrag = function(e,id,kind,el){
@@ -2041,7 +2151,23 @@
     const up=()=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);if(moved){recordUndo(event,snap);touchEvent(event);}render();};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);
   };
 
-  setTableCapacity = function(event,table,newCap){if(!canMutate(event,"change chair capacity"))return false;newCap=Math.max(1,Math.min(99,Number(newCap)||1));const occupied=tableAssignedPax(event,table.id);if(newCap<occupied){toast(t("toast.capacityBelowPax",{table:table.number,n:occupied}),"error",5000);return false;}recordUndo(event);repackTableAssignments(event,table,newCap);if(table.capacityEvidence&&table.capacitySource!=="HUMAN_CONFIRMED")table.capacityEvidence={...table.capacityEvidence,confirmedBy:"person",confirmedAt:nowISO(),previous:table.capacity};table.capacitySource="HUMAN_CONFIRMED";RULES().syncTableChairs(table,newCap);touchEvent(event);render();return true;};
+  setTableCapacity = function(event,table,newCap){
+    if(!canMutate(event,"change chair capacity"))return false;
+    newCap=Math.max(1,Math.min(99,Number(newCap)||1));
+    const occupied=tableAssignedPax(event,table.id);
+    if(newCap<occupied){
+      toast(t("toast.capacityBelowPax",{table:table.number,n:occupied}),"error",5000);
+      return false;
+    }
+    recordUndo(event);
+    repackTableAssignments(event,table,newCap);
+    if(table.capacityEvidence&&table.capacitySource!=="HUMAN_CONFIRMED")table.capacityEvidence={...table.capacityEvidence,confirmedBy:"person",confirmedAt:nowISO(),previous:table.capacity};
+    table.capacitySource="HUMAN_CONFIRMED";
+    RULES().syncTableChairs(table,newCap);
+    touchEvent(event);
+    render();
+    return true;
+  };
   // A person can now type a table's number (§24): it was the one plan fact with
   // no path at all -- the only number field lived in the pre-v8 inspector,
   // which v8 never renders. Validated HERE before the base writer runs: letters,
@@ -2081,7 +2207,32 @@
   bindCanvas = function(){
     oldBindCanvas();const event=activeEvent(),viewport=document.getElementById("canvasViewport"),world=document.getElementById("canvasWorld");
     if(RULES().isHistorical(event))return;
-    document.querySelectorAll("[data-v8-action]").forEach(button=>button.onclick=()=>{const action=button.dataset.v8Action;if(action==="add"){ui.v8AddOpen=!ui.v8AddOpen;ui.bulkDraft ||= {kind:"table",type:"round",chairs:8,quantity:4,rows:2,cols:2,placement:"grid",prefix:"T",zone:"MAIN FLOOR"};render();}else if(action==="close-add"){ui.v8AddOpen=false;render();}else if(action==="commit-add")commitBulk();else if(action==="duplicate-selection")duplicateSelection();else if(action==="delete-selection")deleteSelection();else if(action==="focus"){ui.focusMode=!ui.focusMode;render();}else if(action==="detect")runAssistedDetection();else if(action==="toggle-bg"){recordUndo(event);event.background.visible=!event.background.visible;touchEvent(event);}else if(action==="replace-bg")document.getElementById("floorPlanFile").click();else if(action==="open-review-center"){ui.reviewCenterOpen=true;ui.tab="floor";ui.planMode="review";render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
+    document.querySelectorAll("[data-v8-action]").forEach(button=>button.onclick=()=>{
+      const action=button.dataset.v8Action;
+      if(action==="add"){
+        ui.v8AddOpen=!ui.v8AddOpen;
+        ui.bulkDraft ||= {kind:"table",type:"round",chairs:8,quantity:4,rows:2,cols:2,placement:"grid",prefix:"T",zone:"MAIN FLOOR"};
+        render();
+      }else if(action==="close-add"){
+        ui.v8AddOpen=false;
+        render();
+      }else if(action==="commit-add")commitBulk();else if(action==="duplicate-selection")duplicateSelection();else if(action==="delete-selection")deleteSelection();else if(action==="focus"){
+        ui.focusMode=!ui.focusMode;
+        render();
+      }else if(action==="detect")runAssistedDetection();else if(action==="toggle-bg"){
+        recordUndo(event);
+        event.background.visible=!event.background.visible;
+        touchEvent(event);
+      }else if(action==="replace-bg")document.getElementById("floorPlanFile").click();else if(action==="open-review-center"){
+        ui.reviewCenterOpen=true;
+        ui.tab="floor";
+        ui.planMode="review";
+        render();
+      }else if(action==="toggle-lang"){
+        ui.lang=ui.lang==="tr"?"en":"tr";
+        render();
+      }
+    });
     // Typed fields update the draft and refresh only the ghost preview. A full
     // re-render on every change replaced the "Add to plan" button mid-click --
     // typing a value and clicking straight through lost both the edit and the
@@ -5254,7 +5405,12 @@
   function reviewPoiCardHTML(c){
     if(!c)return"";
     const opt=o=>`<option value="${o.kind}:${o.type}" ${c.kind===o.kind&&c.type===o.type?"selected":""}>${t("teach.type."+o.type)}</option>`;
-    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?(c.seatsUnknown?`${t("poi.seatsNotShown")} · `:`${(c.chairDetections||[]).length} ${t("poi.seats")} · `):""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${c.taughtFrom?`<div class="poi-memory-note taught">${icon("check")}<span>${t("teachArea.appliedHere")} — ${t("teachArea.scope."+c.taughtFrom.scope)}</span><button class="btn sm quiet" data-review-action="forget">${t("teachArea.forget")}</button></div>`:""}${c.lowEvidence?`<div class="poi-lowevidence"><strong>${t("poi.lowEvidence")}</strong><span>${esc(t("poi.lowEvidence."+c.lowEvidence.reason))}</span></div>`:""}${visualEvidenceHTML(c)}${relationNoteHTML(c)}<select class="field-select" data-candidate-edit="kindtype" aria-label="${esc(t("review.kindType"))}"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}${printedNumberHTML(c)}${(()=>{const av=scopeAvailability(c);const blocked=Object.entries(av).filter(([,s])=>!s.ok);const chosen=av[ui.teachScope||"plan"]?.ok?(ui.teachScope||"plan"):"plan";return`<div class="poi-teach"><label for="poiTeachScope">${t("teachArea.remember")}</label><div class="poi-teach-row"><select id="poiTeachScope" class="field-select" data-teach-scope>${["plan","layout","venue"].map(v=>`<option value="${v}" ${chosen===v?"selected":""} ${av[v].ok?"":"disabled"}>${t("teachArea.scope."+v)}</option>`).join("")}</select><button class="btn sm" data-review-action="teach">${t("teachArea.keep")}</button></div>${blocked.map(([,s])=>`<p class="poi-teach-blocked">${esc(s.why)}</p>`).join("")}<p class="poi-teach-note">${t("teachArea.notTraining")}</p></div>`;})()}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
+    return`<aside class="poi-card"><div class="poi-card-head"><strong>${t("teach.type."+c.type)}</strong><span>${c.kind==="table"?(c.seatsUnknown?`${t("poi.seatsNotShown")} · `:`${(c.chairDetections||[]).length} ${t("poi.seats")} · `):""}${t(c.status==="confirmed"?"poi.confirmed":c.status==="rejected"?"poi.rejected":"poi.unreviewed")}</span></div>${c.fromMemory?`<div class="poi-memory-note">${icon("check")}${t("poi.fromMemory")}</div>`:""}${c.taughtFrom?`<div class="poi-memory-note taught">${icon("check")}<span>${t("teachArea.appliedHere")} — ${t("teachArea.scope."+c.taughtFrom.scope)}</span><button class="btn sm quiet" data-review-action="forget">${t("teachArea.forget")}</button></div>`:""}${c.lowEvidence?`<div class="poi-lowevidence"><strong>${t("poi.lowEvidence")}</strong><span>${esc(t("poi.lowEvidence."+c.lowEvidence.reason))}</span></div>`:""}${visualEvidenceHTML(c)}${relationNoteHTML(c)}<select class="field-select" data-candidate-edit="kindtype" aria-label="${esc(t("review.kindType"))}"><optgroup label="${t("taxonomy.tables")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="table").map(opt).join("")}</optgroup><optgroup label="${t("taxonomy.objects")}">${RECLASSIFY_TAXONOMY.filter(o=>o.kind==="venue").map(opt).join("")}</optgroup></select>${UNVERIFIED_SEATING.has(c.type)?`<div class="poi-seat-row"><label for="poiSeatCount">${t("poi.seatsOnThis")}</label><input id="poiSeatCount" class="field-input" type="number" min="0" max="99" inputmode="numeric" placeholder="${t("poi.seatsUnset")}" value="${c.seats==null?"":c.seats}" data-candidate-edit="seatCount"><p class="poi-seat-note">${c.seats==null?t("poi.seatsUnverifiedNote"):t("poi.seatsVerifiedNote",{n:c.seats})}</p></div>`:""}${printedNumberHTML(c)}${(()=>{
+      const av=scopeAvailability(c);
+      const blocked=Object.entries(av).filter(([,s])=>!s.ok);
+      const chosen=av[ui.teachScope||"plan"]?.ok?(ui.teachScope||"plan"):"plan";
+      return`<div class="poi-teach"><label for="poiTeachScope">${t("teachArea.remember")}</label><div class="poi-teach-row"><select id="poiTeachScope" class="field-select" data-teach-scope>${["plan","layout","venue"].map(v=>`<option value="${v}" ${chosen===v?"selected":""} ${av[v].ok?"":"disabled"}>${t("teachArea.scope."+v)}</option>`).join("")}</select><button class="btn sm" data-review-action="teach">${t("teachArea.keep")}</button></div>${blocked.map(([,s])=>`<p class="poi-teach-blocked">${esc(s.why)}</p>`).join("")}<p class="poi-teach-note">${t("teachArea.notTraining")}</p></div>`;
+    })()}<div class="poi-card-actions"><button class="btn sm primary" data-review-action="confirm">${t("action.correct")}</button><button class="btn sm" data-review-action="reject">${t("action.notAnObject")}</button><button class="btn sm" data-review-action="dismiss" title="${t("action.notImportantTitle")}">${t("action.notImportant")}</button></div></aside>`;
   }
   // Real pixel crop of a candidate straight out of the actual imported plan
   // image — a CSS background-position/-size window, never a synthesized or
@@ -5806,14 +5962,74 @@
     const ruleUse=CP&&CP.ruleApplication?CP.ruleApplication({rule:event.analysis?.planIntelligence?.capacityAudit?.rule||null,
       representationKind:event.analysis?.diagnostics?.representation?.kind||null,
       seatlessTables:(event.analysis?.candidates||[]).filter(c=>c.kind==="table"&&c.status!=="rejected"&&!c.chairDetections?.length).length}):{applies:false};
-    recordUndo(event);let tables=0,venues=0,chairsKept=0,derived=0;for(const c of chosen){if(c.committedId)continue;const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);if(c.kind==="table"){const table=RULES().syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||(ruleUse.applies?ruleUse.perUnit:1)),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":ruleUse.applies?"DERIVED_PRINTED_RULE":"UNKNOWN",origin:"DETECTED",printedNumber:printedEvidence(c.printedNumber),...(!c.chairDetections?.length&&ruleUse.applies?{capacityEvidence:{...ruleUse.evidence,at:nowISO()}}:{})});if(c.chairDetections?.length){table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0}));table.capacity=table.chairs.length;}event.tables.push(table);c.committedId=table.id;tables++;chairsKept+=(table.chairs||[]).length;if(table.capacitySource==="DERIVED_PRINTED_RULE")derived++;}else{const object={id:uid("venue"),type:c.type||"text",label:String(c.type||"OBJECT").toUpperCase(),x,y,w,h,rotation:c.rotation||0,locked:false,z:4};
+    recordUndo(event);
+    let tables=0,venues=0,chairsKept=0,derived=0;
+    for(const c of chosen){
+      if(c.committedId)continue;
+      const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);
+      if(c.kind==="table"){
+        const table=RULES().syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||(ruleUse.applies?ruleUse.perUnit:1)),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":ruleUse.applies?"DERIVED_PRINTED_RULE":"UNKNOWN",origin:"DETECTED",printedNumber:printedEvidence(c.printedNumber),...(!c.chairDetections?.length&&ruleUse.applies?{capacityEvidence:{...ruleUse.evidence,at:nowISO()}}:{})});
+        if(c.chairDetections?.length){
+          table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0}));
+          table.capacity=table.chairs.length;
+        }
+        event.tables.push(table);
+        c.committedId=table.id;
+        tables++;
+        chairsKept+=(table.chairs||[]).length;
+        if(table.capacitySource==="DERIVED_PRINTED_RULE")derived++;
+      }else{
+        const object={id:uid("venue"),type:c.type||"text",label:String(c.type||"OBJECT").toUpperCase(),x,y,w,h,rotation:c.rotation||0,locked:false,z:4};
       // Seating furniture keeps its capacity state on the committed object, so
       // "we do not know how many this banquette seats" survives leaving the
       // review screen instead of silently becoming zero on the floor plan.
       if(UNVERIFIED_SEATING.has(object.type)){object.seats=c.seats??null;object.seatsConfidence=c.seats==null?"unverified":"verified";}
-      event.venueObjects.push(object);c.committedId=object.id;venues++;}c.status="confirmed";}if(event.analysis.timings)event.analysis.timings.confirmedAtMs=Date.now();recordOperatorAction(event,"confirm-plan",chosen.map(c=>c.id));touchEvent(event);ui.tab="floor";ui.planMode="plan";render();toast(t(chairsKept?"toast.detectionsConfirmed":derived?"toast.detectionsConfirmedRule":"toast.detectionsConfirmedPlain",{tables,venues,perUnit:ruleUse.perUnit,tableWord:t(tables===1?"word.table":"word.tables"),venueWord:t(venues===1?"word.venueObject":"word.venueObjects")}),"success",6000);
+      event.venueObjects.push(object);
+      c.committedId=object.id;
+      venues++;}
+      c.status="confirmed";}
+      if(event.analysis.timings)event.analysis.timings.confirmedAtMs=Date.now();
+      recordOperatorAction(event,"confirm-plan",chosen.map(c=>c.id));
+      touchEvent(event);
+      ui.tab="floor";
+      ui.planMode="plan";
+      render();
+      toast(t(chairsKept?"toast.detectionsConfirmed":derived?"toast.detectionsConfirmedRule":"toast.detectionsConfirmedPlain",{tables,venues,perUnit:ruleUse.perUnit,tableWord:t(tables===1?"word.table":"word.tables"),venueWord:t(venues===1?"word.venueObject":"word.venueObjects")}),"success",6000);
   }
-  function bindReviewDrawing(){const scene=document.getElementById("analysisScene");if(!scene||!ui.reviewDrawMode)return;scene.onpointerdown=e=>{if(e.target!==scene&&e.target.tagName!=="IMG")return;e.preventDefault();const r=scene.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top,box=document.createElement("div");box.className="candidate-box selected";scene.appendChild(box);const move=ev=>{const x=ev.clientX-r.left,y=ev.clientY-r.top;Object.assign(box.style,{left:Math.min(sx,x)+"px",top:Math.min(sy,y)+"px",width:Math.abs(x-sx)+"px",height:Math.abs(y-sy)+"px"});};const up=ev=>{document.removeEventListener("pointermove",move);document.removeEventListener("pointerup",up);const x=Math.min(sx,ev.clientX-r.left)/r.width*100,y=Math.min(sy,ev.clientY-r.top)/r.height*100,w=Math.abs(ev.clientX-r.left-sx)/r.width*100,h=Math.abs(ev.clientY-r.top-sy)/r.height*100;if(w>1&&h>1){const event=activeEvent();const c={id:uid("candidate"),kind:"table",type:"rectangle",x,y,w,h,rotation:0,confidence:1,status:"unreviewed",selected:true,missed:true,chairDetections:[],evidence:{geometry:"manual",chairs:0,repetition:0}};event.analysis.candidates.push(c);event.analysis.missed.push(c.id);rememberCorrection(event,c,{manual:true});captureTrainingExample(event,c,{decisionType:"missedObject",note:"drawn by the operator on a region the detector never proposed"});ui.selectedCandidateId=c.id;ui.reviewDrawMode=false;touchEvent(event);}render();};document.addEventListener("pointermove",move);document.addEventListener("pointerup",up);};}
+  function bindReviewDrawing(){
+    const scene=document.getElementById("analysisScene");
+    if(!scene||!ui.reviewDrawMode)return;
+    scene.onpointerdown=e=>{
+      if(e.target!==scene&&e.target.tagName!=="IMG")return;
+      e.preventDefault();
+      const r=scene.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top,box=document.createElement("div");
+      box.className="candidate-box selected";
+      scene.appendChild(box);
+      const move=ev=>{
+        const x=ev.clientX-r.left,y=ev.clientY-r.top;
+        Object.assign(box.style,{left:Math.min(sx,x)+"px",top:Math.min(sy,y)+"px",width:Math.abs(x-sx)+"px",height:Math.abs(y-sy)+"px"});
+      };
+      const up=ev=>{
+        document.removeEventListener("pointermove",move);
+        document.removeEventListener("pointerup",up);
+        const x=Math.min(sx,ev.clientX-r.left)/r.width*100,y=Math.min(sy,ev.clientY-r.top)/r.height*100,w=Math.abs(ev.clientX-r.left-sx)/r.width*100,h=Math.abs(ev.clientY-r.top-sy)/r.height*100;
+        if(w>1&&h>1){
+          const event=activeEvent();
+          const c={id:uid("candidate"),kind:"table",type:"rectangle",x,y,w,h,rotation:0,confidence:1,status:"unreviewed",selected:true,missed:true,chairDetections:[],evidence:{geometry:"manual",chairs:0,repetition:0}};
+          event.analysis.candidates.push(c);
+          event.analysis.missed.push(c.id);
+          rememberCorrection(event,c,{manual:true});
+          captureTrainingExample(event,c,{decisionType:"missedObject",note:"drawn by the operator on a region the detector never proposed"});
+          ui.selectedCandidateId=c.id;
+          ui.reviewDrawMode=false;
+          touchEvent(event);
+        }
+        render();
+      };
+      document.addEventListener("pointermove",move);
+      document.addEventListener("pointerup",up);
+    };
+  }
   // ---- dataset export (Gates H-J) ----------------------------------------
   //
   // One portable file containing every captured decision, its image crop, and
@@ -5890,8 +6106,22 @@
   }
   globalThis.MERIT_TRAINING_EXPORT=buildTrainingDatasetExport;
 
-  function saveVerified(){const event=activeEvent();if(!ui.teachAI)return toast(t("toast.enableTeachFirst"),"error");const a=event.analysis;if(!a)return;state.verifiedExamples.push({id:uid("verified"),eventId:event.id,savedAt:nowISO(),engine:a.engine,trainedModel:false,threshold:a.threshold,imageSize:[a.imageWidth,a.imageHeight],predictions:a.candidates.map(clone),groundTruth:a.candidates.filter(c=>c.status!=="rejected").map(clone),rejected:a.candidates.filter(c=>c.status==="rejected").map(c=>c.id),missed:[...a.missed],hardExample:a.missed.length>0||a.candidates.some(c=>c.status==="rejected")});saveState();toast(t("toast.verifiedPlanSaved"),"success",6000);}
-  function improveAI(){if(!state.verifiedExamples.length)return toast(t("toast.saveVerifiedFirst"),"error");const samples=state.verifiedExamples.flatMap(v=>v.groundTruth||[]),avg=samples.length?samples.reduce((n,c)=>n+(c.confidence||0),0)/samples.length:0;state.calibration={version:(state.calibration?.version||0)+1,updatedAt:nowISO(),examples:state.verifiedExamples.length,objects:samples.length,recommendedConfidence:Number(Math.max(.35,Math.min(.8,avg*.85)).toFixed(2)),trainedModel:false,label:"Local assisted-detection calibration; not a trained neural model"};saveState();toast(t("toast.calibrationDone",{v:state.calibration.version,n:state.verifiedExamples.length}),"success",6500);}
+  function saveVerified(){
+    const event=activeEvent();
+    if(!ui.teachAI)return toast(t("toast.enableTeachFirst"),"error");
+    const a=event.analysis;
+    if(!a)return;
+    state.verifiedExamples.push({id:uid("verified"),eventId:event.id,savedAt:nowISO(),engine:a.engine,trainedModel:false,threshold:a.threshold,imageSize:[a.imageWidth,a.imageHeight],predictions:a.candidates.map(clone),groundTruth:a.candidates.filter(c=>c.status!=="rejected").map(clone),rejected:a.candidates.filter(c=>c.status==="rejected").map(c=>c.id),missed:[...a.missed],hardExample:a.missed.length>0||a.candidates.some(c=>c.status==="rejected")});
+    saveState();
+    toast(t("toast.verifiedPlanSaved"),"success",6000);
+  }
+  function improveAI(){
+    if(!state.verifiedExamples.length)return toast(t("toast.saveVerifiedFirst"),"error");
+    const samples=state.verifiedExamples.flatMap(v=>v.groundTruth||[]),avg=samples.length?samples.reduce((n,c)=>n+(c.confidence||0),0)/samples.length:0;
+    state.calibration={version:(state.calibration?.version||0)+1,updatedAt:nowISO(),examples:state.verifiedExamples.length,objects:samples.length,recommendedConfidence:Number(Math.max(.35,Math.min(.8,avg*.85)).toFixed(2)),trainedModel:false,label:"Local assisted-detection calibration; not a trained neural model"};
+    saveState();
+    toast(t("toast.calibrationDone",{v:state.calibration.version,n:state.verifiedExamples.length}),"success",6500);
+  }
   function bindReview(){
     const ev=activeEvent();
     document.querySelectorAll("[data-budget-open]").forEach(b=>b.onclick=()=>openReviewQueue(ev,b.dataset.budgetOpen));
@@ -5907,8 +6137,99 @@
       else if(a==="next-outstanding")queueNextOutstanding(ev);
       else if(a==="exit")closeReviewQueue();
     });
-    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);if(action==="back"){ui.planMode="plan";ui.activeReviewGroupId=null;ui.activeQuestionId=null;ui.selectedCandidateId=null;render();}else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){const was=classOf(c);c.status="confirmed";c.selected=true;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was});recordOperatorAction(event,"confirm",c.id);recomputePlanIntelligence(event);touchEvent(event);afterReviewDecision(event);}else if(action==="reject"&&c){const was=classOf(c);c.status="rejected";c.selected=false;rememberCorrection(event,c);captureTrainingExample(event,c,{decisionType:"falsePositive",predictionBefore:was});recordOperatorAction(event,"reject",c.id);recomputePlanIntelligence(event);touchEvent(event);afterReviewDecision(event);}else if(action==="dismiss"&&c){const was=classOf(c);captureTrainingExample(event,c,{decisionType:"negative",predictionBefore:was,note:"operator dismissed this region as not important"});recordOperatorAction(event,"dismiss",c.id);event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);ui.selectedCandidateId=null;recomputePlanIntelligence(event);touchEvent(event);afterReviewDecision(event);}else if(action==="teach"&&c){ui.teachScope=document.querySelector("[data-teach-scope]")?.value||"plan";teachSelectedObject(event,c,ui.teachScope);}else if(action==="confirm-number"&&c){const scope=document.querySelector("[data-teach-scope]")?.value||"plan";teachTableNumber(event,c,document.getElementById("poiNumber")?.value,scope);}else if(action==="forget"&&c){forgetLesson(event,c);}else if(action==="draw"){if(!ui.reviewDrawMode)recordOperatorAction(event,"ai-missed-open",[]);ui.reviewDrawMode=!ui.reviewDrawMode;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();}else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="export-dataset")exportTrainingDataset();else if(action==="session-report"){ui.operatorReportOpen=true;render();}else if(action==="close-session-report"){ui.operatorReportOpen=false;render();}else if(action==="open-review-center"){ui.reviewCenterOpen=true;render();}else if(action==="close-review-center"){ui.reviewCenterOpen=false;render();}else if(action==="focus-group"){ui.activeReviewGroupId=b.dataset.group;ui.selectedCandidateId=null;ui.activeQuestionId=null;ui.reviewCenterOpen=true;render();}else if(action==="toggle-lang"){ui.lang=ui.lang==="tr"?"en":"tr";render();}});
-    document.querySelectorAll("[data-candidate],[data-candidate-box]").forEach(node=>node.onclick=e=>{if(e.target.matches("input"))return;ui.selectedCandidateId=node.dataset.candidate||node.dataset.candidateBox;ui.activeReviewGroupId=null;ui.activeQuestionId=null;render();});document.querySelectorAll("[data-candidate-select]").forEach(input=>input.onchange=()=>{const c=activeEvent().analysis.candidates.find(x=>x.id===input.dataset.candidateSelect);c.selected=input.checked;touchEvent(activeEvent());});document.querySelectorAll("[data-candidate-edit]").forEach(input=>input.onchange=()=>{const f=input.dataset.candidateEdit,v=input.value;requestAnimationFrame(()=>updateCandidateField(f,v));});document.querySelectorAll("[data-review-filter]").forEach(input=>input.oninput=()=>{if(input.dataset.reviewFilter==="status")ui.reviewFilter=input.value;else if(input.dataset.reviewFilter==="class")ui.reviewClass=input.value;else ui.reviewConfidence=Number(input.value);render();});document.querySelector("[data-teach-ai]")?.addEventListener("change",e=>{ui.teachAI=e.target.checked;});
+    document.querySelectorAll("[data-review-action]").forEach(b=>b.onclick=()=>{
+      const action=b.dataset.reviewAction,event=activeEvent(),c=event.analysis?.candidates.find(x=>x.id===ui.selectedCandidateId);
+      if(action==="back"){
+        ui.planMode="plan";
+        ui.activeReviewGroupId=null;
+        ui.activeQuestionId=null;
+        ui.selectedCandidateId=null;
+        render();
+      }else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){
+        const was=classOf(c);
+        c.status="confirmed";
+        c.selected=true;
+        rememberCorrection(event,c);
+        captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was});
+        recordOperatorAction(event,"confirm",c.id);
+        recomputePlanIntelligence(event);
+        touchEvent(event);
+        afterReviewDecision(event);
+      }else if(action==="reject"&&c){
+        const was=classOf(c);
+        c.status="rejected";
+        c.selected=false;
+        rememberCorrection(event,c);
+        captureTrainingExample(event,c,{decisionType:"falsePositive",predictionBefore:was});
+        recordOperatorAction(event,"reject",c.id);
+        recomputePlanIntelligence(event);
+        touchEvent(event);
+        afterReviewDecision(event);
+      }else if(action==="dismiss"&&c){
+        const was=classOf(c);
+        captureTrainingExample(event,c,{decisionType:"negative",predictionBefore:was,note:"operator dismissed this region as not important"});
+        recordOperatorAction(event,"dismiss",c.id);
+        event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);
+        ui.selectedCandidateId=null;
+        recomputePlanIntelligence(event);
+        touchEvent(event);
+        afterReviewDecision(event);
+      }else if(action==="teach"&&c){
+        ui.teachScope=document.querySelector("[data-teach-scope]")?.value||"plan";
+        teachSelectedObject(event,c,ui.teachScope);
+      }else if(action==="confirm-number"&&c){
+        const scope=document.querySelector("[data-teach-scope]")?.value||"plan";
+        teachTableNumber(event,c,document.getElementById("poiNumber")?.value,scope);
+      }else if(action==="forget"&&c){forgetLesson(event,c);}else if(action==="draw"){
+        if(!ui.reviewDrawMode)recordOperatorAction(event,"ai-missed-open",[]);
+        ui.reviewDrawMode=!ui.reviewDrawMode;
+        ui.activeReviewGroupId=null;
+        ui.activeQuestionId=null;
+        render();
+      }else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="export-dataset")exportTrainingDataset();else if(action==="session-report"){
+        ui.operatorReportOpen=true;
+        render();
+      }else if(action==="close-session-report"){
+        ui.operatorReportOpen=false;
+        render();
+      }else if(action==="open-review-center"){
+        ui.reviewCenterOpen=true;
+        render();
+      }else if(action==="close-review-center"){
+        ui.reviewCenterOpen=false;
+        render();
+      }else if(action==="focus-group"){
+        ui.activeReviewGroupId=b.dataset.group;
+        ui.selectedCandidateId=null;
+        ui.activeQuestionId=null;
+        ui.reviewCenterOpen=true;
+        render();
+      }else if(action==="toggle-lang"){
+        ui.lang=ui.lang==="tr"?"en":"tr";
+        render();
+      }
+    });
+    document.querySelectorAll("[data-candidate],[data-candidate-box]").forEach(node=>node.onclick=e=>{
+      if(e.target.matches("input"))return;
+      ui.selectedCandidateId=node.dataset.candidate||node.dataset.candidateBox;
+      ui.activeReviewGroupId=null;
+      ui.activeQuestionId=null;
+      render();
+    });
+    document.querySelectorAll("[data-candidate-select]").forEach(input=>input.onchange=()=>{
+      const c=activeEvent().analysis.candidates.find(x=>x.id===input.dataset.candidateSelect);
+      c.selected=input.checked;
+      touchEvent(activeEvent());
+    });
+    document.querySelectorAll("[data-candidate-edit]").forEach(input=>input.onchange=()=>{
+      const f=input.dataset.candidateEdit,v=input.value;
+      requestAnimationFrame(()=>updateCandidateField(f,v));
+    });
+    document.querySelectorAll("[data-review-filter]").forEach(input=>input.oninput=()=>{
+      if(input.dataset.reviewFilter==="status")ui.reviewFilter=input.value;else if(input.dataset.reviewFilter==="class")ui.reviewClass=input.value;else ui.reviewConfidence=Number(input.value);
+      render();
+    });
+    document.querySelector("[data-teach-ai]")?.addEventListener("change",e=>{ui.teachAI=e.target.checked;});
     document.querySelectorAll("[data-reviewgroup-action]").forEach(b=>b.onclick=()=>{
       const event=activeEvent(),pi=event.analysis?.planIntelligence,group=pi?.reviewGroups.find(g=>g.id===b.dataset.group);if(!group)return;
       if(b.dataset.reviewgroupAction==="confirm-family"){
@@ -6160,7 +6481,20 @@
   function bindV8Common(){
     document.querySelectorAll("[data-action='create-event']").forEach(b=>b.onclick=startNewEvent);document.querySelectorAll("[data-action='help']").forEach(b=>b.onclick=openGuide);document.querySelectorAll("[data-open-event]").forEach(b=>b.onclick=()=>openEvent(b.dataset.openEvent));// Row-level open + per-row action buttons now coexist on Home, so the
 // buttons must not bubble into the row's open handler.
-document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.stopPropagation();duplicateEvent(b.dataset.duplicateEvent);});document.querySelectorAll("[data-export-event-package]").forEach(b=>b.onclick=e=>{e.stopPropagation();exportEventPackage(b.dataset.exportEventPackage);});document.querySelectorAll("[data-delete-event]").forEach(b=>b.onclick=e=>{e.stopPropagation();deleteEvent(b.dataset.deleteEvent);});document.querySelectorAll("[data-history-event]").forEach(row=>row.ondblclick=()=>openEvent(row.dataset.historyEvent));document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondblclick=e=>e.stopPropagation());
+document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{
+  e.stopPropagation();
+  duplicateEvent(b.dataset.duplicateEvent);
+});
+document.querySelectorAll("[data-export-event-package]").forEach(b=>b.onclick=e=>{
+  e.stopPropagation();
+  exportEventPackage(b.dataset.exportEventPackage);
+});
+document.querySelectorAll("[data-delete-event]").forEach(b=>b.onclick=e=>{
+  e.stopPropagation();
+  deleteEvent(b.dataset.deleteEvent);
+});
+document.querySelectorAll("[data-history-event]").forEach(row=>row.ondblclick=()=>openEvent(row.dataset.historyEvent));
+document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondblclick=e=>e.stopPropagation());
     // An unanswered override challenge and a half-written freeze are questions
     // about THIS screen. Carrying them to another tab would put a blocking
     // card over work the operator has moved on to.
@@ -6331,7 +6665,14 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
       ["Etkinlikler","Yaklaşan etkinlikler kartlarda, geçmiş etkinlikler kilitli tabloda görünür. Geçmiş satırına çift tıklayın."],["Plan ve PDF","PNG/JPG/PDF yerelde açılır. PDF sayfasını küçük önizlemelerden seçin; hiçbir dosya yüklenmez."],["Destekli Tespit","Klasik görüntü işleme adayları üretir. Sonuçlar AI değildir; onaylamadan plana eklenmez."],["Koltuk Yerleşimi","Ctrl/Shift ile çoklu seçim yapın. Grup taşıma tek işlem olarak doğrulanır; kapasite yetmezse hiçbir kayıt değişmez."],["Canlı Operasyon","No Show planlanan yeri korur ancak canlı kapasiteyi serbest bırakır. Empty Chairs kırmızı ışıklı koltuk görünümünü açar."],["Excel ve Kayıt","XLSX tamamen çevrimdışıdır. Table Plan, Guest List ve Unassigned sayfaları korunur; veriler tarayıcıda otomatik kaydedilir."]
     ]:[
       ["Events","Upcoming work appears as cards; past and Completed events are locked in History. Double-click a history row."],["Plans and PDF","PNG/JPG/PDF opens locally. Select PDF pages from thumbnails; no file is uploaded."],["Assisted Detection","Classical computer vision proposes candidates. It is not a trained AI model, and nothing is added until confirmation."],["Seating","Use Ctrl/Shift for multi-selection. Group moves validate as one transaction; insufficient capacity changes nothing."],["Live Operations","No Show preserves the planned assignment but releases live capacity. Empty Chairs opens the red-glow operational view."],["Excel and Storage","XLSX works offline. Table Plan, Guest List and Unassigned sheets remain available; browser autosave is automatic."]
-    ];root.innerHTML=`<aside class="guide-nav"><div class="guide-brand"><strong>MERIT EVENT MAKER</strong><span>${title}</span></div></aside><section class="guide-main"><header class="guide-top"><h2>${title}</h2><div class="guide-actions"><div class="lang-toggle"><button data-guide-lang="en" class="${!tr?"active":""}">EN</button><button data-guide-lang="tr" class="${tr?"active":""}">TR</button></div><button class="btn quiet" data-guide-reset-onboarding>${tr?"İpuçlarını yeniden göster":"Show tips again"}</button><button class="btn" data-guide-print>${icon("print")}${tr?"Yazdır / PDF":"Print / PDF"}</button><button class="btn icon-only" data-guide-close aria-label="${esc(t("a11y.close"))}" title="${esc(t("a11y.close"))}">${icon("x")}</button></div></header><div class="guide-content"><div class="guide-hero"><div class="kicker">MERIT ENTERTAINMENT · ${tr?"V8 TARAYICI İNCELEMESİ":"V8 BROWSER REVIEW"}</div><h1>${title}</h1><p>${tr?"Masa planı, fiziksel koltuklar, misafirler, canlı operasyon ve doğrulanmış plan düzeltmeleri için çevrimdışı başvuru.":"Offline reference for plan objects, physical chairs, guests, live operations and verified plan corrections."}</p></div><div class="guide-v8-grid">${cards.map(([h,p])=>`<article class="guide-v8-card"><h3>${h}</h3><p>${p}</p></article>`).join("")}</div><div class="guide-tip">${tr?"Bu sürüm tarayıcı incelemesidir; EXE veya masaüstü çalışma zamanı içermez.":"This is a browser review build; it does not include an EXE or desktop runtime."}</div></div></section>`;root.querySelectorAll("[data-guide-lang]").forEach(b=>b.onclick=()=>{ui.guideLang=b.dataset.guideLang;renderGuide();});root.querySelector("[data-guide-close]").onclick=()=>document.getElementById("guideDialog").close();root.querySelector("[data-guide-print]").onclick=()=>window.print();
+    ];
+    root.innerHTML=`<aside class="guide-nav"><div class="guide-brand"><strong>MERIT EVENT MAKER</strong><span>${title}</span></div></aside><section class="guide-main"><header class="guide-top"><h2>${title}</h2><div class="guide-actions"><div class="lang-toggle"><button data-guide-lang="en" class="${!tr?"active":""}">EN</button><button data-guide-lang="tr" class="${tr?"active":""}">TR</button></div><button class="btn quiet" data-guide-reset-onboarding>${tr?"İpuçlarını yeniden göster":"Show tips again"}</button><button class="btn" data-guide-print>${icon("print")}${tr?"Yazdır / PDF":"Print / PDF"}</button><button class="btn icon-only" data-guide-close aria-label="${esc(t("a11y.close"))}" title="${esc(t("a11y.close"))}">${icon("x")}</button></div></header><div class="guide-content"><div class="guide-hero"><div class="kicker">MERIT ENTERTAINMENT · ${tr?"V8 TARAYICI İNCELEMESİ":"V8 BROWSER REVIEW"}</div><h1>${title}</h1><p>${tr?"Masa planı, fiziksel koltuklar, misafirler, canlı operasyon ve doğrulanmış plan düzeltmeleri için çevrimdışı başvuru.":"Offline reference for plan objects, physical chairs, guests, live operations and verified plan corrections."}</p></div><div class="guide-v8-grid">${cards.map(([h,p])=>`<article class="guide-v8-card"><h3>${h}</h3><p>${p}</p></article>`).join("")}</div><div class="guide-tip">${tr?"Bu sürüm tarayıcı incelemesidir; EXE veya masaüstü çalışma zamanı içermez.":"This is a browser review build; it does not include an EXE or desktop runtime."}</div></div></section>`;
+    root.querySelectorAll("[data-guide-lang]").forEach(b=>b.onclick=()=>{
+      ui.guideLang=b.dataset.guideLang;
+      renderGuide();
+    });
+    root.querySelector("[data-guide-close]").onclick=()=>document.getElementById("guideDialog").close();
+    root.querySelector("[data-guide-print]").onclick=()=>window.print();
     root.querySelector("[data-guide-reset-onboarding]").onclick=()=>{resetOnboarding();toast(t("toast.tipsReset"),"success");};
   };
   // The guide opens in the language the app is in: ui.guideLang defaulted to
@@ -6340,7 +6681,30 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{e.s
   // flips it while it is open.
   openGuide = function(){ui.guideLang=ui.lang;renderGuide();document.getElementById("guideDialog").showModal();};
 
-  const oldFloorInput=document.getElementById("floorPlanFile"),freshFloorInput=oldFloorInput.cloneNode(true);oldFloorInput.replaceWith(freshFloorInput);freshFloorInput.addEventListener("change",async e=>{const file=e.target.files[0],event=activeEvent();if(!file||!event||!canMutate(event,"replace the floor plan"))return;try{let src,name=file.name;if(file.type==="application/pdf"||file.name.toLowerCase().endsWith(".pdf")){const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise,pageNumber=doc.numPages>1?await ask({title:t("ask.pdfPageTitle"),body:t("ask.pdfPageBody",{n:doc.numPages}),confirmLabel:t("ask.usePage"),number:{label:t("ask.pdfPageLabel"),min:1,max:doc.numPages,value:1}}):1;if(pageNumber===null)return;const page=await doc.getPage(pageNumber),v=page.getViewport({scale:2.6}),canvas=document.createElement("canvas");canvas.width=Math.ceil(v.width);canvas.height=Math.ceil(v.height);await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;src=canvas.toDataURL("image/png",.96);name=`${file.name} · page ${pageNumber}`;}else src=await readImageFile(file);recordUndo(event);event.background={src,name,opacity:.34,visible:true,locked:true,isDefault:false,scale:100,importedAtMs:Date.now()};touchEvent(event);render();toast(t("toast.planImported"),"success");}catch(error){toast(t("plan.replaceFailed",{reason:userMessage(error,"plan.fileUnreadable")}),"error",6500);}finally{e.target.value="";}});
+  const oldFloorInput=document.getElementById("floorPlanFile"),freshFloorInput=oldFloorInput.cloneNode(true);
+  oldFloorInput.replaceWith(freshFloorInput);
+  freshFloorInput.addEventListener("change",async e=>{
+    const file=e.target.files[0],event=activeEvent();
+    if(!file||!event||!canMutate(event,"replace the floor plan"))return;
+    try{
+      let src,name=file.name;
+      if(file.type==="application/pdf"||file.name.toLowerCase().endsWith(".pdf")){
+        const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise,pageNumber=doc.numPages>1?await ask({title:t("ask.pdfPageTitle"),body:t("ask.pdfPageBody",{n:doc.numPages}),confirmLabel:t("ask.usePage"),number:{label:t("ask.pdfPageLabel"),min:1,max:doc.numPages,value:1}}):1;
+        if(pageNumber===null)return;
+        const page=await doc.getPage(pageNumber),v=page.getViewport({scale:2.6}),canvas=document.createElement("canvas");
+        canvas.width=Math.ceil(v.width);
+        canvas.height=Math.ceil(v.height);
+        await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;
+        src=canvas.toDataURL("image/png",.96);
+        name=`${file.name} · page ${pageNumber}`;
+      }else src=await readImageFile(file);
+      recordUndo(event);
+      event.background={src,name,opacity:.34,visible:true,locked:true,isDefault:false,scale:100,importedAtMs:Date.now()};
+      touchEvent(event);
+      render();
+      toast(t("toast.planImported"),"success");
+    }catch(error){toast(t("plan.replaceFailed",{reason:userMessage(error,"plan.fileUnreadable")}),"error",6500);}finally{e.target.value="";}
+  });
 
   // ---- Focus return after a dialog closes -----------------------------
   // A native <dialog> restores focus to whatever had it when showModal() ran.
