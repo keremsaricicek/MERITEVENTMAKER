@@ -1,8 +1,8 @@
 // A plan bigger than the cap, and the cap that used to eat it.
 //
-// `plan-detection-classical.js` bounds how many table candidates it will
-// rank. That bound was 240 — and 240 sits *inside* the range real venues
-// occupy. The large-venue adversarial fixture has 324 tables, so the
+// The detection pipeline (its tables stage, `src/plan-detection-tables.js`)
+// bounds how many table candidates it will rank. That bound was 240 — and
+// 240 sits *inside* the range real venues occupy. The large-venue adversarial fixture has 324 tables, so the
 // detector returned exactly 240 of them and reported table recall 0.741,
 // which is 240/324 to four figures. Eighty-four real tables were discarded
 // by arithmetic rather than by any judgement about them, and the operator's
@@ -72,8 +72,14 @@ const SEED = `(function(){
 
 export default async function run({ page, checks, baseUrl, repoRoot }) {
   // --- 1. the ceiling, read from the source it lives in --------------------
-  const det = fs.readFileSync(path.join(repoRoot, "src", "plan-detection-classical.js"), "utf8");
-  const cap = det.match(/const\s+MAX_TABLES\s*=\s*(\d+)/);
+  // The whole pipeline, not one file: the ceiling moved from
+  // plan-detection-classical.js into the tables stage with Split B, and a
+  // check that read one file failed on a constant that was still there.
+  const det = fs.readdirSync(path.join(repoRoot, "src")).filter((f) => /^plan-detection-.*\.js$/.test(f)).sort()
+    .map((f) => fs.readFileSync(path.join(repoRoot, "src", f), "utf8")).join("\n");
+  const caps = [...det.matchAll(/(?:const\s+|,)\s*MAX_TABLES\s*=\s*(\d+)/g)];
+  checks.equal(caps.length, 1, "the candidate ceiling is defined once in the detection pipeline, not twice with two values");
+  const cap = caps[0];
   checks.require(cap, "the candidate ceiling is still a named constant in the detection pipeline");
   const ceiling = Number(cap[1]);
 
