@@ -718,4 +718,16 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     ["binB,binCount,binG,binR,gray,lumaLowChroma,lumaMidChroma,sampled,threshold", "barrier,fillMask"],
     "each stage returns exactly the record its contract states");
   checks.ok(livePre.thresholdBetween && livePre.gray.join(",") === "20,20,240,240", "and it still measures: luma per pixel, an ink threshold between the two populations", livePre);
+
+  // ---- Split B-16: the representation verdict and its swap -----------------
+  const verdictPath = path.join(repoRoot, "src", "plan-detection-verdict.js");
+  checks.require(fs.existsSync(verdictPath), "the representation verdict stage lives in its own file", "src/plan-detection-verdict.js");
+  const verdictCode = stripCommentsAndStrings(fs.readFileSync(verdictPath, "utf8"));
+  const verdictExported = [...verdictCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]);
+  checks.equal([...new Set(verdictExported)].join(","), "MeritPlanVerdict", "it publishes exactly one name", verdictExported);
+  checks.ok(/VERDICT\.applyVerdict\s*\(/.test(detCode) && !/(^|[^\w.$])applyVerdict\s*\(/m.test(detCode),
+    "detect() reaches it only through the published object", true);
+  const verdictBinds = bindings(verdictCode), verdictBare = bareUses(verdictCode);
+  checks.equal([...detBindings, ...v8Bindings].filter((n) => verdictBare.has(n) && !verdictBinds.has(n)), [],
+    "and it resolves no name bound only in the pipeline or the shell — what it needs, uid and toPercentBox included, arrives as input");
 }

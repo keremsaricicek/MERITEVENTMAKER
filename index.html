@@ -181,6 +181,9 @@
   <!-- Assisted Detection's first two stages: pixels and binarize, each with
        a stated input/output contract. Reads the tone and deskew modules. -->
   <script src="src/plan-detection-preprocess.js"></script>
+  <!-- Assisted Detection's representation verdict and swap: what kind of
+       drawing this is, and what that does to the candidates. -->
+  <script src="src/plan-detection-verdict.js"></script>
   <script src="src/plan-detection-components.js"></script>
   <script src="src/plan-detection-split.js"></script>
   <!-- Assisted Detection: the classical CV pipeline, extracted from app-v8.js.
