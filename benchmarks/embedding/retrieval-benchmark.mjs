@@ -4,7 +4,7 @@
 //   node benchmarks/embedding/retrieval-benchmark.mjs --provider learned
 //   node benchmarks/embedding/retrieval-benchmark.mjs --json out.json
 //
-// Teach AI propagates a human decision to the objects that look like the one
+// Teach the Plan (formerly "Teach AI") propagates a human decision to the objects that look like the one
 // the human judged, and Plan Memory re-finds a corrected object after the plan
 // is re-analysed. Both are nearest-neighbour lookups in representation space,
 // so the honest test of a representation is retrieval, not a loss curve.
@@ -20,7 +20,7 @@
 //                           rescale, recolour, JPEG, rotation), not jitter.
 //
 //   SAME-CLASS RETRIEVAL    Given this object, is the nearest OTHER object of
-//                           the same kind? This is what Teach AI propagation
+//                           the same kind? This is what Teach the Plan propagation
 //                           needs. The query's own crops are removed from the
 //                           gallery entirely, so nothing can score by finding
 //                           itself.

@@ -1,4 +1,4 @@
-// Teach AI and Plan Memory, measured against ground truth.
+// Teach the Plan (formerly "Teach AI") and Plan Memory, measured against ground truth.
 //
 //   node benchmarks/teach-ai/measure-teaching.mjs
 //

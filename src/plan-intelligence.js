@@ -317,8 +317,8 @@
 
   // ---- Capacity: physical seat count purely from detected chair objects —
   // no estimation for tables (chairs are literal). Sofas/benches (not yet
-  // detected by the classical pipeline; taxonomy exists for Teach AI) get a
-  // real evidence-based estimate when the user provides one via Teach AI.
+  // detected by the classical pipeline; taxonomy exists for Teach the Plan) get a
+  // real evidence-based estimate when the user provides one via Teach the Plan.
   //
   // Two real chair populations are counted, never double-counted: chairs
   // associated with a table (c.chairDetections, one chair belongs to at most

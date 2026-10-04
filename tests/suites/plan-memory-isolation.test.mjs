@@ -1,7 +1,7 @@
 // A human decision may change what the plan SAYS. It may never change what the
 // detector FINDS.
 //
-// Both halves of that were broken, and neither was visible until Teach AI was
+// Both halves of that were broken, and neither was visible until Teach AI (now Teach the Plan) was
 // measured against ground truth (benchmarks/teach-ai/measure-teaching.mjs).
 // Confirmed objects are passed into the next detection pass as protected
 // regions, so that a filter cannot delete something a person explicitly
