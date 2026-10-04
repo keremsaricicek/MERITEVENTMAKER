@@ -1255,131 +1255,12 @@
     }
   }
 
-  function planModeSwitchHTML(event){
-    const changes=VENUE().changesSinceSource(state,event);
-    if(!event.background?.src&&!changes)return"";
-    const b=(mode,label)=>`<button class="${ui.planMode===mode?"active":""}" data-plan-mode="${mode}"${
-      ui.planMode===mode?' aria-current="true"':""}>${label}</button>`;
-    // The third mode appears only where there is a previous version to compare
-    // against. An event that was never taken from a published layout has no
-    // "since when" to answer, and an empty tab that is always there teaches an
-    // operator to stop looking at it.
-    return`<div class="planmode-switch" role="group" aria-label="${esc(t("plan.mode.label"))}">${
-      event.background?.src?b("plan",t("plan.mode.plan"))+b("review",t("plan.mode.review")):""}${
-      changes?b("changes",t("plan.mode.changes")):""}</div>`;
-  }
-  // Shared by both canvases: the Floor Plan is where an operator reads the
-  // room spatially, and Seating is where they act on occupancy, so the toggle
-  // belongs on both toolbars rather than only where it was easiest to add.
-  // Offered only where there is occupancy to show -- an empty room has no
-  // load, and a permanent toggle for an empty layer teaches an operator to
-  // stop reading the toolbar, the same rule the freeze layer and the changes
-  // mode follow.
-  function loadLayerToolHTML(event){
-    return(event.tables||[]).length&&(event.guests||[]).some(g=>g.assignment)
-      ?`<div class="tool-group">${toolbarBtn("users",t("load.layer"),`data-load-layer`,ui.loadLayer)}</div>`:"";
-  }
-  function planMapToolbarHTML(event){
-    const bg=event.background||{};
-    // The language toggle used to live here AND in the review screen's own top
-    // bar -- a global setting owned by two screen-local toolbars, and absent
-    // from every other screen. It is in the workspace header now, with the rest
-    // of the controls that are about the application rather than the drawing.
-    // The switch decides for itself whether it has anything to offer: a plan to
-    // review, a published version to compare against, or both. Gating the group
-    // on a background image instead meant an event with a layout history and no
-    // imported drawing had its change view built and unreachable.
-    const modes=planModeSwitchHTML(event);
-    return`<div class="planmap-toolbar">${modes?`<div class="tool-group">${modes}</div>`:""}<div class="tool-group">${toolbarBtn("mouse",t("toolbar.select"),`data-tool="select"`,ui.tool==="select")}${toolbarBtn("hand",t("toolbar.pan"),`data-tool="pan"`,ui.tool==="pan")}</div>${loadLayerToolHTML(event)}<div class="tool-group">${toolbarBtn("zoomOut",t("toolbar.zoomOut"),`data-canvas-action="zoom-out"`)}<span class="zoom-label">${Math.round(ui.zoom*100)}%</span>${toolbarBtn("zoomIn",t("toolbar.zoomIn"),`data-canvas-action="zoom-in"`)}${toolbarBtn("fit",t("toolbar.fit"),`data-canvas-action="fit"`)}</div><div class="tool-group">${bg.src?toolbarBtn("eye",bg.visible?t("toolbar.hideOriginalPlan"):t("toolbar.showOriginalPlan"),`data-v8-action="toggle-bg"`,bg.visible):""}${toolbarBtn("image",t(bg.src?"toolbar.replacePlan":"toolbar.importPlan"),`data-v8-action="replace-bg"`)}</div><div class="tool-group">${toolbarBtn("fit",t("toolbar.focusMode"),`data-v8-action="focus"`,ui.focusMode)}</div>${bg.src?`<div class="tool-group">${toolbarBtn("image",t("toolbar.assistedDetection"),`data-v8-action="detect"`,false).replace('class="toolbar-btn','class="toolbar-btn ai')}</div>`:""}</div>`;
-  }
-  // What the pill puts where a seat count goes. On a plan whose tables are
-  // drawn as symbols there is nothing to count: a bold "0 seats" in the
-  // headline reads as "this room seats nobody", when the truth is that this
-  // drawing does not show seats at all. The count is replaced by what kind of
-  // drawing it is, and the tables — which this plan really does state — take
-  // the number's place.
-  function planSeatsPill(pi){
-    const s=pi.planSummary||{};
-    if(s.representation==="SYMBOLIC")
-      return`<b>${s.tables??0}</b><small>${t("plan.symbolTables")}</small>`;
-    return`<b>${s.physicalSeats??0}</b><small>${t("plan.seats")}</small>`;
-  }
-  // ONE answer to "how much of this plan still needs a person", for every
-  // surface that asks it.
-  //
-  // Two pills used to compute this independently and disagree. Rendered on the
-  // same event, in the same component, in the same corner of the screen, both
-  // linking to the same Review Center, the product said:
-  //
-  //   Floor Plan tab   "37 items need review"   reviewGroups MEMBERS + questions
-  //   Review screen    "6 to decide"            the Confidence Budget
-  //
-  // The 37 is the raw, un-collapsed count -- precisely what the Confidence
-  // Budget exists to replace ("do not show the operator 50 warnings just
-  // because the system has 50 uncertain facts"). Sharing one function is the
-  // point: two call sites computing the same question separately is how they
-  // drifted apart in the first place.
-  //
-  // The click attribute differs because the two surfaces are bound by different
-  // binders, so it is a parameter rather than a reason to fork the function.
-  function planReviewChipHTML(event,actionAttr){
-    const budget=event.analysis?.confidenceBudget;
-    const shown=budget?budget.counts.shown:0;
-    if(shown)return`<i class="pill-div"></i><button class="pill-chip" data-${actionAttr}="open-review-center">${t("budget.chip",{n:shown})}</button>`;
-    // Before an analysis has produced a budget there is still something honest
-    // to say: how many groups are waiting. Never the member count.
-    const pi=event.analysis?.planIntelligence;
-    const groups=pi?reviewGroupCount(pi):0;
-    return groups?`<i class="pill-div"></i><button class="pill-chip" data-${actionAttr}="open-review-center">${groups} ${t(groups===1?"review.group":"review.groups")}</button>`:"";
-  }
-  function planStatusPillHTML(event){
-    const pi=event.analysis?.planIntelligence;if(!pi)return"";
-    return`<div class="planmap-status-pill"><span>${t("plan.understood")}</span><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i>${planSeatsPill(pi)}${planReviewChipHTML(event,"v8-action")}</div>`;
-  }
-  function contextualCardHTML(event){
-    const t_=event.tables.find(x=>x.id===ui.selectedObjectId),o=event.venueObjects.find(x=>x.id===ui.selectedObjectId);
-    if(!t_&&!o)return"";
-    // Every field this card renders edits ui.selectedObjectId ALONE, never
-    // the rest of ui.selectedObjectIds -- so a canvas multi-select (bulk-add
-    // just created 4 tables, a marquee caught several) must say so here,
-    // rather than letting the blue multi-select outlines imply a stepper
-    // click is about to change all of them.
-    const alsoSelected=Math.max(0,(ui.selectedObjectIds||[]).length-1);
-    const alsoSelectedHTML=alsoSelected?`<div class="contextual-card-also-selected">${t("inspector.alsoSelected",{n:alsoSelected})}</div>`:"";
-    if(t_){const assigned=tableAssignedPax(event,t_.id),presets=t_.type==="round"?[6,8,10,12]:[2,4,6,8];
-      // Data Provenance Inspector (Section 11): a read-only fact, never an
-      // editable field -- capacitySource is set only by the writers named in
-      // src/capacity-provenance.js, never chosen here.
-      const provenanceHTML=tableProvenanceHTML(t_);
-      return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(formatTableNumber(t_.number))}</strong><span>${esc(t_.zone)} · ${assigned} ${t("seating.occupied").toLowerCase()}</span></div>${alsoSelectedHTML}<div class="seat-editor"><div class="seat-stepper"><button data-seat-step="-1" title="${t("inspector.removeSeat")}">−</button><b>${t_.capacity}</b><button data-seat-step="1" title="${t("inspector.addSeat")}">+</button></div><div class="seat-presets">${presets.map(n=>`<button class="${t_.capacity===n?"active":""}" data-seat-capacity="${n}">${n}</button>`).join("")}<button data-seat-custom>${t("inspector.custom")}</button></div></div><div class="form-grid compact"><div class="field full"><label for="fld-inspector-number">${t("inspector.tableNumber")}</label><input id="fld-inspector-number" data-inspector="number" value="${esc(t_.number)}" maxlength="12" autocomplete="off" spellcheck="false"></div><div class="field"><label for="fld-inspector-type">${t("inspector.type")}</label><select id="fld-inspector-type" data-inspector="type">${["rectangle","square","round","bistro"].map(x=>`<option value="${x}" ${t_.type===x?"selected":""}>${t("bulk.type."+x)}</option>`).join("")}</select></div><div class="field"><label for="fld-inspector-rotation">${t("inspector.rotation")}</label><input id="fld-inspector-rotation" data-inspector="rotation" type="number" value="${Math.round(t_.rotation||0)}"></div><div class="field full"><label for="fld-inspector-zone">${t("inspector.zone")}</label><select id="fld-inspector-zone" data-inspector="zone">${ZONES.map(z=>`<option ${t_.zone===z?"selected":""}>${z}</option>`).join("")}</select></div></div>${provenanceHTML}<div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${t_.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
-    }
-    // Sofa/bench/banquette pax cannot be read off a drawing, so its seat
-    // count is either a person's verified number or explicitly unverified --
-    // never silently treated as zero. Same provenance discipline as capacity.
-    const seatProvenanceHTML=UNVERIFIED_SEATING.has(o.type)&&o.seatsConfidence?`<div class="contextual-card-provenance"><span>${t("poi.seatsOnThis")}</span><b>${o.seats==null?t("poi.seatsUnset"):o.seats}</b><i>${t(o.seatsConfidence==="verified"?"inspector.seatsVerified":"inspector.seatsUnverified")}</i></div>`:"";
-    return`<aside class="contextual-card"><div class="contextual-card-head"><strong>${esc(o.label)}</strong><span>${t("inspector.object",{type:t("bulk.type."+o.type)})}</span></div>${alsoSelectedHTML}<div class="form-grid compact"><div class="field full"><label for="fld-inspector-label">${t("inspector.label")}</label><input id="fld-inspector-label" data-inspector="label" value="${esc(o.label)}"></div><div class="field"><label for="fld-inspector-rotation-2">${t("inspector.rotation")}</label><input id="fld-inspector-rotation-2" data-inspector="rotation" type="number" value="${Math.round(o.rotation||0)}"></div></div>${seatProvenanceHTML}<div class="contextual-card-actions"><button class="btn sm" data-inspector-action="duplicate">${icon("copy")}${t("toolbar.duplicate")}</button><button class="btn sm" data-inspector-action="lock">${icon("lock")}${o.locked?t("seating.unlock"):t("seating.lock")}</button><button class="btn sm danger" data-inspector-action="delete">${icon("trash")}${t("toolbar.delete")}</button></div></aside>`;
-  }
-  function addManuallyFabHTML(){return`<button class="planmap-fab" data-v8-action="add" title="${t("action.addManually")}">${icon(ui.v8AddOpen?"x":"plus")}<span>${t("action.addManually")}</span></button>`;}
-
-  function v8Toolbar(event,seating=false){
-    // The FREEZE ZONES layer button appears only where there is something to
-    // show. A permanent toggle for an empty layer is how a toolbar teaches an
-    // operator to stop reading it -- same rule as the Layout Changes mode.
-    const freezeLayerBtn=eventFreezes(event).length
-      ?`<div class="tool-group">${toolbarBtn("lock",t("freeze.layer"),`data-freeze-action="layer"`,ui.freezeLayer)}</div>`:"";
-    return`<div class="canvas-toolbar v8-toolbar"><div class="tool-group">${toolbarBtn("mouse",t("toolbar.select"),`data-tool="select"`,ui.tool==="select")}${toolbarBtn("hand",t("toolbar.pan"),`data-tool="pan"`,ui.tool==="pan")}</div>${freezeLayerBtn}${loadLayerToolHTML(event)}${!seating?`<div class="tool-group">${toolbarBtn("plus",t("toolbar.addBulk"),`data-v8-action="add"`,ui.v8AddOpen)}${toolbarBtn("copy",t("toolbar.duplicate"),`data-v8-action="duplicate-selection"`)}${toolbarBtn("trash",t("toolbar.delete"),`data-v8-action="delete-selection"`)}</div><div class="tool-group">${toolbarBtn("undo",t("toolbar.undo"),`data-canvas-action="undo"`)}${toolbarBtn("redo",t("toolbar.redo"),`data-canvas-action="redo"`)}</div>`:""}<div class="tool-group">${toolbarBtn("zoomOut",t("toolbar.zoomOut"),`data-canvas-action="zoom-out"`)}<span class="zoom-label">${Math.round(ui.zoom*100)}%</span>${toolbarBtn("zoomIn",t("toolbar.zoomIn"),`data-canvas-action="zoom-in"`)}${toolbarBtn("fit",t("toolbar.fit"),`data-canvas-action="fit"`)}</div><div class="tool-group">${toolbarBtn("grid",t("toolbar.grid"),`data-canvas-action="grid"`,ui.grid)}${toolbarBtn("magnet",t("toolbar.snap"),`data-canvas-action="snap"`,ui.snap)}${toolbarBtn("seat",t("toolbar.seatLabels"),`data-canvas-action="seat-numbers"`,ui.showSeats)}</div><span class="toolbar-spacer"></span>${!seating?toolbarBtn("image",t("toolbar.assistedDetection"),`data-v8-action="detect" ${event.background?.src?"":"disabled"}`,false).replace('class="toolbar-btn','class="toolbar-btn ai'):""}${toolbarBtn("fit",t("toolbar.focusMode"),`data-v8-action="focus"`,ui.focusMode)}</div>`;
-  }
-  function bulkPanel(event){
-    if(!ui.v8AddOpen)return"";const d=ui.bulkDraft||={kind:"table",type:"round",chairs:8,quantity:4,rows:2,cols:2,placement:"grid",prefix:"T",zone:"MAIN FLOOR"};
-    // Option LABELS are translated; the option VALUES stay the English
-    // identifiers the data model stores. The old markup relied on the label
-    // being the value (`<option>${v}</option>`), so translating without an
-    // explicit value= would have written Turkish words into table.type.
-    const opt=(v,sel)=>`<option value="${v}" ${sel===v?"selected":""}>${t("bulk.type."+v)}</option>`;
-    const typeValues=d.kind==="venue"?["stage","bar","entrance","exit","column","text"]:["rectangle","square","round","bistro"];
-    const placeValues=["grid","row","repeated","array"];
-    return`<div class="v8-create-pop"><h3>${t("bulk.title")}</h3><p>${t("bulk.subtitle")}</p><div class="bulk-grid"><div class="field"><label for="fld-bulk-kind">${t("bulk.kind")}</label><select id="fld-bulk-kind" data-bulk="kind"><option value="table" ${d.kind==="table"?"selected":""}>${t("bulk.kind.table")}</option><option value="venue" ${d.kind==="venue"?"selected":""}>${t("bulk.kind.venue")}</option></select></div><div class="field"><label for="fld-bulk-type">${t("bulk.type")}</label><select id="fld-bulk-type" data-bulk="type">${typeValues.map(v=>opt(v,d.type)).join("")}</select></div>${d.kind==="table"?`<div class="field"><label for="fld-bulk-chairs">${t("bulk.chairsEach")}</label><input id="fld-bulk-chairs" data-bulk="chairs" type="number" min="1" max="99" value="${d.chairs}"></div><div class="field"><label for="fld-bulk-prefix">${t("bulk.numberPrefix")}</label><input id="fld-bulk-prefix" data-bulk="prefix" value="${esc(d.prefix)}" maxlength="4"></div>`:""}<div class="field"><label for="fld-bulk-quantity">${t("bulk.quantity")}</label><input id="fld-bulk-quantity" data-bulk="quantity" type="number" min="1" max="60" value="${d.quantity}"></div><div class="field"><label for="fld-bulk-placement">${t("bulk.placement")}</label><select id="fld-bulk-placement" data-bulk="placement">${placeValues.map(v=>`<option value="${v}" ${d.placement===v?"selected":""}>${t("bulk.placement."+v)}</option>`).join("")}</select></div><div class="field"><label for="fld-bulk-rows">${t("bulk.rows")}</label><input id="fld-bulk-rows" data-bulk="rows" type="number" min="1" max="12" value="${d.rows}"></div><div class="field"><label for="fld-bulk-cols">${t("bulk.columns")}</label><input id="fld-bulk-cols" data-bulk="cols" type="number" min="1" max="12" value="${shownCols(d)}"></div></div><div class="bulk-actions"><button class="btn sm" data-v8-action="close-add">${t("bulk.cancel")}</button><button class="btn sm primary" data-v8-action="commit-add">${t(d.placement==="repeated"?"bulk.startPlacement":"bulk.addToPlan")}</button></div></div>`;
-  }
+  // ---- moved to src/screen-floor-plan.js — see that file's header. The shell hands it
+  // what it reads; shell functions go over as late-binding wrappers, so a body
+  // this file reassigns later is the one that runs. ----------------------------
+  const FLOORPLAN=globalThis.MeritScreenFloorPlan.create({
+    esc:(...a)=>esc(...a),eventFreezes:(...a)=>eventFreezes(...a),formatTableNumber:(...a)=>formatTableNumber(...a),getState:()=>state,getUnverifiedSeating:()=>UNVERIFIED_SEATING,icon:(...a)=>icon(...a),reviewGroupCount:(...a)=>reviewGroupCount(...a),shownCols:(...a)=>shownCols(...a),t:(...a)=>t(...a),tableAssignedPax:(...a)=>tableAssignedPax(...a),tableProvenanceHTML:(...a)=>tableProvenanceHTML(...a),toolbarBtn:(...a)=>toolbarBtn(...a),ui,VENUE:(...a)=>VENUE(...a),ZONES,
+  });
   // Quantity is authoritative everywhere except "array", where rows x cols is.
   // Grid used to silently truncate to rows*cols, so asking for 25 tables in a
   // 2x2 grid quietly produced 4 -- the Quantity field lied about the outcome.
@@ -1470,7 +1351,7 @@
     return html.replace("</div><div class=\"canvas-status\"",`${ghostHTML()}</div><div class="canvas-status v8-status"`)
       .replace(t("canvas.editHint"),`${t("canvas.multiSelectHint")}<span class="status-right">${t("canvas.selectedCount",{n:ui.selectedObjectIds.length||0})}</span>`);
   };
-  floorPlanHTML = function(event){return`<div class="planmap-shell">${planMapToolbarHTML(event)}${bulkPanel(event)}${canvasViewportHTML(event,false)}${floorEmptyHTML(event)}${contextualCardHTML(event)}${planStatusPillHTML(event)}${addManuallyFabHTML()}</div>`;};
+  floorPlanHTML = function(event){return`<div class="planmap-shell">${FLOORPLAN.planMapToolbarHTML(event)}${FLOORPLAN.bulkPanel(event)}${canvasViewportHTML(event,false)}${floorEmptyHTML(event)}${FLOORPLAN.contextualCardHTML(event)}${FLOORPLAN.planStatusPillHTML(event)}${FLOORPLAN.addManuallyFabHTML()}</div>`;};
   // ---- EMPTY STATES THAT SAY WHAT TO DO NEXT (§20) -------------------------
   // A blank canvas used to be a blank panel: the only sentence telling the
   // operator what to do was the toast raised when the event was created --
@@ -1526,7 +1407,7 @@
   // compareToVersion); what follows is the screen.
   const VENUE=()=>globalThis.MeritVenueModel;
   function layoutChangesHTML(event){
-    return`<div class="planmap-shell in-changes">${planMapToolbarHTML(event)}${
+    return`<div class="planmap-shell in-changes">${FLOORPLAN.planMapToolbarHTML(event)}${
       canvasViewportHTML(event,false)}${layoutChangePanelHTML(event)}${layoutChangeCardHTML(event)}</div>`;
   }
   function changeLabel(c){
@@ -1859,7 +1740,7 @@
   // what it reads; shell functions go over as late-binding wrappers, so a body
   // this file reassigns later is the one that runs. ----------------------------
   const SEATING=globalThis.MeritScreenSeating.create({
-    activeEvent:(...a)=>activeEvent(...a),assignGuestGroup:(...a)=>assignGuestGroup(...a),assignGuestToTable:(...a)=>assignGuestToTable(...a),authoriseFreezeOverride:(...a)=>authoriseFreezeOverride(...a),AVAIL:(...a)=>AVAIL(...a),availReasonText:(...a)=>availReasonText(...a),bindPanelToggles:(...a)=>bindPanelToggles(...a),canMutate:(...a)=>canMutate(...a),canSeat,canvasEmptyHTML:(...a)=>canvasEmptyHTML(...a),canvasViewportHTML:(...a)=>canvasViewportHTML(...a),createFreezeFromDraft:(...a)=>createFreezeFromDraft(...a),esc:(...a)=>esc(...a),eventFreezes:(...a)=>eventFreezes(...a),formatTableNumber:(...a)=>formatTableNumber(...a),FREEZE:(...a)=>FREEZE(...a),freezeReasonText:(...a)=>freezeReasonText(...a),icon:(...a)=>icon(...a),liftFreeze:(...a)=>liftFreeze(...a),logicalSeatCount:(...a)=>logicalSeatCount(...a),naturalSort:(...a)=>naturalSort(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxDotsHTML:(...a)=>paxDotsHTML(...a),paxOf:(...a)=>paxOf(...a),recordUndo:(...a)=>recordUndo(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),seatingQueueEmptyHTML:(...a)=>seatingQueueEmptyHTML(...a),setTableAvailability:(...a)=>setTableAvailability(...a),t:(...a)=>t(...a),tableAssignedPax:(...a)=>tableAssignedPax(...a),tableIndex:(...a)=>tableIndex(...a),tableSeatMap:(...a)=>tableSeatMap(...a),toast:(...a)=>toast(...a),toggleAssignmentLock:(...a)=>toggleAssignmentLock(...a),touchEvent:(...a)=>touchEvent(...a),ui,unassignGuest:(...a)=>unassignGuest(...a),v8Toolbar:(...a)=>v8Toolbar(...a),
+    activeEvent:(...a)=>activeEvent(...a),assignGuestGroup:(...a)=>assignGuestGroup(...a),assignGuestToTable:(...a)=>assignGuestToTable(...a),authoriseFreezeOverride:(...a)=>authoriseFreezeOverride(...a),AVAIL:(...a)=>AVAIL(...a),availReasonText:(...a)=>availReasonText(...a),bindPanelToggles:(...a)=>bindPanelToggles(...a),canMutate:(...a)=>canMutate(...a),canSeat,canvasEmptyHTML:(...a)=>canvasEmptyHTML(...a),canvasViewportHTML:(...a)=>canvasViewportHTML(...a),createFreezeFromDraft:(...a)=>createFreezeFromDraft(...a),esc:(...a)=>esc(...a),eventFreezes:(...a)=>eventFreezes(...a),formatTableNumber:(...a)=>formatTableNumber(...a),FREEZE:(...a)=>FREEZE(...a),freezeReasonText:(...a)=>freezeReasonText(...a),icon:(...a)=>icon(...a),liftFreeze:(...a)=>liftFreeze(...a),logicalSeatCount:(...a)=>logicalSeatCount(...a),naturalSort:(...a)=>naturalSort(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxDotsHTML:(...a)=>paxDotsHTML(...a),paxOf:(...a)=>paxOf(...a),recordUndo:(...a)=>recordUndo(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),seatingQueueEmptyHTML:(...a)=>seatingQueueEmptyHTML(...a),setTableAvailability:(...a)=>setTableAvailability(...a),t:(...a)=>t(...a),tableAssignedPax:(...a)=>tableAssignedPax(...a),tableIndex:(...a)=>tableIndex(...a),tableSeatMap:(...a)=>tableSeatMap(...a),toast:(...a)=>toast(...a),toggleAssignmentLock:(...a)=>toggleAssignmentLock(...a),touchEvent:(...a)=>touchEvent(...a),ui,unassignGuest:(...a)=>unassignGuest(...a),v8Toolbar:(...a)=>FLOORPLAN.v8Toolbar(...a),
   });
   seatingHTML = function(...a){return SEATING.seatingHTML(...a);};
   selectedTablePanelHTML = function(...a){return SEATING.selectedTablePanelHTML(...a);};
@@ -4217,7 +4098,7 @@
   }
   function planIntelBottomPillHTML(event){
     const pi=event.analysis.planIntelligence;
-    return`<div class="planmap-status-pill wide"><span class="pill-check">${icon("check")}</span><b>${t("plan.understood")}</b><i class="pill-div"></i><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i>${planSeatsPill(pi)}${planReviewChipHTML(event,"review-action")}${teachAreaPillHTML(event)}<span class="toolbar-spacer"></span><button class="btn sm quiet" data-review-action="back">${t("review.editManually")}</button><button class="btn sm primary" data-review-action="commit">${t("action.confirmPlan")}</button></div>`;
+    return`<div class="planmap-status-pill wide"><span class="pill-check">${icon("check")}</span><b>${t("plan.understood")}</b><i class="pill-div"></i><b>${pi.planSummary.diningGroups}</b><small>${t("plan.diningGroups")}</small><i class="pill-div"></i>${FLOORPLAN.planSeatsPill(pi)}${FLOORPLAN.planReviewChipHTML(event,"review-action")}${teachAreaPillHTML(event)}<span class="toolbar-spacer"></span><button class="btn sm quiet" data-review-action="back">${t("review.editManually")}</button><button class="btn sm primary" data-review-action="commit">${t("action.confirmPlan")}</button></div>`;
   }
   // One pin per REVIEW GROUP (at the centroid of its members), not one per
   // individual object — a plan with hundreds of similar chairs must not turn
@@ -4268,7 +4149,7 @@
       :queued?{x:queued.x,y:queued.y,w:queued.w,h:queued.h}:null;
     requestAnimationFrame(()=>applyReviewZoom(boundaryBox));
     const statusLabel=v=>t(v==="unreviewed"?"poi.unreviewed":v==="confirmed"?"poi.confirmed":"poi.rejected");
-    return`<section class="planintel-screen ${ui.reviewQueue?"in-queue":""}"><header class="planintel-top">${planModeSwitchHTML(event)}<div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):t("plan.noAnalysisYet"))}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:t(OCR_REASON_KEY[a.ocr.reasonCode]||"ocr.reason.FAILED")})):esc(analysisNoticeText(a))}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>${t("diag.advancedDiagnostics")}</summary><div class="diag-pop">${detectionDiagnosticsHTML(a)}<div class="field"><label for="fld-review-filter-status">${t("diag.status")}</label><select id="fld-review-filter-status" data-review-filter="status"><option value="all">${t("diag.all")}</option>${["unreviewed","confirmed","rejected"].map(v=>`<option value="${v}" ${ui.reviewFilter===v?"selected":""}>${statusLabel(v)}</option>`).join("")}</select></div><div class="field full"><label for="fld-review-filter-confidence">${t("diag.minConfidence",{pct:Math.round(ui.reviewConfidence*100)})}</label><input id="fld-review-filter-confidence" data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?t("action.cancelDrawing"):t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">${t("action.saveVerifiedPlan")}</button><button class="btn sm" data-review-action="improve">${t("action.improveAI")}</button><button class="btn sm" data-review-action="export-dataset" title="${t("action.exportDatasetTitle")}">${t("action.exportDataset")}</button><button class="btn sm" data-review-action="session-report">${t("op.report")}</button></div></details><button class="btn" data-review-action="reanalyze">${t("action.reanalyze")}</button>`:""}</header>${reviewQueueBarHTML(event)}${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><div class="planintel-map-inner" id="analysisSceneInner"><img src="${event.background.src}" alt="${esc(t("review.planImageAlt"))}">${candidates.map(c=>candidateBox(c,selected?.id===c.id,target?.ids||null)).join("")}${boundaryBox?`<div class="review-group-boundary" style="left:${Math.max(0,boundaryBox.x-2.5)}%;top:${Math.max(0,boundaryBox.y-2.5)}%;width:${boundaryBox.w+5}%;height:${boundaryBox.h+5}%"></div>`:""}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="focus-group" data-group="${p.groupId}" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="${esc(t("review.difficultQuestion"))}">${p.label}</button>`).join("")}</div></div>${ui.operatorReportOpen?`<aside class="op-report-panel"><div class="op-report-head"><strong>${t("op.reportTitle")}</strong><button class="btn icon-only sm" data-review-action="close-session-report">${icon("x")}</button></div><div class="op-report-body">${operatorReportHTML(event)}</div></aside>`:""}${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?t("plan.analyzingLocally"):t("plan.noAnalysisYet")}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
+    return`<section class="planintel-screen ${ui.reviewQueue?"in-queue":""}"><header class="planintel-top">${FLOORPLAN.planModeSwitchHTML(event)}<div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):t("plan.noAnalysisYet"))}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:t(OCR_REASON_KEY[a.ocr.reasonCode]||"ocr.reason.FAILED")})):esc(analysisNoticeText(a))}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>${t("diag.advancedDiagnostics")}</summary><div class="diag-pop">${detectionDiagnosticsHTML(a)}<div class="field"><label for="fld-review-filter-status">${t("diag.status")}</label><select id="fld-review-filter-status" data-review-filter="status"><option value="all">${t("diag.all")}</option>${["unreviewed","confirmed","rejected"].map(v=>`<option value="${v}" ${ui.reviewFilter===v?"selected":""}>${statusLabel(v)}</option>`).join("")}</select></div><div class="field full"><label for="fld-review-filter-confidence">${t("diag.minConfidence",{pct:Math.round(ui.reviewConfidence*100)})}</label><input id="fld-review-filter-confidence" data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?t("action.cancelDrawing"):t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">${t("action.saveVerifiedPlan")}</button><button class="btn sm" data-review-action="improve">${t("action.improveAI")}</button><button class="btn sm" data-review-action="export-dataset" title="${t("action.exportDatasetTitle")}">${t("action.exportDataset")}</button><button class="btn sm" data-review-action="session-report">${t("op.report")}</button></div></details><button class="btn" data-review-action="reanalyze">${t("action.reanalyze")}</button>`:""}</header>${reviewQueueBarHTML(event)}${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><div class="planintel-map-inner" id="analysisSceneInner"><img src="${event.background.src}" alt="${esc(t("review.planImageAlt"))}">${candidates.map(c=>candidateBox(c,selected?.id===c.id,target?.ids||null)).join("")}${boundaryBox?`<div class="review-group-boundary" style="left:${Math.max(0,boundaryBox.x-2.5)}%;top:${Math.max(0,boundaryBox.y-2.5)}%;width:${boundaryBox.w+5}%;height:${boundaryBox.h+5}%"></div>`:""}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="focus-group" data-group="${p.groupId}" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="${esc(t("review.difficultQuestion"))}">${p.label}</button>`).join("")}</div></div>${ui.operatorReportOpen?`<aside class="op-report-panel"><div class="op-report-head"><strong>${t("op.reportTitle")}</strong><button class="btn icon-only sm" data-review-action="close-session-report">${icon("x")}</button></div><div class="op-report-body">${operatorReportHTML(event)}</div></aside>`:""}${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?t("plan.analyzingLocally"):t("plan.noAnalysisYet")}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
   }
   // The confidence at which a fresh candidate arrives pre-selected. Local
   // calibration (improveAI) writes state.calibration.recommendedConfidence
