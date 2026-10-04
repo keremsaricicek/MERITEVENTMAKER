@@ -27,12 +27,14 @@ import { BUDGETS, judge } from "./budgets.mjs";
 
 const REPS = Number(process.env.REPS || 20);
 const app = await serveApp();
-const browser = await launchChromium();
+// --expose-gc: each operation's samples start from a collected heap (below).
+const browser = await launchChromium({ args: ["--js-flags=--expose-gc"] });
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 const errs = [];
 page.on("pageerror", (e) => errs.push(e.message));
 
 await page.goto(app.baseUrl + "/index.html");
+if (!(await page.evaluate(() => typeof gc === "function"))) { console.error("--expose-gc did not take: the measurement would be contaminated by earlier operations' garbage."); process.exit(1); }
 await page.waitForFunction(() => { try { return Array.isArray(state.events); } catch { return false; } });
 await page.evaluate(() => {
   const e = { id: "ev-stress", name: "Stress 4000", hotel: "Merit Arena", salon: "", date: new Date(Date.now() + 90 * 864e5).toLocaleDateString("en-CA"), status: "Planning",
@@ -98,7 +100,15 @@ const OPS = {
   packageValidate: () => { const e = activeEvent(); const p = JSON.parse(JSON.stringify(MeritEventPackage.buildPayload(e, { auditEntries: [] })));
     if (!MeritEventPackage.isWellFormed(p) || !MeritEventPackage.referencesIntact(p.event) || MeritEventPackage.eventProblem(p.event)) throw new Error("package refused"); },
 };
+// Each batch starts from a collected heap. Without it, the garbage the PREVIOUS
+// operation left (a 1.2 MB serialise, a 4,000-chair floor render) is collected
+// inside THIS operation's samples: measured 2026-10-04, eventsList p95 ranged
+// 7.1–34.8 ms over 12 trials without it and 6.9–11.6 ms with it, and CI failed
+// its budget (37.9 ms, median 3.8) on a commit that changed only comments.
+// Garbage an operation creates itself is still collected inside its own
+// samples, so its cost is still counted. Budgets are unchanged by this.
 const run = (name, reps) => page.evaluate(({ name, reps, src }) => {
+  gc();
   const op = new Function(`return (${src})`)();
   const out = [];
   for (let i = 0; i < reps; i++) { const t0 = performance.now(); op(); void document.body.offsetHeight; out.push(performance.now() - t0); }
