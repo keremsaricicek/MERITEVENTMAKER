@@ -47,7 +47,7 @@ const INVENTORY = [
     trace: "The pre-v8 finder, reassigned by app-v8.js (`renderGlobalSearch = function`) at load." },
   { file: "app-v8.js", fn: "refreshGhosts", target: "world.insertAdjacentHTML", evidence: "literal",
     trace: "ghostHTML(): the bulk-add preview. A table-number prefix through esc(), and x/y pixel positions computed by bulkPositions() — numbers." },
-  { file: "app-v8.js", fn: "bindFreezeZones > commit", target: "box.innerHTML", evidence: "literal",
+  { file: "screen-seating.js", fn: "bindFreezeZones > commit", target: "box.innerHTML", evidence: "literal",
     trace: "freezeCoveragePreviewHTML(): t() strings whose only parameters are table and chair COUNTS. No name, zone or note is interpolated." },
   { file: "app-v8.js", fn: "renderExcelWizard", target: "root.innerHTML", evidence: "hostile-input",
     trace: "The guest-import wizard. File name, column headers, source cells and interpreted fields, all through esc(); step labels and summary counts otherwise." },

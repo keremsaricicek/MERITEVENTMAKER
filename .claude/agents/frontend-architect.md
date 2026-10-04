@@ -49,13 +49,13 @@ commit as the change that moves it.
 
 | Fact | Value | How to re-measure |
 |---|---|---|
-| `src/*.js` files | **63** | `ls src/*.js \| wc -l` |
-| `src/` total lines | **24,029** | `wc -l src/*.js` |
-| `app-v8.js` | **6,450** lines (5,740 right after the detection extraction and 8,543 before it — history, in CLAUDE.md) | `wc -l src/app-v8.js` |
+| `src/*.js` files | **64** | `ls src/*.js \| wc -l` |
+| `src/` total lines | **24,169** | `wc -l src/*.js` |
+| `app-v8.js` | **5,970** lines (5,740 right after the detection extraction and 8,543 before it — history, in CLAUDE.md) | `wc -l src/app-v8.js` |
 | Longest single line in `app-v8.js` | **3,554** chars; **27** lines exceed 500 | `awk '{print length}' src/app-v8.js \| sort -rn \| head -1` |
 | `plan-detection-classical.js` | **221** lines — the orchestrator `detect()` over seven stage modules (Split A/B) | `wc -l src/plan-detection-classical.js` |
-| Files exporting `globalThis.Merit*` | **60** of **63** | `grep -l "globalThis.Merit" src/*.js \| wc -l` |
-| Classic `<script>` tags in `index.html` | **63**, fixed order, `app-v8.js` LAST (plus one `type="module"` PDF loader) | `grep -c '<script src="src/' index.html` |
+| Files exporting `globalThis.Merit*` | **61** of **64** | `grep -l "globalThis.Merit" src/*.js \| wc -l` |
+| Classic `<script>` tags in `index.html` | **64**, fixed order, `app-v8.js` LAST (plus one `type="module"` PDF loader) | `grep -c '<script src="src/' index.html` |
 | Test suites | **114** (**10** slow); checks printed by the run | `npm run test:all` |
 | CI jobs | **5** parallel, split by what a failure means | `.github/workflows/ci.yml` |
 | Offline verification | every check the verifier prints, by RUNNING the built artifact | `npm run verify:offline` |
