@@ -62,7 +62,26 @@
   // Chosen by the measurement above, not by taste.
   const VIEWS = [
     { id: "inset-18-x4", inset: 0.18, scale: 4, stretch: true },
-    { id: "inset-28-x4", inset: 0.28, scale: 4, stretch: true },
+    { id: "inset-28-x4", inset: 0.28, scale: 4, stretch: true, tight: true },
+  ];
+  // A THREE-DIGIT NUMBER IS OFTEN DRAWN ON TWO LINES inside its circle — "10"
+  // over "4" for 104 — because three digits do not fit across the symbol.
+  // On ORNEK every one of the 58 numbers from 100 up is drawn that way, and
+  // none was read (2026-10-04): the reader took two digit runs for an
+  // ambiguity, and the tight view physically cannot contain both lines. When
+  // a view finds two runs stacked one above the other, the number is read as
+  // top-then-bottom, and the confirming view is a WIDER crop that can hold both
+  // lines; the tight view is not evidence for a two-line number (it is kept in
+  // the readings, marked, and left out of the vote).
+  // Measured on ORNEK's detected boxes (30 two-line symbols, 2026-10-04):
+  // inset 0.18 and 0.15 both read the two lines and, wherever both read a
+  // two-line number, agreed only on the right one; 0.21 is a tie-breaker that
+  // reads some symbols the others miss and disagrees where it is wrong; wider
+  // crops (0.08, 0, -0.05) take in the ring and the neighbours and read noise.
+  const STACKED_MIN_CONFIDENCE = 50;
+  const STACKED_VIEWS = [
+    { id: "inset-15-x4", inset: 0.15, scale: 4, stretch: true },
+    { id: "inset-21-x4", inset: 0.21, scale: 4, stretch: true },
   ];
 
   // A table number is a small integer. Three digits covers every seating plan
@@ -78,22 +97,74 @@
   // the number and something else — a neighbouring symbol that crept into the
   // frame, a dimension tick — and there is no way to tell which is which. Two
   // candidates is not a number, it is an ambiguity, and it is reported as one.
-  function numberFromResult(result) {
+  //
+  // Two refinements, both narrower than they look:
+  //   - quotes and commas the engine glues to a digit run (“10, 10,) are not
+  //     part of it; nothing else is stripped;
+  //   - a run whose box touches the crop's LEFT or RIGHT edge is a piece of
+  //     the symbol's ring or of a neighbour, not the number in the middle —
+  //     when the crop's size is known, it is not counted. (Top and bottom are
+  //     not filtered: a two-line number's lines sit close to both.)
+  // Two runs are still an ambiguity UNLESS they are stacked: one wholly above
+  // the other, horizontally overlapping, two digits at most on top and one
+  // below. Then they are one number, top line first, and the reading says so.
+  const STRIP = /^[“”"'‘’,.]+|[“”"'‘’,.]+$/g;
+  function numberFromResult(result, crop) {
     if (!result || !result.available) return null;
     const found = [];
     for (const w of (result.words || [])) {
-      const text = String(w.text || "").trim();
+      const text = String(w.text || "").trim().replace(STRIP, "");
       if (!NUMBER_PATTERN.test(text)) continue;
-      found.push({ value: Number(text), confidence: Math.round(w.confidence || 0) });
+      const b = w.bbox || null;
+      if (crop && b && (b.x0 <= 1 || b.x1 >= crop.width - 1)) continue;
+      found.push({ text, value: Number(text), confidence: Math.round(w.confidence || 0), bbox: b });
     }
-    if (found.length !== 1) return null;
-    return found[0];
+    if (found.length === 1) {
+      const b = found[0].bbox, yShare = crop && b ? ((b.y0 + b.y1) / 2) / crop.height : null;
+      return { value: found[0].value, confidence: found[0].confidence, yShare, digits: found[0].text.length };
+    }
+    if (found.length === 2 && found.every(f => f.bbox)) {
+      const [top, bottom] = [...found].sort((p, q) => p.bbox.y0 - q.bbox.y0);
+      const overlapX = Math.min(top.bbox.x1, bottom.bbox.x1) - Math.max(top.bbox.x0, bottom.bbox.x0);
+      const stacked = top.bbox.y1 <= bottom.bbox.y0 + 0.15 * (bottom.bbox.y1 - bottom.bbox.y0)
+        && overlapX > 0 && top.text.length <= 2 && bottom.text.length === 1;
+      if (stacked) return { value: Number(top.text + bottom.text), confidence: Math.min(top.confidence, bottom.confidence), stacked: true };
+    }
+    return null;
   }
 
   // Read one table's number from its own symbol.
   async function readOne(runOCR, labelOCR, image, box, options) {
     const opts = options || {};
-    const views = opts.views || VIEWS;
+    const readings = await readViews(runOCR, labelOCR, image, box, opts.views || VIEWS, opts);
+    // A two-line number shows itself either as two stacked runs, or as one
+    // short run sitting in the upper part of its crop with the line below it
+    // unread. Then the symbol is read again with the two-line views, the
+    // tight view leaves the vote, and a reading that saw only the top line
+    // (the prefix of a two-line reading, high in its crop) is kept as what it
+    // is -- consistent, not a vote.
+    const looksStacked = readings.some(r => r.stacked || (r.value != null && r.digits <= 2 && r.yShare != null && r.yShare < 0.4));
+    if (!opts.views && looksStacked) {
+      readings.push(...await readViews(runOCR, labelOCR, image, box, STACKED_VIEWS, opts));
+      const twoLine = readings.filter(r => r.stacked).map(r => String(r.value));
+      for (const r of readings) {
+        if (r.tight) r.excluded = "too tight to hold a two-line number";
+        // Two crops of one symbol share the engine and the pixels, so they can
+        // share a misread: on ORNEK both two-line views read 138 as 132, the
+        // weaker at confidence 47. A two-line reading below 50 is not a vote.
+        // Set on ORNEK, the only two-line plan there is (27 right two-line
+        // readings measured 28..96, the one wrong one 47); the number-integrity
+        // layer is the second guard -- a misread lands on another table's
+        // number and is reported as a duplicate.
+        else if (r.stacked && (r.confidence || 0) < STACKED_MIN_CONFIDENCE) r.excluded = "a two-line reading below the confidence a vote needs";
+        else if (!r.stacked && r.value != null && r.yShare != null && r.yShare < 0.4 && twoLine.some(v => v.startsWith(String(r.value)) && v !== String(r.value)))
+          r.excluded = "read only the top line of a two-line number";
+      }
+      return classify(readings.filter(r => !r.excluded), readings);
+    }
+    return classify(readings);
+  }
+  async function readViews(runOCR, labelOCR, image, box, views, opts) {
     const readings = [];
     for (const view of views) {
       const crops = labelOCR.cropVariants(image, box, {
@@ -111,10 +182,12 @@
         readings.push({ view: view.id, value: null, reason: error && error.message ? error.message : String(error) });
         continue;
       }
-      const hit = numberFromResult(result);
-      readings.push({ view: view.id, value: hit ? hit.value : null, confidence: hit ? hit.confidence : null });
+      const hit = numberFromResult(result, { width: crops[0].width, height: crops[0].height });
+      readings.push({ view: view.id, value: hit ? hit.value : null, confidence: hit ? hit.confidence : null,
+        ...(hit && hit.stacked ? { stacked: true } : {}), ...(view.tight ? { tight: true } : {}),
+        ...(hit && hit.yShare != null ? { yShare: +hit.yShare.toFixed(3), digits: hit.digits } : {}) });
     }
-    return classify(readings);
+    return readings;
   }
 
   // Turn what the views saw into one of the four states an operator understands.
@@ -124,8 +197,11 @@
   // would be a lie told in the product's own vocabulary. LIKELY is reserved for
   // a reading corroborated from somewhere else (verified layout memory, or a
   // person), which is a different evidence source and belongs to a later layer.
-  function classify(readings) {
-    const seen = readings.filter((r) => r.value != null);
+  // `readings` are the views that vote; `all`, when given, is every view taken
+  // (including any left out of the vote, each saying why) — what is reported.
+  function classify(voting, all) {
+    const readings = all || voting;
+    const seen = voting.filter((r) => r.value != null);
     const values = [...new Set(seen.map((r) => r.value))];
     if (!seen.length) {
       return { value: null, state: STATES.UNKNOWN, confidence: null, readings,
@@ -161,9 +237,11 @@
   }
 
   globalThis.MeritTableNumbers = {
-    version: 1,
+    // 2: two-line numbers (2026-10-04).
+    version: 2,
     STATES,
     VIEWS,
+    STACKED_VIEWS,
     numberFromResult,
     classify,
     readOne,

@@ -195,4 +195,61 @@ export default async function run({ page, checks, baseUrl }) {
     checks.equal(out.t2.value, null, "the disagreeing one carries none");
     checks.equal(out.views.length, 2, "and the views that were used are reported");
   }
+
+  // ---- a number drawn on two lines -------------------------------------------
+  // Three digits do not fit across a table symbol, so plans draw "10" over "4".
+  // On ORNEK every number from 100 up is drawn that way and none was read
+  // (2026-10-04). Two stacked runs are one number, top line first; two runs
+  // side by side are still an ambiguity; a run touching the crop's left or
+  // right edge is the ring or a neighbour.
+  const bw = (text, confidence, x0, y0, x1, y1) => ({ text, confidence, bbox: { x0, y0, x1, y1 } });
+  const crop = { width: 200, height: 200 };
+  const numC = (result) => page.evaluate(({ r, c }) => globalThis.MeritTableNumbers.numberFromResult(r, c), { r: result, c: crop });
+  {
+    const r = await numC(ocr([bw("10", 96, 60, 20, 140, 76), bw("4", 95, 80, 120, 120, 176)]));
+    checks.ok(r && r.value === 104 && r.stacked, "two runs stacked one above the other are ONE number, top line first", r);
+  }
+  {
+    const r = await numC(ocr([bw("10", 96, 20, 80, 90, 130), bw("4", 95, 110, 80, 150, 130)]));
+    checks.equal(r, null, "two runs side by side stay an ambiguity — never glued into 104");
+  }
+  {
+    const r = await numC(ocr([bw("10", 96, 10, 20, 60, 70), bw("4", 95, 130, 120, 170, 170)]));
+    checks.equal(r, null, "one above the other but not over it (a neighbour's digit, diagonally) is not a two-line number");
+  }
+  {
+    const r = await numC(ocr([bw("“10", 59, 60, 20, 140, 76), bw("1", 97, 80, 120, 120, 176)]));
+    checks.ok(r && r.value === 101, "a quote the engine glued to a digit run is not part of it", r);
+  }
+  {
+    const r = await numC(ocr([bw("37", 90, 60, 80, 140, 130), bw("13", 24, 186, 180, 200, 200)]));
+    checks.ok(r && r.value === 37, "a run touching the crop's edge is the ring or a neighbour, not a second number", r);
+  }
+  {
+    const r = await numC(ocr([bw("104", 90, 60, 20, 140, 76), bw("4", 95, 80, 120, 120, 176)]));
+    checks.equal(r, null, "a three-digit top line over a digit is not a two-line number (four digits are not a table number)");
+  }
+  {
+    // Both two-line views agree; the tight view cannot hold both lines and is
+    // left out of the vote, as is a view that read only the top line.
+    const top = bw("10", 96, 60, 20, 140, 76), bottom = bw("4", 95, 80, 120, 120, 176);
+    const r = await readOne([{ words: [top, bottom] }, { words: [bw("4", 80, 80, 120, 120, 176)] },
+      { words: [top, bottom] }, { words: [bw("10", 90, 60, 20, 140, 76)] }], SYMBOL);
+    checks.equal(r.state, "VERIFIED", "a two-line number read the same by two two-line views is verified", r);
+    checks.equal(r.value, 104, "as 104");
+    checks.equal(r.calls, 4, "the two-line views are read only when the symbol looks two-line");
+    checks.ok(r.readings.some(x => x.tight && x.excluded) && r.readings.some(x => /top line/.test(x.excluded || "")),
+      "the tight view and the top-line-only reading are kept, marked, and left out of the vote", r.readings);
+  }
+  {
+    // The measured misread: both two-line views read 138 as 132, one at 47.
+    const r = await readOne([{ words: [bw("13", 91, 60, 20, 140, 76), bw("2", 91, 80, 120, 120, 176)] }, { words: [] },
+      { words: [bw("13", 47, 60, 20, 140, 76), bw("2", 60, 80, 120, 120, 176)] }, { words: [] }], SYMBOL);
+    checks.equal(r.state, "NEEDS_REVIEW", "a two-line reading below confidence 50 is not a vote, so one strong reading is not verified", r);
+  }
+  {
+    const r = await readOne([{ words: [bw("10", 96, 60, 20, 140, 76), bw("4", 95, 80, 120, 120, 176)] }, { words: [] },
+      { words: [bw("10", 90, 60, 20, 140, 76), bw("7", 85, 80, 120, 120, 176)] }, { words: [] }], SYMBOL);
+    checks.equal(r.state, "NEEDS_REVIEW", "two two-line views that disagree (104 against 107) go to a person");
+  }
 }

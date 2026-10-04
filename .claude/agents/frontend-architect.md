@@ -50,7 +50,7 @@ commit as the change that moves it.
 | Fact | Value | How to re-measure |
 |---|---|---|
 | `src/*.js` files | **72** | `ls src/*.js \| wc -l` |
-| `src/` total lines | **25,187** | `wc -l src/*.js` |
+| `src/` total lines | **25,265** | `wc -l src/*.js` |
 | `app-v8.js` | **4,760** lines (5,740 right after the detection extraction and 8,543 before it — history, in CLAUDE.md) | `wc -l src/app-v8.js` |
 | Longest single line in `app-v8.js` | **1,677** chars; **14** lines exceed 500 | `awk '{print length}' src/app-v8.js \| sort -rn \| head -1` |
 | `plan-detection-classical.js` | **225** lines — the orchestrator `detect()` over seven stage modules (Split A/B) | `wc -l src/plan-detection-classical.js` |
