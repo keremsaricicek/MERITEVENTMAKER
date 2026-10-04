@@ -37,6 +37,12 @@ export default async function run({ page, checks, baseUrl }) {
   const guestId = await page.evaluate(() => state.events[0].guests.find((x) => x.name === "Pax Guest").id);
   await click(page, `[data-guest-edit="${guestId}"]`);
   await page.waitForSelector("#guestForm", { state: "visible", timeout: 5000 });
+  // openGuestDialog moves focus to the name field 30 ms after it opens. Under
+  // load that landed between Playwright locating Save and clicking it, and the
+  // click missed: 2 of 11 runs failed with a concurrent suite, 0 of 12 once the
+  // dialog had settled (measured 2026-10-04). A person cannot press Save inside
+  // those 30 ms; the test waits for the same settled dialog a person sees.
+  await page.waitForFunction(() => document.activeElement === document.querySelector('#guestForm input[name="name"]'), null, { timeout: 5000 });
   await page.fill('#guestForm input[name="additionalGuests"]', "0");
   await click(page, "#guestForm .dialog-foot .btn.primary");
   await page.waitForFunction(
