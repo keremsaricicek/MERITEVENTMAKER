@@ -40,6 +40,8 @@ export const meta = { name: "toast-discipline", tags: ["ui", "localization", "re
 // from. A new composed site fails until it is read and listed here; a listed
 // one that disappears fails too, so this list cannot rot.
 const COMPOSED = [
+  { file: "app-v8.js", fn: "toast", arg: "...a", count: 1,
+    from: "the hand-over to a screen module (src/screen-*.js): a late-binding pass-through, not a message — the module's own toast() calls are scanned in its own file like every other" },
   { file: "app-v8.js", fn: "toast", arg: "message", count: 1,
     from: 'const message=t("seating.groupMovedToast",…) on the line above: a first seating of a group is confirmed plainly…' },
   { file: "app-v8.js", fn: "toastAction", arg: "message", count: 1,

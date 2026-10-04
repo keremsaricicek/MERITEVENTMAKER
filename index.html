@@ -212,6 +212,9 @@
        (globalThis.MERIT_PLAN_DETECTION), and AFTER the Merit* modules it calls
        at detect() time. It is NOT a trained model. -->
   <script src="src/plan-detection-classical.js"></script>
+  <!-- Screens moved out of app-v8.js. Each is created by app-v8.js with what it
+       reads from the shell, so it only has to load before app-v8.js. -->
+  <script src="src/screen-live.js"></script>
   <script src="src/app-v8.js"></script>
 </body>
 </html>
