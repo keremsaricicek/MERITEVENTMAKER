@@ -127,7 +127,7 @@
   function buildRecord(input) {
     const {
       decisionType, plan, context, geometry, predictionBefore, humanTruth,
-      providers, descriptor, crop, note,
+      providers, descriptor, crop, note, decisionId, propagatedFrom, reviewedIndividually,
     } = input;
 
     if (!DECISION_TYPES.includes(decisionType)) {
@@ -206,7 +206,34 @@
         encoding: "image/png",
       } : null,
       note: note ?? null,
+      // Which review decision produced this label (decideReview in app-v8.js),
+      // so undoing the decision can retract every label it made.
+      decisionId: decisionId ?? null,
+      // A label a person did not look at — spread across a family, or
+      // accepted in bulk — says so structurally, not only in the note, so an
+      // evaluation can leave it out instead of counting a guess forty times.
+      reviewedIndividually: reviewedIndividually !== false,
+      propagatedFrom: propagatedFrom ?? null,
+      // Set when the decision is undone: kept for the record, out of every
+      // dataset.
+      retracted: null,
     };
+  }
+
+  // Undoing a decision retracts the labels it produced. Nothing is deleted: a
+  // retracted example still says what was decided and when it was taken back.
+  function retract(records, decisionId, { at, reason } = {}) {
+    let n = 0;
+    for (const r of records || []) {
+      if (!decisionId || r.decisionId !== decisionId || r.retracted) continue;
+      r.retracted = { at: at || nowISO(), reason: reason || "the decision was undone" };
+      n++;
+    }
+    return n;
+  }
+  // The examples whose decision still stands.
+  function standing(records) {
+    return (records || []).filter(r => !r.retracted);
   }
 
   // ---- leakage-safe splitting ---------------------------------------------
@@ -217,7 +244,7 @@
   // examples, so a wildly unbalanced split is visible rather than assumed.
   function splitByPlan(records, { train = 0.7, val = 0.15, seed = 1 } = {}) {
     const byPlan = new Map();
-    for (const record of records) {
+    for (const record of standing(records)) {
       const key = record.plan?.planHash || "unknown";
       if (!byPlan.has(key)) byPlan.set(key, []);
       byPlan.get(key).push(record);
@@ -264,7 +291,8 @@
   }
 
   // ---- summary -------------------------------------------------------------
-  function summarise(records) {
+  function summarise(allRecords) {
+    const records = standing(allRecords);
     const byType = {};
     for (const type of DECISION_TYPES) byType[type] = 0;
     const plans = new Set(), classes = {};
@@ -276,6 +304,8 @@
     }
     return {
       total: records.length,
+      retracted: (allRecords || []).length - records.length,
+      notIndividuallyReviewed: records.filter(r => r.reviewedIndividually === false).length,
       byDecisionType: byType,
       distinctPlans: plans.size,
       labelledClasses: classes,
@@ -294,6 +324,6 @@
   globalThis.MeritTrainingData = {
     DECISION_TYPES, SCHEMA_VERSION, CROP_SIZE, CROP_PADDING,
     planFingerprint, cropFromImage, imageFromDataUrl,
-    buildRecord, splitByPlan, summarise,
+    buildRecord, splitByPlan, summarise, retract, standing,
   };
 })();

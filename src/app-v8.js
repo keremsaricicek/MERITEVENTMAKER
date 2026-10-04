@@ -2412,6 +2412,9 @@
     const vector=c.visualDescriptor?.vector||null;
     const entry={id:uid("planmemory"),sourceCandidateId:c.id,kind:c.kind,type:c.type,status:c.status,
       geometry:{x:c.x,y:c.y,w:c.w,h:c.h,rotation:c.rotation||0},manual,correctedAt:nowISO(),
+      // "Not important": rejected for this plan, and remembered as dismissed
+      // so Re-Analyze does not ask again and the reason is not lost.
+      dismissed:!!c.dismissed,
       // The identifier the drawing prints on it, when two crops agreed on one.
       // Stored with the memory so the same table can be recognised after a
       // re-import by its number rather than by resembling a hundred siblings.
@@ -2454,9 +2457,8 @@
     }
     return planImageCache.image;
   }
-  function classOf(c){return c?{kind:c.kind,type:c.type,confidence:c.confidence,source:c.evidence?.geometry??null,candidateId:c.id}:null;}
   function truthOf(c){return c?{kind:c.kind,type:c.type,seats:c.seats??null,seatsConfidence:c.seatsConfidence??null}:null;}
-  async function captureTrainingExample(event,c,{decisionType,predictionBefore=null,note=null}={}){
+  async function captureTrainingExample(event,c,{decisionType,predictionBefore=null,note=null,decisionId=null,propagatedFrom=null,reviewedIndividually=true}={}){
     if(!globalThis.MeritTrainingData||!event?.background?.src||!c)return null;
     try{
       const src=event.background.src;
@@ -2483,8 +2485,11 @@
         },
         descriptor:c.descriptor??null,
         crop:{blobId,size:shot.size,sourceRect:shot.sourceRect,objectRect:shot.objectRect,padding:shot.padding},
-        note,
+        note,decisionId,propagatedFrom,reviewedIndividually,
       });
+      // A capture finishes after its crop is stored; if the decision was undone
+      // meanwhile, the label is kept as retracted rather than counted.
+      if(decisionId&&retractedDecisions.has(decisionId))MeritTrainingData.retract([record],decisionId,{reason:"the decision was undone"});
       state.trainingData ||= [];
       state.trainingData.push(record);
       saveState();
@@ -2584,7 +2589,7 @@
       if(hit.reclassifies)
         conflicts.push({kind:"overruled",candidateId:c.id,
           detector:{kind:c.kind,type:c.type},operator:{kind:m.kind,type:m.type}});
-      c.kind=m.kind;c.type=m.type;c.status=m.status;c.selected=m.status!=="rejected";c.fromMemory=true;
+      c.kind=m.kind;c.type=m.type;c.status=m.status;c.selected=m.status!=="rejected";c.fromMemory=true;if(m.dismissed)c.dismissed=true;
       c.memoryMatch={grade:hit.grade,score:hit.score,margin:hit.margin,
         movedBeyondTolerance:!hit.withinOldTolerance,visualCosine:hit.visualCosine,terms:hit.terms};
       usedC.add(c.id);usedM.add(m.id);idRemap.set(m.sourceCandidateId,c.id);reappliedCount++;
@@ -3253,6 +3258,7 @@
   // omitted value THROWS rather than falling back; `null` is the honest "no
   // number", `undefined` is a caller that forgot.
   function keepLesson(event,c,{scope,subject,printedNumber,auditAction,auditDetail,toastText}){
+    if(!canMutate(event,"keep a lesson"))return;
     if(printedNumber===undefined)
       throw new Error("keepLesson: printedNumber must be passed explicitly — null for none, never omitted");
     const alive=(event.analysis?.candidates||[]).filter(x=>x.status!=="rejected");
@@ -3321,13 +3327,15 @@
   // the Teach Area entirely and puts the detector's own answer back, so the
   // object is not left holding a classification with no author.
   function forgetLesson(event,c){
+    if(!canMutate(event,"forget a lesson"))return;
     const id=c?.taughtFrom?.lessonId;if(!id)return;
     const scope=c.taughtFrom.scope;
     state.teachings=(state.teachings||[]).filter(l=>l.id!==id);
-    const was=c.taughtFrom.was;
-    if(was){c.kind=was.kind;c.type=was.type;c.status=was.status;c.printedNumber=was.printedNumber;}
-    delete c.taughtFrom;
-    delete c.typeBasis;
+    // The detector's own answer back, through the same field writer as every
+    // review decision (MeritReviewDecisions "forgetLesson").
+    const p=globalThis.MeritReviewDecisions.plan({kind:"forgetLesson",candidateId:c.id},{candidates:[c]});
+    if(p.ok)for(const w of p.writes)applyReviewWrites(c,w.set);
+    else{delete c.taughtFrom;delete c.typeBasis;}
     saveState();
     audit(event,"TEACH_AREA_LESSON_FORGOTTEN",{lessonId:id});
     toast(t("teachArea.forgotten",{scope:t("teachArea.scope."+scope)}),"success",5000);
@@ -3677,6 +3685,36 @@
   // Exactly which candidates a spread will reach, computed with the same rules
   // the spread itself uses. Shared so the undo snapshot and the mutation can
   // never disagree about the affected set.
+
+  // ---- review decisions: ONE writer ----------------------------------------
+  //
+  // Everything a person decides about a detected object goes through
+  // decideReview(): confirm, reject, "not important", a type change and the
+  // family it spreads to, accepting a family in bulk, and switching a candidate
+  // in or out of what Confirm writes. MeritReviewDecisions (review-decisions.js)
+  // says what the decision does; this applies it together with the four records
+  // that have to agree with it -- plan memory (Re-Analyze keeps it), the
+  // training label (what the detector said, what the person answered, whether
+  // they looked at THIS object), the audit trail, and a human observation on
+  // the object -- and undoReviewDecision() takes all of them back together.
+  //
+  // Before this, each button wrote its own subset: undo withdrew memory but
+  // left the training label standing, undoing a correction over an earlier one
+  // deleted both memory entries, "not important" deleted the candidate outright,
+  // and no decision reached the audit trail. tests/suites/review-decisions.
+  //
+  // The undo stack is session-only, on ui, like ui.liveRecent: a property of
+  // this working session that never reaches the stored schema.
+  const retractedDecisions=new Set();
+  const REVIEW_OPERATOR_ACTION={confirm:"confirm",reject:"reject",notImportant:"dismiss",confirmFamily:"confirm-family"};
+  function applyReviewWrites(c,set){
+    for(const k of ["kind","type","status","selected","dismissed"])if(k in set)c[k]=set[k];
+    if("printedNumber" in set)c.printedNumber=set.printedNumber;
+    if(set.clearSeats)c.chairDetections=[]; // a chair/armchair/sofa/stage/etc. carries no nested seat detections of its own
+    if(set.seatsUnknown){c.seats=null;c.seatsConfidence="unverified";}
+    if(set.dropSeatsState){delete c.seats;delete c.seatsConfidence;}
+    if(set.forgetLesson){delete c.taughtFrom;delete c.typeBasis;}
+  }
   function familyCandidateIds(event,corrected,wasKind,wasType){
     const pi=event.analysis?.planIntelligence;if(!pi)return[];
     const group=(pi.similarityGroups||[]).find(g=>(g.memberIds||[]).includes(corrected.id))
@@ -3688,72 +3726,70 @@
       return !!other&&other.status==="unreviewed"&&other.kind===wasKind&&other.type===wasType;
     });
   }
-  function applyCorrectionToFamily(event,corrected,wasKind,wasType){
-    const pi=event.analysis?.planIntelligence;if(!pi)return 0;
-    // Prefer the full similarity family; fall back to the review group.
-    const group=(pi.similarityGroups||[]).find(g=>(g.memberIds||[]).includes(corrected.id))
-      ||(pi.reviewGroups||[]).find(g=>(g.memberIds||[]).includes(corrected.id));
-    if(!group)return 0;
-    let n=0;
-    for(const id of group.memberIds){
-      if(id===corrected.id)continue;
-      const other=event.analysis.candidates.find(x=>x.id===id);
-      if(!other||other.status!=="unreviewed")continue;
-      if(other.kind!==wasKind||other.type!==wasType)continue;
-      other.kind=corrected.kind;other.type=corrected.type;
-      if(corrected.kind!=="table")other.chairDetections=[];
-      other.status="confirmed";other.selected=true;
-      rememberCorrection(event,other);
-      // Captured, but marked as propagated. A person looked at one object and
-      // this repaired forty; recording forty human decisions would overstate
-      // the evidence by a factor of forty, and an evaluation that counted them
-      // as independent labels would be measuring its own guess.
-      captureTrainingExample(event,other,{decisionType:"correction",
-        predictionBefore:{kind:wasKind,type:wasType,confidence:other.confidence,source:other.evidence?.geometry??null,candidateId:other.id},
-        note:`propagated from ${corrected.id}; not individually reviewed by a person`});
-      n++;
-    }
-    return n;
-  }
-  // A reclassification lives entirely in event.analysis.candidates and
-  // event.planMemory. The canvas undo stack snapshots {tables, venueObjects,
-  // background}, so it cannot reach any of it -- which meant one dropdown
-  // change that repaired a whole family of objects was, until now,
-  // irreversible. The more objects the spread correctly fixed, the more
-  // damage an accidental wrong pick did.
-  //
-  // Session-only, deliberately on ui rather than the event: like ui.liveRecent
-  // it is a property of this working session and must never reach the stored
-  // schema.
-  function recordCorrectionUndo(event,affectedIds,label){
+  function decideReview(event,decision){
+    if(!canMutate(event,"record a plan review decision"))return null;
+    const a=event?.analysis;if(!a)return null;
+    const DEC=globalThis.MeritReviewDecisions,byId=new Map(a.candidates.map(c=>[c.id,c]));
+    const subject=byId.get(decision.candidateId);
+    // One correction repairs the whole family, not one object -- calibration
+    // against measured geometry on this plan, NOT model training.
+    const familyIds=decision.kind==="reclassify"&&subject?familyCandidateIds(event,subject,subject.kind,subject.type):[];
+    const p=DEC.plan({...decision,familyIds},{candidates:a.candidates,unverifiedSeating:[...UNVERIFIED_SEATING]});
+    if(!p.ok)return null;
+    const decisionId=uid("decision");
+    const before=p.writes.map(w=>{const c=byId.get(w.id),snap={id:w.id,present:{}};
+      for(const k of DEC.SNAPSHOT_FIELDS){snap.present[k]=k in c;if(k in c)snap[k]=clone(c[k]);}return snap;});
     ui.correctionUndo ||= [];
-    const before=affectedIds.map(id=>{
-      const c=event.analysis.candidates.find(x=>x.id===id);
-      return c?{id,kind:c.kind,type:c.type,status:c.status,selected:c.selected,
-        chairDetections:clone(c.chairDetections||[])}:null;
-    }).filter(Boolean);
-    const memoryBefore=(event.planMemory||[]).map(m=>m.id);
-    ui.correctionUndo.push({before,memoryBefore,label,at:nowISO()});
+    ui.correctionUndo.push({decisionId,eventId:event.id,analysisId:a.id,kind:p.kind,label:p.kind,before,memoryBefore:clone(event.planMemory||[]),at:nowISO()});
     if(ui.correctionUndo.length>30)ui.correctionUndo.shift();
+    for(const w of p.writes)applyReviewWrites(byId.get(w.id),w.set);
+    for(const id of p.memory)rememberCorrection(event,byId.get(id));
+    for(const tr of p.training)captureTrainingExample(event,byId.get(tr.id),{decisionType:tr.decisionType,predictionBefore:tr.predictionBefore,
+      note:tr.note||null,decisionId,propagatedFrom:tr.propagatedFrom||null,reviewedIndividually:tr.reviewedIndividually});
+    // The object now carries a HUMAN observation: a person, not the detector,
+    // said this -- and on one object they looked at, or as part of a spread.
+    const O=globalThis.MeritObservations;
+    if(O)for(const w of p.writes){
+      const c=byId.get(w.id),label=p.training.find(t=>t.id===w.id);
+      c.observationIds ||= [];
+      O.link(a,c,O.create({id:uid("obs"),source:{kind:"human",provider:"operator"},imageRef:a.planHash||null,
+        claim:{decisionId,decision:p.kind,kind:c.kind,type:c.type,status:c.status,selected:c.selected,
+          reviewedIndividually:label?label.reviewedIndividually!==false:true},
+        geometry:{frame:"plan-percent",convention:"corner",x:c.x,y:c.y,w:c.w,h:c.h,rotation:c.rotation||0},
+        evidence:{what:label&&label.propagatedFrom?`spread from ${label.propagatedFrom}`:"the operator's own decision on this object"}}));
+    }
+    audit(event,"REVIEW_DECISION",{decisionId,kind:p.kind,targets:p.writes.map(w=>w.id),spread:p.spread,labels:p.training.length});
+    if(REVIEW_OPERATOR_ACTION[p.kind])recordOperatorAction(event,REVIEW_OPERATOR_ACTION[p.kind],p.writes.map(w=>w.id));
+    recomputePlanIntelligence(event);
+    touchEvent(event);
+    return{decisionId,affected:p.writes.length,spread:p.spread};
   }
-  function undoLastCorrection(){
-    const event=activeEvent();
+  globalThis.decideReview=decideReview;
+  function undoReviewDecision(event){
+    event=event||activeEvent();
     if(!canMutate(event,"undo a plan correction"))return 0;
-    const entry=(ui.correctionUndo||[]).pop();
-    if(!entry)return 0;
+    const stack=ui.correctionUndo||[];
+    const i=stack.map(e=>e.eventId).lastIndexOf(event.id);
+    if(i<0)return 0;
+    const entry=stack.splice(i,1)[0],a=event.analysis;
+    // A decision about candidates of an analysis that has since been replaced
+    // (Re-Analyze) has nothing left to restore here; memory carried it over.
+    if(!a||a.id!==entry.analysisId)return 0;
+    const byId=new Map(a.candidates.map(c=>[c.id,c]));
     let restored=0;
     for(const snap of entry.before){
-      const c=event.analysis?.candidates.find(x=>x.id===snap.id);
-      if(!c)continue;
-      c.kind=snap.kind;c.type=snap.type;c.status=snap.status;c.selected=snap.selected;
-      c.chairDetections=snap.chairDetections;
+      const c=byId.get(snap.id);if(!c)continue;
+      for(const k of globalThis.MeritReviewDecisions.SNAPSHOT_FIELDS){if(snap.present[k])c[k]=snap[k];else delete c[k];}
       restored++;
     }
-    // Corrections write plan memory, so undoing one has to withdraw the memory
-    // entries it added -- otherwise the reverted classification would come
-    // straight back on the next Re-Analyze.
-    const keep=new Set(entry.memoryBefore);
-    if(event.planMemory)event.planMemory=event.planMemory.filter(m=>keep.has(m.id));
+    // Memory as it was, whole: a correction that REPLACED an earlier decision's
+    // entry gets that earlier entry back, not a hole.
+    event.planMemory=entry.memoryBefore;
+    retractedDecisions.add(entry.decisionId);
+    MeritTrainingData.retract(state.trainingData||[],entry.decisionId,{reason:"the decision was undone"});
+    const gone=new Set((a.observations||[]).filter(o=>o.source.kind==="human"&&o.claim&&o.claim.decisionId===entry.decisionId).map(o=>o.id));
+    if(gone.size){a.observations=a.observations.filter(o=>!gone.has(o.id));for(const c of a.candidates)if(c.observationIds)c.observationIds=c.observationIds.filter(id=>!gone.has(id));}
+    audit(event,"REVIEW_DECISION_UNDONE",{decisionId:entry.decisionId,kind:entry.kind,targets:entry.before.map(b=>b.id)});
     recomputePlanIntelligence(event);
     touchEvent(event);
     return restored;
@@ -3778,36 +3814,19 @@
     else if(field==="rotation")c.rotation=Number(value)||0;
     else if(field==="chairs"){const count=Math.max(0,Math.min(99,Number(value)||0));c.chairDetections=Array.from({length:count},(_,i)=>c.chairDetections?.[i]||{id:uid("candidate-chair"),x:c.x+c.w/2,y:c.y+c.h/2,w:.7,h:.7,rotation:0,confidence:.3});}
     else if(field==="kindtype"){
-      const [kind,type]=value.split(":"),crossedKind=kind!==c.kind;
-      const wasKind=c.kind,wasType=c.type;
-      // Snapshot the corrected object AND every object the spread is about to
-      // reach, before anything changes, so undo restores the whole action as
-      // one unit rather than leaving the family half-corrected.
-      recordCorrectionUndo(event,[c.id,...familyCandidateIds(event,c,wasKind,wasType)],"reclassify");
-      c.kind=kind;c.type=type;
-      if(crossedKind&&kind!=="table")c.chairDetections=[]; // a chair/armchair/sofa/stage/etc. candidate carries no nested seat detections of its own.
-      if(UNVERIFIED_SEATING.has(type)){
-        // Reclassifying INTO seating furniture never invents a capacity. It
-        // starts as an admitted unknown; the operator supplies the number.
-        c.seats=null;c.seatsConfidence="unverified";
-      }else{delete c.seats;delete c.seatsConfidence;}
-      c.status="confirmed";c.selected=true;
-      rememberCorrection(event,c);
-      captureTrainingExample(event,c,{decisionType:crossedKind||wasType!==type?"correction":"confirmation",
-        predictionBefore:{kind:wasKind,type:wasType,confidence:c.confidence,source:c.evidence?.geometry??null,candidateId:c.id}});
-      // One correction should repair the whole family, not one object. Every
-      // still-unreviewed candidate that the similarity clustering already
-      // considers the same shape gets the same correction. This is
-      // calibration against measured geometry, NOT model training -- nothing
-      // is learned across plans.
-      const spread=applyCorrectionToFamily(event,c,wasKind,wasType);
-      recomputePlanIntelligence(event); // reclassifying can move a candidate in/out of furniture grouping, similarity clustering, review groups and the physical-seat capacity sum — never just relabel it.
-      if(spread)toast(t("review.correctionSpread",{n:spread}),"success",4200);
+      // The person's type, spread to the unreviewed members of its family --
+      // one decision, one undo, one audit entry (decideReview). Reclassifying
+      // INTO seating furniture never invents a capacity: an admitted unknown.
+      const [kind,type]=value.split(":");
+      const r=decideReview(event,{kind:"reclassify",candidateId:c.id,to:{kind,type}});
+      if(r&&r.spread)toast(t("review.correctionSpread",{n:r.spread}),"success",4200);
+      render();return;
     }
     else c[field]=value;
     touchEvent(event);render();
   }
   function commitCandidates(){
+    if(!canMutate(activeEvent(),"confirm the plan"))return;
     const event=activeEvent(),chosen=event.analysis?.candidates.filter(c=>c.selected&&c.status!=="rejected")||[];if(!chosen.length)return toast(t("toast.selectDetectionFirst"),"error");
     // The same verdict runSelfCheck() already reads (analysis.diagnostics.
     // representation.kind==="PHYSICAL") -- one fact, one source. A table
@@ -4027,34 +4046,13 @@
         ui.selectedCandidateId=null;
         render();
       }else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){
-        const was=classOf(c);
-        c.status="confirmed";
-        c.selected=true;
-        rememberCorrection(event,c);
-        captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was});
-        recordOperatorAction(event,"confirm",c.id);
-        recomputePlanIntelligence(event);
-        touchEvent(event);
-        REVIEW.afterReviewDecision(event);
+        if(decideReview(event,{kind:"confirm",candidateId:c.id}))REVIEW.afterReviewDecision(event);
       }else if(action==="reject"&&c){
-        const was=classOf(c);
-        c.status="rejected";
-        c.selected=false;
-        rememberCorrection(event,c);
-        captureTrainingExample(event,c,{decisionType:"falsePositive",predictionBefore:was});
-        recordOperatorAction(event,"reject",c.id);
-        recomputePlanIntelligence(event);
-        touchEvent(event);
-        REVIEW.afterReviewDecision(event);
+        if(decideReview(event,{kind:"reject",candidateId:c.id}))REVIEW.afterReviewDecision(event);
       }else if(action==="dismiss"&&c){
-        const was=classOf(c);
-        captureTrainingExample(event,c,{decisionType:"negative",predictionBefore:was,note:"operator dismissed this region as not important"});
-        recordOperatorAction(event,"dismiss",c.id);
-        event.analysis.candidates=event.analysis.candidates.filter(x=>x.id!==c.id);
-        ui.selectedCandidateId=null;
-        recomputePlanIntelligence(event);
-        touchEvent(event);
-        REVIEW.afterReviewDecision(event);
+        // "Not important": kept in the analysis, rejected and marked dismissed --
+        // never deleted -- so it can be undone and Re-Analyze does not ask again.
+        if(decideReview(event,{kind:"notImportant",candidateId:c.id})){ui.selectedCandidateId=null;REVIEW.afterReviewDecision(event);}
       }else if(action==="teach"&&c){
         ui.teachScope=document.querySelector("[data-teach-scope]")?.value||"plan";
         teachSelectedObject(event,c,ui.teachScope);
@@ -4097,11 +4095,6 @@
       ui.activeQuestionId=null;
       render();
     });
-    document.querySelectorAll("[data-candidate-select]").forEach(input=>input.onchange=()=>{
-      const c=activeEvent().analysis.candidates.find(x=>x.id===input.dataset.candidateSelect);
-      c.selected=input.checked;
-      touchEvent(activeEvent());
-    });
     document.querySelectorAll("[data-candidate-edit]").forEach(input=>input.onchange=()=>{
       const f=input.dataset.candidateEdit,v=input.value;
       requestAnimationFrame(()=>updateCandidateField(f,v));
@@ -4115,10 +4108,8 @@
       const event=activeEvent(),pi=event.analysis?.planIntelligence,group=pi?.reviewGroups.find(g=>g.id===b.dataset.group);if(!group)return;
       if(b.dataset.reviewgroupAction==="confirm-family"){
         const strong=group.memberIds.filter(id=>!group.outlierIds.includes(id));
-        strong.forEach(id=>{const c=event.analysis.candidates.find(x=>x.id===id);if(c){const was=classOf(c);c.status="confirmed";c.selected=true;rememberCorrection(event,c);
-          captureTrainingExample(event,c,{decisionType:"confirmation",predictionBefore:was,
-            note:"accepted in bulk via Confirm All; not individually reviewed by a person"});}});
-        recordOperatorAction(event,"confirm-family",strong);
+        // Accepted in bulk: each label says it was not individually reviewed.
+        if(!decideReview(event,{kind:"confirmFamily",ids:strong}))return;
         // The queue is only worth following if it reflects the answer just
         // given. Confirming a family removes it from review, changes the seat
         // and table counts every fact rests on, and can settle a
@@ -4159,7 +4150,7 @@
         "success",6000);
     });
     document.querySelectorAll("[data-review-decision-action='undo-correction']").forEach(b=>b.onclick=()=>{
-      const n=undoLastCorrection();
+      const n=undoReviewDecision(activeEvent());
       render();
       if(n)toast(t("review.undoCorrectionToast",{n}),"success",5000);
     });
