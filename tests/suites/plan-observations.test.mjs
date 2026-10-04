@@ -104,6 +104,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
       seats: seats.length, seatsLinked,
       stage: stage ? { kinds: stageObs.map(o => o.source.kind), label: (stageObs.find(o => o.source.kind === "ocr") || {}).claim } : null,
       stageSupport: stage ? O.support(stageObs) : null,
+      detectorVersion: globalThis.MERIT_PLAN_DETECTION.resolve().version,
       firstObs: { kind: firstObs.source.kind, provider: firstObs.source.provider, version: firstObs.source.version,
         scale: firstObs.confidence && firstObs.confidence.scale, value: firstObs.confidence && firstObs.confidence.value,
         sameAsCandidate: firstObs.confidence && firstObs.confidence.value === firstTable.confidence, imageRef: firstObs.imageRef, planHash: a.planHash },
@@ -123,7 +124,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal(real.stage && real.stage.label && real.stage.label.label, "SAHNE", "the label observation says what the drawing printed");
   checks.equal(real.stageSupport && real.stageSupport.independentChannels, 1, "and the two are ONE channel — the same raster — not independent confirmation");
   checks.equal(real.firstObs.kind, "classical-cv", "a detected table's observation names its source kind");
-  checks.equal(real.firstObs.version, "2026-10-04", "and the detector build that made it");
+  checks.ok(/^\d{4}-\d{2}-\d{2}$/.test(real.firstObs.version || "") && real.firstObs.version === real.detectorVersion, "and the detector build that made it (the provider's own version, not a copy of it)", { obs: real.firstObs.version, provider: real.detectorVersion });
   checks.ok(real.firstObs.scale === "provider-native-0-1" && real.firstObs.sameAsCandidate, "its confidence is the detector's own number, in the detector's own scale", real.firstObs);
   checks.ok(real.firstObs.imageRef && real.firstObs.imageRef === real.firstObs.planHash, "it names the image it was seen in (the plan hash)");
   checks.ok(real.frames && real.frames.conventions.candidate === "corner" && real.frames.conventions.seat === "centre"
