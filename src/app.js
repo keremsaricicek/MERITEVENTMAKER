@@ -411,9 +411,28 @@
   function floorPlanHTML(event){return`<div class="${editorClasses(false)}">${objectLibraryHTML(event)}<section class="canvas-column">${canvasToolbarHTML(false)}${canvasViewportHTML(event,false)}</section>${inspectorHTML(event)}</div>`}
   function tableMatchesFilter(event,t){const occ=tableAssignedPax(event,t.id),empty=Math.max(0,t.capacity-occ);if(ui.seatingFilter==="empty")return occ===0;if(ui.seatingFilter==="available")return empty>0;if(ui.seatingFilter==="full")return empty===0;return true}
   function filterBannerHTML(){if(ui.seatingFilter==="all")return"";const text={empty:"Showing tables with zero assigned guests",available:"Showing tables with available seats",full:"Showing full tables"}[ui.seatingFilter];return`<div class="filter-banner">${icon("search")}<span>${text}</span><button data-clear-seating-filter title="Clear filter">${icon("x")}</button></div>`}
+  // The plan image's own size, read once per image (session cache, never
+  // stored): the world box takes the plan's aspect from it
+  // (MeritPlanFrames.worldForPlan). Until it has decoded, the fixed box; the
+  // decode re-renders once.
+  const BACKGROUND_SIZES=new Map();
+  function backgroundSize(bg){
+    if(!bg?.src)return null;
+    if(BACKGROUND_SIZES.has(bg.src))return BACKGROUND_SIZES.get(bg.src);
+    if(BACKGROUND_SIZES.size>6)BACKGROUND_SIZES.clear();
+    BACKGROUND_SIZES.set(bg.src,null);
+    const image=new Image();
+    image.onload=()=>{BACKGROUND_SIZES.set(bg.src,{width:image.naturalWidth,height:image.naturalHeight});render();};
+    image.src=bg.src;
+    return null;
+  }
+  function worldSize(event){
+    const size=backgroundSize(event?.background);
+    return globalThis.MeritPlanFrames?globalThis.MeritPlanFrames.worldForPlan(WORLD,size?.width,size?.height):{width:WORLD.width,height:WORLD.height};
+  }
   function canvasViewportHTML(event,seating){
-    const bg=event.background||{};
-    return`<div class="canvas-viewport ${ui.tool==="pan"?"pan-mode":""}" id="canvasViewport"><div class="canvas-world ${ui.grid?"grid-on":""} ${seating?"seating-canvas":""}" id="canvasWorld" style="transform:translate(${ui.pan.x}px,${ui.pan.y}px) scale(${ui.zoom})"><div class="reference-layer" style="display:${bg.visible&&bg.src?"block":"none"};opacity:${bg.opacity??.25};background-image:${bg.src?`url('${bg.src}')`:"none"};background-size:${bg.scale||100}% auto"></div>${event.venueObjects.map(o=>venueObjectHTML(o,seating)).join("")}${event.tables.map(t=>tableObjectHTML(event,t,seating)).join("")}</div>${seating?filterBannerHTML():""}${seating?"":`<div class="canvas-status">${typeof t==="function"?t("canvas.editHint"):"Drag to move · Handles resize and rotate · Delete removes selection"}</div>`}</div>`
+    const bg=event.background||{},world=worldSize(event);
+    return`<div class="canvas-viewport ${ui.tool==="pan"?"pan-mode":""}" id="canvasViewport"><div class="canvas-world ${ui.grid?"grid-on":""} ${seating?"seating-canvas":""}" id="canvasWorld" style="width:${world.width}px;height:${world.height}px;transform:translate(${ui.pan.x}px,${ui.pan.y}px) scale(${ui.zoom})"><div class="reference-layer" style="display:${bg.visible&&bg.src?"block":"none"};opacity:${bg.opacity??.25};background-image:${bg.src?`url('${bg.src}')`:"none"};background-size:${bg.scale||100}% auto"></div>${event.venueObjects.map(o=>venueObjectHTML(o,seating)).join("")}${event.tables.map(t=>tableObjectHTML(event,t,seating)).join("")}</div>${seating?filterBannerHTML():""}${seating?"":`<div class="canvas-status">${typeof t==="function"?t("canvas.editHint"):"Drag to move · Handles resize and rotate · Delete removes selection"}</div>`}</div>`
   }
   function venueObjectHTML(o,seating){
     const selected=!seating&&ui.selectedObjectId===o.id;

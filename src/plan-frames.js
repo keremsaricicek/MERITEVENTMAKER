@@ -200,9 +200,76 @@
     return [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]].map(([x, y]) => [px.cx + x * c - y * s, px.cy + x * s + y * c]);
   }
 
+  // ---- the floor plan (world) ------------------------------------------------
+  // How the reference layer draws the plan image on the floor plan: `scale`%
+  // of the world's width, its height from the IMAGE's own aspect, top-left at
+  // world (0,0). Plan percent -> world is therefore a UNIFORM scale — a circle
+  // on the drawing is a circle on the floor plan. (Until 2026-10-04 commit
+  // mapped y by the world's fixed height, 788 — the Golden Plan's own height —
+  // so any plan of another aspect landed off its own drawing.)
+  // The reference layer fills the world box and draws the image
+  // `background-size: <scale>% auto; background-position: center` — so the
+  // image is `scale`% of the world's width, its height from its own aspect,
+  // CENTRED in the world. The world itself takes the plan's aspect
+  // (worldForPlan), so at scale 100 the image fills it exactly and nothing of
+  // the drawing is cut off.
+  function referenceLayerFrame(worldWidth, worldHeight, scalePct, naturalWidth, naturalHeight) {
+    const drawnWidth = worldWidth * (scalePct || 100) / 100;
+    const drawnHeight = drawnWidth * naturalHeight / naturalWidth;
+    const offsetX = (worldWidth - drawnWidth) / 2, offsetY = (worldHeight - drawnHeight) / 2;
+    return { drawnWidth, drawnHeight, offsetX, offsetY,
+      percentToWorld: transform("plan-percent", "world", [step.scale(drawnWidth / 100, drawnHeight / 100), step.translate(offsetX, offsetY)]) };
+  }
+
+  // The floor plan's world box for a plan image: the product's fixed width,
+  // and the height the plan's own aspect gives it. Until 2026-10-04 the height
+  // was fixed at 788 — the Golden Plan's own height — so a plan of any other
+  // aspect had its top and bottom cut off by the world box and its objects
+  // written outside the drawing. Without a known image size, the fixed box.
+  function worldForPlan(base, naturalWidth, naturalHeight) {
+    if (!(naturalWidth > 0 && naturalHeight > 0)) return { width: base.width, height: base.height };
+    return { width: base.width, height: base.width * naturalHeight / naturalWidth };
+  }
+
+  // A detected table as the floor plan stores it. The canvas draws a table as
+  // a FOOTPRINT box (x/y/w/h, rotated about its centre) holding its chairs at
+  // left/top percent of that box, and the table SURFACE inside it. So the
+  // footprint is the union of the drawn surface and the drawn chairs, the
+  // surface is kept as its own box in footprint percent, and every chair keeps
+  // its detected centre — expressed in the table's own unrotated frame, so a
+  // rotated table does not rotate its chairs a second time. Nothing is
+  // clamped, rounded to a minimum size, or regenerated.
+  //   surface: {cx, cy, w, h} world, rotation: degrees
+  //   seats:   [{cx, cy, w, h, rotation}] world
+  function footprintFor(surface, rotation, seats) {
+    const r = -(rotation || 0) * Math.PI / 180, cos = Math.cos(r), sin = Math.sin(r);
+    // Into the surface's own frame: origin at its centre, axes along it.
+    const local = (seats || []).map(s => {
+      const dx = s.cx - surface.cx, dy = s.cy - surface.cy;
+      return { x: dx * cos - dy * sin, y: dx * sin + dy * cos, hw: (s.w || 0) / 2, hh: (s.h || 0) / 2, rotation: s.rotation || 0 };
+    });
+    let x0 = -surface.w / 2, y0 = -surface.h / 2, x1 = surface.w / 2, y1 = surface.h / 2;
+    for (const p of local) {
+      x0 = Math.min(x0, p.x - p.hw); x1 = Math.max(x1, p.x + p.hw);
+      y0 = Math.min(y0, p.y - p.hh); y1 = Math.max(y1, p.y + p.hh);
+    }
+    const fw = x1 - x0, fh = y1 - y0, lcx = (x0 + x1) / 2, lcy = (y0 + y1) / 2;
+    // Back to world: the footprint's centre, rotated with the table.
+    const rr = (rotation || 0) * Math.PI / 180;
+    const wcx = surface.cx + lcx * Math.cos(rr) - lcy * Math.sin(rr);
+    const wcy = surface.cy + lcx * Math.sin(rr) + lcy * Math.cos(rr);
+    return {
+      x: wcx - fw / 2, y: wcy - fh / 2, w: fw, h: fh, rotation: rotation || 0,
+      surface: { x: (-surface.w / 2 - x0) / fw * 100, y: (-surface.h / 2 - y0) / fh * 100, w: surface.w / fw * 100, h: surface.h / fh * 100 },
+      // A chair drawn inside the rotated table element turns with it, so its
+      // own angle is stored relative to the table's.
+      chairs: local.map(p => ({ x: (p.x - x0) / fw * 100, y: (p.y - y0) / fh * 100, rotation: p.rotation - (rotation || 0) })),
+    };
+  }
+
   globalThis.MeritPlanFrames = Object.freeze({
     step, transform, identity, compose,
-    pdfToSource, analysisFrame, deskewFrame, tileFrame,
-    CORNER, CENTRE, mapBox, percentToPixels, pixelsToPercent, mapPixelBox, corners,
+    pdfToSource, analysisFrame, deskewFrame, tileFrame, referenceLayerFrame, worldForPlan,
+    CORNER, CENTRE, mapBox, percentToPixels, pixelsToPercent, mapPixelBox, corners, footprintFor,
   });
 })();

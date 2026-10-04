@@ -1,7 +1,7 @@
 {
- "ranAt": "2026-10-04T19:41:35.183Z",
+ "ranAt": "2026-10-04T20:16:17.968Z",
  "source": {
-  "digest": "2a41928af73a8410f5eb4d7ba70ee11c04f82dc9913d73a3192ec19cdfffc3ab",
+  "digest": "aecb799542bbc454898d5cadf112e1a04fa0b717d888da3c611f7efa1f4f52a2",
   "files": 84,
   "inputs": [
    "index.html",
@@ -466,9 +466,29 @@
     "objectsInTruth": 176,
     "perHundredObjects": 14.205
    },
+   "digital": {
+    "committedTables": 47,
+    "matchedTables": 46,
+    "missedTables": 0,
+    "extraTables": 1,
+    "tableCentreErrorP90Share": 0.299,
+    "tableAspectLogErrorP90": 0.267,
+    "tableSizeErrorP90": 0.447,
+    "committedChairs": 107,
+    "matchedChairs": 107,
+    "chairCentreErrorP90Share": 0.703,
+    "venueObjects": 0,
+    "frame": {
+     "worldWidth": 1355,
+     "worldHeight": 788,
+     "imageDrawnWidth": 1355,
+     "imageDrawnHeight": 788,
+     "offsetY": 0
+    }
+   },
    "run": {
-    "analysisMs": 5489,
-    "peakHeapMB": 21,
+    "analysisMs": 7741,
+    "peakHeapMB": 18.8,
     "offOriginRequests": 7,
     "engineFetches": 7,
     "planDataEgress": 0,
@@ -852,9 +872,29 @@
     "objectsInTruth": 182,
     "perHundredObjects": 11.538
    },
+   "digital": {
+    "committedTables": 163,
+    "matchedTables": 97,
+    "missedTables": 69,
+    "extraTables": 66,
+    "tableCentreErrorP90Share": 0.528,
+    "tableAspectLogErrorP90": 0.201,
+    "tableSizeErrorP90": 0.25,
+    "committedChairs": 0,
+    "matchedChairs": 0,
+    "chairCentreErrorP90Share": null,
+    "venueObjects": 0,
+    "frame": {
+     "worldWidth": 1355,
+     "worldHeight": 788,
+     "imageDrawnWidth": 1355,
+     "imageDrawnHeight": 969.7,
+     "offsetY": -90.9
+    }
+   },
    "run": {
-    "analysisMs": 30223,
-    "peakHeapMB": 55,
+    "analysisMs": 32403,
+    "peakHeapMB": 52.3,
     "offOriginRequests": 7,
     "engineFetches": 7,
     "planDataEgress": 0,
@@ -880,8 +920,8 @@
   }
  ],
  "contract": {
-  "total": 66,
-  "passed": 41,
+  "total": 75,
+  "passed": 43,
   "rows": [
    {
     "plan": "merit-real-venue",
@@ -1165,6 +1205,46 @@
    },
    {
     "plan": "merit-real-venue",
+    "id": "digital.committedEqualsOffered",
+    "value": true,
+    "op": "==",
+    "threshold": true,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "digital.tableCentreErrorP90Share",
+    "value": 0.299,
+    "op": "<=",
+    "threshold": 0.15,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "digital.tableAspectLogErrorP90",
+    "value": 0.267,
+    "op": "<=",
+    "threshold": 0.1,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "digital.tableSizeErrorP90",
+    "value": 0.447,
+    "op": "<=",
+    "threshold": 0.15,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "digital.chairCentreErrorP90Share",
+    "value": 0.703,
+    "op": "<=",
+    "threshold": 0.35,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
     "id": "corrections.perHundredObjects",
     "value": 14.205,
     "op": "<=",
@@ -1174,7 +1254,7 @@
    {
     "plan": "merit-real-venue",
     "id": "run.analysisMs",
-    "value": 5489,
+    "value": 7741,
     "op": "<=",
     "threshold": 15000,
     "pass": true
@@ -1182,7 +1262,7 @@
    {
     "plan": "merit-real-venue",
     "id": "run.peakHeapMB",
-    "value": 21,
+    "value": 18.8,
     "op": "<=",
     "threshold": 1024,
     "pass": true
@@ -1381,6 +1461,38 @@
    },
    {
     "plan": "ornek-symbolic",
+    "id": "digital.committedEqualsOffered",
+    "value": true,
+    "op": "==",
+    "threshold": true,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "digital.tableCentreErrorP90Share",
+    "value": 0.528,
+    "op": "<=",
+    "threshold": 0.15,
+    "pass": false
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "digital.tableAspectLogErrorP90",
+    "value": 0.201,
+    "op": "<=",
+    "threshold": 0.1,
+    "pass": false
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "digital.tableSizeErrorP90",
+    "value": 0.25,
+    "op": "<=",
+    "threshold": 0.15,
+    "pass": false
+   },
+   {
+    "plan": "ornek-symbolic",
     "id": "corrections.perHundredObjects",
     "value": 11.538,
     "op": "<=",
@@ -1390,7 +1502,7 @@
    {
     "plan": "ornek-symbolic",
     "id": "run.analysisMs",
-    "value": 30223,
+    "value": 32403,
     "op": "<=",
     "threshold": 60000,
     "pass": true
@@ -1398,7 +1510,7 @@
    {
     "plan": "ornek-symbolic",
     "id": "run.peakHeapMB",
-    "value": 55,
+    "value": 52.3,
     "op": "<=",
     "threshold": 1024,
     "pass": true

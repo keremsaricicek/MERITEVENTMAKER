@@ -109,7 +109,51 @@ const angDiff = (a, b) => { const d = Math.abs(((a - b) % 360 + 360) % 360); ret
 function inRect(p, r) { return p.cx >= r.x && p.cx <= r.x + r.w && p.cy >= r.y && p.cy <= r.y + r.h; }
 
 // ---------------------------------------------------------------------------
-export function score({ analysis, annotation, truth, run = {} }) {
+// The committed digital plan, mapped back onto the drawing AS THE CANVAS DRAWS
+// IT: the reference layer fills the world box with `background-size: <scale>%
+// auto; background-position: center` — the image `scale`% of the world's
+// width, its own aspect, centred. A committed object is in the right place
+// exactly when it lands on the drawing in that frame. (The first version of
+// this scorer assumed top-left anchoring and mis-scored ORNEK; a rendered
+// screenshot caught it.)
+function scoreDigital(digital, annotation, tol) {
+  if (!digital) return null;
+  const nw = digital.background.naturalWidth, nh = digital.background.naturalHeight;
+  const bw = digital.world.width * digital.background.scalePct / 100, bh = bw * nh / nw;
+  const ox = (digital.world.width - bw) / 2, oy = (digital.world.height - bh) / 2;
+  const sx = nw / bw, sy = nh / bh;
+  // A committed table is a footprint box; where the drawing's table SURFACE
+  // is, is `surface` (percent of the footprint) when the product kept it, and
+  // the whole footprint when it did not — so a product that stores no surface
+  // is scored on the box it does store.
+  const tables = digital.tables.map(t => {
+    const s = t.surface || { x: 0, y: 0, w: 100, h: 100 };
+    const bx = t.x + s.x / 100 * t.w, by = t.y + s.y / 100 * t.h, bw2 = s.w / 100 * t.w, bh2 = s.h / 100 * t.h;
+    return { ...t, cx: (bx + bw2 / 2 - ox) * sx, cy: (by + bh2 / 2 - oy) * sy, pw: bw2 * sx, ph: bh2 * sy };
+  });
+  const gtTables = annotation.objects.filter(o => o.class === "table");
+  const tm = matchByDistance(gtTables, tables, tol);
+  const centre = tm.matches.map(m => m.dist / Math.min(m.gt.w, m.gt.h));
+  const aspect = tm.matches.map(m => Math.abs(Math.log((m.det.pw / m.det.ph) / (m.gt.w / m.gt.h))));
+  const size = tm.matches.map(m => Math.max(Math.abs(m.det.pw - m.gt.w) / m.gt.w, Math.abs(m.det.ph - m.gt.h) / m.gt.h));
+  // A committed chair is stored relative to its table: centre in percent of
+  // the table's own width and height from its top-left corner.
+  const chairs = tables.flatMap(t => (t.chairs || []).map(c => ({
+    cx: (t.x + c.x / 100 * t.w - ox) * sx, cy: (t.y + c.y / 100 * t.h - oy) * sy })));
+  const gtChairs = annotation.objects.filter(o => o.class === "chair");
+  const cm = matchByDistance(gtChairs, chairs, tol);
+  const chairCentre = cm.matches.map(m => m.dist / Math.min(m.gt.w, m.gt.h));
+  return {
+    committedTables: tables.length, matchedTables: tm.matches.length, missedTables: tm.missed.length, extraTables: tm.spurious.length,
+    tableCentreErrorP90Share: r3(pct(centre, 0.9)), tableAspectLogErrorP90: r3(pct(aspect, 0.9)), tableSizeErrorP90: r3(pct(size, 0.9)),
+    committedChairs: chairs.length, matchedChairs: cm.matches.length,
+    chairCentreErrorP90Share: gtChairs.length ? r3(pct(chairCentre, 0.9)) : null,
+    venueObjects: digital.venueObjects.length,
+    frame: { worldWidth: digital.world.width, worldHeight: +digital.world.height.toFixed(1), imageDrawnWidth: +bw.toFixed(1), imageDrawnHeight: +bh.toFixed(1), offsetY: +oy.toFixed(1) },
+  };
+}
+
+export function score({ analysis, annotation, truth, run = {}, digital = null }) {
   const W = annotation.source.width, H = annotation.source.height;
   const diag = Math.hypot(W, H);
   const tol = (annotation.matchToleranceP ?? 3) / 100 * diag;
@@ -302,6 +346,7 @@ export function score({ analysis, annotation, truth, run = {} }) {
     out.corrections.perHundredObjects = out.corrections.objectsInTruth ? r3(100 * out.corrections.total / out.corrections.objectsInTruth) : null;
   }
 
+  out.digital = scoreDigital(digital, annotation, tol);
   out.run = {
     analysisMs: run.analysisMs ?? null, peakHeapMB: run.peakHeapMB ?? null,
     offOriginRequests: run.offOriginRequests ?? null, engineFetches: run.engineFetches ?? null,

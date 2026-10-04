@@ -97,7 +97,32 @@ async function analyse(plan) {
     for (const c of a.candidates || []) { delete c.visualDescriptor; delete c.visualEvidence; }
     return a;
   });
-  return { page, analysis, run: { analysisMs, peakHeapMB: +(peak / 1048576).toFixed(1), offOriginRequests: offOrigin.length,
+  // ---- confirm as offered, then read the DIGITAL plan back --------------
+  // Detection quality and digitization quality are different questions: a
+  // perfectly detected table written to the wrong place on the floor plan is
+  // still wrong. The operator's own button commits the offered result; the
+  // tables and venue objects it wrote are read back in world units together
+  // with how the product draws the plan image under them, so score.mjs can
+  // map each committed object back onto the drawing.
+  await page.evaluate(() => { ui.tab = "floor"; ui.planMode = "review"; render(); });
+  await page.waitForTimeout(300);
+  await page.click('[data-review-action="commit"]');
+  await page.waitForTimeout(800);
+  const digital = await page.evaluate(async () => {
+    const e = state.events[0], bg = e.background;
+    const img = new Image(); img.src = bg.src; await img.decode();
+    return {
+      // The world box as the canvas actually sizes it, read from the element.
+      world: (() => { const el = document.getElementById("canvasWorld"); return el ? { width: el.offsetWidth, height: el.offsetHeight } : { width: WORLD.width, height: WORLD.height }; })(),
+      background: { naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight, scalePct: bg.scale || 100,
+        // how the reference layer draws it (styles.css + canvasViewportHTML)
+        drawnAs: "background-size: <scale>% auto; background-position: center — in the world box" },
+      tables: e.tables.map(t => ({ id: t.id, type: t.type, x: t.x, y: t.y, w: t.w, h: t.h, rotation: t.rotation || 0, surface: t.surface || null,
+        capacity: t.capacity, chairs: (t.chairs || []).map(c => ({ x: c.x, y: c.y })) })),
+      venueObjects: e.venueObjects.map(v => ({ type: v.type, x: v.x, y: v.y, w: v.w, h: v.h, rotation: v.rotation || 0 })),
+    };
+  });
+  return { page, analysis, digital, run: { analysisMs, peakHeapMB: +(peak / 1048576).toFixed(1), offOriginRequests: offOrigin.length,
     engineFetches: offOrigin.filter(r => r.method === "GET" && !r.body && r.host === "cdn.jsdelivr.net").length,
     planDataEgress: offOrigin.filter(r => !(r.method === "GET" && !r.body && r.host === "cdn.jsdelivr.net")),
     cloudCostUSD: 0, providers: analysis.planIntelligence && analysis.planIntelligence.providerMetadata, pageErrors: errors } };
@@ -177,8 +202,8 @@ const report = { ranAt: new Date().toISOString(), source: sourceDigest(path.join
 for (const plan of PLANS) {
   const annotation = JSON.parse(fs.readFileSync(path.join(ROOT, "annotations", `${plan.id}.json`), "utf8"));
   const truth = JSON.parse(fs.readFileSync(path.join(HERE, "truth", `${plan.id}.json`), "utf8"));
-  const { page, analysis, run } = await analyse(plan);
-  const result = score({ analysis, annotation, truth, run });
+  const { page, analysis, digital, run } = await analyse(plan);
+  const result = score({ analysis, annotation, truth, run, digital });
   result.run.pageErrors = run.pageErrors;
   await overlay(page, plan, annotation, truth, analysis, result, path.join(OUT, `${plan.id}.overlay.jpg`));
   fs.writeFileSync(path.join(OUT, `${plan.id}.analysis.json`), JSON.stringify(analysis));
@@ -194,6 +219,7 @@ for (const plan of PLANS) {
   console.log(`  printed  numbers ${JSON.stringify(result.printed.tableNumbers)} capacityTotal ${JSON.stringify(result.printed.capacityTotal)}`);
   console.log(`  capacity ${JSON.stringify(result.capacity).slice(0, 300)}`);
   console.log(`  fixes    ${JSON.stringify(result.corrections)}`);
+  console.log(`  digital  ${JSON.stringify(result.digital).slice(0, 320)}`);
 }
 await browser.close();
 await app.close?.();

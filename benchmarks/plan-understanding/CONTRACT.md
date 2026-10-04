@@ -80,14 +80,30 @@ venues.
 | | printed capacity total read | exact | **not read** · 2064 ✓ | the Golden Plan prints "Total : 124 pax" in outlined orange text OCR does not read |
 | capacity | held-back chairs in the drawn-chair figure | 0 | **5** · 0 | the product's "physical seats" counts chairs on tables it did not offer — the leak the user named |
 | | drawn chairs vs truth · written total vs truth | ≤ 5% · exact | 112/113 ✓, total **null** · 0/0, 2064 ✓ | four numbers stay separate: drawn chairs, written capacity, logical seats, printed totals |
+| digital plan | committed tables = offered tables | equal | ✓ · ✓ | Confirm must write what was offered, nothing more or less |
+| | committed table surface centre error p90 (share of side), mapped back onto the drawing as the canvas draws it | ≤ 0.15 | **0.299** · **0.528** (97 of 166 on their drawing) | detection quality is wasted if Confirm writes the table somewhere else |
+| | committed table aspect (log ratio) p90 · size error p90 | ≤ 0.1 · ≤ 0.15 | **0.267 · 0.447** · **0.201 · 0.25** | a round table stays round, a bistro stays bistro-sized |
+| | committed chair centre error p90 (share of a chair) | ≤ 0.35 | **0.703** · — | a chair on the floor plan is where the drawing has it |
 | corrections | operator actions per 100 objects (lower bound) | ≤ 5 | **14.2** · **11.5** | one action per wrong/missing object, link, type or group; the gap between "detected" and "usable" |
 | run | analysis wall clock (this container, 4 CPU, no GPU) | ≤ 15 s · ≤ 60 s | 5.5 s · 30.2 s | an import is once per plan, with progress and cancel; the CI budget for the Golden Plan (7,680 ms) still applies separately |
 | | peak JS heap | ≤ 1024 MB | 21 · 55 MB | a browser tab |
 | | plan or guest data leaving the machine | 0 requests | 0 · 0 | the pinned engines (7 GETs of library files the CSP allows) are counted apart; anything else — another host, any request with a body — is egress |
 
-**Baseline: 41 of 66 rows met.** Overlays (what was found, invented, missed;
+**Baseline: 43 of 75 rows met** (the nine `digital.*` rows were added the same day, after a rendered screenshot showed the committed plan off its drawing, and still before the fix). Overlays (what was found, invented, missed;
 wrong links; groups) are in `baseline-65808d5/*.overlay.jpg`, the full stored
 analyses beside them.
+
+## A third measurement error, found by a screenshot
+
+The `digital.*` rows were first scored assuming the canvas draws the plan
+image anchored top-left. A rendered screenshot showed otherwise: the reference
+layer draws it `background-size: 100% auto; background-position: center` in a
+world box of fixed height 788 — the Golden Plan's own height — so on ORNEK the
+drawing's top and bottom 91 px were cut off and the committed tables sat in a
+frame the scorer did not model. The scorer now maps through the frame the
+canvas actually draws (`score.mjs`, `scoreDigital`), reading the world box
+size from the element; the baseline above was re-measured at `65808d5` with
+it. Source review would not have caught this; the picture did.
 
 ## Carried targets (their own runners, not lowered)
 

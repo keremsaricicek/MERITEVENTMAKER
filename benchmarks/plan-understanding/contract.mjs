@@ -31,6 +31,10 @@ export const THRESHOLDS = {
   printed: { tableNumberRecall: 0.9, tableNumberVerifiedPrecision: 0.99, capacityTotalCorrect: true },
   capacity: { heldBackLeakMax: 0, drawnChairsMaxError: 0.05, writtenTotalCorrect: true },
   corrections: { perHundredObjectsMax: 5 },
+  // Added 2026-10-04, still before any fix: the plan as WRITTEN to the floor
+  // plan, mapped back onto the drawing. Same bars as the analysis geometry —
+  // committing must not lose what detection got right.
+  digital: { tableCentreErrorP90Share: 0.15, tableAspectLogErrorP90: 0.1, tableSizeErrorP90: 0.15, chairCentreErrorP90Share: 0.35 },
   run: { analysisMs: { "merit-real-venue": 15000, "ornek-symbolic": 60000 }, peakHeapMB: 1024, planDataEgress: 0 },
 };
 
@@ -91,6 +95,13 @@ export function evaluateContract(report) {
       row(rows, id, "capacity.drawnChairsError", e, "<=", T.capacity.drawnChairsMaxError);
     }
     if (p.capacity.writtenTotal.truth != null) row(rows, id, "capacity.writtenTotalCorrect", p.capacity.writtenTotal.product === p.capacity.writtenTotal.truth, "==", true);
+    if (p.digital) {
+      row(rows, id, "digital.committedEqualsOffered", p.digital.committedTables === p.classes.table.det, "==", true);
+      for (const [k, v] of Object.entries(T.digital)) {
+        if (k.startsWith("chair") && !p.classes.chair.gt) continue;
+        row(rows, id, `digital.${k}`, p.digital[k], "<=", v);
+      }
+    }
     row(rows, id, "corrections.perHundredObjects", p.corrections.perHundredObjects, "<=", T.corrections.perHundredObjectsMax);
     row(rows, id, "run.analysisMs", p.run.analysisMs, "<=", T.run.analysisMs[id] ?? 60000);
     row(rows, id, "run.peakHeapMB", p.run.peakHeapMB, "<=", T.run.peakHeapMB);

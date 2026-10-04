@@ -550,6 +550,14 @@
     if(ui.seatingFilter==="all")return"";
     return`<div class="filter-banner">${icon("search")}<span>${t({empty:"seating.showingEmpty",available:"seating.showingAvailable",full:"seating.showingFull"}[ui.seatingFilter])}</span><button data-clear-seating-filter aria-label="${esc(t("seating.clearFilter"))}">${icon("x")}</button></div>`;
   };
+  // A table committed from a plan keeps the box its SURFACE was drawn at, in
+  // percent of its footprint; a table made by hand has none and the stylesheet
+  // places its surface. Numbers only, so nothing reaches the style attribute
+  // that is not a finite figure.
+  function surfaceStyle(table){
+    const s=table.surface;if(!s||![s.x,s.y,s.w,s.h].every(Number.isFinite))return"";
+    return` style="left:${s.x}%;top:${s.y}%;width:${s.w}%;height:${s.h}%"`;
+  }
   tableObjectHTML = function(event,table,seating){
     RULES().syncTableChairs(table);
     const selected=(!seating&&(ui.selectedObjectId===table.id||ui.selectedObjectIds.includes(table.id)))||(seating&&ui.selectedTableId===table.id);
@@ -580,7 +588,7 @@
     // over the drawing, and never a smooth field interpolated between tables,
     // which would invent a figure for floor the product knows nothing about.
     const loadRow=ui.loadLayer?loadBandMap(event)?.get(table.id):null;
-    return`<div class="table-object ${esc(table.type)} ${selected?"selected multi-selected":""} ${highlighted?"highlighted":""} ${frozen?"frozen":""} ${unavailable?"unavailable":""} ${loadRow?"load-"+loadRow.band:""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match operational-match":""}" data-object-id="${table.id}" data-object-kind="table" tabindex="0" role="button" aria-pressed="${selected?"true":"false"}" aria-label="${esc([t("a11y.table",{number:formatTableNumber(table.number),seated:assigned,capacity:table.capacity}),frozen?t("a11y.frozen"):"",unavailable?t("a11y.unavailable"):""].filter(Boolean).join(", "))}" style="left:${table.x}px;top:${table.y}px;width:${table.w}px;height:${table.h}px;transform:rotate(${table.rotation||0}deg);z-index:${table.z||10}">${chairs}<div class="table-surface"><span class="table-label">${esc(formatTableNumber(table.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${table.capacity}</span>${frozen?`<span class="table-frozen" title="${esc(t("freeze.tableFrozen"))}">${icon("lock")}</span>`:""}${unavailable?`<span class="table-unavailable" title="${esc(t("avail.tableUnavailable"))}">${icon("alert")}</span>`:""}${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${esc(t("seating.emptySeats",{n:empty}))}</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`;
+    return`<div class="table-object ${esc(table.type)} ${selected?"selected multi-selected":""} ${highlighted?"highlighted":""} ${frozen?"frozen":""} ${unavailable?"unavailable":""} ${loadRow?"load-"+loadRow.band:""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match operational-match":""}" data-object-id="${table.id}" data-object-kind="table" tabindex="0" role="button" aria-pressed="${selected?"true":"false"}" aria-label="${esc([t("a11y.table",{number:formatTableNumber(table.number),seated:assigned,capacity:table.capacity}),frozen?t("a11y.frozen"):"",unavailable?t("a11y.unavailable"):""].filter(Boolean).join(", "))}" style="left:${table.x}px;top:${table.y}px;width:${table.w}px;height:${table.h}px;transform:rotate(${table.rotation||0}deg);z-index:${table.z||10}">${chairs}<div class="table-surface"${surfaceStyle(table)}><span class="table-label">${esc(formatTableNumber(table.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${table.capacity}</span>${frozen?`<span class="table-frozen" title="${esc(t("freeze.tableFrozen"))}">${icon("lock")}</span>`:""}${unavailable?`<span class="table-unavailable" title="${esc(t("avail.tableUnavailable"))}">${icon("alert")}</span>`:""}${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${esc(t("seating.emptySeats",{n:empty}))}</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`;
   };
 
   function planIssues(event){
@@ -1304,7 +1312,7 @@
   }
   fitCanvas = function(){
     const v=document.getElementById("canvasViewport");if(!v)return;
-    const c=planBox(activeEvent()),x0=Math.min(0,c?c.x0:0),y0=Math.min(0,c?c.y0:0),bw=Math.max(WORLD.width,c?c.x1:0)-x0,bh=Math.max(WORLD.height,c?c.y1:0)-y0;
+    const ev=activeEvent(),world=worldSize(ev),c=planBox(ev),x0=Math.min(0,c?c.x0:0),y0=Math.min(0,c?c.y0:0),bw=Math.max(world.width,c?c.x1:0)-x0,bh=Math.max(world.height,c?c.y1:0)-y0;
     ui.zoom=Math.max(.2,Math.min((v.clientWidth-42)/bw,(v.clientHeight-42)/bh));
     ui.pan.x=(v.clientWidth-bw*ui.zoom)/2-x0*ui.zoom;ui.pan.y=(v.clientHeight-bh*ui.zoom)/2-y0*ui.zoom;
     applyCanvasTransform();
@@ -3819,13 +3827,31 @@
       seatlessTables:(event.analysis?.candidates||[]).filter(c=>c.kind==="table"&&c.status!=="rejected"&&!c.chairDetections?.length).length}):{applies:false};
     recordUndo(event);
     let tables=0,venues=0,chairsKept=0,derived=0;
+    // Plan percent -> world through the frame the reference layer DRAWS the
+    // plan in (MeritPlanFrames.referenceLayerFrame): uniform, so every object
+    // lands on its own drawing at its own shape. Stored at its true size --
+    // nothing is grown to a minimum, which moved small objects off their
+    // drawing and their chairs with them.
+    const FRAMES=globalThis.MeritPlanFrames,src=event.analysis?.frames?.source;
+    const natW=src?.width||event.analysis?.originalWidth||event.analysis?.imageWidth||WORLD.width;
+    const natH=src?.height||event.analysis?.originalHeight||event.analysis?.imageHeight||WORLD.height;
+    const world=FRAMES.worldForPlan(WORLD,natW,natH);
+    const layer=FRAMES.referenceLayerFrame(world.width,world.height,event.background?.scale||100,natW,natH);
+    const toWorld=(box,convention)=>{
+      const[cx,cy]=layer.percentToWorld.apply(...(convention===FRAMES.CENTRE?[box.x,box.y]:[box.x+box.w/2,box.y+box.h/2]));
+      return{cx,cy,w:box.w/100*layer.drawnWidth,h:box.h/100*layer.drawnHeight,rotation:box.rotation||0};
+    };
     for(const c of chosen){
       if(c.committedId)continue;
-      const x=c.x/100*WORLD.width,y=c.y/100*WORLD.height,w=Math.max(55,c.w/100*WORLD.width),h=Math.max(45,c.h/100*WORLD.height);
+      const body=toWorld(c,FRAMES.CORNER),x=body.cx-body.w/2,y=body.cy-body.h/2,w=body.w,h=body.h;
       if(c.kind==="table"){
-        const table=RULES().syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x,y,w,h,capacity:Math.max(1,c.chairDetections?.length||(ruleUse.applies?ruleUse.perUnit:1)),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":ruleUse.applies?"DERIVED_PRINTED_RULE":"UNKNOWN",origin:"DETECTED",printedNumber:printedEvidence(c.printedNumber),...(!c.chairDetections?.length&&ruleUse.applies?{capacityEvidence:{...ruleUse.evidence,at:nowISO()}}:{})});
+        // The footprint holds the drawn surface and the drawn chairs; the
+        // surface is kept as its own box inside it, each chair at its
+        // detected centre in the table's own frame.
+        const fp=FRAMES.footprintFor(body,c.rotation||0,(c.chairDetections||[]).map(ch=>toWorld(ch,FRAMES.CENTRE)));
+        const table=RULES().syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x:fp.x,y:fp.y,w:fp.w,h:fp.h,surface:fp.surface,capacity:Math.max(1,c.chairDetections?.length||(ruleUse.applies?ruleUse.perUnit:1)),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":ruleUse.applies?"DERIVED_PRINTED_RULE":"UNKNOWN",origin:"DETECTED",printedNumber:printedEvidence(c.printedNumber),...(!c.chairDetections?.length&&ruleUse.applies?{capacityEvidence:{...ruleUse.evidence,at:nowISO()}}:{})});
         if(c.chairDetections?.length){
-          table.chairs=c.chairDetections.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:Math.max(0,Math.min(100,(ch.x-c.x)/c.w*100)),y:Math.max(0,Math.min(100,(ch.y-c.y)/c.h*100)),rotation:ch.rotation||0}));
+          table.chairs=fp.chairs.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:ch.x,y:ch.y,rotation:ch.rotation}));
           table.capacity=table.chairs.length;
         }
         event.tables.push(table);

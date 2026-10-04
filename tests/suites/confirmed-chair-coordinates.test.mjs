@@ -79,13 +79,21 @@ export default async function run({ page, checks, baseUrl }) {
     ui.tab = "floor";
     ui.planMode = "review";
     render();
-    // What the committed chairs MUST equal: the detector's centres expressed
-    // relative to the table box, which is the conversion commitCandidates
-    // does. Computed here from the same inputs so the expectation is derived
-    // rather than copied from a passing run.
+    // What the committed chairs MUST be: each detector centre, on the floor
+    // plan, exactly where the drawing has it. The plan image is drawn the
+    // world's width wide and its own aspect tall (no background here, so the
+    // analysis canvas, 1000 x 800, gives the aspect). Computed here from the
+    // inputs, not from the product's conversion, so a wrong conversion cannot
+    // agree with itself.
+    //
+    // Until 2026-10-04 the expectation was the product's old conversion —
+    // `clamp(0..100, (chair - table corner) / table size)` — which pulled every
+    // chair standing outside its table's box (all four here) onto the table's
+    // edge: ch1 sat 1.6% of the plan (12.8 px) above the table and was written
+    // ON its top edge. The suite pinned the clamp it was meant to forbid.
+    const bw = WORLD.width, bh = WORLD.width * 800 / 1000;
     return c.chairDetections.map((ch) => ({
-      x: Math.max(0, Math.min(100, (ch.x - c.x) / c.w * 100)),
-      y: Math.max(0, Math.min(100, (ch.y - c.y) / c.h * 100)),
+      worldX: ch.x / 100 * bw, worldY: ch.y / 100 * bh,
       rotation: ch.rotation || 0,
     }));
   });
@@ -102,8 +110,11 @@ export default async function run({ page, checks, baseUrl }) {
       capacity: table?.capacity ?? null,
       hasPhysicalSeats: table?.hasPhysicalSeats ?? null,
       capacitySource: table?.capacitySource ?? null,
+      // The canvas draws a chair at left/top percent of its table's footprint
+      // box (rotation 0 here), so this is where it appears on the floor plan.
       chairs: (table?.chairs || []).map((ch) => ({
-        x: ch.x, y: ch.y, rotation: ch.rotation, seatNumber: ch.seatNumber,
+        worldX: table.x + ch.x / 100 * table.w, worldY: table.y + ch.y / 100 * table.h,
+        rotation: ch.rotation, seatNumber: ch.seatNumber,
         parented: ch.parentTableId === table.id,
       })),
     };
@@ -117,7 +128,7 @@ export default async function run({ page, checks, baseUrl }) {
   // reported.
   for (let i = 0; i < planted.length; i++) {
     const want = planted[i], got = out.chairs[i] || {};
-    checks.ok(got.x === want.x && got.y === want.y,
+    checks.ok(Math.abs(got.worldX - want.worldX) < 1e-9 && Math.abs(got.worldY - want.worldY) < 1e-9,
       `chair ${i + 1} sits exactly where the detector found it. A synthetic ring would put it somewhere plausible instead, and nothing on the floor plan would look wrong`,
       { want, got });
     checks.equal(got.rotation, want.rotation,
