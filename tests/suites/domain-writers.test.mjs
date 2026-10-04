@@ -30,9 +30,13 @@ const WRITERS = {
   availability: { fields: ["availability", "unavailableReason", "unavailableSince", "unavailableNote"], allowed: [] },
   freezes: { fields: ["freezes"], allowed: ["app-v8.js:createFreezeFromDraft", "app-v8.js:liftFreeze", "app-v8.js:migrateEvent"] },
   handover: { fields: ["handoverNotes"], allowed: ["app-v8.js:addHandoverNote", "app-v8.js:migrateEvent"] },
+  // "A person ran the pre-flight, at this moment, against this answer." Written
+  // from the Command Center's button until 2026-10-04; that screen moved out
+  // of the shell, and the write stayed behind as one named writer.
+  finalCheck: { fields: ["finalCheck"], allowed: ["app-v8.js:recordFinalCheck"] },
 };
 // The single writer of each fact, and what it must call before it writes.
-const GUARDED = ["setArrival", "setTableAvailability", "addHandoverNote", "createFreezeFromDraft", "liftFreeze"];
+const GUARDED = ["setArrival", "setTableAvailability", "addHandoverNote", "createFreezeFromDraft", "liftFreeze", "recordFinalCheck"];
 
 function enclosingFunction(lines, index) {
   for (let i = index; i >= 0; i--) {
