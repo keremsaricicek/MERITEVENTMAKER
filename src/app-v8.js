@@ -3478,11 +3478,35 @@
       <td>${issues.length?issues.map(x=>`<div class="wz-issue ${x.level}">⚠ ${esc(wizIssueText(x.message))}</div>`).join(""):`<span class="wz-ok">✓ ${t("wiz.ready")}</span>`}</td>
     </tr>`;
   };
+  // The interpretation step drew EVERY row as five editable controls: 2,000
+  // rows froze the page for 3.9 s, 10,000 for 17.9 s, and each correction
+  // redrew them all again (measured 2026-10-04, benchmarks/perf/large-files.mjs).
+  // It now draws one page of rows; the pager and the "needs attention" filter
+  // reach every row, and every row is still imported. A list that fits on one
+  // page looks exactly as before.
+  const INTERP_PAGE=200;
+  function interpWindow(p){
+    const rows=p.interpreted,attention=rows.reduce((n,r)=>n+(r.issues&&r.issues.length?1:0),0);
+    const flagged=p.interpFilter==="attention";
+    const idx=flagged?rows.flatMap((r,i)=>r.issues&&r.issues.length?[i]:[]):null,total=flagged?idx.length:rows.length;
+    const pages=Math.max(1,Math.ceil(total/INTERP_PAGE)),page=Math.min(Math.max(0,p.interpPage|0),pages-1),from=page*INTERP_PAGE,to=Math.min(total,from+INTERP_PAGE);
+    const out=flagged?idx.slice(from,to):Array.from({length:to-from},(_,k)=>from+k);
+    if(rows.length<=INTERP_PAGE&&!flagged)return{rows:out,pager:""};
+    const n=(x)=>x.toLocaleString(ui.lang==="tr"?"tr-TR":"en-US");
+    const pager=`<div class="wz-pager" role="group" aria-label="${t("wiz.pager.label")}">
+      <span class="wz-pager-range" aria-live="polite">${t(flagged?"wiz.pager.rangeAttention":"wiz.pager.range",{from:n(total?from+1:0),to:n(to),total:n(total)})}</span>
+      ${attention||flagged?`<button class="btn sm" type="button" data-interp-filter="${flagged?"all":"attention"}" aria-pressed="${flagged}">${t("wiz.pager.attentionOnly",{n:n(attention)})}</button>`:""}
+      <button class="btn sm" type="button" data-interp-page="${page-1}" ${page===0?"disabled":""}>${t("wiz.pager.prev",{n:INTERP_PAGE})}</button>
+      <label class="wz-pager-goto">${t("wiz.pager.page")} <input type="number" min="1" max="${pages}" value="${page+1}" data-interp-goto aria-label="${t("wiz.pager.pageField",{n:n(pages)})}"> ${t("wiz.pager.pageOf",{n:n(pages)})}</label>
+      <button class="btn sm" type="button" data-interp-page="${page+1}" ${page>=pages-1?"disabled":""}>${t("wiz.pager.next",{n:INTERP_PAGE})}</button>
+    </div>`;
+    return{rows:out,pager};
+  }
   wizardBodyHTML = function(p){
     if(p.step===1)return`<div class="wz-drop">${icon("download")}<h3>${t("wiz.chooseTitle")}</h3><p>${t("wiz.chooseNote")}</p><div class="toolbar-row" style="justify-content:center;margin-top:6px"><button class="btn" data-wizard-template>${icon("download")}${t("wiz.template")}</button><button class="btn primary" data-wizard-choose>${icon("plus")}${t("wiz.choose")}</button></div></div>`;
     if(p.step===2)return`<h3 class="wz-title">${t("wiz.previewTitle")}</h3><p class="wz-note">${t("wiz.previewNote",{file:esc(p.fileName),shown:Math.min(15,p.rows.length),total:p.rows.length})}</p><div class="wz-scroll">${sourcePreviewHTML(p)}</div>`;
     if(p.step===3)return`<h3 class="wz-title">${t("wiz.mapTitle")}</h3><p class="wz-note">${t("wiz.mapNote")}</p><div style="max-width:780px">${mappingRowsHTML(p)}</div>`;
-    if(p.step===4)return`<h3 class="wz-title">${t("wiz.interpTitle")}</h3><p class="wz-note">${t("wiz.interpNote")}</p><div class="wz-scroll"><table class="wz-table interp"><colgroup><col class="c-source"><col class="c-name"><col class="c-num"><col class="c-num"><col class="c-status"><col class="c-vip"><col class="c-table"><col class="c-seat"><col class="c-check"></colgroup><thead><tr><th>${t("wiz.col.source")}</th><th>${t("wiz.map.name")}</th><th>${t("wiz.col.additional")}</th><th>${t("wiz.col.totalPax")}</th><th>${t("wiz.map.planningStatus")}</th><th>${t("wiz.map.vip")}</th><th>${t("wiz.col.table")}</th><th>${t("wiz.col.seat")}</th><th>${t("wiz.col.validation")}</th></tr></thead><tbody>${p.interpreted.map((r,i)=>interpretRowHTML(r,i)).join("")}</tbody></table></div>`;
+    if(p.step===4){const w=interpWindow(p);return`<h3 class="wz-title">${t("wiz.interpTitle")}</h3><p class="wz-note">${t("wiz.interpNote")}</p>${w.pager}<div class="wz-scroll"><table class="wz-table interp"><colgroup><col class="c-source"><col class="c-name"><col class="c-num"><col class="c-num"><col class="c-status"><col class="c-vip"><col class="c-table"><col class="c-seat"><col class="c-check"></colgroup><thead><tr><th>${t("wiz.col.source")}</th><th>${t("wiz.map.name")}</th><th>${t("wiz.col.additional")}</th><th>${t("wiz.col.totalPax")}</th><th>${t("wiz.map.planningStatus")}</th><th>${t("wiz.map.vip")}</th><th>${t("wiz.col.table")}</th><th>${t("wiz.col.seat")}</th><th>${t("wiz.col.validation")}</th></tr></thead><tbody>${w.rows.length?w.rows.map((i)=>interpretRowHTML(p.interpreted[i],i)).join(""):`<tr><td colspan="9" class="wz-empty">${t("wiz.pager.noneFlagged")}</td></tr>`}</tbody></table></div>`;}
     const s=importSummary(p.interpreted);
     return`<h3 class="wz-title">${t("wiz.sumTitle")}</h3><p class="wz-note">${t("wiz.sumNote")}</p>
       <div class="wz-sum">
@@ -3517,6 +3541,9 @@
       :was.dataset.mapHeader!=null?`[data-map-header="${CSS.escape(was.dataset.mapHeader)}"]`:null);
     root.innerHTML=`<div class="wz-head"><h2 id="wizTitle">${t("wiz.title")}</h2><button class="table-card-close" data-wizard-close aria-label="${t("wiz.close")}" title="${t("wiz.close")}">&times;</button></div>${wizardStepsHTML(p.step)}<div class="wz-body">${wizardBodyHTML(p)}</div><div class="wz-foot">${wizardFootHTML(p)}</div>`;
     bindExcelWizard();
+    root.querySelectorAll("[data-interp-page]").forEach(b=>b.onclick=()=>{p.interpPage=Number(b.dataset.interpPage);renderExcelWizard();root.querySelector(".wz-scroll")?.scrollTo(0,0);});
+    root.querySelectorAll("[data-interp-goto]").forEach(f=>f.onchange=()=>{const v=Math.round(Number(f.value));if(!Number.isFinite(v))return;p.interpPage=Math.max(0,Math.min(Number(f.max)||1,v)-1);renderExcelWizard();root.querySelector("[data-interp-goto]")?.focus();});
+    root.querySelectorAll("[data-interp-filter]").forEach(b=>b.onclick=()=>{p.interpFilter=b.dataset.interpFilter;p.interpPage=0;renderExcelWizard();});
     // In PRIORITY order, not document order: Back precedes Continue in the footer.
     const primary=(wasSel&&root.querySelector(wasSel))||["[data-wizard-choose]","[data-wizard-next]","[data-wizard-import]:not([disabled])","[data-wizard-back]"].map(q=>root.querySelector(q)).find(Boolean);
     if(primary){

@@ -148,6 +148,7 @@
           return
         }
         p.interpreted=interpretImportRows(p.rows,p.mapping,activeEvent());
+        p.interpPage=0;
         p.step=4
       }else if(p.step===4){
         revalidateInterpreted(p.interpreted,activeEvent());
@@ -267,7 +268,11 @@
     return interpreted
   }
   function revalidateInterpreted(rows,event){
-    const counts=new Map(),pendingSeats=new Map();
+    // Looked up once per check, not once per row: with every existing guest
+    // scanned for every row, the check grew with list size times list size.
+    const counts=new Map(),pendingSeats=new Map(),existingNames=new Set(event.guests.map(g=>norm(g.name))),tableByNumber=new Map(),usedByTable=new Map();
+    event.tables.forEach(t=>{const k=String(t.number).toUpperCase();if(!tableByNumber.has(k))tableByNumber.set(k,t)});
+    const usedSeats=id=>{if(!usedByTable.has(id))usedByTable.set(id,occupiedSeatIndexes(event,id));return usedByTable.get(id)};
     rows.forEach(r=>counts.set(norm(r.name),(counts.get(norm(r.name))||0)+1));
     rows.forEach(r=>{
       const preserved=(r.issues||[]).filter(x=>x.message.includes("mapped column")||x.message.includes("Unknown status")||x.message.includes("Invalid additional guest")||x.message.includes("Invalid total pax"));
@@ -277,14 +282,14 @@
       if(r.additionalGuests>maxAdditional()&&!r.issues.some(x=>x.message.includes("Invalid additional guest")))r.issues.push({level:"error",message:"Invalid additional guest number."});
       if(!String(r.name).trim())r.issues.push({level:"error",message:"Name is empty."});
       const key=norm(r.name);
-      if(key&&(counts.get(key)>1||event.guests.some(g=>norm(g.name)===key)))r.issues.push({level:"warn",message:"Possible duplicate name."});
+      if(key&&(counts.get(key)>1||existingNames.has(key)))r.issues.push({level:"warn",message:"Possible duplicate name."});
       if(r.tableNumber){
-        const t=event.tables.find(x=>x.number.toUpperCase()===r.tableNumber.toUpperCase());
+        const t=tableByNumber.get(r.tableNumber.toUpperCase());
         if(!t){
           r.issues.push({level:"error",message:"Table number does not exist."});
           return
         }
-        const seats=parseSeatText(r.seatText),used=occupiedSeatIndexes(event,t.id),pending=pendingSeats.get(t.id)||new Set();
+        const seats=parseSeatText(r.seatText),used=usedSeats(t.id),pending=pendingSeats.get(t.id)||new Set();
         pendingSeats.set(t.id,pending);
         if(seats.length){
           const chosen=seats.slice(0,r.pax);
