@@ -4,6 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
+  <!--
+    CONTENT-SECURITY-POLICY, enforced. No inline script, no eval: content that
+    reaches the page as markup cannot run (tests/suites/csp-policy.test.mjs
+    walks the product under it and fails on any violation). Allowed beyond
+    'self': the three pinned engines on jsDelivr; WebAssembly compilation for
+    the OCR core ('wasm-unsafe-eval' — not JavaScript eval); blob: workers
+    (OCR, PDF); data:/blob: images (an imported plan IS a data: URL); and
+    inline STYLE ATTRIBUTES only, which position every table on the canvas —
+    a <style> element or a stylesheet from elsewhere is still refused.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net data: blob:; img-src 'self' data: blob:; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'">
   <title>MERIT ENTERTAINMENT — EVENT MAKER</title>
   <link rel="stylesheet" href="src/styles.css">
 </head>
@@ -43,12 +54,7 @@
     environments with no network access at runtime.
   -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script type="module">
-    import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.7.284/build/pdf.min.mjs";
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.7.284/build/pdf.worker.min.mjs";
-    globalThis.MeritPdf = { getDocument: pdfjsLib.getDocument, GlobalWorkerOptions: pdfjsLib.GlobalWorkerOptions };
-    globalThis.dispatchEvent(new CustomEvent("merit-pdf-ready"));
-  </script>
+  <script type="module" src="src/pdf-bridge.mjs"></script>
   <!--
     Tesseract.js (MIT) — real client-side OCR for the Plan Intelligence
     capacity auditor (reads printed pax notes / labels off the imported plan

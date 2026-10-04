@@ -1,3 +1,4 @@
+import fs from "node:fs";
 // AN AUTOMATED ACCESSIBILITY SCAN OF EVERY SCREEN, IN BOTH LANGUAGES.
 //
 // `.claude/skills/merit-accessibility-hardening/SKILL.md`, required evidence
@@ -26,10 +27,13 @@ export const meta = { name: "a11y-scan", tags: ["accessibility", "ui", "fast"], 
 export default async function run({ page, checks, baseUrl, repoRoot }) {
   page.on("dialog", (d) => d.accept());
   await autoAnswer(page);
-  const axePath = path.join(repoRoot, "node_modules/axe-core/axe.min.js");
+  const axeSource = fs.readFileSync(path.join(repoRoot, "node_modules/axe-core/axe.min.js"), "utf8");
   let scanned = 0;
   const scan = async (label) => {
-    if (!(await page.evaluate(() => typeof window.axe === "object"))) await page.addScriptTag({ path: axePath });
+    // Evaluated through the DevTools protocol, not added as a <script>: the
+    // page's Content-Security-Policy refuses inline script, and the checker is
+    // a test tool, not product code (csp-policy holds the product to it).
+    if (!(await page.evaluate(() => typeof window.axe === "object"))) await page.evaluate(axeSource);
     // Contrast is a property of the RESTING screen. A dialog scanned during its
     // fade-in is measured blended with the backdrop: 40ms into the guide's
     // opening it sat at opacity 0.31 and axe reported 23 contrast violations,

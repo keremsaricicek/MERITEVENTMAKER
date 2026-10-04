@@ -139,7 +139,7 @@ export default async function run({ checks, repoRoot }) {
     inlineHandlers.slice(0, 5));
   const html = fs.readFileSync(path.join(repoRoot, "index.html"), "utf8");
   const inlineScripts = [...html.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>/g)].length;
-  checks.equal(inlineScripts, 1,
-    "index.html has exactly one inline <script> (the pdf.js bootstrap) — another one needs a CSP hash, so it needs a decision",
+  checks.equal(inlineScripts, 0,
+    "index.html has NO inline <script>: its Content-Security-Policy allows none (the pdf.js bootstrap moved to src/pdf-bridge.mjs; csp-policy enforces it)",
     inlineScripts);
 }

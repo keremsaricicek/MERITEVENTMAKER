@@ -16,6 +16,7 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readAppSources } from "./lib/app-sources.mjs";
+import { offlineCspMeta } from "./lib/offline-csp.mjs";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const CACHE = path.join(ROOT, ".vendor-cache");
@@ -108,9 +109,16 @@ globalThis.dispatchEvent(new CustomEvent("merit-pdf-ready"));
 // <script> files that set strings on a global; plan-ocr.js loads them on first
 // use and starts ONE blob worker that carries all of it. One path, whether the
 // folder is served or opened from disk.
-const ocrPathsBridge = `<script>
-globalThis.MERIT_OCR_ASSET_PATHS = { embedded: "./assets/ocr/" };
-</script>`;
+const ocrPathsBlock = `\nglobalThis.MERIT_OCR_ASSET_PATHS = { embedded: "./assets/ocr/" };\n`;
+
+// Every inline block is built once, hashed for the policy, then inserted.
+// The OCR engine's files are the package's own siblings, loaded by <script src>
+// ('self'); nothing else external runs.
+const styleBlock = `\n${styles}\n  `;
+const xlsxBlock = xlsxSrc;
+const pdfBlock = `\n${pdfCoreSrc}\n${pdfBridge}\n  `;
+const appBlock = `\n${appJs}\n  `;
+const csp = offlineCspMeta({ scripts: [ocrPathsBlock, xlsxBlock, pdfBlock, appBlock], styles: [styleBlock], scriptSelf: true });
 
 const html = `<!doctype html>
 <html lang="tr">
@@ -118,22 +126,16 @@ const html = `<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
+  ${csp}
   <title>MERIT ENTERTAINMENT — EVENT MAKER</title>
-  <style>
-${styles}
-  </style>
+  <style>${styleBlock}</style>
 </head>
 ${bodyMarkup}
-  ${ocrPathsBridge}
-  <script data-merit-offline-xlsx>${xlsxSrc}</script>
-  <script type="module" data-merit-offline-pdf>
-${pdfCoreSrc}
-${pdfBridge}
-  </script>
+  <script>${ocrPathsBlock}</script>
+  <script data-merit-offline-xlsx>${xlsxBlock}</script>
+  <script type="module" data-merit-offline-pdf>${pdfBlock}</script>
   <script src="./assets/ocr/tesseract.min.js"></script>
-  <script>
-${appJs}
-  </script>
+  <script>${appBlock}</script>
 </body>
 </html>
 `;

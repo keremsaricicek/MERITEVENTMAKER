@@ -11,6 +11,7 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readAppSources } from "./lib/app-sources.mjs";
+import { offlineCspMeta } from "./lib/offline-csp.mjs";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const CACHE = path.join(ROOT, ".vendor-cache");
@@ -83,26 +84,27 @@ globalThis.MeritPdf = { getDocument, GlobalWorkerOptions };
 globalThis.dispatchEvent(new CustomEvent("merit-pdf-ready"));
 `;
 
+// Every inline block is built once, hashed for the policy, then inserted.
+const styleBlock = `\n${styles}\n  `;
+const xlsxBlock = xlsxSrc;
+const pdfBlock = `\n${pdfCoreSrc}\n${pdfBridge}\n  `;
+const appBlock = `\n${appJs}\n  `;
+const csp = offlineCspMeta({ scripts: [xlsxBlock, pdfBlock, appBlock], styles: [styleBlock] });
+
 const html = `<!doctype html>
 <html lang="tr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
+  ${csp}
   <title>MERIT ENTERTAINMENT — EVENT MAKER</title>
-  <style>
-${styles}
-  </style>
+  <style>${styleBlock}</style>
 </head>
 ${bodyMarkup}
-  <script data-merit-offline-xlsx>${xlsxSrc}</script>
-  <script type="module" data-merit-offline-pdf>
-${pdfCoreSrc}
-${pdfBridge}
-  </script>
-  <script>
-${appJs}
-  </script>
+  <script data-merit-offline-xlsx>${xlsxBlock}</script>
+  <script type="module" data-merit-offline-pdf>${pdfBlock}</script>
+  <script>${appBlock}</script>
 </body>
 </html>
 `;

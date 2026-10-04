@@ -57,6 +57,13 @@ await ctx.route('**/*', route => {
   blocked.push(u);
   return route.abort();
 });
+// Every page this verifier opens reports Content-Security-Policy refusals here.
+// Both packages carry a strict policy (scripts allowed by hash only); a refusal
+// means the package blocked its own code, which is a broken package.
+const cspRefusals = [];
+ctx.on('page', (pg) => pg.on('console', (m) => {
+  if (m.type() === 'error' && /Content Security Policy/.test(m.text())) cspRefusals.push(m.text().slice(0, 160));
+}));
 const p = await ctx.newPage();
 const errs = [];
 p.on('pageerror', e => errs.push(e.message));
@@ -356,6 +363,34 @@ if (existsSync(LIGHT)) {
   console.log('\nLIGHT BUILD (dist/index-offline.html):', JSON.stringify(light));
 } else {
   console.log('\nLIGHT BUILD: dist/index-offline.html not built — skipping (run node scripts/build-offline.mjs)');
+}
+
+// THE POLICY: present in both packages, strict, and in force.
+for (const [label, file] of [['folder build', join(ROOT, 'index.html')], ['light build', LIGHT]]) {
+  if (!existsSync(file)) continue;
+  const text = await readFile(file, 'utf8');
+  const policy = (text.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/) || [])[1] || '';
+  const scriptSrc = (policy.split(';').map(d => d.trim()).find(d => d.startsWith('script-src ')) || '');
+  checks.push([`${label}: carries a Content-Security-Policy with no inline-script or eval allowance`,
+    !!policy && /'sha256-/.test(scriptSrc) && !/unsafe-inline|'unsafe-eval'/.test(scriptSrc), scriptSrc.slice(0, 120)]);
+}
+{
+  const cp = await ctx.newPage();
+  await cp.goto('file://' + join(ROOT, 'index.html'));
+  await cp.waitForTimeout(800);
+  const ran = await cp.evaluate(async () => {
+    window.__ran = false;
+    const d = document.createElement('div');
+    d.innerHTML = '<img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onload="window.__ran=true">';
+    document.body.appendChild(d);
+    await new Promise(r => setTimeout(r, 300));
+    return window.__ran;
+  });
+  await cp.close();
+  const provoked = cspRefusals.filter(m => /inline event handler/.test(m));
+  checks.push(['the policy is in force: a planted inline handler does not run, and is refused', ran === false && provoked.length > 0, { ran, provoked: provoked.length }]);
+  checks.push(['no Content-Security-Policy refusal of the packages\' own code, served or opened from disk',
+    cspRefusals.length === provoked.length, cspRefusals.filter(m => !/inline event handler/.test(m)).slice(0, 3)]);
 }
 
 let failed = 0;
