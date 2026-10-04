@@ -19,9 +19,16 @@
   // entirely, which is a direct contributor to an under-reported seat total on
   // a plan whose chairs are the number the operator actually needs. Rejected
   // candidates are excluded: a human said that object is not real.
+  // OFFERED, not merely not-rejected. A candidate the detector held back
+  // (selected false, nobody has confirmed it) is not on the plan an operator
+  // gets by confirming what was offered, and its chairs are not in the room's
+  // drawn-chair figure: on the Golden Plan they added 5 seats (112 against
+  // the 107 actually offered, 2026-10-04). Held-back seats are reported on
+  // their own (heldBackSeats) so the difference is visible, never folded in.
+  const isOffered = (c) => c.status === "confirmed" || (c.status !== "rejected" && c.selected !== false);
   function computePhysicalCapacity(candidates) {
     return candidates.reduce((n, c) => {
-      if (c.status === "rejected") return n;
+      if (!isOffered(c)) return n;
       // A standalone chair object seats exactly one person.
       if (c.kind === "chair" || (c.kind === "venue" && c.type === "chair")) return n + 1;
       // Only tables seat people. A stage, a bar, or a stray printed label that
@@ -32,10 +39,19 @@
     }, 0);
   }
   function countAssociatedSeats(candidates) {
-    return candidates.reduce((n, c) => n + (c.status === "rejected" ? 0 : (c.chairDetections?.length || 0)), 0);
+    return candidates.reduce((n, c) => n + (!isOffered(c) ? 0 : (c.chairDetections?.length || 0)), 0);
   }
   function countStandaloneChairs(candidates) {
-    return candidates.filter(c => c.status !== "rejected" && c.kind === "venue" && c.type === "chair").length;
+    return candidates.filter(c => isOffered(c) && c.kind === "venue" && c.type === "chair").length;
+  }
+  // What the detector found and did not offer: tables held back and the seats
+  // they carry, plus standalone chairs held back. Never part of a total.
+  function heldBackSeats(candidates) {
+    const held = candidates.filter(c => c.status !== "rejected" && !isOffered(c));
+    return {
+      tables: held.filter(c => c.kind === "table").length,
+      seats: held.reduce((n, c) => n + (c.kind === "table" ? (c.chairDetections?.length || 0) : (c.kind === "venue" && c.type === "chair" ? 1 : 0)), 0),
+    };
   }
 
   // ---- OCR capacity cross-check. Requires a real OCR engine (Tesseract.js,
@@ -205,7 +221,8 @@
       }, 0);
     }, 0);
     const audit = {
-      physical: { seats: systemCounted, source: "chairs detected and associated to tables, plus standalone chairs" },
+      physical: { seats: systemCounted, source: "chairs on the tables offered, plus standalone chairs offered",
+        heldBack: heldBackSeats(candidates) },
       logical: { seats: logicalSeats, groups: (furnitureGroups || []).length, source: "seats summed over logical seating groups" },
       unverified: unverifiedSeating.map(c => ({ id: c.id, kind: c.kind, type: c.type,
         note: "seat count not determinable from the drawing — needs a human answer" })),
@@ -239,5 +256,5 @@
     return (stated == null && !rule && !unverifiedSeating.length && !audit.suspectRegions.length) ? null : audit;
   }
 
-  globalThis.MeritPlanIntelCapacity = Object.freeze({ buildCapacityAudit, computePhysicalCapacity, countAssociatedSeats, countStandaloneChairs });
+  globalThis.MeritPlanIntelCapacity = Object.freeze({ buildCapacityAudit, computePhysicalCapacity, countAssociatedSeats, countStandaloneChairs, heldBackSeats, isOffered });
 })();

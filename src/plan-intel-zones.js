@@ -75,7 +75,11 @@
       const xs = list.flatMap(c => [c.x, c.x + c.w]), ys = list.flatMap(c => [c.y, c.y + c.h]);
       return { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
     };
-    const seatsOf = list => list.reduce((n, c) => n + (c.chairDetections || []).length, 0);
+    // Seats in a zone are the seats OFFERED in it — the same rule as the room's
+    // drawn-chair figure (MeritPlanIntelCapacity.isOffered), so a zone can never
+    // claim a held-back table's chairs the room total leaves out.
+    const offered = globalThis.MeritPlanIntelCapacity ? globalThis.MeritPlanIntelCapacity.isOffered : (c => c.status !== "rejected");
+    const seatsOf = list => list.reduce((n, c) => n + (offered(c) ? (c.chairDetections || []).length : 0), 0);
     const add = (type, members, confidence, evidence, extra = {}) => {
       if (!members.length) return;
       zones.push({ id: uid("zone"), type, confidence, evidence,
