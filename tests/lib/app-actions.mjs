@@ -114,6 +114,13 @@ export async function addGuest(page, { name, additionalGuests = 0, vip } = {}) {
     try {
       await click(page, '[data-guest-command="add"]', { attempts: 2, timeout: 5000 });
       await page.waitForSelector("#guestForm", { state: "visible", timeout: 5000 });
+      // The dialog puts the caret in the name field 30 ms after it opens
+      // (app-guests.js). Filling before that lands means the party size can be
+      // typed while focus jumps to the name: a11y-scan failed all three
+      // attempts this way on 2026-10-04 ("ALICE SCAN1", additional 0) — the
+      // same race pax-invariant met. A person cannot type inside those 30 ms;
+      // the helper waits for the dialog a person sees.
+      await page.waitForFunction(() => document.activeElement === document.querySelector('#guestForm input[name="name"]'), null, { timeout: 5000 });
       await page.fill('#guestForm input[name="name"]', name);
       if (additionalGuests) await page.fill('#guestForm input[name="additionalGuests"]', String(additionalGuests));
       if (vip) await page.selectOption('#guestForm select[name="vip"]', vip).catch(() => {});
