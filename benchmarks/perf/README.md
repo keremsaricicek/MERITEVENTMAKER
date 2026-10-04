@@ -144,9 +144,30 @@ guest search 131 → **45**; Seating render 199 → **91**; Live render 332 → 
 XLSX export 447 → 325 (not touched — variance); reload 755 → 737. Data
 integrity after reload exact in all six.
 
-**Budgets.** None exists and none is invented here: this contract says budgets
-are set with the user. Heap is not reported — `performance.memory` is
-coarsened in this browser.
+**Budgets.** Until 2026-10-04 there were none, because budgets were to be set
+with the user. The user then asked for them, derived from representative
+measurements and failing CI when exceeded. They are in `BUDGETS.json`: twice
+the worst p95 measured on the CI runner across three runs (15 ms floor), with
+the runs named and the reasoning written down. `budgets.mjs` is the one
+comparison; it is enforced where the numbers were measured (CI=true) and
+printed elsewhere, because this container measures some renders at 2× the
+runner. `ci-gate-honesty` fails if enforcement is switched off or a budget is
+widened past the rule; an injected 150 ms Live slowdown failed the run (live
+p95 202.8 against 145). Heap from `performance.memory` is not reported — it is
+coarsened in this browser; `large-files.mjs` reads the heap through the
+DevTools protocol instead.
+
+**Large files** (`large-files.mjs`, this container, 2026-10-04): a 50,000-row
+guest workbook (11.8 MB) and a 40-page PDF plan through the real controls.
+The interpretation step drew every row as editable controls and froze the page
+for 3.9 s at 2,000 rows and 17.9 s at 10,000; it now draws a page of 200 with
+a pager and a needs-attention filter (`import-scale` suite): 502 ms at 50,000.
+Live render at 50,000 guests went 1,665 → 197 ms when `naturalSort` stopped
+building a collator per comparison. Still measured and not fixed: the
+workbook export of 50,000 guests blocks the page for ~5–11 s (SheetJS writing
+and GC inside the frozen report contract), and parsing the 11.8 MB file
+blocks for ~1.2 s. The 40-page PDF: page 1 in 370 ms, all 40 thumbnails in a
+further 759 ms, page 40 chosen in 241 ms, heap 10.9 MB after GC.
 
 ## What the bottleneck actually was
 

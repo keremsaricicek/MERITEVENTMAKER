@@ -39,6 +39,7 @@ import { launchChromium } from "../../tests/lib/env.mjs";
 import { serveApp } from "../../tests/lib/server.mjs";
 import { routeVendorFromCache } from "../../tests/lib/vendor.mjs";
 import { futureDate } from "../../tests/lib/app-actions.mjs";
+import { BUDGETS, judge } from "./budgets.mjs";
 
 const DB_NAME = "meritEventMaker";
 const DB_VERSION = 2;
@@ -274,6 +275,8 @@ if (!drainAgrees || !syncAgrees) {
 }
 
 let failed = 0;
+// The drain budget (BUDGETS.json): twice the worst CI drain, read-back included.
+failed += judge("save queue", [["queued drain, pass 1", queuedA.drainMs, BUDGETS.saveDrain.budgetMs], ["queued drain, pass 2", queuedB.drainMs, BUDGETS.saveDrain.budgetMs]]).length;
 for (const [label, r] of [["pass 1", queuedA], ["pass 2", queuedB]]) {
   if (!r.lastWins) { console.log(`\nFAIL: the queued burst (${label}) did not leave the last write on disk.`); failed++; }
   if (r.drainMs === null) { console.log(`\nFAIL: the queued burst (${label}) never drained within 120s.`); failed++; }

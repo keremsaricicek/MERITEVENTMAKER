@@ -23,6 +23,7 @@ import { fileURLToPath } from "node:url";
 import { launchChromium } from "../../tests/lib/env.mjs";
 import { serveApp } from "../../tests/lib/server.mjs";
 import { futureDate } from "../../tests/lib/app-actions.mjs";
+import { BUDGETS, judge } from "./budgets.mjs";
 
 const REPS = Number(process.env.REPS || 20);
 const app = await serveApp();
@@ -167,6 +168,16 @@ console.log("Plan analysis, real venue plan, 3 runs (ms, wall clock incl. OCR):"
 console.log("JS heap: UNAVAILABLE (performance.memory is coarsened in this browser; not printed as data)");
 console.log("ERRORS:", errs.length ? JSON.stringify(errs.slice(0, 3)) : "clean");
 console.log("JSON " + JSON.stringify({ results, degradation, growth, analysis }));
+
+// The budgets: twice the worst CI p95, and the reasons, in BUDGETS.json.
+const third = (xs) => xs.slice(0, 3), lastThird = (xs) => xs.slice(-3);
+const seriesRatio = +(med(lastThird(degradation.blockMedians)) / med(third(degradation.blockMedians))).toFixed(2);
+const over = judge("4,000-seat stress", [
+  ...names.map((n) => [`${n} p95`, results[n].p95, BUDGETS.ops[n].budgetMs]),
+  ["plan analysis median", [...analysis].sort((a, b) => a - b)[1], BUDGETS.analysis.budgetMs],
+  ["seating 300× late/early", seriesRatio, BUDGETS.seatingSeries.maxRatio, "ratio"],
+  ["DOM growth, three laps", growth.afterThreeLaps.nodes - growth.afterOneLap.nodes, BUDGETS.domGrowth.maxNodes, "nodes"],
+]);
 await browser.close();
 await app.close();
-process.exit(errs.length ? 1 : 0);
+process.exit(errs.length || over.length ? 1 : 0);

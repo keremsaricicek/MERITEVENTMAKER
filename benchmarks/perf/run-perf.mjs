@@ -26,6 +26,10 @@ const RUNNERS = [
     why: "§26: every screen and keystroke 20×, two passes in opposite order, a 300-render series, plan analysis 3× — median/p95/max" },
   { file: "profile-render-phases.mjs", asserts: false,
     why: "where render time actually goes, with a forced layout flush inside the timed region" },
+  // A 50,000-row guest workbook and a 40-page PDF plan through the real
+  // controls: every row imported, every page choosable, no step failing.
+  { file: "large-files.mjs", asserts: true,
+    why: "a 50,000-row guest workbook and a 40-page PDF plan: per-step wall clock, longest main-thread block, heap" },
   { file: "save-queue-burst.mjs", asserts: true,
     why: "what Section 13's write queue costs in drain latency and retained heap — and that it still ends last-write-wins" },
 ];

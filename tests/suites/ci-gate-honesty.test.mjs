@@ -175,5 +175,22 @@ export default async function run({ checks, repoRoot }) {
     if (/process\.exit\([^)]*\?|process\.exitCode\s*=\s*1/.test(src))
       checks.ok(asserts, `${file} can exit non-zero on a failed assertion, so npm run perf propagates it`);
   }
+
+  // --- 7. the performance budgets can turn CI red ---------------------------
+  // A budget that is printed and never enforced is a decoration. GitHub sets
+  // CI=true on every job; the budget module must enforce under it, each budget
+  // the runners judge must exist in BUDGETS.json, and each runner that judges
+  // must fold the verdict into its exit code.
+  const budgetsSrc = fs.readFileSync(path.join(repoRoot, "benchmarks/perf/budgets.mjs"), "utf8");
+  const budgets = JSON.parse(fs.readFileSync(path.join(repoRoot, "benchmarks/perf/BUDGETS.json"), "utf8"));
+  checks.ok(/process\.env\.CI\s*===\s*"true"/.test(budgetsSrc) && /return ENFORCED \? over : \[\]/.test(budgetsSrc),
+    "budgets are enforced whenever CI=true (GitHub sets it on every job)");
+  const judged = ["repeat-stress.mjs", "save-queue-burst.mjs"].map((f) => [f, fs.readFileSync(path.join(repoRoot, "benchmarks/perf", f), "utf8")]);
+  checks.equal(judged.filter(([, src]) => !/judge\(/.test(src) || !(/over\.length \? 1 : 0/.test(src) || /failed \+= judge\(/.test(src))).map(([f]) => f), [],
+    "each runner that has budgets folds the budget verdict into its exit code");
+  const stressOps = [...fs.readFileSync(path.join(repoRoot, "benchmarks/perf/repeat-stress.mjs"), "utf8").matchAll(/^  (\w+): \(\) => \{/gm)].map((m) => m[1]);
+  checks.equal(stressOps.filter((op) => !(budgets.ops[op] && budgets.ops[op].budgetMs > 0)), [], "every timed stress operation has a budget", stressOps);
+  checks.ok(Object.values(budgets.ops).every((o) => o.budgetMs <= Math.ceil(Math.max(2 * o.worstP95, o.worstP95 + 15) / 5) * 5),
+    "no budget is looser than the stated rule (2 × worst CI p95, 15 ms floor) — a budget cannot be widened quietly", budgets.ops);
   fs.rmSync(tmp, { recursive: true, force: true });
 }

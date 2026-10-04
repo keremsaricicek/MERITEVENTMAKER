@@ -1,0 +1,50 @@
+{
+  "what": "Performance budgets. Exceeding one fails `npm run perf`, and so the Performance CI job.",
+  "measuredOn": "GitHub Actions ubuntu-latest, the Performance job, Chromium headless, OCR served from the pinned cache",
+  "basis": [
+    "fb8238e — Performance job, read from its CI log on 2026-10-03",
+    "8c3ca17 — run 37148713100, job 111277934030",
+    "8c3ca17 — run 37148707601, job 111277924681"
+  ],
+  "rule": "budget = max(2 × worst observed p95, worst observed p95 + 15 ms), rounded up to the next 5 ms",
+  "why": [
+    "p95 over 20 samples (two passes in opposite order) tolerates one slow sample and not two; a single max would gate on one GC pause.",
+    "Across the three CI runs the worst p95 moved by up to 23% (floor: 178.9 → 220.5 ms). Twice the WORST run leaves room for that runner noise and still fails on a doubling — the size of regression an O(n) step becoming O(n²), or a render doing its work twice, produces.",
+    "Below ~15 ms the runner's own jitter (timer, GC) is a large fraction of the number, so a small operation gets an absolute 15 ms floor rather than a ratio no one could hold.",
+    "These are regression budgets on a 3,000-guest / 400-table / 4,000-chair stress event (§26's minimum), not promises about a typical event, which is several times smaller.",
+    "Re-deriving a budget is a deliberate, explained edit to this file — never a change made to turn a red run green."
+  ],
+  "ops": {
+    "command":         { "worstP95": 58.5,  "budgetMs": 120 },
+    "floor":           { "worstP95": 220.5, "budgetMs": 445 },
+    "guests":          { "worstP95": 38.2,  "budgetMs": 80 },
+    "guestSearchKey":  { "worstP95": 26.7,  "budgetMs": 55 },
+    "seating":         { "worstP95": 190.7, "budgetMs": 385 },
+    "live":            { "worstP95": 70.9,  "budgetMs": 145 },
+    "liveSearchKey":   { "worstP95": 39.6,  "budgetMs": 80 },
+    "reports":         { "worstP95": 82.1,  "budgetMs": 165 },
+    "tableSelect":     { "worstP95": 181.0, "budgetMs": 365 },
+    "eventsList":      { "worstP95": 11.8,  "budgetMs": 30 },
+    "serialise":       { "worstP95": 22.0,  "budgetMs": 45 },
+    "packageExport":   { "worstP95": 6.3,   "budgetMs": 25 },
+    "packageValidate": { "worstP95": 12.6,  "budgetMs": 30 }
+  },
+  "analysis": {
+    "what": "Assisted Detection with OCR on the real venue plan, median of 3 runs, wall clock from the click",
+    "worstMedianMs": 3840, "budgetMs": 7680
+  },
+  "seatingSeries": {
+    "what": "300 renders of the busiest screen: median of the last three blocks of 25 over the median of the first three",
+    "observed": [0.91, 1.02], "maxRatio": 1.5,
+    "why": "A leak climbs; noise does not trend. Single blocks have doubled and recovered (§26), so a ratio of three-block medians, not one block."
+  },
+  "domGrowth": {
+    "what": "DOM nodes after three laps of every screen minus after one lap",
+    "observed": [0, 0], "maxNodes": 0,
+    "why": "The count is deterministic; any growth is nodes left behind."
+  },
+  "saveDrain": {
+    "what": "40 back-to-back saves of the 4,000-seat event through the queue, until the last value is the record on disk (read back included)",
+    "worstMs": 328, "budgetMs": 660
+  }
+}

@@ -257,11 +257,14 @@ jobs:
       - run: npm run vendor:test
       - run: npm run build:offline
 
-      # Timings are measurements, not assertions — there is no honest budget
-      # for "fast enough" and inventing one would be the overclaiming this
-      # product refuses everywhere else. Three runners also assert something
-      # an operator depends on, and those fail the run: live windowing did not
-      # change what the door sees, the 4,000-seat event survives a reload
-      # intact, and the save queue still ends last-write-wins.
+      # Budgets, not promises: each timed operation on the 4,000-seat stress
+      # event, plan analysis, the 300-render series, DOM growth and the save
+      # queue's drain is held to twice the worst p95 measured on this runner
+      # (benchmarks/perf/BUDGETS.json says which runs and why), and a run
+      # over budget fails this job — GitHub sets CI=true, which is what turns
+      # enforcement on. The runners also assert what an operator depends on:
+      # live windowing did not change what the door sees, the 4,000-seat event
+      # survives a reload intact, the save queue still ends last-write-wins,
+      # and a 50,000-row workbook / 40-page PDF go through the real controls.
       - name: Performance suites
         run: npm run perf
