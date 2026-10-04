@@ -1247,6 +1247,7 @@
     // pre-selects whichever REASON key is listed first (DAMAGED) and a click
     // that never opens the dropdown silently records "Damaged" for a table
     // that might be RELOCATED, on AV hold, or anything else.
+    "avail.reasonLabel": { en: "Why the table is unavailable", tr: "Masanın kullanılamama nedeni" },
     "avail.reason.CHOOSE": { en: "Choose a reason…", tr: "Bir neden seçin…" },
     "avail.reasonRequiredToast": { en: "Choose a reason before marking this table unavailable.", tr: "Bu masayı kullanılamaz işaretlemeden önce bir neden seçin." },
     "avail.markUnavailable": { en: "Mark unavailable", tr: "Kullanılamaz işaretle" },

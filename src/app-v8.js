@@ -2911,7 +2911,7 @@
       </div>
       ${A?`${unavailable?"":onboardingCalloutHTML("tableAvailability")}<div class="table-card-avail">${unavailable
         ?`<button class="btn sm" data-avail-mark="${t_.id}" data-avail-next="AVAILABLE">${t("avail.markAvailable")}</button>`
-        :`<select data-avail-reason required><option value="" disabled selected>${esc(t("avail.reason.CHOOSE"))}</option>${Object.keys(A.REASON).map(r=>
+        :`<select data-avail-reason required aria-label="${esc(t("avail.reasonLabel"))}"><option value="" disabled selected>${esc(t("avail.reason.CHOOSE"))}</option>${Object.keys(A.REASON).map(r=>
             `<option value="${r}">${esc(availReasonText(r))}</option>`).join("")}</select>
           <button class="btn sm danger" data-avail-mark="${t_.id}" data-avail-next="UNAVAILABLE">${t("avail.markUnavailable")}</button>`
       }</div>`:""}

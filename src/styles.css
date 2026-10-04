@@ -365,8 +365,9 @@ table{border-collapse:collapse}
 .seat-no{color:#6d644d;font-weight:650}
 .seat-person{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .seat-person small{color:#756b54}
-.seat-row.empty .seat-person{color:#82775f;font-style:italic}
-.seat-action{border:0;background:transparent;color:#4d92c5;padding:3px;font-size:8px;border-radius:var(--radius-sm);transition:color var(--dur-fast) var(--ease)}
+.seat-row.empty .seat-person{color:var(--muted-2);font-style:italic}
+/* Was 8px at 3.17:1 — below the 12–14px operational range and WCAG AA. */
+.seat-action{border:0;background:transparent;color:var(--blue);padding:3px;font-size:11px;border-radius:var(--radius-sm);transition:color var(--dur-fast) var(--ease)}
 .seat-action:hover{color:#2e2e1f}
 
 .overview-grid{display:grid;grid-template-columns:1.25fr .85fr;gap:14px}
@@ -847,6 +848,10 @@ body{min-width:1180px}
 .btn{min-height:34px;border-radius:var(--radius-lg)}
 .btn.primary{background:linear-gradient(180deg,#2e74a5,#3f79a1);border-color:#3981b4;box-shadow:0 8px 24px rgba(61,126,174,.22)}
 .btn.primary:hover{background:linear-gradient(180deg,#2c80b9,#4887b1)}
+/* The elevation above has the same specificity as .btn:focus-visible and comes
+   later, so it replaced the focus ring on every primary button (viewport-matrix,
+   2026-10-04). The ring is drawn over the elevation, never instead of it. */
+.btn.primary:focus-visible{box-shadow:var(--ring),0 8px 24px rgba(61,126,174,.22)}
 
 .events-page{overflow:auto;background:linear-gradient(180deg,rgba(253,253,252,.012),transparent 28%)}
 .events-wrap.v8-home{max-width:none;width:min(1740px,calc(100% - 64px));padding:42px 0 90px}
@@ -1424,8 +1429,10 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .mx-metric-label{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-2);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mx-metric-value{font-size:25px;font-weight:600;letter-spacing:-.025em;color:var(--text);line-height:1.08;font-variant-numeric:tabular-nums}
 .mx-metric-note{font-size:11px;color:var(--muted);line-height:1.35}
-.mx-metric.is-good .mx-metric-value{color:var(--green)}
-.mx-metric.is-warn .mx-metric-value{color:var(--amber)}
+.mx-metric.is-good .mx-metric-value{color:var(--green-ink)}
+/* -ink, not the base hue: at ≤1440 the value drops to 22px, below "large
+   text", and amber read 3.62:1 (viewport-matrix, 2026-10-04). */
+.mx-metric.is-warn .mx-metric-value{color:var(--amber-ink)}
 .mx-metric.is-alert .mx-metric-value{color:var(--red)}
 .mx-metric.is-hero{flex:1.5 1 0;background:var(--chrome)}
 .mx-metric.is-hero .mx-metric-value{font-size:34px}
