@@ -82,6 +82,10 @@
   // ---- The provider -------------------------------------------------------
   const CLASSICAL_CV_PROVIDER={
     id:"classical-cv",
+    // Which build of the detector produced an observation. Bumped by hand with
+    // any commit that changes detector output (detector-fingerprint DIFFERS),
+    // so two observations can be told apart by the code that made them.
+    version:"2026-10-04",
     label:"Assisted Detection (classical computer vision)",
     trainedModel:false,
     estimatePlanSkew: DESKEW.estimatePlanSkew,

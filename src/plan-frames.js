@@ -115,7 +115,7 @@
     const ratio = Math.min(1, cap / Math.max(sourceWidth, sourceHeight));
     const width = Math.max(1, Math.round(sourceWidth * ratio));
     const height = Math.max(1, Math.round(sourceHeight * ratio));
-    return { ratio, width, height,
+    return { ratio, width, height, sourceWidth, sourceHeight,
       sourceToAnalysis: transform("source", "analysis", [step.scale(ratio)]),
       originalWidth: Math.round(width / ratio), originalHeight: Math.round(height / ratio) };
   }

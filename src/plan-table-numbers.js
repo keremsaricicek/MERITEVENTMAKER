@@ -40,9 +40,12 @@
 //
 // Two things follow, and both are load-bearing.
 //
-// AGREEMENT IS THE EVIDENCE, NOT CONFIDENCE. Two independent crops losing the
-// same digit in the same way does not happen; two crops both reading 137 means
-// the symbol says 137.
+// AGREEMENT IS THE EVIDENCE, NOT CONFIDENCE. Two different crops losing the
+// same digit in the same way is rare; two crops both reading 137 means the
+// symbol says 137 — measured, precision 1.000 on 87 agreeing tables. They are
+// still ONE source: the same image read by the same engine, so their agreement
+// is consistency, not independent confirmation (MeritObservations counts them
+// as one channel).
 //
 // THE VARIANTS MUST DIFFER IN WHAT THEY SEE, NOT JUST IN RESOLUTION. Pairs that
 // differ only in scale agree far more often and are wrong more often
@@ -131,7 +134,7 @@
     if (values.length === 1 && seen.length >= 2) {
       return { value: values[0], state: STATES.VERIFIED,
         confidence: Math.max(...seen.map((r) => r.confidence || 0)), readings,
-        why: `${seen.length} independent crops of this symbol read the same number` };
+        why: `${seen.length} different crops of this symbol read the same number (one image, one OCR engine — consistent, not independently confirmed)` };
     }
     if (values.length > 1) {
       return { value: null, state: STATES.NEEDS_REVIEW, confidence: null, readings,

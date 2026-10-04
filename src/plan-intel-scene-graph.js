@@ -92,12 +92,20 @@
       nodeType.set(id, type);
       nodeList.push({ id, type, label, source, ...(extra || {}) });
     };
+    // Where each object came from, said by its own record rather than assumed:
+    // a re-applied human decision is "memory", an object an operator drew is
+    // "operator", the rest came from Assisted Detection. A node carries the
+    // ids of the observations behind it (MeritObservations), so a question
+    // about the graph can be answered by the evidence, not by the graph.
+    const sourceOf = (c) => c.fromMemory ? "memory" : c.missed ? "operator" : "assistedDetection";
     for (const c of alive) {
       addNode(c.id, "physicalObject", c.kind === "venue" ? (c.type || "venue") : (c.kind || "object"),
-        "assistedDetection", { kind: c.kind, objectType: c.type || null, humanVerified: c.status === "confirmed" });
+        sourceOf(c), { kind: c.kind, objectType: c.type || null, humanVerified: c.status === "confirmed",
+          observationIds: c.observationIds || [] });
       for (const ch of c.chairDetections || [])
-        addNode(ch.id, "physicalObject", "chair", "assistedDetection",
-          { kind: "chair", objectType: "chair", humanVerified: c.status === "confirmed" });
+        addNode(ch.id, "physicalObject", "chair", sourceOf(c),
+          { kind: "chair", objectType: "chair", humanVerified: c.status === "confirmed",
+            observationIds: ch.observedBy ? [ch.observedBy] : [] });
     }
     for (const g of similarityGroups || [])
       addNode(g.id, "visualFamily", g.type || g.kind || "family", "similarityClustering",

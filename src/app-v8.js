@@ -3525,6 +3525,11 @@
       // object from table to venue and the capacity, relationship and
       // consistency layers all have to see the corrected answer.
       applyTeachArea(event);
+      // What each stage saw, in which frame, with its own confidence and a link
+      // to look again (MeritObservations). Rebuilt whole on every analysis, so
+      // no observation outlives the candidate it describes.
+      event.analysis.frames={source:{width:analysisFrame.sourceWidth,height:analysisFrame.sourceHeight},analysis:{width,height,ratio},deskewDeg:deskewDeg||0,storedIn:"plan-percent of the analysis canvas",conventions:{candidate:FRAMES.CORNER,seat:FRAMES.CENTRE}};
+      globalThis.MeritObservations.recordFromAnalysis(event.analysis,{detector:{id:provider.id,version:provider.version||null},ocrEngine:event.analysis.ocr?.available?"tesseract.js":null,imageRef:event.analysis.planHash||null});
       ui.analysisStage=t("analysis.stage.relating");ui.analysisProgress=90;render();await yieldFrame();
       ui.analysisStage=t("analysis.stage.capacity");ui.analysisProgress=95;render();await yieldFrame();
       event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText);
