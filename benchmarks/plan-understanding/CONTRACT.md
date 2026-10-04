@@ -1,0 +1,109 @@
+# Plan understanding — the 9/10 acceptance contract
+
+Written 2026-10-04, **before** any of the work it judges, against the code at
+`65808d5`. The thresholds are in `contract.mjs` (the copy a run is checked
+against); this file says why each one is what it is. A threshold changes only
+with a shown error in it, never to turn a run green. Existing targets are kept
+as they were (§23 memory, the object-benchmark baseline, the CI analysis
+budget); nothing here is lower than a target already written down.
+
+```
+node benchmarks/plan-understanding/measure.mjs             # report + overlays → ./latest
+node benchmarks/plan-understanding/measure.mjs --compare   # exit 1 unless every row is met
+```
+
+## What is measured, and on what
+
+The real app, on the two real supplied plans, **after the whole analysis has
+finished** (OCR, label reading, printed numbers, plan intelligence —
+`ui.analysisBusy` false), with the pinned OCR served from `.vendor-cache` and
+the network refused. Every row is per plan, on the **auto** view: what an
+operator gets by confirming the result as offered. A real object the product
+found but held back is a miss here — the operator still has to find it and
+switch it on. The **proposed** view (everything shown for review) is reported
+beside it and never passes a gate.
+
+Truth is the base annotation (`benchmarks/annotations/*.json`, human-verified
+tables, chairs and chair→table links) plus `truth/*.json`, written for this
+contract: venue elements measured from the drawing's own fill/outline pixels
+and checked on zoomed crops, joined groups derived from the verified table
+boxes (≤ 8 px apart; the smallest gap between tables that are NOT joined is
+40 px, so no case is borderline), and chair facing checked by eye with an arrow
+drawn per chair. Where the drawing does not decide what something is (the T
+block in the middle of ORNEK, the grey boxes at the Golden stage's corners) the
+region is **excluded** and neither class is scored there; a table found inside
+it is still a false table.
+
+Two real plans cannot show generalization and nothing here claims it. The
+synthetic fixtures (`a2`, `a6`, `a8`) and the robustness renderings are tracked
+by their own runners and listed under "carried targets" — they are not new
+venues.
+
+## Two measurement errors found while writing this
+
+1. **The object benchmark read an intermediate state.** `run-benchmark.mjs`
+   (and thirteen other runners) waited for `state.events[0].analysis` to exist —
+   which it does *before* OCR, text suppression and label reading run. It
+   measured a result the operator never sees. Fixed to wait for
+   `!ui.analysisBusy`; on the Golden Plan the finished analysis has 2 phantom
+   tables, not 4, and finds the stage; adversarial-dense has 76 chairs, not
+   80. `BASELINE.json` re-recorded from the finished state (reason in the
+   commit). The other thirteen still read early; each is listed in `README.md`
+   here and is fixed when its area is worked.
+2. **Chairs were scored half a chair off.** A candidate's x/y is its top-left
+   corner; a chair detection's x/y is its **centre** (the review layer draws
+   it with `translate(-50%,-50%)` and the commit path keeps it as a centre).
+   The benchmark read chairs as top-left, adding ~24 px to every chair, hidden
+   by a 3%-of-diagonal tolerance (47 px). Fixed in both scorers; the product
+   itself was consistent. Chair centre error p90 goes from a reported 0.76 of
+   a chair to 0.07. This is the case for one coordinate module (work item B).
+
+## The thresholds
+
+| area | row | 9/10 threshold | baseline `65808d5` (Golden · ORNEK) | why this number |
+|---|---|---|---|---|
+| tables | precision, recall | ≥ 0.97 each, count error ≤ 0.03 | P 0.979 R 1 · P 0.994 R 0.976 | a table carries 4–12 seats; 0.97 allows one error on the 46-table room and five on the 166-table one — beyond that the printed-total cross-check can no longer say *where* the error is |
+| bistro | precision, recall | ≥ 0.9 | 1 / 1 · absent | five on the Golden Plan: all five, or one wrong type at most when there are ten |
+| chairs | precision, recall | ≥ 0.95 each, count error ≤ 0.05 | P 1 R 0.947 · absent | chairs ARE the capacity: 5% is ~6 seats on 113, the most a coordinator can absorb without re-counting the room by hand |
+| sofa, stage, column, bar, entrance, loca | precision, recall | ≥ 0.9 per class present | 0 / 0 for all six (stage found but held back) | the user's list; few per plan, so 0.9 means "all, or one miss in ten" |
+| any class absent from a plan | false positives | 0 | 0 | a loca invented on a plan with none is a fabricated object |
+| venue elements | median box IoU of found elements | ≥ 0.5 | — | a stage found as only its truss bar is in the right place and the wrong shape |
+| chair→table | link accuracy · end-to-end | ≥ 0.97 · ≥ 0.92 | 0.99 · 0.917 | accuracy alone hides chairs never found; end-to-end (correct / all annotated links) = 0.97 × the 0.95 chair recall |
+| joined groups | exact groups · exact chair count · spurious | ≥ 0.9 · ≥ 0.9 · ≤ 1 | 12/12 · 12/12 · 1 | a group is one dining unit: "3 tables + 8 chairs" must come out as one unit with eight seats, member geometry kept |
+| geometry | table centre error p90 (share of side) | ≤ 0.15 | 0.035 · 0.095 | a table placed off by more than a sixth of itself is visibly wrong on the floor plan |
+| | table box IoU p10 | ≥ 0.6 | 0.914 · 0.703 | shape and size, not only position |
+| | table type accuracy | ≥ 0.97 | 1 · 1 | round/square/rectangle/bistro decides capacity rules |
+| | rotation error p90 | ≤ 5° | 0 · 0 | both plans are axis-aligned; the robustness renderings rotate (carried target) |
+| | chair centre error p90 | ≤ 0.35 of a chair | 0.071 · — | a seat drawn in the wrong place moves a guest's chair |
+| direction | precision of stated facing (≤ 30°) · coverage | ≥ 0.95 · ≥ 0.8 | **0.684** · **0.115** | facing is stated only from the chair's own symbol, never from the box angle or "it is next to a table"; a stated facing that is wrong is worse than none, hence the precision floor |
+| printed | table-number recall · verified precision | ≥ 0.9 · ≥ 0.99 | — · 0.554 / 1.0 | a VERIFIED number that is wrong seats a guest at the wrong table; recall below 0.9 is a page of manual typing |
+| | printed capacity total read | exact | **not read** · 2064 ✓ | the Golden Plan prints "Total : 124 pax" in outlined orange text OCR does not read |
+| capacity | held-back chairs in the drawn-chair figure | 0 | **5** · 0 | the product's "physical seats" counts chairs on tables it did not offer — the leak the user named |
+| | drawn chairs vs truth · written total vs truth | ≤ 5% · exact | 112/113 ✓, total **null** · 0/0, 2064 ✓ | four numbers stay separate: drawn chairs, written capacity, logical seats, printed totals |
+| corrections | operator actions per 100 objects (lower bound) | ≤ 5 | **14.2** · **11.5** | one action per wrong/missing object, link, type or group; the gap between "detected" and "usable" |
+| run | analysis wall clock (this container, 4 CPU, no GPU) | ≤ 15 s · ≤ 60 s | 5.5 s · 30.2 s | an import is once per plan, with progress and cancel; the CI budget for the Golden Plan (7,680 ms) still applies separately |
+| | peak JS heap | ≤ 1024 MB | 21 · 55 MB | a browser tab |
+| | plan or guest data leaving the machine | 0 requests | 0 · 0 | the pinned engines (7 GETs of library files the CSP allows) are counted apart; anything else — another host, any request with a body — is egress |
+
+**Baseline: 41 of 66 rows met.** Overlays (what was found, invented, missed;
+wrong links; groups) are in `baseline-65808d5/*.overlay.jpg`, the full stored
+analyses beside them.
+
+## Carried targets (their own runners, not lowered)
+
+| target | where | baseline |
+|---|---|---|
+| a2 mixed families: no real table held back, table recall ≥ 0.9, three chair families | `benchmarks/adversarial` (KNOWN FAIL) | recall 0.571, 3 held back, chair recall 0.34 |
+| a6 architecture: offered phantoms 0 and offered precision ≥ 0.9 | same (KNOWN FAIL) | 0 offered, 21 held back (precision 0.276 proposed) |
+| a8 small chairs: chair recall ≥ 0.8 | same | **0.089** |
+| §23 memory: retention ≥ 0.98, identity precision ≥ 0.98, wrong application ≤ 0.01 | `benchmarks/memory` | 0.736 · 1.0 · 0 |
+| robustness: no SEVERE rendering among the 13 | `benchmarks/robustness` | 7 SEVERE (blur, bright ±, contrast-high, hue-shift, jpeg-q20, lowres) |
+| object benchmark: no guarded field worse than `BASELINE.json` | `npm run benchmark:baseline` | re-recorded from the finished analysis |
+
+## Cloud and model cost
+
+Measured, not estimated: every row above ran with **no cloud call and no
+model download**; cost 0. A provider that sends a plan anywhere (work item G)
+must report tokens, wall clock and cost per plan in this report, run only
+when the operator has switched it on, and never send guest data. Its cost
+ceiling is set when a real run exists to measure — not before.

@@ -32,6 +32,8 @@ export const INPUTS = {
     "tests/lib/vendor.mjs"],
   memory: ["benchmarks/memory/measure-memory.mjs", "benchmarks/annotations/merit-real-venue.json",
     "benchmarks/plans/merit-real-venue-plan.png", "benchmarks/robustness/variants", "tests/lib/vendor.mjs"],
+  understanding: ["benchmarks/annotations", "benchmarks/plan-understanding/truth", "benchmarks/plan-understanding/score.mjs",
+    "benchmarks/plan-understanding/contract.mjs", "benchmarks/plan-understanding/measure.mjs", "tests/lib/vendor.mjs"],
 };
 
 export function sourceDigest(repoRoot, extraInputs = []) {

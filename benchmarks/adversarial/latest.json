@@ -1,8 +1,8 @@
 {
-  "ranAt": "2026-09-27T14:54:55.354Z",
+  "ranAt": "2026-10-04T19:23:16.992Z",
   "source": {
-    "digest": "138ade96813a4b237830a341477124d3ac12751d24277ad043a44df98fc937f0",
-    "files": 65,
+    "digest": "a6030deead1c119e20cad8aa620684145f9e68b7d5e93b8b4b8d09b49589f224",
+    "files": 92,
     "inputs": [
       "index.html",
       "src",
@@ -31,6 +31,8 @@
         "f1": 0.667,
         "heldBack": 0,
         "heldBackReasons": {},
+        "phantomsOffered": 0,
+        "phantomsHeldBack": 0,
         "missedIds": [
           "OUT01",
           "OUT02",
@@ -135,7 +137,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 2495,
+      "detectionMs": 5768,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -166,6 +168,8 @@
         "heldBackReasons": {
           "belowReviewThreshold": 3
         },
+        "phantomsOffered": 3,
+        "phantomsHeldBack": 0,
         "missedIds": [
           "RD01",
           "RD02",
@@ -282,7 +286,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 4
       },
-      "detectionMs": 3310,
+      "detectionMs": 4132,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -317,6 +321,8 @@
         "f1": 1,
         "heldBack": 0,
         "heldBackReasons": {},
+        "phantomsOffered": 0,
+        "phantomsHeldBack": 0,
         "missedIds": []
       },
       "tableTypes": {
@@ -413,7 +419,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 3793,
+      "detectionMs": 4705,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -438,6 +444,8 @@
         "f1": 0.81,
         "heldBack": 0,
         "heldBackReasons": {},
+        "phantomsOffered": 0,
+        "phantomsHeldBack": 0,
         "missedIds": [
           "C01",
           "C02",
@@ -545,7 +553,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 3766,
+      "detectionMs": 4503,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -573,6 +581,8 @@
         "f1": 0,
         "heldBack": 0,
         "heldBackReasons": {},
+        "phantomsOffered": 0,
+        "phantomsHeldBack": 0,
         "missedIds": []
       },
       "tableTypes": {
@@ -653,7 +663,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 0
       },
-      "detectionMs": 1805,
+      "detectionMs": 2425,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -678,6 +688,8 @@
         "f1": 0.432,
         "heldBack": 0,
         "heldBackReasons": {},
+        "phantomsOffered": 0,
+        "phantomsHeldBack": 21,
         "missedIds": []
       },
       "tableTypes": {
@@ -775,7 +787,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 2498,
+      "detectionMs": 3081,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -804,6 +816,8 @@
         "f1": 0.682,
         "heldBack": 0,
         "heldBackReasons": {},
+        "phantomsOffered": 0,
+        "phantomsHeldBack": 0,
         "missedIds": [
           "B01",
           "B02",
@@ -916,7 +930,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 2380,
+      "detectionMs": 3082,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -945,6 +959,8 @@
         "f1": 0.943,
         "heldBack": 0,
         "heldBackReasons": {},
+        "phantomsOffered": 0,
+        "phantomsHeldBack": 0,
         "missedIds": [
           "T090",
           "T099",
@@ -1058,7 +1074,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 7996,
+      "detectionMs": 10527,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -1087,6 +1103,8 @@
         "f1": 0.98,
         "heldBack": 0,
         "heldBackReasons": {},
+        "phantomsOffered": 0,
+        "phantomsHeldBack": 0,
         "missedIds": [
           "TB1",
           "TB2",
@@ -1190,7 +1208,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 8
       },
-      "detectionMs": 4297,
+      "detectionMs": 5479,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {

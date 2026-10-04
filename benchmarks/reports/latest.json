@@ -1,8 +1,8 @@
 {
-  "ranAt": "2026-09-27T14:52:56.281Z",
+  "ranAt": "2026-10-04T19:41:18.743Z",
   "source": {
-    "digest": "7521bc8445b7d1f9b66d12d941af65ceb2a6fa0c99ccccdbd22dbb7d244f535d",
-    "files": 53,
+    "digest": "8307d2c39027212239d60a8a6cabffef5895f54f95680db06629e2343ee507e4",
+    "files": 80,
     "inputs": [
       "index.html",
       "src",
@@ -83,60 +83,60 @@
           "parts": {},
           "arithmetic": null,
           "difference": null,
-          "sourceText": null,
-          "ocrAvailable": false,
+          "sourceText": "LJ\n[] O | O\n",
+          "ocrAvailable": true,
           "suspectRegions": [
             {
-              "id": "candidate_027afe3f-9cba-43e6-a5ba-e017d83eb904",
+              "id": "candidate_051e084c-dfef-43ab-be6d-9726f4a76a0c",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_040cef42-f9ab-48b2-8298-3b735dfbbb61",
+              "id": "candidate_0c222d02-be1c-439e-920e-9f30aee230de",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_69df69ac-a771-46a7-8c1c-54e41dfb313e",
+              "id": "candidate_12e68f5b-3ad2-4047-8738-b2456df05f8d",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_7c09af47-11e3-439f-bc84-a0397844cf23",
+              "id": "candidate_13b9d7a7-bf6e-4e9c-bf79-b447fcacd954",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_7d6455db-62d3-4849-9a86-c85ccc8aafab",
+              "id": "candidate_2f6d2ed0-b280-4762-b668-30c0996aab0d",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_834004c3-9218-495d-af50-d27ff951ffa5",
+              "id": "candidate_397e4564-b9e5-498d-af08-02886ef8d15d",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_954132df-93e9-4ab8-be63-98a5174832ab",
+              "id": "candidate_42cdd833-d6df-4bf4-9c64-c3c76a8824d1",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_a13a1f5d-46eb-45ff-8c9e-f3ffe1d96325",
+              "id": "candidate_5bd09471-51ed-4265-aec0-943d5dbaf831",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -144,14 +144,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_027afe3f-9cba-43e6-a5ba-e017d83eb904",
-            "candidate_040cef42-f9ab-48b2-8298-3b735dfbbb61",
-            "candidate_69df69ac-a771-46a7-8c1c-54e41dfb313e",
-            "candidate_7c09af47-11e3-439f-bc84-a0397844cf23",
-            "candidate_7d6455db-62d3-4849-9a86-c85ccc8aafab",
-            "candidate_834004c3-9218-495d-af50-d27ff951ffa5",
-            "candidate_954132df-93e9-4ab8-be63-98a5174832ab",
-            "candidate_a13a1f5d-46eb-45ff-8c9e-f3ffe1d96325"
+            "candidate_051e084c-dfef-43ab-be6d-9726f4a76a0c",
+            "candidate_0c222d02-be1c-439e-920e-9f30aee230de",
+            "candidate_12e68f5b-3ad2-4047-8738-b2456df05f8d",
+            "candidate_13b9d7a7-bf6e-4e9c-bf79-b447fcacd954",
+            "candidate_2f6d2ed0-b280-4762-b668-30c0996aab0d",
+            "candidate_397e4564-b9e5-498d-af08-02886ef8d15d",
+            "candidate_42cdd833-d6df-4bf4-9c64-c3c76a8824d1",
+            "candidate_5bd09471-51ed-4265-aec0-943d5dbaf831"
           ]
         }
       },
@@ -194,10 +194,10 @@
         "detectionProvider": "classical-cv",
         "detectionPath": "chair-first",
         "chairSource": "colour-cluster",
-        "ocrEngine": null,
-        "ocrAvailable": false
+        "ocrEngine": "tesseract.js",
+        "ocrAvailable": true
       },
-      "detectionMs": 622,
+      "detectionMs": 2043,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -274,60 +274,60 @@
           "parts": {},
           "arithmetic": null,
           "difference": null,
-          "sourceText": null,
-          "ocrAvailable": false,
+          "sourceText": "Kı; Ce oC De oC oC\n“Je “Je “Je “Je “Je “Je\n“Je “Je “Je “Je “Je “Je\nnl nl nl nl nl\n",
+          "ocrAvailable": true,
           "suspectRegions": [
             {
-              "id": "candidate_13eeab09-999c-4311-a91d-63b7016b9d2f",
+              "id": "candidate_01a493ef-06b0-4855-b61e-089cb3f39d65",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_1beac26a-3589-42a6-a252-b9f2823290b2",
+              "id": "candidate_21d8fe92-265c-45f1-8825-6ba519706570",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_22cf0b6a-cf28-4967-9fef-8659e7b2ff49",
+              "id": "candidate_2627f942-74f8-4780-bf1b-680ce394902a",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_4277271a-50ce-4be6-8b2c-de1bdeb8bd07",
+              "id": "candidate_27d90699-f940-40c0-86be-6f483067b16d",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_48535882-5a62-459b-9ecd-d5446e23a46c",
+              "id": "candidate_2912b9c6-6ae9-4628-8d3d-51c7e4ef9e5c",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_49db4c60-6308-409d-a038-2fb4afa351d7",
+              "id": "candidate_4ade52b3-8770-4ce1-b1aa-5bdb383f444f",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_4e783a80-6cdd-466c-bd0d-6d0a21828f17",
+              "id": "candidate_79acb000-571e-4d92-b2bb-b440916b6583",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_60fea4fb-52b2-4ea0-aa22-bd2eeae74700",
+              "id": "candidate_8537ef23-4eb4-4e2c-adf9-4f4740a63faa",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -335,14 +335,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_13eeab09-999c-4311-a91d-63b7016b9d2f",
-            "candidate_1beac26a-3589-42a6-a252-b9f2823290b2",
-            "candidate_22cf0b6a-cf28-4967-9fef-8659e7b2ff49",
-            "candidate_4277271a-50ce-4be6-8b2c-de1bdeb8bd07",
-            "candidate_48535882-5a62-459b-9ecd-d5446e23a46c",
-            "candidate_49db4c60-6308-409d-a038-2fb4afa351d7",
-            "candidate_4e783a80-6cdd-466c-bd0d-6d0a21828f17",
-            "candidate_60fea4fb-52b2-4ea0-aa22-bd2eeae74700"
+            "candidate_01a493ef-06b0-4855-b61e-089cb3f39d65",
+            "candidate_21d8fe92-265c-45f1-8825-6ba519706570",
+            "candidate_2627f942-74f8-4780-bf1b-680ce394902a",
+            "candidate_27d90699-f940-40c0-86be-6f483067b16d",
+            "candidate_2912b9c6-6ae9-4628-8d3d-51c7e4ef9e5c",
+            "candidate_4ade52b3-8770-4ce1-b1aa-5bdb383f444f",
+            "candidate_79acb000-571e-4d92-b2bb-b440916b6583",
+            "candidate_8537ef23-4eb4-4e2c-adf9-4f4740a63faa"
           ]
         }
       },
@@ -369,10 +369,10 @@
         "detectionProvider": "classical-cv",
         "detectionPath": "chair-first",
         "chairSource": "outline-interior",
-        "ocrEngine": null,
-        "ocrAvailable": false
+        "ocrEngine": "tesseract.js",
+        "ocrAvailable": true
       },
-      "detectionMs": 527,
+      "detectionMs": 2480,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -419,17 +419,17 @@
         "method": "count only — this annotation records a chair TOTAL, not per-chair positions, so precision/recall cannot be computed",
         "annotatedChairs": 96,
         "detectedOnTables": 76,
-        "detectedStandalone": 4,
-        "detectedTotal": 80
+        "detectedStandalone": 0,
+        "detectedTotal": 76
       },
       "capacity": {
         "ocrStated": null,
         "annotatedChairs": 96,
-        "systemPhysicalSeats": 80,
+        "systemPhysicalSeats": 76,
         "unverifiedInAnnotation": [],
         "auditFromApp": {
           "physical": {
-            "seats": 80,
+            "seats": 76,
             "source": "chairs detected and associated to tables, plus standalone chairs"
           },
           "logical": {
@@ -438,67 +438,65 @@
             "source": "seats summed over logical seating groups"
           },
           "unverified": [],
-          "drawingStated": null,
+          "drawingStated": 96,
           "rule": null,
           "parts": {},
           "arithmetic": null,
-          "difference": null,
-          "sourceText": null,
-          "ocrAvailable": false,
+          "difference": 20,
+          "sourceText": "BALLROOM B 96 PAX\n—\nm A\nm AKK\nZONE A ZONE B\n",
+          "ocrAvailable": true,
           "suspectRegions": [
             {
-              "id": "candidate_179a72bd-1615-4d05-90c6-b477065d428c",
-              "score": 1.25,
-              "reasons": [
-                "not yet reviewed",
-                "low confidence 0.44"
-              ]
-            },
-            {
-              "id": "candidate_662b9ff0-5899-4580-bd1d-7ca6c79411e7",
-              "score": 1.25,
-              "reasons": [
-                "not yet reviewed",
-                "low confidence 0.44"
-              ]
-            },
-            {
-              "id": "candidate_0ad2abf9-cda7-451d-a43a-435fdd899955",
+              "id": "candidate_174175ce-ec8e-4c14-b89e-1cd38796d0a8",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_10f7583a-c09f-442f-a55c-18acccd00b6c",
+              "id": "candidate_215a955c-4e13-46dc-bf39-9c2c44bc47a9",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_18ea4a75-4804-4e90-948c-5fdc1180f3f6",
+              "id": "candidate_3806c137-1583-4b7c-9263-6b4692a8a5d2",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_1c157856-2dae-45a3-909f-dc6561071ae8",
+              "id": "candidate_42bf7152-1ae9-49a4-a86c-3fe52611846d",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_1efa4e8c-906b-445f-8506-5f9b8aeb4871",
+              "id": "candidate_43a0e0ae-db55-46d5-af7d-f084b5c0a62d",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_22bde2f4-68d3-4ba1-99d9-5629b946cb9a",
+              "id": "candidate_4ad098c5-9066-4e2d-8d03-15502b28dcf2",
+              "score": 1,
+              "reasons": [
+                "not yet reviewed"
+              ]
+            },
+            {
+              "id": "candidate_5c40998c-a8a6-47e4-8d31-7f7128d31632",
+              "score": 1,
+              "reasons": [
+                "not yet reviewed"
+              ]
+            },
+            {
+              "id": "candidate_618ea55c-319e-47be-8f8b-418dc62b4e9b",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -506,14 +504,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_179a72bd-1615-4d05-90c6-b477065d428c",
-            "candidate_662b9ff0-5899-4580-bd1d-7ca6c79411e7",
-            "candidate_0ad2abf9-cda7-451d-a43a-435fdd899955",
-            "candidate_10f7583a-c09f-442f-a55c-18acccd00b6c",
-            "candidate_18ea4a75-4804-4e90-948c-5fdc1180f3f6",
-            "candidate_1c157856-2dae-45a3-909f-dc6561071ae8",
-            "candidate_1efa4e8c-906b-445f-8506-5f9b8aeb4871",
-            "candidate_22bde2f4-68d3-4ba1-99d9-5629b946cb9a"
+            "candidate_174175ce-ec8e-4c14-b89e-1cd38796d0a8",
+            "candidate_215a955c-4e13-46dc-bf39-9c2c44bc47a9",
+            "candidate_3806c137-1583-4b7c-9263-6b4692a8a5d2",
+            "candidate_42bf7152-1ae9-49a4-a86c-3fe52611846d",
+            "candidate_43a0e0ae-db55-46d5-af7d-f084b5c0a62d",
+            "candidate_4ad098c5-9066-4e2d-8d03-15502b28dcf2",
+            "candidate_5c40998c-a8a6-47e4-8d31-7f7128d31632",
+            "candidate_618ea55c-319e-47be-8f8b-418dc62b4e9b"
           ]
         }
       },
@@ -521,7 +519,7 @@
       "falsePositiveRegions": {
         "textRegionsAnnotated": 4,
         "tablesInsideTextRegions": 0,
-        "anyDetectionInsideTextRegions": 4,
+        "anyDetectionInsideTextRegions": 0,
         "worstTextRegions": [],
         "architectureRegionsAnnotated": 9,
         "tablesInsideArchitectureRegions": 0,
@@ -529,15 +527,8 @@
         "worstArchitectureRegions": []
       },
       "humanEffort": {
-        "reviewGroups": 1,
-        "reviewGroupDetail": [
-          {
-            "kind": "venue",
-            "type": "chair",
-            "n": 4,
-            "clusters": 2
-          }
-        ],
+        "reviewGroups": 0,
+        "reviewGroupDetail": [],
         "uncertainQuestions": 1,
         "note": "review groups + questions the operator must resolve before Plan Confirmed"
       },
@@ -547,10 +538,10 @@
         "detectionProvider": "classical-cv",
         "detectionPath": "chair-first",
         "chairSource": "outline-interior",
-        "ocrEngine": null,
-        "ocrAvailable": false
+        "ocrEngine": "tesseract.js",
+        "ocrAvailable": true
       },
-      "detectionMs": 628,
+      "detectionMs": 2203,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -616,65 +607,67 @@
             "source": "seats summed over logical seating groups"
           },
           "unverified": [],
-          "drawingStated": null,
+          "drawingStated": 72,
           "rule": null,
-          "parts": {},
+          "parts": {
+            "total": 72
+          },
           "arithmetic": null,
-          "difference": null,
-          "sourceText": null,
-          "ocrAvailable": false,
+          "difference": -1,
+          "sourceText": "MERIT ARENA - MAIN BALLROOM TOTAL 72 PAX\nSEATING LAYOUT / REV 4 / 2026-08-30 12 TABLES x 6 SEATS\n[| [| [| [|\nTall | Td dll\n[| [| [| [|\n| | Tal dl\n[| [| [| [|\nNote: final seat ir approval, ıl ıl O alls 6 SEATS\nAl dimensions in mim @nless noted otherwise. il Till ME se Access - keep clear\nDo not scale from this drawing. Refer to schedule 48.\n05 10m N\n—\n",
+          "ocrAvailable": true,
           "suspectRegions": [
             {
-              "id": "candidate_1af38738-ea06-4776-ba34-6440935aba2b",
+              "id": "candidate_074f19df-4dfe-4351-bd65-2be1077bc42a",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_1c2f04d9-d415-44e7-9226-0049ad14285d",
+              "id": "candidate_1dc0d8e8-0728-49c6-b39e-149d1ab79b02",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_27ba71f3-1e43-42df-ae78-6898d81895e1",
+              "id": "candidate_567e1891-0dce-41d9-836b-5b78b33ab02b",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_34dd8c71-b761-473a-99e9-b806c02baf31",
+              "id": "candidate_62692ddf-f189-4376-9ecd-471dcf60a0f9",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_4508f508-33ac-47e8-bc2c-0c2adf28299d",
+              "id": "candidate_6368c764-940c-46ca-8676-63ee92c899d0",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_6d6853ab-46c0-4748-b5c2-8fe84cc7f861",
+              "id": "candidate_6a1d9546-dd40-42c3-8833-939dc8541bd5",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_6fe717dc-6687-4a71-92f4-9ccb36b9598d",
+              "id": "candidate_751efd65-e944-42d8-a056-2d0ee9672c3d",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_a83fe313-f823-44a4-a51d-c382c524f267",
+              "id": "candidate_7d912238-3937-482e-b26b-838324a192d1",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -682,14 +675,14 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_1af38738-ea06-4776-ba34-6440935aba2b",
-            "candidate_1c2f04d9-d415-44e7-9226-0049ad14285d",
-            "candidate_27ba71f3-1e43-42df-ae78-6898d81895e1",
-            "candidate_34dd8c71-b761-473a-99e9-b806c02baf31",
-            "candidate_4508f508-33ac-47e8-bc2c-0c2adf28299d",
-            "candidate_6d6853ab-46c0-4748-b5c2-8fe84cc7f861",
-            "candidate_6fe717dc-6687-4a71-92f4-9ccb36b9598d",
-            "candidate_a83fe313-f823-44a4-a51d-c382c524f267"
+            "candidate_074f19df-4dfe-4351-bd65-2be1077bc42a",
+            "candidate_1dc0d8e8-0728-49c6-b39e-149d1ab79b02",
+            "candidate_567e1891-0dce-41d9-836b-5b78b33ab02b",
+            "candidate_62692ddf-f189-4376-9ecd-471dcf60a0f9",
+            "candidate_6368c764-940c-46ca-8676-63ee92c899d0",
+            "candidate_6a1d9546-dd40-42c3-8833-939dc8541bd5",
+            "candidate_751efd65-e944-42d8-a056-2d0ee9672c3d",
+            "candidate_7d912238-3937-482e-b26b-838324a192d1"
           ]
         }
       },
@@ -716,10 +709,10 @@
         "detectionProvider": "classical-cv",
         "detectionPath": "chair-first",
         "chairSource": "colour-cluster",
-        "ocrEngine": null,
-        "ocrAvailable": false
+        "ocrEngine": "tesseract.js",
+        "ocrAvailable": true
       },
-      "detectionMs": 599,
+      "detectionMs": 3173,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -774,15 +767,15 @@
       },
       "tables": {
         "groundTruth": 46,
-        "detected": 50,
+        "detected": 48,
         "tp": 46,
-        "fp": 4,
+        "fp": 2,
         "fn": 0,
-        "precision": 0.92,
+        "precision": 0.958,
         "recall": 1,
-        "f1": 0.958,
+        "f1": 0.979,
         "missedIds": [],
-        "spuriousCount": 4,
+        "spuriousCount": 2,
         "spurious": [
           {
             "cx": 776,
@@ -795,18 +788,6 @@
             "cy": 153,
             "w": 55,
             "h": 45
-          },
-          {
-            "cx": 1145,
-            "cy": 516,
-            "w": 40,
-            "h": 34
-          },
-          {
-            "cx": 668,
-            "cy": 520,
-            "w": 40,
-            "h": 33
           }
         ]
       },
@@ -872,1445 +853,17 @@
         ],
         "matchPairs": [
           {
-            "gtId": "c101",
-            "det": {
-              "xPct": 96.56826568265683,
-              "yPct": 69.54314720812182,
-              "wPct": 1.033210332103321,
-              "hPct": 2.4111675126903553,
-              "cx": 1315.5,
-              "cy": 557.5,
-              "w": 14,
-              "h": 19,
-              "parentId": "candidate_fa4eba02-98a1-4da5-855e-9b860d076bef"
-            }
-          },
-          {
-            "gtId": "c109",
-            "det": {
-              "xPct": 7.103200795977456,
-              "yPct": 83.39276588573398,
-              "wPct": 1.4282503960434305,
-              "hPct": 1.2402111115871373,
-              "cx": 105.92476721868877,
-              "cy": 662.021426959237,
-              "w": 19.352792866388484,
-              "h": 9.772863559306641,
-              "parentId": "candidate_e63023a7-1816-44ef-a2c7-408eba507327"
-            }
-          },
-          {
-            "gtId": "c110",
-            "det": {
-              "xPct": 5.176814305966408,
-              "yPct": 80.36643956270474,
-              "wPct": 0.8734670391161645,
-              "hPct": 2.4868385056695583,
-              "cx": 76.06357303585685,
-              "cy": 643.0856874664514,
-              "w": 11.835478380024028,
-              "h": 19.59628742467612,
-              "parentId": "candidate_e63023a7-1816-44ef-a2c7-408eba507327"
-            }
-          },
-          {
-            "gtId": "c083",
-            "det": {
-              "xPct": 3.025830258302583,
-              "yPct": 33.37563451776649,
-              "wPct": 1.4022140221402213,
-              "hPct": 1.903553299492386,
-              "cx": 50.49999999999999,
-              "cy": 270.49999999999994,
-              "w": 19,
-              "h": 15.000000000000002,
-              "parentId": "candidate_8b7ad297-09bd-4e66-9c26-2d4e617d155a"
-            }
-          },
-          {
-            "gtId": "c093",
-            "det": {
-              "xPct": 95.07593684258471,
-              "yPct": 28.53698976910386,
-              "wPct": 1.4660559085117664,
-              "hPct": 1.498530790383667,
-              "cx": 1298.2114729971902,
-              "cy": 230.77569069465005,
-              "w": 19.865057560334435,
-              "h": 11.808422628223296,
-              "parentId": "candidate_c0a8958e-e135-402c-b3f9-e72c18b29bf8"
-            }
-          },
-          {
-            "gtId": "c100",
-            "det": {
-              "xPct": 10.516605166051662,
-              "yPct": 55.32994923857868,
-              "wPct": 1.482795800150315,
-              "hPct": 1.831856452099543,
-              "cx": 152.54594154601838,
-              "cy": 443.21751442127214,
-              "w": 20.09188309203677,
-              "h": 14.4350288425444,
-              "parentId": "candidate_3a9acb55-cfb7-41c4-92e5-caaddefaf779"
-            }
-          },
-          {
-            "gtId": "c102",
-            "det": {
-              "xPct": 95.47903064121583,
-              "yPct": 73.6689830934696,
-              "wPct": 1.4837587087439768,
-              "hPct": 1.5241985335169284,
-              "cx": 1303.793330440215,
-              "cy": 586.5169289985972,
-              "w": 20.104930503480887,
-              "h": 12.010684444113396,
-              "parentId": "candidate_fa4eba02-98a1-4da5-855e-9b860d076bef"
-            }
-          },
-          {
-            "gtId": "c080",
-            "det": {
-              "xPct": 2.915129151291513,
-              "yPct": 26.713197969543145,
-              "wPct": 1.3284132841328413,
-              "hPct": 1.7766497461928936,
-              "cx": 48.5,
-              "cy": 217.49999999999997,
-              "w": 18,
-              "h": 14.000000000000002,
-              "parentId": "candidate_8b7ad297-09bd-4e66-9c26-2d4e617d155a"
-            }
-          },
-          {
-            "gtId": "c088",
-            "det": {
-              "xPct": 17.047970479704798,
-              "yPct": 91.87817258883248,
-              "wPct": 1.107011070110701,
-              "hPct": 2.4111675126903553,
-              "cx": 238.5,
-              "cy": 733.5,
-              "w": 14.999999999999998,
-              "h": 19,
-              "parentId": "candidate_27260da9-a779-4ec4-b6d0-343f240b16bf"
-            }
-          },
-          {
-            "gtId": "c092",
-            "det": {
-              "xPct": 92.45619343722275,
-              "yPct": 28.19157794917637,
-              "wPct": 1.4677879109871612,
-              "hPct": 1.2863811464180939,
-              "cx": 1262.7256841713063,
-              "cy": 227.21797595639708,
-              "w": 19.888526193876032,
-              "h": 10.13668343377458,
-              "parentId": "candidate_c0a8958e-e135-402c-b3f9-e72c18b29bf8"
-            }
-          },
-          {
-            "gtId": "c106",
-            "det": {
-              "xPct": 94.95873353713,
-              "yPct": 64.97691756002794,
-              "wPct": 1.4532951078388416,
-              "hPct": 1.520473537733662,
-              "cx": 1296.5369137837197,
-              "cy": 518.0087761116908,
-              "w": 19.692148711216305,
-              "h": 11.981331477341257,
-              "parentId": "candidate_fa4eba02-98a1-4da5-855e-9b860d076bef"
-            }
-          },
-          {
-            "gtId": "c098",
-            "det": {
-              "xPct": 5.627723419493328,
-              "yPct": 55.99982165166275,
-              "wPct": 1.0714803550553247,
-              "hPct": 2.559669784333427,
-              "cx": 83.5149317396344,
-              "cy": 451.36369356537614,
-              "w": 14.51855881099965,
-              "h": 20.170197900547407,
-              "parentId": "candidate_3a9acb55-cfb7-41c4-92e5-caaddefaf779"
-            }
-          },
-          {
-            "gtId": "c081",
-            "det": {
-              "xPct": 5.940959409594096,
-              "yPct": 26.649746192893403,
-              "wPct": 1.3284132841328413,
-              "hPct": 1.6497461928934012,
-              "cx": 89.49999999999999,
-              "cy": 216.5,
-              "w": 18,
-              "h": 13,
-              "parentId": "candidate_5c8d40d3-e144-4683-8f0c-e44d6f7a750f"
-            }
-          },
-          {
-            "gtId": "c105",
-            "det": {
-              "xPct": 92.32531323862221,
-              "yPct": 64.65062444730886,
-              "wPct": 1.451225259423446,
-              "hPct": 1.2854735493738132,
-              "cx": 1260.8400455159249,
-              "cy": 514.5116864293267,
-              "w": 19.664102265187694,
-              "h": 10.129531569065648,
-              "parentId": "candidate_fa4eba02-98a1-4da5-855e-9b860d076bef"
-            }
-          },
-          {
-            "gtId": "c097",
-            "det": {
-              "xPct": 5.351083669105728,
-              "yPct": 61.269689091605684,
-              "wPct": 0.8935454610225444,
-              "hPct": 2.5776085705727905,
-              "cx": 78.56095421481035,
-              "cy": 492.96092780990955,
-              "w": 12.107540996855477,
-              "h": 20.311555536113588,
-              "parentId": "candidate_3a9acb55-cfb7-41c4-92e5-caaddefaf779"
-            }
-          },
-          {
-            "gtId": "c087",
-            "det": {
-              "xPct": 35.68265682656826,
-              "yPct": 91.68781725888326,
-              "wPct": 1.1808118081180812,
-              "hPct": 2.284263959390863,
-              "cx": 491.49999999999994,
-              "cy": 731.5000000000001,
-              "w": 16,
-              "h": 18,
-              "parentId": "candidate_1fb80ed6-33c4-4b83-8a53-288f62a1a3a5"
-            }
-          },
-          {
-            "gtId": "c111",
-            "det": {
-              "xPct": 5.450240754344316,
-              "yPct": 75.1751818740198,
-              "wPct": 1.0637670753732609,
-              "hPct": 2.512223146228073,
-              "cx": 81.05778415701931,
-              "cy": 602.2785923634146,
-              "w": 14.414043871307685,
-              "h": 19.796318392277215,
-              "parentId": "candidate_e63023a7-1816-44ef-a2c7-408eba507327"
-            }
-          },
-          {
-            "gtId": "c082",
-            "det": {
-              "xPct": 6.014760147601476,
-              "yPct": 33.31218274111675,
-              "wPct": 1.4760147601476015,
-              "hPct": 2.030456852791878,
-              "cx": 91.5,
-              "cy": 270.49999999999994,
-              "w": 20,
-              "h": 15.999999999999998,
-              "parentId": "candidate_5c8d40d3-e144-4683-8f0c-e44d6f7a750f"
-            }
-          },
-          {
-            "gtId": "c091",
-            "det": {
-              "xPct": 90.40991758791561,
-              "yPct": 32.16355034547786,
-              "wPct": 0.8479926984427377,
-              "hPct": 2.590920200153976,
-              "cx": 1230.799533848206,
-              "cy": 263.6570023109722,
-              "w": 11.490301063899096,
-              "h": 20.416451177213332,
-              "parentId": "candidate_c0a8958e-e135-402c-b3f9-e72c18b29bf8"
-            }
-          },
-          {
-            "gtId": "c113",
-            "det": {
-              "xPct": 10.275168671732363,
-              "yPct": 74.55020297986643,
-              "wPct": 1.0519631653525807,
-              "hPct": 2.538860383295369,
-              "cx": 146.35558594723724,
-              "cy": 597.4587093915312,
-              "w": 14.25410089052747,
-              "h": 20.006219820367505,
-              "parentId": "candidate_e63023a7-1816-44ef-a2c7-408eba507327"
-            }
-          },
-          {
-            "gtId": "c085",
-            "det": {
-              "xPct": 27.26937269372694,
-              "yPct": 91.37055837563452,
-              "wPct": 1.1808118081180812,
-              "hPct": 2.4111675126903553,
-              "cx": 377.5,
-              "cy": 729.5,
-              "w": 16,
-              "h": 19,
-              "parentId": "candidate_71a5185a-2f20-4ea0-8049-639d1518bc73"
-            }
-          },
-          {
-            "gtId": "c086",
-            "det": {
-              "xPct": 39.926199261992615,
-              "yPct": 91.56091370558376,
-              "wPct": 1.107011070110701,
-              "hPct": 2.5380710659898478,
-              "cx": 548.4999999999999,
-              "cy": 731.5,
-              "w": 14.999999999999998,
-              "h": 20,
-              "parentId": "candidate_1fb80ed6-33c4-4b83-8a53-288f62a1a3a5"
-            }
-          },
-          {
-            "gtId": "c095",
-            "det": {
-              "xPct": 10.314490719120709,
-              "yPct": 63.31535535175068,
-              "wPct": 1.4370691870830277,
-              "hPct": 1.443913886498411,
-              "cx": 149.49749298657312,
-              "cy": 504.61402088459914,
-              "w": 19.472287484975027,
-              "h": 11.378041425607478,
-              "parentId": "candidate_3a9acb55-cfb7-41c4-92e5-caaddefaf779"
-            }
-          },
-          {
-            "gtId": "c108",
-            "det": {
-              "xPct": 10.037993428608697,
-              "yPct": 82.39056780007343,
-              "wPct": 1.4342136408110553,
-              "hPct": 1.3622965673000884,
-              "cx": 145.73160837414275,
-              "cy": 654.605122739741,
-              "w": 19.433594832989797,
-              "h": 10.734896950324698,
-              "parentId": "candidate_e63023a7-1816-44ef-a2c7-408eba507327"
-            }
-          },
-          {
-            "gtId": "c104",
-            "det": {
-              "xPct": 90.26669867342106,
-              "yPct": 68.67330141516285,
-              "wPct": 0.8255934765773961,
-              "hPct": 2.5510298944156578,
-              "cx": 1228.7071628286674,
-              "cy": 551.1966729354809,
-              "w": 11.186791607623718,
-              "h": 20.102115567995384,
-              "parentId": "candidate_fa4eba02-98a1-4da5-855e-9b860d076bef"
-            }
-          },
-          {
-            "gtId": "c008",
-            "det": {
-              "xPct": 87.74907749077491,
-              "yPct": 24.873096446700508,
-              "wPct": 2.5830258302583027,
-              "hPct": 3.6802030456852792,
-              "cx": 1206.5,
-              "cy": 210.50000000000003,
-              "w": 35,
-              "h": 29,
-              "parentId": "candidate_b8b4cb66-7edd-48b7-a966-1d0191b602fc"
-            }
-          },
-          {
-            "gtId": "c002",
-            "det": {
-              "xPct": 87.49077490774908,
-              "yPct": 12.5,
-              "wPct": 2.5092250922509227,
-              "hPct": 4.060913705583756,
-              "cx": 1202.5,
-              "cy": 114.5,
-              "w": 34.00000000000001,
-              "h": 31.999999999999996,
-              "parentId": "candidate_6421279c-42e5-49c2-87d1-2759e3dae44d"
-            }
-          },
-          {
-            "gtId": "c007",
-            "det": {
-              "xPct": 66.01476014760148,
-              "yPct": 24.746192893401016,
-              "wPct": 2.5092250922509227,
-              "hPct": 3.934010152284264,
-              "cx": 911.5,
-              "cy": 210.50000000000003,
-              "w": 34.00000000000001,
-              "h": 31,
-              "parentId": "candidate_f281a3b6-0443-46c7-a6f3-faff15061f89"
-            }
-          },
-          {
-            "gtId": "c009",
-            "det": {
-              "xPct": 70.14760147601477,
-              "yPct": 25.50761421319797,
-              "wPct": 2.5092250922509227,
-              "hPct": 3.934010152284264,
-              "cx": 967.5000000000001,
-              "cy": 216.5,
-              "w": 34.00000000000001,
-              "h": 31,
-              "parentId": "candidate_c58624ea-99ef-4dc3-9739-595177b95d91"
-            }
-          },
-          {
-            "gtId": "c004",
-            "det": {
-              "xPct": 66.01476014760148,
-              "yPct": 18.083756345177665,
-              "wPct": 2.5092250922509227,
-              "hPct": 4.060913705583756,
-              "cx": 911.5,
-              "cy": 158.5,
-              "w": 34.00000000000001,
-              "h": 31.999999999999996,
-              "parentId": "candidate_01b77005-34e4-435a-94d1-7f437b97e4dd"
-            }
-          },
-          {
-            "gtId": "c006",
-            "det": {
-              "xPct": 69.92619926199262,
-              "yPct": 19.35279187817259,
-              "wPct": 2.5092250922509227,
-              "hPct": 4.060913705583756,
-              "cx": 964.5,
-              "cy": 168.5,
-              "w": 34.00000000000001,
-              "h": 31.999999999999996,
-              "parentId": "candidate_17615cd5-61af-4151-943c-4b0f54d3714c"
-            }
-          },
-          {
-            "gtId": "c048",
-            "det": {
-              "xPct": 86.16236162361623,
-              "yPct": 54.441624365482234,
-              "wPct": 2.6568265682656826,
-              "hPct": 4.187817258883249,
-              "cx": 1185.5,
-              "cy": 445.49999999999994,
-              "w": 36,
-              "h": 33,
-              "parentId": "candidate_4412e00f-fe38-41fd-87cd-8d96266d9107"
-            }
-          },
-          {
-            "gtId": "c062",
-            "det": {
-              "xPct": 40.44280442804428,
-              "yPct": 62.30964467005076,
-              "wPct": 2.2878228782287824,
-              "hPct": 4.695431472081219,
-              "cx": 563.5,
-              "cy": 509.5,
-              "w": 31.000000000000004,
-              "h": 37,
-              "parentId": "candidate_4e3d34b4-df0f-43f9-beba-83aa6c1adf75"
-            }
-          },
-          {
-            "gtId": "c005",
-            "det": {
-              "xPct": 87.71217712177122,
-              "yPct": 18.083756345177665,
-              "wPct": 2.5092250922509227,
-              "hPct": 4.060913705583756,
-              "cx": 1205.5,
-              "cy": 158.5,
-              "w": 34.00000000000001,
-              "h": 31.999999999999996,
-              "parentId": "candidate_caf992de-c446-4de5-830b-a344210b5918"
-            }
-          },
-          {
-            "gtId": "c003",
-            "det": {
-              "xPct": 69.92619926199262,
-              "yPct": 12.690355329949238,
-              "wPct": 2.5092250922509227,
-              "hPct": 4.187817258883249,
-              "cx": 964.5,
-              "cy": 116.50000000000001,
-              "w": 34.00000000000001,
-              "h": 33,
-              "parentId": "candidate_731c1cf9-cc63-45c5-86bb-a00a5d80892e"
-            }
-          },
-          {
-            "gtId": "c020",
-            "det": {
-              "xPct": 68.81918819188192,
-              "yPct": 43.46446700507614,
-              "wPct": 2.6568265682656826,
-              "hPct": 4.060913705583756,
-              "cx": 950.4999999999999,
-              "cy": 358.5,
-              "w": 36,
-              "h": 31.999999999999996,
-              "parentId": "candidate_f74044c4-755a-4f16-905c-63070300232b"
-            }
-          },
-          {
-            "gtId": "c016",
-            "det": {
-              "xPct": 75.16605166051662,
-              "yPct": 43.02030456852792,
-              "wPct": 2.6568265682656826,
-              "hPct": 4.187817258883249,
-              "cx": 1036.5,
-              "cy": 355.49999999999994,
-              "w": 36,
-              "h": 33,
-              "parentId": "candidate_f74044c4-755a-4f16-905c-63070300232b"
-            }
-          },
-          {
-            "gtId": "c053",
-            "det": {
-              "xPct": 51.918819188191875,
-              "yPct": 59.77157360406091,
-              "wPct": 2.6568265682656826,
-              "hPct": 4.187817258883249,
-              "cx": 721.5,
-              "cy": 487.49999999999994,
-              "w": 36,
-              "h": 33,
-              "parentId": "candidate_b55c23f0-79a8-44aa-82f0-653296e7279a"
-            }
-          },
-          {
-            "gtId": "c037",
-            "det": {
-              "xPct": 19.74169741697417,
-              "yPct": 51.01522842639594,
-              "wPct": 2.3616236162361623,
-              "hPct": 4.695431472081219,
-              "cx": 283.49999999999994,
-              "cy": 420.50000000000006,
-              "w": 32,
-              "h": 37,
-              "parentId": "candidate_df9213ad-c676-4527-b9b0-06c49f3287da"
-            }
-          },
-          {
-            "gtId": "c018",
-            "det": {
-              "xPct": 86.23616236162361,
-              "yPct": 43.46446700507614,
-              "wPct": 2.6568265682656826,
-              "hPct": 4.060913705583756,
-              "cx": 1186.4999999999998,
-              "cy": 358.5,
-              "w": 36,
-              "h": 31.999999999999996,
-              "parentId": "candidate_9d19a693-5b6a-4900-a1e8-e52283b74841"
-            }
-          },
-          {
-            "gtId": "c063",
-            "det": {
-              "xPct": 37.74907749077491,
-              "yPct": 62.43654822335025,
-              "wPct": 2.3616236162361623,
-              "hPct": 4.695431472081219,
-              "cx": 527.5,
-              "cy": 510.49999999999994,
-              "w": 32,
-              "h": 37,
-              "parentId": "candidate_9bd80ed5-80ee-4c23-8f82-e5853ff1c88e"
-            }
-          },
-          {
-            "gtId": "c040",
-            "det": {
-              "xPct": 34.57564575645756,
-              "yPct": 51.01522842639594,
-              "wPct": 2.3616236162361623,
-              "hPct": 4.695431472081219,
-              "cx": 484.4999999999999,
-              "cy": 420.50000000000006,
-              "w": 32,
-              "h": 37,
-              "parentId": "candidate_9bd80ed5-80ee-4c23-8f82-e5853ff1c88e"
-            }
-          },
-          {
-            "gtId": "c041",
-            "det": {
-              "xPct": 37.60147601476015,
-              "yPct": 51.07868020304569,
-              "wPct": 2.3616236162361623,
-              "hPct": 4.568527918781726,
-              "cx": 525.5,
-              "cy": 420.50000000000006,
-              "w": 32,
-              "h": 36,
-              "parentId": "candidate_9bd80ed5-80ee-4c23-8f82-e5853ff1c88e"
-            }
-          },
-          {
-            "gtId": "c025",
-            "det": {
-              "xPct": 91.8450184501845,
-              "yPct": 45.24111675126903,
-              "wPct": 2.3616236162361623,
-              "hPct": 4.822335025380711,
-              "cx": 1260.5,
-              "cy": 375.5,
-              "w": 32,
-              "h": 38,
-              "parentId": "candidate_0d68b3c5-49ba-4cda-9e3d-6331471343e7"
-            }
-          },
-          {
-            "gtId": "c032",
-            "det": {
-              "xPct": 51.80811808118081,
-              "yPct": 49.42893401015229,
-              "wPct": 2.730627306273063,
-              "hPct": 4.060913705583756,
-              "cx": 720.5,
-              "cy": 405.5,
-              "w": 37.00000000000001,
-              "h": 31.999999999999996,
-              "parentId": "candidate_21def250-611e-49d8-a640-c855b54cc665"
-            }
-          },
-          {
-            "gtId": "c064",
-            "det": {
-              "xPct": 21.25461254612546,
-              "yPct": 70.17766497461929,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.695431472081219,
-              "cx": 304.5,
-              "cy": 571.5,
-              "w": 33,
-              "h": 37,
-              "parentId": "candidate_7519af2c-f0c8-4dcd-b721-ad455f139594"
-            }
-          },
-          {
-            "gtId": "c039",
-            "det": {
-              "xPct": 40.405904059040594,
-              "yPct": 51.01522842639594,
-              "wPct": 2.3616236162361623,
-              "hPct": 4.695431472081219,
-              "cx": 563.5,
-              "cy": 420.50000000000006,
-              "w": 32,
-              "h": 37,
-              "parentId": "candidate_4e3d34b4-df0f-43f9-beba-83aa6c1adf75"
-            }
-          },
-          {
-            "gtId": "c010",
-            "det": {
-              "xPct": 62.73062730627307,
-              "yPct": 38.07106598984771,
-              "wPct": 2.730627306273063,
-              "hPct": 3.934010152284264,
-              "cx": 868.5000000000001,
-              "cy": 315.49999999999994,
-              "w": 37.00000000000001,
-              "h": 31,
-              "parentId": "candidate_2486d774-9ba8-433b-9421-632681d7e016"
-            }
-          },
-          {
             "gtId": "c001",
             "det": {
               "xPct": 65.86715867158671,
               "yPct": 12.055837563451776,
               "wPct": 2.5092250922509227,
               "hPct": 4.187817258883249,
-              "cx": 909.4999999999999,
-              "cy": 111.5,
+              "cx": 892.5,
+              "cy": 95,
               "w": 34.00000000000001,
               "h": 33,
-              "parentId": "candidate_3cc3d293-9ffd-46d0-8107-dbcc1645e046"
-            }
-          },
-          {
-            "gtId": "c049",
-            "det": {
-              "xPct": 79.74169741697416,
-              "yPct": 55.0761421319797,
-              "wPct": 2.6568265682656826,
-              "hPct": 4.187817258883249,
-              "cx": 1098.4999999999998,
-              "cy": 450.5,
-              "w": 36,
-              "h": 33,
-              "parentId": "candidate_4412e00f-fe38-41fd-87cd-8d96266d9107"
-            }
-          },
-          {
-            "gtId": "c017",
-            "det": {
-              "xPct": 62.69372693726937,
-              "yPct": 43.2741116751269,
-              "wPct": 2.6568265682656826,
-              "hPct": 4.187817258883249,
-              "cx": 867.5,
-              "cy": 357.49999999999994,
-              "w": 36,
-              "h": 33,
-              "parentId": "candidate_f5bb8c02-b110-4c1b-8943-0059e436c52f"
-            }
-          },
-          {
-            "gtId": "c033",
-            "det": {
-              "xPct": 45.46125461254613,
-              "yPct": 49.68274111675127,
-              "wPct": 2.730627306273063,
-              "hPct": 4.314720812182741,
-              "cx": 634.5,
-              "cy": 408.5,
-              "w": 37.00000000000001,
-              "h": 34,
-              "parentId": "candidate_21def250-611e-49d8-a640-c855b54cc665"
-            }
-          },
-          {
-            "gtId": "c065",
-            "det": {
-              "xPct": 17.822878228782287,
-              "yPct": 70.24111675126903,
-              "wPct": 2.3616236162361623,
-              "hPct": 4.568527918781726,
-              "cx": 257.5,
-              "cy": 571.5,
-              "w": 32,
-              "h": 36,
-              "parentId": "candidate_c14a46c9-ffb7-4df3-953e-0b344e5271ab"
-            }
-          },
-          {
-            "gtId": "c066",
-            "det": {
-              "xPct": 24.944649446494466,
-              "yPct": 70.24111675126903,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.568527918781726,
-              "cx": 354.5,
-              "cy": 571.5,
-              "w": 33,
-              "h": 36,
-              "parentId": "candidate_dc8d5a21-b331-4841-a018-c6afc607578b"
-            }
-          },
-          {
-            "gtId": "c019",
-            "det": {
-              "xPct": 56.34686346863469,
-              "yPct": 43.59137055837564,
-              "wPct": 2.6568265682656826,
-              "hPct": 4.314720812182741,
-              "cx": 781.5000000000001,
-              "cy": 360.50000000000006,
-              "w": 36,
-              "h": 34,
-              "parentId": "candidate_a1fd892e-73d7-44d6-8aad-c1f305ec0fbd"
-            }
-          },
-          {
-            "gtId": "c023",
-            "det": {
-              "xPct": 45.535055350553506,
-              "yPct": 44.60659898477157,
-              "wPct": 2.730627306273063,
-              "hPct": 4.060913705583756,
-              "cx": 635.5,
-              "cy": 367.5,
-              "w": 37.00000000000001,
-              "h": 31.999999999999996,
-              "parentId": "candidate_cf41aa93-c264-412a-bc41-ef0cf0311ab4"
-            }
-          },
-          {
-            "gtId": "c030",
-            "det": {
-              "xPct": 86.12546125461255,
-              "yPct": 48.79441624365482,
-              "wPct": 2.730627306273063,
-              "hPct": 4.060913705583756,
-              "cx": 1185.5,
-              "cy": 400.5,
-              "w": 37.00000000000001,
-              "h": 31.999999999999996,
-              "parentId": "candidate_9d19a693-5b6a-4900-a1e8-e52283b74841"
-            }
-          },
-          {
-            "gtId": "c035",
-            "det": {
-              "xPct": 25.756457564575648,
-              "yPct": 50.76142131979695,
-              "wPct": 2.2878228782287824,
-              "hPct": 4.695431472081219,
-              "cx": 364.5,
-              "cy": 418.5,
-              "w": 31.000000000000004,
-              "h": 37,
-              "parentId": "candidate_26e22a91-10f3-4d18-9440-184d6d77f599"
-            }
-          },
-          {
-            "gtId": "c059",
-            "det": {
-              "xPct": 22.98892988929889,
-              "yPct": 62.055837563451774,
-              "wPct": 2.3616236162361623,
-              "hPct": 4.695431472081219,
-              "cx": 327.5,
-              "cy": 507.5,
-              "w": 32,
-              "h": 37,
-              "parentId": "candidate_df9213ad-c676-4527-b9b0-06c49f3287da"
-            }
-          },
-          {
-            "gtId": "c069",
-            "det": {
-              "xPct": 37.19557195571956,
-              "yPct": 71.06598984771574,
-              "wPct": 2.2878228782287824,
-              "hPct": 4.695431472081219,
-              "cx": 519.5,
-              "cy": 578.5,
-              "w": 31.000000000000004,
-              "h": 37,
-              "parentId": "candidate_3f635984-f3bd-4544-a5b2-2afd8bbc4764"
-            }
-          },
-          {
-            "gtId": "c057",
-            "det": {
-              "xPct": 16.974169741697416,
-              "yPct": 61.99238578680203,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.568527918781726,
-              "cx": 246.5,
-              "cy": 506.5000000000001,
-              "w": 33,
-              "h": 36,
-              "parentId": "candidate_b549c3b0-558b-4c38-8674-f6336d12ddd3"
-            }
-          },
-          {
-            "gtId": "c042",
-            "det": {
-              "xPct": 68.92988929889299,
-              "yPct": 53.36294416243654,
-              "wPct": 2.730627306273063,
-              "hPct": 4.060913705583756,
-              "cx": 952.4999999999999,
-              "cy": 436.49999999999994,
-              "w": 37.00000000000001,
-              "h": 31.999999999999996,
-              "parentId": "candidate_09b841d5-e30b-4ccb-9629-808e4c6fdb75"
-            }
-          },
-          {
-            "gtId": "c031",
-            "det": {
-              "xPct": 79.88929889298892,
-              "yPct": 49.555837563451774,
-              "wPct": 2.6568265682656826,
-              "hPct": 4.060913705583756,
-              "cx": 1100.4999999999998,
-              "cy": 406.49999999999994,
-              "w": 36,
-              "h": 31.999999999999996,
-              "parentId": "candidate_4412e00f-fe38-41fd-87cd-8d96266d9107"
-            }
-          },
-          {
-            "gtId": "c029",
-            "det": {
-              "xPct": 68.85608856088561,
-              "yPct": 48.60406091370558,
-              "wPct": 2.730627306273063,
-              "hPct": 4.187817258883249,
-              "cx": 951.4999999999999,
-              "cy": 399.49999999999994,
-              "w": 37.00000000000001,
-              "h": 33,
-              "parentId": "candidate_f74044c4-755a-4f16-905c-63070300232b"
-            }
-          },
-          {
-            "gtId": "c015",
-            "det": {
-              "xPct": 79.85239852398523,
-              "yPct": 38.83248730964467,
-              "wPct": 2.730627306273063,
-              "hPct": 4.187817258883249,
-              "cx": 1100.4999999999998,
-              "cy": 322.5,
-              "w": 37.00000000000001,
-              "h": 33,
-              "parentId": "candidate_56ebf054-5281-4ee7-8466-297735811635"
-            }
-          },
-          {
-            "gtId": "c021",
-            "det": {
-              "xPct": 79.85239852398523,
-              "yPct": 44.03553299492386,
-              "wPct": 2.730627306273063,
-              "hPct": 4.187817258883249,
-              "cx": 1100.4999999999998,
-              "cy": 363.50000000000006,
-              "w": 37.00000000000001,
-              "h": 33,
-              "parentId": "candidate_9d19a693-5b6a-4900-a1e8-e52283b74841"
-            }
-          },
-          {
-            "gtId": "c044",
-            "det": {
-              "xPct": 56.457564575645755,
-              "yPct": 53.68020304568528,
-              "wPct": 2.730627306273063,
-              "hPct": 4.187817258883249,
-              "cx": 783.4999999999999,
-              "cy": 439.5,
-              "w": 37.00000000000001,
-              "h": 33,
-              "parentId": "candidate_003e88e8-bf70-49a5-a63e-6e3e0848bd4c"
-            }
-          },
-          {
-            "gtId": "c075",
-            "det": {
-              "xPct": 37.41697416974169,
-              "yPct": 81.97969543147208,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.695431472081219,
-              "cx": 523.4999999999999,
-              "cy": 664.5,
-              "w": 33,
-              "h": 37,
-              "parentId": "candidate_3f635984-f3bd-4544-a5b2-2afd8bbc4764"
-            }
-          },
-          {
-            "gtId": "c011",
-            "det": {
-              "xPct": 75.2029520295203,
-              "yPct": 38.07106598984771,
-              "wPct": 2.730627306273063,
-              "hPct": 4.187817258883249,
-              "cx": 1037.5,
-              "cy": 316.49999999999994,
-              "w": 37.00000000000001,
-              "h": 33,
-              "parentId": "candidate_855a0946-5613-4250-8243-56310f1c2e8f"
-            }
-          },
-          {
-            "gtId": "c052",
-            "det": {
-              "xPct": 45.535055350553506,
-              "yPct": 59.77157360406091,
-              "wPct": 2.730627306273063,
-              "hPct": 4.187817258883249,
-              "cx": 635.5,
-              "cy": 487.49999999999994,
-              "w": 37.00000000000001,
-              "h": 33,
-              "parentId": "candidate_b55c23f0-79a8-44aa-82f0-653296e7279a"
-            }
-          },
-          {
-            "gtId": "c034",
-            "det": {
-              "xPct": 22.804428044280442,
-              "yPct": 50.76142131979695,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.695431472081219,
-              "cx": 325.5,
-              "cy": 418.5,
-              "w": 33,
-              "h": 37,
-              "parentId": "candidate_df9213ad-c676-4527-b9b0-06c49f3287da"
-            }
-          },
-          {
-            "gtId": "c036",
-            "det": {
-              "xPct": 16.789667896678967,
-              "yPct": 50.8248730964467,
-              "wPct": 2.5092250922509227,
-              "hPct": 4.822335025380711,
-              "cx": 244.5,
-              "cy": 419.5,
-              "w": 34.00000000000001,
-              "h": 38,
-              "parentId": "candidate_b549c3b0-558b-4c38-8674-f6336d12ddd3"
-            }
-          },
-          {
-            "gtId": "c050",
-            "det": {
-              "xPct": 92.32472324723247,
-              "yPct": 55.710659898477154,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.695431472081219,
-              "cx": 1267.5,
-              "cy": 457.5,
-              "w": 33,
-              "h": 37,
-              "parentId": "candidate_0d68b3c5-49ba-4cda-9e3d-6331471343e7"
-            }
-          },
-          {
-            "gtId": "c051",
-            "det": {
-              "xPct": 95.83025830258303,
-              "yPct": 55.647208121827404,
-              "wPct": 2.3616236162361623,
-              "hPct": 4.568527918781726,
-              "cx": 1314.5,
-              "cy": 456.5,
-              "w": 32,
-              "h": 36,
-              "parentId": "candidate_c8221a85-fa4e-4deb-9f49-ddbdb4ab5b44"
-            }
-          },
-          {
-            "gtId": "c054",
-            "det": {
-              "xPct": 86.12546125461255,
-              "yPct": 59.89847715736041,
-              "wPct": 2.730627306273063,
-              "hPct": 4.187817258883249,
-              "cx": 1185.5,
-              "cy": 488.5,
-              "w": 37.00000000000001,
-              "h": 33,
-              "parentId": "candidate_ca151699-b6b3-455c-ab90-fcd60a457d29"
-            }
-          },
-          {
-            "gtId": "c070",
-            "det": {
-              "xPct": 40.29520295202952,
-              "yPct": 71.06598984771574,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.695431472081219,
-              "cx": 562.5,
-              "cy": 578.5,
-              "w": 33,
-              "h": 37,
-              "parentId": "candidate_3f635984-f3bd-4544-a5b2-2afd8bbc4764"
-            }
-          },
-          {
-            "gtId": "c078",
-            "det": {
-              "xPct": 40.59040590405904,
-              "yPct": 82.10659898477158,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.695431472081219,
-              "cx": 566.4999999999999,
-              "cy": 665.5000000000001,
-              "w": 33,
-              "h": 37,
-              "parentId": "candidate_3f635984-f3bd-4544-a5b2-2afd8bbc4764"
-            }
-          },
-          {
-            "gtId": "c060",
-            "det": {
-              "xPct": 31.69741697416974,
-              "yPct": 62.30964467005076,
-              "wPct": 2.5092250922509227,
-              "hPct": 4.695431472081219,
-              "cx": 446.50000000000006,
-              "cy": 509.5,
-              "w": 34.00000000000001,
-              "h": 37,
-              "parentId": "candidate_c91e5132-eb9a-4453-92e7-98310a134512"
-            }
-          },
-          {
-            "gtId": "c038",
-            "det": {
-              "xPct": 31.660516605166052,
-              "yPct": 51.01522842639594,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.695431472081219,
-              "cx": 445.5,
-              "cy": 420.50000000000006,
-              "w": 33,
-              "h": 37,
-              "parentId": "candidate_c91e5132-eb9a-4453-92e7-98310a134512"
-            }
-          },
-          {
-            "gtId": "c077",
-            "det": {
-              "xPct": 34.391143911439116,
-              "yPct": 82.10659898477158,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.695431472081219,
-              "cx": 482.5,
-              "cy": 665.5000000000001,
-              "w": 33,
-              "h": 37,
-              "parentId": "candidate_7f3d763f-c574-4537-9358-889d7771b9d3"
-            }
-          },
-          {
-            "gtId": "c013",
-            "det": {
-              "xPct": 68.92988929889299,
-              "yPct": 38.26142131979696,
-              "wPct": 2.730627306273063,
-              "hPct": 4.060913705583756,
-              "cx": 952.4999999999999,
-              "cy": 317.5,
-              "w": 37.00000000000001,
-              "h": 31.999999999999996,
-              "parentId": "candidate_855a0946-5613-4250-8243-56310f1c2e8f"
-            }
-          },
-          {
-            "gtId": "c074",
-            "det": {
-              "xPct": 21.476014760147603,
-              "yPct": 81.53553299492386,
-              "wPct": 2.2878228782287824,
-              "hPct": 4.822335025380711,
-              "cx": 306.5,
-              "cy": 661.5,
-              "w": 31.000000000000004,
-              "h": 38,
-              "parentId": "candidate_7519af2c-f0c8-4dcd-b721-ad455f139594"
-            }
-          },
-          {
-            "gtId": "c056",
-            "det": {
-              "xPct": 25.71955719557196,
-              "yPct": 62.055837563451774,
-              "wPct": 2.3616236162361623,
-              "hPct": 4.695431472081219,
-              "cx": 364.5,
-              "cy": 507.5,
-              "w": 32,
-              "h": 37,
-              "parentId": "candidate_26e22a91-10f3-4d18-9440-184d6d77f599"
-            }
-          },
-          {
-            "gtId": "c026",
-            "det": {
-              "xPct": 75.31365313653137,
-              "yPct": 48.47715736040609,
-              "wPct": 2.6568265682656826,
-              "hPct": 4.441624365482234,
-              "cx": 1038.5,
-              "cy": 399.50000000000006,
-              "w": 36,
-              "h": 35,
-              "parentId": "candidate_f74044c4-755a-4f16-905c-63070300232b"
-            }
-          },
-          {
-            "gtId": "c055",
-            "det": {
-              "xPct": 79.70479704797047,
-              "yPct": 60.0253807106599,
-              "wPct": 2.730627306273063,
-              "hPct": 4.441624365482234,
-              "cx": 1098.4999999999998,
-              "cy": 490.50000000000006,
-              "w": 37.00000000000001,
-              "h": 35,
-              "parentId": "candidate_ca151699-b6b3-455c-ab90-fcd60a457d29"
-            }
-          },
-          {
-            "gtId": "c012",
-            "det": {
-              "xPct": 56.457564575645755,
-              "yPct": 38.45177664974619,
-              "wPct": 2.730627306273063,
-              "hPct": 4.187817258883249,
-              "cx": 783.4999999999999,
-              "cy": 319.5,
-              "w": 37.00000000000001,
-              "h": 33,
-              "parentId": "candidate_a1fd892e-73d7-44d6-8aad-c1f305ec0fbd"
-            }
-          },
-          {
-            "gtId": "c071",
-            "det": {
-              "xPct": 43.50553505535055,
-              "yPct": 71.06598984771574,
-              "wPct": 2.5092250922509227,
-              "hPct": 4.695431472081219,
-              "cx": 606.5,
-              "cy": 578.5,
-              "w": 34.00000000000001,
-              "h": 37,
-              "parentId": "candidate_de7c2d1c-e9c2-46b1-b065-01193421209c"
-            }
-          },
-          {
-            "gtId": "c014",
-            "det": {
-              "xPct": 86.12546125461255,
-              "yPct": 38.642131979695435,
-              "wPct": 2.730627306273063,
-              "hPct": 4.314720812182741,
-              "cx": 1185.5,
-              "cy": 321.50000000000006,
-              "w": 37.00000000000001,
-              "h": 34,
-              "parentId": "candidate_56ebf054-5281-4ee7-8466-297735811635"
-            }
-          },
-          {
-            "gtId": "c068",
-            "det": {
-              "xPct": 31.365313653136536,
-              "yPct": 71.06598984771574,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.695431472081219,
-              "cx": 441.50000000000006,
-              "cy": 578.5,
-              "w": 33,
-              "h": 37,
-              "parentId": "candidate_defb6c1b-8f54-4c7a-9997-eb498f84d89c"
-            }
-          },
-          {
-            "gtId": "c028",
-            "det": {
-              "xPct": 62.80442804428045,
-              "yPct": 48.66751269035533,
-              "wPct": 2.730627306273063,
-              "hPct": 4.314720812182741,
-              "cx": 869.5000000000001,
-              "cy": 400.5,
-              "w": 37.00000000000001,
-              "h": 34,
-              "parentId": "candidate_f5bb8c02-b110-4c1b-8943-0059e436c52f"
-            }
-          },
-          {
-            "gtId": "c072",
-            "det": {
-              "xPct": 17.859778597785976,
-              "yPct": 81.28172588832487,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.822335025380711,
-              "cx": 258.5,
-              "cy": 659.5,
-              "w": 33,
-              "h": 38,
-              "parentId": "candidate_c14a46c9-ffb7-4df3-953e-0b344e5271ab"
-            }
-          },
-          {
-            "gtId": "c045",
-            "det": {
-              "xPct": 62.80442804428045,
-              "yPct": 53.61675126903553,
-              "wPct": 2.730627306273063,
-              "hPct": 4.060913705583756,
-              "cx": 869.5000000000001,
-              "cy": 438.49999999999994,
-              "w": 37.00000000000001,
-              "h": 31.999999999999996,
-              "parentId": "candidate_003e88e8-bf70-49a5-a63e-6e3e0848bd4c"
-            }
-          },
-          {
-            "gtId": "c076",
-            "det": {
-              "xPct": 31.365313653136536,
-              "yPct": 82.10659898477158,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.695431472081219,
-              "cx": 441.50000000000006,
-              "cy": 665.5000000000001,
-              "w": 33,
-              "h": 37,
-              "parentId": "candidate_defb6c1b-8f54-4c7a-9997-eb498f84d89c"
-            }
-          },
-          {
-            "gtId": "c073",
-            "det": {
-              "xPct": 25.129151291512912,
-              "yPct": 81.40862944162437,
-              "wPct": 2.3616236162361623,
-              "hPct": 4.822335025380711,
-              "cx": 356.4999999999999,
-              "cy": 660.5000000000001,
-              "w": 32,
-              "h": 38,
-              "parentId": "candidate_dc8d5a21-b331-4841-a018-c6afc607578b"
-            }
-          },
-          {
-            "gtId": "c046",
-            "det": {
-              "xPct": 51.918819188191875,
-              "yPct": 54.82233502538071,
-              "wPct": 2.6568265682656826,
-              "hPct": 4.441624365482234,
-              "cx": 721.5,
-              "cy": 449.5,
-              "w": 36,
-              "h": 35,
-              "parentId": "candidate_21def250-611e-49d8-a640-c855b54cc665"
-            }
-          },
-          {
-            "gtId": "c024",
-            "det": {
-              "xPct": 95.38745387453874,
-              "yPct": 45.17766497461929,
-              "wPct": 2.5092250922509227,
-              "hPct": 4.695431472081219,
-              "cx": 1309.4999999999998,
-              "cy": 374.50000000000006,
-              "w": 34.00000000000001,
-              "h": 37,
-              "parentId": "candidate_c8221a85-fa4e-4deb-9f49-ddbdb4ab5b44"
-            }
-          },
-          {
-            "gtId": "c047",
-            "det": {
-              "xPct": 45.535055350553506,
-              "yPct": 54.9492385786802,
-              "wPct": 2.730627306273063,
-              "hPct": 4.187817258883249,
-              "cx": 635.5,
-              "cy": 449.5,
-              "w": 37.00000000000001,
-              "h": 33,
-              "parentId": "candidate_21def250-611e-49d8-a640-c855b54cc665"
-            }
-          },
-          {
-            "gtId": "c027",
-            "det": {
-              "xPct": 56.38376383763838,
-              "yPct": 48.66751269035533,
-              "wPct": 2.730627306273063,
-              "hPct": 4.314720812182741,
-              "cx": 782.5000000000001,
-              "cy": 400.5,
-              "w": 37.00000000000001,
-              "h": 34,
-              "parentId": "candidate_f5bb8c02-b110-4c1b-8943-0059e436c52f"
-            }
-          },
-          {
-            "gtId": "c022",
-            "det": {
-              "xPct": 51.881918819188186,
-              "yPct": 44.35279187817259,
-              "wPct": 2.730627306273063,
-              "hPct": 4.314720812182741,
-              "cx": 721.5,
-              "cy": 366.5,
-              "w": 37.00000000000001,
-              "h": 34,
-              "parentId": "candidate_cf41aa93-c264-412a-bc41-ef0cf0311ab4"
-            }
-          },
-          {
-            "gtId": "c067",
-            "det": {
-              "xPct": 34.02214022140221,
-              "yPct": 70.8756345177665,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.822335025380711,
-              "cx": 477.49999999999994,
-              "cy": 577.5,
-              "w": 33,
-              "h": 38,
-              "parentId": "candidate_7f3d763f-c574-4537-9358-889d7771b9d3"
-            }
-          },
-          {
-            "gtId": "c058",
-            "det": {
-              "xPct": 19.963099630996307,
-              "yPct": 62.119289340101524,
-              "wPct": 2.5092250922509227,
-              "hPct": 4.822335025380711,
-              "cx": 287.5,
-              "cy": 508.50000000000006,
-              "w": 34.00000000000001,
-              "h": 38,
-              "parentId": "candidate_df9213ad-c676-4527-b9b0-06c49f3287da"
-            }
-          },
-          {
-            "gtId": "c079",
-            "det": {
-              "xPct": 43.50553505535055,
-              "yPct": 82.36040609137056,
-              "wPct": 2.5092250922509227,
-              "hPct": 4.695431472081219,
-              "cx": 606.5,
-              "cy": 667.5000000000001,
-              "w": 34.00000000000001,
-              "h": 37,
-              "parentId": "candidate_de7c2d1c-e9c2-46b1-b065-01193421209c"
-            }
-          },
-          {
-            "gtId": "c061",
-            "det": {
-              "xPct": 34.83394833948339,
-              "yPct": 62.3730964467005,
-              "wPct": 2.4354243542435423,
-              "hPct": 4.822335025380711,
-              "cx": 488.49999999999994,
-              "cy": 510.49999999999994,
-              "w": 33,
-              "h": 38,
-              "parentId": "candidate_9bd80ed5-80ee-4c23-8f82-e5853ff1c88e"
+              "parentId": "candidate_33382f6f-2757-48d9-a940-bf7367ba92ae"
             }
           },
           {
@@ -2320,11 +873,1453 @@
               "yPct": 53.55329949238579,
               "wPct": 2.730627306273063,
               "hPct": 4.441624365482234,
-              "cx": 1038.5,
-              "cy": 439.5,
+              "cx": 1020,
+              "cy": 422,
               "w": 37.00000000000001,
               "h": 35,
-              "parentId": "candidate_09b841d5-e30b-4ccb-9629-808e4c6fdb75"
+              "parentId": "candidate_c9b792e9-2362-4884-8930-f04eb189e23e"
+            }
+          },
+          {
+            "gtId": "c061",
+            "det": {
+              "xPct": 34.83394833948339,
+              "yPct": 62.3730964467005,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.822335025380711,
+              "cx": 471.99999999999994,
+              "cy": 491.5,
+              "w": 33,
+              "h": 38,
+              "parentId": "candidate_a40f7af5-ff5b-497b-a846-14ef8d30f3b8"
+            }
+          },
+          {
+            "gtId": "c045",
+            "det": {
+              "xPct": 62.80442804428045,
+              "yPct": 53.61675126903553,
+              "wPct": 2.730627306273063,
+              "hPct": 4.060913705583756,
+              "cx": 851.0000000000001,
+              "cy": 422.5,
+              "w": 37.00000000000001,
+              "h": 31.999999999999996,
+              "parentId": "candidate_73421609-d1ba-4a87-84b5-c9444af22dc7"
+            }
+          },
+          {
+            "gtId": "c079",
+            "det": {
+              "xPct": 43.50553505535055,
+              "yPct": 82.36040609137056,
+              "wPct": 2.5092250922509227,
+              "hPct": 4.695431472081219,
+              "cx": 589.4999999999999,
+              "cy": 649,
+              "w": 34.00000000000001,
+              "h": 37,
+              "parentId": "candidate_a7aca417-a9f8-4374-8094-ddc3c8774cd9"
+            }
+          },
+          {
+            "gtId": "c051",
+            "det": {
+              "xPct": 95.83025830258303,
+              "yPct": 55.647208121827404,
+              "wPct": 2.3616236162361623,
+              "hPct": 4.568527918781726,
+              "cx": 1298.5000000000002,
+              "cy": 438.49999999999994,
+              "w": 32,
+              "h": 36,
+              "parentId": "candidate_67aad9eb-e04e-4d3f-b940-4a009a46b74d"
+            }
+          },
+          {
+            "gtId": "c092",
+            "det": {
+              "xPct": 92.45619343722275,
+              "yPct": 28.19157794917637,
+              "wPct": 1.4677879109871612,
+              "hPct": 1.2863811464180939,
+              "cx": 1252.7814210743684,
+              "cy": 222.14963423950982,
+              "w": 19.888526193876032,
+              "h": 10.13668343377458,
+              "parentId": "candidate_d461a3e9-961e-4933-90d4-51fa7d231417"
+            }
+          },
+          {
+            "gtId": "c106",
+            "det": {
+              "xPct": 94.95873353713,
+              "yPct": 64.97691756002794,
+              "wPct": 1.4532951078388416,
+              "hPct": 1.520473537733662,
+              "cx": 1286.6908394281115,
+              "cy": 512.0181103730202,
+              "w": 19.692148711216305,
+              "h": 11.981331477341257,
+              "parentId": "candidate_7e658022-e551-4be7-af8e-a683bab7d70e"
+            }
+          },
+          {
+            "gtId": "c076",
+            "det": {
+              "xPct": 31.365313653136536,
+              "yPct": 82.10659898477158,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.695431472081219,
+              "cx": 425.00000000000006,
+              "cy": 647.0000000000001,
+              "w": 33,
+              "h": 37,
+              "parentId": "candidate_73060612-f00f-44e1-8bc6-a3e6b8ba39b7"
+            }
+          },
+          {
+            "gtId": "c005",
+            "det": {
+              "xPct": 87.71217712177122,
+              "yPct": 18.083756345177665,
+              "wPct": 2.5092250922509227,
+              "hPct": 4.060913705583756,
+              "cx": 1188.5,
+              "cy": 142.5,
+              "w": 34.00000000000001,
+              "h": 31.999999999999996,
+              "parentId": "candidate_11cc30a0-1163-496c-be67-1a4b75123c9f"
+            }
+          },
+          {
+            "gtId": "c012",
+            "det": {
+              "xPct": 56.457564575645755,
+              "yPct": 38.45177664974619,
+              "wPct": 2.730627306273063,
+              "hPct": 4.187817258883249,
+              "cx": 765,
+              "cy": 303,
+              "w": 37.00000000000001,
+              "h": 33,
+              "parentId": "candidate_389c799a-eac4-4f8f-a821-59e2a7ee82c1"
+            }
+          },
+          {
+            "gtId": "c013",
+            "det": {
+              "xPct": 68.92988929889299,
+              "yPct": 38.26142131979696,
+              "wPct": 2.730627306273063,
+              "hPct": 4.060913705583756,
+              "cx": 934,
+              "cy": 301.5,
+              "w": 37.00000000000001,
+              "h": 31.999999999999996,
+              "parentId": "candidate_1561b5d4-da8a-4b3b-b437-94aa7bc6a78c"
+            }
+          },
+          {
+            "gtId": "c022",
+            "det": {
+              "xPct": 51.881918819188186,
+              "yPct": 44.35279187817259,
+              "wPct": 2.730627306273063,
+              "hPct": 4.314720812182741,
+              "cx": 703,
+              "cy": 349.5,
+              "w": 37.00000000000001,
+              "h": 34,
+              "parentId": "candidate_e7790bed-ede2-446d-bbe1-1efe676bfb19"
+            }
+          },
+          {
+            "gtId": "c024",
+            "det": {
+              "xPct": 95.38745387453874,
+              "yPct": 45.17766497461929,
+              "wPct": 2.5092250922509227,
+              "hPct": 4.695431472081219,
+              "cx": 1292.4999999999998,
+              "cy": 356,
+              "w": 34.00000000000001,
+              "h": 37,
+              "parentId": "candidate_67aad9eb-e04e-4d3f-b940-4a009a46b74d"
+            }
+          },
+          {
+            "gtId": "c027",
+            "det": {
+              "xPct": 56.38376383763838,
+              "yPct": 48.66751269035533,
+              "wPct": 2.730627306273063,
+              "hPct": 4.314720812182741,
+              "cx": 764,
+              "cy": 383.5,
+              "w": 37.00000000000001,
+              "h": 34,
+              "parentId": "candidate_dd499f99-147c-49a1-b152-1681034c4a0d"
+            }
+          },
+          {
+            "gtId": "c035",
+            "det": {
+              "xPct": 25.756457564575648,
+              "yPct": 50.76142131979695,
+              "wPct": 2.2878228782287824,
+              "hPct": 4.695431472081219,
+              "cx": 349,
+              "cy": 400,
+              "w": 31.000000000000004,
+              "h": 37,
+              "parentId": "candidate_6e1110c6-494a-4f39-859b-0102fca679c3"
+            }
+          },
+          {
+            "gtId": "c046",
+            "det": {
+              "xPct": 51.918819188191875,
+              "yPct": 54.82233502538071,
+              "wPct": 2.6568265682656826,
+              "hPct": 4.441624365482234,
+              "cx": 703.5,
+              "cy": 432,
+              "w": 36,
+              "h": 35,
+              "parentId": "candidate_4d3919cf-8c9d-4463-9186-ba0609b59ff4"
+            }
+          },
+          {
+            "gtId": "c068",
+            "det": {
+              "xPct": 31.365313653136536,
+              "yPct": 71.06598984771574,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.695431472081219,
+              "cx": 425.00000000000006,
+              "cy": 560,
+              "w": 33,
+              "h": 37,
+              "parentId": "candidate_73060612-f00f-44e1-8bc6-a3e6b8ba39b7"
+            }
+          },
+          {
+            "gtId": "c069",
+            "det": {
+              "xPct": 37.19557195571956,
+              "yPct": 71.06598984771574,
+              "wPct": 2.2878228782287824,
+              "hPct": 4.695431472081219,
+              "cx": 504,
+              "cy": 560,
+              "w": 31.000000000000004,
+              "h": 37,
+              "parentId": "candidate_5e83fd9a-cb27-46a7-a39a-5a610e89e505"
+            }
+          },
+          {
+            "gtId": "c073",
+            "det": {
+              "xPct": 25.129151291512912,
+              "yPct": 81.40862944162437,
+              "wPct": 2.3616236162361623,
+              "hPct": 4.822335025380711,
+              "cx": 340.5,
+              "cy": 641.5,
+              "w": 32,
+              "h": 38,
+              "parentId": "candidate_df50dde5-b8b6-412f-a399-f6db07ed7c6c"
+            }
+          },
+          {
+            "gtId": "c074",
+            "det": {
+              "xPct": 21.476014760147603,
+              "yPct": 81.53553299492386,
+              "wPct": 2.2878228782287824,
+              "hPct": 4.822335025380711,
+              "cx": 291,
+              "cy": 642.5,
+              "w": 31.000000000000004,
+              "h": 38,
+              "parentId": "candidate_da0e4644-d9e5-4ca2-9d8d-dd33118b6e53"
+            }
+          },
+          {
+            "gtId": "c085",
+            "det": {
+              "xPct": 27.26937269372694,
+              "yPct": 91.37055837563452,
+              "wPct": 1.1808118081180812,
+              "hPct": 2.4111675126903553,
+              "cx": 369.50000000000006,
+              "cy": 720,
+              "w": 16,
+              "h": 19,
+              "parentId": "candidate_11f9fd92-2324-4698-b500-db78b60c9249"
+            }
+          },
+          {
+            "gtId": "c086",
+            "det": {
+              "xPct": 39.926199261992615,
+              "yPct": 91.56091370558376,
+              "wPct": 1.107011070110701,
+              "hPct": 2.5380710659898478,
+              "cx": 540.9999999999999,
+              "cy": 721.5,
+              "w": 14.999999999999998,
+              "h": 20,
+              "parentId": "candidate_398d03bc-5861-4857-a305-f4bd6d7cbbf3"
+            }
+          },
+          {
+            "gtId": "c067",
+            "det": {
+              "xPct": 34.02214022140221,
+              "yPct": 70.8756345177665,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.822335025380711,
+              "cx": 460.99999999999994,
+              "cy": 558.5,
+              "w": 33,
+              "h": 38,
+              "parentId": "candidate_a9a8cd1a-3c7f-42b4-8fe8-a3234c447094"
+            }
+          },
+          {
+            "gtId": "c087",
+            "det": {
+              "xPct": 35.68265682656826,
+              "yPct": 91.68781725888326,
+              "wPct": 1.1808118081180812,
+              "hPct": 2.284263959390863,
+              "cx": 483.49999999999994,
+              "cy": 722.5,
+              "w": 16,
+              "h": 18,
+              "parentId": "candidate_398d03bc-5861-4857-a305-f4bd6d7cbbf3"
+            }
+          },
+          {
+            "gtId": "c065",
+            "det": {
+              "xPct": 17.822878228782287,
+              "yPct": 70.24111675126903,
+              "wPct": 2.3616236162361623,
+              "hPct": 4.568527918781726,
+              "cx": 241.5,
+              "cy": 553.4999999999999,
+              "w": 32,
+              "h": 36,
+              "parentId": "candidate_8099581e-719d-462f-a76c-6028da0fe7d9"
+            }
+          },
+          {
+            "gtId": "c105",
+            "det": {
+              "xPct": 92.32531323862221,
+              "yPct": 64.65062444730886,
+              "wPct": 1.451225259423446,
+              "hPct": 1.2854735493738132,
+              "cx": 1251.0079943833312,
+              "cy": 509.4469206447938,
+              "w": 19.664102265187694,
+              "h": 10.129531569065648,
+              "parentId": "candidate_7e658022-e551-4be7-af8e-a683bab7d70e"
+            }
+          },
+          {
+            "gtId": "c113",
+            "det": {
+              "xPct": 10.275168671732363,
+              "yPct": 74.55020297986643,
+              "wPct": 1.0519631653525807,
+              "hPct": 2.538860383295369,
+              "cx": 139.2285355019735,
+              "cy": 587.4555994813475,
+              "w": 14.25410089052747,
+              "h": 20.006219820367505,
+              "parentId": "candidate_bfc48cf4-31c5-434c-82ff-7ec7737e8c63"
+            }
+          },
+          {
+            "gtId": "c111",
+            "det": {
+              "xPct": 5.450240754344316,
+              "yPct": 75.1751818740198,
+              "wPct": 1.0637670753732609,
+              "hPct": 2.512223146228073,
+              "cx": 73.85076222136549,
+              "cy": 592.380433167276,
+              "w": 14.414043871307685,
+              "h": 19.796318392277215,
+              "parentId": "candidate_bfc48cf4-31c5-434c-82ff-7ec7737e8c63"
+            }
+          },
+          {
+            "gtId": "c009",
+            "det": {
+              "xPct": 70.14760147601477,
+              "yPct": 25.50761421319797,
+              "wPct": 2.5092250922509227,
+              "hPct": 3.934010152284264,
+              "cx": 950.5000000000002,
+              "cy": 201,
+              "w": 34.00000000000001,
+              "h": 31,
+              "parentId": "candidate_42050728-33f7-4e4d-a085-a24ee63220fb"
+            }
+          },
+          {
+            "gtId": "c011",
+            "det": {
+              "xPct": 75.2029520295203,
+              "yPct": 38.07106598984771,
+              "wPct": 2.730627306273063,
+              "hPct": 4.187817258883249,
+              "cx": 1019.0000000000002,
+              "cy": 299.99999999999994,
+              "w": 37.00000000000001,
+              "h": 33,
+              "parentId": "candidate_1561b5d4-da8a-4b3b-b437-94aa7bc6a78c"
+            }
+          },
+          {
+            "gtId": "c041",
+            "det": {
+              "xPct": 37.60147601476015,
+              "yPct": 51.07868020304569,
+              "wPct": 2.3616236162361623,
+              "hPct": 4.568527918781726,
+              "cx": 509.5000000000001,
+              "cy": 402.50000000000006,
+              "w": 32,
+              "h": 36,
+              "parentId": "candidate_a40f7af5-ff5b-497b-a846-14ef8d30f3b8"
+            }
+          },
+          {
+            "gtId": "c007",
+            "det": {
+              "xPct": 66.01476014760148,
+              "yPct": 24.746192893401016,
+              "wPct": 2.5092250922509227,
+              "hPct": 3.934010152284264,
+              "cx": 894.5000000000001,
+              "cy": 195.00000000000003,
+              "w": 34.00000000000001,
+              "h": 31,
+              "parentId": "candidate_9b3814bb-9bb5-4c29-9667-c8b5971b8d6a"
+            }
+          },
+          {
+            "gtId": "c004",
+            "det": {
+              "xPct": 66.01476014760148,
+              "yPct": 18.083756345177665,
+              "wPct": 2.5092250922509227,
+              "hPct": 4.060913705583756,
+              "cx": 894.5000000000001,
+              "cy": 142.5,
+              "w": 34.00000000000001,
+              "h": 31.999999999999996,
+              "parentId": "candidate_87ea5dfb-b2cf-4813-a79a-0ac576a4c39b"
+            }
+          },
+          {
+            "gtId": "c028",
+            "det": {
+              "xPct": 62.80442804428045,
+              "yPct": 48.66751269035533,
+              "wPct": 2.730627306273063,
+              "hPct": 4.314720812182741,
+              "cx": 851.0000000000001,
+              "cy": 383.5,
+              "w": 37.00000000000001,
+              "h": 34,
+              "parentId": "candidate_dd499f99-147c-49a1-b152-1681034c4a0d"
+            }
+          },
+          {
+            "gtId": "c077",
+            "det": {
+              "xPct": 34.391143911439116,
+              "yPct": 82.10659898477158,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.695431472081219,
+              "cx": 466,
+              "cy": 647.0000000000001,
+              "w": 33,
+              "h": 37,
+              "parentId": "candidate_a9a8cd1a-3c7f-42b4-8fe8-a3234c447094"
+            }
+          },
+          {
+            "gtId": "c078",
+            "det": {
+              "xPct": 40.59040590405904,
+              "yPct": 82.10659898477158,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.695431472081219,
+              "cx": 550,
+              "cy": 647.0000000000001,
+              "w": 33,
+              "h": 37,
+              "parentId": "candidate_5e83fd9a-cb27-46a7-a39a-5a610e89e505"
+            }
+          },
+          {
+            "gtId": "c010",
+            "det": {
+              "xPct": 62.73062730627307,
+              "yPct": 38.07106598984771,
+              "wPct": 2.730627306273063,
+              "hPct": 3.934010152284264,
+              "cx": 850.0000000000001,
+              "cy": 299.99999999999994,
+              "w": 37.00000000000001,
+              "h": 31,
+              "parentId": "candidate_98979aa6-4f32-43c8-9fb3-0df693ffdf7c"
+            }
+          },
+          {
+            "gtId": "c014",
+            "det": {
+              "xPct": 86.12546125461255,
+              "yPct": 38.642131979695435,
+              "wPct": 2.730627306273063,
+              "hPct": 4.314720812182741,
+              "cx": 1167,
+              "cy": 304.50000000000006,
+              "w": 37.00000000000001,
+              "h": 34,
+              "parentId": "candidate_95833ee0-ec20-4201-9303-a8af5306bb4a"
+            }
+          },
+          {
+            "gtId": "c049",
+            "det": {
+              "xPct": 79.74169741697416,
+              "yPct": 55.0761421319797,
+              "wPct": 2.6568265682656826,
+              "hPct": 4.187817258883249,
+              "cx": 1080.5,
+              "cy": 434.00000000000006,
+              "w": 36,
+              "h": 33,
+              "parentId": "candidate_0754d993-525c-49f6-ae07-d9e60d8f7adb"
+            }
+          },
+          {
+            "gtId": "c003",
+            "det": {
+              "xPct": 69.92619926199262,
+              "yPct": 12.690355329949238,
+              "wPct": 2.5092250922509227,
+              "hPct": 4.187817258883249,
+              "cx": 947.5,
+              "cy": 100,
+              "w": 34.00000000000001,
+              "h": 33,
+              "parentId": "candidate_090f3aaa-76b9-4c17-a06a-1887fc5091d1"
+            }
+          },
+          {
+            "gtId": "c006",
+            "det": {
+              "xPct": 69.92619926199262,
+              "yPct": 19.35279187817259,
+              "wPct": 2.5092250922509227,
+              "hPct": 4.060913705583756,
+              "cx": 947.5,
+              "cy": 152.5,
+              "w": 34.00000000000001,
+              "h": 31.999999999999996,
+              "parentId": "candidate_035e8f2f-d526-4de1-a907-0379fab561f3"
+            }
+          },
+          {
+            "gtId": "c023",
+            "det": {
+              "xPct": 45.535055350553506,
+              "yPct": 44.60659898477157,
+              "wPct": 2.730627306273063,
+              "hPct": 4.060913705583756,
+              "cx": 617,
+              "cy": 351.5,
+              "w": 37.00000000000001,
+              "h": 31.999999999999996,
+              "parentId": "candidate_e7790bed-ede2-446d-bbe1-1efe676bfb19"
+            }
+          },
+          {
+            "gtId": "c030",
+            "det": {
+              "xPct": 86.12546125461255,
+              "yPct": 48.79441624365482,
+              "wPct": 2.730627306273063,
+              "hPct": 4.060913705583756,
+              "cx": 1167,
+              "cy": 384.5,
+              "w": 37.00000000000001,
+              "h": 31.999999999999996,
+              "parentId": "candidate_4cfa266c-db25-42fd-944f-0c6c8dda45f3"
+            }
+          },
+          {
+            "gtId": "c034",
+            "det": {
+              "xPct": 22.804428044280442,
+              "yPct": 50.76142131979695,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.695431472081219,
+              "cx": 309,
+              "cy": 400,
+              "w": 33,
+              "h": 37,
+              "parentId": "candidate_954ff71f-c729-4fb7-bb44-33cc4b1364a0"
+            }
+          },
+          {
+            "gtId": "c038",
+            "det": {
+              "xPct": 31.660516605166052,
+              "yPct": 51.01522842639594,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.695431472081219,
+              "cx": 429,
+              "cy": 402,
+              "w": 33,
+              "h": 37,
+              "parentId": "candidate_8ed0b896-b28c-42b8-9840-57ac5c1018a0"
+            }
+          },
+          {
+            "gtId": "c044",
+            "det": {
+              "xPct": 56.457564575645755,
+              "yPct": 53.68020304568528,
+              "wPct": 2.730627306273063,
+              "hPct": 4.187817258883249,
+              "cx": 765,
+              "cy": 423,
+              "w": 37.00000000000001,
+              "h": 33,
+              "parentId": "candidate_73421609-d1ba-4a87-84b5-c9444af22dc7"
+            }
+          },
+          {
+            "gtId": "c047",
+            "det": {
+              "xPct": 45.535055350553506,
+              "yPct": 54.9492385786802,
+              "wPct": 2.730627306273063,
+              "hPct": 4.187817258883249,
+              "cx": 617,
+              "cy": 433,
+              "w": 37.00000000000001,
+              "h": 33,
+              "parentId": "candidate_4d3919cf-8c9d-4463-9186-ba0609b59ff4"
+            }
+          },
+          {
+            "gtId": "c050",
+            "det": {
+              "xPct": 92.32472324723247,
+              "yPct": 55.710659898477154,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.695431472081219,
+              "cx": 1251,
+              "cy": 439,
+              "w": 33,
+              "h": 37,
+              "parentId": "candidate_af64466b-0bd4-4dae-8641-14ba7535bde4"
+            }
+          },
+          {
+            "gtId": "c052",
+            "det": {
+              "xPct": 45.535055350553506,
+              "yPct": 59.77157360406091,
+              "wPct": 2.730627306273063,
+              "hPct": 4.187817258883249,
+              "cx": 617,
+              "cy": 471,
+              "w": 37.00000000000001,
+              "h": 33,
+              "parentId": "candidate_b249ee0f-dc97-4e59-8b26-fb716daaf497"
+            }
+          },
+          {
+            "gtId": "c054",
+            "det": {
+              "xPct": 86.12546125461255,
+              "yPct": 59.89847715736041,
+              "wPct": 2.730627306273063,
+              "hPct": 4.187817258883249,
+              "cx": 1167,
+              "cy": 472,
+              "w": 37.00000000000001,
+              "h": 33,
+              "parentId": "candidate_c8f6f14d-c0bb-41ed-a459-476fc456974d"
+            }
+          },
+          {
+            "gtId": "c059",
+            "det": {
+              "xPct": 22.98892988929889,
+              "yPct": 62.055837563451774,
+              "wPct": 2.3616236162361623,
+              "hPct": 4.695431472081219,
+              "cx": 311.5,
+              "cy": 489,
+              "w": 32,
+              "h": 37,
+              "parentId": "candidate_954ff71f-c729-4fb7-bb44-33cc4b1364a0"
+            }
+          },
+          {
+            "gtId": "c070",
+            "det": {
+              "xPct": 40.29520295202952,
+              "yPct": 71.06598984771574,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.695431472081219,
+              "cx": 546,
+              "cy": 560,
+              "w": 33,
+              "h": 37,
+              "parentId": "candidate_5e83fd9a-cb27-46a7-a39a-5a610e89e505"
+            }
+          },
+          {
+            "gtId": "c018",
+            "det": {
+              "xPct": 86.23616236162361,
+              "yPct": 43.46446700507614,
+              "wPct": 2.6568265682656826,
+              "hPct": 4.060913705583756,
+              "cx": 1168.5,
+              "cy": 342.49999999999994,
+              "w": 36,
+              "h": 31.999999999999996,
+              "parentId": "candidate_4cfa266c-db25-42fd-944f-0c6c8dda45f3"
+            }
+          },
+          {
+            "gtId": "c026",
+            "det": {
+              "xPct": 75.31365313653137,
+              "yPct": 48.47715736040609,
+              "wPct": 2.6568265682656826,
+              "hPct": 4.441624365482234,
+              "cx": 1020.5,
+              "cy": 381.99999999999994,
+              "w": 36,
+              "h": 35,
+              "parentId": "candidate_a603202a-e99f-409e-86dc-aefb7364c11d"
+            }
+          },
+          {
+            "gtId": "c072",
+            "det": {
+              "xPct": 17.859778597785976,
+              "yPct": 81.28172588832487,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.822335025380711,
+              "cx": 241.99999999999994,
+              "cy": 640.5,
+              "w": 33,
+              "h": 38,
+              "parentId": "candidate_8099581e-719d-462f-a76c-6028da0fe7d9"
+            }
+          },
+          {
+            "gtId": "c017",
+            "det": {
+              "xPct": 62.69372693726937,
+              "yPct": 43.2741116751269,
+              "wPct": 2.6568265682656826,
+              "hPct": 4.187817258883249,
+              "cx": 849.4999999999999,
+              "cy": 341,
+              "w": 36,
+              "h": 33,
+              "parentId": "candidate_dd499f99-147c-49a1-b152-1681034c4a0d"
+            }
+          },
+          {
+            "gtId": "c066",
+            "det": {
+              "xPct": 24.944649446494466,
+              "yPct": 70.24111675126903,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.568527918781726,
+              "cx": 338,
+              "cy": 553.4999999999999,
+              "w": 33,
+              "h": 36,
+              "parentId": "candidate_df50dde5-b8b6-412f-a399-f6db07ed7c6c"
+            }
+          },
+          {
+            "gtId": "c071",
+            "det": {
+              "xPct": 43.50553505535055,
+              "yPct": 71.06598984771574,
+              "wPct": 2.5092250922509227,
+              "hPct": 4.695431472081219,
+              "cx": 589.4999999999999,
+              "cy": 560,
+              "w": 34.00000000000001,
+              "h": 37,
+              "parentId": "candidate_a7aca417-a9f8-4374-8094-ddc3c8774cd9"
+            }
+          },
+          {
+            "gtId": "c075",
+            "det": {
+              "xPct": 37.41697416974169,
+              "yPct": 81.97969543147208,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.695431472081219,
+              "cx": 506.9999999999999,
+              "cy": 646,
+              "w": 33,
+              "h": 37,
+              "parentId": "candidate_5e83fd9a-cb27-46a7-a39a-5a610e89e505"
+            }
+          },
+          {
+            "gtId": "c021",
+            "det": {
+              "xPct": 79.85239852398523,
+              "yPct": 44.03553299492386,
+              "wPct": 2.730627306273063,
+              "hPct": 4.187817258883249,
+              "cx": 1081.9999999999998,
+              "cy": 347.00000000000006,
+              "w": 37.00000000000001,
+              "h": 33,
+              "parentId": "candidate_4cfa266c-db25-42fd-944f-0c6c8dda45f3"
+            }
+          },
+          {
+            "gtId": "c015",
+            "det": {
+              "xPct": 79.85239852398523,
+              "yPct": 38.83248730964467,
+              "wPct": 2.730627306273063,
+              "hPct": 4.187817258883249,
+              "cx": 1081.9999999999998,
+              "cy": 306,
+              "w": 37.00000000000001,
+              "h": 33,
+              "parentId": "candidate_95833ee0-ec20-4201-9303-a8af5306bb4a"
+            }
+          },
+          {
+            "gtId": "c031",
+            "det": {
+              "xPct": 79.88929889298892,
+              "yPct": 49.555837563451774,
+              "wPct": 2.6568265682656826,
+              "hPct": 4.060913705583756,
+              "cx": 1082.4999999999998,
+              "cy": 390.5,
+              "w": 36,
+              "h": 31.999999999999996,
+              "parentId": "candidate_0754d993-525c-49f6-ae07-d9e60d8f7adb"
+            }
+          },
+          {
+            "gtId": "c097",
+            "det": {
+              "xPct": 5.351083669105728,
+              "yPct": 61.269689091605684,
+              "wPct": 0.8935454610225444,
+              "hPct": 2.5776085705727905,
+              "cx": 72.50718371638261,
+              "cy": 482.8051500418528,
+              "w": 12.107540996855477,
+              "h": 20.311555536113588,
+              "parentId": "candidate_9c194ced-15ed-4e15-8bda-204ac41e61da"
+            }
+          },
+          {
+            "gtId": "c093",
+            "det": {
+              "xPct": 95.07593684258471,
+              "yPct": 28.53698976910386,
+              "wPct": 1.4660559085117664,
+              "hPct": 1.498530790383667,
+              "cx": 1288.2789442170229,
+              "cy": 224.8714793805384,
+              "w": 19.865057560334435,
+              "h": 11.808422628223296,
+              "parentId": "candidate_d461a3e9-961e-4933-90d4-51fa7d231417"
+            }
+          },
+          {
+            "gtId": "c029",
+            "det": {
+              "xPct": 68.85608856088561,
+              "yPct": 48.60406091370558,
+              "wPct": 2.730627306273063,
+              "hPct": 4.187817258883249,
+              "cx": 933,
+              "cy": 383,
+              "w": 37.00000000000001,
+              "h": 33,
+              "parentId": "candidate_a603202a-e99f-409e-86dc-aefb7364c11d"
+            }
+          },
+          {
+            "gtId": "c057",
+            "det": {
+              "xPct": 16.974169741697416,
+              "yPct": 61.99238578680203,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.568527918781726,
+              "cx": 230,
+              "cy": 488.5,
+              "w": 33,
+              "h": 36,
+              "parentId": "candidate_07ee0733-0f0d-4ccc-b0b3-6d92134c0e68"
+            }
+          },
+          {
+            "gtId": "c042",
+            "det": {
+              "xPct": 68.92988929889299,
+              "yPct": 53.36294416243654,
+              "wPct": 2.730627306273063,
+              "hPct": 4.060913705583756,
+              "cx": 934,
+              "cy": 420.49999999999994,
+              "w": 37.00000000000001,
+              "h": 31.999999999999996,
+              "parentId": "candidate_c9b792e9-2362-4884-8930-f04eb189e23e"
+            }
+          },
+          {
+            "gtId": "c058",
+            "det": {
+              "xPct": 19.963099630996307,
+              "yPct": 62.119289340101524,
+              "wPct": 2.5092250922509227,
+              "hPct": 4.822335025380711,
+              "cx": 270.49999999999994,
+              "cy": 489.5,
+              "w": 34.00000000000001,
+              "h": 38,
+              "parentId": "candidate_954ff71f-c729-4fb7-bb44-33cc4b1364a0"
+            }
+          },
+          {
+            "gtId": "c032",
+            "det": {
+              "xPct": 51.80811808118081,
+              "yPct": 49.42893401015229,
+              "wPct": 2.730627306273063,
+              "hPct": 4.060913705583756,
+              "cx": 702,
+              "cy": 389.50000000000006,
+              "w": 37.00000000000001,
+              "h": 31.999999999999996,
+              "parentId": "candidate_4d3919cf-8c9d-4463-9186-ba0609b59ff4"
+            }
+          },
+          {
+            "gtId": "c055",
+            "det": {
+              "xPct": 79.70479704797047,
+              "yPct": 60.0253807106599,
+              "wPct": 2.730627306273063,
+              "hPct": 4.441624365482234,
+              "cx": 1080,
+              "cy": 473.00000000000006,
+              "w": 37.00000000000001,
+              "h": 35,
+              "parentId": "candidate_c8f6f14d-c0bb-41ed-a459-476fc456974d"
+            }
+          },
+          {
+            "gtId": "c088",
+            "det": {
+              "xPct": 17.047970479704798,
+              "yPct": 91.87817258883248,
+              "wPct": 1.107011070110701,
+              "hPct": 2.4111675126903553,
+              "cx": 231.00000000000003,
+              "cy": 724,
+              "w": 14.999999999999998,
+              "h": 19,
+              "parentId": "candidate_889e25b0-3701-4c5a-9b24-013ef532572c"
+            }
+          },
+          {
+            "gtId": "c002",
+            "det": {
+              "xPct": 87.49077490774908,
+              "yPct": 12.5,
+              "wPct": 2.5092250922509227,
+              "hPct": 4.060913705583756,
+              "cx": 1185.5,
+              "cy": 98.5,
+              "w": 34.00000000000001,
+              "h": 31.999999999999996,
+              "parentId": "candidate_a6e117f6-bdba-471d-8afe-123d4696d1ca"
+            }
+          },
+          {
+            "gtId": "c008",
+            "det": {
+              "xPct": 87.74907749077491,
+              "yPct": 24.873096446700508,
+              "wPct": 2.5830258302583027,
+              "hPct": 3.6802030456852792,
+              "cx": 1189,
+              "cy": 196,
+              "w": 35,
+              "h": 29,
+              "parentId": "candidate_a4143bd7-29f7-4048-9d4a-a41996b5ec4b"
+            }
+          },
+          {
+            "gtId": "c019",
+            "det": {
+              "xPct": 56.34686346863469,
+              "yPct": 43.59137055837564,
+              "wPct": 2.6568265682656826,
+              "hPct": 4.314720812182741,
+              "cx": 763.5,
+              "cy": 343.5,
+              "w": 36,
+              "h": 34,
+              "parentId": "candidate_389c799a-eac4-4f8f-a821-59e2a7ee82c1"
+            }
+          },
+          {
+            "gtId": "c039",
+            "det": {
+              "xPct": 40.405904059040594,
+              "yPct": 51.01522842639594,
+              "wPct": 2.3616236162361623,
+              "hPct": 4.695431472081219,
+              "cx": 547.5,
+              "cy": 402,
+              "w": 32,
+              "h": 37,
+              "parentId": "candidate_93705629-2443-4402-881a-460cb66bc71d"
+            }
+          },
+          {
+            "gtId": "c040",
+            "det": {
+              "xPct": 34.57564575645756,
+              "yPct": 51.01522842639594,
+              "wPct": 2.3616236162361623,
+              "hPct": 4.695431472081219,
+              "cx": 468.5,
+              "cy": 402,
+              "w": 32,
+              "h": 37,
+              "parentId": "candidate_a40f7af5-ff5b-497b-a846-14ef8d30f3b8"
+            }
+          },
+          {
+            "gtId": "c056",
+            "det": {
+              "xPct": 25.71955719557196,
+              "yPct": 62.055837563451774,
+              "wPct": 2.3616236162361623,
+              "hPct": 4.695431472081219,
+              "cx": 348.5,
+              "cy": 489,
+              "w": 32,
+              "h": 37,
+              "parentId": "candidate_6e1110c6-494a-4f39-859b-0102fca679c3"
+            }
+          },
+          {
+            "gtId": "c063",
+            "det": {
+              "xPct": 37.74907749077491,
+              "yPct": 62.43654822335025,
+              "wPct": 2.3616236162361623,
+              "hPct": 4.695431472081219,
+              "cx": 511.5,
+              "cy": 492,
+              "w": 32,
+              "h": 37,
+              "parentId": "candidate_a40f7af5-ff5b-497b-a846-14ef8d30f3b8"
+            }
+          },
+          {
+            "gtId": "c080",
+            "det": {
+              "xPct": 2.915129151291513,
+              "yPct": 26.713197969543145,
+              "wPct": 1.3284132841328413,
+              "hPct": 1.7766497461928936,
+              "cx": 39.5,
+              "cy": 210.5,
+              "w": 18,
+              "h": 14.000000000000002,
+              "parentId": "candidate_f553f6c4-340f-48e5-9e72-b2d20253aa34"
+            }
+          },
+          {
+            "gtId": "c082",
+            "det": {
+              "xPct": 6.014760147601476,
+              "yPct": 33.31218274111675,
+              "wPct": 1.4760147601476015,
+              "hPct": 2.030456852791878,
+              "cx": 81.5,
+              "cy": 262.5,
+              "w": 20,
+              "h": 15.999999999999998,
+              "parentId": "candidate_e2c09b92-9e0e-43f6-bfae-7b06fc1d7dfc"
+            }
+          },
+          {
+            "gtId": "c060",
+            "det": {
+              "xPct": 31.69741697416974,
+              "yPct": 62.30964467005076,
+              "wPct": 2.5092250922509227,
+              "hPct": 4.695431472081219,
+              "cx": 429.5,
+              "cy": 490.99999999999994,
+              "w": 34.00000000000001,
+              "h": 37,
+              "parentId": "candidate_8ed0b896-b28c-42b8-9840-57ac5c1018a0"
+            }
+          },
+          {
+            "gtId": "c081",
+            "det": {
+              "xPct": 5.940959409594096,
+              "yPct": 26.649746192893403,
+              "wPct": 1.3284132841328413,
+              "hPct": 1.6497461928934012,
+              "cx": 80.5,
+              "cy": 210.00000000000003,
+              "w": 18,
+              "h": 13,
+              "parentId": "candidate_e2c09b92-9e0e-43f6-bfae-7b06fc1d7dfc"
+            }
+          },
+          {
+            "gtId": "c020",
+            "det": {
+              "xPct": 68.81918819188192,
+              "yPct": 43.46446700507614,
+              "wPct": 2.6568265682656826,
+              "hPct": 4.060913705583756,
+              "cx": 932.5,
+              "cy": 342.49999999999994,
+              "w": 36,
+              "h": 31.999999999999996,
+              "parentId": "candidate_a603202a-e99f-409e-86dc-aefb7364c11d"
+            }
+          },
+          {
+            "gtId": "c098",
+            "det": {
+              "xPct": 5.627723419493328,
+              "yPct": 55.99982165166275,
+              "wPct": 1.0714803550553247,
+              "hPct": 2.559669784333427,
+              "cx": 76.25565233413458,
+              "cy": 441.27859461510246,
+              "w": 14.51855881099965,
+              "h": 20.170197900547407,
+              "parentId": "candidate_9c194ced-15ed-4e15-8bda-204ac41e61da"
+            }
+          },
+          {
+            "gtId": "c104",
+            "det": {
+              "xPct": 90.26669867342106,
+              "yPct": 68.67330141516285,
+              "wPct": 0.8255934765773961,
+              "hPct": 2.5510298944156578,
+              "cx": 1223.1137670248554,
+              "cy": 541.1456151514833,
+              "w": 11.186791607623718,
+              "h": 20.102115567995384,
+              "parentId": "candidate_7e658022-e551-4be7-af8e-a683bab7d70e"
+            }
+          },
+          {
+            "gtId": "c025",
+            "det": {
+              "xPct": 91.8450184501845,
+              "yPct": 45.24111675126903,
+              "wPct": 2.3616236162361623,
+              "hPct": 4.822335025380711,
+              "cx": 1244.5,
+              "cy": 356.5,
+              "w": 32,
+              "h": 38,
+              "parentId": "candidate_af64466b-0bd4-4dae-8641-14ba7535bde4"
+            }
+          },
+          {
+            "gtId": "c033",
+            "det": {
+              "xPct": 45.46125461254613,
+              "yPct": 49.68274111675127,
+              "wPct": 2.730627306273063,
+              "hPct": 4.314720812182741,
+              "cx": 616,
+              "cy": 391.5,
+              "w": 37.00000000000001,
+              "h": 34,
+              "parentId": "candidate_4d3919cf-8c9d-4463-9186-ba0609b59ff4"
+            }
+          },
+          {
+            "gtId": "c036",
+            "det": {
+              "xPct": 16.789667896678967,
+              "yPct": 50.8248730964467,
+              "wPct": 2.5092250922509227,
+              "hPct": 4.822335025380711,
+              "cx": 227.5,
+              "cy": 400.5,
+              "w": 34.00000000000001,
+              "h": 38,
+              "parentId": "candidate_07ee0733-0f0d-4ccc-b0b3-6d92134c0e68"
+            }
+          },
+          {
+            "gtId": "c095",
+            "det": {
+              "xPct": 10.314490719120709,
+              "yPct": 63.31535535175068,
+              "wPct": 1.4370691870830277,
+              "hPct": 1.443913886498411,
+              "cx": 139.7613492440856,
+              "cy": 498.9250001717954,
+              "w": 19.472287484975027,
+              "h": 11.378041425607478,
+              "parentId": "candidate_9c194ced-15ed-4e15-8bda-204ac41e61da"
+            }
+          },
+          {
+            "gtId": "c110",
+            "det": {
+              "xPct": 5.176814305966408,
+              "yPct": 80.36643956270474,
+              "wPct": 0.8734670391161645,
+              "hPct": 2.4868385056695583,
+              "cx": 70.14583384584483,
+              "cy": 633.2875437541134,
+              "w": 11.835478380024028,
+              "h": 19.59628742467612,
+              "parentId": "candidate_bfc48cf4-31c5-434c-82ff-7ec7737e8c63"
+            }
+          },
+          {
+            "gtId": "c108",
+            "det": {
+              "xPct": 10.037993428608697,
+              "yPct": 82.39056780007343,
+              "wPct": 1.4342136408110553,
+              "hPct": 1.3622965673000884,
+              "cx": 136.01481095764785,
+              "cy": 649.2376742645786,
+              "w": 19.433594832989797,
+              "h": 10.734896950324698,
+              "parentId": "candidate_bfc48cf4-31c5-434c-82ff-7ec7737e8c63"
+            }
+          },
+          {
+            "gtId": "c016",
+            "det": {
+              "xPct": 75.16605166051662,
+              "yPct": 43.02030456852792,
+              "wPct": 2.6568265682656826,
+              "hPct": 4.187817258883249,
+              "cx": 1018.5000000000002,
+              "cy": 339,
+              "w": 36,
+              "h": 33,
+              "parentId": "candidate_a603202a-e99f-409e-86dc-aefb7364c11d"
+            }
+          },
+          {
+            "gtId": "c037",
+            "det": {
+              "xPct": 19.74169741697417,
+              "yPct": 51.01522842639594,
+              "wPct": 2.3616236162361623,
+              "hPct": 4.695431472081219,
+              "cx": 267.5,
+              "cy": 402,
+              "w": 32,
+              "h": 37,
+              "parentId": "candidate_954ff71f-c729-4fb7-bb44-33cc4b1364a0"
+            }
+          },
+          {
+            "gtId": "c053",
+            "det": {
+              "xPct": 51.918819188191875,
+              "yPct": 59.77157360406091,
+              "wPct": 2.6568265682656826,
+              "hPct": 4.187817258883249,
+              "cx": 703.5,
+              "cy": 471,
+              "w": 36,
+              "h": 33,
+              "parentId": "candidate_b249ee0f-dc97-4e59-8b26-fb716daaf497"
+            }
+          },
+          {
+            "gtId": "c064",
+            "det": {
+              "xPct": 21.25461254612546,
+              "yPct": 70.17766497461929,
+              "wPct": 2.4354243542435423,
+              "hPct": 4.695431472081219,
+              "cx": 288,
+              "cy": 553,
+              "w": 33,
+              "h": 37,
+              "parentId": "candidate_da0e4644-d9e5-4ca2-9d8d-dd33118b6e53"
+            }
+          },
+          {
+            "gtId": "c062",
+            "det": {
+              "xPct": 40.44280442804428,
+              "yPct": 62.30964467005076,
+              "wPct": 2.2878228782287824,
+              "hPct": 4.695431472081219,
+              "cx": 548,
+              "cy": 490.99999999999994,
+              "w": 31.000000000000004,
+              "h": 37,
+              "parentId": "candidate_93705629-2443-4402-881a-460cb66bc71d"
+            }
+          },
+          {
+            "gtId": "c091",
+            "det": {
+              "xPct": 90.40991758791561,
+              "yPct": 32.16355034547786,
+              "wPct": 0.8479926984427377,
+              "hPct": 2.590920200153976,
+              "cx": 1225.0543833162565,
+              "cy": 253.44877672236552,
+              "w": 11.490301063899096,
+              "h": 20.416451177213332,
+              "parentId": "candidate_d461a3e9-961e-4933-90d4-51fa7d231417"
+            }
+          },
+          {
+            "gtId": "c083",
+            "det": {
+              "xPct": 3.025830258302583,
+              "yPct": 33.37563451776649,
+              "wPct": 1.4022140221402213,
+              "hPct": 1.903553299492386,
+              "cx": 41,
+              "cy": 263,
+              "w": 19,
+              "h": 15.000000000000002,
+              "parentId": "candidate_f553f6c4-340f-48e5-9e72-b2d20253aa34"
+            }
+          },
+          {
+            "gtId": "c102",
+            "det": {
+              "xPct": 95.47903064121583,
+              "yPct": 73.6689830934696,
+              "wPct": 1.4837587087439768,
+              "hPct": 1.5241985335169284,
+              "cx": 1293.7408651884746,
+              "cy": 580.5115867765405,
+              "w": 20.104930503480887,
+              "h": 12.010684444113396,
+              "parentId": "candidate_7e658022-e551-4be7-af8e-a683bab7d70e"
+            }
+          },
+          {
+            "gtId": "c048",
+            "det": {
+              "xPct": 86.16236162361623,
+              "yPct": 54.441624365482234,
+              "wPct": 2.6568265682656826,
+              "hPct": 4.187817258883249,
+              "cx": 1167.5,
+              "cy": 429,
+              "w": 36,
+              "h": 33,
+              "parentId": "candidate_0754d993-525c-49f6-ae07-d9e60d8f7adb"
+            }
+          },
+          {
+            "gtId": "c100",
+            "det": {
+              "xPct": 10.516605166051662,
+              "yPct": 55.32994923857868,
+              "wPct": 1.482795800150315,
+              "hPct": 1.831856452099543,
+              "cx": 142.5,
+              "cy": 436,
+              "w": 20.09188309203677,
+              "h": 14.4350288425444,
+              "parentId": "candidate_9c194ced-15ed-4e15-8bda-204ac41e61da"
+            }
+          },
+          {
+            "gtId": "c107",
+            "det": {
+              "xPct": 96.56826568265683,
+              "yPct": 69.54314720812182,
+              "wPct": 1.033210332103321,
+              "hPct": 2.4111675126903553,
+              "cx": 1308.5,
+              "cy": 548,
+              "w": 14,
+              "h": 19,
+              "parentId": "candidate_7e658022-e551-4be7-af8e-a683bab7d70e"
+            }
+          },
+          {
+            "gtId": "c109",
+            "det": {
+              "xPct": 7.103200795977456,
+              "yPct": 83.39276588573398,
+              "wPct": 1.4282503960434305,
+              "hPct": 1.2402111115871373,
+              "cx": 96.24837078549453,
+              "cy": 657.1349951795837,
+              "w": 19.352792866388484,
+              "h": 9.772863559306641,
+              "parentId": "candidate_bfc48cf4-31c5-434c-82ff-7ec7737e8c63"
+            }
+          },
+          {
+            "gtId": "c101",
+            "det": {
+              "xPct": 96.6789667896679,
+              "yPct": 72.5253807106599,
+              "wPct": 1.5498154981549817,
+              "hPct": 2.5380710659898478,
+              "cx": 1310,
+              "cy": 571.5,
+              "w": 21.000000000000004,
+              "h": 20,
+              "parentId": "candidate_7e658022-e551-4be7-af8e-a683bab7d70e"
             }
           },
           {
@@ -2334,25 +2329,11 @@
               "yPct": 37.23851759028155,
               "wPct": 1.4396759448050453,
               "hPct": 1.4378189514676243,
-              "cx": 1305.0997508834687,
-              "cy": 299.1045252802011,
+              "cx": 1295.3459463574145,
+              "cy": 293.43951861141863,
               "w": 19.507609052108364,
               "h": 11.330013337564878,
-              "parentId": "candidate_c0a8958e-e135-402c-b3f9-e72c18b29bf8"
-            }
-          },
-          {
-            "gtId": "c107",
-            "det": {
-              "xPct": 96.6789667896679,
-              "yPct": 72.5253807106599,
-              "wPct": 1.5498154981549817,
-              "hPct": 2.5380710659898478,
-              "cx": 1320.4999999999998,
-              "cy": 581.5,
-              "w": 21.000000000000004,
-              "h": 20,
-              "parentId": "candidate_fa4eba02-98a1-4da5-855e-9b860d076bef"
+              "parentId": "candidate_d461a3e9-961e-4933-90d4-51fa7d231417"
             }
           },
           {
@@ -2362,18 +2343,18 @@
               "yPct": 33.058375634517766,
               "wPct": 1.107011070110701,
               "hPct": 2.5380710659898478,
-              "cx": 1317.5,
-              "cy": 270.50000000000006,
+              "cx": 1310,
+              "cy": 260.5,
               "w": 14.999999999999998,
               "h": 20,
-              "parentId": "candidate_c0a8958e-e135-402c-b3f9-e72c18b29bf8"
+              "parentId": "candidate_d461a3e9-961e-4933-90d4-51fa7d231417"
             }
           }
         ],
         "spurious": [
           {
-            "cx": 56,
-            "cy": 176,
+            "cx": 50,
+            "cy": 166,
             "w": 13,
             "h": 19
           },
@@ -2432,7 +2413,7 @@
           },
           "logical": {
             "seats": 108,
-            "groups": 23,
+            "groups": 21,
             "source": "seats summed over logical seating groups"
           },
           "unverified": [],
@@ -2441,62 +2422,60 @@
           "parts": {},
           "arithmetic": null,
           "difference": null,
-          "sourceText": null,
-          "ocrAvailable": false,
+          "sourceText": "1 FP — | @\nDp OD |\n- BAR Brno | Bs\nx \\R Ra\n5,3, =] qn\nA\n| B10 o”\n, o-1-0-§-0-1-0-R 11\n: revs Bod RE BASE\nGİ kk naa > x\nBR\nvu \"EE\nFD) Baba Haat N 7\na sağ L\n1 dt m “NR\n",
+          "ocrAvailable": true,
           "suspectRegions": [
             {
-              "id": "candidate_77c3bf00-c559-4ce4-af8f-fd90207671ac",
-              "score": 4,
-              "reasons": [
-                "table with no seats found",
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_b9644bcf-d6e1-4ae3-abcb-aaf82469fae3",
-              "score": 4,
-              "reasons": [
-                "table with no seats found",
-                "not yet reviewed"
-              ]
-            },
-            {
-              "id": "candidate_003e88e8-bf70-49a5-a63e-6e3e0848bd4c",
+              "id": "candidate_035e8f2f-d526-4de1-a907-0379fab561f3",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_00aa26dd-bc74-406f-b94f-982a4bff549a",
+              "id": "candidate_0754d993-525c-49f6-ae07-d9e60d8f7adb",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_01b77005-34e4-435a-94d1-7f437b97e4dd",
+              "id": "candidate_07ee0733-0f0d-4ccc-b0b3-6d92134c0e68",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_09b841d5-e30b-4ccb-9629-808e4c6fdb75",
+              "id": "candidate_090f3aaa-76b9-4c17-a06a-1887fc5091d1",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0d68b3c5-49ba-4cda-9e3d-6331471343e7",
+              "id": "candidate_0fd75dde-e6fe-4220-8ede-8fd7bc1d2a21",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
               ]
             },
             {
-              "id": "candidate_0e928dd2-f8fd-4306-bcc8-e0a5085f2e5a",
+              "id": "candidate_11cc30a0-1163-496c-be67-1a4b75123c9f",
+              "score": 1,
+              "reasons": [
+                "not yet reviewed"
+              ]
+            },
+            {
+              "id": "candidate_11f9fd92-2324-4698-b500-db78b60c9249",
+              "score": 1,
+              "reasons": [
+                "not yet reviewed"
+              ]
+            },
+            {
+              "id": "candidate_1561b5d4-da8a-4b3b-b437-94aa7bc6a78c",
               "score": 1,
               "reasons": [
                 "not yet reviewed"
@@ -2504,25 +2483,25 @@
             }
           ],
           "likelyAreaIds": [
-            "candidate_77c3bf00-c559-4ce4-af8f-fd90207671ac",
-            "candidate_b9644bcf-d6e1-4ae3-abcb-aaf82469fae3",
-            "candidate_003e88e8-bf70-49a5-a63e-6e3e0848bd4c",
-            "candidate_00aa26dd-bc74-406f-b94f-982a4bff549a",
-            "candidate_01b77005-34e4-435a-94d1-7f437b97e4dd",
-            "candidate_09b841d5-e30b-4ccb-9629-808e4c6fdb75",
-            "candidate_0d68b3c5-49ba-4cda-9e3d-6331471343e7",
-            "candidate_0e928dd2-f8fd-4306-bcc8-e0a5085f2e5a"
+            "candidate_035e8f2f-d526-4de1-a907-0379fab561f3",
+            "candidate_0754d993-525c-49f6-ae07-d9e60d8f7adb",
+            "candidate_07ee0733-0f0d-4ccc-b0b3-6d92134c0e68",
+            "candidate_090f3aaa-76b9-4c17-a06a-1887fc5091d1",
+            "candidate_0fd75dde-e6fe-4220-8ede-8fd7bc1d2a21",
+            "candidate_11cc30a0-1163-496c-be67-1a4b75123c9f",
+            "candidate_11f9fd92-2324-4698-b500-db78b60c9249",
+            "candidate_1561b5d4-da8a-4b3b-b437-94aa7bc6a78c"
           ]
         }
       },
       "semanticObjects": {
         "stage": {
-          "tp": 0,
+          "tp": 1,
           "fp": 0,
-          "fn": 1,
-          "precision": 0,
-          "recall": 0,
-          "f1": 0
+          "fn": 0,
+          "precision": 1,
+          "recall": 1,
+          "f1": 1
         }
       },
       "falsePositiveRegions": {
@@ -2546,8 +2525,8 @@
           {
             "kind": "table",
             "type": "square",
-            "n": 15,
-            "clusters": 8
+            "n": 13,
+            "clusters": 7
           },
           {
             "kind": "table",
@@ -2575,9 +2554,9 @@
           },
           {
             "kind": "venue",
-            "type": "other",
-            "n": 2,
-            "clusters": 2
+            "type": "stage",
+            "n": 1,
+            "clusters": 1
           }
         ],
         "uncertainQuestions": 5,
@@ -2589,10 +2568,10 @@
         "detectionProvider": "classical-cv",
         "detectionPath": "chair-first",
         "chairSource": "colour-cluster",
-        "ocrEngine": null,
-        "ocrAvailable": false
+        "ocrEngine": "tesseract.js",
+        "ocrAvailable": true
       },
-      "detectionMs": 1114,
+      "detectionMs": 4945,
       "pageErrors": [],
       "imageShaMatches": true
     },
@@ -2677,88 +2656,113 @@
             "source": "seats summed over logical seating groups"
           },
           "unverified": [],
-          "drawingStated": null,
-          "rule": null,
-          "parts": {},
-          "arithmetic": null,
-          "difference": null,
-          "sourceText": null,
-          "ocrAvailable": false,
+          "drawingStated": 2064,
+          "rule": {
+            "units": 166,
+            "perUnit": 12,
+            "total": 1992,
+            "unitsSource": "derived",
+            "unitsAsRead": 1166,
+            "unitsAgree": false,
+            "corroboratedBy": 1992,
+            "why": "OCR read this line as \"1166 x 121992\"; 1992 is a figure the drawing states elsewhere, and 1992 / 12 = 166 exactly, so the count is taken as 166 rather than the 1166 that does not multiply out"
+          },
+          "parts": {
+            "total": 2064,
+            "boxes": 72
+          },
+          "arithmetic": {
+            "seating": 1992,
+            "others": 72,
+            "total": 2064,
+            "closes": true
+          },
+          "difference": 2064,
+          "sourceText": "So\nservant SILA 29.08.2026 SAAT\n© © ©) ©) ©) Haluk Elver Salonu 1/2/3 ©) 9 © ©)\nE\nEŞ — yp PN > yp >»\nBe ©) (») ©) ©) ©) SALON 1166 * 121992 PAX GD En) €5) 5) (») (=\nfe LOCALAR  :72 pax yy = 4 “4 /\nka A A A sa CR İTOPLAM : 2064 pax a aa an a &\n22 (23 (2a) (2s) (3263) (mn) (mw) (= (a 31\ne 9 $V Ww © @ GS Ww\n©9000 © Oe 606 606 6c\n» AD a A AA EB AD AED BR ÇE A o) VAN AREA <S>\nSAA ee Ww (=) © © © 6 6 © ",
+          "ocrAvailable": true,
           "suspectRegions": [
             {
-              "id": "candidate_02a1964d-6186-4867-aa8c-1074e34ea908",
-              "score": 4,
+              "id": "candidate_0114d404-4205-412f-adbf-ed1b4f5823a9",
+              "score": 5,
               "reasons": [
                 "table with no seats found",
-                "not yet reviewed"
+                "not yet reviewed",
+                "fewer seats than a table usually has"
               ]
             },
             {
-              "id": "candidate_03e5bedb-d35d-452e-ab55-2ea8b1a50866",
-              "score": 4,
+              "id": "candidate_013603ec-6e2f-447f-b7d9-fbd23792a193",
+              "score": 5,
               "reasons": [
                 "table with no seats found",
-                "not yet reviewed"
+                "not yet reviewed",
+                "fewer seats than a table usually has"
               ]
             },
             {
-              "id": "candidate_062596d6-02b4-4835-a9fe-f2874ac5d677",
-              "score": 4,
+              "id": "candidate_0167a04e-7d60-4b89-bd04-e5a6292c344e",
+              "score": 5,
               "reasons": [
                 "table with no seats found",
-                "not yet reviewed"
+                "not yet reviewed",
+                "fewer seats than a table usually has"
               ]
             },
             {
-              "id": "candidate_069f898f-b578-4b15-aea2-19509ee1d14c",
-              "score": 4,
+              "id": "candidate_02e248bb-4c7b-4269-b35a-02c9b0a398a7",
+              "score": 5,
               "reasons": [
                 "table with no seats found",
-                "not yet reviewed"
+                "not yet reviewed",
+                "fewer seats than a table usually has"
               ]
             },
             {
-              "id": "candidate_07749004-bb1b-44af-9030-79f8f677002b",
-              "score": 4,
+              "id": "candidate_044281ea-f1f8-435d-8e97-15db37712389",
+              "score": 5,
               "reasons": [
                 "table with no seats found",
-                "not yet reviewed"
+                "not yet reviewed",
+                "fewer seats than a table usually has"
               ]
             },
             {
-              "id": "candidate_090b19e9-cb11-4338-b872-c051a3297e4b",
-              "score": 4,
+              "id": "candidate_0448fc07-4ee6-4601-a0e1-f2098bcb671d",
+              "score": 5,
               "reasons": [
                 "table with no seats found",
-                "not yet reviewed"
+                "not yet reviewed",
+                "fewer seats than a table usually has"
               ]
             },
             {
-              "id": "candidate_09766385-7427-4bf9-bccb-1250c5e6b596",
-              "score": 4,
+              "id": "candidate_06bc74e6-a740-481d-a620-2bf122f60fcb",
+              "score": 5,
               "reasons": [
                 "table with no seats found",
-                "not yet reviewed"
+                "not yet reviewed",
+                "fewer seats than a table usually has"
               ]
             },
             {
-              "id": "candidate_0cb3f829-bb79-4ea3-8f95-d6acf6081462",
-              "score": 4,
+              "id": "candidate_08db9f86-5287-43f8-8e69-8c54c24ae645",
+              "score": 5,
               "reasons": [
                 "table with no seats found",
-                "not yet reviewed"
+                "not yet reviewed",
+                "fewer seats than a table usually has"
               ]
             }
           ],
           "likelyAreaIds": [
-            "candidate_02a1964d-6186-4867-aa8c-1074e34ea908",
-            "candidate_03e5bedb-d35d-452e-ab55-2ea8b1a50866",
-            "candidate_062596d6-02b4-4835-a9fe-f2874ac5d677",
-            "candidate_069f898f-b578-4b15-aea2-19509ee1d14c",
-            "candidate_07749004-bb1b-44af-9030-79f8f677002b",
-            "candidate_090b19e9-cb11-4338-b872-c051a3297e4b",
-            "candidate_09766385-7427-4bf9-bccb-1250c5e6b596",
-            "candidate_0cb3f829-bb79-4ea3-8f95-d6acf6081462"
+            "candidate_0114d404-4205-412f-adbf-ed1b4f5823a9",
+            "candidate_013603ec-6e2f-447f-b7d9-fbd23792a193",
+            "candidate_0167a04e-7d60-4b89-bd04-e5a6292c344e",
+            "candidate_02e248bb-4c7b-4269-b35a-02c9b0a398a7",
+            "candidate_044281ea-f1f8-435d-8e97-15db37712389",
+            "candidate_0448fc07-4ee6-4601-a0e1-f2098bcb671d",
+            "candidate_06bc74e6-a740-481d-a620-2bf122f60fcb",
+            "candidate_08db9f86-5287-43f8-8e69-8c54c24ae645"
           ]
         }
       },
@@ -2770,7 +2774,7 @@
         "worstTextRegions": [],
         "architectureRegionsAnnotated": 15,
         "tablesInsideArchitectureRegions": 1,
-        "anyDetectionInsideArchitectureRegions": 11,
+        "anyDetectionInsideArchitectureRegions": 9,
         "worstArchitectureRegions": [
           {
             "id": "system-kontrol",
@@ -2791,8 +2795,8 @@
           {
             "kind": "venue",
             "type": "other",
-            "n": 17,
-            "clusters": 12
+            "n": 14,
+            "clusters": 10
           }
         ],
         "uncertainQuestions": 1,
@@ -2804,10 +2808,10 @@
         "detectionProvider": "classical-cv",
         "detectionPath": "chair-first",
         "chairSource": "outline-interior",
-        "ocrEngine": null,
-        "ocrAvailable": false
+        "ocrEngine": "tesseract.js",
+        "ocrAvailable": true
       },
-      "detectionMs": 1803,
+      "detectionMs": 29111,
       "pageErrors": [],
       "imageShaMatches": true
     }

@@ -20,3 +20,7 @@ benchmarks/embedding/crops.json
 # PNGs that would otherwise land in every clone. The README says how to make
 # them and what they show.
 benchmarks/false-positives/debug/
+
+# Plan-understanding run output (overlays + stored analyses, ~2MB a run).
+# The committed starting point is baseline-<commit>/; a run writes latest/.
+benchmarks/plan-understanding/latest/

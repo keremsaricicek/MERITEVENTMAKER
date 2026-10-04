@@ -99,7 +99,7 @@ async function detect(browser, imagePath) {
 
   const t0 = Date.now();
   await page.click('[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis, null, { timeout: 180000 }).catch(() => {});
+  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy, null, { timeout: 180000 }).catch(() => {});
   const ms = Date.now() - t0;
   await page.waitForTimeout(600);
 
@@ -124,6 +124,7 @@ async function detect(browser, imagePath) {
       uncertainQuestions: (pi.uncertainQuestions || []).length,
       capacityAudit: pi.capacityAudit || null,
       diagnostics: a.diagnostics || null,
+      ocr: a.ocr || null,
     };
   });
   await page.close();
@@ -220,7 +221,10 @@ function evaluate(annot, det) {
     // Each chair remembers the table it was associated with, so the same match
     // that scores chair positions can also score the chair->table relationship.
     const detChairs = [
-      ...cands.filter(c => c.kind === "table").flatMap(c => (c.chairs || []).map(ch => ({ ...toPixels(ch, W, H), parentId: c.id }))),
+      // A chair detection's x/y is its CENTRE; a candidate's is its top-left
+      // corner. Read as top-left (until 2026-10-04) every chair moved by half
+      // its own size and the 3%-of-diagonal tolerance hid it.
+      ...cands.filter(c => c.kind === "table").flatMap(c => (c.chairs || []).map(ch => ({ ...ch, cx: ch.xPct / 100 * W, cy: ch.yPct / 100 * H, w: ch.wPct / 100 * W, h: ch.hPct / 100 * H, parentId: c.id }))),
       ...cands.filter(c => c.kind !== "table" && /chair|armchair/.test(c.type || "")).map(c => ({ ...c, parentId: null })),
     ];
     const all = matchObjects(gtChairs, detChairs, diag, tolPct);
