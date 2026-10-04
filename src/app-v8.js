@@ -3359,7 +3359,7 @@
     const priorAnalysis=event.analysis;
     render();await yieldFrame();
     try{
-      const blob=await sourceBlob(event.background.src),bitmap=await createImageBitmap(blob),max=1920,ratio=Math.min(1,max/Math.max(bitmap.width,bitmap.height)),width=Math.max(1,Math.round(bitmap.width*ratio)),height=Math.max(1,Math.round(bitmap.height*ratio)),canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,height);bitmap.close();
+      const FRAMES=globalThis.MeritPlanFrames,blob=await sourceBlob(event.background.src),bitmap=await createImageBitmap(blob),analysisFrame=FRAMES.analysisFrame(bitmap.width,bitmap.height,1920),ratio=analysisFrame.ratio,width=analysisFrame.width,height=analysisFrame.height,canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,height);bitmap.close();
       ui.analysisStage=t("analysis.stage.understanding");ui.analysisProgress=22;render();await yieldFrame();
       // Deskew before anything measures a component. See estimatePlanSkew.
       //
@@ -3369,68 +3369,38 @@
       // straight renderings, so the deadband is not a close call.
       const skew=globalThis.MERIT_PLAN_DETECTION.resolve().estimatePlanSkew(canvas,width,height);
       const deskewDeg=skew.applyDeg;
-      let dw=width,dh=height,dctx=ctx;
-      if(deskewDeg){
-        const rad=-deskewDeg*Math.PI/180,cos=Math.abs(Math.cos(rad)),sin=Math.abs(Math.sin(rad));
-        dw=Math.max(1,Math.round(width*cos+height*sin));
-        dh=Math.max(1,Math.round(width*sin+height*cos));
+      // Every frame and both box conventions live in MeritPlanFrames
+      // (src/plan-frames.js): the detector reads DESKEWED pixels, the product
+      // stores and draws PLAN percent of the analysis canvas, and a deskew of 0
+      // makes both directions the identity.
+      const deskew=FRAMES.deskewFrame(width,height,deskewDeg),dw=deskew.dw,dh=deskew.dh;
+      let dctx=ctx;
+      if(deskew.applied){
         const dcanvas=document.createElement("canvas");dcanvas.width=dw;dcanvas.height=dh;
         dctx=dcanvas.getContext("2d",{willReadFrequently:true});
         // Paper, not black, behind the rotated corners: a black wedge would read
         // as a giant dark object and change every tone family on the plan.
         dctx.fillStyle="#ffffff";dctx.fillRect(0,0,dw,dh);
-        dctx.translate(dw/2,dh/2);dctx.rotate(rad);dctx.drawImage(canvas,-width/2,-height/2);
+        dctx.translate(dw/2,dh/2);dctx.rotate(deskew.rad);dctx.drawImage(canvas,-width/2,-height/2);
         dctx.setTransform(1,0,0,1,0,0);
       }
       const pixels=dctx.getImageData(0,0,dw,dh);
-      // Everything the detector returns is in DESKEWED percent, and everything
-      // the product stores and draws is in PLAN percent. These two are the only
-      // bridge between them, and both are identities when no deskew happened.
-      //
-      // A candidate's w/h are its oriented box's own dimensions, not an
-      // axis-aligned extent, so rotating the frame does not change them — only
-      // the centre moves and the angle shifts by the correction that was
-      // applied. That is why this mapping is four lines rather than a general
-      // polygon transform.
-      const skewRad=deskewDeg*Math.PI/180;
-      const planFromDeskewPoint=(px,py)=>{
-        if(!deskewDeg)return[px,py];
-        const ox=px-dw/2,oy=py-dh/2,cos=Math.cos(skewRad),sin=Math.sin(skewRad);
-        return[ox*cos-oy*sin+width/2,ox*sin+oy*cos+height/2];
-      };
-      const deskewFromPlanPoint=(px,py)=>{
-        if(!deskewDeg)return[px,py];
-        const ox=px-width/2,oy=py-height/2,cos=Math.cos(-skewRad),sin=Math.sin(-skewRad);
-        return[ox*cos-oy*sin+dw/2,ox*sin+oy*cos+dh/2];
-      };
+      // A candidate's w/h are its oriented box's own dimensions, so rotating
+      // the frame moves only the centre and shifts the angle by the correction
+      // applied. A candidate is a CORNER box; the seats nested in it are CENTRE
+      // boxes — the two conventions MeritPlanFrames names.
       const planFromDeskew=o=>{
         if(!o)return o;
-        if(deskewDeg){
-          const[cx,cy]=planFromDeskewPoint((o.x+o.w/2)/100*dw,(o.y+o.h/2)/100*dh);
-          const ow=o.w/100*dw,oh=o.h/100*dh;
-          o.w=ow/width*100;o.h=oh/height*100;
-          o.x=cx/width*100-o.w/2;o.y=cy/height*100-o.h/2;
-          o.rotation=((o.rotation||0)+deskewDeg)%360;
-        }
+        if(deskew.applied)FRAMES.mapBox(o,FRAMES.CORNER,deskew.deskewToAnalysis,dw,dh,width,height,deskewDeg);
         for(const ch of o.chairDetections||[])planFromDeskewChair(ch);
         return o;
       };
-      // A nested seat carries its CENTRE in x/y, not a top-left corner.
-      const planFromDeskewChair=ch=>{
-        if(!deskewDeg)return ch;
-        const[cx,cy]=planFromDeskewPoint(ch.x/100*dw,ch.y/100*dh);
-        const cw=ch.w/100*dw,chh=ch.h/100*dh;
-        ch.x=cx/width*100;ch.y=cy/height*100;
-        ch.w=cw/width*100;ch.h=chh/height*100;
-        ch.rotation=((ch.rotation||0)+deskewDeg)%360;
-        return ch;
-      };
+      const planFromDeskewChair=ch=>deskew.applied?FRAMES.mapBox(ch,FRAMES.CENTRE,deskew.deskewToAnalysis,dw,dh,width,height,deskewDeg):ch;
       // Human-confirmed regions travel the other way: they were stored in plan
       // percent and the detector needs them where it is looking.
-      const deskewToPlan=list=>!deskewDeg?list:list.map(r=>{
-        const[cx,cy]=deskewFromPlanPoint((r.x+r.w/2)/100*width,(r.y+r.h/2)/100*height);
-        const w=r.w/100*width/dw*100,h=r.h/100*height/dh*100;
-        return{x:cx/dw*100-w/2,y:cy/dh*100-h/2,w,h};
+      const deskewToPlan=list=>!deskew.applied?list:list.map(r=>{
+        const m=FRAMES.mapBox({x:r.x,y:r.y,w:r.w,h:r.h},FRAMES.CORNER,deskew.analysisToDeskew,width,height,dw,dh);
+        return{x:m.x,y:m.y,w:m.w,h:m.h};
       });
       // The application layer talks to a PlanDetectionProvider, never to pixel
       // code or a vendor SDK directly (merit-plan-intelligence, "Provider
@@ -3512,7 +3482,7 @@
       // silently reverting to the detector's default grouping.
       const geometryRemap=matchCandidatesByGeometry(priorCandidates,allCandidates);
       const carriedDecisions=priorDecisions.map(d=>({...d,memberIds:d.memberIds.map(id=>geometryRemap.get(id)).filter(Boolean)})).filter(d=>d.memberIds.length>=2);
-      event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:false,notice:"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:Math.round(width/ratio),originalHeight:Math.round(height/ratio),threshold,candidates:allCandidates,missed:allCandidates.filter(c=>c.missed).map(c=>c.id),groupingDecisions:carriedDecisions,memoryReapplied:memoryResult.reappliedCount,memoryRestored:memoryResult.restored.length,memoryConflicts:memoryResult.conflicts,comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{...detection.diagnostics,resolution:`${width}×${height}`,detectionMs,provider:provider.id,providerLabel:provider.label,
+      event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:false,notice:"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:analysisFrame.originalWidth,originalHeight:analysisFrame.originalHeight,threshold,candidates:allCandidates,missed:allCandidates.filter(c=>c.missed).map(c=>c.id),groupingDecisions:carriedDecisions,memoryReapplied:memoryResult.reappliedCount,memoryRestored:memoryResult.restored.length,memoryConflicts:memoryResult.conflicts,comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{...detection.diagnostics,resolution:`${width}×${height}`,detectionMs,provider:provider.id,providerLabel:provider.label,
         // Which visual representation actually produced the descriptors, and
         // whether it involved trained weights. Reported from the resolved
         // provider rather than from a constant, so an install without the
