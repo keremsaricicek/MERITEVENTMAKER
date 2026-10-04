@@ -31,6 +31,7 @@
 // already gone wrong.
 import fs from "node:fs";
 import path from "node:path";
+import { shellAndScreens } from "../lib/shell-sources.mjs";
 
 export const meta = { name: "i18n-key-integrity", tags: ["business", "fast"], timeout: 15000 };
 
@@ -137,7 +138,7 @@ export default async function run({ checks }) {
       `${key} still substitutes the underlying {reason}, so the technical detail is kept alongside the instruction`, row && row[0].slice(0, 120));
   }
 
-  const bareExceptionToasts = appV8.split("\n")
+  const bareExceptionToasts = shellAndScreens(path.dirname(SRC)).split("\n")
     .map((line, idx) => ({ line, idx: idx + 1 }))
     .filter(({ line }) => /toast\(\s*error\.message\s*,/.test(line))
     .map(({ idx }) => `app-v8.js:${idx}`);

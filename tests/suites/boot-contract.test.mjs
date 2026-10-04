@@ -114,7 +114,12 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // overridden name as untouched. The positive control below is what
   // caught that; keep both.
   const isReassigned = (n) => new RegExp(`(^|[^\\w.])${n}\\s*=[^=>]`, "m").test(after);
-  const isDelegated = (n) => new RegExp(`original\\.${n}\\s*\\(`).test(after);
+  // A screen moved out of app-v8.js is handed the same \`original\` capture and
+  // may delegate through it (screen-guests.js calls original.bindGuests): the
+  // delegation is the same fact in another file, so it is looked for there too.
+  const screenSources = fs.readdirSync(path.join(repoRoot, "src")).filter((f) => /^screen-.*\.js$/.test(f))
+    .map((f) => fs.readFileSync(path.join(repoRoot, "src", f), "utf8")).join("\n");
+  const isDelegated = (n) => new RegExp(`original\\.${n}\\s*\\(`).test(after + "\n" + screenSources);
 
   const delegated = names.filter((n) => isDelegated(n));
   const shadowed = names.filter((n) => isReassigned(n) && !isDelegated(n));

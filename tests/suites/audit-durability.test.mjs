@@ -35,6 +35,7 @@
 //      begins — a fact, not a "may have".
 import fs from "node:fs";
 import path from "node:path";
+import { shellAndScreens } from "../lib/shell-sources.mjs";
 import { click, openApp, createBlankEvent, gotoTab, futureDate, settle } from "../lib/app-actions.mjs";
 
 export const meta = { name: "audit-durability", tags: ["business", "fast"], timeout: 180000 };
@@ -64,7 +65,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // Read CODE, not the comments that explain the old bug — those mention the
   // very expression being banned, and a scanner that cannot tell the two
   // apart reports the explanation as the defect.
-  const v8 = fs.readFileSync(path.join(repoRoot, "src", "app-v8.js"), "utf8")
+  const v8 = shellAndScreens(repoRoot)
     .split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n").replace(/\s/g, "");
   const truncations = (v8.match(/audit[^;]{0,40}\.slice\(0,1000\)/g) || []);
   checks.equal(truncations.length, 0,

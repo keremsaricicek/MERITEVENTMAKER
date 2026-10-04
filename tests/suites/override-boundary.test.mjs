@@ -27,6 +27,7 @@
 // this long.
 import fs from "node:fs";
 import path from "node:path";
+import { shellAndScreens } from "../lib/shell-sources.mjs";
 
 export const meta = { name: "override-boundary", tags: ["business", "fast"], timeout: 15000 };
 
@@ -60,7 +61,10 @@ export default async function run({ checks, repoRoot }) {
   // Everything after the capture object's own closing brace -- so a name
   // merely appearing INSIDE the object literal itself never counts as its
   // own reference.
-  const afterCapture = text.slice(originalMatch.index + originalMatch[0].length);
+  // Screens moved out of app-v8.js are handed `original` and may delegate
+  // through it (screen-guests.js: original.bindGuests), so they are read too.
+  const afterCapture = text.slice(originalMatch.index + originalMatch[0].length) +
+    shellAndScreens(repoRoot).slice(text.length);
   const referenced = new Set();
   const unreferenced = new Set();
   for (const name of names) {
