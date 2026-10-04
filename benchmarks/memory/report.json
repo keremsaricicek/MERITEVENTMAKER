@@ -1,8 +1,8 @@
 {
- "ranAt": "2026-09-27T14:59:27.852Z",
+ "ranAt": "2026-10-04T14:27:27.066Z",
  "source": {
-  "digest": "a060bdd03b18da5cc302927bfd4665c5ce69c9c5cf2c8172e8dedacfb6f2ac33",
-  "files": 64,
+  "digest": "39fce3e826c040d2d7f70121ad31add4c26fee77cb6aee5797b6c531b0aa03e0",
+  "files": 85,
   "inputs": [
    "index.html",
    "src",
@@ -72,7 +72,7 @@
      "wrongRate": 0,
      "identityPrecision": 1
     },
-    "shifted": {
+    "noShift": {
      "scoreableMemories": 26,
      "applied": 26,
      "retained": 26,
@@ -147,7 +147,7 @@
      "wrongRate": 0,
      "identityPrecision": 1
     },
-    "shifted": {
+    "noShift": {
      "scoreableMemories": 26,
      "applied": 12,
      "retained": 12,
@@ -223,7 +223,7 @@
      "wrongRate": 0,
      "identityPrecision": 1
     },
-    "shifted": {
+    "noShift": {
      "scoreableMemories": 26,
      "applied": 23,
      "retained": 23,
@@ -298,7 +298,7 @@
      "wrongRate": 0,
      "identityPrecision": 1
     },
-    "shifted": {
+    "noShift": {
      "scoreableMemories": 26,
      "applied": 22,
      "retained": 22,
@@ -329,63 +329,63 @@
    "shipped": {
     "scoreableMemories": 26,
     "applied": 14,
-    "retained": 12,
-    "wrong": 2,
+    "retained": 14,
+    "wrong": 0,
     "unscoreable": 0,
     "lost": 12,
     "beyondOldTolerance": 4,
-    "retention": 0.4615,
-    "wrongRate": 0.1429,
-    "identityPrecision": 0.8571
+    "retention": 0.5385,
+    "wrongRate": 0,
+    "identityPrecision": 1
    },
    "ablation": {
     "full": {
      "scoreableMemories": 26,
      "applied": 14,
-     "retained": 12,
-     "wrong": 2,
+     "retained": 14,
+     "wrong": 0,
      "unscoreable": 0,
      "lost": 12,
      "beyondOldTolerance": 4,
-     "retention": 0.4615,
-     "wrongRate": 0.1429,
-     "identityPrecision": 0.8571
+     "retention": 0.5385,
+     "wrongRate": 0,
+     "identityPrecision": 1
     },
     "noVisual": {
      "scoreableMemories": 26,
      "applied": 15,
-     "retained": 11,
-     "wrong": 4,
+     "retained": 14,
+     "wrong": 1,
      "unscoreable": 0,
      "lost": 11,
      "beyondOldTolerance": 5,
-     "retention": 0.4231,
-     "wrongRate": 0.2667,
-     "identityPrecision": 0.7333
+     "retention": 0.5385,
+     "wrongRate": 0.0667,
+     "identityPrecision": 0.9333
     },
     "noContext": {
      "scoreableMemories": 26,
      "applied": 15,
-     "retained": 12,
-     "wrong": 3,
+     "retained": 15,
+     "wrong": 0,
      "unscoreable": 0,
      "lost": 11,
      "beyondOldTolerance": 5,
-     "retention": 0.4615,
-     "wrongRate": 0.2,
-     "identityPrecision": 0.8
+     "retention": 0.5769,
+     "wrongRate": 0,
+     "identityPrecision": 1
     },
-    "shifted": {
+    "noShift": {
      "scoreableMemories": 26,
      "applied": 14,
-     "retained": 12,
-     "wrong": 2,
+     "retained": 14,
+     "wrong": 0,
      "unscoreable": 0,
      "lost": 12,
      "beyondOldTolerance": 4,
-     "retention": 0.4615,
-     "wrongRate": 0.1429,
-     "identityPrecision": 0.8571
+     "retention": 0.5385,
+     "wrongRate": 0,
+     "identityPrecision": 1
     }
    },
    "ambiguousReported": 11,
@@ -405,71 +405,69 @@
    "scoreable": 26,
    "shipped": {
     "scoreableMemories": 26,
-    "applied": 10,
-    "retained": 7,
-    "wrong": 3,
+    "applied": 25,
+    "retained": 25,
+    "wrong": 0,
     "unscoreable": 0,
-    "lost": 16,
-    "beyondOldTolerance": 2,
-    "retention": 0.2692,
-    "wrongRate": 0.3,
-    "identityPrecision": 0.7
+    "lost": 1,
+    "beyondOldTolerance": 0,
+    "retention": 0.9615,
+    "wrongRate": 0,
+    "identityPrecision": 1
    },
    "ablation": {
     "full": {
      "scoreableMemories": 26,
-     "applied": 10,
-     "retained": 7,
-     "wrong": 3,
+     "applied": 25,
+     "retained": 25,
+     "wrong": 0,
      "unscoreable": 0,
-     "lost": 16,
-     "beyondOldTolerance": 2,
-     "retention": 0.2692,
-     "wrongRate": 0.3,
-     "identityPrecision": 0.7
+     "lost": 1,
+     "beyondOldTolerance": 0,
+     "retention": 0.9615,
+     "wrongRate": 0,
+     "identityPrecision": 1
     },
     "noVisual": {
      "scoreableMemories": 26,
-     "applied": 10,
-     "retained": 7,
-     "wrong": 3,
+     "applied": 25,
+     "retained": 25,
+     "wrong": 0,
      "unscoreable": 0,
-     "lost": 16,
-     "beyondOldTolerance": 1,
-     "retention": 0.2692,
-     "wrongRate": 0.3,
-     "identityPrecision": 0.7
+     "lost": 1,
+     "beyondOldTolerance": 0,
+     "retention": 0.9615,
+     "wrongRate": 0,
+     "identityPrecision": 1
     },
     "noContext": {
      "scoreableMemories": 26,
-     "applied": 12,
-     "retained": 8,
-     "wrong": 4,
-     "unscoreable": 0,
-     "lost": 14,
-     "beyondOldTolerance": 3,
-     "retention": 0.3077,
-     "wrongRate": 0.3333,
-     "identityPrecision": 0.6667
-    },
-    "shifted": {
-     "scoreableMemories": 26,
      "applied": 25,
-     "retained": 14,
-     "wrong": 10,
-     "unscoreable": 1,
-     "lost": 2,
+     "retained": 25,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 1,
      "beyondOldTolerance": 0,
+     "retention": 0.9615,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 26,
+     "applied": 14,
+     "retained": 14,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 12,
+     "beyondOldTolerance": 3,
      "retention": 0.5385,
-     "wrongRate": 0.4,
-     "identityPrecision": 0.5833
+     "wrongRate": 0,
+     "identityPrecision": 1
     }
    },
-   "ambiguousReported": 15,
+   "ambiguousReported": 1,
    "conflictKinds": {
-    "overruled": 4,
-    "ambiguous": 15,
-    "lost": 1
+    "overruled": 14
    },
    "pageErrors": 0
   },
@@ -529,7 +527,7 @@
      "wrongRate": 0,
      "identityPrecision": 1
     },
-    "shifted": {
+    "noShift": {
      "scoreableMemories": 26,
      "applied": 12,
      "retained": 12,
@@ -553,20 +551,20 @@
  ],
  "totals": {
   "scoreable": 182,
-  "retainedFull": 114,
-  "retainedNoVisual": 113,
-  "retainedNoContext": 115,
-  "retainedShifted": 121,
-  "wrongShifted": 12,
-  "appliedShifted": 134,
-  "wrongFull": 5,
-  "appliedFull": 119,
-  "retentionFull": 0.6264,
-  "retentionNoVisual": 0.6209,
-  "retentionNoContext": 0.6319,
-  "retentionWithGlobalTransform": 0.6648,
-  "identityPrecisionWithGlobalTransform": 0.9098,
-  "identityPrecisionFull": 0.958,
-  "wrongApplicationRateFull": 0.042
+  "retainedFull": 134,
+  "retainedNoVisual": 134,
+  "retainedNoContext": 135,
+  "retainedNoShift": 123,
+  "wrongNoShift": 0,
+  "appliedNoShift": 123,
+  "wrongFull": 0,
+  "appliedFull": 134,
+  "retentionFull": 0.7363,
+  "retentionNoVisual": 0.7363,
+  "retentionNoContext": 0.7418,
+  "retentionWithoutGlobalTransform": 0.6758,
+  "identityPrecisionWithoutGlobalTransform": 1,
+  "identityPrecisionFull": 1,
+  "wrongApplicationRateFull": 0
  }
 }

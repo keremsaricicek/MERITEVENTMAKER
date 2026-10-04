@@ -247,8 +247,12 @@
     }
 
     if (objectLessons.length && globalThis.MeritPlanMemory && (candidates || []).length) {
+      // shift:false — Visual Plan Memory corrects for a re-cropped plan by
+      // fitting one transform to its confident matches; that was measured for
+      // remembered review decisions, not for lessons, so lessons do not get it
+      // until it is.
       const result = globalThis.MeritPlanMemory.match(
-        objectLessons.map(asMemoryRow), candidates, { visual: opts.visual !== false });
+        objectLessons.map(asMemoryRow), candidates, { visual: opts.visual !== false, shift: false });
       const byLesson = new Map(result.matches.map((m) => [m.memoryId, m]));
       for (const l of objectLessons) {
         const m = byLesson.get(l.id);

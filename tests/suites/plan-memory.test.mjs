@@ -17,8 +17,8 @@
 //   3. a family mismatch lowers the score and never blocks the match, because
 //      a reclassification is the memory that matters most
 //   4. an object that is simply gone is reported lost, never fabricated
-//   5. the global-transform correction is off unless asked for, and when asked
-//      for it declines a fit it cannot trust
+//   5. the global-transform correction is on unless switched off, declines a
+//      fit it cannot trust, and stays off for the Teach Area's lessons
 import { openApp } from "../lib/app-actions.mjs";
 
 export const meta = {
@@ -118,8 +118,12 @@ export default async function run({ page, checks, baseUrl }) {
 
   // ---- 5. the global-transform correction -----------------------------------
   //
-  // Off by default. That is a measured decision, not an unfinished feature:
-  // across the transformed plans it recovers 3 decisions and misapplies 3 more.
+  // On by default since 2026-10-04. It had shipped off on a measurement that
+  // scored re-cropped plans against the original plan's coordinates; scored
+  // against each rendering's own annotation it recovers 15 decisions and
+  // misapplies none (benchmarks/memory/README.md). `{shift:false}` is the off
+  // switch, and the Teach Area uses it: lessons were not part of that
+  // measurement.
   {
     // A re-issued plan, modelled the way a real one changes: the frame grew, so
     // every object scaled about the origin. Objects near the origin barely
@@ -139,10 +143,10 @@ export default async function run({ page, checks, baseUrl }) {
       memory.push(mem(`m${i}`, x, 20, 5, 5));
       cands.push(cand(`c${i}`, +(x * S).toFixed(2), +(20 * S).toFixed(2), 5, 5));
     }
-    const off = await run1(memory, cands);
-    const on = await run1(memory, cands, { shift: true });
-    checks.equal(off.shift, null, "no transform is fitted unless it is asked for", off.shift);
-    checks.ok(on.shift !== null, "and one is fitted when there are anchors to fit it from", on.shift);
+    const off = await run1(memory, cands, { shift: false });
+    const on = await run1(memory, cands);
+    checks.equal(off.shift, null, "no transform is fitted when it is switched off", off.shift);
+    checks.ok(on.shift !== null, "and by default one is fitted when there are anchors to fit it from", on.shift);
     checks.ok(on.shift && Math.abs(on.shift.scale - S) < 0.03,
       "recovering the scale the plan actually changed by", on.shift);
     checks.ok(on.matches.length >= off.matches.length,
@@ -152,9 +156,27 @@ export default async function run({ page, checks, baseUrl }) {
     // A scatter of unrelated movements is not one transform, and must not be
     // fitted as if it were.
     const scattered = cands.map((c, i) => ({ ...c, x: c.x + (i % 2 ? 6 : -6), y: c.y + (i % 3 ? 5 : -5) }));
-    const noisy = await run1(memory, scattered, { shift: true });
+    const noisy = await run1(memory, scattered);
     checks.ok(noisy.shift === null || noisy.shift.applied === false,
       "a scatter of unrelated shifts is refused rather than fitted", noisy.shift);
+
+    // The same re-issued plan, as Teach Area lessons. The correction would
+    // reach the far-out objects; the lessons must not get it, so each of
+    // them is exactly where the uncorrected matcher left it.
+    const taught = await page.evaluate(({ memory, cands }) => {
+      const lessons = memory.map((m) => ({ id: m.id, scope: "plan", subject: { kind: "objectIdentity" },
+        from: { kind: m.kind, type: m.type, geometry: m.geometry } }));
+      return globalThis.MeritTeachArea.propose(lessons, cands).proposals
+        .map((p) => ({ lessonId: p.lessonId, candidateId: p.candidateId }));
+    }, { memory, cands });
+    const plain = Object.fromEntries(off.matches.map((m) => [m.memoryId, m.candidateId]));
+    checks.equal(taught.map((p) => [p.lessonId, p.candidateId || null]),
+      memory.map((m) => [m.id, plain[m.id] || null]),
+      "a lesson is placed exactly as the uncorrected matcher places it — the Teach Area does not get the correction",
+      { taught, plain, corrected: on.matches.length, uncorrected: off.matches.length });
+    checks.ok(on.matches.length > off.matches.length,
+      "and that comparison has teeth: on this plan the correction does reach more objects",
+      { on: on.matches.length, off: off.matches.length });
   }
 
   // ---- the evidence is inspectable ----------------------------------------

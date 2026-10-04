@@ -111,10 +111,10 @@ async function analyse(page, src) {
 // Which annotated object a detection is, so "the decision came back on the same
 // object" means the same thing before and after the image changed. Matching is
 // the same greedy nearest-first every other benchmark uses.
-function annotatedIdFor(det, W, H, tolPx) {
+function annotatedIdFor(det, W, H, tolPx, objects = ANNOT.objects) {
   let best = null, bestD = Infinity;
   const cx = (det.x + det.w / 2) / 100 * W, cy = (det.y + det.h / 2) / 100 * H;
-  for (const o of ANNOT.objects) {
+  for (const o of objects) {
     const d = Math.hypot(o.cx - cx, o.cy - cy);
     if (d < bestD) { bestD = d; best = o; }
   }
@@ -232,16 +232,31 @@ for (const scenario of SCENARIOS) {
             grade: m.grade, score: m.score, beyondTolerance: !m.withinOldTolerance })),
             ambiguous: r.ambiguous.length, lost: r.unmatched.length, stats: r.stats };
         };
-        // `shifted` is the opt-in global-transform correction, measured beside
-        // the shipped configuration so the decision to leave it off stays
-        // visible and re-decidable rather than becoming folklore.
+        // `noShift` is the shipped matcher with its global-transform correction
+        // switched off — the configuration that shipped until 2026-10-04 —
+        // measured beside it so the decision to turn it on stays visible and
+        // re-decidable rather than becoming folklore.
         return { full: run({}), noVisual: run({ visual: false }), noContext: run({ context: false }),
-          shifted: run({ shift: true }) };
+          noShift: run({ shift: false }) };
       })(),
     };
   });
 
   // ---- score ---------------------------------------------------------------
+  // Where a decision LANDED is read off the plan it landed on. Each variant
+  // carries its own annotation, derived by the same transform as its pixels
+  // and keeping every object's id, so "the same object" is an id comparison.
+  // Until 2026-10-04 this read the ORIGINAL plan's coordinates for every
+  // scenario: on crop-pad (60/34 px of margin) and rotate-2 a decision that
+  // came back on the right table was located up to ~25 px from where that
+  // table now is, and chairs sit closer together than that — so the nearest
+  // annotated object could be a neighbour and a correct application was
+  // scored as a wrong one.
+  const after_ = scenario.file
+    ? JSON.parse(fs.readFileSync(path.join(BENCH, "robustness", "annotations", scenario.file.replace(/\.(png|jpg)$/, ".json")), "utf8"))
+    : ANNOT;
+  const W2 = after_.source.width, H2 = after_.source.height;
+  const tolPx2 = (ANNOT.matchToleranceP ?? 3) / 100 * Math.hypot(W2, H2);
   const candById = new Map(after.candidates.map(c => [c.id, c]));
   const score = applied => {
     let retained = 0, wrong = 0, unscoreable = 0, beyond = 0;
@@ -249,7 +264,7 @@ for (const scenario of SCENARIOS) {
       const truth = memoryTruth.get(hit.memoryId);
       const c = candById.get(hit.candidateId);
       if (!truth || !c) { unscoreable++; continue; }
-      const landedOn = annotatedIdFor(c, W, H, tolPx);
+      const landedOn = annotatedIdFor(c, W2, H2, tolPx2, after_.objects);
       if (landedOn === null) { unscoreable++; continue; }
       if (landedOn === truth) retained++; else wrong++;
       if (hit.beyondTolerance) beyond++;
@@ -278,7 +293,7 @@ for (const scenario of SCENARIOS) {
       full: score(after.ablation.full.applied),
       noVisual: score(after.ablation.noVisual.applied),
       noContext: score(after.ablation.noContext.applied),
-      shifted: score(after.ablation.shifted.applied),
+      noShift: score(after.ablation.noShift.applied),
     },
     ambiguousReported: after.ablation.full.ambiguous,
     conflictKinds: after.conflicts.reduce((m, c) => (m[c.kind] = (m[c.kind] || 0) + 1, m), {}),
@@ -291,7 +306,7 @@ for (const scenario of SCENARIOS) {
   console.log(`  memories ${row.memories} (${row.memoriesWithVector} with a learned vector, ${row.memoriesWithContext} with context), ${row.scoreable} scoreable`);
   console.log(`  retained ${s.retained}  wrong ${s.wrong}  lost ${s.lost}  ambiguous(not applied) ${row.ambiguousReported}  unscoreable ${s.unscoreable}`);
   console.log(`  RETENTION ${s.retention}   IDENTITY PRECISION ${s.identityPrecision}   WRONG RATE ${s.wrongRate}   matched beyond the old tolerance: ${s.beyondOldTolerance}`);
-  console.log(`  ablation  full ${row.ablation.full.retained}/${row.scoreable} (wrong ${row.ablation.full.wrong})   no-visual ${row.ablation.noVisual.retained}/${row.scoreable}   no-context ${row.ablation.noContext.retained}/${row.scoreable}   +global-transform ${row.ablation.shifted.retained}/${row.scoreable} (wrong ${row.ablation.shifted.wrong})`);
+  console.log(`  ablation  full ${row.ablation.full.retained}/${row.scoreable} (wrong ${row.ablation.full.wrong})   no-visual ${row.ablation.noVisual.retained}/${row.scoreable}   no-context ${row.ablation.noContext.retained}/${row.scoreable}   without global-transform ${row.ablation.noShift.retained}/${row.scoreable} (wrong ${row.ablation.noShift.wrong})`);
   if (errors.length) console.log(`  pageErrors ${errors.length}: ${errors[0]}`);
   await page.close();
 }
@@ -307,9 +322,9 @@ const totals = {
   retainedFull: sum(scored, r => r.ablation.full.retained),
   retainedNoVisual: sum(scored, r => r.ablation.noVisual.retained),
   retainedNoContext: sum(scored, r => r.ablation.noContext.retained),
-  retainedShifted: sum(scored, r => r.ablation.shifted.retained),
-  wrongShifted: sum(scored, r => r.ablation.shifted.wrong),
-  appliedShifted: sum(scored, r => r.ablation.shifted.applied),
+  retainedNoShift: sum(scored, r => r.ablation.noShift.retained),
+  wrongNoShift: sum(scored, r => r.ablation.noShift.wrong),
+  appliedNoShift: sum(scored, r => r.ablation.noShift.applied),
   wrongFull: sum(scored, r => r.ablation.full.wrong),
   appliedFull: sum(scored, r => r.ablation.full.applied),
 };
@@ -325,8 +340,8 @@ const report = {
     retentionFull: rate(totals.retainedFull, totals.scoreable),
     retentionNoVisual: rate(totals.retainedNoVisual, totals.scoreable),
     retentionNoContext: rate(totals.retainedNoContext, totals.scoreable),
-    retentionWithGlobalTransform: rate(totals.retainedShifted, totals.scoreable),
-    identityPrecisionWithGlobalTransform: rate(totals.retainedShifted, totals.retainedShifted + totals.wrongShifted),
+    retentionWithoutGlobalTransform: rate(totals.retainedNoShift, totals.scoreable),
+    identityPrecisionWithoutGlobalTransform: rate(totals.retainedNoShift, totals.retainedNoShift + totals.wrongNoShift),
     identityPrecisionFull: rate(totals.retainedFull, totals.retainedFull + totals.wrongFull),
     wrongApplicationRateFull: rate(totals.wrongFull, totals.appliedFull),
   },
@@ -355,11 +370,14 @@ console.log(contextGain > 0
 const gatesMet = report.totals.retentionFull >= 0.98
   && report.totals.identityPrecisionFull >= 0.98
   && report.totals.wrongApplicationRateFull <= 0.01;
-console.log("\nTHE GLOBAL-TRANSFORM CORRECTION, which ships OFF");
-console.log(`  retention          ${report.totals.retentionFull} -> ${report.totals.retentionWithGlobalTransform}`);
-console.log(`  identity precision ${report.totals.identityPrecisionFull} -> ${report.totals.identityPrecisionWithGlobalTransform}`);
-console.log(`  it recovers ${totals.retainedShifted - totals.retainedFull} decision(s) and misapplies ${totals.wrongShifted - totals.wrongFull} more.`);
-console.log("  A lost decision is reported and re-made; a wrongly applied one is invisible. Not promoted.");
+console.log("\nTHE GLOBAL-TRANSFORM CORRECTION, which ships ON since 2026-10-04 (off -> on)");
+console.log(`  retention          ${report.totals.retentionWithoutGlobalTransform} -> ${report.totals.retentionFull}`);
+console.log(`  identity precision ${report.totals.identityPrecisionWithoutGlobalTransform} -> ${report.totals.identityPrecisionFull}`);
+const recovered = totals.retainedFull - totals.retainedNoShift, misapplied = totals.wrongFull - totals.wrongNoShift;
+console.log(`  it recovers ${recovered} decision(s) and misapplies ${misapplied} more.`);
+console.log(misapplied > 0
+  ? "  IT NOW MISAPPLIES DECISIONS. A wrongly applied one is invisible: switch it off (src/plan-memory.js) and record why."
+  : "  No decision misapplied by it on this corpus — the condition it was switched on under.");
 console.log(`\n${gatesMet ? "All §23 memory targets met." : "§23 MEMORY TARGETS NOT MET on transformed plans (they are met on an unchanged one)."}`);
 console.log("REAL DISTINCT VENUE PLANS: 1. CROSS-VENUE GENERALIZATION: NOT VERIFIED.");
 

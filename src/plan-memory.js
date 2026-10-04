@@ -130,33 +130,31 @@
   // tell "this is clearly the object" from "two objects fit equally well", and
   // the second is how a decision quietly lands on the wrong one.
   //
-  // The `likely` numbers were MEASURED, not chosen. benchmark:memory over 196
-  // scoreable decisions, sweeping score x margin:
+  // The `likely` numbers were MEASURED, not chosen — twice, because the first
+  // sweep was scored wrongly. benchmark:memory, 182 scoreable decisions over
+  // seven renderings of the real plan, each rendering scored against its OWN
+  // annotation (2026-10-04), with the global-transform correction below on:
   //
-  //     score margin | retention precision wrong-rate
-  //      0.62  0.04  |   0.7857    0.9448    0.0552   <- was
-  //      0.62  0.08  |   0.7347    0.9412    0.0588
-  //      0.62  0.12  |   0.7194    0.9592    0.0408
-  //      0.68  0.08  |   0.7296    0.9470    0.0530
-  //      0.68  0.12  |   0.7143    0.9655    0.0345   <- is
-  //      0.72  0.12  |   0.6990    0.9648    0.0352
+  //     score margin | retention  wrong / applied
+  //      0.62  0.04  |   0.7857      1 / 144
+  //      0.62  0.08  |   0.7692      0 / 140
+  //      0.62  0.12  |   0.7527      0 / 137
+  //      0.68  0.08  |   0.7527      0 / 137
+  //      0.68  0.12  |   0.7363      0 / 134   <- is
+  //      0.72  0.12  |   0.7363      0 / 134
   //
-  // Two things that sweep says, and both matter.
+  // The first sweep (2026-09) located every re-applied decision with the
+  // ORIGINAL plan's coordinates, so on the rotated and re-cropped renderings a
+  // decision that came back on the right table could be read as its
+  // neighbour. Its conclusion — "no setting meets the 0.01 gate, the score
+  // cannot separate right from wrong" — was the harness, not this module.
   //
-  // NO SETTING MEETS THE GATE. The wrong-application ceiling is 0.01 and the
-  // best point on this curve is 0.0345. Tightening the grade is not the fix
-  // for it: 0.04 -> 0.08 makes the wrong rate WORSE, so this is not even a
-  // monotone trade. The score cannot separate a right match from a wrong one
-  // on a transformed plan, which is the same thing the ablation says when it
-  // reports that the learned embedding contributes nothing measurable. That
-  // is a signal problem and it is recorded as open, not closed.
-  //
-  // BETWEEN TWO SETTINGS THAT BOTH MISS, THIS MODULE'S OWN DOCTRINE DECIDES.
-  // A lost decision is reported and re-made; a wrongly applied one is
-  // invisible. 0.68/0.12 costs 7 points of retention (0.786 -> 0.714) and
-  // removes 37% of the invisible errors (0.0552 -> 0.0345), and precision
-  // rises with it. Taking the visible cost to cut the invisible one is the
-  // same call that keeps the global-transform correction switched off.
+  // Scored correctly, the loose settings DO misapply: 0.62/0.04 puts 4
+  // decisions on the wrong object without the transform and 1 with it.
+  // 0.68/0.12 misapplies none. 0.62/0.08 also measured none, and is not taken:
+  // it is one step from a setting that does not, on ONE real drawing, and
+  // what this ceiling protects against is an invisible error. A lost decision
+  // is reported and re-made; a wrongly applied one is not seen at all.
   const GRADE = {
     strong: { score: 0.78, margin: 0.08 },
     likely: { score: 0.68, margin: 0.12 },
@@ -440,22 +438,25 @@
       signatureFor: c => contextSignature(c, candidates, opts.contextK || CONTEXT_K),
     };
     const first = matchOnce(memory, candidates, opts, ctx);
-    // OFF BY DEFAULT, and that is a decision from the measurement rather than
-    // an unfinished feature. Across the seven transformed renderings the
-    // global-transform correction recovers 6 decisions and adds 3 that land on
-    // the wrong object — retention 0.786 -> 0.816, identity precision
-    // 0.945 -> 0.930. On the re-cropped plan specifically it retains 19 and
-    // misapplies 8, with none of them reported as uncertain, because the fitted
-    // transform lands each remaining decision confidently on a neighbour one
-    // grid position away.
+    // ON BY DEFAULT since 2026-10-04; `{shift:false}` switches it off.
     //
-    // A lost decision is visible: it is reported, and the operator re-makes it.
-    // A wrongly applied one is invisible, and it corrupts a plan while looking
-    // like the feature worked. Six recovered is not worth three of those.
+    // It shipped OFF because it measured "recovers 6, misapplies 3" (and, on
+    // the re-cropped plan, "retains 19, misapplies 8"). Those misapplications
+    // were the benchmark's: it located every re-applied decision with the
+    // ORIGINAL plan's coordinates, and a re-cropped plan's frame is not the
+    // original's, so a decision on the right table was read as its neighbour.
+    // Scored against each rendering's own annotation, over the same 182
+    // decisions, it recovers 15 and misapplies NONE — retention 0.6538 ->
+    // 0.7363, identity precision 1.0 -> 1.0 (crop-pad 10 -> 25 of 26; every
+    // other rendering unchanged).
     //
-    // Kept, measurable, and opt-in (`{shift:true}`) so the next real plan can
-    // re-decide this with its own evidence instead of re-deriving it.
-    if (opts.shift !== true) return { ...first, shift: null };
+    // The doctrine that kept it off still holds and is what benchmark:memory
+    // now checks every run: a lost decision is reported and re-made, a wrongly
+    // applied one is invisible. The day this misapplies one, it goes back off.
+    //
+    // Only Visual Plan Memory uses it. The Teach Area passes `{shift:false}`:
+    // its lessons were not part of this measurement.
+    if (opts.shift === false) return { ...first, shift: null };
 
     const shift = estimateShift(first.matches);
     if (!shift) return { ...first, shift: null };
