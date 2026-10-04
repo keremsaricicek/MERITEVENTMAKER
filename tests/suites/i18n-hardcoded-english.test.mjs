@@ -49,7 +49,10 @@ const SAME_IN_BOTH = new Set(["VIP", "VVIP", "VIP / VVIP", "Bar", "Bistro", "Exc
   "VIP FRONT", "MAIN FLOOR", "BISTRO", "RESERVED", "Language / Dil",
   "KEREM SARICICEK"]);   // the example name in the guest dialog's placeholder: a name, not English
 
-const SHELL = ["app-v8.js", "app.js", "app-guests.js"];
+// The shell, and every screen moved out of it (src/screen-*.js): a template
+// that leaves app-v8.js must not leave this scan with it.
+const SHELL = ["app-v8.js", "app.js", "app-guests.js",
+  ...fs.readdirSync(new URL("../../src/", import.meta.url)).filter((f) => /^screen-.*\.js$/.test(f)).sort()];
 
 function staticFindings(repoRoot) {
   const { SRC, CODE, defs, dead, calledBack, overridden } = preV8Reachability(repoRoot);

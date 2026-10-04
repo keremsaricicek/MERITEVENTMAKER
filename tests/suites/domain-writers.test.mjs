@@ -94,7 +94,9 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // seeder that only a suite calls.
   const SEAT_EXEMPT = ["app.js:normalizeGuest", "app.js:seedAssignments"];
   const seatWriters = new Map();
-  for (const f of ["app.js", "app-guests.js", "app-v8.js"]) {
+  // The shell and every screen moved out of it: a seating writer that moves
+  // into src/screen-*.js is still held to the same guard.
+  for (const f of ["app.js", "app-guests.js", "app-v8.js", ...files.filter((x) => /^screen-.*\.js$/.test(x))]) {
     const lines = stripped[f].split("\n");
     lines.forEach((l, i) => {
       if (/(SEAT\(\)|MeritSeatAssignment)\.(write|clear)\s*\(/.test(l)) seatWriters.set(`${f}:${enclosingFunction(lines, i)}`, f);
