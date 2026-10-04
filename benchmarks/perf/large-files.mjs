@@ -18,6 +18,7 @@ import { launchChromium } from "../../tests/lib/env.mjs";
 import { serveApp, REPO_ROOT } from "../../tests/lib/server.mjs";
 import { openApp, createBlankEvent, futureDate, click } from "../../tests/lib/app-actions.mjs";
 import { readRecord } from "../../tests/lib/faults.mjs";
+import { BUDGETS, judge } from "./budgets.mjs";
 
 const ROWS = Number(process.env.ROWS || 50000);
 const PAGES = Number(process.env.PAGES || 40);
@@ -181,7 +182,22 @@ if (out.pdf && out.pdf.thumbs.done !== PAGES) failures.push(`${out.pdf.thumbs.do
 if (out.pdf && !new RegExp(`page ${PAGES}$`).test(out.pdf.chosen || "")) failures.push(`the chosen page did not become the plan (${out.pdf.chosen})`);
 for (const v of Object.values(out)) for (const s of v.steps) if (s.error) failures.push(`${s.label}: ${s.error}`);
 failures.forEach((f) => console.log("FAIL:", f));
+
+// Budgets (BUDGETS.json → largeFiles) hold at the default sizes only; a run
+// at other sizes is a measurement.
+const IDS = { xlsx: ["parse", "step2to3", "step3to4", "step4to5", "import", "save", "guestsRender", "guestsSearch", "seatingRender", "liveRender", "commandRender", "reportsRender", "export", "reload"],
+  pdf: ["pdfOpen", "pdfThumbs", "pdfChoose", "pdfCreate"] };
+let over = [];
+if (ROWS === 50000 && PAGES === 40 && !ONLY) {
+  const B = BUDGETS.largeFiles, rows = [];
+  for (const kind of ["xlsx", "pdf"]) {
+    if (out[kind].steps.length !== IDS[kind].length) failures.push(`${kind}: ${out[kind].steps.length} steps measured, ${IDS[kind].length} budgeted`);
+    out[kind].steps.forEach((st, i) => rows.push([IDS[kind][i], st.error ? NaN : st.ms, B.steps[IDS[kind][i]].budgetMs]));
+  }
+  rows.push(["heap after import", out.xlsx.heapMB.afterImport, B.heapAfterImportMB.budget, "MB"]);
+  over = judge("50,000-row workbook, 40-page PDF", rows);
+}
 await browser.close();
 await app.close();
 fs.rmSync(TMP, { recursive: true, force: true });
-process.exit(errs.length || failures.length ? 1 : 0);
+process.exit(errs.length || failures.length || over.length ? 1 : 0);

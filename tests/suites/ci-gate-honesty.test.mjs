@@ -185,12 +185,15 @@ export default async function run({ checks, repoRoot }) {
   const budgets = JSON.parse(fs.readFileSync(path.join(repoRoot, "benchmarks/perf/BUDGETS.json"), "utf8"));
   checks.ok(/process\.env\.CI\s*===\s*"true"/.test(budgetsSrc) && /return ENFORCED \? over : \[\]/.test(budgetsSrc),
     "budgets are enforced whenever CI=true (GitHub sets it on every job)");
-  const judged = ["repeat-stress.mjs", "save-queue-burst.mjs"].map((f) => [f, fs.readFileSync(path.join(repoRoot, "benchmarks/perf", f), "utf8")]);
+  const judged = ["repeat-stress.mjs", "save-queue-burst.mjs", "large-files.mjs"].map((f) => [f, fs.readFileSync(path.join(repoRoot, "benchmarks/perf", f), "utf8")]);
   checks.equal(judged.filter(([, src]) => !/judge\(/.test(src) || !(/over\.length \? 1 : 0/.test(src) || /failed \+= judge\(/.test(src))).map(([f]) => f), [],
     "each runner that has budgets folds the budget verdict into its exit code");
   const stressOps = [...fs.readFileSync(path.join(repoRoot, "benchmarks/perf/repeat-stress.mjs"), "utf8").matchAll(/^  (\w+): \(\) => \{/gm)].map((m) => m[1]);
   checks.equal(stressOps.filter((op) => !(budgets.ops[op] && budgets.ops[op].budgetMs > 0)), [], "every timed stress operation has a budget", stressOps);
   checks.ok(Object.values(budgets.ops).every((o) => o.budgetMs <= Math.ceil(Math.max(2 * o.worstP95, o.worstP95 + 15) / 5) * 5),
     "no budget is looser than the stated rule (2 × worst CI p95, 15 ms floor) — a budget cannot be widened quietly", budgets.ops);
+  checks.ok(Object.values(budgets.largeFiles.steps).every((o) => o.budgetMs <= Math.ceil(Math.max(2 * o.ciMs, o.ciMs + 15) / 5) * 5)
+    && budgets.largeFiles.heapAfterImportMB.budget <= Math.ceil(2 * budgets.largeFiles.heapAfterImportMB.ci),
+    "the large-file budgets follow the same rule", budgets.largeFiles);
   fs.rmSync(tmp, { recursive: true, force: true });
 }
