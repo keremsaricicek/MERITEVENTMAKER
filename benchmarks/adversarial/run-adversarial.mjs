@@ -368,6 +368,14 @@ function evaluate(decl, det) {
     planId: decl.planId, realVenue: false, hypothesis: decl.hypothesis,
     tables: { groundTruth: gtTables.length, detected: detTables.length, ...tables,
       heldBack: heldBack.length, heldBackReasons,
+      // INFORMATION, not a gate. A phantom the pipeline proposes but holds
+      // back (deselected, with a stated reason) is still a proposal an
+      // operator has to look past, and PHANTOM_MAJORITY counts every one. What
+      // it does not do is reach the floor plan when the proposal is confirmed
+      // as offered — only an offered (selected) phantom does that. The two
+      // are different consequences and the KNOWN-FAILS text has to say which.
+      phantomsOffered: tm.spurious.filter(d => d.selected).length,
+      phantomsHeldBack: tm.spurious.filter(d => !d.selected).length,
       missedIds: tm.missed.slice(0, 20).map(g => g.id) },
     tableTypes: { byType: typeStats, distinctFound: distinctTypesFound,
       required: minTypes ?? null, meetsRequirement: minTypes == null ? null : distinctTypesFound >= minTypes },
@@ -470,7 +478,8 @@ for (const file of declFiles()) {
 
   const t = r.tables, c = r.chairs;
   console.log(`  ${r.verdict.status}`);
-  console.log(`  TABLES   gt=${t.groundTruth} det=${t.detected} TP=${t.tp} FP=${t.fp} FN=${t.fn} P=${t.precision} R=${t.recall} F1=${t.f1}  heldBack=${t.heldBack}`);
+  console.log(`  TABLES   gt=${t.groundTruth} det=${t.detected} TP=${t.tp} FP=${t.fp} FN=${t.fn} P=${t.precision} R=${t.recall} F1=${t.f1}  heldBack=${t.heldBack}` +
+    (t.fp ? `  phantoms offered=${t.phantomsOffered} held back=${t.phantomsHeldBack}` : ""));
   if (t.heldBack) console.log(`           held back: ${Object.entries(t.heldBackReasons).map(([k, v]) => `${k} x${v}`).join(", ")}`);
   console.log(`  TYPES    ${Object.entries(r.tableTypes.byType).map(([k, v]) => `${k} ${v.correct}/${v.matched}`).join("  ") || "(none)"}` +
     (r.tableTypes.required ? `   distinct=${r.tableTypes.distinctFound}/${r.tableTypes.required}` : ""));
