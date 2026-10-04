@@ -218,6 +218,11 @@
         chairSource: diag.chairSource || null,
         ocrEngine: ocrText != null ? "tesseract.js" : null,
         ocrAvailable: ocrText != null,
+        // The OCR model (PP-OCRv4) that read text beside Tesseract, when it
+        // ran. A model of TEXT: it says nothing about tables or rooms, and the
+        // detector above is still not a trained model.
+        ocrModel: analysis.ocrModel && analysis.ocrModel.available ? analysis.ocrModel.provider.label : null,
+        ocrModelReason: analysis.ocrModel && !analysis.ocrModel.available ? analysis.ocrModel.reasonCode || null : null,
       },
       planSummary: {
         diningGroups: furnitureGroups.length,

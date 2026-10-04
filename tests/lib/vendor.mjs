@@ -35,6 +35,11 @@ export const OCR_PACKAGES = [
   ["tesseract.js-core", "5.1.1"],
   ["@tesseract.js-data/eng", "1.0.0"],
   ["@tesseract.js-data/tur", "1.0.0"],
+  // The OCR model provider (src/plan-ocr-paddle.js): ONNX Runtime Web (MIT)
+  // and the PP-OCRv4 detection + recognition models (Apache-2.0) the app
+  // fetches from jsDelivr and checks by sha256 before running.
+  ["onnxruntime-web", "1.30.0"],
+  ["paddle-ocr-onnx-models", "0.2.0"],
 ];
 const TESSDATA = /^https:\/\/cdn\.jsdelivr\.net\/npm\/(@tesseract\.js-data\/[a-z_]+)\/(.+)$/;
 
@@ -64,6 +69,7 @@ const CONTENT_TYPE = {
   ".js": "text/javascript; charset=utf-8",
   ".mjs": "text/javascript; charset=utf-8",
   ".wasm": "application/wasm",
+  ".onnx": "application/octet-stream",
   ".json": "application/json; charset=utf-8",
 };
 

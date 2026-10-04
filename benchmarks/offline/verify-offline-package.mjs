@@ -165,6 +165,23 @@ const capacityLoop = await p.evaluate(text => {
   return { differs: read(4), agrees: read(Math.round(124 / 20)) };
 }, ocr.text || null);
 
+// The OCR MODEL (PP-OCRv4 on ONNX Runtime Web), from the package's own files:
+// the same synthetic plan, read by the second engine. Its integrity check is
+// the app's own — a byte that is not the pinned sha256 would refuse to run.
+const modelRead = await p.evaluate(async () => {
+  const c = document.createElement('canvas'); c.width = 1000; c.height = 420;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, 1000, 420); x.fillStyle = '#000';
+  x.font = 'bold 44px sans-serif'; x.fillText('TOTAL 124 PAX', 60, 90);
+  x.font = '34px sans-serif'; x.fillText('114 pax seating', 60, 160);
+  x.font = 'bold 40px sans-serif'; x.fillText('SAHNE', 60, 300);
+  if (!globalThis.MeritPaddleOCR) return { available: false, reason: 'MeritPaddleOCR missing' };
+  const r = await MeritPaddleOCR.readPlanText(c, { timeoutMs: 120000 });
+  return { available: r.available, reason: r.reason || null, reasonCode: r.reasonCode || null,
+    integrity: r.provider && r.provider.integrity, texts: (r.items || []).map(i => i.text), ms: r.ms };
+});
+const modelText = (modelRead.texts || []).join(' | ').toUpperCase();
+
 const text = (ocr.text || '').toUpperCase();
 const offOrigin = [...new Set(blocked.filter(u => !u.startsWith('chrome-extension')))];
 const notBooted = Object.entries(boot).filter(([k, v]) => v === false).map(([k]) => k);
@@ -198,6 +215,9 @@ const checks = [
   ['capacity loop: agreement raises no disagreement',
     capacityLoop.agrees.factKey === 'fact.capacityAgrees' && !capacityLoop.agrees.contradiction,
     capacityLoop.agrees],
+  ['OCR model runs from the package (no network)', modelRead.available === true, modelRead.reason],
+  ['OCR model: the pinned models passed their sha256 check', modelRead.integrity === 'sha256', modelRead.integrity],
+  ['OCR model reads "TOTAL 124 PAX" and "SAHNE"', /TOTAL\s*124\s*PAX/.test(modelText) && modelText.includes('SAHNE'), modelRead.texts],
   ['no page errors', errs.length === 0, errs.slice(0, 3)],
 ];
 
@@ -207,6 +227,7 @@ console.log('OCR text:', JSON.stringify(ocr.text));
 console.log('words:', JSON.stringify((ocr.words || []).slice(0, 14)));
 console.log('capacity auditor:', JSON.stringify(parsed));
 console.log('capacity loop:', JSON.stringify(capacityLoop, null, 1));
+console.log('OCR model:', JSON.stringify(modelRead));
 
 // Reported, not asserted. OCR reads the capacity numbers this product depends
 // on at 95-97 confidence and misreads alphanumeric table labels (T01 -> TO1)
@@ -246,7 +267,12 @@ console.log('\nNOTE — alphanumeric table labels, evidence only, not asserted:'
       await page.render({ canvasContext: pc.getContext('2d'), viewport: vp }).promise;
       pdf = { pages: doc.numPages, width: Math.round(vp.width) };
     } catch (e) { pdf = { error: String(e) }; }
-    return { available: r.available, text: r.text, reason: r.reason, booted: typeof globalThis.t === 'function', pdf };
+    let model = null;
+    if (globalThis.MeritPaddleOCR) {
+      const m = await MeritPaddleOCR.readPlanText(c, { timeoutMs: 120000 });
+      model = { available: m.available, reason: m.reason || null, integrity: m.provider && m.provider.integrity, texts: (m.items || []).map(i => i.text) };
+    }
+    return { available: r.available, text: r.text, reason: r.reason, booted: typeof globalThis.t === 'function', pdf, model };
   }, (await readFile(join(REPO, 'benchmarks', 'plans', 'ORNEK.pdf'))).toString('base64'));
   await fp.close();
   const ft = (fileOcr.text || '').toUpperCase();
@@ -254,6 +280,8 @@ console.log('\nNOTE — alphanumeric table labels, evidence only, not asserted:'
     ['opened by double-click (file://): the app boots', fileOcr.booted === true],
     ['opened by double-click (file://): OCR is available', fileOcr.available === true, fileOcr.reason],
     ['opened by double-click (file://): OCR reads "124" and "SAHNE"', ft.includes('124') && ft.includes('SAHNE'), fileOcr.text],
+    ['opened by double-click (file://): the OCR model runs and reads "124" and "SAHNE"',
+      !!fileOcr.model && fileOcr.model.available === true && /124/.test(fileOcr.model.texts.join(' ')) && /SAHNE/i.test(fileOcr.model.texts.join(' ')), fileOcr.model],
     ['opened by double-click (file://): a PDF plan renders', !!fileOcr.pdf && fileOcr.pdf.pages >= 1 && fileOcr.pdf.width > 0, fileOcr.pdf],
     ['opened by double-click (file://): no page errors', fileErrs.length === 0, fileErrs.slice(0, 3)],
   );
@@ -312,7 +340,13 @@ if (existsSync(LIGHT)) {
         trainedModel: provider ? provider.trainedModel : null,
       };
     }
-    return { missing, booted, xlsx: typeof globalThis.XLSX, ocr, encoder };
+    let model = null;
+    if (globalThis.MeritPaddleOCR) {
+      const c = document.createElement('canvas'); c.width = 64; c.height = 32;
+      const m = await MeritPaddleOCR.readPlanText(c, { timeoutMs: 4000 });
+      model = { available: m.available, reasonCode: m.reasonCode || null };
+    }
+    return { missing, booted, xlsx: typeof globalThis.XLSX, ocr, encoder, model };
   });
   await lp.close();
   // Is every source file the app loads actually IN the artifact?
@@ -355,6 +389,8 @@ if (existsSync(LIGHT)) {
     ['light build: SheetJS is inlined (XLSX export works with no network)', light.xlsx === 'object'],
     ['light build: OCR reports itself unavailable rather than faking a result',
       light.ocr === null || light.ocr.available === false, light.ocr],
+    ['light build: the OCR model says it is not bundled, without reaching for the network',
+      !!light.model && light.model.available === false && light.model.reasonCode === 'ENGINE_NOT_BUNDLED', light.model],
     ['light build: no page errors', lightErrs.length === 0, lightErrs.slice(0, 3)],
     ['light build: still zero off-origin requests after opening it',
       blocked.filter(u => !u.startsWith('chrome-extension')).length === 0,

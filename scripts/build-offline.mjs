@@ -89,7 +89,11 @@ const styleBlock = `\n${styles}\n  `;
 const xlsxBlock = xlsxSrc;
 const pdfBlock = `\n${pdfCoreSrc}\n${pdfBridge}\n  `;
 const appBlock = `\n${appJs}\n  `;
-const csp = offlineCspMeta({ scripts: [xlsxBlock, pdfBlock, appBlock], styles: [styleBlock] });
+// This file carries no OCR model (src/plan-ocr-paddle.js would otherwise reach
+// for jsDelivr): the provider is told so, and reports ENGINE_NOT_BUNDLED
+// without making a request.
+const ppocrBlock = `\nglobalThis.MERIT_PPOCR_ASSET_PATHS = { none: "the single-file package carries no OCR model; use dist/merit-offline/" };\n`;
+const csp = offlineCspMeta({ scripts: [ppocrBlock, xlsxBlock, pdfBlock, appBlock], styles: [styleBlock] });
 
 const html = `<!doctype html>
 <html lang="tr">
@@ -102,6 +106,7 @@ const html = `<!doctype html>
   <style>${styleBlock}</style>
 </head>
 ${bodyMarkup}
+  <script>${ppocrBlock}</script>
   <script data-merit-offline-xlsx>${xlsxBlock}</script>
   <script type="module" data-merit-offline-pdf>${pdfBlock}</script>
   <script>${appBlock}</script>

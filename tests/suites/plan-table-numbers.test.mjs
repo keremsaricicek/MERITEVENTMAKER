@@ -252,4 +252,54 @@ export default async function run({ page, checks, baseUrl }) {
       { words: [bw("10", 90, 60, 20, 140, 76), bw("7", 85, 80, 120, 120, 176)] }, { words: [] }], SYMBOL);
     checks.equal(r.state, "NEEDS_REVIEW", "two two-line views that disagree (104 against 107) go to a person");
   }
+
+  // ---- the OCR model's reading as one view --------------------------------
+  // PP-OCRv4 (plan-ocr-paddle.js) reads the whole plan once; the text inside
+  // a symbol is one view. It votes only when it can be the whole number, and
+  // VERIFIED still needs two agreeing views and more of them than any rival.
+  const readWithModel = (script, model) => page.evaluate(async ({ s, m, b }) => {
+    let n = 0;
+    const fake = async () => { const step = s[n++] || { words: [] }; return { available: true, text: "", words: step.words || [] }; };
+    const c = document.createElement("canvas"); c.width = 2402; c.height = 1719;
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+    const im = new Image(); await new Promise((res) => { im.onload = res; im.src = c.toDataURL("image/png"); });
+    const r = await globalThis.MeritTableNumbers.readOne(fake, globalThis.MeritLabelOCR, im, b, { model: m });
+    return { ...r, calls: n };
+  }, { s: script, m: model, b: SYMBOL });
+  const two = (v, a, b2) => ({ value: v, score: 0.99, lines: 2, lineTexts: [a, b2], yShare: 0.5, text: String(v), provider: "ppocr" });
+  {
+    const r = await readWithModel([{ words: [w("37", 90)] }], { value: 37, score: 0.99, lines: 1, lineTexts: ["37"], yShare: 0.5, provider: "ppocr" });
+    checks.equal(r.state, "VERIFIED", "the model and one crop agreeing is verified", r);
+    checks.equal(r.calls, 1, "and the other crops are not read once the first agrees");
+  }
+  {
+    const r = await readWithModel([{ words: [bw("10", 96, 60, 20, 140, 76), bw("7", 84, 80, 120, 120, 176)] }, { words: [] },
+      { words: [bw("10", 93, 60, 20, 140, 76), bw("2", 93, 80, 120, 120, 176)] }, { words: [] }], two(102, "10", "2"));
+    checks.ok(r.state === "VERIFIED" && r.value === 102, "the model and a crop reading 102 outvote one crop reading 107", r);
+  }
+  {
+    const r = await readWithModel([{ words: [bw("10", 96, 60, 20, 140, 76)] }, { words: [] },
+      { words: [bw("9", 79, 80, 120, 120, 176)] }, { words: [] }], two(109, "10", "9"));
+    checks.ok(r.state === "VERIFIED" && r.value === 109 && /line by line/.test(r.why), "crops that read the top line and the bottom line confirm the model's two-line number line by line", r);
+  }
+  {
+    const r = await readWithModel([{ words: [bw("4", 93, 80, 120, 120, 176)] }, { words: [] }, { words: [bw("4", 91, 80, 120, 120, 176)] }, { words: [] }], two(154, "15", "4"));
+    checks.equal(r.state, "NEEDS_REVIEW", "only the bottom line confirmed is not the whole number: a person checks it", r);
+    checks.equal(r.suggestion, 154, "with the model's reading offered");
+  }
+  {
+    const r = await readWithModel([{ words: [bw("13", 91, 60, 20, 140, 76), bw("2", 91, 80, 120, 120, 176)] }, { words: [] }, { words: [] }, { words: [] }], two(138, "13", "8"));
+    checks.equal(r.state, "NEEDS_REVIEW", "the model against one crop with a different number is a tie, and a tie goes to a person", r);
+  }
+  {
+    // The model's measured error: 135 read as "13" -- one short line high in
+    // the symbol, the second line unread. It is not a vote.
+    const r = await readWithModel([{ words: [bw("13", 95, 60, 20, 140, 76)] }, { words: [] }], { value: 13, score: 1, lines: 1, lineTexts: ["13"], yShare: 0.22, provider: "ppocr" });
+    checks.ok(r.state !== "VERIFIED", "a single short line high in the symbol is not trusted as the whole number, even when a crop reads the same top line", r);
+    checks.ok(r.readings.some(x => /model/.test(x.view) && x.excluded), "the model's reading is kept, marked as not voting");
+  }
+  {
+    const r = await readWithModel([{ words: [w("37", 90)] }, { words: [w("37", 88)] }], { value: 37, score: 0.6, lines: 1, yShare: 0.5, provider: "ppocr" });
+    checks.ok(r.readings.some(x => /model/.test(x.view) && x.excluded), "a model reading below its own score floor is not a vote", r.readings);
+  }
 }

@@ -13,6 +13,7 @@
 
 import { mkdirSync, writeFileSync, readFileSync, existsSync, copyFileSync, rmSync } from "node:fs";
 import { execSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readAppSources } from "./lib/app-sources.mjs";
@@ -62,6 +63,27 @@ const tesseractCoreDir = fetchTarball("tesseract.js-core", TESSERACT_CORE_VERSIO
 const engTrainedData = fetchRaw("eng.traineddata.gz", "https://raw.githubusercontent.com/naptha/tessdata/gh-pages/4.0.0/eng.traineddata.gz");
 const turTrainedData = fetchRaw("tur.traineddata.gz", "https://raw.githubusercontent.com/naptha/tessdata/gh-pages/4.0.0/tur.traineddata.gz");
 
+// The OCR model (src/plan-ocr-paddle.js): the versions, files and sha256 are
+// read from the provider's own PINS, never restated here, and every model file
+// is checked against them before it goes into the package — the build refuses
+// bytes the app would refuse.
+const paddleSrc = readFileSync(path.join(ROOT, "src/plan-ocr-paddle.js"), "utf8");
+const pin = (re, what) => { const m = paddleSrc.match(re); if (!m) throw new Error(`build-offline-full: could not read ${what} from plan-ocr-paddle.js PINS`); return m; };
+const [, ortPkg, ortVersion, ortScript] = pin(/runtime:\s*\{\s*package:\s*"([^"]+)",\s*version:\s*"([^"]+)",[^}]*script:\s*"([^"]+)"/, "the runtime pin");
+const [, modelPkg, modelVersion] = pin(/models:\s*\{\s*package:\s*"([^"]+)",\s*version:\s*"([^"]+)"/, "the model package pin");
+const modelPins = ["det", "rec"].map((k) => {
+  const [, file, sha256, bytes] = pin(new RegExp(`${k}:\\s*\\{\\s*file:\\s*"([^"]+)",\\s*sha256:\\s*"([0-9a-f]{64})",\\s*bytes:\\s*(\\d+)`), `the ${k} model pin`);
+  return { key: k, file, sha256, bytes: Number(bytes) };
+});
+const ortDir = fetchTarball(ortPkg, ortVersion);
+const modelDir = fetchTarball(modelPkg, modelVersion);
+const modelBytes = Object.fromEntries(modelPins.map((m) => {
+  const buf = readFileSync(path.join(modelDir, m.file));
+  const sha = createHash("sha256").update(buf).digest("hex");
+  if (buf.length !== m.bytes || sha !== m.sha256) throw new Error(`build-offline-full: ${m.file} is not the pinned model (${buf.length} bytes, sha256 ${sha})`);
+  return [m.key, buf];
+}));
+
 const xlsxSrc = readFileSync(path.join(xlsxDir, "dist/xlsx.full.min.js"), "utf8");
 const pdfCoreSrc = readFileSync(path.join(pdfjsDir, "build/pdf.min.mjs"), "utf8");
 const pdfWorkerSrc = readFileSync(path.join(pdfjsDir, "build/pdf.worker.min.mjs"), "utf8");
@@ -109,7 +131,8 @@ globalThis.dispatchEvent(new CustomEvent("merit-pdf-ready"));
 // <script> files that set strings on a global; plan-ocr.js loads them on first
 // use and starts ONE blob worker that carries all of it. One path, whether the
 // folder is served or opened from disk.
-const ocrPathsBlock = `\nglobalThis.MERIT_OCR_ASSET_PATHS = { embedded: "./assets/ocr/" };\n`;
+// The OCR model rides the same way, in its own folder (MERIT_PPOCR_ASSET_PATHS).
+const ocrPathsBlock = `\nglobalThis.MERIT_OCR_ASSET_PATHS = { embedded: "./assets/ocr/" };\nglobalThis.MERIT_PPOCR_ASSET_PATHS = { embedded: "./assets/ocr/ppocr/" };\n`;
 
 // Every inline block is built once, hashed for the policy, then inserted.
 // The OCR engine's files are the package's own siblings, loaded by <script src>
@@ -155,6 +178,27 @@ embed("embed-worker.js", "worker", readFileSync(path.join(tesseractDir, "dist/wo
 embed("embed-core.js", "core", readFileSync(path.join(tesseractCoreDir, "tesseract-core-simd-lstm.wasm.js"), "utf8"));
 embed("embed-eng.js", "eng", readFileSync(engTrainedData).toString("base64"));
 embed("embed-tur.js", "tur", readFileSync(turTrainedData).toString("base64"));
+
+// The OCR model: the runtime script as shipped, its wasm and module loader and
+// both models as base64 strings on MERIT_PPOCR_EMBED, the character list as the
+// app's own file.
+const PPOCR_OUT = path.join(OCR_OUT, "ppocr");
+mkdirSync(PPOCR_OUT, { recursive: true });
+const embedModel = (name, key, text) => writeFileSync(path.join(PPOCR_OUT, name),
+  `(globalThis.MERIT_PPOCR_EMBED=globalThis.MERIT_PPOCR_EMBED||{})[${JSON.stringify(key)}]=${JSON.stringify(text)};\n`);
+copyFileSync(path.join(ortDir, "dist", ortScript), path.join(PPOCR_OUT, ortScript));
+embedModel("embed-wasm.js", "wasm", readFileSync(path.join(ortDir, "dist/ort-wasm-simd-threaded.wasm")).toString("base64"));
+embedModel("embed-mjs.js", "mjs", readFileSync(path.join(ortDir, "dist/ort-wasm-simd-threaded.mjs"), "utf8"));
+embedModel("embed-det.js", "det", modelBytes.det.toString("base64"));
+embedModel("embed-rec.js", "rec", modelBytes.rec.toString("base64"));
+copyFileSync(path.join(ROOT, "src/plan-ocr-paddle-keys.js"), path.join(PPOCR_OUT, "keys.js"));
+// Licences travel with the bytes: the package's own LICENSE file where it ships
+// one, otherwise the licence its package.json declares.
+writeFileSync(path.join(PPOCR_OUT, "NOTICE.txt"), [[ortDir, ortPkg, ortVersion], [modelDir, modelPkg, modelVersion]].map(([dir, pkg, v]) => {
+  const declared = JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")).license || "licence in its LICENSE file";
+  const text = existsSync(path.join(dir, "LICENSE")) ? readFileSync(path.join(dir, "LICENSE"), "utf8") : `${pkg} declares the ${declared} licence in its package.json.`;
+  return `==== ${pkg}@${v} (${declared}) ====\n${text}\n`;
+}).join("\n"));
 
 const totalSize = execSync(`du -sh "${OUT}"`).toString().split("\t")[0];
 console.log(`Bundled ${appJsFiles.length} app sources from index.html: ${appJsFiles.map((f) => f.replace("src/", "")).join(", ")}`);

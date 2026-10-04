@@ -87,11 +87,24 @@ venues.
 | corrections | operator actions per 100 objects (lower bound) | ≤ 5 | **14.2** · **11.5** | one action per wrong/missing object, link, type or group; the gap between "detected" and "usable" |
 | run | analysis wall clock (this container, 4 CPU, no GPU) | ≤ 15 s · ≤ 60 s | 5.5 s · 30.2 s | an import is once per plan, with progress and cancel; the CI budget for the Golden Plan (7,680 ms) still applies separately |
 | | peak JS heap | ≤ 1024 MB | 21 · 55 MB | a browser tab |
-| | plan or guest data leaving the machine | 0 requests | 0 · 0 | the pinned engines (7 GETs of library files the CSP allows) are counted apart; anything else — another host, any request with a body — is egress |
+| | plan or guest data leaving the machine | 0 requests | 0 · 0 | the pinned engines (GETs of library and model files the CSP allows — 7 at baseline, 12 once the OCR model is in) are counted apart; anything else — another host, any request with a body — is egress |
 
 **Baseline: 43 of 75 rows met** (the nine `digital.*` rows were added the same day, after a rendered screenshot showed the committed plan off its drawing, and still before the fix). Overlays (what was found, invented, missed;
 wrong links; groups) are in `baseline-65808d5/*.overlay.jpg`, the full stored
 analyses beside them.
+
+## Progress, measured on commits (never remembered)
+
+| commit | rows met | what moved |
+|---|---|---|
+| `65808d5` baseline | 43 / 75 | — |
+| `1da997a` digital fidelity, review writer, two-line numbers, held-back capacity | 48 / 75 | digital centre/aspect/size/chair on the Golden Plan; held-back chairs in the drawn figure 5 → 0 |
+| OCR model (PP-OCRv4, work item F) | 51 / 75 | Golden printed total **not read → 124 ✓** (and the written-capacity figure with it); ORNEK table-number recall **0.720 → 0.924**, verified wrong 0 → 0 (precision 1.0) |
+
+The OCR model's cost is time, measured here: Golden 4.1 s → 7.9 s, ORNEK
+25.6 s → 43.9 s (budgets 15 s and 60 s); heap peak 24 → 21 MB and 60 → 61 MB.
+Both rows were measured by `measure.mjs` on this container, the second with
+the model served from the pinned test cache.
 
 ## A third measurement error, found by a screenshot
 
@@ -118,8 +131,12 @@ it. Source review would not have caught this; the picture did.
 
 ## Cloud and model cost
 
-Measured, not estimated: every row above ran with **no cloud call and no
-model download**; cost 0. A provider that sends a plan anywhere (work item G)
+Measured, not estimated: every row above ran with **no cloud call**; cost 0.
+Since the OCR model (work item F) the served app downloads two pinned model
+files (PP-OCRv4 det 4.7 MB + rec 10.9 MB, Apache-2.0) and the ONNX Runtime Web
+wasm (14.2 MB, MIT) from jsDelivr on first analysis — GETs with no body,
+checked against their sha256 before use; the folder package carries them and
+fetches nothing. A provider that sends a plan anywhere (work item G)
 must report tokens, wall clock and cost per plan in this report, run only
 when the operator has switched it on, and never send guest data. Its cost
 ceiling is set when a real run exists to measure — not before.

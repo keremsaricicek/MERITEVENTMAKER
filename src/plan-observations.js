@@ -144,6 +144,7 @@
   function recordFromAnalysis(analysis, ctx) {
     const detector = (ctx && ctx.detector) || { id: "unknown-detector", version: null };
     const ocrEngine = (ctx && ctx.ocrEngine) || null;
+    const ocrModel = (ctx && ctx.ocrModel) || null;
     const imageRef = (ctx && ctx.imageRef) || null;
     const list = [];
     let n = 0;
@@ -189,10 +190,14 @@
         });
       }
       const pn = c.printedNumber;
-      if (pn && Array.isArray(pn.readings) && ocrEngine) {
+      if (pn && Array.isArray(pn.readings) && (ocrEngine || ocrModel)) {
         for (const r of pn.readings) {
+          // A reading by the OCR model names the model; a crop read by
+          // Tesseract names Tesseract. Same image either way: one channel.
+          const prov = r.model || /^model:/.test(r.view || "") ? ocrModel : ocrEngine;
+          if (!prov) continue;
           add(c, {
-            source: { kind: "ocr", provider: ocrEngine },
+            source: { kind: "ocr", provider: prov },
             claim: { printedNumber: r.value },
             geometry,
             confidence: Number.isFinite(r.confidence) ? { value: r.confidence, scale: "ocr-0-100" } : null,

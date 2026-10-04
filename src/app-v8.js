@@ -3053,10 +3053,23 @@
   // The cost is real and worth stating: 163 symbols at two crops each is about
   // 9 seconds on top of detection. See src/plan-table-numbers.js for why two
   // crops rather than one, and why a montage was measured and abandoned.
+  // One plan-wide read by the OCR model, stored with the analysis: the
+  // provider that ran (or why none did), its timings, and every line it read
+  // with its box in SOURCE pixels and its own score.
+  async function readPlanTextWithModel(event){
+    const M=globalThis.MeritPaddleOCR,src=event.background?.src;
+    if(!M||!src)return{available:false,reasonCode:"ENGINE_NOT_LOADED",reason:"OCR model provider not present"};
+    let image;
+    try{image=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});}
+    catch{return{available:false,reasonCode:"FAILED",reason:"plan image did not decode"};}
+    const r=await M.readPlanText(image,{timeoutMs:120000,onProgress:p=>{ui.analysisProgress=84+Math.round(p*4);}});
+    return r.available?{available:true,provider:r.provider,ms:r.ms,imageSize:r.imageSize,items:r.items}
+      :{available:false,provider:r.provider||null,reasonCode:r.reasonCode||"FAILED",reason:r.reason||null};
+  }
   async function readPrintedTableNumbers(event){
     const analysis=event?.analysis;
     if(!analysis||!globalThis.MeritTableNumbers||!globalThis.MeritLabelOCR)return;
-    if(typeof globalThis.runPlanOCR!=="function"||!analysis.ocr?.available)return;
+    if(typeof globalThis.runPlanOCR!=="function"||!(analysis.ocr?.available||analysis.ocrModel?.available))return;
     const src=event.background?.src;
     if(!src)return;
     const numbered=(analysis.candidates||[]).filter(c=>c.kind==="table"&&c.symbolFamily===true);
@@ -3068,7 +3081,18 @@
     const startedAt=Date.now();
     let read;
     try{
+      // The model's reading of each symbol, from its plan-wide read: the text
+      // whose centre lies in the table's own box, in reading order.
+      const om=analysis.ocrModel,modelReadings=new Map();
+      if(om&&om.available&&globalThis.MeritPaddleOCR){
+        const SW=om.imageSize.width,SH=om.imageSize.height;
+        for(const table of numbered){
+          const r=globalThis.MeritPaddleOCR.numberInBox(om.items,{cx:(table.x+table.w/2)/100*SW,cy:(table.y+table.h/2)/100*SH,w:table.w/100*SW,h:table.h/100*SH});
+          if(r)modelReadings.set(table.id,{...r,provider:om.provider.id});
+        }
+      }
       read=await globalThis.MeritTableNumbers.readTableNumbers(globalThis.runPlanOCR,globalThis.MeritLabelOCR,image,numbered,{
+        modelReadings,
         onProgress:(done,total)=>{
           ui.analysisProgress=84+Math.round((done/Math.max(1,total))*10);
         },
@@ -3530,6 +3554,16 @@
         suppressedByText=suppression.removed||[];
       }
       ui.analysisStage=t("analysis.stage.labels");render();await yieldFrame();
+      // The OCR MODEL (src/plan-ocr-paddle.js, PP-OCRv4): one plan-wide read at
+      // the plan's own resolution, beside Tesseract. Its lines join the text
+      // the capacity and label layers read, and its reading of each table's
+      // symbol is one view in the printed-number vote. Unavailable is recorded
+      // as such -- the Tesseract path carries on alone.
+      event.analysis.ocrModel=await readPlanTextWithModel(event);
+      if(event.analysis.ocrModel.available){
+        const modelText=event.analysis.ocrModel.items.map(i=>i.text).join("\n").normalize("NFKC");
+        event.analysis.ocrText=[event.analysis.ocrText,modelText].filter(Boolean).join("\n");
+      }
       await identifyLabelledVenueObjects(event,suppressedByText);
       await readPrintedTableNumbers(event);
       // The drawing's own fingerprint, so a lesson taught on it can be found
@@ -3545,7 +3579,7 @@
       // to look again (MeritObservations). Rebuilt whole on every analysis, so
       // no observation outlives the candidate it describes.
       event.analysis.frames={source:{width:analysisFrame.sourceWidth,height:analysisFrame.sourceHeight},analysis:{width,height,ratio},deskewDeg:deskewDeg||0,storedIn:"plan-percent of the analysis canvas",conventions:{candidate:FRAMES.CORNER,seat:FRAMES.CENTRE}};
-      globalThis.MeritObservations.recordFromAnalysis(event.analysis,{detector:{id:provider.id,version:provider.version||null},ocrEngine:event.analysis.ocr?.available?"tesseract.js":null,imageRef:event.analysis.planHash||null});
+      globalThis.MeritObservations.recordFromAnalysis(event.analysis,{detector:{id:provider.id,version:provider.version||null},ocrEngine:event.analysis.ocr?.available?"tesseract.js":null,ocrModel:event.analysis.ocrModel?.available?event.analysis.ocrModel.provider.id:null,imageRef:event.analysis.planHash||null});
       ui.analysisStage=t("analysis.stage.relating");ui.analysisProgress=90;render();await yieldFrame();
       ui.analysisStage=t("analysis.stage.capacity");ui.analysisProgress=95;render();await yieldFrame();
       event.analysis.planIntelligence=buildPlanIntelligence(event,event.analysis.ocrText);

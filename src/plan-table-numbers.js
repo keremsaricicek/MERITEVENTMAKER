@@ -134,9 +134,44 @@
   }
 
   // Read one table's number from its own symbol.
+  // THE OCR MODEL'S READING (plan-ocr-paddle.js, PP-OCRv4): the text a trained
+  // detector + recognizer found inside this symbol in its one plan-wide read.
+  // It is one view — same image, a different engine — and it votes only when
+  // it can be trusted to be the whole number:
+  //   - its own score is at least MODEL_MIN_SCORE, and
+  //   - it is two lines, or one line sitting in the middle of the symbol: a
+  //     single short line high in the symbol is often the top of two with the
+  //     second unread (the model's one measured error on ORNEK, 135 read "13").
+  // Against it, a Tesseract reading that is the top or bottom line of the
+  // model's two-line reading is a fragment, not a disagreement. A Tesseract
+  // two-line reading too weak to vote on its own (below 50) may vote when it
+  // agrees with the model — two engines, not two crops of one.
+  const MODEL_MIN_SCORE = 0.9;
+  function modelVote(m) {
+    if (!m || m.value == null || !(m.score >= MODEL_MIN_SCORE)) return null;
+    const centred = m.yShare != null && m.yShare >= 0.3 && m.yShare <= 0.7;
+    if (!(m.lines >= 2 || centred)) return null;
+    return { view: "model:" + (m.provider || "ocr-model"), value: m.value, confidence: Math.round(m.score * 100), model: true, lines: m.lines,
+      lineTexts: Array.isArray(m.lineTexts) ? m.lineTexts : null };
+  }
   async function readOne(runOCR, labelOCR, image, box, options) {
     const opts = options || {};
+    const model = opts.model ? modelVote(opts.model) : null;
+    if (opts.model && !model) {
+      // Recorded for the operator either way, never as a vote.
+      opts.modelNote = { view: "model:" + (opts.model.provider || "ocr-model"), value: opts.model.value ?? null, text: opts.model.text ?? null,
+        confidence: opts.model.score != null ? Math.round(opts.model.score * 100) : null, excluded: "the OCR model's reading is not trusted as the whole number here" };
+    }
+    if (model && !opts.views) {
+      // The model has a number: one Tesseract crop agreeing is two views, and
+      // the remaining crops are not needed.
+      const first = await readViews(runOCR, labelOCR, image, box, [VIEWS[0]], opts);
+      if (first[0].value === model.value) return classify([model, first[0]], [model, ...first]);
+      const rest = await readViews(runOCR, labelOCR, image, box, VIEWS.slice(1), opts);
+      return judge([...first, ...rest], model, runOCR, labelOCR, image, box, opts);
+    }
     const readings = await readViews(runOCR, labelOCR, image, box, opts.views || VIEWS, opts);
+    if (opts.modelNote) readings.push(opts.modelNote);
     // A two-line number shows itself either as two stacked runs, or as one
     // short run sitting in the upper part of its crop with the line below it
     // unread. Then the symbol is read again with the two-line views, the
@@ -162,7 +197,42 @@
       }
       return classify(readings.filter(r => !r.excluded), readings);
     }
-    return classify(readings);
+    return classify(readings.filter(r => !r.excluded), readings);
+  }
+  // Tesseract's readings judged together with the model's.
+  async function judge(readings, model, runOCR, labelOCR, image, box, opts) {
+    const looksStacked = model.lines >= 2 || readings.some(r => r.stacked || (r.value != null && r.digits <= 2 && r.yShare != null && r.yShare < 0.4));
+    if (looksStacked) readings.push(...await readViews(runOCR, labelOCR, image, box, STACKED_VIEWS, opts));
+    const mv = String(model.value), lines = model.lineTexts && model.lineTexts.length === 2 ? model.lineTexts : null;
+    let top = false, bottom = false;
+    for (const r of readings) {
+      if (r.value == null) continue;
+      const v = String(r.value);
+      if (r.tight && model.lines >= 2) r.excluded = "too tight to hold a two-line number";
+      else if (v !== mv && model.lines >= 2 && !r.stacked && (mv.startsWith(v) || mv.endsWith(v))) {
+        r.excluded = "one line of the OCR model's two-line reading";
+        if (lines && v === lines[0]) top = r.confirmsLine = "top";
+        if (lines && v === lines[1]) bottom = r.confirmsLine = "bottom";
+      }
+      else if (r.stacked && (r.confidence || 0) < STACKED_MIN_CONFIDENCE && v !== mv) r.excluded = "a two-line reading below the confidence a vote needs";
+    }
+    // The vote with the model in it. A Tesseract crop that read the top line
+    // and another that read the bottom line confirm the model's number line by
+    // line -- one more agreeing view. VERIFIED needs two agreeing views AND
+    // more of them than any other value has: two engines reading 102 outvote
+    // one crop reading 107; one against one is a person's call.
+    const votes = readings.filter(r => !r.excluded && r.value != null);
+    const agree = votes.filter(r => r.value === model.value).length + 1 + (top && bottom ? 1 : 0);
+    const others = new Map();
+    for (const r of votes) if (r.value !== model.value) others.set(r.value, (others.get(r.value) || 0) + 1);
+    const strongestOther = Math.max(0, ...others.values());
+    const all = [model, ...readings];
+    if (agree >= 2 && agree > strongestOther) {
+      return { value: model.value, state: STATES.VERIFIED, confidence: Math.max(model.confidence, ...votes.filter(r => r.value === model.value).map(r => r.confidence || 0)),
+        readings: all, why: `the OCR model and ${agree - 1} crop reading(s) of this symbol read the same number${top && bottom ? " (two crops confirming it line by line)" : ""}${others.size ? `; ${[...others.keys()].join(" and ")} outvoted` : ""} (one image: consistent, not independently confirmed)` };
+    }
+    return { value: null, state: STATES.NEEDS_REVIEW, confidence: model.confidence, readings: all, suggestion: model.value,
+      why: others.size ? `the OCR model reads ${model.value}, crops of this symbol read ${[...others.keys()].join(" and ")}` : `only the OCR model read a number here (${model.value})` };
   }
   async function readViews(runOCR, labelOCR, image, box, views, opts) {
     const readings = [];
@@ -228,7 +298,8 @@
     const out = new Map();
     const counts = { VERIFIED: 0, LIKELY: 0, NEEDS_REVIEW: 0, UNKNOWN: 0 };
     for (const table of tables) {
-      const r = await readOne(runOCR, labelOCR, image, table, opts);
+      const model = opts.modelReadings ? opts.modelReadings.get(table.id) || null : null;
+      const r = await readOne(runOCR, labelOCR, image, table, { ...opts, model, modelNote: null });
       out.set(table.id, r);
       counts[r.state]++;
       if (typeof opts.onProgress === "function") opts.onProgress(out.size, tables.length);
@@ -237,11 +308,13 @@
   }
 
   globalThis.MeritTableNumbers = {
-    // 2: two-line numbers (2026-10-04).
-    version: 2,
+    // 2: two-line numbers. 3: the OCR model's reading as a view (2026-10-04).
+    version: 3,
     STATES,
     VIEWS,
     STACKED_VIEWS,
+    MODEL_MIN_SCORE,
+    modelVote,
     numberFromResult,
     classify,
     readOne,
