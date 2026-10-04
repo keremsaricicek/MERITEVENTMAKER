@@ -42,21 +42,23 @@ Then read `.claude/skills/programming-principles/SKILL.md`,
 
 ## Repo facts — measured, not remembered
 
-Re-measure before relying on any of these; they are a snapshot (2026-09-27), and a stale
-fact in this file is the exact failure mode it exists to prevent.
+Every bold figure in this table is re-measured by the `doc-drift` suite, which
+fails when one no longer matches the code — a stale fact here is the exact
+failure mode this file exists to prevent. Update the figure in the same
+commit as the change that moves it.
 
 | Fact | Value | How to re-measure |
 |---|---|---|
-| `src/*.js` files | **43** | `ls src/*.js \| wc -l` |
-| `src/` total lines | **21,281** | `wc -l src/*.js` |
-| `app-v8.js` | **6,582 lines — 31% of all source** (5,740 right after the detection extraction; 8,543 before it) | `wc -l src/app-v8.js` |
-| Longest single line in `app-v8.js` | **3,554 chars** (40 lines exceed 500) | `awk '{print length}' src/app-v8.js \| sort -rn \| head -1` |
-| `plan-detection-classical.js` | **2,682 lines** — the extracted detection pipeline, a **transitional checkpoint**, not a finished module | `wc -l src/plan-detection-classical.js` |
-| Files exporting `globalThis.Merit*` | **39 of 43** | `grep -l "globalThis.Merit" src/*.js \| wc -l` |
-| Classic `<script>` tags in `index.html` | **43**, fixed order, `app-v8.js` LAST | `grep -c 'src="src/' index.html` |
-| Test suites | **96** (8 slow); checks printed by the run | `npm run test:all` |
-| CI jobs | **5 parallel**, split by what a failure means | `.github/workflows/ci.yml` |
-| Offline verification | **27 checks**, by RUNNING the built artifact | `npm run verify:offline` |
+| `src/*.js` files | **53** | `ls src/*.js \| wc -l` |
+| `src/` total lines | **23,698** | `wc -l src/*.js` |
+| `app-v8.js` | **7,025** lines (5,740 right after the detection extraction and 8,543 before it — history, in CLAUDE.md) | `wc -l src/app-v8.js` |
+| Longest single line in `app-v8.js` | **3,554** chars; **27** lines exceed 500 | `awk '{print length}' src/app-v8.js \| sort -rn \| head -1` |
+| `plan-detection-classical.js` | **221** lines — the orchestrator `detect()` over seven stage modules (Split A/B) | `wc -l src/plan-detection-classical.js` |
+| Files exporting `globalThis.Merit*` | **50** of **53** | `grep -l "globalThis.Merit" src/*.js \| wc -l` |
+| Classic `<script>` tags in `index.html` | **53**, fixed order, `app-v8.js` LAST (plus one `type="module"` PDF loader) | `grep -c '<script src="src/' index.html` |
+| Test suites | **113** (**10** slow); checks printed by the run | `npm run test:all` |
+| CI jobs | **5** parallel, split by what a failure means | `.github/workflows/ci.yml` |
+| Offline verification | every check the verifier prints, by RUNNING the built artifact | `npm run verify:offline` |
 
 **There ARE automated tests.** An earlier version of this file said there
 were none and told you to treat that as a gap. That was wrong and is

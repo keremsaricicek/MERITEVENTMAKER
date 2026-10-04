@@ -195,5 +195,23 @@ export default async function run({ checks, repoRoot }) {
   checks.ok(Object.values(budgets.largeFiles.steps).every((o) => o.budgetMs <= Math.ceil(Math.max(2 * o.ciMs, o.ciMs + 15) / 5) * 5)
     && budgets.largeFiles.heapAfterImportMB.budget <= Math.ceil(2 * budgets.largeFiles.heapAfterImportMB.ci),
     "the large-file budgets follow the same rule", budgets.largeFiles);
+
+  // --- 8. every suite is run by CI ------------------------------------------
+  // `npm test` runs every suite not tagged slow and `npm run test:slow` every
+  // suite tagged slow; CI runs both. A suite outside that partition, a second
+  // suite under the same name, or a file the runner cannot load would be a
+  // check that exists and never runs.
+  const pkg = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json"), "utf8")).scripts;
+  checks.ok(pkg.test === "node tests/run.mjs" && pkg["test:slow"] === "node tests/run.mjs --tag=slow", "npm test runs the non-slow suites and test:slow the slow ones", { test: pkg.test, slow: pkg["test:slow"] });
+  checks.ok(/run: npm test\b/.test(ci) && /run: npm run test:slow\b/.test(ci), "CI runs both halves");
+  const suiteFiles = fs.readdirSync(path.join(repoRoot, "tests/suites")).filter((f) => f.endsWith(".test.mjs"));
+  const metas = [];
+  for (const f of suiteFiles) {
+    const mod = await import(pathToFileURL(path.join(repoRoot, "tests/suites", f)).href).catch((e) => ({ loadError: String(e) }));
+    metas.push({ f, name: mod.meta && mod.meta.name, runs: typeof mod.default === "function" });
+  }
+  checks.equal(metas.filter((m) => !m.name || !m.runs).map((m) => m.f), [], "every suite file declares a name and a run function the runner will call");
+  const names = metas.map((m) => m.name);
+  checks.equal(names.filter((n, i) => names.indexOf(n) !== i), [], "no two suites share a name (a name filter would run one and silently skip the other)");
   fs.rmSync(tmp, { recursive: true, force: true });
 }
