@@ -28,6 +28,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { openApp, createBlankEvent, futureDate } from "../lib/app-actions.mjs";
+import { shellAndScreens } from "../lib/shell-sources.mjs";
 
 export const meta = { name: "large-venue-scale", tags: ["business", "fast"], timeout: 180000 };
 
@@ -95,7 +96,9 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(/capReached\s*=\s*scored\.length\s*>\s*MAX_TABLES/.test(det),
     "truncation is still detected when it happens — a silent slice is what made the original bug invisible",
     true);
-  const v8 = fs.readFileSync(path.join(repoRoot, "src", "app-v8.js"), "utf8");
+  // The shell and the screens it hands its work to: the diagnostics note that
+  // says so moved into src/screen-review.js with the review screen.
+  const v8 = shellAndScreens(repoRoot);
   checks.ok(/candidateCapReached/.test(v8),
     "and the shell surfaces it, so hitting the ceiling reaches a person rather than only a variable",
     true);
