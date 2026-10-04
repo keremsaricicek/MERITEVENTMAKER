@@ -253,7 +253,28 @@
     host.appendChild(el);
     capToasts(host,el);
     holdToast(el,duration);
+    placeToasts(host);requestAnimationFrame(()=>placeToasts(host));
     return el;
+  }
+  // On a canvas the room can fill the window, so the stack's usual corner can
+  // sit over tables -- each one a control an operator presses. On a canvas
+  // screen the stack takes the first corner that covers no control, starting
+  // with the usual one. When the room fills the window and every corner
+  // would cover a table (measured: 1920x1080 and 1440x900 with 30 tables),
+  // it stays in the usual corner and lets presses through to the tables under
+  // it; its own Undo stays pressable. It still overlaps them on screen while
+  // it is shown -- that is the limit of this placement, not a solved case.
+  const TOAST_COVERABLE='button,a[href],input,select,textarea,[role=button],[tabindex="0"],[draggable=true],.canvas-status,.planmap-status-pill,.seat-pill';
+  function placeToasts(host){
+    if(!host||host.id!=="toastWrap")return;
+    const set=(c,top)=>{host.classList.remove("pass-through");host.dataset.corner=c;host.style.left=c[1]==="r"?"auto":"";host.style.right=c[1]==="r"?"16px":"";host.style.top=c[0]==="t"?top+"px":"";host.style.bottom=c[0]==="t"?"auto":"";};
+    const viewport=document.getElementById("canvasViewport");
+    if(!viewport||!host.children.length){set("bl",0);return;}
+    const top=Math.round(viewport.getBoundingClientRect().top+64);
+    const controls=[...document.querySelectorAll(TOAST_COVERABLE)].filter(n=>!n.closest(".toast-wrap")).map(n=>n.getBoundingClientRect()).filter(r=>r.width&&r.height);
+    const covered=()=>{const w=host.getBoundingClientRect();return controls.filter(r=>!(r.right<=w.left||r.left>=w.right||r.bottom<=w.top||r.top>=w.bottom)).length;};
+    for(const c of["bl","br","tr","tl"]){set(c,top);if(!covered())return;}
+    set("bl",top);host.classList.add("pass-through");
   }
   function toast(message,type="info",duration=3200){const el=document.createElement("div");el.className="toast "+type;el.setAttribute("role",type==="error"?"alert":"status");el.textContent=message;pushToast(el,{key:type+"\n"+message,duration})}
   // Translated where i18n is loaded, English where it is not: this file is

@@ -172,6 +172,10 @@
   document.getElementById("guestFileInput").addEventListener("change",async e=>{
     const file=e.target.files[0];
     if(!file)return;
+    // Reading a large workbook blocks the page (1.2 s for 11.8 MB, measured):
+    // the wizard says which file it is reading before the work starts.
+    const reading=pendingImport&&pendingImport.step===1?pendingImport:null;
+    if(reading){reading.reading=file.name;renderExcelWizard();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))}
     try{
       let rows=[];
       if(file.name.toLowerCase().endsWith(".csv"))rows=parseCSV(await file.text());else{
@@ -188,6 +192,8 @@
     }catch(err){
       console.warn("Guest list refused.",err&&err.name);
       toast(userMessage(err,"guests.readFailed"),"error",5200)
+    }finally{
+      if(reading&&reading.reading){reading.reading=null;if(pendingImport===reading)renderExcelWizard()}
     }
     e.target.value=""
   });

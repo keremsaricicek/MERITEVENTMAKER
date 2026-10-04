@@ -532,6 +532,7 @@ dialog::backdrop{background:rgba(32,28,20,.44)}
    and of the centred status pill. tests/suites/toast-discipline.test.mjs
    re-measures all of it on every run. */
 .toast-wrap{position:fixed;left:16px;bottom:16px;z-index:2000;display:flex;flex-direction:column;gap:7px}
+.toast-wrap.pass-through{pointer-events:none}.toast-wrap.pass-through .toast-action{pointer-events:auto}
 body:has(.seat-stage) .toast-wrap{left:302px}
 body:has(.seat-stage) .toast{min-width:0;max-width:340px}
 /* Raised while a modal dialog is open, a toast lives INSIDE that dialog so it
@@ -1690,7 +1691,7 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .wz-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;min-height:260px;border:1px dashed var(--line);border-radius:var(--radius-lg);background:var(--panel);text-align:center;padding:30px}
 .wz-drop h3{margin:0;font-size:16px;font-weight:650}
 .wz-drop p{margin:0;font-size:12.5px;color:var(--muted);max-width:52ch;line-height:1.5}
-.wz-pager{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px}.wz-pager-range{font-size:12.5px;color:var(--muted);margin-right:auto;font-variant-numeric:tabular-nums}.wz-pager [aria-pressed="true"]{border-color:var(--blue);color:var(--blue);background:var(--blue-soft)}.wz-pager-goto{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}.wz-pager-goto input{width:72px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--panel);color:var(--text);font:inherit;font-size:12.5px;font-variant-numeric:tabular-nums}.wz-pager-goto input:focus{outline:none;border-color:var(--blue);box-shadow:var(--ring)}.wz-empty{padding:18px;color:var(--muted);text-align:center}
+.wz-pager{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px}.wz-pager-range{font-size:12.5px;color:var(--muted);margin-right:auto;font-variant-numeric:tabular-nums}.wz-pager [aria-pressed="true"]{border-color:var(--blue);color:var(--blue);background:var(--blue-soft)}.wz-pager-goto{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}.wz-pager-goto input{width:72px;height:30px;padding:0 8px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--panel);color:var(--text);font:inherit;font-size:12.5px;font-variant-numeric:tabular-nums}.wz-pager-goto input:focus{outline:none;border-color:var(--blue);box-shadow:var(--ring)}.wz-reading{font-size:13px;color:var(--text);padding:24px 0}.wz-empty{padding:18px;color:var(--muted);text-align:center}
 .wz-scroll{overflow:auto;max-height:52vh;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--chrome)}
 .wz-table{border-collapse:collapse;width:100%;font-size:12.5px}
 .wz-table th{position:sticky;top:0;z-index:1;text-align:left;padding:8px 11px;background:var(--panel-2);border-bottom:1px solid var(--line);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted-2);font-weight:700;white-space:nowrap}

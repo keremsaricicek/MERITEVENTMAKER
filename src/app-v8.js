@@ -1888,7 +1888,7 @@
     const opt=(v,sel)=>`<option value="${v}" ${sel===v?"selected":""}>${t("bulk.type."+v)}</option>`;
     const typeValues=d.kind==="venue"?["stage","bar","entrance","exit","column","text"]:["rectangle","square","round","bistro"];
     const placeValues=["grid","row","repeated","array"];
-    return`<div class="v8-create-pop"><h3>${t("bulk.title")}</h3><p>${t("bulk.subtitle")}</p><div class="bulk-grid"><div class="field"><label for="fld-bulk-kind">${t("bulk.kind")}</label><select id="fld-bulk-kind" data-bulk="kind"><option value="table" ${d.kind==="table"?"selected":""}>${t("bulk.kind.table")}</option><option value="venue" ${d.kind==="venue"?"selected":""}>${t("bulk.kind.venue")}</option></select></div><div class="field"><label for="fld-bulk-type">${t("bulk.type")}</label><select id="fld-bulk-type" data-bulk="type">${typeValues.map(v=>opt(v,d.type)).join("")}</select></div>${d.kind==="table"?`<div class="field"><label for="fld-bulk-chairs">${t("bulk.chairsEach")}</label><input id="fld-bulk-chairs" data-bulk="chairs" type="number" min="1" max="99" value="${d.chairs}"></div><div class="field"><label for="fld-bulk-prefix">${t("bulk.numberPrefix")}</label><input id="fld-bulk-prefix" data-bulk="prefix" value="${esc(d.prefix)}" maxlength="4"></div>`:""}<div class="field"><label for="fld-bulk-quantity">${t("bulk.quantity")}</label><input id="fld-bulk-quantity" data-bulk="quantity" type="number" min="1" max="60" value="${d.quantity}"></div><div class="field"><label for="fld-bulk-placement">${t("bulk.placement")}</label><select id="fld-bulk-placement" data-bulk="placement">${placeValues.map(v=>`<option value="${v}" ${d.placement===v?"selected":""}>${t("bulk.placement."+v)}</option>`).join("")}</select></div><div class="field"><label for="fld-bulk-rows">${t("bulk.rows")}</label><input id="fld-bulk-rows" data-bulk="rows" type="number" min="1" max="12" value="${d.rows}"></div><div class="field"><label for="fld-bulk-cols">${t("bulk.columns")}</label><input id="fld-bulk-cols" data-bulk="cols" type="number" min="1" max="12" value="${d.cols}"></div></div><div class="bulk-actions"><button class="btn sm" data-v8-action="close-add">${t("bulk.cancel")}</button><button class="btn sm primary" data-v8-action="commit-add">${t(d.placement==="repeated"?"bulk.startPlacement":"bulk.addToPlan")}</button></div></div>`;
+    return`<div class="v8-create-pop"><h3>${t("bulk.title")}</h3><p>${t("bulk.subtitle")}</p><div class="bulk-grid"><div class="field"><label for="fld-bulk-kind">${t("bulk.kind")}</label><select id="fld-bulk-kind" data-bulk="kind"><option value="table" ${d.kind==="table"?"selected":""}>${t("bulk.kind.table")}</option><option value="venue" ${d.kind==="venue"?"selected":""}>${t("bulk.kind.venue")}</option></select></div><div class="field"><label for="fld-bulk-type">${t("bulk.type")}</label><select id="fld-bulk-type" data-bulk="type">${typeValues.map(v=>opt(v,d.type)).join("")}</select></div>${d.kind==="table"?`<div class="field"><label for="fld-bulk-chairs">${t("bulk.chairsEach")}</label><input id="fld-bulk-chairs" data-bulk="chairs" type="number" min="1" max="99" value="${d.chairs}"></div><div class="field"><label for="fld-bulk-prefix">${t("bulk.numberPrefix")}</label><input id="fld-bulk-prefix" data-bulk="prefix" value="${esc(d.prefix)}" maxlength="4"></div>`:""}<div class="field"><label for="fld-bulk-quantity">${t("bulk.quantity")}</label><input id="fld-bulk-quantity" data-bulk="quantity" type="number" min="1" max="60" value="${d.quantity}"></div><div class="field"><label for="fld-bulk-placement">${t("bulk.placement")}</label><select id="fld-bulk-placement" data-bulk="placement">${placeValues.map(v=>`<option value="${v}" ${d.placement===v?"selected":""}>${t("bulk.placement."+v)}</option>`).join("")}</select></div><div class="field"><label for="fld-bulk-rows">${t("bulk.rows")}</label><input id="fld-bulk-rows" data-bulk="rows" type="number" min="1" max="12" value="${d.rows}"></div><div class="field"><label for="fld-bulk-cols">${t("bulk.columns")}</label><input id="fld-bulk-cols" data-bulk="cols" type="number" min="1" max="12" value="${shownCols(d)}"></div></div><div class="bulk-actions"><button class="btn sm" data-v8-action="close-add">${t("bulk.cancel")}</button><button class="btn sm primary" data-v8-action="commit-add">${t(d.placement==="repeated"?"bulk.startPlacement":"bulk.addToPlan")}</button></div></div>`;
   }
   // Quantity is authoritative everywhere except "array", where rows x cols is.
   // Grid used to silently truncate to rows*cols, so asking for 25 tables in a
@@ -1900,6 +1900,8 @@
   function syncBulkFields(){
     if(!ui.bulkDraft)return;
     document.querySelectorAll("[data-bulk]").forEach(input=>{
+      // The column field shows the layout's count until the operator types one.
+      if(input.dataset.bulk==="cols"&&!ui.bulkDraft.colsChosen)return;
       ui.bulkDraft[input.dataset.bulk]=input.type==="number"?Number(input.value):input.value;
     });
   }
@@ -1910,17 +1912,65 @@
     if(!world)return;
     world.querySelectorAll(".ghost-object").forEach(n=>n.remove());
     world.insertAdjacentHTML("beforeend",ghostHTML());
+    const cols=document.querySelector('[data-bulk="cols"]');if(cols&&ui.bulkDraft)cols.value=shownCols(ui.bulkDraft);
   }
   function bulkCount(d){
     if(d.placement==="array")return Math.max(1,Math.min(60,(Math.max(1,Number(d.rows)||1))*(Math.max(1,Number(d.cols)||1))));
     return Math.max(1,Math.min(60,Number(d.quantity)||1));
   }
+  // Fit fitted the fixed 1355×788 world, so a table placed below or beside it
+  // stayed off-screen after Fit. It now fits the world together with every
+  // object on the plan; for a plan whose objects all lie inside the world that
+  // is exactly the old view.
+  function planBox(event){
+    let b=null;
+    for(const o of [...(event?.tables||[]),...(event?.venueObjects||[])]){
+      const w=Number(o.w)||0,h=Number(o.h)||0,cx=(Number(o.x)||0)+w/2,cy=(Number(o.y)||0)+h/2;
+      const hw=o.rotation?Math.hypot(w,h)/2:w/2,hh=o.rotation?Math.hypot(w,h)/2:h/2;
+      b=b?{x0:Math.min(b.x0,cx-hw),y0:Math.min(b.y0,cy-hh),x1:Math.max(b.x1,cx+hw),y1:Math.max(b.y1,cy+hh)}:{x0:cx-hw,y0:cy-hh,x1:cx+hw,y1:cy+hh};
+    }
+    return b;
+  }
+  fitCanvas = function(){
+    const v=document.getElementById("canvasViewport");if(!v)return;
+    const c=planBox(activeEvent()),x0=Math.min(0,c?c.x0:0),y0=Math.min(0,c?c.y0:0),bw=Math.max(WORLD.width,c?c.x1:0)-x0,bh=Math.max(WORLD.height,c?c.y1:0)-y0;
+    ui.zoom=Math.max(.2,Math.min((v.clientWidth-42)/bw,(v.clientHeight-42)/bh));
+    ui.pan.x=(v.clientWidth-bw*ui.zoom)/2-x0*ui.zoom;ui.pan.y=(v.clientHeight-bh*ui.zoom)/2-y0*ui.zoom;
+    applyCanvasTransform();
+  };
+  function planFullyInView(event){
+    const v=document.getElementById("canvasViewport"),c=planBox(event);if(!v||!c)return true;
+    return ui.pan.x+c.x0*ui.zoom>=-1&&ui.pan.y+c.y0*ui.zoom>=-1&&ui.pan.x+c.x1*ui.zoom<=v.clientWidth+1&&ui.pan.y+c.y1*ui.zoom<=v.clientHeight+1;
+  }
+  // The first time a canvas shows an event's objects in this session, every
+  // object is on screen: if the current view would cut any off, it is fitted.
+  // After that the view is the operator's — it is never refitted behind them.
+  const firstViewSeen=new Set();
+  function firstViewFit(event){
+    if(!event||!planBox(event))return;
+    const key=event.id+":"+ui.tab;if(firstViewSeen.has(key))return;firstViewSeen.add(key);
+    if(!planFullyInView(event))fitCanvas();
+  }
+  // A grid used the column count's default (2) whatever the quantity, so 24
+  // tables became 12 rows running past the bottom of the room and Seating
+  // opened with most of them off-screen (§25, entry Z). When a grid would
+  // leave the room and the operator has not typed a column count, it starts
+  // at the room's top-left with as many columns as fit. A count the operator
+  // typed is kept exactly, and so is every grid that already fits.
+  function bulkLayout(d){
+    const count=bulkCount(d),gapX=190,gapY=145;
+    let cols=d.placement==="row"?count:Math.max(1,Math.min(count,Number(d.cols)||1)),x0=440,y0=270;
+    if(d.placement==="grid"&&!d.colsChosen&&y0+(Math.ceil(count/cols)-1)*gapY+82>WORLD.height){
+      x0=60;y0=60;cols=Math.max(cols,Math.min(count,Math.floor((WORLD.width-x0-120)/gapX)+1));
+    }
+    return{count,cols,x0,y0,gapX,gapY};
+  }
   function bulkPositions(d){
-    const count=bulkCount(d),gapX=190,gapY=145,out=[];
-    const cols=d.placement==="row"?count:Math.max(1,Math.min(count,Number(d.cols)||1));
-    for(let i=0;i<count;i++){const c=i%cols,r=Math.floor(i/cols);out.push({x:440+c*gapX,y:270+r*gapY});}
+    const L=bulkLayout(d),out=[];
+    for(let i=0;i<L.count;i++){const c=i%L.cols,r=Math.floor(i/L.cols);out.push({x:L.x0+c*L.gapX,y:L.y0+r*L.gapY});}
     return out;
   }
+  const shownCols=d=>d.placement==="grid"&&!d.colsChosen?bulkLayout(d).cols:d.cols;
   function ghostHTML(){if(!ui.v8AddOpen||ui.bulkDraft?.placement==="repeated")return"";return bulkPositions(ui.bulkDraft).map((p,i)=>`<div class="ghost-object" data-label="${esc((ui.bulkDraft.prefix||"T")+String(i+1).padStart(2,"0"))}" style="left:${p.x}px;top:${p.y}px;width:120px;height:82px"></div>`).join("");}
   const oldViewport=canvasViewportHTML;
   canvasViewportHTML = function(event,seating){
@@ -2114,6 +2164,7 @@
     ui.v8AddOpen=false;
     touchEvent(event);
     render();
+    requestAnimationFrame(()=>{if(!planFullyInView(event))fitCanvas();});
     toast(t(created.length===1?"toast.objectAddedChairsOne":"toast.objectsAddedChairs",{n:created.length}),"success");
   }
   function placeRepeated(pointerEvent){
@@ -2287,6 +2338,7 @@
     document.querySelectorAll("[data-bulk]").forEach(input=>{
       const isSelect=input.tagName==="SELECT";
       input.oninput=()=>{
+        if(input.dataset.bulk==="cols")ui.bulkDraft.colsChosen=true;
         syncBulkFields();
         if(input.dataset.bulk==="kind")ui.bulkDraft.type=ui.bulkDraft.kind==="venue"?"stage":"round";
         if(isSelect)render();else refreshGhosts();
@@ -3503,6 +3555,7 @@
     return{rows:out,pager};
   }
   wizardBodyHTML = function(p){
+    if(p.step===1&&p.reading)return`<div class="wz-drop" aria-busy="true"><div class="wz-reading" role="status">${t("wiz.reading",{file:esc(p.reading)})}</div></div>`;
     if(p.step===1)return`<div class="wz-drop">${icon("download")}<h3>${t("wiz.chooseTitle")}</h3><p>${t("wiz.chooseNote")}</p><div class="toolbar-row" style="justify-content:center;margin-top:6px"><button class="btn" data-wizard-template>${icon("download")}${t("wiz.template")}</button><button class="btn primary" data-wizard-choose>${icon("plus")}${t("wiz.choose")}</button></div></div>`;
     if(p.step===2)return`<h3 class="wz-title">${t("wiz.previewTitle")}</h3><p class="wz-note">${t("wiz.previewNote",{file:esc(p.fileName),shown:Math.min(15,p.rows.length),total:p.rows.length})}</p><div class="wz-scroll">${sourcePreviewHTML(p)}</div>`;
     if(p.step===3)return`<h3 class="wz-title">${t("wiz.mapTitle")}</h3><p class="wz-note">${t("wiz.mapNote")}</p><div style="max-width:780px">${mappingRowsHTML(p)}</div>`;
@@ -3552,6 +3605,17 @@
       if(document.getElementById("excelDialog")?.open)primary.focus();
     }
   };
+
+  // Writing a workbook blocks the page (5 s for 50,000 guests, measured). The
+  // control says so BEFORE the work starts — two frames are yielded so the
+  // browser paints it — and cannot be pressed twice meanwhile.
+  async function whileBusy(button,label,work){
+    if(!button||button.getAttribute("aria-busy")==="true")return;
+    const was=[...button.childNodes];button.disabled=true;button.setAttribute("aria-busy","true");button.textContent=label;
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    try{await work();}
+    finally{if(button.isConnected){button.disabled=false;button.removeAttribute("aria-busy");button.replaceChildren(...was);}}
+  }
 
   // ---- Reports: catch problems BEFORE the workbook leaves the building --
   // The screen is free to change; the workbook contract is frozen. Nothing
@@ -3683,7 +3747,7 @@
   // results directly, which blanks Reports if a button is ever conditional.
   bindReports = function(){
     app.querySelectorAll("[data-report='csv']").forEach(b=>b.onclick=exportGuestCSV);
-    app.querySelectorAll("[data-report='xlsx']").forEach(b=>b.onclick=exportTablePlanXLSX);
+    app.querySelectorAll("[data-report='xlsx']").forEach(b=>b.onclick=()=>whileBusy(b,t("reports.preparingWorkbook"),exportTablePlanXLSX));
     app.querySelectorAll("[data-report='print']").forEach(b=>b.onclick=printTablePlan);
     bindDoctorGo(activeEvent());
     // Post-Event Replay's wave chart (historical events only) needs the same
@@ -6664,7 +6728,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
       setTimeout(()=>URL.revokeObjectURL(url),4000);
     }else if(a==="restore"){document.getElementById("backupFileInput")?.click();}
     else if(a==="backup"){exportBackup();}
-    else if(a==="workbook"){exportTablePlanXLSX();}
+    else if(a==="workbook"){whileBusy(b,t("reports.preparingWorkbook"),exportTablePlanXLSX);}
     else if(a==="dismiss"){
       // Hide THIS notice: each one is dismissed on its own, and hiding one
       // never hides another that is still true.
@@ -6734,6 +6798,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
       // The changes view is the same canvas, so it keeps the same bindings --
       // pan, zoom and selection all still work while reading the diff.
       if(((ui.tab==="floor"&&!reviewing)||ui.tab==="seating")&&!historical)bindCanvas();
+      if((ui.tab==="floor"&&!reviewing)||ui.tab==="seating"){const shown=activeEvent();requestAnimationFrame(()=>firstViewFit(shown));}
       if(reviewing&&!historical)bindReview();
       if(changesMode)bindLayoutChanges();
       if(ui.tab==="command"&&!historical)bindCommand();
