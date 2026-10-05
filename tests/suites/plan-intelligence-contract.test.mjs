@@ -87,6 +87,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
       physicalSeats: pi?.planSummary?.physicalSeats ?? null,
       ocrAvailable: !!pi?.providerMetadata?.ocrAvailable,
       tableIds: alive.filter(c => c.kind === "table").map(c => c.id),
+      aliveIds: alive.map(c => c.id),
       // The seat-containment gate: what it held, and whether it deleted
       // anything. Measured at 129 invented tables held and zero real ones
       // across eleven renderings (benchmarks/false-positives/).
@@ -576,11 +577,13 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(affectsUnknownFact.length === 0,
     "a contradiction never claims to affect a fact the interpreter did not state", affectsUnknownFact);
 
-  // A contradiction is evidence, not a filter. Every table id it points at has
+  // A contradiction is evidence, not a filter. Every object it points at has
   // to still BE in the surviving candidate list: if doubting an object could
-  // remove it, the ids here would outrun the objects there.
+  // remove it, the ids here would outrun the objects there. Not only tables:
+  // a capacity disagreement points at the banquettes whose seats are unknown.
   const pointedTables = result.contradictions.flatMap(c => c.targetIds).filter(id => /^candidate_/.test(id));
-  const vanished = pointedTables.filter(id => !aliveIds.has(id) && !result.chairIds.includes(id));
+  const aliveAny = new Set(result.aliveIds);
+  const vanished = pointedTables.filter(id => !aliveAny.has(id) && !result.chairIds.includes(id));
   checks.ok(vanished.length === 0,
     "every object a contradiction disputes is still in the candidate list — doubting one never removes it",
     vanished.slice(0, 3));

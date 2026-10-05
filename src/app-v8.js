@@ -3097,9 +3097,16 @@
       const geometry={x:box.x,y:box.y,w:box.w,h:box.h,rotation:0};
       let obj=(analysis.candidates||[]).find(c=>c.kind==="venue"&&c.status==="unreviewed"&&!c.fromMemory&&!c.missed&&c.typeBasis!=="printedLabel"&&!claimed.has(c.id)&&share(c,geometry)>=.5);
       if(!obj&&decided.some(c=>overlaps(c,geometry)))return false;
+      const reused=!!obj;
       if(!obj){obj={id:uid("candidate"),kind:"venue",status:"unreviewed",chairDetections:[]};analysis.candidates.push(obj);}
       claimed.add(obj.id);placedIds.add(obj.id);
-      Object.assign(obj,geometry,{type,selected:true,geometryBasis:"region"},fields);
+      // An object the detector had already named THIS type keeps its own
+      // reasoning (a column the grid pass admitted says why); the family's
+      // evidence is added beside it, never written over it.
+      const keepOwn=reused&&obj.type===type&&obj.evidence;
+      const{evidence,...rest}=fields;
+      Object.assign(obj,geometry,{type,selected:true,geometryBasis:"region"},rest);
+      obj.evidence=keepOwn?{...obj.evidence,also:evidence}:evidence;
       return true;
     };
     const placedIds=new Set(plans.map(p=>p.keepId).filter(Boolean));
@@ -3111,12 +3118,21 @@
     for(const m of VE.locaRows(raster,anchors))
       if(offerFamilyMember("loca",m.box,{confidence:m.titleScore,typeBasis:"printedTitle",seatsUnknown:true,
         evidence:{source:"loca-row",basis:`one of ${m.rowSize} like cells in the row the drawing titles "${m.title}"`,extent:"the cell's own closed area",seats:"not printed per cell"}}))locas++;
+    // Banquettes: long benches in the seats' own measured colour, against an
+    // offered table. Seat count unknown, and said so (UNVERIFIED_SEATING).
+    const offeredTables=analysis.candidates.filter(c=>c.kind==="table"&&c.status!=="rejected"&&c.selected!==false);
+    const seatsSeen=offeredTables.flatMap(c=>(c.chairDetections||[]).map(ch=>({x:ch.x,y:ch.y,w:ch.w,h:ch.h})));
+    const bench=VE.banquettes(raster,seatsSeen,offeredTables);
+    let benches=0;
+    for(const m of bench.found)
+      if(offerFamilyMember("banquette",m.box,{confidence:null,typeBasis:"seatColourBench",seatsUnknown:true,
+        evidence:{source:"seat-colour-bench",basis:"a solid bench in the seats' own colour, standing against a table",lengthInChairs:m.lengthInChairs,againstTables:m.againstTables,extent:"the bench's own filled area",seats:"not drawn: no divisions to count"}}))benches++;
     // These elements were placed AFTER plan memory ran, at their own
     // geometry: a decision a person made about one of them on an earlier run
     // is found again here, by the same identity rules, and stands.
     const fresh=analysis.candidates.filter(c=>placedIds.has(c.id)&&!c.fromMemory);
     const remembered=fresh.length&&(event.planMemory||[]).length?applyPlanMemory(fresh,event.planMemory).reappliedCount:0;
-    analysis.diagnostics.namedVenueElements={anchors:anchors.length,placed,columns,locas,memoryReapplied:remembered};
+    analysis.diagnostics.namedVenueElements={anchors:anchors.length,placed,columns,locas,banquettes:benches,seatColour:bench.seatColour,memoryReapplied:remembered};
   }
   // ---- the number printed inside each table symbol -------------------------
   //
@@ -3157,17 +3173,22 @@
     const startedAt=Date.now();
     let read;
     try{
+      // The number is read INSIDE the ring: where a symbol's drawn edge was
+      // measured out to its ring (geometryRefined), the views still look at
+      // the fill the detector found — the box they were designed and measured
+      // around — never at the ring itself.
+      const insideRing=numbered.map(c=>c.geometryRefined?{...c,...c.geometryRefined.from}:c);
       // The model's reading of each symbol, from its plan-wide read: the text
       // whose centre lies in the table's own box, in reading order.
       const om=analysis.ocrModel,modelReadings=new Map();
       if(om&&om.available&&globalThis.MeritPaddleOCR){
         const SW=om.imageSize.width,SH=om.imageSize.height;
-        for(const table of numbered){
+        for(const table of insideRing){
           const r=globalThis.MeritPaddleOCR.numberInBox(om.items,{cx:(table.x+table.w/2)/100*SW,cy:(table.y+table.h/2)/100*SH,w:table.w/100*SW,h:table.h/100*SH});
           if(r)modelReadings.set(table.id,{...r,provider:om.provider.id});
         }
       }
-      read=await globalThis.MeritTableNumbers.readTableNumbers(globalThis.runPlanOCR,globalThis.MeritLabelOCR,image,numbered,{
+      read=await globalThis.MeritTableNumbers.readTableNumbers(globalThis.runPlanOCR,globalThis.MeritLabelOCR,image,insideRing,{
         modelReadings,
         onProgress:(done,total)=>{
           ui.analysisProgress=84+Math.round((done/Math.max(1,total))*10);
@@ -3594,6 +3615,25 @@
       }
       const embeddingMs=Math.round(performance.now()-embeddingStartedAt);
       for(const c of [...candidates,...venues])planFromDeskew(c);
+      // A table SYMBOL is found by the fill inside its ring; its drawn edge is
+      // the ring. Measured from the pixels (src/plan-symbol-geometry.js) before
+      // anything — memory included — reads the geometry. Only symbols: a table
+      // with drawn chairs is measured by its own surface, and an axis-aligned
+      // walk says nothing true about a rotated box.
+      if(globalThis.MeritSymbolGeometry){
+        const raster=ctx.getImageData(0,0,width,height);
+        let refined=0;
+        for(const c of candidates){
+          if(c.kind!=="table"||c.symbolFamily!==true||(c.rotation||0)%180!==0)continue;
+          const box={x0:c.x/100*width,y0:c.y/100*height,x1:(c.x+c.w)/100*width,y1:(c.y+c.h)/100*height};
+          const r=globalThis.MeritSymbolGeometry.outerOutline(raster,box);
+          if(!r||(r.x0===box.x0&&r.y0===box.y0&&r.x1===box.x1&&r.y1===box.y1))continue;
+          c.geometryRefined={from:{x:c.x,y:c.y,w:c.w,h:c.h},basis:"the symbol's drawn ring, measured from the pixels",sides:r.measuredSides};
+          c.x=r.x0/width*100;c.y=r.y0/height*100;c.w=(r.x1-r.x0)/width*100;c.h=(r.y1-r.y0)/height*100;
+          refined++;
+        }
+        detection.diagnostics.symbolOutlinesRefined=refined;
+      }
       const previous=event.analysis?.candidates||[],signatures=list=>list.map(c=>`${c.kind}:${c.type}:${Math.round(c.x)}:${Math.round(c.y)}`),oldSig=new Set(signatures(previous)),newSig=new Set(signatures([...candidates,...venues]));
       const freshCandidates=[...candidates,...venues];
       const priorCandidates=event.analysis?.candidates||[],priorDecisions=event.analysis?.groupingDecisions||[];
@@ -3766,7 +3806,7 @@
   }
   function candidateBox(c,selected,targetIds){
     const reviewCls=targetIds?(targetIds.has(c.id)?"review-target":"review-dimmed"):"";
-    return`<button class="candidate-box ${c.kind} ${c.status} ${selected?"selected":""} ${reviewCls}" data-candidate-box="${c.id}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%;transform:rotate(${c.rotation||0}deg)" title="${esc(c.kind)} · ${Math.round(c.confidence*100)}%"></button>${(c.chairDetections||[]).map(ch=>`<i class="candidate-box chair ${reviewCls}" style="left:${ch.x}%;top:${ch.y}%;width:${Math.max(.5,ch.w)}%;height:${Math.max(.5,ch.h)}%;transform:translate(-50%,-50%) rotate(${ch.rotation||0}deg)"></i>`).join("")}`;
+    return`<button class="candidate-box ${c.kind} ${c.status} ${selected?"selected":""} ${reviewCls}" data-candidate-box="${c.id}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%;transform:rotate(${c.rotation||0}deg)" title="${esc(c.kind)} · ${Number.isFinite(c.confidence)?Math.round(c.confidence*100)+"%":"—"}"></button>${(c.chairDetections||[]).map(ch=>`<i class="candidate-box chair ${reviewCls}" style="left:${ch.x}%;top:${ch.y}%;width:${Math.max(.5,ch.w)}%;height:${Math.max(.5,ch.h)}%;transform:translate(-50%,-50%) rotate(${ch.rotation||0}deg)"></i>`).join("")}`;
   }
   // ============================================================
   // Concept 3 + Concept 2 + Concept 1 unified Plan Intelligence review screen.

@@ -86,7 +86,7 @@ export default async function run({ page, checks, repoRoot, baseUrl }) {
   await runDetection(page);
   const golden = await page.evaluate(() => {
     const a = state.events[0].analysis;
-    const v = a.candidates.filter(c => c.kind === "venue" && ["stage", "bar", "entrance", "exit", "column", "loca"].includes(c.type));
+    const v = a.candidates.filter(c => c.kind === "venue" && ["stage", "bar", "entrance", "exit", "column", "loca", "banquette"].includes(c.type));
     const px = c => ({ x0: Math.round(c.x / 100 * 1355), y0: Math.round(c.y / 100 * 788), x1: Math.round((c.x + c.w) / 100 * 1355), y1: Math.round((c.y + c.h) / 100 * 788) });
     return {
       ocrModel: !!(a.ocrModel && a.ocrModel.available),
@@ -95,6 +95,8 @@ export default async function run({ page, checks, repoRoot, baseUrl }) {
       stage: v.filter(c => c.type === "stage").map(c => ({ ...px(c), basis: c.geometryBasis, typeBasis: c.typeBasis, extent: c.evidence && c.evidence.extent })),
       bar: v.filter(c => c.type === "bar").map(c => ({ basis: c.geometryBasis, extent: c.evidence && c.evidence.extent })),
       columns: v.filter(c => c.type === "column").map(c => ({ wall: c.evidence && c.evidence.wallThrough, basis: c.typeBasis })),
+      benches: v.filter(c => c.type === "banquette").map(c => ({ seatsUnknown: c.seatsUnknown === true, seats: c.chairDetections.length, basis: c.typeBasis })),
+      seatColour: a.diagnostics.namedVenueElements && a.diagnostics.namedVenueElements.seatColour,
       explained: v.every(c => c.evidence && c.evidence.basis && c.evidence.extent),
       diag: a.diagnostics.namedVenueElements,
     };
@@ -110,6 +112,10 @@ export default async function run({ page, checks, repoRoot, baseUrl }) {
   checks.ok(golden.byType.column >= 8 && golden.byType.column <= 10 && golden.columns.every(c => c.basis === "wallFamily" && c.wall >= 0.6),
     "the grey blocks threaded on the walls are columns, each with its wall evidence", golden.columns.length);
   checks.ok(!golden.byType.loca && !golden.byType.exit, "no loca and no exit: the drawing names neither", golden.byType);
+  checks.ok(golden.byType.banquette === 3 && golden.benches.every(b => b.seatsUnknown && b.seats === 0 && b.basis === "seatColourBench"),
+    "the three long benches in the seats' own colour are banquettes, their seat count admitted unknown, never guessed", golden.benches);
+  checks.ok(Array.isArray(golden.seatColour) && golden.seatColour[0] > golden.seatColour[2] + 100,
+    "the seat colour was measured off the detected chairs (the Golden Plan's orange), not assumed", golden.seatColour);
   checks.equal(golden.offered, golden.total, "each element the drawing names is offered");
   checks.ok(golden.explained, "and each one says what named it and how much of it was measured");
 

@@ -323,6 +323,54 @@
     return out;
   }
 
+  // BANQUETTES: long upholstered benches drawn in the seats' own colour, with
+  // no seat divisions. The seat colour is MEASURED, never assumed: the median
+  // colour at the centres of the chairs the detector already found, and only
+  // when those chairs carry a real colour (an ink-only plan has none, and then
+  // nothing here runs — a bench drawn as an outline is not claimed). A
+  // banquette is a solid region of that colour, several times longer than it
+  // is deep and at least twice as long as a chair, standing against a table
+  // the analysis offers. Its seat count is never guessed: the caller marks it
+  // seatsUnknown. `chairs` are centre points in plan percent; `tables` are the
+  // offered tables (plan percent, corner boxes).
+  function banquettes(raster, chairs, tables, opts) {
+    const o = opts || {};
+    const W = raster.width, H = raster.height, d = raster.data;
+    if (!chairs || chairs.length < 6 || !tables || !tables.length) return { seatColour: null, found: [] };
+    const samples = [];
+    for (const c of chairs) {
+      const x = Math.round(c.x / 100 * W), y = Math.round(c.y / 100 * H);
+      if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1) continue;
+      let r = 0, g = 0, b = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const p = 4 * ((y + dy) * W + x + dx); r += d[p]; g += d[p + 1]; b += d[p + 2]; }
+      samples.push([r / 9, g / 9, b / 9]);
+    }
+    const med = (k) => { const v = samples.map(s => s[k]).sort((a, b) => a - b); return v[v.length >> 1]; };
+    const seat = samples.length >= 6 ? [med(0), med(1), med(2)] : null;
+    if (!seat || chroma(seat[0], seat[1], seat[2]) < 50) return { seatColour: seat, found: [] };
+    // The chairs' own size, from the boxes the detector gave them.
+    const sides = chairs.filter(c => c.w > 0 && c.h > 0).map(c => [Math.min(c.w / 100 * W, c.h / 100 * H), Math.max(c.w / 100 * W, c.h / 100 * H)]);
+    if (sides.length < 6) return { seatColour: seat, found: [] };
+    const chairShort = sides.map(s => s[0]).sort((a, b) => a - b)[sides.length >> 1];
+    const chairLong = sides.map(s => s[1]).sort((a, b) => a - b)[sides.length >> 1];
+    const tol = o.colourTolerance || 40;
+    const regions = fillRegions(raster, (r, g, b) => Math.abs(r - seat[0]) <= tol && Math.abs(g - seat[1]) <= tol && Math.abs(b - seat[2]) <= tol, { minArea: 100, edge: 40 });
+    const found = [];
+    for (const r of regions) {
+      if (r.solidity < 0.8 || r.l / r.s < 2.5 || r.s < 0.6 * chairShort || r.l < 2 * chairLong) continue;
+      const box = pctBox(r, W, H);
+      // Standing against a table: within one chair depth of an offered table.
+      const gapX = (t) => Math.max(0, t.x - (box.x + box.w), box.x - (t.x + t.w)) / 100 * W;
+      const gapY = (t) => Math.max(0, t.y - (box.y + box.h), box.y - (t.y + t.h)) / 100 * H;
+      const against = tables.filter(t => Math.max(gapX(t), gapY(t)) <= chairShort);
+      if (!against.length) continue;
+      // Not a chair the detector already counted.
+      if (chairs.some(c => c.x >= box.x && c.x <= box.x + box.w && c.y >= box.y && c.y <= box.y + box.h)) continue;
+      found.push({ box, againstTables: against.length, lengthInChairs: +(r.l / chairLong).toFixed(2) });
+    }
+    return { seatColour: seat.map(v => Math.round(v)), found };
+  }
+
   globalThis.MeritVenueElements = Object.freeze({ VOCABULARY, fold, anchorsFrom, regionAround, elementsFrom,
-    fillRegions, familiesOf, wallThrough, columnFamilies, locaRows });
+    fillRegions, familiesOf, wallThrough, columnFamilies, locaRows, banquettes });
 })();

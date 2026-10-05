@@ -36,6 +36,13 @@
       for (let j = i + 1; j < n; j++) {
         const a = tableCandidates[i], b = tableCandidates[j];
         if (blockedPairs.has(pairKey(a.id, b.id))) continue;
+        // A ROUND TABLE SYMBOL IS A WHOLE TABLE. On a symbolic sheet each ring
+        // stands for one table with its own number; two rings drawn close are
+        // two tables, not one dining unit — round tables are not pushed
+        // together to seat a party, and the contact rule below, written for
+        // drawn furniture, made one ORNEK pair a "joined group" at a 20 px gap
+        // between 80 px rings. Only a person's "merged" answer joins them.
+        if (a.symbolFamily === true && b.symbolFamily === true && a.type === "round" && b.type === "round") continue;
         const gap = GEOM.gapBetween(a, b), threshold = Math.min(a.w, a.h, b.w, b.h) * 0.28;
         if (gap <= threshold && GEOM.aligned(a, b)) union(i, j);
       }
