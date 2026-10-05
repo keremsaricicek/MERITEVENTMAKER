@@ -190,10 +190,14 @@
         // have invented them.
         if (difference > 0 && c.kind === "table" && (c.chairDetections?.length || 0) < 2) { score += 1; reasons.push("fewer seats than a table usually has"); }
         if (difference < 0 && (c.chairDetections?.length || 0) > 8) { score += 1; reasons.push("unusually many seats for one table"); }
-        return { id: c.id, score: +score.toFixed(2), reasons };
+        return { id: c.id, score: +score.toFixed(2), reasons, at: [+(c.y || 0).toFixed(3), +(c.x || 0).toFixed(3)] };
       })
       .filter(s => s.score > 0)
-      .sort((a, b) => b.score - a.score || String(a.id).localeCompare(String(b.id)));
+      // Ties broken by WHERE the object is (top to bottom, left to right), never
+      // by its id: ids are random per analysis, so the same plan analysed twice
+      // put a different eight objects in front of the operator.
+      .sort((a, b) => b.score - a.score || a.at[0] - b.at[0] || a.at[1] - b.at[1] || String(a.id).localeCompare(String(b.id)))
+      .map(({ at, ...rest }) => rest);
     return scored;
   }
 
