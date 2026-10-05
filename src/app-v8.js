@@ -3042,6 +3042,53 @@
     analysis.diagnostics.labelledVenueObjects={examined:pool.length,identified,attempts:attempts.length};
     if(identified.length)analysis.planIntelligence=buildPlanIntelligence(event,analysis.ocrText??null);
   }
+  // ---- two tables cannot stand in one place -----------------------------------
+  //
+  // Physical tables do not overlap. When two offered tables cover the same
+  // floor — a quarter of the smaller one's box or more — one of them is not a
+  // table, and the weaker is held back for a person (lowEvidence
+  // "overlapsAnotherTable"), never deleted: the piece a blob split produced
+  // before a whole one, the lower confidence before the higher. Measured on the
+  // Golden Plan: an armchair and half of the table beside it, split out of one
+  // blob as a "rectangle table", overlapping that real table by a third.
+  // Tables that merely touch (a joined group) overlap by a line, not a quarter.
+  function holdBackOverlappingTables(candidates){
+    const tables=(candidates||[]).filter(c=>c.kind==="table"&&!c.lowEvidence&&c.selected!==false);
+    const inter=(a,b)=>Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));
+    let held=0;
+    for(let i=0;i<tables.length;i++)for(let j=i+1;j<tables.length;j++){
+      const a=tables[i],b=tables[j];
+      if(a.lowEvidence||b.lowEvidence)continue;
+      const share=inter(a,b)/Math.max(1e-9,Math.min(a.w*a.h,b.w*b.h));
+      if(share<.25)continue;
+      const aSplit=!!a.evidence?.split,bSplit=!!b.evidence?.split;
+      const weaker=aSplit!==bSplit?(aSplit?a:b):((a.confidence||0)<=(b.confidence||0)?a:b),stronger=weaker===a?b:a;
+      weaker.lowEvidence={reason:"overlapsAnotherTable",with:stronger.id,share:+share.toFixed(2)};
+      weaker.selected=false;
+      held++;
+    }
+    // The seats the held-back reading had claimed are still seats. Each goes to
+    // the offered table it stands against (the nearest within one chair of its
+    // edge), which is where association would have put it without the split;
+    // a seat with no such table stays with the held-back reading.
+    const offered=(candidates||[]).filter(c=>c.kind==="table"&&!c.lowEvidence&&c.selected!==false);
+    const gap=(ch,t)=>Math.max(0,t.x-ch.x,ch.x-(t.x+t.w))+Math.max(0,t.y-ch.y,ch.y-(t.y+t.h));
+    let moved=0;
+    for(const c of candidates||[]){
+      if(c.lowEvidence?.reason!=="overlapsAnotherTable"||!c.chairDetections?.length)continue;
+      const keep=[];
+      for(const ch of c.chairDetections){
+        let best=null,bd=Infinity;
+        for(const t of offered){const g=gap(ch,t);if(g<bd){bd=g;best=t;}}
+        if(best&&bd<=Math.max(ch.w,ch.h)){
+          ch.relation={...(ch.relation||{}),reason:"reassignedFromOverlappingReading",from:c.id};
+          (best.chairDetections||(best.chairDetections=[])).push(ch);moved++;
+        }else keep.push(ch);
+      }
+      c.chairDetections=keep;
+    }
+    return {held,seatsMoved:moved};
+  }
   // ---- venue elements the drawing names (src/plan-venue-elements.js) -------
   //
   // SAHNE, BAR, GİRİŞ, ÇIKIŞ printed on the plan become a stage, a bar, an
@@ -3661,6 +3708,7 @@
         }
         detection.diagnostics.symbolOutlinesRefined=refined;
       }
+      detection.diagnostics.tablesHeldForOverlap=holdBackOverlappingTables(candidates);
       const previous=event.analysis?.candidates||[],signatures=list=>list.map(c=>`${c.kind}:${c.type}:${Math.round(c.x)}:${Math.round(c.y)}`),oldSig=new Set(signatures(previous)),newSig=new Set(signatures([...candidates,...venues]));
       const freshCandidates=[...candidates,...venues];
       const priorCandidates=event.analysis?.candidates||[],priorDecisions=event.analysis?.groupingDecisions||[];

@@ -322,6 +322,7 @@
     // the OBJECT: this one is about how sure the reader is, and it names both
     // numbers so the operator can judge rather than take it on trust.
     "poi.lowEvidence.belowReviewThreshold": { en: "Read with {confidence} confidence, below the {threshold} needed to place it on the floor plan unreviewed. It is still here to accept or reject.", tr: "{confidence} güvenle okundu; kat planına incelenmeden yerleştirilmesi için gereken {threshold} eşiğinin altında. Kabul veya reddetmeniz için burada duruyor." },
+    "poi.lowEvidence.overlapsAnotherTable": { en: "This box covers a quarter or more of another table. Two tables cannot stand in one place, so the weaker reading is held back. Nothing was deleted — confirm it to include it.", tr: "Bu kutu başka bir masanın en az dörtte birini kaplıyor. İki masa aynı yerde duramaz, bu yüzden zayıf olan okuma geri tutuldu. Hiçbir şey silinmedi — dahil etmek için onaylayın." },
     "poi.lowEvidence.seatsInsideBody": { en: "Every seat attached to this object is inside it. A table's seats stand around it, so this is more likely a seat than a table. Nothing was deleted — confirm it to include it.", tr: "Bu nesneye bağlı tüm koltuklar içinde. Bir masanın koltukları etrafında durur, bu yüzden bu bir masadan çok bir koltuk olabilir. Hiçbir şey silinmedi — dahil etmek için onaylayın." },
     "contradiction.severity.high": { en: "serious", tr: "ciddi" },
     "contradiction.severity.medium": { en: "worth checking", tr: "kontrol edilmeli" },

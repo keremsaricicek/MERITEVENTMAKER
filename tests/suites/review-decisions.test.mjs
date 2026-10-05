@@ -48,6 +48,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "app-v8.js:applyPlanMemory",      // analysis time: earlier human decisions re-applied
     "app-v8.js:identifyLabelledVenueObjects", // analysis time: a printed label names an object
     "app-v8.js:placeNamedVenueElements", // analysis time: a printed label or a wall-column family offers an element
+    "app-v8.js:holdBackOverlappingTables", // analysis time: two tables cannot stand in one place
     "app-v8.js:applyTeachArea",       // analysis time: a kept lesson applied within its scope
     "app-v8.js:commitCandidates",     // marks what Confirm wrote to the floor plan
   ]);

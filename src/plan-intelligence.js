@@ -170,7 +170,12 @@
 
   function buildPlanIntelligence(event, ocrText) {
     const analysis = event.analysis; if (!analysis) return null;
-    const tableCandidates = analysis.candidates.filter(c => c.kind === "table");
+    // Dining groups are made of the tables the analysis OFFERS. A reading a
+    // person rejected, or one held back (it covers another table, it fell
+    // below the review threshold), is not furniture on this plan yet, and
+    // joining it to a real table made a "group" out of a table and its own
+    // split-off fragment. The same rule the room's seat count follows.
+    const tableCandidates = analysis.candidates.filter(c => c.kind === "table" && CAPACITY.isOffered(c));
     const furnitureGroups = GROUPS.buildFurnitureGroups(tableCandidates, analysis.groupingDecisions || []);
     const similarityGroups = GROUPS.buildSimilarityGroups(analysis.candidates);
     const reviewGroups = GROUPS.buildReviewGroups(analysis.candidates, similarityGroups);
