@@ -3134,6 +3134,33 @@
     const remembered=fresh.length&&(event.planMemory||[]).length?applyPlanMemory(fresh,event.planMemory).reappliedCount:0;
     analysis.diagnostics.namedVenueElements={anchors:anchors.length,placed,columns,locas,banquettes:benches,seatColour:bench.seatColour,memoryReapplied:remembered};
   }
+  // ---- which way each chair faces, from its own stencil ---------------------
+  //
+  // src/plan-chair-facing.js reads a family's backrest off its averaged
+  // stencil. That is now the ONLY way a facing is stated: the per-chair
+  // ink-centroid rule it replaces was measured at 13 right of 19 stated on the
+  // Golden Plan, below what a stated direction must be, so a chair the stencil
+  // reading cannot settle says so (facingKnown false) instead.
+  function readChairFacing(event,raster){
+    const analysis=event?.analysis,F=globalThis.MeritChairFacing;
+    if(!analysis||!F||!raster)return;
+    const W=raster.width,H=raster.height,chairs=[],byId=new Map();
+    for(const c of analysis.candidates||[]){
+      if(c.kind!=="table")continue;
+      for(const ch of c.chairDetections||[]){
+        chairs.push({id:ch.id,cx:ch.x/100*W,cy:ch.y/100*H,w:ch.w/100*W,h:ch.h/100*H,rotation:ch.rotation||0});
+        byId.set(ch.id,ch);
+      }
+    }
+    const read=F.readFacing(raster,chairs);
+    for(const [id,ch] of byId){
+      const rel=ch.relation||(ch.relation={}),o=rel.orientation||(rel.orientation={});
+      const f=read.byId.get(id);
+      if(f){o.facingKnown=true;o.facingAngle=f.facingAngle;o.facingEvidence=f.evidence;o.facingStencil={family:f.family,map:f.map,margin:f.margin};}
+      else{o.facingKnown=false;o.facingAngle=null;o.facingEvidence="stencilNotRead";delete o.facingStencil;}
+    }
+    analysis.diagnostics.chairFacing={chairs:chairs.length,stated:read.byId.size,families:read.families};
+  }
   // ---- the number printed inside each table symbol -------------------------
   //
   // Only for plans whose tables ARE numbered symbols. That is not a guess: the
@@ -3711,7 +3738,9 @@
         event.analysis.ocrText=[event.analysis.ocrText,modelText].filter(Boolean).join("\n");
       }
       await identifyLabelledVenueObjects(event,suppressedByText);
-      placeNamedVenueElements(event,ctx.getImageData(0,0,width,height),ocrResult);
+      const planRaster=ctx.getImageData(0,0,width,height);
+      placeNamedVenueElements(event,planRaster,ocrResult);
+      readChairFacing(event,planRaster);
       await readPrintedTableNumbers(event);
       // The drawing's own fingerprint, so a lesson taught on it can be found
       // again after a re-import under a different filename. Failing to compute
