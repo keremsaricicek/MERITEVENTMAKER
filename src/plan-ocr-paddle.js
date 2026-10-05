@@ -283,7 +283,9 @@
     }
 
     async release() {
-      for (const s of [this.det, this.rec]) { try { if (s) await s.release(); } catch { /* already gone */ } }
+      // A session that fails to release is recorded, not hidden; the engine is
+      // reset either way so the next load() starts clean.
+      for (const s of [this.det, this.rec]) { try { if (s) await s.release(); } catch (error) { this.releaseError = error; } }
       this.det = this.rec = null; this.state = "idle"; this.loading = null;
     }
   }
