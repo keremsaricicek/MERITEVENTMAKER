@@ -122,7 +122,14 @@ function annotatedIdFor(det, W, H, tolPx, objects = ANNOT.objects) {
 }
 
 const results = [];
-for (const scenario of SCENARIOS) {
+// --only <scenario id> runs one scenario (diagnosis; never for --compare or
+// --record-baseline, which refuse a partial corpus below).
+const onlyAt = argv.indexOf("--only"), ONLY = onlyAt >= 0 ? argv[onlyAt + 1] : null;
+if (ONLY && (argv.includes("--compare") || argv.includes("--record-baseline"))) {
+  console.error("--only is for diagnosis; the gate and the baseline need the whole corpus");
+  process.exit(2);
+}
+for (const scenario of SCENARIOS.filter(s => !ONLY || s.id === ONLY)) {
   const page = await browser.newPage({ viewport: { width: 1800, height: 1000 } });
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
@@ -266,7 +273,12 @@ for (const scenario of SCENARIOS) {
       if (!truth || !c) { unscoreable++; continue; }
       const landedOn = annotatedIdFor(c, W2, H2, tolPx2, after_.objects);
       if (landedOn === null) { unscoreable++; continue; }
-      if (landedOn === truth) retained++; else wrong++;
+      if (landedOn === truth) retained++; else {
+        wrong++;
+        // Which decision landed where: the evidence a wrong application needs
+        // before anyone theorises about it.
+        if (ONLY) console.log(`  WRONG  memory ${hit.memoryId} about ${truth} landed on ${landedOn}: candidate ${c.kind}/${c.type} at ${c.x.toFixed(2)},${c.y.toFixed(2)} ${c.w.toFixed(2)}x${c.h.toFixed(2)} grade ${hit.grade || "?"}`);
+      }
       if (hit.beyondTolerance) beyond++;
     }
     const scoreable = memoryTruth.size;

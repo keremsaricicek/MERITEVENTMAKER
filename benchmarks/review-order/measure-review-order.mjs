@@ -72,7 +72,11 @@ async function analyse(page, baseUrl, file) {
   }, dataUrl(file));
   await page.waitForTimeout(300);
   await page.click('[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis, null, { timeout: 240000 });
+  // The FINISHED analysis. `analysis` exists as soon as detection returns, and
+  // the OCR, label, element and number stages keep rewriting it for seconds
+  // after that; reading it then measured (and answered) a queue the operator
+  // never sees. Found 2026-10-05 when the dynamic gate failed on timing alone.
+  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy, null, { timeout: 240000 });
   await page.waitForTimeout(500);
   return page.evaluate(() => {
     const a = state.events[0].analysis, pi = a.planIntelligence;
