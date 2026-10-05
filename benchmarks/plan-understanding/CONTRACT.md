@@ -100,6 +100,7 @@ analyses beside them.
 | `65808d5` baseline | 43 / 75 | — |
 | `1da997a` digital fidelity, review writer, two-line numbers, held-back capacity | 48 / 75 | digital centre/aspect/size/chair on the Golden Plan; held-back chairs in the drawn figure 5 → 0 |
 | OCR model (PP-OCRv4, work item F) | 51 / 75 | Golden printed total **not read → 124 ✓** (and the written-capacity figure with it); ORNEK table-number recall **0.720 → 0.924**, verified wrong 0 → 0 (precision 1.0) |
+| venue elements (work item H, `src/plan-venue-elements.js`) | 68 / 81 | stage, bar, both entrances on Golden from their printed words (P 1, R 1); columns as wall-threaded families — Golden 9 of 10, ORNEK 4 of 4, no false positive; ORNEK's 12 locas from the row its LOCA title labels (12 of 12, P 1). Six new rows exist because elements now match: their shape IoU — stage 0.613, columns 0.74–0.89 / 0.83–0.90, locas 0.92–0.94 met; **bar 0.046 and entrances 0.14/0.23 NOT met**, because their extent is the label's own box and says so (`geometryBasis: "label"`). Corrections per 100 objects: Golden 14.2 → 6.8, ORNEK 11.5 → 2.7 |
 
 The OCR model's cost is time, measured here: Golden 4.1 s → 7.9 s, ORNEK
 25.6 s → 43.9 s (budgets 15 s and 60 s); heap peak 24 → 21 MB and 60 → 61 MB.

@@ -3042,6 +3042,82 @@
     analysis.diagnostics.labelledVenueObjects={examined:pool.length,identified,attempts:attempts.length};
     if(identified.length)analysis.planIntelligence=buildPlanIntelligence(event,analysis.ocrText??null);
   }
+  // ---- venue elements the drawing names (src/plan-venue-elements.js) -------
+  //
+  // SAHNE, BAR, GİRİŞ, ÇIKIŞ printed on the plan become a stage, a bar, an
+  // entrance, an exit — offered, because the drawing said so. The extent is the
+  // closed area the word sits in when there is one, and the word's own box
+  // (geometryBasis "label") when there is not. Readings come from the OCR model
+  // (score >= 0.9) and from Tesseract's full-page words (confidence >= 90), each
+  // against its own floor — never one scale read as the other.
+  //
+  // A place a person already ruled on (a candidate from plan memory, or one an
+  // operator drew) is left alone: an element is never offered over a decision.
+  function placeNamedVenueElements(event,raster,ocrResult){
+    const analysis=event?.analysis,VE=globalThis.MeritVenueElements;
+    if(!analysis||!VE||!raster)return;
+    const W=raster.width,H=raster.height,items=[];
+    const om=analysis.ocrModel;
+    if(om&&om.available&&om.imageSize){
+      const sx=W/om.imageSize.width,sy=H/om.imageSize.height;
+      for(const it of om.items||[])items.push({text:it.text,score:it.score,engine:om.provider?.id||"ocr-model",
+        box:{x0:it.box.x0*sx,y0:it.box.y0*sy,x1:it.box.x1*sx,y1:it.box.y1*sy}});
+    }
+    const anchors=VE.anchorsFrom(items,0.9);
+    if(ocrResult?.available)for(const w of ocrResult.words||[]){
+      if(!w.bbox||!(w.confidence>=90))continue;
+      for(const a of VE.anchorsFrom([{text:w.text,score:1,box:w.bbox}],1))anchors.push({...a,score:w.confidence/100,engine:"tesseract.js"});
+    }
+    const plans=VE.elementsFrom(raster,anchors,analysis.candidates);
+    const decided=(analysis.candidates||[]).filter(c=>c.fromMemory||c.missed||c.status!=="unreviewed");
+    const overlaps=(a,b)=>a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h;
+    const placed=[];
+    for(const p of plans){
+      if(!p.keepId&&decided.some(c=>overlaps(c,p.box)))continue;
+      const read={term:p.anchor.term,confidence:Math.round(p.anchor.score*100),source:"OCR of the whole plan",engine:p.anchor.engine||null};
+      const geometry={x:p.box.x,y:p.box.y,w:p.box.w,h:p.box.h,rotation:0};
+      let obj=p.keepId?analysis.candidates.find(c=>c.id===p.keepId):null;
+      if(obj)Object.assign(obj,geometry);
+      else{obj={id:uid("candidate"),kind:"venue",...geometry,confidence:p.anchor.score,status:"unreviewed",chairDetections:[]};analysis.candidates.push(obj);}
+      obj.type=p.type;obj.typeBasis="printedLabel";obj.geometryBasis=p.geometryBasis;obj.selected=true;
+      obj.labelRead=obj.labelRead||read;obj.labelReadWhole=read;
+      obj.evidence={...(obj.evidence||{}),source:obj.evidence?.source||"venue-label",
+        basis:`the drawing prints "${p.anchor.term}" here`,
+        extent:p.geometryBasis==="region"?"the closed area the label sits in"+(p.mergeIds.length||p.keepId?", joined with the parts of it already found":""):"not measured: the label's own box"};
+      if(p.mergeIds.length){const drop=new Set(p.mergeIds);analysis.candidates=analysis.candidates.filter(c=>!drop.has(c.id));}
+      placed.push({type:p.type,term:p.anchor.term,geometryBasis:p.geometryBasis,joined:p.mergeIds.length+(p.keepId?1:0)});
+    }
+    // Families the drawing repeats: columns threaded on its walls, and the row
+    // of loca cells a printed loca title labels. A shape-only proposal the
+    // detector already made at the same place is that element (kept, retyped),
+    // never a second object beside it.
+    const share=(a,b)=>{const ix=Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x)),iy=Math.max(0,Math.min(a.y+a.h,b.y+b.h)-Math.max(a.y,b.y));return ix*iy/Math.max(1e-9,Math.min(a.w*a.h,b.w*b.h));};
+    const claimed=new Set();
+    const offerFamilyMember=(type,box,fields)=>{
+      const geometry={x:box.x,y:box.y,w:box.w,h:box.h,rotation:0};
+      let obj=(analysis.candidates||[]).find(c=>c.kind==="venue"&&c.status==="unreviewed"&&!c.fromMemory&&!c.missed&&c.typeBasis!=="printedLabel"&&!claimed.has(c.id)&&share(c,geometry)>=.5);
+      if(!obj&&decided.some(c=>overlaps(c,geometry)))return false;
+      if(!obj){obj={id:uid("candidate"),kind:"venue",status:"unreviewed",chairDetections:[]};analysis.candidates.push(obj);}
+      claimed.add(obj.id);placedIds.add(obj.id);
+      Object.assign(obj,geometry,{type,selected:true,geometryBasis:"region"},fields);
+      return true;
+    };
+    const placedIds=new Set(plans.map(p=>p.keepId).filter(Boolean));
+    for(const c of analysis.candidates)if(c.typeBasis==="printedLabel"&&c.labelReadWhole)placedIds.add(c.id);
+    let columns=0,locas=0;
+    for(const m of VE.columnFamilies(raster,analysis.candidates))
+      if(offerFamilyMember("column",m.box,{confidence:m.wall,typeBasis:"wallFamily",
+        evidence:{source:"column-family",basis:`one of ${m.familySize} identical solid blocks set into the walls`,wallThrough:m.wall,extent:"the block's own filled area"}}))columns++;
+    for(const m of VE.locaRows(raster,anchors))
+      if(offerFamilyMember("loca",m.box,{confidence:m.titleScore,typeBasis:"printedTitle",seatsUnknown:true,
+        evidence:{source:"loca-row",basis:`one of ${m.rowSize} like cells in the row the drawing titles "${m.title}"`,extent:"the cell's own closed area",seats:"not printed per cell"}}))locas++;
+    // These elements were placed AFTER plan memory ran, at their own
+    // geometry: a decision a person made about one of them on an earlier run
+    // is found again here, by the same identity rules, and stands.
+    const fresh=analysis.candidates.filter(c=>placedIds.has(c.id)&&!c.fromMemory);
+    const remembered=fresh.length&&(event.planMemory||[]).length?applyPlanMemory(fresh,event.planMemory).reappliedCount:0;
+    analysis.diagnostics.namedVenueElements={anchors:anchors.length,placed,columns,locas,memoryReapplied:remembered};
+  }
   // ---- the number printed inside each table symbol -------------------------
   //
   // Only for plans whose tables ARE numbered symbols. That is not a guess: the
@@ -3565,6 +3641,7 @@
         event.analysis.ocrText=[event.analysis.ocrText,modelText].filter(Boolean).join("\n");
       }
       await identifyLabelledVenueObjects(event,suppressedByText);
+      placeNamedVenueElements(event,ctx.getImageData(0,0,width,height),ocrResult);
       await readPrintedTableNumbers(event);
       // The drawing's own fingerprint, so a lesson taught on it can be found
       // again after a re-import under a different filename. Failing to compute
@@ -3684,7 +3761,9 @@
   // different from contributing zero: zero is a claim, and an unverified
   // banquette is an admitted unknown that the capacity auditor surfaces rather
   // than quietly absorbs.
-  const UNVERIFIED_SEATING=new Set(["sofa","bench","banquette"]);
+  // A loca (a box sold as one unit) seats a party the drawing rarely prints per
+  // box: the same admitted unknown.
+  const UNVERIFIED_SEATING=new Set(["sofa","bench","banquette","loca"]);
   const RECLASSIFY_TAXONOMY=[
     {kind:"table",type:"round"},{kind:"table",type:"square"},{kind:"table",type:"rectangle"},{kind:"table",type:"bistro"},
     {kind:"venue",type:"chair"},{kind:"venue",type:"armchair"},
@@ -3692,7 +3771,7 @@
     // "sofa/bench" label, because they seat different numbers of people and a
     // venue counts them separately. None of the three ever gets a guessed seat
     // count -- see UNVERIFIED_SEATING below.
-    {kind:"venue",type:"sofa"},{kind:"venue",type:"bench"},{kind:"venue",type:"banquette"},
+    {kind:"venue",type:"sofa"},{kind:"venue",type:"bench"},{kind:"venue",type:"banquette"},{kind:"venue",type:"loca"},
     {kind:"venue",type:"stage"},{kind:"venue",type:"bar"},{kind:"venue",type:"entrance"},{kind:"venue",type:"exit"},
     {kind:"venue",type:"column"},{kind:"venue",type:"text"},{kind:"venue",type:"other"},
   ];
