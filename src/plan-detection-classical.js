@@ -85,11 +85,11 @@
     // Which build of the detector produced an observation. Bumped by hand with
     // any commit that changes detector output (detector-fingerprint DIFFERS),
     // so two observations can be told apart by the code that made them.
-    version:"2026-10-04",
+    version:"2026-10-05",
     label:"Assisted Detection (classical computer vision)",
     trainedModel:false,
     estimatePlanSkew: DESKEW.estimatePlanSkew,
-    async detect(pixels,width,height,{onStage,protectedRegions=[],confidenceThreshold=()=>.48}={}){
+    async detect(pixels,width,height,{onStage,protectedRegions=[],confidenceThreshold=()=>.48,textRegions=[]}={}){
       const stage=onStage||(async()=>{});
       const total=width*height,data=pixels.data;
       // Real measured phase timings, reported in diagnostics so a future
@@ -158,7 +158,7 @@
       // with its contract stated there.
       const{chairs,chairModal,chairUniform,chairSource,chairSourceBreakdown,chairFloorSide,detectionPath,
         secondaryFamilyDiagnostics,gapTo}=CHAIRS.findChairs({width,height,total,area,minPixels,sources,chairSources,
-        fallbackChairComps,fallbackChairLabels,accentMask,chairSizeOk,analyze});
+        fallbackChairComps,fallbackChairLabels,accentMask,chairSizeOk,analyze,textRegions});
       mark("chairs");
 
       // B-6 … B-14 — which objects are tables, and what is left over — is

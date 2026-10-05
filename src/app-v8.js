@@ -3132,13 +3132,13 @@
   // One plan-wide read by the OCR model, stored with the analysis: the
   // provider that ran (or why none did), its timings, and every line it read
   // with its box in SOURCE pixels and its own score.
-  async function readPlanTextWithModel(event){
+  async function readPlanTextWithModel(event,progress={from:24,span:6}){
     const M=globalThis.MeritPaddleOCR,src=event.background?.src;
     if(!M||!src)return{available:false,reasonCode:"ENGINE_NOT_LOADED",reason:"OCR model provider not present"};
     let image;
     try{image=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});}
     catch{return{available:false,reasonCode:"FAILED",reason:"plan image did not decode"};}
-    const r=await M.readPlanText(image,{timeoutMs:120000,onProgress:p=>{ui.analysisProgress=84+Math.round(p*4);}});
+    const r=await M.readPlanText(image,{timeoutMs:120000,onProgress:p=>{ui.analysisProgress=progress.from+Math.round(p*progress.span);}});
     return r.available?{available:true,provider:r.provider,ms:r.ms,imageSize:r.imageSize,items:r.items}
       :{available:false,provider:r.provider||null,reasonCode:r.reasonCode||"FAILED",reason:r.reason||null};
   }
@@ -3524,6 +3524,25 @@
       // classical computer vision: trainedModel stays false and the UI keeps
       // saying DOMAIN MODEL NOT INSTALLED.
       const provider=globalThis.MERIT_PLAN_DETECTION.resolve();
+      // The OCR MODEL reads the plan's text FIRST (src/plan-ocr-paddle.js): its
+      // lines are the one evidence the detector takes from text — what is
+      // printed is not a seat (see textRegions in plan-detection-chairs.js) —
+      // and the same read later feeds the capacity, label and number stages.
+      // Its boxes are SOURCE pixels; the detector looks at the deskewed
+      // analysis canvas, so each line's corners go through both frames.
+      ui.analysisStage=t("analysis.stage.labels");render();await yieldFrame();
+      const ocrModelRead=await readPlanTextWithModel(event);
+      const textRegions=[];
+      if(ocrModelRead.available&&ocrModelRead.imageSize){
+        const sx=width/ocrModelRead.imageSize.width,sy=height/ocrModelRead.imageSize.height;
+        for(const it of ocrModelRead.items||[]){
+          if(!(it.score>=.9)||!String(it.text||"").trim())continue;
+          const corners=[[it.box.x0,it.box.y0],[it.box.x1,it.box.y0],[it.box.x0,it.box.y1],[it.box.x1,it.box.y1]]
+            .map(([x,y])=>deskew.applied?deskew.analysisToDeskew.apply(x*sx,y*sy):[x*sx,y*sy]);
+          textRegions.push({x0:Math.min(...corners.map(c=>c[0])),y0:Math.min(...corners.map(c=>c[1])),
+            x1:Math.max(...corners.map(c=>c[0])),y1:Math.max(...corners.map(c=>c[1]))});
+        }
+      }
       const detectionStartedAt=performance.now();
       // Regions the operator has already ruled on. An automatic filter is
       // allowed to disagree with the detector; it is never allowed to overrule
@@ -3536,7 +3555,7 @@
       const protectedRegions=(event.planMemory||[])
         .filter(m=>m.status==="confirmed"||m.manual)
         .map(m=>({x:m.geometry.x,y:m.geometry.y,w:m.geometry.w,h:m.geometry.h}));
-      const detection=await provider.detect(pixels,dw,dh,{confidenceThreshold:calibratedThreshold,protectedRegions:deskewToPlan(protectedRegions),onStage:async(key,progress)=>{
+      const detection=await provider.detect(pixels,dw,dh,{confidenceThreshold:calibratedThreshold,protectedRegions:deskewToPlan(protectedRegions),textRegions,onStage:async(key,progress)=>{
         ui.analysisStage=t("analysis.stage."+key);ui.analysisProgress=progress;render();await yieldFrame();
       }});
       const detectionMs=Math.round(performance.now()-detectionStartedAt);
@@ -3623,8 +3642,19 @@
       // later without re-running OCR.
       event.analysis.ocrText=ocrResult.available?ocrResult.text:null;
       let suppressedByText=[];
-      if(ocrResult.available&&ocrResult.words?.length){
-        const suppression=suppressTextFalsePositives(event.analysis.candidates,ocrResult.words,width,height);
+      // The words text suppression measures against: Tesseract's, and the
+      // lines the OCR model read (score >= 0.9) in the same analysis pixels.
+      // Tesseract does not read outlined lettering — the Golden Plan's GİRİŞ,
+      // BAR, the capacity block — and a "table" made of a door label and the
+      // column beside it was then only held back by accident.
+      const suppressionWords=[...(ocrResult.available?ocrResult.words||[]:[])];
+      if(ocrModelRead.available&&ocrModelRead.imageSize){
+        const sx=width/ocrModelRead.imageSize.width,sy=height/ocrModelRead.imageSize.height;
+        for(const it of ocrModelRead.items||[])if(it.score>=.9&&String(it.text||"").trim())
+          suppressionWords.push({text:it.text,bbox:{x0:it.box.x0*sx,y0:it.box.y0*sy,x1:it.box.x1*sx,y1:it.box.y1*sy}});
+      }
+      if(suppressionWords.length){
+        const suppression=suppressTextFalsePositives(event.analysis.candidates,suppressionWords,width,height);
         event.analysis.candidates=suppression.kept;
         event.analysis.diagnostics.textSuppressed=suppression.removedCount;
         suppressedByText=suppression.removed||[];
@@ -3635,7 +3665,7 @@
       // the capacity and label layers read, and its reading of each table's
       // symbol is one view in the printed-number vote. Unavailable is recorded
       // as such -- the Tesseract path carries on alone.
-      event.analysis.ocrModel=await readPlanTextWithModel(event);
+      event.analysis.ocrModel=ocrModelRead;
       if(event.analysis.ocrModel.available){
         const modelText=event.analysis.ocrModel.items.map(i=>i.text).join("\n").normalize("NFKC");
         event.analysis.ocrText=[event.analysis.ocrText,modelText].filter(Boolean).join("\n");

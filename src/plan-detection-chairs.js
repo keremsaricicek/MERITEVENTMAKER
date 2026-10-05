@@ -10,9 +10,10 @@
 // findChairs(input)                                                     B-5
 //   IN        { width, height, total, area, minPixels, sources, chairSources,
 //               fallbackChairComps, fallbackChairLabels, accentMask,
-//               chairSizeOk, analyze } — the object sources and chair-scale
-//             pools from B-4, the accent mask, and the detector's own size
-//             test and shape analyser.
+//               chairSizeOk, analyze, textRegions } — the object sources and
+//             chair-scale pools from B-4, the accent mask, the detector's own
+//             size test and shape analyser, and the lines of printed text a
+//             text model read (detection pixels; [] when none ran).
 //   OUT       { chairs, chairModal, chairUniform, chairSource,
 //               chairSourceBreakdown, chairFloorSide, detectionPath,
 //               secondaryFamilyDiagnostics, gapTo } — the chairs with their
@@ -38,6 +39,15 @@
   function findChairs(input) {
     const { width, height, total, area, minPixels, sources, chairSources, fallbackChairComps,
       fallbackChairLabels, accentMask, chairSizeOk, analyze } = input;
+    // Lines of PRINTED TEXT a text model read on this plan, in detection
+    // pixels ({x0,y0,x1,y1}); empty when no model ran. Used for one thing:
+    // keeping printed matter out of the evidence a seat family is judged on.
+    const textRegions = Array.isArray(input.textRegions) ? input.textRegions : [];
+    const inPrintedText = c => {
+      const cx = c.x + c.w / 2, cy = c.y + c.h / 2;
+      return textRegions.some(r => cx >= r.x0 && cx <= r.x1 && cy >= r.y0 && cy <= r.y1);
+    };
+    const familyMembersDebug = [];
     // ---- STAGE B: chairs first -------------------------------------------
     // Chairs are detected from their OWN model before any table is
     // considered. That is what stops a chair drawn against a table outline
@@ -346,7 +356,22 @@
       const referenceIsSeatSized=!surfaceSide||referenceSide<surfaceSide;
       const groups=new Map();
       for(const e of extra){const k=keyOf(e.comp);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(e);}
-      for(const [key,members] of groups){
+      for(const [key,allMembers] of groups){
+        // PRINTED MATTER IS NOT SEAT EVIDENCE. A family is judged on the share
+        // of its members seated at a table, and on this product's real plan
+        // the capacity block ("114 pax seating", "10 pax bistro", "Total : 124
+        // pax") is printed at chair scale in the chairs' own accent colour, so
+        // three of its glyphs landed in the family that also holds the two
+        // bistro chairs and three round-table seats: 5 seated of 8, 0.63, under
+        // the 0.7 floor, and five real seats lost with the glyphs. Where a text
+        // model has read the plan, a member whose centre lies inside a line it
+        // read is printing, not a candidate seat, and it is left out of the
+        // family — of the members it is counted against and of the members it
+        // could contribute. The floors (four members, 0.7 seated) are unchanged
+        // and still apply to what remains. With no text model, nothing changes.
+        const members=textRegions.length?allMembers.filter(m=>!inPrintedText(m.comp)):allMembers;
+        if(globalThis.MERIT_DETECT_DEBUG)familyMembersDebug.push({key,members:allMembers.map(m=>({x:m.comp.x,y:m.comp.y,w:m.comp.w,h:m.comp.h,
+          seated:touchesSurface(m.comp),printed:inPrintedText(m.comp),src:m.source.name}))});
         if(members.length<SECONDARY_MIN_MEMBERS)continue;
         const sides=members.map(m=>Math.sqrt(m.comp.w*m.comp.h)).sort((a,b)=>a-b);
         const side=sides[sides.length>>1];
@@ -421,7 +446,7 @@
         const SECONDARY_MIN_CLEARANCE=1.4;
         const standsClear=referenceIsSeatSized||crowding>=SECONDARY_MIN_CLEARANCE;
         const admitted=sizeOk&&standsClear&&share>=SECONDARY_MIN_ADJACENT;
-        secondaryFamilies.push({key,members:members.length,adjacent,
+        secondaryFamilies.push({key,members:members.length,printedExcluded:allMembers.length-members.length,adjacent,
           share:Number(share.toFixed(2)),admitted,sizeOk,standsClear,
           side:Math.round(side),referenceSide:Math.round(referenceSide),surfaceSide:Math.round(surfaceSide),
           crowding:Number(crowding.toFixed(2)),primarySpacing:Math.round(primarySpacing),
@@ -471,6 +496,9 @@
     // the most useful line in this whole diagnostic.
     const secondaryFamilyDiagnostics={
       considered:secondaryFamilies.length,
+      // How many lines of printed text a text model supplied; 0 means the
+      // family pass ran exactly as it does with no model.
+      textRegions:textRegions.length,
       admitted:admittedFamilies.length,
       minMembers:SECONDARY_MIN_MEMBERS,minAdjacentShare:SECONDARY_MIN_ADJACENT,
       primary:primarySource?primarySource.name:null,
@@ -564,6 +592,7 @@
         allSourceComps:sources.flatMap(s2=>s2.comps.map(c=>({x:c.x,y:c.y,w:c.w,h:c.h,source:s2.name}))),
         allSourceAll:sources.flatMap(s2=>(s2.all||[]).map(c=>({x:c.x,y:c.y,w:c.w,h:c.h,fill:+((c.fill??0).toFixed(3)),source:s2.name}))),
         chairEntries:chairEntries.map(e=>({x:e.comp.x,y:e.comp.y,w:e.comp.w,h:e.comp.h,family:chairFamilyOf(e)})),
+        familyMembers:familyMembersDebug,
       };
     }
     const chairComps=chairEntries.map(e=>e.comp);

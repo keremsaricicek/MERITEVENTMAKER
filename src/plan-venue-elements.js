@@ -62,7 +62,7 @@
       if (!f) continue;
       for (const v of VOCABULARY) {
         const term = v.terms.find(t => t === f);
-        if (term) { out.push({ type: v.type, term, text: String(it.text), score: it.score, box: { ...it.box } }); break; }
+        if (term) { out.push({ type: v.type, term, text: String(it.text), score: it.score, box: { ...it.box }, engine: it.engine || null }); break; }
       }
     }
     return out;
@@ -150,7 +150,7 @@
       if (region) for (const p of pieces) box = union(box, p);
       for (const p of pieces) claimed.add(p.id);
       out.push({
-        anchor: { term: a.term, text: a.text, score: a.score, box: a.box },
+        anchor: { term: a.term, text: a.text, score: a.score, box: a.box, engine: a.engine || null },
         type: a.type, box, labelBox: labelPct, geometryBasis,
         region: region ? { pixels: region.pixels } : null,
         keepId: pieces.length ? pieces[0].id : null, mergeIds: pieces.slice(1).map(p => p.id),
