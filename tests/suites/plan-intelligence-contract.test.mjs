@@ -81,6 +81,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
         });
       })(),
       chairsReseated: a.diagnostics.chairsReseated ?? null,
+      declaredZoneTypes: globalThis.MERIT_PLAN_INTELLIGENCE_STATUS?.zones?.types || null,
       zones: (pi?.zones || []).map(z => ({ type: z.type, confidence: z.confidence,
         evidence: z.evidence, members: z.memberIds.length, memberIds: z.memberIds, seats: z.seats })),
       physicalSeats: pi?.planSummary?.physicalSeats ?? null,
@@ -400,7 +401,11 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // made. `unknown` is a real answer here: a cluster of tables nobody sits at
   // is reported as an undetermined region rather than guessed into a dining
   // room, and dropping it silently would be the dishonest option.
-  const ZONE_TYPES = new Set(["dining", "bistro", "lounge", "stage", "entrance", "unknown"]);
+  // The vocabulary the product DECLARES (MERIT_PLAN_INTELLIGENCE_STATUS.zones), not a
+  // copy of it: the copy here left out "bar", which no plan exercised until
+  // the Golden Plan's BAR label became a bar object (2026-10-05).
+  checks.ok(Array.isArray(result.declaredZoneTypes) && result.declaredZoneTypes.includes("unknown"), "the product declares its zone vocabulary", result.declaredZoneTypes);
+  const ZONE_TYPES = new Set(result.declaredZoneTypes || []);
   checks.ok(result.zones.length > 0, "the plan is read as regions with a job, not just objects", result.zones.length);
   const strangeTypes = result.zones.filter(z => !ZONE_TYPES.has(z.type));
   checks.ok(strangeTypes.length === 0, "every zone uses the declared vocabulary", strangeTypes.slice(0, 3));
