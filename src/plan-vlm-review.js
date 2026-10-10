@@ -174,11 +174,74 @@
     return out;
   }
 
-  // One list, without the same suggestion twice. A zoomed look at a region
-  // is the better look: on a tie it replaces the overview's finding.
+  // Native-detail tiles, planned only when the overview would shrink the
+  // smallest object the detector found below TILE_MIN_PX on its short side
+  // (benchmarks/resolution: below that, small objects are lost). Overlapping,
+  // in plan-percent, row-major, each with the scale it is sent at. EVERY tile
+  // is returned: the caller sends what its step limit allows and reports the
+  // rest as not inspected — a plan is never quietly cut.
+  const TILE_MIN_PX = 12, TILE_OVERLAP = 0.12;
+  function tilePlan(w, h, smallestPx) {
+    const fit = fitSize(w, h);
+    const overviewScale = fit ? Math.round(fit.scale * 1000) / 1000 : null;
+    if (!fit || !(smallestPx > 0)) return { needed: false, overviewScale, needScale: null, tiles: [] };
+    const needScale = Math.min(1, TILE_MIN_PX / smallestPx);
+    if (fit.scale >= needScale) return { needed: false, overviewScale, needScale: round3(needScale), tiles: [] };
+    const side = REGION_EDGE / needScale, step = side * (1 - TILE_OVERLAP);
+    const spans = (len) => { const n = len <= side ? 1 : Math.ceil((len - side) / step) + 1, out = [];
+      for (let i = 0; i < n; i++) { const a = n === 1 ? 0 : Math.min(len - side, i * step); out.push([Math.max(0, a), Math.min(len, a + side)]); } return out; };
+    const tiles = [];
+    for (const [y0, y1] of spans(h)) for (const [x0, x1] of spans(w)) {
+      const frame = { x: round3(x0 / w * 100), y: round3(y0 / h * 100), w: round3((x1 - x0) / w * 100), h: round3((y1 - y0) / h * 100) };
+      const s = fitSize(x1 - x0, y1 - y0, { maxEdge: REGION_EDGE });
+      tiles.push({ frame, scale: round3(s.scale) });
+    }
+    return { needed: true, overviewScale, needScale: round3(needScale), tiles };
+  }
+  const round3 = (v) => Math.round(v * 1000) / 1000;
+
+  // What a reading saw, and at what detail: on a 50 × 50 grid over the plan,
+  // each cell's best scale among the looks that came back. "Seen in detail" is
+  // the share of cells at or above the scale the tile plan asked for (the
+  // overview alone when no tiles were needed). Looks that were planned but not
+  // sent, failed or were cancelled are listed by name, never dropped.
+  function coverage(run) {
+    if (!run) return null;
+    const need = run.needScale || null, N = 50, best = new Float32Array(N * N).fill(run.steps > 0 ? (run.overviewScale || 0) : 0);
+    const looks = [...(run.tiles || []).map((x, i) => ({ ...x, label: "T" + (i + 1) })), ...(run.regions || []).map((x, i) => ({ ...x, label: "R" + (i + 1) }))];
+    for (const l of looks) {
+      if (l.state !== "done" || !l.frame || !(l.scale > 0)) continue;
+      const c0 = Math.floor(l.frame.x / 100 * N), c1 = Math.ceil((l.frame.x + l.frame.w) / 100 * N), r0 = Math.floor(l.frame.y / 100 * N), r1 = Math.ceil((l.frame.y + l.frame.h) / 100 * N);
+      for (let r = Math.max(0, r0); r < Math.min(N, r1); r++) for (let c = Math.max(0, c0); c < Math.min(N, c1); c++) best[r * N + c] = Math.max(best[r * N + c], l.scale);
+    }
+    const target = need || run.overviewScale || 0;
+    let seen = 0; for (const v of best) if (v > 0 && v >= target - 1e-6) seen++;
+    return { needScale: need, overviewScale: run.overviewScale ?? null, detailPct: Math.round(seen / (N * N) * 100),
+      notInspected: looks.filter((l) => l.state !== "done").map((l) => ({ label: l.label, frame: l.frame, state: l.state, code: l.code || null })) };
+  }
+
+  // A number the model read, set against what the plan's own reading says
+  // about that table. The model's figure is never applied (acceptPlan); this
+  // says whether it AGREES with the verified reading, DISAGREES with it (the
+  // table is worth a look — two readers differ), names a number another table
+  // already carries (DUPLICATE), or stands where nothing was read
+  // (NO_READING). The OCR reading is not overruled either way.
+  function numberCheck(finding, analysis) {
+    if (!finding || finding.kind !== "printedNumber" || finding.value == null) return null;
+    const all = (analysis && analysis.candidates) || [], c = all.find((x) => x.id === finding.candidateId);
+    if (!c) return null;
+    const v = String(finding.value), pn = c.printedNumber, read = pn && pn.value != null ? String(pn.value) : null;
+    const verified = !!(pn && pn.state === "VERIFIED");
+    const other = all.find((x) => x.id !== c.id && x.status !== "rejected" && x.printedNumber && x.printedNumber.state === "VERIFIED" && String(x.printedNumber.value) === v);
+    const state = read != null ? (read === v ? "AGREES" : "DISAGREES") : other ? "DUPLICATE" : "NO_READING";
+    return { state, model: v, read, verified, otherId: other ? other.id : null };
+  }
+
+  // One list, without the same suggestion twice. A closer look (a region or a
+  // tile) is the better look: on a tie it replaces the overview's finding.
   function mergeFindings(existing, incoming) {
     const out = existing.slice();
-    const better = (a, b) => (CONFIDENCE_RANK[a.confidence] || 0) > (CONFIDENCE_RANK[b.confidence] || 0) || ((CONFIDENCE_RANK[a.confidence] || 0) === (CONFIDENCE_RANK[b.confidence] || 0) && a.step === "region");
+    const better = (a, b) => (CONFIDENCE_RANK[a.confidence] || 0) > (CONFIDENCE_RANK[b.confidence] || 0) || ((CONFIDENCE_RANK[a.confidence] || 0) === (CONFIDENCE_RANK[b.confidence] || 0) && a.step !== "overview" && b.step === "overview");
     for (const f of incoming) {
       const i = out.findIndex(o => o.state === "open" && o.kind === f.kind && (f.candidateId ? o.candidateId === f.candidateId
         : !o.candidateId && o.box && f.box && iou(o.box, f.box) >= 0.5 && TYPE_KIND[o.type] === TYPE_KIND[f.type]));
@@ -300,7 +363,7 @@
 
   globalThis.MeritVlmReview = Object.freeze({
     IMAGE_MAX_EDGE, IMAGE_MAX_PIXELS, REGION_EDGE, REGION_UPSCALE, MAX_REGIONS, KINDS, TYPE_KIND, WHOLE,
-    fitSize, candidatesPayload, printedTextPayload, payloadFor, regionFrame, findingsFrom, mergeFindings,
+    fitSize, candidatesPayload, printedTextPayload, payloadFor, regionFrame, findingsFrom, mergeFindings, tilePlan, coverage, TILE_MIN_PX, numberCheck,
     staleReason, acceptPlan, counts, newRunId, iou, sameObject, tableFor, FAMILY, heldBackCode,
   });
 })();

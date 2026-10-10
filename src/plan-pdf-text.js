@@ -9,9 +9,10 @@
 // on, so the analysis can use them where it now uses OCR lines.
 //
 // What it does NOT do:
-//   - it does not turn vector paths into tables or chairs. It counts them, so
-//     the analysis can say the drawing HAS vector geometry this build does not
-//     read, rather than saying nothing;
+//   - it does not turn vector paths into tables or chairs. It measures them
+//     (vectorShapes: rectangles, circles, polygons and lines in raster pixels,
+//     transforms and clipping followed) and counts them, so the analysis can
+//     say what geometry the drawing HAS without claiming what it IS;
 //   - it does not decide what a text object is the number OF. A word inside a
 //     table symbol is near the table; which table it numbers is a separate
 //     judgement with its own provenance (plan-table-numbers.js), not done here;
@@ -86,6 +87,113 @@
     return { paths, images: img, text };
   }
 
+  // The painted shapes of a page, in the raster's pixels. Walks the operator
+  // list with the graphics-state stack (save / restore / transform), so a
+  // shape drawn under a `cm` lands where the page shows it, rotation kept.
+  // The clip is followed as the raster box of the clipping path (a rotated
+  // clip is approximated by its box): a shape wholly outside it is not
+  // visible and is counted as clipped, never returned. Curves are bounded by
+  // their control polygon, which is never smaller than the curve.
+  // pdf.js 5 hands each path as [paintOp, [Float32Array | null], minMax];
+  // the array holds DrawOPS codes: moveTo 0, lineTo 1, curveTo 2,
+  // quadraticCurveTo 3, closePath 4. `toRaster` is viewport.transform.
+  //
+  // What it does NOT do: say what a shape IS. A circle of table size is a
+  // circle, not a table; turning shapes into objects needs real CAD plans to
+  // be measured against, and none is in the benchmark yet.
+  const MAX_SHAPES = 20000;
+  const mul = (m, n) => [m[0] * n[0] + m[2] * n[1], m[1] * n[0] + m[3] * n[1], m[0] * n[2] + m[2] * n[3], m[1] * n[2] + m[3] * n[3], m[0] * n[4] + m[2] * n[5] + m[4], m[1] * n[4] + m[3] * n[5] + m[5]];
+  const ap = (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
+  function vectorShapes(operatorList, OPS, toRaster) {
+    const fn = (operatorList && operatorList.fnArray) || [], args = (operatorList && operatorList.argsArray) || [];
+    const out = { shapes: [], clipped: 0, truncated: false };
+    if (!OPS) return { ...out, reasonCode: "NO_OPS" };
+    const base = Array.isArray(toRaster) || ArrayBuffer.isView(toRaster) ? Array.from(toRaster).slice(0, 6) : [1, 0, 0, 1, 0, 0];
+    const paintKind = (op) => op === OPS.stroke || op === OPS.closeStroke ? "stroke"
+      : op === OPS.fill || op === OPS.eoFill ? "fill"
+      : [OPS.fillStroke, OPS.eoFillStroke, OPS.closeFillStroke, OPS.closeEOFillStroke].includes(op) ? "both" : null;
+    let ctm = [1, 0, 0, 1, 0, 0], clip = null, pendingClip = false;
+    const stack = [];
+    for (let i = 0; i < fn.length; i++) {
+      const f = fn[i], a = args[i];
+      if (f === OPS.save) { stack.push({ ctm, clip }); continue; }
+      if (f === OPS.restore) { const s = stack.pop(); if (s) { ctm = s.ctm; clip = s.clip; } continue; }
+      if (f === OPS.transform) { if (Array.isArray(a) || ArrayBuffer.isView(a)) ctm = mul(ctm, Array.from(a).slice(0, 6)); continue; }
+      if (f === OPS.clip || f === OPS.eoClip) { pendingClip = true; continue; }
+      if (f !== OPS.constructPath || !Array.isArray(a)) continue;
+      const data = Array.isArray(a[1]) ? a[1][0] : null, paint = paintKind(a[0]);
+      if (!data || !data.length) { pendingClip = false; continue; }
+      const m = mul(base, ctm);
+      for (const sub of subpaths(data, m)) {
+        if (pendingClip) { clip = clip ? intersect(clip, sub.box) || { x0: 0, y0: 0, x1: 0, y1: 0 } : sub.box; continue; }
+        if (!paint) continue;
+        let box = sub.box, partly = false;
+        if (clip) { const v = intersect(box, clip); if (!v) { out.clipped++; continue; } partly = v.x0 > box.x0 || v.y0 > box.y0 || v.x1 < box.x1 || v.y1 < box.y1; box = v; }
+        if (out.shapes.length >= MAX_SHAPES) { out.truncated = true; continue; }
+        out.shapes.push({ ...sub, box, paint, ...(partly ? { clippedPart: true } : {}) });
+      }
+      pendingClip = false;
+    }
+    return out;
+  }
+  function intersect(a, b) {
+    const x0 = Math.max(a.x0, b.x0), y0 = Math.max(a.y0, b.y0), x1 = Math.min(a.x1, b.x1), y1 = Math.min(a.y1, b.y1);
+    return x1 >= x0 && y1 >= y0 ? { x0, y0, x1, y1 } : null;
+  }
+  // One path's subpaths, each classified from its own geometry in raster
+  // pixels: a closed four-sided path with right angles is a RECT (its side
+  // lengths and the angle of its first side kept), a closed path of curves is
+  // an ELLIPSE (CIRCLE when its box is square within 8%), anything else
+  // closed is a POLYGON, and an open path is a LINE.
+  function subpaths(data, m) {
+    const subs = [];
+    let cur = null;
+    const start = (x, y) => { cur = { pts: [ap(m, x, y)], ctrl: [], lines: 0, curves: 0, closed: false }; subs.push(cur); };
+    for (let k = 0; k < data.length;) {
+      const op = data[k++];
+      if (op === 0) { start(data[k], data[k + 1]); k += 2; }
+      else if (op === 1) { if (!cur) start(data[k], data[k + 1]); else { cur.pts.push(ap(m, data[k], data[k + 1])); cur.lines++; } k += 2; }
+      else if (op === 2) { if (!cur) start(data[k + 4], data[k + 5]); else { cur.ctrl.push(ap(m, data[k], data[k + 1]), ap(m, data[k + 2], data[k + 3])); cur.pts.push(ap(m, data[k + 4], data[k + 5])); cur.curves++; } k += 6; }
+      else if (op === 3) { if (!cur) start(data[k + 2], data[k + 3]); else { cur.ctrl.push(ap(m, data[k], data[k + 1])); cur.pts.push(ap(m, data[k + 2], data[k + 3])); cur.curves++; } k += 4; }
+      else if (op === 4) { if (cur) cur.closed = true; }
+      else break;
+    }
+    const r1 = (v) => Math.round(v * 10) / 10;
+    return subs.filter((s) => s.pts.length > 1).map((s) => {
+      const all = s.pts.concat(s.ctrl), xs = all.map((p) => p[0]), ys = all.map((p) => p[1]);
+      const box = { x0: r1(Math.min(...xs)), y0: r1(Math.min(...ys)), x1: r1(Math.max(...xs)), y1: r1(Math.max(...ys)) };
+      const p = s.pts.slice(), first = p[0], last = p[p.length - 1];
+      const closes = s.closed || Math.hypot(first[0] - last[0], first[1] - last[1]) < 0.5;
+      if (closes && Math.hypot(first[0] - last[0], first[1] - last[1]) < 0.5 && p.length > 1) p.pop();
+      const w = box.x1 - box.x0, h = box.y1 - box.y0;
+      if (!closes) return { kind: "line", box };
+      if (s.curves === 0 && p.length === 4) {
+        const side = (i) => [p[(i + 1) % 4][0] - p[i][0], p[(i + 1) % 4][1] - p[i][1]];
+        const square = [0, 1, 2, 3].every((i) => { const u = side(i), v = side((i + 1) % 4), d = Math.hypot(...u) * Math.hypot(...v); return d > 0 && Math.abs(u[0] * v[0] + u[1] * v[1]) / d < 0.02; });
+        if (square) { const u = side(0), v = side(1);
+          return { kind: "rect", box, sides: [r1(Math.hypot(...u)), r1(Math.hypot(...v))], angle: Math.round(Math.atan2(u[1], u[0]) * 1800 / Math.PI) / 10 }; }
+      }
+      if (s.curves >= 2 && s.lines === 0) return { kind: Math.abs(w - h) <= 0.08 * Math.max(w, h) ? "circle" : "ellipse", box };
+      return { kind: "polygon", box };
+    });
+  }
+  // How many of each, for the record kept with the plan (the shapes
+  // themselves are not stored: a CAD page can carry tens of thousands).
+  function shapeSummary(result) {
+    const r = result || {}, counts = { rect: 0, circle: 0, ellipse: 0, polygon: 0, line: 0 };
+    for (const sh of r.shapes || []) counts[sh.kind] = (counts[sh.kind] || 0) + 1;
+    return { ...counts, clipped: r.clipped || 0, truncated: !!r.truncated };
+  }
+
+  // RASTER — drawn with images only; VECTOR — with paths only; MIXED — both
+  // (a scan with vector annotations, or CAD with an embedded photo). Text is
+  // a separate axis, kept by sourceKind below.
+  function contentClass(summary) {
+    const s = summary || {};
+    if (s.paths == null && s.images == null) return null;
+    return (s.paths || 0) > 0 ? ((s.images || 0) > 0 ? "MIXED" : "VECTOR") : (s.images || 0) > 0 ? "RASTER" : "EMPTY";
+  }
+
   // SCAN — an image and nothing else: every word on it must be read off pixels.
   // VECTOR — drawn with paths; TEXT — carries text objects. Both can hold.
   function sourceKind(summary, textItems) {
@@ -111,5 +219,5 @@
     return out;
   }
 
-  globalThis.MeritPdfText = Object.freeze({ itemsFromTextContent, vectorSummary, sourceKind, scaledItems, MAX_ITEMS, MAX_CHARS });
+  globalThis.MeritPdfText = Object.freeze({ itemsFromTextContent, vectorSummary, vectorShapes, shapeSummary, contentClass, sourceKind, scaledItems, MAX_ITEMS, MAX_CHARS, MAX_SHAPES });
 })();

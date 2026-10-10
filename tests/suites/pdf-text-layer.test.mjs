@@ -11,8 +11,11 @@
 //     label sits in, measured on the raster; its label says it came from the
 //     PDF's own text, with no confidence figure, and its observation is the
 //     pdf-text channel, never "ocr".
-//   VECTORS ARE NAMED, NOT READ: the paths are counted and the analysis says
-//     this build does not turn them into objects.
+//   VECTORS ARE MEASURED, NOT INTERPRETED: the paths are counted, walked as
+//     geometry with transforms and clipping followed (a second synthetic page:
+//     a rotated rectangle under two `cm`s, a Bezier circle, a clip window,
+//     an inline image making it MIXED), and the analysis says this build does
+//     not turn them into objects.
 //   TEXT FROM A FILE IS DATA: a markup string in the PDF's text never runs and
 //     never becomes an element; a stored text record that comes back damaged
 //     is dropped field by field, not trusted.
@@ -38,6 +41,28 @@ function vectorPdf() {
     "BT /F1 10 Tf 0 Tr 104 132 Td (T1) Tj ET",
     "BT /F1 6 Tf 3 Tr 440 60 Td (<img src=x onerror=window.__pdfTextPwned=1>) Tj ET",
   ].join("\n");
+  return pdfOf(content);
+}
+
+// A second SYNTHETIC page for the geometry walk (MeritPdfText.vectorShapes):
+// a 40 x 20 pt rectangle rotated 30 degrees about (300, 200) under two `cm`s;
+// a circle of radius 15 at (100, 300) drawn as four Beziers and filled; a
+// clip window 400..500 x 50..150 with one rectangle half inside it and one
+// wholly outside; after the restore, a rectangle outside the old window
+// (visible again); a 2 x 2 inline image (so the page is MIXED); a line.
+function geometryPdf() {
+  return pdfOf([
+    "1 w",
+    "q 1 0 0 1 300 200 cm 0.866025 0.5 -0.5 0.866025 0 0 cm -20 -10 40 20 re S Q",
+    "115 300 m 115 308.28 108.28 315 100 315 c 91.72 315 85 308.28 85 300 c 85 291.72 91.72 285 100 285 c 108.28 285 115 291.72 115 300 c h f",
+    "q 400 50 100 100 re W n 380 60 40 40 re S 520 60 30 30 re S Q",
+    "450 300 20 20 re S",
+    "q 50 0 0 50 500 300 cm BI /W 2 /H 2 /CS /G /BPC 8 /F /AHx ID 00FF00FF> EI Q",
+    "10 10 m 590 10 l S",
+  ].join("\n"));
+}
+
+function pdfOf(content) {
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
     "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
@@ -130,4 +155,38 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const rows = await page.evaluate(() => (document.querySelector(".planintel-diagnostics .analysis-note") || {}).textContent || "");
   checks.ok(rows.includes(`${golden.diag && golden.diag.textItems} text object(s) used as the document's own text`) && /does not turn vector paths into objects/.test(rows),
     "the review screen's diagnostics name the text used and the vectors not read", rows);
+
+  // ---- vector geometry: transforms, curves, clipping, restore; raster + vector = MIXED ----------
+  await page.click('[data-action="back-events"]');
+  await page.waitForTimeout(400);
+  await createBlankEvent(page, { name: "Geometry", date: futureDate() });
+  const geo = geometryPdf();
+  await page.setInputFiles("#floorPlanFile", { name: "geometry.pdf", mimeType: "application/pdf", buffer: geo });
+  await page.waitForFunction(() => !!state.events[0].background?.pdfSource && state.events[0].name === "Geometry", null, { timeout: 60000 });
+  const geoStored = await page.evaluate(() => { const s = state.events[0].background.pdfSource; return { content: s.content, shapes: s.vector.shapes }; });
+  checks.ok(geoStored.content === "MIXED" && geoStored.shapes && geoStored.shapes.rect === 3 && geoStored.shapes.circle === 1 && geoStored.shapes.line === 1 && geoStored.shapes.clipped === 1,
+    "the page is recorded as MIXED (an image and vector paths) with its shapes counted: 3 rectangles, 1 circle, 1 line, 1 hidden by the clip", geoStored);
+  const shapes = await page.evaluate(async (b64) => {
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const doc = await globalThis.pdfjsLib.getDocument({ data: bytes, isEvalSupported: false }).promise, pg = await doc.getPage(1), vp = pg.getViewport({ scale: 2.6 });
+    return globalThis.MeritPdfText.vectorShapes(await pg.getOperatorList(), globalThis.pdfjsLib.OPS, vp.transform);
+  }, geo.toString("base64"));
+  const near = (a, b, tol = 1.5) => Math.abs(a - b) <= tol;
+  const rot = shapes.shapes.find((x) => x.kind === "rect" && x.angle != null && Math.abs(Math.abs(x.angle) - 30) < 1);
+  checks.ok(!!rot && near(rot.sides[0], 104) && near(rot.sides[1], 52) && near((rot.box.x0 + rot.box.x1) / 2, 780) && near((rot.box.y0 + rot.box.y1) / 2, 520),
+    "a rectangle drawn under two transforms keeps its size (104 x 52 px), its 30-degree rotation and its place on the raster", rot);
+  const circle = shapes.shapes.find((x) => x.kind === "circle");
+  checks.ok(!!circle && near(circle.box.x0, 221) && near(circle.box.x1, 299) && near(circle.box.y0, 221) && near(circle.box.y1, 299) && circle.paint === "fill",
+    "four Beziers are measured as one filled circle at its place (the y flip included)", circle);
+  const half = shapes.shapes.find((x) => x.clippedPart), back = shapes.shapes.find((x) => x.kind === "rect" && near(x.box.x0, 1170));
+  checks.ok(!!half && near(half.box.x0, 1040) && shapes.clipped === 1 && !!back,
+    "the clip cuts the half-inside rectangle at the window's edge, hides the one outside it, and ends at the restore", { half, clipped: shapes.clipped, back });
+  await page.evaluate(() => { ui.tab = "floor"; ui.planMode = "plan"; render(); });
+  await page.waitForTimeout(300);
+  await runDetection(page);
+  await page.evaluate(() => { ui.tab = "floor"; ui.planMode = "review"; render(); });
+  await page.waitForTimeout(300);
+  const geoRows = await page.evaluate(() => (document.querySelector(".planintel-diagnostics .analysis-note") || {}).textContent || "");
+  checks.ok(/MIXED/.test(geoRows) && /3 rectangle\(s\), 1 circle\(s\)/.test(geoRows) && /not yet turned into objects/.test(geoRows),
+    "the diagnostics say the page is mixed, what geometry was measured, and that it is not turned into objects", geoRows);
 }

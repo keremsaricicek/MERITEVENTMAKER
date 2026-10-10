@@ -79,4 +79,30 @@ export default async function run({ checks, repoRoot }) {
   const sent = V.candidatesPayload(shapes, frame, size).candidates.map((c) => c.heldBack);
   checks.equal(sent, ["overlapsAnotherTable", null, "other"],
     "lowEvidence:{reason} is sent as its reason, null as null, and an unknown reason as \"other\" — never read as === true");
+
+  // ---- U2 / U3: detail tiles and coverage ------------------------------------------------
+  // The two measured plans (benchmarks/resolution) need no tiles: the overview
+  // shows their smallest objects at >= 12 px.
+  checks.equal([V.tilePlan(1355, 788, 12).needed, V.tilePlan(2402, 1719, 62).needed], [false, false],
+    "the Golden Plan (chairs 12 px) and ORNEK (tables 62 px) are read from the overview alone, as measured");
+  const big = V.tilePlan(6000, 4000, 14);
+  const done = { steps: 1 + big.tiles.length, overviewScale: big.overviewScale, needScale: big.needScale, regions: [], tiles: big.tiles.map((x) => ({ ...x, state: "done" })) };
+  const overlapX = big.tiles[0].frame.x + big.tiles[0].frame.w - big.tiles[1].frame.x;
+  checks.ok(big.needed && big.tiles.length >= 6 && big.tiles.every((x) => x.scale >= big.needScale - 0.001) && overlapX > 0 && V.coverage(done).detailPct === 100,
+    "a large plan with small objects is tiled at the scale it needs, tiles overlap, and all of them together cover the whole plan", { n: big.tiles.length, need: big.needScale, overlapX, pct: V.coverage(done).detailPct });
+  const part = { ...done, tiles: done.tiles.map((x, i) => (i < 4 ? x : { ...x, state: "notSent", code: "STEP_LIMIT" })), regions: [{ frame: { x: 1, y: 1, w: 12, h: 12 }, state: "failed", code: "TIMEOUT" }] };
+  const cov = V.coverage(part);
+  checks.ok(cov.detailPct < 100 && cov.notInspected.length === big.tiles.length - 4 + 1 && cov.notInspected.every((l) => l.code),
+    "with tiles over the step limit and a failed region, coverage is below 100% and names every part not inspected, with its reason", cov);
+  const ov = { id: "o", kind: "missing", type: "round", box: { x: 10, y: 10, w: 4, h: 4 }, confidence: "medium", state: "open", step: "overview", candidateId: null };
+  const tl = { ...ov, id: "t", step: "tile" };
+  checks.equal(V.mergeFindings([ov], [tl]).map((f) => f.id), ["t"], "on a tie, a tile's finding replaces the overview's (the closer look wins)");
+
+  // ---- U7: a model's number beside the plan's own reading -------------------------------
+  const nums = { candidates: [cand("a", { printedNumber: { state: "VERIFIED", value: 21 } }), cand("b", { printedNumber: { state: "VERIFIED", value: 12 } }), cand("c"), cand("d", { printedNumber: { state: "UNCERTAIN", value: 7 } })] };
+  const nf = (id, value) => open({ kind: "printedNumber", candidateId: id, value });
+  checks.equal([nf("a", 21), nf("a", 12), nf("c", 12), nf("c", 30), nf("d", 1)].map((f) => V.numberCheck(f, nums).state),
+    ["AGREES", "DISAGREES", "DUPLICATE", "NO_READING", "DISAGREES"],
+    "a model's number is set against the plan's reading: agrees, disagrees (verified or not), names another table's number, or stands alone");
+  checks.equal(V.acceptPlan(nf("c", 30), nums).reason, "NUMBER_NOT_APPLIED", "and whatever it says, a number is never applied from a model");
 }

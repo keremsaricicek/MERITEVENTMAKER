@@ -1058,8 +1058,8 @@
     try{text=P.itemsFromTextContent(await page.getTextContent(),viewport.transform);}
     catch{return{page:page.pageNumber,kind:"UNREAD",reasonCode:"TEXT_LAYER_FAILED"};}
     let vector={paths:null,images:null,text:null};
-    try{vector=P.vectorSummary(await page.getOperatorList(),globalThis.pdfjsLib?.OPS);}catch{vector.reasonCode="OPERATORS_FAILED";}
-    return{page:page.pageNumber,scale:viewport.scale,width:canvas.width,height:canvas.height,kind:P.sourceKind(vector,text.items.length),
+    try{const ops=await page.getOperatorList(),OPS=globalThis.pdfjsLib?.OPS;vector=P.vectorSummary(ops,OPS);vector.shapes=P.shapeSummary(P.vectorShapes(ops,OPS,viewport.transform));}catch{vector.reasonCode="OPERATORS_FAILED";}
+    return{page:page.pageNumber,scale:viewport.scale,width:canvas.width,height:canvas.height,kind:P.sourceKind(vector,text.items.length),content:P.contentClass(vector),
       text:{items:text.items,dropped:text.dropped,truncated:text.truncated},vector};
   }
   async function selectPdfPage(index){
@@ -3806,7 +3806,9 @@
       for(const it of pdfItems)suppressionWords.push({text:it.text,bbox:{...it.box}});
       const pdfSource=event.background?.pdfSource;
       if(pdfSource)event.analysis.diagnostics.pdfSource={kind:pdfSource.kind||null,textItems:pdfItems.length,
-        paths:pdfSource.vector?.paths??null,images:pdfSource.vector?.images??null,truncated:!!pdfSource.text?.truncated};
+        paths:pdfSource.vector?.paths??null,images:pdfSource.vector?.images??null,truncated:!!pdfSource.text?.truncated,
+        content:["RASTER","VECTOR","MIXED","EMPTY"].includes(pdfSource.content)?pdfSource.content:null,
+        shapes:pdfSource.vector?.shapes&&typeof pdfSource.vector.shapes==="object"?Object.fromEntries(["rect","circle","ellipse","polygon","line","clipped"].map(k=>[k,Math.max(0,Math.floor(Number(pdfSource.vector.shapes[k])||0))])):null};
       if(suppressionWords.length){
         const suppression=suppressTextFalsePositives(event.analysis.candidates,suppressionWords,width,height);
         event.analysis.candidates=suppression.kept;

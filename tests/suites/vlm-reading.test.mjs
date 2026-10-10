@@ -380,6 +380,57 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
       "on a historical event pressing Send starts nothing: no question, no request, the analysis untouched", { startShown, calls: fake.requests.length - callsBefore, status: (await vlm()).status });
     await page.evaluate((s) => { state.events[0].status = s; render(); }, priorStatus);
 
+    // ---- detail tiles: planned when the overview is too coarse, never cut silently ----------------
+    // The same plan at 3x, with one chair shrunk to 8 px: the overview (at
+    // 0.61x) would shrink it below 12 px, so native tiles are planned. Six
+    // are needed and the step limit (5) leaves room for four after the
+    // overview: two tiles and the model's region are NOT inspected, and say so.
+    await page.evaluate(async () => {
+      const ev = state.events[0], img = new Image(); img.src = ev.background.src; await img.decode();
+      const c = document.createElement("canvas"); c.width = img.naturalWidth * 3; c.height = img.naturalHeight * 3;
+      const g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(img, 0, 0, c.width, c.height);
+      window.__planBefore = ev.background.src; ev.background.src = c.toDataURL("image/png");
+      const t = ev.analysis.candidates.find((x) => x.kind === "table" && x.status !== "rejected" && (x.chairDetections || []).length);
+      t.chairDetections[0] = { ...t.chairDetections[0], w: 0.2, h: 0.2 };
+      render();
+    });
+    const tileCalls = fake.requests.length;
+    const tileDialog = await send();
+    await waitRun();
+    const tiled = await vlm();
+    const tileReqs = fake.requests.slice(tileCalls).filter((r) => r.method === "POST");
+    const tileTexts = tileReqs.map((r) => r.body.messages[0].content[1].text);
+    checks.ok(/4 of 6 overlapping detail tile/.test(tileDialog.body) && /PRINTED on the plan travels with it/.test(tileDialog.body),
+      "the confirmation says detail tiles are sent (4 of 6 within the step limit) and that text printed on the plan travels with the image", tileDialog.body.slice(0, 600));
+    checks.ok(tileReqs.length === 5 && tileTexts.filter((x) => x.startsWith("This is one TILE")).length === 4 && tiled.tiles.length === 6
+      && tiled.tiles.slice(0, 4).every((x) => x.state === "done" && x.scale >= 0.99) && tiled.tiles.slice(4).every((x) => x.state === "notSent" && x.code === "STEP_LIMIT"),
+      "one overview and four tiles at the plan's own resolution are sent; the two over the step limit are kept as not sent", { requests: tileReqs.length, tiles: tiled.tiles.map((x) => [x.state, x.scale, x.code]) });
+    checks.ok(tiled.regions.length === 1 && tiled.regions[0].state === "notSent" && tiled.regions[0].code === "STEP_LIMIT",
+      "the region the model asked for, with no step left, is listed as not inspected rather than dropped", tiled.regions);
+    const t1 = tiled.tiles[0].frame, tileFinding = tiled.findings.find((f) => f.step === "tile" && f.regionIndex === 0);
+    checks.ok(!!tileFinding && tileFinding.box.x >= t1.x && tileFinding.box.x + tileFinding.box.w <= t1.x + t1.w + 0.01 && tileFinding.box.y >= t1.y && tileFinding.box.y + tileFinding.box.h <= t1.y + t1.h + 0.01,
+      "a finding from a tile lands inside that tile's part of the plan", { t1, box: tileFinding && tileFinding.box });
+    const covText = await page.locator(".vlm-panel .vlm-run").textContent();
+    const hatched = await page.locator(".vlm-region.vlm-uninspected").count();
+    checks.ok(/Seen in detail \(smallest objects at ≥12 px\): \d+% of the plan/.test(covText) && /not inspected: T5 \(not sent/.test(covText) && /R1 \(not sent/.test(covText) && hatched === 3,
+      "the panel says how much of the plan was seen in detail and names what was not; the map hatches those three parts", { hatched, text: covText.slice(0, 400) });
+    // The panel row of a number finding (the comparison itself is pinned in
+    // vlm-decisions): a finding on a table whose number the plan read
+    // differently is shown as two readings that differ, and nothing is applied.
+    const numberRow = await page.evaluate(() => {
+      const a = state.events[0].analysis, c = a.candidates.find((x) => x.kind === "table" && x.status !== "rejected");
+      const before = JSON.stringify(c.printedNumber || null);
+      c.printedNumber = { ...(c.printedNumber || {}), state: "VERIFIED", value: 21 };
+      a.vlm.findings.push({ id: "vf-number-test", step: "overview", regionIndex: null, kind: "printedNumber", candidateId: c.id, type: null, box: null, value: 12, confidence: "high", evidence: "SCRIPTED number", state: "open" });
+      render();
+      const li = document.querySelector('[data-vlm-row="vf-number-test"]'), text = li ? li.textContent : null, accept = li && li.querySelector('[data-vlm-action="accept"]');
+      a.vlm.findings.pop(); c.printedNumber = JSON.parse(before) || undefined; if (!c.printedNumber) delete c.printedNumber; render();
+      return { text, acceptDisabled: !accept || accept.disabled };
+    });
+    checks.ok(/Two readings differ: the plan's own reading says 21, the model says 12/.test(numberRow.text || "") && numberRow.acceptDisabled,
+      "a model's number that differs from the plan's reading is shown as two readings that differ, and cannot be applied", numberRow);
+    await page.evaluate(() => { state.events[0].background.src = window.__planBefore; render(); });
+
     // ---- without a relay, the page says so and sends nothing --------------------------------------
     const plain = await context.newPage();
     await openApp(plain, baseUrl, { lang: "en" });

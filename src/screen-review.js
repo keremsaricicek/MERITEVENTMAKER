@@ -518,6 +518,8 @@
     if(ps&&ps.kind==="SCAN")rows.push(t("diag.pdfSource.scan"));
     if(ps&&ps.textItems)rows.push(t("diag.pdfSource.text",{n:ps.textItems}));
     if(ps&&ps.paths)rows.push(t("diag.pdfSource.vector",{n:ps.paths}));
+    if(ps&&ps.content==="MIXED")rows.push(t("diag.pdfSource.mixed"));
+    if(ps&&ps.shapes&&ps.paths)rows.push(t("diag.pdfSource.shapes",ps.shapes));
     // Whether a vision-language model can read this plan, said outright
     // (src/screen-vlm.js): until a relay has answered from this page, no model
     // runs, with what the analysis would have asked one.
