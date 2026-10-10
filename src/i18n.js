@@ -478,6 +478,8 @@
     "diag.pdfSource.scan": { en: "PDF source: a scanned image — no text objects and no vector paths, so every word is read off pixels", tr: "PDF kaynağı: taranmış görüntü — metin nesnesi ve vektör yol yok, her yazı piksellerden okunur" },
     "diag.pdfSource.text": { en: "PDF source: {n} text object(s) used as the document's own text (labels, printed lines), not read off pixels", tr: "PDF kaynağı: {n} metin nesnesi belgenin kendi yazısı olarak kullanıldı (etiketler, basılı satırlar), piksellerden okunmadı" },
     "diag.pdfSource.vector": { en: "The PDF draws with {n} vector path(s); this build does not turn vector paths into objects", tr: "PDF {n} vektör yolla çizilmiş; bu sürüm vektör yolları nesneye dönüştürmez" },
+    "diag.vlmNotConfigured": { en: "VISION-LANGUAGE MODEL NOT CONFIGURED", tr: "GÖRÜNTÜ-DİL MODELİ YAPILANDIRILMADI" },
+    "diag.vlmPending": { en: "no relay holds a key for this page, so nothing is sent; this analysis has {n} question(s) it would ask", tr: "bu sayfa için anahtarı tutan bir aktarıcı yok, hiçbir şey gönderilmez; bu analizin soracağı {n} soru var" },
     "diag.textSuppressed": { en: "{n} candidate(s) discarded as printed text/labels via real OCR overlap", tr: "Gerçek OCR örtüşmesiyle {n} aday basılı yazı/etiket olarak elendi" },
 
     // ---- Guests screen ----

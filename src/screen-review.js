@@ -513,6 +513,9 @@
     if(ps&&ps.kind==="SCAN")rows.push(t("diag.pdfSource.scan"));
     if(ps&&ps.textItems)rows.push(t("diag.pdfSource.text",{n:ps.textItems}));
     if(ps&&ps.paths)rows.push(t("diag.pdfSource.vector",{n:ps.paths}));
+    // No relay holds a key for this page, so no vision-language model runs
+    // (src/plan-vlm.js). Said outright, with what it would have been asked.
+    if(globalThis.MeritVlm)rows.push(`<b>${t("diag.vlmNotConfigured")}</b> · ${t("diag.vlmPending",{n:MeritVlm.questionsFor(a).length})}`);
     return`<div class="analysis-note">${rows.join("<br>")}</div>`;
   }
   function analysisHTML(event){

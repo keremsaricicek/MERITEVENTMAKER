@@ -166,7 +166,41 @@ Since the OCR model (work item F) the served app downloads two pinned model
 files (PP-OCRv4 det 4.7 MB + rec 10.9 MB, Apache-2.0) and the ONNX Runtime Web
 wasm (14.2 MB, MIT) from jsDelivr on first analysis — GETs with no body,
 checked against their sha256 before use; the folder package carries them and
-fetches nothing. A provider that sends a plan anywhere (work item G)
-must report tokens, wall clock and cost per plan in this report, run only
-when the operator has switched it on, and never send guest data. Its cost
-ceiling is set when a real run exists to measure — not before.
+fetches nothing.
+
+### The vision-language loop (work item G): built to the boundary, not run
+
+`src/plan-vlm.js` turns the analysis's own doubts into one narrow question
+per object — a bench whose seats are unknown, a reading held back, a printed
+number the vote could not settle — about one crop, and checks each answer
+against that question's closed schema. Answers come back as SUGGESTIONS on
+the `vlm` channel, applied to nothing. It has never run against a model, and
+nothing here says it has: the review screen states VISION-LANGUAGE MODEL NOT
+CONFIGURED, and `vlm-replay` drives the loop with SCRIPTED answers written for
+the suite to pin the boundary — no key and no guest data in any request, an
+instruction printed on the drawing carried only as quoted data, a relay off
+the page's own origin refused, out-of-schema answers refused, nothing applied.
+
+What running it needs, concretely, and none of it is in this repository:
+
+1. **A relay at the app's own origin** (`/vlm-relay`) that holds the API key
+   server-side and forwards the request. The browser build is static files
+   and its policy is `connect-src 'self'`; a key in the page or the package
+   is refused by design. The eventual desktop build's main process could be
+   that relay — after "EXE YAP", not before.
+2. **A paid API key** for a vision-capable model, held by that relay.
+3. **The operator's decision to send plan CROPS off the machine.** Only the
+   crops of the objects asked about leave, never a guest, an inviter or a
+   note — but a client's floor plan is still their drawing.
+
+What it would cost is measured by the loop itself from the usage the
+transport reports, and priced only from a table the operator supplies. The
+size of the job, measured on this commit: the Golden Plan raises **4**
+questions (3 benches' seats, 1 held-back reading), ORNEK **19** (12 locas'
+seats, 7 printed numbers). Each request is a crop (the objects' own crops are
+9–33 thousand pixels; upscaled to about 400 × 400 for legibility that is
+about 213 image tokens by the published width × height / 750 rule) plus
+about 800 characters of fixed instruction — on the order of 450 input and
+40 output tokens a question, so about 2 thousand input tokens for the Golden
+Plan and 9 thousand for ORNEK. That is an estimate of size, not a measured
+cost: the first real run replaces it.
