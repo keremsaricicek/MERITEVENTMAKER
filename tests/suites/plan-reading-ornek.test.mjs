@@ -8,6 +8,8 @@
 //     printed beside the drawing as a legend, not as the boxes.
 //   WHAT IT DOES NOT NAME STAYS A QUESTION: the T-shaped block in the middle
 //     is offered as a possible stage, unsure — the sheet never says "stage".
+//   TEACH IT ONCE: a person saying "this block is the stage" turns the question
+//     into the stage — read back as theirs, drawn as the stage, no question mark.
 //   NOTHING IS INVENTED: no merged tables (round symbols are not pushed
 //     together), unread numbers are counted as open, never guessed.
 // The checks name the categories, not this plan's strings, where they can:
@@ -50,4 +52,17 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const open = s("read.numbers.open"), numbers = s("read.numbers.summary");
   checks.ok(numbers && numbers.params.verified >= 140 && open && open.certainty === "unsure" && numbers.params.verified + open.params.n === numbers.params.tables,
     "read numbers and open numbers add up to the tables found; the open ones are asked, not guessed", { numbers, open });
+
+  // "Bu sahnedir": one reclassify decision, through the review's own writer.
+  const taught = await page.evaluate(() => {
+    const ev = state.events[0], a = ev.analysis, x = MeritPlanReading.read(a);
+    const q = x.sections.flatMap((s) => s.sentences).find((s) => s.key === "read.stage.maybe");
+    decideReview(ev, { kind: "reclassify", candidateId: q.refs[0], to: { kind: "venue", type: "stage" }, spread: false });
+    const y = MeritPlanReading.read(ev.analysis), where = y.sections.flatMap((s) => s.sentences).find((s) => s.key === "read.stage.where");
+    ui.tab = "floor"; ui.planMode = "review"; ui.readingOpen = true; ui.planView = "digital"; render();
+    const labels = [...document.querySelectorAll(".digital-plan .dg-label")].map((t) => t.textContent);
+    return { where: where && { certainty: where.certainty, refs: where.refs.length }, maybe: !!y.sections.flatMap((s) => s.sentences).find((s) => s.key === "read.stage.maybe"), labels };
+  });
+  checks.ok(taught.where && taught.where.certainty === "confirmed" && !taught.maybe && taught.labels.includes("SAHNE") && !taught.labels.some((l) => /\?/.test(l)),
+    "after \"this block is the stage\" the plan has a stage the person confirmed — read back as theirs and drawn as SAHNE, with no question left", taught);
 }

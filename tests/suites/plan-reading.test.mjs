@@ -22,7 +22,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
-import { openApp, createBlankEvent, importPlan, runDetection, futureDate } from "../lib/app-actions.mjs";
+import { openApp, createBlankEvent, importPlan, runDetection, reRunDetection, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "plan-reading", tags: ["intelligence", "ux"], timeout: 240000, viewport: { width: 1920, height: 1080 } };
 
@@ -80,6 +80,17 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal([tx["SAHNE"].used.key, tx["Total : 12 pax"].used.key, tx["8m"].used.key, tx["servant"].used.key, tx["Loca 1"].used.key, tx["Unreadable mess"].used.key],
     ["read.used.named", "read.used.capacity", "read.used.dimension", "read.used.placeOnly", "read.used.legend", "read.used.none"],
     "every word says what it was used for: named the stage, the capacity, a measurement kept as text, a place only written, a legend, nothing");
+
+  // What a person decided outranks how it was read; a remembered decision says so.
+  const taught = JSON.parse(JSON.stringify(analysis));
+  taught.candidates.find((c) => c.id === "stage").status = "confirmed";
+  for (const id of ["t2", "t3", "t4"]) taught.candidates.find((c) => c.id === id).status = "confirmed";
+  const rt = R.read(taught), all3 = rt.sections.flatMap((x) => x.sentences);
+  const remembered = JSON.parse(JSON.stringify(taught));
+  remembered.candidates.find((c) => c.id === "stage").fromMemory = true;
+  const rm = R.read(remembered).sections.flatMap((x) => x.sentences);
+  checks.equal([all3.find((x) => x.key === "read.stage.where").certainty, rm.find((x) => x.key === "read.stage.where").certainty, all3.find((x) => x.key === "read.tables.mergedOne").certainty],
+    ["confirmed", "remembered", "inferred"], "a stage a person confirmed reads as confirmed, and as remembered when the decision came back from memory; three confirmed tables are still only worked out to be one table");
 
   // A block the sheet does not name, with tables on three sides, is only a possible stage.
   const noStage = JSON.parse(JSON.stringify(analysis));
@@ -140,4 +151,15 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const en = await page.locator(".read-panel").textContent();
   checks.ok(/A dinner layout with drawn chairs/.test(en) && /The plan states a total of 124 people/.test(en), "and in English", en.slice(0, 300));
   checks.equal(await snap(), before, "reading the plan changed nothing in the analysis");
+
+  // ---- what you teach, it says back — and says again on the next analysis --------------------
+  await page.evaluate(() => { const ev = state.events[0], st = ev.analysis.candidates.find((c) => c.type === "stage"); decideReview(ev, { kind: "confirm", candidateId: st.id }); ui.readingOpen = true; render(); });
+  const stageCert = () => page.evaluate(() => { const b = [...document.querySelectorAll(".read-line")].find((x) => /The stage is at|Stage at the/.test(x.textContent)); return b ? b.querySelector(".read-cert").textContent : null; });
+  const afterConfirm = await stageCert();
+  await reRunDetection(page);
+  await page.evaluate(() => { ui.tab = "floor"; ui.planMode = "review"; ui.readingOpen = true; render(); });
+  await page.waitForSelector(".read-panel");
+  const afterReanalysis = await stageCert();
+  checks.ok(afterConfirm === "You confirmed" && afterReanalysis === "Remembered",
+    "a stage the person confirmed is read back as theirs, and after a fresh analysis of the same plan it is read back as remembered", { afterConfirm, afterReanalysis });
 }

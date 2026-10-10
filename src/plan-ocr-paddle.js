@@ -40,7 +40,16 @@
   });
   const CDN = "https://cdn.jsdelivr.net/npm/";
   const runtimeBase = () => `${CDN}${PINS.runtime.package}@${PINS.runtime.version}/dist/`;
-  const modelUrl = (m) => `${CDN}${PINS.models.package}@${PINS.models.version}/${m.file}`;
+  // A benchmark may measure another model through the same code path
+  // (benchmarks/ocr/compare-ppocr.mjs): it sets globalThis.MERIT_PPOCR_EXPERIMENT
+  // before the page loads, with that model's own pins (sha256, size, its
+  // character list and count). The product never sets it, the embedded
+  // offline build ignores it, and a pin that does not match still refuses.
+  const experiment = () => {
+    const x = globalThis.MERIT_PPOCR_EXPERIMENT;
+    return x && x.models && x.models.det && x.models.rec && typeof x.keysScript === "string" && typeof x.keysGlobal === "string" && x.keysCount > 0 ? x : null;
+  };
+  const modelUrl = (m, P) => `${CDN}${(P || PINS).models.package}@${(P || PINS).models.version}/${m.file}`;
 
   // ---- pure parts (exported for the suite) -----------------------------------
 
@@ -168,9 +177,17 @@
           const paths = globalThis.MERIT_PPOCR_ASSET_PATHS || null;
           if (paths && paths.none) throw fail("ENGINE_NOT_BUNDLED", paths.none);
           const embedded = paths && paths.embedded;
-          if (!globalThis.MERIT_PPOCR_V4_KEYS) await loadScript((embedded ? embedded : "") + (embedded ? "keys.js" : PINS.keysScript));
-          this.keys = globalThis.MERIT_PPOCR_V4_KEYS;
-          if (!Array.isArray(this.keys) || this.keys.length !== 6623) throw fail("ENGINE_NOT_LOADED", "recognition character list missing or wrong length");
+          const X = embedded ? null : experiment(), P = X || PINS;
+          this.pins = { id: P.id, label: P.label, models: P.models };
+          if (X) {
+            if (!globalThis[X.keysGlobal]) await loadScript(X.keysScript);
+            this.keys = globalThis[X.keysGlobal];
+            if (!Array.isArray(this.keys) || this.keys.length !== X.keysCount) throw fail("ENGINE_NOT_LOADED", "experiment character list missing or wrong length");
+          } else {
+            if (!globalThis.MERIT_PPOCR_V4_KEYS) await loadScript((embedded ? embedded : "") + (embedded ? "keys.js" : PINS.keysScript));
+            this.keys = globalThis.MERIT_PPOCR_V4_KEYS;
+            if (!Array.isArray(this.keys) || this.keys.length !== 6623) throw fail("ENGINE_NOT_LOADED", "recognition character list missing or wrong length");
+          }
           let detBytes, recBytes;
           if (embedded) {
             // The runtime as its own file; the wasm, its loader and both models
@@ -190,11 +207,11 @@
             if (!globalThis.ort) throw fail("ENGINE_NOT_LOADED", "ONNX Runtime Web did not load");
             globalThis.ort.env.wasm.wasmPaths = runtimeBase();
             const get = async (m) => {
-              const r = await fetch(modelUrl(m));
+              const r = await fetch(modelUrl(m, P));
               if (!r.ok) throw fail("ENGINE_NOT_LOADED", `model fetch failed (${r.status})`);
               return new Uint8Array(await r.arrayBuffer());
             };
-            [detBytes, recBytes] = await Promise.all([get(PINS.models.det), get(PINS.models.rec)]);
+            [detBytes, recBytes] = await Promise.all([get(P.models.det), get(P.models.rec)]);
           }
           // Single thread: a page that is not cross-origin isolated (and a
           // file:// package never is) cannot share memory with workers.
@@ -204,7 +221,7 @@
           // opened from disk). Elsewhere the size is still checked and the
           // result says the hash was not — never that it was.
           const canHash = !!(globalThis.crypto && crypto.subtle);
-          for (const [bytes, m] of [[detBytes, PINS.models.det], [recBytes, PINS.models.rec]]) {
+          for (const [bytes, m] of [[detBytes, P.models.det], [recBytes, P.models.rec]]) {
             if (bytes.byteLength !== m.bytes) throw fail("MODEL_INTEGRITY", `model size ${bytes.byteLength} is not the pinned ${m.bytes}`);
             if (canHash && (await sha256Hex(bytes)) !== m.sha256) throw fail("MODEL_INTEGRITY", "model sha256 is not the pinned one");
           }
@@ -275,8 +292,8 @@
         if (typeof o.onProgress === "function") o.onProgress(Math.min(1, (s + 6) / Math.max(1, order.length)));
       }
       return {
-        available: true, provider: { id: PINS.id, label: PINS.label, runtime: `${PINS.runtime.package}@${PINS.runtime.version}`,
-          models: `${PINS.models.package}@${PINS.models.version}`, integrity: this.integrity, trainedModel: true, domain: "text only — not a model of plans" },
+        available: true, provider: { id: (this.pins || PINS).id, label: (this.pins || PINS).label, runtime: `${PINS.runtime.package}@${PINS.runtime.version}`,
+          models: `${(this.pins || PINS).models.package}@${(this.pins || PINS).models.version}`, integrity: this.integrity, trainedModel: true, domain: "text only — not a model of plans" },
         items: boxes.map(b => ({ text: b.text || "", score: b.score || 0, box: { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 }, rotated: !!b.rot })),
         imageSize: { width: W, height: H }, ms: { detection: Math.round(tDet), total: Math.round(performance.now() - t0) },
       };
@@ -298,7 +315,7 @@
       return await engine.read(image, opts);
     } catch (error) {
       return { available: false, reasonCode: (error && error.ocrCode) || "FAILED", reason: error && error.message ? error.message : String(error),
-        provider: { id: PINS.id, label: PINS.label } };
+        provider: { id: (engine && engine.pins || PINS).id, label: (engine && engine.pins || PINS).label } };
     }
   }
 

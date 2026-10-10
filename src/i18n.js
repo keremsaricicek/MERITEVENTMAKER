@@ -504,6 +504,8 @@
     "read.cert.stated": { en: "On the plan", tr: "Plan yazıyor" },
     "read.cert.seen": { en: "Seen", tr: "Görüldü" },
     "read.cert.inferred": { en: "Worked out", tr: "Çıkarım" },
+    "read.cert.confirmed": { en: "You confirmed", tr: "Siz onayladınız" },
+    "read.cert.remembered": { en: "Remembered", tr: "Hatırlandı" },
     "read.cert.unsure": { en: "Check", tr: "Emin değil" },
     "read.section.event": { en: "The event", tr: "Etkinlik" },
     "read.section.overview": { en: "What is on the plan", tr: "Planda neler var" },

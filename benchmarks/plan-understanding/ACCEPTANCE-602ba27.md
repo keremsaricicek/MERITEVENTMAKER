@@ -62,7 +62,7 @@ Decisions, licences and evidence: `TOOLS.md`.
 |---|---|---|
 | T1 | SAHI-style sliced scanning | 1 · DONE for the model reading · 3 · REJECTED for the detector on today's plans (U1) |
 | T2 | RF-DETR (Apache-2.0 N/S/M) | 2 · BLOCKED — labelled plans from ≥5 venues (N1) and a GPU |
-| T3 | PP-OCRv5 vs PP-OCRv4 in use | OPEN — not measured in this pass; package, files and hash recorded |
+| T3 | PP-OCRv5 vs PP-OCRv4 in use | 3 · REJECTED BY EXPERIMENT — ORNEK numbers 145 → 120 right (0 wrong both), Golden identical; v4 kept (`benchmarks/ocr/README.md`) |
 | T4 | ONNX WebGPU / worker | 3 · REJECTED — no measured bottleneck it removes; WebGPU absent here and on many laptops |
 | T5 | PDF.js vector geometry | 1 · DONE (U8) |
 | T6 | CVAT / FiftyOne | 2 · BLOCKED — for labelling N1 |

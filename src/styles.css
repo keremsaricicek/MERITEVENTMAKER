@@ -2280,6 +2280,8 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .read-cert.cert-stated,.cert-stated .read-cert{color:var(--pi-ink);background:var(--pi-surface-2)}
 .read-cert.cert-seen,.cert-seen .read-cert{color:var(--pi-accent-strong);background:var(--pi-accent-soft);border-color:transparent}
 .read-cert.cert-inferred,.cert-inferred .read-cert{color:var(--pi-muted);background:transparent;border-style:dashed}
+.read-cert.cert-confirmed,.cert-confirmed .read-cert{color:#fff;background:var(--pi-accent-strong);border-color:transparent}
+.read-cert.cert-remembered,.cert-remembered .read-cert{color:var(--pi-accent-strong);background:var(--pi-surface);border-color:var(--pi-accent-strong)}
 .read-cert.cert-unsure,.cert-unsure .read-cert{color:#7a5a20;background:rgba(181,136,63,.14);border-color:transparent}
 .read-regions{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 10px;padding-top:8px;border-top:1px solid var(--pi-line-soft)}
 .read-section{margin-top:8px}

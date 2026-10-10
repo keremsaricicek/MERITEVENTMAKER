@@ -140,7 +140,17 @@
     const capa = pi.capacityAudit || {};
     const sections = [];
     let n = 0;
-    const S = (key, params, refs, certainty, boxes) => ({ id: "rs-" + (++n), key, params: params || {}, refs: (refs || []).filter(Boolean), boxes: boxes || [], certainty });
+    // What a person decided outranks how the drawing was read: a line about
+    // objects that a person confirmed says so (and says "remembered" when that
+    // decision came back from the plan memory on a new analysis). Worked-out
+    // lines stay worked out — confirming three tables does not confirm that
+    // they are one table.
+    const personal = (refs) => refs.length > 0 && refs.every((id) => { const c = byId.get(id); return c && c.status === "confirmed"; });
+    const S = (key, params, refs, certainty, boxes) => {
+      const r = (refs || []).filter(Boolean);
+      const by = certainty !== "inferred" && personal(r) ? (r.every((id) => byId.get(id).fromMemory) ? "remembered" : "confirmed") : certainty;
+      return { id: "rs-" + (++n), key, params: params || {}, refs: r, boxes: boxes || [], certainty: by };
+    };
     const section = (id, sentences) => { const s = sentences.filter(Boolean); if (s.length) sections.push({ id, sentences: s }); };
     const P = (c) => px(c, W, H);
     const tableSide = median(tables.map((c) => Math.min(c.w / 100 * W, c.h / 100 * H))) || 1;

@@ -292,6 +292,33 @@ model quality — no real model has run until a person with a funded key says
 so. Full detail: `server/README.md`, `src/screen-vlm.js`,
 `src/plan-vlm-review.js`.
 
+## The plan reading
+
+`src/plan-reading.js` (`MeritPlanReading`) reads an analysis back the way a
+person reads the sheet. It covers:
+- the event the sheet prints, and what is on the plan;
+- printed capacity against counted, and where the gap is;
+- the stage and what faces it;
+- pushed-together tables with their seats;
+- columns that may hide a table from the stage;
+- places the sheet only writes, and every word with what it was used for.
+
+It **discovers no object**. Every sentence carries the objects and printed words
+it stands on, and says how it is known: You confirmed / Remembered / On the plan
+/ Seen / Worked out / Check. A person's decision outranks the drawing.
+
+Two refusals are load-bearing:
+- An unnamed block ringed by tables is a **possible** stage, never a stage, until
+  a person says so.
+- A column "**may**" block the view, because the drawing has no heights.
+
+Positions are plan-relative thirds. There is no north and no metres.
+
+`src/screen-reading.js` shows it on the review screen. A line marks and zooms to
+its evidence. **Digital** redraws the plan from what was understood. It writes
+nothing. Full detail: `benchmarks/plan-reading/README.md`, suites `plan-reading`
+and `plan-reading-ornek`.
+
 ## Plan Intelligence honesty
 
 Assisted Detection today is classical computer vision, not a trained
