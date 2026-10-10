@@ -103,11 +103,11 @@ export default async function run({ checks, repoRoot }) {
     {
       const d = dir();
       fs.mkdirSync(d, { recursive: true });
-      fs.writeFileSync(path.join(d, "usage.json"), '{"version":2,"days":{"2026-10-10":{"usd":4.9');
+      fs.writeFileSync(path.join(d, "usage.json"), '{"version":2,"days":{"2020-01-01":{"usd":4.9');
       const s = new core.UsageStore(d, { lock: false });
       const refused = (() => { try { s.reserve(0.1); return null; } catch (e) { return e.code; } })();
       const still = fs.readFileSync(path.join(d, "usage.json"), "utf8");
-      checks.ok(s.state === "CORRUPT" && refused === "LEDGER_CORRUPT" && still.startsWith('{"version":2,"days":{"2026-10-10":{"usd":4.9'),
+      checks.ok(s.state === "CORRUPT" && refused === "LEDGER_CORRUPT" && still.startsWith('{"version":2,"days":{"2020-01-01":{"usd":4.9'),
         "a ledger that cannot be read is not reopened as zero spend: paid work stops and the file is left as it was", { state: s.state, refused });
       const f = await startFakeAnthropic();
       const config = core.configFromEnv({ ANTHROPIC_API_KEY: KEY, VLM_UPSTREAM_BASE_URL: f.baseURL, VLM_DATA_DIR: d, PORT: "0" }, { repoRoot });

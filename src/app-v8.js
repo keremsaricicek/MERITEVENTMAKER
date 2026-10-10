@@ -3589,7 +3589,7 @@
     const priorAnalysis=event.analysis;
     render();await yieldFrame();
     try{
-      const FRAMES=globalThis.MeritPlanFrames,blob=await sourceBlob(event.background.src),bitmap=await createImageBitmap(blob),analysisFrame=FRAMES.analysisFrame(bitmap.width,bitmap.height,1920),ratio=analysisFrame.ratio,width=analysisFrame.width,height=analysisFrame.height,canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,height);bitmap.close();
+      const FRAMES=globalThis.MeritPlanFrames,blob=await sourceBlob(event.background.src),bitmap=await createImageBitmap(blob),analysisFrame=FRAMES.analysisFrame(bitmap.width,bitmap.height,ANALYSIS_MAX_SIDE()),ratio=analysisFrame.ratio,width=analysisFrame.width,height=analysisFrame.height,canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,height);bitmap.close();
       // Tesseract reads the whole analysis canvas in its own worker, so it is
       // started HERE and runs while the OCR model and the detector hold the main
       // thread; its answer is awaited where it was always read. Same input: the
@@ -4255,6 +4255,11 @@
       render();
       toast(t(chairsKept?"toast.detectionsConfirmed":derived?"toast.detectionsConfirmedRule":"toast.detectionsConfirmedPlain",{tables,venues,perUnit:ruleUse.perUnit,tableWord:t(tables===1?"word.table":"word.tables"),venueWord:t(venues===1?"word.venueObject":"word.venueObjects")}),"success",6000);
   }
+  // The long edge the analysis canvas is capped at. 1920 is the product's
+  // value; MERIT_ANALYSIS_MAX_SIDE exists only so benchmarks/resolution can
+  // measure what the cap costs on small objects (set by an init script, like
+  // MERIT_DISABLE_FRAGMENT_FILTER), and is never set by the app.
+  const ANALYSIS_MAX_SIDE=()=>{const v=Number(globalThis.MERIT_ANALYSIS_MAX_SIDE);return Number.isFinite(v)&&v>=640&&v<=8192?Math.round(v):1920;};
   function bindReviewDrawing(){
     const scene=document.getElementById("analysisScene");
     if(!scene||!ui.reviewDrawMode)return;
