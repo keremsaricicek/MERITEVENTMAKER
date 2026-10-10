@@ -506,6 +506,13 @@
     if(d.candidateCapReached)rows.push(t("diag.capReached"));
     rows.push(`Diff +${a.comparison.added} / −${a.comparison.removed}`);
     if(d.textSuppressed)rows.push(t("diag.textSuppressed",{n:d.textSuppressed}));
+    // What the PDF the plan came from carries (src/plan-pdf-text.js): a scan
+    // says every word was read off pixels; text objects say how many were used
+    // as exact text; vector paths are named as present and NOT read.
+    const ps=d.pdfSource;
+    if(ps&&ps.kind==="SCAN")rows.push(t("diag.pdfSource.scan"));
+    if(ps&&ps.textItems)rows.push(t("diag.pdfSource.text",{n:ps.textItems}));
+    if(ps&&ps.paths)rows.push(t("diag.pdfSource.vector",{n:ps.paths}));
     return`<div class="analysis-note">${rows.join("<br>")}</div>`;
   }
   function analysisHTML(event){

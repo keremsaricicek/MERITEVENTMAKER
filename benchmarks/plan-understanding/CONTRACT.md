@@ -124,6 +124,30 @@ canvas actually draws (`score.mjs`, `scoreDigital`), reading the world box
 size from the element; the baseline above was re-measured at `65808d5` with
 it. Source review would not have caught this; the picture did.
 
+## What a PDF carries (work item D) — and what no real plan here can measure
+
+`src/plan-pdf-text.js` records, at import, what a PDF page carries besides
+its pixels: its text objects in the raster's own pixels, and a count of what
+it is drawn with. The text objects join the OCR model's lines wherever those
+are used for what is PRINTED — printed-matter suppression for the detector and
+for text, the plan's text the capacity layer reads, and the words that name a
+stage, bar or entrance. A label the document states carries no confidence
+figure and is observed on the `pdf-text` channel, never as `ocr`. Two things
+are deliberately NOT done: a text object is not used as a table's printed
+NUMBER (which symbol a number belongs to is a judgement with its own vote and
+provenance), and vector paths are counted and named as unread, never turned
+into tables or chairs.
+
+No contract row moves, and none can: both real plans are rasters. `ORNEK.pdf`
+is recorded `SCAN` — one image, zero text objects, zero paths — exactly as
+`benchmarks/plans/ORNEK-SOURCE.md` measured it by hand. The behaviour is pinned
+by `pdf-text-layer` on a SYNTHETIC vector PDF written byte by byte in the suite
+(not a venue, never counted as one): a stage whose name is INVISIBLE text —
+no pixel shows it, the OCR model does not read it — is still named, and
+measured to the outline it sits in on the raster. A vector reader that turns
+paths into furniture needs a real CAD-exported plan to be measured against;
+there is none, and one is not invented.
+
 ## Carried targets (their own runners, not lowered)
 
 | target | where | baseline |

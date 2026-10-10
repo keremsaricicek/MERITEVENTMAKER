@@ -180,7 +180,17 @@
         });
       }
       for (const ch of c.chairDetections || []) ch.observedBy = made.id;
-      if (c.labelRead && ocrEngine) {
+      // A label the PDF itself states (its text layer) is the pdf-text channel,
+      // not a reading: no crop, no confidence.
+      if (c.labelRead && c.labelRead.engine === "pdfTextLayer") {
+        add(c, {
+          source: { kind: "pdf-text", provider: "pdfTextLayer" },
+          claim: { type: c.type, label: c.labelRead.term },
+          geometry,
+          confidence: null,
+          evidence: { text: "the PDF's own text object at this place" },
+        });
+      } else if (c.labelRead && ocrEngine) {
         add(c, {
           source: { kind: "ocr", provider: ocrEngine },
           claim: { type: c.type, label: c.labelRead.term },

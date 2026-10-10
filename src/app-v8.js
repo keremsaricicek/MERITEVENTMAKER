@@ -1035,8 +1035,8 @@
       </div>
     </section>`;
   }
-  let newEventDraft={name:"",date:"",hotel:"",salon:"",status:"Planning",coverImage:"",planSrc:"",planName:"",pdfDoc:null,pdfPages:[],pdfPage:0};
-  function startNewEvent(){newEventDraft={name:"",date:new Date(Date.now()+7*86400000).toLocaleDateString("en-CA"),hotel:"",salon:"",status:"Planning",coverImage:"",planSrc:"",planName:"",pdfDoc:null,pdfPages:[],pdfPage:0};ui.screen="new-event";render();}
+  let newEventDraft={name:"",date:"",hotel:"",salon:"",status:"Planning",coverImage:"",planSrc:"",planName:"",pdfDoc:null,pdfPages:[],pdfPage:0,pdfSource:null};
+  function startNewEvent(){newEventDraft={name:"",date:new Date(Date.now()+7*86400000).toLocaleDateString("en-CA"),hotel:"",salon:"",status:"Planning",coverImage:"",planSrc:"",planName:"",pdfDoc:null,pdfPages:[],pdfPage:0,pdfSource:null};ui.screen="new-event";render();}
   function syncSetupFields(){const f=document.getElementById("v8EventForm");if(!f)return;const data=new FormData(f);for(const k of ["name","date","hotel","salon","status"])newEventDraft[k]=String(data.get(k)||"");}
   function readDataURL(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.readAsDataURL(file);});}
   // An image is accepted only once the browser has actually DECODED it. The
@@ -1047,9 +1047,25 @@
   function decodableImage(src){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>img.naturalWidth>0?resolve(src):reject(userError(t("plan.notAnImage")));img.onerror=()=>reject(userError(t("plan.notAnImage")));img.src=src;});}
   async function readImageFile(file){return decodableImage(await readDataURL(file));}
   function waitForPdf(){if(globalThis.MeritPdf)return Promise.resolve(globalThis.MeritPdf);return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error("Offline PDF renderer did not initialize.")),15000);addEventListener("merit-pdf-ready",()=>{clearTimeout(timer);resolve(globalThis.MeritPdf);},{once:true});});}
+  // What the PDF page carries besides its pixels (src/plan-pdf-text.js): its
+  // text objects in the raster's own pixels, and what it is drawn with. Kept
+  // on the plan beside the image, so the analysis can use the document's own
+  // words where it would otherwise read them off pixels. A page whose text
+  // cannot be read is still a plan: the image is kept and this says why.
+  async function pdfSourceOf(page,viewport,canvas){
+    const P=globalThis.MeritPdfText;if(!P)return null;
+    let text;
+    try{text=P.itemsFromTextContent(await page.getTextContent(),viewport.transform);}
+    catch{return{page:page.pageNumber,kind:"UNREAD",reasonCode:"TEXT_LAYER_FAILED"};}
+    let vector={paths:null,images:null,text:null};
+    try{vector=P.vectorSummary(await page.getOperatorList(),globalThis.pdfjsLib?.OPS);}catch{vector.reasonCode="OPERATORS_FAILED";}
+    return{page:page.pageNumber,scale:viewport.scale,width:canvas.width,height:canvas.height,kind:P.sourceKind(vector,text.items.length),
+      text:{items:text.items,dropped:text.dropped,truncated:text.truncated},vector};
+  }
   async function selectPdfPage(index){
     const doc=newEventDraft.pdfDoc;if(!doc)return;ui.setupBusy=true;render();
     const page=await doc.getPage(index+1),viewport=page.getViewport({scale:2.6}),canvas=document.createElement("canvas");canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);await page.render({canvasContext:canvas.getContext("2d"),viewport}).promise;
+    newEventDraft.pdfSource=await pdfSourceOf(page,viewport,canvas);
     newEventDraft.pdfPage=index;newEventDraft.planSrc=canvas.toDataURL("image/png",.96);newEventDraft.planName=`${newEventDraft.pdfName} · page ${index+1}`;ui.setupBusy=false;render();requestAnimationFrame(renderPdfThumbs);
   }
   async function handlePlanFile(file){
@@ -1074,7 +1090,7 @@
     }
     if(!(file.type==="image/png"||file.type==="image/jpeg"||/\.(png|jpe?g)$/.test(lower)))return toast(t("toast.chooseImageType"),"error");
     let planSrc;try{planSrc=await readImageFile(file);}catch{return toast(t("plan.unreadableImage"),"error",6500);}
-    newEventDraft.planSrc=planSrc;newEventDraft.planName=file.name;newEventDraft.pdfDoc=null;newEventDraft.pdfPages=[];render();
+    newEventDraft.planSrc=planSrc;newEventDraft.planName=file.name;newEventDraft.pdfDoc=null;newEventDraft.pdfPages=[];newEventDraft.pdfSource=null;render();
   }
   async function renderPdfThumbs(){
     const doc=newEventDraft.pdfDoc;if(!doc)return;
@@ -1093,7 +1109,7 @@
   }
   function createBlankEventFromSetup(usePlan){
     syncSetupFields();const d=newEventDraft;if(!d.name.trim()||!d.date||!d.hotel.trim()){toast(t("toast.eventFieldsRequired"),"error");return;}
-    const event=migrateEvent({id:uid("event"),name:d.name.trim(),date:d.date,hotel:d.hotel.trim(),salon:d.salon.trim(),status:d.status,coverImage:d.coverImage,tables:[],venueObjects:[],guests:[],background:{src:usePlan?d.planSrc:"",name:usePlan?d.planName:"",opacity:.34,visible:!!(usePlan&&d.planSrc),locked:true,isDefault:false,scale:100},createdAt:nowISO(),lastModified:nowISO()});
+    const event=migrateEvent({id:uid("event"),name:d.name.trim(),date:d.date,hotel:d.hotel.trim(),salon:d.salon.trim(),status:d.status,coverImage:d.coverImage,tables:[],venueObjects:[],guests:[],background:{src:usePlan?d.planSrc:"",name:usePlan?d.planName:"",opacity:.34,visible:!!(usePlan&&d.planSrc),locked:true,isDefault:false,scale:100,...(usePlan&&d.planSrc&&d.pdfSource?{pdfSource:d.pdfSource}:{})},createdAt:nowISO(),lastModified:nowISO()});
     state.events.unshift(event);if(globalThis.MeritVenueModel)MeritVenueModel.migrateVenues(state);audit(event,"EVENT_CREATED",{blank:!event.background.src,hotel:event.hotel,salon:event.salon});saveState();ui.activeEventId=event.id;ui.screen="workspace";ui.tab="floor";ui.leftCollapsed=true;render();toast(t(event.background.src?"toast.eventCreatedWithPlan":"toast.blankEventCreated"),"success",5000);
   }
   function bindSetup(){
@@ -1104,7 +1120,7 @@
     document.querySelectorAll("[data-pdf-page]").forEach(b=>b.onclick=e=>{e.stopPropagation();syncSetupFields();selectPdfPage(Number(b.dataset.pdfPage));});
     document.querySelector("[data-setup='remove-cover']")?.addEventListener("click",e=>{e.preventDefault();syncSetupFields();newEventDraft.coverImage="";render();});
     document.querySelector("[data-setup='replace-plan']")?.addEventListener("click",e=>{e.preventDefault();input.click();});
-    document.querySelector("[data-setup='remove-plan']")?.addEventListener("click",e=>{e.preventDefault();syncSetupFields();Object.assign(newEventDraft,{planSrc:"",planName:"",pdfDoc:null,pdfPages:[],pdfPage:0});render();});
+    document.querySelector("[data-setup='remove-plan']")?.addEventListener("click",e=>{e.preventDefault();syncSetupFields();Object.assign(newEventDraft,{planSrc:"",planName:"",pdfDoc:null,pdfPages:[],pdfPage:0,pdfSource:null});render();});
     document.querySelector("[data-setup='blank']").onclick=e=>{e.preventDefault();createBlankEventFromSetup(false);};document.querySelector("[data-setup='create']").onclick=e=>{e.preventDefault();createBlankEventFromSetup(true);};
     requestAnimationFrame(renderPdfThumbs);
   }
@@ -3100,7 +3116,7 @@
   //
   // A place a person already ruled on (a candidate from plan memory, or one an
   // operator drew) is left alone: an element is never offered over a decision.
-  function placeNamedVenueElements(event,raster,ocrResult){
+  function placeNamedVenueElements(event,raster,ocrResult,pdfItems=[]){
     const analysis=event?.analysis,VE=globalThis.MeritVenueElements;
     if(!analysis||!VE||!raster)return;
     const W=raster.width,H=raster.height,items=[];
@@ -3111,6 +3127,8 @@
         box:{x0:it.box.x0*sx,y0:it.box.y0*sy,x1:it.box.x1*sx,y1:it.box.y1*sy}});
     }
     const anchors=VE.anchorsFrom(items,0.9);
+    // The PDF's own words are exact text in these same pixels (score 1).
+    anchors.push(...VE.anchorsFrom(pdfItems,1));
     if(ocrResult?.available)for(const w of ocrResult.words||[]){
       if(!w.bbox||!(w.confidence>=90))continue;
       for(const a of VE.anchorsFrom([{text:w.text,score:1,box:w.bbox}],1))anchors.push({...a,score:w.confidence/100,engine:"tesseract.js"});
@@ -3121,11 +3139,12 @@
     const placed=[];
     for(const p of plans){
       if(!p.keepId&&decided.some(c=>overlaps(c,p.box)))continue;
-      const read={term:p.anchor.term,confidence:Math.round(p.anchor.score*100),source:"OCR of the whole plan",engine:p.anchor.engine||null};
+      const fromPdf=p.anchor.engine==="pdfTextLayer";
+      const read={term:p.anchor.term,confidence:fromPdf?null:Math.round(p.anchor.score*100),source:fromPdf?"the PDF's own text":"OCR of the whole plan",engine:p.anchor.engine||null};
       const geometry={x:p.box.x,y:p.box.y,w:p.box.w,h:p.box.h,rotation:0};
       let obj=p.keepId?analysis.candidates.find(c=>c.id===p.keepId):null;
       if(obj)Object.assign(obj,geometry);
-      else{obj={id:uid("candidate"),kind:"venue",...geometry,confidence:p.anchor.score,status:"unreviewed",chairDetections:[]};analysis.candidates.push(obj);}
+      else{obj={id:uid("candidate"),kind:"venue",...geometry,confidence:fromPdf?null:p.anchor.score,status:"unreviewed",chairDetections:[]};analysis.candidates.push(obj);}
       obj.type=p.type;obj.typeBasis="printedLabel";obj.geometryBasis=p.geometryBasis;obj.selected=true;
       obj.labelRead=obj.labelRead||read;obj.labelReadWhole=read;
       obj.evidence={...(obj.evidence||{}),source:obj.evidence?.source||"venue-label",
@@ -3627,17 +3646,27 @@
       // analysis canvas, so each line's corners go through both frames.
       ui.analysisStage=t("analysis.stage.labels");render();await yieldFrame();
       const ocrModelRead=await readPlanTextWithModel(event);
+      // A plan imported from a PDF that carries TEXT OBJECTS (src/plan-pdf-text.js)
+      // hands them on as exact text in the analysis pixels: the document states
+      // its words, nothing reads them. They join the model's lines wherever
+      // those are used for what is printed (never as a table's number — that
+      // vote has its own provenance). A scan wrapped in a PDF has none.
+      const pdfItems=globalThis.MeritPdfText?MeritPdfText.scaledItems(event.background?.pdfSource,width,height):[];
       const textRegions=[];
+      const textRegion=(box,sx,sy)=>{
+        const corners=[[box.x0,box.y0],[box.x1,box.y0],[box.x0,box.y1],[box.x1,box.y1]]
+          .map(([x,y])=>deskew.applied?deskew.analysisToDeskew.apply(x*sx,y*sy):[x*sx,y*sy]);
+        textRegions.push({x0:Math.min(...corners.map(c=>c[0])),y0:Math.min(...corners.map(c=>c[1])),
+          x1:Math.max(...corners.map(c=>c[0])),y1:Math.max(...corners.map(c=>c[1]))});
+      };
       if(ocrModelRead.available&&ocrModelRead.imageSize){
         const sx=width/ocrModelRead.imageSize.width,sy=height/ocrModelRead.imageSize.height;
         for(const it of ocrModelRead.items||[]){
           if(!(it.score>=.9)||!String(it.text||"").trim())continue;
-          const corners=[[it.box.x0,it.box.y0],[it.box.x1,it.box.y0],[it.box.x0,it.box.y1],[it.box.x1,it.box.y1]]
-            .map(([x,y])=>deskew.applied?deskew.analysisToDeskew.apply(x*sx,y*sy):[x*sx,y*sy]);
-          textRegions.push({x0:Math.min(...corners.map(c=>c[0])),y0:Math.min(...corners.map(c=>c[1])),
-            x1:Math.max(...corners.map(c=>c[0])),y1:Math.max(...corners.map(c=>c[1]))});
+          textRegion(it.box,sx,sy);
         }
       }
+      for(const it of pdfItems)textRegion(it.box,1,1);
       const detectionStartedAt=performance.now();
       // Regions the operator has already ruled on. An automatic filter is
       // allowed to disagree with the detector; it is never allowed to overrule
@@ -3768,6 +3797,10 @@
         for(const it of ocrModelRead.items||[])if(it.score>=.9&&String(it.text||"").trim())
           suppressionWords.push({text:it.text,bbox:{x0:it.box.x0*sx,y0:it.box.y0*sy,x1:it.box.x1*sx,y1:it.box.y1*sy}});
       }
+      for(const it of pdfItems)suppressionWords.push({text:it.text,bbox:{...it.box}});
+      const pdfSource=event.background?.pdfSource;
+      if(pdfSource)event.analysis.diagnostics.pdfSource={kind:pdfSource.kind||null,textItems:pdfItems.length,
+        paths:pdfSource.vector?.paths??null,images:pdfSource.vector?.images??null,truncated:!!pdfSource.text?.truncated};
       if(suppressionWords.length){
         const suppression=suppressTextFalsePositives(event.analysis.candidates,suppressionWords,width,height);
         event.analysis.candidates=suppression.kept;
@@ -3785,9 +3818,10 @@
         const modelText=event.analysis.ocrModel.items.map(i=>i.text).join("\n").normalize("NFKC");
         event.analysis.ocrText=[event.analysis.ocrText,modelText].filter(Boolean).join("\n");
       }
+      if(pdfItems.length)event.analysis.ocrText=[event.analysis.ocrText,pdfItems.map(i=>i.text).join("\n").normalize("NFKC")].filter(Boolean).join("\n");
       await identifyLabelledVenueObjects(event,suppressedByText);
       const planRaster=ctx.getImageData(0,0,width,height);
-      placeNamedVenueElements(event,planRaster,ocrResult);
+      placeNamedVenueElements(event,planRaster,ocrResult,pdfItems);
       readChairFacing(event,planRaster);
       await readPrintedTableNumbers(event);
       // The drawing's own fingerprint, so a lesson taught on it can be found
@@ -4844,7 +4878,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     const file=e.target.files[0],event=activeEvent();
     if(!file||!event||!canMutate(event,"replace the floor plan"))return;
     try{
-      let src,name=file.name;
+      let src,name=file.name,pdfSource=null;
       if(file.type==="application/pdf"||file.name.toLowerCase().endsWith(".pdf")){
         const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise,pageNumber=doc.numPages>1?await ask({title:t("ask.pdfPageTitle"),body:t("ask.pdfPageBody",{n:doc.numPages}),confirmLabel:t("ask.usePage"),number:{label:t("ask.pdfPageLabel"),min:1,max:doc.numPages,value:1}}):1;
         if(pageNumber===null)return;
@@ -4852,11 +4886,12 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
         canvas.width=Math.ceil(v.width);
         canvas.height=Math.ceil(v.height);
         await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;
+        pdfSource=await pdfSourceOf(page,v,canvas);
         src=canvas.toDataURL("image/png",.96);
         name=`${file.name} · page ${pageNumber}`;
       }else src=await readImageFile(file);
       recordUndo(event);
-      event.background={src,name,opacity:.34,visible:true,locked:true,isDefault:false,scale:100,importedAtMs:Date.now()};
+      event.background={src,name,opacity:.34,visible:true,locked:true,isDefault:false,scale:100,importedAtMs:Date.now(),...(pdfSource?{pdfSource}:{})};
       touchEvent(event);
       render();
       toast(t("toast.planImported"),"success");
