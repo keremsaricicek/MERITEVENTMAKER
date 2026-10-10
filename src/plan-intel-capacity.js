@@ -168,8 +168,9 @@
   // evidence and sorts on that score.
   function rankSuspectRegions(candidates, difference) {
     const scored = candidates
-      .filter(c => c.status !== "rejected" && c.status !== "confirmed")
-      .map(c => {
+      .map((c, order) => ({ c, order }))
+      .filter(({ c }) => c.status !== "rejected" && c.status !== "confirmed")
+      .map(({ c, order }) => {
         const reasons = [];
         let score = 0;
         // An object whose seat count is explicitly unknown is the strongest
@@ -190,14 +191,17 @@
         // have invented them.
         if (difference > 0 && c.kind === "table" && (c.chairDetections?.length || 0) < 2) { score += 1; reasons.push("fewer seats than a table usually has"); }
         if (difference < 0 && (c.chairDetections?.length || 0) > 8) { score += 1; reasons.push("unusually many seats for one table"); }
-        return { id: c.id, score: +score.toFixed(2), reasons, at: [+(c.y || 0).toFixed(3), +(c.x || 0).toFixed(3)] };
+        return { id: c.id, score: +score.toFixed(2), reasons, at: [+(c.y || 0).toFixed(3), +(c.x || 0).toFixed(3)], order };
       })
       .filter(s => s.score > 0)
       // Ties broken by WHERE the object is (top to bottom, left to right), never
       // by its id: ids are random per analysis, so the same plan analysed twice
-      // put a different eight objects in front of the operator.
-      .sort((a, b) => b.score - a.score || a.at[0] - b.at[0] || a.at[1] - b.at[1] || String(a.id).localeCompare(String(b.id)))
-      .map(({ at, ...rest }) => rest);
+      // put a different eight objects in front of the operator. Two objects at
+      // exactly the same place (a6 has four such pairs) fall to the order the
+      // analysis holds them in — the last tie-break used to be the id, so the
+      // same plan still came out in two orders.
+      .sort((a, b) => b.score - a.score || a.at[0] - b.at[0] || a.at[1] - b.at[1] || a.order - b.order)
+      .map(({ at, order, ...rest }) => rest);
     return scored;
   }
 

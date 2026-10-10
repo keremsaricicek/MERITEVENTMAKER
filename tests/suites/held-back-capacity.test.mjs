@@ -39,4 +39,18 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(r.held.tables === 1 && r.held.seats === 6, "held back is reported on its own: one table, 5 + 1 seats", r.held);
   checks.ok(r.audit.heldBack && r.audit.heldBack.seats === 6 && r.audit.seats === 11, "the capacity audit carries both, apart", r.audit);
   checks.equal(r.afterSwitch, 16, "switching the held-back table on brings its chairs in");
+
+  // The capacity suspects an operator is shown first come out in one order for
+  // one plan. Ties go to position, and two objects at exactly the same place
+  // go to the order the analysis holds them in — never to their ids, which are
+  // random per analysis (a6 has four such pairs; its fingerprint changed run to
+  // run until 2026-10-10).
+  const order = await page.evaluate(() => {
+    const C = globalThis.MeritPlanIntelCapacity;
+    const at = (id, x, y) => ({ id, kind: "table", type: "square", x, y, w: 1, h: 1, status: "unreviewed", selected: true, confidence: 0.4, chairDetections: [] });
+    const run = (ids) => C.buildCapacityAudit(null, 0, [at(ids[0], 10, 10), at(ids[1], 10, 10), at(ids[2], 5, 5)], []).suspectRegions.map(s => s.id);
+    return { a: run(["zz-first", "aa-second", "mm-top"]), b: run(["aa-first", "zz-second", "mm-top"]) };
+  });
+  checks.ok(JSON.stringify(order.a) === JSON.stringify(["mm-top", "zz-first", "aa-second"]) && JSON.stringify(order.b) === JSON.stringify(["mm-top", "aa-first", "zz-second"]),
+    "suspects tied on score sort by place, and two at the same place keep the analysis's order whatever their ids", order);
 }
