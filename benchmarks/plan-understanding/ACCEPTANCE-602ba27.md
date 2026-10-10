@@ -52,7 +52,7 @@ shortfall is not called accepted.
 | U6 | capacity: printed vs seen vs banquette vs confirmed, and which objects cause the gap | 1 · DONE | the capacity audit ranks suspect regions for a gap; held-back seats are reported apart, rejected objects excluded (`symbolic-plan-capacity`, `held-back-capacity`, `capacity-provenance`); person-confirmed counts are kept as `HUMAN_CONFIRMED` (D2/D3) |
 | U7 | number duplicates and OCR–model disagreement go to review; a model number is never a fact | 1 · DONE | duplicates: `plan-number-integrity` (a person's duplicate is BLOCKING, a reading's is NEEDS REVIEW). Model vs OCR: `numberCheck` gives AGREES / DISAGREES / DUPLICATE / NO_READING on the finding's row, and the number is never applied (`vlm-decisions`, `vlm-reading`). Scene query "tables sharing a number" opens them as a queue (`scene-queries`) |
 | U8 | PDF vector geometry (transforms, clipping, text, paths); raster / vector / mixed | 1 · DONE (extraction) · 2 · BLOCKED (use as detection) | `vectorShapes` follows save/restore/cm and the clip. A rotated rect keeps 104×52 px at 30°, a Bézier circle is placed with the y flip, the clip cuts and hides and ends at restore, and an inline image makes the page MIXED (`pdf-text-layer`, SYNTHETIC PDF, clip-restore mutation turns it red). Turning shapes into objects needs a real CAD PDF (N1) |
-| U9 | memory under rotation, scale, perspective, colour, quality; twins abstain | OPEN — target not met | measured on 7 transforms of one venue: identity precision **1.0**, wrong application **0** (targets met). Retention **0.7363** against the **0.98** target, **not met** (`benchmarks/memory/README.md`). Twins abstain (`plan-memory`). Next: homography over matched tables before a learned matcher (TOOLS.md T7) |
+| U9 | memory under rotation, scale, perspective, colour, quality; twins abstain | OPEN — target not met, improved | 7 transforms of one venue. Identity precision **0.9927**, wrong application **0.0073** (targets met). Retention **0.8012 → 0.8447** after the global transform became affine: rotate-2 went from 14/23 to 21/23 with 0 wrong (`benchmarks/memory/README.md`, baseline re-recorded with its reason). Target 0.98 **not met**: jpeg-q20 (11/23) and blur (19/23) lose objects in re-detection, not in alignment. Twins abstain (`plan-memory`) |
 
 ## 5 · Tools
 
@@ -66,7 +66,7 @@ Decisions, licences and evidence: `TOOLS.md`.
 | T4 | ONNX WebGPU / worker | 3 · REJECTED — no measured bottleneck it removes; WebGPU absent here and on many laptops |
 | T5 | PDF.js vector geometry | 1 · DONE (U8) |
 | T6 | CVAT / FiftyOne | 2 · BLOCKED — for labelling N1 |
-| T7 | LightGlue or simpler for alignment | OPEN — homography over matched tables first (U9) |
+| T7 | LightGlue or simpler for alignment | 1 · DONE (simpler method) — an affine fit over matched objects recovered the rotated scan (14 → 21 of 23, 0 wrong); LightGlue not needed for the losses that remain, which are detection losses |
 | T8 | Qwen3-VL local | 3 · REJECTED for the browser product — 1.9 GB weights, minutes per plan on CPU |
 | T9 | GroundingDINO / SAM | 2 · BLOCKED — needs labelled outlines (N1) |
 

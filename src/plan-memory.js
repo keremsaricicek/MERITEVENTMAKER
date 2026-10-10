@@ -310,19 +310,42 @@
   const SHIFT_MAX_SPREAD = 0.6;   // percent — residual spread above which it is not one transform
   const SCALE_LIMITS = [0.6, 1.6];
   const median = xs => { const s = xs.slice().sort((a, b) => a - b); return s.length ? s[s.length >> 1] : 0; };
-  function estimateShift(matches) {
-    // Seeded from every confident match, not only the ones already inside the
-    // old tolerance. Restricting it to those was tried and measured: it left
-    // the re-cropped plan exactly where it was (19 retained, 8 wrong) and cost
-    // the learned embedding its only measurable contribution, because the
-    // anchors it kept were the ones that needed no correcting.
-    const clear = matches.filter(m => m.grade === "strong" && m.dx !== undefined);
-    if (clear.length < SHIFT_MIN_MATCHES) return null;
-    const mem = clear.map(m => ({ x: m.memoryCentre.x, y: m.memoryCentre.y }));
-    const cand = clear.map(m => ({ x: m.candidateCentre.x, y: m.candidateCentre.y }));
-    // Scale from the ratio of pairwise separations. Pairs closer than a
-    // percent of the plan are dropped: dividing by a tiny separation turns
-    // sub-pixel noise into a wild ratio.
+  // The transform is AFFINE — rotation, scale (per axis) and offset — fitted by
+  // least squares on the confident matches, trimmed once. A similarity (one
+  // scale, one offset) was enough for a re-crop but could not describe a plan
+  // scanned 2 degrees askew: on rotate-2 its residual was too large, it fitted
+  // nothing, and 9 of 23 decisions were lost (benchmarks/memory, 2026-10-10).
+  // In plan-percent a rotation is not even a pure rotation (the axes have
+  // different lengths), which an affine map describes and a similarity cannot.
+  //
+  // The guards are the same in spirit: enough anchors, ONE transform agreed by
+  // most of them (at least 60% survive the trim — a scatter of unrelated shifts
+  // does not), a small residual, a plausible scale and a small rotation.
+  const SHIFT_MIN_AGREE = 0.6;
+  const SHEAR_MAX = 0.3;
+  function solve3(A, v) {
+    const det = (m) => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+    const D = det(A);
+    if (!(Math.abs(D) > 1e-9)) return null;
+    return [0, 1, 2].map((k) => det(A.map((row, i) => row.map((x, j) => (j === k ? v[i] : x)))) / D);
+  }
+  function fitAffine(mem, cand, idx) {
+    let sxx = 0, sxy = 0, sx = 0, syy = 0, sy = 0;
+    const tx = [0, 0, 0], ty = [0, 0, 0];
+    for (const i of idx) {
+      const { x, y } = mem[i], X = cand[i].x, Y = cand[i].y;
+      sxx += x * x; sxy += x * y; sx += x; syy += y * y; sy += y;
+      tx[0] += x * X; tx[1] += y * X; tx[2] += X; ty[0] += x * Y; ty[1] += y * Y; ty[2] += Y;
+    }
+    const M = [[sxx, sxy, sx], [sxy, syy, sy], [sx, sy, idx.length]];
+    const p = solve3(M, tx), q = solve3(M, ty);
+    return p && q ? [p[0], p[1], p[2], q[0], q[1], q[2]] : null;
+  }
+  const applyAffine = (t, x, y) => ({ x: t[0] * x + t[1] * y + t[2], y: t[3] * x + t[4] * y + t[5] });
+  // The similarity fit (one scale, one offset, by median), kept as the
+  // fallback: it needs no spread of anchors, where an affine fit cannot be
+  // solved from anchors on one line.
+  function estimateSimilarity(mem, cand) {
     const ratios = [];
     for (let i = 0; i < mem.length; i++) for (let j = i + 1; j < mem.length; j++) {
       const dm = Math.hypot(mem[i].x - mem[j].x, mem[i].y - mem[j].y);
@@ -333,25 +356,60 @@
     if (!(s >= SCALE_LIMITS[0] && s <= SCALE_LIMITS[1])) s = 1;
     const dx = median(cand.map((c, i) => c.x - s * mem[i].x));
     const dy = median(cand.map((c, i) => c.y - s * mem[i].y));
-    // Residual after the fit: if one transform really describes the change,
-    // every confident match lands close to where it predicts.
     const spread = Math.max(
       median(cand.map((c, i) => Math.abs(c.x - (s * mem[i].x + dx)))),
       median(cand.map((c, i) => Math.abs(c.y - (s * mem[i].y + dy)))));
     if (spread > SHIFT_MAX_SPREAD) return null;
-    // Nothing worth correcting: the plan did not move.
     const moved = Math.hypot(dx + (s - 1) * 50, dy + (s - 1) * 50);
     if (Math.abs(s - 1) < 0.005 && moved < SHIFT_MIN) return null;
-    return { scale: +s.toFixed(4), dx: +dx.toFixed(3), dy: +dy.toFixed(3),
-      spread: +spread.toFixed(3), from: clear.length };
+    return { scale: +s.toFixed(4), dx: +dx.toFixed(3), dy: +dy.toFixed(3), spread: +spread.toFixed(3), from: mem.length, model: "similarity" };
+  }
+  function estimateShift(matches) {
+    // Seeded from every confident match, not only the ones already inside the
+    // old tolerance. Restricting it to those was tried and measured: it left
+    // the re-cropped plan exactly where it was (19 retained, 8 wrong) and cost
+    // the learned embedding its only measurable contribution, because the
+    // anchors it kept were the ones that needed no correcting.
+    const clear = matches.filter(m => m.grade === "strong" && m.dx !== undefined);
+    if (clear.length < SHIFT_MIN_MATCHES) return null;
+    const mem = clear.map(m => ({ x: m.memoryCentre.x, y: m.memoryCentre.y }));
+    const cand = clear.map(m => ({ x: m.candidateCentre.x, y: m.candidateCentre.y }));
+    return estimateAffine(mem, cand) || estimateSimilarity(mem, cand);
+  }
+  function estimateAffine(mem, cand) {
+    const all = mem.map((_, i) => i);
+    let t = fitAffine(mem, cand, all);
+    if (!t) return null;
+    const resid = (tt, i) => { const r = applyAffine(tt, mem[i].x, mem[i].y); return Math.max(Math.abs(r.x - cand[i].x), Math.abs(r.y - cand[i].y)); };
+    // One trim: the matches that landed on the wrong object do not get a vote.
+    const med = median(all.map((i) => resid(t, i)));
+    const keep = all.filter((i) => resid(t, i) <= Math.max(2.5 * med, 0.15));
+    if (keep.length < SHIFT_MIN_MATCHES || keep.length < SHIFT_MIN_AGREE * all.length) return null;
+    // Anchors on (nearly) one line fix only one direction: not an affine map.
+    const xs = keep.map((i) => mem[i].x), ys = keep.map((i) => mem[i].y);
+    if (Math.max(...xs) - Math.min(...xs) < 5 || Math.max(...ys) - Math.min(...ys) < 5) return null;
+    t = fitAffine(mem, cand, keep);
+    if (!t) return null;
+    const spread = median(keep.map((i) => resid(t, i)));
+    if (spread > SHIFT_MAX_SPREAD) return null;
+    const [a, b, c, d, e, f] = t;
+    const sxAxis = Math.hypot(a, d), syAxis = Math.hypot(b, e);
+    if (!(sxAxis >= SCALE_LIMITS[0] && sxAxis <= SCALE_LIMITS[1] && syAxis >= SCALE_LIMITS[0] && syAxis <= SCALE_LIMITS[1])) return null;
+    if (Math.abs(b) > SHEAR_MAX || Math.abs(d) > SHEAR_MAX) return null;
+    // Nothing worth correcting: the plan did not move.
+    const centre = applyAffine(t, 50, 50), moved = Math.hypot(centre.x - 50, centre.y - 50);
+    if (Math.abs(a - 1) < 0.005 && Math.abs(e - 1) < 0.005 && Math.abs(b) < 0.002 && Math.abs(d) < 0.002 && moved < SHIFT_MIN) return null;
+    const r4 = (v) => +v.toFixed(4);
+    return { scale: r4(Math.sqrt(Math.abs(a * e - b * d))), dx: +c.toFixed(3), dy: +f.toFixed(3),
+      affine: t.map(r4), spread: +spread.toFixed(3), from: keep.length, of: mem.length, model: "affine" };
   }
   // Apply the fitted transform to a remembered box: its centre moves with the
-  // transform and its size scales with it.
+  // transform and each side scales with the axis it lies along.
   function transformGeometry(g, t) {
     const cx = g.x + g.w / 2, cy = g.y + g.h / 2;
-    const nx = t.scale * cx + t.dx, ny = t.scale * cy + t.dy;
-    const nw = g.w * t.scale, nh = g.h * t.scale;
-    return { ...g, x: nx - nw / 2, y: ny - nh / 2, w: nw, h: nh };
+    const p = t.affine ? applyAffine(t.affine, cx, cy) : { x: t.scale * cx + t.dx, y: t.scale * cy + t.dy };
+    const nw = g.w * (t.affine ? Math.hypot(t.affine[0], t.affine[3]) : t.scale), nh = g.h * (t.affine ? Math.hypot(t.affine[1], t.affine[4]) : t.scale);
+    return { ...g, x: p.x - nw / 2, y: p.y - nh / 2, w: nw, h: nh };
   }
 
   function matchOnce(memory, candidates, opts, ctx, corrected) {

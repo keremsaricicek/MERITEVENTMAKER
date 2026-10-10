@@ -25,6 +25,38 @@ object **is**, not on where the detector happened to put a box.
 
 Re-measure with `npm run benchmark:memory`.
 
+### 2026-10-10 — the global transform is affine, and a plan scanned askew is recovered
+
+At the start of this session the detector had moved on and this corpus read
+retention **0.8012**, identity precision 0.9923, wrong-application rate 0.0077.
+The one wrong application is a grayscale case unrelated to this change.
+`rotate-2` kept 14 of 23 decisions, and switching the transform off changed
+nothing there. The similarity fit (one scale, one offset) left too much
+residual on a 2° rotation and fitted nothing. In plan-percent a rotation is not
+even a pure rotation, because the two axes have different lengths.
+
+The fit is now **affine**: rotation, scale per axis and offset. It is least
+squares over the confident matches, trimmed once, and refused unless at least
+60% of them agree, the residual is small, the scale is plausible and the
+rotation is small. The similarity fit remains the fallback for anchors that lie
+on one line. After a correction only STRONG matches still apply, as before.
+
+| scenario | before | after |
+|---|--:|--:|
+| identical | 23/23 | 23/23 |
+| jpeg-q20 | 11/23 | 11/23 |
+| grayscale | 20/23 (1 wrong) | 20/23 (1 wrong) |
+| downscale-70 | 20/23 | 20/23 |
+| **rotate-2** | **14/23** | **21/23, 0 wrong** |
+| crop-pad | 22/23 | 22/23 |
+| blur | 19/23 | 19/23 |
+| **all** | retention 0.8012 | **retention 0.8447**, identity precision 0.9927, the transform recovers 12 and misapplies 0 |
+
+Recorded as the baseline with this reason. §23 retention ≥ 0.98 is still **not
+met**. What remains is in jpeg-q20 and blur, where the re-analysis of the
+degraded image finds different objects. That is a detection-quality loss, not
+an alignment one, and no transform recovers it.
+
 ### 2026-10-04 — the harness was scoring transformed plans against the original
 
 Where a re-applied decision LANDED was located with the ORIGINAL plan's
