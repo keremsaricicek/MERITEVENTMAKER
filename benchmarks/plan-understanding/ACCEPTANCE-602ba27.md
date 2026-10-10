@@ -34,9 +34,9 @@ A row with no evidence is OPEN, whatever the code looks like.
 | E1 | type-blind COVERED blocks a real nested object | 1 · DONE | COVERED only for the same family at the same place (IoU ≥ 0.4, or ≥80% contained with ≥50% area ratio); nested table-in-loca, column-on-table offered (`vlm-decisions`) |
 | E2 | local output validator looser than the API schema | 1 · DONE | top level and every finding must have exactly the schema's keys; else `INVALID_OUTPUT` / dropped with a code (`vlm-relay`) |
 | E3 | dropped findings and clamped boxes invisible | 1 · DONE | dropped reasons (closed codes), clamped boxes, objects/text not sent over the cap: stored on the reading and listed in the panel in TR/EN (`vlm-reading`, `vlm-relay`) |
-| F1 | `xlsx@0.18.5`: advisories, licence, fixed version on CDN and offline | OPEN | |
-| F2 | inventory of CDN / model / WASM assets | OPEN | |
-| F3 | import/export compatibility, hostile and large files after the change | OPEN | |
+| F1 | `xlsx@0.18.5`: advisories, licence, fixed version on CDN and offline | 2 · READY, BLOCKED | advisories verified (CVE-2023-30533 fixed 0.19.3; CVE-2024-22363 fixed 0.20.2; npm stops at 0.18.5, fixed builds only on cdn.sheetjs.com, Apache-2.0). This environment refuses cdn.sheetjs.com and git.sheetjs.com (proxy 403): the tarball cannot be fetched, hashed and pinned here. Recorded OPEN in the inventory with the block |
+| F2 | inventory of CDN / model / WASM assets | 1 · DONE | `benchmarks/dependencies/INVENTORY.json` (10 runtime assets incl. CDN, WASM, OCR data, model weights; advisories with status) + `dependency-inventory` suite (bites on a bumped pin); pdf.js `isEvalSupported:false` added (5.7.284 already past CVE-2024-4367) |
+| F3 | import/export compatibility, hostile and large files after the change | 2 · READY, BLOCKED | on the current 0.18.5: `xlsx-contract`, `malformed-import`, `hostile-input`, `import-scale` (in the full suite); after the upgrade the same suites plus a before/after TABLE PLAN / GUEST LIST / UNASSIGNED diff are the gate |
 
 ## 4 · Plan understanding
 

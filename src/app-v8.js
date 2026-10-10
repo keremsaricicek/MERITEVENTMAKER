@@ -1074,7 +1074,7 @@
       try{
         ui.setupBusy=true;
         render();
-        const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+        const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise;
         newEventDraft.pdfDoc=doc;
         newEventDraft.pdfName=file.name;
         newEventDraft.pdfPages=Array.from({length:doc.numPages},(_,i)=>i);
@@ -4935,7 +4935,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     try{
       let src,name=file.name,pdfSource=null;
       if(file.type==="application/pdf"||file.name.toLowerCase().endsWith(".pdf")){
-        const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise,pageNumber=doc.numPages>1?await ask({title:t("ask.pdfPageTitle"),body:t("ask.pdfPageBody",{n:doc.numPages}),confirmLabel:t("ask.usePage"),number:{label:t("ask.pdfPageLabel"),min:1,max:doc.numPages,value:1}}):1;
+        const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise,pageNumber=doc.numPages>1?await ask({title:t("ask.pdfPageTitle"),body:t("ask.pdfPageBody",{n:doc.numPages}),confirmLabel:t("ask.usePage"),number:{label:t("ask.pdfPageLabel"),min:1,max:doc.numPages,value:1}}):1;
         if(pageNumber===null)return;
         const page=await doc.getPage(pageNumber),v=page.getViewport({scale:2.6}),canvas=document.createElement("canvas");
         canvas.width=Math.ceil(v.width);

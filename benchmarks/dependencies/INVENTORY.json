@@ -1,0 +1,38 @@
+{
+  "checkedOn": "2026-10-10",
+  "note": "Every third-party asset the product loads at run time or ships in a package, including what npm audit cannot see (CDN scripts, WASM, OCR data, model weights). tests/suites/dependency-inventory.test.mjs fails when a pin in the code and its row here disagree, or when a row's advisory has no status.",
+  "assets": [
+    { "name": "xlsx", "version": "0.18.5", "kind": "browser script (CDN + offline packages)", "source": "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js", "license": "Apache-2.0",
+      "pinnedIn": ["index.html", "scripts/build-offline.mjs", "scripts/build-offline-full.mjs"],
+      "advisories": [
+        { "id": "CVE-2023-30533", "what": "prototype pollution when reading a crafted file", "fixedIn": "0.19.3",
+          "status": "OPEN — upgrade blocked: the fixed releases are published only on cdn.sheetjs.com (npm stops at 0.18.5), and this environment's network policy refuses cdn.sheetjs.com and git.sheetjs.com (proxy 403, 2026-10-10)" },
+        { "id": "CVE-2024-22363", "what": "ReDoS when reading a crafted file (CVSS 7.5)", "fixedIn": "0.20.2",
+          "status": "OPEN — same block; target is the current 0.20.x from cdn.sheetjs.com, pinned by SRI hash in index.html and by sha256 in both offline builds" }
+      ],
+      "mitigationsMeanwhile": "imports are size- and row-limited and rejected whole when malformed (malformed-import); a parsed workbook's keys are checked for prototype pollution (hostile-input); a file over the parse size is announced before it blocks (import-scale). These do not replace the upgrade." },
+    { "name": "pdfjs-dist", "version": "5.7.284", "kind": "browser module + worker (CDN + offline packages)", "source": "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.7.284/build/pdf.min.mjs", "license": "Apache-2.0",
+      "pinnedIn": ["src/pdf-bridge.mjs", "scripts/build-offline.mjs", "scripts/build-offline-full.mjs"],
+      "advisories": [ { "id": "CVE-2024-4367", "what": "arbitrary JS via a crafted font when isEvalSupported is on", "fixedIn": "4.2.67", "status": "NOT AFFECTED — 5.7.284 is later; getDocument also passes isEvalSupported:false and the CSP has no eval" } ] },
+    { "name": "tesseract.js", "version": "5.1.1", "kind": "browser script (CDN + folder package)", "source": "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js", "license": "Apache-2.0",
+      "pinnedIn": ["index.html", "scripts/build-offline-full.mjs", "tests/lib/vendor.mjs"],
+      "advisories": [ { "id": "GHSA-83rx-c8cr-6j8q", "what": "third-party proxy by default", "fixedIn": "1.0.19", "status": "NOT AFFECTED — 5.1.1" } ] },
+    { "name": "tesseract.js-core", "version": "5.1.1", "kind": "WASM (CDN + folder package)", "license": "Apache-2.0", "pinnedIn": ["scripts/build-offline-full.mjs", "tests/lib/vendor.mjs"], "advisories": [] },
+    { "name": "@tesseract.js-data/eng", "version": "1.0.0", "kind": "OCR language data", "license": "Apache-2.0", "pinnedIn": ["tests/lib/vendor.mjs"], "advisories": [] },
+    { "name": "@tesseract.js-data/tur", "version": "1.0.0", "kind": "OCR language data", "license": "Apache-2.0", "pinnedIn": ["tests/lib/vendor.mjs"], "advisories": [] },
+    { "name": "onnxruntime-web", "version": "1.30.0", "kind": "WASM runtime (CDN + folder package)", "license": "MIT", "pinnedIn": ["src/plan-ocr-paddle.js", "tests/lib/vendor.mjs"],
+      "advisories": [ { "id": "CVE-2026-14647", "what": "out-of-bounds read in ONNX shape inference on a crafted model", "fixedIn": "upstream ONNX", "status": "NOT REACHABLE — only the two pinned models below are ever loaded, each checked by sha256 before use" } ] },
+    { "name": "paddle-ocr-onnx-models", "version": "0.2.0", "kind": "model weights (PP-OCRv4 det + rec)", "license": "Apache-2.0", "pinnedIn": ["src/plan-ocr-paddle.js", "tests/lib/vendor.mjs"],
+      "integrity": { "det": "sha256 d2a7720d45a54257208b1e13e36a8479894cb74155a5efe29462512d42f49da9", "rec": "sha256 48fc40f24f6d2a207a2b1091d3437eb3cc3eb6b676dc3ef9c37384005483683b" }, "advisories": [] },
+    { "name": "plan-encoder-weights", "version": "in-repo", "kind": "model weights (src/plan-encoder-weights.js, trained in this repository)", "license": "project", "pinnedIn": ["src/plan-encoder-weights.js"], "advisories": [] },
+    { "name": "@anthropic-ai/sdk", "version": "0.133.0", "kind": "npm, server only (server/vlm-relay.mjs); never shipped to the browser", "license": "MIT", "pinnedIn": ["package.json"], "advisories": [] }
+  ],
+  "devOnly": [
+    { "name": "playwright", "version": "1.56.1", "license": "Apache-2.0" },
+    { "name": "axe-core", "version": "4.13.0", "license": "MPL-2.0" },
+    { "name": "acorn", "version": "8.15.0", "license": "MIT" },
+    { "name": "acorn-walk", "version": "8.3.4", "license": "MIT" }
+  ],
+  "npmAudit": { "date": "2026-10-10", "result": "0 vulnerabilities (covers package.json only — not the CDN, WASM and model rows above)" },
+  "sourcesChecked": ["https://advisories.gitlab.com/npm/xlsx/CVE-2024-22363/", "https://nvd.nist.gov/vuln/detail/CVE-2024-22363", "https://github.com/advisories/GHSA-wgrm-67xf-hhpq", "https://www.npmjs.com/advisories/792"]
+}
