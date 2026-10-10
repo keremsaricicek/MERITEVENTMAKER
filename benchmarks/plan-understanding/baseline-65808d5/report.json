@@ -1,0 +1,1528 @@
+{
+ "ranAt": "2026-10-04T20:16:17.968Z",
+ "source": {
+  "digest": "aecb799542bbc454898d5cadf112e1a04fa0b717d888da3c611f7efa1f4f52a2",
+  "files": 84,
+  "inputs": [
+   "index.html",
+   "src",
+   "benchmarks/annotations",
+   "benchmarks/plan-understanding/truth",
+   "benchmarks/plan-understanding/score.mjs",
+   "benchmarks/plan-understanding/contract.mjs",
+   "benchmarks/plan-understanding/measure.mjs",
+   "tests/lib/vendor.mjs"
+  ]
+ },
+ "plans": [
+  {
+   "planId": "merit-real-venue",
+   "classes": {
+    "table": {
+     "gt": 46,
+     "det": 47,
+     "tp": 46,
+     "fp": 1,
+     "fn": 0,
+     "precision": 0.979,
+     "recall": 1,
+     "f1": 0.989,
+     "countError": 0.022
+    },
+    "bistro": {
+     "gt": 5,
+     "det": 5,
+     "tp": 5,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0
+    },
+    "chair": {
+     "gt": 113,
+     "det": 107,
+     "tp": 107,
+     "fp": 0,
+     "fn": 6,
+     "precision": 1,
+     "recall": 0.947,
+     "f1": 0.973,
+     "countError": 0.053
+    },
+    "sofa": {
+     "gt": 3,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 3,
+     "precision": 0,
+     "recall": 0,
+     "f1": 0,
+     "countError": 1,
+     "scoredOnThisPlan": true,
+     "shapeIoU": [],
+     "missed": [
+      "s001",
+      "s002",
+      "s003"
+     ],
+     "spurious": []
+    },
+    "stage": {
+     "gt": 1,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 1,
+     "precision": 0,
+     "recall": 0,
+     "f1": 0,
+     "countError": 1,
+     "scoredOnThisPlan": true,
+     "shapeIoU": [],
+     "missed": [
+      "v01"
+     ],
+     "spurious": []
+    },
+    "column": {
+     "gt": 10,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 10,
+     "precision": 0,
+     "recall": 0,
+     "f1": 0,
+     "countError": 1,
+     "scoredOnThisPlan": true,
+     "shapeIoU": [],
+     "missed": [
+      "col01",
+      "col02",
+      "col03",
+      "col04",
+      "col05",
+      "col06",
+      "col07",
+      "col08",
+      "col09",
+      "col10"
+     ],
+     "spurious": []
+    },
+    "bar": {
+     "gt": 1,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 1,
+     "precision": 0,
+     "recall": 0,
+     "f1": 0,
+     "countError": 1,
+     "scoredOnThisPlan": true,
+     "shapeIoU": [],
+     "missed": [
+      "bar01"
+     ],
+     "spurious": []
+    },
+    "entrance": {
+     "gt": 2,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 2,
+     "precision": 0,
+     "recall": 0,
+     "f1": 0,
+     "countError": 1,
+     "scoredOnThisPlan": true,
+     "shapeIoU": [],
+     "missed": [
+      "ent01",
+      "ent02"
+     ],
+     "spurious": []
+    },
+    "loca": {
+     "gt": 0,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0,
+     "scoredOnThisPlan": false,
+     "shapeIoU": [],
+     "missed": [],
+     "spurious": []
+    }
+   },
+   "proposed": {
+    "table": {
+     "gt": 46,
+     "det": 48,
+     "tp": 46,
+     "fp": 2,
+     "fn": 0,
+     "precision": 0.958,
+     "recall": 1,
+     "f1": 0.979,
+     "countError": 0.043
+    },
+    "bistro": {
+     "gt": 5,
+     "det": 5,
+     "tp": 5,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0
+    },
+    "chair": {
+     "gt": 113,
+     "det": 112,
+     "tp": 107,
+     "fp": 5,
+     "fn": 6,
+     "precision": 0.955,
+     "recall": 0.947,
+     "f1": 0.951,
+     "countError": 0.009
+    },
+    "sofa": {
+     "gt": 3,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 3,
+     "precision": 0,
+     "recall": 0,
+     "f1": 0,
+     "countError": 1,
+     "scoredOnThisPlan": true
+    },
+    "stage": {
+     "gt": 1,
+     "det": 1,
+     "tp": 1,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0,
+     "scoredOnThisPlan": true
+    },
+    "column": {
+     "gt": 10,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 10,
+     "precision": 0,
+     "recall": 0,
+     "f1": 0,
+     "countError": 1,
+     "scoredOnThisPlan": true
+    },
+    "bar": {
+     "gt": 1,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 1,
+     "precision": 0,
+     "recall": 0,
+     "f1": 0,
+     "countError": 1,
+     "scoredOnThisPlan": true
+    },
+    "entrance": {
+     "gt": 2,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 2,
+     "precision": 0,
+     "recall": 0,
+     "f1": 0,
+     "countError": 1,
+     "scoredOnThisPlan": true
+    },
+    "loca": {
+     "gt": 0,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0,
+     "scoredOnThisPlan": false
+    }
+   },
+   "geometry": {
+    "tableCentreErrorMedianShare": 0.023,
+    "tableCentreErrorP90Share": 0.035,
+    "tableSizeErrorMedian": 0.023,
+    "tableSizeErrorP90": 0.053,
+    "tableIoUMedian": 0.935,
+    "tableIoUP10": 0.914,
+    "tableTypeAccuracy": 1,
+    "tableAspectLogErrorP90": 0.046,
+    "tableRotationErrorP90Deg": 0,
+    "chairCentreErrorMedianShare": 0.022,
+    "chairCentreErrorP90Share": 0.071,
+    "note": "centre and size errors are a share of the object's own smaller side, so they mean the same on a 17 px chair and a 70 px table"
+   },
+   "links": {
+    "groundTruth": 109,
+    "scored": 101,
+    "correct": 100,
+    "wrong": 1,
+    "orphan": 0,
+    "unscoreable": 8,
+    "accuracy": 0.99,
+    "endToEnd": 0.917,
+    "wrongLinks": [
+     {
+      "chair": "c069",
+      "expected": "t034",
+      "got": "t036"
+     }
+    ],
+    "note": "endToEnd = correct links / all annotated links: a chair never found counts against it, which accuracy alone hides"
+   },
+   "groups": {
+    "groundTruth": 12,
+    "exact": 12,
+    "accuracy": 1,
+    "chairCountExact": 12,
+    "spuriousGroups": 1,
+    "rows": [
+     {
+      "id": "jg01",
+      "tables": 3,
+      "verdict": "EXACT",
+      "chairsTruth": 3,
+      "chairsDetected": 3
+     },
+     {
+      "id": "jg02",
+      "tables": 3,
+      "verdict": "EXACT",
+      "chairsTruth": 3,
+      "chairsDetected": 3
+     },
+     {
+      "id": "jg03",
+      "tables": 3,
+      "verdict": "EXACT",
+      "chairsTruth": 3,
+      "chairsDetected": 3
+     },
+     {
+      "id": "jg04",
+      "tables": 4,
+      "verdict": "EXACT",
+      "chairsTruth": 10,
+      "chairsDetected": 10
+     },
+     {
+      "id": "jg05",
+      "tables": 3,
+      "verdict": "EXACT",
+      "chairsTruth": 8,
+      "chairsDetected": 8
+     },
+     {
+      "id": "jg06",
+      "tables": 3,
+      "verdict": "EXACT",
+      "chairsTruth": 8,
+      "chairsDetected": 8
+     },
+     {
+      "id": "jg07",
+      "tables": 3,
+      "verdict": "EXACT",
+      "chairsTruth": 8,
+      "chairsDetected": 8
+     },
+     {
+      "id": "jg08",
+      "tables": 2,
+      "verdict": "EXACT",
+      "chairsTruth": 4,
+      "chairsDetected": 4
+     },
+     {
+      "id": "jg09",
+      "tables": 3,
+      "verdict": "EXACT",
+      "chairsTruth": 8,
+      "chairsDetected": 8
+     },
+     {
+      "id": "jg10",
+      "tables": 3,
+      "verdict": "EXACT",
+      "chairsTruth": 8,
+      "chairsDetected": 8
+     },
+     {
+      "id": "jg11",
+      "tables": 3,
+      "verdict": "EXACT",
+      "chairsTruth": 6,
+      "chairsDetected": 6
+     },
+     {
+      "id": "jg12",
+      "tables": 4,
+      "verdict": "EXACT",
+      "chairsTruth": 10,
+      "chairsDetected": 10
+     }
+    ]
+   },
+   "direction": {
+    "groundTruth": 113,
+    "stated": 19,
+    "correctWithin30": 13,
+    "wrongOver45": 4,
+    "coverage": 0.115,
+    "precision": 0.684,
+    "errorP90Deg": 66.091,
+    "note": "coverage = chairs whose facing is stated AND within 30 degrees, over every chair whose facing the drawing shows; a facing left unstated is honest but still a gap"
+   },
+   "printed": {
+    "tableNumbers": {
+     "legibleInTruth": 0,
+     "verifiedCorrect": 0,
+     "verifiedWrong": 0,
+     "readAtAll": 0,
+     "recall": null,
+     "verifiedPrecision": null
+    },
+    "capacityTotal": {
+     "truth": 124,
+     "read": null,
+     "correct": false
+    },
+    "capacityParts": {
+     "truth": {
+      "seating": 114,
+      "bistro": 10,
+      "total": 124,
+      "region": {
+       "x": 100,
+       "y": 52,
+       "w": 175,
+       "h": 90
+      }
+     },
+     "read": {},
+     "rule": null
+    }
+   },
+   "capacity": {
+    "drawnChairs": {
+     "truth": 113,
+     "product": 112,
+     "offeredAuto": 107
+    },
+    "writtenTotal": {
+     "truth": 124,
+     "product": null
+    },
+    "logicalSeats": {
+     "product": 108,
+     "truthFromRule": null
+    },
+    "unverifiedNamed": 0,
+    "heldBackChairs": 1,
+    "heldBackLeak": 5,
+    "note": "heldBackLeak > 0 means the product's drawn-chair figure counts chairs on tables it did not offer"
+   },
+   "corrections": {
+    "tables": 1,
+    "chairs": 6,
+    "tableTypes": 0,
+    "links": 1,
+    "groups": 0,
+    "elements": 17,
+    "total": 25,
+    "objectsInTruth": 176,
+    "perHundredObjects": 14.205
+   },
+   "digital": {
+    "committedTables": 47,
+    "matchedTables": 46,
+    "missedTables": 0,
+    "extraTables": 1,
+    "tableCentreErrorP90Share": 0.299,
+    "tableAspectLogErrorP90": 0.267,
+    "tableSizeErrorP90": 0.447,
+    "committedChairs": 107,
+    "matchedChairs": 107,
+    "chairCentreErrorP90Share": 0.703,
+    "venueObjects": 0,
+    "frame": {
+     "worldWidth": 1355,
+     "worldHeight": 788,
+     "imageDrawnWidth": 1355,
+     "imageDrawnHeight": 788,
+     "offsetY": 0
+    }
+   },
+   "run": {
+    "analysisMs": 7741,
+    "peakHeapMB": 18.8,
+    "offOriginRequests": 7,
+    "engineFetches": 7,
+    "planDataEgress": 0,
+    "planDataEgressDetail": [],
+    "cloudCostUSD": 0,
+    "providers": {
+     "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+     "trainedModel": false,
+     "detectionProvider": "classical-cv",
+     "detectionPath": "chair-first",
+     "chairSource": "colour-cluster",
+     "ocrEngine": "tesseract.js",
+     "ocrAvailable": true
+    },
+    "ocr": {
+     "available": true,
+     "reason": null,
+     "reasonCode": null,
+     "engine": "tesseract.js"
+    },
+    "pageErrors": []
+   }
+  },
+  {
+   "planId": "ornek-symbolic",
+   "classes": {
+    "table": {
+     "gt": 166,
+     "det": 163,
+     "tp": 162,
+     "fp": 1,
+     "fn": 4,
+     "precision": 0.994,
+     "recall": 0.976,
+     "f1": 0.985,
+     "countError": 0.018
+    },
+    "bistro": {
+     "gt": 0,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0
+    },
+    "chair": {
+     "gt": 0,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0
+    },
+    "sofa": {
+     "gt": 0,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0,
+     "scoredOnThisPlan": false,
+     "shapeIoU": [],
+     "missed": [],
+     "spurious": []
+    },
+    "stage": {
+     "gt": 0,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0,
+     "scoredOnThisPlan": false,
+     "shapeIoU": [],
+     "missed": [],
+     "spurious": []
+    },
+    "column": {
+     "gt": 4,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 4,
+     "precision": 0,
+     "recall": 0,
+     "f1": 0,
+     "countError": 1,
+     "scoredOnThisPlan": true,
+     "shapeIoU": [],
+     "missed": [
+      "pillar-left-upper",
+      "pillar-left-lower",
+      "pillar-right-upper",
+      "pillar-right-lower"
+     ],
+     "spurious": []
+    },
+    "bar": {
+     "gt": 0,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0,
+     "scoredOnThisPlan": false,
+     "shapeIoU": [],
+     "missed": [],
+     "spurious": []
+    },
+    "entrance": {
+     "gt": 0,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0,
+     "scoredOnThisPlan": false,
+     "shapeIoU": [],
+     "missed": [],
+     "spurious": []
+    },
+    "loca": {
+     "gt": 12,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 12,
+     "precision": 0,
+     "recall": 0,
+     "f1": 0,
+     "countError": 1,
+     "scoredOnThisPlan": true,
+     "shapeIoU": [],
+     "missed": [
+      "loca-9B",
+      "loca-9A",
+      "loca-8B",
+      "loca-8A",
+      "loca-7",
+      "loca-6",
+      "loca-5",
+      "loca-4",
+      "loca-3B",
+      "loca-3A",
+      "loca-2",
+      "loca-1"
+     ],
+     "spurious": []
+    }
+   },
+   "proposed": {
+    "table": {
+     "gt": 166,
+     "det": 163,
+     "tp": 162,
+     "fp": 1,
+     "fn": 4,
+     "precision": 0.994,
+     "recall": 0.976,
+     "f1": 0.985,
+     "countError": 0.018
+    },
+    "bistro": {
+     "gt": 0,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0
+    },
+    "chair": {
+     "gt": 0,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0
+    },
+    "sofa": {
+     "gt": 0,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0,
+     "scoredOnThisPlan": false
+    },
+    "stage": {
+     "gt": 0,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0,
+     "scoredOnThisPlan": false
+    },
+    "column": {
+     "gt": 4,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 4,
+     "precision": 0,
+     "recall": 0,
+     "f1": 0,
+     "countError": 1,
+     "scoredOnThisPlan": true
+    },
+    "bar": {
+     "gt": 0,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0,
+     "scoredOnThisPlan": false
+    },
+    "entrance": {
+     "gt": 0,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1,
+     "f1": 1,
+     "countError": 0,
+     "scoredOnThisPlan": false
+    },
+    "loca": {
+     "gt": 12,
+     "det": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 12,
+     "precision": 0,
+     "recall": 0,
+     "f1": 0,
+     "countError": 1,
+     "scoredOnThisPlan": true
+    }
+   },
+   "geometry": {
+    "tableCentreErrorMedianShare": 0.039,
+    "tableCentreErrorP90Share": 0.095,
+    "tableSizeErrorMedian": 0.134,
+    "tableSizeErrorP90": 0.166,
+    "tableIoUMedian": 0.797,
+    "tableIoUP10": 0.703,
+    "tableTypeAccuracy": 1,
+    "tableAspectLogErrorP90": 0.107,
+    "tableRotationErrorP90Deg": 0,
+    "chairCentreErrorMedianShare": null,
+    "chairCentreErrorP90Share": null,
+    "note": "centre and size errors are a share of the object's own smaller side, so they mean the same on a 17 px chair and a 70 px table"
+   },
+   "links": {
+    "groundTruth": 0,
+    "scored": 0,
+    "correct": 0,
+    "wrong": 0,
+    "orphan": 0,
+    "unscoreable": 0,
+    "accuracy": null,
+    "endToEnd": null,
+    "wrongLinks": [],
+    "note": "endToEnd = correct links / all annotated links: a chair never found counts against it, which accuracy alone hides"
+   },
+   "groups": {
+    "groundTruth": 0,
+    "exact": 0,
+    "accuracy": null,
+    "chairCountExact": 0,
+    "spuriousGroups": 1,
+    "rows": []
+   },
+   "direction": {
+    "groundTruth": 0,
+    "stated": 0,
+    "correctWithin30": 0,
+    "wrongOver45": 0,
+    "coverage": null,
+    "precision": null,
+    "errorP90Deg": null,
+    "note": "coverage = chairs whose facing is stated AND within 30 degrees, over every chair whose facing the drawing shows; a facing left unstated is honest but still a gap"
+   },
+   "printed": {
+    "tableNumbers": {
+     "legibleInTruth": 157,
+     "verifiedCorrect": 87,
+     "verifiedWrong": 0,
+     "readAtAll": 153,
+     "recall": 0.554,
+     "verifiedPrecision": 1
+    },
+    "capacityTotal": {
+     "truth": 2064,
+     "read": 2064,
+     "correct": true
+    },
+    "capacityParts": {
+     "truth": {
+      "tables": 166,
+      "perTable": 12,
+      "seating": 1992,
+      "locas": 72,
+      "total": 2064,
+      "source": "printed on the drawing: 'SALON : 166 * 12 : 1992 PAX', 'LOCALAR : 72 PAX', 'TOPLAM : 2064 PAX'"
+     },
+     "read": {
+      "total": 2064,
+      "boxes": 72
+     },
+     "rule": {
+      "units": 166,
+      "perUnit": 12,
+      "total": 1992
+     }
+    }
+   },
+   "capacity": {
+    "drawnChairs": {
+     "truth": 0,
+     "product": 0,
+     "offeredAuto": 0
+    },
+    "writtenTotal": {
+     "truth": 2064,
+     "product": 2064
+    },
+    "logicalSeats": {
+     "product": 0,
+     "truthFromRule": 1992
+    },
+    "unverifiedNamed": 0,
+    "heldBackChairs": 0,
+    "heldBackLeak": 0,
+    "note": "heldBackLeak > 0 means the product's drawn-chair figure counts chairs on tables it did not offer"
+   },
+   "corrections": {
+    "tables": 5,
+    "chairs": 0,
+    "tableTypes": 0,
+    "links": 0,
+    "groups": 0,
+    "elements": 16,
+    "total": 21,
+    "objectsInTruth": 182,
+    "perHundredObjects": 11.538
+   },
+   "digital": {
+    "committedTables": 163,
+    "matchedTables": 97,
+    "missedTables": 69,
+    "extraTables": 66,
+    "tableCentreErrorP90Share": 0.528,
+    "tableAspectLogErrorP90": 0.201,
+    "tableSizeErrorP90": 0.25,
+    "committedChairs": 0,
+    "matchedChairs": 0,
+    "chairCentreErrorP90Share": null,
+    "venueObjects": 0,
+    "frame": {
+     "worldWidth": 1355,
+     "worldHeight": 788,
+     "imageDrawnWidth": 1355,
+     "imageDrawnHeight": 969.7,
+     "offsetY": -90.9
+    }
+   },
+   "run": {
+    "analysisMs": 32403,
+    "peakHeapMB": 52.3,
+    "offOriginRequests": 7,
+    "engineFetches": 7,
+    "planDataEgress": 0,
+    "planDataEgressDetail": [],
+    "cloudCostUSD": 0,
+    "providers": {
+     "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+     "trainedModel": false,
+     "detectionProvider": "classical-cv",
+     "detectionPath": "chair-first",
+     "chairSource": "outline-interior",
+     "ocrEngine": "tesseract.js",
+     "ocrAvailable": true
+    },
+    "ocr": {
+     "available": true,
+     "reason": null,
+     "reasonCode": null,
+     "engine": "tesseract.js"
+    },
+    "pageErrors": []
+   }
+  }
+ ],
+ "contract": {
+  "total": 75,
+  "passed": 43,
+  "rows": [
+   {
+    "plan": "merit-real-venue",
+    "id": "table.precision",
+    "value": 0.979,
+    "op": ">=",
+    "threshold": 0.97,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "table.recall",
+    "value": 1,
+    "op": ">=",
+    "threshold": 0.97,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "table.countError",
+    "value": 0.022,
+    "op": "<=",
+    "threshold": 0.03,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "bistro.precision",
+    "value": 1,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "bistro.recall",
+    "value": 1,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "chair.precision",
+    "value": 1,
+    "op": ">=",
+    "threshold": 0.95,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "chair.recall",
+    "value": 0.947,
+    "op": ">=",
+    "threshold": 0.95,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "chair.countError",
+    "value": 0.053,
+    "op": "<=",
+    "threshold": 0.05,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "sofa.precision",
+    "value": 0,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "sofa.recall",
+    "value": 0,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "stage.precision",
+    "value": 0,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "stage.recall",
+    "value": 0,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "column.precision",
+    "value": 0,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "column.recall",
+    "value": 0,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "bar.precision",
+    "value": 0,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "bar.recall",
+    "value": 0,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "entrance.precision",
+    "value": 0,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "entrance.recall",
+    "value": 0,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "loca.absentFalsePositives",
+    "value": 0,
+    "op": "<=",
+    "threshold": 0,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "links.accuracy",
+    "value": 0.99,
+    "op": ">=",
+    "threshold": 0.97,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "links.endToEnd",
+    "value": 0.917,
+    "op": ">=",
+    "threshold": 0.92,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "groups.accuracy",
+    "value": 1,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "groups.chairCountExactShare",
+    "value": 1,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "groups.spurious",
+    "value": 1,
+    "op": "<=",
+    "threshold": 1,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "geometry.tableCentreErrorP90Share",
+    "value": 0.035,
+    "op": "<=",
+    "threshold": 0.15,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "geometry.tableIoUP10",
+    "value": 0.914,
+    "op": ">=",
+    "threshold": 0.6,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "geometry.tableTypeAccuracy",
+    "value": 1,
+    "op": ">=",
+    "threshold": 0.97,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "geometry.tableRotationErrorP90Deg",
+    "value": 0,
+    "op": "<=",
+    "threshold": 5,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "geometry.chairCentreErrorP90Share",
+    "value": 0.071,
+    "op": "<=",
+    "threshold": 0.35,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "direction.precision",
+    "value": 0.684,
+    "op": ">=",
+    "threshold": 0.95,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "direction.coverage",
+    "value": 0.115,
+    "op": ">=",
+    "threshold": 0.8,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "printed.capacityTotalCorrect",
+    "value": false,
+    "op": "==",
+    "threshold": true,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "capacity.heldBackLeak",
+    "value": 5,
+    "op": "<=",
+    "threshold": 0,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "capacity.drawnChairsError",
+    "value": 0.009,
+    "op": "<=",
+    "threshold": 0.05,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "capacity.writtenTotalCorrect",
+    "value": false,
+    "op": "==",
+    "threshold": true,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "digital.committedEqualsOffered",
+    "value": true,
+    "op": "==",
+    "threshold": true,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "digital.tableCentreErrorP90Share",
+    "value": 0.299,
+    "op": "<=",
+    "threshold": 0.15,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "digital.tableAspectLogErrorP90",
+    "value": 0.267,
+    "op": "<=",
+    "threshold": 0.1,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "digital.tableSizeErrorP90",
+    "value": 0.447,
+    "op": "<=",
+    "threshold": 0.15,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "digital.chairCentreErrorP90Share",
+    "value": 0.703,
+    "op": "<=",
+    "threshold": 0.35,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "corrections.perHundredObjects",
+    "value": 14.205,
+    "op": "<=",
+    "threshold": 5,
+    "pass": false
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "run.analysisMs",
+    "value": 7741,
+    "op": "<=",
+    "threshold": 15000,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "run.peakHeapMB",
+    "value": 18.8,
+    "op": "<=",
+    "threshold": 1024,
+    "pass": true
+   },
+   {
+    "plan": "merit-real-venue",
+    "id": "run.planDataEgress",
+    "value": 0,
+    "op": "<=",
+    "threshold": 0,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "table.precision",
+    "value": 0.994,
+    "op": ">=",
+    "threshold": 0.97,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "table.recall",
+    "value": 0.976,
+    "op": ">=",
+    "threshold": 0.97,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "table.countError",
+    "value": 0.018,
+    "op": "<=",
+    "threshold": 0.03,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "bistro.absentFalsePositives",
+    "value": 0,
+    "op": "<=",
+    "threshold": 0,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "chair.absentFalsePositives",
+    "value": 0,
+    "op": "<=",
+    "threshold": 0,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "sofa.absentFalsePositives",
+    "value": 0,
+    "op": "<=",
+    "threshold": 0,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "stage.absentFalsePositives",
+    "value": 0,
+    "op": "<=",
+    "threshold": 0,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "column.precision",
+    "value": 0,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "column.recall",
+    "value": 0,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "bar.absentFalsePositives",
+    "value": 0,
+    "op": "<=",
+    "threshold": 0,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "entrance.absentFalsePositives",
+    "value": 0,
+    "op": "<=",
+    "threshold": 0,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "loca.precision",
+    "value": 0,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "loca.recall",
+    "value": 0,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "groups.spurious",
+    "value": 1,
+    "op": "<=",
+    "threshold": 1,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "geometry.tableCentreErrorP90Share",
+    "value": 0.095,
+    "op": "<=",
+    "threshold": 0.15,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "geometry.tableIoUP10",
+    "value": 0.703,
+    "op": ">=",
+    "threshold": 0.6,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "geometry.tableTypeAccuracy",
+    "value": 1,
+    "op": ">=",
+    "threshold": 0.97,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "geometry.tableRotationErrorP90Deg",
+    "value": 0,
+    "op": "<=",
+    "threshold": 5,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "printed.tableNumberRecall",
+    "value": 0.554,
+    "op": ">=",
+    "threshold": 0.9,
+    "pass": false
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "printed.tableNumberVerifiedPrecision",
+    "value": 1,
+    "op": ">=",
+    "threshold": 0.99,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "printed.capacityTotalCorrect",
+    "value": true,
+    "op": "==",
+    "threshold": true,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "capacity.heldBackLeak",
+    "value": 0,
+    "op": "<=",
+    "threshold": 0,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "capacity.writtenTotalCorrect",
+    "value": true,
+    "op": "==",
+    "threshold": true,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "digital.committedEqualsOffered",
+    "value": true,
+    "op": "==",
+    "threshold": true,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "digital.tableCentreErrorP90Share",
+    "value": 0.528,
+    "op": "<=",
+    "threshold": 0.15,
+    "pass": false
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "digital.tableAspectLogErrorP90",
+    "value": 0.201,
+    "op": "<=",
+    "threshold": 0.1,
+    "pass": false
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "digital.tableSizeErrorP90",
+    "value": 0.25,
+    "op": "<=",
+    "threshold": 0.15,
+    "pass": false
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "corrections.perHundredObjects",
+    "value": 11.538,
+    "op": "<=",
+    "threshold": 5,
+    "pass": false
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "run.analysisMs",
+    "value": 32403,
+    "op": "<=",
+    "threshold": 60000,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "run.peakHeapMB",
+    "value": 52.3,
+    "op": "<=",
+    "threshold": 1024,
+    "pass": true
+   },
+   {
+    "plan": "ornek-symbolic",
+    "id": "run.planDataEgress",
+    "value": 0,
+    "op": "<=",
+    "threshold": 0,
+    "pass": true
+   }
+  ]
+ }
+}

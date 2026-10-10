@@ -1,0 +1,240 @@
+# Regression suite
+
+```
+npm install          # once — Playwright only; the app itself has no dependencies
+npm test             # every fast suite (~2 minutes)
+npm run test:all     # including the slow ones (real detection on the real plan)
+npm run test:list    # what exists
+node tests/run.mjs xlsx storage       # substring filter on suite name
+node tests/run.mjs --tag=business     # everything tagged business
+```
+
+The runner serves the app itself on an ephemeral port and gives every suite a
+fresh browser context, so nothing depends on a server someone remembered to
+start, and IndexedDB written by one suite cannot reach the next. Exit code is 1
+if any check failed, any suite threw, or any suite saw a page error.
+
+## What is here
+
+| suite | tags | what breaks if it goes red |
+|---|---|---|
+| `smoke` | business | the app does not boot, or a screen throws |
+| `no-sample-specific-runtime-logic` | business | a Golden/ORNEK/merit-real-venue reference in `src/*.js` stops being a documentation comment and becomes a branch on which specific sample was uploaded — the product must understand the language of a plan, never recognise the identity of the image |
+| `guest-and-seating-rules` | business | pax semantics, chair/capacity sync, the planning-vs-arrival split |
+| `physical-logical-seat-separation` | business | a capacity number synthesises physical chairs again (a symbolic table's `chairs` must be `[]`, not a ring tagged `physical:false`), a symbolic table stops seating guests or stops counting toward operational capacity, detected chair coordinates get regenerated into a synthetic ring by a capacity sync, the two totals (`seatingCapacity` vs `physicalCapacity`) collapse into one number, or Assisted Detection's commit path stops sourcing `hasPhysicalSeats` from the plan's own representation verdict |
+| `unanchored-seating` | intelligence | the plan reader stops returning UNKNOWN on a drawing it cannot classify, a standalone chair is claimed again with no table anywhere to be a seat at, or the capacity abstention goes back to depending on WHY OCR failed instead of on whether any capacity was established |
+| `assignment-writer` | business | anything other than `MeritSeatAssignment.write()` assigns to `guest.assignment` (a STATIC scan, because a twelfth writer added tomorrow would sit in a path no behavioural test exercises), the writer starts sorting seat order (which maps a party to its companions), or any operational path regresses — assign, move, unassign, undo, rollback, table deletion, a contested seat or a locked assignment |
+| `schema-registry` | storage | `parseRoot` starts STAMPING a schema version instead of reading it, the migration chain develops a gap or stops ending at the current version, a step stops being idempotent, a record from a NEWER build is treated as an old one (it used to be downgraded and then overwritten on the first save), the app writes over a future record, or corruption stops being distinguishable from age |
+| `save-ordering` | business | `saveState()` stops being awaitable (it returned `undefined` while chaining onto the queue, so `await saveState()` waited for nothing), last-write-wins breaks under a storage layer that finishes writes out of order, a burst of saves in one tick stops coalescing — or starts coalescing saves that were genuinely separated in time — or a failed save's image-stripping retry rebuilds its payload from live `state` instead of writing the snapshot it was handed |
+| `audit-durability` | business | the activity log truncates on write again (it capped at 1,000 across ALL events, so a busy door erased its own event's opening entries and the previous event's history with them), retention and the screen's display window collapse back into one number, an eviction happens without being counted, or a package import / save round trip loses entries |
+| `large-venue-scale` | business | the detector's candidate ceiling drops back into real-venue range or stops reporting truncation, or a 420-table / 4,200-seat plan loses tables, guests, seats or seat arithmetic through the domain and a save round trip |
+| `held-back-capacity` | intelligence | a held-back candidate's chairs (found, not offered, not confirmed) reach the drawn-chair figure, a zone's seats or the seat counts, or held-back seats stop being reported on their own |
+| `historical-immutability` | business | a completed event can be edited |
+| `bulk-add-integrity` | business | the Turkish UI writes labels where identifiers belong |
+| `undo-operations` | business | one of twelve destructive operations no longer round-trips |
+| `live-door-keys` | business | the door keyboard flow checks in the wrong person, or Live's search stops agreeing with the Global Finder on what a query matches (term order, zone, a +N party, an unseated guest) |
+| `xlsx-contract` | business, reports | the exported workbook's sheets, companion seats, or table numbering |
+| `storage-provider` | storage | data does not reach IndexedDB, or does not survive a reload |
+| `backup-restore` | storage | a bad backup file is accepted, or a good one does not restore |
+| `a11y-scan` | accessibility, ui | a WCAG 2.0/2.1 A or AA violation appears on any of 42 screen states — every tab, a selected table's card, the add panel, the freeze form, the finder, the guest dialog, every import-wizard step, the guide and the plan review — in English or Turkish (axe-core, a pinned TEST-only dependency) |
+| `a11y-dialog-focus` | accessibility, ui | a dialog opened from the keyboard does not take focus in to its first meaningful control, lets Tab or Shift+Tab walk out of it, or returns focus anywhere but the control that opened it (after Escape and after its own close control); or Escape closes more than the topmost layer, or saves a half-typed form |
+| `a11y-keyboard-workflows` | accessibility, business | any operator task stops being finishable by keyboard alone — create an event, place, select, move and number tables, add a guest, import a list, seat a guest, check in, mark a No Show, export the workbook, review and confirm a detection, record a Teach lesson — or a control reached by Tab shows no visible focus |
+| `a11y-announce-contrast` | accessibility, ui | a check-in or No Show stops being announced (as the change only, politely, from a region that existed at boot), an error toast stops being assertive, a sampled text's PAINTED contrast drops under 4.5:1 on the shell or the `--pi-*` surfaces, frozen / unavailable / VIP / No Show lose their non-colour cue, the guest list loses its table semantics, or reduced motion stops collapsing transitions |
+| `native-dialogs` | ui, accessibility | a browser-native `confirm()`, `prompt()` or `alert()` reappears in `src/`, or any of the in-app questions that replaced them stops meaning what it did: Cancel or Escape must change NOTHING (delete a guest, a table, an event; restore a backup; import a package; replace the plan), yes must act, one Delete press must ask once, Escape must close only the dialog, an out-of-range number is refused in the dialog with its reason on the field, and a two-page PDF must render its chosen page |
+| `toast-discipline` | ui, localization, resilience | a toast message is passed as an English literal instead of one `t()` call (every one of ~130 call sites is scanned; the seven composed ones are listed with where their text comes from), a toast raised as an error is not classified as a refusal, confirmation, information or CONDITION — and a condition has no persistent carrier; a toast key is missing in either language or the Turkish is the English copied across; a guest name with `$&`/`$$` is mangled by `t()`; a burst stacks past three, the same message stacks as copies, the newest is not shown, or an Undo offer is the first thing pushed off; a toast vanishes under the pointer; a three-toast stack covers any control or status readout on six screens at 1920, 2560 and 1440 (incl. Seating with Smart Seating's preview open); a toast raised in the guest dialog or import wizard renders behind the backdrop instead of in the dialog's top layer, covers a dialog control, or is lost when the dialog closes; a plan image dropped from storage, an unserialisable state, or a boot that fell back to a recovery point is told by a toast alone |
+| `i18n-hardcoded-english` | localization | English written straight into the shell's REACHABLE code as markup text, `aria-label`, `title`, `placeholder` or `alt` (reachability computed to a fixpoint: a pre-v8 body is unreachable only if app-v8.js overrides it and never calls it back through `original.*`; the four-entry allowlist is justified in the file and cannot outlive what it excuses); a Plan Doctor finding code with no sentence in either language; "AI" in the Turkish for Assisted Detection; and, rendered, any string on 21 screen/dialog states (incl. a Completed event, Seating's filter banners, the guide) that stays English on the Turkish screen or Turkish on the English one, walked fresh in each language; a stored VIP level shown as its raw value instead of its label |
+| `empty-states` | ui | an empty screen stops saying what is missing or stops offering the next step — every control is PRESSED, not just found: the blank Floor Plan's Import (opens the file chooser) and Add (opens the panel; the card steps aside), Seating's no-tables card (goes to the Floor Plan), the no-guests queue and Live list (go to Guests); Live says everyone has arrived on an event with no guests; Seating's queue says "no matching" when nothing was searched (no guests, or everyone seated — that case offers Show all); the plan toolbar offers to show an original plan that does not exist, or says Replace when there is nothing to replace; more than one onboarding tip on a screen; a Completed event's empty state offers an editing control |
+| `table-provenance` | business, ui | a table confirmed from Assisted Detection stops recording that it was, or loses the OCR reading of the number printed on its own symbol (value, state, source — nothing else, and nothing of an unknown shape from an untrusted package); a reading RENAMES the table (which number the room uses is a person's decision); a VERIFIED printed number that disagrees with the table's own is not stated beside it, or an unconfirmed one raises a disagreement; a copy inherits the original's evidence instead of being recorded as a person's act; a table from before this was tracked is guessed rather than shown as not recorded; either fact is lost across a save and reload. SYNTHETIC candidates, planted through the real review screen |
+| `readiness-timeline` | business, ui | the Command Center's readiness timeline stops being DERIVED from records: a step whose moment was never recorded shows a date anyway (tables added by hand have none), a count becomes a percentage or a forecast, a final check older than the event's latest change still reads as done, nobody seated reads as partial, an open step loses the control that takes the operator there, or the event day stops being counted in whole calendar days (today, no date recorded) |
+| `live-door-speed` | business, ui | the door search stops receiving keys in order at full speed (no delay between keys — a scanner or fast typist; the shared typeQuery() helper types with a 20ms delay, which hid a reorder bug); Enter with several matches and no explicit choice checks anybody in; ↑/↓ stop marking a chosen row, or Enter takes something other than the marked row; two guests with the SAME full name cannot be told apart by keyboard; typing after choosing keeps the old choice; Ctrl+Z in an empty search stops taking back the last change, or reaches into arrivals while the box has text; a +3 party needs more than one Enter. Logs the counted keystrokes |
+| `table-number-edit` | business, ui | a person can no longer set a table's number from its own card (select, type, Enter), or the number is accepted when another table already SHOWS it ("T3" beside T03), or when it is empty, markup, or over 12 characters; the typed number stops recording `numberSource: TYPED`, is lost on undo or reload, or stops reaching Seating; the §21 printed-number disagreement stays after the table has been given the printed number; a seated party loses its table on rename |
+| `list-windowing` | business, ui | the Guests list or the Seating queue mounts every record again (§26: ~70,000 / 23,833 DOM nodes at 3,000 guests); the mounted rows stop being the list's own first N; "showing X of Y" counts mounted rows instead of matches; Show more loses the keyboard's place; a new search, filter or scope keeps a grown window; search stops reaching records outside the window; shift-click ranges change; either search reorders keys typed at full speed ("Mehmet Yılmaz" → "MeheYm") |
+| `capacity-rule-commit` | business, intelligence | a symbolic plan's committed tables stop taking the capacity its printed rule states (166 × 12 → 12 each), or that capacity becomes CHAIRS; the rule is applied on a plan that draws seats, with no rule, to more symbols than it counts, with a per-table figure over 99, or with figures that do not multiply out; a derived capacity loses its source or evidence, across a reload too; a person's change forgets where the number came from; the plan's printed total stops being a PLAN fact on the Command Center, or a table is allowed to carry it; the commit confirmation claims chair coordinates on a plan with no chairs. Every case presses the real Commit button |
+| `occupancy-pair` | business | planned and live occupancy stop DISAGREEING for a No Show — the plan drops the No Show's seats, or tonight's count keeps them — on the Seating badge (planned vs live mode), in Live's free-chair and empty-table figures, or in the modules themselves. The characterization test for moving live occupancy out of `app-v8.js` |
+| `critical-paths` | business, storage | the retired English shell renders at boot again; a plan imported from a FILE (PNG, or a PDF and its page choice) stops becoming the draft plan, or two thumbnail passes collide on one canvas; with IndexedDB absent or refusing to exist, the app does not fall back to localStorage — or with IndexedDB merely blocked or full, it DOES move the data; the audit trail at its 100,000 cap stops recording what it dropped; a locked assignment can be moved; the guest Excel template stops being a workbook with the importer's columns; schema 8 → 9 keeps placeholder chairs; a package with malformed chairs is accepted. Each of these had never been executed by any suite (§28, `benchmarks/coverage/`) |
+| `ci-gate-honesty` | business | `benchmark:baseline` compares (or `--record`s) a report measured on different source, or treats a plan the run did not score as a note; the adversarial gate stops blocking on a new FAIL code, a listed FAIL that stopped failing, a regression, a missing, unbaselined, refused or erroring fixture; the memory gate stops blocking on one more wrong application or a changed corpus; a `continue-on-error` appears in the workflow; CI stops running either gate with `--compare`; an npm command CI runs has no class in `merit-ci-quality-gates`; OCR stops being pinned, or a benchmark browser can reach the network; a CI job with Chromium stops fetching the pins; a perf runner that can exit non-zero is not propagated |
+| `resilience-storage` | resilience, storage | storage fails and the evening does not survive it: a full quota stops being a persistent "not being saved" notice with a working backup beside it, a failed save writes half a record, an UNREADABLE stored record is overwritten by the first save instead of copied aside, a session that could not copy it saves anyway, an unopenable store is written over blind, or a blank install is stamped with an old schema version. Faults go into the browser's own IndexedDB (`tests/lib/faults.mjs`) |
+| `resilience-persisted` | resilience, storage | a stored guest pointing at a missing table, or at a seat the table does not have, stops opening cleanly, stops being a BLOCKING Plan Doctor finding on screen, or is silently "repaired" on load instead of kept as the plan said |
+| `resilience-detection-render` | resilience, intelligence, **slow** | a detection that fails after the new analysis replaced the old one leaves the half-built one behind, a second press starts a second pipeline, or a screen that throws escapes render() instead of becoming a translated recovery screen (still logged as an error) |
+| `resilience-static` | resilience | an empty `catch` appears, a promise `.catch()` swallows a rejection without an `EXPECTED ABSTENTION` marker naming what reports the gap, or a caught error's own `.message` reaches a toast, a translated sentence or a markup template |
+| `malformed-import` | security, storage | a bad file is half-applied, fails silently or bricks the install: a backup from a newer build latching the read-only guard on the CURRENT install, a null or wrong-typed record throwing out of the file reader, an unreadable date saved and then killing every render, a party of a billion, an id carrying markup, a sheet count read by `Number()` (`"1e9"`, `"0x10"`), noise named `.xlsx`, or a broken image becoming the floor plan |
+| `hostile-input` | security, ui | text becomes markup or runs: a payload in every text field of an imported event, typed into the guest dialog, handover note, new-event form and search boxes, carried in spreadsheet cells and headers, and read off a plan by the OCR engine — walked through every screen, which must show it as text |
+| `privacy-logs` | security, storage | a corrupted stored record puts a guest's name in the console — a JSON `SyntaxError` quotes the text around the damage, and every storage failure used to be logged with it |
+| `html-sink-inventory` | security | a new `innerHTML` / `insertAdjacentHTML` sink appears without a written trace of its inputs, an inventoried one goes stale, anything evaluates a string as code, object URLs stop balancing, an inline event-handler attribute appears, or a second inline `<script>` is added (CSP readiness) |
+| `prototype-pollution` | security, storage | a `__proto__` / `constructor` / `prototype` key in a backup, an event package (literal or `\u`-escaped) or a spreadsheet header reaches `Object.prototype`, swaps a record's prototype, or is carried into state, onto disk and back out in the next export — where the first careless `Object.assign` would arm it |
+| `venue-model` | storage | a published layout version is no longer frozen |
+| `i18n` | ui | a raw translation key reaches the screen, or a language stops rendering |
+| `i18n-key-integrity` | business | a `t()` key stops existing, or loses one of its two languages — statically, across every call site, because the strings this matters most for (error paths) are the ones no rendering test ever reaches. Also guards that no toast shows a bare `error.message` |
+| `plan-intelligence-contract` | intelligence, **slow** | the detector fabricates, or its scene graph points at objects that do not exist |
+| `chair-facing` | intelligence | a chair's facing is stated from anything but its family's stencil backrest (the box angle, a per-chair guess, adjacency), a symmetric or backrest-less symbol is given a front, or a stated facing on the Golden Plan disagrees with the annotation; or Confirm, a save or a reload loses an observed facing, draws it any other way, or gives an unseen front a mark |
+| `pdf-text-layer` | intelligence, security | a scanned PDF (ORNEK.pdf) is recorded as anything but a scan; a vector PDF's own text objects stop reaching the analysis, are attributed to OCR, or carry a confidence figure; a stage named only by invisible PDF text is not found or not measured to its outline; vector paths are claimed as read; a markup string in a PDF's text runs or becomes an element; a damaged stored text record is trusted |
+| `vlm-replay` | intelligence, security | a vision-language request is sent with no relay, carries a key, a guest's name, inviter or note, or lets text printed on the drawing reach the instruction; a relay off the page's origin is accepted; an answer outside its question's closed schema is accepted or repaired; an answer is applied rather than suggested; a cost is shown without a price table (all answers SCRIPTED, never recorded) |
+| `vlm-relay` | security, intelligence, fast | the relay (`server/vlm-relay.mjs`) shows its key anywhere but the upstream's `x-api-key` (status, a reply, the log, the ledger), lets `ANTHROPIC_BASE_URL` / `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_CUSTOM_HEADERS` from its own environment redirect or decorate a request, serves anything but `index.html` and `src/`, accepts a POST without the page's header, from another Origin, flagged cross-site or to a rebound Host, accepts a field it does not know, sends an image past the API's limits, lets a reading's or a day's budget, the day's requests or a reading's steps be exceeded (each must refuse BEFORE the upstream is called), keeps an unbilled failure's hold or drops a cancelled one's, stops aborting on Cancel, timeout or a disconnecting page, or names a failure wrongly (no key, no balance as a 400 and as a 402, a refused key, a forbidden or unknown model, overload retried once, a declined, cut-off or malformed answer). The upstream is `tests/lib/fake-anthropic.mjs`: every answer SCRIPTED, no model, no key, no network |
+| `vlm-budget` | security, intelligence, fast | the relay's hold stops covering every billable attempt (a declined attempt AND its fallback are both billable, so the chain must be explicit and priced; an open-ended chain is refused as configuration), an input-token heuristic is presented as exact (count_tokens first, itself an estimate, plus a margin), a connection failure or a 5xx is counted as free, a retry goes out without its own hold, a reservation settles against the wrong UTC day or twice, an unreadable `usage.json` reopens as zero spend or is overwritten, a second relay shares a ledger, a crash loses a hold, or Haiku 5.5's 100K-token price tier is ignored. Red on 602ba27 (ACCEPTANCE-602ba27.md A1–A8) |
+| `vlm-decisions` | intelligence, business, fast | Accept can override a confirmed object or a count a person typed, re-offers a "missing" object where a person rejected one (in the analysis or in plan memory), reads `lowEvidence` as `=== true` instead of its `{reason}` shape, treats a nested object (a table in a loca, a chair at a table) as a duplicate or a second table on a table as new, leaves a missed chair as a loose box instead of its table's chair, or gives a number to a table counted by its drawn chairs. Node-only, against the module itself; `MERIT_VLM_REVIEW_SRC` points it at another copy. Red on 602ba27 (B1–B3, C1, D5, E1) |
+| `vlm-reading` | intelligence, security, ui | the review screen's Model reading sends anything before a person confirms (opening the panel and the free connection check send no plan), its confirmation stops naming what is and is not sent and the caps, a guest's name, note, inviter or the event's name reaches the upstream, the key reaches the browser (a reply, the page, storage), the whole plan and the model's close-ups stop landing in plan coordinates as marks and rows, a finished reading changes an object by itself, Accept changes more than the one object (a type correction spreading to its family) or goes around the existing writers, a printed number, a note or a finding about a decided object becomes applicable, model text renders as markup, an answer for an older analysis is merged, Cancel stops stopping the request in flight, an empty balance is only a toast, findings do not survive a reload, or a historical event can start a reading. Through the real relay with a SCRIPTED upstream — no model runs |
+| `chair-families` | intelligence, **slow** | the detector can only describe one kind of chair again, or printed text gets in as the second kind |
+| `plan-memory-isolation` | intelligence, **slow** | a human decision changes what the detector finds — confirming one object deletes or conjures others, or a confirmed object does not come back after Re-Analyze |
+| `plan-encoder` | intelligence | the browser forward pass drifts from the trainer's, the encoder's embeddings collapse, a provider hides whether it is a trained model, or shipping one starts implying a domain model is installed |
+| `structural-objects` | intelligence, **slow** | a column grid is split by a size-bin edge, a column is thrown out for someone else's chair, or printed text starts being read as a column grid |
+| `table-typing` | intelligence, **slow** | a table is typed bistro on its size alone, without evidence, or a plan of uniform tables starts producing bistros |
+| `training-data-capture` | intelligence, **slow** | a human decision stops storing a real crop with its provenance, or a capture log starts calling itself a model |
+| `relationship-engine` | intelligence | a seat is put at the wrong table, or an ambiguous seat is claimed as settled |
+| `review-decisions` | intelligence | a review decision (confirm, reject, not important, reclassify + family spread, bulk confirm, exclude) is written outside the one writer, or its four records drift apart: plan memory, the training label (decision id, individually reviewed or spread), the audit entry, the human observation; undo stops retracting the labels it made or deletes an earlier decision's memory entry; "not important" deletes the candidate or comes back after Re-Analyze; a historical event accepts a decision; a retracted example reaches a summary or a split |
+| `plan-memory` | intelligence | a remembered correction stops surviving Re-Analyze, or leaks between plans |
+| `visual-second-opinion` | intelligence | the learned encoder's opinion is presented as more than a second opinion |
+| `plan-representation` | intelligence | a plan that draws chairs is read as symbolic, or one that draws none is read as physical |
+| `symbolic-plan-capacity` | intelligence | a numbered symbol is deleted as printed text, or a capacity rule is claimed from OCR nothing corroborates |
+| `plan-self-check` | intelligence | arithmetic starts repairing its own inputs, a number loses its provenance, or the withdrawn "stated pax vs 0 counted seats" finding returns on a symbolic plan |
+| `operator-questions` | intelligence | two questions that are about different things start reading as the same sentence — correct individually, indistinguishable together, which is the failure reviewing one string at a time cannot catch |
+| `plan-confidence-budget` | intelligence | repeated uncertainty stops being grouped, one disagreement gets listed once per layer that noticed it, an item that settles nothing is ranked as work, or the tail below the line is dropped instead of counted |
+| `plan-teach-area` | intelligence | a lesson reaches outside the scope it was given, one lesson spreads to every object that resembles it, an ambiguous match gets applied anyway, a venue-wide note acts on resemblance instead of a printed number, or the wording starts calling any of it training |
+| `plan-number-integrity` | intelligence | a gap in the numbering gets silently filled in, a numbering range gets hardcoded instead of discovered, or repeated uncertainty stops being grouped |
+| `plan-frames` | intelligence | a coordinate conversion drifts (any frame's forward→inverse no longer returns the point), a seat is read with the corner-box rule (half a seat off), a rotated box is pushed through a distorting transform instead of refused, PDF user space stops landing where pdf.js drew it, or two frames are composed in the wrong order |
+| `plan-observations` | intelligence | an observation is stored without its provider, frame, box convention or confidence scale; two readings of ONE image (two crops, or a detector and OCR on the same raster) are counted as independent confirmation; confidences from different sources get averaged; a candidate, seat or scene-graph node loses the link to the observation behind it; or observations stop surviving save → reload, or an analysis stored before them stops loading |
+| `plan-table-numbers` | intelligence | a table number is claimed on weaker evidence than two crops agreeing, or LIKELY starts being produced from OCR alone |
+| `plan-ocr-model` | intelligence | the OCR model (PP-OCRv4 on ONNX Runtime Web) stops reading the plan's printed text, runs from bytes that are not its pinned sha256, hides that it is unavailable instead of saying why, or starts describing itself as a model of plans |
+| `symbol-geometry` | intelligence | a table symbol's edge stops being its drawn ring (black or faint), a neighbour beyond the ring is measured into it, a box with no ring moves, or two round table symbols drawn close are joined into one dining unit by contact |
+| `printed-matter-seats` | intelligence, detection | printing the OCR model read counts as evidence for (or against) a seat family again, the Golden Plan's bistro chairs are lost with the capacity block's glyphs, a door label becomes a table, or the detector stops deciding exactly as before when no text model ran |
+| `overlapping-tables` | intelligence, detection | a reading that covers another table is offered beside it, is deleted instead of held back, takes real seats down with it, or a held-back reading is joined into a dining group |
+| `plan-venue-elements` | intelligence | a stage, bar, entrance, column or loca is named from anything but a whole printed word or a wall-threaded family, an unmeasured extent stops saying so, a truss is offered as a second stage, or an element is offered over a person's earlier decision |
+| `plan-label-ocr` | intelligence | an object stops being named from the word the drawing prints on it, or starts being named from a scattered reading stitched back together |
+| `symbol-family` | intelligence | family membership widens until architecture is admitted, or narrows until the family's own members fall out |
+| `symbolic-plan-detection` | intelligence | on a symbolic plan a detected family member fails to become a table — because it was drawn in solid ink, read as printing, or counted as the seat of an object that was then demoted |
+| `operator-session` | business | the operator's review session loses its place, its queue order, or its decisions |
+| `command-center` | business | readiness becomes a percentage, the header badge and the screen count different things, or a self-check finding reaches a Turkish operator in English |
+| `floor-plan-modes` | business | reviewing a plan costs the operator the workspace around it — the event's name, the tabs, the guest search — or the uploaded plan stops being the hero |
+| `review-queue` | business | a ranked list of uncertainties stops becoming "this one, decide, next", or a settled item leaves the operator sitting on what they just settled |
+| `teach-number` | business | a number a person confirmed becomes indistinguishable from one two crops agreed on, or an unsafe scope is refused after the click instead of before |
+| `plan-doctor` | business | an uncertain OCR reading becomes a blocker, a finding has nowhere to go, a fixed problem lingers as a stale warning, or the pre-flight and the header disagree |
+| `layout-changes` | business | a moved table is reported as a removal plus an addition, a capacity change is lumped in with movement, the change view stops being a mode of the Floor Plan, or a published version is rewritten by reading it |
+| `guest-finder` | business | the global search stops answering the whole question in the row, an action silently reseats or reclassifies a guest, the keyboard path breaks, or a four-thousand-guest search stops being fast |
+| `smart-seating` | business | a recommendation becomes a mutation before someone presses Apply, a party gets split across tables to make the numbers work, a constraint that has never run is reported as satisfied, or a locked assignment stops outranking the advisor |
+| `arrival-wave` | business | the expected axis is drawn as a zero curve when nobody stated a time, a No Show reaches the arrival curve, an arrival moment survives a status that contradicts it, an untimed check-in is dropped instead of counted, partial coverage is presented as complete, a forecast appears, or selecting a wave stops narrowing the door list |
+| `risk-radar` | business | the Command Center's radar invents a readiness percentage, stops naming the risks this build cannot evaluate, raises a No Show as a problem with the plan, treats every occupied frozen table as a contradiction, stops raising a checked-in guest with no table as BLOCKING, or leaves a resolved row on screen |
+| `seating-freeze` | business | a seating path crosses a freeze without a supervisor, an override lifts the freeze instead of authorising one operation, Smart Seating starts recommending frozen tables, the freeze stops being a rule (a table added to the zone afterwards is not covered), the canvas layer buries the plan under an opaque block, or a freeze does not survive a reload |
+| `service-load` | business | occupancy bands are scored as a percentage instead of named, PLANNED and LIVE occupancy stop being different rooms (a No Show's chair still reads as taken), a distance or route is computed from an unmarked or a marked service point, the layer paints an opaque block over the plan, or toggling it mutates the room |
+| `table-availability` | business | marking a table unavailable moves a guest or touches capacity/chairs, a NEW assignment can still land on an unavailable table from any path (a seat row, not only the disabled button), Smart Seating recommends it anyway, a freeze and an unavailable state stop being independent facts about the same table, the Plan Doctor stops naming who it strands, or the canvas mark is gated behind a layer toggle |
+| `event-handover` | business | the digest disagrees with the same fact shown elsewhere on the Command Center (it must be read, never recomputed), a handover note can be edited or deleted, notes stop being newest-first, a blank note is accepted silently, a note ever moves a guest or changes arrival status, or a historical event keeps reaching the composer (or the Command Center at all) |
+| `audit-trail` | business | the generic per-mutation log entry leaks into the trail as if it were a decision, one real decision gets logged twice under two different codes, another event's decisions leak into this one's trail, an unresolvable guest/table id throws instead of falling back honestly, the shared log hitting its cap goes undisclosed, or the trail stops being reachable on a historical event |
+| `offline-recovery` | storage | a corrupted primary record boots blank with no notice, an automatic snapshot is taken on every save instead of throttled, the ring buffer grows past its cap, a snapshot shares storage with (and can be corrupted by) the primary record, a deliberate restore is not confirmed first, or automatic recovery is ever presented as equivalent to `exportBackup()`'s "a file left the browser" |
+| `event-package` | storage | importing a package replaces or touches any event already present instead of adding one alongside, a table freeze/chair/guest-assignment/audit-trail reference is left pointing at an old id after renumbering, exporting a package sets `lastBackupAt` as if the whole install had been backed up, or `duplicateEvent()`'s own TABLE-scope freeze regresses to pointing at the wrong table |
+| `post-event-replay` | business | the replay reaches a non-historical event, it reorders or restyles the Audit Trail section it sits above instead of leaving it alone, a bucket click fails to narrow to that window (or an empty window looks like a bare list instead of saying so), the clock-time shown on a row stops using the wave module's own helpers, or `MeritPostEventReplay` mutates its input or guesses without both clock helpers injected |
+| `event-history` | business | the history panel reports a percentage for an event with no capacity or no invited pax instead of naming the gap, one fact's missing data drags down the other fact's average, an average's own sample size stops being independent per fact, the panel appears with zero historical events, or its wording starts implying a trained model instead of a plain average of real past events |
+| `dependency-direction` | business | a `globalThis.Merit*` module reaches back into the app shell (`state`, `ui`, `render()`, `touchEvent()`, `saveState()`, `activeEvent()`) and the one-way graph that makes extraction safe stops holding. Also guards the scanner it depends on: prose mentions must stay invisible, `venue-model.js`'s injected `state` parameter must stay recognised as injection rather than coupling, and code inside a **nested** template interpolation must stay visible — a scanner blind to those reports live functions as dead |
+| `boot-contract` | business | the 80 classic scripts change order, `app-v8.js` stops being last, a script is loaded twice, or — the one static analysis cannot see — an overridden function silently resolves to its **pre-v8 body at runtime**, which is what an extraction from `app-v8.js` is most likely to cause and what does not look wrong in a diff. Also pins the `original` capture's classification (12 delegated / 20 shadowed / 1 untouched), so a future dead-code pass cannot read "21 unreachable" as 21 dead functions |
+| `offline-bundle-contract` | business | an element the app looks up by id ends up **below** the first `<script>` tag and is silently dropped from both offline artifacts while both builds report success (this already shipped a dead package once), or the bundle stops concatenating the sources in `index.html`'s document order — which keeps every file present, builds clean, and breaks the app, because `app-v8.js`'s overrides would run before the files they override |
+| `plan-detection-boundary` | business | the Assisted Detection pipeline's seam closes again: `app-v8.js` resolves a name bound only inside `plan-detection-classical.js` (or the reverse) — a ReferenceError at runtime, not a style complaint; the file exports something beyond its three public names; a function was COPIED rather than moved (two detectors that drift is worse than one in the wrong file); the injected `confidenceThreshold` or the returned `applyDeg` stops crossing, so calibration or the deskew deadband silently stops applying; or `trainedModel` stops being `false`, which a refactor is exactly the kind of change to drop and which would make the product imply a trained model exists |
+| `capacity-provenance` | business, fast | a table's capacity stops saying where it came from (printed, derived by rule, typed, detected), or a derived figure is presented as one a person confirmed |
+| `confirmed-chair-coordinates` | business, fast | confirming a detected chair regenerates it into a synthetic ring instead of writing the coordinate the detector found |
+| `digital-plan-fidelity` | business | a confirmed plan stops landing on its own drawing: the world box stops taking the plan's aspect (a non-Golden plan's top and bottom cut off), a table surface moves or changes shape, a small object is grown to a minimum size, a chair is pulled onto its table's edge or rotated twice on a rotated table, a venue object changes size, or the surface box is lost on save → reload |
+| `csp-policy` | security, slow | the enforced Content-Security-Policy refuses anything the product does (a screen, an import, an export, a PDF, detection with OCR, a backup), or stops refusing a planted inline handler |
+| `doc-drift` | docs, fast | a figure a document states as current (the frontend-architect fact table, the README, the rules) no longer matches the code, a bold figure has no measurement, or a suite has no row in this table |
+| `domain-writers` | business, fast | a second writer of the arrival axis, availability, freezes or handover notes appears, a single writer stops refusing a historical event itself, or a screen left open after the event became historical can still change it |
+| `duplicate-declarations` | business, fast | a function is declared twice in one scope, so the later body silently replaces the earlier everywhere in that scope |
+| `event-rules` | business, fast | the rules every screen asks before changing an event (historical, phase, chair geometry) change behaviour while being moved |
+| `first-view-and-busy` | ui, floor-plan, fast | a canvas first shows an event with tables off-screen, Fit stops reaching every object, bulk add leaves the room, the toast stack covers or blocks tables it could avoid, or long work (file read, workbook export) blocks without saying so |
+| `fixture-dates` | fast | a fixture date is about to pass and turn a future event historical, which would fail suites for the calendar's reasons |
+| `import-scale` | guests, performance, fast | the import wizard draws every row again (it froze 17.9 s at 10,000 rows), a row stops being reachable through the pager or filter, a correction lands on the wrong record, or the cached collator orders differently from localeCompare |
+| `mixed-representation` | intelligence, slow | one sheet drawn in two languages (drawn chairs and printed capacities) stops being read as both |
+| `onboarding` | business, fast | first-run onboarding stops naming the next action, or floods the screen with callouts |
+| `override-boundary` | business, fast | an app.js / app-guests.js function app-v8.js replaces stops being replaced, or a replaced body is still reachable |
+| `pax-invariant` | business, fast | `guest.pax` drifts from `1 + additionalGuests` through any path |
+| `reports-preflight` | business, ui, fast | Reports' "Before you export" says something different from the Plan Doctor / Command Center about the same event |
+| `resilience-engines` | resilience, fast | an engine that did not load (OCR, SheetJS, PDF.js) stops being reported, a half-done import or export results, or a control stays disabled |
+| `resilience-records` | resilience, storage, fast | one corrupt record makes the whole store unreadable again, an unreadable entry is replaced with a fabricated event, a save that reads back different goes unnoticed, availability does not survive save → reload, or a change made just before closing is lost |
+| `screen-modules` | business, fast | a screen moved out of `app-v8.js` (`src/screen-*.js`) uses a name it was not handed — a shell global or an app-v8 helper, which is a ReferenceError on first use — or its DEPS list, its bindings and what app-v8.js passes stop being one list, or render/toast/touchEvent are captured instead of wrapped |
+| `schema-migration` | storage, fast | the migration chain stops upgrading genuinely old stored data |
+| `teach-venue-scope` | intelligence, fast | a venue-wide lesson is applied to an object without a verified printed number |
+| `transaction-atomicity` | business, fast | a mutation that fails halfway leaves storage and memory disagreeing |
+| `viewport-matrix` | ui, accessibility, localization, slow | at 1920, 2560 or 1440, in Turkish or English, a screen or dialog scrolls sideways, a control runs off the edge, text is clipped without its full text, a Tab stop shows no focus, or axe finds a WCAG A/AA violation |
+| `writer-transitions` | business, fast | the transition one of the three single writers applies (arrival, availability, handover) changes |
+
+## Structural suites
+
+Four of the suites above guard *structure* rather than behaviour, and exist
+so `app-v8.js` can be broken up safely: `dependency-direction`,
+`boot-contract`, `offline-bundle-contract` and `plan-detection-boundary`.
+Run them before and after every structural step.
+
+**None of them proves a detector still detects.** The first attempt at the
+detection extraction passed all four, booted cleanly, and threw
+`ReferenceError` on every real analysis. Pair them with a suite that exercises
+the behaviour being moved — for detection that is `symbolic-plan-detection`,
+plus `npm run benchmark` against the committed baseline. The plan they serve is in
+`benchmarks/MODULARIZATION-ORDER.md`, the map it is derived from is
+`benchmarks/APP-V8-OWNERSHIP-MAP.md`, and the evidence behind "delete
+nothing yet" is `benchmarks/CODE-INVENTORY.md`.
+
+They share `tests/lib/js-scan.mjs`, which strips comments and string literals
+so a rule can be written about *code* rather than about text. Use it instead
+of grep for any question of the form "does this file really reference X?" —
+and note its one hard-won property: it keeps the contents of **nested**
+template interpolations, because that is where nearly every call in this
+codebase's render functions lives.
+
+## Environment
+
+Everything is resolved, with the container's values as the last fallback, so
+the same files run here and in CI:
+
+| variable | what it overrides |
+|---|---|
+| `MERIT_PLAYWRIGHT` | module path to Playwright (default: a normal `playwright` import) |
+| `MERIT_CHROMIUM` | Chromium executable (default: under `PLAYWRIGHT_BROWSERS_PATH`, else Playwright's own) |
+| `MERIT_BASE_URL` | use an already-running server instead of starting one |
+| `MERIT_TEST_ARTIFACTS` | where downloaded workbooks and backup fixtures are written |
+
+The pinned CDN engines (SheetJS, PDF.js) and Tesseract with its language
+data are served from `.vendor-cache/`: `npm run build:offline` puts SheetJS
+and PDF.js there, `npm run vendor:test` the OCR engine and language data.
+Without them the suite still runs wherever there is network, but a sandbox
+with no outbound access boots the app with `XLSX` undefined — the workbook
+export then produces nothing and looks fine — and without OCR, which changes
+what Assisted Detection finds. Run both once and the whole suite is hermetic.
+
+The benchmark runners are stricter: `launchChromium()` serves every CDN
+engine from the cache, sends nothing to the network, and refuses to start
+without the OCR files. §27 measured why: a machine that could reach the CDN
+measured detection WITH OCR (`a2`: 3 phantom tables) and one that could not
+measured it without (`a2`: 23), and both wrote their numbers under the same
+name.
+
+## Writing a suite
+
+A suite is a file in `suites/` named `*.test.mjs`:
+
+```js
+import { openApp, createBlankEvent } from "../lib/app-actions.mjs";
+
+export const meta = { name: "my-suite", tags: ["business", "fast"], timeout: 90000 };
+
+export default async function run({ page, checks, baseUrl, artifactDir, repoRoot }) {
+  await openApp(page, baseUrl);
+  checks.ok(condition, "what an operator would lose if this were false", detail);
+  checks.require(condition, "…");   // aborts the suite instead of cascading
+}
+```
+
+Add `downloads: true` to `meta` if the suite saves a file, and a `viewport` if
+1920×1080 is wrong for it.
+
+Three things this suite learned the hard way, all encoded in `lib/app-actions.mjs`:
+
+- **Never hardcode a fixture date.** An event dated in the past is
+  `isHistorical`: read-only, with no Floor Plan tab and no add-object control.
+  A suite that hardcodes a date fails the day it passes, with a
+  `click(".planmap-fab")` timeout that says nothing about the cause. Use
+  `futureDate()` — `createBlankEvent` already defaults to it. Pass a past date
+  only when the suite genuinely wants a finished event.
+
+- **Drive the real UI.** Nearly every domain function — `canMutate`,
+  `setTableCapacity`, the seating logic — lives inside a closure and is not on
+  `globalThis`. So do `state` and `ui`: they are top-level `let` bindings, so
+  `state.events` works inside `page.evaluate` and `globalThis.state` is
+  `undefined` on a perfectly healthy app.
+- **Wait on state, never on a sleep.** `render()` rebuilds the screen from
+  places a test cannot see, and a synthetic keystroke or fill that lands
+  mid-render reaches a detached node. The helpers confirm what they typed
+  actually reached `ui`, and read the data back before drawing any conclusion
+  from it.

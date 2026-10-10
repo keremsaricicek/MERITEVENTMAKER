@@ -1,0 +1,887 @@
+{
+ "ranAt": "2026-10-10T10:54:51.267Z",
+ "variants": [
+  {
+   "variant": "ORIGINAL",
+   "tables": 47,
+   "falsePositives": 1,
+   "baselineFalseRate": 0.0213,
+   "contradictions": 3,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "CAPACITY"
+   ],
+   "pointedAt": 6,
+   "pointedAtFalse": 1,
+   "targetedPrecision": 0.1667,
+   "lift": 7.833,
+   "severities": {
+    "medium": 2,
+    "high": 1
+   },
+   "perContradiction": [
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 1,
+     "ofThoseFalse": 1,
+     "precision": 1
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 2,
+     "ofThoseFalse": 1,
+     "precision": 0.5
+    },
+    {
+     "id": "contra:capacity",
+     "kind": "CAPACITY",
+     "severity": "high",
+     "pointedAt": 5,
+     "ofThoseFalse": 1,
+     "precision": 0.2
+    }
+   ],
+   "downgradedFacts": [
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:rectangle",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "1 table(s) have no seat while 2 seat(s) have no table.",
+     "2 object(s) called tables do not look like this plan's tables.",
+     "The drawing says 124 people; detection counted 109."
+    ],
+    "tr": [
+     "1 masada hiç koltuk yok, buna karşılık 2 koltuğun masası yok.",
+     "Masa denen 2 nesne bu planın masalarına benzemiyor.",
+     "Çizim 124 kişi diyor; tespit 109 saydı."
+    ]
+   }
+  },
+  {
+   "variant": "jpeg-q40",
+   "tables": 48,
+   "falsePositives": 2,
+   "baselineFalseRate": 0.0417,
+   "contradictions": 2,
+   "kinds": [
+    "COUNT",
+    "CAPACITY"
+   ],
+   "pointedAt": 5,
+   "pointedAtFalse": 2,
+   "targetedPrecision": 0.4,
+   "lift": 9.6,
+   "severities": {
+    "medium": 1,
+    "high": 1
+   },
+   "perContradiction": [
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 2,
+     "ofThoseFalse": 2,
+     "precision": 1
+    },
+    {
+     "id": "contra:capacity",
+     "kind": "CAPACITY",
+     "severity": "high",
+     "pointedAt": 5,
+     "ofThoseFalse": 2,
+     "precision": 0.4
+    }
+   ],
+   "downgradedFacts": [],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.unverifiedSeating"
+   ],
+   "sample": {
+    "en": [
+     "2 table(s) have no seat while 2 seat(s) have no table.",
+     "The drawing says 124 people; detection counted 112."
+    ],
+    "tr": [
+     "2 masada hiç koltuk yok, buna karşılık 2 koltuğun masası yok.",
+     "Çizim 124 kişi diyor; tespit 112 saydı."
+    ]
+   }
+  },
+  {
+   "variant": "grayscale",
+   "tables": 44,
+   "falsePositives": 2,
+   "baselineFalseRate": 0.0455,
+   "contradictions": 3,
+   "kinds": [
+    "TYPE",
+    "RELATIONSHIP",
+    "CAPACITY"
+   ],
+   "pointedAt": 12,
+   "pointedAtFalse": 1,
+   "targetedPrecision": 0.0833,
+   "lift": 1.833,
+   "severities": {
+    "medium": 1,
+    "high": 2
+   },
+   "perContradiction": [
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 5,
+     "ofThoseFalse": 1,
+     "precision": 0.2
+    },
+    {
+     "id": "contra:seatsInsideBody",
+     "kind": "RELATIONSHIP",
+     "severity": "high",
+     "pointedAt": 1,
+     "ofThoseFalse": 0,
+     "precision": 0
+    },
+    {
+     "id": "contra:capacity",
+     "kind": "CAPACITY",
+     "severity": "high",
+     "pointedAt": 8,
+     "ofThoseFalse": 0,
+     "precision": 0
+    }
+   ],
+   "downgradedFacts": [
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:round",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:rectangle",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:bistro",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "5 object(s) called tables do not look like this plan's tables.",
+     "1 object(s) contain every seat attached to them, which a table does not.",
+     "The drawing says 124 people; detection counted 104."
+    ],
+    "tr": [
+     "Masa denen 5 nesne bu planın masalarına benzemiyor.",
+     "1 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz.",
+     "Çizim 124 kişi diyor; tespit 104 saydı."
+    ]
+   }
+  },
+  {
+   "variant": "noise",
+   "tables": 49,
+   "falsePositives": 3,
+   "baselineFalseRate": 0.0612,
+   "contradictions": 3,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "CAPACITY"
+   ],
+   "pointedAt": 5,
+   "pointedAtFalse": 3,
+   "targetedPrecision": 0.6,
+   "lift": 9.8,
+   "severities": {
+    "medium": 2,
+    "high": 1
+   },
+   "perContradiction": [
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 3,
+     "ofThoseFalse": 3,
+     "precision": 1
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 2,
+     "ofThoseFalse": 2,
+     "precision": 1
+    },
+    {
+     "id": "contra:capacity",
+     "kind": "CAPACITY",
+     "severity": "high",
+     "pointedAt": 5,
+     "ofThoseFalse": 3,
+     "precision": 0.6
+    }
+   ],
+   "downgradedFacts": [
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:rectangle",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "3 table(s) have no seat while 2 seat(s) have no table.",
+     "2 object(s) called tables do not look like this plan's tables.",
+     "The drawing says 124 people; detection counted 109."
+    ],
+    "tr": [
+     "3 masada hiç koltuk yok, buna karşılık 2 koltuğun masası yok.",
+     "Masa denen 2 nesne bu planın masalarına benzemiyor.",
+     "Çizim 124 kişi diyor; tespit 109 saydı."
+    ]
+   }
+  },
+  {
+   "variant": "downscale-70",
+   "tables": 42,
+   "falsePositives": 1,
+   "baselineFalseRate": 0.0238,
+   "contradictions": 2,
+   "kinds": [
+    "TYPE",
+    "CAPACITY"
+   ],
+   "pointedAt": 8,
+   "pointedAtFalse": 0,
+   "targetedPrecision": 0,
+   "lift": 0,
+   "severities": {
+    "medium": 1,
+    "high": 1
+   },
+   "perContradiction": [
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 3,
+     "ofThoseFalse": 0,
+     "precision": 0
+    },
+    {
+     "id": "contra:capacity",
+     "kind": "CAPACITY",
+     "severity": "high",
+     "pointedAt": 5,
+     "ofThoseFalse": 0,
+     "precision": 0
+    }
+   ],
+   "downgradedFacts": [
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:round",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.question"
+   ],
+   "sample": {
+    "en": [
+     "3 object(s) called tables do not look like this plan's tables.",
+     "The drawing says 124 people; detection counted 170."
+    ],
+    "tr": [
+     "Masa denen 3 nesne bu planın masalarına benzemiyor.",
+     "Çizim 124 kişi diyor; tespit 170 saydı."
+    ]
+   }
+  },
+  {
+   "variant": "blur",
+   "tables": 53,
+   "falsePositives": 16,
+   "baselineFalseRate": 0.3019,
+   "contradictions": 5,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "RELATIONSHIP",
+    "CAPACITY"
+   ],
+   "pointedAt": 18,
+   "pointedAtFalse": 14,
+   "targetedPrecision": 0.7778,
+   "lift": 2.576,
+   "severities": {
+    "medium": 3,
+    "high": 2
+   },
+   "perContradiction": [
+    {
+     "id": "contra:orphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 0,
+     "ofThoseFalse": 0,
+     "precision": null
+    },
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 3,
+     "ofThoseFalse": 3,
+     "precision": 1
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 4,
+     "ofThoseFalse": 4,
+     "precision": 1
+    },
+    {
+     "id": "contra:seatsInsideBody",
+     "kind": "RELATIONSHIP",
+     "severity": "high",
+     "pointedAt": 13,
+     "ofThoseFalse": 11,
+     "precision": 0.8462
+    },
+    {
+     "id": "contra:capacity",
+     "kind": "CAPACITY",
+     "severity": "high",
+     "pointedAt": 5,
+     "ofThoseFalse": 3,
+     "precision": 0.6
+    }
+   ],
+   "downgradedFacts": [
+    {
+     "id": "tableTypeMix",
+     "from": "strong",
+     "to": "likely"
+    },
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:rectangle",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:round",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "31 of 112 detected seats belong to no table.",
+     "3 table(s) have no seat while 31 seat(s) have no table.",
+     "4 object(s) called tables do not look like this plan's tables.",
+     "13 object(s) contain every seat attached to them, which a table does not.",
+     "The drawing says 124 people; detection counted 68."
+    ],
+    "tr": [
+     "Tespit edilen 112 koltuktan 31 tanesi hiçbir masaya ait değil.",
+     "3 masada hiç koltuk yok, buna karşılık 31 koltuğun masası yok.",
+     "Masa denen 4 nesne bu planın masalarına benzemiyor.",
+     "13 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz.",
+     "Çizim 124 kişi diyor; tespit 68 saydı."
+    ]
+   }
+  },
+  {
+   "variant": "hue-shift",
+   "tables": 77,
+   "falsePositives": 39,
+   "baselineFalseRate": 0.5065,
+   "contradictions": 6,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "RELATIONSHIP",
+    "CAPACITY"
+   ],
+   "pointedAt": 46,
+   "pointedAtFalse": 34,
+   "targetedPrecision": 0.7391,
+   "lift": 1.459,
+   "severities": {
+    "medium": 4,
+    "high": 2
+   },
+   "perContradiction": [
+    {
+     "id": "contra:orphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 0,
+     "ofThoseFalse": 0,
+     "precision": null
+    },
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 4,
+     "ofThoseFalse": 2,
+     "precision": 0.5
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 5,
+     "ofThoseFalse": 4,
+     "precision": 0.8
+    },
+    {
+     "id": "contra:mixedGroupTypes",
+     "kind": "RELATIONSHIP",
+     "severity": "medium",
+     "pointedAt": 3,
+     "ofThoseFalse": 0,
+     "precision": 0
+    },
+    {
+     "id": "contra:seatsInsideBody",
+     "kind": "RELATIONSHIP",
+     "severity": "high",
+     "pointedAt": 38,
+     "ofThoseFalse": 32,
+     "precision": 0.8421
+    },
+    {
+     "id": "contra:capacity",
+     "kind": "CAPACITY",
+     "severity": "high",
+     "pointedAt": 5,
+     "ofThoseFalse": 2,
+     "precision": 0.4
+    }
+   ],
+   "downgradedFacts": [
+    {
+     "id": "tableTypeMix",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:round",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "29 of 114 detected seats belong to no table.",
+     "4 table(s) have no seat while 29 seat(s) have no table.",
+     "5 object(s) called tables do not look like this plan's tables.",
+     "1 seating unit(s) are made of tables typed as different kinds.",
+     "38 object(s) contain every seat attached to them, which a table does not.",
+     "The drawing says 124 people; detection counted 44."
+    ],
+    "tr": [
+     "Tespit edilen 114 koltuktan 29 tanesi hiçbir masaya ait değil.",
+     "4 masada hiç koltuk yok, buna karşılık 29 koltuğun masası yok.",
+     "Masa denen 5 nesne bu planın masalarına benzemiyor.",
+     "1 oturma biriminde farklı türde sınıflandırılmış masalar var.",
+     "38 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz.",
+     "Çizim 124 kişi diyor; tespit 44 saydı."
+    ]
+   }
+  },
+  {
+   "variant": "contrast-high",
+   "tables": 73,
+   "falsePositives": 36,
+   "baselineFalseRate": 0.4932,
+   "contradictions": 6,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "RELATIONSHIP",
+    "CAPACITY"
+   ],
+   "pointedAt": 39,
+   "pointedAtFalse": 34,
+   "targetedPrecision": 0.8718,
+   "lift": 1.768,
+   "severities": {
+    "medium": 4,
+    "high": 2
+   },
+   "perContradiction": [
+    {
+     "id": "contra:orphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 0,
+     "ofThoseFalse": 0,
+     "precision": null
+    },
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 7,
+     "ofThoseFalse": 4,
+     "precision": 0.5714
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 2,
+     "ofThoseFalse": 2,
+     "precision": 1
+    },
+    {
+     "id": "contra:familyOutlier",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 1,
+     "ofThoseFalse": 1,
+     "precision": 1
+    },
+    {
+     "id": "contra:seatsInsideBody",
+     "kind": "RELATIONSHIP",
+     "severity": "high",
+     "pointedAt": 32,
+     "ofThoseFalse": 30,
+     "precision": 0.9375
+    },
+    {
+     "id": "contra:capacity",
+     "kind": "CAPACITY",
+     "severity": "high",
+     "pointedAt": 5,
+     "ofThoseFalse": 3,
+     "precision": 0.6
+    }
+   ],
+   "downgradedFacts": [
+    {
+     "id": "tableTypeMix",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:round",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "34 of 111 detected seats belong to no table.",
+     "7 table(s) have no seat while 34 seat(s) have no table.",
+     "2 object(s) called tables do not look like this plan's tables.",
+     "1 object(s) were typed differently from the family they look like.",
+     "32 object(s) contain every seat attached to them, which a table does not.",
+     "The drawing says 124 people; detection counted 45."
+    ],
+    "tr": [
+     "Tespit edilen 111 koltuktan 34 tanesi hiçbir masaya ait değil.",
+     "7 masada hiç koltuk yok, buna karşılık 34 koltuğun masası yok.",
+     "Masa denen 2 nesne bu planın masalarına benzemiyor.",
+     "1 nesne, benzediği aileden farklı türde sınıflandırıldı.",
+     "32 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz.",
+     "Çizim 124 kişi diyor; tespit 45 saydı."
+    ]
+   }
+  },
+  {
+   "variant": "jpeg-q20",
+   "tables": 41,
+   "falsePositives": 8,
+   "baselineFalseRate": 0.1951,
+   "contradictions": 4,
+   "kinds": [
+    "COUNT",
+    "TYPE",
+    "CAPACITY"
+   ],
+   "pointedAt": 17,
+   "pointedAtFalse": 6,
+   "targetedPrecision": 0.3529,
+   "lift": 1.809,
+   "severities": {
+    "medium": 3,
+    "high": 1
+   },
+   "perContradiction": [
+    {
+     "id": "contra:orphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 0,
+     "ofThoseFalse": 0,
+     "precision": null
+    },
+    {
+     "id": "contra:emptyTablesOrphanSeats",
+     "kind": "COUNT",
+     "severity": "medium",
+     "pointedAt": 3,
+     "ofThoseFalse": 3,
+     "precision": 1
+    },
+    {
+     "id": "contra:visualClass",
+     "kind": "TYPE",
+     "severity": "medium",
+     "pointedAt": 12,
+     "ofThoseFalse": 2,
+     "precision": 0.1667
+    },
+    {
+     "id": "contra:capacity",
+     "kind": "CAPACITY",
+     "severity": "high",
+     "pointedAt": 6,
+     "ofThoseFalse": 5,
+     "precision": 0.8333
+    }
+   ],
+   "downgradedFacts": [
+    {
+     "id": "tableTypeMix",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "tableCount",
+     "from": "likely",
+     "to": "uncertain"
+    },
+    {
+     "id": "has:round",
+     "from": "likely",
+     "to": "uncertain"
+    }
+   ],
+   "topPriorities": [
+    "priority.contradiction",
+    "priority.contradiction",
+    "priority.contradiction"
+   ],
+   "sample": {
+    "en": [
+     "13 of 84 detected seats belong to no table.",
+     "3 table(s) have no seat while 13 seat(s) have no table.",
+     "12 object(s) called tables do not look like this plan's tables.",
+     "The drawing says 124 people; detection counted 60."
+    ],
+    "tr": [
+     "Tespit edilen 84 koltuktan 13 tanesi hiçbir masaya ait değil.",
+     "3 masada hiç koltuk yok, buna karşılık 13 koltuğun masası yok.",
+     "Masa denen 12 nesne bu planın masalarına benzemiyor.",
+     "Çizim 124 kişi diyor; tespit 60 saydı."
+    ]
+   }
+  }
+ ],
+ "gates": {
+  "meanTargetedPrecision": 0.4435,
+  "meanBaselineFalseRate": 0.1878,
+  "renderingsWherePointingBeatsChance": "8/9",
+  "contradictionsOnTheCleanOriginal": 3,
+  "honestyFailures": 0
+ },
+ "perKind": {
+  "COUNT": {
+   "kind": "COUNT",
+   "fired": 11,
+   "pointedAt": 23,
+   "ofThoseFalse": 18
+  },
+  "TYPE": {
+   "kind": "TYPE",
+   "fired": 9,
+   "pointedAt": 36,
+   "ofThoseFalse": 17
+  },
+  "CAPACITY": {
+   "kind": "CAPACITY",
+   "fired": 9,
+   "pointedAt": 49,
+   "ofThoseFalse": 19
+  },
+  "RELATIONSHIP": {
+   "kind": "RELATIONSHIP",
+   "fired": 5,
+   "pointedAt": 87,
+   "ofThoseFalse": 73
+  }
+ },
+ "perCheck": {
+  "contra:emptyTablesOrphanSeats": {
+   "id": "contra:emptyTablesOrphanSeats",
+   "kind": "COUNT",
+   "fired": 7,
+   "pointedAt": 23,
+   "ofThoseFalse": 18,
+   "severities": {
+    "medium": 7
+   }
+  },
+  "contra:visualClass": {
+   "id": "contra:visualClass",
+   "kind": "TYPE",
+   "fired": 8,
+   "pointedAt": 35,
+   "ofThoseFalse": 16,
+   "severities": {
+    "medium": 8
+   }
+  },
+  "contra:capacity": {
+   "id": "contra:capacity",
+   "kind": "CAPACITY",
+   "fired": 9,
+   "pointedAt": 49,
+   "ofThoseFalse": 19,
+   "severities": {
+    "high": 9
+   }
+  },
+  "contra:seatsInsideBody": {
+   "id": "contra:seatsInsideBody",
+   "kind": "RELATIONSHIP",
+   "fired": 4,
+   "pointedAt": 84,
+   "ofThoseFalse": 73,
+   "severities": {
+    "high": 4
+   }
+  },
+  "contra:orphanSeats": {
+   "id": "contra:orphanSeats",
+   "kind": "COUNT",
+   "fired": 4,
+   "pointedAt": 0,
+   "ofThoseFalse": 0,
+   "severities": {
+    "medium": 4
+   }
+  },
+  "contra:mixedGroupTypes": {
+   "id": "contra:mixedGroupTypes",
+   "kind": "RELATIONSHIP",
+   "fired": 1,
+   "pointedAt": 3,
+   "ofThoseFalse": 0,
+   "severities": {
+    "medium": 1
+   }
+  },
+  "contra:familyOutlier": {
+   "id": "contra:familyOutlier",
+   "kind": "TYPE",
+   "fired": 1,
+   "pointedAt": 1,
+   "ofThoseFalse": 1,
+   "severities": {
+    "medium": 1
+   }
+  }
+ },
+ "kindVerdict": {
+  "RELATIONSHIP": "TRUSTED",
+  "COUNT": "TRUSTED",
+  "TYPE": "TRUSTED",
+  "CAPACITY": "TRUSTED"
+ },
+ "chanceRate": 0.1878
+}

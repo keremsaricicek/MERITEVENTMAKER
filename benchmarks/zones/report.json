@@ -1,0 +1,891 @@
+{
+ "ranAt": "2026-10-10T11:04:29.976Z",
+ "note": "Stability is measured across renderings of ONE drawing, so disagreement is the product's and not the annotation's. REAL DISTINCT VENUE PLANS: 1.",
+ "renderings": 16,
+ "stability": 0.9935064935064936,
+ "gate": 0.9,
+ "met": true,
+ "originalSignature": "barx1,bistrox1,diningx2,entrancex1,stagex1",
+ "stabilityMethod": "per annotated table: the share of (object, rendering) pairs whose zone TYPE matches that object's modal reading across renderings",
+ "tablesCompared": 46,
+ "comparisons": 616,
+ "agreements": 612,
+ "disagreeingObjects": [
+  {
+   "object": "t044",
+   "modal": "dining",
+   "tally": {
+    "dining": 6,
+    "bistro": 1
+   },
+   "seenIn": 7
+  },
+  {
+   "object": "t045",
+   "modal": "dining",
+   "tally": {
+    "dining": 5,
+    "bistro": 1
+   },
+   "seenIn": 6
+  },
+  {
+   "object": "t043",
+   "modal": "bistro",
+   "tally": {
+    "bistro": 5,
+    "dining": 2
+   },
+   "seenIn": 7
+  }
+ ],
+ "zoneCountRange": [
+  3,
+  10
+ ],
+ "perType": {
+  "stage": {
+   "present": 14,
+   "counts": [
+    1,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    1,
+    1,
+    1
+   ]
+  },
+  "bar": {
+   "present": 16,
+   "counts": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  "entrance": {
+   "present": 16,
+   "counts": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  "dining": {
+   "present": 16,
+   "counts": [
+    2,
+    2,
+    4,
+    6,
+    6,
+    3,
+    2,
+    3,
+    4,
+    7,
+    1,
+    1,
+    1,
+    2,
+    2,
+    3
+   ]
+  },
+  "bistro": {
+   "present": 5,
+   "counts": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    2,
+    0,
+    0
+   ]
+  }
+ },
+ "everyZoneHasEvidence": true,
+ "seatsNeverExceed": true,
+ "rows": [
+  {
+   "id": "ORIGINAL",
+   "signature": "barx1,bistrox1,diningx2,entrancex1,stagex1",
+   "zoneCount": 6,
+   "zones": [
+    {
+     "type": "stage",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 34,
+     "seats": 79
+    },
+    {
+     "type": "dining",
+     "confidence": "likely",
+     "objects": 11,
+     "seats": 27
+    },
+    {
+     "type": "bistro",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 3
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "blur",
+   "signature": "barx1,diningx2,entrancex1",
+   "zoneCount": 4,
+   "zones": [
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "likely",
+     "objects": 52,
+     "seats": 67
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 1
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "bright-down",
+   "signature": "barx1,diningx4,entrancex1,stagex1",
+   "zoneCount": 7,
+   "zones": [
+    {
+     "type": "stage",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 9,
+     "seats": 25
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 17,
+     "seats": 30
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 2
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 1
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "bright-up",
+   "signature": "barx1,diningx6,entrancex1,stagex1",
+   "zoneCount": 9,
+   "zones": [
+    {
+     "type": "stage",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "likely",
+     "objects": 56,
+     "seats": 39
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 3,
+     "seats": 3
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 3,
+     "seats": 3
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 3,
+     "seats": 3
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 1
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "contrast-high",
+   "signature": "barx1,diningx6,entrancex1,stagex1",
+   "zoneCount": 9,
+   "zones": [
+    {
+     "type": "stage",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "likely",
+     "objects": 62,
+     "seats": 35
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 3,
+     "seats": 3
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 3,
+     "seats": 3
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 3,
+     "seats": 3
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 1
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "contrast-low",
+   "signature": "barx1,diningx3,entrancex1,stagex1",
+   "zoneCount": 6,
+   "zones": [
+    {
+     "type": "stage",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 33,
+     "seats": 79
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 8,
+     "seats": 21
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 2
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "crop-pad",
+   "signature": "barx1,bistrox1,diningx2,entrancex1,stagex1",
+   "zoneCount": 6,
+   "zones": [
+    {
+     "type": "stage",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 33,
+     "seats": 79
+    },
+    {
+     "type": "dining",
+     "confidence": "likely",
+     "objects": 11,
+     "seats": 27
+    },
+    {
+     "type": "bistro",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 3
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "downscale-70",
+   "signature": "barx1,diningx3,entrancex1,stagex1",
+   "zoneCount": 6,
+   "zones": [
+    {
+     "type": "stage",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 33,
+     "seats": 136
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 8,
+     "seats": 32
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 2
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "grayscale",
+   "signature": "barx1,diningx4,entrancex1,stagex1",
+   "zoneCount": 7,
+   "zones": [
+    {
+     "type": "stage",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 33,
+     "seats": 80
+    },
+    {
+     "type": "dining",
+     "confidence": "likely",
+     "objects": 9,
+     "seats": 22
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 1
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 1
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "hue-shift",
+   "signature": "barx1,diningx7,entrancex1,stagex1",
+   "zoneCount": 10,
+   "zones": [
+    {
+     "type": "stage",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "likely",
+     "objects": 65,
+     "seats": 34
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 3,
+     "seats": 3
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 3,
+     "seats": 3
+    },
+    {
+     "type": "dining",
+     "confidence": "likely",
+     "objects": 3,
+     "seats": 3
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 1
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "jpeg-q20",
+   "signature": "barx1,bistrox1,diningx1,entrancex1,stagex1",
+   "zoneCount": 5,
+   "zones": [
+    {
+     "type": "stage",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "likely",
+     "objects": 38,
+     "seats": 57
+    },
+    {
+     "type": "bistro",
+     "confidence": "likely",
+     "objects": 3,
+     "seats": 3
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "jpeg-q40",
+   "signature": "barx1,bistrox1,diningx1,entrancex1,stagex1",
+   "zoneCount": 5,
+   "zones": [
+    {
+     "type": "stage",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 46,
+     "seats": 108
+    },
+    {
+     "type": "bistro",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 4
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "lowres-roundtrip",
+   "signature": "barx1,diningx1,entrancex1",
+   "zoneCount": 3,
+   "zones": [
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "likely",
+     "objects": 24,
+     "seats": 37
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "noise",
+   "signature": "barx1,bistrox2,diningx2,entrancex1,stagex1",
+   "zoneCount": 7,
+   "zones": [
+    {
+     "type": "stage",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 36,
+     "seats": 80
+    },
+    {
+     "type": "dining",
+     "confidence": "likely",
+     "objects": 9,
+     "seats": 22
+    },
+    {
+     "type": "bistro",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 3
+    },
+    {
+     "type": "bistro",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 4
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "rotate-2",
+   "signature": "barx1,diningx2,entrancex1,stagex1",
+   "zoneCount": 5,
+   "zones": [
+    {
+     "type": "stage",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 45,
+     "seats": 110
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 1
+    }
+   ],
+   "pageErrors": 0
+  },
+  {
+   "id": "rotate-minus-3",
+   "signature": "barx1,diningx3,entrancex1,stagex1",
+   "zoneCount": 6,
+   "zones": [
+    {
+     "type": "stage",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "bar",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 0
+    },
+    {
+     "type": "entrance",
+     "confidence": "strong",
+     "objects": 2,
+     "seats": 0
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 41,
+     "seats": 99
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 2
+    },
+    {
+     "type": "dining",
+     "confidence": "strong",
+     "objects": 1,
+     "seats": 1
+    }
+   ],
+   "pageErrors": 0
+  }
+ ]
+}

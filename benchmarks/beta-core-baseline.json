@@ -1,0 +1,73 @@
+{
+  "label": "BETA CORE BASELINE",
+  "head": "ee069590ac861823ed1bd25414d8fcd134a9f103",
+  "branch": "claude/merit-concept3-plan-intelligence-rebirth",
+  "note": "The protected state at the start of the event-operations product programme. Product work must not move these. Two commands exit non-zero; both are known, verified, pre-existing states - see knownFailing.",
+  "commands": {
+    "npm test": { "exit": 0, "secs": 213, "suites": "27/27", "checks": "818/818" },
+    "npm run test:all": { "exit": 1, "secs": 245, "suites": "32/33", "checks": "1011/1013", "failing": "plan-intelligence-contract" },
+    "npm run benchmark": { "exit": 0, "secs": 25 },
+    "npm run benchmark:baseline": { "exit": 0, "secs": 0, "verdict": "No regressions. 0 improvements, 0 notes." },
+    "npm run benchmark:adversarial": { "exit": 0, "secs": 33 },
+    "npm run benchmark:zones": { "exit": 0, "secs": 63 },
+    "npm run benchmark:facts": { "exit": 0, "secs": 22 },
+    "npm run benchmark:contradictions": { "exit": 0, "secs": 35 },
+    "npm run benchmark:review-order": { "exit": 0, "secs": 49 },
+    "npm run benchmark:false-positives": { "exit": 0, "secs": 45 },
+    "npm run benchmark:teaching": { "exit": 0, "secs": 17 },
+    "npm run benchmark:memory": { "exit": 1, "secs": 93, "why": "gates are not met on TRANSFORMED renderings; known, measured, accepted" },
+    "npm run perf": { "exit": 0, "secs": 15 },
+    "npm run verify:offline": { "exit": 0, "secs": 8, "result": "27 passed, 0 failed" }
+  },
+  "detection": {
+    "merit-real-venue": {
+      "representation": "PHYSICAL",
+      "tables": { "gt": 46, "det": 50, "tp": 46, "fp": 4, "fn": 0, "P": 0.92, "R": 1, "F1": 0.958 },
+      "chairs": { "gt": 113, "det": 112, "tp": 107, "fp": 5, "fn": 6, "P": 0.955, "R": 0.947, "F1": 0.951 },
+      "relations": { "gt": 109, "scored": 101, "correct": 100, "wrong": 1, "orphan": 0, "accuracy": 0.99 },
+      "semanticStage": { "tp": 0, "fp": 0, "fn": 1, "why": "the benchmark build has no OCR; the stage is recovered from its printed label in the offline build" }
+    },
+    "ornek-symbolic": {
+      "representation": "SYMBOLIC",
+      "tables": { "gt": 166, "det": 163, "tp": 162, "fp": 1, "fn": 4, "P": 0.994, "R": 0.976, "F1": 0.985 }
+    },
+    "adversarial": {
+      "architecture": { "gt": 10, "tp": 10, "fp": 0, "fn": 0, "F1": 1, "semanticColumn": "6/6" },
+      "bistro": { "gt": 23, "tp": 18, "fp": 0, "fn": 5, "P": 1, "R": 0.783, "F1": 0.878 },
+      "dense": { "gt": 24, "tp": 24, "fp": 0, "fn": 0, "F1": 1 },
+      "text": { "gt": 12, "tp": 12, "fp": 0, "fn": 0, "F1": 1 }
+    }
+  },
+  "memory": {
+    "retentionFullModel": 0.7857,
+    "identityPrecisionFullModel": 0.9448,
+    "wrongApplicationRate": 0.0552,
+    "gates": { "retention": ">= 0.98", "identityPrecision": ">= 0.98", "wrongApplication": "<= 0.01" },
+    "status": "NOT MET on transformed renderings; met on an unchanged drawing. Known and accepted."
+  },
+  "knownFailing": [
+    {
+      "status": "RESOLVED after this baseline was frozen. This entry is kept as the record of what was true at the freeze, not as a current state - see the 'Fixing the two slow contract failures' section of EVENT-OPERATIONS-PRODUCT-REPORT.md. Both root causes were fixed rather than the assertions weakened: the scene graph now emits its nodes so every edge endpoint resolves inside it, and every edge carries a one-sentence evidence composed from its own reasons. test:all is now 34/34 suites, 1066/1066 checks, and the slow suites are gated in CI's intelligence job.",
+      "what": "tests/suites/plan-intelligence-contract.test.mjs - 2 of 90 checks",
+      "checks": [
+        "every scene-graph edge connects two objects that actually exist",
+        "every relationship records the evidence that produced it"
+      ],
+      "preExisting": true,
+      "verifiedAt": "cb263eb",
+      "howVerified": "the identical two checks fail in a clean worktree at cb263eb, the commit this sprint started from",
+      "invisibleBecause": "it is a SLOW suite, so 'npm test' excludes it and the CI fast-core job never runs it",
+      "detail": {
+        "danglingEdges": "the scene graph emits memberOf edges into similarity-group ids (simgroup_*), but the contract's known id space is candidates + chairs + FURNITURE groups. Similarity groups are a fourth id space the contract does not know about.",
+        "unexplainedEdges": "chair->table belongsTo edges carry no evidence string."
+      },
+      "matters": "the second check is load-bearing for this programme: Risk Radar, Plan Doctor and Smart Seating all have to explain WHY, and a chair->table belongsTo edge with no recorded evidence cannot be explained to an operator."
+    },
+    {
+      "what": "npm run benchmark:memory exits 1",
+      "preExisting": true,
+      "why": "documented, measured, accepted: gates unmet on transformed drawings only",
+      "handledBy": "CI runs it continue-on-error and uploads the report"
+    }
+  ]
+}

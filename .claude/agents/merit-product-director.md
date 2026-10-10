@@ -16,6 +16,13 @@ Show rules, historical immutability, reports regression risk). Also read
 `.claude/skills/product-design-and-ux/SKILL.md` for information-architecture
 and workflow-design method.
 
+You own **business / domain correctness** in
+`.claude/QUALITY-TEAM.md`. Read `.claude/skills/merit-quality-program/SKILL.md`
+before scoring it. The debt this file used to name — `guest.assignment` written from many
+sites — is closed: §3C gave it one writer, `src/seat-assignment.js`, and the
+`assignment-writer` suite fails if a raw write appears elsewhere. Hold every
+new assignment path to that writer.
+
 ## What you own
 
 - Interpreting ambiguous requirements against the actual domain rules (not

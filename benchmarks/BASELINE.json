@@ -1,0 +1,349 @@
+{
+  "recordedAt": "2026-10-10T09:58:00.854Z",
+  "commit": "f91d42ecd59217d51a80602317d382fae951020a",
+  "note": "Measured by benchmarks/run-benchmark.mjs against the annotations in benchmarks/annotations/. Classical computer vision (Assisted Detection); no trained model is involved in these numbers.",
+  "guardedFields": [
+    {
+      "field": "tables.tp",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tables.fp",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "tables.fn",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "tables.precision",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tables.recall",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tables.f1",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "chairs.detectedTotal",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "humanEffort.reviewGroups",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "humanEffort.uncertainQuestions",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "chairs.tp",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "chairs.fp",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "chairs.fn",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "chairs.precision",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "chairs.recall",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "chairs.f1",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "relationships.correct",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "relationships.wrong",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "relationships.orphan",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "relationships.accuracy",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.round.correct",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.round.accuracy",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "semanticObjects.column.tp",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "semanticObjects.column.fp",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "semanticObjects.column.fn",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "tableTypeAccuracy.square.correct",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.square.accuracy",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.bistro.correct",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "tableTypeAccuracy.bistro.accuracy",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "semanticObjects.stage.tp",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "semanticObjects.stage.fp",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "semanticObjects.stage.fn",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "semanticObjects.bar.tp",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "semanticObjects.bar.fp",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "semanticObjects.bar.fn",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "semanticObjects.entrance.tp",
+      "worseWhen": "lower"
+    },
+    {
+      "field": "semanticObjects.entrance.fp",
+      "worseWhen": "higher"
+    },
+    {
+      "field": "semanticObjects.entrance.fn",
+      "worseWhen": "higher"
+    }
+  ],
+  "tolerance": 0.005,
+  "plans": [
+    {
+      "planId": "adversarial-architecture-v1",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "colour-cluster",
+        "ocrEngine": "tesseract.js",
+        "ocrAvailable": true,
+        "ocrModel": "PP-OCRv4 (ONNX Runtime Web)",
+        "ocrModelReason": null
+      },
+      "tables.tp": 10,
+      "tables.fp": 0,
+      "tables.fn": 0,
+      "tables.precision": 1,
+      "tables.recall": 1,
+      "tables.f1": 1,
+      "chairs.detectedTotal": 80,
+      "humanEffort.reviewGroups": 0,
+      "humanEffort.uncertainQuestions": 0,
+      "tableTypeAccuracy.round.correct": 10,
+      "tableTypeAccuracy.round.accuracy": 1,
+      "semanticObjects.column.tp": 6,
+      "semanticObjects.column.fp": 0,
+      "semanticObjects.column.fn": 0
+    },
+    {
+      "planId": "adversarial-bistro-v1",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "outline-interior",
+        "ocrEngine": "tesseract.js",
+        "ocrAvailable": true,
+        "ocrModel": "PP-OCRv4 (ONNX Runtime Web)",
+        "ocrModelReason": null
+      },
+      "tables.tp": 18,
+      "tables.fp": 0,
+      "tables.fn": 5,
+      "tables.precision": 1,
+      "tables.recall": 0.783,
+      "tables.f1": 0.878,
+      "chairs.detectedTotal": 72,
+      "humanEffort.reviewGroups": 0,
+      "humanEffort.uncertainQuestions": 0,
+      "tableTypeAccuracy.square.correct": 18,
+      "tableTypeAccuracy.square.accuracy": 1,
+      "semanticObjects.column.tp": 0,
+      "semanticObjects.column.fp": 5,
+      "semanticObjects.column.fn": 0
+    },
+    {
+      "planId": "adversarial-dense-v1",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "outline-interior",
+        "ocrEngine": "tesseract.js",
+        "ocrAvailable": true,
+        "ocrModel": "PP-OCRv4 (ONNX Runtime Web)",
+        "ocrModelReason": null
+      },
+      "tables.tp": 24,
+      "tables.fp": 0,
+      "tables.fn": 0,
+      "tables.precision": 1,
+      "tables.recall": 1,
+      "tables.f1": 1,
+      "chairs.detectedTotal": 76,
+      "humanEffort.reviewGroups": 0,
+      "humanEffort.uncertainQuestions": 1,
+      "tableTypeAccuracy.square.correct": 24,
+      "tableTypeAccuracy.square.accuracy": 1
+    },
+    {
+      "planId": "adversarial-text-v1",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "colour-cluster",
+        "ocrEngine": "tesseract.js",
+        "ocrAvailable": true,
+        "ocrModel": "PP-OCRv4 (ONNX Runtime Web)",
+        "ocrModelReason": null
+      },
+      "tables.tp": 12,
+      "tables.fp": 0,
+      "tables.fn": 0,
+      "tables.precision": 1,
+      "tables.recall": 1,
+      "tables.f1": 1,
+      "chairs.detectedTotal": 73,
+      "humanEffort.reviewGroups": 0,
+      "humanEffort.uncertainQuestions": 0,
+      "tableTypeAccuracy.square.correct": 12,
+      "tableTypeAccuracy.square.accuracy": 1
+    },
+    {
+      "planId": "merit-real-venue",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "colour-cluster",
+        "ocrEngine": "tesseract.js",
+        "ocrAvailable": true,
+        "ocrModel": "PP-OCRv4 (ONNX Runtime Web)",
+        "ocrModelReason": null
+      },
+      "tables.tp": 46,
+      "tables.fp": 1,
+      "tables.fn": 0,
+      "tables.precision": 0.979,
+      "tables.recall": 1,
+      "tables.f1": 0.989,
+      "chairs.detectedTotal": 111,
+      "humanEffort.reviewGroups": 8,
+      "humanEffort.uncertainQuestions": 4,
+      "chairs.tp": 108,
+      "chairs.fp": 3,
+      "chairs.fn": 5,
+      "chairs.precision": 0.973,
+      "chairs.recall": 0.956,
+      "chairs.f1": 0.964,
+      "relationships.correct": 103,
+      "relationships.wrong": 1,
+      "relationships.orphan": 0,
+      "relationships.accuracy": 0.99,
+      "tableTypeAccuracy.square.correct": 37,
+      "tableTypeAccuracy.square.accuracy": 1,
+      "tableTypeAccuracy.round.correct": 4,
+      "tableTypeAccuracy.round.accuracy": 1,
+      "tableTypeAccuracy.bistro.correct": 5,
+      "tableTypeAccuracy.bistro.accuracy": 1,
+      "semanticObjects.stage.tp": 1,
+      "semanticObjects.stage.fp": 0,
+      "semanticObjects.stage.fn": 0,
+      "semanticObjects.bar.tp": 0,
+      "semanticObjects.bar.fp": 1,
+      "semanticObjects.bar.fn": 0,
+      "semanticObjects.entrance.tp": 0,
+      "semanticObjects.entrance.fp": 2,
+      "semanticObjects.entrance.fn": 0,
+      "semanticObjects.column.tp": 0,
+      "semanticObjects.column.fp": 9,
+      "semanticObjects.column.fn": 0
+    },
+    {
+      "planId": "ornek-symbolic",
+      "imageShaMatches": true,
+      "provider": {
+        "engine": "ASSISTED_DETECTION_GEOMETRIC_HEURISTICS",
+        "trainedModel": false,
+        "detectionProvider": "classical-cv",
+        "detectionPath": "chair-first",
+        "chairSource": "outline-interior",
+        "ocrEngine": "tesseract.js",
+        "ocrAvailable": true,
+        "ocrModel": "PP-OCRv4 (ONNX Runtime Web)",
+        "ocrModelReason": null
+      },
+      "tables.tp": 162,
+      "tables.fp": 1,
+      "tables.fn": 4,
+      "tables.precision": 0.994,
+      "tables.recall": 0.976,
+      "tables.f1": 0.985,
+      "chairs.detectedTotal": 0,
+      "humanEffort.reviewGroups": 2,
+      "humanEffort.uncertainQuestions": 0,
+      "tableTypeAccuracy.round.correct": 162,
+      "tableTypeAccuracy.round.accuracy": 1,
+      "semanticObjects.column.tp": 0,
+      "semanticObjects.column.fp": 4,
+      "semanticObjects.column.fn": 0
+    }
+  ]
+}

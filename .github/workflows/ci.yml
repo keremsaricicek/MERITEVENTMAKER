@@ -1,0 +1,270 @@
+name: CI
+
+# What a change has to survive before anyone looks at it.
+#
+# Five jobs, in parallel, because a single job says "CI failed" and five say
+# WHICH KIND of thing broke. They are split by what a failure would mean, not by
+# how long they take:
+#
+#   fast-core     the business rules, the workbook contract, storage and
+#                 migration, and every intelligence layer's own suite
+#   detection     the detector's numbers, compared per plan and per field
+#                 against the committed baseline
+#   offline       the artifacts an operator actually runs, SERVED AND DRIVEN
+#   intelligence  the measurements that say whether the reasoning layers still
+#                 reason; reported, and gated only where a gate is honest
+#   performance   the DOM and canvas cost, plus the one correctness suite that
+#                 must fail the run
+#
+# Nothing here downloads a model, trains anything, or touches Ground Truth. The
+# detector's real-plan numbers are a COMPARISON against benchmarks/BASELINE.json,
+# never a hardcoded expectation, so an honest improvement is reported and a
+# silent regression fails.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fast-core:
+    name: Fast core — regression suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --no-audit --no-fund
+      - name: Cache Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      # The pinned OCR engine and language data, served locally to every test
+      # and benchmark. Without it the runners stop rather than measure the app
+      # without OCR — which is what this container did for the whole programme
+      # while CI, reaching the CDN, measured it with OCR (§27).
+      - run: npm run vendor:test
+      # Populates .vendor-cache/ with the pinned SheetJS and PDF.js tarballs,
+      # which the test run then serves locally instead of reaching a CDN.
+      - name: Build the offline artifact
+        run: npm run build:offline
+      - name: Regression suite
+        run: npm test
+
+  detection:
+    name: Detection — Golden, ORNEK and the adversarial fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --no-audit --no-fund
+      - name: Cache Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      # The pinned OCR engine and language data, served locally to every test
+      # and benchmark. Without it the runners stop rather than measure the app
+      # without OCR — which is what this container did for the whole programme
+      # while CI, reaching the CDN, measured it with OCR (§27).
+      - run: npm run vendor:test
+      - run: npm run build:offline
+
+      # One run, every plan. Splitting Golden and ORNEK into separate jobs would
+      # run detection twice to produce evidence the baseline step already gives
+      # per plan: it compares EVERY guarded field SEPARATELY for EVERY plan and
+      # fails on any drop in any one of them. A trade — chair recall up, table
+      # F1 down — is invisible to a single score and is a revert, not a win.
+      - name: Detection benchmark
+        run: npm run benchmark
+
+      - name: Detector baseline, per plan and per field
+        run: npm run benchmark:baseline
+
+      - name: Upload benchmark report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-report
+          path: benchmarks/reports/latest.json
+          if-no-files-found: warn
+
+  offline:
+    name: Offline — build both artifacts, then RUN them
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --no-audit --no-fund
+      - name: Cache Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      # The pinned OCR engine and language data, served locally to every test
+      # and benchmark. Without it the runners stop rather than measure the app
+      # without OCR — which is what this container did for the whole programme
+      # while CI, reaching the CDN, measured it with OCR (§27).
+      - run: npm run vendor:test
+
+      # The vendored OCR engine and its language data are fetched once and
+      # cached: ~30MB that changes only when the build script pins a new
+      # version. Keyed on both build scripts, so bumping either invalidates it.
+      - name: Cache vendored offline assets
+        uses: actions/cache@v4
+        with:
+          path: .vendor-cache
+          key: vendor-${{ runner.os }}-${{ hashFiles('scripts/build-offline.mjs', 'scripts/build-offline-full.mjs', 'tests/lib/vendor.mjs') }}
+
+      - name: Build the single-file artifact
+        run: npm run build:offline
+      - name: Build the folder artifact, with OCR
+        run: npm run build:offline-full
+
+      # THE CHECK THIS JOB EXISTS FOR, and it was missing from CI entirely.
+      #
+      # "The build succeeded" is not evidence. Both build scripts slice
+      # index.html's body by string index, and one of them once cut at the first
+      # HTML comment — which silently dropped #guestDialog, made app-guests.js
+      # throw, and killed every source file after it in the single concatenated
+      # script. The build reported success and shipped a package that booted to
+      # a dead shell with no OCR at all.
+      #
+      # This serves the real artifact, aborts every non-same-origin request, and
+      # drives real OCR. It costs about six seconds and is the only step here
+      # that would have caught that.
+      - name: Verify the built artifacts by running them
+        run: npm run verify:offline
+
+  intelligence:
+    name: Intelligence — do the reasoning layers still reason?
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --no-audit --no-fund
+      - name: Cache Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      # The pinned OCR engine and language data, served locally to every test
+      # and benchmark. Without it the runners stop rather than measure the app
+      # without OCR — which is what this container did for the whole programme
+      # while CI, reaching the CDN, measured it with OCR (§27).
+      - run: npm run vendor:test
+      - run: npm run build:offline
+
+      # THE SLOW CONTRACT SUITES, and their absence was a real hole.
+      #
+      # Six suites run real detection on the real venue plan, so they are tagged
+      # slow and `npm test` excludes them — which meant fast-core never ran them
+      # and no other job did either. Two checks in plan-intelligence-contract
+      # were failing continuously and invisibly for that reason: scene-graph
+      # edges pointing at ids the contract could not resolve, and relationships
+      # carrying no evidence string. The second one is load-bearing for this
+      # product — Risk Radar, Plan Doctor and Smart Seating all have to explain
+      # WHY — so it goes where a failure means "the reasoning layers stopped
+      # being checkable", and it gates.
+      - name: Slow contract suites
+        run: npm run test:slow
+
+      # Each of these fails the job on a real regression against its own
+      # committed expectations. None of them trains anything. The class of
+      # every step in this file is written down in
+      # .claude/skills/merit-ci-quality-gates/SKILL.md, and a suite
+      # (ci-gate-honesty) fails when a step here has no row there.
+      - name: Review ordering
+        run: npm run benchmark:review-order
+      - name: Plan facts
+        run: npm run benchmark:facts
+      - name: Contradictions
+        run: npm run benchmark:contradictions
+      - name: Semantic zones
+        run: npm run benchmark:zones
+      # --compare is the gate. Without it this step measured and printed, and
+      # could fail on nothing short of a crash while two fixtures were FAIL. It
+      # now blocks on a regression against the frozen baseline, on any FAIL
+      # not listed in benchmarks/adversarial/KNOWN-FAILS.json (each listed one
+      # names its reason and owner and is printed on every run), on a listed
+      # FAIL that stopped failing, and on a refused or erroring fixture.
+      - name: Adversarial fixtures
+        run: npm run benchmark:adversarial -- --compare
+      - name: False positives
+        run: npm run benchmark:false-positives
+      - name: Teaching propagation
+        run: npm run benchmark:teaching
+
+      # A REGRESSION GATE, and deliberately not the §23 gate. The §23
+      # thresholds are not met on transformed renderings of the plan, and no
+      # setting reaches them (a signal problem, measured in §9). This step used
+      # to run the threshold check under continue-on-error, which meant it
+      # could not fail at all. --compare fails on anything worse than
+      # benchmarks/memory/BASELINE.json — above all one more WRONG application,
+      # which an operator cannot see — and prints the §23 thresholds as NOT MET
+      # on every run, so the green is never read as those being met.
+      - name: Visual Plan Memory (regression gate; §23 thresholds reported)
+        run: npm run benchmark:memory -- --compare
+      - name: Upload memory report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-report
+          path: benchmarks/memory/report.json
+          if-no-files-found: warn
+
+  performance:
+    name: Performance — DOM cost, and the one correctness suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --no-audit --no-fund
+      - name: Cache Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      # The pinned OCR engine and language data, served locally to every test
+      # and benchmark. Without it the runners stop rather than measure the app
+      # without OCR — which is what this container did for the whole programme
+      # while CI, reaching the CDN, measured it with OCR (§27).
+      - run: npm run vendor:test
+      - run: npm run build:offline
+
+      # Budgets, not promises: each timed operation on the 4,000-seat stress
+      # event, plan analysis, the 300-render series, DOM growth and the save
+      # queue's drain is held to twice the worst p95 measured on this runner
+      # (benchmarks/perf/BUDGETS.json says which runs and why), and a run
+      # over budget fails this job — GitHub sets CI=true, which is what turns
+      # enforcement on. The runners also assert what an operator depends on:
+      # live windowing did not change what the door sees, the 4,000-seat event
+      # survives a reload intact, the save queue still ends last-write-wins,
+      # and a 50,000-row workbook / 40-page PDF go through the real controls.
+      - name: Performance suites
+        run: npm run perf

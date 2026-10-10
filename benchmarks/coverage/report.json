@@ -1,0 +1,2542 @@
+{
+ "ranAt": "2026-09-27T16:22:16.687Z",
+ "note": "V8 block coverage merged across every suite page that ran. INFO, not a gate: §28 asks where the untested paths are, not for a percentage.",
+ "files": [
+  {
+   "file": "src/app-guests.js",
+   "codeChars": 64908,
+   "executedChars": 31775,
+   "executed": 0.49,
+   "functionsNeverRun": 39,
+   "neverRan": [
+    {
+     "name": "guestsHTML",
+     "line": 11
+    },
+    {
+     "name": "guestRowHTML",
+     "line": 12
+    },
+    {
+     "name": "search.oninput",
+     "line": 13
+    },
+    {
+     "name": "document.getElementById.onchange",
+     "line": 13
+    },
+    {
+     "name": "app.querySelector.onclick",
+     "line": 13
+    },
+    {
+     "name": "b.onclick",
+     "line": 13
+    },
+    {
+     "name": "deleteGuest",
+     "line": 18
+    },
+    {
+     "name": "wizardStepsHTML",
+     "line": 20
+    },
+    {
+     "name": "renderExcelWizard",
+     "line": 22
+    },
+    {
+     "name": "wizardBodyHTML",
+     "line": 23
+    },
+    {
+     "name": "wizardFootHTML",
+     "line": 24
+    },
+    {
+     "name": "sourcePreviewHTML",
+     "line": 25
+    },
+    {
+     "name": "mappingRowsHTML",
+     "line": 27
+    },
+    {
+     "name": "interpretRowHTML",
+     "line": 28
+    },
+    {
+     "name": "loadXLSX",
+     "line": 39
+    },
+    {
+     "name": "parseSeatText",
+     "line": 45
+    },
+    {
+     "name": "downloadExcelTemplate",
+     "line": 59
+    },
+    {
+     "name": "seatingHTML",
+     "line": 61
+    },
+    {
+     "name": "selectedTablePanelHTML",
+     "line": 63
+    },
+    {
+     "name": "seatRowHTML",
+     "line": 64
+    },
+    {
+     "name": "bindSeating",
+     "line": 65
+    },
+    {
+     "name": "assignGuestToTable",
+     "line": 66
+    },
+    {
+     "name": "unassignGuest",
+     "line": 67
+    },
+    {
+     "name": "toggleAssignmentLock",
+     "line": 68
+    },
+    {
+     "name": "liveHTML",
+     "line": 70
+    },
+    {
+     "name": "bindLive",
+     "line": 71
+    },
+    {
+     "name": "reportsHTML",
+     "line": 73
+    },
+    {
+     "name": "reportRow",
+     "line": 74
+    },
+    {
+     "name": "bindReports",
+     "line": 75
+    },
+    {
+     "name": "exportGuestCSV",
+     "line": 76
+    },
+    {
+     "name": "floorGuideVisual",
+     "line": 171
+    },
+    {
+     "name": "excelGuideVisual",
+     "line": 172
+    },
+    {
+     "name": "seatingGuideVisual",
+     "line": 173
+    },
+    {
+     "name": "workbookGuideVisual",
+     "line": 174
+    },
+    {
+     "name": "manualVisual",
+     "line": 175
+    },
+    {
+     "name": "renderGuide",
+     "line": 179
+    },
+    {
+     "name": "openGuide",
+     "line": 180
+    },
+    {
+     "name": "back.onclick",
+     "line": 29
+    },
+    {
+     "name": "el.onchange",
+     "line": 29
+    }
+   ],
+   "largestGaps": [
+    {
+     "fromLine": 70,
+     "toLine": 70,
+     "chars": 2487,
+     "head": "function liveHTML(event){const q=ui.liveQuery.trim().toLocaleLowerCase(\"tr\"),row"
+    },
+    {
+     "fromLine": 73,
+     "toLine": 73,
+     "chars": 2382,
+     "head": "function reportsHTML(event){const m=eventMetrics(event),s=seatingStats(event),al"
+    },
+    {
+     "fromLine": 61,
+     "toLine": 61,
+     "chars": 2325,
+     "head": "function seatingHTML(event){const q=ui.seatingQuery.trim().toLocaleLowerCase(\"tr"
+    },
+    {
+     "fromLine": 23,
+     "toLine": 23,
+     "chars": 2155,
+     "head": "function wizardBodyHTML(p){if(p.step===1)return`<div class=\"drop-zone\">${icon(\"d"
+    },
+    {
+     "fromLine": 179,
+     "toLine": 179,
+     "chars": 2116,
+     "head": "function renderGuide(){const lang=ui.guideLang,data=lang===\"tr\"?GUIDE_TR:GUIDE_E"
+    },
+    {
+     "fromLine": 11,
+     "toLine": 11,
+     "chars": 1880,
+     "head": "function guestsHTML(event){const guests=filteredGuests(event);return`<div class="
+    },
+    {
+     "fromLine": 63,
+     "toLine": 63,
+     "chars": 1561,
+     "head": "function selectedTablePanelHTML(event){if(ui.rightCollapsed)return collapsedPane"
+    },
+    {
+     "fromLine": 65,
+     "toLine": 65,
+     "chars": 1366,
+     "head": "function bindSeating(){bindPanelToggles();const search=document.getElementById(\""
+    },
+    {
+     "fromLine": 56,
+     "toLine": 56,
+     "chars": 1129,
+     "head": "{const t=event.tables.find(x=>x.number.toUpperCase()===r.tableNumber.toUpperCase"
+    },
+    {
+     "fromLine": 12,
+     "toLine": 12,
+     "chars": 1128,
+     "head": "function guestRowHTML(event,g){const t_=g.assignment&&event.tables.find(x=>x.id="
+    },
+    {
+     "fromLine": 28,
+     "toLine": 28,
+     "chars": 1100,
+     "head": "function interpretRowHTML(r,i){const issues=r.issues||[];return`<tr><td title=\"$"
+    },
+    {
+     "fromLine": 66,
+     "toLine": 66,
+     "chars": 991,
+     "head": "function assignGuestToTable(guestId,tableId,preferred=null){const event=activeEv"
+    },
+    {
+     "fromLine": 59,
+     "toLine": 59,
+     "chars": 956,
+     "head": "async function downloadExcelTemplate(){try{await loadXLSX();const rows=[[\"NAME S"
+    },
+    {
+     "fromLine": 71,
+     "toLine": 71,
+     "chars": 889,
+     "head": "function bindLive(){const search=document.getElementById(\"liveSearch\");search.on"
+    },
+    {
+     "fromLine": 171,
+     "toLine": 171,
+     "chars": 848,
+     "head": "function floorGuideVisual(lang){const tr=lang===\"tr\";return`<div class=\"manual-v"
+    },
+    {
+     "fromLine": 64,
+     "toLine": 64,
+     "chars": 759,
+     "head": "function seatRowHTML(index,occupant,selected){if(!occupant)return`<div class=\"se"
+    },
+    {
+     "fromLine": 24,
+     "toLine": 24,
+     "chars": 740,
+     "head": "function wizardFootHTML(p){if(p.step===1)return`<button class=\"btn\" data-wizard-"
+    },
+    {
+     "fromLine": 76,
+     "toLine": 76,
+     "chars": 733,
+     "head": "function exportGuestCSV(){const event=activeEvent(),headers=[\"NAME SURNAME\",\"PAX"
+    },
+    {
+     "fromLine": 172,
+     "toLine": 172,
+     "chars": 641,
+     "head": "function excelGuideVisual(lang){const tr=lang===\"tr\";return`<div class=\"manual-v"
+    },
+    {
+     "fromLine": 173,
+     "toLine": 173,
+     "chars": 552,
+     "head": "function seatingGuideVisual(lang){const tr=lang===\"tr\";return`<div class=\"manual"
+    },
+    {
+     "fromLine": 174,
+     "toLine": 174,
+     "chars": 501,
+     "head": "function workbookGuideVisual(lang){const tr=lang===\"tr\";return`<div class=\"manua"
+    },
+    {
+     "fromLine": 58,
+     "toLine": 58,
+     "chars": 422,
+     "head": "{const t=event.tables.find(x=>x.number.toUpperCase()===r.tableNumber.toUpperCase"
+    },
+    {
+     "fromLine": 29,
+     "toLine": 29,
+     "chars": 412,
+     "head": "()=>{const r=p.interpreted[Number(el.dataset.interpRow)],field=el.dataset.interp"
+    },
+    {
+     "fromLine": 22,
+     "toLine": 22,
+     "chars": 395,
+     "head": "function renderExcelWizard(){const root=document.getElementById(\"excelWizard\"),p"
+    },
+    {
+     "fromLine": 27,
+     "toLine": 27,
+     "chars": 355,
+     "head": "function mappingRowsHTML(p){return p.headers.map(h=>`<div class=\"mapping-grid\"><"
+    }
+   ]
+  },
+  {
+   "file": "src/app-v8.js",
+   "codeChars": 409313,
+   "executedChars": 364211,
+   "executed": 0.89,
+   "functionsNeverRun": 55,
+   "neverRan": [
+    {
+     "name": "physicalChairCount",
+     "line": 193
+    },
+    {
+     "name": "seatPositions",
+     "line": 545
+    },
+    {
+     "name": "selectPdfPage",
+     "line": 1569
+    },
+    {
+     "name": "handlePlanFile",
+     "line": 1574
+    },
+    {
+     "name": "document.querySelector.onclick",
+     "line": 1593
+    },
+    {
+     "name": "drop.onclick",
+     "line": 1594
+    },
+    {
+     "name": "input.onchange",
+     "line": 1594
+    },
+    {
+     "name": "drop.ondragover",
+     "line": 1595
+    },
+    {
+     "name": "drop.ondragleave",
+     "line": 1595
+    },
+    {
+     "name": "drop.ondrop",
+     "line": 1595
+    },
+    {
+     "name": "document.querySelector.onclick",
+     "line": 1596
+    },
+    {
+     "name": "document.getElementById.onchange",
+     "line": 1596
+    },
+    {
+     "name": "document.querySelector.onclick",
+     "line": 1601
+    },
+    {
+     "name": "placeRepeated",
+     "line": 2161
+    },
+    {
+     "name": "startResize",
+     "line": 2204
+    },
+    {
+     "name": "startRotate",
+     "line": 2205
+    },
+    {
+     "name": "addVenue",
+     "line": 2207
+    },
+    {
+     "name": "clear.onclick",
+     "line": 2239
+    },
+    {
+     "name": "toggleAssignmentLock",
+     "line": 2909
+    },
+    {
+     "name": "closeCard.onclick",
+     "line": 2924
+    },
+    {
+     "name": "b.onclick",
+     "line": 2925
+    },
+    {
+     "name": "row.ondragstart",
+     "line": 2926
+    },
+    {
+     "name": "b.onclick",
+     "line": 3264
+    },
+    {
+     "name": "growLive",
+     "line": 3284
+    },
+    {
+     "name": "printTablePlan",
+     "line": 3611
+    },
+    {
+     "name": "printRoot",
+     "line": 3653
+    },
+    {
+     "name": "toSeating.onclick",
+     "line": 3858
+    },
+    {
+     "name": "embed",
+     "line": 3943
+    },
+    {
+     "name": "toVector",
+     "line": 3948
+    },
+    {
+     "name": "computeVisualDescriptor",
+     "line": 3983
+    },
+    {
+     "name": "unionBbox",
+     "line": 5239
+    },
+    {
+     "name": "undoLastCorrection",
+     "line": 5854
+    },
+    {
+     "name": "exportTrainingDataset",
+     "line": 5998
+    },
+    {
+     "name": "saveVerified",
+     "line": 6018
+    },
+    {
+     "name": "improveAI",
+     "line": 6019
+    },
+    {
+     "name": "save.onclick",
+     "line": 6307
+    },
+    {
+     "name": "b.onclick",
+     "line": 6452
+    },
+    {
+     "name": "root.querySelector.onclick",
+     "line": 6452
+    },
+    {
+     "name": "row.ondragstart",
+     "line": 2927
+    },
+    {
+     "name": "b.onclick",
+     "line": 2938
+    },
+    {
+     "name": "b.onclick",
+     "line": 3598
+    },
+    {
+     "name": "scene.onpointerdown",
+     "line": 5941
+    },
+    {
+     "name": "input.oninput",
+     "line": 6036
+    },
+    {
+     "name": "row.onclick",
+     "line": 1793
+    },
+    {
+     "name": "row.ondblclick",
+     "line": 6288
+    },
+    {
+     "name": "el.ondblclick",
+     "line": 6288
+    },
+    {
+     "name": "reader.onerror",
+     "line": 6146
+    },
+    {
+     "name": "planFromDeskewPoint",
+     "line": 5025
+    },
+    {
+     "name": "deskewFromPlanPoint",
+     "line": 5030
+    },
+    {
+     "name": "b.onclick",
+     "line": 6057
+    },
+    {
+     "name": "move",
+     "line": 2170
+    },
+    {
+     "name": "up",
+     "line": 2171
+    },
+    {
+     "name": "move",
+     "line": 2179
+    },
+    {
+     "name": "r.onerror",
+     "line": 1560
+    },
+    {
+     "name": "img.onload",
+     "line": 1566
+    }
+   ],
+   "largestGaps": [
+    {
+     "fromLine": 3611,
+     "toLine": 3652,
+     "chars": 1932,
+     "head": "function printTablePlan(){\n    const event=activeEvent();if(!event)return;\n    i"
+    },
+    {
+     "fromLine": 6057,
+     "toLine": 6083,
+     "chars": 1657,
+     "head": "()=>{\n      const event=activeEvent(),pi=event.analysis?.planIntelligence,q=pi?."
+    },
+    {
+     "fromLine": 5941,
+     "toLine": 5941,
+     "chars": 1396,
+     "head": "scene.onpointerdown=e=>{if(e.target!==scene&&e.target.tagName!==\"IMG\")return;e.p"
+    },
+    {
+     "fromLine": 1574,
+     "toLine": 1582,
+     "chars": 1072,
+     "head": "async function handlePlanFile(file){\n    if(!file)return;syncSetupFields();const"
+    },
+    {
+     "fromLine": 2169,
+     "toLine": 2172,
+     "chars": 1066,
+     "head": "e.preventDefault();const box=document.createElement(\"div\");box.className=\"marque"
+    },
+    {
+     "fromLine": 3983,
+     "toLine": 4006,
+     "chars": 969,
+     "head": "function computeVisualDescriptor(gray,binary,width,height,c){\n    const px=Math."
+    },
+    {
+     "fromLine": 5854,
+     "toLine": 5875,
+     "chars": 753,
+     "head": "function undoLastCorrection(){\n    const event=activeEvent();\n    if(!canMutate("
+    },
+    {
+     "fromLine": 5998,
+     "toLine": 6015,
+     "chars": 739,
+     "head": "async function exportTrainingDataset(){\n    const records=state.trainingData||[]"
+    },
+    {
+     "fromLine": 2161,
+     "toLine": 2161,
+     "chars": 720,
+     "head": "function placeRepeated(pointerEvent){const r=document.getElementById(\"canvasView"
+    },
+    {
+     "fromLine": 6019,
+     "toLine": 6019,
+     "chars": 679,
+     "head": "function improveAI(){if(!state.verifiedExamples.length)return toast(t(\"toast.sav"
+    },
+    {
+     "fromLine": 6018,
+     "toLine": 6018,
+     "chars": 660,
+     "head": "function saveVerified(){const event=activeEvent();if(!ui.teachAI)return toast(t("
+    },
+    {
+     "fromLine": 5002,
+     "toLine": 5013,
+     "chars": 604,
+     "head": "{\n        const rad=-deskewDeg*Math.PI/180,cos=Math.abs(Math.cos(rad)),sin=Math."
+    },
+    {
+     "fromLine": 1569,
+     "toLine": 1573,
+     "chars": 593,
+     "head": "async function selectPdfPage(index){\n    const doc=newEventDraft.pdfDoc;if(!doc)"
+    },
+    {
+     "fromLine": 5934,
+     "toLine": 5939,
+     "chars": 521,
+     "head": "else{const object={id:uid(\"venue\"),type:c.type||\"text\",label:String(c.type||\"OBJ"
+    },
+    {
+     "fromLine": 6035,
+     "toLine": 6035,
+     "chars": 458,
+     "head": "else if(action===\"close-session-report\"){ui.operatorReportOpen=false;render();}e"
+    },
+    {
+     "fromLine": 1345,
+     "toLine": 1355,
+     "chars": 450,
+     "head": "else{\n      // REVIEW and REVIEW_CENTER. Both land in the Floor Plan's review mo"
+    },
+    {
+     "fromLine": 4229,
+     "toLine": 4233,
+     "chars": 443,
+     "head": "// a non-manual correction whose object wasn't re-detected this time is left alo"
+    },
+    {
+     "fromLine": 1964,
+     "toLine": 1964,
+     "chars": 434,
+     "head": "?`<div class=\"tool-group\">${toolbarBtn(\"plus\",t(\"toolbar.addBulk\"),`data-v8-acti"
+    },
+    {
+     "fromLine": 5391,
+     "toLine": 5391,
+     "chars": 394,
+     "head": "?`<div class=\"poi-seat-row\"><label for=\"poiSeatCount\">${t(\"poi.seatsOnThis\")}</l"
+    },
+    {
+     "fromLine": 6089,
+     "toLine": 6094,
+     "chars": 393,
+     "head": "b=>b.onclick=()=>{\n      const event=activeEvent();if(!canMutate(event,\"undo a p"
+    },
+    {
+     "fromLine": 6353,
+     "toLine": 6359,
+     "chars": 381,
+     "head": "{\n      parts.push(`<div class=\"schema-future-banner\" data-storage-notice=\"recov"
+    },
+    {
+     "fromLine": 6373,
+     "toLine": 6382,
+     "chars": 373,
+     "head": "else if(a===\"workbook\"){exportTablePlanXLSX();}\n    else if(a===\"dismiss\"){\n    "
+    },
+    {
+     "fromLine": 5884,
+     "toLine": 5892,
+     "chars": 364,
+     "head": "{\n      // Blank means \"still unknown\", which is a different state from zero and"
+    },
+    {
+     "fromLine": 382,
+     "toLine": 388,
+     "chars": 358,
+     "head": "{\n      // Get it into the real store right away so this migration only ever\n   "
+    },
+    {
+     "fromLine": 6278,
+     "toLine": 6283,
+     "chars": 347,
+     "head": "if(!(await ask({title:t(\"ask.recoveryTitle\"),body:t(\"recovery.confirmRestore\",{w"
+    }
+   ]
+  },
+  {
+   "file": "src/app.js",
+   "codeChars": 62264,
+   "executedChars": 31829,
+   "executed": 0.511,
+   "functionsNeverRun": 58,
+   "neverRan": [
+    {
+     "name": "value",
+     "line": 14
+    },
+    {
+     "name": "saveState",
+     "line": 78
+    },
+    {
+     "name": "touchEvent",
+     "line": 79
+    },
+    {
+     "name": "metricHTML",
+     "line": 251
+    },
+    {
+     "name": "workspaceHTML",
+     "line": 252
+    },
+    {
+     "name": "tabContent",
+     "line": 253
+    },
+    {
+     "name": "readyRow",
+     "line": 254
+    },
+    {
+     "name": "overviewHTML",
+     "line": 255
+    },
+    {
+     "name": "back.onclick",
+     "line": 259
+    },
+    {
+     "name": "save.onclick",
+     "line": 259
+    },
+    {
+     "name": "dup.onclick",
+     "line": 259
+    },
+    {
+     "name": "gs.oninput",
+     "line": 260
+    },
+    {
+     "name": "gs.onkeydown",
+     "line": 260
+    },
+    {
+     "name": "renderGlobalSearch",
+     "line": 262
+    },
+    {
+     "name": "focusGuest",
+     "line": 263
+    },
+    {
+     "name": "openEvent",
+     "line": 264
+    },
+    {
+     "name": "openEventDialog",
+     "line": 267
+    },
+    {
+     "name": "editorClasses",
+     "line": 281
+    },
+    {
+     "name": "collapsedPanel",
+     "line": 282
+    },
+    {
+     "name": "libraryRow",
+     "line": 283
+    },
+    {
+     "name": "tableCreatorHTML",
+     "line": 284
+    },
+    {
+     "name": "objectLibraryHTML",
+     "line": 285
+    },
+    {
+     "name": "canvasToolbarHTML",
+     "line": 287
+    },
+    {
+     "name": "floorPlanHTML",
+     "line": 288
+    },
+    {
+     "name": "tableMatchesFilter",
+     "line": 289
+    },
+    {
+     "name": "filterBannerHTML",
+     "line": 290
+    },
+    {
+     "name": "tableObjectHTML",
+     "line": 293
+    },
+    {
+     "name": "seatPositions",
+     "line": 295
+    },
+    {
+     "name": "inspectorHTML",
+     "line": 296
+    },
+    {
+     "name": "redoCanvas",
+     "line": 297
+    },
+    {
+     "name": "b.onclick",
+     "line": 299
+    },
+    {
+     "name": "b.onclick",
+     "line": 299
+    },
+    {
+     "name": "viewport.addEventListener.passive",
+     "line": 299
+    },
+    {
+     "name": "h.onpointerdown",
+     "line": 299
+    },
+    {
+     "name": "h.onpointerdown",
+     "line": 299
+    },
+    {
+     "name": "clear.onclick",
+     "line": 299
+    },
+    {
+     "name": "custom.oninput",
+     "line": 300
+    },
+    {
+     "name": "num.oninput",
+     "line": 300
+    },
+    {
+     "name": "zone.onchange",
+     "line": 300
+    },
+    {
+     "name": "cancel.onclick",
+     "line": 300
+    },
+    {
+     "name": "openTableCreator",
+     "line": 301
+    },
+    {
+     "name": "addVenue",
+     "line": 303
+    },
+    {
+     "name": "canvasAction",
+     "line": 304
+    },
+    {
+     "name": "zoomAt",
+     "line": 307
+    },
+    {
+     "name": "startPan",
+     "line": 308
+    },
+    {
+     "name": "findObject",
+     "line": 309
+    },
+    {
+     "name": "startObjectDrag",
+     "line": 310
+    },
+    {
+     "name": "startResize",
+     "line": 311
+    },
+    {
+     "name": "startRotate",
+     "line": 312
+    },
+    {
+     "name": "setTableCapacity",
+     "line": 315
+    },
+    {
+     "name": "b.onclick",
+     "line": 316
+    },
+    {
+     "name": "inspectorAction",
+     "line": 318
+    },
+    {
+     "name": "deleteSelectedObject",
+     "line": 319
+    },
+    {
+     "name": "opacity.oninput",
+     "line": 320
+    },
+    {
+     "name": "opacity.onchange",
+     "line": 320
+    },
+    {
+     "name": "scale.oninput",
+     "line": 320
+    },
+    {
+     "name": "scale.onchange",
+     "line": 320
+    },
+    {
+     "name": "pendingAsk",
+     "line": 138
+    }
+   ],
+   "largestGaps": [
+    {
+     "fromLine": 296,
+     "toLine": 296,
+     "chars": 4185,
+     "head": "function inspectorHTML(event){if(ui.rightCollapsed)return collapsedPanel(\"right\""
+    },
+    {
+     "fromLine": 285,
+     "toLine": 285,
+     "chars": 2577,
+     "head": "function objectLibraryHTML(event){if(ui.leftCollapsed)return collapsedPanel(\"lef"
+    },
+    {
+     "fromLine": 255,
+     "toLine": 255,
+     "chars": 1953,
+     "head": "function overviewHTML(event){const m=eventMetrics(event),unassigned=event.guests"
+    },
+    {
+     "fromLine": 293,
+     "toLine": 293,
+     "chars": 1273,
+     "head": "function tableObjectHTML(event,t,seating){const selected=(!seating&&ui.selectedO"
+    },
+    {
+     "fromLine": 284,
+     "toLine": 284,
+     "chars": 1238,
+     "head": "function tableCreatorHTML(event){if(!ui.tableDraft)return\"\";const d=ui.tableDraf"
+    },
+    {
+     "fromLine": 252,
+     "toLine": 252,
+     "chars": 1187,
+     "head": "function workspaceHTML(event){const m=eventMetrics(event);return`<section class="
+    },
+    {
+     "fromLine": 310,
+     "toLine": 310,
+     "chars": 1007,
+     "head": "function startObjectDrag(e,id,kind,el){if(ui.tool!==\"select\")return;e.preventDef"
+    },
+    {
+     "fromLine": 262,
+     "toLine": 262,
+     "chars": 980,
+     "head": "function renderGlobalSearch(query){const box=document.getElementById(\"globalSear"
+    },
+    {
+     "fromLine": 287,
+     "toLine": 287,
+     "chars": 941,
+     "head": "function canvasToolbarHTML(seating=false){return`<div class=\"canvas-toolbar\"><di"
+    },
+    {
+     "fromLine": 249,
+     "toLine": 249,
+     "chars": 913,
+     "head": "?`<table class=\"event-table\"><thead><tr><th>Event</th><th>Date & Venue</th><th>E"
+    },
+    {
+     "fromLine": 312,
+     "toLine": 312,
+     "chars": 783,
+     "head": "function startRotate(e,id,kind,el){e.preventDefault();e.stopPropagation();const "
+    },
+    {
+     "fromLine": 318,
+     "toLine": 318,
+     "chars": 756,
+     "head": "function inspectorAction(event,action){const t=event.tables.find(x=>x.id===ui.se"
+    },
+    {
+     "fromLine": 295,
+     "toLine": 295,
+     "chars": 747,
+     "head": "function seatPositions(table){const count=Math.max(1,Number(table.capacity)||1),"
+    },
+    {
+     "fromLine": 311,
+     "toLine": 311,
+     "chars": 691,
+     "head": "function startResize(e,id,kind,el){e.preventDefault();e.stopPropagation();const "
+    },
+    {
+     "fromLine": 319,
+     "toLine": 319,
+     "chars": 673,
+     "head": "async function deleteSelectedObject(event){const t=event.tables.find(x=>x.id===u"
+    },
+    {
+     "fromLine": 78,
+     "toLine": 78,
+     "chars": 530,
+     "head": "function saveState(show=false){const serial=clone(state);serial.events.forEach(e"
+    },
+    {
+     "fromLine": 303,
+     "toLine": 303,
+     "chars": 526,
+     "head": "function addVenue(type){const e=activeEvent();recordUndo(e);const sizes={stage:["
+    },
+    {
+     "fromLine": 304,
+     "toLine": 304,
+     "chars": 486,
+     "head": "function canvasAction(action){if(action===\"undo\")return undoCanvas();if(action=="
+    },
+    {
+     "fromLine": 320,
+     "toLine": 320,
+     "chars": 436,
+     "head": "b=>b.onclick=()=>{const a=b.dataset.bgAction;if(a===\"import\")return document.get"
+    },
+    {
+     "fromLine": 308,
+     "toLine": 308,
+     "chars": 416,
+     "head": "function startPan(e,v){const sx=e.clientX,sy=e.clientY,px=ui.pan.x,py=ui.pan.y;v"
+    },
+    {
+     "fromLine": 283,
+     "toLine": 283,
+     "chars": 394,
+     "head": "function libraryRow(type,label,sub,kind=\"table\",iconName=\"table\"){return`<button"
+    },
+    {
+     "fromLine": 315,
+     "toLine": 315,
+     "chars": 381,
+     "head": "function setTableCapacity(event,table,newCap){newCap=Math.max(1,Math.min(99,Numb"
+    },
+    {
+     "fromLine": 290,
+     "toLine": 290,
+     "chars": 358,
+     "head": "function filterBannerHTML(){if(ui.seatingFilter===\"all\")return\"\";const text={emp"
+    },
+    {
+     "fromLine": 307,
+     "toLine": 307,
+     "chars": 303,
+     "head": "function zoomAt(delta,cx,cy){const v=document.getElementById(\"canvasViewport\"),r"
+    },
+    {
+     "fromLine": 263,
+     "toLine": 263,
+     "chars": 302,
+     "head": "function focusGuest(id){const event=activeEvent(),g=event.guests.find(x=>x.id==="
+    }
+   ]
+  },
+  {
+   "file": "src/arrival-wave.js",
+   "codeChars": 6226,
+   "executedChars": 6182,
+   "executed": 0.993,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/audit-trail.js",
+   "codeChars": 6239,
+   "executedChars": 5779,
+   "executed": 0.926,
+   "functionsNeverRun": 1,
+   "neverRan": [
+    {
+     "name": "iso",
+     "line": 151
+    }
+   ],
+   "largestGaps": [
+    {
+     "fromLine": 150,
+     "toLine": 158,
+     "chars": 196,
+     "head": "return null;\n    const iso = (v) => (typeof v === \"string\" && v ? v : null);\n   "
+    },
+    {
+     "fromLine": 119,
+     "toLine": 123,
+     "chars": 131,
+     "head": "const dropped = next.slice(limit);\n    return {\n      log: next.slice(0, limit),"
+    },
+    {
+     "fromLine": 149,
+     "toLine": 149,
+     "chars": 59,
+     "head": "const evicted = Math.max(0, Math.trunc(Number(value.evicted) || 0"
+    }
+   ]
+  },
+  {
+   "file": "src/capacity-provenance.js",
+   "codeChars": 2603,
+   "executedChars": 2603,
+   "executed": 1,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/event-handover.js",
+   "codeChars": 1667,
+   "executedChars": 1656,
+   "executed": 0.993,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/event-history.js",
+   "codeChars": 2284,
+   "executedChars": 2281,
+   "executed": 0.999,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/event-package.js",
+   "codeChars": 7181,
+   "executedChars": 6754,
+   "executed": 0.941,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": [
+    {
+     "fromLine": 95,
+     "toLine": 95,
+     "chars": 53,
+     "head": "return { path: `${here}.chairs[${c}]`, rule: \"notRecord\" };"
+    },
+    {
+     "fromLine": 97,
+     "toLine": 97,
+     "chars": 52,
+     "head": "return { path: `${here}.chairs[${b}].id`, rule: \"badId\" };"
+    },
+    {
+     "fromLine": 93,
+     "toLine": 93,
+     "chars": 45,
+     "head": "return { path: `${here}.chairs`, rule: \"notList\" };"
+    },
+    {
+     "fromLine": 77,
+     "toLine": 77,
+     "chars": 41,
+     "head": "return { path: `${at}.name`, rule: \"notText\" };"
+    },
+    {
+     "fromLine": 106,
+     "toLine": 106,
+     "chars": 41,
+     "head": "return { path: `${here}.pax`, rule: \"badPax\" };"
+    }
+   ]
+  },
+  {
+   "file": "src/i18n.js",
+   "codeChars": 164117,
+   "executedChars": 162566,
+   "executed": 0.991,
+   "functionsNeverRun": 22,
+   "neverRan": [
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1875
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1876
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1877
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1878
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1879
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1880
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1881
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1882
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1883
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1884
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1885
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1886
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1887
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1888
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1890
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1891
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1892
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1893
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1894
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1895
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1896
+    },
+    {
+     "name": "TOAST_PATTERNS",
+     "line": 1897
+    }
+   ],
+   "largestGaps": [
+    {
+     "fromLine": 1895,
+     "toLine": 1895,
+     "chars": 154,
+     "head": "(m) => `${m[1]} nesne \"${m[2]}\" olarak onaylandı.${m[3] ? \" \" + m[3].replace(/^("
+    },
+    {
+     "fromLine": 1892,
+     "toLine": 1892,
+     "chars": 104,
+     "head": "(m) => `${m[1]} masasında ${m[2]} boş sandalye var; seçili grup ${m[3]} sandalye"
+    },
+    {
+     "fromLine": 1894,
+     "toLine": 1894,
+     "chars": 100,
+     "head": "(m) => `Yerel kalibrasyon v${m[1]}, ${m[2]} doğrulanmış plandan tamamlandı. Eğit"
+    },
+    {
+     "fromLine": 1896,
+     "toLine": 1896,
+     "chars": 97,
+     "head": "(m) => `Geri alındı: ${m[1] === \"one seating group\" ? \"tek oturma grubu\" : \"ayrı"
+    },
+    {
+     "fromLine": 1891,
+     "toLine": 1891,
+     "chars": 87,
+     "head": "(m) => `${m[1]} masasında ${m[2]} yerleştirilmiş kişi var. Kapasite doluluğun al"
+    },
+    {
+     "fromLine": 1889,
+     "toLine": 1889,
+     "chars": 85,
+     "head": "(m) => `${m[1]} masasında yalnızca ${m[2]} boş koltuk var. ${m[3]} için ${m[4]} "
+    },
+    {
+     "fromLine": 1893,
+     "toLine": 1893,
+     "chars": 76,
+     "head": "(m) => `${m[1]} masa, ${m[2]} plan nesnesi onaylandı. Sandalye koordinatları kor"
+    },
+    {
+     "fromLine": 1897,
+     "toLine": 1897,
+     "chars": 71,
+     "head": "(m) => `${m[1]} PDF sayfası yerel olarak oluşturuldu. Bir sayfa küçük resmi seçi"
+    },
+    {
+     "fromLine": 1885,
+     "toLine": 1885,
+     "chars": 66,
+     "head": "(m) => `${m[1]} misafir kaydı içe aktarıldı · ${m[2]} tanesi yerleştirildi.`"
+    },
+    {
+     "fromLine": 1880,
+     "toLine": 1880,
+     "chars": 65,
+     "head": "(m) => `${m[1]} kayıt ${m[2]} masasına taşındı · ${m[3]} sandalye ayrıldı.`"
+    },
+    {
+     "fromLine": 1888,
+     "toLine": 1888,
+     "chars": 64,
+     "head": "(m) => `${m[1]} ${m[2]} masasına yerleştirildi · ${m[3]} koltuk ayrıldı.`"
+    },
+    {
+     "fromLine": 1881,
+     "toLine": 1881,
+     "chars": 59,
+     "head": "(m) => `${m[1]} masasında bu kayıt için yalnızca ${m[2]} koltuk var.`"
+    },
+    {
+     "fromLine": 1887,
+     "toLine": 1887,
+     "chars": 58,
+     "head": "(m) => `${m[1]} ${m[2]} masasına taşındı · ${m[3]} koltuk ayrıldı.`"
+    },
+    {
+     "fromLine": 1876,
+     "toLine": 1876,
+     "chars": 55,
+     "head": "(m) => `${m[1]} ataması kilitli. Taşımadan önce kilidini açın.`"
+    },
+    {
+     "fromLine": 1879,
+     "toLine": 1879,
+     "chars": 55,
+     "head": "(m) => `${m[1]} nesne fiziksel sandalye kayıtlarıyla eklendi.`"
+    },
+    {
+     "fromLine": 1882,
+     "toLine": 1882,
+     "chars": 54,
+     "head": "() => `Geçmiş etkinlikler salt okunurdur; bu işlem yapılamaz.`"
+    },
+    {
+     "fromLine": 1890,
+     "toLine": 1890,
+     "chars": 44,
+     "head": "(m) => `${m[1]}: ${t(\"status.arrival.\" + m[2])}.`"
+    },
+    {
+     "fromLine": 1878,
+     "toLine": 1878,
+     "chars": 41,
+     "head": "(m) => `${m[1]}, ${m[2]} sandalyeyle eklendi.`"
+    }
+   ]
+  },
+  {
+   "file": "src/offline-recovery.js",
+   "codeChars": 1717,
+   "executedChars": 1703,
+   "executed": 0.992,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/plan-confidence-budget.js",
+   "codeChars": 13123,
+   "executedChars": 12983,
+   "executed": 0.989,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/plan-detection-classical.js",
+   "codeChars": 127575,
+   "executedChars": 122164,
+   "executed": 0.958,
+   "functionsNeverRun": 5,
+   "neverRan": [
+    {
+     "name": "confidenceThreshold",
+     "line": 246
+    },
+    {
+     "name": "stage",
+     "line": 247
+    },
+    {
+     "name": "cbox",
+     "line": 1215
+    },
+    {
+     "name": "cbox",
+     "line": 1398
+    },
+    {
+     "name": "box",
+     "line": 1459
+    }
+   ],
+   "largestGaps": [
+    {
+     "fromLine": 1167,
+     "toLine": 1177,
+     "chars": 691,
+     "head": "{\n        globalThis.MERIT_STAGE_CENSUS.accepted=chairs.map(c=>({x:c.x,y:c.y,w:c"
+    },
+    {
+     "fromLine": 1397,
+     "toLine": 1407,
+     "chars": 599,
+     "head": "{\n        const cbox=c=>({x:c.x,y:c.y,w:c.w,h:c.h,src:c.source,fill:c.fill??null"
+    },
+    {
+     "fromLine": 1458,
+     "toLine": 1465,
+     "chars": 418,
+     "head": "{\n        const box=e=>({s:e.comp.source,x:Math.round(e.comp.x),y:Math.round(e.c"
+    },
+    {
+     "fromLine": 1037,
+     "toLine": 1043,
+     "chars": 366,
+     "head": "{\n        globalThis.MERIT_STAGE_CENSUS={\n          allSourceComps:sources.flatM"
+    },
+    {
+     "fromLine": 1022,
+     "toLine": 1026,
+     "chars": 293,
+     "head": "const x1=Math.min(hit.comp.x,e.comp.x),y1=Math.min(hit.comp.y,e.comp.y);\n       "
+    },
+    {
+     "fromLine": 494,
+     "toLine": 498,
+     "chars": 240,
+     "head": "{\n            (globalThis.MERIT_DARK_FAMILY_PROBE||=[]).push({index:di,medSide:m"
+    },
+    {
+     "fromLine": 2475,
+     "toLine": 2483,
+     "chars": 240,
+     "head": "{\n        for(const c of chairVenues){\n          c.type=\"other\";\n          c.typ"
+    },
+    {
+     "fromLine": 1214,
+     "toLine": 1218,
+     "chars": 228,
+     "head": "{\n        const cbox=c=>({x:c.x,y:c.y,w:c.w,h:c.h,src:c.source,fill:c.fill??null"
+    },
+    {
+     "fromLine": 1863,
+     "toLine": 1865,
+     "chars": 158,
+     "head": ":\n           !vocabularyTrusted?`the plan's modal describes only ${Math.round(ag"
+    },
+    {
+     "fromLine": 969,
+     "toLine": 972,
+     "chars": 133,
+     "head": "else if(fallbackChairComps.length){\n        addChairs(fallbackChairComps,fallbac"
+    },
+    {
+     "fromLine": 1872,
+     "toLine": 1873,
+     "chars": 131,
+     "head": "globalThis.MERIT_STAGE_CENSUS.stage_chosen=\n        chosen.map(c2=>({x:c2.obb.cx"
+    },
+    {
+     "fromLine": 983,
+     "toLine": 985,
+     "chars": 128,
+     "head": "continue;\n          chairEntries.splice(i,1,...parts.map(p=>({comp:Object.assign"
+    },
+    {
+     "fromLine": 1990,
+     "toLine": 1993,
+     "chars": 126,
+     "head": ":{\n            reason:\"belowReviewThreshold\",\n            confidence:Number(s.co"
+    },
+    {
+     "fromLine": 2121,
+     "toLine": 2124,
+     "chars": 124,
+     "head": "{\n          seatsInsideBodyStoodDown={wouldHold:held.length,of:candidates.length"
+    },
+    {
+     "fromLine": 982,
+     "toLine": 983,
+     "chars": 106,
+     "head": "const parts=SPLIT.splitAtValley(e.comp,e.labels,width,height,modalSide,modalSide"
+    },
+    {
+     "fromLine": 1027,
+     "toLine": 1030,
+     "chars": 105,
+     "head": "{\n            chairEntries.length=0;chairEntries.push(...merged);\n            fo"
+    },
+    {
+     "fromLine": 2582,
+     "toLine": 2582,
+     "chars": 88,
+     "head": "||{cx:comp.x+comp.w/2,cy:comp.y+comp.h/2,w:comp.w,h:comp.h,rotation:comp.pcaRota"
+    },
+    {
+     "fromLine": 2217,
+     "toLine": 2217,
+     "chars": 86,
+     "head": "globalThis.MERIT_TEXTRUN_PROBE.push({len:r.length,medW,medGap,runGap,runGapInWid"
+    },
+    {
+     "fromLine": 1568,
+     "toLine": 1568,
+     "chars": 74,
+     "head": "||{cx:ch.x+ch.w/2,cy:ch.y+ch.h/2,w:ch.w,h:ch.h,rotation:ch.pcaRotation||0}"
+    },
+    {
+     "fromLine": 1558,
+     "toLine": 1558,
+     "chars": 67,
+     "head": "||{cx:c.x+c.w/2,cy:c.y+c.h/2,w:c.w,h:c.h,rotation:c.pcaRotation||0}"
+    },
+    {
+     "fromLine": 2372,
+     "toLine": 2372,
+     "chars": 67,
+     "head": "||{cx:c.x+c.w/2,cy:c.y+c.h/2,w:c.w,h:c.h,rotation:c.pcaRotation||0}"
+    },
+    {
+     "fromLine": 2475,
+     "toLine": 2475,
+     "chars": 66,
+     "head": "&&representation.evidence&&representation.evidence.tablesFound===0"
+    },
+    {
+     "fromLine": 2634,
+     "toLine": 2634,
+     "chars": 54,
+     "head": "c=>(c.seatFamilies||[]).filter(f=>!isPrimaryFamily(f))"
+    }
+   ]
+  },
+  {
+   "file": "src/plan-detection-components.js",
+   "codeChars": 5790,
+   "executedChars": 5788,
+   "executed": 1,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/plan-detection-deskew.js",
+   "codeChars": 7477,
+   "executedChars": 7378,
+   "executed": 0.987,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": [
+    {
+     "fromLine": 81,
+     "toLine": 81,
+     "chars": 47,
+     "head": "return{deg:0,gain:1,measured:false,applyDeg:0};"
+    }
+   ]
+  },
+  {
+   "file": "src/plan-detection-geometry.js",
+   "codeChars": 4219,
+   "executedChars": 4208,
+   "executed": 0.997,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/plan-detection-shape.js",
+   "codeChars": 5440,
+   "executedChars": 5299,
+   "executed": 0.974,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": [
+    {
+     "fromLine": 105,
+     "toLine": 105,
+     "chars": 69,
+     "head": "return{type:\"rectangle\",basis:\"no-shape-signal\",shapeConfidence:.15};"
+    }
+   ]
+  },
+  {
+   "file": "src/plan-detection-size-prior.js",
+   "codeChars": 3751,
+   "executedChars": 3727,
+   "executed": 0.994,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/plan-detection-split.js",
+   "codeChars": 5306,
+   "executedChars": 5229,
+   "executed": 0.985,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/plan-doctor.js",
+   "codeChars": 34120,
+   "executedChars": 31535,
+   "executed": 0.924,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": [
+    {
+     "fromLine": 204,
+     "toLine": 217,
+     "chars": 740,
+     "head": "{\n      over.sort((a, b) => (b.pax - b.capacity) - (a.pax - a.capacity));\n      "
+    },
+    {
+     "fromLine": 234,
+     "toLine": 246,
+     "chars": 555,
+     "head": "{\n      const seats = clashes.reduce((n, c) => n + c.seats, 0);\n      add({\n    "
+    },
+    {
+     "fromLine": 628,
+     "toLine": 639,
+     "chars": 489,
+     "head": "{\n        add({\n          code: \"tablesUnaccountedFor\", level: LEVEL.NEEDS_REVIE"
+    },
+    {
+     "fromLine": 741,
+     "toLine": 752,
+     "chars": 422,
+     "head": "{\n      add({\n        code: \"someChecksNotPossible\", level: LEVEL.INFORMATION,\n "
+    },
+    {
+     "fromLine": 202,
+     "toLine": 202,
+     "chars": 60,
+     "head": "over.push({ table: t, pax, capacity: num(t.capacity), guests: at });"
+    },
+    {
+     "fromLine": 684,
+     "toLine": 684,
+     "chars": 53,
+     "head": "|| \"two figures that should describe the same room do not match\""
+    },
+    {
+     "fromLine": 232,
+     "toLine": 232,
+     "chars": 45,
+     "head": "clashes.push({ table: t, seats: doubled.length });"
+    }
+   ]
+  },
+  {
+   "file": "src/plan-embedding.js",
+   "codeChars": 16997,
+   "executedChars": 16639,
+   "executed": 0.979,
+   "functionsNeverRun": 1,
+   "neverRan": [
+    {
+     "name": "toVector",
+     "line": 511
+    }
+   ],
+   "largestGaps": [
+    {
+     "fromLine": 456,
+     "toLine": 456,
+     "chars": 41,
+     "head": "return items.map(function () { return null; });"
+    }
+   ]
+  },
+  {
+   "file": "src/plan-encoder-weights.js",
+   "codeChars": 55008,
+   "executedChars": 55008,
+   "executed": 1,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/plan-intelligence.js",
+   "codeChars": 85369,
+   "executedChars": 76772,
+   "executed": 0.899,
+   "functionsNeverRun": 1,
+   "neverRan": [
+    {
+     "name": "get",
+     "line": 1883
+    }
+   ],
+   "largestGaps": [
+    {
+     "fromLine": 1883,
+     "toLine": 1925,
+     "chars": 1981,
+     "head": "get() {\n      const encoder = globalThis.MERIT_PLAN_ENCODER_WEIGHTS || null;\n   "
+    },
+    {
+     "fromLine": 761,
+     "toLine": 778,
+     "chars": 673,
+     "head": "{\n      let best = null, bestGap = Infinity;\n      for (const g of furnitureGrou"
+    },
+    {
+     "fromLine": 930,
+     "toLine": 936,
+     "chars": 306,
+     "head": "{\n      // Read, but with no object to attach it to. Recorded as a zone with no\n"
+    },
+    {
+     "fromLine": 1482,
+     "toLine": 1486,
+     "chars": 292,
+     "head": "say(\"contra:capacityUnverified\", \"CAPACITY\", \"contradiction.capacityUnverified\","
+    },
+    {
+     "fromLine": 919,
+     "toLine": 924,
+     "chars": 278,
+     "head": "for (const cluster of clusterByGap(barObjects, s => Math.max(s.w, s.h) * 0.6)) {"
+    },
+    {
+     "fromLine": 62,
+     "toLine": 67,
+     "chars": 275,
+     "head": "{\n      if (!Array.isArray(d.memberIds)) continue;\n      const target = d.decisi"
+    },
+    {
+     "fromLine": 948,
+     "toLine": 951,
+     "chars": 274,
+     "head": "add(\"lounge\", cluster, cluster.length > 1 ? \"likely\" : \"uncertain\",\n        [`${"
+    },
+    {
+     "fromLine": 1509,
+     "toLine": 1513,
+     "chars": 269,
+     "head": "say(\"contra:memoryAmbiguous\", \"MEMORY\", \"contradiction.memoryAmbiguous\",\n       "
+    },
+    {
+     "fromLine": 1383,
+     "toLine": 1387,
+     "chars": 267,
+     "head": "say(\"contra:familyOutlier\", \"TYPE\", \"contradiction.familyOutlier\",\n        { n: "
+    },
+    {
+     "fromLine": 1450,
+     "toLine": 1454,
+     "chars": 264,
+     "head": "say(\"contra:seatingInStage\", \"ZONE\", \"contradiction.seatingInStage\",\n        { n"
+    },
+    {
+     "fromLine": 1462,
+     "toLine": 1466,
+     "chars": 256,
+     "head": "say(\"contra:unzonedTables\", \"ZONE\", \"contradiction.unzonedTables\",\n        { n: "
+    },
+    {
+     "fromLine": 1491,
+     "toLine": 1495,
+     "chars": 243,
+     "head": "say(\"contra:memoryOverruled\", \"MEMORY\", \"contradiction.memoryOverruled\",\n       "
+    },
+    {
+     "fromLine": 1721,
+     "toLine": 1724,
+     "chars": 224,
+     "head": "push({ id: \"priority:capacity\", key: \"priority.capacity\", rank: 1,\n        param"
+    },
+    {
+     "fromLine": 1498,
+     "toLine": 1502,
+     "chars": 203,
+     "head": "say(\"contra:memoryLost\", \"MEMORY\", \"contradiction.memoryLost\",\n        { n: lost"
+    },
+    {
+     "fromLine": 1733,
+     "toLine": 1736,
+     "chars": 185,
+     "head": "push({ id: \"priority:unverifiedSeating\", key: \"priority.unverifiedSeating\", rank"
+    },
+    {
+     "fromLine": 145,
+     "toLine": 146,
+     "chars": 184,
+     "head": "return { ...incomingVisual, intensityHist: [...incomingVisual.intensityHist], qu"
+    },
+    {
+     "fromLine": 1219,
+     "toLine": 1221,
+     "chars": 140,
+     "head": "say(\"unverifiedSeating\", \"fact.unverifiedSeating\", { n: unverified.length }, \"st"
+    },
+    {
+     "fromLine": 1267,
+     "toLine": 1268,
+     "chars": 133,
+     "head": "say(\"memoryAmbiguous\", \"fact.memoryAmbiguousObjects\", { n: mem.ambiguous }, \"lik"
+    },
+    {
+     "fromLine": 684,
+     "toLine": 685,
+     "chars": 128,
+     "head": "addNode(id, \"physicalObject\", \"chair\", \"assistedDetection\",\n            { kind: "
+    },
+    {
+     "fromLine": 85,
+     "toLine": 85,
+     "chars": 126,
+     "head": "d => Array.isArray(d.memberIds) && d.memberIds.length === memberIds.length && [."
+    },
+    {
+     "fromLine": 90,
+     "toLine": 90,
+     "chars": 126,
+     "head": "? (matchingDecision.decision === \"merged\" ? \"Confirmed by a human answer as one "
+    },
+    {
+     "fromLine": 76,
+     "toLine": 79,
+     "chars": 119,
+     "head": "{\n      const [idA, idB] = key.split(\"|\");\n      if (indexById.has(idA) && index"
+    },
+    {
+     "fromLine": 1264,
+     "toLine": 1265,
+     "chars": 109,
+     "head": "say(\"memoryLost\", \"fact.memoryLostObjects\", { n: mem.lost }, \"likely\",\n        ["
+    },
+    {
+     "fromLine": 518,
+     "toLine": 519,
+     "chars": 102,
+     "head": "c => ({ id: c.id, kind: c.kind, type: c.type,\n        note: \"seat count not dete"
+    },
+    {
+     "fromLine": 159,
+     "toLine": 161,
+     "chars": 78,
+     "head": "else if (!learned && incomingVisual.learned) {\n      learned = [...incomingVisua"
+    }
+   ]
+  },
+  {
+   "file": "src/plan-label-ocr.js",
+   "codeChars": 9199,
+   "executedChars": 8926,
+   "executed": 0.97,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": [
+    {
+     "fromLine": 230,
+     "toLine": 233,
+     "chars": 111,
+     "head": "catch (error) {\n        attempts.push({ variant: crop.id, error: error && error."
+    },
+    {
+     "fromLine": 103,
+     "toLine": 106,
+     "chars": 101,
+     "head": "{\n        const k = MAX_CROP_PX / Math.max(cw, ch);\n        cw = Math.max(1, Mat"
+    }
+   ]
+  },
+  {
+   "file": "src/plan-memory.js",
+   "codeChars": 19885,
+   "executedChars": 19721,
+   "executed": 0.992,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": [
+    {
+     "fromLine": 469,
+     "toLine": 469,
+     "chars": 48,
+     "head": "return { ...first, shift: { ...shift, applied: false } };"
+    }
+   ]
+  },
+  {
+   "file": "src/plan-number-integrity.js",
+   "codeChars": 6297,
+   "executedChars": 6254,
+   "executed": 0.993,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/plan-ocr.js",
+   "codeChars": 4409,
+   "executedChars": 3866,
+   "executed": 0.877,
+   "functionsNeverRun": 1,
+   "neverRan": [
+    {
+     "name": "errorHandler",
+     "line": 31
+    }
+   ],
+   "largestGaps": [
+    {
+     "fromLine": 56,
+     "toLine": 62,
+     "chars": 303,
+     "head": "catch (error) {\n      // `reason` is the engine's own words, kept for diagnostic"
+    },
+    {
+     "fromLine": 21,
+     "toLine": 21,
+     "chars": 127,
+     "head": "return Promise.reject(Object.assign(new Error(\"Tesseract.js did not load (no net"
+    },
+    {
+     "fromLine": 52,
+     "toLine": 52,
+     "chars": 81,
+     "head": "() => reject(Object.assign(new Error(\"OCR engine load timed out.\"), { ocrCode: \""
+    }
+   ]
+  },
+  {
+   "file": "src/plan-relationships.js",
+   "codeChars": 15698,
+   "executedChars": 15661,
+   "executed": 0.998,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/plan-representation.js",
+   "codeChars": 4532,
+   "executedChars": 4526,
+   "executed": 0.999,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/plan-self-check.js",
+   "codeChars": 9143,
+   "executedChars": 8976,
+   "executed": 0.982,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/plan-table-numbers.js",
+   "codeChars": 5979,
+   "executedChars": 5839,
+   "executed": 0.977,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": [
+    {
+     "fromLine": 107,
+     "toLine": 110,
+     "chars": 120,
+     "head": "catch (error) {\n        readings.push({ view: view.id, value: null, reason: erro"
+    }
+   ]
+  },
+  {
+   "file": "src/plan-teach-area.js",
+   "codeChars": 12020,
+   "executedChars": 11740,
+   "executed": 0.977,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": [
+    {
+     "fromLine": 282,
+     "toLine": 282,
+     "chars": 71,
+     "head": ": `the match is ${m.grade} rather than certain, so it is offered rather than app"
+    },
+    {
+     "fromLine": 111,
+     "toLine": 111,
+     "chars": 58,
+     "head": "return { ok: false, reason: `unknown subject \"${subject.kind}\"` };"
+    }
+   ]
+  },
+  {
+   "file": "src/post-event-replay.js",
+   "codeChars": 2376,
+   "executedChars": 2327,
+   "executed": 0.979,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/schema-migrations.js",
+   "codeChars": 6741,
+   "executedChars": 6328,
+   "executed": 0.939,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": [
+    {
+     "fromLine": 75,
+     "toLine": 85,
+     "chars": 351,
+     "head": "table.chairs = table.chairs\n              // A chair explicitly marked not-physi"
+    }
+   ]
+  },
+  {
+   "file": "src/seat-assignment.js",
+   "codeChars": 3057,
+   "executedChars": 2951,
+   "executed": 0.965,
+   "functionsNeverRun": 1,
+   "neverRan": [
+    {
+     "name": "isSeated",
+     "line": 83
+    }
+   ],
+   "largestGaps": [
+    {
+     "fromLine": 83,
+     "toLine": 85,
+     "chars": 85,
+     "head": "function isSeated(guest) {\n    return !!(isPlainObject(guest) && normalize(guest"
+    }
+   ]
+  },
+  {
+   "file": "src/seat-model.js",
+   "codeChars": 3271,
+   "executedChars": 3216,
+   "executed": 0.983,
+   "functionsNeverRun": 1,
+   "neverRan": [
+    {
+     "name": "drawsChairs",
+     "line": 65
+    }
+   ],
+   "largestGaps": [
+    {
+     "fromLine": 65,
+     "toLine": 65,
+     "chars": 48,
+     "head": "(table) => !!table && table.hasPhysicalSeats !== false"
+    }
+   ]
+  },
+  {
+   "file": "src/seating-advisor.js",
+   "codeChars": 11497,
+   "executedChars": 11179,
+   "executed": 0.972,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/seating-freeze.js",
+   "codeChars": 11873,
+   "executedChars": 11051,
+   "executed": 0.931,
+   "functionsNeverRun": 1,
+   "neverRan": [
+    {
+     "name": "openCapacityOutsideFreeze",
+     "line": 183
+    }
+   ],
+   "largestGaps": [
+    {
+     "fromLine": 183,
+     "toLine": 194,
+     "chars": 616,
+     "head": "function openCapacityOutsideFreeze(freezes, tables, guests) {\n    const frozen ="
+    }
+   ]
+  },
+  {
+   "file": "src/service-load.js",
+   "codeChars": 6364,
+   "executedChars": 6306,
+   "executed": 0.991,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": []
+  },
+  {
+   "file": "src/storage-provider.js",
+   "codeChars": 5547,
+   "executedChars": 3885,
+   "executed": 0.7,
+   "functionsNeverRun": 18,
+   "neverRan": [
+    {
+     "name": "req.onerror",
+     "line": 39
+    },
+    {
+     "name": "req.onblocked",
+     "line": 40
+    },
+    {
+     "name": "req.onerror",
+     "line": 52
+    },
+    {
+     "name": "tx.onerror",
+     "line": 63
+    },
+    {
+     "name": "tx.onabort",
+     "line": 64
+    },
+    {
+     "name": "deleteBlob",
+     "line": 98
+    },
+    {
+     "name": "LocalStorageStorageProvider",
+     "line": 131
+    },
+    {
+     "name": "slot",
+     "line": 132
+    },
+    {
+     "name": "load",
+     "line": 133
+    },
+    {
+     "name": "save",
+     "line": 137
+    },
+    {
+     "name": "putBlob",
+     "line": 146
+    },
+    {
+     "name": "getBlob",
+     "line": 154
+    },
+    {
+     "name": "deleteBlob",
+     "line": 155
+    },
+    {
+     "name": "listBlobIds",
+     "line": 156
+    },
+    {
+     "name": "tx.onerror",
+     "line": 81
+    },
+    {
+     "name": "tx.onabort",
+     "line": 82
+    },
+    {
+     "name": "req.onerror",
+     "line": 94
+    },
+    {
+     "name": "req.onerror",
+     "line": 117
+    }
+   ],
+   "largestGaps": [
+    {
+     "fromLine": 98,
+     "toLine": 109,
+     "chars": 292,
+     "head": "async deleteBlob(id) {\n      const db = await openDB();\n      try {\n        awai"
+    },
+    {
+     "fromLine": 146,
+     "toLine": 153,
+     "chars": 194,
+     "head": "async putBlob(id, value) {\n      try {\n        localStorage.setItem(this.key + \""
+    },
+    {
+     "fromLine": 156,
+     "toLine": 159,
+     "chars": 145,
+     "head": "async listBlobIds() {\n      const prefix = this.key + \".blob.\";\n      return Obj"
+    },
+    {
+     "fromLine": 133,
+     "toLine": 136,
+     "chars": 93,
+     "head": "async load(key) {\n      const raw = localStorage.getItem(this.slot(key));\n      "
+    },
+    {
+     "fromLine": 137,
+     "toLine": 140,
+     "chars": 90,
+     "head": "async save(data, key) {\n      localStorage.setItem(this.slot(key), JSON.stringif"
+    },
+    {
+     "fromLine": 155,
+     "toLine": 155,
+     "chars": 78,
+     "head": "async deleteBlob(id) { localStorage.removeItem(this.key + \".blob.\" + id); return"
+    },
+    {
+     "fromLine": 40,
+     "toLine": 40,
+     "chars": 76,
+     "head": "() => reject(new Error(\"IndexedDB open blocked (another tab holds an older versi"
+    },
+    {
+     "fromLine": 31,
+     "toLine": 31,
+     "chars": 71,
+     "head": "{ reject(new Error(\"IndexedDB is not available in this environment.\")); return; "
+    },
+    {
+     "fromLine": 154,
+     "toLine": 154,
+     "chars": 67,
+     "head": "async getBlob(id) { return localStorage.getItem(this.key + \".blob.\" + id); }"
+    },
+    {
+     "fromLine": 117,
+     "toLine": 117,
+     "chars": 65,
+     "head": "() => reject(req.error || new Error(\"IndexedDB blob key listing failed.\"))"
+    },
+    {
+     "fromLine": 82,
+     "toLine": 82,
+     "chars": 60,
+     "head": "() => reject(tx.error || new Error(\"IndexedDB blob write aborted.\"))"
+    },
+    {
+     "fromLine": 81,
+     "toLine": 81,
+     "chars": 59,
+     "head": "() => reject(tx.error || new Error(\"IndexedDB blob write failed.\"))"
+    },
+    {
+     "fromLine": 94,
+     "toLine": 94,
+     "chars": 59,
+     "head": "() => reject(req.error || new Error(\"IndexedDB blob read failed.\"))"
+    },
+    {
+     "fromLine": 64,
+     "toLine": 64,
+     "chars": 56,
+     "head": "() => reject(tx.error || new Error(\"IndexedDB write aborted.\"))"
+    },
+    {
+     "fromLine": 39,
+     "toLine": 39,
+     "chars": 55,
+     "head": "() => reject(req.error || new Error(\"IndexedDB open failed.\"))"
+    },
+    {
+     "fromLine": 52,
+     "toLine": 52,
+     "chars": 55,
+     "head": "() => reject(req.error || new Error(\"IndexedDB read failed.\"))"
+    },
+    {
+     "fromLine": 63,
+     "toLine": 63,
+     "chars": 55,
+     "head": "() => reject(tx.error || new Error(\"IndexedDB write failed.\"))"
+    },
+    {
+     "fromLine": 132,
+     "toLine": 132,
+     "chars": 51,
+     "head": "slot(key) { return key ? `${this.key}:${key}` : this.key; }"
+    }
+   ]
+  },
+  {
+   "file": "src/table-availability.js",
+   "codeChars": 3516,
+   "executedChars": 3398,
+   "executed": 0.966,
+   "functionsNeverRun": 1,
+   "neverRan": [
+    {
+     "name": "num",
+     "line": 41
+    }
+   ],
+   "largestGaps": [
+    {
+     "fromLine": 41,
+     "toLine": 41,
+     "chars": 42,
+     "head": "(v) => (typeof v === \"number\" && isFinite(v) ? v : 0)"
+    }
+   ]
+  },
+  {
+   "file": "src/training-data.js",
+   "codeChars": 10636,
+   "executedChars": 9371,
+   "executed": 0.881,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": [
+    {
+     "fromLine": 288,
+     "toLine": 290,
+     "chars": 209,
+     "head": ": records.length < 500\n          ? \"TOO FEW EXAMPLES to evaluate a learned detec"
+    },
+    {
+     "fromLine": 118,
+     "toLine": 124,
+     "chars": 177,
+     "head": "return new Promise((resolve, reject) => {\n      const img = new Image();\n      i"
+    },
+    {
+     "fromLine": 140,
+     "toLine": 142,
+     "chars": 113,
+     "head": "{\n      throw new Error(`A \"${decisionType}\" is by definition something the dete"
+    },
+    {
+     "fromLine": 137,
+     "toLine": 139,
+     "chars": 112,
+     "head": "{\n      throw new Error(`A \"${decisionType}\" needs the prediction the human disa"
+    },
+    {
+     "fromLine": 146,
+     "toLine": 148,
+     "chars": 110,
+     "head": "{\n      throw new Error(\"Every example must name the plan it came from, by hash "
+    },
+    {
+     "fromLine": 133,
+     "toLine": 135,
+     "chars": 99,
+     "head": "{\n      throw new Error(`Unknown decisionType \"${decisionType}\". Expected one of"
+    },
+    {
+     "fromLine": 149,
+     "toLine": 151,
+     "chars": 63,
+     "head": "{\n      throw new Error(\"Every example needs the geometry it was taken from.\");\n"
+    },
+    {
+     "fromLine": 143,
+     "toLine": 145,
+     "chars": 60,
+     "head": "{\n      throw new Error(`A \"${decisionType}\" needs the human's answer.`);\n    }"
+    },
+    {
+     "fromLine": 67,
+     "toLine": 69,
+     "chars": 46,
+     "head": "catch {\n      bytes = new TextEncoder().encode(payload);\n    }"
+    },
+    {
+     "fromLine": 245,
+     "toLine": 247,
+     "chars": 44,
+     "head": "{\n        if (valCount > 1) valCount--; else trainCount--;\n      }"
+    }
+   ]
+  },
+  {
+   "file": "src/venue-model.js",
+   "codeChars": 18405,
+   "executedChars": 16657,
+   "executed": 0.905,
+   "functionsNeverRun": 0,
+   "neverRan": [],
+   "largestGaps": [
+    {
+     "fromLine": 354,
+     "toLine": 359,
+     "chars": 188,
+     "head": "next.forEach((n, ni) => {\n      if (usedN.has(ni) || (p.type ?? null) !== (n.typ"
+    },
+    {
+     "fromLine": 203,
+     "toLine": 203,
+     "chars": 121,
+     "head": ": `nothing named this table on either side; it is ${d.toFixed(0)}px from where i"
+    },
+    {
+     "fromLine": 361,
+     "toLine": 364,
+     "chars": 85,
+     "head": "{\n      if (usedP.has(c.pi) || usedN.has(c.ni)) continue;\n      pair(c.pi, c.ni,"
+    },
+    {
+     "fromLine": 214,
+     "toLine": 214,
+     "chars": 80,
+     "head": "{ put(CHANGE.TYPE_CHANGED, before.type ?? null, after.type ?? null, \"type\"); nam"
+    },
+    {
+     "fromLine": 249,
+     "toLine": 252,
+     "chars": 80,
+     "head": "{\n      if (usedP.has(p.pi) || usedN.has(p.ni)) continue;\n      record(p.pi, p.n"
+    },
+    {
+     "fromLine": 220,
+     "toLine": 220,
+     "chars": 75,
+     "head": "put(CHANGE.UNKNOWN_CHANGE, before.number ?? null, after.number ?? null, \"number\""
+    },
+    {
+     "fromLine": 101,
+     "toLine": 101,
+     "chars": 68,
+     "head": "throw new Error(\"promoteEventToNewVersion: event is not linked to a layout\");"
+    },
+    {
+     "fromLine": 338,
+     "toLine": 338,
+     "chars": 65,
+     "head": "emit(CHANGE.UNKNOWN_CHANGE, b, identity, a.type ?? null, b.type ?? null);"
+    },
+    {
+     "fromLine": 314,
+     "toLine": 315,
+     "chars": 64,
+     "head": ": SERVICE_POINT_TYPES.has(type) ? CHANGE.SERVICE_POINT_CHANGED\n          : base"
+    },
+    {
+     "fromLine": 93,
+     "toLine": 94,
+     "chars": 63,
+     "head": "throw new Error(\"snapshotVersionIntoEvent: unknown layout version\");"
+    },
+    {
+     "fromLine": 171,
+     "toLine": 171,
+     "chars": 55,
+     "head": "throw new Error(\"compareToVersion: unknown layout version\");"
+    },
+    {
+     "fromLine": 55,
+     "toLine": 55,
+     "chars": 51,
+     "head": "throw new Error(\"createLayoutVersion: unknown layout\");"
+    },
+    {
+     "fromLine": 43,
+     "toLine": 43,
+     "chars": 43,
+     "head": "throw new Error(\"createLayout: unknown venue\");"
+    },
+    {
+     "fromLine": 335,
+     "toLine": 335,
+     "chars": 43,
+     "head": ": `matched on position, ${d.toFixed(0)}px apart`"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,3133 @@
+# MERIT EVENT MAKER — event-operations product programme
+
+**Branch** `claude/merit-concept3-plan-intelligence-rebirth`
+**Starting head** `ee069590ac861823ed1bd25414d8fcd134a9f103`
+**PR** #5
+
+This is the consolidated report for the product programme. It records what was
+measured, what was built, what was rejected, and — with equal weight — what is
+still not verified. No marketing language; every number here came from a command
+whose output is in the repository.
+
+---
+
+## PHASE A — Beta Core, frozen
+
+The point of this phase is to be able to prove later that product work did not
+move the plan reader. Nothing was changed; everything was run and recorded.
+
+State at the start, verified rather than assumed:
+
+```
+branch   claude/merit-concept3-plan-intelligence-rebirth
+head     ee069590ac861823ed1bd25414d8fcd134a9f103
+tree     clean
+```
+
+### BETA CORE BASELINE
+
+Fourteen commands, each to its own log, with exit code and wall-clock cost.
+Machine-readable copy: `benchmarks/beta-core-baseline.json`.
+
+| command | exit | time | result |
+|---|---|---|---|
+| `npm test` | 0 | 213s | **27/27 suites, 818/818 checks** |
+| `npm run test:all` | **1** | 245s | 32/33 suites, 1011/1013 — see *known failing* |
+| `npm run benchmark` | 0 | 25s | detection table below |
+| `npm run benchmark:baseline` | 0 | 0s | **No regressions. 0 improvements, 0 notes.** |
+| `npm run benchmark:adversarial` | 0 | 33s | |
+| `npm run benchmark:zones` | 0 | 63s | |
+| `npm run benchmark:facts` | 0 | 22s | |
+| `npm run benchmark:contradictions` | 0 | 35s | |
+| `npm run benchmark:review-order` | 0 | 49s | |
+| `npm run benchmark:false-positives` | 0 | 45s | |
+| `npm run benchmark:teaching` | 0 | 17s | |
+| `npm run benchmark:memory` | **1** | 93s | gates unmet on *transformed* drawings — known |
+| `npm run perf` | 0 | 15s | |
+| `npm run verify:offline` | 0 | 8s | **27 passed, 0 failed** |
+
+#### Detection — the numbers product work must not move
+
+| plan | | |
+|---|---|---|
+| **merit-real-venue** (PHYSICAL) | tables | P **0.92** · R **1** · F1 **0.958** (46/46, 4 fp) |
+| | chairs | P **0.955** · R **0.947** · F1 **0.951** |
+| | relations | **0.99** (100 correct, 1 wrong, 0 orphan) |
+| **ornek-symbolic** (SYMBOLIC) | tables | P **0.994** · R **0.976** · F1 **0.985** (162/166, 1 fp) |
+| adversarial architecture | | 10/10, F1 1 · columns 6/6 |
+| adversarial bistro | | 18/23, P 1, R 0.783, F1 0.878 |
+| adversarial dense | | 24/24, F1 1 |
+| adversarial text | | 12/12, F1 1 |
+
+Every figure matches the protected values in the programme brief. The detector
+baseline guard independently confirms it: **no regressions, per plan, per field.**
+
+Visual Plan Memory: retention **0.7857**, identity precision **0.9448**, wrong
+application **0.0552** — against gates of ≥0.98 / ≥0.98 / ≤0.01. Not met on
+transformed drawings, met on an unchanged one. Known, measured, accepted.
+
+#### Known failing — and one of them matters to this programme
+
+**`plan-intelligence-contract`, 2 of 90 checks.** Verified **pre-existing**: the
+identical two checks fail in a clean worktree at `cb263eb`, the commit this
+sprint started from. Nothing in the previous phases caused it.
+
+It has been invisible because it is a **slow** suite — `npm test` excludes it,
+so the CI *fast-core* job has never run it. That is a third CI gap, on top of
+the two found in the CI phase.
+
+| check | what is actually wrong |
+|---|---|
+| every scene-graph edge connects two objects that actually exist | the graph emits `memberOf` edges into **similarity-group** ids; the contract's known id space is candidates + chairs + **furniture** groups. Similarity groups are a fourth id space the contract does not know about |
+| every relationship records the evidence that produced it | chair→table `belongsTo` edges carry **no evidence string** |
+
+The second is **load-bearing for this programme.** The Risk Radar (§8), Plan
+Doctor (§13), Smart Seating (§16) and the recommendation UI (§37) all require
+the product to explain *why*. A relationship with no recorded evidence cannot be
+explained to an operator. This is not cosmetic and it is not a test-only
+problem — and the fix must be in the engine or in an argued contract change,
+never in quietly relaxing the assertion, which would be the same sin as moving
+Ground Truth.
+
+**Not fixed in Phase A.** Phase A freezes and records; changing behaviour here
+would defeat the freeze. Scheduled ahead of Phase D, which is the first phase
+that consumes relationship evidence in the UI.
+
+---
+
+## The product as it exists — measured, not remembered
+
+Before proposing an information architecture, the application was rendered at
+1920×1080, 2560×1440 and ~1440px with a real plan, real Assisted Detection
+(49 tables committed from 56 candidates) and real guests. Zero page errors at
+every viewport.
+
+### What exists today
+
+| | |
+|---|---|
+| screens | `events`, `new-event`, `workspace`, **`review`** |
+| workspace tabs | Floor Plan · Guests · Seating Plan · Live Event · Reports |
+| Command Center | **does not exist** |
+
+### The central finding: two surfaces answer the SAME question with different numbers
+
+This is not a style complaint. Rendered side by side on the same event, in the
+same visual component, in the same screen position, the product says:
+
+| surface | where | what it counts | showed |
+|---|---|---|---|
+| `planStatusPillHTML` | **Floor Plan** tab, bottom pill | `reviewGroups` members + questions — the **raw, un-collapsed** count | **"37 items need review"** |
+| `planIntelBottomPillHTML` | **Review** screen, bottom pill | the Confidence Budget | **"6 to decide"** |
+| `planHealthHTML` | workspace header | `planIssues()` — 4 hard-coded rules | **"Plan Health · 1"** |
+| Review Center panel | inside Review | the Confidence Budget, ranked | 6 rows |
+
+**Two of these answer the same question and disagree.** "37 items need review"
+and "6 to decide" both mean *how much of this plan still needs a person* — same
+question, same component, same corner of the screen, both linking to the same
+Review Center, different numbers. The 37 is the raw un-collapsed count, which is
+exactly what the Confidence Budget was built to replace: *"do not show the
+operator 50 warnings just because the system has 50 uncertain facts."*
+
+**The third is not a contradiction and must not be merged away.** `planIssues()`
+answers a *different* question — duplicate table numbers, blank plan, capacity
+exceeded, unassigned guests. That is **event data readiness**, not plan-reading
+uncertainty. Folding it into one number would destroy real information. It is
+poorly placed, not wrong; it becomes an input to Plan Doctor and the Risk Radar
+(Phases E and J), which is where those rules belong.
+
+Meanwhile **Self-Check and Number Integrity have no surface at all** outside
+the Review Center's budget rows. Two layers that produce real findings are
+invisible to an operator who never opens that panel.
+
+### The second finding: the review screen leaves the application
+
+`ui.screen = "review"` is a **separate shell**, not a view. It replaces:
+
+| | workspace | review screen |
+|---|---|---|
+| main navigation | 5 tabs | **gone** — replaced by a "Floor Plan" back button |
+| event identity | name, date, venue | **gone** |
+| global guest search | present | **gone** |
+| header | brand + event + actions | a different header entirely |
+| bottom pill | "37 items need review" | "6 to decide" |
+
+An operator reviewing a plan cannot see which event they are in, cannot search a
+guest, and cannot reach any other part of the product without leaving the task.
+Two full-screen plan surfaces exist, showing the same plan image at the same
+scale, with different chrome.
+
+`CLAUDE.md` permits each screen its own component patterns for its own job. It
+does not require two shells, two headers, or two contradictory counts — and the
+contradiction is the part that misleads.
+
+---
+
+## The information architecture
+
+### Navigation — one addition, nothing else
+
+```
+EVENTS                          (screen)
+  └── EVENT WORKSPACE           (one event)
+        COMMAND CENTER          ← NEW, and the default landing tab
+        FLOOR PLAN
+        GUESTS
+        SEATING
+        LIVE
+        REPORTS / HISTORY
+```
+
+Six tabs. **Command Center is the only navigation item this whole programme
+adds.** Every other feature lives inside the workflow where it is used.
+
+### Where each feature lives
+
+| feature | home | why not its own nav item |
+|---|---|---|
+| Event Risk Radar | Command Center, primary column | it *is* the Command Center's main content |
+| Confidence Budget | Command Center summary + Floor Plan review drawer | it is a way into work, not a place |
+| Self-Check | Command Center "plan consistency" + Floor Plan review + Plan Doctor | it is evidence about the plan, read where the plan is |
+| Teach Area | Floor Plan contextual inspector | it is always about a selected object |
+| Plan Doctor | Command Center action → "can we start?" panel | answered once, before going live |
+| Layout Change Detection | Floor Plan **layer toggle** | it is a way of looking at the plan |
+| Smart Guest Finder | shell header search (exists) + Guests | needed from everywhere, so it belongs to the shell |
+| Smart Seating | Seating, per guest/party | it is a step in seating, not a destination |
+| Seating Impact Preview | Seating + Live, before any change applies | a confirmation step, never a page |
+| Freeze Zones | Seating (define) + Floor Plan layer (see) | two verbs, two existing homes |
+| Emergency Table Failure | Live, table context action | only meaningful during service |
+| Arrival Wave | Command Center block; Live during service | a readiness fact, then a live fact |
+| Service Load | Floor Plan **layer** + Command Center summary | it is a property of the room |
+| Event Handover | Live / Command Center action | an action, not a screen |
+| Audit Trail | Reports / History | it is history |
+| Post-Event Replay | Reports / History, closed events | it is history, played back |
+| Event History & Learning | Reports / History + Events | it is history, reused |
+| Backup / Restore | event contextual menu | an action on an event |
+| Portable Event Package | event contextual menu | an action on an event |
+
+Nineteen features, **one** new navigation item.
+
+### Surfaces to unify or retire
+
+| surface | decision |
+|---|---|
+| Floor Plan pill "N items need review" (raw count) | **done in B1.** Both pills now call one shared `planReviewChipHTML()` |
+| Review screen pill "N to decide" | **done in B1.** Same function, same number |
+| `planHealthHTML` "Plan Health · N" | **demote to an input.** Its four rules feed the Risk Radar and Plan Doctor; it stops being its own header widget with its own number |
+| `ui.screen = "review"` separate shell | **fold into the Floor Plan tab as a mode**, so the shell, event identity and search persist |
+| two inspector architectures | converge on one contextual inspector, whatever the selection is |
+
+`planIssues()` is not deleted — its rules (duplicate table number, blank plan,
+capacity exceeded, unassigned pax) are real and belong in Plan Doctor's
+BLOCKING/NEEDS REVIEW tiers. What is removed is a *fourth independent number*
+competing for the same corner of the operator's attention.
+
+### The boundary that stops Command Center becoming a second Live screen
+
+Live already carries a five-metric operational strip — Arrived · Still Expected ·
+No Show · Empty Tables · Empty Chairs — a full-width guest search, and one-tap
+Check In / No Show. It is a good screen and none of it should move.
+
+So the Command Center must not be "the same numbers, elsewhere". The division:
+
+| | question it answers | content |
+|---|---|---|
+| **Command Center** | *is this event ready, and what deserves my attention now?* | risk, readiness, unresolved decisions, and links **into** the place the work happens |
+| **Live** | *let me do the work* | the counts, the search, the check-in |
+
+A number belongs where it is acted on. The Command Center may state that
+something is wrong and take you to it; it does not become a wall of statistics
+duplicating the screen that already owns them.
+
+### The rule this architecture is built on
+
+> One question, one answer, one number, one place to act on it.
+
+Where two layers legitimately notice the same thing, the Confidence Budget
+already collapses them — that mechanism exists and is measured. The product
+shell must stop re-introducing the duplication the intelligence layer removed.
+
+---
+
+## Status
+
+| phase | state |
+|---|---|
+| A — freeze Beta Core | **done** — 14 commands recorded, `benchmarks/beta-core-baseline.json` |
+| B — UI/UX architecture pass | **B1 done** (one question, one number). B2 Command Center, B3 shell unification to follow |
+| C — Confidence Budget actionable | not started |
+| D–X | not started |
+
+## Not verified
+
+- **Real human operator usability.** No person has run Session A (Golden) or
+  Session B (ORNEK). `benchmarks/operator/README.md` holds the protocol.
+- **Cross-venue generalisation.** One numbered venue in the corpus.
+- **Visual Plan Memory on transformed drawings.** Retention 0.786 against a
+  0.98 gate — a known, measured, accepted limit, not a solved problem.
+- **Scene-graph referential integrity and relationship evidence.** Two contract
+  checks fail, pre-existing, and the second blocks the "explain why" requirement
+  that runs through the whole programme.
+- **`test:all` is not in CI.** The fast-core job runs `npm test`. Adding
+  `test:all` would make CI red today, so the honest order is: fix the two
+  contract failures first, then gate on it.
+
+---
+
+## PHASE B — the architecture pass
+
+### B1 — one question, one number
+
+The Floor Plan tab and the review screen each computed *"how much of this plan
+still needs a person"* independently, and disagreed: **37** against **6** on the
+same event. Both are now one function, `planReviewChipHTML()`, so they cannot
+drift again — two call sites computing the same question separately is how they
+diverged in the first place.
+
+Measured on the Golden Plan through the real UI, at all three viewports:
+
+| | before | after |
+|---|---|---|
+| Floor Plan tab pill | "37 items need review" | **"6 to decide"** |
+| Review screen pill | "6 to decide" | **"6 to decide"** |
+| agreement | **no** | **yes**, 1920 / 2560 / 1440, zero page errors |
+
+The fallback before an analysis has produced a budget is the number of review
+**groups**, never the member count — the un-collapsed number does not come back
+through the back door.
+
+`planIssues()` was deliberately **left alone**: "Plan Health · Ready" answers a
+different question and demoting it belongs with Plan Doctor, which does not
+exist yet. Removing a real signal before its replacement exists would lose
+information, which is the opposite of the point.
+
+The now-dead `plan.needsReview` translation was removed rather than left behind.
+
+### B2 — the Event Command Center
+
+The one navigation item this programme adds, and the last one it will add. It
+answers a single question — **is this event ready, and what deserves my
+attention now?** — and it does it with facts the product already had.
+
+**No new engine.** It reads `planIssues()`, the Confidence Budget, the
+Self-Check, `eventMetrics()` and `physicalCapacity()`. It computes nothing about
+the plan itself and calls no detector.
+
+**The verdict is a named state, never a percentage.** One of four:
+
+| verdict | when |
+|---|---|
+| `ready` | no blockers, nothing open |
+| `readyWithReview` | no blockers, but open questions |
+| `notReady` | a blocker, doors not yet open |
+| `liveRisk` | a blocker, and guests are already arriving |
+
+There is no honest weighting of "one duplicate table number" against "twelve
+unseated guests", so no number is derived from one. The screen names the
+situation and lists what produced it, each row carrying a way into the screen
+that can fix it. A regression check in `tests/suites/command-center.test.mjs`
+fails if a readiness percentage ever appears in the header.
+
+**It gives the Self-Check its first surface anywhere in the product.** Phase A
+found that the arithmetic engine's findings existed only in the data. On the
+real ORNEK plan, through real OCR in `dist/merit-offline`, the screen now shows
+all five:
+
+```
+✓  166 × 12 = 1992                      the drawing's own multiplication comes out
+✓  1992 + 72 = 2064                     the parts the drawing prints add up to the total
+!  the drawing states 166 tables;       3 unaccounted for
+   163 were found
+✓  each of the 87 confidently read      no number is claimed twice
+   numbers belongs to one table
+—  the drawing's seating figure         this drawing shows its tables as symbols and
+   cannot be checked against a           draws no seats, so there is nothing to count
+   seat count                            against it
+```
+
+The INCONSISTENT one is also listed as something that needs a decision. That
+repetition between the summary and the audit below it is deliberate: a finding
+an operator has to act on belongs in the action list, and hiding it there to
+avoid an echo would be the worse trade.
+
+**Two Self-Check honesty fixes came out of rendering it.**
+
+1. The module writes its sentences in English, because the benchmarks and the
+   exported operator report read the same structure. Rendered into a Turkish
+   screen that produced English findings inside Turkish chrome. Each check now
+   also carries its numbers structurally in `params`, and the screen restates
+   the sentence from those — so the two forms are the same facts, and the
+   English text stays where the English artifacts need it.
+2. "No plan has been analysed for this event yet" was shown whenever the check
+   list was empty. On the Golden Plan a plan *had* been analysed; it simply
+   prints no figure about itself to check against. Two different silences, and
+   saying the wrong one is a lie the operator cannot detect. They are now
+   separate sentences.
+
+**The header badge stopped being a second answer.** "Plan Health · 3" listed
+`planIssues()` in its own popover — the same question the Command Center now
+owns, answered from a narrower source. It is now `Readiness · 3`, a button into
+the Command Center, counting exactly what the Command Center counts. A test
+holds the two numbers equal, and it is placed after a Self-Check finding is
+present, because before that the two sources coincidentally agree and the guard
+would not bite. (Verified by mutation: wiring the badge back to `planIssues`
+alone fails that check and only that check.) A historical event has no Command
+Center to open, so it keeps the popover.
+
+**What it deliberately does not do.** It does not restate Live's five-metric
+strip — a number belongs where it is acted on. It does not appear for completed
+events: a finished night has no readiness to assess, and "12 unassigned guests"
+on it is noise. And a newly created blank event still opens on Floor Plan, since
+there is nothing yet to summarise.
+
+Evidence: `tests/suites/command-center.test.mjs` (39 checks), rendered at
+1920×1080 / 2560×1440 / ~1440px in EN and TR, on both real plans through the
+OCR build — zero page errors, zero horizontal overflow.
+
+Regression after B2: `npm test` **28/28 suites, 857/857 checks** (from 27/818);
+`npm run benchmark:baseline` **no regressions, 0 improvements, 0 notes**;
+`npm run verify:offline` **27 passed, 0 failed**; `npm run perf` clean. The
+protected detection numbers are untouched.
+
+---
+
+## Fixing the two slow contract failures
+
+Phase A froze the Beta Core with two checks in `plan-intelligence-contract`
+failing. They were invisible: the suite is tagged **slow**, so `npm test`
+excluded it and no CI job ran it. Both are fixed at the root cause, and the
+suite now runs in CI.
+
+### What was measured first
+
+A probe dumped the whole graph on the Golden Plan before anything was changed —
+every edge type, every endpoint's id space, every edge's supporting evidence:
+
+```
+edges 260   belongsTo 108   faces 19   memberOf 106   adjacentTo 27
+endpoint id spaces:  candidates 56 · chairs 108 · furnitureGroups 23
+                     similarityGroups 26 · zones 2
+edges with an empty `supporting` list:  0
+edges carrying an `evidence` string:    0
+```
+
+That contradicted the recorded diagnosis on both counts, so both were rewritten
+from the measurement rather than from the note.
+
+### A — nothing was dangling; the graph published no nodes
+
+Every endpoint resolved to a real object. What failed was the *check*: it
+rebuilt the id spaces from four other fields of `planIntelligence`, knew about
+three of the five, missed the visual families entirely, and reported 56
+perfectly real `memberOf` targets as dangling.
+
+The architecture question — are similarity groups real graph nodes, or an
+implementation-side grouping reference? — is answered **A, they are real
+nodes**, and the code already said so: `NODE_TYPES` contains `visualFamily`,
+`sceneGraph.nodes` counted them, and the builder's own comment reads *"a family
+is a node in its own right: it is the unit a correction spreads across, so a
+graph that cannot name one cannot explain why a decision reached thirty
+objects."* The defect was that the graph published node **counts** and never the
+nodes, so **nothing** holding a scene graph could resolve **any** id in it.
+
+So the graph now emits `nodeList` — all five kinds as first-class typed nodes
+with stable ids, a label, the stage that produced them, and their own
+provenance. Every edge endpoint resolves inside the graph itself. The per-type
+census is derived from that same list, so the counts and the nodes can no longer
+disagree.
+
+Two things fell out of doing it properly:
+
+- **`memberOf` means two different things.** Object → visual family ("looks like
+  these") and object → logical group ("physically joined to these") shared one
+  edge type — 56 and 50 edges on the Golden Plan. Every edge now carries
+  `fromType`/`toType`, so a surface explaining a decision never has to do a
+  lookup to tell them apart.
+- **`nodes.physicalObject` was wrong.** It counted 56 candidates while 108
+  `belongsTo` edges started from chair ids it did not count at all. It is now
+  164. `nodeCount` keeps its original name and meaning — candidates that
+  survived review — and `nodeTotal` is the graph's actual size.
+
+A structural anchor is a **role on** a physical object, not a second node for
+the same column.
+
+### B — evidence is composed from the reasons, not labelled
+
+No edge had an `evidence` field; all 260 had a non-empty `supporting` array. So
+`evidence` is now one readable sentence built from the edge's own supporting
+facts, with its objection appended where it has one:
+
+```
+seated along its top edge; perimeter distance 21.5
+runs alongside the group, gap 18.4 within reach 42.0
+  — but the sofa's own orientation was not derivable, so this is proximity, not facing
+```
+
+The structured fields all stay. The point of the sentence is that a product
+surface which has to answer *"why did you say that"* gets a sentence rather than
+an array to assemble — Risk Radar, Plan Doctor, Smart Seating and Impact Preview
+all need exactly that.
+
+`edge()` now **refuses** to build a relationship with nothing to say for it, and
+refusals are counted in `refusedEdges` rather than silently dropped. On both
+real plans that count is 0.
+
+Three checks stop a constant from passing where a reason is required: every
+`supporting` string must appear in the sentence, every `contradicting` string
+must too, and a chair's `belongsTo` must be explained by the measurement that
+decided it.
+
+### Result
+
+| | before | after |
+|---|---|---|
+| `plan-intelligence-contract` | 88/90 | **104/104** |
+| `npm run test:all` | 32/33 suites, 1011/1013 | **34/34 suites, 1066/1066** |
+| slow suites in CI | none | `npm run test:slow` gates the `intelligence` job |
+
+No assertion was weakened; the suite gained 14 checks.
+
+Detector unchanged, proven rather than argued: the diff is confined to lines
+567–800 of `plan-intelligence.js`, which is the scene-graph section, and
+`benchmark:adversarial` was run at `840efbe` and again after — the outputs are
+**byte-identical**, graph lines included. `benchmark:baseline` reports no
+regressions on either real plan; `verify:offline` 27/27.
+
+---
+
+## PHASE B3 — one shell for the whole workspace
+
+### The defect
+
+`ui.screen = "review"` was a **separate application**. Entering it called
+`app.innerHTML = analysisHTML(event)` and replaced everything: the event's
+name, the tab bar, the readiness badge, and the global guest search all left
+the page. An operator reviewing a plan could not answer *"which event am I
+in?"* or *"is Mr Yılmaz already seated?"* without abandoning the review.
+
+### The fix
+
+Review is a **mode of the Floor Plan tab** now — `ui.planMode` ∈
+`{plan, review}` — and `ui.screen` stays `"workspace"` throughout. The tab
+dispatch picks the mode; `render()` has no review branch left at all.
+
+```
+EVENT WORKSPACE  (header · tabs · guest search · readiness — never leave)
+└─ Floor Plan
+   ├─ Plan mode      the editable canvas
+   └─ Review mode    the analysed plan, its candidates and its questions
+```
+
+Every way in was rewired to the mode rather than the screen: the plan
+toolbar's Assisted Detection button, the Command Center's *Open review*, the
+status pill's review chip, and Re-Analyze. The review bar's old *← Floor
+Plan* button is gone; a **Plan | Review** segmented control replaces it, and
+the same control appears at the head of the floating map toolbar in plan
+mode. It is not navigation and does not look like it.
+
+### Two things this surfaced
+
+**The language toggle was owned by two screen-local toolbars.** One inside
+the plan toolbar, another inside the review bar, and none anywhere else — so
+Guests, Seating, Live, Reports and the Command Center had no language control
+at all. It is in the workspace header now, with the other controls that are
+about the application rather than the drawing. A check holds it to exactly
+one instance in the header and zero in either screen.
+
+**A real defect the new suite caught before any human saw it.** The header
+button rendered but did nothing: `[data-v8-action]` is bound inside
+`bindCanvas()`, which only runs where a canvas exists — and review mode has
+none. Moving a control into the shell means binding it in the shell.
+`bindV8Common()` owns it now.
+
+### Evidence
+
+`tests/suites/floor-plan-modes.test.mjs` — 42 checks. It asserts the *shell*,
+not the review UI, because a change that made review a screen again would look
+perfectly reasonable in a diff:
+
+- the round trip is checked on **each leg** — into review, back to plan, into
+  review again — and each leg must still show the event name, six tabs, the
+  active Floor Plan tab, the guest search and the readiness badge
+- the guest search is typed into from inside review mode, not merely counted
+- stepping into Guests and back does not abandon a review in progress
+- Assisted Detection lands in review **mode**, with the shell intact
+- the Command Center's *Open review* lands in the same place
+- the uploaded plan is still the hero in review mode — a data-URL image at
+  size, never a redraw
+
+Measured on the real ORNEK plan through real OCR at 1920×1080 / 2560×1440 /
+~1440px in EN and TR: `ui.screen` stayed `"workspace"` on every leg, all six
+tabs present, event identity and search intact, zero page errors, zero
+horizontal overflow.
+
+Two harnesses that drove the old screen were updated to the new architecture
+rather than worked around — `plan-memory-isolation` and the teaching
+benchmark. `benchmark:teaching` still reports precision 1.0000, retention
+1.0000, wrong-application 0.0000, all gates met.
+
+```
+npm run test:all            35/35 suites, 1108/1108 checks
+npm run benchmark:baseline  no regressions, 0 improvements, 0 notes
+npm run verify:offline      27 passed, 0 failed
+```
+
+---
+
+## PHASE C — the Confidence Budget becomes actionable
+
+### The defect
+
+The budget already knew **which** uncertainties were worth deciding and in what
+order. It said so as a list of sentences with no way in. An operator read *"31
+table numbers need review"*, agreed, and then had to go and find those 31 tables
+themselves. A ranked row that cannot be acted on spends the operator's attention
+twice — once to read it, once to work out where to go.
+
+### One workflow, not five
+
+The five claim sources (review priorities, numbering, integrity, self-check,
+Teach Area) do not need five destinations. Four of them name candidate objects,
+so all four resolve the same way: **take me to these objects and let me decide
+one at a time.** That single workflow is §4A and §4B at once.
+
+Every ranked row now carries a **Review N** button, and a claim that names no
+objects — the self-check's arithmetic is about the whole drawing — says *"About
+the drawing as a whole"* rather than offering a button that would land nowhere.
+A check holds that correspondence exactly: `(live objects > 0) === (button
+present)`.
+
+### The queue
+
+`ui.reviewQueue` holds an **order and a position, and nothing else.**
+
+What counts as *resolved* is read from the candidates on every render and never
+remembered. This is the load-bearing decision: a queue with its own tally would
+drift the moment a decision was undone and would then be confidently wrong about
+how much work is left. The suite proves it by reversing a decision behind the
+queue's back and asserting the resolved count drops.
+
+Opening a row lands the operator on the first object with the shell intact,
+reusing the machinery a manual click already uses rather than a second copy of
+it: selection highlights the object, opens its inspector, and — new — focuses
+the plan on it. Outside a queue a single selection is deliberately left unzoomed;
+someone clicking around a plan does not want the view jumping under them. Inside
+one, *"take me there"* is the request.
+
+`Previous · Skip · Next undecided · Exit`, with **Next undecided** searching
+forward from where you are and wrapping once — an operator who has worked
+halfway down does not want to be sent back to the top. Confirming, rejecting or
+dismissing advances automatically; recomputation has already run by then, so the
+progress line, the ranked row behind it and the readiness badge are all reading
+the new state. §4C falls out: a resolved item changes state by itself instead of
+sitting there as a stale warning.
+
+### Two i18n defects this surfaced
+
+**`why` is developer-facing English by design** — `plan-intelligence.js` says so
+at the call site, and some of it is composed from internal identifiers. Rendering
+it in the queue bar produced *"contradiction.from.detectionAndShape and
+contradiction.from.visualSecondOpinion cannot both be right"* inside an otherwise
+Turkish bar. It is not carried into the queue at all now; what an operator reads
+is the claim's own translated label plus what one decision settles.
+
+**The Assisted Detection notice was stored English rendered raw.** It is *data* —
+the contract suite asserts on it and the exported report carries it — so it stays
+as written and the screen says the same thing in the operator's language. An
+analysis whose notice this build does not recognise keeps its own words rather
+than being relabelled with a sentence that might not be true of it.
+
+A third, smaller one: the progress separator was a CSS-only dot, so the text read
+*"163 içinden 10 karara bağlandı"* — one number where there are two. It is a real
+character now.
+
+### Evidence
+
+`tests/suites/review-queue.test.mjs` — 36 checks, covering the path from a ranked
+row to a decided object and back, including the undo case above and the
+no-raw-key sweep in both languages.
+
+Rendered on the real ORNEK plan through real OCR at 1920×1080 / 2560×1440 /
+~1440px in EN and TR: queue bar without overflow, inspector card clearing the
+bar, plan focused on the queued object, zero page errors, zero horizontal
+overflow.
+
+```
+npm run test:all            36/36 suites, 1144/1144 checks
+npm run benchmark:baseline  no regressions, 0 improvements, 0 notes
+npm run verify:offline      27 passed, 0 failed
+```
+
+---
+
+## PHASE D — Self-Check and the Teach Area, surfaced
+
+No engine was rebuilt. Both already worked; what was missing was the product
+around them, and in one case a control that had never existed at all.
+
+### 5A — Self-Check now states RESULT, SOURCE and, where there is one, ACTION
+
+Each finding in the Command Center carries where its numbers came from, and an
+INCONSISTENT or NEEDS_REVIEW one carries a way to act on it. On the real ORNEK
+plan, in Turkish:
+
+```
+✓  166 × 12 = 1992              Kaynak: basılı sayılardan hesaplandı; çizimde basılı
+✓  1992 + 72 = 2064             Kaynak: çizimde basılı
+!  çizim 166 masa belirtiyor;   Kaynak: çizimde basılı; Destekli Tespit   [İncelemeyi aç]
+   163 masa bulundu
+✓  güvenle okunan 87 numara…    Kaynak: çizimde basılı
+—  çizimin koltuk sayısı…       Kaynak: çizimde basılı
+```
+
+The sources are **not** the engine's `source` sentences. Those are free English,
+one of them is composed from the figures themselves, and they carry OCR
+internals — *"OCR of each table's own symbol where two crops agreed"* — which
+§5A says not to show by default. So `plan-self-check.js` now emits a stable
+`origin` alongside each `source`, one of five named values, and the screen
+renders that. Same pattern as the `params` fix: the sentence stays for the
+English artifacts, the enum is what a product screen can speak.
+
+### 5C — confirming a table's number, which nothing ever offered
+
+The Teach Area has supported a `tableNumber` subject since it was built, and the
+apply layer has written the result since then too. There was no way to reach it,
+so **the strongest evidence the product recognises — a person standing behind a
+number — was unreachable.**
+
+A table's inspector now shows its printed number, the state that number is in,
+and where that came from, with a **Confirm** control. The state is shown rather
+than smoothed over: *"read once — not yet confirmed"* is a different fact from
+*"confirmed"*, and only the second one identifies a table across a whole venue.
+A confirmed number is stored with `source: "confirmed by a person"` — never as
+though the drawing had been read.
+
+### 5B — an unsafe scope is refused before the click, not after
+
+Venue scope requires a verified printed number. The Teach Area enforced that
+correctly and enforced it **after** the operator chose a scope and pressed the
+button. The rule is knowable beforehand, so the option is now disabled with the
+reason beside it:
+
+> Across the whole venue an object has to be identified by its printed number.
+> Confirm this table's number first, and this becomes available.
+
+Confirming the number then unlocks it. That loop — *why can't I? · here's what
+would fix it · now you can* — is the whole of §5B, and the suite walks it.
+
+### Three more English strings that were reaching a Turkish screen
+
+All three were **stored data** rendered raw, and all three are fixed the same
+way: the data stays as written, the screen says the same thing in the operator's
+language, and a value this build does not recognise is shown as it stands rather
+than relabelled with a sentence that might not be true of it.
+
+| | was |
+|---|---|
+| the Assisted Detection notice | *"Classical computer vision is active…"* under a Turkish heading |
+| `printedNumber.source` | *"Doğrulandı · OCR of this table's own symbol"* |
+| self-check input sources | *"Kaynak: printed on the drawing, read by OCR"* |
+
+### Evidence
+
+`tests/suites/teach-number.test.mjs` — 23 checks: the panel and its state line,
+venue scope disabled with a reason, a confirmed number stored as a person's, the
+unlock, a venue-scoped lesson then accepted, rubbish refused with an
+explanation, and no raw key in either language.
+
+One defect the suite caught while being written: I had invented two number-state
+names (`CONFLICTED`, `UNREADABLE`) that `plan-table-numbers.js` does not emit —
+its states are `VERIFIED`, `LIKELY`, `NEEDS_REVIEW`, `UNKNOWN`. Those would have
+rendered as raw keys on the two states that matter most.
+
+```
+npm run test:all            37/37 suites, 1167/1167 checks
+npm run benchmark:baseline  no regressions, 0 improvements, 0 notes
+npm run verify:offline      27 passed, 0 failed
+```
+
+---
+
+## The CI that was red, and why a local green run was not enough
+
+Four checks failed on the real GitHub run at `d3f13e6` and two more at
+`dc1e703`, while every local run was green. The handoff's hypothesis was that
+the PR merge ref differed from the branch. It did not: `origin/main` is an
+ancestor of the branch, `git merge-base` returns main's own head, and the
+`push` run and the `pull_request` run at the same commit failed identically.
+The merge was never involved.
+
+**One root cause, measured, behind all four.** `index.html` loads Tesseract
+from a CDN. A GitHub runner has network, so Assisted Detection runs its whole
+OCR-dependent tail — OCR, text-based false-positive suppression, labelled-object
+identification, printed-number reading. This development sandbox has no network,
+so that tail had never run here. Every suite written here had been validated
+against half the pipeline.
+
+The fix was in the harness, not in any assertion. `tests/lib/app-actions.mjs`
+gained `runDetection` / `reRunDetection` / `importPlan`, and there is now ONE
+way to wait — *the analysis is finished* (`!!analysis && !ui.analysisBusy`),
+not *the analysis exists*. Six suites carried the same latent race and had been
+passing by luck. Three suites that drew their plans on a canvas at runtime moved
+to the committed `merit-real-venue-plan.png`, byte-identical on every machine.
+Each now reports OCR availability rather than assuming a world.
+
+**A real product defect only a machine with OCR could surface.** With OCR live,
+`suppressTextFalsePositives` deleted 3 of the adversarial fixture's 6 exact
+columns and left the survivors on a single axis — the very shape the column pass
+exists to reject, since what separates a structural grid from printed text is
+that a grid is aligned in two directions and a word in one. The rule already
+carried two exemptions in exactly this idiom (a candidate with chairs at it, a
+member of a repeated symbol family); a column is the third and was missing. The
+exemption can only ever KEEP an object, so it cannot move a table or chair
+number on either real plan — and the four measurements below say so.
+
+Green on the real PR run at `b15c4b1`: fast-core, detection, offline,
+intelligence (including the slow contract suites) and performance.
+
+---
+
+## PHASE E — the Plan Doctor
+
+**CAN THIS EVENT SAFELY PROCEED?** A pre-flight check, not a detector. It reads
+nothing off the drawing and calls no engine: `src/plan-doctor.js` compares facts
+other layers already concluded — the tables, the guests, where they are sitting,
+and what the plan reader, Self-Check, Number Integrity, Confidence Budget and
+Teach Area made of the drawing.
+
+### One assembly, not three
+
+The change that matters is not the new screen. Before this, the header badge,
+the readiness verdict and the reason list each assembled their own view of "is
+this event ready" from `planIssues()` and the analysis, and keeping three
+assemblies in agreement was a matter of care rather than architecture.
+`eventReadiness()` now reads the Doctor's report and nothing else does its own
+arithmetic. `planIssues()` is untouched and is one of the Doctor's inputs — the
+Reports pre-flight and the historical popover still use it directly, and a rule
+added to it tomorrow reaches the Doctor automatically rather than being dropped.
+
+### A reading is not an operational fact
+
+Two tables a person numbered the same is **BLOCKING**: a guest will be sent to
+the wrong table tonight. Two tables OCR *read* as the same number is **NEEDS
+REVIEW**: the room may be perfectly fine and the reader wrong. The same
+disagreement sits at two levels depending on where the number came from.
+Collapsing them — which looks like a simplification in a diff — would either cry
+wolf on every plan with imperfect OCR or bury a conflict that misdirects a guest.
+§4A's "do not turn uncertain OCR into BLOCKING" is this rule, and it is the one
+the suite mutation-tests first.
+
+### Every row says five things, and none is a dead end
+
+WHAT is wrong · WHY the system believes it · SOURCE · WHAT it affects · WHAT the
+operator can do. Sources are named values (`DRAWING`, `NUMBER_READING`,
+`RELATIONSHIPS`, …) that a screen translates, not English sentences — the same
+pattern as the Self-Check's `origin`. No raw arrays and no developer
+diagnostics: the scene graph appears as "12 chairs were found that no table
+claims", which is what an operator can act on, not as an edge count.
+
+Destinations are resolved from live data at click time, not baked into the row:
+between render and click the operator may have fixed the problem in another tab,
+and acting on a stale payload would send them to a table that no longer exists.
+
+### Nothing is remembered
+
+The report is derived on every read. Fix the duplicate number and the row is
+gone on the next render — there is no stored finding list to go stale and no
+"dismissed" flag that could hide a problem that has come back. RUN FINAL CHECK
+records that a *person* ran the pre-flight, which is a real operational fact;
+where the event has changed since, the panel says so rather than letting a
+timestamp imply that what is on screen is what was checked.
+
+### Three defects this surfaced, two of them mine
+
+1. **The provenance never matched.** `checkOrigins` compared each self-check
+   input's `origin` against the ORIGINS *key names* (`"PRINTED"`) when the values
+   are words (`"printedOnTheDrawing"`). It matched nothing, so a finding with
+   perfectly good provenance reported none of it. Found by rendering the screen,
+   not by reading the diff. It now reads the values from `MeritSelfCheck.ORIGINS`
+   rather than keeping a copy that a rename would silently break.
+2. **A raw key one origin away.** `ccPlanConsistencyHTML` rendered an
+   unrecognised origin as `cc.origin.WHATEVER`. Unreachable today, one added
+   ORIGIN from being reachable. Unknown values are now dropped rather than
+   printed, as everywhere else.
+3. **An English island in a Turkish panel.** The "last run" stamp read
+   "son çalıştırma: Just now": `relativeTime()` predates i18n and nothing else
+   live still called it. A raw-key sweep cannot see this — the leak is real
+   English — so the suite asserts the two languages differ.
+
+### Evidence
+
+`tests/suites/plan-doctor.test.mjs` — 52 checks: the verdict is one of three
+named states and never a score; every finding declares a destination, a source
+and what it affects; following each row on screen actually leaves the Command
+Center; a read duplicate is review while a plan duplicate blocks; fixing it
+removes the row with nothing dismissed; a guest at a deleted table is blocking
+and selects that guest; INFORMATION is reported and never enters the attention
+list; badge, attention list and report agree in both languages; no raw key and
+no English in either; and a completed event has no pre-flight and cannot acquire
+a final-check record.
+
+Two mutations, to prove the checks bite rather than merely pass:
+
+| Mutation | Result |
+| --- | --- |
+| `duplicateNumberReading` raised to BLOCKING | 4 checks fail, naming the collapsed distinction |
+| a finding's `action` removed | "every finding declares a destination the product can reach" fails |
+
+The second mutation is the reason the contract is asserted against the module
+rather than against the rendered row: the UI labels an unknown destination
+generically rather than printing a key, so a screen-only check could not tell a
+dead end from a working one. The first version of that check could not fail.
+
+```
+npm run test:all             38/38 suites, 1227/1227 checks
+npm run benchmark:adversarial  identical to the pre-change run on every
+                             measured field (only timestamps and timings move)
+npm run verify:offline       27 passed, 0 failed
+npm run perf                 all suites completed
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             0px horizontal overflow at every viewport
+CI run 116 (pull_request)    all five jobs green, including Detection
+```
+
+### A correction about the detector proof
+
+`npm run benchmark:baseline` does **not** re-run detection. It compares the
+report `npm run benchmark` last wrote, so on its own it can report "no
+regressions" against a measurement taken before the change — which is what
+happened while this phase was being checked. It is not the evidence it looks
+like, and it is recorded here rather than quietly dropped.
+
+The real proof is CI's **Detection** job, which runs `npm run benchmark` and
+then the baseline comparison on a fresh run. It is green at `f3a3894`. The
+adversarial comparison above was genuinely fresh — run twice, once with the
+changes stashed. Neither this phase nor the next touches the detection path.
+
+The lesson for anything downstream: a green `benchmark:baseline` is only a
+detector proof when `npm run benchmark` ran first, in the same working tree.
+
+---
+
+## PHASE F — Layout Change Detection
+
+**No new detector.** `MeritVenueModel.compareToVersion` has done this comparison
+since the venue model was built, matching by table number first and geometry
+second, and it had **no UI at all** — it was reachable only from a test. Nothing
+in the product could answer "what did we change since v3?". Phase F is the
+product around it, plus the two classification defects that surfaced once a
+person could actually read the output.
+
+### A number outranks a position
+
+The identity order is verified table number → position, and there is
+deliberately **no visual-similarity rung**. "Never let embedding similarity
+override explicit verified identity" is honoured by not having the input at all:
+nothing in this comparison consults an embedding, so similarity cannot outrank
+a number it disagrees with.
+
+Removing the number pass is what shows why it matters. The suite's mutation run
+reports the moved table as **"T02 removed" plus "T02 added"** — one table
+counted twice, in a report whose whole value is telling an operator what is
+different. That is the failure §5A names, reproduced on demand.
+
+### A change is named, not lumped
+
+`compareToVersion` folded a capacity change into `moved`. A table that stayed
+exactly where it was and gained two seats came out as MOVED, and an operator
+reading "3 tables moved" would go looking for movement that never happened. One
+matched pair now emits **one change per aspect that differs** — MOVED,
+CAPACITY_CHANGED, TYPE_CHANGED, ZONE_CHANGED — rather than one label being
+chosen and the rest hidden. `moved` keeps its old meaning for the callers that
+read it; the named classes are what a screen shows.
+
+Venue objects were compared as **counts per type**, which is true and useless:
+"there is one more bar than there was" cannot say which bar, so nothing could be
+shown on the plan — and a stage that moved five metres did not change the count
+at all and was invisible. They are matched per object now, by their own label
+first and position second.
+
+### A stage that appeared is not a stage that changed
+
+Found by rendering, not by reading: an added stage came out as
+**"STAGE CHANGED · STAGE · — → stage"** — the object's type stated twice and its
+actual news not at all. ADDED, REMOVED and STAGE_CHANGED are peers in the
+taxonomy; the last one means the stage was there before and is different now.
+Unmatched objects are ADDED/REMOVED with no before/after, because the row
+already names them.
+
+### The plan stays the hero
+
+LAYOUT CHANGES is a **mode of the Floor Plan**, on the same canvas, with the
+same toolbar and the same pan and zoom — not a second drawing of the same room.
+A view that redrew the layout from the diff would have the operator comparing
+the product's picture of the night rather than their own. The overlay is the
+selection: choosing a change highlights the object it is about, on the plan
+already in front of them.
+
+The mode appears only where there is a published version to compare against. An
+event never taken from a layout has no "since when" to answer, and a tab that is
+always there and always empty teaches an operator to stop looking at it. The
+permanent navigation did not grow.
+
+### Confirmation only where it means something
+
+An UNCERTAIN change — an addition or a removal, matched by nothing — offers a
+Confirm. A change matched by its own table number does not: there is nothing for
+a person to ratify, and asking them to tick forty certainties would make the
+ticks meaningless on the four that matter. A confirmation is stored against the
+**version** it was made about, so "T05 is gone relative to v3" stays true and a
+table removed, re-added and removed again does not come back already ticked.
+
+### Evidence
+
+`tests/suites/layout-changes.test.mjs` — 46 checks: every named class on a
+change that is genuinely only that; the moved table is one MOVED entry matched
+by TABLE_NUMBER, not a removal plus an addition; an added stage is ADDED and a
+stage present in both is STAGE_CHANGED matched by its label; the view is the
+same canvas inside the workspace; every engine change reaches the screen in
+words; confirmation is offered only on uncertain changes and marks exactly one;
+the card states previous, current, confidence and evidence; no raw key or enum
+in either language; the published version is never rewritten; and a completed
+event reads its changes and cannot confirm them.
+
+Two mutations, to prove the checks bite:
+
+| Mutation | Result |
+| --- | --- |
+| identity-by-number pass removed | the moved table comes back as `T02 removed` + `T02 added`; 2 checks fail |
+| capacity change folded back into MOVED | `T01`, which never moved, is reported MOVED; 2 checks fail |
+
+```
+npm run test:all             39/39 suites, 1273/1273 checks
+npm run benchmark             fresh detection run, then
+npm run benchmark:baseline    no regressions, 0 improvements, 0 notes
+                              (in that order — see the correction above)
+npm run verify:offline        27 passed, 0 failed
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             0px horizontal overflow, no page errors
+```
+
+---
+
+## PHASE G — Smart Guest Finder
+
+The global search was a name-and-table lookup that offered one destination. At a
+door, with a queue behind somebody, the question is rarely "where is this name"
+on its own — it is *who is this, are they expected, have they arrived, where do
+they sit, who came with them* — and then one action. The row answers all of that
+now, and offers the four things an operator actually does next.
+
+### Speed is an index, not a promise
+
+The old search ran a table lookup **inside** the filter, so every keystroke cost
+O(guests × tables). On a four-thousand-guest event that is millions of
+comparisons per character typed. One lowercase haystack per guest is built once
+per change to the event — `lastModified` is the invalidation key, because
+`touchEvent()` stamps it on every mutation — and scanned linearly after that.
+
+Measured rather than asserted, through `renderGlobalSearch` (the whole cost of
+one keystroke: index, match, rank, build the rows), over 4,003 guests:
+
+| | ms |
+|---|---|
+| cold (pays for the index) | reported |
+| warm, mean of 8 queries | **gated < 25** |
+| warm, worst of 8 | **gated < 60** |
+
+The matcher underneath is closure-scoped and unreachable from a test, which is
+the right shape: the suite drives what the product exposes.
+
+### Every field the phase names, and nothing invented
+
+Name, host or company, VIP level, planning status, arrival status, table number
+and zone. **`invitedBy` is where this data model keeps both the host and the
+company** — there is no separate company field, and adding one would have
+created a field nobody fills in. Said plainly rather than papered over.
+
+Terms narrow rather than widen: `kerem yılmaz` matches guests satisfying both.
+An OR search over four thousand guests is the same as no search at all.
+
+### The party is the people the same host brought
+
+Not the guest's own companions — those are already inside the record as pax, and
+a "party" of one record showing itself tells an operator nothing. `invitedBy` is
+the only grouping in this data that survives a guest not being seated yet.
+
+### Nothing moves by itself
+
+CHANGE TABLE opens Seating with the guest selected and waits for a person.
+Silently reseating somebody is the one thing this product must never do, and a
+"smart" finder is exactly where that would creep in. CHECK IN writes **arrival
+status only** — planning status is a separate axis and nothing here touches it.
+
+Each action is offered only where it can do something, with the reason on the
+control: an unseated guest cannot be shown on a plan, a guest nobody shares a
+host with has no party, a completed event cannot be checked into.
+
+### Four defects this surfaced, two of them only by rendering
+
+1. **The keyboard died after the first Escape.** `ui.findActive` uses -1 for the
+   shut state, and the re-activation guard tested `== null` and `>= rows.length`
+   but not `< 0`. So after one Escape the list came back with nothing selected
+   and Enter did nothing — a door operator's whole path, silently broken.
+2. **My own axis check could not fail.** The check-in fixture used a guest who
+   was already `Confirmed`, so a mutation that wrote `planningStatus =
+   "Confirmed"` on check-in changed nothing and the suite stayed green. The most
+   important domain rule in this phase was unguarded. The fixture is `Tentative`
+   now, and the mutation fails it.
+3. **The results panel was invisible, and nothing was clipping it.** Rendered at
+   1920×1080 the finder showed a ~50px sliver of one row. Every ancestor's
+   `overflow` was `visible` and all four rows were in the DOM at full height —
+   the panel was simply painted UNDER the content, because `.workspace-head` is
+   `position: static` and had no stacking context of its own. Pre-existing: the
+   old short panel overlapped the screen too, just less visibly. The header is
+   positioned now.
+4. **Half the Turkish row was English.** Planning status is stored as
+   `Confirmed`/`Tentative` — domain values the workbook export and the contract
+   read — and was rendered straight through, so a Turkish operator saw
+   "2 kişi · VIP · **Confirmed** · giriş yaptı". Arrival status had already been
+   translated at the boundary; planning status had not. A raw-key sweep cannot
+   see this, so the suite now compares the two languages and rejects English
+   status words in the Turkish row.
+
+### Evidence
+
+`tests/suites/guest-finder.test.mjs` — 57 checks against a real 4,003-guest
+event: the measured timings; each searchable field; terms narrowing; the row
+carrying pax, VIP, both statuses, table, seats, zone and host; actions gated with
+reasons; SHOW ON PLAN landing on the guest's own table, selected and highlighted,
+inside the workspace; CHECK IN moving one axis and writing an audit entry;
+CHANGE TABLE moving nobody; arrow keys and Enter and Escape; a capped result set
+counting the rest; no raw key in either language; and a completed event that can
+be searched but not changed.
+
+Two mutations, to prove the checks bite:
+
+| Mutation | Result |
+| --- | --- |
+| CHANGE TABLE silently reseats the guest | "NOTHING was seated, moved or unseated" fails |
+| CHECK IN also sets planning status | "checking in does NOT touch planning status" fails — **only after the fixture was corrected**; with the original fixture it passed, which is why the fixture is part of the fix |
+| planning status rendered raw again | "no English status survives into the Turkish row" fails |
+
+### A time bomb in the fixtures, found by the calendar
+
+`test:all` went red on `guest-and-seating-rules` and `xlsx-contract` — the
+reports contract among them — with an identical, useless message:
+`click(".planmap-fab")` timed out. Nothing in the product had changed.
+
+Both suites created their event with a **hardcoded `date: "2026-09-10"`**, and
+the day had passed. A past-dated event is `isHistorical`: read-only, with no
+Floor Plan tab and no add-object control at all. The suite was not failing a
+check — it was waiting for a control the product correctly refuses to render,
+and reporting a timeout that says nothing about the cause.
+
+Every other fixture in the suite carried the same bomb with a later fuse; the
+next one was due in three weeks. Fixed as a class rather than as two instances:
+`futureDate(daysAhead = 90)` in `tests/lib/app-actions.mjs` computes the date,
+`createBlankEvent` defaults to it, and 26 suites now use it. The suites that
+deliberately want a finished event still pass a past date — `2020-01-01` in
+`historical-immutability` is untouched, and the event that starts workable and
+is later marked `Completed` correctly got a future date.
+
+Worth stating plainly because it cuts both ways: this failure was **not** caused
+by the phases in this report, and finding that out took reading the suite rather
+than the diff. A timeout on a selector is the least informative failure this
+harness produces, and it is exactly what a date-sensitive fixture yields.
+
+---
+
+## PHASE H + H2 — Smart Seating, and the Impact Preview
+
+Built as one phase because they are one workflow: recommend → preview → apply.
+Shipping recommendations with a dead Apply button would be the dead end the
+programme forbids, and shipping an Apply without a preview would be the silent
+mutation it forbids harder.
+
+### The boundary is the design
+
+`src/seating-advisor.js` **cannot seat anybody.** It takes a copy of the room and
+returns options and arithmetic; it has no path to an assignment at all. The only
+thing that ever writes one is the existing `assignGuestToTable()` — the same
+function a drag-and-drop calls — and exactly one line in the UI calls it, from
+the Apply button's handler.
+
+That is the whole point of the file rather than an implementation detail. "Smart
+seating" is precisely where a product starts quietly moving guests because it
+was confident, and this one structurally cannot.
+
+### Reasons, never a score
+
+An option carries named reasons — *enough seats for the whole party*, *the party
+stays together at one table*, *same zone as the rest of their host's guests*, *a
+VIP guest in a VIP zone*, *fills the table exactly*. A reason is a thing an
+operator can disagree with; "Table 58 (0.87)" is not. There is an internal
+`rank` that decides which four rows appear, and it is deliberately never shown.
+
+### A party is one record
+
+"Name +3" needs four seats at **one** table. A table with three free is not a
+near miss to be offered anyway — splitting a party to make the numbers work is
+the optimisation this must never make, and the engine reports `NOT_ENOUGH_SEATS`
+against that table rather than dropping it silently.
+
+### A constraint that cannot be evaluated says so
+
+Freeze Zones (Phase I) and unavailable tables (Phase N) do not exist yet.
+Reporting "no conflict" would be a claim about a feature that has never run, so
+both are reported as **not set up yet**, in the preview, every time. The day they
+arrive the same slot carries a real answer.
+
+### A locked assignment outranks the advisor
+
+A locked seat is a person's decision. Nothing is suggested over it, and the panel
+says why rather than showing an empty list.
+
+### Evidence
+
+`tests/suites/smart-seating.test.mjs` — 38 checks. The central one snapshots
+**every assignment in the event** and compares it byte for byte after asking for
+recommendations, after opening a preview, and after cancelling; a targeted check
+on the one guest being seated would miss a recommender that tidied somebody else
+up along the way. After Apply, the same snapshot proves exactly one record moved
+— the preview promised one, one moved.
+
+Two mutations, to prove the checks bite:
+
+| Mutation | Result |
+| --- | --- |
+| the preview applies itself on open | "NOTHING was seated, moved or unseated by opening it" fails, with the before/after assignments in the message |
+| a table one seat short is offered anyway | "a table with only three seats free is NOT offered — the party is not split" fails |
+
+One layout defect found by rendering: the preview's **Apply** button shared the
+bottom-right corner with the status pill and the toast band. A toast landing over
+Apply is a mis-click on the one control in this phase that actually moves a
+guest, so the card was lifted clear.
+
+```
+npm run test:all             41/41 suites, 1371/1371 checks
+npm run benchmark            fresh run, then
+npm run benchmark:baseline   no regressions, 0 improvements, 0 notes
+npm run verify:offline       27 passed, 0 failed
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             0px horizontal overflow, no page errors
+```
+
+### H2 correction, after the fact
+
+The phase asked for a deterministic test proving **"preview predicts applied
+occupancy exactly"**. What shipped asserted the preview's numbers and the applied
+result *separately* — two checks that could both pass while the card showed an
+operator a figure the room never reached. That is the one failure mode a preview
+has, and nothing was watching it.
+
+Fixed in `03457ee`: the suite now reads the predicted target occupancy and
+predicted spare seats off the rendered card **before** pressing Apply, then
+recomputes both from the stored room afterwards and compares. Mutating
+`previewMove()`'s reserve arithmetic by one seat turns the suite red on exactly
+that line. 40 checks.
+
+## PHASE I — Freeze Zones
+
+### The question
+
+Part of a room is routinely not available to the seating process: the VIP area
+until the host confirms it, the head tables, the sponsor block, a management
+hold, seats kept back for late arrivals. Until this phase the product had no way
+to say so. An operator's only tools were `assignment.locked` — which protects one
+guest's chair, not a place — and remembering.
+
+### What a freeze is
+
+**A rule about a place, not a list of tables.** This is the decision the whole
+module rests on. A zone freeze covers the zone, so a table moved into VIP
+tomorrow is frozen tomorrow; a range freeze covers `T01–T10`, so a `T07` created
+next week is frozen the moment it exists. Resolving the rule to table ids at
+creation time would have produced a freeze that silently stopped covering the
+thing it was written about — and a held area that holds nothing looks exactly
+like a held area that does.
+
+Three scopes, because an operator says three different things: a **zone**, a
+**range of printed numbers**, or **one table**. Six reasons, closed: VIP area,
+head tables, sponsor tables, management hold, late-arrival reserve, other — plus
+the operator's own note, kept as well as rather than instead of the named
+reason, because "why" has to survive a handover to somebody who was not in the
+room.
+
+### The three states, and what the third one is about
+
+`OPEN` and `FROZEN` describe a **table**. `SUPERVISOR OVERRIDE REQUIRED`
+describes an **operation**. It is not a fourth kind of table, and naming it as
+one would imply some tables are pre-authorised — none are.
+
+### An override authorises one operation and never lifts the freeze
+
+This is structural rather than promised. The override travels as a **parameter
+to one call** (`{override:true}`), consumed by that call and gone. There is no
+stored flag for the next operation to find, and no function anywhere in the
+module clears a freeze as a side effect of anything. A freeze ends exactly one
+way: a person presses **Lift**, which is audited as their act.
+
+The suite proves it by attempting a second crossing immediately after a
+successful override and asserting it is challenged again.
+
+### Both directions are crossings
+
+Filling a held area breaks the hold. Emptying a frozen head table breaks the
+arrangement the freeze was protecting. `assignGuestGroup` and `unassignGuest`
+both run the same evaluation, and the card says which way the rule is being
+crossed.
+
+### What the challenge card has to say
+
+What is frozen (scope, reason, the operator's note), who it touches (**records
+being moved** and **people already sitting in the area**, reported separately —
+summing them into one "affected" number would be a lie in both directions), and
+what the occupancy becomes. All of it computed from the room, with nothing
+mutated: `mutated: false` is in the returned object so no caller can present an
+evaluation as a decision.
+
+"Who is already in the area" counts the **whole area the crossed rules cover**,
+not just the one table being touched. Seating into one VIP table affects the VIP
+arrangement, and an operator deciding whether to break it needs to know how many
+people that arrangement already holds. The first version of this counted only
+the touched table and reported zero on a two-table zone freeze; the suite caught
+it.
+
+### One resolution, read by four surfaces
+
+`src/seating-freeze.js` owns the rules. Nothing else evaluates them:
+
+| Surface | What it consumes |
+| --- | --- |
+| Smart Seating | a resolved `frozen` list — a frozen table is never recommended, and `FREEZE_ZONES` moved out of `unevaluated` into a real answer |
+| the canvas layer | a resolved id set, memoised per mutation epoch |
+| the Plan Doctor | a resolved id set, for `capacityHeldByFreeze` and `frozenCapacityNeeded` |
+| the override challenge | the full evaluation |
+
+The advisor deliberately learns the **outcome** and not the rules. That is what
+keeps freeze policy in one file.
+
+### What the Plan Doctor now says
+
+`capacityHeldByFreeze` (INFORMATION) — how many chairs are held and how many of
+them are empty. It exists because the pre-existing `spareCapacity` row counts
+every chair in the room: an operator reading "60 chairs are unassigned" without
+this line goes looking for 60 chairs they are not allowed to use.
+
+`frozenCapacityNeeded` (NEEDS REVIEW) — raised only when the people still
+waiting cannot be seated without the frozen chairs. **Not** a capacity shortage:
+the chairs exist and are being kept back on purpose, so this is a decision to
+take, not a problem to fix, and the wording says so.
+
+### The layer
+
+Defined in Seating, drawn on the Floor Plan. A dashed outline and a small lock
+mark — never a filled block. Amber, not red: red is for things that have gone
+wrong, and a room where half the tables are marked in red reads as a disaster
+instead of a plan. The toggle appears only once something is frozen; a permanent
+switch for an empty layer teaches an operator to stop reading the toolbar, which
+is the same rule the Layout Changes mode follows.
+
+The suite asserts the *computed* `::after` background alpha is at most 0.25, so
+"do not cover the plan with heavy opaque blocks" is enforced rather than
+remembered.
+
+### A defect found on the way
+
+The table card's primary button — **Assign / Move [guest]** — had no handler in
+the Seating screen. It was rendered by `app-v8.js` and bound only by the *old*
+`bindSeating` in `app-guests.js`, which `app-v8.js` replaces. The most prominent
+control on that card did nothing when pressed, and had been doing nothing since
+the v8 seating screen was built. Found because the freeze gate sits on exactly
+that path, and the suite could not reach the gate through it. Fixed.
+
+### Evidence
+
+`tests/suites/seating-freeze.test.mjs` — 79 checks, driving the real UI: the
+real freeze form, the real table card, the real unassign button, the real
+override card. The whole-room assignment snapshot is compared after every
+attempt, so a path that mutated and *then* challenged would fail here rather
+than in production.
+
+Five mutations, to prove the checks bite:
+
+| Mutation | Result |
+| --- | --- |
+| the freeze gate removed from the assignment path | "seating into a frozen area stops and asks" fails, and the snapshot check shows the guest was seated |
+| the override also clears `event.freezes` | "the freeze is STILL in place — an override is not an unlock" fails, and so does the next-crossing check |
+| the advisor ignores the resolved freeze list | "never recommends a frozen table" fails with `["T01","T04","T02","T03"]` |
+| only `INTO` counts as a crossing | "pulling somebody OUT of a frozen area is challenged as well" fails |
+| the layer paints a 0.75-alpha block | "none of them is covered by a heavy opaque block" fails |
+| the challenge scrim drops below the table card's z-index | "the card underneath it cannot be clicked through" fails |
+
+A second, unrelated correction: `--elev-2` and `--elev-3` were referenced by
+three components and defined nowhere. The real tokens are `--shadow-*`, so the
+Smart Seating preview and the Layout Changes panel had been rendering with no
+elevation at all. Fixed in the same pass.
+
+Two layout defects found by rendering rather than by reading the diff:
+
+- Smart Seating and Freeze Zones were separate `flex:none` children of the guest
+  column, so neither could shrink. On a 900px-tall screen Smart Seating's closing
+  note was clipped by the panel below it and the second **Lift** button fell off
+  the bottom with no way to reach it. They now share one bounded, scrollable
+  band that leaves the guest queue a floor.
+- The override scrim sat below the table card, so the very button that raised
+  the question was still clickable through a card that reads as blocking. The
+  suite now asserts `elementFromPoint` at the card's centre lands inside the
+  scrim.
+
+And one wording fix the render exposed: the card said "2 record · 5 pax".
+
+```
+npm run test:all             42/42 suites, 1456/1456 checks
+npm run verify:offline       27 passed, 0 failed
+                             (seating-freeze.js bundled into BOTH artifacts)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             seating / override card / freeze form / floor
+                             layer — 0px horizontal overflow, no page errors
+```
+
+Not done in this phase, and deliberately: the audit trail is **Phase P**. Freeze
+creation, lifting and every override are written to `state.audit` now so that
+phase has real entries to surface; nothing renders them yet.
+
+## PHASE J — the Event Risk Radar
+
+### What was already there, and what was not
+
+Phase E built the Plan Doctor and the Command Center's attention list, and
+between them they already delivered most of §8: named verdicts rather than a
+score, findings with provenance, and a control on every row. Saying Phase J
+"built a Risk Radar" would be a relabel.
+
+What was missing is the risks §8 names that the product could not raise at all,
+and one refusal it was not making.
+
+### The risks it could not raise
+
+| Risk | Level | Why it is that level |
+| --- | --- | --- |
+| `checkedInWithoutATable` | BLOCKING | somebody is standing in the room and the seating plan has nowhere to put them. Not a forecast — already true. It carries no phase condition on purpose: a phase test would only make it possible to hide. |
+| `reservedAreaOccupied` | NEEDS REVIEW | an area held for late arrivals or by management already has guests on it. Two stated facts contradict each other and only a person can say which is now true. |
+| `neverBackedUp` | NEEDS REVIEW | everything this product knows lives in one browser profile. An event with real content and no exported copy is one cleared cache from gone — the only risk in the list that cannot be recovered from on the night. |
+| `backupOlderThanTheEvent` | INFORMATION | a copy that exists but predates the work. Worth knowing, demands nothing. |
+| `chairsFreedByNoShow` | INFORMATION | chairs a No Show physically freed that the plan still shows as taken. |
+
+Two of those were deliberately drawn narrowly, and the narrowness is the point:
+
+**`reservedAreaOccupied` is not "every occupied frozen table."** A VIP area, the
+head tables and the sponsor block are frozen *precisely to protect the people
+sitting in them*. Raising those would be crying wolf at the normal case, which
+is how an operator learns to ignore a radar. Only `LATE_ARRIVAL_RESERVE` and
+`MANAGEMENT_HOLD` — the two reasons that mean "keep these empty" — are a
+contradiction when occupied. The suite checks all five reasons, and mutating the
+set to include the protective three turns three checks red.
+
+**`chairsFreedByNoShow` must never read as "the plan is wrong."** No Show keeps
+its planned seat on purpose; the table plan and the reports are correct. The row
+says a second number exists, and its wording says the first one is right. It is
+INFORMATION, so it never reaches the radar — mutating it to NEEDS REVIEW fails
+the suite on exactly that line.
+
+### The refusal it was not making
+
+The radar showed the risks it knew how to evaluate and said nothing about the
+ones it did not, which teaches an operator that a quiet radar means a safe
+event. It now prints them under the verdict, from
+`MeritPlanDoctor.NOT_EVALUATED` rather than from a sentence somebody typed —
+so a risk that ships stops being listed by itself. Today that list is one entry:
+a table taken out of service (Phase N).
+
+The other refusal was already in place and is now asserted rather than assumed:
+**no percentage anywhere on the radar**. Injecting "92%" into the heading turns
+the suite red.
+
+### A row whose destination is an act
+
+Every Doctor row must say where to go. The backup row is the one whose honest
+destination is not a screen: the risk is precisely that nobody pressed the
+export button, so the button on the row *is* the export. The plan-doctor suite's
+"no dead ends" rule was restated from "leaves the Command Center" to "has an
+observable effect", and the effect is checked — `state.lastBackupAt` must change
+— rather than assumed.
+
+`state.lastBackupAt` is written only after the file has actually been handed to
+the browser, never when an export is merely offered, so "backed up" on the radar
+means a file really left.
+
+### A defect the suite found
+
+Pressing **Back up now** produced a file and a toast and left the row that asked
+for it sitting on screen — which reads as "it did not work". `doctorGo` returned
+before rendering. One `render()` fixes it, and because the report is derived on
+every read, nothing has to clear the row: it disappears by itself. The suite
+asserts that, and removing the render turns it red.
+
+### Evidence
+
+`tests/suites/risk-radar.test.mjs` — 43 checks. Six mutations bite:
+
+| Mutation | Result |
+| --- | --- |
+| the radar hides what it cannot evaluate | "shows them rather than implying it covers everything" fails |
+| "92%" injected into the heading | "no percentage anywhere on it" fails, with the rendered text |
+| every occupied frozen table treated as a contradiction | the three protective-reason checks fail |
+| a checked-in guest with no table downgraded to NEEDS REVIEW | the level check fails, and so does LIVE RISK |
+| the render removed after Back up now | "the risk is gone from the next read" fails |
+| `chairsFreedByNoShow` raised to NEEDS REVIEW | "the plan is not wrong, the room simply has room" fails |
+
+Two existing suites were corrected rather than weakened. `command-center`
+asserted *exactly one* review reason; that count was incidental precision, and a
+check that breaks when a new risk is added punishes the radar for doing its job
+— it now matches the unseated-guests row by its own translated wording and
+asserts that nothing is a blocker. `plan-doctor`'s dead-end rule was restated as
+described above.
+
+## PHASE K — the Arrival Wave Planner
+
+### Measured first: what facts actually existed
+
+| Fact | State before this phase |
+| --- | --- |
+| arrival status | on the guest record, three values |
+| party pax | on the guest record |
+| VIP level | on the guest record |
+| **when a guest actually checked in** | **nowhere on the guest record** — only as an `ARRIVAL_STATUS_CHANGED` line in `state.audit`, which is capped at 1,000 entries globally |
+| **a stated arrival window** | **did not exist in the schema at all** |
+| event start time | does not exist |
+
+So the honest reading was: the actual curve was *almost* derivable and would
+have silently truncated on any event with more than a thousand audited
+operations — a three-thousand-guest door — and the expected curve had no source
+whatsoever.
+
+### One writer for the arrival axis
+
+Four call sites wrote `arrivalStatus` independently — the Live Enter key, the
+Live status buttons, the Live undo, and the guest finder — each with its own
+audit line and none recording *when*. Four writers of one fact is how a fact
+drifts, and principle 5 forbids it.
+
+`setArrival(event, guest, next, source)` now owns the axis. It writes the
+status, maintains `checkedInAt` beside it, and records one audit entry carrying
+`from`, `to`, `at` and `source`. It writes the arrival axis and **nothing else**:
+`planningStatus` and the planned seat are separate facts and are untouched in
+both directions.
+
+The moment lives on the guest record rather than being reconstructed from the
+audit — one fact, one place, and it survives backup and restore with the guest
+it belongs to.
+
+**The moment never outlives the status.** Un-checking somebody in, or turning
+them into a No Show, clears `checkedInAt`. A stale timestamp would leave a
+person on the arrival curve who is not in the room.
+
+### The honest degraded mode is the DEFAULT
+
+No guest record carries a stated window unless a person typed one, so most
+events genuinely have no expected axis. The module reports `available: false`,
+`coverage: NONE` and a reason; every bucket's `expected` is `null`, not zero.
+The screen says so in a sentence instead of drawing a flat line along the
+bottom, which would read as "nobody is expected tonight".
+
+Three coverage states, named rather than scored: `NONE`, `PARTIAL`, `COMPLETE`.
+**PARTIAL is stated on the screen** — a stated curve covering half the room
+without saying so is worse than no curve at all.
+
+To make the comparison possible at all, the guest record gained an optional
+`expectedArrival` ("HH:MM"), typed in the guest dialog. Nothing infers one, and
+a half-typed value is rejected rather than becoming a point on a timeline.
+
+### Nothing is predicted
+
+There is no projection field, no extrapolation past the last real figure, and
+`forecast: null` is returned in the object itself so no caller can present one.
+The screen says it out loud as well. "310 guests expected in the next 20
+minutes" would need a model that does not exist.
+
+### Two defences, and only one was being tested
+
+The first mutation run exposed a real hole. Marking a No Show clears the
+timestamp in `setArrival`, so by the time the module ran there was nothing left
+to mishandle — which meant the module's **own** rule ("a No Show is never an
+arrival") was invisible to the suite. Mutating the module to keep No Shows on
+the curve passed.
+
+A restored older backup, or a hand-edited file, arrives with exactly that shape:
+a No Show that still carries a moment. The suite now builds that case directly
+and asserts the module refuses it, and the mutation then fails on precisely that
+line.
+
+### Placement
+
+Live carries the working timeline in the existing aside; selecting an interval
+**narrows the same door list** the search narrows, with a banner and a one-click
+way out. The Command Center carries a compact summary. No new navigation item.
+
+### A defect found by rendering
+
+The wave's filter banner reused `.filter-banner`, which is `position:absolute;
+top:10px; left:50%` because it was built for the canvas. Dropped into the Live
+column it landed over the header, and its icon-only `padding:0` button was not a
+click target anybody could hit at a door. It is its own inline component now,
+with a worded button. The rendered pass asserts the control's real bounding box
+rather than its presence.
+
+### Evidence
+
+`tests/suites/arrival-wave.test.mjs` — 64 checks. Six mutations bite:
+
+| Mutation | Result |
+| --- | --- |
+| an absent expected axis drawn as a zero curve | the count and the stated-bar checks fail |
+| a No Show kept on the arrival curve | (first attempt PASSED — see above; after the direct module check was added, it fails on both the curve and the total) |
+| the arrival moment surviving the status change | two checks fail with the stale timestamps |
+| an untimed check-in dropped instead of counted | "counted as untimed" fails |
+| partial coverage reported as complete | the coverage and the stated-partial checks fail |
+| selecting a wave narrows nothing | three door-list checks fail |
+
+```
+npm run test:all             44/44 suites, 1565/1565 checks
+npm run verify:offline       27 passed, 0 failed
+                             (arrival-wave.js bundled into both artifacts)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR —
+                             Live timeline, wave selected with the door list
+                             narrowed, Command Center summary; the way out of
+                             the filter measured as a real click target;
+                             no percentage, 0px horizontal overflow, no page
+                             errors
+```
+
+Detection was not touched by this phase — no detector input, threshold or
+pipeline stage is reachable from it — so no benchmark re-run was warranted.
+
+### Limitations, stated
+
+- An event has no start time, so the timeline is anchored on the data rather
+  than on a door time. When the first arrival is at 19:35, the timeline starts
+  at 19:30 and not earlier.
+- `expectedArrival` is a clock time with no date. An event crossing midnight
+  would order 00:30 before 23:30. Not modelled, and not pretended otherwise.
+- The Excel import does not yet map a stated-arrival column, so windows are
+  typed one at a time in the guest dialog.
+
+## PHASE L — the Service Load Map
+
+### Problem
+
+An operator working the room needs one honest answer to "where is this room
+busy right now?" — using facts the product actually has (table positions,
+occupancy, zones, a marked bar) rather than facts it would need to invent
+(walking routes, calibrated distances, service times, staff load).
+
+### Measured first
+
+Before writing anything, the existing surfaces were checked for what they
+already answer:
+
+- `liveUsedIndexes` / `occupiedSeatIndexes` (`src/app-v8.js`) already compute
+  PLANNED vs LIVE occupancy per table, correctly excluding a No Show's chair
+  only in the live reading. Nothing new needed inventing here — Service Load
+  reuses the same domain distinction rather than recomputing it.
+- Venue objects already carry a `type` field (`bar`, `stage`, `entrance`,
+  `exit`, `column`, `text`) from the bulk-add tool. `bar` is the one type that
+  means "service comes from here" — nothing else in that list does.
+- Nothing anywhere records staff, service times, or the room's geometry beyond
+  object positions. These are true absences, not oversights, so the layer
+  reports them as `notEvaluated` rather than working around them.
+
+### Design decision: four refusals
+
+`src/service-load.js` runs no engine and answers one question. Four things it
+refuses, and why each was a real temptation:
+
+- **No walking routes.** The product knows where objects sit on a drawing. It
+  does not know where walls, doors or service corridors are, so a line from a
+  bar to a table would be a line, not a route.
+- **No distance in any unit.** A plan's pixels are not calibrated to metres.
+  `farthestFromService` reports a **rank**, computed from squared distance
+  internally and never exposed, because "14m from the bar" would be a number
+  with no referent while "furthest of these three" is a fact this drawing
+  supports.
+- **No service times or staff load.** Named in `NOT_EVALUATED` rather than
+  silently missing, the same discipline as the Risk Radar's blind spots.
+- **No continuous heat field.** Occupancy is known per table. A smooth
+  gradient between tables would invent a figure for floor the product knows
+  nothing about — bands (`EMPTY`/`LIGHT`/`BUSY`/`FULL`) and per-zone totals
+  are the honest granularity.
+
+**PLANNED and LIVE are different rooms**, reusing the No-Show rule rather than
+re-deriving it: a `mode` parameter (`PLANNED`/`LIVE`) decides whether a No
+Show's assignment counts, and the module contains exactly one line of domain
+logic that differs between them.
+
+### Implementation
+
+- The layer toggle (`loadLayerToolHTML`) is shared by the Floor Plan and
+  Seating toolbars — a single function, not two independent copies — and
+  appears only once an event has both tables and at least one seated guest.
+  Off by default: unlike a freeze, load is not a rule an operator can be
+  blocked by, so a permanent tint would be decoration rather than information.
+- On the canvas, a band renders as an `inset box-shadow` on the table's own
+  surface (not a filled overlay), composing cleanly with the freeze layer's
+  existing outline when both apply to the same table.
+- The Command Center carries a compact per-zone summary beside the arrival
+  wave, reusing the existing `.cc-columns` two-column grid rather than adding
+  a new layout primitive.
+
+### Defects found
+
+- **A real gap when the code was first wired up**: the load-layer toggle was
+  added only to `v8Toolbar` (Seating), and the Floor Plan uses a separate
+  `planMapToolbarHTML`. The Floor Plan is the primary map workspace — the one
+  place the layer most needs to be reachable — and had no way to turn it on.
+  Fixed by extracting `loadLayerToolHTML` as a function shared by both
+  toolbars, mirroring how the freeze-layer toggle should have been (and
+  wasn't) shared in Phase I.
+- **Test bugs caught by mutation testing, not the implementation**: an early
+  version of the suite asserted `farthestFromService` *excluded* the table
+  sitting on the marked service point. The engine was right to include it
+  (ranked last, closest) — the test's expectation was wrong. Also caught: a
+  regex checking for "not marked" against copy that actually reads "**No**
+  service point **is** marked", and a raw-JSON leak check that falsely
+  flagged a UUID's embedded digit run before the fix scoped it to exclude
+  `tableId` values.
+- **Pre-existing, out of scope**: `formatTableNumber` inserts a plain space
+  between a table's letter prefix and its digits ("T 05"), so table numbers
+  embedded in prose can wrap mid-token at narrow viewports (observed in the
+  Turkish Command Center at 1440×900). This exists everywhere the product
+  already renders a table number inline — Freeze Zones, the Plan Doctor,
+  Layout Changes — and predates this phase. A fix would touch a shared
+  formatting function used by every phase to date; not attempted here without
+  a dedicated regression pass across all of them.
+
+### Test evidence
+
+`tests/suites/service-load.test.mjs` — 52 checks, driving the real toolbar,
+the real canvas, and the real Command Center. Three mutations proved to bite:
+
+| Mutation | Result |
+|---|---|
+| bands scored as a percentage instead of named | 5 checks fail, showing `"100%"`/`"63%"` etc. in place of `FULL`/`BUSY` |
+| a No Show's chair still counted as occupied in `LIVE` mode | 2 checks fail: seated count and band both wrong |
+| `farthestFromService` leaking a computed distance under a new `distance` key | both the "no distance key" check and the raw-JSON check fail |
+
+### Visual QA
+
+Rendered at 1920×1080, 2560×1440 and 1440×900, English and Turkish, with the
+layer both off and on, on the Floor Plan and on the Command Center:
+
+- The layer draws as a thin band under each table's number — visible, but the
+  original drawing (the `BAR` object, the plan background) stays fully legible
+  underneath. No opaque block anywhere.
+- The Command Center's Service Load card sits beside the Arrival Wave card in
+  the existing two-column grid, states its one marked service point, states
+  the relative-only ordering in words ("a relative position, not a distance or
+  a walking route" / "göreli bir konumdur; mesafe veya yürüyüş güzergâhı
+  değildir"), and states its three uncovered aspects.
+- Zero horizontal overflow at any viewport. No page errors, English or
+  Turkish.
+
+### Regression
+
+Detection is not reachable from this phase — Service Load reads stored
+table/guest/venue-object state, never plan pixels or the detector pipeline —
+so `npm run benchmark` was not re-run; re-running it would only reproduce the
+existing baseline.
+
+```
+npm run test:all             45/45 suites, 1617/1617 checks
+npm run verify:offline       27 passed, 0 failed
+                             (service-load.js bundled into both artifacts)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             layer off/on, Floor Plan + Command Center —
+                             0px horizontal overflow, no page errors
+```
+
+### CI (the actual PR run, not a local one)
+
+Commit `9302ab6`, PR #5. Both the push-triggered run (`34713128792`) and the
+pull_request-triggered run (`34713130392`) are fully green — all 10 check
+runs (5 job types × 2 triggers) `completed`/`success`: Fast core, Intelligence,
+Detection, Offline, Performance. Phase L is DONE.
+
+## PHASE M — Live Event hardening
+
+### Problem
+
+The programme named this phase critical for one specific reason: Live runs
+the door on event night, and its own inline guest search had quietly become
+a second, independently-written guest-search engine sitting next to the
+Global Finder built in Phase G — the exact thing the product's own rule
+forbids ("no parallel implementations of ... guest-status").
+
+### Measured first
+
+Reading both search paths side by side (`guestSearchIndex`/`findGuests` in
+`src/app-v8.js`, and `liveHTML`'s own row filter) found they were not the
+same engine wearing two skins — they disagreed on what a query means:
+
+- The Global Finder splits a query into terms and requires **every term to
+  match somewhere in the haystack** (AND-narrowing), independent of order.
+- Live tested the **whole typed string as one contiguous substring** against
+  its own hand-built haystack. "OZTURK VIP" only matched if those two words
+  happened to sit adjacent, in that order, in the fixed field layout — true
+  by accident for some guests, false for others.
+- Live's haystack was missing fields the Finder's has always had: `notes`,
+  the **formatted** table number, and the table's **zone**. A door operator
+  searching a guest's zone, or typing "T 05" the way the app itself displays
+  it, found nobody in Live and would have found them in the appbar search.
+
+Two engines that can disagree on the same typed word, at the one screen
+where disagreeing costs a queue behind a door, is not a hardening item to
+defer — it is the bug this phase exists to find.
+
+### Design decision: one engine, two presentations
+
+Rather than teach Live's filter the Finder's rules a second time (which
+just creates a THIRD place to keep them in sync), `matchGuestRows(event,
+query)` was extracted as the one function either surface uses to decide
+whether a query matches a guest — same cached haystack
+(`guestSearchIndex`), same term-AND-narrowing, same fields. `findGuests`
+now calls it and then applies its own ranking (name-prefix first) and
+12-row cap; `liveHTML` now calls it and then applies its own arrival-status
+sort and DOM-windowing. Ranking, limiting and rendering are legitimately
+different per screen; matching is not, and can no longer drift apart by
+one file being edited without the other.
+
+This did not touch `setArrival` (the arrival axis's one writer, from Phase
+K), the Enter-to-arm keyboard flow, the wave-filter integration, or the DOM
+windowing measured in Phase K/L — none of those needed changing, and the
+"smallest coherent flow" rule means they were left alone.
+
+### Implementation
+
+- `src/app-v8.js`: `matchGuestRows(event, query)` — the shared matcher.
+  `findGuests` reduced to ranking + limiting the rows it returns. `liveHTML`
+  reduced to sorting + windowing the same rows, replacing its own five-field
+  substring filter.
+- No new UI, no new CSS, no new i18n strings — this phase closes a domain
+  bug in a matching engine, not a visual surface.
+
+### Test evidence
+
+`tests/suites/live-door-keys.test.mjs` grew from 25 to 32 checks (this run:
+25 before, +7 new — total counted by `test:all` across the whole suite went
+1617 → 1624). Two new checks are direct proof of the fix, each impossible to
+pass against the old per-screen filter:
+
+| Check | What it proves |
+|---|---|
+| "VIP DEMIR" (reversed term order) finds the guest at the door | AND-narrowing over independent terms, not a whole-string substring test |
+| "TERRACE" (a table's zone, nothing else) finds the guest at the door | Live's haystack now includes zone, matching the Global Finder |
+
+A mutation proved both bite: reverting `liveHTML`'s filter to the old
+single-substring five-field version made exactly these two checks fail —
+`[]` (zero rows) where one guest was expected — with every other check
+(including the pre-existing ambiguous-query, arm-on-one-match, Enter-checks-
+in, Escape-clears and historical-event checks) still passing, confirming
+the mutation isolated the one thing this phase changed.
+
+Two more checks close scenarios named in the programme without needing new
+code: a +3 party still reads as one row ("party of 4"), never four records,
+after everything else in the suite ran; and an unseated guest (no table)
+still displays `No table` rather than being hidden, miscounted, or erroring.
+
+**Frozen destination**, named in the programme's scenario list, does not
+apply to this phase and is recorded here rather than skipped silently:
+Live's only writer is `setArrival`, which never touches `guest.assignment`
+or any table. A freeze governs seating assignment; Live has no code path
+that can cross one. **Guest changes table** is likewise not a Live action —
+it stays exclusively the Global Finder's `table` action, which navigates to
+Seating and waits for a person, per the existing "nothing it offers moves a
+guest" rule from Phase G.
+
+### Visual QA
+
+No markup or CSS changed, so this is a regression render rather than a new
+design: 1920×1080, 2560×1440 and 1440×900, English and Turkish, Live Event
+with a +N party, an unseated guest, a VIP, a No Show, and a zoned/seated
+guest on screen together, plus the same screen mid-search on the zone
+query. Zero horizontal overflow at any viewport, no console or page errors
+(the sandbox's three blocked CDN fetches for XLSX/Tesseract/PDF.js and the
+browser's own unconditional `favicon.ico` probe are pre-existing environment
+noise, confirmed unrelated by URL and present on an unmodified checkout).
+
+### Regression
+
+Detection is not reachable from this phase — the change is confined to
+in-memory guest-matching logic — so `npm run benchmark` was not re-run.
+
+```
+npm run test:all             45/45 suites, 1624/1624 checks
+npm run verify:offline       27 passed, 0 failed
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             Live Event idle + mid zone-search —
+                             0px horizontal overflow, no page errors
+```
+
+### CI (the actual PR run, not a local one)
+
+Commit `52551d8` pushed Phase M and CI's "Fast core" job came back red on
+both triggering runs — `arrival-wave` failing two checks with
+`{"expected":0,"actual":3}` and `{"expected":1,"actual":2}`. Root-caused
+rather than re-run: `arrival-wave.test.mjs` checks a guest in through the
+real door click and leaves that guest's arrival at the real wall-clock
+moment, then later hardcodes a "19:30" bucket for an unrelated assertion —
+on any run whose real clock falls inside 19:30–19:59, the two collide.
+Reproduced the exact failure locally by forcing the same collision (same
+two checks, same numbers, same 62-check count), which excluded Phase M's
+own change as the cause before touching anything. Fixed by anchoring that
+guest's moment to a fixed stamp immediately after the real-click assertions
+already prove a door check-in stamps "now" — the same fixed-stamp pattern
+the file already uses for two other guests. `npm test` (CI's exact fast
+set): 39/39 suites, 1414/1414 checks. Pushed as `71579a1`.
+
+Both the push-triggered run (`34725401311`) and the pull_request-triggered
+run (`34725405326`) are fully green on `71579a1` — all 10 check runs
+`completed`/`success`. Phase M is DONE.
+
+## PHASE N — Emergency Table Failure / Unavailable Table
+
+### Problem
+
+A table can fail during the event itself — water damage, a broken base, an
+AV crew that needs the space, a fire-safety call. The programme named this
+exactly once already, as the single entry in the Plan Doctor's own
+`NOT_EVALUATED` list: "a table taken out of service, and which guests it
+would strand, is not modelled yet." Phase N models it.
+
+### Measured first
+
+Before writing anything, the seating advisor's own comments and the Plan
+Doctor's own blind-spot list were read as the spec: `seating-advisor.js`
+already carried `CONSTRAINT.UNAVAILABLE_TABLES` at `NOT_CONFIGURED` — a slot
+deliberately left open for exactly this phase, mirroring how Freeze Zones
+arrived. `plan-doctor.js`'s `NOT_EVALUATED` array had exactly one entry,
+naming exactly this. Nothing was invented; both call sites already existed
+and named the shape of the answer they were waiting for.
+
+### Design decision: distinct from a freeze, in both directions
+
+`src/table-availability.js` is a new, small, pure module — deliberately not
+a rule-about-a-place like `seating-freeze.js`, because "unavailable" is a
+fact about ONE table, not a scope that ages as the room changes. Four
+things it refuses:
+
+- **No override, anywhere.** A freeze can be crossed by a supervisor for one
+  operation; unavailable cannot be crossed at all. The seating advisor gained
+  `BLOCKED.UNAVAILABLE` with no corresponding override parameter, and
+  `assignGuestGroup()` (the sole assignment writer) refuses a NEW assignment
+  to an unavailable table unconditionally — the same hard stop as a table
+  with no physical seats, checked before the freeze gate, not routed through
+  it.
+- **No cross-talk with freezes.** Marking a table unavailable does not read
+  or write `event.freezes`, and freezing/unfreezing does not read or write
+  `table.availability`. A table can be both; each layer answers only its own
+  question. Proved by direct mutation test, not just by code review.
+- **No mutation on marking it.** `setTableAvailability()` writes exactly
+  `availability`, `unavailableReason`, `unavailableNote`, `unavailableSince`
+  — never `guest.assignment`, `table.capacity`, or `table.chairs`. A guest
+  already seated there keeps that seat on paper, per the exact "marking a
+  table unavailable never moves anyone by itself" rule the programme stated.
+- **No new relocation mechanism.** The table card's stranded-guest row has a
+  "relocate" button that does exactly one thing: `ui.selectedGuestId =
+  guest.id`. That is the same selection the guest queue itself sets — Smart
+  Seating (Phase H) populates for them, unmodified. Relocation is 100% the
+  existing Apply-driven flow; this phase added zero lines to it.
+
+### Implementation
+
+- `src/table-availability.js`: `STATE` (AVAILABLE/UNAVAILABLE), `REASON`
+  (closed set — DAMAGED/RELOCATED/AV_HOLD/SAFETY/OTHER, plus a note, same
+  shape discipline as a freeze's reason), `resolve()`, `unavailableTableIds()`,
+  `strandedGuests()`, `lostCapacity()`. Pure; no mutation, no DOM.
+- `src/seating-advisor.js`: `unavailableIndex()` mirrors `freezeIndex()`;
+  `constraintRows()` now answers `UNAVAILABLE_TABLES` for real (state
+  OPEN/UNAVAILABLE) whenever a resolved list is passed, closing the last
+  `NOT_CONFIGURED` slot this build named. `recommend()` excludes an
+  unavailable table with `BLOCKED.UNAVAILABLE`; `previewMove()` reports the
+  same constraint for a manually-chosen destination.
+- `src/plan-doctor.js`: accepts a resolved `unavailable` list the same way it
+  accepts `frozen`. Two new findings — `guestsAtUnavailableTable` (BLOCKING:
+  who is stranded, by record and pax) and `capacityLostToUnavailable`
+  (INFORMATION: chairs removed from tonight, caveating the `spareCapacity`
+  row the same way `capacityHeldByFreeze` caveats it for a freeze).
+  `NOT_EVALUATED` is now honestly `[]`.
+- `src/app-v8.js`: `AVAIL()`/`resolvedUnavailable()` mirror `FREEZE()`/
+  `resolvedFreezes()`. `setTableAvailability()` is the single writer, next to
+  `setArrival()`. The table card gained a red UNAVAILABLE banner (reason +
+  note), a stranded-guest list with relocate buttons, and a reason-picker +
+  mark/unmark control; the primary "seat here" button is `disabled` while
+  unavailable. `assignGuestGroup()` gained the hard block. The canvas gained
+  a hazard-stripe fill + alert icon, **unconditional** — unlike the freeze
+  and service-load layers, there is no toggle to hide it, because this is a
+  fact about whether the table exists tonight, not an optional advisory.
+
+### Defects found
+
+- None in existing code — the two call sites the programme pointed at
+  (`seating-advisor.js`'s `NOT_CONFIGURED` slot, `plan-doctor.js`'s
+  `NOT_EVALUATED` entry) were exactly right and needed no correction, only
+  filling in.
+
+### Test evidence
+
+`tests/suites/table-availability.test.mjs` — 36 checks, driving the real
+table card, the real canvas, the real Smart Seating panel and a direct call
+into the Plan Doctor. Two mutations proved to bite:
+
+| Mutation | Result |
+|---|---|
+| removed the hard block in `assignGuestGroup` | 5 checks fail — a direct empty-seat click seats the guest, the toast becomes a success message, Smart Seating's blocked reason flips to `ALREADY_THERE`, and the Doctor's stranded pax comes out wrong (4 instead of 3) |
+| disabled the `guestsAtUnavailableTable` finding | 3 checks fail — the Doctor no longer raises it, the Command Center's radar text disappears |
+
+Existing suites required updates because two real constraints — not one —
+now answer for real: `smart-seating.test.mjs`'s "one constraint still
+NOT_CONFIGURED" check became "zero," with a new section proving the
+unavailable table is excluded with no override; `risk-radar.test.mjs`'s
+"the engine names something it cannot see" check became "the engine now
+honestly names nothing," since Phase N closed the only entry that list ever
+held.
+
+### Visual QA
+
+Rendered at 1920×1080, 2560×1440 and 1440×900, English and Turkish: the
+table card in both states (available with the reason picker; unavailable
+with the red banner, stranded-guest row and "Mark available"), the disabled
+seat-here button next to Smart Seating correctly omitting the unavailable
+table from its recommendations, the canvas hazard-stripe mark with no layer
+switched on, and the Command Center radar showing the new BLOCKING finding
+ranked first, in both languages, with no blind-spot line left to show. Zero
+horizontal overflow at any viewport, no console or page errors beyond the
+same pre-existing sandbox CDN/favicon noise documented in Phase M.
+
+### Regression
+
+Detection is not reachable from this phase — table availability is a status
+flag on stored table state, never plan pixels — so `npm run benchmark` was
+not re-run.
+
+```
+npm run test:all             46/46 suites, 1663/1663 checks
+npm run verify:offline       27 passed, 0 failed
+                             (table-availability.js bundled into both artifacts)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             table card (both states), canvas mark,
+                             Command Center radar — 0px horizontal
+                             overflow, no page errors
+```
+
+### CI (the actual PR run, not a local one)
+
+Commit `96ed3b7` pushed Phase N. Both the push-triggered run (`34728032899`)
+and the pull_request-triggered run (`34728031231`) are fully green — all 10
+check runs `completed`/`success` across both. Phase N is DONE.
+
+## PHASE O — Event Handover
+
+### Problem
+
+Two operators cross paths at shift change while an event is still live —
+the day team who ran arrivals, the night team taking over the room. What
+does the next shift need to know that no existing screen tells them in one
+place: how ready the event is, who has not arrived, who is a no-show, which
+tables are held or out of service, and anything a person needs to say in
+their own words that no system fact captures (a leg being fixed, a VIP
+running late per a phone call)?
+
+### Measured first
+
+Every fact this phase needed already existed, resolved, with a single
+owner: `eventReadiness()`/`planDoctorReport()` for the verdict,
+`liveStats()` for not-arrived/no-show pax, `eventMetrics()` for unassigned
+pax, `resolvedFreezes()` for held tables, `resolvedUnavailable()` and
+`MeritTableAvailability.strandedGuests()` for tables out of service and who
+it strands. Nothing needed computing that was not already computed
+somewhere else on the same Command Center. The only genuinely new thing is
+the note log — free text a person writes, which by definition no existing
+module could already own.
+
+### Design decision: a digest that reads, a log that never interprets
+
+Deliberately two halves, kept apart:
+
+- **The digest computes nothing.** `eventHandoverHTML()` in `src/app-v8.js`
+  is composition only — it calls the same functions `ccSeatingHTML()`,
+  `arrivalWaveHTML()` and `planDoctorHTML()` already call, on the same
+  render, so Handover cannot say a number the rest of the screen would
+  disagree with. There is no `event-handover.js` function that recomputes
+  readiness, arrivals, freezes or availability — the module owns only the
+  note shape.
+- **The note log is never interpreted.** `src/event-handover.js` owns one
+  thing: `normalizeNote()`/`resolve()` for a `{text, by, at}` record — text
+  trimmed and capped, author optional and capped, order preserved exactly as
+  written. Nothing parses a note for a table number, a guest name, or a
+  time; nothing here is training, matching, or promoted into a system fact.
+  This is the same "never interpreted" discipline the Teach Area (`.claude/
+  rules/ai.md`) holds for a lesson's free-text note, applied to a completely
+  unrelated feature for the same reason: a person's words stay a person's
+  words.
+- **Append-only, no edit, no delete.** `addHandoverNote()` — the single
+  writer, next to `setArrival()` and `setTableAvailability()` — only ever
+  unshifts. A handover log a person could quietly rewrite afterwards would
+  not be trustworthy as a record of what one shift actually told the next.
+  This is also what keeps it distinct from the future Audit Trail (Phase
+  P): a note is what a person chose to say, not a decision the system
+  recorded, and the two lists must never merge.
+- **No new tab, no new screen.** Handover is a card at the bottom of the
+  Command Center, the same restrained-navigation choice every phase since
+  Freeze Zones has made — Table Availability lives on the table card, the
+  Risk Radar and Arrival Wave live on the Command Center, and now Handover
+  does too.
+- **Historical events do not get a special case — they inherit the existing
+  one.** The Command Center already has no tab at all for a completed event
+  (`workspaceHTML`'s `historyTabs` vs. `normalTabs` — "a finished event has
+  no readiness to assess," predating this phase). Handover lives inside the
+  Command Center, so it disappears with it, by construction; the composer
+  additionally carries its own `historical` guard as defense in depth, the
+  same layered pattern `bindCommand()` already uses (bound only when
+  `!historical`), never relying on a single check.
+
+### Implementation
+
+- `src/event-handover.js` (new): `NOTE_MAX`/`BY_MAX`, `normalizeNote()`,
+  `resolve()`. Pure; no DOM, no knowledge of guests or tables.
+- `src/app-v8.js`: `HANDOVER()`/`resolvedHandoverNotes()` mirror `FREEZE()`/
+  `resolvedFreezes()`. `addHandoverNote()` is the single writer, auditing
+  `HANDOVER_NOTE_ADDED`. `eventHandoverHTML()` renders the digest (six
+  `.cc-metric` cells reusing the existing grid component), the stranded-
+  guest alert (only when `strandedGuests().records > 0`), the note list, and
+  — for a non-historical event only — the composer. Wired into
+  `commandCenterHTML()` right after `planDoctorHTML()`. `bindCommand()`
+  gained the `[data-handover-add]` handler, gated on `canMutate()` exactly
+  like every other mutation in that function. `migrateEvent()` defaults
+  `handoverNotes` the same way it already defaults `freezes` — an
+  install from before this phase, or a brand-new blank event, simply has
+  none.
+- `src/i18n.js`: a `handover.*` block (title, question, six metric labels,
+  the stranded alert with a `.1` singular variant, empty state, composer
+  placeholders, add/added/empty-input toasts).
+- `src/styles.css`: `.cc-handover` and its children reuse the existing
+  `.cc-metrics`/`.cc-metric`/`.cc-empty` tokens (a `cc-metrics-handover`
+  modifier only changes the grid to 3 columns for six cells instead of
+  four); the composer's textarea/input are styled to match the existing
+  `.field` form-control look (border, background, focus ring) rather than
+  left as unstyled browser defaults.
+
+### Defects found
+
+- None in existing code. This phase only added a new leaf composition and
+  one new writer; no existing call site needed correction.
+
+### Test evidence
+
+`tests/suites/event-handover.test.mjs` — 42 checks, driving the real
+Command Center and the real note composer. Two mutations proved to bite:
+
+| Mutation | Result |
+|---|---|
+| changed `unshift` to `push` in `addHandoverNote` | 3 checks fail — the newer note no longer reads first, the older note no longer stays second, and the note order no longer survives a reload in the expected sequence |
+| removed the blank-text guard in `addHandoverNote` | 1 check fails — the operator is told "Handover note added" instead of the write-something warning for whitespace-only input (the read-side `normalizeNote()` trim still filtered the malformed record out of what renders, so the note-count checks stayed green — only the operator-facing toast exposed the defect, which is itself evidence the two layers are independently defensive) |
+
+### Visual QA
+
+Rendered via the `visual-qa-reviewer` agent at 1920×1080, 2560×1440 and
+1440×900, English and Turkish, plus a dedicated stranded-alert state, a
+long-unbroken-token wrap stress test, and the historical-event tab check.
+Pass at all six required viewport/language combinations: the six-cell
+digest grid reads as a true 3×2 layout using the same `.cc-metrics`
+typography and card rhythm as the existing "Guests and seats" card above
+it (not a new visual language); the longest Turkish label
+("KULLANILAMAYAN MASA") stays on one line at 1440×900 with no wrap or
+collision; the composer's textarea/input match the app's existing
+`.field`-style border/background/focus-ring language; a long unbroken
+token wraps via `overflow-wrap:anywhere` with no forced horizontal
+expansion; the stranded-guest alert renders in `red-ink` and stays in sync
+with the Plan Doctor's own verdict shown above it on the same screen (no
+disagreement between the two blocks); zero horizontal overflow
+(`scrollWidth === clientWidth`, checked programmatically) at any of the
+six combinations; zero new console/page errors beyond the pre-existing,
+documented, blocked-CDN noise (XLSX/Tesseract/PDF.js).
+
+One non-blocking observation, out of scope for this phase: `.toast-wrap`
+is fixed at `right:16px;bottom:16px` app-wide (pre-existing, unrelated to
+this change), and because the composer's "Add note" button is the first
+control in the app to sit at the literal bottom of a long scroll
+(Command Center is the longest screen, and Handover is now its last
+card), a toast confirming a just-added note can visually sit over that
+same button at 1440×900, momentarily in the way of adding a second note
+in quick succession. This is existing toast-positioning behaviour, not a
+defect in `eventHandoverHTML()`, and is noted here rather than fixed —
+repositioning `.toast-wrap` is a cross-cutting change well outside a
+Handover-scoped phase and was not requested.
+
+### Regression
+
+Detection is not reachable from this phase — Handover is composed from
+existing facts and a stored note list, never plan pixels — so `npm run
+benchmark` was not re-run.
+
+```
+npm run test:all             47/47 suites, 1705/1705 checks
+npm run verify:offline       27 passed, 0 failed
+                             (event-handover.js bundled into both artifacts,
+                             27 sources total, up from 26)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             plus stranded-alert state and historical
+                             tab-bar check — 0px horizontal overflow,
+                             no new console/page errors
+```
+
+### CI (the actual PR run, not a local one)
+
+Commit `0aa1428` pushed Phase O. Both the push-triggered run (`34741623945`)
+and the pull_request-triggered run (`34741582103`) are fully green — all 10
+check runs `completed`/`success` across both. Phase O is DONE.
+
+## PHASE P — Audit Trail / Decision Replay foundation
+
+### Problem
+
+"What actually happened to this event?" has no answer anywhere in the
+product today. Every domain module writes to `state.audit` when it makes a
+decision, but nothing ever reads that log back to a person — it exists
+purely as an internal record. This phase is named a *foundation*
+deliberately: it names and orders the decisions that were made; it does
+not play the room back visually — that is Phase S, a later and separate
+feature, and the two must not be confused.
+
+### Measured first
+
+Reading every `audit(event, "CODE", detail)` call site in `app-v8.js`
+before writing anything surfaced two facts that shaped the whole design:
+
+1. `touchEvent()` — called by nearly every mutation path in the product —
+   writes a generic `EVENT_UPDATED` entry on its own, as a side effect of
+   saving. The raw log is mostly this one code, repeated. A trail that
+   printed `state.audit` verbatim would show an operator dozens of
+   meaningless "event updated" lines burying the real decisions.
+2. A real, pre-existing defect: checking a guest in from the Global Finder
+   wrote **two** audit entries for one decision — `setArrival()`'s own
+   `ARRIVAL_STATUS_CHANGED` (guestId, from, to, source), and a second,
+   separately-written `GUEST_CHECKED_IN` at the call site
+   (`{guestId, from:"finder"}`). The `from` field meant two different
+   things across the two entries — the guest's previous status in one, the
+   calling UI surface in the other — a genuine trap for a human reading the
+   log. `setArrival()` already recorded `source:"finder"` on its own entry,
+   making the second one pure duplication. Fixed at the source: the
+   redundant call is deleted, `setArrival()` stays the one writer of both
+   the field and its audit entry. `guest-finder.test.mjs` (which already
+   asserted the old, duplicated behaviour) was updated to assert the
+   correct one — one entry, tagged `source:"finder"` — and `audit-
+   trail.test.mjs` asserts the same invariant independently, so a future
+   regression is caught by two suites, not one.
+
+### Design decision: an allowlist, not a filter on noise
+
+`src/audit-trail.js` is a new, small, pure module. It owns exactly one
+thing — `DECISION_CODES`, a Set naming every code that counts as a
+decision worth showing — and `resolve(auditEntries, eventId)`, which
+filters the shared root-level log down to one event's allowlisted entries,
+in the order `audit()` already writes them (newest first; nothing here
+re-sorts). It is an **allowlist**, not an exclude-list on `EVENT_UPDATED`:
+a future audit code this module was never told about stays invisible
+rather than leaking into the trail unreviewed. Showing nothing is honest;
+showing noise is not.
+
+Turning one entry into a sentence is deliberately NOT this module's job —
+`auditTrailText(event, entry)` lives in `app-v8.js`, next to `t()` and the
+guest/table lookups a sentence needs, mirroring exactly where
+`doctorText()` and `ccCheckText()` already live for the same reason. A
+`HANDOVER_NOTE_ADDED` entry only stores a `noteId`; the sentence looks the
+real text up live from `event.handoverNotes` rather than caching a copy,
+so the trail can never show a note that has since been superseded — though
+in this foundation, handover notes are themselves append-only, so nothing
+supersedes them yet. An entry pointing at a guest or table id that no
+longer resolves (the record was deleted since) falls back to an honest "no
+longer on this event" phrase rather than blanking the row or throwing —
+the same "falls back to the screen" discipline `doctorGo()` already uses
+for a stale finding.
+
+**Lives in Reports, not the Command Center.** The original navigation plan
+(§"Where each feature lives") already named this: "Audit Trail | Reports /
+History | it is history." Reports is reachable for a historical event
+(`historyTabs` includes it) where the Command Center is not — exactly the
+moment an operator most wants to know what happened, which the Command
+Center's own "a finished event has no readiness to assess" design would
+otherwise deny them.
+
+**The shared log's cap is disclosed, not silently hidden.** `state.audit`
+is one array shared by every event in the install, capped at 1000 entries
+total. An old event's own decisions can fall off the back of that cap
+purely because OTHER events kept generating activity — a real limitation
+of reusing the existing log rather than giving each event its own. Rather
+than solve that (a genuine architecture change, out of scope for a
+foundation phase) or hide it, the trail shows a plain caveat whenever the
+shared log is at its cap, so an operator reading an unusually short trail
+on an old, busy install is told why rather than left to assume nothing
+happened.
+
+### Implementation
+
+- `src/audit-trail.js` (new): `DECISION_CODES`, `resolve()`. Pure; no i18n,
+  no DOM, no knowledge of guests or tables.
+- `src/app-v8.js`: `TRAIL()`/`resolvedAuditTrail()` mirror the same
+  `FREEZE()`/`resolvedFreezes()` pattern every prior phase has used.
+  `auditTrailText()` renders each of the thirteen allowlisted codes to a
+  sentence from its own `detail` plus current guest/table/note lookups.
+  `auditTrailHTML()` renders the section (question line, cap notice where
+  relevant, the list, or an honest empty state) and is wired into
+  `reportsHTML()` right after the existing table list. The redundant
+  `GUEST_CHECKED_IN` audit call in the Global Finder's check-in handler is
+  removed.
+- `src/i18n.js`: an `audit.*` block — title, question, empty state, the cap
+  notice, unknown-guest/unknown-table/note-gone fallbacks, and one sentence
+  key per allowlisted code.
+- `src/styles.css`: `.audit-trail`/`.audit-row` reuse `.mx-list`'s borders
+  and hover from the existing Reports screen, with rows that wrap a
+  sentence instead of a fixed grid, plus `.audit-cap-notice` styled as a
+  quiet amber disclosure, not an alarm.
+
+### Defects found
+
+- The `GUEST_CHECKED_IN` double-logging described above — fixed at the
+  source (`src/app-v8.js`, the Global Finder's check-in handler), not
+  papered over in the trail's own rendering. Both `guest-finder.test.mjs`
+  and `audit-trail.test.mjs` now assert the corrected behaviour.
+
+### Test evidence
+
+`tests/suites/audit-trail.test.mjs` — 27 checks, driving the real Global
+Finder check-in, the real table-availability control, the real handover
+composer, and Reports itself. Two mutations proved to bite:
+
+| Mutation | Result |
+|---|---|
+| re-introduced the redundant `GUEST_CHECKED_IN` audit call | 2 checks fail across two suites — `audit-trail.test.mjs`'s own "never a second entry" check, and `guest-finder.test.mjs`'s matching assertion (added specifically so this defect is caught by the suite that owns the flow, not only by the unrelated suite that happened to find it) |
+| added `EVENT_UPDATED` to the allowlist | 3 checks fail — the domain-module check that the noise code is excluded, the scoped-resolve count, and the real-UI check that no raw `EVENT_UPDATED` line reaches the screen |
+
+### Visual QA
+
+Rendered via the `visual-qa-reviewer` agent at 1920×1080, 2560×1440 and
+1440×900, English and Turkish, plus a dedicated cap-notice state, a
+historical-event check, and a forced multi-line wrap stress test (the
+handover-note case truncates to 80 characters before it ever reaches the
+DOM, so a `GUEST_DELETED` entry with a ~300-character injected name was
+used to force a genuine 3-line row instead). Pass at all six required
+viewport/language combinations, no defects: `.audit-trail`/`.audit-row`
+are visually and rule-for-rule identical to the existing `.mx-list`/
+`.mx-row` styling the "Table list" section above it already uses — this
+reads as a continuation of Reports, not a bolted-on block. The forced
+wrap case grows the row cleanly to three lines with no overflow of the
+row or its container, and `.audit-when` stays pinned rather than being
+pushed off; zero horizontal overflow at any of the six combinations. The
+cap-notice renders as a calm amber disclosure, not an alarm. Turkish
+strings are real, distinct translations that fit the row at every tested
+width despite running longer than their English counterparts. Historical
+event confirmed: Reports and the trail inside it stay fully visible and
+populated on a Completed event, with the Command Center tab correctly
+absent. Zero new console/page errors beyond the pre-existing, documented,
+blocked-CDN noise (XLSX/Tesseract/PDF.js).
+
+### Regression
+
+Detection is not reachable from this phase — the trail reads a stored log
+and stored guest/table/note data, never plan pixels — so `npm run
+benchmark` was not re-run.
+
+```
+npm run test:all             48/48 suites, 1735/1735 checks
+npm run verify:offline       27 passed, 0 failed
+                             (audit-trail.js bundled into both artifacts,
+                             28 sources total, up from 27)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             plus cap-notice state, historical-event
+                             check, and a forced multi-line wrap test —
+                             0px horizontal overflow, no new page errors
+```
+
+### CI (the actual PR run, not a local one)
+
+Commit `217d3ce` pushed Phase P. Both the push-triggered run (`34742827236`)
+and the pull_request-triggered run (`34742829111`) are fully green — all 10
+check runs `completed`/`success` across both. Phase P is DONE.
+
+## PHASE Q — Offline Recovery / Automatic Backup
+
+### Problem
+
+`exportBackup()` (Gate L) is the product's only backup mechanism, and it is
+entirely manual — a person has to remember to click it. Nothing protects an
+operator from a corrupted local record or an in-session mistake that undo
+does not reach far enough back to fix.
+
+### Measured first
+
+Reading `loadV8Async()` before writing anything surfaced a real, silent
+defect: when the primary StorageProvider record cannot be read (corrupted,
+or `JSON.parse` throws) and there is no legacy install to fall back to
+either, the function has always quietly returned a brand-new `blankRoot()`.
+The only trace was a `console.warn` — an operator would open the app and
+see every event gone, with no indication anything had gone wrong, let alone
+that anything could be done about it. There was no automatic, unattended
+copy of the state anywhere to fall back to in the first place.
+
+A second latent defect surfaced while designing the fix:
+`LocalStorageStorageProvider.load()/save()` already accepted the SAME `key`
+parameter `IndexedDBStorageProvider` uses to address more than one record,
+but silently ignored it — every call, regardless of key, read and wrote the
+single slot `this.key`. Writing an automatic snapshot under a second key on
+this fallback provider would have silently overwritten the live primary
+record instead of writing beside it. Fixed before it could ever be
+exercised: `slot(key)` now namespaces a given key under `` `${this.key}:${key}` ``,
+falling back to the original single-slot behaviour when no key is given, so
+every existing call site is unaffected.
+
+### Design decision: two different guarantees, never presented as one
+
+`src/offline-recovery.js` is a new, small, pure module. It is not a second
+`exportBackup()` and must never be described as equivalent to one:
+
+- **`exportBackup()` means one specific fact — a file left the browser.**
+  It is the only real protection against losing the device or the browser
+  profile itself, and the Risk Radar's `backupState()` (Phase — Event Risk
+  Radar) reads exactly that fact and nothing added by this phase.
+- **Automatic recovery lives in the SAME browser storage the live state
+  already occupies.** It protects against a corrupted primary record or an
+  in-session mistake undo cannot reach — never against losing the device.
+  Every piece of copy this phase writes (the button title, the confirm
+  dialog, both toasts) says this plainly rather than letting "recovery
+  point" and "backup" blur into one idea.
+- **A small ring buffer, not a version history.** `KEEP = 3`, and a
+  snapshot is taken only when real time (`MIN_INTERVAL_MS`, 5 minutes) has
+  actually passed since the last one — otherwise ordinary saves would
+  duplicate the same moment for no benefit. `shouldSnapshot()`/
+  `withSnapshot()`/`latestSnapshot()` are pure; the module has no idea what
+  storage is.
+- **Boot recovery is never silent, and a deliberate restore is always
+  confirmed.** Falling back to a snapshot at boot (the primary record could
+  not be read at all) shows a long, honest toast naming what happened and
+  that it may not hold the most recent changes. Restoring a snapshot
+  on-demand, while the app is otherwise healthy, is confirmed exactly like
+  `importBackupFile()` — it replaces the whole working state the same way a
+  backup file does, and gets the same care.
+
+### Implementation
+
+- `src/storage-provider.js`: `LocalStorageStorageProvider` gained `slot(key)`
+  and both `load`/`save` now accept the same optional `key` their
+  IndexedDB counterpart already did, instead of silently ignoring it.
+- `src/offline-recovery.js` (new): `KEEP`, `MIN_INTERVAL_MS`,
+  `shouldSnapshot()`, `withSnapshot()`, `latestSnapshot()`. Pure.
+- `src/app-v8.js`: `autoSnapshot(payload)` — called from `saveState()`'s own
+  success callback, reusing the JSON already serialised for the primary
+  save rather than re-stringifying `state` a second time — writes under the
+  `"autosnapshots"` StorageProvider key, gated by the domain module's
+  throttle. `loadV8Async()` now returns `{data, recoveredAt}`; when the
+  primary record and any legacy install both fail, it tries the latest
+  automatic snapshot before conceding a blank slate, and persists the
+  recovered state back to the primary record so the recovery becomes
+  durable going forward. The boot call site shows a long `"error"`-toned
+  toast whenever `recoveredAt` is set. `restoreLatestSnapshot()` is a
+  deliberate, operator-initiated restore, confirmed first, wired to a new
+  icon button (`data-action="recovery-restore"`, reusing the existing
+  `undo` icon) placed next to the existing backup export/import controls in
+  the appbar.
+- `src/i18n.js`: a `recovery.*` block — button title, no-recovery-point
+  toast, the confirm dialog, the manual-restore toast, and the boot-time
+  recovery toast, all explicit that this is not a backup file.
+
+### Defects found
+
+- `loadV8Async()`'s silent fall-through to a blank slate on a corrupted
+  primary record with no legacy install — the central problem this phase
+  exists to close, described above.
+- `LocalStorageStorageProvider`'s ignored `key` parameter — fixed before
+  this phase's own new code could have been the first to trigger it
+  silently corrupting the primary record on that fallback provider.
+
+### Test evidence
+
+`tests/suites/offline-recovery.test.mjs` — 21 checks. The independent-
+storage guarantee could not be proven with a plain `page.reload()`:
+`app-guests.js` registers a `beforeunload` handler that calls `saveState()`
+with whatever good in-memory state the page still holds, which would
+silently heal a manually corrupted primary record before the reloaded
+document ever started reading it. The suite instead corrupts storage from
+the original page, then opens a second page in the same browser context
+(same origin storage, `context.newPage()`) to read it fresh — proving the
+recovery without a same-page reload's own safety net masking the result.
+Two mutations proved to bite:
+
+| Mutation | Result |
+|---|---|
+| removed the boot-time snapshot fallback from `loadV8Async()` | 3 checks fail — the fresh page boots blank instead of recovering the event, the boot toast never appears, and a later step throws outright once the expected event no longer exists to rename |
+| removed the throttle from `shouldSnapshot()` (always returns true when there is content) | 6 checks fail — a second snapshot is taken one second later, the ring buffer no longer holds the earlier moment, and every later assertion in the flow inherits the wrong (renamed) snapshot content |
+
+### Visual QA
+
+Rendered via the `visual-qa-reviewer` agent at 1920×1080, 2560×1440 and
+1440×900, English and Turkish. The one new persistent control — a third
+icon button in the Events/Home appbar, next to the existing backup
+export/import icons — measures identically to its siblings (same `btn
+quiet icon-only` class, same 30×34px box, same ~37px pitch) and reads as a
+natural third sibling, not an outlier. Both easily-triggered toast states
+("no recovery point exists yet" and the manual-restore confirmation)
+render fully within the toast's width, wrap sensibly, and use vocabulary
+clearly distinct from the existing backup toasts. The rarer boot-time
+recovery toast was also captured (three lines, still within the toast's
+max-width, no clipping) using the same fresh-second-page technique the
+test suite uses. Real, distinct Turkish translations throughout, and the
+Turkish boot-toast string was confirmed directly against source since
+`ui.lang` is in-memory-only and resets before a second boot can be driven
+in that language. Zero horizontal overflow, zero new console/page errors.
+
+One judgment call raised, not a defect: the new button reuses the existing
+"undo" icon glyph, which the app already uses for two unrelated concepts
+(canvas Ctrl+Z, Plan Intelligence's per-decision undo). The reviewer's
+read: on a persistent home-screen control sitting next to the backup
+icons, an undo-shaped glyph risks being misread as "undo my last change"
+rather than "restore a whole-database snapshot" before an operator reads
+the tooltip. The distinct tooltip, the two distinct toast strings, and the
+confirm dialog's explicit "this is not the same as a backup file" line all
+mitigate this once engaged, so no functional risk exists — but the icon
+choice itself is noted here as a design tradeoff rather than silently
+accepted or changed unilaterally.
+
+### Regression
+
+Detection is not reachable from this phase — recovery reads and writes a
+serialized copy of the whole app state, never plan pixels — so `npm run
+benchmark` was not re-run.
+
+```
+npm run test:all             49/49 suites, 1756/1756 checks
+npm run verify:offline       27 passed, 0 failed
+                             (offline-recovery.js bundled into both
+                             artifacts, 29 sources total, up from 28)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             plus both easily-triggered toast states and
+                             the boot-time recovery toast — 0px
+                             horizontal overflow, no new page errors
+```
+
+### CI (the actual PR run, not a local one)
+
+Commit `0a3ad4b` pushed Phase Q. Both the push-triggered run (`34744003406`)
+and the pull_request-triggered run (`34744005076`) are fully green — all 10
+check runs `completed`/`success` across both. Phase Q is DONE.
+
+## PHASE R — Portable Event Package
+
+### Problem
+
+`exportBackup()` is whole-install: every event, replacing what is already
+there on import. There was no way to move ONE event to another machine —
+send a colleague a single night's plan, or archive one finished event
+outside the browser it was built in — without carrying every other event
+along, or destroying whatever was already on the receiving machine.
+
+### Measured first
+
+Reading `duplicateEvent()` (the one existing code path that already
+regenerates an event's internal ids, to avoid a duplicate colliding with
+its source) before writing anything surfaced a real, pre-existing defect:
+it remaps a guest's `assignment.tableId` when tables get new ids, but never
+a TABLE-scope freeze's own `tableId`. `seating-freeze.js`'s `covers()`
+simply returns `false` for an id that matches no table, so the bug is
+silent — a duplicated event with a per-table freeze reads as "never
+frozen," not as an error. Fixed directly, with the same map the function
+already builds for guest assignments.
+
+This mattered directly for Phase R's own design: a portable package needs
+the SAME class of id-renumbering (to avoid colliding with whatever ids
+already exist on the receiving machine) but touching MORE cross-references
+than `duplicateEvent()` does — chairs, freezes, and now, since Phase P, the
+audit trail's own `eventId` and the guest/table ids inside its `detail`.
+Getting this right in one place rather than copying `duplicateEvent()`'s
+incomplete version was the reason to build `regenerateIds()` as its own
+pure, fully-covered function instead.
+
+### Design decision: one event, added alongside — never a second backup
+
+`src/event-package.js` is a new, small, pure module carrying its own format
+marker (`merit-event-maker-event-package`), distinct from `backup.*`'s
+words in every piece of copy this phase writes:
+
+- **Adds, never replaces.** Importing a package always adds a new event
+  alongside whatever is already on the machine. Only `importBackupFile()`'s
+  whole-install path replaces anything, and a package's format marker
+  routes it away from that path entirely.
+- **Every id is renumbered, and every cross-reference follows.**
+  `regenerateIds(event, auditEntries, idFactory)` takes a plain event, plain
+  carried audit entries, and an id factory (dependency-injected so the
+  module stays pure and testable with a deterministic factory) — it
+  produces fresh ids for the event, every table, every chair, every guest
+  and every venue object, and rewrites every place that named an old one:
+  a guest's seat assignment, a TABLE-scope freeze's `tableId`, a chair's
+  `parentTableId`, and — carried alongside the event rather than merged
+  into the shared root log until import — the `eventId` and any
+  `tableId`/`guestId` inside an audit entry's own `detail`. Without that
+  last piece, an imported event's Audit Trail (Phase P) would read every
+  carried decision as pointing at "a guest/table no longer on this event,"
+  which is false — the guest and table ARE there, just under a new id.
+- **Never conflated with `exportBackup()`.** Exporting a package never
+  touches `lastBackupAt` — that fact means the whole install left the
+  browser, and a single event leaving says nothing about any other event
+  in it. Every string this phase writes (button title, confirm dialog,
+  both toasts) avoids `backup.*`'s vocabulary on purpose.
+- **One file input, routed by content, not by which button opened it.**
+  Rather than add a fourth appbar icon next to the three from Phases L/Q,
+  the existing `backup-import` picker now peeks at the parsed file's
+  `format` marker and routes to whichever import flow applies — a whole
+  backup and a single package are both "a file the operator picked to
+  bring data in," and two controls for what looks like one action would
+  have been the wrong kind of precision, especially with Phase Q's own
+  visual QA already flagging the appbar's icon count as a mild risk.
+
+### Implementation
+
+- `src/event-package.js` (new): `FORMAT`, `FORMAT_VERSION`, `buildPayload()`,
+  `isWellFormed()`, `referencesIntact()`, `regenerateIds()`. Pure.
+- `src/app.js`: `duplicateEvent()` now remaps a TABLE-scope freeze's
+  `tableId` through the same map it already builds for guest assignments —
+  the defect described above.
+- `src/app-v8.js`: `exportEventPackage(eventId)` builds the payload (the
+  event, its `venueRef`'d venue if any, and the `state.audit` entries whose
+  `eventId` matches it) and downloads it. `importEventPackagePayload()`
+  validates shape and referential integrity, confirms, regenerates ids,
+  adds any travelling venue as a new record only if one with that id does
+  not already exist locally (never merged into a same-named one), unshifts
+  the event through `migrateEvent()` for the same normalization every other
+  entry path gets, and prepends the remapped audit entries to the shared
+  log. `importBackupFile()` now peeks at `parsed.format` first and routes
+  event packages to this new flow before falling through to the existing
+  whole-install restore. A new "export as portable package" icon
+  (`data-export-event-package`, the existing `download` icon) sits next to
+  duplicate/delete on every per-event surface on the Events/Home screen —
+  the hero card, the upcoming list, and the history list, since archiving a
+  finished event is exactly as meaningful as archiving an upcoming one.
+- `src/i18n.js`: an `eventPackage.*` block plus the row action's own
+  label/a11y strings, none sharing vocabulary with `backup.*`.
+
+### Defects found
+
+- `duplicateEvent()`'s unmapped TABLE-scope freeze `tableId`, described
+  above — fixed at the source, in the same function, using the same map.
+
+### Test evidence
+
+`tests/suites/event-package.test.mjs` — 32 checks, driving the real export
+button, the real (shared) import file input, and the real duplicate button.
+Two mutations proved to bite:
+
+| Mutation | Result |
+|---|---|
+| reverted the `duplicateEvent()` freeze fix | 1 check fails — the duplicated event's freeze no longer covers its own table |
+| removed freeze `tableId` remapping from `regenerateIds()` | 3 checks fail — the domain-module unit check, and two real-UI checks (the imported freeze's `tableId` does not point at any of the imported event's own tables, and it no longer reads as `FROZEN`) |
+
+### Visual QA
+
+Rendered via the `visual-qa-reviewer` agent at 1920×1080, 2560×1440 and
+1440×900, English and Turkish, across all three surfaces the new export
+icon reaches (the hero card, the "other upcoming" list, and the history
+list). The two list surfaces passed cleanly — the icon matches the
+existing `.row-action` duplicate/delete controls exactly (size, spacing,
+style), and the history row's third element causes no crowding or wrap at
+any tested width.
+
+**One real defect found and fixed.** The hero card's `.next-event-side`
+container forces every button to `width:100%` with centered content —
+correct for Duplicate/Delete, which carry icon+text, but the export button
+was icon-only, rendering as a full-width button with a lone glyph adrift
+in empty space at every viewport and in both languages. Fixed by giving it
+the same icon+label composition as its siblings (a new, shorter
+`home.exportPackageShort` string — "Export package" / "Paketi dışa
+aktar" — distinct from the fuller `home.exportPackage` tooltip text used
+on the icon-only row variants, where space is tighter). Re-verified via
+`tests/suites/event-package.test.mjs` after the fix — still 32/32 — since
+the suite reads the button's `title` attribute, unaffected by adding a
+visible label.
+
+One judgment call raised, not a defect: the export icon reuses the same
+`download` glyph already used for `exportBackup()`'s whole-install button
+in the appbar. The reviewer's read: acceptable, since the two controls
+never appear adjacent (one lives in the top appbar, the others live inside
+per-event cards/rows) and each carries its own distinct tooltip scoping
+"this event" versus the whole install — noted, not changed. Zero new
+console/page errors (only the documented pre-existing CDN-block noise) and
+real, distinct Turkish translations confirmed throughout.
+
+### Regression
+
+Detection is not reachable from this phase — a package carries stored
+event data, never plan pixels — so `npm run benchmark` was not re-run.
+
+```
+npm run test:all             50/50 suites, 1788/1788 checks
+npm run verify:offline       27 passed, 0 failed
+                             (event-package.js bundled into both
+                             artifacts, 30 sources total, up from 29)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             all three per-event export surfaces — one
+                             hero-card layout defect found and fixed,
+                             re-verified; 0px horizontal overflow, no
+                             new page errors after the fix
+```
+
+### CI (the actual PR run, not a local one)
+
+Commit `cb533c7` pushed Phase R. Both the push-triggered run (`34755466823`)
+and the pull_request-triggered run (`34755465014`) are fully green — all 10
+check runs `completed`/`success` across both. Phase R is DONE.
+
+## PHASE S — Post-Event Replay
+
+### Problem
+
+Once an event is Completed, its Reports screen still shows the Audit Trail
+(Phase P) — but newest-first, the ordering a LIVE event wants ("what just
+happened"). Nobody reviewing a finished night wants that: they want the
+story from the doors opening to the last decision, and they want to be able
+to ask "what happened around 19:30" without cross-referencing the Arrival
+Wave chart and the Audit Trail list by eye.
+
+### Measured first
+
+Reading `src/arrival-wave.js` in full before writing anything confirmed the
+module already exports exactly the two clock helpers a replay would need —
+`minutesOfStamp(iso)` (a stored timestamp to minutes-past-midnight in the
+browser's own timezone) and `minutesOfClock("HH:MM")` (the reverse) — and
+that each wave bucket already carries `fromMinutes` and a `to` clock string.
+Nothing needed to be added to that module; a bucket's own window is fully
+recoverable from data it already returns. Reading `src/audit-trail.js`
+confirmed `resolve()` deliberately never re-sorts, trusting `audit()`'s own
+insertion order (newest-first, via `unshift`) — so "oldest-first" is a pure
+reversal of that order, never a re-sort by timestamp, which matters because
+insertion order is the real record of what happened even if two entries
+somehow shared a timestamp.
+
+### Design decision: two views of the same decisions, never a third source
+
+`src/post-event-replay.js` is a new, small, pure module. It computes nothing
+either `arrival-wave.js` or `audit-trail.js` could disagree with it about:
+
+- **`chronological(auditEntries)`** reverses an already-resolved,
+  already-scoped audit trail into oldest-first order. It does not sort by
+  timestamp and does not mutate its input, since the newest-first array may
+  still be in use elsewhere on the same render (the Audit Trail section
+  itself, directly below Replay on the same screen).
+- **`inWindow(entry, bucket, helpers)`** decides whether one entry's `at`
+  falls inside a wave bucket's window, using `minutesOfStamp`/
+  `minutesOfClock` **injected** rather than reached for on `globalThis` — the
+  same dependency-injection discipline Phase R's `regenerateIds(event,
+  auditEntries, idFactory)` established, so the module stays a pure function
+  of its inputs, is directly unit-testable with fake helpers, and can never
+  silently drift if the wave module's own clock handling changes. Without
+  both helpers, or without a resolvable timestamp, it returns `false` rather
+  than guessing — mirroring Arrival Wave's own "a check-in without a time is
+  not guessed at" rule.
+- **The Audit Trail section is never replaced, only joined.** Phase P's own
+  suite asserts `.audit-row`/`.audit-text`/`.audit-when` stay present and
+  newest-first on a historical event's Reports screen — Replay uses its own
+  classes (`.replay-row`/`.replay-text`/`.replay-when`) precisely so the two
+  lists can coexist on one screen without either suite's selectors ever
+  matching the other's rows, and without one silently becoming a
+  reordering of the other.
+- **The Arrival Wave chart is reused exactly as it renders on Live, not
+  redrawn.** A closed event's arrival data is now a stable historical
+  record, so `arrivalWaveHTML(event)` — bucket-size toggle, VIP-outstanding
+  button, and all — is called unchanged. Its bucket-click, VIP-toggle, and
+  clear-filter bindings were previously wired only inside `bindLive()`;
+  extracted into a shared `bindArrivalWaveControls()` so a bucket click
+  means the same thing on Live and on Replay rather than two handlers
+  drifting apart, and so a historical event (which has no Live tab to have
+  bound them already) still gets a working chart.
+- **No new persisted field, no migration.** Replay is a derived view over
+  `state.audit` and `event.guests`, both already stored — there is nothing
+  for `migrateEvent()` to default.
+
+### Implementation
+
+- `src/post-event-replay.js` (new): `chronological()`, `inWindow()`,
+  `windowed()`. Pure, dependency-injected, no `globalThis` reads.
+- `src/app-v8.js`:
+  - `bindArrivalWaveControls()` extracted from the tail of `bindLive()`
+    (the `[data-wave-bucket]`/`[data-wave-key]`/`[data-wave-vip]`/
+    `[data-wave-clear]` bindings) with no behavior change; called from both
+    `bindLive()` and the new call in `bindReports()`.
+  - `postEventReplayHTML(event)` — returns `""` unless the event is
+    historical; otherwise combines `resolvedAuditTrail(event)` (Phase P,
+    reused) run through `MeritPostEventReplay.chronological()`, narrowed to
+    the selected wave bucket (`ui.waveKey`, the same selection state Live
+    already uses — safe to share since a historical event has no Live tab
+    to also be reading it) via `MeritPostEventReplay.windowed()`, and
+    rendered as a numbered, oldest-first list using `auditTrailText()`
+    (Phase P, reused) for each sentence and `AW.clockOfMinutes(AW.minutesOfStamp(entry.at))`
+    for each row's clock time (falling back to `relativeTime()` for an
+    entry with no resolvable timestamp, the same honest-fallback shape
+    Phase P's own unresolvable-guest-id case uses).
+  - Wired into `reportsHTML()` as the first section in the left column,
+    above the pre-flight/capacity/table-list sections and above the
+    unchanged Audit Trail section further down.
+- `src/i18n.js`: `replay.title`, `replay.question`, `replay.filteredCount`,
+  `replay.none`, `replay.noneInWindow` — EN and TR, sharing no vocabulary
+  with `audit.*`.
+- `src/styles.css`: `.replay-question`, `.replay-trail`, `.replay-row`,
+  `.replay-when`, `.replay-text` — same row language as `.audit-trail`'s
+  existing rules (border, hover, sentence-plus-timestamp layout) under their
+  own class names, plus a `counter()`-based row index.
+- `index.html`: script tag added after `event-package.js`.
+
+### Defects found
+
+None. This phase found no pre-existing bug — `arrival-wave.js` and
+`audit-trail.js` already exposed everything Replay needed; the only new
+code is the reversal/windowing logic and its UI composition.
+
+### Test evidence
+
+`tests/suites/post-event-replay.test.mjs` — 31 checks: a domain-module unit
+section (`chronological()` reverses without mutating; `windowed()`/
+`inWindow()` keep only what's in a bucket's window and refuse to guess
+without both helpers or a valid entry/bucket) followed by a real-UI section
+driving an actual historical event's Reports screen. Two mutations proved
+to bite:
+
+| Mutation | Result |
+|---|---|
+| `chronological()` stopped reversing (returned its input as-is) | 4 checks fail — the domain-module ordering check, and three real-UI checks (the creation entry no longer leads, the later arrival is no longer last, its clock time no longer matches) |
+| `windowed()` stopped filtering (returned every entry regardless of bucket) | 6 checks fail — the domain-module windowing check, both bucket-click checks (narrowing to one entry, and the empty-window case), the filtered-count banner, and the "says so explicitly" empty-state check |
+
+Both mutations were applied to a scratch-directory backup of
+`src/post-event-replay.js`, confirmed to produce exactly the expected
+failures and no others, then reverted and re-confirmed green (31/31).
+
+### Visual QA
+
+Rendered via the `visual-qa-reviewer` agent at 1920×1080, 2560×1440 and
+1440×900, English and Turkish, driving the same fixture recipe as the test
+suite plus a second, non-historical event for the negative check. **No
+defects found.** `.replay-section` renders directly above the pre-flight/
+capacity/table-list sections and above the unchanged `.audit-trail` section
+at every viewport and in both languages; the reused Arrival Wave chart is
+legible and uncramped in the narrower Reports column, including its
+VIP-outstanding pill; bucket-click → filter → clear all work and match the
+"N decisions in this window" / empty-window copy exactly; the numbered rows
+hold their three-column alignment in both languages, including the longer
+Turkish sentences; the section reads as a native sibling of the other
+Reports sections (same `mx-section-head` tokens) rather than a bolted-on
+card; the negative case (a Planning event's Reports screen) shows no
+`.replay-section` at all while its own `.audit-trail` is unaffected; and
+zero JavaScript errors were attributable to this feature across every
+viewport/language/interaction pass.
+
+One fragility was raised, not a defect: `chronological()` trusts
+`state.audit`'s own insertion order rather than re-sorting by timestamp
+(matching `audit-trail.js`'s own "never re-sorts" design), so an audit array
+hand-constructed with an insertion order that contradicts its own `at`
+values would replay out of order. The reviewer traced every real write path
+(`audit()`, `logHandoverNote()`) and confirmed there is no way for an
+operator to produce such an array today — `at` is always `nowISO()` at the
+moment of the real `unshift()` — so this is a documented design property,
+not a reachable bug, and was left unchanged. Two judgment calls were raised
+and left as-is: Replay's section count reflects the current filter while
+Audit Trail's always shows the true total (each is internally consistent
+with what its own banner already says), and a pre-existing wide right-hand
+margin on the whole Reports screen at 2560×1440 that predates this phase.
+Console noise from the sandbox's blocked `cdn.jsdelivr.net` egress and a
+missing favicon were also present on an unrelated screen and are unrelated
+to this feature.
+
+### Regression
+
+Detection is not reachable from this phase — Replay reads stored audit
+entries and guest data, never plan pixels — so `npm run benchmark` was not
+re-run.
+
+```
+npm run test:all             51/51 suites, 1819/1819 checks
+npm run verify:offline       27 passed, 0 failed
+                             (post-event-replay.js bundled into both
+                             artifacts, 31 sources total, up from 30)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             replay section, reused wave chart, bucket
+                             filter/clear, empty-window state, and the
+                             non-historical negative case — no defects,
+                             0px horizontal overflow, no new page errors
+```
+
+### CI (the actual PR run, not a local one)
+
+Commit `9f6de61` pushed Phase S. Both the push-triggered run (`34757873005`)
+and the pull_request-triggered run (`34757875335`) are fully green — all 10
+check runs `completed`/`success` across both. Phase S is DONE.
+
+## PHASE T — Event History & Learning
+
+### Problem
+
+The Events/Home screen already lists every historical event (name, date,
+venue, guest pax, physical chairs), but nothing reads ACROSS that list.
+An operator planning event #12 has no way to see what their own last 11
+completed events actually looked like — whether the room usually fills up,
+whether a meaningful fraction of confirmed guests tend not to show — short
+of opening each one and doing the arithmetic by hand.
+
+### Measured first
+
+Reading `eventMetrics()`, `physicalCapacity()` and `src/arrival-wave.js`'s
+`build()` output before writing anything confirmed every fact this phase
+needed already existed per-event: `eventMetrics(event).guests` (total
+invited pax), `physicalCapacity(event)` (real chair count), and
+`MeritArrivalWave.build({guests}).actual.pax` / `.noShow.pax` (who actually
+walked in, who didn't). Nothing needed to be computed that a domain module
+did not already establish — the gap was purely that no layer read these
+facts ACROSS more than one event at a time.
+
+### Design decision: an operator reading their own past, never a trained model
+
+`src/event-history.js` is a new, small, pure module. Its own header quotes
+the same discipline the Teach Area and the captured-decision log already
+hold to: "Learning" means a person reading real numbers, never a model
+fitting anything.
+
+- **Two facts only, both already real.** `outcome()` derives exactly a
+  utilization ratio (checked-in pax over physical chair capacity — the
+  ACTUAL room on the night, not the planned seating, matching Service
+  Load's own PLANNED-vs-LIVE distinction) and a no-show rate (no-show pax
+  over total invited pax) from facts passed in, never recomputed.
+- **Null means no data, never zero.** A historical event with no tables
+  yet contributes no utilization figure; one with no guests contributes no
+  no-show figure. Reporting either as 0% would claim something about a
+  room or a guest list that never existed.
+- **Each fact tracks its own sample size, independently.** `learning()`
+  averages whichever outcomes actually carry a given figure, and reports
+  how many that was — an event missing capacity can still contribute its
+  no-show rate, and vice versa, without either average being silently
+  diluted by the other's gap. This is the exact same honesty Arrival
+  Wave's own PARTIAL-coverage reporting already established for a single
+  event; this phase applies it across many.
+- **No window, no cap, no ranking.** Every currently-historical event
+  contributes — the same "list everything, no pagination" choice the
+  existing Events History section already makes. Nothing is windowed to
+  "recent," nothing is weighted, nothing decays: a deliberately plain mean.
+- **Reuses the Reports screen's own tile component.** The panel is built
+  from the same `.mx-metric`/`.mx-metrics` markup Reports' Capacity
+  Summary already uses, so it reads as a native sibling of an existing,
+  already-tested component rather than a new visual pattern needing its
+  own review.
+
+### Implementation
+
+- `src/event-history.js` (new): `outcome()`, `learning()`. Pure.
+- `src/app-v8.js`: `eventHistoryLearningHTML(historyEvents)` — builds one
+  `outcome()` per historical event from `eventMetrics()`, `physicalCapacity()`
+  and a fresh `MeritArrivalWave.build()` call (reused, not recomputed),
+  averages them via `learning()`, and renders two `.mx-metric` tiles. Wired
+  into `eventsHTML()` between the "other upcoming" list and the existing
+  "Events History" section, returning `""` when there are no historical
+  events yet.
+- `src/i18n.js`: `history.*` block, including a singular `sampleNote1`
+  ("from your only completed event") alongside the plural `sampleNote`
+  ("across {n} completed events"), matching the existing `home.eventCount1`/
+  `home.eventsCount` singular/plural convention rather than reading oddly
+  at n=1.
+- `src/styles.css`: one new rule, `.history-note` (identical shape to
+  `.audit-question`/`.replay-question`) — everything else is the existing
+  `.mx-metric` component.
+- `index.html`: script tag added after `post-event-replay.js`.
+
+### Defects found
+
+None. This phase found no pre-existing bug — every fact it reads was
+already correctly computed by `eventMetrics()`, `physicalCapacity()` and
+`arrival-wave.js`; the only new code is the per-event derivation and the
+cross-event average.
+
+### Test evidence
+
+`tests/suites/event-history.test.mjs` — 27 checks: a domain-module unit
+section (zero capacity/zero pax produce `null`, never a fabricated 0%; a
+mixed batch of outcomes tracks each fact's sample size independently) and
+a real-UI section building three historical events through the actual
+create-event/add-tables flow, with the third event carrying zero tables to
+prove it is excluded from the utilization average but still counted in the
+no-show average. Two mutations proved to bite:
+
+| Mutation | Result |
+|---|---|
+| `outcome()`'s zero-capacity guard widened from `cap > 0` to `cap >= 0` | 5 checks fail — the domain-module null check, both cross-event sample-size/average checks for utilization, and the two real-UI checks that depend on the excluded third event |
+| `learning()` stopped filtering by fact before averaging (averaged every outcome for both facts, substituting 0 for a missing figure) | 6 checks fail — both domain-module sample-size checks, both domain-module average checks, and both real-UI checks (average value and its sample-size caption) |
+
+Both mutations were applied to a scratch-directory backup of
+`src/event-history.js`, confirmed to produce exactly the expected failures
+and no others, then reverted and re-confirmed green (27/27).
+
+### Visual QA
+
+Rendered via the `visual-qa-reviewer` agent at 1920×1080, 2560×1440 and
+1440×900, English and Turkish, building the exact three-event fixture the
+test suite uses (a fresh zero-history baseline, then one event, then all
+three). **No defects found.** The panel is absent (confirmed in the DOM,
+not just visually) with zero historical events; with events present it
+sits between "Other upcoming events" and "Events History" with the exact
+same 24px section spacing used everywhere else on the screen; every number
+and every sample-size caption (singular at n=1, plural with the correct N
+at n>1, independently per tile) matched the suite's own hand-computed
+values in both languages; Turkish rendered with no wrapping or truncation;
+and the title/subtitle carry the same plain uppercase kicker treatment as
+every other section header on the screen — no icon, no badge, no gold, no
+"insight" styling that would read as an AI/analytics callout rather than a
+plain factual summary.
+
+**One judgment call acted on.** The reviewer flagged that with only two
+tiles and no side rail (unlike Reports' four-tile row sitting next to the
+export panel), the row stretched to the section's full width at 2560×1440,
+leaving a large empty area inside each tile — the only place in the app
+this component is used at 2-of-a-row and full viewport width. Fixed with
+one scoped rule, `.history-learning .mx-metrics{max-width:560px}`, rather
+than touching the shared `.mx-metric`/`.mx-metrics` component every other
+screen already relies on. Two further observations were left as-is,
+correctly identified by the reviewer as pre-existing and unrelated to this
+phase: `.mx-metric-label`'s 9.5px kicker size (the same token Reports'
+Capacity Summary already uses) and toast copy not retranslating in place
+after a language switch (existing toast lifecycle behaviour). Zero new
+console/page errors beyond the documented pre-existing CDN-block noise.
+
+### Regression
+
+Detection is not reachable from this phase — the panel reads stored guest/
+table data and Arrival Wave's own output, never plan pixels — so `npm run
+benchmark` was not re-run.
+
+```
+npm run test:all             52/52 suites, 1846/1846 checks
+npm run verify:offline       27 passed, 0 failed
+                             (event-history.js bundled into both
+                             artifacts, 32 sources total, up from 31)
+rendered                     1920×1080, 2560×1440, 1440×900, EN and TR,
+                             zero-history absence, one-event singular
+                             wording, three-event averaging with
+                             independent per-fact sample sizes — one
+                             minor tile-width fix applied and
+                             re-verified; 0px horizontal overflow, no
+                             new page errors
+```
+
+### CI (the actual PR run, not a local one)
+
+Commit `767997b` pushed Phase T. Both the push-triggered run (`34759875659`)
+and the pull_request-triggered run (`34759876978`) are fully green — all 10
+check runs `completed`/`success` across both. Phase T is DONE.
+
+This is the last phase of the K–T programme. Every phase from K through T
+is implemented, tested with real mutation evidence, visually verified at
+three viewports in both languages, covered by the full regression suite,
+rebuilt and verified in both offline artifacts, and confirmed green on the
+actual GitHub Actions run for its own commit — not a local pass, not an
+assumption.
+
+## FINAL PRODUCT VALIDATION
+
+Six checks, each a real, reproducible result rather than a claim — this
+section states what was actually done and what was actually found, and
+says plainly which questions this validation cannot answer.
+
+1. **Full regression suite, every phase, one final run.** `npm run
+   test:all` on the current head (commit `767997b`): **52/52 suites,
+   1846/1846 checks passed.** Every suite added across the K–T programme
+   (`arrival-wave`, `service-load`, `table-availability`, `event-handover`,
+   `audit-trail`, `offline-recovery`, `event-package`, `post-event-replay`,
+   `event-history`, and every pre-existing business/storage/intelligence
+   suite) ran together, in one process, against one build.
+
+2. **Both offline artifacts, rebuilt and actually run, not just built.**
+   `node scripts/build-offline.mjs` and `build-offline-full.mjs` against
+   the current head, then `node benchmarks/offline/verify-offline-package.mjs`:
+   **27/27 passed, 0 failed.** 32 app sources bundled into both artifacts
+   in the order `index.html` loads them; the single-file build boots with
+   the trained plan-encoder inlined and OCR honestly reporting itself
+   unavailable, and the full folder build performs real, local OCR
+   (capacity auditor, contradiction engine) with zero off-origin requests
+   attempted by either.
+
+3. **Visual QA at three viewports, two languages, every phase.** Recorded
+   individually in each phase's own section above (Phases K through T).
+   Across the whole programme this surfaced exactly one real, fixed defect
+   (Phase R's icon-only hero-card export button) and one applied judgment
+   call (Phase T's two-tile row width); every other pass came back clean.
+   No phase's UI work was marked complete from markup review alone —
+   every one was rendered in a real browser first, per this repo's own
+   `merit-ui-constitution` rule.
+
+4. **The actual GitHub Actions CI run, per phase, not a local pass.**
+   Phases L through T each carry their own recorded confirmation above —
+   commit hash, both the push- and pull_request-triggered workflow run
+   IDs, and all 10 check runs read back as `completed`/`success` via the
+   GitHub API itself, not inferred from a local `exit 0`. Phase K's own
+   completion was established earlier in this same programme, before this
+   document adopted the per-phase "CI" subsection as its own convention;
+   it is not re-verified here, and this validation does not claim a commit
+   hash for it it does not have on record.
+
+5. **A real operator, a real event, a real session.** **NOT VERIFIED.**
+   Every "operator" in every suite in this repository and every visual QA
+   pass in this programme has been a Playwright script or an agent driving
+   the real UI — never a person running an actual event night on this
+   build. Nothing in this validation should be read as claiming this
+   product has been used operationally.
+
+6. **A third, independent real floor plan, held out end-to-end.** **NOT
+   AVAILABLE.** This programme has ever had two real plans (the original
+   real plan from the early Gates, and `ORNEK.pdf` from the 2PLAN track).
+   `2PLAN Phase 7` — the robustness suite and CI run across both real
+   plans together — remains its own separate, still-open item (task
+   tracked, not part of K–T) precisely because a third plan to validate
+   against has never been supplied. This K–T validation does not close it
+   and does not pretend to.
+
+### Carried-over items, explicitly still open
+
+Three items predate the K–T programme, are not part of it, and are not
+closed by anything in this document — named here so "K–T is done" is never
+misread as "everything is done":
+
+- **2PLAN Phase 7** — the ORNEK robustness suite and a CI run covering
+  both real plans together, plus the report/PR that would follow.
+- **2PLAN Phase 4b** — PDF orientation normalisation, measured rather than
+  assumed.
+- **OI Phase 10–13** — real-operator-test session-recording scaffolding,
+  the third-real-plan held-out procedure, and OPERATIONAL-INTELLIGENCE-
+  ROADMAP.md's own final report.
+
+None of these were touched during Phases K–T. They stay exactly as open as
+they were before this programme began.
+
+## FINAL COMPLETION MATRIX
+
+| Item | Status |
+|---|---|
+| K–T programme (Phases K through T) | **DONE** — each phase implemented, mutation-tested, visually verified, regression-tested, offline-verified, and CI-confirmed green on its own commit |
+| Full regression suite (`npm run test:all`) | **PASSING** — 52/52 suites, 1846/1846 checks on the current head |
+| Offline artifacts, both builds | **VERIFIED** — 27/27, real OCR/XLSX/encoder execution confirmed, not just "the build succeeded" |
+| Visual QA, all K–T phases | **DONE** — 3 viewports × 2 languages per phase, one real defect found and fixed, everything else clean |
+| Real GitHub Actions CI, phases L–T | **GREEN** — every phase's own commit confirmed via the GitHub API, both workflow triggers, all 10 checks each |
+| Desktop packaging / EXE | **NOT DONE** — the gate has not been opened this conversation |
+| Real operator test (an actual person, an actual event night) | **NOT VERIFIED** — every test/QA pass in this programme was automated |
+| Third real held-out floor plan | **NOT AVAILABLE** — only two real plans have ever existed for this product |
+| 2PLAN Phase 7 (ORNEK robustness suite, CI for both plans, report + PR) | **NOT DONE** — separate, older, still open |
+| 2PLAN Phase 4b (PDF orientation normalisation, measured) | **NOT DONE** — separate, older, still open |
+| OI Phase 10–13 (operator-test scaffolding, third-plan procedure, final report) | **NOT DONE** — separate, older, still open |
+
+### NO EXE
+
+Desktop packaging remains forbidden. Nothing in this session builds,
+scaffolds, or prepares an EXE, an Electron package, an installer, or any
+production desktop bundle. That gate stays closed until the user types the
+exact phrase **"EXE YAP"** in the conversation — which has not happened —
+per `CLAUDE.md` and `.claude/rules/desktop.md`. This document's own
+completion does not change that.
