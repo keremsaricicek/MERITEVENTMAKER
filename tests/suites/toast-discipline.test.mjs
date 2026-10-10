@@ -88,6 +88,12 @@ const ERROR_CLASS = {
   "eventPackage.invalidFile": REFUSAL, "eventPackage.futureVersion": REFUSAL, "eventPackage.invalidRecord": REFUSAL,
   "eventPackage.badReference": REFUSAL, "eventPackage.importFailed": REFUSAL, "recovery.none": REFUSAL,
   "plan.replaceFailed": REFUSAL,
+  // The model reading (src/screen-vlm.js): the send did not happen, a person's
+  // Accept was refused (its reason stays beside the finding), an answer for an
+  // older analysis was dropped (the event is untouched).
+  "vlm.toast.image": REFUSAL, "vlm.toast.changed": REFUSAL, "vlm.toast.refused": REFUSAL,
+  "vlm.toast.stale": INFORMATION,
+  "vlm.toast.stopped": CONDITION,
   // Both keys of a toast whose TYPE is conditional are listed: the success
   // branch shares the call, so it is classified with it.
   "avail.markedUnavailableToast": CONFIRMATION, "avail.markedAvailableToast": CONFIRMATION,
@@ -103,6 +109,7 @@ const CARRIER = {
   "toast.imagesNotStored": 'data-storage-notice="images-dropped" (asserted here)',
   "toast.notSerializable": 'data-storage-notice="save-failing", its serialise wording (asserted here)',
   "recovery.bootRecoveredToast": 'data-storage-notice="recovered" (asserted here)',
+  "vlm.toast.stopped": "the model-reading panel's run status line, which names the reason (.vlm-panel .vlm-state, asserted in vlm-reading)",
   // The pre-v8 saveState() that raised these two is overridden by app-v8.js's
   // (boot-contract proves the override resolves), so they are unreachable;
   // they are keyed like every other message so a revival would be Turkish.

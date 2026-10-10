@@ -3971,6 +3971,45 @@
     // when the module is not loaded. The review screen states that no
     // vision-language model is configured, with this count beside it.
     vlmQuestionCount:(analysis)=>globalThis.MeritVlm?globalThis.MeritVlm.questionsFor(analysis).length:null,
+    // The model reading (src/screen-vlm.js): its control in the header, its
+    // marks on the plan, its panel and its diagnostics line.
+    vlmToolbarHTML:(...a)=>VLMSCREEN.toolbarHTML(...a),vlmMapHTML:(...a)=>VLMSCREEN.mapHTML(...a),vlmPanelHTML:(...a)=>VLMSCREEN.panelHTML(...a),vlmDiagnosticsHTML:(...a)=>VLMSCREEN.diagnosticsHTML(...a),
+  });
+  // An object the detector missed, added because a person accepted a model's
+  // suggestion: the same record the "AI missed" drawing tool writes — memory,
+  // a missed-object training example, the audit trail — with the model's box,
+  // confirmed (a person said yes to it) and saying where it came from.
+  function addVlmCandidate(event,proposal,finding){
+    if(!canMutate(event,"add an object a model suggested"))return null;
+    const a=event.analysis;if(!a)return null;
+    const c={id:uid("candidate"),kind:proposal.kind,type:proposal.type,x:proposal.x,y:proposal.y,w:proposal.w,h:proposal.h,rotation:0,confidence:1,
+      status:"confirmed",selected:true,missed:true,chairDetections:[],evidence:{geometry:"vlm-suggestion",chairs:0,repetition:0,model:a.vlm?.model||null,finding:finding.id}};
+    if(UNVERIFIED_SEATING.has(c.type)){c.seats=null;c.seatsUnknown=true;}
+    a.candidates.push(c);
+    a.missed.push(c.id);
+    rememberCorrection(event,c,{manual:true});
+    captureTrainingExample(event,c,{decisionType:"missedObject",note:"a vision-language model suggested it and the operator accepted it; the box is the model's"});
+    audit(event,"VLM_OBJECT_ADDED",{candidateId:c.id,type:c.type,findingId:finding.id});
+    recomputePlanIntelligence(event);
+    touchEvent(event);
+    return c.id;
+  }
+  // A seat count a person accepted from a model's suggestion: the same write
+  // as typing it into the object card (verified, because a person said so).
+  function setVlmSeats(event,candidateId,value,finding){
+    if(!canMutate(event,"set a seat count a model suggested"))return false;
+    const c=event.analysis?.candidates.find(x=>x.id===candidateId);if(!c)return false;
+    const before=c.seats??null;
+    c.seats=Math.max(0,Math.min(99,value));c.seatsConfidence="verified";
+    audit(event,"VLM_SEATS_SET",{candidateId,from:before,to:c.seats,findingId:finding.id});
+    recomputePlanIntelligence(event);
+    touchEvent(event);
+    return true;
+  }
+  const VLMSCREEN=globalThis.MeritScreenVlm.create({
+    activeEvent:(...a)=>activeEvent(...a),addVlmCandidate:(...a)=>addVlmCandidate(...a),applyReviewZoom:(...a)=>applyReviewZoom(...a),ask:(...a)=>ask(...a),audit:(...a)=>audit(...a),
+    canMutate:(...a)=>canMutate(...a),decideReview:(...a)=>decideReview(...a),esc:(...a)=>esc(...a),icon:(...a)=>icon(...a),render:(...a)=>render(...a),
+    setVlmSeats:(...a)=>setVlmSeats(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),ui,
   });
   // The confidence at which a fresh candidate arrives pre-selected. Local
   // calibration (improveAI) writes state.calibration.recommendedConfidence
@@ -4037,7 +4076,9 @@
     const subject=byId.get(decision.candidateId);
     // One correction repairs the whole family, not one object -- calibration
     // against measured geometry on this plan, NOT model training.
-    const familyIds=decision.kind==="reclassify"&&subject?familyCandidateIds(event,subject,subject.kind,subject.type):[];
+    // A decision taken on a model's suggestion (decision.via==="vlm") is about
+    // the ONE object the person looked at: spread:false keeps the family out.
+    const familyIds=decision.kind==="reclassify"&&subject&&decision.spread!==false?familyCandidateIds(event,subject,subject.kind,subject.type):[];
     const p=DEC.plan({...decision,familyIds},{candidates:a.candidates,unverifiedSeating:[...UNVERIFIED_SEATING]});
     if(!p.ok)return null;
     const decisionId=uid("decision");
@@ -4060,9 +4101,9 @@
         claim:{decisionId,decision:p.kind,kind:c.kind,type:c.type,status:c.status,selected:c.selected,
           reviewedIndividually:label?label.reviewedIndividually!==false:true},
         geometry:{frame:"plan-percent",convention:"corner",x:c.x,y:c.y,w:c.w,h:c.h,rotation:c.rotation||0},
-        evidence:{what:label&&label.propagatedFrom?`spread from ${label.propagatedFrom}`:"the operator's own decision on this object"}}));
+        evidence:{what:label&&label.propagatedFrom?`spread from ${label.propagatedFrom}`:decision.via==="vlm"?"the operator accepted a vision-language model's suggestion about this object":"the operator's own decision on this object"}}));
     }
-    audit(event,"REVIEW_DECISION",{decisionId,kind:p.kind,targets:p.writes.map(w=>w.id),spread:p.spread,labels:p.training.length});
+    audit(event,"REVIEW_DECISION",{decisionId,kind:p.kind,targets:p.writes.map(w=>w.id),spread:p.spread,labels:p.training.length,...(decision.via==="vlm"?{via:"vlm"}:{})});
     if(REVIEW_OPERATOR_ACTION[p.kind])recordOperatorAction(event,REVIEW_OPERATOR_ACTION[p.kind],p.writes.map(w=>w.id));
     recomputePlanIntelligence(event);
     touchEvent(event);
@@ -4339,6 +4380,7 @@
   }
   function bindReview(){
     const ev=activeEvent();
+    document.querySelectorAll("[data-vlm-action]").forEach(b=>b.onclick=()=>VLMSCREEN.onAction(b.dataset.vlmAction,b));
     document.querySelectorAll("[data-budget-open]").forEach(b=>b.onclick=()=>REVIEW.openReviewQueue(ev,b.dataset.budgetOpen));
     document.querySelectorAll("[data-queue]").forEach(b=>b.onclick=()=>{
       const a=b.dataset.queue;

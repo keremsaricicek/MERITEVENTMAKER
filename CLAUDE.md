@@ -261,6 +261,30 @@ default, and appears only once there is occupancy to show. The Command
 Center carries a compact summary beside the arrival wave. Full detail:
 `src/service-load.js` and `tests/suites/service-load.test.mjs`.
 
+## The model reading (vision-language relay)
+
+`npm run serve:vlm` (`server/vlm-relay.mjs`) serves the app and holds the
+API key in its own environment as `ANTHROPIC_API_KEY` — **never** in the
+page, a file in the repository, a log, or a reply. The page talks only to
+`/vlm-relay/*` on its own origin; the relay builds the request from a fixed
+template (`server/vlm-core.mjs`) and refuses any field it does not know, so a
+guest record cannot ride along. A person starts every reading, after a
+confirmation that names what is sent (the plan image, the detector's boxes,
+the text read off the plan) and what is not, with the relay's caps; every
+spend limit refuses against the request's WORST CASE before anything is
+sent. The model reads the whole plan and may ask for up to four close-ups;
+its findings are **suggestions** drawn on the same map — nothing changes
+until a person presses Accept, and Accept goes through the existing writers
+(`decideReview` with `spread:false`, the missed-object path, the typed
+seat-count path), one object at a time. A printed table number is never
+taken from a model. An answer for an older analysis, plan, event or a
+cancelled reading is dropped whole (`MeritVlmReview.staleReason`). The
+suites run against `tests/lib/fake-anthropic.mjs`, whose answers are
+SCRIPTED: a green `vlm-relay`/`vlm-reading` proves the plumbing and **never**
+model quality — no real model has run until a person with a funded key says
+so. Full detail: `server/README.md`, `src/screen-vlm.js`,
+`src/plan-vlm-review.js`.
+
 ## Plan Intelligence honesty
 
 Assisted Detection today is classical computer vision, not a trained

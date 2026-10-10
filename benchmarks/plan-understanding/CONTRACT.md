@@ -171,39 +171,46 @@ wasm (14.2 MB, MIT) from jsDelivr on first analysis — GETs with no body,
 checked against their sha256 before use; the folder package carries them and
 fetches nothing.
 
-### The vision-language loop (work item G): built to the boundary, not run
+### The vision-language loop (work item G): wired end to end, not yet run against a model
 
-`src/plan-vlm.js` turns the analysis's own doubts into one narrow question
-per object — a bench whose seats are unknown, a reading held back, a printed
-number the vote could not settle — about one crop, and checks each answer
-against that question's closed schema. Answers come back as SUGGESTIONS on
-the `vlm` channel, applied to nothing. It has never run against a model, and
-nothing here says it has: the review screen states VISION-LANGUAGE MODEL NOT
-CONFIGURED, and `vlm-replay` drives the loop with SCRIPTED answers written for
-the suite to pin the boundary — no key and no guest data in any request, an
-instruction printed on the drawing carried only as quoted data, a relay off
-the page's own origin refused, out-of-schema answers refused, nothing applied.
+Two layers exist. `src/plan-vlm.js` (the first) turns the analysis's own
+doubts into narrow per-object questions and is still pinned by `vlm-replay`
+with SCRIPTED answers. Since 2026-10-10 the second is the product path: the
+review screen's **Model reading** (`src/screen-vlm.js`, rules in
+`src/plan-vlm-review.js`) sends the WHOLE plan, lets the model ask for up to
+four close-ups, and draws its findings — missed objects, wrong types,
+non-objects, seat counts, printed numbers, notes — as marks on the same map,
+each waiting for a person's Accept or Dismiss. It goes through
+`server/vlm-relay.mjs`, which holds the key in its own environment
+(`ANTHROPIC_API_KEY`), refuses any field it does not know, holds every
+request's worst-case cost against per-reading and per-day caps before it is
+sent, and aborts on Cancel, timeout or a page that goes away
+(`server/README.md`).
 
-What running it needs, concretely, and none of it is in this repository:
+It has **not run against a model**. `vlm-relay` (41 checks) and `vlm-reading`
+(29 checks) drive the real relay and the real screen against
+`tests/lib/fake-anthropic.mjs`, whose every answer is SCRIPTED; nine
+deliberate mutations (family spread, stale answers merged, an unknown field
+accepted, limits skipped, the SDK's environment not shadowed, model text not
+escaped, Cancel not aborting, an unbilled hold kept, findings applied on
+arrival) each turn one of them red. That proves the plumbing and nothing about
+reading quality.
 
-1. **A relay at the app's own origin** (`/vlm-relay`) that holds the API key
-   server-side and forwards the request. The browser build is static files
-   and its policy is `connect-src 'self'`; a key in the page or the package
-   is refused by design. The eventual desktop build's main process could be
-   that relay — after "EXE YAP", not before.
-2. **A paid API key** for a vision-capable model, held by that relay.
-3. **The operator's decision to send plan CROPS off the machine.** Only the
-   crops of the objects asked about leave, never a guest, an inviter or a
-   note — but a client's floor plan is still their drawing.
+What the first real run needs, and nothing more:
 
-What it would cost is measured by the loop itself from the usage the
-transport reports, and priced only from a table the operator supplies. The
-size of the job, measured on this commit: the Golden Plan raises **4**
-questions (3 benches' seats, 1 held-back reading), ORNEK **19** (12 locas'
-seats, 7 printed numbers). Each request is a crop (the objects' own crops are
-9–33 thousand pixels; upscaled to about 400 × 400 for legibility that is
-about 213 image tokens by the published width × height / 750 rule) plus
-about 800 characters of fixed instruction — on the order of 450 input and
-40 output tokens a question, so about 2 thousand input tokens for the Golden
-Plan and 9 thousand for ORNEK. That is an estimate of size, not a measured
-cost: the first real run replaces it.
+1. **A funded key.** The key exists and is held by its owner; the account had
+   no balance on 2026-10-10. `POST /vlm-relay/check` (free) can confirm the key
+   and the model before any paid call; it cannot confirm a balance.
+2. **The owner's decision to send this plan.** The whole plan image now
+   leaves, not crops — still never a guest, an inviter, a note or the event's
+   name, and the confirmation says so before every reading.
+
+What a reading should cost, before it is measured: the Golden Plan image is
+1,355 × 788 px, about 1,424 image tokens by the published width × height / 750
+rule, plus about 4,000 tokens of instruction, schema and detector boxes (the
+overview's text block was 9,651 characters on that plan) — on the order of 6
+thousand input tokens for the overview; each close-up is smaller. The relay
+holds the worst case (every allowed output token at the dearer of the model
+and its fallback — about $0.28 a step at the defaults) and records what the
+API reports. The first
+real run replaces this estimate.

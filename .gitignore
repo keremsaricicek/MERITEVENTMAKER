@@ -24,3 +24,10 @@ benchmarks/false-positives/debug/
 # Plan-understanding run output (overlays + stored analyses, ~2MB a run).
 # The committed starting point is baseline-<commit>/; a run writes latest/.
 benchmarks/plan-understanding/latest/
+
+# The vision-language relay's daily spend ledger (aggregates only, per machine)
+# and any local environment file someone keeps a key in. Neither is source;
+# a key must never be committed.
+.vlm-data/
+.env
+.env.*

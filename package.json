@@ -2,7 +2,7 @@
   "name": "merit-event-maker",
   "version": "0.0.0",
   "private": true,
-  "description": "MERIT Entertainment — Event Maker. Browser-only event operations software. This manifest exists for the developer test/build tooling only; the app itself has no build step and no runtime dependencies.",
+  "description": "MERIT Entertainment — Event Maker. Browser-only event operations software. This manifest exists for the developer test/build tooling only; the app itself has no build step and loads no package in the browser. The one runtime dependency, @anthropic-ai/sdk, is used only by server/vlm-relay.mjs (npm run serve:vlm), the optional local relay that holds the vision-language API key in its own environment.",
   "type": "module",
   "scripts": {
     "test": "node tests/run.mjs",
@@ -10,6 +10,7 @@
     "test:slow": "node tests/run.mjs --tag=slow",
     "test:list": "node tests/run.mjs --list",
     "serve": "node tests/serve.mjs",
+    "serve:vlm": "node server/vlm-relay.mjs",
     "benchmark": "node benchmarks/run-benchmark.mjs",
     "benchmark:baseline": "node benchmarks/record-baseline.mjs",
     "benchmark:teaching": "node benchmarks/teach-ai/measure-teaching.mjs",
@@ -37,5 +38,8 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.133.0"
   }
 }

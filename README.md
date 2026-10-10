@@ -13,8 +13,20 @@ stored in the browser via `localStorage`; nothing is uploaded anywhere.
 npm run serve                 # http://127.0.0.1:8000 — or any static file server
 ```
 
-There is no build step and no runtime dependency: `npm install` fetches
-Playwright for the test suite only, and is not needed just to open the app.
+There is no build step and nothing the browser loads from `node_modules`:
+`npm install` fetches Playwright for the test suite (and the Anthropic SDK
+for the optional relay below), and is not needed just to open the app.
+
+```
+ANTHROPIC_API_KEY=… npm run serve:vlm   # http://127.0.0.1:8787 — the app plus the model-reading relay
+```
+
+The review screen's **Model reading** sends a plan to a vision-language
+model only through this relay, which holds the API key in its own
+environment and nowhere else. Without it, the app runs exactly as before and
+says no relay is present. How to run it, what leaves the machine and the
+spend limits: `server/README.md` (step by step in Turkish:
+`server/CALISTIRMA.md`).
 
 `index.html` loads the SheetJS (Excel import/export) and PDF.js (PDF floor
 plan import) engines from jsDelivr, pinned to the exact versions this app
@@ -116,6 +128,16 @@ src/training-data.js  What a human decision leaves behind: the record shape,
 src/storage-provider.js   The persistence boundary (IndexedDB, localStorage
                       fallback) — see the desktop-architecture skill for why
 src/venue-model.js    Venue → Layout → LayoutVersion → Event, and layout memory
+src/plan-vlm-review.js  The model reading's rules: what the page sends (the
+                      plan and the detector's boxes, never an event), image
+                      sizing within the API's limits, coordinates back onto
+                      the plan, stale-answer refusal, what Accept would do
+src/screen-vlm.js     The review screen's Model reading: panel, marks on the
+                      map, confirmation, cancel, Accept/Dismiss through the
+                      existing writers
+server/vlm-relay.mjs  The optional relay (npm run serve:vlm): serves the app
+                      and holds the API key in its own environment; limits,
+                      cancel, error codes (server/README.md)
 scripts/build-offline.mjs   Produces the single-file offline build
 tests/                Regression suite (tests/README.md)
 benchmarks/           Detection accuracy, performance, offline verification

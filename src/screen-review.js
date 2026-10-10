@@ -41,7 +41,11 @@
   let ui;
   let unionBbox;
   let UNVERIFIED_SEATING;
+  let vlmDiagnosticsHTML;
+  let vlmMapHTML;
+  let vlmPanelHTML;
   let vlmQuestionCount;
+  let vlmToolbarHTML;
   let created=false;
 
   // The learned encoder's opinion, in words. Deliberately NOT a percentage:
@@ -514,10 +518,11 @@
     if(ps&&ps.kind==="SCAN")rows.push(t("diag.pdfSource.scan"));
     if(ps&&ps.textItems)rows.push(t("diag.pdfSource.text",{n:ps.textItems}));
     if(ps&&ps.paths)rows.push(t("diag.pdfSource.vector",{n:ps.paths}));
-    // No relay holds a key for this page, so no vision-language model runs
-    // (src/plan-vlm.js). Said outright, with what it would have been asked.
-    const vlmPending=vlmQuestionCount(a);
-    if(vlmPending!=null)rows.push(`<b>${t("diag.vlmNotConfigured")}</b> · ${t("diag.vlmPending",{n:vlmPending})}`);
+    // Whether a vision-language model can read this plan, said outright
+    // (src/screen-vlm.js): until a relay has answered from this page, no model
+    // runs, with what the analysis would have asked one.
+    const vlmRow=vlmDiagnosticsHTML(a,vlmQuestionCount(a));
+    if(vlmRow)rows.push(vlmRow);
     return`<div class="analysis-note">${rows.join("<br>")}</div>`;
   }
   function analysisHTML(event){
@@ -533,7 +538,7 @@
       :queued?{x:queued.x,y:queued.y,w:queued.w,h:queued.h}:null;
     requestAnimationFrame(()=>applyReviewZoom(boundaryBox));
     const statusLabel=v=>t(v==="unreviewed"?"poi.unreviewed":v==="confirmed"?"poi.confirmed":"poi.rejected");
-    return`<section class="planintel-screen ${ui.reviewQueue?"in-queue":""}"><header class="planintel-top">${FLOORPLAN.planModeSwitchHTML(event)}<div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):t("plan.noAnalysisYet"))}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:t(OCR_REASON_KEY[a.ocr.reasonCode]||"ocr.reason.FAILED")})):esc(analysisNoticeText(a))}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>${t("diag.advancedDiagnostics")}</summary><div class="diag-pop">${detectionDiagnosticsHTML(a)}<div class="field"><label for="fld-review-filter-status">${t("diag.status")}</label><select id="fld-review-filter-status" data-review-filter="status"><option value="all">${t("diag.all")}</option>${["unreviewed","confirmed","rejected"].map(v=>`<option value="${v}" ${ui.reviewFilter===v?"selected":""}>${statusLabel(v)}</option>`).join("")}</select></div><div class="field full"><label for="fld-review-filter-confidence">${t("diag.minConfidence",{pct:Math.round(ui.reviewConfidence*100)})}</label><input id="fld-review-filter-confidence" data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?t("action.cancelDrawing"):t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">${t("action.saveVerifiedPlan")}</button><button class="btn sm" data-review-action="improve">${t("action.improveAI")}</button><button class="btn sm" data-review-action="export-dataset" title="${t("action.exportDatasetTitle")}">${t("action.exportDataset")}</button><button class="btn sm" data-review-action="session-report">${t("op.report")}</button></div></details><button class="btn" data-review-action="reanalyze">${t("action.reanalyze")}</button>`:""}</header>${reviewQueueBarHTML(event)}${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><div class="planintel-map-inner" id="analysisSceneInner"><img src="${event.background.src}" alt="${esc(t("review.planImageAlt"))}">${candidates.map(c=>candidateBox(c,selected?.id===c.id,target?.ids||null)).join("")}${boundaryBox?`<div class="review-group-boundary" style="left:${Math.max(0,boundaryBox.x-2.5)}%;top:${Math.max(0,boundaryBox.y-2.5)}%;width:${boundaryBox.w+5}%;height:${boundaryBox.h+5}%"></div>`:""}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="focus-group" data-group="${p.groupId}" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="${esc(t("review.difficultQuestion"))}">${p.label}</button>`).join("")}</div></div>${ui.operatorReportOpen?`<aside class="op-report-panel"><div class="op-report-head"><strong>${t("op.reportTitle")}</strong><button class="btn icon-only sm" data-review-action="close-session-report">${icon("x")}</button></div><div class="op-report-body">${operatorReportHTML(event)}</div></aside>`:""}${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?t("plan.analyzingLocally"):t("plan.noAnalysisYet")}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
+    return`<section class="planintel-screen ${ui.reviewQueue?"in-queue":""}"><header class="planintel-top">${FLOORPLAN.planModeSwitchHTML(event)}<div class="planintel-title"><h2>${a?t("plan.understood"):(ui.analysisBusy?esc(ui.analysisStage):t("plan.noAnalysisYet"))}</h2>${a?`<p>${a.ocr&&!a.ocr.available?esc(t("ocr.unavailable",{reason:t(OCR_REASON_KEY[a.ocr.reasonCode]||"ocr.reason.FAILED")})):esc(analysisNoticeText(a))}</p>`:`<p>${esc(ui.analysisStage)}</p>`}</div><span class="toolbar-spacer"></span>${a?`<details class="planintel-diagnostics"><summary>${t("diag.advancedDiagnostics")}</summary><div class="diag-pop">${detectionDiagnosticsHTML(a)}<div class="field"><label for="fld-review-filter-status">${t("diag.status")}</label><select id="fld-review-filter-status" data-review-filter="status"><option value="all">${t("diag.all")}</option>${["unreviewed","confirmed","rejected"].map(v=>`<option value="${v}" ${ui.reviewFilter===v?"selected":""}>${statusLabel(v)}</option>`).join("")}</select></div><div class="field full"><label for="fld-review-filter-confidence">${t("diag.minConfidence",{pct:Math.round(ui.reviewConfidence*100)})}</label><input id="fld-review-filter-confidence" data-review-filter="confidence" type="range" min="0" max=".95" step=".05" value="${ui.reviewConfidence}"></div><button class="btn sm" data-review-action="draw">${ui.reviewDrawMode?t("action.cancelDrawing"):t("action.aiMissed")}</button><button class="btn sm" data-review-action="save-verified">${t("action.saveVerifiedPlan")}</button><button class="btn sm" data-review-action="improve">${t("action.improveAI")}</button><button class="btn sm" data-review-action="export-dataset" title="${t("action.exportDatasetTitle")}">${t("action.exportDataset")}</button><button class="btn sm" data-review-action="session-report">${t("op.report")}</button></div></details>${vlmToolbarHTML(event)}<button class="btn" data-review-action="reanalyze">${t("action.reanalyze")}</button>`:""}</header>${reviewQueueBarHTML(event)}${pi?`<div class="planintel-map ${ui.reviewDrawMode?"draw-mode":""}" id="analysisScene"><div class="planintel-map-inner" id="analysisSceneInner"><img src="${event.background.src}" alt="${esc(t("review.planImageAlt"))}">${candidates.map(c=>candidateBox(c,selected?.id===c.id,target?.ids||null)).join("")}${boundaryBox?`<div class="review-group-boundary" style="left:${Math.max(0,boundaryBox.x-2.5)}%;top:${Math.max(0,boundaryBox.y-2.5)}%;width:${boundaryBox.w+5}%;height:${boundaryBox.h+5}%"></div>`:""}${pins.map(p=>p.kind==="group"?`<button class="review-pin group" data-review-action="focus-group" data-group="${p.groupId}" style="left:${p.x}%;top:${p.y}%" title="Review group ${p.label}">${p.label}</button>`:`<button class="review-pin question" data-question-action="open" data-question="${p.questionId}" style="left:${p.x}%;top:${p.y}%" title="${esc(t("review.difficultQuestion"))}">${p.label}</button>`).join("")}${vlmMapHTML(event)}</div></div>${ui.operatorReportOpen?`<aside class="op-report-panel"><div class="op-report-head"><strong>${t("op.reportTitle")}</strong><button class="btn icon-only sm" data-review-action="close-session-report">${icon("x")}</button></div><div class="op-report-body">${operatorReportHTML(event)}</div></aside>`:""}${selected&&!ui.reviewDrawMode?reviewPoiCardHTML(selected):""}${difficultQuestionCardHTML(event)}${planIntelBottomPillHTML(event)}${ui.reviewCenterOpen?reviewCenterPanelHTML(event):""}${vlmPanelHTML(event)}`:`<div class="v8-empty" style="margin:40px"><h2>${ui.analysisBusy?t("plan.analyzingLocally"):t("plan.noAnalysisYet")}</h2><p>${esc(ui.analysisStage)}</p></div>`}</section>`;
   }
 
   function create(deps){
@@ -558,8 +563,12 @@
     ui=deps.ui;
     unionBbox=deps.unionBbox;
     UNVERIFIED_SEATING=deps.UNVERIFIED_SEATING;
+    vlmDiagnosticsHTML=deps.vlmDiagnosticsHTML;
+    vlmMapHTML=deps.vlmMapHTML;
+    vlmPanelHTML=deps.vlmPanelHTML;
     vlmQuestionCount=deps.vlmQuestionCount;
+    vlmToolbarHTML=deps.vlmToolbarHTML;
     return{afterReviewDecision,analysisHTML,closeReviewQueue,openReviewQueue,queueGo,queueNextOutstanding,reviewGroupCount};
   }
-  globalThis.MeritScreenReview=Object.freeze({create,DEPS:Object.freeze(["activeEvent","activeReviewTargetIds","applyReviewZoom","candidateBox","esc","FLOORPLAN","icon","OCR_REASON_KEY","operatorReportHTML","RECLASSIFY_TAXONOMY","render","reviewCandidates","scopeAvailability","t","titleCase","toast","ui","unionBbox","UNVERIFIED_SEATING","vlmQuestionCount"])});
+  globalThis.MeritScreenReview=Object.freeze({create,DEPS:Object.freeze(["activeEvent","activeReviewTargetIds","applyReviewZoom","candidateBox","esc","FLOORPLAN","icon","OCR_REASON_KEY","operatorReportHTML","RECLASSIFY_TAXONOMY","render","reviewCandidates","scopeAvailability","t","titleCase","toast","ui","unionBbox","UNVERIFIED_SEATING","vlmDiagnosticsHTML","vlmMapHTML","vlmPanelHTML","vlmQuestionCount","vlmToolbarHTML"])});
 })();

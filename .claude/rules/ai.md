@@ -30,4 +30,13 @@
   verified printed number identifies the object. AMBIGUOUS applies to nothing.
 - `improveAI()`-style local calibration is not model training and must
   never be described as such; `trainedModel` flags must reflect reality.
+- The vision-language model reading goes through `server/vlm-relay.mjs`
+  only. The key lives in that process's environment (`ANTHROPIC_API_KEY`) —
+  never in `src/`, a committed file, a log or a reply; the relay ignores
+  `ANTHROPIC_BASE_URL`/`ANTHROPIC_AUTH_TOKEN`/`ANTHROPIC_CUSTOM_HEADERS`. A
+  person starts every send; findings are suggestions applied only by a
+  person's Accept, one object at a time, through the existing writers. A
+  printed table number is never taken from a model.
+- A result against `tests/lib/fake-anthropic.mjs` is SCRIPTED. Never report
+  it, or anything measured with it, as a model's accuracy.
 - Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.
