@@ -90,10 +90,15 @@
     table.capacity = count;
     if (table.hasPhysicalSeats === false) { table.chairs = []; return table; }
     const old = Array.isArray(table.chairs) ? table.chairs : [], geometry = chairGeometry({ ...table, capacity: count }, count);
+    // `facing` is which way a DETECTED chair was seen to face (degrees, world
+    // frame) or null when the drawing did not show it; `facingSource` says how
+    // it was read. A chair a person placed has neither: its rotation is the
+    // layout's, which seats it facing its table. Kept only where it was written.
     table.chairs = geometry.map((p, index) => ({
       id: old[index]?.id || uid("chair"), parentTableId: table.id, seatNumber: index + 1,
       x: Number.isFinite(old[index]?.x) ? old[index].x : p.x, y: Number.isFinite(old[index]?.y) ? old[index].y : p.y,
       rotation: Number.isFinite(old[index]?.rotation) ? old[index].rotation : p.rotation,
+      ...(old[index] && "facing" in old[index] ? { facing: Number.isFinite(old[index].facing) ? old[index].facing : null, facingSource: String(old[index].facingSource || "notObserved") } : {}),
     }));
     return table;
   }

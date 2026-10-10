@@ -572,7 +572,7 @@
     // this code should never have written. Seat NUMBERS are unaffected:
     // they come from capacity, via the seat list and the S-labels in the
     // reports, not from this array.
-    const chairs=table.chairs.map((chair,index)=>`<i class="chair ${used.has(index)?"occupied":seating&&ui.operationalMode?"available-live":""}" data-chair-id="${chair.id}" style="left:${chair.x}%;top:${chair.y}%;transform:translate(-50%,-50%) rotate(${chair.rotation||0}deg)"></i>${ui.showSeats?`<span class="seat-number" style="left:${50+(chair.x-50)*.69}%;top:${50+(chair.y-50)*.69}">S${chair.seatNumber}</span>`:""}`).join("");
+    const chairs=table.chairs.map((chair,index)=>`<i class="chair ${used.has(index)?"occupied":seating&&ui.operationalMode?"available-live":""}${chair.facing===null?" facing-unknown":""}" data-chair-id="${chair.id}" style="left:${chair.x}%;top:${chair.y}%;transform:translate(-50%,-50%) rotate(${chair.rotation||0}deg)"></i>${ui.showSeats?`<span class="seat-number" style="left:${50+(chair.x-50)*.69}%;top:${50+(chair.y-50)*.69}">S${chair.seatNumber}</span>`:""}`).join("");
     // THE FREEZE ZONES LAYER. A thin outline and a small mark, never an opaque
     // block: the operator has to keep reading the room through it, and a plan
     // covered in filled shapes is a plan nobody can work on. Hidden entirely
@@ -4130,7 +4130,18 @@
         const fp=FRAMES.footprintFor(body,c.rotation||0,(c.chairDetections||[]).map(ch=>toWorld(ch,FRAMES.CENTRE)));
         const table=RULES().syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x:fp.x,y:fp.y,w:fp.w,h:fp.h,surface:fp.surface,capacity:Math.max(1,c.chairDetections?.length||(ruleUse.applies?ruleUse.perUnit:1)),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":ruleUse.applies?"DERIVED_PRINTED_RULE":"UNKNOWN",origin:"DETECTED",printedNumber:printedEvidence(c.printedNumber),...(!c.chairDetections?.length&&ruleUse.applies?{capacityEvidence:{...ruleUse.evidence,at:nowISO()}}:{})});
         if(c.chairDetections?.length){
-          table.chairs=fp.chairs.map((ch,index)=>({id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:ch.x,y:ch.y,rotation:ch.rotation}));
+          // A chair whose facing the drawing showed keeps it. The canvas draws a
+          // chair at rotation 0 facing +y of its table (the layout convention of
+          // MeritEventRules.chairGeometry), so the stored rotation is that
+          // facing turned into the table's frame. A chair the drawing did not
+          // show a front for is facing:null — drawn with no front — and keeps
+          // its box angle, which is an axis and not a direction.
+          table.chairs=fp.chairs.map((ch,index)=>{
+            const o=c.chairDetections[index]?.relation?.orientation,known=!!(o&&o.facingKnown&&Number.isFinite(o.facingAngle));
+            return{id:uid("chair"),parentTableId:table.id,seatNumber:index+1,x:ch.x,y:ch.y,
+              rotation:known?((o.facingAngle-90-(c.rotation||0))%360+360)%360:ch.rotation,
+              facing:known?o.facingAngle:null,facingSource:known?String(o.facingEvidence||"stencilBackrest"):"notObserved"};
+          });
           table.capacity=table.chairs.length;
         }
         event.tables.push(table);

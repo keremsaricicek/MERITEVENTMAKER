@@ -12,9 +12,13 @@
 //   ON THE GOLDEN PLAN: every facing the product states is one the annotation
 //     agrees with (within 30 degrees), every one carries stencilBackrest as
 //     its evidence, and the old per-chair ink-centroid rule states nothing.
+//   AND THE DIGITAL PLAN KEEPS IT: Confirm writes each observed facing onto
+//     its chair (drawn the way it was seen), writes facing:null where the
+//     drawing showed no front (drawn with no front mark), gives a person's
+//     layout no observed facing at all, and a reload changes none of it.
 import fs from "node:fs";
 import path from "node:path";
-import { openApp, createBlankEvent, importPlan, runDetection, futureDate } from "../lib/app-actions.mjs";
+import { openApp, createBlankEvent, importPlan, runDetection, futureDate, addTables } from "../lib/app-actions.mjs";
 
 export const meta = { name: "chair-facing", tags: ["intelligence"], timeout: 300000, viewport: { width: 1400, height: 900 } };
 
@@ -91,4 +95,43 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal(disagreements.length, 0, "every stated facing agrees with the annotation within 30 degrees", disagreements.slice(0, 5));
   checks.ok(stated.every(c => c.evidence === "stencilBackrest"), "and every one says it came from the stencil's backrest");
   checks.ok(chairs.filter(c => !c.known).every(c => c.evidence === "stencilNotRead"), "a chair the stencil reading cannot settle says so, rather than keeping a per-chair guess");
+
+  // ---- the facing survives Confirm, a save and a reload --------------------------
+  await page.evaluate(() => { ui.tab = "floor"; ui.planMode = "review"; render(); });
+  await page.click('[data-review-action="commit"]');
+  await page.waitForTimeout(600);
+  // A manual table beside the committed ones: its chairs come from the layout,
+  // which seats them facing the table, and nobody observed anything about them.
+  await addTables(page, { quantity: 1, type: "round" });
+  const committed = () => page.evaluate(() => {
+    const ts = state.events[0].tables, rows = [];
+    for (const t of ts) for (const c of t.chairs || []) rows.push({ origin: t.origin, table: t.rotation || 0, rotation: c.rotation, has: "facing" in c, facing: c.facing, source: c.facingSource });
+    const norm = a => ((a % 360) + 360) % 360, diff = (a, b) => { const d = Math.abs(norm(a) - norm(b)); return Math.min(d, 360 - d); };
+    const det = rows.filter(r => r.origin === "DETECTED"), known = det.filter(r => Number.isFinite(r.facing));
+    return {
+      detected: det.length, known: known.length,
+      // The canvas draws a chair at rotation 0 facing +y of its table, so the
+      // drawn facing is table + chair rotation + 90 and must BE the observed one.
+      drawnAsObserved: known.filter(r => diff(r.table + r.rotation + 90, r.facing) < 1e-6).length,
+      knownSources: [...new Set(known.map(r => r.source))],
+      unknown: det.filter(r => r.facing === null).length,
+      unknownSources: [...new Set(det.filter(r => r.facing === null).map(r => r.source))],
+      manual: rows.filter(r => r.origin === "MANUAL").length, manualWithFacing: rows.filter(r => r.origin === "MANUAL" && r.has).length,
+      renderedUnknown: document.querySelectorAll(".table-object .chair.facing-unknown").length,
+      rendered: document.querySelectorAll(".table-object .chair").length,
+    };
+  });
+  const first = await committed();
+  checks.ok(first.known === stated.length && first.drawnAsObserved === first.known && first.knownSources.join() === "stencilBackrest",
+    "every facing read off the stencil is kept on the committed chair, drawn the way it was observed, and says where it came from", first);
+  checks.ok(first.unknown === first.detected - first.known && first.unknownSources.join() === "notObserved" && first.renderedUnknown === first.unknown,
+    "a detected chair whose front was not seen is committed facing:null and drawn with no front mark", first);
+  checks.ok(first.manual > 0 && first.manualWithFacing === 0,
+    "a chair a person laid out carries no observed facing: the layout seats it toward its table", first);
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+  await page.evaluate(() => { openEvent(state.events[0].id); ui.tab = "floor"; ui.planMode = "plan"; render(); });
+  await page.waitForTimeout(500);
+  const second = await committed();
+  checks.equal(JSON.stringify(second), JSON.stringify(first), "and all of it survives a save and a reload, field for field", { first, second });
 }

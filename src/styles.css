@@ -273,6 +273,9 @@ table{border-collapse:collapse}
 .table-empty{margin-top:3px;color:#7a6244;font-size:6px;font-weight:700;letter-spacing:.04em}
 .chair{position:absolute;width:14px;height:11px;transform:translate(-50%,-50%);border:1px solid #75808a;border-radius:3px 3px 2px 2px;background:#f4f1eb;box-shadow:0 1px 1px rgba(0,0,0,.13);transition:background var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease)}
 .chair::after{content:"";position:absolute;left:2px;right:2px;bottom:-3px;height:2px;background:#78828b;border-radius:0 0 2px 2px}
+/* A detected chair whose front the drawing did not show: no front mark. */
+.chair.facing-unknown{border-radius:2px}
+.chair.facing-unknown::after{display:none}
 .chair.occupied{border-color:#3f617f;background:#6f91ad}
 .chair.occupied::after{background:#3f617f}
 .seat-number{position:absolute;transform:translate(-50%,-50%);padding:0 2px;border-radius:2px;background:rgba(247,245,240,.86);color:#3b4852;font-size:6px;font-weight:700;pointer-events:none}
