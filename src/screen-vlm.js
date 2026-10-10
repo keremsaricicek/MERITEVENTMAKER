@@ -71,6 +71,12 @@
     session.probing=false;render();
     return session.relay;
   }
+  // The same question without the "asking" state: after a reading, so the
+  // caps line shows what the day has now spent.
+  async function refresh(){
+    try{const r=await globalThis.fetch(RELAY+"/status",{cache:"no-store",credentials:"same-origin"});const j=r.ok?await r.json():null;if(j&&j.relay===true)session.relay=j;}catch{}
+    render();
+  }
   async function post(path,body,signal){
     let r;
     try{r=await globalThis.fetch(RELAY+path,{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify(body),signal,cache:"no-store",credentials:"same-origin"});}
@@ -167,6 +173,7 @@
         else if(run.status!=="stale")toast(t("vlm.toast.stopped"),"error",7000);
       }
       render();
+      refresh();
     }
   }
 
@@ -281,7 +288,8 @@
       if(f.state!=="open")return"";
       const c=f.candidateId&&byId.get(f.candidateId),box=f.box||(c?{x:c.x-.4,y:c.y-.4,w:c.w+.8,h:c.h+.8}:null);
       if(!box)return"";
-      return`<button class="vlm-mark kind-${esc(f.kind)} ${session.focusId===f.id?"focused":""}" data-vlm-action="focus" data-vlm-finding="${esc(f.id)}" style="left:${num(box.x)}%;top:${num(box.y)}%;width:${num(box.w)}%;height:${num(box.h)}%" aria-label="${esc(findingTitle(f,i))}" title="${esc(findingTitle(f,i))}"><b>${i+1}</b></button>`;
+      const cls=["vlm-mark","kind-"+f.kind,session.focusId===f.id?"focused":""].join(" ").trim();
+      return`<button class="${esc(cls)}" data-vlm-action="focus" data-vlm-finding="${esc(f.id)}" style="left:${num(box.x)}%;top:${num(box.y)}%;width:${num(box.w)}%;height:${num(box.h)}%" aria-label="${esc(findingTitle(f,i))}" title="${esc(findingTitle(f,i))}"><b>${i+1}</b></button>`;
     }).join("");
     return regions+marks;
   }
@@ -303,7 +311,8 @@
     const state=f.state==="accepted"?`<span class="vlm-tag ok">${t("vlm.state.accepted")}</span>`:f.state==="dismissed"?`<span class="vlm-tag">${t("vlm.state.dismissed")}</span>`:"";
     const reason=!p.ok&&f.state==="open"?`<span class="vlm-reason">${esc(t("vlm.reason."+p.reason))}</span>`:"";
     const actions=f.state==="open"?`<div class="vlm-row-actions"><button class="btn sm primary" data-vlm-action="accept" data-vlm-finding="${esc(f.id)}" ${p.ok?"":`disabled title="${esc(t("vlm.reason."+p.reason))}"`}>${t("vlm.accept")}</button><button class="btn sm" data-vlm-action="dismiss" data-vlm-finding="${esc(f.id)}">${t("vlm.dismiss")}</button>${f.box||f.candidateId?`<button class="btn sm quiet" data-vlm-action="focus" data-vlm-finding="${esc(f.id)}">${t("vlm.show")}</button>`:""}</div>${reason}`:"";
-    return`<li class="vlm-finding state-${esc(f.state)} kind-${esc(f.kind)} ${session.focusId===f.id?"focused":""}" data-vlm-row="${esc(f.id)}"><div class="vlm-finding-head"><b>${esc(findingTitle(f,i))}</b><small>${esc(conf)}${f.step==="region"?` · R${num(f.regionIndex)+1}`:""}</small>${state}</div>${f.evidence?`<q class="vlm-evidence">${esc(f.evidence)}</q>`:""}${actions}</li>`;
+    const cls=["vlm-finding","state-"+f.state,"kind-"+f.kind,session.focusId===f.id?"focused":""].join(" ").trim();
+    return`<li class="${esc(cls)}" data-vlm-row="${esc(f.id)}"><div class="vlm-finding-head"><b>${esc(findingTitle(f,i))}</b><small>${esc(conf)}${f.step==="region"?` · R${num(f.regionIndex)+1}`:""}</small>${state}</div>${f.evidence?`<q class="vlm-evidence">${esc(f.evidence)}</q>`:""}${actions}</li>`;
   }
   function panelHTML(event){
     if(!ui.vlmPanelOpen)return"";
