@@ -4392,6 +4392,8 @@
     const ev=activeEvent();
     document.querySelectorAll("[data-vlm-action]").forEach(b=>b.onclick=()=>VLMSCREEN.onAction(b.dataset.vlmAction,b));
     document.querySelectorAll("[data-budget-open]").forEach(b=>b.onclick=()=>REVIEW.openReviewQueue(ev,b.dataset.budgetOpen));
+    const sceneForm=document.querySelector("[data-scene-form]");
+    if(sceneForm)sceneForm.onsubmit=e=>{e.preventDefault();REVIEW.runSceneQuery(ev,String(new FormData(sceneForm).get("q")||""));};
     document.querySelectorAll("[data-queue]").forEach(b=>b.onclick=()=>{
       const a=b.dataset.queue;
       if(a==="prev")REVIEW.queueGo(ev,-1);
