@@ -527,6 +527,7 @@
     "vlm.relay.noPriceWhy": { en: "A spend limit needs a price, and none is known for {model}; the relay refuses to send until one is set.", tr: "Harcama sınırı fiyat ister ve {model} için fiyat bilinmiyor; fiyat girilene kadar aktarıcı göndermez." },
     "vlm.relay.ready": { en: "MODEL RELAY READY", tr: "MODEL AKTARICISI HAZIR" },
     "vlm.relay.caps": { en: "Limits: {run} per reading, {day} per day. Today: {spent} used or held, {requests} of {maxRequests} requests.", tr: "Sınırlar: okuma başına {run}, günlük {day}. Bugün: {spent} kullanıldı ya da ayrıldı, {requests}/{maxRequests} istek." },
+    "vlm.relay.stale": { en: "(The relay did not answer just now, so these figures may be out of date.)", tr: "(Aktarıcı az önce yanıt vermedi; bu rakamlar güncel olmayabilir.)" },
     "vlm.check": { en: "Check connection (free)", tr: "Bağlantıyı sına (ücretsiz)" },
     "vlm.check.running": { en: "Checking…", tr: "Sınanıyor…" },
     "vlm.check.ok": { en: "Key and model accepted. (A balance is not checked by this.)", tr: "Anahtar ve model kabul edildi. (Bakiye bununla denetlenmez.)" },

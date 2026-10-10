@@ -74,7 +74,7 @@
   // The same question without the "asking" state: after a reading, so the
   // caps line shows what the day has now spent.
   async function refresh(){
-    try{const r=await globalThis.fetch(RELAY+"/status",{cache:"no-store",credentials:"same-origin"});const j=r.ok?await r.json():null;if(j&&j.relay===true)session.relay=j;}catch{}
+    try{const r=await globalThis.fetch(RELAY+"/status",{cache:"no-store",credentials:"same-origin"});const j=r.ok?await r.json():null;if(j&&j.relay===true){session.relay=j;session.relayStale=false;}}catch{session.relayStale=true;} // the earlier answer stands, and is marked as possibly out of date
     render();
   }
   async function post(path,body,signal){
@@ -303,7 +303,7 @@
     const check=session.checking?`<span class="vlm-note" role="status">${t("vlm.check.running")}</span>`
       :session.check?(session.check.ok?`<span class="vlm-state ok">${t("vlm.check.ok")}</span>`:`<span class="vlm-state warn">${esc(tx("vlm.err.",session.check.code))}</span>`):"";
     return`<p class="vlm-state ok"><b>${t("vlm.relay.ready")}</b> · ${esc(r.model||"")}</p>
-      <p class="vlm-note">${t("vlm.relay.caps",{run:money(L.maxUsdPerRun),day:money(L.maxUsdPerDay),spent:money(U.usd),requests:U.requests||0,maxRequests:L.maxRequestsPerDay||0})}</p>
+      <p class="vlm-note">${t("vlm.relay.caps",{run:money(L.maxUsdPerRun),day:money(L.maxUsdPerDay),spent:money(U.usd),requests:U.requests||0,maxRequests:L.maxRequestsPerDay||0})}${session.relayStale?` ${t("vlm.relay.stale")}`:""}</p>
       <div class="vlm-actions"><button class="btn sm" data-vlm-action="check" ${session.checking||session.busy?"disabled":""}>${t("vlm.check")}</button>${check}</div>`;
   }
   function findingRowHTML(a,f,i){
