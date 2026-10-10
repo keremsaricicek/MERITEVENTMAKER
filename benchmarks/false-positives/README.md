@@ -7,7 +7,13 @@ npm run benchmark:false-positives hue-shift jpeg-q20
 
 Writes `report.json` and one debug image per rendering in `debug/`: **green** true
 positives, **red** false positives labelled with their cause, **orange** misses.
-Exits non-zero if the seat-containment gate ever holds back a real table.
+Exits non-zero if the seat-containment gate holds back a real table it is not
+recorded as holding. Until 2026-10-10 this runner read the analysis the moment
+it existed and reported 0 real tables held on every rendering; reading the
+FINISHED analysis, it holds 16 across five photometric renderings (29 before the
+plan-understanding work). Those are accepted in writing, per rendering, in
+`KNOWN-FAILS.json` with the reason, the consequence and an owner — a higher
+count blocks, and so does a lower one until the record is lowered.
 
 The robustness matrix says `hue-shift` invents 52 tables and `downscale-70`
 invents 73 chairs. It does not say what those objects *are*, and without that any

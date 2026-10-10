@@ -126,7 +126,10 @@ async function openWithPlan(browser, baseUrl) {
 
 async function analyse(page) {
   await page.click('[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis, null, { timeout: 240000 });
+  // The FINISHED analysis (OCR, labels, numbers, the layers built on them), not
+  // the first one written: which half-built state an early read saw depended on
+  // how fast the engines ran (2026-10-10, see benchmarks/plan-understanding/README.md).
+  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy, null, { timeout: 300000 });
   await page.waitForTimeout(700);
 }
 
@@ -138,8 +141,8 @@ async function reanalyse(page) {
   const previousId = await page.evaluate(() => state.events[0].analysis.id);
   await page.evaluate(() => { ui.tab = "floor"; ui.planMode = "review"; ui.selectedCandidateId = null; render(); });
   await page.click('[data-review-action="reanalyze"]');
-  await page.waitForFunction(id => state.events[0].analysis && state.events[0].analysis.id !== id,
-    previousId, { timeout: 240000 });
+  await page.waitForFunction(id => state.events[0].analysis && state.events[0].analysis.id !== id && !ui.analysisBusy,
+    previousId, { timeout: 300000 });
   await page.waitForTimeout(700);
 }
 

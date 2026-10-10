@@ -326,8 +326,9 @@ Every runner serves the pinned OCR engine from `.vendor-cache`
 the app is measured WITH OCR, without it the app is measured without, and
 those are two different products (`a2`: 3 phantom tables against 23). A green
 CI means the RELEASE GATE rows in `.claude/skills/merit-ci-quality-gates/`
-passed — not that the two accepted adversarial FAILs or the §23 memory targets
-are met.
+passed — not that the two accepted adversarial FAILs, the five false-positives
+renderings accepted in `benchmarks/false-positives/KNOWN-FAILS.json`, or the §23
+memory targets are met.
 
 When a detector count comes up short, **diagnose before theorising**:
 `benchmarks/heldout/ornek-stage-walk.mjs` names the stage each missed object

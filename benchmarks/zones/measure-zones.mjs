@@ -93,7 +93,10 @@ async function zonesFor(browser, baseUrl, imagePath) {
   }, `data:image/${ext};base64,${fs.readFileSync(imagePath).toString("base64")}`);
   await page.waitForTimeout(300);
   await page.click('[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis, null, { timeout: 240000 });
+  // The FINISHED analysis (OCR, labels, numbers, the layers built on them), not
+  // the first one written: which half-built state an early read saw depended on
+  // how fast the engines ran (2026-10-10, see benchmarks/plan-understanding/README.md).
+  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy, null, { timeout: 300000 });
   await page.waitForTimeout(500);
   const out = await page.evaluate(() => {
     const pi = state.events[0].analysis.planIntelligence;
@@ -193,7 +196,9 @@ const seatsNeverExceed = rows.every(r =>
 console.log(`\nHONESTY`);
 console.log(`  every zone states its evidence            ${everyZoneHasEvidence ? "yes" : "NO"}`);
 console.log(`  zone seats never exceed detected seats    ${seatsNeverExceed ? "yes" : "NO"}`);
-console.log(`  entrance zones on a build with no OCR     ${rows.filter(r => r.zones.some(z => z.type === "entrance")).length} of ${rows.length}`);
+// Entrances are named by printed labels, which only OCR reads; the runner read
+// the analysis before OCR until 2026-10-10, so this line used to say 0.
+console.log(`  renderings with an entrance zone (OCR)    ${rows.filter(r => r.zones.some(z => z.type === "entrance")).length} of ${rows.length}`);
 
 fs.writeFileSync(path.join(HERE, "report.json"), JSON.stringify({
   ranAt: new Date().toISOString(),

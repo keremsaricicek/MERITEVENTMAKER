@@ -1,21 +1,21 @@
 {
- "ranAt": "2026-09-27T15:03:22.544Z",
+ "ranAt": "2026-10-10T10:57:44.466Z",
  "plan": "merit-real-venue",
  "matchToleranceP": 3,
- "candidates": 56,
+ "candidates": 65,
  "annotatedScoreable": 164,
- "matched": 47,
+ "matched": 51,
  "matching": {
   "flatTolerancePx": 47,
   "tightenedForNeighbours": 163,
   "note": "A GT object's tolerance is capped at half the distance to its nearest neighbour, so an identity claim is decidable on a plan whose chairs are closer together than the flat tolerance."
  },
  "propagation": {
-  "trials": 47,
-  "spreadTrials": 41,
-  "reached": 109,
-  "scored": 109,
-  "correct": 109,
+  "trials": 51,
+  "spreadTrials": 44,
+  "reached": 114,
+  "scored": 114,
+  "correct": 114,
   "wrong": 0,
   "ontoUnannotated": 0,
   "precision": 1,
@@ -71,8 +71,8 @@
     "object": "t009",
     "was": "table:square",
     "taught": "table:square",
-    "reached": 5,
-    "correct": 5,
+    "reached": 4,
+    "correct": 4,
     "wrong": 0,
     "ontoUnannotated": 0
    },
@@ -347,18 +347,18 @@
     "ontoUnannotated": 0
    },
    {
-    "object": "t042",
-    "was": "table:bistro",
-    "taught": "table:bistro",
+    "object": "t039",
+    "was": "table:round",
+    "taught": "table:round",
     "reached": 1,
     "correct": 1,
     "wrong": 0,
     "ontoUnannotated": 0
    },
    {
-    "object": "t039",
-    "was": "table:round",
-    "taught": "table:round",
+    "object": "t042",
+    "was": "table:bistro",
+    "taught": "table:bistro",
     "reached": 1,
     "correct": 1,
     "wrong": 0,
@@ -390,13 +390,40 @@
     "correct": 2,
     "wrong": 0,
     "ontoUnannotated": 0
+   },
+   {
+    "object": "s001",
+    "was": "venue:banquette",
+    "taught": "venue:banquette",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "s002",
+    "was": "venue:banquette",
+    "taught": "venue:banquette",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
+   },
+   {
+    "object": "s003",
+    "was": "venue:banquette",
+    "taught": "venue:banquette",
+    "reached": 2,
+    "correct": 2,
+    "wrong": 0,
+    "ontoUnannotated": 0
    }
   ]
  },
  "reanalyze": {
-  "correctionsMade": 16,
-  "memoryEntries": 26,
-  "retained": 16,
+  "correctionsMade": 20,
+  "memoryEntries": 30,
+  "retained": 20,
   "lost": 0,
   "retention": 1,
   "retentionGate": 0.98,

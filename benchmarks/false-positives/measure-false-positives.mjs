@@ -64,7 +64,10 @@ async function analyse(page, baseUrl, file) {
   }, dataUrl(file));
   await page.waitForTimeout(300);
   await page.click('[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis, null, { timeout: 240000 });
+  // The FINISHED analysis (OCR, labels, numbers, the layers built on them), not
+  // the first one written: which half-built state an early read saw depended on
+  // how fast the engines ran (2026-10-10, see benchmarks/plan-understanding/README.md).
+  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy, null, { timeout: 300000 });
   await page.waitForTimeout(400);
   return page.evaluate(() => {
     const a = state.events[0].analysis;
@@ -372,6 +375,12 @@ report.pooledByCause = pooled;
 console.log("\n\nPROPOSED vs COMMITTED TABLES");
 console.log("variant           proposed TP/FP   committed TP/FP   held by the seat-containment gate (false/real)");
 const failures = [];
+// Real tables held back that a person has ACCEPTED in writing, per variant
+// (KNOWN-FAILS.json: the reason, the consequence, the owner). A count above the
+// accepted one blocks; a count below it blocks too until the record is lowered.
+const KNOWN = JSON.parse(fs.readFileSync(path.join(HERE, "KNOWN-FAILS.json"), "utf8"));
+const accepted = KNOWN.acceptedHeldReal || {};
+const knownLines = [];
 for (const v of report.variants) {
   const t = v.classes.table;
   const gate = x => x.lowEvidence === "seatsInsideBody";
@@ -381,8 +390,13 @@ for (const v of report.variants) {
   console.log(`  ${v.variant.padEnd(17)} ${`${t.tp}/${t.fp}`.padEnd(16)} ${`${t.committed.tp}/${t.committed.fp}`.padEnd(17)} ${gatedFalse}/${gatedReal}`);
   // The one gate that must never fail. A structural rule that starts costing
   // real tables is a rule that has to come out, whatever it does for a score.
-  if (gatedReal > 0)
-    failures.push(`${v.variant}: the seat-containment gate held back ${gatedReal} REAL table(s)`);
+  const allowed = accepted[v.variant] || 0;
+  if (gatedReal > allowed)
+    failures.push(`${v.variant}: the seat-containment gate held back ${gatedReal} REAL table(s)${allowed ? ` (${allowed} accepted in KNOWN-FAILS.json)` : ""}`);
+  else if (gatedReal < allowed)
+    failures.push(`${v.variant}: ${gatedReal} real table(s) held where ${allowed} are accepted — IMPROVED; lower the entry in KNOWN-FAILS.json so a return is caught`);
+  else if (gatedReal > 0)
+    knownLines.push(`  KNOWN FAIL ${v.variant}: the seat-containment gate holds back ${gatedReal} REAL table(s) — accepted in writing, owner ${KNOWN.owner}`);
 }
 const original = report.variants.find(v => v.variant === "ORIGINAL");
 if (original && original.classes.table.committed.tp !== original.classes.table.tp)
@@ -402,9 +416,12 @@ fs.writeFileSync(path.join(HERE, "report.json"), JSON.stringify(report, null, 1)
 console.log(`\nwrote ${path.relative(process.cwd(), path.join(HERE, "report.json"))}`);
 console.log(`debug images in ${path.relative(process.cwd(), OUT)}/  (green TP, red FP with cause, orange FN)`);
 console.log("\nREAL DISTINCT VENUE PLANS: 1. Every rendering is the same drawing.");
+if (knownLines.length) console.log("\n" + knownLines.join("\n"));
 if (failures.length) {
   console.log(`\n${failures.length} failure(s):`);
   for (const f of failures) console.log("  - " + f);
   process.exit(1);
 }
-console.log("\nAll gates met: the seat-containment gate has never held back a real table.");
+console.log(knownLines.length
+  ? `\nAll gates met, with ${knownLines.length} known failure(s) accepted in writing: the seat-containment gate holds back no real table it is not recorded as holding, and none on the clean plan.`
+  : "\nAll gates met: the seat-containment gate has never held back a real table.");

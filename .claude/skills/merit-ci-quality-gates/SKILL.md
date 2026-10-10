@@ -68,14 +68,16 @@ exit semantics, not its step name.
 | `npm run benchmark:facts` | RELEASE GATE | accuracy < 0.9, any fabricated STRONG fact, any untranslated fact |
 | `npm run benchmark:contradictions` | RELEASE GATE | its own listed failures |
 | `npm run benchmark:zones` | RELEASE GATE | stability < 0.9, a zone without evidence, seats exceeding capacity |
-| `npm run benchmark:false-positives` | RELEASE GATE | the seat-containment gate holding back a real table |
+| `npm run benchmark:false-positives` | RELEASE GATE | the seat-containment gate holding back a real table it is not recorded as holding (per rendering, `KNOWN-FAILS.json`; a count below the record blocks too, until it is lowered), or any real table on the clean plan |
 | `npm run benchmark:teaching` | RELEASE GATE | propagation precision, retention or wrong application outside its gates on an unchanged plan |
 | `npm run perf` | RELEASE GATE for three runners, INFO for the rest | live-windowing correctness, 4,000-seat reload integrity, save-queue last-write-wins. Every timing is INFO — no budget exists, and none is invented |
 | report uploads (`actions/upload-artifact`) | INFO | never |
 
 What a green run therefore proves: every RELEASE GATE row passed. It does
-**not** prove the two listed adversarial FAILs are fixed, or that Visual Plan
-Memory meets its §23 thresholds — both are printed as not so on every run.
+**not** prove the two listed adversarial FAILs are fixed, that the
+seat-containment gate holds no real table on the five photometric renderings
+accepted in `benchmarks/false-positives/KNOWN-FAILS.json`, or that Visual Plan
+Memory meets its §23 thresholds — all are printed as not so on every run.
 
 ## The prohibitions
 

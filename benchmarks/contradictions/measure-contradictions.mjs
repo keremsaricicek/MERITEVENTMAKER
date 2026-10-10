@@ -61,7 +61,10 @@ async function analyse(page, baseUrl, file) {
   }, dataUrl(file));
   await page.waitForTimeout(300);
   await page.click('[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis, null, { timeout: 240000 });
+  // The FINISHED analysis (OCR, labels, numbers, the layers built on them), not
+  // the first one written: which half-built state an early read saw depended on
+  // how fast the engines ran (2026-10-10, see benchmarks/plan-understanding/README.md).
+  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy, null, { timeout: 300000 });
   await page.waitForTimeout(500);
   return page.evaluate(() => {
     const a = state.events[0].analysis, pi = a.planIntelligence;

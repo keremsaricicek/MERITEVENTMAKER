@@ -24,13 +24,18 @@ product grouped it exactly).
 They wait for `state.events[0].analysis`, which exists before OCR, text
 suppression, label reading and printed numbers have run, so they measure a
 state the operator never sees. `run-benchmark.mjs` was fixed on 2026-10-04
-(see CONTRACT.md); these are fixed when their own area is worked, with their
-own baselines re-checked, rather than silently all at once:
+(see CONTRACT.md), `review-order` during this work, and on 2026-10-10 the five
+CI runs among them — `contradictions`, `false-positives`, `interpreter/
+measure-facts`, `teach-ai/measure-teaching`, `zones` — after running the two
+OCR engines side by side made which half-built state an early read saw depend
+on the machine (facts failed on CI and passed locally on one commit). Each was
+re-measured on the finished analysis: contradictions, teaching and zones still
+meet their gates; facts meets its gate once its checker reads the annotation's
+structured capacity and the per-chair facing truth; false-positives holds 16
+real tables on five renderings, accepted in its `KNOWN-FAILS.json`. Still
+reading early, fixed when their own area is worked:
 
-contradictions/measure-contradictions · detection/categorize-errors ·
-embedding/measure-descriptor-baseline · embedding/measure-separation ·
-false-positives/measure-false-positives · heldout/run-heldout ·
-interpreter/measure-facts · review-order/measure-review-order ·
-teach-ai/measure-teaching · teach/bulk-correction-is-undoable ·
-teach/human-decisions-survive-reanalyze · teach/unverified-seating ·
-zones/measure-zones
+detection/categorize-errors · embedding/measure-descriptor-baseline ·
+embedding/measure-separation · heldout/run-heldout ·
+teach/bulk-correction-is-undoable · teach/human-decisions-survive-reanalyze ·
+teach/unverified-seating

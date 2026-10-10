@@ -41,7 +41,9 @@
 - What each CI step proves is written in
   `.claude/skills/merit-ci-quality-gates/SKILL.md` (INFO / WARNING / RELEASE
   GATE). "CI green" means the RELEASE GATE rows passed — not that the listed
-  adversarial FAILs or the §23 memory targets are met.
+  adversarial FAILs, the accepted false-positives renderings
+  (`benchmarks/false-positives/KNOWN-FAILS.json`) or the §23 memory targets
+  are met.
 - After any change to `index.html` or `src/*.js`/`src/styles.css`
   structure, rebuild BOTH offline artifacts and then **run the built
   artifacts**:

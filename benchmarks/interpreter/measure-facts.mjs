@@ -33,13 +33,19 @@ function plans() {
     if (!f.endsWith(".json")) continue;
     const annot = JSON.parse(fs.readFileSync(path.join(BENCH, "annotations", f), "utf8"));
     const file = path.join(BENCH, annot.source.file);
-    if (fs.existsSync(file)) out.push({ annot, file });
+    // The plan-understanding truth for this plan, when it exists, by the
+    // annotation file it names.
+    const truthDir = path.join(BENCH, "plan-understanding", "truth");
+    const truthFile = fs.readdirSync(truthDir).map(t => path.join(truthDir, t))
+      .find(t => { try { return JSON.parse(fs.readFileSync(t, "utf8")).annotation === `benchmarks/annotations/${f}`; } catch { return false; } });
+    const facingTruth = truthFile ? JSON.parse(fs.readFileSync(truthFile, "utf8")).chairFacing || null : null;
+    if (fs.existsSync(file)) out.push({ annot, file, facingTruth });
   }
   return out;
 }
 
 // What the annotation says, in the terms the facts make claims in.
-function groundTruth(annot) {
+function groundTruth(annot, facingTruth) {
   const tables = annot.objects.filter(o => o.class === "table");
   const byType = tables.reduce((m, t) => (m[t.type] = (m[t.type] || 0) + 1, m), {});
   const ranked = Object.entries(byType).sort((a, b) => b[1] - a[1]);
@@ -50,14 +56,27 @@ function groundTruth(annot) {
     chairs: annot.objects.filter(o => o.class === "chair").length,
     stages: annot.objects.filter(o => o.class === "stage" || o.class === "stage_extension").length,
     columns: annot.objects.filter(o => o.class === "column").length,
-    statedCapacity: annot.capacity ? annot.capacity.ocrStated : null,
+    // The annotation records the printed capacity as a number or, on the two
+    // real plans, as its printed parts with their total. The drawing STATES
+    // the total; that is what a capacity fact claims to have read.
+    statedCapacity: !annot.capacity || annot.capacity.ocrStated == null ? null
+      : typeof annot.capacity.ocrStated === "object" ? annot.capacity.ocrStated.total ?? null : annot.capacity.ocrStated,
     // A chair with no relationship in the annotation is one the annotation
     // declines to seat, which is not the same as one seated nowhere.
     seatedTables: new Set((annot.relationships || []).filter(r => r.belongsTo).map(r => r.belongsTo)).size,
     // How many chair symbols on this drawing carry a direction at all, and how
     // many relations the annotation itself refuses to settle. Both are ceilings
     // the interpreter must not claim past.
-    orientableChairs: annot.objects.filter(o => o.class === "chair" && o.orientationKnown).length,
+    //
+    // Orientable chairs come from the per-chair facing truth where one exists
+    // (benchmarks/plan-understanding/truth, 2026-10-04: every chair checked by
+    // eye on 3x crops, an arrow drawn per chair). The annotation's older
+    // `orientationKnown` flag marks 24 of the Golden Plan's 113 chairs, and is
+    // shown wrong by that check: the 79 facings the product reads off the
+    // armchair stencil agree with it 79 / 79 within 30 degrees, and 55 of them
+    // are on chairs the old flag says carry no direction.
+    orientableChairs: facingTruth ? facingTruth.length : annot.objects.filter(o => o.class === "chair" && o.orientationKnown).length,
+    orientableSource: facingTruth ? "plan-understanding truth (per-chair, by eye)" : "annotation orientationKnown",
     ambiguousRelations: (annot.relationships || []).filter(r => !r.belongsTo).length,
     hasRelationGroundTruth: !!(annot.relationships && annot.relationships.length),
   };
@@ -142,7 +161,7 @@ function checkFact(fact, gt) {
       if (gt.orientableChairs == null)
         return { checkable: false, why: "the annotation does not record which chair symbols carry a direction" };
       return { checkable: true, correct: p.n <= gt.orientableChairs,
-        detail: { claimed: p.n, annotatedOrientable: gt.orientableChairs } };
+        detail: { claimed: p.n, annotatedOrientable: gt.orientableChairs, source: gt.orientableSource } };
     }
     case "fact.seatsAmbiguous": {
       // The annotation abstains on the chairs it cannot adjudicate. A claim of
@@ -185,8 +204,13 @@ async function factsFor(browser, baseUrl, imagePath) {
   }, `data:image/${ext};base64,${fs.readFileSync(imagePath).toString("base64")}`);
   await page.waitForTimeout(300);
   await page.click('[data-v8-action="detect"]');
-  await page.waitForFunction(() => !!state.events[0].analysis, null, { timeout: 240000 });
-  await page.waitForTimeout(500);
+  // The FINISHED analysis — OCR, labels, printed numbers and the facts built on
+  // them — not the first one written. Reading at "an analysis exists" measured a
+  // state the operator never sees, and which one depended on how fast the
+  // engines ran: on 2026-10-10 the OCR model's capacity line arrived inside the
+  // old half-second window on CI and not locally, and the run that saw it found
+  // the checker below could not read the annotation's structured capacity.
+  await page.waitForFunction(() => !!state.events[0].analysis && !ui.analysisBusy, null, { timeout: 300000 });
   const out = await page.evaluate(() => {
     const pi = state.events[0].analysis.planIntelligence;
     // Every fact must render in both languages without leaving a raw key or an
@@ -214,11 +238,11 @@ let totalCheckable = 0, totalCorrect = 0, fabricatedStrong = [];
 // the product less useful while looking more careful.
 const calibration = { downgraded: { n: 0, wrong: 0 }, untouched: { n: 0, wrong: 0 } };
 
-for (const { annot, file } of plans()) {
+for (const { annot, file, facingTruth } of plans()) {
   annotHasRelationships = (annot.relationships || []).some(r => r.belongsTo);
   annotHasLogicalGroups = (annot.logicalGroups || []).length > 0;
   annotLogicalGroupCount = (annot.logicalGroups || []).length;
-  const gt = groundTruth(annot);
+  const gt = groundTruth(annot, facingTruth && facingTruth.length ? facingTruth : null);
   const { facts, priorities, rendered, errors } = await factsFor(browser, app.baseUrl, file);
 
   console.log(`\n=== ${annot.planId}`);

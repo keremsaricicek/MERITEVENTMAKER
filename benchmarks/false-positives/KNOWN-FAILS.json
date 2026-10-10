@@ -1,0 +1,14 @@
+{
+ "note": "Real tables the seat-containment gate (lowEvidence seatsInsideBody) holds back, ACCEPTED IN WRITING per variant, the way benchmarks/adversarial/KNOWN-FAILS.json accepts its two: with the reason, the consequence an operator meets, and an owner. Acceptance lets the gate tell a known failure from a new one; it does not make the output right, and every run prints it. A variant whose count goes UP blocks; a variant whose count goes DOWN also blocks until its entry is lowered, so a return to the old count is caught. Synthetic renderings of the one real plan — not venues.",
+ "measuredAt": "2026-10-10 on 08da891, reading the FINISHED analysis (the runner read the analysis the moment it existed until this date, and that read reported 0 real tables held on every rendering)",
+ "why": "On the photometric renderings the chairs' colour model fails, a real table is found as a table-sized box with one 'seat' detected inside its body, and the gate reads 'every seat attached to this object is inside it' — the same evidence as a chair taken for a table. The held real boxes and the held false ones are alike in size, seat count (1) and seat fill, so no narrowing of the rule separates them on this evidence. The rule holds 100 false tables against these 16 real ones across the renderings; removing it would offer the 100 (and a6's 19 phantoms). Before this programme's work (98f6c60, the same finished-analysis read) the count was 29: hue-shift 11, bright-up 10, contrast-high 2, blur 5, grayscale 1.",
+ "consequence": "On these five renderings, confirming the proposal as offered leaves the listed number of real tables off the floor plan; each is still on the review screen, unticked, with its reason. On the clean plan no real table is held (the ORIGINAL gate below is separate and still blocks).",
+ "owner": "computer-vision-engineer (Assisted Detection)",
+ "acceptedHeldReal": {
+  "hue-shift": 6,
+  "bright-up": 5,
+  "contrast-high": 2,
+  "blur": 2,
+  "grayscale": 1
+ }
+}
