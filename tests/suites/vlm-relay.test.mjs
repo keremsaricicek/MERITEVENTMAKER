@@ -312,6 +312,29 @@ export default async function run({ checks, repoRoot }) {
     checks.equal(core.redact(`failed with ${KEY} and sk-ant-api03-ABCDEFGHIJKLMNOP`, withKey), "failed with [redacted] and sk-ant-[redacted]",
       "anything key-shaped is redacted from text that leaves the process");
     await fake.close();
+
+    // ---- the command a person types: `npm run serve:vlm` -----------------------------
+    // Started as its own process, the way the run guide says, with no key and
+    // then with one: it must come up and say what it is. It crashed on the
+    // first line about the ledger (status read without one) — every unit
+    // check above passed while the command a person types threw.
+    const { spawn } = await import("node:child_process");
+    const startCli = (env) => new Promise((resolve) => {
+      const child = spawn(process.execPath, [path.join(repoRoot, "server/vlm-relay.mjs")], { env: { PATH: process.env.PATH, PORT: "0", ...env }, stdio: ["ignore", "pipe", "pipe"] });
+      let out = "";
+      const done = (why) => { clearTimeout(timer); child.kill(); resolve({ out, why }); };
+      const timer = setTimeout(() => done("timeout"), 15000);
+      child.stdout.on("data", (d) => { out += d; if (out.includes("(ctrl-c to stop)")) done("ready"); });
+      child.stderr.on("data", (d) => { out += d; });
+      child.on("exit", (code) => done("exit " + code));
+    });
+    const cliDir = path.join(tmp, "cli");
+    const noKey = await startCli({ VLM_DATA_DIR: cliDir });
+    const keyed = await startCli({ ANTHROPIC_API_KEY: KEY, VLM_DATA_DIR: cliDir });
+    checks.ok(noKey.why === "ready" && /relay {7}NOT CONFIGURED \(ANTHROPIC_API_KEY is not set/.test(noKey.out) && !/TypeError|Error:/.test(noKey.out),
+      "`npm run serve:vlm` with no key starts, serves the app and says NOT CONFIGURED", noKey);
+    checks.ok(keyed.why === "ready" && /relay {7}CONFIGURED/.test(keyed.out) && /prices {6}\$/.test(keyed.out) && !keyed.out.includes(KEY) && !/TypeError|Error:/.test(keyed.out),
+      "with a key it starts CONFIGURED, prints its prices and limits, and never prints the key", { why: keyed.why, out: keyed.out.replace(KEY, "[KEY]") });
   } finally {
     for (const r of opened) await r.close().catch(() => {});
     fs.rmSync(tmp, { recursive: true, force: true });

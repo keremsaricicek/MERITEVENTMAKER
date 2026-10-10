@@ -63,6 +63,44 @@ Anahtarı yalnız o terminal oturumunda ortam değişkeni yapın (dosyaya yazmay
 Tarayıcıda `http://127.0.0.1:8787/index.html` açın ve Yol A'nın 5–8.
 adımlarını izleyin.
 
+## Pilot — ilk gerçek ölçüm (açık onayınızla)
+
+Ücretli istek ve gerçek plan aktarımı **yalnız sizin açık onayınızla** yapılır.
+Onay şu üç şeyden sonra istenir: gizli ayar (yukarıda Yol A, 1. adım; tek
+seferlik), API hesabında bakiye ve aşağıdaki içerik ile bütçe.
+
+**Gönderilecek planlar:** iki gerçek mekân: Golden Plan
+(`benchmarks/plans/merit-real-venue-plan.png`, 1355×788) ve ORNEK
+(`benchmarks/plans/ornek-upright.png`, 2402×1719). Her biri için bir okuma
+yapılır. **Gönderilenler:** plan görüntüsü, dedektörün kutuları (tür, inceleme
+durumu, doğrulanmış numara) ve plandan okunan yazılar. **Gönderilmeyenler:**
+misafir, not, davet eden, oturma düzeni, etkinlik adı. Plan üzerinde BASILI bir
+isim veya numara varsa görüntüyle birlikte gider; bu iki planda yalnız masa
+numaraları, ölçüler ve "SAHNE/BAR/GİRİŞ" gibi yazılar vardır.
+
+**Bütçe (en kötü durum, resmi fiyatlar, 2026-10-10):** varsayılan model
+`claude-opus-5-5` için milyon belirteç başına $4 girdi ve $20 çıktı. Bu iki planda
+bir denemenin girdisi tahminen ~20 000 belirtece kadardır (görüntü ≤ ~4 800 +
+kutular ve yazılar). Aktarıcı, göndermeden önce gerçek sayıyı ücretsiz
+`count_tokens` ile ölçer ve sınır denetimini o sayıyla yapar. Çıktı en çok
+10 000 belirteçtir. Bir deneme bu durumda ≈ $0,08 + $0,20 = **≈ $0,28** eder. Bir okuma en çok 5 denemedir
+(genel görünüm + 4 yakın bakış) ve okuma başına sınır $1,50'dir. İki plan için
+en kötü durum **≤ $2,80**. Pilot için aktarıcıyı şu sınırla başlatın:
+
+```
+VLM_MAX_USD_PER_DAY=3 VLM_MAX_USD_PER_RUN=1.50 npm run serve:vlm
+```
+
+Aktarıcı, bir denemeyi göndermeden önce en kötü maliyetini ayırır ve bu
+sınırları aşacak isteği reddeder. Gerçek harcama genellikle bunun çok
+altındadır: çıktı nadiren 10 000 belirtece ulaşır.
+
+**Ölçülecekler:** her plan için bulgu sayısı, kabul ve ret sayısı, yanlış öneri
+(planda olmayan nesne), bulunan gerçek eksik, harcanan tutar ve süre. Bunlar,
+modelsiz ölçümle (`benchmarks/BASELINE.json`) ayrı satırlarda raporlanır. Sahte
+modelle (`tests/lib/fake-anthropic.mjs`) alınan sonuçlar bu tabloya hiçbir
+zaman girmez.
+
 ## Sınırlar (varsayılan)
 
 | | |

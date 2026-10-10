@@ -339,7 +339,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const config = core.configFromEnv(process.env, { repoRoot: REPO_ROOT });
   const allowedHosts = allowedHostsFrom(process.env, config.port);
   const started = await startRelay({ config, allowedHosts });
-  const s = core.status(config, started.relay.usage.snapshot());
+  const s = core.status(config, started.relay.usage.snapshot(), started.relay.usage.ledger());
   console.log("MERIT EVENT MAKER — app + vision-language relay");
   console.log(`  open        ${started.baseUrl}/index.html`);
   const why = { NO_KEY: "ANTHROPIC_API_KEY is not set in this process's environment", UNKNOWN_PRICE: "a model in use has no known price",

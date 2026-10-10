@@ -8,7 +8,9 @@ only these three:
 - **2 · READY, BLOCKED** — code is in place; a named external dependency prevents live verification.
 - **3 · REJECTED BY EXPERIMENT** — measured to be unsuitable; the chosen alternative and its evidence are named.
 
-A row with no evidence is OPEN, whatever the code looks like.
+A row with no evidence is OPEN, whatever the code looks like. A row whose
+measurement falls short of its target is also OPEN, with the number. A
+shortfall is not called accepted.
 
 ## 3 · Audit findings (fix with a failing test first)
 
@@ -42,58 +44,62 @@ A row with no evidence is OPEN, whatever the code looks like.
 
 | id | item | state | evidence |
 |---|---|---|---|
-| U1 | measured effect of resolution on small objects | OPEN | |
-| U2 | whole-plan reading + overlapping native-resolution tiles, one coordinate system, merged | OPEN | |
-| U3 | coverage: what was inspected, what was not, what was cut | OPEN | |
-| U4 | structural model: identity, type, geometry, source, confidence, decision, uncertainty per object | OPEN | |
-| U5 | relations: chair→table, table→group/loca/zone, merged tables, venue furniture, facing, printed numbers | OPEN | |
-| U6 | capacity: printed vs seen vs banquette vs confirmed, and which objects cause the gap | OPEN | |
-| U7 | number duplicates and OCR–model disagreement go to review; a model number is never a fact | OPEN | |
-| U8 | PDF vector geometry (transforms, clipping, text, paths); raster / vector / mixed | OPEN | |
-| U9 | memory under rotation, scale, perspective, colour, quality; twins abstain | OPEN | |
+| U1 | measured effect of resolution on small objects | 1 · DONE | `benchmarks/resolution` (real detector, pinned OCR, network refused). Golden at 0.66×: tables R 1.000 → 0.261, chairs 109 → 39 of 113. ORNEK above the 1920 cap: F1 0.985 → 0.967 at native. Printed numbers: 0 wrong at every cap. The cap stays 1920 |
+| U2 | whole-plan reading + overlapping native-resolution tiles, one coordinate system, merged | 2 · READY, BLOCKED | `tilePlan` adds tiles only when the overview would shrink the smallest detected object below 12 px. Tiles overlap 12%, are sent at native scale, and their findings map into plan coordinates. A tile beats the overview on a tie (`vlm-decisions`, `vlm-reading`: 4 tiles at scale ≥ 0.99, finding inside its tile). Plumbing verified against a SCRIPTED model. Whether tiles improve a real model's reading needs the pilot (V3) |
+| U3 | coverage: what was inspected, what was not, what was cut | 1 · DONE | `coverage()` reports the share seen in detail. Every tile or region not sent, failed or cancelled is named with its reason and hatched on the map. The model's regions over the step limit were silently sliced off before; they are now listed (`vlm-reading`, mutation-checked in `vlm-decisions`) |
+| U4 | structural model: identity, type, geometry, source, confidence, decision, uncertainty per object | 1 · DONE | earlier phases: sourced observations per object (`plan-observations`), drawing kind with abstention (`plan-representation`), decisions through one writer with undo (`review-decisions`, `undo-operations`), provenance per table (`table-provenance`), held-back reasons (`held-back-capacity`) |
+| U5 | relations: chair→table, table→group/loca/zone, merged tables, venue furniture, facing, printed numbers | 1 · DONE on the two real venues | `relationship-engine` (evidence terms that a benchmark cannot see), `chair-facing` (unknown stays unknown), `plan-number-integrity`, accepted VLM chairs join their table (`vlm-decisions` D5). Per-venue relation P/R on new venues: N2 |
+| U6 | capacity: printed vs seen vs banquette vs confirmed, and which objects cause the gap | 1 · DONE | the capacity audit ranks suspect regions for a gap; held-back seats are reported apart, rejected objects excluded (`symbolic-plan-capacity`, `held-back-capacity`, `capacity-provenance`); person-confirmed counts are kept as `HUMAN_CONFIRMED` (D2/D3) |
+| U7 | number duplicates and OCR–model disagreement go to review; a model number is never a fact | 1 · DONE | duplicates: `plan-number-integrity` (a person's duplicate is BLOCKING, a reading's is NEEDS REVIEW). Model vs OCR: `numberCheck` gives AGREES / DISAGREES / DUPLICATE / NO_READING on the finding's row, and the number is never applied (`vlm-decisions`, `vlm-reading`). Scene query "tables sharing a number" opens them as a queue (`scene-queries`) |
+| U8 | PDF vector geometry (transforms, clipping, text, paths); raster / vector / mixed | 1 · DONE (extraction) · 2 · BLOCKED (use as detection) | `vectorShapes` follows save/restore/cm and the clip. A rotated rect keeps 104×52 px at 30°, a Bézier circle is placed with the y flip, the clip cuts and hides and ends at restore, and an inline image makes the page MIXED (`pdf-text-layer`, SYNTHETIC PDF, clip-restore mutation turns it red). Turning shapes into objects needs a real CAD PDF (N1) |
+| U9 | memory under rotation, scale, perspective, colour, quality; twins abstain | OPEN — target not met | measured on 7 transforms of one venue: identity precision **1.0**, wrong application **0** (targets met). Retention **0.7363** against the **0.98** target, **not met** (`benchmarks/memory/README.md`). Twins abstain (`plan-memory`). Next: homography over matched tables before a learned matcher (TOOLS.md T7) |
 
 ## 5 · Tools
 
-| id | candidate | state | evidence |
-|---|---|---|---|
-| T1 | SAHI-style sliced scanning | OPEN | |
-| T2 | RF-DETR (or licensed alternative) for plan symbols | OPEN | |
-| T3 | PP-OCRv5 vs the current OCR | OPEN | |
-| T4 | ONNX WebGPU / worker where a bottleneck is measured | OPEN | |
-| T5 | PDF.js vector geometry | OPEN | |
-| T6 | CVAT / FiftyOne for labelling and error review | OPEN | |
-| T7 | LightGlue or a simpler method for plan alignment | OPEN | |
-| T8 | Qwen3-VL as a local VLM | OPEN | |
-| T9 | GroundingDINO / SAM | OPEN | |
+Decisions, licences and evidence: `TOOLS.md`.
+
+| id | candidate | state |
+|---|---|---|
+| T1 | SAHI-style sliced scanning | 1 · DONE for the model reading · 3 · REJECTED for the detector on today's plans (U1) |
+| T2 | RF-DETR (Apache-2.0 N/S/M) | 2 · BLOCKED — labelled plans from ≥5 venues (N1) and a GPU |
+| T3 | PP-OCRv5 vs PP-OCRv4 in use | OPEN — not measured in this pass; package, files and hash recorded |
+| T4 | ONNX WebGPU / worker | 3 · REJECTED — no measured bottleneck it removes; WebGPU absent here and on many laptops |
+| T5 | PDF.js vector geometry | 1 · DONE (U8) |
+| T6 | CVAT / FiftyOne | 2 · BLOCKED — for labelling N1 |
+| T7 | LightGlue or simpler for alignment | OPEN — homography over matched tables first (U9) |
+| T8 | Qwen3-VL local | 3 · REJECTED for the browser product — 1.9 GB weights, minutes per plan on CPU |
+| T9 | GroundingDINO / SAM | 2 · BLOCKED — needs labelled outlines (N1) |
 
 ## 6 · New plans
 
+What to send, the venue split, and every metric with its target: `NEW-VENUES.md`.
+
 | id | item | state | evidence |
 |---|---|---|---|
-| N1 | 5–10 real plans from different venues, split by venue | OPEN | |
-| N2 | per-class / per-venue precision & recall, misses, phantoms, relations, numbers, capacity, facing, geometry | OPEN | |
-| N3 | corrections / 100 objects, operator time, memory keep / wrong-apply, VLM before/after, cost, p50/p95, memory | OPEN | |
-| N4 | targets: ≥98% precision, ≥95% recall per class on blind plans; ≤5 corrections/100; zero decision/record loss | OPEN | |
+| N1 | 5–10 real plans from different venues, split by venue | 2 · BLOCKED | needs the files (NEW-VENUES.md). No third venue is measured, and none is invented |
+| N2 | per-class / per-venue precision & recall, misses, phantoms, relations, numbers, capacity, facing, geometry | 2 · BLOCKED | runners exist (`npm run benchmark`, `benchmarks/resolution`, `ornek-stage-walk`); on the two venues: `benchmarks/BASELINE.json` |
+| N3 | corrections / 100 objects, operator time, memory keep / wrong-apply, VLM before/after, cost, p50/p95, memory | 2 · BLOCKED | operator time needs a real person; VLM before/after needs the pilot. Neither is simulated |
+| N4 | targets: ≥98% precision, ≥95% recall per class on blind plans; ≤5 corrections/100; zero decision/record loss | 2 · BLOCKED | blind venues are required. Zero decision loss holds by test (D1–D4, `vlm-reading` save/reload) |
 
 ## 7 · Operator experience
 
 | id | item | state | evidence |
 |---|---|---|---|
-| X1 | one click from a finding to its place on the source image | OPEN | |
-| X2 | "why did it think this?" with image and relation evidence | OPEN | |
-| X3 | uninspected / unreadable areas visible | OPEN | |
-| X4 | capacity contradictions explained | OPEN | |
-| X5 | every accept undoable | OPEN | |
-| X6 | scene queries ("tables with no number read", "locas next to the stage") | OPEN | |
-| X7 | changes between plan versions and kept decisions | OPEN | |
-| X8 | TR/EN, viewports, keyboard, error states | OPEN | |
-| X9 | send confirmation names personal data printed on the plan | OPEN | |
-| X10 | no network / no model: local analysis unaffected | OPEN | |
+| X1 | one click from a finding to its place on the source image | 1 · DONE | a model finding focuses its box on the map (`vlm-reading`); a ranked review row and a scene question open a queue with the object selected and zoomed (`review-queue`, `scene-queries`) |
+| X2 | "why did it think this?" with image and relation evidence | 1 · DONE | table provenance and printed-number evidence (`table-provenance`), visual check (`visual-second-opinion`), the model's quoted evidence and the OCR comparison on each finding (`vlm-reading`) |
+| X3 | uninspected / unreadable areas visible | 1 · DONE | hatched tiles/regions and a coverage line (U3); unread numbers as one finding (`plan-number-integrity`) |
+| X4 | capacity contradictions explained | 1 · DONE | U6 |
+| X5 | every accept undoable | 1 · DONE | D1, per-row Undo (`vlm-reading`) |
+| X6 | scene queries ("tables with no number read", "locas next to the stage") | 1 · DONE | `MeritSceneQuery`, closed set, TR/EN, pixel-measured "next to", unknown → the list of questions, never a guess (`scene-queries`, screenshots in `screens/`) |
+| X7 | changes between plan versions and kept decisions | 1 · DONE | `layout-changes` (identity by verified number first), memory survives re-analysis (D4) |
+| X8 | TR/EN, viewports, keyboard, error states | 1 · DONE | `i18n`, `i18n-hardcoded-english`, `a11y-*`; new screens rendered at 1920×1080 / 2560×1440 / 1440×900 with no console errors (`screens/`) |
+| X9 | send confirmation names personal data printed on the plan | 1 · DONE | `vlm.ask.printed` in the confirmation (`vlm-reading` asserts it) |
+| X10 | no network / no model: local analysis unaffected | 1 · DONE | without a relay the panel says so and detection runs (`vlm-reading`), offline packages verified (`verify:offline`) |
 
 ## 8 · Delivery
 
 | id | item | state | evidence |
 |---|---|---|---|
-| V1 | targeted suites, then full suite, offline packages, performance, CI | OPEN | |
-| V2 | clean-environment install and the Codespaces flow | OPEN | |
-| V3 | real-model pilot (needs the owner's secret, balance and approval) | OPEN | |
+| V1 | targeted suites, then full suite, offline packages, performance, CI | see the PR | full suite, both offline builds and `verify:offline` run on the final commit; CI on the PR |
+| V2 | clean-environment install and the Codespaces flow | 1 · DONE (documented, key-less path run here) | `server/CALISTIRMA.md`; `npm ci` then `npm run serve:vlm` with no key reports NOT CONFIGURED and serves the app |
+| V3 | real-model pilot (needs the owner's secret, balance and approval) | 2 · BLOCKED | the owner's secret, a balance and an explicit approval; plan and budget in `server/CALISTIRMA.md` |
