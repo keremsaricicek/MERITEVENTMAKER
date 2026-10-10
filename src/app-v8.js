@@ -3590,6 +3590,13 @@
     render();await yieldFrame();
     try{
       const FRAMES=globalThis.MeritPlanFrames,blob=await sourceBlob(event.background.src),bitmap=await createImageBitmap(blob),analysisFrame=FRAMES.analysisFrame(bitmap.width,bitmap.height,1920),ratio=analysisFrame.ratio,width=analysisFrame.width,height=analysisFrame.height,canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,height);bitmap.close();
+      // Tesseract reads the whole analysis canvas in its own worker, so it is
+      // started HERE and runs while the OCR model and the detector hold the main
+      // thread; its answer is awaited where it was always read. Same input: the
+      // canvas is drawn once above and nothing after this line draws on it.
+      // Measured on ORNEK, the two engines one after the other were most of the
+      // analysis's wall clock.
+      const ocrStarted=(async()=>{try{return await runPlanOCR(canvas.toDataURL("image/png"));}catch(ocrError){return{available:false,text:null,reason:ocrError.message,reasonCode:"FAILED"};}})();
       ui.analysisStage=t("analysis.stage.understanding");ui.analysisProgress=22;render();await yieldFrame();
       // Deskew before anything measures a component. See estimatePlanSkew.
       //
@@ -3778,8 +3785,7 @@
       event.analysis.ocrText=null;
       event.analysis.planIntelligence=buildPlanIntelligence(event,null);
       ui.analysisStage=t("analysis.stage.labels");ui.analysisProgress=84;render();await yieldFrame();
-      let ocrResult={available:false,text:null,reason:"OCR not attempted"};
-      try{ocrResult=await runPlanOCR(canvas.toDataURL("image/png"));}catch(ocrError){ocrResult={available:false,text:null,reason:ocrError.message,reasonCode:"FAILED"};}
+      const ocrResult=await ocrStarted;
       event.analysis.ocr={available:ocrResult.available,reason:ocrResult.reason||null,reasonCode:ocrResult.reasonCode||null,engine:"tesseract.js"};
       // Kept in full (not just the truncated capacityAudit.sourceText) so a
       // grouping/reclassification decision can recompute planIntelligence
