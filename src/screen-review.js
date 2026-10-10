@@ -41,6 +41,7 @@
   let ui;
   let unionBbox;
   let UNVERIFIED_SEATING;
+  let vlmQuestionCount;
   let created=false;
 
   // The learned encoder's opinion, in words. Deliberately NOT a percentage:
@@ -515,7 +516,8 @@
     if(ps&&ps.paths)rows.push(t("diag.pdfSource.vector",{n:ps.paths}));
     // No relay holds a key for this page, so no vision-language model runs
     // (src/plan-vlm.js). Said outright, with what it would have been asked.
-    if(globalThis.MeritVlm)rows.push(`<b>${t("diag.vlmNotConfigured")}</b> · ${t("diag.vlmPending",{n:MeritVlm.questionsFor(a).length})}`);
+    const vlmPending=vlmQuestionCount(a);
+    if(vlmPending!=null)rows.push(`<b>${t("diag.vlmNotConfigured")}</b> · ${t("diag.vlmPending",{n:vlmPending})}`);
     return`<div class="analysis-note">${rows.join("<br>")}</div>`;
   }
   function analysisHTML(event){
@@ -556,7 +558,8 @@
     ui=deps.ui;
     unionBbox=deps.unionBbox;
     UNVERIFIED_SEATING=deps.UNVERIFIED_SEATING;
+    vlmQuestionCount=deps.vlmQuestionCount;
     return{afterReviewDecision,analysisHTML,closeReviewQueue,openReviewQueue,queueGo,queueNextOutstanding,reviewGroupCount};
   }
-  globalThis.MeritScreenReview=Object.freeze({create,DEPS:Object.freeze(["activeEvent","activeReviewTargetIds","applyReviewZoom","candidateBox","esc","FLOORPLAN","icon","OCR_REASON_KEY","operatorReportHTML","RECLASSIFY_TAXONOMY","render","reviewCandidates","scopeAvailability","t","titleCase","toast","ui","unionBbox","UNVERIFIED_SEATING"])});
+  globalThis.MeritScreenReview=Object.freeze({create,DEPS:Object.freeze(["activeEvent","activeReviewTargetIds","applyReviewZoom","candidateBox","esc","FLOORPLAN","icon","OCR_REASON_KEY","operatorReportHTML","RECLASSIFY_TAXONOMY","render","reviewCandidates","scopeAvailability","t","titleCase","toast","ui","unionBbox","UNVERIFIED_SEATING","vlmQuestionCount"])});
 })();

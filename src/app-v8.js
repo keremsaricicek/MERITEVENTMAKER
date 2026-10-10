@@ -3961,6 +3961,10 @@
   // this file reassigns later is the one that runs. ----------------------------
   const REVIEW=globalThis.MeritScreenReview.create({
     activeEvent:(...a)=>activeEvent(...a),activeReviewTargetIds:(...a)=>activeReviewTargetIds(...a),applyReviewZoom:(...a)=>applyReviewZoom(...a),candidateBox:(...a)=>candidateBox(...a),esc:(...a)=>esc(...a),FLOORPLAN,icon:(...a)=>icon(...a),OCR_REASON_KEY,operatorReportHTML:(...a)=>operatorReportHTML(...a),RECLASSIFY_TAXONOMY,render:(...a)=>render(...a),reviewCandidates:(...a)=>reviewCandidates(...a),scopeAvailability:(...a)=>scopeAvailability(...a),t:(...a)=>t(...a),titleCase:(...a)=>titleCase(...a),toast:(...a)=>toast(...a),ui,unionBbox:(...a)=>unionBbox(...a),UNVERIFIED_SEATING,
+    // How many questions src/plan-vlm.js would ask about this analysis; null
+    // when the module is not loaded. The review screen states that no
+    // vision-language model is configured, with this count beside it.
+    vlmQuestionCount:(analysis)=>globalThis.MeritVlm?globalThis.MeritVlm.questionsFor(analysis).length:null,
   });
   // The confidence at which a fresh candidate arrives pre-selected. Local
   // calibration (improveAI) writes state.calibration.recommendedConfidence
