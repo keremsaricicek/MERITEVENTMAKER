@@ -19,7 +19,8 @@
 (function () {
   "use strict";
 
-  const KINDS = Object.freeze(["confirm", "reject", "notImportant", "reclassify", "confirmFamily", "include", "exclude", "forgetLesson"]);
+  const KINDS = Object.freeze(["confirm", "reject", "notImportant", "reclassify", "confirmFamily", "include", "exclude", "forgetLesson",
+    "addObject", "addChair", "setSeats"]);
 
   const classOf = (c) => c ? { kind: c.kind, type: c.type, confidence: c.confidence,
     source: (c.evidence && c.evidence.geometry) ?? null, candidateId: c.id } : null;
@@ -31,7 +32,7 @@
     if (!KINDS.includes(kind)) return { ok: false, reason: `unknown decision "${kind}"` };
     const byId = new Map((ctx.candidates || []).map(c => [c.id, c]));
     const unverified = new Set(ctx.unverifiedSeating || []);
-    const writes = [], training = [], memory = [];
+    const writes = [], training = [], memory = [], create = [];
     const target = byId.get(decision.candidateId);
     const one = (c, set, label) => {
       writes.push({ id: c.id, set });
@@ -92,6 +93,34 @@
           memory.push(c.id);
         }
         break;
+      // An object the detector missed, added because a person said so (drawn by
+      // hand, or a model's suggestion accepted). It is CREATED by the decision,
+      // so undo removes it; it carries a missed-object label and plan memory.
+      case "addObject": {
+        const c = decision.candidate;
+        if (!c || !c.id || byId.has(c.id)) break;
+        create.push(c);
+        writes.push({ id: c.id, set: { status: "confirmed", selected: true } });
+        training.push({ id: c.id, decisionType: "missedObject", predictionBefore: null, reviewedIndividually: true,
+          note: decision.note || "added by the operator where the detector proposed nothing" });
+        memory.push(c.id);
+        break;
+      }
+      // A chair the detector missed, on the table it stands at: the table's own
+      // chair list grows by one, and undo takes it back.
+      case "addChair": {
+        const ch = decision.chair;
+        if (!target || target.kind !== "table" || !ch || !ch.id) break;
+        one(target, { chairDetections: [...(target.chairDetections || []), ch] });
+        break;
+      }
+      // A seat count a person settled (typed, or a suggestion accepted): the
+      // count is verified, and says where it came from.
+      case "setSeats": {
+        if (!target || !Number.isInteger(decision.value) || decision.value < 0 || decision.value > 99) break;
+        one(target, { seats: decision.value, seatsConfidence: "verified", seatsSource: decision.source || "typed" });
+        break;
+      }
       case "include":
       case "exclude":
         // What Confirm will write — not a statement about what the object is,
@@ -107,13 +136,13 @@
         break;
       }
     }
-    return { ok: writes.length > 0, reason: writes.length ? null : "nothing to decide", kind, writes, training, memory,
+    return { ok: writes.length > 0, reason: writes.length ? null : "nothing to decide", kind, writes, training, memory, create,
       spread: training.filter(t => t.propagatedFrom).length };
   }
 
   // The fields a decision can change, captured before it so undo restores
   // exactly what was there.
-  const SNAPSHOT_FIELDS = ["kind", "type", "status", "selected", "dismissed", "chairDetections", "seats", "seatsConfidence", "printedNumber", "taughtFrom", "typeBasis"];
+  const SNAPSHOT_FIELDS = ["kind", "type", "status", "selected", "dismissed", "chairDetections", "seats", "seatsConfidence", "seatsSource", "printedNumber", "taughtFrom", "typeBasis"];
 
   globalThis.MeritReviewDecisions = Object.freeze({ KINDS, SNAPSHOT_FIELDS, plan, classOf });
 })();

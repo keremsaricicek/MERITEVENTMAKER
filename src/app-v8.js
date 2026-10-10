@@ -3975,41 +3975,10 @@
     // marks on the plan, its panel and its diagnostics line.
     vlmToolbarHTML:(...a)=>VLMSCREEN.toolbarHTML(...a),vlmMapHTML:(...a)=>VLMSCREEN.mapHTML(...a),vlmPanelHTML:(...a)=>VLMSCREEN.panelHTML(...a),vlmDiagnosticsHTML:(...a)=>VLMSCREEN.diagnosticsHTML(...a),
   });
-  // An object the detector missed, added because a person accepted a model's
-  // suggestion: the same record the "AI missed" drawing tool writes — memory,
-  // a missed-object training example, the audit trail — with the model's box,
-  // confirmed (a person said yes to it) and saying where it came from.
-  function addVlmCandidate(event,proposal,finding){
-    if(!canMutate(event,"add an object a model suggested"))return null;
-    const a=event.analysis;if(!a)return null;
-    const c={id:uid("candidate"),kind:proposal.kind,type:proposal.type,x:proposal.x,y:proposal.y,w:proposal.w,h:proposal.h,rotation:0,confidence:1,
-      status:"confirmed",selected:true,missed:true,chairDetections:[],evidence:{geometry:"vlm-suggestion",chairs:0,repetition:0,model:a.vlm?.model||null,finding:finding.id}};
-    if(UNVERIFIED_SEATING.has(c.type)){c.seats=null;c.seatsUnknown=true;}
-    a.candidates.push(c);
-    a.missed.push(c.id);
-    rememberCorrection(event,c,{manual:true});
-    captureTrainingExample(event,c,{decisionType:"missedObject",note:"a vision-language model suggested it and the operator accepted it; the box is the model's"});
-    audit(event,"VLM_OBJECT_ADDED",{candidateId:c.id,type:c.type,findingId:finding.id});
-    recomputePlanIntelligence(event);
-    touchEvent(event);
-    return c.id;
-  }
-  // A seat count a person accepted from a model's suggestion: the same write
-  // as typing it into the object card (verified, because a person said so).
-  function setVlmSeats(event,candidateId,value,finding){
-    if(!canMutate(event,"set a seat count a model suggested"))return false;
-    const c=event.analysis?.candidates.find(x=>x.id===candidateId);if(!c)return false;
-    const before=c.seats??null;
-    c.seats=Math.max(0,Math.min(99,value));c.seatsConfidence="verified";
-    audit(event,"VLM_SEATS_SET",{candidateId,from:before,to:c.seats,findingId:finding.id});
-    recomputePlanIntelligence(event);
-    touchEvent(event);
-    return true;
-  }
   const VLMSCREEN=globalThis.MeritScreenVlm.create({
-    activeEvent:(...a)=>activeEvent(...a),addVlmCandidate:(...a)=>addVlmCandidate(...a),applyReviewZoom:(...a)=>applyReviewZoom(...a),ask:(...a)=>ask(...a),audit:(...a)=>audit(...a),
+    activeEvent:(...a)=>activeEvent(...a),applyReviewZoom:(...a)=>applyReviewZoom(...a),ask:(...a)=>ask(...a),audit:(...a)=>audit(...a),
     canMutate:(...a)=>canMutate(...a),decideReview:(...a)=>decideReview(...a),esc:(...a)=>esc(...a),icon:(...a)=>icon(...a),render:(...a)=>render(...a),
-    setVlmSeats:(...a)=>setVlmSeats(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),ui,
+    t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),ui,undoReviewDecision:(...a)=>undoReviewDecision(...a),
   });
   // The confidence at which a fresh candidate arrives pre-selected. Local
   // calibration (improveAI) writes state.calibration.recommendedConfidence
@@ -4057,6 +4026,8 @@
     if(set.seatsUnknown){c.seats=null;c.seatsConfidence="unverified";}
     if(set.dropSeatsState){delete c.seats;delete c.seatsConfidence;}
     if(set.forgetLesson){delete c.taughtFrom;delete c.typeBasis;}
+    if("chairDetections" in set)c.chairDetections=set.chairDetections;
+    if("seats" in set){c.seats=set.seats;c.seatsConfidence=set.seatsConfidence||"verified";if(set.seatsSource)c.seatsSource=set.seatsSource;}
   }
   function familyCandidateIds(event,corrected,wasKind,wasType){
     const pi=event.analysis?.planIntelligence;if(!pi)return[];
@@ -4081,14 +4052,24 @@
     const familyIds=decision.kind==="reclassify"&&subject&&decision.spread!==false?familyCandidateIds(event,subject,subject.kind,subject.type):[];
     const p=DEC.plan({...decision,familyIds},{candidates:a.candidates,unverifiedSeating:[...UNVERIFIED_SEATING]});
     if(!p.ok)return null;
+    // A model finding this decision answers (decision.vlm) changes WITH it: one
+    // transaction, one undo. It must still be open and belong to this analysis.
+    const finding=decision.vlm&&a.vlm&&a.vlm.findings.find(f=>f.id===decision.vlm.findingId);
+    if(decision.vlm&&(!finding||finding.state!=="open"))return null;
     const decisionId=uid("decision");
-    const before=p.writes.map(w=>{const c=byId.get(w.id),snap={id:w.id,present:{}};
+    // Created objects are snapshotted as absent, so undo removes them.
+    const createdIds=new Set((p.create||[]).map(c=>c.id));
+    const before=p.writes.filter(w=>!createdIds.has(w.id)).map(w=>{const c=byId.get(w.id),snap={id:w.id,present:{}};
       for(const k of DEC.SNAPSHOT_FIELDS){snap.present[k]=k in c;if(k in c)snap[k]=clone(c[k]);}return snap;});
     ui.correctionUndo ||= [];
-    ui.correctionUndo.push({decisionId,eventId:event.id,analysisId:a.id,kind:p.kind,label:p.kind,before,memoryBefore:clone(event.planMemory||[]),at:nowISO()});
+    ui.correctionUndo.push({decisionId,eventId:event.id,analysisId:a.id,kind:p.kind,label:p.kind,before,created:[...createdIds],
+      finding:finding?{id:finding.id,state:finding.state}:null,memoryBefore:clone(event.planMemory||[]),at:nowISO()});
     if(ui.correctionUndo.length>30)ui.correctionUndo.shift();
+    for(const c of p.create||[]){a.candidates.push(c);byId.set(c.id,c);if(c.missed&&!a.missed.includes(c.id))a.missed.push(c.id);}
     for(const w of p.writes)applyReviewWrites(byId.get(w.id),w.set);
-    for(const id of p.memory)rememberCorrection(event,byId.get(id));
+    // An object the decision CREATED has no detection to be matched against on
+    // the next analysis: it is remembered as manual, so re-analysis restores it.
+    for(const id of p.memory)rememberCorrection(event,byId.get(id),{manual:createdIds.has(id)});
     for(const tr of p.training)captureTrainingExample(event,byId.get(tr.id),{decisionType:tr.decisionType,predictionBefore:tr.predictionBefore,
       note:tr.note||null,decisionId,propagatedFrom:tr.propagatedFrom||null,reviewedIndividually:tr.reviewedIndividually});
     // The object now carries a HUMAN observation: a person, not the detector,
@@ -4103,19 +4084,26 @@
         geometry:{frame:"plan-percent",convention:"corner",x:c.x,y:c.y,w:c.w,h:c.h,rotation:c.rotation||0},
         evidence:{what:label&&label.propagatedFrom?`spread from ${label.propagatedFrom}`:decision.via==="vlm"?"the operator accepted a vision-language model's suggestion about this object":"the operator's own decision on this object"}}));
     }
-    audit(event,"REVIEW_DECISION",{decisionId,kind:p.kind,targets:p.writes.map(w=>w.id),spread:p.spread,labels:p.training.length,...(decision.via==="vlm"?{via:"vlm"}:{})});
+    if(finding){finding.state="accepted";finding.decidedAt=nowISO();finding.decisionId=decisionId;finding.appliedTo=p.writes[0]?.id||null;}
+    audit(event,"REVIEW_DECISION",{decisionId,kind:p.kind,targets:p.writes.map(w=>w.id),spread:p.spread,labels:p.training.length,
+      ...(decision.via==="vlm"?{via:"vlm",findingId:finding?.id||null,runId:decision.vlm?.runId||null}:{})});
     if(REVIEW_OPERATOR_ACTION[p.kind])recordOperatorAction(event,REVIEW_OPERATOR_ACTION[p.kind],p.writes.map(w=>w.id));
     recomputePlanIntelligence(event);
     touchEvent(event);
-    return{decisionId,affected:p.writes.length,spread:p.spread};
+    return{decisionId,affected:p.writes.length,spread:p.spread,created:[...createdIds]};
   }
   globalThis.decideReview=decideReview;
-  function undoReviewDecision(event){
+  // The last decision on this event — or, given its id, one particular
+  // decision, provided no LATER decision touched the same objects (restoring
+  // an older snapshot over a newer decision would undo that one too, silently).
+  function undoReviewDecision(event,decisionId){
     event=event||activeEvent();
     if(!canMutate(event,"undo a plan correction"))return 0;
     const stack=ui.correctionUndo||[];
-    const i=stack.map(e=>e.eventId).lastIndexOf(event.id);
+    const i=decisionId?stack.findIndex(e=>e.eventId===event.id&&e.decisionId===decisionId):stack.map(e=>e.eventId).lastIndexOf(event.id);
     if(i<0)return 0;
+    const ids=e=>new Set([...e.before.map(b=>b.id),...(e.created||[])]);
+    if(decisionId){const mine=ids(stack[i]);if(stack.slice(i+1).some(e=>e.eventId===event.id&&[...ids(e)].some(id=>mine.has(id))))return -1;}
     const entry=stack.splice(i,1)[0],a=event.analysis;
     // A decision about candidates of an analysis that has since been replaced
     // (Re-Analyze) has nothing left to restore here; memory carried it over.
@@ -4127,6 +4115,15 @@
       for(const k of globalThis.MeritReviewDecisions.SNAPSHOT_FIELDS){if(snap.present[k])c[k]=snap[k];else delete c[k];}
       restored++;
     }
+    // Objects the decision created are removed again, from every list that holds them.
+    if(entry.created?.length){
+      const gone=new Set(entry.created);
+      a.candidates=a.candidates.filter(c=>!gone.has(c.id));
+      a.missed=(a.missed||[]).filter(id=>!gone.has(id));
+      restored+=entry.created.length;
+    }
+    // The model finding it answered is open again.
+    if(entry.finding&&a.vlm){const f=a.vlm.findings.find(x=>x.id===entry.finding.id);if(f){f.state=entry.finding.state;delete f.decidedAt;delete f.decisionId;delete f.appliedTo;}}
     // Memory as it was, whole: a correction that REPLACED an earlier decision's
     // entry gets that earlier entry back, not a hole.
     event.planMemory=entry.memoryBefore;
@@ -4170,16 +4167,22 @@
     else c[field]=value;
     touchEvent(event);render();
   }
+  // A seat count a person settled on a table that draws no chairs: typed into
+  // the object card, or a suggestion they accepted. It is the table's logical
+  // capacity (HUMAN_CONFIRMED) and creates no chair — the physical count stays
+  // what the drawing drew, and the printed rule stays its own source.
+  const personSeats=c=>c.seatsConfidence==="verified"&&Number.isInteger(c.seats)&&c.seats>0?c.seats:null;
   function commitCandidates(){
     if(!canMutate(activeEvent(),"confirm the plan"))return;
     const event=activeEvent(),chosen=event.analysis?.candidates.filter(c=>c.selected&&c.status!=="rejected")||[];if(!chosen.length)return toast(t("toast.selectDetectionFirst"),"error");
-    // The same verdict runSelfCheck() already reads (analysis.diagnostics.
-    // representation.kind==="PHYSICAL") -- one fact, one source. A table
-    // committed off a SYMBOLIC plan (or one with no verdict at all, since
-    // absence of evidence is not evidence of drawn chairs) gets
-    // hasPhysicalSeats:false, so it carries NO chair objects at all --
-    // not a ring of fabricated positions flagged as unreal.
-    const drawsSeats=!!(event.analysis?.diagnostics?.representation?.kind==="PHYSICAL");
+    // A table carries physical chairs only when chairs were found AT IT. It
+    // used to inherit the plan's verdict (representation PHYSICAL): a table on
+    // a chair-drawing plan whose own chairs were not detected was committed as
+    // hasPhysicalSeats:true with no chairs, and syncTableChairs then built a
+    // ring from its capacity number on the next load — chairs nobody drew
+    // (found by vlm-reading's accept → Confirm → reload chain, 2026-10-10). A
+    // SYMBOLIC plan's tables were already false; now an undetected table on a
+    // physical plan is too, and its capacity stays a logical number.
     // §5: the drawing's printed capacity rule gives a seatless symbol its
     // capacity ONLY when MeritCapacityProvenance.ruleApplication() says the
     // rule describes these symbols — one decision for the whole commit, with
@@ -4213,7 +4216,7 @@
         // surface is kept as its own box inside it, each chair at its
         // detected centre in the table's own frame.
         const fp=FRAMES.footprintFor(body,c.rotation||0,(c.chairDetections||[]).map(ch=>toWorld(ch,FRAMES.CENTRE)));
-        const table=RULES().syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x:fp.x,y:fp.y,w:fp.w,h:fp.h,surface:fp.surface,capacity:Math.max(1,c.chairDetections?.length||(ruleUse.applies?ruleUse.perUnit:1)),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:drawsSeats||!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":ruleUse.applies?"DERIVED_PRINTED_RULE":"UNKNOWN",origin:"DETECTED",printedNumber:printedEvidence(c.printedNumber),...(!c.chairDetections?.length&&ruleUse.applies?{capacityEvidence:{...ruleUse.evidence,at:nowISO()}}:{})});
+        const table=RULES().syncTableChairs({id:uid("table"),number:uniqueNumber(event,"T",1),type:["round","square","rectangle","bistro"].includes(c.type)?c.type:"rectangle",x:fp.x,y:fp.y,w:fp.w,h:fp.h,surface:fp.surface,capacity:Math.max(1,c.chairDetections?.length||(personSeats(c)??(ruleUse.applies?ruleUse.perUnit:1))),zone:"MAIN FLOOR",rotation:c.rotation||0,locked:false,z:10,hasPhysicalSeats:!!c.chairDetections?.length,capacitySource:c.chairDetections?.length?"DETECTED_PHYSICAL_SEATS":personSeats(c)!=null?"HUMAN_CONFIRMED":ruleUse.applies?"DERIVED_PRINTED_RULE":"UNKNOWN",origin:"DETECTED",printedNumber:printedEvidence(c.printedNumber),...(!c.chairDetections?.length&&personSeats(c)!=null?{capacityEvidence:{via:c.seatsSource||"typed",seats:c.seats,at:nowISO()}}:!c.chairDetections?.length&&ruleUse.applies?{capacityEvidence:{...ruleUse.evidence,at:nowISO()}}:{})});
         if(c.chairDetections?.length){
           // A chair whose facing the drawing showed keeps it. The canvas draws a
           // chair at rotation 0 facing +y of its table (the layout convention of

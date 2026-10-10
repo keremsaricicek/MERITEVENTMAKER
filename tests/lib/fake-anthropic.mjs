@@ -8,7 +8,8 @@
 // the plumbing; it proves nothing about how well a real model reads a plan,
 // and no report may present it as if it did.
 //
-// It records every request it receives (method, path, headers, parsed body),
+// It records every request it receives (method, path, headers, parsed body) —
+// `requests` for messages and models, `counts` for the free count_tokens —
 // so a suite can assert what actually left the relay: which header carried
 // the key, that no guest field travelled, that plan text was quoted data.
 import http from "node:http";
@@ -38,9 +39,12 @@ export const ERRORS = Object.freeze({
 
 // script: an array consumed one entry per /v1/messages request; each entry is
 //   { reply: <message object> } | { error: <errorReply> } | { delayMs, ...either } | { hang: true }
+//   | { destroy: true }   (the connection is cut before any reply: the client sees a connection error)
 // When the script runs out, `fallback(body)` answers (default: an empty review).
-export async function startFakeAnthropic({ script = [], fallback } = {}) {
-  const requests = [];
+// count_tokens answers `countTokens` (a number, or a function of the body);
+// it is free upstream, and never consumes a script step.
+export async function startFakeAnthropic({ script = [], fallback, countTokens = 4000 } = {}) {
+  const requests = [], counts = [];
   const queue = [...script];
   const hanging = new Set();
   const server = http.createServer((req, res) => {
@@ -51,7 +55,8 @@ export async function startFakeAnthropic({ script = [], fallback } = {}) {
       let body = null;
       try { body = raw ? JSON.parse(raw) : null; } catch { body = { unparsed: raw.slice(0, 200) }; }
       const rec = { method: req.method, path: req.url, headers: { ...req.headers }, body, at: Date.now(), aborted: false };
-      requests.push(rec);
+      // Free token counts are kept apart from the calls that can cost or check.
+      (req.url.startsWith("/v1/messages/count_tokens") ? counts : requests).push(rec);
       res.on("close", () => { if (!res.writableEnded) rec.aborted = true; });
       const send = (status, obj, headers = {}) => {
         if (res.destroyed) return;
@@ -65,9 +70,15 @@ export async function startFakeAnthropic({ script = [], fallback } = {}) {
         const id = decodeURIComponent(req.url.split("/")[3].split("?")[0]);
         return send(200, { type: "model", id, display_name: `${id} (fake)`, created_at: "2026-01-01T00:00:00Z" });
       }
+      if (req.method === "POST" && req.url.startsWith("/v1/messages/count_tokens")) {
+        const nTok = typeof countTokens === "function" ? countTokens(body) : countTokens;
+        if (nTok instanceof Error || (nTok && nTok.status)) return send(nTok.status || 500, nTok.body || { type: "error", error: { type: "api_error", message: "count failed" } });
+        return send(200, { input_tokens: nTok });
+      }
       if (req.method === "POST" && req.url.startsWith("/v1/messages")) {
         const step = queue.length && !queue[0].models ? queue.shift() : null;
         if (step && step.hang) { hanging.add(res); return; }
+        if (step && step.destroy) { req.socket.destroy(); return; }
         if (step && step.delayMs) await new Promise((r) => setTimeout(r, step.delayMs));
         if (res.destroyed) return;
         if (step && step.error) return send(step.error.status, step.error.body, step.error.headers);
@@ -82,6 +93,7 @@ export async function startFakeAnthropic({ script = [], fallback } = {}) {
   return {
     baseURL: `http://127.0.0.1:${port}`,
     requests,
+    counts,
     push: (...steps) => queue.push(...steps),
     pending: () => queue.length,
     close: () => new Promise((resolve) => { for (const r of hanging) r.destroy(); server.closeAllConnections?.(); server.close(() => resolve()); }),

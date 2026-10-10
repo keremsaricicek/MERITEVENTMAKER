@@ -271,12 +271,19 @@ template (`server/vlm-core.mjs`) and refuses any field it does not know, so a
 guest record cannot ride along. A person starts every reading, after a
 confirmation that names what is sent (the plan image, the detector's boxes,
 the text read off the plan) and what is not, with the relay's caps; every
-spend limit refuses against the request's WORST CASE before anything is
-sent. The model reads the whole plan and may ask for up to four close-ups;
+spend limit refuses against each ATTEMPT's worst case before it is sent —
+input counted by the free count_tokens (an estimate, so a margin is added)
+plus all of max_tokens, summed over an explicit, priced fallback chain (an
+open-ended chain is refused). Each attempt holds an id'd reservation against
+its own UTC day; unknown outcomes keep their hold; an unreadable ledger stops
+paid work and is never reopened as zero. The model reads the whole plan and may ask for up to four close-ups;
 its findings are **suggestions** drawn on the same map — nothing changes
-until a person presses Accept, and Accept goes through the existing writers
-(`decideReview` with `spread:false`, the missed-object path, the typed
-seat-count path), one object at a time. A printed table number is never
+until a person presses Accept, and Accept is ONE `decideReview` decision
+(`reject`/`reclassify` with `spread:false`, `addObject`, `addChair`,
+`setSeats`) that moves the object, the finding's state, plan memory, the
+training label and the audit entry together — and undoes them together. A
+person's decision outranks every suggestion in app logic (`acceptPlan`): no
+count over a confirmed object, no "missing" where a person rejected one. A printed table number is never
 taken from a model. An answer for an older analysis, plan, event or a
 cancelled reading is dropped whole (`MeritVlmReview.staleReason`). The
 suites run against `tests/lib/fake-anthropic.mjs`, whose answers are

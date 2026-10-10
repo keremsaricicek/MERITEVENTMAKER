@@ -31,7 +31,6 @@
 (() => {
   "use strict";
   let activeEvent;
-  let addVlmCandidate;
   let applyReviewZoom;
   let ask;
   let audit;
@@ -40,11 +39,11 @@
   let esc;
   let icon;
   let render;
-  let setVlmSeats;
   let t;
   let toast;
   let touchEvent;
   let ui;
+  let undoReviewDecision;
   let created=false;
 
   const RELAY="/vlm-relay";
@@ -198,6 +197,14 @@
       return null;
     }
     if(step==="overview")run.planSummary=String(res.result.planSummary||"").slice(0,800);
+    // What was set aside on the way, kept with the reading and shown with it:
+    // findings the relay refused (each with its reason), boxes it pulled back
+    // inside the image, and objects or text the page could not send (the cap).
+    run.setAside ||= {dropped:{},clamped:0,omittedObjects:0,omittedText:0};
+    for(const d of res.result.dropped||[])run.setAside.dropped[d.why]=(run.setAside.dropped[d.why]||0)+1;
+    run.setAside.clamped+=res.result.clamped||0;
+    run.setAside.omittedObjects+=(body.omitted&&body.omitted.candidates)||0;
+    run.setAside.omittedText+=(body.omitted&&body.omitted.printedText)||0;
     const incoming=V().findingsFrom(res.result,{refs,frame,size:{width:image.width,height:image.height},step,regionIndex,idPrefix:run.runId.slice(4,12)});
     run.findings=V().mergeFindings(run.findings,incoming);
     touchEvent(activeEvent());render();
@@ -223,22 +230,40 @@
 
   // ---- a person's decision on one finding ----------------------------------------
   function findingOf(id){const a=activeEvent()&&activeEvent().analysis,run=a&&a.vlm;return run?{a,run,f:run.findings.find(x=>x.id===id)}:{};}
+  // One finding, one decision, through the review's single writer
+  // (decideReview): the object, the finding's state, plan memory, the training
+  // label and the audit entry change together, and undo takes them all back.
+  const newId=(prefix)=>prefix+"_"+(globalThis.crypto&&globalThis.crypto.randomUUID?globalThis.crypto.randomUUID():String(Math.random()).slice(2));
+  function decisionFor(p,f,run){
+    const vlm={runId:run.runId,findingId:f.id};
+    if(p.action==="decide")return{...p.decision,vlm};
+    if(p.action==="seats")return{kind:"setSeats",candidateId:p.candidateId,value:p.value,source:"vlm-accepted",via:"vlm",vlm};
+    if(p.action==="addChair")return{kind:"addChair",candidateId:p.tableId,via:"vlm",vlm,
+      chair:{id:newId("candidate-chair"),x:p.chair.x,y:p.chair.y,w:p.chair.w,h:p.chair.h,rotation:0,confidence:1,source:"vlm-suggestion",finding:f.id}};
+    const c=p.candidate,id=newId("candidate");
+    return{kind:"addObject",candidateId:id,via:"vlm",vlm,note:"a vision-language model suggested it and the operator accepted it; the box is the model's",
+      candidate:{id,kind:c.kind,type:c.type,x:c.x,y:c.y,w:c.w,h:c.h,rotation:0,confidence:1,status:"confirmed",selected:true,missed:true,chairDetections:[],
+        ...(["sofa","bench","banquette","loca"].includes(c.type)?{seats:null,seatsConfidence:"unverified",seatsUnknown:true}:{}),
+        evidence:{geometry:"vlm-suggestion",chairs:0,repetition:0,model:run.model||null,finding:f.id}}};
+  }
   function accept(id){
     const event=activeEvent(),{a,run,f}=findingOf(id);
     if(!f)return;
     if(!canMutate(event,"apply a vision-language suggestion"))return;
-    const p=V().acceptPlan(f,a);
+    const p=V().acceptPlan(f,a,{memory:event.planMemory||[]});
     if(!p.ok){toast(t("vlm.toast.refused"),"error",5000);render();return;}
-    let candidateId=null;
-    if(p.action==="add")candidateId=addVlmCandidate(event,p.candidate,f);
-    else if(p.action==="decide"){const r=decideReview(event,p.decision);if(!r){toast(t("vlm.toast.refused"),"error",5000);return;}candidateId=f.candidateId;}
-    else if(p.action==="seats"){if(!setVlmSeats(event,p.candidateId,p.value,f)){toast(t("vlm.toast.refused"),"error",5000);return;}candidateId=p.candidateId;}
-    if(!candidateId)return;
-    f.state="accepted";f.decidedAt=new Date().toISOString();f.appliedTo=candidateId;
-    audit(event,"VLM_FINDING_ACCEPTED",{runId:run.runId,findingId:f.id,kind:f.kind,candidateId});
-    touchEvent(event);
-    ui.selectedCandidateId=candidateId;
+    const r=decideReview(event,decisionFor(p,f,run));
+    if(!r){toast(t("vlm.toast.refused"),"error",5000);render();return;}
+    ui.selectedCandidateId=f.appliedTo||null;
     toast(t("vlm.toast.accepted"),"success",3500);
+    render();
+  }
+  function undo(id){
+    const event=activeEvent(),{f}=findingOf(id);
+    if(!f||f.state!=="accepted"||!f.decisionId)return;
+    const n=undoReviewDecision(event,f.decisionId);
+    if(n===-1){toast(t("vlm.toast.undoBlocked"),"error",6000);return;}
+    if(n>0)toast(t("vlm.toast.undone"),"success",3500);
     render();
   }
   function dismiss(id){
@@ -298,7 +323,12 @@
     if(session.probing)return`<p class="vlm-note" role="status">${t("vlm.relay.probing")}</p>`;
     if(!r)return`<p class="vlm-note">${t("vlm.relay.unknown")}</p>`;
     if(!r.relay)return`<p class="vlm-state warn"><b>${t("vlm.relay.absent")}</b></p><p class="vlm-note">${t("vlm.relay.absentWhy")}</p><button class="btn sm" data-vlm-action="probe">${t("vlm.relay.again")}</button>`;
-    if(!r.configured)return`<p class="vlm-state warn"><b>${t(r.reasonCode==="UNKNOWN_PRICE"?"vlm.relay.noPrice":"vlm.relay.noKey")}</b></p><p class="vlm-note">${t(r.reasonCode==="UNKNOWN_PRICE"?"vlm.relay.noPriceWhy":"vlm.relay.noKeyWhy",{model:esc(r.model||"")})}</p><button class="btn sm" data-vlm-action="probe">${t("vlm.relay.again")}</button>`;
+    if(!r.configured){
+      const head=r.reasonCode==="UNKNOWN_PRICE"?"vlm.relay.noPrice":r.reasonCode==="UNBOUNDED_FALLBACK"?"vlm.relay.noBudget":"vlm.relay.noKey";
+      const why=r.reasonCode==="UNKNOWN_PRICE"?t("vlm.relay.noPriceWhy",{model:esc(r.model||"")}):r.reasonCode==="UNBOUNDED_FALLBACK"?t("vlm.err.UNBOUNDED_FALLBACK"):t("vlm.relay.noKeyWhy",{model:esc(r.model||"")});
+      return`<p class="vlm-state warn"><b>${t(head)}</b></p><p class="vlm-note">${why}</p><button class="btn sm" data-vlm-action="probe">${t("vlm.relay.again")}</button>`;
+    }
+    if(r.ledger&&r.ledger.state&&r.ledger.state!=="OK")return`<p class="vlm-state warn"><b>${t("vlm.run.failed")}</b> · ${esc(tx("vlm.err.","LEDGER_"+r.ledger.state))}</p><button class="btn sm" data-vlm-action="probe">${t("vlm.relay.again")}</button>`;
     const L=r.limits||{},U=r.usage||{};
     const check=session.checking?`<span class="vlm-note" role="status">${t("vlm.check.running")}</span>`
       :session.check?(session.check.ok?`<span class="vlm-state ok">${t("vlm.check.ok")}</span>`:`<span class="vlm-state warn">${esc(tx("vlm.err.",session.check.code))}</span>`):"";
@@ -307,8 +337,8 @@
       <div class="vlm-actions"><button class="btn sm" data-vlm-action="check" ${session.checking||session.busy?"disabled":""}>${t("vlm.check")}</button>${check}</div>`;
   }
   function findingRowHTML(a,f,i){
-    const p=V().acceptPlan(f,a),conf=t("vlm.conf."+f.confidence);
-    const state=f.state==="accepted"?`<span class="vlm-tag ok">${t("vlm.state.accepted")}</span>`:f.state==="dismissed"?`<span class="vlm-tag">${t("vlm.state.dismissed")}</span>`:"";
+    const p=V().acceptPlan(f,a,{memory:(activeEvent()&&activeEvent().planMemory)||[]}),conf=t("vlm.conf."+f.confidence);
+    const state=f.state==="accepted"?`<span class="vlm-tag ok">${t("vlm.state.accepted")}</span><button class="btn sm quiet" data-vlm-action="undo" data-vlm-finding="${esc(f.id)}">${t("vlm.undo")}</button>`:f.state==="dismissed"?`<span class="vlm-tag">${t("vlm.state.dismissed")}</span>`:"";
     const reason=!p.ok&&f.state==="open"?`<span class="vlm-reason">${esc(t("vlm.reason."+p.reason))}</span>`:"";
     const actions=f.state==="open"?`<div class="vlm-row-actions"><button class="btn sm primary" data-vlm-action="accept" data-vlm-finding="${esc(f.id)}" ${p.ok?"":`disabled title="${esc(t("vlm.reason."+p.reason))}"`}>${t("vlm.accept")}</button><button class="btn sm" data-vlm-action="dismiss" data-vlm-finding="${esc(f.id)}">${t("vlm.dismiss")}</button>${f.box||f.candidateId?`<button class="btn sm quiet" data-vlm-action="focus" data-vlm-finding="${esc(f.id)}">${t("vlm.show")}</button>`:""}</div>${reason}`:"";
     const cls=["vlm-finding","state-"+f.state,"kind-"+f.kind,session.focusId===f.id?"focused":""].join(" ").trim();
@@ -320,11 +350,20 @@
     const status=run?`<p class="vlm-state ${run.status==="done"?"ok":run.status==="running"?"":"warn"}" role="status"><b>${t("vlm.run."+run.status)}</b>${run.code&&run.status!=="done"?` · ${esc(run.status==="stale"?tx("vlm.stale.",run.staleReason||"ANALYSIS_CHANGED"):tx("vlm.err.",run.code))}`:""}</p><p class="vlm-note">${t("vlm.run.meta",{model:esc(run.model||""),usd:money(run.spentUsd),steps:num(run.steps)})}</p>`:"";
     const body=run&&run.findings.length?`<ol class="vlm-findings">${run.findings.map((f,i)=>findingRowHTML(a,f,i)).join("")}</ol>`
       :run&&run.status!=="running"?`<p class="vlm-note">${t("vlm.noFindings")}</p>`:"";
-    const send=session.relay&&session.relay.relay&&session.relay.configured&&!session.busy?`<button class="btn sm primary" data-vlm-action="start">${t(run?"vlm.sendAgain":"vlm.send")}</button>`:"";
+    const send=session.relay&&session.relay.relay&&session.relay.configured&&!(session.relay.ledger&&session.relay.ledger.state&&session.relay.ledger.state!=="OK")&&!session.busy?`<button class="btn sm primary" data-vlm-action="start">${t(run?"vlm.sendAgain":"vlm.send")}</button>`:"";
     return`<aside class="vlm-panel" id="vlmPanel" aria-label="${esc(t("vlm.title"))}"><div class="vlm-head"><strong>${t("vlm.title")}</strong><button class="btn icon-only sm" data-vlm-action="close" aria-label="${esc(t("vlm.close"))}">${icon("x")}</button></div><div class="vlm-body">
       <section class="vlm-relay">${relayStateHTML()}${run?"":`<p class="vlm-note">${t("vlm.what")}</p>`}${send}</section>
-      ${run?`<section class="vlm-run">${status}${run.planSummary?`<div class="vlm-summary"><small>${t("vlm.summaryLabel")}</small><p>${esc(run.planSummary)}</p></div>`:""}${c&&c.total?`<p class="vlm-note">${t("vlm.counts",{open:c.open,accepted:c.accepted,dismissed:c.dismissed})}</p>`:""}${body}</section>`:""}
+      ${run?`<section class="vlm-run">${status}${run.planSummary?`<div class="vlm-summary"><small>${t("vlm.summaryLabel")}</small><p>${esc(run.planSummary)}</p></div>`:""}${c&&c.total?`<p class="vlm-note">${t("vlm.counts",{open:c.open,accepted:c.accepted,dismissed:c.dismissed})}</p>`:""}${setAsideHTML(run)}${body}</section>`:""}
     </div></aside>`;
+  }
+  // Nothing the relay or the page set aside is silent: each reason, counted.
+  function setAsideHTML(run){
+    const sa=run&&run.setAside;if(!sa)return"";
+    const rows=Object.entries(sa.dropped).map(([why,n])=>`<li>${esc(tx("vlm.drop.",why))} <b>×${num(n)}</b></li>`);
+    if(sa.clamped)rows.push(`<li>${t("vlm.setAside.clamped",{n:num(sa.clamped)})}</li>`);
+    if(sa.omittedObjects)rows.push(`<li>${t("vlm.setAside.omittedObjects",{n:num(sa.omittedObjects)})}</li>`);
+    if(sa.omittedText)rows.push(`<li>${t("vlm.setAside.omittedText",{n:num(sa.omittedText)})}</li>`);
+    return rows.length?`<details class="vlm-setaside"><summary>${t("vlm.setAside",{n:rows.length})}</summary><ul>${rows.join("")}</ul></details>`:"";
   }
   // The diagnostics line. Until the relay has been asked, the old line stands:
   // no relay has been reached from this page, so nothing has been sent.
@@ -346,6 +385,7 @@
     else if(action==="cancel")cancel();
     else if(action==="accept")accept(id);
     else if(action==="dismiss")dismiss(id);
+    else if(action==="undo")undo(id);
     else if(action==="focus")focus(id);
   }
 
@@ -353,7 +393,6 @@
     if(created)throw new Error("MeritScreenVlm.create() is called once, by app-v8.js.");
     created=true;
     activeEvent=deps.activeEvent;
-    addVlmCandidate=deps.addVlmCandidate;
     applyReviewZoom=deps.applyReviewZoom;
     ask=deps.ask;
     audit=deps.audit;
@@ -362,12 +401,12 @@
     esc=deps.esc;
     icon=deps.icon;
     render=deps.render;
-    setVlmSeats=deps.setVlmSeats;
     t=deps.t;
     toast=deps.toast;
     touchEvent=deps.touchEvent;
     ui=deps.ui;
+    undoReviewDecision=deps.undoReviewDecision;
     return{toolbarHTML,mapHTML,panelHTML,diagnosticsHTML,onAction,session:()=>({...session,controller:!!session.controller})};
   }
-  globalThis.MeritScreenVlm=Object.freeze({create,DEPS:Object.freeze(["activeEvent","addVlmCandidate","applyReviewZoom","ask","audit","canMutate","decideReview","esc","icon","render","setVlmSeats","t","toast","touchEvent","ui"])});
+  globalThis.MeritScreenVlm=Object.freeze({create,DEPS:Object.freeze(["activeEvent","applyReviewZoom","ask","audit","canMutate","decideReview","esc","icon","render","t","toast","touchEvent","ui","undoReviewDecision"])});
 })();

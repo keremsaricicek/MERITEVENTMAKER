@@ -84,13 +84,22 @@
   // What the page sends about the analysis: each detector object inside the
   // frame, by a short ref the model answers with. Refs map back to candidate
   // ids here and only here, so no id the app uses ever leaves the page.
+  // Why the analysis held an object back, as the closed code the relay accepts.
+  // The stored shape is lowEvidence:{reason,...} (or null); a bare `true` from an
+  // older record is still "held back", for a reason not recorded.
+  const HELD_BACK = ["belowReviewThreshold", "overlapsAnotherTable", "seatsInsideBody", "reassignedFromOverlappingReading"];
+  const heldBackCode = (le) => !le ? null : (le && HELD_BACK.includes(le.reason) ? le.reason : "other");
+
   function candidatesPayload(analysis, frame, size) {
     const refs = {}, list = [];
+    let omitted = 0;
     for (const c of (analysis && analysis.candidates) || []) {
-      if (list.length >= MAX_CANDIDATES) break;
       if (!(c.w > 0 && c.h > 0) || overlapShare(c, frame) < 0.5) continue;
       const box = clampBox(toPx(c, frame, size), size);
       if (!(box[0] < box[2] && box[1] < box[3])) continue;
+      // Past the cap an object is COUNTED, never silently dropped: the model
+      // is told how many it was not shown, and so is the person.
+      if (list.length >= MAX_CANDIDATES) { omitted++; continue; }
       const ref = "c" + (list.length + 1);
       refs[ref] = c.id;
       const pn = c.printedNumber;
@@ -98,38 +107,41 @@
         status: ["unreviewed", "confirmed", "rejected"].includes(c.status) ? c.status : "unreviewed",
         seats: Number.isInteger(c.seats) && c.seats >= 0 && c.seats <= 99 ? c.seats : null,
         number: pn && pn.state === "VERIFIED" && /^[A-Za-z0-9 ._-]{1,12}$/.test(String(pn.value)) ? String(pn.value) : null,
-        heldBack: c.lowEvidence === true });
+        heldBack: heldBackCode(c.lowEvidence) });
     }
-    return { candidates: list, refs };
+    return { candidates: list, refs, omitted };
   }
 
   // Text the OCR model read off the plan, as data, inside the frame.
   function printedTextPayload(analysis, frame, size) {
     const m = analysis && analysis.ocrModel, out = [];
-    if (!m || !m.available || !m.imageSize || !Array.isArray(m.items)) return out;
+    let omitted = 0;
+    if (!m || !m.available || !m.imageSize || !Array.isArray(m.items)) return { items: out, omitted };
     const W = m.imageSize.width, H = m.imageSize.height;
     for (const it of m.items) {
-      if (out.length >= MAX_PRINTED) break;
       const text = String(it.text || "").trim();
       if (!text || !(it.score >= 0.8) || !it.box) continue;
       const pct = { x: it.box.x0 / W * 100, y: it.box.y0 / H * 100, w: (it.box.x1 - it.box.x0) / W * 100, h: (it.box.y1 - it.box.y0) / H * 100 };
       if (overlapShare(pct, frame) < 0.5) continue;
       const box = clampBox(toPx(pct, frame, size), size);
-      if (box[0] < box[2] && box[1] < box[3]) out.push({ text: text.slice(0, 80), box });
+      if (!(box[0] < box[2] && box[1] < box[3])) continue;
+      if (out.length >= MAX_PRINTED) { omitted++; continue; }
+      out.push({ text: text.slice(0, 80), box });
     }
-    return out;
+    return { items: out, omitted };
   }
 
   // The body of one /vlm-relay/run request. `image` is { mediaType, data,
   // width, height } as encoded by the caller from exactly `frame`.
   function payloadFor({ analysis, planHash, runId, step, lang, frame, image, reason }) {
     const size = { width: image.width, height: image.height };
-    const { candidates, refs } = candidatesPayload(analysis, frame, size);
+    const { candidates, refs, omitted } = candidatesPayload(analysis, frame, size);
+    const printed = printedTextPayload(analysis, frame, size);
     const body = { runId, step, analysisId: analysis.id, planHash: planHash || null, lang: lang === "tr" ? "tr" : "en",
       image: { mediaType: image.mediaType, data: image.data, width: image.width, height: image.height },
-      candidates, printedText: printedTextPayload(analysis, frame, size) };
-    if (step === "region") body.region = { reason: String(reason || "").slice(0, 200) };
-    return { body, refs };
+      candidates, printedText: printed.items, omitted: { candidates: omitted, printedText: printed.omitted } };
+    if (step === "region" || step === "tile") body.region = { reason: String(reason || "").slice(0, 200) };
+    return { body, refs, omitted: body.omitted };
   }
 
   // A region the model asked to inspect, as a frame on the plan: its box from
@@ -187,34 +199,84 @@
     return null;
   }
 
-  // What Accept would do with a finding, against the analysis as it is NOW.
-  //   { ok:true, action:"add", candidate }               an object the detector missed
-  //   { ok:true, action:"decide", decision }             through decideReview, one object
-  //   { ok:true, action:"seats", candidateId, value }    a seat count, the typed-count writer
-  //   { ok:false, reason }                               shown on the disabled control
+  // Which objects can stand in one place. Two of the SAME family in one place
+  // are one object seen twice; a chair inside a table's reach, a table inside a
+  // loca, a column inside a bar are different objects nested — legitimate.
+  const FAMILY = Object.freeze({ round: "table", square: "table", rectangle: "table", bistro: "table", chair: "seat", armchair: "seat",
+    sofa: "lounge", bench: "lounge", banquette: "lounge", loca: "loca", stage: "stage", bar: "bar", entrance: "door", exit: "door",
+    column: "column", text: "text", other: "other" });
+  const area = (b) => Math.max(0, b.w) * Math.max(0, b.h);
+  function sameObject(a, b) {
+    if (iou(a, b) >= 0.4) return true;
+    const small = area(a) <= area(b) ? a : b, big = small === a ? b : a;
+    return area(big) > 0 && area(small) / area(big) >= 0.5 && overlapShare(small, big) >= 0.8;
+  }
+  // A chair belongs to the nearest table whose reach holds its centre (reach:
+  // one and a half chair sizes beyond the table's own box).
+  function tableFor(chair, analysis) {
+    const cx = chair.x + chair.w / 2, cy = chair.y + chair.h / 2, reach = Math.max(chair.w, chair.h) * 1.5;
+    let best = null, bestD = Infinity;
+    for (const t of (analysis && analysis.candidates) || []) {
+      if (t.kind !== "table" || t.status === "rejected") continue;
+      const dx = Math.max(t.x - cx, 0, cx - (t.x + t.w)), dy = Math.max(t.y - cy, 0, cy - (t.y + t.h)), d = Math.hypot(dx, dy);
+      if (d <= reach && d < bestD) { best = t; bestD = d; }
+    }
+    return best;
+  }
+
+  // What Accept would do with a finding, against the analysis as it is NOW,
+  // and against what a person has already decided — in this analysis
+  // (candidate status) and in the event's plan memory (`ctx.memory`, the
+  // decisions that survive a re-analysis). A decision is never routed around:
+  // the person reopens the object first, by the review's own controls.
+  //   { ok:true, action:"add", candidate }                an object the detector missed
+  //   { ok:true, action:"addChair", chair, tableId }      a missed chair, on its table
+  //   { ok:true, action:"decide", decision }              through decideReview, one object
+  //   { ok:true, action:"seats", candidateId, value }     a seat count, the typed-count writer
+  //   { ok:false, reason }                                shown on the disabled control
   // printedNumber and note are never applied: a verified printed number is an
   // identity (layout changes and venue lessons key on it) and only a reading
   // or a person typing it may set one; a note is information.
-  function acceptPlan(finding, analysis) {
+  function acceptPlan(finding, analysis, ctx) {
     if (!finding || finding.state !== "open") return { ok: false, reason: "DONE" };
-    const byId = new Map(((analysis && analysis.candidates) || []).map(c => [c.id, c]));
+    const all = (analysis && analysis.candidates) || [];
+    const byId = new Map(all.map(c => [c.id, c]));
+    const memory = (ctx && Array.isArray(ctx.memory)) ? ctx.memory : [];
     if (finding.kind === "missing") {
       if (!finding.box || !TYPE_KIND[finding.type]) return { ok: false, reason: "INCOMPLETE" };
-      const covered = [...byId.values()].some(c => c.status !== "rejected" && (iou(c, finding.box) >= 0.4 || overlapShare(finding.box, c) >= 0.8));
-      if (covered) return { ok: false, reason: "COVERED" };
-      return { ok: true, action: "add", candidate: { kind: TYPE_KIND[finding.type], type: finding.type, ...finding.box } };
+      const fam = FAMILY[finding.type], b = finding.box;
+      // A person rejected an object of this family here — now, or in a decision
+      // the plan memory carries across re-analysis.
+      if (all.some(c => c.status === "rejected" && FAMILY[c.type] === fam && sameObject(c, b))
+        || memory.some(m => m && m.status === "rejected" && m.geometry && FAMILY[m.type] === fam && sameObject(m.geometry, b))) return { ok: false, reason: "REJECTED_HERE" };
+      // The same family already stands here: a duplicate, not a missing object.
+      if (all.some(c => c.status !== "rejected" && FAMILY[c.type] === fam && sameObject(c, b))) return { ok: false, reason: "COVERED" };
+      if (fam === "seat") {
+        const seatAt = all.some(c => c.status !== "rejected" && (c.chairDetections || []).some(ch => sameObject({ x: ch.x - ch.w / 2, y: ch.y - ch.h / 2, w: ch.w, h: ch.h }, b)));
+        if (seatAt) return { ok: false, reason: "COVERED" };
+        const table = finding.type === "chair" ? tableFor(b, analysis) : null;
+        if (table) {
+          // A chair added to a table a person confirmed changes a decided object.
+          if (table.status === "confirmed") return { ok: false, reason: "ALREADY_DECIDED" };
+          return { ok: true, action: "addChair", tableId: table.id, chair: { x: b.x + b.w / 2, y: b.y + b.h / 2, w: b.w, h: b.h } };
+        }
+      }
+      return { ok: true, action: "add", candidate: { kind: TYPE_KIND[finding.type], type: finding.type, ...b } };
     }
     if (finding.kind === "note") return { ok: false, reason: "INFORMATION" };
     if (finding.kind === "printedNumber") return { ok: false, reason: "NUMBER_NOT_APPLIED" };
     const c = byId.get(finding.candidateId);
     if (!c) return { ok: false, reason: "GONE" };
+    if (c.status !== "unreviewed") return { ok: false, reason: "ALREADY_DECIDED" };
     if (finding.kind === "seatCount") {
       if (!Number.isInteger(finding.value) || finding.value < 0 || finding.value > 99) return { ok: false, reason: "INCOMPLETE" };
-      if (c.status === "rejected") return { ok: false, reason: "ALREADY_DECIDED" };
+      // A count a person typed outranks a suggestion; a table that draws its
+      // chairs is counted by its chairs, which are corrected one by one.
+      if (c.seatsConfidence === "verified") return { ok: false, reason: "ALREADY_DECIDED" };
+      if (c.kind === "table" && (c.chairDetections || []).length) return { ok: false, reason: "SEATS_ARE_CHAIRS" };
       if (c.seats === finding.value) return { ok: false, reason: "ALREADY_SO" };
       return { ok: true, action: "seats", candidateId: c.id, value: finding.value };
     }
-    if (c.status !== "unreviewed") return { ok: false, reason: "ALREADY_DECIDED" };
     if (finding.kind === "notAnObject") return { ok: true, action: "decide", decision: { kind: "reject", candidateId: c.id, via: "vlm" } };
     if (finding.kind === "wrongType") {
       if (!TYPE_KIND[finding.type]) return { ok: false, reason: "INCOMPLETE" };
@@ -239,6 +301,6 @@
   globalThis.MeritVlmReview = Object.freeze({
     IMAGE_MAX_EDGE, IMAGE_MAX_PIXELS, REGION_EDGE, REGION_UPSCALE, MAX_REGIONS, KINDS, TYPE_KIND, WHOLE,
     fitSize, candidatesPayload, printedTextPayload, payloadFor, regionFrame, findingsFrom, mergeFindings,
-    staleReason, acceptPlan, counts, newRunId, iou,
+    staleReason, acceptPlan, counts, newRunId, iou, sameObject, tableFor, FAMILY, heldBackCode,
   });
 })();

@@ -91,7 +91,7 @@ const ERROR_CLASS = {
   // The model reading (src/screen-vlm.js): the send did not happen, a person's
   // Accept was refused (its reason stays beside the finding), an answer for an
   // older analysis was dropped (the event is untouched).
-  "vlm.toast.image": REFUSAL, "vlm.toast.changed": REFUSAL, "vlm.toast.refused": REFUSAL,
+  "vlm.toast.image": REFUSAL, "vlm.toast.changed": REFUSAL, "vlm.toast.refused": REFUSAL, "vlm.toast.undoBlocked": REFUSAL,
   "vlm.toast.stale": INFORMATION,
   "vlm.toast.stopped": CONDITION,
   // Both keys of a toast whose TYPE is conditional are listed: the success

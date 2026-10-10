@@ -37,7 +37,7 @@ import { fileURLToPath } from "node:url";
 import * as core from "./vlm-core.mjs";
 
 export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-export const RELAY_VERSION = 1;
+export const RELAY_VERSION = 2;
 
 const MIME = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8",
@@ -173,6 +173,25 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     return json(res, 200, { ok: true, aborted, known: true, run: snapshotRun(r) });
   }
 
+  // The free count, per model the request may run on. A count that fails for
+  // a reason the paid call would share (a refused key, an unknown model) ends
+  // the step before anything billable; any other failure leaves that model
+  // uncounted, and the estimate says it is heuristic.
+  async function countInput(params, signal) {
+    const counted = {};
+    for (const model of [config.model, ...config.fallbackChain]) {
+      if (counted[model] != null) continue;
+      try {
+        const r = await client.beta.messages.countTokens(core.countTokensRequest(params, model), { signal, timeout: 15000 });
+        if (r && Number.isFinite(r.input_tokens)) counted[model] = r.input_tokens;
+      } catch (err) {
+        const m = core.mapUpstreamError(err);
+        if (["KEY_INVALID", "KEY_FORBIDDEN", "MODEL_UNAVAILABLE", "CANCELLED"].includes(m.code)) return { failure: m };
+      }
+    }
+    return { counted };
+  }
+
   async function handleRun(req, res) {
     if (!config.configured) { req.resume(); return json(res, 503, { ok: false, code: config.reasonCode }); }
     if (inFlight) { req.resume(); return json(res, 409, { ok: false, code: "BUSY" }); }
@@ -182,6 +201,7 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     if (!v.ok) return json(res, v.code === "IMAGE_TOO_LARGE" ? 413 : 400, { ok: false, code: v.code, field: v.field });
     const p = v.payload;
     if (inFlight) return json(res, 409, { ok: false, code: "BUSY" });
+    try { usage.usable(); } catch (e) { return json(res, 503, { ok: false, code: e.code, ledger: usage.ledger() }); }
     pruneRuns();
     let run = runs.get(p.runId);
     if (!run) {
@@ -191,43 +211,48 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     }
     if (run.analysisId !== p.analysisId || run.planHash !== p.planHash) return json(res, 409, { ok: false, code: "RUN_MISMATCH" });
     if (run.cancelled) return json(res, 409, { ok: false, code: "CANCELLED", run: snapshotRun(run) });
-    const estimate = core.estimateCost(p, config);
-    const refusal = core.limitRefusal({ day: usage.snapshot(), run, reserve: estimate.maxUsd, config });
-    if (refusal) {
-      say(`run ${p.runId.slice(0, 12)} ${p.step}: refused before sending — ${refusal} (worst case $${estimate.maxUsd})`);
-      return json(res, 429, { ok: false, code: refusal, estimate, usage: usage.snapshot(), run: snapshotRun(run) });
-    }
+    if (run.steps >= config.limits.maxStepsPerRun) return json(res, 429, { ok: false, code: "STEP_LIMIT", usage: usage.snapshot(), run: snapshotRun(run) });
 
-    // Hold the worst case against the day and the run BEFORE anything leaves.
-    usage.reserve(estimate.maxUsd);
-    run.steps++; run.usd += estimate.maxUsd; run.at = now();
     const controller = new AbortController();
     run.controller = controller; inFlight = { runId: p.runId, controller };
     const onClose = () => { if (!res.writableEnded) controller.abort(); };
     res.on("close", onClose);
     const started = now(), deadline = started + config.limits.timeoutMs;
     const params = core.buildMessagesRequest(p, config);
-    let message = null, failure = null;
+    const tag = `run ${p.runId.slice(0, 12)} ${p.step}`;
+    let message = null, failure = null, estimate = null, refusal = null, lastHold = null;
     try {
-      for (let attempt = 0; ; attempt++) {
-        try {
-          message = await client.beta.messages.create(params, { signal: controller.signal, timeout: Math.max(1000, deadline - now()) });
-          break;
-        } catch (err) {
-          const m = core.mapUpstreamError(err);
-          const wait = RETRY_WAITS_MS[attempt];
-          const retryAfter = Number(err && err.headers && typeof err.headers.get === "function" && err.headers.get("retry-after"));
-          const pause = Math.min(20000, Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : wait || 0);
-          const dayNow = usage.snapshot();
-          if (m.retryable && wait != null && !controller.signal.aborted && deadline - now() > pause + 5000 && dayNow.requests < config.limits.maxRequestsPerDay) {
-            say(`run ${p.runId.slice(0, 12)} ${p.step}: ${m.code}, retrying in ${Math.round(pause / 1000)}s`);
-            await sleep(pause, controller.signal);
-            if (controller.signal.aborted) { failure = { code: "CANCELLED", http: 499, billed: false, retryable: false }; break; }
-            usage.noteRetry();
-            continue;
+      const c = await countInput(params, controller.signal);
+      if (c.failure) failure = c.failure;
+      else {
+        estimate = core.estimateCost(p, config, { counted: c.counted });
+        run.steps++;
+        for (let attempt = 0; ; attempt++) {
+          // Every attempt is checked against the caps and held BEFORE it leaves.
+          refusal = core.limitRefusal({ day: usage.snapshot(), run: { ...run, steps: 0 }, reserve: estimate.maxUsd, config });
+          if (refusal) { if (attempt === 0) run.steps--; break; }
+          const hold = usage.reserve(estimate.maxUsd, { runId: p.runId });
+          lastHold = hold;
+          run.usd += estimate.maxUsd; run.at = now();
+          try {
+            message = await client.beta.messages.create(params, { signal: controller.signal, timeout: Math.max(1000, deadline - now()) });
+            break;
+          } catch (err) {
+            const m = core.mapUpstreamError(err);
+            usage.settle(hold, { billed: m.billed }); lastHold = null;
+            if (m.billed === false) run.usd = Math.max(0, run.usd - estimate.maxUsd);
+            const wait = RETRY_WAITS_MS[attempt];
+            const retryAfter = Number(err && err.headers && typeof err.headers.get === "function" && err.headers.get("retry-after"));
+            const pause = Math.min(20000, Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : wait || 0);
+            if (m.retryable && wait != null && !controller.signal.aborted && deadline - now() > pause + 5000) {
+              say(`${tag}: ${m.code}${m.billed === null ? " (spend unknown: hold kept)" : ""}, retrying in ${Math.round(pause / 1000)}s with a new hold`);
+              await sleep(pause, controller.signal);
+              if (controller.signal.aborted) { failure = { code: "CANCELLED", http: 499, billed: false, retryable: false }; break; }
+              continue;
+            }
+            failure = m; failure.requestID = err && err.requestID;
+            break;
           }
-          failure = m; failure.requestID = err && err.requestID;
-          break;
         }
       }
     } finally {
@@ -236,25 +261,28 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     }
 
     const secs = ((now() - started) / 1000).toFixed(1);
+    if (refusal && !message && !failure) {
+      say(`${tag}: refused before sending — ${refusal} (worst case $${estimate.maxUsd}, ${estimate.inputBasis} input)`);
+      return json(res, 429, { ok: false, code: refusal, estimate, usage: usage.snapshot(), run: snapshotRun(run) });
+    }
     if (failure) {
-      usage.settle(estimate.maxUsd, { billed: failure.billed });
-      if (failure.billed === false) run.usd = Math.max(0, run.usd - estimate.maxUsd);
-      say(`run ${p.runId.slice(0, 12)} ${p.step}: ${failure.code} after ${secs}s${failure.requestID ? ` request-id ${failure.requestID}` : ""}${failure.billed === null ? " (spend unknown: the worst case stays held)" : ""}`);
+      say(`${tag}: ${failure.code} after ${secs}s${failure.requestID ? ` request-id ${failure.requestID}` : ""}${failure.billed === null ? " (spend unknown: the worst case stays held)" : ""}`);
       if (res.writableEnded || res.destroyed) return;
-      return json(res, failure.http, { ok: false, code: failure.code, billed: failure.billed, retryable: failure.retryable, usage: usage.snapshot(), run: snapshotRun(run) });
+      return json(res, failure.http, { ok: false, code: failure.code, billed: failure.billed, retryable: failure.retryable, estimate, usage: usage.snapshot(), run: snapshotRun(run) });
     }
 
     const cost = core.actualCost(message, config);
-    usage.settle(estimate.maxUsd, { cost });
+    usage.settle(lastHold, { cost });
     run.usd = Math.max(0, run.usd - estimate.maxUsd + cost.usd);
-    const head = `run ${p.runId.slice(0, 12)} ${p.step}: ${cost.inputTokens} in / ${cost.outputTokens} out, $${cost.usd} on ${cost.servedBy}${cost.fellBack ? " (fallback)" : ""}, ${secs}s`;
-    const echo = { runId: p.runId, step: p.step, analysisId: p.analysisId, planHash: p.planHash, cost, estimate, usage: usage.snapshot(), run: snapshotRun(run) };
+    const overHold = cost.usd > estimate.maxUsd;
+    const head = `${tag}: ${cost.inputTokens} in / ${cost.outputTokens} out over ${cost.attempts} attempt(s), $${cost.usd} on ${cost.servedBy}${cost.fellBack ? " (fallback)" : ""}, ${secs}s${overHold ? ` — OVER THE HOLD ($${estimate.maxUsd})` : ""}`;
+    const echo = { runId: p.runId, step: p.step, analysisId: p.analysisId, planHash: p.planHash, cost, estimate, overHold, usage: usage.snapshot(), run: snapshotRun(run) };
     if (message.stop_reason === "refusal") { say(`${head} — the model declined`); return json(res, 200, { ok: false, code: "MODEL_DECLINED", ...echo }); }
     if (message.stop_reason === "max_tokens") { say(`${head} — the answer was cut off`); return json(res, 200, { ok: false, code: "OUTPUT_TRUNCATED", ...echo }); }
     const text = (message.content || []).filter(b => b && b.type === "text").map(b => b.text).join("");
     const out = core.validateModelOutput(text, p);
-    if (!out.ok) { say(`${head} — the answer did not fit the schema`); return json(res, 200, { ok: false, code: out.code, ...echo }); }
-    say(`${head} — ${out.result.findings.length} finding(s), ${out.result.regionsToInspect.length} region(s), ${out.result.dropped} dropped`);
+    if (!out.ok) { say(`${head} — the answer did not fit the schema (${out.why})`); return json(res, 200, { ok: false, code: out.code, why: out.why, ...echo }); }
+    say(`${head} — ${out.result.findings.length} finding(s), ${out.result.regionsToInspect.length} region(s), ${out.result.droppedCount} dropped, ${out.result.clamped} clamped`);
     if (res.writableEnded || res.destroyed) return;
     return json(res, 200, { ok: true, result: out.result, ...echo });
   }
@@ -270,7 +298,7 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
       }
       if (pathname === "/vlm-relay/status" && req.method === "GET") {
         if (!hostAllowed(hostnameOf(req.headers.host), hosts)) return json(res, 421, { ok: false, code: "HOST_NOT_ALLOWED" });
-        return json(res, 200, { ok: true, version: RELAY_VERSION, busy: !!inFlight, ...core.status(config, usage.snapshot()) });
+        return json(res, 200, { ok: true, version: RELAY_VERSION, busy: !!inFlight, ...core.status(config, usage.snapshot(), usage.ledger()) });
       }
       if (req.method !== "POST") return json(res, 405, { ok: false, code: "METHOD" });
       const cross = refuseCrossSite(req);
@@ -285,7 +313,7 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     }
   }
 
-  return { handler, usage, runs, get busy() { return !!inFlight; } };
+  return { handler, usage, runs, get busy() { return !!inFlight; }, close: () => usage.close() };
 }
 
 function sleep(ms, signal) {
@@ -303,7 +331,7 @@ export async function startRelay({ config, client, root = REPO_ROOT, allowedHost
   const { port } = server.address();
   const host = config.host === "0.0.0.0" || config.host === "::" ? "127.0.0.1" : config.host;
   return { relay, server, port, baseUrl: `http://${host.includes(":") ? `[${host}]` : host}:${port}`,
-    close: () => new Promise((resolve) => { server.closeAllConnections?.(); server.close(() => resolve()); }) };
+    close: () => new Promise((resolve) => { server.closeAllConnections?.(); server.close(() => { relay.close(); resolve(); }); }) };
 }
 
 // ---- command line ------------------------------------------------------------------
@@ -314,9 +342,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const s = core.status(config, started.relay.usage.snapshot());
   console.log("MERIT EVENT MAKER — app + vision-language relay");
   console.log(`  open        ${started.baseUrl}/index.html`);
-  console.log(`  relay       ${s.configured ? "CONFIGURED" : `NOT CONFIGURED (${s.reasonCode === "NO_KEY" ? "ANTHROPIC_API_KEY is not set in this process's environment" : "no price is known for " + s.model})`}`);
-  console.log(`  model       ${s.model}   effort ${s.effort}   fallbacks ${s.fallbacks}`);
-  if (s.prices) console.log(`  prices      $${s.prices.inputPerMTok} in / $${s.prices.outputPerMTok} out per million tokens (${s.prices.source})`);
+  const why = { NO_KEY: "ANTHROPIC_API_KEY is not set in this process's environment", UNKNOWN_PRICE: "a model in use has no known price",
+    UNBOUNDED_FALLBACK: "VLM_FALLBACKS asks for open-ended fallbacks; name them in VLM_FALLBACK_MODELS so every attempt can be held" }[s.reasonCode];
+  console.log(`  relay       ${s.configured ? "CONFIGURED" : `NOT CONFIGURED (${why})`}`);
+  console.log(`  model       ${s.model}   effort ${s.effort}   fallbacks ${s.fallbackChain.length ? s.fallbackChain.join(" → ") : "off"}`);
+  if (s.ledger.state !== "OK") console.log(`  ledger      ${s.ledger.state}: ${s.ledger.problem} — paid requests are refused until this is resolved (${config.dataDir})`);
+  if (s.ledger.openReservations) console.log(`  ledger      ${s.ledger.openReservations} reservation(s) from an earlier run never settled; they stay held`);
+  if (s.prices) console.log(`  prices      $${s.prices.inputPerMTok} in / $${s.prices.outputPerMTok} out per million tokens (${s.prices.source}; official table checked ${s.prices.asOf})`);
   console.log(`  limits      $${s.limits.maxUsdPerRun}/run  $${s.limits.maxUsdPerDay}/day  ${s.limits.maxRequestsPerDay} requests/day  ${s.limits.maxStepsPerRun} steps/run  ${s.limits.timeoutMs / 1000}s/request`);
   console.log(`  today       ${s.usage.requests} request(s), $${s.usage.usd} held or spent   (${config.dataDir})`);
   console.log(`  hosts       ${allowedHosts.join(", ")}`);

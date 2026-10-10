@@ -55,16 +55,20 @@ anywhere in the request (`validateRunPayload`).
 
 ## Limits
 
-Every limit is checked against the request's **worst case** — the image, the
-instruction, and every output token it is allowed, at the dearer of the model
-and its server-side fallback — and refuses **before** anything is sent.
+Every limit is checked against each **attempt's** worst case and refuses
+**before** that attempt is sent. The worst case is the input the API's free
+`count_tokens` reports for that model (documented by Anthropic as an estimate,
+so 5% and 64 tokens are added; without a count the figure is a labelled
+heuristic, never called exact) plus every output token `max_tokens` allows,
+summed over every model the request may run on, at that model's price
+(official table, checked 2026-10-10, Haiku 5.5's 100K-token tier included).
 
 | variable | default | |
 |---|---|---|
 | `VLM_MODEL` | `claude-opus-5-5` | any model id; one without a listed price needs the two price variables |
 | `VLM_PRICE_INPUT_PER_MTOK`, `VLM_PRICE_OUTPUT_PER_MTOK` | listed table (2026-10-06) | USD per million tokens |
 | `VLM_EFFORT` | `high` | `low` … `max` |
-| `VLM_FALLBACKS` | `default` | `off` to disable server-side refusal fallbacks |
+| `VLM_FALLBACK_MODELS` | (none) | an explicit, priced chain such as `claude-opus-5`: a declined attempt and its fallback can BOTH be billed, so each hop is held. Open-ended routing (`VLM_FALLBACKS=default`) cannot be bounded and is refused as configuration |
 | `VLM_MAX_OUTPUT_TOKENS` | 10000 | per request |
 | `VLM_MAX_USD_PER_RUN` | 1.50 | one reading (overview + its regions) |
 | `VLM_MAX_USD_PER_DAY` | 5.00 | per UTC day, held or spent |
@@ -76,9 +80,19 @@ and its server-side fallback — and refuses **before** anything is sent.
 | `PORT`, `HOST` | 8787, 127.0.0.1 | |
 | `VLM_ALLOWED_HOSTS` | loopback (+ the Codespace's own forwarded name) | extra Host names, `name` or `*.suffix` |
 
-A request refused before processing (bad key, no balance, rate limit) gives
-its hold back. A request that timed out, was cancelled, or lost its page keeps
-the worst case on the day's ledger, because nobody can know what it cost.
+Each attempt holds its own reservation, with an id and the UTC day it was
+made in; it settles once, against that day, even when the answer arrives after
+midnight. An attempt refused before processing (bad key, no balance, rate
+limit, overload) gives its hold back. One that timed out, was cancelled, lost
+its page, hit a broken connection or a 5xx keeps the worst case, because
+nobody can know what it cost — and a retry is a new attempt with a new hold.
+
+The ledger (`.vlm-data/usage.json`) is written to a temporary file, flushed,
+then renamed. A ledger that exists but cannot be read is **not** reopened as
+zero spend: the relay refuses paid requests and leaves the file untouched until
+a person deals with it. A lock file (`usage.lock`, the writer's pid) keeps a
+second relay off the same ledger. A reservation whose request never settled
+(the process died) stays held after a restart, and the console says so.
 
 ## Security model
 
@@ -116,7 +130,7 @@ result of theirs may be reported as model performance.
 `NO_KEY`, `UNKNOWN_PRICE`, `BUSY`, `BAD_PAYLOAD`, `UNKNOWN_FIELD`,
 `PAYLOAD_TOO_LARGE`, `IMAGE_TOO_LARGE`, `RUN_UNKNOWN`, `RUN_MISMATCH`,
 `CANCELLED`, `STEP_LIMIT`, `REQUEST_LIMIT`, `DAY_BUDGET`, `RUN_BUDGET`,
-`TIMEOUT`, `UNREACHABLE`, `KEY_INVALID`, `NO_BALANCE` (a 402, a
+`TIMEOUT`, `UNREACHABLE`, `LEDGER_CORRUPT`, `LEDGER_LOCKED`, `UNBOUNDED_FALLBACK`, `KEY_INVALID`, `NO_BALANCE` (a 402, a
 `billing_error`, or a 400 stating the credit balance), `KEY_FORBIDDEN`,
 `MODEL_UNAVAILABLE`, `RATE_LIMITED` and `OVERLOADED` (each retried once),
 `BAD_REQUEST`, `UPSTREAM_ERROR`, `MODEL_DECLINED`, `OUTPUT_TRUNCATED`,

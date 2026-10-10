@@ -31,7 +31,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { startFakeAnthropic, messageReply, ERRORS } from "../lib/fake-anthropic.mjs";
-import { openApp, createBlankEvent, importPlan, runDetection, futureDate, gotoTab, addGuest } from "../lib/app-actions.mjs";
+import { openApp, createBlankEvent, importPlan, runDetection, reRunDetection, futureDate, gotoTab, addGuest } from "../lib/app-actions.mjs";
 
 export const meta = { name: "vlm-reading", tags: ["intelligence", "security", "ui"], timeout: 360000, viewport: { width: 1920, height: 1080 } };
 
@@ -54,12 +54,14 @@ function scripted(body) {
     regionsToInspect: [{ box: [Math.round(W * 0.10), Math.round(H * 0.60), Math.round(W * 0.30), Math.round(H * 0.85)], reason: "SCRIPTED region" }],
     findings: [
       { kind: "missing", ref: null, type: "round", box: [Math.round(W * 0.47), Math.round(H * 0.02), Math.round(W * 0.50), Math.round(H * 0.06)], value: null, confidence: "medium", evidence: "SCRIPTED missing" },
-      { kind: "notAnObject", ref: tables[0].ref, type: null, box: null, value: null, confidence: "low", evidence: "SCRIPTED reject" },
-      { kind: "wrongType", ref: tables[1].ref, type: "bistro", box: null, value: null, confidence: "medium", evidence: "SCRIPTED retype" },
+      tables[0] && { kind: "notAnObject", ref: tables[0].ref, type: null, box: null, value: null, confidence: "low", evidence: "SCRIPTED reject" },
+      tables[1] && { kind: "wrongType", ref: tables[1].ref, type: "bistro", box: null, value: null, confidence: "medium", evidence: "SCRIPTED retype" },
       venue && { kind: "seatCount", ref: venue.ref, type: null, box: null, value: 4, confidence: "low", evidence: "SCRIPTED seats" },
-      { kind: "printedNumber", ref: tables[2].ref, type: null, box: null, value: 12, confidence: "high", evidence: "SCRIPTED number" },
+      tables[2] && { kind: "printedNumber", ref: tables[2].ref, type: null, box: null, value: 12, confidence: "high", evidence: "SCRIPTED number" },
       { kind: "note", ref: null, type: null, box: null, value: null, confidence: "high", evidence: HOSTILE_EVIDENCE },
       decided && { kind: "wrongType", ref: decided.ref, type: "square", box: null, value: null, confidence: "high", evidence: "SCRIPTED about a decided object" },
+      // a chair just off a table's right edge: it belongs to that table
+      tables[4] && { kind: "missing", ref: null, type: "chair", box: [tables[4].box[2] + 2, Math.round((tables[4].box[1] + tables[4].box[3]) / 2) - 6, tables[4].box[2] + 14, Math.round((tables[4].box[1] + tables[4].box[3]) / 2) + 6], value: null, confidence: "medium", evidence: "SCRIPTED chair" },
     ].filter(Boolean),
   }) });
 }
@@ -161,7 +163,7 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
 
     // ---- nothing has changed yet ----------------------------------------------------------------
     const before = await page.evaluate(() => JSON.stringify(state.events[0].analysis.candidates.map((c) => [c.id, c.kind, c.type, c.status, c.seats ?? null])));
-    const find = (kind) => r1.findings.find((f) => f.kind === kind && f.evidence !== "SCRIPTED about a decided object" && (kind !== "missing" || f.step === "overview"));
+    const find = (kind) => r1.findings.find((f) => f.kind === kind && f.evidence !== "SCRIPTED about a decided object" && f.evidence !== "SCRIPTED chair" && (kind !== "missing" || f.step === "overview"));
     const aboutDecided = r1.findings.find((f) => f.evidence === "SCRIPTED about a decided object");
     const accept = async (f) => { await page.click(`[data-vlm-action="accept"][data-vlm-finding="${f.id}"]`); await page.waitForTimeout(250); };
 
@@ -226,6 +228,45 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
     const states = (await vlm()).findings.reduce((m, f) => (m[f.state] = (m[f.state] || 0) + 1, m), {});
     checks.ok(states.accepted === expected.length + 1 && states.dismissed === 1, "the panel keeps each decision on its finding", states);
 
+    // ---- every accept can be undone, with everything that moved with it -----------------------------
+    const ledgerOf = (fid) => page.evaluate((fid) => {
+      const ev = state.events[0], a = ev.analysis, f = a.vlm.findings.find((x) => x.id === fid);
+      const c = a.candidates.find((x) => x.evidence && x.evidence.finding === fid);
+      return { state: f.state, decisionId: f.decisionId || null, present: !!c, inMissed: c ? a.missed.includes(c.id) : false, memory: (ev.planMemory || []).length,
+        standing: (state.trainingData || []).filter((r) => r.decisionId && r.decisionId === f.decisionId && !r.retracted).length };
+    }, fid);
+    const withIt = await ledgerOf(overviewMissing.id);
+    const decisionOfAdd = withIt.decisionId;
+    await page.click(`[data-vlm-action="undo"][data-vlm-finding="${overviewMissing.id}"]`);
+    await page.waitForTimeout(300);
+    const undone = await ledgerOf(overviewMissing.id);
+    const retracted = await page.evaluate((d) => (state.trainingData || []).filter((r) => r.decisionId === d && r.retracted).length, decisionOfAdd);
+    checks.ok(withIt.state === "accepted" && withIt.present && withIt.standing === 1 && undone.state === "open" && !undone.present && undone.memory === withIt.memory - 1 && retracted === 1,
+      "undoing an accepted missed object removes the object, its memory entry and its training label together, and re-opens the finding", { withIt, undone, retracted });
+    await accept(overviewMissing);
+    checks.equal((await ledgerOf(overviewMissing.id)).present, true, "the re-opened finding can be accepted again");
+
+    // a missed chair joins its table
+    const chairFinding = r1.findings.find((f) => f.evidence === "SCRIPTED chair");
+    if (chairFinding) {
+      const chairsBefore = await page.evaluate(() => Object.fromEntries(state.events[0].analysis.candidates.filter((c) => c.kind === "table").map((c) => [c.id, (c.chairDetections || []).length])));
+      await accept(chairFinding);
+      const chairsAfter = await page.evaluate(() => Object.fromEntries(state.events[0].analysis.candidates.filter((c) => c.kind === "table").map((c) => [c.id, (c.chairDetections || []).length])));
+      const grew = Object.keys(chairsAfter).filter((id) => chairsAfter[id] !== chairsBefore[id]);
+      const standalone = await page.evaluate((fid) => state.events[0].analysis.candidates.some((c) => c.evidence && c.evidence.finding === fid), chairFinding.id);
+      checks.ok(grew.length === 1 && chairsAfter[grew[0]] === chairsBefore[grew[0]] + 1 && !standalone,
+        "an accepted missed chair is added to the one table it stands at, not left as a loose box", { grew, standalone });
+    }
+
+    // a person-settled seat count on a table with no drawn chairs survives Confirm as its capacity
+    const symbolic = await page.evaluate(() => {
+      const ev = state.events[0], c = ev.analysis.candidates.find((x) => x.kind === "table" && x.status === "unreviewed" && x.selected !== false);
+      c.chairDetections = [];   // what a symbolic plan's table looks like: no chairs drawn
+      const r = decideReview(ev, { kind: "setSeats", candidateId: c.id, value: 10, source: "vlm-accepted", via: "vlm" });
+      return { id: c.id, ok: !!r, seats: c.seats, conf: c.seatsConfidence, src: c.seatsSource };
+    });
+    checks.ok(symbolic.ok && symbolic.seats === 10 && symbolic.conf === "verified" && symbolic.src === "vlm-accepted", "a seat count goes through the one decision writer", symbolic);
+
     // ---- a reload keeps the findings and their decisions ------------------------------------
     await page.evaluate(() => saveState());
     const statesBefore = (await vlm()).findings.map((f) => f.state);
@@ -238,8 +279,46 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
     await page.waitForSelector('.vlm-panel [data-vlm-action="start"]');
     const reloaded = await vlm();
     checks.ok(reloaded && reloaded.findings.length === r1.findings.length && JSON.stringify(reloaded.findings.map((f) => f.state)) === JSON.stringify(statesBefore)
-      && reloaded.findings.filter((f) => f.state === "accepted").length === states.accepted && await page.locator(".vlm-finding").count() === r1.findings.length,
+      && reloaded.findings.filter((f) => f.state === "accepted").length === statesBefore.filter((x) => x === "accepted").length && await page.locator(".vlm-finding").count() === r1.findings.length,
       "after a reload the reading, its findings and their decisions are all still there", reloaded && reloaded.findings.length);
+
+    // ---- accept → undo → re-analyse → Confirm → save → load -----------------------------------------
+    const kept = await page.evaluate((fid) => { const c = state.events[0].analysis.candidates.find((x) => x.evidence && x.evidence.finding === fid); return c && { x: c.x, y: c.y, type: c.type }; }, overviewMissing.id);
+    await reRunDetection(page);
+    const restored = await page.evaluate((k) => {
+      const a = state.events[0].analysis;
+      return { vlm: a.vlm || null, back: a.candidates.filter((c) => c.fromMemory && c.type === k.type && Math.abs(c.x - k.x) < 0.5 && Math.abs(c.y - k.y) < 0.5 && c.status === "confirmed").length,
+        symbolic: a.candidates.find((c) => c.kind === "table" && c.seatsConfidence === "verified" && c.seats === 10) ? true : false };
+    }, kept);
+    checks.ok(restored.vlm === null && restored.back === 1,
+      "after a re-analysis the reading belongs to the old analysis, and the object a person accepted comes back from plan memory, confirmed", restored);
+    // the symbolic table's count: set again on the new analysis, then Confirm
+    const symbolic2 = await page.evaluate(() => {
+      const ev = state.events[0], c = ev.analysis.candidates.find((x) => x.kind === "table" && x.status === "unreviewed" && x.selected !== false && !x.fromMemory);
+      c.chairDetections = [];
+      decideReview(ev, { kind: "setSeats", candidateId: c.id, value: 10, source: "vlm-accepted", via: "vlm" });
+      return c.id;
+    });
+    await page.evaluate(() => { ui.tab = "floor"; ui.planMode = "review"; render(); });
+    await page.click('[data-review-action="commit"]');
+    await page.waitForTimeout(500);
+    const committed = await page.evaluate((cid) => {
+      const ev = state.events[0], c = ev.analysis.candidates.find((x) => x.id === cid), t = ev.tables.find((x) => x.id === c.committedId);
+      const fromMem = ev.analysis.candidates.find((x) => x.fromMemory && x.missed && x.committedId);
+      return { capacity: t && t.capacity, source: t && t.capacitySource, chairs: t && (t.chairs || []).length, via: t && t.capacityEvidence && t.capacityEvidence.via, memTable: !!(fromMem && ev.tables.find((x) => x.id === fromMem.committedId)) };
+    }, symbolic2);
+    checks.equal(committed, { capacity: 10, source: "HUMAN_CONFIRMED", chairs: 0, via: "vlm-accepted", memTable: true },
+      "on Confirm the person-settled count becomes the table's capacity (HUMAN_CONFIRMED, no chairs invented) and the accepted object becomes a table");
+    await page.evaluate(() => saveState());
+    await page.reload();
+    await page.waitForFunction(() => { try { return state.events.length === 1; } catch { return false; } }, null, { timeout: 15000 });
+    const afterLoad = await page.evaluate((cid) => { const ev = state.events[0], c = ev.analysis.candidates.find((x) => x.id === cid), t = ev.tables.find((x) => x.id === c.committedId); return { capacity: t.capacity, source: t.capacitySource, chairs: (t.chairs || []).length }; }, symbolic2);
+    checks.equal(afterLoad, { capacity: 10, source: "HUMAN_CONFIRMED", chairs: 0 }, "and it survives save and reload");
+    await page.evaluate(() => openEvent(state.events[0].id));
+    await page.waitForTimeout(300);
+    await page.evaluate(() => { ui.lang = "en"; ui.tab = "floor"; ui.planMode = "review"; ui.selectedCandidateId = null; ui.vlmPanelOpen = false; render(); });
+    await page.click('[data-vlm-action="toggle"]');
+    await page.waitForSelector('.vlm-panel [data-vlm-action="start"]');
 
     // ---- an answer for an older analysis is dropped -------------------------------------------
     fake.push({ delayMs: 2500, reply: scripted });

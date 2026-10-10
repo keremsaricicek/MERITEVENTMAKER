@@ -209,10 +209,18 @@ export default async function run({ page, checks, baseUrl }) {
   // Whether a committed table gets physical chairs is decided by what the
   // plan reader concluded about the drawing. Absence of a verdict is not
   // evidence of drawn chairs, so it abstains.
-  const physicalPlan = await commitThroughReview(page, { kind: "PHYSICAL", chairs: [0] });
+  const physicalPlan = await commitThroughReview(page, { kind: "PHYSICAL", chairs: [0, 3] });
   const symbolicPlan = await commitThroughReview(page, { kind: "SYMBOLIC", chairs: [0, 4] });
   const noVerdict = await commitThroughReview(page, { kind: null, chairs: [0] });
-  checks.equal(physicalPlan[0].physical, true, "a PHYSICAL-verdict plan's committed tables start hasPhysicalSeats:true", physicalPlan);
+  // Until 2026-10-10 a table on a PHYSICAL plan was committed physical even
+  // when no chair was found AT IT, and syncTableChairs then built chairs from
+  // its capacity number — fabricated chairs, which the domain rule forbids
+  // (vlm-reading's accept → Confirm → reload chain found it). Physical now
+  // means chairs found at this table; the plan's verdict alone is not enough.
+  checks.ok(physicalPlan[1].physical === true && physicalPlan[1].chairs === 3,
+    "on a PHYSICAL-verdict plan a table with detected chairs is physical, with exactly its 3 chairs", physicalPlan);
+  checks.ok(physicalPlan[0].physical === false && physicalPlan[0].chairs === 0,
+    "…and a table on that plan whose own chairs were not detected carries no chair built from its capacity number", physicalPlan);
   checks.ok(symbolicPlan[0].physical === false && symbolicPlan[0].chairs === 0, "a SYMBOLIC-verdict plan's committed tables start hasPhysicalSeats:false, with no chair fabricated from anything", symbolicPlan);
   checks.ok(symbolicPlan[1].physical === true && symbolicPlan[1].chairs === 4, "a candidate with real confirmed chair detections is still physical, with exactly its 4 chairs, on an otherwise-symbolic plan", symbolicPlan);
   checks.equal(noVerdict[0].physical, false, "with no representation verdict at all, the committed table abstains (symbolic), never an unconditional true", noVerdict);
