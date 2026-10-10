@@ -1199,7 +1199,12 @@ body{min-width:1180px}
 .planintel-diagnostics .analysis-note{font-size:10.5px;color:var(--pi-muted);line-height:1.5}
 
 .planintel-map{position:relative;flex:1;min-height:0;overflow:hidden;background:#e9e5d8;display:grid;place-items:center}
-.planintel-map img{display:block;max-width:100%;max-height:100%;width:auto;height:auto}
+/* The plan always fits the map. max-height:100% resolved against the inner box's
+   auto height and was ignored, so a plan taller than the window (ORNEK, 2402x1719)
+   was shown cropped: its bottom rows and boxes were off screen. The map is a size
+   container and the image is bounded by it. */
+.planintel-map{container-type:size}
+.planintel-map img{display:block;max-width:100cqw;max-height:100cqh;width:auto;height:auto}
 .review-pin{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:999px;background:var(--pi-warn);color:#fff;border:2px solid #fff;font-size:11px;font-weight:700;box-shadow:var(--pi-shadow-1);z-index:20;display:flex;align-items:center;justify-content:center;transition:transform var(--dur-fast) var(--ease)}
 .review-pin:hover{transform:translate(-50%,-50%) scale(1.12)}
 .review-pin.active{background:var(--pi-accent);width:30px;height:30px}
@@ -2252,3 +2257,71 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .scene-query input:focus-visible{outline:2px solid var(--pi-accent);outline-offset:1px}
 .scene-query input::placeholder{color:var(--pi-muted-2)}
 .scene-answer{position:absolute;top:100%;right:0;z-index:30;margin:4px 0 0;max-width:420px;padding:6px 9px;font-size:12px;background:var(--pi-surface);border:1px solid var(--pi-warn);border-radius:6px}
+/* Plan reading (screen-reading.js): the plan read back in words, and drawn clean */
+.read-panel{position:absolute;top:64px;left:16px;width:400px;max-height:calc(100% - 140px);display:flex;flex-direction:column;background:var(--pi-surface);border:1px solid var(--pi-line);border-radius:var(--pi-radius);box-shadow:var(--pi-shadow-3);color:var(--pi-ink);z-index:46}
+.read-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--pi-line-soft)}
+.read-head strong{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--pi-muted)}
+.read-head .btn{margin-left:auto;background:var(--pi-surface-2);border:1px solid var(--pi-line);color:var(--pi-ink)}
+.read-view{display:flex;gap:4px;margin-left:auto}
+.read-view + .btn{margin-left:4px}
+.read-panel .chip{height:24px;padding:0 9px;font-size:11.5px;border:1px solid var(--pi-line);border-radius:var(--pi-radius-pill);background:var(--pi-surface);color:var(--pi-ink);cursor:pointer}
+.read-panel .chip.on{background:var(--pi-accent);border-color:var(--pi-accent);color:#fff}
+.read-body{overflow:auto;padding:10px 12px 14px}
+.read-intro{margin:0 0 8px;font-size:11.5px;color:var(--pi-muted)}
+.read-lines{list-style:none;margin:0;padding:0}
+.read-headline{margin-bottom:8px}
+.read-headline .read-say{font-size:13.5px;font-weight:600}
+.read-line{display:grid;grid-template-columns:98px 1fr;gap:8px;align-items:baseline;width:100%;padding:5px 6px;margin:1px 0;text-align:left;font:inherit;font-size:12.5px;line-height:1.45;color:var(--pi-ink);background:transparent;border:1px solid transparent;border-radius:var(--pi-radius-sm);cursor:pointer}
+.read-line:hover{background:var(--pi-surface-2);border-color:var(--pi-line-soft)}
+.read-line.on{background:var(--pi-accent-soft);border-color:var(--pi-accent)}
+.read-line:focus-visible{outline:2px solid var(--pi-accent);outline-offset:1px}
+.read-line[data-read-nowhere]{cursor:default}
+.read-cert{display:inline-block;max-width:96px;overflow:hidden;text-overflow:ellipsis;font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:1px 5px;border-radius:4px;white-space:nowrap;justify-self:start;border:1px solid var(--pi-line)}
+.read-cert.cert-stated,.cert-stated .read-cert{color:var(--pi-ink);background:var(--pi-surface-2)}
+.read-cert.cert-seen,.cert-seen .read-cert{color:var(--pi-accent-strong);background:var(--pi-accent-soft);border-color:transparent}
+.read-cert.cert-inferred,.cert-inferred .read-cert{color:var(--pi-muted);background:transparent;border-style:dashed}
+.read-cert.cert-unsure,.cert-unsure .read-cert{color:#7a5a20;background:rgba(181,136,63,.14);border-color:transparent}
+.read-regions{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0 10px;padding-top:8px;border-top:1px solid var(--pi-line-soft)}
+.read-section{margin-top:8px}
+.read-section h3{margin:8px 0 2px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--pi-muted)}
+.read-texts{margin-top:10px;border-top:1px solid var(--pi-line-soft);padding-top:6px}
+.read-texts summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--pi-ink);padding:4px 0}
+.read-word{grid-template-columns:1fr auto;grid-template-areas:"q cat" "used used"}
+.read-word q{grid-area:q;font-weight:600;quotes:"“" "”"}
+.read-word .read-cat{grid-area:cat;font-size:10.5px;color:var(--pi-muted);text-transform:uppercase;letter-spacing:.04em}
+.read-word .read-used{grid-area:used;font-size:11.5px;color:var(--pi-muted)}
+.read-note{font-size:11.5px;color:var(--pi-muted);padding:4px 6px}
+.read-legend{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:12px 0 0;font-size:11px;color:var(--pi-muted)}
+.read-legend-title{margin-right:4px}
+.read-mark{position:absolute;z-index:14;pointer-events:none;border:2px solid var(--pi-accent);border-radius:4px;background:rgba(47,111,102,.10);box-shadow:0 0 0 3px rgba(47,111,102,.18)}
+.read-mark.word{border-color:var(--pi-warn);background:rgba(181,136,63,.12);box-shadow:0 0 0 3px rgba(181,136,63,.18)}
+.read-mark.region{border-style:dashed;background:transparent;box-shadow:none}
+/* The digital view: the plan redrawn from what was understood */
+.digital-plan{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.view-digital .planintel-map-inner > img{opacity:0}
+.view-both .planintel-map-inner > img{opacity:.38}
+.view-digital .candidate-box:not(.selected),.view-both .candidate-box:not(.selected){border-color:transparent;background:transparent}
+.dg-paper{fill:var(--pi-surface)}
+.view-both .dg-paper{fill:transparent}
+.dg-table{fill:#f4efe4;stroke:#5c5446;stroke-width:1.6}
+.dg-chair{fill:rgba(47,111,102,.16);stroke:var(--pi-accent);stroke-width:1}
+.dg-stage{fill:rgba(47,111,102,.10);stroke:var(--pi-accent-strong);stroke-width:2}
+.dg-column{fill:#3b362c;stroke:none}
+.dg-banquette{fill:#e6dfd0;stroke:#8b8270;stroke-width:1.2}
+.dg-bar{fill:#ece6da;stroke:#6f6758;stroke-width:1.4}
+.dg-loca{fill:var(--pi-surface-2);stroke:#8b8270;stroke-width:1.2}
+.dg-entrance,.dg-exit{fill:rgba(181,136,63,.14);stroke:var(--pi-warn);stroke-width:1.4}
+.dg-chair.dg-chair{opacity:1}
+.dg-other{fill:none;stroke:#9a917f;stroke-width:1.2;stroke-dasharray:5 4}
+.dg-held{stroke-dasharray:5 4;opacity:.7}
+.dg-group{fill:none;stroke:var(--pi-accent);stroke-width:1.6;stroke-dasharray:6 4}
+.dg-label{fill:var(--pi-accent-strong);font-weight:700;letter-spacing:.06em;text-anchor:middle;dominant-baseline:central;font-family:inherit}
+.dg-number{fill:#3b362c;font-weight:700;text-anchor:middle;dominant-baseline:central;font-family:inherit}
+.dg-badge{fill:#fff;font-weight:800;text-anchor:start;dominant-baseline:auto;font-family:inherit}
+.dg-badge-bg{fill:var(--pi-accent-strong)}
+.dg-place rect{fill:rgba(181,136,63,.12);stroke:var(--pi-warn);stroke-width:1.2}
+.dg-place text,.dg-title text,.dg-capacity text{fill:#3b362c;font-weight:700;text-anchor:middle;dominant-baseline:central;font-family:inherit;letter-spacing:.02em}
+.dg-technical rect{fill:rgba(47,111,102,.10);stroke:var(--pi-accent)}
+.dg-title rect{fill:var(--pi-surface-2);stroke:#8b8270;stroke-width:1.2}
+.dg-capacity rect{fill:transparent;stroke:none}
+.dg-capacity text{font-weight:600;fill:#5c5446}

@@ -168,6 +168,14 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     await scan(`${L} plan review`);
     await to(() => { ui.selectedCandidateId = "cand-scan"; render(); });
     await scan(`${L} plan review, candidate selected`);
+    // The plan reading (src/screen-reading.js), open with a line pressed, and
+    // the digital redraw of the plan behind it.
+    await to(() => { ui.selectedCandidateId = null; ui.readingOpen = true; render(); });
+    await to(() => { const b = document.querySelector(".read-line:not([data-read-nowhere])"); if (b) b.click(); });
+    await scan(`${L} plan reading`);
+    await to(() => { ui.planView = "digital"; render(); });
+    await scan(`${L} plan reading, digital view`);
+    await to(() => { ui.readingOpen = false; ui.readingFocus = null; ui.planView = "original"; render(); });
     await to(() => { ui.planMode = "edit"; ui.selectedCandidateId = null; state.events.find((x) => x.name === "Scan Event").analysis = null; render(); });
   }
   checks.ok(scanned >= 40, `the scan really covered the product — ${scanned} screen states across both languages`, scanned);

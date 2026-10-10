@@ -425,7 +425,7 @@
   // ---- controls ---------------------------------------------------------------
   function onAction(action,el){
     const id=el&&el.dataset?el.dataset.vlmFinding:null;
-    if(action==="toggle"){ui.vlmPanelOpen=!ui.vlmPanelOpen;if(ui.vlmPanelOpen&&!session.relay)probe();render();}
+    if(action==="toggle"){ui.vlmPanelOpen=!ui.vlmPanelOpen;if(ui.vlmPanelOpen)ui.readingOpen=false;if(ui.vlmPanelOpen&&!session.relay)probe();render();}
     else if(action==="close"){ui.vlmPanelOpen=false;render();}
     else if(action==="probe")probe();
     else if(action==="check")check();

@@ -3976,6 +3976,13 @@
     // The model reading (src/screen-vlm.js): its control in the header, its
     // marks on the plan, its panel and its diagnostics line.
     vlmToolbarHTML:(...a)=>VLMSCREEN.toolbarHTML(...a),vlmMapHTML:(...a)=>VLMSCREEN.mapHTML(...a),vlmPanelHTML:(...a)=>VLMSCREEN.panelHTML(...a),vlmDiagnosticsHTML:(...a)=>VLMSCREEN.diagnosticsHTML(...a),
+    // The plan reading (src/screen-reading.js): its control, its panel, its
+    // marks and digital redraw on the plan, the box it zooms to, the view class.
+    readingToolbarHTML:(...a)=>READING.toolbarHTML(...a),readingMapHTML:(...a)=>READING.mapHTML(...a),readingPanelHTML:(...a)=>READING.panelHTML(...a),
+    readingFocusBox:(...a)=>READING.focusBox(...a),readingViewClass:(...a)=>READING.viewClass(...a),
+  });
+  const READING=globalThis.MeritScreenReading.create({
+    activeEvent:(...a)=>activeEvent(...a),applyReviewZoom:(...a)=>applyReviewZoom(...a),esc:(...a)=>esc(...a),render:(...a)=>render(...a),t:(...a)=>t(...a),ui,
   });
   const VLMSCREEN=globalThis.MeritScreenVlm.create({
     activeEvent:(...a)=>activeEvent(...a),applyReviewZoom:(...a)=>applyReviewZoom(...a),ask:(...a)=>ask(...a),audit:(...a)=>audit(...a),
@@ -4391,6 +4398,7 @@
   function bindReview(){
     const ev=activeEvent();
     document.querySelectorAll("[data-vlm-action]").forEach(b=>b.onclick=()=>VLMSCREEN.onAction(b.dataset.vlmAction,b));
+    document.querySelectorAll("[data-read-action]").forEach(b=>b.onclick=()=>READING.onAction(b.dataset.readAction,b));
     document.querySelectorAll("[data-budget-open]").forEach(b=>b.onclick=()=>REVIEW.openReviewQueue(ev,b.dataset.budgetOpen));
     const sceneForm=document.querySelector("[data-scene-form]");
     if(sceneForm)sceneForm.onsubmit=e=>{e.preventDefault();REVIEW.runSceneQuery(ev,String(new FormData(sceneForm).get("q")||""));};
