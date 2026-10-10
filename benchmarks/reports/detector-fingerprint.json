@@ -1,5 +1,5 @@
 {
-  "recordedAt": "2026-10-10T10:09:35.615Z",
+  "recordedAt": "2026-10-10T11:37:19.100Z",
   "plans": {
     "adversarial-architecture": {
       "hash": "ed7bd0cbd7901274",
@@ -68,7 +68,7 @@
       "pageErrors": 0
     },
     "adversarial/a6-architectural-confusion": {
-      "hash": "fa01c6b2728ccc45",
+      "hash": "fe73da28a954a7fb",
       "candidates": 64,
       "bytes": 313714,
       "pageErrors": 0

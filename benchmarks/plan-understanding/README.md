@@ -13,6 +13,7 @@ for each — and `measure.mjs` is the run that checks it.
 | `measure.mjs` | runs the real app on both real plans to the END of the analysis, scores, draws overlays |
 | `truth/*.json` | venue elements, joined groups, chair facing, printed facts — how each was measured is in the file |
 | `baseline-65808d5/` | the starting point: report, overlays, full stored analyses |
+| `final-8a30427/` | where the programme ended: `FINAL-REPORT.md`, every row before and after (`BEFORE-AFTER.md`), report, overlays, stored analyses, and the committed digital plan at three viewports |
 
 Overlay colours: green found · amber wrong type · red invented (EXTRA) ·
 magenta missed (dashed box / circle) · blue venue element found · red line a
