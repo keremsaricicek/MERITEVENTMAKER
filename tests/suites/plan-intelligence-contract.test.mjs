@@ -56,6 +56,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     return {
       engine: a.engine,
       trainedModel: a.trainedModel,
+      localDetectorRan: !!(a.localModel && a.localModel.available),
       notice: a.notice,
       total: a.candidates.length,
       alive: alive.length,
@@ -185,12 +186,17 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // --- honesty ---------------------------------------------------------------
   checks.ok(result.engine === "ASSISTED_DETECTION",
     'the engine identifies itself as Assisted Detection, never as "AI"', result.engine);
-  checks.ok(result.trainedModel === false,
-    "the analysis records that no trained model produced it", result.trainedModel);
+  // One trained model exists in the product: the local plan-symbol detector
+  // (src/plan-model.js). The analysis says a trained model took part only
+  // because it ran — the classical provider itself never claims one (below).
+  checks.ok(result.trainedModel === result.localDetectorRan,
+    "the analysis records a trained model only because the local plan-symbol detector ran", { trainedModel: result.trainedModel, localDetectorRan: result.localDetectorRan });
   checks.ok(result.pi.providerMetadata && result.pi.providerMetadata.trainedModel === false,
     "the provider metadata agrees — one truth, not two", result.pi.providerMetadata);
-  checks.ok(/no trained/i.test(result.notice || "") || !/\btrained\s+model\b/i.test(result.notice || ""),
-    "the operator-facing notice does not claim a trained model", result.notice);
+  checks.ok(result.localDetectorRan
+      ? result.notice === "Classical computer vision and the local plan-symbol detector (a small trained model of plan symbols) are active."
+      : (/no trained/i.test(result.notice || "") || !/\btrained\s+model\b/i.test(result.notice || "")),
+    "the operator-facing notice claims a trained model only when the local detector ran, and then names it for what it is — a small model of plan symbols, not of rooms", result.notice);
 
   const audit = result.pi.audit;
   checks.require(audit, "a capacity audit was produced", result.pi);

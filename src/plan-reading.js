@@ -287,7 +287,12 @@
     const ni = a.numberIntegrity;
     if (ni && ni.summary) {
       const s = ni.summary;
-      tableSentences.push(S("read.numbers.summary", { verified: s.verified, tables: s.tables, from: ni.range && ni.range.from, to: ni.range && ni.range.to }, tables.filter((t) => t.printedNumber && t.printedNumber.state === "VERIFIED").map((t) => t.id), "seen"));
+      // Both sentences count the tables THIS reading is about. The number check
+      // counts only the tables whose number it tried to read, and a table the
+      // local model added was never among them, so its own total (163 on
+      // ORNEK) did not add up with the open ones (21 of 166).
+      const verifiedIds = tables.filter((t) => t.printedNumber && t.printedNumber.state === "VERIFIED").map((t) => t.id);
+      tableSentences.push(S("read.numbers.summary", { verified: verifiedIds.length, tables: tables.length, from: ni.range && ni.range.from, to: ni.range && ni.range.to }, verifiedIds, "seen"));
       const open = tables.filter((t) => !(t.printedNumber && t.printedNumber.state === "VERIFIED")).map((t) => t.id);
       if (open.length) tableSentences.push(S("read.numbers.open", { n: open.length }, open, "unsure"));
       if (s.duplicates) tableSentences.push(S("read.numbers.duplicates", { n: s.duplicates }, (ni.findings || []).filter((f) => f.kind === "duplicate" || f.kind === "duplicateNumber").flatMap((f) => f.tableIds || []), "unsure"));
