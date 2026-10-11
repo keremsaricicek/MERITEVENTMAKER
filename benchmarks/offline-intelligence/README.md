@@ -306,7 +306,7 @@ measurable here.
 | Chair precision / recall, Golden | ≥ 0.98 / ≥ 0.95 | 0.973 / 0.956 | ✗ / ✓ |
 | Table type accuracy | ≥ 0.95 | 1.000 / 1.000 | ✓ |
 | Chair → table link, Golden | ≥ 0.97 | 0.990 | ✓ |
-| Venue objects (columns) | recall ≥ 0.90 | not annotated on either real plan; 9 / 4 proposed | — |
+| Venue objects (columns) | recall ≥ 0.90 | Golden 9 of 10 (0.90), ORNEK 4 of 4, **0 false** on either, scored against `benchmarks/plan-understanding/truth`, which does label columns (`latest/report.json`, 2026-10-10). The base annotations this table's other rows use do not label columns, so the regression run's "9 / 4 false positives" were the true columns counted against a set that leaves them out (re-checked 2026-10-11). | ✓ |
 | Printed numbers: wrong / read, ORNEK | 0 / ≥ 0.90 | 0 wrong; 148 of 157 legible (0.94) — 145 before the tables the local detector added joined the number reading (2026-10-11; the three it adds, 74, 75 and 76, are each VERIFIED and right) | ✓ / ✓ |
 | Decision memory: retention / wrong application | ≥ 0.98 / 0 | 0.8447 / 0.0073 | ✗ / ✗ |
 | Local examples (exemplar search) | ≥ 50 % recovered, ≤ 1 phantom / 100 | 0 % recovered, up to 9 / 100 | ✗ (not in the UI) |
