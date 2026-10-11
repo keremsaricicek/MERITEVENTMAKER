@@ -272,7 +272,18 @@ console.log('\nNOTE — alphanumeric table labels, evidence only, not asserted:'
       const m = await MeritPaddleOCR.readPlanText(c, { timeoutMs: 120000 });
       model = { available: m.available, reason: m.reason || null, integrity: m.provider && m.provider.integrity, texts: (m.items || []).map(i => i.text) };
     }
-    return { available: r.available, text: r.text, reason: r.reason, booted: typeof globalThis.t === 'function', pdf, model };
+    // The local plan-symbol detector, from the package's own assets/ folder,
+    // on the runtime the OCR model just loaded: a few drawn round tables.
+    let symbols = null;
+    if (globalThis.MeritPlanModel) {
+      const s = document.createElement('canvas'); s.width = 800; s.height = 500;
+      const g = s.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 800, 500); g.lineWidth = 3; g.strokeStyle = '#222';
+      for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(140 + i * 170, 250, 45, 0, Math.PI * 2); g.stroke(); }
+      const d = await MeritPlanModel.detect(g.getImageData(0, 0, 800, 500), 800, 500);
+      symbols = { available: d.available, reasonCode: d.reasonCode || null, version: d.model && d.model.version, integrity: d.model && d.model.integrity,
+        pinned: MeritPlanModel.PIN.version, detections: d.detections.length };
+    }
+    return { available: r.available, text: r.text, reason: r.reason, booted: typeof globalThis.t === 'function', pdf, model, symbols };
   }, (await readFile(join(REPO, 'benchmarks', 'plans', 'ORNEK.pdf'))).toString('base64'));
   await fp.close();
   const ft = (fileOcr.text || '').toUpperCase();
@@ -282,6 +293,8 @@ console.log('\nNOTE — alphanumeric table labels, evidence only, not asserted:'
     ['opened by double-click (file://): OCR reads "124" and "SAHNE"', ft.includes('124') && ft.includes('SAHNE'), fileOcr.text],
     ['opened by double-click (file://): the OCR model runs and reads "124" and "SAHNE"',
       !!fileOcr.model && fileOcr.model.available === true && /124/.test(fileOcr.model.texts.join(' ')) && /SAHNE/i.test(fileOcr.model.texts.join(' ')), fileOcr.model],
+    ['opened by double-click (file://): the local plan-symbol detector loads its pinned file from assets/, checked by sha256, and runs',
+      !!fileOcr.symbols && fileOcr.symbols.available === true && fileOcr.symbols.integrity === 'sha256' && fileOcr.symbols.version === fileOcr.symbols.pinned, fileOcr.symbols],
     ['opened by double-click (file://): a PDF plan renders', !!fileOcr.pdf && fileOcr.pdf.pages >= 1 && fileOcr.pdf.width > 0, fileOcr.pdf],
     ['opened by double-click (file://): no page errors', fileErrs.length === 0, fileErrs.slice(0, 3)],
   );
@@ -346,7 +359,13 @@ if (existsSync(LIGHT)) {
       const m = await MeritPaddleOCR.readPlanText(c, { timeoutMs: 4000 });
       model = { available: m.available, reasonCode: m.reasonCode || null };
     }
-    return { missing, booted, xlsx: typeof globalThis.XLSX, ocr, encoder, model };
+    // The single file carries no model of any kind: the detector must say so.
+    let symbols = null;
+    if (globalThis.MeritPlanModel) {
+      const d = await MeritPlanModel.detect(new ImageData(64, 64), 64, 64);
+      symbols = { available: d.available, reasonCode: d.reasonCode || null };
+    }
+    return { missing, booted, xlsx: typeof globalThis.XLSX, ocr, encoder, model, symbols };
   });
   await lp.close();
   // Is every source file the app loads actually IN the artifact?
@@ -391,6 +410,8 @@ if (existsSync(LIGHT)) {
       light.ocr === null || light.ocr.available === false, light.ocr],
     ['light build: the OCR model says it is not bundled, without reaching for the network',
       !!light.model && light.model.available === false && light.model.reasonCode === 'ENGINE_NOT_BUNDLED', light.model],
+    ['light build: the local plan-symbol detector reports itself unavailable, with a reason, without reaching for the network',
+      !!light.symbols && light.symbols.available === false && /^(RUNTIME_NOT_LOADED|MODEL_MISSING)$/.test(light.symbols.reasonCode || ''), light.symbols],
     ['light build: no page errors', lightErrs.length === 0, lightErrs.slice(0, 3)],
     ['light build: still zero off-origin requests after opening it',
       blocked.filter(u => !u.startsWith('chrome-extension')).length === 0,

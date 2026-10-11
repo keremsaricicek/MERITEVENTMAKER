@@ -419,7 +419,7 @@ for (const f of files) {
   const lm = out.localModel;
   rep.localModel = lm ? { available: lm.available, reasonCode: lm.reasonCode || null, version: lm.model && lm.model.version || null, ms: lm.ms ?? null,
     detections: lm.detections ?? null, addedTables: lm.addedTables ?? null, chairsAttached: lm.chairsAttached ?? null,
-    chairsInText: lm.chairsInText ?? null, addedColumns: lm.addedColumns ?? null, unsupported: lm.unsupported ?? null } : null;
+    chairsInText: lm.chairsInText ?? null, offSize: lm.offSize ?? null, addedColumns: lm.addedColumns ?? null, unsupported: lm.unsupported ?? null } : null;
   reports.push(rep);
 
   const t = rep.tables;

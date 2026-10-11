@@ -1,6 +1,6 @@
 {
  "set": "regression",
- "measuredOn": "2026-10-11T10:54:09.170Z",
+ "measuredOn": "2026-10-11T12:10:15.388Z",
  "runs": {
   "classical": {
    "rows": [
@@ -45,16 +45,17 @@
        "accuracy": null
       }
      },
-     "ms": 6020,
+     "ms": 5633,
      "localModel": {
       "available": false,
       "reasonCode": "MODEL_DISABLED",
-      "version": "v1",
+      "version": "v2",
       "ms": null,
       "detections": 0,
       "addedTables": 0,
       "chairsAttached": 0,
       "chairsInText": 0,
+      "offSize": 0,
       "addedColumns": 0,
       "unsupported": 0
      },
@@ -101,16 +102,17 @@
        "accuracy": null
       }
      },
-     "ms": 6691,
+     "ms": 6634,
      "localModel": {
       "available": false,
       "reasonCode": "MODEL_DISABLED",
-      "version": "v1",
+      "version": "v2",
       "ms": null,
       "detections": 0,
       "addedTables": 0,
       "chairsAttached": 0,
       "chairsInText": 0,
+      "offSize": 0,
       "addedColumns": 0,
       "unsupported": 0
      },
@@ -150,16 +152,17 @@
        "accuracy": null
       }
      },
-     "ms": 5852,
+     "ms": 6436,
      "localModel": {
       "available": false,
       "reasonCode": "MODEL_DISABLED",
-      "version": "v1",
+      "version": "v2",
       "ms": null,
       "detections": 0,
       "addedTables": 0,
       "chairsAttached": 0,
       "chairsInText": 0,
+      "offSize": 0,
       "addedColumns": 0,
       "unsupported": 0
      },
@@ -199,16 +202,17 @@
        "accuracy": null
       }
      },
-     "ms": 10509,
+     "ms": 10570,
      "localModel": {
       "available": false,
       "reasonCode": "MODEL_DISABLED",
-      "version": "v1",
+      "version": "v2",
       "ms": null,
       "detections": 0,
       "addedTables": 0,
       "chairsAttached": 0,
       "chairsInText": 0,
+      "offSize": 0,
       "addedColumns": 0,
       "unsupported": 0
      },
@@ -266,16 +270,17 @@
        "accuracy": null
       }
      },
-     "ms": 8787,
+     "ms": 8811,
      "localModel": {
       "available": false,
       "reasonCode": "MODEL_DISABLED",
-      "version": "v1",
+      "version": "v2",
       "ms": null,
       "detections": 0,
       "addedTables": 0,
       "chairsAttached": 0,
       "chairsInText": 0,
+      "offSize": 0,
       "addedColumns": 0,
       "unsupported": 0
      },
@@ -322,16 +327,17 @@
        "accuracy": null
       }
      },
-     "ms": 54561,
+     "ms": 62540,
      "localModel": {
       "available": false,
       "reasonCode": "MODEL_DISABLED",
-      "version": "v1",
+      "version": "v2",
       "ms": null,
       "detections": 0,
       "addedTables": 0,
       "chairsAttached": 0,
       "chairsInText": 0,
+      "offSize": 0,
       "addedColumns": 0,
       "unsupported": 0
      },
@@ -382,16 +388,17 @@
        "accuracy": null
       }
      },
-     "ms": 9321,
+     "ms": 8466,
      "localModel": {
       "available": true,
       "reasonCode": null,
-      "version": "v1",
-      "ms": 2635,
-      "detections": 57,
+      "version": "v2",
+      "ms": 2478,
+      "detections": 89,
       "addedTables": 0,
       "chairsAttached": 0,
       "chairsInText": 0,
+      "offSize": 0,
       "addedColumns": 0,
       "unsupported": 0
      },
@@ -438,18 +445,19 @@
        "accuracy": null
       }
      },
-     "ms": 9393,
+     "ms": 10531,
      "localModel": {
       "available": true,
       "reasonCode": null,
-      "version": "v1",
-      "ms": 2224,
-      "detections": 86,
-      "addedTables": 5,
+      "version": "v2",
+      "ms": 3360,
+      "detections": 90,
+      "addedTables": 2,
       "chairsAttached": 0,
       "chairsInText": 0,
+      "offSize": 0,
       "addedColumns": 0,
-      "unsupported": 0
+      "unsupported": 10
      },
      "pageErrors": 0
     },
@@ -487,16 +495,17 @@
        "accuracy": null
       }
      },
-     "ms": 8779,
+     "ms": 9584,
      "localModel": {
       "available": true,
       "reasonCode": null,
-      "version": "v1",
-      "ms": 2528,
-      "detections": 55,
+      "version": "v2",
+      "ms": 2557,
+      "detections": 59,
       "addedTables": 0,
       "chairsAttached": 0,
       "chairsInText": 0,
+      "offSize": 0,
       "addedColumns": 0,
       "unsupported": 24
      },
@@ -536,18 +545,19 @@
        "accuracy": null
       }
      },
-     "ms": 13105,
+     "ms": 13944,
      "localModel": {
       "available": true,
       "reasonCode": null,
-      "version": "v1",
-      "ms": 2386,
-      "detections": 34,
+      "version": "v2",
+      "ms": 2420,
+      "detections": 62,
       "addedTables": 0,
       "chairsAttached": 0,
       "chairsInText": 0,
+      "offSize": 0,
       "addedColumns": 0,
-      "unsupported": 1
+      "unsupported": 12
      },
      "pageErrors": 0
     },
@@ -603,16 +613,17 @@
        "accuracy": null
       }
      },
-     "ms": 11407,
+     "ms": 11729,
      "localModel": {
       "available": true,
       "reasonCode": null,
-      "version": "v1",
-      "ms": 2721,
-      "detections": 150,
-      "addedTables": 1,
+      "version": "v2",
+      "ms": 2633,
+      "detections": 161,
+      "addedTables": 0,
       "chairsAttached": 0,
       "chairsInText": 0,
+      "offSize": 1,
       "addedColumns": 0,
       "unsupported": 6
      },
@@ -659,16 +670,17 @@
        "accuracy": null
       }
      },
-     "ms": 61589,
+     "ms": 62504,
      "localModel": {
       "available": true,
       "reasonCode": null,
-      "version": "v1",
-      "ms": 2736,
+      "version": "v2",
+      "ms": 2574,
       "detections": 166,
       "addedTables": 4,
       "chairsAttached": 0,
       "chairsInText": 0,
+      "offSize": 0,
       "addedColumns": 0,
       "unsupported": 1
      },

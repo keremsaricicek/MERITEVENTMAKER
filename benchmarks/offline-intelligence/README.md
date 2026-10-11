@@ -10,45 +10,49 @@ in this repository by the script named beside it, with the network refused
 
 | Piece | Where | State |
 |---|---|---|
-| Local plan-symbol detector v1 | `src/plan-model.js`, `models/plan-detector/v1/` | ships, on by default, loaded only from pinned bytes (size + sha256) |
+| Local plan-symbol detector **v2** (v1 kept for rollback) | `src/plan-model.js`, `models/plan-detector/v2/` (and `v1/`) | ships, on by default, loaded only from pinned bytes (size + sha256) |
 | Fusion with the classical candidates | `src/plan-model-fusion.js` | adds tables only; removes and moves nothing |
-| Training pipeline (CPU) | `training/` | synthetic generator, trainer, calibration, ONNX export, packaging, activation |
-| Real-plan dataset export | `training/export_plans.py` | an app backup → per-venue dataset with each label's verification state |
+| Training pipeline (CPU) | `training/` | synthetic generator (2 generations), trainer, calibration, ONNX export, packaging, activation |
+| Real-plan dataset export | `training/export_plans.py` | an app backup → per-venue dataset with each label's verification state and who suggested it |
 | Vector-PDF furniture proposals | `src/plan-vector-objects.js` | repeated shapes in a vector PDF → tables and chairs, fused like the model |
-| Exemplar search ("find more like this") | `src/plan-exemplar.js` | NCC template matching at four quarter turns |
-| Comparison harness | `run.mjs`, `exemplar-measure.mjs`, `vector-measure.mjs` | each a child of `benchmarks/run-benchmark.mjs`'s scoring |
+| Exemplar search ("find more like this") | `src/plan-exemplar.js` | measured below; fails its row; not in the UI |
+| Comparison harness | `run.mjs`, `exemplar-measure.mjs`, `vector-measure.mjs`, `teacher-e2e.mjs` | each scored with `benchmarks/run-benchmark.mjs`'s own matching |
 
 ## The model
 
 - **Architecture**: a CenterNet-style fully convolutional network.
   - 882,864 parameters, stride 4, grey input, long side 1536.
   - Four classes: round table, rectangular table, chair, column.
-- **Training**: 4,000 steps on 4 CPU cores in 2,317 s, on synthetic banquet
-  plans only (`training/synth.py`, styles 0–7).
-  - No real plan was used, so Golden and ORNEK are venues it never saw.
-  - The two remaining synthetic styles (8, 9) are held out.
+- **Trained on synthetic banquet plans only** (`training/synth.py`, styles
+  0–7; styles 8 and 9 held out). No real plan was used by either version, so
+  Golden and ORNEK are venues they never saw.
+  - **v1**: generation 1, 4,000 steps from scratch, 2,317 s on 4 CPU cores.
+  - **v2**: generation 2, which adds single long banquet tables and chairs
+    drawn over the table edge (see "v1 and the adversarial gate" below).
+    2,500 steps warm-started from v1, about 30 minutes.
 - **Threshold**: 0.5 for every class, fixed in advance.
   - Calibrating on synthetic plans did not transfer: a 0.95 precision target
     picked 0.2 and a 0.995 target picked about 0.75.
   - Tuning on Golden/ORNEK would have tuned on the plans it is scored on.
-- **Size and export**: 3,540,361 bytes as ONNX opset 17. Its outputs match
-  PyTorch to within 7e-7.
+- **Size and export**: 3,540,361 bytes each as ONNX opset 17. v1's outputs
+  match PyTorch to within 7e-7.
 - **Runtime**: in the app it runs on the onnxruntime-web 1.30.0 that OCR
-  already loads (WASM, single thread). It took 2.2–3.0 s per plan in the
-  runs below.
+  already loads (WASM, single thread). It took 2.0–3.4 s per plan in the runs
+  below.
 
-### The model alone, on venues it never saw (`training/detector.py eval`)
+### The model alone (`training/detector.py eval`, threshold 0.5)
 
-| Plan | Tables P / R / F1 | Chairs P / R | Table type |
-|---|---|---|---|
-| Golden | 0.978 / 0.957 / 0.967 | 0.950 / 0.841 | 44 / 44 |
-| ORNEK | 0.994 / 1.000 / 0.997 | — (draws no chairs) | 166 / 166 |
-| Synthetic held-out styles (8, 9) | 0.997 / 0.996 | 0.999 / 0.996 (columns 1.000 / 0.791) | |
+| Plan | v1 tables TP / FP / FN | v2 tables TP / FP / FN | v1 chairs P / R | v2 chairs P / R |
+|---|---|---|---|---|
+| Golden (never seen) | 44 / 1 / 2 | 44 / 1 / 2 | 0.950 / 0.841 | 0.920 / 0.920 |
+| ORNEK (never seen) | 166 / 1 / 0 | **166 / 0 / 0** | — | — |
+| Held-out styles, generation 1 (80 plans) | P 0.995 / R 0.997 | P 0.998 / R 0.992 | 0.999 / 0.995 | 0.999 / 0.986 |
+| Held-out styles, generation 2 (80 plans) | P 0.982 / R 0.891 (34 FP) | **P 0.995 / R 0.911 (10 FP)** | 0.999 / 0.968 | 1.000 / 0.979 |
 
-The classical pipeline on the same plans scores tables F1 0.958 (Golden) and
-0.985 (ORNEK), and chairs F1 0.964 (Golden).
+The classical pipeline on the same real plans scores tables F1 0.958 (Golden)
+and 0.985 (ORNEK), and chairs F1 0.964 (Golden).
 
-## Fused into the product: classical vs classical + model
+## Fused into the product: classical vs classical + model (v2)
 
 `node benchmarks/offline-intelligence/run.mjs --set regression` →
 `results-regression.json`.
@@ -56,9 +60,11 @@ The classical pipeline on the same plans scores tables F1 0.958 (Golden) and
 - **Scoring**: the same plans, labels and matching (`run-benchmark.mjs`).
 - **Switch**: the only difference between the two runs is
   `MERIT_BENCH_MODEL=off`.
-- **Why it is a fair new-venue comparison here**: these six plans are the
-  regression set, which every classical rule was tuned on. The model saw none
-  of them.
+- **What kind of evidence this is**: these six plans are the REGRESSION set.
+  Every classical rule was tuned on them, and so was every fusion rule below:
+  each one was set by diagnosing a failure on one of these plans. **These
+  rows prove nothing got worse; they are not new-venue results.** The model
+  alone (the table above) is the unseen-venue number.
 
 | Plan | Classical tables TP/FP/FN | Fused tables TP/FP/FN | Chairs (both) |
 |---|---|---|---|
@@ -69,50 +75,54 @@ The classical pipeline on the same plans scores tables F1 0.958 (Golden) and
 | adversarial-dense | 24 / 0 / 0 | 24 / 0 / 0 | — |
 | adversarial-text | 12 / 0 / 0 | 12 / 0 / 0 | — |
 
-`npm run benchmark:baseline` against the fused run: **no regressions, 5
-improvements** (all ORNEK tables).
+- `npm run benchmark:baseline` against the fused run: **no regressions, 5
+  improvements** (all ORNEK tables).
+- `npm run benchmark:adversarial -- --compare`: **0 blocking**. The 2
+  KNOWN FAILs are unchanged.
 
 ### What fusion was measured to do wrong, and what changed because of it
 
-The first fused run regressed in ten places against the committed baseline.
-Each was diagnosed on the plan, not guessed at.
+Each row was diagnosed on the plan, not guessed at.
 
 | Found | Cause | Change |
 |---|---|---|
-| Golden: two classical phantom tables survived | A model chair attached to them exempted them from text suppression. | A model chair attaches only to a table the model also sees. Suite: `local-model`. |
+| Golden: two classical phantom tables survived | A model chair attached to them exempted them from text suppression. | A model chair attaches only to a table the model also sees. |
 | adversarial-architecture: +1 table | The model read column C3 as a table. | Nothing is added with its centre on a classical venue object. |
-| Columns: 23 added, 0 real | Trained on synthetic only, because the real annotations mask columns. | Model columns are off in v1 (`addColumn: null`). |
-| Golden chairs: +4 right, +3 wrong (57 %) | A grey seat-like box under two tables that is not a chair, and a speck. | Model chairs are off in v1 (`addChair: null`). Classical chair precision (0.973) is already under the 0.98 bar, and a chair has no review line to hold it as a question. |
+| Columns: 23 added, 0 real | Trained on synthetic only, because the real annotations mask columns. | Model columns are off (`addColumn: null`). |
+| Golden chairs: +4 right, +3 wrong (57 %) | A grey seat-like box under two tables that is not a chair, and a speck. | Model chairs are off (`addChair: null`). Classical chair precision (0.973) is already under the 0.98 bar, and a chair has no review line to hold it as a question. |
+| Golden, v2: +1 table | A 24 px planter read as a round table; the plan's tables are about 45 px. | A model table is added only at the size the plan's tables are drawn at (±40 % of the classical median, the criterion that already decided selection). With no classical table to compare with, an addition is only ever a question. |
 
-### What the adversarial gate found with v1 (`npm run benchmark:adversarial -- --compare`)
+Every rule is checked by the `local-model` suite. The chair and column rules
+are tested with those classes switched on, so turning one back on is a new
+measurement, not a default.
 
-**a1-chair-under-table: tables F1 0.667 → 0.400, a BLOCKING regression.**
+### v1 and the adversarial gate
+
+**a1-chair-under-table: tables F1 0.667 → 0.400 with v1, a BLOCKING
+regression.**
 
 - The fixture has 16 long banquet tables (about 2.3 : 1).
-- The model alone, at 0.5, splits each of the 8 that classical detection
-  misses into two square-ish halves. That gives 16 phantom tables (4
-  selected, 12 held under the review line, all counted by the gate).
-- It sees none of the 8 tables with chairs drawn on top of them.
+- v1 alone, at 0.5, split each of the 8 that classical detection misses into
+  two square-ish halves. That gave 16 phantom tables (4 selected, 12 held
+  under the review line, all counted by the gate).
+- It saw none of the 8 tables with chairs drawn on top of them.
 
-**Cause: the training data.** Synthetic generation 1 drew single
-rectangular tables only at 1 : 1 or 1.6 : 1. A long table existed only as a
-row of pushed-together squares, each labelled as its own table, so "a long
-rectangle is several tables" is what v1 learned. Chairs drawn over a table
-never occurred.
+**Cause: the training data.** Generation 1 drew single rectangular tables
+only at 1 : 1 or 1.6 : 1. A long table existed only as a row of
+pushed-together squares, each labelled as its own table, so "a long rectangle
+is several tables" is what v1 learned. Chairs drawn over a table never
+occurred.
 
-**Change: v2.**
-- Synthetic generation 2 adds single long tables (1.8–3.5 : 1, chairs on
-  both sides) and chairs drawn over the table edge.
-- Still no real plan, so Golden and ORNEK remain unseen venues.
-- Fusion was not given a rule to hide this.
+**Change: v2 (generation 2 data, no fusion rule).** On a1, v2 alone proposes
+**no table at 0.5**: no phantoms, but it does not find a1's missing tables
+either. Its strongest responses there are 0.15–0.19, at the top row's tables
+with chairs drawn on them. So the gate is clean (a1 back to 0.667), and a1's
+recall is still the classical 0.5.
 
 **Recorded honestly:** a1 shaped v2's training distribution, so a1 is no
 longer a blind test of the model.
 
-Turning chairs or columns back on is a new measurement, not a default. The
-rules for both stay in the code and are tested with them switched on.
-
-## Against the acceptance table
+## Against the acceptance table (fused product, v2)
 
 | Row | Threshold | Golden | ORNEK |
 |---|---|---|---|
@@ -123,16 +133,6 @@ rules for both stay in the code and are tested with them switched on.
 | Chair → table link | ≥ 0.97 | 0.990 ✓ | — |
 | Venue objects (columns) | recall ≥ 0.90 | no columns annotated; 9 proposed | none annotated; 4 proposed |
 | **Real blind plans** | the 9.5 claim | **NOT MEASURED — no such plan exists in the repository** | |
-
-The rows not yet measured in this programme are filled in below as they are
-run:
-
-- the cross-venue folds;
-- exemplars;
-- vector PDF;
-- memory;
-- OCR;
-- hardware.
 
 ## Decision memory: a rule tried, measured, and not shipped
 

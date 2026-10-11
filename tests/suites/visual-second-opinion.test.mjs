@@ -197,6 +197,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
       seatsCarryingVectors: cands.reduce((n, c) =>
         n + (c.chairDetections || []).filter(ch => ch.visualDescriptor || ch.vector).length, 0),
       trainedModel: a.trainedModel,
+      localDetectorRan: !!(a.localModel && a.localModel.available),
     };
   });
 
@@ -225,9 +226,12 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal(shipped.seatsCarryingVectors, 0,
     "seat vectors back the chair references but are not persisted onto stored objects",
     shipped.seatsCarryingVectors);
-  checks.equal(shipped.trainedModel, false,
-    "a learned encoder giving a second opinion is still not a trained domain model",
-    shipped.trainedModel);
+  // The analysis says a trained model ran for ONE reason only: the local
+  // plan-symbol detector (src/plan-model.js) ran. The encoder's second
+  // opinion never sets it, whether or not the detector is installed.
+  checks.equal(shipped.trainedModel, shipped.localDetectorRan,
+    "a learned encoder giving a second opinion is still not a trained domain model: trainedModel is true only because the local plan-symbol detector ran",
+    { trainedModel: shipped.trainedModel, localDetectorRan: shipped.localDetectorRan });
 
   // ---- part three: what the operator reads ---------------------------------
   const card = await page.evaluate(() => {

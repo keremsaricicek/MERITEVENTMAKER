@@ -34,19 +34,19 @@
 
   const PIN = {
     id: "merit-plan-detector",
-    version: "v1",
-    file: "models/plan-detector/v1/model.js",
+    version: "v2",
+    file: "models/plan-detector/v2/model.js",
     bytes: 3540361,
-    sha256: "522ef95c172ae26a81fdfd65a93f0670fd8ee507471449e27ccd2242337e4ea4",
+    sha256: "a180b42062e9d24a43e6567ff0878a2cb0da5b25bfb6f046b59fa34c186084de",
     classes: ["table_round", "table_rect", "chair", "column"],
     stride: 4,
     longSide: 1536,
     // Per-class score thresholds, written here by training/package.py from the
-    // run's thresholds.json. v1: 0.5 for every class, fixed in advance —
+    // run's thresholds.json. v1 and v2: 0.5 for every class, fixed in advance —
     // calibration on synthetic plans did not transfer to real ones, and tuning
     // on Golden/ORNEK would tune on the venues it is measured on.
     thresholds: { table_round: 0.5, table_rect: 0.5, chair: 0.5, column: 0.5 },
-    trainedOn: "synthetic banquet plans (training/synth.py, styles other than 8,9) only; no real plan",
+    trainedOn: "synthetic banquet plans (training/synth.py generation 2, styles other than 8,9) only; no real plan; warm-started from v1",
   };
 
   // A benchmark may load another version through the same code path

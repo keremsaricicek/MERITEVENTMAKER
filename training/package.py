@@ -29,6 +29,7 @@ def main():
     ap.add_argument("--run", required=True)
     ap.add_argument("--version", required=True)
     ap.add_argument("--activate", action="store_true")
+    ap.add_argument("--parent", default="", help="the version this run was warm-started from (its --init), recorded in the manifest")
     ap.add_argument("--models-dir", default=os.path.join(REPO, "models", "plan-detector"),
                     help="where versions are written (a test writes a throwaway version elsewhere)")
     a = ap.parse_args()
@@ -48,9 +49,11 @@ def main():
     except Exception as e:  # the manifest says it could not read it rather than inventing values
         ck = {"error": str(e)}
     def strip_paths(v):
-        # An absolute path on the training machine says nothing about the model.
+        # An absolute path on the training machine says nothing about the
+        # model and leaks a directory layout; its last two parts say which run
+        # or which set it was.
         if isinstance(v, str) and os.path.isabs(v):
-            return os.path.basename(v.rstrip("/"))
+            return "/".join(v.rstrip("/").split("/")[-2:])
         if isinstance(v, dict):
             return {k: strip_paths(x) for k, x in v.items()}
         if isinstance(v, list):
@@ -64,8 +67,16 @@ def main():
     args = dict(ck.get("args") or {})
     real = [r for r in str(args.get("real") or "").split(",") if r]
     held = str(args.get("exclude_families") or "")
-    trained_on = ("synthetic banquet plans (training/synth.py" + (f", styles other than {held}" if held else "") + ")"
-                  + (" plus the real venue(s) " + ", ".join(real) if real else " only; no real plan"))
+    gen = None
+    try:  # which generation of training/synth.py made the synthetic set
+        gen = json.load(open(os.path.join(args.get("synthetic") or "", "index.json"))).get("gen", 1)
+    except Exception:
+        pass
+    trained_on = ("synthetic banquet plans (training/synth.py" + (f" generation {gen}" if gen else "")
+                  + (f", styles other than {held}" if held else "") + ")"
+                  + (" plus the real venue(s) " + ", ".join(real) if real else " only; no real plan")
+                  + (" plus the exported dataset(s) " + str(args["dataset"]) if args.get("dataset") else "")
+                  + (f"; warm-started from {a.parent}" if a.parent else ""))
     # Paths on the training machine say nothing about the model and leak a
     # directory layout; keep the file names only.
     args = strip_paths(args)
@@ -76,7 +87,7 @@ def main():
         "trainedModel": True,
         "domain": "plan symbols only: tables, chairs, columns. Not rooms, not numbers, not capacity.",
         "training": {"args": args, "steps": ck.get("step"), "params": ck.get("params"), "commitAtPackaging": commit,
-                     "data": trained_on},
+                     "data": trained_on, "parent": a.parent or None},
         "measured": evals,
         "thresholds": json.load(open(os.path.join(a.run, "thresholds.json"))) if os.path.exists(os.path.join(a.run, "thresholds.json")) else None,
         "notes": "Its new-venue quality is the cross-venue folds in benchmarks/offline-intelligence/, not its score on plans it was trained on.",

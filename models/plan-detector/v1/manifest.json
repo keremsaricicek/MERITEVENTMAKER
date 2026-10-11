@@ -15,7 +15,7 @@
  "training": {
   "args": {
    "cmd": "train",
-   "synthetic": "train",
+   "synthetic": "synth/train",
    "real": "",
    "exclude_families": "8,9",
    "steps": 4000,
@@ -24,16 +24,17 @@
    "real_frac": 0.3,
    "threads": 4,
    "seed": 1,
-   "out": "foldS2"
+   "out": "runs/foldS2"
   },
   "steps": 4000,
   "params": 882864,
-  "commitAtPackaging": "276c925d5380ebb7d5eb21c9d8fe72bee4e6f820",
-  "data": "synthetic banquet plans (training/synth.py, styles other than 8,9) only; no real plan"
+  "commitAtPackaging": "2c7befca2ac286b64b46ec2586e6e01b53863dce",
+  "data": "synthetic banquet plans (training/synth.py generation 1, styles other than 8,9) only; no real plan",
+  "parent": null
  },
  "measured": {
   "eval-heldout-styles.json": {
-   "model": "model.pt",
+   "model": "foldS2/model.pt",
    "thresholds": {
     "0": 0.5,
     "1": 0.5,
@@ -42,7 +43,7 @@
    },
    "step": 4000,
    "trainedOn": {
-    "synthetic": "train",
+    "synthetic": "synth/train",
     "real": "",
     "exclude_families": "8,9"
    },
@@ -1294,7 +1295,7 @@
    }
   },
   "eval-real.json": {
-   "model": "model.pt",
+   "model": "foldS2/model.pt",
    "thresholds": {
     "0": 0.5,
     "1": 0.5,
@@ -1303,7 +1304,7 @@
    },
    "step": 4000,
    "trainedOn": {
-    "synthetic": "train",
+    "synthetic": "synth/train",
     "real": "",
     "exclude_families": "8,9"
    },
@@ -1371,7 +1372,7 @@
    }
   },
   "eval-val.json": {
-   "model": "model.pt",
+   "model": "foldS2/model.pt",
    "thresholds": {
     "0": 0.5,
     "1": 0.5,
@@ -1380,7 +1381,7 @@
    },
    "step": 4000,
    "trainedOn": {
-    "synthetic": "train",
+    "synthetic": "synth/train",
     "real": "",
     "exclude_families": "8,9"
    },

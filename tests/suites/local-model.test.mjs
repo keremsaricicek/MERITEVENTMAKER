@@ -115,10 +115,15 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
     const d = [cand(10, 10, 5, 5)];
     const r4 = MeritPlanModelFusion.fuse(d, [], model([]), frame("PHYSICAL"));
     const r5 = MeritPlanModelFusion.fuse([cand(10, 10, 5, 5)], [], { available: false, detections: [] }, frame("PHYSICAL"));
+    // drawn at a size no table on this plan is drawn at (a 20 px "table" beside 50 px ones)
+    const r11 = MeritPlanModelFusion.fuse([cand(10, 10, 5, 5)], [], model([{ cls: "table_round", score: 0.95, cx: 600, cy: 600, w: 20, h: 20 }]), frame("PHYSICAL"));
+    // nothing to compare with: added, but only as a question
+    const r12 = MeritPlanModelFusion.fuse([], [], model([{ cls: "table_round", score: 0.95, cx: 600, cy: 600, w: 20, h: 20 }]), frame("PHYSICAL"));
     return { addedOne: r1.added.length, addedType: r1.added[0] && r1.added[0].type, lowScoreSkipped: !r1.added.some(x => x.x > 70),
       symbolicChairs: r2.chairsAttached, physicalChairs: r3.chairsAttached, farChairDropped: r3.chairsDropped, chairsOnTable: c[0].chairDetections.length,
       unsupported: r4.unsupported, flagged: d[0].modelSupport, kept: d.length, unavailableAdds: r5.added.length,
       unseenTableChairs: r6.chairsAttached, unseenTableSeats: e[0].chairDetections.length,
+      offSize: r11.added.length + "/" + r11.offSize, noReference: r12.added.length === 1 && r12.added[0].selected === false && r12.added[0].confidence <= 0.7,
       chairsDefault: rDefault.chairsAttached + g[0].chairDetections.length, onColumn: r7.added.length, textChairs: r8.chairsAttached, textSkipped: r8.chairsInText, textSeats: f[0].chairDetections.length,
       columnsDefault: r9.addedVenues.length, columnsEnabled: r10.addedVenues.length,
       attachedRelation: c[0].chairDetections[0] && c[0].chairDetections[0].relation && c[0].chairDetections[0].relation.evidence };
@@ -129,6 +134,8 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
     "a model chair is attached to the table it sits beside; one far from every table is dropped; on a plan that draws no chairs none is attached", rules);
   checks.ok(rules.unseenTableChairs === 0 && rules.unseenTableSeats === 0,
     "a model chair is never attached to a table the model itself does not see — that seat would exempt a phantom from text suppression", rules);
+  checks.ok(rules.offSize === "0/1" && rules.noReference,
+    "a model table drawn at a size no table on the plan is drawn at is not added (a 24 px planter on the Golden Plan); with no classical table to compare with, an addition is only ever a question", rules);
   checks.ok(rules.chairsDefault === 0,
     "model chairs are not attached by default in v1 (on the Golden Plan the chairs only the model saw were 4 right, 3 wrong); the rules below hold for a measured re-enable", rules);
   checks.ok(rules.onColumn === 0, "a model table centred on a classical column is not added — the two disagree about a class; nothing was missed", rules);

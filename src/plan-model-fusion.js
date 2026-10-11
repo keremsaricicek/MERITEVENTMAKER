@@ -5,9 +5,12 @@
 // different ways. Fusion only ADDS what one found and the other did not, and
 // marks where they disagree. It deletes nothing:
 //   · a model table with no classical table near it becomes a NEW candidate,
-//     unreviewed, carrying its source and the model's score. It is selected
-//     for Confirm only when the model is confident AND it is drawn at the
-//     same size as the plan's other tables; otherwise the review asks;
+//     unreviewed, carrying its source and the model's score — only when it
+//     is drawn at the size the plan's other tables are drawn at (measured:
+//     v2 read a 24 px planter on the Golden Plan, whose tables are ~45 px, as
+//     a round table). It is selected for Confirm only when the model is also
+//     confident; otherwise the review asks. On a plan where the classical
+//     pass found no table to compare with, an addition is never selected;
 //   · a model chair that matches no classical chair is attached to the table
 //     whose edge it sits beside — only a table the model also sees as a
 //     table. On a plan the classical verdict calls
@@ -21,14 +24,14 @@
 //     evidence (plan-detection-chairs.js, inPrintedText). Measured on the
 //     Golden Plan: the two printed labels under tables t029/t030 read as
 //     chairs;
-//   · model CHAIRS are not attached in v1 (addChair: null). With every rule
+//   · model CHAIRS are not attached (addChair: null; measured with v1). With every rule
 //     above in force, the chairs only the model saw on the Golden Plan were 4
 //     right and 3 wrong (two of them a grey seat-like box under a table that
 //     is not a chair). Attached directly they would lower chair precision,
 //     the criterion the plan already fails (ACCEPTANCE.md: >= 0.98), and
 //     unlike a table there is no review line to hold an unsure chair as a
 //     question. Turning it on is a new measurement, not a default;
-//   · model COLUMNS are not added in v1 (addColumn: null). The class was
+//   · model COLUMNS are not added (addColumn: null; measured with v1). The class was
 //     trained on synthetic plans only — real annotations mask it — and on
 //     the regression set it added 23 columns where none exist and found no
 //     real one. Turning it back on is a new measurement, not a default;
@@ -48,7 +51,7 @@
     const o = Object.assign({}, DEFAULTS, opts || {});
     const W = frame.width, H = frame.height, uid = frame.uid;
     const pct = (v, dim) => v / dim * 100;
-    const out = { added: [], addedVenues: [], chairsAttached: 0, chairsDropped: 0, chairsInText: 0, unsupported: 0, considered: (model && model.detections || []).length };
+    const out = { added: [], addedVenues: [], chairsAttached: 0, chairsDropped: 0, chairsInText: 0, offSize: 0, unsupported: 0, considered: (model && model.detections || []).length };
     if (!model || !model.available) return out;
     const dets = model.detections;
     const centre = c => ({ cx: (c.x + c.w / 2) / 100 * W, cy: (c.y + c.h / 2) / 100 * H, w: c.w / 100 * W, h: c.h / 100 * H });
@@ -78,6 +81,7 @@
       // does not cast a halo its own size over every table around it)
       if (others.some(v => Math.abs(d.cx - v.cx) <= v.w / 2 && Math.abs(d.cy - v.cy) <= v.h / 2)) continue;
       if (d.score < o.addTable) continue;
+      if (medianSide != null && !consistent(d)) { out.offSize++; continue; }
       const round = d.cls === "table_round";
       const square = !round && Math.abs(d.w - d.h) < 0.12 * Math.max(d.w, d.h);
       const select = d.score >= o.selectScore && consistent(d);

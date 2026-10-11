@@ -35,7 +35,11 @@ jobs:
   fast-core:
     name: Fast core — regression suite
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # A resource cap, not a quality bar. The suite took 21.5 of 25 minutes at
+    # 276c925; since then every analysis also runs the local plan-symbol
+    # detector (~2.5 s, src/plan-model.js), and the full local run measured
+    # 27 min 50 s on 2026-10-11.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

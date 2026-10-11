@@ -329,11 +329,12 @@ label it "Assisted Detection," never "AI." Beside it runs ONE trained model:
 the local plan-symbol detector (`src/plan-model.js`, ~0.9 M parameters,
 trained in `training/` on CPU). It finds round/rectangular tables, chairs and
 columns. It is not a model of rooms, numbers or capacity. Its pin states what
-it was trained on (v1: synthetic plans only). It is loaded only from its
+it was trained on (v2, active: synthetic plans only, warm-started from v1). It is loaded only from its
 pinned bytes (size + sha256). Fusion (`src/plan-model-fusion.js`) only ADDS
-unreviewed tables where nothing was proposed and marks; it removes and moves
-nothing. In v1 it adds no chairs and no columns: both were measured and made
-the regression set worse, and switching one on is a new measurement. An analysis says a trained model
+unreviewed tables where nothing was proposed, at the size the plan's tables
+are drawn at, and marks; it removes and moves nothing. It adds no chairs and
+no columns: both were measured and made the regression set worse, and
+switching one on is a new measurement. An analysis says a trained model
 ran (`trainedModel:true`) only when it did. When the model is missing,
 corrupt, disabled or has no runtime, the analysis completes on the classical
 path, records why, and the screen says **"DOMAIN MODEL NOT INSTALLED"**.

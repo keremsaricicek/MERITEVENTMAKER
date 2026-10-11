@@ -1,8 +1,8 @@
 {
-  "ranAt": "2026-10-04T19:23:16.992Z",
+  "ranAt": "2026-10-11T12:17:09.773Z",
   "source": {
-    "digest": "a6030deead1c119e20cad8aa620684145f9e68b7d5e93b8b4b8d09b49589f224",
-    "files": 92,
+    "digest": "88a7771529af2497112942070566058e9592e9d103f3baaa5cc5f74668756390",
+    "files": 111,
     "inputs": [
       "index.html",
       "src",
@@ -137,7 +137,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 5768,
+      "detectionMs": 9636,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -271,11 +271,11 @@
       "sceneGraph": {
         "counts": {
           "belongsTo": 32,
-          "memberOf": 62,
+          "memberOf": 59,
           "structuralElementOf": 28
         },
         "nodeCount": 47,
-        "edges": 122
+        "edges": 119
       },
       "contradictions": 1,
       "contradictionIds": [
@@ -286,7 +286,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 4
       },
-      "detectionMs": 4132,
+      "detectionMs": 10199,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -381,7 +381,7 @@
         }
       },
       "facts": {
-        "total": 6,
+        "total": 5,
         "expected": 3,
         "expectedPresent": 3,
         "expectedMissing": [],
@@ -391,7 +391,7 @@
         "withoutProvenance": [],
         "byStrength": {
           "strong": 3,
-          "likely": 3
+          "likely": 2
         }
       },
       "regionFP": {
@@ -403,12 +403,11 @@
       "sceneGraph": {
         "counts": {
           "belongsTo": 240,
-          "faces": 120,
           "memberOf": 60,
           "structuralElementOf": 20
         },
         "nodeCount": 40,
-        "edges": 440
+        "edges": 320
       },
       "contradictions": 1,
       "contradictionIds": [
@@ -419,7 +418,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 4705,
+      "detectionMs": 10583,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -553,7 +552,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 4503,
+      "detectionMs": 10251,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -663,7 +662,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 0
       },
-      "detectionMs": 2425,
+      "detectionMs": 11226,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -679,17 +678,17 @@
       "hypothesis": "Repetition at a consistent size is read as furniture. When repeated architecture outnumbers the real furniture and sets the plan's modal size, the furniture must still be found and the architecture must not be proposed as tables.",
       "tables": {
         "groundTruth": 8,
-        "detected": 29,
+        "detected": 27,
         "tp": 8,
-        "fp": 21,
+        "fp": 19,
         "fn": 0,
-        "precision": 0.276,
+        "precision": 0.296,
         "recall": 1,
-        "f1": 0.432,
+        "f1": 0.457,
         "heldBack": 0,
         "heldBackReasons": {},
         "phantomsOffered": 0,
-        "phantomsHeldBack": 21,
+        "phantomsHeldBack": 19,
         "missedIds": []
       },
       "tableTypes": {
@@ -748,7 +747,7 @@
         }
       },
       "facts": {
-        "total": 8,
+        "total": 6,
         "expected": 2,
         "expectedPresent": 2,
         "expectedMissing": [],
@@ -757,26 +756,25 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "likely": 5,
+          "likely": 3,
           "uncertain": 1,
           "strong": 2
         }
       },
       "regionFP": {
         "textRegions": 1,
-        "tablesInText": 2,
+        "tablesInText": 0,
         "architectureRegions": 47,
         "tablesInArchitecture": 19
       },
       "sceneGraph": {
         "counts": {
           "belongsTo": 51,
-          "faces": 19,
-          "memberOf": 95,
+          "memberOf": 72,
           "structuralElementOf": 32
         },
-        "nodeCount": 66,
-        "edges": 197
+        "nodeCount": 64,
+        "edges": 155
       },
       "contradictions": 1,
       "contradictionIds": [
@@ -787,13 +785,13 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 3081,
+      "detectionMs": 9175,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
         "status": "FAIL",
         "fail": [
-          "more phantom tables than real ones: 21 FP against 8 GT (precision 0.276)"
+          "more phantom tables than real ones: 19 FP against 8 GT (precision 0.296)"
         ],
         "failCodes": [
           "PHANTOM_MAJORITY"
@@ -896,7 +894,7 @@
         }
       },
       "facts": {
-        "total": 5,
+        "total": 6,
         "expected": 2,
         "expectedPresent": 2,
         "expectedMissing": [],
@@ -906,7 +904,7 @@
         "withoutProvenance": [],
         "byStrength": {
           "strong": 3,
-          "likely": 2
+          "likely": 3
         }
       },
       "regionFP": {
@@ -918,10 +916,11 @@
       "sceneGraph": {
         "counts": {
           "belongsTo": 37,
-          "memberOf": 47
+          "faces": 23,
+          "memberOf": 53
         },
-        "nodeCount": 32,
-        "edges": 84
+        "nodeCount": 38,
+        "edges": 113
       },
       "contradictions": 0,
       "contradictionIds": [],
@@ -930,7 +929,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 3082,
+      "detectionMs": 9721,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -1040,7 +1039,7 @@
         }
       },
       "facts": {
-        "total": 7,
+        "total": 8,
         "expected": 3,
         "expectedPresent": 3,
         "expectedMissing": [],
@@ -1049,7 +1048,7 @@
         "fabricatedStrong": 0,
         "withoutProvenance": [],
         "byStrength": {
-          "likely": 5,
+          "likely": 6,
           "strong": 2
         }
       },
@@ -1062,10 +1061,11 @@
       "sceneGraph": {
         "counts": {
           "belongsTo": 289,
+          "faces": 289,
           "memberOf": 578
         },
         "nodeCount": 289,
-        "edges": 867
+        "edges": 1156
       },
       "contradictions": 0,
       "contradictionIds": [],
@@ -1074,7 +1074,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 10527,
+      "detectionMs": 15659,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -1191,10 +1191,10 @@
       },
       "sceneGraph": {
         "counts": {
-          "memberOf": 179
+          "memberOf": 168
         },
-        "nodeCount": 107,
-        "edges": 179
+        "nodeCount": 96,
+        "edges": 168
       },
       "contradictions": 4,
       "contradictionIds": [
@@ -1204,11 +1204,11 @@
         "contra:tablesNoDining"
       ],
       "effort": {
-        "reviewGroups": 3,
+        "reviewGroups": 2,
         "uncertainQuestions": 0,
-        "reviewPriorities": 8
+        "reviewPriorities": 7
       },
-      "detectionMs": 5479,
+      "detectionMs": 23752,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
