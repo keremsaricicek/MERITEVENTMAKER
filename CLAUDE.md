@@ -292,7 +292,11 @@ cancelled reading is dropped whole (`MeritVlmReview.staleReason`). The
 suites run against `tests/lib/fake-anthropic.mjs`, whose answers are
 SCRIPTED: a green `vlm-relay`/`vlm-reading` proves the plumbing and **never**
 model quality — no real model has run until a person with a funded key says
-so. Full detail: `server/README.md`, `src/screen-vlm.js`,
+so. `VLM_PROVIDER=local` sends the same reading to a model process on this
+machine instead (`server/vlm-local.mjs`): loopback only, every model file
+pinned by size and sha256 in a manifest that states its licence and source, no
+key, no charge, same checks; no model ships, and `vlm-local` runs it against a
+SCRIPTED process. Full detail: `server/README.md`, `src/screen-vlm.js`,
 `src/plan-vlm-review.js`.
 
 ## Analysis speed and Stop

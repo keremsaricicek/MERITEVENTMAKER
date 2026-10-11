@@ -47,6 +47,63 @@ both measured in this directory:
 Neither one is a VLM. Neither can read a free-text note
 ("this area is for sponsors"). That gap stays open and is stated as such.
 
+## The 403, diagnosed (2026-10-11, second pass)
+
+The question was whether the refusal comes from the model repository (a gated
+repo, a licence click-through), a redirect to a file server, authentication,
+or the network. Each host was asked once, and the session's egress proxy
+records why it refused (`/__agentproxy/status`, `recentRelayFailures`):
+
+| Host | What answered | Meaning |
+|---|---|---|
+| `huggingface.co` | the egress gateway: `403` to **CONNECT** | refused before TLS: no request ever reached Hugging Face |
+| `cdn-lfs.hf.co`, `cdn-lfs.huggingface.co` | gateway `403` to CONNECT | the LFS file servers `/resolve/` redirects to are refused the same way |
+| `cas-bridge.xethub.hf.co` | gateway `403` to CONNECT | the Xet storage bridge newer repositories redirect to, refused the same way |
+| `registry.ollama.ai`, `ollama.com`, `www.kaggle.com`, `modelscope.cn`, `dl.fbaipublicfiles.com` | no connection (refused at the gateway) | no alternative model host is reachable either |
+| `github.com`, `objects.githubusercontent.com` | GitHub itself answered (`400`/`404` to a bare HEAD) | reachable — but no candidate's authors publish weights there |
+| `registry.npmjs.org`, `pypi.org` | `200` | reachable — package registries; no candidate's authors publish weights there |
+
+So it is **the network policy of this cloud session** — an allow-list at the
+egress gateway — not the repository, not a redirect target alone, and not
+authentication: a `CONNECT` refused at the gateway never reaches the server
+that would check a token or a licence acceptance. Nothing in the product or
+the repository can change that, and routing around it (a mirror of unknown
+provenance, a re-upload on npm or PyPI) would mean running weights nobody can
+verify, which this product refuses.
+
+**The one environment change that unblocks it** (read-only download access):
+
+- `huggingface.co`
+- `cdn-lfs.hf.co`
+- `cas-bridge.xethub.hf.co`
+
+On a desktop machine with ordinary internet none of this applies: the files are
+downloaded once by a developer, their sha256 pinned in the repository the way
+`src/plan-model.js` pins the local detector, and shipped inside the package.
+The end user never downloads a model.
+
+## What is ready for the day a model is allowed (2026-10-11)
+
+The provider side is built and tested, so the only missing piece is the files:
+
+- `server/vlm-local.mjs` — a local model process behind the same relay, same
+  instruction, same answer schema, same checks, same Accept-by-a-person flow.
+  Loopback only; every model file pinned by size and sha256 in a manifest that
+  also states the licence and the source; a request cap but no key and no
+  charge. See `server/README.md`.
+- `tests/suites/vlm-local.test.mjs` — 17 checks against a scripted local
+  process: configuration refusals (off-machine URL, no manifest, missing or
+  changed file, path escape, no licence), the request carries the cloud
+  request's content unchanged, findings go through the same validation, the day
+  cap refuses before the process is called, each failure's code (not running,
+  cut-off, malformed, failing, cancelled in flight), and the page's wording
+  ("on this computer", the model's name and licence, no price). Mutation-
+  checked: removing the loopback or the sha256 check turns it red.
+
+What is still **NOT MEASURED**: any model's accuracy, CPU time, memory and
+start-up on plan crops — for Florence-2, SmolVLM or any other candidate. Two
+candidates cannot be compared until their files can be fetched (below).
+
 ## What would unblock it
 
 One of these, then the measurement script in this directory is run as is:

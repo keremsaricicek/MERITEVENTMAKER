@@ -36,6 +36,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as core from "./vlm-core.mjs";
+import { makeLocalClient } from "./vlm-local.mjs";
 
 export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const RELAY_VERSION = 2;
@@ -56,6 +57,8 @@ const SDK_ENV_SHADOWED = ["ANTHROPIC_CUSTOM_HEADERS", "ANTHROPIC_LOG", "ANTHROPI
 
 export async function makeClient(config, { log } = {}) {
   if (!config.configured) return null;
+  // A model process on this machine (server/vlm-local.mjs): no SDK, no key.
+  if (config.provider === "local") return makeLocalClient(config);
   const { default: Anthropic } = await import("@anthropic-ai/sdk");
   const saved = {};
   for (const k of SDK_ENV_SHADOWED) { saved[k] = process.env[k]; delete process.env[k]; }
@@ -156,6 +159,11 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     res.on("close", () => { if (!res.writableEnded) controller.abort(); });
     try {
       const info = await client.models.retrieve(config.model, {}, { signal: controller.signal, timeout: 15000 });
+      if (config.provider === "local") {
+        say(`check: the local model process is answering (${(info && info.served || []).join(", ") || "no model listed"})`);
+        return json(res, 200, { ok: true, model: info && info.id || config.model, displayName: info && info.display_name || null, served: info && info.served || [],
+          note: "the model process on this machine answered; nothing leaves this machine" });
+      }
       say(`check: key accepted, model ${config.model} reachable`);
       return json(res, 200, { ok: true, model: info && info.id || config.model, displayName: info && info.display_name || null,
         note: "the key and the model were accepted; a balance is not checked by this call" });
@@ -227,7 +235,8 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     const tag = `run ${p.runId.slice(0, 12)} ${p.step}`;
     let message = null, failure = null, estimate = null, refusal = null, lastHold = null;
     try {
-      const c = await countInput(params, controller.signal);
+      // A local model has no count to ask for and nothing to charge.
+      const c = config.provider === "local" ? { counted: {} } : await countInput(params, controller.signal);
       if (c.failure) failure = c.failure;
       else {
         estimate = core.estimateCost(p, config, { counted: c.counted });
@@ -347,15 +356,27 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const s = core.status(config, started.relay.usage.snapshot(), started.relay.usage.ledger());
   console.log("MERIT EVENT MAKER — app + vision-language relay");
   console.log(`  open        ${started.baseUrl}/index.html`);
-  const why = { NO_KEY: "ANTHROPIC_API_KEY is not set in this process's environment", UNKNOWN_PRICE: "a model in use has no known price",
-    UNBOUNDED_FALLBACK: "VLM_FALLBACKS asks for open-ended fallbacks; name them in VLM_FALLBACK_MODELS so every attempt can be held" }[s.reasonCode];
-  console.log(`  relay       ${s.configured ? "CONFIGURED" : `NOT CONFIGURED (${why})`}`);
-  console.log(`  model       ${s.model}   effort ${s.effort}   fallbacks ${s.fallbackChain.length ? s.fallbackChain.join(" → ") : "off"}`);
-  if (s.ledger.state !== "OK") console.log(`  ledger      ${s.ledger.state}: ${s.ledger.problem} — paid requests are refused until this is resolved (${config.dataDir})`);
-  if (s.ledger.openReservations) console.log(`  ledger      ${s.ledger.openReservations} reservation(s) from an earlier run never settled; they stay held`);
-  if (s.prices) console.log(`  prices      $${s.prices.inputPerMTok} in / $${s.prices.outputPerMTok} out per million tokens (${s.prices.source}; official table checked ${s.prices.asOf})`);
-  console.log(`  limits      $${s.limits.maxUsdPerRun}/run  $${s.limits.maxUsdPerDay}/day  ${s.limits.maxRequestsPerDay} requests/day  ${s.limits.maxStepsPerRun} steps/run  ${s.limits.timeoutMs / 1000}s/request`);
-  console.log(`  today       ${s.usage.requests} request(s), $${s.usage.usd} held or spent   (${config.dataDir})`);
-  console.log(`  hosts       ${allowedHosts.join(", ")}`);
-  console.log("  (ctrl-c to stop)");
+  if (s.provider === "local") {
+    const whyLocal = { LOCAL_NO_URL: "VLM_LOCAL_URL is not set", LOCAL_NOT_LOOPBACK: "VLM_LOCAL_URL must be 127.0.0.1, localhost or [::1] — a plan never leaves this machine",
+      LOCAL_NOT_PINNED: "VLM_LOCAL_MANIFEST is not set or not found", LOCAL_MANIFEST_INVALID: "the manifest is not valid", LOCAL_MODEL_MISSING: "a pinned model file is missing",
+      LOCAL_MODEL_INTEGRITY: "a pinned model file does not match its size or sha256" }[s.reasonCode];
+    console.log(`  provider    LOCAL — a model process on this machine; nothing leaves it, nothing is charged`);
+    console.log(`  relay       ${s.configured ? "CONFIGURED" : `NOT CONFIGURED (${whyLocal}${s.problem ? `: ${s.problem}` : ""})`}`);
+    if (s.local) console.log(`  model       ${s.local.name} ${s.local.version} (${s.local.licence}) from ${s.local.source}, ${s.local.files} file(s) checked by sha256, served by ${s.local.runtime}`);
+    console.log(`  limits      ${s.limits.maxRequestsPerDay} requests/day  ${s.limits.maxStepsPerRun} steps/run  ${s.limits.timeoutMs / 1000}s/request`);
+    console.log(`  hosts       ${allowedHosts.join(", ")}`);
+    console.log("  (ctrl-c to stop)");
+  } else {
+    const why = { NO_KEY: "ANTHROPIC_API_KEY is not set in this process's environment", UNKNOWN_PRICE: "a model in use has no known price",
+      UNBOUNDED_FALLBACK: "VLM_FALLBACKS asks for open-ended fallbacks; name them in VLM_FALLBACK_MODELS so every attempt can be held" }[s.reasonCode];
+    console.log(`  relay       ${s.configured ? "CONFIGURED" : `NOT CONFIGURED (${why})`}`);
+    console.log(`  model       ${s.model}   effort ${s.effort}   fallbacks ${s.fallbackChain.length ? s.fallbackChain.join(" → ") : "off"}`);
+    if (s.ledger.state !== "OK") console.log(`  ledger      ${s.ledger.state}: ${s.ledger.problem} — paid requests are refused until this is resolved (${config.dataDir})`);
+    if (s.ledger.openReservations) console.log(`  ledger      ${s.ledger.openReservations} reservation(s) from an earlier run never settled; they stay held`);
+    if (s.prices) console.log(`  prices      $${s.prices.inputPerMTok} in / $${s.prices.outputPerMTok} out per million tokens (${s.prices.source}; official table checked ${s.prices.asOf})`);
+    console.log(`  limits      $${s.limits.maxUsdPerRun}/run  $${s.limits.maxUsdPerDay}/day  ${s.limits.maxRequestsPerDay} requests/day  ${s.limits.maxStepsPerRun} steps/run  ${s.limits.timeoutMs / 1000}s/request`);
+    console.log(`  today       ${s.usage.requests} request(s), $${s.usage.usd} held or spent   (${config.dataDir})`);
+    console.log(`  hosts       ${allowedHosts.join(", ")}`);
+    console.log("  (ctrl-c to stop)");
+  }
 }

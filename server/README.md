@@ -53,6 +53,40 @@ page builds the request from the analysis only (`MeritVlmReview.payloadFor`
 is never handed an event), and the relay refuses any field it does not know,
 anywhere in the request (`validateRunPayload`).
 
+## A model on this machine instead (`VLM_PROVIDER=local`)
+
+The same reading can go to a vision-language model running in a process on
+this computer — nothing leaves the machine, there is no key and no charge:
+
+```
+# 1. a local model process speaking the OpenAI-compatible chat endpoint on
+#    loopback, e.g. llama.cpp:  llama-server -m <model.gguf> --mmproj <mmproj.gguf> --port 8080
+# 2. a manifest beside the files, pinning each one:
+#    { "format": "merit-local-vlm/1", "id": "...", "name": "...", "version": "...",
+#      "licence": "...", "source": "<where the files came from>", "runtime": "llama.cpp bNNNN",
+#      "files": [ { "path": "model.gguf", "bytes": N, "sha256": "<64 hex>" }, ... ] }
+VLM_PROVIDER=local VLM_LOCAL_URL=http://127.0.0.1:8080 \
+VLM_LOCAL_MANIFEST=/path/to/merit-local-vlm.json npm run serve:vlm
+```
+
+`server/vlm-local.mjs` is the provider. What it refuses, before anything is
+sent: a URL that is not 127.0.0.1, localhost or ::1 (`LOCAL_NOT_LOOPBACK`); no
+manifest (`LOCAL_NOT_PINNED`); a file missing (`LOCAL_MODEL_MISSING`) or one
+byte different from its pinned size and sha256 (`LOCAL_MODEL_INTEGRITY`); a
+manifest without a licence or a source, or with a path outside its folder
+(`LOCAL_MANIFEST_INVALID`). The request is the cloud request's fixed
+instruction, task text, image and answer schema in the chat endpoint's shape;
+the answer goes through the same `validateModelOutput`; the day's request cap
+still applies. A process that is not running is `LOCAL_NOT_RUNNING`. The page
+says "on this computer", names the model, version and licence, and shows no
+price.
+
+No model ships with this repository and none could be downloaded from the
+environment it was built in (`benchmarks/offline-intelligence/LOCAL-VLM.md`).
+`tests/suites/vlm-local.test.mjs` runs the whole path against
+`tests/lib/fake-local-vlm.mjs`, whose answers are SCRIPTED: it proves the
+plumbing, never a model's reading.
+
 ## Limits
 
 Every limit is checked against each **attempt's** worst case and refuses

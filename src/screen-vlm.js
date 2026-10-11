@@ -136,8 +136,9 @@
       ...(tp.needed?[t("vlm.ask.tiles",{n:tilesSent,of:tp.tiles.length,px:V().TILE_MIN_PX})]:[]),
       t("vlm.ask.notSent"),
       t("vlm.ask.printed"),
-      t("vlm.ask.where",{model:st.model}),
-      t("vlm.ask.caps",{run:money(L.maxUsdPerRun),day:money(L.maxUsdPerDay),spent:money(U.usd),requests:U.requests||0,maxRequests:L.maxRequestsPerDay||0}),
+      ...(st.provider==="local"&&st.local
+        ?[t("vlm.ask.whereLocal",{model:`${st.local.name} ${st.local.version}`,licence:st.local.licence}),t("vlm.ask.capsLocal",{requests:U.requests||0,maxRequests:L.maxRequestsPerDay||0})]
+        :[t("vlm.ask.where",{model:st.model}),t("vlm.ask.caps",{run:money(L.maxUsdPerRun),day:money(L.maxUsdPerDay),spent:money(U.usd),requests:U.requests||0,maxRequests:L.maxRequestsPerDay||0})]),
       t("vlm.ask.suggestions"),
     ].join("\n\n")});
     if(!yes)return;
@@ -357,6 +358,8 @@
     if(session.probing)return`<p class="vlm-note" role="status">${t("vlm.relay.probing")}</p>`;
     if(!r)return`<p class="vlm-note">${t("vlm.relay.unknown")}</p>`;
     if(!r.relay)return`<p class="vlm-state warn"><b>${t("vlm.relay.absent")}</b></p><p class="vlm-note">${t("vlm.relay.absentWhy")}</p><button class="btn sm" data-vlm-action="probe">${t("vlm.relay.again")}</button>`;
+    // A model process on this computer (server/vlm-local.mjs): its own reasons.
+    if(!r.configured&&r.provider==="local")return`<p class="vlm-state warn"><b>${t("vlm.relay.localNotReady")}</b></p><p class="vlm-note">${esc(tx("vlm.err.",r.reasonCode))}</p><button class="btn sm" data-vlm-action="probe">${t("vlm.relay.again")}</button>`;
     if(!r.configured){
       const head=r.reasonCode==="UNKNOWN_PRICE"?"vlm.relay.noPrice":r.reasonCode==="UNBOUNDED_FALLBACK"?"vlm.relay.noBudget":"vlm.relay.noKey";
       const why=r.reasonCode==="UNKNOWN_PRICE"?t("vlm.relay.noPriceWhy",{model:esc(r.model||"")}):r.reasonCode==="UNBOUNDED_FALLBACK"?t("vlm.err.UNBOUNDED_FALLBACK"):t("vlm.relay.noKeyWhy",{model:esc(r.model||"")});
@@ -364,10 +367,14 @@
     }
     if(r.ledger&&r.ledger.state&&r.ledger.state!=="OK")return`<p class="vlm-state warn"><b>${t("vlm.run.failed")}</b> · ${esc(tx("vlm.err.","LEDGER_"+r.ledger.state))}</p><button class="btn sm" data-vlm-action="probe">${t("vlm.relay.again")}</button>`;
     const L=r.limits||{},U=r.usage||{};
+    const local=r.provider==="local"&&r.local;
     const check=session.checking?`<span class="vlm-note" role="status">${t("vlm.check.running")}</span>`
-      :session.check?(session.check.ok?`<span class="vlm-state ok">${t("vlm.check.ok")}</span>`:`<span class="vlm-state warn">${esc(tx("vlm.err.",session.check.code))}</span>`):"";
-    return`<p class="vlm-state ok"><b>${t("vlm.relay.ready")}</b> · ${esc(r.model||"")}</p>
-      <p class="vlm-note">${t("vlm.relay.caps",{run:money(L.maxUsdPerRun),day:money(L.maxUsdPerDay),spent:money(U.usd),requests:U.requests||0,maxRequests:L.maxRequestsPerDay||0})}${session.relayStale?` ${t("vlm.relay.stale")}`:""}</p>
+      :session.check?(session.check.ok?`<span class="vlm-state ok">${t(local?"vlm.check.okLocal":"vlm.check.ok")}</span>`:`<span class="vlm-state warn">${esc(tx("vlm.err.",session.check.code))}</span>`):"";
+    const head=local?`<p class="vlm-state ok"><b>${t("vlm.relay.readyLocal")}</b> · ${esc(`${local.name} ${local.version}`)}</p>
+      <p class="vlm-note">${t("vlm.relay.capsLocal",{licence:esc(local.licence),requests:U.requests||0,maxRequests:L.maxRequestsPerDay||0})}${session.relayStale?` ${t("vlm.relay.stale")}`:""}</p>`
+      :`<p class="vlm-state ok"><b>${t("vlm.relay.ready")}</b> · ${esc(r.model||"")}</p>
+      <p class="vlm-note">${t("vlm.relay.caps",{run:money(L.maxUsdPerRun),day:money(L.maxUsdPerDay),spent:money(U.usd),requests:U.requests||0,maxRequests:L.maxRequestsPerDay||0})}${session.relayStale?` ${t("vlm.relay.stale")}`:""}</p>`;
+    return`${head}
       <div class="vlm-actions"><button class="btn sm" data-vlm-action="check" ${session.checking||session.busy?"disabled":""}>${t("vlm.check")}</button>${check}</div>`;
   }
   function findingRowHTML(a,f,i){
@@ -418,8 +425,9 @@
   function diagnosticsHTML(a,questionCount){
     const r=session.relay;
     if(!r||!r.relay)return questionCount!=null?`<b>${t("diag.vlmNotConfigured")}</b> · ${t("diag.vlmPending",{n:questionCount})}`:"";
-    if(!r.configured)return`<b>${t("diag.vlmNotConfigured")}</b> · ${t(r.reasonCode==="UNKNOWN_PRICE"?"vlm.relay.noPrice":"vlm.relay.noKey")}`;
-    return`<b>${t("vlm.relay.ready")}</b> · ${esc(r.model||"")}${a&&a.vlm?` · ${t("vlm.run."+a.vlm.status)}`:""}`;
+    if(!r.configured)return`<b>${t("diag.vlmNotConfigured")}</b> · ${r.provider==="local"?t("vlm.relay.localNotReady"):t(r.reasonCode==="UNKNOWN_PRICE"?"vlm.relay.noPrice":"vlm.relay.noKey")}`;
+    const name=r.provider==="local"&&r.local?`${r.local.name} ${r.local.version}`:r.model||"";
+    return`<b>${t(r.provider==="local"?"vlm.relay.readyLocal":"vlm.relay.ready")}</b> · ${esc(name)}${a&&a.vlm?` · ${t("vlm.run."+a.vlm.status)}`:""}`;
   }
 
   // ---- controls ---------------------------------------------------------------

@@ -27,6 +27,7 @@
 //                   Turkish and English — never a raw message with a secret in it.
 import fs from "node:fs";
 import path from "node:path";
+import { localFromEnv } from "./vlm-local.mjs";
 
 // ---- prices ------------------------------------------------------------------
 // USD per million tokens, Anthropic first-party API, checked on PRICES_AS_OF
@@ -98,8 +99,25 @@ export function configFromEnv(env, { repoRoot } = {}) {
   const unpricedHop = fallbackChain.some(m => !PRICES[m]);
   const base = env.VLM_UPSTREAM_BASE_URL && /^https?:\/\/[^\s]+$/.test(env.VLM_UPSTREAM_BASE_URL) ? env.VLM_UPSTREAM_BASE_URL.replace(/\/$/, "") : "https://api.anthropic.com";
   const reasonCode = !apiKey ? "NO_KEY" : !prices || unpricedHop ? "UNKNOWN_PRICE" : unbounded ? "UNBOUNDED_FALLBACK" : null;
+  // VLM_PROVIDER=local: the same reading, sent to a model process on THIS
+  // machine (server/vlm-local.mjs). No key is read for it — not even one that
+  // happens to be set — no price applies, and the shared limits below still do.
+  const local = env.VLM_PROVIDER === "local" ? localFromEnv(env) : null;
+  if (local) return Object.freeze({
+    provider: "local", apiKey: null, model: local.model, prices: { in: 0, out: 0, cacheWrite: 0, cacheRead: 0, source: "local: no charge" },
+    effort, fallbackChain: Object.freeze([]), upstreamBaseURL: local.upstreamBaseURL, local: local.local ? Object.freeze(local.local) : null, problem: local.problem,
+    ...sharedConfig(env, repoRoot), configured: !local.reasonCode, reasonCode: local.reasonCode,
+  });
   return Object.freeze({
-    apiKey, model, prices, effort, fallbackChain: Object.freeze(fallbackChain), upstreamBaseURL: base,
+    provider: "anthropic", apiKey, model, prices, effort, fallbackChain: Object.freeze(fallbackChain), upstreamBaseURL: base,
+    ...sharedConfig(env, repoRoot),
+    configured: !reasonCode,
+    reasonCode,
+  });
+}
+// What every provider shares: output size, limits, where the ledger lives, where to listen.
+function sharedConfig(env, repoRoot) {
+  return {
     maxOutputTokens: int(env.VLM_MAX_OUTPUT_TOKENS, 10000, 1000, 32000),
     limits: Object.freeze({
       maxUsdPerRun: num(env.VLM_MAX_USD_PER_RUN, 1.5, 0.01, 100),
@@ -113,15 +131,19 @@ export function configFromEnv(env, { repoRoot } = {}) {
     dataDir: path.resolve(env.VLM_DATA_DIR || path.join(repoRoot || process.cwd(), ".vlm-data")),
     port: int(env.PORT, 8787, 0, 65535),
     host: env.HOST || "127.0.0.1",
-    configured: !reasonCode,
-    reasonCode,
-  });
+  };
 }
 
 // What the page may know. Never the key — not even its length or prefix.
 export function status(config, usage, ledger) {
   return {
     relay: true,
+    provider: config.provider || "anthropic",
+    // The local model's own statement of itself (name, version, licence,
+    // source, runtime, pinned files) — never a path on this disk.
+    local: config.local ? { id: config.local.id, name: config.local.name, version: config.local.version, licence: config.local.licence,
+      source: config.local.source, runtime: config.local.runtime, integrity: config.local.integrity, files: config.local.files.length } : null,
+    problem: config.problem || null,
     configured: config.configured,
     reasonCode: config.reasonCode,
     model: config.model,
@@ -131,7 +153,8 @@ export function status(config, usage, ledger) {
     // What a cap is a cap ON: every attempt's input (counted by the API's own
     // free count_tokens, itself an estimate, plus a margin) and every output
     // token it is allowed, at the price of the model that runs it.
-    budgetBasis: "worst case per attempt: counted input (+5%) and max_tokens output, at listed prices",
+    budgetBasis: config.provider === "local" ? "a model on this machine: no charge; the request caps still apply"
+      : "worst case per attempt: counted input (+5%) and max_tokens output, at listed prices",
     limits: { ...config.limits },
     usage: usage || null,
     ledger: ledger || null,
@@ -536,6 +559,9 @@ export function mapUpstreamError(err) {
   const status = err && typeof err.status === "number" ? err.status : null;
   const type = err && (err.type || (err.error && err.error.error && err.error.error.type)) || null;
   const msg = String((err && err.message) || "");
+  // Only a local provider says this: the model process on this machine is not
+  // answering. Nothing can have been charged.
+  if (err && err.localCode === "LOCAL_NOT_RUNNING") return { code: "LOCAL_NOT_RUNNING", http: 502, billed: false, retryable: false };
   if (name === "APIUserAbortError") return { code: "CANCELLED", http: 499, billed: null, retryable: false };
   if (name === "APIConnectionTimeoutError") return { code: "TIMEOUT", http: 504, billed: null, retryable: false };
   if (name === "APIConnectionError") return { code: "UNREACHABLE", http: 502, billed: null, retryable: true };
