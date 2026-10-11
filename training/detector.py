@@ -78,6 +78,12 @@ class PlanSample:
             if k is None or not np.isfinite(o.get("cx", float("nan"))):
                 continue
             box = (float(o["cx"]), float(o["cy"]), float(o["w"]), float(o["h"]))
+            # Generation 3 marks what a person could not see (cut by the sheet's
+            # edge, under glare, a legend's sample symbol): neither taught nor
+            # counted against.
+            if o.get("ignore"):
+                self.ignore.append((-1,) + box)
+                continue
             v = o.get("verification")
             if targets is not None and v is not None and v not in targets:
                 # a rejected object is background, which is what every
@@ -337,6 +343,11 @@ def score(p, dets):
             continue
         gt = [(cx, cy) for k, cx, cy, w, h in p.objs if k in ks]
         dt = [(cx, cy) for k, cx, cy, w, h, s in dets if k in ks]
+        # A detection on an object marked `ignore` (generation 3: cut by the
+        # edge, under glare, a legend's sample) is neither right nor wrong.
+        ign = [(cx, cy, max(w, h)) for k, cx, cy, w, h in getattr(p, "ignore", [])]
+        if ign:
+            dt = [(x, y) for x, y in dt if not any(math.hypot(x - ix, y - iy) <= max(r * 0.6, 4) for ix, iy, r in ign)]
         if not gt and not dt:
             continue
         m, fn, fp = match(gt, dt, diag, tol)
@@ -355,7 +366,9 @@ def train(args):
     torch.manual_seed(args.seed)
     rng = random.Random(args.seed)
     torch.set_num_threads(args.threads)
-    syn = load_synthetic(args.synthetic, exclude=set(int(x) for x in args.exclude_families.split(",") if x != "")) if args.synthetic else []
+    # one directory, or several separated by commas (generation 2 and 3 together)
+    excl = set(int(x) for x in args.exclude_families.split(",") if x != "")
+    syn = [s for d in args.synthetic.split(",") if d for s in load_synthetic(d, exclude=excl)]
     real = load_real([x for x in args.real.split(",") if x])
     if args.dataset:
         real += load_dataset([x for x in args.dataset.split(",") if x], with_confirm=args.with_confirm)

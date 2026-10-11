@@ -54,6 +54,41 @@ training slowed about threefold when they overlapped.
 - **Missing labels are not negatives**: a real annotation that does not label
   a class (no columns on either real plan) masks that class out of the loss.
 
+## Generation 3: seven levels (`synth_levels.py`)
+
+```
+python training/synth_levels.py --out D3/train   --level L --count 84 --split train     # L = 1..7
+python training/synth_levels.py --out D3/val     --level L --count 24 --split val
+python training/synth_levels.py --out D3/heldout --level L --count 10 --split heldout   # families 8, 9
+python training/synth_levels.py --out D3/blind   --level L --count 12 --split blind     # families 14, 15 + u-shape layout
+```
+
+| Level | Adds |
+|---|---|
+| L1 | clean line drawing, round tables with chairs or bare symbols |
+| L2 | square / rectangular / long / pushed-together tables, printed numbers, stage, bar, columns |
+| L3 | armchairs, sofas, benches, banquettes, loca boxes, entrances, exits, service areas, titles, capacity lines |
+| L4 | scale 0.5–2.2×, rotated groups, colour and fill, thin and thick lines, crowding, touching tables |
+| L5 | look-alikes: big letters and digits, round planters the size of a table, stamps, legends; the sheet cut by its edge; text over objects |
+| L6 | a scan: blur, JPEG, noise, paper tone, low contrast, a slight skew, a fold line |
+| L7 | a photograph: perspective, rotation, a shadow, glare, uneven light, strong compression |
+
+- **Style, not layout.** Families 10 and 11 take the drawing style of the
+  Golden and ORNEK sheets; no layout, count, position or text block of either
+  is copied. Both sheets stay the regression set.
+- **Labels are what the picture shows.** A sofa's or bench's seats are counted
+  only when the drawing divides them (otherwise `seats: null` — never three by
+  default). An object more than 40 % outside the sheet, under glare, below six
+  pixels, or a legend's sample symbol carries `ignore: true`: `detector.py`
+  neither teaches nor scores it.
+- **Splits.** Train and val: families 0–7 and 10–13 with the layouts rounds,
+  staggered, rows, mixed and cabaret. Families 8 and 9 shaped earlier work, so
+  they are *held out*, not blind. **Blind**: families 14 and 15 and the u-shape
+  layout, which no training or tuning run sees; generated once, scored once.
+- **Generation 2 stays in the mix** (`--synthetic gen2,gen3`), and every level
+  is reported for the previous model and the new one side by side, so a hard-
+  case gain cannot hide an easy-case loss.
+
 ## Versions
 
 Every packaged model has a manifest under `models/plan-detector/vN/manifest.json`
