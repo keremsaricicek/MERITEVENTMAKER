@@ -17,6 +17,7 @@ in this repository by the script named beside it, with the network refused
 | Vector-PDF furniture proposals | `src/plan-vector-objects.js` | repeated shapes in a vector PDF → tables and chairs, fused like the model |
 | Exemplar search ("find more like this") | `src/plan-exemplar.js` | measured below; fails its row; not in the UI |
 | Comparison harness | `run.mjs`, `exemplar-measure.mjs`, `vector-measure.mjs`, `teacher-e2e.mjs` | each scored with `benchmarks/run-benchmark.mjs`'s own matching |
+| What the operator sees | `screens/` | the review screen with the model's line in Advanced diagnostics, at 1920 / 2560 / 1440, TR and EN, and with the model off ("DOMAIN MODEL NOT INSTALLED" plus the reason). Rendered, 0 console errors, no horizontal overflow |
 
 ## The model
 
@@ -284,17 +285,51 @@ it, neither done:
 
 **Not measured:** a real Windows laptop with 8 GB.
 
-## Against the acceptance table (fused product, v2)
+## Three approaches, compared
 
-| Row | Threshold | Golden | ORNEK |
+| Approach | State | Evidence |
+|---|---|---|
+| 1. Classical + OCR + rules | measured | `results-regression.json`, "classical" rows. Every rule was tuned on these plans. |
+| 2. + a small local detector (v2) | **shipped**, measured | The model alone on venues it never saw (above); fused on the regression set; LOVO folds; all CI gates green. Adds 3 real tables on ORNEK, 0 false ones anywhere in the regression set. |
+| 3. + a small local vision-language model on uncertain regions | **NOT MEASURED** | Every candidate's weights (Florence-2, SmolVLM, Qwen3-VL) are on hosts this environment refuses (403). CPU time, RAM, start-up and accuracy on plan crops are unknown. `LOCAL-VLM.md` says what would unblock it. |
+
+## Against the acceptance table (shipped product: classical + v2)
+
+ACCEPTANCE.md is unchanged since `276c925`. ✓ met · ✗ not met · — not
+measurable here.
+
+| Row | Threshold | Measured | |
 |---|---|---|---|
-| Table precision | ≥ 0.98 | 0.979 ✗ | 0.994 ✓ |
-| Table recall | ≥ 0.95 | 1.000 ✓ | 0.994 ✓ |
-| Chair precision / recall | ≥ 0.98 / ≥ 0.95 | 0.973 ✗ / 0.956 ✓ | — |
-| Table type accuracy | ≥ 0.95 | 1.000 ✓ | 1.000 ✓ |
-| Chair → table link | ≥ 0.97 | 0.990 ✓ | — |
-| Venue objects (columns) | recall ≥ 0.90 | no columns annotated; 9 proposed | none annotated; 4 proposed |
-| **Real blind plans** | the 9.5 claim | **NOT MEASURED — no such plan exists in the repository** | |
+| **Real blind plans** | the 9.5 claim | no plan from an unseen venue exists in the repository | **NOT MEASURED** |
+| Table precision, Golden / ORNEK | ≥ 0.98 | 0.979 / 0.994 | ✗ / ✓ |
+| Table recall, Golden / ORNEK | ≥ 0.95 | 1.000 / 0.994 | ✓ / ✓ |
+| Chair precision / recall, Golden | ≥ 0.98 / ≥ 0.95 | 0.973 / 0.956 | ✗ / ✓ |
+| Table type accuracy | ≥ 0.95 | 1.000 / 1.000 | ✓ |
+| Chair → table link, Golden | ≥ 0.97 | 0.990 | ✓ |
+| Venue objects (columns) | recall ≥ 0.90 | not annotated on either real plan; 9 / 4 proposed | — |
+| Printed numbers: wrong / read, ORNEK | 0 / ≥ 0.90 | 0 wrong; 145 of 157 legible (0.92) | ✓ / ✓ |
+| Decision memory: retention / wrong application | ≥ 0.98 / 0 | 0.8447 / 0.0073 | ✗ / ✗ |
+| Local examples (exemplar search) | ≥ 50 % recovered, ≤ 1 phantom / 100 | 0 % recovered, up to 9 / 100 | ✗ (not in the UI) |
+| Model update: regression check, version recorded, rollback | all three | baseline + adversarial before activation; pinned by sha256; rollback tested end to end (`teacher-e2e`) | ✓ |
+| ORNEK-size plan, 2 cores, p50 / p95 | ≤ 30 s / ≤ 60 s | 69–76 s / 69–80 s | ✗ / ✗ |
+| Golden-size plan, 2 cores, p50 / p95 | ≤ 10 s / ≤ 20 s | 16–18 s / 16–18 s | ✗ / ✓ |
+| Model load (cold) | ≤ 5 s | 0.3–1.0 s | ✓ |
+| Peak browser memory | ≤ 2.0 GB | 1.04–1.49 GB | ✓ |
+| Longest main-thread task | ≤ 500 ms | 2.4–5.7 s (with or without the model) | ✗ |
+| Off-origin requests, offline package | 0 | 0 (`verify:offline` 44 / 44) | ✓ |
+| Model missing / corrupt / disabled | completes classically, says why | `local-model`, `verify:offline` | ✓ |
+
+**What the numbers say about the 9.5 target.** It is not demonstrated, and
+cannot be with what this repository holds:
+- two real venues, both on the regression set;
+- no plan from a venue nobody has seen;
+- no real Windows laptop.
+
+What can be claimed:
+- The model, trained on synthetic plans only, scores tables 0.978 / 0.957
+  (Golden) and 1.000 / 1.000 (ORNEK) on venues it never saw.
+- In the product it adds what the classical pass missed without adding a
+  single false table on any of the six regression plans.
 
 ## Decision memory: a rule tried, measured, and not shipped
 
