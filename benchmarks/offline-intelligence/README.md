@@ -186,6 +186,40 @@ got the classical path alone (`MODEL_MISSING`). The relay now also serves
 `models/plan-detector/<version>/model.js`, and nothing else from that folder;
 `vlm-relay` checks both.
 
+## Vector PDF: the document's own shapes (synthetic PDFs only)
+
+`node benchmarks/offline-intelligence/vector-measure.mjs DIR` →
+`vector-latest.json`.
+
+- **The PDFs:** six synthetic vector PDFs from `training/synth_pdf.py`, with
+  circle and rectangle paths and text, and exact annotations.
+- **The procedure:** each is imported through the app's own PDF path, then
+  analysed with vector fusion off and on.
+- **The rule** (`src/plan-vector-objects.js`): furniture is what repeats. A
+  table is the repeated group ringed by a smaller repeated group (its
+  chairs).
+
+| PDF | Chairs recall, off → on | Tables, off → on | Added false objects |
+|---|---|---|---|
+| cad-line-5-0 | 0.000 → 0.945 (503 / 532) | 70 / 10 / 0 → same | 0 |
+| cad-line-5-3 | 0.887 → 0.990 | 54 / 0 / 0 → same | 0 |
+| mono-num-chairs-5-2 | 0.940 → 1.000 | 24 / 0 / 1 → **25 / 0 / 0** | 0 |
+| mono-num-chairs-5-5 | 0.998 → 1.000 | 48 / 1 / 0 → same | 0 |
+| thin-circle-5-1 | 0.000 → 0.857 | 21 / 40 / 0 → same | 0 |
+| thin-circle-5-4 | 1.000 → 1.000 | 32 / 0 / 0 → same | 0 |
+
+**What the first run showed.** The first run measured no change at all,
+because the vector call had inherited the model's chairs-off default. The
+model measurement that set that default (4 right, 3 wrong) says nothing
+about chairs a document draws as shapes. So the vector call attaches chairs,
+and records "not drawn as a table" in `vectorSupport`, never `modelSupport`.
+
+**Still open:**
+- Fusion only adds. The classical phantoms on cad-line-5-0 (10) and
+  thin-circle-5-1 (40) stay, flagged where the PDF does not draw them.
+- **No real CAD PDF exists in the repository** (ORNEK.pdf is a scan), so
+  this is synthetic evidence only.
+
 ## Against the acceptance table (fused product, v2)
 
 | Row | Threshold | Golden | ORNEK |

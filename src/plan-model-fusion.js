@@ -45,7 +45,10 @@
 (function () {
   "use strict";
 
-  const DEFAULTS = { addTable: 0.5, addChair: null, addColumn: null, matchFactor: 0.6, chairReach: 1.2, selectScore: 0.7, source: "local-model" };
+  // supportField: where "this source did not see that classical table" is
+  // written — the model's opinion and the PDF's own shapes are not the same
+  // witness, so they never share a field.
+  const DEFAULTS = { addTable: 0.5, addChair: null, addColumn: null, matchFactor: 0.6, chairReach: 1.2, selectScore: 0.7, source: "local-model", supportField: "modelSupport" };
 
   function fuse(candidates, venues, model, frame, opts) {
     const o = Object.assign({}, DEFAULTS, opts || {});
@@ -93,7 +96,7 @@
       tables.push({ c, cx: d.cx, cy: d.cy, w: d.w, h: d.h });
       supported.add(c);
     }
-    for (const t of tables) if (!supported.has(t.c)) { t.c.modelSupport = false; out.unsupported++; }
+    for (const t of tables) if (!supported.has(t.c) && t.c.source !== o.source) { t.c[o.supportField] = false; out.unsupported++; }
 
     // ---- chairs
     // A model chair is attached only to a table the model ALSO sees. A chair

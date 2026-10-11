@@ -3725,12 +3725,15 @@
       // exact geometry, fused the same way (added where nothing was proposed).
       // No printed-text rule here: a drawn chair is drawn, whatever number is
       // printed inside it; the rule exists for what a model READ off pixels.
+      // And chairs ARE attached (addChair), unlike the local model's: they are
+      // the document's own shapes, not a reading (benchmarks/offline-intelligence,
+      // vector-latest.json).
       let vectorObjects=null;
       const vo=event.background?.pdfSource?.vector?.objects;
       if(vo&&globalThis.MeritPlanModelFusion&&(vo.tables||[]).length&&!globalThis.MERIT_PLAN_VECTOR_DISABLED){
         const ps=event.background.pdfSource,kx=width/(ps.width||width),ky=height/(ps.height||height);
         const toDeskew=b=>{const[cx,cy]=deskew.applied?deskew.analysisToDeskew.apply(b.cx*kx,b.cy*ky):[b.cx*kx,b.cy*ky];return{cls:b.cls,score:1,cx,cy,w:b.w*kx,h:b.h*ky};};
-        const fusedV=MeritPlanModelFusion.fuse(candidates,venues,{available:true,detections:[...vo.tables,...vo.chairs].map(toDeskew)},{width:dw,height:dh,uid,representation:detection.representation},{source:"pdf-vector"});
+        const fusedV=MeritPlanModelFusion.fuse(candidates,venues,{available:true,detections:[...vo.tables,...vo.chairs].map(toDeskew)},{width:dw,height:dh,uid,representation:detection.representation},{source:"pdf-vector",addChair:0.45,supportField:"vectorSupport"});
         candidates.push(...fusedV.added);
         vectorObjects={reason:vo.reason,proposedTables:vo.tables.length,proposedChairs:vo.chairs.length,addedTables:fusedV.added.length,chairsAttached:fusedV.chairsAttached};
       }

@@ -108,6 +108,10 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
     const f = [cand(10, 10, 5, 5)];
     const r8 = MeritPlanModelFusion.fuse(f, [], model([seen, { cls: "chair", score: 0.9, cx: 125, cy: 160, w: 20, h: 20 }]),
       Object.assign(frame("PHYSICAL"), { textRegions: [{ x0: 100, y0: 150, x1: 160, y1: 170 }] }), chairsOn);
+    // the vector-PDF call (app-v8.js): the document's own chair shapes ARE attached,
+    // and "this source did not see that table" lands in its own field
+    const v1 = [cand(10, 10, 5, 5)], v2 = cand(70, 70, 5, 5);
+    const rv = MeritPlanModelFusion.fuse([v1[0], v2], [], model([seen, { cls: "chair", score: 1, cx: 125, cy: 92, w: 20, h: 20 }]), frame("PHYSICAL"), { source: "pdf-vector", addChair: 0.45, supportField: "vectorSupport" });
     // model columns: off by default in v1, the code path kept for a measured re-enable
     const colDet = [{ cls: "column", score: 0.9, cx: 900, cy: 900, w: 30, h: 30 }];
     const r9 = MeritPlanModelFusion.fuse([cand(10, 10, 5, 5)], [], model(colDet), frame("PHYSICAL"));
@@ -123,7 +127,7 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
       symbolicChairs: r2.chairsAttached, physicalChairs: r3.chairsAttached, farChairDropped: r3.chairsDropped, chairsOnTable: c[0].chairDetections.length,
       unsupported: r4.unsupported, flagged: d[0].modelSupport, kept: d.length, unavailableAdds: r5.added.length,
       unseenTableChairs: r6.chairsAttached, unseenTableSeats: e[0].chairDetections.length,
-      offSize: r11.added.length + "/" + r11.offSize, noReference: r12.added.length === 1 && r12.added[0].selected === false && r12.added[0].confidence <= 0.7,
+      vectorChairs: rv.chairsAttached, vectorField: [v2.vectorSupport, "modelSupport" in v2], offSize: r11.added.length + "/" + r11.offSize, noReference: r12.added.length === 1 && r12.added[0].selected === false && r12.added[0].confidence <= 0.7,
       chairsDefault: rDefault.chairsAttached + g[0].chairDetections.length, onColumn: r7.added.length, textChairs: r8.chairsAttached, textSkipped: r8.chairsInText, textSeats: f[0].chairDetections.length,
       columnsDefault: r9.addedVenues.length, columnsEnabled: r10.addedVenues.length,
       attachedRelation: c[0].chairDetections[0] && c[0].chairDetections[0].relation && c[0].chairDetections[0].relation.evidence };
@@ -134,6 +138,8 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
     "a model chair is attached to the table it sits beside; one far from every table is dropped; on a plan that draws no chairs none is attached", rules);
   checks.ok(rules.unseenTableChairs === 0 && rules.unseenTableSeats === 0,
     "a model chair is never attached to a table the model itself does not see — that seat would exempt a phantom from text suppression", rules);
+  checks.ok(rules.vectorChairs === 1 && rules.vectorField[0] === false && rules.vectorField[1] === false,
+    "a vector PDF's own chair shapes are attached (they are drawn, not read), and a table the PDF does not draw is marked in vectorSupport — never as the model's opinion", rules);
   checks.ok(rules.offSize === "0/1" && rules.noReference,
     "a model table drawn at a size no table on the plan is drawn at is not added (a 24 px planter on the Golden Plan); with no classical table to compare with, an addition is only ever a question", rules);
   checks.ok(rules.chairsDefault === 0,
