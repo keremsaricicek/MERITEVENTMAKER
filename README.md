@@ -32,7 +32,7 @@ spend limits: `server/README.md` (step by step in Turkish:
 plan import) engines from jsDelivr, pinned to the exact versions this app
 was built against:
 
-- `xlsx@0.18.5`
+- SheetJS `0.20.3` (npm mirror `@e965/xlsx`, pinned by sha256)
 - `pdfjs-dist@5.7.284`
 
 Opening `index.html` directly as a `file://` URL will **not** work for the

@@ -40,6 +40,10 @@ export const OCR_PACKAGES = [
   // fetches from jsDelivr and checks by sha256 before running.
   ["onnxruntime-web", "1.30.0"],
   ["paddle-ocr-onnx-models", "0.2.0"],
+  // Not OCR: the spreadsheet engine index.html loads (SheetJS 0.20.3 through
+  // its npm mirror, pinned by sha256 in index.html and both offline builds),
+  // cached here so the suites serve the same bytes the page pins.
+  ["@e965/xlsx", "0.20.3"],
 ];
 const TESSDATA = /^https:\/\/cdn\.jsdelivr\.net\/npm\/(@tesseract\.js-data\/[a-z_]+)\/(.+)$/;
 

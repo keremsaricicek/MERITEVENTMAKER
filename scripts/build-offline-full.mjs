@@ -24,19 +24,27 @@ const CACHE = path.join(ROOT, ".vendor-cache");
 const OUT = path.join(ROOT, "dist", "merit-offline");
 const OCR_OUT = path.join(OUT, "assets", "ocr");
 
-const XLSX_VERSION = "0.18.5";
+// SheetJS 0.20.3 (fixes CVE-2023-30533 and CVE-2024-22363). Its own CDN is not
+// reachable from every build machine; the npm mirror @e965/xlsx carries the
+// same bytes as the JSR mirror @sail/xlsx, and the build refuses any other.
+const XLSX_PACKAGE = "@e965/xlsx";
+const XLSX_VERSION = "0.20.3";
+const XLSX_SHA256 = "cc015130aa8521e7f088f88898eba949ccdcbfb38df0bd129b44b7273c3a6f41";
 const PDFJS_VERSION = "5.7.284";
 const TESSERACT_VERSION = "5.1.1";
 const TESSERACT_CORE_VERSION = "5.1.1";
 
 function fetchTarball(pkg, version) {
-  const dest = path.join(CACHE, `${pkg}-${version}.tgz`);
+  // A scoped package (@scope/name) is cached as "@scope-name", the same
+  // directory name tests/lib/vendor.mjs looks in; its tarball is name-version.tgz.
+  const flat = pkg.replace("/", "-"), base = pkg.split("/").pop();
+  const dest = path.join(CACHE, `${flat}-${version}.tgz`);
   if (!existsSync(dest)) {
     mkdirSync(CACHE, { recursive: true });
     console.log(`Downloading ${pkg}@${version} from the npm registry...`);
-    execSync(`curl -sSL -o "${dest}" "https://registry.npmjs.org/${pkg}/-/${pkg}-${version}.tgz"`, { stdio: "inherit" });
+    execSync(`curl -sSL -o "${dest}" "https://registry.npmjs.org/${pkg}/-/${base}-${version}.tgz"`, { stdio: "inherit" });
   }
-  const extractDir = path.join(CACHE, `${pkg}-${version}`);
+  const extractDir = path.join(CACHE, `${flat}-${version}`);
   if (!existsSync(extractDir)) {
     mkdirSync(extractDir, { recursive: true });
     execSync(`tar xzf "${dest}" -C "${extractDir}"`);
@@ -54,7 +62,7 @@ function fetchRaw(name, url) {
 }
 
 console.log("Fetching vendor packages (xlsx, pdfjs-dist, tesseract.js, tesseract.js-core)...");
-const xlsxDir = fetchTarball("xlsx", XLSX_VERSION);
+const xlsxDir = fetchTarball(XLSX_PACKAGE, XLSX_VERSION);
 const pdfjsDir = fetchTarball("pdfjs-dist", PDFJS_VERSION);
 const tesseractDir = fetchTarball("tesseract.js", TESSERACT_VERSION);
 const tesseractCoreDir = fetchTarball("tesseract.js-core", TESSERACT_CORE_VERSION);
@@ -85,6 +93,7 @@ const modelBytes = Object.fromEntries(modelPins.map((m) => {
 }));
 
 const xlsxSrc = readFileSync(path.join(xlsxDir, "dist/xlsx.full.min.js"), "utf8");
+if (createHash("sha256").update(xlsxSrc).digest("hex") !== XLSX_SHA256) throw new Error(`${XLSX_PACKAGE}@${XLSX_VERSION}: xlsx.full.min.js is not the pinned SheetJS build`);
 const pdfCoreSrc = readFileSync(path.join(pdfjsDir, "build/pdf.min.mjs"), "utf8");
 const pdfWorkerSrc = readFileSync(path.join(pdfjsDir, "build/pdf.worker.min.mjs"), "utf8");
 

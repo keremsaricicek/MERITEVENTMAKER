@@ -26,7 +26,9 @@ export default async function run({ checks, repoRoot }) {
   for (const m of (read("index.html") + read("src/pdf-bridge.mjs")).matchAll(/cdn\.jsdelivr\.net\/npm\/((?:@[^/]+\/)?[^@/]+)@([^/]+)\//g)) add(m[1], m[2], "index.html / pdf-bridge");
   for (const f of ["scripts/build-offline.mjs", "scripts/build-offline-full.mjs"]) {
     const src = read(f);
-    for (const [k, name] of [["XLSX_VERSION", "xlsx"], ["PDFJS_VERSION", "pdfjs-dist"], ["TESSERACT_VERSION", "tesseract.js"], ["TESSERACT_CORE_VERSION", "tesseract.js-core"]]) {
+    // SheetJS may come from a named mirror package (XLSX_PACKAGE); the row is under that name.
+    const xlsxPkg = (src.match(/const XLSX_PACKAGE = "([^"]+)"/) || [])[1] || "xlsx";
+    for (const [k, name] of [["XLSX_VERSION", xlsxPkg], ["PDFJS_VERSION", "pdfjs-dist"], ["TESSERACT_VERSION", "tesseract.js"], ["TESSERACT_CORE_VERSION", "tesseract.js-core"]]) {
       const m = src.match(new RegExp(`const ${k} = "([^"]+)"`));
       if (m) add(name, m[1], f);
     }
@@ -48,7 +50,7 @@ export default async function run({ checks, repoRoot }) {
   checks.equal(unused, [], "no inventory row describes an asset the code no longer pins");
 
   const advisories = inv.assets.flatMap((a) => (a.advisories || []).map((x) => ({ asset: a.name, ...x })));
-  checks.ok(advisories.every((x) => /^(OPEN|NOT AFFECTED|NOT REACHABLE) — /.test(x.status || "")), "every advisory states OPEN, NOT AFFECTED or NOT REACHABLE, with its reason", advisories.filter((x) => !/^(OPEN|NOT AFFECTED|NOT REACHABLE) — /.test(x.status || "")));
+  checks.ok(advisories.every((x) => /^(OPEN|FIXED|NOT AFFECTED|NOT REACHABLE) — /.test(x.status || "")), "every advisory states OPEN, FIXED, NOT AFFECTED or NOT REACHABLE, with its reason", advisories.filter((x) => !/^(OPEN|NOT AFFECTED|NOT REACHABLE) — /.test(x.status || "")));
   const open = advisories.filter((x) => x.status.startsWith("OPEN"));
   checks.ok(open.every((x) => /block|blocked/i.test(x.status) && x.fixedIn), `open advisories name their fixed version and what blocks it (${open.map((x) => `${x.asset} ${x.id}`).join(", ") || "none"})`, open);
   checks.ok(inv.assets.every((a) => a.license), "every asset names its licence");

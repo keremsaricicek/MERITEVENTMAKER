@@ -47,13 +47,16 @@
   <div id="toastWrap" class="toast-wrap" aria-live="polite"></div>
 
   <!--
-    Spreadsheet (SheetJS xlsx@0.18.5) and PDF (pdfjs-dist@5.7.284) engines are
+    Spreadsheet (SheetJS 0.20.3) and PDF (pdfjs-dist@5.7.284) engines are
     loaded from jsDelivr, pinned to the exact versions this app was built
     against, instead of being vendored inline — see README.md for why, and
     for the script that builds a single-file, fully offline HTML for
-    environments with no network access at runtime.
+    environments with no network access at runtime. SheetJS publishes 0.20.x
+    only on its own CDN; this is the npm mirror @e965/xlsx, byte-identical to
+    the JSR mirror @sail/xlsx (sha256 cc015130…3a6f41, both checked
+    2026-10-11), pinned here by that hash.
   -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@e965/xlsx@0.20.3/dist/xlsx.full.min.js" integrity="sha256-zAFRMKqFIefwiPiImOupSczcv7ON8L0Sm0S3Jzw6b0E=" crossorigin="anonymous"></script>
   <script type="module" src="src/pdf-bridge.mjs"></script>
   <!--
     Tesseract.js (MIT) — real client-side OCR for the Plan Intelligence
