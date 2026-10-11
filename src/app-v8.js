@@ -1715,6 +1715,9 @@
         recordUndo(event);
         event.background.visible=!event.background.visible;
         touchEvent(event);
+        // touchEvent only saves: without a render the plan stayed on screen and
+        // the button kept saying "Hide", so the first press looked like nothing.
+        render();
       }else if(action==="replace-bg")document.getElementById("floorPlanFile").click();else if(action==="open-review-center"){
         ui.reviewCenterOpen=true;
         ui.tab="floor";

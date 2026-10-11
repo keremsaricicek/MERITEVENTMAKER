@@ -91,6 +91,27 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "with a plan imported the Floor Plan offers both modes, editing selected");
   checks.equal(withPlan.screen, "workspace", "and it is still the workspace");
 
+  // --- 2b. "Hide original plan" hides it on the first press ---------------
+  //
+  // The handler flipped background.visible and saved, but never re-rendered:
+  // the scan stayed on the canvas and the button kept saying "Hide", so the
+  // first press looked like nothing happened (2026-10-11). What is checked is
+  // the rendered layer and the button, not the stored flag.
+  const bgView = () => page.evaluate(() => {
+    const layer = document.querySelector("#canvasWorld .reference-layer"), btn = document.querySelector('[data-v8-action="toggle-bg"]');
+    return { stored: state.events[0].background.visible, shown: !!layer && getComputedStyle(layer).display !== "none", label: btn && btn.textContent.trim() };
+  });
+  const bgBefore = await bgView();
+  await click(page, '[data-v8-action="toggle-bg"]');
+  await page.waitForTimeout(300);
+  const bgHidden = await bgView();
+  await click(page, '[data-v8-action="toggle-bg"]');
+  await page.waitForTimeout(300);
+  const bgShown = await bgView();
+  checks.ok(bgBefore.shown && !bgHidden.stored && !bgHidden.shown && bgHidden.label !== bgBefore.label && bgShown.shown && bgShown.label === bgBefore.label,
+    "one press of Hide original plan takes the scan off the canvas and the button now offers Show; the next press brings it back",
+    { bgBefore, bgHidden, bgShown });
+
   // --- 3. the round trip keeps every part of the shell ---------------------
   //
   // This is the whole point of the phase, so it is checked on each leg rather

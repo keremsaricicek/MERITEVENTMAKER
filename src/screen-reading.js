@@ -168,7 +168,8 @@
       if (c.kind === "venue") {
         const cls = ["stage", "column", "banquette", "bar", "loca", "entrance", "exit", "chair"].includes(c.type) ? c.type : "other";
         out.push(`<rect class="dg-${cls}${held}" x="${X(c.x)}" y="${Y(c.y)}" width="${X(c.w)}" height="${Y(c.h)}" rx="${cls === "banquette" || cls === "loca" ? r1(Math.min(X(c.w), Y(c.h)) / 3) : 0}"${rot(c)}/>`);
-        if (["stage", "bar", "loca", "entrance", "exit"].includes(cls) && c.w > 3) out.push(label(c, typeWord(cls, 1).toLocaleUpperCase(ui.lang === "tr" ? "tr" : "en"), "dg-label"));
+        // Named, as the Floor Plan names them: a pale block alone does not say column.
+        if (["stage", "bar", "loca", "entrance", "exit", "column", "banquette"].includes(cls) && Math.max(c.w, c.h) > 3) out.push(label(c, typeWord(cls, 1).toLocaleUpperCase(ui.lang === "tr" ? "tr" : "en"), "dg-label"));
         continue;
       }
       if (c.kind !== "table") continue;

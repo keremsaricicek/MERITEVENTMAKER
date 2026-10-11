@@ -1,4 +1,9 @@
 :root{
+  /* The Floor Plan's own furniture. The review's Digital view draws with the
+     same values, so the room looks the same before and after Confirm. */
+  --fp-table:#e6e3db;--fp-table-line:#cdc7ba;--fp-chair:#f4f1eb;--fp-chair-line:#75808a;
+  --fp-venue:rgba(92,110,125,.1);--fp-venue-line:rgba(62,74,84,.4);--fp-venue-ink:#34404a;
+  --fp-stage:rgba(81,123,162,.12);--fp-stage-line:rgba(61,101,137,.58);
   --shell:#fbfbf9;--chrome:#f9f8f7;--panel:#f7f6f4;--panel-2:#f5f4f0;--panel-3:#f3f1ed;
   /* --muted-2 was #7c7259 -> 4.41:1 on --panel, just under the 4.5 AA floor,
      and it colours every eyebrow, column header and secondary tag in the app. */
@@ -255,15 +260,15 @@ table{border-collapse:collapse}
 .canvas-world.grid-on{background-image:linear-gradient(rgba(234,231,225,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(234,231,225,.09) 1px,transparent 1px);background-size:20px 20px}
 .reference-layer{position:absolute;inset:0;z-index:0;pointer-events:none;background-position:center;background-repeat:no-repeat}
 
-.venue-object{position:absolute;z-index:3;display:flex;align-items:center;justify-content:center;border:1px solid rgba(62,74,84,.4);background:rgba(92,110,125,.1);color:#34404a;font-size:10px;font-weight:650;letter-spacing:.1em;user-select:none;transition:box-shadow var(--dur-fast) var(--ease)}
-.venue-object.stage{border:2px solid rgba(61,101,137,.58);background:rgba(81,123,162,.12)}
+.venue-object{position:absolute;z-index:3;display:flex;align-items:center;justify-content:center;border:1px solid var(--fp-venue-line);background:var(--fp-venue);color:var(--fp-venue-ink);font-size:10px;font-weight:650;letter-spacing:.1em;user-select:none;transition:box-shadow var(--dur-fast) var(--ease)}
+.venue-object.stage{border:2px solid var(--fp-stage-line);background:var(--fp-stage)}
 .venue-object.text,.venue-object.entrance,.venue-object.exit{border-style:dashed;background:rgba(253,253,252,.5)}
 
 .table-object{position:absolute;z-index:10;user-select:none;cursor:move;touch-action:none;transition:opacity var(--dur-base) var(--ease),filter var(--dur-base) var(--ease)}
 .seating-canvas .table-object{cursor:pointer}
 .table-object.dimmed{opacity:.19}
 .table-object.filter-match{filter:drop-shadow(0 0 5px rgba(61,116,164,.32))}
-.table-surface{position:absolute;left:19%;top:25%;width:62%;height:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1.5px solid #cdc7ba;background:#e6e3db;box-shadow:0 1px 2px rgba(38,32,20,.10);line-height:1;transition:box-shadow var(--dur-fast) var(--ease)}
+.table-surface{position:absolute;left:19%;top:25%;width:62%;height:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1.5px solid var(--fp-table-line);background:var(--fp-table);box-shadow:0 1px 2px rgba(38,32,20,.10);line-height:1;transition:box-shadow var(--dur-fast) var(--ease)}
 .table-object:hover .table-surface{box-shadow:0 2px 6px rgba(38,32,20,.16)}
 .table-object.round .table-surface,.table-object.bistro .table-surface{left:23%;top:18%;width:54%;height:64%;border-radius:50%}
 .table-object.square .table-surface{left:22%;top:18%;width:56%;height:64%}
@@ -271,7 +276,7 @@ table{border-collapse:collapse}
 .table-label{font-size:10px;font-weight:760;letter-spacing:.035em}
 .table-occ{margin-top:4px;color:#59646d;font-size:8px;font-weight:650}
 .table-empty{margin-top:3px;color:#7a6244;font-size:6px;font-weight:700;letter-spacing:.04em}
-.chair{position:absolute;width:14px;height:11px;transform:translate(-50%,-50%);border:1px solid #75808a;border-radius:3px 3px 2px 2px;background:#f4f1eb;box-shadow:0 1px 1px rgba(0,0,0,.13);transition:background var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease)}
+.chair{position:absolute;width:14px;height:11px;transform:translate(-50%,-50%);border:1px solid var(--fp-chair-line);border-radius:3px 3px 2px 2px;background:var(--fp-chair);box-shadow:0 1px 1px rgba(0,0,0,.13);transition:background var(--dur-fast) var(--ease),border-color var(--dur-fast) var(--ease)}
 .chair::after{content:"";position:absolute;left:2px;right:2px;bottom:-3px;height:2px;background:#78828b;border-radius:0 0 2px 2px}
 /* A detected chair whose front the drawing did not show: no front mark. */
 .chair.facing-unknown{border-radius:2px}
@@ -2308,20 +2313,18 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .view-digital .candidate-box:not(.selected),.view-both .candidate-box:not(.selected){border-color:transparent;background:transparent}
 .dg-paper{fill:var(--pi-surface)}
 .view-both .dg-paper{fill:transparent}
-.dg-table{fill:#f4efe4;stroke:#5c5446;stroke-width:1.6}
-.dg-chair{fill:rgba(47,111,102,.16);stroke:var(--pi-accent);stroke-width:1}
-.dg-stage{fill:rgba(47,111,102,.10);stroke:var(--pi-accent-strong);stroke-width:2}
-.dg-column{fill:#3b362c;stroke:none}
-.dg-banquette{fill:#e6dfd0;stroke:#8b8270;stroke-width:1.2}
-.dg-bar{fill:#ece6da;stroke:#6f6758;stroke-width:1.4}
-.dg-loca{fill:var(--pi-surface-2);stroke:#8b8270;stroke-width:1.2}
-.dg-entrance,.dg-exit{fill:rgba(181,136,63,.14);stroke:var(--pi-warn);stroke-width:1.4}
-.dg-chair.dg-chair{opacity:1}
+/* Tables, chairs and room objects in the Floor Plan's own colours (--fp-*):
+   what is drawn here is what Confirm puts on the Floor Plan, and it looks it */
+.dg-table{fill:var(--fp-table);stroke:var(--fp-table-line);stroke-width:1.5}
+.dg-chair{fill:var(--fp-chair);stroke:var(--fp-chair-line);stroke-width:1}
+.dg-stage{fill:var(--fp-stage);stroke:var(--fp-stage-line);stroke-width:2}
+.dg-column,.dg-banquette,.dg-bar,.dg-loca{fill:var(--fp-venue);stroke:var(--fp-venue-line);stroke-width:1}
+.dg-entrance,.dg-exit{fill:rgba(253,253,252,.5);stroke:var(--fp-venue-line);stroke-width:1;stroke-dasharray:5 4}
 .dg-other{fill:none;stroke:#9a917f;stroke-width:1.2;stroke-dasharray:5 4}
 .dg-held{stroke-dasharray:5 4;opacity:.7}
 .dg-group{fill:none;stroke:var(--pi-accent);stroke-width:1.6;stroke-dasharray:6 4}
-.dg-label{fill:var(--pi-accent-strong);font-weight:700;letter-spacing:.06em;text-anchor:middle;dominant-baseline:central;font-family:inherit}
-.dg-number{fill:#3b362c;font-weight:700;text-anchor:middle;dominant-baseline:central;font-family:inherit}
+.dg-label{fill:var(--fp-venue-ink);font-weight:650;letter-spacing:.1em;text-anchor:middle;dominant-baseline:central;font-family:inherit}
+.dg-number{fill:#2f2b25;font-weight:760;text-anchor:middle;dominant-baseline:central;font-family:inherit}
 .dg-badge{fill:var(--pi-accent-strong);font-weight:700;text-anchor:middle;dominant-baseline:central;font-family:inherit}
 .dg-badge-bg{fill:var(--pi-surface);stroke:var(--pi-accent);stroke-width:1.2}
 .dg-place rect{fill:rgba(181,136,63,.12);stroke:var(--pi-warn);stroke-width:1.2}

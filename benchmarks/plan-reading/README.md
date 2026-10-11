@@ -42,6 +42,15 @@ over the scan. It draws:
 Teach it ("this block is the stage") and it is drawn as the stage and read back
 as yours.
 
+Tables, chairs and room objects are drawn in the Floor Plan's own colours.
+These are the shared `--fp-*` tokens in `src/styles.css`: what the review shows
+is what Confirm puts on the Floor Plan, and it looks it
+(`screens/digital-vs-floor-golden.png`). One difference is kept on purpose:
+the Digital view draws each chair at the size the plan drew it, so it sits on
+the scan's chair in Both. The Floor Plan uses its standard chair symbol.
+Until 2026-10-11 the Digital view used colours of its own: cream tables,
+teal chairs, dark columns.
+
 Close-ups, scan / digital / both: `screens/digital-tables-golden.png` and
 `screens/digital-tables-ornek.png`. Each chair is drawn on the chair the
 analysis found. Before 2026-10-11 every chair was drawn half its own size off
