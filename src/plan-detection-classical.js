@@ -96,6 +96,10 @@
       // performance change can be judged against numbers instead of a feeling.
       const phaseMs={};let phaseFrom=performance.now();
       const mark=name=>{const now=performance.now();phaseMs[name]=Math.round(now-phaseFrom);phaseFrom=now;};
+      // A turn for the page between phases that have no stage of their own, so
+      // a dense plan does not hold it for most of a second. Nothing is computed
+      // differently; only the waiting changes (and is kept out of phaseMs).
+      const breathe=async()=>{await new Promise(r=>setTimeout(r,0));phaseFrom=performance.now();};
       // B-1 and B-2 are MeritPlanPreprocess (src/plan-detection-preprocess.js),
       // each with its contract stated there.
       const {gray,threshold,binCount,binR,binG,binB,sampled,lumaLowChroma,lumaMidChroma}=PRE.measurePixels(data,width,height);
@@ -160,6 +164,7 @@
         secondaryFamilyDiagnostics,gapTo}=CHAIRS.findChairs({width,height,total,area,minPixels,sources,chairSources,
         fallbackChairComps,fallbackChairLabels,accentMask,chairSizeOk,analyze,textRegions});
       mark("chairs");
+      await breathe();
 
       // B-6 … B-14 — which objects are tables, and what is left over — is
       // MeritPlanTables (src/plan-detection-tables.js), contract there.
@@ -167,6 +172,7 @@
       const{candidates,chairVenues,pool,debugPool,modalPool,modalArea,modalSeats,modalLong,modalShort,bistrosTyped,reseated,seatsInsideBody,seatsInsideBodyStoodDown,relationStats,splitCount,capReached,offModalDropped,surfaceRejected,surfaceMinorityFinishKept,fragmentDiagnostics,textGlyphChairsDropped,familyLostToAssociation,familyLostToTextRun,familyFromTableSources,familyVenue,mergedRowVenues,columnComps,chairOBB,toPercentBox}=tablesOut;
       let venues=tablesOut.venues;
       mark("tables");
+      await breathe();
       const associatedSeats=candidates.reduce((n,c)=>n+c.chairDetections.length,0);
 
       // B-16 — what kind of drawing this is, and what that does to the

@@ -270,7 +270,8 @@ console.log('\nNOTE — alphanumeric table labels, evidence only, not asserted:'
     let model = null;
     if (globalThis.MeritPaddleOCR) {
       const m = await MeritPaddleOCR.readPlanText(c, { timeoutMs: 120000 });
-      model = { available: m.available, reason: m.reason || null, integrity: m.provider && m.provider.integrity, texts: (m.items || []).map(i => i.text) };
+      model = { available: m.available, reason: m.reason || null, integrity: m.provider && m.provider.integrity, texts: (m.items || []).map(i => i.text),
+        runsIn: m.provider && m.provider.runsIn, workerError: m.provider && m.provider.workerError };
     }
     // The local plan-symbol detector, from the package's own assets/ folder,
     // on the runtime the OCR model just loaded: a few drawn round tables.
@@ -281,9 +282,19 @@ console.log('\nNOTE — alphanumeric table labels, evidence only, not asserted:'
       for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(140 + i * 170, 250, 45, 0, Math.PI * 2); g.stroke(); }
       const d = await MeritPlanModel.detect(g.getImageData(0, 0, 800, 500), 800, 500);
       symbols = { available: d.available, reasonCode: d.reasonCode || null, version: d.model && d.model.version, integrity: d.model && d.model.integrity,
-        pinned: MeritPlanModel.PIN.version, detections: d.detections.length };
+        pinned: MeritPlanModel.PIN.version, detections: d.detections.length, runsIn: d.model && d.model.runsIn };
     }
-    return { available: r.available, text: r.text, reason: r.reason, booted: typeof globalThis.t === 'function', pdf, model, symbols };
+    // A crop read on the crop workers (several Tesseract workers made from
+    // the package's own embedded engine), twice: the second from memory.
+    let crops = null;
+    if (globalThis.MeritPlanOCRCrops) {
+      const k = document.createElement('canvas'); k.width = 300; k.height = 80;
+      const kg = k.getContext('2d'); kg.fillStyle = '#fff'; kg.fillRect(0, 0, 300, 80); kg.fillStyle = '#000'; kg.font = 'bold 40px sans-serif'; kg.fillText('SAHNE', 40, 55);
+      const url = k.toDataURL('image/png');
+      const a = await MeritPlanOCRCrops.read(url, { timeoutMs: 120000 }), b = await MeritPlanOCRCrops.read(url, { timeoutMs: 120000 });
+      crops = { text: a.text, available: a.available, reason: a.reason || null, again: a === b, stats: MeritPlanOCRCrops.stats() };
+    }
+    return { available: r.available, text: r.text, reason: r.reason, booted: typeof globalThis.t === 'function', pdf, model, symbols, crops };
   }, (await readFile(join(REPO, 'benchmarks', 'plans', 'ORNEK.pdf'))).toString('base64'));
   await fp.close();
   const ft = (fileOcr.text || '').toUpperCase();
@@ -295,6 +306,15 @@ console.log('\nNOTE — alphanumeric table labels, evidence only, not asserted:'
       !!fileOcr.model && fileOcr.model.available === true && /124/.test(fileOcr.model.texts.join(' ')) && /SAHNE/i.test(fileOcr.model.texts.join(' ')), fileOcr.model],
     ['opened by double-click (file://): the local plan-symbol detector loads its pinned file from assets/, checked by sha256, and runs',
       !!fileOcr.symbols && fileOcr.symbols.available === true && fileOcr.symbols.integrity === 'sha256' && fileOcr.symbols.version === fileOcr.symbols.pinned, fileOcr.symbols],
+    // The engines run off the page in the package too (src/plan-ort-pool.js):
+    // the runtime's own source ships as embed-ortjs.js, the policy allows blob:
+    // workers, and a missing part would silently put them back on the page.
+    ['opened by double-click (file://): the OCR model runs in worker threads, not on the page',
+      !!fileOcr.model && /^workers \(\d\)$/.test(fileOcr.model.runsIn || '') && !fileOcr.model.workerError, fileOcr.model && { runsIn: fileOcr.model.runsIn, workerError: fileOcr.model.workerError }],
+    ['opened by double-click (file://): the local plan-symbol detector runs in a worker', !!fileOcr.symbols && fileOcr.symbols.runsIn === 'worker', fileOcr.symbols && fileOcr.symbols.runsIn],
+    ['opened by double-click (file://): crops are read on the crop workers, and a crop read twice is read once',
+      !!fileOcr.crops && fileOcr.crops.available === true && /SAHNE/i.test(fileOcr.crops.text || '') && fileOcr.crops.again === true && fileOcr.crops.stats.workers >= 1 && fileOcr.crops.stats.cacheHits >= 1,
+      fileOcr.crops],
     ['opened by double-click (file://): a PDF plan renders', !!fileOcr.pdf && fileOcr.pdf.pages >= 1 && fileOcr.pdf.width > 0, fileOcr.pdf],
     ['opened by double-click (file://): no page errors', fileErrs.length === 0, fileErrs.slice(0, 3)],
   );

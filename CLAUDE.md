@@ -295,6 +295,20 @@ model quality — no real model has run until a person with a funded key says
 so. Full detail: `server/README.md`, `src/screen-vlm.js`,
 `src/plan-vlm-review.js`.
 
+## Analysis speed and Stop
+
+The OCR model and the local detector run in workers (`src/plan-ort-pool.js`),
+Tesseract's crop reads on several workers with a per-session cache keyed by the
+crop's own pixels (`MeritPlanOCRCrops`), and the review screen's **Stop** ends
+the engines' work, not only the wait. A speed change must leave the analysis's
+OUTPUT identical — measured, not assumed: `analysis-workers` (worker = page,
+order-independent numbers, cache, Stop) and a before/after dump of every
+candidate and printed number. Two faster settings were measured and refused
+for what they cost (`benchmarks/perf/README.md`). The ≤ 10 s requirement, the
+reference machine and the supported plan envelope are dated in
+`benchmarks/offline-intelligence/ACCEPTANCE.md`; ORNEK does not meet it yet,
+and a partial result is never reported as a complete one.
+
 ## The plan reading
 
 `src/plan-reading.js` (`MeritPlanReading`) reads an analysis back the way a

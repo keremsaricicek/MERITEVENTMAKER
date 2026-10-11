@@ -291,19 +291,34 @@
       why: "only one crop of this symbol produced a number, and a single reading is measured right 17% of the time" };
   }
 
-  // Read a whole plan's tables. Sequential rather than parallel: the engine is
-  // one worker, and queueing 163 recognitions at once only moves the wait.
+  // Read a whole plan's tables. `concurrency` tables are read at once (default
+  // one): worth more than one only when `runOCR` has several engines behind it
+  // (MeritPlanOCRCrops) -- queueing 163 tables on one worker only moves the
+  // wait. Each table's views stay in their order, every table's answer is its
+  // own, and the result is assembled in the tables' order, so it does not
+  // depend on which table finished first.
   async function readTableNumbers(runOCR, labelOCR, image, tables, options) {
     const opts = options || {};
-    const out = new Map();
+    const results = new Array(tables.length);
     const counts = { VERIFIED: 0, LIKELY: 0, NEEDS_REVIEW: 0, UNKNOWN: 0 };
-    for (const table of tables) {
-      const model = opts.modelReadings ? opts.modelReadings.get(table.id) || null : null;
-      const r = await readOne(runOCR, labelOCR, image, table, { ...opts, model, modelNote: null });
-      out.set(table.id, r);
-      counts[r.state]++;
-      if (typeof opts.onProgress === "function") opts.onProgress(out.size, tables.length);
-    }
+    let next = 0, done = 0, since = Date.now();
+    const lane = async () => {
+      while (next < tables.length) {
+        // A turn for the page every ~40 ms: readings answered from memory
+        // resolve without one, and 163 of them in a row held it for 0.6 s.
+        if (Date.now() - since > 40) { await new Promise((r) => setTimeout(r, 0)); since = Date.now(); }
+        if (next >= tables.length) break;
+        const i = next++, table = tables[i];
+        const model = opts.modelReadings ? opts.modelReadings.get(table.id) || null : null;
+        results[i] = await readOne(runOCR, labelOCR, image, table, { ...opts, model, modelNote: null });
+        done++;
+        if (typeof opts.onProgress === "function") opts.onProgress(done, tables.length);
+      }
+    };
+    const lanes = Math.max(1, Math.min(tables.length, Math.floor(opts.concurrency) || 1));
+    await Promise.all(Array.from({ length: lanes }, lane));
+    const out = new Map();
+    tables.forEach((table, i) => { out.set(table.id, results[i]); counts[results[i].state]++; });
     return { byId: out, counts, views: (opts.views || VIEWS).map((v) => v.id) };
   }
 

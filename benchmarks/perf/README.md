@@ -24,6 +24,90 @@ and the cost lands on whichever measurement happens next, which is how the
 first pass of this work misattributed ~1.2s of Guests-screen layout to the
 following search keystroke.
 
+## Plan analysis: where the time goes, and what the page feels (2026-10-11)
+
+```
+taskset -c 0-3 node benchmarks/perf/analysis-profile.mjs 3   # 4 cores
+taskset -c 0,1 node benchmarks/perf/analysis-profile.mjs 1   # 2 cores
+```
+
+Each run starts a fresh browser, imports the plan, presses Analyse (COLD:
+engines, models and caches loaded from nothing) and then Re-analyse on the same
+page (WARM). The analysis records its own per-stage wall clock
+(`analysis.timings.stages`); the runner adds the longest main-thread task, the
+total blocking time, the longest a frame asked for every 250 ms waited (what a
+scroll, a zoom or the Stop button would have waited) and the browser's peak
+memory. Pinned OCR, network refused. Median of three runs, p95 beside it.
+
+### Before and after (4 cores, same container CPU, Intel Xeon @ 2.10 GHz)
+
+| | Golden cold | Golden warm | ORNEK cold | ORNEK warm |
+|---|--:|--:|--:|--:|
+| **total, before** (`94dff8c`) | 15.7 s | 5.1 s | 44.5 s | 41.6 s |
+| **total, after** | **7.3 s** (p95 8.0) | **3.3 s** | **22.5 s** | **15.0 s** |
+| longest main-thread task, before | 2,091 ms | 1,561 ms | 4,069 ms | 2,494 ms |
+| longest main-thread task, after | 535 ms | 405 ms | 728 ms | 953 ms |
+| total blocking time, before | 6.1 s | 3.8 s | 27.0 s | 25.4 s |
+| total blocking time, after | 1.4 s | 0.9 s | 2.9 s | 3.2 s |
+
+2 cores (`taskset -c 0,1`, one run): Golden cold **9.7 s**, warm 5.1 s; ORNEK
+cold **43.9 s**, warm 28.9 s; longest task 450–790 ms. The earlier 2-core
+measurement (`benchmarks/hardware/`, a different runner with a 4 GB cap) had
+Golden 16.2 s and ORNEK 69.0 s with tasks of 3.5–5.7 s.
+
+The analysis's OUTPUT did not change. A canonical dump of every candidate
+(kind, type, box, status, every printed-number view and its vote, labels,
+capacity, suppression) was taken before and after on both plans: ORNEK's 186
+candidates and 163 printed numbers are identical, cold and re-analysed;
+Golden's differ only in a random candidate id.
+
+### What moved
+
+1. **The ONNX engines left the page** (`src/plan-ort-pool.js`). The OCR model's
+   detector and recogniser, and the local plan-symbol detector, run in up to
+   three workers (one per core, leaving one for the page), each with its own
+   single-threaded session: a page that is not cross-origin isolated cannot
+   share memory with a worker, so parallelism is several workers. Recognition
+   batches go out in parallel. 12 batches: 6.46 s in one worker, 2.10 s across
+   three. If a worker cannot start, everything runs on the page as before —
+   `analysis-workers` proves both paths give the same answer.
+2. **Crops are read side by side, and never twice** (`src/plan-ocr.js`,
+   `MeritPlanOCRCrops`). Labels and printed numbers were ~400 Tesseract crop
+   reads through ONE worker (13 s on ORNEK). Up to three workers now read them;
+   a crop already read this session is answered from memory, keyed by its own
+   pixels. ORNEK re-analysed: 268 of 268 crops from memory.
+3. **The local detector starts with the OCR model, not after the classical
+   detector**: it needs only the deskewed pixels and the runtime, so its load
+   and inference overlap the OCR read (2.1 s → 0 on the critical path).
+4. **Long passes give the page a turn** every ~40 ms: the embedding pass, the
+   crops of labelled objects, number reads answered from memory, and the
+   detector between its chair and table phases.
+5. **Stop stops.** The review screen offers Stop while an analysis runs; it
+   terminates every Tesseract worker and, when an inference is running, the
+   ONNX workers (a running inference cannot be interrupted any other way),
+   puts back the previous analysis, and the next run loads its engines again.
+
+### Measured and NOT adopted (the accuracy cost was measured, not guessed)
+
+| Experiment | Time saved (ORNEK cold) | What it cost | Verdict |
+|---|--:|---|---|
+| Recognition width floor 320 → 160 px | 1.1 s (OCR stage −2.9 s) | verified printed numbers 145 → **143**; 7 lines crossed the 0.9 score floor; `：2064PAX` read as `:2064 PAX` | rejected |
+| Recognition width floor 320 → 96 px | 2.4 s | verified numbers 145 → **141** | rejected |
+| No Tesseract whole-page read when the OCR model read the page | 0.9 s | Golden: text suppression 5 → 1 and **two phantom tables** offered for Confirm; ORNEK: four extra objects (one model table, three bands). The capacity rule read straight as 166 × 12 instead of by corroboration — the only gain | rejected; Tesseract's word boxes are load-bearing for text suppression |
+
+Both switches stay in the code for re-measurement (`MERIT_PPOCR_REC_MIN_WIDTH`,
+`MERIT_TESSERACT_PAGE="model-only"`); the product runs neither.
+
+### Where ORNEK's time still goes (4 cores, cold)
+
+OCR model 13.7 s (detection ~5.7 s including its cold load, recognition of 231
+lines ~7.1 s across three workers) · labels 2.8 s · printed numbers 2.5 s ·
+classical detector 0.9 s · embedding 0.8 s · the rest under 0.3 s each.
+Recognition is ~22 s of single-core work; detection is one inference on a
+2000 × 1431 image that one worker runs alone. Splitting detection into tiles
+would not give the same answer — the model's neck pools globally (squeeze-and-
+excitation) — and was not tried.
+
 ## Numbers on record
 
 Measured in this environment (headless Chromium, 1920x1080), wall clock in ms.

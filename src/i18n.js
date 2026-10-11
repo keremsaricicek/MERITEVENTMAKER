@@ -1286,6 +1286,12 @@
     "renderFailed.toEvents": { en: "Back to the events list", tr: "Etkinlik listesine dön" },
     "analysis.stage.failed": { en: "Analysis could not finish", tr: "Analiz tamamlanamadı" },
     "detect.failed": { en: "Assisted Detection could not finish on this plan. Nothing was changed — try again, or place tables by hand.", tr: "Destekli Algılama bu planda tamamlanamadı. Hiçbir şey değiştirilmedi — yeniden deneyin ya da masaları elle yerleştirin." },
+    // Cancelling an analysis stops its engines, not only the screen.
+    "action.cancelAnalysis": { en: "Stop analysis", tr: "Analizi durdur" },
+    "analysis.notComplete": { en: "Not complete yet — what is shown may still change.", tr: "Henüz tamamlanmadı — gösterilenler değişebilir." },
+    "analysis.stage.cancelling": { en: "Stopping…", tr: "Durduruluyor…" },
+    "analysis.stage.cancelled": { en: "Analysis stopped", tr: "Analiz durduruldu" },
+    "detect.cancelled": { en: "Analysis stopped. Nothing was changed — the previous result is kept.", tr: "Analiz durduruldu. Hiçbir şey değiştirilmedi — önceki sonuç korundu." },
     "dataset.exportFailed": { en: "The training dataset could not be exported.", tr: "Eğitim veri kümesi dışa aktarılamadı." },
     "guests.notAWorkbook": { en: "This file is named .xlsx but is not an Excel workbook. Nothing was imported.", tr: "Bu dosyanın adı .xlsx ama bir Excel çalışma kitabı değil. Hiçbir şey içe aktarılmadı." },
     // Accessible names for controls with no visible label of their own. Each

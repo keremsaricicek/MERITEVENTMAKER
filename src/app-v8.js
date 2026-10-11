@@ -49,7 +49,7 @@
     screen:"events", tab:"floor", focusMode:false, v8AddOpen:false,
     selectedObjectIds:[], selectedGuestIds:[], guestAnchorId:null,
     operationalMode:false, reviewFilter:"all", reviewClass:"all", reviewConfidence:0,
-    analysisBusy:false, analysisProgress:0, analysisStage:"Ready", selectedCandidateId:null,
+    analysisBusy:false, analysisProgress:0, analysisStage:"Ready", analysisAbort:null, analysisStoppedEngines:null, selectedCandidateId:null,
     reviewDrawMode:false, teachAI:false, setupBusy:false,
     // Review is a MODE OF THE FLOOR PLAN, not a screen. It used to replace the
     // whole application shell, which took the event's name, the tab bar and the
@@ -3018,7 +3018,14 @@
   // are the only shape a stage is ever drawn as, and a plan with dozens of them
   // is a plan whose bands mean something else.
   const MAX_LABEL_CANDIDATES=14;
-  async function identifyLabelledVenueObjects(event,suppressedByText){
+  // A crop reader that stops asking once the analysis is stopped: the readers
+  // still queued answer "unavailable" at once instead of starting the engine
+  // again after the operator pressed Stop.
+  function stoppableCropReader(signal){
+    const read=globalThis.MeritPlanOCRCrops?globalThis.MeritPlanOCRCrops.read:globalThis.runPlanOCR;
+    return(src,o)=>signal?.aborted?Promise.resolve({available:false,text:null,reason:"analysis stopped",reasonCode:"CANCELLED"}):read(src,o);
+  }
+  async function identifyLabelledVenueObjects(event,suppressedByText,signal=null){
     const analysis=event?.analysis;
     if(!analysis||!globalThis.MeritLabelOCR||typeof globalThis.runPlanOCR!=="function")return;
     if(!analysis.ocr?.available)return;
@@ -3043,12 +3050,20 @@
       image=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});
     }catch{return;}
     const identified=[],attempts=[];
-    for(const entry of pool){
-      for(const spec of LABELLED_VENUE_TYPES){
-        let reading;
-        try{
-          reading=await globalThis.MeritLabelOCR.readLabel(globalThis.runPlanOCR,image,entry.box,spec.vocabulary,{timeoutMs:20000});
-        }catch{continue;}
+    // Every object's crops are read at once, on the crop workers when there are
+    // several (MeritPlanOCRCrops); each object's answer is then taken in the
+    // order above, exactly as when they were read one after another.
+    const readCrop=stoppableCropReader(signal);
+    // EXPECTED ABSTENTION: an object whose crop cannot be read stays unnamed,
+    // as it did when the read was awaited in the loop.
+    // Each object's crops are cut in a task of their own (a turn for the page
+    // between them): cut all at once, a dense plan's bands held it for 0.7 s.
+    const readings=await Promise.all(pool.map(entry=>Promise.all(LABELLED_VENUE_TYPES.map(spec=>
+      new Promise(r=>setTimeout(r,0)).then(()=>globalThis.MeritLabelOCR.readLabel(readCrop,image,entry.box,spec.vocabulary,{timeoutMs:20000})).catch(()=>null)))));
+    for(const [entryIndex,entry] of pool.entries()){
+      for(const [specIndex,spec] of LABELLED_VENUE_TYPES.entries()){
+        const reading=readings[entryIndex][specIndex];
+        if(!reading)continue;
         attempts.push({type:spec.type,found:reading.found,confidence:reading.confidence,
           fromSuppressed:entry.fromSuppressed});
         if(!reading.found)continue;
@@ -3256,17 +3271,17 @@
   // One plan-wide read by the OCR model, stored with the analysis: the
   // provider that ran (or why none did), its timings, and every line it read
   // with its box in SOURCE pixels and its own score.
-  async function readPlanTextWithModel(event,progress={from:24,span:6}){
+  async function readPlanTextWithModel(event,progress={from:24,span:6},signal=null){
     const M=globalThis.MeritPaddleOCR,src=event.background?.src;
     if(!M||!src)return{available:false,reasonCode:"ENGINE_NOT_LOADED",reason:"OCR model provider not present"};
     let image;
     try{image=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});}
     catch{return{available:false,reasonCode:"FAILED",reason:"plan image did not decode"};}
-    const r=await M.readPlanText(image,{timeoutMs:120000,onProgress:p=>{ui.analysisProgress=progress.from+Math.round(p*progress.span);}});
+    const r=await M.readPlanText(image,{timeoutMs:120000,signal,recMinWidth:globalThis.MERIT_PPOCR_REC_MIN_WIDTH,onProgress:p=>{ui.analysisProgress=progress.from+Math.round(p*progress.span);}});
     return r.available?{available:true,provider:r.provider,ms:r.ms,imageSize:r.imageSize,items:r.items}
       :{available:false,provider:r.provider||null,reasonCode:r.reasonCode||"FAILED",reason:r.reason||null};
   }
-  async function readPrintedTableNumbers(event){
+  async function readPrintedTableNumbers(event,signal=null){
     const analysis=event?.analysis;
     if(!analysis||!globalThis.MeritTableNumbers||!globalThis.MeritLabelOCR)return;
     if(typeof globalThis.runPlanOCR!=="function"||!(analysis.ocr?.available||analysis.ocrModel?.available))return;
@@ -3296,8 +3311,11 @@
           if(r)modelReadings.set(table.id,{...r,provider:om.provider.id});
         }
       }
-      read=await globalThis.MeritTableNumbers.readTableNumbers(globalThis.runPlanOCR,globalThis.MeritLabelOCR,image,insideRing,{
-        modelReadings,
+      // On the crop workers when there are several, a few tables per worker in
+      // flight; the answer does not depend on the order (readTableNumbers).
+      const crops=globalThis.MeritPlanOCRCrops;
+      read=await globalThis.MeritTableNumbers.readTableNumbers(stoppableCropReader(signal),globalThis.MeritLabelOCR,image,insideRing,{
+        modelReadings,concurrency:crops?2*crops.workers():1,
         onProgress:(done,total)=>{
           ui.analysisProgress=84+Math.round((done/Math.max(1,total))*10);
         },
@@ -3584,6 +3602,16 @@
   // pinned directly, and now is.
   globalThis.MeritSuppressTextFalsePositives = suppressTextFalsePositives;
 
+  // Run fn over items in order, giving the page a turn every ~40 ms so input,
+  // scrolling and Stop are answered while a long pass runs. The work and its
+  // order are unchanged.
+  async function inSlices(items,fn,check){
+    let since=performance.now();
+    for(const item of items){
+      fn(item);
+      if(performance.now()-since>40){await new Promise(r=>setTimeout(r,0));if(check)check();since=performance.now();}
+    }
+  }
   async function runAssistedDetection(){
     // ONE ANALYSIS AT A TIME. A second press (a double click, Re-Analyze while
     // the first run is still going) started a second pipeline that interleaved
@@ -3597,21 +3625,45 @@
     // exactly the kind of thing a test that reads the value catches and a test
     // that reads the code does not.
     const analysisStartedAtMs=Date.now();
+    // Where the time goes, per stage, on every run: the wall clock between one
+    // stage mark and the next, kept on the analysis (timings.stages). Measured,
+    // not estimated, so a speed-up is shown by the stage it moved.
+    const stageTimes=[];let stageAt=performance.now();
+    const stage=name=>{const now=performance.now();stageTimes.push({stage:name,ms:Math.round(now-stageAt),end:Math.round(now)});stageAt=now;};
     // What the plan's analysis was before this run. The new one REPLACES it
     // part-way through (before OCR, labels, numbers and the teach area run),
     // so a failure after that point used to leave a half-built analysis where
     // a complete one had been -- under a toast saying nothing was changed.
     const priorAnalysis=event.analysis;
+    // STOP means stop. The operator's Stop button aborts this controller; every
+    // long wait below is raced against it, so the pipeline leaves at once, and
+    // stopAnalysisEngines() ends the work the engines were doing (a worker
+    // mid-inference cannot be interrupted any other way). The previous analysis
+    // is put back exactly as on a failure.
+    const abort=new AbortController();ui.analysisAbort=abort;
+    const stopped=new Promise((_,reject)=>abort.signal.addEventListener("abort",()=>reject(Object.assign(new Error("analysis stopped"),{analysisStopped:true})),{once:true}));
+    // EXPECTED ABSTENTION: the rejection is read by every guard() below.
+    stopped.catch(()=>null);
+    const guard=p=>Promise.race([p,stopped]);
+    const checkStopped=()=>{if(abort.signal.aborted)throw Object.assign(new Error("analysis stopped"),{analysisStopped:true});};
     render();await yieldFrame();
     try{
-      const FRAMES=globalThis.MeritPlanFrames,blob=await sourceBlob(event.background.src),bitmap=await createImageBitmap(blob),analysisFrame=FRAMES.analysisFrame(bitmap.width,bitmap.height,ANALYSIS_MAX_SIDE()),ratio=analysisFrame.ratio,width=analysisFrame.width,height=analysisFrame.height,canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,height);bitmap.close();
+      const FRAMES=globalThis.MeritPlanFrames,blob=await sourceBlob(event.background.src),bitmap=await createImageBitmap(blob),analysisFrame=FRAMES.analysisFrame(bitmap.width,bitmap.height,ANALYSIS_MAX_SIDE()),ratio=analysisFrame.ratio,width=analysisFrame.width,height=analysisFrame.height,canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,height);bitmap.close();stage("decode");
       // Tesseract reads the whole analysis canvas in its own worker, so it is
       // started HERE and runs while the OCR model and the detector hold the main
       // thread; its answer is awaited where it was always read. Same input: the
       // canvas is drawn once above and nothing after this line draws on it.
       // Measured on ORNEK, the two engines one after the other were most of the
       // analysis's wall clock.
-      const ocrStarted=(async()=>{try{return await runPlanOCR(canvas.toDataURL("image/png"));}catch(ocrError){return{available:false,text:null,reason:ocrError.message,reasonCode:"FAILED"};}})();
+      const tesseractStartedAt=performance.now();let tesseractMs=null;
+      const readWholePage=()=>(async()=>{try{return await runPlanOCR(canvas.toDataURL("image/png"));}catch(ocrError){return{available:false,text:null,reason:ocrError.message,reasonCode:"FAILED"};}finally{tesseractMs=Math.round(performance.now()-tesseractStartedAt);}})();
+      // EXPERIMENT ONLY (benchmarks/perf/README.md): MERIT_TESSERACT_PAGE =
+      // "model-only" leaves Tesseract's whole-page read out when the OCR model
+      // reads the page, and starts it only when the model could not. The product
+      // reads with both until a measurement says one is enough.
+      const pageOnlyIfModelFails=globalThis.MERIT_TESSERACT_PAGE==="model-only";
+      let ocrStarted=pageOnlyIfModelFails?null:readWholePage();
+      stage("tesseractStart");
       ui.analysisStage=t("analysis.stage.understanding");ui.analysisProgress=22;render();await yieldFrame();
       // Deskew before anything measures a component. See estimatePlanSkew.
       //
@@ -3620,7 +3672,7 @@
       // on the two genuinely rotated variants and exactly 1.0000 on the six
       // straight renderings, so the deadband is not a close call.
       const skew=globalThis.MERIT_PLAN_DETECTION.resolve().estimatePlanSkew(canvas,width,height);
-      const deskewDeg=skew.applyDeg;
+      const deskewDeg=skew.applyDeg;stage("skew");
       // Every frame and both box conventions live in MeritPlanFrames
       // (src/plan-frames.js): the detector reads DESKEWED pixels, the product
       // stores and draws PLAN percent of the analysis canvas, and a deskew of 0
@@ -3636,7 +3688,7 @@
         dctx.translate(dw/2,dh/2);dctx.rotate(deskew.rad);dctx.drawImage(canvas,-width/2,-height/2);
         dctx.setTransform(1,0,0,1,0,0);
       }
-      const pixels=dctx.getImageData(0,0,dw,dh);
+      const pixels=dctx.getImageData(0,0,dw,dh);stage("deskew");
       // A candidate's w/h are its oriented box's own dimensions, so rotating
       // the frame moves only the centre and shifts the angle by the correction
       // applied. A candidate is a CORNER box; the seats nested in it are CENTRE
@@ -3668,7 +3720,25 @@
       // Its boxes are SOURCE pixels; the detector looks at the deskewed
       // analysis canvas, so each line's corners go through both frames.
       ui.analysisStage=t("analysis.stage.labels");render();await yieldFrame();
-      const ocrModelRead=await readPlanTextWithModel(event);
+      // The local plan-symbol detector (src/plan-model.js) needs only the
+      // deskewed pixels and the runtime the OCR model brings. It starts as soon
+      // as that runtime is up and runs in a worker beside the OCR model's read;
+      // its answer is taken after the classical detector, where it always was.
+      // The detector only reads the pixels, so both see the same ones.
+      const localModelStarted=globalThis.MeritPlanModel&&globalThis.MeritPlanModelFusion?(async()=>{
+        // EXPECTED ABSTENTION: a runtime that does not come up is reported by
+        // the OCR model's read and by the local model's own (RUNTIME_NOT_LOADED).
+        await globalThis.MeritPaddleOCR?.ready?.().catch(()=>null);
+        if(abort.signal.aborted)return{available:false,reasonCode:"STOPPED",reason:"the analysis was stopped",detections:[]};
+        return MeritPlanModel.detect(pixels,dw,dh);
+      })():null;
+      const ocrModelRead=await guard(readPlanTextWithModel(event,undefined,abort.signal));stage("ocrModel");
+      if(!ocrStarted)ocrStarted=ocrModelRead.available&&globalThis.Tesseract
+        ?Promise.resolve({available:true,text:"",words:[],pageRead:"skipped: the OCR model read the page"})
+        :readWholePage();
+      // The crop workers start now, while the detector holds the page, so they
+      // are ready when the label and number stages ask for them.
+      globalThis.MeritPlanOCRCrops?.prewarm();
       // A plan imported from a PDF that carries TEXT OBJECTS (src/plan-pdf-text.js)
       // hands them on as exact text in the analysis pixels: the document states
       // its words, nothing reads them. They join the model's lines wherever
@@ -3702,10 +3772,10 @@
       const protectedRegions=(event.planMemory||[])
         .filter(m=>m.status==="confirmed"||m.manual)
         .map(m=>({x:m.geometry.x,y:m.geometry.y,w:m.geometry.w,h:m.geometry.h}));
-      const detection=await provider.detect(pixels,dw,dh,{confidenceThreshold:calibratedThreshold,protectedRegions:deskewToPlan(protectedRegions),textRegions,onStage:async(key,progress)=>{
-        ui.analysisStage=t("analysis.stage."+key);ui.analysisProgress=progress;render();await yieldFrame();
-      }});
-      const detectionMs=Math.round(performance.now()-detectionStartedAt);
+      const detection=await guard(provider.detect(pixels,dw,dh,{confidenceThreshold:calibratedThreshold,protectedRegions:deskewToPlan(protectedRegions),textRegions,onStage:async(key,progress)=>{
+        checkStopped();ui.analysisStage=t("analysis.stage."+key);ui.analysisProgress=progress;render();await yieldFrame();
+      }}));
+      const detectionMs=Math.round(performance.now()-detectionStartedAt);stage("classicalDetect");
       const candidates=detection.candidates,venues=detection.venues,threshold=detection.threshold;
       // The local plan-symbol detector (src/plan-model.js) takes a second,
       // independent look at the same deskewed pixels. Fusion adds only what the
@@ -3713,13 +3783,13 @@
       // support; it removes nothing (src/plan-model-fusion.js). When the model
       // is unavailable the reason is kept and the classical path goes on alone.
       let localModel=null;
-      if(globalThis.MeritPlanModel&&globalThis.MeritPlanModelFusion){
+      if(localModelStarted){
         ui.analysisStage=t("analysis.stage.localModel");render();await yieldFrame();
-        const read=await MeritPlanModel.detect(pixels,dw,dh);
+        const read=await guard(localModelStarted);
         const fused=MeritPlanModelFusion.fuse(candidates,venues,read,{width:dw,height:dh,uid,representation:detection.representation,textRegions});
         candidates.push(...fused.added);venues.push(...fused.addedVenues);
         localModel={available:read.available,reasonCode:read.reasonCode||null,reason:read.reason||null,ms:read.ms??null,model:read.model,
-          detections:read.detections.length,addedTables:fused.added.length,addedColumns:fused.addedVenues.length,chairsAttached:fused.chairsAttached,chairsInText:fused.chairsInText,offSize:fused.offSize,unsupported:fused.unsupported};
+          loadMs:read.model&&read.model.loadMs!=null?read.model.loadMs:null,detections:read.detections.length,addedTables:fused.added.length,addedColumns:fused.addedVenues.length,chairsAttached:fused.chairsAttached,chairsInText:fused.chairsInText,offSize:fused.offSize,unsupported:fused.unsupported};
       }
       // A vector PDF's own furniture shapes, when the import found repeated ones:
       // exact geometry, fused the same way (added where nothing was proposed).
@@ -3737,6 +3807,7 @@
         candidates.push(...fusedV.added);
         vectorObjects={reason:vo.reason,proposedTables:vo.tables.length,proposedChairs:vo.chairs.length,addedTables:fusedV.added.length,chairsAttached:fusedV.chairsAttached};
       }
+      stage("localModelAndVector");
       ui.analysisStage=t("analysis.stage.seating");ui.analysisProgress=73;render();await yieldFrame();
       // Through the provider boundary rather than the function directly. That
       // seam was built for a future learned model and is now carrying one:
@@ -3750,8 +3821,11 @@
       // the next statement.
       const embedder=resolveVisualEmbeddingProvider();
       const embeddingStartedAt=performance.now();
-      for(const c of candidates)c.visualDescriptor=embedder.embed(detection.gray,detection.binary,dw,dh,c);
-      for(const c of venues)c.visualDescriptor=embedder.embed(detection.gray,detection.binary,dw,dh,c);
+      // In slices of about 40 ms, so a dense plan's few hundred crops do not
+      // hold the page for a second at a time (measured: one task of ~1 s on
+      // ORNEK). Each object's vector is its own; only the waiting changes.
+      await inSlices(candidates,c=>{c.visualDescriptor=embedder.embed(detection.gray,detection.binary,dw,dh,c);},checkStopped);
+      await inSlices(venues,c=>{c.visualDescriptor=embedder.embed(detection.gray,detection.binary,dw,dh,c);},checkStopped);
       // Seats the associator attached to a table are the best-corroborated
       // chairs on the plan, and they are what lets the second opinion say
       // "that looks more like a chair than a table" instead of only "that
@@ -3764,11 +3838,11 @@
       // cost real storage for something recomputed on every run. A nested seat
       // carries its CENTRE in x/y, so the box is converted before cropping.
       const seatVectors=new Map();
-      for(const c of candidates)for(const ch of c.chairDetections||[]){
+      await inSlices(candidates,c=>{for(const ch of c.chairDetections||[]){
         const v=embedder.embed(detection.gray,detection.binary,dw,dh,
           {x:ch.x-ch.w/2,y:ch.y-ch.h/2,w:ch.w,h:ch.h});
         if(v?.vector)seatVectors.set(ch.id,{vector:v.vector,tableId:c.id});
-      }
+      }},checkStopped);
       const embeddingMs=Math.round(performance.now()-embeddingStartedAt);
       for(const c of [...candidates,...venues])planFromDeskew(c);
       // A table SYMBOL is found by the fill inside its ring; its drawn edge is
@@ -3831,7 +3905,8 @@
       event.analysis.ocrText=null;
       event.analysis.planIntelligence=buildPlanIntelligence(event,null);
       ui.analysisStage=t("analysis.stage.labels");ui.analysisProgress=84;render();await yieldFrame();
-      const ocrResult=await ocrStarted;
+      stage("embedMemoryBuild");
+      const ocrResult=await guard(ocrStarted);stage("tesseractWait");
       event.analysis.ocr={available:ocrResult.available,reason:ocrResult.reason||null,reasonCode:ocrResult.reasonCode||null,engine:"tesseract.js"};
       // Kept in full (not just the truncated capacityAudit.sourceText) so a
       // grouping/reclassification decision can recompute planIntelligence
@@ -3873,16 +3948,18 @@
         event.analysis.ocrText=[event.analysis.ocrText,modelText].filter(Boolean).join("\n");
       }
       if(pdfItems.length)event.analysis.ocrText=[event.analysis.ocrText,pdfItems.map(i=>i.text).join("\n").normalize("NFKC")].filter(Boolean).join("\n");
-      await identifyLabelledVenueObjects(event,suppressedByText);
+      stage("textSuppression");
+      await guard(identifyLabelledVenueObjects(event,suppressedByText,abort.signal));stage("labels");
       const planRaster=ctx.getImageData(0,0,width,height);
       placeNamedVenueElements(event,planRaster,ocrResult,pdfItems);
-      readChairFacing(event,planRaster);
-      await readPrintedTableNumbers(event);
+      readChairFacing(event,planRaster);stage("venueAndFacing");
+      await guard(readPrintedTableNumbers(event,abort.signal));stage("tableNumbers");
       // The drawing's own fingerprint, so a lesson taught on it can be found
       // again after a re-import under a different filename. Failing to compute
       // it is not fatal: plan-scope lessons simply do not match, which is the
       // safe direction.
-      try{event.analysis.planHash=await planHashFor(event.background.src);}catch{event.analysis.planHash=null;}
+      try{event.analysis.planHash=await guard(planHashFor(event.background.src));}catch(hashError){if(hashError?.analysisStopped)throw hashError;event.analysis.planHash=null;}stage("planHash");
+      checkStopped();
       // Before plan intelligence is rebuilt, because a lesson can move an
       // object from table to venue and the capacity, relationship and
       // consistency layers all have to see the corrected answer.
@@ -3906,14 +3983,42 @@
       // itself whatever its tables look like.
       runSelfCheck(event);
       // Last, and only last: it ranks what every layer above it concluded.
-      runConfidenceBudget(event);
-      ui.analysisStage=t("analysis.stage.review");ui.analysisProgress=100;ui.analysisBusy=false;
-      event.analysis.timings={importedAtMs:event.background?.importedAtMs??null,analysisStartedAtMs,analysisCompletedAtMs:Date.now()};ui.selectedCandidateId=event.analysis.candidates[0]?.id||null;ui.difficultQuestionIndex=0;ui.activeReviewGroupId=null;ui.activeQuestionId=null;audit(event,"ASSISTED_DETECTION_COMPLETED",event.analysis.diagnostics);touchEvent(event);render();
+      runConfidenceBudget(event);stage("intelligence");
+      ui.analysisStage=t("analysis.stage.review");ui.analysisProgress=100;ui.analysisBusy=false;ui.analysisAbort=null;
+      event.analysis.timings={importedAtMs:event.background?.importedAtMs??null,analysisStartedAtMs,analysisCompletedAtMs:Date.now(),stages:stageTimes,tesseractMs};ui.selectedCandidateId=event.analysis.candidates[0]?.id||null;ui.difficultQuestionIndex=0;ui.activeReviewGroupId=null;ui.activeQuestionId=null;audit(event,"ASSISTED_DETECTION_COMPLETED",event.analysis.diagnostics);touchEvent(event);render();
     }catch(error){
+      event.analysis=priorAnalysis;ui.analysisAbort=null;
+      if(error?.analysisStopped||abort.signal.aborted){
+        ui.analysisBusy=false;ui.analysisStage=t("analysis.stage.cancelled");render();toast(t("detect.cancelled"),"info",5000);
+        return;
+      }
       console.warn("Assisted Detection failed; the previous analysis is kept.",error);
-      event.analysis=priorAnalysis;
       ui.analysisBusy=false;ui.analysisStage=t("analysis.stage.failed");render();toast(t("detect.failed"),"error",7000);
     }
+  }
+  // The Stop button. Ends the engines' work, not just the wait for it: every
+  // OCR worker (a recognition cannot be interrupted any other way), and the
+  // ONNX workers when an inference is running there — whose sessions go with
+  // them, so the OCR model and the local detector load again on the next run.
+  function stopAnalysis(){
+    if(!ui.analysisBusy||!ui.analysisAbort||ui.analysisAbort.signal.aborted)return;
+    ui.analysisStage=t("analysis.stage.cancelling");
+    ui.analysisAbort.abort();
+    stopAnalysisEngines();
+    render();
+  }
+  function stopAnalysisEngines(){
+    const stoppedEngines={tesseract:false,onnx:false};
+    if(globalThis.MeritPlanOCRCrops){globalThis.MeritPlanOCRCrops.terminate();stoppedEngines.tesseract=true;}
+    const pool=globalThis.MeritOrtPool;
+    if(pool&&pool.status().busy>0){
+      pool.terminate();
+      globalThis.MeritPaddleOCR?.reset?.();
+      globalThis.MeritPlanModel?.release?.();
+      stoppedEngines.onnx=true;
+    }
+    ui.analysisStoppedEngines=stoppedEngines;
+    return stoppedEngines;
   }
   // Re-derives the whole PlanIntelligenceResult from the CURRENT candidates +
   // any recorded grouping/reclassification decisions. Called after every
@@ -4468,7 +4573,7 @@
         ui.activeQuestionId=null;
         ui.selectedCandidateId=null;
         render();
-      }else if(action==="reanalyze")runAssistedDetection();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){
+      }else if(action==="reanalyze")runAssistedDetection();else if(action==="cancel-analysis")stopAnalysis();else if(action==="commit")commitCandidates();else if(action==="confirm"&&c){
         if(decideReview(event,{kind:"confirm",candidateId:c.id}))REVIEW.afterReviewDecision(event);
       }else if(action==="reject"&&c){
         if(decideReview(event,{kind:"reject",candidateId:c.id}))REVIEW.afterReviewDecision(event);

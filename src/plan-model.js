@@ -58,7 +58,10 @@
     const x = globalThis.MERIT_PLAN_MODEL_PIN_OVERRIDE;
     return x && typeof x.file === "string" && x.bytes > 0 && typeof x.sha256 === "string" ? Object.assign({}, PIN, x) : PIN;
   };
-  let session = null, state = "idle", loading = null, lastError = null, integrity = null, loadMs = null;
+  let session = null, state = "idle", loading = null, lastError = null, integrity = null, loadMs = null, poolNames = null, poolKey = null;
+  // release() starts a new generation: a load still in flight from the old one
+  // ends without touching the state the next load builds.
+  let generation = 0;
   const fail = (code, message) => Object.assign(new Error(message), { modelCode: code });
 
   const loadScript = (src) => new Promise((resolve, reject) => {
@@ -77,6 +80,8 @@
     const o = opts || {};
     if (state === "ready") return true;
     if (loading) return loading;
+    const gen = generation;
+    const current = () => { if (gen !== generation) throw fail("MODEL_STOPPED", "the model was released while it loaded"); };
     loading = (async () => {
       try {
         state = "loading";
@@ -95,14 +100,24 @@
         const canHash = !!(globalThis.crypto && crypto.subtle);
         if (canHash && (await sha256Hex(bytes)) !== pin.sha256) throw fail("MODEL_INTEGRITY", "model sha256 is not the pinned one");
         integrity = canHash ? "sha256" : "size-only (no WebCrypto in this context)";
-        session = await ort.InferenceSession.create(bytes, { executionProviders: ["wasm"], graphOptimizationLevel: "all" });
+        // In a worker when the OCR engine's pool is running (src/plan-ort-pool.js),
+        // so the inference does not hold the page; otherwise on the page.
+        const Pool = globalThis.MeritOrtPool;
+        poolNames = null;
+        if (Pool && Pool.status().state === "ready") {
+          try { poolKey = "plan-model:" + pin.version; poolNames = await Pool.load(poolKey, bytes, 1); }
+          catch (error) { poolNames = null; lastError = error; }
+        }
+        current();
+        if (!poolNames) session = await ort.InferenceSession.create(bytes, { executionProviders: ["wasm"], graphOptimizationLevel: "all" });
+        current();
         // Cold load, measured: fetching the file, decoding it, checking its
         // sha256 and building the session. Reported, never assumed.
         loadMs = Math.round(performance.now() - loadStartedAt);
         state = "ready";
         return true;
       } catch (error) {
-        state = "failed"; lastError = error; loading = null; session = null;
+        if (gen === generation) { state = "failed"; lastError = error; loading = null; session = null; poolNames = null; }
         throw error.modelCode ? error : fail("MODEL_FAILED", error && error.message ? error.message : String(error));
       }
     })();
@@ -158,9 +173,14 @@
       const pin = o.pin || pinNow(), t0 = performance.now();
       const p = prepare(pixels, width, height, o.longSide || pin.longSide);
       const ort = globalThis.ort;
-      const feeds = { [session.inputNames[0]]: new ort.Tensor("float32", p.tensor, [1, 1, p.H, p.W]) };
-      const r = await session.run(feeds);
-      const heat = r[session.outputNames[0]], size = r[session.outputNames[1]], off = r[session.outputNames[2]];
+      let heat, size, off;
+      if (poolNames) {
+        const r = (await globalThis.MeritOrtPool.run(poolKey, { [poolNames.inputNames[0]]: { type: "float32", data: p.tensor, dims: [1, 1, p.H, p.W] } })).outputs;
+        heat = r[poolNames.outputNames[0]]; size = r[poolNames.outputNames[1]]; off = r[poolNames.outputNames[2]];
+      } else {
+        const r = await session.run({ [session.inputNames[0]]: new ort.Tensor("float32", p.tensor, [1, 1, p.H, p.W]) });
+        heat = r[session.outputNames[0]]; size = r[session.outputNames[1]]; off = r[session.outputNames[2]];
+      }
       const [, K, h, w] = heat.dims;
       const thr = pin.thresholds || {}, floor = o.threshold ?? Math.min(...pin.classes.map(c => thr[c] ?? 0.5));
       const raw = decode(heat.data, size.data, off.data, K, h, w, pin.stride, floor);
@@ -174,12 +194,12 @@
 
   function describe() {
     return { id: PIN.id, version: pinNow().version, trainedModel: true, domain: "plan symbols: tables, chairs, columns — not rooms, not numbers",
-      trainedOn: pinNow().trainedOn, integrity, state, loadMs };
+      trainedOn: pinNow().trainedOn, integrity, state, loadMs, runsIn: poolNames ? "worker" : session ? "page" : null };
   }
 
   async function release() {
     try { if (session) await session.release(); } catch (error) { lastError = error; }
-    session = null; state = "idle"; loading = null;
+    session = null; poolNames = null; state = "idle"; loading = null; generation++;
   }
 
   globalThis.MeritPlanModel = Object.freeze({ PIN, load, detect, decode, describe, release, status: () => state, lastError: () => lastError });

@@ -53,6 +53,63 @@ unless a row says otherwise.
 | Whole browser, peak PSS during analysis | ≤ 2.0 GB |
 | UI responsiveness during analysis: longest main-thread task | ≤ 500 ms (input answered within 1 s) |
 
+## Requirement change, 2026-10-11 (later the same day): full analysis ≤ 10 s
+
+Added after the hardware rows above were measured, at the user's request. The
+rows above stay as they were, with their measurements; this section adds a
+stricter requirement beside them and lowers nothing.
+
+**The requirement.** A full analysis of a supported plan completes in
+**≤ 10 s at p95**, cold, on the reference machine, and the page does not freeze
+while it runs.
+
+- **Full** means `analysis.timings.analysisCompletedAtMs` is set: detection,
+  the local model, OCR, labels, printed numbers, plan memory and the readiness
+  checks all done. A first preview, a partial result or "the tables are drawn"
+  is not complete and is never reported against this row. While an analysis
+  runs, the review screen says it is not complete and takes no decisions.
+- **Clock**: from the plan's import completing to the full result (the runner
+  presses Analyse at once). Reported COLD (a fresh browser: engines, models and
+  caches loaded from nothing) and CACHED (re-analysis of the same plan in the
+  same session) separately. The requirement is on COLD.
+- **Does not freeze**: no main-thread task over **200 ms**, and a frame asked
+  for at any moment during the analysis drawn within **250 ms** (that is what a
+  scroll, a zoom or the Stop button waits). Stop ends the engines' work, not
+  only the wait for it.
+- **Without accuracy loss**: a speed-up that changes what the analysis finds is
+  measured against the regression set and is not adopted if anything gets
+  worse (`benchmarks/perf/README.md` lists the ones measured and refused).
+
+**Reference machine.** 4 logical cores (measured as `taskset -c 0-3` on an
+Intel Xeon @ 2.10 GHz), 8 GB RAM class, no GPU, Chromium. 2 cores are measured
+and reported beside it; the 10 s requirement is stated for 4, and the 2-core
+rows above keep their own thresholds.
+
+**Supported plan envelope** (both regression plans are inside it, by design):
+
+| Property | Supported | Golden | ORNEK |
+|---|---|---|---|
+| Pages | one page per analysis (an image, or the one PDF page chosen at import) | 1 | 1 |
+| Source size | long side ≤ 2,600 px, ≤ 4.5 megapixels | 1355 × 788 | 2402 × 1719 |
+| Tables (annotated) | ≤ 170 | 46 | 166 |
+| Printed text lines (OCR model reads) | ≤ 250 | 9 | 231 |
+| Drawn chairs (annotated) | ≤ 400 | 113 | 0 (symbolic plan) |
+
+A plan outside the envelope is analysed the same way; its time is reported,
+not promised.
+
+**Measured 2026-10-11** (`benchmarks/perf/analysis-profile.mjs`, median of 3,
+p95 beside it):
+
+| Plan | Cold (4 cores) | Cached (4 cores) | Longest task | Frame wait max | Cold (2 cores) | Verdict |
+|---|--:|--:|--:|--:|--:|---|
+| Golden | 7.3 s / 8.0 s | 3.3 s | 535 ms | 44 ms | 9.7 s | time **MET**; freeze **NOT MET** (task > 200 ms) |
+| ORNEK | 22.5 s / 22.5 s | 15.0 s | 728 ms | 599 ms | 43.9 s | **NOT MET** |
+
+Before this change the same runner measured Golden 15.7 s and ORNEK 44.5 s
+cold, with main-thread tasks of 2.1 s and 4.1 s. Where ORNEK's 22.5 s goes,
+and what was tried, is in `benchmarks/perf/README.md`.
+
 ## Offline and failure behaviour
 
 | Measure | Threshold |

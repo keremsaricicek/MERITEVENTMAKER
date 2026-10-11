@@ -207,6 +207,10 @@ const embedModel = (name, key, text) => writeFileSync(path.join(PPOCR_OUT, name)
 copyFileSync(path.join(ortDir, "dist", ortScript), path.join(PPOCR_OUT, ortScript));
 embedModel("embed-wasm.js", "wasm", readFileSync(path.join(ortDir, "dist/ort-wasm-simd-threaded.wasm")).toString("base64"));
 embedModel("embed-mjs.js", "mjs", readFileSync(path.join(ortDir, "dist/ort-wasm-simd-threaded.mjs"), "utf8"));
+// The same runtime script once more, as text: the OCR model and the local
+// detector run in workers made from it (src/plan-ort-pool.js), and a page
+// opened from disk cannot read its own files any other way.
+embedModel("embed-ortjs.js", "ortjs", readFileSync(path.join(ortDir, "dist", ortScript), "utf8"));
 embedModel("embed-det.js", "det", modelBytes.det.toString("base64"));
 embedModel("embed-rec.js", "rec", modelBytes.rec.toString("base64"));
 copyFileSync(path.join(ROOT, "src/plan-ocr-paddle-keys.js"), path.join(PPOCR_OUT, "keys.js"));

@@ -161,7 +161,7 @@
 
   // ---- the engine ------------------------------------------------------------
   class PaddleOCREngine {
-    constructor() { this.state = "idle"; this.det = null; this.rec = null; this.keys = null; this.loading = null; this.lastError = null; }
+    constructor() { this.state = "idle"; this.det = null; this.rec = null; this.keys = null; this.loading = null; this.lastError = null; this.mode = null; this.workerError = null; }
 
     // Where the assets come from: the package's embedded files when the
     // offline build set MERIT_PPOCR_ASSET_PATHS.embedded, otherwise jsDelivr
@@ -191,19 +191,26 @@
             this.keys = globalThis.MERIT_PPOCR_V4_KEYS;
             if (!Array.isArray(this.keys) || this.keys.length !== 6623) throw fail("ENGINE_NOT_LOADED", "recognition character list missing or wrong length");
           }
-          let detBytes, recBytes;
+          let detBytes, recBytes, runtime = null;
           if (embedded) {
             // The runtime as its own file; the wasm, its loader and both models
             // as base64 strings in script files — a page opened from disk can
             // run scripts beside it but cannot fetch them.
             if (!globalThis.ort) await loadScript(embedded + PINS.runtime.script);
-            for (const part of ["wasm", "mjs", "det", "rec"]) await loadScript(embedded + "embed-" + part + ".js");
+            for (const part of ["wasm", "mjs", "det", "rec", "ortjs"]) {
+              try { await loadScript(embedded + "embed-" + part + ".js"); }
+              // The runtime's own source is only needed to run it in workers; a
+              // package built before it was embedded runs on the main thread.
+              catch (error) { if (part !== "ortjs") throw error; }
+            }
             const E = globalThis.MERIT_PPOCR_EMBED || {};
             if (!globalThis.ort) throw fail("ENGINE_NOT_LOADED", "ONNX Runtime Web did not load from the package");
-            globalThis.ort.env.wasm.wasmBinary = b64ToBytes(E.wasm);
+            const wasmBytes = b64ToBytes(E.wasm);
+            globalThis.ort.env.wasm.wasmBinary = wasmBytes;
             mjsUrl = URL.createObjectURL(new Blob([E.mjs], { type: "text/javascript" }));
             globalThis.ort.env.wasm.wasmPaths = { mjs: mjsUrl };
             detBytes = b64ToBytes(E.det); recBytes = b64ToBytes(E.rec);
+            if (typeof E.ortjs === "string") runtime = { source: E.ortjs, wasm: wasmBytes, mjs: E.mjs };
             delete globalThis.MERIT_PPOCR_EMBED;
           } else {
             if (!globalThis.ort) await loadScript(runtimeBase() + PINS.runtime.script);
@@ -215,6 +222,13 @@
               return new Uint8Array(await r.arrayBuffer());
             };
             [detBytes, recBytes] = await Promise.all([get(P.models.det), get(P.models.rec)]);
+            // The same runtime, fetched as text and bytes for the workers (the
+            // policy allows the CDN for scripts and connections).
+            try {
+              const [source, wasm] = await Promise.all([fetch(runtimeBase() + PINS.runtime.script).then((r) => r.ok ? r.text() : null),
+                fetch(runtimeBase() + "ort-wasm-simd-threaded.wasm").then((r) => r.ok ? r.arrayBuffer() : null)]);
+              if (source && wasm) runtime = { source, wasm, mjsUrl: runtimeBase() + "ort-wasm-simd-threaded.mjs" };
+            } catch (error) { this.workerError = { code: "RUNTIME_FETCH", message: String(error && error.message || error) }; }
           }
           // Single thread: a page that is not cross-origin isolated (and a
           // file:// package never is) cannot share memory with workers.
@@ -229,9 +243,29 @@
             if (canHash && (await sha256Hex(bytes)) !== m.sha256) throw fail("MODEL_INTEGRITY", "model sha256 is not the pinned one");
           }
           this.integrity = canHash ? "sha256" : "size-only (no WebCrypto in this context)";
-          const so = { executionProviders: ["wasm"], graphOptimizationLevel: "all" };
-          this.det = await globalThis.ort.InferenceSession.create(detBytes, so);
-          this.rec = await globalThis.ort.InferenceSession.create(recBytes, so);
+          // Off the main thread when the page can (src/plan-ort-pool.js): the
+          // detector in one worker, recognition in every worker, batches in
+          // parallel. The same bytes, checked above, the same runtime, so the
+          // same output; anything that stops the workers starting leaves the
+          // engine on the main thread, exactly as before.
+          const Pool = globalThis.MeritOrtPool;
+          if (Pool && runtime) {
+            try {
+              await Pool.start(runtime);
+              this.detNames = await Pool.load("ppocr-det", detBytes, 1);
+              this.recNames = await Pool.load("ppocr-rec", recBytes, Pool.status().workers);
+              this.mode = "workers";
+            } catch (error) { this.workerError = { code: error.poolCode || "FAILED", message: String(error && error.message || error) }; this.mode = null; }
+          // Stopped while loading (an analysis the operator stopped): the work
+          // ends here; it does not carry on building sessions on the page.
+          if (this.stopped) throw fail("CANCELLED", "OCR model load stopped");
+          } else if (!runtime && !this.workerError) this.workerError = { code: Pool ? "NO_RUNTIME_SOURCE" : "NO_POOL", message: "the runtime is not available to workers on this page" };
+          if (this.mode !== "workers") {
+            const so = { executionProviders: ["wasm"], graphOptimizationLevel: "all" };
+            this.det = await globalThis.ort.InferenceSession.create(detBytes, so);
+            this.rec = await globalThis.ort.InferenceSession.create(recBytes, so);
+            this.mode = "page";
+          }
           this.state = "ready";
           return this;
         } catch (error) {
@@ -273,7 +307,9 @@
         for (let i = 0; i < n; i++) { t[i] = (px[4 * i + 2] / 255 - M[0]) / S[0]; t[n + i] = (px[4 * i + 1] / 255 - M[1]) / S[1]; t[2 * n + i] = (px[4 * i] / 255 - M[2]) / S[2]; }
       } else for (let i = 0; i < n; i++) { t[i] = px[4 * i + 2] / 127.5 - 1; t[n + i] = px[4 * i + 1] / 127.5 - 1; t[2 * n + i] = px[4 * i] / 127.5 - 1; }
       check(); await yieldNow();
-      const prob = (await this.det.run({ [this.det.inputNames[0]]: new ort.Tensor("float32", t, [1, 3, dh, dw]) }))[this.det.outputNames[0]];
+      const prob = this.mode === "workers"
+        ? (await globalThis.MeritOrtPool.run("ppocr-det", { [this.detNames.inputNames[0]]: { type: "float32", data: t, dims: [1, 3, dh, dw] } })).outputs[this.detNames.outputNames[0]]
+        : (await this.det.run({ [this.det.inputNames[0]]: new ort.Tensor("float32", t, [1, 3, dh, dw]) }))[this.det.outputNames[0]];
       const tDet = performance.now() - t0;
       const boxes = dbPost(prob.data, prob.dims[3], prob.dims[2], W, H, { thresh: D.thresh, boxThresh: D.boxThresh, unclipRatio: D.unclipRatio, minSize: 3 });
       check();
@@ -283,10 +319,24 @@
       const order = boxes.map((_, i) => i).sort((a, b) => boxes[a].ratio - boxes[b].ratio);
       const rc = document.createElement("canvas"); rc.width = 2048; rc.height = 48;
       const rg = rc.getContext("2d", { willReadFrequently: true });
+      // Batches go to the workers in parallel, a few in flight per worker; on
+      // the main thread they run one after another, as before. Each batch's
+      // answer is written to its own boxes, so the order they return in does
+      // not matter.
+      const workersMode = this.mode === "workers";
+      const recRun = workersMode
+        ? async (data, dims) => (await globalThis.MeritOrtPool.run("ppocr-rec", { [this.recNames.inputNames[0]]: { type: "float32", data, dims } })).outputs[this.recNames.outputNames[0]]
+        : async (data, dims) => (await this.rec.run({ [this.rec.inputNames[0]]: new ort.Tensor("float32", data, dims) }))[this.rec.outputNames[0]];
+      const limit = workersMode ? Math.max(2, 2 * this.recNames.workers) : 1;
+      // The reference pipeline pads every line to at least 320 px (48 x 320).
+      // An experiment may state another floor; the product uses 320.
+      const recMinWidth = Math.max(48, Number(o.recMinWidth) || 320);
+      const inflight = new Set();
+      let recognised = 0;
       for (let s = 0; s < order.length; s += 6) {
         check(); await yieldNow();
         const idx = order.slice(s, s + 6);
-        const imgW = Math.trunc(48 * Math.max(320 / 48, ...idx.map(i => boxes[i].ratio))), B = idx.length, plane = 48 * imgW;
+        const imgW = Math.trunc(48 * Math.max(recMinWidth / 48, ...idx.map(i => boxes[i].ratio))), B = idx.length, plane = 48 * imgW;
         const data = new Float32Array(B * 3 * plane);
         if (rc.width < imgW) rc.width = imgW;
         idx.forEach((bi, k) => {
@@ -301,13 +351,20 @@
             data[base + o2] = p[p4 + 2] / 127.5 - 1; data[base + plane + o2] = p[p4 + 1] / 127.5 - 1; data[base + 2 * plane + o2] = p[p4] / 127.5 - 1;
           }
         });
-        const out = (await this.rec.run({ [this.rec.inputNames[0]]: new ort.Tensor("float32", data, [B, 3, 48, imgW]) }))[this.rec.outputNames[0]];
-        idx.forEach((bi, k) => { const r = ctcGreedy(out.data, out.dims, k, this.keys); boxes[bi].text = r.text; boxes[bi].score = +r.score.toFixed(4); });
-        if (typeof o.onProgress === "function") o.onProgress(Math.min(1, (s + 6) / Math.max(1, order.length)));
+        const job = recRun(data, [B, 3, 48, imgW]).then((out) => {
+          idx.forEach((bi, k) => { const r = ctcGreedy(out.data, out.dims, k, this.keys); boxes[bi].text = r.text; boxes[bi].score = +r.score.toFixed(4); });
+          recognised += B;
+          if (typeof o.onProgress === "function") o.onProgress(Math.min(1, recognised / Math.max(1, order.length)));
+        });
+        inflight.add(job);
+        job.then(() => inflight.delete(job), () => inflight.delete(job));
+        if (inflight.size >= limit) await Promise.race(inflight);
       }
+      await Promise.all(inflight);
       return {
         available: true, provider: { id: (this.pins || PINS).id, label: (this.pins || PINS).label, runtime: `${PINS.runtime.package}@${PINS.runtime.version}`,
-          models: `${(this.pins || PINS).models.package}@${(this.pins || PINS).models.version}`, integrity: this.integrity, trainedModel: true, domain: "text only — not a model of plans" },
+          models: `${(this.pins || PINS).models.package}@${(this.pins || PINS).models.version}`, integrity: this.integrity, trainedModel: true, domain: "text only — not a model of plans",
+          runsIn: this.mode === "workers" ? `workers (${globalThis.MeritOrtPool.status().workers})` : "page", workerError: this.workerError },
         items: boxes.map(b => ({ text: b.text || "", score: b.score || 0, box: { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 }, rotated: !!b.rot })),
         imageSize: { width: W, height: H }, ms: { detection: Math.round(tDet), total: Math.round(performance.now() - t0) },
       };
@@ -333,6 +390,24 @@
     }
   }
 
-  globalThis.MeritPaddleOCR = Object.freeze({ PINS, PaddleOCREngine, readPlanText, detSize, dbPost, ctcGreedy, numberInBox,
+  // Resolves when the engine (and the runtime it brings to the page) is up;
+  // rejects with the reason it is not. The local plan-symbol detector runs on
+  // that same runtime and starts the moment it is there, not after the read.
+  function ready() {
+    engine ||= new PaddleOCREngine();
+    return engine.load();
+  }
+  // After the worker pool was stopped mid-read or mid-load (an analysis the
+  // operator stopped): its sessions are gone. The engine is set aside — a load
+  // still in flight ends instead of falling back to the page — and the next
+  // read starts a fresh one.
+  function reset() {
+    if (!engine || (engine.mode !== "workers" && engine.state !== "loading")) return false;
+    engine.stopped = true;
+    engine = null;
+    return true;
+  }
+
+  globalThis.MeritPaddleOCR = Object.freeze({ PINS, PaddleOCREngine, readPlanText, ready, reset, detSize, dbPost, ctcGreedy, numberInBox,
     status: () => (engine ? engine.state : "idle") });
 })();
