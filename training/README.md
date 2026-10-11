@@ -89,6 +89,37 @@ python training/synth_levels.py --out D3/blind   --level L --count 12 --split bl
   is reported for the previous model and the new one side by side, so a hard-
   case gain cannot hide an easy-case loss.
 
+### 2026-10-11 — v3 trained on generation 2 + 3, measured, NOT packaged
+
+v3 was warm-started from v2 and trained for 3000 steps on generation-2 train
+plus generation-3 train: 588 plans, families 0–7 and 10–13. Families 8, 9, 14
+and 15 were excluded, and no real plan was used. It was then scored level by
+level against v2. v2 stays the active model, which is the rollback, exercised.
+
+**Thresholds decide the comparison.** v2 is scored at 0.5 for every class,
+fixed in advance (its `thresholds.json` says why: synthetic calibration did not
+transfer). Calibrated on generation-3 val at a 0.95 precision target, v3 picked
+0.2 for round tables and chairs. At those thresholds it looked like a large
+recall gain and lost table precision on the real regression set: Golden 0.978
+→ **0.821**, 10 false tables. That is a threshold change dressed as a model
+change. So v3 is judged at the same pre-fixed 0.5:
+
+| set | v2 → v3 at 0.5 |
+|---|---|
+| val, held-out, blind: tables and chairs | recall up or equal at almost every level (e.g. val L4 tables 0.95 → 0.99, held-out L7 chairs 0.83 → 0.94); held-out L5 table precision **0.97 → 0.94**; blind L4–L6 table precision down 0.01–0.02 |
+| columns | recall **down** on blind L2–L5 (0.94 → 0.91, 0.94 → 0.89, 0.24 → 0.20, 0.54 → 0.46), held-out L7 (0.52 → 0.35) and val L5–L6; up elsewhere |
+| generation-2 val (the easy cases) | equal: tables P 0.996 → 0.993, R 0.974 → 0.974 |
+| Golden (never trained on) | tables equal (44 of 46, 1 false); chairs recall **0.920 → 0.894** |
+| ORNEK (never trained on) | tables 166 of 166 both; **one new false table** (P 1.000 → 0.994) |
+
+The local model's tables are the only thing fusion adds to an analysis, and
+v3 adds a false one on ORNEK that v2 does not. Several levels regress (pooled numbers: `benchmarks/offline-intelligence/v3-candidate-2026-10-11.json`). The
+rule fixed before training was "package only if no level regresses", so v3 is
+not packaged. What the comparison points at: columns at the style extremes
+(L4–L5) and table precision on scans (L5–L6) are where generation 3 pulled
+the model the wrong way. Those levels are where the next data change goes,
+measured the same way.
+
 ## Versions
 
 Every packaged model has a manifest under `models/plan-detector/vN/manifest.json`
