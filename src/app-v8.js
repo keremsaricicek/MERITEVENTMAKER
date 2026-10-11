@@ -3054,10 +3054,10 @@
     // several (MeritPlanOCRCrops); each object's answer is then taken in the
     // order above, exactly as when they were read one after another.
     const readCrop=stoppableCropReader(signal);
-    // EXPECTED ABSTENTION: an object whose crop cannot be read stays unnamed,
-    // as it did when the read was awaited in the loop.
     // Each object's crops are cut in a task of their own (a turn for the page
     // between them): cut all at once, a dense plan's bands held it for 0.7 s.
+    // EXPECTED ABSTENTION: an object whose crop cannot be read stays unnamed,
+    // as it did when the read was awaited in the loop.
     const readings=await Promise.all(pool.map(entry=>Promise.all(LABELLED_VENUE_TYPES.map(spec=>
       new Promise(r=>setTimeout(r,0)).then(()=>globalThis.MeritLabelOCR.readLabel(readCrop,image,entry.box,spec.vocabulary,{timeoutMs:20000})).catch(()=>null)))));
     for(const [entryIndex,entry] of pool.entries()){
