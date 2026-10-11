@@ -1,5 +1,5 @@
 {
- "measuredOn": "2026-10-10T22:11:18.313Z",
+ "measuredOn": "2026-10-11T14:33:31.585Z",
  "v5": {
   "det": {
    "file": "detection/PP-OCRv5_mobile_det_infer.ort",
@@ -16,14 +16,14 @@
  "plans": {
   "ornek": {
    "v4": {
-    "ms": 48264,
+    "ms": 64059,
     "ocr": {
      "available": true,
      "provider": "ppocr-v4-ort-web",
      "items": 231,
      "ms": {
-      "detection": 5212,
-      "total": 30432
+      "detection": 6837,
+      "total": 39647
      },
      "reason": null
     },
@@ -63,15 +63,60 @@
      "wrongList": []
     }
    },
+   "v4-official": {
+    "ms": 41161,
+    "ocr": {
+     "available": true,
+     "provider": "ppocr-v4-ort-web",
+     "items": 24,
+     "ms": {
+      "detection": 3158,
+      "total": 7011
+     },
+     "reason": null
+    },
+    "words": [
+     "SILA 29.08.2026 [title]",
+     "servant [service]",
+     "servant [service]",
+     "SALON [capacityLabel]",
+     ":166 *12:1992 PAX [capacity]",
+     "LOCALAR [capacityLabel]",
+     ":72PAX [capacity]",
+     "TOPLAM [capacityLabel]",
+     ":2064 PAX [capacity]",
+     "Loca1 [loca]",
+     "Loca2 [loca]",
+     "Loca3A [loca]",
+     "Loca3B [loca]",
+     "Loca 4 [loca]",
+     "Loca5 [loca]",
+     "Loca6 [loca]",
+     "Loca8 [loca]",
+     "SYSTEM KONTROL [technical]",
+     "Loca8B [loca]",
+     "servant [service]",
+     "Loca9A [loca]",
+     "Loca 9B [loca]",
+     "LOCA [loca]"
+    ],
+    "numbers": {
+     "legible": 157,
+     "right": 113,
+     "wrong": 0,
+     "unread": 44,
+     "wrongList": []
+    }
+   },
    "v5": {
-    "ms": 48587,
+    "ms": 67142,
     "ocr": {
      "available": true,
      "provider": "ppocr-v5-mobile-experiment",
      "items": 194,
      "ms": {
-      "detection": 6114,
-      "total": 28397
+      "detection": 6814,
+      "total": 38583
      },
      "reason": null
     },
@@ -149,18 +194,95 @@
      "unread": 37,
      "wrongList": []
     }
+   },
+   "v5-official": {
+    "ms": 64727,
+    "ocr": {
+     "available": true,
+     "provider": "ppocr-v5-mobile-experiment",
+     "items": 182,
+     "ms": {
+      "detection": 8953,
+      "total": 38170
+     },
+     "reason": null
+    },
+    "words": [
+     "SILA 29.08.2026 [title]",
+     "servant [service]",
+     "servant [service]",
+     "SALON [capacityLabel]",
+     ":166 *12:1992 PAX [capacity]",
+     "LOCALAR [capacityLabel]",
+     ":72PAX [capacity]",
+     "TOPLAM [capacityLabel]",
+     ": 2064 PAX [capacity]",
+     "Loca1 [loca]",
+     "Loca2 [loca]",
+     "Loca 3A [loca]",
+     "Loca 3B [loca]",
+     "$13 [other]",
+     "Loca4 [loca]",
+     "Loca5 [loca]",
+     "Loca6 [loca]",
+     "Loca 7 [loca]",
+     "Loca8 [loca]",
+     "SYSTEM KONTROL [technical]",
+     "Loca8B [loca]",
+     "servant [service]",
+     "Loca 9A [loca]",
+     "servant [service]",
+     "Loca9B [loca]",
+     "C3AC2 [other]",
+     "LOCA [loca]"
+    ],
+    "numbers": {
+     "legible": 157,
+     "right": 131,
+     "wrong": 3,
+     "unread": 23,
+     "wrongList": [
+      "116→11",
+      "129→12",
+      "142→14"
+     ]
+    }
    }
   },
   "golden": {
    "v4": {
-    "ms": 7362,
+    "ms": 12436,
     "ocr": {
      "available": true,
      "provider": "ppocr-v4-ort-web",
      "items": 9,
      "ms": {
-      "detection": 3136,
-      "total": 4268
+      "detection": 4241,
+      "total": 5948
+     },
+     "reason": null
+    },
+    "words": [
+     "GIRIS [entrance]",
+     "114 pax seating [capacity]",
+     "10 pax bistro [capacity]",
+     "Total : 124 pax [capacity]",
+     "GIRIS [entrance]",
+     "BAR [bar]",
+     "8m [dimension]",
+     "SAHNE [stage]",
+     "3,10m [dimension]"
+    ]
+   },
+   "v4-official": {
+    "ms": 11516,
+    "ocr": {
+     "available": true,
+     "provider": "ppocr-v4-ort-web",
+     "items": 9,
+     "ms": {
+      "detection": 3396,
+      "total": 5156
      },
      "reason": null
     },
@@ -177,14 +299,38 @@
     ]
    },
    "v5": {
-    "ms": 7518,
+    "ms": 12045,
     "ocr": {
      "available": true,
      "provider": "ppocr-v5-mobile-experiment",
      "items": 9,
      "ms": {
-      "detection": 3733,
-      "total": 4827
+      "detection": 4361,
+      "total": 5885
+     },
+     "reason": null
+    },
+    "words": [
+     "GIRIS [entrance]",
+     "114 pax seating [capacity]",
+     "10 pax bistro [capacity]",
+     "Total : 124 pax [capacity]",
+     "GIRIS [entrance]",
+     "BAR [bar]",
+     "8m [dimension]",
+     "SAHNE [stage]",
+     "3,10m [dimension]"
+    ]
+   },
+   "v5-official": {
+    "ms": 11532,
+    "ocr": {
+     "available": true,
+     "provider": "ppocr-v5-mobile-experiment",
+     "items": 9,
+     "ms": {
+      "detection": 4375,
+      "total": 5710
      },
      "reason": null
     },

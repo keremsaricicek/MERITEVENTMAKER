@@ -220,6 +220,28 @@ and records "not drawn as a table" in `vectorSupport`, never `modelSupport`.
 - **No real CAD PDF exists in the repository** (ORNEK.pdf is a scan), so
   this is synthetic evidence only.
 
+## OCR: PP-OCRv5 against v4, each on its official settings
+
+`node benchmarks/ocr/compare-ppocr.mjs` → `benchmarks/ocr/compare-latest.json`.
+Same app, same code path. Every model runs once on the product's detection
+settings and once on its OWN official ones: ImageNet normalisation in BGR
+order, its size limits, box threshold and unclip ratio. Neither is judged on
+the other's terms.
+
+| ORNEK, 157 legible table numbers | Right | Wrong | Unread | Time |
+|---|---|---|---|---|
+| v4, product settings (**in use**) | **145** | **0** | 12 | 64 s |
+| v4, official settings | 113 | 0 | 44 | 41 s |
+| v5, product settings | 120 | 0 | 37 | 67 s |
+| v5, official settings | 131 | **3** | 23 | 65 s |
+
+- Golden: all four read the same 9 words.
+- On its official settings v5 reads more than on the product's (120 → 131),
+  but still fewer than v4 (145).
+- **It reads three numbers wrong.** ACCEPTANCE.md allows 0, because a wrong
+  number is worse than an unread one.
+- **v4 stays.** PP-OCRv5 is rejected again, now on fair terms.
+
 ## Against the acceptance table (fused product, v2)
 
 | Row | Threshold | Golden | ORNEK |
