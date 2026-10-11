@@ -3287,7 +3287,18 @@
     if(typeof globalThis.runPlanOCR!=="function"||!(analysis.ocr?.available||analysis.ocrModel?.available))return;
     const src=event.background?.src;
     if(!src)return;
-    const numbered=(analysis.candidates||[]).filter(c=>c.kind==="table"&&c.symbolFamily===true);
+    const family=(analysis.candidates||[]).filter(c=>c.kind==="table"&&c.symbolFamily===true);
+    // A table the local detector or a vector PDF added on a plan of numbered
+    // symbols is read like the symbols: the classical pass missed it, which is
+    // no reason for its number to go unread — and a number read for it is
+    // checked against the rest for duplicates like any other. Only one drawn
+    // at the family's size: an addition that is not a symbol of this family
+    // has no printed number to look for.
+    const side=c=>Math.sqrt(Math.max(0,c.w)*Math.max(0,c.h));
+    const familySide=family.length>=3?family.map(side).sort((a,b)=>a-b)[Math.floor(family.length/2)]:null;
+    const added=familySide?(analysis.candidates||[]).filter(c=>c.kind==="table"&&c.symbolFamily!==true&&(c.source==="local-model"||c.source==="pdf-vector")
+      &&c.status!=="rejected"&&Math.abs(side(c)/familySide-1)<=.35):[];
+    const numbered=[...family,...added];
     if(!numbered.length)return;
     let image;
     try{
@@ -3333,7 +3344,7 @@
       };
     }
     analysis.diagnostics.printedTableNumbers={
-      examined:numbered.length,...read.counts,views:read.views,ms:Date.now()-startedAt,
+      examined:numbered.length,addedByModel:added.length,...read.counts,views:read.views,ms:Date.now()-startedAt,
     };
     analysis.planIntelligence=buildPlanIntelligence(event,analysis.ocrText??null);
     checkNumberIntegrity(event);

@@ -307,7 +307,7 @@ measurable here.
 | Table type accuracy | ≥ 0.95 | 1.000 / 1.000 | ✓ |
 | Chair → table link, Golden | ≥ 0.97 | 0.990 | ✓ |
 | Venue objects (columns) | recall ≥ 0.90 | not annotated on either real plan; 9 / 4 proposed | — |
-| Printed numbers: wrong / read, ORNEK | 0 / ≥ 0.90 | 0 wrong; 145 of 157 legible (0.92) | ✓ / ✓ |
+| Printed numbers: wrong / read, ORNEK | 0 / ≥ 0.90 | 0 wrong; 148 of 157 legible (0.94) — 145 before the tables the local detector added joined the number reading (2026-10-11; the three it adds, 74, 75 and 76, are each VERIFIED and right) | ✓ / ✓ |
 | Decision memory: retention / wrong application | ≥ 0.98 / 0 | 0.8447 / 0.0073 | ✗ / ✗ |
 | Local examples (exemplar search) | ≥ 50 % recovered, ≤ 1 phantom / 100 | 0 % recovered, up to 9 / 100 | ✗ (not in the UI) |
 | Model update: regression check, version recorded, rollback | all three | baseline + adversarial before activation; pinned by sha256; rollback tested end to end (`teacher-e2e`) | ✓ |

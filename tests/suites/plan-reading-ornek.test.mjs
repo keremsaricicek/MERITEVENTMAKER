@@ -52,6 +52,17 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const open = s("read.numbers.open"), numbers = s("read.numbers.summary");
   checks.ok(numbers && numbers.params.verified >= 140 && open && open.certainty === "unsure" && numbers.params.verified + open.params.n === numbers.params.tables,
     "read numbers and open numbers add up to the tables found; the open ones are asked, not guessed", { numbers, open });
+  // The tables the local detector added beside the numbered symbols are read
+  // like the symbols (measured 2026-10-11: three such tables, 74, 75 and 76,
+  // each VERIFIED and each right; with them the plan reads 166 of the 166
+  // tables its capacity rule states, and no number is claimed twice).
+  const addedRead = await page.evaluate(() => {
+    const a = state.events[0].analysis, m = a.candidates.filter((c) => c.kind === "table" && c.source === "local-model" && c.status !== "rejected");
+    return { added: m.length, read: (a.diagnostics.printedTableNumbers || {}).addedByModel ?? null, withNumber: m.filter((c) => c.printedNumber).length,
+      summary: a.numberIntegrity && a.numberIntegrity.summary };
+  });
+  checks.ok(addedRead.read >= 1 && addedRead.withNumber >= addedRead.read && addedRead.summary && addedRead.summary.duplicates === 0,
+    "a table the local detector added on this numbered plan joins the number reading, and no number is claimed twice", addedRead);
 
   // "Bu sahnedir": one reclassify decision, through the review's own writer.
   const taught = await page.evaluate(() => {
