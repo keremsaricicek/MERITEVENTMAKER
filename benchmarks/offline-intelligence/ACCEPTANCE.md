@@ -110,6 +110,17 @@ Before this change the same runner measured Golden 15.7 s and ORNEK 44.5 s
 cold, with main-thread tasks of 2.1 s and 4.1 s. Where ORNEK's 22.5 s goes,
 and what was tried, is in `benchmarks/perf/README.md`.
 
+**Measured 2026-10-11, later** (same runner and machine), after the page got a
+turn inside the stages that still held it: the detector's sources stage, the
+chair-facing read, the venue elements, the embedding pass and the last stage.
+The analysis output was identical before and after, cold and re-analysed, on
+both plans:
+
+| Plan | Cold (4 cores) | Cached | Longest task, cold / cached | Frame wait max | Verdict |
+|---|--:|--:|--:|--:|---|
+| Golden | 7.3 s / 7.3 s | 3.2 s | **156 ms** (p95 174) / 101 ms | 87 ms (p95 157) | time **MET**; freeze **MET** |
+| ORNEK | 21.2 s / 21.7 s | 14.4 s | 215 ms (p95 245) / 273 ms (p95 285) | 159 ms (p95 266) | **NOT MET** (time; tasks of 210–285 ms remain) |
+
 ## Offline and failure behaviour
 
 | Measure | Threshold |

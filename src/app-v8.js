@@ -3146,7 +3146,10 @@
   //
   // A place a person already ruled on (a candidate from plan memory, or one an
   // operator drew) is left alone: an element is never offered over a decision.
-  function placeNamedVenueElements(event,raster,ocrResult,pdfItems=[]){
+  // `turn` (optional) gives the page a turn between the four reads of the
+  // drawing below; on a dense plan they are together a quarter of a second.
+  async function placeNamedVenueElements(event,raster,ocrResult,pdfItems=[],turn=null){
+    const pause=turn||(async()=>{});
     const analysis=event?.analysis,VE=globalThis.MeritVenueElements;
     if(!analysis||!VE||!raster)return;
     const W=raster.width,H=raster.height,items=[];
@@ -3164,6 +3167,7 @@
       for(const a of VE.anchorsFrom([{text:w.text,score:1,box:w.bbox}],1))anchors.push({...a,score:w.confidence/100,engine:"tesseract.js"});
     }
     const plans=VE.elementsFrom(raster,anchors,analysis.candidates);
+    await pause();
     const decided=(analysis.candidates||[]).filter(c=>c.fromMemory||c.missed||c.status!=="unreviewed");
     const overlaps=(a,b)=>a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h;
     const placed=[];
@@ -3208,9 +3212,11 @@
     const placedIds=new Set(plans.map(p=>p.keepId).filter(Boolean));
     for(const c of analysis.candidates)if(c.typeBasis==="printedLabel"&&c.labelReadWhole)placedIds.add(c.id);
     let columns=0,locas=0;
+    await pause();
     for(const m of VE.columnFamilies(raster,analysis.candidates))
       if(offerFamilyMember("column",m.box,{confidence:m.wall,typeBasis:"wallFamily",
         evidence:{source:"column-family",basis:`one of ${m.familySize} identical solid blocks set into the walls`,wallThrough:m.wall,extent:"the block's own filled area"}}))columns++;
+    await pause();
     for(const m of VE.locaRows(raster,anchors))
       if(offerFamilyMember("loca",m.box,{confidence:m.titleScore,typeBasis:"printedTitle",seatsUnknown:true,
         evidence:{source:"loca-row",basis:`one of ${m.rowSize} like cells in the row the drawing titles "${m.title}"`,extent:"the cell's own closed area",seats:"not printed per cell"}}))locas++;
@@ -3218,6 +3224,7 @@
     // offered table. Seat count unknown, and said so (UNVERIFIED_SEATING).
     const offeredTables=analysis.candidates.filter(c=>c.kind==="table"&&c.status!=="rejected"&&c.selected!==false);
     const seatsSeen=offeredTables.flatMap(c=>(c.chairDetections||[]).map(ch=>({x:ch.x,y:ch.y,w:ch.w,h:ch.h})));
+    await pause();
     const bench=VE.banquettes(raster,seatsSeen,offeredTables);
     let benches=0;
     for(const m of bench.found)
@@ -3237,7 +3244,7 @@
   // ink-centroid rule it replaces was measured at 13 right of 19 stated on the
   // Golden Plan, below what a stated direction must be, so a chair the stencil
   // reading cannot settle says so (facingKnown false) instead.
-  function readChairFacing(event,raster){
+  async function readChairFacing(event,raster,pause){
     const analysis=event?.analysis,F=globalThis.MeritChairFacing;
     if(!analysis||!F||!raster)return;
     const W=raster.width,H=raster.height,chairs=[],byId=new Map();
@@ -3248,7 +3255,9 @@
         byId.set(ch.id,ch);
       }
     }
-    const read=F.readFacing(raster,chairs);
+    // Sliced: on a plan with a hundred armchairs the read is ~0.3 s of work,
+    // and the page gets a turn every ~40 ms of it. Same answer (chair-facing).
+    const read=pause&&F.readFacingSliced?await F.readFacingSliced(raster,chairs,undefined,pause):F.readFacing(raster,chairs);
     for(const [id,ch] of byId){
       const rel=ch.relation||(ch.relation={}),o=rel.orientation||(rel.orientation={});
       const f=read.byId.get(id);
@@ -3281,7 +3290,10 @@
     return r.available?{available:true,provider:r.provider,ms:r.ms,imageSize:r.imageSize,items:r.items}
       :{available:false,provider:r.provider||null,reasonCode:r.reasonCode||"FAILED",reason:r.reason||null};
   }
-  async function readPrintedTableNumbers(event,signal=null){
+  // `turn` (optional): a turn for the page between rebuilding the plan's
+  // intelligence and checking the numbering, each ~0.1–0.2 s on a dense plan.
+  // The analysis is still marked not complete while it runs.
+  async function readPrintedTableNumbers(event,signal=null,turn=null){
     const analysis=event?.analysis;
     if(!analysis||!globalThis.MeritTableNumbers||!globalThis.MeritLabelOCR)return;
     if(typeof globalThis.runPlanOCR!=="function"||!(analysis.ocr?.available||analysis.ocrModel?.available))return;
@@ -3347,6 +3359,7 @@
       examined:numbered.length,addedByModel:added.length,...read.counts,views:read.views,ms:Date.now()-startedAt,
     };
     analysis.planIntelligence=buildPlanIntelligence(event,analysis.ocrText??null);
+    if(turn)await turn();
     checkNumberIntegrity(event);
   }
   // ---- is the numbering intact? --------------------------------------------
@@ -3657,6 +3670,10 @@
     stopped.catch(()=>null);
     const guard=p=>Promise.race([p,stopped]);
     const checkStopped=()=>{if(abort.signal.aborted)throw Object.assign(new Error("analysis stopped"),{analysisStopped:true});};
+    // A turn for the page between steps that are each a few hundred ms on a
+    // dense plan (measured: benchmarks/perf/README.md). Nothing is computed
+    // differently; Stop is honoured at each turn.
+    const turn=async()=>{await new Promise(r=>setTimeout(r,0));checkStopped();};
     render();await yieldFrame();
     try{
       const FRAMES=globalThis.MeritPlanFrames,blob=await sourceBlob(event.background.src),bitmap=await createImageBitmap(blob),analysisFrame=FRAMES.analysisFrame(bitmap.width,bitmap.height,ANALYSIS_MAX_SIDE()),ratio=analysisFrame.ratio,width=analysisFrame.width,height=analysisFrame.height,canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,height);bitmap.close();stage("decode");
@@ -3856,6 +3873,7 @@
       }},checkStopped);
       const embeddingMs=Math.round(performance.now()-embeddingStartedAt);
       for(const c of [...candidates,...venues])planFromDeskew(c);
+      await turn();
       // A table SYMBOL is found by the fill inside its ring; its drawn edge is
       // the ring. Measured from the pixels (src/plan-symbol-geometry.js) before
       // anything — memory included — reads the geometry. Only symbols: a table
@@ -3863,6 +3881,7 @@
       // walk says nothing true about a rotated box.
       if(globalThis.MeritSymbolGeometry){
         const raster=ctx.getImageData(0,0,width,height);
+        await turn();
         let refined=0;
         for(const c of candidates){
           if(c.kind!=="table"||c.symbolFamily!==true||(c.rotation||0)%180!==0)continue;
@@ -3874,6 +3893,7 @@
           refined++;
         }
         detection.diagnostics.symbolOutlinesRefined=refined;
+        await turn();
       }
       detection.diagnostics.tablesHeldForOverlap=holdBackOverlappingTables(candidates);
       const previous=event.analysis?.candidates||[],signatures=list=>list.map(c=>`${c.kind}:${c.type}:${Math.round(c.x)}:${Math.round(c.y)}`),oldSig=new Set(signatures(previous)),newSig=new Set(signatures([...candidates,...venues]));
@@ -3897,6 +3917,7 @@
       // every analysis pass -- remap them through the same geometry match so
       // a "these are separate tables" answer survives Re-Analyze instead of
       // silently reverting to the detector's default grouping.
+      await turn();
       const geometryRemap=matchCandidatesByGeometry(priorCandidates,allCandidates);
       const carriedDecisions=priorDecisions.map(d=>({...d,memberIds:d.memberIds.map(id=>geometryRemap.get(id)).filter(Boolean)})).filter(d=>d.memberIds.length>=2);
       event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:!!(localModel&&localModel.available),localModel,vectorObjects,notice:localModel&&localModel.available?"Classical computer vision and the local plan-symbol detector (a small trained model of plan symbols) are active.":"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:analysisFrame.originalWidth,originalHeight:analysisFrame.originalHeight,threshold,candidates:allCandidates,missed:allCandidates.filter(c=>c.missed).map(c=>c.id),groupingDecisions:carriedDecisions,memoryReapplied:memoryResult.reappliedCount,memoryRestored:memoryResult.restored.length,memoryConflicts:memoryResult.conflicts,comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{...detection.diagnostics,resolution:`${width}×${height}`,detectionMs,provider:provider.id,providerLabel:provider.label,
@@ -3961,10 +3982,17 @@
       if(pdfItems.length)event.analysis.ocrText=[event.analysis.ocrText,pdfItems.map(i=>i.text).join("\n").normalize("NFKC")].filter(Boolean).join("\n");
       stage("textSuppression");
       await guard(identifyLabelledVenueObjects(event,suppressedByText,abort.signal));stage("labels");
+      // A turn for the page between the three steps of this stage, and inside
+      // the facing read (each was measured over 200 ms on its own plan).
+      let turnAt=performance.now();
+      const pace=async()=>{if(performance.now()-turnAt<40)return;await turn();turnAt=performance.now();};
+      await turn();
       const planRaster=ctx.getImageData(0,0,width,height);
-      placeNamedVenueElements(event,planRaster,ocrResult,pdfItems);
-      readChairFacing(event,planRaster);stage("venueAndFacing");
-      await guard(readPrintedTableNumbers(event,abort.signal));stage("tableNumbers");
+      await turn();
+      await placeNamedVenueElements(event,planRaster,ocrResult,pdfItems,turn);
+      await turn();turnAt=performance.now();
+      await readChairFacing(event,planRaster,pace);stage("venueAndFacing");
+      await guard(readPrintedTableNumbers(event,abort.signal,turn));stage("tableNumbers");
       // The drawing's own fingerprint, so a lesson taught on it can be found
       // again after a re-import under a different filename. Failing to compute
       // it is not fatal: plan-scope lessons simply do not match, which is the
@@ -3992,7 +4020,9 @@
       // simply not be there to check. It runs on every plan, not only numbered
       // ones — a drawing that prints a capacity rule can be checked against
       // itself whatever its tables look like.
+      await turn();
       runSelfCheck(event);
+      await turn();
       // Last, and only last: it ranks what every layer above it concluded.
       runConfidenceBudget(event);stage("intelligence");
       ui.analysisStage=t("analysis.stage.review");ui.analysisProgress=100;ui.analysisBusy=false;ui.analysisAbort=null;

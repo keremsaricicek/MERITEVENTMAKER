@@ -24,7 +24,7 @@ export const meta = { name: "chair-facing", tags: ["intelligence"], timeout: 300
 
 export default async function run({ page, checks, baseUrl, repoRoot }) {
   await openApp(page, baseUrl, { lang: "en" });
-  const synth = await page.evaluate(() => {
+  const synth = await page.evaluate(async () => {
     const F = globalThis.MeritChairFacing;
     const raster = (W, H) => ({ width: W, height: H, data: new Uint8ClampedArray(W * H * 4).fill(255) });
     const px = (r, x, y, rgb) => { if (x < 0 || y < 0 || x >= r.width || y >= r.height) return; const p = 4 * (y * r.width + x); r.data[p] = rgb[0]; r.data[p + 1] = rgb[1]; r.data[p + 2] = rgb[2]; };
@@ -50,18 +50,25 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     const square = (u, v) => (Math.abs(u) > 15 || Math.abs(v) > 15 ? null : Math.abs(u) >= 14 || Math.abs(v) >= 14 ? LINE : ORANGE);
     const plank = (u, v) => (Math.abs(u) > 17 || Math.abs(v) > 9 ? null : Math.abs(u) >= 16 || Math.abs(v) >= 8 ? LINE : ORANGE);
     const out = {};
-    const run = (symbol, facings, boxOf) => {
+    // Each case is read twice: straight through, and sliced (a pause at every
+    // step, as the analysis runs it). The two must give the same answer.
+    const flat = (res) => JSON.stringify({ byId: [...res.byId], families: res.families });
+    let pauses = 0;
+    const run = async (symbol, facings, boxOf) => {
       const r = raster(600, 140), chairs = [];
       facings.forEach((f, i) => { const cx = 40 + i * 70, cy = 70; draw(r, cx, cy, f, symbol);
         const b = boxOf(f); chairs.push({ id: "c" + i, cx, cy, w: b[0], h: b[1], rotation: 0 }); });
       const res = F.readFacing(r, chairs);
-      return { stated: facings.map((_, i) => res.byId.has("c" + i) ? res.byId.get("c" + i).facingAngle : null), families: res.families };
+      const sliced = await F.readFacingSliced(r, chairs, undefined, async () => { pauses++; await new Promise((ok) => setTimeout(ok, 0)); });
+      return { stated: facings.map((_, i) => res.byId.has("c" + i) ? res.byId.get("c" + i).facingAngle : null), families: res.families,
+        slicedSame: flat(sliced) === flat(res) };
     };
     const armBox = (f) => (f % 180 === 0 ? [34, 30] : [30, 34]);
-    out.arm = run(inChair, [0, 90, 180, 270, 0, 90, 180, 270], armBox);
-    out.square = run(square, [0, 90, 180, 270, 0, 90], () => [30, 30]);
-    out.plank = run(plank, [0, 90, 0, 90, 0, 90], (f) => (f % 180 === 0 ? [34, 18] : [18, 34]));
-    out.pair = run(inChair, [0, 180], armBox);
+    out.arm = await run(inChair, [0, 90, 180, 270, 0, 90, 180, 270], armBox);
+    out.square = await run(square, [0, 90, 180, 270, 0, 90], () => [30, 30]);
+    out.plank = await run(plank, [0, 90, 0, 90, 0, 90], (f) => (f % 180 === 0 ? [34, 18] : [18, 34]));
+    out.pair = await run(inChair, [0, 180], armBox);
+    out.pauses = pauses;
     return out;
   });
   checks.equal(JSON.stringify(synth.arm.stated), JSON.stringify([0, 90, 180, 270, 0, 90, 180, 270]),
@@ -69,6 +76,8 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(synth.square.stated.every(v => v === null), "plain squares have no front: nothing is stated", synth.square.stated);
   checks.ok(synth.plank.stated.every(v => v === null), "an elongated symbol with no backrest has an axis, not a front: nothing is stated", synth.plank.stated);
   checks.ok(synth.pair.stated.every(v => v === null), "two chairs are not a family: nothing is stated", synth.pair.stated);
+  checks.ok(["arm", "square", "plank", "pair"].every(k => synth[k].slicedSame) && synth.pauses > 0,
+    "the sliced read (a turn for the page between members) gives exactly the answer of the read run straight through", { pauses: synth.pauses });
 
   // ---- the Golden Plan ------------------------------------------------------------
   const plan = "data:image/png;base64," + fs.readFileSync(path.join(repoRoot, "benchmarks/plans/merit-real-venue-plan.png")).toString("base64");

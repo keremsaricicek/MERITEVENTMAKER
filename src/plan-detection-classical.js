@@ -100,6 +100,12 @@
       // a dense plan does not hold it for most of a second. Nothing is computed
       // differently; only the waiting changes (and is kept out of phaseMs).
       const breathe=async()=>{await new Promise(r=>setTimeout(r,0));phaseFrom=performance.now();};
+      // The same turn INSIDE a phase (a stage module's own seams): the wait is
+      // taken out of the phase's clock, so phaseMs still measures the work.
+      // Only when ~40 ms of work has gone by since the last turn, so a stage
+      // with many seams does not pay a timer hop at each one.
+      let turnAt=performance.now();
+      const pause=async()=>{const now=performance.now();if(now-turnAt<40)return;await new Promise(r=>setTimeout(r,0));const after=performance.now();phaseFrom+=after-now;turnAt=after;};
       // B-1 and B-2 are MeritPlanPreprocess (src/plan-detection-preprocess.js),
       // each with its contract stated there.
       const {gray,threshold,binCount,binR,binG,binB,sampled,lumaLowChroma,lumaMidChroma}=PRE.measurePixels(data,width,height);
@@ -153,9 +159,10 @@
 
       // B-4 — the three object sources — is MeritPlanSources
       // (src/plan-detection-sources.js), with its contract stated there.
+      turnAt=performance.now();
       const{sources,diagnosticsSources,chairSources,tintIsChairMaterial,fallbackChairComps,fallbackChairLabels,
-        accentMask,surfaceMask,masksTints}=SOURCES.collectSources({data,gray,total,width,height,barrier,fillMask,
-        accentModel,toneModel,minPixels,minDim,CHAIR_MIN_SIDE_P,notWall,tableSizeOk,chairSizeOk,mark});
+        accentMask,surfaceMask,masksTints}=await SOURCES.collectSourcesSliced({data,gray,total,width,height,barrier,fillMask,
+        accentModel,toneModel,minPixels,minDim,CHAIR_MIN_SIDE_P,notWall,tableSizeOk,chairSizeOk,mark},pause);
       await stage("seating",58);phaseFrom=performance.now();
 
       // B-5 — chairs first — is MeritPlanChairs (src/plan-detection-chairs.js),

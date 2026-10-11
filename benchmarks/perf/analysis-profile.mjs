@@ -81,7 +81,8 @@ async function analyse(page, selector, importDoneAt) {
   await page.waitForFunction(() => !ui.analysisBusy && state.events[0].analysis && state.events[0].analysis.timings && state.events[0].analysis.timings.analysisCompletedAtMs, null, { timeout: 600000, polling: 100 });
   const totalMs = Date.now() - t0;
   clearInterval(sampler);
-  const r = await page.evaluate((totalMs, importDoneAt) => {
+  // one argument: Playwright passes a single serialisable value to the page
+  const r = await page.evaluate(({ totalMs, importDoneAt }) => {
     clearInterval(globalThis.__probeTimer);
     const a = state.events[0].analysis, tasks = globalThis.__longTasks || [], probe = globalThis.__probe || [];
     return { totalMs, stages: a.timings.stages || [], tesseractMs: a.timings.tesseractMs ?? null,
@@ -97,7 +98,7 @@ async function analyse(page, selector, importDoneAt) {
         const st = (a.timings.stages || []).find((x) => x.end != null && x.end >= at);
         return { stage: st ? st.stage : "after", ms: Math.round(d) };
       }) };
-  }, totalMs, importDoneAt);
+  }, { totalMs, importDoneAt });
   return { ...r, peakMemoryMb, memoryBasis };
 }
 

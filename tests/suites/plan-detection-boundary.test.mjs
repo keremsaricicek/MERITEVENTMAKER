@@ -767,7 +767,9 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.require(fs.existsSync(sourcesPath), "the object sources stage lives in its own file", "src/plan-detection-sources.js");
   const sourcesCode = stripCommentsAndStrings(fs.readFileSync(sourcesPath, "utf8"));
   checks.equal([...new Set([...sourcesCode.matchAll(/globalThis\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]))].join(","), "MeritPlanSources", "it publishes exactly one name");
-  checks.ok(/SOURCES\.collectSources\s*\(/.test(detCode) && !/(^|[^\w.$])collectSources\s*\(/m.test(detCode),
+  // detect() runs the sliced entry point (the same generator, with a turn for
+  // the page at its seams); either name, but only through the object.
+  checks.ok(/SOURCES\.collectSources(?:Sliced)?\s*\(/.test(detCode) && !/(^|[^\w.$])collectSources(?:Sliced)?\s*\(/m.test(detCode),
     "detect() reaches it only through the published object", true);
   const sourcesBinds = new Set([...bindings(sourcesCode), ...destructured(sourcesCode)]), sourcesBare = bareUses(sourcesCode);
   checks.equal([...detBindings, ...v8Bindings].filter((n) => sourcesBare.has(n) && !sourcesBinds.has(n)), [],

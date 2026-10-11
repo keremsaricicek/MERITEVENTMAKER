@@ -87,6 +87,57 @@ Golden's differ only in a random candidate id.
    ONNX workers (a running inference cannot be interrupted any other way),
    puts back the previous analysis, and the next run loads its engines again.
 
+### Later the same day: the tasks that still held the page
+
+`longTasksByStage` (every task over 200 ms, with the stage it fell in) showed
+what was left:
+- the detector's sources stage as one task (ORNEK: interiors 211 + tone masks
+  339 + fill mask 38 ms);
+- the chair-facing read (Golden: 284 ms in one call);
+- the venue elements (ORNEK ~250 ms);
+- the embedding pass's tail (~290 ms);
+- the end of the number reading.
+
+Each now gives the page a turn at seams that do not change what is computed:
+
+- **Sources and chair facing are generators.** `MeritPlanSources` and
+  `MeritChairFacing` run one generator two ways: straight through (the old
+  entry points, unchanged), or sliced, awaiting the caller's pause at each
+  step. The pause in `detect()` takes ~40 ms of work between turns and keeps
+  the wait out of `phaseMs`. The per-pixel loops moved out of the generator
+  body into plain functions, because inside it V8 ran them about 1.6× slower.
+- **Turns between steps in the shell**, with Stop honoured at each:
+  - between the venue reads (elements, column families, loca rows, banquettes);
+  - after the plan-space mapping and after the first full-canvas read;
+  - before the plan-memory remap;
+  - between the number reading's intelligence rebuild and its integrity check;
+  - between the last stage's three steps.
+
+  Never between assigning `event.analysis` and its first plan intelligence:
+  the screen must not see one without the other.
+
+Identity: detector fingerprint 28/28 identical (ids blanked); the canonical
+analysis dump identical cold and re-analysed on both plans (facings,
+named venue elements and outlines included); `chair-facing` checks that the
+sliced read answers exactly as the plain one.
+
+| | Golden cold | Golden warm | ORNEK cold | ORNEK warm |
+|---|--:|--:|--:|--:|
+| longest main-thread task, before | 535 ms | 405 ms | 728 ms | 953 ms |
+| longest main-thread task, after | **156 ms** (p95 174) | **101 ms** | 215 ms (p95 245) | 273 ms (p95 285) |
+| total blocking time, before | 1.4 s | 0.9 s | 2.9 s | 3.2 s |
+| total blocking time, after | 0.43 s | 0.22 s | 1.7 s | 1.7 s |
+| total | 7.3 s | 3.2 s | 21.2 s | 14.4 s |
+
+ORNEK's remaining tasks of 210–285 ms fall in four places:
+- the OCR model stage's page-side work;
+- the detector's tables stage;
+- the first plan-intelligence build;
+- the skew estimate.
+
+Each is one synchronous function that would need the same generator
+treatment. The ≤ 200 ms target is met on Golden and **not yet on ORNEK**.
+
 ### Measured and NOT adopted (the accuracy cost was measured, not guessed)
 
 | Experiment | Time saved (ORNEK cold) | What it cost | Verdict |

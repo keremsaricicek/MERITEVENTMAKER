@@ -120,9 +120,12 @@
 
   // Align a family to itself on one map: each member's best quarter turn
   // (on top of its own detected rotation) against the running template.
-  function alignFamily(raster, map, members) {
+  // A generator: it pauses (yields) after each member's four views, which is
+  // where the time goes, so readFacingSliced can give the page a turn there.
+  function* alignFamily(raster, map, members) {
     const turns = [0, 90, 180, 270];
-    const views = members.map(c => turns.map(t => view(raster, map, c, (c.rotation || 0) + t)));
+    const views = [];
+    for (const c of members) { views.push(turns.map(t => view(raster, map, c, (c.rotation || 0) + t))); yield; }
     const normed = views.map(vs => vs.map(normalise));
     let ref = normed[0][0];
     let pick = members.map(() => ({ k: 0, margin: 0, score: 0 }));
@@ -169,14 +172,28 @@
 
   // The answer for every chair it can read: {id -> {facingAngle, evidence}}.
   // Chairs it cannot read are absent — nothing is stated about them.
+  //
+  // ONE computation, two ways to run it: readFacing runs the steps straight
+  // through; readFacingSliced awaits the caller's `pause` (an async function)
+  // at each step, so a plan with a hundred chairs does not hold the page for a
+  // quarter of a second. The steps and their order are the same, so the two
+  // cannot answer differently.
   function readFacing(raster, chairs, opts) {
+    const steps = facingSteps(raster, chairs, opts);
+    for (let r = steps.next(); ; r = steps.next()) if (r.done) return r.value;
+  }
+  async function readFacingSliced(raster, chairs, opts, pause) {
+    const steps = facingSteps(raster, chairs, opts);
+    for (let r = steps.next(); ; r = steps.next()) { if (r.done) return r.value; await pause(); }
+  }
+  function* facingSteps(raster, chairs, opts) {
     const o = opts || {};
     const minMargin = o.minMargin == null ? 0.05 : o.minMargin;
     const M = maps(raster);
     const out = new Map(), families = [];
     for (const fam of familiesOf(raster, chairs)) {
       const byMap = {};
-      for (const name of ["outline", "line"]) byMap[name] = alignFamily(raster, M[name], fam.members);
+      for (const name of ["outline", "line"]) byMap[name] = yield* alignFamily(raster, M[name], fam.members);
       const a = byMap.outline.front, b = byMap.line.front;
       let use = null;
       if (a.angle != null && b.angle != null) use = a.angle === b.angle ? "outline" : null;
@@ -196,5 +213,5 @@
     return { byId: out, families };
   }
 
-  globalThis.MeritChairFacing = Object.freeze({ readFacing, templateFront, ridgeCount });
+  globalThis.MeritChairFacing = Object.freeze({ readFacing, readFacingSliced, templateFront, ridgeCount });
 })();

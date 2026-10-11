@@ -19,6 +19,11 @@
 //             fill-mask fallback, and the class masks the later stages ask
 //             "is this made of table?" with.
 //   OWNS      nothing that survives the call besides its outputs.
+//   SLICED    collectSourcesSliced(input, pause) is the same computation with a
+//             turn for the page at each seam (after the interiors are found,
+//             after the tone masks are built, after each tone family): ONE
+//             generator, sourceSteps, runs either way, so the two cannot answer
+//             differently. `pause` is the caller's (an async function).
 //   FAILS     never: with no colour model the tone pass is skipped, as before.
 //   TEST OWNER `benchmarks/detector-fingerprint.mjs` (28 plans,
 //             byte-identical), `chair-families`, `table-typing`.
@@ -27,7 +32,16 @@
   const COMP = globalThis.MeritPlanComponents;
   const TONE = globalThis.MeritPlanTone;
 
-  function collectSources(input) {
+  // The per-pixel loops live in plain functions: inside a generator's own body
+  // V8 optimises them less well (measured: the tone pass took ~1.6x as long).
+  function maskCount(m, total) { let n = 0; for (let i = 0; i < total; i += 7) if (m[i]) n++; return n; }
+  function bandMask(gray, total, luma, window) {
+    const dmask = new Uint8Array(total);
+    for (let i = 0; i < total; i++) { const v = gray[i]; if (Math.abs(v - luma) <= window) dmask[i] = 1; }
+    return dmask;
+  }
+
+  function* sourceSteps(input) {
     const { data, gray, total, width, height, barrier, fillMask, accentModel, toneModel,
       minPixels, minDim, CHAIR_MIN_SIDE_P, notWall, tableSizeOk, chairSizeOk, mark } = input;
     // ---- object sources --------------------------------------------------
@@ -42,6 +56,7 @@
     // (a) interiors of closed outlines — the primary table source
     {
       const enclosed=COMP.enclosedRegions(barrier,width,height);
+      yield;
       const{labels,comps}=COMP.labelComponents(enclosed,width,height,minPixels,false);
       const kept=comps.filter(c=>tableSizeOk(c)&&c.fill>=.35);
       for(const c of kept)c.source="interior";
@@ -58,12 +73,14 @@
       if(interiorChairs.length)chairSources.push({name:"outline-interior",labels,
         rawCount:comps.length,comps:interiorChairs});
       mark("interiors");
+      yield;
     }
     // (b) tinted/solid fills straight from the colour model — one mask per
     //     tone family, so a mid-grey chair fill and a pale table fill cannot
     //     end up in the same mask and merge
     if(accentModel||toneModel){
       const masks=TONE.buildClassMasks(data,gray,total,accentModel,toneModel);
+      yield;
       accentMask=masks.accent;
       masksTints=masks.tints;
       // The tint family that actually carries furniture surfaces, kept as a
@@ -85,12 +102,12 @@
       // family in the first place; widening this consumer of it does not
       // help. Left as it was, with the finding recorded.
       surfaceMask=masks.tints.length?masks.tints.reduce((best,m)=>{
-        let n=0;for(let i=0;i<total;i+=7)if(m[i])n++;
+        const n=maskCount(m,total);
         return (!best||n>best.n)?{mask:m,n}:best;
       },null)?.mask||null:null;
       let toneKept=0;
       const toneFamilyEvidence=[];
-      masks.tints.forEach((mask,index)=>{
+      for(const [index,mask] of masks.tints.entries()){
         const solidity=COMP.maskSolidity(mask,width,height);
         const family=toneModel?.families?.[index]||null;
         const{labels,comps}=COMP.labelComponents(mask,width,height,minPixels,true);
@@ -140,12 +157,14 @@
         // chair source, not only a table source.
         tintIsChairMaterial[index]=chairWorthy;
         if(chairWorthy)chairSources.push({name:"tone-cluster"+index,labels,rawCount:comps.length,comps:comps.filter(c=>chairSizeOk(c)&&c.fill>=.3)});
-        if(!tableWorthy)return;
-        const kept=comps.filter(c=>tableSizeOk(c)&&c.fill>=.35);
-        for(const c of kept)c.source="tone";
-        toneKept+=kept.length;
-        sources.push({name:"tone"+index,labels,comps:kept,all:comps});
-      });
+        if(tableWorthy){
+          const kept=comps.filter(c=>tableSizeOk(c)&&c.fill>=.35);
+          for(const c of kept)c.source="tone";
+          toneKept+=kept.length;
+          sources.push({name:"tone"+index,labels,comps:kept,all:comps});
+        }
+        yield;
+      }
       diagnosticsSources.tone=toneKept;
       diagnosticsSources.toneFamilies=toneFamilyEvidence;
 
@@ -164,8 +183,7 @@
         let gap=Infinity;
         for(const q of toneModel.peaks)if(q!==peak)gap=Math.min(gap,Math.abs(q.luma-peak.luma));
         const window=Math.max(4,Math.min(16,Math.floor(gap/2)));
-        const dmask=new Uint8Array(total);
-        for(let i=0;i<total;i++){const v=gray[i];if(Math.abs(v-peak.luma)<=window)dmask[i]=1;}
+        const dmask=bandMask(gray,total,peak.luma,window);
         const{labels,comps}=COMP.labelComponents(dmask,width,height,minPixels,true);
         const compact=comps.filter(c=>c.fill>=.45&&Math.max(c.w,c.h)/Math.max(1,Math.min(c.w,c.h))<=2.2);
         const sides=compact.map(c=>Math.sqrt(c.w*c.h)).sort((a,b)=>a-b);
@@ -186,6 +204,7 @@
             comps:comps.map(c=>({x:c.x,y:c.y,w:c.w,h:c.h,fill:+c.fill.toFixed(3),
               side:+Math.sqrt(c.w*c.h).toFixed(1),notWall:notWall(c),sizeOk:chairSizeOk(c)}))});
         }
+        yield;
       }
       mark("toneMasks");
     }
@@ -205,5 +224,14 @@
       fallbackChairComps, fallbackChairLabels, accentMask, surfaceMask, masksTints };
   }
 
-  globalThis.MeritPlanSources = { version: 1, collectSources };
+  function collectSources(input) {
+    const steps = sourceSteps(input);
+    for (let r = steps.next(); ; r = steps.next()) if (r.done) return r.value;
+  }
+  async function collectSourcesSliced(input, pause) {
+    const steps = sourceSteps(input);
+    for (let r = steps.next(); ; r = steps.next()) { if (r.done) return r.value; await pause(); }
+  }
+
+  globalThis.MeritPlanSources = { version: 1, collectSources, collectSourcesSliced };
 })();
