@@ -1058,7 +1058,19 @@
     try{text=P.itemsFromTextContent(await page.getTextContent(),viewport.transform);}
     catch{return{page:page.pageNumber,kind:"UNREAD",reasonCode:"TEXT_LAYER_FAILED"};}
     let vector={paths:null,images:null,text:null};
-    try{const ops=await page.getOperatorList(),OPS=globalThis.pdfjsLib?.OPS;vector=P.vectorSummary(ops,OPS);vector.shapes=P.shapeSummary(P.vectorShapes(ops,OPS,viewport.transform));}catch{vector.reasonCode="OPERATORS_FAILED";}
+    try{
+      const ops=await page.getOperatorList(),OPS=globalThis.pdfjsLib?.OPS;vector=P.vectorSummary(ops,OPS);
+      const shapes=P.vectorShapes(ops,OPS,viewport.transform);vector.shapes=P.shapeSummary(shapes);
+      // Furniture the document draws as repeated shapes (src/plan-vector-objects.js),
+      // kept compact on the plan so the analysis can use exact geometry where a
+      // scan would have to be interpreted. Proposals, never decisions.
+      const VO=globalThis.MeritPlanVectorObjects;
+      if(VO){
+        const props=VO.propose(shapes.shapes,{width:canvas.width,height:canvas.height,texts:text.items.map(it=>({text:it.text,cx:(it.box.x0+it.box.x1)/2,cy:(it.box.y0+it.box.y1)/2}))});
+        const r=b=>({cls:b.cls,cx:Math.round(b.cx*10)/10,cy:Math.round(b.cy*10)/10,w:Math.round(b.w*10)/10,h:Math.round(b.h*10)/10,angle:b.angle||0});
+        vector.objects={reason:props.reason,groups:props.groups,tables:props.tables.slice(0,3000).map(r),chairs:props.chairs.slice(0,9000).map(r)};
+      }
+    }catch{vector.reasonCode="OPERATORS_FAILED";}
     return{page:page.pageNumber,scale:viewport.scale,width:canvas.width,height:canvas.height,kind:P.sourceKind(vector,text.items.length),content:P.contentClass(vector),
       text:{items:text.items,dropped:text.dropped,truncated:text.truncated},vector};
   }
@@ -3645,8 +3657,9 @@
       // The application layer talks to a PlanDetectionProvider, never to pixel
       // code or a vendor SDK directly (merit-plan-intelligence, "Provider
       // abstraction"). Today exactly one provider is installed and it is
-      // classical computer vision: trainedModel stays false and the UI keeps
-      // saying DOMAIN MODEL NOT INSTALLED.
+      // classical computer vision. The local plan-symbol detector is not a
+      // provider: it takes a second look beside it, below, and the analysis
+      // records trainedModel true only when that model ran.
       const provider=globalThis.MERIT_PLAN_DETECTION.resolve();
       // The OCR MODEL reads the plan's text FIRST (src/plan-ocr-paddle.js): its
       // lines are the one evidence the detector takes from text — what is
@@ -3694,6 +3707,33 @@
       }});
       const detectionMs=Math.round(performance.now()-detectionStartedAt);
       const candidates=detection.candidates,venues=detection.venues,threshold=detection.threshold;
+      // The local plan-symbol detector (src/plan-model.js) takes a second,
+      // independent look at the same deskewed pixels. Fusion adds only what the
+      // classical pipeline did not propose and marks what the model does not
+      // support; it removes nothing (src/plan-model-fusion.js). When the model
+      // is unavailable the reason is kept and the classical path goes on alone.
+      let localModel=null;
+      if(globalThis.MeritPlanModel&&globalThis.MeritPlanModelFusion){
+        ui.analysisStage=t("analysis.stage.localModel");render();await yieldFrame();
+        const read=await MeritPlanModel.detect(pixels,dw,dh);
+        const fused=MeritPlanModelFusion.fuse(candidates,venues,read,{width:dw,height:dh,uid,representation:detection.representation,textRegions});
+        candidates.push(...fused.added);venues.push(...fused.addedVenues);
+        localModel={available:read.available,reasonCode:read.reasonCode||null,reason:read.reason||null,ms:read.ms??null,model:read.model,
+          detections:read.detections.length,addedTables:fused.added.length,addedColumns:fused.addedVenues.length,chairsAttached:fused.chairsAttached,chairsInText:fused.chairsInText,unsupported:fused.unsupported};
+      }
+      // A vector PDF's own furniture shapes, when the import found repeated ones:
+      // exact geometry, fused the same way (added where nothing was proposed).
+      // No printed-text rule here: a drawn chair is drawn, whatever number is
+      // printed inside it; the rule exists for what a model READ off pixels.
+      let vectorObjects=null;
+      const vo=event.background?.pdfSource?.vector?.objects;
+      if(vo&&globalThis.MeritPlanModelFusion&&(vo.tables||[]).length&&!globalThis.MERIT_PLAN_VECTOR_DISABLED){
+        const ps=event.background.pdfSource,kx=width/(ps.width||width),ky=height/(ps.height||height);
+        const toDeskew=b=>{const[cx,cy]=deskew.applied?deskew.analysisToDeskew.apply(b.cx*kx,b.cy*ky):[b.cx*kx,b.cy*ky];return{cls:b.cls,score:1,cx,cy,w:b.w*kx,h:b.h*ky};};
+        const fusedV=MeritPlanModelFusion.fuse(candidates,venues,{available:true,detections:[...vo.tables,...vo.chairs].map(toDeskew)},{width:dw,height:dh,uid,representation:detection.representation},{source:"pdf-vector"});
+        candidates.push(...fusedV.added);
+        vectorObjects={reason:vo.reason,proposedTables:vo.tables.length,proposedChairs:vo.chairs.length,addedTables:fusedV.added.length,chairsAttached:fusedV.chairsAttached};
+      }
       ui.analysisStage=t("analysis.stage.seating");ui.analysisProgress=73;render();await yieldFrame();
       // Through the provider boundary rather than the function directly. That
       // seam was built for a future learned model and is now carrying one:
@@ -3771,7 +3811,7 @@
       // silently reverting to the detector's default grouping.
       const geometryRemap=matchCandidatesByGeometry(priorCandidates,allCandidates);
       const carriedDecisions=priorDecisions.map(d=>({...d,memberIds:d.memberIds.map(id=>geometryRemap.get(id)).filter(Boolean)})).filter(d=>d.memberIds.length>=2);
-      event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:false,notice:"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:analysisFrame.originalWidth,originalHeight:analysisFrame.originalHeight,threshold,candidates:allCandidates,missed:allCandidates.filter(c=>c.missed).map(c=>c.id),groupingDecisions:carriedDecisions,memoryReapplied:memoryResult.reappliedCount,memoryRestored:memoryResult.restored.length,memoryConflicts:memoryResult.conflicts,comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{...detection.diagnostics,resolution:`${width}×${height}`,detectionMs,provider:provider.id,providerLabel:provider.label,
+      event.analysis={id:uid("analysis"),engine:"ASSISTED_DETECTION",trainedModel:!!(localModel&&localModel.available),localModel,vectorObjects,notice:localModel&&localModel.available?"Classical computer vision and the local plan-symbol detector (a small trained model of plan symbols) are active.":"Classical computer vision is active; no trained Merit model is installed in this browser review.",createdAt:nowISO(),imageWidth:width,imageHeight:height,originalWidth:analysisFrame.originalWidth,originalHeight:analysisFrame.originalHeight,threshold,candidates:allCandidates,missed:allCandidates.filter(c=>c.missed).map(c=>c.id),groupingDecisions:carriedDecisions,memoryReapplied:memoryResult.reappliedCount,memoryRestored:memoryResult.restored.length,memoryConflicts:memoryResult.conflicts,comparison:{added:[...newSig].filter(x=>!oldSig.has(x)).length,removed:[...oldSig].filter(x=>!newSig.has(x)).length,changed:0},diagnostics:{...detection.diagnostics,resolution:`${width}×${height}`,detectionMs,provider:provider.id,providerLabel:provider.label,
         // Which visual representation actually produced the descriptors, and
         // whether it involved trained weights. Reported from the resolved
         // provider rather than from a constant, so an install without the

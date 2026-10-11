@@ -137,7 +137,10 @@
     for (const t of tables)
       for (const ch of t.chairDetections || []) {
         const id = ch.id || `${t.id}:chair:${Math.round(ch.x)}x${Math.round(ch.y)}`;
-        const rel = ch.relation || null;
+        // A relation without its engine's evidence (a chair added after the
+        // relationship engine ran, given only an orientation by the facing
+        // reader) is described as what it is, not read as if it had evidence.
+        const rel = ch.relation && ch.relation.evidence ? ch.relation : null;
         const supporting = rel
           ? [`seated ${rel.evidence.positionKind === "inside" ? "over the table body"
               : rel.evidence.positionKind === "edge" ? `along its ${rel.evidence.positionSide} edge`

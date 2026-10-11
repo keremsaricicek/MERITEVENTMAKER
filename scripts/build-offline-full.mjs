@@ -141,7 +141,16 @@ globalThis.dispatchEvent(new CustomEvent("merit-pdf-ready"));
 // use and starts ONE blob worker that carries all of it. One path, whether the
 // folder is served or opened from disk.
 // The OCR model rides the same way, in its own folder (MERIT_PPOCR_ASSET_PATHS).
-const ocrPathsBlock = `\nglobalThis.MERIT_OCR_ASSET_PATHS = { embedded: "./assets/ocr/" };\nglobalThis.MERIT_PPOCR_ASSET_PATHS = { embedded: "./assets/ocr/ppocr/" };\n`;
+// The local plan-symbol detector (src/plan-model.js) rides the same way: its
+// pinned file is copied under assets/ and the page is told where assets live.
+// No pinned model (bytes 0) -> nothing is copied and the model reports
+// MODEL_MISSING, which the analysis handles like any other unavailability.
+const planModelPin = (() => {
+  const src = readFileSync(path.join(ROOT, "src/plan-model.js"), "utf8");
+  const file = /file: "([^"]+)"/.exec(src), bytes = /bytes: (\d+)/.exec(src);
+  return file && bytes && Number(bytes[1]) > 0 ? { file: file[1], bytes: Number(bytes[1]) } : null;
+})();
+const ocrPathsBlock = `\nglobalThis.MERIT_OCR_ASSET_PATHS = { embedded: "./assets/ocr/" };\nglobalThis.MERIT_PPOCR_ASSET_PATHS = { embedded: "./assets/ocr/ppocr/" };\nglobalThis.MERIT_PLAN_MODEL_BASE = "./assets/";\n`;
 
 // Every inline block is built once, hashed for the policy, then inserted.
 // The OCR engine's files are the package's own siblings, loaded by <script src>
@@ -201,6 +210,11 @@ embedModel("embed-mjs.js", "mjs", readFileSync(path.join(ortDir, "dist/ort-wasm-
 embedModel("embed-det.js", "det", modelBytes.det.toString("base64"));
 embedModel("embed-rec.js", "rec", modelBytes.rec.toString("base64"));
 copyFileSync(path.join(ROOT, "src/plan-ocr-paddle-keys.js"), path.join(PPOCR_OUT, "keys.js"));
+rmSync(path.join(OUT, "assets", "models"), { recursive: true, force: true });
+if (planModelPin) {
+  mkdirSync(path.dirname(path.join(OUT, "assets", planModelPin.file)), { recursive: true });
+  copyFileSync(path.join(ROOT, planModelPin.file), path.join(OUT, "assets", planModelPin.file));
+}
 // Licences travel with the bytes: the package's own LICENSE file where it ships
 // one, otherwise the licence its package.json declares.
 writeFileSync(path.join(PPOCR_OUT, "NOTICE.txt"), [[ortDir, ortPkg, ortVersion], [modelDir, modelPkg, modelVersion]].map(([dir, pkg, v]) => {

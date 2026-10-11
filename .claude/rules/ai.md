@@ -7,6 +7,15 @@
   labeled **"Assisted Detection"** — never "AI" or "trained model."
 - If no trained domain model is installed, the UI states **"DOMAIN MODEL
   NOT INSTALLED"** — never implies one is running.
+- The local plan-symbol detector (`src/plan-model.js`) is the one trained
+  model in the product. An analysis says it ran only when it loaded from its
+  pinned bytes (size + sha256) and ran; a missing/corrupt/disabled model
+  falls back to the classical path and says why. What it adds is unreviewed
+  and never dressed as a person's decision; fusion removes and moves
+  nothing. Its quality is reported per venue and per fold against
+  `benchmarks/offline-intelligence/ACCEPTANCE.md`, whose thresholds are never
+  changed after a result is seen, and a score on a venue it trained on is
+  never presented as an unseen-venue score.
 - Preserve rotation/orientation on every detected object — never force to
   axis-aligned.
 - Chairs are detected/associated individually, never collapsed to a bare

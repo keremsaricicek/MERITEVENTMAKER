@@ -48,6 +48,7 @@
     "analysis.stage.reading": { en: "Reading plan", tr: "Plan okunuyor" },
     "analysis.stage.understanding": { en: "Understanding venue", tr: "Mekan anlaşılıyor" },
     "analysis.stage.seating": { en: "Finding seating", tr: "Oturma düzeni bulunuyor" },
+    "analysis.stage.localModel": { en: "Second look with the local model", tr: "Yerel modelle ikinci bakış" },
     "analysis.stage.labels": { en: "Reading labels", tr: "Yazılar okunuyor" },
     "analysis.stage.relating": { en: "Connecting furniture", tr: "Objeler ilişkilendiriliyor" },
     "analysis.stage.capacity": { en: "Checking capacity", tr: "Kapasite kontrol ediliyor" },
@@ -166,6 +167,10 @@
     "ocr.unavailable": { en: "OCR unavailable in this session ({reason}) — capacity audit skipped, not fabricated.", tr: "Bu oturumda OCR kullanılamıyor ({reason}) — kapasite denetimi atlandı, uydurulmadı." },
 
     "diag.notInstalled": { en: "DOMAIN MODEL NOT INSTALLED", tr: "ALAN MODELİ KURULU DEĞİL" },
+    "diag.localModel": { en: "LOCAL PLAN-SYMBOL MODEL {version} ran ({ms} ms) — a small trained model of plan symbols, not of rooms", tr: "YEREL PLAN SEMBOLÜ MODELİ {version} çalıştı ({ms} ms) — plan sembolleri için eğitilmiş küçük bir model, salon modeli değil" },
+    "diag.localModelAdded": { en: "added {tables} tables and {chairs} chairs the classical pass had not proposed; {unsupported} classical tables it did not see", tr: "klasik geçişin önermediği {tables} masa ve {chairs} sandalye ekledi; görmediği {unsupported} klasik masa" },
+    "diag.localModelOff": { en: "Local plan-symbol model did not run: {code}", tr: "Yerel plan sembolü modeli çalışmadı: {code}" },
+    "diag.vectorObjects": { en: "PDF drawing: {tables} tables and {chairs} chairs read from the document's own shapes; {added} tables added", tr: "PDF çizimi: belgenin kendi şekillerinden {tables} masa ve {chairs} sandalye okundu; {added} masa eklendi" },
     // ---- Whole-plan interpreter: what the drawing says, in words ----
     // The domain layer emits a key and parameters, never a sentence, so the
     // operator's language is decided here and nowhere else.
@@ -1391,6 +1396,7 @@
 
     // The Floor Plan's two modes. Deliberately not called "screens" or
     // "views" in either language: the operator has not gone anywhere.
+    "plan.noticeLocalModel": { en: "Classical computer vision and the local plan-symbol detector (a small trained model of plan symbols) are active.", tr: "Klasik görüntü işleme ve yerel plan sembolü dedektörü (plan sembolleri için eğitilmiş küçük bir model) çalışıyor." },
     "plan.noticeAssisted": { en: "Classical computer vision is active; no trained Merit model is installed in this browser review.", tr: "Klasik görüntü işleme çalışıyor; bu tarayıcı incelemesinde eğitilmiş bir Merit modeli kurulu değil." },
     "plan.mode.label": { en: "Floor Plan mode", tr: "Kat Planı modu" },
     "plan.mode.plan": { en: "Plan", tr: "Plan" },

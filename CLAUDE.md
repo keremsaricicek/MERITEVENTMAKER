@@ -85,8 +85,11 @@ Every human decision in the review screen stores a training example with the
 real image crop, the plan hash, the venue/layout/version it came from, what
 the detector had predicted, and which build predicted it — five decision
 types, including negatives ("Not important" is a stored example, never a
-delete). This is a data foundation: it trains nothing, and `trainedModel`
-stays false. Labels spread across a family are marked as not individually
+delete). This is a data foundation: capturing trains nothing. An analysis's
+`trainedModel` is true only because the separately trained local plan-symbol
+detector ran (below), never because examples were captured; turning captured
+examples into a dataset is `training/export_plans.py`, run by a developer, and
+a new model is a new pinned version. Labels spread across a family are marked as not individually
 reviewed. Dataset splits are grouped by plan, never by example. Full detail:
 `benchmarks/TRAINING-DATA.md`.
 
@@ -321,11 +324,25 @@ and `plan-reading-ornek`.
 
 ## Plan Intelligence honesty
 
-Assisted Detection today is classical computer vision, not a trained
-model — label it "Assisted Detection," never "AI." If no trained domain
-model exists, say **"DOMAIN MODEL NOT INSTALLED"** rather than implying
-one is running. Never fabricate detections, confidence scores, or model
-metrics. Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.
+Assisted Detection is classical computer vision, not a trained model —
+label it "Assisted Detection," never "AI." Beside it runs ONE trained model:
+the local plan-symbol detector (`src/plan-model.js`, ~0.9 M parameters,
+trained in `training/` on CPU). It finds round/rectangular tables, chairs and
+columns. It is not a model of rooms, numbers or capacity. Its pin states what
+it was trained on (v1: synthetic plans only). It is loaded only from its
+pinned bytes (size + sha256). Fusion (`src/plan-model-fusion.js`) only ADDS
+unreviewed tables where nothing was proposed and marks; it removes and moves
+nothing. In v1 it adds no chairs and no columns: both were measured and made
+the regression set worse, and switching one on is a new measurement. An analysis says a trained model
+ran (`trainedModel:true`) only when it did. When the model is missing,
+corrupt, disabled or has no runtime, the analysis completes on the classical
+path, records why, and the screen says **"DOMAIN MODEL NOT INSTALLED"**.
+Its quality is measured per venue and per fold in
+`benchmarks/offline-intelligence/` against the fixed thresholds in its
+`ACCEPTANCE.md` — never one average, and never from a plan it trained on
+presented as unseen. Never fabricate detections, confidence scores, or model
+metrics. Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`,
+`training/README.md`, suite `local-model`.
 
 ## Code health
 

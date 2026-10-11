@@ -234,6 +234,13 @@
        (globalThis.MERIT_PLAN_DETECTION), and AFTER the Merit* modules it calls
        at detect() time. It is NOT a trained model. -->
   <script src="src/plan-detection-classical.js"></script>
+  <!-- The local plan-symbol detector: a small trained model of plan symbols
+       (training/), loaded on demand with its pinned weights, and its fusion
+       with the classical candidates. Both before app-v8.js, which calls them. -->
+  <script src="src/plan-model.js"></script>
+  <script src="src/plan-model-fusion.js"></script>
+  <script src="src/plan-exemplar.js"></script>
+  <script src="src/plan-vector-objects.js"></script>
   <!-- Screens moved out of app-v8.js. Each is created by app-v8.js with what it
        reads from the shell, so it only has to load before app-v8.js. -->
   <script src="src/screen-live.js"></script>

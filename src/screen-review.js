@@ -266,8 +266,9 @@
   // notice this build does not recognise keeps its own words rather than being
   // relabelled with a sentence that might not be true of it.
   const ASSISTED_NOTICE="Classical computer vision is active; no trained Merit model is installed in this browser review.";
+  const LOCAL_MODEL_NOTICE="Classical computer vision and the local plan-symbol detector (a small trained model of plan symbols) are active.";
   function analysisNoticeText(a){
-    return a && a.notice===ASSISTED_NOTICE ? t("plan.noticeAssisted") : (a && a.notice) || "";
+    return a && a.notice===ASSISTED_NOTICE ? t("plan.noticeAssisted") : a && a.notice===LOCAL_MODEL_NOTICE ? t("plan.noticeLocalModel") : (a && a.notice) || "";
   }
   function settlesText(s){
     if(!s)return"";
@@ -529,7 +530,14 @@
   function detectionDiagnosticsHTML(a){
     const d=a.diagnostics||{},rows=[];
     rows.push(`${esc(a.engine)} · ${esc(d.resolution||"")}${Number.isFinite(d.detectionMs)?` · ${d.detectionMs} ms`:""}`);
-    rows.push(`<b>${t("diag.notInstalled")}</b>`);
+    // The local plan-symbol detector (src/plan-model.js): said to have run
+    // only when this analysis records that it did; otherwise the old line,
+    // with the reason the model did not run.
+    const lm=a.localModel;
+    if(lm&&lm.available)rows.push(`<b>${t("diag.localModel",{version:(lm.model&&lm.model.version)||"?",ms:lm.ms??"?"})}</b> · ${t("diag.localModelAdded",{tables:lm.addedTables||0,chairs:lm.chairsAttached||0,unsupported:lm.unsupported||0})}`);
+    else{rows.push(`<b>${t("diag.notInstalled")}</b>`);if(lm&&lm.reasonCode)rows.push(t("diag.localModelOff",{code:lm.reasonCode}));}
+    const vo=a.vectorObjects;
+    if(vo)rows.push(t("diag.vectorObjects",{tables:vo.proposedTables||0,chairs:vo.proposedChairs||0,added:vo.addedTables||0}));
     const pathKey=d.detectionPath==="chair-first"?"diag.path.chairFirst":d.detectionPath==="table-first"?"diag.path.tableFirst":null;
     if(pathKey)rows.push(`${t("diag.path")}: ${t(pathKey)}`);
     const sourceKey={"colour-cluster":"diag.chairSource.colour","luma-components":"diag.chairSource.luma","none":"diag.chairSource.none"}[d.chairSource];

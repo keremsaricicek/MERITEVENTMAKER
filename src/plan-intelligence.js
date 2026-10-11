@@ -310,7 +310,12 @@
         // The detector is classical computer vision. It has never been a
         // trained model and this line must never say otherwise.
         detector: { engine: "Assisted Detection (classical computer vision)", trainedModel: false,
-          note: "DOMAIN MODEL NOT INSTALLED — no trained object detector is running." },
+          note: globalThis.MeritPlanModel && globalThis.MeritPlanModel.status() === "ready"
+            ? "Assisted Detection itself is classical computer vision, not a trained model; the local plan-symbol detector (a small trained model of plan symbols) runs beside it."
+            : "DOMAIN MODEL NOT INSTALLED — no trained object detector is running." },
+        // The local plan-symbol detector, read from its runtime (src/plan-model.js):
+        // "ready" only once its pinned bytes loaded and verified in this page.
+        localSymbolDetector: globalThis.MeritPlanModel ? Object.assign({ state: globalThis.MeritPlanModel.status() }, globalThis.MeritPlanModel.describe(), { pin: { version: globalThis.MeritPlanModel.PIN.version, bytes: globalThis.MeritPlanModel.PIN.bytes } }) : null,
         visualRepresentation: {
           provider: provider ? provider.id : "none",
           // TRUE, and it means exactly one thing: real weights fitted by

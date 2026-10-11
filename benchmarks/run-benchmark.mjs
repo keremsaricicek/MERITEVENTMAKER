@@ -80,6 +80,18 @@ async function detect(browser, imagePath) {
   if (process.env.MERIT_BENCH_ALL_CHAIR_SOURCES) {
     await page.addInitScript(() => { globalThis.MERIT_ALL_CHAIR_SOURCES = true; });
   }
+  // The local plan-symbol detector (src/plan-model.js): MERIT_BENCH_MODEL=off
+  // measures the classical path alone on the same build; MERIT_BENCH_MODEL_PIN
+  // names a JSON pin {version,file,bytes,sha256} plus a "path" on disk, so a
+  // cross-venue fold model is measured through the product's own loader.
+  if (process.env.MERIT_BENCH_MODEL === "off") {
+    await page.addInitScript(() => { globalThis.MERIT_PLAN_MODEL_DISABLED = "benchmark: classical only"; });
+  } else if (process.env.MERIT_BENCH_MODEL_PIN) {
+    const pin = JSON.parse(fs.readFileSync(process.env.MERIT_BENCH_MODEL_PIN, "utf8"));
+    const body = fs.readFileSync(pin.path, "utf8");
+    await page.route("**/" + pin.file, r => r.fulfill({ status: 200, contentType: "text/javascript; charset=utf-8", body }));
+    await page.addInitScript(p => { globalThis.MERIT_PLAN_MODEL_PIN_OVERRIDE = p; }, { version: pin.version, file: pin.file, bytes: pin.bytes, sha256: pin.sha256 });
+  }
   await page.goto(`${app.baseUrl}/index.html`);
   await page.waitForLoadState("networkidle");
   await page.click('.appbar [data-action="create-event"]');
@@ -125,6 +137,7 @@ async function detect(browser, imagePath) {
       capacityAudit: pi.capacityAudit || null,
       diagnostics: a.diagnostics || null,
       ocr: a.ocr || null,
+      localModel: a.localModel || null,
     };
   });
   await page.close();
@@ -400,6 +413,13 @@ for (const f of files) {
   rep.detectionMs = ms;
   rep.pageErrors = errors;
   rep.imageShaMatches = shaOK;
+  // Whether the local plan-symbol detector ran in this measurement, and what
+  // fusion did with it: a number measured with the model and one without are
+  // two different products, the same way OCR on and off are.
+  const lm = out.localModel;
+  rep.localModel = lm ? { available: lm.available, reasonCode: lm.reasonCode || null, version: lm.model && lm.model.version || null, ms: lm.ms ?? null,
+    detections: lm.detections ?? null, addedTables: lm.addedTables ?? null, chairsAttached: lm.chairsAttached ?? null,
+    chairsInText: lm.chairsInText ?? null, addedColumns: lm.addedColumns ?? null, unsupported: lm.unsupported ?? null } : null;
   reports.push(rep);
 
   const t = rep.tables;
