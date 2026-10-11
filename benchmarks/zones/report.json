@@ -1,24 +1,24 @@
 {
- "ranAt": "2026-10-10T11:04:29.976Z",
+ "ranAt": "2026-10-11T13:31:53.117Z",
  "note": "Stability is measured across renderings of ONE drawing, so disagreement is the product's and not the annotation's. REAL DISTINCT VENUE PLANS: 1.",
  "renderings": 16,
- "stability": 0.9935064935064936,
+ "stability": 0.9919354838709677,
  "gate": 0.9,
  "met": true,
  "originalSignature": "barx1,bistrox1,diningx2,entrancex1,stagex1",
  "stabilityMethod": "per annotated table: the share of (object, rendering) pairs whose zone TYPE matches that object's modal reading across renderings",
  "tablesCompared": 46,
- "comparisons": 616,
- "agreements": 612,
+ "comparisons": 620,
+ "agreements": 615,
  "disagreeingObjects": [
   {
    "object": "t044",
    "modal": "dining",
    "tally": {
-    "dining": 6,
+    "dining": 8,
     "bistro": 1
    },
-   "seenIn": 7
+   "seenIn": 9
   },
   {
    "object": "t045",
@@ -37,6 +37,15 @@
     "dining": 2
    },
    "seenIn": 7
+  },
+  {
+   "object": "t042",
+   "modal": "bistro",
+   "tally": {
+    "bistro": 5,
+    "unknown": 1
+   },
+   "seenIn": 6
   }
  ],
  "zoneCountRange": [
@@ -145,6 +154,27 @@
     1,
     0,
     2,
+    0,
+    0
+   ]
+  },
+  "unknown": {
+   "present": 1,
+   "counts": [
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
     0,
     0
    ]
@@ -261,7 +291,7 @@
     {
      "type": "dining",
      "confidence": "strong",
-     "objects": 17,
+     "objects": 19,
      "seats": 30
     },
     {
@@ -281,8 +311,8 @@
   },
   {
    "id": "bright-up",
-   "signature": "barx1,diningx6,entrancex1,stagex1",
-   "zoneCount": 9,
+   "signature": "barx1,diningx6,entrancex1,stagex1,unknownx1",
+   "zoneCount": 10,
    "zones": [
     {
      "type": "stage",
@@ -337,6 +367,12 @@
      "confidence": "strong",
      "objects": 1,
      "seats": 1
+    },
+    {
+     "type": "unknown",
+     "confidence": "uncertain",
+     "objects": 1,
+     "seats": 0
     }
    ],
    "pageErrors": 0
@@ -611,7 +647,7 @@
     {
      "type": "dining",
      "confidence": "likely",
-     "objects": 65,
+     "objects": 66,
      "seats": 34
     },
     {
@@ -869,7 +905,7 @@
     {
      "type": "dining",
      "confidence": "strong",
-     "objects": 41,
+     "objects": 42,
      "seats": 99
     },
     {

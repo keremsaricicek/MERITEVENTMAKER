@@ -1,5 +1,5 @@
 {
- "ranAt": "2026-10-10T10:54:51.267Z",
+ "ranAt": "2026-10-11T13:25:21.895Z",
  "variants": [
   {
    "variant": "ORIGINAL",
@@ -461,9 +461,9 @@
   },
   {
    "variant": "hue-shift",
-   "tables": 77,
+   "tables": 78,
    "falsePositives": 39,
-   "baselineFalseRate": 0.5065,
+   "baselineFalseRate": 0.5,
    "contradictions": 6,
    "kinds": [
     "COUNT",
@@ -474,7 +474,7 @@
    "pointedAt": 46,
    "pointedAtFalse": 34,
    "targetedPrecision": 0.7391,
-   "lift": 1.459,
+   "lift": 1.478,
    "severities": {
     "medium": 4,
     "high": 2
@@ -492,9 +492,9 @@
      "id": "contra:emptyTablesOrphanSeats",
      "kind": "COUNT",
      "severity": "medium",
-     "pointedAt": 4,
+     "pointedAt": 5,
      "ofThoseFalse": 2,
-     "precision": 0.5
+     "precision": 0.4
     },
     {
      "id": "contra:visualClass",
@@ -554,7 +554,7 @@
    "sample": {
     "en": [
      "29 of 114 detected seats belong to no table.",
-     "4 table(s) have no seat while 29 seat(s) have no table.",
+     "5 table(s) have no seat while 29 seat(s) have no table.",
      "5 object(s) called tables do not look like this plan's tables.",
      "1 seating unit(s) are made of tables typed as different kinds.",
      "38 object(s) contain every seat attached to them, which a table does not.",
@@ -562,7 +562,7 @@
     ],
     "tr": [
      "Tespit edilen 114 koltuktan 29 tanesi hiçbir masaya ait değil.",
-     "4 masada hiç koltuk yok, buna karşılık 29 koltuğun masası yok.",
+     "5 masada hiç koltuk yok, buna karşılık 29 koltuğun masası yok.",
      "Masa denen 5 nesne bu planın masalarına benzemiyor.",
      "1 oturma biriminde farklı türde sınıflandırılmış masalar var.",
      "38 nesne kendisine bağlı tüm koltukları içinde barındırıyor; bir masa bunu yapmaz.",
@@ -774,7 +774,7 @@
  ],
  "gates": {
   "meanTargetedPrecision": 0.4435,
-  "meanBaselineFalseRate": 0.1878,
+  "meanBaselineFalseRate": 0.1871,
   "renderingsWherePointingBeatsChance": "8/9",
   "contradictionsOnTheCleanOriginal": 3,
   "honestyFailures": 0
@@ -783,7 +783,7 @@
   "COUNT": {
    "kind": "COUNT",
    "fired": 11,
-   "pointedAt": 23,
+   "pointedAt": 24,
    "ofThoseFalse": 18
   },
   "TYPE": {
@@ -810,7 +810,7 @@
    "id": "contra:emptyTablesOrphanSeats",
    "kind": "COUNT",
    "fired": 7,
-   "pointedAt": 23,
+   "pointedAt": 24,
    "ofThoseFalse": 18,
    "severities": {
     "medium": 7
@@ -883,5 +883,5 @@
   "TYPE": "TRUSTED",
   "CAPACITY": "TRUSTED"
  },
- "chanceRate": 0.1878
+ "chanceRate": 0.1871
 }

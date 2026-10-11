@@ -1,8 +1,8 @@
 {
- "ranAt": "2026-10-10T22:26:10.372Z",
+ "ranAt": "2026-10-11T13:39:35.878Z",
  "source": {
-  "digest": "019a741c4e8dda937796394725997485643feef1e334fd1239e4415ca59a4e67",
-  "files": 106,
+  "digest": "2581c79e3f6401490bf2d9adea5fd7e9d518de53cf2a731cf3b1326e2479b7c3",
+  "files": 110,
   "inputs": [
    "index.html",
    "src",
@@ -238,7 +238,7 @@
    },
    "ambiguousReported": 1,
    "conflictKinds": {
-    "overruled": 11
+    "overruled": 12
    },
    "pageErrors": 0
   },
@@ -313,8 +313,8 @@
    },
    "ambiguousReported": 3,
    "conflictKinds": {
-    "overruled": 10,
-    "ambiguous": 3
+    "overruled": 12,
+    "ambiguous": 1
    },
    "pageErrors": 0
   },
@@ -389,9 +389,8 @@
    },
    "ambiguousReported": 1,
    "conflictKinds": {
-    "overruled": 10,
-    "ambiguous": 1,
-    "lost": 1
+    "overruled": 11,
+    "ambiguous": 1
    },
    "pageErrors": 0
   },
@@ -542,9 +541,8 @@
    },
    "ambiguousReported": 3,
    "conflictKinds": {
-    "overruled": 10,
-    "ambiguous": 1,
-    "lost": 1
+    "overruled": 11,
+    "ambiguous": 1
    },
    "pageErrors": 0
   }
