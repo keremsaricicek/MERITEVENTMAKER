@@ -25,7 +25,17 @@ const PAGES = Number(process.env.PAGES || 40);
 const ONLY = process.env.ONLY || "";
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "merit-large-"));
 const require = createRequire(import.meta.url);
-const XLSX = require(path.join(REPO_ROOT, ".vendor-cache/xlsx-0.18.5/package/xlsx.js"));
+// The SheetJS build the app ships, read from the build's own pin so this
+// measurement cannot keep timing a version the product no longer loads (it
+// timed 0.18.5 from a stale local cache, and CI — which had only 0.20.3 —
+// could not find it).
+const XLSX_PIN = (() => {
+  const src = fs.readFileSync(path.join(REPO_ROOT, "scripts/build-offline.mjs"), "utf8");
+  const pkg = /const XLSX_PACKAGE = "([^"]+)"/.exec(src)[1], version = /const XLSX_VERSION = "([^"]+)"/.exec(src)[1];
+  return { pkg, version, dir: `${pkg.replace("/", "-")}-${version}` };
+})();
+const XLSX = require(path.join(REPO_ROOT, ".vendor-cache", XLSX_PIN.dir, "package/xlsx.js"));
+console.log(`SheetJS under test: ${XLSX_PIN.pkg}@${XLSX_PIN.version} (version ${XLSX.version})`);
 
 const app = await serveApp();
 const browser = await launchChromium();

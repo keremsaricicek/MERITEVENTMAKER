@@ -50,8 +50,8 @@ commit as the change that moves it.
 | Fact | Value | How to re-measure |
 |---|---|---|
 | `src/*.js` files | **88** | `ls src/*.js \| wc -l` |
-| `src/` total lines | **29,898** | `wc -l src/*.js` |
-| `app-v8.js` | **5,181** lines (5,740 right after the detection extraction and 8,543 before it — history, in CLAUDE.md) | `wc -l src/app-v8.js` |
+| `src/` total lines | **29,913** | `wc -l src/*.js` |
+| `app-v8.js` | **5,184** lines (5,740 right after the detection extraction and 8,543 before it — history, in CLAUDE.md) | `wc -l src/app-v8.js` |
 | Longest single line in `app-v8.js` | **1,677** chars; **14** lines exceed 500 | `awk '{print length}' src/app-v8.js \| sort -rn \| head -1` |
 | `plan-detection-classical.js` | **225** lines — the orchestrator `detect()` over seven stage modules (Split A/B) | `wc -l src/plan-detection-classical.js` |
 | Files exporting `globalThis.Merit*` | **84** of **88** | `grep -l "globalThis.Merit" src/*.js \| wc -l` |
