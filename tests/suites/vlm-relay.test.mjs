@@ -159,9 +159,11 @@ export default async function run({ checks, repoRoot }) {
     // static: the app and nothing else
     const get = (p) => fetch(r1.baseUrl + p).then((x) => x.status);
     const statics = { root: await get("/"), app: await get("/src/app-v8.js"), self: await get("/server/vlm-relay.mjs"), pkg: await get("/package.json"),
-      data: await get("/.vlm-data/usage.json"), climb: await get("/src/../package.json"), encoded: await get("/src/%2e%2e/package.json"), modules: await get("/node_modules/@anthropic-ai/sdk/package.json") };
-    checks.equal(statics, { root: 200, app: 200, self: 404, pkg: 404, data: 404, climb: 404, encoded: 404, modules: 404 },
-      "the relay serves index.html and src/ — not itself, its spend file, package.json or node_modules, by any path");
+      data: await get("/.vlm-data/usage.json"), climb: await get("/src/../package.json"), encoded: await get("/src/%2e%2e/package.json"), modules: await get("/node_modules/@anthropic-ai/sdk/package.json"),
+      model: await get("/" + /file: "([^"]+)"/.exec(fs.readFileSync(path.join(repoRoot, "src/plan-model.js"), "utf8"))[1]),
+      manifest: await get("/models/plan-detector/v2/manifest.json"), modelClimb: await get("/models/plan-detector/../../package.json"), training: await get("/training/detector.py") };
+    checks.equal(statics, { root: 200, app: 200, self: 404, pkg: 404, data: 404, climb: 404, encoded: 404, modules: 404, model: 200, manifest: 404, modelClimb: 404, training: 404 },
+      "the relay serves index.html, src/ and the pinned local model file — not itself, its spend file, package.json, node_modules, a model's manifest or the training code, by any path");
 
     // cross-site refusals, before the body is read
     const before = fake.requests.length;

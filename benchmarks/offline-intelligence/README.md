@@ -122,6 +122,70 @@ recall is still the classical 0.5.
 **Recorded honestly:** a1 shaped v2's training distribution, so a1 is no
 longer a blind test of the model.
 
+## Cross-venue folds (leave one venue out)
+
+Each fold is v2 warm-started and trained 1,200 more steps on generation-2
+synthetic plans plus ONE real venue, then scored on the other venue, which
+it never saw. Model alone: `training/detector.py eval`. In the app:
+`run.mjs --set lovo` → `results-lovo.json`, through the product's own loader
+and fusion.
+
+| Fold | Trained with | Scored on (unseen) | Model alone, tables TP/FP/FN | Model alone, chairs P / R | In the app, tables TP/FP/FN |
+|---|---|---|---|---|---|
+| v2 (shipped) | synthetic only | Golden | 44 / 1 / 2 | 0.920 / 0.920 | 46 / 1 / 0 |
+| v2 (shipped) | synthetic only | ORNEK | 166 / 0 / 0 | — | 165 / 1 / 1 |
+| foldA | + Golden | ORNEK | 166 / 0 / 0 | — | 165 / 1 / 1 |
+| foldB | + ORNEK | Golden | **42 / 1 / 4** | **0.967 / 0.788** | **46 / 2 / 0** |
+
+**What it says:**
+- Adding one real venue did not help the other. foldA could not improve on
+  ORNEK, which v2 already scores 166/0/0.
+- foldB is WORSE on Golden than the synthetic-only v2: table recall 0.957 →
+  0.913, chair recall 0.920 → 0.788, and one more phantom table in the app.
+  ORNEK draws no chairs; its "no chair here" labels and its single symbol
+  style pulled the model away from a drawn-furniture plan.
+- So v2 stays active. A model trained on both venues would have no unseen
+  venue left to check it against, and foldB shows what that risks.
+- **Two folds are two data points**, not a distribution. The honest headline
+  stays "real blind: NOT MEASURED".
+
+## Teacher → person → dataset → training → package → load (scripted teacher)
+
+`MERIT_TRAIN_PYTHON=… node benchmarks/offline-intelligence/teacher-e2e.mjs` →
+`teacher-e2e-latest.json`. The teacher is `tests/lib/fake-anthropic.mjs`.
+Its answers are SCRIPTED, so this proves the path and says nothing about any
+model's quality. **12 / 12 passed:**
+
+1. **The teacher suggests.** Its three findings arrive as suggestions, and
+   nothing changes.
+2. **A person decides.** They accept a missing table and a chair, dismiss a
+   "not an object", confirm one table and reject another, all through the
+   review's single writer.
+3. **The app's own Backup button** writes the file. `export_plans.py` makes
+   it a dataset:
+   - the accepted suggestions are `human-confirmed`, `suggestedBy: vlm`;
+   - the dismissed one is listed as `teacher-suggested` and is NOT an object;
+   - the reject is `rejected`.
+4. **The trainer reads only the person's labels.**
+   - It reads 5 targets, exactly the 5 human-confirmed objects.
+   - It ignores the 161 objects nobody verified, teaching them as neither
+     object nor background.
+   - The rejections are background.
+5. **Packaging.** 30 training steps (plumbing only), ONNX export, packaged
+   with its own sha256, outside the repository.
+6. **Loading and rollback.**
+   - The app loads the new version through its own loader, checked by
+     sha256.
+   - A wrong hash is refused (`MODEL_INTEGRITY`) and the analysis completes
+     classically.
+   - With no override the pinned v2 runs again: rollback is re-pinning.
+
+**Found by this run:** the model-reading relay (`npm run serve:vlm`) served
+only `index.html` and `src/`. An operator using the model reading therefore
+got the classical path alone (`MODEL_MISSING`). The relay now also serves
+`models/plan-detector/<version>/model.js`, and nothing else from that folder;
+`vlm-relay` checks both.
+
 ## Against the acceptance table (fused product, v2)
 
 | Row | Threshold | Golden | ORNEK |

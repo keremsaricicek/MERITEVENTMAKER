@@ -6,7 +6,8 @@
 // One small Node process that does two things on ONE origin, so the page's
 // Content-Security-Policy (connect-src 'self') needs no exception:
 //
-//   1. serves the app itself — index.html and src/, nothing else on the disk;
+//   1. serves the app itself — index.html, src/ and the pinned local model
+//      files (models/plan-detector/<version>/model.js), nothing else on the disk;
 //   2. answers /vlm-relay/*, the only door through which a plan image reaches a
 //      vision-language model. The page never holds the key and never talks to
 //      Anthropic; it sends this process a plan image and the detector's boxes,
@@ -130,9 +131,13 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
 
   function serveStatic(req, res, pathname) {
     let rel = pathname === "/" ? "/index.html" : pathname;
-    // index.html and src/ only: the relay's own directory, the data directory,
-    // node_modules and everything else on the disk are not the app.
-    if (!(rel === "/index.html" || /^\/src\/[A-Za-z0-9._/-]+$/.test(rel)) || rel.includes("..")) { res.writeHead(404, { "content-type": "text/plain" }).end("not found"); return; }
+    // index.html, src/ and the local plan-symbol detector's pinned model files
+    // (models/plan-detector/<version>/model.js, which src/plan-model.js loads and
+    // checks by sha256) only: the relay's own directory, the data directory,
+    // node_modules, a model's manifest and everything else on the disk are not
+    // the app. Without the model path the app served here ran the classical
+    // path alone and said MODEL_MISSING (benchmarks/offline-intelligence/teacher-e2e.mjs).
+    if (!(rel === "/index.html" || /^\/src\/[A-Za-z0-9._/-]+$/.test(rel) || /^\/models\/plan-detector\/[A-Za-z0-9._-]+\/model\.js$/.test(rel)) || rel.includes("..")) { res.writeHead(404, { "content-type": "text/plain" }).end("not found"); return; }
     const target = path.join(root, rel);
     if (!target.startsWith(path.join(root, path.sep)) && target !== path.join(root, "index.html")) { res.writeHead(403).end(); return; }
     fs.stat(target, (err, st) => {
