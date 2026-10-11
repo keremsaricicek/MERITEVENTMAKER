@@ -25,6 +25,54 @@ object **is**, not on where the detector happened to put a box.
 
 Re-measure with `npm run benchmark:memory`.
 
+### 2026-10-11 — a recognition layer, built, measured, and not shipped
+
+**Question.** Can the remaining losses be recovered from the confirmed crop
+itself? The idea was to look for a confirmed object the detector no longer finds
+at the spot where the plan's own strong matches place it, and re-make it if the
+learned embedding there is at cosine ≥ 0.9.
+
+**Design.** `MeritPlanMemory.recognise` refused on any one of these:
+- the decision is not a confirmation;
+- the frame is not established (fewer than four strong matches, or movement no
+  single transform explains);
+- any detection stands on the spot;
+- the crop does not look like the confirmed one.
+
+A decision the matcher called AMBIGUOUS was looked for only at its own spot,
+never by choosing between the tied candidates. A Node suite pinned every
+refusal on its own.
+
+**Measured:** 0 recognised on all seven scenarios. Retention stayed 0.8447 and
+the wrong-application rate 0.0073.
+
+The layer records every refusal with its reason, read from the app's own pass:
+
+| scenario | not retained | what the layer recorded |
+|---|--:|---|
+| jpeg-q20 | 12 | 8 confirmations considered, all 8 refused because **a detection stands on the spot**, at overlap 1.00. It is a detection of a different shape: a rectangle spanning the table and its neighbour, or a square read as round. |
+| crop-pad | 1 | refused: too few strong matches to establish a frame |
+| grayscale, downscale-70, rotate-2, blur | 2–4 | not asked: in the app's own pass no confirmation was left unplaced or tied |
+| identical | 0 | not asked |
+
+The unretained decisions the scorer names in the last two rows are rejections
+and reclassifications. The same three objects come up every time: a rejected
+rectangle at a chair's position (c012), a table re-typed as a chair beside a
+column (t042, the one wrong application on grayscale), and a rejected bistro
+(t044). This layer does not touch any of them.
+
+The decision therefore has no single object to land on. Re-making a second
+object on top of a detection that already covers it would be the fabrication
+this layer exists to avoid, so the refusal is correct and the layer has nothing
+to recover on this corpus. It adds a code path with no measured benefit, so it
+is not in the product. The patch, the suite and the probe that produced the
+table above are kept outside the repository.
+
+What would move this number is the **detector's stability under degradation**:
+the same object read as the same shape after a JPEG round trip at q20. That
+belongs to the detector's benchmarks, not to memory. The §23 targets (≥ 0.98,
+≤ 0.01) remain **not met**.
+
 ### 2026-10-10 — the global transform is affine, and a plan scanned askew is recovered
 
 At the start of this session the detector had moved on and this corpus read
