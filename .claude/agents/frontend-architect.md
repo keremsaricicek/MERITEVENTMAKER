@@ -50,13 +50,13 @@ commit as the change that moves it.
 | Fact | Value | How to re-measure |
 |---|---|---|
 | `src/*.js` files | **89** | `ls src/*.js \| wc -l` |
-| `src/` total lines | **30,469** | `wc -l src/*.js` |
+| `src/` total lines | **30,511** | `wc -l src/*.js` |
 | `app-v8.js` | **5,300** lines (5,740 right after the detection extraction and 8,543 before it — history, in CLAUDE.md) | `wc -l src/app-v8.js` |
 | Longest single line in `app-v8.js` | **1,677** chars; **14** lines exceed 500 | `awk '{print length}' src/app-v8.js \| sort -rn \| head -1` |
 | `plan-detection-classical.js` | **231** lines — the orchestrator `detect()` over seven stage modules (Split A/B) | `wc -l src/plan-detection-classical.js` |
 | Files exporting `globalThis.Merit*` | **86** of **89** | `grep -l "globalThis.Merit" src/*.js \| wc -l` |
 | Classic `<script>` tags in `index.html` | **88**, fixed order, `app-v8.js` LAST (plus one `type="module"` PDF loader) | `grep -c '<script src="src/' index.html` |
-| Test suites | **138** (**11** slow); checks printed by the run | `npm run test:all` |
+| Test suites | **139** (**11** slow); checks printed by the run | `npm run test:all` |
 | CI jobs | **5** parallel, split by what a failure means | `.github/workflows/ci.yml` |
 | Offline verification | every check the verifier prints, by RUNNING the built artifact | `npm run verify:offline` |
 

@@ -20,7 +20,49 @@
   // connect them, and both are honored on every recompute so a human answer
   // has a real, persistent effect instead of being logged and ignored.
   function pairKey(idA, idB) { return idA < idB ? `${idA}|${idB}` : `${idB}|${idA}`; }
-  function buildFurnitureGroups(tableCandidates, decisions = []) {
+
+  // TURNED TABLES ARE COMPARED IN THEIR OWN FRAME. A table carries its
+  // unrotated box around its centre plus a rotation (the detector keeps it in
+  // (-45, 45]); the contact rule below reads that box as if it were axis-
+  // aligned, so a row of tables pushed together at 30 degrees looked like a
+  // diagonal of separate boxes and was never joined (benchmarks/relations:
+  // 36 of 93 turned rows). Two tables turned alike (within 10 degrees, square
+  // symmetry included) are measured along their shared axes instead — the same
+  // gap and the same alignment test, on the same 0.28 / 0.35 of a side. The
+  // percent box is anisotropic (x is a share of the width, y of the height),
+  // so a turn is only meaningful after y is put in the same unit as x:
+  // `aspect` is the plan's width over its height. Tables that are not turned
+  // (both within 5 degrees) and tables turned differently keep the contact rule
+  // exactly as it was.
+  const deg = c => Number.isFinite(c.rotation) ? c.rotation : 0;
+  function turnedFrame(a, b, aspect) {
+    const ra = deg(a), rb = deg(b);
+    if (Math.abs(ra) <= 5 && Math.abs(rb) <= 5) return null;
+    let d = ((rb - ra) % 90 + 90) % 90; if (d > 45) d -= 90;
+    if (Math.abs(d) > 10) return null;
+    const swap = Math.abs(rb - ra) > 45;
+    const t = -ra * Math.PI / 180, cos = Math.cos(t), sin = Math.sin(t);
+    const centre = c => ({ x: c.x + c.w / 2, y: (c.y + c.h / 2) / aspect });
+    const ca = centre(a), cb = centre(b);
+    const dx = cb.x - ca.x, dy = cb.y - ca.y;
+    const u = dx * cos - dy * sin, v = dx * sin + dy * cos;
+    const A = { w: a.w, h: a.h / aspect }, B = swap ? { w: b.h / aspect, h: b.w } : { w: b.w, h: b.h / aspect };
+    return { u, v, A, B };
+  }
+  function touchesAndAligns(a, b, aspect) {
+    const f = turnedFrame(a, b, aspect);
+    if (!f) {
+      const gap = GEOM.gapBetween(a, b), threshold = Math.min(a.w, a.h, b.w, b.h) * 0.28;
+      return gap <= threshold && GEOM.aligned(a, b);
+    }
+    const gu = Math.max(Math.abs(f.u) - (f.A.w + f.B.w) / 2, 0), gv = Math.max(Math.abs(f.v) - (f.A.h + f.B.h) / 2, 0);
+    const threshold = Math.min(f.A.w, f.A.h, f.B.w, f.B.h) * 0.28;
+    const aligned = Math.abs(f.v) <= Math.min(f.A.h, f.B.h) * 0.35 || Math.abs(f.u) <= Math.min(f.A.w, f.B.w) * 0.35;
+    return Math.hypot(gu, gv) <= threshold && aligned;
+  }
+
+  function buildFurnitureGroups(tableCandidates, decisions = [], options = {}) {
+    const aspect = Number.isFinite(options.aspect) && options.aspect > 0 ? options.aspect : 1;
     const n = tableCandidates.length, parent = Array.from({ length: n }, (_, i) => i);
     const find = i => (parent[i] === i ? i : (parent[i] = find(parent[i])));
     const union = (i, j) => { const a = find(i), b = find(j); if (a !== b) parent[a] = b; };
@@ -43,8 +85,7 @@
         // drawn furniture, made one ORNEK pair a "joined group" at a 20 px gap
         // between 80 px rings. Only a person's "merged" answer joins them.
         if (a.symbolFamily === true && b.symbolFamily === true && a.type === "round" && b.type === "round") continue;
-        const gap = GEOM.gapBetween(a, b), threshold = Math.min(a.w, a.h, b.w, b.h) * 0.28;
-        if (gap <= threshold && GEOM.aligned(a, b)) union(i, j);
+        if (touchesAndAligns(a, b, aspect)) union(i, j);
       }
     }
     for (const key of forcedPairs) {

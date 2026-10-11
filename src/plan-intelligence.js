@@ -176,7 +176,8 @@
     // joining it to a real table made a "group" out of a table and its own
     // split-off fragment. The same rule the room's seat count follows.
     const tableCandidates = analysis.candidates.filter(c => c.kind === "table" && CAPACITY.isOffered(c));
-    const furnitureGroups = GROUPS.buildFurnitureGroups(tableCandidates, analysis.groupingDecisions || []);
+    const furnitureGroups = GROUPS.buildFurnitureGroups(tableCandidates, analysis.groupingDecisions || [],
+      analysis.imageWidth > 0 && analysis.imageHeight > 0 ? { aspect: analysis.imageWidth / analysis.imageHeight } : {});
     const similarityGroups = GROUPS.buildSimilarityGroups(analysis.candidates);
     const reviewGroups = GROUPS.buildReviewGroups(analysis.candidates, similarityGroups);
     const uncertainQuestions = GROUPS.buildDifficultQuestions(analysis.candidates, furnitureGroups);
