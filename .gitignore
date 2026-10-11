@@ -31,3 +31,8 @@ benchmarks/plan-understanding/latest/
 .vlm-data/
 .env
 .env.*
+
+# The offline-intelligence comparison's per-run benchmark reports (each a full
+# run-benchmark.mjs report); results-<set>.json beside them is the record.
+benchmarks/offline-intelligence/.runs/
+training/__pycache__/
