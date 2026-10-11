@@ -146,6 +146,31 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   });
   checks.ok(digital.tables === digital.offered && digital.chairs >= 100 && digital.stage === 1 && digital.columns >= 1 && digital.groups >= 10 && digital.imgOpacity === "0",
     "the digital view redraws the plan from what was understood — every table offered, its chairs, the stage, the columns, the pushed-together tables — with the scan hidden", digital);
+  // Where each shape lands, not only how many: a chair detection is stored by
+  // its CENTRE and a table by its corner, and drawing a chair from its corner
+  // put every one half its own size off the scan under it.
+  const placed = await page.evaluate(() => {
+    const a = state.events[0].analysis, W = a.imageWidth, H = a.imageHeight;
+    // In drawing order: loose chairs (venue objects, stored by their corner) first, then each table's.
+    const live = a.candidates.filter((c) => c.status !== "rejected");
+    const want = [...live.filter((c) => c.kind === "venue" && c.type === "chair").map((c) => ({ x: c.x + c.w / 2, y: c.y + c.h / 2, w: c.w })),
+      ...live.filter((c) => c.kind === "table").flatMap((c) => c.chairDetections || [])].map((ch) => [ch.x / 100 * W, ch.y / 100 * H, ch.w / 100 * W]);
+    const drawn = [...document.querySelectorAll(".digital-plan .dg-chair")].map((r) => [+r.getAttribute("x") + +r.getAttribute("width") / 2, +r.getAttribute("y") + +r.getAttribute("height") / 2]);
+    let worst = 0, halfWidth = 0;
+    drawn.forEach(([x, y], i) => { worst = Math.max(worst, Math.hypot(x - want[i][0], y - want[i][1])); halfWidth = Math.max(halfWidth, want[i][2] / 2); });
+    return { chairs: drawn.length, expected: want.length, worstPx: Math.round(worst * 10) / 10, largestHalfWidthPx: Math.round(halfWidth * 10) / 10 };
+  });
+  checks.ok(placed.chairs === placed.expected && placed.worstPx <= 0.2,
+    "every drawn chair is centred on the chair the analysis found (within rounding), not shifted off it by half its size", placed);
+  const lettering = await page.evaluate(() => {
+    const svg = document.querySelector(".digital-plan"), paper = getComputedStyle(svg.querySelector(".dg-paper")).fill;
+    const num = svg.querySelector("text:not(.dg-badge)"), badges = [...svg.querySelectorAll(".dg-badge")].map((b) => b.textContent);
+    return { numberStroke: num && getComputedStyle(num).stroke, paper, badges: badges.slice(0, 3), worded: badges.length > 0 && badges.every((b) => /^\d+ (koltuk|seats)$/.test(b)) };
+  });
+  // The app's icon rule strokes every svg in currentColor; inherited by the
+  // lettering it drew a dark outline round every figure.
+  checks.ok(lettering.numberStroke === lettering.paper && lettering.worded,
+    "the digital view's figures carry a paper halo, not the icons' dark outline, and a pushed-together table's seats are worded (\"8 seats\"), never a bare figure that reads as a table number", lettering);
   await page.click('[data-read-view="original"]');
   await page.evaluate(() => { ui.lang = "en"; render(); });
   const en = await page.locator(".read-panel").textContent();

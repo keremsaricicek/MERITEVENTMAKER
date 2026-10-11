@@ -155,7 +155,13 @@
     // Lettering is sized to the plan, not to the object: a stage the width of
     // a third of the room does not get letters a hundred pixels tall.
     const cap = Math.max(11, Math.min(26, Math.max(W, H) / 55));
-    const label = (c, text, cls) => `<text class="${cls}" x="${X(c.x + c.w / 2)}" y="${Y(c.y + c.h / 2)}" font-size="${r1(Math.max(8, Math.min(cap, c.w / 100 * W / Math.max(3, text.length) * 1.5, c.h / 100 * H * 0.5)))}">${esc(text)}</text>`;
+    // A word longer than a number turns to run along a tall, narrow block
+    // instead of spilling across the tables beside it.
+    const label = (c, text, cls) => {
+      const wPx = c.w / 100 * W, hPx = c.h / 100 * H, size = (along, across) => Math.min(cap, along / Math.max(3, text.length) * 1.5, across * 0.5);
+      const turn = text.length > 3 && size(hPx, wPx) > size(wPx, hPx) * 1.3, cx = X(c.x + c.w / 2), cy = Y(c.y + c.h / 2);
+      return `<text class="${cls}" x="${cx}" y="${cy}" font-size="${r1(Math.max(8, turn ? size(hPx, wPx) : size(wPx, hPx)))}"${turn ? ` transform="rotate(-90 ${cx} ${cy})"` : ""}>${esc(text)}</text>`;
+    };
     const order = { venue: 0, table: 1 };
     for (const c of live.slice().sort((x, y) => (order[x.kind] ?? 2) - (order[y.kind] ?? 2))) {
       const held = c.selected === false && c.status !== "confirmed" ? " dg-held" : "";
@@ -166,7 +172,9 @@
         continue;
       }
       if (c.kind !== "table") continue;
-      for (const ch of c.chairDetections || []) out.push(`<rect class="dg-chair" x="${X(ch.x)}" y="${Y(ch.y)}" width="${X(ch.w)}" height="${Y(ch.h)}" rx="${r1(Math.min(X(ch.w), Y(ch.h)) / 4)}"${rot(ch)}/>`);
+      // A chair detection's x/y is its CENTRE, not its corner (MeritPlanFrames):
+      // drawn from the corner, every chair sat half its own size off the scan.
+      for (const ch of c.chairDetections || []) out.push(`<rect class="dg-chair" x="${X(ch.x - ch.w / 2)}" y="${Y(ch.y - ch.h / 2)}" width="${X(ch.w)}" height="${Y(ch.h)}" rx="${r1(Math.min(X(ch.w), Y(ch.h)) / 4)}"${ch.rotation ? ` transform="rotate(${r1(ch.rotation)} ${X(ch.x)} ${Y(ch.y)})"` : ""}/>`);
       out.push(c.type === "round"
         ? `<ellipse class="dg-table${held}" cx="${X(c.x + c.w / 2)}" cy="${Y(c.y + c.h / 2)}" rx="${X(c.w / 2)}" ry="${Y(c.h / 2)}"/>`
         : `<rect class="dg-table${held}" x="${X(c.x)}" y="${Y(c.y)}" width="${X(c.w)}" height="${Y(c.h)}" rx="${r1(Math.min(X(c.w), Y(c.h)) / 10)}"${rot(c)}/>`);
@@ -182,8 +190,15 @@
       const seats = m.reduce((k, c) => k + (c.chairDetections || []).length, 0);
       out.push(`<rect class="dg-group" x="${X(x0)}" y="${Y(y0)}" width="${X(x1 - x0)}" height="${Y(y1 - y0)}"/>`);
       if (seats) {
-        const fs = r1(Math.max(9, Math.min(cap * 0.75, Math.min(X(x1 - x0), Y(y1 - y0)) * 0.42))), bx = X(x1) + fs * 0.3, by = Y(y0) - fs * 0.25;
-        out.push(`<rect class="dg-badge-bg" x="${r1(bx - fs * 0.15)}" y="${r1(by - fs * 0.95)}" width="${r1(fs * (String(seats).length * 0.62 + 0.3))}" height="${r1(fs * 1.15)}" rx="${r1(fs * 0.3)}"/><text class="dg-badge" x="${r1(bx)}" y="${r1(by)}" font-size="${fs}">${seats}</text>`);
+        // Worded, not a bare figure (a lone "8" beside a table reads as its
+        // number), and set on the joined table itself, below any number read
+        // on it, rather than out over the chairs of the table next door.
+        const word = t("read.digital.seats", { n: seats }), numbered = m.some((c) => c.printedNumber && c.printedNumber.state === "VERIFIED");
+        // A long, narrow joined table carries it along its length, as a label does.
+        const gw = X(x1 - x0), gh = Y(y1 - y0), turn = gh > gw * 1.6, along = turn ? gh : gw, across = turn ? gw : gh;
+        const fs = r1(Math.max(8, Math.min(cap * 0.5, along * 0.9 / (word.length * 0.58 + 0.9), across * 0.3)));
+        const bx = X((x0 + x1) / 2) + (numbered && turn ? fs * 1.3 : 0), by = r1(Y((y0 + y1) / 2) + (numbered && !turn ? fs * 1.3 : 0)), bw = r1(fs * (word.length * 0.58 + 0.9));
+        out.push(`<g class="dg-seats"${turn ? ` transform="rotate(-90 ${r1(bx)} ${by})"` : ""}><rect class="dg-badge-bg" x="${r1(bx - bw / 2)}" y="${r1(by - fs * 0.75)}" width="${bw}" height="${r1(fs * 1.5)}" rx="${r1(fs * 0.75)}"/><text class="dg-badge" x="${r1(bx)}" y="${by}" font-size="${fs}">${esc(word)}</text></g>`);
       }
     }
     // What was understood but is not an object: places the sheet only writes
@@ -194,7 +209,7 @@
       const maybe = reading.sections.flatMap((x) => x.sentences).find((x) => x.key === "read.stage.maybe");
       for (const id of (maybe ? maybe.refs : [])) {
         const c = byId.get(id);
-        if (c) { out.push(`<rect class="dg-stage dg-held" x="${X(c.x)}" y="${Y(c.y)}" width="${X(c.w)}" height="${Y(c.h)}"/>`); out.push(label({ ...c, w: Math.max(c.w, 8) }, typeWord("stage", 1).toLocaleUpperCase(ui.lang === "tr" ? "tr" : "en") + " ?", "dg-label")); }
+        if (c) { out.push(`<rect class="dg-stage dg-held" x="${X(c.x)}" y="${Y(c.y)}" width="${X(c.w)}" height="${Y(c.h)}"/>`); out.push(label(c, typeWord("stage", 1).toLocaleUpperCase(ui.lang === "tr" ? "tr" : "en") + " ?", "dg-label")); }
       }
       const tag = (tx, text, cls) => {
         const fs = r1(Math.min(cap * 0.8, Math.max(10, Y(tx.box.h) * 0.8))), w = r1(Math.max(X(tx.box.w), text.length * fs * 0.62 + fs));

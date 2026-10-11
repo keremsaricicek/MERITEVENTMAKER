@@ -604,6 +604,7 @@
     "read.sizeItem": { en: "{n} × {size} tables", tr: "{n} × {size} masa" },
     "read.view.original": { en: "Original", tr: "Orijinal" },
     "read.view.digital": { en: "Digital", tr: "Dijital" },
+    "read.digital.seats": { en: "{n} seats", tr: "{n} koltuk" },
     "read.view.both": { en: "Both", tr: "Üst üste" },
     "read.view.label": { en: "How to show the plan", tr: "Planın gösterimi" },
     "scene.label": { en: "Ask about the plan", tr: "Plana soru sorun" },

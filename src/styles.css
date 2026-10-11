@@ -2299,7 +2299,10 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .read-mark.word{border-color:var(--pi-warn);background:rgba(181,136,63,.12);box-shadow:0 0 0 3px rgba(181,136,63,.18)}
 .read-mark.region{border-style:dashed;background:transparent;box-shadow:none}
 /* The digital view: the plan redrawn from what was understood */
-.digital-plan{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.digital-plan{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;stroke:none;stroke-width:1}
+/* The app-wide icon rule (svg{stroke:currentColor}) outlined every letter here; a paper halo instead keeps a word legible over the scan in Both */
+.digital-plan text{stroke:var(--pi-surface);stroke-width:.14em;stroke-linejoin:round;paint-order:stroke fill}
+.digital-plan .dg-badge{stroke:none}
 .view-digital .planintel-map-inner > img{opacity:0}
 .view-both .planintel-map-inner > img{opacity:.38}
 .view-digital .candidate-box:not(.selected),.view-both .candidate-box:not(.selected){border-color:transparent;background:transparent}
@@ -2319,8 +2322,8 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .dg-group{fill:none;stroke:var(--pi-accent);stroke-width:1.6;stroke-dasharray:6 4}
 .dg-label{fill:var(--pi-accent-strong);font-weight:700;letter-spacing:.06em;text-anchor:middle;dominant-baseline:central;font-family:inherit}
 .dg-number{fill:#3b362c;font-weight:700;text-anchor:middle;dominant-baseline:central;font-family:inherit}
-.dg-badge{fill:#fff;font-weight:800;text-anchor:start;dominant-baseline:auto;font-family:inherit}
-.dg-badge-bg{fill:var(--pi-accent-strong)}
+.dg-badge{fill:var(--pi-accent-strong);font-weight:700;text-anchor:middle;dominant-baseline:central;font-family:inherit}
+.dg-badge-bg{fill:var(--pi-surface);stroke:var(--pi-accent);stroke-width:1.2}
 .dg-place rect{fill:rgba(181,136,63,.12);stroke:var(--pi-warn);stroke-width:1.2}
 .dg-place text,.dg-title text,.dg-capacity text{fill:#3b362c;font-weight:700;text-anchor:middle;dominant-baseline:central;font-family:inherit;letter-spacing:.02em}
 .dg-technical rect{fill:rgba(47,111,102,.10);stroke:var(--pi-accent)}

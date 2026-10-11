@@ -42,6 +42,14 @@ over the scan. It draws:
 Teach it ("this block is the stage") and it is drawn as the stage and read back
 as yours.
 
+Close-ups, scan / digital / both: `screens/digital-tables-golden.png` and
+`screens/digital-tables-ornek.png`. Each chair is drawn on the chair the
+analysis found. Before 2026-10-11 every chair was drawn half its own size off
+the scan, because a chair detection's x/y is its centre and it was read as a
+corner; `plan-reading` now checks where every chair lands. The ORNEK close-up
+also shows what is still missing. Table 73 was not found, and 72's number was
+not read, so its circle is drawn blank. Nothing is invented to fill either gap.
+
 ## Measured
 
 `node benchmarks/plan-reading/measure-structure.mjs` (real detector, pinned OCR,
@@ -70,6 +78,6 @@ Reading the plan takes about 6–9 ms. Time and memory on two CPU cores are in
   "possible stage" rule are generic, but they are only proven on these two
   plans. They are checked again on each new venue (`../plan-understanding/NEW-VENUES.md`).
 
-Suites: `plan-reading` (fast, 22 checks, mutation-checked), `plan-reading-ornek`
+Suites: `plan-reading` (fast, 24 checks, mutation-checked), `plan-reading-ornek`
 (slow, 11 checks, real OCR), `a11y-scan` (the panel and the digital view, both
 languages). Screens: `screens/` (1920 / 2560 / 1440, TR and EN).
