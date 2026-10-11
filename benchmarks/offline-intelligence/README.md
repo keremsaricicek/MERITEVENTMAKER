@@ -242,6 +242,48 @@ the other's terms.
   number is worse than an unread one.
 - **v4 stays.** PP-OCRv5 is rejected again, now on fair terms.
 
+## Hardware: two cores, a 4 GB memory cap (Linux simulation, NOT a Windows laptop)
+
+`MERIT_MEM_CGROUP=/sys/fs/cgroup/memory/<cap> taskset -c 0,1 node
+benchmarks/hardware/measure-constrained.mjs 3`, with `MERIT_BENCH_MODEL=off`
+for the same build without the local detector. Three runs each; median /
+p95. Results: `benchmarks/hardware/constrained-latest.json` and
+`constrained-latest-model-off.json`.
+
+| Same machine, same day | Golden analysis | ORNEK analysis | Longest main-thread task (G / O) | Peak browser memory (G / O) |
+|---|---|---|---|---|
+| `a043f26` (before this programme) | 13.8 / 15.4 s | 70.1 / 70.9 s | — | 1.05 / 1.46 GB |
+| now, model off | 17.0 / 17.2 s | 72.7 / 84.1 s | 2.4 / 5.3 s | 1.09 / 1.44 GB |
+| now, model on (run 1) | 18.1 / 18.4 s | 75.5 / 79.6 s | 3.3 / 4.8 s | 1.08 / 1.47 GB |
+| now, model on (run 2) | 16.2 / 16.3 s | 69.0 / 69.0 s | 3.5 / 4.5 s | 1.04 / 1.46 GB |
+
+- **The model's own cost**, recorded by the app:
+  - inference 2.9 s median (3.5 s p95);
+  - cold load 0.3–1.0 s (fetch, base64 decode, sha256, session).
+  Run-to-run noise on this machine (±3 s) is larger than the model's share
+  of the total, so "on minus off" is not a usable measure here.
+- **The memory cap was never reached** (failcnt 0, cgroup peak ≤ 1.37 GB of
+  4 GB).
+- **This machine is slower today** than when `a043f26`'s 10.4 / 50.2 s was
+  recorded: the same commit now measures 13.8 / 70.1 s.
+
+| Acceptance row | Threshold | Measured | |
+|---|---|---|---|
+| ORNEK-size plan p50 / p95 | ≤ 30 s / ≤ 60 s | 69–76 s / 69–80 s | **NOT MET** |
+| Golden-size plan p50 / p95 | ≤ 10 s / ≤ 20 s | 16–18 s / 16–18 s | p50 **NOT MET**, p95 met |
+| Model load (cold) | ≤ 5 s | 0.3–1.0 s | met |
+| Peak browser memory | ≤ 2.0 GB | 1.04–1.49 GB | met |
+| Longest main-thread task | ≤ 500 ms | 3.3–5.7 s | **NOT MET**, with or without the model |
+
+**Where the time goes is not the model.** It is the classical detection and
+OCR stages, which run on the page's main thread. Two changes would address
+it, neither done:
+- moving the model's inference to a worker (onnxruntime-web's proxy
+  worker);
+- moving classical detection off the main thread.
+
+**Not measured:** a real Windows laptop with 8 GB.
+
 ## Against the acceptance table (fused product, v2)
 
 | Row | Threshold | Golden | ORNEK |

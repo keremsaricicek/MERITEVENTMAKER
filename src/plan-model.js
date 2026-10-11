@@ -58,7 +58,7 @@
     const x = globalThis.MERIT_PLAN_MODEL_PIN_OVERRIDE;
     return x && typeof x.file === "string" && x.bytes > 0 && typeof x.sha256 === "string" ? Object.assign({}, PIN, x) : PIN;
   };
-  let session = null, state = "idle", loading = null, lastError = null, integrity = null;
+  let session = null, state = "idle", loading = null, lastError = null, integrity = null, loadMs = null;
   const fail = (code, message) => Object.assign(new Error(message), { modelCode: code });
 
   const loadScript = (src) => new Promise((resolve, reject) => {
@@ -80,6 +80,7 @@
     loading = (async () => {
       try {
         state = "loading";
+        const loadStartedAt = performance.now();
         const pin = o.pin || pinNow();
         if (globalThis.MERIT_PLAN_MODEL_DISABLED) throw fail("MODEL_DISABLED", String(globalThis.MERIT_PLAN_MODEL_DISABLED));
         const ort = globalThis.ort;
@@ -95,6 +96,9 @@
         if (canHash && (await sha256Hex(bytes)) !== pin.sha256) throw fail("MODEL_INTEGRITY", "model sha256 is not the pinned one");
         integrity = canHash ? "sha256" : "size-only (no WebCrypto in this context)";
         session = await ort.InferenceSession.create(bytes, { executionProviders: ["wasm"], graphOptimizationLevel: "all" });
+        // Cold load, measured: fetching the file, decoding it, checking its
+        // sha256 and building the session. Reported, never assumed.
+        loadMs = Math.round(performance.now() - loadStartedAt);
         state = "ready";
         return true;
       } catch (error) {
@@ -170,7 +174,7 @@
 
   function describe() {
     return { id: PIN.id, version: pinNow().version, trainedModel: true, domain: "plan symbols: tables, chairs, columns — not rooms, not numbers",
-      trainedOn: pinNow().trainedOn, integrity, state };
+      trainedOn: pinNow().trainedOn, integrity, state, loadMs };
   }
 
   async function release() {

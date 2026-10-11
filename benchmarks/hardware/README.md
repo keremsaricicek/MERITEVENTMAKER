@@ -27,3 +27,29 @@ go to `constrained-latest.json`.
   pinned to two cores of a server CPU. A low-power laptop CPU may be slower per
   core. The figure to confirm on the target machine is the ORNEK analysis time.
   A person can do that on the target machine; it is not simulated here.
+
+## 2026-10-11: with the local plan-symbol detector, a memory cap and main-thread blocking
+
+Measured again with:
+- a 4 GB memory cgroup (`MERIT_MEM_CGROUP`);
+- the longest main-thread task recorded;
+- the same build also measured without the detector (`MERIT_BENCH_MODEL=off`).
+
+The full table is in `benchmarks/offline-intelligence/README.md` (Hardware).
+
+**Short version:** the machine itself measured `a043f26` at 13.8 / 70.1 s
+that day, where the table above says 10.4 / 50.2 s.
+
+**With the detector:**
+
+| | Golden | ORNEK |
+|---|---|---|
+| Analysis | 16–18 s | 69–76 s |
+| Peak browser memory | 1.04–1.08 GB | 1.46–1.49 GB |
+| Longest task on the page | 3.3–3.5 s | 4.5–4.8 s |
+
+- **The detector's own cost:** 2.9 s inference and 0.3–1.0 s cold load.
+- **The cap was never hit** (failcnt 0).
+- **Main thread:** the page's main thread is blocked for seconds during an
+  analysis, with or without the detector. That misses the 500 ms target and
+  is open.

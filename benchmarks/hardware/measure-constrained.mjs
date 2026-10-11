@@ -46,18 +46,22 @@ function browserRssMB(rootPid) {
 // own peak (RSS + page cache, every process in it) and its failcnt (times the
 // limit was hit) are recorded per run.
 const CG = process.env.MERIT_MEM_CGROUP || null;
+const MODEL_OFF = process.env.MERIT_BENCH_MODEL === "off";
 if (CG) fs.writeFileSync(path.join(CG, "cgroup.procs"), String(process.pid));
 const app = await serveApp();
 const results = {};
 try {
   for (const [name, file] of PLANS) {
-    results[name] = { detectMs: [], readMs: [], peakPssMB: [], peakHeapMB: [], longestTaskMs: [], totalBlockingMs: [], localModelMs: [], ...(CG ? { cgroupPeakMB: [], cgroupFailcnt: [] } : {}) };
+    results[name] = { detectMs: [], readMs: [], peakPssMB: [], peakHeapMB: [], longestTaskMs: [], totalBlockingMs: [], localModelMs: [], localModelLoadMs: [], ...(CG ? { cgroupPeakMB: [], cgroupFailcnt: [] } : {}) };
     for (let i = 0; i < RUNS; i++) {
       const browser = await launchChromium();
       // The browser is a child of this process; everything under it is the browser.
       const pid = process.pid;
       const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
       await routeVendorFromCache(page);
+      // MERIT_BENCH_MODEL=off measures the same build with the local detector
+      // switched off, so its share of the time is measured, not assumed.
+      if (MODEL_OFF) await page.addInitScript(() => { globalThis.MERIT_PLAN_MODEL_DISABLED = "hardware measurement: classical only"; });
       // Main-thread responsiveness during the analysis: every task over 50 ms
       // the browser reports, so the answer is "the page froze for N ms at
       // worst", not a feeling.
@@ -90,6 +94,7 @@ try {
       results[name].longestTaskMs.push(Math.round(Math.max(0, ...lt.tasks)));
       results[name].totalBlockingMs.push(Math.round(lt.tasks.reduce((a, d) => a + Math.max(0, d - 50), 0)));
       results[name].localModelMs.push(lt.model && lt.model.available ? lt.model.ms : null);
+      results[name].localModelLoadMs.push(lt.model && lt.model.available && lt.model.model ? lt.model.model.loadMs ?? null : null);
       if (CG) {
         results[name].cgroupPeakMB.push(Math.round(Number(fs.readFileSync(path.join(CG, "memory.max_usage_in_bytes"), "utf8")) / 1048576));
         results[name].cgroupFailcnt.push(Number(fs.readFileSync(path.join(CG, "memory.failcnt"), "utf8")));
@@ -102,5 +107,6 @@ try {
 const summary = { measuredOn: new Date().toISOString(), cpu: cores, runs: RUNS, node: process.version,
   memoryCgroup: CG ? { path: CG, limitMB: Math.round(Number(fs.readFileSync(path.join(CG, "memory.limit_in_bytes"), "utf8")) / 1048576) } : null,
   plans: Object.fromEntries(Object.entries(results).map(([k, v]) => [k, Object.fromEntries(Object.entries(v).map(([m, arr]) => [m, { median: q(arr, 0.5), p95: q(arr, 0.95), all: arr }]))])) };
-fs.writeFileSync(path.join(HERE, "constrained-latest.json"), JSON.stringify(summary, null, 1));
+summary.localDetector = MODEL_OFF ? "off (MERIT_BENCH_MODEL=off)" : "on";
+fs.writeFileSync(path.join(HERE, MODEL_OFF ? "constrained-latest-model-off.json" : "constrained-latest.json"), JSON.stringify(summary, null, 1));
 console.log(JSON.stringify(summary.plans, null, 1));
