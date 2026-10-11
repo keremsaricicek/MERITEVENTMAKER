@@ -178,7 +178,10 @@
           if (paths && paths.none) throw fail("ENGINE_NOT_BUNDLED", paths.none);
           const embedded = paths && paths.embedded;
           const X = embedded ? null : experiment(), P = X || PINS;
-          this.pins = { id: P.id, label: P.label, models: P.models };
+          // MERIT_PPOCR_DET_EXPERIMENT: a benchmark measuring the PRODUCT's
+          // model with other detection settings (never set by the product).
+          const detX = !embedded && globalThis.MERIT_PPOCR_DET_EXPERIMENT && typeof globalThis.MERIT_PPOCR_DET_EXPERIMENT === "object" ? globalThis.MERIT_PPOCR_DET_EXPERIMENT : null;
+          this.pins = { id: P.id, label: P.label, models: P.models, det: P.det || detX };
           if (X) {
             if (!globalThis[X.keysGlobal]) await loadScript(X.keysScript);
             this.keys = globalThis[X.keysGlobal];
@@ -253,15 +256,26 @@
       const yieldNow = () => new Promise(r => setTimeout(r, 0));
       await this.load();
       const ort = globalThis.ort, W = image.naturalWidth || image.width, H = image.naturalHeight || image.height;
-      const [dw, dh] = detSize(W, H, o.maxSide || 2000, o.limitMin || 736);
+      // Detection pre/post-processing. The product's values are the defaults;
+      // a benchmark experiment may state another model's OFFICIAL ones (its
+      // own size limits, ImageNet normalisation, box threshold, unclip ratio)
+      // so two models are compared each on its own terms, not one on the
+      // other's (benchmarks/ocr/compare-ppocr.mjs).
+      const D = Object.assign({ norm: "halfrange", maxSide: 2000, limitMin: 736, thresh: 0.3, boxThresh: 0.5, unclipRatio: 1.6 }, (this.pins && this.pins.det) || {});
+      const [dw, dh] = detSize(W, H, o.maxSide || D.maxSide, o.limitMin ?? D.limitMin);
       const c = document.createElement("canvas"); c.width = dw; c.height = dh;
       const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(image, 0, 0, dw, dh);
       const px = g.getImageData(0, 0, dw, dh).data, n = dw * dh, t = new Float32Array(3 * n);
-      for (let i = 0; i < n; i++) { t[i] = px[4 * i + 2] / 127.5 - 1; t[n + i] = px[4 * i + 1] / 127.5 - 1; t[2 * n + i] = px[4 * i] / 127.5 - 1; }
+      if (D.norm === "imagenet") {
+        // as the reference pipeline does it: BGR planes, each normalised with
+        // the ImageNet mean/std in that same channel order
+        const M = [0.485, 0.456, 0.406], S = [0.229, 0.224, 0.225];
+        for (let i = 0; i < n; i++) { t[i] = (px[4 * i + 2] / 255 - M[0]) / S[0]; t[n + i] = (px[4 * i + 1] / 255 - M[1]) / S[1]; t[2 * n + i] = (px[4 * i] / 255 - M[2]) / S[2]; }
+      } else for (let i = 0; i < n; i++) { t[i] = px[4 * i + 2] / 127.5 - 1; t[n + i] = px[4 * i + 1] / 127.5 - 1; t[2 * n + i] = px[4 * i] / 127.5 - 1; }
       check(); await yieldNow();
       const prob = (await this.det.run({ [this.det.inputNames[0]]: new ort.Tensor("float32", t, [1, 3, dh, dw]) }))[this.det.outputNames[0]];
       const tDet = performance.now() - t0;
-      const boxes = dbPost(prob.data, prob.dims[3], prob.dims[2], W, H, { thresh: 0.3, boxThresh: 0.5, unclipRatio: 1.6, minSize: 3 });
+      const boxes = dbPost(prob.data, prob.dims[3], prob.dims[2], W, H, { thresh: D.thresh, boxThresh: D.boxThresh, unclipRatio: D.unclipRatio, minSize: 3 });
       check();
       // Recognition in batches of six, ordered by aspect ratio, a tall box
       // read turned 90 degrees (as the reference implementation does).

@@ -40,13 +40,26 @@ const V5 = { id: "ppocr-v5-mobile-experiment", label: "PP-OCRv5 mobile (experime
   models: { package: "pdfmarkdown-ppocrv5-models", version: "1.0.0", license: "Apache-2.0",
     det: pin("detection/PP-OCRv5_mobile_det_infer.ort"), rec: pin("recognition/PP-OCRv5_mobile_rec_infer.onnx") },
   keysScript: KEYS_URL, keysGlobal: "MERIT_PPOCR_V5_KEYS", keysCount: dict.length };
+// Each model ALSO on its own official detection settings (2026-10-11): the first
+// comparison ran v5 through the product's v4-style pre-processing — x/127.5-1
+// normalisation, long side 2000, box threshold 0.5, unclip 1.6 — which is not
+// how either model is published to run. PaddleOCR's DB detectors normalise
+// with the ImageNet mean/std; PP-OCRv4 is published with the long side limited
+// to 960, PP-OCRv5 with the short side at least 64 and the long side up to 4000;
+// both with box threshold 0.6 and unclip 1.5.
+const OFFICIAL = {
+  v4: { norm: "imagenet", maxSide: 960, limitMin: 0, thresh: 0.3, boxThresh: 0.6, unclipRatio: 1.5 },
+  v5: { norm: "imagenet", maxSide: 4000, limitMin: 64, thresh: 0.3, boxThresh: 0.6, unclipRatio: 1.5 },
+};
 
 async function run(browser, baseUrl, engine, file) {
   const page = await browser.newPage({ viewport: { width: 1800, height: 1000 } });
   await routeVendorFromCache(page, { offline: true });
-  if (engine === "v5") {
+  if (engine.startsWith("v5")) {
     await page.route(KEYS_URL, (r) => r.fulfill({ status: 200, contentType: "text/javascript; charset=utf-8", body: `globalThis.MERIT_PPOCR_V5_KEYS=${JSON.stringify(dict)};` }));
-    await page.addInitScript((p) => { globalThis.MERIT_PPOCR_EXPERIMENT = p; }, V5);
+    await page.addInitScript((p) => { globalThis.MERIT_PPOCR_EXPERIMENT = p; }, engine === "v5-official" ? { ...V5, det: OFFICIAL.v5 } : V5);
+  } else if (engine === "v4-official") {
+    await page.addInitScript((d) => { globalThis.MERIT_PPOCR_DET_EXPERIMENT = d; }, OFFICIAL.v4);
   }
   await openApp(page, baseUrl, { lang: "en" });
   await createBlankEvent(page, { name: "OCR " + engine, date: futureDate() });
@@ -84,7 +97,7 @@ const report = { measuredOn: new Date().toISOString(), v5: { det: V5.models.det,
 try {
   for (const [name, file, annotFile] of [["ornek", "ornek-upright.png", "ornek-symbolic.json"], ["golden", "merit-real-venue-plan.png", null]]) {
     report.plans[name] = {};
-    for (const engine of ["v4", "v5"]) {
+    for (const engine of (process.env.ENGINES || "v4,v4-official,v5,v5-official").split(",")) {
       const r = await run(browser, app.baseUrl, engine, file);
       const row = { ms: r.ms, ocr: r.ocr, words: r.words.map((w) => `${w.text} [${w.category}]`) };
       if (annotFile) {

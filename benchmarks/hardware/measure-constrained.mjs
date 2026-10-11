@@ -41,17 +41,31 @@ function browserRssMB(rootPid) {
   return total / 1024;
 }
 
+// MERIT_MEM_CGROUP=/sys/fs/cgroup/memory/<name>: this process (and so the
+// browser) runs inside a memory cgroup whose limit the caller set; the cgroup's
+// own peak (RSS + page cache, every process in it) and its failcnt (times the
+// limit was hit) are recorded per run.
+const CG = process.env.MERIT_MEM_CGROUP || null;
+if (CG) fs.writeFileSync(path.join(CG, "cgroup.procs"), String(process.pid));
 const app = await serveApp();
 const results = {};
 try {
   for (const [name, file] of PLANS) {
-    results[name] = { detectMs: [], readMs: [], peakPssMB: [], peakHeapMB: [] };
+    results[name] = { detectMs: [], readMs: [], peakPssMB: [], peakHeapMB: [], longestTaskMs: [], totalBlockingMs: [], localModelMs: [], ...(CG ? { cgroupPeakMB: [], cgroupFailcnt: [] } : {}) };
     for (let i = 0; i < RUNS; i++) {
       const browser = await launchChromium();
       // The browser is a child of this process; everything under it is the browser.
       const pid = process.pid;
       const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
       await routeVendorFromCache(page);
+      // Main-thread responsiveness during the analysis: every task over 50 ms
+      // the browser reports, so the answer is "the page froze for N ms at
+      // worst", not a feeling.
+      await page.addInitScript(() => {
+        globalThis.__longTasks = [];
+        try { new PerformanceObserver((l) => { for (const e of l.getEntries()) globalThis.__longTasks.push(e.duration); }).observe({ type: "longtask", buffered: true }); } catch {}
+      });
+      if (CG) { try { fs.writeFileSync(path.join(CG, "memory.max_usage_in_bytes"), "0"); } catch {} }
       await openApp(page, app.baseUrl, { lang: "tr" });
       await createBlankEvent(page, { name: "HW", date: futureDate() });
       await importPlan(page, "data:image/png;base64," + fs.readFileSync(path.join(REPO_ROOT, "benchmarks/plans", file)).toString("base64"));
@@ -62,21 +76,31 @@ try {
         if (pid) peak = Math.max(peak, browserRssMB(pid));
         try { const m = await cdp.send("Performance.getMetrics"); const h = m.metrics.find((x) => x.name === "JSHeapUsedSize"); if (h) heap = Math.max(heap, h.value / 1048576); } catch {}
       }, 100);
+      await page.evaluate(() => { globalThis.__longTasks = []; });
       const t0 = Date.now();
       await runDetection(page, { timeout: 600000 });
       const detectMs = Date.now() - t0;
+      const lt = await page.evaluate(() => ({ tasks: globalThis.__longTasks || [], model: state.events[0].analysis.localModel || null }));
       const readMs = await page.evaluate(() => { const t = performance.now(); MeritPlanReading.read(state.events[0].analysis); return performance.now() - t; });
       await page.evaluate(() => { ui.tab = "floor"; ui.planMode = "review"; ui.readingOpen = true; ui.planView = "digital"; render(); });
       await page.waitForTimeout(800);
       clearInterval(timer);
       results[name].detectMs.push(detectMs); results[name].readMs.push(+readMs.toFixed(1));
       results[name].peakPssMB.push(Math.round(peak)); results[name].peakHeapMB.push(Math.round(heap));
-      console.log(`${name} run ${i + 1}: detect ${detectMs} ms, read ${readMs.toFixed(1)} ms, peak browser PSS ${Math.round(peak)} MB, peak JS heap ${Math.round(heap)} MB`);
+      results[name].longestTaskMs.push(Math.round(Math.max(0, ...lt.tasks)));
+      results[name].totalBlockingMs.push(Math.round(lt.tasks.reduce((a, d) => a + Math.max(0, d - 50), 0)));
+      results[name].localModelMs.push(lt.model && lt.model.available ? lt.model.ms : null);
+      if (CG) {
+        results[name].cgroupPeakMB.push(Math.round(Number(fs.readFileSync(path.join(CG, "memory.max_usage_in_bytes"), "utf8")) / 1048576));
+        results[name].cgroupFailcnt.push(Number(fs.readFileSync(path.join(CG, "memory.failcnt"), "utf8")));
+      }
+      console.log(`${name} run ${i + 1}: detect ${detectMs} ms, read ${readMs.toFixed(1)} ms, peak browser PSS ${Math.round(peak)} MB, peak JS heap ${Math.round(heap)} MB, longest task ${results[name].longestTaskMs.at(-1)} ms, model ${results[name].localModelMs.at(-1)} ms`);
       await browser.close();
     }
   }
 } finally { await app.close(); }
 const summary = { measuredOn: new Date().toISOString(), cpu: cores, runs: RUNS, node: process.version,
+  memoryCgroup: CG ? { path: CG, limitMB: Math.round(Number(fs.readFileSync(path.join(CG, "memory.limit_in_bytes"), "utf8")) / 1048576) } : null,
   plans: Object.fromEntries(Object.entries(results).map(([k, v]) => [k, Object.fromEntries(Object.entries(v).map(([m, arr]) => [m, { median: q(arr, 0.5), p95: q(arr, 0.95), all: arr }]))])) };
 fs.writeFileSync(path.join(HERE, "constrained-latest.json"), JSON.stringify(summary, null, 1));
 console.log(JSON.stringify(summary.plans, null, 1));
