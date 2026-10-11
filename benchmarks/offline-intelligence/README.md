@@ -133,3 +133,56 @@ run:
 - memory;
 - OCR;
 - hardware.
+
+## Decision memory: a rule tried, measured, and not shipped
+
+`npm run benchmark:memory -- --compare`, seven transformed copies of the
+Golden Plan, 161 scoreable decisions.
+
+| Measure | Target (ACCEPTANCE.md) | Measured |
+|---|---|---|
+| Retention | ≥ 0.98 | **0.8447** ✗ |
+| Wrong application | 0 (≤ 0.5 %) | **0.0073** ✗ (one decision, on the grayscale copy) |
+| Identity precision | — | 0.9927 |
+
+The worst copy is the JPEG-quality-20 rescan: 11 of 23 decisions kept, 12
+lost. Its conflicts are 11 ambiguous and 7 overruled.
+
+**Tried:** a duplicate rule. A non-strong match becomes strong when its
+runner-up overlaps the best candidate (IoU ≥ 0.5), on the theory that the
+ambiguity was two detections of one object.
+
+**Result:** every scenario identical to the recorded baseline, decision for
+decision. So the ambiguity is between genuinely distinct neighbouring tables,
+not duplicates. The rule was reverted and is not shipped. Retention and
+wrong-application remain **NOT MET**.
+
+## Local examples (exemplar search): measured, fails its row, not in the UI
+
+`node benchmarks/offline-intelligence/exemplar-measure.mjs` →
+`exemplar-latest.json`.
+
+- **Setup:** the model is switched off, so the search is measured on the
+  classical misses alone. The exemplars are k correct detections (what a
+  person would confirm). The search is normalised cross-correlation at four
+  quarter turns, threshold 0.72, excluding everything already found.
+
+| Plan, class | Misses before | k = 1: recovered / phantoms | k = 3: recovered / phantoms |
+|---|---|---|---|
+| Golden, tables | 0 | 0 / 0 | 0 / 0 |
+| Golden, chairs | 5 | 0 / 1 | 0 / 1 |
+| ORNEK, tables | 4 | 0 / 0 | **0 / 15** |
+
+Acceptance asks for ≥ 50 % of misses recovered and ≤ 1 phantom per 100
+objects. Measured: **0 % recovered**, and up to 15 phantoms on ORNEK's 166
+tables (9 per 100). **NOT MET.**
+
+**Why:**
+- ORNEK's four misses are the faint tables 73–76, printed at grey 238–242.
+  Their correlation with a dark exemplar stays under any threshold that
+  does not also admit text and boxes.
+- Golden's missed chairs are partly hidden under tables.
+
+So `src/plan-exemplar.js` stays as a measured component. It is not offered
+in the review UI, and no "find more like this" control exists.
+
