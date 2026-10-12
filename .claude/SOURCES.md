@@ -176,6 +176,46 @@ copied alongside each vendored skill — do not remove them.
 - **Vendored as:** `.claude/skills/senior-ml-engineer/`
 - **Installed:** 2026-08-21
 
+## Adapted external sources (3)
+
+Not vendored: each was rewritten for this repository, says so at its top, and
+keeps its source's licence file. Setup and verification record:
+`tools/model-dev/README.md`.
+
+### A1. merit-local-vision-training (adapted from huggingface-vision-trainer)
+- **Purpose:** local, CPU-only, zero-cost training / evaluation / dataset
+  pre-flight / ONNX optimisation for the project's own plan-symbol detector.
+- **Source:** `https://github.com/huggingface/skills`, path
+  `skills/huggingface-vision-trainer/`
+- **Commit:** `c3ff942be3e07116b475253f0a8fc4f54682c1a8` (2026-10-08)
+- **License:** Apache-2.0 — upstream root `LICENSE` copied unchanged as
+  `.claude/skills/merit-local-vision-training/LICENSE.txt`.
+- **Changed:** Hugging Face Jobs, Hub push, Trackio and cost estimation
+  removed; no upstream script copied. Kept: validate-before-train, bbox
+  sanitising, the reliability principles, COCO-style evaluation.
+  `scripts/inspect_dataset.py` is new code for this repository's annotation
+  format. D-FINE / RT-DETR / DETR / YOLOS / timm / SAM are listed as NOT
+  supported (Hub weights refused here).
+- **Installed:** 2026-10-12
+
+### A2–A3. ai-engineer, model-qa-specialist (adapted from agency-agents)
+- **Purpose:** training a detector candidate (`ai-engineer`) and auditing it
+  independently (`model-qa-specialist`) — kept as two agents so the one who
+  builds never judges.
+- **Source:** `https://github.com/msitarzewski/agency-agents`, paths
+  `engineering/engineering-ai-engineer.md` and
+  `specialized/specialized-model-qa.md` (no other role taken).
+- **Commit:** `f99f6aa910a442b0197b768ce0ea7751e35e2060` (2026-10-07)
+- **License:** MIT (Copyright (c) 2025 AgentLand Contributors) — copied as
+  `.claude/agents/LICENSE.agency-agents.txt`.
+- **Changed:** cloud AI, LLM/RAG, vector databases, recommenders, A/B testing,
+  model serving, PSI/Gini/KS/Hosmer-Lemeshow/SHAP/fairness sections removed.
+  Focus: offline work, detection, seating relations, data leakage, CPU cost.
+  Boundaries written into `computer-vision-engineer` and
+  `active-learning-engineer`.
+- **Installed:** 2026-10-12. Agents are read at session start: they were NOT
+  runnable in the session that created them.
+
 ## Researched but not vendored
 
 Real, strong sources that were investigated and deliberately **not**

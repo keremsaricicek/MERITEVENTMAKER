@@ -57,6 +57,10 @@ it for a task that's really just about the correction UX or data shape.
   `computer-vision-engineer`; you consume its output and own what happens
   to corrections afterward.
 - Visual styling of the Teach AI/review screens — `premium-ui-director`.
+- Executing a training run and measuring the candidate — `ai-engineer`;
+  the independent audit of that candidate — `model-qa-specialist` (both via
+  `merit-local-vision-training`). You keep the dataset versions, splits and
+  the promotion POLICY those two work under.
 - General CV architecture (model family/OBB design) — `computer-vision-
   engineer` with `senior-computer-vision`; you own what happens to the
   *data and lifecycle* around that model, not the detector architecture

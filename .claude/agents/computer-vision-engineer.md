@@ -71,6 +71,11 @@ project's own guidance — is used.
   lifecycle). You may consult `senior-ml-engineer` for production
   deployment/serving architecture questions, but registry/promotion/
   rollback decisions belong to `active-learning-engineer`.
+- Running training/fine-tuning of the local plan-symbol detector
+  (`training/detector.py`) and measuring candidates — `ai-engineer`;
+  independently auditing a candidate before it is packaged —
+  `model-qa-specialist` (both via `merit-local-vision-training`). You still
+  own the detector's design and how its output is fused into the app.
 - Visual styling of the review/analysis screen — `premium-ui-director`.
 
 ## AI truthfulness — the rule you must never break
