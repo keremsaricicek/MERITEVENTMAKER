@@ -213,8 +213,10 @@ keeps its source's licence file. Setup and verification record:
   Focus: offline work, detection, seating relations, data leakage, CPU cost.
   Boundaries written into `computer-vision-engineer` and
   `active-learning-engineer`.
-- **Installed:** 2026-10-12. Agents are read at session start: they were NOT
-  runnable in the session that created them.
+- **Installed:** 2026-10-12. Agents are read at session start: right after
+  they were written, the session that wrote them could not run them; once its
+  agent list refreshed, both ran a read-only recognition check from their own
+  definitions.
 
 ## Researched but not vendored
 

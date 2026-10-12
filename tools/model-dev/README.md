@@ -55,7 +55,7 @@ Outputs go to `tools/model-dev/out/` and training runs to `runs/` (both git-igno
 | Training smoke run (`synth.py` → `detector.py train` 30 steps → eval → export) | **pass**: 7 s training, ONNX 3 540 361 bytes, zero detections (expected; plumbing only) |
 | Outbound network during all of the above | **0 attempts** with `offline_env.py`. Without it: onnxruntime 3, Olive 8 attempts to mobile.events.data.microsoft.com (all refused by the proxy, nothing sent). `OLIVE_DISABLE_TELEMETRY=1` alone did NOT stop Olive; `onnxruntime.disable_telemetry_events()` did NOT stop ORT |
 | Skill recognised | **yes** in this session (listed and loaded via the Skill tool) |
-| Agents recognised | **not in this session** (`Agent type 'model-qa-specialist' not found`): agents are read when a session starts. Frontmatter parses like the existing agents. Open a new session on `claude/merit-concept3-plan-intelligence-rebirth` to use them |
+| Agents recognised | **yes, after a refresh**: right after they were written the call failed (`Agent type 'model-qa-specialist' not found`; the agent list is read when a session starts). The list was refreshed later in the same session, and both then ran a read-only recognition check and answered from their own definitions (provenance commit, verdict words / the command it must never run; `model-qa-specialist` has no Edit/Write). A new session on `claude/merit-concept3-plan-intelligence-rebirth` loads them from the start |
 
 ## Not solved by this setup
 
