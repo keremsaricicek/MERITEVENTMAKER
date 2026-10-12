@@ -139,3 +139,54 @@ remaining parts are judged on real blind plans:
 
 Until such plans exist, the honest headline is the cross-venue result plus
 "real blind: NOT MEASURED".
+
+## Additions, 2026-10-12 — fixed before any result of this programme
+
+Written at `597b0cc`, before the detection, training, relations and learning
+work of 2026-10-12 produced a single number. Nothing above is changed. Each row
+names the evidence class it can support.
+
+**Robustness** (the Golden plan rendered 15 ways by `benchmarks/robustness/`;
+robustness evidence only, never new-venue evidence). Measured at `597b0cc`:
+8 HEALTHY, 3 WEAK (blur, downscale-70, jpeg-q20), 5 SEVERE (bright-down,
+bright-up, contrast-high, hue-shift, lowres-roundtrip).
+
+| Measure | Threshold |
+|---|---|
+| Triage of every rendering (`run-robustness.mjs`'s own rule at `597b0cc`) | HEALTHY on all 15 (table F1 ≥ 0.90, chair F1 ≥ 0.90, no FP explosion, no recall collapse); none WEAK or SEVERE is the minimum |
+| Type stability: GT tables matched on the original AND on a rendering that keep the same type | ≥ 0.95 on every rendering |
+
+**Box quality** (reported per class; per family on synthetic sets).
+
+| Measure | Threshold |
+|---|---|
+| Table box IoU, 10th percentile, matched tables | ≥ 0.6 (same as the plan-understanding contract's `geometry.tableIoUP10`) |
+| Chair box IoU, median, matched chairs (product output) | ≥ 0.6 |
+| Table type accuracy per synthetic family (not only per real venue) | ≥ 0.95 |
+
+**Seating furniture in relations** (sofa, bench, banquette, armchair; on a new
+evaluation split whose definition is written in `benchmarks/relations/README.md`
+before it is scored).
+
+| Measure | Threshold |
+|---|---|
+| Seats counted twice | **0** |
+| Undivided sofa/bench/banquette with no printed rule: capacity reported as unknown | 100 % (never a default number) |
+| Usage groups including seating furniture, oracle boxes: precision / recall | ≥ 0.95 / ≥ 0.95 (end to end reported beside it) |
+
+**Activating a new detector version** — all must hold:
+- `model-qa-specialist` verdict SOUND, from a reviewer that did not train it;
+- at the fixed threshold 0.5: on no synthetic level, family or class with ≥ 100
+  objects is precision or recall lower than the active model's by more than
+  0.005, and no new false table on Golden or ORNEK;
+- a new blind set (families no run or rule has seen) scored once and reported;
+- product gates: `benchmark:baseline` no regression, `benchmark:adversarial
+  --compare` 0 blocking, false-positives no new failure, robustness no rendering
+  worse in triage, `verify:offline` passing, `npm run test:all` passing.
+
+**Timing reporting** (the ≤ 10 s requirement above is unchanged). Two clocks are
+reported separately: (a) import started → first usable result on screen, and
+(b) Analyse pressed → `analysisCompletedAtMs`. Cold and warm, 4 and 2 cores,
+median of at least 5 runs on the final build; a p95 from fewer than 20 runs is
+labelled indicative. Linux-container numbers are labelled as such and never
+presented as a Windows result.
