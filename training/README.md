@@ -259,3 +259,19 @@ the sets that judge it.
   fall by at least half against v2. *Activation* still needs E1's conditions
   against v2 — a furniture class is not a reason to accept a table regression.
   The furniture blind split (seed base 10) is scored once, at the end.
+
+**E4 result — `v5a` FAILS** (2026-10-17; 2,000 steps, 1,180 s; pooled numbers
+in `benchmarks/offline-intelligence/v5a-candidate-2026-10-17.json`). The furniture
+labels reached training (5 sampled scenes: 41 sofas, 28 benches, 21 banquettes)
+and the three channels did learn — their heat peaks at 0.43–0.47 on a furniture
+dev plan — but never reached the fixed 0.5: furniture recall 0 of 436 on the
+furniture dev split. The threshold was NOT lowered after seeing this. What did
+change: on the furniture scenes the model's own tables went 97 → 350 of 436 found
+and chair precision 0.344 → 0.971 (v2 read cushions as chairs: 828 false), and
+the 11 false tables that remain all stand on sofas (`diagnose_fp.py`). Against
+v2 under the E3 decode: val 0 regressions, held-out column recall only,
+generation-2 val 9 (chair recall on colour-arm 0.982 → 0.935, column recall
+0.855 → 0.788, table recall on cad-grey), ORNEK one new false table. Not
+packaged; the furniture blind split not scored. A next run would need the new
+heads trained longer or at a higher rate with generation-2 replay kept — a new
+experiment, written before it runs.

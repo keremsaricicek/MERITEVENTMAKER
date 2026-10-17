@@ -377,7 +377,9 @@ def score(p, dets):
     if K > 4:
         groups.update({"sofas": (4,), "benches": (5,), "banquettes": (6,), "seating": (4, 5, 6)})
     for name, ks in groups.items():
-        if not all(p.annotated[k] for k in ks):
+        # a class the annotation does not declare (a real plan annotated before
+        # the furniture classes existed) is not scored, as for any unannotated class
+        if not all(k < len(p.annotated) and p.annotated[k] for k in ks):
             continue
         gt = [(cx, cy) for k, cx, cy, w, h in p.objs if k in ks]
         dt = [(cx, cy) for k, cx, cy, w, h, s in dets if k in ks]
