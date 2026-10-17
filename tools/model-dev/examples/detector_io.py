@@ -79,7 +79,23 @@ def decode(heat, size, off, thr=0.5, topk=3000):
         k, y, x = ks[i], ys[i], xs[i]
         out.append((int(k), float((x + off[0, y, x]) * STRIDE), float((y + off[1, y, x]) * STRIDE),
                     float(math.exp(size[0, y, x]) * STRIDE), float(math.exp(size[1, y, x]) * STRIDE), float(sc[i])))
-    return out
+    return suppress_close(out)  # one threshold for every class here, so the order does not matter
+
+
+GROUP_OF = {0: 0, 1: 0, 2: 2, 3: 3}
+
+
+def suppress_close(dets):
+    """training/detector.py's suppress_close, unchanged: a detection whose centre
+    lies within half the short side of a stronger one of the same group (round
+    and rectangular tables together) is dropped."""
+    kept = []
+    for d in dets:
+        g = GROUP_OF.get(d[0], d[0])
+        if any(GROUP_OF.get(k[0], k[0]) == g and math.hypot(d[1] - k[1], d[2] - k[2]) < 0.5 * min(k[3], k[4]) for k in kept):
+            continue
+        kept.append(d)
+    return kept
 
 
 def run(session, img_path, thr=0.5):

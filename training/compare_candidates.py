@@ -15,7 +15,7 @@ import json
 import re
 from collections import defaultdict
 
-CLASSES = ("tables", "chairs", "columns")
+CLASSES = ("tables", "chairs", "columns", "sofas", "benches", "banquettes", "seating")
 
 
 def pool(report):
@@ -57,8 +57,8 @@ def main():
         row = {"group": k}
         for c in CLASSES:
             pb, rb, n = pr(*gb[k][c]); pc, rc, _ = pr(*gc[k][c])
-            if n == 0:
-                continue
+            if n == 0 or (gb[k][c] == [0, 0, 0] and c not in ("tables", "chairs", "columns")):
+                continue  # a class the base model does not have is reported by its own eval, not compared
             row[c] = {"n": n, "P": [None if pb is None else round(pb, 4), None if pc is None else round(pc, 4)],
                       "R": [None if rb is None else round(rb, 4), None if rc is None else round(rc, 4)]}
             if n >= a.min:

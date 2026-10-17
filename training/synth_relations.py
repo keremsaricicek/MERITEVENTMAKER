@@ -26,6 +26,23 @@ label a person could defend.
 `dev` draws in the training families; `blind` only in the blind families 14
 and 15. `--scan` passes the sheet through the L6 scan degradation, labels
 carried through the same transform.
+
+SEATING FURNITURE (`--furniture`, added 2026-10-17; its own seed base, so the
+sets above regenerate byte for byte):
+    bench-table     a long table with a bench along each long side
+    lounge          a low table with one or two sofas facing it, and armchairs
+    banquette-wall  one banquette serving two or three small tables, each with
+                    a chair opposite: ONE physical piece, several usage groups
+    sofa-apart      HARD NEGATIVE: a sofa near a table, its back to it, across
+                    paper: proximity is not membership
+A bench, sofa or banquette has a seat count only when its divisions are drawn
+(`seats: n`); undivided it is `seats: null` — "not shown", never a guess of
+three. `seatingGroups` names, per table, the furniture and chairs that serve it
+and the seats the picture shows (null when any member's are not shown); a
+banquette appears in the group of every table it serves (`sharedSeating`).
+
+    python training/synth_relations.py --out DIR --count 24 --split dev --furniture
+    python training/synth_relations.py --out DIR --count 400 --split train --furniture
 """
 import argparse
 import json
@@ -41,7 +58,9 @@ from synth_levels import FAMILIES, TRAIN_FAMILIES, BLIND_FAMILIES, Plan3, scanne
 from synth import SS  # noqa: E402
 
 SEEDS = {"dev": 7, "blind": 8}
+FURNITURE_SEEDS = {"dev": 9, "blind": 10, "train": 11}
 KINDS = ["merged", "merged-rot", "merged-L", "aisle", "aisle-rot", "parallel"]
+FURNITURE_KINDS = ["bench-table", "lounge", "banquette-wall", "sofa-apart"]
 
 
 def square(p, cx, cy, u, deg, chair_sides, cs):
@@ -130,7 +149,102 @@ def scene(p, rng, kind, cx, cy, cell, u, cs):
     return groups, separate
 
 
-def draw(seed, fam_idx, scan):
+def plain_table(p, cx, cy, w, h, deg, typ):
+    """A table with no chairs of its own (the furniture beside it seats it)."""
+    fam = p.fam
+    if typ == "round":
+        p.ellipse(cx, cy, w / 2, w / 2, fam["table_fill"], fam["line"], fam["lw"])
+    else:
+        p.rect(cx, cy, w, h, deg, fam["table_fill"], fam["line"], fam["lw"])
+    tid = p.oid("t")
+    p.objects.append(dict(id=tid, **{"class": "table"}, type=typ, cx=round(cx, 1), cy=round(cy, 1), w=round(w, 1), h=round(h, 1),
+                          rotation=round(deg % 360, 1) if typ != "round" else 0))
+    return tid
+
+
+def seats_of(p, oid):
+    return next(o for o in p.objects if o["id"] == oid).get("seats")
+
+
+def furniture_scene(p, rng, kind, cx, cy, u, cs):
+    """One seating-furniture scene. Returns (seating groups, separate pairs)."""
+    groups, separate = [], []
+    deg = rng.choice([0, 90, 0, 30, -30])
+    a = math.radians(deg)
+    ux, uy, vx, vy = math.cos(a), math.sin(a), -math.sin(a), math.cos(a)
+    if kind == "bench-table":
+        L, D = u * rng.uniform(2.6, 3.4), u * 0.95
+        tid = plain_table(p, cx, cy, L, D, deg, "rectangle")
+        bd = u * 0.42
+        members = []
+        for side in (-1, 1):
+            off = side * (D / 2 + bd / 2 + u * 0.08)
+            # the bench's own v points AWAY from the table on side +1, so a
+            # banquette back (cls banquette) would face out; a bench has none
+            bid = p.bench(cx + vx * off, cy + vy * off, L * 0.96, bd, deg, rng.random() < 0.5)
+            p.rels.append(dict(seating=bid, belongsTo=tid, method="generated"))
+            members.append(bid)
+        seats = [seats_of(p, b) for b in members]
+        groups.append(dict(table=tid, members=members, seats=None if None in seats else sum(seats)))
+    elif kind == "lounge":
+        typ = rng.choice(["round", "square", "rectangle"])
+        tw = u * (0.8 if typ != "rectangle" else 1.3)
+        th = u * 0.8
+        tid = plain_table(p, cx, cy, tw, th, deg, typ)
+        members = []
+        n = rng.choice([1, 2])
+        for side in ((1,) if n == 1 else (1, -1)):
+            SL, SD = u * rng.uniform(1.7, 2.3), u * 0.8
+            # sofa(): its back is drawn on its own -v side; to face the table
+            # from the +v side of the table, turn it half a turn
+            sdeg = deg + (180 if side == 1 else 0)
+            off = side * (th / 2 + SD / 2 + u * 0.18)
+            sid = p.sofa(cx + vx * off, cy + vy * off, SL, SD, sdeg, rng.random() < 0.5, table_id=tid)
+            members.append(sid)
+        for s2 in (-1, 1):
+            if rng.random() < 0.6:
+                off = s2 * (tw / 2 + cs * 0.9)
+                px, py = cx + ux * off, cy + uy * off
+                members.append(p.chair(px, py, cs * 1.1, math.degrees(math.atan2(cy - py, cx - px)), tid, typ="armchair"))
+        seats = [seats_of(p, m) if any(o["id"] == m and o["class"] == "sofa" for o in p.objects) else 1 for m in members]
+        groups.append(dict(table=tid, members=members, seats=None if None in seats else sum(seats)))
+    elif kind == "banquette-wall":
+        k = rng.choice([2, 3])
+        BL, BD = u * (1.25 * k), u * 0.5
+        divided = rng.random() < 0.5
+        # banquette(): its back is on its own -v side, the tables on +v
+        bid = p.bench(cx, cy, BL, BD, deg, divided, cls="banquette")
+        served = []
+        for i in range(k):
+            t = (i - (k - 1) / 2) * u * 1.25
+            tx, ty = cx + ux * t + vx * (BD / 2 + u * 0.55), cy + uy * t + vy * (BD / 2 + u * 0.55)
+            tid = plain_table(p, tx, ty, u * 0.8, u * 0.8, deg, "square")
+            px, py = tx + vx * (u * 0.4 + cs * 0.6), ty + vy * (u * 0.4 + cs * 0.6)
+            cid = p.chair(px, py, cs, math.degrees(math.atan2(ty - py, tx - px)), tid)
+            served.append(tid)
+            bseats = seats_of(p, bid)
+            share = None if bseats is None or bseats % k else bseats // k
+            groups.append(dict(table=tid, members=[bid, cid], seats=None if share is None else share + 1, sharedSeating=bid))
+        p.rels.append(dict(seating=bid, servesTables=served, method="generated"))
+    elif kind == "sofa-apart":
+        tid = p.oid("t")
+        p.objects.append(dict(id=tid, **{"class": "table"}, type="square", cx=round(cx, 1), cy=round(cy, 1), w=round(u, 1), h=round(u, 1), rotation=round(deg % 360, 1)))
+        p.rect(cx, cy, u, u, deg, p.fam["table_fill"], p.fam["line"], p.fam["lw"])
+        for side in (0, 1):  # the table keeps its own chairs, away from the sofa
+            dx, dy = (ux, uy) if side == 0 else (-ux, -uy)
+            px, py = cx + dx * (u / 2 + cs * 0.6), cy + dy * (u / 2 + cs * 0.6)
+            p.chair(px, py, cs, math.degrees(math.atan2(cy - py, cx - px)), tid)
+        p.objects[[o["id"] for o in p.objects].index(tid)]["seats"] = 2
+        SL, SD = u * 2.0, u * 0.8
+        gap = u * rng.uniform(0.8, 1.4)
+        off = u / 2 + gap + SD / 2
+        # its back (own -v) toward the table: it faces away
+        sid = p.sofa(cx + vx * off, cy + vy * off, SL, SD, deg, rng.random() < 0.5)
+        separate.append(dict(members=[sid, tid], gapSides=round(gap / u, 2)))
+    return groups, separate
+
+
+def draw(seed, fam_idx, scan, furniture=False):
     rng = random.Random(seed)
     fam = dict(FAMILIES[fam_idx])
     if fam["chair"] is None:  # a symbolic family draws no chairs; relation scenes are about furniture
@@ -145,40 +259,49 @@ def draw(seed, fam_idx, scan):
     cs = u * rng.uniform(0.5, 0.65)
     cell = u * 6.2
     cols, rows = int((W - 2 * m) // cell), int((H - 2 * m) // cell)
-    separate, kinds = [], []
+    separate, kinds, seating = [], [], []
     for r in range(rows):
         for c in range(cols):
-            kind = rng.choice(KINDS)
+            kind = rng.choice(FURNITURE_KINDS if furniture else KINDS)
             cx, cy = m + (c + 0.5) * (W - 2 * m) / cols, m + (r + 0.5) * (H - 2 * m) / rows
-            g, s = scene(p, rng, kind, cx, cy, cell, u, cs)
-            for ids in g:
-                if len(ids) > 1:
-                    p.groups.append(dict(id=f"g{len(p.groups) + 1:02d}", type="merged", members=ids, seats=None, scene=kind))
+            if furniture:
+                g, s = furniture_scene(p, rng, kind, cx, cy, u, cs)
+                seating += [dict(x, id=f"s{len(seating) + 1 + i:02d}", type="seating", scene=kind) for i, x in enumerate(g)]
+            else:
+                g, s = scene(p, rng, kind, cx, cy, cell, u, cs)
+                for ids in g:
+                    if len(ids) > 1:
+                        p.groups.append(dict(id=f"g{len(p.groups) + 1:02d}", type="merged", members=ids, seats=None, scene=kind))
             separate += [dict(x, scene=kind) for x in s]
             kinds.append(kind)
     img = p.img.resize((W, H), Image.LANCZOS)
     objs = p.objects
     meta = dict(family=fam["name"], familyIndex=fam_idx, level=6 if scan else 2, layout="relations", seed=seed, gen=3, relations=True)
+    if furniture:
+        meta["furniture"] = True
     if scan:
         img, objs = scanned(img, objs, rng, meta)
     objs = visibility(objs, img.size, meta)
-    return img, p, objs, meta, separate, kinds
+    return img, p, objs, meta, separate, kinds, seating
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
     ap.add_argument("--count", type=int, default=20)
-    ap.add_argument("--split", choices=list(SEEDS), required=True)
+    ap.add_argument("--split", choices=["dev", "blind", "train"], required=True, help="train: --furniture only, a training set apart from dev and blind")
     ap.add_argument("--scan", action="store_true")
+    ap.add_argument("--furniture", action="store_true", help="seating-furniture scenes (benches, sofas, banquettes)")
     a = ap.parse_args()
+    if a.split == "train" and not a.furniture:
+        ap.error("--split train exists for --furniture only")
     fams = BLIND_FAMILIES if a.split == "blind" else TRAIN_FAMILIES
     os.makedirs(a.out, exist_ok=True)
     for i in range(a.count):
         fam = fams[i % len(fams)]
-        seed = SEEDS[a.split] * 1000003 + (50021 if a.scan else 0) + i
-        img, p, objs, meta, separate, kinds = draw(seed, fam, a.scan)
-        pid = f"rel-{FAMILIES[fam]['name']}-{'scan-' if a.scan else ''}{seed}"
+        seed = (FURNITURE_SEEDS if a.furniture else SEEDS)[a.split] * 1000003 + (50021 if a.scan else 0) + i
+        img, p, objs, meta, separate, kinds, seating = draw(seed, fam, a.scan, a.furniture)
+        pid = f"{'seat' if a.furniture else 'rel'}-{FAMILIES[fam]['name']}-{'scan-' if a.scan else ''}{seed}"
         img.save(os.path.join(a.out, pid + ".png"))
         ann = {
             "planId": pid,
@@ -186,7 +309,7 @@ def main():
             "annotationMethod": "generated by training/synth_relations.py: exact by construction, not a human judgement",
             "verification": "synthetic-exact",
             "level": meta["level"],
-            "split": {"unit": "styleFamily", "family": meta["family"], "familyIndex": fam, "layoutSource": "relations", "set": a.split, "blind": a.split == "blind"},
+            "split": {"unit": "styleFamily", "family": meta["family"], "familyIndex": fam, "layoutSource": "furniture" if a.furniture else "relations", "set": a.split, "blind": a.split == "blind"},
             "generator": {k: v for k, v in meta.items() if k not in ("family", "familyIndex", "layout")},
             "scenes": kinds,
             "objects": objs,
@@ -194,6 +317,13 @@ def main():
             "logicalGroups": p.groups,
             "separateNeighbours": separate,
         }
+        if a.furniture:
+            # a group naming an object the visibility pass removed is dropped
+            # whole: a usage group with a missing member is not a label
+            kept = {o["id"] for o in objs}
+            ann["seatingGroups"] = [g for g in seating if g["table"] in kept and all(x in kept for x in g["members"])]
+            ann["relationships"] = [r for r in p.rels if all(v in kept for k2, v in r.items() if k2 in ("seating", "belongsTo", "chair"))
+                                    and all(t in kept for t in r.get("servesTables", []))]
         with open(os.path.join(a.out, pid + ".json"), "w") as f:
             json.dump(ann, f)
     print(f"wrote {a.count} {a.split} relation plans to {a.out}")

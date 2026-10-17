@@ -25,6 +25,23 @@ Residential and architectural sets would teach walls, doors and beds. A detector
 scored well on them would say nothing about round tables of twelve and
 banquette rows, so a high number from them would mislead.
 
+## Searched again 2026-10-17 — real venue plans with a stated licence
+
+Looking for a real banquet plan of an unseen venue whose publisher states terms
+that permit reuse (`N1` in `GAP-MATRIX.md`). Found, and NOT used:
+
+| Candidate | What it is | Why not |
+|---|---|---|
+| Town of Danville CA, Town Meeting Hall floor plan PDF (danville.ca.gov) | a drawn hall with banquet tables and 5 ft rounds, "approximate to scale" | no licence or reuse terms stated; a municipal record is not automatically free to reuse |
+| Guilford County NC, banquet / Triple Crown Room layouts (guilfordcountync.gov) | round-table layouts with seats per table, head table, bar | no licence stated |
+| City of Victoria TX community-center diagrams (victoriatx.gov) | dome and annex banquet setups | no licence stated; files not opened |
+| UC Davis ARC Ballroom diagrams, UW Tacoma layout PDFs, venue capacity charts | university and hotel event diagrams | copyrighted by their publishers; no reuse terms |
+| United States federal works (public domain by statute) | searched for agency banquet / conference-centre plans | none found with table-level drawings |
+
+A plan whose terms are unknown is not added, not even as a local test file, and
+no plan is labelled here as if a person had checked it. The procedure for a
+third real plan the user supplies stays `benchmarks/heldout/THIRD-PLAN-PROCEDURE.md`.
+
 ## Network facts that shaped this (measured 2026-10-11)
 
 | Host | Result |

@@ -242,6 +242,107 @@
     // is loosened — a family still needs four members, a size inside the
     // band, and most of its members sitting against a table surface.
     const SECONDARY_PRIMARY_MIN=6;
+    // IS THE "REFERENCE SEAT" ACTUALLY THE TABLE? (D12, 2026-10-17)
+    //
+    // The largest chair source is taken as the plan's seat below. On a sheet
+    // that draws each table as a closed outline and its chairs as SOLID shapes
+    // — black squares on a bold-black drawing, filled half-discs on a pastel
+    // one — the largest chair source is the outline-interior one, and what it
+    // holds is the tables' interiors. The real chairs are in the fill mask's
+    // components, which no chair source offers on an ink plan. The verdict then
+    // finds "seats" that sit at nothing and calls the drawing symbolic.
+    // Measured on the generation-3 relation scenes: 0 of 169 chairs on
+    // `rel-bold-black-7000032` and 0 of 123 on `rel-pastel-arch-7000043`, and
+    // 29 black chairs promoted to TABLES on the first.
+    //
+    // The question is asked only where it can arise — the reference is not
+    // smaller than the plan's own surfaces, the condition `referenceIsSeatSized`
+    // below names — and it is asked about ARRANGEMENT, not size: does a smaller
+    // population SERVE the reference population? A seat stands against a table,
+    // outside it, smaller than it in every direction; a table carries more than
+    // one; and they stand on more than one side of it. A number printed inside a
+    // symbol stands inside it; a label printed beside a table stands on one side
+    // of it, once. Debris shed by the symbols covers a handful of them, not most.
+    //
+    // Fixed before measuring, each from a rule this file already states: a
+    // seat's long side is under the table's short side (`seatSurfaceFor`); it
+    // is within 0.7 of its own long side of the table (`seatSurfaceFor`'s
+    // reach); its centre is outside half the table's own pixel extent; "most"
+    // tables served is the 0.7 this file uses for "most members seated"; at
+    // least two seats per served table (median); and those seats SURROUND the
+    // table — the length of the mean of their unit directions from its centre
+    // is at most 0.5 (two opposite seats read 0, one side reads 1).
+    // Colour plans keep their colour source and are not asked.
+    const SERVED_MIN_COVERAGE=.7,SERVED_MIN_SEATS=2,SERVED_MAX_RESULTANT=.5;
+    let servedInversion={considered:false,accepted:false};
+    if(!(useColourOnly&&!globalThis.MERIT_ALL_CHAIR_SOURCES)){
+      const largest=chairSources.slice().sort((a,b)=>b.comps.length-a.comps.length)[0]||null;
+      if(largest&&largest.comps.length>=SECONDARY_PRIMARY_MIN){
+        const sideOf=c=>Math.sqrt(c.w*c.h);
+        const medianOf=v=>{const s=v.slice().sort((a,b)=>a-b);return s.length?s[s.length>>1]:0;};
+        const tableModal=PRIOR.modalMagnitude(largest.comps.map(sideOf));
+        const tableLike=tableModal?largest.comps.filter(c=>PRIOR.sizeAgreement(sideOf(c),tableModal)>=.25):largest.comps;
+        const refSide=medianOf(tableLike.map(sideOf));
+        const surfSide=medianOf(surfaces.filter(c=>Math.min(c.w,c.h)>=6).map(sideOf));
+        servedInversion={considered:false,accepted:false,referenceSide:Math.round(refSide),surfaceSide:Math.round(surfSide)};
+        if(surfSide&&refSide>=surfSide&&tableLike.length>=SECONDARY_PRIMARY_MIN){
+          servedInversion.considered=true;
+          // Whole drawn shapes first (the fill mask's components), then what
+          // the other chair sources hold; one entry per physical object.
+          const pool=[];
+          const offer=(c,labels)=>{
+            if(tableLike.some(t=>GEO.sameObject(t,c))||pool.some(p=>GEO.sameObject(p.comp,c))||inPrintedText(c))return;
+            pool.push({comp:c,labels});
+          };
+          for(const c of fallbackChairComps)offer(c,fallbackChairLabels);
+          for(const src of chairSources)for(const c of src.comps)offer(c,src.labels);
+          const seatedAt=[];
+          for(const p of pool){
+            const c=p.comp,long=Math.max(c.w,c.h);
+            let best=null,bestGap=Infinity;
+            for(const t of tableLike){
+              if(Math.min(t.w,t.h)<=long)continue;
+              const g=gapTo(c,t);
+              if(g<bestGap){bestGap=g;best=t;}
+            }
+            if(!best||bestGap>long*.7)continue;
+            const dx=(c.x+c.w/2)-(best.x+best.w/2),dy=(c.y+c.h/2)-(best.y+best.h/2);
+            const extent=Math.sqrt(Math.max(1,(best.fill||1)*best.w*best.h));
+            if(Math.hypot(dx,dy)<extent/2)continue;
+            seatedAt.push({...p,table:best,angle:Math.atan2(dy,dx)});
+          }
+          // The seats are one drawn object repeated: the modal size among them.
+          const seatModal=PRIOR.modalMagnitude(seatedAt.map(s=>sideOf(s.comp)));
+          const seats=seatModal?seatedAt.filter(s=>PRIOR.sizeAgreement(sideOf(s.comp),seatModal)>=.25):seatedAt;
+          const byTable=new Map();
+          for(const s of seats){if(!byTable.has(s.table))byTable.set(s.table,[]);byTable.get(s.table).push(s);}
+          const counts=[...byTable.values()].map(l=>l.length);
+          const resultants=[...byTable.values()].filter(l=>l.length>=2).map(l=>{
+            const sx=l.reduce((a,s)=>a+Math.cos(s.angle),0),sy=l.reduce((a,s)=>a+Math.sin(s.angle),0);
+            return Math.hypot(sx,sy)/l.length;
+          });
+          const coverage=byTable.size/tableLike.length;
+          const seatsPerTable=medianOf(counts);
+          const resultant=resultants.length?medianOf(resultants):1;
+          const accepted=seats.length>=SECONDARY_MIN_MEMBERS&&coverage>=SERVED_MIN_COVERAGE
+            &&seatsPerTable>=SERVED_MIN_SEATS&&resultant<=SERVED_MAX_RESULTANT;
+          Object.assign(servedInversion,{accepted,tables:tableLike.length,seats:seats.length,
+            seatSide:seatModal?Number(seatModal.value.toFixed(1)):null,
+            coverage:Number(coverage.toFixed(3)),seatsPerTable,resultant:Number(resultant.toFixed(3)),
+            minCoverage:SERVED_MIN_COVERAGE,minSeats:SERVED_MIN_SEATS,maxResultant:SERVED_MAX_RESULTANT});
+          if(accepted){
+            // The interiors leave the chair sources (they are still in the
+            // table sources they always were in); the seats that serve them
+            // become the primary chair source, one entry per label map.
+            const tableSet=new Set(tableLike);
+            chairSources.splice(chairSources.indexOf(largest),1,{...largest,comps:largest.comps.filter(c=>!tableSet.has(c))});
+            const byLabels=new Map();
+            for(const s of seats){if(!byLabels.has(s.labels))byLabels.set(s.labels,[]);byLabels.get(s.labels).push(s.comp);}
+            for(const [labels,comps] of byLabels)chairSources.unshift({name:"served-seats",labels,rawCount:comps.length,comps});
+          }
+        }
+      }
+    }
     // The two anchors the size band is measured against, hoisted so they are
     // always visible in diagnostics — including when no family was
     // considered at all. They are the quantities that decide whether a
@@ -515,6 +616,10 @@
         ?Number((primaryReferenceSide/planSurfaceSide).toFixed(3)):null,
       minSideRatio:SECONDARY_MIN_SIDE_RATIO,maxSurfaceRatio:SECONDARY_MAX_SURFACE_RATIO,
       families:secondaryFamilies.slice().sort((a,b)=>b.members-a.members).slice(0,12),
+      // Whether the reference population was found to be the TABLES, served
+      // by a smaller seat population (D12) — with every quantity it was
+      // decided on, accepted or not.
+      servedSeats:servedInversion,
     };
     if(specificCount>=6){
       for(const src of activeChairSources)addChairs(src.comps,src.labels,src.name);
@@ -685,11 +790,20 @@
     // brought it back.
     const chairFamilySides=[...familyProfiles.values()].map(p=>p.size?.value).filter(v=>v>0);
     const chairFloorSide=chairFamilySides.length?Math.min(...chairFamilySides):null;
+    // Long over short side of the axis-aligned box is invariant to a quarter
+    // turn, not to any turn: a half-disc seat at a table set at 45° has a
+    // square box (elongation 1.0 against its family's 2.0) and was refused,
+    // which left that table seatless and let text suppression delete it
+    // (D12, `rel-pastel-arch-7000043`: three 45° tables and their six seats).
+    // So a seat also passes on its own oriented box when the shape analysis
+    // measured one. This only ever ADDS a seat whose drawn shape, turned
+    // upright, is its family's shape; the size test is unchanged.
+    const obbElongationOf=c=>{const o=c.shape?.obb;return o&&o.w>0&&o.h>0?Math.max(o.w,o.h)/Math.min(o.w,o.h):null;};
     const chairShapeOk=(c,profile)=>{
       const modalElongation=profile?.elongation||chairModalElongation;
       if(!chairUniform||!modalElongation)return true;
-      const elongation=elongationOf(c);
-      return Math.abs(Math.log(elongation/modalElongation.value))<=Math.log(1.6);
+      const fits=e=>e!=null&&Math.abs(Math.log(e/modalElongation.value))<=Math.log(1.6);
+      return fits(elongationOf(c))||fits(obbElongationOf(c));
     };
     const chairAccepted=e=>{
       const profile=profileFor(e);

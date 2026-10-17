@@ -139,3 +139,49 @@ Still open, and NOT fixed by this: on those two families the drawn chairs are no
 found at all (solid squares, half-discs), so the verdict is wrong even where the
 type is now right; a member the detector did not find (25 units); a duplicate or
 fragment joined into a right unit (19).
+
+## 2026-10-17 — the solid seats found, and with them the drawing's kind (D12)
+
+**Cause** (`benchmarks/detection/diagnose-types.mjs`, now with `pipeline`
+diagnostics). On `rel-bold-black-7000032` the chair stage's largest source was
+`outline-interior` — 74 components, which are the 74 table cells' interiors —
+and the 171 solid black seats were in the fill mask's components, which no
+chair source offers on an ink plan. The "seats" sat at nothing, the verdict
+said SYMBOLIC, and its other-polarity rule promoted 29 black seats to TABLES.
+`rel-pastel-arch-7000043` was the same with half-discs, and once the drawing was
+read as physical a second cause showed: a half-disc beside a table set at 45°
+has a square axis-aligned box (elongation 1.0 against its family's 2.0), was
+refused by the seat-shape test, and its seatless table was then deleted by text
+suppression (3 tables, 6 seats).
+
+**Change** (`src/plan-detection-chairs.js`):
+1. Where the reference "seat" population is at table scale (the condition
+   `referenceIsSeatSized` already names), the stage asks whether a smaller
+   population SERVES it: each candidate outside a reference member, within 0.7
+   of its own long side, smaller in every direction; "most" (0.7) of the members
+   served; a median of at least two per member; and those seats on more than one
+   side (the length of the mean of their unit directions ≤ 0.5). Thresholds fixed
+   before measuring, each from a rule the file already states. If so the
+   reference members leave the chair sources (they are still table sources) and
+   the serving population becomes the primary chair source. Diagnostics:
+   `secondaryChairFamilies.servedSeats`, with every quantity, accepted or not.
+2. A seat also passes the shape test on its OWN oriented box. This only ever
+   adds a seat; the size test is unchanged.
+
+Suite `served-seats` (three drawings built in the test; each rule
+mutation-checked — inversion off, surround rule off, oriented box off — and each
+turns it red). Its control is the cost, stated: marks on ONE side of every table
+are refused, so a table seated along one side only is not recognised by this
+rule either.
+
+**Effect.** Both D12 plans: `rel-bold-black-7000032` chairs 0/169 → 168/0/1,
+tables 74/74 with 29 → 0 false; `rel-pastel-arch-7000043` chairs 0/123 → 123/0/0,
+tables 52/52. On the 28 regression, adversarial and robustness plans the
+analysis is identical to the previous commit apart from the new diagnostic
+(full dumps compared): the rule fires on none of them. Relation scenes, dev set
+(42 plans, development evidence), previous commit → this one, same machine:
+
+| dev (42 plans) | units exact | exact where every member was found | table recall | duplicate joined | real over-merge | close-but-separate merged |
+|---|--:|--:|--:|--:|--:|--:|
+| `442d6eb` | 427 / 476 (0.897) | 0.945 | 0.959 | 22 | 0 | 0 / 646 |
+| this commit | **436 / 476 (0.916)** | **0.960** | 0.962 | 15 | 0 | 0 / 649 |

@@ -34,6 +34,16 @@ from PIL import Image, ImageFilter
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CLASSES = ["table_round", "table_rect", "chair", "column"]
 K = len(CLASSES)
+# E4 (training/README.md): seating furniture as classes of their own, the
+# generator's labels. Off unless a run asks for it (`--seating`) or a checkpoint
+# was trained with it; the four-class model is unchanged.
+SEATING = ["sofa", "bench", "banquette"]
+
+
+def set_classes(seating):
+    global CLASSES, K
+    CLASSES = ["table_round", "table_rect", "chair", "column"] + (SEATING if seating else [])
+    K = len(CLASSES)
 STRIDE = 4
 CROP = 256
 LONG_SIDE = 1536  # inference scale: the plan's long side is resized to this
@@ -53,6 +63,8 @@ def class_of(o):
         return 2
     if c == "column":
         return 3
+    if c in SEATING and c in CLASSES:
+        return CLASSES.index(c)
     return None
 
 
@@ -132,7 +144,9 @@ def load_dataset(dirs, with_confirm=False):
 
 def load_synthetic(d, families=None, exclude=None, limit=None):
     out = []
-    for f in sorted(glob.glob(os.path.join(d, "syn-*.json"))):
+    # generated plans: synth*.py (syn-), relation scenes (rel-) and furniture
+    # scenes (seat-) — a directory only ever holds one kind
+    for f in sorted(sum((glob.glob(os.path.join(d, pat)) for pat in ("syn-*.json", "rel-*.json", "seat-*.json")), [])):
         a = json.load(open(f))
         fi = a["split"]["familyIndex"]
         if families is not None and fi not in families:
@@ -295,7 +309,28 @@ def decode(heat, size, off, thr=0.3, topk=3000):
     return out
 
 
-def detect_plan(model, p, long_side=LONG_SIDE, thr=0.3):
+# Classes that are one kind of object to the person reading the plan: a round
+# and a rectangular table on the same spot are one table; a sofa, a bench and a
+# banquette on the same spot are one piece of seating furniture.
+GROUP_OF = {0: 0, 1: 0, 2: 2, 3: 3, 4: 4, 5: 4, 6: 4}
+
+
+def suppress_close(dets):
+    """Drop a detection whose centre lies within half the short side of a
+    STRONGER detection of the same group (E3, training/README.md). A 3x3 peak
+    pick leaves two peaks on one broad table; two real tables cannot stand that
+    close without overlapping. `dets` is sorted by score, strongest first, and
+    so is the result. Mirrored in src/plan-model.js and detector_io.py."""
+    kept = []
+    for d in dets:
+        g = GROUP_OF.get(d[0], d[0])
+        if any(GROUP_OF.get(k[0], k[0]) == g and math.hypot(d[1] - k[1], d[2] - k[2]) < 0.5 * min(k[3], k[4]) for k in kept):
+            continue
+        kept.append(d)
+    return kept
+
+
+def detect_plan(model, p, long_side=LONG_SIDE, thr=0.3, suppress=True):
     f = long_side / max(p.W, p.H)
     W2, H2 = int(round(p.W * f / 16) * 16), int(round(p.H * f / 16) * 16)
     im = Image.fromarray(p.img).resize((W2, H2), Image.BILINEAR)
@@ -304,7 +339,8 @@ def detect_plan(model, p, long_side=LONG_SIDE, thr=0.3):
         h, s, o = model(x)
     dets = decode(h[0].numpy(), s[0].numpy(), o[0].numpy(), thr)
     sx, sy = p.W / W2, p.H / H2
-    return [(k, cx * sx, cy * sy, w * sx, h_ * sy, sc) for k, cx, cy, w, h_, sc in dets]
+    out = [(k, cx * sx, cy * sy, w * sx, h_ * sy, sc) for k, cx, cy, w, h_, sc in dets]
+    return suppress_close(out) if suppress else out
 
 
 # ---- scoring: the same greedy nearest-first match as benchmarks/run-benchmark.mjs -------
@@ -338,6 +374,8 @@ def score(p, dets):
     tol = p.ann.get("matchToleranceP") or 3.0
     res = {}
     groups = {"tables": (0, 1), "chairs": (2,), "columns": (3,)}
+    if K > 4:
+        groups.update({"sofas": (4,), "benches": (5,), "banquettes": (6,), "seating": (4, 5, 6)})
     for name, ks in groups.items():
         if not all(p.annotated[k] for k in ks):
             continue
@@ -363,6 +401,7 @@ def score(p, dets):
 
 # ---- train ----------------------------------------------------------------------------
 def train(args):
+    set_classes(getattr(args, "seating", False))
     torch.manual_seed(args.seed)
     rng = random.Random(args.seed)
     torch.set_num_threads(args.threads)
@@ -384,7 +423,17 @@ def train(args):
     if args.init:
         # Warm start from another run (e.g. a fold model from the synthetic-only
         # run). Recorded in the checkpoint's args; it adds no data of its own.
-        model.load_state_dict(torch.load(args.init, map_location="cpu", weights_only=False)["state"])
+        state = torch.load(args.init, map_location="cpu", weights_only=False)["state"]
+        own = model.state_dict()
+        for name in ("heat.1.weight", "heat.1.bias"):
+            # a run that adds classes keeps the starting model's channels and
+            # gives the new ones the head's own initial values
+            if name in state and state[name].shape != own[name].shape:
+                grown = own[name].clone()
+                grown[: state[name].shape[0]] = state[name]
+                state[name] = grown
+                print(f"{name}: {tuple(state[name].shape)} (first {CLASSES.index('column') + 1} channels from {args.init})", flush=True)
+        model.load_state_dict(state)
         print(f"initialised from {args.init}", flush=True)
     nparams = sum(p.numel() for p in model.parameters())
     print(f"params: {nparams}", flush=True)
@@ -429,6 +478,7 @@ def train(args):
 
 def load_model(path):
     ck = torch.load(path, map_location="cpu", weights_only=False)
+    set_classes(bool((ck.get("args") or {}).get("seating")))
     m = PlanNet()
     m.load_state_dict(ck["state"])
     m.eval()
@@ -452,9 +502,9 @@ def evaluate(args):
     agg = {}
     for p in plans:
         t = time.time()
-        dets = detect_plan(model, p, args.long_side, min(thr_by_class.values()) if thr_by_class else args.thr)
+        dets = detect_plan(model, p, args.long_side, min(thr_by_class.values()) if thr_by_class else args.thr, suppress=not thr_by_class)
         if thr_by_class:
-            dets = [d for d in dets if d[5] >= thr_by_class.get(d[0], args.thr)]
+            dets = suppress_close([d for d in dets if d[5] >= thr_by_class.get(d[0], args.thr)])
         ms = round((time.time() - t) * 1000)
         s = score(p, dets)
         report["plans"][p.name] = dict(family=p.family, ms=ms, **s)
@@ -552,6 +602,7 @@ def main():
     t.add_argument("--threads", type=int, default=4)
     t.add_argument("--seed", type=int, default=1)
     t.add_argument("--init", default="")
+    t.add_argument("--seating", action="store_true", help="E4: sofa, bench and banquette as classes of their own (K = 7)")
     t.add_argument("--size-weight", type=float, default=0.1, help="weight of the log-size L1 loss (0.1 = every run before 2026-10-17)")
     t.add_argument("--oversample", default="", help='generation-3 levels drawn more often, e.g. "5=2,6=2"')
     t.add_argument("--out", required=True)

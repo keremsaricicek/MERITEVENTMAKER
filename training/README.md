@@ -194,3 +194,68 @@ colour-arm (0.988 → 0.966) and green-event (1.000 → 0.976), and ORNEK, where
 adds one false table (1.000 → 0.994). Golden table type accuracy fell 1.000 →
 0.956. Oversampling L4–L6 at a low learning rate did not undo v3's precision
 shift: a fine-tune from v3 keeps it. Not packaged; blind-2 not scored.
+
+**E2 result — `v4b` FAILS** (2026-10-17, same tool; pooled numbers in
+`benchmarks/offline-intelligence/v4b-candidate-2026-10-17.json`). From v2 the
+trade is larger, not smaller: 22 regressions in groups of ≥ 100, 18 of them table
+precision (held-out L6 0.934 → 0.866, val L4 0.991 → 0.968), and one new false
+table on ORNEK.
+
+**Why — measured, not guessed** (`training/diagnose_fp.py`, val + held-out L4–L7,
+136 plans, threshold 0.5). Every false table is put in one bucket by what lies
+under it:
+
+| | false tables | duplicate peak on a matched table | on a decoration | on a chair | other |
+|---|--:|--:|--:|--:|--:|
+| v2 | 80 | 43 | 22 | 8 | 7 |
+| v4b | 148 | **132** | 14 | 0 | 2 |
+
+v4b reads FEWER look-alikes as tables than v2. Its precision loss is a second
+peak on a table it already found: same class (199 of 201 pairs), 147 of them
+within a quarter of a table side. The decoder keeps every 3×3 local maximum
+above the threshold, in `training/detector.py` and `src/plan-model.js` alike, so
+a broader peak on a large table yields two boxes. That is a decoding defect
+shared by every model, not something a training run can fix.
+
+- **E3 (decode, written before any number under it)**: a detection whose centre
+  lies within half the short side of a STRONGER detection of the same group
+  (round and rectangular tables together; chairs; columns) is dropped. Two real
+  tables cannot stand that close — they would overlap. Applied identically in
+  `training/detector.py`, `tools/model-dev/examples/detector_io.py` and
+  `src/plan-model.js`, for every model, v2 included. *Hypothesis*: scored under
+  the same decode, v4b's table precision is no lower than v2's while its recall
+  gain stays. *Fails* on E1's conditions, both models re-scored with the new
+  decode. The decode change itself is a product change and is judged on its own:
+  the regression, adversarial, false-positive and robustness gates must be
+  unchanged or better with v2.
+
+**E3 result.** The decode change on v2 alone loses no true detection on any set
+and class, and removes false tables: val 57 → 28, held-out 29 → 10, generation-2
+val 16 → 3, Golden + ORNEK 1 → 1 (`e3-v2-*.json` against `v2-*.json`). With both
+models scored under it, v4b has 0 regressions on val and only column recall on
+held-out (0.748 → 0.729, n = 155), but still 6 on generation-2 val
+(green-event table precision 1.000 → 0.980, colour-arm, scan-dark, cad-grey) and
+the one new false table on ORNEK. **v4b still FAILS** E1's conditions; not
+packaged, blind-2 not scored. The decode is kept as a product change, judged by
+the app gates. The remaining pairs a full table side apart are pushed-together
+neighbours, which the rule keeps on purpose; the decode was not tuned further on
+the sets that judge it.
+
+- **E4 `v5a` — seating furniture as classes of their own (written before the run).**
+  The product reads a sofa, a bench or a banquette as a table or its cushions as
+  chairs (`benchmarks/relations/measure-seating-furniture.mjs`, four trial scenes:
+  24 of 83 pieces read as tables, 26 cushions as chairs, 1 named). The
+  four-class model has no word for them. *Change*: three classes added —
+  `sofa`, `bench`, `banquette`, the generator's own labels — so K = 7; the heat
+  head's first four channels are copied from the starting model, the new three
+  start from the usual prior bias. *Data*: E2's (generation 2 + 3 train, same
+  exclusions and oversampling) plus 400 furniture scenes
+  (`synth_relations.py --furniture --split train`, seed base 11, training
+  families); generation 2 draws no furniture, so its plans teach "no furniture"
+  honestly. From v4b (the best recall), 2,000 steps, lr 1e-3, size-weight 0.5.
+  *Measured on*: the furniture dev split (24 scenes, seed base 9) at the fixed
+  0.5, and E1's sets under the E3 decode. *Hypothesis*: per furniture class
+  recall ≥ 0.85 and precision ≥ 0.9; tables the model puts on a furniture piece
+  fall by at least half against v2. *Activation* still needs E1's conditions
+  against v2 — a furniture class is not a reason to accept a table regression.
+  The furniture blind split (seed base 10) is scored once, at the end.

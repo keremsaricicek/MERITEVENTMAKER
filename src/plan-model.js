@@ -164,6 +164,25 @@
     return out.sort((a, b) => b.score - a.score).slice(0, 4000);
   }
 
+  // A 3×3 peak pick leaves two peaks on one broad table. A detection whose
+  // centre lies within half the short side of a STRONGER detection of the same
+  // group (round and rectangular tables are one group) is dropped: two real
+  // tables cannot stand that close without overlapping. Measured on generated
+  // val + held-out L4–L7 (training/diagnose_fp.py): 43 of v2's 80 false tables
+  // and 132 of a later candidate's 148 were such second peaks. The same rule,
+  // line for line, is training/detector.py's `suppress_close` (E3). Applied to
+  // the detections that passed their class threshold.
+  const GROUP_OF = [0, 0, 2, 3];
+  function suppressClose(dets) {
+    const kept = [];
+    for (const d of dets) {
+      const g = GROUP_OF[d.k] ?? d.k;
+      if (kept.some(k => (GROUP_OF[k.k] ?? k.k) === g && Math.hypot(d.cx - k.cx, d.cy - k.cy) < 0.5 * Math.min(k.w, k.h))) continue;
+      kept.push(d);
+    }
+    return kept;
+  }
+
   // Detect on an ImageData. Returns boxes in the ImageData's own pixels:
   // { available, detections:[{cls, score, cx, cy, w, h}], ms, model }.
   async function detect(pixels, width, height, opts) {
@@ -184,7 +203,7 @@
       const [, K, h, w] = heat.dims;
       const thr = pin.thresholds || {}, floor = o.threshold ?? Math.min(...pin.classes.map(c => thr[c] ?? 0.5));
       const raw = decode(heat.data, size.data, off.data, K, h, w, pin.stride, floor);
-      const detections = raw.filter(d => o.threshold != null || d.score >= (thr[pin.classes[d.k]] ?? 0.5))
+      const detections = suppressClose(raw.filter(d => o.threshold != null || d.score >= (thr[pin.classes[d.k]] ?? 0.5)))
         .map(d => ({ cls: pin.classes[d.k], score: +d.score.toFixed(3), cx: d.cx * p.sx, cy: d.cy * p.sy, w: d.w * p.sx, h: d.h * p.sy }));
       return { available: true, detections, ms: Math.round(performance.now() - t0), input: { width: p.W, height: p.H }, model: describe() };
     } catch (error) {
@@ -202,5 +221,5 @@
     session = null; poolNames = null; state = "idle"; loading = null; generation++;
   }
 
-  globalThis.MeritPlanModel = Object.freeze({ PIN, load, detect, decode, describe, release, status: () => state, lastError: () => lastError });
+  globalThis.MeritPlanModel = Object.freeze({ PIN, load, detect, decode, suppressClose, describe, release, status: () => state, lastError: () => lastError });
 })();
