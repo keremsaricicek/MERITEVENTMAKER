@@ -3193,7 +3193,8 @@
       obj.labelRead=obj.labelRead||read;obj.labelReadWhole=read;
       obj.evidence={...(obj.evidence||{}),source:obj.evidence?.source||"venue-label",
         basis:`the drawing prints "${p.anchor.term}" here`,
-        extent:p.geometryBasis==="region"?"the closed area the label sits in"+(p.mergeIds.length||p.keepId?", joined with the parts of it already found":""):"not measured: the label's own box"};
+        extent:p.geometryBasis==="region"?"the closed area the label sits in"+(p.mergeIds.length||p.keepId?", joined with the parts of it already found":"")
+          :p.geometryBasis==="structure"?"the filled counter drawn around the label":"not measured: the label's own box"};
       if(p.mergeIds.length){const drop=new Set(p.mergeIds);analysis.candidates=analysis.candidates.filter(c=>!drop.has(c.id));}
       placed.push({type:p.type,term:p.anchor.term,geometryBasis:p.geometryBasis,joined:p.mergeIds.length+(p.keepId?1:0)});
     }

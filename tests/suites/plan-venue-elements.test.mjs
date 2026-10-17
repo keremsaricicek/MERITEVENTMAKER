@@ -7,7 +7,9 @@
 //   THE EXTENT IS MEASURED OR SAID NOT TO BE: the closed area a label sits in
 //     is the element; an area that is not closed (open to the page's edge)
 //     gives NO region, and the element is the label's own box with
-//     geometryBasis "label".
+//     geometryBasis "label" — except a bar whose COUNTER is drawn around the
+//     word (D9, 2026-10-17): that filled structure is the extent, with
+//     geometryBasis "structure".
 //   COLUMNS ARE A FAMILY ON THE WALLS: three identical solid blocks threaded on
 //     a wall are columns; the same blocks floating free are not, and two are
 //     not a family.
@@ -93,7 +95,7 @@ export default async function run({ page, checks, repoRoot, baseUrl }) {
       byType: v.reduce((m, c) => { m[c.type] = (m[c.type] || 0) + 1; return m; }, {}),
       offered: v.filter(c => c.selected === true).length, total: v.length,
       stage: v.filter(c => c.type === "stage").map(c => ({ ...px(c), basis: c.geometryBasis, typeBasis: c.typeBasis, extent: c.evidence && c.evidence.extent })),
-      bar: v.filter(c => c.type === "bar").map(c => ({ basis: c.geometryBasis, extent: c.evidence && c.evidence.extent })),
+      bar: v.filter(c => c.type === "bar").map(c => ({ ...px(c), basis: c.geometryBasis, extent: c.evidence && c.evidence.extent })),
       columns: v.filter(c => c.type === "column").map(c => ({ wall: c.evidence && c.evidence.wallThrough, basis: c.typeBasis })),
       benches: v.filter(c => c.type === "banquette").map(c => ({ seatsUnknown: c.seatsUnknown === true, seats: c.chairDetections.length, basis: c.typeBasis })),
       seatColour: a.diagnostics.namedVenueElements && a.diagnostics.namedVenueElements.seatColour,
@@ -106,8 +108,11 @@ export default async function run({ page, checks, repoRoot, baseUrl }) {
   checks.ok(golden.stage[0] && golden.stage[0].basis === "region" && golden.stage[0].typeBasis === "printedLabel"
     && golden.stage[0].x0 <= 700 && golden.stage[0].x1 >= 1115 && golden.stage[0].y0 <= 500 && golden.stage[0].y1 >= 730,
     "the stage is the closed area around SAHNE with its truss: measured, not the label's box", golden.stage);
-  checks.ok(golden.byType.bar === 1 && golden.bar[0].basis === "label" && /not measured/.test(golden.bar[0].extent),
-    "the bar is placed at BAR and says its extent was NOT measured (the counter is open to the room)", golden.bar);
+  // the counter complex in benchmarks/plan-understanding/truth: 99..633 x 155..299 px
+  checks.ok(golden.byType.bar === 1 && golden.bar[0].basis === "structure" && /counter drawn around the label/.test(golden.bar[0].extent)
+    && golden.bar[0].x0 <= 115 && golden.bar[0].x1 >= 585 && golden.bar[0].y0 <= 170 && golden.bar[0].y1 >= 285
+    && golden.bar[0].x0 >= 80 && golden.bar[0].x1 <= 650 && golden.bar[0].y0 >= 135 && golden.bar[0].y1 <= 320,
+    "the bar is the counter drawn around BAR — measured from its fill, not the word's box, and no bigger than the counter", golden.bar);
   checks.equal(golden.byType.entrance, 2, "both GİRİŞ labels are entrances");
   checks.ok(golden.byType.column >= 8 && golden.byType.column <= 10 && golden.columns.every(c => c.basis === "wallFamily" && c.wall >= 0.6),
     "the grey blocks threaded on the walls are columns, each with its wall evidence", golden.columns.length);

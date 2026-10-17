@@ -115,6 +115,51 @@
     return { x0: minX, y0: minY, x1: maxX + 1, y1: maxY + 1, pixels: n, paper };
   }
 
+  // THE COUNTER AROUND THE WORD (D9, 2026-10-17). A bar is often drawn open to
+  // the room: the word sits between the shelves and the counter, the flood
+  // above leaks out, and the bar used to be the word's own box — on the Golden
+  // Plan 82 x 43 px against a 534 x 144 px counter (shape IoU 0.046). What the
+  // drawing does show is the counter itself: a filled, outlined structure
+  // around the word. Inside a window of three label widths and four label
+  // heights, the largest grey fill that is not a table, chair or column the
+  // analysis already holds and does not run out of the window (a wall does),
+  // joined with the fills that touch it, is the counter. Kept only when it is
+  // at least four times the label and closer to it than two label heights;
+  // otherwise nothing was measured and the label's box stands.
+  function counterAround(raster, box, candidates) {
+    const W = raster.width, H = raster.height;
+    const lw = box.x1 - box.x0, lh = box.y1 - box.y0;
+    const wx0 = Math.max(0, Math.floor(box.x0 - 3 * lw)), wx1 = Math.min(W, Math.ceil(box.x1 + 3 * lw));
+    const wy0 = Math.max(0, Math.floor(box.y0 - 4 * lh)), wy1 = Math.min(H, Math.ceil(box.y1 + 4 * lh));
+    const ww = wx1 - wx0, wh = wy1 - wy0;
+    if (ww < 8 || wh < 8) return null;
+    const sub = new Uint8ClampedArray(ww * wh * 4);
+    for (let y = 0; y < wh; y++) sub.set(raster.data.subarray(((y + wy0) * W + wx0) * 4, ((y + wy0) * W + wx1) * 4), y * ww * 4);
+    const regions = fillRegions({ data: sub, width: ww, height: wh },
+      (r, g, b) => !isPaperPx(r, g, b) && luma(r, g, b) >= 140 && chroma(r, g, b) < 24, { minArea: Math.max(60, Math.round(lw * lh * 0.05)) });
+    const held = (candidates || []).filter(c => c.status !== "rejected" && (c.kind === "table" || (c.kind === "venue" && (c.type === "chair" || c.type === "column"))))
+      .map(c => ({ x0: c.x / 100 * W - wx0, y0: c.y / 100 * H - wy0, x1: (c.x + c.w) / 100 * W - wx0, y1: (c.y + c.h) / 100 * H - wy0 }));
+    const overlapsHeld = r => held.some(h => r.x0 < h.x1 && h.x0 < r.x1 && r.y0 < h.y1 && h.y0 < r.y1);
+    const inner = regions.filter(r => r.x0 > 0 && r.y0 > 0 && r.x1 < ww && r.y1 < wh && !overlapsHeld(r));
+    if (!inner.length) return null;
+    const lb = { x0: box.x0 - wx0, y0: box.y0 - wy0, x1: box.x1 - wx0, y1: box.y1 - wy0 };
+    const gap = (a, b) => Math.hypot(Math.max(0, a.x0 - b.x1, b.x0 - a.x1), Math.max(0, a.y0 - b.y1, b.y0 - a.y1));
+    const near = inner.filter(r => gap(r, lb) <= 2 * lh).sort((a, b) => b.area - a.area);
+    if (!near.length) return null;
+    let u = { x0: near[0].x0, y0: near[0].y0, x1: near[0].x1, y1: near[0].y1 };
+    const used = new Set([near[0]]);
+    for (let grew = true; grew;) {
+      grew = false;
+      for (const r of inner) if (!used.has(r) && gap(r, u) <= 3) {
+        used.add(r); grew = true;
+        u = { x0: Math.min(u.x0, r.x0), y0: Math.min(u.y0, r.y0), x1: Math.max(u.x1, r.x1), y1: Math.max(u.y1, r.y1) };
+      }
+    }
+    u = { x0: Math.min(u.x0, lb.x0), y0: Math.min(u.y0, lb.y0), x1: Math.max(u.x1, lb.x1), y1: Math.max(u.y1, lb.y1) };
+    if ((u.x1 - u.x0) * (u.y1 - u.y0) < 4 * lw * lh) return null;
+    return { x0: u.x0 + wx0, y0: u.y0 + wy0, x1: u.x1 + wx0, y1: u.y1 + wy0, pieces: used.size };
+  }
+
   const pctBox = (b, W, H) => ({ x: b.x0 / W * 100, y: b.y0 / H * 100, w: (b.x1 - b.x0) / W * 100, h: (b.y1 - b.y0) / H * 100 });
   const touches = (a, b, gx, gy) => a.x < b.x + b.w + gx && b.x < a.x + a.w + gx && a.y < b.y + b.h + gy && b.y < a.y + a.h + gy;
   const union = (a, b) => {
@@ -141,8 +186,9 @@
       const labelPct = pctBox(a.box, W, H);
       if (out.some(e => e.type === a.type && touches(e.labelBox, labelPct, 0, 0))) continue;
       const region = a.type === "stage" || a.type === "bar" ? regionAround(raster, a.box, opts) : null;
-      let box = region ? pctBox(region, W, H) : labelPct;
-      const geometryBasis = region ? "region" : "label";
+      const counter = !region && a.type === "bar" ? counterAround(raster, a.box, candidates) : null;
+      let box = region ? pctBox(region, W, H) : counter ? pctBox(counter, W, H) : labelPct;
+      const geometryBasis = region ? "region" : counter ? "structure" : "label";
       // Same-type pieces the detector already found that the element touches:
       // the same object. Only objects no person has ruled on.
       const pieces = (candidates || []).filter(c => c.kind === "venue" && c.type === a.type && !claimed.has(c.id)
@@ -152,7 +198,7 @@
       out.push({
         anchor: { term: a.term, text: a.text, score: a.score, box: a.box, engine: a.engine || null },
         type: a.type, box, labelBox: labelPct, geometryBasis,
-        region: region ? { pixels: region.pixels } : null,
+        region: region ? { pixels: region.pixels } : counter ? { pieces: counter.pieces } : null,
         keepId: pieces.length ? pieces[0].id : null, mergeIds: pieces.slice(1).map(p => p.id),
       });
     }
