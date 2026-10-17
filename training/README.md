@@ -183,3 +183,14 @@ Each is reported at the fixed 0.5 against v2 per level, family and class, on
 Golden and ORNEK model-alone and with COCO box metrics, and SEPARATELY at
 thresholds chosen on generation-3 val. Blind-2 is scored once, for the candidate
 chosen without it.
+
+**E1 result — `v4a` FAILS** (2026-10-17; `training/compare_candidates.py`, pooled
+numbers in `benchmarks/offline-intelligence/v4a-candidate-2026-10-17.json`). Recall
+rose almost everywhere (val chairs 0.925 → 0.990; pastel-arch chairs 0.290 →
+0.957), but at the fixed 0.5 table precision is below v2's by more than 0.005 in
+eight groups of ≥ 100 tables — val L4 0.991 → 0.985, val symbolic-num 0.994 →
+0.987, held-out L6 0.934 → 0.926, generation-2 val blue-print, cad-grey,
+colour-arm (0.988 → 0.966) and green-event (1.000 → 0.976), and ORNEK, where v4a
+adds one false table (1.000 → 0.994). Golden table type accuracy fell 1.000 →
+0.956. Oversampling L4–L6 at a low learning rate did not undo v3's precision
+shift: a fine-tune from v3 keeps it. Not packaged; blind-2 not scored.
