@@ -373,6 +373,13 @@ def train(args):
     if args.dataset:
         real += load_dataset([x for x in args.dataset.split(",") if x], with_confirm=args.with_confirm)
     print(f"train: {len(syn)} synthetic plans, real: {[p.name for p in real]}", flush=True)
+    # --oversample "5=2,6=2": a generation-3 plan of that level is drawn that many
+    # times as often. Empty (the default) keeps the exact sampling of every
+    # earlier run, random stream included.
+    over = {int(k): float(v) for k, v in (x.split("=") for x in args.oversample.split(",") if x)}
+    syn_w = [over.get((p.ann.get("level") if isinstance(p.ann.get("level"), int) else -1), 1.0) for p in syn] if over else None
+    if over:
+        print(f"oversample {over}: {sum(1 for w in syn_w if w != 1.0)} plans weighted", flush=True)
     model = PlanNet()
     if args.init:
         # Warm start from another run (e.g. a fold model from the synthetic-only
@@ -391,7 +398,8 @@ def train(args):
         batch = []
         for _ in range(args.batch):
             pool = real if (real and rng.random() < args.real_frac) else syn
-            batch.append(sample_crop(rng.choice(pool), rng))
+            pick = rng.choices(syn, weights=syn_w)[0] if (syn_w and pool is syn) else rng.choice(pool)
+            batch.append(sample_crop(pick, rng))
         x = torch.from_numpy(np.stack([b[0] for b in batch]))
         heat = torch.from_numpy(np.stack([b[1] for b in batch]))
         size = torch.from_numpy(np.stack([b[2] for b in batch]))
@@ -403,7 +411,7 @@ def train(args):
         n = mask.sum().clamp(min=1)
         ls = (F.l1_loss(ps, size, reduction="none").sum(1) * mask).sum() / n
         lo = (F.l1_loss(po, off, reduction="none").sum(1) * mask).sum() / n
-        loss = lh + 0.1 * ls + lo
+        loss = lh + args.size_weight * ls + lo
         opt.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
@@ -544,6 +552,8 @@ def main():
     t.add_argument("--threads", type=int, default=4)
     t.add_argument("--seed", type=int, default=1)
     t.add_argument("--init", default="")
+    t.add_argument("--size-weight", type=float, default=0.1, help="weight of the log-size L1 loss (0.1 = every run before 2026-10-17)")
+    t.add_argument("--oversample", default="", help='generation-3 levels drawn more often, e.g. "5=2,6=2"')
     t.add_argument("--out", required=True)
     e = sp.add_parser("eval")
     e.add_argument("--model", required=True)

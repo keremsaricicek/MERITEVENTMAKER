@@ -39,8 +39,11 @@ Every label is `synthetic-exact` and generated, never a human judgement.
 SPLITS by style family and by layout source:
   train / val   families 0-7 and 10-13, layouts rounds|staggered|rows|mixed|cabaret
   held-out      families 8-9 (used in earlier development: not blind any more)
-  BLIND         families 14-15 AND the u-shape layout, which no training or
-                tuning run ever sees. Generated once, scored once.
+  BLIND         families 14-15 AND the u-shape layout. Scored during the
+                2026-10-11 development work, so NOT blind any more.
+  BLIND-2       families 16-17 (`--split blind2`), defined 2026-10-17 before
+                any candidate of that programme was scored; train layouts.
+                Generated once, scored once.
 
     python training/synth_levels.py --out DIR --level 3 --count 40 --split train --seed 5
 """
@@ -75,11 +78,20 @@ NEW_FAMILIES = [
          centre_dot=False, scan=False, sofa_fill=(60, 140, 140)),
     dict(name="sepia-scan", line=(90, 60, 30), lw=2, table_fill=(240, 228, 200), chair="backrest", chair_fill=(225, 205, 170), paper=(248, 240, 222),
          centre_dot=False, scan=True, numbers=True, prefix="T"),
+    # 16-17: BLIND-2, defined 2026-10-17 before any candidate of that programme
+    # was scored. Families 14-15 and the u-shape layout were scored during the
+    # 2026-10-11 development work, so they are no longer blind. No run, rule or
+    # threshold has seen these two. Generated once, scored once.
+    dict(name="ink-wash", line=(35, 40, 95), lw=3, table_fill=(214, 220, 242), chair="circle", chair_fill=(176, 188, 226), paper=(255, 255, 250),
+         centre_dot=False, scan=False),
+    dict(name="copy-grey", line=(50, 50, 50), lw=2, table_fill=None, chair="semicircle", chair_fill=(205, 205, 205), paper=(241, 240, 236),
+         centre_dot=True, scan=True, numbers=True),
 ]
 FAMILIES = synth.FAMILIES + NEW_FAMILIES
 TRAIN_FAMILIES = [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13]
 HELD_OUT = [8, 9]
 BLIND_FAMILIES = [14, 15]
+BLIND2_FAMILIES = [16, 17]
 TRAIN_LAYOUTS = ["rounds", "staggered", "rows", "mixed", "cabaret"]
 BLIND_LAYOUTS = ["ushape"]
 
@@ -624,6 +636,13 @@ def visibility(objs, size, meta):
 
 
 def annotation(plan_id, file, img, objs, p, meta, split, blind):
+    # A relationship or group may only name objects the annotation still holds:
+    # the edge crop and the visibility pass remove objects after the drawing
+    # recorded who sits where (found by the dataset inspector, 2026-10-17).
+    ids = {o["id"] for o in objs}
+    rels = [r for r in p.rels if all(r.get(k) is None or r.get(k) in ids for k in ("chair", "belongsTo"))]
+    groups = [dict(g, members=[m for m in g["members"] if m in ids]) for g in p.groups]
+    groups = [g for g in groups if len(g["members"]) >= 2]
     return {
         "planId": plan_id,
         "source": {"file": file, "width": img.width, "height": img.height, "venue": f"synthetic:{meta['family']}", "layout": meta["layout"], "synthetic": True},
@@ -634,12 +653,12 @@ def annotation(plan_id, file, img, objs, p, meta, split, blind):
                   "set": split, "heldOutFamily": meta["familyIndex"] in HELD_OUT, "blind": blind},
         "generator": {k: v for k, v in meta.items() if k not in ("family", "familyIndex", "layout")},
         "objects": objs,
-        "relationships": p.rels,
-        "logicalGroups": p.groups,
+        "relationships": rels,
+        "logicalGroups": groups,
     }
 
 
-SEEDS = {"train": 1, "val": 2, "heldout": 3, "blind": 4}
+SEEDS = {"train": 1, "val": 2, "heldout": 3, "blind": 4, "blind2": 5}
 
 
 def main():
@@ -650,7 +669,7 @@ def main():
     ap.add_argument("--split", choices=list(SEEDS), required=True)
     ap.add_argument("--seed", type=int, default=0)
     a = ap.parse_args()
-    fams = {"train": TRAIN_FAMILIES, "val": TRAIN_FAMILIES, "heldout": HELD_OUT, "blind": BLIND_FAMILIES}[a.split]
+    fams = {"train": TRAIN_FAMILIES, "val": TRAIN_FAMILIES, "heldout": HELD_OUT, "blind": BLIND_FAMILIES, "blind2": BLIND2_FAMILIES}[a.split]
     layouts = BLIND_LAYOUTS + TRAIN_LAYOUTS if a.split == "blind" else TRAIN_LAYOUTS
     os.makedirs(a.out, exist_ok=True)
     index = []
@@ -663,7 +682,7 @@ def main():
         pid = f"syn-{FAMILIES[fam]['name']}-L{a.level}-{seed}"
         img.save(os.path.join(a.out, pid + ".png"))
         with open(os.path.join(a.out, pid + ".json"), "w") as f:
-            json.dump(annotation(pid, pid + ".png", img, objs, p, meta, a.split, a.split == "blind"), f)
+            json.dump(annotation(pid, pid + ".png", img, objs, p, meta, a.split, a.split in ("blind", "blind2")), f)
         index.append(dict(planId=pid, family=meta["family"], level=a.level, layout=layout, objects=len(objs), ignored=sum(1 for o in objs if o.get("ignore"))))
     path = os.path.join(a.out, "index.json")
     prev = json.load(open(path)) if os.path.exists(path) else {"generator": "training/synth_levels.py", "gen": 3, "plans": []}

@@ -138,3 +138,48 @@ rolling back is `package.py --run <the old run> --version <old> --activate`,
 or reverting the activation commit. The offline folder package carries the
 pinned version only. "Trained once is enough forever" is not assumed: each
 new verified-label batch is a new dataset version and a new candidate model.
+
+## 2026-10-17 — programme v4: written before any candidate was scored
+
+**Blind-2 (new evaluation set).** Families 14–15 and the u-shape layout were
+scored during the 2026-10-11 work, so they are no longer blind. Blind-2 is
+families **16 `ink-wash`** and **17 `copy-grey`** (`synth_levels.py --split
+blind2`, seed base 5), on the training layouts, 12 plans per level × 7 levels =
+84 plans, generated once on 2026-10-17 and scored once at the end, for the final
+candidate only. No run, rule or threshold has seen them. `inspect_dataset.py
+--heldout`: no leakage against generation 2 + 3 train; 6 of 24,534 chairs on
+one L6 plan have their centre a few pixels outside the sheet (scan skew) —
+recorded, not edited. The generator now drops relationships and groups whose
+objects the edge crop or visibility pass removed (4,196 dangling references in
+the generation-3 sets made before this date; the detector never read them).
+
+**Why v3 regressed** (`benchmarks/offline-intelligence/v3-candidate-2026-10-11.json`,
+fixed threshold 0.5): v3 raised recall almost everywhere — chairs on pastel-arch
+0.290 → 0.936 and bold-black 0.764 → 0.980, both families it was the first to
+train on — and paid in table PRECISION exactly on the levels where look-alikes
+and scan damage live: val L4 0.991 → 0.977, val L6 0.985 → 0.977, held-out L5
+0.973 → 0.940, held-out L6 0.934 → 0.915, blind L3–L6 −0.006 to −0.025, and
+families cad-line, symbolic-num, mono-num-chairs, sepia-scan. Column recall fell
+on most sets (columns are 1–2 % of objects). It is a precision-for-recall trade,
+concentrated in L4–L6, not a general loss.
+
+**Experiments, each with its hypothesis and failure condition stated first.**
+Both use generation 2 + 3 train (families 8, 9, 14–17 excluded), batch 16,
+3 threads, `--size-weight 0.5` (log-size L1 at 0.1 left chair boxes wrong-sized:
+v2 Golden chairs 104/9/9 by centre but 82/31/31 at IoU 0.5) and
+`--oversample 4=1.5,5=2,6=2`.
+
+- **E1 `v4a`**: fine-tune from v3, 1,500 steps, lr 1e-3. *Hypothesis*: the levels
+  where v3's false tables arise, seen twice as often while the learning rate is
+  low, recover table precision to v2's while keeping v3's recall; the stronger
+  size loss raises box IoU. *Fails if* any level or family with ≥ 100 tables has
+  table precision below v2's by > 0.005, or a new false table appears on Golden
+  or ORNEK, or chair box AP50 on Golden does not improve.
+- **E2 `v4b`**: from v2, 3,000 steps, lr 2e-3. *Hypothesis*: starting from v2
+  rather than v3 with the same data avoids v3's precision shift altogether.
+  *Fails* on the same conditions as E1.
+
+Each is reported at the fixed 0.5 against v2 per level, family and class, on
+Golden and ORNEK model-alone and with COCO box metrics, and SEPARATELY at
+thresholds chosen on generation-3 val. Blind-2 is scored once, for the candidate
+chosen without it.
