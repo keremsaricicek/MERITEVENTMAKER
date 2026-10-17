@@ -30,6 +30,11 @@ export default async function run({ page, checks, baseUrl }) {
       chairAtTable: S([d(1, 100, 100, 60, 60, 0.9), d(2, 100, 125, 20, 20, 0.8)]).length,
       chairsSideBySide: S([d(2, 100, 100, 20, 20, 0.9), d(2, 121, 100, 20, 20, 0.8)]).length,
       weakerFirstKept: S([d(1, 100, 100, 60, 60, 0.9), d(1, 112, 100, 30, 30, 0.95)].sort((a, b) => b.score - a.score)).map((x) => x.score),
+      // E5: a table box and a seating-furniture box (sofa 4, bench 5, banquette 6) on one spot are one object
+      tableOnSofa: S([d(4, 100, 100, 120, 50, 0.8), d(1, 104, 101, 110, 48, 0.6)]).map((x) => x.k),
+      sofaUnderTable: S([d(1, 100, 100, 120, 50, 0.8), d(5, 103, 100, 118, 30, 0.6)]).map((x) => x.k),
+      benchBesideTable: S([d(1, 100, 100, 200, 60, 0.9), d(5, 100, 152, 190, 26, 0.7)]).length,
+      sofaAndChair: S([d(4, 100, 100, 120, 50, 0.8), d(2, 100, 110, 30, 30, 0.7)]).length,
     };
   });
   checks.equal(out.twoPeaks, 1, "two peaks on one table become one box");
@@ -38,4 +43,8 @@ export default async function run({ page, checks, baseUrl }) {
   checks.equal(out.chairAtTable, 2, "a chair at a table is another group and stays");
   checks.equal(out.chairsSideBySide, 2, "two chairs side by side both stay");
   checks.equal(out.weakerFirstKept, [0.95], "the stronger box decides, by score, not by size");
+  checks.equal(out.tableOnSofa, [4], "a table box on a sofa the model is surer of is the sofa, drawn once");
+  checks.equal(out.sofaUnderTable, [1], "and the other way round: the stronger reading of one spot is kept");
+  checks.equal(out.benchBesideTable, 2, "a bench BESIDE its table is another object and stays");
+  checks.equal(out.sofaAndChair, 2, "a sofa and a chair are never merged by this rule");
 }

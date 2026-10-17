@@ -275,3 +275,97 @@ generation-2 val 9 (chair recall on colour-arm 0.982 → 0.935, column recall
 packaged; the furniture blind split not scored. A next run would need the new
 heads trained longer or at a higher rate with generation-2 replay kept — a new
 experiment, written before it runs.
+
+**Why E4 failed — measured (2026-10-17).** Over 800 crops drawn by the
+training sampler, furniture was **1.3 %** of the heat positives (sofa 99, bench
+104, banquette 47 against 19,336 tables, chairs and columns; 136 of 800 crops held
+any). The focal loss is normalised by ALL positives, so the three new channels
+received about one gradient in eighty; training the whole network on that mix
+is also what moved chair and column recall on generation-2 families.
+
+- **E5 `v5b` — a seating branch on a frozen v2 (written before the run).** The
+  four-class v2 is loaded and frozen, batch-norm statistics included, so its
+  table, chair and column outputs are bit-identical by construction. A separate
+  branch on the same stride-4 features (two conv blocks, its own heat for sofa /
+  bench / banquette, its own size and offset) is the only thing trained. Its
+  focal loss is normalised by FURNITURE positives only; size and offset are
+  learned at furniture centres only. Sampling: furniture scenes and every
+  generation-3 plan that draws furniture weighted ×4, the rest kept as negatives.
+  3,000 steps, lr 2e-3. At decode a seating box and a table box on the same spot
+  are one object and the stronger is kept (the E3 rule, across the two groups).
+  *Passes if*, at the fixed 0.5 on the furniture dev split: each furniture class
+  recall ≥ 0.85 and precision ≥ 0.9; and on E1's sets the table, chair and column
+  numbers equal v2's except where a table box gave way to a stronger furniture
+  box, each such case counted and none on Golden or ORNEK. Blind-2 and the
+  furniture blind split are scored once, only if it passes.
+
+**E5 result — FAILS its condition (2026-10-17).** Furniture dev at 0.5: sofa
+P 1.000 / R 0.452, bench 1.000 / 0.006, banquette 0.714 / 0.060 (`e5-v5b-seatdev`).
+Tables, chairs and columns are v2's by construction (frozen); no regression on
+the furniture dev split (`compare_candidates.py`: 0). Not packaged; the blind
+splits not scored.
+
+**Why E5 failed — measured, not guessed.** The branch FINDS the pieces but is
+not sure of them: at each true centre the strongest of the seven channels is
+the right seating class for 166 / 197 sofas, 127 / 156 benches and 36 / 83
+banquettes, while the class's own peak has a median of 0.483, 0.287 and 0.300
+(`heat_at_gt.py`); ≥ 0.3 holds for 0.87 / 0.43 / 0.48. So the threshold is not
+the problem to solve — lowering it would trade the precision the pre-registration
+fixed for half the recall it asks for. The cause is in the LABELS: training draws
+256 px crops, and a piece whose centre falls outside the crop but whose body is
+visible inside it was taught as BACKGROUND. Counted over 3,000 crops of the
+sampler on seat/train: for every positive, 0.55 more banquettes were visible-but-
+cut (bench 0.46, sofa 0.44, table 0.32, chair 0.17). The longer the class, the
+more often its visible half was a negative example of itself — the same order as
+the peaks. Banquette, the rarest class, also confuses with bench and chair (bench
+or chair is the strongest channel at 47 of 83 banquette centres).
+
+- **E6 `v6a` — the cut-object label fixed, the classes balanced (written before
+  the run).** E5's model, data, seed, 3,000 steps and lr unchanged, with two
+  changes and nothing else: (1) `--ignore-cut` — an object the crop shows only
+  part of, its centre outside, is IGNORED in the heat target (held at 0.999 like
+  an annotated ignore box) instead of taught as background; (2)
+  `--balance-classes` — in the branch's focal loss each seating class's positives
+  weigh equally in total (inverse of its share of the batch's positives);
+  negatives and the normaliser unchanged. *Passes on the same condition as E5*:
+  at the fixed 0.5 on the furniture dev split each furniture class recall ≥ 0.85
+  and precision ≥ 0.9; E1's sets equal v2's except tables that gave way to a
+  stronger furniture box, counted, none on Golden or ORNEK. If it fails, the
+  measured per-class peak at true centres says which of the two changes did not
+  carry; it is not re-run longer.
+
+**E6 result — FAILS its condition (2026-10-17).** Furniture dev at 0.5: sofa
+P 1.000 / R 0.315, bench 1.000 / 0.006, banquette 0.684 / 0.157
+(`e6-v6a-seatdev`). Peaks at the true centres (`heat_at_gt.py`): sofa median
+0.483 → 0.422, bench 0.287 → 0.256, banquette 0.300 → 0.367 (≥ 0.3: 0.48 → 0.74);
+bench or chair now wins at 38 of 83 banquette centres (47 before). What this
+settles: the cut-object label was real (it is fixed and stays available as
+`--ignore-cut`) but it was NOT why benches stay below the threshold — their peak
+did not move; balancing the classes moved weight from sofas to banquettes, as a
+re-weighting does, and lifted neither enough. Every bench sits 0.08 table sides
+from a long table, closer than any other piece, and the frozen v2 features under
+a two-layer branch do not separate the two. Not re-run longer. Not packaged;
+blind splits not scored. The next experiment, if one is run, changes what the
+branch can see (its depth and reach, or features that may adapt under a
+distillation term that holds v2's own outputs), not the schedule.
+
+**Why benches stay low — one more measurement before E7.** On 24 of E6's own
+TRAINING scenes the bench peak is a median 0.269 (0.013 at ≥ 0.5): the branch
+does not fit its training data, so this is not a gap between seen and unseen
+plans. Nor is it scale: benches are 19 px deep at inference and 7–30 px across
+the training crops. What is left is what the branch can represent on features
+frozen for four classes.
+
+- **E7 `v7a` — the features may adapt, held by distillation (written before the
+  run).** E6's data, labels, balance, seed, 3,000 steps and lr, with the base no
+  longer frozen: its weights train at 0.1 × the rate (`--base-lr-scale 0.1`;
+  batch-norm statistics stay v2's), and a frozen copy of v2 is a teacher — the
+  base's four channels are held to the teacher's on every pixel of every crop by
+  KL divergence, normalised like the focal loss (`--distill 1.0`). This is the
+  answer to E4's measured failure (whole-network training moved chair and column
+  recall on generation-2 families): the base may change only as far as the
+  teacher allows. *Passes on E5's condition* (each furniture class recall ≥ 0.85,
+  precision ≥ 0.9 at 0.5 on the furniture dev split) AND, because the base now
+  changes, `compare_candidates.py` against v2 under the E3 decode reports no
+  regression (n ≥ 100, drop > 0.005) on val, held-out and generation-2 val, and
+  Golden / ORNEK keep their table and chair counts with no new false table.

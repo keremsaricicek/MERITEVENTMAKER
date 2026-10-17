@@ -170,7 +170,7 @@ def gaussian(heat, cx, cy, sigma):
     heat[y0:y1, x0:x1] = np.maximum(heat[y0:y1, x0:x1], g)
 
 
-def sample_crop(p, rng, crop=CROP):
+def sample_crop(p, rng, crop=CROP, ignore_cut=False):
     # scale so the plan's typical table lands between 18 and 70 px
     target = rng.uniform(18, 70)
     f = target / p.ref
@@ -212,6 +212,15 @@ def sample_crop(p, rng, crop=CROP):
     # the focal loss neither counts it a positive (target == 1) nor teaches it
     # as background (its negative weight (1 - target)^4 is ~1e-12). A real
     # object's peak drawn afterwards still reaches exactly 1.
+    # E6: an object the crop shows only part of, its centre outside, is not
+    # background. Without this its visible part was taught as background:
+    # measured on seat/train (training/README.md, E6), for every positive
+    # banquette in a crop 0.55 more stood cut at the crop's edge (bench 0.46,
+    # sofa 0.44, chair 0.17). Held just under 1, like an ignored box.
+    if ignore_cut:
+        objs = objs + [(-1, cx, cy, w, h) for k, cx, cy, w, h in objs
+                       if k != -1 and not (0 <= cx < crop and 0 <= cy < crop)
+                       and cx + w / 2 > 0 and cx - w / 2 < crop and cy + h / 2 > 0 and cy - h / 2 < crop]
     for k, cx, cy, w, h in objs:
         if k != -1:
             continue
@@ -252,8 +261,9 @@ class Res(nn.Module):
 
 
 class PlanNet(nn.Module):
-    def __init__(self):
+    def __init__(self, k=None):
         super().__init__()
+        k = k or K
         self.stem = nn.Sequential(cbr(1, 24, 2), cbr(24, 32, 2))
         self.s4 = nn.Sequential(Res(32), Res(32))
         self.s8 = nn.Sequential(cbr(32, 64, 2), Res(64), Res(64))
@@ -263,27 +273,68 @@ class PlanNet(nn.Module):
         self.l8 = nn.Conv2d(64, 48, 1)
         self.p4 = nn.Conv2d(32, 48, 1)
         self.f4 = cbr(48, 48)
-        self.heat = nn.Sequential(cbr(48, 48), nn.Conv2d(48, K, 1))
+        self.heat = nn.Sequential(cbr(48, 48), nn.Conv2d(48, k, 1))
         self.size = nn.Sequential(cbr(48, 32), nn.Conv2d(32, 2, 1))
         self.off = nn.Sequential(cbr(48, 32), nn.Conv2d(32, 2, 1))
         self.heat[-1].bias.data.fill_(-2.19)
 
-    def forward(self, x):
+    def features(self, x):
         x = (x - 0.5) / 0.5
         a4 = self.s4(self.stem(x))
         a8 = self.s8(a4)
         a16 = self.s16(a8)
         u8 = self.f8(a8 + F.interpolate(self.l16(a16), size=a8.shape[-2:], mode="bilinear", align_corners=False))
-        u4 = self.f4(self.p4(a4) + F.interpolate(self.l8(u8), size=a4.shape[-2:], mode="bilinear", align_corners=False))
+        return self.f4(self.p4(a4) + F.interpolate(self.l8(u8), size=a4.shape[-2:], mode="bilinear", align_corners=False))
+
+    def forward(self, x):
+        u4 = self.features(x)
         return torch.sigmoid(self.heat(u4)), self.size(u4), self.off(u4)
 
 
-def focal(pred, gt, cls_mask):
+class PlanNetSeat(nn.Module):
+    """E5 (training/README.md): a frozen four-class PlanNet plus a seating
+    branch — its own heat for sofa / bench / banquette and its own size and
+    offset — on the same stride-4 features. The outputs keep PlanNet's form
+    (heat[K=7], size, off) so export, decode and the app read it unchanged: at
+    a cell where a seating channel is the strongest, size and offset come from
+    the branch."""
+
+    def __init__(self):
+        super().__init__()
+        self.base = PlanNet(k=4)
+        self.seat_trunk = nn.Sequential(cbr(48, 64), cbr(64, 64, d=2))
+        self.seat_heat = nn.Conv2d(64, len(SEATING), 1)
+        self.seat_size = nn.Sequential(cbr(64, 32), nn.Conv2d(32, 2, 1))
+        self.seat_off = nn.Sequential(cbr(64, 32), nn.Conv2d(32, 2, 1))
+        self.seat_heat.bias.data.fill_(-2.19)
+
+    def parts(self, x):
+        u4 = self.base.features(x)
+        t = self.seat_trunk(u4)
+        return (torch.sigmoid(self.base.heat(u4)), self.base.size(u4), self.base.off(u4),
+                torch.sigmoid(self.seat_heat(t)), self.seat_size(t), self.seat_off(t))
+
+    def forward(self, x):
+        bh, bs, bo, sh, ss, so = self.parts(x)
+        use = (sh.amax(1, keepdim=True) > bh.amax(1, keepdim=True)).float()
+        return torch.cat([bh, sh], 1), bs * (1 - use) + ss * use, bo * (1 - use) + so * use
+
+
+def focal(pred, gt, cls_mask, balance=False):
     pred = pred.clamp(1e-4, 1 - 1e-4)
     pos = gt.eq(1).float()
     neg = 1 - pos
     m = cls_mask[:, :, None, None]
     pl = torch.log(pred) * (1 - pred) ** 2 * pos * m
+    if balance:
+        # E6: each class's positives weigh as much in total as any other
+        # class's (inverse of its share of the batch's positives), so the
+        # rarest class is not learned from a fifth of the gradient. The
+        # negatives and the normaliser are unchanged.
+        nc = (pos * m).sum((0, 2, 3))
+        present = nc > 0
+        wc = torch.where(present, nc.sum() / (present.sum().clamp(min=1) * nc.clamp(min=1)), torch.zeros_like(nc))
+        pl = pl * wc[None, :, None, None]
     nl = torch.log(1 - pred) * pred ** 2 * (1 - gt) ** 4 * neg * m
     n = (pos * m).sum()
     return -(pl.sum() + nl.sum()) / max(1.0, n.item())
@@ -315,6 +366,11 @@ def decode(heat, size, off, thr=0.3, topk=3000):
 GROUP_OF = {0: 0, 1: 0, 2: 2, 3: 3, 4: 4, 5: 4, 6: 4}
 
 
+# E5: a table box and a seating-furniture box on the same spot are one object
+# drawn once; the stronger reading is kept, as within a group.
+CONFLICT = {(0, 4), (4, 0)}
+
+
 def suppress_close(dets):
     """Drop a detection whose centre lies within half the short side of a
     STRONGER detection of the same group (E3, training/README.md). A 3x3 peak
@@ -324,7 +380,8 @@ def suppress_close(dets):
     kept = []
     for d in dets:
         g = GROUP_OF.get(d[0], d[0])
-        if any(GROUP_OF.get(k[0], k[0]) == g and math.hypot(d[1] - k[1], d[2] - k[2]) < 0.5 * min(k[3], k[4]) for k in kept):
+        if any((GROUP_OF.get(k[0], k[0]) == g or (GROUP_OF.get(k[0], k[0]), g) in CONFLICT)
+               and math.hypot(d[1] - k[1], d[2] - k[2]) < 0.5 * min(k[3], k[4]) for k in kept):
             continue
         kept.append(d)
     return kept
@@ -421,8 +478,35 @@ def train(args):
     syn_w = [over.get((p.ann.get("level") if isinstance(p.ann.get("level"), int) else -1), 1.0) for p in syn] if over else None
     if over:
         print(f"oversample {over}: {sum(1 for w in syn_w if w != 1.0)} plans weighted", flush=True)
-    model = PlanNet()
-    if args.init:
+    seat_branch = getattr(args, "seat_branch", False)
+    teacher = None
+    if seat_branch:
+        # E5: the four-class model is loaded into `base` and frozen; only the
+        # seating branch trains. Furniture plans are drawn more often.
+        model = PlanNetSeat()
+        base_state = torch.load(args.init, map_location="cpu", weights_only=False)["state"]
+        model.base.load_state_dict(base_state)
+        teacher = None
+        if args.distill > 0:
+            # E7: the base may adapt (at --base-lr-scale of the rate) so the
+            # features can learn what a bench is; a frozen copy of the starting
+            # model is the teacher, and the base's own four channels are held to
+            # its answers on every pixel of every crop (weight --distill), so a
+            # table, chair or column reading moves only where it has to.
+            teacher = PlanNet(k=4)
+            teacher.load_state_dict(base_state)
+            teacher.eval()
+            for q in teacher.parameters():
+                q.requires_grad_(False)
+        else:
+            for q in model.base.parameters():
+                q.requires_grad_(False)
+        w = [4.0 if any(k >= 4 for k, *_ in p.objs) else 1.0 for p in syn]
+        syn_w = w
+        print(f"seat branch on {'a distilled' if teacher is not None else 'frozen'} {args.init}; {sum(1 for x in w if x > 1)} plans with furniture weighted x4", flush=True)
+    else:
+        model = PlanNet()
+    if args.init and not seat_branch:
         # Warm start from another run (e.g. a fold model from the synthetic-only
         # run). Recorded in the checkpoint's args; it adds no data of its own.
         state = torch.load(args.init, map_location="cpu", weights_only=False)["state"]
@@ -439,26 +523,54 @@ def train(args):
         print(f"initialised from {args.init}", flush=True)
     nparams = sum(p.numel() for p in model.parameters())
     print(f"params: {nparams}", flush=True)
-    opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
-    sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=args.lr, total_steps=args.steps, pct_start=0.1)
+    if seat_branch and teacher is not None:
+        base_ids = {id(q) for q in model.base.parameters()}
+        groups = [{"params": [q for q in model.parameters() if q.requires_grad and id(q) not in base_ids], "lr": args.lr},
+                  {"params": [q for q in model.base.parameters()], "lr": args.lr * args.base_lr_scale}]
+        opt = torch.optim.AdamW(groups, weight_decay=1e-4)
+        max_lr = [args.lr, args.lr * args.base_lr_scale]
+    else:
+        opt = torch.optim.AdamW([q for q in model.parameters() if q.requires_grad], lr=args.lr, weight_decay=1e-4)
+        max_lr = args.lr
+    sched = torch.optim.lr_scheduler.OneCycleLR(opt, max_lr=max_lr, total_steps=args.steps, pct_start=0.1)
     os.makedirs(args.out, exist_ok=True)
     log = open(os.path.join(args.out, "train.log"), "a")
     t0 = time.time()
     model.train()
+    if seat_branch:
+        model.base.eval()  # its batch-norm statistics stay v2's; its weights train only under --distill (E7)
     for step in range(1, args.steps + 1):
         batch = []
         for _ in range(args.batch):
             pool = real if (real and rng.random() < args.real_frac) else syn
             pick = rng.choices(syn, weights=syn_w)[0] if (syn_w and pool is syn) else rng.choice(pool)
-            batch.append(sample_crop(pick, rng))
+            batch.append(sample_crop(pick, rng, ignore_cut=args.ignore_cut))
         x = torch.from_numpy(np.stack([b[0] for b in batch]))
         heat = torch.from_numpy(np.stack([b[1] for b in batch]))
         size = torch.from_numpy(np.stack([b[2] for b in batch]))
         off = torch.from_numpy(np.stack([b[3] for b in batch]))
         mask = torch.from_numpy(np.stack([b[4] for b in batch]))
         cm = torch.from_numpy(np.stack([b[5] for b in batch]))
-        ph, ps, po = model(x)
-        lh = focal(ph, heat, cm)
+        if seat_branch:
+            # only the branch's channels and only furniture centres: the loss is
+            # normalised by furniture positives, not by every object on the crop
+            bh, bs, bo, ph, ps, po = model.parts(x)
+            lh = focal(ph, heat[:, 4:], cm[:, 4:], balance=args.balance_classes)
+            if teacher is not None:
+                # the base's four channels held to the teacher's, per pixel; the
+                # sum is normalised like the focal loss, by the batch's positives
+                with torch.no_grad():
+                    th, ts, to = teacher(x)
+                npos = max(1.0, float((heat[:, :4] == 1).sum()))
+                tc = th.clamp(1e-4, 1 - 1e-4)
+                # KL(teacher || student): the cross-entropy minus the teacher's
+                # own entropy, so it reads 0 where the base still agrees
+                kl = F.binary_cross_entropy(bh.clamp(1e-4, 1 - 1e-4), tc, reduction="sum") - F.binary_cross_entropy(tc, tc, reduction="sum")
+                lh = lh + args.distill * kl / npos
+            mask = mask * (heat[:, 4:] == 1).any(1).float()
+        else:
+            ph, ps, po = model(x)
+            lh = focal(ph, heat, cm)
         n = mask.sum().clamp(min=1)
         ls = (F.l1_loss(ps, size, reduction="none").sum(1) * mask).sum() / n
         lo = (F.l1_loss(po, off, reduction="none").sum(1) * mask).sum() / n
@@ -480,8 +592,9 @@ def train(args):
 
 def load_model(path):
     ck = torch.load(path, map_location="cpu", weights_only=False)
-    set_classes(bool((ck.get("args") or {}).get("seating")))
-    m = PlanNet()
+    a = ck.get("args") or {}
+    set_classes(bool(a.get("seating")))
+    m = PlanNetSeat() if a.get("seat_branch") else PlanNet()
     m.load_state_dict(ck["state"])
     m.eval()
     return m, ck
@@ -605,7 +718,12 @@ def main():
     t.add_argument("--seed", type=int, default=1)
     t.add_argument("--init", default="")
     t.add_argument("--seating", action="store_true", help="E4: sofa, bench and banquette as classes of their own (K = 7)")
+    t.add_argument("--seat-branch", action="store_true", help="E5: with --seating, a seating branch on a FROZEN four-class --init model")
     t.add_argument("--size-weight", type=float, default=0.1, help="weight of the log-size L1 loss (0.1 = every run before 2026-10-17)")
+    t.add_argument("--ignore-cut", action="store_true", help="E6: an object cut by the crop's edge, its centre outside, is ignored rather than taught as background")
+    t.add_argument("--balance-classes", action="store_true", help="E6: with --seat-branch, each seating class's positives weigh equally in the focal loss")
+    t.add_argument("--distill", type=float, default=0.0, help="E7: with --seat-branch, the base trains too and its four channels are held to a frozen copy of --init (weight)")
+    t.add_argument("--base-lr-scale", type=float, default=0.1, help="E7: the base's learning rate as a share of --lr")
     t.add_argument("--oversample", default="", help='generation-3 levels drawn more often, e.g. "5=2,6=2"')
     t.add_argument("--out", required=True)
     e = sp.add_parser("eval")

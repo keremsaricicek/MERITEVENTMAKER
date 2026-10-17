@@ -177,7 +177,9 @@
     const kept = [];
     for (const d of dets) {
       const g = GROUP_OF[d.k] ?? d.k;
-      if (kept.some(k => (GROUP_OF[k.k] ?? k.k) === g && Math.hypot(d.cx - k.cx, d.cy - k.cy) < 0.5 * Math.min(k.w, k.h))) continue;
+      // a table and a seating-furniture box on one spot are one object (E5)
+      if (kept.some(k => { const h = GROUP_OF[k.k] ?? k.k; return (h === g || (h === 0 && g === 4) || (h === 4 && g === 0))
+        && Math.hypot(d.cx - k.cx, d.cy - k.cy) < 0.5 * Math.min(k.w, k.h); })) continue;
       kept.push(d);
     }
     return kept;
