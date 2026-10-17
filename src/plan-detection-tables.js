@@ -6,12 +6,12 @@
 // orchestrator the map asked for: one call per stage, in data order.
 //
 // findTables(input)                                              B-6 … B-14
-//   IN        { uid, width, height, area, sources, analyze, venueSizeOk, threshold, masksTints, surfaceMask, tintIsChairMaterial, chairs, chairModal, chairUniform, chairSource, chairFloorSide, gapTo, protectedRegions, confidenceThreshold }
+//   IN        { uid, width, height, area, sources, analyze, venueSizeOk, threshold, masksTints, surfaceMask, accentMask, tintIsChairMaterial, chairs, chairModal, chairUniform, chairSource, chairFloorSide, gapTo, protectedRegions, confidenceThreshold }
 //             — the image size, the object sources and class masks from
 //             B-4, the ink threshold from B-1, the chairs-first stage's
 //             output, the detector's own analyser and venue size test, and
 //             detect()'s two options.
-//   OUT       { candidates, venues, chairVenues, pool, debugPool, modalPool, modalArea, modalSeats, modalLong, modalShort, bistrosTyped, reseated, seatsInsideBody, seatsInsideBodyStoodDown, relationStats, splitCount, capReached, offModalDropped, surfaceRejected, surfaceMinorityFinishKept, fragmentDiagnostics, textGlyphChairsDropped, familyLostToAssociation, familyLostToTextRun, familyFromTableSources, familyVenue, mergedRowVenues, columnComps, chairOBB, toPercentBox }
+//   OUT       { candidates, venues, chairVenues, pool, debugPool, modalPool, modalArea, modalSeats, modalLong, modalShort, bistrosTyped, reseated, seatsInsideBody, seatsInsideBodyStoodDown, relationStats, splitCount, capReached, offModalDropped, surfaceRejected, chairMaterialRejected, surfaceMinorityFinishKept, fragmentDiagnostics, textGlyphChairsDropped, familyLostToAssociation, familyLostToTextRun, familyFromTableSources, familyVenue, mergedRowVenues, columnComps, chairOBB, toPercentBox }
 //             — the tables, the venue-scale objects and unseated chairs
 //             (via B-15, called from inside), the family members the swap
 //             may restore, the two constructors B-16 shares, and the
@@ -43,14 +43,14 @@
 
   function findTables(input) {
     const { uid, width, height, area, sources, analyze, venueSizeOk,
-      threshold, masksTints, surfaceMask, tintIsChairMaterial, chairs, chairModal,
+      threshold, masksTints, surfaceMask, accentMask, tintIsChairMaterial, chairs, chairModal,
       chairUniform, chairSource, chairFloorSide, gapTo, protectedRegions, confidenceThreshold } = input;
     // B-6 the table candidate pool — tablePool(), below findTables().
     const { dedupFitness, expanded, modalLong, modalShort, pool, provisionalModalArea, splitCount, unique } = tablePool({
       analyze, chairModal, chairUniform, chairs, height, sources, width });
     // B-7 is this candidate actually made of table? — madeOfTable(), below findTables().
-    const { surfaceMinorityFinishKept, surfaceRejected, surfaceRejectedComps, uniqueBeforeSurface } = madeOfTable({
-      chairs, dedupFitness, expanded, gapTo, height, masksTints, surfaceMask,
+    const { surfaceMinorityFinishKept, surfaceRejected, surfaceRejectedComps, uniqueBeforeSurface, chairMaterialRejected } = madeOfTable({
+      accentMask, chairs, dedupFitness, expanded, gapTo, height, masksTints, surfaceMask,
       tintIsChairMaterial, unique, width });
     // B-8 the symbol family as a family, not a polarity — symbolFamilySupport(), below findTables().
     const { debugPool, familyFromTableSources, modalArea, modalPool, offModalDropped } = symbolFamilySupport({
@@ -87,7 +87,7 @@
     return { candidates, venues, chairVenues, pool, debugPool, modalPool,
       modalArea, modalSeats, modalLong, modalShort, bistrosTyped, reseated,
       seatsInsideBody, seatsInsideBodyStoodDown, relationStats, splitCount, capReached, offModalDropped,
-      surfaceRejected, surfaceMinorityFinishKept, fragmentDiagnostics, textGlyphChairsDropped, familyLostToAssociation, familyLostToTextRun,
+      surfaceRejected, chairMaterialRejected, surfaceMinorityFinishKept, fragmentDiagnostics, textGlyphChairsDropped, familyLostToAssociation, familyLostToTextRun,
       familyFromTableSources, familyVenue, mergedRowVenues, columnComps, chairOBB, toPercentBox };
   }
 
@@ -201,12 +201,12 @@
 
 
   // B-7 is this candidate actually made of table?
-  //   IN   chairs, dedupFitness, expanded, gapTo, height, masksTints, surfaceMask, tintIsChairMaterial, unique, width
-  //   OUT  surfaceMinorityFinishKept, surfaceRejected, surfaceRejectedComps, uniqueBeforeSurface
+  //   IN   accentMask, chairs, dedupFitness, expanded, gapTo, height, masksTints, surfaceMask, tintIsChairMaterial, unique, width
+  //   OUT  surfaceMinorityFinishKept, surfaceRejected, surfaceRejectedComps, uniqueBeforeSurface, chairMaterialRejected
   //   MUTATES unique, narrowed in place to the candidates made of table surface;
   //        each candidate's comp.surfaceCoverage / surfaceFromMinorityFinish
   function madeOfTable(input) {
-    const { chairs, dedupFitness, expanded, gapTo, height, masksTints,
+    const { accentMask, chairs, dedupFitness, expanded, gapTo, height, masksTints,
       surfaceMask, tintIsChairMaterial, unique, width } = input;
     // ---- is this candidate actually made of table? ------------------------
     // A table drawn with a filled surface is mostly that surface colour. A
@@ -326,6 +326,36 @@
       if(surfaceKept.length>=Math.max(4,unique.length*.2)){unique.length=0;unique.push(...surfaceKept);}
       else surfaceRejected=0;
     }
+    // MADE OF CHAIR, when nothing says what a table is made of. A plan whose
+    // table finish is paper-pale loses its surface family the moment the
+    // print is brightened or its contrast raised: measured on the Golden
+    // Plan's contrast-high and bright-up renderings (D4, 2026-10-17), no tone
+    // family is solid, the filter above never runs, and 30-36 enclosed
+    // regions at the orange armchairs of the pushed-together rows stay as
+    // tables. The chairs' own colour is still there. A candidate the plan's
+    // accent (its chair colour, MeritPlanTone's accent model) covers for at
+    // least a quarter of its box is a chair, not a table: on those renderings
+    // the true tables' boxes hold at most 8 % saturated colour, the false
+    // ones mostly 30 % and more. Asked only when the surface filter did not
+    // decide, so a plan with a table surface is unchanged.
+    let chairMaterialRejected=0;
+    if(accentMask&&!surfaceRejected){
+      const accentCover=c=>{
+        const x0=Math.max(0,Math.round(c.x)),y0=Math.max(0,Math.round(c.y));
+        const x1=Math.min(width,Math.round(c.x+c.w)),y1=Math.min(height,Math.round(c.y+c.h));
+        let on=0,tot=0;
+        for(let y=y0;y<y1;y+=2)for(let x=x0;x<x1;x+=2){tot++;if(accentMask[y*width+x])on++;}
+        return tot?on/tot:0;
+      };
+      const turnedAway=[];
+      const kept=unique.filter(u=>{
+        if(accentCover(u.comp)>=.25){turnedAway.push(u.comp);return false;}
+        return true;
+      });
+      // applied only when it does not gut the plan; what it turned away then
+      // joins the surface filter's rejects (the column pass reads them)
+      if(kept.length>=Math.max(4,unique.length*.5)){unique.length=0;unique.push(...kept);chairMaterialRejected=turnedAway.length;surfaceRejectedComps.push(...turnedAway);}
+    }
     if(globalThis.MERIT_STAGE_CENSUS){
       const cbox=c=>({x:c.x,y:c.y,w:c.w,h:c.h,src:c.source,fill:c.fill??null,cov:c.surfaceCoverage??null,
         minority:c.surfaceFromMinorityFinish??null,
@@ -338,7 +368,7 @@
       globalThis.MERIT_STAGE_CENSUS.stage_afterSurface=unique.map(e=>cbox(e.comp));
     }
 
-    return { surfaceMinorityFinishKept, surfaceRejected, surfaceRejectedComps, uniqueBeforeSurface };
+    return { surfaceMinorityFinishKept, surfaceRejected, surfaceRejectedComps, uniqueBeforeSurface, chairMaterialRejected };
   }
 
 

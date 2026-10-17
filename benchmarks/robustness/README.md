@@ -173,3 +173,45 @@ so the unsupported proposals are mostly offset duplicates and fragments of real
 tables, which this rule cannot tell from the real table. Not shipped; the false
 tables on hue-shift, contrast-high and bright-up stay OPEN, at their cause (the
 colour-dependent tone/accent stage), not at the fusion.
+
+## 2026-10-17 — the three SEVERE renderings fixed at their cause (D4)
+
+`diagnose-types.mjs --debug` on the renderings and on the original named two
+different causes, neither of them the fusion:
+
+- **hue-shift** — the pale table finish split into TWO tone families: luma 230,
+  420 components whose modal side is 5.3 px (the fringe along every outline),
+  and luma 220, 240 components at 44 px (the tables). The surface the "made of
+  table" filter (B-7) asks about was chosen by pixel count, so it was the fringe;
+  no table was made of it, the filter judged it would gut the plan and switched
+  itself off, and 39 fill proposals at the armchairs of the pushed-together rows
+  stayed as tables. Now (`plan-detection-sources.js`) the surface is the solid
+  family drawn AT TABLE SCALE when the largest family's own modal size is known
+  and below it. A first version also switched when that size was unknown (no
+  compact components): it cost the adversarial a6 fixture every real table
+  (recall 1 → 0) and a2 two of seven, and was narrowed before anything was kept.
+- **contrast-high, bright-up** — the cream table finish became paper: no tone
+  family is solid, B-7 never runs. The false tables are the orange armchairs'
+  own boxes. When the surface filter did not decide, a candidate the plan's
+  accent (its chair colour) covers for ≥ 25 % of its box is turned away as chair
+  material (`plan-detection-tables.js`, `chairMaterialRejected`); true tables on
+  these renderings hold at most 8 % saturated colour, the false ones mostly 30 %
+  and more (measured before the threshold was written). It does not apply when
+  it would remove more than half the proposals.
+
+| rendering | tables TP / FP / FN before → after | triage |
+|---|---|---|
+| hue-shift | 43 / 39 / 3 → **46 / 0 / 0** | SEVERE → HEALTHY |
+| contrast-high | 43 / 36 / 3 → **46 / 2 / 0** | SEVERE → HEALTHY |
+| bright-up | 43 / 30 / 3 → **44 / 2 / 2** | SEVERE → HEALTHY |
+
+All sixteen: **11 HEALTHY / 2 ACCEPTABLE / 3 WEAK / 0 SEVERE** (was 8 / 2 / 3 / 3);
+median table F1 0.957, chair F1 0.964; table box IoU P10 on the three 0.205 /
+0.785 / 0.205 → 0.89 / 0.893 / 0.913. Golden and ORNEK candidates are
+byte-identical before and after (a candidate-level dump of all 28 fingerprint
+plans: 20 identical; the eight that differ are these three renderings and five
+adversarial fixtures). Gates on the same source: `benchmark:baseline` no
+regression; adversarial `--compare` 0 blocking (a6 table F1 0.432 → 0.457);
+false-positives met, its accepted held-back real tables lowered from 6 / 5 / 2
+to 0 on these three. Still WEAK: downscale-70 (69 false chairs), jpeg-q20 and
+lowres-roundtrip (tables and chairs missed under heavy compression) — open.

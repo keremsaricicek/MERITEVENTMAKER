@@ -5,10 +5,8 @@
  "consequence": "On these five renderings, confirming the proposal as offered leaves the listed number of real tables off the floor plan; each is still on the review screen, unticked, with its reason. On the clean plan no real table is held (the ORIGINAL gate below is separate and still blocks).",
  "owner": "computer-vision-engineer (Assisted Detection)",
  "acceptedHeldReal": {
-  "hue-shift": 6,
-  "bright-up": 5,
-  "contrast-high": 2,
   "blur": 2,
   "grayscale": 1
- }
+ },
+ "lowered": "2026-10-17: hue-shift 6 -> 0, bright-up 5 -> 0, contrast-high 2 -> 0 and their entries removed, so a return is caught. Cause fixed upstream of the gate (benchmarks/robustness/README.md, D4): on hue-shift the table finish split into two tone families and the surface became the fringe one; on bright-up and contrast-high no surface family survived, and the armchairs' own colour now turns their table-sized boxes away. blur 2 and grayscale 1 unchanged."
 }

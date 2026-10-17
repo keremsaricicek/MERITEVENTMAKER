@@ -175,8 +175,8 @@
 
       // B-6 … B-14 — which objects are tables, and what is left over — is
       // MeritPlanTables (src/plan-detection-tables.js), contract there.
-      const tablesOut=TABLES.findTables({uid,width,height,area,sources,analyze,venueSizeOk,threshold,masksTints,surfaceMask,tintIsChairMaterial,chairs,chairModal,chairUniform,chairSource,chairFloorSide,gapTo,protectedRegions,confidenceThreshold});
-      const{candidates,chairVenues,pool,debugPool,modalPool,modalArea,modalSeats,modalLong,modalShort,bistrosTyped,reseated,seatsInsideBody,seatsInsideBodyStoodDown,relationStats,splitCount,capReached,offModalDropped,surfaceRejected,surfaceMinorityFinishKept,fragmentDiagnostics,textGlyphChairsDropped,familyLostToAssociation,familyLostToTextRun,familyFromTableSources,familyVenue,mergedRowVenues,columnComps,chairOBB,toPercentBox}=tablesOut;
+      const tablesOut=TABLES.findTables({uid,width,height,area,sources,analyze,venueSizeOk,threshold,masksTints,surfaceMask,accentMask,tintIsChairMaterial,chairs,chairModal,chairUniform,chairSource,chairFloorSide,gapTo,protectedRegions,confidenceThreshold});
+      const{candidates,chairVenues,pool,debugPool,modalPool,modalArea,modalSeats,modalLong,modalShort,bistrosTyped,reseated,seatsInsideBody,seatsInsideBodyStoodDown,relationStats,splitCount,capReached,offModalDropped,surfaceRejected,chairMaterialRejected,surfaceMinorityFinishKept,fragmentDiagnostics,textGlyphChairsDropped,familyLostToAssociation,familyLostToTextRun,familyFromTableSources,familyVenue,mergedRowVenues,columnComps,chairOBB,toPercentBox}=tablesOut;
       let venues=tablesOut.venues;
       mark("tables");
       await breathe();
@@ -209,7 +209,7 @@
           // a different table than "nearest perimeter" would have. Reported
           // even when it is zero.
           relations:relationStats,
-          mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,surfaceMinorityFinishKept,secondaryChairFamilies:secondaryFamilyDiagnostics,fragmentSuppression:fragmentDiagnostics,
+          mergesSplit:splitCount,splitModalLong:modalLong?Math.round(modalLong.value):null,splitModalShort:modalShort?Math.round(modalShort.value):null,candidateCapReached:capReached,offModalDropped,surfaceRejected,chairMaterialRejected,surfaceMinorityFinishKept,secondaryChairFamilies:secondaryFamilyDiagnostics,fragmentSuppression:fragmentDiagnostics,
           textGlyphChairsDropped,
           familyLostToAssociation:familyLostToAssociation.map(ch=>toPercentBox(chairOBB(ch))),
           familyLostToTextRun:familyLostToTextRun.map(ch=>toPercentBox(chairOBB(ch))),

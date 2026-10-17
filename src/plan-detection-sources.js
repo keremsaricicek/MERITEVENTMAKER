@@ -167,6 +167,30 @@
       }
       diagnosticsSources.tone=toneKept;
       diagnosticsSources.toneFamilies=toneFamilyEvidence;
+      // THE SURFACE IS THE FAMILY DRAWN AT TABLE SCALE. "Most of the drawing"
+      // picks the table fill on a seating plan only while that fill is one
+      // family. Measured on the Golden Plan's hue-shift rendering (D4,
+      // 2026-10-17): the pale table fill split in two — luma 230, 420
+      // components whose modal side is 5.3 px (edge fringe), and luma 220,
+      // 240 components at 44 px (the tables). The fringe family covers more
+      // pixels, so it became the surface; no table was made of it, the
+      // "made of table" filter (B-7) found it would gut the plan and switched
+      // itself off, and 39 fill proposals at the armchairs of the pushed rows
+      // stayed as tables. Among the solid families, the one whose own
+      // repeated components are table-sized is the surface. Only when the
+      // largest family's own modal size is KNOWN and below table scale — the
+      // failure measured. Where it is unknown (no compact components at all)
+      // the old choice stands: switching there cost the adversarial a6 fixture
+      // every real table (recall 1 → 0) and a2 two of seven, measured
+      // 2026-10-17 before this condition was added.
+      const tableScale=e=>e.usedForTables&&e.modalSide!=null&&e.modalSide>=minDim*.016&&e.modalSide*e.modalSide>=width*height*.00015;
+      const scaled=toneFamilyEvidence.filter(tableScale);
+      const current=toneFamilyEvidence.find(e=>masksTints[e.index]===surfaceMask);
+      if(scaled.length&&current&&current.modalSide!=null&&!tableScale(current)){
+        const pick=scaled.reduce((best,e)=>{const n=maskCount(masksTints[e.index],total);return !best||n>best.n?{e,n}:best;},null);
+        surfaceMask=masksTints[pick.e.index];
+        diagnosticsSources.surfaceFamily={index:pick.e.index,reason:"table-scale family (the largest family's modal side is "+(current?current.modalSide:"unknown")+" px)"};
+      }
 
       // ---- dark repeated families, chairs only --------------------------
       // A mid-grey chair fill on white paper sits below the ink ceiling, so
