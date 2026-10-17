@@ -1,0 +1,1083 @@
+{
+ "planId": "merit-real-venue",
+ "annotation": "benchmarks/annotations/merit-real-venue.json",
+ "source": {
+  "file": "plans/merit-real-venue-plan.png",
+  "sha256": "991cfc48f7b72a682727fe135feae118ac7e3c2ef91f9547df8545afa1708c4f",
+  "width": 1355,
+  "height": 788,
+  "venue": "Merit (real supplied venue plan)",
+  "layout": "Main floor \u2014 concert seating"
+ },
+ "method": "Venue elements measured on 2026-10-04 from connected components of the drawing's own fill colours and checked against zoomed crops; joined groups derived from the annotated (human-verified) table boxes; chair facing checked by eye on 3x crops with an arrow drawn per chair. Written by the engineering session, not by an operator - it is a measurement reference, not a human test.",
+ "classes": [
+  "table",
+  "bistro",
+  "chair",
+  "sofa",
+  "stage",
+  "column",
+  "bar",
+  "entrance",
+  "loca"
+ ],
+ "absentClasses": {
+  "loca": "no loca on this drawing"
+ },
+ "elements": [
+  {
+   "id": "col01",
+   "class": "column",
+   "cx": 45.0,
+   "cy": 144.0,
+   "w": 56,
+   "h": 28,
+   "rotation": 0,
+   "evidence": "grey-filled rectangle (fill 233,229,230) set into the wall line; ten of them at a regular ~300 px pitch on three walls; measured from the fill colour's connected components plus its 3 px outline"
+  },
+  {
+   "id": "col02",
+   "class": "column",
+   "cx": 31.0,
+   "cy": 425.5,
+   "w": 28,
+   "h": 53,
+   "rotation": 0,
+   "evidence": "grey-filled rectangle (fill 233,229,230) set into the wall line; ten of them at a regular ~300 px pitch on three walls; measured from the fill colour's connected components plus its 3 px outline"
+  },
+  {
+   "id": "col03",
+   "class": "column",
+   "cx": 31.0,
+   "cy": 718.0,
+   "w": 28,
+   "h": 50,
+   "rotation": 0,
+   "evidence": "grey-filled rectangle (fill 233,229,230) set into the wall line; ten of them at a regular ~300 px pitch on three walls; measured from the fill colour's connected components plus its 3 px outline"
+  },
+  {
+   "id": "col04",
+   "class": "column",
+   "cx": 305.0,
+   "cy": 143.5,
+   "w": 56,
+   "h": 27,
+   "rotation": 0,
+   "evidence": "grey-filled rectangle (fill 233,229,230) set into the wall line; ten of them at a regular ~300 px pitch on three walls; measured from the fill colour's connected components plus its 3 px outline"
+  },
+  {
+   "id": "col05",
+   "class": "column",
+   "cx": 606.0,
+   "cy": 144.5,
+   "w": 54,
+   "h": 27,
+   "rotation": 0,
+   "evidence": "grey-filled rectangle (fill 233,229,230) set into the wall line; ten of them at a regular ~300 px pitch on three walls; measured from the fill colour's connected components plus its 3 px outline"
+  },
+  {
+   "id": "col06",
+   "class": "column",
+   "cx": 904.0,
+   "cy": 60.0,
+   "w": 58,
+   "h": 28,
+   "rotation": 0,
+   "evidence": "grey-filled rectangle (fill 233,229,230) set into the wall line; ten of them at a regular ~300 px pitch on three walls; measured from the fill colour's connected components plus its 3 px outline"
+  },
+  {
+   "id": "col07",
+   "class": "column",
+   "cx": 1203.0,
+   "cy": 60.5,
+   "w": 60,
+   "h": 29,
+   "rotation": 0,
+   "evidence": "grey-filled rectangle (fill 233,229,230) set into the wall line; ten of them at a regular ~300 px pitch on three walls; measured from the fill colour's connected components plus its 3 px outline"
+  },
+  {
+   "id": "col08",
+   "class": "column",
+   "cx": 306.0,
+   "cy": 736.5,
+   "w": 58,
+   "h": 29,
+   "rotation": 0,
+   "evidence": "grey-filled rectangle (fill 233,229,230) set into the wall line; ten of them at a regular ~300 px pitch on three walls; measured from the fill colour's connected components plus its 3 px outline"
+  },
+  {
+   "id": "col09",
+   "class": "column",
+   "cx": 606.0,
+   "cy": 736.0,
+   "w": 54,
+   "h": 28,
+   "rotation": 0,
+   "evidence": "grey-filled rectangle (fill 233,229,230) set into the wall line; ten of them at a regular ~300 px pitch on three walls; measured from the fill colour's connected components plus its 3 px outline"
+  },
+  {
+   "id": "col10",
+   "class": "column",
+   "cx": 1202.5,
+   "cy": 736.0,
+   "w": 59,
+   "h": 28,
+   "rotation": 0,
+   "evidence": "grey-filled rectangle (fill 233,229,230) set into the wall line; ten of them at a regular ~300 px pitch on three walls; measured from the fill colour's connected components plus its 3 px outline"
+  },
+  {
+   "id": "bar01",
+   "class": "bar",
+   "cx": 366.0,
+   "cy": 227.0,
+   "w": 534,
+   "h": 144,
+   "rotation": 0,
+   "evidence": "the counter complex labelled BAR: front counter 106-593 x 261-296, left return 102-145 x 163-257, right end 598-628 x 202-295, back-bar shelves above; measured from fill components"
+  },
+  {
+   "id": "ent01",
+   "class": "entrance",
+   "cx": 45.0,
+   "cy": 209.0,
+   "w": 74,
+   "h": 118,
+   "rotation": 0,
+   "evidence": "GIRIS label (18-80 x 152-185) beside the gap in the left wall between the corner column (ends y 158) and the wall that resumes at y 268"
+  },
+  {
+   "id": "ent02",
+   "class": "entrance",
+   "cx": 1281.5,
+   "cy": 95.0,
+   "w": 97,
+   "h": 110,
+   "rotation": 0,
+   "evidence": "GIRIS label rotated 90 degrees (1264-1298 x 44-144) at the top-right corner where the top wall stops at the last column (x 1233)"
+  },
+  {
+   "id": "s001",
+   "class": "sofa",
+   "cx": 804,
+   "cy": 147.5,
+   "w": 32,
+   "h": 139,
+   "rotation": 0,
+   "evidence": "annotation banquette: long orange upholstered bench, no drawn seat divisions"
+  },
+  {
+   "id": "s002",
+   "class": "sofa",
+   "cx": 1098,
+   "cy": 151.5,
+   "w": 32,
+   "h": 133,
+   "rotation": 0,
+   "evidence": "annotation banquette: long orange upholstered bench, no drawn seat divisions"
+  },
+  {
+   "id": "s003",
+   "class": "sofa",
+   "cx": 1039,
+   "cy": 153,
+   "w": 32,
+   "h": 128,
+   "rotation": 0,
+   "evidence": "annotation banquette: long orange upholstered bench, no drawn seat divisions"
+  },
+  {
+   "id": "v01",
+   "class": "stage",
+   "cx": 908,
+   "cy": 637.5,
+   "w": 592,
+   "h": 191,
+   "rotation": 0,
+   "evidence": "annotation v01 (SAHNE label, 8 m and 3,10 m dimensions, truss)"
+  }
+ ],
+ "excluded": [
+  {
+   "x": 630,
+   "y": 495,
+   "w": 60,
+   "h": 45,
+   "why": "grey box at the stage's left corner - speaker/riser/stair is not decidable from the drawing"
+  },
+  {
+   "x": 1123,
+   "y": 495,
+   "w": 65,
+   "h": 45,
+   "why": "same, stage right corner"
+  },
+  {
+   "x": 630,
+   "y": 60,
+   "w": 80,
+   "h": 110,
+   "why": "decorative planter (architecture region in the annotation) - not one of the scored classes"
+  }
+ ],
+ "joinedGroups": {
+  "rule": "square tables whose annotated boxes are at most 8 px apart; the smallest gap between tables NOT joined is 40 px, so the rule has no borderline case on this drawing",
+  "namedInAnnotation": [
+   "g1 left-mid-A 3 tables 8 seats",
+   "g2 left-mid-B 3 tables 8 seats",
+   "g3 left-bot-A 3 tables 6 seats",
+   "g4 left-bot-B 4 tables 10 seats"
+  ],
+  "notJoined": "the two bistro pairs touch at a single point of their circles and each bistro has its own two chairs; they are NOT scored as a joined group either way",
+  "groups": [
+   {
+    "id": "jg01",
+    "tables": [
+     "t001",
+     "t004",
+     "t007"
+    ],
+    "chairs": [
+     "c001",
+     "c004",
+     "c007"
+    ],
+    "chairCount": 3,
+    "chairsBetweenTwoMembers": []
+   },
+   {
+    "id": "jg02",
+    "tables": [
+     "t002",
+     "t005",
+     "t008"
+    ],
+    "chairs": [
+     "c002",
+     "c005",
+     "c008"
+    ],
+    "chairCount": 3,
+    "chairsBetweenTwoMembers": []
+   },
+   {
+    "id": "jg03",
+    "tables": [
+     "t003",
+     "t006",
+     "t009"
+    ],
+    "chairs": [
+     "c003",
+     "c006",
+     "c009"
+    ],
+    "chairCount": 3,
+    "chairsBetweenTwoMembers": []
+   },
+   {
+    "id": "jg04",
+    "tables": [
+     "t010",
+     "t015",
+     "t020",
+     "t030"
+    ],
+    "chairs": [
+     "c014",
+     "c015",
+     "c018",
+     "c021",
+     "c030",
+     "c031",
+     "c048",
+     "c049",
+     "c054",
+     "c055"
+    ],
+    "chairCount": 10,
+    "chairsBetweenTwoMembers": [
+     "c030",
+     "c031"
+    ]
+   },
+   {
+    "id": "jg05",
+    "tables": [
+     "t012",
+     "t014",
+     "t021"
+    ],
+    "chairs": [
+     "c011",
+     "c013",
+     "c016",
+     "c020",
+     "c026",
+     "c029",
+     "c042",
+     "c043"
+    ],
+    "chairCount": 8,
+    "chairsBetweenTwoMembers": []
+   },
+   {
+    "id": "jg06",
+    "tables": [
+     "t011",
+     "t016",
+     "t022"
+    ],
+    "chairs": [
+     "c010",
+     "c012",
+     "c017",
+     "c019",
+     "c027",
+     "c028",
+     "c044",
+     "c045"
+    ],
+    "chairCount": 8,
+    "chairsBetweenTwoMembers": []
+   },
+   {
+    "id": "jg07",
+    "tables": [
+     "t013",
+     "t019",
+     "t029"
+    ],
+    "chairs": [
+     "c022",
+     "c023",
+     "c032",
+     "c033",
+     "c046",
+     "c047",
+     "c052",
+     "c053"
+    ],
+    "chairCount": 8,
+    "chairsBetweenTwoMembers": []
+   },
+   {
+    "id": "jg08",
+    "tables": [
+     "t017",
+     "t018"
+    ],
+    "chairs": [
+     "c024",
+     "c025",
+     "c050",
+     "c051"
+    ],
+    "chairCount": 4,
+    "chairsBetweenTwoMembers": []
+   },
+   {
+    "id": "jg09",
+    "tables": [
+     "t023",
+     "t026",
+     "t027"
+    ],
+    "chairs": [
+     "c034",
+     "c035",
+     "c036",
+     "c037",
+     "c056",
+     "c057",
+     "c058",
+     "c059"
+    ],
+    "chairCount": 8,
+    "chairsBetweenTwoMembers": []
+   },
+   {
+    "id": "jg10",
+    "tables": [
+     "t024",
+     "t025",
+     "t028"
+    ],
+    "chairs": [
+     "c038",
+     "c039",
+     "c040",
+     "c041",
+     "c060",
+     "c061",
+     "c062",
+     "c063"
+    ],
+    "chairCount": 8,
+    "chairsBetweenTwoMembers": [
+     "c063"
+    ]
+   },
+   {
+    "id": "jg11",
+    "tables": [
+     "t031",
+     "t032",
+     "t033"
+    ],
+    "chairs": [
+     "c064",
+     "c065",
+     "c066",
+     "c072",
+     "c073",
+     "c074"
+    ],
+    "chairCount": 6,
+    "chairsBetweenTwoMembers": []
+   },
+   {
+    "id": "jg12",
+    "tables": [
+     "t034",
+     "t035",
+     "t036",
+     "t037"
+    ],
+    "chairs": [
+     "c067",
+     "c068",
+     "c069",
+     "c070",
+     "c071",
+     "c075",
+     "c076",
+     "c077",
+     "c078",
+     "c079"
+    ],
+    "chairCount": 10,
+    "chairsBetweenTwoMembers": [
+     "c075"
+    ]
+   }
+  ],
+  "chairRule": "a chair belongs to a group when its annotated table is a member, or when it sits on the seam between two members (the annotation left those four chairs unassigned because they are equidistant from two tables - both of which are in the same group)"
+ },
+ "chairFacing": [
+  {
+   "chair": "c001",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c002",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c003",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c004",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c005",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c006",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c007",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c008",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c009",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c010",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c011",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c012",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c013",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c014",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c015",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c016",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c017",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c018",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c019",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c020",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c021",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c022",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c023",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c024",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c025",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c026",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c027",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c028",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c029",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c030",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c031",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c032",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c033",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c034",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c035",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c036",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c037",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c038",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c039",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c040",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c041",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c042",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c043",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c044",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c045",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c046",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c047",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c048",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c049",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c050",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c051",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c052",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c053",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c054",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c055",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c056",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c057",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c058",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c059",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c060",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c061",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c062",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c063",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c064",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c065",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c066",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c067",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c068",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c069",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c070",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c071",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c072",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c073",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c074",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c075",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c076",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c077",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c078",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c079",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c080",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c081",
+   "facingDeg": 90,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c082",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c083",
+   "facingDeg": 270,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c084",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c085",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c086",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c087",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c088",
+   "facingDeg": 180,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c089",
+   "facingDeg": 0,
+   "basis": "backrest band on the side away from the table, seat opening toward it; checked by eye on 3x crops"
+  },
+  {
+   "chair": "c090",
+   "facingDeg": 247.7,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c091",
+   "facingDeg": 13.9,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c092",
+   "facingDeg": 70.9,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c093",
+   "facingDeg": 120.7,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c094",
+   "facingDeg": 238.8,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c095",
+   "facingDeg": 228.4,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c096",
+   "facingDeg": 286.5,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c097",
+   "facingDeg": 337.0,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c098",
+   "facingDeg": 34.1,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c099",
+   "facingDeg": 85.3,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c100",
+   "facingDeg": 137.9,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c101",
+   "facingDeg": 190.4,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c102",
+   "facingDeg": 224.5,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c103",
+   "facingDeg": 277.0,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c104",
+   "facingDeg": 12.1,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c105",
+   "facingDeg": 70.5,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c106",
+   "facingDeg": 121.3,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c107",
+   "facingDeg": 179.4,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c108",
+   "facingDeg": 231.1,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c109",
+   "facingDeg": 285.2,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c110",
+   "facingDeg": 336.8,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c111",
+   "facingDeg": 36.1,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c112",
+   "facingDeg": 84.7,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c113",
+   "facingDeg": 134.5,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  }
+ ],
+ "printed": {
+  "capacity": {
+   "seating": 114,
+   "bistro": 10,
+   "total": 124,
+   "region": {
+    "x": 100,
+    "y": 52,
+    "w": 175,
+    "h": 90
+   }
+  },
+  "dimensions": [
+   {
+    "text": "8 m",
+    "region": {
+     "x": 884,
+     "y": 526,
+     "w": 40,
+     "h": 24
+    },
+    "spans": "stage width"
+   },
+   {
+    "text": "3,10 m",
+    "region": {
+     "x": 706,
+     "y": 632,
+     "w": 56,
+     "h": 24
+    },
+    "spans": "stage depth (left)"
+   }
+  ],
+  "tableNumbers": "none printed"
+ },
+ "capacityTruth": {
+  "drawnChairs": 113,
+  "drawnByFamily": {
+   "orange-armchair": 79,
+   "orange-bistro-chair": 10,
+   "pale-outlined-chair": 24
+  },
+  "writtenTotal": 124,
+  "writtenSeating": 114,
+  "writtenBistro": 10,
+  "unverified": "3 banquettes: the drawing does not divide them into seats; 124 - 113 = 11 is what the banquettes would have to carry for the printed total to close, which the drawing does not state",
+  "physicalTables": 46,
+  "operationalTableUnitsIfJoinedCountOnce": 21
+ }
+}

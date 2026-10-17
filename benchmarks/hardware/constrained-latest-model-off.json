@@ -1,0 +1,179 @@
+{
+ "measuredOn": "2026-10-11T14:50:03.898Z",
+ "cpu": "pid 24768's current affinity list: 0,1",
+ "runs": 3,
+ "node": "v22.22.2",
+ "memoryCgroup": {
+  "path": "/sys/fs/cgroup/memory/merit8g",
+  "limitMB": 4096
+ },
+ "plans": {
+  "golden": {
+   "detectMs": {
+    "median": 16996,
+    "p95": 17217,
+    "all": [
+     13940,
+     17217,
+     16996
+    ]
+   },
+   "readMs": {
+    "median": 8.2,
+    "p95": 11.2,
+    "all": [
+     8,
+     8.2,
+     11.2
+    ]
+   },
+   "peakPssMB": {
+    "median": 1088,
+    "p95": 1096,
+    "all": [
+     1096,
+     1051,
+     1088
+    ]
+   },
+   "peakHeapMB": {
+    "median": 34,
+    "p95": 35,
+    "all": [
+     35,
+     34,
+     30
+    ]
+   },
+   "longestTaskMs": {
+    "median": 2403,
+    "p95": 2752,
+    "all": [
+     1731,
+     2752,
+     2403
+    ]
+   },
+   "totalBlockingMs": {
+    "median": 9525,
+    "p95": 10115,
+    "all": [
+     7484,
+     9525,
+     10115
+    ]
+   },
+   "localModelMs": {
+    "median": null,
+    "p95": null,
+    "all": [
+     null,
+     null,
+     null
+    ]
+   },
+   "cgroupPeakMB": {
+    "median": 982,
+    "p95": 1159,
+    "all": [
+     1159,
+     970,
+     982
+    ]
+   },
+   "cgroupFailcnt": {
+    "median": 0,
+    "p95": 0,
+    "all": [
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  "ornek": {
+   "detectMs": {
+    "median": 72692,
+    "p95": 84085,
+    "all": [
+     84085,
+     71952,
+     72692
+    ]
+   },
+   "readMs": {
+    "median": 22.7,
+    "p95": 29,
+    "all": [
+     22.7,
+     17.2,
+     29
+    ]
+   },
+   "peakPssMB": {
+    "median": 1441,
+    "p95": 1472,
+    "all": [
+     1472,
+     1441,
+     1417
+    ]
+   },
+   "peakHeapMB": {
+    "median": 68,
+    "p95": 71,
+    "all": [
+     65,
+     71,
+     68
+    ]
+   },
+   "longestTaskMs": {
+    "median": 5315,
+    "p95": 5790,
+    "all": [
+     5790,
+     5315,
+     4864
+    ]
+   },
+   "totalBlockingMs": {
+    "median": 46729,
+    "p95": 57983,
+    "all": [
+     57983,
+     45788,
+     46729
+    ]
+   },
+   "localModelMs": {
+    "median": null,
+    "p95": null,
+    "all": [
+     null,
+     null,
+     null
+    ]
+   },
+   "cgroupPeakMB": {
+    "median": 1382,
+    "p95": 1424,
+    "all": [
+     1382,
+     1424,
+     1312
+    ]
+   },
+   "cgroupFailcnt": {
+    "median": 0,
+    "p95": 0,
+    "all": [
+     0,
+     0,
+     0
+    ]
+   }
+  }
+ },
+ "localDetector": "off (MERIT_BENCH_MODEL=off)"
+}

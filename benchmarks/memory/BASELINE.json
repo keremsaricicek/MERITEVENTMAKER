@@ -1,0 +1,575 @@
+{
+ "ranAt": "2026-10-10T22:26:10.372Z",
+ "source": {
+  "digest": "019a741c4e8dda937796394725997485643feef1e334fd1239e4415ca59a4e67",
+  "files": 106,
+  "inputs": [
+   "index.html",
+   "src",
+   "benchmarks/memory/measure-memory.mjs",
+   "benchmarks/annotations/merit-real-venue.json",
+   "benchmarks/plans/merit-real-venue-plan.png",
+   "benchmarks/robustness/variants",
+   "tests/lib/vendor.mjs"
+  ]
+ },
+ "realVenue": true,
+ "note": "REAL DISTINCT VENUE PLANS: 1. Every scenario is the same drawing transformed.",
+ "scenarios": [
+  {
+   "scenario": "identical",
+   "why": "the same image again — the case teach-ai already measures",
+   "memories": 23,
+   "memoriesWithVector": 23,
+   "memoriesWithContext": 23,
+   "scoreable": 23,
+   "shipped": {
+    "scoreableMemories": 23,
+    "applied": 23,
+    "retained": 23,
+    "wrong": 0,
+    "unscoreable": 0,
+    "lost": 0,
+    "beyondOldTolerance": 0,
+    "retention": 1,
+    "wrongRate": 0,
+    "identityPrecision": 1
+   },
+   "ablation": {
+    "full": {
+     "scoreableMemories": 23,
+     "applied": 23,
+     "retained": 23,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 0,
+     "beyondOldTolerance": 0,
+     "retention": 1,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noVisual": {
+     "scoreableMemories": 23,
+     "applied": 23,
+     "retained": 23,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 0,
+     "beyondOldTolerance": 0,
+     "retention": 1,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noContext": {
+     "scoreableMemories": 23,
+     "applied": 23,
+     "retained": 23,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 0,
+     "beyondOldTolerance": 0,
+     "retention": 1,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 23,
+     "applied": 23,
+     "retained": 23,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 0,
+     "beyondOldTolerance": 0,
+     "retention": 1,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    }
+   },
+   "ambiguousReported": 0,
+   "conflictKinds": {
+    "overruled": 11
+   },
+   "pageErrors": 0
+  },
+  {
+   "scenario": "jpeg-q20",
+   "why": "the plan mailed as a compressed JPEG",
+   "memories": 23,
+   "memoriesWithVector": 23,
+   "memoriesWithContext": 23,
+   "scoreable": 23,
+   "shipped": {
+    "scoreableMemories": 23,
+    "applied": 11,
+    "retained": 11,
+    "wrong": 0,
+    "unscoreable": 0,
+    "lost": 12,
+    "beyondOldTolerance": 0,
+    "retention": 0.4783,
+    "wrongRate": 0,
+    "identityPrecision": 1
+   },
+   "ablation": {
+    "full": {
+     "scoreableMemories": 23,
+     "applied": 11,
+     "retained": 11,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 12,
+     "beyondOldTolerance": 0,
+     "retention": 0.4783,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noVisual": {
+     "scoreableMemories": 23,
+     "applied": 11,
+     "retained": 11,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 12,
+     "beyondOldTolerance": 0,
+     "retention": 0.4783,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noContext": {
+     "scoreableMemories": 23,
+     "applied": 11,
+     "retained": 11,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 12,
+     "beyondOldTolerance": 0,
+     "retention": 0.4783,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 23,
+     "applied": 11,
+     "retained": 11,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 12,
+     "beyondOldTolerance": 0,
+     "retention": 0.4783,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    }
+   },
+   "ambiguousReported": 6,
+   "conflictKinds": {
+    "overruled": 7,
+    "ambiguous": 11
+   },
+   "pageErrors": 0
+  },
+  {
+   "scenario": "grayscale",
+   "why": "the plan exported without colour",
+   "memories": 23,
+   "memoriesWithVector": 23,
+   "memoriesWithContext": 23,
+   "scoreable": 23,
+   "shipped": {
+    "scoreableMemories": 23,
+    "applied": 21,
+    "retained": 20,
+    "wrong": 1,
+    "unscoreable": 0,
+    "lost": 2,
+    "beyondOldTolerance": 1,
+    "retention": 0.8696,
+    "wrongRate": 0.0476,
+    "identityPrecision": 0.9524
+   },
+   "ablation": {
+    "full": {
+     "scoreableMemories": 23,
+     "applied": 21,
+     "retained": 20,
+     "wrong": 1,
+     "unscoreable": 0,
+     "lost": 2,
+     "beyondOldTolerance": 1,
+     "retention": 0.8696,
+     "wrongRate": 0.0476,
+     "identityPrecision": 0.9524
+    },
+    "noVisual": {
+     "scoreableMemories": 23,
+     "applied": 20,
+     "retained": 20,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 3,
+     "beyondOldTolerance": 0,
+     "retention": 0.8696,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noContext": {
+     "scoreableMemories": 23,
+     "applied": 20,
+     "retained": 20,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 3,
+     "beyondOldTolerance": 0,
+     "retention": 0.8696,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 23,
+     "applied": 21,
+     "retained": 20,
+     "wrong": 1,
+     "unscoreable": 0,
+     "lost": 2,
+     "beyondOldTolerance": 1,
+     "retention": 0.8696,
+     "wrongRate": 0.0476,
+     "identityPrecision": 0.9524
+    }
+   },
+   "ambiguousReported": 1,
+   "conflictKinds": {
+    "overruled": 11
+   },
+   "pageErrors": 0
+  },
+  {
+   "scenario": "downscale-70",
+   "why": "the plan re-issued smaller",
+   "memories": 23,
+   "memoriesWithVector": 23,
+   "memoriesWithContext": 23,
+   "scoreable": 23,
+   "shipped": {
+    "scoreableMemories": 23,
+    "applied": 20,
+    "retained": 20,
+    "wrong": 0,
+    "unscoreable": 0,
+    "lost": 3,
+    "beyondOldTolerance": 0,
+    "retention": 0.8696,
+    "wrongRate": 0,
+    "identityPrecision": 1
+   },
+   "ablation": {
+    "full": {
+     "scoreableMemories": 23,
+     "applied": 20,
+     "retained": 20,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 3,
+     "beyondOldTolerance": 0,
+     "retention": 0.8696,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noVisual": {
+     "scoreableMemories": 23,
+     "applied": 20,
+     "retained": 20,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 3,
+     "beyondOldTolerance": 0,
+     "retention": 0.8696,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noContext": {
+     "scoreableMemories": 23,
+     "applied": 20,
+     "retained": 20,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 3,
+     "beyondOldTolerance": 0,
+     "retention": 0.8696,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 23,
+     "applied": 20,
+     "retained": 20,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 3,
+     "beyondOldTolerance": 0,
+     "retention": 0.8696,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    }
+   },
+   "ambiguousReported": 3,
+   "conflictKinds": {
+    "overruled": 10,
+    "ambiguous": 3
+   },
+   "pageErrors": 0
+  },
+  {
+   "scenario": "rotate-2",
+   "why": "the plan scanned slightly askew",
+   "memories": 23,
+   "memoriesWithVector": 23,
+   "memoriesWithContext": 23,
+   "scoreable": 23,
+   "shipped": {
+    "scoreableMemories": 23,
+    "applied": 21,
+    "retained": 21,
+    "wrong": 0,
+    "unscoreable": 0,
+    "lost": 2,
+    "beyondOldTolerance": 0,
+    "retention": 0.913,
+    "wrongRate": 0,
+    "identityPrecision": 1
+   },
+   "ablation": {
+    "full": {
+     "scoreableMemories": 23,
+     "applied": 21,
+     "retained": 21,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 2,
+     "beyondOldTolerance": 0,
+     "retention": 0.913,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noVisual": {
+     "scoreableMemories": 23,
+     "applied": 21,
+     "retained": 21,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 2,
+     "beyondOldTolerance": 0,
+     "retention": 0.913,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noContext": {
+     "scoreableMemories": 23,
+     "applied": 21,
+     "retained": 21,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 2,
+     "beyondOldTolerance": 0,
+     "retention": 0.913,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 23,
+     "applied": 18,
+     "retained": 18,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 5,
+     "beyondOldTolerance": 3,
+     "retention": 0.7826,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    }
+   },
+   "ambiguousReported": 1,
+   "conflictKinds": {
+    "overruled": 10,
+    "ambiguous": 1,
+    "lost": 1
+   },
+   "pageErrors": 0
+  },
+  {
+   "scenario": "crop-pad",
+   "why": "the plan re-cropped, so everything translated",
+   "memories": 23,
+   "memoriesWithVector": 23,
+   "memoriesWithContext": 23,
+   "scoreable": 23,
+   "shipped": {
+    "scoreableMemories": 23,
+    "applied": 22,
+    "retained": 22,
+    "wrong": 0,
+    "unscoreable": 0,
+    "lost": 1,
+    "beyondOldTolerance": 0,
+    "retention": 0.9565,
+    "wrongRate": 0,
+    "identityPrecision": 1
+   },
+   "ablation": {
+    "full": {
+     "scoreableMemories": 23,
+     "applied": 22,
+     "retained": 22,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 1,
+     "beyondOldTolerance": 0,
+     "retention": 0.9565,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noVisual": {
+     "scoreableMemories": 23,
+     "applied": 22,
+     "retained": 22,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 1,
+     "beyondOldTolerance": 0,
+     "retention": 0.9565,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noContext": {
+     "scoreableMemories": 23,
+     "applied": 22,
+     "retained": 22,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 1,
+     "beyondOldTolerance": 0,
+     "retention": 0.9565,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 23,
+     "applied": 13,
+     "retained": 13,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 10,
+     "beyondOldTolerance": 5,
+     "retention": 0.5652,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    }
+   },
+   "ambiguousReported": 1,
+   "conflictKinds": {
+    "overruled": 6,
+    "ambiguous": 12
+   },
+   "pageErrors": 0
+  },
+  {
+   "scenario": "blur",
+   "why": "a soft scan",
+   "memories": 23,
+   "memoriesWithVector": 23,
+   "memoriesWithContext": 23,
+   "scoreable": 23,
+   "shipped": {
+    "scoreableMemories": 23,
+    "applied": 19,
+    "retained": 19,
+    "wrong": 0,
+    "unscoreable": 0,
+    "lost": 4,
+    "beyondOldTolerance": 0,
+    "retention": 0.8261,
+    "wrongRate": 0,
+    "identityPrecision": 1
+   },
+   "ablation": {
+    "full": {
+     "scoreableMemories": 23,
+     "applied": 19,
+     "retained": 19,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 4,
+     "beyondOldTolerance": 0,
+     "retention": 0.8261,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noVisual": {
+     "scoreableMemories": 23,
+     "applied": 19,
+     "retained": 19,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 4,
+     "beyondOldTolerance": 0,
+     "retention": 0.8261,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noContext": {
+     "scoreableMemories": 23,
+     "applied": 19,
+     "retained": 19,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 4,
+     "beyondOldTolerance": 0,
+     "retention": 0.8261,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 23,
+     "applied": 19,
+     "retained": 19,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 4,
+     "beyondOldTolerance": 0,
+     "retention": 0.8261,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    }
+   },
+   "ambiguousReported": 3,
+   "conflictKinds": {
+    "overruled": 10,
+    "ambiguous": 1,
+    "lost": 1
+   },
+   "pageErrors": 0
+  }
+ ],
+ "totals": {
+  "scoreable": 161,
+  "retainedFull": 136,
+  "retainedNoVisual": 136,
+  "retainedNoContext": 136,
+  "retainedNoShift": 124,
+  "wrongNoShift": 1,
+  "appliedNoShift": 125,
+  "wrongFull": 1,
+  "appliedFull": 137,
+  "retentionFull": 0.8447,
+  "retentionNoVisual": 0.8447,
+  "retentionNoContext": 0.8447,
+  "retentionWithoutGlobalTransform": 0.7702,
+  "identityPrecisionWithoutGlobalTransform": 0.992,
+  "identityPrecisionFull": 0.9927,
+  "wrongApplicationRateFull": 0.0073
+ },
+ "recorded": {
+  "at": "2026-10-10T22:26:10.372Z",
+  "commit": "a043f26efec6bc7a230b83c7a47ae40e9fe050e8",
+  "reason": "Plan memory's global transform is a robust affine fit (rotation + per-axis scale + offset, trimmed, >=60% agreement) with the similarity fit as fallback. Measured 2026-10-10: rotate-2 retention 14/23 -> 21/23 with 0 wrong; every other scenario unchanged; overall retention 0.8012 -> 0.8447; wrong applications unchanged (the one grayscale case predates this)."
+ }
+}

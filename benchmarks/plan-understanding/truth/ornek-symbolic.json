@@ -1,0 +1,331 @@
+{
+ "planId": "ornek-symbolic",
+ "annotation": "benchmarks/annotations/ornek-symbolic.json",
+ "source": {
+  "file": "plans/ornek-upright.png",
+  "sha256": "4f25a201b7c991b65938c2094efff7bcf5fe11a0f704bca0d079b788d8a55402",
+  "width": 2402,
+  "height": 1719,
+  "venue": "Haluk Elver Salonu 1/2/3 (real supplied venue plan #2)",
+  "layout": "Banquet \u2014 numbered round tables, 12 pax each",
+  "document": {
+   "file": "plans/ORNEK.pdf",
+   "sha256": "d576b4172120eddb0d4af0f5a8f69ef07c2d86afccb4b0a5b190f05b0de9ba29",
+   "rasterFile": "plans/ornek-raw.jpg",
+   "rasterSha256": "2548abecfe6d360ea04e593e47104230b8daccd6ad48503eef32360868fe469c",
+   "rasterWidth": 1719,
+   "rasterHeight": 2402,
+   "note": "ORNEK.pdf contains no text and no vector geometry \u2014 one /DCTDecode image and nothing else. ornek-raw.jpg is that stream copied out byte for byte; ornek-upright.png is the same pixels rotated 270 degrees and nothing else. Both are produced by benchmarks/plans/extract-ornek.mjs.",
+   "uprightFromRaw": "upright(x,y) = ( raw.y , 1719 - raw.x )",
+   "rawFromUpright": "raw(x,y) = ( 1719 - upright.y , upright.x )"
+  }
+ },
+ "method": "Loca cells measured on 2026-10-04 from the strip's outline pixels (one rule found all twelve); columns taken from the base annotation's measured regions. Written by the engineering session as a measurement reference, not by an operator.",
+ "classes": [
+  "table",
+  "chair",
+  "stage",
+  "column",
+  "bar",
+  "entrance",
+  "loca",
+  "sofa",
+  "bistro"
+ ],
+ "absentClasses": {
+  "chair": "the drawing shows no chairs - capacity is a printed rule",
+  "bistro": "none drawn",
+  "sofa": "none drawn",
+  "bar": "none labelled",
+  "entrance": "no entrance is labelled; the two arrows beside SYSTEM KONTROL are not decidable as an entrance",
+  "stage": "the central T block is not decidable as a stage (excluded region)"
+ },
+ "elements": [
+  {
+   "id": "loca-9B",
+   "class": "loca",
+   "label": "9B",
+   "cx": 309.5,
+   "cy": 1607.5,
+   "w": 153,
+   "h": 51,
+   "rotation": 0,
+   "evidence": "interior of a rounded-rectangle outline in the LOCA strip (luma < 200 outline, filled interior), all twelve found by one rule; labels read by eye left to right, matching the strip labels in the base annotation"
+  },
+  {
+   "id": "loca-9A",
+   "class": "loca",
+   "label": "9A",
+   "cx": 469.5,
+   "cy": 1607.5,
+   "w": 149,
+   "h": 51,
+   "rotation": 0,
+   "evidence": "interior of a rounded-rectangle outline in the LOCA strip (luma < 200 outline, filled interior), all twelve found by one rule; labels read by eye left to right, matching the strip labels in the base annotation"
+  },
+  {
+   "id": "loca-8B",
+   "class": "loca",
+   "label": "8B",
+   "cx": 631.5,
+   "cy": 1605.0,
+   "w": 159,
+   "h": 56,
+   "rotation": 0,
+   "evidence": "interior of a rounded-rectangle outline in the LOCA strip (luma < 200 outline, filled interior), all twelve found by one rule; labels read by eye left to right, matching the strip labels in the base annotation"
+  },
+  {
+   "id": "loca-8A",
+   "class": "loca",
+   "label": "8A",
+   "cx": 796.5,
+   "cy": 1598.5,
+   "w": 157,
+   "h": 55,
+   "rotation": 0,
+   "evidence": "interior of a rounded-rectangle outline in the LOCA strip (luma < 200 outline, filled interior), all twelve found by one rule; labels read by eye left to right, matching the strip labels in the base annotation"
+  },
+  {
+   "id": "loca-7",
+   "class": "loca",
+   "label": "7",
+   "cx": 954.0,
+   "cy": 1591.0,
+   "w": 154,
+   "h": 54,
+   "rotation": 0,
+   "evidence": "interior of a rounded-rectangle outline in the LOCA strip (luma < 200 outline, filled interior), all twelve found by one rule; labels read by eye left to right, matching the strip labels in the base annotation"
+  },
+  {
+   "id": "loca-6",
+   "class": "loca",
+   "label": "6",
+   "cx": 1112.0,
+   "cy": 1583.0,
+   "w": 150,
+   "h": 56,
+   "rotation": 0,
+   "evidence": "interior of a rounded-rectangle outline in the LOCA strip (luma < 200 outline, filled interior), all twelve found by one rule; labels read by eye left to right, matching the strip labels in the base annotation"
+  },
+  {
+   "id": "loca-5",
+   "class": "loca",
+   "label": "5",
+   "cx": 1270.0,
+   "cy": 1577.0,
+   "w": 148,
+   "h": 50,
+   "rotation": 0,
+   "evidence": "interior of a rounded-rectangle outline in the LOCA strip (luma < 200 outline, filled interior), all twelve found by one rule; labels read by eye left to right, matching the strip labels in the base annotation"
+  },
+  {
+   "id": "loca-4",
+   "class": "loca",
+   "label": "4",
+   "cx": 1427.0,
+   "cy": 1576.0,
+   "w": 150,
+   "h": 50,
+   "rotation": 0,
+   "evidence": "interior of a rounded-rectangle outline in the LOCA strip (luma < 200 outline, filled interior), all twelve found by one rule; labels read by eye left to right, matching the strip labels in the base annotation"
+  },
+  {
+   "id": "loca-3B",
+   "class": "loca",
+   "label": "3B",
+   "cx": 1591.5,
+   "cy": 1572.0,
+   "w": 147,
+   "h": 52,
+   "rotation": 0,
+   "evidence": "interior of a rounded-rectangle outline in the LOCA strip (luma < 200 outline, filled interior), all twelve found by one rule; labels read by eye left to right, matching the strip labels in the base annotation"
+  },
+  {
+   "id": "loca-3A",
+   "class": "loca",
+   "label": "3A",
+   "cx": 1754.0,
+   "cy": 1560.5,
+   "w": 144,
+   "h": 53,
+   "rotation": 0,
+   "evidence": "interior of a rounded-rectangle outline in the LOCA strip (luma < 200 outline, filled interior), all twelve found by one rule; labels read by eye left to right, matching the strip labels in the base annotation"
+  },
+  {
+   "id": "loca-2",
+   "class": "loca",
+   "label": "2",
+   "cx": 1925.5,
+   "cy": 1567.5,
+   "w": 155,
+   "h": 55,
+   "rotation": 0,
+   "evidence": "interior of a rounded-rectangle outline in the LOCA strip (luma < 200 outline, filled interior), all twelve found by one rule; labels read by eye left to right, matching the strip labels in the base annotation"
+  },
+  {
+   "id": "loca-1",
+   "class": "loca",
+   "label": "1",
+   "cx": 2107.5,
+   "cy": 1578.5,
+   "w": 159,
+   "h": 53,
+   "rotation": 0,
+   "evidence": "interior of a rounded-rectangle outline in the LOCA strip (luma < 200 outline, filled interior), all twelve found by one rule; labels read by eye left to right, matching the strip labels in the base annotation"
+  },
+  {
+   "id": "pillar-left-upper",
+   "class": "column",
+   "cx": 281.5,
+   "cy": 429.5,
+   "w": 57,
+   "h": 185,
+   "rotation": 0,
+   "evidence": "base annotation region (measured): grey block set into the side wall"
+  },
+  {
+   "id": "pillar-left-lower",
+   "class": "column",
+   "cx": 289.5,
+   "cy": 1166.5,
+   "w": 49,
+   "h": 185,
+   "rotation": 0,
+   "evidence": "base annotation region (measured): grey block set into the side wall"
+  },
+  {
+   "id": "pillar-right-upper",
+   "class": "column",
+   "cx": 2225.0,
+   "cy": 504.0,
+   "w": 50,
+   "h": 164,
+   "rotation": 0,
+   "evidence": "base annotation region (measured): grey block set into the side wall"
+  },
+  {
+   "id": "pillar-right-lower",
+   "class": "column",
+   "cx": 2217.0,
+   "cy": 1206.0,
+   "w": 50,
+   "h": 156,
+   "rotation": 0,
+   "evidence": "base annotation region (measured): grey block set into the side wall"
+  }
+ ],
+ "excluded": [
+  {
+   "x": 458,
+   "y": 187,
+   "w": 250,
+   "h": 68,
+   "why": "servant - a real venue element but not one of the nine scored classes; a table, chair or loca detected inside it is a false positive"
+  },
+  {
+   "x": 1694,
+   "y": 205,
+   "w": 241,
+   "h": 62,
+   "why": "servant - a real venue element but not one of the nine scored classes; a table, chair or loca detected inside it is a false positive"
+  },
+  {
+   "x": 545,
+   "y": 1473,
+   "w": 254,
+   "h": 75,
+   "why": "servant - a real venue element but not one of the nine scored classes; a table, chair or loca detected inside it is a false positive"
+  },
+  {
+   "x": 1622,
+   "y": 1449,
+   "w": 234,
+   "h": 64,
+   "why": "servant - a real venue element but not one of the nine scored classes; a table, chair or loca detected inside it is a false positive"
+  },
+  {
+   "x": 133,
+   "y": 1048,
+   "w": 117,
+   "h": 492,
+   "why": "index_list - a real venue element but not one of the nine scored classes; a table, chair or loca detected inside it is a false positive"
+  },
+  {
+   "x": 1137,
+   "y": 553,
+   "w": 118,
+   "h": 237,
+   "why": "the central T-shaped block: the base annotation reads it as a pillar plus a bar, it could equally be a stage with a runway - not decidable from the drawing, so neither a stage nor a column is scored here; a TABLE detected inside it is still a false table"
+  },
+  {
+   "x": 1032,
+   "y": 779,
+   "w": 331,
+   "h": 63,
+   "why": "the central T-shaped block: the base annotation reads it as a pillar plus a bar, it could equally be a stage with a runway - not decidable from the drawing, so neither a stage nor a column is scored here; a TABLE detected inside it is still a false table"
+  },
+  {
+   "x": 1134,
+   "y": 1400,
+   "w": 250,
+   "h": 100,
+   "why": "control_point - a real venue element but not one of the nine scored classes; a table, chair or loca detected inside it is a false positive"
+  },
+  {
+   "x": 1084,
+   "y": 1347,
+   "w": 45,
+   "h": 153,
+   "why": "direction - a real venue element but not one of the nine scored classes; a table, chair or loca detected inside it is a false positive"
+  },
+  {
+   "x": 1387,
+   "y": 1347,
+   "w": 49,
+   "h": 153,
+   "why": "direction - a real venue element but not one of the nine scored classes; a table, chair or loca detected inside it is a false positive"
+  }
+ ],
+ "joinedGroups": {
+  "groups": [],
+  "rule": "round numbered symbols, none touching - no joined groups exist on this drawing"
+ },
+ "chairFacing": [],
+ "printed": {
+  "capacity": {
+   "tables": 166,
+   "perTable": 12,
+   "seating": 1992,
+   "locas": 72,
+   "total": 2064,
+   "source": "printed on the drawing: 'SALON : 166 * 12 : 1992 PAX', 'LOCALAR : 72 PAX', 'TOPLAM : 2064 PAX'"
+  },
+  "tableNumbers": {
+   "legible": 157,
+   "range": "1..166 with 157 legible; dark-filled symbols carry unreadable numbers"
+  },
+  "locaLabels": [
+   "9B",
+   "9A",
+   "8B",
+   "8A",
+   "7",
+   "6",
+   "5",
+   "4",
+   "3B",
+   "3A",
+   "2",
+   "1"
+  ]
+ },
+ "capacityTruth": {
+  "drawnChairs": 0,
+  "writtenRule": "166 * 12 = 1992",
+  "writtenLoca": 72,
+  "writtenTotal": 2064,
+  "physicalTables": 166,
+  "logicalSeatsFromRule": 1992,
+  "unverified": "the per-loca figure (72 / 12 = 6) is not printed"
+ }
+}
