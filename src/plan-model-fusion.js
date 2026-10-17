@@ -72,7 +72,16 @@
     // for Confirm; every other one is left for the review, with its confidence
     // held under the review's 0.72 line so it is asked about rather than
     // silently dropped (the raw score stays in evidence.modelScore).
-    const sides = tables.map(t => Math.min(t.w, t.h)).sort((a, b) => a - b);
+    // The size the plan's tables are drawn at. Taken from the tables BOTH
+    // witnesses see when there are at least five of them: on a rendering where
+    // the classical pass broke down (benchmarks/robustness, lowres-roundtrip,
+    // 2026-10-17) the classical median was the size of its fragments, and the
+    // gate then refused 15 of the model's real tables as "off size". On a plan
+    // where the two agree the agreed tables ARE the classical tables, so the
+    // median is the same one as before.
+    const modelTablesAll = dets.filter(d => d.cls === "table_round" || d.cls === "table_rect");
+    const agreedSides = tables.filter(t => modelTablesAll.some(d => d.score >= o.addTable && near(t, d))).map(t => Math.min(t.w, t.h));
+    const sides = (agreedSides.length >= 5 ? agreedSides : tables.map(t => Math.min(t.w, t.h))).sort((a, b) => a - b);
     const medianSide = sides.length ? sides[sides.length >> 1] : null;
     const consistent = d => medianSide != null && Math.abs(Math.min(d.w, d.h) - medianSide) <= 0.4 * medianSide;
     const modelTables = dets.filter(d => d.cls === "table_round" || d.cls === "table_rect");

@@ -45,7 +45,8 @@ const results = [];
 for (const file of files) {
   const annot = JSON.parse(fs.readFileSync(file, "utf8"));
   const img = [path.join(path.dirname(file), path.basename(annot.source.file)),
-    path.join(path.dirname(file), "..", annot.source.file)].find(p => fs.existsSync(p));
+    path.join(path.dirname(file), "..", annot.source.file),
+    path.join(path.dirname(file), "..", "..", annot.source.file)].find(p => fs.existsSync(p));
   if (!img) { console.error("no image for", file); continue; }
   const page = await browser.newPage({ viewport: { width: 1800, height: 1000 } });
   const errors = [];
@@ -74,7 +75,7 @@ for (const file of files) {
       for (const ch of c.chairDetections || []) chairs.push({ x: ch.x, y: ch.y, w: ch.w, h: ch.h });
       if (c.kind === "venue" && c.type === "chair") chairs.push({ x: c.x, y: c.y, w: c.w, h: c.h });
     }
-    return { representation: d.representation?.kind || a.representation?.kind || null,
+    return { localModel: a.localModel || null, representation: d.representation?.kind || a.representation?.kind || null,
       representationEvidence: d.representation?.evidence || null, chairs };
   });
   const cands = await page.evaluate(() => (state.events[0].analysis?.candidates || []).filter(c => c.kind === "table" && c.status !== "rejected").map(c => ({
@@ -107,10 +108,12 @@ for (const file of files) {
   cp.sort((a, b) => a.dist - b.dist);
   const cgu = new Set(), cdu = new Set();
   for (const p of cp) if (!cgu.has(p.gi) && !cdu.has(p.di)) { cgu.add(p.gi); cdu.add(p.di); }
-  const r = { plan: annot.planId, representation: meta.representation, representationEvidence: meta.representationEvidence,
+  const r = { plan: annot.planId, localModel: meta.localModel, representation: meta.representation, representationEvidence: meta.representationEvidence,
     chairs: { gt: gtCh.length, tp: cgu.size, fp: detCh.length - cdu.size, fn: gtCh.length - cgu.size }, family: annot.split?.family || null, level: annot.level ?? annot.generator?.level ?? null,
     gt: gt.length, found: matches.length, extra: det.length - matches.length, errors: errors.length,
     typeWrong: rows.filter(x => x.want !== x.got).map(x => ({ gt: x.gt, want: x.want, got: x.got, basis: x.basis, symbolFamily: x.symbolFamily, source: x.source, model: x.model })),
+    extras: det.filter((_, di) => !du.has(di)).map(d => ({ cx: Math.round(d.cx), cy: Math.round(d.cy), w: Math.round(d.w), h: Math.round(d.h), type: d.type, status: d.status, basis: d.basis, source: d.source, model: d.model, vector: d.vector, symbolFamily: d.symbolFamily })),
+    missed: gt.filter((_, gi) => !gu.has(gi)).map(g => ({ id: g.id, type: g.type, cx: Math.round(g.cx), cy: Math.round(g.cy), w: Math.round(g.w), h: Math.round(g.h) })),
     iouMedian: rows.length ? rows.map(x => x.iou).sort((a, b) => a - b)[rows.length >> 1] : null,
     iouP10: rows.length ? rows.map(x => x.iou).sort((a, b) => a - b)[Math.floor(rows.length * 0.1)] : null,
     rows };

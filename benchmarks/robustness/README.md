@@ -95,3 +95,63 @@ direction: `bright-down` keeps false positives at 4 but loses recall to
 make those global statistics robust to a photometric shift, and it changes
 the answer on every plan, so it needs the golden baseline, all eight
 adversarial fixtures and all fifteen variants measured together.
+
+## 2026-10-17 — what breaks, and two changes that held up
+
+Baseline at `597b0cc` (`node benchmarks/robustness/run-robustness.mjs`): 8 HEALTHY,
+3 WEAK, 5 SEVERE. `node benchmarks/detection/diagnose-types.mjs` (new) names the
+source and stage of every false and missed table:
+
+- **hue-shift, contrast-high, bright-up** (30–39 false tables): table-sized
+  proposals from the `fill` source at the armchairs of the pushed-together rows
+  (an armchair plus a table edge), while the round and bistro tables
+  (t038–t046) are missed. On the original the same tables come from the `tone`
+  source; the colour change moves the tone/accent models, not the Otsu threshold
+  (178 vs 179 — measured and ruled out).
+- **bright-down** (recall 0.54): the local model found the missing tables and
+  fusion added 16 of them, but text suppression then deleted 14: Tesseract read
+  word boxes off the darkened table fills (35 suppressions against 5 on the
+  original).
+- **lowres-roundtrip** (recall 0.37): fusion refused 15 of the model's real tables
+  as "off size", measured against the median of the classical proposals, which
+  on this rendering are fragments.
+
+**The local model alone is stable on every rendering**: tables 43–46 of 46 found,
+0–1 false, on all sixteen (`tools/model-dev` + ONNX Runtime, threshold 0.5).
+
+**Kept** (`src/app-v8.js`, `src/plan-model-fusion.js`):
+1. a table the model ADDED, confidently and at the plan's table size (the ones
+   fusion selects), is exempt from text suppression — it exists only where the
+   classical pass proposed nothing, and the model reads shapes, not glyphs;
+2. fusion's size reference is the median of the tables BOTH witnesses see, when
+   there are at least five; on a plan where they agree that is the classical
+   median it always was.
+
+| rendering | `597b0cc` tables TP/FP/FN | now | triage |
+|---|---|---|---|
+| bright-down | 25 / 5 / 21 | **39 / 5 / 7** | SEVERE → **ACCEPTABLE** |
+| blur | 37 / 16 / 9 | 39 / 16 / 7 | WEAK |
+| contrast-high | 37 / 36 / 9 | 39 / 36 / 7 | SEVERE |
+| contrast-low | 41 / 1 / 5 | 43 / 1 / 3 | HEALTHY |
+| downscale-70 | 41 / 1 / 5 | 43 / 1 / 3 | WEAK (chairs) |
+| hue-shift | 39 / 39 / 7 | 41 / 39 / 5 | SEVERE |
+| bright-up | 38 / 30 / 8 | 39 / 30 / 7 | SEVERE |
+| others | unchanged | unchanged | |
+
+Median table F1 across renderings 0.932 → 0.945; chairs unchanged; no rendering
+worse. Two bistro tables are now FOUND on several renderings but typed round
+(the model has no bistro class; "0/2" in the bistro column).
+
+**Tried and refused — holding back the classical tables the model does not see.**
+A plan-wide "classical breakdown" verdict (the model saw ≥ 10 tables, ≥ 80 % of
+them confirmed by the classical pass, and the classical pass proposed ≥ max(5,
+20 %) tables the model does not support; thresholds fixed before scoring) held
+those tables back. It removed the false tables (hue-shift 39 → 0, contrast-high
+36 → 0, bright-up 30 → 0) but also real ones, and it fired on renderings that
+were fine: noise 46/3/0 → 38/0/8, blur 37 → 26 found, hue-shift 39 → 27, chairs
+falling with their tables. Pairing by box overlap instead of centre distance
+changed nothing. A held table was centred on a real one 15 of 18 times on noise,
+so the unsupported proposals are mostly offset duplicates and fragments of real
+tables, which this rule cannot tell from the real table. Not shipped; the false
+tables on hue-shift, contrast-high and bright-up stay OPEN, at their cause (the
+colour-dependent tone/accent stage), not at the fusion.

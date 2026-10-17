@@ -2939,6 +2939,14 @@
       // it exists to reject. This exemption can only ever KEEP an object, so it
       // cannot move a table or chair number on either real plan.
       const isStructural=c.kind==="venue"&&c.type==="column";
+      // AND A TABLE THE LOCAL MODEL ADDED, CONFIDENTLY AND AT THE SIZE THE
+      // PLAN'S TABLES ARE DRAWN AT (fusion selects only those), is not printed
+      // text: it exists only where the classical pass proposed nothing, and the
+      // model reads shapes, not glyphs. Measured on the darkened rendering of
+      // the Golden plan (benchmarks/robustness, bright-down, 2026-10-17): 14 of
+      // the 16 real tables the model added were deleted here by word boxes
+      // Tesseract read off the darkened table fills.
+      const isModelTable=c.kind==="table"&&c.source==="local-model"&&c.selected===true&&c.evidence?.consistentSize===true;
       // AND A MEMBER OF AN ADMITTED SEAT FAMILY IS NOT PRINTED TEXT EITHER,
       // for the third time and by the same argument.
       //
@@ -2973,7 +2981,7 @@
       // so neither real plan can move on it.
       const isDrawnSeat=c.kind==="venue"&&c.type==="chair"
         &&!!c.seatFamily&&c.seatFamily!=="primary";
-      if(overlapRatio>.4&&!hasChairs&&!isSymbol&&!isStructural&&!isDrawnSeat){removedCount++;removed.push(c);}else{kept.push(c);}
+      if(overlapRatio>.4&&!hasChairs&&!isSymbol&&!isStructural&&!isDrawnSeat&&!isModelTable){removedCount++;removed.push(c);}else{kept.push(c);}
     }
     return{kept,removedCount,removed};
   }
