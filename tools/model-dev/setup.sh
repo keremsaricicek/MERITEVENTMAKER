@@ -8,6 +8,10 @@
 #
 #   bash tools/model-dev/setup.sh               # base: ORT, FiftyOne, pycocotools, Olive (files only)
 #   bash tools/model-dev/setup.sh --with-olive  # plus CPU torch, which `import olive` needs
+#   bash tools/model-dev/setup.sh --with-olive-pypi
+#        # the same, where download.pytorch.org is refused: torch from PyPI,
+#        # every file pinned by sha256 in requirements-olive-pypi.lock.txt
+#        # (the CUDA build, ~4.5 GB with its nvidia libraries; it runs on CPU)
 #   .venv-model-dev/bin/python -I tools/model-dev/check.py
 #
 # Free and local only: no Hugging Face Jobs, no Hub upload, no paid service.
@@ -31,7 +35,14 @@ VIRTUAL_ENV="$VENV" uv pip install -q -r "$HERE/requirements.lock.txt"
 # onnxruntime.quantization, which examples/quantize_detector.py --engine ort runs.
 VIRTUAL_ENV="$VENV" uv pip install -q --no-deps "olive-ai==$OLIVE_VERSION"
 
-if [[ "${1:-}" == "--with-olive" ]]; then
+if [[ "${1:-}" == "--with-olive-pypi" ]]; then
+  # Reproducible from an index this session CAN reach (pypi.org), hash-checked:
+  # a file whose sha256 is not the locked one is refused, not installed.
+  # Resolved against requirements.lock.txt as a constraint, so nothing the base
+  # environment pinned moves. Regenerate with the command at the top of the lock.
+  VIRTUAL_ENV="$VENV" uv pip install -q --require-hashes --index-url https://pypi.org/simple \
+    -r "$HERE/requirements-olive-pypi.lock.txt"
+elif [[ "${1:-}" == "--with-olive" ]]; then
   # CPU-only torch from the PyTorch index. PyPI's Linux torch is the CUDA build
   # (~4.5 GB with its nvidia libraries, and it does not import without them).
   # If this index is unreachable, the reason is printed and nothing is changed.
@@ -40,8 +51,8 @@ if [[ "${1:-}" == "--with-olive" ]]; then
     echo "Olive stays NOT IMPORTABLE; use quantize_detector.py --engine ort, or see README.md (Olive)." >&2
     exit 2
   fi
-  VIRTUAL_ENV="$VENV" uv pip install -q "torchmetrics==1.9.0" "lightning-utilities==0.15.2"
+  VIRTUAL_ENV="$VENV" uv pip install -q "torchmetrics==1.9.0" "lightning-utilities==0.15.3"
 fi
 
 echo "ready: $VENV"
-"$VENV/bin/python" -I "$HERE/check.py" $([[ "${1:-}" == "--with-olive" ]] && echo --require-olive)
+"$VENV/bin/python" -I "$HERE/check.py" $([[ "${1:-}" == --with-olive* ]] && echo --require-olive)

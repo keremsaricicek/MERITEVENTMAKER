@@ -40,6 +40,7 @@ training/__pycache__/
 # Developer-time model tools (tools/model-dev/setup.sh): a local virtual
 # environment, never committed and never part of the product.
 .venv-model-dev/
+.mongo-model-dev/
 tools/model-dev/out/
 tools/model-dev/**/__pycache__/
 .claude/skills/*/scripts/__pycache__/

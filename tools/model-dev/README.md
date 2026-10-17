@@ -8,7 +8,8 @@ API, no Hugging Face Jobs, no GPU, no paid Codespaces, nothing uploaded.
 
 | Path | What |
 |---|---|
-| `tools/model-dev/setup.sh` | creates `.venv-model-dev/` (git-ignored, 1.2 GB) from the lock; `--with-olive` adds CPU torch |
+| `tools/model-dev/setup.sh` | creates `.venv-model-dev/` (git-ignored, 1.2 GB) from the lock; `--with-olive` adds CPU torch from download.pytorch.org; `--with-olive-pypi` adds torch from PyPI, every file sha256-pinned in `requirements-olive-pypi.lock.txt` (2026-10-17) |
+| `tools/model-dev/mongodb.sh` + `mongodb-explicit.txt` | a local MongoDB 8.3.7 for FiftyOne's dataset features, from conda-forge via micromamba 2.9.0 (sha256-checked), every package md5-checked; `.mongo-model-dev/` (git-ignored, ~600 MB), loopback only (2026-10-17) |
 | `tools/model-dev/requirements.in` / `requirements.lock.txt` | inputs / exact pins (`uv pip compile`, Python 3.11) |
 | `tools/model-dev/check.py` | imports every tool, prints versions; non-zero exit on a failure |
 | `tools/model-dev/examples/offline_env.py` | the telemetry switches, imported first by every script |
@@ -39,7 +40,9 @@ Outputs go to `tools/model-dev/out/` and training runs to `runs/` (both git-igno
 | onnxscript / onnx-ir | 0.7.2 / 1.0.0 | MIT / Apache-2.0 |
 | numpy / pillow | 2.4.6 / 12.3.0 | BSD-3-Clause (+ bundled) / MIT-CMU |
 | torch (only for Olive, `--with-olive`) | 2.14.1 | BSD-3-Clause and others |
-| torchmetrics / lightning-utilities (Olive imports them) | 1.9.0 / 0.15.2 | Apache-2.0 |
+| torchmetrics / lightning-utilities (Olive imports them) | 1.9.0 / 0.15.3 (0.15.2 no longer resolves with torchmetrics 1.9.0, measured 2026-10-17) | Apache-2.0 |
+| micromamba (only for `mongodb.sh`) | 2.9.0 | BSD-3-Clause AND MIT AND OpenSSL |
+| mongodb server (only for `mongodb.sh`; run locally, never distributed) | 8.3.7 | SSPL-1.0 |
 
 ## Verification (run here, 2026-10-12, 4 cores, no GPU)
 
@@ -56,6 +59,15 @@ Outputs go to `tools/model-dev/out/` and training runs to `runs/` (both git-igno
 | Outbound network during all of the above | **0 attempts** with `offline_env.py`. Without it: onnxruntime 3, Olive 8 attempts to mobile.events.data.microsoft.com (all refused by the proxy, nothing sent). `OLIVE_DISABLE_TELEMETRY=1` alone did NOT stop Olive; `onnxruntime.disable_telemetry_events()` did NOT stop ORT |
 | Skill recognised | **yes** in this session (listed and loaded via the Skill tool) |
 | Agents recognised | **yes, after a refresh**: right after they were written the call failed (`Agent type 'model-qa-specialist' not found`; the agent list is read when a session starts). The list was refreshed later in the same session, and both then ran a read-only recognition check and answered from their own definitions (provenance commit, verdict words / the command it must never run; `model-qa-specialist` has no Edit/Write). A new session on `claude/merit-concept3-plan-intelligence-rebirth` loads them from the start |
+
+## 2026-10-17 — both blocked rows reproduced from sources this session reaches
+
+| Check | Result |
+|---|---|
+| `setup.sh --with-olive-pypi`, into an empty `.venv-model-dev/` | **pass**, 6 min 39 s: torch 2.14.1 and its CUDA libraries from pypi.org with `--require-hashes`, resolved against `requirements.lock.txt` so no base pin moved; `check.py --require-olive` passes. It is PyPI's CUDA build (~4.5 GB); it runs on CPU. The container's own torch is no longer involved |
+| `quantize_detector.py --engine olive` on that environment | **pass**: INT8 agrees with FP32 on 166 / 166 ORNEK detections |
+| `mongodb.sh` from nothing, then `eval_detector_coco.py` with `FIFTYONE_DATABASE_URI` | **pass**, 12.7 s to install and start: FiftyOne `Dataset` + `evaluate_detections(method="coco")` run (mAP 0.3105 over predictions at the product threshold only — not comparable with pycocotools' AP over all scores); the matcher cross-check stays SAME on every plan and class |
+| Hosts used | pypi.org / files.pythonhosted.org, conda.anaconda.org. Still refused and not needed now: download.pytorch.org, fastdl.mongodb.org, api.anaconda.org |
 
 ## Not solved by this setup
 
