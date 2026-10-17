@@ -330,5 +330,121 @@
       .sort((a, b) => b.coversGroups - a.coversGroups);
   }
 
-  globalThis.MeritPlanIntelGroups = Object.freeze({ buildDifficultQuestions, buildFurnitureGroups, buildReviewGroups, buildSimilarityGroups });
+  // ---- Seating furniture → the table it serves (R2, 2026-10-17).
+  //
+  // A sofa, bench or banquette serves a table when ALL of these hold, measured
+  // in the piece's own frame (long axis, depth across it), never by distance
+  // between centres alone:
+  //   - the table lies along the piece: their extents along the long axis
+  //     overlap by at least 30 % of the shorter one;
+  //   - across, the gap from the piece's edge to the table's edge is between
+  //     -0.5 and 0.6 of the piece's depth (the depth is the one size every
+  //     piece has whatever its length — a sofa pulled a metre away from a
+  //     table is not at it);
+  //   - when the piece's front is KNOWN (`facingDeg`, the direction its seat
+  //     faces; a sofa's or banquette's back is on the other side), the table
+  //     is in front of it. A bench has no back; a box read without one says
+  //     nothing, and nothing is inferred.
+  // A table whose centre lies ON the piece is the piece read as a table, not a
+  // table it serves (`tablesOn`). A chair whose centre lies on a piece is a
+  // cushion of that piece (`chairsOn`) and is not counted as a chair: one seat
+  // is counted once. A banquette along several tables serves each of them; its
+  // seats count once for the room and are NOT divided between the tables (an
+  // even split is a guess the drawing does not make), so each of those tables'
+  // seats reads null with the piece named in `sharedPieces`. A piece whose
+  // seats are not drawn (`seats` null) makes its table's seats null too —
+  // "not shown", never three.
+  //
+  // Positions in percent of the sheet, the unrotated box around its centre and
+  // a rotation (as tables are written); `aspect` is width over height, so the
+  // frame is isotropic before anything is turned. Nothing is written back.
+  const SEATING_TYPES = new Set(["sofa", "bench", "banquette"]);
+  const SERVE = Object.freeze({ minOverlap: 0.3, minGapDepth: -0.5, maxGapDepth: 0.6, clearGapDepth: 0.35, onPieceMargin: 0.1 });
+  function boxFrame(c, aspect) {
+    const r = deg(c) * Math.PI / 180;
+    return { cx: c.x + c.w / 2, cy: (c.y + c.h / 2) / aspect, w: c.w, h: c.h / aspect, ux: Math.cos(r), uy: Math.sin(r) };
+  }
+  const halfExtent = (f, dx, dy) => Math.abs(f.w / 2 * (f.ux * dx + f.uy * dy)) + Math.abs(f.h / 2 * (-f.uy * dx + f.ux * dy));
+  function pieceFrame(c, aspect) {
+    const f = boxFrame(c, aspect), long = f.w >= f.h;
+    const lx = long ? f.ux : -f.uy, ly = long ? f.uy : f.ux;
+    const facing = Number.isFinite(c.facingDeg) ? { x: Math.cos(c.facingDeg * Math.PI / 180), y: Math.sin(c.facingDeg * Math.PI / 180) } : null;
+    return { cx: f.cx, cy: f.cy, lx, ly, nx: -ly, ny: lx, L: long ? f.w : f.h, D: long ? f.h : f.w, facing };
+  }
+  function onPiece(p, x, y, margin = SERVE.onPieceMargin) {
+    const dx = x - p.cx, dy = y - p.cy, m = margin * p.D;
+    return Math.abs(dx * p.lx + dy * p.ly) <= p.L / 2 + m && Math.abs(dx * p.nx + dy * p.ny) <= p.D / 2 + m;
+  }
+  function serves(p, t) {
+    const dx = t.cx - p.cx, dy = t.cy - p.cy;
+    const along = dx * p.lx + dy * p.ly, across = dx * p.nx + dy * p.ny;
+    const ea = halfExtent(t, p.lx, p.ly), en = halfExtent(t, p.nx, p.ny);
+    const overlap = Math.min(along + ea, p.L / 2) - Math.max(along - ea, -p.L / 2);
+    const overlapShare = overlap / Math.min(2 * ea, p.L);
+    const gap = (Math.abs(across) - en - p.D / 2) / p.D;
+    const front = p.facing ? dx * p.facing.x + dy * p.facing.y > 0 : null;
+    const ok = overlapShare >= SERVE.minOverlap && gap >= SERVE.minGapDepth && gap <= SERVE.maxGapDepth && front !== false;
+    return { ok, gap, overlapShare, front };
+  }
+  function buildSeatingLinks(candidates, options = {}) {
+    const aspect = Number.isFinite(options.aspect) && options.aspect > 0 ? options.aspect : 1;
+    const tables = candidates.filter(c => c.kind === "table" && c.status !== "rejected");
+    const pieces = candidates.filter(c => c.kind === "venue" && SEATING_TYPES.has(c.type) && c.status !== "rejected");
+    const looseChairs = candidates.filter(c => c.kind === "venue" && c.type === "chair" && c.status !== "rejected");
+    const tf = new Map(tables.map(t => [t.id, boxFrame(t, aspect)]));
+    const pf = new Map(pieces.map(p => [p.id, pieceFrame(p, aspect)]));
+    const links = [], piecesOut = [];
+    const chairOn = new Map(); // chair id -> piece id
+    const chairPoint = s => ({ x: Number.isFinite(s.cx) ? s.cx : s.x + (s.w || 0) / 2, y: (Number.isFinite(s.cy) ? s.cy : s.y + (s.h || 0) / 2) / aspect });
+    // chairDetections are written as centres in percent (plan-detection-chairs.js)
+    const tableChairs = tables.flatMap(t => (t.chairDetections || []).map(s => ({ id: s.id, table: t.id, x: s.x, y: s.y / aspect })));
+    const loose = looseChairs.map(c => ({ id: c.id, table: null, ...chairPoint(c) }));
+    for (const piece of pieces) {
+      const p = pf.get(piece.id);
+      const tablesOn = tables.filter(t => onPiece(p, tf.get(t.id).cx, tf.get(t.id).cy, 0)).map(t => t.id);
+      const chairsOn = [...tableChairs, ...loose].filter(s => onPiece(p, s.x, s.y)).map(s => s.id);
+      for (const id of chairsOn) if (!chairOn.has(id)) chairOn.set(id, piece.id);
+      const served = [];
+      for (const t of tables) {
+        if (tablesOn.includes(t.id)) continue;
+        const r = serves(p, tf.get(t.id));
+        if (!r.ok) continue;
+        const certainty = r.gap <= SERVE.clearGapDepth && r.overlapShare >= 0.5 ? "clear" : "uncertain";
+        links.push({ pieceId: piece.id, tableId: t.id, gapDepths: Math.round(r.gap * 100) / 100, overlap: Math.round(r.overlapShare * 100) / 100,
+          facing: r.front === null ? "unknown" : "front", certainty });
+        served.push(t.id);
+      }
+      const seats = Number.isFinite(piece.seats) && piece.seats > 0 && piece.seatsUnknown !== true ? piece.seats : null;
+      piecesOut.push({ id: piece.id, type: piece.type, tables: served, seats, tablesOn, chairsOn });
+    }
+    const pieceById = new Map(piecesOut.map(p => [p.id, p]));
+    const groups = tables.map(t => {
+      const pieceIds = links.filter(l => l.tableId === t.id).map(l => l.pieceId);
+      const chairIds = tableChairs.filter(s => s.table === t.id && !chairOn.has(s.id)).map(s => s.id);
+      const shared = pieceIds.filter(id => pieceById.get(id).tables.length > 1);
+      const unknown = pieceIds.filter(id => pieceById.get(id).seats === null);
+      const seats = shared.length || unknown.length ? null
+        : chairIds.length + pieceIds.reduce((n, id) => n + pieceById.get(id).seats, 0);
+      return { tableId: t.id, pieceIds, chairIds, seats, sharedPieces: shared, seatsNotShown: unknown };
+    }).filter(g => g.pieceIds.length);
+    // The room's seats, each counted once: every chair not on a piece, and every
+    // piece's drawn seats; pieces whose seats are not drawn are counted as such.
+    const chairsCounted = tableChairs.filter(s => !chairOn.has(s.id)).length + loose.filter(s => !chairOn.has(s.id)).length;
+    const room = {
+      chairs: chairsCounted, cushionsNotCounted: chairOn.size,
+      pieceSeats: piecesOut.reduce((n, p) => n + (p.seats || 0), 0),
+      piecesSeatsNotShown: piecesOut.filter(p => p.seats === null).length,
+    };
+    // ONE question, the one whose answer moves the most: an uncertain link,
+    // the piece with the most drawn seats first, then the longest piece.
+    const uncertain = links.filter(l => l.certainty === "uncertain");
+    const weight = l => [pieceById.get(l.pieceId).seats ?? -1, pf.get(l.pieceId).L];
+    uncertain.sort((a, b) => weight(b)[0] - weight(a)[0] || weight(b)[1] - weight(a)[1] || (a.pieceId < b.pieceId ? -1 : 1));
+    const q = uncertain[0];
+    const question = q ? { kind: "seatingLink", pieceId: q.pieceId, tableId: q.tableId, questionType: "pieceServesTable",
+      question: `Does this ${pieces.find(p => p.id === q.pieceId).type} seat guests at this table?` } : null;
+    return { links, pieces: piecesOut, groups, room, question };
+  }
+
+  globalThis.MeritPlanIntelGroups = Object.freeze({ buildDifficultQuestions, buildFurnitureGroups, buildReviewGroups, buildSeatingLinks, buildSimilarityGroups });
 })();

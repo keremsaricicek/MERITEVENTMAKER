@@ -182,7 +182,12 @@
     const reviewGroups = GROUPS.buildReviewGroups(analysis.candidates, similarityGroups);
     const uncertainQuestions = GROUPS.buildDifficultQuestions(analysis.candidates, furnitureGroups);
     const physicalSeats = CAPACITY.computePhysicalCapacity(analysis.candidates);
-    const capacityAudit = CAPACITY.buildCapacityAudit(ocrText, physicalSeats, analysis.candidates, furnitureGroups);
+    // Sofas, benches and banquettes and the table each one serves — a second
+    // kind of grouping beside pushed-together tables, never merged into it: a
+    // banquette along three tables is one physical piece in three groups.
+    const seatingLinks = GROUPS.buildSeatingLinks(analysis.candidates.filter(c => c.kind !== "table" || CAPACITY.isOffered(c)),
+      analysis.imageWidth > 0 && analysis.imageHeight > 0 ? { aspect: analysis.imageWidth / analysis.imageHeight } : {});
+    const capacityAudit = CAPACITY.buildCapacityAudit(ocrText, physicalSeats, analysis.candidates, furnitureGroups, seatingLinks);
     // Zones before the graph, because the graph now attaches structural and
     // semantic anchors to the region they stand in — a column belongs to a part
     // of the room, and the graph cannot say so before the regions exist.
@@ -270,6 +275,7 @@
       reviewPriorities,
       capacityEstimate: { physical: physicalSeats },
       capacityAudit,
+      seatingLinks,
       // Physical objects and logical seating groups are deliberately separate
       // structures: three tables pushed together stay three physical table
       // candidates that also appear as one logical group, and are never

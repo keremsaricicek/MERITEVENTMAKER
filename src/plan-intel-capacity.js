@@ -209,7 +209,7 @@
   // detected, what the logical seating groups imply, and what is admittedly
   // unknown. Every number is labelled with where it came from; none of them is
   // adjusted to make the others agree.
-  function buildCapacityAudit(ocrText, systemCounted, candidates, furnitureGroups) {
+  function buildCapacityAudit(ocrText, systemCounted, candidates, furnitureGroups, seatingLinks) {
     const stated = parsePaxFromText(ocrText);
     // The labelled figures first, because they are what a multiplication has
     // to agree with before it is believed.
@@ -233,6 +233,7 @@
         heldBack: heldBackSeats(candidates) },
       logical: { seats: logicalSeats, groups: (furnitureGroups || []).length, source: "seats summed over logical seating groups" },
       unverified: unverifiedSeating.map(c => ({ id: c.id, kind: c.kind, type: c.type,
+        servesTables: (seatingLinks?.pieces || []).find(p => p.id === c.id)?.tables || [],
         note: "seat count not determinable from the drawing — needs a human answer" })),
       drawingStated: stated,
       // What the drawing states as a RULE rather than a total, when it does.
@@ -256,12 +257,39 @@
       sourceText: ocrText ? ocrText.slice(0, 400) : null,
       ocrAvailable: ocrText != null,
     };
+    // Seating furniture and the tables it serves (MeritPlanIntelGroups.
+    // buildSeatingLinks), each group naming the objects its seats rest on. A
+    // chair standing ON a piece is counted in `physical` as a chair and is
+    // named here as a possible cushion of that piece — so a person who gives
+    // the piece its seats can see the two would count one seat twice.
+    if (seatingLinks && seatingLinks.pieces.length) {
+      audit.seating = {
+        source: "seating furniture linked to the table it serves, by its own edge and frame",
+        groups: seatingLinks.groups,
+        pieceSeats: seatingLinks.room.pieceSeats,
+        piecesSeatsNotShown: seatingLinks.room.piecesSeatsNotShown,
+        chairsOnPieces: seatingLinks.pieces.filter(p => p.chairsOn.length).map(p => ({ pieceId: p.id, chairIds: p.chairsOn,
+          countedTwice: p.seats != null })),
+        tablesOnPieces: seatingLinks.pieces.filter(p => p.tablesOn.length).map(p => ({ pieceId: p.id, tableIds: p.tablesOn })),
+      };
+    }
+    // The ONE question worth asking about seats, if any: when the drawing's own
+    // total and the count disagree and a piece's seats are not shown, the seats
+    // of the longest such piece that serves a table (its answer moves the most);
+    // otherwise a link the geometry could not settle. Never more than one.
+    const longest = unverifiedSeating.filter(c => audit.unverified.find(u => u.id === c.id).servesTables.length)
+      .sort((a, b) => Math.max(b.w, b.h) - Math.max(a.w, a.h) || (a.id < b.id ? -1 : 1))[0];
+    audit.question = audit.difference && longest
+      ? { kind: "pieceSeats", pieceId: longest.id, tableIds: audit.unverified.find(u => u.id === longest.id).servesTables,
+          question: `How many guests does this ${longest.type} seat?`,
+          why: `the drawing states ${stated} and ${systemCounted} were counted; this piece's seats are not shown` }
+      : seatingLinks?.question || null;
     audit.suspectRegions = rankSuspectRegions(candidates, audit.difference ?? 0).slice(0, 8);
     // Kept for callers that already read this field.
     audit.likelyAreaIds = audit.suspectRegions.map(s => s.id);
     // With no OCR there is no stated number to compare against, but the
     // physical/logical/unverified breakdown is still real and worth returning.
-    return (stated == null && !rule && !unverifiedSeating.length && !audit.suspectRegions.length) ? null : audit;
+    return (stated == null && !rule && !unverifiedSeating.length && !audit.suspectRegions.length && !audit.seating) ? null : audit;
   }
 
   globalThis.MeritPlanIntelCapacity = Object.freeze({ buildCapacityAudit, computePhysicalCapacity, countAssociatedSeats, countStandaloneChairs, heldBackSeats, isOffered });

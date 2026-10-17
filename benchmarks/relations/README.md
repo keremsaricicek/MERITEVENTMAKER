@@ -185,3 +185,55 @@ analysis is identical to the previous commit apart from the new diagnostic
 |---|--:|--:|--:|--:|--:|--:|
 | `442d6eb` | 427 / 476 (0.897) | 0.945 | 0.959 | 22 | 0 | 0 / 646 |
 | this commit | **436 / 476 (0.916)** | **0.960** | 0.962 | 15 | 0 | 0 / 649 |
+
+## 2026-10-17 — which table a sofa, bench or banquette serves (R2)
+
+The product had no link from a seating piece to its table: R1
+(`measure-seating-furniture.mjs`) measured groups 0 / 20. The rule is now
+`MeritPlanIntelGroups.buildSeatingLinks`, run by the plan intelligence
+(`seatingLinks`) and read by the capacity audit. A piece serves a table when the
+table lies ALONG it (extents along the piece's long axis overlap by ≥ 30 % of the
+shorter), across a gap of −0.5 to 0.6 of the piece's DEPTH, and in front of it
+when its front is known. A table candidate standing on a piece is the piece read
+as a table (`tablesOn`), not a table it serves; a chair standing on a piece is a
+cushion and is not also counted as a chair; a banquette along three tables is
+one piece in three groups, counted once for the room and not divided between
+them; an undivided piece makes its table's seats null.
+
+**Pre-registered** (`PREREG`, written before the first run): on `seat/dev`, link
+precision and recall ≥ 0.95, group EXACT ≥ 0.95, sofa-apart linked 0, room seats
+never over-counted; tuned on dev only, blind scored once after the rule froze.
+
+**On true boxes** (`measure-seating-links.mjs`; the rule alone — chairs are
+given to the nearest table as a stand-in for the detector's association, which
+is scored separately and was 452 / 452):
+
+| boxes handed to the rule | dev links P / R | dev groups EXACT | dev apart linked | blind groups EXACT | blind apart linked |
+|---|---|---|---|---|---|
+| turned, front known (`rotated`) | 1.000 / 1.000 | 363 / 363 | 0 / 73 | 163 / 163 | 0 / 31 |
+| turned, front unknown (`oriented`) | 1.000 / 1.000 | 363 / 363 | 0 / 73 | — | — |
+| axis-aligned envelope (`envelope`, what the model writes) | 0.914 / 0.709 | 256 / 363 (0.705) | 32 / 73 | 119 / 163 (0.730) | 14 / 31 |
+| envelope, turn read from pixels (`fitted`, what the product writes now) | 1.000 / 1.000 | 363 / 363 | 0 / 73 | 163 / 163 | 0 / 31 |
+
+Room seats (every chair once plus every drawn piece seat once): exact on 24 / 24
+dev and 12 / 12 blind sheets with turned boxes; from envelopes 18 dev sheets
+UNDER-counted, because a turned piece's envelope swallowed the armchair beside
+it and the chair was taken for a cushion.
+
+**The turn is read from the piece's own pixels**: `MeritPlanModelFusion.
+orientPiece` takes the minimum-area rectangle around the largest ink component
+inside the model's box, kept only when the piece is elongated (≥ 1.3) and turned
+more than 5°. `measure-piece-orientation.mjs`: dev 186 / 186 turned pieces within
+5°, 250 / 250 unturned left as the model's box, no wrong turn; median long-side
+error 3.2 %, depth 10.6 % (the back and arms widen the outline). Blind: 83 / 83
+and 113 / 113.
+
+**What this does NOT show.** These are generated scenes whose geometry the rule
+was written against — necessary, not sufficient. The sofa-apart negative is
+separated by the GAP alone here (generated 0.8–1.4 table sides away); a sofa
+pushed against a table with its back to it is linked unless its front is known,
+and the product reads no front from a drawing (`facingDeg` stays unset). End to
+end it needs a model that names seating furniture; with v2 active nothing is
+named, so the end-to-end number waits for one (training/README.md, E5). Suite:
+`seating-links` (25 checks, two mutations bite: a 2.0-depth gap links the far
+sofa; counting cushions as chairs gives 5 seats for 4).

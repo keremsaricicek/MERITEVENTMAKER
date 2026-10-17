@@ -22,8 +22,9 @@
 //   unknownAsUnknown    an undivided piece reported with seats unknown — named
 //                       with `seats == null` and no chair on it                    (target 100 %)
 //   groups P/R          a piece linked to the table it serves                      (target ≥ 0.95)
-// The product has no piece→table link today; groups are reported as measured, 0
-// when nothing links, rather than left out.
+// The piece→table link is the plan intelligence's `seatingLinks`
+// (MeritPlanIntelGroups.buildSeatingLinks, R2 2026-10-17); before R2 the
+// product had none and groups measured 0.
 //
 // Network refused, pinned OCR — the same environment as every benchmark.
 import fs from "node:fs";
@@ -83,7 +84,8 @@ for (const file of files) {
       chairs: live.flatMap((c) => (c.chairDetections || []).map((s) => ({ table: c.id, x: s.x / 100 * W, y: s.y / 100 * H })))
         .concat(live.filter((c) => c.kind === "venue" && c.type === "chair").map((c) => ({ table: null, ...C(c) }))),
       furniture: live.filter((c) => c.kind === "venue" && ["sofa", "bench", "banquette"].includes(c.type))
-        .map((c) => ({ id: c.id, type: c.type, ...C(c), seats: c.seats ?? null, seatsUnknown: !!c.seatsUnknown, servesTable: c.servesTable ?? c.relation?.tableId ?? null })),
+        .map((c) => ({ id: c.id, type: c.type, ...C(c), seats: c.seats ?? null, seatsUnknown: !!c.seatsUnknown, rotation: c.rotation || 0,
+          serves: ((a.planIntelligence || {}).seatingLinks?.links || []).filter((l) => l.pieceId === c.id).map((l) => l.tableId) })),
     };
   }, { W, H });
   await page.close();
@@ -109,7 +111,7 @@ for (const file of files) {
     const asTable = got.tables.filter((t) => inside(p, t.x, t.y));
     const asChairs = got.chairs.filter((c) => inside(p, c.x, c.y));
     const outcome = named.length ? "named" : asTable.length ? "asTable" : asChairs.length ? "asChairs" : "nothing";
-    const linked = new Set(named.map((f) => f.servesTable).filter(Boolean));
+    const linked = new Set(named.flatMap((f) => f.serves));
     const truth = servedBy.get(p.id) || new Set();
     const truthProduct = new Set([...truth].map((t) => tableMatch.get(t)).filter(Boolean));
     return {
