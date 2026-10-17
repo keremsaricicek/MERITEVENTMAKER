@@ -355,7 +355,12 @@ pinned bytes (size + sha256). Fusion (`src/plan-model-fusion.js`) only ADDS
 unreviewed tables where nothing was proposed, at the size the plan's tables
 are drawn at, and marks; it removes and moves nothing. It adds no chairs and
 no columns: both were measured and made the regression set worse, and
-switching one on is a new measurement. An analysis says a trained model
+switching one on is a new measurement. A model that names seating furniture
+(sofa / bench / banquette, E4 in `training/README.md`) adds it as an unreviewed
+venue object with seats NOT known, and marks a classical table standing on one
+(`modelSaysSeating`); v2 has no such class, so with v2 nothing changes. The
+decoder drops a second peak within half the short side of a stronger box of the
+same group (E3), in `src/plan-model.js` and `training/detector.py` alike. An analysis says a trained model
 ran (`trainedModel:true`) only when it did. When the model is missing,
 corrupt, disabled or has no runtime, the analysis completes on the classical
 path, records why, and the screen says **"DOMAIN MODEL NOT INSTALLED"**.

@@ -48,13 +48,16 @@
   // supportField: where "this source did not see that classical table" is
   // written — the model's opinion and the PDF's own shapes are not the same
   // witness, so they never share a field.
-  const DEFAULTS = { addTable: 0.5, addChair: null, addColumn: null, matchFactor: 0.6, chairReach: 1.2, selectScore: 0.7, source: "local-model", supportField: "modelSupport" };
+  const DEFAULTS = { addTable: 0.5, addChair: null, addColumn: null, addSeating: 0.5, matchFactor: 0.6, chairReach: 1.2, selectScore: 0.7, source: "local-model", supportField: "modelSupport" };
+  // Seating furniture a model may name (training/README.md, E4). A model
+  // without these classes (v1, v2) never emits them, so nothing here runs.
+  const SEATING = new Set(["sofa", "bench", "banquette"]);
 
   function fuse(candidates, venues, model, frame, opts) {
     const o = Object.assign({}, DEFAULTS, opts || {});
     const W = frame.width, H = frame.height, uid = frame.uid;
     const pct = (v, dim) => v / dim * 100;
-    const out = { added: [], addedVenues: [], chairsAttached: 0, chairsDropped: 0, chairsInText: 0, offSize: 0, unsupported: 0, considered: (model && model.detections || []).length };
+    const out = { added: [], addedVenues: [], chairsAttached: 0, chairsDropped: 0, chairsInText: 0, offSize: 0, unsupported: 0, seatingAdded: 0, tablesOnSeating: 0, considered: (model && model.detections || []).length };
     if (!model || !model.available) return out;
     const dets = model.detections;
     const centre = c => ({ cx: (c.x + c.w / 2) / 100 * W, cy: (c.y + c.h / 2) / 100 * H, w: c.w / 100 * W, h: c.h / 100 * H });
@@ -146,6 +149,33 @@
             orientation: { known: false, angle: null, strength: 0, evidence: "notRead", facingKnown: false, facingAngle: null, facingEvidence: "notRead" } } });
         seats.push({ cx: d.cx, cy: d.cy, w: d.w, h: d.h });
         out.chairsAttached++;
+      }
+    }
+
+    // ---- seating furniture
+    // A sofa, bench or banquette the model names where the classical pass
+    // proposed nothing becomes an unreviewed venue object whose seats are NOT
+    // known: a sofa is never "three seats" because it is long, and nothing here
+    // counts it (seats null, seatsUnknown, the capacity audit's "unverified
+    // seating"). A classical TABLE standing on a piece the model calls seating
+    // keeps every field and gains `modelSaysSeating` — the review can ask about
+    // it first; nothing removes or retypes it.
+    if (o.addSeating != null) {
+      const seating = dets.filter(d => SEATING.has(d.cls) && d.score >= o.addSeating);
+      const onPiece = (t, d) => Math.abs(t.cx - d.cx) <= d.w / 2 && Math.abs(t.cy - d.cy) <= d.h / 2;
+      const placed = (venues || []).map(centre);
+      for (const d of seating) {
+        let hitTable = false;
+        for (const t of tables) if (t.c.source !== o.source && onPiece(t, d)) { t.c.modelSaysSeating = d.cls; hitTable = true; }
+        if (hitTable) { out.tablesOnSeating++; continue; }
+        if (placed.some(v => near(v, d))) continue;
+        const v = { id: uid("candidate"), kind: "venue", type: d.cls, x: pct(d.cx - d.w / 2, W), y: pct(d.cy - d.h / 2, H), w: pct(d.w, W), h: pct(d.h, H),
+          rotation: 0, confidence: Math.min(d.score, 0.7), status: "unreviewed", selected: false, source: o.source, chairDetections: [],
+          seats: null, seatsConfidence: "unverified", seatsUnknown: true,
+          evidence: { geometry: o.source, modelScore: d.score, seats: "not counted: a model names the piece, not its seats" } };
+        out.addedVenues.push(v);
+        placed.push({ cx: d.cx, cy: d.cy, w: d.w, h: d.h });
+        out.seatingAdded++;
       }
     }
 

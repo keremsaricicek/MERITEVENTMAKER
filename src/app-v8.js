@@ -3825,7 +3825,7 @@
         const fused=MeritPlanModelFusion.fuse(candidates,venues,read,{width:dw,height:dh,uid,representation:detection.representation,textRegions});
         candidates.push(...fused.added);venues.push(...fused.addedVenues);
         localModel={available:read.available,reasonCode:read.reasonCode||null,reason:read.reason||null,ms:read.ms??null,model:read.model,
-          loadMs:read.model&&read.model.loadMs!=null?read.model.loadMs:null,detections:read.detections.length,addedTables:fused.added.length,addedColumns:fused.addedVenues.length,chairsAttached:fused.chairsAttached,chairsInText:fused.chairsInText,offSize:fused.offSize,unsupported:fused.unsupported};
+          loadMs:read.model&&read.model.loadMs!=null?read.model.loadMs:null,detections:read.detections.length,addedTables:fused.added.length,addedColumns:fused.addedVenues.filter(v=>v.type==="column").length,addedSeating:fused.seatingAdded,tablesOnSeating:fused.tablesOnSeating,chairsAttached:fused.chairsAttached,chairsInText:fused.chairsInText,offSize:fused.offSize,unsupported:fused.unsupported};
       }
       // A vector PDF's own furniture shapes, when the import found repeated ones:
       // exact geometry, fused the same way (added where nothing was proposed).

@@ -80,10 +80,12 @@ def main():
     # Paths on the training machine say nothing about the model and leak a
     # directory layout; keep the file names only.
     args = strip_paths(args)
+    # the checkpoint says which classes its heat head has (E4: --seating adds three)
+    classes = ["table_round", "table_rect", "chair", "column"] + (["sofa", "bench", "banquette"] if (ck.get("args") or {}).get("seating") else [])
     manifest = {
         "id": "merit-plan-detector", "version": a.version, "bytes": len(data), "sha256": sha,
-        "format": "ONNX opset 17, input image[1,1,H,W] grey 0..1 (H,W multiples of 16), outputs heat[1,4,H/4,W/4] (sigmoid), size[1,2,..] log(w/4),log(h/4), offset[1,2,..]",
-        "classes": ["table_round", "table_rect", "chair", "column"],
+        "format": f"ONNX opset 17, input image[1,1,H,W] grey 0..1 (H,W multiples of 16), outputs heat[1,{len(classes)},H/4,W/4] (sigmoid), size[1,2,..] log(w/4),log(h/4), offset[1,2,..]",
+        "classes": classes,
         "trainedModel": True,
         "domain": "plan symbols only: tables, chairs, columns. Not rooms, not numbers, not capacity.",
         "training": {"args": args, "steps": ck.get("step"), "params": ck.get("params"), "commitAtPackaging": commit,
@@ -111,6 +113,11 @@ def main():
             if not re.search(r"thresholds: \{[^}]*\},", s2):
                 raise SystemExit("could not find the thresholds in src/plan-model.js")
             s2 = re.sub(r"thresholds: \{[^}]*\},", "thresholds: { " + ", ".join(f"{k}: {v}" for k, v in thr.items()) + " },", s2, count=1)
+        # the pin's class list is the model's own (E4 adds three): a pin that
+        # kept four names for a seven-channel head would read a sofa as nothing
+        if not re.search(r"classes: \[[^\]]*\],", s2):
+            raise SystemExit("could not find the classes in src/plan-model.js")
+        s2 = re.sub(r"classes: \[[^\]]*\],", "classes: " + json.dumps(classes).replace(",", ", ") + ",", s2, count=1)
         if not re.search(r'trainedOn: "[^"]*",', s2):
             raise SystemExit("could not find trainedOn in src/plan-model.js")
         s2 = re.sub(r'trainedOn: "[^"]*",', lambda m: "trainedOn: " + json.dumps(trained_on) + ",", s2, count=1)

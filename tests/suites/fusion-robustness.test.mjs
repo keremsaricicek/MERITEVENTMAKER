@@ -7,6 +7,9 @@
 //    round trip of the Golden plan the classical proposals — including the
 //    ones on the real tables — were fragments, their median was a fragment's
 //    size, and 15 of the model's real tables were refused as "off size".
+// 3. Seating furniture a model names (E4) is added as an unreviewed venue
+//    object with seats NOT known; a classical table standing on one is marked,
+//    never removed.
 // 2. A table the model added confidently, at the plan's table size (the ones
 //    fusion selects), is not deleted by text suppression. On the darkened
 //    rendering Tesseract read word boxes off the table fills and deleted 14 of
@@ -47,7 +50,21 @@ export default async function run({ page, checks, baseUrl }) {
     const sup = MeritSuppressTextFalsePositives([added, classical], words, W, H);
     const unselected = { ...added, selected: false };
     const supUnselected = MeritSuppressTextFalsePositives([unselected], words.slice(0, 1), W, H);
+    // seating furniture from a model that names it (E4): one sofa where nothing
+    // was proposed, one bench under a classical "table", one sofa on a classical venue
+    const onBench = table(300, 600, 40);
+    const seatModel = { available: true, detections: [
+      { cls: "sofa", cx: 700, cy: 600, w: 120, h: 50, score: 0.9 },
+      { cls: "bench", cx: 300, cy: 600, w: 140, h: 40, score: 0.9 },
+      { cls: "sofa", cx: 100, cy: 900, w: 120, h: 50, score: 0.9 },
+      { cls: "banquette", cx: 900, cy: 900, w: 120, h: 30, score: 0.3 } ] };
+    const stage = { id: "v-stage", kind: "venue", type: "stage", ...box(100, 900, 120), status: "unreviewed" };
+    const seat = MeritPlanModelFusion.fuse([onBench], [stage], seatModel, { width: W, height: H, uid });
+    const sofa = seat.addedVenues.find((v) => v.type === "sofa");
     return {
+      seatAdded: seat.addedVenues.map((v) => v.type), seatSeats: sofa ? [sofa.seats, sofa.seatsUnknown, sofa.status, sofa.selected] : null,
+      tableKept: seat.added.length === 0 && onBench.modelSaysSeating === "bench" && onBench.kind === "table",
+      tablesOnSeating: seat.tablesOnSeating,
       added: fused.added.length, offSize: fused.offSize,
       addedFragmentBoxes: fusedFragmentBoxes.added.length, offSizeFragmentBoxes: fusedFragmentBoxes.offSize,
       addedFragmentsOnly: fusedFragmentsOnly.added.length, offSizeFragmentsOnly: fusedFragmentsOnly.offSize,
@@ -67,4 +84,7 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(out.keptAdded, "text suppression keeps a selected, size-consistent model-added table under a word box");
   checks.ok(out.removedClassical, "but still removes a classical table with no seats under the same word box");
   checks.equal(out.unselectedRemoved, 1, "and an unselected model addition is not exempt");
+  checks.equal(out.seatAdded, ["sofa"], "a model's sofa where nothing was proposed is added; one on a classical venue, one under its threshold and one under a classical table are not");
+  checks.equal(out.seatSeats, [null, true, "unreviewed", false], "its seats are not known and not counted, and it waits for a person");
+  checks.ok(out.tableKept && out.tablesOnSeating === 1, "a classical table on a model's bench keeps its kind and gains modelSaysSeating — nothing is removed");
 }

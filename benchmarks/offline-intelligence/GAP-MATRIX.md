@@ -45,7 +45,7 @@ one real venue out · **BLIND** a real venue nobody has seen (none exists).
 
 | id | problem | user impact | baseline | acceptance | fix (owner) | verification | result |
 |---|---|---|---|---|---|---|---|
-| R1 | sofas, benches, banquettes in groups | capacity and grouping wrong where they appear | NOT MEASURED (scorer reads tables only) | seats counted twice 0; unknown capacity reported unknown 100 %; groups P/R ≥ 0.95 | relations workstream | new scenes + oracle + e2e | open |
+| R1 | sofas, benches, banquettes in groups | capacity and grouping wrong where they appear | 2026-10-17, 4 trial furniture scenes (`measure-seating-furniture.mjs`): of 83 pieces 1 named, 24 read as tables, 26 cushions read as chairs; seats unknown reported unknown 1 / 38; groups linked 0 / 20 | seats counted twice 0; unknown capacity reported unknown 100 %; groups P/R ≥ 0.95 | furniture scenes + scorer (`synth_relations.py --furniture`); E4: seating classes in the local model; fusion adds a named piece with seats unknown, marks a table on one | `measure-seating-furniture.mjs` on the furniture dev split | open — E4 in training |
 | R2 | usage groups end to end | pushed-together rows split | units exact dev 0.817, blind 0.861 (2026-10-11) | ≥ 0.95 | relations + detection | `measure-groups-e2e.mjs` | open |
 | R3 | printed vs drawn vs group capacity contradictions | wrong capacity accepted silently | capacity audit exists (U6) | each contradiction named with its objects | relations | suites | open |
 | R4 | questions to the person | too many confirmations, or none where needed | NOT MEASURED | one most-useful question per ambiguity; questions per plan reported | relations | e2e | open |

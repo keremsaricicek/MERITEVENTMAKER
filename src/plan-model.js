@@ -172,7 +172,7 @@
   // and 132 of a later candidate's 148 were such second peaks. The same rule,
   // line for line, is training/detector.py's `suppress_close` (E3). Applied to
   // the detections that passed their class threshold.
-  const GROUP_OF = [0, 0, 2, 3];
+  const GROUP_OF = [0, 0, 2, 3, 4, 4, 4]; // a sofa, a bench and a banquette on one spot are one piece (E4)
   function suppressClose(dets) {
     const kept = [];
     for (const d of dets) {
