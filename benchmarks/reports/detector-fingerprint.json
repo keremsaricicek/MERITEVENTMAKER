@@ -1,5 +1,5 @@
 {
-  "recordedAt": "2026-10-17T10:13:26.904Z",
+  "recordedAt": "2026-10-17T11:36:09.455Z",
   "plans": {
     "adversarial-architecture": {
       "hash": "ce8285a65c681644",
@@ -32,9 +32,9 @@
       "pageErrors": 0
     },
     "ornek-symbolic": {
-      "hash": "992c452c9da4cd28",
-      "candidates": 186,
-      "bytes": 1119293,
+      "hash": "d88d7fae7dfee762",
+      "candidates": 187,
+      "bytes": 1126106,
       "pageErrors": 0
     },
     "adversarial/a1-chair-under-table": {
@@ -92,33 +92,33 @@
       "pageErrors": 0
     },
     "robustness/merit-real-blur": {
-      "hash": "ff690ca0783c1ab7",
-      "candidates": 103,
-      "bytes": 553580,
+      "hash": "29d3fff0feebca81",
+      "candidates": 108,
+      "bytes": 575766,
       "pageErrors": 0
     },
     "robustness/merit-real-bright-down": {
-      "hash": "b194d35ae0438f42",
-      "candidates": 80,
-      "bytes": 422635,
+      "hash": "b614c17c83b8a6c7",
+      "candidates": 97,
+      "bytes": 497506,
       "pageErrors": 0
     },
     "robustness/merit-real-bright-up": {
-      "hash": "c6e9a432462e8aad",
-      "candidates": 137,
-      "bytes": 709635,
+      "hash": "2ecc874b62d536df",
+      "candidates": 142,
+      "bytes": 733779,
       "pageErrors": 0
     },
     "robustness/merit-real-contrast-high": {
-      "hash": "0b7a67fb4f328000",
-      "candidates": 154,
-      "bytes": 768118,
+      "hash": "69bd0c9f81f6ce76",
+      "candidates": 160,
+      "bytes": 798254,
       "pageErrors": 0
     },
     "robustness/merit-real-contrast-low": {
-      "hash": "e02956dd305f29bb",
-      "candidates": 98,
-      "bytes": 573845,
+      "hash": "61439bf5e31ccc27",
+      "candidates": 100,
+      "bytes": 585222,
       "pageErrors": 0
     },
     "robustness/merit-real-crop-pad": {
@@ -128,9 +128,9 @@
       "pageErrors": 0
     },
     "robustness/merit-real-downscale-70": {
-      "hash": "065cba7279df76ae",
-      "candidates": 91,
-      "bytes": 666419,
+      "hash": "4736f08867cdaeeb",
+      "candidates": 93,
+      "bytes": 677920,
       "pageErrors": 0
     },
     "robustness/merit-real-grayscale": {
@@ -140,15 +140,15 @@
       "pageErrors": 0
     },
     "robustness/merit-real-hue-shift": {
-      "hash": "c2b4b9017fc42828",
-      "candidates": 164,
-      "bytes": 802899,
+      "hash": "4a6422cf80989667",
+      "candidates": 168,
+      "bytes": 822126,
       "pageErrors": 0
     },
     "robustness/merit-real-lowres-roundtrip": {
-      "hash": "001df2dccb7e2157",
-      "candidates": 71,
-      "bytes": 344086,
+      "hash": "5d5845bb339e1162",
+      "candidates": 89,
+      "bytes": 420672,
       "pageErrors": 0
     },
     "robustness/merit-real-noise": {
@@ -158,15 +158,15 @@
       "pageErrors": 0
     },
     "robustness/merit-real-rotate-2": {
-      "hash": "2a16a8c4c65c6191",
-      "candidates": 94,
-      "bytes": 587614,
+      "hash": "50ca61729a4b49e7",
+      "candidates": 96,
+      "bytes": 597358,
       "pageErrors": 0
     },
     "robustness/merit-real-rotate-minus-3": {
-      "hash": "fefab74341e07ed8",
-      "candidates": 92,
-      "bytes": 524399,
+      "hash": "81a47f5354f8543b",
+      "candidates": 94,
+      "bytes": 536208,
       "pageErrors": 0
     }
   }

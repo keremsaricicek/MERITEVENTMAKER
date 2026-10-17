@@ -72,15 +72,18 @@
     // for Confirm; every other one is left for the review, with its confidence
     // held under the review's 0.72 line so it is asked about rather than
     // silently dropped (the raw score stays in evidence.modelScore).
-    // The size the plan's tables are drawn at. Taken from the tables BOTH
-    // witnesses see when there are at least five of them: on a rendering where
-    // the classical pass broke down (benchmarks/robustness, lowres-roundtrip,
-    // 2026-10-17) the classical median was the size of its fragments, and the
-    // gate then refused 15 of the model's real tables as "off size". On a plan
-    // where the two agree the agreed tables ARE the classical tables, so the
-    // median is the same one as before.
+    // The size the plan's tables are drawn at, measured on the tables BOTH
+    // witnesses see when there are at least five of them, as the model draws
+    // them. On a rendering where the classical pass broke down
+    // (benchmarks/robustness, lowres-roundtrip, 2026-10-17) the classical
+    // median — and the classical boxes beside the model's tables — were the
+    // size of fragments, and the gate refused 15 of the model's real tables as
+    // "off size". On a plan where the two agree, the model's boxes of the
+    // agreed tables are the same furniture at the same scale, so the ±40 %
+    // gate admits and refuses what it did before (the Golden plan's 24 px
+    // planter against ~45 px tables).
     const modelTablesAll = dets.filter(d => d.cls === "table_round" || d.cls === "table_rect");
-    const agreedSides = tables.filter(t => modelTablesAll.some(d => d.score >= o.addTable && near(t, d))).map(t => Math.min(t.w, t.h));
+    const agreedSides = modelTablesAll.filter(d => d.score >= o.addTable && tables.some(t => near(t, d))).map(d => Math.min(d.w, d.h));
     const sides = (agreedSides.length >= 5 ? agreedSides : tables.map(t => Math.min(t.w, t.h))).sort((a, b) => a - b);
     const medianSide = sides.length ? sides[sides.length >> 1] : null;
     const consistent = d => medianSide != null && Math.abs(Math.min(d.w, d.h) - medianSide) <= 0.4 * medianSide;

@@ -123,24 +123,42 @@ source and stage of every false and missed table:
 1. a table the model ADDED, confidently and at the plan's table size (the ones
    fusion selects), is exempt from text suppression — it exists only where the
    classical pass proposed nothing, and the model reads shapes, not glyphs;
-2. fusion's size reference is the median of the tables BOTH witnesses see, when
-   there are at least five; on a plan where they agree that is the classical
-   median it always was.
+2. fusion's size reference is the median of the MODEL's own boxes for the
+   tables both witnesses see, when there are at least five (otherwise the
+   classical median, as before). A first version took the classical boxes of
+   those agreed tables and did not help lowres-roundtrip: the classical box
+   beside a model table there is itself a fragment, and 15 tables were still
+   refused as off size. On a plan where the two agree the model's box of an
+   agreed table is the same furniture at the same scale, so the ±40 % gate
+   still refuses the Golden plan's 24 px planter.
 
-| rendering | `597b0cc` tables TP/FP/FN | now | triage |
+Triage is the runner's own (`run-robustness.mjs`, `triage()`), counted over the
+original and its fifteen renderings.
+
+| rendering | `597b0cc` tables TP/FP/FN | now | triage `597b0cc` → now |
 |---|---|---|---|
-| bright-down | 25 / 5 / 21 | **39 / 5 / 7** | SEVERE → **ACCEPTABLE** |
-| blur | 37 / 16 / 9 | 39 / 16 / 7 | WEAK |
-| contrast-high | 37 / 36 / 9 | 39 / 36 / 7 | SEVERE |
+| bright-down | 24 / 4 / 22 | **43 / 4 / 3** | SEVERE → **ACCEPTABLE** (chairs 91/2/22) |
+| lowres-roundtrip | 17 / 7 / 29 | **32 / 7 / 14** | SEVERE → WEAK |
+| blur | 37 / 16 / 9 | 42 / 16 / 4 | WEAK → ACCEPTABLE |
+| bright-up | 37 / 30 / 9 | 43 / 30 / 3 | SEVERE (30 false) |
+| contrast-high | 37 / 36 / 9 | 43 / 36 / 3 | SEVERE (36 false) |
+| hue-shift | 38 / 39 / 8 | 43 / 39 / 3 | SEVERE (39 false) |
 | contrast-low | 41 / 1 / 5 | 43 / 1 / 3 | HEALTHY |
-| downscale-70 | 41 / 1 / 5 | 43 / 1 / 3 | WEAK (chairs) |
-| hue-shift | 39 / 39 / 7 | 41 / 39 / 5 | SEVERE |
-| bright-up | 38 / 30 / 8 | 39 / 30 / 7 | SEVERE |
-| others | unchanged | unchanged | |
+| downscale-70 | 41 / 1 / 5 | 43 / 1 / 3 | WEAK (69 false chairs) |
+| jpeg-q20 | 33 / 8 / 13 | 34 / 8 / 12 | WEAK |
+| rotate-2 | 44 / 2 / 2 | 46 / 2 / 0 | HEALTHY |
+| rotate-minus-3 | 41 / 2 / 5 | 44 / 2 / 2 | HEALTHY |
+| crop-pad, grayscale, jpeg-q40, noise | unchanged | unchanged | HEALTHY |
 
-Median table F1 across renderings 0.932 → 0.945; chairs unchanged; no rendering
-worse. Two bistro tables are now FOUND on several renderings but typed round
-(the model has no bistro class; "0/2" in the bistro column).
+8 HEALTHY / 3 WEAK / 5 SEVERE → **8 HEALTHY / 2 ACCEPTABLE / 3 WEAK / 3 SEVERE**.
+Mean table F1 over the fifteen renderings 0.811 → 0.871; no rendering lost a
+table or gained a false one; chairs unchanged. Every false table that remains is
+the colour-dependent tone/accent stage (below). Two bistro tables are now FOUND
+on several renderings but typed round (the model has no bistro class).
+Regression gates on the same source: `benchmark:baseline` no regressions
+(ORNEK 162 → 166 of 166), adversarial 0 blocking (a6 table F1 0.432 → 0.457),
+false-positive gates met; the detector fingerprint was re-recorded for this
+behaviour change (11 of 28 plans differ, all through fusion).
 
 **Tried and refused — holding back the classical tables the model does not see.**
 A plan-wide "classical breakdown" verdict (the model saw ≥ 10 tables, ≥ 80 % of

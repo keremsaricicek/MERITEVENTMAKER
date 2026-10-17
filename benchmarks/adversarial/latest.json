@@ -1,7 +1,7 @@
 {
-  "ranAt": "2026-10-17T10:56:05.989Z",
+  "ranAt": "2026-10-17T11:14:36.838Z",
   "source": {
-    "digest": "f0d61542d515fe1b64648d10782ecbd3d0d27edc5b9b699a0bb6176b74ef3202",
+    "digest": "e7c5d3d76a438e5ba8b93da82dba64c6a053411e6c229d8ea48d55fbcd2ea6d0",
     "files": 112,
     "inputs": [
       "index.html",
@@ -137,7 +137,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 9158,
+      "detectionMs": 5691,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -286,7 +286,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 4
       },
-      "detectionMs": 9498,
+      "detectionMs": 5939,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -418,7 +418,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 9752,
+      "detectionMs": 5465,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -552,7 +552,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 9558,
+      "detectionMs": 5999,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -662,7 +662,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 0
       },
-      "detectionMs": 9103,
+      "detectionMs": 5936,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -785,7 +785,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 3
       },
-      "detectionMs": 9033,
+      "detectionMs": 5181,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -929,7 +929,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 2
       },
-      "detectionMs": 8046,
+      "detectionMs": 5000,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -1074,7 +1074,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 1
       },
-      "detectionMs": 14831,
+      "detectionMs": 10437,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
@@ -1208,7 +1208,7 @@
         "uncertainQuestions": 0,
         "reviewPriorities": 7
       },
-      "detectionMs": 13885,
+      "detectionMs": 8719,
       "timedOut": false,
       "pageErrors": [],
       "verdict": {
