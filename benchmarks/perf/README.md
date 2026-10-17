@@ -392,3 +392,36 @@ network, because SheetJS loads from CDN in the normal build. That is an
 environment limit, not a product defect — `regress-xlsx-content.mjs` exports a
 real 25KB workbook with all three sheets, and the offline single-file build
 inlines the engine. Do not "fix" the export because this harness reported it.
+
+### 2026-10-17 — re-measured in a quiet window (Linux container, NOT a Windows measurement)
+
+`taskset -c 0-3 node benchmarks/perf/analysis-profile.mjs 5` at `e351580`, nothing
+else running (an earlier same-day figure of 28–30 s for ORNEK was taken while a
+detector was training on 3 of the 4 cores, and is withdrawn). Median of five
+(worst in brackets); the clock is Analyse → analysis complete:
+
+| 4 cores | cold | warm | longest main-thread task cold / warm | peak memory (PSS) |
+|---|--:|--:|--:|--:|
+| Golden | 6.9 s (7.3) | 3.1 s (3.2) | 152 / 100 ms | 1.24 GB |
+| ORNEK | 20.1 s (21.9) | 13.4 s (13.7) | 202 (249) / 187 (205) ms | 1.70 GB |
+
+ORNEK cold, by stage: OCR model 12.8 s (Tesseract's whole-page read 11.6 s on its
+own worker, in parallel), table numbers 2.5 s, labels 2.1 s, classical detection
+1.1 s, memory embedding 0.7 s. Against `d14fc37` (21.2 s cold, longest task 215
+ms) the median is about one second lower; nothing in between was a speed
+change, so the difference is not attributed to anything. The ≤ 10 s target is
+**not met**. The OCR detection pass is ONE
+whole-page inference on one worker (about 5.7 s); splitting it into tiles would
+change the probability map at the seams, and a speed change must leave the
+output identical, so that is an experiment with a byte-identical check, not a
+setting.
+
+| 2 cores (`taskset -c 0,1`, same runner) | cold | warm | longest main-thread task cold / warm |
+|---|--:|--:|--:|
+| Golden | 10.3 s (10.5) | 5.1 s (5.4) | 188 / 107 ms |
+| ORNEK | 41.6 s (42.2) | 27.7 s (28.5) | 203 / 184 ms |
+
+Raw runner output: `benchmarks/perf/runs-2026-10-17/`. The 2-core rows miss both
+hardware rows (Golden ≤ 10 s p50 by 0.3 s, ORNEK ≤ 30 s by 11.6 s). The other
+clock the programme asks for — import → a usable plan on screen, before any
+analysis — is not reported by this runner and is NOT MEASURED here.

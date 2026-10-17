@@ -1,8 +1,8 @@
 {
- "ranAt": "2026-10-11T13:39:35.878Z",
+ "ranAt": "2026-10-17T16:09:57.865Z",
  "source": {
-  "digest": "2581c79e3f6401490bf2d9adea5fd7e9d518de53cf2a731cf3b1326e2479b7c3",
-  "files": 110,
+  "digest": "9522b932f2185ba5b06501d9ba57ee302d77e0cba9b1768e48ab824a5efee06b",
+  "files": 111,
   "inputs": [
    "index.html",
    "src",
@@ -376,18 +376,18 @@
     },
     "noShift": {
      "scoreableMemories": 23,
-     "applied": 18,
+     "applied": 19,
      "retained": 18,
-     "wrong": 0,
+     "wrong": 1,
      "unscoreable": 0,
-     "lost": 5,
-     "beyondOldTolerance": 3,
+     "lost": 4,
+     "beyondOldTolerance": 4,
      "retention": 0.7826,
-     "wrongRate": 0,
-     "identityPrecision": 1
+     "wrongRate": 0.0526,
+     "identityPrecision": 0.9474
     }
    },
-   "ambiguousReported": 1,
+   "ambiguousReported": 2,
    "conflictKinds": {
     "overruled": 11,
     "ambiguous": 1
@@ -539,7 +539,7 @@
      "identityPrecision": 1
     }
    },
-   "ambiguousReported": 3,
+   "ambiguousReported": 4,
    "conflictKinds": {
     "overruled": 11,
     "ambiguous": 1
@@ -553,15 +553,15 @@
   "retainedNoVisual": 136,
   "retainedNoContext": 136,
   "retainedNoShift": 124,
-  "wrongNoShift": 1,
-  "appliedNoShift": 125,
+  "wrongNoShift": 2,
+  "appliedNoShift": 126,
   "wrongFull": 1,
   "appliedFull": 137,
   "retentionFull": 0.8447,
   "retentionNoVisual": 0.8447,
   "retentionNoContext": 0.8447,
   "retentionWithoutGlobalTransform": 0.7702,
-  "identityPrecisionWithoutGlobalTransform": 0.992,
+  "identityPrecisionWithoutGlobalTransform": 0.9841,
   "identityPrecisionFull": 0.9927,
   "wrongApplicationRateFull": 0.0073
  }

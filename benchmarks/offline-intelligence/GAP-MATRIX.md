@@ -54,8 +54,8 @@ one real venue out · **BLIND** a real venue nobody has seen (none exists).
 
 | id | problem | user impact | baseline | acceptance | fix (owner) | verification | result |
 |---|---|---|---|---|---|---|---|
-| L1 | decision memory retention | a person's decision lost after a rescan | 0.8447 (`597b0cc`) | ≥ 0.98 | learning + detection stability (D4) | `npm run benchmark:memory -- --compare` | open |
-| L2 | decision applied to the wrong object | silent corruption | 0.0073 — one decision (t042, grayscale) | 0 (≤ 0.5 % worst case) | learning | same | open |
+| L1 | decision memory retention | a person's decision lost after a rescan | 0.8447 (`597b0cc`) | ≥ 0.98 | learning + detection stability (D4) | `npm run benchmark:memory -- --compare` | **NOT MET, unchanged** (re-measured 2026-10-17): 0.8447; the losses stay in jpeg-q20 and blur, where the re-analysis does not find the object again |
+| L2 | decision applied to the wrong object | silent corruption | 0.0073 — one decision (t042, grayscale) | 0 (≤ 0.5 % worst case) | learning | same | **NOT MET, unchanged** (2026-10-17): 0.0073, the same single decision; identity precision 0.9927 |
 | L3 | find more like this from 1–3 examples | the person draws every missed object by hand | 0 % recovered, up to 9 phantoms / 100 (ORNEK) | ≥ 50 % recovered, ≤ 1 phantom / 100 | learning | `exemplar-measure.mjs` + SYN | open |
 | L4 | lessons: source, scope, version, undo, no unchecked spread | a lesson leaking to another venue | suites green at `597b0cc` | verified by suites; wording never says "retrained" | learning | suites, TR/EN | open |
 
@@ -63,10 +63,10 @@ one real venue out · **BLIND** a real venue nobody has seen (none exists).
 
 | id | problem | user impact | baseline | acceptance | fix (owner) | verification | result |
 |---|---|---|---|---|---|---|---|
-| S1 | ORNEK full analysis, 4 cores, cold | 21 s wait | 21.2 s (p95 21.7) — 2026-10-11, `d14fc37` | ≤ 10 s | coordinator (OCR first: model detection ~5.7 s, recognition 231 lines ~7.1 s) | `taskset -c 0-3 node benchmarks/perf/analysis-profile.mjs 5` | open |
-| S2 | ORNEK longest main-thread task | the page stutters | 215 ms (p95 245) cold, 273 ms warm — `d14fc37` | ≤ 200 ms | coordinator | same runner | open |
-| S3 | 2 cores | slower office PCs | ORNEK 43.9 s, Golden 9.7 s (one run, 2026-10-11) | ≤ 30 s / ≤ 10 s p50 (hardware rows) | coordinator | `taskset -c 0,1 …` | open |
-| S4 | import→usable and Analyse→complete reported apart | — | not reported apart | both clocks, cold/warm, 4/2 cores, ≥ 5 runs | coordinator | runner | open |
+| S1 | ORNEK full analysis, 4 cores, cold | 21 s wait | 21.2 s (p95 21.7) — 2026-10-11, `d14fc37` | ≤ 10 s | coordinator (OCR first: model detection ~5.7 s, recognition 231 lines ~7.1 s) | `taskset -c 0-3 node benchmarks/perf/analysis-profile.mjs 5` | **NOT MET** (2026-10-17, quiet window): 20.1 s median (worst 21.9); OCR model 12.8 s of it. Golden 6.9 s |
+| S2 | ORNEK longest main-thread task | the page stutters | 215 ms (p95 245) cold, 273 ms warm — `d14fc37` | ≤ 200 ms | coordinator | same runner | **NOT MET, at the line** (2026-10-17): 202 ms median cold (worst 249), 187 ms warm (worst 205); Golden 152 / 100 ms |
+| S3 | 2 cores | slower office PCs | ORNEK 43.9 s, Golden 9.7 s (one run, 2026-10-11) | ≤ 30 s / ≤ 10 s p50 (hardware rows) | coordinator | `taskset -c 0,1 …` | **NOT MET** (2026-10-17, 5 runs): ORNEK 41.6 s, Golden 10.3 s |
+| S4 | import→usable and Analyse→complete reported apart | — | not reported apart | both clocks, cold/warm, 4/2 cores, ≥ 5 runs | coordinator | runner | **half** (2026-10-17): Analyse→complete cold/warm, 4 and 2 cores, 5 runs each, raw logs kept; import→usable NOT MEASURED (the runner has no such clock) |
 | S5 | Stop ends the engines; stale answers never overwrite | lost decisions on cancel | suites `analysis-workers`, `analysis-cancel` green | stays green after every speed change | coordinator | suites | open |
 | S6 | ORNEK analysis inside the plan-understanding contract | — | 66.4 s against ≤ 60 s (2026-10-10, before the speed work) | ≤ 60 s | — | re-measure | open (stale number) |
 
@@ -102,3 +102,24 @@ one real venue out · **BLIND** a real venue nobody has seen (none exists).
   a written reason, and the reason for these eight rows (when they first
   appeared, and whether they are the OCR-on/off line of §27) is not yet
   established.
+
+## Continuation record (2026-10-17, end of session)
+
+Where the next session starts, in order, each with the evidence that set it:
+
+1. **E5, written before it runs**: the seven-class model again, its new heads
+   trained longer or at a higher rate, with generation-2 plans kept in the mix
+   (E4 lost chair/column recall on generation-2 families and its furniture
+   channels stopped at 0.43–0.47). Scored as E4 was; the furniture blind split
+   (seed base 10) and blind-2 still unscored.
+2. **D4**: the three SEVERE renderings are the colour-dependent tone/accent
+   stage (30–39 false tables each); the local model alone is clean on all 16.
+3. **S1/S2/S3**: OCR is 12.8 s of ORNEK's 20.1 s cold. The detection pass is one
+   whole-page inference on one worker; any split must be proven byte-identical.
+4. **L1/L2/L3**: retention losses are objects the re-analysis no longer finds
+   (jpeg-q20, blur); exemplar search has only 5 misses to recover on the real
+   plans, so it needs a corpus with misses before it can be judged.
+5. **R1 groups**: no piece→table link exists; proximity is not evidence, and a
+   sofa's facing is not derivable from an axis-aligned box.
+6. **N1–N3**: a licensed third real plan, a Windows 8 GB machine, and an
+   operator's corrections — none can be produced here.
