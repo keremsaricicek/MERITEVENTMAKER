@@ -22,6 +22,15 @@
 //   peakMemoryMb   the browser's processes together (page, renderer
 //                  workers, GPU), PSS sampled every 250 ms
 //   crops          crop reads by the engine vs. answered from memory
+//   prefetch       whether the two text reads begun at import (S5) were used,
+//                  and how long before Analyse they started
+//   gapLongestTaskMs  the longest main-thread task between the import and
+//                  Analyse, when GAP_MS lets one pass (the prefetch's own cost)
+//
+// GAP_MS=n waits n ms between the import and Analyse, as a person looking at
+// the plan would, and marks the import as a real one (importedAtMs), which is
+// what lets the product start reading the plan's text then. Without it the
+// harness imports and presses Analyse at once, and nothing is prefetched.
 // Median and p95 per plan, never one number. Pinned OCR, network refused.
 import fs from "node:fs";
 import path from "node:path";
@@ -37,6 +46,7 @@ const RUNS = Number(process.argv[2]) || 3;
 const PLANS = (process.env.PLANS || "golden,ornek").split(",");
 const FILES = { golden: "merit-real-venue-plan.png", ornek: "ornek-upright.png" };
 const OUT = process.env.OUT || path.join(HERE, "analysis-profile-latest.json");
+const GAP_MS = process.env.GAP_MS != null ? Number(process.env.GAP_MS) : null;
 const cores = (() => { try { return execSync(`taskset -cp ${process.pid}`).toString().trim(); } catch { return "unknown"; } })();
 // Every process descended from this one (the browser and all it started),
 // as PSS: each shared page divided among the processes that share it, so the
@@ -90,6 +100,7 @@ async function analyse(page, selector, importDoneAt) {
       inputLatencyMaxMs: Math.round(Math.max(0, ...probe)), localModel: a.localModel ? { ms: a.localModel.ms, loadMs: a.localModel.loadMs ?? null } : null,
       tables: a.candidates.filter((c) => c.kind === "table" && c.status !== "rejected").length,
       fromImportMs: importDoneAt ? a.timings.analysisCompletedAtMs - importDoneAt : null,
+      prefetch: a.timings.prefetch || null,
       runsIn: { ocrModel: a.ocrModel && a.ocrModel.provider ? a.ocrModel.provider.runsIn || null : null, localModel: a.localModel && a.localModel.model ? a.localModel.model.runsIn || null : null },
       crops: globalThis.MeritPlanOCRCrops ? MeritPlanOCRCrops.stats() : null,
       // Which stage each task over 200 ms fell in: the stage whose end is the
@@ -118,12 +129,21 @@ try {
       await openApp(page, app.baseUrl, { lang: "tr" });
       await createBlankEvent(page, { name: "Profile", date: futureDate() });
       await importPlan(page, "data:image/png;base64," + fs.readFileSync(path.join(REPO_ROOT, "benchmarks/plans", FILES[name])).toString("base64"));
+      let gapLongestTaskMs = null;
+      if (GAP_MS != null) {
+        // a real import is stamped by the import itself (app-v8.js); the helper
+        // above sets the background directly, so it is stamped here
+        await page.evaluate(() => { globalThis.__longTasks = []; state.events[0].background.importedAtMs = Date.now(); render(); });
+        await page.waitForTimeout(GAP_MS);
+        gapLongestTaskMs = await page.evaluate(() => Math.round(Math.max(0, ...(globalThis.__longTasks || []))));
+      }
       const importDoneAt = Date.now();
-      const cold = await analyse(page, '[data-v8-action="detect"]', importDoneAt);
+      const cold = { ...(await analyse(page, '[data-v8-action="detect"]', importDoneAt)), gapMs: GAP_MS, gapLongestTaskMs };
       rows.cold.push(cold);
       const warm = await analyse(page, '[data-review-action="reanalyze"]');
       rows.warm.push(warm);
-      console.log(`${name} run ${i + 1}: cold ${cold.totalMs} ms (longest task ${cold.longestTaskMs}, input ${cold.inputLatencyMaxMs}) · warm ${warm.totalMs} ms (longest ${warm.longestTaskMs})`);
+      console.log(`${name} run ${i + 1}: cold ${cold.totalMs} ms (longest task ${cold.longestTaskMs}, input ${cold.inputLatencyMaxMs}) · warm ${warm.totalMs} ms (longest ${warm.longestTaskMs})` +
+        (GAP_MS != null ? ` · gap ${GAP_MS} ms (longest task in it ${gapLongestTaskMs}) prefetch ${JSON.stringify(cold.prefetch)}` : ""));
       console.log("   cold stages: " + cold.stages.map((s) => `${s.stage} ${s.ms}`).join(" · ") + ` · tesseract(worker) ${cold.tesseractMs}`);
       await browser.close();
     }

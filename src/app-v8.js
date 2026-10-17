@@ -3291,13 +3291,53 @@
   // One plan-wide read by the OCR model, stored with the analysis: the
   // provider that ran (or why none did), its timings, and every line it read
   // with its box in SOURCE pixels and its own score.
+  // ---- the plan's text, read before Analyse is pressed (S5, 2026-10-17) ----
+  // Both text reads — the OCR model's and Tesseract's whole page — depend on
+  // the plan image and on nothing else, so they can begin the moment a plan is
+  // imported and be handed to the analysis when a person presses Analyse: the
+  // same reads of the same pixels, started earlier. Measured on ORNEK they are
+  // most of a cold analysis (benchmarks/perf/README.md). Only for a plan just
+  // imported (`importedAtMs`, written by the import itself) into an event that
+  // has no analysis yet and can still be changed; keyed by the image, so a plan
+  // replaced before Analyse is never read for the new one. MERIT_PREFETCH="off"
+  // turns it off for a measurement without it.
+  const PREFETCH_WINDOW_MS=10*60*1000;
+  const planTextPrefetch={src:null,model:null,page:null,startedAtMs:null,abort:null};
+  // A plan whose analysis a person stopped is not read again in the background:
+  // Stop means stop, until they press Analyse again.
+  let prefetchStoppedSrc=null;
+  async function analysisCanvasOf(src){
+    const FRAMES=globalThis.MeritPlanFrames,blob=await sourceBlob(src),bitmap=await createImageBitmap(blob),analysisFrame=FRAMES.analysisFrame(bitmap.width,bitmap.height,ANALYSIS_MAX_SIDE());
+    const width=analysisFrame.width,height=analysisFrame.height,canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
+    const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,height);bitmap.close();
+    return{analysisFrame,ratio:analysisFrame.ratio,width,height,canvas,ctx};
+  }
+  function clearPlanTextPrefetch(){Object.assign(planTextPrefetch,{src:null,model:null,page:null,startedAtMs:null,abort:null});}
+  function startPlanTextPrefetch(event){
+    if(globalThis.MERIT_PREFETCH==="off"||!event||event.analysis||ui.analysisBusy)return;
+    const bg=event.background,src=bg?.src;
+    if(!src||planTextPrefetch.src===src||src===prefetchStoppedSrc||!(Date.now()-(bg.importedAtMs||0)<PREFETCH_WINDOW_MS))return;
+    if(RULES().isHistorical(event))return;
+    planTextPrefetch.abort?.abort();
+    const abort=new AbortController(),startedAtMs=performance.now();
+    // EXPECTED ABSTENTION: a read that fails here is read again by the analysis.
+    const model=globalThis.MeritPaddleOCR?readPlanTextWithModel(event,null,abort.signal).catch(()=>null):null;
+    const page=globalThis.Tesseract&&typeof globalThis.runPlanOCR==="function"
+      ?analysisCanvasOf(src).then(a=>abort.signal.aborted?null:runPlanOCR(a.canvas.toDataURL("image/png"))).catch(()=>null):null;
+    Object.assign(planTextPrefetch,{src,model,page,startedAtMs,abort});
+  }
+  globalThis.MeritPlanTextPrefetch=Object.freeze({status:()=>({active:!!planTextPrefetch.src})});
+  function takePlanTextPrefetch(src){
+    if(!src||planTextPrefetch.src!==src){planTextPrefetch.abort?.abort();clearPlanTextPrefetch();return null;}
+    const taken={...planTextPrefetch};clearPlanTextPrefetch();return taken;
+  }
   async function readPlanTextWithModel(event,progress={from:24,span:6},signal=null){
     const M=globalThis.MeritPaddleOCR,src=event.background?.src;
     if(!M||!src)return{available:false,reasonCode:"ENGINE_NOT_LOADED",reason:"OCR model provider not present"};
     let image;
     try{image=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});}
     catch{return{available:false,reasonCode:"FAILED",reason:"plan image did not decode"};}
-    const r=await M.readPlanText(image,{timeoutMs:120000,signal,recMinWidth:globalThis.MERIT_PPOCR_REC_MIN_WIDTH,onProgress:p=>{ui.analysisProgress=progress.from+Math.round(p*progress.span);}});
+    const r=await M.readPlanText(image,{timeoutMs:120000,signal,recMinWidth:globalThis.MERIT_PPOCR_REC_MIN_WIDTH,onProgress:p=>{if(progress)ui.analysisProgress=progress.from+Math.round(p*progress.span);}});
     return r.available?{available:true,provider:r.provider,ms:r.ms,imageSize:r.imageSize,items:r.items}
       :{available:false,provider:r.provider||null,reasonCode:r.reasonCode||"FAILED",reason:r.reason||null};
   }
@@ -3707,7 +3747,13 @@
     const turn=async()=>{await new Promise(r=>setTimeout(r,0));checkStopped();};
     render();await yieldFrame();
     try{
-      const FRAMES=globalThis.MeritPlanFrames,blob=await sourceBlob(event.background.src),bitmap=await createImageBitmap(blob),analysisFrame=FRAMES.analysisFrame(bitmap.width,bitmap.height,ANALYSIS_MAX_SIDE()),ratio=analysisFrame.ratio,width=analysisFrame.width,height=analysisFrame.height,canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(bitmap,0,0,width,height);bitmap.close();stage("decode");
+      const FRAMES=globalThis.MeritPlanFrames,{analysisFrame,ratio,width,height,canvas,ctx}=await analysisCanvasOf(event.background.src);stage("decode");
+      // The two text reads, when they were started at import (S5): the same
+      // reads of the same image, begun earlier. Taken over by this analysis, so
+      // a Stop below ends them and a re-analysis reads afresh.
+      const pre=takePlanTextPrefetch(event.background.src);
+      abort.signal.addEventListener("abort",()=>pre?.abort?.abort(),{once:true});
+      const prefetchUse={model:false,page:false,startedBeforeMs:pre?Math.round(performance.now()-pre.startedAtMs):null};
       // Tesseract reads the whole analysis canvas in its own worker, so it is
       // started HERE and runs while the OCR model and the detector hold the main
       // thread; its answer is awaited where it was always read. Same input: the
@@ -3715,7 +3761,11 @@
       // Measured on ORNEK, the two engines one after the other were most of the
       // analysis's wall clock.
       const tesseractStartedAt=performance.now();let tesseractMs=null;
-      const readWholePage=()=>(async()=>{try{return await runPlanOCR(canvas.toDataURL("image/png"));}catch(ocrError){return{available:false,text:null,reason:ocrError.message,reasonCode:"FAILED"};}finally{tesseractMs=Math.round(performance.now()-tesseractStartedAt);}})();
+      const freshPageRead=()=>(async()=>{try{return await runPlanOCR(canvas.toDataURL("image/png"));}catch(ocrError){return{available:false,text:null,reason:ocrError.message,reasonCode:"FAILED"};}finally{tesseractMs=Math.round(performance.now()-tesseractStartedAt);}})();
+      // A read begun at import is used only when it answered: one that failed
+      // or was stopped is read again here, so the result never differs from
+      // what reading now would give.
+      const readWholePage=()=>pre&&pre.page?pre.page.then(r=>{if(r&&r.available){prefetchUse.page=true;tesseractMs=Math.round(performance.now()-tesseractStartedAt);return r;}return freshPageRead();}):freshPageRead();
       // EXPERIMENT ONLY (benchmarks/perf/README.md): MERIT_TESSERACT_PAGE =
       // "model-only" leaves Tesseract's whole-page read out when the OCR model
       // reads the page, and starts it only when the model could not. The product
@@ -3791,7 +3841,9 @@
         if(abort.signal.aborted)return{available:false,reasonCode:"STOPPED",reason:"the analysis was stopped",detections:[]};
         return MeritPlanModel.detect(pixels,dw,dh);
       })():null;
-      const ocrModelRead=await guard(readPlanTextWithModel(event,undefined,abort.signal));stage("ocrModel");
+      const ocrModelRead=await guard(pre&&pre.model
+        ?pre.model.then(r=>{if(r&&r.available){prefetchUse.model=true;return r;}return readPlanTextWithModel(event,undefined,abort.signal);})
+        :readPlanTextWithModel(event,undefined,abort.signal));stage("ocrModel");
       if(!ocrStarted)ocrStarted=ocrModelRead.available&&globalThis.Tesseract
         ?Promise.resolve({available:true,text:"",words:[],pageRead:"skipped: the OCR model read the page"})
         :readWholePage();
@@ -4057,10 +4109,11 @@
       // Last, and only last: it ranks what every layer above it concluded.
       runConfidenceBudget(event);stage("intelligence");
       ui.analysisStage=t("analysis.stage.review");ui.analysisProgress=100;ui.analysisBusy=false;ui.analysisAbort=null;
-      event.analysis.timings={importedAtMs:event.background?.importedAtMs??null,analysisStartedAtMs,analysisCompletedAtMs:Date.now(),stages:stageTimes,tesseractMs};ui.selectedCandidateId=event.analysis.candidates[0]?.id||null;ui.difficultQuestionIndex=0;ui.activeReviewGroupId=null;ui.activeQuestionId=null;audit(event,"ASSISTED_DETECTION_COMPLETED",event.analysis.diagnostics);touchEvent(event);render();
+      event.analysis.timings={importedAtMs:event.background?.importedAtMs??null,analysisStartedAtMs,analysisCompletedAtMs:Date.now(),stages:stageTimes,tesseractMs,prefetch:prefetchUse};ui.selectedCandidateId=event.analysis.candidates[0]?.id||null;ui.difficultQuestionIndex=0;ui.activeReviewGroupId=null;ui.activeQuestionId=null;audit(event,"ASSISTED_DETECTION_COMPLETED",event.analysis.diagnostics);touchEvent(event);render();
     }catch(error){
       event.analysis=priorAnalysis;ui.analysisAbort=null;
       if(error?.analysisStopped||abort.signal.aborted){
+        prefetchStoppedSrc=event.background?.src||null;
         ui.analysisBusy=false;ui.analysisStage=t("analysis.stage.cancelled");render();toast(t("detect.cancelled"),"info",5000);
         return;
       }
@@ -5099,9 +5152,16 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     // recovery screen is announced in the right language too.
     const lang=ui.lang==="en"?"en":"tr";
     if(document.documentElement.lang!==lang)document.documentElement.lang=lang;
-    try{return renderScreen();}
+    try{const out=renderScreen();schedulePlanTextPrefetch();return out;}
     catch(error){renderFailure(error);}
   };
+  // After the frame that shows the plan, never inside it.
+  function schedulePlanTextPrefetch(){
+    if(ui.screen!=="workspace"||globalThis.MERIT_PREFETCH==="off")return;
+    const event=activeEvent(),src=event?.background?.src;
+    if(!src||event.analysis||planTextPrefetch.src===src||src===prefetchStoppedSrc||!event.background.importedAtMs)return;
+    setTimeout(()=>startPlanTextPrefetch(activeEvent()),0);
+  }
   function renderFailure(error){
     console.error("A screen failed to render; the recovery screen is shown instead.",error);
     app.innerHTML=`<section class="render-failure" data-render-failure role="alert">
