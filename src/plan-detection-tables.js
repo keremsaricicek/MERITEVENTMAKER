@@ -1240,8 +1240,14 @@
     // in shape from its neighbours would be a second bug.
     const familyVenue=ch=>{
       const obb=chairOBB(ch);
+      // What the mark's own filled outline says its shape is. A chair has no
+      // use for it; a member the representation swap promotes to a TABLE does,
+      // because a square table drawn as the plan's one repeated symbol is still
+      // square. Null when the shape pass never measured this component.
+      const own=ch.shape?SHAPE.classifyTableShape(ch.shape):null;
       return{id:uid("candidate"),kind:"venue",type:"chair",...toPercentBox(obb),rotation:obb.rotation,
         confidence:chairEvidence(ch,false),status:"unreviewed",selected:false,chairDetections:[],
+        ownShape:own?{type:own.type,basis:own.basis,confidence:Number(own.shapeConfidence.toFixed(2))}:null,
         // Which vocabulary this mark belongs to, carried onto the object so
         // the swap can tell a symbol of the plan's one family from a member
         // of a second, separately admitted seat family.

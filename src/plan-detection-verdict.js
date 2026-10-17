@@ -191,8 +191,10 @@
       });
       const otherPolarity=familyFromTableSources
         .map(comp=>{const o=comp.shape?.obb||{cx:comp.x+comp.w/2,cy:comp.y+comp.h/2,w:comp.w,h:comp.h,rotation:comp.pcaRotation||0};
+          const sh=comp.shape&&globalThis.MeritPlanShape?globalThis.MeritPlanShape.classifyTableShape(comp.shape):null;
           return{id:uid("candidate"),kind:"venue",type:"chair",...toPercentBox(o),rotation:o.rotation,
             confidence:.5,status:"unreviewed",selected:false,chairDetections:[],
+            ownShape:sh?{type:sh.type,basis:sh.basis,confidence:Number(sh.shapeConfidence.toFixed(2))}:null,
             evidence:{geometry:Number(Math.min(.95,comp.fill??.5).toFixed(2)),chairs:1,
               repetition:chairs.length,source:comp.source||"tone",unassociated:true}};})
         .filter(c=>!overlapsExisting(c));
@@ -200,7 +202,15 @@
         fromTextRun:familyLostToTextRun.filter(exitedPrimary).length,otherPolarity:otherPolarity.length};
       const promoted=[...symbolVenues,...restored,...otherPolarity].map(c=>{
         c.kind="table";
-        c.type="round";
+        // The member's own outline decides its shape. This was "round" for
+        // every member, which is right for ORNEK's printed discs and wrong for
+        // a plan whose one repeated symbol is a square table: measured on the
+        // bold-black and pastel-arch relation scenes, 126 of 126 squares came
+        // back round. A member the shape pass never measured keeps the old
+        // default, and says that is what it is.
+        const own=c.ownShape;
+        if(own&&own.type!=="round"){c.type=own.type;c.typeBasis="family-member-own-shape:"+own.basis;}
+        else{c.type="round";c.typeBasis=own?"family-member-own-shape:"+own.basis:"family-default-round";}
         c.selected=true;
         c.chairDetections=[];
         // No seat count is asserted. The drawing shows no seats to count,
@@ -244,6 +254,9 @@
         drawnSeatFamilies:[...new Set(drawnSeatVenues.map(v=>v.seatFamily)
           .concat(keptTables.flatMap(c=>(c.seatFamilies||[]).filter(f=>!isPrimaryFamily(f)))))]};
     }
+    // The own-shape reading served the swap and nothing after it: dropped from
+    // every object so it never becomes a stored field nobody reads.
+    for(const o of [...chairVenues,...candidates,...venues])if(o&&"ownShape" in o)delete o.ownShape;
     return { representation, representationSwap, familyRestoredBySwap, venues };
   }
 

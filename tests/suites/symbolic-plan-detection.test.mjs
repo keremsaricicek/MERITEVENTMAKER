@@ -117,6 +117,7 @@ export default async function run({ page, checks, baseUrl }) {
       seatsClaimed: tables.reduce((n, c) => n + (c.chairDetections || []).length, 0),
       allSeatsUnknown: tables.every((c) => c.seatsUnknown === true),
       allInFamily: tables.every((c) => c.symbolFamily === true),
+      notRound: tables.filter((c) => c.type !== "round").length,
     };
   });
 
@@ -169,4 +170,7 @@ export default async function run({ page, checks, baseUrl }) {
     "every table reports its seat count as unknown rather than as zero");
   checks.ok(out.allInFamily,
     "every table carries its family membership, so later stages can see the basis");
+  // The promoted members are typed from their own outline since 2026-10-17
+  // (symbolic-plan-shape covers squares); a disc must still read as round.
+  checks.equal(out.notRound, 0, "every ring and disc symbol is typed round");
 }

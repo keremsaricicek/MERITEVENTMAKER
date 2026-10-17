@@ -1,172 +1,172 @@
 {
-  "recordedAt": "2026-10-10T11:37:19.100Z",
+  "recordedAt": "2026-10-17T10:13:26.904Z",
   "plans": {
     "adversarial-architecture": {
-      "hash": "ed7bd0cbd7901274",
+      "hash": "ce8285a65c681644",
       "candidates": 16,
-      "bytes": 173837,
+      "bytes": 174428,
       "pageErrors": 0
     },
     "adversarial-bistro": {
-      "hash": "7747c56845b50d21",
+      "hash": "c0cbf521c7412ce5",
       "candidates": 23,
-      "bytes": 183114,
+      "bytes": 183916,
       "pageErrors": 0
     },
     "adversarial-dense": {
-      "hash": "4a3bdbaa1a22881f",
+      "hash": "ccbb998e21d57607",
       "candidates": 24,
-      "bytes": 211043,
+      "bytes": 212139,
       "pageErrors": 0
     },
     "adversarial-text": {
-      "hash": "14c18f63bf95284d",
+      "hash": "ea99980c0269ee46",
       "candidates": 12,
-      "bytes": 152930,
+      "bytes": 153774,
       "pageErrors": 0
     },
     "merit-real-venue": {
-      "hash": "babe315fadd0ae46",
+      "hash": "2f65d562fb5e9ff4",
       "candidates": 65,
-      "bytes": 461903,
+      "bytes": 462558,
       "pageErrors": 0
     },
     "ornek-symbolic": {
-      "hash": "129246f2f442e243",
-      "candidates": 183,
-      "bytes": 1094593,
+      "hash": "992c452c9da4cd28",
+      "candidates": 186,
+      "bytes": 1119293,
       "pageErrors": 0
     },
     "adversarial/a1-chair-under-table": {
-      "hash": "7ce16e5af72f00ed",
+      "hash": "c87705b2e966efe0",
       "candidates": 24,
-      "bytes": 161164,
+      "bytes": 161923,
       "pageErrors": 0
     },
     "adversarial/a2-mixed-families": {
-      "hash": "08f7d23e47573a66",
+      "hash": "7a735d102685be8f",
       "candidates": 47,
-      "bytes": 232756,
+      "bytes": 233517,
       "pageErrors": 0
     },
     "adversarial/a3-no-anchors": {
-      "hash": "e2b55c517e39537e",
+      "hash": "17f003c396c0bc6a",
       "candidates": 40,
-      "bytes": 479213,
+      "bytes": 479805,
       "pageErrors": 0
     },
     "adversarial/a4-multi-room": {
-      "hash": "f93106d27ebc17b4",
+      "hash": "2f0200de8a53b9f3",
       "candidates": 57,
-      "bytes": 351765,
+      "bytes": 352484,
       "pageErrors": 0
     },
     "adversarial/a5-architecture-only": {
-      "hash": "4ae365f7ffa58863",
+      "hash": "0d4333628e9e4ed9",
       "candidates": 0,
-      "bytes": 8581,
+      "bytes": 9171,
       "pageErrors": 0
     },
     "adversarial/a6-architectural-confusion": {
-      "hash": "fe73da28a954a7fb",
+      "hash": "a17c812fe9a3ae20",
       "candidates": 64,
-      "bytes": 313714,
+      "bytes": 314831,
       "pageErrors": 0
     },
     "adversarial/a7-dense-overlap": {
-      "hash": "535a8d25ceb315a8",
+      "hash": "4e8562ebbdb8cfa9",
       "candidates": 38,
-      "bytes": 196728,
+      "bytes": 197572,
       "pageErrors": 0
     },
     "adversarial/a8-large-venue": {
-      "hash": "059d0f9c95941777",
+      "hash": "ec78826480bc23fd",
       "candidates": 289,
-      "bytes": 1690525,
+      "bytes": 1691118,
       "pageErrors": 0
     },
     "adversarial/a9-mixed-representation": {
-      "hash": "6d3226a823fab486",
+      "hash": "0a082e56ff0c2935",
       "candidates": 96,
-      "bytes": 540090,
+      "bytes": 544658,
       "pageErrors": 0
     },
     "robustness/merit-real-blur": {
-      "hash": "81b91bb60a8d0cce",
+      "hash": "ff690ca0783c1ab7",
       "candidates": 103,
-      "bytes": 552521,
+      "bytes": 553580,
       "pageErrors": 0
     },
     "robustness/merit-real-bright-down": {
-      "hash": "9794690ce8f3f635",
-      "candidates": 78,
-      "bytes": 411549,
+      "hash": "b194d35ae0438f42",
+      "candidates": 80,
+      "bytes": 422635,
       "pageErrors": 0
     },
     "robustness/merit-real-bright-up": {
-      "hash": "bdc58b62f15b1b24",
-      "candidates": 136,
-      "bytes": 700415,
+      "hash": "c6e9a432462e8aad",
+      "candidates": 137,
+      "bytes": 709635,
       "pageErrors": 0
     },
     "robustness/merit-real-contrast-high": {
-      "hash": "8667c39e63a05fd5",
+      "hash": "0b7a67fb4f328000",
       "candidates": 154,
-      "bytes": 766700,
+      "bytes": 768118,
       "pageErrors": 0
     },
     "robustness/merit-real-contrast-low": {
-      "hash": "34ab8f8db35ae863",
+      "hash": "e02956dd305f29bb",
       "candidates": 98,
-      "bytes": 573228,
+      "bytes": 573845,
       "pageErrors": 0
     },
     "robustness/merit-real-crop-pad": {
-      "hash": "ae0239fda6ce4a5d",
+      "hash": "23bbbe6481edd7ea",
       "candidates": 80,
-      "bytes": 516416,
+      "bytes": 517029,
       "pageErrors": 0
     },
     "robustness/merit-real-downscale-70": {
-      "hash": "11f409872cae1074",
+      "hash": "065cba7279df76ae",
       "candidates": 91,
-      "bytes": 665794,
+      "bytes": 666419,
       "pageErrors": 0
     },
     "robustness/merit-real-grayscale": {
-      "hash": "07b7aa3e068bcb13",
+      "hash": "0a5d8fce65e648ba",
       "candidates": 101,
-      "bytes": 551680,
+      "bytes": 552362,
       "pageErrors": 0
     },
     "robustness/merit-real-hue-shift": {
-      "hash": "a2383e3340b55d1e",
-      "candidates": 163,
-      "bytes": 796663,
+      "hash": "c2b4b9017fc42828",
+      "candidates": 164,
+      "bytes": 802899,
       "pageErrors": 0
     },
     "robustness/merit-real-lowres-roundtrip": {
-      "hash": "f4bafba90c396212",
+      "hash": "001df2dccb7e2157",
       "candidates": 71,
-      "bytes": 343345,
+      "bytes": 344086,
       "pageErrors": 0
     },
     "robustness/merit-real-noise": {
-      "hash": "740e67ab6f4af5da",
+      "hash": "76037fc0c6ba8ef1",
       "candidates": 58,
-      "bytes": 453348,
+      "bytes": 454088,
       "pageErrors": 0
     },
     "robustness/merit-real-rotate-2": {
-      "hash": "fd1cff4c7701bb18",
+      "hash": "2a16a8c4c65c6191",
       "candidates": 94,
-      "bytes": 586934,
+      "bytes": 587614,
       "pageErrors": 0
     },
     "robustness/merit-real-rotate-minus-3": {
-      "hash": "cbc2b93ca4b6de99",
-      "candidates": 91,
-      "bytes": 517829,
+      "hash": "fefab74341e07ed8",
+      "candidates": 92,
+      "bytes": 524399,
       "pageErrors": 0
     }
   }

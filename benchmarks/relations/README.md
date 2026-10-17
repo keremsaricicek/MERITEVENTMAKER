@@ -103,3 +103,39 @@ What the end-to-end number still loses, by cause:
 Not measured here: sofas, benches and banquettes beside a pushed-together row
 (a seat of the unit only when its cushions are divided). The generator draws
 them on the level plans, but this scorer reads tables only.
+
+## 2026-10-17 — the squares typed round, fixed at their cause
+
+`node benchmarks/detection/diagnose-types.mjs FILES` (new) runs the real app and
+reports, for every annotated table, the type it got and the evidence that
+decided it. On the bold-black and pastel-arch scenes all 195 mistyped squares
+had one basis: *member of the plan's single uniform object family, on a drawing
+that shows no seating*. Those drawings DO show seating — solid black squares and
+outlined half-discs — but the chair-first path does not find either kind (0 of
+169 chairs on `rel-bold-black-7000032`), takes the table cells for the plan's one
+repeated symbol, and the representation verdict calls the sheet SYMBOLIC. The
+promotion then typed every member `round` unconditionally.
+
+**Change** (`src/plan-detection-verdict.js`, `src/plan-detection-tables.js`): a
+promoted member is typed from its own filled outline
+(`MeritPlanShape.classifyTableShape`, the reading every other table gets), with
+`typeBasis` saying so; a member the shape pass never measured keeps the old
+`round` and says `family-default-round`. The intermediate reading is removed
+before the analysis is stored. Suite `symbolic-plan-shape` (mutation-checked:
+reverting the verdict turns it red, 36 squares → round); `symbolic-plan-detection`
+now also asserts ORNEK-style rings stay round.
+
+**Effect.** On the 28 regression, adversarial and robustness plans the analysis
+is identical to `d66984a` apart from ids, timings and the new `typeBasis` field
+(full dumps compared). Relation scenes, dev set (used during development, so this
+is development evidence, not blind):
+
+| dev (42 plans) | units exact | exact where every member was found | real over-merge | close-but-separate merged |
+|---|--:|--:|--:|--:|
+| 2026-10-11 | 389 / 476 (0.817) | 0.863 | 0 | 0 / 646 |
+| 2026-10-17 | **422 / 476 (0.887)** | **0.936** | 0 | 0 / 646 |
+
+Still open, and NOT fixed by this: on those two families the drawn chairs are not
+found at all (solid squares, half-discs), so the verdict is wrong even where the
+type is now right; a member the detector did not find (25 units); a duplicate or
+fragment joined into a right unit (19).
