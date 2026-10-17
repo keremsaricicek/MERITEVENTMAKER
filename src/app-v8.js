@@ -868,6 +868,8 @@
         return t("audit.teachLessonKept");
       case"TEACH_AREA_LESSON_FORGOTTEN":
         return t("audit.teachLessonForgotten");
+      case"TEACH_AREA_LESSON_RESTORED":
+        return t("audit.teachLessonRestored");
       case"ASSISTED_DETECTION_COMPLETED":
         return t("audit.detectionCompleted");
       default:
@@ -3555,8 +3557,15 @@
     saveState();
     audit(event,auditAction,{scope:r.lesson.scope,...auditDetail(r.lesson),
       text:globalThis.MeritTeachArea.describe(r.lesson)});
-    toast(toastText(r.lesson),"success",6000);
     applyTeachArea(event);recomputePlanIntelligence(event);touchEvent(event);render();
+    // Undo is forgetting it at once, through the same writer as Forget — the
+    // object gets the detector's own answer back, with nothing left claiming
+    // a person wrote it.
+    toastAction(toastText(r.lesson),t("teachArea.undo"),()=>{
+      const taught=(event.analysis?.candidates||[]).find(x=>x.taughtFrom?.lessonId===r.lesson.id);
+      if(taught)forgetLesson(event,taught);
+      else if(canMutate(event,"undo a lesson")){state.teachings=(state.teachings||[]).filter(l=>l.id!==r.lesson.id);saveState();audit(event,"TEACH_AREA_LESSON_FORGOTTEN",{lessonId:r.lesson.id});render();}
+    },"success",8000);
   }
   function teachTableNumber(event,c,value,scope){
     if(!globalThis.MeritTeachArea||!c)return;
@@ -3608,7 +3617,7 @@
   function forgetLesson(event,c){
     if(!canMutate(event,"forget a lesson"))return;
     const id=c?.taughtFrom?.lessonId;if(!id)return;
-    const scope=c.taughtFrom.scope;
+    const scope=c.taughtFrom.scope,lesson=(state.teachings||[]).find(l=>l.id===id)||null;
     state.teachings=(state.teachings||[]).filter(l=>l.id!==id);
     // The detector's own answer back, through the same field writer as every
     // review decision (MeritReviewDecisions "forgetLesson").
@@ -3617,15 +3626,28 @@
     else{delete c.taughtFrom;delete c.typeBasis;}
     saveState();
     audit(event,"TEACH_AREA_LESSON_FORGOTTEN",{lessonId:id});
-    toast(t("teachArea.forgotten",{scope:t("teachArea.scope."+scope)}),"success",5000);
     applyTeachArea(event);recomputePlanIntelligence(event);touchEvent(event);render();
+    // Undo puts back the SAME stored lesson — its id, scope and the object it
+    // was taught on — and lets the Teach Area apply it as it applies any note.
+    if(lesson)toastAction(t("teachArea.forgotten",{scope:t("teachArea.scope."+scope)}),t("teachArea.undo"),()=>restoreLesson(event,lesson),"success",8000);
+    else toast(t("teachArea.forgotten",{scope:t("teachArea.scope."+scope)}),"success",5000);
+  }
+  function restoreLesson(event,lesson){
+    if(!canMutate(event,"restore a lesson"))return;
+    state.teachings ||= [];
+    if(state.teachings.some(l=>l.id===lesson.id))return;
+    state.teachings.push(lesson);
+    saveState();
+    audit(event,"TEACH_AREA_LESSON_RESTORED",{lessonId:lesson.id,scope:lesson.scope});
+    applyTeachArea(event);recomputePlanIntelligence(event);touchEvent(event);render();
+    toast(t("teachArea.restored",{scope:t("teachArea.scope."+lesson.scope)}),"success",5000);
   }
   // Exposed for the regression suite. The engine (src/plan-teach-area.js) can be
   // tested on its own, but the two decisions that matter most live here: what
   // "where am I" means for the open drawing, and what applying a lesson does to
   // a candidate. Driving them directly is how the round trip — teach it, throw
   // the answer away, get it back — is checked without a 30-second detection run.
-  globalThis.MeritTeachAreaWiring={teachWhere,applyTeachArea,teachSelectedObject,forgetLesson};
+  globalThis.MeritTeachAreaWiring={teachWhere,applyTeachArea,teachSelectedObject,forgetLesson,restoreLesson};
   // Exposed for the regression suite. This rule silently deleted 117 of
   // ORNEK's 132 tables and only did so when OCR was running, which is a
   // combination no benchmark in this repo exercises — the sandbox has no

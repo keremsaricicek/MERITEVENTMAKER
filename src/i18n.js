@@ -158,6 +158,8 @@
     "teachArea.appliedHere": { en: "From a note you wrote", tr: "Yazdığınız bir nottan" },
     "teachArea.forget": { en: "Forget", tr: "Unut" },
     "teachArea.forgotten": { en: "Note forgotten — {scope}", tr: "Not unutuldu — {scope}" },
+    "teachArea.undo": { en: "Undo", tr: "Geri al" },
+    "teachArea.restored": { en: "Note back — {scope}", tr: "Not geri alındı — {scope}" },
     "teachArea.chip.applied": { en: "{n} remembered", tr: "{n} hatırlanan" },
     "teachArea.chip.pending": { en: "{n} to confirm", tr: "{n} onay bekliyor" },
     "teachArea.chipTitle": { en: "Notes you wrote, applied to this plan. Nothing was trained.", tr: "Yazdığınız notlar bu plana uygulandı. Hiçbir şey eğitilmedi." },
@@ -1654,6 +1656,7 @@
     "audit.teachNumberConfirmed": { en: "A table number was confirmed: {value}", tr: "Bir masa numarası onaylandı: {value}" },
     "audit.teachLessonKept": { en: "A Teach Area lesson was kept", tr: "Bir Öğret alanı notu tutuldu" },
     "audit.teachLessonForgotten": { en: "A Teach Area lesson was forgotten", tr: "Bir Öğret alanı notu unutuldu" },
+    "audit.teachLessonRestored": { en: "A forgotten Teach Area lesson was put back", tr: "Unutulan bir Öğret alanı notu geri alındı" },
     "audit.detectionCompleted": { en: "Assisted Detection finished analysing the plan", tr: "Yardımcı Tespit, planı analiz etmeyi tamamladı" },
 
     "replay.title": { en: "Post-event replay", tr: "Etkinlik sonrası tekrar" },
