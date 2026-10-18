@@ -68,12 +68,31 @@ def class_of(o):
     return None
 
 
+def label_box(o, true_shape=False):
+    """The box a label teaches. Synthetic labels store a piece's OWN length and
+    depth with its rotation (synth.py, synth_levels.py, synth_relations.py);
+    until E10 those were taught as an axis-aligned box, so a bench turned 90
+    degrees was taught transposed and one at 30 degrees was taught at its own
+    length x depth (QA audit 2026-10-18, F1). With `true_shape` the box is the
+    ENCLOSING box of the rotated corners -- what the decoder, E3b, fusion and
+    the evaluator all assume -- and the piece's own axis is kept for the
+    oriented target. Real annotations already store the enclosing box and are
+    never passed through this."""
+    cx, cy, w, h = float(o["cx"]), float(o["cy"]), float(o["w"]), float(o["h"])
+    deg = float(o.get("rotation") or 0.0)
+    if not true_shape or deg % 180 == 0:
+        return (cx, cy, w, h), (math.cos(math.radians(deg)), math.sin(math.radians(deg)), w, h)
+    t = math.radians(deg)
+    c, s_ = abs(math.cos(t)), abs(math.sin(t))
+    return (cx, cy, w * c + h * s_, w * s_ + h * c), (math.cos(t), math.sin(t), w, h)
+
+
 class PlanSample:
     """One plan: its pixels (grey), its labelled objects, and which classes its
     annotation is exhaustive for. A class the annotation does not cover is
     masked out of the loss rather than taught as background."""
 
-    def __init__(self, name, ann_path, img_path, annotated, targets=None):
+    def __init__(self, name, ann_path, img_path, annotated, targets=None, true_shape=False):
         self.name = name
         a = json.load(open(ann_path))
         self.ann = a
@@ -81,6 +100,8 @@ class PlanSample:
         self.W, self.H = im.size
         self.img = np.asarray(im, dtype=np.uint8)
         self.objs = []
+        # The piece's own axis and size, aligned with self.objs (E10).
+        self.shape = []
         # Boxes taught as NEITHER an object nor background: objects nobody has
         # verified (an exported plan's unreviewed candidates, a teacher's
         # suggestion nobody accepted). Their k is -1.
@@ -89,7 +110,7 @@ class PlanSample:
             k = class_of(o)
             if k is None or not np.isfinite(o.get("cx", float("nan"))):
                 continue
-            box = (float(o["cx"]), float(o["cy"]), float(o["w"]), float(o["h"]))
+            box, own = label_box(o, true_shape)
             # Generation 3 marks what a person could not see (cut by the sheet's
             # edge, under glare, a legend's sample symbol): neither taught nor
             # counted against.
@@ -104,6 +125,7 @@ class PlanSample:
                     self.ignore.append((-1,) + box)
                 continue
             self.objs.append((k,) + box)
+            self.shape.append(own)
         self.annotated = annotated  # list of K bools
         tables = [min(w, h) for k, cx, cy, w, h in self.objs if k in (0, 1)]
         self.ref = float(np.median(tables)) if tables else 40.0
@@ -142,7 +164,7 @@ def load_dataset(dirs, with_confirm=False):
     return out
 
 
-def load_synthetic(d, families=None, exclude=None, limit=None):
+def load_synthetic(d, families=None, exclude=None, limit=None, true_shape=False):
     out = []
     # generated plans: synth*.py (syn-), relation scenes (rel-) and furniture
     # scenes (seat-) — a directory only ever holds one kind
@@ -153,7 +175,7 @@ def load_synthetic(d, families=None, exclude=None, limit=None):
             continue
         if exclude is not None and fi in exclude:
             continue
-        out.append(PlanSample(a["planId"], f, os.path.join(d, a["source"]["file"]), [True] * K))
+        out.append(PlanSample(a["planId"], f, os.path.join(d, a["source"]["file"]), [True] * K, true_shape=true_shape))
         if limit and len(out) >= limit:
             break
     return out
@@ -170,7 +192,22 @@ def gaussian(heat, cx, cy, sigma):
     heat[y0:y1, x0:x1] = np.maximum(heat[y0:y1, x0:x1], g)
 
 
-def sample_crop(p, rng, crop=CROP, ignore_cut=False):
+def gaussian_oriented(heat, cx, cy, s_along, s_across, ux, uy):
+    """E10: a Gaussian stretched along a piece's own axis (ux, uy), for the
+    seating classes. Centred on the integer cell, so the peak is exactly 1."""
+    h, w = heat.shape
+    r = int(3 * max(s_along, s_across)) + 1
+    x0, x1, y0, y1 = max(0, int(cx) - r), min(w, int(cx) + r + 1), max(0, int(cy) - r), min(h, int(cy) + r + 1)
+    if x0 >= x1 or y0 >= y1:
+        return
+    ys, xs = np.mgrid[y0:y1, x0:x1]
+    dx, dy = xs - cx, ys - cy
+    a, c = dx * ux + dy * uy, -dx * uy + dy * ux
+    g = np.exp(-(a * a / (2 * s_along * s_along) + c * c / (2 * s_across * s_across)))
+    heat[y0:y1, x0:x1] = np.maximum(heat[y0:y1, x0:x1], g)
+
+
+def sample_crop(p, rng, crop=CROP, ignore_cut=False, oriented=False):
     # scale so the plan's typical table lands between 18 and 70 px
     target = rng.uniform(18, 70)
     f = target / p.ref
@@ -192,16 +229,25 @@ def sample_crop(p, rng, crop=CROP, ignore_cut=False):
         a = np.clip((a - 0.5) * rng.uniform(0.6, 1.3) + 0.5 + rng.uniform(-0.15, 0.1), 0, 1)
     if rng.random() < 0.3:
         a = np.clip(a + np.random.default_rng(rng.randint(0, 1 << 30)).normal(0, rng.uniform(0.01, 0.06), a.shape), 0, 1)
+    # each object carries its own axis (ux, uy) and own length/depth in crop
+    # pixels beside its box, so a quarter turn or a flip turns the axis too
+    shapes = list(getattr(p, "shape", [])) + [None] * len(getattr(p, "ignore", []))
+    if len(shapes) != len(p.objs) + len(getattr(p, "ignore", [])):
+        shapes = [None] * (len(p.objs) + len(getattr(p, "ignore", [])))
     objs = [(k, (cx - ox) * sx, (cy - oy) * sy, w * sx, h * sy) for k, cx, cy, w, h in p.objs + getattr(p, "ignore", [])]
+    axes = [(sh[0], sh[1], sh[2] * sx, sh[3] * sy) if sh else None for sh in shapes]
     # geometric augmentation: quarter turns and flips
     rot = rng.randint(0, 3)
     flip = rng.random() < 0.5
     for _ in range(rot):
         a = np.rot90(a)  # counter-clockwise: (x, y) -> (y, crop - x)
         objs = [(k, cy, crop - cx, h, w) for k, cx, cy, w, h in objs]
+        axes = [(ax[1], -ax[0], ax[2], ax[3]) if ax else None for ax in axes]
     if flip:
         a = a[:, ::-1]
         objs = [(k, crop - cx, cy, w, h) for k, cx, cy, w, h in objs]
+        axes = [(-ax[0], ax[1], ax[2], ax[3]) if ax else None for ax in axes]
+    axis_of = {i: ax for i, ax in enumerate(axes)}
     a = np.ascontiguousarray(a, dtype=np.float32)
     out = crop // STRIDE
     heat = np.zeros((K, out, out), np.float32)
@@ -228,7 +274,7 @@ def sample_crop(p, rng, crop=CROP, ignore_cut=False):
         y0, y1 = max(0, int((cy - h / 2) / STRIDE)), min(out, int(math.ceil((cy + h / 2) / STRIDE)) + 1)
         if x0 < x1 and y0 < y1:
             heat[:, y0:y1, x0:x1] = np.maximum(heat[:, y0:y1, x0:x1], 0.999)
-    for k, cx, cy, w, h in objs:
+    for i, (k, cx, cy, w, h) in enumerate(objs):
         if k == -1 or not (0 <= cx < crop and 0 <= cy < crop):
             continue
         gx, gy = cx / STRIDE, cy / STRIDE
@@ -237,7 +283,14 @@ def sample_crop(p, rng, crop=CROP, ignore_cut=False):
         # Centred on the integer cell, so the peak is exactly 1 there: the
         # focal loss counts a cell as positive only where the target IS 1, and
         # the offset head carries the sub-cell remainder.
-        gaussian(heat[k], ix, iy, sigma)
+        ax = axis_of.get(i)
+        if oriented and ax and K > 4 and k >= 4:
+            # E10 (QA F7): across the piece sigma is today's rule on its own
+            # depth; along it, the same rule on its own length
+            ux, uy, L, D = ax
+            gaussian_oriented(heat[k], ix, iy, max(0.8, max(L, D) / STRIDE / 5), max(0.8, min(L, D) / STRIDE / 5), ux, uy)
+        else:
+            gaussian(heat[k], ix, iy, sigma)
         size[:, iy, ix] = (math.log(max(w, 2) / STRIDE), math.log(max(h, 2) / STRIDE))
         off[:, iy, ix] = (gx - ix, gy - iy)
         mask[iy, ix] = 1
@@ -478,7 +531,7 @@ def train(args):
     torch.set_num_threads(args.threads)
     # one directory, or several separated by commas (generation 2 and 3 together)
     excl = set(int(x) for x in args.exclude_families.split(",") if x != "")
-    syn = [s for d in args.synthetic.split(",") if d for s in load_synthetic(d, exclude=excl)]
+    syn = [s for d in args.synthetic.split(",") if d for s in load_synthetic(d, exclude=excl, true_shape=getattr(args, "true_shape", False))]
     real = load_real([x for x in args.real.split(",") if x])
     if args.dataset:
         real += load_dataset([x for x in args.dataset.split(",") if x], with_confirm=args.with_confirm)
@@ -556,7 +609,7 @@ def train(args):
         for _ in range(args.batch):
             pool = real if (real and rng.random() < args.real_frac) else syn
             pick = rng.choices(syn, weights=syn_w)[0] if (syn_w and pool is syn) else rng.choice(pool)
-            batch.append(sample_crop(pick, rng, ignore_cut=args.ignore_cut))
+            batch.append(sample_crop(pick, rng, ignore_cut=args.ignore_cut, oriented=getattr(args, "true_shape", False)))
         x = torch.from_numpy(np.stack([b[0] for b in batch]))
         heat = torch.from_numpy(np.stack([b[1] for b in batch]))
         size = torch.from_numpy(np.stack([b[2] for b in batch]))
@@ -656,6 +709,9 @@ def calibrate(args):
     torch.set_num_threads(args.threads)
     model, ck = load_model(args.model)
     plans = load_synthetic(args.plans, limit=args.limit)
+    fixed = {CLASSES.index(k): float(v) for k, v in (x.split("=") for x in args.fixed.split(",") if x)} if getattr(args, "fixed", "") else {}
+    if fixed:
+        return calibrate_app_order(args, model, plans, fixed)
     per = {k: [] for k in range(K)}  # (score, is_tp) per class, pooled over plans
     totals = {k: 0 for k in range(K)}
     for p in plans:
@@ -703,6 +759,77 @@ def calibrate(args):
     json.dump(res, open(os.path.join(os.path.dirname(args.model), "thresholds.json"), "w"), indent=1)
 
 
+def calibrate_app_order(args, model, plans, fixed):
+    """Calibration in the order the app and `evaluate` decode: per-class
+    thresholds FIRST, then suppression (QA audit 2026-10-18, F4). The old
+    order suppressed at 0.1 and thresholded after, so a base-class peak below
+    its own 0.5 threshold still suppressed a seating peak beside it (the
+    table/seating conflict) -- a peak the app never sees. Measured on 40
+    training scenes: sofa precision 0.971 in that order, 0.912 in the app's.
+
+    `fixed` classes keep their threshold (the base classes at 0.5). The others
+    are swept together on a grid, then each again with the rest at their first
+    choice; the lowest threshold whose precision reaches the target wins."""
+    raw = []
+    for p in plans:
+        dets = detect_plan(model, p, args.long_side, 0.1, suppress=False)
+        diag = math.hypot(p.W, p.H)
+        raw.append((p, dets, (p.ann.get("matchToleranceP") or 3.0) / 100 * diag))
+    free = [k for k in range(K) if k not in fixed]
+    grid = [round(0.1 + 0.02 * i, 2) for i in range(43)]
+
+    def counts(thr):
+        tp = {k: 0 for k in free}; fp = {k: 0 for k in free}; tot = {k: 0 for k in free}
+        for p, dets, tol in raw:
+            kept = suppress_close([d for d in dets if d[5] >= thr.get(d[0], 0.5)])
+            for k in free:
+                gt = [(cx, cy) for kk, cx, cy, w, h in p.objs if kk == k]
+                tot[k] += len(gt)
+                used = set()
+                for d in sorted([d for d in kept if d[0] == k], key=lambda d: -d[5]):
+                    best, bd = -1, tol
+                    for gi, (gx, gy) in enumerate(gt):
+                        if gi not in used and math.hypot(gx - d[1], gy - d[2]) <= bd:
+                            best, bd = gi, math.hypot(gx - d[1], gy - d[2])
+                    if best >= 0:
+                        used.add(best); tp[k] += 1
+                    else:
+                        fp[k] += 1
+        return tp, fp, tot
+
+    def choose(k, others):
+        best = None
+        for t in grid:
+            tp, fp, tot = counts({**fixed, **others, k: t})
+            prec = tp[k] / (tp[k] + fp[k]) if tp[k] + fp[k] else 0.0
+            rec = tp[k] / tot[k] if tot[k] else 0.0
+            if prec >= args.target_precision:
+                return t, prec, rec, tot[k]
+            if best is None or prec > best[1]:
+                best = (t, prec, rec, tot[k])
+        return best
+
+    first = {}
+    for t in grid:  # the free classes swept together
+        tp, fp, tot = counts({**fixed, **{k: t for k in free}})
+        for k in free:
+            prec = tp[k] / (tp[k] + fp[k]) if tp[k] + fp[k] else 0.0
+            if k not in first and prec >= args.target_precision:
+                first[k] = t
+    for k in free:
+        first.setdefault(k, 0.5)
+    out = {}
+    for k in range(K):
+        if k in fixed:
+            out[CLASSES[k]] = {"threshold": fixed[k], "note": "fixed (not calibrated)"}
+            continue
+        t, prec, rec, n = choose(k, {kk: first[kk] for kk in free if kk != k})
+        out[CLASSES[k]] = {"threshold": t, "valPrecision": round(prec, 3), "valRecall": round(rec, 3), "valObjects": n}
+    res = {"targetPrecision": args.target_precision, "chosenOn": args.plans, "plans": len(plans), "order": "threshold-then-suppress (app order)", "perClass": out}
+    print(json.dumps(res, indent=1))
+    json.dump(res, open(os.path.join(os.path.dirname(args.model), "thresholds.json"), "w"), indent=1)
+
+
 def export(args):
     model, ck = load_model(args.model)
     x = torch.zeros(1, 1, 512, 512)
@@ -736,6 +863,7 @@ def main():
     t.add_argument("--balance-classes", action="store_true", help="E6: with --seat-branch, each seating class's positives weigh equally in the focal loss")
     t.add_argument("--distill", type=float, default=0.0, help="E7: with --seat-branch, the base trains too and its four channels are held to a frozen copy of --init (weight)")
     t.add_argument("--base-lr-scale", type=float, default=0.1, help="E7: the base's learning rate as a share of --lr")
+    t.add_argument("--true-shape", action="store_true", help="E10: a turned synthetic label teaches the ENCLOSING box of its rotated corners (size target, ignore-cut), and sofa/bench/banquette an oriented Gaussian along the piece")
     t.add_argument("--oversample", default="", help='generation-3 levels drawn more often, e.g. "5=2,6=2"')
     t.add_argument("--out", required=True)
     e = sp.add_parser("eval")
@@ -755,6 +883,7 @@ def main():
     c.add_argument("--long-side", type=int, default=LONG_SIDE)
     c.add_argument("--target-precision", type=float, default=0.95)
     c.add_argument("--threads", type=int, default=4)
+    c.add_argument("--fixed", default="", help='classes NOT calibrated, decoded at a fixed threshold in the app order, e.g. "table_round=0.5,table_rect=0.5,chair=0.5,column=0.5"')
     x = sp.add_parser("export")
     x.add_argument("--model", required=True)
     x.add_argument("--onnx", required=True)

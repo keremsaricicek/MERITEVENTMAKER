@@ -439,3 +439,94 @@ half is the model's own peak height (TP median 0.40). The pre-registered E8
 (the base held harder) was conditional on calibration closing the furniture
 part; it does not, so E8 was **not run**, and v2 stays active. The next model
 experiment starts from a decoder that no longer penalises long pieces.
+
+### 2026-10-18 — independent audit, then E10 (written before the run)
+
+`model-qa-specialist` audited the code, the failed runs E4–E9, the labels, the
+splits and the decode, without waiting for a passing candidate. Verdicts: v2
+**SOUND WITH FINDINGS**; the decoder (E3 + E3b) SOUND WITH FINDINGS for v2; any
+seating candidate trained on the current targets **UNSOUND**. It reproduced
+E7 and E9 from the raw files, found no leakage (no shared image or seed across
+train/dev/blind, no real plan in any run) and confirmed the pins. Findings:
+
+- **F1 (HIGH) training ignored `rotation`.** Synthetic labels store a piece's
+  own length × depth and its rotation; the targets used them as an
+  axis-aligned box, so a 90° bench was taught transposed (62 % of benches are
+  turned) while the decoder, E3b, fusion and the evaluator all assume the
+  enclosing box.
+- **F2 (HIGH)** as a result E3b fails on turned pieces: 23 % of turned benches
+  keep ≥ 2 peaks (3 % axis-aligned); turned benches reach the E9 threshold
+  14 % of the time against 59 %.
+- **F3** `--ignore-cut` tested an axis-aligned own-size box (misses 29 % of cut
+  benches), so E6's "cut labels are not why benches stay low" is not established.
+- **F4** `calibrate` suppressed at 0.1 and thresholded after; eval and the app
+  threshold first. Sofa precision 0.971 in calibrate order, 0.912 in the app's.
+- **F5–F12** (medium/low): v2's turned Golden chairs fail IoU for the same
+  reason (the product does not use v2's sizes); family 13 (bold-black) labels
+  divisions nobody can see; the bench target's sigma comes from the short
+  side only; small Python/JS decode differences; dev judged five times — blind
+  stays untouched.
+
+Tooling fixed first (no training): `calibrate --fixed` decodes in the app's
+order; `training/check_targets.py` checks that a 0°, 30° and 90° piece teaches
+its enclosing box and a seating peak streaks along the piece (it fails on
+either fix reverted).
+
+**E10 `v10a` — targets that use each label's true shape.** The only change is
+`--true-shape`: a turned synthetic label teaches the enclosing box of its
+rotated corners (size target and the ignore-cut test), and sofa, bench and
+banquette an oriented Gaussian (across the piece today's sigma from its depth,
+along it the same rule from its length). Tables, chairs and columns keep their
+Gaussian. Everything else is E7's command word for word (data, exclusions,
+seed 1, 3,000 steps, batch 16, lr 2e-3, size-weight 0.5, `--ignore-cut`,
+`--balance-classes`, `--distill 1.0`, `--base-lr-scale 0.1`, init v2, E3b
+decode), so the furniture result is attributable to the targets.
+Comparison row: E9's weights calibrated in the app's order.
+
+Hypotheses, on 40 TRAINING scenes: 0° bench peak median ≥ 0.6 (E7 0.42);
+turned benches reach the threshold within 0.10 of axis-aligned ones (E7 0.14
+vs 0.59); ≥ 2 peaks inside a turned bench ≤ 0.05 (E7 0.23); size loss over the
+last 500 steps ≤ 0.4 (E7 0.87).
+
+**Pass condition (the existing bar, unchanged):** on furniture dev each
+furniture class R ≥ 0.85 and P ≥ 0.9, thresholds from `calibrate --fixed` on
+the first 200 seat/train scenes at precision 0.95 with the base classes at 0.5;
+`compare_candidates` against v2 shows no regression (n ≥ 100, drop > 0.005) on
+val, held-out and generation-2 val at the same thread count; Golden and ORNEK
+keep their table and chair counts with no new false table. Blind is scored once,
+only if it passes. A candidate that passes furniture and regresses the base is
+recorded and NOT activated; the next step is then E8's stronger base hold on
+these targets.
+
+**E10 result (2026-10-18) — furniture PASSES, the base regresses: NOT activated.**
+Training 2,826 s on 3 threads. Furniture dev, thresholds from `calibrate
+--fixed` (app order) on 200 seat/train scenes — sofa 0.24, bench 0.14,
+banquette 0.14, base classes 0.5:
+
+| | E9 weights, app-order calibration | E10 `v10a` |
+|---|---|---|
+| sofa P / R | 0.935 / 0.949 | **0.956 / 0.995** |
+| bench P / R | 0.919 / 0.506 | **0.940 / 1.000** |
+| banquette P / R | 0.906 / 0.578 | **1.000 / 1.000** |
+
+Hypotheses on 40 training scenes: 0° bench peak median 0.785 (≥ 0.6, met);
+turned benches reach 0.5 at 0.87–0.97 against 0.95 axis-aligned (within 0.10,
+met); ≥ 2 peaks inside a turned bench 0.07 (≤ 0.05, **not met**; sofa 0.01,
+banquette 0.04); size loss over the last steps 0.19–0.35 (≤ 0.4, met). The
+size head now predicts the enclosing box at 90° and 30° (log error 0.13–0.22
+against it). The targets were the cause the audit named.
+
+`compare_candidates` against v2 (thr 0.5, 4 threads, E3b), n ≥ 100, drop > 0.005:
+- val, 4: columns P 0.959 → 0.927, R 0.691 → 0.640; bold-black chairs R
+  0.764 → 0.738; office-graphic chairs R 0.948 → 0.941.
+- held-out, 2: columns R 0.748 → 0.690; level-6 tables P 0.973 → 0.966.
+- generation-2 val, 3: columns R 0.855 → 0.778; cad-line tables R 0.901 →
+  0.896; scan-dark tables R 0.906 → 0.896.
+- real: none (Golden tables 44/0/2 against v2's 44/1/2, chairs P 0.920 →
+  0.963, R 0.920 → 0.929; ORNEK 166/0/0 both).
+
+The same base regressions as E7, from the same base settings: distillation at
+1.0 with the base at 0.1 × the rate does not hold columns. As pre-registered,
+v10a is recorded and **not activated**; v2 stays active; blind is not scored.
+The next experiment is E8's stronger base hold (`--distill 3.0
+--base-lr-scale 0.05`) on these targets, nothing else changed.
