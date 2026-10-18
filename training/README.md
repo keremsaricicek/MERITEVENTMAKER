@@ -369,3 +369,42 @@ frozen for four classes.
   changes, `compare_candidates.py` against v2 under the E3 decode reports no
   regression (n ≥ 100, drop > 0.005) on val, held-out and generation-2 val, and
   Golden / ORNEK keep their table and chair counts with no new false table.
+
+**E7 result — FAILS its condition (2026-10-18).** Furniture dev at 0.5: sofa
+P 1.000 / R **0.777** (E6 0.315), bench 0.903 / **0.179** (0.006), banquette
+0.906 / **0.578** (0.157). Letting the base adapt moved all three, which
+confirms E6's reading that frozen four-class features were the limit for sofas
+and banquettes. It also cost the base, and the KL term at 1.0 did not hold it.
+`compare_candidates` against v2 (E3 decode) lists regressions:
+- val, 5: columns P 0.959 → 0.938, R 0.691 → 0.680; level-4 tables R;
+  bold-black chairs R 0.764 → 0.730; office-graphic chairs R 0.948 → 0.932.
+- held-out, 8: chair recall at levels 3–7, level-5/6 tables.
+- generation-2 val, 2: columns R 0.855 → 0.791, cad-line tables.
+On the real set nothing regressed (Golden chairs P 0.920 → 0.955,
+R 0.920 → 0.929).
+
+Measured at the true centres (`heat_at_gt.py`): bench is now the STRONGEST
+class at 132 of 156 bench centres, but its peak sits at a median 0.391 (≥ 0.5:
+13.5 %, ≥ 0.3: 82.7 %). Sofa median 0.634, banquette 0.525. Not packaged.
+Blind splits not scored.
+
+**E7cal — the same weights, seating thresholds calibrated (pre-registered
+2026-10-18, FAILS).** The question: is the bench shortfall only the peak's
+scale? Base classes stayed at 0.5. Sofa, bench and banquette got thresholds
+from `detector.py calibrate` on 200 TRAINING scenes of the furniture split, at
+precision 0.95; never on dev or blind. Calibration picked sofa 0.208, bench
+**0.543**, banquette **0.551**: on its own training scenes a bench reaches
+precision 0.95 only at 0.543, with recall 0.076, because below 0.5 bench peaks
+appear where no bench is. On dev: sofa P 0.876 / R 0.970, bench 1.000 / 0.083,
+banquette 0.925 / 0.446.
+
+So it is not calibration. Benches are told apart from benches, not from what
+looks like them. The E8 that was pre-registered behind this question (the
+same run with the base held harder, `--distill 3.0 --base-lr-scale 0.05`) was
+**not run**: its premise was that calibration closes the furniture part.
+
+What stays true for the product: v2 remains active. The classical pipeline
+already names one bench form directly (a solid bar in the seats' own colour
+standing against a table, `seat-colour-bench`). The R2 relations are measured
+on true boxes (dev 363/363, blind 163/163) and wait for a furniture detector
+that passes.
