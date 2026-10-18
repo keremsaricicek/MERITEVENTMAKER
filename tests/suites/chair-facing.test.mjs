@@ -9,9 +9,17 @@
 //     a family too small to be a family.
 //   THE BOX ANGLE IS NOT A FRONT: an elongated symbol with no backrest line
 //     states nothing however clearly its axis is known.
+//   A CHAIR DRAWN INTO ITS TABLE'S EDGE faces it (D10, 2026-10-18): the
+//     tabletop hides the stencil's front, but the join is drawn — walking
+//     from the chair's centre toward the table's, its ink runs into the
+//     table's drawn edge (an ellipse for a round or bistro table) with no
+//     paper between. That states the facing toward the table's centre,
+//     evidence drawnAgainstTable; a chair with paper between it and the
+//     table, or one inside it, is given nothing.
 //   ON THE GOLDEN PLAN: every facing the product states is one the annotation
-//     agrees with (within 30 degrees), every one carries stencilBackrest as
-//     its evidence, and the old per-chair ink-centroid rule states nothing.
+//     agrees with (within 30 degrees), every one carries the evidence it was
+//     read from (stencilBackrest or drawnAgainstTable), and the old per-chair
+//     ink-centroid rule states nothing.
 //   AND THE DIGITAL PLAN KEEPS IT: Confirm writes each observed facing onto
 //     its chair (drawn the way it was seen), writes facing:null where the
 //     drawing showed no front (drawn with no front mark), gives a person's
@@ -69,6 +77,30 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     out.plank = await run(plank, [0, 90, 0, 90, 0, 90], (f) => (f % 180 === 0 ? [34, 18] : [18, 34]));
     out.pair = await run(inChair, [0, 180], armBox);
     out.pauses = pauses;
+    // A chair drawn AGAINST its table (D10): the chair's ink runs into the
+    // table's drawn edge with no paper between. Table r=40 at (100,100).
+    const TAN = [222, 205, 170], GREY = [140, 140, 140];
+    const sheet = () => raster(220, 220);
+    const disc = (r, cx, cy, rad) => { for (let y = cy - rad - 1; y <= cy + rad + 1; y++) for (let x = cx - rad - 1; x <= cx + rad + 1; x++) {
+      const d = Math.hypot(x - cx, y - cy); if (d <= rad) px(r, x, y, d >= rad - 1.5 ? GREY : TAN); } };
+    const box = (r, x0, y0, x1, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) px(r, x, y, x === x0 || x === x1 || y === y0 || y === y1 ? GREY : TAN); };
+    const table = { cx: 100, cy: 100, w: 80, h: 80, rotation: 0, type: "round" };
+    const A = (r, chair, t = table) => { const f = F.againstFacing(r, chair, t, F.paperLevel(r)); return f ? [f.facingAngle, f.evidence] : null; };
+    const r1 = sheet(); disc(r1, 100, 100, 40);
+    box(r1, 139, 90, 157, 110);                          // east, its ink running into the disc's edge
+    box(r1, 90, 139, 110, 157);                          // south, the same
+    box(r1, 20, 90, 52, 110);                            // west, but 8 px of paper short of the disc
+    const r2 = sheet(); box(r2, 60, 60, 140, 140); box(r2, 140, 140, 160, 160); // a chair at a SQUARE table's corner
+    const r3 = sheet(); disc(r3, 100, 100, 40); box(r3, 140, 140, 160, 160);    // the same chair at a ROUND table
+    out.against = {
+      paper: F.paperLevel(r1),
+      east: A(r1, { cx: 148, cy: 100 }),
+      south: A(r1, { cx: 100, cy: 148 }),
+      gap: A(r1, { cx: 36, cy: 100 }),
+      inside: A(r1, { cx: 110, cy: 100 }),
+      squareCorner: A(r2, { cx: 150, cy: 150 }, { ...table, type: "square" }),
+      roundCorner: A(r3, { cx: 150, cy: 150 }),
+    };
     return out;
   });
   checks.equal(JSON.stringify(synth.arm.stated), JSON.stringify([0, 90, 180, 270, 0, 90, 180, 270]),
@@ -78,6 +110,12 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(synth.pair.stated.every(v => v === null), "two chairs are not a family: nothing is stated", synth.pair.stated);
   checks.ok(["arm", "square", "plank", "pair"].every(k => synth[k].slicedSame) && synth.pauses > 0,
     "the sliced read (a turn for the page between members) gives exactly the answer of the read run straight through", { pauses: synth.pauses });
+  checks.equal(JSON.stringify([synth.against.east, synth.against.south]), JSON.stringify([[180, "drawnAgainstTable"], [270, "drawnAgainstTable"]]),
+    "a chair whose ink runs into its round table's edge faces the table's centre, and says the join is how it is known", synth.against);
+  checks.ok(synth.against.gap === null && synth.against.inside === null && synth.against.paper === 255,
+    "a chair with paper between it and the table, or one inside the table, is given no facing: standing near is not a drawing of the two joined", synth.against);
+  checks.ok(Array.isArray(synth.against.squareCorner) && synth.against.squareCorner[0] === 225 && synth.against.roundCorner === null,
+    "the join is walked to the table's DRAWN edge: the same corner chair touches a square table and stands clear of a round one", synth.against);
 
   // ---- the Golden Plan ------------------------------------------------------------
   const plan = "data:image/png;base64," + fs.readFileSync(path.join(repoRoot, "benchmarks/plans/merit-real-venue-plan.png")).toString("base64");
@@ -100,9 +138,12 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     for (const f of truth.chairFacing) { const o = byId.get(f.chair); const d = Math.hypot(o.cx - c.x, o.cy - c.y); if (d < bd) { bd = d; best = f; } }
     if (!best || bd > 15 || angDiff(best.facingDeg, c.angle) > 30) disagreements.push({ at: [Math.round(c.x), Math.round(c.y)], stated: c.angle, truth: best && best.facingDeg, d: Math.round(bd) });
   }
-  checks.ok(stated.length >= 70, "most of the Golden Plan's armchairs have their facing read off the stencil", stated.length);
+  const fromStencil = stated.filter(c => c.evidence === "stencilBackrest"), joined = stated.filter(c => c.evidence === "drawnAgainstTable");
+  checks.ok(fromStencil.length >= 70, "most of the Golden Plan's armchairs have their facing read off the stencil", fromStencil.length);
+  checks.ok(joined.length >= 25 && stated.length / chairs.length >= 0.8,
+    "the chairs drawn running into their round and bistro tables are stated facing them, and 80 % of all chairs now have a facing", { joined: joined.length, stated: stated.length, chairs: chairs.length });
   checks.equal(disagreements.length, 0, "every stated facing agrees with the annotation within 30 degrees", disagreements.slice(0, 5));
-  checks.ok(stated.every(c => c.evidence === "stencilBackrest"), "and every one says it came from the stencil's backrest");
+  checks.ok(stated.every(c => c.evidence === "stencilBackrest" || c.evidence === "drawnAgainstTable"), "and every one says what it was read from: the stencil's backrest, or the chair drawn into its table's edge");
   checks.ok(chairs.filter(c => !c.known).every(c => c.evidence === "stencilNotRead"), "a chair the stencil reading cannot settle says so, rather than keeping a per-chair guess");
 
   // ---- the facing survives Confirm, a save and a reload --------------------------
@@ -131,7 +172,8 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     };
   });
   const first = await committed();
-  checks.ok(first.known === stated.length && first.drawnAsObserved === first.known && first.knownSources.join() === "stencilBackrest",
+  checks.ok(first.known === stated.length && first.drawnAsObserved === first.known
+    && first.knownSources.slice().sort().join() === [...new Set(stated.map(c => c.evidence))].sort().join(),
     "every facing read off the stencil is kept on the committed chair, drawn the way it was observed, and says where it came from", first);
   checks.ok(first.unknown === first.detected - first.known && first.unknownSources.join() === "notObserved" && first.renderedUnknown === first.unknown,
     "a detected chair whose front was not seen is committed facing:null and drawn with no front mark", first);

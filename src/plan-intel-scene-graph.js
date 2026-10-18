@@ -167,7 +167,9 @@
         if (rel && rel.orientation && rel.orientation.facingKnown)
           push(edge(id, "physicalObject", "faces", t.id, "physicalObject", {
             strength: rel.orientation.facingStrength > 0.5 ? "likely" : "uncertain",
-            supporting: [`the symbol is asymmetric (${rel.orientation.facingEvidence})`,
+            supporting: [rel.orientation.facingEvidence === "drawnAgainstTable"
+              ? "the chair is drawn running into the table's edge (drawnAgainstTable)"
+              : `the symbol is asymmetric (${rel.orientation.facingEvidence})`,
               `facing ${Math.round(rel.orientation.facingAngle)} degrees`],
             humanVerified: false, source: "orientationFromInkMass",
           }));

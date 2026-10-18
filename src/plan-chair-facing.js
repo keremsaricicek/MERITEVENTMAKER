@@ -213,5 +213,53 @@
     return { byId: out, families };
   }
 
-  globalThis.MeritChairFacing = Object.freeze({ readFacing, readFacingSliced, templateFront, ridgeCount });
+  // A chair drawn AGAINST its table (D10, 2026-10-18). At a round or bistro
+  // table the seat runs under the tabletop, so the stencil's front is hidden
+  // and the template above shows no single front — on the Golden Plan all 30
+  // such chairs went unread. What the drawing does show is the join: walking
+  // from the chair's centre straight toward its table's centre, the chair's
+  // ink runs into the table's drawn edge (an ellipse for a round or bistro
+  // table, a turned rectangle otherwise) with no paper in between. Such a
+  // chair faces the table's centre. A chair with paper between it and the
+  // table is given nothing — standing near a table is adjacency, not a
+  // drawing of the two joined. (A first rule asked for the chair's BOX to
+  // overlap the table; measured, it fired on none of the 30, because a
+  // detected chair box covers only the visible part — PREREG in the D10 row
+  // of benchmarks/offline-intelligence/GAP-MATRIX.md.)
+  // The sheet's paper: the 98th percentile of luma sampled every 4 px.
+  function paperLevel(raster) {
+    const { width: W, height: H, data: d } = raster, hist = new Uint32Array(256);
+    let n = 0;
+    for (let y = 0; y < H; y += 4) for (let x = 0; x < W; x += 4) { hist[Math.min(255, Math.round(lum(d, 4 * (y * W + x))))]++; n++; }
+    let acc = 0;
+    for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= 0.98 * n) return v; }
+    return 255;
+  }
+  // chair {cx, cy}, table {cx, cy, w, h, rotation, type}, raster px; paper from paperLevel.
+  function againstFacing(raster, chair, table, paper) {
+    if (!raster || !chair || !table || !(table.w > 0) || !(table.h > 0)) return null;
+    const ta = (table.rotation || 0) * Math.PI / 180, tu = Math.cos(ta), tv = Math.sin(ta);
+    const round = table.type === "round" || table.type === "bistro";
+    const inside = (x, y) => {
+      const dx = x - table.cx, dy = y - table.cy, u = dx * tu + dy * tv, v = -dx * tv + dy * tu;
+      return round ? (u * u) / ((table.w / 2) ** 2) + (v * v) / ((table.h / 2) ** 2) <= 1
+        : Math.abs(u) <= table.w / 2 && Math.abs(v) <= table.h / 2;
+    };
+    if (inside(chair.cx, chair.cy)) return null;
+    const dx = table.cx - chair.cx, dy = table.cy - chair.cy, len = Math.hypot(dx, dy);
+    if (!(len > 0)) return null;
+    const ux = dx / len, uy = dy / len;
+    let edge = null;
+    for (let s = 0; s < len; s += 0.5) if (inside(chair.cx + ux * s, chair.cy + uy * s)) { edge = s; break; }
+    if (edge === null) return null;
+    const { width: W, height: H, data: d } = raster;
+    for (let s = 0; s <= edge + 2; s += 1) {
+      const x = Math.round(chair.cx + ux * s), y = Math.round(chair.cy + uy * s);
+      if (x < 0 || y < 0 || x >= W || y >= H || lum(d, 4 * (y * W + x)) >= paper - 12) return null;
+    }
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    return { facingAngle: Math.round(((angle % 360) + 360) % 360 * 10) / 10, evidence: "drawnAgainstTable" };
+  }
+
+  globalThis.MeritChairFacing = Object.freeze({ againstFacing, paperLevel, readFacing, readFacingSliced, templateFront, ridgeCount });
 })();

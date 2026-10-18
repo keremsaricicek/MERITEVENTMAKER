@@ -3260,24 +3260,30 @@
   async function readChairFacing(event,raster,pause){
     const analysis=event?.analysis,F=globalThis.MeritChairFacing;
     if(!analysis||!F||!raster)return;
-    const W=raster.width,H=raster.height,chairs=[],byId=new Map();
+    const W=raster.width,H=raster.height,chairs=[],byId=new Map(),tableOf=new Map();
     for(const c of analysis.candidates||[]){
       if(c.kind!=="table")continue;
       for(const ch of c.chairDetections||[]){
         chairs.push({id:ch.id,cx:ch.x/100*W,cy:ch.y/100*H,w:ch.w/100*W,h:ch.h/100*H,rotation:ch.rotation||0});
-        byId.set(ch.id,ch);
+        byId.set(ch.id,ch);tableOf.set(ch.id,c);
       }
     }
     // Sliced: on a plan with a hundred armchairs the read is ~0.3 s of work,
     // and the page gets a turn every ~40 ms of it. Same answer (chair-facing).
     const read=pause&&F.readFacingSliced?await F.readFacingSliced(raster,chairs,undefined,pause):F.readFacing(raster,chairs);
+    let againstN=0,paper=null;
     for(const [id,ch] of byId){
       const rel=ch.relation||(ch.relation={}),o=rel.orientation||(rel.orientation={});
       const f=read.byId.get(id);
-      if(f){o.facingKnown=true;o.facingAngle=f.facingAngle;o.facingEvidence=f.evidence;o.facingStencil={family:f.family,map:f.map,margin:f.margin};}
-      else{o.facingKnown=false;o.facingAngle=null;o.facingEvidence="stencilNotRead";delete o.facingStencil;}
+      if(f){o.facingKnown=true;o.facingAngle=f.facingAngle;o.facingEvidence=f.evidence;o.facingStencil={family:f.family,map:f.map,margin:f.margin};continue;}
+      delete o.facingStencil;
+      // not read from the stencil: a chair whose ink runs into its own table's drawn edge faces it (D10)
+      const t=tableOf.get(id),against=t&&F.againstFacing?F.againstFacing(raster,{cx:ch.x/100*W,cy:ch.y/100*H},
+        {cx:(t.x+t.w/2)/100*W,cy:(t.y+t.h/2)/100*H,w:t.w/100*W,h:t.h/100*H,rotation:t.rotation||0,type:t.type},paper??(paper=F.paperLevel(raster))):null;
+      if(against){o.facingKnown=true;o.facingAngle=against.facingAngle;o.facingEvidence=against.evidence;againstN++;}
+      else{o.facingKnown=false;o.facingAngle=null;o.facingEvidence="stencilNotRead";}
     }
-    analysis.diagnostics.chairFacing={chairs:chairs.length,stated:read.byId.size,families:read.families};
+    analysis.diagnostics.chairFacing={chairs:chairs.length,stated:read.byId.size+againstN,fromStencil:read.byId.size,drawnAgainstTable:againstN,families:read.families};
   }
   // ---- the number printed inside each table symbol -------------------------
   //
