@@ -108,6 +108,25 @@ const angDiff = (a, b) => { const d = Math.abs(((a - b) % 360 + 360) % 360); ret
 
 function inRect(p, r) { return p.cx >= r.x && p.cx <= r.x + r.w && p.cy >= r.y && p.cy <= r.y + r.h; }
 
+// Where the truth MEASURED a table's drawn outline (truth.tableOutlines), its
+// size and shape are scored against that outline; the annotation's own box is
+// used only where none was measured. Matching and the centre error still use
+// the annotation's centre. (D11, 2026-10-18: ORNEK's annotation gives all 166
+// tables one nominal 78 x 78 box — its centres are measured, its sizes are
+// not, and the photographed sheet draws them 70-90 px wide and 66-77 px tall.)
+// The scores against the annotation's box are kept beside, under vsAnnotationBox.
+function shapeTruth(truth) {
+  const outlines = (truth && truth.tableOutlines && truth.tableOutlines.outlines) || [];
+  return new Map(outlines.filter(o => o.status === "MEASURED").map(o => [o.id, { cx: o.cx, cy: o.cy, w: o.w, h: o.h }]));
+}
+function shapeScores(matches, shapes, box) {
+  const ref = m => shapes.get(m.gt.id) || m.gt;
+  const size = matches.map(m => { const g = ref(m), d = box(m); return Math.max(Math.abs(d.w - g.w) / g.w, Math.abs(d.h - g.h) / g.h); });
+  const aspect = matches.map(m => { const g = ref(m), d = box(m); return Math.abs(Math.log((d.w / d.h) / (g.w / g.h))); });
+  const ious = matches.map(m => { const g = ref(m); return iou({ cx: g.cx, cy: g.cy, w: g.w, h: g.h }, box(m)); });
+  return { size, aspect, ious, measured: matches.filter(m => shapes.has(m.gt.id)).length };
+}
+
 // ---------------------------------------------------------------------------
 // The committed digital plan, mapped back onto the drawing AS THE CANVAS DRAWS
 // IT: the reference layer fills the world box with `background-size: <scale>%
@@ -116,7 +135,7 @@ function inRect(p, r) { return p.cx >= r.x && p.cx <= r.x + r.w && p.cy >= r.y &
 // exactly when it lands on the drawing in that frame. (The first version of
 // this scorer assumed top-left anchoring and mis-scored ORNEK; a rendered
 // screenshot caught it.)
-function scoreDigital(digital, annotation, tol) {
+function scoreDigital(digital, annotation, tol, shapes = new Map()) {
   if (!digital) return null;
   const nw = digital.background.naturalWidth, nh = digital.background.naturalHeight;
   const bw = digital.world.width * digital.background.scalePct / 100, bh = bw * nh / nw;
@@ -134,8 +153,9 @@ function scoreDigital(digital, annotation, tol) {
   const gtTables = annotation.objects.filter(o => o.class === "table");
   const tm = matchByDistance(gtTables, tables, tol);
   const centre = tm.matches.map(m => m.dist / Math.min(m.gt.w, m.gt.h));
-  const aspect = tm.matches.map(m => Math.abs(Math.log((m.det.pw / m.det.ph) / (m.gt.w / m.gt.h))));
-  const size = tm.matches.map(m => Math.max(Math.abs(m.det.pw - m.gt.w) / m.gt.w, Math.abs(m.det.ph - m.gt.h) / m.gt.h));
+  const dbox = m => ({ cx: m.det.cx, cy: m.det.cy, w: m.det.pw, h: m.det.ph });
+  const { aspect, size, measured } = shapeScores(tm.matches, shapes, dbox);
+  const nominal = shapeScores(tm.matches, new Map(), dbox);
   // A committed chair is stored relative to its table: centre in percent of
   // the table's own width and height from its top-left corner.
   const chairs = tables.flatMap(t => (t.chairs || []).map(c => ({
@@ -146,6 +166,8 @@ function scoreDigital(digital, annotation, tol) {
   return {
     committedTables: tables.length, matchedTables: tm.matches.length, missedTables: tm.missed.length, extraTables: tm.spurious.length,
     tableCentreErrorP90Share: r3(pct(centre, 0.9)), tableAspectLogErrorP90: r3(pct(aspect, 0.9)), tableSizeErrorP90: r3(pct(size, 0.9)),
+    shapeReference: { measuredOutline: measured, annotationBox: tm.matches.length - measured },
+    vsAnnotationBox: { tableAspectLogErrorP90: r3(pct(nominal.aspect, 0.9)), tableSizeErrorP90: r3(pct(nominal.size, 0.9)) },
     committedChairs: chairs.length, matchedChairs: cm.matches.length,
     chairCentreErrorP90Share: gtChairs.length ? r3(pct(chairCentre, 0.9)) : null,
     venueObjects: digital.venueObjects.length,
@@ -165,6 +187,7 @@ export function score({ analysis, annotation, truth, run = {}, digital = null })
   const gtTables = annotation.objects.filter(o => o.class === "table");
   const gtChairs = annotation.objects.filter(o => o.class === "chair");
   const elements = truth.elements || [];
+  const shapes = shapeTruth(truth);
   const excluded = truth.excluded || [];
   const out = { planId: truth.planId, classes: {}, proposed: {} };
 
@@ -203,10 +226,10 @@ export function score({ analysis, annotation, truth, run = {}, digital = null })
 
     // ---- geometry: position, size, shape, rotation (matched tables) -------
     const centreErr = tm.matches.map(m => m.dist / Math.min(m.gt.w, m.gt.h));
-    const sizeErr = tm.matches.map(m => Math.max(Math.abs(m.det.pw - m.gt.w) / m.gt.w, Math.abs(m.det.ph - m.gt.h) / m.gt.h));
-    const ious = tm.matches.map(m => iou(m.gt, { cx: m.det.cx, cy: m.det.cy, w: m.det.pw, h: m.det.ph }));
+    const dbox = m => ({ cx: m.det.cx, cy: m.det.cy, w: m.det.pw, h: m.det.ph });
+    const { size: sizeErr, aspect: aspectErr, ious, measured } = shapeScores(tm.matches, shapes, dbox);
+    const nominal = shapeScores(tm.matches, new Map(), dbox);
     const typeOk = tm.matches.filter(m => m.det.type === m.gt.type).length;
-    const aspectErr = tm.matches.map(m => Math.abs(Math.log((m.det.pw / m.det.ph) / (m.gt.w / m.gt.h))));
     const rotErr = tm.matches.map(m => {
       const fold = m.gt.type === "round" || m.gt.type === "bistro" ? 0 : (m.gt.type === "square" ? 90 : 180);
       if (!fold) return 0;
@@ -222,6 +245,8 @@ export function score({ analysis, annotation, truth, run = {}, digital = null })
       tableAspectLogErrorP90: r3(pct(aspectErr, 0.9)),
       tableRotationErrorP90Deg: r3(pct(rotErr, 0.9)),
       chairCentreErrorMedianShare: r3(median(chairCentreErr)), chairCentreErrorP90Share: r3(pct(chairCentreErr, 0.9)),
+      shapeReference: { measuredOutline: measured, annotationBox: tm.matches.length - measured },
+      vsAnnotationBox: { tableSizeErrorP90: r3(pct(nominal.size, 0.9)), tableIoUP10: r3(pct(nominal.ious, 0.1)), tableAspectLogErrorP90: r3(pct(nominal.aspect, 0.9)) },
       note: "centre and size errors are a share of the object's own smaller side, so they mean the same on a 17 px chair and a 70 px table",
     };
 
@@ -346,7 +371,7 @@ export function score({ analysis, annotation, truth, run = {}, digital = null })
     out.corrections.perHundredObjects = out.corrections.objectsInTruth ? r3(100 * out.corrections.total / out.corrections.objectsInTruth) : null;
   }
 
-  out.digital = scoreDigital(digital, annotation, tol);
+  out.digital = scoreDigital(digital, annotation, tol, shapes);
   out.run = {
     analysisMs: run.analysisMs ?? null, peakHeapMB: run.peakHeapMB ?? null,
     offOriginRequests: run.offOriginRequests ?? null, engineFetches: run.engineFetches ?? null,
