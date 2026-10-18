@@ -33,6 +33,62 @@ What was measured, and what the pre-registered bar was, is in **Measured on
 real inference** below. Everything from "Candidates" down to "What would
 unblock it" is the 2026-10-11 record, kept as written.
 
+## Second pass (2026-10-18, evening): a fair test first, then training
+
+### The first harness was checked before any model was blamed on it
+
+`local-vlm-bench.py` (the table below) was audited against its own output
+before its verdicts were trusted. Three faults, each able to eliminate a model
+for the test's sake:
+
+- a crop reaching past the plan's edge was padded **black** (PIL fills an
+  out-of-range crop with zeros, pasted over the white page) — a black band no
+  plan has;
+- `max_tokens` 12 with no control of a model's thinking mode: Qwen3.5 writes
+  its whole answer into `reasoning_content` and returns an EMPTY answer, so
+  every crop would have scored "unparsed";
+- one image size for every model, below what Qwen-VL projectors ask for.
+
+The image path itself is sound (a red circle, "HELLO 42" and a table with four
+chairs are described correctly through `llama-server`). The second harness,
+`local-vlm-bench2.py`, pads with paper, turns thinking off
+(`chat_template_kwargs`), allows 48 answer tokens, and asks the questions a
+plan reading needs, each with a closed answer and a known truth: **identify**
+(what is at the centre, incl. "nothing"), **NEG** (the same on an empty crop —
+fabrication), **count** (tables wholly in view), **chairs** (round tables of
+1–12 chairs, standing alone), **merged** (pushed together vs. an aisle of ≥ 0.9
+sides) and **serves** (a sofa/bench/banquette against its table vs. the
+generator's "sofa-apart" negatives). Count and chairs are stratified (≤ 5 / ≤ 3
+items per true value) so a constant answer cannot score; a "yes" on a true
+negative counts as a fabrication. Questions live in
+`server/local-check-questions.json`, the one file the benchmark, the training
+set and the product's relay read.
+
+Projector precision dominates CPU time: Qwen3.5's published F16 projector
+encodes a 448 px crop in 15.5 s on 4 cores, the same projector quantized to
+Q8_0 here with the pinned `llama-quantize` in 5.2 s (BF16: no faster).
+
+### Zero-shot, on the fair test (dev: 60 items, seed 11, 448 px, 4 threads)
+
+| Model (licence) | identify gen. / furniture / real | empty → fabricated | count | chairs exact (±1) | merged / serves | median / item | peak RSS |
+|---|---|---|---|---|---|---|---|
+| Qwen3.5-0.8B Q8_0 (Apache-2.0) | 0.17 / **0.00** / 0.17 | **1.00** | 1.00 | 0.43 (1.00) | 0.80 / 0.20 | 5.5 s | 3,626 MB |
+| Qwen3.5-2B Q4_K_M (Apache-2.0) | 0.09 / 0.06 / 0.58 | 0.00 | 0.50 | 0.43 (0.43) | 0.60 / 0.20 | 17.0 s | 4,373 MB |
+| Qwen3-VL-2B Q4_K_M (Apache-2.0) | 0.22 / 0.29 / 0.25 | 0.00 | 0.50 | **0.86** (0.86) | 0.60 / 0.20 | 16.0 s | 4,275 MB |
+
+Timing caveat: the dev runs of the two 2 B models overlapped, for a few
+minutes each, a training smoke test (Qwen3.5-2B) and a regression-suite run
+(Qwen3-VL-2B) on the same 4 cores; their medians are upper bounds. The final
+comparison below is timed on a quiet machine.
+
+Small per-question counts (4–5 items on count, merged, serves, empty); the
+point is the pattern, and the pattern holds across all three: **the models do
+not know the drawing convention.** A sofa seen from above is "table" or
+"nothing"; "serves" is answered "no" almost always (0.20 = the negatives).
+Chair counting on a clear round table is the one zero-shot skill. The faults
+the audit found were real but were not why these models fail — with them
+fixed, the failure is knowledge, not settings.
+
 ## Measured on real inference (2026-10-18)
 
 The bar was pre-registered before any inference
