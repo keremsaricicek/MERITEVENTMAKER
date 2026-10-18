@@ -90,6 +90,9 @@
   // so a far match needs real visual and context support to reach a class that
   // re-applies.
   const SEARCH_OF_TOLERANCE = 3;
+  // What people sit at or on, against everything else the plan draws.
+  const SEATING_TYPES = new Set(["chair", "armchair", "sofa", "bench", "banquette", "loca", "stool"]);
+  const isFurniture = (o) => o.kind === "table" || (o.kind === "venue" && SEATING_TYPES.has(o.type));
   const geometryDistance = (c, g) => Math.hypot(c.x - g.x, c.y - g.y, (c.w - g.w) * 0.5, (c.h - g.h) * 0.5);
 
   // What stands around an object, as a vector that survives the whole plan
@@ -200,6 +203,15 @@
     const tol = toleranceFor(g), search = tol * SEARCH_OF_TOLERANCE;
     const dist = geometryDistance(candidate, g);
     if (dist > search) return null;
+    // FAR AWAY, A DECISION KEEPS TO ITS OWN SIDE OF THE ROOM. Family stays
+    // evidence at the decision's own place (a person may re-type a column as a
+    // chair, and the detector will say "column" there again). Past the old
+    // tolerance only the weighing decides, and there a decision about a table
+    // or a seat does not land on structure, nor one about structure on
+    // furniture. Measured (benchmark:memory, greyscale, 2026-10-18): a table
+    // re-typed as a chair was not detected, and its decision landed 2.9 % away
+    // on the wall pilaster beside it -- the corpus's one wrong application.
+    if (dist > tol && isFurniture(memory) !== isFurniture(candidate)) return null;
     const memNumber = verifiedNumber(memory), candNumber = verifiedNumber(candidate);
     if (memNumber !== null && candNumber !== null && memNumber !== candNumber) return null;
     const terms = {}, weights = {};

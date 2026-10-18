@@ -107,6 +107,30 @@ export default async function run({ page, checks, baseUrl }) {
       { matching: same.matches[0].score, mismatched: r.matches[0].score });
   }
 
+  // ---- 3b. far away, a decision keeps to its own side of the room ----------
+  //
+  // Family stays evidence for a match at the decision's own place. Out past
+  // the old tolerance -- where only the weighing decides -- a decision about a
+  // table or a seat does not land on structure. Measured on the greyscale
+  // rendering (benchmark:memory, 2026-10-18): a table the person re-typed as a
+  // chair was not detected there, and the decision landed 2.9 % away on the
+  // wall pilaster (a column) beside it, graded "likely" -- the corpus's one
+  // wrong application.
+  {
+    // the look agrees (the real case: cosine 0.86), as a pilaster's crop can
+    const look = Array.from({ length: 16 }, (_, i) => (i % 3) - 1);
+    const memory = [{ ...mem("m1", 4.61, 27.6, 2.58, 4.43), kind: "venue", type: "chair", visual: { vector: look } }];
+    const column = cand("col", 1.73, 27.73, 2.51, 4.57, { kind: "venue", type: "column", vector: look });
+    const r = await run1(memory, [column]);
+    checks.equal(r.matches.length, 0, "a far seat decision does not land on a column", r.matches);
+    const asTable = await run1(memory, [{ ...column, id: "tbl", kind: "table", type: "square" }]);
+    checks.equal(asTable.matches.length + asTable.ambiguous.length, 1,
+      "the same candidate drawn as a table is still weighed: table and seat are both furniture", asTable.stats);
+    const near = await run1(memory, [{ ...column, id: "colNear", x: 4.61, y: 27.6 }]);
+    checks.equal(near.matches.length, 1,
+      "and AT the decision's own place a column still takes it (a person may re-type a column as a chair)", near.stats);
+  }
+
   // ---- 4. an object that is gone ------------------------------------------
   {
     const r = await run1([mem("m1", 10, 10, 4, 4)], [cand("c1", 70, 70, 4, 4)]);

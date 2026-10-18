@@ -141,6 +141,7 @@ Closed this session, each with its commit and evidence:
 | V1, junk words | jpeg-q20 chair loss = Tesseract junk (conf < 50); floor refused (exposes 2 Golden false tables) | `1ce3944` |
 | V1, junk words (C) | seats: a filled region standing at a table survives junk words — bright-down chairs 90→109 (HEALTHY), jpeg-q20 81→94, lowres 74→91, no new false object anywhere; tables NOT exempted (filled+free, colour, adjacency each measured: none separates a6's plinths from real chairless tables) | this commit |
 | D2 + column pass | column pass stable under one member; Golden chairs 108/0/5 | `6f93cec` |
+| L1/L2 memory | losses split (not found 16 / not matched 4); far furniture decision cannot land on structure: wrong 1 → 0, retention 0.8447 → 0.8758, identity precision 1.0; 98 % NOT met (7 confirmations on objects the detector loses, 9 rejections of objects no longer proposed, 4 fragments) | this commit |
 
 Where the next session starts, in order:
 

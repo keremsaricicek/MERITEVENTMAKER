@@ -298,10 +298,32 @@ for (const scenario of SCENARIOS.filter(s => !ONLY || s.id === ONLY)) {
       if (hit.beyondTolerance) beyond++;
     }
     const scoreable = memoryTruth.size;
+    // WHY a decision was lost, because the two causes have different owners.
+    // NOT FOUND: no candidate on the changed plan lands on the object the
+    // decision was made on -- the detector lost it, and no matcher can put a
+    // decision on an object that is not there. NOT MATCHED: a candidate does
+    // land on it, and the matcher did not apply the decision there (held back
+    // as ambiguous, or the detection's shape/size/look was too different).
+    const appliedMemories = new Set(applied.map(h => h.memoryId));
+    const landing = new Map();
+    for (const c of after.candidates) {
+      const id = annotatedIdFor(c, W2, H2, tolPx2, after_.objects);
+      if (id !== null && !landing.has(id)) landing.set(id, c);
+    }
+    let lostNotFound = 0, lostNotMatched = 0;
+    const lostDetail = [];
+    for (const [memoryId, truth] of memoryTruth) {
+      if (appliedMemories.has(memoryId)) continue;
+      const m = before.memory.find(x => x.id === memoryId), c = landing.get(truth);
+      if (c) lostNotMatched++; else lostNotFound++;
+      lostDetail.push({ memoryId, truth, decision: m ? `${m.status} ${m.kind}/${m.type}` : null,
+        cause: c ? "notMatched" : "notFound", detectedAs: c ? `${c.kind}/${c.type} ${c.w.toFixed(2)}x${c.h.toFixed(2)}` : null });
+    }
     return {
       scoreableMemories: scoreable, applied: applied.length,
       retained, wrong, unscoreable,
       lost: scoreable - retained - wrong,
+      lostNotFound, lostNotMatched, lostDetail,
       beyondOldTolerance: beyond,
       retention: scoreable ? +(retained / scoreable).toFixed(4) : null,
       wrongRate: applied.length ? +(wrong / applied.length).toFixed(4) : 0,
@@ -332,7 +354,8 @@ for (const scenario of SCENARIOS.filter(s => !ONLY || s.id === ONLY)) {
   const s = row.shipped;
   console.log(`\n=== ${scenario.id} ===  ${scenario.why}`);
   console.log(`  memories ${row.memories} (${row.memoriesWithVector} with a learned vector, ${row.memoriesWithContext} with context), ${row.scoreable} scoreable`);
-  console.log(`  retained ${s.retained}  wrong ${s.wrong}  lost ${s.lost}  ambiguous(not applied) ${row.ambiguousReported}  unscoreable ${s.unscoreable}`);
+  console.log(`  retained ${s.retained}  wrong ${s.wrong}  lost ${s.lost} (object not found ${s.lostNotFound}, found but not matched ${s.lostNotMatched})  ambiguous(not applied) ${row.ambiguousReported}  unscoreable ${s.unscoreable}`);
+  for (const l of s.lostDetail) console.log(`    lost ${l.cause.padEnd(10)} ${l.truth.padEnd(6)} ${l.decision}${l.detectedAs ? `  -- detected as ${l.detectedAs}` : ""}`);
   console.log(`  RETENTION ${s.retention}   IDENTITY PRECISION ${s.identityPrecision}   WRONG RATE ${s.wrongRate}   matched beyond the old tolerance: ${s.beyondOldTolerance}`);
   console.log(`  ablation  full ${row.ablation.full.retained}/${row.scoreable} (wrong ${row.ablation.full.wrong})   no-visual ${row.ablation.noVisual.retained}/${row.scoreable}   no-context ${row.ablation.noContext.retained}/${row.scoreable}   without global-transform ${row.ablation.noShift.retained}/${row.scoreable} (wrong ${row.ablation.noShift.wrong})`);
   if (errors.length) console.log(`  pageErrors ${errors.length}: ${errors[0]}`);
@@ -355,6 +378,8 @@ const totals = {
   appliedNoShift: sum(scored, r => r.ablation.noShift.applied),
   wrongFull: sum(scored, r => r.ablation.full.wrong),
   appliedFull: sum(scored, r => r.ablation.full.applied),
+  lostNotFound: sum(scored, r => r.shipped.lostNotFound),
+  lostNotMatched: sum(scored, r => r.shipped.lostNotMatched),
 };
 const rate = (n, d) => (d ? +(n / d).toFixed(4) : null);
 const report = {
@@ -382,6 +407,8 @@ console.log(`  scoreable decisions            ${totals.scoreable}`);
 console.log(`  retention, full model          ${report.totals.retentionFull}   §23 target >= 0.98`);
 console.log(`  identity precision, full model ${report.totals.identityPrecisionFull}   §23 target >= 0.98`);
 console.log(`  wrong application rate         ${report.totals.wrongApplicationRateFull}   §23 target <= 0.01`);
+console.log(`  lost: object not found         ${totals.lostNotFound}   (the detector no longer finds it)`);
+console.log(`  lost: found but not matched    ${totals.lostNotMatched}   (the matcher did not apply the decision)`);
 console.log("\nDOES THE LEARNED EMBEDDING CONTRIBUTE?  (§24 — the answer has to be measured, not assumed)");
 console.log(`  retention with it              ${report.totals.retentionFull}`);
 console.log(`  retention without it           ${report.totals.retentionNoVisual}`);

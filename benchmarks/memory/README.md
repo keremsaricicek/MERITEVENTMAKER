@@ -25,6 +25,49 @@ object **is**, not on where the detector happened to put a box.
 
 Re-measure with `npm run benchmark:memory`.
 
+### 2026-10-18 — losses split by cause; the one wrong application closed
+
+The scorer now says WHY a decision was lost: **object not found** (no candidate
+on the changed plan lands on the object the decision was made on — the
+detector lost it) or **found but not matched** (a candidate lands on it and the
+matcher did not apply the decision). Each lost decision is printed with its
+cause and, when found, what it was detected as.
+
+Measured after the junk-word seat rule (`d8a7af2`): retention 0.8447 → 0.8758.
+The one wrong application (greyscale) was a table the person re-typed as a
+chair: the table was not detected there, and the decision landed 2.9 % away —
+beyond the old tolerance, graded "likely" on look (cosine 0.86) and
+neighbourhood — on the wall pilaster, a column. Past the old tolerance a
+decision about furniture (a table or a seat) no longer lands on structure, nor
+the reverse; at the decision's own place family stays evidence only, so a
+re-typed column still works (suite `plan-memory`, case 3b, red before).
+
+| | before | after |
+|---|--:|--:|
+| retention | 0.8758 | **0.8758** (141 / 161) |
+| wrong applications | 1 (0.007) | **0** |
+| identity precision | 0.993 | **1.0** |
+| lost: object not found | 15 | 16 |
+| lost: found but not matched | 4 | 4 |
+
+What the 20 losses are:
+- **9 are rejections whose object the detector no longer proposes** (c012 ×5,
+  t044 ×3, t036). Nothing reappears for the person to reject again; they are
+  still counted lost, because the scorer counts a decision retained only when
+  it lands on its object.
+- **7 are confirmations or re-typings of objects the detector does not find**
+  on that rendering (six on jpeg-q20, the pilaster case on greyscale). Memory
+  cannot apply a decision to an object that is not there, and re-making one
+  from the crop was built and refused on 2026-10-11 as fabrication. These are
+  detector stability under degradation (jpeg-q20 tables 34 / 8 / 12).
+- **4 are found but not matched, all on jpeg-q20**: the candidate on the object
+  is a fragment (1.5 × 5.5 % against a 3.4 × 5.5 % table, a square read as
+  round) and the matcher abstains (9 ambiguous reported). Forcing those would
+  trade the zero wrong applications for retention.
+
+§23 (retention ≥ 0.98) is **not met**; wrong application ≤ 0.01 and identity
+precision ≥ 0.98 are met on every scenario. Baseline re-recorded with that reason.
+
 ### 2026-10-11 — a recognition layer, built, measured, and not shipped
 
 **Question.** Can the remaining losses be recovered from the confirmed crop
