@@ -135,6 +135,10 @@ Closed this session, each with its commit and evidence:
 | V1, robustness | baseline re-recorded with the reason (it was measured without OCR) | `e40db0c` |
 | V1, local VLM | measured, none useful; relay timeout bug fixed | `394bdda` |
 | T4/T5 | E5, E6, E7, E7cal all fail their pre-registered conditions; v2 stays | `c634da3`, `79f4d2e` |
+| T4 (E9) | decode E3b: a long piece's peaks merge; bench R 0.083 → 0.526 on furniture dev; condition still not met, E8 not run | `1ce3944` |
+| R4 | questions per plan reported (furniture dev 2.21, seating question on real pieces 4/4) | `1ce3944` |
+| D2 | three FPs measured as bare-paper patches; tone rule NOT shipped (column pass costs lowres 7 tables) | `1ce3944` (experiment record) |
+| V1, junk words | jpeg-q20 chair loss = Tesseract junk (conf < 50); floor refused (exposes 2 Golden false tables) | `1ce3944` |
 
 Where the next session starts, in order:
 
@@ -143,15 +147,19 @@ Where the next session starts, in order:
    bench is (E7cal). The next experiment changes what the branch can see — the
    table beside the piece — not the schedule, and holds the base harder (E7
    regressed columns 0.855 → 0.791).
-2. **D2.** The chair family's admission test should require a mark to look like
-   the chairs drawn at the tables (colour). Two stage-truss segments are the
-   false chairs. This is a detector change: fingerprint and benchmark gates
-   apply.
+2. **Column pass, then D2.** The column pass is a tipping system (one member
+   changes 8 → 25 columns on bright-down, 4 → 22 on lowres) and the largest
+   false-object source on fixtures (Golden 9, a2 32, a4 40 "columns"). Make it
+   stable under one member's removal and refuse marks inside a table's box and
+   chair-material marks; then re-apply the measured D2 tone rule
+   (`benchmarks/detection/experiments/2026-10-18-d2-tone/`).
 3. **S1/S2/S3.** ORNEK cold with no gap is still 20.7 s, 12–13 s of it OCR. The
    OCR detection pass is one whole-page inference, and splitting it must be
    proven byte-identical. The longest task sits at 186–265 ms.
-4. **Robustness WEAK.** jpeg-q20 and lowres lose chairs only WITH OCR (text
-   suppression reads compression noise as printing).
+4. **Robustness WEAK.** jpeg-q20 and lowres lose chairs only WITH OCR: 51 of
+   56 suppressions on jpeg-q20 come from Tesseract junk words (confidence
+   15-49). A floor needs a non-text reason first for the two grey equipment
+   boxes on Golden that only junk text hides today.
 5. **L1/L2/L3.** Causes are known (re-detection on jpeg-q20; too few misses to
    judge exemplar search); unchanged.
 6. **D9 entrance.** The drawing shows no readable wall break at either GİRİŞ.
