@@ -3318,7 +3318,7 @@
     if(event.analysis!==a)return; // a re-analysis started meanwhile: this answer is about another one
     const added=found.map(f=>({id:uid("candidate"),kind:c.kind,type:c.type,x:f.x/W*100,y:f.y/H*100,w:f.w/W*100,h:f.h/H*100,rotation:0,
       confidence:Math.min(f.score,.7),status:"unreviewed",selected:false,source:"exemplar",exemplarOf:c.id,chairDetections:[],
-      evidence:{geometry:"exemplar",basis:`looks like the ${c.type} a person confirmed (match ${f.score})`,extent:"the confirmed object's own size"}}));
+      evidence:{geometry:"exemplar",basis:"resemblesConfirmed",resembles:c.id,matchScore:f.score,extent:"the confirmed object's own size"}}));
     if(!added.length)return toast(t("review.similarNone"),"info",5000);
     a.candidates.push(...added);
     audit(event,"EXEMPLAR_SUGGESTIONS_ADDED",{from:c.id,count:added.length});

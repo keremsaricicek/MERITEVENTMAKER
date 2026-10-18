@@ -36,6 +36,7 @@ benchmarks/plan-understanding/latest/
 # run-benchmark.mjs report); results-<set>.json beside them is the record.
 benchmarks/offline-intelligence/.runs/
 training/__pycache__/
+benchmarks/**/__pycache__/
 
 # Developer-time model tools (tools/model-dev/setup.sh): a local virtual
 # environment, never committed and never part of the product.
