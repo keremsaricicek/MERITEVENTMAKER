@@ -581,3 +581,31 @@ server RSS ≤ 3,000 MB. Each row is judged on its own. Real-plan rows with
 fewer than 8 items are reported, never used to pass. Choices are made on dev
 with the real crops left out (`--no-real`); blind is scored once.
 `model-qa-specialist` audits the run before anything is wired.
+
+**V4 run A (2026-10-18) — trained; dev measured; blind pending.** One epoch,
+324 steps, 8,399 s on 4 CPU threads (2.25–3.3 s per crop once the machine was
+quiet; the first minutes overlapped a benchmark and were paused). Loss per 10
+steps 0.98 → 0.65 → 0.43 → 0.17 → 0.10 → 0.03–0.20 at the end (batch of 8,
+noisy). Peak training RSS 4.9 GB (developer machine only).
+
+Conversion check (`vlm_lora.py agree`, 24 crops, llama.cpp `--lora` with the
+F16 projector against transformers + PEFT in bf16): **24 / 24 same answer.**
+
+Dev (`local-vlm-bench2.py --seed 11 --limit 100 --no-real`, dev splits, real
+crops left out, one look, served Q8_0 + Q8_0 projector + adapter):
+
+| | untrained (60 items, with real) | run A (100 items, no real) |
+|---|---|---|
+| identify, generated | 0.17 | **0.90** |
+| identify, furniture | 0.00 | **1.00** |
+| empty crop called an object | 1.00 | **0.00** |
+| "yes" on a true negative | 0.00 | 0.00 |
+| count exact / over | 1.00 / 0.00 (4 items) | 0.88 / 0.00 |
+| chairs exact | 0.43 | 0.88 |
+| merged / serves | 0.80 / 0.20 | **1.00 / 1.00** |
+| median per crop | 5.5 s | 4.9 s |
+
+Errors left on dev: a table read as a bench (3) or a sofa (1), a count of 5
+read as 4, ten chairs read as eight. Peak server RSS 5,010 MB at `-c 8192`;
+the final test runs at `-c 2048`, what a closed question needs. The verdict
+is the blind run, scored once, below.
