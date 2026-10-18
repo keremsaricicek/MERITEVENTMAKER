@@ -1221,6 +1221,7 @@ body{min-width:1180px}
 .poi-card{position:absolute;right:20px;top:82px;z-index:45;width:260px;background:var(--pi-surface);border:1px solid var(--pi-line);border-radius:var(--pi-radius);box-shadow:var(--pi-shadow-3);padding:15px;animation:popIn var(--dur-base) var(--ease)}
 .poi-memory-note{display:flex;align-items:center;gap:6px;margin-top:9px;padding:7px 9px;border-radius:var(--pi-radius-sm);background:var(--pi-accent-soft);color:var(--pi-accent-strong);font-size:10.5px;font-weight:600}
 .poi-memory-note svg{width:13px;height:13px;flex:none}
+.poi-similar{display:flex;margin-top:9px}
 /* The learned encoder's separate opinion. Quiet by default and semantic only
    when it actually disagrees with the classical pipeline -- it never removes
    anything, so it must not look like an error state. The tier line is always

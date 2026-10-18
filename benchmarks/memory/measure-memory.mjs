@@ -125,6 +125,9 @@ const results = [];
 // --only <scenario id> runs one scenario (diagnosis; never for --compare or
 // --record-baseline, which refuse a partial corpus below).
 const onlyAt = argv.indexOf("--only"), ONLY = onlyAt >= 0 ? argv[onlyAt + 1] : null;
+// --dump DIR (diagnosis): each scenario's memory, candidates and every
+// memory's three best-scored candidates written to DIR/<scenario>.json
+const dumpAt = argv.indexOf("--dump"), DUMP = dumpAt >= 0 ? argv[dumpAt + 1] : null;
 if (ONLY && (argv.includes("--compare") || argv.includes("--record-baseline"))) {
   console.error("--only is for diagnosis; the gate and the baseline need the whole corpus");
   process.exit(2);
@@ -248,6 +251,19 @@ for (const scenario of SCENARIOS.filter(s => !ONLY || s.id === ONLY)) {
       })(),
     };
   });
+
+  if (DUMP) {
+    const detail = await page.evaluate(() => {
+      const a = state.events[0].analysis, mem = state.events[0].planMemory || [];
+      const cands = a.candidates.map(c => ({ id: c.id, kind: c.kind, type: c.type, x: c.x, y: c.y, w: c.w, h: c.h,
+        vector: c.visualDescriptor && c.visualDescriptor.vector || null }));
+      const r = globalThis.MeritPlanMemory.match(mem, cands, {});
+      return { matches: r.matches, ambiguous: r.ambiguous, unmatched: r.unmatched, stats: r.stats,
+        candidates: cands.map(({ vector, ...c }) => c), memory: mem.map(m => ({ id: m.id, kind: m.kind, type: m.type, status: m.status, geometry: m.geometry })) };
+    });
+    fs.mkdirSync(DUMP, { recursive: true });
+    fs.writeFileSync(path.join(DUMP, scenario.id + ".json"), JSON.stringify({ ...detail, truth: Object.fromEntries(memoryTruth) }, null, 1));
+  }
 
   // ---- score ---------------------------------------------------------------
   // Where a decision LANDED is read off the plan it landed on. Each variant

@@ -21,7 +21,17 @@ import { routeVendorFromCache } from "../../tests/lib/vendor.mjs";
 import { openApp, createBlankEvent, importPlan, runDetection, futureDate } from "../../tests/lib/app-actions.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const PLANS = [["golden", "merit-real-venue-plan.png", "merit-real-venue.json"], ["ornek", "ornek-upright.png", "ornek-symbolic.json"]];
+// --robustness adds the fifteen renderings of the Golden Plan (ROB): the same
+// venue, so not a new-venue result, but a corpus where the detector DOES miss
+// objects — on the two originals there are only five misses to recover, too
+// few to judge the search by (L3, 2026-10-17). Written to its own report.
+const ROB = process.argv.includes("--robustness");
+const PLANS = [["golden", "benchmarks/plans/merit-real-venue-plan.png", "benchmarks/annotations/merit-real-venue.json"],
+  ["ornek", "benchmarks/plans/ornek-upright.png", "benchmarks/annotations/ornek-symbolic.json"]]
+  .concat(ROB ? fs.readdirSync(path.join(REPO_ROOT, "benchmarks/robustness/annotations")).filter((f) => f.endsWith(".json")).sort().map((f) => {
+    const a = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, "benchmarks/robustness/annotations", f), "utf8"));
+    return [f.replace(/\.json$/, "").replace(/^merit-real-/, "rob:"), path.join("benchmarks", a.source.file), path.join("benchmarks/robustness/annotations", f)];
+  }) : []);
 const K = [1, 3];
 
 function match(gt, det, tol) {
@@ -37,14 +47,14 @@ const app = await serveApp(); const browser = await launchChromium();
 const report = { measuredOn: new Date().toISOString(), note: "exemplars are CORRECT detections, as a person would confirm them; suggestions are scored against the human annotation", plans: {} };
 try {
   for (const [name, file, annFile] of PLANS) {
-    const annot = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, "benchmarks/annotations", annFile), "utf8"));
+    const annot = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, annFile), "utf8"));
     const W = annot.source.width, H = annot.source.height, tol = (annot.matchToleranceP ?? 3) / 100 * Math.hypot(W, H);
     const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
     await routeVendorFromCache(page, { offline: true });
     await page.addInitScript(() => { globalThis.MERIT_PLAN_MODEL_DISABLED = "exemplar measurement: classical detections only"; });
     await openApp(page, app.baseUrl, { lang: "en" });
     await createBlankEvent(page, { name: "Exemplar " + name, date: futureDate() });
-    await importPlan(page, "data:image/png;base64," + fs.readFileSync(path.join(REPO_ROOT, "benchmarks/plans", file)).toString("base64"));
+    await importPlan(page, `data:image/${file.endsWith(".jpg") ? "jpeg" : "png"};base64,` + fs.readFileSync(path.join(REPO_ROOT, file)).toString("base64"));
     await runDetection(page, { timeout: 600000 });
     const det = await page.evaluate(async () => {
       const a = state.events[0].analysis, W = a.imageWidth, H = a.imageHeight;
@@ -74,11 +84,14 @@ try {
         // k exemplars spread over the plan: every (n/k)-th correct detection
         const ex = Array.from({ length: k }, (_, i) => correct[Math.floor(i * correct.length / k)]);
         const t0 = Date.now();
-        const sugg = await page.evaluate(({ ex, W, H, exclude }) => {
+        // the product's own combination of several examples (searchMany);
+        // UNION=1 measures the old union of separate searches beside it
+        const sugg = await page.evaluate(({ ex, W, H, exclude, union }) => {
+          if (!union) return MeritPlanExemplar.searchMany(globalThis.__grey, W, H, ex, { exclude });
           const all = [];
           for (const e of ex) for (const s of MeritPlanExemplar.search(globalThis.__grey, W, H, e, { exclude: exclude.concat(all) })) all.push(s);
           return all;
-        }, { ex, W: det.W, H: det.H, exclude: list });
+        }, { ex, W: det.W, H: det.H, exclude: list, union: process.env.UNION === "1" });
         const ms = Date.now() - t0;
         const sp = sugg.map(toSrc);
         const onMissed = match(missed, sp, tol);
@@ -95,5 +108,14 @@ try {
     await page.close();
   }
 } finally { await browser.close(); await app.close(); }
-fs.writeFileSync(path.join(HERE, "exemplar-latest.json"), JSON.stringify(report, null, 1));
-console.log("wrote benchmarks/offline-intelligence/exemplar-latest.json");
+// pooled over every plan run, per class and k: the acceptance row's two numbers
+report.pooled = {};
+for (const out of Object.values(report.plans)) for (const [cls, r] of Object.entries(out)) for (const [k, v] of Object.entries(r.byK)) {
+  const key = `${cls} k=${k}`, p = (report.pooled[key] ||= { missedBefore: 0, recovered: 0, phantoms: 0, groundTruth: 0 });
+  p.missedBefore += r.missedBefore; p.recovered += v.recovered; p.phantoms += v.phantoms; p.groundTruth += r.groundTruth;
+}
+for (const p of Object.values(report.pooled)) { p.recoveredShare = p.missedBefore ? +(p.recovered / p.missedBefore).toFixed(3) : null; p.phantomsPer100Objects = +(p.phantoms / p.groundTruth * 100).toFixed(2); }
+console.log(JSON.stringify(report.pooled, null, 1));
+const OUTFILE = (ROB ? "exemplar-robustness" : "exemplar") + (process.env.UNION === "1" ? "-union" : "") + "-latest.json";
+fs.writeFileSync(path.join(HERE, OUTFILE), JSON.stringify(report, null, 1));
+console.log("wrote benchmarks/offline-intelligence/" + OUTFILE);

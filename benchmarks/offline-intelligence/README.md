@@ -15,7 +15,7 @@ in this repository by the script named beside it, with the network refused
 | Training pipeline (CPU) | `training/` | synthetic generator (2 generations), trainer, calibration, ONNX export, packaging, activation |
 | Real-plan dataset export | `training/export_plans.py` | an app backup → per-venue dataset with each label's verification state and who suggested it |
 | Vector-PDF furniture proposals | `src/plan-vector-objects.js` | repeated shapes in a vector PDF → tables and chairs, fused like the model |
-| Exemplar search ("find more like this") | `src/plan-exemplar.js` | measured below; fails its row; not in the UI |
+| Exemplar search ("find more like this") | `src/plan-exemplar.js` | in the review card since 2026-10-18; measured below; still fails its row (best 0.47 recovered, 0 phantoms) |
 | Comparison harness | `run.mjs`, `exemplar-measure.mjs`, `vector-measure.mjs`, `teacher-e2e.mjs` | each scored with `benchmarks/run-benchmark.mjs`'s own matching |
 | What the operator sees | `screens/` | the review screen with the model's line in Advanced diagnostics, at 1920 / 2560 / 1440, TR and EN, and with the model off ("DOMAIN MODEL NOT INSTALLED" plus the reason). Rendered, 0 console errors, no horizontal overflow |
 
@@ -383,3 +383,34 @@ tables (9 per 100). **NOT MET.**
 So `src/plan-exemplar.js` stays as a measured component. It is not offered
 in the review UI, and no "find more like this" control exists.
 
+
+## 2026-10-18 — "find more like this": measured where the detector misses, combined by agreement, and wired in (L3)
+
+On the two original plans there were five misses to recover, too few to judge
+the search by. `exemplar-measure.mjs --robustness` adds the Golden Plan's fifteen
+renderings (ROB — the same venue, not a new one), where the detector misses 100
+tables and 286 chairs. Exemplars are correct detections, as a person would
+confirm them; suggestions are scored against each rendering's own annotation.
+
+| | recovered | phantoms per 100 objects |
+|---|---|---|
+| tables, 1 example | 47 / 100 (0.47) | 0 |
+| tables, 3 examples — union of three searches (before) | 58 / 100 (0.58) | **58.1** |
+| tables, 3 examples — `searchMany`, agreement of ≥ 2 (now) | 47 / 100 (0.47) | 1.55 |
+| chairs, 1 example | 76 / 286 (0.27) | 0.44 |
+| chairs, 3 examples — union (before) | 136 / 286 (0.48) | 4.09 |
+| chairs, 3 examples — agreement (now) | 78 / 286 (0.27) | 0.50 |
+
+Pre-registered (before the agreement rule was run): pass when some k gives
+recovered ≥ 0.50 AND ≤ 1 phantom per 100 for a class. **NOT MET**: the closest
+is tables with one example, 0.47 and 0. The agreement rule removes the union's
+over-generation (one odd example's false matches); it does not find the misses
+no example resembles. Reports: `exemplar-robustness-latest.json` (agreement) and
+`exemplar-robustness-union-latest.json` (union).
+
+The search was a module and a benchmark only — nothing in the product called
+it. The review card of a CONFIRMED object now offers "Benzerlerini bul / Find
+more like this": one example (the setting measured without phantoms), searched
+on the analysis canvas, every place found added as an unreviewed, unselected
+candidate of the same kind and type that names the object it resembles, with
+Undo for those still unreviewed; a completed event refuses. Suite `find-similar`.

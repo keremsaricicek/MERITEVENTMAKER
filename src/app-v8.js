@@ -870,6 +870,8 @@
         return t("audit.teachLessonForgotten");
       case"TEACH_AREA_LESSON_RESTORED":
         return t("audit.teachLessonRestored");
+      case"EXEMPLAR_SUGGESTIONS_ADDED":
+        return t("audit.exemplarSuggestions",{n:d.count});
       case"ASSISTED_DETECTION_COMPLETED":
         return t("audit.detectionCompleted");
       default:
@@ -3291,6 +3293,43 @@
   // One plan-wide read by the OCR model, stored with the analysis: the
   // provider that ran (or why none did), its timings, and every line it read
   // with its box in SOURCE pixels and its own score.
+  // ---- "find more like this" (L3, 2026-10-18) ------------------------------
+  // A person confirmed an object; its own pixels are the template
+  // (MeritPlanExemplar, normalised cross-correlation at the four quarter
+  // turns), searched on the analysis canvas the candidates are drawn in. What
+  // comes back is a SUGGESTION: an unreviewed candidate of the same kind and
+  // type, never selected, each decided by a person like any other. One
+  // example, because that is the setting measured without phantoms (0 per 100
+  // objects, 47 % of the missed tables recovered over the Golden Plan's
+  // renderings; several examples are combined by agreement, searchMany).
+  // Places the analysis already holds are excluded. Undo removes the
+  // suggestions still unreviewed.
+  async function findSimilar(event,c){
+    if(!canMutate(event,"find similar objects"))return;
+    const a=event.analysis,src=event.background?.src;
+    if(!a||!src||!globalThis.MeritPlanExemplar||c.status!=="confirmed")return;
+    let canvas,W,H;
+    try{({canvas,width:W,height:H}=await analysisCanvasOf(src));}catch{return toast(t("plan.unreadableImage"),"error",6500);}
+    const d=canvas.getContext("2d",{willReadFrequently:true}).getImageData(0,0,W,H).data,grey=new Float32Array(W*H);
+    for(let i=0,j=0;i<grey.length;i++,j+=4)grey[i]=.299*d[j]+.587*d[j+1]+.114*d[j+2];
+    const px=o=>({x:o.x/100*W,y:o.y/100*H,w:o.w/100*W,h:o.h/100*H});
+    const known=a.candidates.filter(x=>x.status!=="rejected"&&x.id!==c.id).map(px);
+    const found=MeritPlanExemplar.searchMany(grey,W,H,[px(c)],{exclude:known});
+    if(event.analysis!==a)return; // a re-analysis started meanwhile: this answer is about another one
+    const added=found.map(f=>({id:uid("candidate"),kind:c.kind,type:c.type,x:f.x/W*100,y:f.y/H*100,w:f.w/W*100,h:f.h/H*100,rotation:0,
+      confidence:Math.min(f.score,.7),status:"unreviewed",selected:false,source:"exemplar",exemplarOf:c.id,chairDetections:[],
+      evidence:{geometry:"exemplar",basis:`looks like the ${c.type} a person confirmed (match ${f.score})`,extent:"the confirmed object's own size"}}));
+    if(!added.length)return toast(t("review.similarNone"),"info",5000);
+    a.candidates.push(...added);
+    audit(event,"EXEMPLAR_SUGGESTIONS_ADDED",{from:c.id,count:added.length});
+    recomputePlanIntelligence(event);touchEvent(event);render();
+    const ids=new Set(added.map(x=>x.id));
+    toastAction(t("review.similarFound",{n:added.length}),t("teachArea.undo"),()=>{
+      if(!canMutate(event,"undo suggestions")||event.analysis!==a)return;
+      a.candidates=a.candidates.filter(x=>!(ids.has(x.id)&&x.status==="unreviewed"));
+      recomputePlanIntelligence(event);touchEvent(event);render();
+    },"success",8000);
+  }
   // ---- the plan's text, read before Analyse is pressed (S5, 2026-10-17) ----
   // Both text reads — the OCR model's and Tesseract's whole page — depend on
   // the plan image and on nothing else, so they can begin the moment a plan is
@@ -4712,7 +4751,7 @@
       }else if(action==="confirm-number"&&c){
         const scope=document.querySelector("[data-teach-scope]")?.value||"plan";
         teachTableNumber(event,c,document.getElementById("poiNumber")?.value,scope);
-      }else if(action==="forget"&&c){forgetLesson(event,c);}else if(action==="draw"){
+      }else if(action==="forget"&&c){forgetLesson(event,c);}else if(action==="find-similar"&&c){findSimilar(event,c);}else if(action==="draw"){
         if(!ui.reviewDrawMode)recordOperatorAction(event,"ai-missed-open",[]);
         ui.reviewDrawMode=!ui.reviewDrawMode;
         ui.activeReviewGroupId=null;

@@ -148,5 +148,30 @@
     return kept;
   }
 
-  globalThis.MeritPlanExemplar = Object.freeze({ search });
+  // Several confirmed examples at once (L3, 2026-10-18). Each is searched as
+  // above; with ONE the answer is that search. With two or more a place is
+  // suggested only where at least two of the examples find it: the union of
+  // three searches added every odd example's false matches — measured on the
+  // Golden Plan's fifteen renderings, 58 phantoms per 100 objects with three
+  // table examples against 0 with one. The best-scored box of each agreed
+  // place is the one returned.
+  function searchMany(grey, W, H, boxes, opts) {
+    const list = (boxes || []).filter(Boolean);
+    if (list.length <= 1) return list.length ? search(grey, W, H, list[0], opts) : [];
+    const runs = list.map((b, i) => search(grey, W, H, b, Object.assign({}, opts, { exclude: ((opts && opts.exclude) || []).concat(list.filter((_, j) => j !== i)) })).map(s => ({ ...s, from: i })));
+    const overlaps = (a, b) => {
+      const ix = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)), iy = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+      return ix * iy / Math.min(a.w * a.h, b.w * b.h);
+    };
+    const all = runs.flat().sort((a, b) => b.score - a.score);
+    const kept = [];
+    for (const c of all) {
+      if (kept.some(k => overlaps(k, c) > 0.3)) continue;
+      const support = new Set(all.filter(o => overlaps(o, c) > 0.3).map(o => o.from));
+      if (support.size >= 2) kept.push({ ...c, support: support.size });
+    }
+    return kept.map(({ from, ...c }) => c);
+  }
+
+  globalThis.MeritPlanExemplar = Object.freeze({ search, searchMany });
 })();
