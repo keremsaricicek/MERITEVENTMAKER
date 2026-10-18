@@ -14,8 +14,10 @@
 //     from the chair's centre toward the table's, its ink runs into the
 //     table's drawn edge (an ellipse for a round or bistro table) with no
 //     paper between. That states the facing toward the table's centre,
-//     evidence drawnAgainstTable; a chair with paper between it and the
-//     table, or one inside it, is given nothing.
+//     evidence drawnAgainstTable — but only when the symbol shows a back on
+//     the far side (two lines, as the stencil reads a family). A chair with
+//     paper between it and the table, one inside it, or a plain square that
+//     shows no back is given nothing.
 //   ON THE GOLDEN PLAN: every facing the product states is one the annotation
 //     agrees with (within 30 degrees), every one carries the evidence it was
 //     read from (stencilBackrest or drawnAgainstTable), and the old per-chair
@@ -92,6 +94,14 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     box(r1, 20, 90, 52, 110);                            // west, but 8 px of paper short of the disc
     const r2 = sheet(); box(r2, 60, 60, 140, 140); box(r2, 140, 140, 160, 160); // a chair at a SQUARE table's corner
     const r3 = sheet(); disc(r3, 100, 100, 40); box(r3, 140, 140, 160, 160);    // the same chair at a ROUND table
+    // ...and only a chair whose symbol shows a back on the side away from the
+    // table: an armchair stencil facing +x has its backrest at -x.
+    const r4 = sheet(); draw(r4, 60, 60, 0, inChair); draw(r4, 160, 60, 0, square);
+    out.backrest = {
+      armTableAtPlusX: F.backrestAway(r4, { cx: 60, cy: 60, w: 34, h: 30 }, 0),
+      armTableAtMinusX: F.backrestAway(r4, { cx: 60, cy: 60, w: 34, h: 30 }, 180),
+      squareAnySide: [0, 90, 180, 270].some((a) => F.backrestAway(r4, { cx: 160, cy: 60, w: 30, h: 30 }, a)),
+    };
     out.against = {
       paper: F.paperLevel(r1),
       east: A(r1, { cx: 148, cy: 100 }),
@@ -114,6 +124,8 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "a chair whose ink runs into its round table's edge faces the table's centre, and says the join is how it is known", synth.against);
   checks.ok(synth.against.gap === null && synth.against.inside === null && synth.against.paper === 255,
     "a chair with paper between it and the table, or one inside the table, is given no facing: standing near is not a drawing of the two joined", synth.against);
+  checks.equal(JSON.stringify(synth.backrest), JSON.stringify({ armTableAtPlusX: true, armTableAtMinusX: false, squareAnySide: false }),
+    "a chair touching its table is given a facing only if its symbol shows a back on the far side: a plain square never does, whichever side the table is on", synth.backrest);
   checks.ok(Array.isArray(synth.against.squareCorner) && synth.against.squareCorner[0] === 225 && synth.against.roundCorner === null,
     "the join is walked to the table's DRAWN edge: the same corner chair touches a square table and stands clear of a round one", synth.against);
 
@@ -140,8 +152,10 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   }
   const fromStencil = stated.filter(c => c.evidence === "stencilBackrest"), joined = stated.filter(c => c.evidence === "drawnAgainstTable");
   checks.ok(fromStencil.length >= 70, "most of the Golden Plan's armchairs have their facing read off the stencil", fromStencil.length);
-  checks.ok(joined.length >= 25 && stated.length / chairs.length >= 0.8,
-    "the chairs drawn running into their round and bistro tables are stated facing them, and 80 % of all chairs now have a facing", { joined: joined.length, stated: stated.length, chairs: chairs.length });
+  // 22 of the 30 on 2026-10-18; a chair whose far side does not show its
+  // backrest at this resolution stays unread, which is the honest outcome.
+  checks.ok(joined.length >= 20 && stated.length / chairs.length >= 0.8,
+    "the chairs drawn running into their round and bistro tables, with a back on the far side, are stated facing them, and 80 % of all chairs now have a facing", { joined: joined.length, stated: stated.length, chairs: chairs.length });
   checks.equal(disagreements.length, 0, "every stated facing agrees with the annotation within 30 degrees", disagreements.slice(0, 5));
   checks.ok(stated.every(c => c.evidence === "stencilBackrest" || c.evidence === "drawnAgainstTable"), "and every one says what it was read from: the stencil's backrest, or the chair drawn into its table's edge");
   checks.ok(chairs.filter(c => !c.known).every(c => c.evidence === "stencilNotRead"), "a chair the stencil reading cannot settle says so, rather than keeping a per-chair guess");

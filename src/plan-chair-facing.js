@@ -261,5 +261,26 @@
     return { facingAngle: Math.round(((angle % 360) + 360) % 360 * 10) / 10, evidence: "drawnAgainstTable" };
   }
 
-  globalThis.MeritChairFacing = Object.freeze({ againstFacing, paperLevel, readFacing, readFacingSliced, templateFront, ridgeCount });
+  // ...and only a chair whose symbol SHOWS a back. Seen with +x toward the
+  // table, the side away from it must carry two lines — the chair's edge and
+  // its backrest's inner edge — on either line map, the same reading the
+  // stencil applies to a family. A plain square touching its table shows one
+  // and is given nothing: contact says where a chair is, not which way a
+  // symmetric symbol faces (benchmark:facts caught exactly that on the three
+  // adversarial plans, where every chair is a solid square).
+  const mapsOf = new WeakMap();
+  function backrestAway(raster, chair, towardDeg) {
+    if (!raster || !chair || !(chair.w > 0) || !(chair.h > 0)) return false;
+    let ms = mapsOf.get(raster);
+    if (!ms) { ms = maps(raster); mapsOf.set(raster, ms); }
+    const lo = Math.floor(N / 3), hi = Math.floor(2 * N / 3), half = N / 2;
+    for (const map of [ms.line, ms.outline]) {
+      const V = view(raster, map, chair, towardDeg), far = [];
+      for (let k = 0; k < half; k++) { let t = 0; for (let j = lo; j < hi; j++) t += V[j * N + k]; far.push(t / (hi - lo)); }
+      if (ridgeCount(far) >= 2) return true;
+    }
+    return false;
+  }
+
+  globalThis.MeritChairFacing = Object.freeze({ againstFacing, backrestAway, paperLevel, readFacing, readFacingSliced, templateFront, ridgeCount });
 })();

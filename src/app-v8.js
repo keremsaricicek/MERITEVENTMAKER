@@ -3277,10 +3277,11 @@
       const f=read.byId.get(id);
       if(f){o.facingKnown=true;o.facingAngle=f.facingAngle;o.facingEvidence=f.evidence;o.facingStencil={family:f.family,map:f.map,margin:f.margin};continue;}
       delete o.facingStencil;
-      // not read from the stencil: a chair whose ink runs into its own table's drawn edge faces it (D10)
-      const t=tableOf.get(id),against=t&&F.againstFacing?F.againstFacing(raster,{cx:ch.x/100*W,cy:ch.y/100*H},
+      // not read from the stencil: a chair whose ink runs into its own table's drawn edge, and whose far side shows a backrest, faces it (D10)
+      const box={cx:ch.x/100*W,cy:ch.y/100*H,w:ch.w/100*W,h:ch.h/100*H,rotation:ch.rotation||0};
+      const t=tableOf.get(id),against=t&&F.againstFacing?F.againstFacing(raster,box,
         {cx:(t.x+t.w/2)/100*W,cy:(t.y+t.h/2)/100*H,w:t.w/100*W,h:t.h/100*H,rotation:t.rotation||0,type:t.type},paper??(paper=F.paperLevel(raster))):null;
-      if(against){o.facingKnown=true;o.facingAngle=against.facingAngle;o.facingEvidence=against.evidence;againstN++;}
+      if(against&&F.backrestAway(raster,box,against.facingAngle)){o.facingKnown=true;o.facingAngle=against.facingAngle;o.facingEvidence=against.evidence;againstN++;}
       else{o.facingKnown=false;o.facingAngle=null;o.facingEvidence="stencilNotRead";}
     }
     analysis.diagnostics.chairFacing={chairs:chairs.length,stated:read.byId.size+againstN,fromStencil:read.byId.size,drawnAgainstTable:againstN,families:read.families};
