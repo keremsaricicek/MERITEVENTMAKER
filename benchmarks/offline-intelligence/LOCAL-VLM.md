@@ -75,6 +75,7 @@ Q8_0 here with the pinned `llama-quantize` in 5.2 s (BF16: no faster).
 | Qwen3.5-0.8B Q8_0 (Apache-2.0) | 0.17 / **0.00** / 0.17 | **1.00** | 1.00 | 0.43 (1.00) | 0.80 / 0.20 | 5.5 s | 3,626 MB |
 | Qwen3.5-2B Q4_K_M (Apache-2.0) | 0.09 / 0.06 / 0.58 | 0.00 | 0.50 | 0.43 (0.43) | 0.60 / 0.20 | 17.0 s | 4,373 MB |
 | Qwen3-VL-2B Q4_K_M (Apache-2.0) | 0.22 / 0.29 / 0.25 | 0.00 | 0.50 | **0.86** (0.86) | 0.60 / 0.20 | 16.0 s | 4,275 MB |
+| InternVL3.5-1B Q4_K_M, projector Q8_0 here (Apache-2.0) | 0.22 / **0.00** / 0.50 | **1.00** | 0.75 | 0.57 (0.57) | **1.00 / 1.00** | 15.3 s | 3,833 MB |
 
 Timing caveat: the dev runs of the two 2 B models overlapped, for a few
 minutes each, a training smoke test (Qwen3.5-2B) and a regression-suite run
@@ -85,7 +86,10 @@ Small per-question counts (4–5 items on count, merged, serves, empty); the
 point is the pattern, and the pattern holds across all three: **the models do
 not know the drawing convention.** A sofa seen from above is "table" or
 "nothing"; "serves" is answered "no" almost always (0.20 = the negatives).
-Chair counting on a clear round table is the one zero-shot skill. The faults
+Chair counting on a clear round table is the one zero-shot skill. InternVL's
+5 / 5 on merged and on serves is five items each and comes with "table" for
+every sofa and "stage" for every empty crop. A 672 px run of Qwen3.5-0.8B was
+stopped unrun: the failure is not resolution. The faults
 the audit found were real but were not why these models fail — with them
 fixed, the failure is knowledge, not settings.
 
