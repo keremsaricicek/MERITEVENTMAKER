@@ -504,7 +504,7 @@
     if(!ui.vlmPanelOpen)return"";
     const a=event&&event.analysis,run=a&&a.vlm,c=run?V().counts(run):null;
     const second=run&&run.mode==="check";
-    const status=run?`<p class="vlm-state ${run.status==="done"?"ok":run.status==="running"?"":"warn"}" role="status"><b>${t("vlm.run."+run.status)}</b>${run.code&&run.status!=="done"?` · ${esc(run.status==="stale"?tx("vlm.stale.",run.staleReason||"ANALYSIS_CHANGED"):tx("vlm.err.",run.code))}`:""}</p><p class="vlm-note">${second?t("vlm.second.meta",{model:esc(run.model||""),steps:num(run.steps)}):t("vlm.run.meta",{model:esc(run.model||""),usd:money(run.spentUsd),steps:num(run.steps)})}</p>`:"";
+    const status=run?`<p class="vlm-state ${run.status==="done"?"ok":run.status==="running"?"":"warn"}" role="status"><b>${t((second?"vlm.second.run.":"vlm.run.")+run.status)}</b>${run.code&&run.status!=="done"?` · ${esc(run.status==="stale"?tx("vlm.stale.",run.staleReason||"ANALYSIS_CHANGED"):tx("vlm.err.",run.code))}`:""}</p><p class="vlm-note">${second?t("vlm.second.meta",{model:esc(run.model||""),steps:num(run.steps)}):t("vlm.run.meta",{model:esc(run.model||""),usd:money(run.spentUsd),steps:num(run.steps)})}</p>`:"";
     const tl=second&&LC()?LC().tally(run.checks):null;
     const tally=tl&&tl.asked?`<p class="vlm-note">${t("vlm.second.tally",{asked:num(tl.asked),agrees:num(tl.AGREES),differs:num(tl.DIFFERS),unsure:num(tl.UNSURE),none:num(tl.NO_ANSWER)})}</p>`:"";
     const body=run&&run.findings.length?`<ol class="vlm-findings">${run.findings.map((f,i)=>findingRowHTML(a,f,i)).join("")}</ol>`
@@ -513,7 +513,7 @@
     const send=ready?`<button class="btn sm primary" data-vlm-action="start">${t(run&&!second?"vlm.sendAgain":"vlm.send")}</button>`:"";
     const checks=localChecks(session.relay);
     const look=ready&&checks.length&&LC()?`<button class="btn sm" data-vlm-action="look">${t("vlm.second.button")}</button>`:"";
-    const lookNote=checks.length&&!run?`<p class="vlm-note">${t("vlm.second.what")} ${t("vlm.second.measured",{list:esc(checks.join(", "))})}</p>`:"";
+    const lookNote=checks.length&&!run?`<p class="vlm-note">${t("vlm.second.what")} ${t("vlm.second.measured",{list:esc(checks.map(q=>t("vlm.second.q."+q)).join(", "))})}</p>`:"";
     return`<aside class="vlm-panel" id="vlmPanel" aria-label="${esc(t("vlm.title"))}"><div class="vlm-head"><strong>${t("vlm.title")}</strong><button class="btn icon-only sm" data-vlm-action="close" aria-label="${esc(t("vlm.close"))}">${icon("x")}</button></div><div class="vlm-body">
       <section class="vlm-relay">${relayStateHTML()}${run?"":`<p class="vlm-note">${t("vlm.what")}</p>`}${lookNote}<div class="vlm-actions">${send}${look}</div></section>
       ${run?`<section class="vlm-run">${status}${run.planSummary?`<div class="vlm-summary"><small>${t("vlm.summaryLabel")}</small><p>${esc(run.planSummary)}</p></div>`:""}${tally}${c&&c.total?`<p class="vlm-note">${t("vlm.counts",{open:c.open,accepted:c.accepted,dismissed:c.dismissed})}</p>`:""}${second?"":coverageHTML(run)}${setAsideHTML(run)}${body}</section>`:""}
@@ -549,7 +549,7 @@
     if(!r||!r.relay)return questionCount!=null?`<b>${t("diag.vlmNotConfigured")}</b> · ${t("diag.vlmPending",{n:questionCount})}`:"";
     if(!r.configured)return`<b>${t("diag.vlmNotConfigured")}</b> · ${r.provider==="local"?t("vlm.relay.localNotReady"):t(r.reasonCode==="UNKNOWN_PRICE"?"vlm.relay.noPrice":"vlm.relay.noKey")}`;
     const name=r.provider==="local"&&r.local?`${r.local.name} ${r.local.version}`:r.model||"";
-    return`<b>${t(r.provider==="local"?"vlm.relay.readyLocal":"vlm.relay.ready")}</b> · ${esc(name)}${a&&a.vlm?` · ${t("vlm.run."+a.vlm.status)}`:""}`;
+    return`<b>${t(r.provider==="local"?"vlm.relay.readyLocal":"vlm.relay.ready")}</b> · ${esc(name)}${a&&a.vlm?` · ${t((a.vlm.mode==="check"?"vlm.second.run.":"vlm.run.")+a.vlm.status)}`:""}`;
   }
 
   // ---- controls ---------------------------------------------------------------
