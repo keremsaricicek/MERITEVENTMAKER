@@ -242,8 +242,16 @@
   // page opened any other way never asks for /vlm-relay at all.
   const relayServed=()=>{try{const n=globalThis.performance.getEntriesByType("navigation")[0];return !!(n&&Array.isArray(n.serverTiming)&&n.serverTiming.some(e=>e.name==="merit-relay"));}catch{return false;}};
   const AUTO_KEY="merit.secondLook.auto";
-  const autoOn=()=>{try{return globalThis.localStorage.getItem(AUTO_KEY)!=="off";}catch{return true;}};
-  function setAuto(on){try{globalThis.localStorage.setItem(AUTO_KEY,on?"on":"off");}catch{} render();} // a preference of this computer; without storage it stays on for the session
+  const autoOn=()=>{if(autoSession!==null)return autoSession;try{return globalThis.localStorage.getItem(AUTO_KEY)!=="off";}catch{return true;}};
+  // A preference of this computer. Where storage refuses it, the switch is
+  // kept for this session and the person is told it will not be remembered.
+  let autoSession=null;
+  function setAuto(on){
+    autoSession=on;
+    try{globalThis.localStorage.setItem(AUTO_KEY,on?"on":"off");}
+    catch{toast(t("vlm.second.autoNotRemembered"),"info",5000);}
+    render();
+  }
   // Called by the shell when an analysis has finished. Asks the relay what it
   // is only on a page the relay served; starts the look only for a local model
   // with measured questions, only with the switch on, and only if nothing else
