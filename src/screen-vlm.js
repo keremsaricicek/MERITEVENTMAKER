@@ -21,6 +21,12 @@
 //      capture, audit and undo behave as if the person had done it by hand,
 //      and say it came from a model suggestion.
 //
+// With a model on THIS computer whose manifest names the closed questions it
+// was measured on, a second action asks it a "second look" (MeritLocalCheck):
+// short fixed questions about the places the analysis is unsure of, two looks
+// each, the answers checked against what the analysis found; only a
+// disagreement both looks share becomes a finding, in this same list.
+//
 // An answer that arrives for an older analysis, another plan, another event
 // or a cancelled run is refused whole (MeritVlmReview.staleReason). Findings
 // are kept on the analysis they were made about (analysis.vlm) and vanish
@@ -49,6 +55,7 @@
   const RELAY="/vlm-relay";
   const SEND_LIMIT_BYTES=3.6*1024*1024; // under the API's 5 MB per image once base64-encoded
   const V=()=>globalThis.MeritVlmReview;
+  const LC=()=>globalThis.MeritLocalCheck;
   // Session-only: what the relay said, whether a run is in flight. Nothing
   // here is persisted; the findings live on the analysis.
   const session={relay:null,probing:false,busy:false,controller:null,runId:null,progress:null,check:null,checking:false,focusId:null};
@@ -105,6 +112,23 @@
       if(data.length*3/4<=limit)return{mediaType:type,data,width:size.width,height:size.height};
     }
     throw new Error("IMAGE_TOO_LARGE");
+  }
+
+  // One look for the second look: a square of the plan around `frame` (plan
+  // pixels), at `px`, on white paper where it runs past the plan's edge, turned
+  // `deg` degrees — the crop the model was measured on.
+  function encodeLook(img,frame,deg,px){
+    const canvas=document.createElement("canvas");canvas.width=px;canvas.height=px;
+    const ctx=canvas.getContext("2d");
+    ctx.fillStyle="#ffffff";ctx.fillRect(0,0,px,px);
+    ctx.imageSmoothingQuality="high";
+    if(deg){ctx.translate(px/2,px/2);ctx.rotate(deg*Math.PI/180);ctx.translate(-px/2,-px/2);}
+    const W=img.naturalWidth,H=img.naturalHeight,s=frame.side,x0=frame.cx-s/2,y0=frame.cy-s/2;
+    // Only the part of the square that is on the plan is drawn; the rest stays paper.
+    const sx=Math.max(0,x0),sy=Math.max(0,y0),ex=Math.min(W,x0+s),ey=Math.min(H,y0+s);
+    if(ex>sx&&ey>sy)ctx.drawImage(img,sx,sy,ex-sx,ey-sy,(sx-x0)/s*px,(sy-y0)/s*px,(ex-sx)/s*px,(ey-sy)/s*px);
+    const url=canvas.toDataURL("image/png");
+    return{mediaType:"image/png",data:url.slice(url.indexOf(",")+1),width:px,height:px};
   }
 
   // ---- one reading ---------------------------------------------------------------
@@ -200,6 +224,83 @@
         audit(event,"VLM_READING_FINISHED",{runId:run.runId,status:run.status,code:run.code,findings:c.total,usd:run.spentUsd});
         touchEvent(event);
         if(run.status==="done")toast(t("vlm.toast.done",{n:c.total}),"success",5000);
+        else if(run.status==="cancelled")toast(t("vlm.toast.cancelled"),"info",4000);
+        else if(run.status!=="stale")toast(t("vlm.toast.stopped"),"error",7000);
+      }
+      render();
+      refresh();
+    }
+  }
+
+  // ---- the local second look -------------------------------------------------------
+  const localChecks=(st)=>st&&st.relay&&st.configured&&st.provider==="local"&&st.local&&Array.isArray(st.local.checks)?st.local.checks:[];
+  async function startLook(){
+    const event=activeEvent(),a=event&&event.analysis,L=LC();
+    if(!a||session.busy||!L)return;
+    if(!canMutate(event,"ask the local model a second look"))return;
+    const st=await probe();
+    const checks=localChecks(st);
+    if(!checks.length)return; // the panel says why, persistently
+    let img;
+    try{img=await loadImage(event.background.src);}
+    catch{toast(t("vlm.toast.image"),"error",6000);return;}
+    const W=img.naturalWidth,H=img.naturalHeight,lim=st.limits||{};
+    const max=Math.max(0,Math.min(L.MAX_QUESTIONS,Math.floor((lim.maxAsksPerRun||L.MAX_QUESTIONS*L.LOOKS.length)/L.LOOKS.length)));
+    const qs=L.plan(a,{checks,width:W,height:H,max});
+    if(!qs.length){toast(t("vlm.second.nothing"),"info",6000);return;}
+    const looks=qs.length*L.LOOKS.length;
+    const yes=await ask({title:t("vlm.second.ask.title"),confirmLabel:t("vlm.second.ask.send"),body:[
+      t("vlm.second.ask.what",{n:qs.length,px:L.CROP_PX,looks}),
+      t("vlm.ask.notSent"),
+      t("vlm.ask.printed"),
+      t("vlm.second.ask.where",{model:`${st.local.name} ${st.local.version}`,licence:st.local.licence}),
+      t("vlm.second.ask.time",{min:Math.max(1,Math.round(looks*8/60))}),
+      t("vlm.second.ask.suggestions"),
+    ].join("\n\n")});
+    if(!yes)return;
+    if(activeEvent()!==event||event.analysis!==a){toast(t("vlm.toast.changed"),"error",6000);return;}
+    const run={mode:"check",runId:V().newRunId(n=>globalThis.crypto.getRandomValues(new globalThis.Uint8Array(n))),eventId:event.id,analysisId:a.id,planHash:a.planHash||null,
+      model:`${st.local.name} ${st.local.version}`,lang:ui.lang==="tr"?"tr":"en",startedAt:new Date().toISOString(),finishedAt:null,status:"running",code:null,
+      planSummary:"",regions:[],tiles:[],findings:[],spentUsd:0,steps:0,
+      checks:qs.map(q=>({id:q.id,question:q.question,piece:q.piece||null,candidateIds:q.candidateIds,reason:q.reason,detector:q.detector,answers:[],verdict:null,value:null}))};
+    a.vlm=run;
+    audit(event,"VLM_SECOND_LOOK_STARTED",{runId:run.runId,model:run.model,places:qs.length});
+    touchEvent(event);
+    session.busy=true;session.runId=run.runId;session.controller=new globalThis.AbortController();session.focusId=null;
+    ui.vlmPanelOpen=true;
+    try{
+      for(let i=0;i<qs.length&&run.status==="running";i++){
+        const q=qs[i],rec=run.checks[i];
+        session.progress={label:"second",index:i+1,regions:qs.length};render();
+        for(const deg of L.LOOKS){
+          let image;
+          try{image=encodeLook(img,q.frame,deg,L.CROP_PX);}catch{run.code="IMAGE";break;}
+          const res=await post("/ask",{runId:run.runId,analysisId:run.analysisId,planHash:run.planHash,question:q.question,...(q.piece?{piece:q.piece}:{}),image},session.controller&&session.controller.signal);
+          if(run.status==="cancelled")break;
+          const stale=V().staleReason(run,res&&res.ok?res:{...res,runId:run.runId,analysisId:run.analysisId,planHash:run.planHash},currentKeys());
+          if(stale){run.status="stale";run.code="ANSWER_STALE";run.staleReason=stale;post("/cancel",{runId:run.runId});toast(t("vlm.toast.stale"),"error",7000);break;}
+          if(!res||!res.ok){run.code=res&&res.code||"RELAY_ERROR";if(run.code==="CANCELLED")run.status="cancelled";break;}
+          run.steps++;
+          rec.answers.push(res.value===undefined?null:res.value);
+        }
+        if(run.code||run.status!=="running")break;
+        const j=L.judge(q,rec.answers);
+        rec.verdict=j.verdict;rec.value=j.value;
+        const f=L.findingFor(q,j,a,run.runId.slice(4,12));
+        // One finding per place, never merged: two questions about one object
+        // (its type, the link it is part of) are two different suggestions.
+        if(f)run.findings.push(f);
+        touchEvent(event);render();
+      }
+    }finally{
+      if(run.status==="running")run.status=run.code?(run.checks.some(c=>c.verdict)?"partial":"failed"):"done";
+      run.finishedAt=new Date().toISOString();
+      session.busy=false;session.controller=null;session.progress=null;session.runId=null;
+      if(activeEvent()===event&&event.analysis===a){
+        const c=V().counts(run),tl=L.tally(run.checks);
+        audit(event,"VLM_SECOND_LOOK_FINISHED",{runId:run.runId,status:run.status,code:run.code,asked:tl.asked,agrees:tl.AGREES,differs:tl.DIFFERS,unsure:tl.UNSURE,findings:c.total});
+        touchEvent(event);
+        if(run.status==="done")toast(t("vlm.second.done",{n:c.total}),"success",5000);
         else if(run.status==="cancelled")toast(t("vlm.toast.cancelled"),"info",4000);
         else if(run.status!=="stale")toast(t("vlm.toast.stopped"),"error",7000);
       }
@@ -318,7 +419,12 @@
 
   // ---- what the screen shows ---------------------------------------------------
   const typeLabel=(type)=>type?t("teach.type."+type):"";
+  const answerWord=(w)=>w==="table"||w==="nothing"?t("vlm.second.word."+w):typeLabel(w);
   function findingTitle(f,i){
+    if(f.check&&f.kind==="note"){
+      const k=f.check.question;
+      return`${i+1}. ${t("vlm.second.title."+k,{answer:k==="identify"?answerWord(f.check.answer):f.check.answer})}`;
+    }
     const what=f.kind==="wrongType"?t("vlm.kind.wrongType",{type:typeLabel(f.type)})
       :f.kind==="missing"?t("vlm.kind.missing",{type:typeLabel(f.type)})
       :f.kind==="seatCount"?t("vlm.kind.seatCount",{n:f.value})
@@ -330,7 +436,9 @@
     const a=event&&event.analysis;
     if(!a||!served())return"";
     if(session.busy){
-      const p=session.progress||{},label=p.label==="region"?t("vlm.progress.region",{i:p.index,n:p.regions}):p.label==="tile"?t("vlm.progress.tile",{i:p.index,n:p.regions}):t("vlm.progress.overview");
+      const p=session.progress||{};
+      if(p.label==="second")return`<span class="vlm-progress" role="status">${esc(t("vlm.second.progress",{i:p.index,n:p.regions}))}</span><button class="btn" data-vlm-action="cancel">${t("vlm.second.cancel")}</button>`;
+      const label=p.label==="region"?t("vlm.progress.region",{i:p.index,n:p.regions}):p.label==="tile"?t("vlm.progress.tile",{i:p.index,n:p.regions}):t("vlm.progress.overview");
       return`<span class="vlm-progress" role="status">${esc(t("vlm.progress",{step:p.step||1,of:p.of||1,what:label}))}</span><button class="btn" data-vlm-action="cancel">${t("vlm.cancel")}</button>`;
     }
     const c=a.vlm?V().counts(a.vlm):null;
@@ -383,18 +491,32 @@
     const reason=!p.ok&&f.state==="open"?`<span class="vlm-reason">${esc(t("vlm.reason."+p.reason))}</span>`:"";
     const actions=f.state==="open"?`<div class="vlm-row-actions"><button class="btn sm primary" data-vlm-action="accept" data-vlm-finding="${esc(f.id)}" ${p.ok?"":`disabled title="${esc(t("vlm.reason."+p.reason))}"`}>${t("vlm.accept")}</button><button class="btn sm" data-vlm-action="dismiss" data-vlm-finding="${esc(f.id)}">${t("vlm.dismiss")}</button>${f.box||f.candidateId?`<button class="btn sm quiet" data-vlm-action="focus" data-vlm-finding="${esc(f.id)}">${t("vlm.show")}</button>`:""}</div>${reason}`:"";
     const cls=["vlm-finding","state-"+f.state,"kind-"+f.kind,session.focusId===f.id?"focused":""].join(" ").trim();
-    return`<li class="${esc(cls)}" data-vlm-row="${esc(f.id)}"><div class="vlm-finding-head"><b>${esc(findingTitle(f,i))}</b><small>${esc(conf)}${f.step==="region"?` · R${num(f.regionIndex)+1}`:f.step==="tile"?` · T${num(f.regionIndex)+1}`:""}</small>${state}</div>${numberLine(f)}${f.evidence?`<q class="vlm-evidence">${esc(f.evidence)}</q>`:""}${actions}</li>`;
+    return`<li class="${esc(cls)}" data-vlm-row="${esc(f.id)}"><div class="vlm-finding-head"><b>${esc(findingTitle(f,i))}</b><small>${esc(f.step==="check"?t("vlm.second.step"):conf)}${f.step==="region"?` · R${num(f.regionIndex)+1}`:f.step==="tile"?` · T${num(f.regionIndex)+1}`:""}</small>${state}</div>${numberLine(f)}${checkLine(f)}${f.evidence?`<q class="vlm-evidence">${esc(f.evidence)}</q>`:""}${actions}</li>`;
+  }
+  // What a second-look finding rests on: both looks' answer beside the analysis's.
+  function checkLine(f){
+    const c=f.check;if(!c)return"";
+    const detector=c.question==="identify"?answerWord(c.detector):c.detector;
+    const key=c.question==="chairs"&&c.printed!=null?"vlm.second.line.chairsPrinted":"vlm.second.line."+c.question;
+    return`<p class="vlm-note">${esc(t(key,{answer:c.question==="identify"?answerWord(c.answer):c.answer,detector,printed:c.printed,piece:c.piece?typeLabel(c.piece):""}))}</p>`;
   }
   function panelHTML(event){
     if(!ui.vlmPanelOpen)return"";
     const a=event&&event.analysis,run=a&&a.vlm,c=run?V().counts(run):null;
-    const status=run?`<p class="vlm-state ${run.status==="done"?"ok":run.status==="running"?"":"warn"}" role="status"><b>${t("vlm.run."+run.status)}</b>${run.code&&run.status!=="done"?` · ${esc(run.status==="stale"?tx("vlm.stale.",run.staleReason||"ANALYSIS_CHANGED"):tx("vlm.err.",run.code))}`:""}</p><p class="vlm-note">${t("vlm.run.meta",{model:esc(run.model||""),usd:money(run.spentUsd),steps:num(run.steps)})}</p>`:"";
+    const second=run&&run.mode==="check";
+    const status=run?`<p class="vlm-state ${run.status==="done"?"ok":run.status==="running"?"":"warn"}" role="status"><b>${t("vlm.run."+run.status)}</b>${run.code&&run.status!=="done"?` · ${esc(run.status==="stale"?tx("vlm.stale.",run.staleReason||"ANALYSIS_CHANGED"):tx("vlm.err.",run.code))}`:""}</p><p class="vlm-note">${second?t("vlm.second.meta",{model:esc(run.model||""),steps:num(run.steps)}):t("vlm.run.meta",{model:esc(run.model||""),usd:money(run.spentUsd),steps:num(run.steps)})}</p>`:"";
+    const tl=second&&LC()?LC().tally(run.checks):null;
+    const tally=tl&&tl.asked?`<p class="vlm-note">${t("vlm.second.tally",{asked:num(tl.asked),agrees:num(tl.AGREES),differs:num(tl.DIFFERS),unsure:num(tl.UNSURE),none:num(tl.NO_ANSWER)})}</p>`:"";
     const body=run&&run.findings.length?`<ol class="vlm-findings">${run.findings.map((f,i)=>findingRowHTML(a,f,i)).join("")}</ol>`
-      :run&&run.status!=="running"?`<p class="vlm-note">${t("vlm.noFindings")}</p>`:"";
-    const send=session.relay&&session.relay.relay&&session.relay.configured&&!(session.relay.ledger&&session.relay.ledger.state&&session.relay.ledger.state!=="OK")&&!session.busy?`<button class="btn sm primary" data-vlm-action="start">${t(run?"vlm.sendAgain":"vlm.send")}</button>`:"";
+      :run&&run.status!=="running"?`<p class="vlm-note">${t(second?"vlm.second.noFindings":"vlm.noFindings")}</p>`:"";
+    const ready=session.relay&&session.relay.relay&&session.relay.configured&&!(session.relay.ledger&&session.relay.ledger.state&&session.relay.ledger.state!=="OK")&&!session.busy;
+    const send=ready?`<button class="btn sm primary" data-vlm-action="start">${t(run&&!second?"vlm.sendAgain":"vlm.send")}</button>`:"";
+    const checks=localChecks(session.relay);
+    const look=ready&&checks.length&&LC()?`<button class="btn sm" data-vlm-action="look">${t("vlm.second.button")}</button>`:"";
+    const lookNote=checks.length&&!run?`<p class="vlm-note">${t("vlm.second.what")} ${t("vlm.second.measured",{list:esc(checks.join(", "))})}</p>`:"";
     return`<aside class="vlm-panel" id="vlmPanel" aria-label="${esc(t("vlm.title"))}"><div class="vlm-head"><strong>${t("vlm.title")}</strong><button class="btn icon-only sm" data-vlm-action="close" aria-label="${esc(t("vlm.close"))}">${icon("x")}</button></div><div class="vlm-body">
-      <section class="vlm-relay">${relayStateHTML()}${run?"":`<p class="vlm-note">${t("vlm.what")}</p>`}${send}</section>
-      ${run?`<section class="vlm-run">${status}${run.planSummary?`<div class="vlm-summary"><small>${t("vlm.summaryLabel")}</small><p>${esc(run.planSummary)}</p></div>`:""}${c&&c.total?`<p class="vlm-note">${t("vlm.counts",{open:c.open,accepted:c.accepted,dismissed:c.dismissed})}</p>`:""}${coverageHTML(run)}${setAsideHTML(run)}${body}</section>`:""}
+      <section class="vlm-relay">${relayStateHTML()}${run?"":`<p class="vlm-note">${t("vlm.what")}</p>`}${lookNote}<div class="vlm-actions">${send}${look}</div></section>
+      ${run?`<section class="vlm-run">${status}${run.planSummary?`<div class="vlm-summary"><small>${t("vlm.summaryLabel")}</small><p>${esc(run.planSummary)}</p></div>`:""}${tally}${c&&c.total?`<p class="vlm-note">${t("vlm.counts",{open:c.open,accepted:c.accepted,dismissed:c.dismissed})}</p>`:""}${second?"":coverageHTML(run)}${setAsideHTML(run)}${body}</section>`:""}
     </div></aside>`;
   }
   // A model's number beside the plan's own reading of that table.
@@ -438,6 +560,7 @@
     else if(action==="probe")probe();
     else if(action==="check")check();
     else if(action==="start")start();
+    else if(action==="look")startLook();
     else if(action==="cancel")cancel();
     else if(action==="accept")accept(id);
     else if(action==="dismiss")dismiss(id);

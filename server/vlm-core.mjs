@@ -127,6 +127,11 @@ function sharedConfig(env, repoRoot) {
       timeoutMs: int(env.VLM_TIMEOUT_MS, 180000, 5000, 900000),
       maxImageBytes: int(env.VLM_MAX_IMAGE_BYTES, 4.5 * 1024 * 1024, 64 * 1024, 5 * 1024 * 1024),
       maxBodyBytes: 8 * 1024 * 1024,
+      // The local second look (/vlm-relay/ask): one closed question per
+      // request, a few seconds of CPU each, nothing charged. Its own caps, so
+      // a second look cannot use up the day's whole-plan readings.
+      maxAsksPerRun: int(env.VLM_MAX_ASKS_PER_RUN, 40, 1, 400),
+      maxAsksPerDay: int(env.VLM_MAX_ASKS_PER_DAY, 800, 1, 100000),
     }),
     dataDir: path.resolve(env.VLM_DATA_DIR || path.join(repoRoot || process.cwd(), ".vlm-data")),
     port: int(env.PORT, 8787, 0, 65535),
@@ -142,7 +147,9 @@ export function status(config, usage, ledger) {
     // The local model's own statement of itself (name, version, licence,
     // source, runtime, pinned files) — never a path on this disk.
     local: config.local ? { id: config.local.id, name: config.local.name, version: config.local.version, licence: config.local.licence,
-      source: config.local.source, runtime: config.local.runtime, integrity: config.local.integrity, files: config.local.files.length } : null,
+      source: config.local.source, runtime: config.local.runtime, integrity: config.local.integrity, files: config.local.files.length,
+      // The closed questions this model was MEASURED to answer, and where.
+      checks: [...(config.local.checks || [])], checksEvidence: config.local.checksEvidence || null } : null,
     problem: config.problem || null,
     configured: config.configured,
     reasonCode: config.reasonCode,
@@ -392,6 +399,78 @@ export function validateModelOutput(raw, payload) {
   } else regionsDropped = v.regionsToInspect.length;
   return { ok: true, result: { planSummary: cleanText(v.planSummary, CAPS.summaryChars), findings, regionsToInspect: regions,
     dropped, droppedCount: dropped.length, clamped, regionsDropped } };
+}
+
+// ---- closed questions about one crop: the LOCAL second look ---------------------------
+// A small model on this machine is not asked to review a whole plan (measured:
+// past 15 minutes on four cores, and none of three models passed). It is asked
+// ONE closed question about ONE crop the page chose — "what is at the centre",
+// "how many chairs stand around this table", "do these tables touch", "does this
+// sofa serve this table" — with the exact words it was measured and trained on
+// (server/local-check-questions.json, shared with the benchmark and the training
+// set). The page sends a crop and a question NAME; the relay writes the question.
+// The answer comes back as a closed value (a word from the list, a number, yes or
+// no) or as "no answer" — never as the model's free text.
+export const ASK_SPEC = Object.freeze(JSON.parse(fs.readFileSync(new URL("./local-check-questions.json", import.meta.url), "utf8")));
+export const ASK_QUESTIONS = Object.freeze(Object.keys(ASK_SPEC.questions));
+export const ASK_WORDS = Object.freeze([...ASK_SPEC.words]);
+export const ASK_PIECES = Object.freeze([...ASK_SPEC.pieces]);
+export const ASK_IMAGE = Object.freeze({ min: 64, max: 1024 });
+export function askText(question, piece) {
+  const q = ASK_SPEC.questions[question];
+  return ASK_SPEC.preamble + q.replace("{words}", ASK_WORDS.join(", ")).replace("{piece}", piece || "");
+}
+
+export function validateAskPayload(body, config) {
+  if (!isObj(body)) return fail("BAD_PAYLOAD", "body");
+  const unknown = onlyKeys(body, ["runId", "analysisId", "planHash", "question", "piece", "image"], "body");
+  if (unknown) return fail("UNKNOWN_FIELD", unknown);
+  if (typeof body.runId !== "string" || !/^[A-Za-z0-9_-]{8,64}$/.test(body.runId)) return fail("BAD_PAYLOAD", "runId");
+  if (typeof body.analysisId !== "string" || !/^[A-Za-z0-9_-]{1,100}$/.test(body.analysisId)) return fail("BAD_PAYLOAD", "analysisId");
+  if (body.planHash != null && (typeof body.planHash !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(body.planHash))) return fail("BAD_PAYLOAD", "planHash");
+  if (!ASK_QUESTIONS.includes(body.question)) return fail("BAD_PAYLOAD", "question");
+  // Only what the pinned model was measured to answer (its manifest's `checks`).
+  const validated = (config.local && config.local.checks) || [];
+  if (!validated.includes(body.question)) return fail("QUESTION_NOT_VALIDATED", "question");
+  if (body.question === "serves" ? !ASK_PIECES.includes(body.piece) : body.piece != null) return fail("BAD_PAYLOAD", "piece");
+  const img = body.image;
+  if (!isObj(img)) return fail("BAD_PAYLOAD", "image");
+  const unknownImg = onlyKeys(img, ["mediaType", "data", "width", "height"], "image");
+  if (unknownImg) return fail("UNKNOWN_FIELD", unknownImg);
+  if (!["image/png", "image/jpeg"].includes(img.mediaType)) return fail("BAD_PAYLOAD", "image.mediaType");
+  if (typeof img.data !== "string" || !/^[A-Za-z0-9+/]+=*$/.test(img.data)) return fail("BAD_PAYLOAD", "image.data");
+  const bytes = Math.floor(img.data.length * 3 / 4);
+  if (bytes > config.limits.maxImageBytes) return fail("IMAGE_TOO_LARGE", "image.data");
+  if (![img.width, img.height].every(n => Number.isInteger(n) && n >= ASK_IMAGE.min && n <= ASK_IMAGE.max)) return fail("BAD_PAYLOAD", "image.size");
+  return { ok: true, payload: { runId: body.runId, analysisId: body.analysisId, planHash: body.planHash ?? null, question: body.question, piece: body.piece ?? null,
+    image: { mediaType: img.mediaType, data: img.data, width: img.width, height: img.height, bytes } } };
+}
+
+// The closed value in a model's answer, by the benchmark's own rules
+// (local-vlm-bench2.py answer_word / answer_number / answer_yesno): the
+// earliest listed word or synonym; the first number; the first yes or no.
+// Anything else is null — "no answer", never a guess.
+const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+export function parseAskAnswer(question, raw) {
+  const text = String(raw || "").toLowerCase().slice(0, 400);
+  const kind = ASK_SPEC.answers[question];
+  if (kind === "word") {
+    let best = null;
+    for (const [w, to] of [...ASK_WORDS.map(w => [w, w]), ...Object.entries(ASK_SPEC.synonyms)]) {
+      const m = new RegExp("\\b" + escRe(w) + "s?\\b").exec(text);
+      if (m && (!best || m.index < best.at)) best = { at: m.index, value: to };
+    }
+    return best ? best.value : null;
+  }
+  if (kind === "number") {
+    const m = /\d+/.exec(text);
+    if (m) { const n = Number(m[0]); return n <= 99 ? n : null; }
+    for (const [w, n] of [["zero", 0], ["no", 0], ["one", 1], ["two", 2], ["three", 3], ["four", 4], ["five", 5], ["six", 6], ["seven", 7], ["eight", 8], ["nine", 9], ["ten", 10]])
+      if (new RegExp("\\b" + w + "\\b").test(text)) return n;
+    return null;
+  }
+  if (kind === "yesno") { const m = /\b(yes|no)\b/.exec(text); return m ? m[1] : null; }
+  return null;
 }
 
 // ---- cost ----------------------------------------------------------------------------

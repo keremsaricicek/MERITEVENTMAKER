@@ -40,6 +40,9 @@ import crypto from "node:crypto";
 import http from "node:http";
 
 export const MANIFEST_FORMAT = "merit-local-vlm/1";
+// The closed questions a manifest may say its model was measured on — the same
+// file the relay builds them from (vlm-core ASK_SPEC).
+const ASK_QUESTION_NAMES = Object.keys(JSON.parse(fs.readFileSync(new URL("./local-check-questions.json", import.meta.url), "utf8")).questions);
 const MAX_FILES = 8;
 
 // The URL, if it names this machine; null otherwise.
@@ -75,6 +78,15 @@ export function readManifest(file, { verify = true } = {}) {
   if (!id || !/^[A-Za-z0-9._:-]+$/.test(id) || !name || !version || !licence || !source || !runtime) return fail("LOCAL_MANIFEST_INVALID", "id, name, version, licence, source and runtime are all required");
   const servedModel = m.servedModel == null ? id : str(m.servedModel, 120);
   if (!servedModel) return fail("LOCAL_MANIFEST_INVALID", "servedModel must be a short string");
+  // The closed questions (server/local-check-questions.json) this model passed
+  // its measurement on, and the file that says so. A question not listed is
+  // refused by the relay, so an unmeasured question cannot reach a person.
+  const KNOWN = ASK_QUESTION_NAMES;
+  if (m.checks != null && (!Array.isArray(m.checks) || m.checks.length > KNOWN.length || !m.checks.every(q => KNOWN.includes(q)) || new Set(m.checks).size !== m.checks.length))
+    return fail("LOCAL_MANIFEST_INVALID", `checks must list questions from: ${KNOWN.join(", ")}`);
+  const checks = m.checks || [];
+  const checksEvidence = m.checksEvidence == null ? null : str(m.checksEvidence, 300);
+  if (checks.length && !checksEvidence) return fail("LOCAL_MANIFEST_INVALID", "checks need checksEvidence: the measurement they passed");
   if (!Array.isArray(m.files) || !m.files.length || m.files.length > MAX_FILES) return fail("LOCAL_MANIFEST_INVALID", `files must list 1 to ${MAX_FILES} files`);
   const dir = path.dirname(path.resolve(file)), files = [];
   for (const f of m.files) {
@@ -91,7 +103,7 @@ export function readManifest(file, { verify = true } = {}) {
       if (sha256File(f.abs) !== f.sha256) return fail("LOCAL_MODEL_INTEGRITY", `${f.path} does not match its pinned sha256`);
     }
   }
-  return { ok: true, manifest: { id, name, version, licence, source, runtime, servedModel, files: files.map(({ path: p, bytes, sha256 }) => ({ path: p, bytes, sha256 })) } };
+  return { ok: true, manifest: { id, name, version, licence, source, runtime, servedModel, checks, checksEvidence, files: files.map(({ path: p, bytes, sha256 }) => ({ path: p, bytes, sha256 })) } };
 }
 
 // The provider-specific half of the relay's configuration (vlm-core merges it
@@ -218,6 +230,22 @@ export function makeLocalClient(config, { fetchImpl = loopbackFetch } = {}) {
   }
   return {
     provider: "local",
+    // One closed question about one crop (the relay's /ask, vlm-core
+    // askText): the image and the fixed question, as the benchmark sends them
+    // (local-vlm-bench2.py ask) — no system text, no schema, thinking off,
+    // a short answer. Returns the raw text; the relay keeps only a closed value.
+    async ask({ image, text }, opts) {
+      const body = await call("/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
+        model: (config.local && config.local.servedModel) || config.model, max_tokens: 48, temperature: 0, cache_prompt: false,
+        chat_template_kwargs: { enable_thinking: false },
+        messages: [{ role: "user", content: [
+          { type: "image_url", image_url: { url: `data:${image.mediaType};base64,${image.data}` } },
+          { type: "text", text },
+        ] }],
+      }) }, opts);
+      const choice = body && Array.isArray(body.choices) ? body.choices[0] : null;
+      return { text: choice && choice.message && typeof choice.message.content === "string" ? choice.message.content : "", finish: (choice && choice.finish_reason) || null };
+    },
     models: {
       async retrieve(model, _query, opts) {
         const body = await call("/v1/models", { method: "GET" }, opts);

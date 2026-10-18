@@ -19,6 +19,9 @@
 //   POST /vlm-relay/check    is the key accepted and the model reachable? (models.retrieve —
 //                            free; it does NOT prove there is a balance)
 //   POST /vlm-relay/run      one step of a reading: the whole plan, or one region.
+//   POST /vlm-relay/ask      the LOCAL second look: one closed question about one crop, to the
+//                            model on this machine only, a question its manifest says it was
+//                            measured on; the answer comes back as a closed value, never as text.
 //   POST /vlm-relay/cancel   stop a run: its in-flight request is aborted, its next step refused.
 //
 // What it refuses, before anything is sent: a POST from another site (Origin,
@@ -39,7 +42,7 @@ import * as core from "./vlm-core.mjs";
 import { makeLocalClient } from "./vlm-local.mjs";
 
 export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-export const RELAY_VERSION = 2;
+export const RELAY_VERSION = 3;
 
 const MIME = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8",
@@ -98,6 +101,8 @@ const hostnameOf = (hostHeader) => { try { return new URL(`http://${hostHeader}`
 export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, log = console, now = Date.now } = {}) {
   const usage = new core.UsageStore(config.dataDir);
   const runs = new Map();            // runId -> { analysisId, planHash, steps, usd, cancelled, controller, at }
+  const askRuns = new Map();         // runId -> { analysisId, planHash, asks, cancelled, controller, at }
+  let askDay = { key: null, n: 0 };  // the local second look's day count: CPU, not money, so not in the ledger
   let inFlight = null;               // { runId, controller }
   let lastCheckAt = 0;
   const hosts = allowedHosts || allowedHostsFrom({}, config.port);
@@ -110,7 +115,9 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
   };
   const snapshotRun = (r) => r ? { steps: r.steps, usd: Math.round(r.usd * 1e6) / 1e6, cancelled: r.cancelled } : null;
 
-  function pruneRuns() { const t = now(); for (const [id, r] of runs) if (t - r.at > RUN_TTL_MS && !r.controller) runs.delete(id); }
+  function pruneRuns() { const t = now(); for (const m of [runs, askRuns]) for (const [id, r] of m) if (t - r.at > RUN_TTL_MS && !r.controller) m.delete(id); }
+  const snapshotAsk = (r) => r ? { asks: r.asks, cancelled: r.cancelled } : null;
+  const asksToday = () => askDay.key === core.UsageStore.dayKey(now()) ? askDay.n : 0;
 
   // A POST must come from a page this relay served, on a name it was started for.
   function refuseCrossSite(req) {
@@ -177,13 +184,13 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
   async function handleCancel(req, res) {
     const { body, error } = await readJson(req, 4096);
     if (error || !body || typeof body.runId !== "string") return json(res, 400, { ok: false, code: error || "BAD_PAYLOAD" });
-    const r = runs.get(body.runId);
+    const r = runs.get(body.runId) || askRuns.get(body.runId);
     if (!r) return json(res, 200, { ok: true, aborted: false, known: false });
     r.cancelled = true;
     const aborted = !!r.controller;
     if (r.controller) r.controller.abort();
     say(`run ${body.runId.slice(0, 12)}: cancelled by the operator${aborted ? " (in-flight request aborted)" : ""}`);
-    return json(res, 200, { ok: true, aborted, known: true, run: snapshotRun(r) });
+    return json(res, 200, { ok: true, aborted, known: true, run: runs.has(body.runId) ? snapshotRun(r) : snapshotAsk(r) });
   }
 
   // The free count, per model the request may run on. A count that fails for
@@ -301,6 +308,54 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     return json(res, 200, { ok: true, result: out.result, ...echo });
   }
 
+  // One closed question about one crop, to the model on this machine. The
+  // page names the question; the relay writes it (vlm-core askText) and keeps
+  // only the closed value of the answer. Its own caps per run and per day; one
+  // request in flight across /run and /ask; Cancel aborts it.
+  async function handleAsk(req, res) {
+    if (!config.configured) { req.resume(); return json(res, 503, { ok: false, code: config.reasonCode }); }
+    if (config.provider !== "local" || !client || typeof client.ask !== "function") { req.resume(); return json(res, 409, { ok: false, code: "ASK_LOCAL_ONLY" }); }
+    if (inFlight) { req.resume(); return json(res, 409, { ok: false, code: "BUSY" }); }
+    const { body, error } = await readJson(req, config.limits.maxBodyBytes);
+    if (error) return json(res, error === "PAYLOAD_TOO_LARGE" ? 413 : 400, { ok: false, code: error });
+    const v = core.validateAskPayload(body, config);
+    if (!v.ok) return json(res, v.code === "IMAGE_TOO_LARGE" ? 413 : v.code === "QUESTION_NOT_VALIDATED" ? 409 : 400, { ok: false, code: v.code, field: v.field });
+    const p = v.payload;
+    if (inFlight) return json(res, 409, { ok: false, code: "BUSY" });
+    pruneRuns();
+    if (runs.has(p.runId)) return json(res, 409, { ok: false, code: "RUN_MISMATCH" });
+    let run = askRuns.get(p.runId);
+    if (!run) { run = { analysisId: p.analysisId, planHash: p.planHash, asks: 0, cancelled: false, controller: null, at: now() }; askRuns.set(p.runId, run); }
+    if (run.analysisId !== p.analysisId || run.planHash !== p.planHash) return json(res, 409, { ok: false, code: "RUN_MISMATCH" });
+    if (run.cancelled) return json(res, 409, { ok: false, code: "CANCELLED", run: snapshotAsk(run) });
+    if (run.asks >= config.limits.maxAsksPerRun) return json(res, 429, { ok: false, code: "ASK_LIMIT", run: snapshotAsk(run) });
+    const day = core.UsageStore.dayKey(now());
+    if (askDay.key !== day) askDay = { key: day, n: 0 };
+    if (askDay.n >= config.limits.maxAsksPerDay) return json(res, 429, { ok: false, code: "ASK_DAY_LIMIT", run: snapshotAsk(run) });
+    const controller = new AbortController();
+    run.controller = controller; inFlight = { runId: p.runId, controller };
+    const onClose = () => { if (!res.writableEnded) controller.abort(); };
+    res.on("close", onClose);
+    run.asks++; askDay.n++; run.at = now();
+    const started = now();
+    let answer = null, failure = null;
+    try { answer = await client.ask({ image: p.image, text: core.askText(p.question, p.piece) }, { signal: controller.signal, timeout: config.limits.timeoutMs }); }
+    catch (err) { failure = core.mapUpstreamError(err); }
+    finally { res.off("close", onClose); run.controller = null; inFlight = null; }
+    const seconds = Math.round((now() - started) / 100) / 10;
+    const echo = { runId: p.runId, analysisId: p.analysisId, planHash: p.planHash, question: p.question, seconds, run: snapshotAsk(run) };
+    const tag = `ask ${p.runId.slice(0, 12)} ${p.question}`;
+    if (failure) {
+      say(`${tag}: ${failure.code} after ${seconds}s`);
+      if (res.writableEnded || res.destroyed) return;
+      return json(res, failure.http, { ok: false, code: failure.code, ...echo });
+    }
+    const value = core.parseAskAnswer(p.question, answer.text);
+    say(`${tag}: ${value === null ? "no answer" : value} in ${seconds}s`);
+    if (res.writableEnded || res.destroyed) return;
+    return json(res, 200, { ok: true, value, answered: value !== null, cutOff: value === null && answer.finish === "length", ...echo });
+  }
+
   async function handler(req, res) {
     let pathname;
     try { pathname = new URL(req.url, "http://relay").pathname; } catch { res.writeHead(400).end(); return; }
@@ -312,13 +367,14 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
       }
       if (pathname === "/vlm-relay/status" && req.method === "GET") {
         if (!hostAllowed(hostnameOf(req.headers.host), hosts)) return json(res, 421, { ok: false, code: "HOST_NOT_ALLOWED" });
-        return json(res, 200, { ok: true, version: RELAY_VERSION, busy: !!inFlight, ...core.status(config, usage.snapshot(), usage.ledger()) });
+        return json(res, 200, { ok: true, version: RELAY_VERSION, busy: !!inFlight, ...core.status(config, usage.snapshot(), usage.ledger()), asksToday: asksToday() });
       }
       if (req.method !== "POST") return json(res, 405, { ok: false, code: "METHOD" });
       const cross = refuseCrossSite(req);
       if (cross) { req.resume(); return json(res, 403, { ok: false, code: cross }); }
       if (pathname === "/vlm-relay/check") { req.resume(); return await handleCheck(req, res); }
       if (pathname === "/vlm-relay/run") return await handleRun(req, res);
+      if (pathname === "/vlm-relay/ask") return await handleAsk(req, res);
       if (pathname === "/vlm-relay/cancel") return await handleCancel(req, res);
       return json(res, 404, { ok: false, code: "NOT_FOUND" });
     } catch (err) {
@@ -364,6 +420,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     console.log(`  relay       ${s.configured ? "CONFIGURED" : `NOT CONFIGURED (${whyLocal}${s.problem ? `: ${s.problem}` : ""})`}`);
     if (s.local) console.log(`  model       ${s.local.name} ${s.local.version} (${s.local.licence}) from ${s.local.source}, ${s.local.files} file(s) checked by sha256, served by ${s.local.runtime}`);
     console.log(`  limits      ${s.limits.maxRequestsPerDay} requests/day  ${s.limits.maxStepsPerRun} steps/run  ${s.limits.timeoutMs / 1000}s/request`);
+    console.log(`  second look ${s.local && s.local.checks.length ? `${s.local.checks.join(", ")} (measured: ${s.local.checksEvidence})  ${s.limits.maxAsksPerRun} questions/run  ${s.limits.maxAsksPerDay}/day` : "no closed question measured for this model (manifest `checks`)"}`);
     console.log(`  hosts       ${allowedHosts.join(", ")}`);
     console.log("  (ctrl-c to stop)");
   } else {

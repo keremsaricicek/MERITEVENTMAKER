@@ -43,6 +43,11 @@ banquette appears in the group of every table it serves (`sharedSeating`).
 
     python training/synth_relations.py --out DIR --count 24 --split dev --furniture
     python training/synth_relations.py --out DIR --count 400 --split train --furniture
+
+TRAIN RELATION SCENES (`--split train` without `--furniture`, added 2026-10-18 for
+training/vlm_lora.py): the merged / aisle / parallel scenes in the training
+families from a seed base of their own (12), so dev and blind regenerate byte
+for byte and no train plan is a dev or blind plan.
 """
 import argparse
 import json
@@ -57,7 +62,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # beside synth_l
 from synth_levels import FAMILIES, TRAIN_FAMILIES, BLIND_FAMILIES, Plan3, scanned, visibility  # noqa: E402
 from synth import SS  # noqa: E402
 
-SEEDS = {"dev": 7, "blind": 8}
+SEEDS = {"dev": 7, "blind": 8, "train": 12}  # train: added 2026-10-18 for the local-VLM LoRA (training/vlm_lora.py)
 FURNITURE_SEEDS = {"dev": 9, "blind": 10, "train": 11}
 KINDS = ["merged", "merged-rot", "merged-L", "aisle", "aisle-rot", "parallel"]
 FURNITURE_KINDS = ["bench-table", "lounge", "banquette-wall", "sofa-apart"]
@@ -289,12 +294,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
     ap.add_argument("--count", type=int, default=20)
-    ap.add_argument("--split", choices=["dev", "blind", "train"], required=True, help="train: --furniture only, a training set apart from dev and blind")
+    ap.add_argument("--split", choices=["dev", "blind", "train"], required=True, help="train: a training set apart from dev and blind (its own seed base)")
     ap.add_argument("--scan", action="store_true")
     ap.add_argument("--furniture", action="store_true", help="seating-furniture scenes (benches, sofas, banquettes)")
     a = ap.parse_args()
-    if a.split == "train" and not a.furniture:
-        ap.error("--split train exists for --furniture only")
     fams = BLIND_FAMILIES if a.split == "blind" else TRAIN_FAMILIES
     os.makedirs(a.out, exist_ok=True)
     for i in range(a.count):

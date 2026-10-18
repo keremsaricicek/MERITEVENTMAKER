@@ -81,11 +81,53 @@ still applies. A process that is not running is `LOCAL_NOT_RUNNING`. The page
 says "on this computer", names the model, version and licence, and shows no
 price.
 
-No model ships with this repository and none could be downloaded from the
-environment it was built in (`benchmarks/offline-intelligence/LOCAL-VLM.md`).
+No model ships with this repository. Models are fetched by a developer, pinned
+by a manifest in `tools/local-vlm/manifests/`, and measured
+(`benchmarks/offline-intelligence/LOCAL-VLM.md`).
 `tests/suites/vlm-local.test.mjs` runs the whole path against
 `tests/lib/fake-local-vlm.mjs`, whose answers are SCRIPTED: it proves the
 plumbing, never a model's reading.
+
+### The second look (`POST /vlm-relay/ask`)
+
+A small model on four CPU cores cannot review a whole plan in useful time
+(measured: past 15 minutes), so the local provider has a second door: ONE
+closed question about ONE crop, chosen by the page from the places the analysis
+is unsure of (`src/plan-local-check.js`):
+
+| question | asks | answer |
+|---|---|---|
+| `identify` | what single object is at the centre | a word from a closed list |
+| `count` | how many tables are in the crop | a number |
+| `chairs` | how many chairs stand around the table in the centre | a number |
+| `merged` | do the tables in the centre touch to form one long table | yes / no |
+| `serves` | does this sofa / bench / banquette serve the table | yes / no |
+
+The page sends a question NAME, a 64–1024 px crop and the run's ids — a closed
+shape, an unknown field anywhere is refused. The relay writes the question
+from `server/local-check-questions.json`, the file the benchmark
+(`local-vlm-bench2.py`) and the training set (`training/vlm_lora.py`) read, so
+the product asks word for word what was measured. The request carries no
+system text and turns the model's thinking off, as the benchmark does. What
+comes back is the closed value (`parseAskAnswer`, the benchmark's own reading
+rules) or "no answer" — never the model's text. A question is asked only if
+the manifest lists it under `checks`, with `checksEvidence` naming the
+measurement it passed; otherwise `QUESTION_NOT_VALIDATED`, and the page offers
+no second look at all. Never sent to a paid API (`ASK_LOCAL_ONLY`).
+
+```
+#  "checks": ["identify", "chairs"],
+#  "checksEvidence": "benchmarks/offline-intelligence/local-vlm-results/<run>.json"
+```
+
+| variable | default | |
+|---|---|---|
+| `VLM_MAX_ASKS_PER_RUN` | 40 | questions in one second look |
+| `VLM_MAX_ASKS_PER_DAY` | 800 | per UTC day; CPU, not money, so counted in memory, not in the spend ledger |
+
+One request at a time across `/run` and `/ask`; Cancel aborts the question in
+flight and refuses the look's next one. Codes: `ASK_LOCAL_ONLY`,
+`QUESTION_NOT_VALIDATED`, `ASK_LIMIT`, `ASK_DAY_LIMIT`.
 
 ## Limits
 
@@ -168,5 +210,6 @@ result of theirs may be reported as model performance.
 `billing_error`, or a 400 stating the credit balance), `KEY_FORBIDDEN`,
 `MODEL_UNAVAILABLE`, `RATE_LIMITED` and `OVERLOADED` (each retried once),
 `BAD_REQUEST`, `UPSTREAM_ERROR`, `MODEL_DECLINED`, `OUTPUT_TRUNCATED`,
-`INVALID_OUTPUT`, `CROSS_SITE`, `HOST_NOT_ALLOWED`, `CHECK_TOO_SOON`. Each
+`INVALID_OUTPUT`, `CROSS_SITE`, `HOST_NOT_ALLOWED`, `CHECK_TOO_SOON`,
+`ASK_LOCAL_ONLY`, `QUESTION_NOT_VALIDATED`, `ASK_LIMIT`, `ASK_DAY_LIMIT`. Each
 has a sentence in both languages in `src/i18n.js` (`vlm.err.*`).
