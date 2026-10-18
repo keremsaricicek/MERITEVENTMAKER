@@ -114,7 +114,52 @@ A whole-plan reading through the product relay with Qwen2-VL-2B runs past 15 min
   adversarial and memory baselines do. With OCR, renderings are 11 HEALTHY,
   2 ACCEPTABLE, 3 WEAK (downscale-70, jpeg-q20, lowres-roundtrip), 0 SEVERE.
 
-## Continuation record (2026-10-17, end of session)
+## Continuation record (2026-10-18, end of session)
+
+Closed this session, each with its commit and evidence:
+
+| Item | Result | Commit |
+|---|---|---|
+| D4 | the three SEVERE renderings fixed at their cause | `3253e13` |
+| D10 | chair facing coverage 0.699 → 0.894, precision 1.0 | `929426e`, narrowed in `367aca2` after CI |
+| D11 | ORNEK aspect measured against 164 measured outlines: 0.091 | `5f94283` |
+| D6 | box IoU measured: tables P10 0.91 / 0.85, chairs median 0.918; pale chairs 0.425 | `5f94283` (scorer), `34d68de` (chair boxes) |
+| Golden truth | four pale chairs corrected | `34d68de` |
+| L3 | find more like this | `72c3e92` |
+| L4 | Teach Area Undo | `02ec729` |
+| R2 | seating links, 100 % on true boxes | `5d02c05` |
+| S5 | prefetch at import | `99c6607` |
+| S5, dialog import | prefetch now starts on the new-event dialog path | `e40db0c` |
+| S7 | re-analysis 13.9 → 4.9 s | `e40db0c` |
+| S4 | import clock measured | `e40db0c` |
+| V1, robustness | baseline re-recorded with the reason (it was measured without OCR) | `e40db0c` |
+| V1, local VLM | measured, none useful; relay timeout bug fixed | `394bdda` |
+| T4/T5 | E5, E6, E7, E7cal all fail their pre-registered conditions; v2 stays | `c634da3`, `79f4d2e` |
+
+Where the next session starts, in order:
+
+1. **Model (T4/T5).** E7 proved adapting the base lifts sofas (0.777) and
+   banquettes (0.578). Benches stay at 0.179: bench peaks also appear where no
+   bench is (E7cal). The next experiment changes what the branch can see — the
+   table beside the piece — not the schedule, and holds the base harder (E7
+   regressed columns 0.855 → 0.791).
+2. **D2.** The chair family's admission test should require a mark to look like
+   the chairs drawn at the tables (colour). Two stage-truss segments are the
+   false chairs. This is a detector change: fingerprint and benchmark gates
+   apply.
+3. **S1/S2/S3.** ORNEK cold with no gap is still 20.7 s, 12–13 s of it OCR. The
+   OCR detection pass is one whole-page inference, and splitting it must be
+   proven byte-identical. The longest task sits at 186–265 ms.
+4. **Robustness WEAK.** jpeg-q20 and lowres lose chairs only WITH OCR (text
+   suppression reads compression noise as printing).
+5. **L1/L2/L3.** Causes are known (re-detection on jpeg-q20; too few misses to
+   judge exemplar search); unchanged.
+6. **D9 entrance.** The drawing shows no readable wall break at either GİRİŞ.
+   The label-only extent stands until another drawn cue is found.
+7. **N1–N3.** A licensed third real plan, a Windows 8 GB machine, and an
+   operator's corrections. None can be produced here.
+
+### The previous record (2026-10-17), kept for its reasoning
 
 Where the next session starts, in order, each with the evidence that set it:
 

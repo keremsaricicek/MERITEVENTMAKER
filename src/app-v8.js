@@ -5223,6 +5223,8 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     // competed with the first view and cost it 0.2-1.4 s (benchmarks/perf/
     // import-usable.mjs, prefetch on vs off, 2026-10-18). The image decoded and
     // two frames drawn, then the reads begin.
+    // EXPECTED ABSTENTION: an image that cannot be decoded only loses the wait;
+    // the reads still start, and one that fails is read again by the analysis.
     const img=new Image();img.src=src;
     (img.decode?img.decode():Promise.resolve()).catch(()=>{}).then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(()=>startPlanTextPrefetch(activeEvent()),0))));
   }
