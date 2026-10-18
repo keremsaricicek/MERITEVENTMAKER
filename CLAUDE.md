@@ -302,6 +302,26 @@ bar, none is wired, and a whole-plan reading on 4 CPU cores runs past 15
 minutes. Full detail: `server/README.md`, `src/screen-vlm.js`,
 `src/plan-vlm-review.js`.
 
+## The local second look
+
+`POST /vlm-relay/ask` + `src/plan-local-check.js` (`MeritLocalCheck`): ONE
+closed question about ONE crop, to a model on THIS machine only
+(`ASK_LOCAL_ONLY`), and only a question the manifest lists as measured
+(`checks` + `checksEvidence`, else `QUESTION_NOT_VALIDATED`). The question's
+words come from `server/local-check-questions.json`, the file the benchmark and
+the training set read; the page sends a question name and a crop; the answer
+comes back as a closed value, never the model's text. Places are chosen from
+what the analysis is unsure of and never from what a person decided; each is
+looked at twice (as drawn, turned a quarter); only a disagreement both looks
+share becomes a finding, and a count, grouping or link is a note — nothing is
+applied without Accept. **It starts by itself after an analysis** — the
+owner's decision of 2026-10-18, the one exception to "a person starts every
+reading": nothing leaves the machine, nothing is applied, the panel and the
+audit say it ran, Cancel stops it, a switch turns it off on this computer;
+started by hand it asks first. The page only asks `/vlm-relay` on a page the
+relay served (its `Server-Timing: merit-relay` entry). Suite
+`local-second-look` (scripted model).
+
 ## Analysis speed and Stop
 
 The OCR model and the local detector run in workers (`src/plan-ort-pool.js`),

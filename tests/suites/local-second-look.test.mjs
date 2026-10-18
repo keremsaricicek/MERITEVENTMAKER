@@ -21,6 +21,10 @@
 //     the analysis makes no finding; only a shared disagreement does.
 //   ONE ACCEPT, ONE OBJECT: a type correction goes through decideReview for
 //     the one object and undoes; a count, a grouping or a link is a note.
+//   ONE PRESS: after an analysis, a measured local model's second look starts
+//     BY ITSELF (the owner's decision, 2026-10-18) — no question, no panel
+//     forced open, nothing applied, said in the panel and the audit; a switch
+//     turns it off. Started by hand it still asks first.
 //   CANCEL stops the request in flight.
 import fs from "node:fs";
 import os from "node:os";
@@ -28,7 +32,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import vm from "node:vm";
 import { startFakeLocalVlm, FAKE_LOCAL_NOTICE } from "../lib/fake-local-vlm.mjs";
-import { openApp, createBlankEvent, importPlan, runDetection, futureDate } from "../lib/app-actions.mjs";
+import { openApp, createBlankEvent, importPlan, runDetection, reRunDetection, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "local-second-look", tags: ["intelligence", "security", "fast"], timeout: 300000 };
 
@@ -220,13 +224,34 @@ export default async function run({ page, checks, repoRoot }) {
     };
     const pr = await relayWith({ VLM_LOCAL_URL: pf.baseURL, VLM_LOCAL_MANIFEST: noChecks });
     await openReview(pr);
+    await page.waitForTimeout(800);
+    checks.equal([await page.evaluate(() => state.events[0].analysis.vlm || null), pf.chats().length], [null, 0],
+      "after an analysis, a local model with no measured question is asked nothing");
     await page.click('[data-vlm-action="toggle"]');
     await page.waitForSelector(".vlm-panel .vlm-state.ok");
     checks.equal(await page.locator('[data-vlm-action="look"]').count(), 0, "with no measured question the second-look button is not offered");
 
+    // The owner's decision (2026-10-18): one press of Analyse; with a measured
+    // local model the second look follows BY ITSELF — no question, no panel
+    // popping open, nothing applied.
     const pr2 = await relayWith({ VLM_LOCAL_URL: pf.baseURL, VLM_LOCAL_MANIFEST: withChecks });
     await openReview(pr2);
-    // A person decides one seating piece before the look: it is never asked about.
+    await page.waitForFunction(() => { const v = state.events[0].analysis.vlm; return v && v.mode === "check" && v.status !== "running"; }, null, { timeout: 120000 });
+    const auto = await page.evaluate(() => ({ run: JSON.parse(JSON.stringify(state.events[0].analysis.vlm)), panel: !!ui.vlmPanelOpen,
+      asked: !!document.querySelector("#meritAskTitle") && getComputedStyle(document.querySelector("#meritAskTitle").closest("dialog,[role=dialog],.ask-backdrop") || document.body).display !== "none" && !!document.querySelector("#meritAskTitle").offsetParent,
+      decisions: state.audit.filter((x) => x.action === "REVIEW_DECISION" && x.eventId === state.events[0].id).length,
+      started: state.audit.filter((x) => x.action === "VLM_SECOND_LOOK_STARTED").map((x) => x.detail) }));
+    checks.ok(auto.run.auto === true && auto.run.status === "done" && !auto.panel && !auto.asked && auto.started.length === 1 && auto.started[0].auto === true,
+      "after the analysis the second look ran by itself: no question asked, no panel forced open, and the audit says it started by itself", { auto: auto.run.auto, status: auto.run.status, panel: auto.panel, asked: auto.asked, started: auto.started });
+    checks.ok(auto.decisions === 0 && auto.run.findings.every((fd) => fd.state === "open"), "it applied nothing: every finding waits for a person", { decisions: auto.decisions });
+    checks.equal(pf.chats().length, auto.run.checks.length * 2, "it looked at each planned place twice and sent nothing more");
+    await page.click('[data-vlm-action="toggle"]');
+    await page.waitForSelector('.vlm-panel [data-vlm-action="auto"]');
+    const autoPanel = await page.evaluate(() => document.querySelector(".vlm-panel").textContent);
+    checks.ok(/Started by itself after the analysis/.test(autoPanel) && /Nothing left the computer and nothing was applied/.test(autoPanel),
+      "the panel says the look started by itself, what was sent, and that nothing left the computer or was applied", autoPanel.slice(0, 300));
+
+    // A person decides one seating piece; a look started by hand asks first and never asks about it.
     const plan = await page.evaluate(() => {
       const ev = state.events[0], a = ev.analysis;
       const piece = a.candidates.find((c) => c.kind === "venue" && ["sofa", "bench", "banquette"].includes(c.type) && c.status === "unreviewed");
@@ -237,16 +262,17 @@ export default async function run({ page, checks, repoRoot }) {
     });
     checks.ok(plan.qs.length > 0 && !plan.qs.some((q) => plan.decided && q.ids.includes(plan.decided)),
       "on the real plan the look has places to ask about, and none is the piece a person just confirmed", plan);
-    await page.click('[data-vlm-action="toggle"]');
+    await page.evaluate(() => render());
     await page.waitForSelector('.vlm-panel [data-vlm-action="look"]');
     const guestsBefore = pf.chats().length;
+    identifyN = 0;
     await page.click('[data-vlm-action="look"]');
     await page.waitForSelector("#meritAskTitle", { state: "visible" });
     const dialog = await page.evaluate(() => document.querySelector("#meritAskBody").textContent);
     checks.ok(/sent twice as a 448×448 px crop/.test(dialog) && /on this computer/.test(dialog) && /Not sent: guests/.test(dialog) && !/\$/.test(dialog) && pf.chats().length === guestsBefore,
-      "the confirmation says what travels (two crops per place, fixed questions), where (this computer), and nothing is sent before yes", dialog.slice(0, 300));
+      "started by hand, the look asks first: what travels (two crops per place, fixed questions), where (this computer), and nothing is sent before yes", dialog.slice(0, 300));
     await page.click('[data-ask="confirm"]');
-    await page.waitForFunction(() => { const v = state.events[0].analysis.vlm; return v && v.mode === "check" && v.status !== "running"; }, null, { timeout: 120000 });
+    await page.waitForFunction(() => { const v = state.events[0].analysis.vlm; return v && v.mode === "check" && !v.auto && v.status !== "running"; }, null, { timeout: 120000 });
     const run = await page.evaluate(() => JSON.parse(JSON.stringify(state.events[0].analysis.vlm)));
     const reqs = pf.chats().slice(guestsBefore).map((c) => c.body);
     checks.equal([run.status, reqs.length, run.steps], ["done", plan.qs.length * 2, plan.qs.length * 2], "every planned place was looked at twice, and nothing more was sent");
@@ -288,6 +314,19 @@ export default async function run({ page, checks, repoRoot }) {
     await page.waitForFunction(() => { try { return !!(state.events[0] && state.events[0].analysis); } catch { return false; } }, null, { timeout: 30000 });
     const persisted = await page.evaluate(() => { const v = state.events[0].analysis.vlm; return v && [v.mode, v.checks.length, v.findings.length]; });
     checks.equal(persisted, ["check", run.checks.length, run.findings.length], "the look and its findings survive a reload with the analysis they were made about");
+
+    // The switch: off, and the next analysis is followed by nothing.
+    await page.evaluate(() => { openEvent(state.events[0].id); ui.tab = "floor"; ui.planMode = "review"; render(); });
+    await page.waitForTimeout(400);
+    await page.click('[data-vlm-action="toggle"]');
+    await page.waitForSelector('.vlm-panel [data-vlm-action="auto"]');
+    await page.click('.vlm-panel [data-vlm-action="auto"]');
+    const offStored = await page.evaluate(() => localStorage.getItem("merit.secondLook.auto"));
+    const sentBefore = pf.chats().length;
+    await reRunDetection(page);
+    await page.waitForTimeout(1500);
+    checks.equal([offStored, await page.evaluate(() => state.events[0].analysis.vlm || null), pf.chats().length - sentBefore], ["off", null, 0],
+      "with the switch off (remembered on this computer) an analysis is followed by no look");
   } finally {
     for (const r of opened) await r.close();
     for (const fk of fakes) await fk.close().catch(() => null);

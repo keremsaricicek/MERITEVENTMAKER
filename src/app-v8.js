@@ -4244,6 +4244,9 @@
       ui.analysisStage=t("analysis.stage.review");ui.analysisProgress=100;ui.analysisBusy=false;ui.analysisAbort=null;
       event.analysis.timings={importedAtMs:event.background?.importedAtMs??null,analysisStartedAtMs,analysisCompletedAtMs:Date.now(),stages:stageTimes,tesseractMs,prefetch:prefetchUse};
       if(globalThis.MERIT_PREFETCH!=="off"&&keptReads.model&&keptReads.model.available&&keptReads.page&&keptReads.page.available)keptPlanText={src:event.background.src,model:keptReads.model,page:keptReads.page};ui.selectedCandidateId=event.analysis.candidates[0]?.id||null;ui.difficultQuestionIndex=0;ui.activeReviewGroupId=null;ui.activeQuestionId=null;audit(event,"ASSISTED_DETECTION_COMPLETED",event.analysis.diagnostics);touchEvent(event);render();
+      // A model on this computer, measured on closed questions, then looks at
+      // what the analysis is unsure of — by itself, in the background (screen-vlm).
+      VLMSCREEN.afterAnalysis(event);
     }catch(error){
       event.analysis=priorAnalysis;ui.analysisAbort=null;
       if(error?.analysisStopped||abort.signal.aborted){

@@ -22,7 +22,11 @@
 //      and say it came from a model suggestion.
 //
 // With a model on THIS computer whose manifest names the closed questions it
-// was measured on, a second action asks it a "second look" (MeritLocalCheck):
+// was measured on, the analysis is followed by a "second look"
+// (MeritLocalCheck) that STARTS BY ITSELF — the owner's decision of
+// 2026-10-18: one press of Analyse, nothing leaves the computer, nothing is
+// applied, Cancel stops it and a switch in the panel turns it off (remembered
+// on this computer). It can also be started by hand. It asks
 // short fixed questions about the places the analysis is unsure of, two looks
 // each, the answers checked against what the analysis found; only a
 // disagreement both looks share becomes a finding, in this same list.
@@ -234,11 +238,31 @@
 
   // ---- the local second look -------------------------------------------------------
   const localChecks=(st)=>st&&st.relay&&st.configured&&st.provider==="local"&&st.local&&Array.isArray(st.local.checks)?st.local.checks:[];
-  async function startLook(){
+  // The relay names itself on the page it serves (a Server-Timing entry), so a
+  // page opened any other way never asks for /vlm-relay at all.
+  const relayServed=()=>{try{const n=globalThis.performance.getEntriesByType("navigation")[0];return !!(n&&Array.isArray(n.serverTiming)&&n.serverTiming.some(e=>e.name==="merit-relay"));}catch{return false;}};
+  const AUTO_KEY="merit.secondLook.auto";
+  const autoOn=()=>{try{return globalThis.localStorage.getItem(AUTO_KEY)!=="off";}catch{return true;}};
+  function setAuto(on){try{globalThis.localStorage.setItem(AUTO_KEY,on?"on":"off");}catch{} render();} // a preference of this computer; without storage it stays on for the session
+  // Called by the shell when an analysis has finished. Asks the relay what it
+  // is only on a page the relay served; starts the look only for a local model
+  // with measured questions, only with the switch on, and only if nothing else
+  // is running.
+  async function afterAnalysis(event){
+    if(!served()||!relayServed()||session.busy||!autoOn())return;
+    const a=event&&event.analysis;
+    if(!a)return;
+    const st=await probe();
+    if(!localChecks(st).length||session.busy)return;
+    if(activeEvent()!==event||event.analysis!==a)return;
+    await startLook({auto:true});
+  }
+  async function startLook(opts){
+    const auto=!!(opts&&opts.auto);
     const event=activeEvent(),a=event&&event.analysis,L=LC();
     if(!a||session.busy||!L)return;
     if(!canMutate(event,"ask the local model a second look"))return;
-    const st=await probe();
+    const st=auto?session.relay:await probe();
     const checks=localChecks(st);
     if(!checks.length)return; // the panel says why, persistently
     let img;
@@ -247,9 +271,12 @@
     const W=img.naturalWidth,H=img.naturalHeight,lim=st.limits||{};
     const max=Math.max(0,Math.min(L.MAX_QUESTIONS,Math.floor((lim.maxAsksPerRun||L.MAX_QUESTIONS*L.LOOKS.length)/L.LOOKS.length)));
     const qs=L.plan(a,{checks,width:W,height:H,max});
-    if(!qs.length){toast(t("vlm.second.nothing"),"info",6000);return;}
+    if(!qs.length){if(!auto)toast(t("vlm.second.nothing"),"info",6000);return;}
     const looks=qs.length*L.LOOKS.length;
-    const yes=await ask({title:t("vlm.second.ask.title"),confirmLabel:t("vlm.second.ask.send"),body:[
+    // Started by hand, it asks first; started by the analysis, the owner's
+    // standing decision stands in for the question, and the panel and the
+    // audit say what was sent.
+    const yes=auto||await ask({title:t("vlm.second.ask.title"),confirmLabel:t("vlm.second.ask.send"),body:[
       t("vlm.second.ask.what",{n:qs.length,px:L.CROP_PX,looks}),
       t("vlm.ask.notSent"),
       t("vlm.ask.printed"),
@@ -262,12 +289,12 @@
     const run={mode:"check",runId:V().newRunId(n=>globalThis.crypto.getRandomValues(new globalThis.Uint8Array(n))),eventId:event.id,analysisId:a.id,planHash:a.planHash||null,
       model:`${st.local.name} ${st.local.version}`,lang:ui.lang==="tr"?"tr":"en",startedAt:new Date().toISOString(),finishedAt:null,status:"running",code:null,
       planSummary:"",regions:[],tiles:[],findings:[],spentUsd:0,steps:0,
-      checks:qs.map(q=>({id:q.id,question:q.question,piece:q.piece||null,candidateIds:q.candidateIds,reason:q.reason,detector:q.detector,answers:[],verdict:null,value:null}))};
+      auto,checks:qs.map(q=>({id:q.id,question:q.question,piece:q.piece||null,candidateIds:q.candidateIds,reason:q.reason,detector:q.detector,answers:[],verdict:null,value:null}))};
     a.vlm=run;
-    audit(event,"VLM_SECOND_LOOK_STARTED",{runId:run.runId,model:run.model,places:qs.length});
+    audit(event,"VLM_SECOND_LOOK_STARTED",{runId:run.runId,model:run.model,places:qs.length,crops:looks,auto});
     touchEvent(event);
     session.busy=true;session.runId=run.runId;session.controller=new globalThis.AbortController();session.focusId=null;
-    ui.vlmPanelOpen=true;
+    if(!auto)ui.vlmPanelOpen=true; // by itself it works in the toolbar; the panel opens when a person asks
     try{
       for(let i=0;i<qs.length&&run.status==="running";i++){
         const q=qs[i],rec=run.checks[i];
@@ -514,9 +541,11 @@
     const checks=localChecks(session.relay);
     const look=ready&&checks.length&&LC()?`<button class="btn sm" data-vlm-action="look">${t("vlm.second.button")}</button>`:"";
     const lookNote=checks.length&&!run?`<p class="vlm-note">${t("vlm.second.what")} ${t("vlm.second.measured",{list:esc(checks.map(q=>t("vlm.second.q."+q)).join(", "))})}</p>`:"";
+    const autoSwitch=checks.length?`<label class="vlm-switch"><input type="checkbox" data-vlm-action="auto" ${autoOn()?"checked":""}> ${t("vlm.second.auto")}</label>`:"";
+    const autoNote=second&&run.auto?`<p class="vlm-note">${t("vlm.second.autoRan",{n:num((run.checks||[]).length),crops:num((run.checks||[]).length*(LC()?LC().LOOKS.length:2))})}</p>`:"";
     return`<aside class="vlm-panel" id="vlmPanel" aria-label="${esc(t("vlm.title"))}"><div class="vlm-head"><strong>${t("vlm.title")}</strong><button class="btn icon-only sm" data-vlm-action="close" aria-label="${esc(t("vlm.close"))}">${icon("x")}</button></div><div class="vlm-body">
-      <section class="vlm-relay">${relayStateHTML()}${run?"":`<p class="vlm-note">${t("vlm.what")}</p>`}${lookNote}<div class="vlm-actions">${send}${look}</div></section>
-      ${run?`<section class="vlm-run">${status}${run.planSummary?`<div class="vlm-summary"><small>${t("vlm.summaryLabel")}</small><p>${esc(run.planSummary)}</p></div>`:""}${tally}${c&&c.total?`<p class="vlm-note">${t("vlm.counts",{open:c.open,accepted:c.accepted,dismissed:c.dismissed})}</p>`:""}${second?"":coverageHTML(run)}${setAsideHTML(run)}${body}</section>`:""}
+      <section class="vlm-relay">${relayStateHTML()}${run?"":`<p class="vlm-note">${t("vlm.what")}</p>`}${lookNote}<div class="vlm-actions">${send}${look}</div>${autoSwitch}</section>
+      ${run?`<section class="vlm-run">${status}${autoNote}${run.planSummary?`<div class="vlm-summary"><small>${t("vlm.summaryLabel")}</small><p>${esc(run.planSummary)}</p></div>`:""}${tally}${c&&c.total?`<p class="vlm-note">${t("vlm.counts",{open:c.open,accepted:c.accepted,dismissed:c.dismissed})}</p>`:""}${second?"":coverageHTML(run)}${setAsideHTML(run)}${body}</section>`:""}
     </div></aside>`;
   }
   // A model's number beside the plan's own reading of that table.
@@ -561,6 +590,7 @@
     else if(action==="check")check();
     else if(action==="start")start();
     else if(action==="look")startLook();
+    else if(action==="auto")setAuto(!!(el&&el.checked));
     else if(action==="cancel")cancel();
     else if(action==="accept")accept(id);
     else if(action==="dismiss")dismiss(id);
@@ -585,7 +615,7 @@
     touchEvent=deps.touchEvent;
     ui=deps.ui;
     undoReviewDecision=deps.undoReviewDecision;
-    return{toolbarHTML,mapHTML,panelHTML,diagnosticsHTML,onAction,session:()=>({...session,controller:!!session.controller})};
+    return{toolbarHTML,mapHTML,panelHTML,diagnosticsHTML,onAction,afterAnalysis,session:()=>({...session,controller:!!session.controller})};
   }
   globalThis.MeritScreenVlm=Object.freeze({create,DEPS:Object.freeze(["activeEvent","applyReviewZoom","ask","audit","canMutate","decideReview","esc","icon","render","t","toast","touchEvent","ui","undoReviewDecision"])});
 })();

@@ -2257,6 +2257,8 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .vlm-panel .btn.primary{background:var(--pi-accent);border-color:var(--pi-accent);color:#fff}
 .vlm-panel .btn.quiet{background:transparent;border-color:transparent;color:var(--pi-muted)}
 .vlm-panel .btn:disabled{opacity:.55;cursor:not-allowed}
+.vlm-switch{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--pi-muted);cursor:pointer}
+.vlm-switch input{margin:0}
 .vlm-setaside{width:100%;font-size:11.5px;color:var(--pi-muted)}
 .vlm-setaside summary{cursor:pointer}
 .vlm-setaside ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}

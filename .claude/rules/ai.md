@@ -46,6 +46,11 @@
   person starts every send; findings are suggestions applied only by a
   person's Accept, one object at a time, through the existing writers. A
   printed table number is never taken from a model.
+- The LOCAL second look (`/vlm-relay/ask`) asks only questions a pinned local
+  model was measured on (manifest `checks`), only about places a person has
+  not decided, two looks per place, and applies nothing. It starts by itself
+  after an analysis (owner's decision, 2026-10-18) with an off switch; never
+  widen that to a paid provider or to applying a finding.
 - A result against `tests/lib/fake-anthropic.mjs` is SCRIPTED. Never report
   it, or anything measured with it, as a model's accuracy.
 - Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.

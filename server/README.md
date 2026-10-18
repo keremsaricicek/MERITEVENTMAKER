@@ -125,8 +125,12 @@ no second look at all. Never sent to a paid API (`ASK_LOCAL_ONLY`).
 | `VLM_MAX_ASKS_PER_RUN` | 40 | questions in one second look |
 | `VLM_MAX_ASKS_PER_DAY` | 800 | per UTC day; CPU, not money, so counted in memory, not in the spend ledger |
 
-One request at a time across `/run` and `/ask`; Cancel aborts the question in
-flight and refuses the look's next one. Codes: `ASK_LOCAL_ONLY`,
+After an analysis the page starts the second look BY ITSELF when this relay
+serves a local model with measured questions (the owner's decision,
+2026-10-18; a switch in the panel turns it off on that computer). The relay
+marks the pages it serves with `Server-Timing: merit-relay`, so a page served
+any other way never calls `/vlm-relay`. One request at a time across `/run` and
+`/ask`; Cancel aborts the question in flight and refuses the look's next one. Codes: `ASK_LOCAL_ONLY`,
 `QUESTION_NOT_VALIDATED`, `ASK_LIMIT`, `ASK_DAY_LIMIT`.
 
 ## Limits

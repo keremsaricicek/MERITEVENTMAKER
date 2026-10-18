@@ -152,8 +152,10 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     if (!target.startsWith(path.join(root, path.sep)) && target !== path.join(root, "index.html")) { res.writeHead(403).end(); return; }
     fs.stat(target, (err, st) => {
       if (err || !st.isFile()) { res.writeHead(404, { "content-type": "text/plain" }).end("not found"); return; }
+      // Server-Timing names the relay to the page it serves (performance
+      // navigation entry), so a page served any other way never asks /vlm-relay.
       res.writeHead(200, { "content-type": MIME[path.extname(target).toLowerCase()] || "application/octet-stream", "content-length": st.size,
-        "cache-control": "no-store", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer" });
+        "cache-control": "no-store", "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "server-timing": `merit-relay;desc="${RELAY_VERSION}"` });
       fs.createReadStream(target).pipe(res);
     });
   }
