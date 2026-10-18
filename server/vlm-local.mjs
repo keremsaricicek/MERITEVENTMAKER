@@ -37,6 +37,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+import http from "node:http";
 
 export const MANIFEST_FORMAT = "merit-local-vlm/1";
 const MAX_FILES = 8;
@@ -158,7 +159,41 @@ export class APIConnectionTimeoutError extends Error {}
 export class APIConnectionError extends Error {}
 class LocalStatusError extends Error { constructor(status, message) { super(message); this.status = status; } }
 
-export function makeLocalClient(config, { fetchImpl = globalThis.fetch } = {}) {
+// The default transport: one plain HTTP request to the loopback process, with
+// NO clock of its own. The relay's timeout (config.limits.timeoutMs, up to
+// 900 s) is the only one. Node's built-in fetch carries its own 300-second
+// headers timeout, and that fired first: a real model on four CPU cores that
+// was still reading a whole plan at 5 minutes (2026-10-18, Qwen2-VL-2B, 72 % of
+// the prompt in 257 s) came back as "the local model process is not running".
+function loopbackFetch(url, init = {}) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url), body = init.body == null ? null : String(init.body);
+    const headers = { ...(init.headers || {}) };
+    if (body != null) headers["content-length"] = Buffer.byteLength(body);
+    const req = http.request({ hostname: u.hostname, port: u.port, path: u.pathname + u.search, method: init.method || "GET", headers }, (res) => {
+      let data = "";
+      res.setEncoding("utf8");
+      res.on("data", (c) => { data += c; });
+      res.on("end", () => resolve({ ok: res.statusCode >= 200 && res.statusCode < 300, status: res.statusCode, json: async () => JSON.parse(data) }));
+      res.on("error", reject);
+    });
+    req.setTimeout(0);
+    req.on("error", reject);
+    if (init.signal) {
+      if (init.signal.aborted) { req.destroy(new Error("aborted")); return; }
+      init.signal.addEventListener("abort", () => req.destroy(new Error("aborted")), { once: true });
+    }
+    req.end(body == null ? undefined : body);
+  });
+}
+// A transport's OWN timeout (undici's headers/body timers, if a caller passes
+// fetch) is a timeout too, never "not running".
+const transportTimedOut = (err) => {
+  const code = (err && err.cause && err.cause.code) || (err && err.code) || "";
+  return /UND_ERR_(HEADERS|BODY)_TIMEOUT|ETIMEDOUT/.test(code);
+};
+
+export function makeLocalClient(config, { fetchImpl = loopbackFetch } = {}) {
   const base = config.upstreamBaseURL;
   async function call(pathname, init, opts) {
     const signal = opts && opts.signal, timeout = (opts && opts.timeout) || config.limits.timeoutMs;
@@ -174,7 +209,7 @@ export function makeLocalClient(config, { fetchImpl = globalThis.fetch } = {}) {
     } catch (err) {
       if (err instanceof LocalStatusError) throw err;
       if (signal && signal.aborted) throw new APIUserAbortError("cancelled");
-      if (timedOut) throw new APIConnectionTimeoutError("the local model process did not answer in time");
+      if (timedOut || transportTimedOut(err)) throw new APIConnectionTimeoutError("the local model process did not answer in time");
       throw Object.assign(new APIConnectionError("the local model process is not answering"), { localCode: "LOCAL_NOT_RUNNING" });
     } finally {
       clearTimeout(timer);

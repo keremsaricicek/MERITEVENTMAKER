@@ -1,0 +1,1135 @@
+{
+ "ranAt": "2026-10-18T01:39:17Z",
+ "crops": 136,
+ "seed": 5,
+ "prompts": {
+  "T1": "This is a small crop of an event venue floor plan drawing, seen from above. What single object is at the centre of the image? Answer with exactly one word from this list: table, chair, sofa, bench, banquette, column, stage, bar, nothing.",
+  "T2": "This is a crop of an event venue floor plan drawing, seen from above. How many tables are in the image? Count only tables, not chairs, sofas or benches. Answer with a number only."
+ },
+ "results": [
+  {
+   "summary": {
+    "model": "smolvlm-500m",
+    "threads": 4,
+    "loadSeconds": 1.0,
+    "peakRssMb": 1849,
+    "t1Generated": 0.217,
+    "t1Furniture": 0.0,
+    "t1Real": 0.25,
+    "fabrication": 1.0,
+    "unparsed": 1,
+    "t2Exact": 0.0,
+    "t2OverCount": 0.917,
+    "medianSeconds": 8.5,
+    "p90Seconds": 8.78,
+    "perClass": {
+     "generated-negative:nothing": "0/20",
+     "generated:banquette": "0/12",
+     "generated:bench": "0/12",
+     "generated:chair": "10/12",
+     "generated:sofa": "0/12",
+     "generated:table": "3/12",
+     "golden:banquette": "0/3",
+     "golden:chair": "6/8",
+     "golden:stage": "0/1",
+     "golden:table": "1/12",
+     "ornek:table": "1/8"
+    }
+   },
+   "rows": [
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.465
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.394
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.469
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.652
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.624
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.487
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.551
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.268
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.535
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.236
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.327
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.362
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.401
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.592
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.357
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.492
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.185
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.535
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.317
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Column.",
+     "parsed": "column",
+     "seconds": 8.299
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.459
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Column.",
+     "parsed": "column",
+     "seconds": 8.506
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.71
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Column.",
+     "parsed": "column",
+     "seconds": 8.578
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Column.",
+     "parsed": "column",
+     "seconds": 8.84
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.483
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.784
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.733
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.462
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.357
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.451
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.597
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.454
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.516
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.88
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.458
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.553
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.322
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.506
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.768
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.417
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Sofa.",
+     "parsed": "sofa",
+     "seconds": 8.921
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.277
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.51
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.305
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.844
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.403
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.5
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.66
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.397
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.519
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.49
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.558
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.358
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.537
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.597
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.369
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.595
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.3
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.543
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.299
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.863
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.35
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.433
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.586
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.384
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.69
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.328
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.489
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.615
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.363
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.469
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.512
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.663
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.367
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.541
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.582
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.611
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.578
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.438
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "4.",
+     "parsed": 4,
+     "seconds": 8.946
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "0.",
+     "parsed": 0,
+     "seconds": 8.551
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3.",
+     "parsed": 3,
+     "seconds": 8.661
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "0.",
+     "parsed": 0,
+     "seconds": 8.935
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "4.",
+     "parsed": 4,
+     "seconds": 8.623
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2.",
+     "parsed": 2,
+     "seconds": 8.903
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3.",
+     "parsed": 3,
+     "seconds": 8.622
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "4.",
+     "parsed": 4,
+     "seconds": 8.805
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "4.",
+     "parsed": 4,
+     "seconds": 8.589
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2.",
+     "parsed": 2,
+     "seconds": 8.486
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "4.",
+     "parsed": 4,
+     "seconds": 8.744
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2.",
+     "parsed": 2,
+     "seconds": 8.588
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3.",
+     "parsed": 3,
+     "seconds": 8.722
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "4.",
+     "parsed": 4,
+     "seconds": 8.58
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2.",
+     "parsed": 2,
+     "seconds": 8.686
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2.",
+     "parsed": 2,
+     "seconds": 8.76
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3.",
+     "parsed": 3,
+     "seconds": 9.206
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2.",
+     "parsed": 2,
+     "seconds": 9.085
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "4.",
+     "parsed": 4,
+     "seconds": 8.641
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3.",
+     "parsed": 3,
+     "seconds": 8.529
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2.",
+     "parsed": 2,
+     "seconds": 8.955
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2.",
+     "parsed": 2,
+     "seconds": 8.643
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3",
+     "parsed": 3,
+     "seconds": 8.552
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 3,
+     "answer": "4.",
+     "parsed": 4,
+     "seconds": 8.88
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 9.046
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.45
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Sofa.",
+     "parsed": "sofa",
+     "seconds": 8.308
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.316
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.566
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.42
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.673
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.725
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.281
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.248
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.218
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.629
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.539
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.317
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.252
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.156
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.196
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Sofa.",
+     "parsed": "sofa",
+     "seconds": 8.491
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Column.",
+     "parsed": "column",
+     "seconds": 8.412
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.323
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "banquette",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.246
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "banquette",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.44
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "banquette",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.362
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "stage",
+     "answer": "SAINE.",
+     "parsed": null,
+     "seconds": 8.185
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.257
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.388
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.453
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.072
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.277
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.619
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "TABLE.",
+     "parsed": "table",
+     "seconds": 8.377
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "Chair.",
+     "parsed": "chair",
+     "seconds": 8.195
+    }
+   ],
+   "files": [
+    "SmolVLM-500M-Instruct-Q8_0.gguf",
+    "mmproj-SmolVLM-500M-Instruct-Q8_0.gguf"
+   ]
+  }
+ ]
+}

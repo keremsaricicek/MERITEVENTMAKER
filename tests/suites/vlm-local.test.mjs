@@ -153,6 +153,21 @@ export default async function run({ page, checks, repoRoot }) {
       { cut: "OUTPUT_TRUNCATED", junk: "INVALID_OUTPUT", server: "UPSTREAM_ERROR", serverTries: 3, dead: "LOCAL_NOT_RUNNING", deadBilled: false },
       "a cut-off answer, a malformed one, a failing process and a process that is not running each have their own code");
 
+    // A SLOW process is a timeout, never "not running" (2026-10-18: a real
+    // 2 B model on four CPU cores, still reading a whole plan at 300 s, came
+    // back LOCAL_NOT_RUNNING because Node's fetch has a 300-second headers
+    // clock of its own). The relay's own clock, and a transport's, both say TIMEOUT.
+    const slow = await startFakeLocalVlm({ script: [{ hang: true }] }); fakes.push(slow);
+    const slowRelay = await relayWith({ VLM_LOCAL_URL: slow.baseURL, VLM_LOCAL_MANIFEST: good, VLM_TIMEOUT_MS: "5000" });
+    const slowRes = await post(slowRelay, "/vlm-relay/run", body({ runId: "run_slow0001" }));
+    const { makeLocalClient } = await import(path.join(repoRoot, "server/vlm-local.mjs"));
+    const { mapUpstreamError } = await import(path.join(repoRoot, "server/vlm-core.mjs"));
+    const undiciTimeout = makeLocalClient({ upstreamBaseURL: "http://127.0.0.1:9", model: "m", limits: { timeoutMs: 900000 } },
+      { fetchImpl: async () => { throw Object.assign(new TypeError("fetch failed"), { cause: { code: "UND_ERR_HEADERS_TIMEOUT" } }); } });
+    const transportCode = await undiciTimeout.models.retrieve("m").then(() => "answered", (e) => mapUpstreamError(e).code);
+    checks.equal({ relayClock: slowRes.json.code, transportClock: transportCode }, { relayClock: "TIMEOUT", transportClock: "TIMEOUT" },
+      "a process that is still working when a clock runs out is reported as a timeout — the relay's clock and a transport's alike — not as a process that is not running");
+
     // cancel stops the request in flight
     const hang = await startFakeLocalVlm({ script: [{ hang: true }] }); fakes.push(hang);
     const hr = await relayWith({ VLM_LOCAL_URL: hang.baseURL, VLM_LOCAL_MANIFEST: good });

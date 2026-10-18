@@ -33,6 +33,72 @@ What was measured, and what the pre-registered bar was, is in **Measured on
 real inference** below. Everything from "Candidates" down to "What would
 unblock it" is the 2026-10-11 record, kept as written.
 
+## Measured on real inference (2026-10-18)
+
+The bar was pre-registered before any inference
+(`local-vlm-results/PREREG.md`). A candidate is USEFUL, and is wired into the
+offline flow for uncertain regions only, if ALL of these hold at 4 threads:
+
+| Condition | Threshold |
+|---|---|
+| generated furniture accuracy | ≥ 0.80 |
+| real-plan accuracy | ≥ 0.80 |
+| fabrication on empty crops | ≤ 0.05 |
+| table over-count | ≤ 0.10 |
+| median per crop | ≤ 10 s |
+| peak server RSS | ≤ 3,000 MB |
+
+Run: `local-vlm-bench.py`, 136 crops, seed 5, the same crops for every model,
+on a quiet 4-core Linux container (not a Windows measurement), llama.cpp CPU,
+`--temp 0`. Raw answers, per crop:
+`local-vlm-results/bench-<model>-t4.json`.
+
+| Model | furniture (36) | real plans (32) | fabrication (20 empty) | T2 exact / over-count (24) | median / p90 per crop | peak RSS |
+|---|---|---|---|---|---|---|
+| SmolVLM-256M Q8_0 | 0.028 | 0.031 | 0.00 * | 0.417 / 0.25 | 8.0 / 8.3 s | 1,088 MB |
+| SmolVLM-500M Q8_0 | 0.000 | 0.250 | **1.00** | 0.000 / **0.917** | 8.5 / 8.8 s | 1,849 MB |
+| Qwen2-VL-2B Q4_K_M | 0.222 | 0.062 | 0.00 * | 0.083 / **0.917** | 25.8 / 32.1 s | 2,998 MB |
+
+\* Not a strength. SmolVLM-256M's answer could not be parsed for 69 of 112
+crops ("Banquet." for almost everything). Qwen2-VL-2B answered "nothing" to
+95 of 112 crops, including 31 of the 32 real-plan objects. SmolVLM-500M
+answered "chair" 87 times, and so names a chair on every empty crop.
+
+**None passes; none is wired.** No row is close. The best furniture
+result (Qwen2-VL-2B, 7 of 12 generated sofas) comes with 1 of 12 Golden tables,
+0 of 8 ORNEK tables and an over-count on 22 of 24 scenes. On this task a small
+general VLM is not a second reader; it is noise with a latency.
+
+**The whole-plan reading through the product's relay, with a real model.**
+`VLM_PROVIDER=local` pointed at a real `llama-server` running Qwen2-VL-2B,
+sent the same fixed request the page sends for the Golden Plan: the image,
+120 detected candidates and an estimated 9,612 input tokens. On 4 CPU cores
+the model processed 3,786 prompt tokens in 256.7 s (14.75 tokens/s,
+`local-vlm-results/relay-e2e-qwen2-vl-2b-before-fix.server-timing.txt`). At the default
+180 s cap the relay correctly answered TIMEOUT, with zero spend recorded.
+
+With the cap raised to 900 s, the request instead came back after 301 s as
+`LOCAL_NOT_RUNNING`. That was a **product bug**, found only because a real
+model ran: Node's built-in fetch keeps its own 300-second headers clock, which
+fired before the relay's, and its error was read as "the process is not
+running". `server/vlm-local.mjs` now talks to the loopback process over a
+plain HTTP request with no clock of its own. The relay's limit is the only
+one. A transport's own timeout is still classed as TIMEOUT. The `vlm-local`
+suite pins both, and a mutation of the classification turns it red.
+
+After the fix, the same reading with the cap at 900 s: the relay waited its
+own 900 s and answered **TIMEOUT**, with zero spend. The model had finished
+reading the prompt and was writing its answer at 1.76 tokens/s, 1,098 tokens
+in, peak RSS 2.69 GB (`relay-e2e-qwen2-vl-2b-after-fix.*`). A whole-plan
+reading by a 2 B model on 4 CPU cores takes more than fifteen minutes.
+
+What this settles for the ≤ 10 s target: on the reference class of machine, a
+whole-plan reading by the smallest model that answers at all takes minutes,
+not seconds. Even a per-region reading costs 8–26 s per crop. The model
+reading stays what it was designed as: an optional, person-started second
+look, through the cloud relay or a local process on stronger hardware, never
+part of the analysis clock.
+
 ## Candidates
 
 The licences below are from the model pages and the web search results of
