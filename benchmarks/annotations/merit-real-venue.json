@@ -12,7 +12,7 @@
   "confidence": {
     "tables": "high — every table is a solid tan component with a clean size band",
     "chairsOrange": "high — separate saturated components, individually visible",
-    "chairsPale": "medium — recovered by angular clustering rather than as separate components, so the box is the crescent's extent in the annulus and may clip where it overlaps the table",
+    "chairsPale": "medium — recovered by angular clustering rather than as separate components, so the box is the crescent's extent in the annulus and may clip where it overlaps the table Corrected 2026-10-18: around t038 two clusters (c090, c094) were merged boxes 91 px wide centred inside the table, standing for three chairs, and around t040 one chair was split into two half-boxes (c101, c107). c090, c094 and a new c114 now hold t038's right, lower-right and lower chairs as measured by benchmarks/annotate/round-table-chairs.py; c101 is removed. The count stays 113 (24 pale).",
     "banquettes": "high for position, none for seat count",
     "architecture": "partial — see regions; columns are NOT annotated, see capacity.note"
   },
@@ -1460,13 +1460,14 @@
       "id": "c090",
       "class": "chair",
       "family": "pale-outlined-chair",
-      "rotation": 258.5,
+      "rotation": 227.5,
       "orientationKnown": true,
       "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
-      "cx": 1278.5,
-      "cy": 290.5,
-      "w": 91,
-      "h": 57
+      "cx": 1297.5,
+      "cy": 296,
+      "w": 29,
+      "h": 28,
+      "boxSource": "re-measured 2026-10-18 by benchmarks/annotate/round-table-chairs.py and checked by eye: the first tool's angular clustering had merged this table's right, lower-right and lower chairs into two boxes 91 px wide centred inside the table"
     },
     {
       "id": "c091",
@@ -1508,13 +1509,14 @@
       "id": "c094",
       "class": "chair",
       "family": "pale-outlined-chair",
-      "rotation": 245.5,
+      "rotation": 178.5,
       "orientationKnown": true,
       "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
-      "cx": 1278.5,
-      "cy": 281.5,
-      "w": 91,
-      "h": 75
+      "cx": 1312.5,
+      "cy": 261.5,
+      "w": 17,
+      "h": 35,
+      "boxSource": "re-measured 2026-10-18 by benchmarks/annotate/round-table-chairs.py and checked by eye: the first tool's angular clustering had merged this table's right, lower-right and lower chairs into two boxes 91 px wide centred inside the table"
     },
     {
       "id": "c095",
@@ -1587,18 +1589,6 @@
       "cy": 438.5,
       "w": 36,
       "h": 39
-    },
-    {
-      "id": "c101",
-      "class": "chair",
-      "family": "pale-outlined-chair",
-      "rotation": 190,
-      "orientationKnown": true,
-      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
-      "cx": 1311,
-      "cy": 557.5,
-      "w": 24,
-      "h": 17
     },
     {
       "id": "c102",
@@ -1743,6 +1733,19 @@
       "cy": 588,
       "w": 36,
       "h": 34
+    },
+    {
+      "id": "c114",
+      "class": "chair",
+      "family": "pale-outlined-chair",
+      "rotation": 279.5,
+      "orientationKnown": true,
+      "orientationEvidence": "radial position around its round table; the crescent opens toward the table centre",
+      "cx": 1259,
+      "cy": 311,
+      "w": 34,
+      "h": 26,
+      "boxSource": "re-measured 2026-10-18 by benchmarks/annotate/round-table-chairs.py and checked by eye: the first tool's angular clustering had merged this table's right, lower-right and lower chairs into two boxes 91 px wide centred inside the table"
     },
     {
       "id": "s001",
@@ -2408,12 +2411,6 @@
       "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     },
     {
-      "chair": "c101",
-      "belongsTo": "t040",
-      "method": "annulus",
-      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
-    },
-    {
       "chair": "c102",
       "belongsTo": "t040",
       "method": "annulus",
@@ -2482,6 +2479,12 @@
     {
       "chair": "c113",
       "belongsTo": "t041",
+      "method": "annulus",
+      "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
+    },
+    {
+      "chair": "c114",
+      "belongsTo": "t038",
       "method": "annulus",
       "evidence": "recovered by angular clustering in the annulus just outside this table's disc, so the table is part of the finding"
     }

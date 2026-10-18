@@ -67,6 +67,43 @@ That angle is also the chair's facing — every crescent opens toward the table
 centre. It is measured, not assumed, which is why these 24 chairs carry
 `orientationKnown: true` and `rotation`, and the orange chairs do not.
 
+### Corrected 2026-10-18: two of the angular clusters were wrong
+
+A rendered review during D10 (chair facing) showed it. Around **t038** the
+right, lower-right and lower chairs had come out as TWO boxes 91 px wide whose
+centres lie inside the table (`c090`, `c094`); around **t040** the one
+right-hand chair had come out as two half-boxes (`c101`, `c107`). The count, 24,
+was right by coincidence: one missing at t038, one extra at t040.
+
+```
+python3 benchmarks/annotate/round-table-chairs.py benchmarks/plans/merit-real-venue-plan.png \
+    benchmarks/annotations/merit-real-venue.json /tmp/round-chairs.json /tmp/round-chairs.png
+```
+
+measures every pale chair as a separate connected component instead. It works
+in the ring from 3 to 28 px outside each disc's DRAWN edge (the darkest circle
+near the annotated radius), keeps ink that is neither paper nor near-black,
+and drops straight runs of 45 px or more inside the ring as walls. A chair
+abuts its table and is separated from its neighbours by paper. On the 20
+chairs the first tool got right, it agrees at IoU 0.66–0.85: its boxes cover
+only the visible part, and the first tool's reached a few pixels into the disc.
+One chair of t040 touches a drawn diagonal bar of the same grey and comes out
+merged; its existing box (`c102`) is right and is kept.
+
+Applied, after checking each box by eye on its review image
+(`golden-round-chairs-review.jpg`: green the new boxes, red the boxes held before):
+- `c094` is t038's right chair and `c090` its lower-right one, both
+  re-measured.
+- `c114` is new: t038's lower chair.
+- `c101` is removed; `c107` already held t040's right chair whole.
+
+Each re-measured object says so in `boxSource`. The count stays 113
+(24 pale, six per round table). The truth facings in
+`plan-understanding/truth/merit-real-venue.json` follow. The robustness
+variants were regenerated from the corrected file
+(`benchmarks/robustness/make-variants.mjs`; images byte-identical). They had
+been made before the relationships grew from 24 to 113, and now carry all 113.
+
 ## What is deliberately NOT annotated
 
 - **Columns.** Nothing on this drawing is confidently identifiable as a column
@@ -104,3 +141,20 @@ that file's `annotationMethod`.
 
 `ornek-raw-frame.mjs` derives the rotated copy used by `benchmarks/rotation/`.
 It is a coordinate change on the frozen file, never an independent annotation.
+
+## ORNEK table outlines (2026-10-18)
+
+```
+python3 benchmarks/annotate/ornek-outline-measure.py benchmarks/plans/ornek-upright.png \
+    benchmarks/annotations/ornek-symbolic.json /tmp/outlines.json /tmp/review.png
+```
+
+The annotation measures each table's CENTRE and gives all 166 one nominal
+78 × 78 box. The photographed sheet draws them as ellipses 70–90 px wide and
+66–77 px tall. This tool measures each drawn outline (90 rays, the first rim
+followed by paper, a consensus ellipse fit) and shares no code with the
+detector. 164 of 166 are measured; two that touch a pillar line are left NOT
+MEASURED. Every fit was checked by eye on the review sheet. The result is
+frozen in `plan-understanding/truth/ornek-symbolic.json` under `tableOutlines`
+(review sheet beside it). The scorer uses it for size and shape and keeps the
+nominal-box scores under `vsAnnotationBox`.

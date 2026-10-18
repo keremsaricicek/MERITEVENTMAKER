@@ -911,7 +911,7 @@
   },
   {
    "chair": "c090",
-   "facingDeg": 247.7,
+   "facingDeg": 227.7,
    "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
   },
   {
@@ -931,7 +931,7 @@
   },
   {
    "chair": "c094",
-   "facingDeg": 238.8,
+   "facingDeg": 178.7,
    "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
   },
   {
@@ -962,11 +962,6 @@
   {
    "chair": "c100",
    "facingDeg": 137.9,
-   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
-  },
-  {
-   "chair": "c101",
-   "facingDeg": 190.4,
    "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
   },
   {
@@ -1027,6 +1022,11 @@
   {
    "chair": "c113",
    "facingDeg": 134.5,
+   "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
+  },
+  {
+   "chair": "c114",
+   "facingDeg": 279.4,
    "basis": "crescent opens toward the round table centre (annotation orientationEvidence)"
   }
  ],
