@@ -2883,6 +2883,58 @@
       // filter. Suppression was measured and refused.
       role:"evidence-only",suppresses:false};
   }
+  // ---- what the drawing itself says under a word ---------------------------
+  //
+  // PRINTING IS STROKES; A SEAT IS AN AREA, AND IT STANDS AT A TABLE. OCR on
+  // a degraded rendering reads junk off solid fills -- "KID", "ihn", "BE",
+  // Tesseract confidence 15-49 -- and the text rule deleted the chairs it
+  // covered: 25 real armchairs on the jpeg-q20 rendering of the Golden plan,
+  // standalone primary-family seats with no adjacency to protect them.
+  //
+  // Two facts of the drawing say such a seat is not printing. It is a FILLED
+  // REGION: the share of its box that is ink off every edge (luma below paper
+  // - 12, local step below 12) is 0.58-0.68 on those chairs and 0.00-0.03 on
+  // printed letters, and the bound sits between, not at either one. And it
+  // STANDS AGAINST A TABLE, at the distance the tables stage already calls
+  // "seated against" (a gap within 0.35 of the seat's long side). Area alone
+  // was measured and refused: it kept the bold capacity lettering of the
+  // greyscale rendering (area 0.34-0.49, 69-215 px from any table) and 17
+  // filled label squares on the large-venue fixture (38 px, the seats' own
+  // size, 40 px from the nearest table). Neither stands at a table.
+  //
+  // TABLES ARE NOT EXEMPTED, and that is measured, not cautious. Junk words
+  // also delete real chairless tables (bistro B01/B05, 9 on a2, 8 on a4, 6 on
+  // a7), and they also hide false solid ones that a confidence floor would
+  // hand back. Some of those are ATTACHED -- Golden's grey equipment boxes,
+  // the wall blocks and bar end of jpeg-q20, JPEG fragments of real tables:
+  // an edge line runs on as ink past one end (0.98-1.00, real chairless
+  // tables 0.26-0.27). But the architecture fixture's plinths and mullions
+  // (a6) are filled, free-standing, chairless and junk-covered exactly like
+  // the real ones; colour against the plan's seated tables, seat adjacency and
+  // word confidence were each measured and none separates them (a6's seated
+  // tables are mostly its plinths; its junk reads 0-40 like a2's). Exempting
+  // tables offered 17 phantom tables there. Until something separates them,
+  // the words decide for tables as before.
+  const DRAWN_AREA_MIN=.3,SEATED_GAP_OF_LONG_SIDE=.35;
+  function drawnEvidence(pixels,width,height){
+    const d=pixels.data,lumaAt=i=>(d[4*i]*299+d[4*i+1]*587+d[4*i+2]*114)/1000;
+    const hist=new Uint32Array(256);let n=0;
+    for(let y=0;y<height;y+=4)for(let x=0;x<width;x+=4){hist[Math.min(255,Math.round(lumaAt(y*width+x)))]++;n++;}
+    let paper=255;for(let v=0,seen=0;v<256;v++){seen+=hist[v];if(seen>=.98*n){paper=v;break;}}
+    const pxBox=c=>{const x0=Math.max(0,Math.floor(c.x/100*width)),y0=Math.max(0,Math.floor(c.y/100*height));
+      return{x0,y0,x1:Math.min(width,Math.max(x0+1,Math.floor((c.x+c.w)/100*width))),y1:Math.min(height,Math.max(y0+1,Math.floor((c.y+c.h)/100*height)))};};
+    const areaShare=c=>{
+      const{x0,y0,x1,y1}=pxBox(c);let on=0,tot=0;
+      for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){
+        tot++;const i=y*width+x,v=lumaAt(i);if(v>=paper-12)continue;
+        const gx=x>0&&x<width-1?Math.abs(lumaAt(i+1)-lumaAt(i-1))/2:0;
+        const gy=y>0&&y<height-1?Math.abs(lumaAt(i+width)-lumaAt(i-width))/2:0;
+        if(Math.max(gx,gy)<12)on++;
+      }
+      return tot?on/tot:0;
+    };
+    return{areaShare};
+  }
   // ---- False-positive filtering, real evidence rather than a raised
   // threshold: capacity text ("114 pax seating"), dimension labels, and other
   // printed annotations get picked up by the classical binarization pass the
@@ -2891,12 +2943,23 @@
   // apart directly — a candidate whose area is dominated by recognized text
   // is dropped outright, UNLESS it has real seat adjacency (nearby chair
   // detections), which is strong counter-evidence it's an actual table.
-  function suppressTextFalsePositives(candidates,words,width,height){
+  function suppressTextFalsePositives(candidates,words,width,height,pixels){
     const wordBoxesPct=(words||[]).filter(w=>w.text?.trim().length&&w.bbox).map(w=>({
       x:w.bbox.x0/width*100,y:w.bbox.y0/height*100,
       w:(w.bbox.x1-w.bbox.x0)/width*100,h:(w.bbox.y1-w.bbox.y0)/height*100,
     }));
-    if(!wordBoxesPct.length)return{kept:candidates,removedCount:0,removed:[]};
+    if(!wordBoxesPct.length)return{kept:candidates,removedCount:0,removed:[],keptAsDrawn:0};
+    // The analysis's own pixels or none: a raster of another size would put
+    // every box somewhere else.
+    let look=null;
+    const drawn=()=>look||(look=drawnEvidence(pixels,width,height));
+    const canLook=!!(pixels&&pixels.data&&pixels.width===width&&pixels.height===height);
+    // In pixels, so a plan's aspect does not stretch the gap.
+    const gapPx=(a,b)=>Math.max(0,a.x-(b.x+b.w),b.x-(a.x+a.w))/100*width+Math.max(0,a.y-(b.y+b.h),b.y-(a.y+a.h))/100*height;
+    const tables=candidates.filter(t=>t.kind==="table");
+    const atATable=c=>{const long=Math.max(c.w/100*width,c.h/100*height);
+      return tables.some(t=>gapPx(c,t)<=long*SEATED_GAP_OF_LONG_SIDE);};
+    let keptAsDrawn=0;
     const overlapArea=(a,b)=>{
       const x1=Math.max(a.x,b.x),y1=Math.max(a.y,b.y),x2=Math.min(a.x+a.w,b.x+b.w),y2=Math.min(a.y+a.h,b.y+b.h);
       return Math.max(0,x2-x1)*Math.max(0,y2-y1);
@@ -2985,9 +3048,15 @@
       // so neither real plan can move on it.
       const isDrawnSeat=c.kind==="venue"&&c.type==="chair"
         &&!!c.seatFamily&&c.seatFamily!=="primary";
-      if(overlapRatio>.4&&!hasChairs&&!isSymbol&&!isStructural&&!isDrawnSeat&&!isModelTable){removedCount++;removed.push(c);}else{kept.push(c);}
+      const accused=overlapRatio>.4&&!hasChairs&&!isSymbol&&!isStructural&&!isDrawnSeat&&!isModelTable;
+      // Asked only of a SEAT the words accuse (see drawnEvidence): a filled
+      // region standing at a table is not printing. Tables: the words decide.
+      const isSeat=c.kind==="venue"&&c.type==="chair";
+      const drawnSeat=accused&&isSeat&&canLook&&atATable(c)&&drawn().areaShare(c)>=DRAWN_AREA_MIN;
+      if(drawnSeat)keptAsDrawn++;
+      if(accused&&!drawnSeat){removedCount++;removed.push(c);}else{kept.push(c);}
     }
-    return{kept,removedCount,removed};
+    return{kept,removedCount,removed,keptAsDrawn};
   }
   // ---- naming an object from the word the drawing prints on it -------------
   //
@@ -4103,10 +4172,16 @@
         paths:pdfSource.vector?.paths??null,images:pdfSource.vector?.images??null,truncated:!!pdfSource.text?.truncated,
         content:["RASTER","VECTOR","MIXED","EMPTY"].includes(pdfSource.content)?pdfSource.content:null,
         shapes:pdfSource.vector?.shapes&&typeof pdfSource.vector.shapes==="object"?Object.fromEntries(["rect","circle","ellipse","polygon","line","clipped"].map(k=>[k,Math.max(0,Math.floor(Number(pdfSource.vector.shapes[k])||0))])):null};
+      // The plan's pixels, read once: text suppression asks the drawing what
+      // is under a word (drawnEvidence), and the venue and facing reads below
+      // use the same raster. Nothing draws on this canvas in between.
+      let planRaster=null;
       if(suppressionWords.length){
-        const suppression=suppressTextFalsePositives(event.analysis.candidates,suppressionWords,width,height);
+        planRaster=ctx.getImageData(0,0,width,height);
+        const suppression=suppressTextFalsePositives(event.analysis.candidates,suppressionWords,width,height,planRaster);
         event.analysis.candidates=suppression.kept;
         event.analysis.diagnostics.textSuppressed=suppression.removedCount;
+        event.analysis.diagnostics.textSuppressionKeptAsDrawn=suppression.keptAsDrawn;
         suppressedByText=suppression.removed||[];
       }
       ui.analysisStage=t("analysis.stage.labels");render();await yieldFrame();
@@ -4128,7 +4203,7 @@
       let turnAt=performance.now();
       const pace=async()=>{if(performance.now()-turnAt<40)return;await turn();turnAt=performance.now();};
       await turn();
-      const planRaster=ctx.getImageData(0,0,width,height);
+      if(!planRaster)planRaster=ctx.getImageData(0,0,width,height);
       await turn();
       await placeNamedVenueElements(event,planRaster,ocrResult,pdfItems,turn);
       await turn();turnAt=performance.now();

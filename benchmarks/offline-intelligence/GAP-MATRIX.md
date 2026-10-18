@@ -19,7 +19,7 @@ one real venue out · **BLIND** a real venue nobody has seen (none exists).
 | id | problem | user impact | baseline | acceptance | fix (owner) | verification | result |
 |---|---|---|---|---|---|---|---|
 | D1 | Golden table precision | a phantom table is a seat that does not exist | 0.979 (46/1/0), REG, 2026-10-11 | ≥ 0.98 | detection workstream | `npm run benchmark` | open **Cause named (2026-10-18):** the one proposed false table (776, 303; 62 × 38) is the split piece, an armchair and half of T11. The offered view already holds it back (plan-understanding table P = 1.0); the proposed view counts it. |
-| D2 | Golden chair precision | phantom chairs inflate capacity | 0.973 (108/3/5), REG, `597b0cc` | ≥ 0.98 | detection | `npm run benchmark` | open **Causes named (2026-10-18, `reports/latest.json` spurious list, crops checked):** 108 TP, 3 FP.
+| D2 | Golden chair precision | phantom chairs inflate capacity | 0.973 (108/3/5), REG, `597b0cc` | ≥ 0.98 | detection | `npm run benchmark` | **MET (2026-10-18, `6f93cec`): 108/0/5, precision 1.0**, after the column pass was made stable under one member (suite `column-pass-stability`); no rendering loses a true table, chair FP down 1-3 on 14 renderings (`benchmarks/detection/experiments/2026-10-18-d2-tone/README.md`). Earlier record: **Causes named (2026-10-18, `reports/latest.json` spurious list, crops checked):** 108 TP, 3 FP.
 - Two FPs, at (1138, 707) and (678, 706), are segments of the stage's blue truss struts. They pass the uniform chair family on size and shape, and colour is not part of that test.
 - One FP, at (1310, 572), is a fragment between t040's right chair and the diagonal bar it touches.
 The fix belongs in the chair family's admission test, so a mark must look like the chairs drawn at the tables. That is a detector change, gated on the fingerprint and the full detector benchmarks, and is not made this session. **2026-10-18 (later): all three FPs measured as bare-paper patches (d 0 vs true members d ≥ 7); a tone rule takes Golden to 108/0/5 but was NOT shipped** — through the column pass it costs lowres-roundtrip 7 true tables (the plant icons become a column family). Five pre-registered steps and their failures: `benchmarks/detection/experiments/2026-10-18-d2-tone/`. Next: a column pass stable under one member's removal, then the chair rule again. |
@@ -139,6 +139,8 @@ Closed this session, each with its commit and evidence:
 | R4 | questions per plan reported (furniture dev 2.21, seating question on real pieces 4/4) | `1ce3944` |
 | D2 | three FPs measured as bare-paper patches; tone rule NOT shipped (column pass costs lowres 7 tables) | `1ce3944` (experiment record) |
 | V1, junk words | jpeg-q20 chair loss = Tesseract junk (conf < 50); floor refused (exposes 2 Golden false tables) | `1ce3944` |
+| V1, junk words (C) | seats: a filled region standing at a table survives junk words — bright-down chairs 90→109 (HEALTHY), jpeg-q20 81→94, lowres 74→91, no new false object anywhere; tables NOT exempted (filled+free, colour, adjacency each measured: none separates a6's plinths from real chairless tables) | this commit |
+| D2 + column pass | column pass stable under one member; Golden chairs 108/0/5 | `6f93cec` |
 
 Where the next session starts, in order:
 

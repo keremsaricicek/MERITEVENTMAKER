@@ -287,3 +287,37 @@ table precision 1.0 for 0.958. The next step is a reason those boxes are not
 tables that does not depend on junk text (they are grey, chairless, and drawn
 with an inner square; Golden's tables are tan) — measured on every plan before
 the floor is reconsidered.
+
+## 2026-10-18 (C) — junk words: seats protected by the drawing; tables measured and not exempted
+
+The floor above was not shipped. Instead `suppressTextFalsePositives` asks the
+plan's own pixels about each candidate the words accuse (suite
+`text-suppression-evidence`, red on the old rule, each clause mutation-proved):
+
+- **A seat that is a filled region and stands against a table is not
+  printing.** Area = share of the box that is ink off every edge: real chairs
+  0.58–0.68, printed letters 0.00–0.03 (bound 0.3, between). "Against a table"
+  is the tables stage's own "seated against" distance (gap ≤ 0.35 × the seat's
+  long side). Area alone was measured and refused first: it kept the greyscale
+  rendering's bold capacity lettering (area 0.34–0.49, 69–215 px from any
+  table) and 17 label squares on a8 (seat-sized, 40 px from a table).
+- **Tables are not exempted.** Three table rules were measured and refused:
+  "filled + free-standing" (an edge line running on as ink separates Golden's
+  grey equipment boxes, jpeg-q20's wall blocks, bar end and JPEG fragments:
+  0.98–1.00 against 0.26–0.27 for real free tables), then "+ the colour of
+  the plan's seated tables", then "+ seat adjacency" — each kept a6's grey
+  plinths and mullions (17 phantom tables offered) because a6's seated tables
+  are mostly its plinths, its junk reads 0–40 like a2's, and its real tables
+  stand as far from chairs (156–473 px) as the plinths do (58–325 px). The
+  words therefore still remove real chairless tables under junk (bistro 2, a2
+  9, a4 8, a7 6) and still hide false solid ones; that stays open.
+
+| | chairs before (TP/FP/FN) | after |
+|---|---|---|
+| bright-down | 90 / 0 / 23 | **109 / 0 / 4** (ACCEPTABLE → HEALTHY) |
+| jpeg-q20 | 81 / 0 / 32 | **94 / 0 / 19** |
+| lowres-roundtrip | 74 / 2 / 39 | **91 / 2 / 22** |
+| greyscale | 103 / 3 / 10 | 103 / 3 / 10 |
+| every other rendering, Golden, ORNEK, all adversarial fixtures | | identical |
+
+Tables are unchanged everywhere. Baseline re-recorded with that reason.
