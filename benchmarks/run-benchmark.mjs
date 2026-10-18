@@ -385,6 +385,11 @@ function evaluate(annot, det) {
       reviewGroups: det.reviewGroups,
       reviewGroupDetail: det.reviewGroupDetail,
       uncertainQuestions: det.uncertainQuestions,
+      // The capacity audit's ONE seating question (R4): asked only when the
+      // drawing's total and the count disagree over a piece whose seats are not
+      // shown, or a piece-to-table link the geometry could not settle.
+      seatingQuestion: det.capacityAudit?.question ? det.capacityAudit.question.kind : null,
+      questionsPerPlan: det.uncertainQuestions + (det.capacityAudit?.question ? 1 : 0),
       note: "review groups + questions the operator must resolve before Plan Confirmed",
     },
     provider: det.providerMetadata,
@@ -449,7 +454,7 @@ for (const f of files) {
       console.log(`           ${methods.map(([m, v]) => `${m} ${v.correct}/${v.scored}=${v.accuracy}`).join("  ")}` +
         (rel.abstainedInAnnotation ? `   (${rel.abstainedInAnnotation} unscoreable by annotation)` : ""));
   }
-  console.log(`  EFFORT   reviewGroups=${rep.humanEffort.reviewGroups} questions=${rep.humanEffort.uncertainQuestions}`);
+  console.log(`  EFFORT   reviewGroups=${rep.humanEffort.reviewGroups} questions=${rep.humanEffort.uncertainQuestions} seatingQuestion=${rep.humanEffort.seatingQuestion ?? "none"} questionsPerPlan=${rep.humanEffort.questionsPerPlan}`);
   console.log(`  TIME     ${ms} ms   pageErrors=${errors.length}`);
 }
 await browser.close();

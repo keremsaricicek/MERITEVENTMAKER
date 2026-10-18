@@ -371,17 +371,29 @@ GROUP_OF = {0: 0, 1: 0, 2: 2, 3: 3, 4: 4, 5: 4, 6: 4}
 CONFLICT = {(0, 4), (4, 0)}
 
 
+# E3b (training/README.md, E9): seating furniture is LONG, so half its short
+# side (~10 px for a bench) cannot merge two peaks standing 30 px apart along
+# one bench. Within the seating group and its table conflict, a weaker centre
+# INSIDE the stronger box is the same piece. Off with MERIT_DECODE_E3B=0 for an
+# A/B measurement; tables, chairs and columns keep E3 either way.
+SEATING_GROUP = 4
+E3B = os.environ.get("MERIT_DECODE_E3B", "1") != "0"
+
+
 def suppress_close(dets):
     """Drop a detection whose centre lies within half the short side of a
     STRONGER detection of the same group (E3, training/README.md). A 3x3 peak
     pick leaves two peaks on one broad table; two real tables cannot stand that
-    close without overlapping. `dets` is sorted by score, strongest first, and
-    so is the result. Mirrored in src/plan-model.js and detector_io.py."""
+    close without overlapping. For seating furniture, a centre inside the
+    stronger box (E3b). `dets` is sorted by score, strongest first, and so is
+    the result. Mirrored in src/plan-model.js."""
     kept = []
     for d in dets:
         g = GROUP_OF.get(d[0], d[0])
         if any((GROUP_OF.get(k[0], k[0]) == g or (GROUP_OF.get(k[0], k[0]), g) in CONFLICT)
-               and math.hypot(d[1] - k[1], d[2] - k[2]) < 0.5 * min(k[3], k[4]) for k in kept):
+               and (math.hypot(d[1] - k[1], d[2] - k[2]) < 0.5 * min(k[3], k[4])
+                    or (E3B and SEATING_GROUP in (g, GROUP_OF.get(k[0], k[0]))
+                        and abs(d[1] - k[1]) <= k[3] / 2 and abs(d[2] - k[2]) <= k[4] / 2)) for k in kept):
             continue
         kept.append(d)
     return kept

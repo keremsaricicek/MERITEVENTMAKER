@@ -408,3 +408,34 @@ already names one bench form directly (a solid bar in the seats' own colour
 standing against a table, `seat-colour-bench`). The R2 relations are measured
 on true boxes (dev 363/363, blind 163/163) and wait for a furniture detector
 that passes.
+
+**E9 — the merge of a long piece's peaks (decode only, pre-registered
+2026-10-18).** E7cal read its result as "below 0.5 bench peaks appear where no
+bench is". A census of E7's bench peaks on 120 TRAINING scenes of the furniture
+split (thr 0.3, the E3 decode) says otherwise: of 413 unmatched peaks, **280
+stand inside a true bench**, 48 inside a banquette, 47 inside a long table, 38
+on paper. E3 merges a weaker peak within half the SHORT side of a stronger one;
+a bench is ~19 px deep, so two peaks 30 px apart along it both survived, and the
+second was scored false. That forced the calibrated threshold up.
+
+E3b, the only change (no training): within the seating group and its table
+conflict, a weaker centre inside the stronger box is the same piece; tables,
+chairs and columns keep E3, so v2 decodes exactly as before. On the same 120
+scenes: unmatched bench peaks 413 → 101 (inside a true bench 280 → 43), matched
+639 → 629. Calibrated the E7cal way (200 training scenes, precision 0.95, base
+classes at 0.5): sofa 0.200, bench **0.398** (E7cal 0.543), banquette 0.491
+(0.551). Furniture dev:
+
+| | E7cal (E3) | E9 (E3b) |
+|---|---|---|
+| sofa P / R | 0.876 / 0.970 | 0.868 / 0.970 |
+| bench P / R | 1.000 / 0.083 | 0.911 / **0.526** |
+| banquette P / R | 0.925 / 0.446 | 0.906 / 0.578 |
+
+**FAILS** the condition (each furniture class R ≥ 0.85 and P ≥ 0.9). Half of the
+bench shortfall was the merge, and it is fixed in the decoder for every later
+candidate (`suppress_close`, `src/plan-model.js`, suite `model-decode`); the other
+half is the model's own peak height (TP median 0.40). The pre-registered E8
+(the base held harder) was conditional on calibration closing the furniture
+part; it does not, so E8 was **not run**, and v2 stays active. The next model
+experiment starts from a decoder that no longer penalises long pieces.

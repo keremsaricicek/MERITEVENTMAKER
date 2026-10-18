@@ -35,6 +35,11 @@ export default async function run({ page, checks, baseUrl }) {
       sofaUnderTable: S([d(1, 100, 100, 120, 50, 0.8), d(5, 103, 100, 118, 30, 0.6)]).map((x) => x.k),
       benchBesideTable: S([d(1, 100, 100, 200, 60, 0.9), d(5, 100, 152, 190, 26, 0.7)]).length,
       sofaAndChair: S([d(4, 100, 100, 120, 50, 0.8), d(2, 100, 110, 30, 30, 0.7)]).length,
+      // E3b: seating furniture is long; a second peak along the same bench is the same bench
+      twoPeaksOneBench: S([d(5, 100, 100, 150, 20, 0.6), d(5, 135, 101, 120, 19, 0.45)]).length,
+      benchesEndToEnd: S([d(5, 100, 100, 150, 20, 0.6), d(5, 252, 100, 150, 20, 0.5)]).length,
+      benchesSideBySide: S([d(5, 100, 100, 150, 20, 0.6), d(5, 100, 122, 150, 20, 0.5)]).length,
+      tablesKeepE3: S([d(1, 100, 100, 150, 40, 0.9), d(1, 160, 100, 40, 40, 0.7)]).length,
     };
   });
   checks.equal(out.twoPeaks, 1, "two peaks on one table become one box");
@@ -47,4 +52,8 @@ export default async function run({ page, checks, baseUrl }) {
   checks.equal(out.sofaUnderTable, [1], "and the other way round: the stronger reading of one spot is kept");
   checks.equal(out.benchBesideTable, 2, "a bench BESIDE its table is another object and stays");
   checks.equal(out.sofaAndChair, 2, "a sofa and a chair are never merged by this rule");
+  checks.equal(out.twoPeaksOneBench, 1, "two peaks along one long bench become one bench (E3b)");
+  checks.equal(out.benchesEndToEnd, 2, "two benches end to end both stay");
+  checks.equal(out.benchesSideBySide, 2, "two benches side by side both stay");
+  checks.equal(out.tablesKeepE3, 2, "tables keep E3: a centre inside a long table's box is not merged by E3b");
 }

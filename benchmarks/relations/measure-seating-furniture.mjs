@@ -86,6 +86,11 @@ for (const file of files) {
       furniture: live.filter((c) => c.kind === "venue" && ["sofa", "bench", "banquette"].includes(c.type))
         .map((c) => ({ id: c.id, type: c.type, ...C(c), seats: c.seats ?? null, seatsUnknown: !!c.seatsUnknown, rotation: c.rotation || 0,
           serves: ((a.planIntelligence || {}).seatingLinks?.links || []).filter((l) => l.pieceId === c.id).map((l) => l.tableId) })),
+      // R4: what the operator is asked on this plan — the capacity audit's one
+      // seating question and the review queue's difficult-item questions
+      seatingQuestion: (() => { const q = (a.planIntelligence || {}).capacityAudit?.question;
+        return q ? { kind: q.kind, pieceId: q.pieceId || null } : null; })(),
+      reviewQuestions: ((a.planIntelligence || {}).uncertainQuestions || []).length,
     };
   }, { W, H });
   await page.close();
@@ -128,8 +133,14 @@ for (const file of files) {
     };
   });
   const tablesFound = tablesGt.filter((t) => tableMatch.has(t.id)).length;
+  // Is the seating question about a real piece of furniture (one an annotation
+  // holds), and is it one whose seats the drawing does not show?
+  const qPiece = got.seatingQuestion?.pieceId ? got.furniture.find((f) => f.id === got.seatingQuestion.pieceId) : null;
+  const qTruth = qPiece ? pieces.find((p) => inside(p, qPiece.x, qPiece.y)) : null;
+  const question = got.seatingQuestion ? { ...got.seatingQuestion, onRealPiece: !!qTruth, pieceSeatsDrawn: qTruth ? qTruth.seats != null : null } : null;
   plans.push({ plan: annot.planId, family: annot.split?.family, representation: got.representation, errors: errors.length,
-    tables: { gt: tablesGt.length, found: tablesFound, detected: got.tables.length }, rows });
+    tables: { gt: tablesGt.length, found: tablesFound, detected: got.tables.length }, rows,
+    questions: { seating: question, review: got.reviewQuestions, perPlan: got.reviewQuestions + (question ? 1 : 0) } });
   const oc = rows.reduce((m, r) => (m[r.outcome] = (m[r.outcome] || 0) + 1, m), {});
   console.log(`${annot.planId.padEnd(34)} ${String(got.representation).padEnd(9)} tables ${tablesFound}/${tablesGt.length} (+${got.tables.length - tablesFound})  pieces ${rows.length} ${JSON.stringify(oc)}`);
 }
@@ -152,6 +163,15 @@ const summary = {
   apartLinked: all.filter((r) => r.apartLinked === true).length, apartPieces: all.filter((r) => r.apartFrom).length,
   tables: plans.reduce((m, p) => ({ gt: m.gt + p.tables.gt, found: m.found + p.tables.found, detected: m.detected + p.tables.detected }), { gt: 0, found: 0, detected: 0 }),
   pageErrors: plans.reduce((n, p) => n + p.errors, 0),
+  // R4: questions asked per plan (review queue + the one seating question),
+  // and whether each seating question names a real piece
+  questions: {
+    perPlan: plans.map((p) => p.questions.perPlan),
+    meanPerPlan: plans.length ? Number((plans.reduce((n, p) => n + p.questions.perPlan, 0) / plans.length).toFixed(2)) : null,
+    seatingAsked: plans.filter((p) => p.questions.seating).length,
+    seatingOnRealPiece: plans.filter((p) => p.questions.seating?.onRealPiece).length,
+    seatingKinds: plans.reduce((m, p) => (p.questions.seating ? (m[p.questions.seating.kind] = (m[p.questions.seating.kind] || 0) + 1, m) : m), {}),
+  },
 };
 console.log("\n" + JSON.stringify(summary, null, 1));
 if (OUT) fs.writeFileSync(OUT, JSON.stringify({ ranAt: new Date().toISOString(), dir, summary, plans }, null, 1));

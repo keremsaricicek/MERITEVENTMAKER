@@ -250,3 +250,40 @@ re-record does not hide them. jpeg-q20 and lowres-roundtrip lose chairs with
 OCR on (chair F1 0.822 and 0.785); with OCR off they do not (0.951 and 0.941).
 That is the text-suppression path reading compression noise as printing. It
 is recorded, not fixed.
+
+## 2026-10-18 (later) — why jpeg-q20 loses chairs with OCR on: junk words, measured
+
+The WEAK chair rows of jpeg-q20 and lowres-roundtrip were attributed to text
+suppression reading compression noise as printing. Measured on jpeg-q20 (same
+code, OCR on and OCR refused): the detector's own output is nearly the same
+(71 chairs at tables either way, 38 standalone chairs either way). The
+difference is all in `suppressTextFalsePositives`, which removed **56**
+candidates with OCR on: 29 chairless tables and 25 standalone chairs. 51 of
+the 52 that the OCR-off run kept are covered by Tesseract words, and the words
+are junk: "KID" (confidence 22) ×13, "ihn" (31) ×10, "BE" (31) ×6, "EET" (15),
+"kin" (23), "Bo" (16)… The page read on this rendering returns 60 words, 41 of
+them under confidence 50.
+
+A confidence floor on the words suppression measures against was tried as an
+experiment switch (`MERIT_SUPPRESSION_MIN_CONF`, worktree only, never
+shipped). At 50 it removes 5 candidates instead of 56:
+
+| | proposed tables | offered tables | chairs |
+|---|---|---|---|
+| jpeg-q20, today | 34 / 8 / 12 | 26 / 4 / 20 | 81 / 3 / 32 |
+| jpeg-q20, floor 50 | 45 / 24 / 1 | 27 / 8 / 19 | 104 / 3 / 9 |
+| Golden, today | 46 / 1 / 0 | 46 / 0 / 0 | 108 / 3 / 5 |
+| Golden, floor 50 | 46 / 3 / 0 | 46 / 2 / 0 | 108 / 3 / 5 |
+| adversarial-bistro, today | 18 / 0 / 5 | | |
+| adversarial-bistro, floor 50 | 20 / 0 / 3 | | |
+
+(TP / FP / FN.) The junk words cut both ways. They delete real chairs and real
+tables (bistro B01 and B05 by "nl" at 46; Golden's stage band by "NR" at 49;
+jpeg-q20's 25 chairs), and they also hide false tables: on Golden the two grey
+equipment boxes under the trusses (1125, 500 and 648, 504) are removed only
+because Tesseract reads "EE" at 40 across them. With the floor they come back
+and are OFFERED. So the floor alone is refused: it would trade Golden's offered
+table precision 1.0 for 0.958. The next step is a reason those boxes are not
+tables that does not depend on junk text (they are grey, chairless, and drawn
+with an inner square; Golden's tables are tan) — measured on every plan before
+the floor is reconsidered.

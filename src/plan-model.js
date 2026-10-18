@@ -172,14 +172,24 @@
   // and 132 of a later candidate's 148 were such second peaks. The same rule,
   // line for line, is training/detector.py's `suppress_close` (E3). Applied to
   // the detections that passed their class threshold.
+  //
+  // Seating furniture is LONG (E3b, training/README.md E9): half a bench's short
+  // side is ~10 px, so two peaks 30 px apart along one bench both survived and
+  // the second was counted as a false bench. Measured on 120 training scenes
+  // of the furniture split: 280 of 413 "false" bench peaks stood inside a true
+  // bench. Within the seating group and its table conflict, a weaker centre
+  // INSIDE the stronger box is the same piece. Tables, chairs and columns keep
+  // E3, so a four-class model decodes exactly as before.
   const GROUP_OF = [0, 0, 2, 3, 4, 4, 4]; // a sofa, a bench and a banquette on one spot are one piece (E4)
+  const SEATING_GROUP = 4;
   function suppressClose(dets) {
     const kept = [];
     for (const d of dets) {
       const g = GROUP_OF[d.k] ?? d.k;
       // a table and a seating-furniture box on one spot are one object (E5)
       if (kept.some(k => { const h = GROUP_OF[k.k] ?? k.k; return (h === g || (h === 0 && g === 4) || (h === 4 && g === 0))
-        && Math.hypot(d.cx - k.cx, d.cy - k.cy) < 0.5 * Math.min(k.w, k.h); })) continue;
+        && (Math.hypot(d.cx - k.cx, d.cy - k.cy) < 0.5 * Math.min(k.w, k.h)
+          || ((h === SEATING_GROUP || g === SEATING_GROUP) && Math.abs(d.cx - k.cx) <= k.w / 2 && Math.abs(d.cy - k.cy) <= k.h / 2)); })) continue;
       kept.push(d);
     }
     return kept;
