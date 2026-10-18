@@ -41,6 +41,9 @@ for (const plan of PLANS) {
   for (let r = 0; r < RUNS; r++) {
     const browser = await launchChromium();
     const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+    // PREFETCH=off measures the same clock with the import-time text reads
+    // switched off, so their cost to the first usable view is a measured number.
+    if (process.env.PREFETCH === "off") await page.addInitScript(() => { globalThis.MERIT_PREFETCH = "off"; });
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await openApp(page, app.baseUrl, { lang: "tr" });
@@ -60,14 +63,16 @@ for (const plan of PLANS) {
     const chooseMs = Date.now() - t0;
     const t1 = Date.now();
     await page.click('[data-setup="create"]');
-    // the Floor Plan with the event's own background decoded and drawn
+    // the Floor Plan with the event's own background on screen: the canvas
+    // draws it as a CSS background-image (not an <img>; the first version of
+    // this runner waited for an <img> and never saw one), so: an element that
+    // carries it, laid out, and the image itself decoded, then two frames.
     await page.waitForFunction(() => {
       const e = typeof activeEvent === "function" ? activeEvent() : null;
       if (!e || !e.background || !e.background.src) return false;
-      const imgs = [...document.querySelectorAll("img")].filter((i) => i.src === e.background.src);
-      return imgs.some((i) => i.complete && i.naturalWidth > 0 && i.getBoundingClientRect().width > 0);
+      return [...document.querySelectorAll("[style*='background-image']")].some((el) => el.style.backgroundImage.includes(e.background.src.slice(0, 64)) && el.getBoundingClientRect().width > 0);
     }, null, { timeout: 60000 });
-    await page.evaluate(() => new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res))));
+    await page.evaluate(async () => { const i = new Image(); i.src = activeEvent().background.src; await i.decode(); await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res))); });
     const openMs = Date.now() - t1;
     runs.push({ chooseMs, openMs, totalMs: chooseMs + openMs, errors: errors.length });
     await browser.close();
@@ -79,6 +84,6 @@ for (const plan of PLANS) {
     pageErrors: runs.reduce((n, x) => n + x.errors, 0) };
 }
 await app.close?.();
-const out = { ranAt: new Date().toISOString(), cores, runs: RUNS, results };
+const out = { ranAt: new Date().toISOString(), cores, runs: RUNS, prefetch: process.env.PREFETCH === "off" ? "off" : "on", results };
 fs.writeFileSync(OUT, JSON.stringify(out, null, 1));
 console.log(JSON.stringify(Object.fromEntries(Object.entries(results).map(([k, v]) => [k, { ...v.median, worstTotalMs: v.worstTotalMs, pageErrors: v.pageErrors }])), null, 1));

@@ -425,3 +425,67 @@ Raw runner output: `benchmarks/perf/runs-2026-10-17/`. The 2-core rows miss both
 hardware rows (Golden ≤ 10 s p50 by 0.3 s, ORNEK ≤ 30 s by 11.6 s). The other
 clock the programme asks for — import → a usable plan on screen, before any
 analysis — is not reported by this runner and is NOT MEASURED here.
+
+### 2026-10-18 — quiet window: the import clock, the prefetch, and a re-analysis that no longer re-reads
+
+Linux container, 4 cores, nothing else running (NOT a Windows measurement). Every
+row is the median of 5 (worst or p95 in brackets). Raw runner output is in
+`benchmarks/perf/runs-2026-10-18/`.
+
+**Analyse → complete, before the two changes below** (`analysis-profile.mjs 5`).
+GAP_MS is how long the person looks at the plan between import and Analyse,
+while the S5 prefetch reads its text:
+
+| | 4 cores, no gap | 4 cores, 5 s gap | 4 cores, 15 s gap | 2 cores, no gap | 2 cores, 15 s gap |
+|---|--:|--:|--:|--:|--:|
+| ORNEK cold | 20.7 s (24.4) | 16.1 s (17.0) | **9.0 s (9.5)** | 43.9 s (46.7) | 26.8 s (28.1) |
+| ORNEK re-analysis ("warm") | 13.9 s | 14.1 s | 14.3 s | 27.7 s | 28.9 s |
+| Golden cold | 6.9 s | 3.8 s | 4.0 s | 9.9 s | 3.6 s |
+
+The ≤ 10 s ORNEK row is met only when the person has looked at the plan for
+about 15 s before pressing Analyse. The total work does not shrink; the text
+reads move into the time the plan is on screen. With no gap it stays at
+20.7 s, NOT met. The longest main-thread task is 186–206 ms on 4 cores and up
+to 265 ms on 2 cores, at or above the 200 ms line, as before.
+
+**Import → a usable plan on screen** (`import-usable.mjs 5`, the S4 clock). It
+starts when the plan FILE is chosen in the new-event dialog and stops when the
+Floor Plan shows it, decoded and drawn. Its first version waited for an `<img>`;
+the canvas draws the plan as a CSS background, so that version never stopped.
+It now waits for the background element and the decoded image.
+
+| 4 cores | prefetch off | prefetch on, started at once | prefetch on, started after the first frames |
+|---|--:|--:|--:|
+| Golden PNG | 0.37 s | 0.57 s | 0.52 s |
+| ORNEK PNG | 1.29 s | 1.96 s | 1.65 s |
+| ORNEK PDF (page chosen + rendered) | 4.10 s | 5.46 s | 5.86 s |
+
+2 cores, prefetch off / on at once: Golden 0.47 / 0.66 s, ORNEK PNG 1.46 /
+1.89 s, ORNEK PDF 4.39 / 5.83 s.
+
+**Two fixes found by measuring this clock:**
+1. **The dialog never started the prefetch.** The new-event dialog wrote the
+   plan without `importedAtMs`, so the S5 prefetch had never started on the
+   product's main import path. Every suite case had set the stamp by hand.
+   Now stamped, with `analysis-prefetch` holding it (mutation-checked).
+2. **The prefetch delayed the first view.** Started at once, the prefetch costs
+   the first view 0.2–1.4 s. It now starts after the plan's image is decoded
+   and two frames are drawn. That recovers about 0.3 s on ORNEK PNG and 0.05 s
+   on Golden. ORNEK PDF did not improve (5.46 → 5.86 s, within this runner's
+   spread for the PDF path). The rest of the cost remains, measured.
+
+**S7 — a re-analysis reuses the text reads its predecessor completed.** The
+two reads depend on the image alone. The last completed pair is kept, one
+entry keyed by the image, and handed out as copies. A stopped analysis keeps
+nothing, and `MERIT_PREFETCH=off` disables it.
+
+| re-analysis of the same plan | before | after |
+|---|--:|--:|
+| ORNEK, 4 cores | 13.9 s | **4.9 s** (5.2) |
+| ORNEK, 2 cores | 27.7 s | **5.2 s** (6.0) |
+| Golden, 4 cores | 2.9 s | 2.7 s |
+
+Cold rows are unchanged (ORNEK 21.5 s, 4 cores, no gap), as expected.
+`analysis-prefetch` (19 checks) shows the reused reads give the same OCR model
+lines, Tesseract words and candidates as fresh reads; a mutation disabling the
+reuse turns it red. `analysis-workers` (17 checks) is unchanged.

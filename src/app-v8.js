@@ -1125,7 +1125,7 @@
   }
   function createBlankEventFromSetup(usePlan){
     syncSetupFields();const d=newEventDraft;if(!d.name.trim()||!d.date||!d.hotel.trim()){toast(t("toast.eventFieldsRequired"),"error");return;}
-    const event=migrateEvent({id:uid("event"),name:d.name.trim(),date:d.date,hotel:d.hotel.trim(),salon:d.salon.trim(),status:d.status,coverImage:d.coverImage,tables:[],venueObjects:[],guests:[],background:{src:usePlan?d.planSrc:"",name:usePlan?d.planName:"",opacity:.34,visible:!!(usePlan&&d.planSrc),locked:true,isDefault:false,scale:100,...(usePlan&&d.planSrc&&d.pdfSource?{pdfSource:d.pdfSource}:{})},createdAt:nowISO(),lastModified:nowISO()});
+    const event=migrateEvent({id:uid("event"),name:d.name.trim(),date:d.date,hotel:d.hotel.trim(),salon:d.salon.trim(),status:d.status,coverImage:d.coverImage,tables:[],venueObjects:[],guests:[],background:{src:usePlan?d.planSrc:"",name:usePlan?d.planName:"",opacity:.34,visible:!!(usePlan&&d.planSrc),locked:true,isDefault:false,scale:100,...(usePlan&&d.planSrc?{importedAtMs:Date.now()}:{}),...(usePlan&&d.planSrc&&d.pdfSource?{pdfSource:d.pdfSource}:{})},createdAt:nowISO(),lastModified:nowISO()});
     state.events.unshift(event);if(globalThis.MeritVenueModel)MeritVenueModel.migrateVenues(state);audit(event,"EVENT_CREATED",{blank:!event.background.src,hotel:event.hotel,salon:event.salon});saveState();ui.activeEventId=event.id;ui.screen="workspace";ui.tab="floor";ui.leftCollapsed=true;render();toast(t(event.background.src?"toast.eventCreatedWithPlan":"toast.blankEventCreated"),"success",5000);
   }
   function bindSetup(){
@@ -3359,6 +3359,14 @@
     return{analysisFrame,ratio:analysisFrame.ratio,width,height,canvas,ctx};
   }
   function clearPlanTextPrefetch(){Object.assign(planTextPrefetch,{src:null,model:null,page:null,startedAtMs:null,abort:null});}
+  // The two reads an analysis COMPLETED, kept for the next analysis of the same
+  // image (S7, 2026-10-18). Re-analysing a plan read its text again from
+  // nothing: on ORNEK the OCR model alone was ~9.7 s of a ~14 s re-analysis.
+  // One entry, keyed by the image, handed out as a copy so nothing a later
+  // stage does to it can reach the next analysis; a stopped analysis keeps
+  // nothing, and MERIT_PREFETCH="off" turns this off with the prefetch.
+  let keptPlanText={src:null,model:null,page:null};
+  const copyRead=r=>r==null?r:(typeof structuredClone==="function"?structuredClone(r):JSON.parse(JSON.stringify(r)));
   function startPlanTextPrefetch(event){
     if(globalThis.MERIT_PREFETCH==="off"||!event||event.analysis||ui.analysisBusy)return;
     const bg=event.background,src=bg?.src;
@@ -3797,16 +3805,18 @@
       // The two text reads, when they were started at import (S5): the same
       // reads of the same image, begun earlier. Taken over by this analysis, so
       // a Stop below ends them and a re-analysis reads afresh.
-      const pre=takePlanTextPrefetch(event.background.src);
+      let pre=takePlanTextPrefetch(event.background.src);
+      const reusing=!pre&&globalThis.MERIT_PREFETCH!=="off"&&keptPlanText.src===event.background.src&&keptPlanText.model&&keptPlanText.page;
+      if(reusing)pre={src:keptPlanText.src,model:Promise.resolve(copyRead(keptPlanText.model)),page:Promise.resolve(copyRead(keptPlanText.page)),startedAtMs:performance.now(),abort:null,kept:true};
       abort.signal.addEventListener("abort",()=>pre?.abort?.abort(),{once:true});
-      const prefetchUse={model:false,page:false,startedBeforeMs:pre?Math.round(performance.now()-pre.startedAtMs):null};
+      const prefetchUse={model:false,page:false,startedBeforeMs:pre&&!pre.kept?Math.round(performance.now()-pre.startedAtMs):null,keptFromLastAnalysis:!!(pre&&pre.kept)};
       // Tesseract reads the whole analysis canvas in its own worker, so it is
       // started HERE and runs while the OCR model and the detector hold the main
       // thread; its answer is awaited where it was always read. Same input: the
       // canvas is drawn once above and nothing after this line draws on it.
       // Measured on ORNEK, the two engines one after the other were most of the
       // analysis's wall clock.
-      const tesseractStartedAt=performance.now();let tesseractMs=null;
+      const tesseractStartedAt=performance.now();let tesseractMs=null;const keptReads={model:null,page:null};
       const freshPageRead=()=>(async()=>{try{return await runPlanOCR(canvas.toDataURL("image/png"));}catch(ocrError){return{available:false,text:null,reason:ocrError.message,reasonCode:"FAILED"};}finally{tesseractMs=Math.round(performance.now()-tesseractStartedAt);}})();
       // A read begun at import is used only when it answered: one that failed
       // or was stopped is read again here, so the result never differs from
@@ -3890,6 +3900,7 @@
       const ocrModelRead=await guard(pre&&pre.model
         ?pre.model.then(r=>{if(r&&r.available){prefetchUse.model=true;return r;}return readPlanTextWithModel(event,undefined,abort.signal);})
         :readPlanTextWithModel(event,undefined,abort.signal));stage("ocrModel");
+      keptReads.model=ocrModelRead&&ocrModelRead.available?copyRead(ocrModelRead):null;
       if(!ocrStarted)ocrStarted=ocrModelRead.available&&globalThis.Tesseract
         ?Promise.resolve({available:true,text:"",words:[],pageRead:"skipped: the OCR model read the page"})
         :readWholePage();
@@ -4068,6 +4079,7 @@
       ui.analysisStage=t("analysis.stage.labels");ui.analysisProgress=84;render();await yieldFrame();
       stage("embedMemoryBuild");
       const ocrResult=await guard(ocrStarted);stage("tesseractWait");
+      keptReads.page=ocrResult&&ocrResult.available&&ocrResult.pageRead==null?copyRead(ocrResult):null;
       event.analysis.ocr={available:ocrResult.available,reason:ocrResult.reason||null,reasonCode:ocrResult.reasonCode||null,engine:"tesseract.js"};
       // Kept in full (not just the truncated capacityAudit.sourceText) so a
       // grouping/reclassification decision can recompute planIntelligence
@@ -4155,7 +4167,8 @@
       // Last, and only last: it ranks what every layer above it concluded.
       runConfidenceBudget(event);stage("intelligence");
       ui.analysisStage=t("analysis.stage.review");ui.analysisProgress=100;ui.analysisBusy=false;ui.analysisAbort=null;
-      event.analysis.timings={importedAtMs:event.background?.importedAtMs??null,analysisStartedAtMs,analysisCompletedAtMs:Date.now(),stages:stageTimes,tesseractMs,prefetch:prefetchUse};ui.selectedCandidateId=event.analysis.candidates[0]?.id||null;ui.difficultQuestionIndex=0;ui.activeReviewGroupId=null;ui.activeQuestionId=null;audit(event,"ASSISTED_DETECTION_COMPLETED",event.analysis.diagnostics);touchEvent(event);render();
+      event.analysis.timings={importedAtMs:event.background?.importedAtMs??null,analysisStartedAtMs,analysisCompletedAtMs:Date.now(),stages:stageTimes,tesseractMs,prefetch:prefetchUse};
+      if(globalThis.MERIT_PREFETCH!=="off"&&keptReads.model&&keptReads.model.available&&keptReads.page&&keptReads.page.available)keptPlanText={src:event.background.src,model:keptReads.model,page:keptReads.page};ui.selectedCandidateId=event.analysis.candidates[0]?.id||null;ui.difficultQuestionIndex=0;ui.activeReviewGroupId=null;ui.activeQuestionId=null;audit(event,"ASSISTED_DETECTION_COMPLETED",event.analysis.diagnostics);touchEvent(event);render();
     }catch(error){
       event.analysis=priorAnalysis;ui.analysisAbort=null;
       if(error?.analysisStopped||abort.signal.aborted){
@@ -5206,7 +5219,12 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     if(ui.screen!=="workspace"||globalThis.MERIT_PREFETCH==="off")return;
     const event=activeEvent(),src=event?.background?.src;
     if(!src||event.analysis||planTextPrefetch.src===src||src===prefetchStoppedSrc||!event.background.importedAtMs)return;
-    setTimeout(()=>startPlanTextPrefetch(activeEvent()),0);
+    // Not before the plan is on screen: started at once, the engines' start-up
+    // competed with the first view and cost it 0.2-1.4 s (benchmarks/perf/
+    // import-usable.mjs, prefetch on vs off, 2026-10-18). The image decoded and
+    // two frames drawn, then the reads begin.
+    const img=new Image();img.src=src;
+    (img.decode?img.decode():Promise.resolve()).catch(()=>{}).then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(()=>startPlanTextPrefetch(activeEvent()),0))));
   }
   function renderFailure(error){
     console.error("A screen failed to render; the recovery screen is shown instead.",error);

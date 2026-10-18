@@ -296,7 +296,10 @@ so. `VLM_PROVIDER=local` sends the same reading to a model process on this
 machine instead (`server/vlm-local.mjs`): loopback only, every model file
 pinned by size and sha256 in a manifest that states its licence and source, no
 key, no charge, same checks; no model ships, and `vlm-local` runs it against a
-SCRIPTED process. Full detail: `server/README.md`, `src/screen-vlm.js`,
+SCRIPTED process. Three real small models were measured on 2026-10-18
+(`benchmarks/offline-intelligence/LOCAL-VLM.md`): none passes its pre-registered
+bar, none is wired, and a whole-plan reading on 4 CPU cores runs past 15
+minutes. Full detail: `server/README.md`, `src/screen-vlm.js`,
 `src/plan-vlm-review.js`.
 
 ## Analysis speed and Stop
@@ -315,7 +318,11 @@ the two cannot answer differently. The two text reads (the OCR model's and
 Tesseract's whole page) depend on the image alone, so for a plan just imported
 they start before Analyse and the analysis takes them over (S5,
 `analysis-prefetch`: lines, words and candidates identical with it off; a
-replaced plan never reuses them; Stop does not restart them). The ≤ 10 s requirement, the
+replaced plan never reuses them; Stop does not restart them). They start after the
+plan's first frames, so the first view is not held up, and a plan imported through
+the new-event dialog is stamped so the prefetch starts there too. The reads an
+analysis completed are reused, as copies, by the next analysis of the same image
+(S7: ORNEK re-analysis 13.9 → 4.9 s). The ≤ 10 s requirement, the
 reference machine and the supported plan envelope are dated in
 `benchmarks/offline-intelligence/ACCEPTANCE.md`; ORNEK does not meet it yet,
 and a partial result is never reported as a complete one.

@@ -22,6 +22,15 @@ const ROOT = path.join(HERE, "..");
 const REPORT = path.join(HERE, "report.json");
 const BASELINE = path.join(HERE, "BASELINE.json");
 const record = process.argv.includes("--record");
+// Re-recording is a decision, and says why (as the adversarial and memory
+// baselines do): the 2026-08-31 baseline turned out to have been measured
+// WITHOUT OCR, and nothing in it said so.
+const reasonAt = process.argv.indexOf("--reason");
+const reason = reasonAt > 0 ? process.argv[reasonAt + 1] : null;
+if (record && !(reason && reason.trim().length >= 20)) {
+  console.error("refusing to record: give --reason \"<why this baseline replaces the last>\" (20+ characters)");
+  process.exit(2);
+}
 
 if (!process.argv.includes("--reuse")) {
   const run = spawnSync(process.execPath, [
@@ -147,6 +156,8 @@ const payload = { ranAt: new Date().toISOString(), realDistinctVenuePlans: 1,
   rows: summary };
 
 if (record) {
+  payload.reason = reason;
+  payload.ocr = process.env.MERIT_VENDOR_NETWORK === "1" ? "not served (network routing, OCR CDN refused)" : "pinned OCR served from .vendor-cache";
   fs.writeFileSync(BASELINE, JSON.stringify(payload, null, 2) + "\n");
   console.log(`\nrecorded ${path.relative(process.cwd(), BASELINE)}`);
 } else if (fs.existsSync(BASELINE)) {

@@ -215,3 +215,38 @@ regression; adversarial `--compare` 0 blocking (a6 table F1 0.432 → 0.457);
 false-positives met, its accepted held-back real tables lowered from 6 / 5 / 2
 to 0 on these three. Still WEAK: downscale-70 (69 false chairs), jpeg-q20 and
 lowres-roundtrip (tables and chairs missed under heavy compression) — open.
+
+## 2026-10-18 — the old baseline measured the app without OCR; re-recorded
+
+The baseline recorded at `b8153d7` (2026-08-31) made `run-robustness.mjs`
+print about eight rows "WORSE than the recorded robustness baseline" on every
+run since, and nobody knew why. The hypothesis was the OCR line of §27:
+benchmarks have served the pinned OCR from `.vendor-cache` only since
+`d65a03a` (2026-09-27). Before that, a runner that could not reach the CDN
+measured the app without OCR.
+
+The test: the same renderings, today's code, with OCR refused
+(`MERIT_VENDOR_NETWORK=1`). It reproduces the old baseline's table rows
+exactly: blur table F1 0.643, jpeg-q20 26 false tables, lowres-roundtrip
+0.636, bright-down table recall 0.52. The residual against the old file is at
+most one false chair per rendering. With the pinned OCR (the product), the
+same renderings read:
+
+| Triage | Count | Renderings |
+|---|---|---|
+| HEALTHY | 11 | |
+| ACCEPTABLE | 2 | blur, bright-down |
+| WEAK | 3 | downscale-70 (tables 0.956, chairs 0.762), jpeg-q20 (0.773 / 0.822), lowres-roundtrip (0.753 / 0.785) |
+| SEVERE | 0 | |
+
+So the "WORSE" rows compared two different products. The baseline is
+re-recorded from a clean-tree run with the pinned OCR. The run's report is
+byte-identical to an earlier run the same day. `BASELINE.json` carries the
+reason and the OCR state. `--record` now refuses without
+`--reason "<20+ characters>"`, as the adversarial and memory baselines do.
+
+What stays true: the three WEAK renderings are real weaknesses, and the
+re-record does not hide them. jpeg-q20 and lowres-roundtrip lose chairs with
+OCR on (chair F1 0.822 and 0.785); with OCR off they do not (0.951 and 0.941).
+That is the text-suppression path reading compression noise as printing. It
+is recorded, not fixed.

@@ -53,6 +53,7 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
   await page.waitForTimeout(4000); // a person looking at the plan for a moment
   await analyse(page);
   const withIt = await fingerprint(page);
+  await page.evaluate(() => { globalThis.__firstDone = state.events[0].analysis.timings.analysisCompletedAtMs; });
 
   const off = await newPage(() => { globalThis.MERIT_PREFETCH = "off"; });
   await openApp(off, baseUrl, { lang: "en" });
@@ -69,6 +70,20 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
   checks.equal(withIt.ocrModel, without.ocrModel, `the OCR model's ${without.ocrModel.length} lines are identical`);
   checks.equal(withIt.words, without.words, "Tesseract's whole-page words are identical");
   checks.equal(withIt.candidates, without.candidates, `all ${without.candidates.length} candidates are identical, numbers included`);
+
+  // ---- 1b. a re-analysis of the same plan reuses the reads it completed (S7) ---
+  // The text depends on the image alone, so the reads the last analysis
+  // completed are handed to the next one as copies: the same lines, words and
+  // candidates, without reading the plan again.
+  await page.click('.planintel-screen [data-review-action="reanalyze"]');
+  await page.waitForFunction(() => !ui.analysisBusy && state.events[0].analysis && state.events[0].analysis.timings && state.events[0].analysis.timings.prefetch
+    && state.events[0].analysis.timings.prefetch.keptFromLastAnalysis !== undefined && state.events[0].analysis.timings.analysisCompletedAtMs > (globalThis.__firstDone || 0), null, { timeout: 300000, polling: 200 });
+  const again1 = await fingerprint(page);
+  checks.equal(again1.prefetch && [again1.prefetch.keptFromLastAnalysis, again1.prefetch.model, again1.prefetch.page], [true, true, true],
+    "re-analysing the same plan reuses the two reads the last analysis completed", again1.prefetch);
+  checks.equal(again1.ocrModel, without.ocrModel, "and the OCR model's lines are the ones a fresh read gives");
+  checks.equal(again1.words, without.words, "and Tesseract's words are the ones a fresh read gives");
+  checks.equal(again1.candidates, without.candidates, "and every candidate is the one a fresh read gives");
 
   // ---- 2. a plan replaced before Analyse ---------------------------------------
   const swap = await newPage();
@@ -99,6 +114,26 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
   const analysed = await quiet.evaluate(() => MeritPlanTextPrefetch.status().active);
   await quiet.close();
   checks.equal([notImported, historical, analysed], [false, false, false], "nothing is read early for a background that was not imported, a completed event, or an event already analysed");
+
+  // ---- 3b. the new-event dialog, the way most plans arrive ----------------------
+  // Until 2026-10-18 the dialog's Create wrote the plan with no importedAtMs,
+  // so the prefetch never started on the product's main import path; every
+  // case above set the stamp by hand and could not see it.
+  const dialog = await newPage();
+  await openApp(dialog, baseUrl, { lang: "en" });
+  await dialog.click('.appbar [data-action="create-event"]');
+  await dialog.waitForSelector('input[name="name"]');
+  await dialog.fill('input[name="name"]', "Dialog import");
+  await dialog.fill('input[name="hotel"]', "Merit");
+  await dialog.fill('input[name="date"]', futureDate());
+  await dialog.setInputFiles("#v8PlanFile", { name: "golden.png", mimeType: "image/png", buffer: fs.readFileSync(path.join(repoRoot, "benchmarks/plans/merit-real-venue-plan.png")) });
+  await dialog.waitForFunction(() => !!document.querySelector("#v8PlanDrop img")?.complete, null, { timeout: 30000 });
+  await dialog.click('[data-setup="create"]');
+  await dialog.waitForFunction(() => ui.screen === "workspace" && activeEvent() && activeEvent().name === "Dialog import", null, { timeout: 15000 });
+  await dialog.waitForFunction(() => globalThis.MeritPlanTextPrefetch && MeritPlanTextPrefetch.status().active, null, { timeout: 10000 }).catch(() => {});
+  const viaDialog = await dialog.evaluate(() => ({ stamped: Number.isFinite(activeEvent().background.importedAtMs), active: MeritPlanTextPrefetch.status().active }));
+  await dialog.close();
+  checks.equal(viaDialog, { stamped: true, active: true }, "a plan imported through the new-event dialog is stamped as imported, and its text reads start before Analyse");
 
   // ---- 4. Stop after the analysis took the prefetch over ------------------------
   const stop = await newPage();
