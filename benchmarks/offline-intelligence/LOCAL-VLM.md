@@ -1,8 +1,37 @@
 # A local vision-language model: candidates, what was tried, what blocks it
 
-Recorded 2026-10-11. Approach 3 of the comparison is "a small local vision
-model helps on uncertain regions or with the overall reading". This file says
-honestly how far that got.
+Recorded 2026-10-11, superseded in part on 2026-10-17/18. Approach 3 of the
+comparison is "a small local vision model helps on uncertain regions or with
+the overall reading". This file says honestly how far that got.
+
+## 2026-10-17: the network block is gone — weights fetched, pinned, run
+
+The 403 below (2026-10-11/12) is **history, not a current block**. On
+2026-10-17 the environment's policy allowed Hugging Face, and access was
+verified by fetching every file, not by a status probe:
+
+| Model (all Apache-2.0, read off the model cards 2026-10-18) | Files | Bytes | Manifest |
+|---|---|---|---|
+| SmolVLM-256M-Instruct, GGUF Q8_0 (`ggml-org/SmolVLM-256M-Instruct-GGUF`) | model + mmproj | 175,054,528 + 103,769,856 | `tools/local-vlm/manifests/smolvlm-256m-q8.json` |
+| SmolVLM-500M-Instruct, GGUF Q8_0 (`ggml-org/SmolVLM-500M-Instruct-GGUF`) | model + mmproj | 436,806,912 + 108,783,360 | `tools/local-vlm/manifests/smolvlm-500m-q8.json` |
+| Qwen2-VL-2B-Instruct, GGUF Q4_K_M, projector Q8_0 (`ggml-org/Qwen2-VL-2B-Instruct-GGUF`) | model + mmproj | 986,046,944 + 709,883,360 | `tools/local-vlm/manifests/qwen2-vl-2b-q4km.json` |
+
+Each manifest pins every file by size and sha256 in the `merit-local-vlm/1`
+format `server/vlm-local.mjs` refuses to run without, and states its licence,
+source and runtime. The runtime is llama.cpp's `llama-server` from conda-forge
+(`llama.cpp 11351 cpu_mkl`, version 0.5.0-dev, commit `0fa5950`), CPU only,
+`-ngl 0`. The weights are developer-time downloads kept OUT of the repository
+(2.5 GB); the manifests are what is committed. No plan, guest record or image
+of a customer's plan left the machine: every inference runs on loopback.
+
+Florence-2 is not among them: its ONNX export runs in the page, not in
+`llama-server`, and its task tokens (`<OD>`, `<OCR_WITH_REGION>`) are not the
+question-and-answer interface the relay's local provider speaks. It stays a
+candidate for the page itself, unmeasured.
+
+What was measured, and what the pre-registered bar was, is in **Measured on
+real inference** below. Everything from "Candidates" down to "What would
+unblock it" is the 2026-10-11 record, kept as written.
 
 ## Candidates
 

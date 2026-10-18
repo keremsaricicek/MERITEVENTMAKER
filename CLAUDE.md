@@ -311,7 +311,11 @@ candidate and printed number. Two faster settings were measured and refused
 for what they cost (`benchmarks/perf/README.md`). A stage that holds the page
 gets a turn at seams that do not change what is computed: `MeritPlanSources`
 and `MeritChairFacing` run ONE generator either straight through or sliced, so
-the two cannot answer differently. The ≤ 10 s requirement, the
+the two cannot answer differently. The two text reads (the OCR model's and
+Tesseract's whole page) depend on the image alone, so for a plan just imported
+they start before Analyse and the analysis takes them over (S5,
+`analysis-prefetch`: lines, words and candidates identical with it off; a
+replaced plan never reuses them; Stop does not restart them). The ≤ 10 s requirement, the
 reference machine and the supported plan envelope are dated in
 `benchmarks/offline-intelligence/ACCEPTANCE.md`; ORNEK does not meet it yet,
 and a partial result is never reported as a complete one.
