@@ -103,6 +103,16 @@ async function analyse(page, selector, importDoneAt) {
       prefetch: a.timings.prefetch || null,
       runsIn: { ocrModel: a.ocrModel && a.ocrModel.provider ? a.ocrModel.provider.runsIn || null : null, localModel: a.localModel && a.localModel.model ? a.localModel.model.runsIn || null : null },
       crops: globalThis.MeritPlanOCRCrops ? MeritPlanOCRCrops.stats() : null,
+      // What the analysis concluded, as one digest: a speed setting that
+      // changes it changed the answer, not only the time.
+      outputDigest: (() => {
+        const rows = a.candidates.map((c) => [c.kind, c.type, c.status, +c.x.toFixed(3), +c.y.toFixed(3), +c.w.toFixed(3), +c.h.toFixed(3),
+          (c.chairDetections || []).length, c.printedNumber ? c.printedNumber.state + ":" + (c.printedNumber.value ?? "") : null].join("|")).sort();
+        rows.push(String(a.diagnostics && a.diagnostics.textSuppressed));
+        let h1 = 0x811c9dc5; const str = rows.join("\n");
+        for (let i = 0; i < str.length; i++) { h1 ^= str.charCodeAt(i); h1 = Math.imul(h1, 16777619) >>> 0; }
+        return h1.toString(16) + ":" + rows.length;
+      })(),
       // Which stage each task over 200 ms fell in: the stage whose end is the
       // first after the task started.
       longTasksByStage: (globalThis.__longTaskAt || []).filter(([, d]) => d > 200).map(([at, d]) => {
@@ -122,6 +132,8 @@ try {
       const browser = await launchChromium();
       const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
       await routeVendorFromCache(page, { offline: true });
+      // INIT_GLOBALS='{"MERIT_ORT_POOL_SIZE":2}' sets measurement knobs before the app loads
+      if (process.env.INIT_GLOBALS) await page.addInitScript((g) => Object.assign(globalThis, g), JSON.parse(process.env.INIT_GLOBALS));
       await page.addInitScript(() => {
         globalThis.__longTasks = [];
         try { new PerformanceObserver((l) => { for (const e of l.getEntries()) { (globalThis.__longTasks || []).push(e.duration); (globalThis.__longTaskAt = globalThis.__longTaskAt || []).push([e.startTime, e.duration]); } }).observe({ type: "longtask", buffered: true }); } catch {}

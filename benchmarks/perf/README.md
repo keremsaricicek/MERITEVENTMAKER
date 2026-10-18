@@ -159,6 +159,59 @@ Recognition is ~22 s of single-core work; detection is one inference on a
 would not give the same answer — the model's neck pools globally (squeeze-and-
 excitation) — and was not tried.
 
+## 2026-10-18 — the OCR bottleneck, worker and cache experiments, 2 and 4 cores
+
+`taskset -c 0-3` / `taskset -c 0,1 node benchmarks/perf/analysis-profile.mjs 3`,
+pinned OCR, network refused, three fresh browsers per row, median (raw files in
+`runs-2026-10-18b/`). Every row's **output digest is identical** (every
+candidate's kind, type, status, box, seat count and printed number, plus the
+text-suppression count: Golden `cf91bcc5:64`, ORNEK `5788f346:188`), so no
+setting below changed what the analysis concludes.
+`INIT_GLOBALS` sets measurement knobs (`MERIT_ORT_POOL_SIZE`,
+`MERIT_OCR_CROP_WORKERS`, `MERIT_PREFETCH`) that the product never sets.
+
+Where ORNEK's cold time goes (4 cores): the OCR model stage **15.9 s of 24.7 s**
+(PP-OCR detection on one worker, then recognition), Tesseract's whole page
+14.6 s beside it on its own worker, labels 2.5 s, printed numbers 2.8 s,
+classical detector 1.3 s. OCR is the bottleneck.
+
+| 4 cores | Golden first | Golden re-analysis | ORNEK first | ORNEK re-analysis | longest task (ORNEK) | peak PSS (ORNEK) |
+|---|--:|--:|--:|--:|--:|--:|
+| default (OCR model pool 3, crop workers 3) | 7.5 s | 2.7 s | 24.7 s | 5.0 s | 240 ms | 1.69 / 1.82 GB |
+| OCR model pool 4 | 7.5 s | 2.7 s | **21.8 s** | 5.1 s | 191 ms | 1.81 / **1.97 GB** |
+| OCR model pool 2 | 7.1 s | 2.8 s | 24.9 s | 4.9 s | 211 ms | 1.61 / 1.75 GB |
+| crop workers 4 | 7.4 s | 2.5 s | 23.5 s | 5.3 s | 197 ms | 1.80 / 1.93 GB |
+| no read cache (`MERIT_PREFETCH=off`) | 7.7 s | **3.3 s** | 22.9 s | **16.1 s** | 250 ms | 1.72 / 1.81 GB |
+
+| 2 cores | Golden first | Golden re-analysis | ORNEK first | ORNEK re-analysis | longest task (ORNEK) | peak PSS (ORNEK) |
+|---|--:|--:|--:|--:|--:|--:|
+| default (pool 1) | 10.5 s | 3.4 s | 47.6 s | 5.8 s | 249 ms | 1.32 / 1.42 GB |
+| OCR model pool 2 | 9.8 s | 3.4 s | **41.9 s** | 6.0 s | 276 ms | 1.47 / 1.61 GB |
+
+**The background read is not hidden.** With the plan open 15 s before Analyse
+(`GAP_MS=15000`), the text reads run during that look and Analyse → result
+falls to Golden 4.5 s / ORNEK 10.3 s on 4 cores (2 cores: 4.1 s / 31.6 s). The
+work did not disappear: import → result is the 15 s look plus that, **≈ 19.5 s
+Golden and ≈ 25.3 s ORNEK** on 4 cores — the same total as without it.
+
+Verdicts:
+- **The read cache is worth keeping**: re-analysis of ORNEK 16.1 s → 5.0 s,
+  output identical.
+- **OCR model pool 4 on 4 cores is NOT adopted**: −2.9 s (−12 %) on ORNEK,
+  nothing on Golden, but the re-analysis peak reaches 1.97–2.01 GB against the
+  2.0 GB acceptance cap.
+- **Pool 2 on 2 cores is a candidate, NOT adopted from three runs**: ORNEK
+  −5.7 s (−12 %), Golden −0.7 s, peak 1.6 GB, but the longest task 249 → 276 ms
+  (p95 305 → 311): the page competes with two workers on two cores. It needs
+  the 5+ run median and a freeze measurement that does not get worse.
+- Crop workers 4: −1.2 s on ORNEK, inside the run-to-run spread; not adopted.
+
+Against the targets: full analysis ≤ 10 s is **met for Golden on 4 cores
+(7.5 s) and NOT met for ORNEK (21.8–24.7 s)**, on 2 cores neither (10.5 s /
+47.6 s); main-thread task ≤ 200 ms is met for Golden (177 ms), **not for ORNEK
+(240 ms)**. What remains is the OCR model's single whole-page detection
+inference, which cannot be split into tiles without changing its answer.
+
 ## Numbers on record
 
 Measured in this environment (headless Chromium, 1920x1080), wall clock in ms.

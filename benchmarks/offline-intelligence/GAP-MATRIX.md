@@ -142,6 +142,8 @@ Closed this session, each with its commit and evidence:
 | V1, junk words (C) | seats: a filled region standing at a table survives junk words — bright-down chairs 90→109 (HEALTHY), jpeg-q20 81→94, lowres 74→91, no new false object anywhere; tables NOT exempted (filled+free, colour, adjacency each measured: none separates a6's plinths from real chairless tables) | this commit |
 | D2 + column pass | column pass stable under one member; Golden chairs 108/0/5 | `6f93cec` |
 | L1/L2 memory | losses split (not found 16 / not matched 4); far furniture decision cannot land on structure: wrong 1 → 0, retention 0.8447 → 0.8758, identity precision 1.0; 98 % NOT met (7 confirmations on objects the detector loses, 9 rejections of objects no longer proposed, 4 fragments) | this commit |
+| S1/S2/S3 speed | OCR is the bottleneck (ORNEK: OCR model 15.9 of 24.7 s); output identical under every worker/cache setting; cache keeps ORNEK re-analysis at 5.0 s (16.1 s without); pool 4 −12 % but peak PSS at the 2 GB cap, not adopted; ≤ 10 s met for Golden 4c only, ≤ 200 ms not met on ORNEK | this commit |
+| T4 (E10) | audit: training ignored rotation; E10 enclosing-box + oriented targets: furniture passes (bench R 0.51 → 1.00) but columns/chairs regress on val/held-out/gen-2: NOT activated, v2 stays | `d1e6d16` |
 
 Where the next session starts, in order:
 

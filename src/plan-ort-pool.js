@@ -87,6 +87,9 @@
   // one for the page itself and the OCR text engine, never more than three
   // (each holds its own copy of a model; three measured 3.1x one on 4 cores).
   function defaultSize() {
+    // A measurement knob, like MERIT_OCR_CROP_WORKERS: never set by the product.
+    const forced = Number(globalThis.MERIT_ORT_POOL_SIZE);
+    if (forced >= 1) return Math.min(4, Math.floor(forced));
     const n = (globalThis.navigator && navigator.hardwareConcurrency) || 2;
     return Math.max(1, Math.min(3, n - 1));
   }
