@@ -102,6 +102,21 @@ export default async function run({ page, checks, repoRoot }) {
   checks.equal([accept(sofaToBench).action, accept(sofaToBench).decision.spread, accept(sofaNothing).decision.kind, accept(chairNote).reason, accept(mergedNote).reason],
     ["decide", false, "reject", "INFORMATION", "INFORMATION"],
     "Accept on a type suggestion changes the ONE object (spread:false), on not-an-object rejects it; a note has nothing to apply");
+  // The plan reading says what the look found, in its own section, and only
+  // when a look ran on this analysis.
+  vm.runInContext(fs.readFileSync(path.join(repoRoot, "src/plan-reading.js"), "utf8"), ctx);
+  const R = ctx.MeritPlanReading;
+  const withLook = { ...analysis, imageWidth: W, imageHeight: H, vlm: { mode: "check", status: "done", checks: [
+    { id: "q1", candidateIds: ["held"], verdict: "DIFFERS" }, { id: "q2", candidateIds: ["t7"], verdict: "AGREES" },
+    { id: "q3", candidateIds: ["g1", "g2"], verdict: "AGREES" }, { id: "q4", candidateIds: ["bench1"], verdict: "UNSURE" }] } };
+  const sec = (a) => (R.read(a).sections.find((x) => x.id === "second") || { sentences: [] }).sentences.map((x) => [x.key, x.params, x.refs.slice().sort(), x.certainty]);
+  checks.equal(sec(withLook), [
+    ["read.second.summary", { asked: 4, agree: 2, differ: 1, unsure: 1 }, [], "inferred"],
+    ["read.second.agree", { n: 2 }, ["g1", "g2", "t7"], "seen"],
+    ["read.second.differ", { n: 1 }, ["held"], "unsure"]],
+    "the plan reading tallies the look, points at the places it agreed on as the model's view (never a person's decision) and at the places to check");
+  checks.equal([sec({ ...analysis, imageWidth: W, imageHeight: H }), sec({ ...withLook, vlm: { ...withLook.vlm, status: "running" } }), sec({ ...withLook, vlm: { mode: undefined, findings: [] } })], [[], [], []],
+    "no look, a look still running, or a whole-plan reading: the section is not there");
   const decidedSince = { candidates: analysis.candidates.map((c) => c.id === "sofa1" ? { ...c, status: "confirmed" } : c) };
   checks.equal(accept(sofaToBench, decidedSince).reason, "ALREADY_DECIDED", "a person who decided the object after the look outranks the suggestion");
 
@@ -250,6 +265,10 @@ export default async function run({ page, checks, repoRoot }) {
     const autoPanel = await page.evaluate(() => document.querySelector(".vlm-panel").textContent);
     checks.ok(/Started by itself after the analysis/.test(autoPanel) && /Nothing left the computer and nothing was applied/.test(autoPanel),
       "the panel says the look started by itself, what was sent, and that nothing left the computer or was applied", autoPanel.slice(0, 300));
+
+    const readingTitle = await page.evaluate(() => { const r = MeritPlanReading.read(state.events[0].analysis); const s = r.sections.find((x) => x.id === "second"); return s ? s.sentences.map((x) => x.key) : null; });
+    checks.ok(readingTitle && readingTitle[0] === "read.second.summary", "after the look the plan reading carries its section", readingTitle);
+    await page.click('[data-vlm-action="close"]');
 
     // A person decides one seating piece; a look started by hand asks first and never asks about it.
     const plan = await page.evaluate(() => {

@@ -27,7 +27,7 @@
 
   const R = () => globalThis.MeritPlanReading;
   const VIEWS = ["original", "digital", "both"];
-  const SECTIONS = ["event", "overview", "capacity", "stage", "tables", "seats", "room", "unsure"];
+  const SECTIONS = ["event", "overview", "capacity", "stage", "tables", "seats", "room", "unsure", "second"];
 
   // One reading per analysis state: recomputed when a decision changes what is
   // on the plan, not on every render.

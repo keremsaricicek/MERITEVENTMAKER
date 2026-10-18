@@ -365,6 +365,23 @@
     if (!texts.length) unsure.push(S(a.ocrModel && a.ocrModel.available === false ? "read.unsure.noTextEngine" : "read.unsure.noText", {}, [], "unsure"));
     section("unsure", unsure);
 
+    // ---- the local second look, when one ran on THIS analysis (screen-vlm,
+    // MeritLocalCheck): how many places a model on this computer was asked
+    // about, how many it agreed on, and where both of its looks differed. Its
+    // answers are never facts: an agreement is the model's (seen, not
+    // confirmed by it), a disagreement is a place to check.
+    const look = a.vlm && a.vlm.mode === "check" && a.vlm.status !== "running" ? a.vlm : null;
+    if (look) {
+      const done = (look.checks || []).filter((c) => c.verdict);
+      const agree = done.filter((c) => c.verdict === "AGREES"), differ = done.filter((c) => c.verdict === "DIFFERS");
+      const ids = (xs) => [...new Set(xs.flatMap((c) => c.candidateIds || []))].filter((id) => byId.has(id));
+      section("second", [
+        done.length ? S("read.second.summary", { asked: done.length, agree: agree.length, differ: differ.length, unsure: done.length - agree.length - differ.length }, [], "inferred") : null,
+        agree.length ? S("read.second.agree", { n: agree.length }, ids(agree), "seen") : null,
+        differ.length ? S("read.second.differ", { n: differ.length }, ids(differ), "unsure") : null,
+      ]);
+    }
+
     // ---- parts of the room, each read on its own
     const zones = (pi.zones || []).filter((z) => (z.memberIds || []).length && z.bbox);
     let regions = zones.map((z) => ({ id: z.id, kind: z.type, box: z.bbox, refs: z.memberIds.filter((id) => byId.has(id)) }));
