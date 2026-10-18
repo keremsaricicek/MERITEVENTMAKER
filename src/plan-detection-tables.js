@@ -6,7 +6,7 @@
 // orchestrator the map asked for: one call per stage, in data order.
 //
 // findTables(input)                                              B-6 … B-14
-//   IN        { uid, width, height, area, sources, analyze, venueSizeOk, threshold, masksTints, surfaceMask, accentMask, tintIsChairMaterial, chairs, chairModal, chairUniform, chairSource, chairFloorSide, gapTo, protectedRegions, confidenceThreshold }
+//   IN        { uid, width, height, area, sources, analyze, venueSizeOk, threshold, masksTints, surfaceMask, accentMask, tintIsChairMaterial, chairs, chairModal, chairUniform, chairSource, chairFloorSide, gapTo, protectedRegions, confidenceThreshold, toneRefusedComps }
 //             — the image size, the object sources and class masks from
 //             B-4, the ink threshold from B-1, the chairs-first stage's
 //             output, the detector's own analyser and venue size test, and
@@ -45,9 +45,10 @@
     const { uid, width, height, area, sources, analyze, venueSizeOk,
       threshold, masksTints, surfaceMask, accentMask, tintIsChairMaterial, chairs, chairModal,
       chairUniform, chairSource, chairFloorSide, gapTo, protectedRegions, confidenceThreshold } = input;
+    const toneRefusedComps = input.toneRefusedComps || [];
     // B-6 the table candidate pool — tablePool(), below findTables().
     const { dedupFitness, expanded, modalLong, modalShort, pool, provisionalModalArea, splitCount, unique } = tablePool({
-      analyze, chairModal, chairUniform, chairs, height, sources, width });
+      analyze, chairModal, chairUniform, chairs, height, sources, toneRefusedComps, width });
     // B-7 is this candidate actually made of table? — madeOfTable(), below findTables().
     const { surfaceMinorityFinishKept, surfaceRejected, surfaceRejectedComps, uniqueBeforeSurface, chairMaterialRejected } = madeOfTable({
       accentMask, chairs, dedupFitness, expanded, gapTo, height, masksTints, surfaceMask,
@@ -92,11 +93,12 @@
   }
 
   // B-6 the table candidate pool
-  //   IN   analyze, chairModal, chairUniform, chairs, height, sources, width
+  //   IN   analyze, chairModal, chairUniform, chairs, height, sources, toneRefusedComps, width
   //   OUT  dedupFitness, expanded, modalLong, modalShort, pool, provisionalModalArea, splitCount, unique
   function tablePool(input) {
     const { analyze, chairModal, chairUniform, chairs, height, sources,
       width } = input;
+    const toneRefusedComps = input.toneRefusedComps || [];
     // ---- table candidate pool --------------------------------------------
     let pool=[];
     for(const s of sources)for(const c of s.comps)pool.push({comp:c,labels:s.labels});
@@ -106,6 +108,12 @@
     // floor on a 1000px-tall plan) and cannot drag the modal table size down.
     if(chairUniform&&chairs.length){
       pool=pool.filter(p=>!chairs.some(ch=>GEO.sameObject(p.comp,ch)));
+      // A patch of bare paper the chairs stage refused as a seat for its tone
+      // is not a table or a column either: it was claimed as a seat-family
+      // member, so it leaves the pool the way the seats do. Returned to the
+      // pool it became a column candidate, and on the darkened rendering it
+      // completed a column grid that took a real table (D2, 2026-10-18).
+      if(toneRefusedComps.length)pool=pool.filter(p=>!toneRefusedComps.some(r=>GEO.sameObject(p.comp,r)));
     }
     // The modal has to describe a TABLE, not the pool. Walls, printed text and
     // venue objects are all still in here, and a modal dragged out toward a

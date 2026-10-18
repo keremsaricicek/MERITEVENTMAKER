@@ -10,13 +10,16 @@
 // findChairs(input)                                                     B-5
 //   IN        { width, height, total, area, minPixels, sources, chairSources,
 //               fallbackChairComps, fallbackChairLabels, accentMask,
-//               chairSizeOk, analyze, textRegions } — the object sources and
-//             chair-scale pools from B-4, the accent mask, the detector's own
-//             size test and shape analyser, and the lines of printed text a
-//             text model read (detection pixels; [] when none ran).
+//               chairSizeOk, analyze, textRegions, gray } — the object sources
+//             and chair-scale pools from B-4, the accent mask, the detector's
+//             own size test and shape analyser, the lines of printed text a
+//             text model read (detection pixels; [] when none ran), and the
+//             plan's luma (B-1), read only for a secondary family's tone.
 //   OUT       { chairs, chairModal, chairUniform, chairSource,
 //               chairSourceBreakdown, chairFloorSide, detectionPath,
-//               secondaryFamilyDiagnostics, gapTo } — the chairs with their
+//               secondaryFamilyDiagnostics, gapTo, toneRefusedComps } — the
+//             patches of bare paper refused as seats (kept out of the table
+//             pool exactly as seats are), the chairs with their
 //             family, the modal chair size and whether the family is uniform,
 //             which source supplied them and why, and the gap measure the
 //             tables stage and the column pass reuse.
@@ -43,6 +46,7 @@
     // pixels ({x0,y0,x1,y1}); empty when no model ran. Used for one thing:
     // keeping printed matter out of the evidence a seat family is judged on.
     const textRegions = Array.isArray(input.textRegions) ? input.textRegions : [];
+    const gray = input.gray || null;
     const inPrintedText = c => {
       const cx = c.x + c.w / 2, cy = c.y + c.h / 2;
       return textRegions.some(r => cx >= r.x0 && cx <= r.x1 && cy >= r.y0 && cy <= r.y1);
@@ -203,6 +207,11 @@
     // band the adjacency rule happily admitted families of 4-6px specks --
     // they repeat, and on a dense plan everything is near something.
     const SECONDARY_MIN_MEMBERS=4,SECONDARY_MIN_ADJACENT=.7;
+    // The tone test below (ONE DRAWN OBJECT, ONE TONE): how far under the
+    // plan's paper a member's own median luma may sit and still be bare paper.
+    // The paper level is measured once, the first time a family needs it.
+    const SECONDARY_BARE_PAPER=5;
+    let paperLevel=null;
     // Two bounds, and they anchor to different things on purpose.
     //
     // The FLOOR is relative to the primary chair family: a minority seat is
@@ -218,6 +227,9 @@
     // may be claimed as a chair; the table pool needs it more.
     const SECONDARY_MIN_SIDE_RATIO=.4,SECONDARY_MAX_SURFACE_RATIO=.75;
     const secondaryFamilies=[];
+    // Members refused for their tone (ONE DRAWN OBJECT, ONE TONE, below): not
+    // seats, and not candidates for anything else either -- see the output.
+    const toneRefusedComps=[];
     // WHICH POPULATION DEFINES WHAT A SEAT LOOKS LIKE HERE.
     //
     // It used to be the colour cluster and nothing else: the whole family
@@ -547,11 +559,64 @@
         const SECONDARY_MIN_CLEARANCE=1.4;
         const standsClear=referenceIsSeatSized||crowding>=SECONDARY_MIN_CLEARANCE;
         const admitted=sizeOk&&standsClear&&share>=SECONDARY_MIN_ADJACENT;
+        // ONE DRAWN OBJECT, ONE TONE (D2, 2026-10-18).
+        //
+        // A family is a seat drawn the same way over and over, and its size
+        // and shape say so; its TONE did not, and that let three seat-sized
+        // patches of bare paper into the Golden Plan's chairs: the triangles
+        // enclosed between the struts of the two stage trusses, and the gap
+        // between a round table's chair and the bar drawn against it. Each is
+        // the inside of a closed outline, so the outline-interior source offers
+        // it, and each sits against something broad enough to pass for a table.
+        //
+        // Measured on all 28 fingerprint plans, as the distance of a member's
+        // own median luma below the plan's paper: those patches read 0-3 in
+        // every rendering; real filled seats read 7 and up (7-11 on the
+        // brightened rendering, 33-167 elsewhere). And a plan can draw two
+        // seats of one size in two tones and mean both: `a4-multi-room` has 32
+        // bare-outline chairs and 24 filled ones in ONE family, all real. So
+        // the test is not "unlike the family's median" -- that refused a real
+        // crescent beside orange bistro chairs -- but this: bare-paper members
+        // are refused only where they are fewer than the family floor (four)
+        // and the filled members are not. They could never have been admitted
+        // as a family of their own, and the family they rode in on is drawn
+        // filled. A family that is all paper (an ink plan), all filled, or
+        // whose paper members stand as a family of their own is untouched.
+        // The bound of 5 sits in the measured gap (3 against 7). Only a
+        // secondary family is asked; the primary family defines the seat.
+        let toneRefused=[],barePaper=null;
+        if(admitted&&gray&&members.length>=SECONDARY_MIN_MEMBERS){
+          if(paperLevel===null){
+            const h=new Uint32Array(256);let n=0;
+            for(let i=0;i<gray.length;i+=4){h[gray[i]]++;n++;}
+            let acc=0,v=0;for(;v<255;v++){acc+=h[v];if(acc>=n*.98)break;}
+            paperLevel=v;
+          }
+          const isBarePaper=m=>{
+            const c=m.comp,labels=m.source?.labels;
+            if(!labels)return false;
+            const v=[];
+            for(let y=c.y;y<c.y+c.h;y++)for(let x=c.x;x<c.x+c.w;x++){
+              const i=y*width+x;
+              if(labels[i]===c.label)v.push(gray[i]);
+            }
+            if(!v.length)return false;
+            v.sort((a,b)=>a-b);
+            return paperLevel-v[v.length>>1]<=SECONDARY_BARE_PAPER;
+          };
+          const paperMembers=members.filter(isBarePaper);
+          barePaper=paperMembers.length;
+          if(paperMembers.length&&paperMembers.length<SECONDARY_MIN_MEMBERS
+            &&members.length-paperMembers.length>=SECONDARY_MIN_MEMBERS)
+            toneRefused=seated.filter(m=>paperMembers.includes(m));
+          for(const m of toneRefused)toneRefusedComps.push(m.comp);
+        }
         secondaryFamilies.push({key,members:members.length,printedExcluded:allMembers.length-members.length,adjacent,
           share:Number(share.toFixed(2)),admitted,sizeOk,standsClear,
           side:Math.round(side),referenceSide:Math.round(referenceSide),surfaceSide:Math.round(surfaceSide),
           crowding:Number(crowding.toFixed(2)),primarySpacing:Math.round(primarySpacing),
           minClearance:referenceIsSeatSized?null:SECONDARY_MIN_CLEARANCE,
+          barePaper,toneRefused:toneRefused.length,
           source:members[0].source.name});
         // One entry per originating source, all under the same family name.
         // The label map a component was found in is what shape analysis has
@@ -561,6 +626,7 @@
         if(admitted){
           const bySource=new Map();
           for(const m of seated){
+            if(toneRefused.includes(m))continue;
             if(!bySource.has(m.source))bySource.set(m.source,[]);
             bySource.get(m.source).push(m.comp);
           }
@@ -845,7 +911,7 @@
     }
     const detectionPath=chairUniform?"chair-first":"table-first";
     return { chairs, chairModal, chairUniform, chairSource, chairSourceBreakdown, chairFloorSide,
-      detectionPath, secondaryFamilyDiagnostics, gapTo };
+      detectionPath, secondaryFamilyDiagnostics, gapTo, toneRefusedComps };
   }
 
   globalThis.MeritPlanChairs = { version: 1, findChairs };

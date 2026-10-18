@@ -32,3 +32,27 @@ COLUMN PASS is the coupling point. Its two-axis grid test tips on one member
 4 -> 22 from removing members). The next step is a column pass that is stable
 under one member's removal (and never takes a mark standing inside a table's
 own box), measured on all 28 plans, BEFORE the chair rule is re-applied.
+
+## Shipped after the column pass was made stable (2026-10-18, second session)
+
+The column pass now (a) refuses a mark that stands inside an object the size of
+the plan's tables, (b) admits a family only if it still passes with any ONE
+member removed, and (c) drops a member aligned with no other member on either
+axis (`tests/suites/column-pass-stability.test.mjs`, red on the old pass). The
+column fix alone changed only columns, on 4 renderings, all downward, and no
+table or chair anywhere (24 of 28 plans identical); adversarial-architecture
+keeps its six real columns.
+
+R-D2s's chair parts were then re-applied (refused patches leave the table pool;
+the column-pass bare-paper clause was NOT needed and is not shipped). Measured
+with the pinned OCR, every runner:
+
+- Golden: chairs 108/3/5 -> **108/0/5**; tables 46/1/0 unchanged.
+- Robustness, no rendering loses a true table: bright-up table FP 2 -> 0,
+  contrast-high 2 -> 1; chair FP falls by 1-3 on 14 renderings.
+- lowres-roundtrip chair TP 75 -> 74: the removed detection is the t040
+  fragment itself (1310, 572), bare paper, d 0. On that rendering c102 — the
+  real chair beside it — is not detected, so the fragment had been matched to
+  c102 at the 47 px tolerance. No real chair's own pixels were removed; the
+  lost "TP" was the false fragment standing in for a missed chair.
+- Adversarial: every fixture's detection identical; the gate passes.

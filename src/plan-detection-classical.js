@@ -168,14 +168,14 @@
       // B-5 — chairs first — is MeritPlanChairs (src/plan-detection-chairs.js),
       // with its contract stated there.
       const{chairs,chairModal,chairUniform,chairSource,chairSourceBreakdown,chairFloorSide,detectionPath,
-        secondaryFamilyDiagnostics,gapTo}=CHAIRS.findChairs({width,height,total,area,minPixels,sources,chairSources,
-        fallbackChairComps,fallbackChairLabels,accentMask,chairSizeOk,analyze,textRegions});
+        secondaryFamilyDiagnostics,gapTo,toneRefusedComps}=CHAIRS.findChairs({width,height,total,area,minPixels,sources,chairSources,
+        fallbackChairComps,fallbackChairLabels,accentMask,chairSizeOk,analyze,textRegions,gray});
       mark("chairs");
       await breathe();
 
       // B-6 … B-14 — which objects are tables, and what is left over — is
       // MeritPlanTables (src/plan-detection-tables.js), contract there.
-      const tablesOut=TABLES.findTables({uid,width,height,area,sources,analyze,venueSizeOk,threshold,masksTints,surfaceMask,accentMask,tintIsChairMaterial,chairs,chairModal,chairUniform,chairSource,chairFloorSide,gapTo,protectedRegions,confidenceThreshold});
+      const tablesOut=TABLES.findTables({uid,width,height,area,sources,analyze,venueSizeOk,threshold,masksTints,surfaceMask,accentMask,tintIsChairMaterial,chairs,chairModal,chairUniform,chairSource,chairFloorSide,gapTo,protectedRegions,confidenceThreshold,toneRefusedComps});
       const{candidates,chairVenues,pool,debugPool,modalPool,modalArea,modalSeats,modalLong,modalShort,bistrosTyped,reseated,seatsInsideBody,seatsInsideBodyStoodDown,relationStats,splitCount,capReached,offModalDropped,surfaceRejected,chairMaterialRejected,surfaceMinorityFinishKept,fragmentDiagnostics,textGlyphChairsDropped,familyLostToAssociation,familyLostToTextRun,familyFromTableSources,familyVenue,mergedRowVenues,columnComps,chairOBB,toPercentBox}=tablesOut;
       let venues=tablesOut.venues;
       mark("tables");

@@ -98,6 +98,12 @@
       // There is no boundary to sit on, because the comparison is always
       // between two real objects.
       const COLUMN_SIZE_RATIO=1.18;
+      const tableAreas=chosen.map(t=>t.obb.w*t.obb.h).filter(a=>a>0).sort((a,b)=>a-b);
+      const tableArea=tableAreas.length?tableAreas[tableAreas.length>>1]:0;
+      const containers=tableArea?sources.flatMap(s2=>s2.all||s2.comps||[])
+        .filter(o=>{const a=o.w*o.h;return a>=tableArea*.5&&a<=tableArea*2;}):[];
+      const insideTableSized=c=>containers.some(o=>o!==c&&o.w*o.h>=c.w*c.h*4
+        &&o.x<=c.x+1&&o.y<=c.y+1&&o.x+o.w>=c.x+c.w-1&&o.y+o.h>=c.y+c.h-1);
       const sized=seatless.map(c=>({c,s:Math.sqrt(c.w*c.h)})).sort((a,b)=>a.s-b.s);
       const groups=[];
       let run=[];
@@ -107,7 +113,17 @@
       }
       if(run.length)groups.push(run.map(x=>x.c));
       const out=[];
-      for(const members of groups){
+      for(const all of groups){
+        // A MARK INSIDE A TABLE IS PART OF THE TABLE (2026-10-18). The plant
+        // icon printed at the centre of each of the Golden Plan's square tables
+        // is compact, repeated and -- because the tables are -- aligned on two
+        // axes; on the low-resolution rendering, where the tables themselves
+        // were turned away, sixteen of them became a column family and the
+        // local model could no longer add the tables they stand in. A column
+        // stands free on the floor. A mark wholly inside a drawn object the
+        // size of this plan's detected tables (half to twice their median
+        // area, and at least four times the mark) is that object's printing.
+        const members=all.filter(c=>!insideTableSized(c));
         if(members.length<COLUMN_MIN_MEMBERS)continue;
         const tol=Math.max(4,members.reduce((n,c)=>n+Math.max(c.w,c.h),0)/members.length*.25);
         const centre=c=>[c.x+c.w/2,c.y+c.h/2];
@@ -116,12 +132,32 @@
         // same idea but breaks as soon as the grid is only partly detected:
         // with four of this fixture's six columns found, only one member has
         // both a row-partner and a column-partner and the family scored zero.
-        const sharesOn=(get)=>members.filter(c=>{
+        const sharesOn=(get,set=members)=>set.filter(c=>{
           const v=get(centre(c));
-          return members.some(o=>o!==c&&Math.abs(v-get(centre(o)))<=tol);
-        }).length/members.length;
+          return set.some(o=>o!==c&&Math.abs(v-get(centre(o)))<=tol);
+        }).length/set.length;
         const rowShare=sharesOn(p=>p[1]),columnShare=sharesOn(p=>p[0]);
-        if(rowShare>=COLUMN_ALIGN_SHARE&&columnShare>=COLUMN_ALIGN_SHARE)out.push(...members);
+        // ONE MEMBER MAY NOT DECIDE IT (2026-10-18). The shares are taken over
+        // the family as a whole, so a family sitting just under the line could
+        // be pushed over it by one mark: measured on the darkened Golden
+        // rendering, a single patch of paper inside a stage truss raised a
+        // family of eight orange chairs and a table's interior from a column
+        // share of 0.375 to 0.556, and all nine became columns. A structural
+        // grid is a grid with any one of its columns unseen: the family must
+        // still pass with each member removed in turn. And a member aligned
+        // with no other on either axis is not standing on the grid at all, so
+        // it is never a column, whatever its family does.
+        const passes=set=>set.length>=COLUMN_MIN_MEMBERS
+          &&sharesOn(p=>p[1],set)>=COLUMN_ALIGN_SHARE&&sharesOn(p=>p[0],set)>=COLUMN_ALIGN_SHARE;
+        const stable=members.every(m=>passes(members.filter(o=>o!==m)));
+        const onGrid=c=>{const[x,y]=centre(c);
+          return members.some(o=>o!==c&&(Math.abs(x-centre(o)[0])<=tol||Math.abs(y-centre(o)[1])<=tol));};
+        if(globalThis.MERIT_STAGE_CENSUS)(globalThis.MERIT_STAGE_CENSUS.columnFamilies=globalThis.MERIT_STAGE_CENSUS.columnFamilies||[]).push({
+          members:members.map(c=>({x:Math.round(c.x+c.w/2),y:Math.round(c.y+c.h/2),s:Math.round(Math.sqrt(c.w*c.h)),src:c.source||null})),
+          rowShare:+rowShare.toFixed(3),columnShare:+columnShare.toFixed(3),tol:+tol.toFixed(1),
+          stable,insideTables:all.length-members.length,
+          admitted:rowShare>=COLUMN_ALIGN_SHARE&&columnShare>=COLUMN_ALIGN_SHARE&&stable});
+        if(rowShare>=COLUMN_ALIGN_SHARE&&columnShare>=COLUMN_ALIGN_SHARE&&stable)out.push(...members.filter(onGrid));
       }
       return out;
     })();

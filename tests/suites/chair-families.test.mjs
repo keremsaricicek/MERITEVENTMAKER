@@ -60,7 +60,11 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     const a = state.events[0].analysis;
     const alive = a.candidates.filter(c => c.status !== "rejected");
     const chairs = alive.flatMap(c => (c.chairDetections || []).map(ch => ({ x: ch.x, y: ch.y, w: ch.w, h: ch.h })));
+    // standalone chairs carry a top-left box; give them a centre like a seat's
+    const standalone = alive.filter(c => c.kind === "venue" && c.type === "chair")
+      .map(c => ({ x: c.x + c.w / 2, y: c.y + c.h / 2, w: c.w, h: c.h }));
     return {
+      standalone,
       families: a.diagnostics.secondaryChairFamilies,
       sources: a.diagnostics.chairSourceBreakdown,
       chairSource: a.diagnostics.chairSource,
@@ -135,4 +139,23 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(inText.length <= 6,
     "the printed capacity block is not read as a block of seating",
     { inTextRegions: inText.length, regions: textRegions.map(r => r.id) });
+
+  // --- one drawn object, one tone (D2, 2026-10-18) ---------------------------
+  // Three seat-sized patches of bare paper were admitted with the crescent and
+  // bistro families: the triangles between the struts of the two stage
+  // trusses, and the gap between t040's chair and the bar drawn against it.
+  // The families here are drawn FILLED (tan crescents, orange bistro chairs),
+  // so a few bare-paper members among them are gaps between objects. Every
+  // admitted family states how many members read as bare paper and how many
+  // of those it refused.
+  checks.ok(admitted.every(f => typeof f.barePaper === "number" && typeof f.toneRefused === "number"),
+    "every admitted family reports its bare-paper members and what it refused",
+    admitted.map(f => ({ key: f.key, barePaper: f.barePaper, toneRefused: f.toneRefused })));
+  const paperGaps = [{ at: "truss, right", x: 1138, y: 707 }, { at: "truss, left", x: 678, y: 706 },
+    { at: "t040 chair and bar", x: 1310, y: 572 }];
+  const allChairs = [...result.chairs, ...result.standalone];
+  const onGap = paperGaps.map(g => ({ ...g, chairs: allChairs.filter(ch =>
+    Math.hypot(ch.x / 100 * W - g.x, ch.y / 100 * H - g.y) <= 8).length })).filter(g => g.chairs);
+  checks.ok(onGap.length === 0,
+    "no seat is proposed on a patch of bare paper between drawn objects", onGap);
 }
