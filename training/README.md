@@ -530,3 +530,54 @@ The same base regressions as E7, from the same base settings: distillation at
 v10a is recorded and **not activated**; v2 stays active; blind is not scored.
 The next experiment is E8's stronger base hold (`--distill 3.0
 --base-lr-scale 0.05`) on these targets, nothing else changed.
+
+## 2026-10-18 — V4: a plan-specific LoRA for the local vision-language model (written before the result)
+
+Not the plan-symbol detector: this trains the small VLM the relay's second
+look asks closed questions of (`server/local-check-questions.json`,
+`src/plan-local-check.js`). On the fair harness (`local-vlm-bench2.py`) every
+zero-shot model failed on knowledge, not settings — Qwen3.5-0.8B named a sofa
+"table" or "nothing" and called every empty crop a table — so the drawing
+convention is taught with labelled examples (`training/vlm_lora.py`).
+
+- **Base:** Qwen3.5-0.8B (Hugging Face `Qwen/Qwen3.5-0.8B` at
+  `2fc06364715b967f1860aea9cf38778875588b17`, Apache-2.0, safetensors sha256
+  `04b1c301…e4696`), served for evaluation as the Q8_0 GGUF with a Q8_0
+  projector quantized here (`benchmarks/offline-intelligence/LOCAL-VLM.md`).
+- **What is trained:** a LoRA (rank 16, alpha 32, dropout 0.05) on the
+  language model's MLP `gate/up/down` in all 24 blocks — 5,308,416 parameters.
+  Vision encoder and projector frozen. Only the MLP, because those three map
+  one-to-one onto llama.cpp's `ffn_gate/ffn_up/ffn_down`; this hybrid model's
+  attention projections are reordered by the GGUF conversion.
+- **Data (`vlm_lora.py data`, seed 21):** 2,587 crops, ONLY from training
+  splits — 400 furniture scenes (`synth_relations.py --furniture --split
+  train`), 588 generation-3 plans (`synth_levels.py`, train), 120 relation
+  scenes (`synth_relations.py --split train`, new seed base 12) — refused if
+  any annotation names another split. 140 per identify class (table, chair,
+  sofa, bench, banquette, column, stage, bar) and 140 empty crops; 220 + 220
+  serves; 220 + 216 merged; chairs and count stratified (≤ 40 / ≤ 45 per
+  true value). Quarter turns and framing jitter, kept label-safe: a first cut
+  of the set moved a bench crop's centre onto its table and let a half table
+  into a count crop (seen on a contact sheet); an identify crop's centre now
+  stays on its object and a count crop is re-checked after the jitter.
+- **Training (`vlm_lora.py train`):** one epoch, batch 1 × accumulation 8 (324
+  steps), AdamW 2e-4, 20-step warm-up then linear decay, bf16 autocast, loss
+  on the answer tokens only, CPU, 4 threads.
+- **Conversion (`vlm_lora.py gguf`):** a llama.cpp LoRA adapter
+  (`general.type=adapter`, `adapter.lora.alpha`), served with `llama-server
+  --lora`; `vlm_lora.py agree` must show llama.cpp + adapter answering what
+  transformers + PEFT answer on ≥ 90 % of 24 crops.
+
+**Pass condition (pre-registered before any trained adapter was scored).** The
+final test is ONE run of `local-vlm-bench2.py --seed 5 --looks 2` on the BLIND
+splits (style families 14/15, never trained on) plus the Golden and ORNEK
+crops; the untrained base answers the same items. A question type is wired —
+listed in the manifest's `checks`, the only way the relay will ask it — only
+if on that run: identify generated ≥ 0.85, furniture ≥ 0.80, real ≥ 0.80;
+empty crops fabricated ≤ 0.05; "yes" on true negatives ≤ 0.10; chairs exact ≥
+0.80 with over-count ≤ 0.10; count exact ≥ 0.80 with over-count ≤ 0.10;
+merged and serves ≥ 0.85 each; median ≤ 10 s per crop at 4 threads; peak
+server RSS ≤ 3,000 MB. Each row is judged on its own. Real-plan rows with
+fewer than 8 items are reported, never used to pass. Choices are made on dev
+with the real crops left out (`--no-real`); blind is scored once.
+`model-qa-specialist` audits the run before anything is wired.
