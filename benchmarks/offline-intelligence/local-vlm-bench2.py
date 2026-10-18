@@ -64,6 +64,7 @@ MODELS = {
     "qwen3.5-2b": ("Qwen3.5-2B-Q4_K_M.gguf", "mmproj-Qwen3.5-2B-Q8_0-local.gguf"),
     "qwen3-vl-2b": ("Qwen3VL-2B-Instruct-Q4_K_M.gguf", "mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf"),
     "internvl3.5-1b": ("InternVL3_5-1B-Q4_K_M.gguf", "mmproj-InternVL3_5-1B-Q8_0-local.gguf"),
+    "smolvlm2-500m": ("SmolVLM2-500M-Video-Instruct-Q8_0.gguf", "mmproj-SmolVLM2-500M-Video-Instruct-Q8_0.gguf"),
 }
 
 
