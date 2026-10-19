@@ -609,3 +609,31 @@ Errors left on dev: a table read as a bench (3) or a sofa (1), a count of 5
 read as 4, ten chairs read as eight. Peak server RSS 5,010 MB at `-c 8192`;
 the final test runs at `-c 2048`, what a closed question needs. The verdict
 is the blind run, scored once, below.
+
+**V4 run A — supplementary blind test S1 (pre-registered 2026-10-19, written
+before any S1 scene was generated).** The independent audit of run A found three
+things the V4 final test could not see: no bench or banquette is ever "not
+serving" in training or test (a made-up "yes" for one could never show; the
+question word alone scores 19/24 on serves); chairs were trained and tested on
+even counts only (2–12), while the second look asks exactly where a count is
+unusual; and every merged "no" had a gap of at least 0.9 table sides, while the
+product asks where tables nearly touch. S1 adds those cases, from the BLIND
+style families and seed bases never used before, with NO retraining (same
+adapter, same served config incl. `--cache-ram 0`, two looks, one run):
+
+- chairs: round tables standing alone with 3, 5, 7, 9, 11 chairs (6 each) and
+  4, 8, 12 as a control (4 each);
+- merged: 20 near-miss separate neighbours (a visible gap of 0.35–0.9 sides,
+  the generator's own two-tables rule) and 20 pushed-together groups V4 did not
+  ask;
+- serves: 20 bench/banquette pieces set apart from a table (10 + 10) and 20
+  serving ones.
+
+A type passes S1 only if: chairs exact ≥ 0.80 on the odd items and on all S1
+chair items, over-count ≤ 0.10; merged accuracy ≥ 0.85 and "yes" on near-miss
+negatives ≤ 0.10; serves accuracy ≥ 0.85 and "yes" on bench/banquette negatives
+≤ 0.10. Two-look figures and Wilson 95 % intervals are reported beside each
+row, not used to pass. **A type is wired only if it passed V4 (the RSS row
+from the disclosed cache-off re-run) AND S1, AND the relay verifies the running
+server (adapter loaded, model file, context).** A type that fails is not wired;
+no retraining in this step. Independent QA audits S1 before wiring.
