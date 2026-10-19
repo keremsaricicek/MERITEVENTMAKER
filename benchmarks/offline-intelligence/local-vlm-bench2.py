@@ -4,12 +4,16 @@ reading needs, asked fairly.
     python -I benchmarks/offline-intelligence/local-vlm-bench2.py \\
         --server PATH/llama-server --models DIR --seat DIR --rel DIR --syn DIR --out FILE \\
         --model NAME [--size 448] [--min-tokens N] [--seed 5] [--limit N] [--threads 4]
-        [--no-real] [--lora ADAPTER.gguf] [--ctx 8192] [--looks 2]
+        [--no-real] [--lora ADAPTER.gguf] [--ctx 8192] [--looks 2] [--cache-ram 0]
 
 --no-real leaves the Golden/ORNEK crops out (a run that chooses settings);
 --lora serves a llama.cpp adapter (training/vlm_lora.py gguf) with the model;
 --looks 2 also asks every crop turned a quarter and reports the product's rule
 (an answer counts only when both looks give it: summary.twoLooks).
+--cache-ram 0 turns off llama-server's host prompt cache (this build's default
+keeps up to 8 GiB of prompt states although every request here sends
+cache_prompt:false and none is reused): without it, peakRssMb measures that
+cache, not the model (V4 blind run, 2026-10-19: 9,448 MB on a 0.8B model).
 
 What the first harness (local-vlm-bench.py) got wrong, found by checking it
 before trusting it:
@@ -357,6 +361,7 @@ def main():
     ap.add_argument("--lora", default="", help="a llama.cpp LoRA adapter (training/vlm_lora.py gguf) served with the model")
     ap.add_argument("--ctx", type=int, default=8192)
     ap.add_argument("--looks", type=int, choices=[1, 2], default=1, help="2: also ask each crop turned a quarter, as the product's second look does")
+    ap.add_argument("--cache-ram", type=int, default=None, help="llama-server --cache-ram MiB (0: no host prompt cache; unset: the build's default)")
     args = ap.parse_args()
     items = build_items(args.seat, args.rel, random.Random(args.seed), args.size, args.syn or None, real=not args.no_real)
     if args.limit:
@@ -367,6 +372,8 @@ def main():
            "--port", str(args.port), "-t", str(args.threads), "-tb", str(args.threads), "-c", str(args.ctx), "-np", "1", "-ngl", "0"]
     if args.lora:
         cmd += ["--lora", args.lora]
+    if args.cache_ram is not None:
+        cmd += ["--cache-ram", str(args.cache_ram)]
     if args.min_tokens:
         cmd += ["--image-min-tokens", str(args.min_tokens)]
     t0 = time.time()
@@ -409,7 +416,8 @@ def main():
         except subprocess.TimeoutExpired:
             proc.kill()
     s = summarise(args.model, rows, load_s, rss, dict(looks=args.looks, size=args.size, minTokens=args.min_tokens, maxTokens=args.max_tokens, threads=args.threads, seed=args.seed,
-                                                      ctx=args.ctx, real=not args.no_real, lora=os.path.basename(args.lora) or None))
+                                                      ctx=args.ctx, real=not args.no_real, lora=os.path.basename(args.lora) or None,
+                                                      cacheRam=args.cache_ram))
     print(json.dumps(s, indent=1), flush=True)
     json.dump(dict(ranAt=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), summary=s, prompts=Q, files=[model, proj] + ([os.path.basename(args.lora)] if args.lora else []),
                    dirs=dict(seat=args.seat, rel=args.rel, syn=args.syn), rows=rows), open(args.out, "w"), indent=1)
