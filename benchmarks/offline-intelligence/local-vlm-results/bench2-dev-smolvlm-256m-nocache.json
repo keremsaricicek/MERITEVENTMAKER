@@ -1,0 +1,659 @@
+{
+ "ranAt": "2026-10-19T02:36:25Z",
+ "segments": 1,
+ "summary": {
+  "model": "smolvlm-256m",
+  "settings": {
+   "looks": 1,
+   "size": 448,
+   "minTokens": 0,
+   "maxTokens": 48,
+   "threads": 4,
+   "seed": 11,
+   "ctx": 8192,
+   "real": true,
+   "lora": null,
+   "cacheRam": 0,
+   "s1": false
+  },
+  "loadSeconds": 24.1,
+  "peakRssMb": 632,
+  "idGenerated": 0.0,
+  "idFurniture": 0.0,
+  "idReal": 0.0,
+  "fabricationEmpty": 0.0,
+  "fabricationYes": 0.75,
+  "count": 0.25,
+  "countOver": 0.75,
+  "chairs": 0.429,
+  "chairsGolden": 0.333,
+  "chairsWithin1": 0.571,
+  "merged": 0.2,
+  "serves": 0.2,
+  "unparsed": 25,
+  "emptyAnswers": 0,
+  "medianSeconds": 9.32,
+  "p90Seconds": 10.15,
+  "n": 60,
+  "twoLooks": null,
+  "s1": null
+ },
+ "prompts": {
+  "ID": "This is a crop of an event venue floor plan, drawn from above. What single object is at the centre of the image? Answer with exactly one word from: table, chair, sofa, bench, banquette, column, stage, bar, nothing.",
+  "COUNT": "This is a crop of an event venue floor plan, drawn from above. How many tables are in the image? Count only tables, not chairs, sofas or benches. Answer with a number only.",
+  "CHAIRS": "This is a crop of an event venue floor plan, drawn from above. How many chairs stand around the table in the centre? Answer with a number only.",
+  "MERGED": "This is a crop of an event venue floor plan, drawn from above. Do the tables in the centre touch each other to form one long table? Answer yes or no.",
+  "SERVES": "This is a crop of an event venue floor plan, drawn from above. Does the {piece} stand directly against the table so people on it sit at that table? Answer yes or no."
+ },
+ "files": [
+  "SmolVLM-256M-Instruct-Q8_0.gguf",
+  "mmproj-SmolVLM-256M-Instruct-Q8_0.gguf"
+ ],
+ "dirs": {
+  "seat": "/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/seat/dev",
+  "rel": "/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/rel2/dev",
+  "syn": "/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/synth3/val"
+ },
+ "rows": [
+  {
+   "task": "ID",
+   "source": "golden",
+   "truth": "chair",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 10.834,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "bench",
+   "answer": "Nothing",
+   "reasoningChars": 0,
+   "parsed": "nothing",
+   "seconds": 10.567,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "golden",
+   "truth": "stage",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 10.751,
+   "promptTokens": 197
+  },
+  {
+   "task": "MERGED",
+   "source": "generated",
+   "truth": "yes",
+   "answer": "Yes.",
+   "reasoningChars": 0,
+   "parsed": "yes",
+   "seconds": 9.953,
+   "promptTokens": 178
+  },
+  {
+   "task": "CHAIRS",
+   "source": "generated",
+   "truth": 2,
+   "answer": "2",
+   "reasoningChars": 0,
+   "parsed": 2,
+   "seconds": 9.707,
+   "promptTokens": 175
+  },
+  {
+   "task": "ID",
+   "source": "golden",
+   "truth": "banquette",
+   "answer": "Sofa.",
+   "reasoningChars": 0,
+   "parsed": "sofa",
+   "seconds": 10.151,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "banquette",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.285,
+   "promptTokens": 197
+  },
+  {
+   "task": "MERGED",
+   "source": "generated",
+   "truth": "yes",
+   "answer": "No.",
+   "reasoningChars": 0,
+   "parsed": "no",
+   "seconds": 9.273,
+   "promptTokens": 178
+  },
+  {
+   "task": "COUNT",
+   "source": "generated",
+   "truth": 3,
+   "answer": "4",
+   "reasoningChars": 0,
+   "parsed": 4,
+   "seconds": 10.078,
+   "promptTokens": 185
+  },
+  {
+   "task": "COUNT",
+   "source": "generated",
+   "truth": 1,
+   "answer": "2",
+   "reasoningChars": 0,
+   "parsed": 2,
+   "seconds": 9.991,
+   "promptTokens": 185
+  },
+  {
+   "task": "MERGED",
+   "source": "generated",
+   "truth": "no",
+   "answer": "Yes.",
+   "reasoningChars": 0,
+   "parsed": "yes",
+   "seconds": 9.326,
+   "promptTokens": 178
+  },
+  {
+   "task": "CHAIRS",
+   "source": "generated",
+   "truth": 6,
+   "answer": "6.",
+   "reasoningChars": 0,
+   "parsed": 6,
+   "seconds": 9.387,
+   "promptTokens": 175
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "bench",
+   "answer": "chair",
+   "reasoningChars": 0,
+   "parsed": "chair",
+   "seconds": 8.604,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "golden",
+   "truth": "table",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.494,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "golden",
+   "truth": "chair",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.628,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "bench",
+   "answer": "Nothing",
+   "reasoningChars": 0,
+   "parsed": "nothing",
+   "seconds": 9.347,
+   "promptTokens": 197
+  },
+  {
+   "task": "CHAIRS",
+   "source": "golden",
+   "truth": 2,
+   "answer": "2",
+   "reasoningChars": 0,
+   "parsed": 2,
+   "seconds": 9.039,
+   "promptTokens": 175
+  },
+  {
+   "task": "NEG",
+   "source": "generated",
+   "truth": "nothing",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 10.347,
+   "promptTokens": 197
+  },
+  {
+   "task": "CHAIRS",
+   "source": "golden",
+   "truth": 2,
+   "answer": "5",
+   "reasoningChars": 0,
+   "parsed": 5,
+   "seconds": 10.0,
+   "promptTokens": 175
+  },
+  {
+   "task": "COUNT",
+   "source": "generated",
+   "truth": 2,
+   "answer": "2.",
+   "reasoningChars": 0,
+   "parsed": 2,
+   "seconds": 9.401,
+   "promptTokens": 185
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "chair",
+   "answer": "table",
+   "reasoningChars": 0,
+   "parsed": "table",
+   "seconds": 10.172,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "banquette",
+   "answer": "Nothing.",
+   "reasoningChars": 0,
+   "parsed": "nothing",
+   "seconds": 9.935,
+   "promptTokens": 197
+  },
+  {
+   "task": "NEG",
+   "source": "generated",
+   "truth": "nothing",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.124,
+   "promptTokens": 197
+  },
+  {
+   "task": "SERVES",
+   "source": "generated",
+   "truth": "yes",
+   "answer": "No.",
+   "reasoningChars": 0,
+   "parsed": "no",
+   "seconds": 9.168,
+   "promptTokens": 180
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "sofa",
+   "answer": "Chair",
+   "reasoningChars": 0,
+   "parsed": "chair",
+   "seconds": 9.011,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "table",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.135,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "golden",
+   "truth": "table",
+   "answer": "Chair.",
+   "reasoningChars": 0,
+   "parsed": "chair",
+   "seconds": 9.224,
+   "promptTokens": 197
+  },
+  {
+   "task": "CHAIRS",
+   "source": "generated",
+   "truth": 4,
+   "answer": "5",
+   "reasoningChars": 0,
+   "parsed": 5,
+   "seconds": 9.404,
+   "promptTokens": 175
+  },
+  {
+   "task": "CHAIRS",
+   "source": "generated",
+   "truth": 12,
+   "answer": "0",
+   "reasoningChars": 0,
+   "parsed": 0,
+   "seconds": 9.206,
+   "promptTokens": 175
+  },
+  {
+   "task": "NEG",
+   "source": "generated",
+   "truth": "nothing",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.271,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "banquette",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.244,
+   "promptTokens": 197
+  },
+  {
+   "task": "SERVES",
+   "source": "generated",
+   "truth": "yes",
+   "answer": "No.",
+   "reasoningChars": 0,
+   "parsed": "no",
+   "seconds": 9.144,
+   "promptTokens": 181
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "banquette",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 10.378,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "sofa",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 10.01,
+   "promptTokens": 197
+  },
+  {
+   "task": "CHAIRS",
+   "source": "golden",
+   "truth": 2,
+   "answer": "0",
+   "reasoningChars": 0,
+   "parsed": 0,
+   "seconds": 9.28,
+   "promptTokens": 175
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "bench",
+   "answer": "Nothing.",
+   "reasoningChars": 0,
+   "parsed": "nothing",
+   "seconds": 9.786,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "ornek",
+   "truth": "table",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.835,
+   "promptTokens": 197
+  },
+  {
+   "task": "SERVES",
+   "source": "generated",
+   "truth": "yes",
+   "answer": "No.",
+   "reasoningChars": 0,
+   "parsed": "no",
+   "seconds": 9.347,
+   "promptTokens": 181
+  },
+  {
+   "task": "NEG",
+   "source": "generated",
+   "truth": "nothing",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.623,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "table",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.421,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "bench",
+   "answer": "Nothing",
+   "reasoningChars": 0,
+   "parsed": "nothing",
+   "seconds": 9.532,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "bench",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 8.749,
+   "promptTokens": 197
+  },
+  {
+   "task": "SERVES",
+   "source": "generated",
+   "truth": "yes",
+   "answer": "No.",
+   "reasoningChars": 0,
+   "parsed": "no",
+   "seconds": 8.502,
+   "promptTokens": 182
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "banquette",
+   "answer": "Chair",
+   "reasoningChars": 0,
+   "parsed": "chair",
+   "seconds": 9.008,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "golden",
+   "truth": "chair",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 8.949,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "golden",
+   "truth": "table",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 8.873,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "sofa",
+   "answer": "Chair",
+   "reasoningChars": 0,
+   "parsed": "chair",
+   "seconds": 9.098,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "table",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 8.935,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "golden",
+   "truth": "table",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.197,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "golden",
+   "truth": "table",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.304,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "golden",
+   "truth": "table",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.063,
+   "promptTokens": 197
+  },
+  {
+   "task": "MERGED",
+   "source": "generated",
+   "truth": "no",
+   "answer": "Yes.",
+   "reasoningChars": 0,
+   "parsed": "yes",
+   "seconds": 9.094,
+   "promptTokens": 178
+  },
+  {
+   "task": "COUNT",
+   "source": "generated",
+   "truth": 3,
+   "answer": "5",
+   "reasoningChars": 0,
+   "parsed": 5,
+   "seconds": 8.873,
+   "promptTokens": 185
+  },
+  {
+   "task": "MERGED",
+   "source": "generated",
+   "truth": "no",
+   "answer": "Yes.",
+   "reasoningChars": 0,
+   "parsed": "yes",
+   "seconds": 9.47,
+   "promptTokens": 178
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "table",
+   "answer": "Chair.",
+   "reasoningChars": 0,
+   "parsed": "chair",
+   "seconds": 9.37,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "banquette",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 8.759,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "sofa",
+   "answer": "Chair.",
+   "reasoningChars": 0,
+   "parsed": "chair",
+   "seconds": 9.106,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "table",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.36,
+   "promptTokens": 197
+  },
+  {
+   "task": "ID",
+   "source": "generated",
+   "truth": "bench",
+   "answer": "Banquet.",
+   "reasoningChars": 0,
+   "parsed": null,
+   "seconds": 9.227,
+   "promptTokens": 197
+  },
+  {
+   "task": "SERVES",
+   "source": "generated",
+   "truth": "no",
+   "answer": "No.",
+   "reasoningChars": 0,
+   "parsed": "no",
+   "seconds": 9.176,
+   "promptTokens": 181
+  }
+ ]
+}
