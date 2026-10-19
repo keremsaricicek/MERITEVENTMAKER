@@ -84,7 +84,7 @@ Shipping it would have drawn a wrong area, so the label-only extent stays ("not 
 - SmolVLM-256M: furniture 0.028, real 0.031, 8.0 s, 1.1 GB.
 - SmolVLM-500M: furniture 0.000, real 0.250, fabrication 1.00, over-count 0.917, 8.5 s, 1.8 GB.
 - Qwen2-VL-2B: furniture 0.222, real 0.062, over-count 0.917, 25.8 s, 3.0 GB.
-A whole-plan reading through the product relay with Qwen2-VL-2B runs past 15 minutes. It exposed a product bug, now fixed: Node fetch's own 300 s clock reported a slow model as "not running"; `vlm-local` pins the fix. |
+A whole-plan reading through the product relay with Qwen2-VL-2B runs past 15 minutes. It exposed a product bug, now fixed: Node fetch's own 300 s clock reported a slow model as "not running"; `vlm-local` pins the fix. **2026-10-19: ONE QUESTION WIRED.** The first harness's faults were found and fixed before any model was blamed (black padding, empty answers from thinking mode, too-small images); the eliminated models re-run on the fair harness still fail (`LOCAL-VLM.md`). A plan-specific LoRA on Qwen3.5-0.8B (V4, pre-registered, scored once on blind plans): identify on generated plans 0.17 → 0.93, furniture 0.03 → 1.00, empty crops fabricated 0.42 → 0.00, merged 0.75 → 1.00 — but real-plan identify 0.75 (bar 0.80). The independent audit then found what the test could not see; the pre-registered supplementary test S1 confirmed it: even chair counts only (odd 1/30), every bench/banquette "serving" (18/20 set apart). **Wired: merged only**, behind a relay that checks the running server is the measured one. Server 1.24 GB with `--cache-ram 0` (9.4 GB with llama.cpp's default prompt cache), ~5 s per crop on 4 cores. |
 | X1 | Olive needs torch; reproducible | dev tooling only | CPU torch index refused (403); verified only with a torch already in the container | reproducible from an allowed official source | coordinator | clean venv | **MET** (2026-10-17): `setup.sh --with-olive-pypi` installs torch 2.14.1 from pypi.org with every file sha256-pinned, into an empty environment, in 6 min 39 s; `import olive` and the Olive INT8 run pass (166 / 166 agree). `tools/model-dev/README.md` |
 | X2 | FiftyOne datasets / App | dev tooling only | mongod download refused (403); pycocotools + matcher work | a local DB or a local error gallery | coordinator | run | **MET** (2026-10-17): `tools/model-dev/mongodb.sh` installs MongoDB 8.3.7 from conda-forge (micromamba sha256-checked, packages md5-checked), loopback only; FiftyOne `Dataset` + `evaluate_detections` run against it, cross-check SAME |
 | N1 | real blind plans | the 9.5 claim | none in the repository | ≥ 1 licensed public plan of an unseen venue | coordinator (search) | `DATA-SOURCES.md` | open |
@@ -133,7 +133,7 @@ Closed this session, each with its commit and evidence:
 | S7 | re-analysis 13.9 → 4.9 s | `e40db0c` |
 | S4 | import clock measured | `e40db0c` |
 | V1, robustness | baseline re-recorded with the reason (it was measured without OCR) | `e40db0c` |
-| V1, local VLM | measured, none useful; relay timeout bug fixed | `394bdda` |
+| V1, local VLM | measured; one question (merged) wired after V4 + S1 + audit; relay checks the running server | 2026-10-19 |
 | T4/T5 | E5, E6, E7, E7cal all fail their pre-registered conditions; v2 stays | `c634da3`, `79f4d2e` |
 | T4 (E9) | decode E3b: a long piece's peaks merge; bench R 0.083 → 0.526 on furniture dev; condition still not met, E8 not run | `1ce3944` |
 | R4 | questions per plan reported (furniture dev 2.21, seating question on real pieces 4/4) | `1ce3944` |

@@ -637,3 +637,37 @@ row, not used to pass. **A type is wired only if it passed V4 (the RSS row
 from the disclosed cache-off re-run) AND S1, AND the relay verifies the running
 server (adapter loaded, model file, context).** A type that fails is not wired;
 no retraining in this step. Independent QA audits S1 before wiring.
+
+**V4 run A — verdict (2026-10-19).** Scored once on the final test (191 items,
+trained and untrained on the same items; raw rows in
+`benchmarks/offline-intelligence/local-vlm-results/v4-blind-*.json`), then on S1
+(122 items, `s1-A.json`):
+
+| question | V4 (bar) | S1 (bar) | wired |
+|---|---|---|---|
+| identify | generated 0.93, furniture 1.00, **real 0.75** (≥ 0.80), empty 0.00 | — | **no** |
+| count | **0.76** (≥ 0.80), over 0.00 | — | no (not a second-look question) |
+| chairs | 0.91, over 0.00 | **odd 0.03** (≥ 0.80), all 0.31, **over 0.52** | **no** |
+| serves | 1.00, yes-on-no 0.00 | all 0.55, **yes on a set-apart bench/banquette 0.90** (≤ 0.10) | **no** |
+| merged | 1.00, yes-on-no 0.00 | **1.00**, yes on near-miss 0.00 | **yes** |
+
+Untrained base on the same V4 items: identify generated 0.17, furniture 0.03,
+real 0.19, empty fabricated 0.42, chairs 0.55, count 0.18, merged 0.75, serves
+0.50. Median 5.2 s per crop (4 threads, quiet machine). Peak server RSS: 9,448
+MB as scored, with llama.cpp's default 8 GiB prompt cache; 1,237 MB with
+`--cache-ram 0` on the same items, every answer identical — a disclosed
+deviation of procedure, the bar unchanged.
+
+What run A learned: the drawing convention for WHAT a thing is on generated
+plans (sofa / bench / banquette / table / chair / column / stage / bar / nothing)
+and whether two drawn tables touch. What it did not: counting (it answers even
+chair counts only — 3 → 4, 7 → 8, 9 → 10 — because the training set held even
+counts only), whether a piece serves a table (training never showed a bench or
+banquette that does not, so it learned the word), and the real plans' chair and
+banquette symbols. The second independent audit returned SOUND WITH FINDINGS
+for wiring merged only, with the claim limited to generated plans and separate
+pairs at least 0.35 sides apart (`LOCAL-VLM.md`). In the product, on Golden, the
+look asked 12 groups (all rows of touching tables by eye): 10 agreed, 2 unsure,
+0 wrong, in 134 s, with no frozen frame. A run B would need odd counts and bench/banquette negatives
+in its training set, and new real plans to be judged on — the Golden and ORNEK
+crops are no longer a test any choice could be blind to.

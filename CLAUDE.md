@@ -322,6 +322,23 @@ started by hand it asks first. The page only asks `/vlm-relay` on a page the
 relay served (its `Server-Timing: merit-relay` entry). Suite
 `local-second-look` (scripted model).
 
+The one measured model (2026-10-19): Qwen3.5-0.8B + the Merit LoRA run A
+(`models/local-vlm/qwen3.5-0.8b-merit-a`, manifest
+`tools/local-vlm/manifests/qwen3.5-0.8b-merit-a.json`) is wired for **merged
+only** — it passed the V4 final test and the supplementary test S1, on
+generated plans, for separate pairs at least 0.35 table sides apart; there is no
+real-plan merged truth, so it is not a real-plan result (audit 2026-10-19). It failed
+identify on real plans (24/32), chair counts (it answers even numbers only) and
+serves (it calls a set-apart bench serving), and the relay will not ask those.
+A manifest with `checks` must also carry `serve` (model file, adapters,
+context), and the relay asks the running llama-server what it loaded before
+every question (`LOCAL_SERVER_MISMATCH` / `LOCAL_SERVER_UNVERIFIED`): a server
+without its adapter answers as the untrained model behind hashes that all pass.
+The suite fails if a manifest lists a question its committed evidence did not
+pass. Run the server with `--cache-ram 0`: this llama.cpp's default 8 GiB prompt
+cache made a 1.2 GB server measure 9.4 GB. Full record:
+`benchmarks/offline-intelligence/LOCAL-VLM.md`.
+
 ## Analysis speed and Stop
 
 The OCR model and the local detector run in workers (`src/plan-ort-pool.js`),

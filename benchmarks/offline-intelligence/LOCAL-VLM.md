@@ -29,6 +29,11 @@ Florence-2 is not among them: its ONNX export runs in the page, not in
 question-and-answer interface the relay's local provider speaks. It stays a
 candidate for the page itself, unmeasured.
 
+**2026-10-19: one question wired.** A plan-specific LoRA on Qwen3.5-0.8B,
+scored once on blind plans and then on a supplementary test an independent
+audit asked for, is wired for `merged` only (V4 below); the server measures
+1.2 GB once llama.cpp's prompt cache is off.
+
 What was measured, and what the pre-registered bar was, is in **Measured on
 real inference** below. Everything from "Candidates" down to "What would
 unblock it" is the 2026-10-11 record, kept as written.
@@ -92,6 +97,159 @@ every sofa and "stage" for every empty crop. A 672 px run of Qwen3.5-0.8B was
 stopped unrun: the failure is not resolution. The faults
 the audit found were real but were not why these models fail — with them
 fixed, the failure is knowledge, not settings.
+
+### V4: the drawing convention taught, scored once on unseen plans (2026-10-19)
+
+The zero-shot failure was knowledge, so the convention was taught: a LoRA on
+Qwen3.5-0.8B's MLP (rank 16, one epoch, 2,587 crops cut from TRAINING splits
+only; `training/vlm_lora.py`; recipe and the bars, committed in 6585076 before
+any trained adapter was scored, in `training/README.md` "V4"). The final test
+is ONE run of `local-vlm-bench2.py --seed 5 --looks 2 --ctx 2048` on the BLIND
+splits (style families 14/15, never trained on) plus the Golden and ORNEK
+crops; the adapter and the untrained base answer the same 191 items (same
+order, same truths — checked). Q8_0 model, Q8_0 projector, 4 threads. Raw rows:
+`local-vlm-results/v4-blind-A.json`, `v4-blind-base.json`.
+
+| Row (pre-registered bar) | n | untrained | **trained (run A)** | |
+|---|---|---|---|---|
+| identify, generated (≥ 0.85) | 60 | 0.17 | **0.93** | pass |
+| identify, furniture (≥ 0.80) | 36 | 0.03 | **1.00** | pass |
+| identify, real plans: Golden + ORNEK (≥ 0.80) | 32 | 0.19 | 0.75 | **FAIL** |
+| empty crop called an object (≤ 0.05) | 12 | 0.42 | **0.00** | pass |
+| "yes" on a true negative, merged + serves (≤ 0.10) | 24 | 0.00 | 0.00 | pass |
+| chairs exact (≥ 0.80) / over-count (≤ 0.10) | 22 | 0.55 / 0.09 | **0.91 / 0.00** | pass |
+| count exact (≥ 0.80) / over-count (≤ 0.10) | 17 | 0.18 / 0.41 | 0.76 / 0.00 | **FAIL** |
+| merged (≥ 0.85) | 24 | 0.75 | **1.00** | pass |
+| serves (≥ 0.85) | 24 | 0.50 | **1.00** | pass |
+| median s per crop, 4 threads (≤ 10) | 382 looks | 4.8 * | 5.2 | pass |
+| peak server RSS (≤ 3,000 MB) | — | 9,425 † | 9,448 † → **1,237** with the cache off | see below |
+
+\* The untrained run's first minute overlapped a 48-second browser suite.
+† The memory figure below.
+
+On the real plans the model calls four Golden chairs a sofa (two of them on
+both looks), the three Golden banquettes a sofa or a bench, and one ORNEK table
+a chair: 24 of 32, under 0.80 — **identify is not wired**: a wrong type on a
+real plan is the suggestion the review screen must not make. Count is under its
+bar and is not a question the second look asks.
+
+### The audit, and the test that answered it (S1)
+
+`model-qa-specialist` reproduced every number from the rows, found no leakage
+(0 of 191 crops, in any quarter turn, pixel-identical to a training crop; no
+blind plan, seed or family in training), and returned **UNSOUND as proposed**
+for three reasons the V4 test could not see:
+
+- **serves**: no bench or banquette is ever "not serving" anywhere in training
+  or test (bench 66 / 0, banquette 101 / 0 in training) — the question word
+  alone scores 19 / 24;
+- **chairs**: only even counts (2–12) were trained or tested, while the second
+  look asks exactly where a count is unusual;
+- **merged**: every "no" had a gap of at least 0.9 table sides; the product asks
+  where tables nearly touch.
+
+Those became a supplementary blind test, **S1**, pre-registered before any of
+its scenes existed (`training/README.md`, commit 62071bb; generator
+`synth_relations.py --s1`, blind families only, a new seed base; 122 items;
+no retraining; raw rows `local-vlm-results/s1-A.json`):
+
+| S1 row (bar) | n | trained (run A) | Wilson 95 % | |
+|---|---|---|---|---|
+| chairs exact, odd counts 3–11 (≥ 0.80) | 30 | **0.03** | 0.01–0.17 | **FAIL** |
+| chairs exact, all (≥ 0.80) / over-count (≤ 0.10) | 42 | 0.31 / 0.52 | | **FAIL** |
+| merged, all (≥ 0.85) | 40 | **1.00** | 0.91–1.00 | pass |
+| "yes" on near-miss separate tables (≤ 0.10) | 20 | **0.00** | 0.00–0.16 | pass |
+| serves, all (≥ 0.85) | 40 | 0.55 | 0.40–0.69 | **FAIL** |
+| "yes" on a bench/banquette set apart (≤ 0.10) | 20 | 0.90 | 0.70–0.97 | **FAIL** |
+
+The audit was right twice. The model has learned "a bench or banquette serves"
+(18 of 20 set-apart pieces called serving) and only even chair counts: 3 → 4,
+5 → 6, 7 → 8, 9 → 10, 11 → 10, on almost every crop. It has not learned to
+count. Merged held: 40 of 40, and no near-miss pair of separate tables (a gap
+of 0.35–0.9 sides) called one unit.
+
+The untrained base on the same S1 items: chairs odd 4 / 30, serves 26 / 40
+with "yes" on 4 of 20 set-apart pieces, merged 37 / 40 with 0 / 20 near-miss
+(`s1-base.json`). Training did not teach serves; it taught the bias — the
+base was wrong on set-apart pieces 4 times in 20, the adapter 18.
+
+**Wired: `merged` only** — the one question that passed V4 and S1 (64 / 64
+across both, Wilson 0.94–1.00; "yes" on a separate pair 0 / 32, upper bound
+0.11). The second audit returned SOUND WITH FINDINGS for wiring it, with the
+claim limited to what was measured: on generated plans in style families the
+model never saw, whether 2–4 drawn tables touch, for separate pairs at least
+0.35 table sides apart. It may NOT be read as: a real-plan result (no
+real-plan merged truth exists in the repository), tables closer than 0.35
+sides or touching at a corner (no truth generated there — and the product asks
+exactly about groups the analysis already formed, so a wrong "yes" there would
+read as agreement), a false-"yes" rate below 10 % (the bound is 0.16 on
+near-miss pairs), or a memory figure without `--cache-ram 0` (the relay cannot
+see that flag). Every answer stays a note a person reads; nothing is applied.
+
+### The memory figure was the server's cache, not the model
+
+Both scored runs reached ~9.4 GB. The server log says why: "making room for
+prompt cache entry … (size = 41.620 MiB)", 168 times per run. This llama.cpp
+build keeps up to 8 GiB of old prompt states by default (`--cache-ram 8192`)
+although every request sends `cache_prompt:false` and none is reused. The same
+191 items, adapter and settings, re-run with `--cache-ram 0`
+(`v4-blind-A-nocache.json`): **every answer identical on both looks (191 /
+191), peak server RSS 1,237 MB** (S1: 1,238 MB). This is a disclosed deviation
+of procedure, not of the bar: the bar is unchanged, the scored run's 9,448 MB
+stays on record, and the cost run's identity with it is checked by the suite
+(`local-second-look`). The launch line now carries `--cache-ram 0`; on an 8 GB
+office PC that flag is the difference between fitting and not.
+
+The same default was on for every peak RSS measured before this section (the
+zero-shot table above, the first harness's 1,088 / 1,849 / 2,998 MB below):
+those are upper bounds that include the cache.
+
+### The models the first harness eliminated, on the fair one, cache off
+
+Dev, 60 items, seed 11 (`local-vlm-results/bench2-dev-*-nocache.json`):
+
+| Model | identify gen. / furniture / real | empty → fabricated | merged / serves | median | peak RSS |
+|---|---|---|---|---|---|
+| SmolVLM-256M Q8_0 | 0.00 / 0.00 / 0.00 (25 unparsed) | 0.00 | 0.20 / 0.20 | 9.3 s | 632 MB |
+| SmolVLM-500M Q8_0 | 0.09 / 0.00 / 0.25 | 1.00 | 0.80 / 0.20 | 10.3 s | 1,035 MB |
+| SmolVLM2-500M Q8_0 | 0.30 / 0.18 / 0.08 | 1.00 | 0.80 / 0.20 | 10.3 s | 1,034 MB |
+| Qwen2-VL-2B Q4_K_M | 0.17 / 0.24 / 0.17 | 0.00 | 0.80 / 0.20 | 36.0 s | 2,152 MB |
+
+With the harness's faults fixed they still fail on knowledge. The first
+harness did not eliminate them unfairly; it was only measuring them wrongly.
+
+### Cost
+
+Trained run, quiet 4-core Xeon (2.8 GHz, AVX-512; faster than the reference
+office PC in `ACCEPTANCE.md`): median 5.2 s, p90 5.5 s per crop; a place is
+looked at twice, so ~10 s per place. Server 1.24 GB with the cache off.
+Training (developer machine only): 8,399 s on 4 threads, 4.9 GB.
+Conversion: llama.cpp + adapter answered what transformers + PEFT answered on
+24 of 24 crops (training crops, F16 projector — the audit's #8: a weak check).
+
+### In the product, on the two real plans (2026-10-19)
+
+`real-second-look-merged.json`: the real page, the real relay with this
+manifest, the real llama-server (adapter, `-c 2048`, `--cache-ram 0`) on
+loopback, Analyse pressed once.
+
+- **The relay's server check passed against the real llama-server** (paths
+  through symlinks, `/props`, `/lora-adapters`) — the audit's open item.
+- **Golden:** analysis 8.4 s; the look started by itself; 12 groups asked (the
+  cap; 13 qualify), 24 crops, **134 s** (5.6 s per crop). No main-thread task
+  over 50 ms during the look — the page did not freeze. Answers: 10 AGREES
+  (both looks "yes"), 2 UNSURE (the looks disagreed), 0 DIFFERS, 0 findings,
+  nothing applied. By eye (`real-second-look-golden-groups.png`, the exact
+  frames the product cropped) all 12 groups are rows of square tables pushed
+  edge to edge — so 10 right, 2 abstained, 0 wrong. That is a person's reading
+  of 12 crops, all of them true "yes", not a pre-registered test, and it says
+  nothing about false "yes" on a real plan.
+- **ORNEK:** every group the analysis formed has one table, so there is
+  nothing to ask and nothing was asked.
+- **Memory while it ran:** model server 1,213 MB; relay process 146 MB;
+  headless Chromium with the app and its analysis engines ~1.75 GB summed RSS
+  (an upper bound — shared pages are counted once per process). About 3.1 GB
+  in all, inside an 8 GB machine.
 
 ## Measured on real inference (2026-10-18)
 
