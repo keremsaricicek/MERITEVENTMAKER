@@ -4,7 +4,7 @@ reading needs, asked fairly.
     python -I benchmarks/offline-intelligence/local-vlm-bench2.py \\
         --server PATH/llama-server --models DIR --seat DIR --rel DIR --syn DIR --out FILE \\
         --model NAME [--size 448] [--min-tokens N] [--seed 5] [--limit N] [--threads 4]
-        [--no-real] [--lora ADAPTER.gguf] [--ctx 8192] [--looks 2] [--cache-ram 0]
+        [--no-real] [--lora ADAPTER.gguf] [--ctx 8192] [--looks 2] [--cache-ram 0] [--resume]
 
 --no-real leaves the Golden/ORNEK crops out (a run that chooses settings);
 --lora serves a llama.cpp adapter (training/vlm_lora.py gguf) with the model;
@@ -361,6 +361,7 @@ def main():
     ap.add_argument("--lora", default="", help="a llama.cpp LoRA adapter (training/vlm_lora.py gguf) served with the model")
     ap.add_argument("--ctx", type=int, default=8192)
     ap.add_argument("--looks", type=int, choices=[1, 2], default=1, help="2: also ask each crop turned a quarter, as the product's second look does")
+    ap.add_argument("--resume", action="store_true", help="continue a run a restart cut short (OUT.partial.jsonl)")
     ap.add_argument("--cache-ram", type=int, default=None, help="llama-server --cache-ram MiB (0: no host prompt cache; unset: the build's default)")
     args = ap.parse_args()
     items = build_items(args.seat, args.rel, random.Random(args.seed), args.size, args.syn or None, real=not args.no_real)
@@ -376,8 +377,29 @@ def main():
         cmd += ["--cache-ram", str(args.cache_ram)]
     if args.min_tokens:
         cmd += ["--image-min-tokens", str(args.min_tokens)]
+    # Every answered item is appended to OUT.partial.jsonl as it lands (with the
+    # server's VmHWM at that moment); --resume continues a run a restart cut
+    # short, skipping the items already answered after checking they are the
+    # same items in the same order. Each request is independent (no prompt
+    # reuse, temperature 0), so a resumed run asks exactly what one run asks;
+    # the peak RSS is the largest any segment's server reached.
+    partial = args.out + ".partial.jsonl"
+    done, hwm_prev, segments = {}, 0, 1
+    if args.resume and os.path.exists(partial):
+        for line in open(partial):
+            rec = json.loads(line)
+            it = items[rec["i"]]
+            if rec["key"] != [it["task"], it["source"], str(it["truth"])]:
+                raise SystemExit(f"--resume: item {rec['i']} is not the item this run would ask; refusing")
+            done[rec["i"]] = rec["row"]
+            hwm_prev = max(hwm_prev, rec.get("hwm") or 0)
+            segments = max(segments, rec.get("segment", 1) + 1)
+        print(f"resuming: {len(done)} of {len(items)} already answered, segment {segments}", flush=True)
+    elif os.path.exists(partial):
+        os.remove(partial)
+    pf = open(partial, "a")
     t0 = time.time()
-    log = open(args.out + ".server.log", "w")
+    log = open(args.out + ".server.log", "a" if done else "w")
     proc = subprocess.Popen(cmd, stdout=log, stderr=log)
     rows = []
     try:
@@ -395,6 +417,9 @@ def main():
             time.sleep(0.5)
         load_s = time.time() - t0
         for i, it in enumerate(items):
+            if i in done:
+                rows.append(done[i])
+                continue
             text, reasoning, usage, dt = ask(args.port, it, args.max_tokens)
             row = dict(task=it["task"], source=it["source"], truth=it["truth"], answer=text.strip()[:120],
                        reasoningChars=len(reasoning), parsed=parse(it["task"], text), seconds=round(dt, 3),
@@ -406,9 +431,12 @@ def main():
                 text2, _, _, dt2 = ask(args.port, dict(it, image=b64(turned)), args.max_tokens)
                 row.update(answer2=text2.strip()[:120], parsed2=parse(it["task"], text2), seconds2=round(dt2, 3))
             rows.append(row)
+            pf.write(json.dumps(dict(i=i, key=[it["task"], it["source"], str(it["truth"])], row=row, hwm=peak_rss_mb(proc.pid), segment=segments)) + "\n")
+            pf.flush()
+            os.fsync(pf.fileno())
             if i % 25 == 0:
                 print(f"  {i}/{len(items)} {dt:.1f}s {it['task']} {it['truth']} -> {text.strip()[:40]!r}", flush=True)
-        rss = peak_rss_mb(proc.pid)
+        rss = max(peak_rss_mb(proc.pid) or 0, hwm_prev) or None
     finally:
         proc.send_signal(signal.SIGTERM)
         try:
@@ -419,7 +447,7 @@ def main():
                                                       ctx=args.ctx, real=not args.no_real, lora=os.path.basename(args.lora) or None,
                                                       cacheRam=args.cache_ram))
     print(json.dumps(s, indent=1), flush=True)
-    json.dump(dict(ranAt=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), summary=s, prompts=Q, files=[model, proj] + ([os.path.basename(args.lora)] if args.lora else []),
+    json.dump(dict(ranAt=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), segments=segments, summary=s, prompts=Q, files=[model, proj] + ([os.path.basename(args.lora)] if args.lora else []),
                    dirs=dict(seat=args.seat, rel=args.rel, syn=args.syn), rows=rows), open(args.out, "w"), indent=1)
 
 
