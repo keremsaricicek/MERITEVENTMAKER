@@ -18,10 +18,19 @@
 //   PINNED WEIGHTS. A manifest names every file the local process loads, each
 //     with its size and sha256, plus where it came from and its licence. The
 //     relay hashes every file when it starts and refuses to run if one is
-//     missing (LOCAL_MODEL_MISSING) or differs (LOCAL_MODEL_INTEGRITY). It
-//     cannot see inside the other process, so this proves the files on disk are
-//     the pinned ones — the process must be started on those same paths, which
-//     the manifest states.
+//     missing (LOCAL_MODEL_MISSING) or differs (LOCAL_MODEL_INTEGRITY).
+//   THE MEASURED SERVER, NOT ONLY THE MEASURED FILES. A manifest that lists
+//     measured questions (`checks`) also says how the measured server ran
+//     (`serve`: the model file, each adapter and its scale, the context). Before
+//     every closed question the relay asks the process what it has loaded
+//     (llama-server's /props and /lora-adapters) and refuses unless it is
+//     those very files, on those very paths, at that context
+//     (LOCAL_SERVER_MISMATCH; LOCAL_SERVER_UNVERIFIED when the process cannot
+//     say). A server started without its adapter answers as the untrained model
+//     — on the V4 test 0.55 on chairs instead of 0.91 — behind a manifest whose
+//     every hash still passes (audit of 2026-10-19). What it cannot see: the
+//     projector file (not reported) and --cache-ram, which changes memory, not
+//     answers.
 //   NO KEY, NO CHARGE. There is no key to hold and nothing to pay; the day's
 //     request cap still applies, because a reading still costs this machine
 //     minutes of CPU.
@@ -87,6 +96,16 @@ export function readManifest(file, { verify = true } = {}) {
   const checks = m.checks || [];
   const checksEvidence = m.checksEvidence == null ? null : str(m.checksEvidence, 300);
   if (checks.length && !checksEvidence) return fail("LOCAL_MANIFEST_INVALID", "checks need checksEvidence: the measurement they passed");
+  // How the measured server ran — required with checks, so the relay can ask
+  // the running process whether it is that server.
+  let serve = null;
+  if (m.serve != null || checks.length) {
+    const sv = m.serve, listed = new Set(Array.isArray(m.files) ? m.files.map(f => f && f.path) : []);
+    const loraOk = sv && Array.isArray(sv.lora) && sv.lora.length <= 4 && sv.lora.every(l => l && typeof l.path === "string" && listed.has(l.path) && typeof l.scale === "number" && l.scale > 0 && l.scale <= 4);
+    if (!sv || typeof sv !== "object" || typeof sv.model !== "string" || !listed.has(sv.model) || !loraOk || !Number.isSafeInteger(sv.ctx) || sv.ctx < 256 || sv.ctx > 262144)
+      return fail("LOCAL_MANIFEST_INVALID", "checks need serve: { model, lora: [{ path, scale }], ctx } naming files the manifest pins — how the measured server ran");
+    serve = { model: sv.model, lora: sv.lora.map(l => ({ path: l.path, scale: l.scale })), ctx: sv.ctx };
+  }
   if (!Array.isArray(m.files) || !m.files.length || m.files.length > MAX_FILES) return fail("LOCAL_MANIFEST_INVALID", `files must list 1 to ${MAX_FILES} files`);
   const dir = path.dirname(path.resolve(file)), files = [];
   for (const f of m.files) {
@@ -103,7 +122,7 @@ export function readManifest(file, { verify = true } = {}) {
       if (sha256File(f.abs) !== f.sha256) return fail("LOCAL_MODEL_INTEGRITY", `${f.path} does not match its pinned sha256`);
     }
   }
-  return { ok: true, manifest: { id, name, version, licence, source, runtime, servedModel, checks, checksEvidence, files: files.map(({ path: p, bytes, sha256 }) => ({ path: p, bytes, sha256 })) } };
+  return { ok: true, manifest: { id, name, version, licence, source, runtime, servedModel, checks, checksEvidence, serve, files: files.map(({ path: p, bytes, sha256 }) => ({ path: p, bytes, sha256 })) } };
 }
 
 // The provider-specific half of the relay's configuration (vlm-core merges it
@@ -119,8 +138,29 @@ export function localFromEnv(env) {
     problem: reasonCode ? (read.ok ? null : read.problem) : null,
     model: read.ok ? read.manifest.id : "local",
     upstreamBaseURL: origin,
-    local: read.ok ? { ...read.manifest, integrity: "sha256", url: origin } : null,
+    local: read.ok ? { ...read.manifest, integrity: "sha256", url: origin,
+      // the files the measured server loaded, as this disk names them (never sent to the page)
+      serveAt: read.manifest.serve ? { model: realOrSelf(path.resolve(path.dirname(manifestPath), read.manifest.serve.model)), ctx: read.manifest.serve.ctx,
+        lora: read.manifest.serve.lora.map(l => ({ at: realOrSelf(path.resolve(path.dirname(manifestPath), l.path)), scale: l.scale })) } : null } : null,
   };
+}
+const realOrSelf = (p) => { try { return fs.realpathSync(p); } catch { return p; } };
+
+// Is the running process the measured server? `props` and `adapters` are what
+// llama-server reports (GET /props, GET /lora-adapters). The same model file
+// on the same path, every pinned adapter loaded at its scale and no other one
+// active, the same context. A pure function: the relay passes what it read.
+export function checkServing(local, props, adapters) {
+  const at = local && local.serveAt;
+  if (!at) return { ok: true, verified: false };
+  if (!props || typeof props !== "object" || !Array.isArray(adapters)) return { ok: false, code: "LOCAL_SERVER_UNVERIFIED", problem: "the local process does not say what it has loaded (/props, /lora-adapters)" };
+  if (typeof props.model_path !== "string" || realOrSelf(props.model_path) !== at.model) return { ok: false, code: "LOCAL_SERVER_MISMATCH", problem: "the local process is not running the pinned model file" };
+  const nCtx = props.default_generation_settings && props.default_generation_settings.n_ctx;
+  if (nCtx !== at.ctx) return { ok: false, code: "LOCAL_SERVER_MISMATCH", problem: `the local process runs a context of ${Number(nCtx) || "?"}, the measured one ${at.ctx}` };
+  const active = adapters.filter(a => a && Number(a.scale) !== 0).map(a => ({ at: realOrSelf(String(a.path || "")), scale: Number(a.scale) }));
+  const same = active.length === at.lora.length && at.lora.every(l => active.some(a => a.at === l.at && Math.abs(a.scale - l.scale) < 1e-6));
+  if (!same) return { ok: false, code: "LOCAL_SERVER_MISMATCH", problem: at.lora.length ? "the local process is not running the pinned adapter at its scale" : "the local process runs an adapter the measurement did not" };
+  return { ok: true, verified: true };
 }
 
 // ---- the request and the answer --------------------------------------------------------
@@ -245,6 +285,12 @@ export function makeLocalClient(config, { fetchImpl = loopbackFetch } = {}) {
       }) }, opts);
       const choice = body && Array.isArray(body.choices) ? body.choices[0] : null;
       return { text: choice && choice.message && typeof choice.message.content === "string" ? choice.message.content : "", finish: (choice && choice.finish_reason) || null };
+    },
+    // What the process has loaded, to compare with the manifest's `serve`.
+    async serving(opts) {
+      const props = await call("/props", { method: "GET" }, opts);
+      const adapters = await call("/lora-adapters", { method: "GET" }, opts);
+      return { props, adapters };
     },
     models: {
       async retrieve(model, _query, opts) {

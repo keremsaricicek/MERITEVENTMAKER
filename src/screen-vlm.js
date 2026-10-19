@@ -549,10 +549,12 @@
     const checks=localChecks(session.relay);
     const look=ready&&checks.length&&LC()?`<button class="btn sm" data-vlm-action="look">${t("vlm.second.button")}</button>`:"";
     const lookNote=checks.length&&!run?`<p class="vlm-note">${t("vlm.second.what")} ${t("vlm.second.measured",{list:esc(checks.map(q=>t("vlm.second.q."+q)).join(", "))})}</p>`:"";
+    const servingCode=session.relay&&session.relay.local&&session.relay.local.serving&&session.relay.local.serving!=="verified"?session.relay.local.serving:null;
+    const unmeasured=servingCode?`<p class="vlm-note warn">${t("vlm.second.notMeasuredSetup",{why:esc(tx("vlm.err.",servingCode))})}</p><button class="btn sm" data-vlm-action="probe">${t("vlm.relay.again")}</button>`:"";
     const autoSwitch=checks.length?`<label class="vlm-switch"><input type="checkbox" data-vlm-action="auto" ${autoOn()?"checked":""}> ${t("vlm.second.auto")}</label>`:"";
     const autoNote=second&&run.auto?`<p class="vlm-note">${t("vlm.second.autoRan",{n:num((run.checks||[]).length),crops:num((run.checks||[]).length*(LC()?LC().LOOKS.length:2))})}</p>`:"";
     return`<aside class="vlm-panel" id="vlmPanel" aria-label="${esc(t("vlm.title"))}"><div class="vlm-head"><strong>${t("vlm.title")}</strong><button class="btn icon-only sm" data-vlm-action="close" aria-label="${esc(t("vlm.close"))}">${icon("x")}</button></div><div class="vlm-body">
-      <section class="vlm-relay">${relayStateHTML()}${run?"":`<p class="vlm-note">${t("vlm.what")}</p>`}${lookNote}<div class="vlm-actions">${send}${look}</div>${autoSwitch}</section>
+      <section class="vlm-relay">${relayStateHTML()}${run?"":`<p class="vlm-note">${t("vlm.what")}</p>`}${lookNote}${unmeasured}<div class="vlm-actions">${send}${look}</div>${autoSwitch}</section>
       ${run?`<section class="vlm-run">${status}${autoNote}${run.planSummary?`<div class="vlm-summary"><small>${t("vlm.summaryLabel")}</small><p>${esc(run.planSummary)}</p></div>`:""}${tally}${c&&c.total?`<p class="vlm-note">${t("vlm.counts",{open:c.open,accepted:c.accepted,dismissed:c.dismissed})}</p>`:""}${second?"":coverageHTML(run)}${setAsideHTML(run)}${body}</section>`:""}
     </div></aside>`;
   }

@@ -7,12 +7,16 @@
 // script: one entry per POST /v1/chat/completions —
 //   { content: "<text>", finish: "stop" | "length" } | { status: 500 } | { delayMs, ...either } | { hang: true }
 // When the script runs out, `fallback(body)` answers (default: an empty review).
+// serving: what GET /props and GET /lora-adapters report, as llama-server does —
+//   { modelPath, nCtx, loras: [{ path, scale }] }; null (the default) answers 404,
+//   a process that cannot say what it has loaded. `setServing()` changes it.
 import http from "node:http";
 
 export const FAKE_LOCAL_NOTICE = "SCRIPTED by tests/lib/fake-local-vlm.mjs — not a model";
 
-export async function startFakeLocalVlm({ script = [], fallback, models = ["fake-local-vlm"] } = {}) {
+export async function startFakeLocalVlm({ script = [], fallback, models = ["fake-local-vlm"], serving = null } = {}) {
   const requests = [];
+  let served = serving;
   const queue = [...script];
   const hanging = new Set();
   const server = http.createServer((req, res) => {
@@ -27,6 +31,8 @@ export async function startFakeLocalVlm({ script = [], fallback, models = ["fake
       res.on("close", () => { if (!res.writableEnded) rec.aborted = true; });
       const send = (status, obj) => { if (res.destroyed) return; const text = JSON.stringify(obj); res.writeHead(status, { "content-type": "application/json" }); res.end(text); };
       if (req.method === "GET" && req.url === "/v1/models") return send(200, { object: "list", data: models.map((id) => ({ id, object: "model" })) });
+      if (req.method === "GET" && req.url === "/props") return served ? send(200, { model_path: served.modelPath, default_generation_settings: { n_ctx: served.nCtx }, build_info: "fake" }) : send(404, { error: { message: "not found" } });
+      if (req.method === "GET" && req.url === "/lora-adapters") return served ? send(200, (served.loras || []).map((l, id) => ({ id, path: l.path, scale: l.scale }))) : send(404, { error: { message: "not found" } });
       if (req.method === "POST" && req.url === "/v1/chat/completions") {
         const step = queue.length ? queue.shift() : null;
         if (step && step.hang) { hanging.add(res); return; }
@@ -42,6 +48,6 @@ export async function startFakeLocalVlm({ script = [], fallback, models = ["fake
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const { port } = server.address();
-  return { baseURL: `http://127.0.0.1:${port}`, requests, chats: () => requests.filter((r) => r.path === "/v1/chat/completions"),
+  return { baseURL: `http://127.0.0.1:${port}`, requests, chats: () => requests.filter((r) => r.path === "/v1/chat/completions"), setServing: (s) => { served = s; },
     close: () => new Promise((resolve) => { for (const r of hanging) r.destroy(); server.closeAllConnections?.(); server.close(() => resolve()); }) };
 }

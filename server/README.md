@@ -120,7 +120,27 @@ no second look at all. Never sent to a paid API (`ASK_LOCAL_ONLY`).
 
 ```
 #  "checks": ["identify", "chairs"],
-#  "checksEvidence": "benchmarks/offline-intelligence/local-vlm-results/<run>.json"
+#  "checksEvidence": "benchmarks/offline-intelligence/local-vlm-results/<run>.json",
+#  "serve": { "model": "model.gguf", "lora": [{ "path": "adapter.gguf", "scale": 1 }], "ctx": 2048 }
+```
+
+`serve` is how the measured server ran, and it is required with `checks`. The
+hashes prove the files on disk; they cannot prove the process loaded them. So
+before every question — and before the page is told which questions exist —
+the relay asks the running llama-server what it has loaded (`GET /props`,
+`GET /lora-adapters`) and refuses unless it is the pinned model file and the
+pinned adapters at their scales, on the manifest's own paths, at the measured
+context: `LOCAL_SERVER_MISMATCH`, or `LOCAL_SERVER_UNVERIFIED` when the process
+cannot say. A server started without its adapter answers as the untrained
+model (on the V4 test: chairs 0.55 instead of 0.91) behind hashes that all
+pass — this is the check that stops it (audit of 2026-10-19). The page then
+offers no second look and says why, with a button to check again. Not visible
+to it: the projector file (not reported by the server) and `--cache-ram`
+(memory, not answers). Launch the measured server on the manifest's files:
+
+```
+llama-server -m DIR/model.gguf --mmproj DIR/mmproj.gguf --lora DIR/adapter.gguf \
+  -c 2048 -t 4 -np 1 --cache-ram 0 --host 127.0.0.1 --port 8080
 ```
 
 | variable | default | |
@@ -134,7 +154,7 @@ serves a local model with measured questions (the owner's decision,
 marks the pages it serves with `Server-Timing: merit-relay`, so a page served
 any other way never calls `/vlm-relay`. One request at a time across `/run` and
 `/ask`; Cancel aborts the question in flight and refuses the look's next one. Codes: `ASK_LOCAL_ONLY`,
-`QUESTION_NOT_VALIDATED`, `ASK_LIMIT`, `ASK_DAY_LIMIT`.
+`QUESTION_NOT_VALIDATED`, `LOCAL_SERVER_MISMATCH`, `LOCAL_SERVER_UNVERIFIED`, `ASK_LIMIT`, `ASK_DAY_LIMIT`.
 
 ## Limits
 
@@ -218,5 +238,5 @@ result of theirs may be reported as model performance.
 `MODEL_UNAVAILABLE`, `RATE_LIMITED` and `OVERLOADED` (each retried once),
 `BAD_REQUEST`, `UPSTREAM_ERROR`, `MODEL_DECLINED`, `OUTPUT_TRUNCATED`,
 `INVALID_OUTPUT`, `CROSS_SITE`, `HOST_NOT_ALLOWED`, `CHECK_TOO_SOON`,
-`ASK_LOCAL_ONLY`, `QUESTION_NOT_VALIDATED`, `ASK_LIMIT`, `ASK_DAY_LIMIT`. Each
+`ASK_LOCAL_ONLY`, `QUESTION_NOT_VALIDATED`, `LOCAL_SERVER_MISMATCH`, `LOCAL_SERVER_UNVERIFIED`, `ASK_LIMIT`, `ASK_DAY_LIMIT`. Each
 has a sentence in both languages in `src/i18n.js` (`vlm.err.*`).

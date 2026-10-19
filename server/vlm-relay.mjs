@@ -39,10 +39,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as core from "./vlm-core.mjs";
-import { makeLocalClient } from "./vlm-local.mjs";
+import { makeLocalClient, checkServing } from "./vlm-local.mjs";
 
 export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-export const RELAY_VERSION = 3;
+export const RELAY_VERSION = 4;
 
 const MIME = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8",
@@ -118,6 +118,18 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
   function pruneRuns() { const t = now(); for (const m of [runs, askRuns]) for (const [id, r] of m) if (t - r.at > RUN_TTL_MS && !r.controller) m.delete(id); }
   const snapshotAsk = (r) => r ? { asks: r.asks, cancelled: r.cancelled } : null;
   const asksToday = () => askDay.key === core.UsageStore.dayKey(now()) ? askDay.n : 0;
+  // Is the local process the server the manifest's checks were measured on
+  // (vlm-local checkServing)? Asked of the process itself, every time it
+  // matters: a server restarted without its adapter must not keep answering
+  // as if it were the measured one.
+  const verifyServing = async (opts = {}) => {
+    if (config.provider !== "local" || !config.local || !config.local.serveAt) return { ok: true, verified: false };
+    if (!client || typeof client.serving !== "function") return { ok: false, code: "LOCAL_SERVER_UNVERIFIED", problem: "no way to ask the local process what it runs" };
+    let seen;
+    try { seen = await client.serving({ timeout: opts.timeout || 5000, signal: opts.signal }); }
+    catch (err) { return { ok: false, code: err && err.localCode === "LOCAL_NOT_RUNNING" ? "LOCAL_NOT_RUNNING" : "LOCAL_SERVER_UNVERIFIED", problem: "the local process did not say what it has loaded" }; }
+    return checkServing(config.local, seen.props, seen.adapters);
+  };
 
   // A POST must come from a page this relay served, on a name it was started for.
   function refuseCrossSite(req) {
@@ -336,6 +348,12 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     if (askDay.n >= config.limits.maxAsksPerDay) return json(res, 429, { ok: false, code: "ASK_DAY_LIMIT", run: snapshotAsk(run) });
     const controller = new AbortController();
     run.controller = controller; inFlight = { runId: p.runId, controller };
+    const served = await verifyServing({ signal: controller.signal });
+    if (!served.ok) {
+      run.controller = null; inFlight = null;
+      say(`ask ${p.runId.slice(0, 12)} ${p.question}: refused, ${served.code} (${served.problem})`);
+      return json(res, 409, { ok: false, code: served.code, runId: p.runId, question: p.question, run: snapshotAsk(run) });
+    }
     const onClose = () => { if (!res.writableEnded) controller.abort(); };
     res.on("close", onClose);
     run.asks++; askDay.n++; run.at = now();
@@ -369,7 +387,13 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
       }
       if (pathname === "/vlm-relay/status" && req.method === "GET") {
         if (!hostAllowed(hostnameOf(req.headers.host), hosts)) return json(res, 421, { ok: false, code: "HOST_NOT_ALLOWED" });
-        return json(res, 200, { ok: true, version: RELAY_VERSION, busy: !!inFlight, ...core.status(config, usage.snapshot(), usage.ledger()), asksToday: asksToday() });
+        const st = core.status(config, usage.snapshot(), usage.ledger());
+        // measured questions are offered only while the process is the measured server
+        if (st.local && st.local.checks.length) {
+          const served = await verifyServing({ timeout: 3000 });
+          st.local = served.ok ? { ...st.local, serving: "verified" } : { ...st.local, checks: [], serving: served.code };
+        }
+        return json(res, 200, { ok: true, version: RELAY_VERSION, busy: !!inFlight, ...st, asksToday: asksToday() });
       }
       if (req.method !== "POST") return json(res, 405, { ok: false, code: "METHOD" });
       const cross = refuseCrossSite(req);
@@ -423,6 +447,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     if (s.local) console.log(`  model       ${s.local.name} ${s.local.version} (${s.local.licence}) from ${s.local.source}, ${s.local.files} file(s) checked by sha256, served by ${s.local.runtime}`);
     console.log(`  limits      ${s.limits.maxRequestsPerDay} requests/day  ${s.limits.maxStepsPerRun} steps/run  ${s.limits.timeoutMs / 1000}s/request`);
     console.log(`  second look ${s.local && s.local.checks.length ? `${s.local.checks.join(", ")} (measured: ${s.local.checksEvidence})  ${s.limits.maxAsksPerRun} questions/run  ${s.limits.maxAsksPerDay}/day` : "no closed question measured for this model (manifest `checks`)"}`);
+    if (config.local && config.local.serveAt) {
+      const served = await started.relay.verifyServing();
+      console.log(`  server      ${served.ok ? "the running process is the measured one (model file, adapters, context)" : `NOT the measured one — ${served.code}: ${served.problem}; no closed question will be asked until it is`}`);
+    }
     console.log(`  hosts       ${allowedHosts.join(", ")}`);
     console.log("  (ctrl-c to stop)");
   } else {
