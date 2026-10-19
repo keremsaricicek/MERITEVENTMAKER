@@ -104,7 +104,10 @@ def load(d):
     return out
 
 
-def build_items(seat_dir, rel_dir, rng, size, syn_dir=None, real=True):
+def build_items(seat_dir, rel_dir, rng, size, syn_dir=None, real=True, asked=None):
+    """The V4 items. `asked`, if a list, receives the (plan, cx, cy) of every
+    pushed-together group V4 asks about, so S1 can leave them out; it changes
+    nothing the run asks."""
     items, cache = [], {}
 
     def im(p):
@@ -211,6 +214,8 @@ def build_items(seat_dir, rel_dir, rng, size, syn_dir=None, real=True):
         add("CHAIRS", "generated", n, im(p), t["cx"], t["cy"], 2.4 * max(t["w"], t["h"]) + 50)
     for p, cx, cy, side in merged[:12]:
         add("MERGED", "generated", "yes", im(p), cx, cy, side)
+        if asked is not None:
+            asked.append((p, round(cx, 1), round(cy, 1)))
     for p, cx, cy, side in apart[:12]:
         add("MERGED", "generated", "no", im(p), cx, cy, side)
 
@@ -240,6 +245,90 @@ def build_items(seat_dir, rel_dir, rng, size, syn_dir=None, real=True):
             rng.shuffle(ts)
             for t in stratified(ts, lambda t: len(owner[t["id"]]), 3, 8):
                 add("CHAIRS", "golden", len(owner[t["id"]]), img, t["cx"], t["cy"], 2.4 * max(t["w"], t["h"]) + 50)
+    return items
+
+
+def build_s1_items(s1_dir, rel_dir, rng, size, v4_asked):
+    """The supplementary blind test S1 (training/README.md, pre-registered
+    2026-10-19): odd chair counts, near-miss separate tables, and benches and
+    banquettes set apart from a table — what the V4 test could not see. Each
+    item carries `sub`, the stratum it is scored in."""
+    items, cache = [], {}
+
+    def im(p):
+        if p not in cache:
+            cache[p] = Image.open(p).convert("RGB")
+        return cache[p]
+
+    def add(task, sub, truth, img, cx, cy, side, q=None):
+        items.append(dict(task=task, source="s1", sub=sub, truth=truth, q=q or Q[task], image=b64(crop(img, cx, cy, side, size))))
+
+    chairs, serves = {}, {}
+    for a, p in load(s1_dir):
+        objs = [o for o in a["objects"] if all(k in o for k in ("cx", "cy", "w", "h"))]
+        by = {o["id"]: o for o in objs}
+        tables = [o for o in objs if o["class"] == "table"]
+        owner = {}
+        for r in a.get("relationships") or []:
+            if "chair" in r:
+                owner.setdefault(r["belongsTo"], []).append(r["chair"])
+        for t in tables:
+            if t.get("type") == "round" and t["id"] in owner and all(o is t or math.hypot(o["cx"] - t["cx"], o["cy"] - t["cy"]) > 1.8 * max(t["w"], t["h"], o["w"], o["h"]) for o in tables):
+                chairs.setdefault(len(owner[t["id"]]), []).append((p, t))
+        for g in a.get("seatingGroups") or []:
+            t = by.get(g["table"])
+            for m in g["members"]:
+                o = by.get(m)
+                if t and o and o["class"] in ("bench", "banquette"):
+                    serves.setdefault((o["class"], "yes"), []).append((p, t, o))
+        for sn in a.get("separateNeighbours") or []:
+            ms = [by.get(m) for m in sn["members"]]
+            if len(ms) == 2 and all(ms):
+                t = next((o for o in ms if o["class"] == "table"), None)
+                o = next((o for o in ms if o["class"] in ("bench", "banquette")), None)
+                if t and o:
+                    serves.setdefault((o["class"], "no"), []).append((p, t, o))
+    for n, per in [(3, 6), (5, 6), (7, 6), (9, 6), (11, 6), (4, 4), (8, 4), (12, 4)]:
+        xs = sorted(chairs.get(n, []), key=lambda x: (x[0], x[1]["id"]))
+        rng.shuffle(xs)
+        for p, t in xs[:per]:
+            add("CHAIRS", "odd" if n % 2 else "even", n, im(p), t["cx"], t["cy"], 2.4 * max(t["w"], t["h"]) + 50)
+    for (cls, lab), per in [(("bench", "no"), 10), (("banquette", "no"), 10), (("bench", "yes"), 10), (("banquette", "yes"), 10)]:
+        xs = sorted(serves.get((cls, lab), []), key=lambda x: (x[0], x[2]["id"]))
+        rng.shuffle(xs)
+        for p, t, o in xs[:per]:
+            cx, cy = (t["cx"] + o["cx"]) / 2, (t["cy"] + o["cy"]) / 2
+            side = max(abs(t["cx"] - o["cx"]) + max(t["w"], o["w"]), abs(t["cy"] - o["cy"]) + max(t["h"], o["h"])) * 1.3 + 30
+            add("SERVES", cls + ("neg" if lab == "no" else "pos"), lab, im(p), cx, cy, side, q=Q["SERVES"].format(piece=cls))
+    near, pos = [], []
+    asked = set(v4_asked)
+    for a, p in load(rel_dir):
+        objs = [o for o in a["objects"] if all(k in o for k in ("cx", "cy", "w", "h"))]
+        by = {o["id"]: o for o in objs}
+        tables = [o for o in objs if o["class"] == "table"]
+        in_group = {m for g in a.get("logicalGroups") or [] for m in g["members"]}
+        span = lambda ms: (min(o["cx"] - o["w"] / 2 for o in ms), min(o["cy"] - o["h"] / 2 for o in ms), max(o["cx"] + o["w"] / 2 for o in ms), max(o["cy"] + o["h"] / 2 for o in ms))
+        for g in a.get("logicalGroups") or []:
+            ms = [by[m] for m in g["members"] if m in by]
+            if 2 <= len(ms) <= 4:
+                x0, y0, x1, y1 = span(ms)
+                cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+                if (p, round(cx, 1), round(cy, 1)) not in asked:
+                    pos.append((p, cx, cy, max(x1 - x0, y1 - y0) * 1.25 + 40))
+        for sn in a.get("separateNeighbours") or []:
+            ms = [by.get(m) for m in sn["members"]]
+            if len(ms) == 2 and all(ms) and all(o["class"] == "table" for o in ms) and 0.35 <= sn.get("gapSides", 0) < 0.9:
+                x0, y0, x1, y1 = span(ms)
+                side = max(x1 - x0, y1 - y0) * 1.25 + 40
+                cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+                box = (cx - side / 2, cy - side / 2, cx + side / 2, cy + side / 2)
+                if not any(o["id"] in in_group and inside(o, box, whole=False) for o in tables):
+                    near.append((p, cx, cy, side))
+    rng.shuffle(near); rng.shuffle(pos)
+    for p, cx, cy, side in near[:20]:
+        add("MERGED", "nearmiss", "no", im(p), cx, cy, side)
+    for p, cx, cy, side in pos[:20]:
+        add("MERGED", "pos", "yes", im(p), cx, cy, side)
     return items
 
 
@@ -320,6 +409,41 @@ def two_looks(rows):
     return out
 
 
+def wilson(k, n, z=1.96):
+    if not n:
+        return None
+    ph = k / n; d = 1 + z * z / n
+    c = (ph + z * z / (2 * n)) / d; h = z * math.sqrt(ph * (1 - ph) / n + z * z / (4 * n * n)) / d
+    return [round(max(0.0, c - h), 3), round(min(1.0, c + h), 3)]
+
+
+def s1_summary(rows):
+    """S1's pre-registered rows (training/README.md), each with its n, its rate,
+    a Wilson 95 % interval and the two-look figure beside it (reported, not
+    used to pass)."""
+    rows = [r for r in rows if r.get("sub")]
+    if not rows:
+        return None
+    def rate(xs, ok):
+        k = sum(1 for x in xs if ok(x))
+        both = [x for x in xs if "parsed2" in x and x["parsed"] is not None and x["parsed"] == x["parsed2"]]
+        return dict(n=len(xs), k=k, rate=round(k / len(xs), 3) if xs else None, wilson=wilson(k, len(xs)),
+                    twoLooksConsistent=len(both), twoLooksRight=sum(1 for x in both if ok(x)))
+    T = lambda task, subs=None: [r for r in rows if r["task"] == task and (subs is None or r["sub"] in subs)]
+    right = lambda x: x["parsed"] == x["truth"]
+    over = lambda x: isinstance(x["parsed"], int) and x["parsed"] > x["truth"]
+    yes = lambda x: x["parsed"] == "yes"
+    out = dict(chairsOddExact=rate(T("CHAIRS", ["odd"]), right), chairsAllExact=rate(T("CHAIRS"), right), chairsOver=rate(T("CHAIRS"), over),
+               mergedAll=rate(T("MERGED"), right), mergedYesOnNearMiss=rate(T("MERGED", ["nearmiss"]), yes),
+               servesAll=rate(T("SERVES"), right), servesYesOnBenchBanquetteNeg=rate(T("SERVES", ["benchneg", "banquetteneg"]), yes))
+    bars = dict(chairs=out["chairsOddExact"]["rate"] is not None and out["chairsOddExact"]["rate"] >= 0.80 and out["chairsAllExact"]["rate"] >= 0.80 and out["chairsOver"]["rate"] <= 0.10,
+                merged=out["mergedAll"]["rate"] is not None and out["mergedAll"]["rate"] >= 0.85 and out["mergedYesOnNearMiss"]["rate"] <= 0.10,
+                serves=out["servesAll"]["rate"] is not None and out["servesAll"]["rate"] >= 0.85 and out["servesYesOnBenchBanquetteNeg"]["rate"] <= 0.10)
+    out["passes"] = bars
+    out["perSub"] = {f"{r_task}:{sub}": rate(T(r_task, [sub]), right) for r_task, sub in sorted({(r["task"], r["sub"]) for r in rows})}
+    return out
+
+
 def summarise(name, rows, load_s, rss, settings):
     def acc(xs):
         return round(sum(x["parsed"] == x["truth"] for x in xs) / len(xs), 3) if xs else None
@@ -342,7 +466,7 @@ def summarise(name, rows, load_s, rss, settings):
                 merged=acc(by(lambda x: x["task"] == "MERGED")), serves=acc(by(lambda x: x["task"] == "SERVES")),
                 unparsed=sum(x["parsed"] is None for x in rows), emptyAnswers=sum(not x["answer"] for x in rows),
                 medianSeconds=round(statistics.median(secs), 2), p90Seconds=round(secs[int(0.9 * (len(secs) - 1))], 2),
-                n=len(rows), twoLooks=two_looks(rows))
+                n=len(rows), twoLooks=two_looks(rows), s1=s1_summary(rows))
 
 
 def main():
@@ -361,10 +485,16 @@ def main():
     ap.add_argument("--lora", default="", help="a llama.cpp LoRA adapter (training/vlm_lora.py gguf) served with the model")
     ap.add_argument("--ctx", type=int, default=8192)
     ap.add_argument("--looks", type=int, choices=[1, 2], default=1, help="2: also ask each crop turned a quarter, as the product's second look does")
+    ap.add_argument("--s1", default="", help="the supplementary blind test S1: its scene DIR (synth_relations.py --s1); items from it and from --rel")
     ap.add_argument("--resume", action="store_true", help="continue a run a restart cut short (OUT.partial.jsonl)")
     ap.add_argument("--cache-ram", type=int, default=None, help="llama-server --cache-ram MiB (0: no host prompt cache; unset: the build's default)")
     args = ap.parse_args()
-    items = build_items(args.seat, args.rel, random.Random(args.seed), args.size, args.syn or None, real=not args.no_real)
+    if args.s1:
+        asked = []
+        build_items(args.seat, args.rel, random.Random(5), args.size, args.syn or None, real=False, asked=asked)  # V4's own selection (seed 5)
+        items = build_s1_items(args.s1, args.rel, random.Random(args.seed), args.size, asked)
+    else:
+        items = build_items(args.seat, args.rel, random.Random(args.seed), args.size, args.syn or None, real=not args.no_real)
     if args.limit:
         random.Random(1).shuffle(items); items = items[:args.limit]
     print(f"{len(items)} items: " + json.dumps({k: sum(1 for i in items if f'{i["task"]}:{i["source"]}' == k) for k in sorted({f'{i["task"]}:{i["source"]}' for i in items})}), flush=True)
@@ -421,7 +551,7 @@ def main():
                 rows.append(done[i])
                 continue
             text, reasoning, usage, dt = ask(args.port, it, args.max_tokens)
-            row = dict(task=it["task"], source=it["source"], truth=it["truth"], answer=text.strip()[:120],
+            row = dict(task=it["task"], source=it["source"], **({"sub": it["sub"]} if "sub" in it else {}), truth=it["truth"], answer=text.strip()[:120],
                        reasoningChars=len(reasoning), parsed=parse(it["task"], text), seconds=round(dt, 3),
                        promptTokens=usage.get("prompt_tokens"))
             if args.looks == 2:
@@ -445,7 +575,7 @@ def main():
             proc.kill()
     s = summarise(args.model, rows, load_s, rss, dict(looks=args.looks, size=args.size, minTokens=args.min_tokens, maxTokens=args.max_tokens, threads=args.threads, seed=args.seed,
                                                       ctx=args.ctx, real=not args.no_real, lora=os.path.basename(args.lora) or None,
-                                                      cacheRam=args.cache_ram))
+                                                      cacheRam=args.cache_ram, s1=bool(args.s1)))
     print(json.dumps(s, indent=1), flush=True)
     json.dump(dict(ranAt=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), segments=segments, summary=s, prompts=Q, files=[model, proj] + ([os.path.basename(args.lora)] if args.lora else []),
                    dirs=dict(seat=args.seat, rel=args.rel, syn=args.syn), rows=rows), open(args.out, "w"), indent=1)

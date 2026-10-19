@@ -59,13 +59,19 @@ import sys
 from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # beside synth_levels.py, also under python -I
-from synth_levels import FAMILIES, TRAIN_FAMILIES, BLIND_FAMILIES, Plan3, scanned, visibility  # noqa: E402
+from synth_levels import FAMILIES, TRAIN_FAMILIES, BLIND_FAMILIES, Plan3, round_table3, scanned, visibility  # noqa: E402
 from synth import SS  # noqa: E402
 
 SEEDS = {"dev": 7, "blind": 8, "train": 12}  # train: added 2026-10-18 for the local-VLM LoRA (training/vlm_lora.py)
 FURNITURE_SEEDS = {"dev": 9, "blind": 10, "train": 11}
 KINDS = ["merged", "merged-rot", "merged-L", "aisle", "aisle-rot", "parallel"]
 FURNITURE_KINDS = ["bench-table", "lounge", "banquette-wall", "sofa-apart"]
+# The supplementary blind test S1 (training/README.md, V4 run A, pre-registered
+# 2026-10-19): blind families only, a seed base of its own, kinds of its own, so
+# every set above regenerates byte for byte.
+S1_SEEDS = {"blind": 14}
+S1_KINDS = ["odd-chairs", "bench-apart", "banquette-apart", "bench-table", "banquette-wall"]
+S1_CHAIRS = [3, 5, 7, 9, 11, 3, 5, 7, 9, 11, 4, 8, 12]
 
 
 def square(p, cx, cy, u, deg, chair_sides, cs):
@@ -231,6 +237,28 @@ def furniture_scene(p, rng, kind, cx, cy, u, cs):
             share = None if bseats is None or bseats % k else bseats // k
             groups.append(dict(table=tid, members=[bid, cid], seats=None if share is None else share + 1, sharedSeating=bid))
         p.rels.append(dict(seating=bid, servesTables=served, method="generated"))
+    elif kind == "odd-chairs":
+        # a round table standing alone in its cell; S1 counts are odd as well as even
+        n = rng.choice(S1_CHAIRS)
+        round_table3(p, cx, cy, u * 0.6, n, None, p.fam.get("round_chair") or p.fam["chair"], 2)
+    elif kind in ("bench-apart", "banquette-apart"):
+        # HARD NEGATIVE: a bench or a banquette near a table, across paper; the
+        # table keeps its own chairs, away from the piece (as sofa-apart)
+        tid = p.oid("t")
+        p.objects.append(dict(id=tid, **{"class": "table"}, type="square", cx=round(cx, 1), cy=round(cy, 1), w=round(u, 1), h=round(u, 1), rotation=round(deg % 360, 1)))
+        p.rect(cx, cy, u, u, deg, p.fam["table_fill"], p.fam["line"], p.fam["lw"])
+        for side in (0, 1):
+            dx, dy = (ux, uy) if side == 0 else (-ux, -uy)
+            px, py = cx + dx * (u / 2 + cs * 0.6), cy + dy * (u / 2 + cs * 0.6)
+            p.chair(px, py, cs, math.degrees(math.atan2(cy - py, cx - px)), tid)
+        p.objects[[o["id"] for o in p.objects].index(tid)]["seats"] = 2
+        cls = "banquette" if kind == "banquette-apart" else "bench"
+        BL, BD = (u * 2.2, u * 0.5) if cls == "banquette" else (u * 2.0, u * 0.42)
+        gap = u * rng.uniform(0.8, 1.4)
+        off = u / 2 + gap + BD / 2
+        # a banquette's back (its own -v side) toward the table: it faces away
+        bid = p.bench(cx + vx * off, cy + vy * off, BL, BD, deg, rng.random() < 0.5, cls=cls)
+        separate.append(dict(members=[bid, tid], gapSides=round(gap / u, 2)))
     elif kind == "sofa-apart":
         tid = p.oid("t")
         p.objects.append(dict(id=tid, **{"class": "table"}, type="square", cx=round(cx, 1), cy=round(cy, 1), w=round(u, 1), h=round(u, 1), rotation=round(deg % 360, 1)))
@@ -249,7 +277,7 @@ def furniture_scene(p, rng, kind, cx, cy, u, cs):
     return groups, separate
 
 
-def draw(seed, fam_idx, scan, furniture=False):
+def draw(seed, fam_idx, scan, furniture=False, s1=False):
     rng = random.Random(seed)
     fam = dict(FAMILIES[fam_idx])
     if fam["chair"] is None:  # a symbolic family draws no chairs; relation scenes are about furniture
@@ -267,9 +295,9 @@ def draw(seed, fam_idx, scan, furniture=False):
     separate, kinds, seating = [], [], []
     for r in range(rows):
         for c in range(cols):
-            kind = rng.choice(FURNITURE_KINDS if furniture else KINDS)
+            kind = rng.choice(S1_KINDS if s1 else FURNITURE_KINDS if furniture else KINDS)
             cx, cy = m + (c + 0.5) * (W - 2 * m) / cols, m + (r + 0.5) * (H - 2 * m) / rows
-            if furniture:
+            if furniture or s1:
                 g, s = furniture_scene(p, rng, kind, cx, cy, u, cs)
                 seating += [dict(x, id=f"s{len(seating) + 1 + i:02d}", type="seating", scene=kind) for i, x in enumerate(g)]
             else:
@@ -282,8 +310,10 @@ def draw(seed, fam_idx, scan, furniture=False):
     img = p.img.resize((W, H), Image.LANCZOS)
     objs = p.objects
     meta = dict(family=fam["name"], familyIndex=fam_idx, level=6 if scan else 2, layout="relations", seed=seed, gen=3, relations=True)
-    if furniture:
+    if furniture or s1:
         meta["furniture"] = True
+    if s1:
+        meta["s1"] = True
     if scan:
         img, objs = scanned(img, objs, rng, meta)
     objs = visibility(objs, img.size, meta)
@@ -297,14 +327,17 @@ def main():
     ap.add_argument("--split", choices=["dev", "blind", "train"], required=True, help="train: a training set apart from dev and blind (its own seed base)")
     ap.add_argument("--scan", action="store_true")
     ap.add_argument("--furniture", action="store_true", help="seating-furniture scenes (benches, sofas, banquettes)")
+    ap.add_argument("--s1", action="store_true", help="the supplementary blind test S1: odd chair counts, bench/banquette set apart (blind only)")
     a = ap.parse_args()
+    if a.s1 and (a.split != "blind" or a.furniture):
+        ap.error("--s1 is a blind test of its own: --split blind, without --furniture")
     fams = BLIND_FAMILIES if a.split == "blind" else TRAIN_FAMILIES
     os.makedirs(a.out, exist_ok=True)
     for i in range(a.count):
         fam = fams[i % len(fams)]
-        seed = (FURNITURE_SEEDS if a.furniture else SEEDS)[a.split] * 1000003 + (50021 if a.scan else 0) + i
-        img, p, objs, meta, separate, kinds, seating = draw(seed, fam, a.scan, a.furniture)
-        pid = f"{'seat' if a.furniture else 'rel'}-{FAMILIES[fam]['name']}-{'scan-' if a.scan else ''}{seed}"
+        seed = (S1_SEEDS if a.s1 else FURNITURE_SEEDS if a.furniture else SEEDS)[a.split] * 1000003 + (50021 if a.scan else 0) + i
+        img, p, objs, meta, separate, kinds, seating = draw(seed, fam, a.scan, a.furniture, a.s1)
+        pid = f"{'s1' if a.s1 else 'seat' if a.furniture else 'rel'}-{FAMILIES[fam]['name']}-{'scan-' if a.scan else ''}{seed}"
         img.save(os.path.join(a.out, pid + ".png"))
         ann = {
             "planId": pid,
@@ -312,7 +345,7 @@ def main():
             "annotationMethod": "generated by training/synth_relations.py: exact by construction, not a human judgement",
             "verification": "synthetic-exact",
             "level": meta["level"],
-            "split": {"unit": "styleFamily", "family": meta["family"], "familyIndex": fam, "layoutSource": "furniture" if a.furniture else "relations", "set": a.split, "blind": a.split == "blind"},
+            "split": {"unit": "styleFamily", "family": meta["family"], "familyIndex": fam, "layoutSource": "s1" if a.s1 else "furniture" if a.furniture else "relations", "set": a.split, "blind": a.split == "blind"},
             "generator": {k: v for k, v in meta.items() if k not in ("family", "familyIndex", "layout")},
             "scenes": kinds,
             "objects": objs,
@@ -320,7 +353,7 @@ def main():
             "logicalGroups": p.groups,
             "separateNeighbours": separate,
         }
-        if a.furniture:
+        if a.furniture or a.s1:
             # a group naming an object the visibility pass removed is dropped
             # whole: a usage group with a missing member is not a label
             kept = {o["id"] for o in objs}
