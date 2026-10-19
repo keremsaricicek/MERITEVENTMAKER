@@ -268,7 +268,6 @@ export default async function run({ page, checks, repoRoot }) {
 
     const readingTitle = await page.evaluate(() => { const r = MeritPlanReading.read(state.events[0].analysis); const s = r.sections.find((x) => x.id === "second"); return s ? s.sentences.map((x) => x.key) : null; });
     checks.ok(readingTitle && readingTitle[0] === "read.second.summary", "after the look the plan reading carries its section", readingTitle);
-    await page.click('[data-vlm-action="close"]');
 
     // A person decides one seating piece; a look started by hand asks first and never asks about it.
     const plan = await page.evaluate(() => {

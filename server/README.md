@@ -60,7 +60,10 @@ this computer — nothing leaves the machine, there is no key and no charge:
 
 ```
 # 1. a local model process speaking the OpenAI-compatible chat endpoint on
-#    loopback, e.g. llama.cpp:  llama-server -m <model.gguf> --mmproj <mmproj.gguf> --port 8080
+#    loopback, e.g. llama.cpp:  llama-server -m <model.gguf> --mmproj <mmproj.gguf> --port 8080 --cache-ram 0
+#    (--cache-ram 0: this llama.cpp keeps up to 8 GiB of old prompt states by
+#    default; the relay never reuses one, so on an 8 GB computer that cache is
+#    the whole difference between fitting and not — measured, LOCAL-VLM.md)
 # 2. a manifest beside the files, pinning each one:
 #    { "format": "merit-local-vlm/1", "id": "...", "name": "...", "version": "...",
 #      "licence": "...", "source": "<where the files came from>", "runtime": "llama.cpp bNNNN",
