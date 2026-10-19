@@ -133,6 +133,52 @@ export default async function run({ page, checks, repoRoot }) {
     ["chairs", "1200"], ["merged", "No, they are apart"], ["serves", "Yes"]].map(([q, t]) => core.parseAskAnswer(q, t));
   checks.equal(parsed, ["sofa", "sofa", null, 8, 8, null, "no", "yes"], "the answer is read by the benchmark's rules into a closed value, or none");
 
+  // ---- the committed manifests: a check is listed only if its evidence passed it ------
+  // The pre-registered bars (training/README.md, V4) recomputed from the evidence
+  // file's own rows: a manifest cannot list a question its measurement failed, nor
+  // leave out the cost rows. The memory row is read from the cost run (--cache-ram 0),
+  // whose every answer must equal the scored run's — else it measured something else.
+  const { readManifest } = await import(path.join(repoRoot, "server/vlm-local.mjs"));
+  const mdir = path.join(repoRoot, "tools/local-vlm/manifests");
+  const acc = (rs) => rs.length ? rs.filter((r) => String(r.parsed) === String(r.truth)).length / rs.length : 0;
+  const over = (rs) => rs.length ? rs.filter((r) => Number.isInteger(r.parsed) && r.parsed > Number(r.truth)).length / rs.length : 1;
+  const passes = (rows) => {
+    const T = (task, src) => rows.filter((r) => r.task === task && (!src || src.includes(r.source)));
+    const idgen = T("ID", ["generated"]);
+    const neg = T("NEG"), yesneg = rows.filter((r) => ["MERGED", "SERVES"].includes(r.task) && r.truth === "no");
+    const yesOnNo = yesneg.length ? yesneg.filter((r) => r.parsed === "yes").length / yesneg.length : 1;   // one pooled row, as registered
+    return {
+      identify: acc(idgen) >= 0.85 && acc(idgen.filter((r) => ["sofa", "bench", "banquette"].includes(r.truth))) >= 0.80 && acc(T("ID", ["golden", "ornek"])) >= 0.80
+        && neg.filter((r) => r.parsed !== "nothing").length / neg.length <= 0.05,
+      count: acc(T("COUNT")) >= 0.80 && over(T("COUNT")) <= 0.10,
+      chairs: acc(T("CHAIRS")) >= 0.80 && over(T("CHAIRS")) <= 0.10,
+      merged: acc(T("MERGED")) >= 0.85 && yesOnNo <= 0.10,
+      serves: acc(T("SERVES")) >= 0.85 && yesOnNo <= 0.10,
+    };
+  };
+  const listed = [];
+  for (const f of fs.readdirSync(mdir).filter((n) => n.endsWith(".json"))) {
+    const r = readManifest(path.join(mdir, f), { verify: false });
+    checks.ok(r.ok, `committed manifest ${f} is well formed`, r);
+    if (!r.ok || !r.manifest.checks.length) continue;
+    listed.push(f);
+    const ev = (r.manifest.checksEvidence.match(/[\w./-]+\.json/g) || []).map((p) => path.join(repoRoot, p));
+    checks.ok(ev.length === 2 && ev.every((p) => fs.existsSync(p)), `${f}: checksEvidence names the scored run and the cost run, both committed`, r.manifest.checksEvidence);
+    if (ev.length !== 2 || !ev.every((p) => fs.existsSync(p))) continue;
+    const [scored, cost] = ev.map((p) => JSON.parse(fs.readFileSync(p, "utf8")));
+    const st = scored.summary.settings;
+    checks.ok(st.looks === 2 && st.real === true && st.seed === 5, `${f}: the evidence is the pre-registered final test (two looks, real crops in, seed 5)`, st);
+    const same = scored.rows.length === cost.rows.length && scored.rows.every((x, i) => x.task === cost.rows[i].task && String(x.truth) === String(cost.rows[i].truth)
+      && x.parsed === cost.rows[i].parsed && x.parsed2 === cost.rows[i].parsed2);
+    checks.ok(same && cost.summary.settings.cacheRam === 0, `${f}: the cost run asked the same items with the prompt cache off and got every answer the scored run got`);
+    checks.ok(scored.summary.medianSeconds <= 10 && cost.summary.peakRssMb <= 3000, `${f}: median ≤ 10 s per crop (scored run) and peak server RSS ≤ 3,000 MB (cost run)`,
+      { median: scored.summary.medianSeconds, rss: cost.summary.peakRssMb });
+    const ok = passes(scored.rows);
+    checks.equal(r.manifest.checks.slice().sort(), Object.keys(ok).filter((q) => ok[q]).sort(),
+      `${f}: lists exactly the questions its evidence passed at the pre-registered bars`, ok);
+  }
+  checks.ok(listed.length <= 1, "at most one committed manifest lists checks (the measured one)", listed);
+
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "merit-second-look-"));
   const modelDir = path.join(tmp, "model");
   fs.mkdirSync(modelDir);
