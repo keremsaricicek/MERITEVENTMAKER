@@ -1,0 +1,33 @@
+# Current state (read this first; update at every milestone)
+
+Last updated: 2026-10-24 (Istanbul evening). Branch: `claude/merit-concept3-plan-intelligence-rebirth` (PR #5 — never merge, never force-push). Owner talks Turkish, non-technical: short, simple answers; times in Istanbul time (UTC+3).
+
+## Owner's standing constraints
+No EXE (one-click `.cmd` launcher allowed). No paid API/GPU/service, no private data uploaded. No merge/force-push. No invented plans or human tests. Don't lower bars to pass. Train 0.8B first, then 2B on the same data (mandatory). Save tokens (2026-10-24): short replies, few subagents, sparse checks.
+
+## Local VLM programme (where the work is)
+- Pre-registrations and verdicts: `training/README.md` sections "V5" and "V6" (bars, splits, frozen-test hashes, QA amendment). Never change a bar after a result.
+- Generators: `training/synth_vlm.py` (V5 question crops), `training/synth_real.py` (V6: the two real plans' own symbols; test = right 40% of each plan, 236 items).
+- Training: `training/vlm_lora.py train` (fp32 on this CPU, `--curriculum`, `--init`, resume every 25 steps). Bench: `benchmarks/offline-intelligence/local-vlm-bench2.py --v5 DIR` (summary.v5, summary.tasks).
+- Run order and recovery: `tools/local-vlm/v5/README.md`, `tools/local-vlm/v5/pipeline.sh`. Checkpoints pushed every 2 h to branch `claude/v5-train-state` (owner's permission).
+- Scratch (this container only): `S=/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad`; chain log `$S/v5/chain.log`; results `$S/v5/out/*.json`; `$S/scripts/ensure.sh` restarts chain + backup after a machine restart.
+- The cloud machine stops when the session is idle; a background task/monitor keeps it up; everything resumes from checkpoints.
+
+## Status (2026-10-24 ~21:30 Istanbul)
+- 0.8B V5 training (runB): ~step 700/734, then automatic benches (V5 test, real held-out, base, run A, S1, V4-style, dev), then V6 fine-tune (runB6) + benches, then 2B probe → 2B V5 → 2B V6 + benches.
+- Wired in product today: run A, `merged` only (manifest `tools/local-vlm/manifests/qwen3.5-0.8b-merit-a.json`).
+- Third real plan: owner may send one → keep it as the never-seen blind test (label first, owner confirms counts, score once at the end).
+- ViT idea: after 2B, a small ViT classifier on the same data/test (pre-register first).
+
+## Next actions when results arrive
+1. Read `$S/v5/out/*.json` summaries (`summary.v5.passes`, `summary.tasks`); compare against the pre-registered bars; QA audit (`model-qa-specialist`, narrow brief).
+2. Commit raw results to `benchmarks/offline-intelligence/local-vlm-results/`; write verdicts in `training/README.md`.
+3. Wire only passing questions (manifest `checks` + `checksEvidence` + `serve`); add model files to `models/local-vlm/`.
+4. Windows package: `tools/local-vlm/windows/build-package.sh` (+ `MERIT-Baslat.cmd`, `BENIOKU.txt`); sample plan `$S/sample/pkg/ornek-plan.png` (generated, ours); verify offline on Linux (say it is a Linux simulation).
+5. Final: full `npm test`, both offline builds + verify, CI green; short Turkish report with tables (old/new, 0.8B/2B, time, RAM, remaining corrections).
+
+## Done this round (all pushed)
+- Storage: unload snapshot fixes "change just before closing is lost" (resilience-records).
+- Relay: serves the offline build's `assets/` (`MERIT_APP_ROOT`); per-crop answer cache.
+- Second look: loca/entrance/exit words (planned only when identify is measured).
+- CLAUDE.md shortened to the essentials; full text in `.claude/PROJECT-GUIDE.md`.
