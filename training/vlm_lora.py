@@ -265,6 +265,8 @@ def cmd_train(a):
         p_.requires_grad_(False)
     targets = [n for n, _ in model.named_modules() if MLP.search(n)]
     cfg = LoraConfig(r=a.rank, lora_alpha=2 * a.rank, lora_dropout=0.05, target_modules=targets, bias="none")
+    if a.grad_ckpt:  # recompute activations in the backward pass: less memory, more time
+        model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
     model = get_peft_model(model, cfg)
     trainable = sum(p_.numel() for p_ in model.parameters() if p_.requires_grad)
     # Several data dirs (comma separated): the first in full, each further one
@@ -359,7 +361,7 @@ def cmd_train(a):
     model.save_pretrained(a.out)
     json.dump(dict(base=os.path.abspath(a.base), data=os.path.abspath(a.data), items=len(rows), epochs=a.epochs, rank=a.rank, alpha=2 * a.rank,
                    lr=a.lr, accum=a.accum, seed=a.seed, trainable=trainable, targets=f"language_model MLP gate/up/down, {len(targets) // 3} blocks",
-                   curriculum=a.curriculum, dtype=a.dtype, replayTasks=a.replay_tasks, resumedAt=start, peakTrainRssMb=round(peak()),
+                   curriculum=a.curriculum, dtype=a.dtype, gradCkpt=a.grad_ckpt, replayTasks=a.replay_tasks, resumedAt=start, peakTrainRssMb=round(peak()),
                    seconds=round(time.time() - t0), finished=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())),
               open(os.path.join(a.out, "run.json"), "w"), indent=1)
     say(f"done in {(time.time() - t0) / 60:.1f} min")
@@ -438,6 +440,7 @@ def main():
     t.add_argument("--limit", type=int, default=0)
     t.add_argument("--save-every", type=int, default=25)
     t.add_argument("--dtype", choices=["bf16", "fp32"], default="bf16", help="weights and compute: bf16 (autocast) or fp32")
+    t.add_argument("--grad-ckpt", action="store_true", help="gradient checkpointing (for a model whose fp32 training would not fit in memory)")
     t.add_argument("--curriculum", action="store_true", help="easy to hard by the items' level (soft)")
     t.add_argument("--replay-tasks", default="ID,NEG,COUNT,MERGED", help="tasks kept from the 2nd and later data dirs")
     g = sub.add_parser("gguf")
