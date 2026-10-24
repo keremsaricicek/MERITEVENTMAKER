@@ -53,3 +53,24 @@ step 440/734 items 3520 loss 0.2110 lr 8.01e-05 4.64s/item elapsed 256.9min peak
 step 450/734 items 3600 loss 0.1666 lr 7.74e-05 4.64s/item elapsed 263.0min peakRSS 8038MB
 step 460/734 items 3680 loss 0.1770 lr 7.47e-05 4.64s/item elapsed 269.0min peakRSS 8038MB
 step 470/734 items 3760 loss 0.0714 lr 7.19e-05 4.63s/item elapsed 274.7min peakRSS 8038MB
+resume at item 3600 step 450
+start 2026-10-24T16:00:31Z items=5869 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 460/734 items 3680 loss 0.1771 lr 7.47e-05 4.72s/item elapsed 6.3min peakRSS 7946MB
+step 470/734 items 3760 loss 0.0746 lr 7.19e-05 4.59s/item elapsed 12.3min peakRSS 7946MB
+step 480/734 items 3840 loss 0.1768 lr 6.92e-05 4.50s/item elapsed 18.0min peakRSS 7946MB
+step 490/734 items 3920 loss 0.0458 lr 6.65e-05 4.48s/item elapsed 23.9min peakRSS 7946MB
+step 500/734 items 4000 loss 0.0673 lr 6.38e-05 4.49s/item elapsed 30.0min peakRSS 7963MB
+step 510/734 items 4080 loss 0.2348 lr 6.10e-05 4.51s/item elapsed 36.1min peakRSS 7963MB
+step 520/734 items 4160 loss 0.2054 lr 5.83e-05 4.52s/item elapsed 42.2min peakRSS 7963MB
+step 530/734 items 4240 loss 0.1460 lr 5.56e-05 4.52s/item elapsed 48.2min peakRSS 7963MB
+step 540/734 items 4320 loss 0.0901 lr 5.29e-05 4.49s/item elapsed 53.9min peakRSS 7963MB
+step 550/734 items 4400 loss 0.1292 lr 5.01e-05 4.49s/item elapsed 59.8min peakRSS 7974MB
+step 560/734 items 4480 loss 0.1444 lr 4.74e-05 4.47s/item elapsed 65.6min peakRSS 7974MB
+step 570/734 items 4560 loss 0.0851 lr 4.47e-05 4.46s/item elapsed 71.4min peakRSS 7974MB
+step 580/734 items 4640 loss 0.1534 lr 4.20e-05 4.46s/item elapsed 77.3min peakRSS 7974MB
+step 590/734 items 4720 loss 0.1471 lr 3.92e-05 4.44s/item elapsed 82.9min peakRSS 8004MB
+step 600/734 items 4800 loss 0.1917 lr 3.65e-05 4.45s/item elapsed 89.0min peakRSS 8004MB
+step 610/734 items 4880 loss 0.2078 lr 3.38e-05 4.44s/item elapsed 94.7min peakRSS 8004MB
+step 620/734 items 4960 loss 0.1523 lr 3.11e-05 4.43s/item elapsed 100.4min peakRSS 8004MB
+step 630/734 items 5040 loss 0.1357 lr 2.83e-05 4.44s/item elapsed 106.5min peakRSS 8004MB
+step 640/734 items 5120 loss 0.2200 lr 2.56e-05 4.43s/item elapsed 112.3min peakRSS 8004MB

@@ -35,9 +35,9 @@
   "rank_pattern": {},
   "revision": null,
   "target_modules": [
-    "up_proj",
     "gate_proj",
-    "down_proj"
+    "down_proj",
+    "up_proj"
   ],
   "target_parameters": null,
   "task_type": null,
