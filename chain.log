@@ -8,3 +8,5 @@
 == 2026-10-24T15:56:03Z restart chain
 2200 scenes
 == 2026-10-24T15:57:43Z train runB
+wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v5/runB/adapter.gguf
+== 2026-10-24T18:46:01Z bench v5-B
