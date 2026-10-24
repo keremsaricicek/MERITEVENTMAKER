@@ -237,11 +237,11 @@ def cmd_data(a):
 
 
 # ---- model ------------------------------------------------------------------------------
-def load_model(base, run=None):
+def load_model(base, run=None, dtype="bf16"):
     import torch
     from transformers import AutoProcessor, Qwen3_5ForConditionalGeneration
     proc = AutoProcessor.from_pretrained(base)
-    model = Qwen3_5ForConditionalGeneration.from_pretrained(base, dtype=torch.bfloat16)
+    model = Qwen3_5ForConditionalGeneration.from_pretrained(base, dtype=torch.bfloat16 if dtype == "bf16" else torch.float32)
     model.eval()
     if run:
         from peft import PeftModel
@@ -260,7 +260,7 @@ def cmd_train(a):
     from peft import LoraConfig, get_peft_model
     torch.manual_seed(a.seed)
     torch.set_num_threads(a.threads)
-    proc, model = load_model(a.base)
+    proc, model = load_model(a.base, dtype=a.dtype)
     for p_ in model.parameters():
         p_.requires_grad_(False)
     targets = [n for n, _ in model.named_modules() if MLP.search(n)]
@@ -327,7 +327,9 @@ def cmd_train(a):
             ids = x["input_ids"][0]
             A = len(ans_ids)
             assert ids[-A:].tolist() == ans_ids, (ids[-A:].tolist(), ans_ids)
-            with torch.autocast("cpu", dtype=torch.bfloat16):
+            # bf16 autocast is fast only on a CPU with bf16 instructions (AMX /
+            # AVX512-BF16); without them fp32 is the faster path (measured, README)
+            with torch.autocast("cpu", dtype=torch.bfloat16, enabled=a.dtype == "bf16"):
                 out = model(**x, logits_to_keep=A + 1)
             logits = out.logits[0, :A].float()
             loss = torch.nn.functional.cross_entropy(logits, torch.tensor(ans_ids)) / a.accum
@@ -357,7 +359,7 @@ def cmd_train(a):
     model.save_pretrained(a.out)
     json.dump(dict(base=os.path.abspath(a.base), data=os.path.abspath(a.data), items=len(rows), epochs=a.epochs, rank=a.rank, alpha=2 * a.rank,
                    lr=a.lr, accum=a.accum, seed=a.seed, trainable=trainable, targets=f"language_model MLP gate/up/down, {len(targets) // 3} blocks",
-                   curriculum=a.curriculum, replayTasks=a.replay_tasks, resumedAt=start, peakTrainRssMb=round(peak()),
+                   curriculum=a.curriculum, dtype=a.dtype, replayTasks=a.replay_tasks, resumedAt=start, peakTrainRssMb=round(peak()),
                    seconds=round(time.time() - t0), finished=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())),
               open(os.path.join(a.out, "run.json"), "w"), indent=1)
     say(f"done in {(time.time() - t0) / 60:.1f} min")
@@ -435,6 +437,7 @@ def main():
     t.add_argument("--seed", type=int, default=3)
     t.add_argument("--limit", type=int, default=0)
     t.add_argument("--save-every", type=int, default=25)
+    t.add_argument("--dtype", choices=["bf16", "fp32"], default="bf16", help="weights and compute: bf16 (autocast) or fp32")
     t.add_argument("--curriculum", action="store_true", help="easy to hard by the items' level (soft)")
     t.add_argument("--replay-tasks", default="ID,NEG,COUNT,MERGED", help="tasks kept from the 2nd and later data dirs")
     g = sub.add_parser("gguf")
