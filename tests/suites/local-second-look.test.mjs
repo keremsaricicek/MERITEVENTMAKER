@@ -291,10 +291,16 @@ export default async function run({ page, checks, repoRoot }) {
     checks.equal(refused, { unknownField: "UNKNOWN_FIELD", freeText: "BAD_PAYLOAD", pieceMissing: "BAD_PAYLOAD", pieceOnOther: "BAD_PAYLOAD", tooBig: "BAD_PAYLOAD", guestInImage: "UNKNOWN_FIELD" },
       "the ask is a closed shape: no unknown field anywhere, no question the relay does not write, no oversized crop");
     checks.equal(fake.chats().length, 1, "nothing refused reached the local process");
+    // the same crop and question again (a re-analysis of an unchanged place): the
+    // answer the verified server gave is reused, the model is not asked twice
+    const again = await post(r, "/vlm-relay/ask", askBody({ runId: "run_again0001" }));
+    const otherQ = await post(r, "/vlm-relay/ask", askBody({ runId: "run_again0002", question: "merged" }));
+    checks.ok(again.http === 200 && again.json.value === "sofa" && again.json.cached === true && fake.chats().length === 2 && otherQ.json.cached !== true,
+      "an unchanged crop asked the same question is answered from the relay's cache (one model call for two asks); another question is asked", { again: again.json, chats: fake.chats().length });
 
     const nr = await relayWith({ VLM_LOCAL_URL: fake.baseURL, VLM_LOCAL_MANIFEST: noChecks });
     const notValidated = await post(nr, "/vlm-relay/ask", askBody());
-    checks.equal([notValidated.http, notValidated.json.code, fake.chats().length], [409, "QUESTION_NOT_VALIDATED", 1], "a model with no measured question is asked nothing");
+    checks.equal([notValidated.http, notValidated.json.code, fake.chats().length], [409, "QUESTION_NOT_VALIDATED", 2], "a model with no measured question is asked nothing");
     const cloud = core.configFromEnv({ ANTHROPIC_API_KEY: "sk-ant-test-0000000000", VLM_DATA_DIR: path.join(tmp, "cloud"), PORT: "0" }, { repoRoot });
     const cr = await startRelay({ config: cloud, client: { models: {}, beta: { messages: {} } }, log }); opened.push(cr);
     const cloudAsk = await post(cr, "/vlm-relay/ask", askBody());
@@ -302,7 +308,8 @@ export default async function run({ page, checks, repoRoot }) {
 
     const capped = await relayWith({ VLM_LOCAL_URL: fake.baseURL, VLM_LOCAL_MANIFEST: withChecks, VLM_MAX_ASKS_PER_RUN: "2" });
     const caps = [];
-    for (let i = 0; i < 3; i++) caps.push((await post(capped, "/vlm-relay/ask", askBody({ runId: "run_cap00001" }))).json.code || "ok");
+    // three different questions (the same one again would be answered from the cache, which costs no model call)
+    for (const q of ["identify", "merged", "chairs"]) caps.push((await post(capped, "/vlm-relay/ask", askBody({ runId: "run_cap00001", question: q }))).json.code || "ok");
     checks.equal(caps, ["ok", "ok", "ASK_LIMIT"], "the per-look question cap refuses before the process is called");
 
     const hang = await startFakeLocalVlm({ serving: SERVING, script: [{ hang: true }] }); fakes.push(hang);
@@ -395,7 +402,9 @@ export default async function run({ page, checks, repoRoot }) {
     await page.waitForFunction(() => { const v = state.events[0].analysis.vlm; return v && v.mode === "check" && !v.auto && v.status !== "running"; }, null, { timeout: 120000 });
     const run = await page.evaluate(() => JSON.parse(JSON.stringify(state.events[0].analysis.vlm)));
     const reqs = pf.chats().slice(guestsBefore).map((c) => c.body);
-    checks.equal([run.status, reqs.length, run.steps], ["done", plan.qs.length * 2, plan.qs.length * 2], "every planned place was looked at twice, and nothing more was sent");
+    // the same plan was looked at by itself just before: a place whose crop and question are
+    // unchanged is answered from the relay's cache, so the model is asked at most that often
+    checks.equal([run.status, run.steps, reqs.length <= plan.qs.length * 2], ["done", plan.qs.length * 2, true], "every planned place was looked at twice, and nothing more was sent", { sent: reqs.length });
     checks.ok(reqs.every((b) => b.messages.length === 1 && /^This is a crop of an event venue floor plan/.test(b.messages[0].content[1].text)
       && /^data:image\/png;base64,/.test(b.messages[0].content[0].image_url.url)) && !reqs.some((b) => /Second look|guest/i.test(JSON.stringify(b))),
       "each request is one crop and one fixed question — no event name, no guest");

@@ -36,6 +36,7 @@
 // holds aggregates only).
 import http from "node:http";
 import fs from "node:fs";
+import crypto from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as core from "./vlm-core.mjs";
@@ -102,6 +103,7 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
   const usage = new core.UsageStore(config.dataDir);
   const runs = new Map();            // runId -> { analysisId, planHash, steps, usd, cancelled, controller, at }
   const askRuns = new Map();         // runId -> { analysisId, planHash, asks, cancelled, controller, at }
+  const answerCache = new Map();  // sha256(model files, question, piece, crop) -> closed answer, this process only
   let askDay = { key: null, n: 0 };  // the local second look's day count: CPU, not money, so not in the ledger
   let inFlight = null;               // { runId, controller }
   let lastCheckAt = 0;
@@ -357,6 +359,17 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
       say(`ask ${p.runId.slice(0, 12)} ${p.question}: refused, ${served.code} (${served.problem})`);
       return json(res, 409, { ok: false, code: served.code, runId: p.runId, question: p.question, run: snapshotAsk(run) });
     }
+    // An unchanged place asked the same question again (a re-analysis) is
+    // answered from what this verified server already said: same crop bytes,
+    // same question and piece, same pinned model files. Only closed answers
+    // are kept; nothing is written to disk.
+    const cacheKey = crypto.createHash("sha256").update([config.local && JSON.stringify(config.local.files || config.local.id || ""), p.question, p.piece || "", p.image.data].join("\u0000")).digest("hex");
+    if (answerCache.has(cacheKey)) {
+      run.controller = null; inFlight = null; run.at = now();
+      const value = answerCache.get(cacheKey);
+      say(`ask ${p.runId.slice(0, 12)} ${p.question}: ${value} (cached)`);
+      return json(res, 200, { ok: true, value, answered: true, cutOff: false, cached: true, runId: p.runId, analysisId: p.analysisId, planHash: p.planHash, question: p.question, seconds: 0, run: snapshotAsk(run) });
+    }
     const onClose = () => { if (!res.writableEnded) controller.abort(); };
     res.on("close", onClose);
     run.asks++; askDay.n++; run.at = now();
@@ -374,6 +387,10 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
       return json(res, failure.http, { ok: false, code: failure.code, ...echo });
     }
     const value = core.parseAskAnswer(p.question, answer.text);
+    if (value !== null) {
+      answerCache.set(cacheKey, value);
+      if (answerCache.size > 4000) answerCache.delete(answerCache.keys().next().value);
+    }
     say(`${tag}: ${value === null ? "no answer" : value} in ${seconds}s`);
     if (res.writableEnded || res.destroyed) return;
     return json(res, 200, { ok: true, value, answered: value !== null, cutOff: value === null && answer.finish === "length", ...echo });
