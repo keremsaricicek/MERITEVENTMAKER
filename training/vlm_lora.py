@@ -21,7 +21,7 @@ wall), so this teaches the convention with labelled examples and nothing else:
            assumed.
 
     python -I training/vlm_lora.py data  --seat DIR --syn DIR --rel DIR --out DATA [--seed 21]
-    python -I training/vlm_lora.py train --base HF_DIR --data DATA --out RUN [--rank 16 --epochs 1]
+    python -I training/vlm_lora.py train --base HF_DIR --data DATA[,DATA2] --out RUN [--rank 16 --epochs 1] [--curriculum] [--replay-tasks ID,NEG,COUNT,MERGED]
     python -I training/vlm_lora.py gguf  --run RUN --out adapter.gguf
     python -I training/vlm_lora.py agree --base HF_DIR --run RUN --data DATA --server URL [--n 24]
 
@@ -267,7 +267,16 @@ def cmd_train(a):
     cfg = LoraConfig(r=a.rank, lora_alpha=2 * a.rank, lora_dropout=0.05, target_modules=targets, bias="none")
     model = get_peft_model(model, cfg)
     trainable = sum(p_.numel() for p_ in model.parameters() if p_.requires_grad)
-    rows = [json.loads(l) for l in open(os.path.join(a.data, "items.jsonl"))]
+    # Several data dirs (comma separated): the first in full, each further one
+    # (a replay of an earlier run's crops) only for --replay-tasks.
+    rows = []
+    for k, d in enumerate(a.data.split(",")):
+        for l in open(os.path.join(d, "items.jsonl")):
+            r = json.loads(l)
+            if k and r["task"] not in a.replay_tasks.split(","):
+                continue
+            r["image"] = os.path.join(d, r["image"])
+            rows.append(r)
     if a.limit:
         rows = rows[:a.limit]
     os.makedirs(a.out, exist_ok=True)
@@ -278,16 +287,39 @@ def cmd_train(a):
     end_id = proc.tokenizer.convert_tokens_to_ids("<|im_end|>")
     log = open(os.path.join(a.out, "train.log"), "a")
     say = lambda s: (print(s, flush=True), log.write(s + "\n"), log.flush())
+    # Resume: the newest checkpoint holds the adapter, the optimizer, the
+    # schedule and how many items were seen; the order is a pure function of
+    # the seed, so a resumed run trains exactly what one run trains.
+    ck = os.path.join(a.out, "resume")
+    start = 0
+    if os.path.exists(os.path.join(ck, "state.pt")):
+        from peft import set_peft_model_state_dict
+        from safetensors.torch import load_file as st_load
+        st = torch.load(os.path.join(ck, "state.pt"), weights_only=False)
+        set_peft_model_state_dict(model, st_load(os.path.join(ck, "adapter_model.safetensors")))
+        opt.load_state_dict(st["opt"]); sched.load_state_dict(st["sched"])
+        start = st["seen"]
+        say(f"resume at item {start} step {st['step']}")
     say(f"start {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())} items={len(rows)} epochs={a.epochs} rank={a.rank} lr={a.lr} accum={a.accum} trainable={trainable} targets={len(targets)}")
     model.train()
-    step, t0, run_loss, seen = 0, time.time(), 0.0, 0
+    step, t0, run_loss, seen = start // a.accum, time.time(), 0.0, 0
+    peak = lambda: __import__("resource").getrusage(__import__("resource").RUSAGE_SELF).ru_maxrss / 1024
     order = list(range(len(rows)))
     for ep in range(math.ceil(a.epochs)):
-        random.Random(a.seed + ep).shuffle(order)
+        rr = random.Random(a.seed + ep)
+        rr.shuffle(order)
+        if a.curriculum:
+            # easy to hard, softly: level plus noise, so every level is present
+            # throughout and the end is not hard crops only (replay crops: level 2)
+            key = {i: rows[i].get("level", 2) + rr.uniform(0, 2.0) for i in order}
+            order.sort(key=key.get)
         n_this = len(order) if ep + 1 <= a.epochs else int(len(order) * (a.epochs - ep))
         for j, idx in enumerate(order[:n_this]):
+            if seen < start:
+                seen += 1
+                continue
             r = rows[idx]
-            img = Image.open(os.path.join(a.data, r["image"])).convert("RGB")
+            img = Image.open(r["image"]).convert("RGB")
             pre = prompt(proc, r["q"])
             ans = str(r["truth"])
             x = proc(text=[pre + ans + "<|im_end|>"], images=[img], return_tensors="pt")
@@ -308,13 +340,16 @@ def cmd_train(a):
                 step += 1
                 if step % 10 == 0:
                     el = time.time() - t0
-                    say(f"step {step}/{total} items {seen} loss {run_loss / (10 * a.accum):.4f} lr {sched.get_last_lr()[0]:.2e} {el / seen:.2f}s/item elapsed {el / 60:.1f}min")
+                    say(f"step {step}/{total} items {seen} loss {run_loss / (10 * a.accum):.4f} lr {sched.get_last_lr()[0]:.2e} {el / max(1, seen - start):.2f}s/item elapsed {el / 60:.1f}min peakRSS {peak():.0f}MB")
                     run_loss = 0.0
                 if a.save_every and step % a.save_every == 0:
-                    model.save_pretrained(os.path.join(a.out, f"step{step}"))
+                    model.save_pretrained(ck)
+                    torch.save(dict(opt=opt.state_dict(), sched=sched.state_dict(), seen=seen, step=step), os.path.join(ck, "state.tmp"))
+                    os.replace(os.path.join(ck, "state.tmp"), os.path.join(ck, "state.pt"))
     model.save_pretrained(a.out)
     json.dump(dict(base=os.path.abspath(a.base), data=os.path.abspath(a.data), items=len(rows), epochs=a.epochs, rank=a.rank, alpha=2 * a.rank,
-                   lr=a.lr, accum=a.accum, seed=a.seed, trainable=trainable, targets="language_model MLP gate/up/down, 24 blocks",
+                   lr=a.lr, accum=a.accum, seed=a.seed, trainable=trainable, targets=f"language_model MLP gate/up/down, {len(targets) // 3} blocks",
+                   curriculum=a.curriculum, replayTasks=a.replay_tasks, resumedAt=start, peakTrainRssMb=round(peak()),
                    seconds=round(time.time() - t0), finished=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())),
               open(os.path.join(a.out, "run.json"), "w"), indent=1)
     say(f"done in {(time.time() - t0) / 60:.1f} min")
@@ -391,7 +426,9 @@ def main():
     t.add_argument("--threads", type=int, default=4)
     t.add_argument("--seed", type=int, default=3)
     t.add_argument("--limit", type=int, default=0)
-    t.add_argument("--save-every", type=int, default=100)
+    t.add_argument("--save-every", type=int, default=25)
+    t.add_argument("--curriculum", action="store_true", help="easy to hard by the items' level (soft)")
+    t.add_argument("--replay-tasks", default="ID,NEG,COUNT,MERGED", help="tasks kept from the 2nd and later data dirs")
     g = sub.add_parser("gguf")
     g.add_argument("--run", required=True)
     g.add_argument("--out", required=True)
