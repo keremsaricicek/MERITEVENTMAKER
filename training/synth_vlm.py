@@ -37,8 +37,11 @@ the whole crop.
 
 Splits by DRAWING FAMILY and seed base (synth_levels.FAMILIES):
   train  TRAIN_FAMILIES (0-7, 10-13), seed base 51
-  dev    families 8, 9, 14, 15 (14/15 were the V4/S1 test families), base 52
+  dev    families 8, 9 (not 14/15: the V4/S1 test families stay out of every choice), base 52
   blind  families 16, 17 (never drawn for any VLM), base 53 — the frozen V5 test
+One family per item in turn, checked per stratum. dev and blind are boosted
+where a bar needs n (BOOST), and print a figure on half their chairs crops,
+half matching the drawing.
 
     python -I training/synth_vlm.py --split train --out DIR [--scale 1.0]
     python -I training/synth_vlm.py --split blind --out DIR --scale 0.08
@@ -69,11 +72,11 @@ def Q(task, piece=None):
     return SPEC["preamble"] + q.replace("{words}", ", ".join(WORDS)).replace("{piece}", piece or "")
 
 
-SPLITS = {"train": (L.TRAIN_FAMILIES, 51), "dev": ([8, 9, 14, 15], 52), "blind": (L.BLIND2_FAMILIES, 53)}
+SPLITS = {"train": (L.TRAIN_FAMILIES, 51), "dev": ([8, 9], 52), "blind": (L.BLIND2_FAMILIES, 53)}
 CHAIR_KINDS = ["rect", "rounded", "arm", "circle", "backrest", "petal", "semicircle", "silhouette"]
 PALETTE = [(232, 216, 176), (205, 235, 232), (240, 228, 200), (225, 225, 225), (232, 110, 40), (60, 140, 140), (160, 205, 170),
            (120, 90, 160), (200, 215, 245), (250, 226, 230), (176, 188, 226), (90, 90, 90), (255, 255, 255)]
-NOISE_WORDS = ["BAR", "SAHNE", "STAGE", "SOFA", "8 pax", "10 pax", "T12", "VIP", "GİRİŞ", "LOCA", "DJ", "SERVİS", "WC"]
+NOISE_WORDS = ["BAR", "SAHNE", "STAGE", "SOFA", "8 pax", "10 pax", "T12", "VIP", "GİRİŞ", "LOCA", "DJ", "SERVİS", "WC", "PODYUM", "ENTRANCE", "LOCA 3", "GIRIS"]
 
 # How many items per stratum at --scale 1.0 (the training set).
 PLAN = {
@@ -195,7 +198,7 @@ class Scene:
                 self.p.rect(cx + (k - 1) * u * 0.35, cy + h / 2 + u * 0.12, u * 0.3, u * 0.22, 0, None, self.fam["line"], 1)
         if words:
             self.p.text(cx, cy, self.rng.choice(["SAHNE", "STAGE", "PODYUM"]), h * 0.3)
-        return self.rec("stage", cx, cy, w, h)
+        return self.rec("stage", cx, cy, w, h, labelled=words)
 
     def bar(self, cx, cy, u):
         w, h = u * self.rng.uniform(2.5, 4.5), u * self.rng.uniform(0.6, 0.9)
@@ -207,9 +210,10 @@ class Scene:
         if stools:  # along the front
             for k in range(int(w // (u * 0.6))):
                 self.p.ellipse(cx - w / 2 + u * 0.4 + k * u * 0.6, cy - h / 2 - u * 0.3, u * 0.14, u * 0.14, None, self.fam["line"], 1)
-        if not stools or self.rng.random() < 0.6:  # a bare long box is a table's drawing too
+        words = not stools or self.rng.random() < 0.6  # a bare long box is a table's drawing too
+        if words:
             self.p.text(cx, cy, "BAR", h * 0.55, fill=(255, 255, 255) if fill[0] < 120 else None)
-        return self.rec("bar", cx, cy, w, h)
+        return self.rec("bar", cx, cy, w, h, labelled=words)
 
     def entrance(self, cx, cy, u):
         r = u * self.rng.uniform(0.7, 1.1)
@@ -225,9 +229,10 @@ class Scene:
         # the wall it opens in
         d.line([(cx - 3 * r) * SS, cy * SS, (cx - (2 * r if double else r)) * SS, cy * SS], fill=line, width=max(2, self.fam["lw"] + 1) * SS)
         d.line([(cx + (2 * r if double else r)) * SS, cy * SS, (cx + 3 * r) * SS, cy * SS], fill=line, width=max(2, self.fam["lw"] + 1) * SS)
-        if self.rng.random() < 0.6:
+        words = self.rng.random() < 0.6
+        if words:
             self.p.text(cx, cy + r * 0.55, self.rng.choice(["GİRİŞ", "ENTRANCE", "GIRIS"]), r * 0.4)
-        return self.rec("entrance", cx, cy, (4 if double else 2) * r, r)
+        return self.rec("entrance", cx, cy, (4 if double else 2) * r, r, labelled=words)
 
     def lodge(self, cx, cy, u):
         w, h = u * self.rng.uniform(2.2, 3.4), u * self.rng.uniform(1.6, 2.4)
@@ -236,9 +241,10 @@ class Scene:
         self.p.rect(cx, cy - h / 2 + u * 0.18, w * 0.9, u * 0.22, 0, self.fam.get("sofa_fill") or (200, 200, 200), line, 1)  # its own sofa along the back
         if self.rng.random() < 0.5:
             self.p.ellipse(cx, cy + h * 0.1, u * 0.3, u * 0.3, self.fam["table_fill"], line, 1)
-        if self.rng.random() < 0.8:  # a lodge is usually labelled, not always
+        words = self.rng.random() < 0.8  # a lodge is usually labelled, not always
+        if words:
             self.p.text(cx, cy + h * 0.32, self.rng.choice(["LOCA", "LOCA 3", "VIP 2", "L-4", "LOCA A"]), h * 0.16)
-        return self.rec("lodge", cx, cy, w, h)
+        return self.rec("lodge", cx, cy, w, h, labelled=words)
 
 
 # ---- one centre object of a class ----------------------------------------------------------------
@@ -353,7 +359,15 @@ def family(fam_idx, rng, level):
 
 
 # ---- one item ----------------------------------------------------------------------------------------
-def make(task, stratum, rng, fam_idx, size=448):
+# The test and dev are boosted where a bar needs n (QA pre-audit 2026-10-24):
+# empty crops, serves per piece and answer, chairs, merged; printed figures on
+# half the chairs crops.
+BOOST = {"train": {}, "dev": {"identify:nothing": 2.67, "chairs": 1.6, "merged": 1.2, "serves": 3.33},
+         "blind": {"identify:nothing": 2.67, "chairs": 1.6, "merged": 1.2, "serves": 3.33}}
+PRINTED = {"train": 0.25, "dev": 0.5, "blind": 0.5}
+
+
+def make(task, stratum, rng, fam_idx, size=448, split="train"):
     level = rng.choices([1, 2, 3, 4], weights=[3, 3, 2, 2])[0]
     fam = family(fam_idx, rng, level)
     u = rng.uniform(44, 80)
@@ -379,7 +393,7 @@ def make(task, stratum, rng, fam_idx, size=448):
             o = draw_centre(sc, cls, cx, cy, u, cs, chair_kind, colour_swap)
             big = max(o["w"], o["h"])
             side = 1.15 * big if cls == "stage" else 2.0 * big + 30
-            sub = cls
+            sub = cls + ({True: "-labelled", False: "-unlabelled"}[o["labelled"]] if "labelled" in o else "")
             if rng.random() < 0.15 and cls != "nothing":  # a misleading word beside it
                 sc.p.text(cx + big * 0.9, cy - big * 0.7, rng.choice(NOISE_WORDS), u * 0.3)
                 sub = cls + "-word"
@@ -437,10 +451,11 @@ def make(task, stratum, rng, fam_idx, size=448):
         assert sc.chairs_around(t, n, chair_kind, ccs) == n
         side = 2.4 * max(t["w"], t["h"]) + 50
         sub = ("odd" if n % 2 else "even")
-        if rng.random() < 0.25:  # a printed figure that is NOT the drawing
-            shown = rng.choice([v for v in range(2, 15) if v != n])
+        if rng.random() < PRINTED[split]:  # a printed figure: half the time the drawing's own, half not
+            match = rng.random() < 0.5
+            shown = n if match else rng.choice([v for v in range(2, 15) if v != n])
             sc.p.text(cx, cy + max(t["w"], t["h"]) / 2 + cs * 1.4, f"{shown} pax", cs * 0.55)
-            sub += "-printed"
+            sub += "-printed-match" if match else "-printed-wrong"
         neighbours(sc, cx, cy, side * 1.15, u, cs, chair_kind, rng.randint(0, 2), max(t["w"], t["h"]) / 2 + cs * 1.4)
         truth, q = n, Q("chairs")
 
@@ -499,9 +514,14 @@ def make(task, stratum, rng, fam_idx, size=448):
             gap, facing = u * rng.uniform(0.0, 0.12), True
             sub = f"{piece}-yes"
         else:
-            gap = u * rng.uniform(0.55, 1.5)
-            facing = rng.random() < 0.5
-            sub = f"{piece}-no-" + ("facing" if facing else "away")
+            # "near" (0.2-0.5 sides, facing) is a zone a person could argue either
+            # way for a lounge sofa: asked in dev/test and reported on its own,
+            # never trained, never in a bar
+            kinds_ = ["far-facing", "far-away"] + (["near"] if split != "train" else []) + (["back"] if piece != "bench" else [])  # a bench has no back to turn
+            k_ = rng.choice(kinds_)
+            gap = u * (rng.uniform(0.55, 1.5) if k_.startswith("far") else rng.uniform(0.2, 0.5) if k_ == "near" else rng.uniform(0.0, 0.12))
+            facing = k_ in ("far-facing", "near")
+            sub = f"{piece}-no-{k_}"
         off = th / 2 + gap + depth / 2
         # sofa(): back on its own -v side. Facing the table from +v means turned half a turn.
         pdeg = deg + (180 if facing else 0)
@@ -554,13 +574,17 @@ def main():
     rows, tally, k = [], {}, 0
     for task, strata in PLAN.items():
         for stratum, n in strata.items():
-            want = max(1, round(n * a.scale))
+            b = BOOST[a.split]
+            want = max(1, round(n * a.scale * b.get(f"{task}:{stratum}", b.get(task, 1.0))))
             made = 0
             attempt = 0
             while made < want:
                 seed = base * 1000003 + k * 97 + attempt
                 rng = random.Random(seed)
-                it = make(task, stratum, rng, fams[(k + attempt) % len(fams)], a.size)
+                # one family per ITEM in turn (a first cut stepped by two per
+                # item and tied each answer to one family: QA pre-audit)
+                fam = fams[k % len(fams)]
+                it = make(task, stratum, rng, fam, a.size, a.split)
                 attempt += 1
                 if it is None:
                     continue
@@ -572,6 +596,11 @@ def main():
                 k += 1
             key = f"{task}:{stratum}"
             tally[key] = made
+            fc = {}
+            for r in rows[-made:]:
+                fc[r["family"]] = fc.get(r["family"], 0) + 1
+            if made >= len(fams) and (len(fc) < len(fams) or max(fc.values()) - min(fc.values()) > 1):
+                raise SystemExit(f"stratum {key} is not family-balanced: {fc}")
     with open(os.path.join(a.out, "items.jsonl"), "w") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")

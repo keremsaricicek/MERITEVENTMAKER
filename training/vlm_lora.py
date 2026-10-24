@@ -343,9 +343,17 @@ def cmd_train(a):
                     say(f"step {step}/{total} items {seen} loss {run_loss / (10 * a.accum):.4f} lr {sched.get_last_lr()[0]:.2e} {el / max(1, seen - start):.2f}s/item elapsed {el / 60:.1f}min peakRSS {peak():.0f}MB")
                     run_loss = 0.0
                 if a.save_every and step % a.save_every == 0:
-                    model.save_pretrained(ck)
-                    torch.save(dict(opt=opt.state_dict(), sched=sched.state_dict(), seen=seen, step=step), os.path.join(ck, "state.tmp"))
-                    os.replace(os.path.join(ck, "state.tmp"), os.path.join(ck, "state.pt"))
+                    # atomic: the adapter and its state land together or not at all
+                    import shutil
+                    new = ck + ".new"
+                    shutil.rmtree(new, ignore_errors=True)
+                    model.save_pretrained(new)
+                    torch.save(dict(opt=opt.state_dict(), sched=sched.state_dict(), seen=seen, step=step), os.path.join(new, "state.pt"))
+                    if os.path.exists(ck):
+                        shutil.rmtree(ck + ".old", ignore_errors=True)
+                        os.replace(ck, ck + ".old")
+                    os.replace(new, ck)
+                    shutil.rmtree(ck + ".old", ignore_errors=True)
     model.save_pretrained(a.out)
     json.dump(dict(base=os.path.abspath(a.base), data=os.path.abspath(a.data), items=len(rows), epochs=a.epochs, rank=a.rank, alpha=2 * a.rank,
                    lr=a.lr, accum=a.accum, seed=a.seed, trainable=trainable, targets=f"language_model MLP gate/up/down, {len(targets) // 3} blocks",

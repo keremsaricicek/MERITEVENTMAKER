@@ -400,12 +400,13 @@ def v5_summary(rows):
         return None
     def rate(xs, ok):
         k = sum(1 for x in xs if ok(x))
-        return dict(n=len(xs), k=k, rate=round(k / len(xs), 3) if xs else None, wilson=wilson(k, len(xs)))
+        return dict(n=len(xs), k=k, rate=round(k / len(xs), 3) if xs else None, wilson=wilson(k, len(xs)), unparsed=sum(x["parsed"] is None for x in xs))
     T = lambda task, f=lambda r: True: [r for r in rows if r["task"] == task and f(r)]
     right = lambda x: x["parsed"] == x["truth"]
     over = lambda x: isinstance(x["parsed"], int) and x["parsed"] > x["truth"]
     yes = lambda x: x["parsed"] == "yes"
     furn = lambda r: r["truth"] in ("sofa", "bench", "banquette")
+    notnear = lambda r: not r["sub"].endswith("-near")
     out = dict(idOther=rate(T("ID", lambda r: not furn(r)), right), idFurniture=rate(T("ID", furn), right),
                idEntrance=rate(T("ID", lambda r: r["truth"] == "entrance"), right), idLodge=rate(T("ID", lambda r: r["truth"] == "lodge"), right),
                idWithWord=rate(T("ID", lambda r: r["sub"].endswith("-word")), right),
@@ -416,14 +417,20 @@ def v5_summary(rows):
                countAll=rate(T("COUNT"), right), countOver=rate(T("COUNT"), over),
                mergedAll=rate(T("MERGED"), right), mergedYesOnNo=rate(T("MERGED", lambda r: r["truth"] == "no"), yes),
                mergedYesOnNear=rate(T("MERGED", lambda r: r["sub"].endswith("-near")), yes),
-               servesAll=rate(T("SERVES"), right), servesYesOnNo=rate(T("SERVES", lambda r: r["truth"] == "no"), yes),
-               **{f"serves_{p}": rate(T("SERVES", lambda r, p=p: r["sub"].startswith(p + "-")), right) for p in ("sofa", "bench", "banquette")},
-               **{f"servesYesOnNo_{p}": rate(T("SERVES", lambda r, p=p: r["sub"].startswith(p + "-no")), yes) for p in ("sofa", "bench", "banquette")})
+               servesAll=rate(T("SERVES", notnear), right), servesYesOnNo=rate(T("SERVES", lambda r: r["truth"] == "no" and notnear(r)), yes),
+               servesNearReported=rate(T("SERVES", lambda r: not notnear(r)), yes), servesBack=rate(T("SERVES", lambda r: r["sub"].endswith("-back")), right),
+               **{f"serves_{p}": rate(T("SERVES", lambda r, p=p: r["sub"].startswith(p + "-") and notnear(r)), right) for p in ("sofa", "bench", "banquette")},
+               **{f"servesYesOnNo_{p}": rate(T("SERVES", lambda r, p=p: r["sub"].startswith(p + "-no") and notnear(r)), yes) for p in ("sofa", "bench", "banquette")},
+               **{f"id_{c}": rate(T("ID", lambda r, c=c: r["truth"] == c), right) for c in WORDS if c != "nothing"},
+               idUnlabelled=rate(T("ID", lambda r: r["sub"].endswith("-unlabelled")), right),
+               chairsPrintedMatch=rate(T("CHAIRS", lambda r: r["sub"].endswith("-printed-match")), right),
+               chairsPrintedWrong=rate(T("CHAIRS", lambda r: r["sub"].endswith("-printed-wrong")), right))
     r_ = lambda k: out[k]["rate"]
     ok = lambda k, lo=None, hi=None: r_(k) is not None and (lo is None or r_(k) >= lo) and (hi is None or r_(k) <= hi)
     out["passes"] = dict(
-        identify=ok("idOther", 0.85) and ok("idFurniture", 0.80) and ok("emptyFabricated", hi=0.05) and ok("emptyWordFabricated", hi=0.10),
-        chairs=ok("chairsAll", 0.80) and ok("chairsOdd", 0.80) and ok("chairsOver", hi=0.10) and ok("chairsPrinted", 0.70),
+        identify=ok("idOther", 0.85) and ok("idFurniture", 0.80) and ok("emptyFabricated", hi=0.05) and ok("emptyWordFabricated", hi=0.10)
+        and all(ok(f"id_{c}", 0.70) for c in WORDS if c != "nothing"),
+        chairs=ok("chairsAll", 0.80) and ok("chairsOdd", 0.80) and ok("chairsOver", hi=0.10) and ok("chairsPrintedMatch", 0.70) and ok("chairsPrintedWrong", 0.70),
         count=ok("countAll", 0.80) and ok("countOver", hi=0.10),
         merged=ok("mergedAll", 0.85) and ok("mergedYesOnNo", hi=0.10),
         serves=ok("servesAll", 0.85) and ok("servesYesOnNo", hi=0.10) and all(ok(f"servesYesOnNo_{p}", hi=0.15) for p in ("sofa", "bench", "banquette")))
