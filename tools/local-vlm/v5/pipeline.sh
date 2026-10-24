@@ -69,12 +69,14 @@ fi
 
 # ---- the chain ----
 L=$S/llama-linux/bin/llama-server; O=$S/v5/out; mkdir -p $O
+[ -f $S/v6/realtest/meta.json ] || $P -I training/synth_real.py test --out $S/v6/realtest
 A=$REPO/models/local-vlm/qwen3.5-0.8b-merit-a/adapter.gguf
 cd $REPO
 log(){ echo "== $(date -u +%FT%TZ) $*"; }
-train(){ # name base extra...
+train(){ # name base extra...  (V5 data unless --data is given in extra)
   local n=$1 b=$2; shift 2
-  [ -f $S/v5/$n/run.json ] || { log train $n; $P -I training/vlm_lora.py train --base $b --data $S/v5/train,$S/v4data --out $S/v5/$n --curriculum --threads 4 "$@" >> $S/v5/$n.trainout 2>&1 || exit 1; }
+  local data="--data $S/v5/train,$S/v4data"; case " $* " in *" --data "*) data="";; esac
+  [ -f $S/v5/$n/run.json ] || { log train $n; $P -I training/vlm_lora.py train --base $b $data --out $S/v5/$n --curriculum --threads 4 "$@" >> $S/v5/$n.trainout 2>&1 || exit 1; }
   [ -f $S/v5/$n/adapter.gguf ] || $P -I training/vlm_lora.py gguf --run $S/v5/$n --out $S/v5/$n/adapter.gguf || exit 1; }
 bench(){ # out model lora extra...
   local out=$1 model=$2 lora=$3; shift 3
@@ -84,15 +86,28 @@ bench(){ # out model lora extra...
 V5="--v5 $S/v5/test"
 V4R="--seat $S/try/seat12 --rel $S/rel2/blind --syn $S/synth3/blind --seed 5"
 S1="--seat $S/try/seat12 --rel $S/rel2/blind --syn $S/synth3/blind --s1 $S/s1/blind --seed 17"
-while ps aux | grep -q "[v]lm_lora.py train"; do sleep 60; done
+while pgrep -f "^$S/pyenv/bin/python -I training/vlm_lora.py train" >/dev/null; do sleep 60; done
+REAL="--v5 $S/v6/realtest"
+V6="--data $S/v6/scenes,$S/v5/train --replay-tasks ID,NEG,COUNT,CHAIRS,MERGED,SERVES --replay-max 1200"
+[ -f $S/v6/scenes/meta.json ] || $P -I training/synth_real.py scenes --out $S/v6/scenes --scale 1.0 >> $S/v5/chain.log 2>&1
+# 0.8B: V5
 train runB $S/models/hf/Qwen3.5-0.8B --dtype fp32
 bench v5-B qwen3.5-0.8b $S/v5/runB/adapter.gguf $V5
+bench real-B qwen3.5-0.8b $S/v5/runB/adapter.gguf $REAL
+bench real-A qwen3.5-0.8b $A $REAL
 bench v5-base08 qwen3.5-0.8b "" $V5
 bench v5-A qwen3.5-0.8b $A $V5
+bench s1-B qwen3.5-0.8b $S/v5/runB/adapter.gguf $S1
 bench v4r-B qwen3.5-0.8b $S/v5/runB/adapter.gguf $V4R
 bench v4r-A qwen3.5-0.8b $A $V4R
-bench s1-B qwen3.5-0.8b $S/v5/runB/adapter.gguf $S1
 bench dev-B qwen3.5-0.8b $S/v5/runB/adapter.gguf --v5 $S/v5/dev
+# 0.8B: V6 (continues the V5 adapter)
+train runB6 $S/models/hf/Qwen3.5-0.8B --dtype fp32 --init $S/v5/runB $V6
+bench real-B6 qwen3.5-0.8b $S/v5/runB6/adapter.gguf $REAL
+bench v5-B6 qwen3.5-0.8b $S/v5/runB6/adapter.gguf $V5
+bench s1-B6 qwen3.5-0.8b $S/v5/runB6/adapter.gguf $S1
+bench dev-B6 qwen3.5-0.8b $S/v5/runB6/adapter.gguf --v5 $S/v5/dev
+bench real-base08 qwen3.5-0.8b "" $REAL
 # 2B: fp32 if 16 items fit in 12 GB of training memory, else fp32 + gradient checkpointing
 if [ ! -f $S/v5/run2B.args ]; then
   log probe 2B memory
@@ -104,7 +119,12 @@ fi
 train run2B $S/models/hf/Qwen3.5-2B $(cat $S/v5/run2B.args 2>/dev/null || echo --dtype fp32)
 bench v5-2B qwen3.5-2b $S/v5/run2B/adapter.gguf $V5
 bench v5-base2 qwen3.5-2b "" $V5
-bench v4r-2B qwen3.5-2b $S/v5/run2B/adapter.gguf $V4R
 bench s1-2B qwen3.5-2b $S/v5/run2B/adapter.gguf $S1
 bench dev-2B qwen3.5-2b $S/v5/run2B/adapter.gguf --v5 $S/v5/dev
+bench real-2B qwen3.5-2b $S/v5/run2B/adapter.gguf $REAL
+train run2B6 $S/models/hf/Qwen3.5-2B $(cat $S/v5/run2B.args) --init $S/v5/run2B $V6
+bench real-2B6 qwen3.5-2b $S/v5/run2B6/adapter.gguf $REAL
+bench v5-2B6 qwen3.5-2b $S/v5/run2B6/adapter.gguf $V5
+bench s1-2B6 qwen3.5-2b $S/v5/run2B6/adapter.gguf $S1
+bench dev-2B6 qwen3.5-2b $S/v5/run2B6/adapter.gguf --v5 $S/v5/dev
 log CHAIN-DONE
