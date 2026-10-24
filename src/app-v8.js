@@ -326,10 +326,45 @@
       MERIT_STORAGE_NOTICE.unreadable={kept:false,key:null,at,raw};
     }
   }
+  // THE LAST MOMENT BEFORE THE TAB CLOSED. A save is an IndexedDB write the
+  // browser may abort when the page is torn down, so a change made just
+  // before closing could be lost (resilience-records, caught by CI
+  // 2026-10-24). On pagehide/beforeunload the same complete snapshot a save
+  // would write is also put, synchronously, in one localStorage slot; at the
+  // next boot it is used when it differs from the stored record, and any
+  // successful save removes it (the store then holds the newest picture). It
+  // is written only when a save would be allowed, and only whole: a snapshot
+  // that does not fit is not written at all (and an older one is removed),
+  // never written without its images. It carries a fingerprint of the stored
+  // record this tab last read or wrote, and is used only while the store
+  // still holds exactly that record: a store something else has written since
+  // (another tab, a restore, the suites' own injected records) is newer than
+  // this tab's last moment, and the snapshot is dropped.
+  const UNLOAD_JOURNAL_KEY="merit.unloadJournal.v1";
+  let lastStoredRaw=null;
+  const fingerprint=(str)=>{if(typeof str!=="string")return "none";let h=0x811c9dc5;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,0x01000193);}return (h>>>0).toString(16)+":"+str.length;};
+  function readUnloadJournal(){try{const j=JSON.parse(localStorage.getItem(UNLOAD_JOURNAL_KEY)||"null");return j&&typeof j.payload==="string"&&typeof j.base==="string"?j:null;}catch(error){console.warn("The record kept when the tab closed could not be read.",loggableError(error));return null;}}
+  function clearUnloadJournal(){try{localStorage.removeItem(UNLOAD_JOURNAL_KEY);}catch(error){console.warn("Could not remove the record kept when the tab closed.",loggableError(error));}}
+  function writeUnloadJournal(){
+    if(!bootReady||(globalThis.MERIT_SCHEMA_GUARD&&MERIT_SCHEMA_GUARD.readOnly)||(MERIT_STORAGE_NOTICE.unreadable&&!MERIT_STORAGE_NOTICE.unreadable.kept))return;
+    let payload;
+    try{state.events.forEach(e=>RULES().syncEventChairs(e));payload=JSON.stringify(state);}catch(error){console.warn("Nothing kept when the tab closed: the state could not be serialised.",loggableError(error));return;}
+    if(payload===lastStoredRaw){clearUnloadJournal();return;}
+    try{localStorage.setItem(UNLOAD_JOURNAL_KEY,JSON.stringify({base:fingerprint(lastStoredRaw),payload}));}catch(error){console.warn("Nothing kept when the tab closed: it does not fit.",loggableError(error));clearUnloadJournal();}
+  }
+  window.addEventListener("pagehide",writeUnloadJournal);
+  window.addEventListener("beforeunload",writeUnloadJournal);
   async function loadV8Async(){
     let raw=null;
     try{
       raw=await storageProvider.load();
+      lastStoredRaw=raw;
+      const journal=readUnloadJournal();
+      if(journal&&journal.base===fingerprint(raw)&&journal.payload!==raw){
+        try{return{data:parseRoot(journal.payload),recoveredAt:null,fromJournal:true};}
+        catch(error){console.warn("The record kept when the tab closed could not be read; using the stored record.",loggableError(error));}
+      }
+      if(journal)clearUnloadJournal();
       if(raw) return{data:parseRoot(raw),recoveredAt:null};
     }catch(error){
       console.warn("StorageProvider load failed, checking legacy localStorage.",loggableError(error));
@@ -418,7 +453,7 @@
   }
   function persistPayload(payload,show){
     return saveAndReadBack(payload)
-      .then(()=>{if(show)toast(t("toast.savedLocally"),"success");autoSnapshot(payload);storageRecovered();imagesStored();})
+      .then(()=>{if(show)toast(t("toast.savedLocally"),"success");lastStoredRaw=payload;clearUnloadJournal();autoSnapshot(payload);storageRecovered();imagesStored();})
       .catch(error=>{
         if(error&&error.readBack)throw error;
         // Large embedded images are the only realistic reason a save this
@@ -5551,13 +5586,15 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
   // The very first render must wait on the async StorageProvider load --
   // every render() after this one is driven by user interaction and needs
   // nothing more than the in-memory `state` object already being current.
-  loadV8Async().then(({data,recoveredAt})=>{
+  loadV8Async().then(({data,recoveredAt,fromJournal})=>{
     // Never a silent swap: if the primary record could not be read at all
     // and an automatic snapshot stood in for it, the operator is told
     // plainly, including that it may not hold the most recent changes --
     // in a notice that stays until they put it away, not only a toast.
     if(recoveredAt)MERIT_STORAGE_NOTICE.recovered={at:recoveredAt};
     state=data;bootReady=true;render();
+    // the store catches up with what was kept when the tab closed
+    if(fromJournal)saveState();
     if(recoveredAt)toast(t("recovery.bootRecoveredToast",{when:relativeTime(recoveredAt)}),"error",9000);
   }).catch(error=>{
     console.error("Storage load failed entirely; starting from a blank state.",loggableError(error));

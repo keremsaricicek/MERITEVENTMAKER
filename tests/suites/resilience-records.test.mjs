@@ -106,6 +106,10 @@ export default async function run({ page, checks, baseUrl }) {
   checks.equal(reloaded, marked, "SAVE → RELOAD: availability, reason and moment come back exactly");
 
   // --- 4. closing right after a change loses nothing ------------------------
+  // The page is torn down before IndexedDB commits: made deterministic by a
+  // write that never lands ("lost"). It passed by timing alone until CI caught
+  // a run where the reload won (2026-10-24).
+  await setFault(page, "put", "lost");
   await page.evaluate(() => { state.events[0].name = "Changed Then Closed"; touchEvent(state.events[0]); });
   await page.reload();   // no wait for the write: the operator closes the tab
   await page.waitForFunction(() => { try { return Array.isArray(state.events) && state.events.length > 0; } catch { return false; } }, null, { timeout: 20000 });

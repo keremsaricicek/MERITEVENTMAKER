@@ -30,6 +30,12 @@ export async function installStorageFaults(page, initial = {}) {
       // reports success either way.
       if (!window.__faultsBypass && f === "truncate" && typeof value === "string")
         return put.call(this, value.slice(0, Math.floor(value.length * 0.9)), key);
+      // "lost": the write never lands — a save still in flight when the tab
+      // closes (the page is torn down before IndexedDB commits).
+      if (!window.__faultsBypass && f === "lost" && key === "root") {
+        const req = { result: undefined, error: null, onsuccess: null, onerror: null, readyState: "pending", addEventListener() {}, removeEventListener() {} };
+        return req;
+      }
       return put.call(this, value, key);
     };
     const open = IDBFactory.prototype.open;
