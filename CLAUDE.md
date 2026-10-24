@@ -13,6 +13,9 @@ you are about to touch before changing its code.** Current work state:
 - Keep replies to the owner short, simple, non-technical Turkish.
 - Long jobs (training, benchmarks) run as resumable scripts; check them sparingly.
 - Update `.claude/STATE.md` at each milestone so a new session starts from it, not from history.
+- Talk to the owner ONLY in short, simple Turkish (Istanbul time). No English messages to the owner.
+- Background events (monitor/keep-alive/CI/check-in notices): act silently; write to the owner only when something changes for them (a result, a blocker, a finished step). No routine "still running" notes.
+- Before context gets long, keep `.claude/STATE.md` complete so `/compact` loses nothing; after a compact, re-read STATE.md, never re-derive from scratch.
 
 ## Stage and gates
 - BROWSER REVIEW. No EXE/Electron/installer until the owner types **"EXE YAP"** (a one-click `.cmd` launcher for the portable local-VLM package was explicitly asked for, 2026-10-24; still no EXE/installer).

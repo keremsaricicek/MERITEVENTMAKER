@@ -26,6 +26,12 @@ No EXE (one-click `.cmd` launcher allowed). No paid API/GPU/service, no private 
 4. Windows package: `tools/local-vlm/windows/build-package.sh` (+ `MERIT-Baslat.cmd`, `BENIOKU.txt`); sample plan `$S/sample/pkg/ornek-plan.png` (generated, ours); verify offline on Linux (say it is a Linux simulation).
 5. Final: full `npm test`, both offline builds + verify, CI green; short Turkish report with tables (old/new, 0.8B/2B, time, RAM, remaining corrections).
 
+## Token economy decisions (2026-10-24, owner approved)
+- CLAUDE.md short; full text in `.claude/PROJECT-GUIDE.md`. Owner compacts this long chat with `/compact`; nothing may be lost: this file + `training/README.md` + `tools/local-vlm/v5/README.md` carry the state.
+- Rejected after research/measurement: OmniRoute (critical RCE CVE-2026-88062, ToS/MITM risk), Caveman (≈ "be concise", +1.2k tokens/request, worse Turkish clarity), RTK (small gain here, hides output), Graphify (measured on 3 real questions: 25–70x larger answers, pointed at the shadowed pre-v8 `saveState`, skipped `seat-model.js`; uninstalled, nothing added to the repo), auto-fallback to other AIs (security/ToS/quality).
+- Keep-alive: one background Bash loop (~100 min, exits by itself, re-armed on completion; it runs `$S/scripts/ensure.sh` every 2 min). No hourly check-in reminders.
+- Owner: Turkish only, no routine status messages.
+
 ## Done this round (all pushed)
 - Storage: unload snapshot fixes "change just before closing is lost" (resilience-records).
 - Relay: serves the offline build's `assets/` (`MERIT_APP_ROOT`); per-crop answer cache.
