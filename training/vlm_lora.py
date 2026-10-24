@@ -268,17 +268,25 @@ def cmd_train(a):
     if a.grad_ckpt:  # recompute activations in the backward pass: less memory, more time
         model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
     model = get_peft_model(model, cfg)
+    if a.init:  # continue from an earlier run's adapter (same rank and targets)
+        from peft import set_peft_model_state_dict
+        from safetensors.torch import load_file as st_load
+        set_peft_model_state_dict(model, st_load(os.path.join(a.init, "adapter_model.safetensors")))
     trainable = sum(p_.numel() for p_ in model.parameters() if p_.requires_grad)
     # Several data dirs (comma separated): the first in full, each further one
     # (a replay of an earlier run's crops) only for --replay-tasks.
     rows = []
     for k, d in enumerate(a.data.split(",")):
+        part = []
         for l in open(os.path.join(d, "items.jsonl")):
             r = json.loads(l)
             if k and r["task"] not in a.replay_tasks.split(","):
                 continue
             r["image"] = os.path.join(d, r["image"])
-            rows.append(r)
+            part.append(r)
+        if k and a.replay_max and len(part) > a.replay_max:
+            part = random.Random(a.seed + k).sample(part, a.replay_max)
+        rows += part
     if a.limit:
         rows = rows[:a.limit]
     os.makedirs(a.out, exist_ok=True)
@@ -361,7 +369,7 @@ def cmd_train(a):
     model.save_pretrained(a.out)
     json.dump(dict(base=os.path.abspath(a.base), data=os.path.abspath(a.data), items=len(rows), epochs=a.epochs, rank=a.rank, alpha=2 * a.rank,
                    lr=a.lr, accum=a.accum, seed=a.seed, trainable=trainable, targets=f"language_model MLP gate/up/down, {len(targets) // 3} blocks",
-                   curriculum=a.curriculum, dtype=a.dtype, gradCkpt=a.grad_ckpt, replayTasks=a.replay_tasks, resumedAt=start, peakTrainRssMb=round(peak()),
+                   curriculum=a.curriculum, dtype=a.dtype, init=os.path.abspath(a.init) if a.init else None, replayMax=a.replay_max, gradCkpt=a.grad_ckpt, replayTasks=a.replay_tasks, resumedAt=start, peakTrainRssMb=round(peak()),
                    seconds=round(time.time() - t0), finished=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())),
               open(os.path.join(a.out, "run.json"), "w"), indent=1)
     say(f"done in {(time.time() - t0) / 60:.1f} min")
@@ -441,6 +449,8 @@ def main():
     t.add_argument("--save-every", type=int, default=25)
     t.add_argument("--dtype", choices=["bf16", "fp32"], default="bf16", help="weights and compute: bf16 (autocast) or fp32")
     t.add_argument("--grad-ckpt", action="store_true", help="gradient checkpointing (for a model whose fp32 training would not fit in memory)")
+    t.add_argument("--init", default="", help="start from this run's adapter (fine-tune) instead of a fresh LoRA")
+    t.add_argument("--replay-max", type=int, default=0, help="at most this many items from each 2nd and later data dir (0: all)")
     t.add_argument("--curriculum", action="store_true", help="easy to hard by the items' level (soft)")
     t.add_argument("--replay-tasks", default="ID,NEG,COUNT,MERGED", help="tasks kept from the 2nd and later data dirs")
     g = sub.add_parser("gguf")

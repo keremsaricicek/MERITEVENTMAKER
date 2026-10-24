@@ -779,3 +779,48 @@ items.jsonl `db953c61…65a3`; V4-style rebuilt: seat (synth_relations
 `--furniture --split blind --count 12`) `fdce846f…c33d`, rel2 (`--split blind
 --count 40`) `5239ce13…51c0`, synth3 (synth_levels levels 1–7 `--count 12
 --split blind`) `de145eb8…b1e`; S1 `58a6896f…392d`.
+
+## 2026-10-24 — V6: the two real plans' own symbols (written before any V6 adapter exists)
+
+**Why.** The owner's plans come in the two drawing styles of the two real plans
+here (owner, 2026-10-24: there will hardly be another symbol set). Run A's
+real-plan identify was 0.75 against 0.93 on generated plans: the gap is the
+drawing. V6 teaches the drawing itself.
+
+**Data (`training/synth_real.py scenes`).** Every annotated symbol in the TRAIN
+part of each plan (object centre x < 0.6 of the plan's width) is cut out with
+its own pixels (paper made transparent) and composed into new scenes: real
+square tables in rows or columns touching or apart, with the real armchairs
+(merged yes/no), the real armchairs and crescent chairs counted around real
+square and round tables (chairs 1–8), the real banquette against or away from
+a column of real tables (serves), each real symbol alone at the centre with
+real neighbours (identify: table, chair, banquette), and real empty paper —
+half of it with a real printed word from the plan — for "nothing" (never a
+crop of the bar counter, the stage, the loca strip, the T podium or an
+entrance label: they are drawn but not annotated, so they are kept out by
+hand-read boxes, `AVOID`). Generation-5 photometric levels on top. Labels
+checked on a contact sheet (the first cut let the bar counter into "nothing";
+fixed before this was written).
+
+**Held-out real test (`synth_real.py test`, frozen):** every object in the TEST
+part of both plans (x ≥ 0.6 W, never cut, never composed, never trained on):
+236 items — identify (Golden: 20 tables, 47 chairs, 2 banquettes, 1 stage;
+ORNEK: 70 numbered tables), 32 empty crops, 20 Golden chair counts, merged (6
+touching groups, 38 separate pairs). Both plans were looked at in earlier
+evaluations, so this is HELD OUT FROM TRAINING, not blind to a person; it is
+the only real-plan measure there is, and it is reported as exactly that.
+sha256 of `sha256sum items.jsonl meta.json img/*.png`: `0521f2b0…42f4a`.
+
+**Training.** V6 continues each model's V5 adapter (`vlm_lora.py train --init`):
+the V6 scenes plus a replay of 1,200 V5 training crops (every question), one
+epoch, fp32, curriculum. 0.8B first; the 2B gets the same two stages (V5,
+then V6) on the same data.
+
+**Bars on the held-out real test** (the V5 bars where the test has the items):
+identify ≥ 0.85 pooled and every class with n ≥ 10 ≥ 0.70; empty crops
+fabricated ≤ 0.05; chairs exact ≥ 0.80, over ≤ 0.10; merged ≥ 0.85 and "yes" on
+a separate pair ≤ 0.10. AND no question that passed on the V5 test or S1 may
+fall below its bar there (regression). Real serves has no item (the test
+part's two banquettes are identify items only): serves stays a generated-plan
+result. Run A and the V5 adapters are scored on the same real test first, so
+the before/after is on the same 236 items.
