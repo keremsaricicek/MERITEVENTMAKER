@@ -1,0 +1,20 @@
+MERIT Event Maker — internetsiz, kurulumsuz paket (Windows 10/11, 64 bit)
+
+1. Indirdiginiz ZIP dosyasina sag tiklayin -> "Tumunu ayikla".
+2. Acilan klasorde "MERIT-Baslat.cmd" dosyasina cift tiklayin.
+   (Windows "korumali" uyarisi verirse: "Ek bilgi" -> "Yine de calistir".)
+3. Siyah pencerede "Model hazir" ve "Uygulama hazir" yazinca tarayici kendiliginden acilir.
+4. Yeni etkinlik -> "Plan yukle" -> "sample" klasorundeki ornek-plan.png dosyasini secin -> "Analiz et".
+5. Analiz bitince yerel ikinci bakis kendiliginden calisir.
+
+Modelin calistigini nereden anlarsiniz?
+- Siyah pencerede "Model hazir" yazar.
+- Inceleme ekranindaki "Ikinci bakis" panelinde modelin adi, sordugu yerlerin sayisi
+  ve her yer icin "uyusuyor / farkli / emin degil" sonucu gorunur.
+- Model dosyasi eksik ya da degismisse panel bunu acikca soyler ve hicbir soru sormaz.
+
+Hicbir sey internete gitmez; her sey bu bilgisayarda (127.0.0.1) calisir.
+Kapatmak icin siyah pencereyi kapatin.
+
+Gereken: 64 bit Windows 10/11, en az 8 GB RAM, ~3 GB bos disk. Ekran karti gerekmez.
+Bilinen sinirlar: README-PAKET.txt dosyasinda.

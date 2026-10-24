@@ -1,0 +1,788 @@
+{
+ "ranAt": "2026-09-01T10:36:43.542Z",
+ "referenceLibrary": {
+  "tables": 46,
+  "chairs": 113,
+  "source": "human-verified annotated boxes on the ORIGINAL Golden Plan",
+  "caveat": "one venue; the encoder trained on Golden objects, which inflates the true-positive side but not the false-positive side"
+ },
+ "variants": [
+  {
+   "variant": "ORIGINAL",
+   "tp": 46,
+   "fp": 4,
+   "fusionRules": {
+    "bottom20pct+seatless": {
+     "bar": 0.754,
+     "falseRemoved": 2,
+     "trueLost": 0
+    },
+    "bottom30pct+seatless": {
+     "bar": 0.799,
+     "falseRemoved": 2,
+     "trueLost": 0
+    },
+    "bottom40pct+seatless": {
+     "bar": 0.837,
+     "falseRemoved": 2,
+     "trueLost": 0
+    },
+    "below0.65+seatless": {
+     "bar": 0.65,
+     "falseRemoved": 2,
+     "trueLost": 0
+    },
+    "below0.7+seatless": {
+     "bar": 0.7,
+     "falseRemoved": 2,
+     "trueLost": 0
+    },
+    "below0.75+seatless": {
+     "bar": 0.75,
+     "falseRemoved": 2,
+     "trueLost": 0
+    }
+   },
+   "tpSimilarity": {
+    "n": 46,
+    "min": 0.6356439927910867,
+    "p10": 0.726085062283623,
+    "median": 0.8613073250595799,
+    "p90": 0.9289609240878135,
+    "max": 0.9730577850332728,
+    "mean": 0.8491157448796159
+   },
+   "fpSimilarity": {
+    "n": 4,
+    "min": 0.5192345505960655,
+    "p10": 0.5192345505960655,
+    "median": 0.6210485944853382,
+    "p90": 0.6256837316841543,
+    "max": 0.8857225470870436,
+    "mean": 0.6629223559631504
+   },
+   "fpNearestChairSimilarity": {
+    "n": 4,
+    "min": 0.42028217647865096,
+    "p10": 0.42028217647865096,
+    "median": 0.6477970887492605,
+    "p90": 0.6893865322452242,
+    "max": 0.6900312541646627,
+    "mean": 0.6118742629094496
+   },
+   "falsePositivesAboveTruePercentile10": 1,
+   "separable": 0.25,
+   "runtimeProxy": {
+    "seated": {
+     "n": 48,
+     "min": 0.6210485944853382,
+     "p10": 0.7246305396714012,
+     "median": 0.8613073250595799,
+     "p90": 0.9289609240878135,
+     "max": 0.9730577850332728,
+     "mean": 0.845126987625723
+    },
+    "unseated": {
+     "n": 2,
+     "min": 0.5192345505960655,
+     "p10": 0.5192345505960655,
+     "median": 0.5192345505960655,
+     "p90": 0.5192345505960655,
+     "max": 0.6256837316841543,
+     "mean": 0.5724591411401099
+    },
+    "medianGap": 0.34207277446351436
+   },
+   "shippedSecondOpinion": {
+    "referenceTier": "provisional",
+    "references": 117,
+    "tiers": {
+     "provisional": 117
+    },
+    "classes": [
+     "table",
+     "venue:chair"
+    ],
+    "graded": {
+     "tp": 46,
+     "fp": 4
+    },
+    "weak": {
+     "tp": 13,
+     "fp": 4
+    },
+    "weakLift": 3.54,
+    "disagree": {
+     "tp": 1,
+     "fp": 2
+    }
+   }
+  },
+  {
+   "variant": "hue-shift",
+   "tp": 38,
+   "fp": 52,
+   "fusionRules": {
+    "bottom20pct+seatless": {
+     "bar": 0.525,
+     "falseRemoved": 1,
+     "trueLost": 0
+    },
+    "bottom30pct+seatless": {
+     "bar": 0.567,
+     "falseRemoved": 1,
+     "trueLost": 0
+    },
+    "bottom40pct+seatless": {
+     "bar": 0.616,
+     "falseRemoved": 2,
+     "trueLost": 0
+    },
+    "below0.65+seatless": {
+     "bar": 0.65,
+     "falseRemoved": 2,
+     "trueLost": 0
+    },
+    "below0.7+seatless": {
+     "bar": 0.7,
+     "falseRemoved": 3,
+     "trueLost": 0
+    },
+    "below0.75+seatless": {
+     "bar": 0.75,
+     "falseRemoved": 3,
+     "trueLost": 1
+    }
+   },
+   "tpSimilarity": {
+    "n": 38,
+    "min": 0.37954207072095447,
+    "p10": 0.7483281798725576,
+    "median": 0.8481647585068801,
+    "p90": 0.9369209693570815,
+    "max": 0.9739598717577618,
+    "mean": 0.8380542631702792
+   },
+   "fpSimilarity": {
+    "n": 52,
+    "min": 0.3508250784756066,
+    "p10": 0.3837186351456658,
+    "median": 0.5665877857514781,
+    "p90": 0.723421155523208,
+    "max": 0.7976592267670278,
+    "mean": 0.5701525644428311
+   },
+   "fpNearestChairSimilarity": {
+    "n": 52,
+    "min": 0.4501210118021275,
+    "p10": 0.5654747243265256,
+    "median": 0.6732105137428201,
+    "p90": 0.7351807280172795,
+    "max": 0.817150314290215,
+    "mean": 0.6649436362735816
+   },
+   "falsePositivesAboveTruePercentile10": 4,
+   "separable": 0.07692307692307693,
+   "runtimeProxy": {
+    "seated": {
+     "n": 69,
+     "min": 0.3508250784756066,
+     "p10": 0.3837186351456658,
+     "median": 0.6250708331480251,
+     "p90": 0.8481647585068801,
+     "max": 0.9413561653855814,
+     "mean": 0.639665673300008
+    },
+    "unseated": {
+     "n": 21,
+     "min": 0.48785922115240155,
+     "p10": 0.6831382537205765,
+     "median": 0.8661634860968973,
+     "p90": 0.9369209693570815,
+     "max": 0.9739598717577618,
+     "mean": 0.8265268520855835
+    },
+    "medianGap": -0.24109265294887217
+   },
+   "shippedSecondOpinion": {
+    "referenceTier": "provisional",
+    "references": 93,
+    "tiers": {
+     "provisional": 93
+    },
+    "classes": [
+     "table",
+     "venue:chair"
+    ],
+    "graded": {
+     "tp": 38,
+     "fp": 52
+    },
+    "weak": {
+     "tp": 12,
+     "fp": 19
+    },
+    "weakLift": 1.16,
+    "disagree": {
+     "tp": 0,
+     "fp": 6
+    }
+   }
+  },
+  {
+   "variant": "contrast-high",
+   "tp": 37,
+   "fp": 49,
+   "fusionRules": {
+    "bottom20pct+seatless": {
+     "bar": 0.473,
+     "falseRemoved": 0,
+     "trueLost": 0
+    },
+    "bottom30pct+seatless": {
+     "bar": 0.522,
+     "falseRemoved": 2,
+     "trueLost": 0
+    },
+    "bottom40pct+seatless": {
+     "bar": 0.579,
+     "falseRemoved": 3,
+     "trueLost": 0
+    },
+    "below0.65+seatless": {
+     "bar": 0.65,
+     "falseRemoved": 4,
+     "trueLost": 0
+    },
+    "below0.7+seatless": {
+     "bar": 0.7,
+     "falseRemoved": 5,
+     "trueLost": 1
+    },
+    "below0.75+seatless": {
+     "bar": 0.75,
+     "falseRemoved": 5,
+     "trueLost": 3
+    }
+   },
+   "tpSimilarity": {
+    "n": 37,
+    "min": 0.660753560282902,
+    "p10": 0.694984039114756,
+    "median": 0.8125602103835273,
+    "p90": 0.8979490241200927,
+    "max": 0.933109629851765,
+    "mean": 0.8079670308198303
+   },
+   "fpSimilarity": {
+    "n": 49,
+    "min": 0.30170401986091644,
+    "p10": 0.37160909769256095,
+    "median": 0.5219411649199314,
+    "p90": 0.6684843254098176,
+    "max": 0.7358140616321083,
+    "mean": 0.5250348773599365
+   },
+   "fpNearestChairSimilarity": {
+    "n": 49,
+    "min": 0.3816324585006382,
+    "p10": 0.5450677513095683,
+    "median": 0.6471950841939883,
+    "p90": 0.7560226094720273,
+    "max": 0.8484657108976222,
+    "mean": 0.6453353225767047
+   },
+   "falsePositivesAboveTruePercentile10": 4,
+   "separable": 0.08163265306122448,
+   "runtimeProxy": {
+    "seated": {
+     "n": 64,
+     "min": 0.30170401986091644,
+     "p10": 0.41733037058527445,
+     "median": 0.5811261432044237,
+     "p90": 0.7972093780100574,
+     "max": 0.933109629851765,
+     "mean": 0.6011737856360112
+    },
+    "unseated": {
+     "n": 22,
+     "min": 0.5167436984238263,
+     "p10": 0.5546786057829054,
+     "median": 0.8272354462855267,
+     "p90": 0.8899828020127409,
+     "max": 0.9137628602914724,
+     "mean": 0.7793803113757228
+    },
+    "medianGap": -0.24610930308110301
+   },
+   "shippedSecondOpinion": {
+    "referenceTier": "provisional",
+    "references": 104,
+    "tiers": {
+     "provisional": 104
+    },
+    "classes": [
+     "table",
+     "venue:chair"
+    ],
+    "graded": {
+     "tp": 37,
+     "fp": 49
+    },
+    "weak": {
+     "tp": 8,
+     "fp": 21
+    },
+    "weakLift": 1.98,
+    "disagree": {
+     "tp": 0,
+     "fp": 2
+    }
+   }
+  },
+  {
+   "variant": "bright-up",
+   "tp": 39,
+   "fp": 48,
+   "fusionRules": {
+    "bottom20pct+seatless": {
+     "bar": 0.475,
+     "falseRemoved": 0,
+     "trueLost": 0
+    },
+    "bottom30pct+seatless": {
+     "bar": 0.543,
+     "falseRemoved": 2,
+     "trueLost": 0
+    },
+    "bottom40pct+seatless": {
+     "bar": 0.568,
+     "falseRemoved": 3,
+     "trueLost": 1
+    },
+    "below0.65+seatless": {
+     "bar": 0.65,
+     "falseRemoved": 4,
+     "trueLost": 1
+    },
+    "below0.7+seatless": {
+     "bar": 0.7,
+     "falseRemoved": 4,
+     "trueLost": 2
+    },
+    "below0.75+seatless": {
+     "bar": 0.75,
+     "falseRemoved": 4,
+     "trueLost": 4
+    }
+   },
+   "tpSimilarity": {
+    "n": 39,
+    "min": 0.5552134589831269,
+    "p10": 0.693628416007531,
+    "median": 0.8208272635356171,
+    "p90": 0.8973773858171218,
+    "max": 0.9338630749504638,
+    "mean": 0.8020432325782884
+   },
+   "fpSimilarity": {
+    "n": 48,
+    "min": 0.27809094567780224,
+    "p10": 0.3748313595918257,
+    "median": 0.5151136234187532,
+    "p90": 0.665955002477597,
+    "max": 0.7330585934133124,
+    "mean": 0.5232476821626019
+   },
+   "fpNearestChairSimilarity": {
+    "n": 48,
+    "min": 0.37709307647964857,
+    "p10": 0.5396121079840469,
+    "median": 0.6420039662220378,
+    "p90": 0.7545122292588988,
+    "max": 0.8466142268609466,
+    "mean": 0.6432897702706535
+   },
+   "falsePositivesAboveTruePercentile10": 4,
+   "separable": 0.08333333333333333,
+   "runtimeProxy": {
+    "seated": {
+     "n": 65,
+     "min": 0.27809094567780224,
+     "p10": 0.4185285138211023,
+     "median": 0.586276374962926,
+     "p90": 0.7945705852305621,
+     "max": 0.9338630749504638,
+     "mean": 0.6062513706540797
+    },
+    "unseated": {
+     "n": 22,
+     "min": 0.5151136234187532,
+     "p10": 0.5525490471568001,
+     "median": 0.8255066607591068,
+     "p90": 0.891166181239766,
+     "max": 0.9004636432414371,
+     "mean": 0.7722379873564982
+    },
+    "medianGap": -0.23923028579618089
+   },
+   "shippedSecondOpinion": {
+    "referenceTier": "provisional",
+    "references": 107,
+    "tiers": {
+     "provisional": 107
+    },
+    "classes": [
+     "table",
+     "venue:chair"
+    ],
+    "graded": {
+     "tp": 39,
+     "fp": 48
+    },
+    "weak": {
+     "tp": 8,
+     "fp": 22
+    },
+    "weakLift": 2.23,
+    "disagree": {
+     "tp": 0,
+     "fp": 4
+    }
+   }
+  },
+  {
+   "variant": "jpeg-q20",
+   "tp": 45,
+   "fp": 26,
+   "fusionRules": {
+    "bottom20pct+seatless": {
+     "bar": 0.62,
+     "falseRemoved": 3,
+     "trueLost": 4
+    },
+    "bottom30pct+seatless": {
+     "bar": 0.649,
+     "falseRemoved": 7,
+     "trueLost": 5
+    },
+    "bottom40pct+seatless": {
+     "bar": 0.678,
+     "falseRemoved": 8,
+     "trueLost": 8
+    },
+    "below0.65+seatless": {
+     "bar": 0.65,
+     "falseRemoved": 7,
+     "trueLost": 5
+    },
+    "below0.7+seatless": {
+     "bar": 0.7,
+     "falseRemoved": 11,
+     "trueLost": 9
+    },
+    "below0.75+seatless": {
+     "bar": 0.75,
+     "falseRemoved": 12,
+     "trueLost": 10
+    }
+   },
+   "tpSimilarity": {
+    "n": 45,
+    "min": 0.4696422876852857,
+    "p10": 0.5458863977629059,
+    "median": 0.7030642033828348,
+    "p90": 0.8480414888330393,
+    "max": 0.9424655777082181,
+    "mean": 0.7175248801901037
+   },
+   "fpSimilarity": {
+    "n": 26,
+    "min": 0.5642803587426237,
+    "p10": 0.5758049704784303,
+    "median": 0.6823241148534807,
+    "p90": 0.786869172677434,
+    "max": 0.8360142850234571,
+    "mean": 0.6889735080709312
+   },
+   "fpNearestChairSimilarity": {
+    "n": 26,
+    "min": 0.31689006047875806,
+    "p10": 0.3837953164216346,
+    "median": 0.5224653972527434,
+    "p90": 0.6929641757106128,
+    "max": 0.7351676732861888,
+    "mean": 0.5504542282089404
+   },
+   "falsePositivesAboveTruePercentile10": 26,
+   "separable": 1,
+   "runtimeProxy": {
+    "seated": {
+     "n": 39,
+     "min": 0.5391248187113956,
+     "p10": 0.5721819530586567,
+     "median": 0.7145005128168425,
+     "p90": 0.8963184274620308,
+     "max": 0.9424655777082181,
+     "mean": 0.7285888488260607
+    },
+    "unseated": {
+     "n": 32,
+     "min": 0.4696422876852857,
+     "p10": 0.5715555713867714,
+     "median": 0.6622524157155142,
+     "p90": 0.7865111629200539,
+     "max": 0.8360142850234571,
+     "mean": 0.6808426785682036
+    },
+    "medianGap": 0.05224809710132827
+   },
+   "shippedSecondOpinion": {
+    "referenceTier": "provisional",
+    "references": 74,
+    "tiers": {
+     "provisional": 74
+    },
+    "classes": [
+     "table",
+     "venue:chair"
+    ],
+    "graded": {
+     "tp": 45,
+     "fp": 26
+    },
+    "weak": {
+     "tp": 7,
+     "fp": 17
+    },
+    "weakLift": 4.2,
+    "disagree": {
+     "tp": 12,
+     "fp": 3
+    }
+   }
+  },
+  {
+   "variant": "blur",
+   "tp": 37,
+   "fp": 32,
+   "fusionRules": {
+    "bottom20pct+seatless": {
+     "bar": 0.603,
+     "falseRemoved": 0,
+     "trueLost": 1
+    },
+    "bottom30pct+seatless": {
+     "bar": 0.63,
+     "falseRemoved": 1,
+     "trueLost": 1
+    },
+    "bottom40pct+seatless": {
+     "bar": 0.679,
+     "falseRemoved": 1,
+     "trueLost": 1
+    },
+    "below0.65+seatless": {
+     "bar": 0.65,
+     "falseRemoved": 1,
+     "trueLost": 1
+    },
+    "below0.7+seatless": {
+     "bar": 0.7,
+     "falseRemoved": 1,
+     "trueLost": 1
+    },
+    "below0.75+seatless": {
+     "bar": 0.75,
+     "falseRemoved": 1,
+     "trueLost": 3
+    }
+   },
+   "tpSimilarity": {
+    "n": 37,
+    "min": 0.6027265789156422,
+    "p10": 0.7062474402046185,
+    "median": 0.820649517060744,
+    "p90": 0.8644297604114594,
+    "max": 0.8939326467923151,
+    "mean": 0.8014559722643317
+   },
+   "fpSimilarity": {
+    "n": 32,
+    "min": 0.3720079855756019,
+    "p10": 0.4730286198481365,
+    "median": 0.6159395983441792,
+    "p90": 0.7210576832737038,
+    "max": 0.8460260588410546,
+    "mean": 0.6074391787609651
+   },
+   "fpNearestChairSimilarity": {
+    "n": 32,
+    "min": 0.5308434893844397,
+    "p10": 0.5724383801876975,
+    "median": 0.6784689266268377,
+    "p90": 0.7598876037398797,
+    "max": 0.8248895470881218,
+    "mean": 0.6786980037464067
+   },
+   "falsePositivesAboveTruePercentile10": 5,
+   "separable": 0.15625,
+   "runtimeProxy": {
+    "seated": {
+     "n": 55,
+     "min": 0.3720079855756019,
+     "p10": 0.49036730081055613,
+     "median": 0.7022048989882297,
+     "p90": 0.8502105023338326,
+     "max": 0.8939326467923151,
+     "mean": 0.6923534445010272
+    },
+    "unseated": {
+     "n": 14,
+     "min": 0.6027265789156422,
+     "p10": 0.6302197438711188,
+     "median": 0.8193190136910118,
+     "p90": 0.8644297604114594,
+     "max": 0.891181818537561,
+     "mean": 0.7866060890410468
+    },
+    "medianGap": -0.1171141147027821
+   },
+   "shippedSecondOpinion": {
+    "referenceTier": "provisional",
+    "references": 90,
+    "tiers": {
+     "provisional": 90
+    },
+    "classes": [
+     "table",
+     "venue:chair"
+    ],
+    "graded": {
+     "tp": 37,
+     "fp": 32
+    },
+    "weak": {
+     "tp": 9,
+     "fp": 14
+    },
+    "weakLift": 1.8,
+    "disagree": {
+     "tp": 0,
+     "fp": 5
+    }
+   }
+  },
+  {
+   "variant": "downscale-70",
+   "tp": 41,
+   "fp": 4,
+   "fusionRules": {
+    "bottom20pct+seatless": {
+     "bar": 0.724,
+     "falseRemoved": 1,
+     "trueLost": 0
+    },
+    "bottom30pct+seatless": {
+     "bar": 0.741,
+     "falseRemoved": 1,
+     "trueLost": 0
+    },
+    "bottom40pct+seatless": {
+     "bar": 0.79,
+     "falseRemoved": 1,
+     "trueLost": 0
+    },
+    "below0.65+seatless": {
+     "bar": 0.65,
+     "falseRemoved": 0,
+     "trueLost": 0
+    },
+    "below0.7+seatless": {
+     "bar": 0.7,
+     "falseRemoved": 1,
+     "trueLost": 0
+    },
+    "below0.75+seatless": {
+     "bar": 0.75,
+     "falseRemoved": 1,
+     "trueLost": 0
+    }
+   },
+   "tpSimilarity": {
+    "n": 41,
+    "min": 0.6282961700203636,
+    "p10": 0.7099005486549201,
+    "median": 0.8467653291497735,
+    "p90": 0.9145382868951623,
+    "max": 0.9289790456023955,
+    "mean": 0.8176544169481498
+   },
+   "fpSimilarity": {
+    "n": 4,
+    "min": 0.5417312517341151,
+    "p10": 0.5417312517341151,
+    "median": 0.6659261686002345,
+    "p90": 0.6925935308006461,
+    "max": 0.8438760996854793,
+    "mean": 0.6860317627051187
+   },
+   "fpNearestChairSimilarity": {
+    "n": 4,
+    "min": 0.41389193609142877,
+    "p10": 0.41389193609142877,
+    "median": 0.6795630684958243,
+    "p90": 0.6884799986066931,
+    "max": 0.7349794990578298,
+    "mean": 0.629228625562944
+   },
+   "falsePositivesAboveTruePercentile10": 1,
+   "separable": 0.25,
+   "runtimeProxy": {
+    "seated": {
+     "n": 44,
+     "min": 0.5417312517341151,
+     "p10": 0.6925935308006461,
+     "median": 0.8438760996854793,
+     "p90": 0.9000445068369899,
+     "max": 0.9289790456023955,
+     "mean": 0.8091370903885086
+    },
+    "unseated": {
+     "n": 1,
+     "min": 0.6659261686002345,
+     "p10": 0.6659261686002345,
+     "median": 0.6659261686002345,
+     "p90": 0.6659261686002345,
+     "max": 0.6659261686002345,
+     "mean": 0.6659261686002345
+    },
+    "medianGap": 0.17794993108524482
+   },
+   "shippedSecondOpinion": {
+    "referenceTier": "provisional",
+    "references": 185,
+    "tiers": {
+     "provisional": 185
+    },
+    "classes": [
+     "table",
+     "venue:chair"
+    ],
+    "graded": {
+     "tp": 41,
+     "fp": 4
+    },
+    "weak": {
+     "tp": 11,
+     "fp": 4
+    },
+    "weakLift": 3.73,
+    "disagree": {
+     "tp": 3,
+     "fp": 1
+    }
+   }
+  }
+ ]
+}

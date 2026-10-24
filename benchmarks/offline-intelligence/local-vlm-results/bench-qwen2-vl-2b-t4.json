@@ -1,0 +1,1135 @@
+{
+ "ranAt": "2026-10-18T02:40:18Z",
+ "crops": 136,
+ "seed": 5,
+ "prompts": {
+  "T1": "This is a small crop of an event venue floor plan drawing, seen from above. What single object is at the centre of the image? Answer with exactly one word from this list: table, chair, sofa, bench, banquette, column, stage, bar, nothing.",
+  "T2": "This is a crop of an event venue floor plan drawing, seen from above. How many tables are in the image? Count only tables, not chairs, sofas or benches. Answer with a number only."
+ },
+ "results": [
+  {
+   "summary": {
+    "model": "qwen2-vl-2b",
+    "threads": 4,
+    "loadSeconds": 2.5,
+    "peakRssMb": 2998,
+    "t1Generated": 0.15,
+    "t1Furniture": 0.222,
+    "t1Real": 0.062,
+    "fabrication": 0.0,
+    "unparsed": 0,
+    "t2Exact": 0.083,
+    "t2OverCount": 0.917,
+    "medianSeconds": 25.78,
+    "p90Seconds": 32.13,
+    "perClass": {
+     "generated-negative:nothing": "20/20",
+     "generated:banquette": "1/12",
+     "generated:bench": "0/12",
+     "generated:chair": "0/12",
+     "generated:sofa": "7/12",
+     "generated:table": "1/12",
+     "golden:banquette": "0/3",
+     "golden:chair": "0/8",
+     "golden:stage": "1/1",
+     "golden:table": "1/12",
+     "ornek:table": "0/8"
+    }
+   },
+   "rows": [
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.411
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.966
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "sofa",
+     "parsed": "sofa",
+     "seconds": 26.21
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "sofa",
+     "parsed": "sofa",
+     "seconds": 25.489
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.059
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "sofa",
+     "parsed": "sofa",
+     "seconds": 24.98
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.108
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "sofa",
+     "parsed": "sofa",
+     "seconds": 25.287
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.882
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "sofa",
+     "parsed": "sofa",
+     "seconds": 25.397
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "sofa",
+     "parsed": "sofa",
+     "seconds": 25.365
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "sofa",
+     "parsed": "sofa",
+     "seconds": 25.381
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.438
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.717
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.417
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.104
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.197
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.33
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "sofa",
+     "parsed": "sofa",
+     "seconds": 25.914
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.375
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 24.939
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.208
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.832
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "sofa",
+     "parsed": "sofa",
+     "seconds": 25.82
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.401
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.644
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.02
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.316
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.555
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.621
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "banquette",
+     "parsed": "banquette",
+     "seconds": 26.084
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.319
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.361
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.798
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.84
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.909
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.571
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.561
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "sofa",
+     "parsed": "sofa",
+     "seconds": 25.874
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.01
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.376
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.539
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.304
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.762
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.392
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "table",
+     "parsed": "table",
+     "seconds": 25.364
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.52
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.097
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.039
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.415
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.328
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.954
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.602
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.766
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.29
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.671
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.514
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "banquette",
+     "parsed": "banquette",
+     "seconds": 26.196
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.123
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.57
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.383
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.743
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.799
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.817
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.99
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.965
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 27.308
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.434
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.095
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.702
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.087
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.065
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.683
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.871
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 27.027
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.966
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.475
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.517
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.874
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.349
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "4",
+     "parsed": 4,
+     "seconds": 32.533
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2",
+     "parsed": 2,
+     "seconds": 32.882
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3",
+     "parsed": 3,
+     "seconds": 31.688
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3",
+     "parsed": 3,
+     "seconds": 32.456
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "5",
+     "parsed": 5,
+     "seconds": 32.267
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3",
+     "parsed": 3,
+     "seconds": 33.086
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "10",
+     "parsed": 10,
+     "seconds": 33.103
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "4",
+     "parsed": 4,
+     "seconds": 32.71
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "4",
+     "parsed": 4,
+     "seconds": 33.089
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2",
+     "parsed": 2,
+     "seconds": 32.214
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "5",
+     "parsed": 5,
+     "seconds": 31.513
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3",
+     "parsed": 3,
+     "seconds": 32.577
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2",
+     "parsed": 2,
+     "seconds": 32.135
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "4",
+     "parsed": 4,
+     "seconds": 31.844
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "1",
+     "parsed": 1,
+     "seconds": 32.134
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2",
+     "parsed": 2,
+     "seconds": 31.477
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3",
+     "parsed": 3,
+     "seconds": 31.565
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3",
+     "parsed": 3,
+     "seconds": 32.088
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "6",
+     "parsed": 6,
+     "seconds": 31.926
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3",
+     "parsed": 3,
+     "seconds": 32.277
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2",
+     "parsed": 2,
+     "seconds": 32.178
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3",
+     "parsed": 3,
+     "seconds": 32.348
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2",
+     "parsed": 2,
+     "seconds": 31.627
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 3,
+     "answer": "3",
+     "parsed": 3,
+     "seconds": 31.514
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.491
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.431
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.65
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.714
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.329
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.108
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.015
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.005
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 24.937
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "table",
+     "parsed": "table",
+     "seconds": 25.457
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.045
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.155
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.622
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.376
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.257
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.443
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.613
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "table",
+     "parsed": "table",
+     "seconds": 25.917
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.591
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.72
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "banquette",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.583
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "banquette",
+     "answer": "sofa",
+     "parsed": "sofa",
+     "seconds": 26.545
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "banquette",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.894
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "stage",
+     "answer": "stage",
+     "parsed": "stage",
+     "seconds": 25.767
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 26.567
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.801
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 27.029
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.947
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.601
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.721
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.965
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 25.403
+    }
+   ],
+   "files": [
+    "Qwen2-VL-2B-Instruct-Q4_K_M.gguf",
+    "mmproj-Qwen2-VL-2B-Instruct-Q8_0.gguf"
+   ]
+  }
+ ]
+}

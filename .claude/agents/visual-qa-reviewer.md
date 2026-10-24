@@ -14,6 +14,14 @@ Before starting, read `.claude/skills/merit-ui-constitution/SKILL.md`
 `.claude/skills/webapp-testing/SKILL.md` (how to drive the app with
 Playwright in this environment).
 
+Also read `.claude/skills/merit-ui-quality-gates/SKILL.md`. You own the
+evidence for UI quality, and that evidence is **not only screenshots**: the
+gates require three viewports in **both languages**, the four states per
+screen (empty / loading / error / populated), overflow checked with Turkish
+strings, and **counted interactions** for the core operator workflows. The
+interaction count is the part usually skipped and the part that separates a
+verification from a gallery.
+
 ## How to run the app
 
 This is a static, backend-free app: `python3 -m http.server 8000` from the

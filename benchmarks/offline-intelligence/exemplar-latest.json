@@ -1,0 +1,85 @@
+{
+ "measuredOn": "2026-10-11T11:23:23.017Z",
+ "note": "exemplars are CORRECT detections, as a person would confirm them; suggestions are scored against the human annotation",
+ "plans": {
+  "golden": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 47,
+    "missedBefore": 0,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": null,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1258
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": null,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 4245
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 109,
+    "missedBefore": 5,
+    "byK": {
+     "1": {
+      "suggestions": 1,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 1,
+      "phantomsPer100Objects": 0.88,
+      "duplicates": 0,
+      "ms": 1054
+     },
+     "3": {
+      "suggestions": 1,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 1,
+      "phantomsPer100Objects": 0.88,
+      "duplicates": 0,
+      "ms": 3309
+     }
+    }
+   }
+  },
+  "ornek": {
+   "table": {
+    "groundTruth": 166,
+    "detected": 163,
+    "missedBefore": 4,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 6202
+     },
+     "3": {
+      "suggestions": 15,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 15,
+      "phantomsPer100Objects": 9.04,
+      "duplicates": 0,
+      "ms": 17818
+     }
+    }
+   }
+  }
+ }
+}

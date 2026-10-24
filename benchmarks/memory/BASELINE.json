@@ -1,0 +1,1487 @@
+{
+ "ranAt": "2026-10-18T14:25:44.072Z",
+ "source": {
+  "digest": "15026daf126e06ca1902259749e3bddacfa7419d07e3eb1ad18ccc0bc00033a2",
+  "files": 111,
+  "inputs": [
+   "index.html",
+   "src",
+   "benchmarks/memory/measure-memory.mjs",
+   "benchmarks/annotations/merit-real-venue.json",
+   "benchmarks/plans/merit-real-venue-plan.png",
+   "benchmarks/robustness/variants",
+   "tests/lib/vendor.mjs"
+  ]
+ },
+ "realVenue": true,
+ "note": "REAL DISTINCT VENUE PLANS: 1. Every scenario is the same drawing transformed.",
+ "scenarios": [
+  {
+   "scenario": "identical",
+   "why": "the same image again — the case teach-ai already measures",
+   "memories": 23,
+   "memoriesWithVector": 23,
+   "memoriesWithContext": 23,
+   "scoreable": 23,
+   "shipped": {
+    "scoreableMemories": 23,
+    "applied": 23,
+    "retained": 23,
+    "wrong": 0,
+    "unscoreable": 0,
+    "lost": 0,
+    "lostNotFound": 0,
+    "lostNotMatched": 0,
+    "lostDetail": [],
+    "beyondOldTolerance": 0,
+    "retention": 1,
+    "wrongRate": 0,
+    "identityPrecision": 1
+   },
+   "ablation": {
+    "full": {
+     "scoreableMemories": 23,
+     "applied": 23,
+     "retained": 23,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 0,
+     "lostNotFound": 0,
+     "lostNotMatched": 0,
+     "lostDetail": [],
+     "beyondOldTolerance": 0,
+     "retention": 1,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noVisual": {
+     "scoreableMemories": 23,
+     "applied": 23,
+     "retained": 23,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 0,
+     "lostNotFound": 0,
+     "lostNotMatched": 0,
+     "lostDetail": [],
+     "beyondOldTolerance": 0,
+     "retention": 1,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noContext": {
+     "scoreableMemories": 23,
+     "applied": 23,
+     "retained": 23,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 0,
+     "lostNotFound": 0,
+     "lostNotMatched": 0,
+     "lostDetail": [],
+     "beyondOldTolerance": 0,
+     "retention": 1,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 23,
+     "applied": 23,
+     "retained": 23,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 0,
+     "lostNotFound": 0,
+     "lostNotMatched": 0,
+     "lostDetail": [],
+     "beyondOldTolerance": 0,
+     "retention": 1,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    }
+   },
+   "ambiguousReported": 0,
+   "conflictKinds": {
+    "overruled": 11
+   },
+   "pageErrors": 0
+  },
+  {
+   "scenario": "jpeg-q20",
+   "why": "the plan mailed as a compressed JPEG",
+   "memories": 23,
+   "memoriesWithVector": 23,
+   "memoriesWithContext": 23,
+   "scoreable": 23,
+   "shipped": {
+    "scoreableMemories": 23,
+    "applied": 11,
+    "retained": 11,
+    "wrong": 0,
+    "unscoreable": 0,
+    "lost": 12,
+    "lostNotFound": 8,
+    "lostNotMatched": 4,
+    "lostDetail": [
+     {
+      "memoryId": "planmemory_20000d92-1fbc-4bac-9a8f-f791e407dfb0",
+      "truth": "t027",
+      "decision": "confirmed venue/chair",
+      "cause": "notMatched",
+      "detectedAs": "table/rectangle 1.48x5.46"
+     },
+     {
+      "memoryId": "planmemory_846a7245-cdd6-403b-9dc4-ed96ce04b2e8",
+      "truth": "t034",
+      "decision": "confirmed venue/chair",
+      "cause": "notFound",
+      "detectedAs": null
+     },
+     {
+      "memoryId": "planmemory_24a679ed-9a12-449f-9b98-3d634280b0f0",
+      "truth": "t024",
+      "decision": "confirmed venue/chair",
+      "cause": "notFound",
+      "detectedAs": null
+     },
+     {
+      "memoryId": "planmemory_57be3183-f1cc-4fae-b970-5b156e10a647",
+      "truth": "t035",
+      "decision": "confirmed venue/chair",
+      "cause": "notFound",
+      "detectedAs": null
+     },
+     {
+      "memoryId": "planmemory_8aba8f24-1b90-4037-90e3-3739a698345d",
+      "truth": "t025",
+      "decision": "confirmed table/square",
+      "cause": "notMatched",
+      "detectedAs": "table/rectangle 3.17x4.19"
+     },
+     {
+      "memoryId": "planmemory_8df68f3c-dc33-4ff0-a8f9-ae51f3137226",
+      "truth": "t036",
+      "decision": "rejected table/square",
+      "cause": "notFound",
+      "detectedAs": null
+     },
+     {
+      "memoryId": "planmemory_7b1edfbc-6c0c-4756-9106-9cb82aa33896",
+      "truth": "t037",
+      "decision": "confirmed venue/chair",
+      "cause": "notMatched",
+      "detectedAs": "table/round 2.75x2.07"
+     },
+     {
+      "memoryId": "planmemory_8ff74aa1-685e-4495-9d61-b87e23520e47",
+      "truth": "c012",
+      "decision": "rejected table/rectangle",
+      "cause": "notFound",
+      "detectedAs": null
+     },
+     {
+      "memoryId": "planmemory_c75782f1-d264-4e9d-be5a-9f390226d83f",
+      "truth": "t016",
+      "decision": "confirmed venue/chair",
+      "cause": "notFound",
+      "detectedAs": null
+     },
+     {
+      "memoryId": "planmemory_020a772a-1c25-4f02-add7-f618ffc4160a",
+      "truth": "t015",
+      "decision": "confirmed venue/chair",
+      "cause": "notFound",
+      "detectedAs": null
+     },
+     {
+      "memoryId": "planmemory_cf635a86-69a5-47eb-a759-9abe01a1bc02",
+      "truth": "t007",
+      "decision": "rejected table/square",
+      "cause": "notMatched",
+      "detectedAs": "table/rectangle 1.54x4.81"
+     },
+     {
+      "memoryId": "planmemory_755fb60b-7f59-4ce5-87b3-ac0d1da78c2a",
+      "truth": "t003",
+      "decision": "confirmed table/square",
+      "cause": "notFound",
+      "detectedAs": null
+     }
+    ],
+    "beyondOldTolerance": 0,
+    "retention": 0.4783,
+    "wrongRate": 0,
+    "identityPrecision": 1
+   },
+   "ablation": {
+    "full": {
+     "scoreableMemories": 23,
+     "applied": 11,
+     "retained": 11,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 12,
+     "lostNotFound": 8,
+     "lostNotMatched": 4,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_20000d92-1fbc-4bac-9a8f-f791e407dfb0",
+       "truth": "t027",
+       "decision": "confirmed venue/chair",
+       "cause": "notMatched",
+       "detectedAs": "table/rectangle 1.48x5.46"
+      },
+      {
+       "memoryId": "planmemory_846a7245-cdd6-403b-9dc4-ed96ce04b2e8",
+       "truth": "t034",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_24a679ed-9a12-449f-9b98-3d634280b0f0",
+       "truth": "t024",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_57be3183-f1cc-4fae-b970-5b156e10a647",
+       "truth": "t035",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_8aba8f24-1b90-4037-90e3-3739a698345d",
+       "truth": "t025",
+       "decision": "confirmed table/square",
+       "cause": "notMatched",
+       "detectedAs": "table/rectangle 3.17x4.19"
+      },
+      {
+       "memoryId": "planmemory_8df68f3c-dc33-4ff0-a8f9-ae51f3137226",
+       "truth": "t036",
+       "decision": "rejected table/square",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_7b1edfbc-6c0c-4756-9106-9cb82aa33896",
+       "truth": "t037",
+       "decision": "confirmed venue/chair",
+       "cause": "notMatched",
+       "detectedAs": "table/round 2.75x2.07"
+      },
+      {
+       "memoryId": "planmemory_8ff74aa1-685e-4495-9d61-b87e23520e47",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_c75782f1-d264-4e9d-be5a-9f390226d83f",
+       "truth": "t016",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_020a772a-1c25-4f02-add7-f618ffc4160a",
+       "truth": "t015",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_cf635a86-69a5-47eb-a759-9abe01a1bc02",
+       "truth": "t007",
+       "decision": "rejected table/square",
+       "cause": "notMatched",
+       "detectedAs": "table/rectangle 1.54x4.81"
+      },
+      {
+       "memoryId": "planmemory_755fb60b-7f59-4ce5-87b3-ac0d1da78c2a",
+       "truth": "t003",
+       "decision": "confirmed table/square",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.4783,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noVisual": {
+     "scoreableMemories": 23,
+     "applied": 11,
+     "retained": 11,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 12,
+     "lostNotFound": 8,
+     "lostNotMatched": 4,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_20000d92-1fbc-4bac-9a8f-f791e407dfb0",
+       "truth": "t027",
+       "decision": "confirmed venue/chair",
+       "cause": "notMatched",
+       "detectedAs": "table/rectangle 1.48x5.46"
+      },
+      {
+       "memoryId": "planmemory_846a7245-cdd6-403b-9dc4-ed96ce04b2e8",
+       "truth": "t034",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_24a679ed-9a12-449f-9b98-3d634280b0f0",
+       "truth": "t024",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_57be3183-f1cc-4fae-b970-5b156e10a647",
+       "truth": "t035",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_8aba8f24-1b90-4037-90e3-3739a698345d",
+       "truth": "t025",
+       "decision": "confirmed table/square",
+       "cause": "notMatched",
+       "detectedAs": "table/rectangle 3.17x4.19"
+      },
+      {
+       "memoryId": "planmemory_8df68f3c-dc33-4ff0-a8f9-ae51f3137226",
+       "truth": "t036",
+       "decision": "rejected table/square",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_7b1edfbc-6c0c-4756-9106-9cb82aa33896",
+       "truth": "t037",
+       "decision": "confirmed venue/chair",
+       "cause": "notMatched",
+       "detectedAs": "table/round 2.75x2.07"
+      },
+      {
+       "memoryId": "planmemory_8ff74aa1-685e-4495-9d61-b87e23520e47",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_c75782f1-d264-4e9d-be5a-9f390226d83f",
+       "truth": "t016",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_020a772a-1c25-4f02-add7-f618ffc4160a",
+       "truth": "t015",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_cf635a86-69a5-47eb-a759-9abe01a1bc02",
+       "truth": "t007",
+       "decision": "rejected table/square",
+       "cause": "notMatched",
+       "detectedAs": "table/rectangle 1.54x4.81"
+      },
+      {
+       "memoryId": "planmemory_755fb60b-7f59-4ce5-87b3-ac0d1da78c2a",
+       "truth": "t003",
+       "decision": "confirmed table/square",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.4783,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noContext": {
+     "scoreableMemories": 23,
+     "applied": 11,
+     "retained": 11,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 12,
+     "lostNotFound": 8,
+     "lostNotMatched": 4,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_20000d92-1fbc-4bac-9a8f-f791e407dfb0",
+       "truth": "t027",
+       "decision": "confirmed venue/chair",
+       "cause": "notMatched",
+       "detectedAs": "table/rectangle 1.48x5.46"
+      },
+      {
+       "memoryId": "planmemory_846a7245-cdd6-403b-9dc4-ed96ce04b2e8",
+       "truth": "t034",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_24a679ed-9a12-449f-9b98-3d634280b0f0",
+       "truth": "t024",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_57be3183-f1cc-4fae-b970-5b156e10a647",
+       "truth": "t035",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_8aba8f24-1b90-4037-90e3-3739a698345d",
+       "truth": "t025",
+       "decision": "confirmed table/square",
+       "cause": "notMatched",
+       "detectedAs": "table/rectangle 3.17x4.19"
+      },
+      {
+       "memoryId": "planmemory_8df68f3c-dc33-4ff0-a8f9-ae51f3137226",
+       "truth": "t036",
+       "decision": "rejected table/square",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_7b1edfbc-6c0c-4756-9106-9cb82aa33896",
+       "truth": "t037",
+       "decision": "confirmed venue/chair",
+       "cause": "notMatched",
+       "detectedAs": "table/round 2.75x2.07"
+      },
+      {
+       "memoryId": "planmemory_8ff74aa1-685e-4495-9d61-b87e23520e47",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_c75782f1-d264-4e9d-be5a-9f390226d83f",
+       "truth": "t016",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_020a772a-1c25-4f02-add7-f618ffc4160a",
+       "truth": "t015",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_cf635a86-69a5-47eb-a759-9abe01a1bc02",
+       "truth": "t007",
+       "decision": "rejected table/square",
+       "cause": "notMatched",
+       "detectedAs": "table/rectangle 1.54x4.81"
+      },
+      {
+       "memoryId": "planmemory_755fb60b-7f59-4ce5-87b3-ac0d1da78c2a",
+       "truth": "t003",
+       "decision": "confirmed table/square",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.4783,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 23,
+     "applied": 11,
+     "retained": 11,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 12,
+     "lostNotFound": 8,
+     "lostNotMatched": 4,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_20000d92-1fbc-4bac-9a8f-f791e407dfb0",
+       "truth": "t027",
+       "decision": "confirmed venue/chair",
+       "cause": "notMatched",
+       "detectedAs": "table/rectangle 1.48x5.46"
+      },
+      {
+       "memoryId": "planmemory_846a7245-cdd6-403b-9dc4-ed96ce04b2e8",
+       "truth": "t034",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_24a679ed-9a12-449f-9b98-3d634280b0f0",
+       "truth": "t024",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_57be3183-f1cc-4fae-b970-5b156e10a647",
+       "truth": "t035",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_8aba8f24-1b90-4037-90e3-3739a698345d",
+       "truth": "t025",
+       "decision": "confirmed table/square",
+       "cause": "notMatched",
+       "detectedAs": "table/rectangle 3.17x4.19"
+      },
+      {
+       "memoryId": "planmemory_8df68f3c-dc33-4ff0-a8f9-ae51f3137226",
+       "truth": "t036",
+       "decision": "rejected table/square",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_7b1edfbc-6c0c-4756-9106-9cb82aa33896",
+       "truth": "t037",
+       "decision": "confirmed venue/chair",
+       "cause": "notMatched",
+       "detectedAs": "table/round 2.75x2.07"
+      },
+      {
+       "memoryId": "planmemory_8ff74aa1-685e-4495-9d61-b87e23520e47",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_c75782f1-d264-4e9d-be5a-9f390226d83f",
+       "truth": "t016",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_020a772a-1c25-4f02-add7-f618ffc4160a",
+       "truth": "t015",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_cf635a86-69a5-47eb-a759-9abe01a1bc02",
+       "truth": "t007",
+       "decision": "rejected table/square",
+       "cause": "notMatched",
+       "detectedAs": "table/rectangle 1.54x4.81"
+      },
+      {
+       "memoryId": "planmemory_755fb60b-7f59-4ce5-87b3-ac0d1da78c2a",
+       "truth": "t003",
+       "decision": "confirmed table/square",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.4783,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    }
+   },
+   "ambiguousReported": 9,
+   "conflictKinds": {
+    "overruled": 7,
+    "ambiguous": 11
+   },
+   "pageErrors": 0
+  },
+  {
+   "scenario": "grayscale",
+   "why": "the plan exported without colour",
+   "memories": 23,
+   "memoriesWithVector": 23,
+   "memoriesWithContext": 23,
+   "scoreable": 23,
+   "shipped": {
+    "scoreableMemories": 23,
+    "applied": 20,
+    "retained": 20,
+    "wrong": 0,
+    "unscoreable": 0,
+    "lost": 3,
+    "lostNotFound": 3,
+    "lostNotMatched": 0,
+    "lostDetail": [
+     {
+      "memoryId": "planmemory_fcf4c7e0-c5de-4c8c-ac79-21f6c8066f4a",
+      "truth": "t042",
+      "decision": "confirmed venue/chair",
+      "cause": "notFound",
+      "detectedAs": null
+     },
+     {
+      "memoryId": "planmemory_89521d7c-9a97-4a7a-a72a-cc31746ef8f8",
+      "truth": "t044",
+      "decision": "rejected table/bistro",
+      "cause": "notFound",
+      "detectedAs": null
+     },
+     {
+      "memoryId": "planmemory_f262344e-6c86-4e27-b6e0-faf5735bd0d3",
+      "truth": "c012",
+      "decision": "rejected table/rectangle",
+      "cause": "notFound",
+      "detectedAs": null
+     }
+    ],
+    "beyondOldTolerance": 0,
+    "retention": 0.8696,
+    "wrongRate": 0,
+    "identityPrecision": 1
+   },
+   "ablation": {
+    "full": {
+     "scoreableMemories": 23,
+     "applied": 20,
+     "retained": 20,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 3,
+     "lostNotFound": 3,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_fcf4c7e0-c5de-4c8c-ac79-21f6c8066f4a",
+       "truth": "t042",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_89521d7c-9a97-4a7a-a72a-cc31746ef8f8",
+       "truth": "t044",
+       "decision": "rejected table/bistro",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_f262344e-6c86-4e27-b6e0-faf5735bd0d3",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.8696,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noVisual": {
+     "scoreableMemories": 23,
+     "applied": 20,
+     "retained": 20,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 3,
+     "lostNotFound": 3,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_fcf4c7e0-c5de-4c8c-ac79-21f6c8066f4a",
+       "truth": "t042",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_89521d7c-9a97-4a7a-a72a-cc31746ef8f8",
+       "truth": "t044",
+       "decision": "rejected table/bistro",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_f262344e-6c86-4e27-b6e0-faf5735bd0d3",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.8696,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noContext": {
+     "scoreableMemories": 23,
+     "applied": 20,
+     "retained": 20,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 3,
+     "lostNotFound": 3,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_fcf4c7e0-c5de-4c8c-ac79-21f6c8066f4a",
+       "truth": "t042",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_89521d7c-9a97-4a7a-a72a-cc31746ef8f8",
+       "truth": "t044",
+       "decision": "rejected table/bistro",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_f262344e-6c86-4e27-b6e0-faf5735bd0d3",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.8696,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 23,
+     "applied": 20,
+     "retained": 20,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 3,
+     "lostNotFound": 3,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_fcf4c7e0-c5de-4c8c-ac79-21f6c8066f4a",
+       "truth": "t042",
+       "decision": "confirmed venue/chair",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_89521d7c-9a97-4a7a-a72a-cc31746ef8f8",
+       "truth": "t044",
+       "decision": "rejected table/bistro",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_f262344e-6c86-4e27-b6e0-faf5735bd0d3",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.8696,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    }
+   },
+   "ambiguousReported": 1,
+   "conflictKinds": {
+    "overruled": 12
+   },
+   "pageErrors": 0
+  },
+  {
+   "scenario": "downscale-70",
+   "why": "the plan re-issued smaller",
+   "memories": 23,
+   "memoriesWithVector": 23,
+   "memoriesWithContext": 23,
+   "scoreable": 23,
+   "shipped": {
+    "scoreableMemories": 23,
+    "applied": 21,
+    "retained": 21,
+    "wrong": 0,
+    "unscoreable": 0,
+    "lost": 2,
+    "lostNotFound": 2,
+    "lostNotMatched": 0,
+    "lostDetail": [
+     {
+      "memoryId": "planmemory_08a8368a-8ce4-40bc-b53a-0d1851a1d47b",
+      "truth": "t044",
+      "decision": "rejected table/bistro",
+      "cause": "notFound",
+      "detectedAs": null
+     },
+     {
+      "memoryId": "planmemory_66d6b319-4bb9-4721-870d-39a13c9654ea",
+      "truth": "c012",
+      "decision": "rejected table/rectangle",
+      "cause": "notFound",
+      "detectedAs": null
+     }
+    ],
+    "beyondOldTolerance": 0,
+    "retention": 0.913,
+    "wrongRate": 0,
+    "identityPrecision": 1
+   },
+   "ablation": {
+    "full": {
+     "scoreableMemories": 23,
+     "applied": 21,
+     "retained": 21,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 2,
+     "lostNotFound": 2,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_08a8368a-8ce4-40bc-b53a-0d1851a1d47b",
+       "truth": "t044",
+       "decision": "rejected table/bistro",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_66d6b319-4bb9-4721-870d-39a13c9654ea",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.913,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noVisual": {
+     "scoreableMemories": 23,
+     "applied": 21,
+     "retained": 21,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 2,
+     "lostNotFound": 2,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_08a8368a-8ce4-40bc-b53a-0d1851a1d47b",
+       "truth": "t044",
+       "decision": "rejected table/bistro",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_66d6b319-4bb9-4721-870d-39a13c9654ea",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.913,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noContext": {
+     "scoreableMemories": 23,
+     "applied": 21,
+     "retained": 21,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 2,
+     "lostNotFound": 2,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_08a8368a-8ce4-40bc-b53a-0d1851a1d47b",
+       "truth": "t044",
+       "decision": "rejected table/bistro",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_66d6b319-4bb9-4721-870d-39a13c9654ea",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.913,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 23,
+     "applied": 21,
+     "retained": 21,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 2,
+     "lostNotFound": 2,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_08a8368a-8ce4-40bc-b53a-0d1851a1d47b",
+       "truth": "t044",
+       "decision": "rejected table/bistro",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_66d6b319-4bb9-4721-870d-39a13c9654ea",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.913,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    }
+   },
+   "ambiguousReported": 2,
+   "conflictKinds": {
+    "overruled": 12,
+    "ambiguous": 1
+   },
+   "pageErrors": 0
+  },
+  {
+   "scenario": "rotate-2",
+   "why": "the plan scanned slightly askew",
+   "memories": 23,
+   "memoriesWithVector": 23,
+   "memoriesWithContext": 23,
+   "scoreable": 23,
+   "shipped": {
+    "scoreableMemories": 23,
+    "applied": 22,
+    "retained": 22,
+    "wrong": 0,
+    "unscoreable": 0,
+    "lost": 1,
+    "lostNotFound": 1,
+    "lostNotMatched": 0,
+    "lostDetail": [
+     {
+      "memoryId": "planmemory_e4a08226-aec0-48e8-93cc-f6961264f00c",
+      "truth": "c012",
+      "decision": "rejected table/rectangle",
+      "cause": "notFound",
+      "detectedAs": null
+     }
+    ],
+    "beyondOldTolerance": 0,
+    "retention": 0.9565,
+    "wrongRate": 0,
+    "identityPrecision": 1
+   },
+   "ablation": {
+    "full": {
+     "scoreableMemories": 23,
+     "applied": 22,
+     "retained": 22,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 1,
+     "lostNotFound": 1,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_e4a08226-aec0-48e8-93cc-f6961264f00c",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.9565,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noVisual": {
+     "scoreableMemories": 23,
+     "applied": 22,
+     "retained": 22,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 1,
+     "lostNotFound": 1,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_e4a08226-aec0-48e8-93cc-f6961264f00c",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.9565,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noContext": {
+     "scoreableMemories": 23,
+     "applied": 22,
+     "retained": 22,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 1,
+     "lostNotFound": 1,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_e4a08226-aec0-48e8-93cc-f6961264f00c",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.9565,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 23,
+     "applied": 19,
+     "retained": 19,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 4,
+     "lostNotFound": 1,
+     "lostNotMatched": 3,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_6187aa89-5bf5-4a62-93e9-4ced1da0bde8",
+       "truth": "t035",
+       "decision": "confirmed venue/chair",
+       "cause": "notMatched",
+       "detectedAs": "venue/chair 3.26x5.03"
+      },
+      {
+       "memoryId": "planmemory_e4a08226-aec0-48e8-93cc-f6961264f00c",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_267bd3c5-be0d-4d64-a70e-e37353b38185",
+       "truth": "t015",
+       "decision": "confirmed venue/chair",
+       "cause": "notMatched",
+       "detectedAs": "venue/chair 3.04x5.51"
+      },
+      {
+       "memoryId": "planmemory_ce881dfc-c798-4f9e-ae0e-c26c8c0febf7",
+       "truth": "t009",
+       "decision": "rejected table/square",
+       "cause": "notMatched",
+       "detectedAs": "table/square 3.18x5.15"
+      }
+     ],
+     "beyondOldTolerance": 3,
+     "retention": 0.8261,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    }
+   },
+   "ambiguousReported": 1,
+   "conflictKinds": {
+    "overruled": 11,
+    "ambiguous": 1
+   },
+   "pageErrors": 0
+  },
+  {
+   "scenario": "crop-pad",
+   "why": "the plan re-cropped, so everything translated",
+   "memories": 23,
+   "memoriesWithVector": 23,
+   "memoriesWithContext": 23,
+   "scoreable": 23,
+   "shipped": {
+    "scoreableMemories": 23,
+    "applied": 22,
+    "retained": 22,
+    "wrong": 0,
+    "unscoreable": 0,
+    "lost": 1,
+    "lostNotFound": 1,
+    "lostNotMatched": 0,
+    "lostDetail": [
+     {
+      "memoryId": "planmemory_0eb04af6-5728-427f-8178-08cde947e963",
+      "truth": "c012",
+      "decision": "rejected table/rectangle",
+      "cause": "notFound",
+      "detectedAs": null
+     }
+    ],
+    "beyondOldTolerance": 0,
+    "retention": 0.9565,
+    "wrongRate": 0,
+    "identityPrecision": 1
+   },
+   "ablation": {
+    "full": {
+     "scoreableMemories": 23,
+     "applied": 22,
+     "retained": 22,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 1,
+     "lostNotFound": 1,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_0eb04af6-5728-427f-8178-08cde947e963",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.9565,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noVisual": {
+     "scoreableMemories": 23,
+     "applied": 22,
+     "retained": 22,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 1,
+     "lostNotFound": 1,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_0eb04af6-5728-427f-8178-08cde947e963",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.9565,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noContext": {
+     "scoreableMemories": 23,
+     "applied": 22,
+     "retained": 22,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 1,
+     "lostNotFound": 1,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_0eb04af6-5728-427f-8178-08cde947e963",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.9565,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 23,
+     "applied": 14,
+     "retained": 14,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 9,
+     "lostNotFound": 1,
+     "lostNotMatched": 8,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_61aeed59-7fd6-49b8-95eb-dd52e7130e45",
+       "truth": "t042",
+       "decision": "confirmed venue/chair",
+       "cause": "notMatched",
+       "detectedAs": "table/bistro 2.37x4.08"
+      },
+      {
+       "memoryId": "planmemory_e2cd5418-0b43-4319-8ed5-fbd4db23f6c8",
+       "truth": "t026",
+       "decision": "rejected table/square",
+       "cause": "notMatched",
+       "detectedAs": "table/square 3.05x5.02"
+      },
+      {
+       "memoryId": "planmemory_3d88fd5e-77a2-4952-9e1e-895e947bda1f",
+       "truth": "t027",
+       "decision": "confirmed venue/chair",
+       "cause": "notMatched",
+       "detectedAs": "table/square 3.12x5.02"
+      },
+      {
+       "memoryId": "planmemory_3536f552-9f4e-41a0-9fa9-8d0682fb23d3",
+       "truth": "t034",
+       "decision": "confirmed venue/chair",
+       "cause": "notMatched",
+       "detectedAs": "table/square 3.12x5.02"
+      },
+      {
+       "memoryId": "planmemory_eca04b6e-40e1-4830-98ca-1aa9292378e1",
+       "truth": "t023",
+       "decision": "confirmed table/square",
+       "cause": "notMatched",
+       "detectedAs": "table/square 3.05x5.14"
+      },
+      {
+       "memoryId": "planmemory_562a6936-b9e8-4e8e-9a01-9199bfd619f1",
+       "truth": "t036",
+       "decision": "rejected table/square",
+       "cause": "notMatched",
+       "detectedAs": "table/square 3.12x5.02"
+      },
+      {
+       "memoryId": "planmemory_6c3fc5cb-56ed-45e9-9fd2-cbbf04bdf768",
+       "truth": "t037",
+       "decision": "confirmed venue/chair",
+       "cause": "notMatched",
+       "detectedAs": "table/square 3.19x5.02"
+      },
+      {
+       "memoryId": "planmemory_0eb04af6-5728-427f-8178-08cde947e963",
+       "truth": "c012",
+       "decision": "rejected table/rectangle",
+       "cause": "notFound",
+       "detectedAs": null
+      },
+      {
+       "memoryId": "planmemory_1d035891-e7fd-4ab4-9370-a380d10bb42b",
+       "truth": "t009",
+       "decision": "rejected table/square",
+       "cause": "notMatched",
+       "detectedAs": "table/square 3.05x5.14"
+      }
+     ],
+     "beyondOldTolerance": 6,
+     "retention": 0.6087,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    }
+   },
+   "ambiguousReported": 1,
+   "conflictKinds": {
+    "overruled": 7,
+    "ambiguous": 10
+   },
+   "pageErrors": 0
+  },
+  {
+   "scenario": "blur",
+   "why": "a soft scan",
+   "memories": 23,
+   "memoriesWithVector": 23,
+   "memoriesWithContext": 23,
+   "scoreable": 23,
+   "shipped": {
+    "scoreableMemories": 23,
+    "applied": 22,
+    "retained": 22,
+    "wrong": 0,
+    "unscoreable": 0,
+    "lost": 1,
+    "lostNotFound": 1,
+    "lostNotMatched": 0,
+    "lostDetail": [
+     {
+      "memoryId": "planmemory_39ab7c2d-3ebd-434b-9efb-0552608dedf7",
+      "truth": "t044",
+      "decision": "rejected table/bistro",
+      "cause": "notFound",
+      "detectedAs": null
+     }
+    ],
+    "beyondOldTolerance": 0,
+    "retention": 0.9565,
+    "wrongRate": 0,
+    "identityPrecision": 1
+   },
+   "ablation": {
+    "full": {
+     "scoreableMemories": 23,
+     "applied": 22,
+     "retained": 22,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 1,
+     "lostNotFound": 1,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_39ab7c2d-3ebd-434b-9efb-0552608dedf7",
+       "truth": "t044",
+       "decision": "rejected table/bistro",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.9565,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noVisual": {
+     "scoreableMemories": 23,
+     "applied": 22,
+     "retained": 22,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 1,
+     "lostNotFound": 1,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_39ab7c2d-3ebd-434b-9efb-0552608dedf7",
+       "truth": "t044",
+       "decision": "rejected table/bistro",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.9565,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noContext": {
+     "scoreableMemories": 23,
+     "applied": 22,
+     "retained": 22,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 1,
+     "lostNotFound": 1,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_39ab7c2d-3ebd-434b-9efb-0552608dedf7",
+       "truth": "t044",
+       "decision": "rejected table/bistro",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.9565,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    },
+    "noShift": {
+     "scoreableMemories": 23,
+     "applied": 22,
+     "retained": 22,
+     "wrong": 0,
+     "unscoreable": 0,
+     "lost": 1,
+     "lostNotFound": 1,
+     "lostNotMatched": 0,
+     "lostDetail": [
+      {
+       "memoryId": "planmemory_39ab7c2d-3ebd-434b-9efb-0552608dedf7",
+       "truth": "t044",
+       "decision": "rejected table/bistro",
+       "cause": "notFound",
+       "detectedAs": null
+      }
+     ],
+     "beyondOldTolerance": 0,
+     "retention": 0.9565,
+     "wrongRate": 0,
+     "identityPrecision": 1
+    }
+   },
+   "ambiguousReported": 1,
+   "conflictKinds": {
+    "overruled": 11,
+    "ambiguous": 1
+   },
+   "pageErrors": 0
+  }
+ ],
+ "totals": {
+  "scoreable": 161,
+  "retainedFull": 141,
+  "retainedNoVisual": 141,
+  "retainedNoContext": 141,
+  "retainedNoShift": 130,
+  "wrongNoShift": 0,
+  "appliedNoShift": 130,
+  "wrongFull": 0,
+  "appliedFull": 141,
+  "lostNotFound": 16,
+  "lostNotMatched": 4,
+  "retentionFull": 0.8758,
+  "retentionNoVisual": 0.8758,
+  "retentionNoContext": 0.8758,
+  "retentionWithoutGlobalTransform": 0.8075,
+  "identityPrecisionWithoutGlobalTransform": 1,
+  "identityPrecisionFull": 1,
+  "wrongApplicationRateFull": 0
+ },
+ "recorded": {
+  "at": "2026-10-18T14:25:44.072Z",
+  "commit": "d8a7af28c7dc3f15c76b518b60fbab256c30e6d7",
+  "reason": "2026-10-18: seats protected from junk OCR words (d8a7af2) and a far furniture decision no longer lands on structure: retention 0.8447 -> 0.8758, wrong applications 1 -> 0, identity precision 1.0; losses now split into object-not-found (16) and found-but-not-matched (4)"
+ }
+}

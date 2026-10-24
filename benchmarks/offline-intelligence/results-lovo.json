@@ -1,0 +1,143 @@
+{
+ "set": "lovo",
+ "measuredOn": "2026-10-11T14:17:43.545Z",
+ "runs": {
+  "foldA": {
+   "model": "foldA",
+   "trainedWithout": "ornek-symbolic",
+   "rows": [
+    {
+     "plan": "ornek-symbolic",
+     "tables": {
+      "tp": 165,
+      "fp": 1,
+      "fn": 1,
+      "precision": 0.994,
+      "recall": 0.994
+     },
+     "chairs": null,
+     "columns": {
+      "tp": 0,
+      "fp": 4,
+      "fn": 0,
+      "precision": 0,
+      "recall": 0,
+      "f1": 0
+     },
+     "relationships": null,
+     "tableTypes": {
+      "square": {
+       "matched": 0,
+       "correct": 0,
+       "accuracy": null
+      },
+      "round": {
+       "matched": 165,
+       "correct": 165,
+       "accuracy": 1
+      },
+      "bistro": {
+       "matched": 0,
+       "correct": 0,
+       "accuracy": null
+      },
+      "rectangle": {
+       "matched": 0,
+       "correct": 0,
+       "accuracy": null
+      }
+     },
+     "ms": 67172,
+     "localModel": {
+      "available": true,
+      "reasonCode": null,
+      "version": "foldA",
+      "ms": 3010,
+      "detections": 166,
+      "addedTables": 4,
+      "chairsAttached": 0,
+      "chairsInText": 0,
+      "offSize": 0,
+      "addedColumns": 0,
+      "unsupported": 1
+     },
+     "pageErrors": 0
+    }
+   ]
+  },
+  "foldB": {
+   "model": "foldB",
+   "trainedWithout": "merit-real-venue",
+   "rows": [
+    {
+     "plan": "merit-real-venue",
+     "tables": {
+      "tp": 46,
+      "fp": 2,
+      "fn": 0,
+      "precision": 0.958,
+      "recall": 1
+     },
+     "chairs": {
+      "tp": 108,
+      "fp": 3,
+      "fn": 5,
+      "precision": 0.973,
+      "recall": 0.956
+     },
+     "columns": {
+      "tp": 0,
+      "fp": 9,
+      "fn": 0,
+      "precision": 0,
+      "recall": 0,
+      "f1": 0
+     },
+     "relationships": {
+      "correct": 103,
+      "wrong": 1,
+      "orphan": 0,
+      "accuracy": 0.99
+     },
+     "tableTypes": {
+      "square": {
+       "matched": 37,
+       "correct": 37,
+       "accuracy": 1
+      },
+      "round": {
+       "matched": 4,
+       "correct": 4,
+       "accuracy": 1
+      },
+      "bistro": {
+       "matched": 5,
+       "correct": 5,
+       "accuracy": 1
+      },
+      "rectangle": {
+       "matched": 0,
+       "correct": 0,
+       "accuracy": null
+      }
+     },
+     "ms": 13271,
+     "localModel": {
+      "available": true,
+      "reasonCode": null,
+      "version": "foldB",
+      "ms": 2855,
+      "detections": 141,
+      "addedTables": 1,
+      "chairsAttached": 0,
+      "chairsInText": 0,
+      "offSize": 0,
+      "addedColumns": 0,
+      "unsupported": 8
+     },
+     "pageErrors": 0
+    }
+   ]
+  }
+ }
+}

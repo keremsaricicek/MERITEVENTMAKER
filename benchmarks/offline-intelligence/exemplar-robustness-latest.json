@@ -1,0 +1,899 @@
+{
+ "measuredOn": "2026-10-18T00:01:00.593Z",
+ "note": "exemplars are CORRECT detections, as a person would confirm them; suggestions are scored against the human annotation",
+ "plans": {
+  "golden": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 47,
+    "missedBefore": 0,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": null,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1072
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": null,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 2862
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 109,
+    "missedBefore": 5,
+    "byK": {
+     "1": {
+      "suggestions": 1,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 1,
+      "phantomsPer100Objects": 0.88,
+      "duplicates": 0,
+      "ms": 541
+     },
+     "3": {
+      "suggestions": 1,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 1,
+      "phantomsPer100Objects": 0.88,
+      "duplicates": 0,
+      "ms": 1586
+     }
+    }
+   }
+  },
+  "ornek": {
+   "table": {
+    "groundTruth": 166,
+    "detected": 163,
+    "missedBefore": 4,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 4171
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 11948
+     }
+    }
+   }
+  },
+  "rob:blur": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 53,
+    "missedBefore": 9,
+    "byK": {
+     "1": {
+      "suggestions": 4,
+      "recovered": 4,
+      "recoveredShare": 0.444,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1053
+     },
+     "3": {
+      "suggestions": 4,
+      "recovered": 4,
+      "recoveredShare": 0.444,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 2633
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 81,
+    "missedBefore": 32,
+    "byK": {
+     "1": {
+      "suggestions": 1,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 1,
+      "phantomsPer100Objects": 0.88,
+      "duplicates": 0,
+      "ms": 686
+     },
+     "3": {
+      "suggestions": 1,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 1,
+      "phantomsPer100Objects": 0.88,
+      "duplicates": 0,
+      "ms": 1780
+     }
+    }
+   }
+  },
+  "rob:bright-down": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 28,
+    "missedBefore": 22,
+    "byK": {
+     "1": {
+      "suggestions": 10,
+      "recovered": 10,
+      "recoveredShare": 0.455,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 942
+     },
+     "3": {
+      "suggestions": 10,
+      "recovered": 10,
+      "recoveredShare": 0.455,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 3011
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 58,
+    "missedBefore": 55,
+    "byK": {
+     "1": {
+      "suggestions": 25,
+      "recovered": 25,
+      "recoveredShare": 0.455,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 613
+     },
+     "3": {
+      "suggestions": 25,
+      "recovered": 25,
+      "recoveredShare": 0.455,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1746
+     }
+    }
+   }
+  },
+  "rob:bright-up": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 46,
+    "missedBefore": 2,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1012
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 2891
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 103,
+    "missedBefore": 12,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 585
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1500
+     }
+    }
+   }
+  },
+  "rob:contrast-high": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 48,
+    "missedBefore": 0,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": null,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 910
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": null,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 2579
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 111,
+    "missedBefore": 5,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 220
+     },
+     "3": {
+      "suggestions": 4,
+      "recovered": 4,
+      "recoveredShare": 0.8,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1438
+     }
+    }
+   }
+  },
+  "rob:contrast-low": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 42,
+    "missedBefore": 5,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 937
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 2901
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 102,
+    "missedBefore": 11,
+    "byK": {
+     "1": {
+      "suggestions": 1,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 1,
+      "ms": 161
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1456
+     }
+    }
+   }
+  },
+  "rob:crop-pad": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 46,
+    "missedBefore": 0,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": null,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1067
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": null,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 5451
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 109,
+    "missedBefore": 5,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 621
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 2105
+     }
+    }
+   }
+  },
+  "rob:downscale-70": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 42,
+    "missedBefore": 5,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 315
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 779
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 170,
+    "missedBefore": 9,
+    "byK": {
+     "1": {
+      "suggestions": 2,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 2,
+      "phantomsPer100Objects": 1.77,
+      "duplicates": 0,
+      "ms": 254
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 432
+     }
+    }
+   }
+  },
+  "rob:grayscale": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 44,
+    "missedBefore": 4,
+    "byK": {
+     "1": {
+      "suggestions": 1,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 1,
+      "ms": 1338
+     },
+     "3": {
+      "suggestions": 1,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 1,
+      "ms": 3197
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 106,
+    "missedBefore": 10,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 282
+     },
+     "3": {
+      "suggestions": 1,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 1,
+      "phantomsPer100Objects": 0.88,
+      "duplicates": 0,
+      "ms": 933
+     }
+    }
+   }
+  },
+  "rob:hue-shift": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 46,
+    "missedBefore": 0,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": null,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 996
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": null,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 4212
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 112,
+    "missedBefore": 2,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 658
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1271
+     }
+    }
+   }
+  },
+  "rob:jpeg-q20": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 41,
+    "missedBefore": 13,
+    "byK": {
+     "1": {
+      "suggestions": 9,
+      "recovered": 8,
+      "recoveredShare": 0.615,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 1,
+      "ms": 967
+     },
+     "3": {
+      "suggestions": 9,
+      "recovered": 8,
+      "recoveredShare": 0.615,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 1,
+      "ms": 3911
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 71,
+    "missedBefore": 42,
+    "byK": {
+     "1": {
+      "suggestions": 36,
+      "recovered": 36,
+      "recoveredShare": 0.857,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 563
+     },
+     "3": {
+      "suggestions": 36,
+      "recovered": 36,
+      "recoveredShare": 0.857,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1634
+     }
+    }
+   }
+  },
+  "rob:jpeg-q40": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 48,
+    "missedBefore": 0,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": null,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1062
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": null,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 3340
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 112,
+    "missedBefore": 2,
+    "byK": {
+     "1": {
+      "suggestions": 1,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 1,
+      "phantomsPer100Objects": 0.88,
+      "duplicates": 0,
+      "ms": 626
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1272
+     }
+    }
+   }
+  },
+  "rob:lowres-roundtrip": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 24,
+    "missedBefore": 29,
+    "byK": {
+     "1": {
+      "suggestions": 25,
+      "recovered": 25,
+      "recoveredShare": 0.862,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1097
+     },
+     "3": {
+      "suggestions": 60,
+      "recovered": 25,
+      "recoveredShare": 0.862,
+      "phantoms": 14,
+      "phantomsPer100Objects": 30.43,
+      "duplicates": 21,
+      "ms": 1880
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 38,
+    "missedBefore": 76,
+    "byK": {
+     "1": {
+      "suggestions": 15,
+      "recovered": 15,
+      "recoveredShare": 0.197,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 156
+     },
+     "3": {
+      "suggestions": 13,
+      "recovered": 13,
+      "recoveredShare": 0.171,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 870
+     }
+    }
+   }
+  },
+  "rob:noise": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 49,
+    "missedBefore": 0,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": null,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 2458
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": null,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 4134
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 109,
+    "missedBefore": 5,
+    "byK": {
+     "1": {
+      "suggestions": 1,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 1,
+      "phantomsPer100Objects": 0.88,
+      "duplicates": 0,
+      "ms": 625
+     },
+     "3": {
+      "suggestions": 1,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 1,
+      "phantomsPer100Objects": 0.88,
+      "duplicates": 0,
+      "ms": 1772
+     }
+    }
+   }
+  },
+  "rob:rotate-2": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 46,
+    "missedBefore": 2,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1122
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 3201
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 111,
+    "missedBefore": 4,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 845
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 2036
+     }
+    }
+   }
+  },
+  "rob:rotate-minus-3": {
+   "table": {
+    "groundTruth": 46,
+    "detected": 43,
+    "missedBefore": 5,
+    "byK": {
+     "1": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 1133
+     },
+     "3": {
+      "suggestions": 0,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 0,
+      "phantomsPer100Objects": 0,
+      "duplicates": 0,
+      "ms": 3301
+     }
+    }
+   },
+   "chair": {
+    "groundTruth": 113,
+    "detected": 102,
+    "missedBefore": 11,
+    "byK": {
+     "1": {
+      "suggestions": 2,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 2,
+      "phantomsPer100Objects": 1.77,
+      "duplicates": 0,
+      "ms": 804
+     },
+     "3": {
+      "suggestions": 5,
+      "recovered": 0,
+      "recoveredShare": 0,
+      "phantoms": 5,
+      "phantomsPer100Objects": 4.42,
+      "duplicates": 0,
+      "ms": 2096
+     }
+    }
+   }
+  }
+ },
+ "pooled": {
+  "table k=1": {
+   "missedBefore": 100,
+   "recovered": 47,
+   "phantoms": 0,
+   "groundTruth": 902,
+   "recoveredShare": 0.47,
+   "phantomsPer100Objects": 0
+  },
+  "table k=3": {
+   "missedBefore": 100,
+   "recovered": 47,
+   "phantoms": 14,
+   "groundTruth": 902,
+   "recoveredShare": 0.47,
+   "phantomsPer100Objects": 1.55
+  },
+  "chair k=1": {
+   "missedBefore": 286,
+   "recovered": 76,
+   "phantoms": 8,
+   "groundTruth": 1808,
+   "recoveredShare": 0.266,
+   "phantomsPer100Objects": 0.44
+  },
+  "chair k=3": {
+   "missedBefore": 286,
+   "recovered": 78,
+   "phantoms": 9,
+   "groundTruth": 1808,
+   "recoveredShare": 0.273,
+   "phantomsPer100Objects": 0.5
+  }
+ }
+}
