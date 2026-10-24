@@ -49,8 +49,11 @@
   // word may correct an object to (a "table" names no shape, so it corrects
   // nothing; it can only be a note).
   const WORD_OF_TYPE = Object.freeze({ round: "table", square: "table", rectangle: "table", bistro: "table", chair: "chair", armchair: "chair",
-    sofa: "sofa", bench: "bench", banquette: "banquette", column: "column", stage: "stage", bar: "bar" });
-  const TYPE_OF_WORD = Object.freeze({ chair: "chair", sofa: "sofa", bench: "bench", banquette: "banquette", column: "column", stage: "stage", bar: "bar" });
+    sofa: "sofa", bench: "bench", banquette: "banquette", column: "column", stage: "stage", bar: "bar",
+    // V5 words: a loca box is a "lodge"; an exit is drawn as an entrance is (a door), so the word cannot tell them apart
+    loca: "lodge", entrance: "entrance", exit: "entrance" });
+  const TYPE_OF_WORD = Object.freeze({ chair: "chair", sofa: "sofa", bench: "bench", banquette: "banquette", column: "column", stage: "stage", bar: "bar",
+    lodge: "loca" });
   const SEATING = new Set(["sofa", "bench", "banquette"]);
 
   const isOffered = (c) => c.status === "confirmed" || (c.status !== "rejected" && c.selected !== false);

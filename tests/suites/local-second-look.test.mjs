@@ -81,6 +81,15 @@ export default async function run({ page, checks, repoRoot }) {
     "the second look asks about the held-back object, the guessed seating furniture, the table whose chairs differ from its look-alikes, the unanswered group and the uncertain link — and about nothing a person decided (confirmed sofa, dismissed bench, typed seats, answered group)");
   checks.equal(L.plan(analysis, { checks: ["merged"], width: W, height: H }).map((q) => q.question), ["merged"], "only the questions the model was measured on are planned");
   checks.equal(L.plan(analysis, { checks: [], width: W, height: H }), [], "with no measured question nothing is planned");
+  // the V5 words (server/local-check-questions.json): a loca box is a "lodge", an entrance or an exit an "entrance"
+  const venueAnalysis = { candidates: [cand("loca1", { kind: "venue", type: "loca", x: 10, y: 10, w: 6, h: 4, confidence: 0.4 }),
+    cand("door1", { kind: "venue", type: "entrance", x: 30, y: 10, w: 3, h: 3, confidence: 0.4 }), cand("exit1", { kind: "venue", type: "exit", x: 50, y: 10, w: 3, h: 3, confidence: 0.4 })] };
+  const venueQs = L.plan(venueAnalysis, { checks: ["identify"], width: W, height: H });
+  checks.equal(venueQs.map((q) => `${q.candidateIds[0]}:${q.detector}`).sort(), ["door1:entrance", "exit1:entrance", "loca1:lodge"],
+    "a held-back loca, entrance or exit is asked about with the word the model was trained on");
+  const doorQ = venueQs.find((q) => q.candidateIds[0] === "door1");
+  const toLodge = doorQ && L.findingFor(doorQ, L.judge(doorQ, ["lodge", "lodge"]), venueAnalysis, "t");
+  checks.equal(toLodge && [toLodge.kind, toLodge.type], ["wrongType", "loca"], "the word 'lodge' suggests the product's own type, loca");
   const sofaQ = qs.find((q) => q.candidateIds[0] === "sofa1");
   checks.equal(sofaQ.frame, { cx: 840, cy: 410, side: 2 * 80 + 30 }, "an identify crop is the benchmark's: centred on the object, 2 x its larger side + 30 px");
   const chairsQ = qs.find((q) => q.question === "chairs");
