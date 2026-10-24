@@ -63,7 +63,7 @@ M=$S/models/serve; mkdir -p $M; ln -sf ../gguf/Qwen3.5-0.8B-Q8_0.gguf $M/Qwen3.5
 # ---- resume state from the checkpoint branch ----
 if git -C $REPO ls-remote --exit-code origin claude/v5-train-state >/dev/null 2>&1; then
   [ -d $S/ckpt ] || git -C $REPO worktree add -q $S/ckpt claude/v5-train-state 2>/dev/null || { git -C $REPO fetch -q origin claude/v5-train-state && git -C $REPO worktree add -q $S/ckpt origin/claude/v5-train-state; }
-  for r in runB run2B; do [ -d $S/ckpt/$r ] && { mkdir -p $S/v5/$r; cp -rn $S/ckpt/$r/. $S/v5/$r/; }; done
+  for r in runB runB6 run2B run2B6; do [ -d $S/ckpt/$r ] && { mkdir -p $S/v5/$r; cp -rn $S/ckpt/$r/. $S/v5/$r/; }; done
   mkdir -p $S/v5/out; cp -n $S/ckpt/out/* $S/v5/out/ 2>/dev/null
 fi
 
