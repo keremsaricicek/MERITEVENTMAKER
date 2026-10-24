@@ -1,10 +1,11 @@
 {
   "format": "merit-local-check/1",
-  "note": "The closed questions a local vision-language model is asked about ONE crop of a plan. One source for the relay (server/vlm-core.mjs), the benchmark (benchmarks/offline-intelligence/local-vlm-bench2.py) and the training set (training/vlm_lora.py): a question the product asks is word for word the question that was measured and trained. Changing a word here is a new measurement.",
+  "note": "The closed questions a local vision-language model is asked about ONE crop of a plan. One source for the relay (server/vlm-core.mjs), the benchmark (benchmarks/offline-intelligence/local-vlm-bench2.py) and the training set (training/vlm_lora.py): a question the product asks is word for word the question that was measured and trained. Changing a word here is a new measurement. 2026-10-24 (V5): identify gained 'entrance' and 'lodge' (a loca box); the V4 identify results were measured on the earlier list of nine words.",
   "preamble": "This is a crop of an event venue floor plan, drawn from above. ",
-  "words": ["table", "chair", "sofa", "bench", "banquette", "column", "stage", "bar", "nothing"],
+  "words": ["table", "chair", "sofa", "bench", "banquette", "column", "stage", "bar", "entrance", "lodge", "nothing"],
   "synonyms": {"couch": "sofa", "settee": "sofa", "booth": "banquette", "seat": "chair", "armchair": "chair", "stool": "chair",
-    "desk": "table", "empty": "nothing", "none": "nothing", "blank": "nothing", "pillar": "column", "podium": "stage"},
+    "desk": "table", "empty": "nothing", "none": "nothing", "blank": "nothing", "pillar": "column", "podium": "stage",
+    "door": "entrance", "doorway": "entrance", "exit": "entrance", "loca": "lodge"},
   "pieces": ["sofa", "bench", "banquette"],
   "questions": {
     "identify": "What single object is at the centre of the image? Answer with exactly one word from: {words}.",

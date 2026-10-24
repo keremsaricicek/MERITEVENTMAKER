@@ -6,6 +6,12 @@ reading needs, asked fairly.
         --model NAME [--size 448] [--min-tokens N] [--seed 5] [--limit N] [--threads 4]
         [--no-real] [--lora ADAPTER.gguf] [--ctx 8192] [--looks 2] [--cache-ram 0] [--resume]
 
+    python -I benchmarks/offline-intelligence/local-vlm-bench2.py --v5 DIR \\
+        --server PATH/llama-server --models DIR --out FILE --model NAME [--lora A.gguf] --looks 2 --ctx 2048 --cache-ram 0
+
+--v5 asks the V5 test's own crops (training/synth_vlm.py --split blind) and
+reports summary.v5 (its pre-registered bars) and summary.tasks (accuracy,
+covered, agreed right / wrong, undecided, missed, false yes, per task).
 --no-real leaves the Golden/ORNEK crops out (a run that chooses settings);
 --lora serves a llama.cpp adapter (training/vlm_lora.py gguf) with the model;
 --looks 2 also asks every crop turned a quarter and reports the product's rule
@@ -332,6 +338,100 @@ def build_s1_items(s1_dir, rel_dir, rng, size, v4_asked):
     return items
 
 
+def build_v5_items(d):
+    """The V5 test (training/synth_vlm.py --split blind, frozen): its own crops
+    and questions, as generated; nothing is re-cut or re-framed here."""
+    items = []
+    for line in open(os.path.join(d, "items.jsonl")):
+        r = json.loads(line)
+        with open(os.path.join(d, r["image"]), "rb") as f:
+            items.append(dict(task=r["task"], source="v5", sub=r["sub"], truth=r["truth"], q=r["q"], level=r["level"], family=r["family"],
+                              image=base64.b64encode(f.read()).decode()))
+    return items
+
+
+def task_metrics(rows):
+    """Per task, what the product's two-look rule makes of the answers
+    (MeritLocalCheck.judge), all on the same items:
+      accuracy    one look right
+      covered     both looks answered and agree (an answer the product can use)
+      agreedRight / agreedWrong  of all items: both looks agree and are right /
+                  wrong (wrong is the upper bound of a WRONG SUGGESTION: the
+                  product offers one where the agreed answer differs from the
+                  analysis)
+      undecided   the looks disagree (UNSURE) or one did not answer
+      missed      a true object called "nothing", a true "yes" answered "no",
+                  or a count below the truth (one look)
+      falseYes / fabricated  "yes" on a true "no"; an object named on an empty
+                  crop (one look)"""
+    out = {}
+    for task in sorted({r["task"] for r in rows}):
+        xs = [r for r in rows if r["task"] == task]
+        n = len(xs)
+        two = [r for r in xs if "parsed2" in r]
+        agreed = [r for r in two if r["parsed"] is not None and r["parsed"] == r["parsed2"]]
+        right = lambda r: r["parsed"] == r["truth"]
+        m = dict(n=n, accuracy=round(sum(map(right, xs)) / n, 3), accuracyWilson=wilson(sum(map(right, xs)), n))
+        if two:
+            m.update(covered=round(len(agreed) / len(two), 3), agreedRight=round(sum(map(right, agreed)) / len(two), 3),
+                     agreedWrong=round(sum(not right(r) for r in agreed) / len(two), 3), undecided=round(1 - len(agreed) / len(two), 3))
+        if task == "ID":
+            m["missed"] = round(sum(r["parsed"] == "nothing" for r in xs) / n, 3)
+        elif task == "NEG":
+            m["fabricated"] = round(sum(r["parsed"] not in (None, "nothing") for r in xs) / n, 3)
+        elif task in ("COUNT", "CHAIRS"):
+            m["missed"] = round(sum(isinstance(r["parsed"], int) and r["parsed"] < r["truth"] for r in xs) / n, 3)
+            m["over"] = round(sum(isinstance(r["parsed"], int) and r["parsed"] > r["truth"] for r in xs) / n, 3)
+        else:
+            pos, neg = [r for r in xs if r["truth"] == "yes"], [r for r in xs if r["truth"] == "no"]
+            m["missed"] = round(sum(r["parsed"] == "no" for r in pos) / len(pos), 3) if pos else None
+            m["falseYes"] = round(sum(r["parsed"] == "yes" for r in neg) / len(neg), 3) if neg else None
+        m["unparsed"] = sum(r["parsed"] is None for r in xs)
+        out[task] = m
+    return out
+
+
+def v5_summary(rows):
+    """V5's pre-registered rows (training/README.md, 2026-10-24, written before
+    any V5 item was generated or any V5 adapter trained). Each with n, rate and
+    a Wilson 95 % interval; `passes` applies the bars exactly as written."""
+    rows = [r for r in rows if r.get("source") == "v5"]
+    if not rows:
+        return None
+    def rate(xs, ok):
+        k = sum(1 for x in xs if ok(x))
+        return dict(n=len(xs), k=k, rate=round(k / len(xs), 3) if xs else None, wilson=wilson(k, len(xs)))
+    T = lambda task, f=lambda r: True: [r for r in rows if r["task"] == task and f(r)]
+    right = lambda x: x["parsed"] == x["truth"]
+    over = lambda x: isinstance(x["parsed"], int) and x["parsed"] > x["truth"]
+    yes = lambda x: x["parsed"] == "yes"
+    furn = lambda r: r["truth"] in ("sofa", "bench", "banquette")
+    out = dict(idOther=rate(T("ID", lambda r: not furn(r)), right), idFurniture=rate(T("ID", furn), right),
+               idEntrance=rate(T("ID", lambda r: r["truth"] == "entrance"), right), idLodge=rate(T("ID", lambda r: r["truth"] == "lodge"), right),
+               idWithWord=rate(T("ID", lambda r: r["sub"].endswith("-word")), right),
+               emptyFabricated=rate(T("NEG"), lambda x: x["parsed"] not in (None, "nothing")),
+               emptyWordFabricated=rate(T("NEG", lambda r: r["sub"] == "nothing-word"), lambda x: x["parsed"] not in (None, "nothing")),
+               chairsAll=rate(T("CHAIRS"), right), chairsOdd=rate(T("CHAIRS", lambda r: r["truth"] % 2), right), chairsOver=rate(T("CHAIRS"), over),
+               chairsPrinted=rate(T("CHAIRS", lambda r: r["sub"].endswith("-printed")), right),
+               countAll=rate(T("COUNT"), right), countOver=rate(T("COUNT"), over),
+               mergedAll=rate(T("MERGED"), right), mergedYesOnNo=rate(T("MERGED", lambda r: r["truth"] == "no"), yes),
+               mergedYesOnNear=rate(T("MERGED", lambda r: r["sub"].endswith("-near")), yes),
+               servesAll=rate(T("SERVES"), right), servesYesOnNo=rate(T("SERVES", lambda r: r["truth"] == "no"), yes),
+               **{f"serves_{p}": rate(T("SERVES", lambda r, p=p: r["sub"].startswith(p + "-")), right) for p in ("sofa", "bench", "banquette")},
+               **{f"servesYesOnNo_{p}": rate(T("SERVES", lambda r, p=p: r["sub"].startswith(p + "-no")), yes) for p in ("sofa", "bench", "banquette")})
+    r_ = lambda k: out[k]["rate"]
+    ok = lambda k, lo=None, hi=None: r_(k) is not None and (lo is None or r_(k) >= lo) and (hi is None or r_(k) <= hi)
+    out["passes"] = dict(
+        identify=ok("idOther", 0.85) and ok("idFurniture", 0.80) and ok("emptyFabricated", hi=0.05) and ok("emptyWordFabricated", hi=0.10),
+        chairs=ok("chairsAll", 0.80) and ok("chairsOdd", 0.80) and ok("chairsOver", hi=0.10) and ok("chairsPrinted", 0.70),
+        count=ok("countAll", 0.80) and ok("countOver", hi=0.10),
+        merged=ok("mergedAll", 0.85) and ok("mergedYesOnNo", hi=0.10),
+        serves=ok("servesAll", 0.85) and ok("servesYesOnNo", hi=0.10) and all(ok(f"servesYesOnNo_{p}", hi=0.15) for p in ("sofa", "bench", "banquette")))
+    out["perLevel"] = {f"L{lv}": rate([r for r in rows if r.get("level") == lv], right) for lv in sorted({r.get("level") for r in rows if r.get("level")})}
+    out["perFamily"] = {f: rate([r for r in rows if r.get("family") == f], right) for f in sorted({r.get("family") for r in rows if r.get("family")})}
+    return out
+
+
 def answer_word(text):
     t = text.lower()
     hits = [(m.start(), w) for w in WORDS for m in [re.search(r"\b" + w + r"s?\b", t)] if m]
@@ -421,7 +521,7 @@ def s1_summary(rows):
     """S1's pre-registered rows (training/README.md), each with its n, its rate,
     a Wilson 95 % interval and the two-look figure beside it (reported, not
     used to pass)."""
-    rows = [r for r in rows if r.get("sub")]
+    rows = [r for r in rows if r.get("sub") and r.get("source") == "s1"]
     if not rows:
         return None
     def rate(xs, ok):
@@ -466,13 +566,16 @@ def summarise(name, rows, load_s, rss, settings):
                 merged=acc(by(lambda x: x["task"] == "MERGED")), serves=acc(by(lambda x: x["task"] == "SERVES")),
                 unparsed=sum(x["parsed"] is None for x in rows), emptyAnswers=sum(not x["answer"] for x in rows),
                 medianSeconds=round(statistics.median(secs), 2), p90Seconds=round(secs[int(0.9 * (len(secs) - 1))], 2),
-                n=len(rows), twoLooks=two_looks(rows), s1=s1_summary(rows))
+                n=len(rows), twoLooks=two_looks(rows), s1=s1_summary(rows), tasks=task_metrics(rows), v5=v5_summary(rows))
 
 
 def main():
     ap = argparse.ArgumentParser()
-    for k in ("server", "models", "seat", "rel", "out", "model"):
+    for k in ("server", "models", "out", "model"):
         ap.add_argument("--" + k, required=True)
+    ap.add_argument("--seat", default="", help="furniture scenes (V4 items; not needed with --v5)")
+    ap.add_argument("--rel", default="", help="relation scenes (V4 and S1 items; not needed with --v5)")
+    ap.add_argument("--v5", default="", help="the V5 test: a DIR written by training/synth_vlm.py (items.jsonl + img/); its items only")
     ap.add_argument("--syn", default="", help="generation-3 plans: round tables with 6-12 chairs, for CHAIRS")
     ap.add_argument("--size", type=int, default=448)
     ap.add_argument("--min-tokens", type=int, default=0)
@@ -489,7 +592,9 @@ def main():
     ap.add_argument("--resume", action="store_true", help="continue a run a restart cut short (OUT.partial.jsonl)")
     ap.add_argument("--cache-ram", type=int, default=None, help="llama-server --cache-ram MiB (0: no host prompt cache; unset: the build's default)")
     args = ap.parse_args()
-    if args.s1:
+    if args.v5:
+        items = build_v5_items(args.v5)
+    elif args.s1:
         asked = []
         build_items(args.seat, args.rel, random.Random(5), args.size, args.syn or None, real=False, asked=asked)  # V4's own selection (seed 5)
         items = build_s1_items(args.s1, args.rel, random.Random(args.seed), args.size, asked)
@@ -551,7 +656,7 @@ def main():
                 rows.append(done[i])
                 continue
             text, reasoning, usage, dt = ask(args.port, it, args.max_tokens)
-            row = dict(task=it["task"], source=it["source"], **({"sub": it["sub"]} if "sub" in it else {}), truth=it["truth"], answer=text.strip()[:120],
+            row = dict(task=it["task"], source=it["source"], **{k: it[k] for k in ("sub", "level", "family") if k in it}, truth=it["truth"], answer=text.strip()[:120],
                        reasoningChars=len(reasoning), parsed=parse(it["task"], text), seconds=round(dt, 3),
                        promptTokens=usage.get("prompt_tokens"))
             if args.looks == 2:
@@ -575,7 +680,7 @@ def main():
             proc.kill()
     s = summarise(args.model, rows, load_s, rss, dict(looks=args.looks, size=args.size, minTokens=args.min_tokens, maxTokens=args.max_tokens, threads=args.threads, seed=args.seed,
                                                       ctx=args.ctx, real=not args.no_real, lora=os.path.basename(args.lora) or None,
-                                                      cacheRam=args.cache_ram, s1=bool(args.s1)))
+                                                      cacheRam=args.cache_ram, s1=bool(args.s1), v5=os.path.basename(os.path.normpath(args.v5)) or None))
     print(json.dumps(s, indent=1), flush=True)
     json.dump(dict(ranAt=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), segments=segments, summary=s, prompts=Q, files=[model, proj] + ([os.path.basename(args.lora)] if args.lora else []),
                    dirs=dict(seat=args.seat, rel=args.rel, syn=args.syn), rows=rows), open(args.out, "w"), indent=1)

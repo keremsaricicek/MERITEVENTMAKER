@@ -671,3 +671,75 @@ look asked 12 groups (all rows of touching tables by eye): 10 agreed, 2 unsure,
 0 wrong, in 134 s, with no frozen frame. A run B would need odd counts and bench/banquette negatives
 in its training set, and new real plans to be judged on — the Golden and ORNEK
 crops are no longer a test any choice could be blind to.
+
+## 2026-10-24 — V5: the data fixed, then the 0.8B and the 2B model on the same data (written before the result)
+
+**Why.** Run A failed chairs, serves and real identify because of its data
+(above): even chair counts only, every bench/banquette serving, separate
+tables never nearer than 0.9 sides, and crops cut from plans drawn for the
+detector. V5 draws each crop for the question it answers
+(`training/synth_vlm.py`, generation 5): identify over eleven words (adds
+`entrance` and `lodge` — `server/local-check-questions.json`), count 1–6,
+chairs 1–14 (odd and even, round/oval/square/rectangle, chairs never
+overlapping), merged yes/no half and half (row, turned, L, T; "no" gaps
+0.2–1.0 sides, near < 0.45), serves yes/no half and half for EACH of sofa,
+bench and banquette (set apart facing the table or turned away). Against
+learning the wrong thing: a printed "N pax" that does not match the drawn
+chairs (25 % of chairs crops: the answer is the drawing), words on empty
+crops ("SAHNE", "8 pax", "LOCA"…: the answer is `nothing`), misleading words
+beside objects, colours swapped between classes, a chair always drawn at the
+table it faces (alone it is a column's drawing too — first contact sheet), a
+stage or bar never a bare rectangle (a table's drawing). Difficulty levels
+1–4 (clean → line/scale/colour → fade/blur/noise/JPEG → photographed
+perspective, shadow, strong JPEG); training runs easy to hard (a soft
+curriculum: level plus noise, so every level stays present). A seat count is
+never asked of a sofa, bench or banquette. Labels were checked on contact
+sheets of the dev split before this was written.
+
+**Splits by drawing family and seed base.** train: families 0–7, 10–13, base
+51 (plus a replay of run A's own training crops for identify, empty, count and
+merged — not its chairs or serves items, whose bias is the finding above);
+dev: families 8, 9, 14, 15, base 52; **V5 test: families 16 and 17 (never
+drawn for any vision-language model), base 53, generated once at `--scale
+0.1` (≈ 400 items), frozen by sha256 before any V5 adapter exists.** Golden
+and ORNEK have been looked at in earlier runs: they are reported as a SEEN
+real test, never as blind. If a choice is made on the V5 test's results, a
+new test is generated from a new seed base before anything is claimed.
+
+**Models, in this order.** (1) Qwen3.5-0.8B, LoRA as run A (rank 16, MLP
+only, one epoch, lr 2e-4, batch 1 × 8); measured. (2) Qwen3.5-2B (Hugging
+Face `Qwen/Qwen3.5-2B` at `15852e8c16360a2fea060d615a32b45270f8a8fc`,
+Apache-2.0), the SAME data and recipe, served as the published Q4_K_M with a
+Q8_0 projector quantized here; trained whatever (1) scores. Training memory
+(developer machine) and serving memory are reported apart. Training resumes
+from its last checkpoint if cut.
+
+**Final test (one run per model, two looks, `-c 2048 --cache-ram 0`, 4
+threads):** the V5 test, plus run A's V4 final test and S1 as regression
+(same items as before). Base models answer the V5 test too. Per task:
+accuracy, answer coverage (both looks agree), agreed-and-wrong (the most a
+wrong suggestion can be), undecided, missed, false yes / fabricated.
+
+**Bars (not lowered from V4/S1):**
+- identify: other classes ≥ 0.85, furniture ≥ 0.80, empty crops fabricated ≤
+  0.05 (empty crops with a word ≤ 0.10); AND V4 final test generated/furniture
+  bars still met; AND the seen real test (Golden/ORNEK) ≥ 0.80, reported as
+  seen, not blind.
+- chairs: all ≥ 0.80, odd ≥ 0.80, over-count ≤ 0.10, printed counter-examples
+  ≥ 0.70; AND S1 chairs bars.
+- merged: ≥ 0.85, "yes" on a true "no" ≤ 0.10; AND V4 and S1 merged bars
+  (a regression here unwires merged).
+- serves: ≥ 0.85, "yes" on a true "no" ≤ 0.10 overall and ≤ 0.15 for each of
+  sofa, bench, banquette; AND S1 serves bars.
+- count: ≥ 0.80, over ≤ 0.10 (reported; not a product question).
+- memory: peak llama-server RSS ≤ 3,000 MB (an 8 GB machine with the
+  browser). Seconds per crop are reported; slowness alone eliminates nothing
+  this round, but the screen must not freeze.
+
+**Choice between the two models (pre-registered).** The default is the model
+with more questions passing; on a tie, the higher mean accuracy over the
+passing questions on the V5 test; within 0.02, the smaller serving memory.
+The other is offered as an alternative only for the questions it passes,
+within the memory bar. A question neither passes stays unwired. Independent
+QA (`.claude/agents/model-qa-specialist.md`) audits data and test design
+before training and the results after.
