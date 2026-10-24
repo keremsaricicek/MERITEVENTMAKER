@@ -165,6 +165,24 @@ export default async function run({ checks, repoRoot }) {
     checks.equal(statics, { root: 200, app: 200, self: 404, pkg: 404, data: 404, climb: 404, encoded: 404, modules: 404, model: 200, manifest: 404, modelClimb: 404, training: 404 },
       "the relay serves index.html, src/ and the pinned local model file — not itself, its spend file, package.json, node_modules, a model's manifest or the training code, by any path");
 
+    // the offline folder build (dist/merit-offline: index.html + assets/) as the app
+    // root, as the Windows package serves it: its assets, nothing beside them
+    const appRoot = path.join(tmp, "app");
+    fs.mkdirSync(path.join(appRoot, "assets", "ocr"), { recursive: true });
+    fs.mkdirSync(path.join(appRoot, "server"), { recursive: true });
+    fs.writeFileSync(path.join(appRoot, "index.html"), "<!doctype html><title>t</title>");
+    fs.writeFileSync(path.join(appRoot, "assets", "ocr", "embed-eng.js"), "1");
+    fs.writeFileSync(path.join(appRoot, "assets", "ocr", "LICENSE.txt"), "1");
+    fs.writeFileSync(path.join(appRoot, "assets", "ocr", "x.exe"), "1");
+    fs.writeFileSync(path.join(appRoot, "server", "vlm-relay.mjs"), "1");
+    const rApp = await relayMod.startRelay({ config: core.configFromEnv({ ANTHROPIC_API_KEY: KEY, VLM_DATA_DIR: path.join(tmp, "dApp"), PORT: "0" }, { repoRoot }), root: appRoot, log });
+    opened.push(rApp);
+    const getA = (p) => fetch(rApp.baseUrl + p).then((x) => x.status);
+    const appStatics = { root: await getA("/"), asset: await getA("/assets/ocr/embed-eng.js"), text: await getA("/assets/ocr/LICENSE.txt"), exe: await getA("/assets/ocr/x.exe"),
+      server: await getA("/server/vlm-relay.mjs"), climb: await getA("/assets/../server/vlm-relay.mjs"), encoded: await getA("/assets/%2e%2e/server/vlm-relay.mjs") };
+    checks.equal(appStatics, { root: 200, asset: 200, text: 200, exe: 404, server: 404, climb: 404, encoded: 404 },
+      "with the offline folder build as its root the relay also serves its assets/ (scripts and text only) and still nothing beside them");
+
     // cross-site refusals, before the body is read
     const before = fake.requests.length;
     const cross = {

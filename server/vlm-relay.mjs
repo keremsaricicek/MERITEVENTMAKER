@@ -159,7 +159,10 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     // node_modules, a model's manifest and everything else on the disk are not
     // the app. Without the model path the app served here ran the classical
     // path alone and said MODEL_MISSING (benchmarks/offline-intelligence/teacher-e2e.mjs).
-    if (!(rel === "/index.html" || /^\/src\/[A-Za-z0-9._/-]+$/.test(rel) || /^\/models\/plan-detector\/[A-Za-z0-9._-]+\/model\.js$/.test(rel)) || rel.includes("..")) { res.writeHead(404, { "content-type": "text/plain" }).end("not found"); return; }
+    // The offline folder build (dist/merit-offline, the Windows package's app root,
+    // MERIT_APP_ROOT) adds assets/: the OCR engine and the detector, scripts and text only.
+    if (!(rel === "/index.html" || /^\/src\/[A-Za-z0-9._/-]+$/.test(rel) || /^\/models\/plan-detector\/[A-Za-z0-9._-]+\/model\.js$/.test(rel)
+      || /^\/assets\/[A-Za-z0-9._/-]+\.(js|txt)$/.test(rel)) || rel.includes("..")) { res.writeHead(404, { "content-type": "text/plain" }).end("not found"); return; }
     const target = path.join(root, rel);
     if (!target.startsWith(path.join(root, path.sep)) && target !== path.join(root, "index.html")) { res.writeHead(403).end(); return; }
     fs.stat(target, (err, st) => {
@@ -434,7 +437,7 @@ export async function startRelay({ config, client, root = REPO_ROOT, allowedHost
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const config = core.configFromEnv(process.env, { repoRoot: REPO_ROOT });
   const allowedHosts = allowedHostsFrom(process.env, config.port);
-  const started = await startRelay({ config, allowedHosts });
+  const started = await startRelay({ config, allowedHosts, root: process.env.MERIT_APP_ROOT ? path.resolve(process.env.MERIT_APP_ROOT) : REPO_ROOT });
   const s = core.status(config, started.relay.usage.snapshot(), started.relay.usage.ledger());
   console.log("MERIT EVENT MAKER — app + vision-language relay");
   console.log(`  open        ${started.baseUrl}/index.html`);
