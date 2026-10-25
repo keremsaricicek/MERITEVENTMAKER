@@ -9,7 +9,7 @@
  "checks": [
   "merged"
  ],
- "checksEvidence": "local-vlm-results/v5-v5-B.json (V5 test) + v5-s1-B.json (S1) + v5-v4r-B.json (V4-style) + v5-real-B.json (held-out real, 236 items), in benchmarks/offline-intelligence/; verdict and audit: training/README.md (V5 results)",
+ "checksEvidence": "benchmarks/offline-intelligence/local-vlm-results/v5-v5-B.json + benchmarks/offline-intelligence/local-vlm-results/v5-v4r-B.json + benchmarks/offline-intelligence/local-vlm-results/v5-s1-B.json (V5 test, V4-style, S1)",
  "serve": {
   "model": "Qwen3.5-0.8B-Q8_0.gguf",
   "lora": [

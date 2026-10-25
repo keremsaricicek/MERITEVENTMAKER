@@ -174,6 +174,23 @@ export default async function run({ page, checks, repoRoot }) {
       serves: T("SERVES").length > 0 && acc(T("SERVES")) >= 0.85 && rateYes(T("SERVES", ["benchneg", "banquetteneg"])) <= 0.10,
     };
   };
+  // V5 (training/README.md "V5" with the QA amendment): count is reported, not a
+  // product question; serves leaves the never-trained "near" zone out.
+  const passesV5 = (rows) => {
+    const T = (task, p = () => true) => rows.filter((r) => r.task === task && p(r));
+    const furn = (r) => ["sofa", "bench", "banquette"].includes(r.truth), near = (r) => /-near$/.test(r.sub);
+    const fab = (rs) => rs.length ? rs.filter((r) => r.parsed != null && r.parsed !== "nothing").length / rs.length : 1;
+    const classes = [...new Set(T("ID").map((r) => r.truth))];
+    return {
+      identify: acc(T("ID", (r) => !furn(r))) >= 0.85 && acc(T("ID", furn)) >= 0.80 && fab(T("NEG")) <= 0.05
+        && fab(T("NEG", (r) => r.sub === "nothing-word")) <= 0.10 && classes.every((c) => acc(T("ID", (r) => r.truth === c)) >= 0.70),
+      chairs: acc(T("CHAIRS")) >= 0.80 && acc(T("CHAIRS", (r) => Number(r.truth) % 2)) >= 0.80 && over(T("CHAIRS")) <= 0.10
+        && acc(T("CHAIRS", (r) => /-printed-match$/.test(r.sub))) >= 0.70 && acc(T("CHAIRS", (r) => /-printed-wrong$/.test(r.sub))) >= 0.70,
+      merged: acc(T("MERGED")) >= 0.85 && rateYes(T("MERGED", (r) => r.truth === "no")) <= 0.10,
+      serves: acc(T("SERVES", (r) => !near(r))) >= 0.85 && rateYes(T("SERVES", (r) => r.truth === "no" && !near(r))) <= 0.10
+        && ["sofa", "bench", "banquette"].every((p) => rateYes(T("SERVES", (r) => r.sub.startsWith(p + "-no") && !near(r))) <= 0.15),
+    };
+  };
   const listed = [];
   for (const f of fs.readdirSync(mdir).filter((n) => n.endsWith(".json"))) {
     const r = readManifest(path.join(mdir, f), { verify: false });
@@ -184,6 +201,22 @@ export default async function run({ page, checks, repoRoot }) {
     checks.ok(ev.length >= 2 && ev.every((p) => fs.existsSync(p)), `${f}: checksEvidence names its evidence files, all committed`, r.manifest.checksEvidence);
     if (ev.length < 2 || !ev.every((p) => fs.existsSync(p))) continue;
     const runs = ev.map((p) => JSON.parse(fs.readFileSync(p, "utf8")));
+    // V5 evidence: every run is scored with the prompt cache off (no separate
+    // cost run); the V5 test AND the V4-style rebuilt set AND S1. Slowness
+    // eliminates nothing this round; memory does.
+    const v5test = runs.find((x) => x.summary.settings.v5 === "test");
+    if (v5test) {
+      const s1r = runs.find((x) => x.summary.settings.s1), v4r = runs.find((x) => x !== v5test && x !== s1r && x.summary.settings.v5 === ".");
+      checks.ok(s1r && v4r && runs.every((x) => x.summary.settings.looks === 2 && x.summary.settings.cacheRam === 0
+        && x.summary.settings.lora === v5test.summary.settings.lora && x.summary.peakRssMb <= 3000),
+        `${f}: the V5 evidence holds the V5 test, the V4-style rebuilt set and S1 — two looks, prompt cache off, one adapter, peak server RSS ≤ 3,000 MB`);
+      if (!s1r || !v4r) continue;
+      const v5 = passesV5(v5test.rows), v4 = passesV4(v4r.rows), sup = passesS1(s1r.rows);
+      const ok = Object.fromEntries(Object.keys(v5).map((q) => [q, v5[q] && v4[q] && (q in sup ? sup[q] : true)]));
+      checks.equal(r.manifest.checks.slice().sort(), Object.keys(ok).filter((q) => ok[q]).sort(),
+        `${f}: lists exactly the questions its V5 evidence passed — V5 test, V4-style rebuilt and S1 — at the pre-registered bars`, { v5, v4, s1: sup });
+      continue;
+    }
     const s1 = runs.find((x) => x.summary.settings.s1);
     const cost = runs.find((x) => !x.summary.settings.s1 && x.summary.settings.cacheRam === 0);
     const scored = runs.find((x) => x !== s1 && x !== cost);
