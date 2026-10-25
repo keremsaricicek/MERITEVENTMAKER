@@ -889,3 +889,27 @@ for every adapter not yet scored (runB6, 2B, 2B6).
 goes through the same writer as a person's Accept, is marked "applied by the
 model" with its run, is never captured as a person's decision for training, and
 is undone from the panel or the undo list.
+
+## 2026-10-25 — Two follow-ups, written before runB6's results are complete
+
+(Only runB6's partial real-test rows had been looked at: chair identify up, chair
+count still low, merged possibly down.)
+
+**1. One adapter per question.** llama.cpp serves one base model with several
+LoRA adapters loaded and chooses each adapter's scale per request. The product
+may therefore use, per question, the adapter that passes it. Rule: a question is
+served by an adapter only if that adapter passes the question's bars (V5, V6
+where it is a V6 adapter, regression rule); when several pass, the one with the
+higher accuracy for that question on dev (families 8 and 9), never on a test;
+the relay verifies every loaded adapter by sha256 as it does one today. Memory
+bar unchanged (peak server RSS ≤ 3,000 MB with all adapters loaded).
+
+**2. Seat counts from chairs, one by one.** Counting chairs around a table is
+the question the model fails; telling whether one symbol is a chair is one it
+may pass. A table's count then becomes: the chairs the detector found around it
+that the model calls `chair` on both looks (identify), counted by geometry — the
+model never says a number. Measured on the held-out real test's 20 Golden
+chair-count tables, using the detector's own chair candidates on those tables:
+exact count ≥ 0.80 and over-count ≤ 0.10 (the chairs bars), reported beside the
+detector alone. It is wired only if identify passes for that adapter and this
+passes.
