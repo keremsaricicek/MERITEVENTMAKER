@@ -22,7 +22,8 @@ No EXE (one-click `.cmd` launcher allowed). No paid API/GPU/service, no private 
 ## Results so far (2026-10-25 ~02:45 Istanbul; raw in `benchmarks/offline-intelligence/local-vlm-results/v5-*.json`)
 - run B (0.8B V5) on V5 test: passes identify, count, merged (1.00, yesOnNo 0); fails chairs (0.62; printedWrong 0.32), serves (0.87 but yesOnNo 0.31; banquette 0.50).
 - Real held-out: B merged 0.886 / yesOnNo 0.053 (pass), empty fabricated 0.031, identify 0.83 (chair 0.60), chairs 0/20 (over 0.90). Run A: merged 0.59 / yesOnNo 0.47 (the wired check is unreliable on real plans), empty fabricated 0.19, chairs 0.20.
-- Merged for B may be wired only after S1 + V4-style regression (s1-B, v4r-B) pass; then QA audit, then wire (replaces run A).
+- DONE 2026-10-25 ~09:55: run B wired for merged (manifest `qwen3.5-0.8b-merit-b.json`, adapter in `models/local-vlm/qwen3.5-0.8b-merit-b/`); run A's merged unwired (fails V5 bar). QA SOUND WITH FINDINGS; agree 55/55. Verdicts in `training/README.md` "V5 results". Windows package must use manifest B (or the later winner).
+- runB6 (V6) training started 05:19 UTC.
 - Owner asleep, gave every permission (2026-10-25 ~02:50): continue without asking; 2B takes ~2 more days — say so honestly.
 
 ## Next actions when results arrive
