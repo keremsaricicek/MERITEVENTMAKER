@@ -852,6 +852,10 @@ family or image-hash overlap between training and any test. Findings kept as
 limits: the S1 near-miss Wilson upper bound (0.16) is above 0.10 (as for run
 A), so the claim stays "generated plans, separate pairs ≥ 0.35 sides apart";
 real touching groups are only six (3–4 of 6 recalled), so real recall of a
-merged group is not established; `vlm_lora.py agree` for run B is required
-before wiring (below). The 0.8B vs 2B choice is made later on dev, as
-pre-registered.
+merged group is not established; `vlm_lora.py agree` for run B was required
+before wiring. Conversion check (llama.cpp `--lora` vs transformers + PEFT,
+run at low priority during V6 training, never during a benchmark): 24 / 24 on
+the test's last 24 items (all serves) and 31 / 31 on 12 merged yes, 12 merged
+no and 7 identify/chairs crops (`local-vlm-results/v5-agree-B-*.txt`). Run B
+is wired for merged (`tools/local-vlm/manifests/qwen3.5-0.8b-merit-b.json`).
+The 0.8B vs 2B choice is made later on dev, as pre-registered.
