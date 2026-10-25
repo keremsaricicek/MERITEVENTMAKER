@@ -26,6 +26,8 @@ No EXE (one-click `.cmd` launcher allowed). No paid API/GPU/service, no private 
 - runB6 (V6) training started 05:19 UTC.
 - Owner (2026-10-25): wants the analysis to hand over the CORRECTED plan (AI applies fixes itself, marked + one-click undo) and a progress bar. Progress bar DONE (analysis + second look). Auto-apply: stricter bar pre-registered in `training/README.md` ("Changing the plan by itself", agreed-and-wrong ≤ 3 % on real + V5, n ≥ 30); run B merged fails it (would split 2/6 real long tables). Build the mechanism (manifest `autoApply`, apply via the same writer, never a training label) when a question passes it.
 - Owner: GPU auto-use in the Windows package (Vulkan llama.cpp + CPU fallback + first-run answer check against CPU answers); EXE only after "EXE YAP".
+- runB6 real test (2026-10-25): identify 0.964 (chair 0.957, table 0.978), empty fab 0, chairs 0.20, merged 0.841 / yes-on-no 0.184 (agreed-wrong 1/44; all 6 real groups found). Waiting v5-B6, s1-B6, dev-B6 for the regression rule before wiring identify from B6.
+- Pre-registered (before full B6 results): per-question adapters (dev picks; relay loads several LoRA, per-request scale) and seat counts from per-chair identify (`training/seat_count_eval.py`; needs `node benchmarks/run-benchmark.mjs merit-real-venue --dump DIR` then bench2 `--v5 DIR` with the B6 adapter, then `score`). Run during 2B training with the trainer paused.
 - Running tests during training: pause the trainer with SIGSTOP, resume with SIGCONT (logged in chain.log); never during a benchmark.
 - Owner asleep, gave every permission (2026-10-25 ~02:50): continue without asking; 2B takes ~2 more days — say so honestly.
 
