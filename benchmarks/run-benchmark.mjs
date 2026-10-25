@@ -25,7 +25,7 @@ const app = await serveApp();
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
 const optOf = name => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : null; };
-const FILTER = argv.find(a => !a.startsWith("--") && argv[argv.indexOf(a) - 1] !== "--annotations" && argv[argv.indexOf(a) - 1] !== "--out") || "";
+const FILTER = argv.find(a => !a.startsWith("--") && !["--annotations", "--out", "--dump"].includes(argv[argv.indexOf(a) - 1])) || "";
 // --annotations points the runner at another directory of annotations, and
 // --out sends the report somewhere other than reports/latest.json. Both exist
 // so the robustness suite can score the Golden Plan's transformed variants
@@ -33,6 +33,10 @@ const FILTER = argv.find(a => !a.startsWith("--") && argv[argv.indexOf(a) - 1] !
 // benchmark or the recorded baseline as if they were separate plans.
 const ANNOT_DIR = optOf("--annotations");
 const OUT_FILE = optOf("--out");
+// --dump DIR also writes each plan's raw detections (candidates with their
+// chairs, in plan percent) to DIR/<planId>.detections.json — the input of
+// training/seat_count_eval.py. It changes nothing in the report.
+const DUMP_DIR = optOf("--dump");
 
 // ---- matching -------------------------------------------------------------
 // Greedy nearest-first over all (gt, det) pairs within tolerance. Greedy on a
@@ -414,6 +418,10 @@ for (const f of files) {
   process.stdout.write(`\n=== ${annot.planId} ===\n`);
   const { out, ms, errors } = await detect(browser, img);
   if (!out) { console.error("  detection produced no analysis"); continue; }
+  if (DUMP_DIR) {
+    fs.mkdirSync(path.resolve(DUMP_DIR), { recursive: true });
+    fs.writeFileSync(path.join(path.resolve(DUMP_DIR), `${annot.planId}.detections.json`), JSON.stringify({ planId: annot.planId, imageSha256: sha, source: annot.source, candidates: out.candidates }));
+  }
   const rep = evaluate(annot, out);
   rep.detectionMs = ms;
   rep.pageErrors = errors;
