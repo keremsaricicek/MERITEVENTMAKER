@@ -913,3 +913,26 @@ chair-count tables, using the detector's own chair candidates on those tables:
 exact count ≥ 0.80 and over-count ≤ 0.10 (the chairs bars), reported beside the
 detector alone. It is wired only if identify passes for that adapter and this
 passes.
+
+## 2026-10-25 — V6 verdict for runB6, and runB6b (written before runB6b exists)
+
+**runB6 (0.8B, V6) — not wired.** Held-out real test: identify 0.964 (table
+0.978, chair 0.957), empty fabricated 0.00 — the V6 identify bars pass; chairs
+0.20 (over 0.80) and merged 0.841 with "yes" on a separate pair 0.184 fail. V5
+test: identify still passes (0.962 / 0.889, every class ≥ 0.73), merged 0.975 /
+0.05; S1 merged and serves pass. **But count, which run B passed on the V5 test
+(over-count 2 / 30), over-counts 4 / 30 (bar ≤ 0.10): a question that passed fell
+below its bar, so by the regression rule nothing of runB6 is wired.** The rule is
+applied as written, though the difference is two items.
+
+**runB6b.** The known remedy for a skill lost while learning a new one is more
+replay of the old data. runB6b is runB6's recipe with the replay doubled
+(`--replay-max 2400`, every question), everything else the same (init run B,
+V6 scenes, one epoch, fp32, curriculum, seed 3). Because it was decided with the
+V5 test's results in view, it is scored on a FRESH V5 test — `synth_vlm.py
+--split blind3` (families 16 and 17, seed base 54, `--scale 0.1`, 652 items),
+frozen now: sha256 of `sha256sum items.jsonl meta.json img/*.png` =
+`5199eb21…1b63`, items.jsonl `4cc0de05…7a`. The held-out real test and S1 stay
+as they are (the real test is the only real one; it is reported as scored a
+second time). Bars and the regression rule unchanged; the regression reference
+is run B on the V5 test and S1. The 2B follows runB6b, on the original recipe.

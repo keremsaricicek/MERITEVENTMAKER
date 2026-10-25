@@ -72,7 +72,9 @@ def Q(task, piece=None):
     return SPEC["preamble"] + q.replace("{words}", ", ".join(WORDS)).replace("{piece}", piece or "")
 
 
-SPLITS = {"train": (L.TRAIN_FAMILIES, 51), "dev": ([8, 9], 52), "blind": (L.BLIND2_FAMILIES, 53)}
+# blind3 (2026-10-25): a fresh V5 test, same never-trained families, new seed
+# base — for an adapter made after the V5 test's results were seen (runB6b).
+SPLITS = {"train": (L.TRAIN_FAMILIES, 51), "dev": ([8, 9], 52), "blind": (L.BLIND2_FAMILIES, 53), "blind3": (L.BLIND2_FAMILIES, 54)}
 CHAIR_KINDS = ["rect", "rounded", "arm", "circle", "backrest", "petal", "semicircle", "silhouette"]
 PALETTE = [(232, 216, 176), (205, 235, 232), (240, 228, 200), (225, 225, 225), (232, 110, 40), (60, 140, 140), (160, 205, 170),
            (120, 90, 160), (200, 215, 245), (250, 226, 230), (176, 188, 226), (90, 90, 90), (255, 255, 255)]
@@ -364,7 +366,8 @@ def family(fam_idx, rng, level):
 # half the chairs crops.
 BOOST = {"train": {}, "dev": {"identify:nothing": 2.67, "chairs": 1.6, "merged": 1.2, "serves": 3.33},
          "blind": {"identify:nothing": 2.67, "chairs": 1.6, "merged": 1.2, "serves": 3.33}}
-PRINTED = {"train": 0.25, "dev": 0.5, "blind": 0.5}
+BOOST["blind3"] = BOOST["blind"]
+PRINTED = {"train": 0.25, "dev": 0.5, "blind": 0.5, "blind3": 0.5}
 
 
 def make(task, stratum, rng, fam_idx, size=448, split="train"):
