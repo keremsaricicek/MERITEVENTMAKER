@@ -1,0 +1,7 @@
+start 2026-10-25T17:01:08Z items=4600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 10/575 items 80 loss 0.1441 lr 1.08e-04 4.54s/item elapsed 6.1min peakRSS 7922MB
+step 20/575 items 160 loss 0.1007 lr 1.93e-04 4.62s/item elapsed 12.3min peakRSS 8033MB
+step 30/575 items 240 loss 0.1965 lr 1.90e-04 4.47s/item elapsed 17.9min peakRSS 8033MB
+step 40/575 items 320 loss 0.4136 lr 1.86e-04 4.40s/item elapsed 23.5min peakRSS 8033MB
+step 50/575 items 400 loss 0.3103 lr 1.83e-04 4.48s/item elapsed 29.8min peakRSS 8033MB
+step 60/575 items 480 loss 0.2722 lr 1.79e-04 4.48s/item elapsed 35.8min peakRSS 8033MB
