@@ -13,3 +13,4 @@ wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER
 == 2026-10-24T20:57:17Z bench real-B
 == 2026-10-24T21:44:41Z bench real-A
 == 2026-10-24T22:32:35Z bench v5-base08
+== 2026-10-25T00:34:48Z bench v5-A
