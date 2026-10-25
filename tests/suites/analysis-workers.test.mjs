@@ -125,9 +125,12 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
     header: (document.querySelector(".planintel-top") || {}).textContent || "",
     stop: !!document.querySelector('[data-review-action="cancel-analysis"]:not([disabled])'),
     reanalyse: !!document.querySelector('[data-review-action="reanalyze"]'),
-    busyAttr: (document.querySelector(".planintel-screen") || {}).getAttribute?.("aria-busy") || null }));
+    busyAttr: (document.querySelector(".planintel-screen") || {}).getAttribute?.("aria-busy") || null,
+    bar: (() => { const b = document.querySelector('.planintel-top [role="progressbar"]'); return b ? { now: Number(b.getAttribute("aria-valuenow")), width: b.firstElementChild && b.firstElementChild.style.width } : null; })() }));
   checks.ok(during.stop && !during.reanalyse && /Not complete yet/.test(during.header) && during.busyAttr === "true",
     "while the analysis runs the header says it is not complete and offers Stop, not Re-analyse", during);
+  checks.ok(during.bar && during.bar.now > 0 && during.bar.now < 100 && during.bar.width === `${during.bar.now}%`,
+    "while the analysis runs a progress bar fills to the reported percentage", during.bar);
   const t0 = Date.now();
   await click(p, '[data-review-action="cancel-analysis"]');
   await p.waitForFunction(() => !ui.analysisBusy, null, { timeout: 10000, polling: 20 });

@@ -766,6 +766,8 @@
     "vlm.second.ask.time": { en: "About {min} minute(s) on this computer. You can keep working, and Cancel stops it.", tr: "Bu bilgisayarda yaklaşık {min} dakika. Çalışmaya devam edebilirsiniz; İptal durdurur." },
     "vlm.second.ask.suggestions": { en: "Answers are checked against what the analysis found. Agreement changes nothing; a disagreement becomes a suggestion that waits for you.", tr: "Cevaplar analizin bulduklarıyla karşılaştırılır. Uyuşma hiçbir şeyi değiştirmez; ayrılık sizi bekleyen bir öneriye dönüşür." },
     "vlm.second.progress": { en: "Second look · place {i} of {n}", tr: "İkinci bakış · yer {i}/{n}" },
+    "vlm.second.leftSec": { en: "about {n} s left", tr: "yaklaşık {n} sn kaldı" },
+    "vlm.second.leftMin": { en: "about {n} min left", tr: "yaklaşık {n} dk kaldı" },
     "vlm.second.cancel": { en: "Cancel second look", tr: "İkinci bakışı iptal et" },
     "vlm.second.meta": { en: "{model} on this computer · {steps} question(s) asked", tr: "Bu bilgisayarda {model} · {steps} soru soruldu" },
     "vlm.second.tally": { en: "{asked} place(s) looked at: {agrees} agree with the analysis, {differs} differ, {unsure} unsure (the two looks disagreed), {none} unanswered.", tr: "{asked} yere bakıldı: {agrees} analizle uyuşuyor, {differs} ayrılıyor, {unsure} belirsiz (iki bakış uyuşmadı), {none} cevapsız." },

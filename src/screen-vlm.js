@@ -306,7 +306,7 @@
     try{
       for(let i=0;i<qs.length&&run.status==="running";i++){
         const q=qs[i],rec=run.checks[i];
-        session.progress={label:"second",index:i+1,regions:qs.length};render();
+        session.progress={label:"second",index:i+1,regions:qs.length,startedAt:(session.progress&&session.progress.startedAt)||Date.now()};render();
         for(const deg of L.LOOKS){
           let image;
           try{image=encodeLook(img,q.frame,deg,L.CROP_PX);}catch{run.code="IMAGE";break;}
@@ -472,7 +472,13 @@
     if(!a||!served())return"";
     if(session.busy){
       const p=session.progress||{};
-      if(p.label==="second")return`<span class="vlm-progress" role="status">${esc(t("vlm.second.progress",{i:p.index,n:p.regions}))}</span><button class="btn" data-vlm-action="cancel">${t("vlm.second.cancel")}</button>`;
+      if(p.label==="second"){
+        // Time left from this run's own pace: nothing is shown until one place is done.
+        const done=Math.max(0,(p.index||1)-1),pct=Math.round(done/Math.max(1,p.regions)*100);
+        const left=done&&p.startedAt?Math.max(1,Math.round((Date.now()-p.startedAt)/done*(p.regions-done)/1000)):null;
+        const when=left==null?"":` · ${left<60?t("vlm.second.leftSec",{n:left}):t("vlm.second.leftMin",{n:Math.round(left/60)})}`;
+        return`<span class="vlm-progress" role="status">${esc(t("vlm.second.progress",{i:p.index,n:p.regions}))}${esc(when)}<span class="work-bar" role="progressbar" aria-label="${esc(t("vlm.second.step"))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span></span><button class="btn" data-vlm-action="cancel">${t("vlm.second.cancel")}</button>`;
+      }
       const label=p.label==="region"?t("vlm.progress.region",{i:p.index,n:p.regions}):p.label==="tile"?t("vlm.progress.tile",{i:p.index,n:p.regions}):t("vlm.progress.overview");
       return`<span class="vlm-progress" role="status">${esc(t("vlm.progress",{step:p.step||1,of:p.of||1,what:label}))}</span><button class="btn" data-vlm-action="cancel">${t("vlm.cancel")}</button>`;
     }
