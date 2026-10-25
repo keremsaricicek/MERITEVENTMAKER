@@ -26,3 +26,23 @@ step 240/425 items 1920 loss 0.0411 lr 8.71e-05 5.00s/item elapsed 160.0min peak
 step 250/425 items 2000 loss 0.1178 lr 8.24e-05 4.97s/item elapsed 165.7min peakRSS 8046MB
 step 260/425 items 2080 loss 0.0453 lr 7.76e-05 4.96s/item elapsed 172.1min peakRSS 8046MB
 step 270/425 items 2160 loss 0.1113 lr 7.29e-05 4.95s/item elapsed 178.1min peakRSS 8046MB
+resume at item 2000 step 250
+start 2026-10-25T09:35:44Z items=3400 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 260/425 items 2080 loss 0.0441 lr 7.76e-05 4.72s/item elapsed 6.3min peakRSS 7963MB
+step 270/425 items 2160 loss 0.1113 lr 7.29e-05 4.61s/item elapsed 12.3min peakRSS 7998MB
+step 280/425 items 2240 loss 0.0934 lr 6.82e-05 4.55s/item elapsed 18.2min peakRSS 8010MB
+step 290/425 items 2320 loss 0.1030 lr 6.35e-05 5.61s/item elapsed 29.9min peakRSS 8010MB
+step 300/425 items 2400 loss 0.0429 lr 5.88e-05 5.42s/item elapsed 36.1min peakRSS 8010MB
+step 310/425 items 2480 loss 0.1611 lr 5.41e-05 5.30s/item elapsed 42.4min peakRSS 8010MB
+step 320/425 items 2560 loss 0.0407 lr 4.94e-05 5.19s/item elapsed 48.4min peakRSS 8010MB
+step 330/425 items 2640 loss 0.1143 lr 4.47e-05 5.12s/item elapsed 54.6min peakRSS 8010MB
+step 340/425 items 2720 loss 0.0647 lr 4.00e-05 5.05s/item elapsed 60.6min peakRSS 8010MB
+step 350/425 items 2800 loss 0.0339 lr 3.53e-05 4.98s/item elapsed 66.4min peakRSS 8010MB
+step 360/425 items 2880 loss 0.1607 lr 3.06e-05 4.93s/item elapsed 72.2min peakRSS 8010MB
+step 370/425 items 2960 loss 0.0151 lr 2.59e-05 4.89s/item elapsed 78.3min peakRSS 8010MB
+step 380/425 items 3040 loss 0.0436 lr 2.12e-05 4.85s/item elapsed 84.0min peakRSS 8010MB
+step 390/425 items 3120 loss 0.0399 lr 1.65e-05 4.82s/item elapsed 90.0min peakRSS 8010MB
+step 400/425 items 3200 loss 0.1023 lr 1.18e-05 4.80s/item elapsed 96.1min peakRSS 8010MB
+step 410/425 items 3280 loss 0.0457 lr 1.00e-05 4.77s/item elapsed 101.8min peakRSS 8010MB
+step 420/425 items 3360 loss 0.1214 lr 1.00e-05 4.74s/item elapsed 107.4min peakRSS 8010MB
+done in 110.2 min
