@@ -859,3 +859,33 @@ the test's last 24 items (all serves) and 31 / 31 on 12 merged yes, 12 merged
 no and 7 identify/chairs crops (`local-vlm-results/v5-agree-B-*.txt`). Run B
 is wired for merged (`tools/local-vlm/manifests/qwen3.5-0.8b-merit-b.json`).
 The 0.8B vs 2B choice is made later on dev, as pre-registered.
+
+## 2026-10-25 — Changing the plan by itself: a second, stricter bar (written before any V6 or 2B result)
+
+**Why.** The owner wants the analysis to hand over the corrected plan, not a list
+of suggestions: a check the model is good enough at should apply its answer by
+itself, marked as the model's and undone in one click; everything else stays a
+suggestion or is left alone. A wrong change the person does not notice is worse
+than an open suggestion, so passing a question's bar (it may be ASKED) is not
+enough to let it CHANGE the plan.
+
+**Bar for applying by itself (per question, per model).** On the held-out real
+test (`synth_real.py test`) AND on the V5 test, over that question's items:
+the answer both looks agree on is wrong on ≤ 3 % of the items (agreed-and-wrong
+— the most an automatic change can get wrong), with at least 30 items on the
+real test. The question must also pass its own bars above (V5, and V6 where the
+model is a V6 adapter). Nothing else is applied by itself; a printed table
+number never is.
+
+**Already seen.** Run B's merged rows were looked at before this was written:
+on the real test both looks said "no" on 2 of the 6 touching groups (Golden
+group 3) — applied, that would split two real long tables — so agreed-and-wrong
+is 2 / 44 = 0.045 > 0.03, and merged is NOT applied by itself for run B. That
+verdict is reported as made with the rows in view; the bar is a pre-registration
+for every adapter not yet scored (runB6, 2B, 2B6).
+
+**In the product.** A manifest lists what may be applied by itself
+(`autoApply`, a subset of `checks`) only with this evidence. An applied change
+goes through the same writer as a person's Accept, is marked "applied by the
+model" with its run, is never captured as a person's decision for training, and
+is undone from the panel or the undo list.
