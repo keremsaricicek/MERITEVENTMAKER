@@ -23,4 +23,4 @@ checkpoint's item (`vlm_lora.py train` reads `RUN/resume`), and every benchmark
 resumes from its `.partial.jsonl` (`local-vlm-bench2.py --resume`). At most the
 work since the last push (≤ 2 hours) is repeated.
 
-Order of the chain (V6 added 2026-10-24): train 0.8B (V5) -> V5 test, real held-out test, V5 base, run A, S1, V4-style, dev -> 0.8B V6 (continues V5 adapter) -> real, V5, S1, dev -> 2B probe -> 2B V5 -> V5, base, S1, dev, real -> 2B V6 -> real, V5, S1, dev.
+Order of the chain (V6 added 2026-10-24, V6b 2026-10-25): train 0.8B (V5) -> V5 test, real held-out test, V5 base, run A, S1, V4-style, dev -> 0.8B V6 (continues V5 adapter) -> real, V5, S1, dev -> 0.8B V6b (replay doubled) -> real, fresh V5 test (blind3, also run B), S1, dev -> 2B probe -> 2B V5 -> V5, base, S1, dev, real -> 2B V6 -> real, V5, S1, dev.

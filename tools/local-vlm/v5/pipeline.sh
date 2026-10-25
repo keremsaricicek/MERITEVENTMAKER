@@ -48,6 +48,7 @@ step done
 # ---- data (seeds; byte-identical) ----
 P=$S/pyenv/bin/python; cd $REPO
 [ -f $S/v5/test/meta.json ] || $P -I training/synth_vlm.py --split blind --out $S/v5/test --scale 0.1
+[ -f $S/v5/test3/meta.json ] || $P -I training/synth_vlm.py --split blind3 --out $S/v5/test3 --scale 0.1
 [ -f $S/v5/dev/meta.json ] || $P -I training/synth_vlm.py --split dev --out $S/v5/dev --scale 0.05
 [ -f $S/v5/train/meta.json ] || $P -I training/synth_vlm.py --split train --out $S/v5/train --scale 1.0
 [ -d $S/try/seat12 ] || { mkdir -p $S/try/seat12; $P -I training/synth_relations.py --out $S/try/seat12 --count 12 --split blind --furniture; }
@@ -63,7 +64,7 @@ M=$S/models/serve; mkdir -p $M; ln -sf ../gguf/Qwen3.5-0.8B-Q8_0.gguf $M/Qwen3.5
 # ---- resume state from the checkpoint branch ----
 if git -C $REPO ls-remote --exit-code origin claude/v5-train-state >/dev/null 2>&1; then
   [ -d $S/ckpt ] || git -C $REPO worktree add -q $S/ckpt claude/v5-train-state 2>/dev/null || { git -C $REPO fetch -q origin claude/v5-train-state && git -C $REPO worktree add -q $S/ckpt origin/claude/v5-train-state; }
-  for r in runB runB6 run2B run2B6; do [ -d $S/ckpt/$r ] && { mkdir -p $S/v5/$r; cp -rn $S/ckpt/$r/. $S/v5/$r/; }; done
+  for r in runB runB6 runB6b run2B run2B6; do [ -d $S/ckpt/$r ] && { mkdir -p $S/v5/$r; cp -rn $S/ckpt/$r/. $S/v5/$r/; }; done
   mkdir -p $S/v5/out; cp -n $S/ckpt/out/* $S/v5/out/ 2>/dev/null
 fi
 
@@ -108,6 +109,14 @@ bench v5-B6 qwen3.5-0.8b $S/v5/runB6/adapter.gguf $V5
 bench s1-B6 qwen3.5-0.8b $S/v5/runB6/adapter.gguf $S1
 bench dev-B6 qwen3.5-0.8b $S/v5/runB6/adapter.gguf --v5 $S/v5/dev
 bench real-base08 qwen3.5-0.8b "" $REAL
+# 0.8B: V6b (runB6 with the replay doubled; training/README.md 2026-10-25), fresh V5 test blind3
+V6B="--data $S/v6/scenes,$S/v5/train --replay-tasks ID,NEG,COUNT,CHAIRS,MERGED,SERVES --replay-max 2400"
+train runB6b $S/models/hf/Qwen3.5-0.8B --dtype fp32 --init $S/v5/runB $V6B
+bench real-B6b qwen3.5-0.8b $S/v5/runB6b/adapter.gguf $REAL
+bench v5n-B6b qwen3.5-0.8b $S/v5/runB6b/adapter.gguf --v5 $S/v5/test3
+bench s1-B6b qwen3.5-0.8b $S/v5/runB6b/adapter.gguf $S1
+bench v5n-B qwen3.5-0.8b $S/v5/runB/adapter.gguf --v5 $S/v5/test3
+bench dev-B6b qwen3.5-0.8b $S/v5/runB6b/adapter.gguf --v5 $S/v5/dev
 # 2B: fp32 if 16 items fit in 12 GB of training memory, else fp32 + gradient checkpointing
 if [ ! -f $S/v5/run2B.args ]; then
   log probe 2B memory
