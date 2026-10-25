@@ -26,3 +26,5 @@ wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER
 wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v5/runB6/adapter.gguf
 == 2026-10-25T11:26:06Z bench real-B6
 == 2026-10-25T12:18:41Z bench v5-B6
+== 2026-10-25T14:39:04Z bench s1-B6
+== 2026-10-25T15:05:42Z bench dev-B6
