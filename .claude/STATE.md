@@ -24,6 +24,9 @@ No EXE (one-click `.cmd` launcher allowed). No paid API/GPU/service, no private 
 - Real held-out: B merged 0.886 / yesOnNo 0.053 (pass), empty fabricated 0.031, identify 0.83 (chair 0.60), chairs 0/20 (over 0.90). Run A: merged 0.59 / yesOnNo 0.47 (the wired check is unreliable on real plans), empty fabricated 0.19, chairs 0.20.
 - DONE 2026-10-25 ~09:55: run B wired for merged (manifest `qwen3.5-0.8b-merit-b.json`, adapter in `models/local-vlm/qwen3.5-0.8b-merit-b/`); run A's merged unwired (fails V5 bar). QA SOUND WITH FINDINGS; agree 55/55. Verdicts in `training/README.md` "V5 results". Windows package must use manifest B (or the later winner).
 - runB6 (V6) training started 05:19 UTC.
+- Owner (2026-10-25): wants the analysis to hand over the CORRECTED plan (AI applies fixes itself, marked + one-click undo) and a progress bar. Progress bar DONE (analysis + second look). Auto-apply: stricter bar pre-registered in `training/README.md` ("Changing the plan by itself", agreed-and-wrong ≤ 3 % on real + V5, n ≥ 30); run B merged fails it (would split 2/6 real long tables). Build the mechanism (manifest `autoApply`, apply via the same writer, never a training label) when a question passes it.
+- Owner: GPU auto-use in the Windows package (Vulkan llama.cpp + CPU fallback + first-run answer check against CPU answers); EXE only after "EXE YAP".
+- Running tests during training: pause the trainer with SIGSTOP, resume with SIGCONT (logged in chain.log); never during a benchmark.
 - Owner asleep, gave every permission (2026-10-25 ~02:50): continue without asking; 2B takes ~2 more days — say so honestly.
 
 ## Next actions when results arrive
