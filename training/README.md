@@ -824,3 +824,34 @@ fall below its bar there (regression). Real serves has no item (the test
 part's two banquettes are identify items only): serves stays a generated-plan
 result. Run A and the V5 adapters are scored on the same real test first, so
 the before/after is on the same 236 items.
+
+## 2026-10-25 — V5 results, 0.8B (run B), scored once against the bars above
+
+Run B: Qwen3.5-0.8B, V5 data + run A replay (5,869 items, one epoch, fp32,
+curriculum), 9,927 s of training (resumed twice after machine restarts), peak
+training RSS 8,031 MB; served 1,238 MB peak (`--cache-ram 0`), median 5.9 s per
+crop at 4 threads. Raw: `benchmarks/offline-intelligence/local-vlm-results/v5-*.json`.
+
+| question | V5 test (bar) | S1 | V4-style rebuilt | held-out real (236) | verdict |
+|---|---|---|---|---|---|
+| identify | other 0.97, furniture 0.91, every class ≥ 0.80, empty fabricated 0.00 | – | generated 0.97, furniture 1.00, **real 0.69** (≥ 0.80) | 0.83, **chair 0.60**, empty fabricated 0.03 | **no** (V4-style real) |
+| chairs | **0.62** (≥ 0.80), odd 0.68, over 0.07, printed-wrong **0.32** | 0.74 (≥ 0.80) | 0.50 | **0 / 20**, over 0.90 | **no** |
+| merged | 1.00, yes-on-no 0 / 40 | 1.00, near-miss yes 0 / 20 | 1.00 | 0.89, yes on separate 2 / 38 | **yes** |
+| serves | 0.87, **yes-on-no 0.31** (≤ 0.10; banquette 0.50, sofa 0.33) | 1.00, 0 / 20 | 0.88 | (no items) | **no** |
+| count | 0.87, over 0.07 | – | – | (no items) | pass (not a product question) |
+
+Same tests, run A (the adapter wired until now): V5 test merged 0.81 with "yes"
+on 13 of 40 separate pairs, held-out real merged 0.59 with "yes" on 18 of 38,
+empty fabricated 0.19 real / 0.20 V5, chairs 0.46 / 0.20. Run A's merged fails
+the V5 bar and is unwired; run B replaces it for merged. Untrained base on the
+V5 test: identify 0.18 / 0.00, merged 0.68, chairs 0.41.
+
+Independent audit (`model-qa-specialist`, 2026-10-25): SOUND WITH FINDINGS for
+wiring merged only — numbers recomputed from raw rows, test hash matches, no
+family or image-hash overlap between training and any test. Findings kept as
+limits: the S1 near-miss Wilson upper bound (0.16) is above 0.10 (as for run
+A), so the claim stays "generated plans, separate pairs ≥ 0.35 sides apart";
+real touching groups are only six (3–4 of 6 recalled), so real recall of a
+merged group is not established; `vlm_lora.py agree` for run B is required
+before wiring (below). The 0.8B vs 2B choice is made later on dev, as
+pre-registered.
