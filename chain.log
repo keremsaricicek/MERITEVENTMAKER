@@ -31,3 +31,6 @@ wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER
 == 2026-10-25T15:38:11Z restart chain
 == 2026-10-25T16:14:42Z bench real-base08
 == 2026-10-25T17:01:02Z train runB6b
+wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v5/runB6b/adapter.gguf
+== 2026-10-25T22:25:05Z bench real-B6b
+== 2026-10-25T23:11:35Z bench v5n-B6b
