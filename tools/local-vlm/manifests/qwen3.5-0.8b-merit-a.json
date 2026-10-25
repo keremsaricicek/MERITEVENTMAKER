@@ -6,9 +6,7 @@
  "licence": "Apache-2.0 (base model); adapter trained here on generated plans only",
  "source": "unsloth/Qwen3.5-0.8B-GGUF (base Qwen/Qwen3.5-0.8B): model + mmproj-F16, projector quantized here to Q8_0 (pinned llama-quantize); adapter: this repository, models/local-vlm/qwen3.5-0.8b-merit-a",
  "runtime": "llama.cpp llama-server 11351 cpu_mkl (0fa5950): --mmproj, --lora adapter.gguf, -c 2048, --cache-ram 0",
- "checks": [
-  "merged"
- ],
+ "checks": [],
  "checksEvidence": "benchmarks/offline-intelligence/local-vlm-results/v4-blind-A.json (V4, scored once) + benchmarks/offline-intelligence/local-vlm-results/v4-blind-A-nocache.json (cost) + benchmarks/offline-intelligence/local-vlm-results/s1-A.json (S1)",
  "serve": {
   "model": "Qwen3.5-0.8B-Q8_0.gguf",
@@ -37,5 +35,6 @@
    "sha256": "f5a0344aee305f1f5dc22f4832b781eb3829cddecbe927953eb154289399d9aa"
   }
  ],
- "licenceNote": "(Hugging Face model card of unsloth/Qwen3.5-0.8B-GGUF and of Qwen/Qwen3.5-0.8B, Apache-2.0, read 2026-10-18)"
+ "licenceNote": "(Hugging Face model card of unsloth/Qwen3.5-0.8B-GGUF and of Qwen/Qwen3.5-0.8B, Apache-2.0, read 2026-10-18)",
+ "checksNote": "merged unwired 2026-10-25: on the V5 test run A said 'yes' on 13 of 40 separate pairs and on the held-out real test 18 of 38 (v5-v5-A.json, v5-real-A.json); superseded by qwen3.5-0.8b-merit-b"
 }
