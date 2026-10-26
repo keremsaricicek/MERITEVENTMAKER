@@ -980,3 +980,10 @@ in another question blocks that other question only. Every bar is unchanged.
 **Not applied backwards.** runB6b and runB6 keep their verdicts (nothing wired):
 this rule was written after their results were seen, and re-judging them by it
 would be choosing the rule by the result.
+
+**Owner's decision (2026-10-26): one model, not one adapter per question.** Follow-up
+1 (several adapters, per-request scale) is dropped. The product ships ONE adapter:
+the best overall by measurement (0.8B line: runB6b; then run2B / run2B6 when
+scored), wired for the questions it passes (rule above); the winner is trained
+further on its measured weaknesses (bench identify, chair counts), with the same
+bars and fresh tests.
