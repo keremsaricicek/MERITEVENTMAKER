@@ -42,3 +42,7 @@ wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER
 == 2026-10-26T05:20:17Z train run2B
 == 2026-10-26T08:05:15Z restart chain
 == 2026-10-26T08:05:15Z train run2B
+== 2026-10-26T08:14:55Z stop run2B for agree-B6b (no 2B progress lost: resumed 08:12, no step yet)
+== 2026-10-26T08:19:28Z agree-B6b stopped (owner: keep 2B running); resume 2B
+== 2026-10-26T08:19:28Z restart chain
+== 2026-10-26T08:19:28Z train run2B
