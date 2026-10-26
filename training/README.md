@@ -962,3 +962,21 @@ B stays wired for merged. Because no adapter now passes identify on both the
 V5-style and the real tests, seat counts from per-chair identify (follow-up 2)
 cannot be wired yet; it is still measured (with the trainer paused) for the
 record. The 2B (V5, then V6) runs next on the original recipe.
+
+## 2026-10-26 — The regression rule, per question from now on (written before any 2B result)
+
+**Why.** The rule as written rejects a whole adapter when any one question falls
+below its bar. runB6b was rejected for three bench crops in identify while its
+merged answer was the best measured on the real plans. All-or-nothing protects
+nothing here: a question is wired on its own evidence and served by its own
+adapter (follow-up 1), so a regression in one question says nothing about another.
+
+**Rule from now on (run2B, run2B6 and every later adapter).** An adapter may serve
+question Q only if (a) Q passes all its bars (V5 test, S1 where it has items, the
+held-out real test where it has items, V6 bars for a V6 adapter) AND (b) Q itself
+does not fall below its bar where the reference adapter passed it. A regression
+in another question blocks that other question only. Every bar is unchanged.
+
+**Not applied backwards.** runB6b and runB6 keep their verdicts (nothing wired):
+this rule was written after their results were seen, and re-judging them by it
+would be choosing the rule by the result.
