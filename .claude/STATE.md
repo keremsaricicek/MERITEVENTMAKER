@@ -40,6 +40,11 @@ No EXE (one-click `.cmd` launcher allowed). No paid API/GPU/service, no private 
 - Running tests during training: pause the trainer with SIGSTOP, resume with SIGCONT (logged in chain.log); never during a benchmark.
 - Owner asleep, gave every permission (2026-10-25 ~02:50): continue without asking; 2B takes ~2 more days — say so honestly.
 
+## If this session or the usage allowance ends (owner, 2026-10-26)
+- The cloud machine STOPS whenever nobody is in this session (seen 2026-10-26: down 11:50–13:30 and 15:15–19:19 UTC); the keep-alive loop and the hourly scheduled task do not prevent it — the task's prompts just queue. Nothing is lost: training resumes from `RUN/resume` (every 25 steps), benches from `.partial.jsonl`.
+- Backups every 2 h to branch `claude/v5-train-state` (resume states, adapters, bench rows, chain.log). A NEW session/machine: `S=<scratch> tools/local-vlm/v5/pipeline.sh` restores the newest checkpoint and runs the chain to CHAIN-DONE (`tools/local-vlm/v5/README.md`).
+- Then: 2B results → compare B6 / B6b / 2B table for the owner (questions left, models on top, overall score; chat-planner fitness) → owner picks ONE model. B6b conversion check (`$S/scripts/agreeB6b.sh`) still owed before B6b can list merged.
+
 ## Next actions when results arrive
 1. Read `$S/v5/out/*.json` summaries (`summary.v5.passes`, `summary.tasks`); compare against the pre-registered bars; QA audit (`model-qa-specialist`, narrow brief).
 2. Commit raw results to `benchmarks/offline-intelligence/local-vlm-results/`; write verdicts in `training/README.md`.
