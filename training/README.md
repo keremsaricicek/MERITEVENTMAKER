@@ -936,3 +936,29 @@ frozen now: sha256 of `sha256sum items.jsonl meta.json img/*.png` =
 as they are (the real test is the only real one; it is reported as scored a
 second time). Bars and the regression rule unchanged; the regression reference
 is run B on the V5 test and S1. The 2B follows runB6b, on the original recipe.
+
+## 2026-10-26 — runB6b verdict: not wired (identify regresses on the fresh test)
+
+runB6b: 323.9 min of training (575 steps, 4.2 s per item, peak
+training RSS 8,049 MB); served 1,240 MB peak, median 5.9 s per crop; adapter
+sha256 `2980ab5e…a457b`. Raw: `local-vlm-results/v5-{real,v5n,s1,dev}-B6b.json`;
+run B on the same fresh test `v5-v5n-B.json`; untrained base on the real test
+`v5-real-base08.json`; runB6 on dev `v5-dev-B6.json`.
+
+| question | fresh V5 test (blind3): B → **B6b** | S1: B → B6b | held-out real (236): base / B / B6 → **B6b** |
+|---|---|---|---|
+| identify | pass → **fail**: bench **10 / 15 = 0.67** (< 0.70; B 13 / 15), furniture 0.87, other 0.99, empty fabricated 0 | – | 0.16 / 0.83 / 0.96 → **0.97** (agreed-and-wrong 0 / 140), empty fabricated 0.28 / 0.03 / 0 → 0.03 |
+| chairs | fail → fail (0.71 → 0.74, over 0.04 → 0.06) | fail → fail (0.74 → 0.69) | 0.05 / 0 / 0.20 → 0.10 (over 0.90) |
+| count | pass → pass (0.90, over 0.03 → 0.07) | – | (no items) |
+| merged | pass → pass (1.00 → 0.99, yes-on-no 0 → 1 / 40) | pass → pass | 0.89 / 0.89 / 0.84 → **0.93**, yes on separate 0 / 2 / 7 → **1 / 38**, agreed-and-wrong 1 / 44 |
+| serves | fail → fail (yes-on-no 0.27 → 0.17) | pass → pass (1.00 → 0.88, 0 / 20 yes on negatives) | (no items) |
+
+**Verdict.** Doubling the replay fixed what broke runB6 (count over-count back to
+2 / 30) and runB6b is the best adapter so far on the real test for identify and
+merged. **But identify, which run B passes on the same fresh test, falls below its
+bar there (the bench class 10 / 15 < 0.70): by the regression rule nothing of
+runB6b is wired.** Applied as written; the difference is three bench crops. Run
+B stays wired for merged. Because no adapter now passes identify on both the
+V5-style and the real tests, seat counts from per-chair identify (follow-up 2)
+cannot be wired yet; it is still measured (with the trainer paused) for the
+record. The 2B (V5, then V6) runs next on the original recipe.
