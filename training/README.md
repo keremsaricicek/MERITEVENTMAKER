@@ -987,3 +987,13 @@ the best overall by measurement (0.8B line: runB6b; then run2B / run2B6 when
 scored), wired for the questions it passes (rule above); the winner is trained
 further on its measured weaknesses (bench identify, chair counts), with the same
 bars and fresh tests.
+
+**runB6b wired for merged (owner's decision, 2026-10-26, after its results).** The
+owner chose one model, the best overall, and asked that it be used: runB6b
+replaces run B for **merged**, the one question it passes on every test it has
+items in (fresh V5 test 0.99 / yes-on-no 1 / 40; S1 1.00 / 0 / 20; held-out real
+0.93 / 1 / 38). Its identify regression (bench 10 / 15) blocks identify only. No
+bar was changed; what changed is the all-or-nothing scope of the regression rule,
+by the owner's decision after the results were seen, and it is recorded as such.
+Run B's manifest keeps its evidence with `checks: []`. Conversion check and audit
+before wiring: `local-vlm-results/v5-agree-B6b.txt`.

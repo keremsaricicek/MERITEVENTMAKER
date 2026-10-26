@@ -201,6 +201,30 @@ export default async function run({ page, checks, repoRoot }) {
     checks.ok(ev.length >= 2 && ev.every((p) => fs.existsSync(p)), `${f}: checksEvidence names its evidence files, all committed`, r.manifest.checksEvidence);
     if (ev.length < 2 || !ev.every((p) => fs.existsSync(p))) continue;
     const runs = ev.map((p) => JSON.parse(fs.readFileSync(p, "utf8")));
+    // V6 evidence (training/README.md "V6", runB6b verdict and the per-question
+    // rule): a V5-style test, S1 and the held-out real test, same adapter; a
+    // question is listed when it passes all three where each has its items.
+    const realtest = runs.find((x) => x.summary.settings.v5 === "realtest");
+    if (realtest) {
+      const s1r = runs.find((x) => x.summary.settings.s1), v5t = runs.find((x) => ["test", "test3"].includes(x.summary.settings.v5));
+      checks.ok(s1r && v5t && runs.every((x) => x.summary.settings.looks === 2 && x.summary.settings.cacheRam === 0
+        && x.summary.settings.lora === realtest.summary.settings.lora && x.summary.peakRssMb <= 3000),
+        `${f}: the V6 evidence holds a V5 test, S1 and the held-out real test — two looks, prompt cache off, one adapter, peak server RSS ≤ 3,000 MB`);
+      if (!s1r || !v5t) continue;
+      const R = (task, p = () => true) => realtest.rows.filter((r) => r.task === task && p(r));
+      const rid = R("ID"), rcls = [...new Set(rid.map((r) => r.truth))].filter((c) => rid.filter((r) => r.truth === c).length >= 10);
+      const real = {
+        identify: acc(rid) >= 0.85 && rcls.every((c) => acc(R("ID", (r) => r.truth === c)) >= 0.70)
+          && R("NEG").filter((r) => r.parsed != null && r.parsed !== "nothing").length / R("NEG").length <= 0.05,
+        chairs: acc(R("CHAIRS")) >= 0.80 && over(R("CHAIRS")) <= 0.10,
+        merged: acc(R("MERGED")) >= 0.85 && rateYes(R("MERGED", (r) => r.truth === "no")) <= 0.10,
+      };
+      const v5 = passesV5(v5t.rows), sup = passesS1(s1r.rows);
+      const ok = Object.fromEntries(Object.keys(v5).map((q) => [q, v5[q] && (q in sup ? sup[q] : true) && (q in real ? real[q] : true)]));
+      checks.equal(r.manifest.checks.slice().sort(), Object.keys(ok).filter((q) => ok[q]).sort(),
+        `${f}: lists exactly the questions its V6 evidence passed — V5 test, S1 and the held-out real test — at the pre-registered bars`, { v5, s1: sup, real });
+      continue;
+    }
     // V5 evidence: every run is scored with the prompt cache off (no separate
     // cost run); the V5 test AND the V4-style rebuilt set AND S1. Slowness
     // eliminates nothing this round; memory does.

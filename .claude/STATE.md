@@ -15,7 +15,7 @@ No EXE (one-click `.cmd` launcher allowed). No paid API/GPU/service, no private 
 
 ## Status (2026-10-24 ~21:30 Istanbul)
 - 0.8B V5 training (runB): ~step 700/734, then automatic benches (V5 test, real held-out, base, run A, S1, V4-style, dev), then V6 fine-tune (runB6) + benches, then 2B probe → 2B V5 → 2B V6 + benches.
-- Wired in product today: run A, `merged` only (manifest `tools/local-vlm/manifests/qwen3.5-0.8b-merit-a.json`).
+- Wired in product today (2026-10-26): **run B6b, `merged` only** (manifest `tools/local-vlm/manifests/qwen3.5-0.8b-merit-b6b.json`, adapter `models/local-vlm/qwen3.5-0.8b-merit-b6b/`; owner's one-model decision; suite `local-second-look` has a V6 evidence branch). Windows package uses manifest B6b (or the later winner).
 - Third real plan: owner may send one → keep it as the never-seen blind test (label first, owner confirms counts, score once at the end).
 - ViT idea: after 2B, a small ViT classifier on the same data/test (pre-register first).
 
