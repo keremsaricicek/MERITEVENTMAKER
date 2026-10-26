@@ -20,3 +20,10 @@ step 140/734 items 1120 loss 0.3717 lr 1.62e-04 13.21s/item elapsed 158.5min pea
 step 150/734 items 1200 loss 0.3441 lr 1.59e-04 13.15s/item elapsed 175.4min peakRSS 13487MB
 step 160/734 items 1280 loss 0.2219 lr 1.56e-04 13.13s/item elapsed 192.6min peakRSS 13487MB
 step 170/734 items 1360 loss 0.0969 lr 1.54e-04 13.12s/item elapsed 209.9min peakRSS 13487MB
+resume at item 1200 step 150
+start 2026-10-26T13:39:09Z items=5869 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=9437184 targets=72
+step 160/734 items 1280 loss 0.2251 lr 1.56e-04 14.95s/item elapsed 19.9min peakRSS 13364MB
+step 170/734 items 1360 loss 0.0960 lr 1.54e-04 14.50s/item elapsed 38.7min peakRSS 13364MB
+step 180/734 items 1440 loss 0.1864 lr 1.51e-04 14.44s/item elapsed 57.8min peakRSS 13364MB
+step 190/734 items 1520 loss 0.2185 lr 1.48e-04 14.29s/item elapsed 76.2min peakRSS 13364MB
+step 200/734 items 1600 loss 0.2134 lr 1.46e-04 14.20s/item elapsed 94.7min peakRSS 13364MB
