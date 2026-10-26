@@ -36,3 +36,7 @@ wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER
 == 2026-10-25T23:11:35Z bench v5n-B6b
 == 2026-10-26T01:21:18Z bench s1-B6b
 == 2026-10-26T01:47:02Z bench v5n-B
+== 2026-10-26T04:03:35Z bench dev-B6b
+== 2026-10-26T05:12:03Z probe 2B memory
+== 2026-10-26T05:20:17Z probe peak 12558 MB
+== 2026-10-26T05:20:17Z train run2B
