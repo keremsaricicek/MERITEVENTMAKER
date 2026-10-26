@@ -50,6 +50,7 @@ No EXE (one-click `.cmd` launcher allowed). No paid API/GPU/service, no private 
 ## Token economy decisions (2026-10-24, owner approved)
 - CLAUDE.md short; full text in `.claude/PROJECT-GUIDE.md`. Owner compacts this long chat with `/compact`; nothing may be lost: this file + `training/README.md` + `tools/local-vlm/v5/README.md` carry the state.
 - Rejected after research/measurement: OmniRoute (critical RCE CVE-2026-88062, ToS/MITM risk), Caveman (≈ "be concise", +1.2k tokens/request, worse Turkish clarity), RTK (small gain here, hides output), Graphify (measured on 3 real questions: 25–70x larger answers, pointed at the shadowed pre-v8 `saveState`, skipped `seat-model.js`; uninstalled, nothing added to the repo), auto-fallback to other AIs (security/ToS/quality).
+- Hourly scheduled keep-alive task trig_01GCesb4cLYgezAuHRdDMENB (minute 25) fires into this session: runs ensure.sh, re-arms the loop; delete it when CHAIN-DONE and the owner is done.
 - Keep-alive: one background Bash loop (~100 min, exits by itself, re-armed on completion; it runs `$S/scripts/ensure.sh` every 2 min). No hourly check-in reminders.
 - Owner: Turkish only, no routine status messages.
 
