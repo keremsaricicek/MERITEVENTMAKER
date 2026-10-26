@@ -35,8 +35,8 @@
   "rank_pattern": {},
   "revision": null,
   "target_modules": [
-    "down_proj",
     "up_proj",
+    "down_proj",
     "gate_proj"
   ],
   "target_parameters": null,
