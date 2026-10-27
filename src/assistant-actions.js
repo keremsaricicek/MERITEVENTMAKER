@@ -79,6 +79,12 @@
           if (g.guest.assignment && g.guest.assignment.tableId === table.id && (!seats || JSON.stringify(g.guest.assignment.seats) === JSON.stringify(seats))) { out.push({ op: "noop", line: `${g.guest.name} zaten ${table.number}` }); continue; }
           if (seats && !seatsFree(e, table, seats, g.guest.id)) return { ask: `${table.number} masasındaki o koltuk dolu — başka koltuk olsun mu?` };
           out.push({ op: "assign", guestId: g.guest.id, name: g.guest.name, tableId: table.id, number: table.number, seats });
+        } else if (st.op === "nextTo") {  // the same table as another guest of this event
+          const o = guestHere(e, st.other);
+          if (o.ask) return { ask: o.ask };
+          if (!o.guest.assignment) return { ask: `${o.guest.name} bu etkinlikte henüz bir masada değil` };
+          const table = (e.tables || []).find((t) => t.id === o.guest.assignment.tableId);
+          out.push({ op: "assign", guestId: g.guest.id, name: g.guest.name, tableId: table.id, number: table.number, seats: null });
         } else if (st.op === "unassign") out.push({ op: "unassign", guestId: g.guest.id, name: g.guest.name });
         else if (st.op === "deleteGuest") out.push({ op: "deleteGuest", guestId: g.guest.id, name: g.guest.name });
         else if (st.op === "setPax") out.push({ op: "setPax", guestId: g.guest.id, name: g.guest.name, pax: st.pax });

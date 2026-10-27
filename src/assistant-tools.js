@@ -53,7 +53,9 @@
     // words every event name shares ("konser", "etkinlik") pick nothing out
     const generic = (w) => /^(konser|etkinlik|organizasyon|program|gece)/.test(w);
     const qw = q.split(" ").filter((x) => x.length > 2 && !generic(x));
-    const score = (ev) => fold(ev.name + " " + (ev.venue || "")).split(" ").filter((w) => w.length > 2 && !generic(w) && qw.some((x) => w.startsWith(x) || x.startsWith(w))).length;
+    // a shared start of at least 4 letters: "galada" finds "Galası", "harbiyedeki" finds "Harbiye"
+    const near = (w, x) => { let k = 0; while (k < w.length && k < x.length && w[k] === x[k]) k++; return k >= Math.min(4, w.length, x.length) && k >= 3; };
+    const score = (ev) => fold(ev.name + " " + (ev.venue || "")).split(" ").filter((w) => w.length > 2 && !generic(w) && qw.some((x) => near(w, x))).length;
     const top = Math.max(0, ...events.map(score));
     let hit = top ? events.filter((ev) => score(ev) === top) : [];
     const m = MONTHS.findIndex((mo) => q.split(" ").some((x) => x.startsWith(mo)));
