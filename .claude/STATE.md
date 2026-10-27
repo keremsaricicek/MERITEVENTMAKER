@@ -42,6 +42,11 @@ No EXE (one-click `.cmd` launcher allowed). No paid API/GPU/service, no private 
 
 - 2026-10-27: chain changed — after run2B: real-2B, v5n-2B (fresh test3, same as B6b), s1-2B, dev-2B, v5-2B; then it WAITS for `$S/v5/go-2B6` (train 2B6) or `$S/v5/skip-2B6` (stop). Owner: 2B must beat B6b; decide run2B6 from the 2B vs B6b table. In the pause: seat-count-per-chair eval (B6b) and B6b agree check.
 
+- **2026-10-27 ~15:30 Istanbul — CURRENT WORK (owner: 2B dropped; B6b is the one model; feed it to the max; test its chat).**
+  1. `$S/scripts/b6b-work.sh` (log `$S/v5/b6b-work.log`): B6b agree check (→ then list merged in manifest b6b, commit `v5-agree-B6b.txt`), seat-count-per-chair eval (`$S/seat/score-B6b.json`, bar exact ≥ 0.80, over ≤ 0.10).
+  2. `$S/scripts/lang-work.sh`: language test base vs B6b (`$S/lang/*.json`; bar fields ≥ 0.90, invented ≤ 0.05; chat answers for the owner). If B6b < base on language: serve chat with the adapter scale 0 (same files, one model).
+  3. `$S/scripts/chainC.sh` (log `$S/v5/chainC.log`, guard `ensureC.sh`): freeze test4 (blind4) + tucktest, make scenes2/train2, train runB6c (init B6b), bench tuck/real/v5f/s1/dev (+ B6b on tuck and v5f). Pre-registration: training/README.md "runB6c".
+
 ## If this session or the usage allowance ends (owner, 2026-10-26)
 - The cloud machine STOPS whenever nobody is in this session (seen 2026-10-26: down 11:50–13:30 and 15:15–19:19 UTC); the keep-alive loop and the hourly scheduled task do not prevent it — the task's prompts just queue. Nothing is lost: training resumes from `RUN/resume` (every 25 steps), benches from `.partial.jsonl`.
 - Backups every 2 h to branch `claude/v5-train-state` (resume states, adapters, bench rows, chain.log). A NEW session/machine: `S=<scratch> tools/local-vlm/v5/pipeline.sh` restores the newest checkpoint and runs the chain to CHAIN-DONE (`tools/local-vlm/v5/README.md`).
