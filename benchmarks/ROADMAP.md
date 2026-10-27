@@ -28,7 +28,7 @@ result is seen. Order is by dependency; steps marked ∥ run while the CPU train
 | C2 | Brief parser: rules first, model second (schema-constrained) | 40-brief test ≥ 0.90 fields, invented ≤ 0.05 | after A5 |
 | C3 | Planner window UI (chips, 2–3 options, Uygula / Geri al) | screenshots at 3 viewports; UI suites | after C1 |
 | C4 ∥ | F8 assistant: fixture events + written question set (§11) and command set (§12) with expected tool calls | sets committed before any model sees them | **done** (`training/assistant/`) |
-| C5 | F8 tools: read-only (findPerson, eventsOf, seatOf, findEvent, eventFacts) and acting (through the app's writers; one undo per command; `canMutate`) | suite: right answer from data; every command undone by one undo | after C4 |
+| C5 | F8 tools: read-only (findPerson, eventsOf, seatOf, findEvent, eventFacts) and acting (through the app's writers; one undo per command; `canMutate`) | suite: right answer from data; every command undone by one undo | **read-only tools done** (`src/assistant-tools.js`, suite `assistant-tools`: all 20 questions answered right from the data); acting tools next |
 | C6 | F8 panel UI (right side, small; Esc closes) | screenshots; keyboard/a11y | after C5 |
 | C7 | Memory (habits, venues) local, listed, deletable | suite | after C6 |
 | C8 | Offline voice (Whisper-small class) | word error reported; owner's own test | last |
