@@ -40,6 +40,8 @@ No EXE (one-click `.cmd` launcher allowed). No paid API/GPU/service, no private 
 - Running tests during training: pause the trainer with SIGSTOP, resume with SIGCONT (logged in chain.log); never during a benchmark.
 - Owner asleep, gave every permission (2026-10-25 ~02:50): continue without asking; 2B takes ~2 more days — say so honestly.
 
+- 2026-10-27: chain changed — after run2B: real-2B, v5n-2B (fresh test3, same as B6b), s1-2B, dev-2B, v5-2B; then it WAITS for `$S/v5/go-2B6` (train 2B6) or `$S/v5/skip-2B6` (stop). Owner: 2B must beat B6b; decide run2B6 from the 2B vs B6b table. In the pause: seat-count-per-chair eval (B6b) and B6b agree check.
+
 ## If this session or the usage allowance ends (owner, 2026-10-26)
 - The cloud machine STOPS whenever nobody is in this session (seen 2026-10-26: down 11:50–13:30 and 15:15–19:19 UTC); the keep-alive loop and the hourly scheduled task do not prevent it — the task's prompts just queue. Nothing is lost: training resumes from `RUN/resume` (every 25 steps), benches from `.partial.jsonl`.
 - Backups every 2 h to branch `claude/v5-train-state` (resume states, adapters, bench rows, chain.log). A NEW session/machine: `S=<scratch> tools/local-vlm/v5/pipeline.sh` restores the newest checkpoint and runs the chain to CHAIN-DONE (`tools/local-vlm/v5/README.md`).
