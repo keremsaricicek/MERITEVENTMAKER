@@ -1,0 +1,20 @@
+{"id": 1, "q": "Ahmet Yılmaz Sezen Aksu konserinde nerede oturuyordu?", "tools": ["findPerson", "findEvent", "seatOf"], "answer": {"event": "c1", "table": "T12", "seats": [3], "arrival": "Checked In"}}
+{"id": 2, "q": "Ahmet Yılmaz kaç konserimize geldi?", "tools": ["findPerson", "eventsOf"], "answer": {"checkedIn": ["c1", "c2"], "noShow": ["c4"], "count": 2}}
+{"id": 3, "q": "Ayşe Demir hangi konserlere geldi?", "tools": ["findPerson"], "answer": {"ask": "two people named Ayşe Demir (phones differ)"}}
+{"id": 4, "q": "0544 999 99 99 numaralı Ayşe Demir Tarkan konserinde nerede oturdu?", "tools": ["findPerson", "findEvent", "seatOf"], "answer": {"event": "c2", "table": "T07", "seats": [2]}}
+{"id": 5, "q": "Mehmet Kaya Sezen Aksu konserine kaç kişi geldi?", "tools": ["findPerson", "findEvent", "seatOf"], "answer": {"event": "c1", "pax": 3, "arrival": "Checked In"}}
+{"id": 6, "q": "Tarkan konserinde kaç kişi vardı?", "tools": ["findEvent", "eventFacts"], "answer": {"event": "c2", "checkedInPax": 4}}
+{"id": 7, "q": "Yılbaşı galasında kimler henüz masaya oturtulmadı?", "tools": ["findEvent", "eventFacts"], "answer": {"event": "gala", "unassigned": ["Ahmet Yılmaz", "Zeynep Arslan", "Mehmet Kaya"]}}
+{"id": 8, "q": "Can Öztürk hangi konserlerimize geldi?", "tools": ["findPerson", "eventsOf"], "answer": {"checkedIn": [], "count": 0, "note": "only invited to the gala (not held yet)"}}
+{"id": 9, "q": "Selin Ak nerede oturuyor?", "tools": ["findPerson"], "answer": {"none": "kayıt yok"}}
+{"id": 10, "q": "Son konserde Ahmet nerede oturacaktı?", "tools": ["findPerson", "findEvent", "seatOf"], "answer": {"event": "c4", "table": "T12", "seats": [3], "arrival": "No Show"}}
+{"id": 11, "q": "Elif Şen Sezen Aksu konserine geldi mi?", "tools": ["findPerson", "findEvent", "seatOf"], "answer": {"event": "c1", "arrival": "No Show", "table": "T08"}}
+{"id": 12, "q": "Harbiye'deki konserlerde Elif Şen nerelerde oturdu?", "tools": ["findPerson", "findEvent", "seatOf"], "answer": {"seats": {"c1": ["T08", [0, 1], "No Show"], "c2": ["T02", [0, 1], "Checked In"]}}}
+{"id": 13, "q": "Zeynep Arslan daha önce VIP masada oturdu mu?", "tools": ["findPerson", "eventsOf"], "answer": {"event": "c4", "table": "VIP01", "yes": true}}
+{"id": 14, "q": "Mabel Matiz konserine gelmeyenler kimdi?", "tools": ["findEvent", "eventFacts"], "answer": {"event": "c4", "noShow": ["Ahmet Yılmaz"]}}
+{"id": 15, "q": "Hangi konserde en çok kişi vardı?", "tools": ["findEvent", "eventFacts"], "answer": {"event": "c1", "checkedInPax": 5}}
+{"id": 16, "q": "Haziranda hangi etkinliğimiz vardı?", "tools": ["findEvent"], "answer": {"event": "c2"}}
+{"id": 17, "q": "Mehmet Kaya her seferinde aynı masada mı oturdu?", "tools": ["findPerson", "eventsOf"], "answer": {"tables": {"c1": "T08", "c4": "T08"}, "yes": true}}
+{"id": 18, "q": "ahmet yilmaz tarkanda kacinci masadaydi", "tools": ["findPerson", "findEvent", "seatOf"], "answer": {"event": "c2", "table": "T05", "seats": [1]}}
+{"id": 19, "q": "Galada T07'de kim var?", "tools": ["findEvent", "eventFacts"], "answer": {"event": "gala", "table": "T07", "guests": ["Ayşe Demir"]}}
+{"id": 20, "q": "Geçen yılbaşında Ahmet nerede oturdu?", "tools": ["findEvent"], "answer": {"none": "kayıt yok (no New Year event in the records before 2026-12-31)"}}

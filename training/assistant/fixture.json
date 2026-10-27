@@ -1,0 +1,511 @@
+{
+ "note": "Fixture for the F8 assistant tests (AI-PLANNER-DESIGN.md §11-§12). Invented people; 'today' is 2026-10-27; the current event is 'gala'. Seat indexes are 0-based (seat 4 on screen = index 3).",
+ "today": "2026-10-27",
+ "current": "gala",
+ "events": [
+  {
+   "id": "c1",
+   "name": "Sezen Aksu Konseri",
+   "date": "2026-03-15",
+   "venue": "Harbiye Açıkhava",
+   "status": "Completed",
+   "tables": [
+    {
+     "id": "t01",
+     "number": "T01",
+     "capacity": 10
+    },
+    {
+     "id": "t02",
+     "number": "T02",
+     "capacity": 10
+    },
+    {
+     "id": "t03",
+     "number": "T03",
+     "capacity": 10
+    },
+    {
+     "id": "t04",
+     "number": "T04",
+     "capacity": 10
+    },
+    {
+     "id": "t05",
+     "number": "T05",
+     "capacity": 10
+    },
+    {
+     "id": "t06",
+     "number": "T06",
+     "capacity": 10
+    },
+    {
+     "id": "t07",
+     "number": "T07",
+     "capacity": 10
+    },
+    {
+     "id": "t08",
+     "number": "T08",
+     "capacity": 10
+    },
+    {
+     "id": "t09",
+     "number": "T09",
+     "capacity": 10
+    },
+    {
+     "id": "t10",
+     "number": "T10",
+     "capacity": 10
+    },
+    {
+     "id": "t11",
+     "number": "T11",
+     "capacity": 10
+    },
+    {
+     "id": "t12",
+     "number": "T12",
+     "capacity": 10
+    },
+    {
+     "id": "vip01",
+     "number": "VIP01",
+     "capacity": 8
+    }
+   ],
+   "guests": [
+    {
+     "id": "c1g1",
+     "name": "Ahmet Yılmaz",
+     "pax": 1,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "Checked In",
+     "phone": "0532 111 11 11",
+     "assignment": {
+      "tableId": "t12",
+      "seats": [
+       3
+      ]
+     }
+    },
+    {
+     "id": "c1g2",
+     "name": "Ayşe Demir",
+     "pax": 1,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "Checked In",
+     "phone": "0533 222 22 22",
+     "assignment": {
+      "tableId": "t03",
+      "seats": [
+       0
+      ]
+     }
+    },
+    {
+     "id": "c1g3",
+     "name": "Mehmet Kaya",
+     "pax": 3,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "Checked In",
+     "phone": null,
+     "assignment": {
+      "tableId": "t08",
+      "seats": [
+       4,
+       5,
+       6
+      ]
+     }
+    },
+    {
+     "id": "c1g4",
+     "name": "Elif Şen",
+     "pax": 2,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "No Show",
+     "phone": null,
+     "assignment": {
+      "tableId": "t08",
+      "seats": [
+       0,
+       1
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "c2",
+   "name": "Tarkan Konseri",
+   "date": "2026-06-20",
+   "venue": "Harbiye Açıkhava",
+   "status": "Completed",
+   "tables": [
+    {
+     "id": "t01",
+     "number": "T01",
+     "capacity": 10
+    },
+    {
+     "id": "t02",
+     "number": "T02",
+     "capacity": 10
+    },
+    {
+     "id": "t03",
+     "number": "T03",
+     "capacity": 10
+    },
+    {
+     "id": "t04",
+     "number": "T04",
+     "capacity": 10
+    },
+    {
+     "id": "t05",
+     "number": "T05",
+     "capacity": 10
+    },
+    {
+     "id": "t06",
+     "number": "T06",
+     "capacity": 10
+    },
+    {
+     "id": "t07",
+     "number": "T07",
+     "capacity": 10
+    },
+    {
+     "id": "t08",
+     "number": "T08",
+     "capacity": 10
+    },
+    {
+     "id": "t09",
+     "number": "T09",
+     "capacity": 10
+    },
+    {
+     "id": "t10",
+     "number": "T10",
+     "capacity": 10
+    },
+    {
+     "id": "t11",
+     "number": "T11",
+     "capacity": 10
+    },
+    {
+     "id": "t12",
+     "number": "T12",
+     "capacity": 10
+    },
+    {
+     "id": "vip01",
+     "number": "VIP01",
+     "capacity": 8
+    }
+   ],
+   "guests": [
+    {
+     "id": "c2g1",
+     "name": "Ahmet Yılmaz",
+     "pax": 1,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "Checked In",
+     "phone": "0532 111 11 11",
+     "assignment": {
+      "tableId": "t05",
+      "seats": [
+       1
+      ]
+     }
+    },
+    {
+     "id": "c2g2",
+     "name": "Ayşe Demir",
+     "pax": 1,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "Checked In",
+     "phone": "0544 999 99 99",
+     "assignment": {
+      "tableId": "t07",
+      "seats": [
+       2
+      ]
+     }
+    },
+    {
+     "id": "c2g3",
+     "name": "Elif Şen",
+     "pax": 2,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "Checked In",
+     "phone": null,
+     "assignment": {
+      "tableId": "t02",
+      "seats": [
+       0,
+       1
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "c4",
+   "name": "Mabel Matiz Konseri",
+   "date": "2026-09-10",
+   "venue": "Zorlu PSM",
+   "status": "Completed",
+   "tables": [
+    {
+     "id": "t01",
+     "number": "T01",
+     "capacity": 10
+    },
+    {
+     "id": "t02",
+     "number": "T02",
+     "capacity": 10
+    },
+    {
+     "id": "t03",
+     "number": "T03",
+     "capacity": 10
+    },
+    {
+     "id": "t04",
+     "number": "T04",
+     "capacity": 10
+    },
+    {
+     "id": "t05",
+     "number": "T05",
+     "capacity": 10
+    },
+    {
+     "id": "t06",
+     "number": "T06",
+     "capacity": 10
+    },
+    {
+     "id": "t07",
+     "number": "T07",
+     "capacity": 10
+    },
+    {
+     "id": "t08",
+     "number": "T08",
+     "capacity": 10
+    },
+    {
+     "id": "t09",
+     "number": "T09",
+     "capacity": 10
+    },
+    {
+     "id": "t10",
+     "number": "T10",
+     "capacity": 10
+    },
+    {
+     "id": "t11",
+     "number": "T11",
+     "capacity": 10
+    },
+    {
+     "id": "t12",
+     "number": "T12",
+     "capacity": 10
+    },
+    {
+     "id": "vip01",
+     "number": "VIP01",
+     "capacity": 8
+    }
+   ],
+   "guests": [
+    {
+     "id": "c4g1",
+     "name": "Ahmet Yılmaz",
+     "pax": 1,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "No Show",
+     "phone": "0532 111 11 11",
+     "assignment": {
+      "tableId": "t12",
+      "seats": [
+       3
+      ]
+     }
+    },
+    {
+     "id": "c4g2",
+     "name": "Mehmet Kaya",
+     "pax": 2,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "Checked In",
+     "phone": null,
+     "assignment": {
+      "tableId": "t08",
+      "seats": [
+       0,
+       1
+      ]
+     }
+    },
+    {
+     "id": "c4g3",
+     "name": "Zeynep Arslan",
+     "pax": 1,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "Checked In",
+     "phone": null,
+     "assignment": {
+      "tableId": "vip01",
+      "seats": [
+       0
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "gala",
+   "name": "Yılbaşı Galası",
+   "date": "2026-12-31",
+   "venue": "Zorlu PSM",
+   "status": "Planning",
+   "tables": [
+    {
+     "id": "t01",
+     "number": "T01",
+     "capacity": 10
+    },
+    {
+     "id": "t02",
+     "number": "T02",
+     "capacity": 10
+    },
+    {
+     "id": "t03",
+     "number": "T03",
+     "capacity": 10
+    },
+    {
+     "id": "t04",
+     "number": "T04",
+     "capacity": 10
+    },
+    {
+     "id": "t05",
+     "number": "T05",
+     "capacity": 10
+    },
+    {
+     "id": "t06",
+     "number": "T06",
+     "capacity": 10
+    },
+    {
+     "id": "t07",
+     "number": "T07",
+     "capacity": 10
+    },
+    {
+     "id": "t08",
+     "number": "T08",
+     "capacity": 10
+    },
+    {
+     "id": "t09",
+     "number": "T09",
+     "capacity": 10
+    },
+    {
+     "id": "t10",
+     "number": "T10",
+     "capacity": 10
+    },
+    {
+     "id": "t11",
+     "number": "T11",
+     "capacity": 10
+    },
+    {
+     "id": "t12",
+     "number": "T12",
+     "capacity": 10
+    },
+    {
+     "id": "vip01",
+     "number": "VIP01",
+     "capacity": 8
+    }
+   ],
+   "guests": [
+    {
+     "id": "gg1",
+     "name": "Ahmet Yılmaz",
+     "pax": 1,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "Not Arrived",
+     "phone": "0532 111 11 11",
+     "assignment": null
+    },
+    {
+     "id": "gg2",
+     "name": "Ayşe Demir",
+     "pax": 1,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "Not Arrived",
+     "phone": "0544 999 99 99",
+     "assignment": {
+      "tableId": "t07",
+      "seats": [
+       2
+      ]
+     }
+    },
+    {
+     "id": "gg3",
+     "name": "Zeynep Arslan",
+     "pax": 1,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "Not Arrived",
+     "phone": null,
+     "assignment": null
+    },
+    {
+     "id": "gg4",
+     "name": "Can Öztürk",
+     "pax": 1,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "Not Arrived",
+     "phone": null,
+     "assignment": {
+      "tableId": "t02",
+      "seats": [
+       0
+      ]
+     }
+    },
+    {
+     "id": "gg5",
+     "name": "Mehmet Kaya",
+     "pax": 2,
+     "planningStatus": "Confirmed",
+     "arrivalStatus": "Not Arrived",
+     "phone": null,
+     "assignment": null
+    }
+   ]
+  }
+ ]
+}
