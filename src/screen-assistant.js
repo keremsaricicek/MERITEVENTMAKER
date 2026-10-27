@@ -19,8 +19,25 @@
   "use strict";
   const P = () => globalThis.MeritAssistantParse;
 
+  let canMutate;
+  let currentId;
+  let events;
+  let onChange;
+  let t;
+  let today;
+  let writers;
+  let created = false;
+
   function create(deps) {
-    const { events, currentId, today, canMutate, writers, t, onChange } = deps;
+    if (created) throw new Error("MeritScreenAssistant.create() is called once, by app-v8.js.");
+    created = true;
+    canMutate=deps.canMutate;
+    currentId=deps.currentId;
+    events=deps.events;
+    onChange=deps.onChange;
+    t=deps.t;
+    today=deps.today;
+    writers=deps.writers;
     let root = null, log = null, input = null, status = null, strip = null;
     const turns = [];   // {who:"you"|"assistant", text, lines?, undo?}
 
@@ -204,5 +221,5 @@
     return { mount, toggle, isOpen, ask };
   }
 
-  globalThis.MeritScreenAssistant = { create };
+  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","currentId","events","onChange","t","today","writers"])});
 })();
