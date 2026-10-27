@@ -345,15 +345,25 @@
   const fingerprint=(str)=>{if(typeof str!=="string")return "none";let h=0x811c9dc5;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,0x01000193);}return (h>>>0).toString(16)+":"+str.length;};
   function readUnloadJournal(){try{const j=JSON.parse(localStorage.getItem(UNLOAD_JOURNAL_KEY)||"null");return j&&typeof j.payload==="string"&&typeof j.base==="string"?j:null;}catch(error){console.warn("The record kept when the tab closed could not be read.",loggableError(error));return null;}}
   function clearUnloadJournal(){try{localStorage.removeItem(UNLOAD_JOURNAL_KEY);}catch(error){console.warn("Could not remove the record kept when the tab closed.",loggableError(error));}}
+  // ONE serialisation per close (CI, 2026-10-27: on a 50,000-guest event the
+  // close-time work pushed the reload past its budget). beforeunload and
+  // pagehide both fire, so the snapshot is written once per close (`unloadDone`,
+  // reset when the page is shown again or saves again); and the save that
+  // app-guests' beforeunload handler has just made in this same task already
+  // holds the payload (`unloadPayload`, dropped at the next task).
+  let unloadDone=false,unloadPayload=null;
   function writeUnloadJournal(){
+    if(unloadDone)return;
     if(!bootReady||(globalThis.MERIT_SCHEMA_GUARD&&MERIT_SCHEMA_GUARD.readOnly)||(MERIT_STORAGE_NOTICE.unreadable&&!MERIT_STORAGE_NOTICE.unreadable.kept))return;
-    let payload;
-    try{state.events.forEach(e=>RULES().syncEventChairs(e));payload=JSON.stringify(state);}catch(error){console.warn("Nothing kept when the tab closed: the state could not be serialised.",loggableError(error));return;}
+    let payload=unloadPayload;
+    if(payload==null){try{state.events.forEach(e=>RULES().syncEventChairs(e));payload=JSON.stringify(state);}catch(error){console.warn("Nothing kept when the tab closed: the state could not be serialised.",loggableError(error));return;}}
+    unloadDone=true;
     if(payload===lastStoredRaw){clearUnloadJournal();return;}
     try{localStorage.setItem(UNLOAD_JOURNAL_KEY,JSON.stringify({base:fingerprint(lastStoredRaw),payload}));}catch(error){console.warn("Nothing kept when the tab closed: it does not fit.",loggableError(error));clearUnloadJournal();}
   }
   window.addEventListener("pagehide",writeUnloadJournal);
   window.addEventListener("beforeunload",writeUnloadJournal);
+  window.addEventListener("pageshow",()=>{unloadDone=false;});
   async function loadV8Async(){
     let raw=null;
     try{
@@ -526,6 +536,9 @@
       if(first){toast(t("toast.notSerializable"),"error",6500);if(bootReady)render();}
       return Promise.resolve();
     }
+    // a later save means a later picture; the close-time snapshot may reuse
+    // this payload only within the task that made it
+    unloadDone=false;unloadPayload=payload;setTimeout(()=>{unloadPayload=null;},0);
     // COALESCE. The pending slot is already the tail of the queue, so
     // handing it a newer payload keeps last-write-wins exactly: the newest
     // snapshot is still the one that lands, and it still lands last. `show`

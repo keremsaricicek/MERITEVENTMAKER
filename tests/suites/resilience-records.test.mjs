@@ -111,9 +111,19 @@ export default async function run({ page, checks, baseUrl }) {
   // a run where the reload won (2026-10-24).
   await setFault(page, "put", "lost");
   await page.evaluate(() => { state.events[0].name = "Changed Then Closed"; touchEvent(state.events[0]); });
+  // Closing the tab turns the whole record into text ONCE: beforeunload (the
+  // save) and the close-time snapshot on beforeunload AND pagehide each did it,
+  // three times — on a 50,000-guest event that is what pushed the reload past
+  // its budget (CI, 2026-10-27). Counted across the reload in sessionStorage.
+  await page.evaluate(() => {
+    const K = "merit.test.unloadSerialisations", orig = JSON.stringify;
+    sessionStorage.setItem(K, "0");
+    JSON.stringify = function (v, ...rest) { if (v === state) sessionStorage.setItem(K, String(Number(sessionStorage.getItem(K)) + 1)); return orig.call(this, v, ...rest); };
+  });
   await page.reload();   // no wait for the write: the operator closes the tab
   await page.waitForFunction(() => { try { return Array.isArray(state.events) && state.events.length > 0; } catch { return false; } }, null, { timeout: 20000 });
   await page.waitForTimeout(500);
   checks.equal(await page.evaluate(() => state.events[0].name), "Changed Then Closed", "a change made just before the tab closed is there when it opens again");
+  checks.equal(await page.evaluate(() => sessionStorage.getItem("merit.test.unloadSerialisations")), "1", "closing the tab serialises the record once, not once per unload handler");
   checks.equal(pageErrors, [], "no page errors through any of it");
 }
