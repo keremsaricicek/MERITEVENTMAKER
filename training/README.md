@@ -1043,3 +1043,11 @@ the same items.
 B6c serves a question only if it passes that question's bars and does not fall
 below a bar B6b passes on the same test. New: tucked chairs identify ≥ 0.80 on
 the tucked test (both looks agree), with empty-crop fabrication ≤ 0.05 there.
+
+**Wired (2026-10-27).** Conversion check for runB6b (llama.cpp `--lora` vs
+transformers + PEFT, the same 31 crops as run B: 12 merged yes, 12 merged no, 7
+others): 31 / 31 (`local-vlm-results/v5-agree-B6b.txt`). Audit (`model-qa-specialist`):
+SOUND WITH FINDINGS; kept as a limit: on the real test merged rests on 6 touching
+groups and 38 separate pairs — B6b found 4 of the 6 groups on the first look (run
+B 3), so its real recall of a long table is not established. `merged` now comes
+from `qwen3.5-0.8b-merit-b6b`; run B's manifest lists no check.

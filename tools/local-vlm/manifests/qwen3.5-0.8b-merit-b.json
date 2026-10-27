@@ -6,9 +6,7 @@
  "licence": "Apache-2.0 (base model); adapter trained here on generated plans only",
  "source": "unsloth/Qwen3.5-0.8B-GGUF (base Qwen/Qwen3.5-0.8B): model + mmproj-F16, projector quantized here to Q8_0 (pinned llama-quantize); adapter: this repository, models/local-vlm/qwen3.5-0.8b-merit-b",
  "runtime": "llama.cpp llama-server 11351 cpu_mkl (0fa5950): --mmproj, --lora adapter.gguf, -c 2048, --cache-ram 0",
- "checks": [
-  "merged"
- ],
+ "checks": [],
  "checksEvidence": "benchmarks/offline-intelligence/local-vlm-results/v5-v5-B.json + benchmarks/offline-intelligence/local-vlm-results/v5-v4r-B.json + benchmarks/offline-intelligence/local-vlm-results/v5-s1-B.json (V5 test, V4-style, S1)",
  "serve": {
   "model": "Qwen3.5-0.8B-Q8_0.gguf",
@@ -37,5 +35,6 @@
    "sha256": "62f7599ef845c2cb5b9354b18b0d843bf6b08e9e5a1b3fd9d7de66e37e5355e8"
   }
  ],
- "licenceNote": "(Hugging Face model card of unsloth/Qwen3.5-0.8B-GGUF and of Qwen/Qwen3.5-0.8B, Apache-2.0, read 2026-10-18)"
+ "licenceNote": "(Hugging Face model card of unsloth/Qwen3.5-0.8B-GGUF and of Qwen/Qwen3.5-0.8B, Apache-2.0, read 2026-10-18)",
+ "checksNote": "merged moved 2026-10-27 to qwen3.5-0.8b-merit-b6b (owner's decision: one model, the best overall; B6b conversion check 31/31); run B still passes it (v5-v5-B.json, v5-s1-B.json)"
 }
