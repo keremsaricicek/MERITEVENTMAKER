@@ -997,3 +997,23 @@ bar was changed; what changed is the all-or-nothing scope of the regression rule
 by the owner's decision after the results were seen, and it is recorded as such.
 Run B's manifest keeps its evidence with `checks: []`. Conversion check and audit
 before wiring: `local-vlm-results/v5-agree-B6b.txt`.
+
+## 2026-10-27 — Owner: 2B dropped, B6b is the one model; B6b's language test (written before it runs)
+
+**2B stopped (owner's decision).** run2B (V5 stage) on the held-out real test:
+identify 0.90 (B 0.83, B6b 0.97), empty crops fabricated **0.156** (B / B6b
+0.031), merged 0.864 with "yes" on separate 2 / 38 and 2 of 6 groups found, chairs
+0 / 20; median 20.8 s per crop (B6b 5.9 s), peak 1,996 MB. Raw
+`local-vlm-results/v5-real-2B.json`. Its fresh-test run was stopped part-way and
+run2B6 was not trained: B6b is better on every real-plan row and 3.5× faster.
+
+**Language test (AI planner, step 0).** `training/planner_brief_eval.py` asks the
+model to turn each of 40 Turkish briefs (`training/planner_briefs.jsonl`, written
+by hand before any model saw them: typos, words for numbers, slang such as
+"180'lik", "8er") into a fixed JSON shape (schema-constrained, temperature 0),
+and scores every field the brief states; fields it fills that the brief does not
+state are reported as invented. Run for the base 0.8B and for B6b (does the plan
+LoRA hurt language?). Bar for the model alone, for the planner's parser (the
+planner adds a rule parser in front, AI-PLANNER-DESIGN.md §6): fields right
+≥ 0.90 and invented ≤ 0.05. Eight everyday chat prompts are answered and kept as
+written for the owner to read; they are not scored.
