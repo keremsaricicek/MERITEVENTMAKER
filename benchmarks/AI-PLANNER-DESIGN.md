@@ -150,3 +150,8 @@ canned answers: the model reasons about the QUESTION; the app's code reads the D
 - **Measured before it ships:** a written command set over fixture events —
   right calls ≥ 95 %, wrong change 0 (a wrong guess must become a question),
   every command undone exactly by one undo.
+- **Working strip (owner, 2026-10-27):** a 3 px line across the full top of the
+  panel; the app's own colours (teal #2f6f66 → #6fae9f → amber #d9a441 → clay
+  #c2703d) flow back and forth along it (background-position, ease-in-out,
+  2.6 s, alternate). Shown only while the assistant thinks or acts; still under
+  "reduce motion". Mock-up: claude.ai artifact "F8 asistan paneli — düşünme şeridi", board B.
