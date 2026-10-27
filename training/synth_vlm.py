@@ -74,7 +74,8 @@ def Q(task, piece=None):
 
 # blind3 (2026-10-25): a fresh V5 test, same never-trained families, new seed
 # base — for an adapter made after the V5 test's results were seen (runB6b).
-SPLITS = {"train": (L.TRAIN_FAMILIES, 51), "dev": ([8, 9], 52), "blind": (L.BLIND2_FAMILIES, 53), "blind3": (L.BLIND2_FAMILIES, 54)}
+SPLITS = {"train": (L.TRAIN_FAMILIES, 51), "dev": ([8, 9], 52), "blind": (L.BLIND2_FAMILIES, 53), "blind3": (L.BLIND2_FAMILIES, 54),
+          "train2": (L.TRAIN_FAMILIES, 55), "blind4": (L.BLIND2_FAMILIES, 56)}  # train2: B6c's extra crops, training families, new seeds (2026-10-27)
 CHAIR_KINDS = ["rect", "rounded", "arm", "circle", "backrest", "petal", "semicircle", "silhouette"]
 PALETTE = [(232, 216, 176), (205, 235, 232), (240, 228, 200), (225, 225, 225), (232, 110, 40), (60, 140, 140), (160, 205, 170),
            (120, 90, 160), (200, 215, 245), (250, 226, 230), (176, 188, 226), (90, 90, 90), (255, 255, 255)]
@@ -366,8 +367,12 @@ def family(fam_idx, rng, level):
 # half the chairs crops.
 BOOST = {"train": {}, "dev": {"identify:nothing": 2.67, "chairs": 1.6, "merged": 1.2, "serves": 3.33},
          "blind": {"identify:nothing": 2.67, "chairs": 1.6, "merged": 1.2, "serves": 3.33}}
-BOOST["blind3"] = BOOST["blind"]
-PRINTED = {"train": 0.25, "dev": 0.5, "blind": 0.5, "blind3": 0.5}
+BOOST["blind3"] = BOOST["blind4"] = BOOST["blind"]
+# train2 (B6c): weight on what runB6b got wrong — furniture identify (bench 10/15
+# on the fresh test), serves "yes" on pieces that do not serve; little else.
+BOOST["train2"] = {"identify": 0.3, "identify:sofa": 1.5, "identify:bench": 2.0, "identify:banquette": 1.5, "identify:nothing": 0.6,
+                   "count": 0.3, "chairs": 0.4, "merged": 0.3, "serves": 1.5}
+PRINTED = {"train": 0.25, "dev": 0.5, "blind": 0.5, "blind3": 0.5, "train2": 0.25, "blind4": 0.5}
 
 
 def make(task, stratum, rng, fam_idx, size=448, split="train"):
@@ -520,7 +525,7 @@ def make(task, stratum, rng, fam_idx, size=448, split="train"):
             # "near" (0.2-0.5 sides, facing) is a zone a person could argue either
             # way for a lounge sofa: asked in dev/test and reported on its own,
             # never trained, never in a bar
-            kinds_ = ["far-facing", "far-away"] + (["near"] if split != "train" else []) + (["back"] if piece != "bench" else [])  # a bench has no back to turn
+            kinds_ = ["far-facing", "far-away"] + (["near"] if split not in ("train", "train2") else []) + (["back"] if piece != "bench" else [])  # a bench has no back to turn
             k_ = rng.choice(kinds_)
             gap = u * (rng.uniform(0.55, 1.5) if k_.startswith("far") else rng.uniform(0.2, 0.5) if k_ == "near" else rng.uniform(0.0, 0.12))
             facing = k_ in ("far-facing", "near")

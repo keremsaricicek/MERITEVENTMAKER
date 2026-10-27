@@ -39,6 +39,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLANS = {"golden": ("benchmarks/annotations/merit-real-venue.json", "benchmarks/plans/merit-real-venue-plan.png"),
          "ornek": ("benchmarks/annotations/ornek-symbolic.json", "benchmarks/plans/ornek-upright.png")}
 SPLIT_X = 0.6  # train part: object centre x < 0.6 W; test part: >= 0.6 W
+TUCK = 0.0  # share of chairs drawn half under their table (scenes --tuck; 0 keeps the V6 scenes as generated)
 # Drawn things the annotations do not list as objects, kept out of every
 # "nothing" crop (x0, y0, x1, y1 in plan pixels, read off the images): a crop
 # of the bar counter or the loca strip is not empty (first contact sheet).
@@ -87,7 +88,7 @@ def sprite(img, o, pad=2):
 class Bank:
     """Sprites cut from the TRAIN part of both plans."""
 
-    def __init__(self):
+    def __init__(self, side_part="train"):
         self.s = {}
         self.paper = {}
         self.text = []   # real printed words (Golden's declared text regions) in the train part
@@ -98,18 +99,19 @@ class Bank:
             self.paper[name] = paper_of(img)
             objs = [o for o in ann["objects"] if all(k in o for k in ("cx", "cy", "w", "h"))]
             for o in objs:
-                if part(o, W) != "train":
+                if part(o, W) != side_part:
                     continue
                 key = (name, o["class"], o.get("type") or o.get("family") or o.get("state") or "")
                 self.s.setdefault(key, []).append((sprite(img, o), o))
             for r in ann.get("regions") or []:
-                if r.get("class") == "text" and r["x"] + r["w"] / 2 < SPLIT_X * W and not r["id"].startswith("giris"):  # an entrance's label is not "nothing"
+                if r.get("class") == "text" and ((r["x"] + r["w"] / 2 < SPLIT_X * W) == (side_part == "train")) and not r["id"].startswith("giris"):  # an entrance's label is not "nothing"
                     self.text.append(img.crop((int(r["x"]), int(r["y"]), int(r["x"] + r["w"]), int(r["y"] + r["h"]))))
             rng = random.Random(61)
             self.empty[name] = []
             for _ in range(4000):
                 side = rng.uniform(60, 160)
-                cx, cy = rng.uniform(side, SPLIT_X * W - side), rng.uniform(side, img.height - side)
+                cx = rng.uniform(side, SPLIT_X * W - side) if side_part == "train" else rng.uniform(SPLIT_X * W + side, W - side)
+                cy = rng.uniform(side, img.height - side)
                 box = (cx - side / 2, cy - side / 2, cx + side / 2, cy + side / 2)
                 if clear(name, objs, cx, cy, side):
                     self.empty[name].append(img.crop(tuple(int(v) for v in box)))
@@ -163,10 +165,30 @@ def make(task, stratum, rng, bank, size=448):
             tsp, to = bank.pick(rng, "golden", "table", "square")
             ang = rng.choice([0, 90, 180, 270])
             d = (tsp.width + sp.width) / 2 * sc
-            cv.put(tsp, C + math.cos(math.radians(ang)) * d, C + math.sin(math.radians(ang)) * d, sc)
-            w, h = cv.put(sp, C, C, sc, rng.choice([0, 90, 180, 270]) if o.get("family") == "orange-armchair" else 0)
-            big = max(w, h)
-            sub = f"golden-chair-{o.get('family')}"
+            if TUCK and rng.random() < TUCK:  # half under the table: chair first, the table drawn over it
+                w, h = cv.put(sp, C, C, sc, rng.choice([0, 90, 180, 270]) if o.get("family") == "orange-armchair" else 0)
+                horiz = ang in (0, 180)
+                cl_, tl_ = (w if horiz else h), max(2, int((tsp.width if horiz else tsp.height) * sc))
+                v = rng.uniform(0.35, 0.65)  # share of the chair left visible along the table's side
+                d = tl_ / 2 + cl_ / 2 - (1 - v) * cl_
+                ux, uy = math.cos(math.radians(ang)), math.sin(math.radians(ang))
+                cv.put(tsp, C + ux * d, C + uy * d, sc)
+                big = max(w, h)
+                sub = f"golden-chair-{o.get('family')}-tucked"
+                # the crop is centred on what is still visible of the chair, so the centre shows the chair
+                off = (1 - v) * cl_ / 2
+                img = cv.crop(C - ux * off, C - uy * off, (2.0 * big + 30) * rng.uniform(0.95, 1.08), size)
+                truth, q = cls, G5.Q("identify")
+                k = rng.randrange(4)
+                if k:
+                    img = img.rotate(90 * k)
+                img = G5.degrade(img, level, rng)
+                return dict(task=task, sub=sub, truth=truth, q=q, level=level, family=f"real-{name}", image=img)
+            else:
+                cv.put(tsp, C + math.cos(math.radians(ang)) * d, C + math.sin(math.radians(ang)) * d, sc)
+                w, h = cv.put(sp, C, C, sc, rng.choice([0, 90, 180, 270]) if o.get("family") == "orange-armchair" else 0)
+                big = max(w, h)
+                sub = f"golden-chair-{o.get('family')}"
         elif cls == "banquette":
             name = "golden"
             sp, o = bank.pick(rng, "golden", "banquette")
@@ -201,27 +223,38 @@ def make(task, stratum, rng, bank, size=448):
         if n <= 4 and rng.random() < 0.7:
             tsp, to = bank.pick(rng, "golden", "table", "square")
             csp, co = bank.pick(rng, "golden", "chair", "orange-armchair")
-            tw, th = cv.put(tsp, C, C, sc)
+            tuck = bool(TUCK and rng.random() < TUCK)
+            tw, th = max(2, int(tsp.width * sc)), max(2, int(tsp.height * sc))  # as Canvas.put returns them
+            if not tuck:
+                cv.put(tsp, C, C, sc)
             sides = rng.sample([0, 1, 2, 3], n)
             for s_ in sides:
                 dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][s_]
-                cv.put(csp, C + dx * (tw + csp.width * sc) / 2 * 1.02, C + dy * (th + csp.height * sc) / 2 * 1.02, sc, [180, 90, 0, 270][s_])
+                f = rng.uniform(0.62, 0.8) if tuck else 1.02
+                cv.put(csp, C + dx * (tw + csp.width * sc) / 2 * f, C + dy * (th + csp.height * sc) / 2 * f, sc, [180, 90, 0, 270][s_])
+            if tuck:
+                cv.put(tsp, C, C, sc)
             big = max(tw, th) + 2 * csp.width * sc
-            sub = f"square-{'odd' if n % 2 else 'even'}"
+            sub = f"square-{'odd' if n % 2 else 'even'}" + ("-tucked" if tuck else "")
         else:
             tsp, to = bank.pick(rng, "golden", "table", "round")
             cl = bank.s.get(("golden", "chair", "pale-outlined-chair")) or []
-            tw, th = cv.put(tsp, C, C, sc)
+            tuck = bool(TUCK and rng.random() < TUCK)
+            tw, th = max(2, int(tsp.width * sc)), max(2, int(tsp.height * sc))  # as Canvas.put returns them
+            if not tuck:
+                cv.put(tsp, C, C, sc)
             r = tw / 2
             a0 = rng.uniform(0, 360)
             for i in range(n):
                 csp, co = rng.choice(cl)
                 ang = a0 + 360 * i / n
                 # the crescent's own facing is co["rotation"]; turn it to face this table
-                dd = r + max(csp.width, csp.height) * sc * 0.35
+                dd = r + max(csp.width, csp.height) * sc * (rng.uniform(-0.05, 0.15) if tuck else 0.35)
                 cv.put(csp, C + math.cos(math.radians(ang)) * dd, C + math.sin(math.radians(ang)) * dd, sc, co.get("rotation", 0) - ang - 180)
+            if tuck:
+                cv.put(tsp, C, C, sc)
             big = tw + 2 * 30 * sc
-            sub = f"round-{'odd' if n % 2 else 'even'}"
+            sub = f"round-{'odd' if n % 2 else 'even'}" + ("-tucked" if tuck else "")
         img = cv.crop(C, C, 2.4 * big / 1.3 + 50, size)
         truth, q = n, G5.Q("chairs")
     elif task == "MERGED":
@@ -275,23 +308,32 @@ PLAN = {"ID": {c: 220 for c in ["table", "chair", "banquette", "nothing"]},
         "SERVES": {"yes": 160, "no": 160}}
 
 
+# B6c (2026-10-27): more chairs (half of them tucked under the table) and serves.
+PLAN2 = {"ID": {"table": 120, "chair": 360, "banquette": 120, "nothing": 160},
+         "CHAIRS": {n: 40 for n in range(1, 9)},
+         "MERGED": {"yes": 120, "no": 120},
+         "SERVES": {"yes": 200, "no": 260}}
+
+
 def cmd_scenes(a):
-    bank = Bank()
+    global TUCK
+    TUCK = a.tuck
+    bank = Bank(a.sprites)
     os.makedirs(os.path.join(a.out, "img"), exist_ok=True)
     rows, k = [], 0
-    for task, strata in PLAN.items():
+    for task, strata in (PLAN2 if a.plan2 else PLAN).items():
         for stratum, n in strata.items():
             for _ in range(max(1, round(n * a.scale))):
-                seed = 61 * 1000003 + k
+                seed = a.seed_base * 1000003 + k
                 it = make(task, stratum, random.Random(seed), bank, a.size)
                 name = f"img/{len(rows):05d}.png"
                 it["image"].save(os.path.join(a.out, name))
-                rows.append(dict({x: it[x] for x in ("task", "sub", "truth", "q", "level", "family")}, seed=seed, split="train", image=name))
+                rows.append(dict({x: it[x] for x in ("task", "sub", "truth", "q", "level", "family")}, seed=seed, split="train" if a.sprites == "train" else "test", image=name))
                 k += 1
     with open(os.path.join(a.out, "items.jsonl"), "w") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
-    json.dump(dict(generator="training/synth_real.py scenes", splitX=SPLIT_X, n=len(rows), sprites={"|".join(k_): len(v) for k_, v in bank.s.items()}),
+    json.dump(dict(generator="training/synth_real.py scenes", splitX=SPLIT_X, n=len(rows), tuck=a.tuck, plan2=a.plan2, seedBase=a.seed_base, spritePart=a.sprites, sprites={"|".join(k_): len(v) for k_, v in bank.s.items()}),
               open(os.path.join(a.out, "meta.json"), "w"), indent=1)
     print(len(rows), "scenes")
 
@@ -394,6 +436,10 @@ def main():
     s.add_argument("--out", required=True)
     s.add_argument("--scale", type=float, default=1.0)
     s.add_argument("--size", type=int, default=448)
+    s.add_argument("--tuck", type=float, default=0.0, help="share of chairs drawn half under their table")
+    s.add_argument("--plan2", action="store_true", help="B6c's mix (PLAN2)")
+    s.add_argument("--seed-base", type=int, default=61)
+    s.add_argument("--sprites", choices=["train", "test"], default="train", help="cut symbols from this part of the plans (test: a held-out scene test)")
     t = sub.add_parser("test")
     t.add_argument("--out", required=True)
     t.add_argument("--size", type=int, default=448)
