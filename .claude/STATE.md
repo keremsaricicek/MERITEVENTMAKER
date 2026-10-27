@@ -45,6 +45,7 @@ No EXE (one-click `.cmd` launcher allowed). No paid API/GPU/service, no private 
 - **2026-10-27 ~15:30 Istanbul — CURRENT WORK (owner: 2B dropped; B6b is the one model; feed it to the max; test its chat).**
   1. `$S/scripts/b6b-work.sh` (log `$S/v5/b6b-work.log`): B6b agree check (→ then list merged in manifest b6b, commit `v5-agree-B6b.txt`), seat-count-per-chair eval (`$S/seat/score-B6b.json`, bar exact ≥ 0.80, over ≤ 0.10).
   2. `$S/scripts/lang-work.sh`: language test base vs B6b (`$S/lang/*.json`; bar fields ≥ 0.90, invented ≤ 0.05; chat answers for the owner). If B6b < base on language: serve chat with the adapter scale 0 (same files, one model).
+  Results 2026-10-27: agree 31/31 → B6b WIRED (merged). Seat count per chair PASSES (18/20, over 1/20) — wire after identify passes (B6c). Language: base 0.64 / B6b 0.77 fields, invented 0.44/0.77 — fail; B6c adds 1,500 brief items. CI perf 'reload' fixed (close serialises once).
   3. `$S/scripts/chainC.sh` (log `$S/v5/chainC.log`, guard `ensureC.sh`): freeze test4 (blind4) + tucktest, make scenes2/train2, train runB6c (init B6b), bench tuck/real/v5f/s1/dev (+ B6b on tuck and v5f). Pre-registration: training/README.md "runB6c".
 
 ## If this session or the usage allowance ends (owner, 2026-10-26)
