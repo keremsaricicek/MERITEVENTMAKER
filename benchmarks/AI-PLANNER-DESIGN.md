@@ -105,3 +105,25 @@ while generating; every message short.
   table kinds) are passed; the window says which remembered items it used.
 - Measured with the brief set: a habit stated once is applied in a later brief,
   and a deleted habit is never applied again (100 %).
+
+## 11. Questions about our own events (owner, 2026-10-27)
+"Şu konserde bu kişi nerede oturuyordu?", "Bu kişi kaç konserimize geldi?" — no
+canned answers: the model reasons about the QUESTION; the app's code reads the DATA.
+- **Tools, not memory.** The model answers only by calling a small fixed set of
+  read-only functions (schema-constrained), then writes the answer from what they
+  returned: `findPerson(name)` (every event, the existing matcher `matchRows`),
+  `eventsOf(person)` (planned / checked in / no show per event), `seatOf(person,
+  event)` (table + seat from `guest.assignment`), `findEvent(text|date|venue)`,
+  `eventFacts(event)` (pax, tables, arrivals). Several calls may chain ("the last
+  concert at X" → findEvent → seatOf).
+- **Meaning kept exact.** "Came" = arrival `Checked In`; planned-but-No-Show is
+  said as such (No Show keeps the planned seat — product rule); a past event's
+  seat is its frozen record. A guest is a record per event: the same person
+  across events is matched by name (+ phone/e-mail when present); two possible
+  matches → it asks, never merges silently.
+- **Every answer shows its evidence** (which events, which table), and says
+  "kayıt yok" when the data does not hold it — no guessing.
+- **Measured before it ships:** a written set of questions over a fixture of
+  events (who/where/how many/when, typos, relative dates, ambiguous names):
+  right tool chain ≥ 90 %, final answer matches the data 100 % when the chain
+  is right, and "kayıt yok"/ask-back on every unanswerable/ambiguous item.
