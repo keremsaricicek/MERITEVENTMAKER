@@ -1080,3 +1080,9 @@ never producing one of them; seed 64): brief → the full JSON with nulls.
 system message, as llama-server builds it; image items unchanged). The 40
 hand-written briefs stay the test; the bar is unchanged (fields ≥ 0.90, invented
 ≤ 0.05), and the vision questions are judged as pre-registered above.
+
+**runB6c tests frozen (2026-10-27 13:20 UTC, before training).** Fresh V5 test
+`blind4` (families 16 and 17, seed base 56, scale 0.1): sha256 of
+`sha256sum items.jsonl meta.json img/*.png` begins `d24e1a91f38d63f7`; tucked
+test (held-out TEST-part symbols, seed base 63, tuck 0.7, scale 0.3): begins
+`b35c0da3f7cd477b`. runB6c trains on 7,361 items (921 steps).
