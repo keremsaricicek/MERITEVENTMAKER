@@ -93,3 +93,15 @@ while generating; every message short.
 | 2 | Parser (rules + local model) and the window UI | 2 days |
 | 3 | Offline voice | 1 day |
 | 4 | Measurement, polish, both offline builds, CI | 1 day |
+
+## 10. Memory (owner, 2026-10-27: "beni hatırlayabilir mi")
+- The model remembers nothing between runs; the APP keeps a local memory and gives
+  the relevant part to the model at each conversation (retrieval, never training).
+- What it keeps: the owner's stated habits ("koridor hep 1,5 m", "Ø180'e 10 kişi"),
+  venues with their measured rooms, past briefs and the option chosen.
+- Stored on the computer only (IndexedDB, same store as events); a "Hafıza" list
+  shows every remembered item with its source, editable and deletable one by one.
+- Limited context: only the items matching the current brief (venue, event type,
+  table kinds) are passed; the window says which remembered items it used.
+- Measured with the brief set: a habit stated once is applied in a later brief,
+  and a deleted habit is never applied again (100 %).
