@@ -68,6 +68,23 @@
     setTimeout(()=>fields.name.focus(),30)
   }
   document.getElementById("guestForm").elements.additionalGuests.addEventListener("input",e=>document.getElementById("guestTotalPax").textContent=String(1+Math.max(0,Number(e.target.value)||0)));
+  // The guest record's fields written, for the guest dialog and the F8
+  // assistant alike: a party that grows at its table must still fit there
+  // (`short` says by how much it does not), and the table is repacked so the
+  // companions' seats stay together. A new record arrives unassigned.
+  function saveGuestRecord(event,existing,data){
+    if(existing?.assignment&&data.pax!=null){
+      const t=event.tables.find(x=>x.id===existing.assignment.tableId),others=tableAssignedPax(event,t.id)-paxOf(existing);
+      if(others+data.pax>t.capacity)return{short:{table:t.number,n:t.capacity-others}};
+      existing.additionalGuests=data.additionalGuests;
+      existing.pax=data.pax;
+      repackTableAssignments(event,t,t.capacity)
+    }
+    if(existing){Object.assign(existing,data);return{guest:existing}}
+    const g={id:uid("guest"),...data,arrivalStatus:"Not Arrived",checkedInAt:null,assignment:null,createdAt:nowISO()};
+    event.guests.unshift(g);
+    return{guest:g}
+  }
   document.getElementById("guestForm").addEventListener("submit",e=>{
     e.preventDefault();
     const f=new FormData(e.currentTarget),event=activeEvent(),id=f.get("id"),existing=event.guests.find(g=>g.id===id),compact=parseCompactName(f.get("name"));
@@ -78,19 +95,13 @@
       toast(t_("toast.nameRequired"),"error");
       return
     }
-    if(existing?.assignment){
-      const t=event.tables.find(x=>x.id===existing.assignment.tableId),others=tableAssignedPax(event,t.id)-paxOf(existing);
-      if(others+pax>t.capacity){
-        toast(t_("toast.recordSeatsShort",{table:t.number,n:t.capacity-others}),"error");
-        return
-      }
-      existing.additionalGuests=additional;
-      existing.pax=pax;
-      repackTableAssignments(event,t,t.capacity)
-    }
     const expected=String(f.get("expectedArrival")||"").trim().replace(".",":");
     const data={name:compact.name,additionalGuests:additional,pax,planningStatus:f.get("planningStatus"),vip:f.get("vip"),invitedBy:String(f.get("invitedBy")).trim(),notes:String(f.get("notes")).trim(),expectedArrival:/^\d{1,2}:\d{2}$/.test(expected)?expected:null};
-    if(existing)Object.assign(existing,data);else event.guests.unshift({id:uid("guest"),...data,arrivalStatus:"Not Arrived",checkedInAt:null,assignment:null,createdAt:nowISO()});
+    const saved=saveGuestRecord(event,existing,data);
+    if(saved.short){
+      toast(t_("toast.recordSeatsShort",saved.short),"error");
+      return
+    }
     touchEvent(event);
     document.getElementById("guestDialog").close();
     render();

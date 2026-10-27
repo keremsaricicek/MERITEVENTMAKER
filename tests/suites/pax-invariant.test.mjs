@@ -55,6 +55,32 @@ export default async function run({ page, checks, baseUrl }) {
   checks.equal(afterEdit.pax, 1 + afterEdit.additionalGuests,
     "editing the party size down keeps pax in sync, not left at the old cached value", afterEdit);
 
+  // --- 2b. a party that grows at its table must still fit there -------------
+  // (the guest dialog's capacity rule, now shared with the F8 assistant as
+  // saveGuestRecord — characterised before the move.)
+  const seated = await page.evaluate((id) => {
+    const e = state.events[0];
+    e.tables.push({ id: "tsmall", number: "T90", shape: "round", capacity: 2, chairs: [], x: 100, y: 100, w: 80, h: 80, rotation: 0 });
+    assignGuestToTable(id, "tsmall");
+    return !!e.guests.find((x) => x.id === id).assignment;
+  }, guestId);
+  checks.require(seated, "the guest is seated at a two-seat table", seated);
+  const editParty = async (n) => {
+    await click(page, `[data-guest-edit="${guestId}"]`);
+    await page.waitForSelector("#guestForm", { state: "visible", timeout: 5000 });
+    await page.waitForFunction(() => document.activeElement === document.querySelector('#guestForm input[name="name"]'), null, { timeout: 5000 });
+    await page.fill('#guestForm input[name="additionalGuests"]', String(n));
+    await click(page, "#guestForm .dialog-foot .btn.primary");
+    await page.waitForTimeout(300);
+  };
+  await editParty(3);
+  const tooBig = await page.evaluate((id) => ({ pax: state.events[0].guests.find((x) => x.id === id).pax, open: document.getElementById("guestDialog").open }), guestId);
+  checks.equal(tooBig, { pax: 1, open: true }, "a party that would not fit at its table is refused and the record is unchanged (the dialog stays open)", tooBig);
+  await page.evaluate(() => document.getElementById("guestDialog").close());
+  await editParty(1);
+  const fits = await page.evaluate((id) => { const g = state.events[0].guests.find((x) => x.id === id); return { pax: g.pax, seats: g.assignment && g.assignment.seats.length }; }, guestId);
+  checks.equal(fits, { pax: 2, seats: 2 }, "a party that fits grows in place and keeps a seat for each person", fits);
+
   // --- 3. the demo-seed data (seedGuests/createDemoEvent, src/app.js) -------
   // Called directly rather than through a UI action -- these are the
   // production seed-data generators themselves, exercised the same way a
