@@ -4473,6 +4473,20 @@
       setPax:(id,pax)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g||!canMutate(e,"edit guest records"))return false;return !saveGuestRecord(e,g,{additionalGuests:pax-1,pax}).short;},
       setVip:(id,vip)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g||!canMutate(e,"edit guest records"))return;saveGuestRecord(e,g,{vip});},
       addGuest:(name,pax)=>{const e=activeEvent();if(!e||!canMutate(e,"edit guest records"))return null;return saveGuestRecord(e,null,{name,additionalGuests:pax-1,pax,planningStatus:"Confirmed",vip:"Standard",invitedBy:"",notes:"",expectedArrival:null}).guest.id;},
+      // An arrangement from the planner (metres) drawn as real tables through
+      // createTable, after the canvas undo snapshot: Ctrl+Z and the panel's
+      // Geri al both take the whole arrangement back.
+      applyLayout:(plan)=>{
+        const e=activeEvent();if(!e||!canMutate(e,"add plan objects"))return null;
+        const PX=66.7,snap=canvasSnapshot(e);recordUndo(e,snap);
+        plan.items.filter(it=>it.kind!=="chair").forEach((it,i)=>{
+          const type=it.kind==="rect"?"rectangle":it.kind==="square"?"square":it.kind==="bistro"?"bistro":"round";
+          const w=Math.round((it.d||it.w)*PX),h=Math.round((it.d||it.h)*PX);
+          const tb=createTable(e,{type,chairs:it.seats||(it.standing||1),prefix:type==="bistro"?"B":"T"},Math.round(it.x*PX-w/2),Math.round(it.y*PX-h/2),i+1);
+          tb.w=w;tb.h=h;RULES().syncTableChairs(tb);e.tables.push(tb);
+        });
+        return()=>{const now=activeEvent();if(now&&canMutate(now,"undo the arrangement"))restoreSnapshot(now,snap);};
+      },
     },
   });
   const VLMSCREEN=globalThis.MeritScreenVlm.create({

@@ -79,6 +79,21 @@ export default async function run({ page, checks, baseUrl }) {
   r = await say("Selin Ak'ı T05'e oturt");
   checks.ok(/yok/.test(r.last), "an unknown guest is asked about, never invented", r.last);
 
+  // a brief becomes arrangements; Uygula draws real tables, one Geri al removes them all
+  const tablesBefore = await page.evaluate(() => activeEvent().tables.length);
+  r = await say("Salon 20x30 metre, 300 kişilik gala, 180'lik yuvarlak masa");
+  checks.ok(await page.locator(".assistant-option").count() >= 1 && /masa/.test(r.last) && /kişilik/.test(r.last), "a brief comes back as arrangements with their numbers", r.last);
+  const cap = await page.evaluate(() => { const o = [...document.querySelectorAll(".assistant-option-title")][0].textContent; return Number((o.match(/(\d+) masa/) || [])[1]); });
+  await page.click(".assistant-option .assistant-apply");
+  await settle(page);
+  const added = await page.evaluate((n) => activeEvent().tables.length - n, tablesBefore);
+  checks.equal(added, cap, "Uygula draws exactly the tables the option showed", { added, cap });
+  const overlapping = await page.evaluate(() => { const ts = activeEvent().tables.slice(2); let n = 0; for (let i = 0; i < ts.length; i++) for (let j = i + 1; j < ts.length; j++) { const a = ts[i], b = ts[j]; if (a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h) n++; } return n; });
+  checks.equal(overlapping, 0, "no two drawn tables overlap");
+  await page.locator(".assistant-undo").last().click();
+  await settle(page);
+  checks.equal(await page.evaluate(() => activeEvent().tables.length), tablesBefore, "one Geri al takes the whole arrangement back");
+
   // Escape closes it
   await page.focus("#assistantInput");
   await page.keyboard.press("Escape");

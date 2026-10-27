@@ -2372,3 +2372,10 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .assistant-input:focus-visible{outline:2px solid var(--pi-accent);outline-offset:1px}
 .assistant-send{height:38px}
 @media (prefers-reduced-motion:reduce){.assistant-panel.is-working .assistant-strip{animation:none}}
+.assistant-option{margin-top:10px;padding:10px;border:1px solid var(--pi-line);border-radius:10px;background:var(--pi-surface-2)}
+.assistant-option-title{font-weight:600;font-size:12.5px}
+.assistant-option-note{margin-top:4px!important;font-size:12px;color:var(--pi-muted)}
+.assistant-preview{display:block;width:100%;height:auto;max-height:180px;margin-top:8px}
+.assistant-preview .room{fill:#fff;stroke:var(--pi-line)}
+.assistant-preview circle,.assistant-preview rect:not(.room){fill:rgba(47,111,102,.18);stroke:var(--pi-accent);stroke-width:.8}
+.assistant-apply{margin-top:8px;height:30px;font-size:12px}
