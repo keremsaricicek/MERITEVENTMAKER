@@ -4458,6 +4458,23 @@
   const READING=globalThis.MeritScreenReading.create({
     activeEvent:(...a)=>activeEvent(...a),applyReviewZoom:(...a)=>applyReviewZoom(...a),esc:(...a)=>esc(...a),render:(...a)=>render(...a),t:(...a)=>t(...a),ui,
   });
+  // The F8 assistant (src/screen-assistant.js): its own panel beside the
+  // screen; questions answered from the data, commands carried out through
+  // these writers only, each command one undo.
+  const ASSIST=globalThis.MeritScreenAssistant.create({
+    events:()=>state.events,currentId:()=>ui.screen==="workspace"?ui.activeEventId:null,today:()=>new Date().toLocaleDateString("en-CA"),
+    canMutate:(e)=>canMutate(e,"change this event"),t:(...a)=>t(...a),
+    onChange:()=>{const e=activeEvent();if(e){RULES().syncEventChairs(e);touchEvent(e);}render();},
+    writers:{
+      assign:(id,tableId,seats)=>assignGuestToTable(id,tableId,seats&&seats.length?seats[0]:null),
+      unassign:(id)=>unassignGuest(id),
+      deleteGuest:(id)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g||!canMutate(e,"delete a guest"))return null;return removeGuestRecord(e,g);},
+      restoreGuest:(kept)=>{const e=activeEvent();return e?restoreGuestRecord(e,kept):null;},
+      setPax:(id,pax)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g||!canMutate(e,"edit guest records"))return false;return !saveGuestRecord(e,g,{additionalGuests:pax-1,pax}).short;},
+      setVip:(id,vip)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g||!canMutate(e,"edit guest records"))return;saveGuestRecord(e,g,{vip});},
+      addGuest:(name,pax)=>{const e=activeEvent();if(!e||!canMutate(e,"edit guest records"))return null;return saveGuestRecord(e,null,{name,additionalGuests:pax-1,pax,planningStatus:"Confirmed",vip:"Standard",invitedBy:"",notes:"",expectedArrival:null}).guest.id;},
+    },
+  });
   const VLMSCREEN=globalThis.MeritScreenVlm.create({
     activeEvent:(...a)=>activeEvent(...a),applyReviewZoom:(...a)=>applyReviewZoom(...a),ask:(...a)=>ask(...a),audit:(...a)=>audit(...a),
     canMutate:(...a)=>canMutate(...a),decideReview:(...a)=>decideReview(...a),esc:(...a)=>esc(...a),icon:(...a)=>icon(...a),render:(...a)=>render(...a),
@@ -5576,6 +5593,8 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     // pressed on a dialog's button deleted or nudged the selected table under
     // it. The dialog handles its own keys; nothing behind it does.
     if(document.querySelector("dialog[open]"))return;
+    // F8 opens and closes the assistant from anywhere (it closes itself on Escape).
+    if(e.key==="F8"){e.preventDefault();ASSIST.toggle();return;}
     // The override challenge is a blocking decision, so Escape means "no" and
     // nothing else on the screen closes with it. Cancelling authorises
     // nothing and leaves the room exactly as it was.

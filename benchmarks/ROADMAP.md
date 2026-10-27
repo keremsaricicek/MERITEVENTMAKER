@@ -29,7 +29,7 @@ result is seen. Order is by dependency; steps marked ∥ run while the CPU train
 | C3 | Planner window UI (chips, 2–3 options, Uygula / Geri al) | screenshots at 3 viewports; UI suites | after C1 |
 | C4 ∥ | F8 assistant: fixture events + written question set (§11) and command set (§12) with expected tool calls | sets committed before any model sees them | **done** (`training/assistant/`) |
 | C5 | F8 tools: read-only (findPerson, eventsOf, seatOf, findEvent, eventFacts) and acting (through the app's writers; one undo per command; `canMutate`) | suite: right answer from data; every command undone by one undo | **read-only tools done** (`src/assistant-tools.js`, suite `assistant-tools`: all 20 questions answered right from the data); **acting layer done** (`src/assistant-actions.js`, suite `assistant-actions`: all 15 commands — right calls, asks, refusals, one undo each); wiring into the app with the real writers comes with C6 |
-| C6 | F8 panel UI (right side, small; Esc closes) | screenshots; keyboard/a11y | after C5 |
+| C6 | F8 panel UI (right side, small; Esc closes) | screenshots; keyboard/a11y | **first version done** (`src/screen-assistant.js`, suite `assistant-panel`; F8/Esc, answers from data, commands through the writers with one undo, past events refused, the owner's strip; screenshots 1920/2560/1440 with no console errors). Rules-first reader only; the model joins after A5 |
 | C7 | Memory (habits, venues) local, listed, deletable | suite | after C6 |
 | C8 | Offline voice (Whisper-small class) | word error reported; owner's own test | last |
 

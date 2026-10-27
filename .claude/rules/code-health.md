@@ -7,8 +7,8 @@
   framework migration, TypeScript conversion, introducing a bundler/build
   step, converting `src/*.js` to ES modules, and silently changing the
   classic-script load order in `index.html` (fixed order, `app-v8.js`
-  LAST; count with `grep -c '<script src="src/' index.html` — 89 on
-  2026-10-18, after `src/plan-local-check.js` joined the 88. The one `type="module"` tag, `src/pdf-bridge.mjs`, is the PDF
+  LAST; count with `grep -c '<script src="src/' index.html` — 93 on
+  2026-10-27, after the F8 assistant's four scripts (`assistant-tools`, `assistant-actions`, `assistant-parse`, `screen-assistant`) joined the 89. The one `type="module"` tag, `src/pdf-bridge.mjs`, is the PDF
   engine's loader moved out of an inline script for the CSP, not app code).
 - **Four gates after EVERY structural step**, not at the end:
   `npm run test:all` · `npm run build:offline` ·

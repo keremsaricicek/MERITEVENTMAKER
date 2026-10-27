@@ -2344,3 +2344,31 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .dg-title rect{fill:var(--pi-surface-2);stroke:#8b8270;stroke-width:1.2}
 .dg-capacity rect{fill:transparent;stroke:none}
 .dg-capacity text{font-weight:600;fill:#5c5446}
+
+/* F8 assistant panel (src/screen-assistant.js). Beside the screen, never over
+   the plan's centre; the top strip carries the app's colours back and forth
+   only while the assistant works (owner's design, 2026-10-27). */
+.assistant-panel{position:fixed;right:16px;bottom:16px;z-index:250;width:380px;max-width:calc(100vw - 32px);height:min(620px,calc(100vh - 32px));display:flex;flex-direction:column;background:var(--pi-bg);border:1px solid var(--pi-line);border-radius:12px;box-shadow:0 12px 32px rgba(36,32,24,.16);overflow:hidden;color:var(--pi-ink)}
+.assistant-panel[hidden]{display:none}
+.assistant-strip{height:3px;flex:none;background:var(--pi-line-soft)}
+.assistant-panel.is-working .assistant-strip{background:linear-gradient(90deg,#2f6f66,#6fae9f,#d9a441,#c2703d,#d9a441,#6fae9f,#2f6f66);background-size:300% 100%;animation:assistant-flow 2.6s ease-in-out infinite alternate}
+@keyframes assistant-flow{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+.assistant-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--pi-surface);border-bottom:1px solid var(--pi-line)}
+.assistant-title{margin:0;font-size:14px;font-weight:650}
+.assistant-key{font:inherit;font-size:11px;color:var(--pi-muted);border:1px solid var(--pi-line);border-radius:6px;padding:1px 6px}
+.assistant-status{flex:1;text-align:right;font-size:12px;color:var(--pi-muted)}
+.assistant-close{width:32px;height:32px;border:0;background:transparent;color:var(--pi-muted);border-radius:8px;cursor:pointer;font-size:18px;line-height:1}
+.assistant-close:hover{background:var(--pi-line-soft);color:var(--pi-ink)}
+.assistant-log{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.assistant-turn{max-width:88%;padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.5}
+.assistant-turn p{margin:0}
+.assistant-turn.you{align-self:flex-end;background:var(--pi-accent);color:#fff;border-bottom-right-radius:4px}
+.assistant-turn.assistant{align-self:flex-start;background:var(--pi-surface);border:1px solid var(--pi-line);border-bottom-left-radius:4px}
+.assistant-lines{margin:6px 0 0;padding:0;list-style:none;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.assistant-undo{margin-top:8px;height:30px;font-size:12px}
+.assistant-undone{margin-top:6px!important;font-size:12px;color:var(--pi-muted)}
+.assistant-form{display:flex;gap:8px;padding:12px 14px;background:var(--pi-surface);border-top:1px solid var(--pi-line)}
+.assistant-input{flex:1;min-width:0;height:38px;border:1px solid var(--pi-line);border-radius:10px;padding:0 12px;font:inherit;font-size:13px;background:var(--pi-surface-2);color:var(--pi-ink)}
+.assistant-input:focus-visible{outline:2px solid var(--pi-accent);outline-offset:1px}
+.assistant-send{height:38px}
+@media (prefers-reduced-motion:reduce){.assistant-panel.is-working .assistant-strip{animation:none}}
