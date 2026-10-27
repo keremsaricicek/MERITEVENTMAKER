@@ -43,11 +43,59 @@
     return person ? w.filter((_, i) => i < person.at || i >= person.at + person.len).join(" ") : w.join(" ");
   }
 
+  // ---- an event brief → the planner's numbers (rules first; the model later) ----------------
+  const ONES = { bir: 1, iki: 2, uc: 3, dort: 4, bes: 5, alti: 6, yedi: 7, sekiz: 8, dokuz: 9 };
+  const TENS = { on: 10, yirmi: 20, otuz: 30, kirk: 40, elli: 50, altmis: 60, yetmis: 70, seksen: 80, doksan: 90 };
+  // "iki yüz elli" → 250, "bin" → 1000: number words become digits first
+  function numberWords(f) {
+    return f.replace(/\b((?:(?:bir|iki|uc|dort|bes|alti|yedi|sekiz|dokuz|on|yirmi|otuz|kirk|elli|altmis|yetmis|seksen|doksan|yuz|bin)\s?)+)\b/g, (m) => {
+      let total = 0, cur = 0;
+      for (const w of m.trim().split(/\s+/)) {
+        if (ONES[w]) cur += ONES[w]; else if (TENS[w]) cur += TENS[w];
+        else if (w === "yuz") cur = (cur || 1) * 100; else if (w === "bin") { total += (cur || 1) * 1000; cur = 0; }
+      }
+      return String(total + cur) + " ";
+    });
+  }
+  const EVENT_WORDS = [["wedding", /\b(dugun|nisan|kina|nikah)/], ["gala", /\b(gala|balo|odul toren)/], ["cocktail", /\b(kokteyl|resepsiyon)/],
+    ["u_shape", /\bu (duzen|masa|tipi)/], ["boardroom", /\b(yonetim kurulu|boardroom|tek masa|oval tek)/], ["classroom", /\b(sinif|egitim|workshop|atolye)/],
+    ["theatre", /\b(tiyatro|konferans|panel|seminer)/], ["banquet", /\b(banket|yemek|dogum gunu|iftar)/], ["meeting", /\b(toplanti|brifing)/]];
+  function brief(text) {
+    const f = numberWords(fold(String(text).replace(/m²/g, " m2 ").replace(/Ø/g, " cap ")));
+    const b = { pax: null, area_m2: null, room_w_m: null, room_l_m: null, event: null, table_kind: null, table_count: null, table_diam_cm: null,
+      table_len_cm: null, table_wid_cm: null, seats_per_table: null, chair_w_cm: null, chair_d_cm: null, extra_kind: null, extra_seats: null };
+    const n = (re) => { const m = f.match(re); return m ? Number(m[1]) : null; };
+    b.pax = n(/\b(\d+) ?(?:kisilik|kisi\b|pax|davetli)/) ?? n(/\b(?:pax|davetli) (\d+)/);
+    b.area_m2 = n(/\b(\d+) ?(?:m2|metrekare)/) ?? n(/\balan (\d+)/);
+    const dims = f.match(/\b(\d+) ?(?:x|e|ye|a|ya) ?(\d+) ?(?:m\b|metre)/) || f.match(/\bsalon (\d+) ?(?:metreye|x) ?(\d+)/);
+    if (dims) { b.room_w_m = Number(dims[1]); b.room_l_m = Number(dims[2]); }
+    for (const [ev, re] of EVENT_WORDS) if (re.test(f)) { b.event = ev; break; }
+    if (b.event === "boardroom" && /\btek masa|oval tek/.test(f)) b.table_count = 1;
+    if (/\byuvarlak/.test(f)) b.table_kind = "round"; else if (/\bdikdortgen/.test(f)) b.table_kind = "rect";
+    else if (/\bkare\b/.test(f)) b.table_kind = "square"; else if (/\b(bistro|yuksek masa)/.test(f) && !/\bkalan/.test(f.split(/bistro|yuksek masa/)[0])) b.table_kind = "bistro";
+    const cnt = f.match(/\b(\d+) (?:adet |tane )?(?:\d+ ?(?:lik|luk|cm) )?(?:yuvarlak |dikdortgen |kare |bistro |yuksek )?masa\b/);
+    if (cnt && b.table_count == null) b.table_count = Number(cnt[1]);
+    const dia = f.match(/\b(1[2-9]\d|2[0-4]\d)\s?(?:lik|luk|cm)?\s?(?:yuvarlak|masa)/) || f.match(/\bcap ?(\d{3})/) || (b.table_kind === "round" && f.match(/\b(1[2-9]\d|2[0-4]\d) cm\b/));
+    if (dia && !/\d+ ?x ?\d+/.test(f.slice(Math.max(0, f.indexOf(dia[0]) - 4), f.indexOf(dia[0]) + dia[0].length))) b.table_diam_cm = Number(dia[1]);
+    const lw = f.match(/\b(\d{2,3}) ?x ?(\d{2,3})\b(?! ?(?:m\b|metre))/);
+    if (lw && !/sandalye/.test(f.slice(Math.max(0, f.indexOf(lw[0]) - 25), f.indexOf(lw[0])))) { b.table_len_cm = Number(lw[1]); b.table_wid_cm = Number(lw[2]); }
+    b.seats_per_table = n(/\bmasa basi (\d+)/) ?? n(/\bmasalar (\d+) kisilik/) ?? n(/\bher masaya (\d+)/) ?? n(/\b(\d+) ?(?:ar|er|ser|sar)\b(?! kisilik)/) ?? n(/\b(\d+) kisilik yuvarlak/) ?? n(/\bmasalar (\d+)(?:ar|er|ser|sar)? kisilik/);
+    const ch = f.match(/\bsandalye(?:ler)?(?: olcusu)? (\d{2}) ?(?:x|e|ye|a|ya| x ) ?(\d{2})/);
+    if (ch) { b.chair_w_cm = Number(ch[1]); b.chair_d_cm = Number(ch[2]); }
+    const rest = f.match(/\bkalan(?:i| alana)?\s+(?:(\d+) kisilik\s*)?(bistro|ayakta kokteyl|kokteyl)?/);
+    if (rest) { if (rest[1]) b.extra_seats = Number(rest[1]); if (rest[2]) b.extra_kind = /kokteyl/.test(rest[2]) ? "cocktail" : "bistro"; }
+    if (b.table_kind === "bistro" && b.event == null) b.event = "cocktail";
+    return b;
+  }
+  const isBrief = (f) => /\b(\d+|[a-z]+) ?(kisilik|kisi\b|pax|davetli)/.test(f) && /\b(m2|metrekare|metre|salon|masa|duzen|tiyatro|kokteyl|gala|dugun|banket|toplanti|sinif|egitim)/.test(f);
+
   function parse(text, events, today) {
     const f = fold(unsuffix(text)), raw = String(text || "");
     const p = personIn(raw, events), tbs = tables(raw), ph = phone(raw);
     const evq = eventPart(raw, p);
     const has = (re) => re.test(f);
+    // a description of an event to lay out — no guest of ours named, no command verb
+    if (!p && isBrief(numberWords(f)) && !has(/\b(sil|kaldir|cikar|oturt|tasi|nerede|kac konser)\b/)) return { kind: "plan", brief: brief(raw) };
     // ---- commands -------------------------------------------------------------------------
     if (has(/\b(sil|kaldir|cikar|ekle|oturt|koy|al|tasi|yap|olsun)\b/)) {
       if (has(/\bherkes/) && tbs.length >= 2 && has(/\btasi/)) return { kind: "command", plan: [{ op: "moveTable", fromTable: tbs[0], table: tbs[1] }] };
@@ -141,5 +189,5 @@
     return { ask: true, text: "Bunu anlayamadım; başka türlü yazar mısın?" };
   }
 
-  globalThis.MeritAssistantParse = { parse, answer, personIn, tables };
+  globalThis.MeritAssistantParse = { parse, answer, brief, personIn, tables };
 })();

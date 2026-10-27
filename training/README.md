@@ -1086,3 +1086,13 @@ hand-written briefs stay the test; the bar is unchanged (fields ≥ 0.90, invent
 `sha256sum items.jsonl meta.json img/*.png` begins `d24e1a91f38d63f7`; tucked
 test (held-out TEST-part symbols, seed base 63, tuck 0.7, scale 0.3): begins
 `b35c0da3f7cd477b`. runB6c trains on 7,361 items (921 steps).
+
+**Rules-first brief reader, scored once (2026-10-27).** `MeritAssistantParse.brief()`
+(src/assistant-parse.js), written after the 40 hand-written briefs existed but
+without running on them, scored on them once: **fields right 0.952, invented
+0.002** — passes the bar set for the parser (≥ 0.90, ≤ 0.05; the model-alone
+results above were 0.64 base / 0.77 B6b). Same author for rules and briefs, so
+this is DEVELOPER-SEEN, not unseen; misses seen (10'ar kişilik, "180lik",
+"Ø180" without "yuvarlak", "şirket yemeği", 60 bistro) are NOT tuned on this
+set — any rule change is to be measured on a fresh brief set (the owner's own
+sentences).
