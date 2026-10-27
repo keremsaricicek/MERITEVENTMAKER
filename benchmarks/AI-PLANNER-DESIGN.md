@@ -127,3 +127,26 @@ canned answers: the model reasons about the QUESTION; the app's code reads the D
   events (who/where/how many/when, typos, relative dates, ambiguous names):
   right tool chain ≥ 90 %, final answer matches the data 100 % when the chain
   is right, and "kayıt yok"/ask-back on every unanswerable/ambiguous item.
+
+## 12. The assistant that ACTS (owner, 2026-10-27) — F8
+- **F8** opens a small chat panel on the right (canvas stays visible); Esc closes.
+  Text now, voice later (§6).
+- It carries out written commands without a confirmation step — the command IS
+  the person's decision: "bunu sil", "T12'ye 2 kişi ekle", "Ahmet Yılmaz'ı geçen
+  konserdeki yerine oturt" ("şu konserde şu kişi vardı, bu konserde aynı kişiyi
+  aynı numaralı masaya / aynı koltuğa oturt").
+- **How:** the model turns the sentence into a plan of calls to the app's own
+  writers only (`assignGuestToTable` via MeritSeatAssignment, the table/chair
+  writers, guest add/remove) — never a raw state edit; the code checks each call
+  (person and table exist, capacity, freeze zones, availability, a past event is
+  never changed — `canMutate`), runs it, and writes one line per change.
+- **Safety without asking:** every command is ONE undo step ("Geri al" in the
+  panel and Ctrl+Z); the panel lists exactly what changed. It asks only when
+  the sentence is ambiguous (two people with that name, table number missing in
+  this event, seat taken) — then it changes nothing until answered. Deleting
+  many things at once (> 10) says the count first.
+- Model actions are marked as the assistant's in the history and are never
+  captured as a person's training example.
+- **Measured before it ships:** a written command set over fixture events —
+  right calls ≥ 95 %, wrong change 0 (a wrong guess must become a question),
+  every command undone exactly by one undo.
