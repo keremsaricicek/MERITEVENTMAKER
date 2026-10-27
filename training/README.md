@@ -1062,3 +1062,21 @@ Detector alone: exact 0.85, over 0.10. The model removed one detector extra
 5 of 6) — it never makes a chair. By the rule written then, it is wired only when
 identify passes for that adapter: B6b's identify fails on the fresh V5 test
 (bench), so this waits for runB6c. Raw `local-vlm-results/v5-seatcount-B6b*.json`.
+
+**Language test, results (2026-10-27).** Base 0.8B: fields right 0.643, briefs all
+right 7 / 40, invented 0.435; B6b: fields right 0.768, all right 13 / 40, invented
+**0.771** — both fail (≥ 0.90, ≤ 0.05). The plan LoRA did not hurt reading the
+stated numbers (it helped) but it fills unstated fields far more. The everyday
+chat answers (kept in the files) are fluent Turkish with wrong facts (e.g.
+"kokteylde kişi başı 1 m², bardaklar yüzünden"): a 0.8B model is no source of
+facts; the planner and the event-questions assistant must take every fact from
+the app's code and data (AI-PLANNER-DESIGN.md §1, §11). Raw
+`local-vlm-results/lang-{base08,B6b}.json`.
+
+**runB6c gets language too (added before runB6c is trained).** 1,500 text-only
+items from `training/synth_briefs.py` (a grammar written after the 40 test briefs,
+never producing one of them; seed 64): brief → the full JSON with nulls.
+`vlm_lora.py train` now takes text-only items (no image: the chat template with a
+system message, as llama-server builds it; image items unchanged). The 40
+hand-written briefs stay the test; the bar is unchanged (fields ≥ 0.90, invented
+≤ 0.05), and the vision questions are judged as pre-registered above.

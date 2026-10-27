@@ -255,6 +255,12 @@ def prompt(proc, q):
     return proc.apply_chat_template(msgs, add_generation_prompt=True, tokenize=False, enable_thinking=False)
 
 
+def text_prompt(proc, system, q):
+    """A text-only item (no image), as llama-server's chat template builds it."""
+    msgs = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": q}]
+    return proc.apply_chat_template(msgs, add_generation_prompt=True, tokenize=False, enable_thinking=False)
+
+
 def cmd_train(a):
     import torch
     from peft import LoraConfig, get_peft_model
@@ -282,7 +288,8 @@ def cmd_train(a):
             r = json.loads(l)
             if k and r["task"] not in a.replay_tasks.split(","):
                 continue
-            r["image"] = os.path.join(d, r["image"])
+            if r.get("image"):  # text-only items (BRIEF) have none
+                r["image"] = os.path.join(d, r["image"])
             part.append(r)
         if k and a.replay_max and len(part) > a.replay_max:
             part = random.Random(a.seed + k).sample(part, a.replay_max)
@@ -329,10 +336,14 @@ def cmd_train(a):
                 seen += 1
                 continue
             r = rows[idx]
-            img = Image.open(r["image"]).convert("RGB")
-            pre = prompt(proc, r["q"])
             ans = str(r["truth"])
-            x = proc(text=[pre + ans + "<|im_end|>"], images=[img], return_tensors="pt")
+            if r.get("image"):
+                img = Image.open(r["image"]).convert("RGB")
+                pre = prompt(proc, r["q"])
+                x = proc(text=[pre + ans + "<|im_end|>"], images=[img], return_tensors="pt")
+            else:
+                pre = text_prompt(proc, r.get("system"), r["q"])
+                x = proc(text=[pre + ans + "<|im_end|>"], return_tensors="pt")
             ans_ids = proc.tokenizer(ans, add_special_tokens=False)["input_ids"] + [end_id]
             ids = x["input_ids"][0]
             A = len(ans_ids)
