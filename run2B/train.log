@@ -52,3 +52,13 @@ step 400/734 items 3200 loss 0.1324 lr 9.10e-05 11.63s/item elapsed 310.1min pea
 step 410/734 items 3280 loss 0.1688 lr 8.83e-05 11.60s/item elapsed 324.9min peakRSS 13364MB
 step 420/734 items 3360 loss 0.2782 lr 8.56e-05 11.57s/item elapsed 339.3min peakRSS 13364MB
 step 430/734 items 3440 loss 0.1082 lr 8.28e-05 11.52s/item elapsed 353.2min peakRSS 13364MB
+resume at item 3400 step 425
+start 2026-10-27T01:35:27Z items=5869 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=9437184 targets=72
+step 430/734 items 3440 loss 0.0606 lr 8.28e-05 10.78s/item elapsed 7.2min peakRSS 13555MB
+step 440/734 items 3520 loss 0.1365 lr 8.01e-05 10.65s/item elapsed 21.3min peakRSS 13555MB
+step 450/734 items 3600 loss 0.0978 lr 7.74e-05 10.54s/item elapsed 35.1min peakRSS 13555MB
+step 460/734 items 3680 loss 0.1451 lr 7.47e-05 10.63s/item elapsed 49.6min peakRSS 13555MB
+step 470/734 items 3760 loss 0.1045 lr 7.19e-05 10.66s/item elapsed 64.0min peakRSS 13555MB
+step 480/734 items 3840 loss 0.1041 lr 6.92e-05 10.75s/item elapsed 78.8min peakRSS 13555MB
+step 490/734 items 3920 loss 0.0576 lr 6.65e-05 10.82s/item elapsed 93.8min peakRSS 13555MB
+step 500/734 items 4000 loss 0.0466 lr 6.38e-05 10.92s/item elapsed 109.2min peakRSS 13555MB
