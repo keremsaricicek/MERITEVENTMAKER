@@ -1,0 +1,23 @@
+{
+ "base": "/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/models/hf/Qwen3.5-2B",
+ "data": "/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v5/train,/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v4data",
+ "items": 5869,
+ "epochs": 1.0,
+ "rank": 16,
+ "alpha": 32,
+ "lr": 0.0002,
+ "accum": 8,
+ "seed": 3,
+ "trainable": 9437184,
+ "targets": "language_model MLP gate/up/down, 24 blocks",
+ "curriculum": true,
+ "dtype": "fp32",
+ "init": null,
+ "replayMax": 0,
+ "gradCkpt": true,
+ "replayTasks": "ID,NEG,COUNT,MERGED",
+ "resumedAt": 3400,
+ "peakTrainRssMb": 13555,
+ "seconds": 27943,
+ "finished": "2026-10-27T09:21:10Z"
+}

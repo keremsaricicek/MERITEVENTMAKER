@@ -54,3 +54,5 @@ wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER
 == 2026-10-27T01:28:21Z train run2B
 == 2026-10-27T07:02:09Z chain replaced (owner: compare 2B with B6b first; 2B6 waits for decision); trainer left running
 == 2026-10-27T07:02:09Z restart chain
+wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v5/run2B/adapter.gguf
+== 2026-10-27T09:22:14Z bench real-2B
