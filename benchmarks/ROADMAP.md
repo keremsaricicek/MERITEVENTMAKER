@@ -4,6 +4,13 @@ Every step ends with its evidence committed. Bars are pre-registered in
 `training/README.md` (models) or in the step's own design section before any
 result is seen. Order is by dependency; steps marked ∥ run while the CPU trains.
 
+## Owner's target for 2026-10-28 (by night): "plan understood whole, nothing left for me"
+Score today ~75/100 (identify 97, tables found ~100, seat counts 90 per-chair, merged 93 but 4/6 groups, self-correction 0).
+To reach 85–90 tomorrow, in order: A1/A2 (B6c verdict, wire what passes) → A3 (seat counts per chair in the product) →
+A4 (self-correction for every question that passes the strict bar; marked as the model's, one-click undo) →
+a before/after count of corrections left on the same plan (B2). Honest limit: measured on the two real plans only;
+the third real plan (owner) is the blind score.
+
 ## A. Models
 | # | Step | Evidence / bar | Status |
 |---|---|---|---|
