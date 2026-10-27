@@ -8,7 +8,9 @@ result is seen. Order is by dependency; steps marked ∥ run while the CPU train
 Score today ~75/100 (identify 97, tables found ~100, seat counts 90 per-chair, merged 93 but 4/6 groups, self-correction 0).
 To reach 85–90 tomorrow, in order: A1/A2 (B6c verdict, wire what passes) → A3 (seat counts per chair in the product) →
 A4 (self-correction for every question that passes the strict bar; marked as the model's, one-click undo) →
-a before/after count of corrections left on the same plan (B2). Honest limit: measured on the two real plans only;
+a before/after count of corrections left on the same plan (B2) → A5 chat-model race (Qwen3.5-4B, Gemma 4 E4B,
+Kara-Kumru 2B, B6c) on the 40 briefs + 35 assistant items, the winner behind the F8 rules as the second reader →
+theatre rows drawn on the plan (a chair-row seating object, seatable, no table surface). Honest limit: measured on the two real plans only;
 the third real plan (owner) is the blind score.
 
 ## A. Models
