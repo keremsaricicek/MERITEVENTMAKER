@@ -2218,35 +2218,48 @@
     el.append(text,btn);
     pushToast(el,{duration});
   }
-  deleteGuest = async function(id){
-    const event=activeEvent(),g=event&&event.guests.find(x=>x.id===id);
-    if(!g||!canMutate(event,"delete a guest"))return;
-    if(!(await ask({title:t("ask.deleteGuestTitle"),body:t("guests.confirmDelete",{name:g.name}),confirmLabel:t("ask.delete"),danger:true})))return;
-    // The whole record is kept, including its planned assignment, so undo puts
-    // the guest back exactly where they were rather than as a fresh unassigned
-    // record. Position is kept too, so the list does not reshuffle on undo.
+  // A guest out of the event and back in, without asking and without a toast:
+  // deleteGuest's own steps, shared with the F8 assistant's undo. The whole
+  // record is kept, including its planned assignment, so a restore puts the
+  // guest back exactly where they were rather than as a fresh unassigned
+  // record. Position is kept too, so the list does not reshuffle.
+  function removeGuestRecord(event,g){
     const index=event.guests.indexOf(g),snapshot=JSON.parse(JSON.stringify(g));
     event.guests.splice(index,1);
     RULES().syncEventChairs(event);
     audit(event,"GUEST_DELETED",{guestId:g.id,name:g.name});
+    return{index,snapshot};
+  }
+  // null when the guest is already back; else whether the seat was lost. The
+  // seat may have been given away in the meantime. Restoring the record matters
+  // more than restoring the seat, so the guest comes back either way --
+  // unassigned if the seat is gone, and the caller tells the operator.
+  function restoreGuestRecord(now,kept){
+    const {index,snapshot}=kept;
+    if(!canMutate(now,"restore a guest")||now.guests.some(x=>x.id===snapshot.id))return null;
+    let seatLost=false;
+    if(snapshot.assignment){
+      const table=now.tables.find(x=>x.id===snapshot.assignment.tableId);
+      const used=table?occupiedSeatIndexes(now,table.id):null;
+      const clash=!table||(snapshot.assignment.seats||[]).some(s=>used.has(Number(s)));
+      if(clash){SEAT().clear(snapshot);seatLost=true;}
+    }
+    now.guests.splice(Math.min(index,now.guests.length),0,snapshot);
+    RULES().syncEventChairs(now);
+    audit(now,"GUEST_RESTORED",{guestId:snapshot.id,name:snapshot.name});
+    return seatLost;
+  }
+  deleteGuest = async function(id){
+    const event=activeEvent(),g=event&&event.guests.find(x=>x.id===id);
+    if(!g||!canMutate(event,"delete a guest"))return;
+    if(!(await ask({title:t("ask.deleteGuestTitle"),body:t("guests.confirmDelete",{name:g.name}),confirmLabel:t("ask.delete"),danger:true})))return;
+    const kept=removeGuestRecord(event,g);
     touchEvent(event);render();
     toastAction(t("guests.deletedToast",{name:g.name}),t("live.undo"),()=>{
       const now=activeEvent();
       if(!now||!canMutate(now,"restore a guest"))return;
-      if(now.guests.some(x=>x.id===snapshot.id))return;
-      // The seat may have been given away in the meantime. Restoring the record
-      // matters more than restoring the seat, so the guest comes back either
-      // way -- unassigned if the seat is gone, and the operator is told.
-      let seatLost=false;
-      if(snapshot.assignment){
-        const table=now.tables.find(x=>x.id===snapshot.assignment.tableId);
-        const used=table?occupiedSeatIndexes(now,table.id):null;
-        const clash=!table||(snapshot.assignment.seats||[]).some(s=>used.has(Number(s)));
-        if(clash){SEAT().clear(snapshot);seatLost=true;}
-      }
-      now.guests.splice(Math.min(index,now.guests.length),0,snapshot);
-      RULES().syncEventChairs(now);
-      audit(now,"GUEST_RESTORED",{guestId:snapshot.id,name:snapshot.name});
+      const seatLost=restoreGuestRecord(now,kept),snapshot=kept.snapshot;
+      if(seatLost==null)return;
       touchEvent(now);render();
       toast(seatLost?t("guests.restoredNoSeat",{name:snapshot.name}):t("guests.restoredToast",{name:snapshot.name}),"success");
     });
