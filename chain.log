@@ -56,3 +56,6 @@ wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER
 == 2026-10-27T07:02:09Z restart chain
 wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v5/run2B/adapter.gguf
 == 2026-10-27T09:22:14Z bench real-2B
+== 2026-10-27T12:09:08Z bench v5n-2B
+== 2026-10-27T12:26:30Z owner: 2B dropped (v5n-2B stopped, run2B6 skipped); B6b is the one model
+== 2026-10-27T12:26:30Z CHAIN-DONE (owner stopped 2B)
