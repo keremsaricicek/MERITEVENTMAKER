@@ -1051,3 +1051,14 @@ SOUND WITH FINDINGS; kept as a limit: on the real test merged rests on 6 touchin
 groups and 38 separate pairs — B6b found 4 of the 6 groups on the first look (run
 B 3), so its real recall of a long table is not established. `merged` now comes
 from `qwen3.5-0.8b-merit-b6b`; run B's manifest lists no check.
+
+**Seat counts from chairs one by one (follow-up 2), runB6b, 2026-10-27.** The
+detector's own chairs on the 20 Golden held-out chair-count tables (42 detected
+chairs, every table found), each asked `identify` with two looks; a table's count
+is the chairs both looks call `chair`. **Model exact 18 / 20 = 0.90, over-count
+1 / 20 = 0.05 — passes** the pre-registered bars (exact ≥ 0.80, over ≤ 0.10).
+Detector alone: exact 0.85, over 0.10. The model removed one detector extra
+(t015), kept one (t020), and cannot add the chair the detector missed (t038:
+5 of 6) — it never makes a chair. By the rule written then, it is wired only when
+identify passes for that adapter: B6b's identify fails on the fresh V5 test
+(bench), so this waits for runB6c. Raw `local-vlm-results/v5-seatcount-B6b*.json`.
