@@ -119,8 +119,7 @@
         svg.append(sh);
       }
       card.append(svg);
-      if (o.event === "theatre") card.append(el("p", { class: "assistant-option-note" }, t("assistant.planTheatreNote")));
-      else if (opt.applied) card.append(el("p", { class: "assistant-undone" }, t("assistant.planApplied")));
+      if (opt.applied) card.append(el("p", { class: "assistant-undone" }, t("assistant.planApplied")));
       else {
         const go = el("button", { class: "btn primary assistant-apply", type: "button" }, t("assistant.apply"));
         go.addEventListener("click", () => {
@@ -129,8 +128,8 @@
           working(true);
           const back = writers.applyLayout(o);
           opt.applied = true;
-          turns.push({ who: "assistant", text: t("assistant.done"), lines: [t("assistant.planTables", { n: tables }) + " · " + t("assistant.planCapacity", { n: o.capacity })], undo: back ? [back] : null });
-          working(false); onChange(); draw();
+          turns.push({ who: "assistant", text: t("assistant.done"), lines: [kind + " · " + t("assistant.planCapacity", { n: o.capacity })], undo: back ? [back] : null });
+          working(false); onChange(); draw(); input.focus();
         });
         card.append(go);
       }
@@ -168,6 +167,7 @@
       turn.undone = true;
       onChange();
       draw();
+      input.focus();
     }
 
     function ask(text) {
@@ -184,8 +184,8 @@
       }, 30);
     }
     // A brief becomes 1–2 arrangements from the layout engine; each can be
-    // applied to the open event as one undo (theatre rows are shown, not drawn
-    // yet: the floor plan has no chair-row object).
+    // applied to the open event as one undo (a theatre arrangement as its chair
+    // rows, S01…).
     function planReply(b) {
       const L = globalThis.MeritPlannerLayout, opts = [];
       const first = L.plan(b);

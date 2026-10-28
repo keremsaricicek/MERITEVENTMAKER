@@ -1590,8 +1590,10 @@
   }
 
   function uniqueNumber(event,prefix,index){let n=index;while(event.tables.some(t=>t.number===prefix+String(n).padStart(2,"0")))n++;return prefix+String(n).padStart(2,"0");}
+  const ROW_SEAT_PX=33;
   function createTable(event,d,x,y,index){
-    const dims=d.type==="round"?[120,120]:d.type==="square"?[105,105]:d.type==="bistro"?[82,72]:[170,86],number=uniqueNumber(event,(d.prefix|| (d.type==="bistro"?"B":"T")).toUpperCase(),index);
+    // A theatre row (S01…) is as long as its chairs, 33 px (half a metre) each.
+    const dims=d.type==="round"?[120,120]:d.type==="square"?[105,105]:d.type==="bistro"?[82,72]:d.type==="row"?[ROW_SEAT_PX*Math.max(1,Number(d.chairs)||1),34]:[170,86],number=uniqueNumber(event,(d.prefix|| (d.type==="bistro"?"B":d.type==="row"?"S":"T")).toUpperCase(),index);
     return RULES().syncTableChairs({id:uid("table"),number,origin:"MANUAL",type:d.type,x,y,w:dims[0],h:dims[1],capacity:Number(d.chairs)||1,zone:d.type==="bistro"?"BISTRO":d.zone||"MAIN FLOOR",rotation:0,locked:false,z:10,hasPhysicalSeats:true,capacitySource:"HUMAN_CONFIRMED"});
   }
   function commitBulk(){
@@ -1719,6 +1721,8 @@
     repackTableAssignments(event,table,newCap);
     if(table.capacityEvidence&&table.capacitySource!=="HUMAN_CONFIRMED")table.capacityEvidence={...table.capacityEvidence,confirmedBy:"person",confirmedAt:nowISO(),previous:table.capacity};
     table.capacitySource="HUMAN_CONFIRMED";
+    // A theatre row grows and shrinks with its seats, so its chairs keep their spacing.
+    if(table.type==="row")table.w=Math.round(table.w*newCap/Math.max(1,table.capacity));
     RULES().syncTableChairs(table,newCap);
     touchEvent(event);
     render();
@@ -4479,10 +4483,12 @@
       applyLayout:(plan)=>{
         const e=activeEvent();if(!e||!canMutate(e,"add plan objects"))return null;
         const PX=66.7,snap=canvasSnapshot(e);recordUndo(e,snap);
-        plan.items.filter(it=>it.kind!=="chair").forEach((it,i)=>{
-          const type=it.kind==="rect"?"rectangle":it.kind==="square"?"square":it.kind==="bistro"?"bistro":"round";
-          const w=Math.round((it.d||it.w)*PX),h=Math.round((it.d||it.h)*PX);
-          const tb=createTable(e,{type,chairs:it.seats||(it.standing||1),prefix:type==="bistro"?"B":"T"},Math.round(it.x*PX-w/2),Math.round(it.y*PX-h/2),i+1);
+        // A theatre arrangement is drawn as its chair rows (S01…), never as loose chairs.
+        const items=plan.event==="theatre"?globalThis.MeritPlannerLayout.rows(plan):plan.items.filter(it=>it.kind!=="chair");
+        items.forEach((it,i)=>{
+          const type=it.kind==="row"?"row":it.kind==="rect"?"rectangle":it.kind==="square"?"square":it.kind==="bistro"?"bistro":"round";
+          const w=Math.round((it.d||it.w)*PX),h=type==="row"?34:Math.round((it.d||it.h)*PX);
+          const tb=createTable(e,{type,chairs:it.seats||(it.standing||1),prefix:type==="bistro"?"B":type==="row"?"S":"T"},Math.round(it.x*PX-w/2),Math.round(it.y*PX-h/2),i+1);
           tb.w=w;tb.h=h;RULES().syncTableChairs(tb);e.tables.push(tb);
         });
         return()=>{const now=activeEvent();if(now&&canMutate(now,"undo the arrangement"))restoreSnapshot(now,snap);};

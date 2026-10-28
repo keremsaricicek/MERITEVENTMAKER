@@ -39,6 +39,9 @@
     if (table.type === "round" || table.type === "bistro") {
       const rx = table.type === "bistro" ? 43 : 45, ry = table.type === "bistro" ? 43 : 46;
       for (let i = 0; i < count; i++) { const a = -Math.PI / 2 + i / count * Math.PI * 2; out.push({ x: 50 + Math.cos(a) * rx, y: 50 + Math.sin(a) * ry, rotation: a * 180 / Math.PI + 90 }); }
+    } else if (table.type === "row") {
+      // A theatre row: one line of chairs, no table, every chair facing the front.
+      for (let i = 0; i < count; i++) out.push({ x: (i + 0.5) / count * 100, y: 50, rotation: 180 });
     } else if (table.type === "square") {
       for (let i = 0; i < count; i++) {
         const u = i / count * 4;
@@ -89,7 +92,10 @@
     count = Math.max(1, Math.min(99, Number(count) || 1));
     table.capacity = count;
     if (table.hasPhysicalSeats === false) { table.chairs = []; return table; }
-    const old = Array.isArray(table.chairs) ? table.chairs : [], geometry = chairGeometry({ ...table, capacity: count }, count);
+    // A theatre row is never detected: its chairs are always the row's own even
+    // spacing, so a row that gains seats spreads them instead of piling the new
+    // ones onto the old positions.
+    const old = Array.isArray(table.chairs) && table.type !== "row" ? table.chairs : (table.chairs || []).map((c) => ({ id: c.id })), geometry = chairGeometry({ ...table, capacity: count }, count);
     // `facing` is which way a DETECTED chair was seen to face (degrees, world
     // frame) or null when the drawing did not show it; `facingSource` says how
     // it was read. A chair a person placed has neither: its rotation is the

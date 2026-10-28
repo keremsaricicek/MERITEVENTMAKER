@@ -94,9 +94,9 @@
     const rows = Math.floor((F.h + (d.rowPitch - d.chairDepth)) / d.rowPitch), out = [];
     const blockW = perBlock * cw, left = F.x + (F.w - (2 * blockW + d.mainAisle)) / 2;
     for (let r = 0; r < rows && out.length < need; r++) {
-      for (const bx of [left, left + blockW + d.mainAisle]) {
-        for (let i = 0; i < perBlock && out.length < need; i++) out.push({ kind: "chair", x: bx + cw * (i + 0.5), y: F.y + d.chairDepth / 2 + r * d.rowPitch, w: cw, h: d.chairDepth, seats: 1 });
-      }
+      [left, left + blockW + d.mainAisle].forEach((bx, block) => {
+        for (let i = 0; i < perBlock && out.length < need; i++) out.push({ kind: "chair", x: bx + cw * (i + 0.5), y: F.y + d.chairDepth / 2 + r * d.rowPitch, w: cw, h: d.chairDepth, seats: 1, row: r, block });
+      });
     }
     return out;
   }
@@ -165,6 +165,21 @@
     return A[0] < B[2] - eps && B[0] < A[2] - eps && A[1] < B[3] - eps && B[1] < A[3] - eps;
   }
 
-  const api = { plan, overlaps, roundSeats, DEFAULTS };
+  // A theatre arrangement's chairs as the rows the floor plan draws: one row per
+  // block per line, as long as its chairs. Empty for any other arrangement.
+  function rows(p) {
+    const by = new Map();
+    for (const c of (p && p.items) || []) if (c.kind === "chair" && Number.isInteger(c.row)) {
+      const k = c.row + ":" + c.block;
+      if (!by.has(k)) by.set(k, []);
+      by.get(k).push(c);
+    }
+    return [...by.values()].map((cs) => {
+      const x0 = Math.min(...cs.map((c) => c.x - c.w / 2)), x1 = Math.max(...cs.map((c) => c.x + c.w / 2));
+      return { kind: "row", x: (x0 + x1) / 2, y: cs[0].y, w: x1 - x0, h: cs[0].h, seats: cs.length, row: cs[0].row, block: cs[0].block };
+    });
+  }
+
+  const api = { plan, rows, overlaps, roundSeats, DEFAULTS };
   globalThis.MeritPlannerLayout = api;
 })();

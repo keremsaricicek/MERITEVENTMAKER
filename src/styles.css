@@ -273,6 +273,9 @@ table{border-collapse:collapse}
 .table-object.round .table-surface,.table-object.bistro .table-surface{left:23%;top:18%;width:54%;height:64%;border-radius:50%}
 .table-object.square .table-surface{left:22%;top:18%;width:56%;height:64%}
 .table-object.bistro .table-surface{background:#d8d2c6}
+/* A theatre row: chairs only. The number sits at the row's left end, no table surface. */
+.table-object.row .table-surface{left:auto;right:100%;top:50%;width:auto;height:auto;margin-right:4px;transform:translateY(-50%);flex-direction:row;gap:4px;border:0;background:transparent;box-shadow:none;white-space:nowrap}
+.table-object.row .table-occ{color:var(--muted)}
 .table-label{font-size:10px;font-weight:760;letter-spacing:.035em}
 .table-occ{margin-top:4px;color:#59646d;font-size:8px;font-weight:650}
 .table-empty{margin-top:3px;color:#7a6244;font-size:6px;font-weight:700;letter-spacing:.04em}
