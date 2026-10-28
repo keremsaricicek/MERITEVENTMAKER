@@ -1175,3 +1175,9 @@ test. **Bars:** B6c's (per question, and not below a bar B6c or B6b passes on th
 same test); for identify the empty-crop fabrication ≤ 0.05 on the fresh tucked test
 AND on the real test, with tucked chairs ≥ 0.80 (both looks) on the fresh tucked
 test. Run after B6c's chain; then the chat-model race (CPU free), then B6d's benches.
+
+**Amended 2026-10-28 ~11:30 Istanbul, before any B6d data exists (owner: the model
+is finished today).** scenes3 at `--scale 0.5`, replay 300 per source (shorter
+training); B6c's dev run dropped (dev only selects; it is no bar); B6d's benches
+run first, in this order — fresh tucked test, real, blind4, S1, language — then the
+chat-model race and B6c on the fresh tucked test. Bars unchanged.
