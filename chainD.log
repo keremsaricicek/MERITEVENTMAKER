@@ -19,3 +19,5 @@ wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER
 == 2026-10-28T17:31:50Z bench real-B6d
 == 2026-10-28T18:24:05Z bench v5f-B6d
 == 2026-10-28T20:52:44Z bench s1-B6d
+== 2026-10-28T21:27:00Z B6D-BENCHED
+== 2026-10-28T21:32:11Z chainD stopped by hand before tuck2-B6c (B6c on the fresh tucked test decides no verdict: B6d's tucked identify is 77/77); the race continues on its own; CHAIND-DONE
