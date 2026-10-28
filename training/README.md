@@ -1242,3 +1242,13 @@ listeden çıkar ve yerine Burak Şahin'i T05'e ekle" seated Can Öztürk at T05
 command verbs is never acted on by the rules; it goes to the second reader or is
 asked back ("Tek tek yazar mısın?"), nothing changed (tests on other sentences,
 `assistant-parse`, `assistant-panel`).
+
+## 2026-10-28 — Before / after on the same plan (ROADMAP B2; defined before it runs)
+
+`benchmarks/offline-intelligence/before-after.mjs`: each of the two real plans is
+analysed twice in the real app — without the local model, and with the wired one
+(its second look starting by itself). Counted, as the app holds them: grouping
+questions the plan still asks, held-back objects nobody decided, open second-look
+suggestions, and answers the model applied by itself (each undoable). A
+demonstration on plans whose left part the model trained on — never an unseen-venue
+score and never a model's accuracy. Run after the chat-model race (CPU free).
