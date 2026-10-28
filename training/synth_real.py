@@ -195,6 +195,19 @@ def make(task, stratum, rng, bank, size=448):
             w, h = cv.put(sp, C, C, sc, rng.choice([0, 90]))
             big = max(w, h)
             sub = "golden-banquette"
+        elif cls == "nothing-edge":  # B6d: empty paper at the centre, a real table or chair cut off by the crop's edge
+            sp, o = bank.pick(rng, "golden", rng.choice(["table", "table", "chair"]))
+            frame = rng.uniform(150, 260)
+            a = rng.uniform(0, 2 * math.pi)
+            d = frame * rng.uniform(0.5, 0.62) + max(sp.width, sp.height) * sc * 0.15  # mostly outside, a part inside the crop
+            cv.put(sp, C + math.cos(a) * d, C + math.sin(a) * d, sc)
+            img = cv.crop(C, C, frame, size)
+            sub = f"{name}-nothing-edge"
+            k = rng.randrange(4)
+            if k:
+                img = img.rotate(90 * k)
+            img = G5.degrade(img, level, rng)
+            return dict(task="NEG", sub=sub, truth="nothing", q=G5.Q("identify"), level=level, family=f"real-{name}", image=img)
         else:  # nothing: real empty paper, half the time with a real printed word
             name = rng.choice([n for n in bank.empty if bank.empty[n]])
             patch = rng.choice(bank.empty[name])
@@ -315,13 +328,22 @@ PLAN2 = {"ID": {"table": 120, "chair": 360, "banquette": 120, "nothing": 160},
          "SERVES": {"yes": 200, "no": 260}}
 
 
+# B6d (2026-10-28): B6c said "chair"/"banquette" on empty crops (tucked test, real
+# test). Many more empty crops — plain, with a word, and with a real object cut
+# off by the crop's edge — against fewer chairs; the other questions replayed.
+PLAN3 = {"ID": {"table": 80, "chair": 240, "banquette": 80, "nothing": 400, "nothing-edge": 240},
+         "CHAIRS": {n: 15 for n in range(1, 9)},
+         "MERGED": {"yes": 60, "no": 60},
+         "SERVES": {"yes": 60, "no": 80}}
+
+
 def cmd_scenes(a):
     global TUCK
     TUCK = a.tuck
     bank = Bank(a.sprites)
     os.makedirs(os.path.join(a.out, "img"), exist_ok=True)
     rows, k = [], 0
-    for task, strata in (PLAN2 if a.plan2 else PLAN).items():
+    for task, strata in (PLAN3 if a.plan3 else PLAN2 if a.plan2 else PLAN).items():
         for stratum, n in strata.items():
             for _ in range(max(1, round(n * a.scale))):
                 seed = a.seed_base * 1000003 + k
@@ -333,7 +355,7 @@ def cmd_scenes(a):
     with open(os.path.join(a.out, "items.jsonl"), "w") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
-    json.dump(dict(generator="training/synth_real.py scenes", splitX=SPLIT_X, n=len(rows), tuck=a.tuck, plan2=a.plan2, seedBase=a.seed_base, spritePart=a.sprites, sprites={"|".join(k_): len(v) for k_, v in bank.s.items()}),
+    json.dump(dict(generator="training/synth_real.py scenes", splitX=SPLIT_X, n=len(rows), tuck=a.tuck, plan2=a.plan2, plan3=a.plan3, seedBase=a.seed_base, spritePart=a.sprites, sprites={"|".join(k_): len(v) for k_, v in bank.s.items()}),
               open(os.path.join(a.out, "meta.json"), "w"), indent=1)
     print(len(rows), "scenes")
 
@@ -438,6 +460,7 @@ def main():
     s.add_argument("--size", type=int, default=448)
     s.add_argument("--tuck", type=float, default=0.0, help="share of chairs drawn half under their table")
     s.add_argument("--plan2", action="store_true", help="B6c's mix (PLAN2)")
+    s.add_argument("--plan3", action="store_true", help="B6d's mix (PLAN3): many more empty crops")
     s.add_argument("--seed-base", type=int, default=61)
     s.add_argument("--sprites", choices=["train", "test"], default="train", help="cut symbols from this part of the plans (test: a held-out scene test)")
     t = sub.add_parser("test")

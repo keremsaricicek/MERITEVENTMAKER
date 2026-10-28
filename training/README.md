@@ -1148,3 +1148,30 @@ the paraphrases, then the faster (median seconds). If none passes, none is wired
 the rules stay alone and the result is reported. Run order: after the B6c chain
 (no other job on the CPU); the rules-alone score on the paraphrases is measured
 once and the rules are NOT changed on it.
+
+## 2026-10-28 — runB6d: B6c taught to say "nothing" again (written before any B6d data exists)
+
+**Why.** B6c learned the tucked chair (tucked test: both looks agree on 0.96 of
+the tucked chairs, B6b 0.76) but says "chair"/"banquette" on empty paper more
+often: empty-crop fabrication on the tucked test 0.229 first look (B6b 0.125),
+on the held-out real test 2 / 32 = 0.062 (B6b 1 / 32) — above the 0.05 bar. (Read
+off the tucked and real tests, so neither is fresh for B6d.)
+
+**Data, from training sources only.** `synth_real.py scenes --plan3 --tuck 0.5
+--seed-base 68 --scale 0.6` (PLAN3: real TRAIN-part paper and symbols; 400 empty
+crops — plain or with a printed word — and 240 NEW "edge" empty crops: empty paper
+at the centre with a real table or chair cut off by the crop's edge, the identify
+question being about the centre; against 240 chairs, half tucked; fewer of the
+rest) + 200 of B6c's generated briefs (language kept). Replay: 400 each from B6c's
+training set and V5 training crops. `vlm_lora.py train --init runB6c`, one epoch,
+fp32, curriculum. Generators' defaults unchanged (PLAN/PLAN2 untouched).
+
+**Tests.** A FRESH tucked test from the plans' held-out TEST part (`synth_real.py
+scenes --sprites test --plan2 --tuck 0.7 --seed-base 69 --scale 0.3`, frozen
+before B6d data is made; B6c is scored on it too); blind4 (B6c's summary was read,
+not its rows; B6d's change was decided from the tucked and real tests); the
+held-out real test, scored a fifth time and reported as such; S1; the language
+test. **Bars:** B6c's (per question, and not below a bar B6c or B6b passes on the
+same test); for identify the empty-crop fabrication ≤ 0.05 on the fresh tucked test
+AND on the real test, with tucked chairs ≥ 0.80 (both looks) on the fresh tucked
+test. Run after B6c's chain; then the chat-model race (CPU free), then B6d's benches.
