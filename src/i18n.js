@@ -777,6 +777,7 @@
     "assistant.planPerson": { en: "person", tr: "kişi" },
     "assistant.planApplied": { en: "Applied.", tr: "Uygulandı." },
     "assistant.chatNote": { en: "Small talk from the language model — not from your records.", tr: "Dil modelinin sohbet cevabı — kayıtlarına dayanmaz." },
+    "assistant.oneAtATime": { en: "There is more than one job in that sentence. Could you write them one at a time? Nothing was changed.", tr: "Bu cümlede birden çok iş var. Tek tek yazar mısın? Hiçbir şey değiştirmedim." },
     "assistant.readByModel": { en: "Read by the language model on this computer.", tr: "Bu cümleyi bu bilgisayardaki dil modeli okudu." },
     "assistant.reading": { en: "The language model is reading…", tr: "Dil modeli okuyor…" },
     "assistant.apply": { en: "Apply", tr: "Uygula" },

@@ -1226,3 +1226,19 @@ chat is still weak (short greetings fine; longer answers repeat words and state
 wrong facts, e.g. "kokteylde kişi başı 1.5 m²"): the F8 small-talk reply is marked
 as not resting on the records, and no fact is taken from it. Raw `local-vlm-results/lang-B6c.json`.
 B6c is a candidate in the chat-model race like the others.
+
+**Race amended 2026-10-28 ~15:15 Istanbul, before any candidate ran (owner: "test
+them with deep sentences too").** A third set, `training/assistant/deep.jsonl`
+(15 long, indirect or two-job sentences, each with its GOLD reading; sha256 of
+the file begins `557727b08412de85`): a deep item is right when the reading gives
+the same answer text, or the same writer calls / question / refusal, as its gold
+reading through the same code. Reported per set; the 0-wrong-changes rule now
+covers all three sets. The race scores the rules as they stood when it was
+pre-registered (`training/assistant/parse-at-race.js`, a frozen copy), so the
+fix below does not change what it measures. Rules alone on the deep set: 8 / 15
+right and **3 WRONG CHANGES** — two-job sentences were half done ("Can Öztürk'ü
+listeden çıkar ve yerine Burak Şahin'i T05'e ekle" seated Can Öztürk at T05).
+**Fixed in the product's rules** (`src/assistant-parse.js`): a sentence with two
+command verbs is never acted on by the rules; it goes to the second reader or is
+asked back ("Tek tek yazar mısın?"), nothing changed (tests on other sentences,
+`assistant-parse`, `assistant-panel`).

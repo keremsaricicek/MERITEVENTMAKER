@@ -4465,6 +4465,9 @@
   // The F8 assistant (src/screen-assistant.js): its own panel beside the
   // screen; questions answered from the data, commands carried out through
   // these writers only, each command one undo.
+  // Is this page served by the relay (it names itself in a Server-Timing entry)?
+  // Only then is there a /vlm-relay to ask; a page opened any other way asks nothing.
+  const relayHere=()=>{try{const n=globalThis.performance.getEntriesByType("navigation")[0];return !!(n&&Array.isArray(n.serverTiming)&&n.serverTiming.some(e=>e.name==="merit-relay"));}catch{return false;}};
   const ASSIST=globalThis.MeritScreenAssistant.create({
     events:()=>state.events,currentId:()=>ui.screen==="workspace"?ui.activeEventId:null,today:()=>new Date().toLocaleDateString("en-CA"),
     canMutate:(e)=>canMutate(e,"change this event"),t:(...a)=>t(...a),
@@ -4472,8 +4475,8 @@
     // model on this machine through the relay (server/assistant-reader.mjs), and
     // its small-talk reply for what is neither question nor command; null when
     // no relay serves this page or no reader is configured.
-    chatText:async(text)=>{try{const r=await fetch("/vlm-relay/chat",{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify({text}),cache:"no-store",credentials:"same-origin"});if(!r.ok)return null;const j=await r.json();return j&&j.ok&&typeof j.reply==="string"?j.reply:null;}catch{return null;}},
-    readText:async(text)=>{try{const r=await fetch("/vlm-relay/read",{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify({text}),cache:"no-store",credentials:"same-origin"});if(!r.ok)return null;const j=await r.json();return j&&j.ok?j.reading:null;}catch{return null;}},
+    chatText:async(text)=>{if(!relayHere())return null;try{const r=await fetch("/vlm-relay/chat",{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify({text}),cache:"no-store",credentials:"same-origin"});if(!r.ok)return null;const j=await r.json();return j&&j.ok&&typeof j.reply==="string"?j.reply:null;}catch{return null;}},
+    readText:async(text)=>{if(!relayHere())return null;try{const r=await fetch("/vlm-relay/read",{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify({text}),cache:"no-store",credentials:"same-origin"});if(!r.ok)return null;const j=await r.json();return j&&j.ok?j.reading:null;}catch{return null;}},
     onChange:()=>{const e=activeEvent();if(e){RULES().syncEventChairs(e);touchEvent(e);}render();},
     writers:{
       assign:(id,tableId,seats)=>assignGuestToTable(id,tableId,seats&&seats.length?seats[0]:null),

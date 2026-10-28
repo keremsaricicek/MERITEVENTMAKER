@@ -210,6 +210,7 @@
     async function answer(text) {
       const evs = events(), now = today();
       let r = P().parse(text, evs, now), byModel = false;
+      const compound = !!r.compound;
       if (r.kind === "unknown" && readText && R()) {
         status.textContent = t("assistant.reading");
         const m = await readText(text);
@@ -217,6 +218,8 @@
       }
       // Neither a question about our events nor a command: small talk, from the
       // same model, marked as not resting on the data.
+      // two jobs in one sentence nobody could read: asked back, never chatted about
+      if (r.kind === "unknown" && compound) return { text: t("assistant.oneAtATime") };
       if (r.kind === "unknown" && chatText) {
         const said = await chatText(text);
         if (said) return { text: said, chat: true };

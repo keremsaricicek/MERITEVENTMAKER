@@ -75,6 +75,11 @@ export default async function run({ page, checks, baseUrl }) {
   const after = await page.evaluate(() => JSON.stringify(state.events.find((e) => e.id === "past1").guests));
   checks.ok(before === after && /geçmiş/.test(r.last), "a command on a past event is refused and changes nothing", r.last);
 
+  // two jobs in one sentence, and no second reader on this page: asked back, nothing changed
+  const beforeTwo = await page.evaluate(() => JSON.stringify(activeEvent().guests));
+  r = await say("Ahmet Yılmaz'ı sil ve yerine Selin Ak'ı T05'e ekle");
+  checks.ok(/tek tek/i.test(r.last) && beforeTwo === await page.evaluate(() => JSON.stringify(activeEvent().guests)), "a sentence with two jobs is asked back and changes nothing", r.last);
+
   // something it cannot place comes back as a question, not a guess
   r = await say("Selin Ak'ı T05'e oturt");
   checks.ok(/yok/.test(r.last), "an unknown guest is asked about, never invented", r.last);

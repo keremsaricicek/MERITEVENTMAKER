@@ -21,8 +21,10 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-for (const f of ["src/assistant-tools.js", "src/assistant-actions.js", "src/assistant-parse.js", "src/assistant-reading.js"]) await import(pathToFileURL(path.join(repo, f)).href);
-const P = globalThis.MeritAssistantParse, Tl = globalThis.MeritAssistantTools;
+for (const f of ["src/assistant-tools.js", "src/assistant-actions.js", "src/assistant-parse.js", "src/assistant-reading.js", "training/assistant/parse-at-race.js"]) await import(pathToFileURL(path.join(repo, f)).href);
+// the rules as they were when the race was pre-registered (a frozen copy): later
+// product fixes to the rules do not change what is measured here; answer() is the product's
+const P = { ...globalThis.MeritAssistantParse, parse: globalThis.MeritAssistantParseAtRace.parse }, Tl = globalThis.MeritAssistantTools;
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : d; };
 const flag = (k) => process.argv.includes("--" + k);
 const fx = JSON.parse(fs.readFileSync(path.join(repo, "training/assistant/fixture.json"), "utf8"));
@@ -41,6 +43,7 @@ const CMDS = Object.fromEntries(lines("commands.jsonl").map((c) => [c.id, c]));
 const items = [
   ...lines("questions.jsonl").map((q) => ({ set: "original", id: "Q" + q.id, kind: "question", text: q.q, must: MUST[q.id] })),
   ...lines("commands.jsonl").map((c) => ({ set: "original", id: "C" + c.id, kind: "command", text: c.text, cmd: c })),
+  ...lines("deep.jsonl").map((d) => ({ set: "deep", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })),
   ...lines("variants.jsonl").map((v) => {
     const n = Number(v.sameAs.slice(1));
     return v.kind === "question" ? { set: "variant", id: v.id, kind: "question", text: v.text, must: MUST[n] } : { set: "variant", id: v.id, kind: "command", text: v.text, cmd: CMDS[n] };
@@ -63,7 +66,32 @@ async function ask(port, text) {
   return { got, raw: j.choices && j.choices[0].message.content, seconds: (Date.now() - t0) / 1000 };
 }
 const toParse = (m) => R.toParse(m, fx.events, fx.today);
+// A deep item's expected outcome is what its gold reading produces through the
+// same code: the same answer text, or the same writer calls / ask / refusal.
+function outcome(item, parsed) {
+  if (item.kind === "question") {
+    let a = { text: "" };
+    try { a = parsed.kind === "question" ? P.answer(parsed, fx.events, fx.today, fx.current) : { text: "" }; } catch { a = { text: "" }; }
+    return { text: a.text || "" };
+  }
+  const events = JSON.parse(JSON.stringify(fx.events)), calls = [];
+  const gala = () => events.find((e) => e.id === fx.current);
+  const rec = (name) => (...a) => { calls.push([name, ...a]); if (name === "addGuest") { gala().guests.push({ id: "new1", name: a[0], pax: a[1], assignment: null }); return "new1"; } };
+  const A = globalThis.MeritAssistantActions.create({ events: () => events, current: () => fx.current, today: () => fx.today,
+    canMutate: (e) => e.date >= fx.today && e.status !== "Completed",
+    writers: { assign: rec("assign"), unassign: rec("unassign"), deleteGuest: rec("deleteGuest"), setPax: rec("setPax"), setVip: rec("setVip"), addGuest: rec("addGuest") },
+    snapshot: () => null, registerUndo: () => {} });
+  let out;
+  try { out = parsed.kind === "command" ? A.run(parsed.plan) : { ask: "not understood" }; } catch (e) { out = { ask: String(e.message || e) }; }
+  return { calls, kind: calls.length ? "calls" : out.refuse ? "refuse" : out.ask ? "ask" : "nothing" };
+}
 function score(item, parsed) {
+  if (item.set === "deep") {
+    const want = outcome(item, toParse(item.gold)), got = outcome(item, parsed);
+    if (item.kind === "question") return { right: !!want.text && got.text === want.text, wrongChange: false, answer: got.text };
+    const right = JSON.stringify(got.calls) === JSON.stringify(want.calls) && got.kind === want.kind;
+    return { right, wrongChange: !right && got.calls.length > 0, calls: got.calls };
+  }
   if (item.kind === "question") {
     let a = { text: "" };
     try { a = parsed.kind === "question" ? P.answer(parsed, fx.events, fx.today, fx.current) : { text: "" }; } catch (e) { a = { text: "" }; }
@@ -109,6 +137,7 @@ const secs = rows.filter((r) => r.model).map((r) => r.model.seconds).sort((a, b)
 const summary = { label, at: new Date().toISOString(),
   original: { rules: sum("original", "rules"), model: sum("original", "model"), both: sum("original", "both") },
   variant: { rules: sum("variant", "rules"), model: sum("variant", "model"), both: sum("variant", "both") },
+  deep: { rules: sum("deep", "rules"), model: sum("deep", "model"), both: sum("deep", "both") },
   medianSeconds: secs.length ? secs[Math.floor(secs.length / 2)] : null };
 fs.writeFileSync(arg("out"), JSON.stringify({ summary, rows }, null, 1));
 console.log(JSON.stringify(summary));

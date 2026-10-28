@@ -30,6 +30,15 @@ export default async function run({ checks, repoRoot }) {
     const a = r.kind === "question" ? P.answer(r, fx.events, fx.today, fx.current) : { text: "" };
     checks.ok(must[q.id].every((w) => a.text.includes(w)), `Q${q.id} "${q.q}" → the answer carries the data's facts`, { parsed: r, answer: a.text });
   }
+  // A sentence with two jobs in it is never half done by the rules: the rules
+  // read ONE command, so a second verb sends the whole sentence on (to the
+  // second reader, or back as a question) and nothing changes. Found 2026-10-28:
+  // "X'i çıkar ve yerine Y'yi T05'e ekle" seated X at T05.
+  for (const t of ["Mehmet Kaya'yı sil ve Can Öztürk'ü T04'e oturt", "Zeynep Arslan'ı VIP yap, sonra T02'ye taşı",
+    "Ayşe Demir'i masasından kaldır ve yerine Elif Şen'i koy", "T01'deki herkesi T06'ya taşı, Can Öztürk'ü de sil"]) {
+    const r = P.parse(t, fx.events, fx.today);
+    checks.equal([r.kind, r.compound], ["unknown", true], `"${t}" — two jobs: the rules change nothing and pass it on`, r);
+  }
   for (const c of lines("commands.jsonl")) {
     const events = JSON.parse(JSON.stringify(fx.events)), calls = [];
     const gala = () => events.find((e) => e.id === fx.current);

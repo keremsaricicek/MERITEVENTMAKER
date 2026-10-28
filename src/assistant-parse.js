@@ -97,6 +97,11 @@
     // a description of an event to lay out — no guest of ours named, no command verb
     if (!p && isBrief(numberWords(f)) && !has(/\b(sil|kaldir|cikar|oturt|tasi|nerede|kac konser)\b/)) return { kind: "plan", brief: brief(raw) };
     // ---- commands -------------------------------------------------------------------------
+    // These rules read ONE command. A sentence with two jobs in it ("X'i çıkar ve
+    // yerine Y'yi ekle") is never half done: it goes on whole — to the second
+    // reader, or back to the person — and nothing changes here.
+    const verbs = (f.match(/\b(sil|kaldir|cikar|ekle|oturt|koy|al|tasi|yap|olsun|yerlestir|kaydir|gecir)\b/g) || []).length;
+    if (verbs >= 2) return { kind: "unknown", compound: true };
     if (has(/\b(sil|kaldir|cikar|ekle|oturt|koy|al|tasi|yap|olsun)\b/)) {
       if (has(/\bherkes/) && tbs.length >= 2 && has(/\btasi/)) return { kind: "command", plan: [{ op: "moveTable", fromTable: tbs[0], table: tbs[1] }] };
       if (has(/\bekle\b/)) {
