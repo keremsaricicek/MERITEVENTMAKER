@@ -38,8 +38,11 @@ CHAT = ["Merhaba, nasılsın?", "Bugün çok yoğunum, 3 etkinliğim var. Bana k
         "Sandalyeler masanın altına itilmiş görünüyorsa planda nasıl anlarım?", "Teşekkürler, iyi akşamlar!"]
 
 
+CACHE = False  # --prompt-cache: keep the fixed instruction in the server's prompt cache (the chat-model race, 2026-10-28)
+
+
 def post(port, messages, schema=None, max_tokens=300):
-    body = {"messages": messages, "temperature": 0, "max_tokens": max_tokens, "cache_prompt": False,
+    body = {"messages": messages, "temperature": 0, "max_tokens": max_tokens, "cache_prompt": CACHE,
             "chat_template_kwargs": {"enable_thinking": False}}
     if schema:
         body["response_format"] = {"type": "json_schema", "json_schema": {"name": "brief", "schema": schema}}
@@ -56,8 +59,11 @@ def main():
     p.add_argument("--server", required=True); p.add_argument("--model", required=True); p.add_argument("--lora")
     p.add_argument("--briefs", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "planner_briefs.jsonl"))
     p.add_argument("--out", required=True); p.add_argument("--port", type=int, default=8099); p.add_argument("--threads", type=int, default=4)
+    p.add_argument("--prompt-cache", action="store_true")
     a = p.parse_args()
-    cmd = [a.server, "-m", a.model, "-c", "4096", "-t", str(a.threads), "-np", "1", "--cache-ram", "0",
+    global CACHE
+    CACHE = a.prompt_cache
+    cmd = [a.server, "-m", a.model, "-c", "4096", "-t", str(a.threads), "-np", "1"] + ([] if a.prompt_cache else ["--cache-ram", "0"]) + [
            "--host", "127.0.0.1", "--port", str(a.port)] + (["--lora", a.lora] if a.lora else [])
     log = open(a.out + ".server.log", "w")
     proc = subprocess.Popen(cmd, stdout=log, stderr=log)

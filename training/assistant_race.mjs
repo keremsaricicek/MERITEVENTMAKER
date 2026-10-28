@@ -55,7 +55,8 @@ const items = [
 const R = globalThis.MeritAssistantReading;
 
 async function ask(port, text) {
-  const body = { messages: R.messages(text), temperature: 0, max_tokens: 400, cache_prompt: false, chat_template_kwargs: { enable_thinking: false },
+  // the fixed instruction and examples are kept in the server's prompt cache, as the relay asks (2026-10-28)
+  const body = { messages: R.messages(text), temperature: 0, max_tokens: 400, cache_prompt: true, chat_template_kwargs: { enable_thinking: false },
     response_format: { type: "json_schema", json_schema: { name: "reading", schema: R.SCHEMA } } };
   const t0 = Date.now();
   const r = await fetch(`http://127.0.0.1:${port}/v1/chat/completions`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });

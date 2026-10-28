@@ -1252,3 +1252,14 @@ questions the plan still asks, held-back objects nobody decided, open second-loo
 suggestions, and answers the model applied by itself (each undoable). A
 demonstration on plans whose left part the model trained on — never an unseen-venue
 score and never a model's accuracy. Run after the chat-model race (CPU free).
+
+**Race amended 2026-10-28 ~18:30 Istanbul (after 19 sentences of the first
+candidate, none scored).** Qwen3.5-4B took ~95 s per sentence: the fixed
+instruction and worked examples (~1,500 tokens) were re-read for every sentence
+(`cache_prompt: false`). The product would do the same, so this was fixed in the
+product first: the relay's reader keeps the fixed part in llama-server's prompt
+cache (`cache_prompt: true`, no `--cache-ram 0` on the chat server), and the
+race now runs that way (F8 sets and briefs, `--prompt-cache`); the race restarts
+from its first sentence. The answers are not meant to change (temperature 0, same
+text); the speeds reported are with the cache. Order: B6d's benches first (its
+verdict), then the race.

@@ -97,7 +97,8 @@ export function makeReader(cfg, { fetchImpl = loopbackFetch, timeoutMs = 120000 
     const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), timeoutMs);
     if (signal) signal.addEventListener("abort", () => ctrl.abort(), { once: true });
     try {
-      const body = { messages: READING.messages(text), temperature: 0, max_tokens: 400, cache_prompt: false, chat_template_kwargs: { enable_thinking: false },
+      // the instruction and worked examples are the same every time: the server keeps them in its prompt cache
+      const body = { messages: READING.messages(text), temperature: 0, max_tokens: 400, cache_prompt: true, chat_template_kwargs: { enable_thinking: false },
         response_format: { type: "json_schema", json_schema: { name: "reading", schema: READING.SCHEMA } } };
       const r = await fetchImpl(cfg.url + "/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal: ctrl.signal });
       if (!r.ok) return { ok: false, code: "CHAT_ERROR" };

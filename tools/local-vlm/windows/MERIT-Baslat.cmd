@@ -46,7 +46,7 @@ if not exist "%CHAT%\manifest.json" goto nochat
 echo   Asistanin dil modeli yukleniyor...
 set "CHATNGL=%NGL%"
 :startchat
-start "" /b "%SERVER%" -m "%CHAT%\@CHAT_FILE@" --jinja -c 4096 -t 4 -np 1 --cache-ram 0 %CHATNGL% --host 127.0.0.1 --port %CHAT_PORT% --log-disable >nul 2>&1
+start "" /b "%SERVER%" -m "%CHAT%\@CHAT_FILE@" --jinja -c 4096 -t 4 -np 1 %CHATNGL% --host 127.0.0.1 --port %CHAT_PORT% --log-disable >nul 2>&1
 set /a tries=0
 :waitchat
 curl.exe -s -o nul -f http://127.0.0.1:%CHAT_PORT%/health && goto chatready
