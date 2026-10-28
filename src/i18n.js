@@ -677,6 +677,7 @@
     "vlm.kind.missing": { en: "Missed object: {type}", tr: "Kaçırılan nesne: {type}" },
     "vlm.kind.wrongType": { en: "Should be: {type}", tr: "Olması gereken: {type}" },
     "vlm.kind.notAnObject": { en: "Not an object", tr: "Nesne değil" },
+    "vlm.kind.extraChair": { en: "Not a chair — remove it from this table", tr: "Sandalye değil — bu masadan çıkar" },
     "vlm.kind.seatCount": { en: "Seats shown: {n}", tr: "Görünen oturma yeri: {n}" },
     "vlm.kind.printedNumber": { en: "Printed number: {n}", tr: "Basılı numara: {n}" },
     "vlm.number.AGREES": { en: "The plan's own reading also says {read}.", tr: "Planın kendi okuması da {read} diyor." },

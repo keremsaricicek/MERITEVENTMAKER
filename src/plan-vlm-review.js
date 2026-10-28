@@ -331,6 +331,11 @@
     const c = byId.get(finding.candidateId);
     if (!c) return { ok: false, reason: "GONE" };
     if (c.status !== "unreviewed") return { ok: false, reason: "ALREADY_DECIDED" };
+    // a detected chair the local model's two looks call something else: that one chair comes off its table
+    if (finding.kind === "extraChair") {
+      if (!(c.chairDetections || []).some(ch => ch.id === finding.chairId)) return { ok: false, reason: "GONE" };
+      return { ok: true, action: "decide", decision: { kind: "removeChair", candidateId: c.id, chairId: finding.chairId, via: "vlm" } };
+    }
     if (finding.kind === "seatCount") {
       if (!Number.isInteger(finding.value) || finding.value < 0 || finding.value > 99) return { ok: false, reason: "INCOMPLETE" };
       // A count a person typed outranks a suggestion; a table that draws its

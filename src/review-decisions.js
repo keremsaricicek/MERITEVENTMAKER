@@ -20,7 +20,7 @@
   "use strict";
 
   const KINDS = Object.freeze(["confirm", "reject", "notImportant", "reclassify", "confirmFamily", "include", "exclude", "forgetLesson",
-    "addObject", "addChair", "setSeats"]);
+    "addObject", "addChair", "removeChair", "setSeats"]);
 
   const classOf = (c) => c ? { kind: c.kind, type: c.type, confidence: c.confidence,
     source: (c.evidence && c.evidence.geometry) ?? null, candidateId: c.id } : null;
@@ -112,6 +112,14 @@
         const ch = decision.chair;
         if (!target || target.kind !== "table" || !ch || !ch.id) break;
         one(target, { chairDetections: [...(target.chairDetections || []), ch] });
+        break;
+      }
+      // A detected chair a person says is not one (a local model's suggestion
+      // accepted): the table's own chair list loses that chair; undo restores it.
+      case "removeChair": {
+        const list = (target && target.chairDetections) || [];
+        if (!target || target.kind !== "table" || !list.some(ch => ch.id === decision.chairId)) break;
+        one(target, { chairDetections: list.filter(ch => ch.id !== decision.chairId) });
         break;
       }
       // A seat count a person settled (typed, or a suggestion accepted): the

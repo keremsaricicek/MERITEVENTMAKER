@@ -119,7 +119,11 @@
         .forEach(c => push({ question: "identify", candidateIds: [c.id], focusId: c.id, objs: [c], reason: c.lowEvidence ? "heldBack" : SEATING.has(c.type) ? "seatingType" : "lowConfidence",
           detector: WORD_OF_TYPE[c.type] }));
     }
-    if (checks.has("chairs")) {
+    // A table whose chair count is in doubt: the chairs question for a model
+    // measured on it; otherwise, for a model measured on identify, identify of
+    // EACH of its chairs (training/README.md "Seat counts from chairs one by
+    // one"): a chair both looks call something else becomes one suggestion.
+    if (checks.has("chairs") || checks.has("identify")) {
       const tables = all.filter(c => c.kind === "table" && isOffered(c));
       const rule = pi.capacityAudit && pi.capacityAudit.rule;
       const perUnit = rule && Number.isInteger(rule.perUnit) ? rule.perUnit : null;
@@ -135,7 +139,10 @@
         const n = (t.chairDetections || []).length;
         if (!undecided(t) || !n || t.seatsConfidence === "verified" || !alone(t, tables, W, H)) continue;
         const reason = perUnit != null && n !== perUnit ? "printedRule" : usual[t.type] != null && n !== usual[t.type] ? "unlikeLookAlikes" : null;
-        if (reason) push({ question: "chairs", candidateIds: [t.id], focusId: t.id, objs: [t], reason, detector: n, printed: reason === "printedRule" ? perUnit : null });
+        if (!reason) continue;
+        if (checks.has("chairs")) push({ question: "chairs", candidateIds: [t.id], focusId: t.id, objs: [t], reason, detector: n, printed: reason === "printedRule" ? perUnit : null });
+        else for (const ch of t.chairDetections) push({ question: "identify", candidateIds: [t.id], focusId: t.id, chairId: ch.id, reason: "chairOfTable", detector: "chair",
+          objs: [{ x: ch.x - ch.w / 2, y: ch.y - ch.h / 2, w: ch.w, h: ch.h, type: "chair" }] });
       }
     }
     if (checks.has("merged")) {
@@ -181,6 +188,15 @@
     const byId = new Map(((analysis && analysis.candidates) || []).map(c => [c.id, c]));
     const objs = q.candidateIds.map(id => byId.get(id)).filter(Boolean);
     if (objs.length !== q.candidateIds.length) return null;
+    // a chair of a table both looks call something else: remove that one chair
+    if (q.reason === "chairOfTable") {
+      const ch = (objs[0].chairDetections || []).find(c => c.id === q.chairId);
+      if (!ch) return null;
+      return { id: `${idPrefix || "lc"}-check-${q.id}`, step: "check", regionIndex: null, kind: "extraChair", candidateId: q.focusId, chairId: ch.id, type: null,
+        box: { x: Math.round((ch.x - ch.w / 2) * 100) / 100, y: Math.round((ch.y - ch.h / 2) * 100) / 100, w: Math.round(ch.w * 100) / 100, h: Math.round(ch.h * 100) / 100 },
+        value: null, confidence: "medium", evidence: "", state: "open",
+        check: { question: q.question, piece: null, answer: j.value, detector: q.detector, reason: q.reason, printed: null } };
+    }
     const box = q.question === "identify" ? null : unionPct(objs);
     let kind = "note", type = null;
     if (q.question === "identify") {
