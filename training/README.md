@@ -1186,3 +1186,24 @@ chat-model race and B6c on the fresh tucked test. Bars unchanged.
 06:00 tomorrow"), still before any B6d data exists:** scenes3 back to `--scale 0.6`,
 replay 400 per source, B6c's dev run kept. Order: B6d trains → the chat-model race →
 B6d's benches (fresh tucked, B6c on it, real, blind4, S1, language). Bars unchanged.
+
+## 2026-10-28 — runB6c verdict (bars as pre-registered; per-question rule)
+
+Raw: `local-vlm-results/v5-{tuck,real,blind4,s1}-B6c.json`, B6b on the same tucked
+and blind4 items `v5-{tuck,blind4}-B6b.json`. Two looks, prompt cache off.
+
+| question | blind4 (fresh V5) | S1 | real (4th time) | verdict |
+|---|---|---|---|---|
+| identify | pass (other 0.93, furniture 0.98, empty 0 / 40, every class ≥ 0.80) — B6b also passes here | – | **fail**: 0.957, empty crops called something on look 1 **2 / 32 = 0.062** (> 0.05; B6b 1 / 32) | not served |
+| tucked chairs (new bar) | – | – | – | tucked test: both looks right on **0.96** of 76 tucked chairs (B6b 0.76) — passes ≥ 0.80; empty-crop fabrication on that test 0.229 look 1 / 0.083 both (> 0.05; B6b 0.125 / 0.062) — **fails** |
+| chairs | fail (0.72; B6b 0.74) | pass (odd 0.83, all 0.86, over 0.05) | 0.10 (as every run) | not served |
+| merged | pass (79 / 80, yes on 1 of 40 separate) | pass (40 / 40, near-miss 0) | pass (42 / 44, yes on 2 / 38 separate — both on one look only; **agreed-and-wrong 0 / 44**) | **served**; B6b passes the same bars, B6c does not fall below any |
+| serves | fail (0.88 but yes on separate 0.28) | pass (0.975, 0 / 20) | – | not served |
+
+**Applying merged by itself** (bar of 2026-10-25): real agreed-and-wrong 0 / 44,
+blind4 0 / 80 — passes; better than B6b (1 / 44, one real long table split).
+**One model** (owner): B6c takes merged and its autoApply from B6b; B6b's manifest
+lists no check. Conversion check (llama.cpp `--lora` vs transformers + PEFT, the
+31 crops used for B and B6b) before wiring: see below. The language result
+(`lang/B6c`) is reported with the chat-model race. runB6d (pre-registered above)
+targets the empty-crop fabrication that keeps identify off.

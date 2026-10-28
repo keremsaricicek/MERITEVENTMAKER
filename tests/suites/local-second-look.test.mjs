@@ -202,11 +202,12 @@ export default async function run({ page, checks, repoRoot }) {
     if (ev.length < 2 || !ev.every((p) => fs.existsSync(p))) continue;
     const runs = ev.map((p) => JSON.parse(fs.readFileSync(p, "utf8")));
     // V6 evidence (training/README.md "V6", runB6b verdict and the per-question
-    // rule): a V5-style test, S1 and the held-out real test, same adapter; a
-    // question is listed when it passes all three where each has its items.
+    // rule): a V5-style test (test3, or blind4 = "test4" for runB6c), S1 and the
+    // held-out real test, same adapter; a question is listed when it passes all
+    // three where each has its items.
     const realtest = runs.find((x) => x.summary.settings.v5 === "realtest");
     if (realtest) {
-      const s1r = runs.find((x) => x.summary.settings.s1), v5t = runs.find((x) => ["test", "test3"].includes(x.summary.settings.v5));
+      const s1r = runs.find((x) => x.summary.settings.s1), v5t = runs.find((x) => ["test", "test3", "test4"].includes(x.summary.settings.v5));
       checks.ok(s1r && v5t && runs.every((x) => x.summary.settings.looks === 2 && x.summary.settings.cacheRam === 0
         && x.summary.settings.lora === realtest.summary.settings.lora && x.summary.peakRssMb <= 3000),
         `${f}: the V6 evidence holds a V5 test, S1 and the held-out real test — two looks, prompt cache off, one adapter, peak server RSS ≤ 3,000 MB`);
