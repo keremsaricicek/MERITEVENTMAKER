@@ -1,0 +1,23 @@
+{
+ "base": "/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/models/hf/Qwen3.5-0.8B",
+ "data": "/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v6/c6,/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v6/scenes,/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v5/train",
+ "items": 7361,
+ "epochs": 1.0,
+ "rank": 16,
+ "alpha": 32,
+ "lr": 0.0002,
+ "accum": 8,
+ "seed": 3,
+ "trainable": 5308416,
+ "targets": "language_model MLP gate/up/down, 24 blocks",
+ "curriculum": true,
+ "dtype": "fp32",
+ "init": "/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v5/runB6b",
+ "replayMax": 1200,
+ "gradCkpt": false,
+ "replayTasks": "ID,NEG,COUNT,CHAIRS,MERGED,SERVES",
+ "resumedAt": 6400,
+ "peakTrainRssMb": 8121,
+ "seconds": 3946,
+ "finished": "2026-10-28T00:20:46Z"
+}
