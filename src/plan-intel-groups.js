@@ -102,7 +102,8 @@
         id: uid("furngroup"),
         memberIds: members.map(m => m.id),
         reason: matchingDecision
-          ? (matchingDecision.decision === "merged" ? "Confirmed by a human answer as one seating group." : "Confirmed by a human answer as separate tables.")
+          ? (matchingDecision.by === "model" ? (matchingDecision.decision === "merged" ? "Answered by the local model (applied by itself) as one seating group." : "Answered by the local model (applied by itself) as separate tables.")
+            : matchingDecision.decision === "merged" ? "Confirmed by a human answer as one seating group." : "Confirmed by a human answer as separate tables.")
           : members.length > 1
             ? `${members.length} physical tables touch and align — treated as one logical dining unit.`
             : "Single physical table.",

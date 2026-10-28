@@ -48,7 +48,7 @@ you are about to touch before changing its code.** Current work state:
 - **Arrival wave** (`src/arrival-wave.js`): expected = stated only, null when none; nothing predicted; `setArrival()` is the one writer.
 - **Service load** (`src/service-load.js`): bands per table, no routes, no distances, PLANNED vs LIVE.
 - **Model reading** (`server/vlm-relay.mjs`): API key only in the relay's environment; a person starts every paid reading; findings are suggestions applied one at a time by Accept; scripted suites never count as model quality.
-- **Local second look** (`/vlm-relay/ask`, `src/plan-local-check.js`): only manifest-measured questions; two looks; nothing applied; relay verifies the running llama-server (`--cache-ram 0`); answers cached per crop in memory.
+- **Local second look** (`/vlm-relay/ask`, `src/plan-local-check.js`): only manifest-measured questions; two looks; nothing applied except a manifest `autoApply` question that passed the stricter bar (today merged → "separate", marked as the model's, never a training example, one-click undo; owner 2026-10-25); relay verifies the running llama-server (`--cache-ram 0`); answers cached per crop in memory.
 - **Analysis speed / Stop:** a speed change leaves output identical (measured); Stop ends the engines' work.
 - **Plan reading** (`src/plan-reading.js`): discovers no object; every sentence carries its evidence and how it is known.
 

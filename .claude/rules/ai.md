@@ -48,9 +48,16 @@
   printed table number is never taken from a model.
 - The LOCAL second look (`/vlm-relay/ask`) asks only questions a pinned local
   model was measured on (manifest `checks`), only about places a person has
-  not decided, two looks per place, and applies nothing. It starts by itself
-  after an analysis (owner's decision, 2026-10-18) with an off switch; never
-  widen that to a paid provider or to applying a finding.
+  not decided, two looks per place, and applies nothing — except a question
+  the manifest lists in `autoApply`, which must pass the stricter bar
+  (`training/README.md` "Changing the plan by itself": agreed-and-wrong ≤ 3 %
+  on the held-out real test, n ≥ 30, and on the V5 test; checked by
+  `local-second-look`). Today only a grouping answer (merged → "separate") can
+  be applied by itself: the record a person's answer writes, marked
+  `by: "model"` with its run, never a training example, undone from its
+  finding (owner's request, 2026-10-25). It starts by itself after an analysis
+  (owner's decision, 2026-10-18) with an off switch; never widen that to a
+  paid provider, and never apply anything else without that evidence.
 - A result against `tests/lib/fake-anthropic.mjs` is SCRIPTED. Never report
   it, or anything measured with it, as a model's accuracy.
 - Full detail: `.claude/skills/merit-plan-intelligence/SKILL.md`.

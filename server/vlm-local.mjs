@@ -96,6 +96,13 @@ export function readManifest(file, { verify = true } = {}) {
   const checks = m.checks || [];
   const checksEvidence = m.checksEvidence == null ? null : str(m.checksEvidence, 300);
   if (checks.length && !checksEvidence) return fail("LOCAL_MANIFEST_INVALID", "checks need checksEvidence: the measurement they passed");
+  // What the model may CHANGE by itself (training/README.md "Changing the plan by
+  // itself"): a subset of its measured checks that passed the stricter bar, and
+  // only a question the product knows how to apply — a grouping answer (merged).
+  const AUTO = ["merged"];
+  if (m.autoApply != null && (!Array.isArray(m.autoApply) || !m.autoApply.every(q => AUTO.includes(q) && checks.includes(q)) || new Set(m.autoApply).size !== m.autoApply.length))
+    return fail("LOCAL_MANIFEST_INVALID", `autoApply must list measured checks the product can apply by itself: ${AUTO.join(", ")}`);
+  const autoApply = m.autoApply || [];
   // How the measured server ran — required with checks, so the relay can ask
   // the running process whether it is that server.
   let serve = null;
@@ -122,7 +129,7 @@ export function readManifest(file, { verify = true } = {}) {
       if (sha256File(f.abs) !== f.sha256) return fail("LOCAL_MODEL_INTEGRITY", `${f.path} does not match its pinned sha256`);
     }
   }
-  return { ok: true, manifest: { id, name, version, licence, source, runtime, servedModel, checks, checksEvidence, serve, files: files.map(({ path: p, bytes, sha256 }) => ({ path: p, bytes, sha256 })) } };
+  return { ok: true, manifest: { id, name, version, licence, source, runtime, servedModel, checks, autoApply, checksEvidence, serve, files: files.map(({ path: p, bytes, sha256 }) => ({ path: p, bytes, sha256 })) } };
 }
 
 // The provider-specific half of the relay's configuration (vlm-core merges it

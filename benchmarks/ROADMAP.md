@@ -19,7 +19,7 @@ the third real plan (owner) is the blind score.
 | A1 | runB6c: train (B6b + tucked chairs + bench/serves + 1,500 Turkish briefs), then tucked test, real test, fresh blind4 test, S1, dev, language test | `training/README.md` "runB6c"; per-question rule vs B6b | training (2026-10-27 13:25 UTC) |
 | A2 | B6c verdict → QA audit → conversion check (agree) → wire every question that passes (manifest `checks`) | suite `local-second-look` V6 branch | after A1 |
 | A3 | Seat counts from chairs one by one in the PRODUCT (relay asks identify per detected chair; count by geometry; never adds a chair) | measured 18/20 with B6b; wired when identify passes (A2) | after A2 |
-| A4 | Changing the plan by itself (`autoApply`) for a question that passes the stricter bar (agreed-and-wrong ≤ 3 % on real AND V5 tests, n ≥ 30) — same writer as Accept, marked as the model's, one-click undo, never a training label | `training/README.md` "Changing the plan by itself" | after A2 |
+| A4 | Changing the plan by itself (`autoApply`) for a question that passes the stricter bar (agreed-and-wrong ≤ 3 % on real AND V5 tests, n ≥ 30) — same writer as Accept, marked as the model's, one-click undo, never a training label | `training/README.md` "Changing the plan by itself" | **done 2026-10-28** for merged with B6b (real 1 / 44 = 0.023, V5 0 / 80): manifest `autoApply`, suite `local-auto-apply`; B6c re-judged on its own evidence |
 | A5 ∥ | Chat/command model candidates: Qwen3.5-4B, Gemma 4 E4B, Kara-Kumru 2B (+ B6c) on the 40 briefs and the command set (C4) | brief bar: fields ≥ 0.90, invented ≤ 0.05; commands C4 | download now, test after A1 |
 | A6 | Small own ViT classifier (identify) — pre-register first, same data and tests | `training/README.md` | after B-package |
 

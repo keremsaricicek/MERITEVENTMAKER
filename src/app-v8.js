@@ -4495,10 +4495,29 @@
       },
     },
   });
+  // A grouping answer the local model applies by itself (manifest autoApply,
+  // training/README.md "Changing the plan by itself"): the record a person's
+  // answer writes, marked as the model's with its run — never a training
+  // example — and taken back by id from its finding.
+  function applyModelGrouping(event,memberIds,decision,vlm){
+    if(!event||!event.analysis||!canMutate(event,"apply a model answer"))return null;
+    event.analysis.groupingDecisions ||= [];
+    const d={id:uid("groupdecision"),memberIds:[...memberIds],decision,decidedAt:nowISO(),by:"model",vlm:{...vlm}};
+    event.analysis.groupingDecisions.push(d);
+    recomputePlanIntelligence(event);touchEvent(event);
+    return d.id;
+  }
+  function undoModelGrouping(event,id){
+    if(!event||!event.analysis||!canMutate(event,"undo a model answer"))return false;
+    const list=event.analysis.groupingDecisions||[],i=list.findIndex(d=>d.id===id&&d.by==="model");
+    if(i<0)return false;
+    list.splice(i,1);recomputePlanIntelligence(event);touchEvent(event);
+    return true;
+  }
   const VLMSCREEN=globalThis.MeritScreenVlm.create({
-    activeEvent:(...a)=>activeEvent(...a),applyReviewZoom:(...a)=>applyReviewZoom(...a),ask:(...a)=>ask(...a),audit:(...a)=>audit(...a),
+    activeEvent:(...a)=>activeEvent(...a),applyModelGrouping:(...a)=>applyModelGrouping(...a),applyReviewZoom:(...a)=>applyReviewZoom(...a),ask:(...a)=>ask(...a),audit:(...a)=>audit(...a),
     canMutate:(...a)=>canMutate(...a),decideReview:(...a)=>decideReview(...a),esc:(...a)=>esc(...a),icon:(...a)=>icon(...a),render:(...a)=>render(...a),
-    t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),ui,undoReviewDecision:(...a)=>undoReviewDecision(...a),
+    t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),ui,undoModelGrouping:(...a)=>undoModelGrouping(...a),undoReviewDecision:(...a)=>undoReviewDecision(...a),
   });
   // The confidence at which a fresh candidate arrives pre-selected. Local
   // calibration (improveAI) writes state.calibration.recommendedConfidence

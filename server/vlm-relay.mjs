@@ -411,7 +411,7 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
         // measured questions are offered only while the process is the measured server
         if (st.local && st.local.checks.length) {
           const served = await verifyServing({ timeout: 3000 });
-          st.local = served.ok ? { ...st.local, serving: "verified" } : { ...st.local, checks: [], serving: served.code };
+          st.local = served.ok ? { ...st.local, serving: "verified" } : { ...st.local, checks: [], autoApply: [], serving: served.code };
         }
         return json(res, 200, { ok: true, version: RELAY_VERSION, busy: !!inFlight, ...st, asksToday: asksToday() });
       }

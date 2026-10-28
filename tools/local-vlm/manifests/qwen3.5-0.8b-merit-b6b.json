@@ -9,6 +9,9 @@
  "checks": [
   "merged"
  ],
+ "autoApply": [
+  "merged"
+ ],
  "checksEvidence": "benchmarks/offline-intelligence/local-vlm-results/v5-v5n-B6b.json + benchmarks/offline-intelligence/local-vlm-results/v5-s1-B6b.json + benchmarks/offline-intelligence/local-vlm-results/v5-real-B6b.json (fresh V5 test, S1, held-out real)",
  "serve": {
   "model": "Qwen3.5-0.8B-Q8_0.gguf",

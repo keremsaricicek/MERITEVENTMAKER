@@ -149,7 +149,9 @@ export function status(config, usage, ledger) {
     local: config.local ? { id: config.local.id, name: config.local.name, version: config.local.version, licence: config.local.licence,
       source: config.local.source, runtime: config.local.runtime, integrity: config.local.integrity, files: config.local.files.length,
       // The closed questions this model was MEASURED to answer, and where.
-      checks: [...(config.local.checks || [])], checksEvidence: config.local.checksEvidence || null } : null,
+      checks: [...(config.local.checks || [])], checksEvidence: config.local.checksEvidence || null,
+      // what it may change by itself (a subset of checks), see server/vlm-local.mjs
+      autoApply: [...(config.local.autoApply || [])] } : null,
     problem: config.problem || null,
     configured: config.configured,
     reasonCode: config.reasonCode,

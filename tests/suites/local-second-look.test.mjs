@@ -223,8 +223,18 @@ export default async function run({ page, checks, repoRoot }) {
       const ok = Object.fromEntries(Object.keys(v5).map((q) => [q, v5[q] && (q in sup ? sup[q] : true) && (q in real ? real[q] : true)]));
       checks.equal(r.manifest.checks.slice().sort(), Object.keys(ok).filter((q) => ok[q]).sort(),
         `${f}: lists exactly the questions its V6 evidence passed — V5 test, S1 and the held-out real test — at the pre-registered bars`, { v5, s1: sup, real });
+      // What it may change by itself (training/README.md "Changing the plan by
+      // itself"): a listed check whose two looks agree AND are wrong on ≤ 3 % of
+      // its items, on the held-out real test (≥ 30 items) and on the V5 test.
+      const agreedWrong = (rs) => rs.filter((x) => x.parsed != null && String(x.parsed) === String(x.parsed2) && String(x.parsed) !== String(x.truth)).length / rs.length;
+      const strict = Object.fromEntries((r.manifest.autoApply || []).map((q) => {
+        const T = q.toUpperCase(), rr = realtest.rows.filter((x) => x.task === T), vr = v5t.rows.filter((x) => x.task === T);
+        return [q, { ok: r.manifest.checks.includes(q) && rr.length >= 30 && agreedWrong(rr) <= 0.03 && vr.length > 0 && agreedWrong(vr) <= 0.03, real: rr.length ? +agreedWrong(rr).toFixed(3) : null, realN: rr.length, v5: vr.length ? +agreedWrong(vr).toFixed(3) : null }];
+      }));
+      checks.ok(Object.values(strict).every((x) => x.ok), `${f}: every question it applies by itself passed the stricter bar (agreed-and-wrong ≤ 3 % on the real test, n ≥ 30, and on the V5 test)`, strict);
       continue;
     }
+    checks.equal(r.manifest.autoApply || [], [], `${f}: applying by itself needs the held-out real test in its evidence`);
     // V5 evidence: every run is scored with the prompt cache off (no separate
     // cost run); the V5 test AND the V4-style rebuilt set AND S1. Slowness
     // eliminates nothing this round; memory does.

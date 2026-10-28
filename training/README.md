@@ -1087,6 +1087,21 @@ hand-written briefs stay the test; the bar is unchanged (fields ≥ 0.90, invent
 test (held-out TEST-part symbols, seed base 63, tuck 0.7, scale 0.3): begins
 `b35c0da3f7cd477b`. runB6c trains on 7,361 items (921 steps).
 
+**Changing the plan by itself — first question applied (2026-10-28).** By the
+bar written 2026-10-25 (before B6b was scored), B6b's merged answers: on the
+held-out real test both looks agree and are wrong on 1 / 44 = 0.023 (≤ 0.03,
+n ≥ 30), on the fresh V5 test 0 / 80; merged passes its own V6 bars (wired
+2026-10-27). So `qwen3.5-0.8b-merit-b6b` lists `autoApply: ["merged"]`: when
+both looks say two pushed-together tables are separate, the product writes the
+grouping answer "separate" by itself, marked `by: "model"` with its run, audited,
+never a training example, undone from its finding (suite `local-auto-apply`;
+the manifest's evidence is re-checked by `local-second-look`). An answer that
+AGREES with the analysis changes nothing. Limit kept: on the real test B6b's
+merged rests on 6 touching groups — and its one agreed-and-wrong answer is a
+touching group (Golden group 3, both looks "no"): applied, the product would split
+that one real long table into separate tables, marked as the model's and undone
+in one click. Within the bar as written; said here so it is not hidden.
+
 **Rules-first brief reader, scored once (2026-10-27).** `MeritAssistantParse.brief()`
 (src/assistant-parse.js), written after the 40 hand-written briefs existed but
 without running on them, scored on them once: **fields right 0.952, invented

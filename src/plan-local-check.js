@@ -32,8 +32,10 @@
 //     agree with each other and DISAGREE with the analysis is a finding made —
 //     a suggestion in the model reading's own shape (MeritVlmReview), which a
 //     person accepts or dismisses one at a time. A seat count, a grouping or a
-//     link is never applied from a model: those are notes that point a person
-//     at the place.
+//     link is never ACCEPTED from a model: those are notes that point a person
+//     at the place. The one exception is the relay's `autoApply` (a question
+//     measured to the stricter bar): screen-vlm.js then writes a grouping
+//     answer by itself, marked as the model's, undone from its finding.
 //   SAME PICTURE AS MEASURED. A crop is a square around the object, sized by
 //     the rule the benchmark cut its crops by, sent at 448 px on white paper.
 //

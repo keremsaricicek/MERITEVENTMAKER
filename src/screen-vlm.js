@@ -24,9 +24,12 @@
 // With a model on THIS computer whose manifest names the closed questions it
 // was measured on, the analysis is followed by a "second look"
 // (MeritLocalCheck) that STARTS BY ITSELF — the owner's decision of
-// 2026-10-18: one press of Analyse, nothing leaves the computer, nothing is
-// applied, Cancel stops it and a switch in the panel turns it off (remembered
-// on this computer). It can also be started by hand. It asks
+// 2026-10-18: one press of Analyse, nothing leaves the computer, Cancel stops
+// it and a switch in the panel turns it off (remembered on this computer).
+// Nothing is applied — except a question the manifest lists in `autoApply`
+// (measured to the stricter bar, training/README.md "Changing the plan by
+// itself"; today a grouping answer): that answer is written by itself as the
+// model's, never a training example, and undone from its finding. It can also be started by hand. It asks
 // short fixed questions about the places the analysis is unsure of, two looks
 // each, the answers checked against what the analysis found; only a
 // disagreement both looks share becomes a finding, in this same list.
@@ -41,6 +44,7 @@
 (() => {
   "use strict";
   let activeEvent;
+  let applyModelGrouping;
   let applyReviewZoom;
   let ask;
   let audit;
@@ -53,6 +57,7 @@
   let toast;
   let touchEvent;
   let ui;
+  let undoModelGrouping;
   let undoReviewDecision;
   let created=false;
 
@@ -238,6 +243,18 @@
 
   // ---- the local second look -------------------------------------------------------
   const localChecks=(st)=>st&&st.relay&&st.configured&&st.provider==="local"&&st.local&&Array.isArray(st.local.checks)?st.local.checks:[];
+  // The measured questions the model may also answer by itself (a subset of its checks).
+  const localAuto=(st)=>localChecks(st).length&&Array.isArray(st.local.autoApply)?st.local.autoApply.filter(q=>localChecks(st).includes(q)):[];
+  // A shared "separate" on a pushed-together group, for a model whose manifest
+  // lets it apply merged: the grouping answer a person would give, marked as
+  // the model's. The finding keeps which answer it wrote, for Undo.
+  function applyByItself(event,run,q,f){
+    if(q.question!=="merged"||f.check.answer!=="no")return;
+    const decisionId=applyModelGrouping(event,q.candidateIds,"separate",{runId:run.runId,findingId:f.id,model:run.model});
+    if(!decisionId)return;
+    f.state="applied";f.appliedBy="model";f.decisionId=decisionId;f.decidedAt=new Date().toISOString();
+    audit(event,"VLM_AUTO_APPLIED",{runId:run.runId,findingId:f.id,question:q.question,answer:f.check.answer,decisionId});
+  }
   // The relay names itself on the page it serves (a Server-Timing entry), so a
   // page opened any other way never asks for /vlm-relay at all.
   const relayServed=()=>{try{const n=globalThis.performance.getEntriesByType("navigation")[0];return !!(n&&Array.isArray(n.serverTiming)&&n.serverTiming.some(e=>e.name==="merit-relay"));}catch{return false;}};
@@ -271,7 +288,7 @@
     if(!a||session.busy||!L)return;
     if(!canMutate(event,"ask the local model a second look"))return;
     const st=auto?session.relay:await probe();
-    const checks=localChecks(st);
+    const checks=localChecks(st),autoApply=localAuto(st);
     if(!checks.length)return; // the panel says why, persistently
     let img;
     try{img=await loadImage(event.background.src);}
@@ -324,7 +341,7 @@
         const f=L.findingFor(q,j,a,run.runId.slice(4,12));
         // One finding per place, never merged: two questions about one object
         // (its type, the link it is part of) are two different suggestions.
-        if(f)run.findings.push(f);
+        if(f){run.findings.push(f);if(autoApply.includes(q.question))applyByItself(event,run,q,f);}
         touchEvent(event);render();
       }
     }finally{
@@ -427,7 +444,14 @@
     render();
   }
   function undo(id){
-    const event=activeEvent(),{f}=findingOf(id);
+    const event=activeEvent(),{run,f}=findingOf(id);
+    if(f&&f.state==="applied"){
+      // what the model applied by itself: exactly that answer comes off, and the suggestion is open again
+      if(!undoModelGrouping(event,f.decisionId))return;
+      audit(event,"VLM_AUTO_UNDONE",{runId:run.runId,findingId:f.id,decisionId:f.decisionId});
+      f.state="open";f.appliedBy=null;f.decisionId=null;f.decidedAt=null;
+      toast(t("vlm.toast.autoUndone"),"success",3500);touchEvent(event);render();return;
+    }
     if(!f||f.state!=="accepted"||!f.decisionId)return;
     const n=undoReviewDecision(event,f.decisionId);
     if(n===-1){toast(t("vlm.toast.undoBlocked"),"error",6000);return;}
@@ -528,7 +552,7 @@
   }
   function findingRowHTML(a,f,i){
     const p=V().acceptPlan(f,a,{memory:(activeEvent()&&activeEvent().planMemory)||[]}),conf=t("vlm.conf."+f.confidence);
-    const state=f.state==="accepted"?`<span class="vlm-tag ok">${t("vlm.state.accepted")}</span><button class="btn sm quiet" data-vlm-action="undo" data-vlm-finding="${esc(f.id)}">${t("vlm.undo")}</button>`:f.state==="dismissed"?`<span class="vlm-tag">${t("vlm.state.dismissed")}</span>`:"";
+    const state=f.state==="accepted"||f.state==="applied"?`<span class="vlm-tag ok">${t(f.state==="applied"?"vlm.state.applied":"vlm.state.accepted")}</span><button class="btn sm quiet" data-vlm-action="undo" data-vlm-finding="${esc(f.id)}">${t("vlm.undo")}</button>`:f.state==="dismissed"?`<span class="vlm-tag">${t("vlm.state.dismissed")}</span>`:"";
     const reason=!p.ok&&f.state==="open"?`<span class="vlm-reason">${esc(t("vlm.reason."+p.reason))}</span>`:"";
     const actions=f.state==="open"?`<div class="vlm-row-actions"><button class="btn sm primary" data-vlm-action="accept" data-vlm-finding="${esc(f.id)}" ${p.ok?"":`disabled title="${esc(t("vlm.reason."+p.reason))}"`}>${t("vlm.accept")}</button><button class="btn sm" data-vlm-action="dismiss" data-vlm-finding="${esc(f.id)}">${t("vlm.dismiss")}</button>${f.box||f.candidateId?`<button class="btn sm quiet" data-vlm-action="focus" data-vlm-finding="${esc(f.id)}">${t("vlm.show")}</button>`:""}</div>${reason}`:"";
     const cls=["vlm-finding","state-"+f.state,"kind-"+f.kind,session.focusId===f.id?"focused":""].join(" ").trim();
@@ -558,7 +582,8 @@
     const servingCode=session.relay&&session.relay.local&&session.relay.local.serving&&session.relay.local.serving!=="verified"?session.relay.local.serving:null;
     const unmeasured=servingCode?`<p class="vlm-note warn">${t("vlm.second.notMeasuredSetup",{why:esc(tx("vlm.err.",servingCode))})}</p><button class="btn sm" data-vlm-action="probe">${t("vlm.relay.again")}</button>`:"";
     const autoSwitch=checks.length?`<label class="vlm-switch"><input type="checkbox" data-vlm-action="auto" ${autoOn()?"checked":""}> ${t("vlm.second.auto")}</label>`:"";
-    const autoNote=second&&run.auto?`<p class="vlm-note">${t("vlm.second.autoRan",{n:num((run.checks||[]).length),crops:num((run.checks||[]).length*(LC()?LC().LOOKS.length:2))})}</p>`:"";
+    const applied=second?run.findings.filter(f=>f.state==="applied").length:0;
+    const autoNote=second&&run.auto?`<p class="vlm-note">${t(applied?"vlm.second.autoRanApplied":"vlm.second.autoRan",{n:num((run.checks||[]).length),crops:num((run.checks||[]).length*(LC()?LC().LOOKS.length:2)),applied:num(applied)})}</p>`:"";
     return`<aside class="vlm-panel" id="vlmPanel" aria-label="${esc(t("vlm.title"))}"><div class="vlm-head"><strong>${t("vlm.title")}</strong><button class="btn icon-only sm" data-vlm-action="close" aria-label="${esc(t("vlm.close"))}">${icon("x")}</button></div><div class="vlm-body">
       <section class="vlm-relay">${relayStateHTML()}${run?"":`<p class="vlm-note">${t("vlm.what")}</p>`}${lookNote}${unmeasured}<div class="vlm-actions">${send}${look}</div>${autoSwitch}</section>
       ${run?`<section class="vlm-run">${status}${autoNote}${run.planSummary?`<div class="vlm-summary"><small>${t("vlm.summaryLabel")}</small><p>${esc(run.planSummary)}</p></div>`:""}${tally}${c&&c.total?`<p class="vlm-note">${t("vlm.counts",{open:c.open,accepted:c.accepted,dismissed:c.dismissed})}</p>`:""}${second?"":coverageHTML(run)}${setAsideHTML(run)}${body}</section>`:""}
@@ -618,6 +643,7 @@
     if(created)throw new Error("MeritScreenVlm.create() is called once, by app-v8.js.");
     created=true;
     activeEvent=deps.activeEvent;
+    applyModelGrouping=deps.applyModelGrouping;
     applyReviewZoom=deps.applyReviewZoom;
     ask=deps.ask;
     audit=deps.audit;
@@ -630,8 +656,9 @@
     toast=deps.toast;
     touchEvent=deps.touchEvent;
     ui=deps.ui;
+    undoModelGrouping=deps.undoModelGrouping;
     undoReviewDecision=deps.undoReviewDecision;
     return{toolbarHTML,mapHTML,panelHTML,diagnosticsHTML,onAction,afterAnalysis,session:()=>({...session,controller:!!session.controller})};
   }
-  globalThis.MeritScreenVlm=Object.freeze({create,DEPS:Object.freeze(["activeEvent","applyReviewZoom","ask","audit","canMutate","decideReview","esc","icon","render","t","toast","touchEvent","ui","undoReviewDecision"])});
+  globalThis.MeritScreenVlm=Object.freeze({create,DEPS:Object.freeze(["activeEvent","applyModelGrouping","applyReviewZoom","ask","audit","canMutate","decideReview","esc","icon","render","t","toast","touchEvent","ui","undoModelGrouping","undoReviewDecision"])});
 })();
