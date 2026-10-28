@@ -1,0 +1,20 @@
+== 2026-10-27T12:33:13Z start chainC
+nohup: failed to run command '/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/scripts/chainC.sh': Permission denied
+== 2026-10-27T12:33:27Z start chainC
+{"split": "blind4", "families": ["ink-wash", "copy-grey"], "n": 652}
+== 2026-10-27T13:20:10Z test4 sha d24e1a91f38d63f7
+534 scenes
+== 2026-10-27T13:20:33Z tucktest sha b35c0da3f7cd477b
+== 2026-10-27T13:21:14Z chainC replaced (adds brief text items, then the language test); test4 generation left running
+== 2026-10-27T13:21:14Z start chainC
+1780 scenes
+{"split": "train2", "families": ["cad-line", "cad-grey", "colour-arm", "symbolic-num", "thin-circle", "blue-print", "scan-dark", "green-event", "office-graphic", "printed-symbolic", "pastel-arch", "bold-black"], "n": 1681}
+1500 briefs
+== 2026-10-27T13:25:19Z train runB6c
+== 2026-10-27T23:10:36Z start chainC
+== 2026-10-27T23:10:36Z train runB6c
+wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v5/runB6c/adapter.gguf
+== 2026-10-28T00:20:50Z bench tuck-B6c
+== 2026-10-28T02:10:57Z bench tuck-B6b
+== 2026-10-28T03:57:16Z bench real-B6c
+== 2026-10-28T04:44:57Z bench v5f-B6c
