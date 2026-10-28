@@ -1111,3 +1111,40 @@ this is DEVELOPER-SEEN, not unseen; misses seen (10'ar kişilik, "180lik",
 "Ø180" without "yuvarlak", "şirket yemeği", 60 bistro) are NOT tuned on this
 set — any rule change is to be measured on a fresh brief set (the owner's own
 sentences).
+
+## 2026-10-28 — Chat-model race: the F8 assistant's second reader (written before any candidate runs)
+
+**Question.** Which local chat model reads what the F8 rules cannot — the
+owner's own phrasing of questions, commands and event briefs — well enough to
+stand behind the rules? The model never states a fact and never changes the
+plan itself: it returns the rules' own shape (`parse()`), and the same code
+answers from the data and acts through the writers.
+
+**Candidates** (all on this machine, 4 CPU threads, `-c 4096`, temperature 0,
+thinking off, schema-constrained JSON): Qwen3.5-4B Q4_K_M (unsloth GGUF);
+Gemma 4 E4B-it Q4_K_M; Kara-Kumru v1.0 2B (AlicanKiraz0, Apache-2.0) as the
+third-party Q8_0 GGUF `senoleker/Kara-Kumru-v1.0-2B-GGUF` — checked against the
+original safetensors before use (6 tensors, correlation ≥ 0.99998, max relative
+error ≤ 0.004, i.e. Q8_0 rounding; sha256 begins `e7ccf5fa25292b68`); and
+runB6c (0.8B + plan LoRA, trained on 1,500 generated briefs).
+
+**Tests.** (1) The 40 hand-written briefs (`planner_brief_eval.py`, bar
+unchanged: fields right ≥ 0.90, invented ≤ 0.05). (2) The F8 sets: the 35
+originals (`questions.jsonl` 20, `commands.jsonl` 15 — DEVELOPER-SEEN for the
+rules) and **35 new paraphrases** written now, before any candidate or the rules
+ran on them (`training/assistant/variants.jsonl`, each with its original's
+outcome; sha256 of the file begins `6927290e28a3af3f`): no apostrophes, other
+verbs ("yerleştir", "geçsin", "listeden çıkar"), other word order.
+`training/assistant_race.mjs` scores each sentence three ways — rules alone,
+model alone, rules first then the model where the rules say "unknown" — by the
+facts the answer must carry and the exact writer calls (or a question / refusal
+with nothing changed). A writer call that is not the expected one is a WRONG
+CHANGE.
+
+**Bar for the second reader** (rules + model, on the paraphrases): right ≥ 0.90
+and **0 wrong changes** on originals and paraphrases together; and the brief bar
+above for the model alone. **Choice:** among those that pass, the most right on
+the paraphrases, then the faster (median seconds). If none passes, none is wired;
+the rules stay alone and the result is reported. Run order: after the B6c chain
+(no other job on the CPU); the rules-alone score on the paraphrases is measured
+once and the rules are NOT changed on it.
