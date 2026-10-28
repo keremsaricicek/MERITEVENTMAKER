@@ -1217,3 +1217,12 @@ adapter. The evidence files name `adapter.gguf` without its hash: the files used
 were runB6c's adapter, sha256 `fd8d72d5…f9d2`, the one committed. The language result
 (`lang/B6c`) is reported with the chat-model race. runB6d (pre-registered above)
 targets the empty-crop fabrication that keeps identify off.
+
+**runB6c language (2026-10-28).** The 40 hand-written briefs, model alone:
+fields right **0.976**, briefs all right 36 / 40, invented **0.009** — passes the
+bar (≥ 0.90, ≤ 0.05; B6b 0.768 / 0.771, base 0.643 / 0.435). The 1,500 generated
+briefs taught it to read the numbers and leave unstated fields null. Its everyday
+chat is still weak (short greetings fine; longer answers repeat words and state
+wrong facts, e.g. "kokteylde kişi başı 1.5 m²"): the F8 small-talk reply is marked
+as not resting on the records, and no fact is taken from it. Raw `local-vlm-results/lang-B6c.json`.
+B6c is a candidate in the chat-model race like the others.
