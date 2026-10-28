@@ -6,12 +6,7 @@
  "licence": "Apache-2.0 (base model); adapter trained here on generated plans and on the training part of the two real plans",
  "source": "unsloth/Qwen3.5-0.8B-GGUF (base Qwen/Qwen3.5-0.8B): model + mmproj-F16, projector quantized here to Q8_0 (pinned llama-quantize); adapter: this repository, models/local-vlm/qwen3.5-0.8b-merit-b6c",
  "runtime": "llama.cpp llama-server 11351 cpu_mkl (0fa5950): --mmproj, --lora adapter.gguf, -c 2048, --cache-ram 0",
- "checks": [
-  "merged"
- ],
- "autoApply": [
-  "merged"
- ],
+ "checks": [],
  "checksEvidence": "benchmarks/offline-intelligence/local-vlm-results/v5-blind4-B6c.json + benchmarks/offline-intelligence/local-vlm-results/v5-s1-B6c.json + benchmarks/offline-intelligence/local-vlm-results/v5-real-B6c.json (fresh V5 test blind4, S1, held-out real)",
  "serve": {
   "model": "Qwen3.5-0.8B-Q8_0.gguf",
@@ -40,5 +35,6 @@
    "sha256": "fd8d72d5728e018bbcf2b9a417a4921c25e8130d22643745e80a825f4153f9d2"
   }
  ],
- "licenceNote": "(Hugging Face model card of unsloth/Qwen3.5-0.8B-GGUF and of Qwen/Qwen3.5-0.8B, Apache-2.0, read 2026-10-18)"
+ "licenceNote": "(Hugging Face model card of unsloth/Qwen3.5-0.8B-GGUF and of Qwen/Qwen3.5-0.8B, Apache-2.0, read 2026-10-18)",
+ "checksNote": "2026-10-28 night: run B6d serves merged (and applies it by itself) instead — the owner's one-model rule; B6c's evidence stays committed."
 }

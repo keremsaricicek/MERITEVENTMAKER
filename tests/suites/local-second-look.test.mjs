@@ -227,6 +227,15 @@ export default async function run({ page, checks, repoRoot }) {
         merged: acc(R("MERGED")) >= 0.85 && rateYes(R("MERGED", (r) => r.truth === "no")) <= 0.10,
       };
       const v5 = passesV5(v5t.rows), sup = passesS1(s1r.rows);
+      // The tucked test (runB6c onward, training/README.md): identify also needs
+      // tucked chairs right on both looks ≥ 0.80 and empty crops named on look 1 ≤ 0.05.
+      const tuck = runs.find((x) => /^tucktest/.test(String(x.summary.settings.v5)));
+      if (tuck) {
+        const tk = tuck.rows.filter((x) => x.task === "ID" && /-tucked$/.test(x.sub)), tn = tuck.rows.filter((x) => x.task === "NEG");
+        const both = tk.length ? tk.filter((x) => String(x.parsed) === String(x.truth) && String(x.parsed2) === String(x.truth)).length / tk.length : 0;
+        const fabT = tn.length ? tn.filter((x) => x.parsed != null && x.parsed !== "nothing").length / tn.length : 1;
+        real.identify = real.identify && both >= 0.80 && fabT <= 0.05;
+      }
       const ok = Object.fromEntries(Object.keys(v5).map((q) => [q, v5[q] && (q in sup ? sup[q] : true) && (q in real ? real[q] : true)]));
       checks.equal(r.manifest.checks.slice().sort(), Object.keys(ok).filter((q) => ok[q]).sort(),
         `${f}: lists exactly the questions its V6 evidence passed — V5 test, S1 and the held-out real test — at the pre-registered bars`, { v5, s1: sup, real });

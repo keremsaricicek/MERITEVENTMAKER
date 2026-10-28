@@ -1312,3 +1312,8 @@ empty crop with either earlier tucked test (sha256 of its files begins `b0a2957d
 summary read); the real test a sixth time; S1; language; seat counts per chair.
 **Bars:** B6d's, unchanged, per question, and not below a bar B6d passes on the same
 test. Runs after the chat-model race.
+
+**runB6d wired (2026-10-28 ~01:10 Istanbul).** Conversion check (llama.cpp `--lora`
+vs transformers + PEFT, the same 31 crops): **31 / 31** (`local-vlm-results/v5-agree-B6d.txt`).
+`qwen3.5-0.8b-merit-b6d` lists merged and applies it by itself; B6c's manifest lists no
+check (one model). Adapter `models/local-vlm/qwen3.5-0.8b-merit-b6d/` (sha256 `643d42fa…882e`).
