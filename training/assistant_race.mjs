@@ -118,11 +118,17 @@ function score(item, parsed) {
 
 const port = Number(arg("port", 8099)), label = arg("label", "rules"), rulesOnly = flag("rules-only");
 const rows = [];
+// Resumable: each sentence's model reading is kept as it comes (OUT.partial.jsonl);
+// a restarted run asks only what is missing and scores everything again from the
+// kept readings with this code.
+const partialFile = arg("out") + ".partial.jsonl", kept = new Map();
+if (!rulesOnly && fs.existsSync(partialFile)) for (const l of fs.readFileSync(partialFile, "utf8").split("\n")) { if (!l.trim()) continue; try { const k = JSON.parse(l); if (k.label === label) kept.set(k.id, k); } catch {} }
 for (const it of items) {
   const rules = P.parse(it.text, fx.events, fx.today);
   const row = { set: it.set, id: it.id, text: it.text, rules: score(it, rules), rulesKind: rules.kind };
   if (!rulesOnly) {
-    const m = await ask(port, it.text);
+    let m = kept.get(it.id);
+    if (!m || m.text !== it.text) { m = { label, id: it.id, text: it.text, ...(await ask(port, it.text)) }; fs.appendFileSync(partialFile, JSON.stringify(m) + "\n"); }
     const mp = toParse(m.got);
     row.model = { ...score(it, mp), reading: m.got, seconds: m.seconds };
     row.both = rules.kind === "unknown" ? row.model : row.rules;
