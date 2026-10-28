@@ -106,16 +106,16 @@ class Bank:
             for r in ann.get("regions") or []:
                 if r.get("class") == "text" and ((r["x"] + r["w"] / 2 < SPLIT_X * W) == (side_part == "train")) and not r["id"].startswith("giris"):  # an entrance's label is not "nothing"
                     self.text.append(img.crop((int(r["x"]), int(r["y"]), int(r["x"] + r["w"]), int(r["y"] + r["h"]))))
-            rng = random.Random(61)
+            rng = random.Random(EMPTY_SEED)
             self.empty[name] = []
-            for _ in range(4000):
+            for _ in range(4000 if EMPTY_N == 120 else 40 * EMPTY_N):  # the default draws exactly as before
                 side = rng.uniform(60, 160)
                 cx = rng.uniform(side, SPLIT_X * W - side) if side_part == "train" else rng.uniform(SPLIT_X * W + side, W - side)
                 cy = rng.uniform(side, img.height - side)
                 box = (cx - side / 2, cy - side / 2, cx + side / 2, cy + side / 2)
                 if clear(name, objs, cx, cy, side):
                     self.empty[name].append(img.crop(tuple(int(v) for v in box)))
-                if len(self.empty[name]) >= 120:
+                if len(self.empty[name]) >= EMPTY_N:
                     break
 
     def pick(self, rng, name, cls, typ=None):
@@ -209,7 +209,8 @@ def make(task, stratum, rng, bank, size=448):
             img = G5.degrade(img, level, rng)
             return dict(task="NEG", sub=sub, truth="nothing", q=G5.Q("identify"), level=level, family=f"real-{name}", image=img)
         else:  # nothing: real empty paper, half the time with a real printed word
-            name = rng.choice([n for n in bank.empty if bank.empty[n]])
+            names = [n for n in bank.empty if bank.empty[n]]
+            name = ("golden" if rng.random() < GOLDEN_EMPTY else "ornek") if GOLDEN_EMPTY is not None and set(names) >= {"golden", "ornek"} else rng.choice(names)
             patch = rng.choice(bank.empty[name])
             img = patch.resize((size, size), Image.LANCZOS)
             sub = f"{name}-nothing"
@@ -337,13 +338,24 @@ PLAN3 = {"ID": {"table": 80, "chair": 240, "banquette": 80, "nothing": 400, "not
          "SERVES": {"yes": 60, "no": 80}}
 
 
+# B6e (2026-10-28): B6d still called 4 of 48 held-out empty crops of the Golden
+# plan "banquette"/"chair". A larger pool of empty paper (EMPTY_N patches a plan,
+# another seed) and more of it from the Golden plan (GOLDEN_EMPTY share).
+PLAN4 = {"ID": {"table": 80, "chair": 200, "banquette": 120, "nothing": 500, "nothing-edge": 200},
+         "CHAIRS": {n: 15 for n in range(1, 9)},
+         "MERGED": {"yes": 60, "no": 60},
+         "SERVES": {"yes": 60, "no": 80}}
+EMPTY_N, EMPTY_SEED, GOLDEN_EMPTY = 120, 61, None
+
+
 def cmd_scenes(a):
-    global TUCK
+    global TUCK, EMPTY_N, EMPTY_SEED, GOLDEN_EMPTY
     TUCK = a.tuck
+    EMPTY_N, EMPTY_SEED, GOLDEN_EMPTY = a.empty_n, a.empty_seed, a.golden_empty
     bank = Bank(a.sprites)
     os.makedirs(os.path.join(a.out, "img"), exist_ok=True)
     rows, k = [], 0
-    for task, strata in (PLAN3 if a.plan3 else PLAN2 if a.plan2 else PLAN).items():
+    for task, strata in (PLAN4 if a.plan4 else PLAN3 if a.plan3 else PLAN2 if a.plan2 else PLAN).items():
         for stratum, n in strata.items():
             for _ in range(max(1, round(n * a.scale))):
                 seed = a.seed_base * 1000003 + k
@@ -355,7 +367,7 @@ def cmd_scenes(a):
     with open(os.path.join(a.out, "items.jsonl"), "w") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
-    json.dump(dict(generator="training/synth_real.py scenes", splitX=SPLIT_X, n=len(rows), tuck=a.tuck, plan2=a.plan2, plan3=a.plan3, seedBase=a.seed_base, spritePart=a.sprites, sprites={"|".join(k_): len(v) for k_, v in bank.s.items()}),
+    json.dump(dict(generator="training/synth_real.py scenes", splitX=SPLIT_X, n=len(rows), tuck=a.tuck, plan2=a.plan2, plan3=a.plan3, plan4=a.plan4, emptyN=a.empty_n, emptySeed=a.empty_seed, goldenEmpty=a.golden_empty, seedBase=a.seed_base, spritePart=a.sprites, sprites={"|".join(k_): len(v) for k_, v in bank.s.items()}),
               open(os.path.join(a.out, "meta.json"), "w"), indent=1)
     print(len(rows), "scenes")
 
@@ -461,6 +473,10 @@ def main():
     s.add_argument("--tuck", type=float, default=0.0, help="share of chairs drawn half under their table")
     s.add_argument("--plan2", action="store_true", help="B6c's mix (PLAN2)")
     s.add_argument("--plan3", action="store_true", help="B6d's mix (PLAN3): many more empty crops")
+    s.add_argument("--plan4", action="store_true", help="B6e's mix (PLAN4)")
+    s.add_argument("--empty-n", type=int, default=120, help="empty paper patches per plan")
+    s.add_argument("--empty-seed", type=int, default=61)
+    s.add_argument("--golden-empty", type=float, default=None, help="share of empty crops from the Golden plan (default: either plan alike)")
     s.add_argument("--seed-base", type=int, default=61)
     s.add_argument("--sprites", choices=["train", "test"], default="train", help="cut symbols from this part of the plans (test: a held-out scene test)")
     t = sub.add_parser("test")
