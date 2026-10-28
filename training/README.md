@@ -1204,6 +1204,16 @@ and blind4 items `v5-{tuck,blind4}-B6b.json`. Two looks, prompt cache off.
 blind4 0 / 80 — passes; better than B6b (1 / 44, one real long table split).
 **One model** (owner): B6c takes merged and its autoApply from B6b; B6b's manifest
 lists no check. Conversion check (llama.cpp `--lora` vs transformers + PEFT, the
-31 crops used for B and B6b) before wiring: see below. The language result
+31 crops used for B and B6b): **31 / 31** (`local-vlm-results/v5-agree-B6c.txt`).
+Independent audit (`model-qa-specialist`): SOUND WITH FINDINGS — every number
+reproduced from the rows; frozen tests rehash (blind4 `d24e1a91f38d63f7`, tucked
+`b35c0da3f7cd477b`); no leakage. Kept as limits: blind4 shares families 16–17 with
+blind3 (whose results shaped B6c's data; new items); the real test is the 4th
+scoring of a held-out REGION of the same two venues, and merged there rests on 6
+touching groups (all 6 right on both looks). Fixed from the audit: a drafted B6b
+manifest had copied B6c's adapter hash (a shallow copy), caught before commit;
+`local-second-look` now checks each manifest pins the sha256 of its own committed
+adapter. The evidence files name `adapter.gguf` without its hash: the files used
+were runB6c's adapter, sha256 `fd8d72d5…f9d2`, the one committed. The language result
 (`lang/B6c`) is reported with the chat-model race. runB6d (pre-registered above)
 targets the empty-crop fabrication that keeps identify off.

@@ -195,6 +195,12 @@ export default async function run({ page, checks, repoRoot }) {
   for (const f of fs.readdirSync(mdir).filter((n) => n.endsWith(".json"))) {
     const r = readManifest(path.join(mdir, f), { verify: false });
     checks.ok(r.ok, `committed manifest ${f} is well formed`, r);
+    // the adapter committed beside it is the one it pins (a copy of one run's hash under another's name is caught here)
+    const committed = r.ok && path.join(repoRoot, "models/local-vlm", r.manifest.id, "adapter.gguf");
+    if (committed && fs.existsSync(committed)) {
+      const pin = r.manifest.files.find((x) => x.path === "adapter.gguf");
+      checks.equal(pin && pin.sha256, crypto.createHash("sha256").update(fs.readFileSync(committed)).digest("hex"), `${f}: pins the sha256 of models/local-vlm/${r.manifest.id}/adapter.gguf`);
+    }
     if (!r.ok || !r.manifest.checks.length) continue;
     listed.push(f);
     const ev = (r.manifest.checksEvidence.match(/[\w./-]+\.json/g) || []).map((p) => path.join(repoRoot, p));
