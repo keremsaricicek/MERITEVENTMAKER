@@ -1181,3 +1181,8 @@ is finished today).** scenes3 at `--scale 0.5`, replay 300 per source (shorter
 training); B6c's dev run dropped (dev only selects; it is no bar); B6d's benches
 run first, in this order — fresh tucked test, real, blind4, S1, language — then the
 chat-model race and B6c on the fresh tucked test. Bars unchanged.
+
+**Amendment withdrawn the same hour (owner: "do it fully, not shorter; finished by
+06:00 tomorrow"), still before any B6d data exists:** scenes3 back to `--scale 0.6`,
+replay 400 per source, B6c's dev run kept. Order: B6d trains → the chat-model race →
+B6d's benches (fresh tucked, B6c on it, real, blind4, S1, language). Bars unchanged.
