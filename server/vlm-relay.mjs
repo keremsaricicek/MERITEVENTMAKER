@@ -41,6 +41,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as core from "./vlm-core.mjs";
 import { makeLocalClient, checkServing } from "./vlm-local.mjs";
+import { readerFromEnv, makeReader, MAX_TEXT } from "./assistant-reader.mjs";
 
 export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const RELAY_VERSION = 4;
@@ -99,7 +100,7 @@ const hostAllowed = (hostname, allowed) => {
 };
 const hostnameOf = (hostHeader) => { try { return new URL(`http://${hostHeader}`).hostname; } catch { return null; } };
 
-export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, log = console, now = Date.now } = {}) {
+export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, log = console, now = Date.now, reader = { configured: false, reasonCode: "CHAT_OFF" }, readerImpl } = {}) {
   const usage = new core.UsageStore(config.dataDir);
   const runs = new Map();            // runId -> { analysisId, planHash, steps, usd, cancelled, controller, at }
   const askRuns = new Map();         // runId -> { analysisId, planHash, asks, cancelled, controller, at }
@@ -198,6 +199,32 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
       say(`check: ${m.code}${err && err.requestID ? ` request-id ${err.requestID}` : ""}`);
       return json(res, m.http, { ok: false, code: m.code });
     }
+  }
+
+  // The F8 assistant's second reader (server/assistant-reader.mjs): one sentence
+  // the rules could not place, read by the pinned chat model on this machine
+  // into the rules' own shape — or no reading. One at a time; nothing logged
+  // but the outcome (the sentence may name guests).
+  const chat = reader.configured ? (readerImpl || makeReader(reader, { timeoutMs: config.limits.timeoutMs })) : null;
+  let reading = false;
+  async function handleRead(req, res) {
+    if (!chat) { req.resume(); return json(res, 409, { ok: false, code: reader.reasonCode || "CHAT_OFF" }); }
+    if (reading) { req.resume(); return json(res, 409, { ok: false, code: "BUSY" }); }
+    const { body, error } = await readJson(req, 8 * 1024);
+    if (error) return json(res, error === "PAYLOAD_TOO_LARGE" ? 413 : 400, { ok: false, code: error });
+    if (!body || typeof body !== "object" || Array.isArray(body) || Object.keys(body).some((k) => k !== "text")) return json(res, 400, { ok: false, code: "UNKNOWN_FIELD" });
+    const text = typeof body.text === "string" ? body.text.trim() : "";
+    if (!text || text.length > MAX_TEXT) return json(res, 400, { ok: false, code: "BAD_PAYLOAD" });
+    reading = true;
+    const started = now(), controller = new AbortController();
+    const onClose = () => { if (!res.writableEnded) controller.abort(); };
+    res.on("close", onClose);
+    let r;
+    try { r = await chat.read(text, { signal: controller.signal }); } finally { res.off("close", onClose); reading = false; }
+    const seconds = Math.round((now() - started) / 100) / 10;
+    say(`read: ${r.ok ? (r.reading ? r.reading.kind : "no reading") : r.code} in ${seconds}s`);
+    if (res.writableEnded || res.destroyed) return;
+    return json(res, r.ok ? 200 : 409, r.ok ? { ok: true, reading: r.reading, seconds } : { ok: false, code: r.code });
   }
 
   async function handleCancel(req, res) {
@@ -413,7 +440,8 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
           const served = await verifyServing({ timeout: 3000 });
           st.local = served.ok ? { ...st.local, serving: "verified" } : { ...st.local, checks: [], autoApply: [], serving: served.code };
         }
-        return json(res, 200, { ok: true, version: RELAY_VERSION, busy: !!inFlight, ...st, asksToday: asksToday() });
+        const chatStatus = reader.configured ? { configured: true, name: reader.manifest.name, version: reader.manifest.version, licence: reader.manifest.licence } : { configured: false, reasonCode: reader.reasonCode };
+        return json(res, 200, { ok: true, version: RELAY_VERSION, busy: !!inFlight, ...st, asksToday: asksToday(), reader: chatStatus });
       }
       if (req.method !== "POST") return json(res, 405, { ok: false, code: "METHOD" });
       const cross = refuseCrossSite(req);
@@ -422,6 +450,7 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
       if (pathname === "/vlm-relay/run") return await handleRun(req, res);
       if (pathname === "/vlm-relay/ask") return await handleAsk(req, res);
       if (pathname === "/vlm-relay/cancel") return await handleCancel(req, res);
+      if (pathname === "/vlm-relay/read") return await handleRead(req, res);
       return json(res, 404, { ok: false, code: "NOT_FOUND" });
     } catch (err) {
       say(`internal error: ${err && err.name}`);
@@ -439,9 +468,9 @@ function sleep(ms, signal) {
   });
 }
 
-export async function startRelay({ config, client, root = REPO_ROOT, allowedHosts, log = console } = {}) {
+export async function startRelay({ config, client, root = REPO_ROOT, allowedHosts, log = console, reader, readerImpl } = {}) {
   const c = client === undefined ? await makeClient(config, { log }) : client;
-  const relay = createRelay({ config, client: c, root, allowedHosts, log });
+  const relay = createRelay({ config, client: c, root, allowedHosts, log, ...(reader ? { reader } : {}), readerImpl });
   const server = http.createServer((req, res) => { relay.handler(req, res); });
   await new Promise((resolve, reject) => { server.once("error", reject); server.listen(config.port, config.host, resolve); });
   const { port } = server.address();
@@ -454,7 +483,9 @@ export async function startRelay({ config, client, root = REPO_ROOT, allowedHost
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const config = core.configFromEnv(process.env, { repoRoot: REPO_ROOT });
   const allowedHosts = allowedHostsFrom(process.env, config.port);
-  const started = await startRelay({ config, allowedHosts, root: process.env.MERIT_APP_ROOT ? path.resolve(process.env.MERIT_APP_ROOT) : REPO_ROOT });
+  const reader = readerFromEnv(process.env);
+  const started = await startRelay({ config, allowedHosts, reader, root: process.env.MERIT_APP_ROOT ? path.resolve(process.env.MERIT_APP_ROOT) : REPO_ROOT });
+  console.log(`  F8 reader   ${reader.configured ? `${reader.manifest.name} ${reader.manifest.version} (${reader.manifest.licence}) — reads what the assistant's rules could not; chosen by ${reader.manifest.evidence}` : `off (${reader.reasonCode}${reader.problem ? `: ${reader.problem}` : ""}) — the assistant's rules read alone`}`);
   const s = core.status(config, started.relay.usage.snapshot(), started.relay.usage.ledger());
   console.log("MERIT EVENT MAKER — app + vision-language relay");
   console.log(`  open        ${started.baseUrl}/index.html`);

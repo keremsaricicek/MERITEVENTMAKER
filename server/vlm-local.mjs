@@ -224,7 +224,7 @@ class LocalStatusError extends Error { constructor(status, message) { super(mess
 // headers timeout, and that fired first: a real model on four CPU cores that
 // was still reading a whole plan at 5 minutes (2026-10-18, Qwen2-VL-2B, 72 % of
 // the prompt in 257 s) came back as "the local model process is not running".
-function loopbackFetch(url, init = {}) {
+export function loopbackFetch(url, init = {}) {
   return new Promise((resolve, reject) => {
     const u = new URL(url), body = init.body == null ? null : String(init.body);
     const headers = { ...(init.headers || {}) };

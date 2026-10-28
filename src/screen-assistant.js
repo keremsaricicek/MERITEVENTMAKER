@@ -18,11 +18,13 @@
 (function () {
   "use strict";
   const P = () => globalThis.MeritAssistantParse;
+  const R = () => globalThis.MeritAssistantReading;
 
   let canMutate;
   let currentId;
   let events;
   let onChange;
+  let readText;
   let t;
   let today;
   let writers;
@@ -35,6 +37,7 @@
     currentId=deps.currentId;
     events=deps.events;
     onChange=deps.onChange;
+    readText=deps.readText;
     t=deps.t;
     today=deps.today;
     writers=deps.writers;
@@ -86,6 +89,7 @@
       for (const turn of turns) {
         const b = el("div", { class: `assistant-turn ${turn.who}` });
         b.append(el("p", {}, turn.text));
+        if (turn.byModel) b.append(el("p", { class: "assistant-by-model" }, t("assistant.readByModel")));
         if (turn.lines && turn.lines.length) { const ul = el("ul", { class: "assistant-lines" }); for (const l of turn.lines) ul.append(el("li", {}, l)); b.append(ul); }
         for (const opt of turn.options || []) b.append(optionCard(turn, opt));
         if (turn.undo && !turn.undone) {
@@ -175,9 +179,9 @@
       working(true);
       draw();
       // let the strip and the question paint before the work
-      setTimeout(() => {
+      setTimeout(async () => {
         let reply;
-        try { reply = answer(text); } catch (e) { reply = { text: (e && e.message) || t("assistant.couldNot") }; }
+        try { reply = await answer(text); } catch (e) { reply = { text: (e && e.message) || t("assistant.couldNot") }; }
         turns.push(Object.assign({ who: "assistant" }, reply));
         working(false);
         draw();
@@ -197,9 +201,21 @@
       }
       return { text: t("assistant.planIntro"), options: opts.map((o) => ({ plan: o, applied: false })) };
     }
-    function answer(text) {
+    // The rules read first; only what they cannot place goes to the second
+    // reader (the chat model on this machine, through the relay), whose reading
+    // is the rules' own shape — answered and carried out by the same code below.
+    async function answer(text) {
       const evs = events(), now = today();
-      const r = P().parse(text, evs, now);
+      let r = P().parse(text, evs, now), byModel = false;
+      if (r.kind === "unknown" && readText && R()) {
+        status.textContent = t("assistant.reading");
+        const m = await readText(text);
+        if (m) { r = R().toParse(m, evs, now); byModel = r.kind !== "unknown"; }
+      }
+      const out = reply(r, evs, now);
+      return byModel ? Object.assign(out, { byModel: true }) : out;
+    }
+    function reply(r, evs, now) {
       if (r.kind === "plan") { if (!currentId()) return { text: t("assistant.noEvent") }; return planReply(r.brief); }
       if (r.kind === "question") return { text: P().answer(r, evs, now, currentId()).text };
       if (r.kind !== "command") return { text: t("assistant.notUnderstood") };
@@ -221,5 +237,5 @@
     return { mount, toggle, isOpen, ask };
   }
 
-  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","currentId","events","onChange","t","today","writers"])});
+  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","currentId","events","onChange","readText","t","today","writers"])});
 })();
