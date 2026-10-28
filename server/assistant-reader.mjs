@@ -108,5 +108,22 @@ export function makeReader(cfg, { fetchImpl = loopbackFetch, timeoutMs = 120000 
     } catch { return { ok: false, code: ctrl.signal.aborted ? "CHAT_TIMEOUT" : "CHAT_NOT_RUNNING" }; }
     finally { clearTimeout(t); }
   }
-  return { read, verify };
+  // A short small-talk reply (READING.chatMessages); plain text, at most 800
+  // characters, nothing else taken from it.
+  async function chat(text, { signal } = {}) {
+    const served = await verify(signal);
+    if (!served.ok) return { ok: false, code: served.code };
+    const ctrl = new AbortController(), t = setTimeout(() => ctrl.abort(), timeoutMs);
+    if (signal) signal.addEventListener("abort", () => ctrl.abort(), { once: true });
+    try {
+      const body = { messages: READING.chatMessages(text), temperature: 0.3, max_tokens: 220, cache_prompt: false, chat_template_kwargs: { enable_thinking: false } };
+      const r = await fetchImpl(cfg.url + "/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal: ctrl.signal });
+      if (!r.ok) return { ok: false, code: "CHAT_ERROR" };
+      const j = await r.json();
+      const reply = String((j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || "").replace(/<think>[\s\S]*?<\/think>/g, "").trim().slice(0, 800);
+      return reply ? { ok: true, reply } : { ok: false, code: "CHAT_EMPTY" };
+    } catch { return { ok: false, code: ctrl.signal.aborted ? "CHAT_TIMEOUT" : "CHAT_NOT_RUNNING" }; }
+    finally { clearTimeout(t); }
+  }
+  return { read, chat, verify };
 }

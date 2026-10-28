@@ -21,6 +21,7 @@
   const R = () => globalThis.MeritAssistantReading;
 
   let canMutate;
+  let chatText;
   let currentId;
   let events;
   let onChange;
@@ -34,6 +35,7 @@
     if (created) throw new Error("MeritScreenAssistant.create() is called once, by app-v8.js.");
     created = true;
     canMutate=deps.canMutate;
+    chatText=deps.chatText;
     currentId=deps.currentId;
     events=deps.events;
     onChange=deps.onChange;
@@ -90,6 +92,7 @@
         const b = el("div", { class: `assistant-turn ${turn.who}` });
         b.append(el("p", {}, turn.text));
         if (turn.byModel) b.append(el("p", { class: "assistant-by-model" }, t("assistant.readByModel")));
+        if (turn.chat) b.append(el("p", { class: "assistant-by-model" }, t("assistant.chatNote")));
         if (turn.lines && turn.lines.length) { const ul = el("ul", { class: "assistant-lines" }); for (const l of turn.lines) ul.append(el("li", {}, l)); b.append(ul); }
         for (const opt of turn.options || []) b.append(optionCard(turn, opt));
         if (turn.undo && !turn.undone) {
@@ -212,6 +215,12 @@
         const m = await readText(text);
         if (m) { r = R().toParse(m, evs, now); byModel = r.kind !== "unknown"; }
       }
+      // Neither a question about our events nor a command: small talk, from the
+      // same model, marked as not resting on the data.
+      if (r.kind === "unknown" && chatText) {
+        const said = await chatText(text);
+        if (said) return { text: said, chat: true };
+      }
       const out = reply(r, evs, now);
       return byModel ? Object.assign(out, { byModel: true }) : out;
     }
@@ -237,5 +246,5 @@
     return { mount, toggle, isOpen, ask };
   }
 
-  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","currentId","events","onChange","readText","t","today","writers"])});
+  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","chatText","currentId","events","onChange","readText","t","today","writers"])});
 })();

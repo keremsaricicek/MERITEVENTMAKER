@@ -207,7 +207,7 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
   // but the outcome (the sentence may name guests).
   const chat = reader.configured ? (readerImpl || makeReader(reader, { timeoutMs: config.limits.timeoutMs })) : null;
   let reading = false;
-  async function handleRead(req, res) {
+  async function handleRead(req, res, mode = "read") {
     if (!chat) { req.resume(); return json(res, 409, { ok: false, code: reader.reasonCode || "CHAT_OFF" }); }
     if (reading) { req.resume(); return json(res, 409, { ok: false, code: "BUSY" }); }
     const { body, error } = await readJson(req, 8 * 1024);
@@ -220,11 +220,12 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     const onClose = () => { if (!res.writableEnded) controller.abort(); };
     res.on("close", onClose);
     let r;
-    try { r = await chat.read(text, { signal: controller.signal }); } finally { res.off("close", onClose); reading = false; }
+    try { r = mode === "chat" ? await chat.chat(text, { signal: controller.signal }) : await chat.read(text, { signal: controller.signal }); } finally { res.off("close", onClose); reading = false; }
     const seconds = Math.round((now() - started) / 100) / 10;
-    say(`read: ${r.ok ? (r.reading ? r.reading.kind : "no reading") : r.code} in ${seconds}s`);
+    say(`${mode}: ${r.ok ? (mode === "chat" ? "reply" : r.reading ? r.reading.kind : "no reading") : r.code} in ${seconds}s`);
     if (res.writableEnded || res.destroyed) return;
-    return json(res, r.ok ? 200 : 409, r.ok ? { ok: true, reading: r.reading, seconds } : { ok: false, code: r.code });
+    if (!r.ok) return json(res, 409, { ok: false, code: r.code });
+    return json(res, 200, mode === "chat" ? { ok: true, reply: r.reply, seconds } : { ok: true, reading: r.reading, seconds });
   }
 
   async function handleCancel(req, res) {
@@ -451,6 +452,7 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
       if (pathname === "/vlm-relay/ask") return await handleAsk(req, res);
       if (pathname === "/vlm-relay/cancel") return await handleCancel(req, res);
       if (pathname === "/vlm-relay/read") return await handleRead(req, res);
+      if (pathname === "/vlm-relay/chat") return await handleRead(req, res, "chat");
       return json(res, 404, { ok: false, code: "NOT_FOUND" });
     } catch (err) {
       say(`internal error: ${err && err.name}`);

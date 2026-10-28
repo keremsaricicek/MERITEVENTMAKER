@@ -68,6 +68,14 @@ Kullanmadığın alanlar null; many yoksa false; steps soru için boş liste.`;
     m.push({ role: "user", content: String(text) });
     return m;
   }
+  // Small talk: what is neither a question about our events nor a command
+  // ("Merhaba", "bana moral ver"). The model answers briefly, and is told it
+  // knows nothing of the events, guests or tables — those come only from the
+  // app's own data; the panel marks the reply as not resting on the data.
+  const CHAT_SYSTEM = "Sen MERIT Event Maker programındaki yardımcı asistansın. Kısa (en fazla üç cümle), sıcak ve doğal Türkçe konuş. "
+    + "Etkinlikler, misafirler, masalar, koltuklar ya da sayılar hakkında bilgi verme ve tahmin etme: bunları program kendi kayıtlarından cevaplar. "
+    + "Böyle bir şey sorulursa, sorunun ad ve etkinlik adıyla yazılmasını iste. Bilmediğin bir şeyi bildiğini söyleme.";
+  function chatMessages(text) { return [{ role: "system", content: CHAT_SYSTEM }, { role: "user", content: String(text) }]; }
   // A reading is taken only in exactly this shape; anything else is no reading.
   function valid(m) {
     const str = (v) => v === null || (typeof v === "string" && v.length <= 120);
@@ -101,5 +109,5 @@ Kullanmadığın alanlar null; many yoksa false; steps soru için boş liste.`;
   return { kind: "command", plan: steps };
   }
 
-  globalThis.MeritAssistantReading = Object.freeze({ INTENTS, OPS, SCHEMA, SYSTEM, EXAMPLES, messages, valid, toParse });
+  globalThis.MeritAssistantReading = Object.freeze({ INTENTS, OPS, SCHEMA, SYSTEM, EXAMPLES, CHAT_SYSTEM, messages, chatMessages, valid, toParse });
 })();

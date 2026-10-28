@@ -4469,8 +4469,10 @@
     events:()=>state.events,currentId:()=>ui.screen==="workspace"?ui.activeEventId:null,today:()=>new Date().toLocaleDateString("en-CA"),
     canMutate:(e)=>canMutate(e,"change this event"),t:(...a)=>t(...a),
     // The second reader: what the rules could not place, read by the pinned chat
-    // model on this machine through the relay (server/assistant-reader.mjs); null
-    // when no relay serves this page or no reader is configured.
+    // model on this machine through the relay (server/assistant-reader.mjs), and
+    // its small-talk reply for what is neither question nor command; null when
+    // no relay serves this page or no reader is configured.
+    chatText:async(text)=>{try{const r=await fetch("/vlm-relay/chat",{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify({text}),cache:"no-store",credentials:"same-origin"});if(!r.ok)return null;const j=await r.json();return j&&j.ok&&typeof j.reply==="string"?j.reply:null;}catch{return null;}},
     readText:async(text)=>{try{const r=await fetch("/vlm-relay/read",{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify({text}),cache:"no-store",credentials:"same-origin"});if(!r.ok)return null;const j=await r.json();return j&&j.ok?j.reading:null;}catch{return null;}},
     onChange:()=>{const e=activeEvent();if(e){RULES().syncEventChairs(e);touchEvent(e);}render();},
     writers:{
