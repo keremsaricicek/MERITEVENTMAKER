@@ -1317,3 +1317,24 @@ test. Runs after the chat-model race.
 vs transformers + PEFT, the same 31 crops): **31 / 31** (`local-vlm-results/v5-agree-B6d.txt`).
 `qwen3.5-0.8b-merit-b6d` lists merged and applies it by itself; B6c's manifest lists no
 check (one model). Adapter `models/local-vlm/qwen3.5-0.8b-merit-b6d/` (sha256 `643d42fa…882e`).
+
+## 2026-10-29 — runB6e verdict: not better than B6d; training stops here (owner)
+
+Raw: `local-vlm-results/v5-{tuck3b,real,blind4,s1}-B6e.json`.
+
+| question | fresh tucked (3b) | blind4 | S1 | real (6th time) | vs B6d |
+|---|---|---|---|---|---|
+| identify | tucked chairs 79 / 79; empty named on look 1 **9 / 48** (both looks 4) | **fail**: one class at 0.67 (< 0.70; furniture 0.87) | – | 0.979, empty 1 / 32 | worse (B6d passes blind4) |
+| merged | – | 80 / 80, yes on separate 0, agreed-and-wrong 0 | 0.975 | 0.932, yes on separate 0 / 38 | passes like B6d |
+| chairs | – | 0.63, over 0.16 | 0.71, over 0.26 | – | worse |
+| serves | – | 0.88, yes on separate 0.27 | 0.85 | – | worse |
+
+The empty crops B6e names on the redrawn tucked test are nearly all one structure of the
+Golden plan's held-out part: the angled double-line WALL at the bottom right, drawn like a
+padded bench — the pool happened to draw many crops around it. That is a real confusion
+(a wall is not seating) and it is reported as measured; the test is not changed.
+**B6d stays the one model** (merged, applied by itself). As the owner decided on 2026-10-28
+("artık otursun"), runB6e was the last training round. B6d on the redrawn test, B6e's
+language and seat counts were not run (they decide nothing); the CPU went to the chat-model race.
+identify stays off: turning it on as suggestions only (never applied by itself) would be the
+owner's decision against the pre-registered bar, recorded as such.
