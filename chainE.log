@@ -14,3 +14,6 @@ wrote 144 tensors, rank 16, alpha 32 -> /tmp/claude-0/-home-user-MERITEVENTMAKER
 == 2026-10-29T01:18:49Z bench tuck3b-B6e
 == 2026-10-29T03:04:29Z bench real-B6e
 == 2026-10-29T03:50:16Z bench v5f-B6e
+== 2026-10-29T05:55:08Z bench s1-B6e
+== 2026-10-29T06:20:14Z bench tuck3b-B6d
+== 2026-10-29T06:56:46Z chainE stopped by hand after B6e's verdict (B6e loses to B6d: blind4 identify fails, tucked empties 9/48); B6d on tucktest3b, B6e's language and seat counts dropped as they decide nothing; the race goes next; CHAINE-DONE
