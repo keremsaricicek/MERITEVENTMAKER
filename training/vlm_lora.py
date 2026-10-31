@@ -255,9 +255,13 @@ def prompt(proc, q):
     return proc.apply_chat_template(msgs, add_generation_prompt=True, tokenize=False, enable_thinking=False)
 
 
-def text_prompt(proc, system, q):
-    """A text-only item (no image), as llama-server's chat template builds it."""
-    msgs = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": q}]
+def text_prompt(proc, system, q, shots=None):
+    """A text-only item (no image), as llama-server's chat template builds it;
+    `shots` are worked examples sent before it (F8: the relay's own, in order)."""
+    msgs = ([{"role": "system", "content": system}] if system else [])
+    for u, a in shots or []:
+        msgs += [{"role": "user", "content": u}, {"role": "assistant", "content": a}]
+    msgs += [{"role": "user", "content": q}]
     return proc.apply_chat_template(msgs, add_generation_prompt=True, tokenize=False, enable_thinking=False)
 
 
@@ -342,7 +346,7 @@ def cmd_train(a):
                 pre = prompt(proc, r["q"])
                 x = proc(text=[pre + ans + "<|im_end|>"], images=[img], return_tensors="pt")
             else:
-                pre = text_prompt(proc, r.get("system"), r["q"])
+                pre = text_prompt(proc, r.get("system"), r["q"], r.get("shots"))
                 x = proc(text=[pre + ans + "<|im_end|>"], return_tensors="pt")
             ans_ids = proc.tokenizer(ans, add_special_tokens=False)["input_ids"] + [end_id]
             ids = x["input_ids"][0]
