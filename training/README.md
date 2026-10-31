@@ -1524,3 +1524,76 @@ data (checked: 0 equal). Init runB6d, replay as B7, short prompt, one epoch.
 fresh; 0 wrong changes over all sets; briefs as before. **If B7c fails:** the same data and
 reading on Qwen3.5-2B (runB7-2B), bars unchanged, fresh3 then seen → a fresh4 written before
 its data.
+
+## 2026-10-31 — Detector v4-g2: Golden 2's technical look as a family (written before any candidate is trained)
+
+Owner: make plans with the same technical properties as Golden and Golden 2, train on them,
+test on the real plans; it must read plans it has never seen, not memorise them. A fourth
+real plan will not come, so the unseen-venue estimate is leave-one-style-out (below).
+
+**What was looked at, said first.** Golden 2's STYLE was studied (its exam is done and it is
+SEEN): an Epson scan, one 200 dpi JPEG on an A4 page, the drawing turned 90° on the page;
+blue outlines; beige square tables with a green centre dot; orange armchairs; squares in
+pairs and rows of three; pairs with an orange banquette on one side; round tables with 5–6
+cream chairs with light-blue backs; a long table with two dots and armchairs on both long
+sides; stage, bar, entrances in light-orange word-art. So for any model trained with the new
+family **Golden 2 is a seen-style test, not an unseen venue.** No layout, count, position or
+text of Golden 2 is copied. Golden (`merit-real-venue-plan.png`) and ORNEK stay regression
+plans. **No real plan goes into training** in any run below.
+
+**Data change (`training/synth_levels.py`, existing families and seeds byte-identical — checked
+by regenerating sets and comparing file hashes):**
+- family 18 `scan-office-blue` (Golden 2's look): every plan is put on an A4 page at 200 dpi,
+  turned 0/90/180/270° (mostly 90/270), light scanner noise and JPEG, labels carried through;
+- layout `lounge` (new, random): square pairs and rows of 2–3 with armchairs on the long
+  sides, long tables (2 dots, 3–5 armchairs on each long side), square pairs with a banquette
+  on one side and chairs on the other, rounds with 5–6 petal chairs; random counts, positions,
+  sizes and orientations. Used by family 18 (with the old train layouts in a third of plans)
+  and by family 10 (Golden's look, which lacked long tables and banquette pairs);
+- `--families`/`--layouts` options; without them the output is what it was.
+- Sets (seeds in the run record): gen-2 train 600 (families 0–7), gen-3 train 588 (as v3),
+  family 18 train 420 (60/level) + val 84 (12/level), family 10 `lounge` train 168 (24/level)
+  + val 42; gen-3 val, held-out (8, 9), blind (14, 15), blind-2 (16, 17) for reporting only.
+
+**Warm start.** v2's `model.pt` is not kept; it is rebuilt from the pinned ONNX
+(`models/plan-detector/v2/model.js`, sha256 `a180b420…`) by folding each conv's bias back into
+its batch-norm. Re-exported, every weight equals the pinned file's within 3e-8. v2 never saw
+families 10, 11 or 18. All runs: `detector.py train --init v2 --steps 3000`, other options at
+their defaults; thresholds 0.5 for every class, fixed, never re-calibrated.
+
+**Runs, in this order (CPU decides how many finish; an unfinished one is reported as such):**
+1. **main**: gen2 + gen3 + family 18 + family 10 `lounge`, families 8, 9 excluded.
+2. **noOffice** (owner's (a) and (b), made stricter): without anything of the office-graphic
+   look — families 10 and 18 and both `lounge` sets out. Golden and Golden 2 share that look,
+   so a model that saw either look is not unseen for the other. Scores Golden 2 AND Golden.
+3. **noG2** (owner's (a) as asked): gen2 + gen3 only (family 10 in, nothing taken from Golden
+   2). Scores Golden 2; NOT unseen-style for it (family 10 looks like it) — reported as such.
+4. **no11** (owner's (c)): as main without family 11 (ORNEK's look). Scores ORNEK.
+- Disclosed limit of every variant: gen-1/2 family 2 (`colour-arm`, orange armchairs, beige
+  tables, centre dot) stays in, as it was for v1–v3, whose Golden score was called unseen.
+
+**Scoring.** Real plans through the product (`benchmarks/run-benchmark.mjs`, classical +
+the candidate through `MERIT_BENCH_MODEL_PIN`, OCR from `.vendor-cache`, network refused),
+the active v2 measured the same way on the same source the same night. Golden 2: the 200 dpi
+JPEG from the PDF, read the same way (no second look: in the exam none started);
+tables matched by centre (3 % of the diagonal, the benchmark's rule) to a table-centre list
+whose counts are `golden2-truth.json`'s (27 tables, chairs per table from its groups; the
+centres were placed by the engineer, NOT human-verified — QA checks them on the image);
+"chairs tied to the right table" = Σ over truth tables of min(chairs the product tied to the
+matched table, its true chairs) / 68. Golden: chairs tied = `relationships.correct` / 113.
+
+**Bars (fixed now, never changed after a result):**
+- main, Golden 2 (seen style): table recall ≥ 0.95 (≥ 26 of 27) with ≤ 1 phantom table;
+  chairs tied ≥ 0.90 (≥ 62 of 68).
+- main, Golden and ORNEK: no regression on any guarded field of `benchmarks/BASELINE.json`
+  (`record-baseline.mjs` logic, `--latest` = the candidate's report), and none against v2
+  measured the same night.
+- main, synthetic: gen-3 val, held-out, blind, blind-2 and family-18/10-lounge val, level by
+  level, tables and chairs precision and recall and column recall at 0.5, v2 beside it;
+  as for v3, **package only if no level regresses** (a drop of 0.01 or more on any of those
+  numbers on held-out, blind or blind-2 is a regression).
+- unseen venue (owner): on each plan scored by a model that did not see its look — Golden 2
+  and Golden by **noOffice**, ORNEK by **no11** — table recall ≥ 0.95 with ≤ 1 phantom, and
+  chairs tied ≥ 0.90 (not applicable to ORNEK, which draws no chairs). noG2 is reported
+  beside, as measured, and does not count as unseen.
+- Nothing is pinned or activated by this work; that is a person's decision after QA.
