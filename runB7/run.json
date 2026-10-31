@@ -1,0 +1,23 @@
+{
+ "base": "/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/models/hf/Qwen3.5-0.8B",
+ "data": "/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/f8/data-short,/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v6/d6,/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v6/c6,/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v5/train",
+ "items": 3600,
+ "epochs": 1.0,
+ "rank": 16,
+ "alpha": 32,
+ "lr": 0.0002,
+ "accum": 8,
+ "seed": 3,
+ "trainable": 5308416,
+ "targets": "language_model MLP gate/up/down, 24 blocks",
+ "curriculum": true,
+ "dtype": "fp32",
+ "init": "/tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/v5/runB6d",
+ "replayMax": 400,
+ "gradCkpt": false,
+ "replayTasks": "ID,NEG,COUNT,CHAIRS,MERGED,SERVES,BRIEF",
+ "resumedAt": 3200,
+ "peakTrainRssMb": 8600,
+ "seconds": 1259,
+ "finished": "2026-10-31T13:42:00Z"
+}
