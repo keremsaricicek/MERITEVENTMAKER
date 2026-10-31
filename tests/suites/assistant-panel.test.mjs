@@ -84,6 +84,23 @@ export default async function run({ page, checks, baseUrl }) {
   r = await say("Selin Ak'ı T05'e oturt");
   checks.ok(/yok/.test(r.last), "an unknown guest is asked about, never invented", r.last);
 
+  // a deletion is shown first and waits: Vazgeç changes nothing, Onayla deletes, Geri al restores
+  const guestsNow = () => page.evaluate(() => JSON.stringify(activeEvent().guests));
+  const g0 = await guestsNow();
+  r = await say("Ahmet Yılmaz'ı sil");
+  checks.ok(/onaylıyor musun/i.test(r.last) && /Ahmet Yılmaz/.test(r.last) && /silinecek/.test(r.last) && g0 === await guestsNow(), "a deletion is shown first and nothing changes yet", r.last);
+  await page.locator(".assistant-cancel").last().click();
+  await settle(page);
+  const cancelled = await page.evaluate(() => [...document.querySelectorAll(".assistant-turn.assistant")].pop().innerText);
+  checks.ok(g0 === await guestsNow() && /hiçbir şey değiştirmedim/i.test(cancelled), "Vazgeç changes nothing and says so", cancelled);
+  r = await say("Ahmet Yılmaz'ı sil");
+  await page.locator(".assistant-confirm").last().click();
+  await settle(page);
+  checks.ok(await page.evaluate(() => !activeEvent().guests.some((x) => x.id === "gg1")), "Onayla deletes the one guest shown");
+  await page.locator(".assistant-undo").last().click();
+  await settle(page);
+  checks.ok(await page.evaluate(() => activeEvent().guests.some((x) => x.id === "gg1")), "and one Geri al brings the guest back");
+
   // a brief becomes arrangements; Uygula draws real tables, one Geri al removes them all
   const tablesBefore = await page.evaluate(() => activeEvent().tables.length);
   r = await say("Salon 20x30 metre, 300 kişilik gala, 180'lik yuvarlak masa");

@@ -101,6 +101,13 @@
           b.append(u);
         }
         if (turn.undone) b.append(el("p", { class: "assistant-undone" }, t("assistant.undone")));
+        if (turn.confirm && !turn.settled) {
+          const ok = el("button", { class: "btn primary assistant-confirm", type: "button" }, t("assistant.confirm"));
+          const no = el("button", { class: "btn assistant-cancel", type: "button" }, t("assistant.cancel"));
+          ok.addEventListener("click", () => settle(turn, true));
+          no.addEventListener("click", () => settle(turn, false));
+          b.append(ok, no);
+        }
         log.append(b);
       }
       log.scrollTop = log.scrollHeight;
@@ -177,6 +184,16 @@
       input.focus();
     }
 
+    // A shown command: Onayla carries it out (resolved again against the event as
+    // it is now), Vazgeç changes nothing.
+    function settle(turn, yes) {
+      turn.settled = true;
+      const out = yes ? carryOut(turn.confirm.plan) : { text: t("assistant.cancelled") };
+      turns.push(Object.assign({ who: "assistant" }, out));
+      draw();
+      input.focus();
+    }
+
     function ask(text) {
       turns.push({ who: "you", text });
       working(true);
@@ -224,21 +241,50 @@
         const said = await chatText(text);
         if (said) return { text: said, chat: true };
       }
-      const out = reply(r, evs, now);
+      const out = reply(r, evs, now, byModel);
       return byModel ? Object.assign(out, { byModel: true }) : out;
     }
-    function reply(r, evs, now) {
+    function reply(r, evs, now, byModel) {
       if (r.kind === "plan") { if (!currentId()) return { text: t("assistant.noEvent") }; return planReply(r.brief); }
       if (r.kind === "question") return { text: P().answer(r, evs, now, currentId()).text };
       if (r.kind !== "command") return { text: t("assistant.notUnderstood") };
       if (!currentId()) return { text: t("assistant.noEvent") };
+      // A command the language model read, and any deletion, is SHOWN first and
+      // waits for Onayla: a misreading costs a click, never a guest.
+      if (byModel || r.plan.some((st) => st.op === "deleteGuest")) {
+        const A = globalThis.MeritAssistantActions.create({ events, current: currentId, today, canMutate: (e) => canMutate(e), writers: {}, snapshot: () => null, registerUndo: () => {} });
+        const res = A.resolve(r.plan);
+        if (res.ask) return { text: res.ask };
+        if (res.refuse) return { text: res.refuse };
+        const real = res.steps.filter((x) => x.op !== "noop");
+        if (!real.length) return { text: t("assistant.nothing"), lines: res.steps.map((x) => x.line) };
+        return { text: t("assistant.confirmIntro"), lines: preview(res.steps), confirm: { plan: r.plan } };
+      }
+      return carryOut(r.plan);
+    }
+    // What a resolved plan will do, in words, before anything changes.
+    function preview(steps) {
+      const ev = events().find((e) => e.id === currentId());
+      const pax = (id) => { const g = ev && ev.guests.find((x) => x.id === id); return g ? g.pax || 1 : 1; };
+      return steps.map((x) => {
+        if (x.op === "noop") return x.line;
+        if (x.op === "assign") return `${x.name} → ${x.number}${x.seats ? ` (${t("assistant.pv.seat")} ${x.seats.map((n) => n + 1).join(", ")})` : ""}`;
+        if (x.op === "unassign") return t("assistant.pv.unassign", { name: x.name });
+        if (x.op === "deleteGuest") return pax(x.guestId) > 1 ? t("assistant.pv.deleteParty", { name: x.name, n: pax(x.guestId) - 1 }) : t("assistant.pv.delete", { name: x.name });
+        if (x.op === "setPax") return t("assistant.pv.pax", { name: x.name, n: x.pax });
+        if (x.op === "setVip") return t("assistant.pv.vip", { name: x.name });
+        if (x.op === "addGuest") return x.table ? t("assistant.pv.addAt", { name: x.name, n: x.pax, table: x.table }) : t("assistant.pv.add", { name: x.name, n: x.pax });
+        return x.op;
+      });
+    }
+    function carryOut(plan) {
       const rec = [];
       const A = globalThis.MeritAssistantActions.create({
         events, current: currentId, today, canMutate: (e) => canMutate(e),
         writers: recording(rec), snapshot: () => null, registerUndo: () => {},
       });
       let out;
-      try { out = A.run(r.plan); }
+      try { out = A.run(plan); }
       catch (e) { for (const back of rec.slice().reverse()) back(); onChange(); return { text: e.message }; }
       if (out.ask) return { text: out.ask };
       if (out.refuse) return { text: out.refuse };

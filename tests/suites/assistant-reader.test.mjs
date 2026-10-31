@@ -143,10 +143,15 @@ export default async function run({ page, checks, repoRoot }) {
       return page.evaluate(() => [...document.querySelectorAll(".assistant-turn.assistant")].pop().innerText);
     };
     const before = sent.length;
-    const last = await say("Zeynep Arslan T05 masasına geçsin");
+    const shown = await say("Zeynep Arslan T05 masasına geçsin");
+    const seat0 = await page.evaluate(() => { const g = activeEvent().guests.find((x) => x.id === "gz"); return g.assignment && g.assignment.tableId; });
+    checks.ok(!seat0 && /onaylıyor musun/i.test(shown) && /Zeynep Arslan → T05/.test(shown) && /dil modeli okudu/.test(shown) && sent.length === before + 1,
+      "the rules could not place it; the reader did, and what it will do is SHOWN first — nothing changes before Onayla", { seat0, shown });
+    await page.locator(".assistant-confirm").last().click();
+    await settle(page);
+    const last = await page.evaluate(() => [...document.querySelectorAll(".assistant-turn.assistant")].pop().innerText);
     const seat = await page.evaluate(() => { const g = activeEvent().guests.find((x) => x.id === "gz"); return g.assignment && g.assignment.tableId; });
-    checks.ok(seat === "t05" && /dil modeli okudu/.test(last) && /T05/.test(last) && sent.length === before + 1,
-      "the rules could not place it; the reader did, the same acting code seated her at once, and the panel says the language model read it", { seat, last });
+    checks.ok(seat === "t05" && /T05/.test(last), "Onayla carries it out through the same acting code", { seat, last });
     await page.locator(".assistant-undo").last().click();
     await settle(page);
     checks.equal(await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment), null, "one Geri al takes it back");
