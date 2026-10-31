@@ -8,27 +8,38 @@
 
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { execSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readAppSources } from "./lib/app-sources.mjs";
+import { offlineCspMeta } from "./lib/offline-csp.mjs";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const CACHE = path.join(ROOT, ".vendor-cache");
 const DIST = path.join(ROOT, "dist");
 
-const XLSX_VERSION = "0.18.5";
+// SheetJS 0.20.3 (fixes CVE-2023-30533 and CVE-2024-22363). Its own CDN is not
+// reachable from every build machine; the npm mirror @e965/xlsx carries the
+// same bytes as the JSR mirror @sail/xlsx, and the build refuses any other.
+const XLSX_PACKAGE = "@e965/xlsx";
+const XLSX_VERSION = "0.20.3";
+const XLSX_SHA256 = "cc015130aa8521e7f088f88898eba949ccdcbfb38df0bd129b44b7273c3a6f41";
 const PDFJS_VERSION = "5.7.284";
 
 function fetchTarball(pkg, version) {
-  const dest = path.join(CACHE, `${pkg}-${version}.tgz`);
+  // A scoped package (@scope/name) is cached as "@scope-name", the same
+  // directory name tests/lib/vendor.mjs looks in; its tarball is name-version.tgz.
+  const flat = pkg.replace("/", "-"), base = pkg.split("/").pop();
+  const dest = path.join(CACHE, `${flat}-${version}.tgz`);
   if (!existsSync(dest)) {
     mkdirSync(CACHE, { recursive: true });
     console.log(`Downloading ${pkg}@${version} from the npm registry...`);
     execSync(
-      `curl -sSL -o "${dest}" "https://registry.npmjs.org/${pkg}/-/${pkg}-${version}.tgz"`,
+      `curl -sSL -o "${dest}" "https://registry.npmjs.org/${pkg}/-/${base}-${version}.tgz"`,
       { stdio: "inherit" }
     );
   }
-  const extractDir = path.join(CACHE, `${pkg}-${version}`);
+  const extractDir = path.join(CACHE, `${flat}-${version}`);
   if (!existsSync(extractDir)) {
     mkdirSync(extractDir, { recursive: true });
     execSync(`tar xzf "${dest}" -C "${extractDir}"`);
@@ -37,23 +48,43 @@ function fetchTarball(pkg, version) {
 }
 
 console.log("Fetching vendor packages (xlsx, pdfjs-dist)...");
-const xlsxDir = fetchTarball("xlsx", XLSX_VERSION);
+const xlsxDir = fetchTarball(XLSX_PACKAGE, XLSX_VERSION);
 const pdfjsDir = fetchTarball("pdfjs-dist", PDFJS_VERSION);
 
 const xlsxSrc = readFileSync(path.join(xlsxDir, "dist/xlsx.full.min.js"), "utf8");
+if (createHash("sha256").update(xlsxSrc).digest("hex") !== XLSX_SHA256) throw new Error(`${XLSX_PACKAGE}@${XLSX_VERSION}: xlsx.full.min.js is not the pinned SheetJS build`);
 const pdfCoreSrc = readFileSync(path.join(pdfjsDir, "build/pdf.min.mjs"), "utf8");
 const pdfWorkerSrc = readFileSync(path.join(pdfjsDir, "build/pdf.worker.min.mjs"), "utf8");
 
 const styles = readFileSync(path.join(ROOT, "src/styles.css"), "utf8");
-const appJs = ["src/app.js", "src/app-guests.js", "src/app-v8.js"]
-  .map((f) => readFileSync(path.join(ROOT, f), "utf8"))
-  .join("\n");
+// Tesseract.js (OCR) is intentionally NOT vendored here: this build's whole
+// point is zero network at runtime, which real OCR language data cannot
+// honor without embedding tens of MB. src/plan-ocr.js detects its absence
+// and reports the capacity auditor's OCR step as unavailable rather than
+// faking a result — see that file for the full rationale.
+// Read from index.html, never listed here. The hand-written copy of this
+// list drifted once already: plan-relationships.js and plan-memory.js were
+// added to the app and never to the builders, so every offline artifact
+// built afterwards shipped without them while the build reported success.
+const { files: appJsFiles, code: appJs } = readAppSources(ROOT);
 
 const shell = readFileSync(path.join(ROOT, "index.html"), "utf8");
 
 const bodyStart = shell.indexOf("<body>");
-const bodyEnd = shell.indexOf("<!--");
+// Cut at the first <script>, not at the first HTML comment: the markup this
+// build needs (the dialogs, the hidden file inputs, the toast host) sits
+// above the script block, and an explanatory comment anywhere in that markup
+// used to silently truncate the body and ship a build with no dialogs at all.
+const bodyEnd = shell.indexOf("<script");
+if (bodyStart < 0 || bodyEnd < 0 || bodyEnd <= bodyStart) {
+  throw new Error("build-offline: could not locate the body markup range in index.html");
+}
 const bodyMarkup = shell.slice(bodyStart, bodyEnd);
+for (const required of ['id="app"', 'id="guestForm"', 'id="excelDialog"', 'id="guideDialog"', 'id="toastWrap"', 'id="floorPlanFile"', 'id="guestFileInput"', 'id="backupFileInput"']) {
+  if (!bodyMarkup.includes(required)) {
+    throw new Error(`build-offline: body markup is missing ${required} — the offline build would be broken`);
+  }
+}
 
 const pdfBridge = `
 GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([${JSON.stringify(
@@ -63,26 +94,32 @@ globalThis.MeritPdf = { getDocument, GlobalWorkerOptions };
 globalThis.dispatchEvent(new CustomEvent("merit-pdf-ready"));
 `;
 
+// Every inline block is built once, hashed for the policy, then inserted.
+const styleBlock = `\n${styles}\n  `;
+const xlsxBlock = xlsxSrc;
+const pdfBlock = `\n${pdfCoreSrc}\n${pdfBridge}\n  `;
+const appBlock = `\n${appJs}\n  `;
+// This file carries no OCR model (src/plan-ocr-paddle.js would otherwise reach
+// for jsDelivr): the provider is told so, and reports ENGINE_NOT_BUNDLED
+// without making a request.
+const ppocrBlock = `\nglobalThis.MERIT_PPOCR_ASSET_PATHS = { none: "the single-file package carries no OCR model; use dist/merit-offline/" };\n`;
+const csp = offlineCspMeta({ scripts: [ppocrBlock, xlsxBlock, pdfBlock, appBlock], styles: [styleBlock] });
+
 const html = `<!doctype html>
-<html lang="en">
+<html lang="tr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="dark">
+  ${csp}
   <title>MERIT ENTERTAINMENT — EVENT MAKER</title>
-  <style>
-${styles}
-  </style>
+  <style>${styleBlock}</style>
 </head>
 ${bodyMarkup}
-  <script data-merit-offline-xlsx>${xlsxSrc}</script>
-  <script type="module" data-merit-offline-pdf>
-${pdfCoreSrc}
-${pdfBridge}
-  </script>
-  <script>
-${appJs}
-  </script>
+  <script>${ppocrBlock}</script>
+  <script data-merit-offline-xlsx>${xlsxBlock}</script>
+  <script type="module" data-merit-offline-pdf>${pdfBlock}</script>
+  <script>${appBlock}</script>
 </body>
 </html>
 `;
@@ -90,4 +127,5 @@ ${appJs}
 mkdirSync(DIST, { recursive: true });
 const outPath = path.join(DIST, "index-offline.html");
 writeFileSync(outPath, html);
+console.log(`Bundled ${appJsFiles.length} app sources from index.html: ${appJsFiles.map((f) => f.replace("src/", "")).join(", ")}`);
 console.log(`Wrote ${outPath} (${(html.length / 1024 / 1024).toFixed(1)} MB)`);

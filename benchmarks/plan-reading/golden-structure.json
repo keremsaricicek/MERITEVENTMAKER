@@ -1,0 +1,43 @@
+{
+  "planId": "merit-real-venue",
+  "source": { "file": "plans/merit-real-venue-plan.png", "width": 1355, "height": 788 },
+  "annotationMethod": "MODEL-ASSISTED: read off the image at native resolution by the assistant (Claude) on 2026-10-10, box by box, in pixels converted to plan-percent. NOT human-verified. A person who checks these and corrects them should set humanVerified:true and note the date.",
+  "humanVerified": false,
+  "columns": {
+    "note": "Light-grey rectangles drawn on the wall lines at a regular pitch (x ≈ 20, 42, 65, 87 % on the top, inner bar and bottom walls; two on the left wall). Read as structural columns / pilasters. Two are less certain: the stub at the far left of the bar wall and the bottom-centre one, half hidden by the stage's bottom line.",
+    "items": [
+      { "id": "c-top-65", "box": { "x": 64.6, "y": 5.7, "w": 4.2, "h": 3.4 } },
+      { "id": "c-top-87", "box": { "x": 86.7, "y": 5.7, "w": 4.2, "h": 3.4 } },
+      { "id": "c-bar-1", "box": { "x": 1.3, "y": 16.5, "w": 4.0, "h": 3.2 }, "certainty": "likely" },
+      { "id": "c-bar-20", "box": { "x": 20.3, "y": 16.5, "w": 4.2, "h": 3.4 } },
+      { "id": "c-bar-42", "box": { "x": 42.4, "y": 16.5, "w": 4.2, "h": 3.4 } },
+      { "id": "c-left-51", "box": { "x": 1.1, "y": 50.5, "w": 2.1, "h": 7.2 } },
+      { "id": "c-left-88", "box": { "x": 1.1, "y": 87.9, "w": 2.1, "h": 6.6 } },
+      { "id": "c-bot-20", "box": { "x": 20.3, "y": 91.8, "w": 4.2, "h": 3.4 } },
+      { "id": "c-bot-42", "box": { "x": 42.4, "y": 91.8, "w": 4.2, "h": 3.4 } },
+      { "id": "c-bot-65", "box": { "x": 64.6, "y": 93.7, "w": 4.2, "h": 1.8 }, "certainty": "likely" },
+      { "id": "c-bot-87", "box": { "x": 86.7, "y": 91.8, "w": 4.2, "h": 3.4 } }
+    ]
+  },
+  "mergedTables": {
+    "note": "Tables drawn touching and aligned, used as one long table. Seats = chairs drawn along them (sofas beside the three top groups are not chairs; their seats are not drawn).",
+    "items": [
+      { "id": "top-1", "tables": 3, "chairs": 3, "box": { "x": 60.7, "y": 9.3, "w": 3.7, "h": 18.7 } },
+      { "id": "top-2", "tables": 3, "chairs": 3, "box": { "x": 71.6, "y": 9.3, "w": 3.7, "h": 18.7 } },
+      { "id": "top-3", "tables": 3, "chairs": 3, "box": { "x": 82.4, "y": 9.3, "w": 3.7, "h": 18.7 } },
+      { "id": "mid-1", "tables": 3, "chairs": 8, "box": { "x": 47.1, "y": 42.5, "w": 3.3, "h": 19.7 } },
+      { "id": "mid-2", "tables": 3, "chairs": 8, "box": { "x": 57.9, "y": 36.2, "w": 3.3, "h": 19.7 } },
+      { "id": "mid-3", "tables": 3, "chairs": 8, "box": { "x": 70.5, "y": 36.2, "w": 3.3, "h": 19.7 } },
+      { "id": "mid-4", "tables": 4, "chairs": 10, "box": { "x": 81.5, "y": 36.2, "w": 3.3, "h": 26.0 } },
+      { "id": "left-1", "tables": 3, "chairs": 8, "box": { "x": 15.9, "y": 53.3, "w": 11.1, "h": 6.3 } },
+      { "id": "left-2", "tables": 3, "chairs": 8, "box": { "x": 30.6, "y": 53.3, "w": 11.1, "h": 6.3 } },
+      { "id": "left-3", "tables": 3, "chairs": 6, "box": { "x": 15.9, "y": 73.0, "w": 11.1, "h": 5.7 } },
+      { "id": "left-4", "tables": 4, "chairs": 10, "box": { "x": 29.9, "y": 73.6, "w": 14.8, "h": 5.7 } },
+      { "id": "right-1", "tables": 2, "chairs": 4, "box": { "x": 90.2, "y": 47.6, "w": 7.2, "h": 5.7 } }
+    ],
+    "ambiguous": [
+      { "id": "bistro-pair", "tables": 2, "box": { "x": 1.6, "y": 27.3, "w": 5.6, "h": 5.1 }, "why": "two round bistro tables drawn touching by the entrance; whether they are one table is not drawn — scored neither way" }
+    ]
+  },
+  "stage": { "box": { "x": 46.4, "y": 62.6, "w": 41.5, "h": 31.3 }, "printedLabel": "SAHNE" }
+}

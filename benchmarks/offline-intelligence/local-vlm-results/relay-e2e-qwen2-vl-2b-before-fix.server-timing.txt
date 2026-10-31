@@ -1,0 +1,5 @@
+0.06.200.598 I srv  llama_server: model loaded
+0.06.200.608 I srv  llama_server: listening on http://127.0.0.1:8093
+0.14.774.150 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =    394, progress = 0.07, t =   4.70 s / 83.81 tokens per second
+4.26.768.826 I slot print_timing: id  0 | task 0 | prompt processing, n_tokens =   3786, progress = 0.72, t = 256.70 s / 14.75 tokens per second
+VmHWM (peak resident) of the llama-server process during the reading: VmHWM:	 2692852 kB

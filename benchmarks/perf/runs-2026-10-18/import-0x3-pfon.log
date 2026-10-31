@@ -1,0 +1,38 @@
+golden.png run 1: choose 193 ms + open 882 ms = 1075 ms
+golden.png run 2: choose 178 ms + open 371 ms = 549 ms
+golden.png run 3: choose 196 ms + open 375 ms = 571 ms
+golden.png run 4: choose 173 ms + open 360 ms = 533 ms
+golden.png run 5: choose 188 ms + open 394 ms = 582 ms
+ornek.png run 1: choose 900 ms + open 754 ms = 1654 ms
+ornek.png run 2: choose 865 ms + open 1314 ms = 2179 ms
+ornek.png run 3: choose 955 ms + open 1005 ms = 1960 ms
+ornek.png run 4: choose 898 ms + open 1162 ms = 2060 ms
+ornek.png run 5: choose 817 ms + open 990 ms = 1807 ms
+ornek.pdf run 1: choose 2772 ms + open 2940 ms = 5712 ms
+ornek.pdf run 2: choose 2657 ms + open 2950 ms = 5607 ms
+ornek.pdf run 3: choose 2441 ms + open 2878 ms = 5319 ms
+ornek.pdf run 4: choose 2383 ms + open 3076 ms = 5459 ms
+ornek.pdf run 5: choose 2412 ms + open 2727 ms = 5139 ms
+{
+ "golden.png": {
+  "chooseMs": 188,
+  "openMs": 375,
+  "totalMs": 571,
+  "worstTotalMs": 1075,
+  "pageErrors": 0
+ },
+ "ornek.png": {
+  "chooseMs": 898,
+  "openMs": 1005,
+  "totalMs": 1960,
+  "worstTotalMs": 2179,
+  "pageErrors": 0
+ },
+ "ornek.pdf": {
+  "chooseMs": 2441,
+  "openMs": 2940,
+  "totalMs": 5459,
+  "worstTotalMs": 5712,
+  "pageErrors": 0
+ }
+}

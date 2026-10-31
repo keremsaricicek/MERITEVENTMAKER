@@ -1,0 +1,132 @@
+{
+ "summary": {
+  "tables": 20,
+  "detectorExact": 0.85,
+  "detectorOver": 0.1,
+  "modelExact": 0.9,
+  "modelOver": 0.05,
+  "passes": true
+ },
+ "tables": [
+  {
+   "id": "t001",
+   "truth": 1,
+   "detector": 1,
+   "model": 1
+  },
+  {
+   "id": "t002",
+   "truth": 1,
+   "detector": 1,
+   "model": 1
+  },
+  {
+   "id": "t003",
+   "truth": 1,
+   "detector": 1,
+   "model": 1
+  },
+  {
+   "id": "t004",
+   "truth": 1,
+   "detector": 1,
+   "model": 1
+  },
+  {
+   "id": "t005",
+   "truth": 1,
+   "detector": 1,
+   "model": 1
+  },
+  {
+   "id": "t006",
+   "truth": 1,
+   "detector": 1,
+   "model": 1
+  },
+  {
+   "id": "t007",
+   "truth": 1,
+   "detector": 1,
+   "model": 1
+  },
+  {
+   "id": "t008",
+   "truth": 1,
+   "detector": 1,
+   "model": 1
+  },
+  {
+   "id": "t009",
+   "truth": 1,
+   "detector": 1,
+   "model": 1
+  },
+  {
+   "id": "t012",
+   "truth": 2,
+   "detector": 2,
+   "model": 2
+  },
+  {
+   "id": "t010",
+   "truth": 2,
+   "detector": 2,
+   "model": 2
+  },
+  {
+   "id": "t014",
+   "truth": 4,
+   "detector": 4,
+   "model": 4
+  },
+  {
+   "id": "t015",
+   "truth": 2,
+   "detector": 3,
+   "model": 2
+  },
+  {
+   "id": "t018",
+   "truth": 2,
+   "detector": 2,
+   "model": 2
+  },
+  {
+   "id": "t017",
+   "truth": 2,
+   "detector": 2,
+   "model": 2
+  },
+  {
+   "id": "t021",
+   "truth": 2,
+   "detector": 2,
+   "model": 2
+  },
+  {
+   "id": "t020",
+   "truth": 2,
+   "detector": 3,
+   "model": 3
+  },
+  {
+   "id": "t030",
+   "truth": 2,
+   "detector": 2,
+   "model": 2
+  },
+  {
+   "id": "t038",
+   "truth": 6,
+   "detector": 5,
+   "model": 5
+  },
+  {
+   "id": "t040",
+   "truth": 6,
+   "detector": 6,
+   "model": 6
+  }
+ ]
+}

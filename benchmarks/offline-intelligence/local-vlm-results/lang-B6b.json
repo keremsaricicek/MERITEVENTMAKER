@@ -1,0 +1,1742 @@
+{
+ "summary": {
+  "briefs": 40,
+  "fieldsRight": 0.768,
+  "briefsAllRight": 0.325,
+  "inventedRate": 0.771,
+  "medianSeconds": 17.93,
+  "model": "Qwen3.5-0.8B-Q8_0.gguf",
+  "lora": "adapter.gguf"
+ },
+ "rows": [
+  {
+   "id": 1,
+   "text": "150 m2 salon, 100 kişilik toplantı, 12 adet 180'lik yuvarlak masa, sandalye 45x50",
+   "want": {
+    "pax": 100,
+    "area_m2": 150,
+    "event": "meeting",
+    "table_kind": "round",
+    "table_count": 12,
+    "table_diam_cm": 180,
+    "chair_w_cm": 45,
+    "chair_d_cm": 50
+   },
+   "got": {
+    "pax": 100,
+    "area_m2": 150,
+    "room_w_m": 12,
+    "room_l_m": 12,
+    "table_count": 12,
+    "table_diam_cm": 180,
+    "table_len_cm": 180,
+    "table_wid_cm": 180,
+    "seats_per_table": 12,
+    "chair_w_cm": 45,
+    "chair_d_cm": 50,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [
+    "room_w_m",
+    "room_l_m",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table"
+   ],
+   "allRight": true,
+   "seconds": 16.76
+  },
+  {
+   "id": 2,
+   "text": "840 pax, 100 masa, homojen dağıt, kalanı 2 kişilik bistro",
+   "want": {
+    "pax": 840,
+    "table_count": 100,
+    "extra_kind": "bistro",
+    "extra_seats": 2
+   },
+   "got": {
+    "pax": 840,
+    "area_m2": 100,
+    "room_w_m": 10,
+    "room_l_m": 10,
+    "table_count": 100,
+    "table_diam_cm": 100,
+    "table_len_cm": 100,
+    "table_wid_cm": 100,
+    "seats_per_table": 840,
+    "chair_w_cm": 100,
+    "chair_d_cm": 100,
+    "extra_seats": 2,
+    "event": "meeting",
+    "table_kind": "rect",
+    "extra_kind": "bistro"
+   },
+   "wrong": [],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm",
+    "event",
+    "table_kind"
+   ],
+   "allRight": true,
+   "seconds": 16.98
+  },
+  {
+   "id": 3,
+   "text": "Düğün var 300 kişi, masalar 10'ar kişilik yuvarlak",
+   "want": {
+    "pax": 300,
+    "event": "wedding",
+    "table_kind": "round",
+    "seats_per_table": 10
+   },
+   "got": {
+    "pax": 300,
+    "area_m2": 100,
+    "room_w_m": 10,
+    "room_l_m": 10,
+    "table_count": 10,
+    "table_diam_cm": 100,
+    "table_len_cm": 100,
+    "table_wid_cm": 100,
+    "seats_per_table": 30,
+    "chair_w_cm": 100,
+    "chair_d_cm": 100,
+    "extra_seats": null,
+    "event": "wedding",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "seats_per_table"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_count",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "allRight": false,
+   "seconds": 16.33
+  },
+  {
+   "id": 4,
+   "text": "salon 20 metreye 30 metre, 400 kişilik gala yemeği, 150 cm yuvarlak masa",
+   "want": {
+    "pax": 400,
+    "room_w_m": 20,
+    "room_l_m": 30,
+    "event": "gala",
+    "table_kind": "round",
+    "table_diam_cm": 150
+   },
+   "got": {
+    "pax": 400,
+    "area_m2": 20,
+    "room_w_m": 30,
+    "room_l_m": 40,
+    "table_count": 1,
+    "table_diam_cm": 150,
+    "table_len_cm": 150,
+    "table_wid_cm": 150,
+    "seats_per_table": 1,
+    "chair_w_cm": 1,
+    "chair_d_cm": 1,
+    "extra_seats": null,
+    "event": "gala",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "room_w_m",
+    "room_l_m"
+   ],
+   "invented": [
+    "area_m2",
+    "table_count",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "allRight": false,
+   "seconds": 17.25
+  },
+  {
+   "id": 5,
+   "text": "Tiyatro düzeni 250 kişi sandalye 50ye 50",
+   "want": {
+    "pax": 250,
+    "event": "theatre",
+    "chair_w_cm": 50,
+    "chair_d_cm": 50
+   },
+   "got": {
+    "pax": 250,
+    "area_m2": 100,
+    "room_w_m": 10,
+    "room_l_m": 10,
+    "table_count": 50,
+    "table_diam_cm": 50,
+    "table_len_cm": 50,
+    "table_wid_cm": 50,
+    "seats_per_table": 50,
+    "chair_w_cm": 50,
+    "chair_d_cm": 50,
+    "extra_seats": null,
+    "event": "theatre",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_count",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "table_kind"
+   ],
+   "allRight": true,
+   "seconds": 17.35
+  },
+  {
+   "id": 6,
+   "text": "sınıf düzeni 60 kişi, 180x60 masalar, her masaya 3 kişi",
+   "want": {
+    "pax": 60,
+    "event": "classroom",
+    "table_kind": "rect",
+    "table_len_cm": 180,
+    "table_wid_cm": 60,
+    "seats_per_table": 3
+   },
+   "got": {
+    "pax": 60,
+    "area_m2": 3600,
+    "room_w_m": 6,
+    "room_l_m": 6,
+    "table_count": 60,
+    "table_diam_cm": 180,
+    "table_len_cm": 180,
+    "table_wid_cm": 180,
+    "seats_per_table": 3,
+    "chair_w_cm": 180,
+    "chair_d_cm": 180,
+    "extra_seats": null,
+    "event": "classroom",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [
+    "table_wid_cm"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_count",
+    "table_diam_cm",
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "allRight": false,
+   "seconds": 17.77
+  },
+  {
+   "id": 7,
+   "text": "kokteyl 500 kişi 40 tane bistro masa",
+   "want": {
+    "pax": 500,
+    "event": "cocktail",
+    "table_kind": "bistro",
+    "table_count": 40
+   },
+   "got": {
+    "pax": 500,
+    "area_m2": 40,
+    "room_w_m": 40,
+    "room_l_m": 40,
+    "table_count": 40,
+    "table_diam_cm": 40,
+    "table_len_cm": 40,
+    "table_wid_cm": 40,
+    "seats_per_table": 500,
+    "chair_w_cm": 500,
+    "chair_d_cm": 500,
+    "extra_seats": null,
+    "event": "cocktail",
+    "table_kind": "bistro",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "allRight": true,
+   "seconds": 17.93
+  },
+  {
+   "id": 8,
+   "text": "U düzeni toplantı 24 kişi",
+   "want": {
+    "pax": 24,
+    "event": "u_shape"
+   },
+   "got": {
+    "pax": 24,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": null,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "event"
+   ],
+   "invented": [
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 15.86
+  },
+  {
+   "id": 9,
+   "text": "yonetim kurulu toplantisi 16 kisi tek masa",
+   "want": {
+    "pax": 16,
+    "event": "boardroom",
+    "table_count": 1
+   },
+   "got": {
+    "pax": 16,
+    "area_m2": 12,
+    "room_w_m": 12,
+    "room_l_m": 12,
+    "table_count": 1,
+    "table_diam_cm": 12,
+    "table_len_cm": 12,
+    "table_wid_cm": 12,
+    "seats_per_table": 1,
+    "chair_w_cm": 12,
+    "chair_d_cm": 12,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [
+    "event"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 17.47
+  },
+  {
+   "id": 10,
+   "text": "200 kişilik banket, 20 masa, masalar 8 kişilik",
+   "want": {
+    "pax": 200,
+    "event": "banquet",
+    "table_count": 20,
+    "seats_per_table": 8
+   },
+   "got": {
+    "pax": 200,
+    "area_m2": 200,
+    "room_w_m": 10,
+    "room_l_m": 10,
+    "table_count": 20,
+    "table_diam_cm": 10,
+    "table_len_cm": 10,
+    "table_wid_cm": 10,
+    "seats_per_table": 8,
+    "chair_w_cm": 10,
+    "chair_d_cm": 10,
+    "extra_seats": null,
+    "event": "banquet",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": true,
+   "seconds": 16.97
+  },
+  {
+   "id": 11,
+   "text": "Salon 600 metrekare. 450 davetli. Nikah sonrası yemek. Yuvarlak masa 10 kişilik.",
+   "want": {
+    "pax": 450,
+    "area_m2": 600,
+    "event": "wedding",
+    "table_kind": "round",
+    "seats_per_table": 10
+   },
+   "got": {
+    "pax": 450,
+    "area_m2": 600,
+    "room_w_m": 12,
+    "room_l_m": 12,
+    "table_count": 10,
+    "table_diam_cm": 10,
+    "table_len_cm": 10,
+    "table_wid_cm": 10,
+    "seats_per_table": 10,
+    "chair_w_cm": 10,
+    "chair_d_cm": 10,
+    "extra_seats": null,
+    "event": "gala",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "event"
+   ],
+   "invented": [
+    "room_w_m",
+    "room_l_m",
+    "table_count",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "allRight": false,
+   "seconds": 17.55
+  },
+  {
+   "id": 12,
+   "text": "konferans 350 kişi tiyatro oturma",
+   "want": {
+    "pax": 350,
+    "event": "theatre"
+   },
+   "got": {
+    "pax": 350,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": null,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "theatre",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [
+    "table_kind"
+   ],
+   "allRight": true,
+   "seconds": 17.01
+  },
+  {
+   "id": 13,
+   "text": "80 kişi toplantı 8 adet kare masa 120x120",
+   "want": {
+    "pax": 80,
+    "event": "meeting",
+    "table_kind": "square",
+    "table_count": 8,
+    "table_len_cm": 120,
+    "table_wid_cm": 120
+   },
+   "got": {
+    "pax": 80,
+    "area_m2": 8,
+    "room_w_m": 12,
+    "room_l_m": 12,
+    "table_count": 8,
+    "table_diam_cm": 120,
+    "table_len_cm": 120,
+    "table_wid_cm": 120,
+    "seats_per_table": 8,
+    "chair_w_cm": 120,
+    "chair_d_cm": 120,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "square",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "allRight": true,
+   "seconds": 17.82
+  },
+  {
+   "id": 14,
+   "text": "gala 1200 pax 120 masa kalanı ayakta kokteyl",
+   "want": {
+    "pax": 1200,
+    "event": "gala",
+    "table_count": 120,
+    "extra_kind": "cocktail"
+   },
+   "got": {
+    "pax": 120,
+    "area_m2": 120,
+    "room_w_m": 12,
+    "room_l_m": 12,
+    "table_count": 12,
+    "table_diam_cm": 12,
+    "table_len_cm": 12,
+    "table_wid_cm": 12,
+    "seats_per_table": 12,
+    "chair_w_cm": 12,
+    "chair_d_cm": 12,
+    "extra_seats": null,
+    "event": "gala",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "pax",
+    "table_count",
+    "extra_kind"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 17.91
+  },
+  {
+   "id": 15,
+   "text": "düğün 250 kişi masalar 180lik, sandalye 44 e 52",
+   "want": {
+    "pax": 250,
+    "event": "wedding",
+    "table_diam_cm": 180,
+    "chair_w_cm": 44,
+    "chair_d_cm": 52
+   },
+   "got": {
+    "pax": 250,
+    "area_m2": 180,
+    "room_w_m": 180,
+    "room_l_m": 180,
+    "table_count": 180,
+    "table_diam_cm": 180,
+    "table_len_cm": 180,
+    "table_wid_cm": 180,
+    "seats_per_table": 180,
+    "chair_w_cm": 180,
+    "chair_d_cm": 180,
+    "extra_seats": null,
+    "event": "wedding",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_count",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 20.43
+  },
+  {
+   "id": 16,
+   "text": "Salonum 12x18 metre, 90 kişilik doğum günü, 9 masa",
+   "want": {
+    "pax": 90,
+    "room_w_m": 12,
+    "room_l_m": 18,
+    "event": "banquet",
+    "table_count": 9
+   },
+   "got": {
+    "pax": 90,
+    "area_m2": 12,
+    "room_w_m": 18,
+    "room_l_m": 12,
+    "table_count": 9,
+    "table_diam_cm": 12,
+    "table_len_cm": 18,
+    "table_wid_cm": 12,
+    "seats_per_table": 9,
+    "chair_w_cm": 12,
+    "chair_d_cm": 18,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [
+    "room_w_m",
+    "room_l_m",
+    "event"
+   ],
+   "invented": [
+    "area_m2",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 18.19
+  },
+  {
+   "id": 17,
+   "text": "lansman kokteyli 300 kişi, 25 yüksek masa",
+   "want": {
+    "pax": 300,
+    "event": "cocktail",
+    "table_kind": "bistro",
+    "table_count": 25
+   },
+   "got": {
+    "pax": 300,
+    "area_m2": 25,
+    "room_w_m": 25,
+    "room_l_m": 25,
+    "table_count": 25,
+    "table_diam_cm": 25,
+    "table_len_cm": 25,
+    "table_wid_cm": 25,
+    "seats_per_table": 12,
+    "chair_w_cm": 12,
+    "chair_d_cm": 12,
+    "extra_seats": null,
+    "event": "cocktail",
+    "table_kind": "bistro",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "allRight": true,
+   "seconds": 17.87
+  },
+  {
+   "id": 18,
+   "text": "100 kisilik egitim sinif duzeni masa basi 2 kisi",
+   "want": {
+    "pax": 100,
+    "event": "classroom",
+    "seats_per_table": 2
+   },
+   "got": {
+    "pax": 2,
+    "area_m2": 100,
+    "room_w_m": 10,
+    "room_l_m": 10,
+    "table_count": 1,
+    "table_diam_cm": 100,
+    "table_len_cm": 100,
+    "table_wid_cm": 100,
+    "seats_per_table": 2,
+    "chair_w_cm": 100,
+    "chair_d_cm": 100,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [
+    "pax",
+    "event"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_count",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 18.55
+  },
+  {
+   "id": 19,
+   "text": "şirket yemeği 160 kişi 16 yuvarlak masa 180 cm",
+   "want": {
+    "pax": 160,
+    "event": "banquet",
+    "table_kind": "round",
+    "table_count": 16,
+    "table_diam_cm": 180
+   },
+   "got": {
+    "pax": 160,
+    "area_m2": 160,
+    "room_w_m": 180,
+    "room_l_m": 180,
+    "table_count": 16,
+    "table_diam_cm": 180,
+    "table_len_cm": 180,
+    "table_wid_cm": 180,
+    "seats_per_table": 16,
+    "chair_w_cm": 180,
+    "chair_d_cm": 180,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "event"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "allRight": false,
+   "seconds": 19.47
+  },
+  {
+   "id": 20,
+   "text": "Bin kişilik gala, masalar 12 kişilik, 200 cm yuvarlak",
+   "want": {
+    "pax": 1000,
+    "event": "gala",
+    "table_kind": "round",
+    "table_diam_cm": 200,
+    "seats_per_table": 12
+   },
+   "got": {
+    "pax": 12,
+    "area_m2": 12,
+    "room_w_m": 200,
+    "room_l_m": 200,
+    "table_count": 12,
+    "table_diam_cm": 200,
+    "table_len_cm": 200,
+    "table_wid_cm": 200,
+    "seats_per_table": 12,
+    "chair_w_cm": 200,
+    "chair_d_cm": 200,
+    "extra_seats": null,
+    "event": "gala",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "pax"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_count",
+    "table_len_cm",
+    "table_wid_cm",
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "allRight": false,
+   "seconds": 19.46
+  },
+  {
+   "id": 21,
+   "text": "seminer, 45 kişi, U masa",
+   "want": {
+    "pax": 45,
+    "event": "u_shape"
+   },
+   "got": {
+    "pax": 45,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": 1,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": 45,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [
+    "event"
+   ],
+   "invented": [
+    "table_count",
+    "seats_per_table",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 17.1
+  },
+  {
+   "id": 22,
+   "text": "350 m² alan, 280 kişi banket, kalanı 4 kişilik bistro ile doldur",
+   "want": {
+    "pax": 280,
+    "area_m2": 350,
+    "event": "banquet",
+    "extra_kind": "bistro",
+    "extra_seats": 4
+   },
+   "got": {
+    "pax": 350,
+    "area_m2": 350,
+    "room_w_m": 280,
+    "room_l_m": 280,
+    "table_count": 1,
+    "table_diam_cm": 280,
+    "table_len_cm": 280,
+    "table_wid_cm": 280,
+    "seats_per_table": 1,
+    "chair_w_cm": 280,
+    "chair_d_cm": 280,
+    "extra_seats": 4,
+    "event": "banquet",
+    "table_kind": "bistro",
+    "extra_kind": "bistro"
+   },
+   "wrong": [
+    "pax"
+   ],
+   "invented": [
+    "room_w_m",
+    "room_l_m",
+    "table_count",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 19.75
+  },
+  {
+   "id": 23,
+   "text": "nişan 120 kişi, 15 masa, 8er kişi",
+   "want": {
+    "pax": 120,
+    "event": "wedding",
+    "table_count": 15,
+    "seats_per_table": 8
+   },
+   "got": {
+    "pax": 120,
+    "area_m2": 15,
+    "room_w_m": 12,
+    "room_l_m": 12,
+    "table_count": 15,
+    "table_diam_cm": 12,
+    "table_len_cm": 12,
+    "table_wid_cm": 12,
+    "seats_per_table": 12,
+    "chair_w_cm": 12,
+    "chair_d_cm": 12,
+    "extra_seats": null,
+    "event": "wedding",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [
+    "seats_per_table"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 19.76
+  },
+  {
+   "id": 24,
+   "text": "toplantı odası 40 m2, 12 kişi, boardroom",
+   "want": {
+    "pax": 12,
+    "area_m2": 40,
+    "event": "boardroom"
+   },
+   "got": {
+    "pax": 12,
+    "area_m2": 40,
+    "room_w_m": 12,
+    "room_l_m": 12,
+    "table_count": 1,
+    "table_diam_cm": 12,
+    "table_len_cm": 12,
+    "table_wid_cm": 12,
+    "seats_per_table": 1,
+    "chair_w_cm": 12,
+    "chair_d_cm": 12,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [
+    "event"
+   ],
+   "invented": [
+    "room_w_m",
+    "room_l_m",
+    "table_count",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 19.02
+  },
+  {
+   "id": 25,
+   "text": "Gala yemeği: 640 kişi, 64 masa, Ø180, sandalye 45x50",
+   "want": {
+    "pax": 640,
+    "event": "gala",
+    "table_kind": "round",
+    "table_count": 64,
+    "table_diam_cm": 180,
+    "chair_w_cm": 45,
+    "chair_d_cm": 50
+   },
+   "got": {
+    "pax": 640,
+    "area_m2": 640,
+    "room_w_m": 180,
+    "room_l_m": 180,
+    "table_count": 64,
+    "table_diam_cm": 180,
+    "table_len_cm": 180,
+    "table_wid_cm": 180,
+    "seats_per_table": 64,
+    "chair_w_cm": 50,
+    "chair_d_cm": 45,
+    "extra_seats": null,
+    "event": "gala",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table"
+   ],
+   "allRight": false,
+   "seconds": 19.75
+  },
+  {
+   "id": 26,
+   "text": "iki yüz elli kişilik tiyatro",
+   "want": {
+    "pax": 250,
+    "event": "theatre"
+   },
+   "got": {
+    "pax": 2,
+    "area_m2": 1,
+    "room_w_m": 1,
+    "room_l_m": 1,
+    "table_count": 2,
+    "table_diam_cm": 1,
+    "table_len_cm": 1,
+    "table_wid_cm": 1,
+    "seats_per_table": 2,
+    "chair_w_cm": 1,
+    "chair_d_cm": 1,
+    "extra_seats": null,
+    "event": "theatre",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "pax"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_count",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 17.34
+  },
+  {
+   "id": 27,
+   "text": "kokteyl prolonje 700 pax, 60 bistro, 10 bar sandalyeli masa",
+   "want": {
+    "pax": 700,
+    "event": "cocktail",
+    "table_kind": "bistro",
+    "table_count": 60
+   },
+   "got": {
+    "pax": 700,
+    "area_m2": 60,
+    "room_w_m": 10,
+    "room_l_m": 10,
+    "table_count": 10,
+    "table_diam_cm": 10,
+    "table_len_cm": 10,
+    "table_wid_cm": 10,
+    "seats_per_table": 10,
+    "chair_w_cm": 10,
+    "chair_d_cm": 10,
+    "extra_seats": null,
+    "event": "cocktail",
+    "table_kind": "bistro",
+    "extra_kind": null
+   },
+   "wrong": [
+    "table_count"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "allRight": false,
+   "seconds": 20.41
+  },
+  {
+   "id": 28,
+   "text": "500 kişi düğün, 50 masa 10'ar kişi, kalanı 2 kişilik",
+   "want": {
+    "pax": 500,
+    "event": "wedding",
+    "table_count": 50,
+    "seats_per_table": 10,
+    "extra_seats": 2
+   },
+   "got": {
+    "pax": 500,
+    "area_m2": 500,
+    "room_w_m": 10,
+    "room_l_m": 10,
+    "table_count": 50,
+    "table_diam_cm": 10,
+    "table_len_cm": 10,
+    "table_wid_cm": 10,
+    "seats_per_table": 10,
+    "chair_w_cm": 10,
+    "chair_d_cm": 10,
+    "extra_seats": 2,
+    "event": "wedding",
+    "table_kind": "round",
+    "extra_kind": "cocktail"
+   },
+   "wrong": [],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind",
+    "extra_kind"
+   ],
+   "allRight": true,
+   "seconds": 19.57
+  },
+  {
+   "id": 29,
+   "text": "sınıf tipi 72 kişi 24 masa",
+   "want": {
+    "pax": 72,
+    "event": "classroom",
+    "table_count": 24
+   },
+   "got": {
+    "pax": 72,
+    "area_m2": 24,
+    "room_w_m": 24,
+    "room_l_m": 24,
+    "table_count": 24,
+    "table_diam_cm": 24,
+    "table_len_cm": 24,
+    "table_wid_cm": 24,
+    "seats_per_table": 24,
+    "chair_w_cm": 24,
+    "chair_d_cm": 24,
+    "extra_seats": null,
+    "event": "classroom",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": true,
+   "seconds": 17.16
+  },
+  {
+   "id": 30,
+   "text": "salon 25x40 m, 900 kişilik gala",
+   "want": {
+    "pax": 900,
+    "room_w_m": 25,
+    "room_l_m": 40,
+    "event": "gala"
+   },
+   "got": {
+    "pax": 900,
+    "area_m2": 1000,
+    "room_w_m": 10,
+    "room_l_m": 10,
+    "table_count": 1,
+    "table_diam_cm": 100,
+    "table_len_cm": 100,
+    "table_wid_cm": 100,
+    "seats_per_table": 1,
+    "chair_w_cm": 1,
+    "chair_d_cm": 1,
+    "extra_seats": null,
+    "event": "gala",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "room_w_m",
+    "room_l_m"
+   ],
+   "invented": [
+    "area_m2",
+    "table_count",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 18.99
+  },
+  {
+   "id": 31,
+   "text": "30 kişilik yönetim toplantısı, oval tek masa",
+   "want": {
+    "pax": 30,
+    "event": "boardroom",
+    "table_count": 1
+   },
+   "got": {
+    "pax": 30,
+    "area_m2": 10,
+    "room_w_m": 10,
+    "room_l_m": 10,
+    "table_count": 1,
+    "table_diam_cm": 100,
+    "table_len_cm": 100,
+    "table_wid_cm": 100,
+    "seats_per_table": 30,
+    "chair_w_cm": 100,
+    "chair_d_cm": 100,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "event"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 18.41
+  },
+  {
+   "id": 32,
+   "text": "banket 96 kişi, 12 masa, 150 lik yuvarlak",
+   "want": {
+    "pax": 96,
+    "event": "banquet",
+    "table_kind": "round",
+    "table_count": 12,
+    "table_diam_cm": 150
+   },
+   "got": {
+    "pax": 96,
+    "area_m2": 12,
+    "room_w_m": 15,
+    "room_l_m": 12,
+    "table_count": 12,
+    "table_diam_cm": 12,
+    "table_len_cm": 12,
+    "table_wid_cm": 12,
+    "seats_per_table": 8,
+    "chair_w_cm": 12,
+    "chair_d_cm": 12,
+    "extra_seats": null,
+    "event": "banquet",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "table_diam_cm"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "allRight": false,
+   "seconds": 18.62
+  },
+  {
+   "id": 33,
+   "text": "Teşekkür yemeği 180 davetli, masa başı 9",
+   "want": {
+    "pax": 180,
+    "event": "banquet",
+    "seats_per_table": 9
+   },
+   "got": {
+    "pax": 180,
+    "area_m2": 180,
+    "room_w_m": 180,
+    "room_l_m": 180,
+    "table_count": 20,
+    "table_diam_cm": 180,
+    "table_len_cm": 180,
+    "table_wid_cm": 180,
+    "seats_per_table": 9,
+    "chair_w_cm": 180,
+    "chair_d_cm": 180,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [
+    "event"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_count",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 20.32
+  },
+  {
+   "id": 34,
+   "text": "200 m2 salon 150 kişi kokteyl",
+   "want": {
+    "pax": 150,
+    "area_m2": 200,
+    "event": "cocktail"
+   },
+   "got": {
+    "pax": 150,
+    "area_m2": 200,
+    "room_w_m": 15,
+    "room_l_m": 15,
+    "table_count": 15,
+    "table_diam_cm": 150,
+    "table_len_cm": 150,
+    "table_wid_cm": 150,
+    "seats_per_table": 10,
+    "chair_w_cm": 10,
+    "chair_d_cm": 10,
+    "extra_seats": null,
+    "event": "cocktail",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [
+    "room_w_m",
+    "room_l_m",
+    "table_count",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": true,
+   "seconds": 17.9
+  },
+  {
+   "id": 35,
+   "text": "panel 120 kişi tiyatro sahne önü 2 metre boş",
+   "want": {
+    "pax": 120,
+    "event": "theatre"
+   },
+   "got": {
+    "pax": 120,
+    "area_m2": 2,
+    "room_w_m": 2,
+    "room_l_m": 2,
+    "table_count": 1,
+    "table_diam_cm": 2,
+    "table_len_cm": 2,
+    "table_wid_cm": 2,
+    "seats_per_table": 120,
+    "chair_w_cm": 1,
+    "chair_d_cm": 1,
+    "extra_seats": null,
+    "event": "theatre",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_count",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": true,
+   "seconds": 17.58
+  },
+  {
+   "id": 36,
+   "text": "kına gecesi 220 kişi 22 masa",
+   "want": {
+    "pax": 220,
+    "event": "wedding",
+    "table_count": 22
+   },
+   "got": {
+    "pax": 220,
+    "area_m2": 220,
+    "room_w_m": 22,
+    "room_l_m": 22,
+    "table_count": 22,
+    "table_diam_cm": 22,
+    "table_len_cm": 22,
+    "table_wid_cm": 22,
+    "seats_per_table": 22,
+    "chair_w_cm": 22,
+    "chair_d_cm": 22,
+    "extra_seats": null,
+    "event": "gala",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "event"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 17.6
+  },
+  {
+   "id": 37,
+   "text": "workshop 48 kişi, 8 masa 6şar kişi, dikdörtgen 200x100",
+   "want": {
+    "pax": 48,
+    "event": "classroom",
+    "table_kind": "rect",
+    "table_count": 8,
+    "seats_per_table": 6,
+    "table_len_cm": 200,
+    "table_wid_cm": 100
+   },
+   "got": {
+    "pax": 48,
+    "area_m2": 200,
+    "room_w_m": 100,
+    "room_l_m": 200,
+    "table_count": 8,
+    "table_diam_cm": 200,
+    "table_len_cm": 100,
+    "table_wid_cm": 200,
+    "seats_per_table": 6,
+    "chair_w_cm": 200,
+    "chair_d_cm": 100,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [
+    "event",
+    "table_len_cm",
+    "table_wid_cm"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "allRight": false,
+   "seconds": 18.19
+  },
+  {
+   "id": 38,
+   "text": "110 kişilik toplantı, sandalye ölçüsü 46x55",
+   "want": {
+    "pax": 110,
+    "event": "meeting",
+    "chair_w_cm": 46,
+    "chair_d_cm": 55
+   },
+   "got": {
+    "pax": 110,
+    "area_m2": 6140,
+    "room_w_m": 55,
+    "room_l_m": 46,
+    "table_count": 110,
+    "table_diam_cm": 46,
+    "table_len_cm": 55,
+    "table_wid_cm": 46,
+    "seats_per_table": 110,
+    "chair_w_cm": 46,
+    "chair_d_cm": 55,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_count",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "table_kind"
+   ],
+   "allRight": true,
+   "seconds": 19.13
+  },
+  {
+   "id": 39,
+   "text": "gala 450 kişi, 45 masa, kalan alana 2 kişilik bistro",
+   "want": {
+    "pax": 450,
+    "event": "gala",
+    "table_count": 45,
+    "extra_kind": "bistro",
+    "extra_seats": 2
+   },
+   "got": {
+    "pax": 450,
+    "area_m2": 450,
+    "room_w_m": 45,
+    "room_l_m": 45,
+    "table_count": 45,
+    "table_diam_cm": 45,
+    "table_len_cm": 45,
+    "table_wid_cm": 45,
+    "seats_per_table": 45,
+    "chair_w_cm": 45,
+    "chair_d_cm": 45,
+    "extra_seats": null,
+    "event": "gala",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "extra_kind",
+    "extra_seats"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_diam_cm",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm",
+    "table_kind"
+   ],
+   "allRight": false,
+   "seconds": 18.48
+  },
+  {
+   "id": 40,
+   "text": "Mezuniyet balosu, 380 kişi, 38 yuvarlak masa, 180 cm",
+   "want": {
+    "pax": 380,
+    "event": "gala",
+    "table_kind": "round",
+    "table_count": 38,
+    "table_diam_cm": 180
+   },
+   "got": {
+    "pax": 380,
+    "area_m2": 380,
+    "room_w_m": 180,
+    "room_l_m": 180,
+    "table_count": 38,
+    "table_diam_cm": 180,
+    "table_len_cm": 180,
+    "table_wid_cm": 180,
+    "seats_per_table": 38,
+    "chair_w_cm": 180,
+    "chair_d_cm": 180,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "event"
+   ],
+   "invented": [
+    "area_m2",
+    "room_w_m",
+    "room_l_m",
+    "table_len_cm",
+    "table_wid_cm",
+    "seats_per_table",
+    "chair_w_cm",
+    "chair_d_cm"
+   ],
+   "allRight": false,
+   "seconds": 19.88
+  }
+ ],
+ "chat": [
+  {
+   "q": "Merhaba, nasılsın?",
+   "a": "Merhaba! Nasıl yardımcı olabilirim?",
+   "seconds": 1.55
+  },
+  {
+   "q": "Bugün çok yoğunum, 3 etkinliğim var. Bana kısa bir moral ver.",
+   "a": "3 etkinliğim var ama bugün yoğun olduğu için, her biri için kısa bir motivasyon yazıyorum:\n\n*   **Etkinlik 1:** \"Yavaşça ilerlemeyi unutmayın. Her adım, bir sonraki adım kadar önemlidir.\"\n*   **Etkinlik 2:** \"Şu anki zorluklar, gelecekteki başarıya yol açar. Şimdilik odaklanın.\"\n*   **Etkinlik 3:** \"Yavaşça ilerlemeyi unutmayın. Her adım, bir sonraki adım kadar önemlidir.\"",
+   "seconds": 10.63
+  },
+  {
+   "q": "Gala ile banket arasındaki fark ne?",
+   "a": "Gala ve banket, genellikle bir araya gelen kişilerin bir araya gelme şekli olarak farklı olarak tanımlanır. İşte temel farklar:\n\n**1. Ortam ve Durum**\n*   **Gala:** Bir büyük, genellikle özel bir yer (kültürel merkez, restoran, salon) içinde gerçekleşir. Bu ortamda genellikle çok sayıda kişi (günlük ziyaretçiler, özel gruplar) bulunur.\n*   **Banket:** Daha küçük, genellikle bir yerin içinden veya bir restoranın içinden gerçekleşir. Bu ortamda genellikle sadece birkaç kişi (bir grup) bulunur.\n\n**2. Süre ve Süreç**\n*   **Gala:** Daha uzun sürer. Genellikle günün en büyük etkinliklerinden biridir ve genellikle birkaç gün boyunca veya haftanın en büyük etkinliklerinden biridir.\n*   **Banket:** Daha kısa sürer. Genellikle bir gün içinde veya haftanın",
+   "seconds": 16.24
+  },
+  {
+   "q": "100 kişilik bir düğün için kaç tane 10 kişilik masa gerekir?",
+   "a": "100 kişilik bir düğün için 10 kişilik masa gerekir.\n\nBu durumda, her 10 kişilik masa 10 kişilik bir grup oluşturur. 100 kişilik bir düğün için toplam 10 kişilik masa sayısı = 100 / 10 = 10.",
+   "seconds": 6.26
+  },
+  {
+   "q": "Yarın bana hatırlat: saat 10'da salon keşfi var.",
+   "a": "Yarın saat 10'da salon keşfi var.",
+   "seconds": 2.14
+  },
+  {
+   "q": "Kokteylde kişi başı kaç metrekare ayırmalıyım?",
+   "a": "Kokteylde kişi başı **1 metrekare** ayırmalıdır.\n\nBu, kokteylin içine yerleştirilmiş her bir bardağı (çay bardağı) toplamıdır. Kokteylin içine yerleştirilen her bardağı bir metrekareye ayırır.",
+   "seconds": 6.2
+  },
+  {
+   "q": "Sandalyeler masanın altına itilmiş görünüyorsa planda nasıl anlarım?",
+   "a": "Sandalyeler masanın altına itilmiş görünüyorsa, planda genellikle aşağıdaki durumlardan birini işaret eder:\n\n*   **Masanın alt kısmı:** Sandalyenin üst kısmı veya masanın alt kısmı sandalyenin altına doğru eğilerek görünebilir.\n*   **Kırmızı veya Yeşil Çekirdekler:** Eğer sandalyenin üst kısmı veya masanın alt kısmı kırmızı veya yeşil bir çekirkeyle işaretlenirse, bu genellikle \"masanın altına itilmiş\" demektir.\n*   **Kırmızı Çekirdekler:** Eğer sandalyenin üst kısmı veya masanın alt kısmı kırmızı bir çekirkeyle işaretlenirse, bu genellikle \"masanın altına itilmiş\" demektir.\n*   **Yeşil Çekirdekler:** Eğer sandalyenin üst kısmı veya masanın alt kısmı ye",
+   "seconds": 16.73
+  },
+  {
+   "q": "Teşekkürler, iyi akşamlar!",
+   "a": "Teşekkürler! İyi akşamlar!",
+   "seconds": 1.5
+  }
+ ]
+}

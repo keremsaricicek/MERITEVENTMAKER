@@ -1,0 +1,11 @@
+{
+ "manifest": "qwen2-vl-2b-q4km.json",
+ "ms": 900078,
+ "http": 504,
+ "ok": false,
+ "reasonCode": "TIMEOUT",
+ "findings": null,
+ "dropped": null,
+ "planSummary": "",
+ "raw": "{\"ok\":false,\"code\":\"TIMEOUT\",\"billed\":null,\"retryable\":false,\"estimate\":{\"inputTokens\":9612,\"inputBasis\":\"heuristic\",\"maxOutputTokens\":10000,\"hops\":1,\"perHop\":[{\"model\":\"qwen2-vl-2b-q4km\",\"inputTokens\":9612,\"maxUsd\":0}],\"maxUsd\":0},\"usage\":{\"day\":\"2026-10-18\",\"requests\":1,\"usd\":0,\"inputTokens\":0,\"outputTokens\":0,\"unknownSpendRequests\":1,\"openReservations\":0},\"run\":{\"steps\":1,\"usd\":0,\"cancelled\":false}}"
+}
