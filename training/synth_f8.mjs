@@ -21,6 +21,10 @@ const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 for (const f of ["src/assistant-tools.js", "src/assistant-reading.js"]) await import(pathToFileURL(path.join(repo, f)).href);
 const R = globalThis.MeritAssistantReading;
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : d; };
+// `--grammar 2` (runB7b): more phrasings per intent and step, two-job sentences sharing a verb
+// or a pronoun, more small talk; grammar 1 (runB7) is unchanged and reproducible
+const G2 = arg("grammar", "1") === "2";
+const NUMW = ["", "bir", "iki", "üç", "dört", "beş", "altı", "yedi"];
 
 // ---- seeded random -------------------------------------------------------------
 let seed = Number(arg("seed", 71)) >>> 0;
@@ -41,6 +45,7 @@ const OCC = ["bahar galası", "şirket yemeği", "mezuniyet balosu", "lansman", 
 const MONTHS = ["ocak", "şubat", "nisan", "mayıs", "temmuz", "ağustos", "ekim", "kasım", "aralık"]; // mart, haziran, eylül are in the tests
 const TABLE_PFX = ["T", "T", "T", "VIP", "B"];
 const PHONES = () => `05${pick(["32", "33", "35", "36", "41", "42", "52", "53", "55"])} ${100 + Math.floor(rnd() * 900)} ${10 + Math.floor(rnd() * 90)} ${10 + Math.floor(rnd() * 90)}`;
+const SMALL2 = ["Bilet fiyatları ne kadar", "Hafta sonu hava nasıl olacak", "Salon kirası kaç para", "Döviz kuru kaç oldu", "Bana bir espri yap", "Kaçta kapanıyoruz", "Yemek menüsünü sen seç", "Sahne ışıkları nasıl olmalı", "Bana tavsiye ver", "Bugün çok işim var", "Ses sistemi kimden", "Bu ay ne kadar kazandık", "Otopark ücretli mi", "Garsonlar kaçta gelecek", "Çiçekçinin numarası ne"];
 const SMALL = ["Merhaba", "Selam, nasılsın?", "Günaydın", "İyi akşamlar", "Teşekkürler", "Sağ ol", "Kolay gelsin", "Bugün hava çok güzel", "Canım sıkkın", "Bana bir şarkı söyle", "Saat kaç?",
   "Dolar ne kadar oldu?", "Akşam ne yesem?", "Bir şiir yaz", "Hafta sonu ne yapalım", "Maç kaç kaç bitti?", "Kahve mi çay mı?", "Beni duyuyor musun?", "Adın ne?", "Nasıl çalışıyorsun?",
   "İstanbul'da trafik nasıl?", "Bana moral ver", "Çok iyisin", "Şaka yaptım", "Tamam", "Neyse boşver", "Bilgisayarı kapat", "Ekranı büyüt", "Programı güncelle", "Müzik aç",
@@ -106,40 +111,50 @@ function question() {
     const ph = chance(0.12) ? PHONES() : null, who = ph ? `${ph} ${pick(["numaralı", "telefonlu"])} ${p}` : p;
     if (e.venue && chance(0.6)) return [pick([`${who} ${sfx(e.base, "loc").replace(/'?(da|de|ta|te)$/, (m) => m)}ki konserlerde nerelerde oturdu`, `${sfx(p, "gen")} ${e.base} konserlerindeki masaları hangileriydi`]), Qr("seatAt", { person: p, phone: null, event: evRead(e), many: true })];
     const t = pick([`${who} ${evCase(e, "loc")} nerede oturdu`, `${who} ${evCase(e, "loc")} hangi masadaydı`, `${who} ${evCase(e, "loc")} kaçıncı masada oturuyordu`, `${sfx(p, "gen")} ${evCase(e, "loc")}ki yeri neresiydi`,
-      `${who} ${evCase(e, "dat")} geldi mi`, `${who} ${evCase(e, "dat")} kaç kişiyle geldi`, `${evCase(e, "loc")} ${who} nerede oturuyordu`, `${who} ${evCase(e, "loc")} hangi koltuktaydı`, `${who} ${evCase(e, "loc")} nerede oturacak`]);
+      `${who} ${evCase(e, "dat")} geldi mi`, `${who} ${evCase(e, "dat")} kaç kişiyle geldi`, `${evCase(e, "loc")} ${who} nerede oturuyordu`, `${who} ${evCase(e, "loc")} hangi koltuktaydı`, `${who} ${evCase(e, "loc")} nerede oturacak`, ...(G2 ? [`${who} ${evCase(e, "loc")} hangi masaya oturmuştu`, `${evCase(e, "loc")} ${sfx(p, "gen")} yeri neresiydi`, `${who} ${evCase(e, "dat")} katıldı mı`, `${who} ${evCase(e, "dat")} kaç kişi olarak geldi`, `${who}, ${evCase(e, "loc")} hangi masa`, `${evCase(e, "loc")} ${who} hangi koltukta oturdu`] : [])]);
     return [t, Qr("seatAt", { person: p, phone: t.includes(who) ? ph : null, event: evRead(e) })];
   }
-  if (pick1 < 0.42) return [pick([`${p} kaç etkinliğimize geldi`, `${p} hangi konserlere katıldı`, `${p} bize kaç kere geldi`, `${p} şimdiye kadar kaç konserimizde bulundu`, `${sfx(p, "gen")} geldiği etkinlikler hangileri`]), Qr("attended", { person: p })];
-  if (pick1 < 0.5) return [pick([`${p} hep aynı masada mı oturdu`, `${sfx(p, "gen")} masası her seferinde aynı mıydı`, `${p} her konserde aynı yerde mi oturuyor`]), Qr("sameTable", { person: p })];
-  if (pick1 < 0.58) return [pick([`${p} daha önce VIP masada oturdu mu`, `${p} hiç VIP'te ağırlandı mı`, `${sfx(p, "acc")} daha önce VIP masaya oturtmuş muyduk`]), Qr("vipBefore", { person: p })];
-  if (pick1 < 0.64) return [pick(["En çok kişi hangi konserde vardı", "en kalabalık etkinliğimiz hangisiydi", "Hangi etkinliğe en çok misafir geldi", "en çok katılım olan konser hangisi"]), Qr("mostPeople")];
-  if (pick1 < 0.72) return [pick([`${evCase(e, "dat")} kaç kişi geldi`, `${evCase(e, "loc")} kaç misafir vardı`, `${evCase(e, "dat")} toplam kaç kişi katıldı`]), Qr("eventCount", { event: evRead(e) })];
-  if (pick1 < 0.8) return [pick([`${evCase(e, "loc")} masası olmayanlar kim`, `${evCase(e, "loc")} kimler henüz oturtulmadı`, `${evCase(e, "loc")} yeri belli olmayan misafirler kimler`]), Qr("unassigned", { event: evRead(e) })];
-  if (pick1 < 0.88) return [pick([`${evCase(e, "dat")} kimler gelmedi`, `${evCase(e, "loc")} gelmeyenler kimdi`, `${evCase(e, "loc")} yeri olup gelmeyenler kimler`]), Qr("noShow", { event: evRead(e) })];
-  if (pick1 < 0.95) { const t = table(); return [pick([`${evCase(e, "loc")} ${tsfx(t, "loc")} kim var`, `${tsfx(t, "loc")} ${evCase(e, "loc")} kimler oturdu`, `${evCase(e, "loc")} ${t} masasında kim oturuyor`]), Qr("whoAtTable", { event: evRead(e), table: t })]; }
+  if (pick1 < 0.42) return [pick([`${p} kaç etkinliğimize geldi`, `${p} hangi konserlere katıldı`, `${p} bize kaç kere geldi`, `${p} şimdiye kadar kaç konserimizde bulundu`, `${sfx(p, "gen")} geldiği etkinlikler hangileri`, ...(G2 ? [`${p} şimdiye dek kaç kez geldi`, `${p} hangi etkinliklerimizde vardı`, `${p} bizim etkinliklere kaç defa katıldı`, `${p} kaç etkinliğe gelip kaçına gelmedi`] : [])]), Qr("attended", { person: p })];
+  if (pick1 < 0.5) return [pick([`${p} hep aynı masada mı oturdu`, `${sfx(p, "gen")} masası her seferinde aynı mıydı`, `${p} her konserde aynı yerde mi oturuyor`, ...(G2 ? [`${p} hep aynı yere mi oturtuldu`, `${sfx(p, "gen")} masası değişiyor mu`, `${p} her etkinlikte aynı masayı mı alıyor`] : [])]), Qr("sameTable", { person: p })];
+  if (pick1 < 0.58) return [pick([`${p} daha önce VIP masada oturdu mu`, `${p} hiç VIP'te ağırlandı mı`, `${sfx(p, "acc")} daha önce VIP masaya oturtmuş muyduk`, ...(G2 ? [`${p} önceden VIP bölümünde yer aldı mı`, `${sfx(p, "acc")} VIP masada ağırladık mı`, `${p} VIP masaya hiç oturdu mu`] : [])]), Qr("vipBefore", { person: p })];
+  if (pick1 < 0.64) return [pick(["En çok kişi hangi konserde vardı", "en kalabalık etkinliğimiz hangisiydi", "Hangi etkinliğe en çok misafir geldi", "en çok katılım olan konser hangisi", ...(G2 ? ["Katılımın en yüksek olduğu etkinlik hangisi", "en çok insan hangi gece geldi", "en kalabalık konser hangisiydi"] : [])]), Qr("mostPeople")];
+  if (pick1 < 0.72) return [pick([`${evCase(e, "dat")} kaç kişi geldi`, `${evCase(e, "loc")} kaç misafir vardı`, `${evCase(e, "dat")} toplam kaç kişi katıldı`, ...(G2 ? [`${evCase(e, "loc")} toplamda kaç kişi vardı`, `${evCase(e, "dat")} gelenlerin sayısı ne`, `${evCase(e, "dat")} kaç misafir katıldı`] : [])]), Qr("eventCount", { event: evRead(e) })];
+  if (pick1 < 0.8) return [pick([`${evCase(e, "loc")} masası olmayanlar kim`, `${evCase(e, "loc")} kimler henüz oturtulmadı`, `${evCase(e, "loc")} yeri belli olmayan misafirler kimler`, ...(G2 ? [`${evCase(e, "loc")} yeri olmayan kaldı mı`, `${evCase(e, "loc")} masasız kimler var`, `${evCase(e, "loc")} oturtulmayı bekleyenler kim`] : [])]), Qr("unassigned", { event: evRead(e) })];
+  if (pick1 < 0.88) return [pick([`${evCase(e, "dat")} kimler gelmedi`, `${evCase(e, "loc")} gelmeyenler kimdi`, `${evCase(e, "loc")} yeri olup gelmeyenler kimler`, ...(G2 ? [`${evCase(e, "dat")} gelmeyen var mı`, `${evCase(e, "loc")} kimler yoktu`, `${evCase(e, "loc")} yerini boş bırakanlar kimdi`] : [])]), Qr("noShow", { event: evRead(e) })];
+  if (pick1 < 0.95) { const t = table(); return [pick([`${evCase(e, "loc")} ${tsfx(t, "loc")} kim var`, `${tsfx(t, "loc")} ${evCase(e, "loc")} kimler oturdu`, `${evCase(e, "loc")} ${t} masasında kim oturuyor`, ...(G2 ? [`${evCase(e, "loc")} ${tsfx(t, "dat")} kimi koyduk`, `${evCase(e, "loc")} ${tsfx(t, "loc")} oturanlar kim`, `${t} masasında ${evCase(e, "loc")} kimler vardı`] : [])]), Qr("whoAtTable", { event: evRead(e), table: t })]; }
   const m = pick(MONTHS), y = chance(0.3) ? pick(["2025 ", "2024 ", "geçen yıl "]) : "";
-  return [pick([`${y}${m}${SUF.loc(m)} hangi etkinlik vardı`, `${y}${m} ayında ne yaptık`, `${y}${m}${SUF.loc(m)} hangi konserimiz vardı`]), Qr("whichEvent", { event: (y + m).replace("geçen yıl", "gecen yil") })];
+  return [pick([`${y}${m}${SUF.loc(m)} hangi etkinlik vardı`, `${y}${m} ayında ne yaptık`, `${y}${m}${SUF.loc(m)} hangi konserimiz vardı`, ...(G2 ? [`${y}${m} ayında hangi etkinliği yaptık`, `${y}${m}${SUF.loc(m)} ne vardı`] : [])]), Qr("whichEvent", { event: (y + m).replace("geçen yıl", "gecen yil") })];
 }
 
 // ---- commands (one step each; joined below) ------------------------------------------------
 function step() {
   const g = person(), t = table(), r = rnd();
   if (r < 0.2) return [pick([`${sfx(g, "acc")} ${tsfx(t, "dat")} oturt`, `${sfx(g, "acc")} ${tsfx(t, "dat")} yerleştir`, `${sfx(g, "acc")} ${tsfx(t, "dat")} al`, `${sfx(g, "acc")} ${tsfx(t, "dat")} koy`, `${sfx(g, "acc")} ${tsfx(t, "dat")} geçir`,
-    `${sfx(g, "acc")} ${tsfx(t, "dat")} taşı`, `${g} ${tsfx(t, "dat")} geçsin`, `${g} ${tsfx(t, "loc")} otursun`, `${tsfx(t, "dat")} ${sfx(g, "acc")} oturt`, `${sfx(g, "gen")} masası ${t} olsun`]), St("assign", { guest: g, table: t })];
-  if (r < 0.3) { const e = eventRef(); if (e.venue || e.month) return step(); return [pick([`${sfx(g, "acc")} ${evCase(e, "loc")}ki yerine oturt`, `${sfx(g, "acc")} ${evCase(e, "loc")}ki masasına al`, `${g} ${evCase(e, "loc")} nerede oturduysa oraya koy`, `${sfx(g, "dat")} ${evCase(e, "loc")}ki yerini ver`]), St("copySeat", { guest: g, from: evRead(e) })]; }
-  if (r < 0.38) { const o = person(); return [pick([`${sfx(g, "acc")} ${sfx(o, "gen")} yanına oturt`, `${g}, ${sfx(o, "gen")} yanında otursun`, `${sfx(g, "acc")} ${sfx(o, "gen")} yanına al`]), St("nextTo", { guest: g, other: o.toLocaleLowerCase("tr") })]; }
-  if (r < 0.46) { const f = table(); return [pick([`${tsfx(f, "loc")}ki herkesi ${tsfx(t, "dat")} taşı`, `${tsfx(f, "loc")}kileri ${tsfx(t, "dat")} geçir`, `${sfx(f, "acc", spoken(f))} komple ${tsfx(t, "dat")} al`]), St("moveTable", { table: t, fromTable: f })]; }
-  if (r < 0.56) return [pick([`${sfx(g, "acc")} masadan kaldır`, `${sfx(g, "gen")} masasını boşalt`, `${sfx(g, "acc")} masasından al ama silme`, `${g} masasız kalsın`, `${g} masadan kalksın`]), St("unassign", { guest: g })];
-  if (r < 0.66) return [pick([`${sfx(g, "acc")} sil`, `${sfx(g, "acc")} listeden çıkar`, `${g} gelmeyecek, listeden sil`, `${sfx(g, "acc")} davetlilerden çıkar`, `${sfx(g, "acc")} listeden kaldır`]), St("deleteGuest", { guest: g })];
-  if (r < 0.76) { const n = 1 + Math.floor(rnd() * 5); return [pick([`${g} +${n} olsun`, `${sfx(g, "gen")} kişi sayısını ${n + 1} yap`, `${g} ${n + 1} kişi gelecek`, `${sfx(g, "gen")} grubu ${n + 1} kişi olsun`]), St("setPax", { guest: g, pax: n + 1 })]; }
-  if (r < 0.84) return [pick([`${sfx(g, "acc")} VIP yap`, `${g} VIP olsun`, `${sfx(g, "acc")} VIP olarak işaretle`]), St("setVip", { guest: g })];
+    `${sfx(g, "acc")} ${tsfx(t, "dat")} taşı`, `${g} ${tsfx(t, "dat")} geçsin`, `${g} ${tsfx(t, "loc")} otursun`, `${tsfx(t, "dat")} ${sfx(g, "acc")} oturt`, `${sfx(g, "gen")} masası ${t} olsun`, ...(G2 ? [`${sfx(g, "acc")} ${tsfx(t, "dat")} alır mısın`, `${sfx(g, "acc")} ${tsfx(t, "dat")} oturtalım`, `${g} artık ${tsfx(t, "loc")} otursun`, `${sfx(g, "acc")} ${t} masasına yerleştirir misin`, `${sfx(g, "acc")} ${tsfx(t, "dat")} aktar`] : [])]), St("assign", { guest: g, table: t })];
+  if (r < 0.3) { const e = eventRef(); if (e.venue || e.month) return step(); return [pick([`${sfx(g, "acc")} ${evCase(e, "loc")}ki yerine oturt`, `${sfx(g, "acc")} ${evCase(e, "loc")}ki masasına al`, `${g} ${evCase(e, "loc")} nerede oturduysa oraya koy`, `${sfx(g, "dat")} ${evCase(e, "loc")}ki yerini ver`, ...(G2 ? [`${sfx(g, "acc")} ${evCase(e, "loc")} oturduğu yere koy`, `${sfx(g, "acc")} ${evCase(e, "loc")}ki koltuğuna oturt`, `${g} ${evCase(e, "loc")} nerede oturduysa yine orada otursun`] : [])]), St("copySeat", { guest: g, from: evRead(e) })]; }
+  if (r < 0.38) { const o = person(); return [pick([`${sfx(g, "acc")} ${sfx(o, "gen")} yanına oturt`, `${g}, ${sfx(o, "gen")} yanında otursun`, `${sfx(g, "acc")} ${sfx(o, "gen")} yanına al`, ...(G2 ? [`${g} ${sfx(o, "gen")} yanında yer alsın`, `${sfx(g, "acc")} ${sfx(o, "gen")} hemen yanına yerleştir`] : [])]), St("nextTo", { guest: g, other: o.toLocaleLowerCase("tr") })]; }
+  if (r < 0.46) { const f = table(); return [pick([`${tsfx(f, "loc")}ki herkesi ${tsfx(t, "dat")} taşı`, `${tsfx(f, "loc")}kileri ${tsfx(t, "dat")} geçir`, `${sfx(f, "acc", spoken(f))} komple ${tsfx(t, "dat")} al`, ...(G2 ? [`${tsfx(f, "loc")} oturan herkesi ${tsfx(t, "dat")} geçirelim`, `${t} masasına ${tsfx(f, "loc")}kileri taşı`] : [])]), St("moveTable", { table: t, fromTable: f })]; }
+  if (r < 0.56) return [pick([`${sfx(g, "acc")} masadan kaldır`, `${sfx(g, "gen")} masasını boşalt`, `${sfx(g, "acc")} masasından al ama silme`, `${g} masasız kalsın`, `${g} masadan kalksın`, ...(G2 ? [`${sfx(g, "gen")} masa atamasını kaldır`, `${sfx(g, "acc")} masadan çıkar ama listede kalsın`, `${g} şimdilik masasız kalsın`] : [])]), St("unassign", { guest: g })];
+  if (r < 0.66) return [pick([`${sfx(g, "acc")} sil`, `${sfx(g, "acc")} listeden çıkar`, `${g} gelmeyecek, listeden sil`, `${sfx(g, "acc")} davetlilerden çıkar`, `${sfx(g, "acc")} listeden kaldır`, ...(G2 ? [`${g} gelmeyecekmiş, sil`, `${sfx(g, "acc")} davetli listesinden sil`, `${sfx(g, "acc")} tamamen kaldır`, `${g} iptal, listeden çıkar`] : [])]), St("deleteGuest", { guest: g })];
+  if (r < 0.76) { const n = 1 + Math.floor(rnd() * 5); return [pick([`${g} +${n} olsun`, `${sfx(g, "gen")} kişi sayısını ${n + 1} yap`, `${g} ${n + 1} kişi gelecek`, `${sfx(g, "gen")} grubu ${n + 1} kişi olsun`, ...(G2 ? [`${sfx(g, "gen")} kişi sayısı ${NUMW[n + 1]} olsun`, `${g} ${NUMW[n + 1]} kişilik olacak`] : [])]), St("setPax", { guest: g, pax: n + 1 })]; }
+  if (r < 0.84) return [pick([`${sfx(g, "acc")} VIP yap`, `${g} VIP olsun`, `${sfx(g, "acc")} VIP olarak işaretle`, ...(G2 ? [`${g} VIP misafirimiz`, `${sfx(g, "acc")} VIP listesine al`, `${sfx(g, "acc")} VIP olarak kaydet`] : [])]), St("setVip", { guest: g })];
   const n = pick([0, 0, 1, 1, 2, 3]), extra = n === 0 ? "" : pick(n === 1 ? [" +1", " ve eşi", " ve bir misafiri"] : [` +${n}`, ` ve ${["", "", "iki", "üç"][n]} misafiri`]);
   const withT = chance(0.45), name = person(true);
   const verb = extra.startsWith(" ve") ? (extra.endsWith("eşi") ? extra.replace("eşi", "eşini") : extra + "ni") : extra;
   if (withT) return [pick([`${tsfx(t, "dat")} ${name}${verb} ekle`, `${name}${verb} ekle, ${tsfx(t, "dat")} oturt`.replace(/(.*),.*/, `$1 ve ${tsfx(t, "dat")} oturt`)]), [St("addGuest", { name, pax: n + 1 }), St("assign", { guest: name, table: t })]];
-  return [pick([`${name}${verb} ekle`, `Yeni misafir: ${name}${extra}`, `listeye ${name}${verb} ekle`, ...(extra ? [] : [`${sfx(name, "acc")} listeye ekle`, `${sfx(name, "acc")} da ekle`])]), St("addGuest", { name, pax: n + 1 })];
+  return [pick([`${name}${verb} ekle`, `Yeni misafir: ${name}${extra}`, `listeye ${name}${verb} ekle`, ...(extra ? [] : [`${sfx(name, "acc")} listeye ekle`, `${sfx(name, "acc")} da ekle`]), ...(G2 ? [`${name} adında bir misafir ekle`, `${name} de gelecek, listeye ekle`] : [])]), St("addGuest", { name, pax: n + 1 })];
+}
+// two seats in one sentence sharing the verb, or a second job on the same guest ("onu")
+function sharedCommand() {
+  const g1 = person(), g2 = person(), t1 = table(), t2 = table(), v = pick(["oturt", "yerleştir", "al", "geçir", "koy"]);
+  if (g1 === g2 || t1 === t2) return sharedCommand();
+  if (chance(0.5)) return [`${sfx(g1, "acc")} ${tsfx(t1, "dat")}, ${sfx(g2, "acc")} ${v2(g2 + SUF.acc(g2)) === "a" ? "da" : "de"} ${tsfx(t2, "dat")} ${v}`, Cr([St("assign", { guest: g1, table: t1 }), St("assign", { guest: g2, table: t2 })])];
+  const n = 1 + Math.floor(rnd() * 5), first = pick([[`${sfx(g1, "gen")} kişi sayısını ${n + 1} yap`, St("setPax", { guest: g1, pax: n + 1 })], [`${sfx(g1, "acc")} ${tsfx(t1, "dat")} oturt`, St("assign", { guest: g1, table: t1 })], [`${sfx(g1, "acc")} masadan kaldır`, St("unassign", { guest: g1 })]]);
+  const second = pick([[`onu VIP ${pick(["yap", "olarak işaretle"])}`, St("setVip", { guest: g1 })], ...(first[1].op === "assign" ? [] : [[`onu ${tsfx(t2, "dat")} oturt`, St("assign", { guest: g1, table: t2 })]])]);
+  return [`${first[0]}${pick([" ve ", ", sonra ", ", ardından "])}${second[0]}`, Cr([first[1], second[1]])];
 }
 function command() {
+  if (G2 && chance(0.12)) return sharedCommand();
   const k = rnd() < 0.72 ? 1 : rnd() < 0.85 ? 2 : 3, parts = [], steps = [];
   while (parts.length < k) {
     const [t, s] = step(), ss = Array.isArray(s) ? s : [s];
@@ -194,7 +209,7 @@ let n = 0, skipped = 0;
 const f = fs.openSync(path.join(out, "items.jsonl"), "w");
 while (n < N) {
   const r = rnd();
-  let [text, reading] = r < 0.42 ? question() : r < 0.93 ? command() : [pick(SMALL), Ur()];
+  let [text, reading] = r < 0.42 ? question() : r < (G2 ? 0.89 : 0.93) ? command() : [G2 && chance(0.5) ? pick(SMALL2) : pick(SMALL), Ur()];
   [text, reading] = finish(text, reading, reading.kind === "question");
   const key = norm(text);
   if (testTexts.has(key) || seen.has(key) || key.split(" ").some((w) => banned.has(w)) || !R.valid(reading)) { skipped++; continue; }

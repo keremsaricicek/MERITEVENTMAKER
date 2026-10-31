@@ -1452,3 +1452,8 @@ test set stay excluded; no generated sentence equals a test sentence. Replay as 
 on the paraphrases AND on fresh; **0 wrong changes** over originals, paraphrases, deep,
 fresh and fresh2; briefs fields ≥ 0.90, invented ≤ 0.05; median seconds reported. Plan
 bars as for B7.
+
+**runB7b data and start (2026-10-31 ~17:30 Istanbul).** `node training/synth_f8.mjs --out DIR --n 3000
+--seed 72 --prompt short --grammar 2` (sha256 of items.jsonl begins `df53cf0a23a65f6f`; grammar 1
+still reproduces B7's data byte for byte). B7's plan benches were stopped during the real
+test (B7 is not wired; they were for the record) and the CPU went to B7b.
