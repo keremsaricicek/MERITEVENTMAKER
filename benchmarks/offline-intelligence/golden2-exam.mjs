@@ -36,7 +36,9 @@ for (let i = 0; i < 300; i++) { try { if ((await fetch(`http://127.0.0.1:${PORT}
 
 const browser = await chromium.launch().catch(() => chromium.launch({ executablePath: "/opt/pw-browsers/chromium" }));
 const relay = await startRelay({ config: core.configFromEnv({ VLM_PROVIDER: "local", VLM_LOCAL_URL: `http://127.0.0.1:${PORT}`, VLM_LOCAL_MANIFEST: path.join(tmp, "manifest.json"),
-  VLM_DATA_DIR: path.join(tmp, "data"), PORT: "0" }, { repoRoot: repo }), log: { log: () => {}, error: () => {} } });
+  VLM_DATA_DIR: path.join(tmp, "data"), PORT: "0" }, { repoRoot: repo }), log: { log: () => {}, error: () => {} },
+  // --root dist/merit-offline: the shipped offline package (its OCR engine included), as the Windows launcher serves it
+  ...(arg("root") ? { root: path.resolve(arg("root")) } : {}) });
 const out = { at: new Date().toISOString(), model: m.id, image: path.basename(arg("image")) };
 try {
   const img = "data:image/jpeg;base64," + fs.readFileSync(arg("image")).toString("base64");
