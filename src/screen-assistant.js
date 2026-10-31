@@ -224,14 +224,17 @@
     // The rules read first; only what they cannot place goes to the second
     // reader (the chat model on this machine, through the relay), whose reading
     // is the rules' own shape — answered and carried out by the same code below.
+    // With a second reader on this machine, the model reads first and the rules
+    // are the fallback (training/README.md "runB7b"); without one, the rules alone.
     async function answer(text) {
       const evs = events(), now = today();
-      let r = P().parse(text, evs, now), byModel = false;
-      const compound = !!r.compound;
-      if (r.kind === "unknown" && readText && R()) {
+      const rules = P().parse(text, evs, now);
+      let r = rules, byModel = false, sure = false;
+      const compound = !!rules.compound;
+      if (readText && R()) {
         status.textContent = t("assistant.reading");
         const m = await readText(text);
-        if (m) { r = R().toParse(m, evs, now); byModel = r.kind !== "unknown"; }
+        if (m && m.reading) { const mr = R().toParse(m.reading, evs, now); if (mr.kind !== "unknown") { r = mr; byModel = true; sure = !!m.sure; } }
       }
       // Neither a question about our events nor a command: small talk, from the
       // same model, marked as not resting on the data.
@@ -241,18 +244,23 @@
         const said = await chatText(text);
         if (said) return { text: said, chat: true };
       }
-      const out = reply(r, evs, now, byModel);
+      const out = reply(r, evs, now, byModel, { rules, sure });
       return byModel ? Object.assign(out, { byModel: true }) : out;
     }
-    function reply(r, evs, now, byModel) {
+    function reply(r, evs, now, byModel, how) {
       if (r.kind === "plan") { if (!currentId()) return { text: t("assistant.noEvent") }; return planReply(r.brief); }
       if (r.kind === "question") return { text: P().answer(r, evs, now, currentId()).text };
       if (r.kind !== "command") return { text: t("assistant.notUnderstood") };
       if (!currentId()) return { text: t("assistant.noEvent") };
-      // A command the language model read, and any deletion, is SHOWN first and
+      // Ask only when unsure (owner): a command the model read is done at once
+      // when the rules read the very same change or the model is sure of it;
+      // otherwise — and for a deletion only the rules read — it is SHOWN first and
       // waits for Onayla: a misreading costs a click, never a guest.
-      if (byModel || r.plan.some((st) => st.op === "deleteGuest")) {
-        const A = globalThis.MeritAssistantActions.create({ events, current: currentId, today, canMutate: (e) => canMutate(e), writers: {}, snapshot: () => null, registerUndo: () => {} });
+      const A = globalThis.MeritAssistantActions.create({ events, current: currentId, today, canMutate: (e) => canMutate(e), writers: {}, snapshot: () => null, registerUndo: () => {} });
+      const key = (res) => res.steps ? JSON.stringify(res.steps.map((x) => [x.op, x.guestId || x.name, x.tableId || x.table || null, x.seats || null, x.pax || null])) : null;
+      const agreed = byModel && how && how.rules && how.rules.kind === "command" && key(A.resolve(r.plan)) !== null && key(A.resolve(r.plan)) === key(A.resolve(how.rules.plan));
+      const unsure = byModel ? !(agreed || (how && how.sure)) : r.plan.some((st) => st.op === "deleteGuest");
+      if (unsure) {
         const res = A.resolve(r.plan);
         if (res.ask) return { text: res.ask };
         if (res.refuse) return { text: res.refuse };

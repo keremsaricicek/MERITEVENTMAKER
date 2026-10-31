@@ -60,13 +60,15 @@ export function readChatManifest(file, { verify = true } = {}) {
   if (!sv || !listed.has(sv.model) || !loraOk || !Number.isSafeInteger(sv.ctx) || sv.ctx < 512 || sv.ctx > 65536) return fail("CHAT_MANIFEST_INVALID", "serve: { model, lora: [], ctx } must name pinned files");
   // the instruction the model was measured with: "full" (instruction + worked examples) or "short" (a model trained on the readings)
   if (sv.prompt !== undefined && sv.prompt !== "full" && sv.prompt !== "short") return fail("CHAT_MANIFEST_INVALID", "serve.prompt is \"full\" or \"short\"");
+  // the confidence at which a reading is carried out without asking (set on seen sets, checked on a fresh one)
+  if (sv.actAt !== undefined && !(typeof sv.actAt === "number" && sv.actAt >= 0.5 && sv.actAt <= 1)) return fail("CHAT_MANIFEST_INVALID", "serve.actAt is a number from 0.5 to 1");
   if (verify) for (const f of files) {
     let st;
     try { st = fs.statSync(f.abs); } catch { return fail("CHAT_MODEL_MISSING", `${f.path} is not on disk`); }
     if (st.size !== f.bytes) return fail("CHAT_MODEL_INTEGRITY", `${f.path} is ${st.size} bytes, not the pinned ${f.bytes}`);
     if (sha256File(f.abs) !== f.sha256) return fail("CHAT_MODEL_INTEGRITY", `${f.path} does not match its pinned sha256`);
   }
-  const serveAt = { model: realOrSelf(path.resolve(dir, sv.model)), ctx: sv.ctx, prompt: sv.prompt || "full", lora: sv.lora.map((l) => ({ at: realOrSelf(path.resolve(dir, l.path)), scale: l.scale })) };
+  const serveAt = { model: realOrSelf(path.resolve(dir, sv.model)), ctx: sv.ctx, prompt: sv.prompt || "full", actAt: typeof sv.actAt === "number" ? sv.actAt : null, lora: sv.lora.map((l) => ({ at: realOrSelf(path.resolve(dir, l.path)), scale: l.scale })) };
   return { ok: true, manifest: { id, name, version, licence, source, evidence, files: files.map(({ path: p, bytes, sha256 }) => ({ path: p, bytes, sha256 })) }, serveAt };
 }
 
@@ -100,14 +102,18 @@ export function makeReader(cfg, { fetchImpl = loopbackFetch, timeoutMs = 120000 
     if (signal) signal.addEventListener("abort", () => ctrl.abort(), { once: true });
     try {
       // the instruction and worked examples are the same every time: the server keeps them in its prompt cache
-      const body = { messages: READING.messages(text, { prompt: cfg.serveAt.prompt }), temperature: 0, max_tokens: 400, cache_prompt: true, chat_template_kwargs: { enable_thinking: false },
+      const body = { messages: READING.messages(text, { prompt: cfg.serveAt.prompt }), temperature: 0, max_tokens: 400, cache_prompt: true, logprobs: true, top_logprobs: 1, chat_template_kwargs: { enable_thinking: false },
         response_format: { type: "json_schema", json_schema: { name: "reading", schema: READING.SCHEMA } } };
       const r = await fetchImpl(cfg.url + "/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal: ctrl.signal });
       if (!r.ok) return { ok: false, code: "CHAT_ERROR" };
       const j = await r.json();
       let reading = null;
       try { reading = JSON.parse(j.choices[0].message.content); } catch { reading = null; }
-      return { ok: true, reading: READING.valid(reading) ? reading : null };
+      // sure: the reading's least likely token is at least as likely as the manifest's actAt
+      const lp = j.choices && j.choices[0] && j.choices[0].logprobs && j.choices[0].logprobs.content;
+      const confidence = Array.isArray(lp) && lp.length ? Math.min(...lp.map((x) => Math.exp(Number(x.logprob)))) : null;
+      const sure = confidence != null && cfg.serveAt.actAt != null && confidence >= cfg.serveAt.actAt;
+      return { ok: true, reading: READING.valid(reading) ? reading : null, sure };
     } catch { return { ok: false, code: ctrl.signal.aborted ? "CHAT_TIMEOUT" : "CHAT_NOT_RUNNING" }; }
     finally { clearTimeout(t); }
   }

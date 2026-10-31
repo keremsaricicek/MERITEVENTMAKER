@@ -225,7 +225,7 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     say(`${mode}: ${r.ok ? (mode === "chat" ? "reply" : r.reading ? r.reading.kind : "no reading") : r.code} in ${seconds}s`);
     if (res.writableEnded || res.destroyed) return;
     if (!r.ok) return json(res, 409, { ok: false, code: r.code });
-    return json(res, 200, mode === "chat" ? { ok: true, reply: r.reply, seconds } : { ok: true, reading: r.reading, seconds });
+    return json(res, 200, mode === "chat" ? { ok: true, reply: r.reply, seconds } : { ok: true, reading: r.reading, sure: !!r.sure, seconds });
   }
 
   async function handleCancel(req, res) {

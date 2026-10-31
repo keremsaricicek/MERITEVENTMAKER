@@ -44,7 +44,7 @@ export default async function run({ page, checks, repoRoot }) {
     source: "tests/suites/assistant-reader.test.mjs", evidence: "scripted", serve: { model: "chat.gguf", lora: [], ctx: 4096 },
     files: Object.entries(files).map(([p, b]) => ({ path: p, bytes: b.length, sha256: crypto.createHash("sha256").update(b).digest("hex") })), ...over });
   const write = (n, m) => { const f = path.join(tmp, n); fs.writeFileSync(f, JSON.stringify(m)); return f; };
-  const good = write("chat.json", manifest());
+  const good = write("chat.json", manifest({ serve: { model: "chat.gguf", lora: [], ctx: 4096, actAt: 0.9 } }));
 
   // ---- configuration ---------------------------------------------------------------
   const env = (url, mf) => RD.readerFromEnv({ ASSISTANT_CHAT_URL: url, ASSISTANT_CHAT_MANIFEST: mf });
@@ -60,7 +60,7 @@ export default async function run({ page, checks, repoRoot }) {
   // ---- a scripted chat process -------------------------------------------------------
   const sent = [];
   let props = { model_path: fs.realpathSync(path.join(tmp, "chat.gguf")), default_generation_settings: { n_ctx: 4096 } };
-  let replyWith = null;
+  let replyWith = null, lp = null;   // lp: the scripted reading's least likely token, as a log-probability
   const fake = http.createServer((req, res) => {
     let body = "";
     req.on("data", (c) => { body += c; });
@@ -68,7 +68,7 @@ export default async function run({ page, checks, repoRoot }) {
       res.setHeader("content-type", "application/json");
       if (req.url === "/props") return res.end(JSON.stringify(props));
       if (req.url === "/lora-adapters") return res.end("[]");
-      if (req.url === "/v1/chat/completions") { const b = JSON.parse(body); sent.push(b); return res.end(JSON.stringify({ choices: [{ message: { content: typeof replyWith === "function" ? replyWith(b) : replyWith } }] })); }
+      if (req.url === "/v1/chat/completions") { const b = JSON.parse(body); sent.push(b); return res.end(JSON.stringify({ choices: [{ message: { content: typeof replyWith === "function" ? replyWith(b) : replyWith }, ...(lp == null ? {} : { logprobs: { content: [{ token: "{", logprob: 0 }, { token: "x", logprob: lp }] } }) }] })); }
       res.statusCode = 404; res.end("{}");
     });
   });
@@ -155,10 +155,25 @@ export default async function run({ page, checks, repoRoot }) {
     await page.locator(".assistant-undo").last().click();
     await settle(page);
     checks.equal(await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment), null, "one Geri al takes it back");
-    const n2 = sent.length;
-    await say("Zeynep Arslan'ı T05'e oturt");
-    checks.equal(sent.length, n2, "a sentence the rules read never goes to the model");
+    // ask only when unsure: the model sure of its reading (confidence >= the manifest's actAt) acts at once
+    lp = Math.log(0.97);
+    const sure = await say("Zeynep Arslan T05 masasına geçsin");
+    checks.ok(!/onaylıyor musun/i.test(sure) && await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment.tableId) === "t05",
+      "a reading the model is sure of (0.97 >= 0.9) is carried out at once, Geri al offered", sure);
     await page.evaluate(() => { const g = activeEvent().guests.find((x) => x.id === "gz"); unassignGuest(g.id); });
+    lp = Math.log(0.4);
+    const unsure = await say("Zeynep Arslan T05 masasına geçsin");
+    checks.ok(/onaylıyor musun/i.test(unsure) && !await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment),
+      "an unsure reading (0.4 < 0.9) is shown and waits", unsure);
+    await page.locator(".assistant-cancel").last().click();
+    await settle(page);
+    // the model reads first; where the rules read the very same change, it is done at once even when unsure
+    const n2 = sent.length;
+    const agreed = await say("Zeynep Arslan'ı T05'e oturt");
+    checks.ok(sent.length === n2 + 1 && !/onaylıyor musun/i.test(agreed) && await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment.tableId) === "t05",
+      "the model reads first; the rules read the same change, so it is done at once", agreed);
+    await page.evaluate(() => { const g = activeEvent().guests.find((x) => x.id === "gz"); unassignGuest(g.id); });
+    lp = null;
 
     // small talk: the reader finds nothing to read, the same model replies, marked
     replyWith = (b) => b.response_format ? JSON.stringify({ kind: "unknown", intent: null, person: null, phone: null, event: null, many: false, table: null, steps: [] }) : "Merhaba! Yoğun bir gün olmalı, kolay gelsin.";
