@@ -49,7 +49,16 @@ try {
   await importPlan(page, img);
   await runDetection(page);
   out.detectSeconds = (Date.now() - t0) / 1000;
-  await page.waitForFunction(() => { const v = state.events[0].analysis.vlm; return v && v.mode === "check" && v.status !== "running"; }, null, { timeout: 3600000 });
+  // the second look starts by itself only when the analysis left something to ask; if no run
+  // appears within two minutes there was nothing to ask (recorded), else wait for it to end
+  out.secondLook = "none started";
+  for (let i = 0; i < 240; i++) {
+    const v = await page.evaluate(() => { const x = state.events[0].analysis.vlm; return x ? { mode: x.mode, status: x.status, checks: (x.checks || []).length } : null; });
+    if (v && v.mode === "check" && v.status !== "running") { out.secondLook = v.status; break; }
+    if (v) out.secondLook = "running";
+    if (!v && i >= 8) break;
+    await sleep(15000);
+  }
   out.totalSeconds = (Date.now() - t0) / 1000;
   Object.assign(out, await page.evaluate(() => {
     const a = state.events[0].analysis, pi = a.planIntelligence || {};
