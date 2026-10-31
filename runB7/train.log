@@ -1,0 +1,27 @@
+start 2026-10-31T06:22:35Z items=3600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 10/450 items 80 loss 0.0344 lr 1.08e-04 3.28s/item elapsed 4.4min peakRSS 8029MB
+start 2026-10-31T06:31:53Z items=3600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 10/450 items 80 loss 0.0344 lr 1.08e-04 3.15s/item elapsed 4.2min peakRSS 8046MB
+start 2026-10-31T06:39:51Z items=3600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 10/450 items 80 loss 0.0344 lr 1.08e-04 3.11s/item elapsed 4.1min peakRSS 7998MB
+start 2026-10-31T06:47:51Z items=3600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 10/450 items 80 loss 0.0344 lr 1.08e-04 3.03s/item elapsed 4.0min peakRSS 7953MB
+start 2026-10-31T06:55:53Z items=3600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 10/450 items 80 loss 0.0344 lr 1.08e-04 3.10s/item elapsed 4.1min peakRSS 7963MB
+start 2026-10-31T07:03:52Z items=3600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 10/450 items 80 loss 0.0344 lr 1.08e-04 3.13s/item elapsed 4.2min peakRSS 8048MB
+start 2026-10-31T07:11:50Z items=3600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 10/450 items 80 loss 0.0344 lr 1.08e-04 3.24s/item elapsed 4.3min peakRSS 8008MB
+start 2026-10-31T07:21:53Z items=3600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 10/450 items 80 loss 0.0344 lr 1.08e-04 3.44s/item elapsed 4.6min peakRSS 8033MB
+start 2026-10-31T07:31:53Z items=3600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 10/450 items 80 loss 0.0344 lr 1.08e-04 3.24s/item elapsed 4.3min peakRSS 8017MB
+start 2026-10-31T07:39:50Z items=3600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 10/450 items 80 loss 0.0344 lr 1.08e-04 3.24s/item elapsed 4.3min peakRSS 8006MB
+start 2026-10-31T07:49:57Z items=3600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 10/450 items 80 loss 0.0344 lr 1.08e-04 3.27s/item elapsed 4.4min peakRSS 8054MB
+start 2026-10-31T07:59:54Z items=3600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 10/450 items 80 loss 0.0344 lr 1.08e-04 3.05s/item elapsed 4.1min peakRSS 7979MB
+start 2026-10-31T08:07:54Z items=3600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
+step 10/450 items 80 loss 0.0344 lr 1.08e-04 3.14s/item elapsed 4.2min peakRSS 8042MB
+start 2026-10-31T08:15:51Z items=3600 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=5308416 targets=72
