@@ -1497,3 +1497,30 @@ changing commands the model read, 9 carried out without asking (rules agreed or 
 deleted a guest (confidence 0.75). Same rule on the seen sets: 0 carried out wrong. Whether to
 use B7b behind this rule although it missed its reading bar is the owner's decision, recorded
 as such if taken.
+
+## 2026-10-31 — runB7c: hybrid reading + targeted language (written before any B7c result; data made)
+
+Owner: improve (1) how the model and the rules are combined and (2) the weak spots; wire
+nothing until it passes; if the 0.8B does not get there, try the 2B.
+
+**Decisive test, written first:** `training/assistant/fresh3.jsonl` (38: 16 questions, 16
+commands, 6 not ours; sha256 begins `3276a50ff512f0cf`). Caveat written now: its 6 small-talk
+items share TOPICS (dinner, sound system, day, lights) with grammar-2 small talk written
+earlier; fresh3 is reported with and without them.
+
+**Reading (1), decided now:** `--order hybrid --theta 0.87` — the model's reading when it is
+sure (confidence ≥ 0.87, B7b's θ) or the rules read nothing; otherwise the rules' reading
+when they have one. The ask-when-unsure rule stays as shipped; θ is re-set on the seen sets
+(now incl. fresh2) by the pre-registered rule and checked on fresh3.
+
+**Data (2):** `synth_f8.mjs --grammar 3 --seed 74 --n 3600 --prompt short` (sha256 begins
+`f86107df0ba4c1b0`): grammar 2 + negation that narrows a command ("X'i silme, sadece masadan
+kaldır", "silinmesin, sadece VIP olsun"), partner adds ("X ile eşini/kocasını/karısını"),
+group-size questions, out-of-scope questions (prices, who wrote the program, …). Taken from
+B7b's fresh2 misses: fresh2 is now SEEN. fresh2 and fresh3 sentences are excluded from the
+data (checked: 0 equal). Init runB6d, replay as B7, short prompt, one epoch.
+
+**Bars:** as B7b, with fresh3 as the decisive set: right ≥ 0.90 on fresh3, paraphrases and
+fresh; 0 wrong changes over all sets; briefs as before. **If B7c fails:** the same data and
+reading on Qwen3.5-2B (runB7-2B), bars unchanged, fresh3 then seen → a fresh4 written before
+its data.
