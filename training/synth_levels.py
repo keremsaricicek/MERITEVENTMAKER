@@ -44,8 +44,15 @@ SPLITS by style family and by layout source:
   BLIND-2       families 16-17 (`--split blind2`), defined 2026-10-17 before
                 any candidate of that programme was scored; train layouts.
                 Generated once, scored once.
+  family 18     (2026-10-31, `--families 18`) Golden 2's technical look, put on an
+                A4 page at 200 dpi, turned and scanned. Golden 2 is SEEN-style for a
+                model trained on it. Layout `lounge` (`--layouts lounge`): random
+                seating groups (square pairs/rows, long tables with armchairs on both
+                long sides, banquette pairs, rounds with 5-6 petal chairs). Neither is
+                in any default split, so earlier sets stay byte-identical.
 
     python training/synth_levels.py --out DIR --level 3 --count 40 --split train --seed 5
+    python training/synth_levels.py --out DIR --level 3 --count 60 --split train --seed 18 --families 18 --layouts lounge,lounge,rounds,rows,mixed,cabaret
 """
 import argparse
 import io
@@ -86,14 +93,23 @@ NEW_FAMILIES = [
          centre_dot=False, scan=False),
     dict(name="copy-grey", line=(50, 50, 50), lw=2, table_fill=None, chair="semicircle", chair_fill=(205, 205, 205), paper=(241, 240, 236),
          centre_dot=True, scan=True, numbers=True),
+    # 18 (2026-10-31): Golden 2's technical look, not its layout — blue outlines, beige squares
+    # with a green centre dot, orange armchairs and banquettes, wood-tone rounds with cream
+    # petal chairs on light-blue backs, put on an A4 page at 200 dpi, turned, scanned, JPEG.
+    # Golden 2 is SEEN-style for any model trained on this family (training/README.md, v4-g2).
+    dict(name="scan-office-blue", line=(55, 105, 195), lw=2, table_fill=(243, 229, 200), chair="arm", chair_fill=(232, 82, 42), paper=(255, 255, 255),
+         centre_dot=True, scan=True, wall=(170, 200, 235), wordart=(246, 170, 120), round_chair="petal-blue", round_fill=(236, 204, 150),
+         petal_fill=(250, 240, 212), petal_back=(130, 175, 232), sofa_fill=(232, 82, 42), dot=((110, 185, 70), (35, 95, 40)), page_scan=True),
 ]
 FAMILIES = synth.FAMILIES + NEW_FAMILIES
 TRAIN_FAMILIES = [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13]
 HELD_OUT = [8, 9]
 BLIND_FAMILIES = [14, 15]
 BLIND2_FAMILIES = [16, 17]
+G2_FAMILY = 18  # Golden 2's look; only through --families (no default split contains it)
 TRAIN_LAYOUTS = ["rounds", "staggered", "rows", "mixed", "cabaret"]
 BLIND_LAYOUTS = ["ushape"]
+LOUNGE_LAYOUTS = ["lounge"]  # 2026-10-31, only through --layouts
 
 
 class Plan3(Plan):
@@ -102,7 +118,7 @@ class Plan3(Plan):
     def chair(self, cx, cy, size, facing_deg, table_id, kind=None, typ="chair"):
         fam = self.fam
         kind = kind or fam["chair"]
-        if kind not in ("petal", "semicircle", "silhouette"):
+        if kind not in ("petal", "semicircle", "silhouette", "petal-blue"):
             saved = fam["chair"]
             fam["chair"] = kind
             try:
@@ -122,6 +138,13 @@ class Plan3(Plan):
             bx, by = cx - math.cos(a) * w * 0.32, cy - math.sin(a) * w * 0.32
             self.d.arc([(bx - w * 0.5) * SS, (by - w * 0.5) * SS, (bx + w * 0.5) * SS, (by + w * 0.5) * SS],
                        facing_deg + 180 - 70, facing_deg + 180 + 70, fill=line, width=max(2, lw * SS))
+        elif kind == "petal-blue":
+            # family 18: a cream seat with a thick light-blue curved back (Golden 2's round-table chairs)
+            back = fam.get("petal_back") or line
+            self.ellipse(cx, cy, w * 0.42, w * 0.38, fam.get("petal_fill") or fill, back, 1)
+            bx, by = cx - math.cos(a) * w * 0.04, cy - math.sin(a) * w * 0.04
+            self.d.arc([(bx - w * 0.5) * SS, (by - w * 0.5) * SS, (bx + w * 0.5) * SS, (by + w * 0.5) * SS],
+                       facing_deg + 180 - 70, facing_deg + 180 + 70, fill=back, width=max(3, int(w * 0.14 * SS)))
         elif kind == "semicircle":
             self.d.pieslice([(cx - w / 2) * SS, (cy - w / 2) * SS, (cx + w / 2) * SS, (cy + w / 2) * SS],
                             facing_deg + 90, facing_deg + 270, fill=fill, outline=line, width=max(1, lw * SS))
@@ -385,6 +408,165 @@ def long_rows(p, rng, level, box, unit, numbers, num):
     return num
 
 
+def lounge_groups(p, rng, level, box, unit):
+    """Layout `lounge` (2026-10-31): the SEATING GROUPS a lounge/office-graphic plan uses —
+    squares in pairs or rows of 2-3 with armchairs on both long sides, a long table with two
+    centre dots and 3-5 armchairs on each long side, squares with a banquette along one side
+    and chairs on the other, rounds with 5-6 petal chairs. Kinds, counts, positions, sizes and
+    orientations are all random; no real plan's arrangement is copied. Each group is built in
+    its own frame (u along the row, v across) and turned as a whole."""
+    fam = p.fam
+    x0, y0, x1, y1 = box
+    dot_fill, dot_line = fam.get("dot") or ((60, 140, 70), (30, 80, 40))
+    rkind = fam.get("round_chair") or fam["chair"] or "circle"
+
+    def place(gx, gy, deg):
+        a = math.radians(deg)
+        c, s = math.cos(a), math.sin(a)
+        return lambda u, v: (gx + u * c - v * s, gy + u * s + v * c)
+
+    def table(P, u, v, w, h, deg, typ, dots):
+        X, Y = P(u, v)
+        p.rect(X, Y, w, h, deg, fam["table_fill"], fam["line"], fam["lw"])
+        for du in dots:
+            DX, DY = P(u + du, v)
+            p.ellipse(DX, DY, min(w, h) * 0.08, min(w, h) * 0.08, dot_fill, dot_line, 1)
+        tid = p.oid("t")
+        p.objects.append(dict(id=tid, **{"class": "table"}, type=typ, cx=round(X, 1), cy=round(Y, 1), w=round(w, 1), h=round(h, 1), rotation=round(deg % 360, 1)))
+        return tid, p.objects[-1]
+
+    def chair(P, u, v, cs, deg, side, tid):
+        # side +1: the chair is on the +v side and faces -v (toward its table)
+        X, Y = P(u, v)
+        p.chair(X, Y, cs, deg - 90 * side, tid, kind="arm" if fam["chair"] == "arm" else fam["chair"])
+
+    n_groups = rng.randint(6, 22)
+    for _ in range(n_groups * 3):
+        if n_groups <= 0:
+            break
+        kind = rng.choices(["pair", "row", "long", "banquette", "round", "single"], weights=[3, 3, 1.2, 1.5, 2.5, 1])[0]
+        s = unit * rng.uniform(0.85, 1.15)
+        cs = s * rng.uniform(0.62, 0.8)
+        g = cs * rng.uniform(0.02, 0.15)
+        deg = rng.choice([0, 90]) if not (level >= 4 and rng.random() < 0.15) else rng.choice([30, 45, 60, -30, 135])
+        if kind == "round":
+            r = s * rng.uniform(0.62, 0.85)
+            rc = r * rng.uniform(0.5, 0.62)
+            half_u = half_v = r + rc * 1.05
+        elif kind == "long":
+            L, D, k = s * rng.uniform(2.2, 3.4), s * rng.uniform(0.85, 1.15), rng.randint(3, 5)
+            half_u, half_v = L / 2 + 2, D / 2 + g + cs
+        else:
+            n = {"pair": 2, "row": rng.choice([2, 3, 3]), "banquette": rng.choice([2, 2, 3]), "single": 1}[kind]
+            half_u = n * s / 2 + 2
+            bd = s * rng.uniform(0.55, 0.7)
+            half_v = s / 2 + g + cs if kind != "banquette" else s / 2 + max(g + cs, bd + 3)
+        a = math.radians(deg)
+        ex = abs(math.cos(a)) * half_u + abs(math.sin(a)) * half_v
+        ey = abs(math.sin(a)) * half_u + abs(math.cos(a)) * half_v
+        if x1 - x0 < 2 * ex + 10 or y1 - y0 < 2 * ey + 10:
+            continue
+        gx, gy = rng.uniform(x0 + ex + 4, x1 - ex - 4), rng.uniform(y0 + ey + 4, y1 - ey - 4)
+        bb = (gx - ex, gy - ey, gx + ex, gy + ey)
+        if not p.free(bb):
+            continue
+        p.take(bb)
+        n_groups -= 1
+        P = place(gx, gy, deg)
+        if kind == "round":
+            X, Y = gx, gy
+            p.ellipse(X, Y, r, r, fam.get("round_fill") or fam["table_fill"], fam["line"], fam["lw"])
+            if fam.get("round_fill"):  # a wood grain: a few faint arcs inside the top
+                for _k in range(rng.randint(0, 5)):
+                    rr = r * rng.uniform(0.3, 0.85)
+                    st = rng.uniform(0, 360)
+                    p.d.arc([(X - rr) * SS, (Y - rr) * SS, (X + rr) * SS, (Y + rr) * SS], st, st + rng.uniform(20, 80),
+                            fill=tuple(max(0, c - 18) for c in fam["round_fill"]), width=SS)
+            if fam.get("centre_dot") and rng.random() < 0.5:
+                p.ellipse(X, Y, r * 0.09, r * 0.09, dot_fill, dot_line, 1)
+            tid = p.oid("t")
+            nch = rng.choice([5, 6])
+            p.objects.append(dict(id=tid, **{"class": "table"}, type="round", cx=round(X, 1), cy=round(Y, 1), w=round(2 * r, 1), h=round(2 * r, 1), rotation=0, seats=nch))
+            off = rng.uniform(0, 360)
+            for i in range(nch):
+                t = off + 360 * i / nch
+                d = r + rc * rng.uniform(0.35, 0.5)
+                p.chair(X + math.cos(math.radians(t)) * d, Y + math.sin(math.radians(t)) * d, rc, t + 180, tid, kind=rkind)
+        elif kind == "long":
+            tid, obj = table(P, 0, 0, L, D, deg, "rectangle", [-L / 4, L / 4] if fam.get("centre_dot") else [])
+            for side in (1, -1):
+                for i in range(k):
+                    chair(P, (i + 0.5) / k * L - L / 2, side * (D / 2 + g + cs / 2), cs, deg, side, tid)
+            obj["seats"] = 2 * k
+        else:
+            ids = []
+            for i in range(n):
+                u = (i - (n - 1) / 2) * s
+                tid, obj = table(P, u, 0, s, s, deg, "square", [0] if fam.get("centre_dot") else [])
+                ids.append(tid)
+                sides = (1, -1) if kind != "banquette" else (-1,)
+                for side in sides:
+                    chair(P, u, side * (s / 2 + g + cs / 2), cs, deg, side, tid)
+                obj["seats"] = len(sides)
+            if kind == "banquette":
+                BL = n * s * rng.uniform(0.95, 1.1)
+                X, Y = P(0, s / 2 + 2 + bd / 2)
+                fill = fam.get("sofa_fill") or fam.get("chair_fill") or (210, 210, 210)
+                p.rect(X, Y, BL, bd, deg, fill, fam["line"], fam["lw"])
+                BX, BY = P(0, s / 2 + 2 + bd * 0.82)
+                p.rect(BX, BY, BL * 0.98, bd * 0.2, deg, fill, fam["line"], max(1, fam["lw"] - 1))
+                for e in (-1, 1):
+                    AX, AY = P(e * BL * 0.47, s / 2 + 2 + bd / 2)
+                    p.rect(AX, AY, BL * 0.05, bd * 0.9, deg, fill, fam["line"], max(1, fam["lw"] - 1))
+                bid = p.oid("v")
+                p.objects.append(dict(id=bid, **{"class": "banquette"}, cx=round(X, 1), cy=round(Y, 1), w=round(BL, 1), h=round(bd, 1), rotation=round(deg % 360, 1),
+                                      seats=None, seatsSource="not shown: unknown"))
+                p.rels.append(dict(seating=bid, belongsTo=ids[0], method="generated"))
+            if len(ids) > 1:
+                p.groups.append(dict(id=f"g{len(p.groups) + 1:02d}", type="merged", members=ids,
+                                     seats=None if kind == "banquette" else 2 * len(ids)))
+
+
+def page_scan(img, objs, rng, meta):
+    """Family 18: the drawing printed on an A4 page and scanned at 200 dpi — turned 0/90/180/270
+    degrees on the page, light scanner tint, noise, specks and JPEG. Labels go through the
+    same transform."""
+    W, H = img.size
+    rot = rng.choice([90, 90, 270, 270, 180, 0])
+    if rot == 90:      # PIL ROTATE_90 is counter-clockwise: (x, y) -> (y, W - x)
+        img, R = img.transpose(Image.ROTATE_90), np.array([[0, 1, 0], [-1, 0, W], [0, 0, 1]], float)
+    elif rot == 270:   # clockwise: (x, y) -> (H - y, x)
+        img, R = img.transpose(Image.ROTATE_270), np.array([[0, -1, H], [1, 0, 0], [0, 0, 1]], float)
+    elif rot == 180:
+        img, R = img.transpose(Image.ROTATE_180), np.array([[-1, 0, W], [0, -1, H], [0, 0, 1]], float)
+    else:
+        R = np.eye(3)
+    w, h = img.size
+    PW, PH = (1654, 2338) if h >= w else (2338, 1654)
+    mx, my = PW * rng.uniform(0.04, 0.09), PH * rng.uniform(0.04, 0.09)
+    sc = min((PW - 2 * mx) / w, (PH - 2 * my) / h)
+    nw, nh = max(1, int(round(w * sc))), max(1, int(round(h * sc)))
+    ox, oy = int(rng.uniform(mx * 0.5, PW - nw - mx * 0.5)), int(rng.uniform(my * 0.5, PH - nh - my * 0.5))
+    page = Image.new("RGB", (PW, PH), (255, 255, 255))
+    page.paste(img.resize((nw, nh), Image.LANCZOS), (ox, oy))
+    M = np.array([[nw / w, 0, ox], [0, nh / h, oy], [0, 0, 1]], float) @ R
+    objs = map_objects(objs, M)
+    a = np.asarray(page, dtype=np.float32)
+    a = a * (np.array(rng.choice([(250, 248, 246), (246, 244, 242), (252, 251, 249), (247, 245, 240)]), np.float32) / 255.0)
+    a = a + np.random.default_rng(rng.randint(0, 1 << 30)).normal(0, rng.uniform(1.5, 4.0), a.shape)
+    page = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
+    dd = ImageDraw.Draw(page)
+    for _ in range(rng.randint(0, 12)):  # dust specks
+        sx, sy, sr = rng.uniform(0, PW), rng.uniform(0, PH), rng.uniform(0.6, 2.2)
+        g = rng.randint(60, 170)
+        dd.ellipse([sx - sr, sy - sr, sx + sr, sy + sr], fill=(g, g, g))
+    page = page.filter(ImageFilter.GaussianBlur(rng.uniform(0.3, 0.7)))
+    buf = io.BytesIO()
+    page.save(buf, "JPEG", quality=rng.randint(65, 90))
+    meta["pageScan"] = {"rotationDeg": rot, "dpi": 200, "page": [PW, PH]}
+    return Image.open(io.BytesIO(buf.getvalue())).convert("RGB"), objs
+
+
 def draw_level(seed, fam_idx, level, layout, size=None):
     rng = random.Random(seed)
     fam = dict(FAMILIES[fam_idx])
@@ -457,6 +639,8 @@ def draw_level(seed, fam_idx, level, layout, size=None):
         p.merged_row(cx - Lw / 2, cy - Lh / 2 + unit * 1.6, k, unit, False)
         p.merged_row(cx - Lw / 2 + (n - 1) * unit, cy - Lh / 2 + unit * 1.6, k, unit, False)
         num = 1
+    elif layout == "lounge":  # 2026-10-31: only reachable through --layouts
+        lounge_groups(p, rng, level, inner, rng.uniform(36, 80) * scale)
     else:
         r = rng.uniform(20, 40) * scale
         crowd = level >= 4 and rng.random() < 0.4
@@ -511,6 +695,10 @@ def draw_level(seed, fam_idx, level, layout, size=None):
         objs = [dict(o, cx=round(o["cx"] - cx0, 1), cy=round(o["cy"] - cy0, 1)) for o in objs]
         W, H = img.size
         meta["cropped"] = True
+
+    # family 18 (and any family that asks for it): an A4 page scanned at 200 dpi, at every level
+    if fam.get("page_scan"):
+        img, objs = page_scan(img, objs, rng, meta)
 
     # L6: scanned
     if level >= 6:
@@ -668,16 +856,22 @@ def main():
     ap.add_argument("--count", type=int, default=20)
     ap.add_argument("--split", choices=list(SEEDS), required=True)
     ap.add_argument("--seed", type=int, default=0)
+    # 2026-10-31: both empty by default, which leaves every earlier set byte-identical
+    ap.add_argument("--families", default="", help="family indices to cycle through instead of the split's own, e.g. 18")
+    ap.add_argument("--layouts", default="", help="layouts drawn from instead of the training layouts, e.g. lounge,lounge,rounds")
     a = ap.parse_args()
     fams = {"train": TRAIN_FAMILIES, "val": TRAIN_FAMILIES, "heldout": HELD_OUT, "blind": BLIND_FAMILIES, "blind2": BLIND2_FAMILIES}[a.split]
+    if a.families:
+        fams = [int(x) for x in a.families.split(",") if x != ""]
     layouts = BLIND_LAYOUTS + TRAIN_LAYOUTS if a.split == "blind" else TRAIN_LAYOUTS
+    pick = [x for x in a.layouts.split(",") if x] or TRAIN_LAYOUTS
     os.makedirs(a.out, exist_ok=True)
     index = []
     for i in range(a.count):
         fam = fams[i % len(fams)]
         seed = (SEEDS[a.split] * 1000003 + a.level * 10007 + a.seed * 101 + i)
         rng = random.Random(seed)
-        layout = layouts[0] if (a.split == "blind" and i % 2 == 0) else rng.choice(TRAIN_LAYOUTS)
+        layout = layouts[0] if (a.split == "blind" and i % 2 == 0) else rng.choice(pick)
         img, p, objs, meta = draw_level(seed, fam, a.level, layout)
         pid = f"syn-{FAMILIES[fam]['name']}-L{a.level}-{seed}"
         img.save(os.path.join(a.out, pid + ".png"))
