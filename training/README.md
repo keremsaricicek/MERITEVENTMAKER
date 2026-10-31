@@ -1345,3 +1345,38 @@ candidate, run last, so that a 0.8B winner would be the same model as the plan's
 sets, scoring and the choice rule unchanged. Before / after (B2) runs with B6d's adapter
 and manifest (B6c's manifest lists no check since B6d was wired). A container restart
 stopped the race during Qwen3.5-4B's briefs; it resumes from them.
+
+## 2026-10-31 — runB7: the 0.8B taught to read the owner's commands (written before any B7 data exists)
+
+**Why.** The owner: a language model that understands spoken and written commands is
+essential, so one MUST pass; if no race candidate does, train one. Qwen3.5-4B (the
+only candidate scored so far) reads 0.80 of the paraphrases with the rules (bar 0.90).
+
+**Fresh test, written first** (`training/assistant/fresh.jsonl`, 40 sentences: 20
+questions, 16 commands, 4 not ours to read — small talk, the weather; each with its
+GOLD reading; sha256 begins `54e6c796bb85dec5`). Scored like the deep set (same
+answer text, or same writer calls / question / refusal, as the gold reading through
+the same code); a "not ours" sentence is right only when read as unknown. Written by
+the same developer who writes the generator: it is NOT an unseen-by-us test — the
+owner's own sentences are the real one.
+
+**Data** (`training/synth_f8.mjs`, written after this section): sentences made by a
+grammar over every intent and writer step — other verbs, word orders, no apostrophes,
+no Turkish letters, fillers, long indirect clauses, two- and three-job sentences, small
+talk — each with its reading in `MeritAssistantReading`'s shape, asked exactly as the
+relay asks (its instruction and worked examples, `src/assistant-reading.js`). Names,
+events, venues and tables of the test fixture and of every test set are excluded from
+the grammar's pools, and no generated sentence equals a test sentence (checked).
+Replay: 400 from each of B6d's data dirs (plan questions and briefs).
+`vlm_lora.py train --init runB6d`, one epoch, fp32, curriculum.
+
+**Bars (not changed after a result).** F8, scored with the PRODUCT's rules first and
+B7 where they say unknown (`assistant_race.mjs --rules current --fresh`; the product's
+rules no longer act on two-job sentences): right ≥ 0.90 on the paraphrases AND ≥ 0.90
+on the fresh set, and **0 wrong changes** on originals, paraphrases, deep and fresh
+together. Briefs: fields ≥ 0.90, invented ≤ 0.05. To replace B6d as the one plan model
+it must also pass B6d's merged bars (blind4, S1, real — scored a 7th time) and the
+applying-by-itself bar. If it passes F8 but not the plan bars, B6d stays the plan model
+and B7's adapter serves only the F8 reader (the same base file, its own adapter),
+said so. If a race candidate also passes, the race's choice rule decides between them.
+Speed (median seconds per sentence) is reported.

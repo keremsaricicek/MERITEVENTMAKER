@@ -24,9 +24,10 @@ const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 for (const f of ["src/assistant-tools.js", "src/assistant-actions.js", "src/assistant-parse.js", "src/assistant-reading.js", "training/assistant/parse-at-race.js"]) await import(pathToFileURL(path.join(repo, f)).href);
 // the rules as they were when the race was pre-registered (a frozen copy): later
 // product fixes to the rules do not change what is measured here; answer() is the product's
-const P = { ...globalThis.MeritAssistantParse, parse: globalThis.MeritAssistantParseAtRace.parse }, Tl = globalThis.MeritAssistantTools;
+// (`--rules current`: the product's rules instead, as runB7 was pre-registered to be scored)
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : d; };
 const flag = (k) => process.argv.includes("--" + k);
+const P = arg("rules", "frozen") === "current" ? globalThis.MeritAssistantParse : { ...globalThis.MeritAssistantParse, parse: globalThis.MeritAssistantParseAtRace.parse }, Tl = globalThis.MeritAssistantTools;
 const fx = JSON.parse(fs.readFileSync(path.join(repo, "training/assistant/fixture.json"), "utf8"));
 const lines = (f) => fs.readFileSync(path.join(repo, "training/assistant", f), "utf8").trim().split("\n").map((l) => JSON.parse(l));
 
@@ -44,6 +45,8 @@ const items = [
   ...lines("questions.jsonl").map((q) => ({ set: "original", id: "Q" + q.id, kind: "question", text: q.q, must: MUST[q.id] })),
   ...lines("commands.jsonl").map((c) => ({ set: "original", id: "C" + c.id, kind: "command", text: c.text, cmd: c })),
   ...lines("deep.jsonl").map((d) => ({ set: "deep", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })),
+  // `--fresh`: the set written for runB7 before its training data (training/assistant/fresh.jsonl), scored as the deep set
+  ...(flag("fresh") ? lines("fresh.jsonl").map((d) => ({ set: "fresh", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...lines("variants.jsonl").map((v) => {
     const n = Number(v.sameAs.slice(1));
     return v.kind === "question" ? { set: "variant", id: v.id, kind: "question", text: v.text, must: MUST[n] } : { set: "variant", id: v.id, kind: "command", text: v.text, cmd: CMDS[n] };
@@ -87,7 +90,9 @@ function outcome(item, parsed) {
   return { calls, kind: calls.length ? "calls" : out.refuse ? "refuse" : out.ask ? "ask" : "nothing" };
 }
 function score(item, parsed) {
-  if (item.set === "deep") {
+  if (item.set === "deep" || item.set === "fresh") {
+    // not ours to read (small talk, the world outside): right only when read as "unknown"
+    if (item.kind === "unknown") { const got = outcome(item, parsed); return { right: parsed.kind === "unknown", wrongChange: got.calls.length > 0, calls: got.calls }; }
     const want = outcome(item, toParse(item.gold)), got = outcome(item, parsed);
     if (item.kind === "question") return { right: !!want.text && got.text === want.text, wrongChange: false, answer: got.text };
     const right = JSON.stringify(got.calls) === JSON.stringify(want.calls) && got.kind === want.kind;
@@ -116,6 +121,10 @@ function score(item, parsed) {
   return { right: calls.length === 0 && (c.ask ? !!out.ask : !!out.refuse), wrongChange: calls.length > 0, calls };
 }
 
+if (flag("check-gold")) {
+  for (const it of items.filter((i) => i.gold)) { const o = outcome(it, toParse(it.gold)); console.log(it.id, it.kind, JSON.stringify(o).slice(0, 160)); }
+  process.exit(0);
+}
 const port = Number(arg("port", 8099)), label = arg("label", "rules"), rulesOnly = flag("rules-only");
 const rows = [];
 // Resumable: each sentence's model reading is kept as it comes (OUT.partial.jsonl);
@@ -145,6 +154,7 @@ const summary = { label, at: new Date().toISOString(),
   original: { rules: sum("original", "rules"), model: sum("original", "model"), both: sum("original", "both") },
   variant: { rules: sum("variant", "rules"), model: sum("variant", "model"), both: sum("variant", "both") },
   deep: { rules: sum("deep", "rules"), model: sum("deep", "model"), both: sum("deep", "both") },
+  ...(flag("fresh") ? { fresh: { rules: sum("fresh", "rules"), model: sum("fresh", "model"), both: sum("fresh", "both") } } : {}),
   medianSeconds: secs.length ? secs[Math.floor(secs.length / 2)] : null };
 fs.writeFileSync(arg("out"), JSON.stringify({ summary, rows }, null, 1));
 console.log(JSON.stringify(summary));
