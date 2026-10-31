@@ -61,8 +61,14 @@ Kullanmadığın alanlar null; many yoksa false; steps soru için boş liste.`;
     ["Bugün hava nasıl?", { kind: "unknown", intent: null, person: null, phone: null, event: null, many: false, table: null, steps: [] }],
   ];
 
+  // The short instruction a model TRAINED on the readings is asked with (runB7,
+  // training/README.md): what to return is in its training, not in the prompt;
+  // the schema still constrains the answer. Its chat manifest says
+  // `serve.prompt: "short"`; every other reader gets the full one.
+  const SYSTEM_SHORT = "Sen bir etkinlik programındaki asistanın okuyucususun. Kullanıcının cümlesini okuma JSON'una çevir; cevap verme, bilgi uydurma.";
   // The chat request for one sentence: the instruction, the worked examples, the sentence.
-  function messages(text) {
+  function messages(text, opts) {
+    if (opts && opts.prompt === "short") return [{ role: "system", content: SYSTEM_SHORT }, { role: "user", content: String(text) }];
     const m = [{ role: "system", content: SYSTEM }];
     for (const [u, a] of EXAMPLES) m.push({ role: "user", content: u }, { role: "assistant", content: JSON.stringify(a) });
     m.push({ role: "user", content: String(text) });
@@ -109,5 +115,5 @@ Kullanmadığın alanlar null; many yoksa false; steps soru için boş liste.`;
   return { kind: "command", plan: steps };
   }
 
-  globalThis.MeritAssistantReading = Object.freeze({ INTENTS, OPS, SCHEMA, SYSTEM, EXAMPLES, CHAT_SYSTEM, messages, chatMessages, valid, toParse });
+  globalThis.MeritAssistantReading = Object.freeze({ INTENTS, OPS, SCHEMA, SYSTEM, SYSTEM_SHORT, EXAMPLES, CHAT_SYSTEM, messages, chatMessages, valid, toParse });
 })();

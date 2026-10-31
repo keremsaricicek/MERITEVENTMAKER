@@ -1385,3 +1385,13 @@ Speed (median seconds per sentence) is reported.
 data, bars and tests unchanged).** The machine stopped twice overnight while the race ran
 (Gemma 4 E4B: 22 of 85 sentences, ~90 s each). B7 trains and is scored first; the race's
 remaining candidates (Gemma 4 E4B, Kara-Kumru, B6c, B6d) and its extras run after it.
+
+**runB7 amended 2026-10-31 ~13:30 Istanbul (no B7 adapter scored; stopped at step 70 of 450).**
+With the relay's full prompt (instruction + 7 worked examples, 1,137 tokens) each sentence
+took ~15 s to train (gradient checkpointing, needed after 13 out-of-memory kills at
+14 GB): ~12 h left. B7 is now trained and asked with a SHORT instruction
+(`MeritAssistantReading.SYSTEM_SHORT`, no worked examples — what to return is taught by
+the data; the schema still constrains the answer): the same 2,400 sentences and readings
+(seed 71, checked identical), the chat manifest says `serve.prompt: "short"`, the relay
+asks exactly that (`assistant-reader` suite), the race harness `--prompt short`. Tests,
+bars and replay unchanged. The race candidates keep the full prompt (they are untrained).

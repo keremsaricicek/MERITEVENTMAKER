@@ -10,7 +10,9 @@
 // test fixture and of every test set are NOT in the pools, and no sentence equals
 // a test sentence (checked below).
 //
-//   node training/synth_f8.mjs --out DIR [--n 2400 --seed 71]
+//   node training/synth_f8.mjs --out DIR [--n 2400 --seed 71] [--prompt short]
+// (`--prompt short`: asked with MeritAssistantReading.SYSTEM_SHORT and no worked
+// examples — the same sentences and readings, a prompt a tenth as long)
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -185,7 +187,8 @@ for (const pool of [FIRST, LAST, ARTISTS, VENUES]) for (const x of pool) for (co
 // ---- write ------------------------------------------------------------------------
 const out = arg("out"), N = Number(arg("n", 2400));
 fs.mkdirSync(out, { recursive: true });
-const shots = R.EXAMPLES.map(([u, a]) => [u, JSON.stringify(a)]);
+const shortPrompt = arg("prompt", "full") === "short";
+const shots = shortPrompt ? null : R.EXAMPLES.map(([u, a]) => [u, JSON.stringify(a)]);
 const seen = new Set(), counts = {};
 let n = 0, skipped = 0;
 const f = fs.openSync(path.join(out, "items.jsonl"), "w");
@@ -198,7 +201,7 @@ while (n < N) {
   seen.add(key);
   const sub = reading.kind === "question" ? reading.intent : reading.kind === "command" ? reading.steps.map((s) => s.op).join("+") : "unknown";
   counts[reading.kind] = (counts[reading.kind] || 0) + 1;
-  fs.writeSync(f, JSON.stringify({ task: "F8", sub, q: text, system: R.SYSTEM, shots, truth: JSON.stringify(reading), level: reading.steps.length > 1 || text.length > 70 ? 3 : 2,
+  fs.writeSync(f, JSON.stringify({ task: "F8", sub, q: text, system: shortPrompt ? R.SYSTEM_SHORT : R.SYSTEM, ...(shots ? { shots } : {}), truth: JSON.stringify(reading), level: reading.steps.length > 1 || text.length > 70 ? 3 : 2,
     family: "synth-f8", seed: Number(arg("seed", 71)), split: "train", image: null }) + "\n");
   n++;
 }

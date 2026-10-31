@@ -108,6 +108,20 @@ export default async function run({ page, checks, repoRoot }) {
     checks.equal([wrong.http, wrong.json.code, sent.length - n], [409, "LOCAL_SERVER_MISMATCH", 0], "a process that is not the measured server reads nothing");
     props = { ...props, default_generation_settings: { n_ctx: 4096 } };
 
+    // ---- a model trained on the short instruction is asked with it ------------------
+    const shortReader = env(url, write("short.json", manifest({ serve: { model: "chat.gguf", lora: [], ctx: 4096, prompt: "short" } })));
+    const relay2 = await startRelay({ config, client: { models: {}, beta: { messages: {} } }, log: { log: () => {}, error: () => {} }, reader: shortReader });
+    try {
+      replyWith = JSON.stringify(reading);
+      const s = await fetch(relay2.baseUrl + "/vlm-relay/read", { method: "POST", headers: { "content-type": "application/json", "x-merit-relay": "1" }, body: JSON.stringify({ text: "Zeynep Arslan T05 masasına geçsin" }) }).then((x) => x.json());
+      const reqS = sent[sent.length - 1];
+      checks.ok(s.ok && reqS.messages.length === 2 && reqS.messages[0].content === R.SYSTEM_SHORT && reqS.messages[1].content === "Zeynep Arslan T05 masasına geçsin"
+        && JSON.stringify(reqS.messages) === JSON.stringify(R.messages("Zeynep Arslan T05 masasına geçsin", { prompt: "short" })),
+        "a manifest that says the model was trained on the short instruction is asked with exactly that (no worked examples)");
+      checks.equal(env(url, write("badprompt.json", manifest({ serve: { model: "chat.gguf", lora: [], ctx: 4096, prompt: "long" } }))).reasonCode, "CHAT_MANIFEST_INVALID",
+        "serve.prompt is \"full\" or \"short\", nothing else");
+    } finally { await relay2.close(); }
+
     // ---- the panel: rules first, then the reader, then the same acting code -------
     replyWith = JSON.stringify(reading);
     await openApp(page, relay.baseUrl, { lang: "tr" });

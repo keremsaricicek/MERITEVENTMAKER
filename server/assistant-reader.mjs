@@ -58,13 +58,15 @@ export function readChatManifest(file, { verify = true } = {}) {
   const sv = m.serve, listed = new Set(files.map((f) => f.path));
   const loraOk = sv && Array.isArray(sv.lora) && sv.lora.length <= 1 && sv.lora.every((l) => l && listed.has(l.path) && typeof l.scale === "number" && l.scale > 0 && l.scale <= 4);
   if (!sv || !listed.has(sv.model) || !loraOk || !Number.isSafeInteger(sv.ctx) || sv.ctx < 512 || sv.ctx > 65536) return fail("CHAT_MANIFEST_INVALID", "serve: { model, lora: [], ctx } must name pinned files");
+  // the instruction the model was measured with: "full" (instruction + worked examples) or "short" (a model trained on the readings)
+  if (sv.prompt !== undefined && sv.prompt !== "full" && sv.prompt !== "short") return fail("CHAT_MANIFEST_INVALID", "serve.prompt is \"full\" or \"short\"");
   if (verify) for (const f of files) {
     let st;
     try { st = fs.statSync(f.abs); } catch { return fail("CHAT_MODEL_MISSING", `${f.path} is not on disk`); }
     if (st.size !== f.bytes) return fail("CHAT_MODEL_INTEGRITY", `${f.path} is ${st.size} bytes, not the pinned ${f.bytes}`);
     if (sha256File(f.abs) !== f.sha256) return fail("CHAT_MODEL_INTEGRITY", `${f.path} does not match its pinned sha256`);
   }
-  const serveAt = { model: realOrSelf(path.resolve(dir, sv.model)), ctx: sv.ctx, lora: sv.lora.map((l) => ({ at: realOrSelf(path.resolve(dir, l.path)), scale: l.scale })) };
+  const serveAt = { model: realOrSelf(path.resolve(dir, sv.model)), ctx: sv.ctx, prompt: sv.prompt || "full", lora: sv.lora.map((l) => ({ at: realOrSelf(path.resolve(dir, l.path)), scale: l.scale })) };
   return { ok: true, manifest: { id, name, version, licence, source, evidence, files: files.map(({ path: p, bytes, sha256 }) => ({ path: p, bytes, sha256 })) }, serveAt };
 }
 
@@ -98,7 +100,7 @@ export function makeReader(cfg, { fetchImpl = loopbackFetch, timeoutMs = 120000 
     if (signal) signal.addEventListener("abort", () => ctrl.abort(), { once: true });
     try {
       // the instruction and worked examples are the same every time: the server keeps them in its prompt cache
-      const body = { messages: READING.messages(text), temperature: 0, max_tokens: 400, cache_prompt: true, chat_template_kwargs: { enable_thinking: false },
+      const body = { messages: READING.messages(text, { prompt: cfg.serveAt.prompt }), temperature: 0, max_tokens: 400, cache_prompt: true, chat_template_kwargs: { enable_thinking: false },
         response_format: { type: "json_schema", json_schema: { name: "reading", schema: READING.SCHEMA } } };
       const r = await fetchImpl(cfg.url + "/v1/chat/completions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal: ctrl.signal });
       if (!r.ok) return { ok: false, code: "CHAT_ERROR" };

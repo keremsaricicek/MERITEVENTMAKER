@@ -24,7 +24,8 @@ const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 for (const f of ["src/assistant-tools.js", "src/assistant-actions.js", "src/assistant-parse.js", "src/assistant-reading.js", "training/assistant/parse-at-race.js"]) await import(pathToFileURL(path.join(repo, f)).href);
 // the rules as they were when the race was pre-registered (a frozen copy): later
 // product fixes to the rules do not change what is measured here; answer() is the product's
-// (`--rules current`: the product's rules instead, as runB7 was pre-registered to be scored)
+// (`--rules current`: the product's rules instead, as runB7 was pre-registered to be scored;
+// `--prompt short`: asked as a model trained on the readings is, MeritAssistantReading.SYSTEM_SHORT)
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : d; };
 const flag = (k) => process.argv.includes("--" + k);
 const P = arg("rules", "frozen") === "current" ? globalThis.MeritAssistantParse : { ...globalThis.MeritAssistantParse, parse: globalThis.MeritAssistantParseAtRace.parse }, Tl = globalThis.MeritAssistantTools;
@@ -59,7 +60,7 @@ const R = globalThis.MeritAssistantReading;
 
 async function ask(port, text) {
   // the fixed instruction and examples are kept in the server's prompt cache, as the relay asks (2026-10-28)
-  const body = { messages: R.messages(text), temperature: 0, max_tokens: 400, cache_prompt: true, chat_template_kwargs: { enable_thinking: false },
+  const body = { messages: R.messages(text, { prompt: arg("prompt", "full") }), temperature: 0, max_tokens: 400, cache_prompt: true, chat_template_kwargs: { enable_thinking: false },
     response_format: { type: "json_schema", json_schema: { name: "reading", schema: R.SCHEMA } } };
   const t0 = Date.now();
   const r = await fetch(`http://127.0.0.1:${port}/v1/chat/completions`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
