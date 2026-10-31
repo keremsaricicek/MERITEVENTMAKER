@@ -1380,3 +1380,8 @@ applying-by-itself bar. If it passes F8 but not the plan bars, B6d stays the pla
 and B7's adapter serves only the F8 reader (the same base file, its own adapter),
 said so. If a race candidate also passes, the race's choice rule decides between them.
 Speed (median seconds per sentence) is reported.
+
+**runB7 order changed 2026-10-31 ~09:20 Istanbul (before any B7 data was trained or scored;
+data, bars and tests unchanged).** The machine stopped twice overnight while the race ran
+(Gemma 4 E4B: 22 of 85 sentences, ~90 s each). B7 trains and is scored first; the race's
+remaining candidates (Gemma 4 E4B, Kara-Kumru, B6c, B6d) and its extras run after it.
