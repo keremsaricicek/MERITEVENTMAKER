@@ -1469,3 +1469,31 @@ above the confidence of every wrong command reading there (two decimals, at leas
 and **evaluated once on fresh2**: commands carried out without asking that are wrong must
 be **0**; the share asked is reported. Set for B7b if it passes; otherwise for the model
 that is wired.
+
+## 2026-10-31 — runB7b verdict: not passed; ask-when-unsure holds on fresh2
+
+Raw: `benchmarks/offline-intelligence/assistant-race/b7b-f8.json`, `b7b-briefs.json` (model first,
+rules as fallback; short prompt; confidences recorded).
+
+| set | rules alone | B7b alone | model first + rules (the bar) | bar |
+|---|---|---|---|---|
+| originals (35) | 1.00 | 0.943 | 0.943, 0 wrong | – |
+| paraphrases (35, seen) | 0.457 | 0.914 | **0.914**, 0 wrong | ≥ 0.90 — passes |
+| deep (15, seen) | 0.533, 1 wrong | 0.867, 0 wrong | 0.867, 0 wrong | 0 wrong — passes |
+| fresh (40, seen) | 0.475, 1 wrong | 0.85 | **0.85**, 0 wrong | ≥ 0.90 — fails |
+| **fresh2 (40, decisive)** | 0.375 | 0.85, 1 wrong | **0.825, 1 wrong** | ≥ 0.90, 0 wrong — fails |
+| briefs (40) | – | fields 0.988, invented 0.009 | – | passes |
+
+Median 3.5 s per sentence, 7.1 s per brief. The wrong change on fresh2: "Can Öztürk'ü silme,
+sadece masasından kaldır" read as a deletion (negation). Other misses: a guest with a
+partner ("Leyla Kara ile kocasını") seated without adding; out-of-scope questions (who made
+the program, ticket prices) read as table questions; "grubu kaç kişiydi" read as a head
+count of the event. **B7b is not wired by this bar.**
+
+**Ask-when-unsure (pre-registered above).** θ from the seen sets: wrong command readings at
+0.8631 (dc2), 0.8503 (w1), 0.6608 (fc9), 0.2975 (fq7) → **θ = 0.87**. On fresh2 (once): of 12
+changing commands the model read, 9 carried out without asking (rules agreed or confidence
+≥ 0.87), **0 of them wrong**; 3 shown with Onayla — among them the negation that would have
+deleted a guest (confidence 0.75). Same rule on the seen sets: 0 carried out wrong. Whether to
+use B7b behind this rule although it missed its reading bar is the owner's decision, recorded
+as such if taken.
