@@ -1395,3 +1395,30 @@ the data; the schema still constrains the answer): the same 2,400 sentences and 
 (seed 71, checked identical), the chat manifest says `serve.prompt: "short"`, the relay
 asks exactly that (`assistant-reader` suite), the race harness `--prompt short`. Tests,
 bars and replay unchanged. The race candidates keep the full prompt (they are untrained).
+
+## 2026-10-31 — runB7 verdict: not passed (bars as pre-registered)
+
+Raw: `benchmarks/offline-intelligence/assistant-race/b7-f8.json`, `b7-briefs.json` (product
+rules first, B7 where they say unknown; short prompt). Also Qwen3.5-4B's race results
+(`qwen35-4b-f8.json`, `qwen35-4b-briefs.json`; frozen rules, full prompt).
+
+| set | rules alone | B7 alone | rules + B7 (the bar) | bar |
+|---|---|---|---|---|
+| originals (35) | 1.00 | 0.971, 0 wrong | 1.00, 0 wrong | – |
+| paraphrases (35) | 0.457 | 0.914, 0 wrong | **0.857**, 0 wrong | ≥ 0.90 — fails |
+| deep (15) | 0.533, 1 wrong | 0.733, 1 wrong | 0.80, 1 wrong | 0 wrong — fails |
+| fresh (40) | 0.475, 1 wrong | 0.90, 0 wrong | **0.825**, 1 wrong | ≥ 0.90, 0 wrong — fails |
+| briefs (40, B7 alone) | – | fields 0.976, invented 0.014 | – | passes |
+
+Median 3.3 s per sentence (B7, short prompt, this 4-core CPU), 7.0 s per brief.
+Qwen3.5-4B (race): paraphrases 0.80 with the rules, briefs 0.804 / 0.06 — fails; 52 s per sentence.
+
+Where it fails. The product's rules act first and misread sentences B7 reads right ("X VIP
+olsun" taken as a question; "X ve eşini T06'ya ekle" and "Okan Er diye bir misafir ekle"
+done without the table / partner; "Ahmet Yılmaz'ı T03'e, Mehmet Kaya'yı da T04'e oturt" half
+done — a wrong change by the rules). B7's own errors: a two-job sentence with "kişi sayısını
+3 yap ve VIP olarak işaretle" (read as add + set: a wrong change), "Yılbaşı galasında T07
+masasına kimi koyduk?" read as a command, small talk about rent and weather read as
+questions, "koltuğuna"/"oturduğu masaya" copy-seat phrasings. These sentences are now SEEN:
+the paraphrase, deep and fresh sets are developer-seen for any later run.
+B7 is not wired. Plan benches (real, blind4, S1) for B7 run for the record.
