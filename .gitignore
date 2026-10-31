@@ -49,3 +49,5 @@ tools/model-dev/**/__pycache__/
 # candidate ONNX files. A model enters the repository only through
 # training/package.py, as models/plan-detector/<version>/.
 /runs/
+
+.claude/settings.local.json
