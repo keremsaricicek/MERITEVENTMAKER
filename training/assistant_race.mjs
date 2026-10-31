@@ -62,7 +62,8 @@ const R = globalThis.MeritAssistantReading;
 
 async function ask(port, text) {
   // the fixed instruction and examples are kept in the server's prompt cache, as the relay asks (2026-10-28)
-  const body = { messages: R.messages(text, { prompt: arg("prompt", "full") }), temperature: 0, max_tokens: 400, cache_prompt: true, chat_template_kwargs: { enable_thinking: false },
+  // logprobs: the reading's confidence (its least likely token) for the ask-when-unsure rule
+  const body = { messages: R.messages(text, { prompt: arg("prompt", "full") }), temperature: 0, max_tokens: 400, cache_prompt: true, logprobs: true, top_logprobs: 1, chat_template_kwargs: { enable_thinking: false },
     response_format: { type: "json_schema", json_schema: { name: "reading", schema: R.SCHEMA } } };
   const t0 = Date.now();
   const r = await fetch(`http://127.0.0.1:${port}/v1/chat/completions`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -70,7 +71,9 @@ async function ask(port, text) {
   let got = null;
   try { got = JSON.parse(j.choices[0].message.content); } catch { got = null; }
   if (got && !R.valid(got)) got = null;   // the relay takes no reading outside the shape
-  return { got, raw: j.choices && j.choices[0].message.content, seconds: (Date.now() - t0) / 1000 };
+  const lp = j.choices && j.choices[0].logprobs && j.choices[0].logprobs.content;
+  const conf = Array.isArray(lp) && lp.length ? +Math.min(...lp.map((x) => Math.exp(x.logprob))).toFixed(4) : null;
+  return { got, raw: j.choices && j.choices[0].message.content, seconds: (Date.now() - t0) / 1000, conf };
 }
 const toParse = (m) => R.toParse(m, fx.events, fx.today);
 // A deep item's expected outcome is what its gold reading produces through the
@@ -142,7 +145,7 @@ for (const it of items) {
     let m = kept.get(it.id);
     if (!m || m.text !== it.text) { m = { label, id: it.id, text: it.text, ...(await ask(port, it.text)) }; fs.appendFileSync(partialFile, JSON.stringify(m) + "\n"); }
     const mp = toParse(m.got);
-    row.model = { ...score(it, mp), reading: m.got, seconds: m.seconds };
+    row.model = { ...score(it, mp), reading: m.got, seconds: m.seconds, conf: m.conf ?? null };
     // the product's order: rules first, the model where they say unknown — or (`--order model-first`,
     // runB7b) the model first, the rules where the model gives no reading or says unknown
     row.both = arg("order", "rules-first") === "model-first" ? (m.got && m.got.kind !== "unknown" ? row.model : row.rules) : rules.kind === "unknown" ? row.model : row.rules;

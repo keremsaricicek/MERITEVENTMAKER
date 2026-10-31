@@ -1457,3 +1457,15 @@ bars as for B7.
 --seed 72 --prompt short --grammar 2` (sha256 of items.jsonl begins `df53cf0a23a65f6f`; grammar 1
 still reproduces B7's data byte for byte). B7's plan benches were stopped during the real
 test (B7 is not wired; they were for the record) and the CPU went to B7b.
+
+**Ask only when unsure (owner, 2026-10-31; written before B7b's F8 run).** The owner: confirm
+when the assistant is not sure, not for everything. A command read by the model is carried
+out at once (with Geri al) when (a) the rules read the same writer calls, or (b) the
+model's confidence — the probability of the least likely token of its reading, from the
+server's logprobs (the race harness now records it) — is at least θ; otherwise it is shown
+with Onayla / Vazgeç (shipped: fd90f1e). Questions change nothing and are never confirmed.
+**θ is set on the developer-seen sets** (paraphrases, deep, fresh) as the smallest value
+above the confidence of every wrong command reading there (two decimals, at least 0.50),
+and **evaluated once on fresh2**: commands carried out without asking that are wrong must
+be **0**; the share asked is reported. Set for B7b if it passes; otherwise for the model
+that is wired.
