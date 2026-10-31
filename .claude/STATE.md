@@ -88,3 +88,4 @@ No EXE (one-click `.cmd` launcher allowed). No paid API/GPU/service, no private 
 - Relay: serves the offline build's `assets/` (`MERIT_APP_ROOT`); per-crop answer cache.
 - Second look: loca/entrance/exit words (planned only when identify is measured).
 - CLAUDE.md shortened to the essentials; full text in `.claude/PROJECT-GUIDE.md`.
+- CI 2026-10-31 00:30 UTC on c79512b: perf `reload` 966 ms vs budget 920 (large-files). No app code changed since 1682e87 (green): only training/, README, STATE. Re-measured by the next push; if `reload` is over again on unchanged code, investigate (not a "slow machine" excuse).
