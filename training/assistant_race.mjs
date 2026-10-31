@@ -48,6 +48,8 @@ const items = [
   ...lines("deep.jsonl").map((d) => ({ set: "deep", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })),
   // `--fresh`: the set written for runB7 before its training data (training/assistant/fresh.jsonl), scored as the deep set
   ...(flag("fresh") ? lines("fresh.jsonl").map((d) => ({ set: "fresh", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  // `--fresh2`: runB7b's decisive set (training/assistant/fresh2.jsonl), written before its data
+  ...(flag("fresh2") ? lines("fresh2.jsonl").map((d) => ({ set: "fresh2", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...lines("variants.jsonl").map((v) => {
     const n = Number(v.sameAs.slice(1));
     return v.kind === "question" ? { set: "variant", id: v.id, kind: "question", text: v.text, must: MUST[n] } : { set: "variant", id: v.id, kind: "command", text: v.text, cmd: CMDS[n] };
@@ -91,7 +93,7 @@ function outcome(item, parsed) {
   return { calls, kind: calls.length ? "calls" : out.refuse ? "refuse" : out.ask ? "ask" : "nothing" };
 }
 function score(item, parsed) {
-  if (item.set === "deep" || item.set === "fresh") {
+  if (item.set === "deep" || item.set === "fresh" || item.set === "fresh2") {
     // not ours to read (small talk, the world outside): right only when read as "unknown"
     if (item.kind === "unknown") { const got = outcome(item, parsed); return { right: parsed.kind === "unknown", wrongChange: got.calls.length > 0, calls: got.calls }; }
     const want = outcome(item, toParse(item.gold)), got = outcome(item, parsed);
@@ -141,7 +143,9 @@ for (const it of items) {
     if (!m || m.text !== it.text) { m = { label, id: it.id, text: it.text, ...(await ask(port, it.text)) }; fs.appendFileSync(partialFile, JSON.stringify(m) + "\n"); }
     const mp = toParse(m.got);
     row.model = { ...score(it, mp), reading: m.got, seconds: m.seconds };
-    row.both = rules.kind === "unknown" ? row.model : row.rules;
+    // the product's order: rules first, the model where they say unknown — or (`--order model-first`,
+    // runB7b) the model first, the rules where the model gives no reading or says unknown
+    row.both = arg("order", "rules-first") === "model-first" ? (m.got && m.got.kind !== "unknown" ? row.model : row.rules) : rules.kind === "unknown" ? row.model : row.rules;
   }
   rows.push(row);
   process.stdout.write(`${it.id} rules:${row.rules.right ? "+" : "-"}${row.model ? ` model:${row.model.right ? "+" : "-"}${row.model.wrongChange ? "!" : ""} ${row.model.seconds.toFixed(1)}s` : ""}\n`);
@@ -156,6 +160,7 @@ const summary = { label, at: new Date().toISOString(),
   variant: { rules: sum("variant", "rules"), model: sum("variant", "model"), both: sum("variant", "both") },
   deep: { rules: sum("deep", "rules"), model: sum("deep", "model"), both: sum("deep", "both") },
   ...(flag("fresh") ? { fresh: { rules: sum("fresh", "rules"), model: sum("fresh", "model"), both: sum("fresh", "both") } } : {}),
+  ...(flag("fresh2") ? { fresh2: { rules: sum("fresh2", "rules"), model: sum("fresh2", "model"), both: sum("fresh2", "both") } } : {}),
   medianSeconds: secs.length ? secs[Math.floor(secs.length / 2)] : null };
 fs.writeFileSync(arg("out"), JSON.stringify({ summary, rows }, null, 1));
 console.log(JSON.stringify(summary));

@@ -1422,3 +1422,33 @@ masasına kimi koyduk?" read as a command, small talk about rent and weather rea
 questions, "koltuğuna"/"oturduğu masaya" copy-seat phrasings. These sentences are now SEEN:
 the paraphrase, deep and fresh sets are developer-seen for any later run.
 B7 is not wired. Plan benches (real, blind4, S1) for B7 run for the record.
+
+## 2026-10-31 — runB7b: wider language, the model read first (written before any B7b data exists)
+
+**Owner:** it must understand, not memorise. **Decisive test, written first:**
+`training/assistant/fresh2.jsonl` (40: 18 questions, 16 commands, 6 not ours; sha256 begins
+`75eaa525f30a01f4`), in constructions the generator does not have word for word (spoken
+forms "alalım", "bir bakıver", "dörde çıkar", "silme, sadece…", "listeden düş", "VIP
+statüsü ver", "ile kocasını", "Listeye yeni bir isim ekle: …", "geldi mi gelmedi mi").
+Developer-written, like every set so far; the owner's own sentences remain the real test
+and are asked for.
+
+**Order (decided now, before results):** the model reads first; the rules read only where
+the model gives no reading or says unknown (`assistant_race.mjs --order model-first`). B7
+showed the rules overriding correct readings; this is a change of design measured on a
+fresh set, not a re-scoring of B7.
+
+**Data** (`synth_f8.mjs` v2, seed 72, 3,000): the v1 grammar plus many more phrasings per
+intent and step (more verbs and politeness forms, spoken suffixes, number words, clauses
+between, negation that narrows a command, comma- and "sonra"-joined two-job sentences,
+add-with-partner, copy-seat via "koltuğuna / oturduğu yere", who-sits-at questions, small
+talk and out-of-scope questions — prices, weather, rent). Several of these were added
+because B7 failed on them in the paraphrase / deep / fresh sets, which are therefore
+DEVELOPER-SEEN for B7b and reported as such. Names, events, venues and tables of every
+test set stay excluded; no generated sentence equals a test sentence. Replay as B7.
+`vlm_lora.py train --init runB6d` (not B7: one clean run), short prompt, one epoch.
+
+**Bars (unchanged in kind, not lowered):** model first + rules: right ≥ 0.90 on fresh2 AND
+on the paraphrases AND on fresh; **0 wrong changes** over originals, paraphrases, deep,
+fresh and fresh2; briefs fields ≥ 0.90, invented ≤ 0.05; median seconds reported. Plan
+bars as for B7.
