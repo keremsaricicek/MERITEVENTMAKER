@@ -1338,3 +1338,10 @@ padded bench — the pool happened to draw many crops around it. That is a real 
 language and seat counts were not run (they decide nothing); the CPU went to the chat-model race.
 identify stays off: turning it on as suggestions only (never applied by itself) would be the
 owner's decision against the pre-registered bar, recorded as such.
+
+**Race amended 2026-10-31 ~03:15 Istanbul (after Qwen3.5-4B's F8 sets were scored; no
+other candidate has run).** runB6d — the one wired plan model — is added as a fifth
+candidate, run last, so that a 0.8B winner would be the same model as the plan's. Bars,
+sets, scoring and the choice rule unchanged. Before / after (B2) runs with B6d's adapter
+and manifest (B6c's manifest lists no check since B6d was wired). A container restart
+stopped the race during Qwen3.5-4B's briefs; it resumes from them.
