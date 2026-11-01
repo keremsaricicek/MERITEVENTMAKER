@@ -59,6 +59,9 @@ const items = [
   // `--fresh7 --typo7`: written 2026-11-02 before the name grounding (training/README.md "Grounding")
   ...(flag("fresh7") ? lines("fresh7.jsonl").map((d) => ({ set: "fresh7", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("typo7") ? lines("typo7.jsonl").map((d) => ({ set: "typo7", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  // `--en7 --entypo7`: English, written 2026-11-02 before any English measurement (training/README.md "English")
+  ...(flag("en7") ? lines("en7.jsonl").map((d) => ({ set: "en7", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("entypo7") ? lines("entypo7.jsonl").map((d) => ({ set: "entypo7", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("fresh3") ? lines("fresh3.jsonl").map((d) => ({ set: "fresh3", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...lines("variants.jsonl").map((v) => {
     const n = Number(v.sameAs.slice(1));
@@ -112,7 +115,7 @@ function score(item, parsed) {
     const want = outcome(item, toParse(item.gold)), got = outcome(item, parsed);
     // typo5: the sentence is typed carelessly, so a name echoed or added may come back with or
     // without capitals and Turkish letters — the same person either way
-    const same = /^typo/.test(item.set) ? (a, b) => globalThis.MeritAssistantTools.fold(String(a)) === globalThis.MeritAssistantTools.fold(String(b)) : (a, b) => a === b;
+    const same = /typo/.test(item.set) ? (a, b) => globalThis.MeritAssistantTools.fold(String(a)) === globalThis.MeritAssistantTools.fold(String(b)) : (a, b) => a === b;
     if (item.kind === "question") return { right: !!want.text && same(got.text, want.text), wrongChange: false, answer: got.text };
     const right = same(JSON.stringify(got.calls), JSON.stringify(want.calls)) && got.kind === want.kind;
     return { right, wrongChange: !right && got.calls.length > 0, calls: got.calls };
@@ -215,6 +218,8 @@ const summary = { label, at: new Date().toISOString(),
   ...(flag("typo6") ? { typo6: { rules: sum("typo6", "rules"), model: sum("typo6", "model"), both: sum("typo6", "both"), product: sum("typo6", "product") } } : {}),
   ...(flag("fresh7") ? { fresh7: { rules: sum("fresh7", "rules"), model: sum("fresh7", "model"), both: sum("fresh7", "both"), product: sum("fresh7", "product") } } : {}),
   ...(flag("typo7") ? { typo7: { rules: sum("typo7", "rules"), model: sum("typo7", "model"), both: sum("typo7", "both"), product: sum("typo7", "product") } } : {}),
+  ...(flag("en7") ? { en7: { rules: sum("en7", "rules"), model: sum("en7", "model"), both: sum("en7", "both"), product: sum("en7", "product") } } : {}),
+  ...(flag("entypo7") ? { entypo7: { rules: sum("entypo7", "rules"), model: sum("entypo7", "model"), both: sum("entypo7", "both"), product: sum("entypo7", "product") } } : {}),
   ...(flag("fresh3") ? { fresh3: { rules: sum("fresh3", "rules"), model: sum("fresh3", "model"), both: sum("fresh3", "both"), product: sum("fresh3", "product") } } : {}),
   medianSeconds: secs.length ? secs[Math.floor(secs.length / 2)] : null };
 fs.writeFileSync(arg("out"), JSON.stringify({ summary, rows }, null, 1));

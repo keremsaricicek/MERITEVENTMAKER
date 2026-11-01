@@ -1788,3 +1788,12 @@ counted (`shownWrong`).
 `right` ≥ 0.85 on fresh7 AND typo7 with 0 wrong changes on every set; the best measured one is shipped. This is
 the owner's decision and is recorded as such — it is NOT the pre-registered 0.90 bar, which stays the target
 (then 0.95). Candidates: B7c (shipped), B7d, B7e (0.8B), and the 2B (runB7-2Bb) when it finishes.
+
+## 2026-11-02 — English (written before any English measurement)
+
+The program is fully English and fully Turkish (owner, 2026-11-02), so the assistant must read English too. No
+model was ever trained or measured on English. **Tests, written first by hand:** `training/assistant/en7.jsonl`
+(20: 8 questions, 10 commands, 2 not ours; sha256 begins `58be70f3947d69b1`) and `entypo7.jsonl` (the same typed
+carelessly, `62c4206ed4ee8698`), on the same fixture, scored like fresh7/typo7 (`--order product`). First a
+measurement of B7c/B7d/B7e as they are; if none reaches the owner's 0.85 on both, an English+Turkish training run
+is pre-registered separately before its data.
