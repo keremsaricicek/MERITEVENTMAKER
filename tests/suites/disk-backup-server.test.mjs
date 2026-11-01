@@ -74,6 +74,18 @@ export default async function run({ checks, repoRoot }) {
   checks.equal([store.read("../secret.json").code, store.read("merit-yedek-x.json").code, store.read("merit-yedek-20261011-080000000-e1.json/../../x").code],
     ["BAD_NAME", "BAD_NAME", "BAD_NAME"], "a name outside the pattern is never read (no path escapes)");
 
+  // ---- the package's page may reach its own server ------------------------------
+  // The portable package serves the offline FOLDER build through the relay. Its
+  // policy must allow a same-origin fetch (connect-src 'self') or every backup
+  // (and every /vlm-relay call) is refused by the browser before it leaves the
+  // page; the single-file build, opened from disk, keeps no 'self' at all.
+  const { offlineCspMeta } = await import(path.join(repoRoot, "scripts/lib/offline-csp.mjs"));
+  const connect = (meta) => (/connect-src ([^;"]*)/.exec(meta) || [])[1] || "";
+  checks.ok(/'self'/.test(connect(offlineCspMeta({ scripts: ["x"], styles: ["y"], scriptSelf: true }))),
+    "the folder build (the package's app) may fetch from its own origin — the relay that served it", connect(offlineCspMeta({ scripts: ["x"], styles: ["y"], scriptSelf: true })));
+  checks.ok(!/'self'|https?:/.test(connect(offlineCspMeta({ scripts: ["x"], styles: ["y"] }))),
+    "the single-file build still connects to nothing but data: and blob:", connect(offlineCspMeta({ scripts: ["x"], styles: ["y"] })));
+
   // ---- the relay's doors ------------------------------------------------------
   const lines = [], log = { log: (l) => lines.push(String(l)), error: (l) => lines.push(String(l)) };
   const config = core.configFromEnv({ VLM_DATA_DIR: path.join(tmp, "relay-data"), PORT: "0" }, { repoRoot });
