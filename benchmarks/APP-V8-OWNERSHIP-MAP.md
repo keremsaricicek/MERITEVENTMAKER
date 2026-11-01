@@ -595,6 +595,23 @@ broken measurement would have deleted fourteen working functions.
 > mutations, four survived every suite (the 50-session cap, the report's undo
 > and unreviewed counts, the rendered action count) — `operator-session` now
 > pins them; 9 of 9 bite on the old and the moved code.
+>
+> **2026-11-01 — training examples in and out moved** to
+> `src/training-capture.js` (`MeritTrainingCapture.create(deps)`;
+> `planHashFor`, `captureTrainingExample` with its plan-image/hash caches, and
+> the dataset export `buildTrainingDatasetExport` / `exportTrainingDataset`
+> from A24's line range; 152 lines). Crossings: `nowISO`, `saveState`, `t`,
+> `toast`, `uid` (wrappers), `MeritTrainingData`, `storageProvider`,
+> `retractedDecisions` (values), `state` via `getState()`. Created below
+> `const retractedDecisions`, which is in its temporal dead zone above it.
+> `MeritVisualEmbedding` (published by app-v8.js itself) is read from
+> `globalThis` at call time, as the bare name did — handing it as a binding
+> named after a later-published module tripped `boot-contract`'s load-order
+> check. `globalThis.MERIT_TRAINING_EXPORT` stays in the shell.
+> Characterized first: of ten mutations, four survived every suite, including
+> the slow `training-data-capture` (per-example split, `cropsMissing`, the
+> empty-export message, an example landing after its decision was undone);
+> it pins them now, and 10 of 10 bite on the old and the moved code.
 
 
 - **Lines** 6214–7413 (1,200)

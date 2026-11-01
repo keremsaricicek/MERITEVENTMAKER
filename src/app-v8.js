@@ -2527,82 +2527,8 @@
     const existing=event.planMemory.findIndex(m=>m.sourceCandidateId===c.id);
     if(existing>=0)event.planMemory[existing]=entry;else event.planMemory.push(entry);
   }
-  // ---- training-data capture (Gates E-G) ----------------------------------
-  //
-  // rememberCorrection above keeps a plan tidy: it records the answer so the
-  // same object comes back the same way after Re-Analyze. It does not keep
-  // the question. Nothing in it says what the detector had predicted, which
-  // build predicted it, which plan and which layout version the object came
-  // from, or what the operator was actually looking at.
-  //
-  // captureTrainingExample keeps all of that, with the real crop, in
-  // state.trainingData. It is a data foundation and nothing else: it never
-  // changes a detection, never trains anything, and never sets trainedModel.
-  // See src/training-data.js for the record shape and the decision types.
-  //
-  // Failures are reported, not swallowed. A correction that was applied but
-  // not captured is a real gap in the dataset, and an operator who is told
-  // "saved" while nothing was stored would build on sand.
-  let planImageCache={src:null,image:null};
-  let planHashCache={src:null,hash:null};
-  let captureFailureReported=false;
-  async function planHashFor(src){
-    if(planHashCache.src!==src)planHashCache={src,hash:await MeritTrainingData.planFingerprint(src)};
-    return planHashCache.hash;
-  }
-  async function planImageFor(src){
-    if(planImageCache.src!==src){
-      if(planImageCache.image?.close)planImageCache.image.close();
-      planImageCache={src,image:await MeritTrainingData.imageFromDataUrl(src)};
-    }
-    return planImageCache.image;
-  }
-  function truthOf(c){return c?{kind:c.kind,type:c.type,seats:c.seats??null,seatsConfidence:c.seatsConfidence??null}:null;}
-  async function captureTrainingExample(event,c,{decisionType,predictionBefore=null,note=null,decisionId=null,propagatedFrom=null,reviewedIndividually=true}={}){
-    if(!globalThis.MeritTrainingData||!event?.background?.src||!c)return null;
-    try{
-      const src=event.background.src;
-      const [planHash,image]=await Promise.all([planHashFor(src),planImageFor(src)]);
-      if(!planHash)return null;
-      const geometry={x:c.x,y:c.y,w:c.w,h:c.h,rotation:c.rotation||0};
-      const shot=await MeritTrainingData.cropFromImage(image,geometry);
-      const blobId=uid("crop");
-      await storageProvider.putBlob(blobId,shot.dataUrl);
-      const wantsTruth=decisionType==="confirmation"||decisionType==="correction"||decisionType==="missedObject";
-      const record=MeritTrainingData.buildRecord({
-        decisionType,
-        plan:{planHash,name:event.background.name||null,width:image.width,height:image.height},
-        context:{eventId:event.id,venueId:event.venueRef?.venueId??null,
-          layoutId:event.venueRef?.layoutId??null,layoutVersionId:event.venueRef?.layoutVersionId??null},
-        geometry,
-        predictionBefore,
-        humanTruth:wantsTruth?truthOf(c):null,
-        providers:{
-          detection:event.analysis?.diagnostics?.provider
-            ?{id:event.analysis.diagnostics.provider,engine:event.analysis.engine,trainedModel:false}:null,
-          embedding:(()=>{const p=MeritVisualEmbedding?.resolve?.();
-            return p?{id:p.id,kind:p.kind,trainedModel:p.trainedModel,dimensions:p.dimensions}:null;})(),
-        },
-        descriptor:c.descriptor??null,
-        crop:{blobId,size:shot.size,sourceRect:shot.sourceRect,objectRect:shot.objectRect,padding:shot.padding},
-        note,decisionId,propagatedFrom,reviewedIndividually,
-      });
-      // A capture finishes after its crop is stored; if the decision was undone
-      // meanwhile, the label is kept as retracted rather than counted.
-      if(decisionId&&retractedDecisions.has(decisionId))MeritTrainingData.retract([record],decisionId,{reason:"the decision was undone"});
-      state.trainingData ||= [];
-      state.trainingData.push(record);
-      saveState();
-      return record;
-    }catch(error){
-      if(!captureFailureReported){
-        captureFailureReported=true;
-        toast(t("training.captureFailed"),"error",7000);
-      }
-      console.error("Training-data capture failed.",error);
-      return null;
-    }
-  }
+  // ---- training-data capture: moved to src/training-capture.js (created
+  // below, with the dataset export). -----------------------------------------
   // General old-candidate -> new-candidate geometry remap, used to carry
   // grouping decisions (which reference every member of a furniture group,
   // not just ones a human individually confirmed/reclassified) across a
@@ -4138,7 +4064,7 @@
       // again after a re-import under a different filename. Failing to compute
       // it is not fatal: plan-scope lessons simply do not match, which is the
       // safe direction.
-      try{event.analysis.planHash=await guard(planHashFor(event.background.src));}catch(hashError){if(hashError?.analysisStopped)throw hashError;event.analysis.planHash=null;}stage("planHash");
+      try{event.analysis.planHash=await guard(TRAINING.planHashFor(event.background.src));}catch(hashError){if(hashError?.analysisStopped)throw hashError;event.analysis.planHash=null;}stage("planHash");
       checkStopped();
       // Before plan intelligence is rebuilt, because a lesson can move an
       // object from table to venue and the capacity, relationship and
@@ -4480,7 +4406,7 @@
     // An object the decision CREATED has no detection to be matched against on
     // the next analysis: it is remembered as manual, so re-analysis restores it.
     for(const id of p.memory)rememberCorrection(event,byId.get(id),{manual:createdIds.has(id)});
-    for(const tr of p.training)captureTrainingExample(event,byId.get(tr.id),{decisionType:tr.decisionType,predictionBefore:tr.predictionBefore,
+    for(const tr of p.training)TRAINING.captureTrainingExample(event,byId.get(tr.id),{decisionType:tr.decisionType,predictionBefore:tr.predictionBefore,
       note:tr.note||null,decisionId,propagatedFrom:tr.propagatedFrom||null,reviewedIndividually:tr.reviewedIndividually});
     // The object now carries a HUMAN observation: a person, not the detector,
     // said this -- and on one object they looked at, or as part of a spread.
@@ -4693,7 +4619,7 @@
           event.analysis.candidates.push(c);
           event.analysis.missed.push(c.id);
           rememberCorrection(event,c,{manual:true});
-          captureTrainingExample(event,c,{decisionType:"missedObject",note:"drawn by the operator on a region the detector never proposed"});
+          TRAINING.captureTrainingExample(event,c,{decisionType:"missedObject",note:"drawn by the operator on a region the detector never proposed"});
           ui.selectedCandidateId=c.id;
           ui.reviewDrawMode=false;
           touchEvent(event);
@@ -4704,81 +4630,13 @@
       document.addEventListener("pointerup",up);
     };
   }
-  // ---- dataset export (Gates H-J) ----------------------------------------
-  //
-  // One portable file containing every captured decision, its image crop, and
-  // a leakage-safe train/val/test split computed by plan rather than by
-  // example. The split is included so that whoever picks this up cannot
-  // accidentally shuffle crops at random: forty chairs from one drawing on
-  // both sides of the line produce a model that has memorised a venue and a
-  // number that says it generalises.
-  //
-  // The file states what it is. `trainedModel` is false throughout, the
-  // readiness line says plainly whether this is a training set or a capture
-  // log, and nothing here trains, evaluates or promotes anything.
-  const DATASET_FORMAT = "merit-training-dataset";
-  const DATASET_FORMAT_VERSION = 1;
-  async function buildTrainingDatasetExport({includeCrops=true}={}){
-    const records=state.trainingData||[];
-    const split=MeritTrainingData.splitByPlan(records);
-    const splitOf=new Map();
-    for(const name of ["train","val","test"])for(const r of split[name])splitOf.set(r.id,name);
-    const examples=[];
-    let cropsMissing=0;
-    for(const record of records){
-      const entry={...record,split:splitOf.get(record.id)||null};
-      if(includeCrops&&record.crop?.blobId){
-        // EXPECTED ABSTENTION: a crop that cannot be read is counted below and
-        // reported as missing, never swallowed.
-        const dataUrl=await storageProvider.getBlob(record.crop.blobId).catch(()=>null);
-        // A missing crop is reported, never quietly replaced with a blank one:
-        // a dataset that silently substitutes empty images trains on nothing
-        // and reports success.
-        if(dataUrl)entry.crop={...record.crop,dataUrl};
-        else{entry.crop={...record.crop,dataUrl:null,missing:true};cropsMissing++;}
-      }
-      examples.push(entry);
-    }
-    return {
-      format:DATASET_FORMAT,
-      formatVersion:DATASET_FORMAT_VERSION,
-      exportedAt:nowISO(),
-      schemaVersion:MeritTrainingData.SCHEMA_VERSION,
-      crop:{size:MeritTrainingData.CROP_SIZE,padding:MeritTrainingData.CROP_PADDING,encoding:"image/png",
-        note:"Square crop centred on the object, padded by a fraction of its own span so context is kept. sourceRect gives the exact source pixels."},
-      trainedModel:false,
-      producedBy:"MERIT EVENT MAKER Assisted Detection (classical computer vision) plus human decisions. No model was trained to produce this file.",
-      summary:MeritTrainingData.summarise(records),
-      split:{
-        method:"grouped by plan content hash; every crop from one plan lands in one split",
-        rationale:"Splitting individual crops at random puts objects from the same drawing on both sides and turns a memorised venue into a high score.",
-        counts:{train:split.train.length,val:split.val.length,test:split.test.length},
-        plans:split.plansPerSplit,
-        warning:split.warning,
-      },
-      cropsMissing,
-      examples,
-    };
-  }
-  async function exportTrainingDataset(){
-    const records=state.trainingData||[];
-    if(!records.length)return toast(t("teach.exportEmpty"),"error",5200);
-    try{
-      const payload=await buildTrainingDatasetExport();
-      const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
-      const a=document.createElement("a");
-      a.href=URL.createObjectURL(blob);
-      a.download=`merit-training-dataset-${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-      const s=payload.summary;
-      toast(t("teach.exportDone",{n:s.total,plans:s.distinctPlans}),"success",7000);
-      if(payload.cropsMissing)toast(t("teach.exportMissingCrops",{n:payload.cropsMissing}),"error",7000);
-    }catch(error){
-      toast(t("dataset.exportFailed"),"error",7000);
-    }
-  }
-  globalThis.MERIT_TRAINING_EXPORT=buildTrainingDatasetExport;
+  // ---- moved to src/training-capture.js — see that file's header: capturing
+  // every human decision as a training example, and the dataset file built
+  // from them. Created here, below retractedDecisions, which it is handed. ----
+  const TRAINING=globalThis.MeritTrainingCapture.create({
+    getState:()=>state,MeritTrainingData,nowISO:(...a)=>nowISO(...a),retractedDecisions,saveState:(...a)=>saveState(...a),storageProvider,t:(...a)=>t(...a),toast:(...a)=>toast(...a),uid:(...a)=>uid(...a),
+  });
+  globalThis.MERIT_TRAINING_EXPORT=TRAINING.buildTrainingDatasetExport;
 
   function saveVerified(){
     const event=activeEvent();
@@ -4843,7 +4701,7 @@
         ui.activeReviewGroupId=null;
         ui.activeQuestionId=null;
         render();
-      }else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="export-dataset")exportTrainingDataset();else if(action==="session-report"){
+      }else if(action==="save-verified")saveVerified();else if(action==="improve")improveAI();else if(action==="export-dataset")TRAINING.exportTrainingDataset();else if(action==="session-report"){
         ui.operatorReportOpen=true;
         render();
       }else if(action==="close-session-report"){
