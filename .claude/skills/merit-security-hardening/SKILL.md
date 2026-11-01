@@ -127,12 +127,28 @@ shape, because those importers walk arbitrary object trees.
 - Track what a CSP would break: inline handlers, inline styles, `blob:`
   workers. The goal is to be CSP-ready before desktop packaging, where it
   matters most.
+  **Inventoried (2026-11-01, `csp-readiness`):** 74 inline `style="…"`
+  attributes in 12 files (the reason for `style-src-attr 'unsafe-inline'`),
+  4 Blob-built scripts and 1 worker (`blob:`), `'wasm-unsafe-eval'` for the
+  OCR/model WebAssembly, the two CDN engines of the served build; no `<style>`
+  element and no `setAttribute("style")`. Every allowance of index.html's and
+  the offline builds' policy is pinned. A new one, or a stale count, fails.
 
 ### Privacy
 - Guest names, notes and contact-like fields must not appear in console
   logs, error messages, or telemetry of any kind.
 - An error shown to an operator must not echo a raw record.
 - Exports contain what the report contract says and nothing more.
+  `export-contract-privacy` holds it: exactly the three sheets and eight
+  list columns; no e-mail, phone, internal field or record id in any cell,
+  workbook property or the CSV. **CSV injection closed 2026-11-01**: a
+  formula-led cell (`= + - @`, tab, CR) is written with a leading apostrophe
+  and the import removes it again (round trip exact); before, the guest CSV
+  wrote `=HYPERLINK(…)` live.
+- `privacy-flows` drives every main flow with a sentinel guest (typed, seated,
+  searched, arrival, moved, exported, printed, F8, deleted/undone, quota on
+  both stores, broken guest file / backup / package) and reads every console
+  message whole: no name, inviter or note; no raw record in an operator error.
 
 ## Required evidence
 
