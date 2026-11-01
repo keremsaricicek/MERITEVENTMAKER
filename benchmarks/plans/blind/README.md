@@ -135,3 +135,22 @@ Gates: benchmark + baseline no regression; adversarial 0 blocking; fingerprint 2
 IDENTICAL (recorded on this branch's unchanged code — the committed fingerprint file was stale,
 28/28 different before any change). It changes no measured plan today, Golden 2 included
 (T24 is already found by the classical pass since the B-6 fix): 24/27, 51/68, 12 loose.
+
+**Fixed — the long table (item 1), B-14b `seatedLongTables` (`src/plan-detection-tables.js`).**
+The size gate is not moved. A surface it refused ONLY for its aspect (every other part of
+`tableSizeOk` holds, fill ≥ 0.35) is offered back after tables and chairs are known when at least
+two seats stand along EACH long side (seat smaller than the surface's short side, within 0.7 of
+its own long side, beside the long side's span; a seat already at a table moves only if it stands
+closer to this surface). The table is HELD BACK for a person (`lowEvidence: seatedLongSurface`).
+Suite `seated-long-table` (failed first; its control — the same surface seated from one side —
+stays no table). Gates: benchmark + baseline no regression; adversarial 0 blocking (identical,
+a6 improvement already present before); fingerprint 0/28 byte-identical ONLY because the
+diagnostics carry the new count — with that one field removed all 28 analyses are identical
+(the rule fires on no other plan); detection/structural suites pass (13/13).
+
+| Golden 2 (SEEN) | before round 2 | after B-14b |
+|---|---|---|
+| tables / 27 | 24 (long 0/1) | **25** (long 1/1, held back for a person) |
+| phantom tables | 0 | 0 |
+| chairs seated / 68 | 51 | **57** (T23 6/8) |
+| loose chairs | 12 | **7** (all 7 are the phantoms: 4 lettering, 3 stage fixtures) |
