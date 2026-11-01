@@ -89,7 +89,20 @@
     const agreedSides = modelTablesAll.filter(d => d.score >= o.addTable && tables.some(t => near(t, d))).map(d => Math.min(d.w, d.h));
     const sides = (agreedSides.length >= 5 ? agreedSides : tables.map(t => Math.min(t.w, t.h))).sort((a, b) => a - b);
     const medianSide = sides.length ? sides[sides.length >> 1] : null;
-    const consistent = d => medianSide != null && Math.abs(Math.min(d.w, d.h) - medianSide) <= 0.4 * medianSide;
+    // ASKED OF THE TABLE'S OWN KIND. A plan that draws two kinds of table draws
+    // them at two sizes, and the median of all of them is one kind's size: on
+    // Golden 2 (a SEEN plan, benchmarks/plans/blind/README.md) a 91 px round was
+    // "off size" against 62.6, the squares' side. Where the model and the
+    // classical pass agree on at least five tables of the SAME kind, that kind's
+    // own median is the reference (the same five, the same ±40 %); otherwise the
+    // all-table median, exactly as before.
+    const kindMedian = {};
+    for (const cls of ["table_round", "table_rect"]) {
+      const own = modelTablesAll.filter(d => d.cls === cls && d.score >= o.addTable && tables.some(t => near(t, d))).map(d => Math.min(d.w, d.h)).sort((a, b) => a - b);
+      if (own.length >= 5) kindMedian[cls] = own[own.length >> 1];
+    }
+    const referenceFor = d => kindMedian[d.cls] != null ? kindMedian[d.cls] : medianSide;
+    const consistent = d => { const ref = referenceFor(d); return ref != null && Math.abs(Math.min(d.w, d.h) - ref) <= 0.4 * ref; };
     const modelTables = dets.filter(d => d.cls === "table_round" || d.cls === "table_rect");
     const supported = new Set();
     for (const d of modelTables) {
