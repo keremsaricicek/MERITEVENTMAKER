@@ -165,7 +165,10 @@ export default async function run({ checks, repoRoot }) {
   for (const scriptSelf of [false, true]) {
     const meta = offlineCspMeta({ scripts: ["a()"], styles: ["b{}"], scriptSelf });
     const policy = (meta.match(/content="([^"]+)"/) || [])[1] || "";
-    const pinned = scriptSelf ? OFFLINE_POLICY : { ...OFFLINE_POLICY, "script-src": OFFLINE_POLICY["script-src"].filter((v) => v !== "'self'") };
+    // the folder build is served by the package's own local server (vlm-relay): its page reaches that
+    // server's doors (disk backup, the plan model's second look, the assistant's reader) on its own
+    // origin, so connect-src 'self' there — reviewed 2026-11-01 (8593563); the single file has no server
+    const pinned = scriptSelf ? { ...OFFLINE_POLICY, "connect-src": ["'self'", ...OFFLINE_POLICY["connect-src"]] } : { ...OFFLINE_POLICY, "script-src": OFFLINE_POLICY["script-src"].filter((v) => v !== "'self'") };
     checks.equal(widened(allowances(policy), pinned), [], `the offline ${scriptSelf ? "folder" : "single-file"} build's policy allows nothing new`, allowances(policy));
   }
   const external = [...sources["index.html"].matchAll(/<script[^>]*\bsrc="([^"]+)"/g)].map((m) => m[1]).filter((u) => !u.startsWith("src/"));
