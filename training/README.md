@@ -1830,3 +1830,9 @@ pools; the four-word guard against every test. Grammar 5 regenerated: still `4fd
 typo8, en8, entypo8 (decisive) and en7, entypo7, original/variant/deep (reported). **Use:** the owner's rule —
 the better of B7e and B7f on the decisive sets (0 wrong changes required) is the one shipped; 0.85 / 0.90 / 0.95
 are targets, not gates.
+
+**fresh8 / typo8 verdict (2026-11-02 ~03:50 UTC), B7e (shipped) with the grounding of 2e0079e, product rule, unseen:**
+fresh8 **0.957** right (0.783 at once), typo8 **0.913** right (0.652 at once), **0 wrong changes**; one wrong preview on
+each (shown, never carried out). The owner's 0.85 is met on both, and the 0.90 target too; 0.95 is the next target.
+English with the same code (en7 / entypo7, B7e / B7d / B7c): 0.85 / 0.75, 0.90 / 0.60, 0.85 / 0.65, 0 wrong changes
+each (re-scored from the kept readings; English was not yet trained — runB7f). Files: `assistant-race/g8/`, `en7/`.
