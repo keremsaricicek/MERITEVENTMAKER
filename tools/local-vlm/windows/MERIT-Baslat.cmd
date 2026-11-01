@@ -71,6 +71,7 @@ set VLM_LOCAL_URL=http://127.0.0.1:%MODEL_PORT%
 set "VLM_LOCAL_MANIFEST=%MODEL%\manifest.json"
 set "MERIT_APP_ROOT=%HERE%app"
 set "VLM_DATA_DIR=%HERE%data"
+set "MERIT_BACKUP_DIR=%HERE%yedekler"
 start "" /b "%NODE%" "%HERE%app\server\vlm-relay.mjs"
 
 set /a tries=0

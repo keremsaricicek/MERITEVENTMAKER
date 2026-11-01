@@ -1482,6 +1482,13 @@
     // protection against a corrupted local record or an in-session mistake,
     // never against losing the device or the browser profile itself.
     "recovery.buttonTitle": { en: "Restore from an automatic recovery point", tr: "Otomatik kurtarma noktasından geri yükle" },
+    "diskBackup.buttonTitle": { en: "Restore from the backups on disk", tr: "Diskteki yedeklerden geri yükle" },
+    "diskBackup.title": { en: "Backups on disk", tr: "Diskteki yedekler" },
+    "diskBackup.note": { en: "The local server keeps a copy of all events in the backup folder next to the program after every change. Choose one to restore; it is checked before anything is replaced.", tr: "Yerel sunucu her değişiklikten sonra tüm etkinliklerin bir kopyasını programın yanındaki yedek klasörüne yazar. Geri yüklemek için birini seçin; hiçbir şey değişmeden önce kontrol edilir." },
+    "diskBackup.events": { en: "{n} event(s)", tr: "{n} etkinlik" },
+    "diskBackup.none": { en: "There is no backup on disk yet.", tr: "Diskte henüz yedek yok." },
+    "diskBackup.close": { en: "Close", tr: "Kapat" },
+    "diskBackup.unreachable": { en: "The backups on disk could not be read. Nothing was changed.", tr: "Diskteki yedekler okunamadı. Hiçbir şey değiştirilmedi." },
     "recovery.none": { en: "No automatic recovery point exists yet.", tr: "Henüz bir otomatik kurtarma noktası yok." },
     "recovery.confirmRestore": { en: "This replaces everything currently saved on this computer with an automatic recovery point from {when}. This is not the same as a backup file, and this cannot be undone. Continue?", tr: "Bu işlem, bu bilgisayarda kayıtlı her şeyi {when} tarihli otomatik kurtarma noktasıyla değiştirir. Bu bir yedek dosyası değildir ve geri alınamaz. Devam edilsin mi?" },
     "recovery.restoredToast": { en: "Restored from the automatic recovery point taken {when}.", tr: "{when} alınan otomatik kurtarma noktasından geri yüklendi." },
