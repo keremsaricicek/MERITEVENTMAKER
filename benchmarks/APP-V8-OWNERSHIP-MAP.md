@@ -647,7 +647,24 @@ broken measurement would have deleted fourteen working functions.
   the code honours it, but no suite fails if a future "cleanup" routes it
   through `syncTableChairs`.
 
-## A25 · Backup, package & offline recovery
+## A25 · Backup, package & offline recovery — **EXTRACTED** (2026-11-01)
+
+> **Moved to `src/data-portability.js`** (`MeritDataPortability.create(deps)`,
+> the screen-module pattern; held by `screen-modules`). 187 lines out of
+> app-v8.js (5,697 → 5,519). Crossings, measured in stripped code before the
+> move — 17 read, one written: `ask`, `loggableError`, `migrateEvent`,
+> `nowISO`, `parseRecordText`, `parseRoot`, `relativeTime`, `render`,
+> `RULES`, `saveState`, `t`, `toast`, `TRAIL`, `uid` (late-binding wrappers),
+> `storageProvider`, `ui` (values), and `state` (read through `getState()`,
+> REASSIGNED by both restores, so written through `setState()`). The other
+> way: `RECOVERY` stayed in the shell because the boot loader reads it too
+> (handed over); the shell calls `PORTABILITY.exportBackup /
+> importBackupFile / exportEventPackage / autoSnapshot /
+> restoreLatestSnapshot`. Characterized first by `data-portability`: of 13
+> mutations, 7 survived backup-restore, event-package, offline-recovery and
+> malformed-import; all real mutations bite on the old and the moved code.
+> The entry below is the original measurement.
+
 
 - **Lines** 8247–8372 (126)
 - **Main functions** `buildBackupPayload`, `exportBackup`, `importBackupFile`,
