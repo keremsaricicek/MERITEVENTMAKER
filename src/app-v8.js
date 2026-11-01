@@ -4403,7 +4403,9 @@
   }
   function candidateBox(c,selected,targetIds){
     const reviewCls=targetIds?(targetIds.has(c.id)?"review-target":"review-dimmed"):"";
-    return`<button class="candidate-box ${c.kind} ${c.status} ${selected?"selected":""} ${reviewCls}" data-candidate-box="${c.id}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%;transform:rotate(${c.rotation||0}deg)" title="${esc(c.kind)} · ${Number.isFinite(c.confidence)?Math.round(c.confidence*100)+"%":"—"}"></button>${(c.chairDetections||[]).map(ch=>`<i class="candidate-box chair ${reviewCls}" style="left:${ch.x}%;top:${ch.y}%;width:${Math.max(.5,ch.w)}%;height:${Math.max(.5,ch.h)}%;transform:translate(-50%,-50%) rotate(${ch.rotation||0}deg)"></i>`).join("")}`;
+    // a stored record can hold anything here (security sweep 2026-11-01): words escaped, numbers made numbers
+    const n=(v,d=0)=>{const x=Number(v);return Number.isFinite(x)?x:d;};
+    return`<button class="candidate-box ${esc(c.kind)} ${esc(c.status)} ${selected?"selected":""} ${reviewCls}" data-candidate-box="${esc(c.id)}" style="left:${n(c.x)}%;top:${n(c.y)}%;width:${n(c.w)}%;height:${n(c.h)}%;transform:rotate(${n(c.rotation)}deg)" title="${esc(c.kind)} · ${Number.isFinite(c.confidence)?Math.round(c.confidence*100)+"%":"—"}"></button>${(c.chairDetections||[]).map(ch=>`<i class="candidate-box chair ${reviewCls}" style="left:${n(ch.x)}%;top:${n(ch.y)}%;width:${Math.max(.5,n(ch.w))}%;height:${Math.max(.5,n(ch.h))}%;transform:translate(-50%,-50%) rotate(${n(ch.rotation)}deg)"></i>`).join("")}`;
   }
   // ============================================================
   // Concept 3 + Concept 2 + Concept 1 unified Plan Intelligence review screen.
@@ -5117,7 +5119,7 @@
   // tests/suites/malformed-import.test.mjs feeds every refusal below through
   // this control.
   const IMPORT_RULE_KEY={notRecord:"import.rule.notRecord",notList:"import.rule.notList",notText:"import.rule.notText",
-    badDate:"import.rule.badDate",badPax:"import.rule.badPax",badAssignment:"import.rule.badAssignment",badId:"import.rule.badId"};
+    badDate:"import.rule.badDate",badPax:"import.rule.badPax",badAssignment:"import.rule.badAssignment",badId:"import.rule.badId",notNumber:"import.rule.notNumber"};
   const importRuleText=rule=>t(IMPORT_RULE_KEY[rule]||"import.rule.notRecord");
   function firstEventProblem(events,at){
     const P=globalThis.MeritEventPackage;

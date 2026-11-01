@@ -254,4 +254,33 @@ export default async function run({ page, checks, baseUrl, artifactDir, repoRoot
   checks.ok(!r3.added.length && /was not (restored|imported)/i.test(r3.toast),
     "a package whose analysis gives an object a kind, status or position that is not a word or a number is refused whole, with the reason",
     r3);
+  // 3b. a position alone that is not a number: the message says so, not "is not a record"
+  const numOnly = JSON.parse(JSON.stringify(pkg));
+  numOnly.event.analysis.candidates[0].x = "10" + breakout("candidates.x");
+  const numFile = path.join(artifactDir, "hostile-record-number.json");
+  fs.writeFileSync(numFile, JSON.stringify(numOnly));
+  await click(page, '[data-action="backup-import"]');
+  await page.setInputFiles("#backupFileInput", numFile);
+  await page.waitForTimeout(900);
+  const r3b = await page.evaluate(() => [...document.querySelectorAll(".toast")].map((x) => x.textContent).pop() || "");
+  checks.ok(/candidates\[0\]\.x is not a number/.test(r3b), "a refused position is named as not a number", r3b);
+
+  // ---- 4. THE SAME VALUES ALREADY IN STORAGE ---------------------------------
+  // Part 3's import rule protects new files; a record saved before that rule
+  // (or written by anything that is not the import) reaches the review map as
+  // it is. The map itself must draw those values as text and numbers.
+  // Mutation proof (2026-11-01): `candidateBox` in app-v8.js unescaped → the
+  // review map fired `candidates.kind` / `candidates.status` / `candidates.id`.
+  await page.evaluate(({ k, s, i }) => {
+    window.__pwned.length = 0;
+    const e = state.events.find((x) => x.analysis && x.analysis.candidates && x.analysis.candidates.length);
+    for (const c of e.analysis.candidates) {
+      c.kind = "table" + k; c.status = "unreviewed" + s; c.id = c.id + i;
+      c.x = "10" + k; c.rotation = "0" + s;
+      for (const ch of c.chairDetections || []) { ch.x = "5" + k; ch.rotation = "0" + s; }
+    }
+    ui.activeEventId = e.id; ui.screen = "workspace"; ui.tab = "floor"; ui.planMode = "review"; ui.selectedCandidateId = null; render();
+  }, { k: breakout("stored.kind"), s: breakout("stored.status"), i: breakout("stored.id") });
+  await settle(page);
+  await audit(page, "Plan review of a record already in storage", checks);
 }

@@ -1474,6 +1474,7 @@
     "import.rule.badPax": { en: "is not a valid party size (0–99 additional guests)", tr: "geçerli bir kişi sayısı değil (0–99 ek misafir)" },
     "import.rule.badAssignment": { en: "is not a valid seat assignment", tr: "geçerli bir oturma ataması değil" },
     "import.rule.badId": { en: "is not an identifier this product writes", tr: "bu ürünün yazdığı bir kimlik değil" },
+    "import.rule.notNumber": { en: "is not a number", tr: "bir sayı değil" },
 
     // ---- Offline Recovery ----
     // An automatic, unattended safety net -- distinct from backup.*, which
