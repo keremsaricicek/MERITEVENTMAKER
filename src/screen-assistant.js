@@ -234,7 +234,7 @@
       if (readText && R()) {
         status.textContent = t("assistant.reading");
         const m = await readText(text);
-        if (m && m.reading) { const mr = R().toParse(m.reading, evs, now, text); if (mr.kind !== "unknown") { r = mr; byModel = true; sure = !!m.sure && R().grounded(mr, text, evs, currentId()); } }
+        if (m && m.reading) { const mr = R().toParse(m.reading, evs, now, text, currentId()); if (mr.kind !== "unknown") { r = mr; byModel = true; sure = !!m.sure && R().grounded(mr, text, evs, currentId()); } }
       }
       // Neither a question about our events nor a command: small talk, from the
       // same model, marked as not resting on the data.

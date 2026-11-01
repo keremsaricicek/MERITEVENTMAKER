@@ -50,4 +50,13 @@ export default async function run({ checks, repoRoot }) {
   const q = { kind: "question", intent: "seatAt", person: "Can Öztürk", phone: null, event: "son konser", many: false, table: null, steps: [] };
   checks.equal(R.toParse(q, E, fx.today, "Can Öztürk nerede oturuyor").event, "", "an event the sentence never named is dropped");
   checks.equal(R.toParse(Object.assign({}, q, { event: "hazir" }), E, fx.today, "haziranda hangi konser vardi").event, "haziranda", "a cut event word is put back");
+
+  // A QUESTION IS NOT A COMMAND; THE GUEST THE SENTENCE NAMES; "Y'nin masasına" is next to Y
+  // (2026-11-02, from typo7's errors — measured on fresh8/typo8).
+  checks.equal(R.toParse(cmd([{ op: "setPax", guest: "mehmet kaya", pax: 1 }]), E, fx.today, "mehmet kaya hep ayni masdami oturuyo", fx.current).kind, "unknown",
+    "a sentence that ends asking and orders nothing is never read as a change");
+  p = R.toParse(cmd([{ op: "deleteGuest", guest: "mehmet kayi" }]), E, fx.today, "mehmet kayayi listeden sil", fx.current);
+  checks.ok(T.fold(p.plan[0].guest) === "mehmet kaya" && p.loose, "a guest the model bent is taken from the sentence — and shown first", p);
+  p = R.toParse(cmd([{ op: "copySeat", guest: "ahmet yilmaz", from: "can ozturkun" }]), E, fx.today, "ahmet yilmazi can ozturkun masasina oturt", fx.current);
+  checks.ok(p.plan[0].op === "nextTo" && /ozturk/.test(p.plan[0].other) && p.loose, "a copy 'from' a guest is a seat next to that guest — shown first", p);
 }

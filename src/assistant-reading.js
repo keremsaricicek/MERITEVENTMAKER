@@ -131,7 +131,7 @@ Kullanmadığın alanlar null; many yoksa false; steps soru için boş liste.`;
     return null;
   }
   const title = (s) => s.split(" ").map((w) => w.charAt(0).toLocaleUpperCase("tr") + w.slice(1)).join(" ");
-  function toParse(m, events, today, text) {
+  function toParse(m, events, today, text, currentId) {
   if (!m || m.kind === "unknown") return { kind: "unknown" };
   const fold = (s) => (s == null ? "" : T().fold(String(s)));
   const ws = text == null ? null : words(text);
@@ -176,8 +176,34 @@ Kullanmadığın alanlar null; many yoksa false; steps soru için boş liste.`;
     return name === name.toLocaleLowerCase("tr") ? title(name) : name;
   };
   if (m.kind === "question") return { kind: "question", intent: m.intent, person: m.person ? back(m.person) : undefined, phone: m.phone || null, event: fold(said(m.event)), many: !!m.many, table: m.table ? String(m.table).replace(/\s+/g, "").toUpperCase() : undefined };
+  // A QUESTION IS NOT A COMMAND: a sentence that ends asking ("… oturdu mu", "masdami oturuyo")
+  // and orders nothing is never carried out or shown as a change — the rules read it instead.
+  if (ws && ws.length) {
+    const lastQ = ws.slice(-2).some((w) => /^(mi|mu|miydi|muydu|misin|musun)$/.test(w.f) || /(mi|mu)(ydi|ydu)?$/.test(w.f) && w.f.length >= 5);
+    const orders = ws.some((w) => /^(ekle|yaz|kaydet|oturt|koy|al|tasi|gecir|sil|cikar|kaldir|yap|olsun|aktar|isaretle|add|move|put|seat|delete|remove|set|make|mark)\w{0,3}$/.test(w.f));
+    if (lastQ && !orders) return { kind: "unknown" };
+  }
+  // THE GUEST THE SENTENCE NAMES. When the model's guest is no guest of the open event, the one
+  // guest whose name the sentence carries (one or two typed words) is taken instead — loose.
+  const evNow = currentId ? (events || []).find((e) => e.id === currentId) : null;
+  const inSentence = () => {
+    if (!ws || !evNow) return null;
+    const found = new Set();
+    for (let i = 0; i < ws.length; i++) for (const n of [2, 1]) {
+      if (i + n > ws.length) continue;
+      const q = ws.slice(i, i + n).map((w) => w.f).join(" ");
+      if (q.length < 3 || ws.slice(i, i + n).some((w) => STOP.test(w.f))) continue;
+      const r = T().findPerson([evNow], q);
+      if (!r.none && !r.ambiguous && r.people[0].records.length === 1) { found.add(r.people[0].name); break; }
+    }
+    return found.size === 1 ? [...found][0] : null;
+  };
+  const known = (v) => { if (!evNow || !v) return true; const r = T().findPerson([evNow], v); return !r.none && !r.ambiguous; };
   const steps = (m.steps || []).map((s) => {
     const o = { op: s.op };
+    if (s.guest && !known(back(s.guest))) { const g = inSentence(); if (g) { s = Object.assign({}, s, { guest: g }); loose = true; } }
+    // "X'i Y'nin masasına oturt" read as a copy from an EVENT named Y: Y is a guest — sit next to them
+    if (s.op === "copySeat" && s.from && evNow && !T().findEvent(events, fold(s.from), today).events.length && known(back(s.from))) { s = Object.assign({}, s, { op: "nextTo", other: s.from, from: null }); o.op = "nextTo"; loose = true; }
     if (s.guest) o.guest = back(s.guest); if (s.table) o.table = String(s.table).replace(/\s+/g, "").toUpperCase(); if (s.from) o.from = fold(back(s.from));
     if (s.other) o.other = fold(back(s.other)); if (s.name) o.name = s.op === "addGuest" ? newName(s.name) : s.name; if (s.pax != null) o.pax = s.pax; if (s.fromTable) o.fromTable = String(s.fromTable).replace(/\s+/g, "").toUpperCase();
     if (s.op === "setVip") o.vip = "VIP";
