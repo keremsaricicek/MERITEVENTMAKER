@@ -2392,3 +2392,29 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .disk-backup-row{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3,12px);width:100%;text-align:left;font-size:13px;border:1px solid var(--pi-line-soft);border-radius:var(--pi-radius-sm)}
 .disk-backup-row b{font-weight:600;color:var(--text)}
 .disk-backup-row .muted{font-size:12px;white-space:nowrap}
+/* ---- Legibility floor (benchmarks/ux/TASKS.md, 2026-11-01) ------------------
+   Measured by tests/suites/ux-operator-tasks on every screen of the operator's
+   day, at 1920/2560/1440 in TR and EN: field labels, table heads, metric labels,
+   the canvas status bar, segment buttons and toolbar captions rendered at
+   8–10.5px. The constitution: operational text ~12–14px, never shrunk to 7–8px.
+   Nothing outside the plan drawing renders below 11px; the drawing itself
+   (table labels, seat numbers, venue objects) scales with zoom and is not
+   touched here. The selectors repeat the rules they lift and sit last, so they
+   win at equal specificity. */
+.brand-copy strong,.brand-copy span,
+.mx-panel > .kicker,.event-id span,
+.field label,.mx-form label,
+.mx-list-head span,.mx-metric-label,.next-badge,
+.wz-table th,.wz-sum span,.wz-node i,
+.live-aside-head,.aw-head strong,.aw-time,.aw-count,.aw-note,.aw-key,.aw-none,.aw-partial,.aw-vip,
+.fz-head strong,.fz-empty,.ss-head strong,.ss-option-head span,.ss-why li,
+.poi-number > label,.poi-number-state,.poi-visual-note strong,.poi-visual-note em,
+.poi-teach label,.poi-teach-blocked,.poi-teach-note,.poi-card-head span,
+.vip-tag,.plan-tag,.arr-state,.tab,.table-card-stats span,.enter-key,
+.analysis-note,.planintel-diagnostics .analysis-note,.planintel-diagnostics summary,
+.planmap-toolbar .zoom-label,
+.canvas-status,.canvas-status span,.seg-btn,.toolbar-btn,.toolbar-btn > span,
+.planmap-status-pill small,.seat-person small{font-size:11px}
+/* At 11px the import wizard's widest Turkish head ("TOPLAM KİŞİ") ran 4px into
+   the next column at 1440 wide; tighter tracking keeps it in its own. */
+.wz-table th{letter-spacing:.02em}
