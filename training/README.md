@@ -1715,3 +1715,31 @@ UX task tests found — a question naming no event ("X nerede oturuyor?") is ans
 instead of "Bu etkinlik kayıtlarda yok." (`src/assistant-parse.js`, suite `assistant-parse`). The race scores
 gold and model readings through that same code, so a reading's right/wrong is unchanged in kind; earlier
 runs' numbers were measured with the old answer code.
+
+## 2026-11-01 — runB7d verdict: NOT passed (typo5 0.794, 2 wrong; fresh3 0.868); typing robustness doubled
+
+Raw: `benchmarks/offline-intelligence/assistant-race/b7d-f8/`, `b7d-briefs.json`; the shipped B7c on the two new
+sets for comparison: `b7c-fresh5-typo5.json`. Hybrid θ 0.91, short prompt. The race ran alone except
+15:11–15:13 UTC (a test run started by mistake and stopped; ~5 sentences' seconds overlap).
+
+| set | B7d hybrid right / wrong | B7d model alone | shipped B7c hybrid | bar |
+|---|---|---|---|---|
+| **fresh5 (decisive)** | **0.912 / 0** | 0.912 / 1 | 0.912 / 0 | pass |
+| **typo5 (owner's typing)** | **0.794 / 2** | 0.824 / 2 | **0.412** / 0 | **fail** |
+| fresh4 | 0.938 / 0 | 0.938 / 0 | – | pass |
+| fresh3 | 0.868 / 1 | 0.921 / 1 | 0.816 / 2 | **fail** |
+| fresh2 | 0.925 / 0 | 1.000 / 0 | 0.825 | pass |
+| paraphrases | 0.914 / 1 | 0.914 / 1 | 1.000 | right passes, **1 wrong** |
+| original | 0.943 / 1 | – | – | **1 wrong** |
+
+Briefs 0.988 fields / 0.95 all right / 0.007 invented (pass). Median 3.4 s a sentence.
+Wrong changes, and what the product would do (act if confidence ≥ 0.91 or the rules read the same):
+- `C5` / `w5` "T05'e Burak Şahin +1 ekle": the model added **"Burak Şah"** (0.957 / 0.950 → carried out). New
+  error, not in B7c: the typing noise drops apostrophes, so the model learned to cut a final "-in/-ın" as a
+  genitive suffix, and cut it from a surname that ends in it.
+- `tjc3` "bir misafir daha burcu tan" → added "burcu" (0.78 → asks). `tjc8` "can ozturku t02den kaldir ama
+  listeden silme" → **deleted** (0.62 → asks; the preview says "sil", the person cancels). `hc3` nextTo (0.75 → asks).
+So under ask-when-unsure 2 wrong changes would be carried out (both the surname cut), 3 would be asked.
+**Reading of it:** the typing noise worked (owner-style sentences 0.41 → 0.79) and cost a new, confident error
+class. Next (pre-registered separately): surnames ending in -in/-ın/-un/-ün in the pool with and without
+suffixes, negation with typos, a new decisive test written first.
