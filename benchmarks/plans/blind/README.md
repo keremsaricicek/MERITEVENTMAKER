@@ -182,3 +182,12 @@ shipped; the patch and the suite are kept outside the repository.
 > 0.75 × surface side 59 — the ceiling is not loosened, and text suppression deletes the seatless
 squares in `app-v8.js`, outside this branch's files); T24/T25 one chair short each (4/5); T04, T09,
 T17, T18, T22 one short; the 4 loose phantoms (GIRIS, three truss/stage).
+
+**Offline package:** both builds rebuilt and `verify-offline-package` 47 passed / 0 failed after
+B-14b; slow suites chair-families, structural-objects, mixed-representation pass.
+
+**T05/T06 — a narrower text rule, proposed for `app-v8.js`'s owner, NOT measured:** a word made only
+of round glyphs (o/O/0) whose box spans two or more table candidates, one glyph centred in each and
+each glyph under half its table's short side, is those tables' centrepieces, not printing. Measured
+lever only: the two survive as soon as either has a seat (the refused v2-chairs run kept both). It
+must be measured against a2's two phantom tables before anyone ships it.
