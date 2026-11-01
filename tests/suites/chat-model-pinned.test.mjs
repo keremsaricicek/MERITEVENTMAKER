@@ -2,7 +2,7 @@
 // behind ask-when-unsure; the 2B was too slow).
 //
 // NO MODEL RUNS HERE. This pins what the package carries and how it starts it:
-//   THE MANIFEST IS VALID. tools/local-vlm/manifests/<id>.json passes the
+//   THE MANIFEST IS VALID. tools/local-chat/manifests/<id>.json passes the
 //     relay's own check (server/assistant-reader.mjs readChatManifest), serves
 //     the short prompt the model was trained and measured with, and acts by
 //     itself only at the confidence the race set (θ 0.91, training/README.md).
@@ -23,7 +23,7 @@ const ID = "qwen3.5-0.8b-merit-chat-b7c";
 
 export default async function run({ checks, repoRoot }) {
   const RD = await import(path.join(repoRoot, "server/assistant-reader.mjs"));
-  const mf = path.join(repoRoot, "tools/local-vlm/manifests", ID + ".json");
+  const mf = path.join(repoRoot, "tools/local-chat/manifests", ID + ".json");
   checks.require(fs.existsSync(mf), "the shipped chat manifest exists", mf);
   const r = RD.readChatManifest(mf, { verify: false });
   checks.ok(r.ok, "it passes the relay's own manifest check", r);
