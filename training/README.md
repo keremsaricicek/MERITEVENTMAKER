@@ -1797,3 +1797,17 @@ model was ever trained or measured on English. **Tests, written first by hand:**
 carelessly, `62c4206ed4ee8698`), on the same fixture, scored like fresh7/typo7 (`--order product`). First a
 measurement of B7c/B7d/B7e as they are; if none reaches the owner's 0.85 on both, an English+Turkish training run
 is pre-registered separately before its data.
+
+**Grounding verdict (2026-11-02 ~02:10 UTC), product rule, fresh7 / typo7 unseen until this run:**
+
+| model | fresh7 right (at once) | typo7 right (at once) | wrong changes (all sets) | original / variant / deep | median s |
+|---|---|---|---|---|---|
+| B7c (shipped until now) | 0.875 (0.833) | 0.583 (0.458) | 0 | 1.000 / 0.971 / 0.800 | 3.7 |
+| B7d | 0.917 (0.833) | 0.750 (0.583) | 0 | 0.971 / 0.943 / 0.933 | 4.7 |
+| **B7e** | **0.917** (0.792) | **0.792** (0.583) | **0** | 0.971 / 0.971 / 0.867 | 4.5 |
+
+No model reaches the owner's 0.85 on typo7, so the shipping rule above is NOT met. **B7e is shipped anyway** as the
+best measured (owner, 2026-11-02: "en iyisini … tak") — better than B7c on both unseen sets, 0 wrong changes;
+recorded as such, not as a pass. Seconds are contaminated by test suites run at the same time (01:20–01:50 UTC);
+they are not decisive. fresh7/typo7 are now SEEN. Files: `benchmarks/offline-intelligence/assistant-race/g7/`.
+Manifest `tools/local-chat/manifests/qwen3.5-0.8b-merit-chat-b7e.json` (B7c's kept for one-step rollback).
