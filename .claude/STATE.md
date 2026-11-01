@@ -125,3 +125,5 @@ Owner answers (2026-11-01 ~18:40 Istanbul): (1) work PCs differ → must run on 
 6. Windows: tools/local-vlm/windows/PRE-TRIAL-CHECKLIST.md (15 lines) → package → final exam → "al dene".
 7. Later, only on "EXE YAP": EXE + SQLite + auto-update (public release repo); then LAN sharing.
 Ideas queued (light): one-click diagnostic report (no guest data); automatic backup-restore drill.
+- **Owner rule (2026-11-02 ~02:30 UTC):** bars (85/90/95) are TARGETS; whatever passes or not, the best measured
+  model is always the one used. No bloat. Speed + token economy. B7e shipped (630a099). fresh8/typo8 written (blind).
