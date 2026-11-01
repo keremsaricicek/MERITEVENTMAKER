@@ -154,3 +154,31 @@ diagnostics carry the new count — with that one field removed all 28 analyses 
 | phantom tables | 0 | 0 |
 | chairs seated / 68 | 51 | **57** (T23 6/8) |
 | loose chairs | 12 | **7** (all 7 are the phantoms: 4 lettering, 3 stage fixtures) |
+
+**Verified (2026-11-01, fresh machine):** B-14b's fingerprint claim reproduced — the 28 plans dumped
+on `ad1d27d` and on `05a6edf`, compared with the one new field `seatedLongTables` removed: 28 of 28
+identical. The fingerprint store is re-recorded on `05a6edf` (it was stale, see item 5).
+
+**Measured and refused — a seat-family member "seated" only at a surface drawn in the seat colour
+(the 7 loose phantoms).** Diagnosis (`MERIT_DETECT_DEBUG` census, detection px): all 7 are members of
+ADMITTED secondary families, not primary chairs. 3 are pieces of the rotated capacity lettering
+("72 pax seating", "Total : 72 pax", printed in the armchairs' orange), each counted as seated
+against the next word of the same lettering (25x63 and 25x48, `fill` source: the word is 1 px
+wider than the glyph is long); Tesseract does not read the rotated lines, so the printed-text
+exclusion never sees them. 1 is on the GIRIS lettering, seated against the door box (59x73,
+interior); 3 are on the stage trusses, seated against the boxes beside them (51x86, 49x78) and the
+stage band (135x47). Tried: the tables stage's own MADE OF CHAIR bar (accent covers >= 0.25 of the
+box → a chair, not a table), not a new number, asked per member after admission. Suite written
+first and failing on the old code (an admitted 12x14 stool family plus two stool-sized marks against
+a 25x63 seat-colour bar). Golden 2 (SEEN): loose 7 → 4 (the 3 lettering pieces), but seated chairs
+57 → 55 (T11 2 → 1, T14 2 → 1): four real seats in the pushed-together rows are "seated" only
+against the whole block of three tables and their armchairs (185x164, 171x68, 179x254, 54x49),
+whose box is 0.23–0.49 orange; on the surfaces' own pixels the blocks read 0.49–0.56 and the
+lettering words 0.75–0.79. Neither measure separates them at the existing bar, and a new one picked
+now would be chosen on a seen result. A trade (phantoms down, real seats down) is a revert: not
+shipped; the patch and the suite are kept outside the repository.
+
+**Still open (unchanged):** T05/T06 (their armchairs are the whole-armchair family `23:0`, side 45
+> 0.75 × surface side 59 — the ceiling is not loosened, and text suppression deletes the seatless
+squares in `app-v8.js`, outside this branch's files); T24/T25 one chair short each (4/5); T04, T09,
+T17, T18, T22 one short; the 4 loose phantoms (GIRIS, three truss/stage).
