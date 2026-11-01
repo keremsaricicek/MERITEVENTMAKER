@@ -86,7 +86,7 @@ const ERROR_CLASS = {
   "toast.saveVerifiedFirst": REFUSAL, "backup.corruptFile": REFUSAL, "backup.invalidFile": REFUSAL,
   "backup.futureVersion": REFUSAL, "backup.invalidRecord": REFUSAL, "backup.badReference": REFUSAL,
   "eventPackage.invalidFile": REFUSAL, "eventPackage.futureVersion": REFUSAL, "eventPackage.invalidRecord": REFUSAL,
-  "eventPackage.badReference": REFUSAL, "eventPackage.importFailed": REFUSAL, "recovery.none": REFUSAL,
+  "eventPackage.badReference": REFUSAL, "eventPackage.importFailed": REFUSAL, "recovery.none": REFUSAL, "diskBackup.unreachable": REFUSAL,
   "plan.replaceFailed": REFUSAL,
   // The model reading (src/screen-vlm.js): the send did not happen, a person's
   // Accept was refused (its reason stays beside the finding), an answer for an
