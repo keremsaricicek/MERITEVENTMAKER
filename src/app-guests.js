@@ -238,7 +238,7 @@
     if(row.some(x=>x!==""))lines.push(row);
     if(lines.length<2)return[];
     const headers=lines[0].map((h,i)=>h.trim()||`Column ${i+1}`);
-    return lines.slice(1).map(r=>Object.fromEntries(headers.map((h,i)=>[h,r[i]??""])))
+    return lines.slice(1).map(r=>Object.fromEntries(headers.map((h,i)=>[h,csvUnneutralise(r[i]??"")])))
   }
   function loadXLSX(){return window.XLSX?Promise.resolve():Promise.reject(userError(t("guests.engineMissing")))}
   function norm(v){return String(v).toLowerCase().replace(/[^a-z0-9ğüşöçı]+/g,"")}
@@ -460,13 +460,23 @@
     const event=activeEvent(),headers=["NAME SURNAME","PAX","STATUS","VIP","INVITED BY","TABLE","SEATS","NOTES"],rows=event.guests.map(g=>{
       const t=g.assignment&&event.tables.find(x=>x.id===g.assignment.tableId);
       return[g.name,paxOf(g),g.planningStatus,g.vip,g.invitedBy,t?.number||"",g.assignment?seatRange(g.assignment.seats):"",g.notes]
-    }),csv="﻿"+[headers,...rows].map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n"),blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+    }),csv="﻿"+[headers,...rows].map(r=>r.map(csvCell).join(",")).join("\r\n"),blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
     a.href=url;
     a.download=safeFileName(event.name)+"-guests.csv";
     a.click();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
     toast(t_("toast.csvExported"),"success")
   }
+  // A cell that starts with = + - @ (or a tab / CR) is a FORMULA to the
+  // spreadsheet that opens the CSV: =HYPERLINK(...) becomes a live link, =cmd|
+  // a DDE prompt (CSV injection). It is written with a leading apostrophe --
+  // the text kept, no longer a formula -- and parseCSV removes that apostrophe
+  // again, so a list exported and imported back keeps every name as typed.
+  // (The workbook needs none of this: SheetJS writes such a cell as a string.)
+  // Guarded by export-contract-privacy.
+  const CSV_FORMULA_LEAD=/^[=+\-@\t\r]/;
+  function csvCell(v){let s=String(v??"");if(CSV_FORMULA_LEAD.test(s))s="'"+s;return`"${s.replace(/"/g,'""')}"`}
+  function csvUnneutralise(v){return typeof v==="string"&&v[0]==="'"&&CSV_FORMULA_LEAD.test(v.slice(1))?v.slice(1):v}
   function safeFileName(value){return String(value).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"event"}
   function seatExportName(event,table,index){const occ=tableSeatMap(event,table.id).get(index);if(!occ)return"";return occ.companion?`GUEST OF ${occ.guest.name.toUpperCase()}`:occ.guest.name.toUpperCase()}
   function buildTablePlanModel(event){
