@@ -1482,6 +1482,8 @@
     // protection against a corrupted local record or an in-session mistake,
     // never against losing the device or the browser profile itself.
     "recovery.buttonTitle": { en: "Restore from an automatic recovery point", tr: "Otomatik kurtarma noktasından geri yükle" },
+    "diagnose.buttonTitle": { en: "Download a diagnostic report (no guest data)", tr: "Tanı raporu indir (misafir bilgisi içermez)" },
+    "diagnose.done": { en: "Diagnostic report saved: {name}", tr: "Tanı raporu kaydedildi: {name}" },
     "diskBackup.buttonTitle": { en: "Restore from the backups on disk", tr: "Diskteki yedeklerden geri yükle" },
     "diskBackup.title": { en: "Backups on disk", tr: "Diskteki yedekler" },
     "diskBackup.note": { en: "The local server keeps a copy of all events in the backup folder next to the program after every change. Choose one to restore; it is checked before anything is replaced.", tr: "Yerel sunucu her değişiklikten sonra tüm etkinliklerin bir kopyasını programın yanındaki yedek klasörüne yazar. Geri yüklemek için birini seçin; hiçbir şey değişmeden önce kontrol edilir." },

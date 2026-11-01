@@ -38,6 +38,7 @@ import http from "node:http";
 import fs from "node:fs";
 import crypto from "node:crypto";
 import path from "node:path";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 import * as core from "./vlm-core.mjs";
 import { makeLocalClient, checkServing } from "./vlm-local.mjs";
@@ -482,6 +483,21 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
         if (req.method !== "GET" && req.method !== "HEAD") { res.writeHead(405).end(); return; }
         if (!hostAllowed(hostnameOf(req.headers.host), hosts)) { res.writeHead(421, { "content-type": "text/plain" }).end("host not allowed"); return; }
         return serveStatic(req, res, pathname);
+      }
+      // The machine's side of the one-click diagnostic report (src/diagnose-report.js;
+      // tools/local-vlm/windows/PRE-TRIAL-CHECKLIST.md line 11): versions, CPU, memory,
+      // backups, models — never a guest, an event or a file's content.
+      if (pathname === "/vlm-relay/diagnose" && req.method === "GET") {
+        if (!hostAllowed(hostnameOf(req.headers.host), hosts)) return json(res, 421, { ok: false, code: "HOST_NOT_ALLOWED" });
+        const cpus = os.cpus() || [];
+        const st = core.status(config, usage.snapshot(), usage.ledger());
+        return json(res, 200, { ok: true, relay: RELAY_VERSION, node: process.version, platform: os.platform(), release: os.release(), arch: os.arch(),
+          cpu: { model: cpus[0] ? cpus[0].model : null, count: cpus.length, id: process.env.PROCESSOR_IDENTIFIER || null },
+          memoryMB: { total: Math.round(os.totalmem() / 1048576), free: Math.round(os.freemem() / 1048576), relayRss: Math.round(process.memoryUsage().rss / 1048576) },
+          uptimeS: Math.round(process.uptime()),
+          backups: backups ? { enabled: true, count: backups.list().length } : { enabled: false },
+          local: st.local ? { model: st.local.model || st.local.name || null, checks: (st.local.checks || []).length } : null,
+          reader: reader.configured ? { configured: true, name: reader.manifest.name, version: reader.manifest.version } : { configured: false, reasonCode: reader.reasonCode } });
       }
       if (pathname === "/vlm-relay/status" && req.method === "GET") {
         if (!hostAllowed(hostnameOf(req.headers.host), hosts)) return json(res, 421, { ok: false, code: "HOST_NOT_ALLOWED" });
