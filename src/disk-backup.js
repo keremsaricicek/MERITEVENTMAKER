@@ -40,7 +40,8 @@
   let pending = null, lastSent = null, timer = null, sending = false, failed = false;
 
   const tr = (key, vars) => (typeof t === "function" ? t(key, vars) : key);
-  const say = (key, type, vars) => { if (typeof toast === "function") toast(tr(key, vars), type, type === "error" ? 6500 : 3200); };
+  // The one refusal this module says: the disk copies could not be reached.
+  const unreachable = () => { if (typeof toast === "function" && typeof t === "function") toast(t("diskBackup.unreachable"), "error", 6500); };
 
   // A stored record with at least one event. Parsed once per debounced send,
   // not once per save.
@@ -141,7 +142,7 @@
       const j = r.ok ? await r.json() : null;
       files = j && j.ok && Array.isArray(j.files) ? j.files : null;
     } catch { files = null; }
-    if (!files) { say("diskBackup.unreachable", "error"); return; }
+    if (!files) { unreachable(); return; }
     if (!files.length) {
       const empty = document.createElement("p"); empty.className = "muted"; empty.textContent = tr("diskBackup.none"); list.appendChild(empty);
     }
@@ -166,9 +167,9 @@
       const r = await fetch(BASE + "file?name=" + encodeURIComponent(name), { headers: HEADERS, cache: "no-store", credentials: "same-origin" });
       if (!r.ok) throw new Error(String(r.status));
       text = await r.text();
-    } catch { say("diskBackup.unreachable", "error"); return; }
+    } catch { unreachable(); return; }
     const input = document.getElementById("backupFileInput");
-    if (!input || typeof DataTransfer !== "function") { say("diskBackup.unreachable", "error"); return; }
+    if (!input || typeof DataTransfer !== "function") { unreachable(); return; }
     const dt = new DataTransfer();
     dt.items.add(new File([text], name, { type: "application/json" }));
     input.files = dt.files;
