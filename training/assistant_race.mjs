@@ -54,6 +54,8 @@ const items = [
   ...(flag("fresh4") ? lines("fresh4.jsonl").map((d) => ({ set: "fresh4", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("fresh5") ? lines("fresh5.jsonl").map((d) => ({ set: "fresh5", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("typo5") ? lines("typo5.jsonl").map((d) => ({ set: "typo5", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("fresh6") ? lines("fresh6.jsonl").map((d) => ({ set: "fresh6", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("typo6") ? lines("typo6.jsonl").map((d) => ({ set: "typo6", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("fresh3") ? lines("fresh3.jsonl").map((d) => ({ set: "fresh3", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...lines("variants.jsonl").map((v) => {
     const n = Number(v.sameAs.slice(1));
@@ -101,13 +103,13 @@ function outcome(item, parsed) {
   return { calls, kind: calls.length ? "calls" : out.refuse ? "refuse" : out.ask ? "ask" : "nothing" };
 }
 function score(item, parsed) {
-  if (item.set === "deep" || item.set === "fresh" || item.set === "fresh2" || item.set === "fresh3" || item.set === "fresh4" || item.set === "fresh5" || item.set === "typo5") {
+  if (item.set === "deep" || item.set === "fresh" || item.set === "fresh2" || item.set === "fresh3" || item.set === "fresh4" || item.set === "fresh5" || item.set === "typo5" || item.set === "fresh6" || item.set === "typo6") {
     // not ours to read (small talk, the world outside): right only when read as "unknown"
     if (item.kind === "unknown") { const got = outcome(item, parsed); return { right: parsed.kind === "unknown", wrongChange: got.calls.length > 0, calls: got.calls }; }
     const want = outcome(item, toParse(item.gold)), got = outcome(item, parsed);
     // typo5: the sentence is typed carelessly, so a name echoed or added may come back with or
     // without capitals and Turkish letters — the same person either way
-    const same = item.set === "typo5" ? (a, b) => globalThis.MeritAssistantTools.fold(String(a)) === globalThis.MeritAssistantTools.fold(String(b)) : (a, b) => a === b;
+    const same = item.set === "typo5" || item.set === "typo6" ? (a, b) => globalThis.MeritAssistantTools.fold(String(a)) === globalThis.MeritAssistantTools.fold(String(b)) : (a, b) => a === b;
     if (item.kind === "question") return { right: !!want.text && same(got.text, want.text), wrongChange: false, answer: got.text };
     const right = same(JSON.stringify(got.calls), JSON.stringify(want.calls)) && got.kind === want.kind;
     return { right, wrongChange: !right && got.calls.length > 0, calls: got.calls };
@@ -180,6 +182,8 @@ const summary = { label, at: new Date().toISOString(),
   ...(flag("fresh4") ? { fresh4: { rules: sum("fresh4", "rules"), model: sum("fresh4", "model"), both: sum("fresh4", "both") } } : {}),
   ...(flag("fresh5") ? { fresh5: { rules: sum("fresh5", "rules"), model: sum("fresh5", "model"), both: sum("fresh5", "both") } } : {}),
   ...(flag("typo5") ? { typo5: { rules: sum("typo5", "rules"), model: sum("typo5", "model"), both: sum("typo5", "both") } } : {}),
+  ...(flag("fresh6") ? { fresh6: { rules: sum("fresh6", "rules"), model: sum("fresh6", "model"), both: sum("fresh6", "both") } } : {}),
+  ...(flag("typo6") ? { typo6: { rules: sum("typo6", "rules"), model: sum("typo6", "model"), both: sum("typo6", "both") } } : {}),
   ...(flag("fresh3") ? { fresh3: { rules: sum("fresh3", "rules"), model: sum("fresh3", "model"), both: sum("fresh3", "both") } } : {}),
   medianSeconds: secs.length ? secs[Math.floor(secs.length / 2)] : null };
 fs.writeFileSync(arg("out"), JSON.stringify({ summary, rows }, null, 1));

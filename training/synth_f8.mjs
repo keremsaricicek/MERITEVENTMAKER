@@ -23,7 +23,8 @@ const R = globalThis.MeritAssistantReading;
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : d; };
 // `--grammar 2` (runB7b): more phrasings per intent and step, two-job sentences sharing a verb
 // or a pronoun, more small talk; grammar 1 (runB7) is unchanged and reproducible
-const G4 = arg("grammar", "1") === "4";   // runB7d: grammar 3 + short/inverted questions, more "next to" verbs, terse adds, a stated count beside a story, more small talk
+const G5 = arg("grammar", "1") === "5";   // runB7e: grammar 4 + surnames ending in -in/-ın/-un/-ün kept whole, negation with other verbs
+const G4 = arg("grammar", "1") === "4" || G5;   // runB7d: grammar 3 + short/inverted questions, more "next to" verbs, terse adds, a stated count beside a story, more small talk
 const G3 = arg("grammar", "1") === "3" || G4;   // runB7c: grammar 2 + negation that narrows a command, partner adds, out-of-scope questions
 const G2 = arg("grammar", "1") === "2" || G3;
 const NUMW = ["", "bir", "iki", "üç", "dört", "beş", "altı", "yedi"];
@@ -39,6 +40,7 @@ const FIRST = ["Murat", "Gizem", "Emre", "Seda", "Kerem", "Buse", "Hakan", "Dery
   "Kaan", "Melis", "Onur", "Ece", "Sinan", "Tuba", "Umut", "Aslı", "Levent", "Nur", "Erdem", "Yasemin", "Bora", "Dilek", "Fatih", "Hande", "Aylin", "Arda", "Şule", "Çağla", "Ömer", "Özge", "Ufuk", "Sibel", "Ilgaz", "Ümit", "Gökhan", "Neslihan", "Taner"];
 const LAST = ["Tekin", "Güneş", "Aydın", "Polat", "Korkmaz", "Erdoğan", "Koç", "Kurt", "Özdemir", "Çelik", "Aksoy", "Turan", "Bulut", "Yıldız", "Karaca", "Ateş", "Uçar", "Toprak", "Duman", "Işık",
   "Bozkurt", "Kılıç", "Sarı", "Altun", "Uysal", "Erol", "Kocabaş", "Sevim", "Ünal", "Güler", "Çakır", "Ekinci", "Tunç", "Oral", "Başaran", "Önal", "Yalçın", "Gündüz", "Akın", "Soylu"];
+const LAST5 = ["Bilgin", "Ergün", "Uzun", "Erkin", "Sezgin", "Durgun", "Gürsoy", "Tetik", "Kalkan", "Ersin", "Öztekin", "Bütün"];
 const ARTISTS = ["Kenan Doğulu", "Sertab Erener", "Teoman", "Gripin", "Manuş Baba", "Sıla", "Hadise", "Gökhan Türkmen", "Model", "Yüksek Sadakat", "Ezhel", "Melek Mosso", "Göksel Demirpençe", "Cem Adrian",
   "Athena", "Mor ve Ötesi", "Yaşar", "Feridun Düzağaç", "Pinhani", "Kalben"];
 const KINDS = ["konseri", "gecesi", "galası", "gösterisi"];
@@ -77,7 +79,7 @@ const sfx = (w, c, sayAs) => w + (noApos ? "" : "'") + SUF[c](sayAs || w);
 const tsfx = (t, c) => sfx(t, c, spoken(t));
 
 // ---- things a sentence talks about ---------------------------------------------------
-const person = (full = chance(0.75)) => (full ? `${pick(FIRST)} ${pick(LAST)}` : pick(FIRST));
+const person = (full = chance(0.75)) => (full ? `${pick(FIRST)} ${G5 && chance(0.3) ? pick(LAST5) : pick(LAST)}` : pick(FIRST));
 const table = () => { const p = pick(TABLE_PFX); const n = p === "T" ? 1 + Math.floor(rnd() * 30) : 1 + Math.floor(rnd() * 6); return p + String(n).padStart(2, "0"); };
 // an event as said in a sentence, and its words in the reading (lowercase, without the case ending)
 function eventRef() {
@@ -158,7 +160,16 @@ function step4() {
   const n = 1 + Math.floor(rnd() * 5), story = pick([`${sfx(g, "gen")} grubuna biri katıldı`, `${g} bir kişi daha getirecek`, `${sfx(g, "gen")} grubundan biri ayrıldı`, `${g} eksik gelecek`, `${sfx(g, "gen")} eşi de geliyor`]);
   return [`${story}, ${pick([`kişi sayısını ${n + 1} yap`, `${n + 1} kişi olsun`, `sayıyı ${NUMW[n + 1]} yap`])}`, St("setPax", { guest: g, pax: n + 1 })];
 }
+// grammar 5: keep-the-record negations with other verbs; adds whose surname ends like a suffix
+function step5() {
+  const g = person(), t = table(), r = rnd();
+  if (r < 0.45) return [pick([`${sfx(g, "acc")} masasından çıkar, listede dursun`, `${sfx(g, "acc")} ${tsfx(t, "abl")} kaldır, kaydı kalsın`, `${g} masasız kalsın ama listeden çıkmasın`, `${sfx(g, "acc")} masadan indir, silinmesin`]), St("unassign", { guest: g })];
+  if (r < 0.6) return [pick([`${g} kalsın, sadece VIP olarak işaretle`, `${sfx(g, "acc")} çıkarma, VIP yap`]), St("setVip", { guest: g })];
+  const name = `${pick(FIRST)} ${pick(LAST5)}`, n = pick([0, 0, 1, 2]);
+  return [pick([`${name}${n ? " +" + n : ""} ekle`, `listeye ${name} ekle`, `${name} da gelecek`, `yeni misafir ${name}`]), St("addGuest", { name, pax: n + 1 })];
+}
 function step() {
+  if (G5 && chance(0.1)) return step5();
   if (G4 && chance(0.15)) return step4();
   if (G3 && chance(0.12)) return step3();
   const g = person(), t = table(), r = rnd();
@@ -226,11 +237,12 @@ const readLines = (f) => fs.readFileSync(path.join(repo, "training/assistant", f
 const fx = JSON.parse(fs.readFileSync(path.join(repo, "training/assistant/fixture.json"), "utf8"));
 const norm = (s) => R && globalThis.MeritAssistantTools.fold(String(s)).replace(/[^a-z0-9]+/g, " ").trim();
 const testTexts = new Set([...readLines("questions.jsonl").map((q) => q.q), ...readLines("commands.jsonl").map((c) => c.text), ...readLines("variants.jsonl").map((v) => v.text),
-  ...readLines("deep.jsonl").map((d) => d.text), ...readLines("fresh.jsonl").map((d) => d.text), ...["fresh2.jsonl", "fresh3.jsonl", ...(G4 ? ["fresh4.jsonl", "fresh5.jsonl"] : [])].filter((f) => fs.existsSync(path.join(repo, "training/assistant", f))).flatMap((f) => readLines(f).map((d) => d.text)), ...R.EXAMPLES.map((e) => e[0])].map(norm));
+  ...readLines("deep.jsonl").map((d) => d.text), ...readLines("fresh.jsonl").map((d) => d.text), ...["fresh2.jsonl", "fresh3.jsonl", ...(G4 ? ["fresh4.jsonl", "fresh5.jsonl", "typo5.jsonl"] : []), ...(G5 ? ["fresh6.jsonl", "typo6.jsonl"] : [])].filter((f) => fs.existsSync(path.join(repo, "training/assistant", f))).flatMap((f) => readLines(f).map((d) => d.text)), ...R.EXAMPLES.map((e) => e[0])].map(norm));
 const banned = new Set();
 for (const e of fx.events) { for (const g of e.guests) g.name.split(/\s+/).forEach((w) => banned.add(norm(w))); e.name.split(/\s+/).filter((w) => w.length > 3 && !/konser|gala/i.test(w)).forEach((w) => banned.add(norm(w))); e.venue.split(/\s+/).forEach((w) => banned.add(norm(w))); }
 ["burak", "sahin", "selin", "ak", "deniz", "yurt", "okan", "er", "elif", "sen", "can", "ozturk", "zeynep", "arslan", "mehmet", "kaya", "ahmet", "yilmaz", "ayse", "demir", "tarkan", "sezen", "aksu", "mabel", "matiz", "harbiye", "zorlu", "yilbasi"].forEach((w) => banned.add(w));
 if (G4) ["burcu", "tan", "riza", "oktay"].forEach((w) => banned.add(w));
+if (G5) ["selim", "cetin", "hulya", "keskin", "kadir", "coskun", "oya", "ergin"].forEach((w) => banned.add(w));
 // grammar 4 only: no sentence may share a four-word run (names folded to one token) with any
 // test sentence — the tests stay tests of understanding, not of a copied frame
 const NAMEW = new Set([...banned, ...FIRST.map(norm), ...LAST.map(norm)]);

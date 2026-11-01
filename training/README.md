@@ -1743,3 +1743,18 @@ So under ask-when-unsure 2 wrong changes would be carried out (both the surname 
 **Reading of it:** the typing noise worked (owner-style sentences 0.41 → 0.79) and cost a new, confident error
 class. Next (pre-registered separately): surnames ending in -in/-ın/-un/-ün in the pool with and without
 suffixes, negation with typos, a new decisive test written first.
+
+## 2026-11-01 — runB7e (0.8B): grammar 5, decisive fresh6 + typo6 (written before any data)
+
+**Decisive tests, written first by hand:** `training/assistant/fresh6.jsonl` (22: 8 questions, 12 commands, 2 not
+ours; sha256 begins `0135e13b59e22a26`) and `typo6.jsonl` (the same 22 typed the owner's way; `d81f5ca30ff4dbf5`).
+Aimed at B7d's errors: new guests whose surname ends like a suffix (Çetin, Keskin, Coşkun, Ergin), keep-the-record
+negations, plus every intent. Rules alone: fresh6 0.455, typo6 0.409. fresh5 and typo5 are now seen.
+**Data:** `synth_f8.mjs --grammar 5 --seed 78 --n 3600 --prompt short`: grammar 4 plus a surname pool ending in
+-in/-ın/-un/-ün (30 % of full names) kept whole in the reading with and without suffixes, and keep-the-record
+negations with other verbs. Grammar 4 regenerated: still `16503a99bc03b831`. Same four-word guard; fresh6/typo6
+texts and names excluded.
+**Run:** `--init runB7d`, B7d's replay (ID,NEG,COUNT,CHAIRS,MERGED,SERVES,BRIEF ≤ 400), fp32, one epoch, curriculum.
+**Bars unchanged** (hybrid θ 0.91, short prompt): right ≥ 0.90 on fresh6, typo6, fresh5, typo5, fresh4, fresh3,
+fresh2, paraphrases; 0 wrong changes on every set; briefs ≥ 0.90 / ≤ 0.05. Reported too: model-first, and the
+wrong changes the product would carry out under ask-when-unsure.
