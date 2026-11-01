@@ -612,6 +612,17 @@ broken measurement would have deleted fourteen working functions.
 > the slow `training-data-capture` (per-example split, `cropsMissing`, the
 > empty-export message, an example landing after its decision was undone);
 > it pins them now, and 10 of 10 bite on the old and the moved code.
+>
+> **2026-11-01 — the visual descriptor registry moved** to
+> `src/plan-visual-embedding.js` (115 lines): `VisualEmbeddingProviders`,
+> `resolveVisualEmbeddingProvider`, `computeVisualDescriptor` and the
+> `globalThis.MeritVisualEmbedding` it publishes. Crossings: none — measured,
+> it reads no shell name — so it is a pure module published at load, not a
+> create(deps) one. It loads immediately before app-v8.js, where it used to
+> run, so plan-embedding.js's encoder registers at the same moment. The shell's
+> one caller (the analysis) uses `globalThis.MeritVisualEmbedding.resolve()`.
+> Characterized first by `visual-descriptor` (hand-computed numbers): six of
+> ten mutations had survived every suite; 10 of 10 bite on the moved code.
 
 
 - **Lines** 6214–7413 (1,200)
