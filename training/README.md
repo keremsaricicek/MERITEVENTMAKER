@@ -1661,3 +1661,38 @@ Every "right" bar passes; the bar "0 wrong changes on all sets" fails twice:
   usable at this speed even if it had passed; cause not yet measured (adapter at run time on Q4_K_M,
   or the 2B itself) — next.
 Not wired. Briefs (plan requests) for the record: below when measured.
+
+## 2026-11-01 — 2B speed: the quantisation, not the model (measured, llama-bench, 4 threads, same CPU)
+
+| model file | prompt tok/s | generation tok/s |
+|---|---|---|
+| 0.8B Q8_0 (shipped base) | 145.9 | 17.6 |
+| 2B Q4_K_M (runB7-2B served this, + LoRA at run time) | 66.8 | **3.1** |
+| 2B Q4_0 | 68.3 | 7.0 |
+| 2B Q8_0 | 69.6 | 7.9 |
+| 2B Q8_0 with the B7-2B adapter MERGED (llama-export-lora → llama-quantize Q8_0) | 71.9 | **7.8** |
+
+On this CPU build Q4_K_M generates 2.5× slower than Q8_0. Served merged Q8_0 through the race:
+questions ~6 s, commands ~11 s, median 6.7 s over 84 seen sentences (was 20.0 s). Speed only — no
+accuracy is claimed from that run (seen sets). Commands are slow because the reading JSON spells
+every null field (~80 tokens); a compact reading would cut that further (not done: a format change).
+
+## 2026-11-01 — runB7d (0.8B) and runB7-2Bb (2B): grammar 4, decisive test fresh5 (written before any data)
+
+**Decisive test, written first:** `training/assistant/fresh5.jsonl` (34: 14 questions, 16 commands, 4 not
+ours; sha256 begins `36a6ed0bca4c1905`), by hand, aimed at what B7c and B7-2B got wrong on seen sets
+(short/inverted questions, "next to" with other verbs, terse adds, a stated count beside a story, the
+program and the outside world). fresh4 is now seen.
+**Data:** `training/synth_f8.mjs --grammar 4 --seed 76 --n 3600 --prompt short`. Grammar 4 = grammar 3
+plus short/inverted questions, more "next to" verbs, terse adds, a stated count beside a story (the
+stated number wins), more small talk. Grammars 1–3 byte-identical (grammar 3 seed 74 regenerated:
+sha `f86107df0ba4c1b0`, same). Grammar 4 refuses every sentence that shares a four-word run with any
+test sentence (names folded to one token), and fresh4/fresh5 texts and their new names.
+**runB7d:** Qwen3.5-0.8B, `--init runB7c`, the B7c replay (`--replay-tasks ID,NEG,COUNT,CHAIRS,MERGED,
+SERVES,BRIEF --replay-max 400` over d6, c6, V5 train), fp32, one epoch, curriculum.
+**runB7-2Bb:** Qwen3.5-2B, `--init runB7-2B`, data grammar 4 + 400 briefs, bf16, one epoch; served as the
+adapter MERGED into Q8_0 (the speed table above).
+**Bars unchanged** (hybrid, θ 0.91, rules `current`, short prompt): right ≥ 0.90 on fresh5, fresh4,
+fresh3, fresh2 and paraphrases; 0 wrong changes on every set; briefs ≥ 0.90 / ≤ 0.05; median seconds
+reported. Also reported, not a bar: model-first order and the ask-when-unsure outcome (wrong changes
+that would be carried out).

@@ -23,7 +23,8 @@ const R = globalThis.MeritAssistantReading;
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : d; };
 // `--grammar 2` (runB7b): more phrasings per intent and step, two-job sentences sharing a verb
 // or a pronoun, more small talk; grammar 1 (runB7) is unchanged and reproducible
-const G3 = arg("grammar", "1") === "3";   // runB7c: grammar 2 + negation that narrows a command, partner adds, out-of-scope questions
+const G4 = arg("grammar", "1") === "4";   // runB7d: grammar 3 + short/inverted questions, more "next to" verbs, terse adds, a stated count beside a story, more small talk
+const G3 = arg("grammar", "1") === "3" || G4;   // runB7c: grammar 2 + negation that narrows a command, partner adds, out-of-scope questions
 const G2 = arg("grammar", "1") === "2" || G3;
 const NUMW = ["", "bir", "iki", "üç", "dört", "beş", "altı", "yedi"];
 
@@ -48,6 +49,7 @@ const TABLE_PFX = ["T", "T", "T", "VIP", "B"];
 const PHONES = () => `05${pick(["32", "33", "35", "36", "41", "42", "52", "53", "55"])} ${100 + Math.floor(rnd() * 900)} ${10 + Math.floor(rnd() * 90)} ${10 + Math.floor(rnd() * 90)}`;
 const SMALL2 = ["Bilet fiyatları ne kadar", "Hafta sonu hava nasıl olacak", "Salon kirası kaç para", "Döviz kuru kaç oldu", "Bana bir espri yap", "Kaçta kapanıyoruz", "Yemek menüsünü sen seç", "Sahne ışıkları nasıl olmalı", "Bana tavsiye ver", "Bugün çok işim var", "Ses sistemi kimden", "Bu ay ne kadar kazandık", "Otopark ücretli mi", "Garsonlar kaçta gelecek", "Çiçekçinin numarası ne"];
 const SMALL3 = ["Bu programı kim yazdı", "Bilet fiyatı neydi", "Konser kaç saat sürdü", "Sanatçının ücreti ne kadardı", "Garson sayısı yeterli mi", "Otelin adresi ne", "Kaç şişe su lazım", "Davetiyeler basıldı mı", "Fotoğrafçı geliyor mu", "Bu yazılım ne kadar", "Hangi şarkıları çalacaklar", "Vale kaç kişi"];
+const SMALL4 = ["Euro ne kadar", "Bu uygulamayı kim geliştirdi", "Yarın kar yağacak mı", "Bir bilmece sor", "Maç kaç kaç bitti", "Bugün günlerden ne", "Altın fiyatı ne", "Benimle sohbet et", "Ne yemek yesem", "Trafik nasıl", "Bu yazılımın sürümü ne", "Kimsin sen"];
 const SMALL = ["Merhaba", "Selam, nasılsın?", "Günaydın", "İyi akşamlar", "Teşekkürler", "Sağ ol", "Kolay gelsin", "Bugün hava çok güzel", "Canım sıkkın", "Bana bir şarkı söyle", "Saat kaç?",
   "Dolar ne kadar oldu?", "Akşam ne yesem?", "Bir şiir yaz", "Hafta sonu ne yapalım", "Maç kaç kaç bitti?", "Kahve mi çay mı?", "Beni duyuyor musun?", "Adın ne?", "Nasıl çalışıyorsun?",
   "İstanbul'da trafik nasıl?", "Bana moral ver", "Çok iyisin", "Şaka yaptım", "Tamam", "Neyse boşver", "Bilgisayarı kapat", "Ekranı büyüt", "Programı güncelle", "Müzik aç",
@@ -107,8 +109,17 @@ const Cr = (steps) => ({ kind: "command", intent: null, person: null, phone: nul
 const Ur = () => ({ kind: "unknown", intent: null, person: null, phone: null, event: null, many: false, table: null, steps: [] });
 
 // ---- questions -------------------------------------------------------------------
+function question4(p, e) {
+  const r = rnd();
+  if (r < 0.3) return [pick([`${evCase(e, "loc")} ${p} neredeydi`, `${p} nerdeydi ${evCase(e, "loc")}`, `${sfx(p, "gen")} yeri ${evCase(e, "loc")}`, `${evCase(e, "loc")} ${sfx(p, "gen")} masası`, `${p} ${evCase(e, "loc")} hangi masa`]), Qr("seatAt", { person: p, event: evRead(e) })];
+  if (r < 0.45) return [pick([`${evCase(e, "loc")} gelmeyenler`, `gelmeyenler ${evCase(e, "loc")}`, `${evCase(e, "dat")} kim gelmedi`, `${evCase(e, "loc")} kimler yoktu söyle`]), Qr("noShow", { event: evRead(e) })];
+  if (r < 0.6) return [pick([`${evCase(e, "loc")} masasızlar`, `masası olmayanlar ${evCase(e, "loc")}`, `${evCase(e, "loc")} oturmayan var mı`]), Qr("unassigned", { event: evRead(e) })];
+  if (r < 0.75) return [pick([`${p} kaç kere`, `${p} kaç konser`, `${p} kaç etkinlik geldi`]), Qr("attended", { person: p })];
+  return [pick([`${evCase(e, "loc")} kaç kişi`, `kaç kişi geldi ${evCase(e, "dat")}`, `${evCase(e, "dat")} gelen sayısı`]), Qr("eventCount", { event: evRead(e) })];
+}
 function question() {
   const p = person(), e = eventRef(), pick1 = rnd();
+  if (G4 && pick1 < 0.15) return question4(p, e);
   if (pick1 < 0.3) {   // seatAt
     const ph = chance(0.12) ? PHONES() : null, who = ph ? `${ph} ${pick(["numaralı", "telefonlu"])} ${p}` : p;
     if (e.venue && chance(0.6)) return [pick([`${who} ${sfx(e.base, "loc").replace(/'?(da|de|ta|te)$/, (m) => m)}ki konserlerde nerelerde oturdu`, `${sfx(p, "gen")} ${e.base} konserlerindeki masaları hangileriydi`]), Qr("seatAt", { person: p, phone: null, event: evRead(e), many: true })];
@@ -139,7 +150,16 @@ function step3() {
   if (r < 0.82) return [pick([`${name} ile ${who} ekle`, `${name} ve ${who} listeye ekle`]), St("addGuest", { name, pax: 2 })];
   return [pick([`${name} ile ${who} ${tsfx(t, "dat")} yerleştir`, `${name} ile ${who} ekle, ${tsfx(t, "dat")} otursunlar`]), [St("addGuest", { name, pax: 2 }), St("assign", { guest: name, table: t })]];
 }
+// grammar 4: more verbs for "next to", terse adds, a stated count beside a story (the stated number wins)
+function step4() {
+  const g = person(), r = rnd();
+  if (r < 0.4) { const o = person(); if (o === g) return step4(); return [pick([`${sfx(g, "acc")} ${sfx(o, "gen")} yanına geçir`, `${g} ${sfx(o, "gen")} yanına gelsin`, `${sfx(o, "gen")} yanına ${sfx(g, "acc")} getir`, `${sfx(o, "gen")} yanına ${sfx(g, "acc")} yerleştir`, `${g} ile ${o} yan yana olsun`]), St("nextTo", { guest: g, other: o.toLocaleLowerCase("tr") })]; }
+  if (r < 0.65) { const name = person(true); return [pick([`${name} eklensin`, `yeni isim ${name}`, `${name} de davetli`, `${name} gelecek, kaydet`]), St("addGuest", { name, pax: 1 })]; }
+  const n = 1 + Math.floor(rnd() * 5), story = pick([`${sfx(g, "gen")} grubuna biri katıldı`, `${g} bir kişi daha getirecek`, `${sfx(g, "gen")} grubundan biri ayrıldı`, `${g} eksik gelecek`, `${sfx(g, "gen")} eşi de geliyor`]);
+  return [`${story}, ${pick([`kişi sayısını ${n + 1} yap`, `${n + 1} kişi olsun`, `sayıyı ${NUMW[n + 1]} yap`])}`, St("setPax", { guest: g, pax: n + 1 })];
+}
 function step() {
+  if (G4 && chance(0.15)) return step4();
   if (G3 && chance(0.12)) return step3();
   const g = person(), t = table(), r = rnd();
   if (r < 0.2) return [pick([`${sfx(g, "acc")} ${tsfx(t, "dat")} oturt`, `${sfx(g, "acc")} ${tsfx(t, "dat")} yerleştir`, `${sfx(g, "acc")} ${tsfx(t, "dat")} al`, `${sfx(g, "acc")} ${tsfx(t, "dat")} koy`, `${sfx(g, "acc")} ${tsfx(t, "dat")} geçir`,
@@ -206,10 +226,17 @@ const readLines = (f) => fs.readFileSync(path.join(repo, "training/assistant", f
 const fx = JSON.parse(fs.readFileSync(path.join(repo, "training/assistant/fixture.json"), "utf8"));
 const norm = (s) => R && globalThis.MeritAssistantTools.fold(String(s)).replace(/[^a-z0-9]+/g, " ").trim();
 const testTexts = new Set([...readLines("questions.jsonl").map((q) => q.q), ...readLines("commands.jsonl").map((c) => c.text), ...readLines("variants.jsonl").map((v) => v.text),
-  ...readLines("deep.jsonl").map((d) => d.text), ...readLines("fresh.jsonl").map((d) => d.text), ...["fresh2.jsonl", "fresh3.jsonl"].filter((f) => fs.existsSync(path.join(repo, "training/assistant", f))).flatMap((f) => readLines(f).map((d) => d.text)), ...R.EXAMPLES.map((e) => e[0])].map(norm));
+  ...readLines("deep.jsonl").map((d) => d.text), ...readLines("fresh.jsonl").map((d) => d.text), ...["fresh2.jsonl", "fresh3.jsonl", ...(G4 ? ["fresh4.jsonl", "fresh5.jsonl"] : [])].filter((f) => fs.existsSync(path.join(repo, "training/assistant", f))).flatMap((f) => readLines(f).map((d) => d.text)), ...R.EXAMPLES.map((e) => e[0])].map(norm));
 const banned = new Set();
 for (const e of fx.events) { for (const g of e.guests) g.name.split(/\s+/).forEach((w) => banned.add(norm(w))); e.name.split(/\s+/).filter((w) => w.length > 3 && !/konser|gala/i.test(w)).forEach((w) => banned.add(norm(w))); e.venue.split(/\s+/).forEach((w) => banned.add(norm(w))); }
 ["burak", "sahin", "selin", "ak", "deniz", "yurt", "okan", "er", "elif", "sen", "can", "ozturk", "zeynep", "arslan", "mehmet", "kaya", "ahmet", "yilmaz", "ayse", "demir", "tarkan", "sezen", "aksu", "mabel", "matiz", "harbiye", "zorlu", "yilbasi"].forEach((w) => banned.add(w));
+if (G4) ["burcu", "tan", "riza", "oktay"].forEach((w) => banned.add(w));
+// grammar 4 only: no sentence may share a four-word run (names folded to one token) with any
+// test sentence — the tests stay tests of understanding, not of a copied frame
+const NAMEW = new Set([...banned, ...FIRST.map(norm), ...LAST.map(norm)]);
+const frame = (t) => norm(t).split(" ").map((w) => (NAMEW.has(w) ? "N" : w));
+const grams = (ws) => ws.slice(0, -3).map((_, i) => ws.slice(i, i + 4).join(" "));
+const testGrams = G4 ? new Set([...testTexts].flatMap((t) => grams(t.split(" ").map((w) => (NAMEW.has(w) ? "N" : w))))) : new Set();
 for (const pool of [FIRST, LAST, ARTISTS, VENUES]) for (const x of pool) for (const w of norm(x).split(" ")) if (banned.has(w)) throw new Error(`pool word "${x}" is a test word`);
 
 // ---- write ------------------------------------------------------------------------
@@ -222,10 +249,10 @@ let n = 0, skipped = 0;
 const f = fs.openSync(path.join(out, "items.jsonl"), "w");
 while (n < N) {
   const r = rnd();
-  let [text, reading] = r < 0.42 ? question() : r < (G2 ? 0.89 : 0.93) ? command() : [G3 && chance(0.4) ? pick(SMALL3) : G2 && chance(0.5) ? pick(SMALL2) : pick(SMALL), Ur()];
+  let [text, reading] = r < 0.42 ? question() : r < (G2 ? 0.89 : 0.93) ? command() : [G4 && chance(0.3) ? pick(SMALL4) : G3 && chance(0.4) ? pick(SMALL3) : G2 && chance(0.5) ? pick(SMALL2) : pick(SMALL), Ur()];
   [text, reading] = finish(text, reading, reading.kind === "question");
   const key = norm(text);
-  if (testTexts.has(key) || seen.has(key) || key.split(" ").some((w) => banned.has(w)) || !R.valid(reading)) { skipped++; continue; }
+  if (testTexts.has(key) || seen.has(key) || (G4 && grams(frame(text)).some((g) => testGrams.has(g))) || key.split(" ").some((w) => banned.has(w)) || !R.valid(reading)) { skipped++; continue; }
   seen.add(key);
   const sub = reading.kind === "question" ? reading.intent : reading.kind === "command" ? reading.steps.map((s) => s.op).join("+") : "unknown";
   counts[reading.kind] = (counts[reading.kind] || 0) + 1;
