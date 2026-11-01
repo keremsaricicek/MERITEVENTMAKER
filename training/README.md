@@ -1758,3 +1758,14 @@ texts and names excluded.
 **Bars unchanged** (hybrid θ 0.91, short prompt): right ≥ 0.90 on fresh6, typo6, fresh5, typo5, fresh4, fresh3,
 fresh2, paraphrases; 0 wrong changes on every set; briefs ≥ 0.90 / ≤ 0.05. Reported too: model-first, and the
 wrong changes the product would carry out under ask-when-unsure.
+
+**Verdict (2026-11-01 22:10 UTC): NOT PASSED. B7c stays shipped.** Adapter sha256 begins `1b37ca8aa79a5c08`
+(not committed). Hybrid θ 0.91 right / wrong changes: fresh6 0.773/0, typo6 0.727/0, fresh5 0.912/0, typo5
+0.676/2, fresh4 0.906/0, fresh3 0.789/2, fresh2 0.925/0, fresh 0.900/1, variant 0.914/0, deep 0.867/1, original
+1.000/0. Model-first: fresh6 0.864/1, typo6 0.864/0, typo5 0.706/2, fresh 0.975/1. Briefs 0.97 fields, 0.925 all
+right, 0.009 invented (passes). Against B7d it is worse on typo5 (0.794 → 0.676) and fresh3 (0.868 → 0.789), equal
+on fresh5. Model-first wrong changes are terse adds read with a broken name ("bir misafir daha burcu tan", "listeye
+rıza oktayı da yaz", "Oya Ergin'i listeye yaz, T03'e oturt", "Deniz Yurt ve eşini T06'ya ekle"), all at conf ≤ 0.68,
+so ask-when-unsure asks instead of acting on three of them; the hybrid's wrong changes on deep/fresh3 are the rules'
+reading taken when the model was below θ. Grammar 5 did not generalise; more of the same grammar is not the next step.
+Files: `benchmarks/offline-intelligence/assistant-race/b7e-f8/`, `b7e-briefs.json`.
