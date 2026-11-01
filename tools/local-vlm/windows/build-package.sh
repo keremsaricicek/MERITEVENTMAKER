@@ -62,10 +62,12 @@ MF0=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['serve']['m
 MP0=$(python3 -c "import json,sys;f=[x['path'] for x in json.load(open(sys.argv[1]))['files'] if 'mmproj' in x['path']];print(f[0])" "$MAN")
 node "$ROOT/server/gpu-check.mjs" "$LL" "$V/$MF0" "$V/$MP0" "$V/adapter.gguf" "$V/gpu-check" --record
 # the assistant's language model (optional): pinned files checked, manifest beside them
-CID="" CF=""
+CID="" CF="" CLA=""
 if [ -n "$CD" ]; then
   CID=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['id'])" "$CMAN")
   CF=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['serve']['model'])" "$CMAN")
+  # the adapter the reader was measured with (none → the base model alone)
+  CLA=$(python3 -c "import json,sys;l=json.load(open(sys.argv[1]))['serve'].get('lora') or [];print('--lora \"%CHAT%\\\\'+l[0]['path']+'\"' if l else '')" "$CMAN")
   mkdir -p "$P/models/local-chat/$CID"
   python3 - "$CMAN" "$CD" "$P/models/local-chat/$CID" <<'EOF2'
 import hashlib, json, os, shutil, sys
@@ -84,6 +86,6 @@ EOF2
 fi
 MF=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['serve']['model'])" "$MAN")
 MP=$(python3 -c "import json,sys;f=[x['path'] for x in json.load(open(sys.argv[1]))['files'] if 'mmproj' in x['path']];print(f[0])" "$MAN")
-sed -e "s/@MODEL_ID@/$ID/" -e "s/@MODEL_FILE@/$MF/" -e "s/@MMPROJ_FILE@/$MP/" -e "s/@CHAT_ID@/${CID:-none}/" -e "s/@CHAT_FILE@/${CF:-none}/" "$ROOT/tools/local-vlm/windows/MERIT-Baslat.cmd" | sed 's/$/\r/' > "$P/MERIT-Baslat.cmd"
+sed -e "s/@MODEL_ID@/$ID/" -e "s/@MODEL_FILE@/$MF/" -e "s/@MMPROJ_FILE@/$MP/" -e "s/@CHAT_ID@/${CID:-none}/" -e "s/@CHAT_FILE@/${CF:-none}/" -e "s|@CHAT_LORA_ARG@|${CLA//\\/\\\\}|" "$ROOT/tools/local-vlm/windows/MERIT-Baslat.cmd" | sed 's/$/\r/' > "$P/MERIT-Baslat.cmd"
 sed 's/$/\r/' "$ROOT/tools/local-vlm/windows/BENIOKU.txt" > "$P/BENIOKU.txt"
 du -sh "$P"
