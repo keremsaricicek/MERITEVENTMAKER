@@ -1811,3 +1811,9 @@ best measured (owner, 2026-11-02: "en iyisini … tak") — better than B7c on b
 recorded as such, not as a pass. Seconds are contaminated by test suites run at the same time (01:20–01:50 UTC);
 they are not decisive. fresh7/typo7 are now SEEN. Files: `benchmarks/offline-intelligence/assistant-race/g7/`.
 Manifest `tools/local-chat/manifests/qwen3.5-0.8b-merit-chat-b7e.json` (B7c's kept for one-step rollback).
+
+## 2026-11-02 — fresh8 / typo8 (written after fresh7/typo7 were seen, before any change made from them)
+
+`training/assistant/fresh8.jsonl` (23: 8 questions, 13 commands, 2 not ours; sha256 begins `b6889d0f5378b3fc`) and
+`typo8.jsonl` (the same typed carelessly, `7309a9552a4e3593`). Any grounding change made from the typo7 errors is
+measured here once, product rule, against the owner's rule (≥ 0.85 on both, 0 wrong changes).
