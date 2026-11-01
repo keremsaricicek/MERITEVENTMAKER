@@ -92,3 +92,37 @@ an unseen venue.
 | chairs on tables / loose | 49 / 20 | 57 / 12 |
 | still missed | T05, T06, T23, T24 | T05, T06, T23 |
 | analysis time | 17 s | 20 s (busy shared CPU) |
+
+## Golden 2 work round 2 (2026-11-01, branch `claude/par-plan`) — SEEN plan
+
+Development measurement: `golden2-score.mjs` over the benchmark runner's dump (source app, OCR
+from the pinned cache, trained detector v2 as shipped), annotation `golden2-bench/` (table
+centres placed by a model, counts owner-confirmed; not in `benchmarks/annotations`, not in the
+baseline). Before any change it reproduces the re-read above: tables 24/27, phantom 0, chairs
+seated 51/68, loose 12.
+
+**Correction to the diagnosis above (measured with `MERIT_DETECT_DEBUG`):** the group-C chairs
+DO become chair components. The accent-colour mask holds them as whole armchairs (42x45 and 44x47
+detection px). On this scan most armchairs break into pieces (the modal colour component is
+29 px, 32 of 62), so the whole armchairs (17, side 45) are left to a secondary family, `23:0`, and
+that family is refused by the size ceiling: side 45 > 0.75 x surface side 59 (the tables are
+57x62). Two of them (T05's, T06's) are also not "seated" (a seat surface must hold 3x the seat's
+area; these tables hold 1.8x). Seven real armchairs are lost this way: T04, T05, T06, T17, T22 and
+two of T23. The ceiling and the 3x rule are not moved (owner: no threshold is loosened).
+
+**Pre-registered before measuring any other plan (2026-11-01 ~09:30 Istanbul):** attaching the
+trained detector's chairs (fusion `addChair`, off since v1: 4 right / 3 wrong on Golden) is
+measured again for v2 at 0.5 — the score bar fusion already uses for tables and seating, not a
+value searched for. Seen first on Golden 2 only (26/27 tables, 60/68 seated, 9 chairs attached).
+It ships only if ALL hold: `benchmark:baseline` no regression on any guarded field of any plan;
+Golden (merit-real-venue) chairs FP stays 0 and relations wrong do not rise; ORNEK identical;
+adversarial `--compare` 0 blocking and no fixture gains a chair; robustness gate no regression.
+Any failure: not shipped, reported as measured.
+
+**Result — NOT shipped (bar failed).** v2 chairs attached at 0.5 (pin-carried setting, code
+reverted): Golden 2 (SEEN) tables 24 → 26/27 (T05/T06 now keep a seat and survive text
+suppression), seated chairs 51 → 60/68, loose 12 → 12. But on Golden (merit-real-venue) chairs FP
+0 → 2 (precision 1 → 0.982; recall 0.956 → 0.991, relations correct 103 → 107) and
+adversarial-bistro review groups 0 → 1: `benchmark:baseline` reports 3 regressions, and the bar
+said Golden chair FP stays 0. Adversarial/fingerprint not completed (stopped after the failure).
+The 0.5 bar is not raised to make it pass (that would be choosing it after the result).
