@@ -114,3 +114,14 @@ Owner answers (2026-11-01 ~18:40 Istanbul): (1) work PCs differ → must run on 
 - Decisive: fresh7/typo7 (pre-registered, sha 29c13061/6f9a80f6). Running $S/run7.sh → $S/race/g7/{b7e,b7d,b7c}.json.
   Ship rule (owner): product right ≥ 0.85 on fresh7 AND typo7, 0 wrong changes → ship best (manifest + adapter).
 - Then: offline builds + verify (src changed), 2B result ~06:30 UTC (watchdog trig_019hZJqpjmhUdH9NVMpQMqAB).
+
+## ROADMAP (updated 2026-11-02 ~01:00 UTC; owner: hızlı, az token, 85 üstü takılır, hedef 95; full TR + full EN)
+1. F8 Turkish: fresh7/typo7 race running (B7e,B7d,B7c, product rule) → ship best if ≥0.85 both, 0 wrong.
+2. F8 English: en7/entypo7 race queued after it ($S/runEn.sh → $S/race/gen). If <0.85: pre-register an EN+TR
+   training run (grammar 5 + English grammar), 0.8B, ~3–4 h.
+3. 2B (cloud, ~06:30 UTC) → measure on fresh7/typo7/en7 with product rule; ship if better and fast enough (merged Q8_0).
+4. F8 replies through t() (English UI answers in English) — code now, tests after races.
+5. After races (CPU free): offline builds + verify; full npm test; plan reading T05/T06 + touching/phantom chairs.
+6. Windows: tools/local-vlm/windows/PRE-TRIAL-CHECKLIST.md (15 lines) → package → final exam → "al dene".
+7. Later, only on "EXE YAP": EXE + SQLite + auto-update (public release repo); then LAN sharing.
+Ideas queued (light): one-click diagnostic report (no guest data); automatic backup-restore drill.
