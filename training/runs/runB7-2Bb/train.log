@@ -2,3 +2,5 @@ start 2026-11-01T19:38:51Z items=4000 epochs=1.0 rank=16 lr=0.0002 accum=8 train
 step 10/500 items 80 loss 0.0185 lr 1.08e-04 11.19s/item elapsed 14.9min peakRSS 13574MB
 step 20/500 items 160 loss 0.0159 lr 1.92e-04 10.57s/item elapsed 28.2min peakRSS 13574MB
 step 30/500 items 240 loss 0.0135 lr 1.88e-04 10.50s/item elapsed 42.0min peakRSS 13574MB
+step 40/500 items 320 loss 0.0150 lr 1.84e-04 10.09s/item elapsed 53.8min peakRSS 13574MB
+step 50/500 items 400 loss 0.0128 lr 1.80e-04 9.90s/item elapsed 66.0min peakRSS 13574MB
