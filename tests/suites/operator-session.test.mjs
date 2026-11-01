@@ -241,10 +241,10 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "the only off-origin host is the vendor CDN this build loads its libraries from (the offline build removes even that)",
     unexpectedHosts);
 
-  const source = fs.readFileSync(path.join(repoRoot, "src/app-v8.js"), "utf8");
-  const block = source.slice(source.indexOf("---- operator sessions"),
-    source.indexOf("---- the visual second opinion"));
-  checks.ok(block.length > 500, "the operator-session block was located in source", block.length);
+  const source = fs.readFileSync(path.join(repoRoot, "src/review-session-log.js"), "utf8");
+  // The whole module is the session log (moved out of app-v8.js 2026-11-01).
+  const block = source;
+  checks.ok(block.includes("---- operator sessions") && block.length > 500, "the operator-session code was located in source", block.length);
   for (const forbidden of ["fetch(", "XMLHttpRequest", "sendBeacon", "WebSocket", "EventSource"])
     checks.ok(!block.includes(forbidden),
       `the operator-session code contains no ${forbidden} — not disabled, absent`, forbidden);
