@@ -122,7 +122,7 @@
   }
   function fmtWhen(iso) {
     const lang = globalThis.MERIT_I18N_LANG;
-    try { return new Date(iso).toLocaleString(lang && lang() === "tr" ? "tr-TR" : "en-GB", { dateStyle: "medium", timeStyle: "short" }); }
+    try { return new Date(iso).toLocaleString(lang && lang() === "tr" ? "tr-TR" : "en-GB", { dateStyle: "medium", timeStyle: "medium" }); }
     catch { return iso; }
   }
   const fmtSize = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
