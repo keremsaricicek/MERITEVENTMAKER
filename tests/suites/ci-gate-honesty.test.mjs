@@ -165,7 +165,9 @@ export default async function run({ checks, repoRoot }) {
   const jobs = ci.split(/\n  (?=[a-z-]+:\n    name:)/).slice(1);
   const unvendored = jobs.filter((j) => j.includes("playwright install") && !/playwright install[^\n]*\n(?:\s+#[^\n]*\n)*\s+- run: npm run vendor:test/.test(j))
     .map((j) => j.split(":")[0]);
-  checks.ok(jobs.length === 5 && unvendored.length === 0, "every CI job that installs Chromium fetches the pinned OCR engine right after", { jobs: jobs.length, unvendored });
+  // Six jobs: the five gate jobs and release-report (which runs the secret
+  // scan, doc-drift and the fingerprint, so it installs Chromium too).
+  checks.ok(jobs.length === 6 && unvendored.length === 0, "every CI job that installs Chromium fetches the pinned OCR engine right after", { jobs: jobs.length, unvendored });
 
   // --- 6. npm run perf: an assertion is never run as a profiler -------------
   const perf = fs.readFileSync(path.join(repoRoot, "benchmarks/perf/run-perf.mjs"), "utf8");
