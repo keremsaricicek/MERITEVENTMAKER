@@ -95,5 +95,9 @@ for (const r of results) for (const t of r.tasks) for (const s of t.steps) for (
 md += `## Text below 12px (outside the plan drawing), by rule\n\n| Rule (src/styles.css) | Smallest px | Example | Passes |\n|---|---|---|---|\n`;
 for (const e of [...small.values()].sort((a, b) => a.px - b.px)) md += `| \`${e.rule}\` | ${e.px} | ${e.text.replace(/\|/g, "/")} | ${e.combos.size} |\n`;
 
+// The ranked defect list is written by a person (it carries the fixes and
+// their status); it is appended, not generated.
+const defects = path.join(HERE, "DEFECTS.md");
+if (fs.existsSync(defects)) md += "\n" + fs.readFileSync(defects, "utf8");
 fs.writeFileSync(path.join(HERE, "TASKS.md"), md);
 console.log("wrote", path.join(HERE, "TASKS.md"));
