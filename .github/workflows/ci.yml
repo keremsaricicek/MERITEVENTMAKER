@@ -57,12 +57,30 @@ jobs:
       # without OCR — which is what this container did for the whole programme
       # while CI, reaching the CDN, measured it with OCR (§27).
       - run: npm run vendor:test
+        id: vendor-test
       # Populates .vendor-cache/ with the pinned SheetJS and PDF.js tarballs,
       # which the test run then serves locally instead of reaching a CDN.
       - name: Build the offline artifact
         run: npm run build:offline
+        id: build-offline
       - name: Regression suite
         run: npm test
+        id: test
+      # Every job ends by recording its steps' outcomes for the release-report
+      # job (if: always(), so a failed job is recorded too). Recording decides
+      # nothing; the verdict is scripts/release-report.mjs's.
+      - name: Record gate outcomes for the release report
+        if: always()
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        run: node scripts/release-report.mjs record --job ${{ github.job }}
+      - name: Upload gate outcomes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.job }}
+          path: release/results/
+          if-no-files-found: error
 
   detection:
     name: Detection — Golden, ORNEK and the adversarial fixtures
@@ -85,7 +103,9 @@ jobs:
       # without OCR — which is what this container did for the whole programme
       # while CI, reaching the CDN, measured it with OCR (§27).
       - run: npm run vendor:test
+        id: vendor-test
       - run: npm run build:offline
+        id: build-offline
 
       # One run, every plan. Splitting Golden and ORNEK into separate jobs would
       # run detection twice to produce evidence the baseline step already gives
@@ -94,9 +114,11 @@ jobs:
       # F1 down — is invisible to a single score and is a revert, not a win.
       - name: Detection benchmark
         run: npm run benchmark
+        id: benchmark
 
       - name: Detector baseline, per plan and per field
         run: npm run benchmark:baseline
+        id: benchmark-baseline
 
       - name: Upload benchmark report
         if: always()
@@ -105,6 +127,21 @@ jobs:
           name: benchmark-report
           path: benchmarks/reports/latest.json
           if-no-files-found: warn
+      # Every job ends by recording its steps' outcomes for the release-report
+      # job (if: always(), so a failed job is recorded too). Recording decides
+      # nothing; the verdict is scripts/release-report.mjs's.
+      - name: Record gate outcomes for the release report
+        if: always()
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        run: node scripts/release-report.mjs record --job ${{ github.job }}
+      - name: Upload gate outcomes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.job }}
+          path: release/results/
+          if-no-files-found: error
 
   offline:
     name: Offline — build both artifacts, then RUN them
@@ -127,6 +164,7 @@ jobs:
       # without OCR — which is what this container did for the whole programme
       # while CI, reaching the CDN, measured it with OCR (§27).
       - run: npm run vendor:test
+        id: vendor-test
 
       # The vendored OCR engine and its language data are fetched once and
       # cached: ~30MB that changes only when the build script pins a new
@@ -139,8 +177,10 @@ jobs:
 
       - name: Build the single-file artifact
         run: npm run build:offline
+        id: build-offline
       - name: Build the folder artifact, with OCR
         run: npm run build:offline-full
+        id: build-offline-full
 
       # THE CHECK THIS JOB EXISTS FOR, and it was missing from CI entirely.
       #
@@ -156,6 +196,22 @@ jobs:
       # that would have caught that.
       - name: Verify the built artifacts by running them
         run: npm run verify:offline
+        id: verify-offline
+      # Every job ends by recording its steps' outcomes for the release-report
+      # job (if: always(), so a failed job is recorded too). Recording decides
+      # nothing; the verdict is scripts/release-report.mjs's.
+      - name: Record gate outcomes for the release report
+        if: always()
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        run: node scripts/release-report.mjs record --job ${{ github.job }}
+      - name: Upload gate outcomes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.job }}
+          path: release/results/
+          if-no-files-found: error
 
   intelligence:
     name: Intelligence — do the reasoning layers still reason?
@@ -178,7 +234,9 @@ jobs:
       # without OCR — which is what this container did for the whole programme
       # while CI, reaching the CDN, measured it with OCR (§27).
       - run: npm run vendor:test
+        id: vendor-test
       - run: npm run build:offline
+        id: build-offline
 
       # THE SLOW CONTRACT SUITES, and their absence was a real hole.
       #
@@ -193,6 +251,7 @@ jobs:
       # being checkable", and it gates.
       - name: Slow contract suites
         run: npm run test:slow
+        id: test-slow
 
       # Each of these fails the job on a real regression against its own
       # committed expectations. None of them trains anything. The class of
@@ -201,12 +260,16 @@ jobs:
       # (ci-gate-honesty) fails when a step here has no row there.
       - name: Review ordering
         run: npm run benchmark:review-order
+        id: benchmark-review-order
       - name: Plan facts
         run: npm run benchmark:facts
+        id: benchmark-facts
       - name: Contradictions
         run: npm run benchmark:contradictions
+        id: benchmark-contradictions
       - name: Semantic zones
         run: npm run benchmark:zones
+        id: benchmark-zones
       # --compare is the gate. Without it this step measured and printed, and
       # could fail on nothing short of a crash while two fixtures were FAIL. It
       # now blocks on a regression against the frozen baseline, on any FAIL
@@ -215,10 +278,13 @@ jobs:
       # FAIL that stopped failing, and on a refused or erroring fixture.
       - name: Adversarial fixtures
         run: npm run benchmark:adversarial -- --compare
+        id: benchmark-adversarial
       - name: False positives
         run: npm run benchmark:false-positives
+        id: benchmark-false-positives
       - name: Teaching propagation
         run: npm run benchmark:teaching
+        id: benchmark-teaching
 
       # A REGRESSION GATE, and deliberately not the §23 gate. The §23
       # thresholds are not met on transformed renderings of the plan, and no
@@ -230,6 +296,7 @@ jobs:
       # on every run, so the green is never read as those being met.
       - name: Visual Plan Memory (regression gate; §23 thresholds reported)
         run: npm run benchmark:memory -- --compare
+        id: benchmark-memory
       - name: Upload memory report
         if: always()
         uses: actions/upload-artifact@v4
@@ -237,6 +304,21 @@ jobs:
           name: memory-report
           path: benchmarks/memory/report.json
           if-no-files-found: warn
+      # Every job ends by recording its steps' outcomes for the release-report
+      # job (if: always(), so a failed job is recorded too). Recording decides
+      # nothing; the verdict is scripts/release-report.mjs's.
+      - name: Record gate outcomes for the release report
+        if: always()
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        run: node scripts/release-report.mjs record --job ${{ github.job }}
+      - name: Upload gate outcomes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.job }}
+          path: release/results/
+          if-no-files-found: error
 
   performance:
     name: Performance — DOM cost, and the one correctness suite
@@ -259,7 +341,9 @@ jobs:
       # without OCR — which is what this container did for the whole programme
       # while CI, reaching the CDN, measured it with OCR (§27).
       - run: npm run vendor:test
+        id: vendor-test
       - run: npm run build:offline
+        id: build-offline
 
       # Budgets, not promises: each timed operation on the 4,000-seat stress
       # event, plan analysis, the 300-render series, DOM growth and the save
@@ -272,3 +356,85 @@ jobs:
       # and a 50,000-row workbook / 40-page PDF go through the real controls.
       - name: Performance suites
         run: npm run perf
+        id: perf
+      # Every job ends by recording its steps' outcomes for the release-report
+      # job (if: always(), so a failed job is recorded too). Recording decides
+      # nothing; the verdict is scripts/release-report.mjs's.
+      - name: Record gate outcomes for the release report
+        if: always()
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        run: node scripts/release-report.mjs record --job ${{ github.job }}
+      - name: Upload gate outcomes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.job }}
+          path: release/results/
+          if-no-files-found: error
+
+  # ONE VERDICT. Runs after every other job, whatever they concluded (if:
+  # always()), collects each job's recorded step outcomes and the jobs' own
+  # results, runs the gates that belong to no other job (secret scan of the
+  # tree, doc-drift; the detector fingerprint is an INFO row, NOT RUN here —
+  # it re-detects 30 plans, over 25 min measured locally), and writes
+  # benchmarks/RELEASE-REPORT.md: every RELEASE GATE row PASS / FAIL / NOT RUN
+  # with its evidence, INFO and WARNING apart, every accepted known fail
+  # listed. It FAILS when any release gate is not PASS — a gate that did not
+  # run is not one that passed — so this job's green is the release claim.
+  # Proven by tests/suites/release-report.test.mjs (a deliberately failing
+  # gate in a fixture makes the script exit 1).
+  release-report:
+    name: Release report — every gate, one verdict
+    needs: [fast-core, detection, offline, intelligence, performance]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --no-audit --no-fund
+      - name: Cache Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      # The pinned OCR engine and language data, served locally to every test
+      # and benchmark. Without it the runners stop rather than measure the app
+      # without OCR — which is what this container did for the whole programme
+      # while CI, reaching the CDN, measured it with OCR (§27).
+      - run: npm run vendor:test
+        id: vendor-test
+      - name: Collect every job's gate outcomes
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: release/results
+      - name: Collect the memory report (evidence for the §23 known fails)
+        # A pattern, not a name: when the intelligence job never uploaded it, this
+        # finds nothing instead of failing, and the report falls back to the
+        # committed report.json — saying so in the known-fails table.
+        uses: actions/download-artifact@v4
+        with:
+          pattern: memory-report
+          merge-multiple: true
+          path: release/evidence/memory
+      - name: Release report
+        if: always()
+        id: release-report
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: npm run release:report -- --collect release/results --evidence release/evidence/memory
+      - name: Upload the release report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-report
+          path: |
+            benchmarks/RELEASE-REPORT.md
+            release/
+          if-no-files-found: error

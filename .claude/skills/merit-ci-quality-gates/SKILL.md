@@ -70,7 +70,11 @@ exit semantics, not its step name.
 | `npm run benchmark:zones` | RELEASE GATE | stability < 0.9, a zone without evidence, seats exceeding capacity |
 | `npm run benchmark:false-positives` | RELEASE GATE | the seat-containment gate holding back a real table it is not recorded as holding (per rendering, `KNOWN-FAILS.json`; a count below the record blocks too, until it is lowered), or any real table on the clean plan |
 | `npm run benchmark:teaching` | RELEASE GATE | propagation precision, retention or wrong application outside its gates on an unchanged plan |
-| `npm run perf` | RELEASE GATE for three runners, INFO for the rest | live-windowing correctness, 4,000-seat reload integrity, save-queue last-write-wins. Every timing is INFO — no budget exists, and none is invented |
+| `npm run perf` | RELEASE GATE for three runners and the budgets, INFO for the rest | live-windowing correctness, 4,000-seat reload integrity, save-queue last-write-wins; and, under `CI=true`, any timed operation over its budget in `benchmarks/perf/BUDGETS.json` (2 × the worst CI p95, 15 ms floor — `ci-gate-honesty` §7 holds the rule). Timings without a budget are INFO |
+| `npm run release:report` | RELEASE GATE | any RELEASE GATE row of `benchmarks/RELEASE-REPORT.md` not PASS — FAIL **or NOT RUN** (a gate that did not run is not one that passed) — a CI job that did not succeed, or a CI step with no row in this table. Runs in the `release-report` job after every other job, `if: always()` |
+| `node scripts/secret-scan.mjs` | RELEASE GATE | run by `release:report`: a credential-shaped string (Anthropic, OpenAI, GitHub, AWS, Slack, Google, Hugging Face, Stripe key; a private key; a tracked `.env`) in any file git tracks. Prints file, line and kind, never the value |
+| `node tests/run.mjs doc-drift` | RELEASE GATE | run by `release:report` (also inside `npm test`): a documented CURRENT figure that no longer matches the code |
+| `node benchmarks/detector-fingerprint.mjs --compare` | INFO | run by `release:report --fingerprint` (not in CI: re-detecting all 30 plans took over 25 min locally; the report lists it as NOT RUN): never blocks — a detector change is expected to change it. A RELEASE GATE only for a structural detector commit (every plan IDENTICAL), run by hand |
 | report uploads (`actions/upload-artifact`) | INFO | never |
 
 What a green run therefore proves: every RELEASE GATE row passed. It does
@@ -78,6 +82,25 @@ What a green run therefore proves: every RELEASE GATE row passed. It does
 seat-containment gate holds no real table on the five photometric renderings
 accepted in `benchmarks/false-positives/KNOWN-FAILS.json`, or that Visual Plan
 Memory meets its §23 thresholds — all are printed as not so on every run.
+
+## The release report
+
+`scripts/release-report.mjs` turns this table into one verdict and one file,
+`benchmarks/RELEASE-REPORT.md` (uploaded by the `release-report` job as the
+`release-report` artifact, and written to the run's summary page). It reads
+the classes from THIS table and the steps from `ci.yml` — nothing is copied —
+so the two cannot drift: every job records its steps' outcomes
+(`record --job`), the last job collects them with the jobs' own results
+(`toJSON(needs)`) and exits 1 when any RELEASE GATE row is not PASS. INFO and
+WARNING rows sit in their own section and never block; the known fails are
+read from the files that accept them (adversarial and false-positives
+`KNOWN-FAILS.json`, the §23 memory thresholds) and printed every run as
+accepted, never as passing. `release-report` (suite) proves the exit: a
+fixture with one failing gate, one gate not run, one job failed, one
+unclassified step — each exits 1; a failing INFO row and every known fail
+exit 0. Locally: `npm run release:report -- --run` runs every CI command in
+order (`--only id,id` for a subset; every other gate is then NOT RUN and
+blocks).
 
 ## The prohibitions
 

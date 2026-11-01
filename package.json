@@ -28,7 +28,9 @@
     "build:offline": "node scripts/build-offline.mjs",
     "build:offline-full": "node scripts/build-offline-full.mjs",
     "verify:offline": "node benchmarks/offline/verify-offline-package.mjs",
-    "vendor:test": "node scripts/fetch-test-vendor.mjs"
+    "vendor:test": "node scripts/fetch-test-vendor.mjs",
+    "secret-scan": "node scripts/secret-scan.mjs",
+    "release:report": "node scripts/release-report.mjs report"
   },
   "devDependencies": {
     "acorn": "8.15.0",
