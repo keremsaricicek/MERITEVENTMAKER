@@ -36,8 +36,8 @@
   "revision": null,
   "target_modules": [
     "down_proj",
-    "gate_proj",
-    "up_proj"
+    "up_proj",
+    "gate_proj"
   ],
   "target_parameters": null,
   "task_type": null,
