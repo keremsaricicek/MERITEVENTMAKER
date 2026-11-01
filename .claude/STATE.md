@@ -127,3 +127,8 @@ Owner answers (2026-11-01 ~18:40 Istanbul): (1) work PCs differ → must run on 
 Ideas queued (light): one-click diagnostic report (no guest data); automatic backup-restore drill.
 - **Owner rule (2026-11-02 ~02:30 UTC):** bars (85/90/95) are TARGETS; whatever passes or not, the best measured
   model is always the one used. No bloat. Speed + token economy. B7e shipped (630a099). fresh8/typo8 written (blind).
+- **2026-11-02 ~04:00 UTC.** B7e + grounding (2e0079e) on UNSEEN fresh8/typo8: 0.957 / 0.913, 0 wrong → owner's 0.85
+  and the 0.90 target met (Turkish). English (not trained): en7 0.85, entypo7 0.75. runB7f (TR+EN, grammar 6) training
+  via $S/scripts/chainM.sh (keep-alive ensureM.sh; race → $S/race/gm, decisive fresh8/typo8/en8/entypo8 vs B7e).
+  Diagnostic report + trial guide + checklist done. Offline builds verified 47/47 after all src changes.
+  NEXT: B7f verdict (~08:30 Istanbul) → ship better; 2B (~11:30) same sets; plan reading T05/T06; Windows checklist.
