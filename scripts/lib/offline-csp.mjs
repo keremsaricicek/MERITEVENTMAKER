@@ -22,7 +22,11 @@ export function offlineCspMeta({ scripts, styles, scriptSelf = false }) {
     // here, so it opens no path for content to become script.
     `script-src ${scriptSelf ? "'self' " : ""}${scripts.map(hash).join(" ")} blob: 'wasm-unsafe-eval'`,
     "worker-src blob:",
-    "connect-src data: blob:",
+    // 'self' in the folder build only: the portable package serves it through
+    // the local relay (server/vlm-relay.mjs), and the page's automatic disk
+    // backup and the relay's /vlm-relay calls are same-origin fetches. Opened
+    // from disk, 'self' is a file: origin that reaches nothing new.
+    `connect-src ${scriptSelf ? "'self' " : ""}data: blob:`,
     "img-src 'self' data: blob:",
     `style-src ${styles.map(hash).join(" ")}`,
     "style-src-attr 'unsafe-inline'",
