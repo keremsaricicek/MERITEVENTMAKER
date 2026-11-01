@@ -1627,3 +1627,10 @@ Bars unchanged. Order fixed now: model first when
 its confidence ≥ 0.91, else the rules' reading when they have one (the B7c rule, θ from B7c's seen sets);
 right ≥ 0.90 on fresh4, fresh3, fresh2, paraphrases; 0 wrong changes on all sets; briefs ≥ 0.90 / ≤ 0.05;
 median seconds reported (the 2B is about twice as slow).
+
+**Amendment (2026-11-01 01:45 UTC, before any result):** bf16 instead of fp32. The 2B's weights had been
+deleted for disk on 10-28; re-downloaded (`Qwen/Qwen3.5-2B` safetensors; serving GGUF
+`unsloth/Qwen3.5-2B-GGUF` Q4_K_M, sha256 `aaf42c8b…`). fp32 was OOM-killed at 10.3 GB (cgroup), and fp32 with
+`--grad-ckpt` had not reached step 10 after 19 min (> 14 s/item, > 15 h). This CPU has AMX-BF16 /
+AVX512-BF16, so `--dtype bf16` (weights and autocast in bf16): 5.4 s/item, peak 9.4 GB. Data, init,
+replay, order, θ and bars unchanged; the abandoned fp32 attempt trained nothing that is used.
