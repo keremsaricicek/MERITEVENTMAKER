@@ -423,7 +423,8 @@ export default async function run({ browser, checks, baseUrl, artifactDir, repoR
       const table = await page.evaluate(() => { const e = activeEvent(), g = e.guests.find((x) => x.name === "Ayşe Kaya"), t = e.tables.find((x) => x.id === g.assignment.tableId); return formatTableNumber(t.number); });
       task.notes.push("answer: " + answer.replace(/\s+/g, " ").slice(0, 160));
       await op.keys("Escape");
-      return answer.includes(table);
+      // the assistant names the table as the records hold it ("T12"); the plan shows "T 12" — the same table
+      return answer.replace(/\s+/g, "").includes(table.replace(/\s+/g, ""));
     });
 
     // ---- per-combo assertions ---------------------------------------------------
