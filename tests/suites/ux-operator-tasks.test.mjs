@@ -151,16 +151,21 @@ export default async function run({ browser, checks, baseUrl, artifactDir, repoR
           return { x: null, coveredBy };
         }, selector);
         if (!hit || hit.x === null) throw new Error(`${selector}: no visible point can be clicked (covered by ${hit && hit.coveredBy})`);
-        if (hit.coveredBy) task.notes.push(`centre of ${selector.split("=")[0]}] is covered by ${hit.coveredBy}`);
+        // A review pin over a table's middle turns "select this table" into
+        // "open a question" -- measured on every pass on 2026-11-01.
+        if (hit.coveredBy && /review-pin/.test(hit.coveredBy)) task.defects.push(`the centre of ${selector.split("=")[0]}] is covered by ${hit.coveredBy}`);
+        else if (hit.coveredBy) task.notes.push(`centre of ${selector.split("=")[0]}] is covered by ${hit.coveredBy}`);
         await page.mouse.click(hit.x, hit.y);
         task.clicks++;
       },
       // Does this control open the file dialog? Not counted as the operator's
       // work (the task does not need it); a defect when it does not.
       async probeChooser(selector) {
+        const t0 = Date.now();
         const opened = page.waitForEvent("filechooser", { timeout: 3000 }).catch(() => null);
         await page.locator(selector).first().click({ timeout: 5000 });
         const chooser = await opened;
+        task.auditMs += Date.now() - t0; // a probe is not the operator's time
         if (!chooser) task.defects.push(`clicking ${selector} does not open the file dialog`);
         // A chooser left open is simply not answered; nothing is chosen.
       },
@@ -169,11 +174,13 @@ export default async function run({ browser, checks, baseUrl, artifactDir, repoR
       // the file is then given to the hidden input so the rest of the day can
       // still be measured -- counted as if the dialog had opened.
       async choose(triggerSelector, file, inputSelector) {
+        const t0 = Date.now();
         const opened = page.waitForEvent("filechooser", { timeout: 4000 }).catch(() => null);
         await op.click(triggerSelector);
         const chooser = await opened;
         if (chooser) await chooser.setFiles(file);
         else {
+          task.auditMs += Date.now() - t0; // the suite's wait for a dialog that never came
           task.defects.push(`clicking ${triggerSelector} does not open the file dialog`);
           await page.setInputFiles(inputSelector, file);
         }
