@@ -67,4 +67,17 @@ export default async function run({ checks, repoRoot }) {
   checks.ok(/Yılbaşı Galası/.test(viaModel.text), "a model reading with no event: answered about the open event", viaModel.text);
   const named = P.answer({ kind: "question", intent: "seatAt", person: "Can Öztürk", phone: null, event: "kenan doğulu konseri", many: false, table: null, steps: [] }, fx.events, fx.today, fx.current);
   checks.ok(/kayıtlarda yok/.test(named.text), "a named event the records lack is still refused, never swapped for the open one", named.text);
+
+  // ENGLISH UI, ENGLISH ANSWERS (owner 2026-11-02: the program is fully Turkish and fully English).
+  // The same facts, worded in English; Turkish stays the default. Fails before the change (Turkish only).
+  const q = { kind: "question", intent: "seatAt", person: "Ahmet Yılmaz", phone: null, event: "tarkan", many: false, table: null, steps: [] };
+  const enA = P.answer(q, fx.events, fx.today, fx.current, "en").text, trA = P.answer(q, fx.events, fx.today, fx.current).text;
+  checks.ok(/20 June 2026/.test(enA) && /came\./.test(enA) && !/geldi|Haziran/.test(enA), "an English UI gets the answer in English", enA);
+  checks.ok(/20 Haziran 2026/.test(trA) && /geldi\./.test(trA), "Turkish stays the default", trA);
+  const unq = P.answer({ kind: "question", intent: "unassigned", person: null, phone: null, event: null, many: false, table: null, steps: [] }, fx.events, fx.today, fx.current, "en").text;
+  checks.ok(/^No table yet: /.test(unq), "an English list answer", unq);
+  const Aen = globalThis.MeritAssistantActions.create({ events: () => JSON.parse(JSON.stringify(fx.events)), current: () => fx.current, today: () => fx.today, lang: () => "en",
+    canMutate: () => true, writers: {}, snapshot: () => null, registerUndo: () => {} });
+  const miss = Aen.resolve([{ op: "assign", guest: "Kenan Kaplan", table: "T03" }]);
+  checks.ok(/is not in this event/.test(miss.ask || ""), "an English UI gets the command's question in English", miss);
 }

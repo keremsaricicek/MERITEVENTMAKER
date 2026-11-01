@@ -148,54 +148,75 @@
   // An answer from the data for a parsed question: the facts (for the panel
   // to word) plus a plain Turkish sentence; `ask` when the person or event is
   // not one, `none` when the records do not hold it.
-  function answer(q, events, today, currentId) {
-    const Tl = T(), tr = (d) => { const [y, m, dd] = String(d).split("-"); return `${Number(dd)} ${["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"][Number(m) - 1]} ${y}`; };
-    const seatTxt = (s) => s.table ? `${s.table}${s.seats && s.seats.length ? `, koltuk ${s.seats.map((x) => x + 1).join("–")}` : ""}` : "masası yoktu";
+  // The sentence is worded in the UI's language (`lang` "tr" default, or "en"; owner 2026-11-02:
+  // the program is fully Turkish and fully English). The facts are the same either way.
+  const MONTHS = { tr: ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"],
+    en: ["January","February","March","April","May","June","July","August","September","October","November","December"] };
+  const SAY = {
+    tr: { seat: (t, seats) => `${t}${seats ? `, koltuk ${seats}` : ""}`, noTable: "masası yoktu", whichEvent: (n) => `Hangi etkinlik? ${n}`,
+      noRecord: (p) => `${p} için kayıt yok.`, noContact: "iletişim yok", ambiguous: (p, k, c) => `${p} adında ${k} kişi var (${c}). Hangisi? Telefonunu yazabilirsin.`,
+      attended: (n, k, list, miss) => `${n} ${k} etkinliğimize geldi${list ? ": " + list : ""}.${miss ? ` Yeri olup gelmediği: ${miss}.` : ""}`,
+      sameYes: (t, k) => `Evet, hep ${t} masasında oturdu (${k} etkinlik).`, sameNo: (l) => `Hayır: ${l}.`, vipYes: (l) => `Evet: ${l}.`, vipNo: "Hayır, geçmiş etkinliklerde VIP masada oturmadı.",
+      didNotCome: " (gelmedi)", noEvent: "Bu etkinlik kayıtlarda yok.", notListed: (p, e) => `${p} ${e} listesinde yok.`, pax: (k) => `, ${k} kişi`, came: " — geldi.", seatNoShow: " — yeri vardı ama gelmedi.",
+      most: (n, k) => `${n}: ${k} kişi geldi.`, noEventThen: "O zamanda bir etkinlik kaydı yok.", countPast: (n, k, pl) => `${n}: ${k} kişi geldi (planlanan ${pl}).`, countFuture: (n, pl) => `${n}: ${pl} kişi planlı, henüz yapılmadı.`,
+      unassigned: (l) => `Masası olmayanlar: ${l}.`, allSeated: "Herkesin masası var.", noShow: (l) => `Gelmeyenler: ${l}.`, noNoShow: "Gelmeyen yok.", empty: (t) => `${t} boş.`, unclear: "Bunu anlayamadım; başka türlü yazar mısın?" },
+    en: { seat: (t, seats) => `${t}${seats ? `, seat ${seats}` : ""}`, noTable: "had no table", whichEvent: (n) => `Which event? ${n}`,
+      noRecord: (p) => `No record of ${p}.`, noContact: "no contact", ambiguous: (p, k, c) => `There are ${k} people named ${p} (${c}). Which one? You can type their phone.`,
+      attended: (n, k, list, miss) => `${n} came to ${k} of our events${list ? ": " + list : ""}.${miss ? ` Had a seat but did not come: ${miss}.` : ""}`,
+      sameYes: (t, k) => `Yes, always at ${t} (${k} events).`, sameNo: (l) => `No: ${l}.`, vipYes: (l) => `Yes: ${l}.`, vipNo: "No, never at a VIP table in past events.",
+      didNotCome: " (did not come)", noEvent: "That event is not in the records.", notListed: (p, e) => `${p} is not on the ${e} list.`, pax: (k) => `, ${k} people`, came: " — came.", seatNoShow: " — had a seat but did not come.",
+      most: (n, k) => `${n}: ${k} people came.`, noEventThen: "No event on record for that time.", countPast: (n, k, pl) => `${n}: ${k} people came (${pl} planned).`, countFuture: (n, pl) => `${n}: ${pl} people planned, not held yet.`,
+      unassigned: (l) => `No table yet: ${l}.`, allSeated: "Everyone has a table.", noShow: (l) => `Did not come: ${l}.`, noNoShow: "Everyone came.", empty: (t) => `${t} is empty.`, unclear: "I could not understand that; could you put it another way?" },
+  };
+  function answer(q, events, today, currentId, lang) {
+    const W = SAY[lang === "en" ? "en" : "tr"], M = MONTHS[lang === "en" ? "en" : "tr"];
+    const Tl = T(), tr = (d) => { const [y, m, dd] = String(d).split("-"); return `${Number(dd)} ${M[Number(m) - 1]} ${y}`; };
+    const seatTxt = (s) => s.table ? W.seat(s.table, s.seats && s.seats.length ? s.seats.map((x) => x + 1).join("–") : "") : W.noTable;
     const pickEvent = (text) => { let r = Tl.findEvent(events, text || "", today).events;
       // "geçen yılbaşı" is never this year's coming one
-      if (/\b(gecen|onceki)\b/.test(fold(text))) r = r.filter((e) => e.past);
+      if (/\b(gecen|onceki|last|previous)\b/.test(fold(text))) r = r.filter((e) => e.past);
       // nothing in the sentence names an event ("Can Öztürk nerede oturuyor?"): the open one
       // (found by the UX task tests, 2026-11-01); a named event the records lack is still refused
-      const rest = fold(text || "").replace(/\b(bu|su|bugun|bu gece|etkinlik\w*|nerede|nerde|nerelerde|oturuyor\w*|oturacak\w*|otur\w*|hangi|kacinci|masa\w*|koltu\w*|var|mi|mu)\b/g, "").trim();
+      const rest = fold(text || "").replace(/\b(bu|su|bugun|bu gece|etkinlik\w*|nerede|nerde|nerelerde|oturuyor\w*|oturacak\w*|otur\w*|hangi|kacinci|masa\w*|koltu\w*|var|mi|mu|this|tonight|event|where|sit\w*|seat\w*|table|which)\b/g, "").trim();
       if (!r.length && currentId && !rest) { const ev = events.find((e) => e.id === currentId); if (ev) r = [{ id: ev.id, name: ev.name, date: ev.date, venue: ev.venue || null, past: ev.date < String(today || "") }]; }
-      return r.length === 1 ? r[0] : r.length ? { ask: `Hangi etkinlik? ${r.map((e) => e.name).join(", ")}` } : null; };
+      return r.length === 1 ? r[0] : r.length ? { ask: W.whichEvent(r.map((e) => e.name).join(", ")) } : null; };
     let person = null;
     if (q.person) {
       const r = Tl.findPerson(events, q.person, q.phone ? { phone: q.phone } : null);
-      if (r.none) return { none: true, text: `${q.person} için kayıt yok.` };
-      if (r.ambiguous) return { ask: true, text: `${q.person} adında ${r.people.length} kişi var (${r.people.map((p) => p.contact || "iletişim yok").join(" / ")}). Hangisi? Telefonunu yazabilirsin.` };
+      if (r.none) return { none: true, text: W.noRecord(q.person) };
+      if (r.ambiguous) return { ask: true, text: W.ambiguous(q.person, r.people.length, r.people.map((p) => p.contact || W.noContact).join(" / ")) };
       person = r.people[0];
     }
     if (q.intent === "attended" || q.intent === "sameTable" || q.intent === "vipBefore") {
       const h = Tl.eventsOf(events, person, today), past = h.events.filter((e) => e.past);
       if (q.intent === "attended") {
         const came = past.filter((e) => e.came), miss = past.filter((e) => !e.came);
-        return { facts: h, text: `${person.name} ${came.length} etkinliğimize geldi${came.length ? ": " + came.map((e) => `${e.name} (${tr(e.date)})`).join(", ") : ""}.${miss.length ? ` Yeri olup gelmediği: ${miss.map((e) => e.name).join(", ")}.` : ""}` };
+        return { facts: h, text: W.attended(person.name, came.length, came.map((e) => `${e.name} (${tr(e.date)})`).join(", "), miss.map((e) => e.name).join(", ")) };
       }
-      if (q.intent === "sameTable") { const tset = [...new Set(past.map((e) => e.table).filter(Boolean))]; return { facts: h, text: tset.length === 1 ? `Evet, hep ${tset[0]} masasında oturdu (${past.length} etkinlik).` : `Hayır: ${past.map((e) => `${e.name} ${e.table || "—"}`).join(", ")}.` }; }
+      if (q.intent === "sameTable") { const tset = [...new Set(past.map((e) => e.table).filter(Boolean))]; return { facts: h, text: tset.length === 1 ? W.sameYes(tset[0], past.length) : W.sameNo(past.map((e) => `${e.name} ${e.table || "—"}`).join(", ")) }; }
       const v = past.filter((e) => /^VIP/i.test(e.table || ""));
-      return { facts: h, text: v.length ? `Evet: ${v.map((e) => `${e.name} — ${e.table}`).join(", ")}.` : "Hayır, geçmiş etkinliklerde VIP masada oturmadı." };
+      return { facts: h, text: v.length ? W.vipYes(v.map((e) => `${e.name} — ${e.table}`).join(", ")) : W.vipNo };
     }
     if (q.intent === "seatAt") {
-      if (q.many) { const h = Tl.eventsOf(events, person, today), evs = Tl.findEvent(events, q.event, today).events.map((e) => e.id); const rows = h.events.filter((e) => !evs.length || evs.includes(e.event)); return { facts: rows, text: rows.map((e) => `${e.name}: ${seatTxt(e)}${e.came ? "" : e.past ? " (gelmedi)" : ""}`).join("; ") + "." }; }
+      if (q.many) { const h = Tl.eventsOf(events, person, today), evs = Tl.findEvent(events, q.event, today).events.map((e) => e.id); const rows = h.events.filter((e) => !evs.length || evs.includes(e.event)); return { facts: rows, text: rows.map((e) => `${e.name}: ${seatTxt(e)}${e.came ? "" : e.past ? W.didNotCome : ""}`).join("; ") + "." }; }
       const ev = pickEvent(q.event);
-      if (!ev) return { none: true, text: "Bu etkinlik kayıtlarda yok." };
+      if (!ev) return { none: true, text: W.noEvent };
       if (ev.ask) return { ask: true, text: ev.ask };
       const s = Tl.seatOf(events, person, ev.id);
-      if (!s.invited) return { none: true, text: `${person.name} ${ev.name} listesinde yok.` };
-      return { facts: s, text: `${ev.name} (${tr(ev.date)}): ${person.name} ${seatTxt(s)}${s.pax > 1 ? `, ${s.pax} kişi` : ""}${ev.past ? (s.came ? " — geldi." : " — yeri vardı ama gelmedi.") : "."}` };
+      if (!s.invited) return { none: true, text: W.notListed(person.name, ev.name) };
+      return { facts: s, text: `${ev.name} (${tr(ev.date)}): ${person.name} ${seatTxt(s)}${s.pax > 1 ? W.pax(s.pax) : ""}${ev.past ? (s.came ? W.came : W.seatNoShow) : "."}` };
     }
-    if (q.intent === "mostPeople") { const best = events.filter((e) => e.date < today).map((e) => Tl.eventFacts(events, e.id)).sort((a, b) => b.checkedInPax - a.checkedInPax)[0]; return { facts: best, text: `${best.name}: ${best.checkedInPax} kişi geldi.` }; }
+    if (q.intent === "mostPeople") { const best = events.filter((e) => e.date < today).map((e) => Tl.eventFacts(events, e.id)).sort((a, b) => b.checkedInPax - a.checkedInPax)[0]; return { facts: best, text: W.most(best.name, best.checkedInPax) }; }
     const ev = q.intent === "whichEvent" ? null : pickEvent(q.event || "");
-    if (q.intent === "whichEvent") { const r = Tl.findEvent(events, q.event, today).events; return r.length ? { facts: r, text: r.map((e) => `${e.name} (${tr(e.date)})`).join(", ") + "." } : { none: true, text: "O zamanda bir etkinlik kaydı yok." }; }
-    if (!ev) return { none: true, text: "Bu etkinlik kayıtlarda yok." };
+    if (q.intent === "whichEvent") { const r = Tl.findEvent(events, q.event, today).events; return r.length ? { facts: r, text: r.map((e) => `${e.name} (${tr(e.date)})`).join(", ") + "." } : { none: true, text: W.noEventThen }; }
+    if (!ev) return { none: true, text: W.noEvent };
     if (ev.ask) return { ask: true, text: ev.ask };
     const fct = Tl.eventFacts(events, ev.id);
-    if (q.intent === "eventCount") return { facts: fct, text: ev.past ? `${fct.name}: ${fct.checkedInPax} kişi geldi (planlanan ${fct.plannedPax}).` : `${fct.name}: ${fct.plannedPax} kişi planlı, henüz yapılmadı.` };
-    if (q.intent === "unassigned") return { facts: fct, text: fct.unassigned.length ? `Masası olmayanlar: ${fct.unassigned.join(", ")}.` : "Herkesin masası var." };
-    if (q.intent === "noShow") return { facts: fct, text: fct.noShow.length ? `Gelmeyenler: ${fct.noShow.join(", ")}.` : "Gelmeyen yok." };
-    if (q.intent === "whoAtTable") { const who = fct.byTable[q.table] || []; return { facts: who, text: who.length ? `${q.table}: ${who.join(", ")}.` : `${q.table} boş.` }; }
-    return { ask: true, text: "Bunu anlayamadım; başka türlü yazar mısın?" };
+    if (q.intent === "eventCount") return { facts: fct, text: ev.past ? W.countPast(fct.name, fct.checkedInPax, fct.plannedPax) : W.countFuture(fct.name, fct.plannedPax) };
+    if (q.intent === "unassigned") return { facts: fct, text: fct.unassigned.length ? W.unassigned(fct.unassigned.join(", ")) : W.allSeated };
+    if (q.intent === "noShow") return { facts: fct, text: fct.noShow.length ? W.noShow(fct.noShow.join(", ")) : W.noNoShow };
+    if (q.intent === "whoAtTable") { const who = fct.byTable[q.table] || []; return { facts: who, text: who.length ? `${q.table}: ${who.join(", ")}.` : W.empty(q.table) }; }
+    return { ask: true, text: W.unclear };
   }
 
   globalThis.MeritAssistantParse = { parse, answer, brief, personIn, tables };

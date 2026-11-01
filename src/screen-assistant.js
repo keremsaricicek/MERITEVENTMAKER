@@ -249,14 +249,14 @@
     }
     function reply(r, evs, now, byModel, how) {
       if (r.kind === "plan") { if (!currentId()) return { text: t("assistant.noEvent") }; return planReply(r.brief); }
-      if (r.kind === "question") return { text: P().answer(r, evs, now, currentId()).text };
+      if (r.kind === "question") return { text: P().answer(r, evs, now, currentId(), globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : "tr").text };
       if (r.kind !== "command") return { text: t("assistant.notUnderstood") };
       if (!currentId()) return { text: t("assistant.noEvent") };
       // Ask only when unsure (owner): a command the model read is done at once
       // when the rules read the very same change or the model is sure of it;
       // otherwise — and for a deletion only the rules read — it is SHOWN first and
       // waits for Onayla: a misreading costs a click, never a guest.
-      const A = globalThis.MeritAssistantActions.create({ events, current: currentId, today, canMutate: (e) => canMutate(e), writers: {}, snapshot: () => null, registerUndo: () => {} });
+      const A = globalThis.MeritAssistantActions.create({ events, current: currentId, today, lang: () => (globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : "tr"), canMutate: (e) => canMutate(e), writers: {}, snapshot: () => null, registerUndo: () => {} });
       const key = (res) => res.steps ? JSON.stringify(res.steps.map((x) => [x.op, x.guestId || x.name, x.tableId || x.table || null, x.seats || null, x.pax || null])) : null;
       const agreed = byModel && how && how.rules && how.rules.kind === "command" && key(A.resolve(r.plan)) !== null && key(A.resolve(r.plan)) === key(A.resolve(how.rules.plan));
       const unsure = byModel ? !(agreed || (how && how.sure)) : r.plan.some((st) => st.op === "deleteGuest");
@@ -288,7 +288,7 @@
     function carryOut(plan) {
       const rec = [];
       const A = globalThis.MeritAssistantActions.create({
-        events, current: currentId, today, canMutate: (e) => canMutate(e),
+        events, current: currentId, today, lang: () => (globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : "tr"), canMutate: (e) => canMutate(e),
         writers: recording(rec), snapshot: () => null, registerUndo: () => {},
       });
       let out;

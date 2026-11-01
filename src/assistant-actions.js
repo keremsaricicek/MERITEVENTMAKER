@@ -30,14 +30,17 @@
 
   function create(deps) {
     const { events, current, today, canMutate, writers, snapshot, registerUndo } = deps;
+    // worded in the UI's language (deps.lang() "tr" | "en"; owner 2026-11-02: full Turkish and full English)
+    const en = () => !!(deps.lang && deps.lang() === "en");
+    const say = (trText, enText) => (en() ? enText : trText);
     const ev = () => events().find((e) => e.id === current());
     const tableByNumber = (e, no) => (e.tables || []).find((t) => T().fold(t.number) === T().fold(no));
     function guestHere(e, name, opts) {
       const r = T().findPerson([e], name, opts);
-      if (r.none) return { ask: `"${name}" bu etkinlikte yok`, missing: name };
-      if (r.ambiguous) return { ask: `"${name}" adında ${r.people.length} kişi var — hangisi?` };
+      if (r.none) return { ask: say(`"${name}" bu etkinlikte yok`, `"${name}" is not in this event`), missing: name };
+      if (r.ambiguous) return { ask: say(`"${name}" adında ${r.people.length} kişi var — hangisi?`, `There are ${r.people.length} people named "${name}" — which one?`) };
       const recs = r.people[0].records;
-      if (recs.length > 1) return { ask: `"${name}" adında ${recs.length} kayıt var — hangisi?` };
+      if (recs.length > 1) return { ask: say(`"${name}" adında ${recs.length} kayıt var — hangisi?`, `There are ${recs.length} records named "${name}" — which one?`) };
       return { guest: e.guests.find((g) => g.id === recs[0].guestId) };
     }
     function seatsFree(e, table, seats, guestId) {
@@ -49,15 +52,15 @@
     // Resolve and check every step first; only a plan that is wholly clear runs.
     function resolve(plan) {
       const e = ev();
-      if (!e) return { ask: "açık etkinlik yok" };
-      if (!canMutate(e)) return { refuse: "geçmiş bir etkinlik değiştirilemez" };
+      if (!e) return { ask: say("açık etkinlik yok", "no event is open") };
+      if (!canMutate(e)) return { refuse: say("geçmiş bir etkinlik değiştirilemez", "a past event cannot be changed") };
       const out = [];
       for (const st of plan) {
-        if (st.event && T().findEvent(events(), st.event, today()).events.some((x) => x.id !== e.id && x.past)) return { refuse: "geçmiş bir etkinlik değiştirilemez" };
+        if (st.event && T().findEvent(events(), st.event, today()).events.some((x) => x.id !== e.id && x.past)) return { refuse: say("geçmiş bir etkinlik değiştirilemez", "a past event cannot be changed") };
         if (st.op === "addGuest") { out.push({ op: "addGuest", name: st.name, pax: st.pax || 1, table: st.table || null }); continue; }
         if (st.op === "moveTable") {  // everyone at one table to another — no guest named
           const from = tableByNumber(e, st.fromTable), to = tableByNumber(e, st.table);
-          if (!from || !to) return { ask: `${!from ? st.fromTable : st.table} bu etkinlikte yok` };
+          if (!from || !to) return { ask: say(`${!from ? st.fromTable : st.table} bu etkinlikte yok`, `${!from ? st.fromTable : st.table} is not in this event`) };
           for (const x of e.guests.filter((x) => x.assignment && x.assignment.tableId === from.id)) out.push({ op: "assign", guestId: x.id, name: x.name, tableId: to.id, number: to.number, seats: null });
           continue;
         }
@@ -67,29 +70,29 @@
           let tableNo = st.table, seats = st.seats || null;
           if (st.op === "copySeat") {
             const fromEv = T().findEvent(events(), st.from, today()).events.filter((x) => x.id !== e.id);
-            if (fromEv.length !== 1) return { ask: fromEv.length ? "hangi etkinlik?" : `"${st.from}" bulunamadı` };
+            if (fromEv.length !== 1) return { ask: fromEv.length ? say("hangi etkinlik?", "which event?") : say(`"${st.from}" bulunamadı`, `"${st.from}" was not found`) };
             const who = T().findPerson(events(), g.guest.name, g.guest.phone ? { phone: g.guest.phone } : null);
-            if (who.ambiguous) return { ask: `"${g.guest.name}" adında birden fazla kişi var — hangisi?` };
+            if (who.ambiguous) return { ask: say(`"${g.guest.name}" adında birden fazla kişi var — hangisi?`, `More than one person is named "${g.guest.name}" — which one?`) };
             const s = T().seatOf(events(), who.people[0], fromEv[0].id);
-            if (!s.invited || !s.table) return { ask: `${g.guest.name} o etkinlikte bir masada değildi` };
+            if (!s.invited || !s.table) return { ask: say(`${g.guest.name} o etkinlikte bir masada değildi`, `${g.guest.name} had no table at that event`) };
             tableNo = s.table; seats = s.seats;
           }
           const table = tableByNumber(e, tableNo);
-          if (!table) return { ask: `${tableNo} bu etkinlikte yok` };
-          if (g.guest.assignment && g.guest.assignment.tableId === table.id && (!seats || JSON.stringify(g.guest.assignment.seats) === JSON.stringify(seats))) { out.push({ op: "noop", line: `${g.guest.name} zaten ${table.number}` }); continue; }
-          if (seats && !seatsFree(e, table, seats, g.guest.id)) return { ask: `${table.number} masasındaki o koltuk dolu — başka koltuk olsun mu?` };
+          if (!table) return { ask: say(`${tableNo} bu etkinlikte yok`, `${tableNo} is not in this event`) };
+          if (g.guest.assignment && g.guest.assignment.tableId === table.id && (!seats || JSON.stringify(g.guest.assignment.seats) === JSON.stringify(seats))) { out.push({ op: "noop", line: say(`${g.guest.name} zaten ${table.number}`, `${g.guest.name} is already at ${table.number}`) }); continue; }
+          if (seats && !seatsFree(e, table, seats, g.guest.id)) return { ask: say(`${table.number} masasındaki o koltuk dolu — başka koltuk olsun mu?`, `That seat at ${table.number} is taken — another seat?`) };
           out.push({ op: "assign", guestId: g.guest.id, name: g.guest.name, tableId: table.id, number: table.number, seats });
         } else if (st.op === "nextTo") {  // the same table as another guest of this event
           const o = guestHere(e, st.other);
           if (o.ask) return { ask: o.ask };
-          if (!o.guest.assignment) return { ask: `${o.guest.name} bu etkinlikte henüz bir masada değil` };
+          if (!o.guest.assignment) return { ask: say(`${o.guest.name} bu etkinlikte henüz bir masada değil`, `${o.guest.name} has no table in this event yet`) };
           const table = (e.tables || []).find((t) => t.id === o.guest.assignment.tableId);
           out.push({ op: "assign", guestId: g.guest.id, name: g.guest.name, tableId: table.id, number: table.number, seats: null });
         } else if (st.op === "unassign") out.push({ op: "unassign", guestId: g.guest.id, name: g.guest.name });
         else if (st.op === "deleteGuest") out.push({ op: "deleteGuest", guestId: g.guest.id, name: g.guest.name });
         else if (st.op === "setPax") out.push({ op: "setPax", guestId: g.guest.id, name: g.guest.name, pax: st.pax });
         else if (st.op === "setVip") out.push({ op: "setVip", guestId: g.guest.id, name: g.guest.name, vip: st.vip });
-        else return { ask: "bunu anlayamadım" };
+        else return { ask: say("bunu anlayamadım", "I could not understand that") };
       }
       return { steps: out };
     }
@@ -104,13 +107,13 @@
       const snap = snapshot(ev());
       let newId = null;
       for (const s of real) {
-        if (s.op === "assign") { writers.assign(s.guestId, s.tableId, s.seats); lines.push(`${s.name} → ${s.number}${s.seats ? ` (koltuk ${s.seats.map((x) => x + 1).join(", ")})` : ""}`); }
-        else if (s.op === "unassign") { writers.unassign(s.guestId); lines.push(`${s.name} masadan kaldırıldı`); }
-        else if (s.op === "deleteGuest") { writers.deleteGuest(s.guestId); lines.push(`${s.name} silindi`); }
-        else if (s.op === "setPax") { writers.setPax(s.guestId, s.pax); lines.push(`${s.name}: ${s.pax} kişi`); }
+        if (s.op === "assign") { writers.assign(s.guestId, s.tableId, s.seats); lines.push(`${s.name} → ${s.number}${s.seats ? ` (${say("koltuk", "seat")} ${s.seats.map((x) => x + 1).join(", ")})` : ""}`); }
+        else if (s.op === "unassign") { writers.unassign(s.guestId); lines.push(say(`${s.name} masadan kaldırıldı`, `${s.name} taken off the table`)); }
+        else if (s.op === "deleteGuest") { writers.deleteGuest(s.guestId); lines.push(say(`${s.name} silindi`, `${s.name} deleted`)); }
+        else if (s.op === "setPax") { writers.setPax(s.guestId, s.pax); lines.push(say(`${s.name}: ${s.pax} kişi`, `${s.name}: ${s.pax} people`)); }
         else if (s.op === "setVip") { writers.setVip(s.guestId, s.vip); lines.push(`${s.name}: ${s.vip}`); }
         else if (s.op === "addGuest") {
-          newId = writers.addGuest(s.name, s.pax); lines.push(`${s.name}${s.pax > 1 ? ` +${s.pax - 1}` : ""} eklendi`);
+          newId = writers.addGuest(s.name, s.pax); lines.push(`${s.name}${s.pax > 1 ? ` +${s.pax - 1}` : ""} ${say("eklendi", "added")}`);
           if (s.table) { const t = tableByNumber(ev(), s.table); if (t) { writers.assign(newId, t.id, null); lines.push(`${s.name} → ${t.number}`); } }
         }
       }
