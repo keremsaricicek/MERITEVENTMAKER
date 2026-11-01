@@ -92,7 +92,7 @@
         // a session's first backup: whatever is stored now (the relay skips it
         // when it equals the newest file)
         if (pending === null) {
-          try { const raw = globalThis.MERIT_STORAGE_PROVIDER && await globalThis.MERIT_STORAGE_PROVIDER.load(); if (typeof raw === "string" && hasEvents(raw)) pending = raw; } catch { /* nothing stored yet */ }
+          try { const raw = globalThis.MERIT_STORAGE_PROVIDER && await globalThis.MERIT_STORAGE_PROVIDER.load(); if (typeof raw === "string" && hasEvents(raw)) pending = raw; } catch (error) { console.warn("Disk backup could not read the stored record for its first copy.", error && error.name); }
         }
         flush();
         setInterval(() => { if (failed || (pending !== null && pending !== lastSent)) { failed = false; flush(); } }, RETRY_MS());
