@@ -65,6 +65,8 @@ const items = [
   // `--fresh8 --typo8`: written 2026-11-02 after fresh7/typo7 were seen, before any change made from them
   ...(flag("fresh8") ? lines("fresh8.jsonl").map((d) => ({ set: "fresh8", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("typo8") ? lines("typo8.jsonl").map((d) => ({ set: "typo8", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("en8") ? lines("en8.jsonl").map((d) => ({ set: "en8", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("entypo8") ? lines("entypo8.jsonl").map((d) => ({ set: "entypo8", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("fresh3") ? lines("fresh3.jsonl").map((d) => ({ set: "fresh3", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...lines("variants.jsonl").map((v) => {
     const n = Number(v.sameAs.slice(1));
@@ -225,6 +227,8 @@ const summary = { label, at: new Date().toISOString(),
   ...(flag("entypo7") ? { entypo7: { rules: sum("entypo7", "rules"), model: sum("entypo7", "model"), both: sum("entypo7", "both"), product: sum("entypo7", "product") } } : {}),
   ...(flag("fresh8") ? { fresh8: { rules: sum("fresh8", "rules"), model: sum("fresh8", "model"), both: sum("fresh8", "both"), product: sum("fresh8", "product") } } : {}),
   ...(flag("typo8") ? { typo8: { rules: sum("typo8", "rules"), model: sum("typo8", "model"), both: sum("typo8", "both"), product: sum("typo8", "product") } } : {}),
+  ...(flag("en8") ? { en8: { rules: sum("en8", "rules"), model: sum("en8", "model"), both: sum("en8", "both"), product: sum("en8", "product") } } : {}),
+  ...(flag("entypo8") ? { entypo8: { rules: sum("entypo8", "rules"), model: sum("entypo8", "model"), both: sum("entypo8", "both"), product: sum("entypo8", "product") } } : {}),
   ...(flag("fresh3") ? { fresh3: { rules: sum("fresh3", "rules"), model: sum("fresh3", "model"), both: sum("fresh3", "both"), product: sum("fresh3", "product") } } : {}),
   medianSeconds: secs.length ? secs[Math.floor(secs.length / 2)] : null };
 fs.writeFileSync(arg("out"), JSON.stringify({ summary, rows }, null, 1));

@@ -1817,3 +1817,16 @@ Manifest `tools/local-chat/manifests/qwen3.5-0.8b-merit-chat-b7e.json` (B7c's ke
 `training/assistant/fresh8.jsonl` (23: 8 questions, 13 commands, 2 not ours; sha256 begins `b6889d0f5378b3fc`) and
 `typo8.jsonl` (the same typed carelessly, `7309a9552a4e3593`). Any grounding change made from the typo7 errors is
 measured here once, product rule, against the owner's rule (≥ 0.85 on both, 0 wrong changes).
+
+## 2026-11-02 — runB7f (0.8B): Turkish + English (written before any B7f training or result)
+
+**Why:** B7e reads English it never saw at en7 0.80 / entypo7 0.75 (product rule) — the program is fully English
+too (owner). **Tests written first by hand:** `training/assistant/en8.jsonl` (20; sha256 begins `6309609b7cda8d5c`)
+and `entypo8.jsonl` (`ae99cd94474ae02f`); Turkish: fresh8/typo8 (above). **Data:** `synth_f8.mjs --grammar 6 --seed
+80 --n 3600 --english 0.33 --prompt short` (sha256 `d8dfcf5a62b97824`): grammar 5 plus English questions, commands
+and small talk with the same readings (975 English); every name in fresh7/8 and en7/8 barred and taken out of the
+pools; the four-word guard against every test. Grammar 5 regenerated: still `4fda297c3db22283`.
+**Run:** `--init runB7e`, B7e's replay, fp32, one epoch, curriculum. **Measured** with the product rule on fresh8,
+typo8, en8, entypo8 (decisive) and en7, entypo7, original/variant/deep (reported). **Use:** the owner's rule —
+the better of B7e and B7f on the decisive sets (0 wrong changes required) is the one shipped; 0.85 / 0.90 / 0.95
+are targets, not gates.
