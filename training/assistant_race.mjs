@@ -51,6 +51,7 @@ const items = [
   // `--fresh2`: runB7b's decisive set (training/assistant/fresh2.jsonl), written before its data
   ...(flag("fresh2") ? lines("fresh2.jsonl").map((d) => ({ set: "fresh2", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   // `--fresh3`: runB7c's decisive set (training/assistant/fresh3.jsonl), written before its data
+  ...(flag("fresh4") ? lines("fresh4.jsonl").map((d) => ({ set: "fresh4", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("fresh3") ? lines("fresh3.jsonl").map((d) => ({ set: "fresh3", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...lines("variants.jsonl").map((v) => {
     const n = Number(v.sameAs.slice(1));
@@ -98,7 +99,7 @@ function outcome(item, parsed) {
   return { calls, kind: calls.length ? "calls" : out.refuse ? "refuse" : out.ask ? "ask" : "nothing" };
 }
 function score(item, parsed) {
-  if (item.set === "deep" || item.set === "fresh" || item.set === "fresh2" || item.set === "fresh3") {
+  if (item.set === "deep" || item.set === "fresh" || item.set === "fresh2" || item.set === "fresh3" || item.set === "fresh4") {
     // not ours to read (small talk, the world outside): right only when read as "unknown"
     if (item.kind === "unknown") { const got = outcome(item, parsed); return { right: parsed.kind === "unknown", wrongChange: got.calls.length > 0, calls: got.calls }; }
     const want = outcome(item, toParse(item.gold)), got = outcome(item, parsed);
@@ -171,6 +172,7 @@ const summary = { label, at: new Date().toISOString(),
   deep: { rules: sum("deep", "rules"), model: sum("deep", "model"), both: sum("deep", "both") },
   ...(flag("fresh") ? { fresh: { rules: sum("fresh", "rules"), model: sum("fresh", "model"), both: sum("fresh", "both") } } : {}),
   ...(flag("fresh2") ? { fresh2: { rules: sum("fresh2", "rules"), model: sum("fresh2", "model"), both: sum("fresh2", "both") } } : {}),
+  ...(flag("fresh4") ? { fresh4: { rules: sum("fresh4", "rules"), model: sum("fresh4", "model"), both: sum("fresh4", "both") } } : {}),
   ...(flag("fresh3") ? { fresh3: { rules: sum("fresh3", "rules"), model: sum("fresh3", "model"), both: sum("fresh3", "both") } } : {}),
   medianSeconds: secs.length ? secs[Math.floor(secs.length / 2)] : null };
 fs.writeFileSync(arg("out"), JSON.stringify({ summary, rows }, null, 1));

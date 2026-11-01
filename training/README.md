@@ -1597,3 +1597,33 @@ matched table, its true chairs) / 68. Golden: chairs tied = `relationships.corre
   chairs tied ≥ 0.90 (not applicable to ORNEK, which draws no chairs). noG2 is reported
   beside, as measured, and does not count as unseen.
 - Nothing is pinned or activated by this work; that is a person's decision after QA.
+
+## 2026-11-01 — runB7c verdict: not passed (fresh3 0.816, 2 wrong); the 2B is next (as pre-registered)
+
+Raw: `assistant-race/b7c-f8.json`, `b7c-briefs.json` (hybrid order, θ 0.87, short prompt).
+
+| set | B7c alone | hybrid (the bar) |
+|---|---|---|
+| originals | 1.00 | 1.00 |
+| paraphrases (seen) | 0.971 | 1.00, 0 wrong |
+| deep (seen) | 0.80 | 0.867, 1 wrong (the rules') |
+| fresh (seen) | 0.90 | 0.875, 0 wrong |
+| fresh2 (seen) | 0.95 | 0.925, 0 wrong |
+| **fresh3 (decisive)** | 0.842, 1 wrong | **0.816, 2 wrong** — fails (≥ 0.90, 0 wrong) |
+| briefs | 0.97 / 0.012 | passes |
+
+Median 3.2 s per sentence. Wrong changes on fresh3: "Can Öztürk'ün yanına Mehmet Kaya'yı al" (the rules'
+reading, taken because B7c was unsure: who goes next to whom reversed) and "Galaya bir isim daha: Orhan Ekşi"
+(B7c, pax 2 instead of 1). **Ask-when-unsure** (θ re-set on the seen sets incl. fresh2 by the rule: 0.91):
+on fresh3 10 changing commands carried out without asking, **0 wrong**; 3 shown with Onayla.
+
+## 2026-11-01 — runB7-2B: the same language on Qwen3.5-2B (written before it trains)
+
+As pre-registered with B7c: grammar-3 data (`$S/f8/data-b7c`, sha `f86107df0ba4c1b0`) on Qwen3.5-2B, short
+prompt, one epoch, fp32, LoRA rank 16, init FRESH (no 2B F8 adapter exists), replay: 400 briefs only (the
+2B would serve the F8 reader alone; B6d stays the plan model — two adapters, two files, said so).
+**Decisive test, written now:** `training/assistant/fresh4.jsonl` (32: 14 questions, 14 commands, 4 not ours; sha256 begins `55fec23e02a13ef9`). Fresh3 is now seen.
+Bars unchanged. Order fixed now: model first when
+its confidence ≥ 0.91, else the rules' reading when they have one (the B7c rule, θ from B7c's seen sets);
+right ≥ 0.90 on fresh4, fresh3, fresh2, paraphrases; 0 wrong changes on all sets; briefs ≥ 0.90 / ≤ 0.05;
+median seconds reported (the 2B is about twice as slow).
