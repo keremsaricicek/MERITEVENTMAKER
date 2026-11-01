@@ -1,0 +1,310 @@
+{
+ "planId": "golden2-seen",
+ "source": {
+  "file": "plans/blind/golden2.jpg",
+  "width": 1654,
+  "height": 2338,
+  "sha256": "dd0fc879745745e49eb034747d3184cd7f564a0ed85b55f322eb743f0512035f"
+ },
+ "annotationMethod": "Table centres from golden2-table-centres.json (placed by a model, NOT human-verified; counts owner-confirmed). w/h are nominal sizes, not measured. Chairs are per-table counts only (no positions). Golden 2 is a SEEN plan since 2026-11-01: this file is for development measurement, never an unseen-venue score, and it is NOT part of benchmarks/annotations (the recorded baseline).",
+ "matchToleranceP": 3.0,
+ "objects": [
+  {
+   "id": "T01",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 373,
+   "cy": 325,
+   "w": 70,
+   "h": 70,
+   "chairs": 1
+  },
+  {
+   "id": "T02",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 453,
+   "cy": 324,
+   "w": 70,
+   "h": 70,
+   "chairs": 1
+  },
+  {
+   "id": "T03",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 377,
+   "cy": 560,
+   "w": 70,
+   "h": 70,
+   "chairs": 1
+  },
+  {
+   "id": "T04",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 451,
+   "cy": 560,
+   "w": 70,
+   "h": 70,
+   "chairs": 1
+  },
+  {
+   "id": "T05",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 371,
+   "cy": 789,
+   "w": 70,
+   "h": 70,
+   "chairs": 1
+  },
+  {
+   "id": "T06",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 452,
+   "cy": 787,
+   "w": 70,
+   "h": 70,
+   "chairs": 1
+  },
+  {
+   "id": "T07",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 735,
+   "cy": 489,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T08",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 810,
+   "cy": 490,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T09",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 882,
+   "cy": 489,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T10",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 739,
+   "cy": 706,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T11",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 814,
+   "cy": 706,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T12",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 886,
+   "cy": 704,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T13",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 739,
+   "cy": 943,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T14",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 813,
+   "cy": 942,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T15",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 887,
+   "cy": 943,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T16",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 918,
+   "cy": 1312,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T17",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 917,
+   "cy": 1395,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T18",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 918,
+   "cy": 1478,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T19",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 918,
+   "cy": 1639,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T20",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 919,
+   "cy": 1722,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T21",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 1162,
+   "cy": 1637,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T22",
+   "class": "table",
+   "type": "square",
+   "rotation": 0,
+   "cx": 1167,
+   "cy": 1720,
+   "w": 70,
+   "h": 70,
+   "chairs": 2
+  },
+  {
+   "id": "T23",
+   "class": "table",
+   "type": "rectangle",
+   "rotation": 0,
+   "cx": 1180,
+   "cy": 1366,
+   "w": 68,
+   "h": 247,
+   "chairs": 8
+  },
+  {
+   "id": "T24",
+   "class": "table",
+   "type": "round",
+   "rotation": 0,
+   "cx": 678,
+   "cy": 204,
+   "w": 90,
+   "h": 90,
+   "chairs": 5
+  },
+  {
+   "id": "T25",
+   "class": "table",
+   "type": "round",
+   "rotation": 0,
+   "cx": 875,
+   "cy": 152,
+   "w": 90,
+   "h": 90,
+   "chairs": 5
+  },
+  {
+   "id": "T26",
+   "class": "table",
+   "type": "round",
+   "rotation": 0,
+   "cx": 916,
+   "cy": 1946,
+   "w": 90,
+   "h": 90,
+   "chairs": 6
+  },
+  {
+   "id": "T27",
+   "class": "table",
+   "type": "round",
+   "rotation": 0,
+   "cx": 1185,
+   "cy": 1934,
+   "w": 90,
+   "h": 90,
+   "chairs": 6
+  }
+ ]
+}
