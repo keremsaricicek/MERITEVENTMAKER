@@ -269,6 +269,70 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "no plan appears in two splits — the leak this exists to prevent", grouped.plansInMoreThanOneSplit);
   checks.ok(grouped.splitsUsed === 3, "six plans reach all three splits", grouped);
   checks.ok(grouped.warning === null, "and six plans no longer carry the one-plan warning", grouped.warning);
+
+  // ---- pinned 2026-11-01, before capture and export left app-v8.js -------
+  // Each of these survived every suite when mutated. Back to the review
+  // screen first: the reload above left the app on its event list.
+  await page.evaluate(() => {
+    const e = state.events[0];
+    ui.activeEventId = e.id; ui.screen = "workspace"; ui.tab = "floor"; ui.planMode = "review"; render();
+  });
+  await page.waitForTimeout(300);
+  //
+  // Every example in the file carries the split its plan was put in.
+  const splitOk = await page.evaluate(async () => {
+    const d = await MERIT_TRAINING_EXPORT({ includeCrops: false });
+    const s = MeritTrainingData.splitByPlan(state.trainingData), where = new Map();
+    for (const name of ["train", "val", "test"]) for (const r of s[name]) where.set(r.id, name);
+    return d.examples.filter(e => e.split !== where.get(e.id) || !e.split).map(e => e.id);
+  });
+  checks.equal(splitOk, [], "every exported example carries the split its plan landed in");
+  // A crop that cannot be read is counted and marked, never quietly dropped.
+  const missing = await page.evaluate(async () => {
+    const r = state.trainingData[0], kept = r.crop;
+    r.crop = { ...kept, blobId: "crop_that_is_not_stored" };
+    try {
+      const d = await MERIT_TRAINING_EXPORT();
+      const e = d.examples.find(x => x.id === r.id);
+      return { count: d.cropsMissing, marked: !!(e && e.crop && e.crop.missing && e.crop.dataUrl === null) };
+    } finally { r.crop = kept; }
+  });
+  checks.equal(missing, { count: 1, marked: true }, "an unreadable crop is counted in cropsMissing and marked on its example");
+  // Exporting with nothing captured says so rather than doing nothing.
+  const emptyToast = await page.evaluate(async () => {
+    const kept = state.trainingData; state.trainingData = [];
+    try {
+      document.querySelectorAll(".toast").forEach(n => n.remove());
+      document.querySelector('[data-review-action="export-dataset"]').click();
+      await new Promise(r => setTimeout(r, 300));
+      const last = [...document.querySelectorAll(".toast")].pop();
+      return { shown: last ? last.textContent : null, want: t("teach.exportEmpty") };
+    } finally { state.trainingData = kept; }
+  });
+  checks.ok(emptyToast.shown && emptyToast.shown.includes(emptyToast.want), "exporting with nothing captured tells the operator so", emptyToast);
+  // A decision undone while its example is still being written: the example
+  // lands already retracted, never as a live label for an undone decision.
+  const late = await page.evaluate(async () => {
+    const P = MERIT_STORAGE_PROVIDER, put = P.putBlob;
+    P.putBlob = (...a) => new Promise(r => setTimeout(r, 1500)).then(() => put.apply(P, a));
+    try {
+      const before = state.trainingData.length;
+      const target = state.events[0].analysis.candidates.find(c => c.status === "unreviewed");
+      if (!target) return { error: "no unreviewed object" };
+      ui.selectedCandidateId = target.id; render();
+      await new Promise(r => setTimeout(r, 250));
+      document.querySelector('[data-review-action="confirm"]').click();
+      await new Promise(r => setTimeout(r, 150));
+      ui.reviewCenterOpen = true; render();
+      const undo = document.querySelector("[data-review-decision-action='undo-correction']");
+      if (!undo) return { error: "no undo control" };
+      undo.click();
+      await new Promise(r => setTimeout(r, 2600));
+      const fresh = state.trainingData.slice(before);
+      return { landed: fresh.length, live: fresh.filter(r => !r.retracted).length };
+    } finally { P.putBlob = put; }
+  });
+  checks.ok(late.landed > 0 && late.live === 0, "an example that lands after its decision was undone lands retracted", late);
 }
 
 async function decide(page, action) {
