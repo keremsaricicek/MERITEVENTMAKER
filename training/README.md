@@ -1634,3 +1634,30 @@ deleted for disk on 10-28; re-downloaded (`Qwen/Qwen3.5-2B` safetensors; serving
 `--grad-ckpt` had not reached step 10 after 19 min (> 14 s/item, > 15 h). This CPU has AMX-BF16 /
 AVX512-BF16, so `--dtype bf16` (weights and autocast in bf16): 5.4 s/item, peak 9.4 GB. Data, init,
 replay, order, θ and bars unchanged; the abandoned fp32 attempt trained nothing that is used.
+
+## 2026-11-01 — runB7-2B verdict: NOT passed (one wrong change on each of fresh3 and deep; 20 s a sentence)
+
+Raw: `$S/race/b7-2b-f8.json` (copied to `benchmarks/offline-intelligence/assistant-race/b7-2b-f8/`).
+Hybrid θ 0.91, rules `current`, short prompt, Qwen3.5-2B Q4_K_M + adapter.
+
+| set | hybrid right | wrong changes | model alone right / wrong | rules alone |
+|---|---|---|---|---|
+| **fresh4 (decisive, unseen)** | **0.969** | **0** | 1.000 / 0 | 0.500 |
+| fresh3 | 0.921 | **1** | 0.974 / 0 | 0.447 (2 wrong) |
+| fresh2 | 0.900 | 0 | 0.950 / 0 | 0.375 |
+| paraphrases | 0.971 | 0 | 0.971 / 0 | 0.457 |
+| fresh | 0.950 | 0 | 0.925 / 1 | 0.475 |
+| deep | 0.867 | **1** | 0.867 / 1 | 0.533 |
+| original | 1.000 | 0 | 0.971 / 0 | 1.000 |
+
+Every "right" bar passes; the bar "0 wrong changes on all sets" fails twice:
+- fresh3 `hc3` "Can Öztürk'ün yanına Mehmet Kaya'yı al": the model read it right (nextTo) but at 0.79 < θ,
+  so the rules' wrong reading (seats Can Öztürk) was taken. In the product the two disagree, so it
+  would ASK, not act; still a wrong reading under the pre-registered order.
+- deep `dc3` "grubu bir kişi daha büyüdü; kişi sayısını 3 yap ve VIP": the model set pax 4 (added one
+  to the stated 3) at 0.95 ≥ θ: the product would carry it out. A confident arithmetic error.
+- **Speed: median 20.0 s a sentence** (questions ~18 s, commands ~29 s) against 3.2 s for B7c;
+  llama-server measured 3–4 tokens/s both for prompt and generation (0.8B: 45 / 16 tokens/s). Not
+  usable at this speed even if it had passed; cause not yet measured (adapter at run time on Q4_K_M,
+  or the 2B itself) — next.
+Not wired. Briefs (plan requests) for the record: below when measured.
