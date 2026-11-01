@@ -191,18 +191,43 @@
     const modalSpanForDedup=provisionalModalArea?Math.sqrt(provisionalModalArea.value):null;
     const boxesIntersect=(a,b)=>a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h;
     const centreDistance=(a,b)=>Math.hypot((a.x+a.w/2)-(b.x+b.w/2),(a.y+a.h/2)-(b.y+b.h/2));
+    // A PARTIAL READ OF A SURFACE IS NOT THE OBJECT. The tone source is
+    // preferred above because it finds the table surface where the enclosed
+    // interior also takes in a chair tucked against it. On a scan whose fill is
+    // uneven, though, the tone family catches only part of a table: measured on
+    // the third real plan (Golden 2, 2026-11-01) its two upper round tables were
+    // drawn as one closed ring each (interior 91x92, 5951 and 5978 px) while
+    // the tone mask held 2468 px and 391 px of them, so a piece seeded first
+    // and the whole disc was dropped as its duplicate -- and the piece then
+    // left as a fragment. A tone box lying inside an enclosed interior that it
+    // fills less than half of describes part of that surface, not a different
+    // object, and the interior stands for it. A table with a chair tucked
+    // against it is the opposite case: its tone surface is most of the region.
+    const PARTIAL_READ_SHARE=.5;
+    const insideOf=(a,b)=>a.x>=b.x-2&&a.y>=b.y-2&&a.x+a.w<=b.x+b.w+2&&a.y+a.h<=b.y+b.h+2;
+    const partialReadOf=(u,e)=>u.source==="tone"&&e.source==="interior"&&!e.wasSplit&&insideOf(u,e)
+      &&Number.isFinite(u.count)&&Number.isFinite(e.count)&&u.count<PARTIAL_READ_SHARE*e.count;
+    const isDup=(entry,u)=>{
+      if(GEO.boxIoU(entry.comp,u.comp)>=.45)return true;
+      if(!modalSpanForDedup)return false;
+      // Same object seen twice: the boxes actually touch AND their centres
+      // are much closer than one repeated object apart.
+      return boxesIntersect(entry.comp,u.comp)&&centreDistance(entry.comp,u.comp)<modalSpanForDedup*.55;
+    };
     const unique=[];
+    let partialReadsReplaced=0;
     for(const entry of expanded){
-      const dup=unique.some(u=>{
-        if(GEO.boxIoU(entry.comp,u.comp)>=.45)return true;
-        if(!modalSpanForDedup)return false;
-        // Same object seen twice: the boxes actually touch AND their centres
-        // are much closer than one repeated object apart.
-        return boxesIntersect(entry.comp,u.comp)&&centreDistance(entry.comp,u.comp)<modalSpanForDedup*.55;
-      });
-      if(dup)continue;
-      unique.push(entry);
+      const dupAt=[];
+      for(let i=0;i<unique.length;i++)if(isDup(entry,unique[i]))dupAt.push(i);
+      if(!dupAt.length){unique.push(entry);continue;}
+      // Only when EVERY box it duplicates is a partial read of it; otherwise
+      // the earlier choice stands, exactly as before.
+      if(!dupAt.every(i=>partialReadOf(unique[i].comp,entry.comp)))continue;
+      unique[dupAt[0]]=entry;
+      for(let k=dupAt.length-1;k>=1;k--)unique.splice(dupAt[k],1);
+      partialReadsReplaced+=dupAt.length;
     }
+    if(globalThis.MERIT_STAGE_CENSUS)globalThis.MERIT_STAGE_CENSUS.partialReadsReplaced=partialReadsReplaced;
     return { dedupFitness, expanded, modalLong, modalShort, pool, provisionalModalArea,
       splitCount, unique };
   }
