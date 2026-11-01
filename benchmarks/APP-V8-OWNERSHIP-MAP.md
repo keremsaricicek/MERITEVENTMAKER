@@ -582,7 +582,20 @@ broken measurement would have deleted fourteen working functions.
   plan. What is missing is a *structural* test that the provider interface is
   the only way in.
 
-## A23 · Plan knowledge — memory, training data, OCR, Teach Area
+## A23 · Plan knowledge — memory, training data, OCR, Teach Area — adapters leaving one at a time
+
+> **2026-11-01 — the review-session log moved** to `src/review-session-log.js`
+> (`MeritReviewSessionLog.create(deps)`; `operatorSession`,
+> `recordOperatorAction`, `operatorSessionSummary`, `operatorReport`,
+> `operatorReportHTML`; 150 lines). Crossings, measured in stripped code:
+> `activeEvent`, `esc`, `nowISO`, `t`, `uid` (wrappers), `ui` (value), `state`
+> (read through `getState()`; only its `operatorSessions` property is
+> written). The two read-only hooks `globalThis.MeritOperatorSessions` /
+> `MeritOperatorReport` stay in the shell. Characterized first: of nine
+> mutations, four survived every suite (the 50-session cap, the report's undo
+> and unreviewed counts, the rendered action count) — `operator-session` now
+> pins them; 9 of 9 bite on the old and the moved code.
+
 
 - **Lines** 6214–7413 (1,200)
 - **Main functions** `rememberCorrection`, `captureTrainingExample`,
