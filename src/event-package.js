@@ -98,6 +98,42 @@
     return null;
   }
 
+  // WHAT THE ANALYSIS SAYS ABOUT EACH DETECTED OBJECT. The review map draws an
+  // object from its id, kind, status and position straight into attributes
+  // (`data-candidate-box="<id>"`, `class="candidate-box <kind> <status>"`,
+  // `style="left:<x>%"`); the detector only ever writes an id, a word and
+  // numbers there. A file that holds anything else there was edited by hand or
+  // built — and `tests/suites/hostile-record-fields.test.mjs` measured a quote
+  // in any of them turning into an element on the review screen (2026-11-01;
+  // the page's Content-Security-Policy stopped its handler from running). Only
+  // these fields are checked: the rest of the analysis is shown escaped, and
+  // its ids legitimately take forms (`…+handcrafted-…`) a stricter rule refuses.
+  const WORD = /^[A-Za-z][A-Za-z0-9_-]{0,59}$/;
+  const isNum = (v) => typeof v === "number" && Number.isFinite(v);
+  function analysisProblem(a, at) {
+    if (a === undefined || a === null) return null;
+    if (!isRecord(a)) return { path: at, rule: "notRecord" };
+    const list = a.candidates;
+    if (list === undefined || list === null) return null;
+    if (!Array.isArray(list)) return { path: `${at}.candidates`, rule: "notList" };
+    for (let i = 0; i < list.length; i++) {
+      const c = list[i], here = `${at}.candidates[${i}]`;
+      if (!isRecord(c)) return { path: here, rule: "notRecord" };
+      if (c.id !== undefined && !(typeof c.id === "string" && ID.test(c.id))) return { path: `${here}.id`, rule: "badId" };
+      for (const k of ["kind", "status"]) if (c[k] !== undefined && c[k] !== null && !(typeof c[k] === "string" && WORD.test(c[k]))) return { path: `${here}.${k}`, rule: "badId" };
+      for (const k of ["x", "y", "w", "h", "rotation", "confidence"]) if (c[k] !== undefined && c[k] !== null && !isNum(c[k])) return { path: `${here}.${k}`, rule: "notNumber" };
+      const chairs = c.chairDetections;
+      if (chairs === undefined || chairs === null) continue;
+      if (!Array.isArray(chairs)) return { path: `${here}.chairDetections`, rule: "notList" };
+      for (let j = 0; j < chairs.length; j++) {
+        const ch = chairs[j];
+        if (!isRecord(ch)) return { path: `${here}.chairDetections[${j}]`, rule: "notRecord" };
+        for (const k of ["x", "y", "w", "h", "rotation"]) if (ch[k] !== undefined && ch[k] !== null && !isNum(ch[k])) return { path: `${here}.chairDetections[${j}].${k}`, rule: "notNumber" };
+      }
+    }
+    return null;
+  }
+
   function eventProblem(event, at = "event") {
     if (!isRecord(event)) return { path: at, rule: "notRecord" };
     if (event.id !== undefined && !(typeof event.id === "string" && ID.test(event.id))) return { path: `${at}.id`, rule: "badId" };
@@ -124,6 +160,8 @@
         if (b >= 0) return { path: `${here}.chairs[${b}].id`, rule: "badId" };
       }
     }
+    const ap = analysisProblem(event.analysis, `${at}.analysis`);
+    if (ap) return ap;
     for (let i = 0; i < (event.guests || []).length; i++) {
       const g = event.guests[i], here = `${at}.guests[${i}]`;
       if (typeof g.name !== "string" || !g.name.trim()) return { path: `${here}.name`, rule: "notText" };

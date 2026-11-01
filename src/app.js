@@ -22,6 +22,13 @@
   let state,pendingImport=null,quotaToastShown=false;
   const app=document.getElementById("app"),uid=p=>p+"_"+(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)),clone=v=>JSON.parse(JSON.stringify(v));
   const esc=v=>String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
+  // A plan image's address inside style="background-image:url('…')": escaped
+  // for the attribute AND percent-encoded for the CSS string, because the
+  // attribute is decoded before CSS reads it (&#39; is a ' again by then). A
+  // data:/blob: address this product writes carries none of these characters,
+  // so it is unchanged; one from a hand-built file cannot leave either context
+  // (tests/suites/hostile-record-fields.test.mjs).
+  const cssUrl=v=>esc(String(v??"").replace(/['"()\\\s]/g,c=>"%"+c.charCodeAt(0).toString(16).padStart(2,"0").toUpperCase()));
   // Dates follow the active UI language; resolved per call, not at load, so
   // the language toggle takes effect without a reload.
   //
@@ -432,7 +439,7 @@
   }
   function canvasViewportHTML(event,seating){
     const bg=event.background||{},world=worldSize(event);
-    return`<div class="canvas-viewport ${ui.tool==="pan"?"pan-mode":""}" id="canvasViewport"><div class="canvas-world ${ui.grid?"grid-on":""} ${seating?"seating-canvas":""}" id="canvasWorld" style="width:${world.width}px;height:${world.height}px;transform:translate(${ui.pan.x}px,${ui.pan.y}px) scale(${ui.zoom})"><div class="reference-layer" style="display:${bg.visible&&bg.src?"block":"none"};opacity:${bg.opacity??.25};background-image:${bg.src?`url('${bg.src}')`:"none"};background-size:${bg.scale||100}% auto"></div>${event.venueObjects.map(o=>venueObjectHTML(o,seating)).join("")}${event.tables.map(t=>tableObjectHTML(event,t,seating)).join("")}</div>${seating?filterBannerHTML():""}${seating?"":`<div class="canvas-status">${typeof t==="function"?t("canvas.editHint"):"Drag to move · Handles resize and rotate · Delete removes selection"}</div>`}</div>`
+    return`<div class="canvas-viewport ${ui.tool==="pan"?"pan-mode":""}" id="canvasViewport"><div class="canvas-world ${ui.grid?"grid-on":""} ${seating?"seating-canvas":""}" id="canvasWorld" style="width:${world.width}px;height:${world.height}px;transform:translate(${ui.pan.x}px,${ui.pan.y}px) scale(${ui.zoom})"><div class="reference-layer" style="display:${bg.visible&&bg.src?"block":"none"};opacity:${bg.opacity??.25};background-image:${bg.src?`url('${cssUrl(bg.src)}')`:"none"};background-size:${bg.scale||100}% auto"></div>${event.venueObjects.map(o=>venueObjectHTML(o,seating)).join("")}${event.tables.map(t=>tableObjectHTML(event,t,seating)).join("")}</div>${seating?filterBannerHTML():""}${seating?"":`<div class="canvas-status">${typeof t==="function"?t("canvas.editHint"):"Drag to move · Handles resize and rotate · Delete removes selection"}</div>`}</div>`
   }
   function venueObjectHTML(o,seating){
     const selected=!seating&&ui.selectedObjectId===o.id;

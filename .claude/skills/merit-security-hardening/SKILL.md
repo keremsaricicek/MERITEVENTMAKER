@@ -37,6 +37,18 @@ Measured at `65ea956`:
 `prototype-pollution`, `malformed-import`, `html-sink-inventory`,
 `privacy-logs`. The sentence below was the starting point.
 
+**2026-11-01 sweep:** two more suites. `hostile-record-fields` found that a
+hand-built backup/package turned fields nobody types into markup: detected-object
+ids/kinds/statuses/positions (`candidateBox` in `app-v8.js`, unescaped), review
+group and question ids, and the plan image address (`<img src>` on the review,
+`url('…')` on the canvas). The enforced CSP stopped every handler from running
+(measured: refusals in the console, `__pwned` empty) — markup injection,
+contained, not script execution. Fixed at the boundary (`eventProblem` →
+`analysisProblem`) and by escaping in `screen-review.js`/`app.js`; the
+`candidateBox` escaping itself is still owed in `app-v8.js`.
+`hostile-input-panels` covers the F8 assistant and the on-request panels; it
+found nothing (the assistant builds with `textContent`), and is mutation-proven.
+
 The escaping discipline is clearly real. The coverage is unproven.
 
 ## THE RULE THAT DECIDES THIS DIMENSION
