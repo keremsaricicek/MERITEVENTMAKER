@@ -154,6 +154,10 @@
     const pickEvent = (text) => { let r = Tl.findEvent(events, text || "", today).events;
       // "geçen yılbaşı" is never this year's coming one
       if (/\b(gecen|onceki)\b/.test(fold(text))) r = r.filter((e) => e.past);
+      // nothing in the sentence names an event ("Can Öztürk nerede oturuyor?"): the open one
+      // (found by the UX task tests, 2026-11-01); a named event the records lack is still refused
+      const rest = fold(text || "").replace(/\b(bu|su|bugun|bu gece|etkinlik\w*|nerede|nerde|nerelerde|oturuyor\w*|oturacak\w*|otur\w*|hangi|kacinci|masa\w*|koltu\w*|var|mi|mu)\b/g, "").trim();
+      if (!r.length && currentId && !rest) { const ev = events.find((e) => e.id === currentId); if (ev) r = [{ id: ev.id, name: ev.name, date: ev.date, venue: ev.venue || null, past: ev.date < String(today || "") }]; }
       return r.length === 1 ? r[0] : r.length ? { ask: `Hangi etkinlik? ${r.map((e) => e.name).join(", ")}` } : null; };
     let person = null;
     if (q.person) {

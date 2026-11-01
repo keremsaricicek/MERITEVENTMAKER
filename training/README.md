@@ -1709,3 +1709,9 @@ and with letter slips ("imla kurallarına dikkat etmem … i yerine ı … kelim
   swapped, the next key, i/ı mixed; names, events, tables and numbers untouched). Grammar 3 regenerated:
   still `f86107df0ba4c1b0`.
 - **Bars:** as above, plus right ≥ 0.90 on typo5 and 0 wrong changes on it.
+
+**Note (2026-11-01 14:50 UTC, before any B7d/B7-2Bb race result):** the answer code fixed a product bug the
+UX task tests found — a question naming no event ("X nerede oturuyor?") is answered about the open event
+instead of "Bu etkinlik kayıtlarda yok." (`src/assistant-parse.js`, suite `assistant-parse`). The race scores
+gold and model readings through that same code, so a reading's right/wrong is unchanged in kind; earlier
+runs' numbers were measured with the old answer code.

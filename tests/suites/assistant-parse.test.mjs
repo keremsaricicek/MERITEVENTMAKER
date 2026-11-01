@@ -54,4 +54,17 @@ export default async function run({ checks, repoRoot }) {
       checks.equal(calls, want, `C${c.id} "${c.text}" → the right writer calls`, { parsed: r, out });
     } else checks.ok(calls.length === 0 && (c.ask ? !!out.ask : !!out.refuse), `C${c.id} "${c.text}" → nothing changed, it ${c.ask ? "asks" : "refuses"}`, { parsed: r, out });
   }
+
+  // THE OPEN EVENT. A question that names no event is about the event that is open
+  // (found by the UX task tests, 2026-11-01: "Can Öztürk nerede oturuyor?" answered
+  // "Bu etkinlik kayıtlarda yok."). A NAMED event the records lack is still refused.
+  for (const t of ["Can Öztürk nerede oturuyor?", "Can Öztürk hangi masada", "Zeynep Arslan nerede oturacak", "can ozturk nerde"]) {
+    const r = P.parse(t, fx.events, fx.today);
+    const a = r.kind === "question" ? P.answer(r, fx.events, fx.today, fx.current) : { text: "" };
+    checks.ok(/Yılbaşı Galası/.test(a.text), `"${t}" — no event named: answered about the open event`, { parsed: r, answer: a.text });
+  }
+  const viaModel = P.answer({ kind: "question", intent: "seatAt", person: "Can Öztürk", phone: null, event: null, many: false, table: null, steps: [] }, fx.events, fx.today, fx.current);
+  checks.ok(/Yılbaşı Galası/.test(viaModel.text), "a model reading with no event: answered about the open event", viaModel.text);
+  const named = P.answer({ kind: "question", intent: "seatAt", person: "Can Öztürk", phone: null, event: "kenan doğulu konseri", many: false, table: null, steps: [] }, fx.events, fx.today, fx.current);
+  checks.ok(/kayıtlarda yok/.test(named.text), "a named event the records lack is still refused, never swapped for the open one", named.text);
 }
