@@ -84,7 +84,7 @@ function auditScreen() {
     if (!r.width || !r.height || r.right < 0 || r.bottom < 0 || r.left > vw || r.top > vh) continue;
     const cs = getComputedStyle(el);
     if (cs.visibility === "hidden" || cs.display === "none" || Number(cs.opacity) === 0) continue;
-    if (el.closest("[hidden], [aria-hidden='true']")) continue;
+    if (el.closest("[hidden], [aria-hidden='true'], .sr-only")) continue; // sr-only is clipped on purpose
     const text = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join("").trim();
     if (!text) continue;
     const fs = parseFloat(cs.fontSize);
