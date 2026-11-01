@@ -212,6 +212,21 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(api.plan_state.objectsDetected > 0 && api.plan_state.reviewItemsLeft !== null,
     "it reports what is still unresolved", api.plan_state);
 
+  // Pinned 2026-11-01, before the session log left app-v8.js: each of these
+  // survived every suite when mutated. The report's numbers are the record's,
+  // and the page shows the number the data says.
+  const pinned = await page.evaluate(() => {
+    const a = state.events[0].analysis, r = globalThis.MeritOperatorReport();
+    const row = [...document.querySelectorAll(".op-report tr")].find(tr => tr.querySelector("th")?.textContent === t("op.actions"));
+    return { undo: r.undoAvailable, undoWant: (ui.correctionUndo || []).length,
+      unreviewed: r.plan_state.stillUnreviewed, unreviewedWant: a.candidates.filter(c => c.status === "unreviewed").length,
+      shown: row ? row.querySelector("td").textContent : null, total: r.actions.total };
+  });
+  checks.require(pinned.undoWant > 0 && pinned.unreviewedWant > 0, "the session left corrections to undo and objects unreviewed", pinned);
+  checks.equal(pinned.undo, pinned.undoWant, "the report counts the corrections that can still be undone");
+  checks.equal(pinned.unreviewed, pinned.unreviewedWant, "the report counts the objects still unreviewed");
+  checks.equal(pinned.shown, String(pinned.total), "the rendered page shows the action count the record holds");
+
   // ---- it stays on the machine --------------------------------------------
   checks.equal(offOrigin.length - beforeActions, 0,
     "not one off-origin request is attempted from the moment the operator starts being recorded",
@@ -246,4 +261,26 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal(afterReload.count, 1, "the session survives a reload", afterReload);
   checks.equal(afterReload.actions, session.raw.actions.length,
     "with every action intact", afterReload.actions);
+
+  // ---- the log is bounded ---------------------------------------------------
+  // Fifty sessions are kept; a new one beyond that drops the OLDEST, never the
+  // one being recorded.
+  const target = await page.evaluate(() => {
+    const e = state.events[0], a = e.analysis;
+    state.operatorSessions = Array.from({ length: 50 }, (_, i) => ({ id: "old" + i, analysisId: "elsewhere-" + i, eventId: "x",
+      startedAt: new Date().toISOString(), startedAtMs: Date.now(), actions: [], suggestedOrder: [] }));
+    const c = a.candidates.find(x => x.status === "unreviewed");
+    ui.activeEventId = e.id; ui.screen = "workspace"; ui.tab = "floor"; ui.planMode = "review";
+    ui.selectedCandidateId = c && c.id; render();
+    return c && c.id;
+  });
+  checks.require(target, "an unreviewed object is left to act on", target);
+  await click(page, '[data-review-action="confirm"]');
+  await page.waitForTimeout(300);
+  const capped = await page.evaluate(() => ({ n: state.operatorSessions.length,
+    first: state.operatorSessions[0].analysisId, last: state.operatorSessions[state.operatorSessions.length - 1].analysisId,
+    current: state.events[0].analysis.id }));
+  checks.equal(capped.n, 50, "a fifty-first session keeps the log at fifty", capped.n);
+  checks.ok(capped.first === "elsewhere-1" && capped.last === capped.current,
+    "by dropping the oldest and keeping the one being recorded", capped);
 }
