@@ -20,6 +20,11 @@ Modelin calistigini nereden anlarsiniz?
 - Asistanda dil modelinin okudugu cumlelerin altinda bu yazilir.
 - Model dosyasi eksik ya da degismisse bunu acikca soyler ve hicbir sey sormaz.
 
+Yedekler: her degisiklikten birkac saniye sonra tum etkinliklerin bir kopyasi bu
+klasordeki "yedekler" klasorune yazilir (son 20 kopya + her gunun son kopyasi, 30 gun).
+Tarayici temizlense bile geri gelir: Etkinlikler ekraninda disket simgesi ->
+"Diskteki yedekler" -> bir kopya secin. Geri yuklemeden once kontrol edilir ve sorulur.
+
 Hicbir sey internete gitmez; her sey bu bilgisayarda (127.0.0.1) calisir.
 Kapatmak icin siyah pencereyi kapatin.
 

@@ -2384,3 +2384,11 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .assistant-preview .room{fill:#fff;stroke:var(--pi-line)}
 .assistant-preview circle,.assistant-preview rect:not(.room){fill:rgba(47,111,102,.18);stroke:var(--pi-accent);stroke-width:.8}
 .assistant-apply{margin-top:8px;height:30px;font-size:12px}
+
+/* Automatic backup to disk (src/disk-backup.js): the restore picker. A plain
+   list of rows -- when, how many events, how large -- inside the standard
+   small dialog. */
+.disk-backup-list{display:flex;flex-direction:column;gap:var(--sp-1,4px);max-height:min(52vh,420px);overflow:auto}
+.disk-backup-row{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3,12px);width:100%;text-align:left;font-size:13px;border:1px solid var(--pi-line-soft);border-radius:var(--pi-radius-sm)}
+.disk-backup-row b{font-weight:600;color:var(--text)}
+.disk-backup-row .muted{font-size:12px;white-space:nowrap}
