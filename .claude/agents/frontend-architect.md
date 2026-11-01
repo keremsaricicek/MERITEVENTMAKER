@@ -56,7 +56,7 @@ commit as the change that moves it.
 | `plan-detection-classical.js` | **238** lines — the orchestrator `detect()` over seven stage modules (Split A/B) | `wc -l src/plan-detection-classical.js` |
 | Files exporting `globalThis.Merit*` | **96** of **99** | `grep -l "globalThis.Merit" src/*.js \| wc -l` |
 | Classic `<script>` tags in `index.html` | **98**, fixed order, `app-v8.js` LAST (plus one `type="module"` PDF loader) | `grep -c '<script src="src/' index.html` |
-| Test suites | **163** (**11** slow); checks printed by the run | `npm run test:all` |
+| Test suites | **164** (**11** slow); checks printed by the run | `npm run test:all` |
 | CI jobs | **5** parallel, split by what a failure means | `.github/workflows/ci.yml` |
 | Offline verification | every check the verifier prints, by RUNNING the built artifact | `npm run verify:offline` |
 
