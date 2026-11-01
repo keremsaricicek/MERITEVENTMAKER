@@ -126,3 +126,12 @@ suppression), seated chairs 51 → 60/68, loose 12 → 12. But on Golden (merit-
 adversarial-bistro review groups 0 → 1: `benchmark:baseline` reports 3 regressions, and the bar
 said Golden chair FP stays 0. Adversarial/fingerprint not completed (stopped after the failure).
 The 0.5 bar is not raised to make it pass (that would be choosing it after the result).
+
+**Fixed — fusion's "off size" asks the table's own kind (item 5).** Where the model and the
+classical pass agree on ≥ 5 tables of the same kind (round / rect), a model table is compared
+with that kind's median (same ±40 %); otherwise the all-table median as before. Check added to
+`local-model` (failed first: a 91 px round beside 90 px rounds and 50 px squares was "off size").
+Gates: benchmark + baseline no regression; adversarial 0 blocking; fingerprint 28 of 28
+IDENTICAL (recorded on this branch's unchanged code — the committed fingerprint file was stale,
+28/28 different before any change). It changes no measured plan today, Golden 2 included
+(T24 is already found by the classical pass since the B-6 fix): 24/27, 51/68, 12 loose.

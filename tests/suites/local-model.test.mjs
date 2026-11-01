@@ -123,12 +123,21 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
     const r11 = MeritPlanModelFusion.fuse([cand(10, 10, 5, 5)], [], model([{ cls: "table_round", score: 0.95, cx: 600, cy: 600, w: 20, h: 20 }]), frame("PHYSICAL"));
     // nothing to compare with: added, but only as a question
     const r12 = MeritPlanModelFusion.fuse([], [], model([{ cls: "table_round", score: 0.95, cx: 600, cy: 600, w: 20, h: 20 }]), frame("PHYSICAL"));
+    // OFF SIZE IS ASKED OF THE TABLE'S OWN KIND. Six agreed squares (50 px) and
+    // five agreed rounds (90 px): the all-table median is a square's side, so a
+    // missed 90 px ROUND was "off size" (Golden 2's T24, 91 against 62.6), while a
+    // 24 px planter read as a round is still refused against the rounds.
+    const sq = [], rd = [], agreed = [];
+    for (let i = 0; i < 6; i++) { sq.push(cand(5 + i * 8, 5, 5, 5)); agreed.push({ cls: "table_rect", score: 0.9, cx: (5 + i * 8 + 2.5) * 10, cy: 75, w: 50, h: 50 }); }
+    for (let i = 0; i < 5; i++) { rd.push(cand(5 + i * 12, 40, 9, 9)); agreed.push({ cls: "table_round", score: 0.9, cx: (5 + i * 12 + 4.5) * 10, cy: 445, w: 90, h: 90 }); }
+    const rKind = MeritPlanModelFusion.fuse([...sq, ...rd], [], model([...agreed, { cls: "table_round", score: 0.95, cx: 500, cy: 850, w: 91, h: 91 }, { cls: "table_round", score: 0.95, cx: 800, cy: 850, w: 24, h: 24 }]), frame("PHYSICAL"));
     return { addedOne: r1.added.length, addedType: r1.added[0] && r1.added[0].type, lowScoreSkipped: !r1.added.some(x => x.x > 70),
       symbolicChairs: r2.chairsAttached, physicalChairs: r3.chairsAttached, farChairDropped: r3.chairsDropped, chairsOnTable: c[0].chairDetections.length,
       unsupported: r4.unsupported, flagged: d[0].modelSupport, kept: d.length, unavailableAdds: r5.added.length,
       unseenTableChairs: r6.chairsAttached, unseenTableSeats: e[0].chairDetections.length,
       vectorChairs: rv.chairsAttached, vectorField: [v2.vectorSupport, "modelSupport" in v2], offSize: r11.added.length + "/" + r11.offSize, noReference: r12.added.length === 1 && r12.added[0].selected === false && r12.added[0].confidence <= 0.7,
       chairsDefault: rDefault.chairsAttached + g[0].chairDetections.length, onColumn: r7.added.length, textChairs: r8.chairsAttached, textSkipped: r8.chairsInText, textSeats: f[0].chairDetections.length,
+      ownKind: rKind.added.map(a => a.type + ":" + Math.round(a.w * 10)).join(",") + "/" + rKind.offSize,
       columnsDefault: r9.addedVenues.length, columnsEnabled: r10.addedVenues.length,
       attachedRelation: c[0].chairDetections[0] && c[0].chairDetections[0].relation && c[0].chairDetections[0].relation.evidence };
   });
@@ -144,6 +153,8 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
     "a model table drawn at a size no table on the plan is drawn at is not added (a 24 px planter on the Golden Plan); with no classical table to compare with, an addition is only ever a question", rules);
   checks.ok(rules.chairsDefault === 0,
     "model chairs are not attached by default in v1 (on the Golden Plan the chairs only the model saw were 4 right, 3 wrong); the rules below hold for a measured re-enable", rules);
+  checks.ok(rules.ownKind === "round:91/1",
+    "off size is judged against the agreed tables of the same kind when there are five of them: a 91 px round beside 90 px rounds is added though the squares are 50 px; a 24 px 'round' is still refused", rules);
   checks.ok(rules.onColumn === 0, "a model table centred on a classical column is not added — the two disagree about a class; nothing was missed", rules);
   checks.ok(rules.textChairs === 0 && rules.textSkipped === 1 && rules.textSeats === 0,
     "a model chair whose centre lies in a line of printed text is not added — the classical chair stage's own rule (on the Golden Plan two labels read as chairs)", rules);
