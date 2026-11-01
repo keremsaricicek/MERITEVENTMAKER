@@ -7,3 +7,9 @@ step 50/500 items 400 loss 0.0128 lr 1.80e-04 9.90s/item elapsed 66.0min peakRSS
 step 60/500 items 480 loss 0.0164 lr 1.76e-04 9.91s/item elapsed 79.3min peakRSS 13574MB
 step 70/500 items 560 loss 0.0059 lr 1.72e-04 9.91s/item elapsed 92.5min peakRSS 13574MB
 step 80/500 items 640 loss 0.0137 lr 1.68e-04 9.91s/item elapsed 105.7min peakRSS 13574MB
+step 90/500 items 720 loss 0.0183 lr 1.64e-04 9.94s/item elapsed 119.2min peakRSS 13574MB
+resume at item 600 step 75
+start 2026-11-01T21:41:52Z items=4000 epochs=1.0 rank=16 lr=0.0002 accum=8 trainable=9437184 targets=72
+step 80/500 items 640 loss 0.0079 lr 1.68e-04 9.37s/item elapsed 6.2min peakRSS 13596MB
+step 90/500 items 720 loss 0.0180 lr 1.64e-04 9.60s/item elapsed 19.2min peakRSS 13596MB
+step 100/500 items 800 loss 0.0050 lr 1.60e-04 9.30s/item elapsed 31.0min peakRSS 13596MB
