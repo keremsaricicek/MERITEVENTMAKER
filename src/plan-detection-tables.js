@@ -1329,5 +1329,108 @@
   }
 
 
-  globalThis.MeritPlanTables = { version: 1, findTables };
+  // B-14b A LONG TABLE SEATED ALONG BOTH LONG SIDES — seatedLongTables().
+  //
+  // The source size gate (plan-detection-classical.js, tableSizeOk) refuses
+  // every surface whose sides differ by more than 1:3.6, and it is right to: a
+  // wall run, a bar counter, a banquette, a stage edge are all long. On the
+  // third real plan (Golden 2, a SEEN plan since 2026-11-01,
+  // benchmarks/plans/blind/README.md) an 8-seat banquet table drawn 68x247
+  // (aspect 0.275) was refused there with them, and its chairs were left loose.
+  //
+  // What makes a long surface a TABLE is not its shape but who sits at it: a
+  // table seated along a side has seats in a row along it, and a banquet table
+  // has them along BOTH long sides. A counter or a banquette is served from one
+  // side, a wall from none. So the gate is not moved; a surface it refused ONLY
+  // for its aspect is offered back here when, after every table and chair is
+  // known, at least two seats stand along each of its two long sides. Each test
+  // is one this pipeline already states:
+  //   · the seat is drawn smaller than the surface (`seatSurfaceFor`: the
+  //     surface's short side exceeds the seat's long side) — which also rules
+  //     out a banquette, narrower than the armchairs at its tables;
+  //   · it stands against it, within 0.7 of its own long side (`seatSurfaceFor`'s
+  //     reach), outside it, beside the long side's span;
+  //   · a seat already at a table stays there unless it stands closer to this
+  //     surface than to that table (a seat belongs to the surface it is at).
+  // The table it makes is HELD BACK for a person (lowEvidence
+  // "seatedLongSurface"): a new rule offers, it does not confirm.
+  //   IN   sources, refusedOnlyForAspect, candidates, venues, chairVenues, width, height, uid
+  //   OUT  { admitted, candidates, venues } — the same arrays, the new tables appended,
+  //        the seats they took removed from where they were.
+  //   MUTATES the candidates whose seats move (chairDetections, evidence.chairs).
+  const LONG_SURFACE_SEATS_PER_SIDE=2,LONG_SURFACE_SEAT_REACH=.7;
+  function seatedLongTables(input) {
+    const { sources, refusedOnlyForAspect, candidates, chairVenues, width, height, uid } = input;
+    let venues = input.venues;
+    const out = { admitted: 0, candidates, venues };
+    const surfaces = [];
+    for (const src of sources) for (const c of (src.all || [])) {
+      if (!(c.fill >= .35) || !refusedOnlyForAspect(c)) continue;
+      if (surfaces.some(s => GEO.sameObject(s, c))) continue;
+      surfaces.push(c);
+    }
+    if (!surfaces.length) return out;
+    const px = b => ({ x: b.x / 100 * width, y: b.y / 100 * height, w: b.w / 100 * width, h: b.h / 100 * height });
+    const gapBetween = (a, b) => Math.hypot(Math.max(0, a.x - (b.x + b.w), b.x - (a.x + a.w)), Math.max(0, a.y - (b.y + b.h), b.y - (a.y + a.h)));
+    const tables = candidates.filter(c => c.kind === "table");
+    // every seat on the plan, in pixels, with where it is now
+    const seats = [];
+    for (const v of chairVenues) seats.push({ box: px(v), venue: v, table: null, det: null });
+    for (const t of tables) for (const ch of t.chairDetections || []) {
+      const b = px(ch); seats.push({ box: { x: b.x - b.w / 2, y: b.y - b.h / 2, w: b.w, h: b.h }, venue: null, table: t, det: ch });
+    }
+    const taken = new Set();
+    for (const s of surfaces) {
+      const sBox = { x: s.x, y: s.y, w: s.w, h: s.h };
+      if (tables.some(t => { const b = px(t); return GEO.sameObject(b, sBox) || GEO.boxIoU(b, sBox) > 0; })) continue;
+      const vertical = s.h > s.w, shortSide = Math.min(s.w, s.h);
+      const sides = [[], []];
+      for (const seat of seats) {
+        if (taken.has(seat)) continue;
+        const b = seat.box, long = Math.max(b.w, b.h), cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+        if (shortSide <= long) continue;
+        const along = vertical ? cy : cx, lo = vertical ? s.y : s.x, hi = vertical ? s.y + s.h : s.x + s.w;
+        if (along < lo || along > hi) continue;
+        const across = vertical ? cx : cy, a0 = vertical ? s.x : s.y, a1 = vertical ? s.x + s.w : s.y + s.h;
+        const side = across < a0 ? 0 : across > a1 ? 1 : -1;
+        if (side < 0) continue;
+        const gap = gapBetween(b, sBox);
+        if (gap > long * LONG_SURFACE_SEAT_REACH) continue;
+        if (seat.table && !(gap < gapBetween(b, px(seat.table)))) continue;
+        sides[side].push(seat);
+      }
+      if (sides[0].length < LONG_SURFACE_SEATS_PER_SIDE || sides[1].length < LONG_SURFACE_SEATS_PER_SIDE) continue;
+      const mine = [...sides[0], ...sides[1]];
+      const chairDetections = [];
+      for (const seat of mine) {
+        taken.add(seat);
+        const b = seat.box, side = sides[0].includes(seat) ? 0 : 1;
+        if (seat.table) {
+          seat.table.chairDetections = seat.table.chairDetections.filter(d => d !== seat.det);
+          if (seat.table.evidence) seat.table.evidence.chairs = seat.table.chairDetections.length;
+        } else {
+          const i = chairVenues.indexOf(seat.venue); if (i >= 0) chairVenues.splice(i, 1);
+          venues = venues.filter(v => v !== seat.venue);
+        }
+        chairDetections.push({ id: uid("candidate-chair"), x: (b.x + b.w / 2) / width * 100, y: (b.y + b.h / 2) / height * 100,
+          w: b.w / width * 100, h: b.h / height * 100, rotation: 0,
+          confidence: seat.det ? seat.det.confidence : seat.venue.confidence,
+          relation: { ambiguous: false, score: null, margin: null, reason: "seatedLongSurface", runnerUpId: null, runnerUpScore: null, competitors: [],
+            evidence: { positionKind: "edge", positionSide: vertical ? (side ? "right" : "left") : (side ? "bottom" : "top"), distance: Math.round(gapBetween(b, sBox) * 10) / 10 },
+            orientation: { known: false, angle: null, strength: 0, evidence: "notRead", facingKnown: false, facingAngle: null, facingEvidence: "notRead" } } });
+      }
+      candidates.push({ id: uid("candidate"), kind: "table", type: "rectangle", typeEvidence: null,
+        x: s.x / width * 100, y: s.y / height * 100, w: s.w / width * 100, h: s.h / height * 100, rotation: 0,
+        confidence: .5, status: "unreviewed", selected: false,
+        lowEvidence: { reason: "seatedLongSurface", seatsPerSide: [sides[0].length, sides[1].length] },
+        seatFamilies: [], chairDetections,
+        evidence: { geometry: Number(Math.min(.95, s.fill).toFixed(2)), chairs: chairDetections.length, repetition: 0, source: "seatedLongSurface",
+          aspect: Number(s.aspect.toFixed(3)) } });
+      out.admitted++;
+    }
+    out.venues = venues;
+    return out;
+  }
+
+  globalThis.MeritPlanTables = { version: 1, findTables, seatedLongTables };
 })();

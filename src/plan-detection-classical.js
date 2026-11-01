@@ -178,6 +178,12 @@
       const tablesOut=TABLES.findTables({uid,width,height,area,sources,analyze,venueSizeOk,threshold,masksTints,surfaceMask,accentMask,tintIsChairMaterial,chairs,chairModal,chairUniform,chairSource,chairFloorSide,gapTo,protectedRegions,confidenceThreshold,toneRefusedComps});
       const{candidates,chairVenues,pool,debugPool,modalPool,modalArea,modalSeats,modalLong,modalShort,bistrosTyped,reseated,seatsInsideBody,seatsInsideBodyStoodDown,relationStats,splitCount,capReached,offModalDropped,surfaceRejected,chairMaterialRejected,surfaceMinorityFinishKept,fragmentDiagnostics,textGlyphChairsDropped,familyLostToAssociation,familyLostToTextRun,familyFromTableSources,familyVenue,mergedRowVenues,columnComps,chairOBB,toPercentBox}=tablesOut;
       let venues=tablesOut.venues;
+      // B-14b — a long table seated along both long sides (MeritPlanTables,
+      // contract there): offered back from the surfaces the size gate refused
+      // ONLY for their aspect.
+      const refusedOnlyForAspect=c=>!tableSizeOk(c)&&tableSizeOk({...c,aspect:1});
+      const longTables=TABLES.seatedLongTables({sources,refusedOnlyForAspect,candidates,venues,chairVenues,width,height,uid});
+      venues=longTables.venues;
       mark("tables");
       await breathe();
       const associatedSeats=candidates.reduce((n,c)=>n+c.chairDetections.length,0);
@@ -200,7 +206,7 @@
           chairModalSize:chairModal?Number(chairModal.value.toFixed(1)):null,
           tableModalArea:modalArea?Math.round(modalArea.value):null,
           tableModalPool:modalPool.length,
-          tableModalSeats:modalSeats||null,bistrosTyped,chairsReseated:reseated,seatsInsideBody,
+          tableModalSeats:modalSeats||null,bistrosTyped,seatedLongTables:longTables.admitted,chairsReseated:reseated,seatsInsideBody,
           // Present only when the seat-containment gate stood down because it
           // would have claimed most of the plan. Its absence means it ran.
           seatsInsideBodyStoodDown,
