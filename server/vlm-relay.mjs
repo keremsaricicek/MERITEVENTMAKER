@@ -42,6 +42,7 @@ import { fileURLToPath } from "node:url";
 import * as core from "./vlm-core.mjs";
 import { makeLocalClient, checkServing } from "./vlm-local.mjs";
 import { readerFromEnv, makeReader, MAX_TEXT } from "./assistant-reader.mjs";
+import { backupStoreFromEnv } from "./disk-backup.mjs";
 
 export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const RELAY_VERSION = 4;
@@ -100,7 +101,7 @@ const hostAllowed = (hostname, allowed) => {
 };
 const hostnameOf = (hostHeader) => { try { return new URL(`http://${hostHeader}`).hostname; } catch { return null; } };
 
-export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, log = console, now = Date.now, reader = { configured: false, reasonCode: "CHAT_OFF" }, readerImpl } = {}) {
+export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, log = console, now = Date.now, reader = { configured: false, reasonCode: "CHAT_OFF" }, readerImpl, backups = null } = {}) {
   const usage = new core.UsageStore(config.dataDir);
   const runs = new Map();            // runId -> { analysisId, planHash, steps, usd, cancelled, controller, at }
   const askRuns = new Map();         // runId -> { analysisId, planHash, asks, cancelled, controller, at }
@@ -424,10 +425,59 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     return json(res, 200, { ok: true, value, answered: value !== null, cutOff: value === null && answer.finish === "length", ...echo });
   }
 
+  // ---- automatic backup to disk (server/disk-backup.mjs) ---------------------
+  // Same doors as every other POST (refuseCrossSite), and the list and the files
+  // too: they hold every guest of every event. Nothing about a backup's content
+  // is logged — its name (time + event count) and size only.
+  function readText(req, limit) {
+    return new Promise((resolve) => {
+      if (!/^application\/json\b/i.test(req.headers["content-type"] || "")) { req.resume(); resolve({ error: "BAD_PAYLOAD" }); return; }
+      const declared = Number(req.headers["content-length"]);
+      if (Number.isFinite(declared) && declared > limit) { req.resume(); resolve({ error: "PAYLOAD_TOO_LARGE" }); return; }
+      const chunks = []; let size = 0, over = false;
+      req.on("data", (c) => { if (over) return; size += c.length; if (size > limit) { over = true; chunks.length = 0; req.resume(); resolve({ error: "PAYLOAD_TOO_LARGE" }); } else chunks.push(c); });
+      req.on("end", () => { if (!over) resolve({ text: Buffer.concat(chunks).toString("utf8") }); });
+      req.on("error", () => { if (!over) resolve({ error: "BAD_PAYLOAD" }); });
+    });
+  }
+  async function handleBackup(req, res, pathname, url) {
+    if (pathname === "/merit-backup/status" && req.method === "GET") {
+      if (!hostAllowed(hostnameOf(req.headers.host), hosts)) return json(res, 421, { ok: false, code: "HOST_NOT_ALLOWED" });
+      if (!backups) return json(res, 200, { ok: true, enabled: false });
+      const files = backups.list();
+      return json(res, 200, { ok: true, enabled: true, count: files.length, latest: files[0] ? { name: files[0].name, at: files[0].at, events: files[0].events } : null, maxBytes: backups.maxBytes });
+    }
+    const cross = refuseCrossSite(req);
+    if (cross) { req.resume(); return json(res, 403, { ok: false, code: cross }); }
+    if (!backups) { req.resume(); return json(res, 404, { ok: false, code: "BACKUP_OFF" }); }
+    if (pathname === "/merit-backup/list" && req.method === "GET")
+      return json(res, 200, { ok: true, files: backups.list().map(({ name, at, events, size }) => ({ name, at, events, size })) });
+    if (pathname === "/merit-backup/file" && req.method === "GET") {
+      const r = backups.read(url.searchParams.get("name"));
+      if (!r.ok) return json(res, r.code === "BAD_NAME" ? 400 : 404, { ok: false, code: r.code });
+      res.writeHead(200, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff", "content-length": Buffer.byteLength(r.text) });
+      return res.end(r.text);
+    }
+    if (pathname === "/merit-backup/save" && req.method === "POST") {
+      const { text, error } = await readText(req, backups.maxBytes);
+      if (error) return json(res, error === "PAYLOAD_TOO_LARGE" ? 413 : 400, { ok: false, code: error });
+      const w = backups.write(text);
+      if (!w.ok) {
+        say(`backup refused: ${w.code}`);
+        return json(res, w.code === "PAYLOAD_TOO_LARGE" ? 413 : w.code === "WRITE_FAILED" ? 507 : 400, { ok: false, code: w.code });
+      }
+      if (!w.unchanged) say(`backup written: ${w.name} (${w.bytes} bytes${w.removed ? `, ${w.removed} old removed` : ""})`);
+      return json(res, 200, { ok: true, name: w.name, unchanged: !!w.unchanged });
+    }
+    req.resume();
+    return json(res, 405, { ok: false, code: "METHOD" });
+  }
+
   async function handler(req, res) {
-    let pathname;
-    try { pathname = new URL(req.url, "http://relay").pathname; } catch { res.writeHead(400).end(); return; }
+    let pathname, url;
+    try { url = new URL(req.url, "http://relay"); pathname = url.pathname; } catch { res.writeHead(400).end(); return; }
     try {
+      if (pathname.startsWith("/merit-backup/")) return await handleBackup(req, res, pathname, url);
       if (!pathname.startsWith("/vlm-relay/")) {
         if (req.method !== "GET" && req.method !== "HEAD") { res.writeHead(405).end(); return; }
         if (!hostAllowed(hostnameOf(req.headers.host), hosts)) { res.writeHead(421, { "content-type": "text/plain" }).end("host not allowed"); return; }
@@ -470,9 +520,9 @@ function sleep(ms, signal) {
   });
 }
 
-export async function startRelay({ config, client, root = REPO_ROOT, allowedHosts, log = console, reader, readerImpl } = {}) {
+export async function startRelay({ config, client, root = REPO_ROOT, allowedHosts, log = console, reader, readerImpl, backups = null } = {}) {
   const c = client === undefined ? await makeClient(config, { log }) : client;
-  const relay = createRelay({ config, client: c, root, allowedHosts, log, ...(reader ? { reader } : {}), readerImpl });
+  const relay = createRelay({ config, client: c, root, allowedHosts, log, ...(reader ? { reader } : {}), readerImpl, backups });
   const server = http.createServer((req, res) => { relay.handler(req, res); });
   await new Promise((resolve, reject) => { server.once("error", reject); server.listen(config.port, config.host, resolve); });
   const { port } = server.address();
@@ -486,7 +536,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const config = core.configFromEnv(process.env, { repoRoot: REPO_ROOT });
   const allowedHosts = allowedHostsFrom(process.env, config.port);
   const reader = readerFromEnv(process.env);
-  const started = await startRelay({ config, allowedHosts, reader, root: process.env.MERIT_APP_ROOT ? path.resolve(process.env.MERIT_APP_ROOT) : REPO_ROOT });
+  // Automatic backup to disk: MERIT_BACKUP_DIR (the portable package sets its own
+  // "yedekler" folder), otherwise <data dir>/backups; MERIT_BACKUP_DIR=off turns it off.
+  const backups = backupStoreFromEnv(process.env, path.join(config.dataDir, "backups"));
+  const started = await startRelay({ config, allowedHosts, reader, backups, root: process.env.MERIT_APP_ROOT ? path.resolve(process.env.MERIT_APP_ROOT) : REPO_ROOT });
+  console.log(`  backups     ${backups ? `${backups.dir} (newest ${backups.keepLast} + one per day for ${backups.keepDays} days)` : "off"}`);
   console.log(`  F8 reader   ${reader.configured ? `${reader.manifest.name} ${reader.manifest.version} (${reader.manifest.licence}) — reads what the assistant's rules could not; chosen by ${reader.manifest.evidence}` : `off (${reader.reasonCode}${reader.problem ? `: ${reader.problem}` : ""}) — the assistant's rules read alone`}`);
   const s = core.status(config, started.relay.usage.snapshot(), started.relay.usage.ledger());
   console.log("MERIT EVENT MAKER — app + vision-language relay");
