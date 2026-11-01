@@ -1696,3 +1696,16 @@ adapter MERGED into Q8_0 (the speed table above).
 fresh3, fresh2 and paraphrases; 0 wrong changes on every set; briefs ≥ 0.90 / ≤ 0.05; median seconds
 reported. Also reported, not a bar: model-first order and the ask-when-unsure outcome (wrong changes
 that would be carried out).
+
+**Amendment (2026-11-01 08:45 UTC, before any B7d/B7-2Bb result; the first B7d start was stopped after
+2 minutes and its data set aside):** the owner types without apostrophes, punctuation or Turkish letters
+and with letter slips ("imla kurallarına dikkat etmem … i yerine ı … kelime yanlış harfle yazarım").
+- **New test, written now by hand:** `training/assistant/typo5.jsonl` — the 34 fresh5 sentences typed that
+  way (same readings; a name or event in the reading follows the sentence's spelling). Scored like fresh5,
+  except a name echoed in an answer or written by addGuest counts as the same with or without capitals and
+  Turkish letters. Rules alone: fresh5 0.412 (2 wrong changes), typo5 0.324.
+- **Data:** grammar 4 now also types 45 % of sentences carelessly (`careless()` in `synth_f8.mjs`: drop
+  apostrophes 70 %, punctuation 60 %, one or two slips in ordinary words — a letter dropped, doubled,
+  swapped, the next key, i/ı mixed; names, events, tables and numbers untouched). Grammar 3 regenerated:
+  still `f86107df0ba4c1b0`.
+- **Bars:** as above, plus right ≥ 0.90 on typo5 and 0 wrong changes on it.

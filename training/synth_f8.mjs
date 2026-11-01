@@ -239,6 +239,33 @@ const grams = (ws) => ws.slice(0, -3).map((_, i) => ws.slice(i, i + 4).join(" ")
 const testGrams = G4 ? new Set([...testTexts].flatMap((t) => grams(t.split(" ").map((w) => (NAMEW.has(w) ? "N" : w))))) : new Set();
 for (const pool of [FIRST, LAST, ARTISTS, VENUES]) for (const x of pool) for (const w of norm(x).split(" ")) if (banned.has(w)) throw new Error(`pool word "${x}" is a test word`);
 
+// grammar 4: typed the way the owner types (2026-11-01: "imla kurallarına dikkat etmem … nokta virgül
+// yada i yerine ı yazamayabilirim … kelime yanlış harfle yazarım"): no apostrophes or punctuation,
+// i/ı mixed up, a letter dropped, doubled, swapped or hit on the next key — in ordinary words only.
+// Names, events, tables and numbers keep their letters (the reading copies them as written).
+const NEAR = { a: "s", e: "r", i: "ı", ı: "i", o: "p", u: "y", r: "t", t: "y", n: "m", m: "n", k: "l", l: "k", s: "d", d: "s", y: "u", g: "ğ", c: "ç", z: "x" };
+function careless(text, reading) {
+  const keep = new Set();
+  const add = (v) => { if (typeof v === "string") for (const w of norm(v).split(" ")) keep.add(w); };
+  for (const k of ["person", "event", "phone", "table"]) add(reading[k]);
+  for (const st of reading.steps) for (const k of ["guest", "table", "from", "other", "name", "fromTable"]) add(st[k]);
+  if (chance(0.7)) text = text.replace(/[’']/g, "");
+  if (chance(0.6)) text = text.replace(/[?!.,]/g, "").replace(/\s+/g, " ").trim();
+  const words = text.split(" "), slips = 1 + (chance(0.35) ? 1 : 0);
+  for (let k = 0, tries = 0; k < slips && tries < 12; tries++) {
+    const i = Math.floor(rnd() * words.length), w = words[i];
+    if (w.length < 4 || /\d/.test(w) || keep.has(norm(w)) || [...keep].some((x) => x && norm(w).startsWith(x))) continue;
+    const j = 1 + Math.floor(rnd() * (w.length - 2)), r = rnd();
+    words[i] = r < 0.25 ? w.slice(0, j) + w.slice(j + 1)
+      : r < 0.45 ? w.slice(0, j) + w[j] + w.slice(j)
+      : r < 0.65 ? w.slice(0, j) + w[j + 1] + w[j] + w.slice(j + 2)
+      : r < 0.85 ? w.slice(0, j) + (NEAR[w[j]] || w[j]) + w.slice(j + 1)
+      : w.replace(/ı/g, "i").replace(/(?<=\S)i/g, chance(0.5) ? "ı" : "i");
+    k++;
+  }
+  return words.join(" ");
+}
+
 // ---- write ------------------------------------------------------------------------
 const out = arg("out"), N = Number(arg("n", 2400));
 fs.mkdirSync(out, { recursive: true });
@@ -251,6 +278,7 @@ while (n < N) {
   const r = rnd();
   let [text, reading] = r < 0.42 ? question() : r < (G2 ? 0.89 : 0.93) ? command() : [G4 && chance(0.3) ? pick(SMALL4) : G3 && chance(0.4) ? pick(SMALL3) : G2 && chance(0.5) ? pick(SMALL2) : pick(SMALL), Ur()];
   [text, reading] = finish(text, reading, reading.kind === "question");
+  if (G4 && chance(0.45)) text = careless(text, reading);
   const key = norm(text);
   if (testTexts.has(key) || seen.has(key) || (G4 && grams(frame(text)).some((g) => testGrams.has(g))) || key.split(" ").some((w) => banned.has(w)) || !R.valid(reading)) { skipped++; continue; }
   seen.add(key);
