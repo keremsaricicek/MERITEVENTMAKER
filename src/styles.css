@@ -2411,3 +2411,11 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 /* At 11px the import wizard's widest Turkish head ("TOPLAM KİŞİ") ran 4px into
    the next column at 1440 wide; tighter tracking keeps it in its own. */
 .wz-table th{letter-spacing:.02em}
+/* The event's date · venue line ellipsizes like its name above it: at 11px a
+   long venue wrapped onto the tabs and swallowed their clicks (hostile-input). */
+.event-id span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* A review pin sits just above-right of the point it marks instead of on it:
+   centred, it covered the middle of the table it was about, so clicking the
+   table opened the pin's question instead (ux-operator-tasks, every pass). */
+.review-pin{transform:translate(-15%,-115%)}
+.review-pin:hover{transform:translate(-15%,-115%) scale(1.12)}

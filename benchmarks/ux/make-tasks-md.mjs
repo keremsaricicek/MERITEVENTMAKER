@@ -58,7 +58,16 @@ for (const T of TASKS) {
 md += `\nc = clicks, k = keystrokes, s = seconds. ✗ = the task's outcome was not in the data (see its table).\n\n`;
 md += `| Per pass | ${results.map((r) => r.combo).join(" | ")} |\n|---|${results.map(() => "---").join("|")}|\n`;
 md += `| Native dialogs | ${results.map((r) => (r.nativeDialogs || []).length).join(" | ")} |\n`;
-md += `| Console / page errors | ${results.map((r) => (r.errors || []).length).join(" | ")} |\n\n`;
+md += `| Console / page errors | ${results.map((r) => (r.errors || []).length).join(" | ")} |\n`;
+const perPass = (r, f) => { const set = new Set(); for (const t of r.tasks) for (const s of t.steps) f(s.audit).forEach((k) => set.add(k)); return set.size; };
+const passRow = (label, f) => {
+  md += `| ${label} | ${results.map((r) => { const now = perPass(r, f); const b = before && before.find((x) => x.combo === r.combo); const then = b ? perPass(b, f) : null; return then !== null && then !== now ? `${now} (was ${then})` : `${now}`; }).join(" | ")} |\n`;
+};
+passRow("Distinct texts < 11px", (a) => a.small.filter((x) => x.px < 11).map((x) => x.rule + x.text));
+passRow("Distinct texts 11–11.9px", (a) => a.small.filter((x) => x.px >= 11).map((x) => x.rule + x.text));
+passRow("Cut-off or spilled texts", (a) => [...a.clipped, ...a.spill].filter((x) => !/sr-only|a11yAnnouncer/.test(x.el)).map((x) => x.el + x.text));
+passRow("Pages scrolling sideways", (a) => (a.overflowX > 0 ? ["x"] : []));
+md += "\n";
 
 for (const T of TASKS) {
   md += `## ${T.title}\n\n| Viewport | Clicks | Keys | Seconds | Done | Focus visible | Problems (screenshot) |\n|---|---|---|---|---|---|---|\n`;
