@@ -1769,3 +1769,22 @@ rıza oktayı da yaz", "Oya Ergin'i listeye yaz, T03'e oturt", "Deniz Yurt ve e�
 so ask-when-unsure asks instead of acting on three of them; the hybrid's wrong changes on deep/fresh3 are the rules'
 reading taken when the model was below θ. Grammar 5 did not generalise; more of the same grammar is not the next step.
 Files: `benchmarks/offline-intelligence/assistant-race/b7e-f8/`, `b7e-briefs.json`.
+
+## 2026-11-02 — Grounding the reading in the sentence and the guest list (written before any measurement on fresh7/typo7)
+
+**Why:** B7c/B7d/B7e fail on names (training/README.md runB7e verdict) — "rıza oktayı" read as "okta", "mehmet
+kayanin" as "mehmet kayan". More training of the same kind stopped helping. The change is in the product, not the
+model: every name and event word the model returns is checked against the user's own sentence and the event's
+guest list; a reading that does not ground is never carried out by itself (it is shown and waits for Onayla).
+**Decisive tests, written first by hand:** `training/assistant/fresh7.jsonl` (24: 9 questions, 13 commands, 2 not
+ours; sha256 begins `29c13061dbc3d244`) and `typo7.jsonl` (the same 24 typed the owner's way, `6f9a80f6bab51d73`).
+fresh3–6 and typo5–6 are now the development sets the grounding is built on; they are SEEN.
+**Measured as the product works** (`assistant_race.mjs --order product`, src/screen-assistant.js reply): the model
+reads first; a command is carried out at once only when sure (conf ≥ θ 0.91 and, new, grounded) or when the rules
+resolve the very same change; otherwise shown first. `right` = the right answer or the right change (at once, or
+shown and confirmed with one click); `rightAtOnce` also reported; a wrong preview is never a wrong change but is
+counted (`shownWrong`).
+**Owner's shipping rule (2026-11-02, his words: "85 üstüyse takılabilir"):** a model is shipped when product
+`right` ≥ 0.85 on fresh7 AND typo7 with 0 wrong changes on every set; the best measured one is shipped. This is
+the owner's decision and is recorded as such — it is NOT the pre-registered 0.90 bar, which stays the target
+(then 0.95). Candidates: B7c (shipped), B7d, B7e (0.8B), and the 2B (runB7-2Bb) when it finishes.

@@ -56,6 +56,9 @@ const items = [
   ...(flag("typo5") ? lines("typo5.jsonl").map((d) => ({ set: "typo5", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("fresh6") ? lines("fresh6.jsonl").map((d) => ({ set: "fresh6", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("typo6") ? lines("typo6.jsonl").map((d) => ({ set: "typo6", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  // `--fresh7 --typo7`: written 2026-11-02 before the name grounding (training/README.md "Grounding")
+  ...(flag("fresh7") ? lines("fresh7.jsonl").map((d) => ({ set: "fresh7", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("typo7") ? lines("typo7.jsonl").map((d) => ({ set: "typo7", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("fresh3") ? lines("fresh3.jsonl").map((d) => ({ set: "fresh3", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...lines("variants.jsonl").map((v) => {
     const n = Number(v.sameAs.slice(1));
@@ -103,13 +106,13 @@ function outcome(item, parsed) {
   return { calls, kind: calls.length ? "calls" : out.refuse ? "refuse" : out.ask ? "ask" : "nothing" };
 }
 function score(item, parsed) {
-  if (item.set === "deep" || item.set === "fresh" || item.set === "fresh2" || item.set === "fresh3" || item.set === "fresh4" || item.set === "fresh5" || item.set === "typo5" || item.set === "fresh6" || item.set === "typo6") {
+  if (item.gold) {
     // not ours to read (small talk, the world outside): right only when read as "unknown"
     if (item.kind === "unknown") { const got = outcome(item, parsed); return { right: parsed.kind === "unknown", wrongChange: got.calls.length > 0, calls: got.calls }; }
     const want = outcome(item, toParse(item.gold)), got = outcome(item, parsed);
     // typo5: the sentence is typed carelessly, so a name echoed or added may come back with or
     // without capitals and Turkish letters — the same person either way
-    const same = item.set === "typo5" || item.set === "typo6" ? (a, b) => globalThis.MeritAssistantTools.fold(String(a)) === globalThis.MeritAssistantTools.fold(String(b)) : (a, b) => a === b;
+    const same = /^typo/.test(item.set) ? (a, b) => globalThis.MeritAssistantTools.fold(String(a)) === globalThis.MeritAssistantTools.fold(String(b)) : (a, b) => a === b;
     if (item.kind === "question") return { right: !!want.text && same(got.text, want.text), wrongChange: false, answer: got.text };
     const right = same(JSON.stringify(got.calls), JSON.stringify(want.calls)) && got.kind === want.kind;
     return { right, wrongChange: !right && got.calls.length > 0, calls: got.calls };
@@ -135,6 +138,30 @@ function score(item, parsed) {
     return { right, wrongChange: !right && calls.length > 0, calls };
   }
   return { right: calls.length === 0 && (c.ask ? !!out.ask : !!out.refuse), wrongChange: calls.length > 0, calls };
+}
+
+// `product` (2026-11-02): exactly what the F8 panel does (src/screen-assistant.js answer/reply). The model
+// reads first; a question is answered from its reading; a command it read is carried out at once only
+// when it is sure (conf >= --theta) or the rules resolve the very same change — otherwise it is SHOWN
+// and waits for Onayla: right only if the preview is the right change (one click), never a wrong change.
+// Without a model reading, the rules' reading; a deletion only the rules read is shown first too.
+function product(item, rules, mp, conf) {
+  const byModel = mp && mp.kind !== "unknown", r = byModel ? mp : rules;
+  const s = score(item, r);
+  if (r.kind !== "command") return s;
+  const ev = JSON.parse(JSON.stringify(fx.events));
+  const A = globalThis.MeritAssistantActions.create({ events: () => ev, current: () => fx.current, today: () => fx.today, canMutate: (e) => e.date >= fx.today && e.status !== "Completed", writers: {}, snapshot: () => null, registerUndo: () => {} });
+  const key = (res) => res.steps ? JSON.stringify(res.steps.map((x) => [x.op, x.guestId || x.name, x.tableId || x.table || null, x.seats || null, x.pax || null])) : null;
+  let unsure;
+  if (byModel) {
+    const agreed = rules.kind === "command" && key(A.resolve(r.plan)) !== null && key(A.resolve(r.plan)) === key(A.resolve(rules.plan));
+    const sure = conf != null && conf >= Number(arg("theta", "0.91")) && (!R.grounded || R.grounded(r, item.text, ev, fx.current));
+    unsure = !(agreed || sure);
+  } else unsure = r.plan.some((st) => st.op === "deleteGuest");
+  if (!unsure) return s;
+  const res = A.resolve(r.plan);
+  if (res.ask || res.refuse) return { right: s.right && !s.wrongChange && s.calls.length === 0, wrongChange: false, calls: [], asked: true };
+  return { right: s.right, wrongChange: false, calls: [], click: true, shownWrong: !s.right };
 }
 
 if (flag("check-gold")) {
@@ -164,27 +191,31 @@ for (const it of items) {
     row.both = order === "model-first" ? (modelRead ? row.model : row.rules)
       : order === "hybrid" ? (modelRead && (rules.kind === "unknown" || (m.conf != null && m.conf >= Number(arg("theta", "0.87")))) ? row.model : rules.kind !== "unknown" ? row.rules : row.model)
       : rules.kind === "unknown" ? row.model : row.rules;
+    row.product = product(it, rules, mp, m.conf);
   }
   rows.push(row);
   process.stdout.write(`${it.id} rules:${row.rules.right ? "+" : "-"}${row.model ? ` model:${row.model.right ? "+" : "-"}${row.model.wrongChange ? "!" : ""} ${row.model.seconds.toFixed(1)}s` : ""}\n`);
 }
 const sum = (set, k) => {
   const rs = rows.filter((r) => r.set === set && r[k]);
-  return rs.length ? { n: rs.length, right: +(rs.filter((r) => r[k].right).length / rs.length).toFixed(3), wrongChanges: rs.filter((r) => r[k].wrongChange).length } : null;
+  return rs.length ? { n: rs.length, right: +(rs.filter((r) => r[k].right).length / rs.length).toFixed(3), wrongChanges: rs.filter((r) => r[k].wrongChange).length,
+    ...(k === "product" ? { rightAtOnce: +(rs.filter((r) => r[k].right && !r[k].click).length / rs.length).toFixed(3), shownWrong: rs.filter((r) => r[k].shownWrong).length } : {}) } : null;
 };
 const secs = rows.filter((r) => r.model).map((r) => r.model.seconds).sort((a, b) => a - b);
 const summary = { label, at: new Date().toISOString(),
-  original: { rules: sum("original", "rules"), model: sum("original", "model"), both: sum("original", "both") },
-  variant: { rules: sum("variant", "rules"), model: sum("variant", "model"), both: sum("variant", "both") },
-  deep: { rules: sum("deep", "rules"), model: sum("deep", "model"), both: sum("deep", "both") },
-  ...(flag("fresh") ? { fresh: { rules: sum("fresh", "rules"), model: sum("fresh", "model"), both: sum("fresh", "both") } } : {}),
-  ...(flag("fresh2") ? { fresh2: { rules: sum("fresh2", "rules"), model: sum("fresh2", "model"), both: sum("fresh2", "both") } } : {}),
-  ...(flag("fresh4") ? { fresh4: { rules: sum("fresh4", "rules"), model: sum("fresh4", "model"), both: sum("fresh4", "both") } } : {}),
-  ...(flag("fresh5") ? { fresh5: { rules: sum("fresh5", "rules"), model: sum("fresh5", "model"), both: sum("fresh5", "both") } } : {}),
-  ...(flag("typo5") ? { typo5: { rules: sum("typo5", "rules"), model: sum("typo5", "model"), both: sum("typo5", "both") } } : {}),
-  ...(flag("fresh6") ? { fresh6: { rules: sum("fresh6", "rules"), model: sum("fresh6", "model"), both: sum("fresh6", "both") } } : {}),
-  ...(flag("typo6") ? { typo6: { rules: sum("typo6", "rules"), model: sum("typo6", "model"), both: sum("typo6", "both") } } : {}),
-  ...(flag("fresh3") ? { fresh3: { rules: sum("fresh3", "rules"), model: sum("fresh3", "model"), both: sum("fresh3", "both") } } : {}),
+  original: { rules: sum("original", "rules"), model: sum("original", "model"), both: sum("original", "both"), product: sum("original", "product") },
+  variant: { rules: sum("variant", "rules"), model: sum("variant", "model"), both: sum("variant", "both"), product: sum("variant", "product") },
+  deep: { rules: sum("deep", "rules"), model: sum("deep", "model"), both: sum("deep", "both"), product: sum("deep", "product") },
+  ...(flag("fresh") ? { fresh: { rules: sum("fresh", "rules"), model: sum("fresh", "model"), both: sum("fresh", "both"), product: sum("fresh", "product") } } : {}),
+  ...(flag("fresh2") ? { fresh2: { rules: sum("fresh2", "rules"), model: sum("fresh2", "model"), both: sum("fresh2", "both"), product: sum("fresh2", "product") } } : {}),
+  ...(flag("fresh4") ? { fresh4: { rules: sum("fresh4", "rules"), model: sum("fresh4", "model"), both: sum("fresh4", "both"), product: sum("fresh4", "product") } } : {}),
+  ...(flag("fresh5") ? { fresh5: { rules: sum("fresh5", "rules"), model: sum("fresh5", "model"), both: sum("fresh5", "both"), product: sum("fresh5", "product") } } : {}),
+  ...(flag("typo5") ? { typo5: { rules: sum("typo5", "rules"), model: sum("typo5", "model"), both: sum("typo5", "both"), product: sum("typo5", "product") } } : {}),
+  ...(flag("fresh6") ? { fresh6: { rules: sum("fresh6", "rules"), model: sum("fresh6", "model"), both: sum("fresh6", "both"), product: sum("fresh6", "product") } } : {}),
+  ...(flag("typo6") ? { typo6: { rules: sum("typo6", "rules"), model: sum("typo6", "model"), both: sum("typo6", "both"), product: sum("typo6", "product") } } : {}),
+  ...(flag("fresh7") ? { fresh7: { rules: sum("fresh7", "rules"), model: sum("fresh7", "model"), both: sum("fresh7", "both"), product: sum("fresh7", "product") } } : {}),
+  ...(flag("typo7") ? { typo7: { rules: sum("typo7", "rules"), model: sum("typo7", "model"), both: sum("typo7", "both"), product: sum("typo7", "product") } } : {}),
+  ...(flag("fresh3") ? { fresh3: { rules: sum("fresh3", "rules"), model: sum("fresh3", "model"), both: sum("fresh3", "both"), product: sum("fresh3", "product") } } : {}),
   medianSeconds: secs.length ? secs[Math.floor(secs.length / 2)] : null };
 fs.writeFileSync(arg("out"), JSON.stringify({ summary, rows }, null, 1));
 console.log(JSON.stringify(summary));
