@@ -49,15 +49,15 @@ commit as the change that moves it.
 
 | Fact | Value | How to re-measure |
 |---|---|---|
-| `src/*.js` files | **98** | `ls src/*.js \| wc -l` |
-| `src/` total lines | **33516** | `wc -l src/*.js` |
+| `src/*.js` files | **99** | `ls src/*.js \| wc -l` |
+| `src/` total lines | **33854** | `wc -l src/*.js` |
 | `app-v8.js` | **5379** lines (5,740 right after the detection extraction and 8,543 before it — history, in CLAUDE.md) | `wc -l src/app-v8.js` |
 | Longest single line in `app-v8.js` | **1,677** chars; **16** lines exceed 500 | `awk '{print length}' src/app-v8.js \| sort -rn \| head -1` |
-| `plan-detection-classical.js` | **238** lines — the orchestrator `detect()` over seven stage modules (Split A/B) | `wc -l src/plan-detection-classical.js` |
-| Files exporting `globalThis.Merit*` | **95** of **98** | `grep -l "globalThis.Merit" src/*.js \| wc -l` |
-| Classic `<script>` tags in `index.html` | **97**, fixed order, `app-v8.js` LAST (plus one `type="module"` PDF loader) | `grep -c '<script src="src/' index.html` |
-| Test suites | **163** (**11** slow); checks printed by the run | `npm run test:all` |
-| CI jobs | **5** parallel, split by what a failure means | `.github/workflows/ci.yml` |
+| `plan-detection-classical.js` | **244** lines — the orchestrator `detect()` over seven stage modules (Split A/B) | `wc -l src/plan-detection-classical.js` |
+| Files exporting `globalThis.Merit*` | **96** of **99** | `grep -l "globalThis.Merit" src/*.js \| wc -l` |
+| Classic `<script>` tags in `index.html` | **98**, fixed order, `app-v8.js` LAST (plus one `type="module"` PDF loader) | `grep -c '<script src="src/' index.html` |
+| Test suites | **173** (**12** slow); checks printed by the run | `npm run test:all` |
+| CI jobs | **6**: 5 parallel, split by what a failure means, then release-report | `.github/workflows/ci.yml` |
 | Offline verification | every check the verifier prints, by RUNNING the built artifact | `npm run verify:offline` |
 
 **There ARE automated tests.** An earlier version of this file said there

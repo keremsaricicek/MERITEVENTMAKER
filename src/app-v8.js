@@ -1178,9 +1178,9 @@
   }
   function bindSetup(){
     document.querySelector("[data-setup='cancel']").onclick=()=>{ui.screen="events";render();};
-    const drop=document.getElementById("v8PlanDrop"),input=document.getElementById("v8PlanFile");drop.onclick=e=>{e.preventDefault();input.click();};input.onchange=()=>handlePlanFile(input.files[0]);
+    const drop=document.getElementById("v8PlanDrop"),input=document.getElementById("v8PlanFile");drop.onclick=e=>{if(e.target===input)return;e.preventDefault();input.click();};input.onchange=()=>handlePlanFile(input.files[0]);
     drop.ondragover=e=>{e.preventDefault();drop.classList.add("dragging")};drop.ondragleave=()=>drop.classList.remove("dragging");drop.ondrop=e=>{e.preventDefault();drop.classList.remove("dragging");handlePlanFile(e.dataTransfer.files[0]);};
-    document.querySelector("[data-cover-drop]").onclick=e=>{e.preventDefault();document.getElementById("v8CoverFile").click();};document.getElementById("v8CoverFile").onchange=async e=>{const f=e.target.files[0];if(f){syncSetupFields();let cover;try{cover=await readImageFile(f);}catch{return toast(t("plan.unreadableImage"),"error",6500);}newEventDraft.coverImage=cover;render();}};
+    document.querySelector("[data-cover-drop]").onclick=e=>{const f=document.getElementById("v8CoverFile");if(e.target===f)return;e.preventDefault();f.click();};document.getElementById("v8CoverFile").onchange=async e=>{const f=e.target.files[0];if(f){syncSetupFields();let cover;try{cover=await readImageFile(f);}catch{return toast(t("plan.unreadableImage"),"error",6500);}newEventDraft.coverImage=cover;render();}};
     document.querySelectorAll("[data-pdf-page]").forEach(b=>b.onclick=e=>{e.stopPropagation();syncSetupFields();selectPdfPage(Number(b.dataset.pdfPage));});
     document.querySelector("[data-setup='remove-cover']")?.addEventListener("click",e=>{e.preventDefault();syncSetupFields();newEventDraft.coverImage="";render();});
     document.querySelector("[data-setup='replace-plan']")?.addEventListener("click",e=>{e.preventDefault();input.click();});
