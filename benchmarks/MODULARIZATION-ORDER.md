@@ -342,6 +342,10 @@ first: they are the smallest win per commit, and doing them early would have
 spent the programme's early credibility on changes nobody notices. After Step
 4 they are routine.
 
+> **A25 moved 2026-11-01** as a capability module created with its
+> dependencies (`src/data-portability.js`, the `screen-modules` pattern), after
+> `data-portability` pinned the seven side effects no suite held.
+
 **Responsibility moved** each adapter joins its module (`src/event-handover.js`,
 `src/audit-trail.js`, `src/service-load.js`) or becomes a small new file
 (`src/onboarding.js`, `src/arrival-writer.js`, `src/data-portability.js`).

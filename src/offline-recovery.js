@@ -1,6 +1,6 @@
 // OFFLINE RECOVERY — an unattended safety net distinct from backup/restore.
 //
-// `exportBackup()` (app-v8.js) is the ONLY thing this product calls "backed
+// `exportBackup()` (src/data-portability.js) is the ONLY thing this product calls "backed
 // up," and it means one specific fact: a file actually left the browser.
 // This module is not that. It is a small, automatic ring buffer of recent
 // full-state snapshots kept INSIDE the same browser storage the live state

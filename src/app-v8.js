@@ -463,7 +463,7 @@
   }
   function persistPayload(payload,show){
     return saveAndReadBack(payload)
-      .then(()=>{if(show)toast(t("toast.savedLocally"),"success");lastStoredRaw=payload;clearUnloadJournal();autoSnapshot(payload);storageRecovered();imagesStored();})
+      .then(()=>{if(show)toast(t("toast.savedLocally"),"success");lastStoredRaw=payload;clearUnloadJournal();PORTABILITY.autoSnapshot(payload);storageRecovered();imagesStored();})
       .catch(error=>{
         if(error&&error.readBack)throw error;
         // Large embedded images are the only realistic reason a save this
@@ -985,7 +985,7 @@
   // what it reads; shell functions go over as late-binding wrappers, so a body
   // this file reassigns later is the one that runs. ----------------------------
   const COMMAND=globalThis.MeritScreenCommand.create({
-    activeEvent:(...a)=>activeEvent(...a),addHandoverNote:(...a)=>addHandoverNote(...a),AVAIL:(...a)=>AVAIL(...a),canMutate:(...a)=>canMutate(...a),doctorSignature:(...a)=>doctorSignature(...a),esc:(...a)=>esc(...a),eventMetrics:(...a)=>eventMetrics(...a),eventReadiness:(...a)=>eventReadiness(...a),exportBackup:(...a)=>exportBackup(...a),fmtDate:(...a)=>fmtDate(...a),getLive:()=>LIVE,HANDOVER:(...a)=>HANDOVER(...a),OCC:(...a)=>OCC(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxOf:(...a)=>paxOf(...a),planDoctorReport:(...a)=>planDoctorReport(...a),recordFinalCheck:(...a)=>recordFinalCheck(...a),relativeTime:(...a)=>relativeTime(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedHandoverNotes:(...a)=>resolvedHandoverNotes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),serviceLoadHTML:(...a)=>serviceLoadHTML(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),ui,
+    activeEvent:(...a)=>activeEvent(...a),addHandoverNote:(...a)=>addHandoverNote(...a),AVAIL:(...a)=>AVAIL(...a),canMutate:(...a)=>canMutate(...a),doctorSignature:(...a)=>doctorSignature(...a),esc:(...a)=>esc(...a),eventMetrics:(...a)=>eventMetrics(...a),eventReadiness:(...a)=>eventReadiness(...a),exportBackup:(...a)=>PORTABILITY.exportBackup(...a),fmtDate:(...a)=>fmtDate(...a),getLive:()=>LIVE,HANDOVER:(...a)=>HANDOVER(...a),OCC:(...a)=>OCC(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxOf:(...a)=>paxOf(...a),planDoctorReport:(...a)=>planDoctorReport(...a),recordFinalCheck:(...a)=>recordFinalCheck(...a),relativeTime:(...a)=>relativeTime(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedHandoverNotes:(...a)=>resolvedHandoverNotes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),serviceLoadHTML:(...a)=>serviceLoadHTML(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),ui,
   });
   // What was checked, reduced to something two runs can be compared on. Codes
   // and counts, not wording: a translation change must not read as the event
@@ -5081,193 +5081,15 @@
     bindReviewDrawing();
   }
 
-  // Backup/restore: a product-level export of the app's own structured
-  // state, distinct from the operational XLSX workbook. Never overwrites
-  // current data with a file that fails format, structure or referential
-  // integrity checks -- each failure is a specific, translated toast rather
-  // than a generic "invalid file".
-  function buildBackupPayload(){return{format:"merit-event-maker-backup",formatVersion:1,exportedAt:nowISO(),payload:state};}
-  function exportBackup(){
-    const blob=new Blob([JSON.stringify(buildBackupPayload(),null,2)],{type:"application/json"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");a.href=url;a.download=`merit-event-maker-yedek-${RULES().todayKey()}.json`;
-    document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),4000);
-    // Recorded only here, after the file has actually been handed to the
-    // browser. The radar reads this to say whether a copy of the event exists
-    // anywhere, so it must never be set by opening a dialog or by an export
-    // that failed -- "backed up" has to mean a file really left.
-    state.lastBackupAt=nowISO();
-    saveState();
-    toast(t("backup.exportedToast"),"success");
-  }
-  function backupReferencesIntact(payload){
-    for(const event of payload.events||[]){
-      const tableIds=new Set((event.tables||[]).map(x=>x.id));
-      for(const g of event.guests||[])if(g.assignment&&g.assignment.tableId&&!tableIds.has(g.assignment.tableId))return false;
-    }
-    return true;
-  }
-  // The SAME file input serves both formats: a whole-install backup and a
-  // single portable event package are both "a file the operator picked to
-  // bring data in," and asking them to remember two different buttons for
-  // what looks like one action would be the wrong kind of precision. Which
-  // flow runs is decided from the file's own format marker, never the
-  // control that opened the picker.
-  // A file is refused WHOLE, with a message, before anything is replaced --
-  // never half-applied and never a silent TypeError out of the file reader.
-  // tests/suites/malformed-import.test.mjs feeds every refusal below through
-  // this control.
-  const IMPORT_RULE_KEY={notRecord:"import.rule.notRecord",notList:"import.rule.notList",notText:"import.rule.notText",
-    badDate:"import.rule.badDate",badPax:"import.rule.badPax",badAssignment:"import.rule.badAssignment",badId:"import.rule.badId",notNumber:"import.rule.notNumber"};
-  const importRuleText=rule=>t(IMPORT_RULE_KEY[rule]||"import.rule.notRecord");
-  function firstEventProblem(events,at){
-    const P=globalThis.MeritEventPackage;
-    if(!P)return null;
-    for(let i=0;i<events.length;i++){const p=P.eventProblem(events[i],`${at}[${i}]`);if(p)return p;}
-    return null;
-  }
-  function importBackupFile(file){
-    const reader=new FileReader();
-    reader.onerror=()=>toast(t("backup.corruptFile"),"error",6000);
-    reader.onload=async()=>{
-      let parsed;
-      try{parsed=parseRecordText(reader.result);}catch{toast(t("backup.corruptFile"),"error",6000);return;}
-      if(parsed&&parsed.format==="merit-event-maker-event-package"){importEventPackagePayload(parsed);return;}
-      if(!parsed||parsed.format!=="merit-event-maker-backup"||!parsed.payload||!Array.isArray(parsed.payload.events)){toast(t("backup.invalidFile"),"error",6000);return;}
-      const SM=globalThis.MeritSchemaMigrations;
-      if(SM&&!SM.readable(parsed.payload)){toast(t("backup.invalidFile"),"error",6000);return;}
-      if(SM&&SM.versionOf(parsed.payload)>SM.CURRENT_VERSION){toast(t("backup.futureVersion"),"error",9000);return;}
-      const problem=firstEventProblem(parsed.payload.events,"events");
-      if(problem){toast(t("backup.invalidRecord",{path:problem.path,rule:importRuleText(problem.rule)}),"error",9000);return;}
-      if(!backupReferencesIntact(parsed.payload)){toast(t("backup.badReference"),"error",6500);return;}
-      const n=parsed.payload.events.length;
-      if(!(await ask({title:t("ask.restoreTitle"),body:t("backup.confirmRestore",{n}),confirmLabel:t("ask.restore"),danger:true})))return;
-      // Built into a local first and only then assigned: whatever the
-      // migration chain meets that the checks above did not anticipate, the
-      // current state is still the current state when it throws.
-      let next;
-      try{next=parseRoot(JSON.stringify(parsed.payload),{forImport:true});}
-      catch(error){
-        console.warn("Backup restore refused while migrating the file.",error&&error.name);
-        toast(t(error&&error.name==="FutureSchemaError"?"backup.futureVersion":"backup.corruptFile"),"error",9000);
-        return;
-      }
-      state=next;
-      ui.screen="events";ui.activeEventId=null;ui.undo=[];ui.redo=[];
-      saveState();render();
-      toast(t("backup.restoredToast",{n}),"success");
-    };
-    reader.readAsText(file);
-  }
-
-  // ---- PORTABLE EVENT PACKAGE: one event, not the whole install --------------
-  //
-  // src/event-package.js owns the payload shape and the id-renumbering; this
-  // is the only code that touches state.events/state.audit for it. Never
-  // updates lastBackupAt -- that fact means the WHOLE install left the
-  // browser, and a single event leaving says nothing about any other event.
-  function exportEventPackage(eventId){
-    const event=state.events.find(e=>e.id===eventId);
-    const P=globalThis.MeritEventPackage;
-    if(!event||!P)return;
-    const venue=event.venueRef?(state.venues||[]).find(v=>v.id===event.venueRef.venueId)||null:null;
-    const auditEntries=(state.audit||[]).filter(a=>a.eventId===eventId);
-    const payload=P.buildPayload(JSON.parse(JSON.stringify(event)),{venue,auditEntries});
-    const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");a.href=url;
-    a.download=`merit-event-package-${String(event.name||"event").toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,60)}-${RULES().todayKey()}.json`;
-    document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),4000);
-    toast(t("eventPackage.exportedToast",{name:event.name}),"success");
-  }
-  async function importEventPackagePayload(parsed){
-    const P=globalThis.MeritEventPackage;
-    if(!P||!P.isWellFormed(parsed)){toast(t("eventPackage.invalidFile"),"error",6000);return;}
-    if(Number(parsed.formatVersion)>P.FORMAT_VERSION){toast(t("eventPackage.futureVersion"),"error",9000);return;}
-    const isRecord=v=>!!v&&typeof v==="object"&&!Array.isArray(v);
-    if(parsed.auditEntries!=null&&!(Array.isArray(parsed.auditEntries)&&parsed.auditEntries.every(isRecord))){toast(t("eventPackage.invalidFile"),"error",6000);return;}
-    if(parsed.venue!=null&&!isRecord(parsed.venue)){toast(t("eventPackage.invalidFile"),"error",6000);return;}
-    const problem=P.eventProblem(parsed.event,"event");
-    if(problem){toast(t("eventPackage.invalidRecord",{path:problem.path,rule:importRuleText(problem.rule)}),"error",9000);return;}
-    if(!P.referencesIntact(parsed.event)){toast(t("eventPackage.badReference"),"error",6500);return;}
-    if(!(await ask({title:t("ask.importTitle"),body:t("eventPackage.confirmImport",{name:parsed.event.name||""}),confirmLabel:t("ask.import")})))return;
-    // Everything is computed BEFORE state is touched. The venue used to be
-    // pushed first and the event migrated after, so a migration that threw
-    // left a venue behind with no event -- half an import.
-    let migrated,auditEntries,newVenue=null;
-    try{
-      const renumbered=P.regenerateIds(parsed.event,parsed.auditEntries,uid);
-      const event=renumbered.event;auditEntries=renumbered.auditEntries;
-      if(parsed.venue&&!state.venues.some(v=>v.id===event.venueRef?.venueId)){
-        // The referenced venue travelled with the package but does not exist
-        // here yet -- added as its own new record rather than merged into a
-        // same-named one, so this import never silently rewrites a venue an
-        // operator on this machine already relies on.
-        newVenue={...JSON.parse(JSON.stringify(parsed.venue)),id:uid("venue")};
-        if(event.venueRef)event.venueRef={...event.venueRef,venueId:newVenue.id};
-      }
-      migrated=migrateEvent(event);
-    }catch(error){
-      console.warn("Event package refused while migrating the file.",error&&error.name);
-      toast(t("eventPackage.importFailed"),"error",9000);
-      return;
-    }
-    if(newVenue)state.venues.push(newVenue);
-    state.events.unshift(migrated);
-    // Merge, never truncate. This line ran slice(0,1000) over the
-    // concatenation, so importing an event whose history was larger than the
-    // cap threw most of it away AND evicted the host install's own decisions
-    // to make room for what survived.
-    {
-      const T=TRAIL();
-      if(T){
-        const r=T.merge(state.audit||[],auditEntries);
-        state.audit=r.log;
-        state.auditRetention=T.recordEviction(state.auditRetention||null,r);
-      } else state.audit=[...auditEntries,...(state.audit||[])];
-    }
-    ui.screen="events";ui.activeEventId=null;
-    saveState();render();
-    toast(t("eventPackage.importedToast",{name:migrated.name}),"success");
-  }
-
-  // ---- OFFLINE RECOVERY: an automatic safety net, distinct from backup ------
-  //
-  // src/offline-recovery.js decides whether a moment is worth keeping and how
-  // many to keep; this is the only code that touches storage for it. Snapshots
-  // live under their own StorageProvider key ("autosnapshots"), never the
-  // primary "root" record, so a corrupted primary record cannot take its own
-  // safety net down with it.
+  // ---- moved to src/data-portability.js — see that file's header: the backup
+  // file, the portable event package and the recovery points. The shell hands it
+  // what it reads; shell functions go over as late-binding wrappers, so a body
+  // this file reassigns later is the one that runs. RECOVERY stays here because
+  // the boot loader reads it as well. ------------------------------------------
   const RECOVERY=()=>globalThis.MeritOfflineRecovery||null;
-  function autoSnapshot(payload){
-    const R=RECOVERY();
-    if(!R||!state.events.length)return;
-    storageProvider.load("autosnapshots").then(stored=>{
-      const list=Array.isArray(stored)?stored:[];
-      const last=R.latestSnapshot(list);
-      if(!R.shouldSnapshot({hasContent:true,lastSnapshotAt:last&&last.at,now:Date.now()}))return;
-      return storageProvider.save(R.withSnapshot(list,{at:nowISO(),payload}),"autosnapshots");
-    }).catch(error=>console.warn("Automatic recovery snapshot failed.",loggableError(error)));
-  }
-  // A deliberate, operator-initiated restore while the app is otherwise
-  // healthy -- e.g. undo did not reach far enough back. Confirmed exactly
-  // like importBackupFile(), because it replaces the whole working state the
-  // same way a backup file does.
-  function restoreLatestSnapshot(){
-    const R=RECOVERY();
-    if(!R)return;
-    storageProvider.load("autosnapshots").then(async stored=>{
-      const snap=R.latestSnapshot(stored);
-      if(!snap){toast(t("recovery.none"),"error");return;}
-      if(!(await ask({title:t("ask.recoveryTitle"),body:t("recovery.confirmRestore",{when:relativeTime(snap.at)}),confirmLabel:t("ask.restore"),danger:true})))return;
-      state=parseRoot(snap.payload);
-      ui.screen="events";ui.activeEventId=null;ui.undo=[];ui.redo=[];
-      saveState();render();
-      toast(t("recovery.restoredToast",{when:relativeTime(snap.at)}),"success");
-    }).catch(error=>{console.warn("Automatic recovery restore failed.",loggableError(error));toast(t("recovery.none"),"error");});
-  }
+  const PORTABILITY=globalThis.MeritDataPortability.create({
+    ask:(...a)=>ask(...a),getState:()=>state,loggableError:(...a)=>loggableError(...a),migrateEvent:(...a)=>migrateEvent(...a),nowISO:(...a)=>nowISO(...a),parseRecordText:(...a)=>parseRecordText(...a),parseRoot:(...a)=>parseRoot(...a),RECOVERY:(...a)=>RECOVERY(...a),relativeTime:(...a)=>relativeTime(...a),render:(...a)=>render(...a),RULES:(...a)=>RULES(...a),saveState:(...a)=>saveState(...a),setState:next=>{state=next;},storageProvider,t:(...a)=>t(...a),toast:(...a)=>toast(...a),TRAIL:(...a)=>TRAIL(...a),ui,uid:(...a)=>uid(...a),
+  });
   function bindV8Common(){
     document.querySelectorAll("[data-action='create-event']").forEach(b=>b.onclick=startNewEvent);document.querySelectorAll("[data-action='help']").forEach(b=>b.onclick=openGuide);document.querySelectorAll("[data-open-event]").forEach(b=>b.onclick=()=>openEvent(b.dataset.openEvent));// Row-level open + per-row action buttons now coexist on Home, so the
 // buttons must not bubble into the row's open handler.
@@ -5277,7 +5099,7 @@ document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{
 });
 document.querySelectorAll("[data-export-event-package]").forEach(b=>b.onclick=e=>{
   e.stopPropagation();
-  exportEventPackage(b.dataset.exportEventPackage);
+  PORTABILITY.exportEventPackage(b.dataset.exportEventPackage);
 });
 document.querySelectorAll("[data-delete-event]").forEach(b=>b.onclick=e=>{
   e.stopPropagation();
@@ -5304,11 +5126,11 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
       ui.reviewDrawMode=false;ui.selectedChangeId=null;ui.highlightId=null;render();
     });
     const back=document.querySelector("[data-action='back-events']");if(back)back.onclick=()=>{ui.screen="events";ui.focusMode=false;render();};const save=document.querySelector("[data-action='save-now']");if(save)save.onclick=()=>saveState(true);const search=document.getElementById("globalGuestSearch");if(search){search.oninput=()=>renderGlobalSearch(search.value);search.onkeydown=guestSearchKey;}
-    const backupExport=document.querySelector("[data-action='backup-export']");if(backupExport)backupExport.onclick=exportBackup;
+    const backupExport=document.querySelector("[data-action='backup-export']");if(backupExport)backupExport.onclick=()=>PORTABILITY.exportBackup();
     const backupImport=document.querySelector("[data-action='backup-import']");if(backupImport)backupImport.onclick=()=>document.getElementById("backupFileInput").click();
-    const recoveryBtn=document.querySelector("[data-action='recovery-restore']");if(recoveryBtn)recoveryBtn.onclick=restoreLatestSnapshot;
+    const recoveryBtn=document.querySelector("[data-action='recovery-restore']");if(recoveryBtn)recoveryBtn.onclick=()=>PORTABILITY.restoreLatestSnapshot();
     const backupInput=document.getElementById("backupFileInput");
-    if(backupInput){const fresh=backupInput.cloneNode(true);backupInput.replaceWith(fresh);fresh.addEventListener("change",e=>{const file=e.target.files[0];if(file)importBackupFile(file);e.target.value="";});}
+    if(backupInput){const fresh=backupInput.cloneNode(true);backupInput.replaceWith(fresh);fresh.addEventListener("change",e=>{const file=e.target.files[0];if(file)PORTABILITY.importBackupFile(file);e.target.value="";});}
   }
   bindCommon = bindV8Common;
   openEvent = function(id){const event=state.events.find(e=>e.id===id);if(!event)return;ui.activeEventId=id;ui.screen="workspace";ui.tab=RULES().isHistorical(event)?"guests":"command";ui.selectedObjectId=null;ui.selectedObjectIds=[];ui.selectedGuestIds=[];ui.operationalMode=false;ui.undo=[];ui.redo=[];render();};
@@ -5380,7 +5202,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
       document.body.appendChild(link);link.click();link.remove();
       setTimeout(()=>URL.revokeObjectURL(url),4000);
     }else if(a==="restore"){document.getElementById("backupFileInput")?.click();}
-    else if(a==="backup"){exportBackup();}
+    else if(a==="backup"){PORTABILITY.exportBackup();}
     else if(a==="workbook"){whileBusy(b,t("reports.preparingWorkbook"),exportTablePlanXLSX);}
     else if(a==="dismiss"){
       // Hide THIS notice: each one is dismissed on its own, and hiding one
@@ -5446,7 +5268,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
   document.addEventListener("click",e=>{
     const b=e.target.closest&&e.target.closest("[data-render-recover]");
     if(!b)return;
-    if(b.dataset.renderRecover==="backup"){exportBackup();return;}
+    if(b.dataset.renderRecover==="backup"){PORTABILITY.exportBackup();return;}
     ui.screen="events";ui.activeEventId=null;ui.selectedObjectId=null;ui.selectedObjectIds=[];render();
   });
   function renderScreen(){

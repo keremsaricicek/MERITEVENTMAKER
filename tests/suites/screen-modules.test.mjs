@@ -51,7 +51,12 @@ function freeNames(code) {
 
 export default async function run({ checks, repoRoot }) {
   const src = (f) => fs.readFileSync(path.join(repoRoot, "src", f), "utf8");
-  const screens = fs.readdirSync(path.join(repoRoot, "src")).filter((f) => /^screen-.*\.js$/.test(f)).sort();
+  // Every module created once by app-v8.js with its dependencies: the screens,
+  // and the shell capabilities that left it the same way (data-portability.js).
+  // Found from the source pattern, so a new one is covered the day it lands.
+  const screens = fs.readdirSync(path.join(repoRoot, "src"))
+    .filter((f) => /\.js$/.test(f) && (/^screen-/.test(f) || /DEPS:Object\.freeze\(/.test(src(f)))).sort();
+  checks.ok(screens.includes("data-portability.js"), "the shell capabilities created with create(deps) are held to the same rule", screens);
   checks.ok(screens.length >= 1, "the screen modules were found", screens);
   const v8 = src("app-v8.js");
   const v8ast = acorn.parse(v8, { ecmaVersion: "latest", sourceType: "script" });
@@ -59,8 +64,8 @@ export default async function run({ checks, repoRoot }) {
 
   for (const file of screens) {
     const code = src(file);
-    const published = (code.match(/globalThis\.(MeritScreen\w+)\s*=/) || [])[1];
-    checks.ok(!!published, `${file}: publishes one globalThis.MeritScreen* object`, published);
+    const published = (code.match(/globalThis\.(Merit\w+)\s*=\s*Object\.freeze\(\{\s*create\b/) || [])[1];
+    checks.ok(!!published && (!/^screen-/.test(file) || /^MeritScreen/.test(published)), `${file}: publishes one globalThis.Merit* object made by create() (MeritScreen* for a screen)`, published);
     // 1. it reads nothing it was not handed
     checks.equal(freeNames(code), [], `${file}: every name it uses is its own, handed to it, or a browser built-in — no shell global, no app-v8.js helper`);
     // 2. one list, four places
