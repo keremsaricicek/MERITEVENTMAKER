@@ -181,7 +181,7 @@ for (const it of items) {
   if (!rulesOnly) {
     let m = kept.get(it.id);
     if (!m || m.text !== it.text) { m = { label, id: it.id, text: it.text, ...(await ask(port, it.text)) }; fs.appendFileSync(partialFile, JSON.stringify(m) + "\n"); }
-    const mp = toParse(m.got);
+    const mp = R.toParse(m.got, fx.events, fx.today, it.text);
     row.model = { ...score(it, mp), reading: m.got, seconds: m.seconds, conf: m.conf ?? null };
     // the product's order: rules first, the model where they say unknown — or (`--order model-first`,
     // runB7b) the model first, the rules where the model gives no reading or says unknown

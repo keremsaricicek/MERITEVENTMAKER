@@ -22,13 +22,34 @@
 
   // Every record whose name matches the query (all words, any order, folded),
   // grouped into people: same folded name AND compatible phone/e-mail.
+  // A typed word and a part of a guest's name are the same word when the typed one
+  // starts it ("Ahm" → Ahmet), is it with a Turkish case ending typed on ("kayanin",
+  // "ozturku", "arslani" — no apostrophe), or is one slip away from it (a letter
+  // missed, added, changed or two swapped) once both are 5+ letters. Folded first,
+  // so ı/i, ş/s, ö/o … never count (2026-11-02, the owner types that way).
+  const SUFFIX = /^(n|y?[iuae]|n?[iu]n|[dt][ae]|[dt][ae]n|n?[ae]|y?l[ae]|il[ae]|ni|nu|ki)$/;
+  function slips(a, b) {
+    if (Math.abs(a.length - b.length) > 1) return 2;
+    const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+    for (let j = 1; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+    return d[a.length][b.length];
+  }
+  function sameWord(w, p) {
+    if (p.startsWith(w)) return true;
+    if (p.length >= 3 && w.startsWith(p) && SUFFIX.test(w.slice(p.length))) return true;
+    return w.length >= 5 && p.length >= 5 && slips(w, p) <= 1;
+  }
   function findPerson(events, query, opts) {
     const words = fold(query).split(" ").filter(Boolean);
     const phone = digits(opts && opts.phone);
     const recs = [];
     for (const ev of events) for (const g of ev.guests || []) {
       const n = fold(g.name);
-      if (words.length && words.every((w) => n.split(" ").some((p) => p.startsWith(w)))) {
+      if (words.length && words.every((w) => n.split(" ").some((p) => sameWord(w, p)))) {
         if (phone && digits(g.phone) && !digits(g.phone).endsWith(phone.slice(-7))) continue;
         recs.push({ eventId: ev.id, guestId: g.id, name: g.name, phone: g.phone || null, email: g.email || null });
       }
@@ -97,5 +118,5 @@
              unassigned: gs.filter((g) => !g.assignment).map((g) => g.name), byTable };
   }
 
-  globalThis.MeritAssistantTools = { findPerson, findEvent, seatOf, eventsOf, eventFacts, fold };
+  globalThis.MeritAssistantTools = { findPerson, sameWord, findEvent, seatOf, eventsOf, eventFacts, fold };
 })();

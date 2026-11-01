@@ -97,14 +97,89 @@ Kullanmadığın alanlar null; many yoksa false; steps soru için boş liste.`;
   // The model's reading in parse()'s shape (src/assistant-parse.js), so the same
   // answer() and acting layer run on it. `events`/`today` resolve a past event
   // named on an assign, exactly as parse() marks it.
-  function toParse(m, events, today) {
+  //
+  // GROUNDED IN THE SENTENCE (2026-11-02, training/README.md "Grounding"). With the
+  // person's own `text`, every name and event word the model wrote is put back to
+  // the word the person typed: a cut-off word ("okta" → "oktayı", "hazir" →
+  // "haziranda") or one with a letter slipped ("burbu" → "burcu") becomes the typed
+  // one, and a new guest's name is the whole name the sentence carries ("Ergin" in
+  // "Oya Ergin'i …" → "Oya Ergin"). Whatever had to be repaired that way — or could
+  // not be found in the sentence at all — marks the reading `loose`: the panel then
+  // shows it and waits for Onayla instead of carrying it out by itself.
+  const STOP = /^(bir|bi|misafir|misafiri|kisi|kisiyi|daha|listeye|liste|listede|de|da|ve|ile|diye|adinda|isimli|adli|ekle|yaz|kaydet|oturt|koy|al|tasi|gecir|sil|yap|olarak|esini|esi|esiyle|arkadasini|arkadasi|arkadaslarini|iki|uc|dort|bes|masaya|masasina|masaya|t\d+\w*|vip\d*\w*|\+\d+|\d+)$/;
+  function words(text) {
+    const out = [];
+    for (const raw of String(text || "").split(/\s+/)) {
+      if (!raw) continue;
+      const [stem, ...rest] = raw.split(/['’]/);
+      const clean = stem.replace(/[^\p{L}\p{N}+]+/gu, "");
+      if (clean) out.push({ raw: clean, f: T().fold(clean), cut: rest.length > 0 });
+    }
+    return out;
+  }
+  // the typed word a model word stands for: {i, how: "same"|"suffix"|"repaired"} or null
+  function typed(w, ws) {
+    const f = T().fold(w);
+    if (!f) return null;
+    let i = ws.findIndex((x) => x.f === f);
+    if (i >= 0) return { i, how: "same" };
+    i = ws.findIndex((x) => x.f.length > f.length && T().sameWord(x.f, f) && !x.f.startsWith(f + " "));
+    if (i >= 0 && ws[i].f.startsWith(f) && /^(n|y?[iuae]|n?[iu]n|[dt][ae]|[dt][ae]n|n?[ae]|y?l[ae]|il[ae]|ni|nu|ki)$/.test(ws[i].f.slice(f.length))) return { i, how: "suffix" };
+    if (i >= 0) return { i, how: "repaired" };
+    if (f.length >= 3) { i = ws.findIndex((x) => x.f.startsWith(f)); if (i >= 0) return { i, how: "repaired" }; }
+    if (f.length >= 4) { i = ws.findIndex((x) => T().sameWord(f, x.f)); if (i >= 0) return { i, how: "repaired" }; }
+    return null;
+  }
+  const title = (s) => s.split(" ").map((w) => w.charAt(0).toLocaleUpperCase("tr") + w.slice(1)).join(" ");
+  function toParse(m, events, today, text) {
   if (!m || m.kind === "unknown") return { kind: "unknown" };
   const fold = (s) => (s == null ? "" : T().fold(String(s)));
-  if (m.kind === "question") return { kind: "question", intent: m.intent, person: m.person || undefined, phone: m.phone || null, event: fold(m.event), many: !!m.many, table: m.table ? String(m.table).replace(/\s+/g, "").toUpperCase() : undefined };
+  const ws = text == null ? null : words(text);
+  let loose = false;
+  // a phrase put back to the typed words (event words, a guest named)
+  const back = (v) => {
+    if (!ws || v == null) return v;
+    return String(v).split(/\s+/).filter(Boolean).map((w) => {
+      const t = typed(w, ws);
+      if (!t) { loose = true; return w; }
+      if (t.how === "repaired") { loose = true; return ws[t.i].raw; }
+      return t.how === "suffix" ? w : ws[t.i].raw;
+    }).join(" ");
+  };
+  // event words for a question that the sentence does not carry at all ("son konser" for "Can
+  // Öztürk nerede oturuyor"): no event named — the open one is meant
+  const said = (v) => {
+    if (!ws || v == null) return v;
+    const hits = String(v).split(/\s+/).filter(Boolean).map((w) => [w, typed(w, ws)]);
+    return hits.some(([, t]) => t) ? hits.map(([w, t]) => (t && t.how === "repaired" ? ws[t.i].raw : w)).join(" ") : null;
+  };
+  // a NEW guest's name: the whole run of name words around what the model wrote
+  const newName = (v) => {
+    if (!ws || v == null) return v;
+    const hits = String(v).split(/\s+/).filter(Boolean).map((w) => typed(w, ws));
+    if (!hits.length || hits.some((h) => !h)) { loose = true; return v; }
+    let a = Math.min(...hits.map((h) => h.i)), b = Math.max(...hits.map((h) => h.i));
+    if (b - a + 1 !== hits.length) { loose = true; return v; }
+    // a name the model wrote as ONE word may have lost a word of it ("Ergin" of "Oya Ergin'i")
+    if (hits.length === 1) {
+      if (a > 0 && !STOP.test(ws[a - 1].f) && !ws[a - 1].cut) a--;
+      else if (b < ws.length - 1 && !ws[b].cut && !STOP.test(ws[b + 1].f)) b++;
+    }
+    const span = ws.slice(a, b + 1);
+    if (span.length !== hits.length || hits.some((h) => h.how !== "same")) loose = true;
+    const last = span[span.length - 1];
+    let lastWord = last.raw;
+    // "oktayı ekle", typed with no apostrophe: the case ending comes off, and the panel asks
+    const after = ws[a + span.length];
+    if (!last.cut && after && STOP.test(after.f) && /[^aeıioöuü][ıiuü]$/i.test(lastWord) && span.length > 1) { lastWord = lastWord.slice(0, -1); loose = true; }
+    const name = span.slice(0, -1).map((x) => x.raw).concat(lastWord).join(" ");
+    return name === name.toLocaleLowerCase("tr") ? title(name) : name;
+  };
+  if (m.kind === "question") return { kind: "question", intent: m.intent, person: m.person ? back(m.person) : undefined, phone: m.phone || null, event: fold(said(m.event)), many: !!m.many, table: m.table ? String(m.table).replace(/\s+/g, "").toUpperCase() : undefined };
   const steps = (m.steps || []).map((s) => {
     const o = { op: s.op };
-    if (s.guest) o.guest = s.guest; if (s.table) o.table = String(s.table).replace(/\s+/g, "").toUpperCase(); if (s.from) o.from = fold(s.from);
-    if (s.other) o.other = fold(s.other); if (s.name) o.name = s.name; if (s.pax != null) o.pax = s.pax; if (s.fromTable) o.fromTable = String(s.fromTable).replace(/\s+/g, "").toUpperCase();
+    if (s.guest) o.guest = back(s.guest); if (s.table) o.table = String(s.table).replace(/\s+/g, "").toUpperCase(); if (s.from) o.from = fold(back(s.from));
+    if (s.other) o.other = fold(back(s.other)); if (s.name) o.name = s.op === "addGuest" ? newName(s.name) : s.name; if (s.pax != null) o.pax = s.pax; if (s.fromTable) o.fromTable = String(s.fromTable).replace(/\s+/g, "").toUpperCase();
     if (s.op === "setVip") o.vip = "VIP";
     // a past event named on an assign: the acting layer refuses it (as parse() marks it)
     if (s.op === "assign" && s.from) { const past = T().findEvent(events, fold(s.from), today).events.find((e) => e.past); delete o.from; if (past) o.event = past.name; }
@@ -112,8 +187,23 @@ Kullanmadığın alanlar null; many yoksa false; steps soru için boş liste.`;
   });
   // "add, then seat at the table": the acting layer takes the table on addGuest
   if (steps.length === 2 && steps[0].op === "addGuest" && steps[1].op === "assign" && !steps[0].table) { steps[0].table = steps[1].table; steps.pop(); }
-  return { kind: "command", plan: steps };
+  return loose ? { kind: "command", plan: steps, loose: true } : { kind: "command", plan: steps };
+  }
+  // May the panel carry this command out by itself (with the model sure of it)?
+  // Only when nothing in it had to be repaired and every guest it names is one
+  // guest of the open event.
+  function grounded(parsed, text, events, currentId) {
+    if (!parsed || parsed.kind !== "command") return true;
+    if (parsed.loose) return false;
+    const ev = (events || []).find((e) => e.id === currentId);
+    if (!ev) return false;
+    for (const st of parsed.plan) for (const who of [st.guest, st.other]) {
+      if (!who) continue;
+      const r = T().findPerson([ev], who);
+      if (r.none || r.ambiguous || r.people[0].records.length !== 1) return false;
+    }
+    return true;
   }
 
-  globalThis.MeritAssistantReading = Object.freeze({ INTENTS, OPS, SCHEMA, SYSTEM, SYSTEM_SHORT, EXAMPLES, CHAT_SYSTEM, messages, chatMessages, valid, toParse });
+  globalThis.MeritAssistantReading = Object.freeze({ INTENTS, OPS, SCHEMA, SYSTEM, SYSTEM_SHORT, EXAMPLES, CHAT_SYSTEM, messages, chatMessages, valid, toParse, grounded });
 })();
