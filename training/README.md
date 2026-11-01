@@ -1660,7 +1660,7 @@ Every "right" bar passes; the bar "0 wrong changes on all sets" fails twice:
   llama-server measured 3–4 tokens/s both for prompt and generation (0.8B: 45 / 16 tokens/s). Not
   usable at this speed even if it had passed; cause not yet measured (adapter at run time on Q4_K_M,
   or the 2B itself) — next.
-Not wired. Briefs (plan requests) for the record: below when measured.
+Not wired. Briefs (plan requests), for the record: fields right 0.976, briefs all right 0.90, invented 0.016, median 36.3 s (Q4_K_M + LoRA at run time) — passes the brief bars, far too slow.
 
 ## 2026-11-01 — 2B speed: the quantisation, not the model (measured, llama-bench, 4 threads, same CPU)
 
