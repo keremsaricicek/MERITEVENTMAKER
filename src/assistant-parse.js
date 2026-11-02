@@ -102,7 +102,10 @@
     const apart = raw.match(/^(.+?)\s+(?:ile|ve)\s+(.+?)['’]?\s*(?:aynı masada|ayni masada|aynı masaya|ayni masaya|yan yana)\s+(?:oturmasın|oturmasin|olmasın|olmasin|oturtma)/i)
       || raw.match(/^(.+?)\s+(?:ile|ve)\s+(.+?)\s+ayr[ıi]\s+(?:otursun|masalarda|tut)/i) || raw.match(/^keep\s+(.+?)\s+and\s+(.+?)\s+apart/i);
     if (apart) return { kind: "command", plan: [{ op: "ruleApart", guest: apart[1].trim().replace(/['’]\S*$/, ""), other: apart[2].trim().replace(/['’]\S*$/, "") }] };
-    if (/\bvip\w*\b.*\b(on masa\w*|onde|on tarafta|vip masa\w*)\b.*\b(otursun|oturt\w*|olsun|yerlestir\w*)\b/.test(f) || /\bvips?\b.*\b(front|vip tables?)\b/.test(f)) return { kind: "command", plan: [{ op: "ruleVipFront" }] };
+    // MANY AT ONCE (owner 2026-11-02): shown first, then Onayla
+    if (/\b(masasiz\w*|masasi olmayan\w*|oturtulmamis\w*|yeri olmayan\w*|bosta kalan\w*)\b.*\b(yerlestir|oturt|dagit|ata|yerlestir)\w*/.test(f) || /^(seat|place) (everyone|everybody|all|the unseated)\b/.test(f)) return { kind: "command", plan: [{ op: "seatUnassigned" }] };
+    if (/\bvip\w*\b.*\b(vip masa\w*|on masa\w*|one|onde)\b.*\b(al|tasi|dagit|gecir|yerlestir|oturt)\w*/.test(f) || /^(move|seat|put) (the )?vips? (to|at) (the )?(vip|front) tables?/.test(f)) return { kind: "command", plan: [{ op: "vipToVipTables" }] };
+    if (/\bvip\w*\b.*\b(on masa\w*|onde|on tarafta|vip masa\w*)\b.*\b(otursun|olsun|oturmali)\b/.test(f) || /\bvips?\b.*\b(at|in) the (front|vip tables?)\b/.test(f)) return { kind: "command", plan: [{ op: "ruleVipFront" }] };
     if (/\b(kurallari (sil|temizle|kaldir)|clear (the )?rules)\b/.test(f)) return { kind: "command", plan: [{ op: "rulesClear" }] };
     if (/^(kurallar|kurallari goster|kurallar neler|show (the )?rules|rules)$/.test(f.trim())) return { kind: "status", what: "rules" };
     // GROUPS / JUNKETS (owner 2026-11-02): "Kerem Sarıçiçek'in misafirlerini aynı masaya al",

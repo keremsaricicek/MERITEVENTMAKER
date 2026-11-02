@@ -58,6 +58,19 @@
       for (const st of plan) {
         if (st.event && T().findEvent(events(), st.event, today()).events.some((x) => x.id !== e.id && x.past)) return { refuse: say("geçmiş bir etkinlik değiştirilemez", "a past event cannot be changed") };
         if (st.op === "addGuest") { out.push({ op: "addGuest", name: st.name, pax: st.pax || 1, table: st.table || null }); continue; }
+        if (st.op === "seatUnassigned" || st.op === "vipToVipTables") {  // many at once (src/guest-groups.js fill), always shown first
+          const G = globalThis.MeritGuestGroups, F = globalThis.MeritSeatingFreeze, SR = globalThis.MeritSeatingRules;
+          const skip = F && F.frozenTableIds ? new Set(F.frozenTableIds(e.freezes || [], e.tables || [])) : new Set();
+          const vipT = (t) => (SR ? SR.isVipTable(t) : /VIP/i.test(t.number));
+          const who = st.op === "seatUnassigned" ? e.guests.filter((g) => !g.assignment)
+            : e.guests.filter((g) => /VIP/i.test(String(g.vip || "")) && !(g.assignment && vipT((e.tables || []).find((t) => t.id === g.assignment.tableId) || {})));
+          if (!who.length) return { ask: st.op === "seatUnassigned" ? say("Masası olmayan misafir yok", "Everyone has a table") : say("Bütün VIP'ler zaten VIP masalarda", "Every VIP already sits at a VIP table") };
+          const r = G.fill(e, who, { skip, only: st.op === "vipToVipTables" ? vipT : null });
+          if (!r.steps.length) return { ask: say("Bunlar için boş yer yok", "There is no free room for them") };
+          for (const s2 of r.steps) { const g2 = e.guests.find((x) => x.id === s2.guestId), t2 = e.tables.find((x) => x.id === s2.tableId); out.push({ op: "assign", guestId: g2.id, name: g2.name, tableId: t2.id, number: t2.number, seats: null }); }
+          if (r.left.length) out.push({ op: "noop", line: say(`Yer kalmadı: ${r.left.map((g) => g.name).join(", ")}`, `No room left for: ${r.left.map((g) => g.name).join(", ")}`) });
+          continue;
+        }
         if (st.op === "ruleApart" || st.op === "ruleVipFront" || st.op === "rulesClear") {  // seating rules: warn-only (src/seating-rules.js)
           const rules = (e.seatRules || []).slice();
           if (st.op === "rulesClear") { out.push({ op: "rule", rules: [], line: say(`Bütün oturma kuralları kaldırılacak (${rules.length})`, `All seating rules removed (${rules.length})`) }); continue; }

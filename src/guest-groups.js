@@ -80,5 +80,29 @@
       came: h.guests.filter((g) => g.arrivalStatus === "Checked In").reduce((n, g) => n + pax(g), 0),
       noShow: h.guests.filter((g) => g.arrivalStatus === "No Show").reduce((n, g) => n + pax(g), 0) })).sort((a, b) => b.expected - a.expected);
   }
-  globalThis.MeritGuestGroups = Object.freeze({ hosts, findHost, plan, spread, counts });
+  // MANY GUESTS AT ONCE (owner 2026-11-02, F8 "masasızları yerleştir", "VIP'leri VIP masalara al").
+  // A host's guests are placed together first (one table, else the nearest few), then the rest,
+  // biggest party first, into the tables given (`only`, else every usable table not in `skip`).
+  // Never a taken seat, never an unavailable or frozen table, never a split record.
+  function fill(event, guests, opts) {
+    const o = opts || {}, skip = o.skip || new Set();
+    const tables = (event.tables || []).filter((t) => usable(t) && !skip.has(t.id) && (!o.only || o.only(t)));
+    const moving = new Set(guests.map((g) => g.id));
+    const room = new Map(tables.map((t) => [t.id, freeAt(event, t, moving)]));
+    const steps = [], left = [];
+    const put = (g, t) => { room.set(t.id, room.get(t.id) - pax(g)); steps.push({ guestId: g.id, tableId: t.id }); };
+    const byHost = new Map(), singles = [];
+    for (const g of guests) { const k = fold(g.invitedBy); if (k) { if (!byHost.has(k)) byHost.set(k, []); byHost.get(k).push(g); } else singles.push(g); }
+    for (const grp of byHost.values()) {
+      const need = grp.reduce((n, g) => n + pax(g), 0), one = tables.filter((t) => room.get(t.id) >= need).sort((a, b) => room.get(a.id) - room.get(b.id))[0];
+      if (one) { grp.forEach((g) => put(g, one)); continue; }
+      singles.push(...grp);
+    }
+    for (const g of singles.sort((a, b) => pax(b) - pax(a))) {
+      const t = tables.filter((x) => room.get(x.id) >= pax(g)).sort((a, b) => room.get(a.id) - room.get(b.id))[0];
+      if (t) put(g, t); else left.push(g);
+    }
+    return { steps, left };
+  }
+  globalThis.MeritGuestGroups = Object.freeze({ hosts, findHost, plan, spread, counts, fill });
 })();

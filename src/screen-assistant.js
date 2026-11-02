@@ -284,7 +284,7 @@
       const A = globalThis.MeritAssistantActions.create({ events, current: currentId, today, lang: () => (globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : "tr"), canMutate: (e) => canMutate(e), writers: {}, snapshot: () => null, registerUndo: () => {} });
       const key = (res) => res.steps ? JSON.stringify(res.steps.map((x) => [x.op, x.guestId || x.name, x.tableId || x.table || null, x.seats || null, x.pax || null])) : null;
       const agreed = byModel && how && how.rules && how.rules.kind === "command" && key(A.resolve(r.plan)) !== null && key(A.resolve(r.plan)) === key(A.resolve(how.rules.plan));
-      const unsure = byModel ? !(agreed || (how && how.sure)) : r.plan.some((st) => st.op === "deleteGuest" || st.op === "groupTogether" || st.op === "rulesClear");
+      const unsure = byModel ? !(agreed || (how && how.sure)) : r.plan.some((st) => st.op === "deleteGuest" || st.op === "groupTogether" || st.op === "rulesClear" || st.op === "seatUnassigned" || st.op === "vipToVipTables");
       if (unsure) {
         const res = A.resolve(r.plan);
         if (res.ask) return { text: res.ask };
