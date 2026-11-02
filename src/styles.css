@@ -655,6 +655,15 @@ body:has(.planmap-fab) .toast-wrap{bottom:76px}
      Four cards per row, matching the workbook's horizontal grouping, so a
      page of paper and a page of the .xlsx show the same four tables side by
      side. Sized to fit A4 portrait; landscape simply gives it more air. */
+  /* Door list: two columns of names on A4, the table number large and right-aligned. */
+  .door-list{width:100%;border-collapse:collapse;columns:2}
+  .door-list thead{display:none}
+  .door-list tbody{display:block;columns:2;column-gap:18pt}
+  .door-list tr{display:flex;justify-content:space-between;gap:8pt;break-inside:avoid;border-bottom:.5pt solid #d8d2c4;padding:2.5pt 0}
+  .door-list .dn{font-size:10pt}
+  .door-list .dx{color:#5a523f;font-size:8.5pt}
+  .door-list .dv{font-size:7pt;letter-spacing:.08em;border:.5pt solid #8a6d1f;padding:0 2pt;border-radius:2pt}
+  .door-list .dt{font-size:11pt;font-weight:700;white-space:nowrap}
   #printRoot{font-family:var(--font-ui,system-ui,sans-serif);color:#221f18;font-size:8.5pt;line-height:1.35}
   .pp-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
     padding-bottom:6pt;margin-bottom:9pt;border-bottom:1.5pt solid #221f18}

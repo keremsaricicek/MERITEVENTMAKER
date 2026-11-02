@@ -165,6 +165,7 @@
           </div>
           <button class="btn primary btn-export" data-report="xlsx">${icon("download")}${t("reports.exportTablePlan")}</button>
           <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="print">${icon("image")}${t("reports.printTablePlan")}</button>
+          <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="door">${icon("door")}${t("reports.printDoorList")}</button>
           <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="csv">${icon("download")}${t("reports.guestCsv")}</button>
           <p style="font-size:11px;color:var(--muted-2);margin:12px 0 0;line-height:1.45">${t("reports.sheetsInEnglish")}</p>
         </aside>
@@ -177,6 +178,7 @@
     app.querySelectorAll("[data-report='csv']").forEach(b=>b.onclick=exportGuestCSV);
     app.querySelectorAll("[data-report='xlsx']").forEach(b=>b.onclick=()=>whileBusy(b,t("reports.preparingWorkbook"),exportTablePlanXLSX));
     app.querySelectorAll("[data-report='print']").forEach(b=>b.onclick=printTablePlan);
+    app.querySelectorAll("[data-report='door']").forEach(b=>b.onclick=printDoorList);
     bindDoctorGo(activeEvent());
     // Post-Event Replay's wave chart (historical events only) needs the same
     // bucket-click/VIP/clear wiring Live uses -- a historical event has no
@@ -230,6 +232,33 @@
     window.print();
     // Browsers that never fire afterprint (or a blocked print dialog) must not
     // leave the app stuck behind the print layer.
+    setTimeout(cleanup,60000);
+  }
+  // ---- Door list (owner 2026-11-02) ---------------------------------------
+  // At the door the one question is "where do I sit". Every guest record A–Z in
+  // Turkish order, with the party size and the table — or a dash when the guest
+  // has no table yet. One record per party ("+2"), never split. Printed (or
+  // saved as PDF from the print dialog); nothing is changed.
+  function printDoorList(){
+    const event=activeEvent();if(!event)return;
+    if(!event.guests.length){toast(t("reports.doorNoGuests"),"error");return;}
+    const tables=new Map(event.tables.map(x=>[x.id,x]));
+    const rows=event.guests.slice().sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""),"tr",{sensitivity:"base"})).map(g=>{
+      const tb=g.assignment?tables.get(g.assignment.tableId):null, extra=paxOf(g)-1;
+      return`<tr><td class="dn">${esc(g.name)}${extra>0?` <span class="dx">+${extra}</span>`:""}${/VIP/i.test(g.vip||"")?` <span class="dv">${esc(g.vip)}</span>`:""}</td><td class="dt">${tb?esc(formatTableNumber(tb.number)):"—"}</td></tr>`;
+    }).join("");
+    const totalPax=event.guests.reduce((n,g)=>n+paxOf(g),0);
+    const root=printRoot();
+    root.innerHTML=`
+      <div class="pp-head">
+        <div class="pp-title"><b>${esc(event.name)} — ${t("reports.doorTitle")}</b><span>${esc([event.hotel,event.salon].filter(Boolean).join(" · "))}</span></div>
+        <div class="pp-meta"><span>${esc(fmtDate(event.date))}</span><span>${t("reports.doorCount",{n:event.guests.length,pax:totalPax})}</span></div>
+      </div>
+      <table class="door-list"><thead><tr><th>${t("reports.doorName")}</th><th>${t("reports.doorTable")}</th></tr></thead><tbody>${rows}</tbody></table>`;
+    document.body.classList.add("printing");
+    const cleanup=()=>{document.body.classList.remove("printing");root.innerHTML="";window.removeEventListener("afterprint",cleanup);};
+    window.addEventListener("afterprint",cleanup);
+    window.print();
     setTimeout(cleanup,60000);
   }
   function printRoot(){

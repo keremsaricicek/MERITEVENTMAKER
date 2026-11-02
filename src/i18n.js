@@ -1308,6 +1308,12 @@
     // The paper plan is built from the same model as the workbook, so it can
     // never disagree with the exported file about who sits where.
     "reports.printTablePlan": { en: "Print table plan", tr: "Masa planını yazdır" },
+    "reports.printDoorList": { en: "Print door list (A–Z)", tr: "Kapı listesini yazdır (A–Z)" },
+    "reports.doorNoGuests": { en: "There are no guests to list yet.", tr: "Henüz listelenecek misafir yok." },
+    "reports.doorTitle": { en: "DOOR LIST", tr: "KAPI LİSTESİ" },
+    "reports.doorCount": { en: "{n} records · {pax} pax", tr: "{n} kayıt · {pax} kişi" },
+    "reports.doorName": { en: "Guest", tr: "Misafir" },
+    "reports.doorTable": { en: "Table", tr: "Masa" },
     "reports.printNoTables": { en: "There are no tables to print yet.", tr: "Henüz yazdırılacak masa yok." },
     "reports.printTables": { en: "{n} tables", tr: "{n} masa" },
     "reports.printPax": { en: "{seated} of {total} pax seated", tr: "{total} kişiden {seated} tanesi oturtuldu" },
