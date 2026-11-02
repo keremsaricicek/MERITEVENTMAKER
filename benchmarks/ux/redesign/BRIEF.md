@@ -13,6 +13,9 @@ this time it must be original, high quality, and make him say "wow".
 - "Truly original — today every AI can make this design." No templates, no generic SaaS dashboard.
 
 ## Hard rules
+- Owner (binding): NO copy of today's app and NO standard interface pattern (sidebar + top tabs + KPI row +
+  table grid, stock admin layouts). Each concept is genuinely innovative and different from the other four —
+  invent the interaction model, not only the skin.
 - One main job per screen; few buttons, each where the hand expects it; secondary actions tucked away.
 - Calm layout: nothing jumps; an action changes only its own row/area; motion is subtle and purposeful.
 - Readable: body 14–16 px, nothing operational below 12 px; contrast ≥ 4.5:1 for text (measure and state it).
