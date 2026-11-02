@@ -158,3 +158,6 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
   plan/event, who to add, how to change the plan, every screen's tasks, common errors and their fixes (step-by-step
   answers + "Götür"). Build a question bank (TR/EN, careless typing too) from the guide, measured like the race:
   a held-out set of how-to questions written before the matcher; target ≥ 0.90 right page.
+- **2026-11-02 ~01:10 UTC — 4 items done** (owner: silent until "durum ne"): typo-forgiving guest search (d30ef45),
+  version 0.9.0 on screen + report (d30ef45), launcher watchdog (843304e), door list print (204c3b7). Offline builds
+  verified 47/47. NEXT from the feature list: copy-from-last-event, F8 door check-in, groups/junket.
