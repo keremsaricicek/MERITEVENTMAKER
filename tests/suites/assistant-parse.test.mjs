@@ -80,4 +80,20 @@ export default async function run({ checks, repoRoot }) {
     canMutate: () => true, writers: {}, snapshot: () => null, registerUndo: () => {} });
   const miss = Aen.resolve([{ op: "assign", guest: "Kenan Kaplan", table: "T03" }]);
   checks.ok(/is not in this event/.test(miss.ask || ""), "an English UI gets the command's question in English", miss);
+
+  // AT THE DOOR (owner 2026-11-02): a statement that a guest came checks them in, through the
+  // arrival axis's one writer; "geldi mi" stays a question; an arrived guest is not checked in twice.
+  const door = (x) => { const r = P.parse(x, fx.events, fx.today); return r.kind === "command" && r.plan[0].op === "arrive" ? r.plan[0].guest : r.kind; };
+  checks.equal(["ahmet yilmaz geldi", "Mehmet Kaya +1 geldi", "Zeynep Arslan ve eşi geldi", "Can Öztürk arrived", "Mehmet Kaya'lar geldi"].map(door),
+    ["ahmet yilmaz", "Mehmet Kaya", "Zeynep Arslan", "Can Öztürk", "Mehmet Kaya"], "a guest who came is read as a check-in, party words dropped");
+  checks.ok(door("ahmet yilmaz geldi mi") !== "ahmet yilmaz" && door("Ahmet Yılmaz geldi?") !== "Ahmet Yılmaz", "\"geldi mi\" stays a question");
+  checks.ok(["zeynep arslan bize kac kez geldi", "Mabel Matiz'e toplam kaç kişi geldi", "Elif Şen Tarkan'da kaç kişiyle geldi"].every((x) => P.parse(x, fx.events, fx.today).kind !== "command"),
+    "a question about who or how many came is never a check-in");
+  const evs = JSON.parse(JSON.stringify(fx.events)), arrived = [];
+  const Ad = globalThis.MeritAssistantActions.create({ events: () => evs, current: () => fx.current, today: () => fx.today, canMutate: () => true, snapshot: () => null, registerUndo: () => {},
+    writers: { setArrival: (id, st) => { const g = evs.find((e) => e.id === fx.current).guests.find((x) => x.id === id); arrived.push([g.name, st]); g.arrivalStatus = st; return { to: st }; } } });
+  const out1 = Ad.run([{ op: "arrive", guest: "can ozturku" }]);
+  checks.ok(arrived.length === 1 && arrived[0][0] === "Can Öztürk" && arrived[0][1] === "Checked In" && /T02/.test(out1.lines.join(" ")), "the guest is checked in, and told where they sit", { arrived, lines: out1.lines });
+  const out2 = Ad.run([{ op: "arrive", guest: "Can Öztürk" }]);
+  checks.ok(arrived.length === 1 && /zaten geldi/.test((out2.lines || []).join(" ")), "an arrived guest is not checked in twice", out2);
 }

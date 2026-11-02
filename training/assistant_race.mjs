@@ -154,7 +154,9 @@ function score(item, parsed) {
 // and waits for Onayla: right only if the preview is the right change (one click), never a wrong change.
 // Without a model reading, the rules' reading; a deletion only the rules read is shown first too.
 function product(item, rules, mp, conf) {
-  const byModel = mp && mp.kind !== "unknown", r = byModel ? mp : rules;
+  // a check-in the rules read is never sent to the model (src/screen-assistant.js atDoor)
+  const atDoor = rules.kind === "command" && rules.plan.every((st) => st.op === "arrive");
+  const byModel = !atDoor && mp && mp.kind !== "unknown", r = byModel ? mp : rules;
   const s = score(item, r);
   if (r.kind !== "command") return s;
   const ev = JSON.parse(JSON.stringify(fx.events));

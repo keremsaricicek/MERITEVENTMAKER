@@ -4361,6 +4361,8 @@
       restoreGuest:(kept)=>{const e=activeEvent();return e?restoreGuestRecord(e,kept):null;},
       setPax:(id,pax)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g||!canMutate(e,"edit guest records"))return false;return !saveGuestRecord(e,g,{additionalGuests:pax-1,pax}).short;},
       setVip:(id,vip)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g||!canMutate(e,"edit guest records"))return;saveGuestRecord(e,g,{vip});},
+      // the arrival axis's one writer (setArrival), as the Live screen and the finder use it
+      setArrival:(id,status)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g)return null;return setArrival(e,g,status,"assistant");},
       addGuest:(name,pax)=>{const e=activeEvent();if(!e||!canMutate(e,"edit guest records"))return null;return saveGuestRecord(e,null,{name,additionalGuests:pax-1,pax,planningStatus:"Confirmed",vip:"Standard",invitedBy:"",notes:"",expectedArrival:null}).guest.id;},
       // An arrangement from the planner (metres) drawn as real tables through
       // createTable, after the canvas undo snapshot: Ctrl+Z and the panel's

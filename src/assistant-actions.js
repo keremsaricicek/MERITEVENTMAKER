@@ -88,6 +88,9 @@
           if (!o.guest.assignment) return { ask: say(`${o.guest.name} bu etkinlikte henüz bir masada değil`, `${o.guest.name} has no table in this event yet`) };
           const table = (e.tables || []).find((t) => t.id === o.guest.assignment.tableId);
           out.push({ op: "assign", guestId: g.guest.id, name: g.guest.name, tableId: table.id, number: table.number, seats: null });
+        } else if (st.op === "arrive") {
+          if (g.guest.arrivalStatus === "Checked In") out.push({ op: "noop", line: say(`${g.guest.name} zaten geldi`, `${g.guest.name} has already arrived`) });
+          else out.push({ op: "arrive", guestId: g.guest.id, name: g.guest.name, table: g.guest.assignment ? ((e.tables || []).find((x) => x.id === g.guest.assignment.tableId) || {}).number || null : null });
         } else if (st.op === "unassign") out.push({ op: "unassign", guestId: g.guest.id, name: g.guest.name });
         else if (st.op === "deleteGuest") out.push({ op: "deleteGuest", guestId: g.guest.id, name: g.guest.name });
         else if (st.op === "setPax") out.push({ op: "setPax", guestId: g.guest.id, name: g.guest.name, pax: st.pax });
@@ -108,6 +111,7 @@
       let newId = null;
       for (const s of real) {
         if (s.op === "assign") { writers.assign(s.guestId, s.tableId, s.seats); lines.push(`${s.name} → ${s.number}${s.seats ? ` (${say("koltuk", "seat")} ${s.seats.map((x) => x + 1).join(", ")})` : ""}`); }
+        else if (s.op === "arrive") { writers.setArrival(s.guestId, "Checked In"); lines.push(say(`${s.name} geldi${s.table ? " — " + s.table : " — masası yok"}`, `${s.name} arrived${s.table ? " — " + s.table : " — no table"}`)); }
         else if (s.op === "unassign") { writers.unassign(s.guestId); lines.push(say(`${s.name} masadan kaldırıldı`, `${s.name} taken off the table`)); }
         else if (s.op === "deleteGuest") { writers.deleteGuest(s.guestId); lines.push(say(`${s.name} silindi`, `${s.name} deleted`)); }
         else if (s.op === "setPax") { writers.setPax(s.guestId, s.pax); lines.push(say(`${s.name}: ${s.pax} kişi`, `${s.name}: ${s.pax} people`)); }

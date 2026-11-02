@@ -94,6 +94,12 @@
     const p = personIn(raw, events), tbs = tables(raw), ph = phone(raw);
     const evq = eventPart(raw, p);
     const has = (re) => re.test(f);
+    // AT THE DOOR (owner 2026-11-02): "ahmet yilmaz geldi", "Mehmet Kaya +2 geldi", "Ayşe Demir
+    // ve eşi geldi", "Can Öztürk arrived" — a statement, not a question: the guest is checked in.
+    // "geldi mi" stays a question; the name must be one guest (the acting layer asks otherwise).
+    const door = raw.trim().replace(/[.!]+$/, "").match(/^(.+?)(?:\s*\+\s*\d+|\s+(?:ve|ile)\s+(?:e[sş]i(?:yle)?|ailesi|arkada[sş]lar[iı])|\s+and\s+(?:his|her)\s+\w+)?\s+(geldi(?:ler)?|girdi|giri[sş] yapt[iı]|arrived|is here|checked in)$/i);
+    if (door && !/\b(mi|mu|mı|mü)\b/i.test(raw) && !/[?]/.test(raw) && door[1].trim().split(/\s+/).length <= 4
+      && !/\b(kac|kim\w*|nere\w*|hangi\w*|ne zaman|nasil|toplam|how|who|when|where|which|what)\b/.test(f)) return { kind: "command", plan: [{ op: "arrive", guest: door[1].trim().replace(/['’]\S*$/, "") }] };
     // a description of an event to lay out — no guest of ours named, no command verb
     if (!p && isBrief(numberWords(f)) && !has(/\b(sil|kaldir|cikar|oturt|tasi|nerede|kac konser)\b/)) return { kind: "plan", brief: brief(raw) };
     // ---- commands -------------------------------------------------------------------------

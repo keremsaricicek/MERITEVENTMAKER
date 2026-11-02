@@ -173,6 +173,7 @@
         deleteGuest(id) { const kept = W.deleteGuest(id); if (!kept) throw new Error(t("assistant.couldNot")); rec.push(() => W.restoreGuest(kept)); },
         setPax(id, pax) { const before = guest(id).pax; if (!W.setPax(id, pax)) throw new Error(t("assistant.couldNot")); rec.push(() => W.setPax(id, before)); },
         setVip(id, vip) { const before = guest(id).vip; W.setVip(id, vip); rec.push(() => W.setVip(id, before)); },
+        setArrival(id, status) { const before = guest(id).arrivalStatus; if (!W.setArrival(id, status)) throw new Error(t("assistant.couldNot")); rec.push(() => W.setArrival(id, before)); },
         addGuest(name, pax) { const id = W.addGuest(name, pax); rec.push(() => { const kept = W.deleteGuest(id); return kept; }); return id; },
       };
     }
@@ -231,7 +232,9 @@
       const rules = P().parse(text, evs, now);
       let r = rules, byModel = false, sure = false;
       const compound = !!rules.compound;
-      if (readText && R()) {
+      // a check-in at the door the rules read is never sent to the model (speed; it is a plain statement)
+      const atDoor = rules.kind === "command" && rules.plan.every((st) => st.op === "arrive");
+      if (readText && R() && !atDoor) {
         status.textContent = t("assistant.reading");
         const m = await readText(text);
         if (m && m.reading) { const mr = R().toParse(m.reading, evs, now, text, currentId()); if (mr.kind !== "unknown") { r = mr; byModel = true; sure = !!m.sure && R().grounded(mr, text, evs, currentId()); } }
@@ -281,6 +284,7 @@
         if (x.op === "deleteGuest") return pax(x.guestId) > 1 ? t("assistant.pv.deleteParty", { name: x.name, n: pax(x.guestId) - 1 }) : t("assistant.pv.delete", { name: x.name });
         if (x.op === "setPax") return t("assistant.pv.pax", { name: x.name, n: x.pax });
         if (x.op === "setVip") return t("assistant.pv.vip", { name: x.name });
+        if (x.op === "arrive") return t("assistant.pv.arrive", { name: x.name });
         if (x.op === "addGuest") return x.table ? t("assistant.pv.addAt", { name: x.name, n: x.pax, table: x.table }) : t("assistant.pv.add", { name: x.name, n: x.pax });
         return x.op;
       });

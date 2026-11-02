@@ -800,6 +800,7 @@
     "assistant.pv.pax": { en: "{name} will be {n} people", tr: "{name}: {n} kişi olacak" },
     "assistant.pv.vip": { en: "{name} will be VIP", tr: "{name} VIP olacak" },
     "assistant.pv.add": { en: "{name} will be added ({n} people)", tr: "{name} eklenecek ({n} kişi)" },
+    "assistant.pv.arrive": { en: "{name} — arrived", tr: "{name} — geldi" },
     "assistant.pv.addAt": { en: "{name} will be added ({n} people) and seated at {table}", tr: "{name} eklenecek ({n} kişi) ve {table} masasına oturtulacak" },
     "assistant.undone": { en: "Undone.", tr: "Geri alındı." },
     "assistant.couldNot": { en: "I could not do that; the app's notice says why. Nothing was left half done.", tr: "Bunu yapamadım; nedeni uygulamanın bildiriminde. Yarım kalan bir şey yok." },
