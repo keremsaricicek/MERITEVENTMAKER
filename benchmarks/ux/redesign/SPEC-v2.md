@@ -1,0 +1,25 @@
+# MERIT EVENT MAKER — agreed design direction (owner, 2026-11-02, after the five concepts)
+
+Owner's ranking: 5 (Tek Satır) first, 2 (Kontrol masası) and 4 (Atlas) nearly equal. All three looked "like a book,
+not a desktop app" and "a bit complicated, things you have to read to understand". This is the combined direction.
+
+## Feel
+- Hotel / casino seriousness (from 2) + Apple clarity: modern, professional, easy on the eye, understood at a glance.
+- NOT a book: no serif body text, no "pages / ink / ledger / atlas" metaphors, no reading-heavy screens.
+- Modern sans throughout (system: "SF Pro" / "Segoe UI Variable" / "Segoe UI" / system-ui). Fewer words, clear icons
+  with labels, strong hierarchy.
+
+## Structure
+- Navigation: one thin, quiet bar at the top: Etkinlik · Salon · Misafirler · Oturma · Kapı · Raporlar, with the
+  single command line (F8) beside it. No left sidebar, no tab-strip clutter.
+- Events page: from 4 — the timeline of evenings with a "Bugün" line (past left, read-only; upcoming right).
+- Seating and guest list: from 5 — simplified further (the owner: "geliştirilebilir, sadeleşebilir").
+- Door: 2 + 5 — big search, big "Giriş" on the right, "Gelmedi" away from it (menu / asks first), undo; the room
+  visible beside it and the guest's chairs fill in place on check-in (from 2). Only that row and the counters change.
+- Floor plan: 2 + 5 — calm, clean plan; table states by colour; options appear only on the clicked table.
+
+## Behaviour
+- Click first; typing optional (the command line is always there as the fast path, never required).
+- A click changes only what it is about; nothing jumps.
+- Light and dark themes, switchable with one key (day planning light, night door dark).
+- Every existing feature keeps a home; nothing removed.
