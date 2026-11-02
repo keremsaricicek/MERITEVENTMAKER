@@ -43,6 +43,7 @@
     t=deps.t;
     today=deps.today;
     writers=deps.writers;
+    const go = deps.go || null;   // opens a screen for a help answer's "Götür" (optional)
     let root = null, log = null, input = null, status = null, strip = null;
     const turns = [];   // {who:"you"|"assistant", text, lines?, undo?}
 
@@ -101,6 +102,8 @@
           b.append(u);
         }
         if (turn.undone) b.append(el("p", { class: "assistant-undone" }, t("assistant.undone")));
+        if (turn.go && go) { const g = el("button", { class: "btn assistant-go", type: "button" }, t("assistant.go")); g.addEventListener("click", () => go(turn.go)); b.append(g); }
+        if (turn.topics) { const ul = el("ul", { class: "assistant-topics" }); for (const tp of turn.topics) { const li = el("li", {}); const a = el("button", { class: "btn quiet assistant-topic", type: "button" }, tp.title[lang()]); a.addEventListener("click", () => { turns.push(Object.assign({ who: "assistant" }, helpReply(tp))); draw(); }); li.append(a); ul.append(li); } b.append(ul); }
         if (turn.confirm && !turn.settled) {
           const ok = el("button", { class: "btn primary assistant-confirm", type: "button" }, t("assistant.confirm"));
           const no = el("button", { class: "btn assistant-cancel", type: "button" }, t("assistant.cancel"));
@@ -227,8 +230,22 @@
     // is the rules' own shape — answered and carried out by the same code below.
     // With a second reader on this machine, the model reads first and the rules
     // are the fallback (training/README.md "runB7b"); without one, the rules alone.
+    // F8 HELP (owner 2026-11-02): "how do I …" is answered from src/help-topics.js — step by step,
+    // in the UI's language, with "Götür" to the screen. No model; nothing changes.
+    const lang = () => (globalThis.MERIT_I18N_LANG && globalThis.MERIT_I18N_LANG() === "en" ? "en" : "tr");
+    function helpReply(tp) { return { text: tp.title[lang()], lines: tp.steps[lang()], go: tp.go || null }; }
+    function help() {
+      const H = globalThis.MeritHelpTopics;
+      toggle(true);
+      if (!H) return;
+      turns.push({ who: "assistant", text: t("assistant.helpIntro"), topics: H.TOPICS });
+      draw();
+    }
     async function answer(text) {
       const evs = events(), now = today();
+      const H = globalThis.MeritHelpTopics;
+      // never when the sentence names one of our guests ("Ahmet nereye oturacak" is about Ahmet)
+      if (H && H.isHowTo(text) && !P().personIn(text, evs)) { const m = H.match(text); if (m) return helpReply(m.topic); }
       const rules = P().parse(text, evs, now);
       let r = rules, byModel = false, sure = false;
       const compound = !!rules.compound;
@@ -304,8 +321,8 @@
       return { text: out.applied.length ? t("assistant.done") : t("assistant.nothing"), lines: out.lines, undo: rec.length ? rec : null };
     }
 
-    return { mount, toggle, isOpen, ask };
+    return { mount, toggle, isOpen, ask, help };
   }
 
-  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","chatText","currentId","events","onChange","readText","t","today","writers"])});
+  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","chatText","currentId","events","go","onChange","readText","t","today","writers"])});
 })();

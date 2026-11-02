@@ -91,6 +91,9 @@ dialog:focus-visible{outline:none}
 .brand-symbol{width:29px;height:29px;border:1px solid #d9d4c9;border-radius:50%;display:grid;place-items:center;color:#413c2f;font-size:11px;background:linear-gradient(160deg,#f3f2ee,#f8f7f5)}
 .brand-copy strong{display:block;font-size:10px;letter-spacing:.14em}
 .brand-copy span{display:block;margin-top:3px;color:#736951;font-size:8px;letter-spacing:.2em}
+.assistant-topics{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}
+.assistant-topic{width:100%;justify-content:flex-start;text-align:left;font-size:12px}
+.assistant-go{margin-top:8px}
 .brand-version{margin-left:6px;letter-spacing:.06em;color:#8a7e63;font-size:8px}
 .crumb{min-width:0;flex:1;padding-left:18px;border-left:1px solid var(--line);color:#5a523f;font-size:11px}
 .crumb b{color:#2d2920;font-weight:620}

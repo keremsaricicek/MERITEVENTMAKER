@@ -789,6 +789,8 @@
     "assistant.placeholder": { en: "Ask, or tell it what to do… (e.g. seat Ahmet where he sat last time)", tr: "Sor ya da yaptır… (ör. Ahmet'i geçen konserdeki yerine oturt)" },
     "assistant.send": { en: "Send", tr: "Gönder" },
     "assistant.undo": { en: "Undo", tr: "Geri al" },
+    "assistant.go": { en: "Take me there", tr: "Götür" },
+    "assistant.helpIntro": { en: "Help topics — pick one, or ask \"how do I …\" in your own words.", tr: "Yardım konuları — birini seçin ya da \"nasıl yapılır\" diye kendi cümlenizle sorun." },
     "assistant.confirmIntro": { en: "This is what I will do — do you confirm?", tr: "Şunu yapacağım, onaylıyor musun?" },
     "assistant.confirm": { en: "Confirm", tr: "Onayla" },
     "assistant.cancel": { en: "Cancel", tr: "Vazgeç" },

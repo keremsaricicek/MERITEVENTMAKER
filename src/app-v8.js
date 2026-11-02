@@ -4354,6 +4354,8 @@
     chatText:async(text)=>{if(!relayHere())return null;try{const r=await fetch("/vlm-relay/chat",{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify({text}),cache:"no-store",credentials:"same-origin"});if(!r.ok)return null;const j=await r.json();return j&&j.ok&&typeof j.reply==="string"?j.reply:null;}catch{return null;}},
     readText:async(text)=>{if(!relayHere())return null;try{const r=await fetch("/vlm-relay/read",{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify({text}),cache:"no-store",credentials:"same-origin"});if(!r.ok)return null;const j=await r.json();return j&&j.ok&&j.reading?{reading:j.reading,sure:!!j.sure}:null;}catch{return null;}},
     onChange:()=>{const e=activeEvent();if(e){RULES().syncEventChairs(e);touchEvent(e);}render();},
+    // "Götür" from a help answer: the events list, or a tab of the open event (with none open, the events list)
+    go:(g)=>{if(!g)return;if(g.screen==="events"||!activeEvent()){ui.screen="events";render();return;}ui.screen="workspace";ui.tab=g.tab;ui.selectedObjectId=null;ui.selectedObjectIds=[];render();},
     writers:{
       assign:(id,tableId,seats)=>assignGuestToTable(id,tableId,seats&&seats.length?seats[0]:null),
       unassign:(id)=>unassignGuest(id),
@@ -5347,6 +5349,8 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     if(document.querySelector("dialog[open]"))return;
     // F8 opens and closes the assistant from anywhere (it closes itself on Escape).
     if(e.key==="F8"){e.preventDefault();ASSIST.toggle();return;}
+    // F10: the help topics in the assistant panel (owner 2026-11-02)
+    if(e.key==="F10"){e.preventDefault();ASSIST.help();return;}
     // The override challenge is a blocking decision, so Escape means "no" and
     // nothing else on the screen closes with it. Cancelling authorises
     // nothing and leaves the room exactly as it was.
