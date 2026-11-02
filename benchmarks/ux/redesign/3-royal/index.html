@@ -1000,6 +1000,7 @@ document.addEventListener('keydown',e=>{
 });
 $('#ccIn').addEventListener('keydown',e=>{if(e.key==='Enter'){ccAsk(e.target.value);e.target.value='';}});
 
+addEventListener('hashchange',()=>{const v=location.hash.slice(1).split('&')[0];if(VIEWS.find(x=>x.v===v)&&v!==S.view)go(v);});
 /* ================= boot ================= */
 (function boot(){
   const [v,...flags]=(location.hash.slice(1)||'home').split('&');

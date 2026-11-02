@@ -6,7 +6,7 @@
 <title>Merit Atlas</title>
 <style>
 :root{
-  --paper:#ECEEE9; --sheet:#F7F8F5; --table:#FBFBF9; --ink:#1D2930; --ink2:#46525A; --ink3:#5E6A71;
+  --paper:#ECEEE9; --sheet:#F7F8F5; --table:#FBFBF9; --ink:#1D2930; --ink2:#46525A; --ink3:#566269;
   --rule:#C3CAC5; --rule2:#D9DDD8; --grid:#DEE2DD;
   --pru:#1E4D78; --pru2:#173D60; --pruw:#DCE5EE; --red:#A2352A; --redw:#F2E1DC; --gilt:#7E6119; --giltw:#EDE4CC;
   --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua","P052","URW Palladio L",Georgia,"DejaVu Serif",serif;
@@ -43,16 +43,18 @@ kbd{font:600 12px var(--sans);color:var(--ink3);border:1px solid var(--rule);bor
 #corner .mark{font-family:var(--serif);font-size:16px;letter-spacing:.36em;font-weight:600}
 #corner .back{display:block;margin-top:2px;font-size:13px;color:var(--ink2)}
 #corner .back:hover{color:var(--pru)}
-#furn{position:absolute;top:54px;right:calc(var(--nw) + 38px);display:flex;align-items:center;gap:14px;font-size:13px;color:var(--ink2)}
+#furn{position:absolute;top:50px;right:calc(var(--nw) + 30px);display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-size:13px;color:var(--ink2);background:var(--paper);padding:4px 6px}
+#furn .zr{display:flex;align-items:center;gap:4px}
+#corner{background:var(--paper);padding:4px 10px 6px;margin:-4px -10px}
 #furn .zb{width:30px;height:30px;display:grid;place-items:center;box-shadow:inset 0 0 0 1px var(--rule);background:var(--sheet);border-radius:2px;font-size:17px;line-height:1}
 #furn .zb:hover{box-shadow:inset 0 0 0 1px var(--ink3)}
 #scalebar{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
 #scalebar .bar{height:6px;border:1px solid var(--ink);background:linear-gradient(90deg,var(--ink) 0 25%,transparent 25% 50%,var(--ink) 50% 75%,transparent 75%)}
 
 /* finder / assistant: the one instrument */
-#finderWrap{position:absolute;top:50px;left:40px;right:calc(var(--nw) + 20px);display:flex;justify-content:center;pointer-events:none;z-index:8}
-#finder{pointer-events:auto;width:min(540px,44vw);position:relative;transition:width .25s}
-.door #finder{width:min(660px,52vw)}
+#finderWrap{position:absolute;top:50px;left:200px;right:calc(var(--nw) + 170px);display:flex;justify-content:center;pointer-events:none;z-index:8}
+#finder{pointer-events:auto;width:min(540px,100%);position:relative;transition:width .25s}
+.door #finder{width:min(660px,100%)}
 #fbox{display:flex;align-items:center;gap:10px;height:44px;padding:0 12px;background:var(--sheet);box-shadow:0 0 0 1px var(--ink3),0 6px 18px rgba(29,41,48,.07);border-radius:2px}
 .door #fbox{height:54px;box-shadow:0 0 0 1.5px var(--ink),0 6px 18px rgba(29,41,48,.08)}
 #fbox input{flex:1;border:0;background:transparent;outline:none;font-size:16px;min-width:0}
@@ -91,7 +93,7 @@ kbd{font:600 12px var(--sans);color:var(--ink3);border:1px solid var(--rule);bor
 /* notes column + title block */
 #notes{position:absolute;top:14px;right:14px;bottom:14px;width:var(--nw);background:var(--sheet);border-left:1.5px solid var(--ink);display:flex;flex-direction:column;transition:width .38s cubic-bezier(.2,.7,.2,1);z-index:6}
 #nBody{flex:1;overflow:auto;padding:22px 24px 12px}
-#nBody h2{font-family:var(--serif);font-weight:500;font-size:28px;line-height:1.15;margin:6px 0 6px;letter-spacing:-.005em}
+#nBody h2{font-family:var(--serif);font-weight:500;font-size:26px;line-height:1.15;margin:6px 0 6px;letter-spacing:-.005em}
 #nBody .lede{color:var(--ink2);margin:0 0 16px;font-size:15px}
 .sec{margin-top:20px}
 .sec>.eyebrow{display:flex;justify-content:space-between;border-bottom:1px solid var(--ink);padding-bottom:5px;margin-bottom:6px}
@@ -108,20 +110,15 @@ kbd{font:600 12px var(--sans);color:var(--ink3);border:1px solid var(--rule);bor
 .tally .bar{grid-column:1/-1;height:4px;background:var(--rule2);position:relative}
 .tally .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--ink);transition:width .3s}
 .big{font-family:var(--serif);font-size:40px;line-height:1;letter-spacing:-.01em}
-#status{flex:none;min-height:46px;padding:9px 24px;border-top:1px solid var(--rule);font-size:14px;color:var(--ink2);display:flex;align-items:center;gap:10px}
+#status{flex:none;min-height:42px;padding:8px 24px;border-top:1px solid var(--rule);font-size:14px;color:var(--ink2);display:flex;align-items:center;gap:10px}
 #status b{color:var(--ink);font-weight:600}
-#status:empty::before{content:"Son işlem burada görünür — geri almak için de burası.";color:var(--ink3)}
+#status:empty::before{content:"Son işlem ve “Geri al” burada.";color:var(--ink3)}
+#status .lnk{white-space:nowrap}
 #tblock{flex:none;border-top:1.5px solid var(--ink);font-size:13px}
 #tblock .tt{padding:10px 16px 8px 24px;font-family:var(--serif);font-size:16px;letter-spacing:.06em;text-transform:uppercase;line-height:1.25}
 #tblock .tt small{display:block;font-family:var(--sans);text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink2);margin-top:2px}
-#tblock .cells{display:grid;grid-template-columns:1.3fr 1fr .8fr;border-top:1px solid var(--ink3)}
-#tblock .cells div{padding:5px 10px 6px 24px;border-left:1px solid var(--ink3)}
-#tblock .cells div+div{padding-left:10px}
-#tblock .cells div:first-child{border-left:0}
-#tblock .cells span{display:block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:600}
-#tblock .cells b{font-weight:600;font-size:14px}
 #sheets{border-top:1px solid var(--ink3);padding:4px 0 6px}
-#sheets .sh{display:grid;grid-template-columns:44px 1fr auto;align-items:center;width:100%;text-align:left;padding:5px 16px 5px 24px;font-size:14px;position:relative}
+#sheets .sh{display:grid;grid-template-columns:44px 1fr auto;align-items:center;width:100%;text-align:left;padding:4px 16px 4px 24px;font-size:14px;position:relative}
 #sheets .sh:hover{background:var(--rule2)}
 #sheets .sh.cur{background:var(--pruw);font-weight:600}
 #sheets .sh.cur::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pru)}
@@ -220,6 +217,7 @@ kbd{font:600 12px var(--sans);color:var(--ink3);border:1px solid var(--rule);bor
 .gridl{stroke:var(--grid);stroke-width:1;vector-effect:non-scaling-stroke}
 .plan .gridl{stroke:#CFD5D0}
 .place{font-family:var(--serif)!important;font-style:italic;fill:var(--ink2);letter-spacing:.18em}
+.place.tight{letter-spacing:.02em;fill:var(--ink)}
 .u14{font-size:calc(var(--u) * 14px)}
 .u13{font-size:calc(var(--u) * 13px)}
 .u16{font-size:calc(var(--u) * 16px)}
@@ -230,7 +228,7 @@ kbd{font:600 12px var(--sans);color:var(--ink3);border:1px solid var(--rule);bor
 .vipring{fill:none;stroke:var(--gilt);stroke-width:.8;vector-effect:non-scaling-stroke}
 .tl{font-weight:650;fill:var(--ink);text-anchor:middle;dominant-baseline:central;font-size:calc(var(--u) * 14px);font-variant-numeric:tabular-nums;pointer-events:none}
 .vip .tl{fill:var(--gilt)}
-.fc{fill:var(--pru);font-weight:600;text-anchor:middle;dominant-baseline:central;font-size:calc(var(--u) * 12.5px);display:none;pointer-events:none}
+.fc{fill:var(--pru);paint-order:stroke;stroke:#ECEEE9;stroke-width:calc(var(--u) * 4px);stroke-linejoin:round;font-weight:700;text-anchor:middle;dominant-baseline:central;font-size:calc(var(--u) * 12.5px);display:none;pointer-events:none}
 .cand .fc{display:block}
 .cand .tshape{stroke:var(--pru);stroke-width:2.2;fill:var(--pruw)}
 .halo{fill:var(--pruw);stroke:var(--pru);stroke-width:1.6;vector-effect:non-scaling-stroke;opacity:0;transition:opacity .2s}
@@ -259,6 +257,9 @@ kbd{font:600 12px var(--sans);color:var(--ink3);border:1px solid var(--rule);bor
 .nm{display:none;fill:var(--ink);font-size:calc(var(--u) * 12px);dominant-baseline:central;pointer-events:none}
 .nm.co{fill:var(--ink2);font-style:italic}
 .lod2 .nm,.tbl.focus .nm{display:block}
+.tiny .foyer text{display:none}
+.tiny .tl{font-size:calc(var(--u) * 12px)}
+.focusing .tbl:not(.focus){opacity:.38;transition:opacity .3s}
 .mk{pointer-events:none}
 .mk path{fill:var(--sheet);stroke:var(--red);stroke-width:1.6;vector-effect:non-scaling-stroke}
 .mk text{fill:var(--red);font-weight:700;text-anchor:middle;dominant-baseline:central;font-size:12px}
@@ -294,14 +295,14 @@ kbd{font:600 12px var(--sans);color:var(--ink3);border:1px solid var(--rule);bor
 #home .mark{font-family:var(--serif);font-size:16px;letter-spacing:.36em;font-weight:600}
 #home h1{font-family:var(--serif);font-weight:500;font-size:46px;letter-spacing:-.01em;margin:26px 0 4px;line-height:1.05}
 #home .sub{color:var(--ink2);font-size:16px;margin:0}
-#strip{position:absolute;left:58px;right:58px;top:46%;transform:translateY(-50%);display:flex;align-items:stretch;justify-content:center;gap:0}
+#strip{position:absolute;left:58px;right:58px;top:54%;transform:translateY(-50%);display:flex;align-items:stretch;justify-content:center;gap:0}
 .plate{width:clamp(170px,13.2vw,260px);padding:0 14px;display:flex;flex-direction:column;cursor:pointer;position:relative}
-.plate .dr{height:clamp(120px,9.4vw,180px);display:flex;align-items:flex-end;justify-content:center;padding-bottom:16px}
+.plate .dr{height:clamp(150px,12vw,230px);display:flex;align-items:flex-end;justify-content:center;padding-bottom:16px}
 .plate .dr svg{width:100%;height:100%;overflow:visible}
 .plate .cap{border-top:1.5px solid var(--ink);padding-top:12px;position:relative}
 .plate .cap::before{content:"";position:absolute;top:-6px;left:0;width:1.5px;height:11px;background:var(--ink)}
 .plate .dt{font-family:var(--serif);font-size:15px;color:var(--ink2)}
-.plate .nm2{font-family:var(--serif);font-size:19px;line-height:1.2;margin:2px 0 4px}
+.plate .nm2{font-family:var(--serif);font-size:20px;line-height:1.2;margin:2px 0 4px}
 .plate .vn{font-size:14px;color:var(--ink2)}
 .plate .ss{font-size:14px;margin-top:6px;font-weight:600}
 .plate .ss.red{color:var(--red)}
@@ -314,7 +315,7 @@ kbd{font:600 12px var(--sans);color:var(--ink3);border:1px solid var(--rule);bor
 .plate.new .dr{opacity:1}
 .meridian{width:110px;position:relative;flex:none}
 .meridian::before{content:"";position:absolute;left:50%;top:-40px;bottom:-30px;border-left:1.5px dashed var(--pru)}
-.meridian .lab{position:absolute;left:50%;transform:translateX(-50%);top:calc(clamp(120px,9.4vw,180px) - 4px);background:var(--paper);padding:4px 6px;text-align:center;font-size:13px;color:var(--pru2);font-weight:600;white-space:nowrap;line-height:1.3}
+.meridian .lab{position:absolute;left:50%;transform:translateX(-50%);top:calc(clamp(150px,12vw,230px) - 4px);background:var(--paper);padding:4px 6px;text-align:center;font-size:13px;color:var(--pru2);font-weight:600;white-space:nowrap;line-height:1.3}
 .side{position:absolute;top:calc(clamp(120px,9.4vw,180px) + 40px);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);font-weight:600}
 #hfoot{position:absolute;left:58px;right:58px;bottom:42px;display:flex;justify-content:space-between;align-items:flex-end;font-size:14px;color:var(--ink2)}
 #hmsg{min-height:22px;color:var(--ink)}
@@ -375,11 +376,9 @@ kbd{font:600 12px var(--sans);color:var(--ink3);border:1px solid var(--rule);bor
   </div></div>
 
   <div id="furn">
-    <div id="scalebar"><div class="bar" id="sbar"></div><span class="num" id="slab">0 — 5 m</span></div>
-    <button class="zb" id="zOut" aria-label="Uzaklaş">−</button>
-    <span class="num" id="zPct" style="min-width:40px;text-align:center">100%</span>
-    <button class="zb" id="zIn" aria-label="Yakınlaş">+</button>
+    <div class="zr"><button class="zb" id="zOut" aria-label="Uzaklaş">−</button><span class="num" id="zPct" style="min-width:44px;text-align:center">100%</span><button class="zb" id="zIn" aria-label="Yakınlaş">+</button></div>
     <button class="lnk" id="zFit" style="font-weight:500">Salonu sığdır</button>
+    <div id="scalebar" style="align-items:flex-end"><div class="bar" id="sbar"></div><span class="num" id="slab">5 m</span></div>
   </div>
 
   <div id="page"></div>
@@ -389,12 +388,7 @@ kbd{font:600 12px var(--sans);color:var(--ink3);border:1px solid var(--rule);bor
     <div id="nBody"></div>
     <div id="status" aria-live="polite"></div>
     <div id="tblock">
-      <div class="tt">Merit Royal Yılbaşı Galası<small>Merit Royal Hotel · Grand Balo Salonu</small></div>
-      <div class="cells">
-        <div><span>Tarih</span><b class="num">31.12.2026</b></div>
-        <div><span>Kişi · masa</span><b class="num">420 · 42</b></div>
-        <div><span>Ölçek</span><b class="num">1:200</b></div>
-      </div>
+      <div class="tt">Merit Royal Yılbaşı Galası<small class="num">31.12.2026 · Grand Balo Salonu, Merit Royal Hotel · 420 kişi · 42 masa · ölçek 1:200</small></div>
       <nav id="sheets" aria-label="Paftalar"></nav>
     </div>
   </aside>
@@ -428,7 +422,7 @@ const LAST=['Aksoy','Altun','Arıkan','Aydemir','Bakır','Başaran','Bulut','Ceb
 const HOSTS=['Merit Royal Yönetim','Kurumsal Satış','Casino Pazarlama','Otel Misafir İlişkileri'];
 const JUNKETS=['Kerem Sarıçiçek','Loyalty Desk','International Marketing'];
 const RW=1600,RH=1040,COLW=RW/12,ROWH=RH/8;
-const CB={x:-50,y:-78,w:1700,h:1338};
+const CB={x:-50,y:-78,w:1700,h:1356};
 
 const TABLES=[],TM={};
 function addTable(id,shape,cap,x,y,rot=0){const t={id,shape,cap,x,y,rot,vip:/^VIP/.test(id),seats:Array(cap).fill(null)};TABLES.push(t);TM[id]=t;return t}
@@ -508,14 +502,14 @@ function buildMap(){
   el('rect',{x:560,y:0,width:480,height:150,fill:'url(#stageh)',stroke:'#1D2930','stroke-width':1.3,'vector-effect':'non-scaling-stroke'},F);
   el('rect',{class:'thin',x:600,y:150,width:60,height:18,fill:'#F2F3EF'},F);el('rect',{class:'thin',x:940,y:150,width:60,height:18,fill:'#F2F3EF'},F);
   pl(F,800,80,'SAHNE','u16');
-  el('rect',{class:'thin',x:1078,y:34,width:96,height:76,fill:'#F2F3EF'},F);pl(F,1126,72,'DJ kabini','u13');
+  el('rect',{class:'thin',x:1062,y:34,width:128,height:76,fill:'#F2F3EF'},F);pl(F,1126,72,'DJ kabini','u13 tight');
   el('rect',{x:610,y:186,width:380,height:178,fill:'url(#parq)',stroke:'#5E6A71','stroke-width':1,'vector-effect':'non-scaling-stroke'},F);pl(F,800,275,'Dans pisti','u14');
   el('path',{class:'thin',d:'M1520 690 H1478 V960 H1520',fill:'#F7F8F5'},F);
   el('rect',{class:'wall',x:1556,y:680,width:44,height:290},F);
   const bt=pl(F,1538,825,'Bar','u14');bt.setAttribute('transform','rotate(-90 1538 825)');
   // foyer outside the entrance
-  el('path',{class:'hair',d:'M150 1058 V1252 H1450 V1058','stroke-dasharray':'8 5'},F);
-  pl(F,800,1235,'FUAYE','u13');
+  el('path',{class:'hair',d:'M150 1058 V1266 H1450 V1058','stroke-dasharray':'8 5'},F);
+  const fy=pl(F,1440,1252,'FUAYE','u13');fy.setAttribute('text-anchor','end');
   el('rect',{class:'doordesk',x:730,y:1078,width:140,height:22},F);
   const dd=el('text',{x:800,y:1124,class:'u13','text-anchor':'middle',fill:'#46525A'},F);dd.textContent='Kapı masası';
   // dimensions (plan sheet)
@@ -547,7 +541,7 @@ function buildTable(t){
   if(t.shape==='round')el('circle',{class:'tshape',r:30},g);else{el('rect',{class:'tshape',x:-85,y:-27,width:170,height:54,rx:3},g);}
   if(t.vip){if(t.shape==='round')el('circle',{class:'vipring',r:25},g);else el('rect',{class:'vipring',x:-80,y:-22,width:160,height:44,rx:2},g)}
   const lab=el('text',{class:'tl',transform:`rotate(${-t.rot})`},g);lab.textContent=t.id;
-  const fc=el('text',{class:'fc',y:t.shape==='round'?16:15,transform:`rotate(${-t.rot})`},g);t.fc=fc;
+  const fc=el('text',{class:'fc',y:t.shape==='round'?70:64,transform:`rotate(${-t.rot})`},g);t.fc=fc;
   t.geo.forEach((c,i)=>{const d=t.shape==='round'?14:12;const r=c.a*Math.PI/180;const x=c.x+Math.cos(r)*d,y=c.y+Math.sin(r)*d;
     let wa=((c.a+t.rot)%360+360)%360;const flip=wa>90&&wa<270;
     const tx=el('text',{class:'nm',x,y,transform:`rotate(${flip?c.a+180:c.a} ${x} ${y})`,'text-anchor':flip?'end':'start'},g);t.names.push(tx)});
@@ -565,19 +559,19 @@ function paintGuest(g){if(g.table)paintTable(TM[g.table])}
 /* foyer: unseated parties stand outside the door */
 const FOYER=[];
 function buildFoyer(){
-  const groups=[['Kerem Sarıçiçek','junket',220],['Loyalty Desk','junket',420],['International Marketing','junket',600],['Kurumsal Satış','',930],['Merit Royal Yönetim','',1150],['Casino Pazarlama','',1300]];
+  const groups=[['Kerem Sarıçiçek',170,1080],['Loyalty Desk',470,1080],['International Marketing',960,1080],['Kurumsal Satış',170,1172],['Merit Royal Yönetim',560,1172],['Casino Pazarlama',960,1172]];
   L.foyer.innerHTML='';FOYER.length=0;
-  groups.forEach(([host,kind,x])=>{const mem=G.filter(g=>g.host===host&&UNSEATED.some(u=>u[0]===g.name));if(!mem.length)return;
-    const h=el('text',{x,y:1080,class:'place u13','text-anchor':'start'},L.foyer);h.textContent=host+(kind?' · junket':'');
-    let cx=x;mem.forEach(g=>{const w=Math.max(g.pax*19+8,96);FOYER.push({g,x:cx,y:1150,w});cx+=w+26})});
+  groups.forEach(([host,x,y])=>{const mem=G.filter(g=>g.host===host&&UNSEATED.some(u=>u[0]===g.name));if(!mem.length)return;
+    const h=el('text',{x,y,class:'place tight u13','text-anchor':'start'},L.foyer);h.textContent=host;
+    let cx=x;mem.forEach(g=>{FOYER.push({g,x:cx,y:y+32,w:180});cx+=190})});
   FOYER.forEach(drawTok)}
 function drawTok(f){if(f.el)f.el.remove();const g=f.g;const o=el('g',{class:'tok'+(g.vip?' vgt':''),'data-g':g.id,transform:`translate(${f.x} ${f.y})`},L.foyer);f.el=o;
-  el('rect',{x:-4,y:-30,width:f.w,height:70,fill:'transparent'},o);
+  el('rect',{x:-4,y:-24,width:f.w-12,height:72,fill:'transparent'},o);
   const cw=g.pax*19-4;const sx=(f.w-8-cw)/2;
   for(let i=0;i<g.pax;i++)el('rect',{class:'tb',x:sx+i*19,y:-14,width:15,height:12,rx:2.5},o);
-  const t1=el('text',{x:(f.w-8)/2,y:16},o);t1.textContent=g.name+(g.extra?' +'+g.extra:'');
-  if(g.table){o.setAttribute('class','tok gone');t1.textContent='→ '+g.table+(g.draft?' (taslak)':'');const t2=el('text',{x:(f.w-8)/2,y:34,class:'h'},o);t2.textContent=g.name}
-  else if(g.vip){const t2=el('text',{x:(f.w-8)/2,y:34,class:'h',fill:'#7E6119'},o);t2.textContent=g.vip}
+  const t1=el('text',{x:(f.w-8)/2,y:24},o);t1.textContent=g.name+(g.extra?' +'+g.extra:'');
+  if(g.table){o.setAttribute('class','tok gone');t1.textContent='→ '+g.table+(g.draft?' (taslak)':'');const t2=el('text',{x:(f.w-8)/2,y:42,class:'h'},o);t2.textContent=g.name}
+  else if(g.vip){const t2=el('text',{x:(f.w-8)/2,y:42,class:'h',fill:'#7E6119'},o);t2.textContent=g.vip}
   if(S.selG===g.id&&!g.table)o.classList.add('sel')}
 function repaintTok(g){const f=FOYER.find(f=>f.g===g);if(f)drawTok(f)}
 
@@ -586,7 +580,7 @@ const V={s:1,tx:0,ty:0,fit:1};
 function area(){const W=innerWidth,H=innerHeight,nw=S.nwPx;return{x0:58,y0:112,x1:W-14-nw-20-18,y1:H-40-16}}
 function fitView(){const a=area();const s=Math.min((a.x1-a.x0)/CB.w,(a.y1-a.y0)/CB.h);return{s,tx:a.x0+((a.x1-a.x0)-CB.w*s)/2-CB.x*s,ty:a.y0+((a.y1-a.y0)-CB.h*s)/2-CB.y*s}}
 function apply(){world.setAttribute('transform',`translate(${V.tx} ${V.ty}) scale(${V.s})`);world.style.setProperty('--u',(1/V.s).toFixed(4));
-  S.k=V.s/V.fit;svg.classList.toggle('lod2',S.k>=2.2);updTicks();updLead();placeNote();placePage();
+  S.k=V.s/V.fit;svg.classList.toggle('lod2',S.k>=4.2);svg.classList.toggle('tiny',V.s<.5);updTicks();updLead();placeNote();placePage();
   $('#zPct').textContent=Math.round(S.k*100)+'%';const m5=250*V.s;$('#sbar').style.width=m5+'px';}
 let anim=null;
 function animTo(t,dur=460){cancelAnimationFrame(anim);if(RM)dur=0;const f={...V},t0=performance.now();
@@ -595,7 +589,7 @@ function layout(animate){const W=innerWidth,H=innerHeight;
   S.nwPx=S.sheet==='A-04'?Math.min(Math.round(W*.47),880):(W>=1800?384:340);
   document.documentElement.style.setProperty('--nw',S.nwPx+'px');
   const r=$('#clipR');r.setAttribute('x',40);r.setAttribute('y',40);r.setAttribute('width',Math.max(0,W-40-S.nwPx-34));r.setAttribute('height',H-80);
-  const f=fitView();V.fit=f.s;if(S.focusT){const t=focusXf(S.focusT,3);animate?animTo(t):(Object.assign(V,t),apply())}else{animate?animTo(f):(Object.assign(V,f),apply())}}
+  const f=fitView();V.fit=f.s;if(S.focusT){const t=focusXf(S.focusT,2.3);animate?animTo(t):(Object.assign(V,t),apply())}else{animate?animTo(f):(Object.assign(V,f),apply())}}
 function focusXf(id,k){const t=TM[id],a=area(),s=V.fit*k;const cx=(a.x0+a.x1)/2,cy=(a.y0+a.y1)/2+20;return{s,tx:cx-t.x*s-(S.sheet==='A-04'?0:60),ty:cy-t.y*s}}
 function zoomAt(f,px,py){const s=Math.max(V.fit*.7,Math.min(V.fit*6,V.s*f));const k=s/V.s;V.tx=px-(px-V.tx)*k;V.ty=py-(py-V.ty)*k;V.s=s;apply()}
 function updTicks(){const box=$('#ticks');const W=innerWidth,H=innerHeight;const xR=W-14-S.nwPx-20;let h='';
@@ -621,13 +615,13 @@ function updLead(){const P=$('#leadP'),A=$('#leadA'),B=$('#leadB');const hide=()
 /* ------------------------------------------------------------------ markers (keynotes) */
 function issues(){const out=[];const T=totals();
   const un=G.filter(g=>!g.table);
-  out.push({n:1,t:un.length?`${T.uns} kişi yer bekliyor`:'Herkesin yeri var',d:un.length?`${un.length} kayıt fuayede duruyor. Oturma paftasında onları masalara taşıyın.`:'Bekleyen misafir yok.',ok:!un.length,at:{x:150,y:1070},tables:[],go:'A-03',goTxt:'Oturma paftasını aç'});
+  out.push({n:1,t:un.length?`${T.uns} kişi yer bekliyor`:'Herkesin yeri var',d:un.length?`${un.length} kayıt fuayede duruyor. Oturma paftasında onları masalara taşıyın.`:'Bekleyen misafir yok.',ok:!un.length,at:{x:150,y:1160},tables:[],go:'A-03',goTxt:'Oturma paftasını aç'});
   const kk=GM[G.find(g=>g.name==='Kerem Koç').id],hk=G.find(g=>g.name==='Hülya Keskin');const same=kk.table&&kk.table===hk.table;
   out.push({n:2,t:'Kural: Kerem Koç ile Hülya Keskin ayrı oturmalı',d:same?`İkisi de ${sfx(kk.table,LOC)} (${ref(TM[kk.table])}).`:'Kural sağlanıyor.',ok:!same,tables:same?[kk.table]:[],goTxt:same?'Masayı göster':''});
   const vipOff=G.filter(g=>g.vip&&g.table&&!TM[g.table].vip&&!S.ack.has(g.id));
   out.push({n:3,t:'Kural: VIP misafir VIP masada',d:vipOff.length?vipOff.map(g=>`${g.name}${g.extra?' +'+g.extra:''} ${sfx(g.table,LOC)}`).join(', ')+'.':'Kural sağlanıyor ya da bilinçli olarak onaylandı.',ok:!vipOff.length,tables:vipOff.map(g=>g.table),ackG:vipOff[0]&&vipOff[0].id,goTxt:vipOff.length?'Masayı göster':''});
   const op=S.sugg.filter(s=>s.state==='open');
-  out.push({n:4,t:op.length?`Plan: ${op.length} öneri onay bekliyor`:'Plan önerileri bitti',d:op.length?'Çizimden okunanlar siz onaylamadan plana girmez.':'Tüm öneriler karara bağlandı.',ok:!op.length,at:op[0]?{x:op[0].x,y:op[0].y}:null,go:'A-02',goTxt:op.length?'Kat planını aç':''});
+  out.push({n:4,t:op.length?`Plan: ${op.length} öneri onay bekliyor`:'Plan önerileri bitti',d:op.length?'Çizimden okunanlar siz onaylamadan plana girmez.':'Tüm öneriler karara bağlandı.',ok:!op.length,at:op[0]?{x:op[0].x+48,y:op[0].y-50}:null,go:'A-02',goTxt:op.length?'Kat planını aç':''});
   return out}
 function drawMarks(){L.marks.innerHTML='';if(S.sheet!=='A-01')return;
   issues().forEach(i=>{if(i.ok)return;let p=i.at;if(!p&&i.tables[0]){const t=TM[i.tables[0]];p={x:t.x+52,y:t.y-50}}if(!p)return;
@@ -659,7 +653,7 @@ function setSheet(id,opts={}){const was=S.sheet;S.sheet=id;S.report=null;S.pendi
   layout(was==='A-04'||id==='A-04');if(id==='A-05'&&!opts.noFocus)setTimeout(()=>$('#q').focus(),60)}
 function renderSheetsNav(){const T=totals();const iss=issues().filter(i=>!i.ok).length;
   const hint={'A-01':[iss?iss+' açık not':'hazır',iss>0],'A-02':[TABLES.length+' masa',false],'A-03':[T.uns?T.uns+' kişi bekliyor':'herkes yerinde',T.uns>0],'A-04':[G.length+' kayıt',false],'A-05':[T.arr+' / '+T.pax,false],'A-06':['5 çıktı',false]};
-  $('#sheets').innerHTML='<div class="eyebrow" style="padding:6px 24px 2px">Paftalar</div>'+SHEETS.map(([id,n],i)=>`<button class="sh${S.sheet===id?' cur':''}" data-sheet="${id}" title="Kısayol: ${i+1}"><code>${id}</code><span>${n}</span><em class="${hint[id][1]?'red':''}">${hint[id][0]}</em></button>`).join('')}
+  $('#sheets').innerHTML='<div class="eyebrow" style="padding:6px 24px 0">Paftalar · 1–6</div>'+SHEETS.map(([id,n],i)=>`<button class="sh${S.sheet===id?' cur':''}" data-sheet="${id}" title="Kısayol: ${i+1}"><code>${id}</code><span>${n}</span><em class="${hint[id][1]?'red':''}">${hint[id][0]}</em></button>`).join('')}
 function renderNotes(){const b=$('#nBody');const T=totals();const sh=S.sheet;let h='';
   if(sh==='A-01'){const iss=issues(),open=iss.filter(i=>!i.ok);
     h=`<div class="eyebrow">A-01 · Hazırlık</div><h2>${open.length?`Hazır değil — ${open.length} not açık`:'Etkinlik hazır'}</h2>
@@ -732,7 +726,7 @@ function selectG(id,silent){S.selG=id;$$('.ie.on').forEach(e=>e.classList.remove
   const g=GM[id];
   if(S.sheet==='A-03'&&!g.table){TABLES.forEach(t=>{const f=freeOf(t);if(f>=g.pax){t.g.classList.add('cand');t.fc.textContent=f+' boş'}});light([]);return}
   const src=$(`.ie[data-g="${id}"]`)||$(`.fr[data-g="${id}"]`);if(src)src.classList.add('on');
-  if(S.sheet==='A-04'){$('#sel').innerHTML=selStrip();$('#sel').classList.add('on')}
+  if(S.sheet==='A-04'){$('#sel').innerHTML=selStrip();$('#sel').classList.add('on');light(g.table?[g.table]:[],$('#sel'));return}
   light(g.table?[g.table]:[],src)}
 
 /* ------------------------------------------------------------------ actions: arrival, seating */
@@ -821,8 +815,8 @@ function hlRow(i){const rows=$$('#fdrop .fr[data-g]');if(!rows.length)return;S.h
 function closeDrop(){$('#fdrop').classList.remove('on');$('#fdrop').innerHTML='';TABLES.forEach(t=>t.chairs.forEach(c=>c.classList.remove('hit')))}
 
 /* ------------------------------------------------------------------ table note (focus by zoom) */
-function openNote(id){S.focusT=id;TABLES.forEach(t=>t.g.classList.toggle('focus',t.id===id));renderNote();$('#tnote').classList.add('on');animTo(focusXf(id,3));light([id])}
-function closeNote(){if(!S.focusT)return;S.focusT=null;TABLES.forEach(t=>t.g.classList.remove('focus'));$('#tnote').classList.remove('on');}
+function openNote(id){S.focusT=id;svg.classList.add('focusing');TABLES.forEach(t=>t.g.classList.toggle('focus',t.id===id));renderNote();$('#tnote').classList.add('on');animTo(focusXf(id,2.3));light([id])}
+function closeNote(){if(!S.focusT)return;S.focusT=null;svg.classList.remove('focusing');TABLES.forEach(t=>t.g.classList.remove('focus'));$('#tnote').classList.remove('on');}
 function renderNote(){const t=TM[S.focusT];if(!t)return;const parties=[...new Set(t.seats.filter(Boolean).map(s=>s.g))].map(id=>GM[id]);const door=S.sheet==='A-05';
   const arr=t.seats.filter(s=>s&&s.k<GM[s.g].arrived).length;
   $('#tnote').innerHTML=`<header><h3>${t.id}${t.vip?' <span class="vip">VIP</span>':''}</h3><span class="num" style="font-size:14px;color:var(--ink2)">${ref(t)} · ${t.cap-freeOf(t)}/${t.cap} · ${arr} geldi</span></header>
@@ -830,7 +824,7 @@ function renderNote(){const t=TM[S.focusT];if(!t)return;const parties=[...new Se
   ${freeOf(t)?`<div class="tr" style="color:var(--ink3)"><span>${freeOf(t)} boş sandalye</span></div>`:''}</div>
   <footer><button class="lnk" id="nBack">Salona dön</button><span style="font-size:13px;color:var(--ink3)">İsimler sandalyelerin yanında</span></footer>`;
   $('#nBack').onclick=()=>{closeNote();light([]);animTo(fitView())};placeNote()}
-function placeNote(){if(!S.focusT)return;const t=TM[S.focusT],c=scr(t.x,t.y),n=$('#tnote');const off=(t.shape==='round'?120:170)*V.s;let x=c.x+off;const xR=innerWidth-S.nwPx-60;if(x+300>xR)x=c.x-off-300;n.style.left=Math.max(60,x)+'px';n.style.top=Math.max(100,Math.min(innerHeight-420,c.y-120))+'px'}
+function placeNote(){if(!S.focusT)return;const t=TM[S.focusT],c=scr(t.x,t.y),n=$('#tnote');const off=(t.shape==='round'?100:150)*V.s;let x=c.x+off;const xR=innerWidth-S.nwPx-60;if(x+300>xR)x=c.x-off-300;n.style.left=Math.max(60,x)+'px';n.style.top=Math.max(100,Math.min(innerHeight-420,c.y-120))+'px'}
 
 /* ------------------------------------------------------------------ reports */
 const REPORTS=[
@@ -1007,7 +1001,7 @@ function plateSVG(kind){const W=1600,H=1040;let s=`<svg viewBox="-40 -40 1680 11
   return s+'</svg>'}
 function renderHome(){const st=$('#strip');let h='';let crossed=false;
   EVENTS.forEach(ev=>{if(!ev.past&&!crossed){crossed=true;h+=`<div class="meridian" aria-hidden="true"><div class="lab">Bugün<br>2 Kasım 2026</div></div>`}
-    h+=`<div class="plate${ev.past?' past':''}${ev.main?' sel':''}" data-ev="${ev.id}" tabindex="0" role="button" aria-label="${esc(ev.n)}"><div class="dr">${plateSVG(ev.plan)}</div><div class="cap"><div class="dt">${ev.d}</div><div class="nm2">${esc(ev.n)}</div><div class="vn">${esc(ev.v)}</div><div class="ss${ev.red?' red':''}">${ev.past?'Salt okunur · ':''}${ev.s}</div><button class="ops" data-ops="${ev.id}">İşlemler…</button></div></div>`});
+    h+=`<div class="plate${ev.past?' past':''}${ev.main?' sel':''}" data-ev="${ev.id}" tabindex="0" role="button" aria-label="${esc(ev.n)}"><div class="dr">${plateSVG(ev.plan)}</div><div class="cap"><div class="dt">${ev.d.replace(' · ','<br>')}</div><div class="nm2">${esc(ev.n)}</div><div class="vn">${esc(ev.v)}</div><div class="ss${ev.red?' red':''}">${ev.past?'Salt okunur · ':''}${ev.s}</div><button class="ops" data-ops="${ev.id}">İşlemler…</button></div></div>`});
   h+=`<div class="plate new" data-new="1" tabindex="0" role="button"><div class="dr">${plateSVG('new')}</div><div class="cap" style="border-top-style:dashed"><div class="dt">Tarih seçin</div><div class="nm2">Yeni etkinlik</div><div class="vn">Boş başlar: masa, misafir yok</div></div></div>`;
   st.innerHTML=h;
   st.insertAdjacentHTML('beforeend','');}
