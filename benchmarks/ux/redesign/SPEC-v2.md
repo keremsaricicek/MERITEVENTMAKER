@@ -23,3 +23,10 @@ not a desktop app" and "a bit complicated, things you have to read to understand
 - A click changes only what it is about; nothing jumps.
 - Light and dark themes, switchable with one key (day planning light, night door dark).
 - Every existing feature keeps a home; nothing removed.
+
+## Owner's verdict on 6-birlesik, photo by photo (2026-11-02)
+1 Events ✗ ("karışık, okunmuyor") → BIG CARDS: cover image, date, venue, readiness; upcoming first.
+2 Salon ✗ ("plan çizimi çirkin") → plan drawn in a SIMPLE ICON style: clean circles/rectangles with table no. and fill.
+3 Guests ✓ keep. 4 Seating (light) ~ "genel olarak iyi" → keep, align with 7. 7 Seating (dark) ✓ keep.
+5 Door (light) ~ "çizim çirkin" → same simple icon plan. 6 Door (dark) ✗ "çizim ve renkler patlak" → fix dark
+colours (calmer, no washed/garish tones) and the same icon plan.
