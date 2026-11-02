@@ -1,6 +1,6 @@
 {
   "name": "merit-event-maker",
-  "version": "0.0.0",
+  "version": "0.9.0",
   "private": true,
   "description": "MERIT Entertainment — Event Maker. Browser-only event operations software. This manifest exists for the developer test/build tooling only; the app itself has no build step and loads no package in the browser. The one runtime dependency, @anthropic-ai/sdk, is used only by server/vlm-relay.mjs (npm run serve:vlm), the optional local relay that holds the vision-language API key in its own environment.",
   "type": "module",

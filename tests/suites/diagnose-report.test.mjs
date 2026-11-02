@@ -51,4 +51,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(rep.errors.length >= 1 && rep.errors.every((e) => !("message" in e)), "the error is kept as kind/file/line only", rep.errors);
   checks.ok(Array.isArray(rep.storage.localStorage) && rep.storage.localStorage.every((k) => Object.keys(k).join() === "key,bytes"), "storage is reported as key names and sizes only", rep.storage.localStorage);
   checks.ok(rep.errors.some((e) => e.kind === "TypeError" && e.file === "app-v8.js" && e.line === 12), "the error's kind, file and line are kept", rep.errors);
+  const pkg = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json"), "utf8"));
+  checks.equal(rep.app.version, pkg.version, "the report carries the program's version — the same as package.json");
+  checks.ok((await page.locator(".brand-version").first().textContent()).includes(pkg.version), "the version is on screen, under the brand");
 }

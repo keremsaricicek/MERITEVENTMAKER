@@ -12,6 +12,8 @@
 //     whether to send it.
 (function () {
   "use strict";
+  // THE PROGRAM'S VERSION — one place; equals package.json "version" (suite diagnose-report).
+  globalThis.MERIT_APP_VERSION = "0.9.0";
   const MAX_ERRORS = 30;
   const errors = [];
   const base = (f) => String(f || "").split(/[\\/]/).pop().split("?")[0] || null;
@@ -47,7 +49,7 @@
     return {
       kind: "merit-diagnose/1",
       at: new Date().toISOString(),
-      app: { lang: globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : null, origin: location.origin, file: location.protocol === "file:" },
+      app: { version: globalThis.MERIT_APP_VERSION, lang: globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : null, origin: location.origin, file: location.protocol === "file:" },
       browser: { userAgent: navigator.userAgent, cores: navigator.hardwareConcurrency || null, memoryGB: navigator.deviceMemory || null,
         screen: `${screen.width}x${screen.height}`, window: `${innerWidth}x${innerHeight}`, dpr: devicePixelRatio || 1 },
       storage: { estimate, localStorage: storageKeys() },

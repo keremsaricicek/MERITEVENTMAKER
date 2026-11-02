@@ -37,6 +37,22 @@
   const fold = (s) => String(s || "").toLocaleLowerCase("tr").normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "").replace(/ı/g, "i");
 
+  // A typed word and a word of the record are "near" when the typed one is the
+  // word with a Turkish case ending on it ("ozturku", "kayanin") or one slip away
+  // (missed, added, changed or swapped letters) on words of 5+ letters.
+  const ENDING = /^(n|y?[iuae]|n?[iu]n|[dt][ae]|[dt][ae]n|n?[ae]|y?l[ae]|il[ae]|ni|nu|ki)$/;
+  function slips(a, b) {
+    if (Math.abs(a.length - b.length) > 1) return 2;
+    const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+    for (let j = 1; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+    return d[a.length][b.length];
+  }
+  const near = (t, w) => (w.length >= 3 && t.startsWith(w) && ENDING.test(t.slice(w.length))) || (t.length >= 5 && w.length >= 5 && slips(t, w) <= 1);
+
   // One engine per caller, each with its own cached index.
   function create({ formatNumber }) {
     let cache = null;
@@ -68,7 +84,12 @@
       const q = fold(String(query || "").trim());
       if (!q) return { rows: [], terms: [] };
       const terms = q.split(/\s+/).filter(Boolean);
-      return { rows: index(event).rows.filter((row) => terms.every((term) => row.hay.includes(term))), terms };
+      const all = index(event).rows;
+      const exact = all.filter((row) => terms.every((term) => row.hay.includes(term)));
+      if (exact.length) return { rows: exact, terms };
+      // Nobody matched exactly: forgive one slip per word and a typed case ending
+      // (owner 2026-11-02). Only then — a query that works is never widened.
+      return { rows: all.filter((row) => { const ws = row.hay.split(" "); return terms.every((term) => row.hay.includes(term) || ws.some((w) => near(term, w))); }), terms };
     }
     // The typeahead's ranking: by how the name matched, then alphabetically,
     // so the order is stable between keystrokes rather than depending on
