@@ -1,0 +1,15 @@
+# 6 · Birleşik — the combined direction (SPEC-v2)
+- **Shell:** one thin 52 px bar holds Etkinlik · Salon · Misafirler · Oturma · Kapı · Raporlar (keys 1–6) and the F8 command line beside it. There is no sidebar and no tab strip. The type is system sans only, and there is no book, ledger or atlas metaphor.
+- **Etkinlik (from 4):** a timeline of evenings with a "Bugün" line. Past events sit on the left, locked; upcoming events on the right. Under it, the selected event shows four figures, one primary action and a "Hazır mı?" list. Each item in that list opens its own screen.
+- **Salon (2 + 5):** a calm plan where colour shows each table's state. Options appear only on the clicked table: capacity, rotate, remove. Tables move by dragging. Each plan suggestion is a pin that is accepted or rejected on its own.
+- **Misafirler / Oturma (5, simplified):**
+  - Misafirler: one list with 5 columns and a detail pane of fixed width. The pane opens without moving the list.
+  - Oturma: unseated guests sit on the left, grouped by junket. Clicking a guest highlights the tables that fit, each marked "N boş"; clicking a table seats the guest. Rules only warn, and the seated row stays in place as "→ T37 · Geri al".
+- **Kapı (2 + 5):** a large search box, with a large "Giriş" button on the right of each row. "Gelmedi" is only in the ⋯ menu on the far left, and it asks before it acts. A check-in changes only three things: that row, that table's chairs (green in place) and the counters (fixed-width digits). Measured: the row's position did not change after the click.
+- **Click first:** every job can be done with clicks. The command line shows examples to click and shows what it will do before Enter ("T36'da yer yok → T37'ye oturt"). F10 opens help.
+- **Theme:** F9, or the button at the top right, switches between light (day planning) and dark (night door). Each theme has its own token set.
+- **Contrast (WCAG), light theme, on background / on surface:** ink 15.8 / 17.6 · ink-2 7.6 / 8.5 · ink-3 5.1 / 5.7 · blue 6.1 / 6.8 · VIP gold 4.8 / 5.4 · arrived green 5.7 / 6.4 · no-show 7.2 / 8.0 · button text 14.4.
+- **Contrast (WCAG), dark theme:** ink 15.6 · ink-3 6.8 · VIP gold 9.8 · green 8.8 · no-show 8.0 · button text 12.1.
+- **Text sizes:** body text is 14–16 px and nothing operational is below 12 px. On the door screen at 1440, table labels are 15 svg units, about 12.5 px.
+- **Checked with Playwright at 1440×900:** console clean; F8 seat command applied (Mehmet Kaya → T37); undo restores the counters; all 6 screens and 5 report previews rendered.
+- **Cost / risk:** a new shell of about 6–8 weeks. It reuses the existing writers (`assignGuestToTable`, `setArrival`) and the F8 parser. The risk is the room-centred screens when an event has no plan yet; they need a strong empty state.
