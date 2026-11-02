@@ -132,3 +132,11 @@ Ideas queued (light): one-click diagnostic report (no guest data); automatic bac
   via $S/scripts/chainM.sh (keep-alive ensureM.sh; race → $S/race/gm, decisive fresh8/typo8/en8/entypo8 vs B7e).
   Diagnostic report + trial guide + checklist done. Offline builds verified 47/47 after all src changes.
   NEXT: B7f verdict (~08:30 Istanbul) → ship better; 2B (~11:30) same sets; plan reading T05/T06; Windows checklist.
+
+## OWNER FEATURE LIST (2026-11-02 ~03:45 Istanbul; owner approved; no bloat)
+Before the Windows trial: (1) door list PDF (A–Z name → table); (2) "copy from last event" (same venue layout);
+(3) groups/junket: F8 "X'in misafirlerini aynı masaya al" (one table, else adjacent; preview + Onayla), a warning
+when a group member is seated apart, Live counter per group (came/expected), junket Excel report (uses guest.invitedBy;
+seating-advisor already reads it). After the trial: (4) F8 batch jobs ("VIP'leri ön masalara dağıt");
+(5) messy list import (WhatsApp/e-mail text → guests); (6) rules (keep apart, VIP front, table reserved — warn/suggest
+only, never move by themselves); (7) phone check-in at the door (with LAN sharing).
