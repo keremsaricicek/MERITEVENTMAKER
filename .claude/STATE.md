@@ -178,3 +178,7 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
   shots, wait for his choice; then implement screen by screen with tests. Earlier UX audit + 3 themes: 7525b0e.
   Also done today: paste list (a137799), "?" keys (f765fb6), Seating draft button + help topics (6ce9f85).
   runEq training chain running ($S/scripts/chainN.sh, keep-alive ensureN.sh; watchdog send_later every ~110 min).
+- **~16:30 UTC.** Owner ranked concepts 5 > 2 ≈ 4; "kitap gibi, karışık". Agreed direction: benchmarks/ux/redesign/SPEC-v2.md.
+  One agent building the combined prototype → benchmarks/ux/redesign/6-birlesik/ (shots at 1440, light+dark). When
+  done: send shots, wait for owner's yes, then implement screen by screen. Owner's WEEKLY LIMIT nearly spent:
+  minimal tokens, no new agents. runEq training continues on its own (chainN).
