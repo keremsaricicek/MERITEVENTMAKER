@@ -104,7 +104,7 @@
     }).join("")+(hiddenRecords>0?`<div class="live-more seat-queue-more"><span>${t("seating.showingOf",{shown:shownRecords.length,total:records.length})}</span><button class="btn sm" data-seating-action="queue-more">${t("guests.showMore")}</button></div>`:""):`<div class="mx-empty" style="border:none;background:none;padding:26px 12px">${seatingQueueEmptyHTML(event)}</div>`;
     return`<div class="seat-stage">
       <aside class="seat-queue">
-        <div class="seat-queue-head"><strong>${ui.seatingGuestScope==="all"?t("seating.allGuests"):t("seating.guestQueue")}</strong>${selectedIds.length?`<span class="sel">${t("seating.recordsSelected",{n:selectedIds.length,pax:selPax})}</span>`:""}</div>
+        <div class="seat-queue-head"><strong>${ui.seatingGuestScope==="all"?t("seating.allGuests"):t("seating.guestQueue")}</strong><button class="btn sm seat-draft" type="button" data-assistant-ask="${esc(t("seating.draftAsk"))}" title="${esc(t("seating.draftTitle"))}">${t("seating.draft")}</button>${selectedIds.length?`<span class="sel">${t("seating.recordsSelected",{n:selectedIds.length,pax:selPax})}</span>`:""}</div>
         <div class="seat-queue-controls">
           <div class="guest-scope-strip">${scopes.map(([v,l])=>`<button class="seg-btn ${ui.seatingGuestScope===v?"active":""}" data-seating-scope="${v}">${l}</button>`).join("")}</div>
           <div class="guest-filter-strip">${filters.map(([v,l])=>`<button class="seg-btn ${ui.seatingFilter===v?"active":""}" data-seating-filter="${v}">${l}</button>`).join("")}</div>

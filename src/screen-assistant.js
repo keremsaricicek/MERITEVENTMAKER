@@ -334,6 +334,13 @@
       return { text: out.applied.length ? t("assistant.done") : t("assistant.nothing"), lines: out.lines, undo: rec.length ? rec : null };
     }
 
+    // A button anywhere may ask F8 a sentence (data-assistant-ask): the answer is shown in the panel,
+    // and anything that changes seats waits for Onayla there (e.g. Seating's "Taslak yerleşim").
+    document.addEventListener("click", (e) => {
+      const b = e.target && e.target.closest && e.target.closest("[data-assistant-ask]");
+      if (!b) return;
+      e.preventDefault(); toggle(true); ask(b.dataset.assistantAsk);
+    });
     return { mount, toggle, isOpen, ask, help, shortcuts };
   }
 

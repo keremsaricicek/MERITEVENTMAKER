@@ -44,4 +44,13 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     return { a: at("a"), b: at("b"), s: at("s"), t0: e.tables[0].id, t2: e.tables[2].id, load, cap: 4 }; });
   checks.ok(r.a && r.a === r.b, "the host's guests sit together", r);
   checks.ok(r.s === r.t0 && Object.values(r.load).every((n) => n <= r.cap) && !Object.keys(r.load).includes(r.t2), "no taken seat taken, no table over capacity, the unavailable table unused", r);
+
+  // Seating's "Taslak yerleşim" asks F8 the same thing: shown first, nothing moves
+  await page.keyboard.press("Escape");
+  await page.evaluate(() => { const e = state.events[0]; e.guests.push({ id: "z", name: "Zeki Yeni", additionalGuests: 0, pax: 1, vip: "Standard", invitedBy: "", notes: "", planningStatus: "Confirmed", arrivalStatus: "Not Arrived", assignment: null, createdAt: "" }); touchEvent(e); ui.screen = "workspace"; ui.tab = "seating"; render(); });
+  await settle(page);
+  await page.click(".seat-draft");
+  await page.waitForFunction(() => !document.getElementById("assistantPanel").classList.contains("is-working"), null, { timeout: 20000 });
+  const d = await page.evaluate(() => ({ confirm: !!document.querySelector(".assistant-turn.assistant:last-child .assistant-confirm"), z: !!state.events[0].guests.find((g) => g.id === "z").assignment }));
+  checks.ok(d.confirm && !d.z, "Seating's draft button proposes through F8 and moves nobody before Onayla", d);
 }
