@@ -52,6 +52,7 @@
       <div class="next-event-side">
         <button class="btn primary" data-open-event="${event.id}">${t("home.openEvent")}</button>
         <button class="btn" data-duplicate-event="${event.id}">${icon("copy")}${t("home.duplicate")}</button>
+        <button class="btn" data-duplicate-layout="${event.id}" title="${esc(t("home.duplicateLayoutTitle"))}">${icon("table")}${t("home.duplicateLayout")}</button>
         <button class="btn" data-export-event-package="${event.id}" title="${esc(t("home.exportPackage"))}">${icon("download")}${t("home.exportPackageShort")}</button>
         <button class="btn danger" data-delete-event="${event.id}">${icon("trash")}${t("home.delete")}</button>
       </div>
@@ -65,7 +66,7 @@
       <div class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(venue)}</div>
       <div class="seat-tag">${eventMetrics(event).guests}</div>
       <div class="seat-tag">${physicalCapacity(event)}</div>
-      <div class="row-icons"><button class="row-action" data-duplicate-event="${event.id}" aria-label="${esc(t("home.a11y.duplicate",{name:event.name}))}" title="${t("home.duplicate")}">${icon("copy")}</button><button class="row-action" data-export-event-package="${event.id}" aria-label="${esc(t("home.a11y.exportPackage",{name:event.name}))}" title="${esc(t("home.exportPackage"))}">${icon("download")}</button><button class="row-action" data-delete-event="${event.id}" aria-label="${esc(t("home.a11y.delete",{name:event.name}))}" title="${t("home.delete")}">${icon("trash")}</button></div>
+      <div class="row-icons"><button class="row-action" data-duplicate-event="${event.id}" aria-label="${esc(t("home.a11y.duplicate",{name:event.name}))}" title="${t("home.duplicate")}">${icon("copy")}</button><button class="row-action" data-duplicate-layout="${event.id}" aria-label="${esc(t("home.a11y.duplicateLayout",{name:event.name}))}" title="${esc(t("home.duplicateLayoutTitle"))}">${icon("table")}</button><button class="row-action" data-export-event-package="${event.id}" aria-label="${esc(t("home.a11y.exportPackage",{name:event.name}))}" title="${esc(t("home.exportPackage"))}">${icon("download")}</button><button class="row-action" data-delete-event="${event.id}" aria-label="${esc(t("home.a11y.delete",{name:event.name}))}" title="${t("home.delete")}">${icon("trash")}</button></div>
     </div>`;
   }
   // ---- EVENT HISTORY & LEARNING ----------------------------------------

@@ -1088,6 +1088,20 @@
     </section>`;
   }
   let newEventDraft={name:"",date:"",hotel:"",salon:"",status:"Planning",coverImage:"",planSrc:"",planName:"",pdfDoc:null,pdfPages:[],pdfPage:0,pdfSource:null};
+  // SAME LAYOUT, NO GUESTS (owner 2026-11-02, "geçen etkinlikten kopyala"). A new
+  // event at the same venue starts from the last one's room: its tables (numbers,
+  // capacities, real chairs, positions), venue objects and plan — never its guests,
+  // seats, arrivals, history or decisions. Dated a week ahead so it is not born
+  // historical (a past date would make it immutable); the operator renames it.
+  function duplicateLayout(id){
+    const src=state.events.find(e=>e.id===id);if(!src)return;
+    const c=clone({tables:src.tables||[],venueObjects:src.venueObjects||[],background:src.background||null});
+    c.tables.forEach(t=>{t.id=uid("table");});
+    c.venueObjects.forEach(o=>{o.id=uid("venue");});
+    const event=migrateEvent({id:uid("event"),name:src.name+" — "+t("home.duplicateLayout"),date:new Date(Date.now()+7*86400000).toLocaleDateString("en-CA"),hotel:src.hotel||"",salon:src.salon||"",
+      status:"Planning",coverImage:src.coverImage||"",tables:c.tables,venueObjects:c.venueObjects,guests:[],background:c.background||undefined,createdAt:nowISO(),lastModified:nowISO()});
+    state.events.unshift(event);saveState();toast(t("toast.layoutCopied"),"success");openEvent(event.id);
+  }
   function startNewEvent(){newEventDraft={name:"",date:new Date(Date.now()+7*86400000).toLocaleDateString("en-CA"),hotel:"",salon:"",status:"Planning",coverImage:"",planSrc:"",planName:"",pdfDoc:null,pdfPages:[],pdfPage:0,pdfSource:null};ui.screen="new-event";render();}
   function syncSetupFields(){const f=document.getElementById("v8EventForm");if(!f)return;const data=new FormData(f);for(const k of ["name","date","hotel","salon","status"])newEventDraft[k]=String(data.get(k)||"");}
   function readDataURL(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.readAsDataURL(file);});}
@@ -4953,6 +4967,10 @@
   function bindV8Common(){
     document.querySelectorAll("[data-action='create-event']").forEach(b=>b.onclick=startNewEvent);document.querySelectorAll("[data-action='help']").forEach(b=>b.onclick=openGuide);document.querySelectorAll("[data-open-event]").forEach(b=>b.onclick=()=>openEvent(b.dataset.openEvent));// Row-level open + per-row action buttons now coexist on Home, so the
 // buttons must not bubble into the row's open handler.
+document.querySelectorAll("[data-duplicate-layout]").forEach(b=>b.onclick=e=>{
+  e.stopPropagation();
+  duplicateLayout(b.dataset.duplicateLayout);
+});
 document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{
   e.stopPropagation();
   duplicateEvent(b.dataset.duplicateEvent);
