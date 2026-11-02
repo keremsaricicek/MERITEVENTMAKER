@@ -1836,3 +1836,16 @@ fresh8 **0.957** right (0.783 at once), typo8 **0.913** right (0.652 at once), *
 each (shown, never carried out). The owner's 0.85 is met on both, and the 0.90 target too; 0.95 is the next target.
 English with the same code (en7 / entypo7, B7e / B7d / B7c): 0.85 / 0.75, 0.90 / 0.60, 0.85 / 0.65, 0 wrong changes
 each (re-scored from the kept readings; English was not yet trained — runB7f). Files: `assistant-race/g8/`, `en7/`.
+
+**runB7f verdict (2026-11-02 ~03:05 UTC), product rule with grounding, decisive sets unseen by either model:**
+
+| model | fresh8 | typo8 | en8 | entypo8 | wrong changes | en7 / entypo7 | original / variant / deep | briefs | median s |
+|---|---|---|---|---|---|---|---|---|---|
+| B7e | 0.957 | **0.913** | 0.850 | 0.800 | 0 | 0.85 / 0.75 | 0.971 / 0.971 / 0.867 | 0.97 / 0.925 / 0.009 | 5.1 |
+| **B7f** | 0.957 | 0.870 | **1.000** | **0.950** | 0 | 0.95 / 0.80 | 0.914 / 0.943 / 0.867 | 0.976 / 0.90 / 0.009 | 4.7 |
+
+**B7f is shipped** (owner's rule: the better on the decisive sets — mean 0.944 vs 0.880, every set ≥ 0.85, 0 wrong
+changes, briefs pass). The trade, stated: one more careless Turkish sentence missed (typo8 21 → 20 of 23) and the
+seen `original` set lower (0.971 → 0.914), for English from 0.80–0.85 to 0.95–1.00. Seconds contaminated by suites
+run at the same time; not decisive. Manifest `tools/local-chat/manifests/qwen3.5-0.8b-merit-chat-b7f.json` (B7e's
+kept for one-step rollback). Files: `benchmarks/offline-intelligence/assistant-race/gm/`.
