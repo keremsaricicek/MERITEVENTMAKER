@@ -94,6 +94,10 @@
     const p = personIn(raw, events), tbs = tables(raw), ph = phone(raw);
     const evq = eventPart(raw, p);
     const has = (re) => re.test(f);
+    // STATUS (owner 2026-11-02): "bugün ne eksik", "hazır mıyız", "dünden beri ne değişti" —
+    // answered from the open event by the shell, never sent to the model, never a change.
+    if (/\b(ne eksik|neler eksik|eksik(ler)? (ne|neler|var)|eksik var mi|hazir miyiz|whats missing|what missing|what is missing|anything missing|are we ready)\b/.test(f)) return { kind: "status", what: "missing" };
+    if (/\b(ne degisti|neler degisti|degisenler|degisiklikler|what changed|what has changed|any changes)\b/.test(f)) return { kind: "status", what: "changes", since: /\b(bugun|today|sabahtan)\b/.test(f) ? "today" : "lastDay" };
     // AT THE DOOR (owner 2026-11-02): "ahmet yilmaz geldi", "Mehmet Kaya +2 geldi", "Ayşe Demir
     // ve eşi geldi", "Can Öztürk arrived" — a statement, not a question: the guest is checked in.
     // "geldi mi" stays a question; the name must be one guest (the acting layer asks otherwise).

@@ -4355,6 +4355,31 @@
     readText:async(text)=>{if(!relayHere())return null;try{const r=await fetch("/vlm-relay/read",{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify({text}),cache:"no-store",credentials:"same-origin"});if(!r.ok)return null;const j=await r.json();return j&&j.ok&&j.reading?{reading:j.reading,sure:!!j.sure}:null;}catch{return null;}},
     onChange:()=>{const e=activeEvent();if(e){RULES().syncEventChairs(e);touchEvent(e);}render();},
     // "Götür" from a help answer: the events list, or a tab of the open event (with none open, the events list)
+    // F8 "bugün ne eksik" / "ne değişti": read-only summaries in the UI's language
+    status:(what,since)=>{
+      const e=activeEvent();if(!e)return{text:t("assistant.noEvent")};
+      if(what==="missing"){
+        const r=eventReadiness(e);
+        const lines=r.reasons.map(x=>{const w=COMMAND.doctorText(x.finding);return w.detail?`${w.what} — ${w.detail}`:w.what;});
+        return{text:lines.length?t("assistant.missingSome",{n:lines.length}):t("assistant.missingNone"),lines};
+      }
+      const rec=digestRoll(e),D=globalThis.MeritChangeDigest;
+      const base=since==="today"?rec&&rec.cur:rec&&rec.prev,day=since==="today"?rec&&rec.day:rec&&rec.prevDay;
+      const d=base&&D?D.diff(base,e):null;
+      if(!d)return{text:t("assistant.changesNoBase")};
+      const L=[],tn=n=>n?formatTableNumber(n):t("assistant.noTable");
+      if(d.added.length)L.push(t("assistant.chAdded",{n:d.added.length,names:d.added.slice(0,8).join(", ")}));
+      if(d.removed.length)L.push(t("assistant.chRemoved",{n:d.removed.length,names:d.removed.slice(0,8).join(", ")}));
+      for(const m of d.moved.slice(0,12))L.push(`${m.name}: ${tn(m.from)} → ${tn(m.to)}`);
+      if(d.moved.length>12)L.push(t("assistant.chMore",{n:d.moved.length-12}));
+      for(const x of d.pax.slice(0,8))L.push(t("assistant.chPax",{name:x.name,from:x.from,to:x.to}));
+      for(const x of d.vip.slice(0,8))L.push(`${x.name}: ${x.from||"—"} → ${x.to||"—"}`);
+      if(d.tablesAdded.length)L.push(t("assistant.chTablesAdded",{list:d.tablesAdded.map(tn).join(", ")}));
+      if(d.tablesRemoved.length)L.push(t("assistant.chTablesRemoved",{list:d.tablesRemoved.map(tn).join(", ")}));
+      for(const c of d.capacity)L.push(t("assistant.chCapacity",{number:tn(c.number),from:c.from,to:c.to}));
+      if(d.arrived)L.push(t("assistant.chArrived",{n:d.arrived}));
+      return{text:d.count||d.arrived?t("assistant.changesSince",{day:fmtDate(day),n:d.count}):t("assistant.changesNone",{day:fmtDate(day)}),lines:L};
+    },
     go:(g)=>{if(!g)return;if(g.screen==="events"||!activeEvent()){ui.screen="events";render();return;}ui.screen="workspace";ui.tab=g.tab;ui.selectedObjectId=null;ui.selectedObjectIds=[];render();},
     writers:{
       assign:(id,tableId,seats)=>assignGuestToTable(id,tableId,seats&&seats.length?seats[0]:null),
@@ -5015,7 +5040,17 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     if(backupInput){const fresh=backupInput.cloneNode(true);backupInput.replaceWith(fresh);fresh.addEventListener("change",e=>{const file=e.target.files[0];if(file)PORTABILITY.importBackupFile(file);e.target.value="";});}
   }
   bindCommon = bindV8Common;
-  openEvent = function(id){const event=state.events.find(e=>e.id===id);if(!event)return;ui.activeEventId=id;ui.screen="workspace";ui.tab=RULES().isHistorical(event)?"guests":"command";ui.selectedObjectId=null;ui.selectedObjectIds=[];ui.selectedGuestIds=[];ui.operationalMode=false;ui.undo=[];ui.redo=[];render();};
+  // F8 "ne değişti": the day's first picture of an event, kept per event on this machine
+  // (src/change-digest.js; owner 2026-11-02). Never fails the open.
+  const DIGEST_KEY="merit.dayDigest.v1";
+  function digestRoll(event){
+    const D=globalThis.MeritChangeDigest;if(!D||!event)return null;
+    let all={};try{all=JSON.parse(localStorage.getItem(DIGEST_KEY)||"{}")||{};}catch{all={};}
+    const today=new Date().toLocaleDateString("en-CA"),rec=D.roll(all[event.id],event,today);
+    if(rec!==all[event.id]){all[event.id]=rec;try{localStorage.setItem(DIGEST_KEY,JSON.stringify(all));}catch{}}
+    return rec;
+  }
+  openEvent = function(id){const event=state.events.find(e=>e.id===id);if(!event)return;digestRoll(event);ui.activeEventId=id;ui.screen="workspace";ui.tab=RULES().isHistorical(event)?"guests":"command";ui.selectedObjectId=null;ui.selectedObjectIds=[];ui.selectedGuestIds=[];ui.operationalMode=false;ui.undo=[];ui.redo=[];render();};
   duplicateEvent = function(id,open=false){const source=state.events.find(e=>e.id===id);if(!source)return;original.duplicateEvent(id,open);const copy=state.events[0];copy.hotel=copy.hotel||copy.venue||"";copy.salon=copy.salon||"";copy.tables.forEach(t=>{t.chairs=(t.chairs||[]).map((c,i)=>({...c,id:uid("chair"),parentTableId:t.id,seatNumber:i+1}));});saveState();};
 
   // What the operator sees when the stored record was written by a newer
