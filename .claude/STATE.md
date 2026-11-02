@@ -154,3 +154,7 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
 - Owner (~04:10): keep the program LIGHT on memory. F10 = detailed user guide (TR/EN, searchable); F8 answers
   "X nasıl yapılır / nereden yapılır" from the guide (no model needed) with a "Götür" button that opens the screen
   and highlights the control; the F8 panel stays open across screens (it lives outside #app — verify with a suite).
+- Owner (~04:15, "çok önemli"): F8 help must know EVERY likely usage question and problem — how to set up a new
+  plan/event, who to add, how to change the plan, every screen's tasks, common errors and their fixes (step-by-step
+  answers + "Götür"). Build a question bank (TR/EN, careless typing too) from the guide, measured like the race:
+  a held-out set of how-to questions written before the matcher; target ≥ 0.90 right page.
