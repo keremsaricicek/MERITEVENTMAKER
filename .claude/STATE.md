@@ -149,3 +149,5 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
   tables stress; crash scenarios (power cut mid-save, browser killed, disk full); model-server watchdog (auto-restart);
   version number in UI + diagnostic. 8-hour memory soak MOVED to the EXE stage (owner: "belleği boşver", EXE runs the
   same code, so it is done there, not dropped).
+- Owner (~04:05): add before trial — "?" shortcut + F8 example sentences guide; post-event one-page summary
+  (came / no-show / per junket / tables full-empty). Not wanted now: waiter zones print, staff poster, event templates.
