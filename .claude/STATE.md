@@ -161,3 +161,6 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
 - **2026-11-02 ~01:10 UTC — 4 items done** (owner: silent until "durum ne"): typo-forgiving guest search (d30ef45),
   version 0.9.0 on screen + report (d30ef45), launcher watchdog (843304e), door list print (204c3b7). Offline builds
   verified 47/47. NEXT from the feature list: copy-from-last-event, F8 door check-in, groups/junket.
+- **~02:50 UTC.** Done: "Aynı düzen" layout copy (6cbdf32), F8 door check-in "X geldi" (e907109; rules only,
+  setArrival writer, panel skips the model for it; TODO browser check in assistant-panel after the B7f race).
+  B7f trained (164 min), race running ($S/race/gm). NEXT: B7f verdict → ship better; groups/junket.
