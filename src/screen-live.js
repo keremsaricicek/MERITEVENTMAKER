@@ -81,6 +81,12 @@
   // A bar pair per bucket. Heights are scaled to the busiest bucket in THIS
   // event, which is a drawing decision and not a claim -- the numbers are on
   // the row, and the tallest bar never means "full".
+  // GROUPS / JUNKETS AT THE DOOR (owner 2026-11-02): per host, people arrived of expected.
+  function groupCountsHTML(event){
+    const G=globalThis.MeritGuestGroups;if(!G)return"";
+    const rows=G.counts(event).slice(0,8);if(!rows.length)return"";
+    return`<div class="live-groups"><div class="live-aside-head">${t("groups.liveTitle")}</div>${rows.map(r=>`<div class="live-group-row"><span>${esc(r.host)}</span><b>${t("groups.cameOf",{came:r.came,expected:r.expected})}</b></div>`).join("")}</div>`;
+  }
   function arrivalWaveHTML(event,{compact=false}={}){
     const w=arrivalWave(event);
     if(!w)return"";
@@ -231,7 +237,7 @@
           <div class="mx-list" id="liveList" style="margin-top:12px">${list}</div>
           ${hiddenCount>0?`<div class="live-more" id="liveMore"><span>${t("live.showingOf",{shown:windowed.length,total:rows.length})}</span><button class="btn sm" data-live-action="show-more">${t("live.showMore")}</button></div>`:""}
         </div>
-        <aside class="live-aside">${arrivalWaveHTML(event)}
+        <aside class="live-aside">${arrivalWaveHTML(event)}${groupCountsHTML(event)}
           <div class="live-aside-head">${t("live.recentTitle")}</div>${recent}</aside>
       </div>
     </div></div>`;

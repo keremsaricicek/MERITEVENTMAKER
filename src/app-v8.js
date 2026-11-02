@@ -2004,6 +2004,12 @@
     ui.seatPreview=null;
     render();
   }
+  // A group member seated away from the rest of the group: said, never prevented (owner 2026-11-02).
+  function groupApartWarning(event,guests){
+    const G=globalThis.MeritGuestGroups;if(!G||guests.length!==1||!String(guests[0].invitedBy||"").trim())return;
+    const sp=G.spread(event).find(s=>G.findHost(event,guests[0].invitedBy).group?.host===s.host);
+    if(sp)toast(t("groups.apartToast",{name:guests[0].name,host:sp.host,tables:sp.tables.map(formatTableNumber).join(", ")}),"info",7000);
+  }
   function assignGuestGroup(ids,tableId,preferred=null,options=null){
     const event=activeEvent();if(!canMutate(event,"change seating assignments"))return;ids=[...new Set(ids)].filter(Boolean);const guests=ids.map(id=>event.guests.find(g=>g.id===id)).filter(Boolean),table=event.tables.find(t=>t.id===tableId);if(!guests.length||!table)return;
     // A table marked unavailable cannot receive a NEW assignment, and unlike
@@ -2029,6 +2035,7 @@
     try{
       for(const g of guests){const count=paxOf(g),seats=free.slice(cursor,cursor+count);cursor+=count;SEAT().write(g,{tableId,seats,locked:false});}
       ui.selectedTableId=tableId;ui.highlightId=tableId;touchEvent(event);render();
+      groupApartWarning(event,guests);
       const message=t("seating.groupMovedToast",{n:guests.length,plural:guests.length===1?"":"s",table:table.number,seats:required});
       if(!isMove){toast(message,"success",5000);return;}
       toastAction(message,t("live.undo"),()=>{
@@ -4375,7 +4382,15 @@
       if(what==="missing"){
         const r=eventReadiness(e);
         const lines=r.reasons.map(x=>{const w=COMMAND.doctorText(x.finding);return w.detail?`${w.what} — ${w.detail}`:w.what;});
+        const G=globalThis.MeritGuestGroups;
+        for(const s of G?G.spread(e):[])lines.push(t("groups.spreadLine",{host:s.host,tables:s.tables.map(formatTableNumber).join(", ")}));
         return{text:lines.length?t("assistant.missingSome",{n:lines.length}):t("assistant.missingNone"),lines};
+      }
+      if(what==="group"){
+        const G=globalThis.MeritGuestGroups,h=G?G.findHost(e,since):{none:true};
+        if(!h.group)return{text:h.ambiguous?t("groups.which",{list:h.ambiguous.join(", ")}):t("groups.none",{host:since})};
+        const c=G.counts(e).find(x=>x.host===h.group.host);
+        return{text:t("groups.countLine",{host:c.host,came:c.came,expected:c.expected,noShow:c.noShow})};
       }
       const rec=digestRoll(e),D=globalThis.MeritChangeDigest;
       const base=since==="today"?rec&&rec.cur:rec&&rec.prev,day=since==="today"?rec&&rec.day:rec&&rec.prevDay;

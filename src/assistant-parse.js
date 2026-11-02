@@ -98,6 +98,15 @@
     // answered from the open event by the shell, never sent to the model, never a change.
     if (/\b(ne eksik|neler eksik|eksik(ler)? (ne|neler|var)|eksik var mi|hazir miyiz|whats missing|what missing|what is missing|anything missing|are we ready)\b/.test(f)) return { kind: "status", what: "missing" };
     if (/\b(ne degisti|neler degisti|degisenler|degisiklikler|what changed|what has changed|any changes)\b/.test(f)) return { kind: "status", what: "changes", since: /\b(bugun|today|sabahtan)\b/.test(f) ? "today" : "lastDay" };
+    // GROUPS / JUNKETS (owner 2026-11-02): "Kerem Sarıçiçek'in misafirlerini aynı masaya al",
+    // "Kerem grubunu T05'e topla", "seat Kerem's guests together"; "Kerem grubundan kaç kişi geldi".
+    const grpTr = raw.match(/^(.+?)\s+(?:misafirler(?:i|ini)|grub(?:u|unu)|davetliler(?:i|ini)|ekib(?:i|ini)|insanlar(?:i|ini|ı|ını))\b(.*)$/i);
+    if (grpTr && /\b(ayni masa\w*|tek masa\w*|bir masa\w*|birlikte|beraber|yan yana|bir araya|topla\w*|t\d+\w*|vip\d+\w*)\b/.test(fold(grpTr[2])) && /\b(al|oturt|koy|topla|yerlestir|getir|gecir|tasi)\w*\b/.test(fold(grpTr[2])))
+      return { kind: "command", plan: [{ op: "groupTogether", host: grpTr[1].trim().replace(/['’]\S*$/, ""), table: tbs[0] || null }] };
+    const grpEn = raw.match(/^(?:seat|put|move|bring|keep)\s+(.+?)['’]?s?\s+(?:guests|group|party|people)\s+(.*)$/i);
+    if (grpEn && /\b(together|same table|one table|t\d+|vip\d+)\b/i.test(grpEn[2])) return { kind: "command", plan: [{ op: "groupTogether", host: grpEn[1].trim(), table: tbs[0] || null }] };
+    const grpQ = raw.match(/^(.+?)\s+(?:grubundan|misafirlerinden|davetlilerinden|grubu)\b.*\b(kac|kaci|geldi)/i) || raw.match(/^how many of\s+(.+?)['’]?s?\s+(?:guests|group|people)/i);
+    if (grpQ) return { kind: "status", what: "group", host: grpQ[1].trim().replace(/['’]\S*$/, "") };
     // AT THE DOOR (owner 2026-11-02): "ahmet yilmaz geldi", "Mehmet Kaya +2 geldi", "Ayşe Demir
     // ve eşi geldi", "Can Öztürk arrived" — a statement, not a question: the guest is checked in.
     // "geldi mi" stays a question; the name must be one guest (the acting layer asks otherwise).

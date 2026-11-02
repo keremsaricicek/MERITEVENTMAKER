@@ -41,6 +41,9 @@
   function sameWord(w, p) {
     if (p.startsWith(w)) return true;
     if (p.length >= 3 && w.startsWith(p) && SUFFIX.test(w.slice(p.length))) return true;
+    // Turkish softening before a vowel ending: Sarıçiçek → Sarıçiçeğin, Kitap → Kitabı, Ahmet → Ahmedi
+    const soft = { k: "g", p: "b", t: "d", c: "c" }[p.slice(-1)];
+    if (soft && p.length >= 4) { const stem = p.slice(0, -1) + soft; if (w.startsWith(stem) && w.length > stem.length && SUFFIX.test(w.slice(stem.length))) return true; }
     return w.length >= 5 && p.length >= 5 && slips(w, p) <= 1;
   }
   function findPerson(events, query, opts) {

@@ -167,6 +167,7 @@
           <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="print">${icon("image")}${t("reports.printTablePlan")}</button>
           <button class="btn report-btn" data-report="door">${icon("door")}${t("reports.printDoorList")}</button>
           <button class="btn report-btn" data-report="summary">${icon("check")}${t("reports.printSummary")}</button>
+          <button class="btn report-btn" data-report="junket">${icon("download")}${t("reports.junketExport")}</button>
           <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="csv">${icon("download")}${t("reports.guestCsv")}</button>
           <p style="font-size:11px;color:var(--muted-2);margin:12px 0 0;line-height:1.45">${t("reports.sheetsInEnglish")}</p>
         </aside>
@@ -181,6 +182,7 @@
     app.querySelectorAll("[data-report='print']").forEach(b=>b.onclick=printTablePlan);
     app.querySelectorAll("[data-report='door']").forEach(b=>b.onclick=printDoorList);
     app.querySelectorAll("[data-report='summary']").forEach(b=>b.onclick=printEventSummary);
+    app.querySelectorAll("[data-report='junket']").forEach(b=>b.onclick=exportJunketReport);
     bindDoctorGo(activeEvent());
     // Post-Event Replay's wave chart (historical events only) needs the same
     // bucket-click/VIP/clear wiring Live uses -- a historical event has no
@@ -262,6 +264,30 @@
     window.addEventListener("afterprint",cleanup);
     window.print();
     setTimeout(cleanup,60000);
+  }
+  // ---- Junket / host report, Excel (owner 2026-11-02) ----------------------
+  // Its own small workbook — the table-plan workbook is not touched. Per host:
+  // expected / came / did not come in people; then every guest of every host with
+  // party size, table and arrival. A cell that starts like a formula is written as text.
+  function exportJunketReport(){
+    const event=activeEvent();if(!event)return;
+    const X=globalThis.XLSX,G=globalThis.MeritGuestGroups;
+    if(!X||!G){toast(t("guests.engineMissing"),"error",5200);return;}
+    const safe=v=>typeof v==="string"&&/^[=+\-@\t\r]/.test(v)?"'"+v:v;
+    const counts=G.counts(event);
+    if(!counts.length){toast(t("reports.junketNone"),"error",5200);return;}
+    const tables=new Map(event.tables.map(x=>[x.id,x]));
+    const sum=[["HOST","EXPECTED","CAME","NO SHOW"],...counts.map(c=>[safe(c.host),c.expected,c.came,c.noShow])];
+    const list=[["HOST","GUEST","PAX","TABLE","ARRIVAL"]];
+    for(const h of G.hosts(event))for(const g of h.guests.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),"tr"))){
+      const tb=g.assignment?tables.get(g.assignment.tableId):null;
+      list.push([safe(h.host),safe(String(g.name||"")),paxOf(g),tb?formatTableNumber(tb.number):"",g.arrivalStatus||"Not Arrived"]);
+    }
+    const wb=X.utils.book_new(),ws1=X.utils.aoa_to_sheet(sum),ws2=X.utils.aoa_to_sheet(list);
+    ws1["!cols"]=[{wch:30},{wch:10},{wch:10},{wch:10}];ws2["!cols"]=[{wch:30},{wch:30},{wch:6},{wch:8},{wch:14}];
+    X.utils.book_append_sheet(wb,ws1,"JUNKET SUMMARY");X.utils.book_append_sheet(wb,ws2,"JUNKET GUESTS");
+    X.writeFile(wb,`${String(event.name||"event").replace(/[\\/:*?"<>|]+/g,"-")}-junket.xlsx`);
+    toast(t("reports.junketDone"),"success");
   }
   // ---- Event summary, one page (owner 2026-11-02) --------------------------
   // After the night, for the boss or the client: who was expected, who came,

@@ -79,7 +79,7 @@ const ERROR_CLASS = {
   "toast.eventFieldsRequired": REFUSAL, "toast.unlockSelectedFirst": REFUSAL, "freeze.invalid": REFUSAL,
   "freeze.coversNothing": REFUSAL, "avail.cannotSeatToast": REFUSAL, "toast.assignmentLockedName": REFUSAL,
   "toast.groupSeatsShort": REFUSAL, "seating.groupSeatTaken": REFUSAL, "toast.groupMoveRolledBack": REFUSAL,
-  "avail.reasonRequiredToast": REFUSAL, "reports.printNoTables": REFUSAL, "reports.doorNoGuests": REFUSAL, "seating.unlockFirst": REFUSAL,
+  "avail.reasonRequiredToast": REFUSAL, "reports.printNoTables": REFUSAL, "reports.doorNoGuests": REFUSAL, "reports.junketNone": REFUSAL, "guests.engineMissing": REFUSAL, "seating.unlockFirst": REFUSAL,
   "seating.seatTaken": REFUSAL, "teachArea.refused": REFUSAL, "number.notANumber": REFUSAL,
   "toast.importPlanFirst": REFUSAL, "detect.failed": REFUSAL, "toast.selectDetectionFirst": REFUSAL,
   "teach.exportEmpty": REFUSAL, "dataset.exportFailed": REFUSAL, "toast.enableTeachFirst": REFUSAL,

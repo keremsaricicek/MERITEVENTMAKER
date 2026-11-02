@@ -58,6 +58,20 @@
       for (const st of plan) {
         if (st.event && T().findEvent(events(), st.event, today()).events.some((x) => x.id !== e.id && x.past)) return { refuse: say("geçmiş bir etkinlik değiştirilemez", "a past event cannot be changed") };
         if (st.op === "addGuest") { out.push({ op: "addGuest", name: st.name, pax: st.pax || 1, table: st.table || null }); continue; }
+        if (st.op === "groupTogether") {  // a host's whole group at one table, else the nearest few (src/guest-groups.js)
+          const G = globalThis.MeritGuestGroups, h = G ? G.findHost(e, st.host) : { none: true };
+          if (h.none) return { ask: say(`"${st.host}" adına davet edilmiş misafir yok`, `Nobody here was invited by "${st.host}"`) };
+          if (h.ambiguous) return { ask: say(`Hangisi: ${h.ambiguous.join(", ")}?`, `Which one: ${h.ambiguous.join(", ")}?`) };
+          const p = G.plan(e, h.group, st.table);
+          if (p.ask === "table") return { ask: say(`${st.table} bu etkinlikte yok`, `${st.table} is not in this event`) };
+          if (p.ask) return { ask: say(`Grubun ${p.need} kişisi için yer yok${p.table ? ` (${p.table}: ${p.free} boş)` : ""}`, `No room for the group's ${p.need} people${p.table ? ` (${p.table}: ${p.free} free)` : ""}`) };
+          for (const s2 of p.steps) {
+            const g2 = e.guests.find((x) => x.id === s2.guestId), t2 = (e.tables || []).find((x) => x.id === s2.tableId);
+            if (g2.assignment && g2.assignment.tableId === t2.id) out.push({ op: "noop", line: say(`${g2.name} zaten ${t2.number}`, `${g2.name} is already at ${t2.number}`) });
+            else out.push({ op: "assign", guestId: g2.id, name: g2.name, tableId: t2.id, number: t2.number, seats: null, group: true });
+          }
+          continue;
+        }
         if (st.op === "moveTable") {  // everyone at one table to another — no guest named
           const from = tableByNumber(e, st.fromTable), to = tableByNumber(e, st.table);
           if (!from || !to) return { ask: say(`${!from ? st.fromTable : st.table} bu etkinlikte yok`, `${!from ? st.fromTable : st.table} is not in this event`) };

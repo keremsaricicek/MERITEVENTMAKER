@@ -252,7 +252,7 @@
       const rules = P().parse(text, evs, now);
       let r = rules, byModel = false, sure = false;
       const compound = !!rules.compound;
-      if (rules.kind === "status") return summary ? summary(rules.what, rules.since) : { text: t("assistant.notUnderstood") };
+      if (rules.kind === "status") return summary ? summary(rules.what, rules.what === "group" ? rules.host : rules.since) : { text: t("assistant.notUnderstood") };
       // a check-in at the door the rules read is never sent to the model (speed; it is a plain statement)
       const atDoor = rules.kind === "command" && rules.plan.every((st) => st.op === "arrive");
       if (readText && R() && !atDoor) {
@@ -283,7 +283,7 @@
       const A = globalThis.MeritAssistantActions.create({ events, current: currentId, today, lang: () => (globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : "tr"), canMutate: (e) => canMutate(e), writers: {}, snapshot: () => null, registerUndo: () => {} });
       const key = (res) => res.steps ? JSON.stringify(res.steps.map((x) => [x.op, x.guestId || x.name, x.tableId || x.table || null, x.seats || null, x.pax || null])) : null;
       const agreed = byModel && how && how.rules && how.rules.kind === "command" && key(A.resolve(r.plan)) !== null && key(A.resolve(r.plan)) === key(A.resolve(how.rules.plan));
-      const unsure = byModel ? !(agreed || (how && how.sure)) : r.plan.some((st) => st.op === "deleteGuest");
+      const unsure = byModel ? !(agreed || (how && how.sure)) : r.plan.some((st) => st.op === "deleteGuest" || st.op === "groupTogether");
       if (unsure) {
         const res = A.resolve(r.plan);
         if (res.ask) return { text: res.ask };
