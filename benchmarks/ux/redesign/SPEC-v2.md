@@ -30,3 +30,12 @@ not a desktop app" and "a bit complicated, things you have to read to understand
 3 Guests ✓ keep. 4 Seating (light) ~ "genel olarak iyi" → keep, align with 7. 7 Seating (dark) ✓ keep.
 5 Door (light) ~ "çizim çirkin" → same simple icon plan. 6 Door (dark) ✗ "çizim ve renkler patlak" → fix dark
 colours (calmer, no washed/garish tones) and the same icon plan.
+
+## Owner's verdict on v2 (2026-11-02 evening)
+- Events cards ✗ — "too big, crowded, information messy, coarse; full but not crowded". → CALENDAR (month view),
+  refined: events as slim, elegant entries; selecting one shows a calm detail; full but never crowded.
+- Salon: liked the chair occupancy of v1, but its drawing was coarse; v2 icon plan has no chairs. → minimal plan
+  WITHOUT chairs by default; when the assistant is asked "X nerede oturuyor" (or a guest/table is selected) that
+  TABLE glows/pulses softly and refined minimal chairs appear around it with the guest's seat highlighted.
+- Door light ✓ (same chair/highlight idea). Door dark ✗ "neon colours ruin the class" → classic dark: deep
+  navy/graphite with ivory text and champagne/gold restraint; no neon, no saturated greens/reds (status by subtle tone).
