@@ -143,3 +143,9 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
 - Owner (~03:55): ALL of the list moves BEFORE the trial, plus: F8 door check-in ("X geldi", "+2 geldi"); typo-tolerant
   search in every guest search box (sameWord); F8 "bugün ne eksik" (one summary from existing facts); F8 "dünden beri
   ne değişti" (change history).
+- Owner (~04:00): add before trial — whole-room DRAFT seating (groups/VIP/rules, preview, owner applies); capacity
+  plan screen ("450 kişi" → tables/layout, planner engine exists); "Etkinlik hazır mı?" checklist; guest history on the
+  guest card (facts only). Health before trial: full test:all + CI green + 1-day feature freeze; 1000 guests/150
+  tables stress; crash scenarios (power cut mid-save, browser killed, disk full); model-server watchdog (auto-restart);
+  version number in UI + diagnostic. 8-hour memory soak MOVED to the EXE stage (owner: "belleği boşver", EXE runs the
+  same code, so it is done there, not dropped).
