@@ -140,3 +140,6 @@ when a group member is seated apart, Live counter per group (came/expected), jun
 seating-advisor already reads it). After the trial: (4) F8 batch jobs ("VIP'leri ön masalara dağıt");
 (5) messy list import (WhatsApp/e-mail text → guests); (6) rules (keep apart, VIP front, table reserved — warn/suggest
 only, never move by themselves); (7) phone check-in at the door (with LAN sharing).
+- Owner (~03:55): ALL of the list moves BEFORE the trial, plus: F8 door check-in ("X geldi", "+2 geldi"); typo-tolerant
+  search in every guest search box (sameWord); F8 "bugün ne eksik" (one summary from existing facts); F8 "dünden beri
+  ne değişti" (change history).
