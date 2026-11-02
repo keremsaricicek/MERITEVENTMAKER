@@ -151,3 +151,6 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
   same code, so it is done there, not dropped).
 - Owner (~04:05): add before trial — "?" shortcut + F8 example sentences guide; post-event one-page summary
   (came / no-show / per junket / tables full-empty). Not wanted now: waiter zones print, staff poster, event templates.
+- Owner (~04:10): keep the program LIGHT on memory. F10 = detailed user guide (TR/EN, searchable); F8 answers
+  "X nasıl yapılır / nereden yapılır" from the guide (no model needed) with a "Götür" button that opens the screen
+  and highlights the control; the F8 panel stays open across screens (it lives outside #app — verify with a suite).
