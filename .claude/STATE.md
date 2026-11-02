@@ -167,3 +167,8 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
 - **~03:30 UTC.** F8 help done (c9383b2): src/help-topics.js (41 topics TR/EN, steps, go), F10 → topic list,
   "Götür" opens the screen, panel stays open; held-out training/help/howto-test.jsonl 0.927/0.927. TODO: screenshot
   F10 panel at 3 viewports after the race; offline builds + verify.
+- **2026-11-02 ~08:45 UTC.** Done since: items 5 (F8 ne eksik / ne değişti, bf3efa8), 8 (guest history on card,
+  event summary print, dc7446b), 2 (groups/junket: F8 group-together shown first, apart toast, Live counter, junket
+  workbook, 7a3d299), 3 (seating rules warn-only, 48e328a). B7f SHIPPED (4ef444a). 2B NOT shipped (9ef229b).
+  Watchdog trigger deleted. Full npm test 169/170 (hostile-input timeout under load only; passes alone).
+  NEXT: item 4 (F8 batch jobs, messy list import), 7 (capacity plan, room draft), 9 health, 10 plan reading, 11 Windows.
