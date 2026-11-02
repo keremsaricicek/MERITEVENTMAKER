@@ -1709,3 +1709,35 @@ and with letter slips ("imla kurallarına dikkat etmem … i yerine ı … kelim
   swapped, the next key, i/ı mixed; names, events, tables and numbers untouched). Grammar 3 regenerated:
   still `f86107df0ba4c1b0`.
 - **Bars:** as above, plus right ≥ 0.90 on typo5 and 0 wrong changes on it.
+
+## 2026-11-02 — runB7-2Bb verdict: NOT passed (fresh5 0.882, typo5 0.735 with 1 wrong change, fresh4 2 wrong changes)
+
+Restarted from step 0 by a second worker (the first stopped at step 230 with no resume state saved).
+Machine: Intel Xeon @ 2.80 GHz, 4 cores, 15.7 GB, AVX-512 + VNNI but **no AMX / AVX512-BF16**. bf16 ran at
+17.5 s/item (step 10, ~19 h) and fp32 without checkpointing was OOM-killed at 13.9 GB, so **fp32 + `--grad-ckpt`**
+(9.4 s/item, peak 13.6 GB; 4000 items, ~11 h; one restart from `resume` at item 600). Data, init (runB7-2B),
+replay (400 briefs), order, θ and bars unchanged. torch 2.14.1, transformers 5.20.1, peft 0.21.2,
+huggingface_hub 2.3.0, gguf-py from llama.cpp `785322d` (llama-server / export-lora / quantize built from it).
+Served: adapter.gguf (sha256 `0386a01f…`, 37.8 MB) merged into `unsloth/Qwen3.5-2B-GGUF` Q8_0 (sha `1b04acba…`)
+→ Q8_0 (`826f1aac…`). Raw: `benchmarks/offline-intelligence/assistant-race/b7-2bb-f8/`; run: `training/runs/runB7-2Bb/`.
+
+| set | hybrid right | wrong changes | model-first right / wrong | rules alone |
+|---|---|---|---|---|
+| **fresh5 (decisive)** | **0.882 ✗** | 0 | 0.941 / 1 | 0.412 (2 wrong) |
+| **typo5** | **0.735 ✗** | **1 ✗** | 0.765 / 2 | 0.324 |
+| fresh4 | **0.875 ✗** | **2 ✗** | 0.906 / 2 | 0.500 |
+| fresh3 | **0.895 ✗** | 0 | 0.974 / 0 | 0.447 (2 wrong) |
+| fresh2 | 0.950 ✓ | 0 | 1.000 / 0 | 0.375 |
+| paraphrases | 1.000 ✓ | 0 | 0.971 / 0 | 0.457 |
+| fresh | 0.975 | 0 | 0.975 / 0 | 0.475 (1 wrong) |
+| deep | 0.933 | 0 | 0.867 / 0 | 0.533 (1 wrong) |
+| original | 1.000 | 0 | 0.943 / 0 | 1.000 |
+
+Bars: right ≥ 0.90 fails on fresh5, typo5, fresh4 and fresh3 (passes fresh2, paraphrases); 0 wrong changes fails
+on fresh4 (2) and typo5 (1). Briefs pass: fields right 0.976, briefs all right 0.90, invented 0.014 (median 11.7 s).
+**Median 6.1 s a sentence** (merged Q8_0; fresh5 6.4 s, typo5 6.1 s).
+Wrong changes: "Can Öztürk'ü masasından/T02'den al(kaldır), listede kalsın/listeden silme" read as unassign **+
+deleteGuest** (fresh4 ic5, fresh5 jc8 model-first, typo5 tjc8); "Yeni davetli: Murat Bilge" added "Murat" pax 2
+(fresh4 ic10); "selin ak ve iki arkadasını t09a ekle" added "sel" (typo5 tjc15, model-first). Ask-when-unsure: every
+one of these had confidence < 0.91 (0.28–0.85) and the rules did not read the same change, so the product would
+SHOW it and wait for Onayla — **0 wrong changes carried out** on any set, in either order. Not wired.
