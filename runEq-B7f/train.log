@@ -14,3 +14,12 @@ step 120/300 items 960 loss 0.0307 lr 1.20e-04 2.96s/item elapsed 47.3min peakRS
 step 130/300 items 1040 loss 0.0027 lr 1.13e-04 2.90s/item elapsed 50.2min peakRSS 9983MB
 step 140/300 items 1120 loss 0.0397 lr 1.07e-04 2.87s/item elapsed 53.5min peakRSS 9983MB
 step 150/300 items 1200 loss 0.0878 lr 1.00e-04 2.84s/item elapsed 56.8min peakRSS 9983MB
+step 160/300 items 1280 loss 0.0043 lr 9.33e-05 2.82s/item elapsed 60.2min peakRSS 9983MB
+step 170/300 items 1360 loss 0.0526 lr 8.67e-05 2.79s/item elapsed 63.3min peakRSS 9983MB
+step 180/300 items 1440 loss 0.0428 lr 8.00e-05 2.77s/item elapsed 66.5min peakRSS 9983MB
+step 190/300 items 1520 loss 0.0256 lr 7.33e-05 2.76s/item elapsed 69.9min peakRSS 9983MB
+step 200/300 items 1600 loss 0.0057 lr 6.67e-05 2.74s/item elapsed 73.0min peakRSS 9983MB
+step 210/300 items 1680 loss 0.0071 lr 6.00e-05 2.73s/item elapsed 76.3min peakRSS 9983MB
+step 220/300 items 1760 loss 0.0255 lr 5.33e-05 2.72s/item elapsed 79.7min peakRSS 9983MB
+step 230/300 items 1840 loss 0.0106 lr 4.67e-05 2.69s/item elapsed 82.6min peakRSS 9983MB
+step 240/300 items 1920 loss 0.0064 lr 4.00e-05 2.68s/item elapsed 85.7min peakRSS 9983MB
