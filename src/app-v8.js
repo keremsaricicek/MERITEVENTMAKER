@@ -2008,6 +2008,18 @@
   }
   // A group member seated away from the rest of the group: said, never prevented (owner 2026-11-02).
   const ruleLine=v=>v.kind==="apart"?t("rules.apartBroken",{a:v.a,b:v.b,table:formatTableNumber(v.table)}):t("rules.vipBroken",{name:v.name,table:formatTableNumber(v.table)});
+  // "Paste a list" (src/paste-guests.js + src/messy-list.js): the dialog asks for the open event's
+  // guests (to mark likely duplicates) and hands back the ticked rows; they are added here through
+  // the one guest writer, for the open event only, never to a past one.
+  globalThis.MERIT_PASTE_EXISTING=()=>{const e=activeEvent();return e?e.guests:[];};
+  document.addEventListener("merit:add-guests",ev=>{
+    const e=activeEvent(),rows=Array.isArray(ev.detail)?ev.detail:[];
+    if(!e||!rows.length||!canMutate(e,"edit guest records"))return;
+    let n=0;
+    for(const r of rows){const name=String(r.name||"").trim().slice(0,120);if(!name)continue;const pax=Math.max(1,Math.min(99,Number(r.pax)||1));
+      saveGuestRecord(e,null,{name,additionalGuests:pax-1,pax,planningStatus:"Confirmed",vip:"Standard",invitedBy:String(r.invitedBy||"").slice(0,120),notes:"",phone:String(r.phone||"").slice(0,30),expectedArrival:null});n++;}
+    touchEvent(e);render();toast(t("paste.done",{n}),"success",5000);
+  });
   function groupApartWarning(event,guests){
     const SR=globalThis.MeritSeatingRules;
     if(SR){const names=new Set(guests.map(g=>g.name));const v=SR.violations(event).filter(x=>names.has(x.a)||names.has(x.b)||names.has(x.name));if(v.length)toast(v.map(ruleLine).join(" "),"info",8000);}

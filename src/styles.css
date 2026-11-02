@@ -94,6 +94,11 @@ dialog:focus-visible{outline:none}
 .guest-history{margin:10px 0 0;color:var(--muted,#6f6650);font-size:12px}
 .live-groups{margin-top:14px}
 .live-group-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:3px 0;border-bottom:1px solid var(--line)}
+.paste-text{width:100%;font:inherit;font-size:13px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--paper,#fff)}
+.paste-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
+.paste-table th,.paste-table td{text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+.paste-table tr.is-dup td{color:#8a5a00}
+.paste-table tr.is-bad td{color:#9b2c2c}
 .report-btn{width:100%;justify-content:center;margin-top:8px}
 .assistant-topics{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}
 .assistant-topic{width:100%;justify-content:flex-start;text-align:left;font-size:12px}
