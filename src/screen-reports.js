@@ -166,6 +166,7 @@
           <button class="btn primary btn-export" data-report="xlsx">${icon("download")}${t("reports.exportTablePlan")}</button>
           <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="print">${icon("image")}${t("reports.printTablePlan")}</button>
           <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="door">${icon("door")}${t("reports.printDoorList")}</button>
+          <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="summary">${icon("check")}${t("reports.printSummary")}</button>
           <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="csv">${icon("download")}${t("reports.guestCsv")}</button>
           <p style="font-size:11px;color:var(--muted-2);margin:12px 0 0;line-height:1.45">${t("reports.sheetsInEnglish")}</p>
         </aside>
@@ -179,6 +180,7 @@
     app.querySelectorAll("[data-report='xlsx']").forEach(b=>b.onclick=()=>whileBusy(b,t("reports.preparingWorkbook"),exportTablePlanXLSX));
     app.querySelectorAll("[data-report='print']").forEach(b=>b.onclick=printTablePlan);
     app.querySelectorAll("[data-report='door']").forEach(b=>b.onclick=printDoorList);
+    app.querySelectorAll("[data-report='summary']").forEach(b=>b.onclick=printEventSummary);
     bindDoctorGo(activeEvent());
     // Post-Event Replay's wave chart (historical events only) needs the same
     // bucket-click/VIP/clear wiring Live uses -- a historical event has no
@@ -255,6 +257,38 @@
         <div class="pp-meta"><span>${esc(fmtDate(event.date))}</span><span>${t("reports.doorCount",{n:event.guests.length,pax:totalPax})}</span></div>
       </div>
       <table class="door-list"><thead><tr><th>${t("reports.doorName")}</th><th>${t("reports.doorTable")}</th></tr></thead><tbody>${rows}</tbody></table>`;
+    document.body.classList.add("printing");
+    const cleanup=()=>{document.body.classList.remove("printing");root.innerHTML="";window.removeEventListener("afterprint",cleanup);};
+    window.addEventListener("afterprint",cleanup);
+    window.print();
+    setTimeout(cleanup,60000);
+  }
+  // ---- Event summary, one page (owner 2026-11-02) --------------------------
+  // After the night, for the boss or the client: who was expected, who came,
+  // who did not, per host / junket ("Davet Eden"), and how the tables filled.
+  // Counts only from the records; nothing estimated, nothing changed.
+  function printEventSummary(){
+    const event=activeEvent();if(!event)return;
+    if(!event.guests.length){toast(t("reports.doorNoGuests"),"error");return;}
+    const sum=(gs)=>gs.reduce((n,g)=>n+paxOf(g),0);
+    const came=event.guests.filter(g=>g.arrivalStatus==="Checked In"),noShow=event.guests.filter(g=>g.arrivalStatus==="No Show");
+    const hosts=new Map();
+    for(const g of event.guests){const h=String(g.invitedBy||"").trim()||t("reports.sumNoHost");if(!hosts.has(h))hosts.set(h,[]);hosts.get(h).push(g);}
+    const hostRows=[...hosts.entries()].sort((a,b)=>sum(b[1])-sum(a[1])).map(([h,gs])=>`<tr><td>${esc(h)}</td><td>${sum(gs)}</td><td>${sum(gs.filter(g=>g.arrivalStatus==="Checked In"))}</td><td>${sum(gs.filter(g=>g.arrivalStatus==="No Show"))}</td></tr>`).join("");
+    const byTable=event.tables.map(tb=>{const gs=event.guests.filter(g=>g.assignment&&g.assignment.tableId===tb.id);return{tb,planned:sum(gs),came:sum(gs.filter(g=>g.arrivalStatus==="Checked In"))};});
+    const emptyLive=byTable.filter(x=>x.planned>0&&x.came===0).map(x=>formatTableNumber(x.tb.number));
+    const root=printRoot();
+    root.innerHTML=`
+      <div class="pp-head">
+        <div class="pp-title"><b>${esc(event.name)} — ${t("reports.sumTitle")}</b><span>${esc([event.hotel,event.salon].filter(Boolean).join(" · "))}</span></div>
+        <div class="pp-meta"><span>${esc(fmtDate(event.date))}</span></div>
+      </div>
+      <table class="sum-kpis"><tr><td><b>${sum(event.guests)}</b><span>${t("reports.sumExpected")}</span></td><td><b>${sum(came)}</b><span>${t("reports.sumCame")}</span></td><td><b>${sum(noShow)}</b><span>${t("reports.sumNoShow")}</span></td><td><b>${sum(event.guests)-sum(came)-sum(noShow)}</b><span>${t("reports.sumNotMarked")}</span></td></tr></table>
+      <h3 class="sum-h">${t("reports.sumByHost")}</h3>
+      <table class="sum-table"><thead><tr><th>${t("reports.sumHost")}</th><th>${t("reports.sumExpected")}</th><th>${t("reports.sumCame")}</th><th>${t("reports.sumNoShow")}</th></tr></thead><tbody>${hostRows}</tbody></table>
+      <h3 class="sum-h">${t("reports.sumTables")}</h3>
+      <p class="sum-p">${t("reports.sumTablesLine",{n:event.tables.length,used:byTable.filter(x=>x.came>0).length,empty:emptyLive.length})}${emptyLive.length?` ${esc(emptyLive.join(", "))}`:""}</p>
+      ${noShow.length?`<h3 class="sum-h">${t("reports.sumNoShowList")}</h3><p class="sum-p">${noShow.map(g=>esc(g.name)).join(", ")}</p>`:""}`;
     document.body.classList.add("printing");
     const cleanup=()=>{document.body.classList.remove("printing");root.innerHTML="";window.removeEventListener("afterprint",cleanup);};
     window.addEventListener("afterprint",cleanup);

@@ -91,9 +91,11 @@ dialog:focus-visible{outline:none}
 .brand-symbol{width:29px;height:29px;border:1px solid #d9d4c9;border-radius:50%;display:grid;place-items:center;color:#413c2f;font-size:11px;background:linear-gradient(160deg,#f3f2ee,#f8f7f5)}
 .brand-copy strong{display:block;font-size:10px;letter-spacing:.14em}
 .brand-copy span{display:block;margin-top:3px;color:#736951;font-size:8px;letter-spacing:.2em}
+.guest-history{margin:10px 0 0;color:var(--muted,#6f6650);font-size:12px}
 .assistant-topics{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}
 .assistant-topic{width:100%;justify-content:flex-start;text-align:left;font-size:12px}
 .assistant-go{margin-top:8px}
+.brand-version::before{content:"v"}
 .brand-version{margin-left:6px;letter-spacing:.06em;color:#8a7e63;font-size:8px}
 .crumb{min-width:0;flex:1;padding-left:18px;border-left:1px solid var(--line);color:#5a523f;font-size:11px}
 .crumb b{color:#2d2920;font-weight:620}
@@ -658,6 +660,16 @@ body:has(.planmap-fab) .toast-wrap{bottom:76px}
      Four cards per row, matching the workbook's horizontal grouping, so a
      page of paper and a page of the .xlsx show the same four tables side by
      side. Sized to fit A4 portrait; landscape simply gives it more air. */
+  /* Event summary: four numbers, then the host table. */
+  .sum-kpis{width:100%;border-collapse:collapse;margin:4pt 0 10pt}
+  .sum-kpis td{border:.5pt solid #d8d2c4;padding:6pt;text-align:center}
+  .sum-kpis b{display:block;font-size:16pt}
+  .sum-kpis span{font-size:8pt;color:#5a523f}
+  .sum-h{font-size:10pt;margin:10pt 0 4pt}
+  .sum-table{width:100%;border-collapse:collapse}
+  .sum-table th,.sum-table td{border-bottom:.5pt solid #d8d2c4;padding:2.5pt 4pt;text-align:right;font-size:9pt}
+  .sum-table th:first-child,.sum-table td:first-child{text-align:left}
+  .sum-p{font-size:9pt;margin:0}
   /* Door list: two columns of names on A4, the table number large and right-aligned. */
   .door-list{width:100%;border-collapse:collapse;columns:2}
   .door-list thead{display:none}

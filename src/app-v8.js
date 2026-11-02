@@ -2316,7 +2316,21 @@
     });
   };
 
-  openGuestDialog = function(...args){if(canMutate(activeEvent(),"edit guest records")){original.openGuestDialog(...args);translateStaticDialogs();}};
+  openGuestDialog = function(...args){if(canMutate(activeEvent(),"edit guest records")){original.openGuestDialog(...args);translateStaticDialogs();guestHistoryLine(args[0]);}};
+  // THE GUEST'S PAST, ON THE CARD (owner 2026-11-02): facts from our own past events —
+  // how many, came or not, which tables. Read only; never a prediction. Text, never markup.
+  function guestHistoryLine(id){
+    const dlg=document.getElementById("guestDialog"),body=dlg&&dlg.querySelector(".dialog-body");if(!body)return;
+    let line=body.querySelector(".guest-history");if(!line){line=document.createElement("p");line.className="guest-history";body.appendChild(line);}
+    line.textContent="";
+    const e=activeEvent(),g=id&&e&&e.guests.find(x=>x.id===id),T=globalThis.MeritAssistantTools;if(!g||!T)return;
+    const who=T.findPerson(state.events,g.name,g.phone?{phone:g.phone}:null);
+    if(who.people.length!==1){if(who.ambiguous)line.textContent=t("guest.historyAmbiguous");return;}
+    const today=new Date().toLocaleDateString("en-CA"),past=T.eventsOf(state.events,who.people[0],today).events.filter(x=>x.past&&x.event!==e.id);
+    if(!past.length){line.textContent=t("guest.historyNone");return;}
+    const came=past.filter(x=>x.came).length,tables=[...new Set(past.map(x=>x.table).filter(Boolean))].map(formatTableNumber);
+    line.textContent=t("guest.history",{n:past.length,came,missed:past.length-came,tables:tables.join(", ")||"—"});
+  }
 
   // guestDialog/excelDialog markup lives once in index.html and never passes
   // through render(), so a language toggle has nothing to re-draw it. This
