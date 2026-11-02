@@ -1,15 +1,15 @@
-# 6 · Birleşik — the combined direction (SPEC-v2)
-- **Shell:** one thin 52 px bar holds Etkinlik · Salon · Misafirler · Oturma · Kapı · Raporlar (keys 1–6) and the F8 command line beside it. There is no sidebar and no tab strip. The type is system sans only, and there is no book, ledger or atlas metaphor.
-- **Etkinlik (from 4):** a timeline of evenings with a "Bugün" line. Past events sit on the left, locked; upcoming events on the right. Under it, the selected event shows four figures, one primary action and a "Hazır mı?" list. Each item in that list opens its own screen.
-- **Salon (2 + 5):** a calm plan where colour shows each table's state. Options appear only on the clicked table: capacity, rotate, remove. Tables move by dragging. Each plan suggestion is a pin that is accepted or rejected on its own.
-- **Misafirler / Oturma (5, simplified):**
-  - Misafirler: one list with 5 columns and a detail pane of fixed width. The pane opens without moving the list.
-  - Oturma: unseated guests sit on the left, grouped by junket. Clicking a guest highlights the tables that fit, each marked "N boş"; clicking a table seats the guest. Rules only warn, and the seated row stays in place as "→ T37 · Geri al".
-- **Kapı (2 + 5):** a large search box, with a large "Giriş" button on the right of each row. "Gelmedi" is only in the ⋯ menu on the far left, and it asks before it acts. A check-in changes only three things: that row, that table's chairs (green in place) and the counters (fixed-width digits). Measured: the row's position did not change after the click.
-- **Click first:** every job can be done with clicks. The command line shows examples to click and shows what it will do before Enter ("T36'da yer yok → T37'ye oturt"). F10 opens help.
-- **Theme:** F9, or the button at the top right, switches between light (day planning) and dark (night door). Each theme has its own token set.
-- **Contrast (WCAG), light theme, on background / on surface:** ink 15.8 / 17.6 · ink-2 7.6 / 8.5 · ink-3 5.1 / 5.7 · blue 6.1 / 6.8 · VIP gold 4.8 / 5.4 · arrived green 5.7 / 6.4 · no-show 7.2 / 8.0 · button text 14.4.
-- **Contrast (WCAG), dark theme:** ink 15.6 · ink-3 6.8 · VIP gold 9.8 · green 8.8 · no-show 8.0 · button text 12.1.
-- **Text sizes:** body text is 14–16 px and nothing operational is below 12 px. On the door screen at 1440, table labels are 15 svg units, about 12.5 px.
-- **Checked with Playwright at 1440×900:** console clean; F8 seat command applied (Mehmet Kaya → T37); undo restores the counters; all 6 screens and 5 report previews rendered.
-- **Cost / risk:** a new shell of about 6–8 weeks. It reuses the existing writers (`assignGuestToTable`, `setArrival`) and the F8 parser. The risk is the room-centred screens when an event has no plan yet; they need a strong empty state.
+# 6 · Birleşik — the combined direction (SPEC-v2, revision 2 after the owner's review)
+- **Shell:** one thin 52 px bar with Etkinlik · Salon · Misafirler · Oturma · Kapı · Raporlar (keys 1–6) and the F8 command line beside it. Fonts are system sans only.
+- **Etkinlik (rev 2):** the timeline is replaced by large cards with drawn covers (inline SVG per venue, no photos).
+  - Tonight's event comes first and largest: date, venue, figures, actions and "Hazır mı?".
+  - Upcoming events follow as three cards with readiness. Past events sit below as small, muted, locked cards.
+  - Clicking a card opens it; ⋯ holds Aynı yerleşimle yeni, Çoğalt, Dışa aktar and Sil.
+- **Plan (rev 2) for Salon, Kapı and print:** a simple icon plan. Each table is a clean circle or a rounded rectangle (VIP) with its number and "8/10". The ring or bar shows occupancy, and a full table is filled. Stage, DJ, dance floor, bar and entrance are labelled shapes. There are no chair dots and no wall detail.
+- **Door colours:** on the door the ring shows arrivals in green and no-shows in claret; the number shows arrived / planned.
+- **Oturma:** keeps the chair drawing the owner approved, so each seat stays visible while a guest is being placed. It aligns with the dark shot (Mehmet Kaya → T37, T38 open; VIP tables are not offered to non-VIP guests).
+- **Misafirler:** unchanged; the owner approved it.
+- **Kapı:** unchanged in behaviour. Big search; big "Giriş" on the right; "Gelmedi" only in the ⋯ menu and it asks first. Only that row, that table's ring and the counters change; measured, the row does not move.
+- **Dark theme (rev 2):** calmer graphite (#121314 / #18191B) with restrained accents (green #7AAA8C, claret #C98A90, steel #93A9BF). Switch with F9 or the button.
+- **Contrast (WCAG), on surface:** light ink 17.6, ink-3 5.7, gold 5.4, green 6.4; dark ink 13.9, ink-3 5.3, green 6.7, claret 6.3, gold 8.2; button text 14.4 light / 12.1 dark. Nothing operational is below 12 px.
+- **Checked with Playwright at 1440:** console clean; F8 seat command and undo work; 8 shots, including the events screen in dark.
+- **Cost / risk:** a new shell of about 6–8 weeks, reusing the writers (`assignGuestToTable`, `setArrival`) and the F8 parser. The icon plan needs per-table occupancy rendering. An event with no plan needs a good empty state.
