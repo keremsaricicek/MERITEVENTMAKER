@@ -87,5 +87,15 @@ start "" http://127.0.0.1:%PORT%/index.html
 echo.
 echo   Asistan: F8. Kapatmak icin bu pencereyi kapatin.
 :keep
-timeout /t 3600 /nobreak >nul
-goto keep
+rem WATCHDOG (2026-11-02): every 20 s each server is asked if it is alive; three misses in a row
+rem and it is started again with the same command. Nothing else is touched (data/ stays as it is).
+set /a mfail=0, cfail=0, afail=0
+:watch
+timeout /t 20 /nobreak >nul
+curl.exe -s -o nul -f http://127.0.0.1:%MODEL_PORT%/health && (set /a mfail=0) || (set /a mfail+=1)
+if %mfail% geq 3 (echo   Plan modeli yeniden baslatiliyor... & start "" /b "%SERVER%" -m "%MODEL%\@MODEL_FILE@" --mmproj "%MODEL%\@MMPROJ_FILE@" --lora "%MODEL%\adapter.gguf" -c 2048 -t 4 -np 1 --cache-ram 0 %NGL% --host 127.0.0.1 --port %MODEL_PORT% --log-disable >nul 2>&1 & set /a mfail=0 & timeout /t 90 /nobreak >nul)
+if defined ASSISTANT_CHAT_URL (curl.exe -s -o nul -f %ASSISTANT_CHAT_URL%/health && (set /a cfail=0) || (set /a cfail+=1))
+if %cfail% geq 3 (echo   Dil modeli yeniden baslatiliyor... & start "" /b "%SERVER%" -m "%CHAT%\@CHAT_FILE@" @CHAT_LORA_ARG@ --jinja -c 4096 -t 4 -np 1 %CHATNGL% --host 127.0.0.1 --port %CHAT_PORT% --log-disable >nul 2>&1 & set /a cfail=0 & timeout /t 90 /nobreak >nul)
+curl.exe -s -o nul -f http://127.0.0.1:%PORT%/index.html && (set /a afail=0) || (set /a afail+=1)
+if %afail% geq 3 (echo   Uygulama sunucusu yeniden baslatiliyor... & start "" /b "%NODE%" "%HERE%app\server\vlm-relay.mjs" & set /a afail=0 & timeout /t 15 /nobreak >nul)
+goto watch

@@ -44,4 +44,14 @@ export default async function run({ checks, repoRoot }) {
   checks.ok(/@CHAT_LORA_ARG@/.test(chatStart), "the launcher starts the chat server with the manifest's adapter", chatStart);
   const build = fs.readFileSync(path.join(repoRoot, "tools/local-vlm/windows/build-package.sh"), "utf8");
   checks.ok(/@CHAT_LORA_ARG@/.test(build), "the package builder fills the adapter in from the chat manifest");
+
+  // THE WATCHDOG (2026-11-02): the launcher keeps every server alive — three missed health
+  // checks and it is started again with the very command it started with.
+  const watch = cmd.slice(cmd.indexOf(":watch"));
+  checks.ok(cmd.includes(":watch") && /goto watch/.test(watch), "the launcher ends in a watch loop, not a sleep", watch.slice(0, 80));
+  for (const [what, port] of [["plan model", "%MODEL_PORT%/health"], ["chat model", "%ASSISTANT_CHAT_URL%/health"], ["app server", "%PORT%/index.html"]])
+    checks.ok(watch.includes(port), `the watch loop checks the ${what}`);
+  const startLines = (txt) => txt.split(/\r?\n/).filter((l) => /start "" \/b "%SERVER%"/.test(l)).map((l) => l.slice(l.indexOf('start ""'), l.indexOf(">nul")));
+  const first = startLines(cmd.slice(0, cmd.indexOf(":keep"))), again = startLines(watch);
+  checks.ok(again.length === 2 && again.every((a) => first.includes(a)), "each server is restarted with the same command it was started with", { first, again });
 }
