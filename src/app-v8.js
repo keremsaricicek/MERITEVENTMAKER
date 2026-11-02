@@ -4370,7 +4370,7 @@
     onChange:()=>{const e=activeEvent();if(e){RULES().syncEventChairs(e);touchEvent(e);}render();},
     // "Götür" from a help answer: the events list, or a tab of the open event (with none open, the events list)
     // F8 "bugün ne eksik" / "ne değişti": read-only summaries in the UI's language
-    status:(what,since)=>{
+    summary:(what,since)=>{
       const e=activeEvent();if(!e)return{text:t("assistant.noEvent")};
       if(what==="missing"){
         const r=eventReadiness(e);
@@ -5061,7 +5061,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     const D=globalThis.MeritChangeDigest;if(!D||!event)return null;
     let all={};try{all=JSON.parse(localStorage.getItem(DIGEST_KEY)||"{}")||{};}catch{all={};}
     const today=new Date().toLocaleDateString("en-CA"),rec=D.roll(all[event.id],event,today);
-    if(rec!==all[event.id]){all[event.id]=rec;try{localStorage.setItem(DIGEST_KEY,JSON.stringify(all));}catch{}}
+    if(rec!==all[event.id]){all[event.id]=rec;try{localStorage.setItem(DIGEST_KEY,JSON.stringify(all));}catch{rec.unsaved=true;}}
     return rec;
   }
   openEvent = function(id){const event=state.events.find(e=>e.id===id);if(!event)return;digestRoll(event);ui.activeEventId=id;ui.screen="workspace";ui.tab=RULES().isHistorical(event)?"guests":"command";ui.selectedObjectId=null;ui.selectedObjectIds=[];ui.selectedGuestIds=[];ui.operationalMode=false;ui.undo=[];ui.redo=[];render();};

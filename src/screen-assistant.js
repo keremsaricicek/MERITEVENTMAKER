@@ -24,8 +24,10 @@
   let chatText;
   let currentId;
   let events;
+  let go;
   let onChange;
   let readText;
+  let summary;
   let t;
   let today;
   let writers;
@@ -38,12 +40,13 @@
     chatText=deps.chatText;
     currentId=deps.currentId;
     events=deps.events;
+    go=deps.go;
     onChange=deps.onChange;
     readText=deps.readText;
+    summary=deps.summary;
     t=deps.t;
     today=deps.today;
     writers=deps.writers;
-    const go = deps.go || null;   // opens a screen for a help answer's "Götür" (optional)
     let root = null, log = null, input = null, status = null, strip = null;
     const turns = [];   // {who:"you"|"assistant", text, lines?, undo?}
 
@@ -249,7 +252,7 @@
       const rules = P().parse(text, evs, now);
       let r = rules, byModel = false, sure = false;
       const compound = !!rules.compound;
-      if (rules.kind === "status") return deps.status ? deps.status(rules.what, rules.since) : { text: t("assistant.notUnderstood") };
+      if (rules.kind === "status") return summary ? summary(rules.what, rules.since) : { text: t("assistant.notUnderstood") };
       // a check-in at the door the rules read is never sent to the model (speed; it is a plain statement)
       const atDoor = rules.kind === "command" && rules.plan.every((st) => st.op === "arrive");
       if (readText && R() && !atDoor) {
@@ -325,5 +328,5 @@
     return { mount, toggle, isOpen, ask, help };
   }
 
-  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","chatText","currentId","events","go","onChange","readText","status","t","today","writers"])});
+  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","chatText","currentId","events","go","onChange","readText","summary","t","today","writers"])});
 })();

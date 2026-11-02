@@ -67,7 +67,7 @@
       const a = document.createElement("a");
       a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
     } finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
-    if (typeof toast === "function") toast(tr("diagnose.done", { name }), "success", 5000);
+    if (typeof toast === "function" && typeof t === "function") toast(t("diagnose.done", { name }), "success", 5000);
     return rep;
   }
   document.addEventListener("click", (e) => {
