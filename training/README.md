@@ -1849,3 +1849,10 @@ changes, briefs pass). The trade, stated: one more careless Turkish sentence mis
 seen `original` set lower (0.971 → 0.914), for English from 0.80–0.85 to 0.95–1.00. Seconds contaminated by suites
 run at the same time; not decisive. Manifest `tools/local-chat/manifests/qwen3.5-0.8b-merit-chat-b7f.json` (B7e's
 kept for one-step rollback). Files: `benchmarks/offline-intelligence/assistant-race/gm/`.
+
+**runB7-2Bb (2B) verdict (2026-11-02 ~08:40 UTC): NOT shipped.** Trained in the cloud session (claude/par-2b c0cf594;
+fp32 + grad-ckpt, grammar 4). Its own race there (old hybrid rule): fresh5 0.882, typo5 0.735, fresh4 2 wrong changes.
+Re-scored here from its kept readings with today's product rule and grounding: original 0.943, variant 0.971,
+deep 0.867, fresh 0.975, fresh2 0.975, fresh4 0.906, fresh5 0.941, typo5 0.882, fresh3 0.974, 0 wrong changes,
+6.1 s median — level with B7e on Turkish, slower, and never trained on English (B7f: en8 1.000 / entypo8 0.950).
+B7f stays. The 2B adapter stays on its branch only.
