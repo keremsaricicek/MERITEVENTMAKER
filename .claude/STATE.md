@@ -172,3 +172,9 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
   workbook, 7a3d299), 3 (seating rules warn-only, 48e328a). B7f SHIPPED (4ef444a). 2B NOT shipped (9ef229b).
   Watchdog trigger deleted. Full npm test 169/170 (hostile-input timeout under load only; passes alone).
   NEXT: item 4 (F8 batch jobs, messy list import), 7 (capacity plan, room draft), 9 health, 10 plan reading, 11 Windows.
+- **~12:00 UTC 2026-11-02 — REDESIGN (owner: "kökten değişim", 5 örnek, wow, özgün; nothing changes until he picks).**
+  Brief: benchmarks/ux/redesign/BRIEF.md. 5 background design agents → benchmarks/ux/redesign/{1-maitre,2-kontrol,
+  3-royal,4-atlas,5-tek-satir}/ (index.html prototype, shots/, NOTES.md). When all 5 are back: send the owner the
+  shots, wait for his choice; then implement screen by screen with tests. Earlier UX audit + 3 themes: 7525b0e.
+  Also done today: paste list (a137799), "?" keys (f765fb6), Seating draft button + help topics (6ce9f85).
+  runEq training chain running ($S/scripts/chainN.sh, keep-alive ensureN.sh; watchdog send_later every ~110 min).
