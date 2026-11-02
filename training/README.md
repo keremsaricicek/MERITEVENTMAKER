@@ -1856,3 +1856,20 @@ Re-scored here from its kept readings with today's product rule and grounding: o
 deep 0.867, fresh 0.975, fresh2 0.975, fresh4 0.906, fresh5 0.941, typo5 0.882, fresh3 0.974, 0 wrong changes,
 6.1 s median — level with B7e on Turkish, slower, and never trained on English (B7f: en8 1.000 / entypo8 0.950).
 B7f stays. The 2B adapter stays on its branch only.
+
+## 2026-11-02 — runEq: every F8 model gets every grammar (owner: "hiçbir modelin birbirinden eksik eğitimi kalmasın") — written before any data or result
+
+**What each model had seen (audited from run.json and this file):** B7f — grammars 1–6 (init chain B7→B7b→B7c→B7d→B7e→B7f,
+plus the plan replay). B7e — grammars 1–5 (no English). 2B (`runB7-2B`, the 2B adapter kept on this machine; the cloud
+`runB7-2Bb` adapter exists only as GGUF, so it cannot be trained further) — grammar 3 and 400 briefs only.
+**Equalisation — every model ends having seen grammars 1–7:** B7f-eq: `--init runB7f` + grammar 7. B7e-eq: `--init
+runB7e` + grammar 6 (first 1200, 352 English) + grammar 7. 2B-eq: `--init runB7-2B`, bf16 + grammars 1, 2, 4, 5, 6 (first
+600 of each run's own data file) + grammar 7. Coverage is equal; volume is not (stated: the 2B on this CPU is ~5.4 s an
+item). **Grammar 7** (`synth_f8.mjs --grammar 7 --seed 81 --n 1200 --prompt short`, sha256 `c82aa71ca8e808dd`): grammar
+6 with more careless typing (0.6), more English (0.4), surnames ending in k/p/t/ç; every name in fresh7–9 and en7–9
+barred and out of the pools; four-word guard against every test. (Grammar 6 regenerated now differs from B7f's file
+because the new tests' names are barred; the training uses the original files.)
+**Short exam, written first by hand:** `fresh9.jsonl` (12, `737219a1cb69dbd1`), `typo9.jsonl` (`0682d81a956708d7`),
+`en9.jsonl` (9, `29f4b4e1633347a0`), `entypo9.jsonl` (`11477167c93d6a4e`); product rule; plus briefs. Caveat: fresh9/en9
+use first names and surnames that were in earlier pools (all three models saw those pools), never these sentences.
+**Use:** the owner's rule — the best on the four exam sets, 0 wrong changes, is shipped.

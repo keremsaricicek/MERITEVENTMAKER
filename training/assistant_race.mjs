@@ -67,6 +67,10 @@ const items = [
   ...(flag("typo8") ? lines("typo8.jsonl").map((d) => ({ set: "typo8", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("en8") ? lines("en8.jsonl").map((d) => ({ set: "en8", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("entypo8") ? lines("entypo8.jsonl").map((d) => ({ set: "entypo8", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("fresh9") ? lines("fresh9.jsonl").map((d) => ({ set: "fresh9", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("typo9") ? lines("typo9.jsonl").map((d) => ({ set: "typo9", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("en9") ? lines("en9.jsonl").map((d) => ({ set: "en9", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("entypo9") ? lines("entypo9.jsonl").map((d) => ({ set: "entypo9", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("fresh3") ? lines("fresh3.jsonl").map((d) => ({ set: "fresh3", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...lines("variants.jsonl").map((v) => {
     const n = Number(v.sameAs.slice(1));
@@ -231,6 +235,10 @@ const summary = { label, at: new Date().toISOString(),
   ...(flag("typo8") ? { typo8: { rules: sum("typo8", "rules"), model: sum("typo8", "model"), both: sum("typo8", "both"), product: sum("typo8", "product") } } : {}),
   ...(flag("en8") ? { en8: { rules: sum("en8", "rules"), model: sum("en8", "model"), both: sum("en8", "both"), product: sum("en8", "product") } } : {}),
   ...(flag("entypo8") ? { entypo8: { rules: sum("entypo8", "rules"), model: sum("entypo8", "model"), both: sum("entypo8", "both"), product: sum("entypo8", "product") } } : {}),
+  ...(flag("fresh9") ? { fresh9: { rules: sum("fresh9", "rules"), model: sum("fresh9", "model"), both: sum("fresh9", "both"), product: sum("fresh9", "product") } } : {}),
+  ...(flag("typo9") ? { typo9: { rules: sum("typo9", "rules"), model: sum("typo9", "model"), both: sum("typo9", "both"), product: sum("typo9", "product") } } : {}),
+  ...(flag("en9") ? { en9: { rules: sum("en9", "rules"), model: sum("en9", "model"), both: sum("en9", "both"), product: sum("en9", "product") } } : {}),
+  ...(flag("entypo9") ? { entypo9: { rules: sum("entypo9", "rules"), model: sum("entypo9", "model"), both: sum("entypo9", "both"), product: sum("entypo9", "product") } } : {}),
   ...(flag("fresh3") ? { fresh3: { rules: sum("fresh3", "rules"), model: sum("fresh3", "model"), both: sum("fresh3", "both"), product: sum("fresh3", "product") } } : {}),
   medianSeconds: secs.length ? secs[Math.floor(secs.length / 2)] : null };
 fs.writeFileSync(arg("out"), JSON.stringify({ summary, rows }, null, 1));

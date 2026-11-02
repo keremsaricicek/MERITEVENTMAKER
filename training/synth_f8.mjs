@@ -23,7 +23,8 @@ const R = globalThis.MeritAssistantReading;
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : d; };
 // `--grammar 2` (runB7b): more phrasings per intent and step, two-job sentences sharing a verb
 // or a pronoun, more small talk; grammar 1 (runB7) is unchanged and reproducible
-const G6 = arg("grammar", "1") === "6";   // runB7f: grammar 5 + English sentences (owner 2026-11-02: the program is fully English too)
+const G7 = arg("grammar", "1") === "7";   // runEq: grammar 6 + more careless typing, more English, surnames ending k/p/t/ç (softening)
+const G6 = arg("grammar", "1") === "6" || G7;   // runB7f: grammar 5 + English sentences (owner 2026-11-02: the program is fully English too)
 const G5 = arg("grammar", "1") === "5" || G6;   // runB7e: grammar 4 + surnames ending in -in/-ın/-un/-ün kept whole, negation with other verbs
 const G4 = arg("grammar", "1") === "4" || G5;   // runB7d: grammar 3 + short/inverted questions, more "next to" verbs, terse adds, a stated count beside a story, more small talk
 const G3 = arg("grammar", "1") === "3" || G4;   // runB7c: grammar 2 + negation that narrows a command, partner adds, out-of-scope questions
@@ -41,6 +42,7 @@ const FIRST = ["Murat", "Gizem", "Emre", "Seda", "Kerem", "Buse", "Hakan", "Dery
   "Kaan", "Melis", "Onur", "Ece", "Sinan", "Tuba", "Umut", "Aslı", "Levent", "Nur", "Erdem", "Yasemin", "Bora", "Dilek", "Fatih", "Hande", "Aylin", "Arda", "Şule", "Çağla", "Ömer", "Özge", "Ufuk", "Sibel", "Ilgaz", "Ümit", "Gökhan", "Neslihan", "Taner"];
 const LAST = ["Tekin", "Güneş", "Aydın", "Polat", "Korkmaz", "Erdoğan", "Koç", "Kurt", "Özdemir", "Çelik", "Aksoy", "Turan", "Bulut", "Yıldız", "Karaca", "Ateş", "Uçar", "Toprak", "Duman", "Işık",
   "Bozkurt", "Kılıç", "Sarı", "Altun", "Uysal", "Erol", "Kocabaş", "Sevim", "Ünal", "Güler", "Çakır", "Ekinci", "Tunç", "Oral", "Başaran", "Önal", "Yalçın", "Gündüz", "Akın", "Soylu"];
+const LAST7 = ["Akbulut", "Yiğit", "Kıvanç", "Bozbıyık", "Ozanalp", "Erdinç", "Karabacak", "Topçu"];
 const LAST5 = ["Bilgin", "Ergün", "Uzun", "Erkin", "Sezgin", "Durgun", "Gürsoy", "Tetik", "Kalkan", "Ersin", "Öztekin", "Bütün"];
 const ARTISTS = ["Kenan Doğulu", "Sertab Erener", "Teoman", "Gripin", "Manuş Baba", "Sıla", "Hadise", "Gökhan Türkmen", "Model", "Yüksek Sadakat", "Ezhel", "Melek Mosso", "Göksel Demirpençe", "Cem Adrian",
   "Athena", "Mor ve Ötesi", "Yaşar", "Feridun Düzağaç", "Pinhani", "Kalben"];
@@ -80,7 +82,7 @@ const sfx = (w, c, sayAs) => w + (noApos ? "" : "'") + SUF[c](sayAs || w);
 const tsfx = (t, c) => sfx(t, c, spoken(t));
 
 // ---- things a sentence talks about ---------------------------------------------------
-const person = (full = chance(0.75)) => (full ? `${pick(FIRST)} ${G5 && chance(0.3) ? pick(LAST5) : pick(LAST)}` : pick(FIRST));
+const person = (full = chance(0.75)) => (full ? `${pick(FIRST)} ${G7 && chance(0.25) ? pick(LAST7) : G5 && chance(0.3) ? pick(LAST5) : pick(LAST)}` : pick(FIRST));
 const table = () => { const p = pick(TABLE_PFX); const n = p === "T" ? 1 + Math.floor(rnd() * 30) : 1 + Math.floor(rnd() * 6); return p + String(n).padStart(2, "0"); };
 // an event as said in a sentence, and its words in the reading (lowercase, without the case ending)
 function eventRef() {
@@ -294,7 +296,7 @@ const readLines = (f) => fs.readFileSync(path.join(repo, "training/assistant", f
 const fx = JSON.parse(fs.readFileSync(path.join(repo, "training/assistant/fixture.json"), "utf8"));
 const norm = (s) => R && globalThis.MeritAssistantTools.fold(String(s)).replace(/[^a-z0-9]+/g, " ").trim();
 const testTexts = new Set([...readLines("questions.jsonl").map((q) => q.q), ...readLines("commands.jsonl").map((c) => c.text), ...readLines("variants.jsonl").map((v) => v.text),
-  ...readLines("deep.jsonl").map((d) => d.text), ...readLines("fresh.jsonl").map((d) => d.text), ...["fresh2.jsonl", "fresh3.jsonl", ...(G4 ? ["fresh4.jsonl", "fresh5.jsonl", "typo5.jsonl"] : []), ...(G5 ? ["fresh6.jsonl", "typo6.jsonl"] : []), ...(G6 ? ["fresh7.jsonl", "typo7.jsonl", "fresh8.jsonl", "typo8.jsonl", "en7.jsonl", "entypo7.jsonl", "en8.jsonl", "entypo8.jsonl"] : [])].filter((f) => fs.existsSync(path.join(repo, "training/assistant", f))).flatMap((f) => readLines(f).map((d) => d.text)), ...R.EXAMPLES.map((e) => e[0])].map(norm));
+  ...readLines("deep.jsonl").map((d) => d.text), ...readLines("fresh.jsonl").map((d) => d.text), ...["fresh2.jsonl", "fresh3.jsonl", ...(G4 ? ["fresh4.jsonl", "fresh5.jsonl", "typo5.jsonl"] : []), ...(G5 ? ["fresh6.jsonl", "typo6.jsonl"] : []), ...(G6 ? ["fresh7.jsonl", "typo7.jsonl", "fresh8.jsonl", "typo8.jsonl", "en7.jsonl", "entypo7.jsonl", "en8.jsonl", "entypo8.jsonl", "fresh9.jsonl", "typo9.jsonl", "en9.jsonl", "entypo9.jsonl"] : [])].filter((f) => fs.existsSync(path.join(repo, "training/assistant", f))).flatMap((f) => readLines(f).map((d) => d.text)), ...R.EXAMPLES.map((e) => e[0])].map(norm));
 const banned = new Set();
 for (const e of fx.events) { for (const g of e.guests) g.name.split(/\s+/).forEach((w) => banned.add(norm(w))); e.name.split(/\s+/).filter((w) => w.length > 3 && !/konser|gala/i.test(w)).forEach((w) => banned.add(norm(w))); e.venue.split(/\s+/).forEach((w) => banned.add(norm(w))); }
 ["burak", "sahin", "selin", "ak", "deniz", "yurt", "okan", "er", "elif", "sen", "can", "ozturk", "zeynep", "arslan", "mehmet", "kaya", "ahmet", "yilmaz", "ayse", "demir", "tarkan", "sezen", "aksu", "mabel", "matiz", "harbiye", "zorlu", "yilbasi"].forEach((w) => banned.add(w));
@@ -302,11 +304,11 @@ if (G4) ["burcu", "tan", "riza", "oktay"].forEach((w) => banned.add(w));
 if (G5) ["selim", "cetin", "hulya", "keskin", "kadir", "coskun", "oya", "ergin"].forEach((w) => banned.add(w));
 // grammar 6: every name in the newer tests is barred, and leaves the pools (they were written from them)
 if (G6) {
-  for (const f of ["fresh7.jsonl", "fresh8.jsonl", "en7.jsonl", "en8.jsonl"].filter((f) => fs.existsSync(path.join(repo, "training/assistant", f)))) for (const d of readLines(f)) {
+  for (const f of ["fresh7.jsonl", "fresh8.jsonl", "en7.jsonl", "en8.jsonl", "fresh9.jsonl", "en9.jsonl"].filter((f) => fs.existsSync(path.join(repo, "training/assistant", f)))) for (const d of readLines(f)) {
     for (const st of d.gold.steps || []) for (const v of [st.guest, st.name, st.other]) if (v) norm(v).split(" ").forEach((w) => banned.add(w));
     if (d.gold.person) norm(d.gold.person).split(" ").forEach((w) => banned.add(w));
   }
-  for (const pool of [FIRST, LAST, LAST5, ARTISTS]) for (let i = pool.length - 1; i >= 0; i--) if (norm(pool[i]).split(" ").some((w) => banned.has(w))) pool.splice(i, 1);
+  for (const pool of [FIRST, LAST, LAST5, LAST7, ARTISTS]) for (let i = pool.length - 1; i >= 0; i--) if (norm(pool[i]).split(" ").some((w) => banned.has(w))) pool.splice(i, 1);
 }
 // grammar 4 only: no sentence may share a four-word run (names folded to one token) with any
 // test sentence — the tests stay tests of understanding, not of a copied frame
@@ -353,9 +355,9 @@ let n = 0, skipped = 0;
 const f = fs.openSync(path.join(out, "items.jsonl"), "w");
 while (n < N) {
   const r = rnd();
-  if (G6 && chance(Number(arg("english", "0.33")))) {
+  if (G6 && chance(Number(arg("english", G7 ? "0.4" : "0.33")))) {
     let [text, reading] = english();
-    if (chance(0.45)) text = careless(text, reading);
+    if (chance(G7 ? 0.6 : 0.45)) text = careless(text, reading);
     const key = norm(text);
     if (testTexts.has(key) || seen.has(key) || grams(frame(text)).some((g) => testGrams.has(g)) || key.split(" ").some((w) => banned.has(w)) || !R.valid(reading)) { skipped++; continue; }
     seen.add(key); counts.english = (counts.english || 0) + 1; counts[reading.kind] = (counts[reading.kind] || 0) + 1;
@@ -366,7 +368,7 @@ while (n < N) {
   }
   let [text, reading] = r < 0.42 ? question() : r < (G2 ? 0.89 : 0.93) ? command() : [G4 && chance(0.3) ? pick(SMALL4) : G3 && chance(0.4) ? pick(SMALL3) : G2 && chance(0.5) ? pick(SMALL2) : pick(SMALL), Ur()];
   [text, reading] = finish(text, reading, reading.kind === "question");
-  if (G4 && chance(0.45)) text = careless(text, reading);
+  if (G4 && chance(G7 ? 0.6 : 0.45)) text = careless(text, reading);
   const key = norm(text);
   if (testTexts.has(key) || seen.has(key) || (G4 && grams(frame(text)).some((g) => testGrams.has(g))) || key.split(" ").some((w) => banned.has(w)) || !R.valid(reading)) { skipped++; continue; }
   seen.add(key);
