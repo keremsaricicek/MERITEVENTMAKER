@@ -164,3 +164,6 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
 - **~02:50 UTC.** Done: "Aynı düzen" layout copy (6cbdf32), F8 door check-in "X geldi" (e907109; rules only,
   setArrival writer, panel skips the model for it; TODO browser check in assistant-panel after the B7f race).
   B7f trained (164 min), race running ($S/race/gm). NEXT: B7f verdict → ship better; groups/junket.
+- **~03:30 UTC.** F8 help done (c9383b2): src/help-topics.js (41 topics TR/EN, steps, go), F10 → topic list,
+  "Götür" opens the screen, panel stays open; held-out training/help/howto-test.jsonl 0.927/0.927. TODO: screenshot
+  F10 panel at 3 viewports after the race; offline builds + verify.
