@@ -44,3 +44,7 @@ step 380/500 items 3040 loss 0.0028 lr 4.80e-05 9.37s/item elapsed 381.1min peak
 step 390/500 items 3120 loss 0.0067 lr 4.40e-05 9.38s/item elapsed 394.0min peakRSS 13596MB
 step 400/500 items 3200 loss 0.0027 lr 4.00e-05 9.40s/item elapsed 407.5min peakRSS 13596MB
 step 410/500 items 3280 loss 0.0043 lr 3.60e-05 9.42s/item elapsed 420.9min peakRSS 13596MB
+step 420/500 items 3360 loss 0.0023 lr 3.20e-05 9.44s/item elapsed 434.3min peakRSS 13596MB
+step 430/500 items 3440 loss 0.0013 lr 2.80e-05 9.45s/item elapsed 447.2min peakRSS 13596MB
+step 440/500 items 3520 loss 0.0047 lr 2.40e-05 9.46s/item elapsed 460.5min peakRSS 13596MB
+step 450/500 items 3600 loss 0.0033 lr 2.00e-05 9.46s/item elapsed 473.0min peakRSS 13596MB
