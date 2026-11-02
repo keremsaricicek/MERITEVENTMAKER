@@ -40,4 +40,12 @@ export default async function run({ page, checks, baseUrl }) {
   const last = await page.evaluate(() => [...document.querySelectorAll(".assistant-turn.assistant")].pop().textContent);
   checks.ok(/Kapı listesini yazdır/.test(last), "picking a topic answers it", last);
   checks.equal(await page.evaluate(() => JSON.stringify(state.events)), before, "help changes nothing");
+
+  // "?" lists the keys and example sentences — and is not taken while typing
+  await page.keyboard.press("Escape");
+  await page.locator("body").click({ position: { x: 5, y: 5 } }).catch(() => {});
+  await page.keyboard.press("?");
+  await page.waitForTimeout(300);
+  const keys = await page.evaluate(() => [...document.querySelectorAll(".assistant-turn.assistant")].pop().textContent);
+  checks.ok(/F10/.test(keys) && /ahmet yilmazi t05e oturt/.test(keys), "\"?\" lists the keys and sentences F8 understands", keys.slice(0, 200));
 }

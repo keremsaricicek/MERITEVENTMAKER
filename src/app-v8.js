@@ -5441,6 +5441,8 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     if(e.key==="F8"){e.preventDefault();ASSIST.toggle();return;}
     // F10: the help topics in the assistant panel (owner 2026-11-02)
     if(e.key==="F10"){e.preventDefault();ASSIST.help();return;}
+    // "?": the keys and the sentences F8 understands — never while typing in a field
+    if(e.key==="?"&&!(e.target&&(e.target.closest&&e.target.closest("input,textarea,select,[contenteditable]")))){e.preventDefault();ASSIST.shortcuts();return;}
     // The override challenge is a blocking decision, so Escape means "no" and
     // nothing else on the screen closes with it. Cancelling authorises
     // nothing and leaves the room exactly as it was.

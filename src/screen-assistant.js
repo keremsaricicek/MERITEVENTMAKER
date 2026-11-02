@@ -238,6 +238,13 @@
     // in the UI's language, with "Götür" to the screen. No model; nothing changes.
     const lang = () => (globalThis.MERIT_I18N_LANG && globalThis.MERIT_I18N_LANG() === "en" ? "en" : "tr");
     function helpReply(tp) { return { text: tp.title[lang()], lines: tp.steps[lang()], go: tp.go || null }; }
+    // "?" (owner 2026-11-02): the keys, and sentences F8 understands, in the UI's language.
+    function shortcuts() {
+      toggle(true);
+      const L = (k) => t(k).split("\n");
+      turns.push({ who: "assistant", text: t("assistant.keysTitle"), lines: [...L("assistant.keys"), "—", ...L("assistant.examples")] });
+      draw();
+    }
     function help() {
       const H = globalThis.MeritHelpTopics;
       toggle(true);
@@ -327,7 +334,7 @@
       return { text: out.applied.length ? t("assistant.done") : t("assistant.nothing"), lines: out.lines, undo: rec.length ? rec : null };
     }
 
-    return { mount, toggle, isOpen, ask, help };
+    return { mount, toggle, isOpen, ask, help, shortcuts };
   }
 
   globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","chatText","currentId","events","go","onChange","readText","summary","t","today","writers"])});
