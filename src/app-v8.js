@@ -169,6 +169,8 @@
     // re-normalized on every load rather than trusted: a hand-edited backup
     // could otherwise carry a freeze whose scope covers nothing definable,
     // which would show the operator a held area that holds nothing.
+    // seating rules (src/seating-rules.js): warn-only notes; an old event has none
+    migrated.seatRules=globalThis.MeritSeatingRules?MeritSeatingRules.normalizeAll(migrated.seatRules):(Array.isArray(migrated.seatRules)?migrated.seatRules:[]);
     migrated.freezes=globalThis.MeritSeatingFreeze
       ?MeritSeatingFreeze.normalizeAll(migrated.freezes)
       :(Array.isArray(migrated.freezes)?migrated.freezes:[]);
@@ -2005,7 +2007,10 @@
     render();
   }
   // A group member seated away from the rest of the group: said, never prevented (owner 2026-11-02).
+  const ruleLine=v=>v.kind==="apart"?t("rules.apartBroken",{a:v.a,b:v.b,table:formatTableNumber(v.table)}):t("rules.vipBroken",{name:v.name,table:formatTableNumber(v.table)});
   function groupApartWarning(event,guests){
+    const SR=globalThis.MeritSeatingRules;
+    if(SR){const names=new Set(guests.map(g=>g.name));const v=SR.violations(event).filter(x=>names.has(x.a)||names.has(x.b)||names.has(x.name));if(v.length)toast(v.map(ruleLine).join(" "),"info",8000);}
     const G=globalThis.MeritGuestGroups;if(!G||guests.length!==1||!String(guests[0].invitedBy||"").trim())return;
     const sp=G.spread(event).find(s=>G.findHost(event,guests[0].invitedBy).group?.host===s.host);
     if(sp)toast(t("groups.apartToast",{name:guests[0].name,host:sp.host,tables:sp.tables.map(formatTableNumber).join(", ")}),"info",7000);
@@ -4382,9 +4387,16 @@
       if(what==="missing"){
         const r=eventReadiness(e);
         const lines=r.reasons.map(x=>{const w=COMMAND.doctorText(x.finding);return w.detail?`${w.what} — ${w.detail}`:w.what;});
-        const G=globalThis.MeritGuestGroups;
+        const G=globalThis.MeritGuestGroups,SR=globalThis.MeritSeatingRules;
+        for(const v of SR?SR.violations(e):[])lines.push(ruleLine(v));
         for(const s of G?G.spread(e):[])lines.push(t("groups.spreadLine",{host:s.host,tables:s.tables.map(formatTableNumber).join(", ")}));
         return{text:lines.length?t("assistant.missingSome",{n:lines.length}):t("assistant.missingNone"),lines};
+      }
+      if(what==="rules"){
+        const SR=globalThis.MeritSeatingRules,rs=SR?SR.normalizeAll(e.seatRules):[],nm=id=>(e.guests.find(g=>g.id===id)||{}).name||"?";
+        if(!rs.length)return{text:t("rules.none")};
+        const v=SR.violations(e);
+        return{text:t("rules.list",{n:rs.length}),lines:[...rs.map(r=>r.kind==="apart"?t("rules.apart",{a:nm(r.a),b:nm(r.b)}):t("rules.vipFront")),...v.map(ruleLine)]};
       }
       if(what==="group"){
         const G=globalThis.MeritGuestGroups,h=G?G.findHost(e,since):{none:true};
@@ -4417,6 +4429,8 @@
       restoreGuest:(kept)=>{const e=activeEvent();return e?restoreGuestRecord(e,kept):null;},
       setPax:(id,pax)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g||!canMutate(e,"edit guest records"))return false;return !saveGuestRecord(e,g,{additionalGuests:pax-1,pax}).short;},
       setVip:(id,vip)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g||!canMutate(e,"edit guest records"))return;saveGuestRecord(e,g,{vip});},
+      // seating rules: the whole list replaced (undo puts the old list back); warn-only
+      setSeatRules:(rules)=>{const e=activeEvent();if(!e||!canMutate(e,"change seating rules"))return null;const before=e.seatRules||[];e.seatRules=globalThis.MeritSeatingRules.normalizeAll(rules);touchEvent(e);return before;},
       // the arrival axis's one writer (setArrival), as the Live screen and the finder use it
       setArrival:(id,status)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g)return null;return setArrival(e,g,status,"assistant");},
       addGuest:(name,pax)=>{const e=activeEvent();if(!e||!canMutate(e,"edit guest records"))return null;return saveGuestRecord(e,null,{name,additionalGuests:pax-1,pax,planningStatus:"Confirmed",vip:"Standard",invitedBy:"",notes:"",expectedArrival:null}).guest.id;},

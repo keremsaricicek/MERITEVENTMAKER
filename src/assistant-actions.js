@@ -58,6 +58,15 @@
       for (const st of plan) {
         if (st.event && T().findEvent(events(), st.event, today()).events.some((x) => x.id !== e.id && x.past)) return { refuse: say("geçmiş bir etkinlik değiştirilemez", "a past event cannot be changed") };
         if (st.op === "addGuest") { out.push({ op: "addGuest", name: st.name, pax: st.pax || 1, table: st.table || null }); continue; }
+        if (st.op === "ruleApart" || st.op === "ruleVipFront" || st.op === "rulesClear") {  // seating rules: warn-only (src/seating-rules.js)
+          const rules = (e.seatRules || []).slice();
+          if (st.op === "rulesClear") { out.push({ op: "rule", rules: [], line: say(`Bütün oturma kuralları kaldırılacak (${rules.length})`, `All seating rules removed (${rules.length})`) }); continue; }
+          if (st.op === "ruleVipFront") { out.push({ op: "rule", rules: rules.concat([{ kind: "vipFront" }]), line: say("Kural: VIP misafirler VIP masalarda otursun (uyarır, taşımaz)", "Rule: VIP guests sit at VIP tables (warns, moves nobody)") }); continue; }
+          const A = guestHere(e, st.guest), B = guestHere(e, st.other);
+          if (A.ask) return { ask: A.ask }; if (B.ask) return { ask: B.ask };
+          out.push({ op: "rule", rules: rules.concat([{ kind: "apart", a: A.guest.id, b: B.guest.id }]), line: say(`Kural: ${A.guest.name} ile ${B.guest.name} aynı masada oturmasın (uyarır, taşımaz)`, `Rule: ${A.guest.name} and ${B.guest.name} not at one table (warns, moves nobody)`) });
+          continue;
+        }
         if (st.op === "groupTogether") {  // a host's whole group at one table, else the nearest few (src/guest-groups.js)
           const G = globalThis.MeritGuestGroups, h = G ? G.findHost(e, st.host) : { none: true };
           if (h.none) return { ask: say(`"${st.host}" adına davet edilmiş misafir yok`, `Nobody here was invited by "${st.host}"`) };
@@ -125,6 +134,7 @@
       let newId = null;
       for (const s of real) {
         if (s.op === "assign") { writers.assign(s.guestId, s.tableId, s.seats); lines.push(`${s.name} → ${s.number}${s.seats ? ` (${say("koltuk", "seat")} ${s.seats.map((x) => x + 1).join(", ")})` : ""}`); }
+        else if (s.op === "rule") { writers.setSeatRules(s.rules); lines.push(s.line); }
         else if (s.op === "arrive") { writers.setArrival(s.guestId, "Checked In"); lines.push(say(`${s.name} geldi${s.table ? " — " + s.table : " — masası yok"}`, `${s.name} arrived${s.table ? " — " + s.table : " — no table"}`)); }
         else if (s.op === "unassign") { writers.unassign(s.guestId); lines.push(say(`${s.name} masadan kaldırıldı`, `${s.name} taken off the table`)); }
         else if (s.op === "deleteGuest") { writers.deleteGuest(s.guestId); lines.push(say(`${s.name} silindi`, `${s.name} deleted`)); }

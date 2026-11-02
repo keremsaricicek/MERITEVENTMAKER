@@ -98,6 +98,13 @@
     // answered from the open event by the shell, never sent to the model, never a change.
     if (/\b(ne eksik|neler eksik|eksik(ler)? (ne|neler|var)|eksik var mi|hazir miyiz|whats missing|what missing|what is missing|anything missing|are we ready)\b/.test(f)) return { kind: "status", what: "missing" };
     if (/\b(ne degisti|neler degisti|degisenler|degisiklikler|what changed|what has changed|any changes)\b/.test(f)) return { kind: "status", what: "changes", since: /\b(bugun|today|sabahtan)\b/.test(f) ? "today" : "lastDay" };
+    // SEATING RULES (owner 2026-11-02): warn-only notes about this event's seating.
+    const apart = raw.match(/^(.+?)\s+(?:ile|ve)\s+(.+?)['’]?\s*(?:aynı masada|ayni masada|aynı masaya|ayni masaya|yan yana)\s+(?:oturmasın|oturmasin|olmasın|olmasin|oturtma)/i)
+      || raw.match(/^(.+?)\s+(?:ile|ve)\s+(.+?)\s+ayr[ıi]\s+(?:otursun|masalarda|tut)/i) || raw.match(/^keep\s+(.+?)\s+and\s+(.+?)\s+apart/i);
+    if (apart) return { kind: "command", plan: [{ op: "ruleApart", guest: apart[1].trim().replace(/['’]\S*$/, ""), other: apart[2].trim().replace(/['’]\S*$/, "") }] };
+    if (/\bvip\w*\b.*\b(on masa\w*|onde|on tarafta|vip masa\w*)\b.*\b(otursun|oturt\w*|olsun|yerlestir\w*)\b/.test(f) || /\bvips?\b.*\b(front|vip tables?)\b/.test(f)) return { kind: "command", plan: [{ op: "ruleVipFront" }] };
+    if (/\b(kurallari (sil|temizle|kaldir)|clear (the )?rules)\b/.test(f)) return { kind: "command", plan: [{ op: "rulesClear" }] };
+    if (/^(kurallar|kurallari goster|kurallar neler|show (the )?rules|rules)$/.test(f.trim())) return { kind: "status", what: "rules" };
     // GROUPS / JUNKETS (owner 2026-11-02): "Kerem Sarıçiçek'in misafirlerini aynı masaya al",
     // "Kerem grubunu T05'e topla", "seat Kerem's guests together"; "Kerem grubundan kaç kişi geldi".
     const grpTr = raw.match(/^(.+?)\s+(?:misafirler(?:i|ini)|grub(?:u|unu)|davetliler(?:i|ini)|ekib(?:i|ini)|insanlar(?:i|ini|ı|ını))\b(.*)$/i);

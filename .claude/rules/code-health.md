@@ -7,7 +7,7 @@
   framework migration, TypeScript conversion, introducing a bundler/build
   step, converting `src/*.js` to ES modules, and silently changing the
   classic-script load order in `index.html` (fixed order, `app-v8.js`
-  LAST; count with `grep -c '<script src="src/' index.html` — 102 on
+  LAST; count with `grep -c '<script src="src/' index.html` — 103 on
   2026-11-01, after the planner engine and the F8 assistant's six scripts (`planner-layout`, `assistant-tools`, `assistant-actions`, `assistant-parse`, `assistant-reading`, `screen-assistant`) joined the 89 (2026-10-28) and `disk-backup` (automatic backup to disk, right after `storage-provider`) joined them. The one `type="module"` tag, `src/pdf-bridge.mjs`, is the PDF
   2026-11-01, after `data-portability` (A25, moved out of app-v8.js) joined the 95; the planner engine and the F8 assistant's six scripts (`planner-layout`, `assistant-tools`, `assistant-actions`, `assistant-parse`, `assistant-reading`, `screen-assistant`) had joined the 89 on 2026-10-28. The one `type="module"` tag, `src/pdf-bridge.mjs`, is the PDF
   LAST; count with `grep -c '<script src="src/' index.html` — 97 on

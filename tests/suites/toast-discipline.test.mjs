@@ -40,6 +40,8 @@ export const meta = { name: "toast-discipline", tags: ["ui", "localization", "re
 // from. A new composed site fails until it is read and listed here; a listed
 // one that disappears fails too, so this list cannot rot.
 const COMPOSED = [
+  { file: "app-v8.js", fn: "toast", arg: 'v.map(ruleLine).join(" ")', count: 1,
+    from: "seating rules broken by a seating (src/seating-rules.js): each line is ruleLine(), one t() call per broken rule, joined" },
   { file: "app-v8.js", fn: "toast", arg: "...a", count: 7,
     from: "the hand-over to a module created with its dependencies (src/screen-*.js, src/data-portability.js): a late-binding pass-through, not a message — the module's own toast() calls are scanned in its own file like every other" },
   { file: "app-v8.js", fn: "toast", arg: "message", count: 1,

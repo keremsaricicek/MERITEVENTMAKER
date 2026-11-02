@@ -179,6 +179,7 @@
         deleteGuest(id) { const kept = W.deleteGuest(id); if (!kept) throw new Error(t("assistant.couldNot")); rec.push(() => W.restoreGuest(kept)); },
         setPax(id, pax) { const before = guest(id).pax; if (!W.setPax(id, pax)) throw new Error(t("assistant.couldNot")); rec.push(() => W.setPax(id, before)); },
         setVip(id, vip) { const before = guest(id).vip; W.setVip(id, vip); rec.push(() => W.setVip(id, before)); },
+        setSeatRules(rules) { const before = W.setSeatRules(rules); if (!before) throw new Error(t("assistant.couldNot")); rec.push(() => W.setSeatRules(before)); },
         setArrival(id, status) { const before = guest(id).arrivalStatus; if (!W.setArrival(id, status)) throw new Error(t("assistant.couldNot")); rec.push(() => W.setArrival(id, before)); },
         addGuest(name, pax) { const id = W.addGuest(name, pax); rec.push(() => { const kept = W.deleteGuest(id); return kept; }); return id; },
       };
@@ -283,7 +284,7 @@
       const A = globalThis.MeritAssistantActions.create({ events, current: currentId, today, lang: () => (globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : "tr"), canMutate: (e) => canMutate(e), writers: {}, snapshot: () => null, registerUndo: () => {} });
       const key = (res) => res.steps ? JSON.stringify(res.steps.map((x) => [x.op, x.guestId || x.name, x.tableId || x.table || null, x.seats || null, x.pax || null])) : null;
       const agreed = byModel && how && how.rules && how.rules.kind === "command" && key(A.resolve(r.plan)) !== null && key(A.resolve(r.plan)) === key(A.resolve(how.rules.plan));
-      const unsure = byModel ? !(agreed || (how && how.sure)) : r.plan.some((st) => st.op === "deleteGuest" || st.op === "groupTogether");
+      const unsure = byModel ? !(agreed || (how && how.sure)) : r.plan.some((st) => st.op === "deleteGuest" || st.op === "groupTogether" || st.op === "rulesClear");
       if (unsure) {
         const res = A.resolve(r.plan);
         if (res.ask) return { text: res.ask };
@@ -306,6 +307,7 @@
         if (x.op === "setPax") return t("assistant.pv.pax", { name: x.name, n: x.pax });
         if (x.op === "setVip") return t("assistant.pv.vip", { name: x.name });
         if (x.op === "arrive") return t("assistant.pv.arrive", { name: x.name });
+        if (x.op === "rule") return x.line;
         if (x.op === "addGuest") return x.table ? t("assistant.pv.addAt", { name: x.name, n: x.pax, table: x.table }) : t("assistant.pv.add", { name: x.name, n: x.pax });
         return x.op;
       });
