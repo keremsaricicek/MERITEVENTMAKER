@@ -1886,3 +1886,16 @@ each model's runEq run (0.8B: plan replay; 2B: BRIEF replay). Order of grammars 
 was re-downloaded (its bf16 weights had been deleted for disk) and is raced on **Q8_0** (the Q4_K_M file is gone).
 **Exam unchanged:** fresh9/typo9/en9/entypo9 + briefs, product rule. The runEq races are kept as the first,
 coverage-equal reading; **the ship decision uses the eq2 races** (best on the four sets, 0 wrong changes).
+
+## 2026-11-07 — runP: identical training HISTORY (owner: "Geçmişleri de öyle olacak … hepsi 4 eğitime girdiyse 4'ü de aynı eğitim") — supersedes runEq2; written before any runEq/runEq2 result was read
+
+Same runs, same data files, same order, for every model. The order is the one the 0.8B line already has, so nothing is
+thrown away: **g3 → g4 → g5 → g6 → g7 → g1 → g2**, one run per grammar, each run the WHOLE file
+(data-b7c, data-b7d, data-b7e, data-b7f, data-g7, data-short, data-b7b).
+- **0.8B:** B6d → B7c (g3) → B7d (g4) → B7e (g5) → B7f (g6) → runEq-B7f (g7) → **runP-08-g1** → **runP-08-g2**. With an
+  identical history B7e and B7f stop being two models (B7e is B7f's ancestor), so the race is **0.8B vs 2B**.
+- **2B:** runB7-2B (g3) → **runP-2B-g4 → g5 → g6 → g7 → g1 → g2**.
+- Stated, unavoidable differences: different bases (0.8B starts from the plan model B6d, 2B from Qwen3.5-2B); the 0.8B
+  runs carry the plan replay (it is also the plan reader), the 2B runs the briefs replay (BRIEF, 400) as runB7-2B did.
+- runEq2, runEq-B7e and the eqb7e/eq2b races are cancelled (never read). **Exam:** fresh9/typo9/en9/entypo9 + briefs,
+  product rule; labels p08, p2b (2B on Q8_0). **Ship:** the better of the two, 0 wrong changes.
