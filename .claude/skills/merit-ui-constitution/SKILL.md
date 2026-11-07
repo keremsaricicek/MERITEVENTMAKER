@@ -21,10 +21,15 @@ decoration for its own sake.
 
 ## Visual direction
 
-- **Dark graphite** application shell/chrome. Quiet neutral panels.
+- **One coherent light/warm system app-wide.** The old dark-graphite
+  shell was fully retired, not recolored — every screen (Home, Guests,
+  Seating, Live Event, Reports, Floor Plan, Plan Intelligence) draws from
+  the same root tokens in `src/styles.css`. Never reintroduce a second,
+  visually distinct dark system for any screen.
 - **Warm-paper-toned canvas** for the Floor Plan itself — this is
   deliberate and already how `src/styles.css` treats the canvas; it reads
-  as a physical plan on paper, not another dark panel.
+  as a physical plan on paper. It now sits inside a light shell rather
+  than contrasting against a dark one.
 - **Controlled cool blue** for selection, interaction, focus, and active
   state — nothing else claims that color.
 - **Semantic color only**: green = success, amber = warning, red =
@@ -41,6 +46,35 @@ Giant rounded "card wall" layouts. Huge empty marketing sections. Tiny
 unreadable UI. Random unmotivated theme changes. White generic admin
 forms. Anything that reads as a templated interface rather than a
 purpose-built one.
+
+## A recolor is not a redesign
+
+If asked to redesign a screen, changing color tokens, spacing, or type
+scale while leaving the DOM structure, information architecture, and
+interaction model intact does **not** satisfy the request. That is
+makeup, and it has already been rejected once on this product.
+
+A real redesign answers: what is this screen's job, what should be
+primary vs. secondary vs. hidden until asked for, what gets promoted,
+what gets removed entirely, and what interaction replaces the old one.
+If the redesigned markup is structurally recognizable as the old markup,
+it is not done.
+
+Note the inverse trap too: honoring the Floor Plan's design *principles*
+on another screen never means literally transplanting its floating
+toolbar / contextual card / status pill components there. Each screen is
+designed for its own job; only the color language and token system are
+shared.
+
+## The user is not an engineer
+
+This is operational hospitality software. It is used by event staff —
+sometimes standing at a venue door during a live event, in a hurry, on
+someone else's laptop. Usability for a non-technical person is the
+primary success criterion; aesthetics second; cleverness never. Prefer
+plain operational language over product jargon, make the primary action
+on each screen unmistakable, and make destructive or irreversible actions
+recoverable.
 
 ## Typography and density
 

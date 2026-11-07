@@ -1,0 +1,376 @@
+// MERIT Event Maker — the F8 assistant panel (MeritScreenAssistant).
+//
+// A small panel on the right (benchmarks/AI-PLANNER-DESIGN.md §11–§12): F8
+// opens and closes it, Escape closes it, the plan stays visible beside it. A
+// question is answered from the data (src/assistant-parse.js answer() over
+// src/assistant-tools.js); a command is carried out at once through the app's
+// own writers (src/assistant-actions.js) — no confirmation, because the
+// command IS the person's decision — and every command is ONE undo, offered
+// right under what it changed. Anything ambiguous comes back as a question and
+// changes nothing.
+//
+// The panel lives in its own <aside>, outside #app, so a render() of the screen
+// never wipes the conversation or the text being typed. Across its working
+// moments a thin strip under its title bar carries the app's colours back and
+// forth (the owner's design, 2026-10-27); it is still under reduced motion.
+//
+// REDESIGN v4 (SPEC-v4, owner 2026-11-07): it is presented as "Mimar", a
+// bottom-right chat box (title bar · – · ×, bubbles, a field, a disabled
+// "yakında" microphone, Gönder), and a command is SHOWN first — its sentence and
+// the table it names highlighted on the plan — then "Uygula", then "Geri al".
+// Door check-ins the rules read stay immediate (a plain statement at the door).
+// The reading, resolving and acting code is unchanged.
+//
+// Everything this reads from the shell is handed to it by create(deps), once.
+(function () {
+  "use strict";
+  const P = () => globalThis.MeritAssistantParse;
+  const R = () => globalThis.MeritAssistantReading;
+
+  let canMutate;
+  let chatText;
+  let currentId;
+  let events;
+  let go;
+  let highlight;
+  let onChange;
+  let readText;
+  let summary;
+  let t;
+  let today;
+  let writers;
+  let created = false;
+
+  function create(deps) {
+    if (created) throw new Error("MeritScreenAssistant.create() is called once, by app-v8.js.");
+    created = true;
+    canMutate=deps.canMutate;
+    chatText=deps.chatText;
+    currentId=deps.currentId;
+    events=deps.events;
+    go=deps.go;
+    highlight=deps.highlight;
+    onChange=deps.onChange;
+    readText=deps.readText;
+    summary=deps.summary;
+    t=deps.t;
+    today=deps.today;
+    writers=deps.writers;
+    let root = null, log = null, input = null, status = null, strip = null;
+    const turns = [];   // {who:"you"|"assistant", text, lines?, undo?}
+
+    function el(tag, attrs, text) {
+      const n = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs || {})) n.setAttribute(k, v);
+      if (text != null) n.textContent = text;
+      return n;
+    }
+    function mount() {
+      if (root) return root;
+      root = el("aside", { class: "assistant-panel theme-scope", id: "assistantPanel", "aria-label": t("assistant.title"), hidden: "" });
+      strip = el("div", { class: "assistant-strip", "aria-hidden": "true" });
+      const head = el("div", { class: "assistant-head" });
+      head.append(el("h2", { class: "assistant-title" }, t("assistant.title")), el("kbd", { class: "assistant-key" }, "F8"));
+      status = el("span", { class: "assistant-status", role: "status" }, t("assistant.ready"));
+      const min = el("button", { class: "assistant-min", type: "button", "aria-label": t("assistant.minimise"), title: t("assistant.minimise") }, "–");
+      min.addEventListener("click", (e) => { e.stopPropagation(); root.classList.toggle("is-min"); });
+      const close = el("button", { class: "assistant-close", type: "button", "aria-label": t("assistant.close") }, "×");
+      close.addEventListener("click", (e) => { e.stopPropagation(); toggle(false); });
+      head.append(status, min, close);
+      // a minimised box comes back from its title bar, like a classic chat
+      head.addEventListener("click", () => { if (root.classList.contains("is-min")) { root.classList.remove("is-min"); input.focus(); } });
+      log = el("div", { class: "assistant-log", "aria-live": "polite" });
+      const form = el("form", { class: "assistant-form" });
+      const label = el("label", { class: "sr-only", for: "assistantInput" }, t("assistant.inputLabel"));
+      input = el("input", { id: "assistantInput", class: "assistant-input", autocomplete: "off", placeholder: t("assistant.placeholder") });
+      const send = el("button", { class: "btn primary assistant-send", type: "submit" }, t("assistant.send"));
+      // Voice is a later stage: the microphone is shown, disabled, and says so.
+      const mic = el("button", { class: "assistant-mic", type: "button", disabled: "", title: t("assistant.micSoon"), "aria-label": t("assistant.micSoon") });
+      const NS = "http://www.w3.org/2000/svg", icon = document.createElementNS(NS, "svg");
+      for (const [k, v] of [["width", "16"], ["height", "16"], ["viewBox", "0 0 16 16"], ["fill", "none"], ["stroke", "currentColor"], ["stroke-width", "1.4"], ["stroke-linecap", "round"], ["aria-hidden", "true"]]) icon.setAttribute(k, v);
+      const body = document.createElementNS(NS, "rect"); for (const [k, v] of [["x", "5.5"], ["y", "1.8"], ["width", "5"], ["height", "8"], ["rx", "2.5"]]) body.setAttribute(k, v);
+      const stand = document.createElementNS(NS, "path"); stand.setAttribute("d", "M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2.2");
+      icon.append(body, stand); mic.append(icon);
+      mic.append(el("span", { class: "assistant-mic-soon" }, t("assistant.soon")));
+      form.append(label, input, mic, send);
+      form.addEventListener("submit", (e) => { e.preventDefault(); const v = input.value.trim(); if (v) { input.value = ""; ask(v); } });
+      root.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); toggle(false); } });
+      root.append(head, strip, log, form);
+      document.body.appendChild(root);
+      return root;
+    }
+    function isOpen() { return !!root && !root.hidden; }
+    function toggle(open) {
+      mount();
+      const want = open == null ? root.hidden : open;
+      root.hidden = !want;
+      document.body.classList.toggle("assistant-open", want);
+      if (want) { root.classList.remove("is-min"); setTimeout(() => input.focus(), 0); }
+      document.querySelectorAll("[data-shell-assistant]").forEach((b) => b.setAttribute("aria-expanded", String(want)));
+    }
+    function working(on, text) {
+      root.classList.toggle("is-working", on);
+      status.textContent = text || (on ? t("assistant.working") : t("assistant.ready"));
+    }
+    function draw() {
+      log.textContent = "";
+      for (const turn of turns) {
+        const b = el("div", { class: `assistant-turn ${turn.who}` });
+        b.append(el("p", {}, turn.text));
+        if (turn.byModel) b.append(el("p", { class: "assistant-by-model" }, t("assistant.readByModel")));
+        if (turn.chat) b.append(el("p", { class: "assistant-by-model" }, t("assistant.chatNote")));
+        if (turn.lines && turn.lines.length) { const ul = el("ul", { class: "assistant-lines" }); for (const l of turn.lines) ul.append(el("li", {}, l)); b.append(ul); }
+        for (const opt of turn.options || []) b.append(optionCard(turn, opt));
+        if (turn.undo && !turn.undone) {
+          const u = el("button", { class: "btn assistant-undo", type: "button" }, t("assistant.undo"));
+          u.addEventListener("click", () => { undo(turn); });
+          b.append(u);
+        }
+        if (turn.undone) b.append(el("p", { class: "assistant-undone" }, t("assistant.undone")));
+        if (turn.go && go) { const g = el("button", { class: "btn assistant-go", type: "button" }, t("assistant.go")); g.addEventListener("click", () => go(turn.go)); b.append(g); }
+        if (turn.topics) { const ul = el("ul", { class: "assistant-topics" }); for (const tp of turn.topics) { const li = el("li", {}); const a = el("button", { class: "btn quiet assistant-topic", type: "button" }, tp.title[lang()]); a.addEventListener("click", () => { turns.push(Object.assign({ who: "assistant" }, helpReply(tp))); draw(); }); li.append(a); ul.append(li); } b.append(ul); }
+        if (turn.confirm && !turn.settled) {
+          const ok = el("button", { class: "btn primary assistant-confirm", type: "button" }, t("assistant.confirm"));
+          const no = el("button", { class: "btn assistant-cancel", type: "button" }, t("assistant.cancel"));
+          ok.addEventListener("click", () => settle(turn, true));
+          no.addEventListener("click", () => settle(turn, false));
+          b.append(ok, no);
+        }
+        log.append(b);
+      }
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // One arrangement: the numbers a person judges it by, a small drawing, Uygula.
+    function optionCard(turn, opt) {
+      const o = opt.plan, card = el("div", { class: "assistant-option" });
+      const tables = o.items.filter((x) => x.kind !== "chair").length;
+      const kind = o.event === "theatre" ? t("assistant.planChairs", { n: o.items.length }) : t("assistant.planTables", { n: tables });
+      card.append(el("p", { class: "assistant-option-title" }, `${kind} · ${t("assistant.planCapacity", { n: o.capacity })} · ${o.m2PerPerson} m²/${t("assistant.planPerson")}`));
+      for (const note of o.notes) card.append(el("p", { class: "assistant-option-note" }, note));
+      const NS = "http://www.w3.org/2000/svg", W = 300, sc = W / o.room.w, H = Math.round(o.room.l * sc);
+      const svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("class", "assistant-preview"); svg.setAttribute("role", "img"); svg.setAttribute("aria-label", kind);
+      const room = document.createElementNS(NS, "rect");
+      room.setAttribute("x", "0.5"); room.setAttribute("y", "0.5"); room.setAttribute("width", String(W - 1)); room.setAttribute("height", String(H - 1)); room.setAttribute("class", "room");
+      svg.append(room);
+      for (const it of o.items) {
+        const sh = document.createElementNS(NS, it.kind === "round" || it.kind === "bistro" ? "circle" : "rect");
+        if (sh.tagName === "circle") { sh.setAttribute("cx", String(it.x * sc)); sh.setAttribute("cy", String(it.y * sc)); sh.setAttribute("r", String(Math.max(1.2, it.d * sc / 2))); }
+        else { sh.setAttribute("x", String((it.x - it.w / 2) * sc)); sh.setAttribute("y", String((it.y - it.h / 2) * sc)); sh.setAttribute("width", String(Math.max(1, it.w * sc))); sh.setAttribute("height", String(Math.max(1, it.h * sc))); }
+        svg.append(sh);
+      }
+      card.append(svg);
+      if (opt.applied) card.append(el("p", { class: "assistant-undone" }, t("assistant.planApplied")));
+      else {
+        const go = el("button", { class: "btn primary assistant-apply", type: "button" }, t("assistant.apply"));
+        go.addEventListener("click", () => {
+          const ev = events().find((e) => e.id === currentId());
+          if (!ev || !canMutate(ev)) return;
+          working(true);
+          const back = writers.applyLayout(o);
+          opt.applied = true;
+          turns.push({ who: "assistant", text: t("assistant.done"), lines: [kind + " · " + t("assistant.planCapacity", { n: o.capacity })], undo: back ? [back] : null });
+          working(false); onChange(); draw(); input.focus();
+        });
+        card.append(go);
+      }
+      return card;
+    }
+
+    // Writers wrapped so each call records how to take it back; a writer that
+    // could not do its step throws, and whatever ran before it is taken back.
+    function recording(rec) {
+      const ev = () => events().find((e) => e.id === currentId());
+      const guest = (id) => ev().guests.find((g) => g.id === id);
+      const W = writers;
+      return {
+        assign(id, tableId, seats) {
+          const before = guest(id) && guest(id).assignment ? JSON.parse(JSON.stringify(guest(id).assignment)) : null;
+          W.assign(id, tableId, seats);
+          const now = guest(id) && guest(id).assignment;
+          if (!now || now.tableId !== tableId) throw new Error(t("assistant.couldNot"));
+          rec.push(() => before ? W.assign(id, before.tableId, before.seats) : W.unassign(id));
+        },
+        unassign(id) {
+          const before = guest(id) && guest(id).assignment ? JSON.parse(JSON.stringify(guest(id).assignment)) : null;
+          W.unassign(id);
+          if (guest(id) && guest(id).assignment) throw new Error(t("assistant.couldNot"));
+          if (before) rec.push(() => W.assign(id, before.tableId, before.seats));
+        },
+        deleteGuest(id) { const kept = W.deleteGuest(id); if (!kept) throw new Error(t("assistant.couldNot")); rec.push(() => W.restoreGuest(kept)); },
+        setPax(id, pax) { const before = guest(id).pax; if (!W.setPax(id, pax)) throw new Error(t("assistant.couldNot")); rec.push(() => W.setPax(id, before)); },
+        setVip(id, vip) { const before = guest(id).vip; W.setVip(id, vip); rec.push(() => W.setVip(id, before)); },
+        setSeatRules(rules) { const before = W.setSeatRules(rules); if (!before) throw new Error(t("assistant.couldNot")); rec.push(() => W.setSeatRules(before)); },
+        setArrival(id, status) { const before = guest(id).arrivalStatus; if (!W.setArrival(id, status)) throw new Error(t("assistant.couldNot")); rec.push(() => W.setArrival(id, before)); },
+        addGuest(name, pax) { const id = W.addGuest(name, pax); rec.push(() => { const kept = W.deleteGuest(id); return kept; }); return id; },
+      };
+    }
+    function undo(turn) {
+      for (const back of turn.undo.slice().reverse()) back();
+      turn.undone = true;
+      onChange();
+      draw();
+      input.focus();
+    }
+
+    // A shown command: Onayla carries it out (resolved again against the event as
+    // it is now), Vazgeç changes nothing.
+    function settle(turn, yes) {
+      turn.settled = true;
+      const out = yes ? carryOut(turn.confirm.plan) : { text: t("assistant.cancelled") };
+      turns.push(Object.assign({ who: "assistant" }, out));
+      draw();
+      input.focus();
+    }
+
+    function ask(text) {
+      turns.push({ who: "you", text });
+      working(true);
+      draw();
+      // let the strip and the question paint before the work
+      setTimeout(async () => {
+        let reply;
+        try { reply = await answer(text); } catch (e) { reply = { text: (e && e.message) || t("assistant.couldNot") }; }
+        turns.push(Object.assign({ who: "assistant" }, reply));
+        working(false);
+        draw();
+      }, 30);
+    }
+    // A brief becomes 1–2 arrangements from the layout engine; each can be
+    // applied to the open event as one undo (a theatre arrangement as its chair
+    // rows, S01…).
+    function planReply(b) {
+      const L = globalThis.MeritPlannerLayout, opts = [];
+      const first = L.plan(b);
+      if (!first.ok) return { text: t("assistant.planAsk", { what: first.ask }) };
+      opts.push(first);
+      if (first.event !== "theatre" && first.event !== "cocktail" && (b.table_kind == null || b.table_kind === "round") && !b.table_diam_cm) {
+        const alt = L.plan(Object.assign({}, b, { table_diam_cm: 150 }));
+        if (alt.ok && alt.capacity !== first.capacity) opts.push(alt);
+      }
+      return { text: t("assistant.planIntro"), options: opts.map((o) => ({ plan: o, applied: false })) };
+    }
+    // The rules read first; only what they cannot place goes to the second
+    // reader (the chat model on this machine, through the relay), whose reading
+    // is the rules' own shape — answered and carried out by the same code below.
+    // With a second reader on this machine, the model reads first and the rules
+    // are the fallback (training/README.md "runB7b"); without one, the rules alone.
+    // F8 HELP (owner 2026-11-02): "how do I …" is answered from src/help-topics.js — step by step,
+    // in the UI's language, with "Götür" to the screen. No model; nothing changes.
+    const lang = () => (globalThis.MERIT_I18N_LANG && globalThis.MERIT_I18N_LANG() === "en" ? "en" : "tr");
+    function helpReply(tp) { return { text: tp.title[lang()], lines: tp.steps[lang()], go: tp.go || null }; }
+    // "?" (owner 2026-11-02): the keys, and sentences F8 understands, in the UI's language.
+    function shortcuts() {
+      toggle(true);
+      const L = (k) => t(k).split("\n");
+      turns.push({ who: "assistant", text: t("assistant.keysTitle"), lines: [...L("assistant.keys"), "—", ...L("assistant.examples")] });
+      draw();
+    }
+    function help() {
+      const H = globalThis.MeritHelpTopics;
+      toggle(true);
+      if (!H) return;
+      turns.push({ who: "assistant", text: t("assistant.helpIntro"), topics: H.TOPICS });
+      draw();
+    }
+    async function answer(text) {
+      const evs = events(), now = today();
+      const H = globalThis.MeritHelpTopics;
+      // never when the sentence names one of our guests ("Ahmet nereye oturacak" is about Ahmet)
+      if (H && H.isHowTo(text) && !P().personIn(text, evs)) { const m = H.match(text); if (m) return helpReply(m.topic); }
+      const rules = P().parse(text, evs, now);
+      let r = rules, byModel = false, sure = false;
+      const compound = !!rules.compound;
+      if (rules.kind === "status") return summary ? summary(rules.what, rules.what === "group" ? rules.host : rules.since) : { text: t("assistant.notUnderstood") };
+      // a check-in at the door the rules read is never sent to the model (speed; it is a plain statement)
+      const atDoor = rules.kind === "command" && rules.plan.every((st) => st.op === "arrive");
+      if (readText && R() && !atDoor) {
+        status.textContent = t("assistant.reading");
+        const m = await readText(text);
+        if (m && m.reading) { const mr = R().toParse(m.reading, evs, now, text, currentId()); if (mr.kind !== "unknown") { r = mr; byModel = true; sure = !!m.sure && R().grounded(mr, text, evs, currentId()); } }
+      }
+      // Neither a question about our events nor a command: small talk, from the
+      // same model, marked as not resting on the data.
+      // two jobs in one sentence nobody could read: asked back, never chatted about
+      if (r.kind === "unknown" && compound) return { text: t("assistant.oneAtATime") };
+      if (r.kind === "unknown" && chatText) {
+        const said = await chatText(text);
+        if (said) return { text: said, chat: true };
+      }
+      const out = reply(r, evs, now, byModel, { rules, sure });
+      return byModel ? Object.assign(out, { byModel: true }) : out;
+    }
+    function reply(r, evs, now, byModel, how) {
+      if (r.kind === "plan") { if (!currentId()) return { text: t("assistant.noEvent") }; return planReply(r.brief); }
+      if (r.kind === "question") return { text: P().answer(r, evs, now, currentId(), globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : "tr").text };
+      if (r.kind !== "command") return { text: t("assistant.notUnderstood") };
+      if (!currentId()) return { text: t("assistant.noEvent") };
+      // Ask only when unsure (owner): a command the model read is done at once
+      // when the rules read the very same change or the model is sure of it;
+      // otherwise — and for a deletion only the rules read — it is SHOWN first and
+      // waits for Onayla: a misreading costs a click, never a guest.
+      const A = globalThis.MeritAssistantActions.create({ events, current: currentId, today, lang: () => (globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : "tr"), canMutate: (e) => canMutate(e), writers: {}, snapshot: () => null, registerUndo: () => {} });
+      const key = (res) => res.steps ? JSON.stringify(res.steps.map((x) => [x.op, x.guestId || x.name, x.tableId || x.table || null, x.seats || null, x.pax || null])) : null;
+      const agreed = byModel && how && how.rules && how.rules.kind === "command" && key(A.resolve(r.plan)) !== null && key(A.resolve(r.plan)) === key(A.resolve(how.rules.plan));
+      // SPEC-v4: every change is shown first and waits for Uygula — except a
+      // check-in at the door the rules read, and a reading the model is sure of
+      // that the rules read the same way is still shown (the person applies it).
+      const doorOnly = r.plan.every((st) => st.op === "arrive");
+      const unsure = !doorOnly || (byModel && !(agreed || (how && how.sure)));
+      if (unsure) {
+        const res = A.resolve(r.plan);
+        if (res.ask) return { text: res.ask };
+        if (res.refuse) return { text: res.refuse };
+        const real = res.steps.filter((x) => x.op !== "noop");
+        if (!real.length) return { text: t("assistant.nothing"), lines: res.steps.map((x) => x.line) };
+        const at = real.find((x) => x.tableId);
+        if (at && highlight) highlight(at.tableId);
+        return { text: t("assistant.confirmIntro"), lines: preview(res.steps), confirm: { plan: r.plan } };
+      }
+      return carryOut(r.plan);
+    }
+    // What a resolved plan will do, in words, before anything changes.
+    function preview(steps) {
+      const ev = events().find((e) => e.id === currentId());
+      const pax = (id) => { const g = ev && ev.guests.find((x) => x.id === id); return g ? g.pax || 1 : 1; };
+      return steps.map((x) => {
+        if (x.op === "noop") return x.line;
+        if (x.op === "assign") return `${x.name} → ${x.number}${x.seats ? ` (${t("assistant.pv.seat")} ${x.seats.map((n) => n + 1).join(", ")})` : ""}`;
+        if (x.op === "unassign") return t("assistant.pv.unassign", { name: x.name });
+        if (x.op === "deleteGuest") return pax(x.guestId) > 1 ? t("assistant.pv.deleteParty", { name: x.name, n: pax(x.guestId) - 1 }) : t("assistant.pv.delete", { name: x.name });
+        if (x.op === "setPax") return t("assistant.pv.pax", { name: x.name, n: x.pax });
+        if (x.op === "setVip") return t("assistant.pv.vip", { name: x.name });
+        if (x.op === "arrive") return t("assistant.pv.arrive", { name: x.name });
+        if (x.op === "rule") return x.line;
+        if (x.op === "addGuest") return x.table ? t("assistant.pv.addAt", { name: x.name, n: x.pax, table: x.table }) : t("assistant.pv.add", { name: x.name, n: x.pax });
+        return x.op;
+      });
+    }
+    function carryOut(plan) {
+      const rec = [];
+      const A = globalThis.MeritAssistantActions.create({
+        events, current: currentId, today, lang: () => (globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : "tr"), canMutate: (e) => canMutate(e),
+        writers: recording(rec), snapshot: () => null, registerUndo: () => {},
+      });
+      let out;
+      try { out = A.run(plan); }
+      catch (e) { for (const back of rec.slice().reverse()) back(); onChange(); return { text: e.message }; }
+      if (out.ask) return { text: out.ask };
+      if (out.refuse) return { text: out.refuse };
+      onChange();
+      return { text: out.applied.length ? t("assistant.done") : t("assistant.nothing"), lines: out.lines, undo: rec.length ? rec : null };
+    }
+
+    // A button anywhere may ask F8 a sentence (data-assistant-ask): the answer is shown in the panel,
+    // and anything that changes seats waits for Onayla there (e.g. Seating's "Taslak yerleşim").
+    document.addEventListener("click", (e) => {
+      const b = e.target && e.target.closest && e.target.closest("[data-assistant-ask]");
+      if (!b) return;
+      e.preventDefault(); toggle(true); ask(b.dataset.assistantAsk);
+    });
+    return { mount, toggle, isOpen, ask, help, shortcuts };
+  }
+
+  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","chatText","currentId","events","go","highlight","onChange","readText","summary","t","today","writers"])});
+})();

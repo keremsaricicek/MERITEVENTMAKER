@@ -1,0 +1,230 @@
+{
+ "plan": "golden2.pdf",
+ "image": {
+  "what": "the one JPEG embedded in golden2.pdf (pdfimages -j), as the product imports it, not rotated",
+  "width": 1654,
+  "height": 2338,
+  "sha256": "dd0fc879745745e49eb034747d3184cd7f564a0ed85b55f322eb743f0512035f"
+ },
+ "written": "2026-10-31, for the v4-g2 detector runs (training/README.md), before any v4-g2 candidate was scored",
+ "placedBy": "ai-engineer (a model), from the image: centres of the 27 tables counted in golden2-truth.json; per-table chairs from its groups. NOT human-verified \u2014 the counts are the owner-confirmed truth, the positions are not; QA checks them on the image (overlay: the scoring script draws them).",
+ "matchToleranceP": 3.0,
+ "tables": [
+  {
+   "id": "T01",
+   "type": "square",
+   "cx": 373,
+   "cy": 325,
+   "chairs": 1,
+   "group": "banquette group A (chairs on one side, banquette on the other)"
+  },
+  {
+   "id": "T02",
+   "type": "square",
+   "cx": 453,
+   "cy": 324,
+   "chairs": 1,
+   "group": "banquette group A (chairs on one side, banquette on the other)"
+  },
+  {
+   "id": "T03",
+   "type": "square",
+   "cx": 377,
+   "cy": 560,
+   "chairs": 1,
+   "group": "banquette group B"
+  },
+  {
+   "id": "T04",
+   "type": "square",
+   "cx": 451,
+   "cy": 560,
+   "chairs": 1,
+   "group": "banquette group B"
+  },
+  {
+   "id": "T05",
+   "type": "square",
+   "cx": 371,
+   "cy": 789,
+   "chairs": 1,
+   "group": "banquette group C"
+  },
+  {
+   "id": "T06",
+   "type": "square",
+   "cx": 452,
+   "cy": 787,
+   "chairs": 1,
+   "group": "banquette group C"
+  },
+  {
+   "id": "T07",
+   "type": "square",
+   "cx": 735,
+   "cy": 489,
+   "chairs": 2,
+   "group": "row of 3 before the stage #1"
+  },
+  {
+   "id": "T08",
+   "type": "square",
+   "cx": 810,
+   "cy": 490,
+   "chairs": 2,
+   "group": "row of 3 before the stage #1"
+  },
+  {
+   "id": "T09",
+   "type": "square",
+   "cx": 882,
+   "cy": 489,
+   "chairs": 2,
+   "group": "row of 3 before the stage #1"
+  },
+  {
+   "id": "T10",
+   "type": "square",
+   "cx": 739,
+   "cy": 706,
+   "chairs": 2,
+   "group": "row of 3 before the stage #2"
+  },
+  {
+   "id": "T11",
+   "type": "square",
+   "cx": 814,
+   "cy": 706,
+   "chairs": 2,
+   "group": "row of 3 before the stage #2"
+  },
+  {
+   "id": "T12",
+   "type": "square",
+   "cx": 886,
+   "cy": 704,
+   "chairs": 2,
+   "group": "row of 3 before the stage #2"
+  },
+  {
+   "id": "T13",
+   "type": "square",
+   "cx": 739,
+   "cy": 943,
+   "chairs": 2,
+   "group": "row of 3 before the stage #3"
+  },
+  {
+   "id": "T14",
+   "type": "square",
+   "cx": 813,
+   "cy": 942,
+   "chairs": 2,
+   "group": "row of 3 before the stage #3"
+  },
+  {
+   "id": "T15",
+   "type": "square",
+   "cx": 887,
+   "cy": 943,
+   "chairs": 2,
+   "group": "row of 3 before the stage #3"
+  },
+  {
+   "id": "T16",
+   "type": "square",
+   "cx": 918,
+   "cy": 1312,
+   "chairs": 2,
+   "group": "column of 3"
+  },
+  {
+   "id": "T17",
+   "type": "square",
+   "cx": 917,
+   "cy": 1395,
+   "chairs": 2,
+   "group": "column of 3"
+  },
+  {
+   "id": "T18",
+   "type": "square",
+   "cx": 918,
+   "cy": 1478,
+   "chairs": 2,
+   "group": "column of 3"
+  },
+  {
+   "id": "T19",
+   "type": "square",
+   "cx": 918,
+   "cy": 1639,
+   "chairs": 2,
+   "group": "pair #1"
+  },
+  {
+   "id": "T20",
+   "type": "square",
+   "cx": 919,
+   "cy": 1722,
+   "chairs": 2,
+   "group": "pair #1"
+  },
+  {
+   "id": "T21",
+   "type": "square",
+   "cx": 1162,
+   "cy": 1637,
+   "chairs": 2,
+   "group": "pair #2"
+  },
+  {
+   "id": "T22",
+   "type": "square",
+   "cx": 1167,
+   "cy": 1720,
+   "chairs": 2,
+   "group": "pair #2"
+  },
+  {
+   "id": "T23",
+   "type": "rectangle",
+   "cx": 1180,
+   "cy": 1366,
+   "chairs": 8,
+   "group": "long table, 4+4 armchairs, two centre dots"
+  },
+  {
+   "id": "T24",
+   "type": "round",
+   "cx": 678,
+   "cy": 204,
+   "chairs": 5,
+   "group": "round, top left"
+  },
+  {
+   "id": "T25",
+   "type": "round",
+   "cx": 875,
+   "cy": 152,
+   "chairs": 5,
+   "group": "round, top right"
+  },
+  {
+   "id": "T26",
+   "type": "round",
+   "cx": 916,
+   "cy": 1946,
+   "chairs": 6,
+   "group": "round, lower left"
+  },
+  {
+   "id": "T27",
+   "type": "round",
+   "cx": 1185,
+   "cy": 1934,
+   "chairs": 6,
+   "group": "round, lower right"
+  }
+ ]
+}

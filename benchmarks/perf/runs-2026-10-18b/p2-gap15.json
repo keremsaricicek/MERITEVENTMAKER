@@ -1,0 +1,1681 @@
+{
+ "measuredOn": "2026-10-18T14:45:05.802Z",
+ "cores": "pid 342's current affinity list: 0,1",
+ "runs": 3,
+ "node": "v22.22.2",
+ "plans": {
+  "golden": {
+   "cold": {
+    "totalMs": {
+     "median": 4102,
+     "p95": 4459
+    },
+    "fromImportMs": {
+     "median": 4005,
+     "p95": 4343
+    },
+    "longestTaskMs": {
+     "median": 221,
+     "p95": 241
+    },
+    "blockingMs": {
+     "median": 656,
+     "p95": 767
+    },
+    "inputLatencyMaxMs": {
+     "median": 123,
+     "p95": 252
+    },
+    "tesseractMs": {
+     "median": 5,
+     "p95": 11
+    },
+    "peakMemoryMb": {
+     "median": 932,
+     "p95": 936
+    },
+    "stages": {
+     "decode": 77,
+     "tesseractStart": 0,
+     "skew": 66,
+     "deskew": 5,
+     "ocrModel": 14,
+     "classicalDetect": 1195,
+     "localModelAndVector": 1250,
+     "embedMemoryBuild": 570,
+     "tesseractWait": 0,
+     "textSuppression": 35,
+     "labels": 302,
+     "venueAndFacing": 403,
+     "tableNumbers": 1,
+     "planHash": 14,
+     "intelligence": 56
+    },
+    "tables": [
+     47,
+     47,
+     47
+    ],
+    "runs": [
+     {
+      "totalMs": 4459,
+      "stages": [
+       {
+        "stage": "decode",
+        "ms": 77,
+        "end": 17849
+       },
+       {
+        "stage": "tesseractStart",
+        "ms": 0,
+        "end": 17849
+       },
+       {
+        "stage": "skew",
+        "ms": 76,
+        "end": 17925
+       },
+       {
+        "stage": "deskew",
+        "ms": 5,
+        "end": 17930
+       },
+       {
+        "stage": "ocrModel",
+        "ms": 14,
+        "end": 17944
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 1399,
+        "end": 19343
+       },
+       {
+        "stage": "localModelAndVector",
+        "ms": 1253,
+        "end": 20596
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 570,
+        "end": 21166
+       },
+       {
+        "stage": "tesseractWait",
+        "ms": 0,
+        "end": 21166
+       },
+       {
+        "stage": "textSuppression",
+        "ms": 41,
+        "end": 21206
+       },
+       {
+        "stage": "labels",
+        "ms": 302,
+        "end": 21509
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 428,
+        "end": 21936
+       },
+       {
+        "stage": "tableNumbers",
+        "ms": 1,
+        "end": 21937
+       },
+       {
+        "stage": "planHash",
+        "ms": 15,
+        "end": 21952
+       },
+       {
+        "stage": "intelligence",
+        "ms": 64,
+        "end": 22015
+       }
+      ],
+      "tesseractMs": 5,
+      "longestTaskMs": 241,
+      "blockingMs": 767,
+      "inputLatencyMaxMs": 252,
+      "localModel": {
+       "ms": 2050,
+       "loadMs": 601
+      },
+      "tables": 47,
+      "fromImportMs": 4343,
+      "prefetch": {
+       "model": true,
+       "page": true,
+       "startedBeforeMs": 15129,
+       "keptFromLastAnalysis": false
+      },
+      "runsIn": {
+       "ocrModel": "workers (1)",
+       "localModel": "worker"
+      },
+      "crops": {
+       "reads": 2,
+       "cacheHits": 0,
+       "workers": 1,
+       "failedWorkers": 0,
+       "cached": 2
+      },
+      "outputDigest": "cf91bcc5:64",
+      "longTasksByStage": [
+       {
+        "stage": "classicalDetect",
+        "ms": 241
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 213
+       }
+      ],
+      "peakMemoryMb": 932,
+      "memoryBasis": "pss",
+      "gapMs": 15000,
+      "gapLongestTaskMs": 130
+     },
+     {
+      "totalMs": 4102,
+      "stages": [
+       {
+        "stage": "decode",
+        "ms": 63,
+        "end": 17582
+       },
+       {
+        "stage": "tesseractStart",
+        "ms": 0,
+        "end": 17582
+       },
+       {
+        "stage": "skew",
+        "ms": 43,
+        "end": 17625
+       },
+       {
+        "stage": "deskew",
+        "ms": 4,
+        "end": 17628
+       },
+       {
+        "stage": "ocrModel",
+        "ms": 9,
+        "end": 17637
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 1174,
+        "end": 18811
+       },
+       {
+        "stage": "localModelAndVector",
+        "ms": 1250,
+        "end": 20061
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 581,
+        "end": 20641
+       },
+       {
+        "stage": "tesseractWait",
+        "ms": 0,
+        "end": 20641
+       },
+       {
+        "stage": "textSuppression",
+        "ms": 35,
+        "end": 20677
+       },
+       {
+        "stage": "labels",
+        "ms": 314,
+        "end": 20991
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 403,
+        "end": 21394
+       },
+       {
+        "stage": "tableNumbers",
+        "ms": 1,
+        "end": 21394
+       },
+       {
+        "stage": "planHash",
+        "ms": 14,
+        "end": 21408
+       },
+       {
+        "stage": "intelligence",
+        "ms": 55,
+        "end": 21463
+       }
+      ],
+      "tesseractMs": 5,
+      "longestTaskMs": 201,
+      "blockingMs": 647,
+      "inputLatencyMaxMs": 123,
+      "localModel": {
+       "ms": 1919,
+       "loadMs": 502
+      },
+      "tables": 47,
+      "fromImportMs": 4005,
+      "prefetch": {
+       "model": true,
+       "page": true,
+       "startedBeforeMs": 15087,
+       "keptFromLastAnalysis": false
+      },
+      "runsIn": {
+       "ocrModel": "workers (1)",
+       "localModel": "worker"
+      },
+      "crops": {
+       "reads": 2,
+       "cacheHits": 0,
+       "workers": 1,
+       "failedWorkers": 0,
+       "cached": 2
+      },
+      "outputDigest": "cf91bcc5:64",
+      "longTasksByStage": [
+       {
+        "stage": "classicalDetect",
+        "ms": 201
+       }
+      ],
+      "peakMemoryMb": 936,
+      "memoryBasis": "pss",
+      "gapMs": 15000,
+      "gapLongestTaskMs": 83
+     },
+     {
+      "totalMs": 4089,
+      "stages": [
+       {
+        "stage": "decode",
+        "ms": 86,
+        "end": 17645
+       },
+       {
+        "stage": "tesseractStart",
+        "ms": 0,
+        "end": 17645
+       },
+       {
+        "stage": "skew",
+        "ms": 66,
+        "end": 17711
+       },
+       {
+        "stage": "deskew",
+        "ms": 5,
+        "end": 17716
+       },
+       {
+        "stage": "ocrModel",
+        "ms": 15,
+        "end": 17731
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 1195,
+        "end": 18926
+       },
+       {
+        "stage": "localModelAndVector",
+        "ms": 1220,
+        "end": 20146
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 516,
+        "end": 20662
+       },
+       {
+        "stage": "tesseractWait",
+        "ms": 0,
+        "end": 20662
+       },
+       {
+        "stage": "textSuppression",
+        "ms": 32,
+        "end": 20694
+       },
+       {
+        "stage": "labels",
+        "ms": 284,
+        "end": 20977
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 396,
+        "end": 21373
+       },
+       {
+        "stage": "tableNumbers",
+        "ms": 1,
+        "end": 21373
+       },
+       {
+        "stage": "planHash",
+        "ms": 9,
+        "end": 21382
+       },
+       {
+        "stage": "intelligence",
+        "ms": 56,
+        "end": 21438
+       }
+      ],
+      "tesseractMs": 11,
+      "longestTaskMs": 221,
+      "blockingMs": 656,
+      "inputLatencyMaxMs": 109,
+      "localModel": {
+       "ms": 1784,
+       "loadMs": 631
+      },
+      "tables": 47,
+      "fromImportMs": 3961,
+      "prefetch": {
+       "model": true,
+       "page": true,
+       "startedBeforeMs": 15128,
+       "keptFromLastAnalysis": false
+      },
+      "runsIn": {
+       "ocrModel": "workers (1)",
+       "localModel": "worker"
+      },
+      "crops": {
+       "reads": 2,
+       "cacheHits": 0,
+       "workers": 1,
+       "failedWorkers": 0,
+       "cached": 2
+      },
+      "outputDigest": "cf91bcc5:64",
+      "longTasksByStage": [
+       {
+        "stage": "classicalDetect",
+        "ms": 221
+       }
+      ],
+      "peakMemoryMb": 931,
+      "memoryBasis": "pss",
+      "gapMs": 15000,
+      "gapLongestTaskMs": 57
+     }
+    ]
+   },
+   "warm": {
+    "totalMs": {
+     "median": 2956,
+     "p95": 2997
+    },
+    "fromImportMs": {
+     "median": null,
+     "p95": null
+    },
+    "longestTaskMs": {
+     "median": 148,
+     "p95": 178
+    },
+    "blockingMs": {
+     "median": 391,
+     "p95": 418
+    },
+    "inputLatencyMaxMs": {
+     "median": 123,
+     "p95": 145
+    },
+    "tesseractMs": {
+     "median": 12,
+     "p95": 13
+    },
+    "peakMemoryMb": {
+     "median": 1012,
+     "p95": 1019
+    },
+    "stages": {
+     "decode": 76,
+     "tesseractStart": 0,
+     "skew": 62,
+     "deskew": 4,
+     "ocrModel": 65,
+     "classicalDetect": 744,
+     "localModelAndVector": 1183,
+     "embedMemoryBuild": 102,
+     "tesseractWait": 0,
+     "textSuppression": 36,
+     "labels": 90,
+     "venueAndFacing": 355,
+     "tableNumbers": 0,
+     "planHash": 0,
+     "intelligence": 56
+    },
+    "tables": [
+     47,
+     47,
+     47
+    ],
+    "runs": [
+     {
+      "totalMs": 2941,
+      "stages": [
+       {
+        "stage": "decode",
+        "ms": 83,
+        "end": 22321
+       },
+       {
+        "stage": "tesseractStart",
+        "ms": 0,
+        "end": 22322
+       },
+       {
+        "stage": "skew",
+        "ms": 77,
+        "end": 22399
+       },
+       {
+        "stage": "deskew",
+        "ms": 5,
+        "end": 22404
+       },
+       {
+        "stage": "ocrModel",
+        "ms": 97,
+        "end": 22502
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 733,
+        "end": 23235
+       },
+       {
+        "stage": "localModelAndVector",
+        "ms": 1160,
+        "end": 24395
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 102,
+        "end": 24497
+       },
+       {
+        "stage": "tesseractWait",
+        "ms": 0,
+        "end": 24497
+       },
+       {
+        "stage": "textSuppression",
+        "ms": 36,
+        "end": 24533
+       },
+       {
+        "stage": "labels",
+        "ms": 94,
+        "end": 24627
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 323,
+        "end": 24950
+       },
+       {
+        "stage": "tableNumbers",
+        "ms": 0,
+        "end": 24950
+       },
+       {
+        "stage": "planHash",
+        "ms": 0,
+        "end": 24950
+       },
+       {
+        "stage": "intelligence",
+        "ms": 56,
+        "end": 25006
+       }
+      ],
+      "tesseractMs": 12,
+      "longestTaskMs": 148,
+      "blockingMs": 391,
+      "inputLatencyMaxMs": 145,
+      "localModel": {
+       "ms": 1958,
+       "loadMs": 601
+      },
+      "tables": 47,
+      "fromImportMs": null,
+      "prefetch": {
+       "model": true,
+       "page": true,
+       "startedBeforeMs": null,
+       "keptFromLastAnalysis": true
+      },
+      "runsIn": {
+       "ocrModel": "workers (1)",
+       "localModel": "worker"
+      },
+      "crops": {
+       "reads": 2,
+       "cacheHits": 2,
+       "workers": 1,
+       "failedWorkers": 0,
+       "cached": 2
+      },
+      "outputDigest": "cf91bcc5:64",
+      "longTasksByStage": [],
+      "peakMemoryMb": 1019,
+      "memoryBasis": "pss"
+     },
+     {
+      "totalMs": 2956,
+      "stages": [
+       {
+        "stage": "decode",
+        "ms": 76,
+        "end": 21725
+       },
+       {
+        "stage": "tesseractStart",
+        "ms": 1,
+        "end": 21726
+       },
+       {
+        "stage": "skew",
+        "ms": 62,
+        "end": 21788
+       },
+       {
+        "stage": "deskew",
+        "ms": 4,
+        "end": 21792
+       },
+       {
+        "stage": "ocrModel",
+        "ms": 65,
+        "end": 21857
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 799,
+        "end": 22656
+       },
+       {
+        "stage": "localModelAndVector",
+        "ms": 1183,
+        "end": 23839
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 104,
+        "end": 23943
+       },
+       {
+        "stage": "tesseractWait",
+        "ms": 0,
+        "end": 23943
+       },
+       {
+        "stage": "textSuppression",
+        "ms": 27,
+        "end": 23970
+       },
+       {
+        "stage": "labels",
+        "ms": 90,
+        "end": 24060
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 355,
+        "end": 24415
+       },
+       {
+        "stage": "tableNumbers",
+        "ms": 0,
+        "end": 24415
+       },
+       {
+        "stage": "planHash",
+        "ms": 0,
+        "end": 24415
+       },
+       {
+        "stage": "intelligence",
+        "ms": 56,
+        "end": 24471
+       }
+      ],
+      "tesseractMs": 13,
+      "longestTaskMs": 178,
+      "blockingMs": 418,
+      "inputLatencyMaxMs": 108,
+      "localModel": {
+       "ms": 2026,
+       "loadMs": 502
+      },
+      "tables": 47,
+      "fromImportMs": null,
+      "prefetch": {
+       "model": true,
+       "page": true,
+       "startedBeforeMs": null,
+       "keptFromLastAnalysis": true
+      },
+      "runsIn": {
+       "ocrModel": "workers (1)",
+       "localModel": "worker"
+      },
+      "crops": {
+       "reads": 2,
+       "cacheHits": 2,
+       "workers": 1,
+       "failedWorkers": 0,
+       "cached": 2
+      },
+      "outputDigest": "cf91bcc5:64",
+      "longTasksByStage": [],
+      "peakMemoryMb": 990,
+      "memoryBasis": "pss"
+     },
+     {
+      "totalMs": 2997,
+      "stages": [
+       {
+        "stage": "decode",
+        "ms": 72,
+        "end": 21767
+       },
+       {
+        "stage": "tesseractStart",
+        "ms": 0,
+        "end": 21768
+       },
+       {
+        "stage": "skew",
+        "ms": 60,
+        "end": 21828
+       },
+       {
+        "stage": "deskew",
+        "ms": 4,
+        "end": 21832
+       },
+       {
+        "stage": "ocrModel",
+        "ms": 59,
+        "end": 21891
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 744,
+        "end": 22635
+       },
+       {
+        "stage": "localModelAndVector",
+        "ms": 1207,
+        "end": 23842
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 81,
+        "end": 23923
+       },
+       {
+        "stage": "tesseractWait",
+        "ms": 0,
+        "end": 23923
+       },
+       {
+        "stage": "textSuppression",
+        "ms": 38,
+        "end": 23961
+       },
+       {
+        "stage": "labels",
+        "ms": 76,
+        "end": 24036
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 384,
+        "end": 24421
+       },
+       {
+        "stage": "tableNumbers",
+        "ms": 0,
+        "end": 24421
+       },
+       {
+        "stage": "planHash",
+        "ms": 0,
+        "end": 24421
+       },
+       {
+        "stage": "intelligence",
+        "ms": 76,
+        "end": 24497
+       }
+      ],
+      "tesseractMs": 12,
+      "longestTaskMs": 136,
+      "blockingMs": 332,
+      "inputLatencyMaxMs": 123,
+      "localModel": {
+       "ms": 1990,
+       "loadMs": 631
+      },
+      "tables": 47,
+      "fromImportMs": null,
+      "prefetch": {
+       "model": true,
+       "page": true,
+       "startedBeforeMs": null,
+       "keptFromLastAnalysis": true
+      },
+      "runsIn": {
+       "ocrModel": "workers (1)",
+       "localModel": "worker"
+      },
+      "crops": {
+       "reads": 2,
+       "cacheHits": 2,
+       "workers": 1,
+       "failedWorkers": 0,
+       "cached": 2
+      },
+      "outputDigest": "cf91bcc5:64",
+      "longTasksByStage": [],
+      "peakMemoryMb": 1012,
+      "memoryBasis": "pss"
+     }
+    ]
+   }
+  },
+  "ornek": {
+   "cold": {
+    "totalMs": {
+     "median": 31620,
+     "p95": 32860
+    },
+    "fromImportMs": {
+     "median": 31180,
+     "p95": 32667
+    },
+    "longestTaskMs": {
+     "median": 263,
+     "p95": 267
+    },
+    "blockingMs": {
+     "median": 2267,
+     "p95": 2272
+    },
+    "inputLatencyMaxMs": {
+     "median": 155,
+     "p95": 185
+    },
+    "tesseractMs": {
+     "median": 19,
+     "p95": 25
+    },
+    "peakMemoryMb": {
+     "median": 1347,
+     "p95": 1356
+    },
+    "stages": {
+     "decode": 329,
+     "tesseractStart": 0,
+     "skew": 137,
+     "deskew": 14,
+     "ocrModel": 16162,
+     "classicalDetect": 1569,
+     "localModelAndVector": 44,
+     "embedMemoryBuild": 938,
+     "tesseractWait": 0,
+     "textSuppression": 153,
+     "labels": 4775,
+     "venueAndFacing": 383,
+     "tableNumbers": 6484,
+     "planHash": 63,
+     "intelligence": 202
+    },
+    "tables": [
+     167,
+     167,
+     167
+    ],
+    "runs": [
+     {
+      "totalMs": 31620,
+      "stages": [
+       {
+        "stage": "decode",
+        "ms": 321,
+        "end": 18547
+       },
+       {
+        "stage": "tesseractStart",
+        "ms": 0,
+        "end": 18548
+       },
+       {
+        "stage": "skew",
+        "ms": 122,
+        "end": 18670
+       },
+       {
+        "stage": "deskew",
+        "ms": 15,
+        "end": 18685
+       },
+       {
+        "stage": "ocrModel",
+        "ms": 15942,
+        "end": 34627
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 1394,
+        "end": 36021
+       },
+       {
+        "stage": "localModelAndVector",
+        "ms": 48,
+        "end": 36070
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 912,
+        "end": 36981
+       },
+       {
+        "stage": "tesseractWait",
+        "ms": 0,
+        "end": 36981
+       },
+       {
+        "stage": "textSuppression",
+        "ms": 153,
+        "end": 37134
+       },
+       {
+        "stage": "labels",
+        "ms": 5052,
+        "end": 42186
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 383,
+        "end": 42569
+       },
+       {
+        "stage": "tableNumbers",
+        "ms": 6503,
+        "end": 49072
+       },
+       {
+        "stage": "planHash",
+        "ms": 63,
+        "end": 49135
+       },
+       {
+        "stage": "intelligence",
+        "ms": 199,
+        "end": 49334
+       }
+      ],
+      "tesseractMs": 13,
+      "longestTaskMs": 257,
+      "blockingMs": 2132,
+      "inputLatencyMaxMs": 131,
+      "localModel": {
+       "ms": 3133,
+       "loadMs": 1051
+      },
+      "tables": 167,
+      "fromImportMs": 31180,
+      "prefetch": {
+       "model": true,
+       "page": true,
+       "startedBeforeMs": 15330,
+       "keptFromLastAnalysis": false
+      },
+      "runsIn": {
+       "ocrModel": "workers (1)",
+       "localModel": "worker"
+      },
+      "crops": {
+       "reads": 272,
+       "cacheHits": 0,
+       "workers": 1,
+       "failedWorkers": 0,
+       "cached": 272
+      },
+      "outputDigest": "5788f346:188",
+      "longTasksByStage": [
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 209
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 257
+       }
+      ],
+      "peakMemoryMb": 1343,
+      "memoryBasis": "pss",
+      "gapMs": 15000,
+      "gapLongestTaskMs": 128
+     },
+     {
+      "totalMs": 32860,
+      "stages": [
+       {
+        "stage": "decode",
+        "ms": 329,
+        "end": 18806
+       },
+       {
+        "stage": "tesseractStart",
+        "ms": 5,
+        "end": 18811
+       },
+       {
+        "stage": "skew",
+        "ms": 162,
+        "end": 18972
+       },
+       {
+        "stage": "deskew",
+        "ms": 10,
+        "end": 18982
+       },
+       {
+        "stage": "ocrModel",
+        "ms": 17352,
+        "end": 36334
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 1620,
+        "end": 37954
+       },
+       {
+        "stage": "localModelAndVector",
+        "ms": 41,
+        "end": 37995
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 938,
+        "end": 38932
+       },
+       {
+        "stage": "tesseractWait",
+        "ms": 0,
+        "end": 38932
+       },
+       {
+        "stage": "textSuppression",
+        "ms": 177,
+        "end": 39109
+       },
+       {
+        "stage": "labels",
+        "ms": 4775,
+        "end": 43884
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 329,
+        "end": 44213
+       },
+       {
+        "stage": "tableNumbers",
+        "ms": 6484,
+        "end": 50697
+       },
+       {
+        "stage": "planHash",
+        "ms": 63,
+        "end": 50760
+       },
+       {
+        "stage": "intelligence",
+        "ms": 283,
+        "end": 51043
+       }
+      ],
+      "tesseractMs": 25,
+      "longestTaskMs": 263,
+      "blockingMs": 2267,
+      "inputLatencyMaxMs": 185,
+      "localModel": {
+       "ms": 2973,
+       "loadMs": 1477
+      },
+      "tables": 167,
+      "fromImportMs": 32667,
+      "prefetch": {
+       "model": true,
+       "page": true,
+       "startedBeforeMs": 15401,
+       "keptFromLastAnalysis": false
+      },
+      "runsIn": {
+       "ocrModel": "workers (1)",
+       "localModel": "worker"
+      },
+      "crops": {
+       "reads": 272,
+       "cacheHits": 0,
+       "workers": 1,
+       "failedWorkers": 0,
+       "cached": 272
+      },
+      "outputDigest": "5788f346:188",
+      "longTasksByStage": [
+       {
+        "stage": "classicalDetect",
+        "ms": 263
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 223
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 220
+       }
+      ],
+      "peakMemoryMb": 1356,
+      "memoryBasis": "pss",
+      "gapMs": 15000,
+      "gapLongestTaskMs": 204
+     },
+     {
+      "totalMs": 31307,
+      "stages": [
+       {
+        "stage": "decode",
+        "ms": 336,
+        "end": 18586
+       },
+       {
+        "stage": "tesseractStart",
+        "ms": 0,
+        "end": 18586
+       },
+       {
+        "stage": "skew",
+        "ms": 137,
+        "end": 18722
+       },
+       {
+        "stage": "deskew",
+        "ms": 14,
+        "end": 18736
+       },
+       {
+        "stage": "ocrModel",
+        "ms": 16162,
+        "end": 34898
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 1569,
+        "end": 36468
+       },
+       {
+        "stage": "localModelAndVector",
+        "ms": 44,
+        "end": 36511
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 981,
+        "end": 37492
+       },
+       {
+        "stage": "tesseractWait",
+        "ms": 0,
+        "end": 37492
+       },
+       {
+        "stage": "textSuppression",
+        "ms": 143,
+        "end": 37635
+       },
+       {
+        "stage": "labels",
+        "ms": 4768,
+        "end": 42403
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 398,
+        "end": 42801
+       },
+       {
+        "stage": "tableNumbers",
+        "ms": 6244,
+        "end": 49045
+       },
+       {
+        "stage": "planHash",
+        "ms": 64,
+        "end": 49109
+       },
+       {
+        "stage": "intelligence",
+        "ms": 202,
+        "end": 49311
+       }
+      ],
+      "tesseractMs": 19,
+      "longestTaskMs": 267,
+      "blockingMs": 2272,
+      "inputLatencyMaxMs": 155,
+      "localModel": {
+       "ms": 2984,
+       "loadMs": 791
+      },
+      "tables": 167,
+      "fromImportMs": 31145,
+      "prefetch": {
+       "model": true,
+       "page": true,
+       "startedBeforeMs": 15376,
+       "keptFromLastAnalysis": false
+      },
+      "runsIn": {
+       "ocrModel": "workers (1)",
+       "localModel": "worker"
+      },
+      "crops": {
+       "reads": 272,
+       "cacheHits": 0,
+       "workers": 1,
+       "failedWorkers": 0,
+       "cached": 272
+      },
+      "outputDigest": "5788f346:188",
+      "longTasksByStage": [
+       {
+        "stage": "classicalDetect",
+        "ms": 230
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 267
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 203
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 243
+       }
+      ],
+      "peakMemoryMb": 1347,
+      "memoryBasis": "pss",
+      "gapMs": 15000,
+      "gapLongestTaskMs": 158
+     }
+    ]
+   },
+   "warm": {
+    "totalMs": {
+     "median": 6474,
+     "p95": 7097
+    },
+    "fromImportMs": {
+     "median": null,
+     "p95": null
+    },
+    "longestTaskMs": {
+     "median": 317,
+     "p95": 345
+    },
+    "blockingMs": {
+     "median": 2278,
+     "p95": 2325
+    },
+    "inputLatencyMaxMs": {
+     "median": 338,
+     "p95": 349
+    },
+    "tesseractMs": {
+     "median": 72,
+     "p95": 73
+    },
+    "peakMemoryMb": {
+     "median": 1555,
+     "p95": 1562
+    },
+    "stages": {
+     "decode": 337,
+     "tesseractStart": 2,
+     "skew": 182,
+     "deskew": 14,
+     "ocrModel": 194,
+     "classicalDetect": 1607,
+     "localModelAndVector": 1348,
+     "embedMemoryBuild": 321,
+     "tesseractWait": 0,
+     "textSuppression": 183,
+     "labels": 635,
+     "venueAndFacing": 302,
+     "tableNumbers": 423,
+     "planHash": 0,
+     "intelligence": 222
+    },
+    "tables": [
+     167,
+     167,
+     167
+    ],
+    "runs": [
+     {
+      "totalMs": 7097,
+      "stages": [
+       {
+        "stage": "decode",
+        "ms": 337,
+        "end": 50316
+       },
+       {
+        "stage": "tesseractStart",
+        "ms": 2,
+        "end": 50318
+       },
+       {
+        "stage": "skew",
+        "ms": 182,
+        "end": 50500
+       },
+       {
+        "stage": "deskew",
+        "ms": 25,
+        "end": 50525
+       },
+       {
+        "stage": "ocrModel",
+        "ms": 212,
+        "end": 50737
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 1607,
+        "end": 52344
+       },
+       {
+        "stage": "localModelAndVector",
+        "ms": 2092,
+        "end": 54436
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 498,
+        "end": 54934
+       },
+       {
+        "stage": "tesseractWait",
+        "ms": 0,
+        "end": 54934
+       },
+       {
+        "stage": "textSuppression",
+        "ms": 207,
+        "end": 55141
+       },
+       {
+        "stage": "labels",
+        "ms": 672,
+        "end": 55813
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 278,
+        "end": 56091
+       },
+       {
+        "stage": "tableNumbers",
+        "ms": 423,
+        "end": 56514
+       },
+       {
+        "stage": "planHash",
+        "ms": 0,
+        "end": 56514
+       },
+       {
+        "stage": "intelligence",
+        "ms": 222,
+        "end": 56736
+       }
+      ],
+      "tesseractMs": 72,
+      "longestTaskMs": 317,
+      "blockingMs": 2278,
+      "inputLatencyMaxMs": 307,
+      "localModel": {
+       "ms": 3789,
+       "loadMs": 1051
+      },
+      "tables": 167,
+      "fromImportMs": null,
+      "prefetch": {
+       "model": true,
+       "page": true,
+       "startedBeforeMs": null,
+       "keptFromLastAnalysis": true
+      },
+      "runsIn": {
+       "ocrModel": "workers (1)",
+       "localModel": "worker"
+      },
+      "crops": {
+       "reads": 272,
+       "cacheHits": 272,
+       "workers": 1,
+       "failedWorkers": 0,
+       "cached": 272
+      },
+      "outputDigest": "5788f346:188",
+      "longTasksByStage": [
+       {
+        "stage": "skew",
+        "ms": 224
+       },
+       {
+        "stage": "ocrModel",
+        "ms": 317
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 257
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 270
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 215
+       }
+      ],
+      "peakMemoryMb": 1562,
+      "memoryBasis": "pss"
+     },
+     {
+      "totalMs": 6474,
+      "stages": [
+       {
+        "stage": "decode",
+        "ms": 336,
+        "end": 51821
+       },
+       {
+        "stage": "tesseractStart",
+        "ms": 2,
+        "end": 51823
+       },
+       {
+        "stage": "skew",
+        "ms": 197,
+        "end": 52019
+       },
+       {
+        "stage": "deskew",
+        "ms": 14,
+        "end": 52034
+       },
+       {
+        "stage": "ocrModel",
+        "ms": 194,
+        "end": 52228
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 1755,
+        "end": 53982
+       },
+       {
+        "stage": "localModelAndVector",
+        "ms": 1348,
+        "end": 55330
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 321,
+        "end": 55651
+       },
+       {
+        "stage": "tesseractWait",
+        "ms": 0,
+        "end": 55651
+       },
+       {
+        "stage": "textSuppression",
+        "ms": 183,
+        "end": 55834
+       },
+       {
+        "stage": "labels",
+        "ms": 580,
+        "end": 56414
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 416,
+        "end": 56831
+       },
+       {
+        "stage": "tableNumbers",
+        "ms": 536,
+        "end": 57366
+       },
+       {
+        "stage": "planHash",
+        "ms": 0,
+        "end": 57366
+       },
+       {
+        "stage": "intelligence",
+        "ms": 262,
+        "end": 57628
+       }
+      ],
+      "tesseractMs": 71,
+      "longestTaskMs": 345,
+      "blockingMs": 2325,
+      "inputLatencyMaxMs": 338,
+      "localModel": {
+       "ms": 3180,
+       "loadMs": 1477
+      },
+      "tables": 167,
+      "fromImportMs": null,
+      "prefetch": {
+       "model": true,
+       "page": true,
+       "startedBeforeMs": null,
+       "keptFromLastAnalysis": true
+      },
+      "runsIn": {
+       "ocrModel": "workers (1)",
+       "localModel": "worker"
+      },
+      "crops": {
+       "reads": 272,
+       "cacheHits": 272,
+       "workers": 1,
+       "failedWorkers": 0,
+       "cached": 272
+      },
+      "outputDigest": "5788f346:188",
+      "longTasksByStage": [
+       {
+        "stage": "skew",
+        "ms": 202
+       },
+       {
+        "stage": "ocrModel",
+        "ms": 345
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 224
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 215
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 244
+       }
+      ],
+      "peakMemoryMb": 1488,
+      "memoryBasis": "pss"
+     },
+     {
+      "totalMs": 5636,
+      "stages": [
+       {
+        "stage": "decode",
+        "ms": 338,
+        "end": 50064
+       },
+       {
+        "stage": "tesseractStart",
+        "ms": 1,
+        "end": 50065
+       },
+       {
+        "stage": "skew",
+        "ms": 177,
+        "end": 50242
+       },
+       {
+        "stage": "deskew",
+        "ms": 12,
+        "end": 50254
+       },
+       {
+        "stage": "ocrModel",
+        "ms": 169,
+        "end": 50423
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 1548,
+        "end": 51971
+       },
+       {
+        "stage": "localModelAndVector",
+        "ms": 1175,
+        "end": 53146
+       },
+       {
+        "stage": "embedMemoryBuild",
+        "ms": 253,
+        "end": 53399
+       },
+       {
+        "stage": "tesseractWait",
+        "ms": 0,
+        "end": 53399
+       },
+       {
+        "stage": "textSuppression",
+        "ms": 99,
+        "end": 53499
+       },
+       {
+        "stage": "labels",
+        "ms": 635,
+        "end": 54134
+       },
+       {
+        "stage": "venueAndFacing",
+        "ms": 302,
+        "end": 54436
+       },
+       {
+        "stage": "tableNumbers",
+        "ms": 400,
+        "end": 54835
+       },
+       {
+        "stage": "planHash",
+        "ms": 0,
+        "end": 54835
+       },
+       {
+        "stage": "intelligence",
+        "ms": 187,
+        "end": 55023
+       }
+      ],
+      "tesseractMs": 73,
+      "longestTaskMs": 274,
+      "blockingMs": 1745,
+      "inputLatencyMaxMs": 349,
+      "localModel": {
+       "ms": 2791,
+       "loadMs": 791
+      },
+      "tables": 167,
+      "fromImportMs": null,
+      "prefetch": {
+       "model": true,
+       "page": true,
+       "startedBeforeMs": null,
+       "keptFromLastAnalysis": true
+      },
+      "runsIn": {
+       "ocrModel": "workers (1)",
+       "localModel": "worker"
+      },
+      "crops": {
+       "reads": 272,
+       "cacheHits": 272,
+       "workers": 1,
+       "failedWorkers": 0,
+       "cached": 272
+      },
+      "outputDigest": "5788f346:188",
+      "longTasksByStage": [
+       {
+        "stage": "ocrModel",
+        "ms": 240
+       },
+       {
+        "stage": "classicalDetect",
+        "ms": 274
+       }
+      ],
+      "peakMemoryMb": 1555,
+      "memoryBasis": "pss"
+     }
+    ]
+   }
+  }
+ }
+}

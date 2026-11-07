@@ -1,0 +1,328 @@
+{
+ "measuredOn": "2026-10-10T17:24:45.482Z",
+ "node": "v22.22.2",
+ "plans": [
+  {
+   "plan": "merit-real-venue",
+   "sizes": {
+    "width": 1355,
+    "height": 788,
+    "scales": {
+     "source": 1,
+     "detector": 1,
+     "vlmOverview": 1
+    },
+    "byClass": {
+     "table:square": {
+      "n": 37,
+      "source": {
+       "minShortSide": 41,
+       "medianShortSide": 43,
+       "under12": 0,
+       "under8": 0
+      },
+      "detector": {
+       "minShortSide": 41,
+       "medianShortSide": 43,
+       "under12": 0,
+       "under8": 0
+      },
+      "vlmOverview": {
+       "minShortSide": 41,
+       "medianShortSide": 43,
+       "under12": 0,
+       "under8": 0
+      }
+     },
+     "table:round": {
+      "n": 4,
+      "source": {
+       "minShortSide": 67,
+       "medianShortSide": 68,
+       "under12": 0,
+       "under8": 0
+      },
+      "detector": {
+       "minShortSide": 67,
+       "medianShortSide": 68,
+       "under12": 0,
+       "under8": 0
+      },
+      "vlmOverview": {
+       "minShortSide": 67,
+       "medianShortSide": 68,
+       "under12": 0,
+       "under8": 0
+      }
+     },
+     "table:bistro": {
+      "n": 5,
+      "source": {
+       "minShortSide": 32,
+       "medianShortSide": 33,
+       "under12": 0,
+       "under8": 0
+      },
+      "detector": {
+       "minShortSide": 32,
+       "medianShortSide": 33,
+       "under12": 0,
+       "under8": 0
+      },
+      "vlmOverview": {
+       "minShortSide": 32,
+       "medianShortSide": 33,
+       "under12": 0,
+       "under8": 0
+      }
+     },
+     "chair": {
+      "n": 113,
+      "source": {
+       "minShortSide": 12,
+       "medianShortSide": 33,
+       "under12": 0,
+       "under8": 0
+      },
+      "detector": {
+       "minShortSide": 12,
+       "medianShortSide": 33,
+       "under12": 0,
+       "under8": 0
+      },
+      "vlmOverview": {
+       "minShortSide": 12,
+       "medianShortSide": 33,
+       "under12": 0,
+       "under8": 0
+      }
+     },
+     "banquette": {
+      "n": 3,
+      "source": {
+       "minShortSide": 32,
+       "medianShortSide": 32,
+       "under12": 0,
+       "under8": 0
+      },
+      "detector": {
+       "minShortSide": 32,
+       "medianShortSide": 32,
+       "under12": 0,
+       "under8": 0
+      },
+      "vlmOverview": {
+       "minShortSide": 32,
+       "medianShortSide": 32,
+       "under12": 0,
+       "under8": 0
+      }
+     },
+     "stage": {
+      "n": 1,
+      "source": {
+       "minShortSide": 191,
+       "medianShortSide": 191,
+       "under12": 0,
+       "under8": 0
+      },
+      "detector": {
+       "minShortSide": 191,
+       "medianShortSide": 191,
+       "under12": 0,
+       "under8": 0
+      },
+      "vlmOverview": {
+       "minShortSide": 191,
+       "medianShortSide": 191,
+       "under12": 0,
+       "under8": 0
+      }
+     },
+     "stage_extension": {
+      "n": 1,
+      "source": {
+       "minShortSide": 35,
+       "medianShortSide": 35,
+       "under12": 0,
+       "under8": 0
+      },
+      "detector": {
+       "minShortSide": 35,
+       "medianShortSide": 35,
+       "under12": 0,
+       "under8": 0
+      },
+      "vlmOverview": {
+       "minShortSide": 35,
+       "medianShortSide": 35,
+       "under12": 0,
+       "under8": 0
+      }
+     }
+    }
+   },
+   "runs": [
+    {
+     "cap": 900,
+     "resolution": "900×523",
+     "ocr": true,
+     "ms": 9048,
+     "tables": {
+      "tp": 12,
+      "fp": 5,
+      "fn": 34,
+      "precision": 0.706,
+      "recall": 0.261,
+      "f1": 0.381
+     },
+     "chairs": {
+      "annotated": 113,
+      "detectedOnTables": 39
+     },
+     "numbers": null
+    },
+    {
+     "cap": 1355,
+     "resolution": "1355×788",
+     "ocr": true,
+     "ms": 8784,
+     "tables": {
+      "tp": 46,
+      "fp": 1,
+      "fn": 0,
+      "precision": 0.979,
+      "recall": 1,
+      "f1": 0.989
+     },
+     "chairs": {
+      "annotated": 113,
+      "detectedOnTables": 109
+     },
+     "numbers": null
+    }
+   ]
+  },
+  {
+   "plan": "ornek-symbolic",
+   "sizes": {
+    "width": 2402,
+    "height": 1719,
+    "scales": {
+     "source": 1,
+     "detector": 0.799,
+     "vlmOverview": 0.932
+    },
+    "byClass": {
+     "table:round": {
+      "n": 166,
+      "source": {
+       "minShortSide": 78,
+       "medianShortSide": 78,
+       "under12": 0,
+       "under8": 0
+      },
+      "detector": {
+       "minShortSide": 62.3,
+       "medianShortSide": 62.3,
+       "under12": 0,
+       "under8": 0
+      },
+      "vlmOverview": {
+       "minShortSide": 72.7,
+       "medianShortSide": 72.7,
+       "under12": 0,
+       "under8": 0
+      }
+     }
+    }
+   },
+   "runs": [
+    {
+     "cap": 1200,
+     "resolution": "1200×859",
+     "ocr": true,
+     "ms": 57532,
+     "tables": {
+      "tp": 161,
+      "fp": 2,
+      "fn": 5,
+      "precision": 0.988,
+      "recall": 0.97,
+      "f1": 0.979
+     },
+     "chairs": null,
+     "numbers": {
+      "right": 139,
+      "wrong": 0,
+      "notRead": 13,
+      "annotatedLegible": 152
+     }
+    },
+    {
+     "cap": 1600,
+     "resolution": "1600×1145",
+     "ocr": true,
+     "ms": 60387,
+     "tables": {
+      "tp": 163,
+      "fp": 3,
+      "fn": 3,
+      "precision": 0.982,
+      "recall": 0.982,
+      "f1": 0.982
+     },
+     "chairs": null,
+     "numbers": {
+      "right": 140,
+      "wrong": 0,
+      "notRead": 14,
+      "annotatedLegible": 154
+     }
+    },
+    {
+     "cap": 1920,
+     "resolution": "1920×1374",
+     "ocr": true,
+     "ms": 60244,
+     "tables": {
+      "tp": 162,
+      "fp": 1,
+      "fn": 4,
+      "precision": 0.994,
+      "recall": 0.976,
+      "f1": 0.985
+     },
+     "chairs": null,
+     "numbers": {
+      "right": 145,
+      "wrong": 0,
+      "notRead": 8,
+      "annotatedLegible": 153
+     }
+    },
+    {
+     "cap": 2402,
+     "resolution": "2402×1719",
+     "ocr": true,
+     "ms": 63075,
+     "tables": {
+      "tp": 161,
+      "fp": 6,
+      "fn": 5,
+      "precision": 0.964,
+      "recall": 0.97,
+      "f1": 0.967
+     },
+     "chairs": null,
+     "numbers": {
+      "right": 143,
+      "wrong": 0,
+      "notRead": 10,
+      "annotatedLegible": 153
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,15 @@
+{"id": 1, "text": "Ahmet Yılmaz'ı Sezen Aksu konserindeki yerine oturt", "calls": [["assign", "gg1", "t12", [3]]]}
+{"id": 2, "text": "Ahmet'i geçen konserdeki yerine oturt", "calls": [["assign", "gg1", "t12", [3]]], "note": "last past event c4 (No Show there; the planned seat counts)"}
+{"id": 3, "text": "Zeynep Arslan'ı VIP01'e al", "calls": [["assign", "gg3", "vip01", null]]}
+{"id": 4, "text": "Can Öztürk'ü sil", "calls": [["deleteGuest", "gg4"]]}
+{"id": 5, "text": "T05'e Burak Şahin +1 ekle", "calls": [["addGuest", "Burak Şahin", 2], ["assign", "<new>", "t05", null]]}
+{"id": 6, "text": "Mehmet Kaya'yı T20'ye oturt", "ask": "T20 is not in this event"}
+{"id": 7, "text": "Tarkan konserinde Ahmet'i T01'e taşı", "refuse": "a past event is never changed"}
+{"id": 8, "text": "Mehmet Kaya'yı Mabel Matiz konserindeki masasına koy", "calls": [["assign", "gg5", "t08", [0, 1]]]}
+{"id": 9, "text": "Ayşe Demir'i masadan kaldır", "calls": [["unassign", "gg2"]]}
+{"id": 10, "text": "Ayşe Demir'i Tarkan'daki yerine oturt", "calls": [], "note": "already there (T07, seat index 2): nothing to change, say so"}
+{"id": 11, "text": "Selin Ak'ı T03'e oturt", "ask": "no guest named Selin Ak in this event; add her?"}
+{"id": 12, "text": "Zeynep'i Ahmet'in yanına oturt", "ask": "Ahmet has no seat in this event yet"}
+{"id": 13, "text": "T02'deki herkesi T03'e taşı", "calls": [["assign", "gg4", "t03", null]]}
+{"id": 14, "text": "Mehmet Kaya +2 olsun", "calls": [["setPax", "gg5", 3]]}
+{"id": 15, "text": "Can Öztürk'ü VIP yap", "calls": [["setVip", "gg4", "VIP"]]}

@@ -1,0 +1,28 @@
+# Developer-time model tools for MERIT EVENT MAKER — NOT an app dependency.
+# Installed into .venv-model-dev/ by tools/model-dev/setup.sh; the product
+# (index.html, src/, the offline packages) never loads any of this.
+#
+# Olive's own wheel is installed separately with --no-deps (see setup.sh):
+# its metadata requires torch, and on Linux the only torch PyPI serves is the
+# CUDA build (several GB of nvidia-* wheels); the CPU index is not reachable
+# from this environment. Its other dependencies are listed here. Measured:
+# `import olive` itself still needs torch (and torchmetrics), so Olive is
+# importable only after setup.sh --with-olive; ONNX Runtime's own quantizer is
+# the torch-free path (examples/quantize_detector.py --engine ort).
+onnx
+onnxruntime
+onnx_ir>=0.1.2
+onnxscript>=0.5.3
+opentelemetry-sdk>=1.39.1
+optuna
+pandas
+pydantic>=2.0
+pyyaml
+questionary
+transformers
+hf-xet
+numpy
+psutil
+pillow
+fiftyone
+pycocotools

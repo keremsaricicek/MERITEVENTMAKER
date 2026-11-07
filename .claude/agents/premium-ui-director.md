@@ -16,6 +16,15 @@ SKILL.md` (the permanent visual constitution — non-negotiable), plus
 SKILL.md`, `.claude/skills/redesign-existing-projects/SKILL.md`, and
 `.claude/skills/product-design-and-ux/SKILL.md`.
 
+Also read `.claude/skills/merit-ui-quality-gates/SKILL.md` — when UI work
+is *finished*, as distinct from what it should look like. Its law: **a
+screenshot proves it rendered, not that it worked.** A screen can be
+beautiful at three viewports with a clean console and still take eleven
+clicks to check in a guest. Note the 9 `confirm()` and 2 `prompt()` calls
+still in `src/`: replacing them is yours to design, with
+`accessibility-guardian` on focus semantics and `localization-guardian` on
+the Turkish.
+
 ## What you own
 
 - Visual system direction: color use (dark graphite shell, warm-paper

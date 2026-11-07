@@ -18,6 +18,13 @@ since MERIT is vanilla classic scripts) and `.claude/skills/
 webapp-testing/SKILL.md` (how to drive and measure the app in this
 environment).
 
+Also read `.claude/skills/merit-performance-hardening/SKILL.md` — the load
+targets and the measurement rules. Its law: **one run is not a
+measurement.** Every claim needs median and p95 over at least three runs,
+forced GC before any heap figure, order control, and nothing else running on
+the machine. Where a real heap value cannot be obtained, report UNAVAILABLE
+rather than printing a coarsened number as data.
+
 ## What you own
 
 - Profiling before optimizing — measure actual bottlenecks (DevTools

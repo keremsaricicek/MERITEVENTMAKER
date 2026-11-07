@@ -1,0 +1,664 @@
+// The review screen's MODEL READING: a person sends the plan to a
+// vision-language model through the relay on this page's own origin
+// (server/vlm-relay.mjs), and the model's findings come back as marks on the
+// same plan and a list beside it, each one waiting for a person.
+//
+// The order is fixed and every step is the operator's:
+//   1. the button opens the panel and asks the relay what it is (status) —
+//      nothing is sent by opening it; "Check connection" asks the API whether
+//      the key and the model are accepted, which costs nothing;
+//   2. "Send plan" shows exactly what will travel (the plan image at its pixel
+//      size, the detector's boxes, the printed text read off the plan — and
+//      what will not: no guest, no note, no event name) with the relay's spend
+//      caps, and sends only on a yes;
+//   3. the whole plan goes first; the model may name up to four regions to
+//      look at closely, and each is sent as a zoomed crop; Cancel stops the
+//      run at any point, including the request in flight;
+//   4. each finding is Accepted or Dismissed one at a time. Accept goes
+//      through the shell's existing writers — decideReview for a type or a
+//      rejection (one object, never its family), the missed-object path for a
+//      new object, the typed seat-count path for seats — so memory, training
+//      capture, audit and undo behave as if the person had done it by hand,
+//      and say it came from a model suggestion.
+//
+// With a model on THIS computer whose manifest names the closed questions it
+// was measured on, the analysis is followed by a "second look"
+// (MeritLocalCheck) that STARTS BY ITSELF — the owner's decision of
+// 2026-10-18: one press of Analyse, nothing leaves the computer, Cancel stops
+// it and a switch in the panel turns it off (remembered on this computer).
+// Nothing is applied — except a question the manifest lists in `autoApply`
+// (measured to the stricter bar, training/README.md "Changing the plan by
+// itself"; today a grouping answer): that answer is written by itself as the
+// model's, never a training example, and undone from its finding. It can also be started by hand. It asks
+// short fixed questions about the places the analysis is unsure of, two looks
+// each, the answers checked against what the analysis found; only a
+// disagreement both looks share becomes a finding, in this same list.
+//
+// An answer that arrives for an older analysis, another plan, another event
+// or a cancelled run is refused whole (MeritVlmReview.staleReason). Findings
+// are kept on the analysis they were made about (analysis.vlm) and vanish
+// with it when the plan is analysed again.
+//
+// Everything this reads from the shell is handed to it by create(deps), once
+// (`screen-modules` holds that).
+(() => {
+  "use strict";
+  let activeEvent;
+  let applyModelGrouping;
+  let applyReviewZoom;
+  let ask;
+  let audit;
+  let canMutate;
+  let decideReview;
+  let esc;
+  let icon;
+  let render;
+  let t;
+  let toast;
+  let touchEvent;
+  let ui;
+  let undoModelGrouping;
+  let undoReviewDecision;
+  let created=false;
+
+  const RELAY="/vlm-relay";
+  const SEND_LIMIT_BYTES=3.6*1024*1024; // under the API's 5 MB per image once base64-encoded
+  const V=()=>globalThis.MeritVlmReview;
+  const LC=()=>globalThis.MeritLocalCheck;
+  // Session-only: what the relay said, whether a run is in flight. Nothing
+  // here is persisted; the findings live on the analysis.
+  const session={relay:null,probing:false,busy:false,controller:null,runId:null,progress:null,check:null,checking:false,focusId:null};
+  const served=()=>/^https?:$/.test(globalThis.location&&globalThis.location.protocol||"");
+  const num=(n)=>{const v=Number(n);return Number.isFinite(v)?Math.round(v*100)/100:0;};
+  const money=(n)=>"$"+(Number(n)||0).toFixed(2);
+  // A code from the relay may be one this build has no words for (a newer
+  // relay): the general sentence, with the code, rather than a raw key.
+  const tx=(prefix,code)=>{const k=prefix+code,s=t(k);return s===k?`${t(prefix+"RELAY_ERROR")} (${code})`:s;};
+
+  // ---- the relay --------------------------------------------------------------
+  async function probe(){
+    session.probing=true;render();
+    try{
+      const r=await globalThis.fetch(RELAY+"/status",{cache:"no-store",credentials:"same-origin"});
+      let j=null;try{j=r.ok?await r.json():null;}catch{j=null;}
+      session.relay=j&&j.relay===true?j:{relay:false,http:r.status};
+    }catch{session.relay={relay:false,http:0};}
+    session.probing=false;render();
+    return session.relay;
+  }
+  // The same question without the "asking" state: after a reading, so the
+  // caps line shows what the day has now spent.
+  async function refresh(){
+    try{const r=await globalThis.fetch(RELAY+"/status",{cache:"no-store",credentials:"same-origin"});const j=r.ok?await r.json():null;if(j&&j.relay===true){session.relay=j;session.relayStale=false;}}catch{session.relayStale=true;} // the earlier answer stands, and is marked as possibly out of date
+    render();
+  }
+  async function post(path,body,signal){
+    let r;
+    try{r=await globalThis.fetch(RELAY+path,{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify(body),signal,cache:"no-store",credentials:"same-origin"});}
+    catch(e){return{ok:false,code:signal&&signal.aborted?"CANCELLED":"UNREACHABLE"};}
+    let j=null;
+    try{j=await r.json();}catch{return{ok:false,code:signal&&signal.aborted?"CANCELLED":r.status===404?"NO_RELAY":"RELAY_ERROR"};}
+    return j&&typeof j==="object"?j:{ok:false,code:"RELAY_ERROR"};
+  }
+
+  // ---- pixels -----------------------------------------------------------------
+  async function loadImage(src){const img=new globalThis.Image();img.src=src;await img.decode();return img;}
+  // The part of the plan `frame` covers, at the size MeritVlmReview.fitSize
+  // allows: PNG when it fits the limit (line drawings stay sharp), JPEG when not.
+  function encodeFrame(img,frame,opts){
+    const W=img.naturalWidth,H=img.naturalHeight;
+    const sx=frame.x/100*W,sy=frame.y/100*H,sw=frame.w/100*W,sh=frame.h/100*H;
+    const size=V().fitSize(sw,sh,opts);
+    if(!size)throw new Error("IMAGE");
+    const canvas=document.createElement("canvas");canvas.width=size.width;canvas.height=size.height;
+    const ctx=canvas.getContext("2d");
+    ctx.fillStyle="#ffffff";ctx.fillRect(0,0,size.width,size.height);
+    ctx.imageSmoothingQuality="high";
+    ctx.drawImage(img,sx,sy,sw,sh,0,0,size.width,size.height);
+    const limit=Math.min(SEND_LIMIT_BYTES,(session.relay&&session.relay.limits&&session.relay.limits.maxImageBytes)||SEND_LIMIT_BYTES);
+    for(const [type,q] of [["image/png",undefined],["image/jpeg",.92],["image/jpeg",.8]]){
+      const url=canvas.toDataURL(type,q),data=url.slice(url.indexOf(",")+1);
+      if(data.length*3/4<=limit)return{mediaType:type,data,width:size.width,height:size.height};
+    }
+    throw new Error("IMAGE_TOO_LARGE");
+  }
+
+  // One look for the second look: a square of the plan around `frame` (plan
+  // pixels), at `px`, on white paper where it runs past the plan's edge, turned
+  // `deg` degrees — the crop the model was measured on.
+  function encodeLook(img,frame,deg,px){
+    const canvas=document.createElement("canvas");canvas.width=px;canvas.height=px;
+    const ctx=canvas.getContext("2d");
+    ctx.fillStyle="#ffffff";ctx.fillRect(0,0,px,px);
+    ctx.imageSmoothingQuality="high";
+    if(deg){ctx.translate(px/2,px/2);ctx.rotate(deg*Math.PI/180);ctx.translate(-px/2,-px/2);}
+    const W=img.naturalWidth,H=img.naturalHeight,s=frame.side,x0=frame.cx-s/2,y0=frame.cy-s/2;
+    // Only the part of the square that is on the plan is drawn; the rest stays paper.
+    const sx=Math.max(0,x0),sy=Math.max(0,y0),ex=Math.min(W,x0+s),ey=Math.min(H,y0+s);
+    if(ex>sx&&ey>sy)ctx.drawImage(img,sx,sy,ex-sx,ey-sy,(sx-x0)/s*px,(sy-y0)/s*px,(ex-sx)/s*px,(ey-sy)/s*px);
+    const url=canvas.toDataURL("image/png");
+    return{mediaType:"image/png",data:url.slice(url.indexOf(",")+1),width:px,height:px};
+  }
+
+  // ---- one reading ---------------------------------------------------------------
+  const currentKeys=()=>{const e=activeEvent(),a=e&&e.analysis;return{eventId:e&&e.id,analysisId:a&&a.id,planHash:a&&a.planHash||null};};
+
+  async function start(){
+    const event=activeEvent(),a=event&&event.analysis;
+    if(!a||session.busy)return;
+    if(!canMutate(event,"read the plan with a vision-language model"))return;
+    const st=await probe();
+    if(!st.relay||!st.configured)return; // the panel says why, persistently
+    let img,overview;
+    try{img=await loadImage(event.background.src);overview=encodeFrame(img,V().WHOLE,{maxEdge:V().IMAGE_MAX_EDGE});}
+    catch{session.progress=null;toast(t("vlm.toast.image"),"error",6000);return;}
+    const preview=V().payloadFor({analysis:a,planHash:a.planHash||null,runId:"run_preview",step:"overview",lang:ui.lang,frame:V().WHOLE,image:overview});
+    const L=st.limits||{},U=st.usage||{};
+    // The smallest object the detector found, in the plan's own pixels: what
+    // decides whether the overview alone shows it in enough detail.
+    const W=img.naturalWidth,H=img.naturalHeight;
+    let smallest=Infinity;
+    for(const c of a.candidates){
+      if(c.status==="rejected")continue;
+      for(const o of [c,...(c.chairDetections||[])])if(o.w>0&&o.h>0)smallest=Math.min(smallest,o.w/100*W,o.h/100*H);
+    }
+    const tp=V().tilePlan(W,H,Number.isFinite(smallest)?smallest:0);
+    const budget=Math.max(0,(L.maxStepsPerRun||1)-1),tilesSent=Math.min(tp.tiles.length,budget);
+    const yes=await ask({title:t("vlm.ask.title"),confirmLabel:t("vlm.ask.send"),body:[
+      t("vlm.ask.sent",{w:overview.width,h:overview.height,boxes:preview.body.candidates.length,texts:preview.body.printedText.length,regions:Math.max(0,Math.min(V().MAX_REGIONS,budget-tilesSent))}),
+      ...(tp.needed?[t("vlm.ask.tiles",{n:tilesSent,of:tp.tiles.length,px:V().TILE_MIN_PX})]:[]),
+      t("vlm.ask.notSent"),
+      t("vlm.ask.printed"),
+      ...(st.provider==="local"&&st.local
+        ?[t("vlm.ask.whereLocal",{model:`${st.local.name} ${st.local.version}`,licence:st.local.licence}),t("vlm.ask.capsLocal",{requests:U.requests||0,maxRequests:L.maxRequestsPerDay||0})]
+        :[t("vlm.ask.where",{model:st.model}),t("vlm.ask.caps",{run:money(L.maxUsdPerRun),day:money(L.maxUsdPerDay),spent:money(U.usd),requests:U.requests||0,maxRequests:L.maxRequestsPerDay||0})]),
+      t("vlm.ask.suggestions"),
+    ].join("\n\n")});
+    if(!yes)return;
+    // Anything that changed while the question was open makes this a
+    // different plan from the one the person agreed to send.
+    if(activeEvent()!==event||event.analysis!==a){toast(t("vlm.toast.changed"),"error",6000);return;}
+    const run={runId:V().newRunId(n=>globalThis.crypto.getRandomValues(new globalThis.Uint8Array(n))),eventId:event.id,analysisId:a.id,planHash:a.planHash||null,
+      model:st.model,lang:ui.lang==="tr"?"tr":"en",startedAt:new Date().toISOString(),finishedAt:null,status:"running",code:null,
+      planSummary:"",regions:[],findings:[],spentUsd:0,steps:0,
+      overviewScale:tp.overviewScale,needScale:tp.needed?tp.needScale:null,
+      tiles:tp.tiles.map((x,i)=>({frame:x.frame,scale:x.scale,state:i<budget?"pending":"notSent",code:i<budget?null:"STEP_LIMIT"}))};
+    a.vlm=run;
+    audit(event,"VLM_READING_STARTED",{runId:run.runId,model:run.model,image:`${overview.width}x${overview.height}`,boxes:preview.body.candidates.length});
+    touchEvent(event);
+    session.busy=true;session.runId=run.runId;session.controller=new globalThis.AbortController();session.focusId=null;
+    ui.vlmPanelOpen=true;
+    try{
+      session.progress={step:1,of:1+tilesSent,label:"overview"};render();
+      const first=await step(run,{step:"overview",frame:V().WHOLE,image:overview,body:{...preview.body,runId:run.runId},refs:preview.refs});
+      // Detail first where the overview is too coarse (tiles), then what the
+      // model asked to look at, within one step limit. Whatever the limit or
+      // a failure leaves out stays on the run as not inspected.
+      const look=async(kind,list,i,opts)=>{
+        const item=list[i];
+        let image;
+        try{image=encodeFrame(img,item.frame,opts);}
+        catch{item.state="failed";item.code="IMAGE";return true;}
+        item.scale=Math.round(image.width/(item.frame.w/100*W)*1000)/1000;
+        const reason=kind==="tile"?`tile ${i+1} of ${list.length}`:item.reason;
+        const p=V().payloadFor({analysis:a,planHash:run.planHash,runId:run.runId,step:kind,lang:run.lang,frame:item.frame,image,reason});
+        const r=await step(run,{step:kind,regionIndex:i,frame:item.frame,image,body:p.body,refs:p.refs});
+        item.state=r?"done":"failed";item.code=r?null:run.code;
+        return !!r;
+      };
+      if(first){
+        const maxRegions=Math.max(0,Math.min(V().MAX_REGIONS,budget-tilesSent));
+        run.regions=(first.result.regionsToInspect||[]).map((r,i)=>({frame:V().regionFrame(r.box,{width:overview.width,height:overview.height}),reason:r.reason,
+          state:i<maxRegions?"pending":"notSent",code:i<maxRegions?null:"STEP_LIMIT"}));
+        touchEvent(event);
+        const total=1+tilesSent+Math.min(run.regions.length,maxRegions);
+        for(let i=0;i<tilesSent;i++){
+          if(run.status!=="running")break;
+          session.progress={step:i+2,of:total,label:"tile",index:i+1,regions:tilesSent};render();
+          if(!await look("tile",run.tiles,i,{maxEdge:V().REGION_EDGE}))break;
+        }
+        for(let i=0;i<Math.min(run.regions.length,maxRegions);i++){
+          if(run.status!=="running")break;
+          session.progress={step:tilesSent+i+2,of:total,label:"region",index:i+1,regions:Math.min(run.regions.length,maxRegions)};render();
+          if(!await look("region",run.regions,i,{maxEdge:V().REGION_EDGE,upscale:V().REGION_UPSCALE}))break;
+        }
+      }
+      for(const l of [...run.tiles,...run.regions])if(l.state==="pending"){l.state="notSent";l.code=run.code||"STOPPED";}
+    }finally{
+      if(run.status==="running")run.status=run.code?(run.steps>0&&run.findings.length?"partial":"failed"):"done";
+      run.finishedAt=new Date().toISOString();
+      session.busy=false;session.controller=null;session.progress=null;session.runId=null;
+      if(activeEvent()===event&&event.analysis===a){
+        const c=V().counts(run);
+        audit(event,"VLM_READING_FINISHED",{runId:run.runId,status:run.status,code:run.code,findings:c.total,usd:run.spentUsd});
+        touchEvent(event);
+        if(run.status==="done")toast(t("vlm.toast.done",{n:c.total}),"success",5000);
+        else if(run.status==="cancelled")toast(t("vlm.toast.cancelled"),"info",4000);
+        else if(run.status!=="stale")toast(t("vlm.toast.stopped"),"error",7000);
+      }
+      render();
+      refresh();
+    }
+  }
+
+  // ---- the local second look -------------------------------------------------------
+  const localChecks=(st)=>st&&st.relay&&st.configured&&st.provider==="local"&&st.local&&Array.isArray(st.local.checks)?st.local.checks:[];
+  // The measured questions the model may also answer by itself (a subset of its checks).
+  const localAuto=(st)=>localChecks(st).length&&Array.isArray(st.local.autoApply)?st.local.autoApply.filter(q=>localChecks(st).includes(q)):[];
+  // A shared "separate" on a pushed-together group, for a model whose manifest
+  // lets it apply merged: the grouping answer a person would give, marked as
+  // the model's. The finding keeps which answer it wrote, for Undo.
+  function applyByItself(event,run,q,f){
+    if(q.question!=="merged"||f.check.answer!=="no")return;
+    const decisionId=applyModelGrouping(event,q.candidateIds,"separate",{runId:run.runId,findingId:f.id,model:run.model});
+    if(!decisionId)return;
+    f.state="applied";f.appliedBy="model";f.decisionId=decisionId;f.decidedAt=new Date().toISOString();
+    audit(event,"VLM_AUTO_APPLIED",{runId:run.runId,findingId:f.id,question:q.question,answer:f.check.answer,decisionId});
+  }
+  // The relay names itself on the page it serves (a Server-Timing entry), so a
+  // page opened any other way never asks for /vlm-relay at all.
+  const relayServed=()=>{try{const n=globalThis.performance.getEntriesByType("navigation")[0];return !!(n&&Array.isArray(n.serverTiming)&&n.serverTiming.some(e=>e.name==="merit-relay"));}catch{return false;}};
+  const AUTO_KEY="merit.secondLook.auto";
+  const autoOn=()=>{if(autoSession!==null)return autoSession;try{return globalThis.localStorage.getItem(AUTO_KEY)!=="off";}catch{return true;}};
+  // A preference of this computer. Where storage refuses it, the switch is
+  // kept for this session and the person is told it will not be remembered.
+  let autoSession=null;
+  function setAuto(on){
+    autoSession=on;
+    try{globalThis.localStorage.setItem(AUTO_KEY,on?"on":"off");}
+    catch{toast(t("vlm.second.autoNotRemembered"),"info",5000);}
+    render();
+  }
+  // Called by the shell when an analysis has finished. Asks the relay what it
+  // is only on a page the relay served; starts the look only for a local model
+  // with measured questions, only with the switch on, and only if nothing else
+  // is running.
+  async function afterAnalysis(event){
+    if(!served()||!relayServed()||session.busy||!autoOn())return;
+    const a=event&&event.analysis;
+    if(!a)return;
+    const st=await probe();
+    if(!localChecks(st).length||session.busy)return;
+    if(activeEvent()!==event||event.analysis!==a)return;
+    await startLook({auto:true});
+  }
+  async function startLook(opts){
+    const auto=!!(opts&&opts.auto);
+    const event=activeEvent(),a=event&&event.analysis,L=LC();
+    if(!a||session.busy||!L)return;
+    if(!canMutate(event,"ask the local model a second look"))return;
+    const st=auto?session.relay:await probe();
+    const checks=localChecks(st),autoApply=localAuto(st);
+    if(!checks.length)return; // the panel says why, persistently
+    let img;
+    try{img=await loadImage(event.background.src);}
+    catch{toast(t("vlm.toast.image"),"error",6000);return;}
+    const W=img.naturalWidth,H=img.naturalHeight,lim=st.limits||{};
+    const max=Math.max(0,Math.min(L.MAX_QUESTIONS,Math.floor((lim.maxAsksPerRun||L.MAX_QUESTIONS*L.LOOKS.length)/L.LOOKS.length)));
+    const qs=L.plan(a,{checks,width:W,height:H,max});
+    if(!qs.length){if(!auto)toast(t("vlm.second.nothing"),"info",6000);return;}
+    const looks=qs.length*L.LOOKS.length;
+    // Started by hand, it asks first; started by the analysis, the owner's
+    // standing decision stands in for the question, and the panel and the
+    // audit say what was sent.
+    const yes=auto||await ask({title:t("vlm.second.ask.title"),confirmLabel:t("vlm.second.ask.send"),body:[
+      t("vlm.second.ask.what",{n:qs.length,px:L.CROP_PX,looks}),
+      t("vlm.ask.notSent"),
+      t("vlm.ask.printed"),
+      t("vlm.second.ask.where",{model:`${st.local.name} ${st.local.version}`,licence:st.local.licence}),
+      t("vlm.second.ask.time",{min:Math.max(1,Math.round(looks*8/60))}),
+      t("vlm.second.ask.suggestions"),
+    ].join("\n\n")});
+    if(!yes)return;
+    if(activeEvent()!==event||event.analysis!==a){toast(t("vlm.toast.changed"),"error",6000);return;}
+    const run={mode:"check",runId:V().newRunId(n=>globalThis.crypto.getRandomValues(new globalThis.Uint8Array(n))),eventId:event.id,analysisId:a.id,planHash:a.planHash||null,
+      model:`${st.local.name} ${st.local.version}`,lang:ui.lang==="tr"?"tr":"en",startedAt:new Date().toISOString(),finishedAt:null,status:"running",code:null,
+      planSummary:"",regions:[],tiles:[],findings:[],spentUsd:0,steps:0,
+      auto,checks:qs.map(q=>({id:q.id,question:q.question,piece:q.piece||null,candidateIds:q.candidateIds,reason:q.reason,detector:q.detector,answers:[],verdict:null,value:null}))};
+    a.vlm=run;
+    audit(event,"VLM_SECOND_LOOK_STARTED",{runId:run.runId,model:run.model,places:qs.length,crops:looks,auto});
+    touchEvent(event);
+    session.busy=true;session.runId=run.runId;session.controller=new globalThis.AbortController();session.focusId=null;
+    if(!auto)ui.vlmPanelOpen=true; // by itself it works in the toolbar; the panel opens when a person asks
+    try{
+      for(let i=0;i<qs.length&&run.status==="running";i++){
+        const q=qs[i],rec=run.checks[i];
+        session.progress={label:"second",index:i+1,regions:qs.length,startedAt:(session.progress&&session.progress.startedAt)||Date.now()};render();
+        for(const deg of L.LOOKS){
+          let image;
+          try{image=encodeLook(img,q.frame,deg,L.CROP_PX);}catch{run.code="IMAGE";break;}
+          const res=await post("/ask",{runId:run.runId,analysisId:run.analysisId,planHash:run.planHash,question:q.question,...(q.piece?{piece:q.piece}:{}),image},session.controller&&session.controller.signal);
+          if(run.status==="cancelled")break;
+          const stale=V().staleReason(run,res&&res.ok?res:{...res,runId:run.runId,analysisId:run.analysisId,planHash:run.planHash},currentKeys());
+          if(stale){run.status="stale";run.code="ANSWER_STALE";run.staleReason=stale;post("/cancel",{runId:run.runId});toast(t("vlm.toast.stale"),"error",7000);break;}
+          if(!res||!res.ok){run.code=res&&res.code||"RELAY_ERROR";if(run.code==="CANCELLED")run.status="cancelled";break;}
+          run.steps++;
+          rec.answers.push(res.value===undefined?null:res.value);
+        }
+        if(run.code||run.status!=="running")break;
+        const j=L.judge(q,rec.answers);
+        rec.verdict=j.verdict;rec.value=j.value;
+        const f=L.findingFor(q,j,a,run.runId.slice(4,12));
+        // One finding per place, never merged: two questions about one object
+        // (its type, the link it is part of) are two different suggestions.
+        if(f){run.findings.push(f);if(autoApply.includes(q.question))applyByItself(event,run,q,f);}
+        touchEvent(event);render();
+      }
+    }finally{
+      if(run.status==="running")run.status=run.code?(run.checks.some(c=>c.verdict)?"partial":"failed"):"done";
+      run.finishedAt=new Date().toISOString();
+      session.busy=false;session.controller=null;session.progress=null;session.runId=null;
+      if(activeEvent()===event&&event.analysis===a){
+        const c=V().counts(run),tl=L.tally(run.checks);
+        audit(event,"VLM_SECOND_LOOK_FINISHED",{runId:run.runId,status:run.status,code:run.code,asked:tl.asked,agrees:tl.AGREES,differs:tl.DIFFERS,unsure:tl.UNSURE,findings:c.total});
+        touchEvent(event);
+        if(run.status==="done")toast(t("vlm.second.done",{n:c.total}),"success",5000);
+        else if(run.status==="cancelled")toast(t("vlm.toast.cancelled"),"info",4000);
+        else if(run.status!=="stale")toast(t("vlm.toast.stopped"),"error",7000);
+      }
+      render();
+      refresh();
+    }
+  }
+
+  // One request. Returns the response when it was accepted into the run,
+  // null when the run must stop (an error, a cancel, or an answer that no
+  // longer belongs to what is on the screen).
+  async function step(run,{step,regionIndex,frame,image,body,refs}){
+    const res=await post("/run",body,session.controller&&session.controller.signal);
+    if(res&&res.run&&Number.isFinite(res.run.usd)){run.spentUsd=res.run.usd;run.steps=res.run.steps;}
+    if(run.status==="cancelled"){return null;}
+    const stale=V().staleReason(run,res&&res.ok?res:{...res,runId:run.runId,analysisId:run.analysisId,planHash:run.planHash},currentKeys());
+    if(stale){
+      run.status="stale";run.code="ANSWER_STALE";
+      run.staleReason=stale;
+      post("/cancel",{runId:run.runId});
+      toast(t("vlm.toast.stale"),"error",7000);
+      return null;
+    }
+    if(!res||!res.ok){
+      run.code=res&&res.code||"RELAY_ERROR";
+      if(run.code==="CANCELLED")run.status="cancelled";
+      return null;
+    }
+    if(step==="overview")run.planSummary=String(res.result.planSummary||"").slice(0,800);
+    // What was set aside on the way, kept with the reading and shown with it:
+    // findings the relay refused (each with its reason), boxes it pulled back
+    // inside the image, and objects or text the page could not send (the cap).
+    run.setAside ||= {dropped:{},clamped:0,omittedObjects:0,omittedText:0};
+    for(const d of res.result.dropped||[])run.setAside.dropped[d.why]=(run.setAside.dropped[d.why]||0)+1;
+    run.setAside.clamped+=res.result.clamped||0;
+    run.setAside.omittedObjects+=(body.omitted&&body.omitted.candidates)||0;
+    run.setAside.omittedText+=(body.omitted&&body.omitted.printedText)||0;
+    const incoming=V().findingsFrom(res.result,{refs,frame,size:{width:image.width,height:image.height},step,regionIndex,idPrefix:run.runId.slice(4,12)});
+    run.findings=V().mergeFindings(run.findings,incoming);
+    touchEvent(activeEvent());render();
+    return res;
+  }
+
+  function cancel(){
+    const a=activeEvent()&&activeEvent().analysis,run=a&&a.vlm;
+    if(!session.busy)return;
+    if(run&&run.runId===session.runId&&run.status==="running"){run.status="cancelled";run.code="CANCELLED";}
+    if(session.controller)session.controller.abort();
+    post("/cancel",{runId:session.runId});
+    render();
+  }
+
+  async function check(){
+    if(session.checking)return;
+    session.checking=true;session.check=null;render();
+    const r=await post("/check",{});
+    session.checking=false;session.check=r&&r.ok?{ok:true,model:r.model}:{ok:false,code:r&&r.code||"RELAY_ERROR"};
+    render();
+  }
+
+  // ---- a person's decision on one finding ----------------------------------------
+  function findingOf(id){const a=activeEvent()&&activeEvent().analysis,run=a&&a.vlm;return run?{a,run,f:run.findings.find(x=>x.id===id)}:{};}
+  // One finding, one decision, through the review's single writer
+  // (decideReview): the object, the finding's state, plan memory, the training
+  // label and the audit entry change together, and undo takes them all back.
+  const newId=(prefix)=>prefix+"_"+(globalThis.crypto&&globalThis.crypto.randomUUID?globalThis.crypto.randomUUID():String(Math.random()).slice(2));
+  function decisionFor(p,f,run){
+    const vlm={runId:run.runId,findingId:f.id};
+    if(p.action==="decide")return{...p.decision,vlm};
+    if(p.action==="seats")return{kind:"setSeats",candidateId:p.candidateId,value:p.value,source:"vlm-accepted",via:"vlm",vlm};
+    if(p.action==="addChair")return{kind:"addChair",candidateId:p.tableId,via:"vlm",vlm,
+      chair:{id:newId("candidate-chair"),x:p.chair.x,y:p.chair.y,w:p.chair.w,h:p.chair.h,rotation:0,confidence:1,source:"vlm-suggestion",finding:f.id}};
+    const c=p.candidate,id=newId("candidate");
+    return{kind:"addObject",candidateId:id,via:"vlm",vlm,note:"a vision-language model suggested it and the operator accepted it; the box is the model's",
+      candidate:{id,kind:c.kind,type:c.type,x:c.x,y:c.y,w:c.w,h:c.h,rotation:0,confidence:1,status:"confirmed",selected:true,missed:true,chairDetections:[],
+        ...(["sofa","bench","banquette","loca"].includes(c.type)?{seats:null,seatsConfidence:"unverified",seatsUnknown:true}:{}),
+        evidence:{geometry:"vlm-suggestion",chairs:0,repetition:0,model:run.model||null,finding:f.id}}};
+  }
+  function accept(id){
+    const event=activeEvent(),{a,run,f}=findingOf(id);
+    if(!f)return;
+    if(!canMutate(event,"apply a vision-language suggestion"))return;
+    const p=V().acceptPlan(f,a,{memory:event.planMemory||[]});
+    if(!p.ok){toast(t("vlm.toast.refused"),"error",5000);render();return;}
+    const r=decideReview(event,decisionFor(p,f,run));
+    if(!r){toast(t("vlm.toast.refused"),"error",5000);render();return;}
+    ui.selectedCandidateId=f.appliedTo||null;
+    toast(t("vlm.toast.accepted"),"success",3500);
+    render();
+  }
+  function undo(id){
+    const event=activeEvent(),{run,f}=findingOf(id);
+    if(f&&f.state==="applied"){
+      // what the model applied by itself: exactly that answer comes off, and the suggestion is open again
+      if(!undoModelGrouping(event,f.decisionId))return;
+      audit(event,"VLM_AUTO_UNDONE",{runId:run.runId,findingId:f.id,decisionId:f.decisionId});
+      f.state="open";f.appliedBy=null;f.decisionId=null;f.decidedAt=null;
+      toast(t("vlm.toast.autoUndone"),"success",3500);touchEvent(event);render();return;
+    }
+    if(!f||f.state!=="accepted"||!f.decisionId)return;
+    const n=undoReviewDecision(event,f.decisionId);
+    if(n===-1){toast(t("vlm.toast.undoBlocked"),"error",6000);return;}
+    if(n>0)toast(t("vlm.toast.undone"),"success",3500);
+    render();
+  }
+  function dismiss(id){
+    const event=activeEvent(),{run,f}=findingOf(id);
+    if(!f||f.state!=="open")return;
+    if(!canMutate(event,"dismiss a vision-language suggestion"))return;
+    f.state="dismissed";f.decidedAt=new Date().toISOString();
+    audit(event,"VLM_FINDING_DISMISSED",{runId:run.runId,findingId:f.id,kind:f.kind});
+    touchEvent(event);render();
+  }
+  function focus(id){
+    const {a,f}=findingOf(id);if(!f)return;
+    session.focusId=f.id;
+    const c=f.candidateId&&a.candidates.find(x=>x.id===f.candidateId);
+    if(c)ui.selectedCandidateId=c.id;
+    render();
+    const box=f.box||(c?{x:c.x,y:c.y,w:c.w,h:c.h}:null);
+    if(box)globalThis.requestAnimationFrame(()=>applyReviewZoom(box));
+  }
+
+  // ---- what the screen shows ---------------------------------------------------
+  const typeLabel=(type)=>type?t("teach.type."+type):"";
+  const answerWord=(w)=>w==="table"||w==="nothing"?t("vlm.second.word."+w):typeLabel(w);
+  function findingTitle(f,i){
+    if(f.check&&f.kind==="note"){
+      const k=f.check.question;
+      return`${i+1}. ${t("vlm.second.title."+k,{answer:k==="identify"?answerWord(f.check.answer):f.check.answer})}`;
+    }
+    const what=f.kind==="wrongType"?t("vlm.kind.wrongType",{type:typeLabel(f.type)})
+      :f.kind==="missing"?t("vlm.kind.missing",{type:typeLabel(f.type)})
+      :f.kind==="seatCount"?t("vlm.kind.seatCount",{n:f.value})
+      :f.kind==="printedNumber"?t("vlm.kind.printedNumber",{n:f.value})
+      :t("vlm.kind."+f.kind);
+    return`${i+1}. ${what}`;
+  }
+  function toolbarHTML(event){
+    const a=event&&event.analysis;
+    if(!a||!served())return"";
+    if(session.busy){
+      const p=session.progress||{};
+      if(p.label==="second"){
+        // Time left from this run's own pace: nothing is shown until one place is done.
+        const done=Math.max(0,(p.index||1)-1),pct=Math.round(done/Math.max(1,p.regions)*100);
+        const left=done&&p.startedAt?Math.max(1,Math.round((Date.now()-p.startedAt)/done*(p.regions-done)/1000)):null;
+        const when=left==null?"":` · ${left<60?t("vlm.second.leftSec",{n:left}):t("vlm.second.leftMin",{n:Math.round(left/60)})}`;
+        return`<span class="vlm-progress" role="status">${esc(t("vlm.second.progress",{i:p.index,n:p.regions}))}${esc(when)}<span class="work-bar" role="progressbar" aria-label="${esc(t("vlm.second.step"))}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></span></span><button class="btn" data-vlm-action="cancel">${t("vlm.second.cancel")}</button>`;
+      }
+      const label=p.label==="region"?t("vlm.progress.region",{i:p.index,n:p.regions}):p.label==="tile"?t("vlm.progress.tile",{i:p.index,n:p.regions}):t("vlm.progress.overview");
+      return`<span class="vlm-progress" role="status">${esc(t("vlm.progress",{step:p.step||1,of:p.of||1,what:label}))}</span><button class="btn" data-vlm-action="cancel">${t("vlm.cancel")}</button>`;
+    }
+    const c=a.vlm?V().counts(a.vlm):null;
+    return`<button class="btn" data-vlm-action="toggle" aria-expanded="${ui.vlmPanelOpen?"true":"false"}" aria-controls="vlmPanel">${t("vlm.button")}${c&&c.open?` <span class="vlm-count">${c.open}</span>`:""}</button>`;
+  }
+  function mapHTML(event){
+    const a=event&&event.analysis,run=a&&a.vlm;
+    if(!run||!ui.vlmPanelOpen)return"";
+    const byId=new Map(a.candidates.map(c=>[c.id,c]));
+    // Every look, and every look that did not happen: a part of the plan the
+    // model did not see in detail is hatched, never left looking inspected.
+    const look=(r,label)=>r&&r.frame?`<i class="vlm-region${r.state==="done"?"":" vlm-uninspected"}" style="left:${num(r.frame.x)}%;top:${num(r.frame.y)}%;width:${num(r.frame.w)}%;height:${num(r.frame.h)}%"><b>${label}</b></i>`:"";
+    const regions=(run.tiles||[]).map((r,i)=>look(r,"T"+(i+1))).join("")+(run.regions||[]).map((r,i)=>look(r,"R"+(i+1))).join("");
+    const marks=run.findings.map((f,i)=>{
+      if(f.state!=="open")return"";
+      const c=f.candidateId&&byId.get(f.candidateId),box=f.box||(c?{x:c.x-.4,y:c.y-.4,w:c.w+.8,h:c.h+.8}:null);
+      if(!box)return"";
+      const cls=["vlm-mark","kind-"+f.kind,session.focusId===f.id?"focused":""].join(" ").trim();
+      return`<button class="${esc(cls)}" data-vlm-action="focus" data-vlm-finding="${esc(f.id)}" style="left:${num(box.x)}%;top:${num(box.y)}%;width:${num(box.w)}%;height:${num(box.h)}%" aria-label="${esc(findingTitle(f,i))}" title="${esc(findingTitle(f,i))}"><b>${i+1}</b></button>`;
+    }).join("");
+    return regions+marks;
+  }
+  function relayStateHTML(){
+    const r=session.relay;
+    if(session.probing)return`<p class="vlm-note" role="status">${t("vlm.relay.probing")}</p>`;
+    if(!r)return`<p class="vlm-note">${t("vlm.relay.unknown")}</p>`;
+    if(!r.relay)return`<p class="vlm-state warn"><b>${t("vlm.relay.absent")}</b></p><p class="vlm-note">${t("vlm.relay.absentWhy")}</p><button class="btn sm" data-vlm-action="probe">${t("vlm.relay.again")}</button>`;
+    // A model process on this computer (server/vlm-local.mjs): its own reasons.
+    if(!r.configured&&r.provider==="local")return`<p class="vlm-state warn"><b>${t("vlm.relay.localNotReady")}</b></p><p class="vlm-note">${esc(tx("vlm.err.",r.reasonCode))}</p><button class="btn sm" data-vlm-action="probe">${t("vlm.relay.again")}</button>`;
+    if(!r.configured){
+      const head=r.reasonCode==="UNKNOWN_PRICE"?"vlm.relay.noPrice":r.reasonCode==="UNBOUNDED_FALLBACK"?"vlm.relay.noBudget":"vlm.relay.noKey";
+      const why=r.reasonCode==="UNKNOWN_PRICE"?t("vlm.relay.noPriceWhy",{model:esc(r.model||"")}):r.reasonCode==="UNBOUNDED_FALLBACK"?t("vlm.err.UNBOUNDED_FALLBACK"):t("vlm.relay.noKeyWhy",{model:esc(r.model||"")});
+      return`<p class="vlm-state warn"><b>${t(head)}</b></p><p class="vlm-note">${why}</p><button class="btn sm" data-vlm-action="probe">${t("vlm.relay.again")}</button>`;
+    }
+    if(r.ledger&&r.ledger.state&&r.ledger.state!=="OK")return`<p class="vlm-state warn"><b>${t("vlm.run.failed")}</b> · ${esc(tx("vlm.err.","LEDGER_"+r.ledger.state))}</p><button class="btn sm" data-vlm-action="probe">${t("vlm.relay.again")}</button>`;
+    const L=r.limits||{},U=r.usage||{};
+    const local=r.provider==="local"&&r.local;
+    const check=session.checking?`<span class="vlm-note" role="status">${t("vlm.check.running")}</span>`
+      :session.check?(session.check.ok?`<span class="vlm-state ok">${t(local?"vlm.check.okLocal":"vlm.check.ok")}</span>`:`<span class="vlm-state warn">${esc(tx("vlm.err.",session.check.code))}</span>`):"";
+    const head=local?`<p class="vlm-state ok"><b>${t("vlm.relay.readyLocal")}</b> · ${esc(`${local.name} ${local.version}`)}</p>
+      <p class="vlm-note">${t("vlm.relay.capsLocal",{licence:esc(local.licence),requests:U.requests||0,maxRequests:L.maxRequestsPerDay||0})}${session.relayStale?` ${t("vlm.relay.stale")}`:""}</p>`
+      :`<p class="vlm-state ok"><b>${t("vlm.relay.ready")}</b> · ${esc(r.model||"")}</p>
+      <p class="vlm-note">${t("vlm.relay.caps",{run:money(L.maxUsdPerRun),day:money(L.maxUsdPerDay),spent:money(U.usd),requests:U.requests||0,maxRequests:L.maxRequestsPerDay||0})}${session.relayStale?` ${t("vlm.relay.stale")}`:""}</p>`;
+    return`${head}
+      <div class="vlm-actions"><button class="btn sm" data-vlm-action="check" ${session.checking||session.busy?"disabled":""}>${t("vlm.check")}</button>${check}</div>`;
+  }
+  function findingRowHTML(a,f,i){
+    const p=V().acceptPlan(f,a,{memory:(activeEvent()&&activeEvent().planMemory)||[]}),conf=t("vlm.conf."+f.confidence);
+    const state=f.state==="accepted"||f.state==="applied"?`<span class="vlm-tag ok">${t(f.state==="applied"?"vlm.state.applied":"vlm.state.accepted")}</span><button class="btn sm quiet" data-vlm-action="undo" data-vlm-finding="${esc(f.id)}">${t("vlm.undo")}</button>`:f.state==="dismissed"?`<span class="vlm-tag">${t("vlm.state.dismissed")}</span>`:"";
+    const reason=!p.ok&&f.state==="open"?`<span class="vlm-reason">${esc(t("vlm.reason."+p.reason))}</span>`:"";
+    const actions=f.state==="open"?`<div class="vlm-row-actions"><button class="btn sm primary" data-vlm-action="accept" data-vlm-finding="${esc(f.id)}" ${p.ok?"":`disabled title="${esc(t("vlm.reason."+p.reason))}"`}>${t("vlm.accept")}</button><button class="btn sm" data-vlm-action="dismiss" data-vlm-finding="${esc(f.id)}">${t("vlm.dismiss")}</button>${f.box||f.candidateId?`<button class="btn sm quiet" data-vlm-action="focus" data-vlm-finding="${esc(f.id)}">${t("vlm.show")}</button>`:""}</div>${reason}`:"";
+    const cls=["vlm-finding","state-"+f.state,"kind-"+f.kind,session.focusId===f.id?"focused":""].join(" ").trim();
+    return`<li class="${esc(cls)}" data-vlm-row="${esc(f.id)}"><div class="vlm-finding-head"><b>${esc(findingTitle(f,i))}</b><small>${esc(f.step==="check"?t("vlm.second.step"):conf)}${f.step==="region"?` · R${num(f.regionIndex)+1}`:f.step==="tile"?` · T${num(f.regionIndex)+1}`:""}</small>${state}</div>${numberLine(f)}${checkLine(f)}${f.evidence?`<q class="vlm-evidence">${esc(f.evidence)}</q>`:""}${actions}</li>`;
+  }
+  // What a second-look finding rests on: both looks' answer beside the analysis's.
+  function checkLine(f){
+    const c=f.check;if(!c)return"";
+    const detector=c.question==="identify"?answerWord(c.detector):c.detector;
+    const key=c.question==="chairs"&&c.printed!=null?"vlm.second.line.chairsPrinted":"vlm.second.line."+c.question;
+    return`<p class="vlm-note">${esc(t(key,{answer:c.question==="identify"?answerWord(c.answer):c.answer,detector,printed:c.printed,piece:c.piece?typeLabel(c.piece):""}))}</p>`;
+  }
+  function panelHTML(event){
+    if(!ui.vlmPanelOpen)return"";
+    const a=event&&event.analysis,run=a&&a.vlm,c=run?V().counts(run):null;
+    const second=run&&run.mode==="check";
+    const status=run?`<p class="vlm-state ${run.status==="done"?"ok":run.status==="running"?"":"warn"}" role="status"><b>${t((second?"vlm.second.run.":"vlm.run.")+run.status)}</b>${run.code&&run.status!=="done"?` · ${esc(run.status==="stale"?tx("vlm.stale.",run.staleReason||"ANALYSIS_CHANGED"):tx("vlm.err.",run.code))}`:""}</p><p class="vlm-note">${second?t("vlm.second.meta",{model:esc(run.model||""),steps:num(run.steps)}):t("vlm.run.meta",{model:esc(run.model||""),usd:money(run.spentUsd),steps:num(run.steps)})}</p>`:"";
+    const tl=second&&LC()?LC().tally(run.checks):null;
+    const tally=tl&&tl.asked?`<p class="vlm-note">${t("vlm.second.tally",{asked:num(tl.asked),agrees:num(tl.AGREES),differs:num(tl.DIFFERS),unsure:num(tl.UNSURE),none:num(tl.NO_ANSWER)})}</p>`:"";
+    const body=run&&run.findings.length?`<ol class="vlm-findings">${run.findings.map((f,i)=>findingRowHTML(a,f,i)).join("")}</ol>`
+      :run&&run.status!=="running"?`<p class="vlm-note">${t(second?"vlm.second.noFindings":"vlm.noFindings")}</p>`:"";
+    const ready=session.relay&&session.relay.relay&&session.relay.configured&&!(session.relay.ledger&&session.relay.ledger.state&&session.relay.ledger.state!=="OK")&&!session.busy;
+    const send=ready?`<button class="btn sm primary" data-vlm-action="start">${t(run&&!second?"vlm.sendAgain":"vlm.send")}</button>`:"";
+    const checks=localChecks(session.relay);
+    const look=ready&&checks.length&&LC()?`<button class="btn sm" data-vlm-action="look">${t("vlm.second.button")}</button>`:"";
+    const lookNote=checks.length&&!run?`<p class="vlm-note">${t("vlm.second.what")} ${t("vlm.second.measured",{list:esc(checks.map(q=>t("vlm.second.q."+q)).join(", "))})}</p>`:"";
+    const servingCode=session.relay&&session.relay.local&&session.relay.local.serving&&session.relay.local.serving!=="verified"?session.relay.local.serving:null;
+    const unmeasured=servingCode?`<p class="vlm-note warn">${t("vlm.second.notMeasuredSetup",{why:esc(tx("vlm.err.",servingCode))})}</p><button class="btn sm" data-vlm-action="probe">${t("vlm.relay.again")}</button>`:"";
+    const autoSwitch=checks.length?`<label class="vlm-switch"><input type="checkbox" data-vlm-action="auto" ${autoOn()?"checked":""}> ${t("vlm.second.auto")}</label>`:"";
+    const applied=second?run.findings.filter(f=>f.state==="applied").length:0;
+    const autoNote=second&&run.auto?`<p class="vlm-note">${t(applied?"vlm.second.autoRanApplied":"vlm.second.autoRan",{n:num((run.checks||[]).length),crops:num((run.checks||[]).length*(LC()?LC().LOOKS.length:2)),applied:num(applied)})}</p>`:"";
+    return`<aside class="vlm-panel" id="vlmPanel" aria-label="${esc(t("vlm.title"))}"><div class="vlm-head"><strong>${t("vlm.title")}</strong><button class="btn icon-only sm" data-vlm-action="close" aria-label="${esc(t("vlm.close"))}">${icon("x")}</button></div><div class="vlm-body">
+      <section class="vlm-relay">${relayStateHTML()}${run?"":`<p class="vlm-note">${t("vlm.what")}</p>`}${lookNote}${unmeasured}<div class="vlm-actions">${send}${look}</div>${autoSwitch}</section>
+      ${run?`<section class="vlm-run">${status}${autoNote}${run.planSummary?`<div class="vlm-summary"><small>${t("vlm.summaryLabel")}</small><p>${esc(run.planSummary)}</p></div>`:""}${tally}${c&&c.total?`<p class="vlm-note">${t("vlm.counts",{open:c.open,accepted:c.accepted,dismissed:c.dismissed})}</p>`:""}${second?"":coverageHTML(run)}${setAsideHTML(run)}${body}</section>`:""}
+    </div></aside>`;
+  }
+  // A model's number beside the plan's own reading of that table.
+  function numberLine(f){
+    const e=activeEvent(),n=V().numberCheck(f,e&&e.analysis);
+    if(!n)return"";
+    return`<p class="vlm-note${n.state==="AGREES"?"":" warn"}">${t("vlm.number."+n.state,{model:esc(n.model),read:esc(n.read??"")})}</p>`;
+  }
+  // What the reading saw in detail, and what it did not, by name.
+  function coverageHTML(run){
+    const c=V().coverage(run);
+    if(!c||!(run.steps>0))return"";
+    const missed=c.notInspected.map(l=>`${esc(l.label)} (${esc(tx("vlm.look.",l.state))}${l.code?" · "+esc(tx("vlm.err.",l.code)):""})`);
+    const line=c.needScale?t("vlm.coverage.tiles",{pct:num(c.detailPct),px:V().TILE_MIN_PX}):t("vlm.coverage.whole",{scale:num(Math.round((c.overviewScale||0)*100))});
+    return`<p class="vlm-note${missed.length?" warn":""}">${line}${missed.length?` · ${t("vlm.coverage.missed",{list:missed.join(", ")})}`:""}</p>`;
+  }
+  // Nothing the relay or the page set aside is silent: each reason, counted.
+  function setAsideHTML(run){
+    const sa=run&&run.setAside;if(!sa)return"";
+    const rows=Object.entries(sa.dropped).map(([why,n])=>`<li>${esc(tx("vlm.drop.",why))} <b>×${num(n)}</b></li>`);
+    if(sa.clamped)rows.push(`<li>${t("vlm.setAside.clamped",{n:num(sa.clamped)})}</li>`);
+    if(sa.omittedObjects)rows.push(`<li>${t("vlm.setAside.omittedObjects",{n:num(sa.omittedObjects)})}</li>`);
+    if(sa.omittedText)rows.push(`<li>${t("vlm.setAside.omittedText",{n:num(sa.omittedText)})}</li>`);
+    return rows.length?`<details class="vlm-setaside"><summary>${t("vlm.setAside",{n:rows.length})}</summary><ul>${rows.join("")}</ul></details>`:"";
+  }
+  // The diagnostics line. Until the relay has been asked, the old line stands:
+  // no relay has been reached from this page, so nothing has been sent.
+  function diagnosticsHTML(a,questionCount){
+    const r=session.relay;
+    if(!r||!r.relay)return questionCount!=null?`<b>${t("diag.vlmNotConfigured")}</b> · ${t("diag.vlmPending",{n:questionCount})}`:"";
+    if(!r.configured)return`<b>${t("diag.vlmNotConfigured")}</b> · ${r.provider==="local"?t("vlm.relay.localNotReady"):t(r.reasonCode==="UNKNOWN_PRICE"?"vlm.relay.noPrice":"vlm.relay.noKey")}`;
+    const name=r.provider==="local"&&r.local?`${r.local.name} ${r.local.version}`:r.model||"";
+    return`<b>${t(r.provider==="local"?"vlm.relay.readyLocal":"vlm.relay.ready")}</b> · ${esc(name)}${a&&a.vlm?` · ${t((a.vlm.mode==="check"?"vlm.second.run.":"vlm.run.")+a.vlm.status)}`:""}`;
+  }
+
+  // ---- controls ---------------------------------------------------------------
+  function onAction(action,el){
+    const id=el&&el.dataset?el.dataset.vlmFinding:null;
+    if(action==="toggle"){ui.vlmPanelOpen=!ui.vlmPanelOpen;if(ui.vlmPanelOpen)ui.readingOpen=false;if(ui.vlmPanelOpen&&!session.relay)probe();render();}
+    else if(action==="close"){ui.vlmPanelOpen=false;render();}
+    else if(action==="probe")probe();
+    else if(action==="check")check();
+    else if(action==="start")start();
+    else if(action==="look")startLook();
+    else if(action==="auto")setAuto(!!(el&&el.checked));
+    else if(action==="cancel")cancel();
+    else if(action==="accept")accept(id);
+    else if(action==="dismiss")dismiss(id);
+    else if(action==="undo")undo(id);
+    else if(action==="focus")focus(id);
+  }
+
+  function create(deps){
+    if(created)throw new Error("MeritScreenVlm.create() is called once, by app-v8.js.");
+    created=true;
+    activeEvent=deps.activeEvent;
+    applyModelGrouping=deps.applyModelGrouping;
+    applyReviewZoom=deps.applyReviewZoom;
+    ask=deps.ask;
+    audit=deps.audit;
+    canMutate=deps.canMutate;
+    decideReview=deps.decideReview;
+    esc=deps.esc;
+    icon=deps.icon;
+    render=deps.render;
+    t=deps.t;
+    toast=deps.toast;
+    touchEvent=deps.touchEvent;
+    ui=deps.ui;
+    undoModelGrouping=deps.undoModelGrouping;
+    undoReviewDecision=deps.undoReviewDecision;
+    return{toolbarHTML,mapHTML,panelHTML,diagnosticsHTML,onAction,afterAnalysis,session:()=>({...session,controller:!!session.controller})};
+  }
+  globalThis.MeritScreenVlm=Object.freeze({create,DEPS:Object.freeze(["activeEvent","applyModelGrouping","applyReviewZoom","ask","audit","canMutate","decideReview","esc","icon","render","t","toast","touchEvent","ui","undoModelGrouping","undoReviewDecision"])});
+})();

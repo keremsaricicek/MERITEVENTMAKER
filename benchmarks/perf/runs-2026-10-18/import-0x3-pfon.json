@@ -1,0 +1,131 @@
+{
+ "ranAt": "2026-10-18T09:09:10.969Z",
+ "cores": "pid 4516's current affinity list: 0-3",
+ "runs": 5,
+ "prefetch": "on",
+ "results": {
+  "golden.png": {
+   "runs": [
+    {
+     "chooseMs": 193,
+     "openMs": 882,
+     "totalMs": 1075,
+     "errors": 0
+    },
+    {
+     "chooseMs": 178,
+     "openMs": 371,
+     "totalMs": 549,
+     "errors": 0
+    },
+    {
+     "chooseMs": 196,
+     "openMs": 375,
+     "totalMs": 571,
+     "errors": 0
+    },
+    {
+     "chooseMs": 173,
+     "openMs": 360,
+     "totalMs": 533,
+     "errors": 0
+    },
+    {
+     "chooseMs": 188,
+     "openMs": 394,
+     "totalMs": 582,
+     "errors": 0
+    }
+   ],
+   "median": {
+    "chooseMs": 188,
+    "openMs": 375,
+    "totalMs": 571
+   },
+   "worstTotalMs": 1075,
+   "pageErrors": 0
+  },
+  "ornek.png": {
+   "runs": [
+    {
+     "chooseMs": 900,
+     "openMs": 754,
+     "totalMs": 1654,
+     "errors": 0
+    },
+    {
+     "chooseMs": 865,
+     "openMs": 1314,
+     "totalMs": 2179,
+     "errors": 0
+    },
+    {
+     "chooseMs": 955,
+     "openMs": 1005,
+     "totalMs": 1960,
+     "errors": 0
+    },
+    {
+     "chooseMs": 898,
+     "openMs": 1162,
+     "totalMs": 2060,
+     "errors": 0
+    },
+    {
+     "chooseMs": 817,
+     "openMs": 990,
+     "totalMs": 1807,
+     "errors": 0
+    }
+   ],
+   "median": {
+    "chooseMs": 898,
+    "openMs": 1005,
+    "totalMs": 1960
+   },
+   "worstTotalMs": 2179,
+   "pageErrors": 0
+  },
+  "ornek.pdf": {
+   "runs": [
+    {
+     "chooseMs": 2772,
+     "openMs": 2940,
+     "totalMs": 5712,
+     "errors": 0
+    },
+    {
+     "chooseMs": 2657,
+     "openMs": 2950,
+     "totalMs": 5607,
+     "errors": 0
+    },
+    {
+     "chooseMs": 2441,
+     "openMs": 2878,
+     "totalMs": 5319,
+     "errors": 0
+    },
+    {
+     "chooseMs": 2383,
+     "openMs": 3076,
+     "totalMs": 5459,
+     "errors": 0
+    },
+    {
+     "chooseMs": 2412,
+     "openMs": 2727,
+     "totalMs": 5139,
+     "errors": 0
+    }
+   ],
+   "median": {
+    "chooseMs": 2441,
+    "openMs": 2940,
+    "totalMs": 5459
+   },
+   "worstTotalMs": 5712,
+   "pageErrors": 0
+  }
+ }
+}

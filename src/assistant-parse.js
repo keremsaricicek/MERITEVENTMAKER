@@ -1,0 +1,252 @@
+// THE F8 ASSISTANT'S FIRST READER — rules before the model.
+//
+// A sentence typed into the F8 panel is first read by these rules (fast,
+// exact, offline); only what they cannot place goes to the local model
+// (benchmarks/AI-PLANNER-DESIGN.md §6, §11–§12). The rules decide WHAT is
+// asked or commanded and WHO / WHICH EVENT / WHICH TABLE it is about — by
+// finding the names the data actually holds — and hand that to the tools
+// (src/assistant-tools.js) or the acting layer (src/assistant-actions.js).
+// They state no fact themselves: every number in an answer comes from the data.
+//
+// Pure: reads no `state` or `ui`; the events are passed in.
+(function () {
+  "use strict";
+  const T = () => globalThis.MeritAssistantTools;
+  const fold = (s) => T().fold(s);
+  // a Turkish suffix after an apostrophe ("Ahmet'i", "T12'ye", "Tarkan'daki")
+  const unsuffix = (s) => String(s || "").replace(/['’`][a-zçğıöşü]+/gi, "");
+
+  // The longest guest name from the data that the sentence contains (folded,
+  // word prefixes, so "ahmet yilmaz", "Ahmet'i" and "Ahmet" all find him).
+  function personIn(text, events) {
+    const words = fold(unsuffix(text)).split(" ");
+    const names = new Set();
+    for (const ev of events) for (const g of ev.guests || []) names.add(g.name);
+    let best = null;
+    for (const name of names) {
+      const parts = fold(name).split(" ");
+      for (let i = 0; i < words.length; i++) {
+        let n = 0;  // consecutive name parts, each a word prefix with at most a Turkish suffix after it
+        while (n < parts.length && i + n < words.length && words[i + n].startsWith(parts[n]) && words[i + n].length - parts[n].length <= 5) n++;
+        if (!n || (best && (best.n > n || (best.n === n && best.at <= i)))) continue;  // more of the name wins; then the earlier one
+        // a first name alone stands for the full names that start with it
+        best = { name: n === parts.length ? name : words.slice(i, i + n).join(" "), n, at: i, len: n };
+      }
+    }
+    return best;
+  }
+  const tables = (text) => (unsuffix(text).match(/\b(VIP\s?\d+|[TB]\s?\d{1,3})\b/gi) || []).map((x) => x.replace(/\s+/g, "").toUpperCase());
+  const phone = (text) => { const m = String(text).match(/(\+?\d[\d\s]{8,}\d)/); return m ? m[1] : null; };
+  // the part of the sentence that is not the person: where an event is named
+  function eventPart(text, person) {
+    const w = fold(unsuffix(text)).split(" ");
+    return person ? w.filter((_, i) => i < person.at || i >= person.at + person.len).join(" ") : w.join(" ");
+  }
+
+  // ---- an event brief → the planner's numbers (rules first; the model later) ----------------
+  const ONES = { bir: 1, iki: 2, uc: 3, dort: 4, bes: 5, alti: 6, yedi: 7, sekiz: 8, dokuz: 9 };
+  const TENS = { on: 10, yirmi: 20, otuz: 30, kirk: 40, elli: 50, altmis: 60, yetmis: 70, seksen: 80, doksan: 90 };
+  // "iki yüz elli" → 250, "bin" → 1000: number words become digits first
+  function numberWords(f) {
+    return f.replace(/\b((?:(?:bir|iki|uc|dort|bes|alti|yedi|sekiz|dokuz|on|yirmi|otuz|kirk|elli|altmis|yetmis|seksen|doksan|yuz|bin)\s?)+)\b/g, (m) => {
+      let total = 0, cur = 0;
+      for (const w of m.trim().split(/\s+/)) {
+        if (ONES[w]) cur += ONES[w]; else if (TENS[w]) cur += TENS[w];
+        else if (w === "yuz") cur = (cur || 1) * 100; else if (w === "bin") { total += (cur || 1) * 1000; cur = 0; }
+      }
+      return String(total + cur) + " ";
+    });
+  }
+  const EVENT_WORDS = [["wedding", /\b(dugun|nisan|kina|nikah)/], ["gala", /\b(gala|balo|odul toren)/], ["cocktail", /\b(kokteyl|resepsiyon)/],
+    ["u_shape", /\bu (duzen|masa|tipi)/], ["boardroom", /\b(yonetim kurulu|boardroom|tek masa|oval tek)/], ["classroom", /\b(sinif|egitim|workshop|atolye)/],
+    ["theatre", /\b(tiyatro|konferans|panel|seminer)/], ["banquet", /\b(banket|yemek|dogum gunu|iftar)/], ["meeting", /\b(toplanti|brifing)/]];
+  function brief(text) {
+    const f = numberWords(fold(String(text).replace(/m²/g, " m2 ").replace(/Ø/g, " cap ")));
+    const b = { pax: null, area_m2: null, room_w_m: null, room_l_m: null, event: null, table_kind: null, table_count: null, table_diam_cm: null,
+      table_len_cm: null, table_wid_cm: null, seats_per_table: null, chair_w_cm: null, chair_d_cm: null, extra_kind: null, extra_seats: null };
+    const n = (re) => { const m = f.match(re); return m ? Number(m[1]) : null; };
+    b.pax = n(/\b(\d+) ?(?:kisilik|kisi\b|pax|davetli)/) ?? n(/\b(?:pax|davetli) (\d+)/);
+    b.area_m2 = n(/\b(\d+) ?(?:m2|metrekare)/) ?? n(/\balan (\d+)/);
+    const dims = f.match(/\b(\d+) ?(?:x|e|ye|a|ya) ?(\d+) ?(?:m\b|metre)/) || f.match(/\bsalon (\d+) ?(?:metreye|x) ?(\d+)/);
+    if (dims) { b.room_w_m = Number(dims[1]); b.room_l_m = Number(dims[2]); }
+    for (const [ev, re] of EVENT_WORDS) if (re.test(f)) { b.event = ev; break; }
+    if (b.event === "boardroom" && /\btek masa|oval tek/.test(f)) b.table_count = 1;
+    if (/\byuvarlak/.test(f)) b.table_kind = "round"; else if (/\bdikdortgen/.test(f)) b.table_kind = "rect";
+    else if (/\bkare\b/.test(f)) b.table_kind = "square"; else if (/\b(bistro|yuksek masa)/.test(f) && !/\bkalan/.test(f.split(/bistro|yuksek masa/)[0])) b.table_kind = "bistro";
+    const cnt = f.match(/\b(\d+) (?:adet |tane )?(?:\d+ ?(?:lik|luk|cm) )?(?:yuvarlak |dikdortgen |kare |bistro |yuksek )?masa\b/);
+    if (cnt && b.table_count == null) b.table_count = Number(cnt[1]);
+    const dia = f.match(/\b(1[2-9]\d|2[0-4]\d)\s?(?:lik|luk|cm)?\s?(?:yuvarlak|masa)/) || f.match(/\bcap ?(\d{3})/) || (b.table_kind === "round" && f.match(/\b(1[2-9]\d|2[0-4]\d) cm\b/));
+    if (dia && !/\d+ ?x ?\d+/.test(f.slice(Math.max(0, f.indexOf(dia[0]) - 4), f.indexOf(dia[0]) + dia[0].length))) b.table_diam_cm = Number(dia[1]);
+    const lw = f.match(/\b(\d{2,3}) ?x ?(\d{2,3})\b(?! ?(?:m\b|metre))/);
+    if (lw && !/sandalye/.test(f.slice(Math.max(0, f.indexOf(lw[0]) - 25), f.indexOf(lw[0])))) { b.table_len_cm = Number(lw[1]); b.table_wid_cm = Number(lw[2]); }
+    b.seats_per_table = n(/\bmasa basi (\d+)/) ?? n(/\bmasalar (\d+) kisilik/) ?? n(/\bher masaya (\d+)/) ?? n(/\b(\d+) ?(?:ar|er|ser|sar)\b(?! kisilik)/) ?? n(/\b(\d+) kisilik yuvarlak/) ?? n(/\bmasalar (\d+)(?:ar|er|ser|sar)? kisilik/);
+    const ch = f.match(/\bsandalye(?:ler)?(?: olcusu)? (\d{2}) ?(?:x|e|ye|a|ya| x ) ?(\d{2})/);
+    if (ch) { b.chair_w_cm = Number(ch[1]); b.chair_d_cm = Number(ch[2]); }
+    const rest = f.match(/\bkalan(?:i| alana)?\s+(?:(\d+) kisilik\s*)?(bistro|ayakta kokteyl|kokteyl)?/);
+    if (rest) { if (rest[1]) b.extra_seats = Number(rest[1]); if (rest[2]) b.extra_kind = /kokteyl/.test(rest[2]) ? "cocktail" : "bistro"; }
+    if (b.table_kind === "bistro" && b.event == null) b.event = "cocktail";
+    return b;
+  }
+  const isBrief = (f) => /\b(\d+|[a-z]+) ?(kisilik|kisi\b|pax|davetli)/.test(f) && /\b(m2|metrekare|metre|salon|masa|duzen|tiyatro|kokteyl|gala|dugun|banket|toplanti|sinif|egitim)/.test(f);
+
+  function parse(text, events, today) {
+    const f = fold(unsuffix(text)), raw = String(text || "");
+    const p = personIn(raw, events), tbs = tables(raw), ph = phone(raw);
+    const evq = eventPart(raw, p);
+    const has = (re) => re.test(f);
+    // STATUS (owner 2026-11-02): "bugün ne eksik", "hazır mıyız", "dünden beri ne değişti" —
+    // answered from the open event by the shell, never sent to the model, never a change.
+    if (/\b(ne eksik|neler eksik|eksik(ler)? (ne|neler|var)|eksik var mi|hazir miyiz|whats missing|what missing|what is missing|anything missing|are we ready)\b/.test(f)) return { kind: "status", what: "missing" };
+    if (/\b(ne degisti|neler degisti|degisenler|degisiklikler|what changed|what has changed|any changes)\b/.test(f)) return { kind: "status", what: "changes", since: /\b(bugun|today|sabahtan)\b/.test(f) ? "today" : "lastDay" };
+    // SEATING RULES (owner 2026-11-02): warn-only notes about this event's seating.
+    const apart = raw.match(/^(.+?)\s+(?:ile|ve)\s+(.+?)['’]?\s*(?:aynı masada|ayni masada|aynı masaya|ayni masaya|yan yana)\s+(?:oturmasın|oturmasin|olmasın|olmasin|oturtma)/i)
+      || raw.match(/^(.+?)\s+(?:ile|ve)\s+(.+?)\s+ayr[ıi]\s+(?:otursun|masalarda|tut)/i) || raw.match(/^keep\s+(.+?)\s+and\s+(.+?)\s+apart/i);
+    if (apart) return { kind: "command", plan: [{ op: "ruleApart", guest: apart[1].trim().replace(/['’]\S*$/, ""), other: apart[2].trim().replace(/['’]\S*$/, "") }] };
+    // MANY AT ONCE (owner 2026-11-02): shown first, then Onayla
+    if (/\b(masasiz\w*|masasi olmayan\w*|oturtulmamis\w*|yeri olmayan\w*|bosta kalan\w*)\b.*\b(yerlestir|oturt|dagit|ata|yerlestir)\w*/.test(f) || /^(seat|place) (everyone|everybody|all|the unseated)\b/.test(f)) return { kind: "command", plan: [{ op: "seatUnassigned" }] };
+    if (/\bvip\w*\b.*\b(vip masa\w*|on masa\w*|one|onde)\b.*\b(al|tasi|dagit|gecir|yerlestir|oturt)\w*/.test(f) || /^(move|seat|put) (the )?vips? (to|at) (the )?(vip|front) tables?/.test(f)) return { kind: "command", plan: [{ op: "vipToVipTables" }] };
+    if (/\bvip\w*\b.*\b(on masa\w*|onde|on tarafta|vip masa\w*)\b.*\b(otursun|olsun|oturmali)\b/.test(f) || /\bvips?\b.*\b(at|in) the (front|vip tables?)\b/.test(f)) return { kind: "command", plan: [{ op: "ruleVipFront" }] };
+    if (/\b(kurallari (sil|temizle|kaldir)|clear (the )?rules)\b/.test(f)) return { kind: "command", plan: [{ op: "rulesClear" }] };
+    if (/^(kurallar|kurallari goster|kurallar neler|show (the )?rules|rules)$/.test(f.trim())) return { kind: "status", what: "rules" };
+    // GROUPS / JUNKETS (owner 2026-11-02): "Kerem Sarıçiçek'in misafirlerini aynı masaya al",
+    // "Kerem grubunu T05'e topla", "seat Kerem's guests together"; "Kerem grubundan kaç kişi geldi".
+    const grpTr = raw.match(/^(.+?)\s+(?:misafirler(?:i|ini)|grub(?:u|unu)|davetliler(?:i|ini)|ekib(?:i|ini)|insanlar(?:i|ini|ı|ını))\b(.*)$/i);
+    if (grpTr && /\b(ayni masa\w*|tek masa\w*|bir masa\w*|birlikte|beraber|yan yana|bir araya|topla\w*|t\d+\w*|vip\d+\w*)\b/.test(fold(grpTr[2])) && /\b(al|oturt|koy|topla|yerlestir|getir|gecir|tasi)\w*\b/.test(fold(grpTr[2])))
+      return { kind: "command", plan: [{ op: "groupTogether", host: grpTr[1].trim().replace(/['’]\S*$/, ""), table: tbs[0] || null }] };
+    const grpEn = raw.match(/^(?:seat|put|move|bring|keep)\s+(.+?)['’]?s?\s+(?:guests|group|party|people)\s+(.*)$/i);
+    if (grpEn && /\b(together|same table|one table|t\d+|vip\d+)\b/i.test(grpEn[2])) return { kind: "command", plan: [{ op: "groupTogether", host: grpEn[1].trim(), table: tbs[0] || null }] };
+    const grpQ = raw.match(/^(.+?)\s+(?:grubundan|misafirlerinden|davetlilerinden|grubu)\b.*\b(kac|kaci|geldi)/i) || raw.match(/^how many of\s+(.+?)['’]?s?\s+(?:guests|group|people)/i);
+    if (grpQ) return { kind: "status", what: "group", host: grpQ[1].trim().replace(/['’]\S*$/, "") };
+    // AT THE DOOR (owner 2026-11-02): "ahmet yilmaz geldi", "Mehmet Kaya +2 geldi", "Ayşe Demir
+    // ve eşi geldi", "Can Öztürk arrived" — a statement, not a question: the guest is checked in.
+    // "geldi mi" stays a question; the name must be one guest (the acting layer asks otherwise).
+    const door = raw.trim().replace(/[.!]+$/, "").match(/^(.+?)(?:\s*\+\s*\d+|\s+(?:ve|ile)\s+(?:e[sş]i(?:yle)?|ailesi|arkada[sş]lar[iı])|\s+and\s+(?:his|her)\s+\w+)?\s+(geldi(?:ler)?|girdi|giri[sş] yapt[iı]|arrived|is here|checked in)$/i);
+    if (door && !/\b(mi|mu|mı|mü)\b/i.test(raw) && !/[?]/.test(raw) && door[1].trim().split(/\s+/).length <= 4
+      && !/\b(kac|kim\w*|nere\w*|hangi\w*|ne zaman|nasil|toplam|how|who|when|where|which|what)\b/.test(f)) return { kind: "command", plan: [{ op: "arrive", guest: door[1].trim().replace(/['’]\S*$/, "") }] };
+    // a description of an event to lay out — no guest of ours named, no command verb
+    if (!p && isBrief(numberWords(f)) && !has(/\b(sil|kaldir|cikar|oturt|tasi|nerede|kac konser)\b/)) return { kind: "plan", brief: brief(raw) };
+    // ---- commands -------------------------------------------------------------------------
+    // These rules read ONE command. A sentence with two jobs in it ("X'i çıkar ve
+    // yerine Y'yi ekle") is never half done: it goes on whole — to the second
+    // reader, or back to the person — and nothing changes here.
+    const verbs = (f.match(/\b(sil|kaldir|cikar|ekle|oturt|koy|al|tasi|yap|olsun|yerlestir|kaydir|gecir)\b/g) || []).length;
+    if (verbs >= 2) return { kind: "unknown", compound: true };
+    if (has(/\b(sil|kaldir|cikar|ekle|oturt|koy|al|tasi|yap|olsun)\b/)) {
+      if (has(/\bherkes/) && tbs.length >= 2 && has(/\btasi/)) return { kind: "command", plan: [{ op: "moveTable", fromTable: tbs[0], table: tbs[1] }] };
+      if (has(/\bekle\b/)) {
+        const m = raw.match(/([A-ZÇĞİÖŞÜ][\wçğıöşüÇĞİÖŞÜ]+(?:\s+[A-ZÇĞİÖŞÜ][\wçğıöşüÇĞİÖŞÜ]+)*)\s*(?:\+\s*(\d+))?\s*ekle/);
+        if (m) return { kind: "command", plan: [{ op: "addGuest", name: m[1].trim(), pax: 1 + Number(m[2] || 0), table: tbs[0] || null }] };
+      }
+      if (!p) return { kind: "command", plan: [{ op: "assign", guest: (raw.match(/^([^'’]+)['’]/) || [])[1] || raw.split(" ")[0], table: tbs[0] || "?" }] };
+      const guest = p.name;
+      if (has(/\byanina\b/)) {
+        const w = fold(unsuffix(raw)).split(" "), k = w.indexOf("yanina");
+        return { kind: "command", plan: [{ op: "nextTo", guest, other: w[k - 1] }] };
+      }
+      if (has(/\bsil\b/)) return { kind: "command", plan: [{ op: "deleteGuest", guest }] };
+      if (has(/\b(masadan) (kaldir|cikar)/)) return { kind: "command", plan: [{ op: "unassign", guest }] };
+      if (has(/\bvip\b/) && has(/\byap\b/)) return { kind: "command", plan: [{ op: "setVip", guest, vip: "VIP" }] };
+      const plus = raw.match(/\+\s*(\d+)\s*olsun/), many = f.match(/\b(\d+) kisi olsun/);
+      if (plus || many) return { kind: "command", plan: [{ op: "setPax", guest, pax: plus ? 1 + Number(plus[1]) : Number(many[1]) }] };
+      if (has(/\b(yerine|masasina|yerinde|koltuguna)\b/) && !tbs.length) {
+        const from = has(/\b(son|gecen|onceki)\b/) ? "son konser" : evq;
+        return { kind: "command", plan: [{ op: "copySeat", guest, from, ...(ph ? { phone: ph } : {}) }] };
+      }
+      if (tbs.length) {
+        const past = T().findEvent(events, evq, today).events.find((e) => e.past);
+        return { kind: "command", plan: [{ op: "assign", guest, table: tbs[0], ...(past ? { event: past.name } : {}) }] };
+      }
+    }
+    // ---- questions ------------------------------------------------------------------------
+    if (p && has(/\b(nerede|nerde|nerelerde)\b|\b(kacinci|hangi) masa/)) return { kind: "question", intent: "seatAt", person: p.name, phone: ph, event: evq, many: has(/\bnerelerde\b/) };
+    if (p && has(/\b(kac|hangi) (konser|etkinlik)/) && has(/\bgeldi/)) return { kind: "question", intent: "attended", person: p.name, phone: ph };
+    if (p && has(/\bgeldi mi\b/)) return { kind: "question", intent: "seatAt", person: p.name, phone: ph, event: evq };
+    if (p && has(/\bayni masa/)) return { kind: "question", intent: "sameTable", person: p.name };
+    if (p && has(/\bvip\b/)) return { kind: "question", intent: "vipBefore", person: p.name };
+    if (p && has(/\bkac kisi(yle)?\b/)) return { kind: "question", intent: "seatAt", person: p.name, event: evq };
+    if (has(/\ben cok kisi\b/)) return { kind: "question", intent: "mostPeople" };
+    if (has(/\bkac kisi\b/)) return { kind: "question", intent: "eventCount", event: evq };
+    if (has(/\b(oturtulmadi|masasi yok|masaya oturmayan)/)) return { kind: "question", intent: "unassigned", event: evq };
+    if (has(/\b(gelmeyen|gelmedi)/)) return { kind: "question", intent: "noShow", event: evq };
+    if (tbs.length && has(/\bkim\b/)) return { kind: "question", intent: "whoAtTable", event: evq, table: tbs[0] };
+    if (has(/\bhangi etkinli/)) return { kind: "question", intent: "whichEvent", event: evq };
+    if (!p && has(/\b(nerede|nerde|otur)/)) return { kind: "question", intent: "seatAt", person: (raw.match(/^(\S+\s+\S+)/) || [])[1], event: evq };
+    return { kind: "unknown" };
+  }
+
+  // An answer from the data for a parsed question: the facts (for the panel
+  // to word) plus a plain Turkish sentence; `ask` when the person or event is
+  // not one, `none` when the records do not hold it.
+  // The sentence is worded in the UI's language (`lang` "tr" default, or "en"; owner 2026-11-02:
+  // the program is fully Turkish and fully English). The facts are the same either way.
+  const MONTHS = { tr: ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"],
+    en: ["January","February","March","April","May","June","July","August","September","October","November","December"] };
+  const SAY = {
+    tr: { seat: (t, seats) => `${t}${seats ? `, koltuk ${seats}` : ""}`, noTable: "masası yoktu", whichEvent: (n) => `Hangi etkinlik? ${n}`,
+      noRecord: (p) => `${p} için kayıt yok.`, noContact: "iletişim yok", ambiguous: (p, k, c) => `${p} adında ${k} kişi var (${c}). Hangisi? Telefonunu yazabilirsin.`,
+      attended: (n, k, list, miss) => `${n} ${k} etkinliğimize geldi${list ? ": " + list : ""}.${miss ? ` Yeri olup gelmediği: ${miss}.` : ""}`,
+      sameYes: (t, k) => `Evet, hep ${t} masasında oturdu (${k} etkinlik).`, sameNo: (l) => `Hayır: ${l}.`, vipYes: (l) => `Evet: ${l}.`, vipNo: "Hayır, geçmiş etkinliklerde VIP masada oturmadı.",
+      didNotCome: " (gelmedi)", noEvent: "Bu etkinlik kayıtlarda yok.", notListed: (p, e) => `${p} ${e} listesinde yok.`, pax: (k) => `, ${k} kişi`, came: " — geldi.", seatNoShow: " — yeri vardı ama gelmedi.",
+      most: (n, k) => `${n}: ${k} kişi geldi.`, noEventThen: "O zamanda bir etkinlik kaydı yok.", countPast: (n, k, pl) => `${n}: ${k} kişi geldi (planlanan ${pl}).`, countFuture: (n, pl) => `${n}: ${pl} kişi planlı, henüz yapılmadı.`,
+      unassigned: (l) => `Masası olmayanlar: ${l}.`, allSeated: "Herkesin masası var.", noShow: (l) => `Gelmeyenler: ${l}.`, noNoShow: "Gelmeyen yok.", empty: (t) => `${t} boş.`, unclear: "Bunu anlayamadım; başka türlü yazar mısın?" },
+    en: { seat: (t, seats) => `${t}${seats ? `, seat ${seats}` : ""}`, noTable: "had no table", whichEvent: (n) => `Which event? ${n}`,
+      noRecord: (p) => `No record of ${p}.`, noContact: "no contact", ambiguous: (p, k, c) => `There are ${k} people named ${p} (${c}). Which one? You can type their phone.`,
+      attended: (n, k, list, miss) => `${n} came to ${k} of our events${list ? ": " + list : ""}.${miss ? ` Had a seat but did not come: ${miss}.` : ""}`,
+      sameYes: (t, k) => `Yes, always at ${t} (${k} events).`, sameNo: (l) => `No: ${l}.`, vipYes: (l) => `Yes: ${l}.`, vipNo: "No, never at a VIP table in past events.",
+      didNotCome: " (did not come)", noEvent: "That event is not in the records.", notListed: (p, e) => `${p} is not on the ${e} list.`, pax: (k) => `, ${k} people`, came: " — came.", seatNoShow: " — had a seat but did not come.",
+      most: (n, k) => `${n}: ${k} people came.`, noEventThen: "No event on record for that time.", countPast: (n, k, pl) => `${n}: ${k} people came (${pl} planned).`, countFuture: (n, pl) => `${n}: ${pl} people planned, not held yet.`,
+      unassigned: (l) => `No table yet: ${l}.`, allSeated: "Everyone has a table.", noShow: (l) => `Did not come: ${l}.`, noNoShow: "Everyone came.", empty: (t) => `${t} is empty.`, unclear: "I could not understand that; could you put it another way?" },
+  };
+  function answer(q, events, today, currentId, lang) {
+    const W = SAY[lang === "en" ? "en" : "tr"], M = MONTHS[lang === "en" ? "en" : "tr"];
+    const Tl = T(), tr = (d) => { const [y, m, dd] = String(d).split("-"); return `${Number(dd)} ${M[Number(m) - 1]} ${y}`; };
+    const seatTxt = (s) => s.table ? W.seat(s.table, s.seats && s.seats.length ? s.seats.map((x) => x + 1).join("–") : "") : W.noTable;
+    const pickEvent = (text) => { let r = Tl.findEvent(events, text || "", today).events;
+      // "geçen yılbaşı" is never this year's coming one
+      if (/\b(gecen|onceki|last|previous)\b/.test(fold(text))) r = r.filter((e) => e.past);
+      // nothing in the sentence names an event ("Can Öztürk nerede oturuyor?"): the open one
+      // (found by the UX task tests, 2026-11-01); a named event the records lack is still refused
+      const rest = fold(text || "").replace(/\b(bu|su|bugun|bu gece|etkinlik\w*|nerede|nerde|nerelerde|oturuyor\w*|oturacak\w*|otur\w*|hangi|kacinci|masa\w*|koltu\w*|var|mi|mu|this|tonight|event|where|sit\w*|seat\w*|table|which)\b/g, "").trim();
+      if (!r.length && currentId && !rest) { const ev = events.find((e) => e.id === currentId); if (ev) r = [{ id: ev.id, name: ev.name, date: ev.date, venue: ev.venue || null, past: ev.date < String(today || "") }]; }
+      return r.length === 1 ? r[0] : r.length ? { ask: W.whichEvent(r.map((e) => e.name).join(", ")) } : null; };
+    let person = null;
+    if (q.person) {
+      const r = Tl.findPerson(events, q.person, q.phone ? { phone: q.phone } : null);
+      if (r.none) return { none: true, text: W.noRecord(q.person) };
+      if (r.ambiguous) return { ask: true, text: W.ambiguous(q.person, r.people.length, r.people.map((p) => p.contact || W.noContact).join(" / ")) };
+      person = r.people[0];
+    }
+    if (q.intent === "attended" || q.intent === "sameTable" || q.intent === "vipBefore") {
+      const h = Tl.eventsOf(events, person, today), past = h.events.filter((e) => e.past);
+      if (q.intent === "attended") {
+        const came = past.filter((e) => e.came), miss = past.filter((e) => !e.came);
+        return { facts: h, text: W.attended(person.name, came.length, came.map((e) => `${e.name} (${tr(e.date)})`).join(", "), miss.map((e) => e.name).join(", ")) };
+      }
+      if (q.intent === "sameTable") { const tset = [...new Set(past.map((e) => e.table).filter(Boolean))]; return { facts: h, text: tset.length === 1 ? W.sameYes(tset[0], past.length) : W.sameNo(past.map((e) => `${e.name} ${e.table || "—"}`).join(", ")) }; }
+      const v = past.filter((e) => /^VIP/i.test(e.table || ""));
+      return { facts: h, text: v.length ? W.vipYes(v.map((e) => `${e.name} — ${e.table}`).join(", ")) : W.vipNo };
+    }
+    if (q.intent === "seatAt") {
+      if (q.many) { const h = Tl.eventsOf(events, person, today), evs = Tl.findEvent(events, q.event, today).events.map((e) => e.id); const rows = h.events.filter((e) => !evs.length || evs.includes(e.event)); return { facts: rows, text: rows.map((e) => `${e.name}: ${seatTxt(e)}${e.came ? "" : e.past ? W.didNotCome : ""}`).join("; ") + "." }; }
+      const ev = pickEvent(q.event);
+      if (!ev) return { none: true, text: W.noEvent };
+      if (ev.ask) return { ask: true, text: ev.ask };
+      const s = Tl.seatOf(events, person, ev.id);
+      if (!s.invited) return { none: true, text: W.notListed(person.name, ev.name) };
+      return { facts: s, text: `${ev.name} (${tr(ev.date)}): ${person.name} ${seatTxt(s)}${s.pax > 1 ? W.pax(s.pax) : ""}${ev.past ? (s.came ? W.came : W.seatNoShow) : "."}` };
+    }
+    if (q.intent === "mostPeople") { const best = events.filter((e) => e.date < today).map((e) => Tl.eventFacts(events, e.id)).sort((a, b) => b.checkedInPax - a.checkedInPax)[0]; return { facts: best, text: W.most(best.name, best.checkedInPax) }; }
+    const ev = q.intent === "whichEvent" ? null : pickEvent(q.event || "");
+    if (q.intent === "whichEvent") { const r = Tl.findEvent(events, q.event, today).events; return r.length ? { facts: r, text: r.map((e) => `${e.name} (${tr(e.date)})`).join(", ") + "." } : { none: true, text: W.noEventThen }; }
+    if (!ev) return { none: true, text: W.noEvent };
+    if (ev.ask) return { ask: true, text: ev.ask };
+    const fct = Tl.eventFacts(events, ev.id);
+    if (q.intent === "eventCount") return { facts: fct, text: ev.past ? W.countPast(fct.name, fct.checkedInPax, fct.plannedPax) : W.countFuture(fct.name, fct.plannedPax) };
+    if (q.intent === "unassigned") return { facts: fct, text: fct.unassigned.length ? W.unassigned(fct.unassigned.join(", ")) : W.allSeated };
+    if (q.intent === "noShow") return { facts: fct, text: fct.noShow.length ? W.noShow(fct.noShow.join(", ")) : W.noNoShow };
+    if (q.intent === "whoAtTable") { const who = fct.byTable[q.table] || []; return { facts: who, text: who.length ? `${q.table}: ${who.join(", ")}.` : W.empty(q.table) }; }
+    return { ask: true, text: W.unclear };
+  }
+
+  globalThis.MeritAssistantParse = { parse, answer, brief, personIn, tables };
+})();

@@ -1,0 +1,95 @@
+{
+ "ran": true,
+ "notice": "SCRIPTED by tests/lib/fake-anthropic.mjs — not a model. This proves the path, never a model's quality.",
+ "measuredOn": "2026-10-11T14:21:43.278Z",
+ "dataset": {
+  "plans": 1,
+  "labelCounts": {
+   "accepted-on-confirm": 60,
+   "chair:accepted-on-confirm": 105,
+   "human-confirmed": 2,
+   "chair:human-confirmed": 3,
+   "rejected": 1,
+   "chair:rejected": 2,
+   "unreviewed": 3,
+   "teacher-suggested": 1
+  },
+  "neverTargets": [
+   "teacher-suggested",
+   "unreviewed"
+  ]
+ },
+ "trainerView": {
+  "targets": 5,
+  "ignored": 161,
+  "human": 5,
+  "rejected": 3,
+  "unknown": 161
+ },
+ "training": {
+  "steps": 30,
+  "seconds": 24,
+  "version": "e2e-mv3wx2gz",
+  "bytes": 3540361,
+  "sha256": "08e66e0738ad4d97f94266247996262d1cf28812646d6c71859c88750f1272ea",
+  "note": "30 steps: plumbing, not a model anyone should use"
+ },
+ "loaded": {
+  "version": "e2e-mv3wx2gz",
+  "ms": 5620,
+  "wrongHash": "MODEL_INTEGRITY",
+  "rolledBackTo": "v2"
+ },
+ "checks": [
+  {
+   "ok": true,
+   "what": "the scripted teacher's three findings arrived as suggestions"
+  },
+  {
+   "ok": true,
+   "what": "the person accepted two suggestions and dismissed one"
+  },
+  {
+   "ok": true,
+   "what": "accepting the missing table added exactly one object; the chair went onto its table"
+  },
+  {
+   "ok": true,
+   "what": "the accepted suggested table is the person's label: human-confirmed, suggestedBy vlm"
+  },
+  {
+   "ok": true,
+   "what": "the accepted suggested chair is the person's label, whatever its table's own state"
+  },
+  {
+   "ok": true,
+   "what": "the dismissed suggestion is listed as teacher-suggested and is not an object"
+  },
+  {
+   "ok": true,
+   "what": "the person's confirm and reject are exported as such"
+  },
+  {
+   "ok": true,
+   "what": "training targets are exactly the person's labels; unverified objects are ignored, not taught as background; rejections are background"
+  },
+  {
+   "ok": true,
+   "what": "a new version was trained, exported and packaged with its own sha256 — outside the repository"
+  },
+  {
+   "ok": true,
+   "what": "the app loaded the new version through its own loader, checked by sha256"
+  },
+  {
+   "ok": true,
+   "what": "a version whose bytes do not match its pin is refused, and the analysis completes on the classical path"
+  },
+  {
+   "ok": true,
+   "what": "with no override the pinned version runs again: rollback is re-pinning"
+  }
+ ],
+ "passed": 12,
+ "failed": 0
+}

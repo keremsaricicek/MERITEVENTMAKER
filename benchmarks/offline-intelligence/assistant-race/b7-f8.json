@@ -1,0 +1,6124 @@
+{
+ "summary": {
+  "label": "b7",
+  "at": "2026-10-31T13:52:27.991Z",
+  "original": {
+   "rules": {
+    "n": 35,
+    "right": 1,
+    "wrongChanges": 0
+   },
+   "model": {
+    "n": 35,
+    "right": 0.971,
+    "wrongChanges": 0
+   },
+   "both": {
+    "n": 35,
+    "right": 1,
+    "wrongChanges": 0
+   }
+  },
+  "variant": {
+   "rules": {
+    "n": 35,
+    "right": 0.457,
+    "wrongChanges": 0
+   },
+   "model": {
+    "n": 35,
+    "right": 0.914,
+    "wrongChanges": 0
+   },
+   "both": {
+    "n": 35,
+    "right": 0.857,
+    "wrongChanges": 0
+   }
+  },
+  "deep": {
+   "rules": {
+    "n": 15,
+    "right": 0.533,
+    "wrongChanges": 1
+   },
+   "model": {
+    "n": 15,
+    "right": 0.733,
+    "wrongChanges": 1
+   },
+   "both": {
+    "n": 15,
+    "right": 0.8,
+    "wrongChanges": 1
+   }
+  },
+  "fresh": {
+   "rules": {
+    "n": 40,
+    "right": 0.475,
+    "wrongChanges": 1
+   },
+   "model": {
+    "n": 40,
+    "right": 0.9,
+    "wrongChanges": 0
+   },
+   "both": {
+    "n": 40,
+    "right": 0.825,
+    "wrongChanges": 1
+   }
+  },
+  "medianSeconds": 3.291
+ },
+ "rows": [
+  {
+   "set": "original",
+   "id": "Q1",
+   "text": "Ahmet Yılmaz Sezen Aksu konserinde nerede oturuyordu?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Ahmet Yılmaz T12, koltuk 4 — geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Ahmet Yılmaz T12, koltuk 4 — geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Ahmet Yılmaz",
+     "phone": null,
+     "event": "sezen aksu konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.923
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Ahmet Yılmaz T12, koltuk 4 — geldi."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q2",
+   "text": "Ahmet Yılmaz kaç konserimize geldi?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Ahmet Yılmaz 2 etkinliğimize geldi: Sezen Aksu Konseri (15 Mart 2026), Tarkan Konseri (20 Haziran 2026). Yeri olup gelmediği: Mabel Matiz Konseri."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Ahmet Yılmaz 2 etkinliğimize geldi: Sezen Aksu Konseri (15 Mart 2026), Tarkan Konseri (20 Haziran 2026). Yeri olup gelmediği: Mabel Matiz Konseri.",
+    "reading": {
+     "kind": "question",
+     "intent": "attended",
+     "person": "Ahmet Yılmaz",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.737
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Ahmet Yılmaz 2 etkinliğimize geldi: Sezen Aksu Konseri (15 Mart 2026), Tarkan Konseri (20 Haziran 2026). Yeri olup gelmediği: Mabel Matiz Konseri."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q3",
+   "text": "Ayşe Demir hangi konserlere geldi?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Ayşe Demir adında 2 kişi var (05332222222 / 05449999999). Hangisi? Telefonunu yazabilirsin."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Ayşe Demir adında 2 kişi var (05332222222 / 05449999999). Hangisi? Telefonunu yazabilirsin.",
+    "reading": {
+     "kind": "question",
+     "intent": "attended",
+     "person": "Ayşe Demir",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.515
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Ayşe Demir adında 2 kişi var (05332222222 / 05449999999). Hangisi? Telefonunu yazabilirsin."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q4",
+   "text": "0544 999 99 99 numaralı Ayşe Demir Tarkan konserinde nerede oturdu?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ayşe Demir T07, koltuk 3 — geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ayşe Demir T07, koltuk 3 — geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Ayşe Demir",
+     "phone": "0544 999 99 99",
+     "event": "tarkan konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.718
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ayşe Demir T07, koltuk 3 — geldi."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q5",
+   "text": "Mehmet Kaya Sezen Aksu konserine kaç kişi geldi?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Mehmet Kaya T08, koltuk 5–6–7, 3 kişi — geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": false,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: 5 kişi geldi (planlanan 7).",
+    "reading": {
+     "kind": "question",
+     "intent": "eventCount",
+     "person": null,
+     "phone": null,
+     "event": "sezen aksu konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.908
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Mehmet Kaya T08, koltuk 5–6–7, 3 kişi — geldi."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q6",
+   "text": "Tarkan konserinde kaç kişi vardı?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri: 4 kişi geldi (planlanan 4)."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri: 4 kişi geldi (planlanan 4).",
+    "reading": {
+     "kind": "question",
+     "intent": "eventCount",
+     "person": null,
+     "phone": null,
+     "event": "tarkan konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.676
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri: 4 kişi geldi (planlanan 4)."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q7",
+   "text": "Yılbaşı galasında kimler henüz masaya oturtulmadı?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Masası olmayanlar: Ahmet Yılmaz, Zeynep Arslan, Mehmet Kaya."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Masası olmayanlar: Ahmet Yılmaz, Zeynep Arslan, Mehmet Kaya.",
+    "reading": {
+     "kind": "question",
+     "intent": "unassigned",
+     "person": null,
+     "phone": null,
+     "event": "yılbaşı galası",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.015
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Masası olmayanlar: Ahmet Yılmaz, Zeynep Arslan, Mehmet Kaya."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q8",
+   "text": "Can Öztürk hangi konserlerimize geldi?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Can Öztürk 0 etkinliğimize geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Can Öztürk 0 etkinliğimize geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "attended",
+     "person": "Can Öztürk",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.749
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Can Öztürk 0 etkinliğimize geldi."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q9",
+   "text": "Selin Ak nerede oturuyor?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Selin Ak için kayıt yok."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Selin Ak için kayıt yok.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Selin Ak",
+     "phone": null,
+     "event": "neden",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.678
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Selin Ak için kayıt yok."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q10",
+   "text": "Son konserde Ahmet nerede oturacaktı?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri (10 Eylül 2026): Ahmet Yılmaz T12, koltuk 4 — yeri vardı ama gelmedi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri (10 Eylül 2026): Ahmet Yılmaz T12, koltuk 4 — yeri vardı ama gelmedi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Ahmet",
+     "phone": null,
+     "event": "son konser",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.674
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri (10 Eylül 2026): Ahmet Yılmaz T12, koltuk 4 — yeri vardı ama gelmedi."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q11",
+   "text": "Elif Şen Sezen Aksu konserine geldi mi?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Elif Şen T08, koltuk 1–2, 2 kişi — yeri vardı ama gelmedi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Elif Şen T08, koltuk 1–2, 2 kişi — yeri vardı ama gelmedi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Elif Şen",
+     "phone": null,
+     "event": "sezen aksu konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.139
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Elif Şen T08, koltuk 1–2, 2 kişi — yeri vardı ama gelmedi."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q12",
+   "text": "Harbiye'deki konserlerde Elif Şen nerelerde oturdu?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: T08, koltuk 1–2 (gelmedi); Tarkan Konseri: T02, koltuk 1–2."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: T08, koltuk 1–2 (gelmedi); Tarkan Konseri: T02, koltuk 1–2.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Elif Şen",
+     "phone": null,
+     "event": "harbiye",
+     "many": true,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.058
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: T08, koltuk 1–2 (gelmedi); Tarkan Konseri: T02, koltuk 1–2."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q13",
+   "text": "Zeynep Arslan daha önce VIP masada oturdu mu?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet: Mabel Matiz Konseri — VIP01."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet: Mabel Matiz Konseri — VIP01.",
+    "reading": {
+     "kind": "question",
+     "intent": "vipBefore",
+     "person": "Zeynep Arslan",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.938
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet: Mabel Matiz Konseri — VIP01."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q14",
+   "text": "Mabel Matiz konserine gelmeyenler kimdi?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Gelmeyenler: Ahmet Yılmaz."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Gelmeyenler: Ahmet Yılmaz.",
+    "reading": {
+     "kind": "question",
+     "intent": "noShow",
+     "person": null,
+     "phone": null,
+     "event": "mabel matiz konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.859
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Gelmeyenler: Ahmet Yılmaz."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q15",
+   "text": "Hangi konserde en çok kişi vardı?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: 5 kişi geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: 5 kişi geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "mostPeople",
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.575
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: 5 kişi geldi."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q16",
+   "text": "Haziranda hangi etkinliğimiz vardı?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026)."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026).",
+    "reading": {
+     "kind": "question",
+     "intent": "whichEvent",
+     "person": null,
+     "phone": null,
+     "event": "Haziran",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.677
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026)."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q17",
+   "text": "Mehmet Kaya her seferinde aynı masada mı oturdu?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet, hep T08 masasında oturdu (2 etkinlik)."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet, hep T08 masasında oturdu (2 etkinlik).",
+    "reading": {
+     "kind": "question",
+     "intent": "sameTable",
+     "person": "Mehmet Kaya",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.974
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet, hep T08 masasında oturdu (2 etkinlik)."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q18",
+   "text": "ahmet yilmaz tarkanda kacinci masadaydi",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ahmet Yılmaz T05, koltuk 2 — geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ahmet Yılmaz T05, koltuk 2 — geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "ahmet yilmaz",
+     "phone": null,
+     "event": "tarkan",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.01
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ahmet Yılmaz T05, koltuk 2 — geldi."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q19",
+   "text": "Galada T07'de kim var?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "T07: Ayşe Demir."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "T07: Ayşe Demir.",
+    "reading": {
+     "kind": "question",
+     "intent": "whoAtTable",
+     "person": null,
+     "phone": null,
+     "event": "galada",
+     "many": false,
+     "table": "T07",
+     "steps": []
+    },
+    "seconds": 2.846
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "T07: Ayşe Demir."
+   }
+  },
+  {
+   "set": "original",
+   "id": "Q20",
+   "text": "Geçen yılbaşında Ahmet nerede oturdu?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Bu etkinlik kayıtlarda yok."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Bu etkinlik kayıtlarda yok.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Ahmet",
+     "phone": null,
+     "event": "gecen yilbaşı",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.016
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Bu etkinlik kayıtlarda yok."
+   }
+  },
+  {
+   "set": "original",
+   "id": "C1",
+   "text": "Ahmet Yılmaz'ı Sezen Aksu konserindeki yerine oturt",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t12",
+      [
+       3
+      ]
+     ]
+    ]
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t12",
+      [
+       3
+      ]
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "copySeat",
+       "guest": "Ahmet Yılmaz",
+       "table": null,
+       "from": "sezen aksu konseri",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.34
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t12",
+      [
+       3
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "set": "original",
+   "id": "C2",
+   "text": "Ahmet'i geçen konserdeki yerine oturt",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t12",
+      [
+       3
+      ]
+     ]
+    ]
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t12",
+      [
+       3
+      ]
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "copySeat",
+       "guest": "Ahmet",
+       "table": null,
+       "from": "son konser",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.675
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t12",
+      [
+       3
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "set": "original",
+   "id": "C3",
+   "text": "Zeynep Arslan'ı VIP01'e al",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg3",
+      "vip01",
+      null
+     ]
+    ]
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg3",
+      "vip01",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Zeynep Arslan",
+       "table": "VIP01",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.97
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg3",
+      "vip01",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "set": "original",
+   "id": "C4",
+   "text": "Can Öztürk'ü sil",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "deleteGuest",
+      "gg4"
+     ]
+    ]
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "deleteGuest",
+      "gg4"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "deleteGuest",
+       "guest": "Can Öztürk",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.686
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "deleteGuest",
+      "gg4"
+     ]
+    ]
+   }
+  },
+  {
+   "set": "original",
+   "id": "C5",
+   "text": "T05'e Burak Şahin +1 ekle",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "addGuest",
+      "Burak Şahin",
+      2
+     ],
+     [
+      "assign",
+      "new1",
+      "t05",
+      null
+     ]
+    ]
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "addGuest",
+      "Burak Şahin",
+      2
+     ],
+     [
+      "assign",
+      "new1",
+      "t05",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "addGuest",
+       "guest": null,
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": "Burak Şahin",
+       "pax": 2,
+       "fromTable": null
+      },
+      {
+       "op": "assign",
+       "guest": "Burak Şahin",
+       "table": "T05",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 7.57
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "addGuest",
+      "Burak Şahin",
+      2
+     ],
+     [
+      "assign",
+      "new1",
+      "t05",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "set": "original",
+   "id": "C6",
+   "text": "Mehmet Kaya'yı T20'ye oturt",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Mehmet Kaya",
+       "table": "T20",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.227
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "original",
+   "id": "C7",
+   "text": "Tarkan konserinde Ahmet'i T01'e taşı",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Ahmet",
+       "table": "T01",
+       "from": "tarkan konseri",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.226
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "original",
+   "id": "C8",
+   "text": "Mehmet Kaya'yı Mabel Matiz konserindeki masasına koy",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg5",
+      "t08",
+      [
+       0,
+       1
+      ]
+     ]
+    ]
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg5",
+      "t08",
+      [
+       0,
+       1
+      ]
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "copySeat",
+       "guest": "Mehmet Kaya",
+       "table": null,
+       "from": "mabel matiz konseri",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.68
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg5",
+      "t08",
+      [
+       0,
+       1
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "set": "original",
+   "id": "C9",
+   "text": "Ayşe Demir'i masadan kaldır",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "unassign",
+      "gg2"
+     ]
+    ]
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "unassign",
+      "gg2"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "unassign",
+       "guest": "Ayşe Demir",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.747
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "unassign",
+      "gg2"
+     ]
+    ]
+   }
+  },
+  {
+   "set": "original",
+   "id": "C10",
+   "text": "Ayşe Demir'i Tarkan'daki yerine oturt",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "copySeat",
+       "guest": "Ayşe Demir",
+       "table": null,
+       "from": "tarkan",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.846
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "original",
+   "id": "C11",
+   "text": "Selin Ak'ı T03'e oturt",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Selin Ak",
+       "table": "T03",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.904
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "original",
+   "id": "C12",
+   "text": "Zeynep'i Ahmet'in yanına oturt",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "nextTo",
+       "guest": "Zeynep",
+       "table": null,
+       "from": null,
+       "other": "ahmet",
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.819
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "original",
+   "id": "C13",
+   "text": "T02'deki herkesi T03'e taşı",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg4",
+      "t03",
+      null
+     ]
+    ]
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg4",
+      "t03",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "moveTable",
+       "guest": null,
+       "table": "T03",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": "T02"
+      }
+     ]
+    },
+    "seconds": 4.923
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg4",
+      "t03",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "set": "original",
+   "id": "C14",
+   "text": "Mehmet Kaya +2 olsun",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setPax",
+      "gg5",
+      3
+     ]
+    ]
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setPax",
+      "gg5",
+      3
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "setPax",
+       "guest": "Mehmet Kaya",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": 3,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.012
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setPax",
+      "gg5",
+      3
+     ]
+    ]
+   }
+  },
+  {
+   "set": "original",
+   "id": "C15",
+   "text": "Can Öztürk'ü VIP yap",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setVip",
+      "gg4",
+      "VIP"
+     ]
+    ]
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setVip",
+      "gg4",
+      "VIP"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "setVip",
+       "guest": "Can Öztürk",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.983
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setVip",
+      "gg4",
+      "VIP"
+     ]
+    ]
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dq1",
+   "text": "Geçen haziranda yaptığımız konserde, hani Tarkan'ın sahne aldığı, Ahmet Yılmaz tam olarak hangi masada ve kaçıncı koltukta oturuyordu?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ahmet Yılmaz T05, koltuk 2 — geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": false,
+    "wrongChange": false,
+    "answer": "Tarkan için kayıt yok.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Tarkan",
+     "phone": null,
+     "event": "geçen hazirana",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.028
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ahmet Yılmaz T05, koltuk 2 — geldi."
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dq2",
+   "text": "Elif Şen'in bugüne kadar etkinliklerimizden kaçına gerçekten geldiğini, yer ayırdığımız ama gelmediği konserleri de ayırarak söyler misin?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": "Bu etkinlik kayıtlarda yok."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Elif Şen 1 etkinliğimize geldi: Tarkan Konseri (20 Haziran 2026). Yeri olup gelmediği: Sezen Aksu Konseri.",
+    "reading": {
+     "kind": "question",
+     "intent": "attended",
+     "person": "Elif Şen",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.852
+   },
+   "both": {
+    "right": false,
+    "wrongChange": false,
+    "answer": "Bu etkinlik kayıtlarda yok."
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dq3",
+   "text": "Mehmet Kaya her konserde aynı masayı mı tercih ediyor, yoksa her seferinde değişiyor mu?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet, hep T08 masasında oturdu (2 etkinlik)."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet, hep T08 masasında oturdu (2 etkinlik).",
+    "reading": {
+     "kind": "question",
+     "intent": "sameTable",
+     "person": "Mehmet Kaya",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.978
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet, hep T08 masasında oturdu (2 etkinlik)."
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dq4",
+   "text": "Bu yılki konserlerimiz arasında en kalabalık olanı, yani en çok misafirin gerçekten geldiği hangisiydi?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: 5 kişi geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "mostPeople",
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.586
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: 5 kişi geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "mostPeople",
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.586
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dq5",
+   "text": "Mabel Matiz konserinde yeri hazır olduğu halde gelmeyen misafirlerimiz kimlerdi?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Gelmeyenler: Ahmet Yılmaz."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Gelmeyenler: Ahmet Yılmaz.",
+    "reading": {
+     "kind": "question",
+     "intent": "noShow",
+     "person": null,
+     "phone": null,
+     "event": "mabel matiz konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.128
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Gelmeyenler: Ahmet Yılmaz."
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dq6",
+   "text": "Yılbaşı galası için henüz hiçbir masaya yerleştirmediğimiz misafirleri listeler misin?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Masası olmayanlar: Ahmet Yılmaz, Zeynep Arslan, Mehmet Kaya.",
+    "reading": {
+     "kind": "question",
+     "intent": "unassigned",
+     "person": null,
+     "phone": null,
+     "event": "yılbaşı galası",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.931
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Masası olmayanlar: Ahmet Yılmaz, Zeynep Arslan, Mehmet Kaya.",
+    "reading": {
+     "kind": "question",
+     "intent": "unassigned",
+     "person": null,
+     "phone": null,
+     "event": "yılbaşı galası",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.931
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dq7",
+   "text": "Zeynep Arslan daha önceki etkinliklerimizde hiç VIP bölümünde ağırlandı mı?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet: Mabel Matiz Konseri — VIP01."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet: Mabel Matiz Konseri — VIP01.",
+    "reading": {
+     "kind": "question",
+     "intent": "vipBefore",
+     "person": "Zeynep Arslan",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.123
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet: Mabel Matiz Konseri — VIP01."
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dq8",
+   "text": "Sezen Aksu konserine Mehmet Kaya yanında kaç kişiyle birlikte gelmişti, hatırlıyor musun?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Mehmet Kaya T08, koltuk 5–6–7, 3 kişi — geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": false,
+    "wrongChange": false,
+    "answer": "Sezen Aksu için kayıt yok.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Sezen Aksu",
+     "phone": null,
+     "event": "sezen aksu konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.093
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Mehmet Kaya T08, koltuk 5–6–7, 3 kişi — geldi."
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dc1",
+   "text": "Ahmet Yılmaz'ı Sezen Aksu konserinde oturduğu yere, Zeynep Arslan'ı da VIP01'e yerleştir",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t12",
+      [
+       3
+      ]
+     ],
+     [
+      "assign",
+      "gg3",
+      "vip01",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "copySeat",
+       "guest": "Ahmet Yılmaz",
+       "table": null,
+       "from": "sezen aksu konseri",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      },
+      {
+       "op": "assign",
+       "guest": "Zeynep Arslan",
+       "table": "VIP01",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 7.905
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t12",
+      [
+       3
+      ]
+     ],
+     [
+      "assign",
+      "gg3",
+      "vip01",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "copySeat",
+       "guest": "Ahmet Yılmaz",
+       "table": null,
+       "from": "sezen aksu konseri",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      },
+      {
+       "op": "assign",
+       "guest": "Zeynep Arslan",
+       "table": "VIP01",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 7.905
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dc2",
+   "text": "Can Öztürk'ü listeden tamamen çıkar ve yerine Burak Şahin'i bir misafiriyle birlikte T05'e ekle",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": false,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "deleteGuest",
+       "guest": "Can Öztürk",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      },
+      {
+       "op": "addGuest",
+       "guest": null,
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": "Burak Şahin",
+       "pax": 1,
+       "fromTable": null
+      },
+      {
+       "op": "assign",
+       "guest": "Burak Şahin",
+       "table": "T05",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 10.055
+   },
+   "both": {
+    "right": false,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "deleteGuest",
+       "guest": "Can Öztürk",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      },
+      {
+       "op": "addGuest",
+       "guest": null,
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": "Burak Şahin",
+       "pax": 1,
+       "fromTable": null
+      },
+      {
+       "op": "assign",
+       "guest": "Burak Şahin",
+       "table": "T05",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 10.055
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dc3",
+   "text": "Mehmet Kaya'nın grubu bir kişi daha büyüdü; kişi sayısını 3 yap ve onu VIP olarak işaretle",
+   "rules": {
+    "right": false,
+    "wrongChange": true,
+    "calls": [
+     [
+      "setVip",
+      "gg5",
+      "VIP"
+     ]
+    ]
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": false,
+    "wrongChange": true,
+    "calls": [
+     [
+      "addGuest",
+      "Mehmet Kaya",
+      4
+     ],
+     [
+      "setPax",
+      "gg5",
+      3
+     ],
+     [
+      "setVip",
+      "gg5",
+      "VIP"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "addGuest",
+       "guest": null,
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": "Mehmet Kaya",
+       "pax": 4,
+       "fromTable": null
+      },
+      {
+       "op": "setPax",
+       "guest": "Mehmet Kaya",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": 3,
+       "fromTable": null
+      },
+      {
+       "op": "setVip",
+       "guest": "Mehmet Kaya",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 10.413
+   },
+   "both": {
+    "right": false,
+    "wrongChange": true,
+    "calls": [
+     [
+      "setVip",
+      "gg5",
+      "VIP"
+     ]
+    ]
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dc4",
+   "text": "T02'de oturan herkesi T03'e kaydır, sonra Ayşe Demir'i masasından kaldır",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg4",
+      "t03",
+      null
+     ],
+     [
+      "unassign",
+      "gg2"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "moveTable",
+       "guest": null,
+       "table": "T03",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": "T02"
+      },
+      {
+       "op": "unassign",
+       "guest": "Ayşe Demir",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 7.458
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg4",
+      "t03",
+      null
+     ],
+     [
+      "unassign",
+      "gg2"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "moveTable",
+       "guest": null,
+       "table": "T03",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": "T02"
+      },
+      {
+       "op": "unassign",
+       "guest": "Ayşe Demir",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 7.458
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dc5",
+   "text": "Tarkan konserindeki oturma düzeninde Ayşe Demir'i T01'e al",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Ayşe Demir",
+       "table": "T01",
+       "from": "tarkan konseri",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.21
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dc6",
+   "text": "Selin Ak'ı T03'e oturt; böyle biri listede yoksa hiçbir şey değiştirme",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Selin Ak",
+       "table": "T03",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      },
+      {
+       "op": "deleteGuest",
+       "guest": "bölge",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 7.795
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "deep",
+   "id": "dc7",
+   "text": "Zeynep'i Ahmet'in yanına koy, ama Ahmet'in bu etkinlikte yeri yoksa bana sor",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "nextTo",
+       "guest": "Zeynep",
+       "table": null,
+       "from": null,
+       "other": "ahmet",
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      },
+      {
+       "op": "unassign",
+       "guest": "ahmet",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 7.381
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq1",
+   "text": "Ahmet Bey Tarkan'da hangi masada oturuyordu acaba",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ahmet Yılmaz T05, koltuk 2 — geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ahmet Yılmaz T05, koltuk 2 — geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Ahmet",
+     "phone": null,
+     "event": "bey tarkan",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.801
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ahmet Yılmaz T05, koltuk 2 — geldi."
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq2",
+   "text": "mehmet kaya sezen aksuya kac kisiyle gelmisti",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Mehmet Kaya T08, koltuk 5–6–7, 3 kişi — geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": false,
+    "wrongChange": false,
+    "answer": "mehmet kaya sezen için kayıt yok.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "mehmet kaya sezen",
+     "phone": null,
+     "event": "aksu",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.073
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Mehmet Kaya T08, koltuk 5–6–7, 3 kişi — geldi."
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq3",
+   "text": "Elif Şen şimdiye kadar kaç konserimizde bulundu?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Elif Şen 1 etkinliğimize geldi: Tarkan Konseri (20 Haziran 2026). Yeri olup gelmediği: Sezen Aksu Konseri.",
+    "reading": {
+     "kind": "question",
+     "intent": "attended",
+     "person": "Elif Şen",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.885
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Elif Şen 1 etkinliğimize geldi: Tarkan Konseri (20 Haziran 2026). Yeri olup gelmediği: Sezen Aksu Konseri.",
+    "reading": {
+     "kind": "question",
+     "intent": "attended",
+     "person": "Elif Şen",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.885
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq4",
+   "text": "Zeynep Arslan'ı daha önce VIP'te ağırlamış mıydık?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet: Mabel Matiz Konseri — VIP01."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet: Mabel Matiz Konseri — VIP01.",
+    "reading": {
+     "kind": "question",
+     "intent": "vipBefore",
+     "person": "Zeynep Arslan",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.458
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet: Mabel Matiz Konseri — VIP01."
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq5",
+   "text": "Mabel Matiz'de kaç misafir gerçekten geldi?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri: 3 kişi geldi (planlanan 4).",
+    "reading": {
+     "kind": "question",
+     "intent": "eventCount",
+     "person": null,
+     "phone": null,
+     "event": "mabel matiz",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.043
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri: 3 kişi geldi (planlanan 4).",
+    "reading": {
+     "kind": "question",
+     "intent": "eventCount",
+     "person": null,
+     "phone": null,
+     "event": "mabel matiz",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.043
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq6",
+   "text": "galada henuz yeri belli olmayan kimler var",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Masası olmayanlar: Ahmet Yılmaz, Zeynep Arslan, Mehmet Kaya.",
+    "reading": {
+     "kind": "question",
+     "intent": "unassigned",
+     "person": null,
+     "phone": null,
+     "event": "galada",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.753
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Masası olmayanlar: Ahmet Yılmaz, Zeynep Arslan, Mehmet Kaya.",
+    "reading": {
+     "kind": "question",
+     "intent": "unassigned",
+     "person": null,
+     "phone": null,
+     "event": "galada",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.753
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq7",
+   "text": "Sezen Aksu gecesinde gelmeyenleri sayar mısın",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Gelmeyenler: Elif Şen."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Gelmeyenler: Elif Şen.",
+    "reading": {
+     "kind": "question",
+     "intent": "noShow",
+     "person": null,
+     "phone": null,
+     "event": "sezen aksu gecesi",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.139
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Gelmeyenler: Elif Şen."
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq8",
+   "text": "Yılbaşı galasında T07 masasına kimi koyduk?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": false,
+    "wrongChange": false,
+    "answer": "",
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "copySeat",
+       "guest": "Yılbaşı",
+       "table": "T07",
+       "from": "galası",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.299
+   },
+   "both": {
+    "right": false,
+    "wrongChange": false,
+    "answer": "",
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "copySeat",
+       "guest": "Yılbaşı",
+       "table": "T07",
+       "from": "galası",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.299
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq9",
+   "text": "Eylül ayında hangi etkinliği yapmıştık?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri (10 Eylül 2026)."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri (10 Eylül 2026).",
+    "reading": {
+     "kind": "question",
+     "intent": "whichEvent",
+     "person": null,
+     "phone": null,
+     "event": "eylül",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.778
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri (10 Eylül 2026)."
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq10",
+   "text": "Bu sene en kalabalık konserimiz hangisiydi",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: 5 kişi geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "mostPeople",
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.74
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: 5 kişi geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "mostPeople",
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.74
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq11",
+   "text": "Mehmet Kaya hep aynı masada mı oturuyor?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet, hep T08 masasında oturdu (2 etkinlik)."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet, hep T08 masasında oturdu (2 etkinlik).",
+    "reading": {
+     "kind": "question",
+     "intent": "sameTable",
+     "person": "Mehmet Kaya",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.988
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet, hep T08 masasında oturdu (2 etkinlik)."
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq12",
+   "text": "Ahmet Yılmaz kaç kere bize geldi, söyler misin",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Ahmet Yılmaz 2 etkinliğimize geldi: Sezen Aksu Konseri (15 Mart 2026), Tarkan Konseri (20 Haziran 2026). Yeri olup gelmediği: Mabel Matiz Konseri.",
+    "reading": {
+     "kind": "question",
+     "intent": "attended",
+     "person": "Ahmet Yılmaz",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.746
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Ahmet Yılmaz 2 etkinliğimize geldi: Sezen Aksu Konseri (15 Mart 2026), Tarkan Konseri (20 Haziran 2026). Yeri olup gelmediği: Mabel Matiz Konseri.",
+    "reading": {
+     "kind": "question",
+     "intent": "attended",
+     "person": "Ahmet Yılmaz",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.746
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq13",
+   "text": "0544 999 99 99 telefonlu Ayşe Demir Tarkan konserinde nerede oturdu",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ayşe Demir T07, koltuk 3 — geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ayşe Demir T07, koltuk 3 — geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Ayşe Demir",
+     "phone": "0544 999 99 99",
+     "event": "tarkan konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.807
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ayşe Demir T07, koltuk 3 — geldi."
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq14",
+   "text": "Can Öztürk galada nerede oturacak?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Yılbaşı Galası (31 Aralık 2026): Can Öztürk T02, koltuk 1."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Yılbaşı Galası (31 Aralık 2026): Can Öztürk T02, koltuk 1.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Can Öztürk",
+     "phone": null,
+     "event": "galat",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.954
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Yılbaşı Galası (31 Aralık 2026): Can Öztürk T02, koltuk 1."
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq15",
+   "text": "Zeynep Mabel Matiz konserinde hangi masadaydı",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri (10 Eylül 2026): Zeynep Arslan VIP01, koltuk 1 — geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri (10 Eylül 2026): Zeynep Arslan VIP01, koltuk 1 — geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Zeynep",
+     "phone": null,
+     "event": "mabel matiz konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.225
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri (10 Eylül 2026): Zeynep Arslan VIP01, koltuk 1 — geldi."
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq16",
+   "text": "Elif Şen'in Harbiye'deki konserlerde oturduğu masalar hangileriydi?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: T08, koltuk 1–2 (gelmedi); Tarkan Konseri: T02, koltuk 1–2.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Elif Şen",
+     "phone": null,
+     "event": "harbiye",
+     "many": true,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.263
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: T08, koltuk 1–2 (gelmedi); Tarkan Konseri: T02, koltuk 1–2.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Elif Şen",
+     "phone": null,
+     "event": "harbiye",
+     "many": true,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.263
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq17",
+   "text": "Tarkan konserinde T05'te kim oturdu",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "T05: Ahmet Yılmaz."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "T05: Ahmet Yılmaz.",
+    "reading": {
+     "kind": "question",
+     "intent": "whoAtTable",
+     "person": null,
+     "phone": null,
+     "event": "tarkan konseri",
+     "many": false,
+     "table": "T05",
+     "steps": []
+    },
+    "seconds": 2.988
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "T05: Ahmet Yılmaz."
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq18",
+   "text": "Mart ayında hangi konser vardı?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026).",
+    "reading": {
+     "kind": "question",
+     "intent": "whichEvent",
+     "person": null,
+     "phone": null,
+     "event": "mart",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.546
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026).",
+    "reading": {
+     "kind": "question",
+     "intent": "whichEvent",
+     "person": null,
+     "phone": null,
+     "event": "mart",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.546
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq19",
+   "text": "son konserimize kaç kişi katıldı",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri: 3 kişi geldi (planlanan 4)."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri: 3 kişi geldi (planlanan 4).",
+    "reading": {
+     "kind": "question",
+     "intent": "eventCount",
+     "person": null,
+     "phone": null,
+     "event": "son konser",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.577
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri: 3 kişi geldi (planlanan 4)."
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fq20",
+   "text": "Ahmet Yılmaz Mabel Matiz konserine gelmiş miydi?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri (10 Eylül 2026): Ahmet Yılmaz T12, koltuk 4 — yeri vardı ama gelmedi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Ahmet Yılmaz",
+     "phone": null,
+     "event": "mabel matiz konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.18
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri (10 Eylül 2026): Ahmet Yılmaz T12, koltuk 4 — yeri vardı ama gelmedi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Ahmet Yılmaz",
+     "phone": null,
+     "event": "mabel matiz konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.18
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc1",
+   "text": "Zeynep Arslan'ı T04'e yerleştiriver",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg3",
+      "t04",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Zeynep Arslan",
+       "table": "T04",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.365
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg3",
+      "t04",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Zeynep Arslan",
+       "table": "T04",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.365
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc2",
+   "text": "ahmeti tarkandaki masasina gecir",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t05",
+      [
+       1
+      ]
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "copySeat",
+       "guest": "ahmet",
+       "table": null,
+       "from": "tarkand",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.958
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t05",
+      [
+       1
+      ]
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "copySeat",
+       "guest": "ahmet",
+       "table": null,
+       "from": "tarkand",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.958
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc3",
+   "text": "Mehmet Kaya'yı Zeynep'in yanına al",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "nextTo",
+       "guest": "Mehmet Kaya",
+       "table": null,
+       "from": null,
+       "other": "zeynep",
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.14
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc4",
+   "text": "T07'dekilerin hepsini T09'a geçir",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg2",
+      "t09",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "moveTable",
+       "guest": null,
+       "table": "T09",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": "T07"
+      }
+     ]
+    },
+    "seconds": 5.129
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg2",
+      "t09",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "moveTable",
+       "guest": null,
+       "table": "T09",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": "T07"
+      }
+     ]
+    },
+    "seconds": 5.129
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc5",
+   "text": "Can Öztürk masadan kalksın",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "unassign",
+      "gg4"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "unassign",
+       "guest": "Can Öztürk",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.11
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "unassign",
+      "gg4"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "unassign",
+       "guest": "Can Öztürk",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.11
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc6",
+   "text": "Ayşe Demir'i davetli listesinden çıkar",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "deleteGuest",
+      "gg2"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "deleteGuest",
+       "guest": "Ayşe Demir",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.835
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "deleteGuest",
+      "gg2"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "deleteGuest",
+       "guest": "Ayşe Demir",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.835
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc7",
+   "text": "Ahmet Yılmaz'ın kişi sayısı 2 olsun",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setPax",
+      "gg1",
+      2
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "setPax",
+       "guest": "Ahmet Yılmaz",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": 2,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.008
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setPax",
+      "gg1",
+      2
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "setPax",
+       "guest": "Ahmet Yılmaz",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": 2,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.008
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc8",
+   "text": "Mehmet Kaya'yı VIP misafir olarak işaretle",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setVip",
+      "gg5",
+      "VIP"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "setVip",
+       "guest": "Mehmet Kaya",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.213
+   },
+   "both": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc9",
+   "text": "Deniz Yurt ve eşini T06'ya ekle",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "addGuest",
+      "Deniz Yurt",
+      2
+     ],
+     [
+      "assign",
+      "new1",
+      "t06",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "addGuest",
+       "guest": null,
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": "Deniz Yurt",
+       "pax": 2,
+       "fromTable": null
+      },
+      {
+       "op": "assign",
+       "guest": "Deniz Yurt",
+       "table": "T06",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 7.4
+   },
+   "both": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc10",
+   "text": "Galaya Okan Er diye bir misafir ekle",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "addGuest",
+      "Okan Er",
+      1
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "addGuest",
+       "guest": null,
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": "Okan Er",
+       "pax": 1,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.815
+   },
+   "both": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc11",
+   "text": "Zeynep'i T15'e koy",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Zeynep",
+       "table": "T15",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.732
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc12",
+   "text": "Sezen Aksu konserinde Elif Şen'i T01'e oturt",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Elif Şen",
+       "table": "T01",
+       "from": "sezen aksu konseri",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.352
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc13",
+   "text": "Ahmet Yılmaz'ı T03'e, Mehmet Kaya'yı da T04'e oturt",
+   "rules": {
+    "right": false,
+    "wrongChange": true,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t03",
+      null
+     ]
+    ]
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t03",
+      null
+     ],
+     [
+      "assign",
+      "gg5",
+      "t04",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Ahmet Yılmaz",
+       "table": "T03",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      },
+      {
+       "op": "assign",
+       "guest": "Mehmet Kaya",
+       "table": "T04",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 7.604
+   },
+   "both": {
+    "right": false,
+    "wrongChange": true,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t03",
+      null
+     ]
+    ]
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc14",
+   "text": "Can Öztürk'ü VIP yap ve VIP01'e taşı",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setVip",
+      "gg4",
+      "VIP"
+     ],
+     [
+      "assign",
+      "gg4",
+      "vip01",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "setVip",
+       "guest": "Can Öztürk",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      },
+      {
+       "op": "assign",
+       "guest": "Can Öztürk",
+       "table": "VIP01",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 7.435
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setVip",
+      "gg4",
+      "VIP"
+     ],
+     [
+      "assign",
+      "gg4",
+      "vip01",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "setVip",
+       "guest": "Can Öztürk",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      },
+      {
+       "op": "assign",
+       "guest": "Can Öztürk",
+       "table": "VIP01",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 7.435
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc15",
+   "text": "mehmet kaya +1 olacak",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setPax",
+      "gg5",
+      2
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "setPax",
+       "guest": "mehmet kaya",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": 2,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.888
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setPax",
+      "gg5",
+      2
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "setPax",
+       "guest": "mehmet kaya",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": 2,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.888
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fc16",
+   "text": "Elif Şen'i son konserdeki yerine oturt",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "copySeat",
+       "guest": "Elif Şen",
+       "table": null,
+       "from": "son konser",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.803
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fu1",
+   "text": "Bugün çok yoruldum",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "unknown",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.409
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "unknown",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.409
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fu2",
+   "text": "Bana bir fıkra anlatır mısın",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "unknown",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.499
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "unknown",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.499
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fu3",
+   "text": "Salonun kirası ne kadar tutmuştu?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": false,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": null,
+     "phone": null,
+     "event": "salon",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.595
+   },
+   "both": {
+    "right": false,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": null,
+     "phone": null,
+     "event": "salon",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.595
+   }
+  },
+  {
+   "set": "fresh",
+   "id": "fu4",
+   "text": "Yarın hava yağmurlu mu olacak?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": false,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "question",
+     "intent": "whichEvent",
+     "person": null,
+     "phone": null,
+     "event": "yarın",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.69
+   },
+   "both": {
+    "right": false,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "question",
+     "intent": "whichEvent",
+     "person": null,
+     "phone": null,
+     "event": "yarın",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.69
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v1",
+   "text": "Sezen Aksu konserinde Ahmet Yılmaz hangi masadaydı?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Ahmet Yılmaz T12, koltuk 4 — geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Ahmet Yılmaz T12, koltuk 4 — geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Ahmet Yılmaz",
+     "phone": null,
+     "event": "sezen aksu konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.117
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Ahmet Yılmaz T12, koltuk 4 — geldi."
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v2",
+   "text": "ahmet yilmaz bugune kadar kac konserimize katildi",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Ahmet Yılmaz 2 etkinliğimize geldi: Sezen Aksu Konseri (15 Mart 2026), Tarkan Konseri (20 Haziran 2026). Yeri olup gelmediği: Mabel Matiz Konseri.",
+    "reading": {
+     "kind": "question",
+     "intent": "attended",
+     "person": "ahmet yilmaz",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.77
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Ahmet Yılmaz 2 etkinliğimize geldi: Sezen Aksu Konseri (15 Mart 2026), Tarkan Konseri (20 Haziran 2026). Yeri olup gelmediği: Mabel Matiz Konseri.",
+    "reading": {
+     "kind": "question",
+     "intent": "attended",
+     "person": "ahmet yilmaz",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.77
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v3",
+   "text": "Ayşe Demir kaç etkinliğimize gelmiş?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Ayşe Demir adında 2 kişi var (05332222222 / 05449999999). Hangisi? Telefonunu yazabilirsin.",
+    "reading": {
+     "kind": "question",
+     "intent": "attended",
+     "person": "Ayşe Demir",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.513
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Ayşe Demir adında 2 kişi var (05332222222 / 05449999999). Hangisi? Telefonunu yazabilirsin.",
+    "reading": {
+     "kind": "question",
+     "intent": "attended",
+     "person": "Ayşe Demir",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.513
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v4",
+   "text": "Tarkan konserinde 0544 999 99 99 telefonlu Ayşe Demir hangi koltuktaydı?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ayşe Demir T07, koltuk 3 — geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Ayşe Demir",
+     "phone": "0544 999 99 99",
+     "event": "tarkan konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.789
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ayşe Demir T07, koltuk 3 — geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Ayşe Demir",
+     "phone": "0544 999 99 99",
+     "event": "tarkan konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.789
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v5",
+   "text": "Mehmet Kaya Sezen Aksu'ya kaç kişiyle gelmişti?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Mehmet Kaya T08, koltuk 5–6–7, 3 kişi — geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Mehmet Kaya T08, koltuk 5–6–7, 3 kişi — geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Mehmet Kaya",
+     "phone": null,
+     "event": "sezen aksu",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.002
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Mehmet Kaya T08, koltuk 5–6–7, 3 kişi — geldi."
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v6",
+   "text": "Tarkan'a toplam kaç kişi geldi?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri: 4 kişi geldi (planlanan 4)."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri: 4 kişi geldi (planlanan 4).",
+    "reading": {
+     "kind": "question",
+     "intent": "eventCount",
+     "person": null,
+     "phone": null,
+     "event": "tarkan",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.465
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri: 4 kişi geldi (planlanan 4)."
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v7",
+   "text": "Galada masası olmayan misafirler kimler?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Masası olmayanlar: Ahmet Yılmaz, Zeynep Arslan, Mehmet Kaya.",
+    "reading": {
+     "kind": "question",
+     "intent": "unassigned",
+     "person": null,
+     "phone": null,
+     "event": "galada",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.607
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Masası olmayanlar: Ahmet Yılmaz, Zeynep Arslan, Mehmet Kaya.",
+    "reading": {
+     "kind": "question",
+     "intent": "unassigned",
+     "person": null,
+     "phone": null,
+     "event": "galada",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.607
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v8",
+   "text": "Can Öztürk bugüne kadar kaç konserimize geldi?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Can Öztürk 0 etkinliğimize geldi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Can Öztürk 0 etkinliğimize geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "attended",
+     "person": "Can Öztürk",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.895
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Can Öztürk 0 etkinliğimize geldi."
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v9",
+   "text": "Selin Ak'ın masası neresi?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Selin Ak için kayıt yok.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Selin Ak",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.988
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Selin Ak için kayıt yok.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Selin Ak",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.988
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v10",
+   "text": "Ahmet Mabel Matiz konserinde hangi masaya yerleştirilmişti?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri (10 Eylül 2026): Ahmet Yılmaz T12, koltuk 4 — yeri vardı ama gelmedi."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri (10 Eylül 2026): Ahmet Yılmaz T12, koltuk 4 — yeri vardı ama gelmedi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Ahmet",
+     "phone": null,
+     "event": "mabel matiz konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.336
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Mabel Matiz Konseri (10 Eylül 2026): Ahmet Yılmaz T12, koltuk 4 — yeri vardı ama gelmedi."
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v11",
+   "text": "Elif Şen Sezen Aksu konserine katıldı mı?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Elif Şen T08, koltuk 1–2, 2 kişi — yeri vardı ama gelmedi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Elif Şen",
+     "phone": null,
+     "event": "sezen aksu konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.525
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri (15 Mart 2026): Elif Şen T08, koltuk 1–2, 2 kişi — yeri vardı ama gelmedi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Elif Şen",
+     "phone": null,
+     "event": "sezen aksu konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.525
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v12",
+   "text": "Elif Şen hangi konserlerde nerelerde oturdu?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: T08, koltuk 1–2 (gelmedi); Tarkan Konseri: T02, koltuk 1–2."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": false,
+    "wrongChange": false,
+    "answer": "Elif Şen 1 etkinliğimize geldi: Tarkan Konseri (20 Haziran 2026). Yeri olup gelmediği: Sezen Aksu Konseri.",
+    "reading": {
+     "kind": "question",
+     "intent": "attended",
+     "person": "Elif Şen",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.73
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: T08, koltuk 1–2 (gelmedi); Tarkan Konseri: T02, koltuk 1–2."
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v13",
+   "text": "Zeynep Arslan geçmişte hiç VIP masada oturdu mu?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet: Mabel Matiz Konseri — VIP01."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet: Mabel Matiz Konseri — VIP01.",
+    "reading": {
+     "kind": "question",
+     "intent": "vipBefore",
+     "person": "Zeynep Arslan",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.291
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet: Mabel Matiz Konseri — VIP01."
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v14",
+   "text": "Mabel Matiz konserine kimler gelmedi?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Gelmeyenler: Ahmet Yılmaz."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Gelmeyenler: Ahmet Yılmaz.",
+    "reading": {
+     "kind": "question",
+     "intent": "noShow",
+     "person": null,
+     "phone": null,
+     "event": "mabel matiz konseri",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.193
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Gelmeyenler: Ahmet Yılmaz."
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v15",
+   "text": "En kalabalık konserimiz hangisiydi?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: 5 kişi geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "mostPeople",
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.757
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Sezen Aksu Konseri: 5 kişi geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "mostPeople",
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.757
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v16",
+   "text": "Haziran ayında hangi etkinliğimiz vardı?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026)."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026).",
+    "reading": {
+     "kind": "question",
+     "intent": "whichEvent",
+     "person": null,
+     "phone": null,
+     "event": "Haziran",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.908
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026)."
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v17",
+   "text": "Mehmet Kaya hep aynı masada mı oturuyor?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet, hep T08 masasında oturdu (2 etkinlik)."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet, hep T08 masasında oturdu (2 etkinlik).",
+    "reading": {
+     "kind": "question",
+     "intent": "sameTable",
+     "person": "Mehmet Kaya",
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.777
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Evet, hep T08 masasında oturdu (2 etkinlik)."
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v18",
+   "text": "ahmet tarkanda nerdeydi",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": ""
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ahmet Yılmaz T05, koltuk 2 — geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "ahmet",
+     "phone": null,
+     "event": "tarkan",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.88
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Tarkan Konseri (20 Haziran 2026): Ahmet Yılmaz T05, koltuk 2 — geldi.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "ahmet",
+     "phone": null,
+     "event": "tarkan",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 2.88
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v19",
+   "text": "Yılbaşı galasında T07'de kimler oturuyor?",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "answer": "Yılbaşı galasında için kayıt yok."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "T07: Ayşe Demir.",
+    "reading": {
+     "kind": "question",
+     "intent": "whoAtTable",
+     "person": null,
+     "phone": null,
+     "event": "yılbaşı galası",
+     "many": false,
+     "table": "T07",
+     "steps": []
+    },
+    "seconds": 3.059
+   },
+   "both": {
+    "right": false,
+    "wrongChange": false,
+    "answer": "Yılbaşı galasında için kayıt yok."
+   }
+  },
+  {
+   "set": "variant",
+   "id": "v20",
+   "text": "Geçen yılbaşı galasında Ahmet hangi masadaydı?",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Bu etkinlik kayıtlarda yok."
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Bu etkinlik kayıtlarda yok.",
+    "reading": {
+     "kind": "question",
+     "intent": "seatAt",
+     "person": "Ahmet",
+     "phone": null,
+     "event": "gecen yilbaşı galası",
+     "many": false,
+     "table": null,
+     "steps": []
+    },
+    "seconds": 3.424
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "answer": "Bu etkinlik kayıtlarda yok."
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w1",
+   "text": "Ahmet Yılmazı Sezen Aksu konserinde oturduğu yere oturt",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t12",
+      [
+       3
+      ]
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "copySeat",
+       "guest": "Ahmet Yılmaz",
+       "table": null,
+       "from": "sezen aksu konseri",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.576
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg1",
+      "t12",
+      [
+       3
+      ]
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "copySeat",
+       "guest": "Ahmet Yılmaz",
+       "table": null,
+       "from": "sezen aksu konseri",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.576
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w2",
+   "text": "Ahmet'i son konserdeki koltuğuna yerleştir",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": false,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Ahmet",
+       "table": null,
+       "from": "son konser",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.895
+   },
+   "both": {
+    "right": false,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Ahmet",
+       "table": null,
+       "from": "son konser",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.895
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w3",
+   "text": "Zeynep Arslan VIP01 masasına geçsin",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg3",
+      "vip01",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Zeynep Arslan",
+       "table": "VIP01",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.303
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg3",
+      "vip01",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Zeynep Arslan",
+       "table": "VIP01",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.303
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w4",
+   "text": "Can Öztürk'ü listeden çıkar",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "deleteGuest",
+      "gg4"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "deleteGuest",
+       "guest": "Can Öztürk",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.789
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "deleteGuest",
+      "gg4"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "deleteGuest",
+       "guest": "Can Öztürk",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.789
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w5",
+   "text": "Burak Şahin ve bir misafirini T05'e ekle",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "addGuest",
+      "Burak Şahin",
+      2
+     ],
+     [
+      "assign",
+      "new1",
+      "t05",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "addGuest",
+       "guest": null,
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": "Burak Şahin",
+       "pax": 2,
+       "fromTable": null
+      },
+      {
+       "op": "assign",
+       "guest": "Burak Şahin",
+       "table": "T05",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 7.769
+   },
+   "both": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w6",
+   "text": "Mehmet Kaya'yı T20 masasına al",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Mehmet Kaya",
+       "table": "T20",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.334
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w7",
+   "text": "Tarkan konserinde Ahmet'i T01'e oturt",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Ahmet",
+       "table": "T01",
+       "from": "tarkan konseri",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.133
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w8",
+   "text": "Mehmet Kaya'yı Mabel Matiz'de oturduğu masaya oturt",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": false,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Mehmet Kaya",
+       "table": null,
+       "from": "mabel matiz",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.342
+   },
+   "both": {
+    "right": false,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Mehmet Kaya",
+       "table": null,
+       "from": "mabel matiz",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.342
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w9",
+   "text": "Ayşe Demir'i masasından al",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "unassign",
+      "gg2"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "unassign",
+       "guest": "Ayşe Demir",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.744
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "unassign",
+      "gg2"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "unassign",
+       "guest": "Ayşe Demir",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.744
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w10",
+   "text": "Ayşe Demir'i Tarkan konserindeki koltuğuna koy",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "copySeat",
+       "guest": "Ayşe Demir",
+       "table": null,
+       "from": "tarkan konseri",
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 5.107
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w11",
+   "text": "Selin Ak'ı T03'e yerleştir",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Selin Ak",
+       "table": "T03",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.994
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "assign",
+       "guest": "Selin Ak",
+       "table": "T03",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.994
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w12",
+   "text": "Zeynep'i Ahmet'in yanına koy",
+   "rules": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "command",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "nextTo",
+       "guest": "Zeynep",
+       "table": null,
+       "from": null,
+       "other": "ahmet",
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.745
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": []
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w13",
+   "text": "T02'dekilerin hepsini T03'e geçir",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg4",
+      "t03",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "moveTable",
+       "guest": null,
+       "table": "T03",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": "T02"
+      }
+     ]
+    },
+    "seconds": 4.91
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "assign",
+      "gg4",
+      "t03",
+      null
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "moveTable",
+       "guest": null,
+       "table": "T03",
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": "T02"
+      }
+     ]
+    },
+    "seconds": 4.91
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w14",
+   "text": "Mehmet Kaya'nın kişi sayısını 3 yap",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "unknown",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setPax",
+      "gg5",
+      3
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "setPax",
+       "guest": "Mehmet Kaya",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": 3,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.922
+   },
+   "both": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setPax",
+      "gg5",
+      3
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "setPax",
+       "guest": "Mehmet Kaya",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": 3,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.922
+   }
+  },
+  {
+   "set": "variant",
+   "id": "w15",
+   "text": "Can Öztürk VIP olsun",
+   "rules": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   },
+   "rulesKind": "question",
+   "model": {
+    "right": true,
+    "wrongChange": false,
+    "calls": [
+     [
+      "setVip",
+      "gg4",
+      "VIP"
+     ]
+    ],
+    "reading": {
+     "kind": "command",
+     "intent": null,
+     "person": null,
+     "phone": null,
+     "event": null,
+     "many": false,
+     "table": null,
+     "steps": [
+      {
+       "op": "setVip",
+       "guest": "Can Öztürk",
+       "table": null,
+       "from": null,
+       "other": null,
+       "name": null,
+       "pax": null,
+       "fromTable": null
+      }
+     ]
+    },
+    "seconds": 4.723
+   },
+   "both": {
+    "right": false,
+    "wrongChange": false,
+    "calls": []
+   }
+  }
+ ]
+}

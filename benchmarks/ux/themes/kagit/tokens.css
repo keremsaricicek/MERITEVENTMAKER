@@ -1,0 +1,32 @@
+/* Theme proposal "kagit" (Kâğıt — sharpened warm paper). benchmarks/ux, 2026-11-02.
+   Drop-in: load AFTER src/styles.css. Redefines existing custom properties only.
+   Idea: keep the warm paper the product already has, but stop it reading as faded beige —
+   darker ink, firmer lines, ONE interaction blue (the plan's teal accent joins it). */
+:root{
+  --fp-table:#e4ddcf;--fp-table-line:#c3b9a6;--fp-chair:#fbf8f2;--fp-chair-line:#6a6252;
+  --fp-venue:rgba(92,82,60,.09);--fp-venue-line:rgba(70,60,40,.42);--fp-venue-ink:#3a3122;
+  --fp-stage:rgba(37,95,146,.11);--fp-stage-line:rgba(37,95,146,.58);
+  --shell:#f6f2ea;--chrome:#fbf8f2;--panel:#fefcf8;--panel-2:#f8f4ec;--panel-3:#f0eadf;
+  --line:#e0d8c9;--line-soft:#ece6da;--text:#1d1810;--muted:#4c4333;--muted-2:#5c5241;
+  --paper:#f2ece1;--paper-2:#e5dccb;--ink:#1c2128;
+  --blue:#255f92;--blue-2:#255f92;--blue-dim:#21557f;--blue-soft:rgba(37,95,146,.12);--blue-soft-strong:rgba(37,95,146,.22);
+  --green:#2c6e4c;--green-soft:rgba(44,110,76,.12);--green-ink:#235a3e;
+  --amber:#93601a;--amber-soft:rgba(176,120,40,.13);--amber-ink:#704710;
+  --red:#a5302c;--red-soft:rgba(165,48,44,.11);--red-ink:#8e2824;
+  --v8-bg:#fdfaf5;--v8-panel:#faf6ef;--v8-panel-2:#f5f0e7;--v8-line:#e2dbcd;
+  --v8-text:var(--text);--v8-muted:#4c4333;
+  --v8-blue:#255f92;--v8-cyan:#2a77a0;--v8-orange:#b9651c;--v8-red:#b3121f;--v8-green:#2c6e4c;
+  --shadow-1:0 1px 2px rgba(40,30,12,.07),0 1px 1px rgba(40,30,12,.05);
+  --shadow-2:0 2px 4px rgba(40,30,12,.06),0 6px 16px rgba(40,30,12,.08);
+  --shadow-3:0 4px 10px rgba(40,30,12,.07),0 16px 38px rgba(40,30,12,.11);
+  --shadow-4:0 8px 20px rgba(40,30,12,.09),0 30px 74px rgba(40,30,12,.17);
+  --ring:0 0 0 3px rgba(37,95,146,.32);
+  --vip:#8a6a22;--vip-soft:rgba(138,106,34,.12);--vip-line:rgba(138,106,34,.42);--vip-ink:#674e17;
+}
+:root{
+  --pi-bg:#f2ede3;--pi-surface:#fefcf8;--pi-surface-2:#f8f4ec;
+  --pi-ink:#1d1810;--pi-muted:#4f4636;--pi-muted-2:#5e5443;
+  --pi-line:#ddd5c5;--pi-line-soft:#e9e2d5;
+  --pi-accent:#255f92;--pi-accent-strong:#1a466e;--pi-accent-soft:rgba(37,95,146,.12);
+  --pi-danger:#a5302c;--pi-danger-soft:rgba(165,48,44,.1);--pi-warn:#93601a;
+}

@@ -1,0 +1,326 @@
+diff --git a/src/plan-detection-chairs.js b/src/plan-detection-chairs.js
+index 8ef488f..e749e98 100644
+--- a/src/plan-detection-chairs.js
++++ b/src/plan-detection-chairs.js
+@@ -10,13 +10,16 @@
+ // findChairs(input)                                                     B-5
+ //   IN        { width, height, total, area, minPixels, sources, chairSources,
+ //               fallbackChairComps, fallbackChairLabels, accentMask,
+-//               chairSizeOk, analyze, textRegions } — the object sources and
+-//             chair-scale pools from B-4, the accent mask, the detector's own
+-//             size test and shape analyser, and the lines of printed text a
+-//             text model read (detection pixels; [] when none ran).
++//               chairSizeOk, analyze, textRegions, gray } — the object sources
++//             and chair-scale pools from B-4, the accent mask, the detector's
++//             own size test and shape analyser, the lines of printed text a
++//             text model read (detection pixels; [] when none ran), and the
++//             plan's luma (B-1), read only for a secondary family's tone.
+ //   OUT       { chairs, chairModal, chairUniform, chairSource,
+ //               chairSourceBreakdown, chairFloorSide, detectionPath,
+-//               secondaryFamilyDiagnostics, gapTo } — the chairs with their
++//               secondaryFamilyDiagnostics, gapTo, toneRefusedComps } — the
++//             patches of bare paper refused as seats (kept out of the table
++//             pool exactly as seats are), the chairs with their
+ //             family, the modal chair size and whether the family is uniform,
+ //             which source supplied them and why, and the gap measure the
+ //             tables stage and the column pass reuse.
+@@ -43,6 +46,7 @@
+     // pixels ({x0,y0,x1,y1}); empty when no model ran. Used for one thing:
+     // keeping printed matter out of the evidence a seat family is judged on.
+     const textRegions = Array.isArray(input.textRegions) ? input.textRegions : [];
++    const gray = input.gray || null;
+     const inPrintedText = c => {
+       const cx = c.x + c.w / 2, cy = c.y + c.h / 2;
+       return textRegions.some(r => cx >= r.x0 && cx <= r.x1 && cy >= r.y0 && cy <= r.y1);
+@@ -203,6 +207,11 @@
+     // band the adjacency rule happily admitted families of 4-6px specks --
+     // they repeat, and on a dense plan everything is near something.
+     const SECONDARY_MIN_MEMBERS=4,SECONDARY_MIN_ADJACENT=.7;
++    // The tone test below (ONE DRAWN OBJECT, ONE TONE): how far under the
++    // plan's paper a member's own median luma may sit and still be bare paper.
++    // The paper level is measured once, the first time a family needs it.
++    const SECONDARY_BARE_PAPER=5;
++    let paperLevel=null;
+     // Two bounds, and they anchor to different things on purpose.
+     //
+     // The FLOOR is relative to the primary chair family: a minority seat is
+@@ -218,6 +227,9 @@
+     // may be claimed as a chair; the table pool needs it more.
+     const SECONDARY_MIN_SIDE_RATIO=.4,SECONDARY_MAX_SURFACE_RATIO=.75;
+     const secondaryFamilies=[];
++    // Members refused for their tone (ONE DRAWN OBJECT, ONE TONE, below): not
++    // seats, and not candidates for anything else either -- see the output.
++    const toneRefusedComps=[];
+     // WHICH POPULATION DEFINES WHAT A SEAT LOOKS LIKE HERE.
+     //
+     // It used to be the colour cluster and nothing else: the whole family
+@@ -547,11 +559,64 @@
+         const SECONDARY_MIN_CLEARANCE=1.4;
+         const standsClear=referenceIsSeatSized||crowding>=SECONDARY_MIN_CLEARANCE;
+         const admitted=sizeOk&&standsClear&&share>=SECONDARY_MIN_ADJACENT;
++        // ONE DRAWN OBJECT, ONE TONE (D2, 2026-10-18).
++        //
++        // A family is a seat drawn the same way over and over, and its size
++        // and shape say so; its TONE did not, and that let three seat-sized
++        // patches of bare paper into the Golden Plan's chairs: the triangles
++        // enclosed between the struts of the two stage trusses, and the gap
++        // between a round table's chair and the bar drawn against it. Each is
++        // the inside of a closed outline, so the outline-interior source offers
++        // it, and each sits against something broad enough to pass for a table.
++        //
++        // Measured on all 28 fingerprint plans, as the distance of a member's
++        // own median luma below the plan's paper: those patches read 0-3 in
++        // every rendering; real filled seats read 7 and up (7-11 on the
++        // brightened rendering, 33-167 elsewhere). And a plan can draw two
++        // seats of one size in two tones and mean both: `a4-multi-room` has 32
++        // bare-outline chairs and 24 filled ones in ONE family, all real. So
++        // the test is not "unlike the family's median" -- that refused a real
++        // crescent beside orange bistro chairs -- but this: bare-paper members
++        // are refused only where they are fewer than the family floor (four)
++        // and the filled members are not. They could never have been admitted
++        // as a family of their own, and the family they rode in on is drawn
++        // filled. A family that is all paper (an ink plan), all filled, or
++        // whose paper members stand as a family of their own is untouched.
++        // The bound of 5 sits in the measured gap (3 against 7). Only a
++        // secondary family is asked; the primary family defines the seat.
++        let toneRefused=[],barePaper=null;
++        if(admitted&&gray&&members.length>=SECONDARY_MIN_MEMBERS){
++          if(paperLevel===null){
++            const h=new Uint32Array(256);let n=0;
++            for(let i=0;i<gray.length;i+=4){h[gray[i]]++;n++;}
++            let acc=0,v=0;for(;v<255;v++){acc+=h[v];if(acc>=n*.98)break;}
++            paperLevel=v;
++          }
++          const isBarePaper=m=>{
++            const c=m.comp,labels=m.source?.labels;
++            if(!labels)return false;
++            const v=[];
++            for(let y=c.y;y<c.y+c.h;y++)for(let x=c.x;x<c.x+c.w;x++){
++              const i=y*width+x;
++              if(labels[i]===c.label)v.push(gray[i]);
++            }
++            if(!v.length)return false;
++            v.sort((a,b)=>a-b);
++            return paperLevel-v[v.length>>1]<=SECONDARY_BARE_PAPER;
++          };
++          const paperMembers=members.filter(isBarePaper);
++          barePaper=paperMembers.length;
++          if(paperMembers.length&&paperMembers.length<SECONDARY_MIN_MEMBERS
++            &&members.length-paperMembers.length>=SECONDARY_MIN_MEMBERS)
++            toneRefused=seated.filter(m=>paperMembers.includes(m));
++          for(const m of toneRefused)toneRefusedComps.push(m.comp);
++        }
+         secondaryFamilies.push({key,members:members.length,printedExcluded:allMembers.length-members.length,adjacent,
+           share:Number(share.toFixed(2)),admitted,sizeOk,standsClear,
+           side:Math.round(side),referenceSide:Math.round(referenceSide),surfaceSide:Math.round(surfaceSide),
+           crowding:Number(crowding.toFixed(2)),primarySpacing:Math.round(primarySpacing),
+           minClearance:referenceIsSeatSized?null:SECONDARY_MIN_CLEARANCE,
++          barePaper,toneRefused:toneRefused.length,
+           source:members[0].source.name});
+         // One entry per originating source, all under the same family name.
+         // The label map a component was found in is what shape analysis has
+@@ -561,6 +626,7 @@
+         if(admitted){
+           const bySource=new Map();
+           for(const m of seated){
++            if(toneRefused.includes(m))continue;
+             if(!bySource.has(m.source))bySource.set(m.source,[]);
+             bySource.get(m.source).push(m.comp);
+           }
+@@ -845,7 +911,7 @@
+     }
+     const detectionPath=chairUniform?"chair-first":"table-first";
+     return { chairs, chairModal, chairUniform, chairSource, chairSourceBreakdown, chairFloorSide,
+-      detectionPath, secondaryFamilyDiagnostics, gapTo };
++      detectionPath, secondaryFamilyDiagnostics, gapTo, toneRefusedComps };
+   }
+ 
+   globalThis.MeritPlanChairs = { version: 1, findChairs };
+diff --git a/src/plan-detection-classical.js b/src/plan-detection-classical.js
+index 4f508ea..e083c51 100644
+--- a/src/plan-detection-classical.js
++++ b/src/plan-detection-classical.js
+@@ -168,14 +168,14 @@
+       // B-5 — chairs first — is MeritPlanChairs (src/plan-detection-chairs.js),
+       // with its contract stated there.
+       const{chairs,chairModal,chairUniform,chairSource,chairSourceBreakdown,chairFloorSide,detectionPath,
+-        secondaryFamilyDiagnostics,gapTo}=CHAIRS.findChairs({width,height,total,area,minPixels,sources,chairSources,
+-        fallbackChairComps,fallbackChairLabels,accentMask,chairSizeOk,analyze,textRegions});
++        secondaryFamilyDiagnostics,gapTo,toneRefusedComps}=CHAIRS.findChairs({width,height,total,area,minPixels,sources,chairSources,
++        fallbackChairComps,fallbackChairLabels,accentMask,chairSizeOk,analyze,textRegions,gray});
+       mark("chairs");
+       await breathe();
+ 
+       // B-6 … B-14 — which objects are tables, and what is left over — is
+       // MeritPlanTables (src/plan-detection-tables.js), contract there.
+-      const tablesOut=TABLES.findTables({uid,width,height,area,sources,analyze,venueSizeOk,threshold,masksTints,surfaceMask,accentMask,tintIsChairMaterial,chairs,chairModal,chairUniform,chairSource,chairFloorSide,gapTo,protectedRegions,confidenceThreshold});
++      const tablesOut=TABLES.findTables({uid,width,height,area,sources,analyze,venueSizeOk,threshold,masksTints,surfaceMask,accentMask,tintIsChairMaterial,chairs,chairModal,chairUniform,chairSource,chairFloorSide,gapTo,protectedRegions,confidenceThreshold,toneRefusedComps,gray});
+       const{candidates,chairVenues,pool,debugPool,modalPool,modalArea,modalSeats,modalLong,modalShort,bistrosTyped,reseated,seatsInsideBody,seatsInsideBodyStoodDown,relationStats,splitCount,capReached,offModalDropped,surfaceRejected,chairMaterialRejected,surfaceMinorityFinishKept,fragmentDiagnostics,textGlyphChairsDropped,familyLostToAssociation,familyLostToTextRun,familyFromTableSources,familyVenue,mergedRowVenues,columnComps,chairOBB,toPercentBox}=tablesOut;
+       let venues=tablesOut.venues;
+       mark("tables");
+diff --git a/src/plan-detection-tables.js b/src/plan-detection-tables.js
+index 1f10ab1..6378719 100644
+--- a/src/plan-detection-tables.js
++++ b/src/plan-detection-tables.js
+@@ -6,7 +6,7 @@
+ // orchestrator the map asked for: one call per stage, in data order.
+ //
+ // findTables(input)                                              B-6 … B-14
+-//   IN        { uid, width, height, area, sources, analyze, venueSizeOk, threshold, masksTints, surfaceMask, accentMask, tintIsChairMaterial, chairs, chairModal, chairUniform, chairSource, chairFloorSide, gapTo, protectedRegions, confidenceThreshold }
++//   IN        { uid, width, height, area, sources, analyze, venueSizeOk, threshold, masksTints, surfaceMask, accentMask, tintIsChairMaterial, chairs, chairModal, chairUniform, chairSource, chairFloorSide, gapTo, protectedRegions, confidenceThreshold, toneRefusedComps, gray }
+ //             — the image size, the object sources and class masks from
+ //             B-4, the ink threshold from B-1, the chairs-first stage's
+ //             output, the detector's own analyser and venue size test, and
+@@ -45,9 +45,10 @@
+     const { uid, width, height, area, sources, analyze, venueSizeOk,
+       threshold, masksTints, surfaceMask, accentMask, tintIsChairMaterial, chairs, chairModal,
+       chairUniform, chairSource, chairFloorSide, gapTo, protectedRegions, confidenceThreshold } = input;
++    const toneRefusedComps = input.toneRefusedComps || [];
+     // B-6 the table candidate pool — tablePool(), below findTables().
+     const { dedupFitness, expanded, modalLong, modalShort, pool, provisionalModalArea, splitCount, unique } = tablePool({
+-      analyze, chairModal, chairUniform, chairs, height, sources, width });
++      analyze, chairModal, chairUniform, chairs, height, sources, toneRefusedComps, width });
+     // B-7 is this candidate actually made of table? — madeOfTable(), below findTables().
+     const { surfaceMinorityFinishKept, surfaceRejected, surfaceRejectedComps, uniqueBeforeSurface, chairMaterialRejected } = madeOfTable({
+       accentMask, chairs, dedupFitness, expanded, gapTo, height, masksTints, surfaceMask,
+@@ -80,7 +81,7 @@
+     // B-15 — columns, merged-row blobs and unnamed venue-scale shapes — is
+     // MeritPlanVenueObjects (src/plan-detection-venues.js), contract there.
+     const venueScale=VENUE_OBJECTS.venueScaleObjects({chosen,chairAssign,surfaceRejectedComps,chairs,gapTo,
+-      sources,venueSizeOk,analyze,uid,toPercentBox,chairVenues});
++      sources,venueSizeOk,analyze,uid,toPercentBox,chairVenues,gray:input.gray,width});
+     const {columnComps,mergedRowVenues}=venueScale;
+     const venues=venueScale.venues;
+ 
+@@ -92,11 +93,12 @@
+   }
+ 
+   // B-6 the table candidate pool
+-  //   IN   analyze, chairModal, chairUniform, chairs, height, sources, width
++  //   IN   analyze, chairModal, chairUniform, chairs, height, sources, toneRefusedComps, width
+   //   OUT  dedupFitness, expanded, modalLong, modalShort, pool, provisionalModalArea, splitCount, unique
+   function tablePool(input) {
+     const { analyze, chairModal, chairUniform, chairs, height, sources,
+       width } = input;
++    const toneRefusedComps = input.toneRefusedComps || [];
+     // ---- table candidate pool --------------------------------------------
+     let pool=[];
+     for(const s of sources)for(const c of s.comps)pool.push({comp:c,labels:s.labels});
+@@ -106,6 +108,12 @@
+     // floor on a 1000px-tall plan) and cannot drag the modal table size down.
+     if(chairUniform&&chairs.length){
+       pool=pool.filter(p=>!chairs.some(ch=>GEO.sameObject(p.comp,ch)));
++      // A patch of bare paper the chairs stage refused as a seat for its tone
++      // is not a table or a column either: it was claimed as a seat-family
++      // member, so it leaves the pool the way the seats do. Returned to the
++      // pool it became a column candidate, and on the darkened rendering it
++      // completed a column grid that took a real table (D2, 2026-10-18).
++      if(toneRefusedComps.length)pool=pool.filter(p=>!toneRefusedComps.some(r=>GEO.sameObject(p.comp,r)));
+     }
+     // The modal has to describe a TABLE, not the pool. Walls, printed text and
+     // venue objects are all still in here, and a modal dragged out toward a
+diff --git a/src/plan-detection-venues.js b/src/plan-detection-venues.js
+index 9536ca1..5c781a5 100644
+--- a/src/plan-detection-venues.js
++++ b/src/plan-detection-venues.js
+@@ -8,7 +8,7 @@
+ // venueScaleObjects(input)                                             B-15
+ //   IN        { chosen, chairAssign, surfaceRejectedComps, chairs, gapTo,
+ //               sources, venueSizeOk, analyze, uid, toPercentBox,
+-//               chairVenues } — the tables that survived, the chair
++//               chairVenues, gray, width } — the tables that survived, the chair
+ //             associations, the objects the surface filter turned away, the
+ //             object sources and the detector's own size test, shape analyser
+ //             and constructors.
+@@ -29,6 +29,7 @@
+   function venueScaleObjects(input) {
+     const { chosen, chairAssign, surfaceRejectedComps, chairs, gapTo, sources,
+       venueSizeOk, analyze, uid, toPercentBox, chairVenues } = input;
++    const gray = input.gray || null, width = input.width || 0;
+     // ---- venue-scale objects (stage band / long bar / column) ------------
+     // ---- columns and structural repeats -----------------------------------
+     // A candidate the surface filter turned away is not a table: it is not
+@@ -62,7 +63,7 @@
+     // Together these are why this does not invent columns on the real venue
+     // plan — whose annotation deliberately records that none are
+     // identifiable there.
+-    const COLUMN_MIN_MEMBERS=3,COLUMN_MAX_ASPECT=1.6,COLUMN_ALIGN_SHARE=.5;
++    const COLUMN_MIN_MEMBERS=3,COLUMN_MAX_ASPECT=1.6,COLUMN_ALIGN_SHARE=.5,COLUMN_BARE_PAPER=5;
+     const columnComps=(()=>{
+       // "Nobody sits at it" has to mean nobody sits at it — not "no seat
+       // happens to pass nearby". A column standing in a room full of tables
+@@ -74,9 +75,34 @@
+       // says nothing about this object. Only unclaimed seats count.
+       const chosenTableIndexes=new Set(chosen.map(s=>s.box.index));
+       const seatedAtRealTable=ci=>chosenTableIndexes.has(chairAssign.get(ci));
++      // A COLUMN IS DRAWN SOLID (D2, 2026-10-18). Structure is drawn as a
++      // filled or hatched mass; the six annotated columns of the architecture
++      // fixture read 61 below the paper. A patch of bare paper -- the inside of
++      // a closed outline, such as a triangle between a stage truss's struts --
++      // is not one. Measured on the darkened Golden rendering: one such patch,
++      // once no longer read as a seat, joined a column family and tipped its
++      // two-axis grid, and eight chairs and a real table came out as columns.
++      // The bound is the chairs stage's bare-paper bound (5 under the paper,
++      // the median of the box's inner part).
++      let paperLevel=null;
++      const barePaper=c=>{
++        if(!gray||!width)return false;
++        if(paperLevel===null){
++          const h=new Uint32Array(256);let n=0;
++          for(let i=0;i<gray.length;i+=4){h[gray[i]]++;n++;}
++          let acc=0,v=0;for(;v<255;v++){acc+=h[v];if(acc>=n*.98)break;}
++          paperLevel=v;
++        }
++        const v=[];
++        for(let y=Math.round(c.y+c.h*.2);y<c.y+c.h*.8;y++)for(let x=Math.round(c.x+c.w*.2);x<c.x+c.w*.8;x++)v.push(gray[y*width+x]);
++        if(!v.length)return false;
++        v.sort((a,b)=>a-b);
++        return paperLevel-v[v.length>>1]<=COLUMN_BARE_PAPER;
++      };
+       const seatless=surfaceRejectedComps.filter(c=>{
+         const aspect=Math.max(c.w,c.h)/Math.max(1,Math.min(c.w,c.h));
+         if(aspect>COLUMN_MAX_ASPECT)return false;
++        if(barePaper(c))return false;
+         const reach=Math.max(c.w,c.h)*.7;
+         return !chairs.some((ch,ci)=>!seatedAtRealTable(ci)&&gapTo(c,ch)<=reach);
+       });
+diff --git a/tests/suites/chair-families.test.mjs b/tests/suites/chair-families.test.mjs
+index 58c6e56..b78e212 100644
+--- a/tests/suites/chair-families.test.mjs
++++ b/tests/suites/chair-families.test.mjs
+@@ -60,7 +60,11 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
+     const a = state.events[0].analysis;
+     const alive = a.candidates.filter(c => c.status !== "rejected");
+     const chairs = alive.flatMap(c => (c.chairDetections || []).map(ch => ({ x: ch.x, y: ch.y, w: ch.w, h: ch.h })));
++    // standalone chairs carry a top-left box; give them a centre like a seat's
++    const standalone = alive.filter(c => c.kind === "venue" && c.type === "chair")
++      .map(c => ({ x: c.x + c.w / 2, y: c.y + c.h / 2, w: c.w, h: c.h }));
+     return {
++      standalone,
+       families: a.diagnostics.secondaryChairFamilies,
+       sources: a.diagnostics.chairSourceBreakdown,
+       chairSource: a.diagnostics.chairSource,
+@@ -135,4 +139,23 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
+   checks.ok(inText.length <= 6,
+     "the printed capacity block is not read as a block of seating",
+     { inTextRegions: inText.length, regions: textRegions.map(r => r.id) });
++
++  // --- one drawn object, one tone (D2, 2026-10-18) ---------------------------
++  // Three seat-sized patches of bare paper were admitted with the crescent and
++  // bistro families: the triangles between the struts of the two stage
++  // trusses, and the gap between t040's chair and the bar drawn against it.
++  // The families here are drawn FILLED (tan crescents, orange bistro chairs),
++  // so a few bare-paper members among them are gaps between objects. Every
++  // admitted family states how many members read as bare paper and how many
++  // of those it refused.
++  checks.ok(admitted.every(f => typeof f.barePaper === "number" && typeof f.toneRefused === "number"),
++    "every admitted family reports its bare-paper members and what it refused",
++    admitted.map(f => ({ key: f.key, barePaper: f.barePaper, toneRefused: f.toneRefused })));
++  const paperGaps = [{ at: "truss, right", x: 1138, y: 707 }, { at: "truss, left", x: 678, y: 706 },
++    { at: "t040 chair and bar", x: 1310, y: 572 }];
++  const allChairs = [...result.chairs, ...result.standalone];
++  const onGap = paperGaps.map(g => ({ ...g, chairs: allChairs.filter(ch =>
++    Math.hypot(ch.x / 100 * W - g.x, ch.y / 100 * H - g.y) <= 8).length })).filter(g => g.chairs);
++  checks.ok(onGap.length === 0,
++    "no seat is proposed on a patch of bare paper between drawn objects", onGap);
+ }

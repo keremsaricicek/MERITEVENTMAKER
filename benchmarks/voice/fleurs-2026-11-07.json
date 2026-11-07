@@ -1,0 +1,785 @@
+{
+ "bar": "training/README.md 2026-11-07 Voice command (Mimar)",
+ "set": "Google FLEURS test (CC-BY-4.0): tr_tr first 40 digit-free distinct-sentence rows, en_us first 20",
+ "engine": "whisper.cpp v1.9.5 (d1be6fd) whisper-cli, Linux build, -nt -np -t 2, nice 19",
+ "load": "measured under a training job's CPU load, niced — speed is an upper bound, not the target PC",
+ "models": {
+  "base": {
+   "file": "ggml-base-q5_1.bin",
+   "bytes": 59707625,
+   "sha256": "422f1ae452ade6f30a004d7e5c6a43195e4433bc370bf23fac9cc591f01a8898"
+  },
+  "small": {
+   "file": "ggml-small-q5_1.bin",
+   "bytes": 190085487,
+   "sha256": "ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb"
+  },
+  "turbo": "not run: the choice rule stops at the smallest passing candidate"
+ },
+ "results": {
+  "base/tr": {
+   "clips": 40,
+   "words": 663,
+   "wer": 0.3092,
+   "cer": 0.0813,
+   "audioSeconds": 485.5,
+   "decodeSeconds": 169.9,
+   "medianRealTimeFactor": 0.36,
+   "per": [
+    {
+     "clip": "9621274263356267537.wav",
+     "wer": 0.478,
+     "seconds": 5.397,
+     "audio": 16.9
+    },
+    {
+     "clip": "882408034882735025.wav",
+     "wer": 0.2,
+     "seconds": 3.096,
+     "audio": 10.5
+    },
+    {
+     "clip": "10921957992542400504.wav",
+     "wer": 0.308,
+     "seconds": 3.672,
+     "audio": 8.3
+    },
+    {
+     "clip": "11860238956573012850.wav",
+     "wer": 0.143,
+     "seconds": 3.561,
+     "audio": 8.3
+    },
+    {
+     "clip": "7690949785499510363.wav",
+     "wer": 0.5,
+     "seconds": 3.973,
+     "audio": 11.7
+    },
+    {
+     "clip": "8845659249103320766.wav",
+     "wer": 0.625,
+     "seconds": 5.052,
+     "audio": 17
+    },
+    {
+     "clip": "6619657831934129947.wav",
+     "wer": 0.263,
+     "seconds": 5.266,
+     "audio": 13.3
+    },
+    {
+     "clip": "13200922870284139850.wav",
+     "wer": 0.75,
+     "seconds": 3.239,
+     "audio": 6.4
+    },
+    {
+     "clip": "1386923258902346082.wav",
+     "wer": 0.2,
+     "seconds": 4.722,
+     "audio": 13.8
+    },
+    {
+     "clip": "12308336075461359139.wav",
+     "wer": 0.2,
+     "seconds": 5.684,
+     "audio": 16.4
+    },
+    {
+     "clip": "16005534840137323244.wav",
+     "wer": 0.25,
+     "seconds": 3.452,
+     "audio": 10.4
+    },
+    {
+     "clip": "10660750621675264830.wav",
+     "wer": 0.263,
+     "seconds": 4.187,
+     "audio": 18.2
+    },
+    {
+     "clip": "9735709957358674696.wav",
+     "wer": 0.35,
+     "seconds": 3.777,
+     "audio": 13.8
+    },
+    {
+     "clip": "10993118482905394005.wav",
+     "wer": 0.571,
+     "seconds": 2.752,
+     "audio": 7.2
+    },
+    {
+     "clip": "6699413580375536800.wav",
+     "wer": 0.467,
+     "seconds": 3.164,
+     "audio": 9.2
+    },
+    {
+     "clip": "16562536727814525805.wav",
+     "wer": 0.444,
+     "seconds": 5.037,
+     "audio": 12.1
+    },
+    {
+     "clip": "13869861730353276392.wav",
+     "wer": 0.409,
+     "seconds": 5.755,
+     "audio": 15.6
+    },
+    {
+     "clip": "16482852810657954602.wav",
+     "wer": 0.083,
+     "seconds": 3.27,
+     "audio": 12.1
+    },
+    {
+     "clip": "3660022680912465197.wav",
+     "wer": 0.273,
+     "seconds": 3.996,
+     "audio": 15.7
+    },
+    {
+     "clip": "15905786751923318940.wav",
+     "wer": 0.4,
+     "seconds": 2.588,
+     "audio": 5.5
+    },
+    {
+     "clip": "18077265941991123213.wav",
+     "wer": 0.167,
+     "seconds": 4.913,
+     "audio": 17.6
+    },
+    {
+     "clip": "7127550612629844315.wav",
+     "wer": 0.067,
+     "seconds": 3.356,
+     "audio": 12.1
+    },
+    {
+     "clip": "16444667506730336345.wav",
+     "wer": 0.2,
+     "seconds": 7.629,
+     "audio": 20.5
+    },
+    {
+     "clip": "587141709980891708.wav",
+     "wer": 0.435,
+     "seconds": 7.2,
+     "audio": 16.8
+    },
+    {
+     "clip": "647768635272037027.wav",
+     "wer": 0.4,
+     "seconds": 4.448,
+     "audio": 9.1
+    },
+    {
+     "clip": "4723414790622293346.wav",
+     "wer": 0.222,
+     "seconds": 3.87,
+     "audio": 13.8
+    },
+    {
+     "clip": "12843040333783900911.wav",
+     "wer": 0.273,
+     "seconds": 3.304,
+     "audio": 7.1
+    },
+    {
+     "clip": "10434128772254756539.wav",
+     "wer": 0.176,
+     "seconds": 5.271,
+     "audio": 13.1
+    },
+    {
+     "clip": "1784033339402792629.wav",
+     "wer": 0.176,
+     "seconds": 3.502,
+     "audio": 8.4
+    },
+    {
+     "clip": "7279071812002827795.wav",
+     "wer": 0.278,
+     "seconds": 3.575,
+     "audio": 10
+    },
+    {
+     "clip": "14423535327097916678.wav",
+     "wer": 0.091,
+     "seconds": 3.299,
+     "audio": 8
+    },
+    {
+     "clip": "8990126017284681231.wav",
+     "wer": 0.286,
+     "seconds": 3.296,
+     "audio": 13.3
+    },
+    {
+     "clip": "16809860443898361222.wav",
+     "wer": 0.615,
+     "seconds": 3.973,
+     "audio": 8.3
+    },
+    {
+     "clip": "910901622646952539.wav",
+     "wer": 0,
+     "seconds": 3.324,
+     "audio": 7.2
+    },
+    {
+     "clip": "17142683059899924398.wav",
+     "wer": 0.263,
+     "seconds": 3.721,
+     "audio": 13
+    },
+    {
+     "clip": "5550361117598439055.wav",
+     "wer": 0.3,
+     "seconds": 4.803,
+     "audio": 12.1
+    },
+    {
+     "clip": "6225607460651969524.wav",
+     "wer": 0.333,
+     "seconds": 2.896,
+     "audio": 10.9
+    },
+    {
+     "clip": "3221402651347514555.wav",
+     "wer": 0.368,
+     "seconds": 4.986,
+     "audio": 15.2
+    },
+    {
+     "clip": "14687669812600033748.wav",
+     "wer": 0.438,
+     "seconds": 6.68,
+     "audio": 14.1
+    },
+    {
+     "clip": "13546200710839842268.wav",
+     "wer": 0.231,
+     "seconds": 4.256,
+     "audio": 12.5
+    }
+   ]
+  },
+  "small/tr": {
+   "clips": 40,
+   "words": 663,
+   "wer": 0.1629,
+   "cer": 0.0415,
+   "audioSeconds": 485.5,
+   "decodeSeconds": 487.1,
+   "medianRealTimeFactor": 0.96,
+   "per": [
+    {
+     "clip": "9621274263356267537.wav",
+     "wer": 0.304,
+     "seconds": 13.276,
+     "audio": 16.9
+    },
+    {
+     "clip": "882408034882735025.wav",
+     "wer": 0.2,
+     "seconds": 14.842,
+     "audio": 10.5
+    },
+    {
+     "clip": "10921957992542400504.wav",
+     "wer": 0.077,
+     "seconds": 10.308,
+     "audio": 8.3
+    },
+    {
+     "clip": "11860238956573012850.wav",
+     "wer": 0,
+     "seconds": 10.32,
+     "audio": 8.3
+    },
+    {
+     "clip": "7690949785499510363.wav",
+     "wer": 0.167,
+     "seconds": 10.469,
+     "audio": 11.7
+    },
+    {
+     "clip": "8845659249103320766.wav",
+     "wer": 0.542,
+     "seconds": 12.189,
+     "audio": 17
+    },
+    {
+     "clip": "6619657831934129947.wav",
+     "wer": 0.211,
+     "seconds": 11.508,
+     "audio": 13.3
+    },
+    {
+     "clip": "13200922870284139850.wav",
+     "wer": 0.125,
+     "seconds": 14.147,
+     "audio": 6.4
+    },
+    {
+     "clip": "1386923258902346082.wav",
+     "wer": 0.133,
+     "seconds": 11.579,
+     "audio": 13.8
+    },
+    {
+     "clip": "12308336075461359139.wav",
+     "wer": 0.133,
+     "seconds": 17.877,
+     "audio": 16.4
+    },
+    {
+     "clip": "16005534840137323244.wav",
+     "wer": 0.15,
+     "seconds": 13.776,
+     "audio": 10.4
+    },
+    {
+     "clip": "10660750621675264830.wav",
+     "wer": 0.053,
+     "seconds": 12.655,
+     "audio": 18.2
+    },
+    {
+     "clip": "9735709957358674696.wav",
+     "wer": 0.2,
+     "seconds": 18.556,
+     "audio": 13.8
+    },
+    {
+     "clip": "10993118482905394005.wav",
+     "wer": 0.286,
+     "seconds": 10.485,
+     "audio": 7.2
+    },
+    {
+     "clip": "6699413580375536800.wav",
+     "wer": 0.067,
+     "seconds": 14.796,
+     "audio": 9.2
+    },
+    {
+     "clip": "16562536727814525805.wav",
+     "wer": 0.278,
+     "seconds": 13.216,
+     "audio": 12.1
+    },
+    {
+     "clip": "13869861730353276392.wav",
+     "wer": 0.182,
+     "seconds": 11.775,
+     "audio": 15.6
+    },
+    {
+     "clip": "16482852810657954602.wav",
+     "wer": 0,
+     "seconds": 10.918,
+     "audio": 12.1
+    },
+    {
+     "clip": "3660022680912465197.wav",
+     "wer": 0.364,
+     "seconds": 15.144,
+     "audio": 15.7
+    },
+    {
+     "clip": "15905786751923318940.wav",
+     "wer": 0.2,
+     "seconds": 8.563,
+     "audio": 5.5
+    },
+    {
+     "clip": "18077265941991123213.wav",
+     "wer": 0,
+     "seconds": 12.32,
+     "audio": 17.6
+    },
+    {
+     "clip": "7127550612629844315.wav",
+     "wer": 0.2,
+     "seconds": 10.552,
+     "audio": 12.1
+    },
+    {
+     "clip": "16444667506730336345.wav",
+     "wer": 0.16,
+     "seconds": 13.924,
+     "audio": 20.5
+    },
+    {
+     "clip": "587141709980891708.wav",
+     "wer": 0.217,
+     "seconds": 15.726,
+     "audio": 16.8
+    },
+    {
+     "clip": "647768635272037027.wav",
+     "wer": 0.133,
+     "seconds": 13.67,
+     "audio": 9.1
+    },
+    {
+     "clip": "4723414790622293346.wav",
+     "wer": 0.111,
+     "seconds": 13.333,
+     "audio": 13.8
+    },
+    {
+     "clip": "12843040333783900911.wav",
+     "wer": 0.091,
+     "seconds": 10.827,
+     "audio": 7.1
+    },
+    {
+     "clip": "10434128772254756539.wav",
+     "wer": 0.118,
+     "seconds": 10.453,
+     "audio": 13.1
+    },
+    {
+     "clip": "1784033339402792629.wav",
+     "wer": 0.235,
+     "seconds": 8.318,
+     "audio": 8.4
+    },
+    {
+     "clip": "7279071812002827795.wav",
+     "wer": 0.056,
+     "seconds": 14.691,
+     "audio": 10
+    },
+    {
+     "clip": "14423535327097916678.wav",
+     "wer": 0,
+     "seconds": 12.427,
+     "audio": 8
+    },
+    {
+     "clip": "8990126017284681231.wav",
+     "wer": 0.286,
+     "seconds": 12.798,
+     "audio": 13.3
+    },
+    {
+     "clip": "16809860443898361222.wav",
+     "wer": 0.308,
+     "seconds": 10.16,
+     "audio": 8.3
+    },
+    {
+     "clip": "910901622646952539.wav",
+     "wer": 0,
+     "seconds": 8.918,
+     "audio": 7.2
+    },
+    {
+     "clip": "17142683059899924398.wav",
+     "wer": 0,
+     "seconds": 10.588,
+     "audio": 13
+    },
+    {
+     "clip": "5550361117598439055.wav",
+     "wer": 0.1,
+     "seconds": 10.767,
+     "audio": 12.1
+    },
+    {
+     "clip": "6225607460651969524.wav",
+     "wer": 0.25,
+     "seconds": 8.577,
+     "audio": 10.9
+    },
+    {
+     "clip": "3221402651347514555.wav",
+     "wer": 0,
+     "seconds": 10.645,
+     "audio": 15.2
+    },
+    {
+     "clip": "14687669812600033748.wav",
+     "wer": 0.313,
+     "seconds": 10.67,
+     "audio": 14.1
+    },
+    {
+     "clip": "13546200710839842268.wav",
+     "wer": 0,
+     "seconds": 11.348,
+     "audio": 12.5
+    }
+   ]
+  },
+  "base/en": {
+   "clips": 20,
+   "words": 430,
+   "wer": 0.1163,
+   "cer": 0.065,
+   "audioSeconds": 179.2,
+   "decodeSeconds": 76.3,
+   "medianRealTimeFactor": 0.45,
+   "per": [
+    {
+     "clip": "12741024238657315067.wav",
+     "wer": 0.235,
+     "seconds": 4.743,
+     "audio": 12.6
+    },
+    {
+     "clip": "621925716775998155.wav",
+     "wer": 0.063,
+     "seconds": 3.783,
+     "audio": 5.9
+    },
+    {
+     "clip": "2589557553267364799.wav",
+     "wer": 0,
+     "seconds": 3.176,
+     "audio": 8.9
+    },
+    {
+     "clip": "8173060820032255320.wav",
+     "wer": 0.286,
+     "seconds": 3.047,
+     "audio": 9.1
+    },
+    {
+     "clip": "2652155470394119415.wav",
+     "wer": 0,
+     "seconds": 4.277,
+     "audio": 6.7
+    },
+    {
+     "clip": "1596269393232229615.wav",
+     "wer": 0,
+     "seconds": 6.009,
+     "audio": 9.6
+    },
+    {
+     "clip": "2637301866626572038.wav",
+     "wer": 0.04,
+     "seconds": 3.38,
+     "audio": 10.1
+    },
+    {
+     "clip": "13230261475791184258.wav",
+     "wer": 0.273,
+     "seconds": 3.116,
+     "audio": 4.6
+    },
+    {
+     "clip": "5106380017322065030.wav",
+     "wer": 0,
+     "seconds": 4.146,
+     "audio": 8.5
+    },
+    {
+     "clip": "10492135991603561867.wav",
+     "wer": 0.125,
+     "seconds": 4.496,
+     "audio": 5.6
+    },
+    {
+     "clip": "6817878979697223927.wav",
+     "wer": 0.143,
+     "seconds": 4.269,
+     "audio": 6.6
+    },
+    {
+     "clip": "10197164397713068203.wav",
+     "wer": 0.067,
+     "seconds": 2.629,
+     "audio": 5.8
+    },
+    {
+     "clip": "1218355507714944126.wav",
+     "wer": 0.125,
+     "seconds": 2.999,
+     "audio": 13.2
+    },
+    {
+     "clip": "6917907748364342404.wav",
+     "wer": 0.053,
+     "seconds": 4.14,
+     "audio": 6.4
+    },
+    {
+     "clip": "3927163358777802368.wav",
+     "wer": 0.245,
+     "seconds": 5.61,
+     "audio": 20.4
+    },
+    {
+     "clip": "16824485789160047135.wav",
+     "wer": 0.261,
+     "seconds": 3.866,
+     "audio": 14
+    },
+    {
+     "clip": "11705046490861852963.wav",
+     "wer": 0.067,
+     "seconds": 2.598,
+     "audio": 7.9
+    },
+    {
+     "clip": "18320871674783850842.wav",
+     "wer": 0.087,
+     "seconds": 2.762,
+     "audio": 7
+    },
+    {
+     "clip": "3502277023574363012.wav",
+     "wer": 0.2,
+     "seconds": 3.855,
+     "audio": 6.6
+    },
+    {
+     "clip": "17087438879836851456.wav",
+     "wer": 0.069,
+     "seconds": 3.399,
+     "audio": 9.7
+    }
+   ]
+  },
+  "small/en": {
+   "clips": 20,
+   "words": 430,
+   "wer": 0.0837,
+   "cer": 0.0481,
+   "audioSeconds": 179.2,
+   "decodeSeconds": 213.7,
+   "medianRealTimeFactor": 1.44,
+   "per": [
+    {
+     "clip": "12741024238657315067.wav",
+     "wer": 0.235,
+     "seconds": 8.552,
+     "audio": 12.6
+    },
+    {
+     "clip": "621925716775998155.wav",
+     "wer": 0.063,
+     "seconds": 8.506,
+     "audio": 5.9
+    },
+    {
+     "clip": "2589557553267364799.wav",
+     "wer": 0,
+     "seconds": 12.795,
+     "audio": 8.9
+    },
+    {
+     "clip": "8173060820032255320.wav",
+     "wer": 0.143,
+     "seconds": 14.691,
+     "audio": 9.1
+    },
+    {
+     "clip": "2652155470394119415.wav",
+     "wer": 0,
+     "seconds": 11.735,
+     "audio": 6.7
+    },
+    {
+     "clip": "1596269393232229615.wav",
+     "wer": 0,
+     "seconds": 10.475,
+     "audio": 9.6
+    },
+    {
+     "clip": "2637301866626572038.wav",
+     "wer": 0.04,
+     "seconds": 11.167,
+     "audio": 10.1
+    },
+    {
+     "clip": "13230261475791184258.wav",
+     "wer": 0.182,
+     "seconds": 9.047,
+     "audio": 4.6
+    },
+    {
+     "clip": "5106380017322065030.wav",
+     "wer": 0,
+     "seconds": 8.253,
+     "audio": 8.5
+    },
+    {
+     "clip": "10492135991603561867.wav",
+     "wer": 0.125,
+     "seconds": 12.732,
+     "audio": 5.6
+    },
+    {
+     "clip": "6817878979697223927.wav",
+     "wer": 0.095,
+     "seconds": 10.516,
+     "audio": 6.6
+    },
+    {
+     "clip": "10197164397713068203.wav",
+     "wer": 0.067,
+     "seconds": 8.477,
+     "audio": 5.8
+    },
+    {
+     "clip": "1218355507714944126.wav",
+     "wer": 0.042,
+     "seconds": 10.757,
+     "audio": 13.2
+    },
+    {
+     "clip": "6917907748364342404.wav",
+     "wer": 0.053,
+     "seconds": 8.867,
+     "audio": 6.4
+    },
+    {
+     "clip": "3927163358777802368.wav",
+     "wer": 0.163,
+     "seconds": 14.102,
+     "audio": 20.4
+    },
+    {
+     "clip": "16824485789160047135.wav",
+     "wer": 0.217,
+     "seconds": 11.464,
+     "audio": 14
+    },
+    {
+     "clip": "11705046490861852963.wav",
+     "wer": 0.067,
+     "seconds": 12.213,
+     "audio": 7.9
+    },
+    {
+     "clip": "18320871674783850842.wav",
+     "wer": 0.043,
+     "seconds": 9.527,
+     "audio": 7
+    },
+    {
+     "clip": "3502277023574363012.wav",
+     "wer": 0.1,
+     "seconds": 9.569,
+     "audio": 6.6
+    },
+    {
+     "clip": "17087438879836851456.wav",
+     "wer": 0.069,
+     "seconds": 10.268,
+     "audio": 9.7
+    }
+   ]
+  }
+ }
+}

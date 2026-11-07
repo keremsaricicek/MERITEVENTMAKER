@@ -1,0 +1,173 @@
+{
+  "recordedAt": "2026-11-01T14:44:29.735Z",
+  "plans": {
+    "adversarial-architecture": {
+      "hash": "4f3cbd035eb0943d",
+      "candidates": 16,
+      "bytes": 174886,
+      "pageErrors": 0
+    },
+    "adversarial-bistro": {
+      "hash": "28c0532cbbe0de2e",
+      "candidates": 23,
+      "bytes": 184410,
+      "pageErrors": 0
+    },
+    "adversarial-dense": {
+      "hash": "b3f8683daa3fcf29",
+      "candidates": 24,
+      "bytes": 212567,
+      "pageErrors": 0
+    },
+    "adversarial-text": {
+      "hash": "147455fe433aaf12",
+      "candidates": 12,
+      "bytes": 154166,
+      "pageErrors": 0
+    },
+    "merit-real-venue": {
+      "hash": "27e539b1d9080a8d",
+      "candidates": 63,
+      "bytes": 465933,
+      "pageErrors": 0
+    },
+    "ornek-symbolic": {
+      "hash": "7093c4745e446b13",
+      "candidates": 187,
+      "bytes": 1128479,
+      "pageErrors": 0
+    },
+    "adversarial/a1-chair-under-table": {
+      "hash": "001cfdc5cfe1caa1",
+      "candidates": 24,
+      "bytes": 162351,
+      "pageErrors": 0
+    },
+    "adversarial/a2-mixed-families": {
+      "hash": "78b444d1d820bdb0",
+      "candidates": 47,
+      "bytes": 234074,
+      "pageErrors": 0
+    },
+    "adversarial/a3-no-anchors": {
+      "hash": "8630dcad3edabc10",
+      "candidates": 40,
+      "bytes": 480297,
+      "pageErrors": 0
+    },
+    "adversarial/a4-multi-room": {
+      "hash": "b2b2548952ff2e0e",
+      "candidates": 57,
+      "bytes": 353032,
+      "pageErrors": 0
+    },
+    "adversarial/a5-architecture-only": {
+      "hash": "63bdb51e2159febe",
+      "candidates": 0,
+      "bytes": 9713,
+      "pageErrors": 0
+    },
+    "adversarial/a6-architectural-confusion": {
+      "hash": "09bd93f5cac150ae",
+      "candidates": 64,
+      "bytes": 315385,
+      "pageErrors": 0
+    },
+    "adversarial/a7-dense-overlap": {
+      "hash": "350def44f908ff39",
+      "candidates": 38,
+      "bytes": 198062,
+      "pageErrors": 0
+    },
+    "adversarial/a8-large-venue": {
+      "hash": "5529af2d6e49e4b6",
+      "candidates": 289,
+      "bytes": 1691549,
+      "pageErrors": 0
+    },
+    "adversarial/a9-mixed-representation": {
+      "hash": "520720bd06ea7003",
+      "candidates": 96,
+      "bytes": 545350,
+      "pageErrors": 0
+    },
+    "robustness/merit-real-blur": {
+      "hash": "f49f4d9439c1d6db",
+      "candidates": 108,
+      "bytes": 575230,
+      "pageErrors": 0
+    },
+    "robustness/merit-real-bright-down": {
+      "hash": "ac054b902b7e53af",
+      "candidates": 103,
+      "bytes": 539636,
+      "pageErrors": 0
+    },
+    "robustness/merit-real-bright-up": {
+      "hash": "44fae683576d8bc0",
+      "candidates": 91,
+      "bytes": 570737,
+      "pageErrors": 0
+    },
+    "robustness/merit-real-contrast-high": {
+      "hash": "960f4477ea1a6bbd",
+      "candidates": 94,
+      "bytes": 596706,
+      "pageErrors": 0
+    },
+    "robustness/merit-real-contrast-low": {
+      "hash": "9aea9c4241f09f9a",
+      "candidates": 99,
+      "bytes": 585010,
+      "pageErrors": 0
+    },
+    "robustness/merit-real-crop-pad": {
+      "hash": "d88c519675253257",
+      "candidates": 62,
+      "bytes": 460737,
+      "pageErrors": 0
+    },
+    "robustness/merit-real-downscale-70": {
+      "hash": "63ccb9f236a88672",
+      "candidates": 90,
+      "bytes": 667823,
+      "pageErrors": 0
+    },
+    "robustness/merit-real-grayscale": {
+      "hash": "bcfd1054cd099d58",
+      "candidates": 98,
+      "bytes": 550136,
+      "pageErrors": 0
+    },
+    "robustness/merit-real-hue-shift": {
+      "hash": "d6eb91e8faa26f34",
+      "candidates": 103,
+      "bytes": 624812,
+      "pageErrors": 0
+    },
+    "robustness/merit-real-lowres-roundtrip": {
+      "hash": "c07984232b261c44",
+      "candidates": 108,
+      "bytes": 524438,
+      "pageErrors": 0
+    },
+    "robustness/merit-real-noise": {
+      "hash": "4b891d740133609d",
+      "candidates": 56,
+      "bytes": 459236,
+      "pageErrors": 0
+    },
+    "robustness/merit-real-rotate-2": {
+      "hash": "a06fe604405f343a",
+      "candidates": 96,
+      "bytes": 604219,
+      "pageErrors": 0
+    },
+    "robustness/merit-real-rotate-minus-3": {
+      "hash": "669c7f8931db6f2c",
+      "candidates": 93,
+      "bytes": 566274,
+      "pageErrors": 0
+    }
+  }
+}

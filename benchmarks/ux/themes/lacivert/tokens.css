@@ -1,0 +1,33 @@
+/* Theme proposal "lacivert" (Lacivert — navy ink on linen). benchmarks/ux, 2026-11-02.
+   Drop-in: load AFTER src/styles.css. Redefines existing custom properties only.
+   Idea: a hotel-house look without a dark shell: linen-grey surfaces, navy as the ink AND the
+   one interaction colour, brass kept for VIP only. Content stays light (constitution: no second dark system). */
+:root{
+  --fp-table:#e3e0d8;--fp-table-line:#bdb7aa;--fp-chair:#faf9f6;--fp-chair-line:#4d5868;
+  --fp-venue:rgba(31,61,107,.07);--fp-venue-line:rgba(31,61,107,.42);--fp-venue-ink:#1c2c45;
+  --fp-stage:rgba(31,61,107,.10);--fp-stage-line:rgba(31,61,107,.55);
+  --shell:#eeece7;--chrome:#f8f7f3;--panel:#fbfaf7;--panel-2:#f4f2ed;--panel-3:#ebe8e1;
+  --line:#dad6cc;--line-soft:#e7e3db;--text:#15213a;--muted:#3c475b;--muted-2:#4a5468;
+  --paper:#f1efe9;--paper-2:#e2ded4;--ink:#15213a;
+  --blue:#21406f;--blue-2:#21406f;--blue-dim:#21406f;--blue-soft:rgba(33,64,111,.10);--blue-soft-strong:rgba(33,64,111,.20);
+  --green:#2b6848;--green-soft:rgba(43,104,72,.11);--green-ink:#22573b;
+  --amber:#8f5c10;--amber-soft:rgba(170,112,30,.13);--amber-ink:#6c440a;
+  --red:#a32d2a;--red-soft:rgba(163,45,42,.10);--red-ink:#8b2522;
+  --v8-bg:#fbfaf7;--v8-panel:#f7f5f1;--v8-panel-2:#f1eee8;--v8-line:#dcd8ce;
+  --v8-text:var(--text);--v8-muted:#3c475b;
+  --v8-blue:#21406f;--v8-cyan:#246b8f;--v8-orange:#b5601c;--v8-red:#b0141f;--v8-green:#2b6848;
+  --shadow-1:0 1px 2px rgba(21,33,58,.07),0 1px 1px rgba(21,33,58,.05);
+  --shadow-2:0 2px 4px rgba(21,33,58,.06),0 6px 16px rgba(21,33,58,.08);
+  --shadow-3:0 4px 10px rgba(21,33,58,.07),0 16px 38px rgba(21,33,58,.12);
+  --shadow-4:0 8px 20px rgba(21,33,58,.09),0 30px 74px rgba(21,33,58,.17);
+  --ring:0 0 0 3px rgba(33,64,111,.34);
+  --vip:#8f6d1f;--vip-soft:rgba(143,109,31,.12);--vip-line:rgba(143,109,31,.45);--vip-ink:#6a5016;
+}
+:root{
+  --pi-bg:#ecebe5;--pi-surface:#fbfaf7;--pi-surface-2:#f4f2ed;
+  --pi-ink:#15213a;--pi-muted:#3f4a5e;--pi-muted-2:#4c566a;
+  --pi-line:#d8d4ca;--pi-line-soft:#e5e1d9;
+  --pi-accent:#21406f;--pi-accent-strong:#152c50;--pi-accent-soft:rgba(33,64,111,.10);
+  --pi-danger:#a32d2a;--pi-danger-soft:rgba(163,45,42,.09);--pi-warn:#8f5c10;
+  --pi-radius:10px;--pi-radius-sm:7px;
+}

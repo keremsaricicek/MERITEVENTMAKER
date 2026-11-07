@@ -1,0 +1,5115 @@
+{
+ "id": "merit-plan-detector",
+ "version": "v2",
+ "bytes": 3540361,
+ "sha256": "a180b42062e9d24a43e6567ff0878a2cb0da5b25bfb6f046b59fa34c186084de",
+ "format": "ONNX opset 17, input image[1,1,H,W] grey 0..1 (H,W multiples of 16), outputs heat[1,4,H/4,W/4] (sigmoid), size[1,2,..] log(w/4),log(h/4), offset[1,2,..]",
+ "classes": [
+  "table_round",
+  "table_rect",
+  "chair",
+  "column"
+ ],
+ "trainedModel": true,
+ "domain": "plan symbols only: tables, chairs, columns. Not rooms, not numbers, not capacity.",
+ "training": {
+  "args": {
+   "cmd": "train",
+   "synthetic": "synth2/train",
+   "real": "",
+   "dataset": "",
+   "with_confirm": false,
+   "exclude_families": "8,9",
+   "steps": 2500,
+   "batch": 16,
+   "lr": 0.002,
+   "real_frac": 0.3,
+   "threads": 4,
+   "seed": 1,
+   "init": "foldS2/model.pt",
+   "out": "runs/v2"
+  },
+  "steps": 2500,
+  "params": 882864,
+  "commitAtPackaging": "2c7befca2ac286b64b46ec2586e6e01b53863dce",
+  "data": "synthetic banquet plans (training/synth.py generation 2, styles other than 8,9) only; no real plan; warm-started from v1",
+  "parent": "v1"
+ },
+ "measured": {
+  "eval-heldout-styles.json": {
+   "model": "v2/model.pt",
+   "thresholds": {
+    "0": 0.5,
+    "1": 0.5,
+    "2": 0.5,
+    "3": 0.5
+   },
+   "step": 2500,
+   "trainedOn": {
+    "synthetic": "synth2/train",
+    "real": "",
+    "exclude_families": "8,9"
+   },
+   "longSide": 1536,
+   "threshold": 0.3,
+   "plans": {
+    "syn-hatched-arm-3700111": {
+     "family": "hatched-arm",
+     "ms": 383,
+     "tables": {
+      "tp": 11,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.786,
+      "f1": 0.88
+     },
+     "chairs": {
+      "tp": 120,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 11,
+      "correct": 11
+     }
+    },
+    "syn-hatched-arm-3700113": {
+     "family": "hatched-arm",
+     "ms": 471,
+     "tables": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.75,
+      "f1": 0.857
+     },
+     "chairs": {
+      "tp": 26,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 7,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 6,
+      "correct": 6
+     }
+    },
+    "syn-hatched-arm-3700115": {
+     "family": "hatched-arm",
+     "ms": 416,
+     "tables": {
+      "tp": 19,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 162,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 19,
+      "correct": 19
+     }
+    },
+    "syn-hatched-arm-3700117": {
+     "family": "hatched-arm",
+     "ms": 401,
+     "tables": {
+      "tp": 5,
+      "fp": 1,
+      "fn": 15,
+      "precision": 0.833,
+      "recall": 0.25,
+      "f1": 0.385
+     },
+     "chairs": {
+      "tp": 56,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 5,
+      "correct": 5
+     }
+    },
+    "syn-hatched-arm-3700119": {
+     "family": "hatched-arm",
+     "ms": 349,
+     "tables": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.667,
+      "f1": 0.8
+     },
+     "chairs": {
+      "tp": 28,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.667,
+      "f1": 0.8
+     },
+     "tableType": {
+      "matched": 6,
+      "correct": 6
+     }
+    },
+    "syn-hatched-arm-3700121": {
+     "family": "hatched-arm",
+     "ms": 429,
+     "tables": {
+      "tp": 18,
+      "fp": 0,
+      "fn": 7,
+      "precision": 1.0,
+      "recall": 0.72,
+      "f1": 0.837
+     },
+     "chairs": {
+      "tp": 71,
+      "fp": 0,
+      "fn": 5,
+      "precision": 1.0,
+      "recall": 0.934,
+      "f1": 0.966
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 18,
+      "correct": 18
+     }
+    },
+    "syn-hatched-arm-3700123": {
+     "family": "hatched-arm",
+     "ms": 464,
+     "tables": {
+      "tp": 11,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 11,
+      "correct": 11
+     }
+    },
+    "syn-hatched-arm-3700125": {
+     "family": "hatched-arm",
+     "ms": 354,
+     "tables": {
+      "tp": 4,
+      "fp": 3,
+      "fn": 9,
+      "precision": 0.571,
+      "recall": 0.308,
+      "f1": 0.4
+     },
+     "chairs": {
+      "tp": 21,
+      "fp": 0,
+      "fn": 13,
+      "precision": 1.0,
+      "recall": 0.618,
+      "f1": 0.764
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 4,
+      "correct": 4
+     }
+    },
+    "syn-hatched-arm-3700127": {
+     "family": "hatched-arm",
+     "ms": 427,
+     "tables": {
+      "tp": 15,
+      "fp": 0,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.789,
+      "f1": 0.882
+     },
+     "chairs": {
+      "tp": 50,
+      "fp": 1,
+      "fn": 0,
+      "precision": 0.98,
+      "recall": 1.0,
+      "f1": 0.99
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.625,
+      "f1": 0.769
+     },
+     "tableType": {
+      "matched": 15,
+      "correct": 15
+     }
+    },
+    "syn-hatched-arm-3700129": {
+     "family": "hatched-arm",
+     "ms": 370,
+     "tables": {
+      "tp": 15,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.938,
+      "f1": 0.968
+     },
+     "chairs": {
+      "tp": 38,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 1,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+     },
+     "tableType": {
+      "matched": 15,
+      "correct": 15
+     }
+    },
+    "syn-hatched-arm-3700131": {
+     "family": "hatched-arm",
+     "ms": 410,
+     "tables": {
+      "tp": 74,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 692,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 74,
+      "correct": 74
+     }
+    },
+    "syn-hatched-arm-3700133": {
+     "family": "hatched-arm",
+     "ms": 502,
+     "tables": {
+      "tp": 14,
+      "fp": 0,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.778,
+      "f1": 0.875
+     },
+     "chairs": {
+      "tp": 52,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.857,
+      "f1": 0.923
+     },
+     "tableType": {
+      "matched": 14,
+      "correct": 14
+     }
+    },
+    "syn-hatched-arm-3700135": {
+     "family": "hatched-arm",
+     "ms": 370,
+     "tables": {
+      "tp": 34,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 296,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.25,
+      "f1": 0.4
+     },
+     "tableType": {
+      "matched": 34,
+      "correct": 34
+     }
+    },
+    "syn-hatched-arm-3700137": {
+     "family": "hatched-arm",
+     "ms": 363,
+     "tables": {
+      "tp": 38,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.95,
+      "f1": 0.974
+     },
+     "chairs": {
+      "tp": 316,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.833,
+      "f1": 0.909
+     },
+     "tableType": {
+      "matched": 38,
+      "correct": 38
+     }
+    },
+    "syn-hatched-arm-3700139": {
+     "family": "hatched-arm",
+     "ms": 329,
+     "tables": {
+      "tp": 16,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.889,
+      "f1": 0.941
+     },
+     "chairs": {
+      "tp": 42,
+      "fp": 1,
+      "fn": 0,
+      "precision": 0.977,
+      "recall": 1.0,
+      "f1": 0.988
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 16,
+      "correct": 16
+     }
+    },
+    "syn-hatched-arm-3700141": {
+     "family": "hatched-arm",
+     "ms": 383,
+     "tables": {
+      "tp": 50,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 462,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 50,
+      "correct": 50
+     }
+    },
+    "syn-hatched-arm-3700143": {
+     "family": "hatched-arm",
+     "ms": 344,
+     "tables": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.571,
+      "f1": 0.727
+     },
+     "chairs": {
+      "tp": 20,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 4,
+      "correct": 4
+     }
+    },
+    "syn-hatched-arm-3700145": {
+     "family": "hatched-arm",
+     "ms": 345,
+     "tables": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 8,
+      "precision": 1.0,
+      "recall": 0.333,
+      "f1": 0.5
+     },
+     "chairs": {
+      "tp": 28,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.75,
+      "f1": 0.857
+     },
+     "tableType": {
+      "matched": 4,
+      "correct": 4
+     }
+    },
+    "syn-hatched-arm-3700147": {
+     "family": "hatched-arm",
+     "ms": 361,
+     "tables": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.6,
+      "f1": 0.75
+     },
+     "chairs": {
+      "tp": 20,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 3,
+      "correct": 3
+     }
+    },
+    "syn-hatched-arm-3700149": {
+     "family": "hatched-arm",
+     "ms": 350,
+     "tables": {
+      "tp": 9,
+      "fp": 0,
+      "fn": 13,
+      "precision": 1.0,
+      "recall": 0.409,
+      "f1": 0.581
+     },
+     "chairs": {
+      "tp": 40,
+      "fp": 0,
+      "fn": 14,
+      "precision": 1.0,
+      "recall": 0.741,
+      "f1": 0.851
+     },
+     "columns": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 9,
+      "correct": 9
+     }
+    },
+    "syn-hatched-arm-3700151": {
+     "family": "hatched-arm",
+     "ms": 355,
+     "tables": {
+      "tp": 19,
+      "fp": 0,
+      "fn": 5,
+      "precision": 1.0,
+      "recall": 0.792,
+      "f1": 0.884
+     },
+     "chairs": {
+      "tp": 66,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 19,
+      "correct": 19
+     }
+    },
+    "syn-hatched-arm-3700153": {
+     "family": "hatched-arm",
+     "ms": 484,
+     "tables": {
+      "tp": 43,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.977,
+      "f1": 0.989
+     },
+     "chairs": {
+      "tp": 354,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 43,
+      "correct": 43
+     }
+    },
+    "syn-hatched-arm-3700155": {
+     "family": "hatched-arm",
+     "ms": 373,
+     "tables": {
+      "tp": 19,
+      "fp": 0,
+      "fn": 5,
+      "precision": 1.0,
+      "recall": 0.792,
+      "f1": 0.884
+     },
+     "chairs": {
+      "tp": 64,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.667
+     },
+     "tableType": {
+      "matched": 19,
+      "correct": 19
+     }
+    },
+    "syn-hatched-arm-3700157": {
+     "family": "hatched-arm",
+     "ms": 330,
+     "tables": {
+      "tp": 7,
+      "fp": 0,
+      "fn": 11,
+      "precision": 1.0,
+      "recall": 0.389,
+      "f1": 0.56
+     },
+     "chairs": {
+      "tp": 23,
+      "fp": 0,
+      "fn": 17,
+      "precision": 1.0,
+      "recall": 0.575,
+      "f1": 0.73
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.75,
+      "f1": 0.857
+     },
+     "tableType": {
+      "matched": 7,
+      "correct": 7
+     }
+    },
+    "syn-hatched-arm-3700159": {
+     "family": "hatched-arm",
+     "ms": 421,
+     "tables": {
+      "tp": 55,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 465,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.998,
+      "f1": 0.999
+     },
+     "tableType": {
+      "matched": 55,
+      "correct": 55
+     }
+    },
+    "syn-hatched-arm-3700161": {
+     "family": "hatched-arm",
+     "ms": 457,
+     "tables": {
+      "tp": 29,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.967,
+      "f1": 0.983
+     },
+     "chairs": {
+      "tp": 254,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 29,
+      "correct": 29
+     }
+    },
+    "syn-hatched-arm-3700163": {
+     "family": "hatched-arm",
+     "ms": 391,
+     "tables": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.75,
+      "f1": 0.857
+     },
+     "chairs": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 7,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 6,
+      "correct": 6
+     }
+    },
+    "syn-hatched-arm-3700165": {
+     "family": "hatched-arm",
+     "ms": 375,
+     "tables": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.714,
+      "f1": 0.833
+     },
+     "chairs": {
+      "tp": 22,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.833,
+      "f1": 0.909
+     },
+     "tableType": {
+      "matched": 5,
+      "correct": 5
+     }
+    },
+    "syn-hatched-arm-3700167": {
+     "family": "hatched-arm",
+     "ms": 441,
+     "tables": {
+      "tp": 8,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 68,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.971,
+      "f1": 0.986
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.75,
+      "f1": 0.857
+     },
+     "tableType": {
+      "matched": 8,
+      "correct": 8
+     }
+    },
+    "syn-hatched-arm-3700169": {
+     "family": "hatched-arm",
+     "ms": 418,
+     "tables": {
+      "tp": 23,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.92,
+      "f1": 0.958
+     },
+     "chairs": {
+      "tp": 196,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.333,
+      "f1": 0.5
+     },
+     "tableType": {
+      "matched": 23,
+      "correct": 23
+     }
+    },
+    "syn-hatched-arm-3700171": {
+     "family": "hatched-arm",
+     "ms": 414,
+     "tables": {
+      "tp": 11,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.917,
+      "f1": 0.957
+     },
+     "chairs": {
+      "tp": 28,
+      "fp": 0,
+      "fn": 6,
+      "precision": 1.0,
+      "recall": 0.824,
+      "f1": 0.903
+     },
+     "tableType": {
+      "matched": 11,
+      "correct": 11
+     }
+    },
+    "syn-hatched-arm-3700173": {
+     "family": "hatched-arm",
+     "ms": 284,
+     "tables": {
+      "tp": 8,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.727,
+      "f1": 0.842
+     },
+     "chairs": {
+      "tp": 34,
+      "fp": 2,
+      "fn": 0,
+      "precision": 0.944,
+      "recall": 1.0,
+      "f1": 0.971
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 8,
+      "correct": 8
+     }
+    },
+    "syn-hatched-arm-3700175": {
+     "family": "hatched-arm",
+     "ms": 443,
+     "tables": {
+      "tp": 9,
+      "fp": 0,
+      "fn": 5,
+      "precision": 1.0,
+      "recall": 0.643,
+      "f1": 0.783
+     },
+     "chairs": {
+      "tp": 56,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 9,
+      "correct": 9
+     }
+    },
+    "syn-hatched-arm-3700177": {
+     "family": "hatched-arm",
+     "ms": 411,
+     "tables": {
+      "tp": 32,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 286,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 32,
+      "correct": 32
+     }
+    },
+    "syn-hatched-arm-3700179": {
+     "family": "hatched-arm",
+     "ms": 322,
+     "tables": {
+      "tp": 25,
+      "fp": 0,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.862,
+      "f1": 0.926
+     },
+     "chairs": {
+      "tp": 80,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 25,
+      "correct": 25
+     }
+    },
+    "syn-hatched-arm-3700181": {
+     "family": "hatched-arm",
+     "ms": 347,
+     "tables": {
+      "tp": 15,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.882,
+      "f1": 0.938
+     },
+     "chairs": {
+      "tp": 117,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.992,
+      "f1": 0.996
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 15,
+      "correct": 15
+     }
+    },
+    "syn-hatched-arm-3700183": {
+     "family": "hatched-arm",
+     "ms": 333,
+     "tables": {
+      "tp": 56,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.982,
+      "f1": 0.991
+     },
+     "chairs": {
+      "tp": 496,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 56,
+      "correct": 56
+     }
+    },
+    "syn-hatched-arm-3700185": {
+     "family": "hatched-arm",
+     "ms": 456,
+     "tables": {
+      "tp": 37,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.949,
+      "f1": 0.974
+     },
+     "chairs": {
+      "tp": 324,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 37,
+      "correct": 37
+     }
+    },
+    "syn-hatched-arm-3700187": {
+     "family": "hatched-arm",
+     "ms": 304,
+     "tables": {
+      "tp": 34,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 208,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.571,
+      "f1": 0.727
+     },
+     "tableType": {
+      "matched": 34,
+      "correct": 34
+     }
+    },
+    "syn-hatched-arm-3700189": {
+     "family": "hatched-arm",
+     "ms": 434,
+     "tables": {
+      "tp": 22,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.957,
+      "f1": 0.978
+     },
+     "chairs": {
+      "tp": 52,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 7,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.875,
+      "f1": 0.933
+     },
+     "tableType": {
+      "matched": 22,
+      "correct": 22
+     }
+    },
+    "syn-mono-num-chairs-3700112": {
+     "family": "mono-num-chairs",
+     "ms": 382,
+     "tables": {
+      "tp": 18,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 162,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.988,
+      "f1": 0.994
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.833,
+      "f1": 0.909
+     },
+     "tableType": {
+      "matched": 18,
+      "correct": 18
+     }
+    },
+    "syn-mono-num-chairs-3700114": {
+     "family": "mono-num-chairs",
+     "ms": 350,
+     "tables": {
+      "tp": 32,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.97,
+      "f1": 0.985
+     },
+     "chairs": {
+      "tp": 239,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.996,
+      "f1": 0.998
+     },
+     "columns": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 32,
+      "correct": 32
+     }
+    },
+    "syn-mono-num-chairs-3700116": {
+     "family": "mono-num-chairs",
+     "ms": 379,
+     "tables": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.333,
+      "f1": 0.5
+     },
+     "chairs": {
+      "tp": 20,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.833,
+      "f1": 0.909
+     },
+     "tableType": {
+      "matched": 1,
+      "correct": 1
+     }
+    },
+    "syn-mono-num-chairs-3700118": {
+     "family": "mono-num-chairs",
+     "ms": 293,
+     "tables": {
+      "tp": 9,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.818,
+      "f1": 0.9
+     },
+     "chairs": {
+      "tp": 65,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.985,
+      "f1": 0.992
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.75,
+      "f1": 0.857
+     },
+     "tableType": {
+      "matched": 9,
+      "correct": 9
+     }
+    },
+    "syn-mono-num-chairs-3700120": {
+     "family": "mono-num-chairs",
+     "ms": 459,
+     "tables": {
+      "tp": 49,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 464,
+      "fp": 0,
+      "fn": 8,
+      "precision": 1.0,
+      "recall": 0.983,
+      "f1": 0.991
+     },
+     "columns": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 49,
+      "correct": 49
+     }
+    },
+    "syn-mono-num-chairs-3700122": {
+     "family": "mono-num-chairs",
+     "ms": 402,
+     "tables": {
+      "tp": 17,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.895,
+      "f1": 0.944
+     },
+     "chairs": {
+      "tp": 49,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.98,
+      "f1": 0.99
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 17,
+      "correct": 17
+     }
+    },
+    "syn-mono-num-chairs-3700124": {
+     "family": "mono-num-chairs",
+     "ms": 393,
+     "tables": {
+      "tp": 25,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 226,
+      "fp": 0,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.983,
+      "f1": 0.991
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 25,
+      "correct": 25
+     }
+    },
+    "syn-mono-num-chairs-3700126": {
+     "family": "mono-num-chairs",
+     "ms": 354,
+     "tables": {
+      "tp": 21,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 167,
+      "fp": 0,
+      "fn": 5,
+      "precision": 1.0,
+      "recall": 0.971,
+      "f1": 0.985
+     },
+     "tableType": {
+      "matched": 21,
+      "correct": 21
+     }
+    },
+    "syn-mono-num-chairs-3700128": {
+     "family": "mono-num-chairs",
+     "ms": 289,
+     "tables": {
+      "tp": 38,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 331,
+      "fp": 0,
+      "fn": 11,
+      "precision": 1.0,
+      "recall": 0.968,
+      "f1": 0.984
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 38,
+      "correct": 38
+     }
+    },
+    "syn-mono-num-chairs-3700130": {
+     "family": "mono-num-chairs",
+     "ms": 292,
+     "tables": {
+      "tp": 54,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 482,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.6,
+      "f1": 0.75
+     },
+     "tableType": {
+      "matched": 54,
+      "correct": 54
+     }
+    },
+    "syn-mono-num-chairs-3700132": {
+     "family": "mono-num-chairs",
+     "ms": 399,
+     "tables": {
+      "tp": 22,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 187,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.984,
+      "f1": 0.992
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.75,
+      "f1": 0.857
+     },
+     "tableType": {
+      "matched": 22,
+      "correct": 22
+     }
+    },
+    "syn-mono-num-chairs-3700134": {
+     "family": "mono-num-chairs",
+     "ms": 340,
+     "tables": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.625,
+      "f1": 0.769
+     },
+     "chairs": {
+      "tp": 58,
+      "fp": 0,
+      "fn": 6,
+      "precision": 1.0,
+      "recall": 0.906,
+      "f1": 0.951
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.667
+     },
+     "tableType": {
+      "matched": 5,
+      "correct": 5
+     }
+    },
+    "syn-mono-num-chairs-3700136": {
+     "family": "mono-num-chairs",
+     "ms": 509,
+     "tables": {
+      "tp": 17,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 155,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.994,
+      "f1": 0.997
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.333,
+      "f1": 0.5
+     },
+     "tableType": {
+      "matched": 17,
+      "correct": 17
+     }
+    },
+    "syn-mono-num-chairs-3700138": {
+     "family": "mono-num-chairs",
+     "ms": 448,
+     "tables": {
+      "tp": 11,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.846,
+      "f1": 0.917
+     },
+     "chairs": {
+      "tp": 75,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.987,
+      "f1": 0.993
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 11,
+      "correct": 11
+     }
+    },
+    "syn-mono-num-chairs-3700140": {
+     "family": "mono-num-chairs",
+     "ms": 322,
+     "tables": {
+      "tp": 42,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 374,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.995,
+      "f1": 0.997
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 42,
+      "correct": 42
+     }
+    },
+    "syn-mono-num-chairs-3700142": {
+     "family": "mono-num-chairs",
+     "ms": 299,
+     "tables": {
+      "tp": 12,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 106,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 12,
+      "correct": 12
+     }
+    },
+    "syn-mono-num-chairs-3700144": {
+     "family": "mono-num-chairs",
+     "ms": 376,
+     "tables": {
+      "tp": 84,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 720,
+      "fp": 0,
+      "fn": 10,
+      "precision": 1.0,
+      "recall": 0.986,
+      "f1": 0.993
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 84,
+      "correct": 84
+     }
+    },
+    "syn-mono-num-chairs-3700146": {
+     "family": "mono-num-chairs",
+     "ms": 443,
+     "tables": {
+      "tp": 20,
+      "fp": 0,
+      "fn": 5,
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.889
+     },
+     "chairs": {
+      "tp": 92,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 20,
+      "correct": 20
+     }
+    },
+    "syn-mono-num-chairs-3700148": {
+     "family": "mono-num-chairs",
+     "ms": 362,
+     "tables": {
+      "tp": 12,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 99,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.99,
+      "f1": 0.995
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 12,
+      "correct": 12
+     }
+    },
+    "syn-mono-num-chairs-3700150": {
+     "family": "mono-num-chairs",
+     "ms": 298,
+     "tables": {
+      "tp": 41,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 339,
+      "fp": 0,
+      "fn": 5,
+      "precision": 1.0,
+      "recall": 0.985,
+      "f1": 0.993
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 41,
+      "correct": 41
+     }
+    },
+    "syn-mono-num-chairs-3700152": {
+     "family": "mono-num-chairs",
+     "ms": 420,
+     "tables": {
+      "tp": 17,
+      "fp": 4,
+      "fn": 0,
+      "precision": 0.81,
+      "recall": 1.0,
+      "f1": 0.895
+     },
+     "chairs": {
+      "tp": 126,
+      "fp": 0,
+      "fn": 24,
+      "precision": 1.0,
+      "recall": 0.84,
+      "f1": 0.913
+     },
+     "columns": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.857,
+      "f1": 0.923
+     },
+     "tableType": {
+      "matched": 17,
+      "correct": 17
+     }
+    },
+    "syn-mono-num-chairs-3700154": {
+     "family": "mono-num-chairs",
+     "ms": 403,
+     "tables": {
+      "tp": 39,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 329,
+      "fp": 0,
+      "fn": 7,
+      "precision": 1.0,
+      "recall": 0.979,
+      "f1": 0.989
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.667,
+      "f1": 0.8
+     },
+     "tableType": {
+      "matched": 39,
+      "correct": 39
+     }
+    },
+    "syn-mono-num-chairs-3700156": {
+     "family": "mono-num-chairs",
+     "ms": 336,
+     "tables": {
+      "tp": 12,
+      "fp": 0,
+      "fn": 10,
+      "precision": 1.0,
+      "recall": 0.545,
+      "f1": 0.706
+     },
+     "chairs": {
+      "tp": 23,
+      "fp": 0,
+      "fn": 35,
+      "precision": 1.0,
+      "recall": 0.397,
+      "f1": 0.568
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 12,
+      "correct": 12
+     }
+    },
+    "syn-mono-num-chairs-3700158": {
+     "family": "mono-num-chairs",
+     "ms": 262,
+     "tables": {
+      "tp": 11,
+      "fp": 1,
+      "fn": 0,
+      "precision": 0.917,
+      "recall": 1.0,
+      "f1": 0.957
+     },
+     "chairs": {
+      "tp": 77,
+      "fp": 2,
+      "fn": 17,
+      "precision": 0.975,
+      "recall": 0.819,
+      "f1": 0.89
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.2,
+      "f1": 0.333
+     },
+     "tableType": {
+      "matched": 11,
+      "correct": 11
+     }
+    },
+    "syn-mono-num-chairs-3700160": {
+     "family": "mono-num-chairs",
+     "ms": 295,
+     "tables": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.923,
+      "f1": 0.96
+     },
+     "chairs": {
+      "tp": 59,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.983,
+      "f1": 0.992
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.667,
+      "f1": 0.8
+     },
+     "tableType": {
+      "matched": 24,
+      "correct": 24
+     }
+    },
+    "syn-mono-num-chairs-3700162": {
+     "family": "mono-num-chairs",
+     "ms": 300,
+     "tables": {
+      "tp": 38,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 303,
+      "fp": 0,
+      "fn": 9,
+      "precision": 1.0,
+      "recall": 0.971,
+      "f1": 0.985
+     },
+     "tableType": {
+      "matched": 38,
+      "correct": 38
+     }
+    },
+    "syn-mono-num-chairs-3700164": {
+     "family": "mono-num-chairs",
+     "ms": 342,
+     "tables": {
+      "tp": 29,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.935,
+      "f1": 0.967
+     },
+     "chairs": {
+      "tp": 135,
+      "fp": 0,
+      "fn": 7,
+      "precision": 1.0,
+      "recall": 0.951,
+      "f1": 0.975
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.429,
+      "f1": 0.6
+     },
+     "tableType": {
+      "matched": 29,
+      "correct": 29
+     }
+    },
+    "syn-mono-num-chairs-3700166": {
+     "family": "mono-num-chairs",
+     "ms": 302,
+     "tables": {
+      "tp": 19,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.95,
+      "f1": 0.974
+     },
+     "chairs": {
+      "tp": 46,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 19,
+      "correct": 19
+     }
+    },
+    "syn-mono-num-chairs-3700168": {
+     "family": "mono-num-chairs",
+     "ms": 231,
+     "tables": {
+      "tp": 2,
+      "fp": 1,
+      "fn": 5,
+      "precision": 0.667,
+      "recall": 0.286,
+      "f1": 0.4
+     },
+     "chairs": {
+      "tp": 16,
+      "fp": 0,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.889
+     },
+     "tableType": {
+      "matched": 2,
+      "correct": 2
+     }
+    },
+    "syn-mono-num-chairs-3700170": {
+     "family": "mono-num-chairs",
+     "ms": 378,
+     "tables": {
+      "tp": 36,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 305,
+      "fp": 0,
+      "fn": 5,
+      "precision": 1.0,
+      "recall": 0.984,
+      "f1": 0.992
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 36,
+      "correct": 36
+     }
+    },
+    "syn-mono-num-chairs-3700172": {
+     "family": "mono-num-chairs",
+     "ms": 376,
+     "tables": {
+      "tp": 12,
+      "fp": 0,
+      "fn": 6,
+      "precision": 1.0,
+      "recall": 0.667,
+      "f1": 0.8
+     },
+     "chairs": {
+      "tp": 103,
+      "fp": 0,
+      "fn": 13,
+      "precision": 1.0,
+      "recall": 0.888,
+      "f1": 0.941
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 12,
+      "correct": 12
+     }
+    },
+    "syn-mono-num-chairs-3700174": {
+     "family": "mono-num-chairs",
+     "ms": 316,
+     "tables": {
+      "tp": 46,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 418,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 46,
+      "correct": 46
+     }
+    },
+    "syn-mono-num-chairs-3700176": {
+     "family": "mono-num-chairs",
+     "ms": 275,
+     "tables": {
+      "tp": 8,
+      "fp": 0,
+      "fn": 9,
+      "precision": 1.0,
+      "recall": 0.471,
+      "f1": 0.64
+     },
+     "chairs": {
+      "tp": 18,
+      "fp": 0,
+      "fn": 20,
+      "precision": 1.0,
+      "recall": 0.474,
+      "f1": 0.643
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 8,
+      "correct": 8
+     }
+    },
+    "syn-mono-num-chairs-3700178": {
+     "family": "mono-num-chairs",
+     "ms": 271,
+     "tables": {
+      "tp": 11,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.846,
+      "f1": 0.917
+     },
+     "chairs": {
+      "tp": 32,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.941,
+      "f1": 0.97
+     },
+     "tableType": {
+      "matched": 11,
+      "correct": 11
+     }
+    },
+    "syn-mono-num-chairs-3700180": {
+     "family": "mono-num-chairs",
+     "ms": 291,
+     "tables": {
+      "tp": 18,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 155,
+      "fp": 0,
+      "fn": 7,
+      "precision": 1.0,
+      "recall": 0.957,
+      "f1": 0.978
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.667
+     },
+     "tableType": {
+      "matched": 18,
+      "correct": 18
+     }
+    },
+    "syn-mono-num-chairs-3700182": {
+     "family": "mono-num-chairs",
+     "ms": 383,
+     "tables": {
+      "tp": 29,
+      "fp": 0,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.879,
+      "f1": 0.935
+     },
+     "chairs": {
+      "tp": 84,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.667
+     },
+     "tableType": {
+      "matched": 29,
+      "correct": 29
+     }
+    },
+    "syn-mono-num-chairs-3700184": {
+     "family": "mono-num-chairs",
+     "ms": 333,
+     "tables": {
+      "tp": 57,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 476,
+      "fp": 0,
+      "fn": 22,
+      "precision": 1.0,
+      "recall": 0.956,
+      "f1": 0.977
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.667
+     },
+     "tableType": {
+      "matched": 57,
+      "correct": 57
+     }
+    },
+    "syn-mono-num-chairs-3700186": {
+     "family": "mono-num-chairs",
+     "ms": 247,
+     "tables": {
+      "tp": 30,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 283,
+      "fp": 0,
+      "fn": 5,
+      "precision": 1.0,
+      "recall": 0.983,
+      "f1": 0.991
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 30,
+      "correct": 30
+     }
+    },
+    "syn-mono-num-chairs-3700188": {
+     "family": "mono-num-chairs",
+     "ms": 279,
+     "tables": {
+      "tp": 67,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 586,
+      "fp": 0,
+      "fn": 6,
+      "precision": 1.0,
+      "recall": 0.99,
+      "f1": 0.995
+     },
+     "columns": {
+      "tp": 7,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.875,
+      "f1": 0.933
+     },
+     "tableType": {
+      "matched": 67,
+      "correct": 67
+     }
+    },
+    "syn-mono-num-chairs-3700190": {
+     "family": "mono-num-chairs",
+     "ms": 287,
+     "tables": {
+      "tp": 36,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 314,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.625,
+      "f1": 0.769
+     },
+     "tableType": {
+      "matched": 36,
+      "correct": 36
+     }
+    }
+   },
+   "pooled": {
+    "tables": {
+     "tp": 1890,
+     "fp": 10,
+     "fn": 184,
+     "precision": 0.995,
+     "recall": 0.911,
+     "f1": 0.951
+    },
+    "chairs": {
+     "tp": 14079,
+     "fp": 6,
+     "fn": 305,
+     "precision": 1.0,
+     "recall": 0.979,
+     "f1": 0.989
+    },
+    "columns": {
+     "tp": 214,
+     "fp": 0,
+     "fn": 53,
+     "precision": 1.0,
+     "recall": 0.801,
+     "f1": 0.89
+    }
+   }
+  },
+  "eval-real.json": {
+   "model": "v2/model.pt",
+   "thresholds": {
+    "0": 0.5,
+    "1": 0.5,
+    "2": 0.5,
+    "3": 0.5
+   },
+   "step": 2500,
+   "trainedOn": {
+    "synthetic": "synth2/train",
+    "real": "",
+    "exclude_families": "8,9"
+   },
+   "longSide": 1536,
+   "threshold": 0.3,
+   "plans": {
+    "golden": {
+     "family": "golden",
+     "ms": 388,
+     "tables": {
+      "tp": 44,
+      "fp": 1,
+      "fn": 2,
+      "precision": 0.978,
+      "recall": 0.957,
+      "f1": 0.967
+     },
+     "chairs": {
+      "tp": 104,
+      "fp": 9,
+      "fn": 9,
+      "precision": 0.92,
+      "recall": 0.92,
+      "f1": 0.92
+     },
+     "tableType": {
+      "matched": 44,
+      "correct": 44
+     }
+    },
+    "ornek": {
+     "family": "ornek",
+     "ms": 485,
+     "tables": {
+      "tp": 166,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 166,
+      "correct": 166
+     }
+    }
+   },
+   "pooled": {
+    "tables": {
+     "tp": 210,
+     "fp": 1,
+     "fn": 2,
+     "precision": 0.995,
+     "recall": 0.991,
+     "f1": 0.993
+    },
+    "chairs": {
+     "tp": 104,
+     "fp": 9,
+     "fn": 9,
+     "precision": 0.92,
+     "recall": 0.92,
+     "f1": 0.92
+    }
+   }
+  },
+  "eval-val.json": {
+   "model": "v2/model.pt",
+   "thresholds": {
+    "0": 0.5,
+    "1": 0.5,
+    "2": 0.5,
+    "3": 0.5
+   },
+   "step": 2500,
+   "trainedOn": {
+    "synthetic": "synth2/train",
+    "real": "",
+    "exclude_families": "8,9"
+   },
+   "longSide": 1536,
+   "threshold": 0.3,
+   "plans": {
+    "syn-blue-print-2300074": {
+     "family": "blue-print",
+     "ms": 349,
+     "tables": {
+      "tp": 9,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 82,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 9,
+      "correct": 9
+     }
+    },
+    "syn-blue-print-2300082": {
+     "family": "blue-print",
+     "ms": 402,
+     "tables": {
+      "tp": 15,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 142,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.889
+     },
+     "tableType": {
+      "matched": 15,
+      "correct": 15
+     }
+    },
+    "syn-blue-print-2300090": {
+     "family": "blue-print",
+     "ms": 395,
+     "tables": {
+      "tp": 16,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.842,
+      "f1": 0.914
+     },
+     "chairs": {
+      "tp": 46,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 16,
+      "correct": 16
+     }
+    },
+    "syn-blue-print-2300098": {
+     "family": "blue-print",
+     "ms": 357,
+     "tables": {
+      "tp": 20,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 184,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 20,
+      "correct": 20
+     }
+    },
+    "syn-blue-print-2300106": {
+     "family": "blue-print",
+     "ms": 299,
+     "tables": {
+      "tp": 14,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.933,
+      "f1": 0.966
+     },
+     "chairs": {
+      "tp": 34,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.833,
+      "f1": 0.909
+     },
+     "tableType": {
+      "matched": 14,
+      "correct": 14
+     }
+    },
+    "syn-blue-print-2300114": {
+     "family": "blue-print",
+     "ms": 402,
+     "tables": {
+      "tp": 20,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.909,
+      "f1": 0.952
+     },
+     "chairs": {
+      "tp": 140,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 20,
+      "correct": 20
+     }
+    },
+    "syn-blue-print-2300122": {
+     "family": "blue-print",
+     "ms": 390,
+     "tables": {
+      "tp": 22,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 204,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 22,
+      "correct": 22
+     }
+    },
+    "syn-blue-print-2300130": {
+     "family": "blue-print",
+     "ms": 356,
+     "tables": {
+      "tp": 18,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 162,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 18,
+      "correct": 18
+     }
+    },
+    "syn-blue-print-2300138": {
+     "family": "blue-print",
+     "ms": 430,
+     "tables": {
+      "tp": 11,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.917,
+      "f1": 0.957
+     },
+     "chairs": {
+      "tp": 85,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.988,
+      "f1": 0.994
+     },
+     "columns": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 4,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+     },
+     "tableType": {
+      "matched": 11,
+      "correct": 11
+     }
+    },
+    "syn-blue-print-2300146": {
+     "family": "blue-print",
+     "ms": 310,
+     "tables": {
+      "tp": 14,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 128,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 7,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 14,
+      "correct": 14
+     }
+    },
+    "syn-cad-grey-2300070": {
+     "family": "cad-grey",
+     "ms": 352,
+     "tables": {
+      "tp": 11,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.917,
+      "f1": 0.957
+     },
+     "chairs": {
+      "tp": 70,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.857,
+      "f1": 0.923
+     },
+     "tableType": {
+      "matched": 11,
+      "correct": 11
+     }
+    },
+    "syn-cad-grey-2300078": {
+     "family": "cad-grey",
+     "ms": 411,
+     "tables": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.889,
+      "f1": 0.941
+     },
+     "chairs": {
+      "tp": 74,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 24,
+      "correct": 24
+     }
+    },
+    "syn-cad-grey-2300086": {
+     "family": "cad-grey",
+     "ms": 421,
+     "tables": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.625,
+      "f1": 0.769
+     },
+     "chairs": {
+      "tp": 26,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 5,
+      "correct": 5
+     }
+    },
+    "syn-cad-grey-2300094": {
+     "family": "cad-grey",
+     "ms": 327,
+     "tables": {
+      "tp": 27,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 234,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 27,
+      "correct": 27
+     }
+    },
+    "syn-cad-grey-2300102": {
+     "family": "cad-grey",
+     "ms": 259,
+     "tables": {
+      "tp": 46,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 426,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 46,
+      "correct": 46
+     }
+    },
+    "syn-cad-grey-2300110": {
+     "family": "cad-grey",
+     "ms": 281,
+     "tables": {
+      "tp": 7,
+      "fp": 0,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.636,
+      "f1": 0.778
+     },
+     "chairs": {
+      "tp": 32,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 7,
+      "correct": 7
+     }
+    },
+    "syn-cad-grey-2300118": {
+     "family": "cad-grey",
+     "ms": 450,
+     "tables": {
+      "tp": 34,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.971,
+      "f1": 0.986
+     },
+     "chairs": {
+      "tp": 274,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 34,
+      "correct": 34
+     }
+    },
+    "syn-cad-grey-2300126": {
+     "family": "cad-grey",
+     "ms": 312,
+     "tables": {
+      "tp": 18,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 38,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 7,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.875,
+      "f1": 0.933
+     },
+     "tableType": {
+      "matched": 18,
+      "correct": 18
+     }
+    },
+    "syn-cad-grey-2300134": {
+     "family": "cad-grey",
+     "ms": 411,
+     "tables": {
+      "tp": 21,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.875,
+      "f1": 0.933
+     },
+     "chairs": {
+      "tp": 74,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 7,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 21,
+      "correct": 21
+     }
+    },
+    "syn-cad-grey-2300142": {
+     "family": "cad-grey",
+     "ms": 500,
+     "tables": {
+      "tp": 46,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.958,
+      "f1": 0.979
+     },
+     "chairs": {
+      "tp": 376,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.995,
+      "f1": 0.997
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 46,
+      "correct": 46
+     }
+    },
+    "syn-cad-line-2300069": {
+     "family": "cad-line",
+     "ms": 406,
+     "tables": {
+      "tp": 2,
+      "fp": 1,
+      "fn": 2,
+      "precision": 0.667,
+      "recall": 0.5,
+      "f1": 0.571
+     },
+     "chairs": {
+      "tp": 14,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 2,
+      "correct": 2
+     }
+    },
+    "syn-cad-line-2300077": {
+     "family": "cad-line",
+     "ms": 484,
+     "tables": {
+      "tp": 17,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.944,
+      "f1": 0.971
+     },
+     "chairs": {
+      "tp": 40,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 17,
+      "correct": 17
+     }
+    },
+    "syn-cad-line-2300085": {
+     "family": "cad-line",
+     "ms": 492,
+     "tables": {
+      "tp": 30,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 284,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 30,
+      "correct": 30
+     }
+    },
+    "syn-cad-line-2300093": {
+     "family": "cad-line",
+     "ms": 510,
+     "tables": {
+      "tp": 17,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 160,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 17,
+      "correct": 17
+     }
+    },
+    "syn-cad-line-2300101": {
+     "family": "cad-line",
+     "ms": 387,
+     "tables": {
+      "tp": 35,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.921,
+      "f1": 0.959
+     },
+     "chairs": {
+      "tp": 316,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 7,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 35,
+      "correct": 35
+     }
+    },
+    "syn-cad-line-2300109": {
+     "family": "cad-line",
+     "ms": 527,
+     "tables": {
+      "tp": 13,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 101,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.971,
+      "f1": 0.985
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.667,
+      "f1": 0.8
+     },
+     "tableType": {
+      "matched": 13,
+      "correct": 13
+     }
+    },
+    "syn-cad-line-2300117": {
+     "family": "cad-line",
+     "ms": 371,
+     "tables": {
+      "tp": 9,
+      "fp": 0,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.692,
+      "f1": 0.818
+     },
+     "chairs": {
+      "tp": 42,
+      "fp": 1,
+      "fn": 0,
+      "precision": 0.977,
+      "recall": 1.0,
+      "f1": 0.988
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 9,
+      "correct": 9
+     }
+    },
+    "syn-cad-line-2300125": {
+     "family": "cad-line",
+     "ms": 369,
+     "tables": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 5,
+      "precision": 1.0,
+      "recall": 0.286,
+      "f1": 0.444
+     },
+     "chairs": {
+      "tp": 38,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 2,
+      "correct": 2
+     }
+    },
+    "syn-cad-line-2300133": {
+     "family": "cad-line",
+     "ms": 339,
+     "tables": {
+      "tp": 26,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.963,
+      "f1": 0.981
+     },
+     "chairs": {
+      "tp": 64,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 26,
+      "correct": 26
+     }
+    },
+    "syn-cad-line-2300141": {
+     "family": "cad-line",
+     "ms": 390,
+     "tables": {
+      "tp": 13,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.867,
+      "f1": 0.929
+     },
+     "chairs": {
+      "tp": 38,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 13,
+      "correct": 13
+     }
+    },
+    "syn-colour-arm-2300071": {
+     "family": "colour-arm",
+     "ms": 466,
+     "tables": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 222,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.833,
+      "f1": 0.909
+     },
+     "tableType": {
+      "matched": 24,
+      "correct": 24
+     }
+    },
+    "syn-colour-arm-2300079": {
+     "family": "colour-arm",
+     "ms": 405,
+     "tables": {
+      "tp": 7,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 22,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 7,
+      "correct": 7
+     }
+    },
+    "syn-colour-arm-2300087": {
+     "family": "colour-arm",
+     "ms": 334,
+     "tables": {
+      "tp": 30,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 76,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.889
+     },
+     "tableType": {
+      "matched": 30,
+      "correct": 30
+     }
+    },
+    "syn-colour-arm-2300095": {
+     "family": "colour-arm",
+     "ms": 332,
+     "tables": {
+      "tp": 18,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 40,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 18,
+      "correct": 18
+     }
+    },
+    "syn-colour-arm-2300103": {
+     "family": "colour-arm",
+     "ms": 403,
+     "tables": {
+      "tp": 21,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 54,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 21,
+      "correct": 21
+     }
+    },
+    "syn-colour-arm-2300111": {
+     "family": "colour-arm",
+     "ms": 277,
+     "tables": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 22,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 6,
+      "correct": 6
+     }
+    },
+    "syn-colour-arm-2300119": {
+     "family": "colour-arm",
+     "ms": 372,
+     "tables": {
+      "tp": 19,
+      "fp": 2,
+      "fn": 1,
+      "precision": 0.905,
+      "recall": 0.95,
+      "f1": 0.927
+     },
+     "chairs": {
+      "tp": 58,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 19,
+      "correct": 19
+     }
+    },
+    "syn-colour-arm-2300127": {
+     "family": "colour-arm",
+     "ms": 326,
+     "tables": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 8,
+      "precision": 1.0,
+      "recall": 0.333,
+      "f1": 0.5
+     },
+     "chairs": {
+      "tp": 21,
+      "fp": 0,
+      "fn": 15,
+      "precision": 1.0,
+      "recall": 0.583,
+      "f1": 0.737
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 4,
+      "correct": 4
+     }
+    },
+    "syn-colour-arm-2300135": {
+     "family": "colour-arm",
+     "ms": 410,
+     "tables": {
+      "tp": 14,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 50,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 14,
+      "correct": 14
+     }
+    },
+    "syn-colour-arm-2300143": {
+     "family": "colour-arm",
+     "ms": 422,
+     "tables": {
+      "tp": 25,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 232,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 25,
+      "correct": 25
+     }
+    },
+    "syn-green-event-2300076": {
+     "family": "green-event",
+     "ms": 359,
+     "tables": {
+      "tp": 17,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 60,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 17,
+      "correct": 17
+     }
+    },
+    "syn-green-event-2300084": {
+     "family": "green-event",
+     "ms": 333,
+     "tables": {
+      "tp": 24,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 54,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 24,
+      "correct": 24
+     }
+    },
+    "syn-green-event-2300092": {
+     "family": "green-event",
+     "ms": 279,
+     "tables": {
+      "tp": 17,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 88,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 17,
+      "correct": 17
+     }
+    },
+    "syn-green-event-2300100": {
+     "family": "green-event",
+     "ms": 257,
+     "tables": {
+      "tp": 51,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 434,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 51,
+      "correct": 51
+     }
+    },
+    "syn-green-event-2300108": {
+     "family": "green-event",
+     "ms": 341,
+     "tables": {
+      "tp": 15,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 40,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.833,
+      "f1": 0.909
+     },
+     "tableType": {
+      "matched": 15,
+      "correct": 15
+     }
+    },
+    "syn-green-event-2300116": {
+     "family": "green-event",
+     "ms": 400,
+     "tables": {
+      "tp": 18,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 36,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 18,
+      "correct": 18
+     }
+    },
+    "syn-green-event-2300124": {
+     "family": "green-event",
+     "ms": 260,
+     "tables": {
+      "tp": 15,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 34,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.857,
+      "f1": 0.923
+     },
+     "tableType": {
+      "matched": 15,
+      "correct": 15
+     }
+    },
+    "syn-green-event-2300132": {
+     "family": "green-event",
+     "ms": 285,
+     "tables": {
+      "tp": 10,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.833,
+      "f1": 0.909
+     },
+     "chairs": {
+      "tp": 38,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.667
+     },
+     "tableType": {
+      "matched": 10,
+      "correct": 10
+     }
+    },
+    "syn-green-event-2300140": {
+     "family": "green-event",
+     "ms": 348,
+     "tables": {
+      "tp": 13,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 104,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 13,
+      "correct": 13
+     }
+    },
+    "syn-green-event-2300148": {
+     "family": "green-event",
+     "ms": 288,
+     "tables": {
+      "tp": 17,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 146,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 7,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 17,
+      "correct": 17
+     }
+    },
+    "syn-scan-dark-2300075": {
+     "family": "scan-dark",
+     "ms": 303,
+     "tables": {
+      "tp": 20,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.952,
+      "f1": 0.976
+     },
+     "chairs": {
+      "tp": 144,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 20,
+      "correct": 20
+     }
+    },
+    "syn-scan-dark-2300083": {
+     "family": "scan-dark",
+     "ms": 336,
+     "tables": {
+      "tp": 14,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 28,
+      "fp": 1,
+      "fn": 0,
+      "precision": 0.966,
+      "recall": 1.0,
+      "f1": 0.982
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 5,
+      "precision": 1.0,
+      "recall": 0.375,
+      "f1": 0.545
+     },
+     "tableType": {
+      "matched": 14,
+      "correct": 14
+     }
+    },
+    "syn-scan-dark-2300091": {
+     "family": "scan-dark",
+     "ms": 275,
+     "tables": {
+      "tp": 60,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 556,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 60,
+      "correct": 60
+     }
+    },
+    "syn-scan-dark-2300099": {
+     "family": "scan-dark",
+     "ms": 250,
+     "tables": {
+      "tp": 19,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 166,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.6,
+      "f1": 0.75
+     },
+     "tableType": {
+      "matched": 19,
+      "correct": 19
+     }
+    },
+    "syn-scan-dark-2300107": {
+     "family": "scan-dark",
+     "ms": 359,
+     "tables": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 6,
+      "precision": 1.0,
+      "recall": 0.455,
+      "f1": 0.625
+     },
+     "chairs": {
+      "tp": 30,
+      "fp": 0,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.882,
+      "f1": 0.938
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.667
+     },
+     "tableType": {
+      "matched": 5,
+      "correct": 5
+     }
+    },
+    "syn-scan-dark-2300115": {
+     "family": "scan-dark",
+     "ms": 347,
+     "tables": {
+      "tp": 9,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.818,
+      "f1": 0.9
+     },
+     "chairs": {
+      "tp": 32,
+      "fp": 1,
+      "fn": 0,
+      "precision": 0.97,
+      "recall": 1.0,
+      "f1": 0.985
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 9,
+      "correct": 9
+     }
+    },
+    "syn-scan-dark-2300123": {
+     "family": "scan-dark",
+     "ms": 395,
+     "tables": {
+      "tp": 14,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.875,
+      "f1": 0.933
+     },
+     "chairs": {
+      "tp": 115,
+      "fp": 0,
+      "fn": 5,
+      "precision": 1.0,
+      "recall": 0.958,
+      "f1": 0.979
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 14,
+      "correct": 14
+     }
+    },
+    "syn-scan-dark-2300131": {
+     "family": "scan-dark",
+     "ms": 426,
+     "tables": {
+      "tp": 9,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.9,
+      "f1": 0.947
+     },
+     "chairs": {
+      "tp": 28,
+      "fp": 1,
+      "fn": 0,
+      "precision": 0.966,
+      "recall": 1.0,
+      "f1": 0.982
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 5,
+      "precision": 1.0,
+      "recall": 0.167,
+      "f1": 0.286
+     },
+     "tableType": {
+      "matched": 9,
+      "correct": 9
+     }
+    },
+    "syn-scan-dark-2300139": {
+     "family": "scan-dark",
+     "ms": 313,
+     "tables": {
+      "tp": 14,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.824,
+      "f1": 0.903
+     },
+     "chairs": {
+      "tp": 50,
+      "fp": 1,
+      "fn": 0,
+      "precision": 0.98,
+      "recall": 1.0,
+      "f1": 0.99
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 14,
+      "correct": 14
+     }
+    },
+    "syn-scan-dark-2300147": {
+     "family": "scan-dark",
+     "ms": 296,
+     "tables": {
+      "tp": 10,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.769,
+      "f1": 0.87
+     },
+     "chairs": {
+      "tp": 42,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.25,
+      "f1": 0.4
+     },
+     "tableType": {
+      "matched": 10,
+      "correct": 10
+     }
+    },
+    "syn-symbolic-num-2300072": {
+     "family": "symbolic-num",
+     "ms": 325,
+     "tables": {
+      "tp": 211,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 211,
+      "correct": 211
+     }
+    },
+    "syn-symbolic-num-2300080": {
+     "family": "symbolic-num",
+     "ms": 346,
+     "tables": {
+      "tp": 591,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 591,
+      "correct": 591
+     }
+    },
+    "syn-symbolic-num-2300088": {
+     "family": "symbolic-num",
+     "ms": 261,
+     "tables": {
+      "tp": 27,
+      "fp": 13,
+      "fn": 8,
+      "precision": 0.675,
+      "recall": 0.771,
+      "f1": 0.72
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.667,
+      "f1": 0.8
+     },
+     "tableType": {
+      "matched": 27,
+      "correct": 27
+     }
+    },
+    "syn-symbolic-num-2300096": {
+     "family": "symbolic-num",
+     "ms": 371,
+     "tables": {
+      "tp": 530,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.75,
+      "f1": 0.857
+     },
+     "tableType": {
+      "matched": 530,
+      "correct": 530
+     }
+    },
+    "syn-symbolic-num-2300104": {
+     "family": "symbolic-num",
+     "ms": 336,
+     "tables": {
+      "tp": 124,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.889
+     },
+     "tableType": {
+      "matched": 124,
+      "correct": 124
+     }
+    },
+    "syn-symbolic-num-2300112": {
+     "family": "symbolic-num",
+     "ms": 359,
+     "tables": {
+      "tp": 115,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.333,
+      "f1": 0.5
+     },
+     "tableType": {
+      "matched": 115,
+      "correct": 115
+     }
+    },
+    "syn-symbolic-num-2300120": {
+     "family": "symbolic-num",
+     "ms": 372,
+     "tables": {
+      "tp": 136,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.667
+     },
+     "tableType": {
+      "matched": 136,
+      "correct": 136
+     }
+    },
+    "syn-symbolic-num-2300128": {
+     "family": "symbolic-num",
+     "ms": 283,
+     "tables": {
+      "tp": 142,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 142,
+      "correct": 142
+     }
+    },
+    "syn-symbolic-num-2300136": {
+     "family": "symbolic-num",
+     "ms": 247,
+     "tables": {
+      "tp": 80,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 80,
+      "correct": 80
+     }
+    },
+    "syn-symbolic-num-2300144": {
+     "family": "symbolic-num",
+     "ms": 428,
+     "tables": {
+      "tp": 155,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 155,
+      "correct": 155
+     }
+    },
+    "syn-thin-circle-2300073": {
+     "family": "thin-circle",
+     "ms": 386,
+     "tables": {
+      "tp": 44,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 398,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.833,
+      "f1": 0.909
+     },
+     "tableType": {
+      "matched": 44,
+      "correct": 44
+     }
+    },
+    "syn-thin-circle-2300081": {
+     "family": "thin-circle",
+     "ms": 304,
+     "tables": {
+      "tp": 6,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.857,
+      "f1": 0.923
+     },
+     "chairs": {
+      "tp": 56,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.667,
+      "f1": 0.8
+     },
+     "tableType": {
+      "matched": 6,
+      "correct": 6
+     }
+    },
+    "syn-thin-circle-2300089": {
+     "family": "thin-circle",
+     "ms": 385,
+     "tables": {
+      "tp": 158,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 1435,
+      "fp": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.998,
+      "f1": 0.999
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 158,
+      "correct": 158
+     }
+    },
+    "syn-thin-circle-2300097": {
+     "family": "thin-circle",
+     "ms": 255,
+     "tables": {
+      "tp": 12,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.923,
+      "f1": 0.96
+     },
+     "chairs": {
+      "tp": 30,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 12,
+      "correct": 12
+     }
+    },
+    "syn-thin-circle-2300105": {
+     "family": "thin-circle",
+     "ms": 245,
+     "tables": {
+      "tp": 41,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 368,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 5,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.833,
+      "f1": 0.909
+     },
+     "tableType": {
+      "matched": 41,
+      "correct": 41
+     }
+    },
+    "syn-thin-circle-2300113": {
+     "family": "thin-circle",
+     "ms": 406,
+     "tables": {
+      "tp": 43,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 380,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 43,
+      "correct": 43
+     }
+    },
+    "syn-thin-circle-2300121": {
+     "family": "thin-circle",
+     "ms": 301,
+     "tables": {
+      "tp": 25,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 230,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 25,
+      "correct": 25
+     }
+    },
+    "syn-thin-circle-2300129": {
+     "family": "thin-circle",
+     "ms": 282,
+     "tables": {
+      "tp": 25,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.926,
+      "f1": 0.962
+     },
+     "chairs": {
+      "tp": 62,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 1,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.667
+     },
+     "tableType": {
+      "matched": 25,
+      "correct": 25
+     }
+    },
+    "syn-thin-circle-2300137": {
+     "family": "thin-circle",
+     "ms": 255,
+     "tables": {
+      "tp": 20,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "chairs": {
+      "tp": 150,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "tableType": {
+      "matched": 20,
+      "correct": 20
+     }
+    },
+    "syn-thin-circle-2300145": {
+     "family": "thin-circle",
+     "ms": 390,
+     "tables": {
+      "tp": 3,
+      "fp": 0,
+      "fn": 13,
+      "precision": 1.0,
+      "recall": 0.188,
+      "f1": 0.316
+     },
+     "chairs": {
+      "tp": 32,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "columns": {
+      "tp": 2,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.667,
+      "f1": 0.8
+     },
+     "tableType": {
+      "matched": 3,
+      "correct": 3
+     }
+    }
+   },
+   "pooled": {
+    "tables": {
+     "tp": 3589,
+     "fp": 16,
+     "fn": 96,
+     "precision": 0.996,
+     "recall": 0.974,
+     "f1": 0.985
+    },
+    "chairs": {
+     "tp": 10091,
+     "fp": 5,
+     "fn": 33,
+     "precision": 1.0,
+     "recall": 0.997,
+     "f1": 0.998
+    },
+    "columns": {
+     "tp": 254,
+     "fp": 0,
+     "fn": 43,
+     "precision": 1.0,
+     "recall": 0.855,
+     "f1": 0.922
+    }
+   }
+  }
+ },
+ "thresholds": {
+  "targetPrecision": null,
+  "chosenOn": "fixed a priori: 0.5 for every class (the sigmoid midpoint), NOT tuned on any plan",
+  "why": "Calibration on synthetic plans did not transfer: on held-out synthetic styles a 0.95 precision target picked 0.2 and a 0.995 target picked ~0.75 for tables, while real plans score differently. Tuning on Golden/ORNEK would tune on the test venues, so the threshold is fixed in advance and reported as such.",
+  "perClass": {
+   "table_round": {
+    "threshold": 0.5
+   },
+   "table_rect": {
+    "threshold": 0.5
+   },
+   "chair": {
+    "threshold": 0.5
+   },
+   "column": {
+    "threshold": 0.5
+   }
+  }
+ },
+ "notes": "Its new-venue quality is the cross-venue folds in benchmarks/offline-intelligence/, not its score on plans it was trained on."
+}

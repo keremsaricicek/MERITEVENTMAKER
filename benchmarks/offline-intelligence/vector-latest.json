@@ -1,0 +1,318 @@
+{
+ "measuredOn": "2026-10-11T14:27:27.197Z",
+ "note": "generated vector PDFs (training/synth_pdf.py); not a real CAD export",
+ "plans": {
+  "vec-cad-line-5-0": {
+   "off": {
+    "tables": {
+     "tp": 70,
+     "fp": 10,
+     "fn": 0,
+     "precision": 0.875,
+     "recall": 1
+    },
+    "chairs": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 532,
+     "precision": 0,
+     "recall": 0
+    },
+    "proposals": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "tables": 56,
+     "chairs": 503
+    },
+    "fused": null
+   },
+   "on": {
+    "tables": {
+     "tp": 70,
+     "fp": 10,
+     "fn": 0,
+     "precision": 0.875,
+     "recall": 1
+    },
+    "chairs": {
+     "tp": 503,
+     "fp": 0,
+     "fn": 29,
+     "precision": 1,
+     "recall": 0.945
+    },
+    "proposals": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "tables": 56,
+     "chairs": 503
+    },
+    "fused": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "proposedTables": 56,
+     "proposedChairs": 503,
+     "addedTables": 0,
+     "chairsAttached": 503
+    }
+   }
+  },
+  "vec-cad-line-5-3": {
+   "off": {
+    "tables": {
+     "tp": 54,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1
+    },
+    "chairs": {
+     "tp": 431,
+     "fp": 0,
+     "fn": 55,
+     "precision": 1,
+     "recall": 0.887
+    },
+    "proposals": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "tables": 54,
+     "chairs": 478
+    },
+    "fused": null
+   },
+   "on": {
+    "tables": {
+     "tp": 54,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1
+    },
+    "chairs": {
+     "tp": 481,
+     "fp": 0,
+     "fn": 5,
+     "precision": 1,
+     "recall": 0.99
+    },
+    "proposals": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "tables": 54,
+     "chairs": 478
+    },
+    "fused": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "proposedTables": 54,
+     "proposedChairs": 478,
+     "addedTables": 0,
+     "chairsAttached": 50
+    }
+   }
+  },
+  "vec-mono-num-chairs-5-2": {
+   "off": {
+    "tables": {
+     "tp": 24,
+     "fp": 0,
+     "fn": 1,
+     "precision": 1,
+     "recall": 0.96
+    },
+    "chairs": {
+     "tp": 47,
+     "fp": 0,
+     "fn": 3,
+     "precision": 1,
+     "recall": 0.94
+    },
+    "proposals": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "tables": 25,
+     "chairs": 38
+    },
+    "fused": null
+   },
+   "on": {
+    "tables": {
+     "tp": 25,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1
+    },
+    "chairs": {
+     "tp": 50,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1
+    },
+    "proposals": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "tables": 25,
+     "chairs": 38
+    },
+    "fused": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "proposedTables": 25,
+     "proposedChairs": 38,
+     "addedTables": 0,
+     "chairsAttached": 3
+    }
+   }
+  },
+  "vec-mono-num-chairs-5-5": {
+   "off": {
+    "tables": {
+     "tp": 48,
+     "fp": 1,
+     "fn": 0,
+     "precision": 0.98,
+     "recall": 1
+    },
+    "chairs": {
+     "tp": 433,
+     "fp": 0,
+     "fn": 1,
+     "precision": 1,
+     "recall": 0.998
+    },
+    "proposals": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "tables": 48,
+     "chairs": 431
+    },
+    "fused": null
+   },
+   "on": {
+    "tables": {
+     "tp": 48,
+     "fp": 1,
+     "fn": 0,
+     "precision": 0.98,
+     "recall": 1
+    },
+    "chairs": {
+     "tp": 434,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1
+    },
+    "proposals": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "tables": 48,
+     "chairs": 431
+    },
+    "fused": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "proposedTables": 48,
+     "proposedChairs": 431,
+     "addedTables": 0,
+     "chairsAttached": 1
+    }
+   }
+  },
+  "vec-thin-circle-5-1": {
+   "off": {
+    "tables": {
+     "tp": 21,
+     "fp": 40,
+     "fn": 0,
+     "precision": 0.344,
+     "recall": 1
+    },
+    "chairs": {
+     "tp": 0,
+     "fp": 0,
+     "fn": 42,
+     "precision": 0,
+     "recall": 0
+    },
+    "proposals": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "tables": 21,
+     "chairs": 42
+    },
+    "fused": null
+   },
+   "on": {
+    "tables": {
+     "tp": 21,
+     "fp": 40,
+     "fn": 0,
+     "precision": 0.344,
+     "recall": 1
+    },
+    "chairs": {
+     "tp": 36,
+     "fp": 0,
+     "fn": 6,
+     "precision": 1,
+     "recall": 0.857
+    },
+    "proposals": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "tables": 21,
+     "chairs": 42
+    },
+    "fused": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "proposedTables": 21,
+     "proposedChairs": 42,
+     "addedTables": 0,
+     "chairsAttached": 36
+    }
+   }
+  },
+  "vec-thin-circle-5-4": {
+   "off": {
+    "tables": {
+     "tp": 32,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1
+    },
+    "chairs": {
+     "tp": 286,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1
+    },
+    "proposals": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "tables": 32,
+     "chairs": 286
+    },
+    "fused": null
+   },
+   "on": {
+    "tables": {
+     "tp": 32,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1
+    },
+    "chairs": {
+     "tp": 286,
+     "fp": 0,
+     "fn": 0,
+     "precision": 1,
+     "recall": 1
+    },
+    "proposals": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "tables": 32,
+     "chairs": 286
+    },
+    "fused": {
+     "reason": "ringedBySmallerRepeatedShapes",
+     "proposedTables": 32,
+     "proposedChairs": 286,
+     "addedTables": 0,
+     "chairsAttached": 0
+    }
+   }
+  }
+ }
+}

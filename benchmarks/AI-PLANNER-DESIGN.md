@@ -1,0 +1,157 @@
+# AI Planner window — design (2026-10-25, owner's brief; build after B6b / 2B / package)
+
+The owner types or says what he needs ("150 m² salon, 100 kişilik toplantı, elimde
+10–12 masa var, masalar 180 cm yuvarlak, sandalye 45×50") and gets an editable,
+correct floor plan. Offline, free, on his computer.
+
+## 1. Principles (non-negotiable)
+- **The model understands, the code draws.** The language model only turns the
+  brief into numbers (a structured brief). Every table, chair, distance and total
+  is computed by the app's own layout code, so the numbers always add up.
+- **Nothing invented.** A missing or contradictory figure is asked back (at most
+  two short questions), never guessed silently. Defaults are shown as defaults.
+- **Everything editable, everything undoable.** The result is a normal floor plan;
+  one undo takes the whole generated layout back.
+- **Offline.** Text parsing and voice run on the computer; no plan or guest data
+  leaves it; no paid service.
+- **Honest limits.** Fire-code and venue rules differ by place: the planner uses
+  conservative defaults and says "check with the venue", never "legal".
+
+## 2. The flow (what the owner sees)
+1. A side window "Yapay zeka planlayıcı" with one input line and a mic button.
+2. He writes/speaks the brief.
+3. **"Anladıklarım" card**: the brief as chips he can tap to change — salon
+   150 m² · etkinlik toplantı (banket) · 100 kişi · masa 12 × Ø180 · sandalye 45×50 ·
+   koridor 1,2 m (varsayılan).
+4. If something is missing or impossible, one short question
+   ("12 masa × 8 kişi = 96; 100 kişi için 13 masa ya da masa başı 9 kişi?").
+5. **2–3 options** as cards with a mini preview: capacity, people per table,
+   m² per person, walkway widths, what did not fit and why.
+6. "Uygula" → the plan appears on the Floor Plan, selectable and editable;
+   "Geri al" takes it back. Follow-ups work in the same window ("sahneyi kuzeye al",
+   "kalan yeri 2 kişilik bistrolarla doldur").
+
+## 3. The structured brief (what the model must produce)
+```
+room:      { width_m, length_m | area_m2, shape: rect|L|drawn, noGo:[...], entrances:[...], stage?, bar?, screen? }
+event:     { type: banquet|gala|theatre|classroom|boardroom|u_shape|cocktail|mixed, pax, stageFacing? }
+inventory: [ { kind: round|rect|square|bistro|cocktail, size: {diameter_m | length_m,width_m}, count, seatsMax? } ]
+chair:     { width_m, depth_m }
+rules:     { mainAisle_m, aisle_m, tableGap_m, stageGap_m, accessible? }
+prefs:     { homogeneous, fillRemainderWith?, vipNearStage?, keepCentreFree? }
+```
+Validated against a fixed schema; the model's output is constrained to it
+(llama.cpp JSON grammar), so it can only answer in this shape.
+
+## 4. Domain knowledge (defaults, all editable)
+| Layout | Space per person (typical) | Notes |
+|---|---|---|
+| Theatre | 0.6–0.8 m² | rows facing stage, centre/side aisles |
+| Classroom | 1.2–1.6 m² | tables in rows, 2–3 per table |
+| Banquet (round) | 1.2–1.5 m² | Ø150 → 8, Ø180 → 10, Ø200 → 12 |
+| Boardroom / U | 2.0–3.0 m² | one block / open U toward screen |
+| Cocktail | 0.5–0.9 m² | high tables, standing |
+Clearances: main aisle ≥ 1.2 m, between tables ≥ 0.9 m chair-to-chair, chair
+depth + push-back ≈ 0.45–0.6 m, stage front ≥ 1.5 m. Terms understood (TR/EN):
+pax, kişi, banket, gala, tiyatro, sınıf, U düzeni, toplantı masası, kokteyl,
+bistro, loca, sahne, fuaye, giriş, bar, VIP, koridor.
+
+## 5. Layout engine (the code)
+- Free area = room − no-go zones − stage/bar/entrance clearances.
+- Per layout type a generator: rounds on a staggered (hex) or square grid; rows
+  for theatre/classroom; U and boardroom blocks; cocktail scatter with walkways.
+- Fit: the largest homogeneous arrangement that respects clearances; the rest
+  filled as asked (e.g. 2-seat bistros); people per table balanced.
+- **Feasibility check** before drawing: capacity vs pax vs inventory vs area,
+  with the arithmetic shown ("150 m² / 100 kişi = 1.5 m²/kişi: banket için sınırda").
+- Score each option: capacity match, clearances, sight lines to stage, walkway
+  continuity; show the 2–3 best that differ meaningfully.
+- Chairs the planner places are real placed chairs (Floor Plan rules: capacity
+  and chairs stay in sync through the existing writers).
+
+## 6. Language and voice models
+- Parsing: the same local Qwen3.5 (0.8B or 2B) text-only, Turkish, schema-
+  constrained; a rule parser catches the common phrasings first (fast, exact).
+- Voice: an offline speech-to-text model (Whisper-small class, ≈250 MB),
+  Turkish; measured before it ships.
+
+## 7. Measured before it ships (pre-registered when building starts)
+- 100+ Turkish/English briefs written in advance (varied, with typos and slang):
+  brief fields extracted correctly ≥ 95 %, contradictions caught 100 %.
+- Every generated layout: no overlaps, clearances met, totals exact (100 %).
+- Voice: word error on a recorded Turkish brief set reported; the owner's own test.
+
+## 8. UI (UI constitution: warm palette, calm, canvas first)
+Side panel, never covering the canvas; chips not forms; option cards with
+mini-previews; keyboard and screen-reader usable; TR/EN; the progress bar
+while generating; every message short.
+
+## 9. Order and estimate
+| Step | What | Estimate |
+|---|---|---|
+| 1 | Brief schema, feasibility check, layout engine (banquet, theatre, classroom, U, boardroom, cocktail) | 2 days |
+| 2 | Parser (rules + local model) and the window UI | 2 days |
+| 3 | Offline voice | 1 day |
+| 4 | Measurement, polish, both offline builds, CI | 1 day |
+
+## 10. Memory (owner, 2026-10-27: "beni hatırlayabilir mi")
+- The model remembers nothing between runs; the APP keeps a local memory and gives
+  the relevant part to the model at each conversation (retrieval, never training).
+- What it keeps: the owner's stated habits ("koridor hep 1,5 m", "Ø180'e 10 kişi"),
+  venues with their measured rooms, past briefs and the option chosen.
+- Stored on the computer only (IndexedDB, same store as events); a "Hafıza" list
+  shows every remembered item with its source, editable and deletable one by one.
+- Limited context: only the items matching the current brief (venue, event type,
+  table kinds) are passed; the window says which remembered items it used.
+- Measured with the brief set: a habit stated once is applied in a later brief,
+  and a deleted habit is never applied again (100 %).
+
+## 11. Questions about our own events (owner, 2026-10-27)
+"Şu konserde bu kişi nerede oturuyordu?", "Bu kişi kaç konserimize geldi?" — no
+canned answers: the model reasons about the QUESTION; the app's code reads the DATA.
+- **Tools, not memory.** The model answers only by calling a small fixed set of
+  read-only functions (schema-constrained), then writes the answer from what they
+  returned: `findPerson(name)` (every event, the existing matcher `matchRows`),
+  `eventsOf(person)` (planned / checked in / no show per event), `seatOf(person,
+  event)` (table + seat from `guest.assignment`), `findEvent(text|date|venue)`,
+  `eventFacts(event)` (pax, tables, arrivals). Several calls may chain ("the last
+  concert at X" → findEvent → seatOf).
+- **Meaning kept exact.** "Came" = arrival `Checked In`; planned-but-No-Show is
+  said as such (No Show keeps the planned seat — product rule); a past event's
+  seat is its frozen record. A guest is a record per event: the same person
+  across events is matched by name (+ phone/e-mail when present); two possible
+  matches → it asks, never merges silently.
+- **Every answer shows its evidence** (which events, which table), and says
+  "kayıt yok" when the data does not hold it — no guessing.
+- **Measured before it ships:** a written set of questions over a fixture of
+  events (who/where/how many/when, typos, relative dates, ambiguous names):
+  right tool chain ≥ 90 %, final answer matches the data 100 % when the chain
+  is right, and "kayıt yok"/ask-back on every unanswerable/ambiguous item.
+
+## 12. The assistant that ACTS (owner, 2026-10-27) — F8
+- **F8** opens a small chat panel on the right (canvas stays visible); Esc closes.
+  Text now, voice later (§6).
+- It carries out written commands without a confirmation step — the command IS
+  the person's decision: "bunu sil", "T12'ye 2 kişi ekle", "Ahmet Yılmaz'ı geçen
+  konserdeki yerine oturt" ("şu konserde şu kişi vardı, bu konserde aynı kişiyi
+  aynı numaralı masaya / aynı koltuğa oturt").
+- **How:** the model turns the sentence into a plan of calls to the app's own
+  writers only (`assignGuestToTable` via MeritSeatAssignment, the table/chair
+  writers, guest add/remove) — never a raw state edit; the code checks each call
+  (person and table exist, capacity, freeze zones, availability, a past event is
+  never changed — `canMutate`), runs it, and writes one line per change.
+- **Safety without asking:** every command is ONE undo step ("Geri al" in the
+  panel and Ctrl+Z); the panel lists exactly what changed. It asks only when
+  the sentence is ambiguous (two people with that name, table number missing in
+  this event, seat taken) — then it changes nothing until answered. Deleting
+  many things at once (> 10) says the count first.
+- Model actions are marked as the assistant's in the history and are never
+  captured as a person's training example.
+- **Measured before it ships:** a written command set over fixture events —
+  right calls ≥ 95 %, wrong change 0 (a wrong guess must become a question),
+  every command undone exactly by one undo.
+- **Working strip (owner, 2026-10-27):** a 3 px line across the full top of the
+  panel; the app's own colours (teal #2f6f66 → #6fae9f → amber #d9a441 → clay
+  #c2703d) flow back and forth along it (background-position, ease-in-out,
+  2.6 s, alternate). Shown only while the assistant thinks or acts; still under
+  "reduce motion". Mock-up: claude.ai artifact "F8 asistan paneli — düşünme şeridi", board B.

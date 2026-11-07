@@ -1,0 +1,17 @@
+adversarial__a2-mixed-families.json              chairs 32->32 tables 15->15 columns 32->14 removed:  
+adversarial__a4-multi-room.json                  chairs 100->100 tables 17->17 columns 40->17 removed:  
+merit-real-venue.json                            chairs 111->108 tables 47->47 columns 9->9 removed: seat 96.68,72.53; venue 83.28,88.26; venue 49.26,88.26 
+robustness__merit-real-blur.json                 chairs 112->109 tables 58->58 columns 9->9 removed: venue 49.04,84.71; venue 95.90,71.26; venue 49.83,87.24 
+robustness__merit-real-bright-down.json          chairs 93->90 tables 47->47 columns 8->8 removed: venue 83.28,88.26; venue 95.90,71.26; venue 49.26,88.26 
+robustness__merit-real-bright-up.json            chairs 103->100 tables 46->44 columns 40->40 removed: seat 84.02,89.66; seat 50.00,89.59; seat 96.68,72.53 
+robustness__merit-real-contrast-high.json        chairs 111->109 tables 48->47 columns 40->40 removed: seat 50.00,89.59; seat 96.68,72.53 
+robustness__merit-real-contrast-low.json         chairs 110->107 tables 44->44 columns 41->41 removed: seat 96.68,72.53; venue 83.28,88.26; venue 49.26,88.26 
+robustness__merit-real-crop-pad.json             chairs 111->108 tables 46->46 columns 25->25 removed: seat 92.88,70.74; venue 80.58,85.22; venue 49.32,85.22 
+robustness__merit-real-downscale-70.json         chairs 181->178 tables 44->44 columns 33->33 removed: seat 56.38,43.75; seat 31.70,51.54; seat 79.96,49.46; seat 91.93,45.29; seat 85.86,43.66; seat 85.76,48.91; seat 65.88,12.05; seat 31.38,82.07; seat 96.68,72.46; venue 49.42,88.32; venue 83.28,88.32  added: seat 56.33,43.66; seat 31.59,51.00; seat 86.13,48.73; seat 79.91,49.37; seat 91.88,45.20; seat 65.82,11.96; seat 86.23,43.48; seat 31.33,81.97
+robustness__merit-real-grayscale.json            chairs 107->106 tables 44->44 columns 51->51 removed: venue 49.26,88.26 
+robustness__merit-real-hue-shift.json            chairs 114->111 tables 46->46 columns 51->51 removed: seat 96.68,72.53; venue 83.28,88.26; venue 49.26,88.26 
+robustness__merit-real-lowres-roundtrip.json     chairs 78->76 tables 39->32 columns 4->22 removed: seat 96.68,72.53; venue 49.26,88.26 
+robustness__merit-real-noise.json                chairs 111->108 tables 49->49 columns 0->0 removed: seat 96.68,72.46; venue 83.28,88.26; venue 49.26,88.26 
+robustness__merit-real-rotate-2.json             chairs 114->114 tables 48->48 columns 38->37 removed:  
+robustness__merit-real-rotate-minus-3.json       chairs 110->108 tables 46->46 columns 33->33 removed: seat 95.94,66.75; venue 50.45,85.09 
+identical (ignoring the two new diagnostic fields): 12
