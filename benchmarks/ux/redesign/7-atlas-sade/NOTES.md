@@ -1,0 +1,21 @@
+# 7 · Atlas sade — SPEC-v4 (owner, 2026-11-07)
+- **Idea:** Atlas's look (vellum palette, Prussian blue, elegant tables with real chairs, venue plan thumbnails) inside the simple combined layout. No grid, rulers, coordinates, scale bars, sheet/"pafta" metaphor or decorative animation.
+- **Top menu ("otel tabelası"):** MERIT mark on the left; small-caps words with thin separators and no icons (Etkinlikler · Hazır mı? · Salon · Misafirler · Oturma · Kapı · Raporlar, keys 1–7). On the right: event name · clock · theme (F9) · **Mimar** (F8).
+- **Etkinlikler:** the Atlas timeline with each venue's plan thumbnail (copied unchanged from 4-atlas). A "Bugün" line separates past events on the left (read-only) from tonight and upcoming events on the right. Clicking a plate shows its tools in plain view: Aç · Aynı yerleşimle yeni · Çoğalt · Dışa aktar · Sil.
+- **Hazır mı?:** the plan on the left and open issues on the right. Each issue has a number that also sits on the plan. Hovering or selecting an issue draws a thin line to its place on the plan and marks that table. Each issue has a "Git" button.
+- **Salon:** a quiet plan. Clicking a table zooms the plan to it and writes the names beside the chairs. The right panel then lists that table's people (clicking a name highlights their seats), with capacity −/+, Döndür, Kaldır and "‹ Tüm salon". Plan suggestions are accepted or rejected one at a time. Tables move by dragging.
+- **Misafirler and Oturma:** unchanged from combined v3, drawn with the Atlas tables. In Oturma, the tables that fit show "N boş"; the others fade.
+- **Kapı:** the guest list takes a quarter of the width and the room three quarters. Big search; "Giriş" on the right; "Gelmedi" in the ⋯ menu, which asks first; "Geri al". On check-in, the guest's chairs fill in place and the table glows.
+- **Raporlar:** a full-size live preview of the document beside a designer panel that takes a third of the screen. In the panel you can:
+  - choose columns and change their order with the arrows;
+  - filter by name, group or junket, table, VIP only, and arrived / no-show / waiting;
+  - set the title, logo, paper (A4/A3, portrait/landscape) and font size;
+  - save the setup as a template.
+- **Mimar:** a chat box at the bottom right with "–" and "×". It stays open across screens and has a microphone button marked "yakında" (disabled). Example: "selin akı t38e oturt" — Mimar first writes what it will do and marks T38 on the plan; "Uygula" then seats her, and "Geri al" undoes it. Checked in the browser: she was seated at T38, then the undo returned her to unseated.
+- **Fonts:** a serif only for large titles and event names; all UI text is system sans. Body text is 15 px, and nothing operational is below 12 px.
+- **Contrast (WCAG), light theme on background / on surface:** ink 12.7 / 14.0 · ink-2 6.9 / 7.5 · ink-3 5.4 / 5.9 · blue 7.5 / 8.2 · VIP 5.0 / 5.5 · red 5.8 / 6.4 · amber 5.1 / 5.5 · green 6.4 / 7.0 · button text 8.8.
+- **Contrast (WCAG), classic night (#0D1117 / #131A23, ivory text, champagne):** ink 15.4 / 14.2 · ink-3 5.8 / 5.4 · champagne 9.9 / 9.1 · VIP 9.2 / 8.5 · button text 9.4. There is no neon.
+- **Known issue:** the amber text on the plan-suggestion chip is 4.8:1, just above the 4.5:1 minimum.
+- **Reuse:** the data, guest list, seating, door, undo and Mimar's sentence parser come from 6-birlesik; the drawing and thumbnails come from 4-atlas. Measured: console clean; the door row did not move.
+- **Shots (1440×900):** 1-etkinlikler · 2-hazir-mi · 3-salon · 3b-salon-masa · 4-misafirler · 5-oturma · 6-kapi · 7-raporlar · 8-mimar · 9-etkinlikler-koyu · 10-salon-koyu · 11-kapi-koyu.
+- **Risk:** zoomed names are written along the chair direction, Atlas style, so they read sideways. Very long names will need shortening (today "Ahmet Y.").
