@@ -101,6 +101,8 @@ export default async function run({ page, checks, baseUrl, repoRoot, errors }) {
   checks.ok(after.some((v) => /script-src/.test(v)), "and the browser reports it as a script-src violation — the policy is enforced, not decorative", after);
   // The refusal the control provoked is the browser doing its job; it is
   // removed from the run's console errors by exact shape, and only it.
-  const provoked = errors.splice(errorsBefore).filter((e) => !/Refused to execute inline event handler/.test(e));
+  // Chromium 1243 words the same refusal "Executing inline event handler
+  // violates …"; older builds said "Refused to execute inline event handler".
+  const provoked = errors.splice(errorsBefore).filter((e) => !/Refused to execute inline event handler|Executing inline event handler violates the following Content Security Policy/.test(e));
   errors.push(...provoked);
 }
