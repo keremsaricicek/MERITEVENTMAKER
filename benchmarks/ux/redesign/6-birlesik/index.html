@@ -12,15 +12,15 @@
   --ink:#16191D;--ink2:#474D55;--ink3:#61676F;
   --acc:#1E2B3A;--acc-ink:#FFFFFF;--acc2:#2D5E8A;--acc2-soft:#E3ECF5;
   --vip:#86651B;--ok:#2B6A4A;--ok-soft:#E2EFE7;--no:#8E2F3C;--no-soft:#F5E3E6;--warn:#8A5A0E;--warn-soft:#F7EBD6;
-  --t-full:#E8E6E1;--room:#FAF9F6;--chair:#4A5059;--ring:#8C9198;
+  --t-full:#E8E6E1;--room:#FAF9F6;--chair:#4A5059;--ring:#8C9198;--me:#2D5E8A;--glow:#D7E3EF;
   --shadow:0 1px 2px rgba(20,22,26,.06),0 10px 28px rgba(20,22,26,.12);
   color-scheme:light}
 :root[data-theme="dark"]{
-  --bg:#121314;--surf:#18191B;--surf2:#1E2022;--line:#2A2C2F;--line2:#3B3E42;
-  --ink:#E6E4E0;--ink2:#B5B2AC;--ink3:#8F8D89;
-  --acc:#D9D4CA;--acc-ink:#16171A;--acc2:#93A9BF;--acc2-soft:#222930;
-  --vip:#C9AE72;--ok:#7AAA8C;--ok-soft:#1C2620;--no:#C98A90;--no-soft:#2C2023;--warn:#C9A469;--warn-soft:#2A251D;
-  --t-full:#24262A;--room:#141517;--chair:#A3A7AC;--ring:#878B91;
+  --bg:#0D1117;--surf:#131A23;--surf2:#18202A;--line:#232C38;--line2:#334050;
+  --ink:#EEE7D9;--ink2:#C2BAAB;--ink3:#948E83;
+  --acc:#CDB98F;--acc-ink:#12161C;--acc2:#CDBD99;--acc2-soft:#1E2631;
+  --vip:#D3B068;--ok:#A7B59F;--ok-soft:#1A2120;--no:#C4A09A;--no-soft:#261E20;--warn:#CDAE74;--warn-soft:#262219;
+  --t-full:#1C242E;--room:#0F151C;--chair:#A9A398;--ring:#8D887E;--me:#D9C69C;--glow:#2C2A22;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.45);
   color-scheme:dark}
 *{box-sizing:border-box}
@@ -94,35 +94,37 @@ main{height:calc(100vh - 52px);position:relative}
 .tl-head h1{font-size:22px}
 .tl-head .sub{color:var(--ink3)}
 .tl-head .btn{margin-left:auto;align-self:center}
-#evs{margin-top:16px}
-.evc{background:var(--surf);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;position:relative;transition:border-color .15s}
-.evc:hover{border-color:var(--line2)}
-.evc:focus-visible{outline:2px solid var(--acc2)}
-.cov{position:relative;background:#1F2935;overflow:hidden}.cov svg{display:block;width:100%;height:100%}
-.hero{display:grid;grid-template-columns:400px minmax(0,1fr) 440px;height:288px;cursor:default}
-.badge{position:absolute;left:16px;top:16px;background:rgba(14,16,19,.7);color:#F1ECE2;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:6px}
-.hb{padding:24px 30px;display:flex;flex-direction:column;min-width:0}
-.hb h2{font-size:28px;margin:4px 0 2px}
-.hb .facts{margin:auto 0 18px}
-.hr{padding:20px 24px;border-left:1px solid var(--line);overflow:hidden}
-.hr .checks li{min-height:44px;padding:3px 4px}
-.ev-sec{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin:24px 0 10px}
-.ev-up{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.evc.up .cov{height:108px}
-.cb{padding:12px 18px 14px}
-.cd{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
-.ct{display:block;font-size:17px;font-weight:600;margin:2px 0 1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cv{color:var(--ink2);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.crow{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:13.5px}
-.rd{display:inline-flex;align-items:center;gap:7px;color:var(--ink2)}
-.rd i{width:8px;height:8px;border-radius:50%;background:var(--warn)}
-.cmore{position:absolute;right:10px;top:10px;width:32px;height:32px;border-radius:8px;border:0;background:rgba(14,16,19,.6);color:#F1ECE2;display:grid;place-items:center}
-.ev-past{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.evc.past{display:grid;grid-template-columns:72px minmax(0,1fr) 34px;align-items:center;gap:12px;height:64px;background:transparent}
-.evc.past .cov{height:64px;filter:grayscale(.75);opacity:.7}
-.evc.past b{display:block;font-weight:500;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.evc.past small{color:var(--ink3);font-size:12.5px;display:inline-flex;gap:5px;align-items:center}
-.evc.past .cmore{position:static;background:none;color:var(--ink3)}
+.cal-wrap{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:32px;margin-top:14px}
+#calBox{display:flex;flex-direction:column;min-height:0}
+.cal-h{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.cal-h h2{font-size:18px;min-width:150px;text-align:center}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);padding-bottom:6px}
+.cal-dow span{padding-left:10px}
+.cal-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.cell{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 6px 4px;position:relative;min-width:0;background:var(--surf);display:flex;flex-direction:column;gap:3px;overflow:hidden}
+.cell.off{background:transparent}
+.cell.was{background:var(--surf2)}
+.cdn{font-size:12.5px;color:var(--ink3);font-weight:600;padding:1px 6px;align-self:flex-start}
+.cell.today .cdn{color:var(--acc-ink);background:var(--acc);border-radius:10px}
+.ce{display:flex;align-items:center;gap:6px;width:100%;text-align:left;border:0;border-radius:6px;padding:4px 6px;background:none;font-size:12.5px;color:var(--ink);min-width:0}
+.ce span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ce i{width:3px;height:14px;border-radius:2px;background:var(--acc2);flex:none}
+.ce:hover{background:var(--surf2)}
+.ce.on{background:var(--acc2-soft);box-shadow:inset 0 0 0 1px var(--acc2)}
+.ce.past{color:var(--ink3)}.ce svg{flex:none}
+.ce.live{font-weight:600}
+.cadd{position:absolute;right:6px;top:4px;width:24px;height:24px;border-radius:6px;border:0;background:none;color:var(--ink3);opacity:0;font-size:16px;line-height:1}
+.cell:hover .cadd,.cadd:focus-visible{opacity:1}.cadd:hover{background:var(--surf2);color:var(--ink)}
+#evDet{border-left:1px solid var(--line);padding:2px 0 0 32px;overflow:auto}
+.ed-t{font-size:22px;margin:4px 0 6px}
+.ed-m{color:var(--ink2);line-height:1.6}
+.facts.sm{gap:28px;margin:20px 0}.facts.sm dd{font-size:22px}
+.ed-h{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin:0 0 6px}
+.rdl{list-style:none;margin:0 0 22px;padding:0;border-top:1px solid var(--line)}
+.rdl li{display:grid;grid-template-columns:16px 1fr auto;align-items:center;gap:8px;min-height:40px;border-bottom:1px solid var(--line);font-size:13.5px}
+.rdl li[data-go]{cursor:pointer}.rdl li[data-go]:hover{background:var(--surf2)}
+.rdl .mk{width:8px;height:8px;border-radius:50%;background:var(--ok)}.rdl .bad .mk{background:var(--warn)}.rdl .info .mk{background:var(--line2)}
+.rdl .go{color:var(--acc2);padding-right:4px}
 .eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
 .eyebrow.live{color:var(--acc2)}
 
@@ -195,6 +197,15 @@ main{height:calc(100vh - 52px);position:relative}
 .door .ti .tn{font-size:17px}.door .ti .tc{font-size:14px}
 .ti.sel .body,.ti.hi .body{stroke:var(--acc2);stroke-width:2.5}
 .ti.lit .arc.in{animation:lit2 1.2s ease-out}
+.halo{fill:var(--glow);animation:pulse 2.4s ease-in-out infinite;pointer-events:none}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:.95}}
+.fc{fill:none;stroke:var(--line2);stroke-width:1.2}
+.fc.p{fill:var(--ring);stroke:var(--ring)}.fc.w{fill:var(--surf);stroke:var(--ring);stroke-width:1.4}
+.fc.in{fill:var(--ok);stroke:var(--ok)}.fc.no{fill:var(--no-soft);stroke:var(--no)}
+.fc.me{stroke:var(--me);stroke-width:2.6}.fc.p.me,.fc.w.me{fill:var(--me)}
+.ti.foc .body{stroke:var(--me);stroke-width:2.2}
+.drow.sel{background:var(--acc2-soft)}
+.pop-g li[data-fg]{cursor:pointer;border-radius:6px;padding:0 6px;margin:0 -6px}.pop-g li[data-fg]:hover{background:var(--surf2)}.pop-g li.me{background:var(--acc2-soft)}
 @keyframes lit2{from{stroke-width:11;stroke-opacity:.35}to{stroke-width:4;stroke-opacity:1}}
 .rtools{position:absolute;top:16px;left:24px;display:flex;gap:8px;align-items:center;z-index:2}
 .chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:17px;background:var(--warn-soft);color:var(--warn);font-weight:600;border:0}
@@ -375,13 +386,13 @@ main{height:calc(100vh - 52px);position:relative}
 </header>
 <main>
   <section class="scr" id="s-etkinlik" aria-label="Etkinlikler">
-    <div class="tl-head"><h1>Etkinlikler</h1><span class="sub">Bu gece ve yaklaşanlar önde · geçmişler aşağıda, salt okunur</span><button class="btn pri" id="newEv">+ Yeni etkinlik</button></div>
-    <div id="evs"></div>
+    <div class="tl-head"><h1>Etkinlikler</h1><span class="sub">Bir etkinliğe tıklayın · geçmişler sessiz ve salt okunur</span><button class="btn pri" id="newEv">+ Yeni etkinlik</button></div>
+    <div class="cal-wrap"><div id="calBox"></div><aside id="evDet" aria-live="polite"></aside></div>
   </section>
   <section class="scr" id="s-salon" aria-label="Salon">
     <div class="roomwrap" id="salonRoom" style="padding-top:64px"></div>
     <div class="rtools"><button class="btn" id="readPlan">Planı oku</button><button class="btn" id="addT">+ Masa</button><button class="chip" id="sugChip"></button></div>
-    <div class="legend"><span><i class="full"></i>Dolu</span><span><i class="room"></i>Yer var</span><span><i style="border-style:dashed;border-radius:50%"></i>Boş</span><span><i class="vipl"></i>VIP masası</span><span><i style="border-width:3px;border-color:var(--chair);background:none"></i>Halka: doluluk · 8/10</span><span class="mut">Masaya tıklayın · sürükleyerek taşıyın</span></div>
+    <div class="legend"><span><i class="full"></i>Dolu</span><span><i class="room"></i>Yer var</span><span><i style="border-style:dashed;border-radius:50%"></i>Boş</span><span><i class="vipl"></i>VIP masası</span><span><i style="border-width:3px;border-color:var(--chair);background:none"></i>Halka: doluluk · 8/10</span><span class="mut">Masaya ya da misafire tıklayın: masa parlar, sandalyeler görünür</span></div>
   </section>
   <section class="scr" id="s-misafirler" aria-label="Misafirler">
     <div class="gl-main">
@@ -443,6 +454,7 @@ const IC={cal:sv('<rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d
  doc:sv('<path d="M4 1.8h5.5L12.5 5v9.2H4z"/><path d="M9.5 1.8V5h3M6 8.2h4.5M6 10.8h4.5"/>'),
  search:sv('<circle cx="7" cy="7" r="4.3"/><path d="M10.2 10.2 13.8 13.8"/>'),
  more:sv('<circle cx="3.5" cy="8" r=".9" fill="currentColor"/><circle cx="8" cy="8" r=".9" fill="currentColor"/><circle cx="12.5" cy="8" r=".9" fill="currentColor"/>'),
+ x:sv('<path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/>',14),
  check:sv('<path d="M3.2 8.4 6.4 11.4 12.8 4.8"/>',15),
  sun:sv('<circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/>'),
  moon:sv('<path d="M13 9.6A5.5 5.5 0 0 1 6.4 3a5.5 5.5 0 1 0 6.6 6.6z"/>'),
@@ -502,11 +514,16 @@ G.forEach(g=>{if(g.arr==='in')g.inPax=g.pax});
 
 /* ═══ events, suggestions ═══ */
 const EVENTS=[
+ {id:'d1',d:'2026-12-05',t:'21:00',name:'Caz Gecesi',venue:'Merit Park Hotel · Lounge',pax:140,arr:131,tables:14,past:true},
+ {id:'d2',d:'2026-12-12',t:'20:00',name:'Poker Night VIP Yemeği',venue:'Merit Royal Diamond · Kristal Salon',pax:48,arr:46,tables:5,past:true},
+ {id:'d3',d:'2026-12-18',t:'20:30',name:'Junket Karşılama Yemeği',venue:'Merit Royal Hotel · Grand Balo Salonu',pax:96,arr:90,tables:10,past:true},
+ {id:'d4',d:'2026-12-25',t:'12:30',name:'Noel Brunch',venue:'Merit Crystal Cove · Teras',pax:220,arr:204,tables:22,past:true},
+ {id:'d5',d:'2026-12-26',t:'21:00',name:'Kış Konseri',venue:'Merit Park Hotel · Amfi',pax:640,arr:602,tables:0,past:true},
  {id:'e1',d:'2026-08-15',name:'Yaz Konseri',venue:'Merit Park Hotel · Amfi',pax:1200,arr:1146,tables:0,past:true},
  {id:'e2',d:'2026-09-12',name:'Poker Turnuvası Kapanış Galası',venue:'Merit Royal Diamond · Kristal Salon',pax:104,arr:96,tables:11,past:true},
  {id:'e3',d:'2026-10-29',name:'Cumhuriyet Balosu',venue:'Merit Royal Hotel · Grand Balo Salonu',pax:402,arr:388,tables:41,past:true},
  {id:'e4',d:'2026-11-28',name:'Blackjack Masters Ödül Gecesi',venue:'Merit Crystal Cove · Teras',pax:180,arr:171,tables:18,past:true},
- {id:'gala',d:'2026-12-31',name:'Merit Royal Yılbaşı Galası',venue:'Merit Royal Hotel · Grand Balo Salonu',pax:420,tables:42,live:true},
+ {id:'gala',d:'2026-12-31',t:'21:00',name:'Merit Royal Yılbaşı Galası',venue:'Merit Royal Hotel · Grand Balo Salonu',pax:420,tables:42,live:true},
  {id:'e6',d:'2027-02-14',name:'Sevgililer Günü Konseri',venue:'Merit Park Hotel · Amfi',pax:680,tables:64,ready:'Plan hazır · 212 kişi oturmamış'},
  {id:'e7',d:'2027-03-06',name:'Bahar Junket Gecesi',venue:'Merit Royal Diamond · Kristal Salon',pax:140,tables:14,ready:'Misafir listesi henüz yok'},
  {id:'e8',d:'2027-04-23',name:'Egemenlik Resepsiyonu',venue:'Merit Crystal Cove · Teras',pax:260,tables:0,ready:'Plan henüz okunmadı'}];
@@ -519,7 +536,7 @@ const SUG=[
 const GHOST={x:905,y:592};
 const SCR=[['etkinlik','Etkinlik','cal'],['salon','Salon','plan'],['misafirler','Misafirler','ppl'],['oturma','Oturma','seat'],['kapi','Kapı','door'],['raporlar','Raporlar','doc']];
 const SCRL=Object.fromEntries(SCR.map(s=>[s[0],s[1]]));
-const S={scr:'etkinlik',ev:'gala',selT:null,selW:null,selG:null,doorHi:null,doorF:'all',glF:'all',glHost:null,rep:'xls',draft:false,justSeat:{},warn:{},justIn:{},undo:[],items:[],hi:0,help:false,issues:[]};
+const S={scr:'etkinlik',ev:'gala',month:'2026-12',focusG:null,selT:null,selW:null,selG:null,doorHi:null,doorF:'all',glF:'all',glHost:null,rep:'xls',draft:false,justSeat:{},warn:{},justIn:{},undo:[],items:[],hi:0,help:false,issues:[]};
 
 /* ═══ derived facts (nothing stored) ═══ */
 function counts(){const arrived=sum(G,g=>g.arr==='in'?g.inPax:0),no=sum(G,g=>g.arr==='no'?g.pax:0),un=sum(G,g=>!g.table?g.pax:0),seated=sum(G,g=>g.table?g.pax:0);return{arrived,no,un,seated,wait:420-arrived-no}}
@@ -575,6 +592,7 @@ function iconSVG(t,mode){const o=occ(t.id),round=t.kind==='round';let cls='ti '+
  let a,b=0,txt;if(mode==='kapi'){const gs=G.filter(g=>g.table===t.id),ar=sum(gs,g=>g.arr==='in'?g.inPax:0),no=sum(gs,g=>g.arr==='no'?g.pax:0);a=o?ar/o:0;b=o?no/o:0;txt=`${ar}/${o}`}else{a=Math.min(1,o/t.cap);txt=`${o}/${t.cap}`}
  const unread=t.unread&&sugOpen('s1'),k=mode==='kapi'?' in':'';
  let s=`<g class="${cls}" data-t="${t.id}" transform="translate(${t.x} ${t.y}) rotate(${t.rot})">`;
+ if(focusT(mode)===t.id){s=s.replace('class="'+cls+'"','class="'+cls+' foc"');s+=(round?'<circle class="halo" r="58"/>':'<rect class="halo" x="-86" y="-50" width="172" height="100" rx="34"/>')+focusChairs(t,mode)}
  if(round){const r=33,C=2*Math.PI*r;s+=`<circle class="trk" r="${r}"/>`;if(a>0)s+=`<circle class="arc${k}" r="${r}" stroke-dasharray="${(a*C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90)"/>`;if(b>0)s+=`<circle class="arc no" r="${r}" stroke-dasharray="0 ${(a*C).toFixed(1)} ${(b*C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90)"/>`;s+=`<circle class="body" r="28"/>`}
  else{const W=124,H=52,bw=W-30,y=H/2-9;s+=`<rect class="body" x="${-W/2}" y="${-H/2}" width="${W}" height="${H}" rx="14"/><rect class="trkb" x="${-bw/2}" y="${y}" width="${bw}" height="4" rx="2"/>`;if(a>0)s+=`<rect class="bar${k}" x="${-bw/2}" y="${y}" width="${(bw*a).toFixed(1)}" height="4" rx="2"/>`;if(b>0)s+=`<rect class="bar no" x="${(-bw/2+bw*a).toFixed(1)}" y="${y}" width="${(bw*b).toFixed(1)}" height="4" rx="2"/>`}
  return s+`<g transform="rotate(${-t.rot})"><text class="tn${unread?' q':''}" y="${round?-6:-9}">${unread?'T??':t.id}</text><text class="tc" y="${round?11:7}">${txt}</text></g></g>`}
@@ -584,10 +602,16 @@ function roomSVG(mode){if(mode==='oturma')return roomChairs(mode);
  <rect class="fx dance" x="395" y="68" width="210" height="30" rx="15"/><text class="fxt" x="500" y="83" style="font-size:12px">DANS PİSTİ</text>
  <rect class="fx" x="936" y="170" width="42" height="340" rx="12"/><text class="fxt" transform="translate(957 340) rotate(-90)">BAR</text>
  <path class="entr" d="M455 652H545"/><text class="fxt" x="500" y="668" style="font-size:12px">ANA GİRİŞ</text>`;
- TABLES.forEach(t=>s+=iconSVG(t,mode));
+ const ft=focusT(mode);TABLES.filter(t=>t.id!==ft).forEach(t=>s+=iconSVG(t,mode));if(ft&&TBL(ft))s+=iconSVG(TBL(ft),mode);
  if(mode==='salon'){if(sugOpen('s3'))s+=`<circle class="ghost" cx="${GHOST.x}" cy="${GHOST.y}" r="28" data-sug="s3"/>`;
   SUG.filter(x=>x.state==='open').forEach(x=>{const p=x.at==='ghost'?GHOST:TBL(x.at);const v=x.at.startsWith('VIP');s+=`<g class="pin" data-sug="${x.id}" transform="translate(${p.x+(v?72:30)} ${p.y-(v?0:30)})"><circle r="11"/><text>?</text></g>`})}
  return s+'</svg>'}
+const focusT=mode=>{const g=S.focusG!=null&&G.find(x=>x.id===S.focusG);if(g&&g.table&&(mode==='salon'||mode==='kapi'))return g.table;return mode==='salon'?S.selT:null};
+function iconChairPos(t){const P=[];if(t.kind==='round'){for(let i=0;i<t.chairs;i++){const a=-Math.PI/2+i*2*Math.PI/t.chairs;P.push([Math.cos(a)*46,Math.sin(a)*46])}}else{const xs=[-44,-22,0,22,44];xs.forEach(x=>P.push([x,-37]));P.push([74,0]);[...xs].reverse().forEach(x=>P.push([x,37]));P.push([-74,0]);if(t.chairs<12)P.length=t.chairs}return P}
+function focusChairs(t,mode){const st=[];G.filter(g=>g.table===t.id).sort((a,b)=>a.id-b.id).forEach(g=>{for(let i=0;i<g.pax;i++)st.push({g,i})});
+ return iconChairPos(t).map((p,i)=>{const o=st[i];let c='e';if(o){c=mode==='kapi'?(o.g.arr==='in'&&o.i<o.g.inPax?'in':o.g.arr==='no'?'no':'w'):'p';if(S.focusG===o.g.id)c+=' me'}return `<circle class="fc ${c}" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="5"/>`}).join('')}
+function seatsTxt(g){let n=0;for(const x of G.filter(y=>y.table===g.table).sort((a,b)=>a.id-b.id)){if(x===g)break;n+=x.pax}return g.pax>1?`sandalye ${n+1}–${n+g.pax}`:`sandalye ${n+1}`}
+function showWhere(g){if(!g.table){S.selW=g.id;go('oturma');return}S.focusG=g.id;if(S.scr==='kapi')renderRoom();else{S.selT=g.table;go('salon')}toast(`${esc(g.name)} ${loc(g.table)} oturuyor · ${seatsTxt(g)} · ${g.pax} kişi`)}
 const ROOMBOX={salon:'#salonRoom',oturma:'#seatRoom',kapi:'#doorRoom'};
 const roomBox=()=>ROOMBOX[S.scr]&&$(ROOMBOX[S.scr]);
 function renderRoom(){const b=roomBox();if(b)b.innerHTML=roomSVG(S.scr)}
@@ -615,42 +639,32 @@ function goIssue(i){if(!i)return;if(i.f)S.glF=i.f;if(i.g)S.selG=i.g;go(i.go)}
 
 /* ═══ ETKİNLİK: timeline of evenings (from 4-atlas) + readiness ═══ */
 const fmtD=d=>{const x=new Date(d+'T12:00');return x.getDate()+' '+MONTHS[x.getMonth()]+' '+x.getFullYear()};
-function cover(e){const v=e.venue,k=/Balo/.test(v)?'balo':/Kristal/.test(v)?'kristal':/Amfi/.test(v)?'amfi':'teras',L='rgba(236,228,212,';
- let s=`<svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="400" height="240" fill="${{balo:'#1F2935',kristal:'#25282D',amfi:'#2B2722',teras:'#1E2B2D'}[k]}"/>`;
- if(k==='balo')s+=`<g fill="none" stroke="${L}.34)">${[16,28,42].map(r=>`<circle cx="200" cy="40" r="${r}"/>`).join('')}<path d="M200 0V24"/></g><ellipse cx="200" cy="262" rx="270" ry="96" fill="${L}.06)"/>`+[[70,176],[140,192],[260,192],[330,176],[105,220],[200,226],[295,220]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="24" ry="7" fill="none" stroke="${L}.42)"/>`).join('');
- if(k==='kristal')s+=`<polygon points="140,60 220,0 400,120" fill="${L}.06)"/><path d="M0 240L140 60L260 240M140 60L400 120M260 240L400 120M140 60L220 0M60 0L140 60L0 110" fill="none" stroke="${L}.3)"/>`;
- if(k==='amfi')s+=[50,80,110,140,170].map(r=>`<path d="M${200-r*1.7} 240A${r*1.7} ${r} 0 0 1 ${200+r*1.7} 240" fill="none" stroke="${L}.3)"/>`).join('')+`<rect x="165" y="212" width="70" height="28" fill="${L}.14)"/>`;
- if(k==='teras')s+=`<circle cx="292" cy="116" r="32" fill="${L}.14)"/><path d="M0 140H400" stroke="${L}.42)"/>`+[162,180,198,216].map((y,i)=>`<path d="M${20+i*14} ${y}H${380-i*24}" stroke="${L}${(.28-i*.05).toFixed(2)})" stroke-dasharray="${30-i*4} ${10+i*3}"/>`).join('');
- return s+'</svg>'}
-function heroCard(e){const x=new Date(e.d+'T12:00'),c=counts();
- const facts=e.live?[['Kişi',420],['Masa',TABLES.length],['Oturmuş',c.seated],['Geldi',c.arrived]]:[['Kişi',e.pax||'—'],['Masa',e.tables||'—']];
- let ch='';if(e.live){S.issues=issues();ch=S.issues.slice(0,5).map((i,k)=>`<li class="${i.bad?'bad':i.info?'info':''}" data-go="${k}"><i class="mk"></i><div><b>${esc(i.t)}</b><small>${esc(i.d)}</small></div><span class="go">${SCRL[i.go]} ›</span></li>`).join('')+(S.issues.length<5?`<li><i class="mk"></i><div><b>Kapı listesi hazır</b><small>A–Z, masa numaralı</small></div><span></span></li>`:'')}
- else ch=`<li class="bad"><i class="mk"></i><div><b>${esc(e.ready||'Boş etkinlik')}</b><small>Masa, misafir ya da örnek veri yok</small></div><span></span></li>`;
- return `<article class="evc hero" data-ev="${e.id}"><div class="cov">${cover(e)}<span class="badge">${e.live?'Bu gece':'Sıradaki'}</span></div>
- <div class="hb"><div class="eyebrow live">${fmtD(e.d)} · ${DAYS[x.getDay()]}</div><h2>${esc(e.name)}</h2><div class="meta">${esc(e.venue)}</div><dl class="facts">${facts.map(([k,v])=>`<div><dt>${k}</dt><dd class="tnum">${v}</dd></div>`).join('')}</dl>
- <div class="acts"><button class="btn pri" data-a="open">Etkinliği aç</button><button class="btn" data-a="same">Aynı yerleşimle yeni</button><button class="btn ghost" data-a="dup">Çoğalt</button><button class="btn ghost icon" data-a="more" aria-label="Diğer işlemler">${IC.more}</button></div></div>
- <div class="hr"><h3>Hazır mı?</h3><ul class="checks">${ch}</ul></div></article>`}
-const upCard=e=>`<article class="evc up" data-ev="${e.id}" tabindex="0"><div class="cov">${cover(e)}<button class="cmore" data-a="more" aria-label="Diğer işlemler">${IC.more}</button></div><div class="cb"><div class="cd">${fmtD(e.d)}</div><b class="ct">${esc(e.name)}</b><div class="cv">${esc(e.venue)}</div><div class="crow"><span class="tnum">${e.pax||'—'} kişi · ${e.tables||'—'} masa</span><span class="rd"><i></i>${esc(e.ready||'Boş')}</span></div></div></article>`;
-const pastCard=e=>`<article class="evc past" data-ev="${e.id}" tabindex="0"><div class="cov">${cover(e)}</div><div><b>${esc(e.name)}</b><small>${IC.lock}${fmtD(e.d)} · ${e.arr}/${e.pax} geldi</small></div><button class="cmore" data-a="more" aria-label="Diğer işlemler">${IC.more}</button></article>`;
-function renderEvents(){const ev=[...EVENTS].sort((a,b)=>a.d.localeCompare(b.d)),up=ev.filter(e=>!e.past&&!e.live),past=ev.filter(e=>e.past).reverse(),hero=ev.find(e=>e.live)||up.shift();
- $('#evs').innerHTML=heroCard(hero)+`<div class="ev-sec">Yaklaşan</div><div class="ev-up">${up.map(upCard).join('')||'<div class="empty">Yaklaşan etkinlik yok.</div>'}</div><div class="ev-sec">Geçmiş · salt okunur</div><div class="ev-past">${past.map(pastCard).join('')}</div>`;$('#evname').textContent='Yılbaşı Galası'}
+function renderEvents(){const [Y,M]=S.month.split('-').map(Number),start=(new Date(Y,M-1,1).getDay()+6)%7,days=new Date(Y,M,0).getDate(),cells=Math.ceil((start+days)/7)*7;
+ let h=`<div class="cal-h"><button class="btn ghost icon" data-m="-1" aria-label="Önceki ay">‹</button><h2>${MONTHS[M-1]} ${Y}</h2><button class="btn ghost icon" data-m="1" aria-label="Sonraki ay">›</button><button class="btn sm" data-m="0">Bugün</button></div><div class="cal-dow">${['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'].map(d=>`<span>${d}</span>`).join('')}</div><div class="cal-grid" style="grid-template-rows:repeat(${cells/7},minmax(0,1fr))">`;
+ for(let i=0;i<cells;i++){const d=i-start+1;if(d<1||d>days){h+='<div class="cell off"></div>';continue}const ds=`${Y}-${pad2(M)}-${pad2(d)}`;
+  h+=`<div class="cell${ds===TODAY?' today':''}${ds<TODAY?' was':''}"><span class="cdn">${d}</span>${EVENTS.filter(e=>e.d===ds).map(e=>`<button class="ce${e.past?' past':''}${e.live?' live':''}${S.ev===e.id?' on':''}" data-ev="${e.id}" title="${esc(e.name)}">${e.past?IC.lock:'<i></i>'}<span>${e.t?e.t+' · ':''}${esc(e.name)}</span></button>`).join('')}${ds>=TODAY?`<button class="cadd" data-new="${ds}" aria-label="${d} ${MONTHS[M-1]}: yeni etkinlik">+</button>`:''}</div>`}
+ $('#calBox').innerHTML=h+'</div>';renderEvDetail();$('#evname').textContent='Yılbaşı Galası'}
+function renderEvDetail(){const e=EVENTS.find(x=>x.id===S.ev)||EVENTS.find(x=>x.live),x=new Date(e.d+'T12:00'),c=counts();
+ const facts=e.live?[['Kişi',420],['Masa',TABLES.length],['Oturmuş',c.seated],['Geldi',c.arrived]]:e.past?[['Kişi',e.pax],['Geldi',e.arr]]:[['Kişi',e.pax||'—'],['Masa',e.tables||'—']];
+ let rd;if(e.live){S.issues=issues();rd=S.issues.slice(0,4).map((i,k)=>`<li class="${i.bad?'bad':'info'}" data-go="${k}"><i class="mk"></i><span>${esc(i.t)}</span><span class="go">›</span></li>`).join('')}else if(e.past)rd=`<li><i class="mk"></i><span>Tamamlandı · değiştirilemez</span><span></span></li>`;else rd=`<li class="bad"><i class="mk"></i><span>${esc(e.ready||'Boş etkinlik')}</span><span></span></li>`;
+ $('#evDet').innerHTML=`<div class="eyebrow ${e.live?'live':''}">${e.live?'Bu gece · canlı':e.past?'Geçmiş · salt okunur':'Yaklaşan'}</div><h2 class="ed-t">${esc(e.name)}</h2><div class="ed-m">${fmtD(e.d)}, ${DAYS[x.getDay()]}${e.t?' · '+e.t:''}<br>${esc(e.venue)}</div><dl class="facts sm">${facts.map(([k,v])=>`<div><dt>${k}</dt><dd class="tnum">${v}</dd></div>`).join('')}</dl><h3 class="ed-h">Hazır mı?</h3><ul class="rdl">${rd}</ul><div class="acts"><button class="btn pri" data-a="open">${e.past?'Raporları gör':'Etkinliği aç'}</button><button class="btn" data-a="same">Aynı yerleşimle yeni</button><button class="btn ghost icon" data-a="more" aria-label="Diğer işlemler">${IC.more}</button></div>`}
 function evAction(a,el){const e=EVENTS.find(x=>x.id===S.ev);
  if(a==='open'){if(e.live)go('kapi');else if(e.past)go('raporlar');else toast('Bu prototipte yalnızca Yılbaşı Galası dolu açılır.');return}
  if(a==='same'){newEventDlg(`${e.name} — yeni tarih`,e.venue,true);return}
  if(a==='dup'){const d=new Date(e.d+'T12:00');d.setDate(d.getDate()+7);const n={...e,id:'c'+Date.now(),name:e.name+' (kopya)',d:d.toISOString().slice(0,10),past:false,live:false,ready:'Kopya · misafirler ve yerleşim kopyalandı'};EVENTS.push(n);S.ev=n.id;renderEvents();pushUndo(`“${e.name}” çoğaltıldı`,()=>{EVENTS.splice(EVENTS.indexOf(n),1);S.ev=e.id;if(S.scr==='etkinlik'){renderEvents()}});return}
  if(a==='exp'){toast(`“${esc(e.name)}” paketi hazırlandı (.merit · örnek)`);return}
  if(a==='more')menu(el,[{t:'Aynı yerleşimle yeni…',fn:()=>evAction('same')},{t:'Çoğalt',fn:()=>evAction('dup')},{t:'Dışa aktar',fn:()=>evAction('exp')},'-',{t:'Plan ve yerleşimi dışa aktar',fn:()=>toast('Yerleşim dosyası hazırlandı (örnek)')},'-',{t:e.past||e.live?'Silinemez · geçmiş ya da canlı':'Etkinliği sil…',danger:!(e.past||e.live),off:e.past||e.live,fn:()=>confirmDlg('Etkinlik silinsin mi?',`<b>${esc(e.name)}</b> ve içindeki her şey kaldırılır. Geri al ile döndürülebilir.`,'Sil',()=>{const i=EVENTS.indexOf(e);EVENTS.splice(i,1);S.ev='gala';renderEvents();pushUndo(`“${esc(e.name)}” silindi`,()=>{EVENTS.splice(i,0,e);S.ev=e.id;if(S.scr==='etkinlik'){renderEvents()}})},true)}])}
-function newEventDlg(name='',venue='Merit Royal Hotel · Grand Balo Salonu',same=false){const V=['Merit Royal Hotel · Grand Balo Salonu','Merit Royal Diamond · Kristal Salon','Merit Park Hotel · Amfi','Merit Crystal Cove · Teras'];
- dialog(`<h3>${same?'Aynı yerleşimle yeni etkinlik':'Yeni etkinlik'}</h3><p>${same?'Salon ve masa yerleşimi gelir; misafir gelmez.':'Boş başlar: masa, misafir ya da örnek veri yok.'}</p><label>Ad</label><input class="fld" id="nN" value="${esc(name)}" placeholder="Örn. Sevgililer Günü Galası"><div class="row2"><div><label>Tarih</label><input class="fld" id="nD" type="date" value="2027-01-16"></div><div><label>Salon</label><select class="fld" id="nV">${V.map(v=>`<option ${v===venue?'selected':''}>${v}</option>`).join('')}</select></div></div><div class="dacts"><button class="btn" data-x>Vazgeç</button><button class="btn pri" data-ok>Oluştur</button></div>`,b=>{b.querySelector('[data-x]').onclick=closeDlg;b.querySelector('[data-ok]').onclick=()=>{const n={id:'n'+Date.now(),d:$('#nD').value||'2027-01-16',name:$('#nN').value.trim()||'Adsız etkinlik',venue:$('#nV').value,pax:0,tables:same?42:0,ready:same?'Yerleşim hazır · misafir listesi yok':'Boş · plan ve misafir yok'};EVENTS.push(n);S.ev=n.id;closeDlg();go('etkinlik');pushUndo(`“${esc(n.name)}” oluşturuldu`,()=>{EVENTS.splice(EVENTS.indexOf(n),1);S.ev='gala';if(S.scr==='etkinlik'){renderEvents()}})}})}
+function newEventDlg(name='',venue='Merit Royal Hotel · Grand Balo Salonu',same=false,date='2027-01-16'){const V=['Merit Royal Hotel · Grand Balo Salonu','Merit Royal Diamond · Kristal Salon','Merit Park Hotel · Amfi','Merit Crystal Cove · Teras'];
+ dialog(`<h3>${same?'Aynı yerleşimle yeni etkinlik':'Yeni etkinlik'}</h3><p>${same?'Salon ve masa yerleşimi gelir; misafir gelmez.':'Boş başlar: masa, misafir ya da örnek veri yok.'}</p><label>Ad</label><input class="fld" id="nN" value="${esc(name)}" placeholder="Örn. Sevgililer Günü Galası"><div class="row2"><div><label>Tarih</label><input class="fld" id="nD" type="date" value="${date}"></div><div><label>Salon</label><select class="fld" id="nV">${V.map(v=>`<option ${v===venue?'selected':''}>${v}</option>`).join('')}</select></div></div><div class="dacts"><button class="btn" data-x>Vazgeç</button><button class="btn pri" data-ok>Oluştur</button></div>`,b=>{b.querySelector('[data-x]').onclick=closeDlg;b.querySelector('[data-ok]').onclick=()=>{const n={id:'n'+Date.now(),d:$('#nD').value||'2027-01-16',name:$('#nN').value.trim()||'Adsız etkinlik',venue:$('#nV').value,pax:0,tables:same?42:0,ready:same?'Yerleşim hazır · misafir listesi yok':'Boş · plan ve misafir yok'};EVENTS.push(n);S.ev=n.id;S.month=n.d.slice(0,7);closeDlg();go('etkinlik');pushUndo(`“${esc(n.name)}” oluşturuldu`,()=>{EVENTS.splice(EVENTS.indexOf(n),1);S.ev='gala';if(S.scr==='etkinlik'){renderEvents()}})}})}
 
 /* ═══ SALON: calm plan; options only on the clicked table ═══ */
 function renderSugChip(){const n=SUG.filter(s=>s.state==='open').length;const c=$('#sugChip');c.style.visibility=n?'visible':'hidden';c.textContent=`${n} plan önerisi karar bekliyor`}
 function tablePop(id){const t=TBL(id),b=roomBox();const el=b&&b.querySelector(`[data-t="${id}"] .body`);if(!el)return;const gs=G.filter(g=>g.table===id),o=occ(id);
  const html=`<div class="pop-h"><b>${t.id}</b><span>${t.kind==='round'?'Yuvarlak':'Dikdörtgen'}${t.id.startsWith('VIP')?' · VIP':''}</span></div><div class="pop-sub tnum">${o} / ${t.cap} dolu${t.chairs!==t.cap?` · çizimde ${t.chairs} sandalye`:''}</div>
- <ul class="pop-g">${gs.slice(0,5).map(g=>`<li><span>${gName(g)}</span><span class="mut tnum">${g.pax}</span></li>`).join('')||'<li class="mut">Henüz kimse yok</li>'}${gs.length>5?`<li class="mut">+${gs.length-5} kayıt daha</li>`:''}</ul>
+ <ul class="pop-g">${gs.slice(0,5).map(g=>`<li data-fg="${g.id}" class="${S.focusG===g.id?'me':''}" title="Sandalyesini göster"><span>${gName(g)}</span><span class="mut tnum">${g.pax}</span></li>`).join('')||'<li class="mut">Henüz kimse yok</li>'}${gs.length>5?`<li class="mut">+${gs.length-5} kayıt daha</li>`:''}</ul>
  <div class="pop-row"><span>Kapasite</span><div class="step"><button data-a="cap-" aria-label="Azalt">−</button><b class="tnum">${t.cap}</b><button data-a="cap+" aria-label="Artır">+</button></div></div>
  <div class="pop-acts">${t.kind==='rect'?'<button class="btn sm" data-a="rot">Döndür 15°</button>':''}<button class="btn sm" data-a="seat">Oturtmaya git</button><button class="btn sm ghost danger" data-a="del">Kaldır…</button></div><div class="pop-foot">Taşımak için masayı sürükleyin</div>`;
- showPop(el,html,e=>{const a=e.target.closest('[data-a]')?.dataset.a;if(!a)return;
+ showPop(el,html,e=>{const fg=e.target.closest('[data-fg]');if(fg){S.focusG=+fg.dataset.fg;renderRoom();tablePop(id);return}const a=e.target.closest('[data-a]')?.dataset.a;if(!a)return;
   if(a==='cap-'||a==='cap+'){const prev={cap:t.cap,chairs:t.chairs},sync=t.chairs===t.cap;const n=t.cap+(a==='cap+'?1:-1);if(n<Math.max(1,o)){toast(`${t.id}: ${o} kişi oturuyor; kapasite ${o} altına inemez`);return}if(n>12){toast('En fazla 12 kişilik');return}t.cap=n;if(sync)t.chairs=n;redrawT(id);tablePop(id);pushUndo(`${t.id} kapasite ${n}`,()=>{Object.assign(t,prev);if(S.scr==='salon'){redrawT(id);closePop()}},'t'+id)}
   if(a==='rot'){const p=t.rot;t.rot=(t.rot+15)%180;redrawT(id);tablePop(id);pushUndo(`${t.id} döndürüldü (${t.rot}°)`,()=>{t.rot=p;if(S.scr==='salon')redrawT(id)})}
   if(a==='seat'){closePop();go('oturma')}
@@ -665,8 +679,8 @@ $('#salonRoom').addEventListener('pointerdown',e=>{const g=e.target.closest('[da
  const mv=ev=>{const p=svgPt(ev,svg),dx=p.x-p0.x,dy=p.y-p0.y;if(!dragMoved&&Math.hypot(dx,dy)<4)return;if(!dragMoved){dragMoved=true;closePop()}t.x=Math.round(st.x+dx);t.y=Math.round(st.y+dy);g.setAttribute('transform',`translate(${t.x} ${t.y}) rotate(${t.rot})`)};
  const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);if(dragMoved)pushUndo(`${t.id} taşındı`,()=>{t.x=st.x;t.y=st.y;if(S.scr==='salon')redrawT(t.id)})};
  addEventListener('pointermove',mv);addEventListener('pointerup',up)});
-$('#salonRoom').addEventListener('click',e=>{if(dragMoved){dragMoved=false;return}const sg=e.target.closest('[data-sug]');if(sg){sugPop(sg.dataset.sug,sg);return}const g=e.target.closest('[data-t]');if(!g){S.selT=null;closePop();renderRoom();return}
- const prev=S.selT;S.selT=g.dataset.t;if(prev&&prev!==S.selT)redrawT(prev);redrawT(S.selT);tablePop(S.selT)});
+$('#salonRoom').addEventListener('click',e=>{if(dragMoved){dragMoved=false;return}const sg=e.target.closest('[data-sug]');if(sg){sugPop(sg.dataset.sug,sg);return}const g=e.target.closest('[data-t]');if(!g){S.selT=null;S.focusG=null;closePop();renderRoom();return}
+ S.selT=g.dataset.t;const fg=S.focusG!=null&&G.find(x=>x.id===S.focusG);if(!fg||fg.table!==S.selT)S.focusG=null;renderRoom();tablePop(S.selT)});
 $('#sugChip').onclick=()=>{const s=SUG.find(x=>x.state==='open');if(!s)return;const el=$(`#salonRoom .pin[data-sug="${s.id}"]`);if(el)sugPop(s.id,el)};
 $('#readPlan').onclick=e=>menu(e.currentTarget,[{t:'PDF ya da görsel seç…',fn:()=>{$('#file').onchange=ev=>{const f=ev.target.files[0];if(f)toast(`“${esc(f.name)}” okunacak · öneriler tek tek onaylanır (örnek)`)};$('#file').click()}},{t:'Son okumanın önerileri',fn:()=>$('#sugChip').click()},'-',{t:'Okuma sizin isteğinizle başlar',off:true}]);
 $('#addT').onclick=e=>menu(e.currentTarget,[{t:'Yuvarlak masa · 10 kişilik',fn:()=>newTable('round')},{t:'Dikdörtgen masa · 12 kişilik',fn:()=>newTable('rect')}]);
@@ -749,12 +763,12 @@ function doorList(){const toks=fold($('#dq').value.trim()).split(/\s+/).filter(B
  return G.filter(g=>{if(S.doorF==='vip'&&!g.vip)return false;if(JK.includes(S.doorF)&&g.junket!==S.doorF)return false;if(!toks.length)return true;const hay=fold(g.name+' '+(g.table||'')+' '+(g.junket||g.host)).split(/\s+/);return toks.every(t=>hay.some(w=>w.startsWith(t)))}).sort((a,b)=>collator.compare(a.name,b.name))}
 function stateCell(g){const j=S.justIn[g.id];
  if(g.arr==='in'){const part=g.inPax<g.pax;return `<span class="st ok">${IC.check}${part?`${g.inPax}/${g.pax} geldi`:`Geldi ${hm(g.at)}`}</span>${part?`<button class="btn sm" data-in="${g.id}">Kalanlar</button>`:j?`<button class="lnk" data-undo-door="${g.id}">Geri al</button>`:''}`}
- if(g.arr==='no')return `<span class="st no">Gelmedi</span>${j?`<button class="lnk" data-undo-door="${g.id}">Geri al</button>`:''}`;
+ if(g.arr==='no')return `<span class="st no">${IC.x}Gelmedi</span>${j?`<button class="lnk" data-undo-door="${g.id}">Geri al</button>`:''}`;
  return `<button class="btn pri lg giris" data-in="${g.id}">Giriş</button>`}
-const dRow=g=>`<div class="drow ${g.arr}" data-g="${g.id}"><button class="more" data-more="${g.id}" aria-label="${esc(g.name)}: diğer işlemler">${IC.more}</button><div class="dn"><b>${esc(g.name)}</b>${g.add?`<i class="px">+${g.add}</i>`:''}${vipMark(g.vip)}<div class="ds"><span class="tnum">${g.table||'<span class="warn">Masa yok</span>'}</span> · ${esc(g.junket||g.host)}${g.add?` · ${g.pax} kişi`:''}</div></div><div class="dact" data-state="${g.id}">${stateCell(g)}</div></div>`;
+const dRow=g=>`<div class="drow ${g.arr}${S.focusG===g.id?' sel':''}" data-g="${g.id}"><button class="more" data-more="${g.id}" aria-label="${esc(g.name)}: diğer işlemler">${IC.more}</button><div class="dn"><b>${esc(g.name)}</b>${g.add?`<i class="px">+${g.add}</i>`:''}${vipMark(g.vip)}<div class="ds"><span class="tnum">${g.table||'<span class="warn">Masa yok</span>'}</span> · ${esc(g.junket||g.host)}${g.add?` · ${g.pax} kişi`:''}</div></div><div class="dact" data-state="${g.id}">${stateCell(g)}</div></div>`;
 function renderDoorList(){const L=doorList();$('#dlist').innerHTML=L.map(dRow).join('')||'<div class="empty" style="padding:32px 24px"><b>Bu isimde misafir yok.</b>Yazımı deneyin ya da Misafirler’den ekleyin.</div>'}
-function afterDoor(g,lit){if(S.scr!=='kapi')return;const c=$(`#dlist [data-state="${g.id}"]`);if(c){c.innerHTML=stateCell(g);c.closest('.drow').className='drow '+g.arr}if(g.table){const n=redrawT(g.table);if(lit&&n)n.classList.add('lit')}renderDoorTop()}
-function checkIn(g,n){if(g.arr==='in'&&g.inPax>=g.pax)return;const prev={arr:g.arr,at:g.at,inPax:g.inPax};g.arr='in';if(prev.arr!=='in')g.at=nowMin();g.inPax=n??g.pax;S.justIn[g.id]=1;afterDoor(g,true);
+function afterDoor(g,lit){if(S.scr!=='kapi')return;const c=$(`#dlist [data-state="${g.id}"]`);if(c){c.innerHTML=stateCell(g);$$('#dlist .drow.sel').forEach(x=>x.classList.remove('sel'));c.closest('.drow').className='drow '+g.arr+(S.focusG===g.id?' sel':'')}if(g.table){renderRoom();const n=lit&&roomBox().querySelector(`[data-t="${g.table}"]`);if(n)n.classList.add('lit')}renderDoorTop()}
+function checkIn(g,n){if(g.arr==='in'&&g.inPax>=g.pax)return;const prev={arr:g.arr,at:g.at,inPax:g.inPax};g.arr='in';if(prev.arr!=='in')g.at=nowMin();g.inPax=n??g.pax;S.justIn[g.id]=1;S.focusG=g.id;afterDoor(g,true);
  pushUndo(`${esc(g.name)} · giriş ${g.inPax}/${g.pax}${g.table?' · '+g.table:''}`,()=>{Object.assign(g,prev);delete S.justIn[g.id];afterDoor(g)},'door'+g.id)}
 function markNo(g){const prev={arr:g.arr,at:g.at,inPax:g.inPax};g.arr='no';g.inPax=0;S.justIn[g.id]=1;afterDoor(g);pushUndo(`${esc(g.name)} gelmedi · ${g.table||'masa'} korunuyor`,()=>{Object.assign(g,prev);delete S.justIn[g.id];afterDoor(g)},'door'+g.id)}
 function askNo(g){confirmDlg('Gelmedi olarak işaretlensin mi?',`<b>${esc(g.name)}</b> · ${g.pax} kişi. Planlanan yeri${g.table?` (${g.table})`:''} korunur; yalnızca canlı kapasite boşalır. Geri alınabilir.`,'Gelmedi işaretle',()=>markNo(g),true)}
@@ -764,7 +778,8 @@ $('#dgroups').onclick=e=>{const b=e.target.closest('[data-f]');if(!b)return;S.do
 $('#dlist').addEventListener('click',e=>{const i=e.target.closest('[data-in]');if(i){checkIn(G.find(g=>g.id===+i.dataset.in));return}
  const u=e.target.closest('[data-undo-door]');if(u){undo('door'+u.dataset.undoDoor);return}
  const m=e.target.closest('[data-more]');if(m){const g=G.find(x=>x.id===+m.dataset.more);const items=[];if(g.arr!=='in'&&g.pax>1)for(let k=1;k<g.pax;k++)items.push({t:`Kısmi giriş · ${k} / ${g.pax} kişi`,fn:()=>checkIn(g,k)});if(items.length)items.push('-');
-  items.push({t:'Misafir kartını aç',fn:()=>{S.selG=g.id;S.glF='all';go('misafirler')}});if(g.arr==='wait')items.push('-',{t:'Gelmedi olarak işaretle…',danger:true,fn:()=>askNo(g)});menu(m,items)}});
+  items.push({t:'Misafir kartını aç',fn:()=>{S.selG=g.id;S.glF='all';go('misafirler')}});if(g.arr==='wait')items.push('-',{t:'Gelmedi olarak işaretle…',danger:true,fn:()=>askNo(g)});menu(m,items);return}
+ const row=e.target.closest('.drow');if(row){S.focusG=+row.dataset.g;$$('#dlist .drow.sel').forEach(x=>x.classList.remove('sel'));row.classList.add('sel');renderRoom()}});
 $('#dlist').addEventListener('mouseover',e=>{const r=e.target.closest('.drow');if(!r)return;const id=+r.dataset.g;if(S.doorHi===id)return;const old=S.doorHi&&G.find(x=>x.id===S.doorHi);S.doorHi=id;const g=G.find(x=>x.id===id);const b=roomBox();if(!b)return;if(old&&old.table)b.querySelector(`[data-t="${old.table}"]`)?.classList.remove('hi');if(g&&g.table)b.querySelector(`[data-t="${g.table}"]`)?.classList.add('hi')});
 $('#doorRoom').addEventListener('click',e=>{const el=e.target.closest('[data-t]');if(!el)return;$('#dq').value=el.dataset.t;renderDoorList()});
 
@@ -790,7 +805,7 @@ const VERB=/^(oturt|otur|yerlestir|koy|tasi|giris|geldi|gelmedi|yap|et|ver|masa|
 function tableIn(f){const m=f.match(/\b(vip|t)\s*0?(\d{1,2})/);if(!m)return null;const id=m[1]==='vip'?'VIP0'+(+m[2]):'T'+pad2(+m[2]);return TBL(id)?id:null}
 function guestsIn(f){const toks=f.split(/[^a-z0-9]+/).filter(w=>w.length>=3&&!/^(vip|t)?\d/.test(w)&&!VERB.test(w));if(!toks.length)return[];let best=[],bs=0;
  G.forEach(g=>{let s=0;fold(g.name).split(' ').forEach(p=>{if(toks.some(t=>t.startsWith(p)||p.startsWith(t)))s++});if(s>bs){bs=s;best=[g]}else if(s===bs&&s>0)best.push(g)});return best}
-const EX=['bugün ne eksik','mehmet kayayı t36ya oturt','ahmet yılmaz','kapı listesi yazdır','gece teması'];
+const EX=['ahmet yılmaz nerede oturuyor','bugün ne eksik','mehmet kayayı t36ya oturt','ahmet yılmaz','kapı listesi yazdır','gece teması'];
 function helpItems(){return[
  {k:'Kapı',t:'Misafiri bulun, Giriş’e basın',s:'Liste A–Z. Gelmedi ⋯ menüsündedir ve önce sorar. Geri al her zaman var.',b:'Kapıya git',run:()=>go('kapi')},
  {k:'Oturma',t:'Misafire, sonra masaya tıklayın',s:'Uyan masalar açılır, “N boş” yazar. Kurallar yalnızca uyarır.',b:'Oturmaya git',run:()=>go('oturma')},
@@ -807,6 +822,7 @@ function parse(raw){const f=fold(raw).trim();
  if(/yeni etkinlik/.test(f))return[{k:'Etkinlik',t:'Yeni, boş etkinlik',s:'Masa, misafir ya da örnek veri olmadan başlar',b:'Oluştur',run:()=>{go('etkinlik');newEventDlg()}}];
  if(/yazdir|excel|rapor|listesi|junket|ozet/.test(f)){const hit=REPS.filter(r=>fold(r.t+' '+r.d).split(/[^a-z0-9]+/).some(w=>w.length>3&&f.includes(w)));return(hit.length?hit:REPS).map(r=>({k:'Rapor',t:r.t,s:r.d,b:'Önizle',run:()=>{S.rep=r.id;go('raporlar')}}))}
  const tid=tableIn(f),gs=guestsIn(f),noV=/gelmedi/.test(f),inV=!noV&&/giris|geldi/.test(f);
+ if(gs.length&&/nerede|hangi masa/.test(f))return gs.slice(0,6).map(g=>({k:'Nerede',t:gName(g),s:g.table?`${loc(g.table)} oturuyor · ${seatsTxt(g)} · ${arrTxt(g)}`:'Henüz oturmamış',b:g.table?(S.scr==='kapi'?'Planda göster':'Salonda göster'):'Oturt…',run:()=>showWhere(g)}));
  if(gs.length&&tid){if(gs.length>1)return gs.slice(0,6).map(g=>({k:'Hangisi?',t:gName(g),s:where(g),b:`${dat(tid)} oturt`,run:()=>assign(g,tid)}));
   const g=gs[0],t=TBL(tid),free=t.cap-occ(tid,g),w=ruleWarn(g,tid);
   if(free>=g.pax)return[{k:'Anladığım',t:`${gName(g)} → ${tid}`,s:`Şimdi: ${g.table||'oturmamış'} · Sonra: ${tid} (${free} boş, ${g.pax} kişi)${w?' · uyarı: '+esc(w):''}`,b:'Uygula',run:()=>assign(g,tid)}];
@@ -834,8 +850,11 @@ $('#nav').innerHTML=SCR.map(([k,l,ic],i)=>`<button data-s="${k}" title="${l} · 
 $('#nav').onclick=e=>{const b=e.target.closest('[data-s]');if(b)go(b.dataset.s)};
 $('#qi').innerHTML=IC.search;$('#dqi').innerHTML=sv('<circle cx="7" cy="7" r="4.3"/><path d="M10.2 10.2 13.8 13.8"/>',20);
 $('#newEv').onclick=()=>newEventDlg();
-$('#evs').onkeydown=e=>{if(e.key==='Enter'&&e.target.matches('.evc')){e.preventDefault();e.target.click()}};
-$('#evs').onclick=e=>{const li=e.target.closest('[data-go]');if(li){goIssue(S.issues[+li.dataset.go]);return}const card=e.target.closest('[data-ev]');if(!card)return;S.ev=card.dataset.ev;const a=e.target.closest('[data-a]');if(!a&&card.classList.contains('hero'))return;evAction(a?a.dataset.a:'open',a||card)};
+
+$('#calBox').onclick=e=>{const m=e.target.closest('[data-m]');if(m){const v=+m.dataset.m;if(!v)S.month='2026-12';else{let [Y,M]=S.month.split('-').map(Number);M+=v;if(M<1){M=12;Y--}if(M>12){M=1;Y++}S.month=`${Y}-${pad2(M)}`}renderEvents();return}
+ const n=e.target.closest('[data-new]');if(n){newEventDlg('',undefined,false,n.dataset.new);return}
+ const b=e.target.closest('[data-ev]');if(b){S.ev=b.dataset.ev;$$('#calBox .ce.on').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderEvDetail()}};
+$('#evDet').onclick=e=>{const li=e.target.closest('[data-go]');if(li){goIssue(S.issues[+li.dataset.go]);return}const a=e.target.closest('[data-a]');if(a)evAction(a.dataset.a,a)};
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('#cmd'))closeDrop();if($('#pop').classList.contains('on')&&!e.target.closest('#pop')&&!(S.popA&&S.popA.contains&&S.popA.contains(e.target))&&!e.target.closest('[data-t],[data-sug],[data-more],#readPlan,#addT,#glImp,#glHost,[data-a="more"]'))closePop();if(e.target.id==='dlg')closeDlg()});
 addEventListener('keydown',e=>{
  if(e.key==='F8'){e.preventDefault();$('#q').focus();openDrop();return}
