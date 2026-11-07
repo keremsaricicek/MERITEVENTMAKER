@@ -12,7 +12,16 @@
 // agree by omission.
 import { openApp, createBlankEvent, addTables, futureDate, settle, click } from "../lib/app-actions.mjs";
 
-export const meta = { name: "reports-preflight", tags: ["business", "ui", "fast"], timeout: 150000 };
+export const meta = { name: "reports-preflight", tags: ["business", "ui", "fast"], timeout: 180000 };
+
+// REDESIGN v4 step 8 (SPEC-v4 "Raporlar"): "Rapor tasarımcısı" — a full-size live
+// preview of the document (2/3) and a designer panel (1/3): choose and order the
+// columns, filter by name / group / table / VIP / arrival, title, logo, paper
+// (A4/A3, portrait/landscape, font size), save as a template (this machine,
+// try/catch). The workbook (TABLE PLAN / GUEST LIST / UNASSIGNED) and its print
+// stay exactly as they were — xlsx-contract guards their bytes. Mutation proof,
+// recorded 2026-11-07: with the table filter ignored the filter check fails;
+// with the column order not applied the order check fails.
 
 export default async function run({ page, checks, baseUrl }) {
   await openApp(page, baseUrl, { lang: "en" });
@@ -95,4 +104,52 @@ export default async function run({ page, checks, baseUrl }) {
   const cc4 = await commandCenter();
   const rp4 = await reports();
   checks.equal(rp4.rows, cc4, "in Turkish the two lists are the same list too");
+
+  // --- REDESIGN v4 step 8: the report designer -------------------------------------
+  await page.evaluate(() => { const e = activeEvent(); const g = (id, name, pax, host, vip, st) => ({ id, name, additionalGuests: pax - 1, pax, vip, invitedBy: host, notes: "", planningStatus: "Confirmed", arrivalStatus: st, assignment: null, createdAt: "" });
+    e.guests.push(g("r1", "Ece Tan", 2, "Junket A", "VIP", "Checked In"), g("r2", "Ferhat Oz", 1, "Junket B", "Standard", "Not Arrived"), g("r3", "Gül Ak", 3, "Junket A", "Standard", "No Show"));
+    assignGuestToTable("r1", e.tables[0].id); assignGuestToTable("r2", e.tables[1].id); touchEvent(e); ui.tab = "reports"; render(); });
+  await settle(page);
+  await click(page, '[data-reports-view="designer"]');
+  const pv = () => page.evaluate(() => { const p = document.querySelector(".rd-page"); if (!p) return null;
+    return { head: [...p.querySelectorAll("thead th")].map((x) => x.textContent.trim()), rows: [...p.querySelectorAll("tbody tr")].map((r) => [...r.cells].map((c) => c.textContent.trim())),
+      title: p.querySelector(".rd-title")?.textContent.trim(), paper: p.dataset.paper, font: getComputedStyle(p.querySelector("table")).fontSize,
+      panel: !!document.querySelector(".rd-panel"), ratio: (() => { const a = document.querySelector(".rd-preview")?.getBoundingClientRect().width, b = document.querySelector(".rd-panel")?.getBoundingClientRect().width; return a && b ? b / (a + b) : null; })() }; });
+  let d = await pv();
+  checks.ok(d && d.panel && d.ratio > 0.25 && d.ratio < 0.4, "Raporlar has a full preview and a designer panel of about 1/3", d);
+  const nAll = await page.evaluate(() => activeEvent().guests.length);
+  checks.ok(d.rows.length === nAll && d.head.length >= 3, "the preview lists every guest record with the chosen columns", d);
+  await page.selectOption("[data-rd-filter='table']", { index: 1 }); await settle(page);
+  d = await pv();
+  const atFirst = await page.evaluate(() => { const v = document.querySelector("[data-rd-filter='table']").value; return activeEvent().guests.filter((g) => g.assignment && g.assignment.tableId === v).map((g) => g.name).sort(); });
+  checks.equal(d.rows.map((r) => r[0]).sort(), atFirst, "filter by table: only that table's people", d.rows);
+  await page.selectOption("[data-rd-filter='table']", ""); await settle(page);
+  await page.fill("[data-rd-filter='name']", "gül"); await page.waitForTimeout(450); await settle(page);
+  d = await pv();
+  checks.ok(d.rows.length === 1 && /Gül Ak/.test(d.rows[0].join(" ")), "filter by name (Turkish-folded)", d.rows);
+  await page.fill("[data-rd-filter='name']", ""); await page.waitForTimeout(450);
+  await page.selectOption("[data-rd-filter='group']", "Junket A"); await settle(page);
+  checks.equal((await pv()).rows.length, 2, "filter by group / junket");
+  await page.selectOption("[data-rd-filter='group']", "");
+  await page.check("[data-rd-filter='vip']"); await settle(page);
+  checks.equal((await pv()).rows.length, await page.evaluate(() => activeEvent().guests.filter((g) => /VIP/.test(String(g.vip || ""))).length), "VIP only");
+  await page.uncheck("[data-rd-filter='vip']"); await settle(page);
+  const before = (await pv()).head;
+  await page.click(`[data-rd-col-down="${await page.evaluate(() => document.querySelector("[data-rd-col]")?.dataset.rdCol)}"]`); await settle(page);
+  const after = (await pv()).head;
+  checks.ok(after[0] === before[1] && after[1] === before[0], "a column moves down: the order is the document's order", { before, after });
+  const off = await page.evaluate(() => [...document.querySelectorAll("[data-rd-col]")].find((x) => !x.querySelector("input").checked)?.dataset.rdCol);
+  await page.check(`[data-rd-col="${off}"] input`); await settle(page);
+  checks.equal((await pv()).head.length, after.length + 1, "ticking a column adds it", off);
+  await page.fill("[data-rd-title]", "Kapı listesi — Junket"); await page.waitForTimeout(450);
+  await page.selectOption("[data-rd-paper]", "A3-landscape"); await page.selectOption("[data-rd-font]", "14"); await settle(page);
+  d = await pv();
+  checks.ok(d.title === "Kapı listesi — Junket" && d.paper === "A3-landscape" && d.font === "14px", "title, paper and font size shape the preview", d);
+  await page.fill("[data-rd-template-name]", "Junket kapı"); await page.click("[data-rd-save]"); await settle(page);
+  const saved = await page.evaluate(() => { try { return JSON.parse(localStorage.getItem("merit.reportTemplates.v1") || "[]").map((x) => x.name); } catch { return null; } });
+  checks.ok(saved && saved.includes("Junket kapı"), "save as template: kept on this machine", saved);
+  const thrown = await page.evaluate(() => { const o = Storage.prototype.setItem; Storage.prototype.setItem = () => { throw new Error("quota"); }; try { document.querySelector("[data-rd-template-name]").value = "X"; document.querySelector("[data-rd-save]").click(); return "ok"; } catch (e) { return String(e); } finally { Storage.prototype.setItem = o; } });
+  checks.equal(thrown, "ok", "a storage that refuses only loses the template, never the screen", thrown);
+  await click(page, '[data-reports-view="summary"]');
+  checks.ok(await page.evaluate(() => !!document.querySelector('[data-report="xlsx"]') && !!document.querySelector(".preflight")), "the summary with the workbook export is one click away, unchanged");
 }
