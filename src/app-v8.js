@@ -1024,7 +1024,7 @@
     return eventReadiness(event).reasons.map(r=>({level:r.level==="blocker"?"blocker":"warn",text:COMMAND.doctorText(r.finding).what}));
   }
   const EVENTS=globalThis.MeritScreenEvents.create({
-    esc:(...a)=>esc(...a),eventMetrics:(...a)=>eventMetrics(...a),fmtDate:(...a)=>fmtDate(...a),getActiveId:()=>ui.activeEventId,getState:()=>state,icon:(...a)=>icon(...a),readiness:(...a)=>calendarReadiness(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),t:(...a)=>t(...a),topbarHTML:(...a)=>shellBarHTML(...a),
+    skin:()=>TOPBAR.skin.current(),esc:(...a)=>esc(...a),eventMetrics:(...a)=>eventMetrics(...a),fmtDate:(...a)=>fmtDate(...a),getActiveId:()=>ui.activeEventId,getState:()=>state,icon:(...a)=>icon(...a),readiness:(...a)=>calendarReadiness(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),t:(...a)=>t(...a),topbarHTML:(...a)=>shellBarHTML(...a),
   });
   eventsHTML = function(...a){return EVENTS.eventsHTML(...a);};
 
@@ -5132,7 +5132,8 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
   // export, delete) are the data-* controls bound above, as before.
   function bindShellBar(){
     document.querySelectorAll("[data-shell-theme]").forEach(b=>b.onclick=()=>TOPBAR.theme.toggle());
-    document.querySelectorAll("[data-shell-skin]").forEach(b=>b.onclick=()=>TOPBAR.skin.set(b.dataset.shellSkin));
+    // A theme may change what a screen shows (A: the timeline, B: the calendar).
+    document.querySelectorAll("[data-shell-skin]").forEach(b=>b.onclick=()=>{TOPBAR.skin.set(b.dataset.shellSkin);render();});
     // "Sonraki: X →" is the same move as clicking X in the bar.
     document.querySelectorAll("[data-shell-next]").forEach(b=>b.onclick=()=>{const tab=document.querySelector(`header.shell-top [data-tab="${b.dataset.shellNext}"]`);if(tab)tab.click();});
     document.querySelectorAll("[data-shell-assistant]").forEach(b=>b.onclick=()=>ASSIST.toggle(true));

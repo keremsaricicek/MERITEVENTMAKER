@@ -2663,3 +2663,38 @@ body:has(#assistantPanel:not([hidden])) .shell-next{right:396px}
    buttons); toasts stack in the detail column instead, below its actions. */
 body:has(.cal-screen) .toast-wrap{left:auto;right:40px}
 body:has(.cal-screen) .toast{min-width:0;max-width:340px}
+
+/* ==== REDESIGN v4 step 3: Etkinlikler — theme A's timeline of plates (7-atlas-sade) ====
+   Each plate is the venue's own plan drawn from its real tables; past left and
+   quiet, a dashed "Bugün" line, upcoming right. Theme B keeps the month calendar. */
+.tl-screen{display:flex;flex-direction:column;overflow:auto}
+.tl-screen .tl-head h1{font-family:var(--pi-brand-font);font-weight:500;font-size:34px;letter-spacing:0}
+.tl-strip{display:flex;justify-content:safe center;align-items:stretch;gap:0;overflow-x:auto;padding:34px 8px 10px;margin-top:18px;flex:none}
+.tl-plate{width:190px;flex:none;display:flex;flex-direction:column;padding:10px 14px 12px;border:0;border-radius:4px;background:none;color:var(--pi-ink);text-align:left;font:inherit;cursor:pointer}
+.tl-plate:hover .tl-nm{color:var(--pi-primary)}
+.tl-plate.on{background:var(--pi-surface);box-shadow:0 0 0 1px var(--pi-line-strong)}
+.tl-plate.on .tl-cap{border-top:2.5px solid var(--pi-primary);padding-top:11px}
+.tl-dr{height:130px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:14px}
+.tl-plan{width:100%;height:100%;overflow:visible}
+.tl-room{fill:var(--pi-surface-2);stroke:var(--pi-ink);stroke-width:2}
+.tl-t{fill:var(--pi-surface);stroke:var(--pi-muted);stroke-width:2;vector-effect:non-scaling-stroke}
+.tl-none{fill:none;stroke:var(--pi-muted-2);stroke-width:1.5;stroke-dasharray:6 4}
+.tl-none-t{fill:var(--pi-muted-2);stroke:none;font:italic 400 15px var(--pi-serif)}
+.tl-cap{display:flex;flex-direction:column;gap:3px;border-top:1.5px solid var(--pi-ink);padding-top:12px}
+.tl-dt{font-size:13px;color:var(--pi-muted);line-height:1.35}
+.tl-nm{font-family:var(--pi-brand-font);font-weight:500;font-size:18px;line-height:1.2}
+.tl-vn{font-size:13px;color:var(--pi-muted)}
+.tl-ss{font-size:13px;font-weight:600;display:flex;gap:5px;align-items:center;margin-top:3px;color:var(--pi-ink)}
+.tl-ss svg{width:12px;height:12px}
+.tl-plate.past .tl-dr{opacity:.55}
+.tl-plate.past .tl-nm,.tl-plate.past .tl-ss{color:var(--pi-muted)}
+.tl-today{width:96px;flex:none;position:relative}
+.tl-today::before{content:"";position:absolute;left:50%;top:-26px;bottom:-6px;border-left:1.5px dashed var(--pi-primary)}
+.tl-today-lab{position:absolute;left:50%;top:116px;transform:translateX(-50%);background:var(--pi-bg);padding:4px 6px;text-align:center;font-size:13px;font-weight:600;color:var(--pi-primary);white-space:nowrap;line-height:1.3}
+.tl-screen .cal-detail{border-left:0;border-top:1px solid var(--pi-line);margin:24px auto 0;padding:20px 0 0;width:min(920px,100%);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:40px;align-content:start}
+.tl-screen .cal-detail>.cal-d-eyebrow,.tl-screen .cal-detail>.cal-d-title,.tl-screen .cal-detail>.cal-d-meta,.tl-screen .cal-detail>.cal-facts{grid-column:1}
+.tl-screen .cal-detail>.cal-d-h,.tl-screen .cal-detail>.cal-ready{grid-column:2}
+.tl-screen .cal-detail>.cal-d-h{grid-row:1}
+.tl-screen .cal-detail>.cal-ready{grid-row:2 / span 3}
+.tl-screen .cal-detail>.cal-d-acts,.tl-screen .cal-detail>.history-learning,.tl-screen .cal-detail>.cal-d-empty{grid-column:1 / -1}
+.cal-d-acts .btn.danger{color:var(--pi-danger)}

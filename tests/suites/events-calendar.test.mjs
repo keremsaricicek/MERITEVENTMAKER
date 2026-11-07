@@ -10,6 +10,16 @@
 //     writers, bound by the shell exactly as before.
 //   A PAST EVENT changes nothing by being shown: it opens read-only.
 //
+// REDESIGN v4 (SPEC-v4, owner 2026-11-07): the month calendar is THEME B's
+// events home; THEME A ("Atlas sade", the default) shows the same events as a
+// timeline of plates — each venue's own small plan drawn from its real tables,
+// a "Bugün" line, past left (read-only) / upcoming right — with the same calm
+// panel. In both, the tools are visible buttons (Aç, Aynı yerleşimle yeni,
+// Çoğalt, Dışa aktar, Sil), no longer behind ⋯. Sections 1–7 run on theme B;
+// section 8 on theme A. Mutation proof for section 8, recorded 2026-11-07: with
+// the plates' table shapes dropped "each plate draws its own tables" fails; with
+// the meridian placed after every plate "Bugün sits between" fails.
+//
 // Mutation proof, recorded 2026-11-07: before the change (hero card + lists)
 // every check fails at ".cal-screen"; with the past class dropped from entries
 // "a past event is grey with a lock" fails; with the shell's selection binding
@@ -38,8 +48,9 @@ const CAL = `(() => {
     ready: [...(panel?.querySelectorAll(".cal-ready li") || [])].map((li) => li.textContent.replace(/\\s+/g, " ").trim()),
     open: !!panel?.querySelector("[data-open-event]"),
     same: !!panel?.querySelector("[data-duplicate-layout]"),
-    more: [...(panel?.querySelectorAll("details.cal-more [data-duplicate-event], details.cal-more [data-export-event-package], details.cal-more [data-delete-event]") || [])]
+    more: [...(panel?.querySelectorAll(".cal-d-acts > [data-duplicate-event], .cal-d-acts > [data-export-event-package], .cal-d-acts > [data-delete-event]") || [])]
       .map((b) => Object.keys(b.dataset)[0]),
+    hiddenMore: !!panel?.querySelector("details.cal-more"),
   };
 })()`;
 const monthLabel = (offset) => `(() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + (${offset}));
@@ -47,6 +58,7 @@ const monthLabel = (offset) => `(() => { const d = new Date(); d.setDate(1); d.s
 
 export default async function run({ page, checks, baseUrl }) {
   await openApp(page, baseUrl, { lang: "tr" });
+  await page.evaluate(() => { localStorage.setItem("merit.skin.v1", "b"); document.documentElement.dataset.skin = "b"; render(); });
 
   // --- 1. an empty install: the month, today, no invented event ---------------
   const empty = await page.evaluate(CAL);
@@ -87,7 +99,7 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(/16/.test(up.seats || ""), "Masa carries the room's logical seats (symbolic tables count) — never physical chairs", up.seats);
   checks.ok(up.ready.length >= 1 && up.ready.length <= 4, "Hazır mı? lists at most four lines from the Plan Doctor", up.ready);
   checks.ok(up.open && up.same, "Etkinliği aç and Aynı yerleşimle yeni are on the panel", up);
-  checks.equal(up.more.sort(), ["deleteEvent", "duplicateEvent", "exportEventPackage"], "⋯ holds Çoğalt, Dışa aktar and Sil", up.more);
+  checks.ok(up.more.sort().join() === "deleteEvent,duplicateEvent,exportEventPackage" && !up.hiddenMore, "Çoğalt, Dışa aktar and Sil are visible buttons, not behind ⋯", up);
 
   // --- 3. a past event: grey, locked, read-only --------------------------------
   await createBlankEvent(page, { name: "Geçen Yıl", hotel: "Merit Park", date: "2020-03-14" });
@@ -138,4 +150,42 @@ export default async function run({ page, checks, baseUrl }) {
   const en = await page.evaluate(CAL);
   checks.equal(en.dow, ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], "English weekday heads", en.dow);
   checks.ok(en.ready.length >= 1 && !en.ready.some((l) => /^[a-z]+\.[a-zA-Z.]+$/.test(l)), "no raw key in the panel", en.ready);
+
+  await page.evaluate(() => { ui.lang = "tr"; render(); });
+
+  // --- 8. theme A: the timeline of plates --------------------------------------
+  await click(page, "header.shell-top .shell-more > summary");
+  await click(page, '[data-shell-skin="a"]');
+  await settle(page);
+  const TL = `(() => {
+    const s = document.querySelector(".cal-screen"); if (!s) return null;
+    const strip = s.querySelector(".tl-strip"); if (!strip) return { strip: false, grid: !!s.querySelector(".cal-grid") };
+    const kids = [...strip.children];
+    return { strip: true, grid: !!s.querySelector(".cal-grid"),
+      order: kids.map((k) => k.classList.contains("tl-today") ? "|" : (k.classList.contains("past") ? "p:" : "u:") + k.dataset.calEvent),
+      today: strip.querySelector(".tl-today")?.textContent.replace(/\s+/g, " ").trim() || null,
+      shapes: Object.fromEntries([...strip.querySelectorAll("[data-cal-event]")].map((p) => [p.dataset.calEvent, p.querySelectorAll("svg .tl-t").length])),
+      empty: Object.fromEntries([...strip.querySelectorAll("[data-cal-event]")].map((p) => [p.dataset.calEvent, !!p.querySelector("svg .tl-none")])),
+      title: s.querySelector(".cal-detail .cal-d-title")?.textContent.trim() || null,
+      tools: [...s.querySelectorAll(".cal-detail .cal-d-acts > button")].map((b) => Object.keys(b.dataset)[0]) };
+  })()`;
+  const tl = await page.evaluate(TL);
+  checks.ok(tl && tl.strip && !tl.grid, "theme A shows the timeline, not the month grid", tl);
+  if (!tl || !tl.strip) return;
+  const facts = await page.evaluate(() => state.events.map((e) => ({ id: e.id, date: e.date, tables: e.tables.length, past: (() => { try { return MeritEventRules.isHistorical(e); } catch { return null; } })() })));
+  const pastId = facts.find((f) => f.date === "2020-03-14").id;
+  const bar = tl.order.indexOf("|");
+  checks.ok(bar > 0 && tl.order.slice(0, bar).every((x) => x.startsWith("p:")) && tl.order.slice(bar + 1).every((x) => x.startsWith("u:")) && tl.order[0] === "p:" + pastId,
+    "Bugün sits between the past (left) and the upcoming (right)", tl.order);
+  checks.ok(/Bugün/.test(tl.today || ""), "the line is labelled Bugün with today's date", tl.today);
+  checks.ok(facts.every((f) => tl.shapes[f.id] === f.tables), "each plate draws its own tables — one shape per real table, nothing invented", { shapes: tl.shapes, facts });
+  checks.ok(tl.empty[pastId] === true && tl.shapes[upId] === 2, "a venue with no plan says so; Takvim Galası shows its 2 tables", tl.empty);
+  await click(page, `[data-cal-event="${upId}"]`);
+  const tl2 = await page.evaluate(TL);
+  checks.equal(tl2.title, "Takvim Galası", "a click on a plate selects it and fills the panel", tl2.title);
+  checks.equal(tl2.tools, ["openEvent", "duplicateLayout", "duplicateEvent", "exportEventPackage", "deleteEvent"], "the tools are visible: Aç · Aynı yerleşimle yeni · Çoğalt · Dışa aktar · Sil", tl2.tools);
+  const n1 = await page.evaluate(() => state.events.length);
+  await createBlankEvent(page, { name: "Boş Şablon", date: futureDate(40) });
+  const blank = await page.evaluate(() => { const e = state.events.find((x) => x.name === "Boş Şablon"); return { tables: e.tables.length, guests: e.guests.length, n: state.events.length }; });
+  checks.equal(blank, { tables: 0, guests: 0, n: n1 + 1 }, "Yeni etkinlik starts a blank template: no tables, no guests", blank);
 }

@@ -24,6 +24,7 @@
   let readiness;
   let RULES;
   let seatingCapacity;
+  let skin;
   let t;
   let topbarHTML;
   let created=false;
@@ -104,10 +105,11 @@
       if(all.length>4)lines[3]={level:"info",text:t("cal.ready.more",{n:all.length-3})};
     }
     const id=esc(e.id);
-    const more=[
-      ...(past?[]:[`<button type="button" class="shell-menu-item" data-duplicate-event="${id}">${esc(t("home.duplicate"))}</button>`]),
-      `<button type="button" class="shell-menu-item" data-export-event-package="${id}" title="${esc(t("home.exportPackage"))}">${esc(t("cal.export"))}</button>`,
-      `<hr><button type="button" class="shell-menu-item danger" data-delete-event="${id}">${esc(t("home.delete"))}</button>`,
+    // SPEC-v4: the tools are where the hand looks for them, visible, not behind ⋯.
+    const tools=[
+      ...(past?[]:[`<button type="button" class="btn" data-duplicate-event="${id}">${esc(t("home.duplicate"))}</button>`]),
+      `<button type="button" class="btn" data-export-event-package="${id}" title="${esc(t("home.exportPackage"))}">${esc(t("cal.export"))}</button>`,
+      `<button type="button" class="btn quiet danger" data-delete-event="${id}">${esc(t("cal.delete"))}</button>`,
     ].join("");
     return`<aside class="cal-detail" aria-live="polite">
       <div class="cal-d-eyebrow ${kind}">${esc(t("cal.eyebrow."+kind))}</div>
@@ -116,10 +118,52 @@
       <dl class="cal-facts">${fact("pax",t("cal.fact.pax"),m.guests)}${fact("tables",t("cal.fact.tables"),tables,`<dd class="cal-sub">${esc(t("cal.fact.seats",{n:seatingCapacity(e)}))}</dd>`)}${fact("seated",t("cal.fact.seated"),m.assigned)}${fact("arrived",t("cal.fact.arrived"),arrived)}</dl>
       <h3 class="cal-d-h">${esc(t("cal.ready"))}</h3>
       <ul class="cal-ready">${lines.map(l=>`<li class="${esc(l.level)}"><i class="cal-mk"></i><span>${esc(l.text)}</span></li>`).join("")}</ul>
-      <div class="cal-d-acts"><button type="button" class="btn primary" data-open-event="${id}">${esc(t(past?"cal.openPast":"cal.open"))}</button><button type="button" class="btn" data-duplicate-layout="${id}" title="${esc(t("home.duplicateLayoutTitle"))}">${esc(t("cal.sameLayout"))}</button><details class="cal-more"><summary class="shell-icon-btn" title="${esc(t("cal.more"))}" aria-label="${esc(t("cal.more"))}"><span aria-hidden="true">⋯</span></summary><div class="shell-menu">${more}</div></details></div>
+      <div class="cal-d-acts"><button type="button" class="btn primary" data-open-event="${id}">${esc(t(past?"cal.openPast":"cal.open"))}</button><button type="button" class="btn" data-duplicate-layout="${id}" title="${esc(t("home.duplicateLayoutTitle"))}">${esc(t("cal.sameLayout"))}</button>${tools}</div>
       ${eventHistoryLearningHTML(historyEvents)}
     </aside>`;
   }
+  // ---- THEME A: THE TIMELINE OF PLATES (SPEC-v4, benchmarks/ux/redesign/7-atlas-sade)
+  //
+  // Every event as a plate: its venue's own small plan, drawn from the event's
+  // REAL tables (one shape per table at its stored position and size, rotation
+  // kept; no chair is drawn, none invented), date, name, venue. Past ones on the
+  // left, quiet and read-only; a "Bugün" line; today and upcoming on the right;
+  // undated last. A click selects (the same data-cal-event the calendar uses),
+  // the calm panel below carries the facts and the tools.
+  function plateSVG(e){
+    const ts=(e.tables||[]).filter(x=>[x.x,x.y,x.w,x.h].every(v=>Number.isFinite(Number(v))));
+    if(!ts.length)return`<svg viewBox="0 0 160 104" class="tl-plan" role="img" aria-label="${esc(t("tl.noPlan"))}"><rect class="tl-none" x="6" y="6" width="148" height="92" rx="2"/><text x="80" y="57" text-anchor="middle" class="tl-none-t">${esc(t("tl.noPlan"))}</text></svg>`;
+    let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+    for(const x of ts){const X=Number(x.x),Y=Number(x.y),W=Number(x.w),H=Number(x.h);x0=Math.min(x0,X);y0=Math.min(y0,Y);x1=Math.max(x1,X+W);y1=Math.max(y1,Y+H);}
+    const pad=Math.max(24,(x1-x0)*.06),vx=x0-pad,vy=y0-pad,vw=x1-x0+2*pad,vh=y1-y0+2*pad,n=v=>Math.round(v*10)/10;
+    const shapes=ts.map(x=>{
+      const X=Number(x.x),Y=Number(x.y),W=Number(x.w),H=Number(x.h),cx=n(X+W/2),cy=n(Y+H/2),rot=Number(x.rotation)||0;
+      const round=/round|bistro|cocktail|circle/.test(String(x.shape||x.type||""))&&!/rect|long|banquet/.test(String(x.shape||""));
+      const tr=rot?` transform="rotate(${n(rot)} ${cx} ${cy})"`:"";
+      return round?`<ellipse class="tl-t" cx="${cx}" cy="${cy}" rx="${n(W/2)}" ry="${n(H/2)}"${tr}/>`:`<rect class="tl-t" x="${n(X)}" y="${n(Y)}" width="${n(W)}" height="${n(H)}"${tr}/>`;
+    }).join("");
+    return`<svg viewBox="${n(vx)} ${n(vy)} ${n(vw)} ${n(vh)}" class="tl-plan" preserveAspectRatio="xMidYMax meet" role="img" aria-label="${esc(t("tl.planOf",{n:ts.length}))}"><rect class="tl-room" x="${n(vx)}" y="${n(vy)}" width="${n(vw)}" height="${n(vh)}" vector-effect="non-scaling-stroke"/>${shapes}</svg>`;
+  }
+  function timelineHTML(events,selectedId){
+    const dated=events.filter(e=>validDate(e.date)).sort((a,b)=>a.date.localeCompare(b.date)||String(a.name).localeCompare(String(b.name),lang()));
+    const undated=events.filter(e=>!validDate(e.date));
+    const plate=e=>{
+      const past=RULES().isHistorical(e),venue=venueOf(e),m=eventMetrics(e);
+      const when=validDate(e.date)?`${esc(fmtDate(e.date))}<br>${esc(weekday(e.date))}`:esc(t("cal.undated"));
+      const status=past?`${icon("lock")}${esc(t("tl.readOnly"))}`:esc(t("tl.status",{seated:m.assigned,pax:m.guests}));
+      return`<button type="button" class="tl-plate${past?" past":""}${e.id===selectedId?" on":""}" data-cal-event="${esc(e.id)}"${past?` data-history-event="${esc(e.id)}"`:""} aria-pressed="${e.id===selectedId}" title="${esc(t("cal.entryTitle",{name:e.name}))}"><span class="tl-dr">${plateSVG(e)}</span><span class="tl-cap"><span class="tl-dt">${when}</span><b class="tl-nm">${esc(e.name)}</b>${venue?`<span class="tl-vn">${esc(venue)}</span>`:""}<span class="tl-ss">${status}</span></span></button>`;
+    };
+    const today=todayISO();
+    let h="",crossed=false;
+    for(const e of dated){
+      if(!crossed&&!RULES().isHistorical(e)){crossed=true;h+=todayLine(today);}
+      h+=plate(e);
+    }
+    if(!crossed)h+=todayLine(today);
+    h+=undated.map(plate).join("");
+    return`<div class="tl-strip" role="group" aria-label="${esc(t("cal.title"))}">${h}</div>`;
+  }
+  function todayLine(d){return`<div class="tl-today" aria-hidden="true"><span class="tl-today-lab">${esc(t("cal.today"))}<br>${esc(fmtDate(d))}</span></div>`;}
   // ---- EVENT HISTORY & LEARNING ----------------------------------------
   //
   // Not a second Reports screen and not a model: src/event-history.js
@@ -166,7 +210,13 @@
     view.shown=ym;
     const undated=events.filter(e=>!validDate(e.date));
     const count=t(events.length===1?"home.eventCount1":"home.eventsCount",{n:events.length});
-    return`${topbarHTML({screen:"events",homeTarget:sel?{id:sel.id,historical:RULES().isHistorical(sel)}:null})}<section class="cal-screen theme-scope">
+    const bar=topbarHTML({screen:"events",homeTarget:sel?{id:sel.id,historical:RULES().isHistorical(sel)}:null});
+    if(skin&&skin()==="a")return`${bar}<section class="cal-screen tl-screen theme-scope">
+      <div class="mx-head cal-head tl-head"><div><h1>${esc(t("cal.title"))}</h1><p>${esc(t("tl.subtitle"))} · ${esc(count)}</p></div><button type="button" class="btn primary" data-action="create-event">${icon("plus")}${esc(t("cal.newEvent"))}</button></div>
+      ${timelineHTML(events,selId)}
+      ${detailHTML(sel,history)}
+    </section>`;
+    return`${bar}<section class="cal-screen theme-scope">
       <div class="mx-head cal-head"><div><h1>${esc(t("cal.title"))}</h1><p>${esc(t("cal.subtitle"))} · ${esc(count)}</p></div><button type="button" class="btn primary" data-action="create-event">${icon("plus")}${esc(t("cal.newEvent"))}</button></div>
       <div class="cal-wrap"><div class="cal-box">
         <div class="cal-nav"><button type="button" class="shell-icon-btn" data-cal-month="-1" aria-label="${esc(t("cal.prev"))}" title="${esc(t("cal.prev"))}">‹</button><h2 class="cal-month">${esc(monthTitle(ym))}</h2><button type="button" class="shell-icon-btn" data-cal-month="1" aria-label="${esc(t("cal.next"))}" title="${esc(t("cal.next"))}">›</button><button type="button" class="btn sm" data-cal-month="0">${esc(t("cal.today"))}</button>${undated.length?`<div class="cal-undated"><span>${esc(t("cal.undated"))}</span>${undated.map(e=>entryHTML(e,selId)).join("")}</div>`:""}</div>
@@ -187,9 +237,10 @@
     readiness=deps.readiness;
     RULES=deps.RULES;
     seatingCapacity=deps.seatingCapacity;
+    skin=deps.skin;
     t=deps.t;
     topbarHTML=deps.topbarHTML;
     return{eventsHTML,select,focus,shift};
   }
-  globalThis.MeritScreenEvents=Object.freeze({create,DEPS:Object.freeze(["esc","eventMetrics","fmtDate","getActiveId","getState","icon","readiness","RULES","seatingCapacity","t","topbarHTML"])});
+  globalThis.MeritScreenEvents=Object.freeze({create,DEPS:Object.freeze(["esc","eventMetrics","fmtDate","getActiveId","getState","icon","readiness","RULES","seatingCapacity","skin","t","topbarHTML"])});
 })();
