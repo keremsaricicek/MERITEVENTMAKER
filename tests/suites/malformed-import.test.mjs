@@ -254,6 +254,32 @@ export default async function run({ page, checks, baseUrl, artifactDir }) {
     await page.evaluate(() => { const d = document.getElementById("excelDialog"); if (d.open) d.close(); pendingImport = null; });
   }
 
+  // A real CSV with the WRONG COLUMNS (pre-Windows health check, 2026-11-07):
+  // a phone list exported from somewhere else. Nothing in it is a name, so the
+  // wizard must stop at the mapping step with a message — not guess a column
+  // to be the name, and not add a record.
+  await clearToasts();
+  pageErrors.length = 0;
+  await click(page, "[data-guest-command='import']");
+  await page.setInputFiles("#guestFileInput", { name: "phones.csv", mimeType: "text/csv",
+    buffer: Buffer.from("Telefon,E-posta,Kod\n05551112233,a@example.com,17\n05554445566,b@example.com,18\n") });
+  await page.waitForSelector("[data-wizard-next]");
+  await click(page, "[data-wizard-next]"); await page.waitForTimeout(150);
+  const mapped = await page.evaluate(() => Object.values(pendingImport.mapping || {}));
+  await click(page, "[data-wizard-next]"); await page.waitForTimeout(250);
+  const wrongCols = await page.evaluate(() => ({
+    step: pendingImport && pendingImport.step,
+    interpreted: !!(pendingImport && pendingImport.interpreted && pendingImport.interpreted.length),
+    toast: [...document.querySelectorAll(".toast")].map((n) => n.textContent.trim()).pop() || null,
+    guests: state.events[0].guests.length,
+  }));
+  checks.ok(!mapped.includes("name"), "a CSV with no name column has no column guessed to be the name", mapped);
+  checks.ok(wrongCols.step === 3 && !wrongCols.interpreted && !!wrongCols.toast,
+    "a CSV with the wrong columns stops at the mapping step with a message — no row is interpreted", wrongCols);
+  checks.equal(wrongCols.guests, guestsBefore, "a CSV with the wrong columns: the guest list is untouched");
+  checks.equal(pageErrors.slice(), [], "a CSV with the wrong columns: no uncaught error");
+  await page.evaluate(() => { const d = document.getElementById("excelDialog"); if (d.open) d.close(); pendingImport = null; });
+
   // --- FLOOR PLAN FILES ---------------------------------------------------
   await gotoTab(page, "floor");
   const planBefore = await page.evaluate(() => JSON.stringify(state.events[0].background || null));
