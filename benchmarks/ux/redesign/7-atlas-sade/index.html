@@ -589,6 +589,14 @@ body.mopen #nextBtn{right:380px}
 .ge .opts button:hover{border-color:var(--acc)}
 .hz-settle{margin-top:20px;padding:18px;border:1px solid var(--ok);border-radius:8px;background:var(--ok-soft)}
 .hz-settle b{display:block;font-size:16px;margin-bottom:4px}
+/* Mimar: warm off-grey title bar, thin flowing strip while it works */
+:root{--mhb:#E8E4DC;--mhi:#2B2824}:root[data-theme="dark"]{--mhb:#2B2925;--mhi:#EEE7D9}
+.mh{background:var(--mhb);color:var(--mhi);border-bottom:1px solid var(--line)}.mh button:hover{background:rgba(127,120,110,.16)}
+.mstrip{height:3px;flex:none;background:var(--line)}#mimar.min .mstrip{display:none}
+#mimar.working .mstrip{background:linear-gradient(90deg,#2f6f66,#6fae9f,#d9a441,#c2703d,#d9a441,#6fae9f,#2f6f66);background-size:300% 100%;animation:mflow 2.6s ease-in-out infinite alternate}
+@keyframes mflow{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+@media (prefers-reduced-motion:reduce){#mimar.working .mstrip{animation:none}}
+.mf .fld{min-width:0;width:0}#mSend{padding:0 12px;flex:none}.mf{min-width:0}
 #s-salon{--htR:384px}
 </style>
 </head>
@@ -635,6 +643,7 @@ body.mopen #nextBtn{right:380px}
 <svg id="lead" aria-hidden="true"></svg>
 <div id="mimar" role="dialog" aria-label="Mimar">
   <div class="mh" id="mHead"><b>Mimar</b><small>asistan</small><button id="mMin" aria-label="Küçült">–</button><button id="mX" aria-label="Kapat">×</button></div>
+  <div class="mstrip" aria-hidden="true"></div>
   <div class="mb" id="mb" aria-live="polite"></div>
   <div class="mf"><input class="fld" id="mq" placeholder="Yazın: “selin akı t38e oturt”" autocomplete="off"><button class="mic" disabled title="Sesle komut · yakında" aria-label="Sesle komut (yakında)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="5.5" y="1.8" width="5" height="8" rx="2.5"/><path d="M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2.2"/></svg><span>yakında</span></button><button class="btn pri" id="mSend">Gönder</button></div>
 </div>
@@ -1112,7 +1121,8 @@ $('#rpBar').onclick=e=>{const b=e.target.closest('[data-go]');if(b)toast(b.datas
 const M={open:false,min:false,msgs:[]};
 function renderM(){const b=$('#mb');b.innerHTML=M.msgs.map((m,i)=>`<div class="bub ${m.who}">${m.html}${(m.items||[]).map((it,j)=>`<div class="mit"><div class="t">${it.t}</div>${it.s?`<div class="s">${it.s}</div>`:''}${it.b&&!m.done?`<div class="acts"><button class="btn sm pri" data-mi="${i}:${j}">${it.b}</button>${m.seat?`<button class="btn sm" data-mx="${i}">Vazgeç</button>`:''}</div>`:''}</div>`).join('')}${m.chips?`<div class="chips">${m.chips.map(c=>`<button data-chip="${esc(c)}">${esc(c)}</button>`).join('')}</div>`:''}${m.undo&&!m.undone?`<div class="acts"><button class="btn sm" data-mu="${i}">Geri al</button></div>`:''}</div>`).join('');b.scrollTop=b.scrollHeight}
 function mimarOpen(v){M.open=v??!M.open;$('#mimar').classList.toggle('on',M.open);$('#mimarBtn').classList.toggle('on',M.open);$('#mimarBtn').setAttribute('aria-expanded',M.open);if(M.open){M.min=false;$('#mimar').classList.remove('min');if(!M.msgs.length)M.msgs.push({who:'ai',html:'Merhaba, ben <b>Mimar</b>. Ne yapmamı istersiniz? Önce planda gösteririm, siz <b>Uygula</b> deyince yaparım.',chips:['bugün ne eksik','ahmet yılmaz nerede oturuyor','selin akı t38e oturt']});renderM();setTimeout(()=>$('#mq').focus(),0)}}
-function mimarAsk(text){if(!text.trim())return;M.msgs.push({who:'me',html:esc(text)});const f=fold(text),items=parse(text).slice(0,4);
+function mimarAsk(text){if(!text.trim())return;M.msgs.push({who:'me',html:esc(text)});renderM();const mm=$('#mimar');mm.classList.add('working');clearTimeout(M.t);M.t=setTimeout(()=>{mm.classList.remove('working');mimarAnswer(text)},650)}
+function mimarAnswer(text){const f=fold(text),items=parse(text).slice(0,4);
  if(items.length===1&&items[0].k==='Anladığım'){const tid=tableIn(f),g=guestsIn(f)[0];S.preview={t:tid,g:g.id};if(!ROOMBOX[S.scr]){go('salon')}else renderRoom();
   M.msgs.push({who:'ai',html:'Şunu yapacağım — masayı planda işaretledim:',items:[{...items[0],b:'Uygula'}],seat:{g:g.id,t:tid}})}
  else M.msgs.push({who:'ai',html:items.length>1?'Şunları buldum:':'',items});renderM()}
