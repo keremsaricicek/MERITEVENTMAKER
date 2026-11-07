@@ -398,6 +398,9 @@ export default async function run({ browser, checks, baseUrl, artifactDir, repoR
       fs.copyFileSync(await download.path(), backupPath);
       // Something to lose, so the restore has something to bring back.
       await page.evaluate(() => { state.events[0].guests = state.events[0].guests.filter((g) => g.name !== "Mehmet Demir"); });
+      // A menu closes after a choice (redesign step 1 put the backup in ⋯), so
+      // the restore is a second visit to the same menu — one counted click.
+      await op.click("header.shell-top .shell-more > summary");
       await op.choose('[data-action="backup-import"]', backupPath, "#backupFileInput");
       await page.waitForTimeout(500);
       await op.step("restore question");

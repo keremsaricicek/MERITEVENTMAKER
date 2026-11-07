@@ -106,7 +106,7 @@ dialog:focus-visible{outline:none}
 .assistant-topic{width:100%;justify-content:flex-start;text-align:left;font-size:12px}
 .assistant-go{margin-top:8px}
 .brand-version::before{content:"v"}
-.brand-version{margin-left:6px;letter-spacing:.06em;color:#5f5640;font-size:8px}
+.brand-version{margin-left:6px;letter-spacing:.06em;color:#5f5640;font-size:11px}
 .crumb{min-width:0;flex:1;padding-left:18px;border-left:1px solid var(--line);color:#5a523f;font-size:11px}
 .crumb b{color:#2d2920;font-weight:620}
 .appbar-actions{display:flex;align-items:center;gap:7px}
@@ -1990,7 +1990,7 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .ss-why li::before{content:"";position:absolute;left:0;top:6px;width:4px;height:4px;
   border-radius:999px;background:var(--green)}
 .ss-option .btn{width:100%;justify-content:center}
-.ss-note{margin-top:var(--sp-5);font-size:10px;line-height:1.4;color:var(--muted-2)}
+.ss-note{margin-top:var(--sp-5);font-size:11px;line-height:1.4;color:var(--muted-2)}
 
 /* Lifted clear of the status pill and the toast band. Both occupy the bottom of
    this column, and a toast landing over Apply is a mis-click on the one control
