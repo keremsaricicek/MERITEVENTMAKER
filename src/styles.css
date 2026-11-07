@@ -2386,31 +2386,44 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 /* F8 assistant panel (src/screen-assistant.js). Beside the screen, never over
    the plan's centre; the top strip carries the app's colours back and forth
    only while the assistant works (owner's design, 2026-10-27). */
-.assistant-panel{position:fixed;right:16px;bottom:16px;z-index:250;width:380px;max-width:calc(100vw - 32px);height:min(620px,calc(100vh - 32px));display:flex;flex-direction:column;background:var(--pi-bg);border:1px solid var(--pi-line);border-radius:12px;box-shadow:0 12px 32px rgba(36,32,24,.16);overflow:hidden;color:var(--pi-ink)}
+/* Mimar (SPEC-v4): a bottom-right chat box — warm off-grey title bar, no blue chrome */
+.assistant-panel{--pi-chat-head:#e7e3dc;--pi-chat-me:#ece8e1;position:fixed;right:20px;bottom:0;z-index:250;width:360px;max-width:calc(100vw - 40px);height:min(520px,calc(100vh - 72px));display:flex;flex-direction:column;background:var(--pi-bg);border:1px solid var(--pi-line-strong);border-bottom:0;border-radius:8px 8px 0 0;box-shadow:0 1px 2px rgba(20,22,26,.06),0 10px 28px rgba(20,22,26,.14);overflow:hidden;color:var(--pi-ink)}
+:root[data-theme="dark"] .assistant-panel{--pi-chat-head:#2a2e33;--pi-chat-me:#262a2f}
+.assistant-panel.is-min{height:auto}
+.assistant-panel.is-min .assistant-strip,.assistant-panel.is-min .assistant-log,.assistant-panel.is-min .assistant-form{display:none}
+.assistant-panel.is-min .assistant-head{cursor:pointer}
 .assistant-panel[hidden]{display:none}
 .assistant-by-model{margin:4px 0 0;font-size:12px;color:var(--muted-2)}
-.assistant-strip{height:3px;flex:none;background:var(--pi-line-soft)}
+.assistant-strip{height:3px;flex:none;background:transparent}
 .assistant-panel.is-working .assistant-strip{background:linear-gradient(90deg,#2f6f66,#6fae9f,#d9a441,#c2703d,#d9a441,#6fae9f,#2f6f66);background-size:300% 100%;animation:assistant-flow 2.6s ease-in-out infinite alternate}
 @keyframes assistant-flow{0%{background-position:0% 50%}100%{background-position:100% 50%}}
-.assistant-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--pi-surface);border-bottom:1px solid var(--pi-line)}
-.assistant-title{margin:0;font-size:14px;font-weight:650}
+.assistant-head{height:44px;flex:none;display:flex;align-items:center;gap:8px;padding:0 6px 0 16px;background:var(--pi-chat-head);color:var(--pi-ink);border-bottom:1px solid var(--pi-line)}
+.assistant-title{margin:0;font-family:var(--pi-brand-font);font-size:17px;font-weight:600;letter-spacing:.06em;cursor:default}
+.assistant-min{width:32px;height:32px;border:0;background:transparent;color:var(--pi-muted);border-radius:4px;cursor:pointer;font-size:18px;line-height:1}
+.assistant-min:hover{background:var(--pi-line);color:var(--pi-ink)}
 .assistant-key{font:inherit;font-size:11px;color:var(--pi-muted);border:1px solid var(--pi-line);border-radius:6px;padding:1px 6px}
 .assistant-status{flex:1;text-align:right;font-size:12px;color:var(--pi-muted)}
 .assistant-close{width:32px;height:32px;border:0;background:transparent;color:var(--pi-muted);border-radius:8px;cursor:pointer;font-size:18px;line-height:1}
-.assistant-close:hover{background:var(--pi-line-soft);color:var(--pi-ink)}
+.assistant-close:hover{background:var(--pi-line);color:var(--pi-ink)}
 .assistant-log{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
-.assistant-turn{max-width:88%;padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.5}
+.assistant-turn{max-width:88%;padding:9px 12px;border-radius:12px;font-size:14px;line-height:1.45}
 .assistant-turn p{margin:0}
-.assistant-turn.you{align-self:flex-end;background:var(--pi-accent);color:#fff;border-bottom-right-radius:4px}
+.assistant-turn.you{align-self:flex-end;background:var(--pi-chat-me);color:var(--pi-ink);border:1px solid var(--pi-line-strong);border-bottom-right-radius:4px}
 .assistant-turn.assistant{align-self:flex-start;background:var(--pi-surface);border:1px solid var(--pi-line);border-bottom-left-radius:4px}
 .assistant-lines{margin:6px 0 0;padding:0;list-style:none;font-family:ui-monospace,Menlo,monospace;font-size:12px}
 .assistant-undo{margin-top:8px;height:30px;font-size:12px}
 .assistant-confirm,.assistant-cancel{margin-top:8px;margin-right:6px;height:30px;font-size:12px}
 .assistant-undone{margin-top:6px!important;font-size:12px;color:var(--pi-muted)}
-.assistant-form{display:flex;gap:8px;padding:12px 14px;background:var(--pi-surface);border-top:1px solid var(--pi-line)}
-.assistant-input{flex:1;min-width:0;height:38px;border:1px solid var(--pi-line);border-radius:10px;padding:0 12px;font:inherit;font-size:13px;background:var(--pi-surface-2);color:var(--pi-ink)}
-.assistant-input:focus-visible{outline:2px solid var(--pi-accent);outline-offset:1px}
-.assistant-send{height:38px}
+.assistant-form{flex:none;display:grid;grid-template-columns:minmax(0,1fr) 38px auto;gap:6px;align-items:center;padding:10px 10px 22px;background:var(--pi-surface);border-top:1px solid var(--pi-line)}
+.assistant-input{min-width:0;width:100%;height:38px;border:1px solid var(--pi-line-strong);border-radius:4px;padding:0 12px;font:inherit;font-size:13px;background:var(--pi-surface-2);color:var(--pi-ink)}
+.assistant-input:focus-visible{outline:2px solid var(--pi-muted-2);outline-offset:1px}
+.assistant-send{height:38px;min-width:72px;padding:0 14px;border-radius:4px;white-space:nowrap}
+/* no blue chrome: Gönder is the box's ink; Uygula is the theme's primary */
+.assistant-panel .btn.primary.assistant-send{background:var(--pi-ink);border-color:var(--pi-ink);color:var(--pi-surface);box-shadow:none}
+.assistant-panel .btn.primary.assistant-confirm,.assistant-panel .btn.primary.assistant-apply{background:var(--pi-primary);border-color:var(--pi-primary);color:var(--pi-primary-ink);box-shadow:none}
+.assistant-panel .btn:not(.primary){background:var(--pi-surface);border-color:var(--pi-line-strong);color:var(--pi-ink)}
+.assistant-mic{position:relative;width:38px;height:38px;border-radius:4px;border:1px solid var(--pi-line-strong);background:var(--pi-surface-2);color:var(--pi-muted-2);display:grid;place-items:center;cursor:not-allowed;padding:0}
+.assistant-mic-soon{position:absolute;left:50%;bottom:-2px;transform:translate(-50%,100%);font-size:11px;color:var(--pi-muted-2);white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.assistant-panel.is-working .assistant-strip{animation:none}}
 .assistant-option{margin-top:10px;padding:10px;border:1px solid var(--pi-line);border-radius:10px;background:var(--pi-surface-2)}
 .assistant-option-title{font-weight:600;font-size:12.5px}
@@ -2561,7 +2574,7 @@ nav.shell-nav{display:flex;align-items:stretch;height:100%;padding:0;background:
 .shell-next:hover{color:var(--pi-primary);border-color:var(--pi-primary)}
 /* it never covers a screen's own bottom-right control (Salon's add button) or the open Mimar box */
 .workspace:has(.planmap-fab) .shell-next{bottom:76px}
-body:has(#assistantPanel:not([hidden])) .shell-next{right:412px}
+body:has(#assistantPanel:not([hidden])) .shell-next{right:396px}
 .shell-menu-head{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pi-muted-2);padding:6px 12px 2px}
 .shell-skin-item[aria-pressed="true"]{font-weight:600;color:var(--pi-primary)}
 .shell-skin-item[aria-pressed="true"]::after{content:" \2713"}

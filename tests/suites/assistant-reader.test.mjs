@@ -155,11 +155,15 @@ export default async function run({ page, checks, repoRoot }) {
     await page.locator(".assistant-undo").last().click();
     await settle(page);
     checks.equal(await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment), null, "one Geri al takes it back");
-    // ask only when unsure: the model sure of its reading (confidence >= the manifest's actAt) acts at once
+    // SPEC-v4 (owner 2026-11-07): every change is SHOWN first and waits for Uygula —
+    // even a reading the model is sure of (it used to act at once)
     lp = Math.log(0.97);
     const sure = await say("Zeynep Arslan T05 masasına geçsin");
-    checks.ok(!/onaylıyor musun/i.test(sure) && await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment.tableId) === "t05",
-      "a reading the model is sure of (0.97 >= 0.9) is carried out at once, Geri al offered", sure);
+    checks.ok(/onaylıyor musun/i.test(sure) && !await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment),
+      "a reading the model is sure of (0.97 >= 0.9) is shown first too — nothing changes before Uygula", sure);
+    await page.locator(".assistant-confirm").last().click();
+    await settle(page);
+    checks.equal(await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment.tableId), "t05", "and Uygula carries it out");
     await page.evaluate(() => { const g = activeEvent().guests.find((x) => x.id === "gz"); unassignGuest(g.id); });
     lp = Math.log(0.4);
     const unsure = await say("Zeynep Arslan T05 masasına geçsin");
@@ -167,11 +171,13 @@ export default async function run({ page, checks, repoRoot }) {
       "an unsure reading (0.4 < 0.9) is shown and waits", unsure);
     await page.locator(".assistant-cancel").last().click();
     await settle(page);
-    // the model reads first; where the rules read the very same change, it is done at once even when unsure
+    // the model reads first; where the rules read the very same change it is still shown first (SPEC-v4)
     const n2 = sent.length;
     const agreed = await say("Zeynep Arslan'ı T05'e oturt");
-    checks.ok(sent.length === n2 + 1 && !/onaylıyor musun/i.test(agreed) && await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment.tableId) === "t05",
-      "the model reads first; the rules read the same change, so it is done at once", agreed);
+    checks.ok(sent.length === n2 + 1 && /onaylıyor musun/i.test(agreed) && !await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment),
+      "the model reads first; even where the rules read the same change it is shown first (SPEC-v4)", agreed);
+    await page.locator(".assistant-confirm").last().click();
+    await settle(page);
     await page.evaluate(() => { const g = activeEvent().guests.find((x) => x.id === "gz"); unassignGuest(g.id); });
     lp = null;
 

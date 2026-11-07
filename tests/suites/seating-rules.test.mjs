@@ -37,7 +37,10 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     await settle(page);
     return page.evaluate(() => [...document.querySelectorAll(".assistant-turn.assistant")].pop().textContent);
   };
-  const r1 = await say("Ahmet Yılmaz ile Mehmet Kaya aynı masada oturmasın");
+  await say("Ahmet Yılmaz ile Mehmet Kaya aynı masada oturmasın");
+  // SPEC-v4: a rule is shown first and kept on Uygula
+  await page.locator(".assistant-confirm").last().click(); await settle(page);
+  const r1 = await page.evaluate(() => [...document.querySelectorAll(".assistant-turn.assistant")].pop().textContent);
   checks.ok(/aynı masada oturmasın/.test(r1) && await page.evaluate(() => state.events[0].seatRules.length === 1), "F8 keeps the rule", r1);
   const toast = await page.evaluate(() => { const e = state.events[0]; assignGuestToTable("a", e.tables[0].id); assignGuestToTable("m", e.tables[0].id);
     return { seated: e.guests.every((g) => g.assignment && g.assignment.tableId === e.tables[0].id), toasts: [...document.querySelectorAll(".toast")].map((x) => x.textContent).join(" | ") }; });

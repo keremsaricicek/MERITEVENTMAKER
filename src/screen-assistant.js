@@ -11,8 +11,15 @@
 //
 // The panel lives in its own <aside>, outside #app, so a render() of the screen
 // never wipes the conversation or the text being typed. Across its working
-// moments a thin strip on its top edge carries the app's colours back and
+// moments a thin strip under its title bar carries the app's colours back and
 // forth (the owner's design, 2026-10-27); it is still under reduced motion.
+//
+// REDESIGN v4 (SPEC-v4, owner 2026-11-07): it is presented as "Mimar", a
+// bottom-right chat box (title bar · – · ×, bubbles, a field, a disabled
+// "yakında" microphone, Gönder), and a command is SHOWN first — its sentence and
+// the table it names highlighted on the plan — then "Uygula", then "Geri al".
+// Door check-ins the rules read stay immediate (a plain statement at the door).
+// The reading, resolving and acting code is unchanged.
 //
 // Everything this reads from the shell is handed to it by create(deps), once.
 (function () {
@@ -25,6 +32,7 @@
   let currentId;
   let events;
   let go;
+  let highlight;
   let onChange;
   let readText;
   let summary;
@@ -41,6 +49,7 @@
     currentId=deps.currentId;
     events=deps.events;
     go=deps.go;
+    highlight=deps.highlight;
     onChange=deps.onChange;
     readText=deps.readText;
     summary=deps.summary;
@@ -58,23 +67,35 @@
     }
     function mount() {
       if (root) return root;
-      root = el("aside", { class: "assistant-panel", id: "assistantPanel", "aria-label": t("assistant.title"), hidden: "" });
+      root = el("aside", { class: "assistant-panel theme-scope", id: "assistantPanel", "aria-label": t("assistant.title"), hidden: "" });
       strip = el("div", { class: "assistant-strip", "aria-hidden": "true" });
       const head = el("div", { class: "assistant-head" });
       head.append(el("h2", { class: "assistant-title" }, t("assistant.title")), el("kbd", { class: "assistant-key" }, "F8"));
       status = el("span", { class: "assistant-status", role: "status" }, t("assistant.ready"));
+      const min = el("button", { class: "assistant-min", type: "button", "aria-label": t("assistant.minimise"), title: t("assistant.minimise") }, "–");
+      min.addEventListener("click", (e) => { e.stopPropagation(); root.classList.toggle("is-min"); });
       const close = el("button", { class: "assistant-close", type: "button", "aria-label": t("assistant.close") }, "×");
-      close.addEventListener("click", () => toggle(false));
-      head.append(status, close);
+      close.addEventListener("click", (e) => { e.stopPropagation(); toggle(false); });
+      head.append(status, min, close);
+      // a minimised box comes back from its title bar, like a classic chat
+      head.addEventListener("click", () => { if (root.classList.contains("is-min")) { root.classList.remove("is-min"); input.focus(); } });
       log = el("div", { class: "assistant-log", "aria-live": "polite" });
       const form = el("form", { class: "assistant-form" });
       const label = el("label", { class: "sr-only", for: "assistantInput" }, t("assistant.inputLabel"));
       input = el("input", { id: "assistantInput", class: "assistant-input", autocomplete: "off", placeholder: t("assistant.placeholder") });
       const send = el("button", { class: "btn primary assistant-send", type: "submit" }, t("assistant.send"));
-      form.append(label, input, send);
+      // Voice is a later stage: the microphone is shown, disabled, and says so.
+      const mic = el("button", { class: "assistant-mic", type: "button", disabled: "", title: t("assistant.micSoon"), "aria-label": t("assistant.micSoon") });
+      const NS = "http://www.w3.org/2000/svg", icon = document.createElementNS(NS, "svg");
+      for (const [k, v] of [["width", "16"], ["height", "16"], ["viewBox", "0 0 16 16"], ["fill", "none"], ["stroke", "currentColor"], ["stroke-width", "1.4"], ["stroke-linecap", "round"], ["aria-hidden", "true"]]) icon.setAttribute(k, v);
+      const body = document.createElementNS(NS, "rect"); for (const [k, v] of [["x", "5.5"], ["y", "1.8"], ["width", "5"], ["height", "8"], ["rx", "2.5"]]) body.setAttribute(k, v);
+      const stand = document.createElementNS(NS, "path"); stand.setAttribute("d", "M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2.2");
+      icon.append(body, stand); mic.append(icon);
+      mic.append(el("span", { class: "assistant-mic-soon" }, t("assistant.soon")));
+      form.append(label, input, mic, send);
       form.addEventListener("submit", (e) => { e.preventDefault(); const v = input.value.trim(); if (v) { input.value = ""; ask(v); } });
       root.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); toggle(false); } });
-      root.append(strip, head, log, form);
+      root.append(head, strip, log, form);
       document.body.appendChild(root);
       return root;
     }
@@ -84,7 +105,8 @@
       const want = open == null ? root.hidden : open;
       root.hidden = !want;
       document.body.classList.toggle("assistant-open", want);
-      if (want) setTimeout(() => input.focus(), 0);
+      if (want) { root.classList.remove("is-min"); setTimeout(() => input.focus(), 0); }
+      document.querySelectorAll("[data-shell-assistant]").forEach((b) => b.setAttribute("aria-expanded", String(want)));
     }
     function working(on, text) {
       root.classList.toggle("is-working", on);
@@ -291,13 +313,19 @@
       const A = globalThis.MeritAssistantActions.create({ events, current: currentId, today, lang: () => (globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : "tr"), canMutate: (e) => canMutate(e), writers: {}, snapshot: () => null, registerUndo: () => {} });
       const key = (res) => res.steps ? JSON.stringify(res.steps.map((x) => [x.op, x.guestId || x.name, x.tableId || x.table || null, x.seats || null, x.pax || null])) : null;
       const agreed = byModel && how && how.rules && how.rules.kind === "command" && key(A.resolve(r.plan)) !== null && key(A.resolve(r.plan)) === key(A.resolve(how.rules.plan));
-      const unsure = byModel ? !(agreed || (how && how.sure)) : r.plan.some((st) => st.op === "deleteGuest" || st.op === "groupTogether" || st.op === "rulesClear" || st.op === "seatUnassigned" || st.op === "vipToVipTables");
+      // SPEC-v4: every change is shown first and waits for Uygula — except a
+      // check-in at the door the rules read, and a reading the model is sure of
+      // that the rules read the same way is still shown (the person applies it).
+      const doorOnly = r.plan.every((st) => st.op === "arrive");
+      const unsure = !doorOnly || (byModel && !(agreed || (how && how.sure)));
       if (unsure) {
         const res = A.resolve(r.plan);
         if (res.ask) return { text: res.ask };
         if (res.refuse) return { text: res.refuse };
         const real = res.steps.filter((x) => x.op !== "noop");
         if (!real.length) return { text: t("assistant.nothing"), lines: res.steps.map((x) => x.line) };
+        const at = real.find((x) => x.tableId);
+        if (at && highlight) highlight(at.tableId);
         return { text: t("assistant.confirmIntro"), lines: preview(res.steps), confirm: { plan: r.plan } };
       }
       return carryOut(r.plan);
@@ -344,5 +372,5 @@
     return { mount, toggle, isOpen, ask, help, shortcuts };
   }
 
-  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","chatText","currentId","events","go","onChange","readText","summary","t","today","writers"])});
+  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","chatText","currentId","events","go","highlight","onChange","readText","summary","t","today","writers"])});
 })();

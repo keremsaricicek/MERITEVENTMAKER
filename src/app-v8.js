@@ -4399,6 +4399,8 @@
   const ASSIST=globalThis.MeritScreenAssistant.create({
     events:()=>state.events,currentId:()=>ui.screen==="workspace"?ui.activeEventId:null,today:()=>new Date().toLocaleDateString("en-CA"),
     canMutate:(e)=>canMutate(e,"change this event"),t:(...a)=>t(...a),
+    // SPEC-v4: a command shown first lights the table it names on the plan.
+    highlight:(id)=>{ui.highlightId=id;render();},
     // The second reader: what the rules could not place, read by the pinned chat
     // model on this machine through the relay (server/assistant-reader.mjs), and
     // its small-talk reply for what is neither question nor command; null when
