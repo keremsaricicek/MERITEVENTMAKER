@@ -3,7 +3,7 @@
 - **Top menu ("otel tabelası"):** MERIT mark on the left; small-caps words with thin separators and no icons (Etkinlikler · Hazır mı? · Salon · Misafirler · Oturma · Kapı · Raporlar, keys 1–7). On the right: event name · clock · theme (F9) · **Mimar** (F8).
 - **Etkinlikler:** the Atlas timeline with each venue's plan thumbnail (copied unchanged from 4-atlas). A "Bugün" line separates past events on the left (read-only) from tonight and upcoming events on the right. Clicking a plate shows its tools in plain view: Aç · Aynı yerleşimle yeni · Çoğalt · Dışa aktar · Sil.
 - **Hazır mı?:** the plan on the left and open issues on the right. Each issue has a number that also sits on the plan. Hovering or selecting an issue draws a thin line to its place on the plan and marks that table. Each issue has a "Git" button.
-- **Salon:** a quiet plan. Clicking a table zooms the plan to it and writes the names beside the chairs. The right panel then lists that table's people (clicking a name highlights their seats), with capacity −/+, Döndür, Kaldır and "‹ Tüm salon". Plan suggestions are accepted or rejected one at a time. Tables move by dragging.
+- **Salon:** a quiet plan. Clicking a table zooms the plan to it and shows its chairs only, with no names at the chairs. The right panel then lists that table's people (clicking a name highlights their seats), with capacity −/+, Döndür, Kaldır and "‹ Tüm salon". Plan suggestions are accepted or rejected one at a time. Tables move by dragging.
 - **Misafirler and Oturma:** unchanged from combined v3, drawn with the Atlas tables. In Oturma, the tables that fit show "N boş"; the others fade.
 - **Kapı:** the guest list takes a quarter of the width and the room three quarters. Big search; "Giriş" on the right; "Gelmedi" in the ⋯ menu, which asks first; "Geri al". On check-in, the guest's chairs fill in place and the table glows.
 - **Raporlar:** a full-size live preview of the document beside a designer panel that takes a third of the screen. In the panel you can:
@@ -18,4 +18,4 @@
 - **Known issue:** the amber text on the plan-suggestion chip is 4.8:1, just above the 4.5:1 minimum.
 - **Reuse:** the data, guest list, seating, door, undo and Mimar's sentence parser come from 6-birlesik; the drawing and thumbnails come from 4-atlas. Measured: console clean; the door row did not move.
 - **Shots (1440×900):** 1-etkinlikler · 2-hazir-mi · 3-salon · 3b-salon-masa · 4-misafirler · 5-oturma · 6-kapi · 7-raporlar · 8-mimar · 9-etkinlikler-koyu · 10-salon-koyu · 11-kapi-koyu.
-- **Risk:** zoomed names are written along the chair direction, Atlas style, so they read sideways. Very long names will need shortening (today "Ahmet Y.").
+- **Owner, 2026-11-07:** names appear only in the right panel, never at the chairs; the Mimar box is 340 px wide so the table it marks stays visible.

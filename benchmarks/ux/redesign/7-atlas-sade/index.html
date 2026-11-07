@@ -529,7 +529,7 @@ main{height:calc(100vh - 56px)}
 .page .card h4{margin:0 0 6px;font-size:13px;display:flex;justify-content:space-between;border-bottom:1px solid #E2E5E0;padding-bottom:4px}
 .page .card div{font-size:12px;line-height:1.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.page .go{color:#566269}
 /* Mimar chat */
-#mimar{position:fixed;right:24px;bottom:0;width:384px;height:500px;background:var(--surf);border:1px solid var(--line2);border-bottom:0;border-radius:8px 8px 0 0;box-shadow:var(--shadow);display:none;flex-direction:column;z-index:45}
+#mimar{position:fixed;right:20px;bottom:0;width:340px;height:500px;background:var(--surf);border:1px solid var(--line2);border-bottom:0;border-radius:8px 8px 0 0;box-shadow:var(--shadow);display:none;flex-direction:column;z-index:45}
 #mimar.on{display:flex}#mimar.min{height:44px}#mimar.min .mb,#mimar.min .mf{display:none}
 .mh{height:44px;flex:none;display:flex;align-items:center;gap:8px;padding:0 6px 0 16px;background:var(--acc);color:var(--acc-ink);border-radius:8px 8px 0 0;cursor:pointer}
 .mh b{font-family:var(--serif);font-size:17px;font-weight:600;letter-spacing:.06em}.mh small{opacity:.85;font-size:13px;flex:1}
@@ -750,7 +750,7 @@ function tableSVG(t,mode){const P=chairGeo(t),st=seatList(t),round=t.kind==='rou
  let s=`<g class="${cls}" data-t="${t.id}" transform="translate(${t.x} ${t.y}) rotate(${t.rot})">`;
  s+=round?'<circle class="halo" r="68"/>':'<rect class="halo" x="-118" y="-62" width="236" height="124" rx="10"/>';
  let pend=S.preview&&S.preview.t===t.id?(G.find(x=>x.id===S.preview.g)||{pax:0}).pax:0;
- const names=mode==='salon'&&S.zoomT===t.id;let nm='';
+ const names=false;let nm='';
  P.forEach((c,i)=>{const so=st[i];let k=seatCls(so,mode);if(!so&&pend>0){k='pend';pend--}
   s+=`<g class="seat ${k}" transform="translate(${c.x.toFixed(1)} ${c.y.toFixed(1)}) rotate(${c.a-90})"><rect class="body" x="-7.5" y="-6" width="15" height="12" rx="2.5"/><line class="back" x1="-6.5" y1="6.5" x2="6.5" y2="6.5"/><line class="x" x1="-6" y1="-5" x2="6" y2="5"/></g>`;
   if(names&&so){const r=c.a*Math.PI/180,x=(c.x+Math.cos(r)*14).toFixed(1),y=(c.y+Math.sin(r)*14).toFixed(1),wa=((c.a+t.rot)%360+360)%360,flip=wa>90&&wa<270,p=so.g.name.split(' ');
@@ -863,7 +863,7 @@ function renderSalon(){renderRoom();renderSalonPanel();$('#salonTools').innerHTM
 function renderSalonPanel(){const id=S.zoomT,P=$('#salonPanel'),c=counts();
  if(!id||!TBL(id)){const ns=SUG.filter(s=>s.state==='open').length;P.innerHTML=`<div class="eyebrow">Merit Royal Hotel</div><h1 class="st-t">Grand Balo Salonu</h1><p class="sub">${TABLES.length} masa · ${c.seated} / 420 kişi yerleşti</p>
   <div class="sp-sec"><button class="btn pri wide" data-a="read">Planı oku · PDF ya da görsel</button><button class="btn wide" data-a="add">+ Masa ekle</button>${ns?`<button class="chip wide" data-a="sug">${ns} plan önerisi karar bekliyor</button>`:''}</div>
-  <p class="hint">Bir masaya tıklayın: açılır, isimler sandalyelerin yanında görünür. Masayı taşımak için sürükleyin.</p>
+  <p class="hint">Bir masaya tıklayın: açılır; sandalyeler ve kişiler sağda listelenir. Masayı taşımak için sürükleyin.</p>
   <div class="lg2"><span><i class="f"></i>Dolu sandalye</span><span><i></i>Yer var</span><span><i class="e"></i>Boş sandalye</span><span><i class="v"></i>VIP masası</span></div>`;return}
  const t=TBL(id),gs=G.filter(g=>g.table===id).sort((a,b)=>a.id-b.id),o=occ(id);
  P.innerHTML=`<button class="lnk" data-z="out">‹ Tüm salon</button><h1 class="st-t" style="margin-top:10px">${t.id}</h1><p class="sub">${t.kind==='round'?'Yuvarlak':'Dikdörtgen'}${t.id.startsWith('VIP')?' · VIP':''} · <b class="tnum">${o} / ${t.cap}</b> dolu${t.chairs!==t.cap?` · çizimde ${t.chairs} sandalye`:''}</p>
