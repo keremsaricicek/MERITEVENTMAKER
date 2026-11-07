@@ -16,6 +16,7 @@ you are about to touch before changing its code.** Current work state:
 - Talk to the owner ONLY in short, simple Turkish (Istanbul time). No English messages to the owner.
 - Keep every reply to the owner SHORT (a few lines or one small table); answer the question first, then the next action. Long explanations only if asked.
 - Owner 2026-10-27: write to the owner ONLY when they ask or to ask permission. Background events (keep-alive, CI, check-ins, results): act silently, no message.
+- Owner 2026-11-07 (binding): NEVER show the owner a permission/approval screen or question — no Claude_Code_Remote tools (send_later, create/update/delete_trigger, etc.), no AskUserQuestion, no tool that is not pre-allowed. Keep-alive = detached Bash daemon only.
 - Before context gets long, keep `.claude/STATE.md` complete so `/compact` loses nothing; after a compact, re-read STATE.md, never re-derive from scratch.
 
 ## Stage and gates
