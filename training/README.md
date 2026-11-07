@@ -1899,3 +1899,29 @@ thrown away: **g3 → g4 → g5 → g6 → g7 → g1 → g2**, one run per gramm
   runs carry the plan replay (it is also the plan reader), the 2B runs the briefs replay (BRIEF, 400) as runB7-2B did.
 - runEq2, runEq-B7e and the eqb7e/eq2b races are cancelled (never read). **Exam:** fresh9/typo9/en9/entypo9 + briefs,
   product rule; labels p08, p2b (2B on Q8_0). **Ship:** the better of the two, 0 wrong changes.
+
+## 2026-11-07 — Voice command (Mimar): speech-to-text engine bar (written before any engine has transcribed a clip)
+
+What it is for: the F8 box gets a microphone. Speech becomes TEXT IN THE BOX; the person reads it and presses Enter.
+Voice never acts by itself, so a wrong word costs a re-say, not a wrong change — the F8 rules/reader stay the only
+path to the plan. Engine: **whisper.cpp** (MIT, v1.9.5, CPU-only, one exe, no Python), OpenAI Whisper weights (MIT),
+multilingual GGML files pinned by size + sha256 like every other local model.
+
+**Held-out set (fixed now, by reference text only):** Google FLEURS test split (CC-BY-4.0, real read speech, never
+used by this project for anything): `tr_tr/test.tsv` — the first **40** rows in file order whose raw transcription
+has no digit and whose sentence id was not taken by an earlier row; `en_us/test.tsv` — the first **20** rows by the
+same rule. (Digits are excluded because Whisper writes "1990" where FLEURS writes words; that would score the
+spelling of numbers, not hearing.)
+**Metric:** corpus WER (and CER, reported) after one normalisation: NFC, Turkish-aware lower case (İ→i, I→ı),
+apostrophes removed, every other punctuation mark → space, whitespace collapsed. Same for both sides.
+**Fixed flags, all candidates:** `whisper-cli -l tr|en -nt -np -t 2` (defaults otherwise), `nice -n 19`, run once.
+No flag, prompt or normalisation is changed after a result is seen.
+**Candidates, smallest first:** `ggml-base-q5_1` (60 MB), `ggml-small-q5_1` (190 MB), `ggml-large-v3-turbo-q5_0`
+(574 MB).
+**Bars:** Turkish WER **≤ 0.20**; English WER **≤ 0.12**. FLEURS is Wikipedia sentences read aloud — harder words
+than "Ayşe'yi 5'e oturt", so this is the stricter side. 40 clips ≈ 700 words: a ±3–4 point uncertainty, stated.
+**Speed** is measured here only as an upper bound (a training job owns this CPU; 2 threads, niced) and is NOT
+decisive here. Decisive on the owner's 8 GB PC: a ~5 s spoken command becomes text in **≤ 5 s** with 4 threads.
+**Choice:** the smallest candidate that passes both language bars. None passes → no voice engine is pinned and the
+microphone stays off. **Second stage (owner):** 20 real commands in the owner's own voice, read on his PC; bar: ≥ 17
+of 20 need no correction before Enter.
