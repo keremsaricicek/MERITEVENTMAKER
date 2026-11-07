@@ -107,8 +107,8 @@ main{height:calc(100vh - 52px);position:relative}
 .cdn{font-size:12.5px;color:var(--ink3);font-weight:600;padding:1px 6px;align-self:flex-start}
 .cell.today .cdn{color:var(--acc-ink);background:var(--acc);border-radius:10px}
 .ce{display:flex;align-items:center;gap:6px;width:100%;text-align:left;border:0;border-radius:6px;padding:4px 6px;background:none;font-size:12.5px;color:var(--ink);min-width:0}
-.ce span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ce i{width:3px;height:14px;border-radius:2px;background:var(--acc2);flex:none}
+.ce .cn{display:flex;flex-direction:column;min-width:0;line-height:1.3}.ce .cn b{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ce .cn small{font-size:12px;color:var(--ink3)}.ce.live .cn b{font-weight:650}
+.ce i{width:3px;height:28px;border-radius:2px;background:var(--acc2);flex:none}
 .ce:hover{background:var(--surf2)}
 .ce.on{background:var(--acc2-soft);box-shadow:inset 0 0 0 1px var(--acc2)}
 .ce.past{color:var(--ink3)}.ce svg{flex:none}
@@ -638,11 +638,12 @@ const RENDER={etkinlik:renderEvents,salon:()=>{renderRoom();renderSugChip()},mis
 function goIssue(i){if(!i)return;if(i.f)S.glF=i.f;if(i.g)S.selG=i.g;go(i.go)}
 
 /* ═══ ETKİNLİK: timeline of evenings (from 4-atlas) + readiness ═══ */
+const TODAY='2026-12-31';
 const fmtD=d=>{const x=new Date(d+'T12:00');return x.getDate()+' '+MONTHS[x.getMonth()]+' '+x.getFullYear()};
 function renderEvents(){const [Y,M]=S.month.split('-').map(Number),start=(new Date(Y,M-1,1).getDay()+6)%7,days=new Date(Y,M,0).getDate(),cells=Math.ceil((start+days)/7)*7;
  let h=`<div class="cal-h"><button class="btn ghost icon" data-m="-1" aria-label="Önceki ay">‹</button><h2>${MONTHS[M-1]} ${Y}</h2><button class="btn ghost icon" data-m="1" aria-label="Sonraki ay">›</button><button class="btn sm" data-m="0">Bugün</button></div><div class="cal-dow">${['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'].map(d=>`<span>${d}</span>`).join('')}</div><div class="cal-grid" style="grid-template-rows:repeat(${cells/7},minmax(0,1fr))">`;
  for(let i=0;i<cells;i++){const d=i-start+1;if(d<1||d>days){h+='<div class="cell off"></div>';continue}const ds=`${Y}-${pad2(M)}-${pad2(d)}`;
-  h+=`<div class="cell${ds===TODAY?' today':''}${ds<TODAY?' was':''}"><span class="cdn">${d}</span>${EVENTS.filter(e=>e.d===ds).map(e=>`<button class="ce${e.past?' past':''}${e.live?' live':''}${S.ev===e.id?' on':''}" data-ev="${e.id}" title="${esc(e.name)}">${e.past?IC.lock:'<i></i>'}<span>${e.t?e.t+' · ':''}${esc(e.name)}</span></button>`).join('')}${ds>=TODAY?`<button class="cadd" data-new="${ds}" aria-label="${d} ${MONTHS[M-1]}: yeni etkinlik">+</button>`:''}</div>`}
+  h+=`<div class="cell${ds===TODAY?' today':''}${ds<TODAY?' was':''}"><span class="cdn">${d}</span>${EVENTS.filter(e=>e.d===ds).map(e=>`<button class="ce${e.past?' past':''}${e.live?' live':''}${S.ev===e.id?' on':''}" data-ev="${e.id}" title="${esc(e.name)}">${e.past?IC.lock:'<i></i>'}<span class="cn"><b>${esc(e.name)}</b>${e.t?`<small>${e.t}</small>`:''}</span></button>`).join('')}${ds>=TODAY?`<button class="cadd" data-new="${ds}" aria-label="${d} ${MONTHS[M-1]}: yeni etkinlik">+</button>`:''}</div>`}
  $('#calBox').innerHTML=h+'</div>';renderEvDetail();$('#evname').textContent='Yılbaşı Galası'}
 function renderEvDetail(){const e=EVENTS.find(x=>x.id===S.ev)||EVENTS.find(x=>x.live),x=new Date(e.d+'T12:00'),c=counts();
  const facts=e.live?[['Kişi',420],['Masa',TABLES.length],['Oturmuş',c.seated],['Geldi',c.arrived]]:e.past?[['Kişi',e.pax],['Geldi',e.arr]]:[['Kişi',e.pax||'—'],['Masa',e.tables||'—']];

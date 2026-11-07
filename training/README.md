@@ -1873,3 +1873,16 @@ because the new tests' names are barred; the training uses the original files.)
 `en9.jsonl` (9, `29f4b4e1633347a0`), `entypo9.jsonl` (`11477167c93d6a4e`); product rule; plus briefs. Caveat: fresh9/en9
 use first names and surnames that were in earlier pools (all three models saw those pools), never these sentences.
 **Use:** the owner's rule — the best on the four exam sets, 0 wrong changes, is shipped.
+
+## 2026-11-07 — runEq2: identical data for all three (owner: "Bütün modellerin eğitimi eşit olmalı ki anlayalım en iyisi hangisi") — written while eqb7f's race was running, before any runEq result was read
+
+runEq made coverage equal, not volume. runEq2 makes the F8 sentences identical: after it every model has seen **every
+item** of data-short (g1), data-b7b (g2), data-b7c (g3), data-b7d (g4), data-b7e (g5), data-b7f (g6) and data-g7 (g7).
+From run.json: B7f's chain is B6d→B7c→B7d→B7e→B7f→Eq, so it lacks g1 and g2. Remainders (`tail` of each run's own file):
+**B7f-eq2** `--init runEq-B7f` + g1 (2400, `bc67cb605cc21087`) + g2 (3000, `df53cf0a23a65f6f`). **B7e-eq2** `--init
+runEq-B7e` + g1 + g2 + g6 items 1201–3600 (`0c1b331677ff10bc`). **2B-eq2** `--init runEq-2B` + g1 601– (`7a549c7b2e02fe5c`),
+g2 601– (`f466736997f6d3fb`), g4/g5/g6 601– (`66bccbcaa7ab8136`, `d8ae61075a46388f`, `0204b19d6278cdf1`). Same flags as
+each model's runEq run (0.8B: plan replay; 2B: BRIEF replay). Order of grammars differs between models (stated). 2B
+was re-downloaded (its bf16 weights had been deleted for disk) and is raced on **Q8_0** (the Q4_K_M file is gone).
+**Exam unchanged:** fresh9/typo9/en9/entypo9 + briefs, product rule. The runEq races are kept as the first,
+coverage-equal reading; **the ship decision uses the eq2 races** (best on the four sets, 0 wrong changes).
