@@ -26,6 +26,7 @@
   let paxOf;
   let render;
   let RULES;
+  let saveGuest;
   let seatTagHTML;
   let t;
   let tableIndex;
@@ -75,16 +76,60 @@
     const body=!c.records
       ?`<div class="mx-empty"><h3>${t("guests.emptyTitle")}</h3><p>${t("guests.emptyHint")}</p><div class="toolbar-row" style="justify-content:center"><button class="btn" data-guest-command="import">${icon("image")}${t("guests.importExcel")}</button><button class="btn" data-guest-command="paste">${icon("copy")}${t("paste.button")}</button><button class="btn primary" data-guest-command="add">${icon("plus")}${t("guests.addGuest")}</button></div></div>`
       :`<div class="mx-list" role="table" aria-label="${esc(t("guests.title"))}"><div class="mx-list-head cols-guest" role="row"><span role="columnheader">${t("guests.col.guest")}</span><span role="columnheader">${t("guests.col.status")}</span><span role="columnheader">${t("guests.col.invitedBy")}</span><span role="columnheader">${t("guests.col.tableSeat")}</span><span role="columnheader"><span class="sr-only">${t("guests.col.actions")}</span></span></div>${
-        guests.length?guests.map(g=>`<div class="mx-row cols-guest" role="row">${guestPartyCellHTML(event,g)}<div role="cell"><span class="plan-tag ${g.planningStatus.toLowerCase()}">${esc(t("status.planning."+g.planningStatus))}</span></div><div class="muted" role="cell" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(g.invitedBy||"—")}</div><div role="cell">${seatTagHTML(event,g,byId)}${g.assignment?.locked?" 🔒":""}</div><div class="row-icons" role="cell"><button class="row-action" aria-label="${esc(t("guests.a11y.seat",{name:g.name}))}" title="${t("guests.col.tableSeat")}" data-guest-seat="${g.id}">${icon("seat")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.edit",{name:g.name}))}" data-guest-edit="${g.id}">${icon("edit")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.delete",{name:g.name}))}" data-guest-delete="${g.id}">${icon("trash")}</button></div></div>`).join(""):`<div class="mx-empty" style="border:none;background:none">${t("guests.noMatches")}</div>`
+        guests.length?guests.map(g=>`<div class="mx-row cols-guest${ui.guestDetailId===g.id?" on":""}" role="row" data-guest-row="${esc(g.id)}">${guestPartyCellHTML(event,g)}<div role="cell"><span class="plan-tag ${g.planningStatus.toLowerCase()}">${esc(t("status.planning."+g.planningStatus))}</span></div><div class="muted" role="cell" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(g.invitedBy||"—")}</div><div role="cell">${seatTagHTML(event,g,byId)}${g.assignment?.locked?" 🔒":""}</div><div class="row-icons" role="cell"><button class="row-action" aria-label="${esc(t("guests.a11y.seat",{name:g.name}))}" title="${t("guests.col.tableSeat")}" data-guest-seat="${g.id}">${icon("seat")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.edit",{name:g.name}))}" data-guest-edit="${g.id}">${icon("edit")}</button><button class="row-action" aria-label="${esc(t("guests.a11y.delete",{name:g.name}))}" data-guest-delete="${g.id}">${icon("trash")}</button></div></div>`).join(""):`<div class="mx-empty" style="border:none;background:none">${t("guests.noMatches")}</div>`
       }</div>${hiddenGuests>0?`<div class="live-more" id="guestMore"><span>${t("guests.showingOf",{shown:guests.length,total:all.length})}</span><button class="btn sm" data-guest-command="show-more">${t("guests.showMore")}</button></div>`:""}`;
     return`<div class="mx-screen"><div class="mx-wrap">
       <div class="mx-head"><div><h1>${t("guests.title")}</h1><p>${t("guests.recordsSummary",{records:c.records,total:c.totalPax})}</p></div><div class="mx-head-actions"><button class="btn" data-guest-command="template">${icon("download")}${t("guests.excelTemplate")}</button><button class="btn" data-guest-command="import">${icon("image")}${t("guests.importExcel")}</button><button class="btn" data-guest-command="paste">${icon("copy")}${t("paste.button")}</button><button class="btn primary" data-guest-command="add">${icon("plus")}${t("guests.addGuest")}</button></div></div>
       <div class="mx-metrics">${metrics}</div>
       ${queue}
       <div class="mx-toolbar"><div class="grow"><input class="filter-input" id="guestSearch" style="width:100%" value="${esc(ui.guestQuery)}" placeholder="${t("guests.search")}"></div><select class="filter-input" id="guestFilter" aria-label="${esc(t("guests.filter.label"))}" style="width:170px">${filters.map(([v,l])=>`<option value="${v}" ${ui.guestFilter===v?"selected":""}>${l}</option>`).join("")}</select></div>
+      ${tidyHTML(event)}
       ${body}
-    </div></div>`;
+    </div>${detailHTML(event,byId)}</div>`;
   };
+
+  // ---- REDESIGN v4 step 5 (SPEC-v4 "Misafirler") ---------------------------------
+  // ÖNERİLER: suggestions to tidy the list, read from the list's own records —
+  // the same name twice (the import's own "possible duplicate" rule: the same
+  // folded name), a "+N" still inside a name (read by MeritMessyList, the paste
+  // reader), "VIP" written in a name. Each is shown, then accepted (through the
+  // guest writer, saveGuest) or ignored for this session (ui, never stored).
+  // Nothing is applied without a click; a historical event gets none.
+  const fold=s=>String(s||"").toLocaleLowerCase("tr").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/ı/g,"i").replace(/\s+/g," ").trim();
+  function tidyItems(event){
+    if(RULES().isHistorical(event))return[];
+    const ignored=ui.guestTidyIgnored||(ui.guestTidyIgnored=new Set()),out=[],seen=new Map();
+    for(const g of event.guests){const k=fold(g.name);if(!k)continue;if(!seen.has(k))seen.set(k,[]);seen.get(k).push(g);}
+    for(const [k,list] of seen)if(list.length>1)out.push({kind:"duplicate",key:"dup:"+k,name:list[0].name,n:list.length});
+    const M=globalThis.MeritMessyList;
+    for(const g of event.guests){
+      if(M&&paxOf(g)===1&&/\+\s*\d/.test(g.name)){const r=M.parse(g.name)[0];if(r&&!r.problem&&r.pax>1)out.push({kind:"pax",key:"pax:"+g.id,id:g.id,name:g.name,clean:r.name,pax:r.pax});}
+      if(/(^|\s)V?VIP(\s|$)/.test(g.name)&&!/VIP/.test(String(g.vip||""))){const v=/(^|\s)VVIP(\s|$)/.test(g.name)?"VVIP":"VIP";out.push({kind:"vip",key:"vip:"+g.id,id:g.id,name:g.name,clean:g.name.replace(/(^|\s)V?VIP(?=\s|$)/g," ").replace(/\s+/g," ").trim(),vip:v});}
+    }
+    return out.filter(x=>!ignored.has(x.key));
+  }
+  function tidyHTML(event){
+    const items=tidyItems(event);
+    if(!items.length)return"";
+    const row=x=>{
+      const text=x.kind==="duplicate"?t("tidy.duplicate",{name:x.name,n:x.n}):x.kind==="pax"?t("tidy.pax",{raw:x.name,name:x.clean,n:x.pax}):t("tidy.vip",{name:x.clean,vip:x.vip});
+      const act=x.kind==="duplicate"?`<button class="btn sm" data-tidy-show="${esc(x.name)}">${esc(t("tidy.show"))}</button>`:`<button class="btn sm primary" data-tidy-apply="${esc(x.key)}">${esc(t("tidy.apply"))}</button>`;
+      return`<div class="tidy-item" data-tidy-item="${x.kind}"><span>${esc(text)}</span>${act}<button class="btn sm quiet" data-tidy-ignore="${esc(x.key)}">${esc(t("tidy.ignore"))}</button></div>`;
+    };
+    const shown=items.slice(0,4);
+    return`<div class="tidy-strip" data-tidy role="region" aria-label="${esc(t("tidy.title"))}"><span class="tidy-h">${esc(t("tidy.title"))}</span>${shown.map(row).join("")}${items.length>4?`<span class="tidy-more">${esc(t("tidy.more",{n:items.length-4}))}</span>`:""}</div>`;
+  }
+  // The right panel: one guest's facts and actions (the existing writers).
+  function detailHTML(event,byId){
+    const g=ui.guestDetailId&&event.guests.find(x=>x.id===ui.guestDetailId);
+    if(!g)return"";
+    const pax=paxOf(g),hist=RULES().isHistorical(event);
+    const kv=(k,v)=>`<div class="gd-kv"><span>${esc(k)}</span><b>${v}</b></div>`;
+    return`<aside class="guest-detail" aria-label="${esc(g.name)}"><div class="gd-head"><h2 class="gd-name">${esc(g.name)}${additionalOf(g)?` <span class="gd-plus">+${additionalOf(g)}</span>`:""}</h2><button class="assistant-close" data-guest-detail-close aria-label="${esc(t("assistant.close"))}">×</button></div>
+      ${kv(t("gd.party"),esc(t("gd.people",{n:pax})))}${kv(t("guests.col.status"),esc(t("status.planning."+g.planningStatus)))}${kv(t("gd.arrival"),esc(t("status.arrival."+(g.arrivalStatus||"Not Arrived"))))}${kv(t("guests.col.invitedBy"),esc(g.invitedBy||"—"))}${kv(t("guests.col.tableSeat"),seatTagHTML(event,g,byId))}${g.vip&&g.vip!=="Standard"?kv("VIP",esc(g.vip)):""}${g.phone?kv(t("gd.phone"),esc(g.phone)):""}${g.notes?kv(t("gd.notes"),esc(g.notes)):""}
+      ${hist?"":`<div class="gd-acts"><button class="btn primary" data-guest-edit="${esc(g.id)}">${icon("edit")}${esc(t("gd.edit"))}</button><button class="btn" data-guest-seat="${esc(g.id)}">${icon("seat")}${esc(t("gd.seat"))}</button><button class="btn quiet danger" data-guest-delete="${esc(g.id)}">${icon("trash")}${esc(t("gd.delete"))}</button></div>`}
+    </aside>`;
+  }
 
 
   // deleteGuest is defined further up, where its undo lives.
@@ -115,6 +160,19 @@
       if(scroller)scroller.scrollTop=keep;
       (app.querySelector("[data-guest-command='show-more']")||document.getElementById("guestSearch"))?.focus({preventScroll:true});
     };
+    // v4: a row opens the right panel (its buttons keep their own jobs).
+    app.querySelectorAll("[data-guest-row]").forEach(r=>r.addEventListener("click",e=>{if(e.target.closest("button,a,input,select"))return;ui.guestDetailId=r.dataset.guestRow;render();}));
+    const close=app.querySelector("[data-guest-detail-close]");
+    if(close)close.onclick=()=>{ui.guestDetailId=null;render();};
+    app.querySelectorAll("[data-tidy-ignore]").forEach(b=>b.onclick=()=>{(ui.guestTidyIgnored||(ui.guestTidyIgnored=new Set())).add(b.dataset.tidyIgnore);render();});
+    app.querySelectorAll("[data-tidy-show]").forEach(b=>b.onclick=()=>{ui.guestQuery=b.dataset.tidyShow;ui.guestWindow=null;render();});
+    app.querySelectorAll("[data-tidy-apply]").forEach(b=>b.onclick=()=>{
+      const e=activeEvent(),x=tidyItems(e).find(i=>i.key===b.dataset.tidyApply),g=x&&e.guests.find(q=>q.id===x.id);
+      if(!g)return;
+      if(x.kind==="pax")saveGuest(e,g,{name:x.clean,additionalGuests:x.pax-1,pax:x.pax});
+      else if(x.kind==="vip")saveGuest(e,g,{name:x.clean,vip:x.vip});
+      render();
+    });
     const toSeating=app.querySelector("[data-guest-command='seating']");
     if(toSeating)toSeating.onclick=()=>{ui.tab="seating";ui.seatingGuestScope="unassigned";ui.seatingQuery="";ui.selectedGuestId=null;ui.selectedGuestIds=[];render();};
   };
@@ -137,11 +195,12 @@
     paxOf=deps.paxOf;
     render=deps.render;
     RULES=deps.RULES;
+    saveGuest=deps.saveGuest;
     seatTagHTML=deps.seatTagHTML;
     t=deps.t;
     tableIndex=deps.tableIndex;
     ui=deps.ui;
     return{guestsHTML,bindGuests};
   }
-  globalThis.MeritScreenGuests=Object.freeze({create,DEPS:Object.freeze(["activeEvent","additionalOf","app","downloadExcelTemplate","esc","filteredGuests","icon","openExcelWizard","openGuestDialog","original","paxDotsHTML","paxOf","render","RULES","seatTagHTML","t","tableIndex","ui"])});
+  globalThis.MeritScreenGuests=Object.freeze({create,DEPS:Object.freeze(["activeEvent","additionalOf","app","downloadExcelTemplate","esc","filteredGuests","icon","openExcelWizard","openGuestDialog","original","paxDotsHTML","paxOf","render","RULES","saveGuest","seatTagHTML","t","tableIndex","ui"])});
 })();

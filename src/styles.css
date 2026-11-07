@@ -2711,3 +2711,19 @@ body:has(.cal-screen) .toast{min-width:0;max-width:340px}
 .table-people li{padding:6px 0;border-bottom:1px solid var(--pi-line-soft);font-size:13px}
 .table-people p{margin:0;font-size:13px;color:var(--pi-muted)}
 .tp-pax{color:var(--pi-muted);font-weight:500}.tp-vip{color:var(--vip);font-size:12px;font-weight:650;letter-spacing:.05em}
+
+/* ==== REDESIGN v4 step 5: Misafirler — Öneriler strip and the right detail panel ==== */
+.tidy-strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
+.tidy-h{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pi-muted-2)}
+.tidy-item{display:flex;gap:8px;align-items:center;border:1px solid var(--pi-line);background:var(--pi-surface-2);border-radius:6px;padding:5px 6px 5px 12px;font-size:13px;color:var(--pi-ink)}
+.tidy-more{font-size:13px;color:var(--pi-muted)}
+.mx-screen:has(.guest-detail){display:grid;grid-template-columns:minmax(0,1fr) 360px}
+.mx-row[data-guest-row]{cursor:pointer}
+.mx-row[data-guest-row].on{background:var(--pi-steel-soft);box-shadow:inset 3px 0 0 var(--pi-primary)}
+.guest-detail{position:sticky;top:0;align-self:start;height:calc(100vh - var(--pi-bar-h));overflow:auto;background:var(--pi-surface);border-left:1px solid var(--pi-line);padding:22px 24px;color:var(--pi-ink)}
+.gd-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.gd-name{margin:0;font-family:var(--pi-brand-font);font-weight:500;font-size:22px;line-height:1.2}
+.gd-plus{color:var(--pi-muted);font-weight:500}
+.gd-kv{display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:center;min-height:42px;border-bottom:1px solid var(--pi-line-soft);font-size:13px}
+.gd-kv span{color:var(--pi-muted)}.gd-kv b{font-weight:600}
+.gd-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
