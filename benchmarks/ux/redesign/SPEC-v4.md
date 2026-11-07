@@ -26,3 +26,17 @@ Focus stays on the job of the screen. Tools sit where the hand looks for them ("
   font size), save as template.
 - **Themes:** light first. Dark = classic night (deep navy/graphite, ivory text, champagne restraint, no neon).
   Later the same pages ship in 4–5 selectable themes; build this main theme first.
+
+## The working order (owner, 2026-11-07) — both themes A and B
+1. **Yeni etkinlik → boş şablon** (name, date, venue; nothing else; a blank event is blank).
+2. **Salon:** drop/upload the plan image (or PDF) → an analysis screen with a clear **"Analiz et"** button (Assisted
+   Detection; suggestions accepted/rejected one by one) → or draw by hand: add round/rect tables, chairs, stage, bar.
+3. **Misafirler:** import Excel / paste a list / add by hand; the list then offers **suggestions to tidy it**
+   (duplicates, "+N" parsing, missing host, VIP marks) — each accepted or ignored.
+4. **Oturma:** place guests (drag/click, groups together, "Taslak yerleşim").
+5. **"Hazır"** (button on Oturma): opens Hazır mı? (open issues, line to the place, "Git"); when nothing blocks, the
+   room turns into the **settled plan** (yerleşmiş plan: quiet, read-mostly, edits still possible via ⋯).
+6. **Kapı** → 7. **Raporlar.**
+Steps on screen (decided by Claude per owner "sana bıraktım: şık, sade, kullanışlı, elit"): the top menu IS the
+order — Etkinlik · Salon · Misafirler · Oturma · Kapı · Raporlar; a finished step carries a thin ✓, the next step
+is the emphasised word; each screen has one quiet "Sonraki: Misafirler →" at the bottom right. No wizard, no stepper bar.
