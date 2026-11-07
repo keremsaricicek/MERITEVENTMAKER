@@ -250,8 +250,9 @@
   // table at its stored place, size and rotation (no chair drawn, none
   // invented), filled by its people from the guests' own records: planned
   // (assignment), arrived (Checked In) and not come (No Show, which keeps its
-  // planned seat and is never counted as arrived). Read-only; a click on a table
-  // searches the list for it (the finder matches table numbers).
+  // planned seat and is never counted as arrived). Read-only, a picture of the room: a click on a
+  // table is a mouse shortcut that searches the list for it (the finder matches
+  // table numbers; the search field is the keyboard's way).
   function liveRoomHTML(event){
     const ts=(event.tables||[]).filter(x=>[x.x,x.y,x.w,x.h].every(v=>Number.isFinite(Number(v))));
     if(!ts.length)return`<div class="live-room live-room-empty">${esc(t("live.room.none"))}</div>`;
@@ -267,9 +268,9 @@
       const tr=rot?` transform="rotate(${n(rot)} ${cx} ${cy})"`:"";
       const body=round?`<ellipse cx="${cx}" cy="${cy}" rx="${n(W/2)}" ry="${n(H/2)}"${tr}/>`:`<rect x="${n(X)}" y="${n(Y)}" width="${n(W)}" height="${n(H)}"${tr}/>`;
       const label=String(x.number||"");
-      return`<g class="lr-t ${state}" data-live-table="${esc(x.id)}" data-planned="${c.planned}" data-arrived="${c.arrived}" data-noshow="${c.noshow}" data-live-table-number="${esc(label)}" role="button" tabindex="0" aria-label="${esc(t("live.room.table",{table:label,arrived:c.arrived,planned:c.planned}))}">${body}<text x="${cx}" y="${n(cy-2)}" text-anchor="middle" class="lr-n">${esc(label)}</text><text x="${cx}" y="${n(cy+Math.min(W,H)*.22)}" text-anchor="middle" class="lr-c">${c.arrived}/${c.planned}${c.noshow?` · ${c.noshow}✕`:""}</text></g>`;
+      return`<g class="lr-t ${state}" data-live-table="${esc(x.id)}" data-planned="${c.planned}" data-arrived="${c.arrived}" data-noshow="${c.noshow}" data-live-table-number="${esc(label)}"><title>${esc(t("live.room.table",{table:label,arrived:c.arrived,planned:c.planned}))}</title>${body}<text x="${cx}" y="${n(cy-2)}" text-anchor="middle" class="lr-n">${esc(label)}</text><text x="${cx}" y="${n(cy+Math.min(W,H)*.22)}" text-anchor="middle" class="lr-c">${c.arrived}/${c.planned}${c.noshow?` · ${c.noshow}✕`:""}</text></g>`;
     }).join("");
-    return`<div class="live-room"><svg viewBox="${n(x0-pad)} ${n(y0-pad)} ${n(x1-x0+2*pad)} ${n(y1-y0+2*pad)}" preserveAspectRatio="xMidYMid meet" role="group" aria-label="${esc(t("live.room.label"))}">${shapes}</svg><div class="lr-key"><span class="k full"></span>${esc(t("live.room.full"))}<span class="k part"></span>${esc(t("live.room.part"))}<span class="k wait"></span>${esc(t("live.room.wait"))}</div></div>`;
+    return`<div class="live-room"><svg viewBox="${n(x0-pad)} ${n(y0-pad)} ${n(x1-x0+2*pad)} ${n(y1-y0+2*pad)}" preserveAspectRatio="xMidYMin meet" role="group" aria-label="${esc(t("live.room.label"))}">${shapes}</svg><div class="lr-key"><span class="k full"></span>${esc(t("live.room.full"))}<span class="k part"></span>${esc(t("live.room.part"))}<span class="k wait"></span>${esc(t("live.room.wait"))}</div></div>`;
   }
   function focusLiveSearch(caret){
     requestAnimationFrame(()=>{
@@ -280,7 +281,7 @@
     });
   }
   const bindLive = function(){
-    document.querySelectorAll(".live-room [data-live-table]").forEach(n=>{const go=()=>{ui.liveQuery=n.dataset.liveTableNumber||"";ui.liveCursor=null;ui.liveWindow=null;render();focusLiveSearch();};n.addEventListener("click",go);n.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}});});
+    document.querySelectorAll(".live-room [data-live-table]").forEach(n=>{const go=()=>{ui.liveQuery=n.dataset.liveTableNumber||"";ui.liveCursor=null;ui.liveWindow=null;render();focusLiveSearch();};n.addEventListener("click",go);});
     const search=document.getElementById("liveSearch");
     if(search){
       search.oninput=()=>{

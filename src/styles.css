@@ -2808,3 +2808,7 @@ body:has(.cal-screen) .toast{min-width:0;max-width:340px}
   body.printing-designer[data-rd-paper="A4-portrait"] .rd-page{page:a4p}body.printing-designer[data-rd-paper="A4-landscape"] .rd-page{page:a4l}
   body.printing-designer[data-rd-paper="A3-portrait"] .rd-page{page:a3p}body.printing-designer[data-rd-paper="A3-landscape"] .rd-page{page:a3l}
 }
+/* Kapı: the list column is narrow now, so a toast stack there would sit on the
+   door buttons; on the door it rises from the room's bottom-right corner, above
+   "Sonraki", where the drawing keeps its margin (tables hug the top). */
+body:has(.live-v4) #toastWrap:not(.in-dialog){left:auto;right:24px;bottom:64px}

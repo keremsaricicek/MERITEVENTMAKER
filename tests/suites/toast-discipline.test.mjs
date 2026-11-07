@@ -90,6 +90,10 @@ const ERROR_CLASS = {
   "eventPackage.invalidFile": REFUSAL, "eventPackage.futureVersion": REFUSAL, "eventPackage.invalidRecord": REFUSAL,
   "eventPackage.badReference": REFUSAL, "eventPackage.importFailed": REFUSAL, "recovery.none": REFUSAL, "diskBackup.unreachable": REFUSAL,
   "plan.replaceFailed": REFUSAL,
+  // The report designer (src/screen-reports.js, redesign v4 step 8): a logo too
+  // large, a template with no name and a storage that refused the template are
+  // each the person's own attempt not happening, nothing changed.
+  "rd.logoTooBig": REFUSAL, "rd.nameFirst": REFUSAL, "rd.notSaved": REFUSAL,
   // The model reading (src/screen-vlm.js): the send did not happen, a person's
   // Accept was refused (its reason stays beside the finding), an answer for an
   // older analysis was dropped (the event is untouched).
