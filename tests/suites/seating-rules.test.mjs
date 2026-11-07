@@ -7,7 +7,7 @@
 // Mutation proof, recorded 2026-11-02: before the change there were no rules → every check fails.
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { openApp, createBlankEvent, addTables, futureDate, settle } from "../lib/app-actions.mjs";
+import { openApp, createBlankEvent, addTables, futureDate, settle, gotoTab } from "../lib/app-actions.mjs";
 
 export const meta = { name: "seating-rules", tags: ["business", "fast"], timeout: 180000 };
 
@@ -53,4 +53,41 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   await page.waitForTimeout(600);
   await page.reload(); await settle(page);
   checks.equal(await page.evaluate(() => (state.events[0].seatRules || []).map((r) => r.kind)), ["apart"], "save → reload keeps the rule");
+
+  // --- REDESIGN v4 step 6 (SPEC-v4 "The working order" 5): Oturma → "Hazır" ------
+  // "Hazır" opens Hazır mı?: the Plan Doctor's open issues (the one judge), each
+  // with its "Git"; pointing at an issue about a table draws a thin line to it.
+  // When nothing blocks, "Planı yerleştir" turns the room into the settled plan
+  // (quiet: the queue and tools step back; "Düzenle" brings them back). A view,
+  // never stored. Mutation proof, recorded 2026-11-07: with the line's target
+  // lookup removed the line check fails; with the settle offered despite a
+  // blocker the "only when nothing blocks" check fails.
+  await page.evaluate(() => { ui.screen = "workspace"; ui.activeEventId = state.events[0].id; ui.tab = "seating";
+    const e = state.events[0]; window.__cap0 = e.tables[0].capacity; e.tables[0].capacity = 1; e.tables[0].chairs = (e.tables[0].chairs || []).slice(0, 1); touchEvent(e); render(); });   // an over-full table: an issue with a place
+  await settle(page);
+  await page.click("[data-ready-open]"); await settle(page);
+  const r = await page.evaluate(() => { const p = document.querySelector("[data-ready-panel]"); return p ? { title: p.querySelector("h2")?.textContent.trim(),
+    issues: [...p.querySelectorAll("[data-ready-issue]")].map((li) => ({ blocker: li.classList.contains("blocker"), go: !!li.querySelector("button"), table: li.dataset.readyTable || null })),
+    settle: !!p.querySelector("[data-ready-settle]") } : null; });
+  checks.ok(r && r.title === "Hazır mı?" && r.issues.length >= 1 && r.issues.every((i) => i.go), "Hazır opens Hazır mı?: the Plan Doctor's issues, each with its Git", r);
+  checks.equal(r.settle, !r.issues.some((i) => i.blocker), "Planı yerleştir is offered only when nothing blocks", r);
+  const withTable = r.issues.findIndex((i) => i.table);
+  checks.ok(withTable >= 0, "an over-full table is an issue with a place", r.issues);
+  if (withTable >= 0) {
+    await page.hover(`[data-ready-issue]:nth-of-type(${withTable + 1})`);
+    const lead = await page.evaluate(() => document.querySelector(".ready-lead path")?.getAttribute("d") || "");
+    checks.ok(/^M[\d.\s-]+[LC]/.test(lead), "pointing at an issue about a table draws a thin line to its place", lead);
+  }
+  // a clean room: one table, everyone seated → nothing blocks → settled plan
+  await page.evaluate(() => { const e = state.events[0]; e.seatRules = []; e.tables[0].capacity = window.__cap0 || 8; e.guests.forEach((g) => { if (!g.assignment) assignGuestToTable(g.id, e.tables[0].id); }); touchEvent(e); render(); });
+  await settle(page);
+  const r2 = await page.evaluate(() => ({ settle: !!document.querySelector("[data-ready-settle]"), blockers: document.querySelectorAll("[data-ready-issue].blocker").length }));
+  if (r2.settle) {
+    await page.click("[data-ready-settle]"); await settle(page);
+    const st = await page.evaluate(() => ({ settled: !!document.querySelector(".seat-v4.is-settled"), queue: getComputedStyle(document.querySelector(".seat-queue")).display, bar: document.querySelector("[data-ready-edit]")?.textContent.trim() || null, stored: JSON.stringify(state.events[0]).includes("settled") }));
+    checks.ok(st.settled && st.queue === "none" && st.bar, "Planı yerleştir: the settled plan — quiet, the queue steps back, Düzenle stays", st);
+    checks.equal(st.stored, false, "the settled view is never stored on the event", st.stored);
+    await page.click("[data-ready-edit]"); await settle(page);
+    checks.ok(await page.evaluate(() => !document.querySelector(".seat-v4.is-settled") && getComputedStyle(document.querySelector(".seat-queue")).display !== "none"), "Düzenle brings the tools back");
+  } else checks.ok(false, "a clean room (everyone seated, no rule) is not blocked", r2);
 }

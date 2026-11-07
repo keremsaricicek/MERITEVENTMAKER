@@ -1877,10 +1877,51 @@
   const SEATING=globalThis.MeritScreenSeating.create({
     activeEvent:(...a)=>activeEvent(...a),assignGuestGroup:(...a)=>assignGuestGroup(...a),assignGuestToTable:(...a)=>assignGuestToTable(...a),authoriseFreezeOverride:(...a)=>authoriseFreezeOverride(...a),AVAIL:(...a)=>AVAIL(...a),availReasonText:(...a)=>availReasonText(...a),bindPanelToggles:(...a)=>bindPanelToggles(...a),canMutate:(...a)=>canMutate(...a),canSeat,canvasEmptyHTML:(...a)=>canvasEmptyHTML(...a),canvasViewportHTML:(...a)=>canvasViewportHTML(...a),createFreezeFromDraft:(...a)=>createFreezeFromDraft(...a),esc:(...a)=>esc(...a),eventFreezes:(...a)=>eventFreezes(...a),formatTableNumber:(...a)=>formatTableNumber(...a),FREEZE:(...a)=>FREEZE(...a),freezeReasonText:(...a)=>freezeReasonText(...a),icon:(...a)=>icon(...a),liftFreeze:(...a)=>liftFreeze(...a),logicalSeatCount:(...a)=>logicalSeatCount(...a),naturalSort:(...a)=>naturalSort(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxDotsHTML:(...a)=>paxDotsHTML(...a),paxOf:(...a)=>paxOf(...a),recordUndo:(...a)=>recordUndo(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),seatingQueueEmptyHTML:(...a)=>seatingQueueEmptyHTML(...a),setTableAvailability:(...a)=>setTableAvailability(...a),t:(...a)=>t(...a),tableAssignedPax:(...a)=>tableAssignedPax(...a),tableIndex:(...a)=>tableIndex(...a),tableSeatMap:(...a)=>tableSeatMap(...a),toast:(...a)=>toast(...a),toggleAssignmentLock:(...a)=>toggleAssignmentLock(...a),touchEvent:(...a)=>touchEvent(...a),ui,unassignGuest:(...a)=>unassignGuest(...a),v8Toolbar:(...a)=>FLOORPLAN.v8Toolbar(...a),
   });
-  seatingHTML = function(...a){return SEATING.seatingHTML(...a);};
+  // REDESIGN v4 step 6 (SPEC-v4 "The working order" 5): "Hazır" on Oturma opens
+  // Hazır mı? — the Plan Doctor's open issues (eventReadiness: the one judge),
+  // each with the Command Center's own "Git" (COMMAND.doctorGoHTML/bindDoctorGo);
+  // pointing at an issue about a table draws a thin line to its place. When
+  // nothing blocks, "Planı yerleştir" turns the room into the settled plan: a
+  // quiet VIEW (ui.settledEvents, never stored), edits back via "Düzenle".
+  function readyChromeHTML(event){
+    const settled=!!(ui.settledEvents&&ui.settledEvents.has(event.id));
+    if(settled)return`<div class="settled-bar" role="status">${esc(t("ready.settled"))}<button class="btn sm" data-ready-edit>${esc(t("ready.edit"))}</button></div>`;
+    if(!ui.readyOpen)return`<button class="btn primary ready-open" data-ready-open>${esc(t("ready.open"))}</button>`;
+    const reasons=eventReadiness(event).reasons||[];
+    const blockers=reasons.filter(r=>r.level==="blocker").length;
+    const rows=reasons.map(r=>{const w=COMMAND.doctorText(r.finding),a=(r.finding&&r.finding.action)||{},tid=a.tableId||(a.tableIds&&a.tableIds[0])||"";
+      return`<li class="ready-issue ${r.level==="blocker"?"blocker":"warn"}" data-ready-issue${tid?` data-ready-table="${esc(tid)}"`:""} tabindex="0"><i class="health-dot ${r.level==="blocker"?"blocker":"warn"}"></i><div><b>${esc(w.what)}</b>${w.detail?`<span>${esc(w.detail)}</span>`:""}</div>${COMMAND.doctorGoHTML(r.finding)}</li>`;}).join("");
+    return`<aside class="ready-panel theme-scope" data-ready-panel aria-label="${esc(t("ready.title"))}"><div class="ready-head"><h2>${esc(t("ready.title"))}</h2><button class="assistant-close" data-ready-close aria-label="${esc(t("assistant.close"))}">×</button></div>
+      ${reasons.length?`<ul class="ready-list">${rows}</ul>`:`<p class="ready-ok">${esc(t("ready.none"))}</p>`}
+      ${blockers?`<p class="ready-blocked">${esc(t("ready.blocked",{n:blockers}))}</p>`:`<div class="ready-settle"><b>${esc(t("ready.canSettle"))}</b><button class="btn primary" data-ready-settle>${esc(t("ready.settle"))}</button></div>`}
+    </aside><svg class="ready-lead" aria-hidden="true"><path d=""/></svg>`;
+  }
+  function bindReady(){
+    const event=activeEvent();if(!event)return;
+    const q=s=>document.querySelector(s);
+    if(q("[data-ready-open]"))q("[data-ready-open]").onclick=()=>{ui.readyOpen=true;render();};
+    if(q("[data-ready-close]"))q("[data-ready-close]").onclick=()=>{ui.readyOpen=false;render();};
+    if(q("[data-ready-settle]"))q("[data-ready-settle]").onclick=()=>{(ui.settledEvents||(ui.settledEvents=new Set())).add(event.id);ui.readyOpen=false;render();};
+    if(q("[data-ready-edit]"))q("[data-ready-edit]").onclick=()=>{ui.settledEvents&&ui.settledEvents.delete(event.id);render();};
+    if(q("[data-ready-panel]"))COMMAND.bindDoctorGo(event);
+    const path=q(".ready-lead path");
+    document.querySelectorAll("[data-ready-issue]").forEach(li=>{
+      const draw=()=>{const tb=li.dataset.readyTable&&document.querySelector(`.seat-stage [data-object-id="${CSS.escape(li.dataset.readyTable)}"]`);
+        if(!tb||!path){if(path)path.setAttribute("d","");return;}
+        const a=li.getBoundingClientRect(),b=tb.getBoundingClientRect(),x1=a.left,y1=a.top+a.height/2,x2=b.left+b.width/2,y2=b.top+b.height/2,r=n=>Math.round(n);
+        path.setAttribute("d",`M${r(x1)} ${r(y1)} C${r((x1+x2)/2)} ${r(y1)} ${r((x1+x2)/2)} ${r(y2)} ${r(x2)} ${r(y2)}`);};
+      li.addEventListener("mouseenter",draw);li.addEventListener("focus",draw);
+      li.addEventListener("mouseleave",()=>path&&path.setAttribute("d",""));
+    });
+  }
+  seatingHTML = function(event){
+    const inner=SEATING.seatingHTML(event);
+    if(RULES().isHistorical(event))return inner;
+    return`<div class="seat-v4${ui.settledEvents&&ui.settledEvents.has(event.id)?" is-settled":""}">${inner}${readyChromeHTML(event)}</div>`;
+  };
   selectedTablePanelHTML = function(...a){return SEATING.selectedTablePanelHTML(...a);};
   seatRowHTML = function(...a){return SEATING.seatRowHTML(...a);};
-  bindSeating = function(...a){return SEATING.bindSeating(...a);};
+  bindSeating = function(...a){const r=SEATING.bindSeating(...a);bindReady();return r;};
 
   // ---- SERVICE LOAD ---------------------------------------------------------
   //
