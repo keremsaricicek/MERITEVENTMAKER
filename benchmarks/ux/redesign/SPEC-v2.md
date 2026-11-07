@@ -39,3 +39,8 @@ colours (calmer, no washed/garish tones) and the same icon plan.
   TABLE glows/pulses softly and refined minimal chairs appear around it with the guest's seat highlighted.
 - Door light ✓ (same chair/highlight idea). Door dark ✗ "neon colours ruin the class" → classic dark: deep
   navy/graphite with ivory text and champagne/gold restraint; no neon, no saturated greens/reds (status by subtle tone).
+
+## Owner's verdict on v3 (2026-11-07)
+- Events calendar (light + dark) ✓ "gayet iyi". Salon glow-on-ask ✓. Door light ✓.
+- Door dark ~ "soldaki liste aşırı büyük, çok az küçült" → list shrunk ~12 % (panel 560→500, rows 66→56, name 16.5→15,
+  search 58→50); applied to both themes. Awaiting his look at the re-shot door photos.
