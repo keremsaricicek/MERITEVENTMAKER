@@ -2748,3 +2748,27 @@ body:has(.cal-screen) .toast{min-width:0;max-width:340px}
 .seat-v4:has(.ready-panel) .table-card{display:none}
 .seat-v4:has(.table-card) .ready-open{right:316px}
 .settled-bar{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:45;display:flex;gap:12px;align-items:center;background:var(--pi-surface);border:1px solid var(--pi-line-strong);border-radius:18px;padding:5px 6px 5px 16px;font-size:13px;color:var(--pi-muted)}
+
+/* ==== REDESIGN v4 step 7: Kapı — guest list 1/4, room 3/4; Giriş right, Gelmedi apart ==== */
+.live-stage.live-v4{grid-template-columns:minmax(300px,1fr) minmax(0,3fr);gap:22px}
+.live-v4 .arrival-row{grid-template-columns:minmax(0,1fr) auto;row-gap:6px;column-gap:10px;padding:10px 12px}
+.live-v4 .arrival-row>:nth-child(3){grid-column:1}
+.live-v4 .arrival-actions{grid-column:1 / -1;justify-content:flex-start}
+.live-v4 .arrival-gap{flex:1 1 auto;min-width:60px}
+.live-v4 .btn-arrive.go{min-width:96px}
+.live-room-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.live-room{position:relative;background:var(--pi-surface);border:1px solid var(--pi-line);border-radius:6px;padding:12px;height:min(62vh,680px)}
+.live-room svg{width:100%;height:calc(100% - 26px)}
+.live-room-empty{display:grid;place-items:center;color:var(--pi-muted);height:auto;min-height:200px}
+.lr-t{cursor:pointer}
+.lr-t ellipse,.lr-t rect{fill:var(--pi-surface-2);stroke:var(--pi-muted-2);stroke-width:2;vector-effect:non-scaling-stroke}
+.lr-t.part ellipse,.lr-t.part rect{fill:var(--pi-steel-soft);stroke:var(--pi-steel)}
+.lr-t.full ellipse,.lr-t.full rect{fill:#dfeee5;stroke:var(--pi-ok)}
+.lr-t:hover ellipse,.lr-t:hover rect,.lr-t:focus ellipse,.lr-t:focus rect{stroke-width:3}
+.lr-t:focus{outline:none}
+.lr-n{font:700 22px var(--font);fill:var(--pi-ink);stroke:none}
+.lr-c{font:600 17px var(--font);fill:var(--pi-muted);stroke:none}
+.lr-key{display:flex;gap:6px 14px;align-items:center;font-size:12px;color:var(--pi-muted);height:22px}
+.lr-key .k{width:12px;height:12px;border-radius:3px;border:1px solid var(--pi-muted-2);background:var(--pi-surface-2);display:inline-block;margin-right:-8px}
+.lr-key .k.full{background:#dfeee5;border-color:var(--pi-ok)}.lr-key .k.part{background:var(--pi-steel-soft);border-color:var(--pi-steel)}
+.live-v4 .live-aside{position:static}

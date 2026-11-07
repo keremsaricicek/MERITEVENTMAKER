@@ -220,31 +220,57 @@
         <div>${seatTagHTML(event,g,byId)}</div>
         <div><span class="arr-state ${isIn?"in":isNo?"no":"not"}">${esc(t("status.arrival."+g.arrivalStatus))}</span></div>
         <div class="arrival-actions">
+          <button class="btn-arrive ${isNo?"undo":"no"}" data-arrival="No Show" data-live-guest="${g.id}">${isNo?t("live.undo"):t("live.noShow")}</button>
+          <span class="arrival-gap" aria-hidden="true"></span>
           ${armed?`<kbd class="enter-key" title="${t("live.armedTitle")}">${t("live.armed")} ↵</kbd>`:""}
           <button class="btn-arrive ${isIn?"undo":"go"}" data-arrival="Checked In" data-live-guest="${g.id}">${isIn?t("live.undoCheckIn"):t("live.checkInAction")}</button>
-          <button class="btn-arrive ${isNo?"undo":"no"}" data-arrival="No Show" data-live-guest="${g.id}">${isNo?t("live.undo"):t("live.noShow")}</button>
         </div>
       </div>`;
     }).join(""):`<div class="mx-empty">${liveEmptyHTML(event,q)}</div>`;
     return`<div class="mx-screen"><div class="mx-wrap">
       <div class="mx-head"><div><h1>${t("live.title")}</h1><p>${t("live.subtitle")}</p></div></div>
       <div class="mx-metrics">${metrics}</div>
-      <div class="live-stage">
-        <div>
+      <div class="live-stage live-v4">
+        <div class="live-list-col">
           <div class="live-search-hero"><span class="hero-icon">${icon("search")}</span><input id="liveSearch" value="${esc(ui.liveQuery)}" placeholder="${t("live.searchHero")}" autocomplete="off"></div>
           <p class="live-hint">${t("live.hint")}<br>${t("live.enterHint")}</p>
           ${waveFilterBannerHTML(event)}
           <div class="mx-list" id="liveList" style="margin-top:12px">${list}</div>
           ${hiddenCount>0?`<div class="live-more" id="liveMore"><span>${t("live.showingOf",{shown:windowed.length,total:rows.length})}</span><button class="btn sm" data-live-action="show-more">${t("live.showMore")}</button></div>`:""}
         </div>
-        <aside class="live-aside">${arrivalWaveHTML(event)}${groupCountsHTML(event)}
-          <div class="live-aside-head">${t("live.recentTitle")}</div>${recent}</aside>
+        <div class="live-room-col">${liveRoomHTML(event)}
+        <aside class="live-aside"><div class="live-aside-head">${t("live.recentTitle")}</div>${recent}${arrivalWaveHTML(event)}${groupCountsHTML(event)}</aside></div>
       </div>
     </div></div>`;
   };
   // render() replaces the input node, so focus has to be re-established by hand
   // after every keystroke -- otherwise the operator types one letter and loses
   // the field.
+  // REDESIGN v4 step 7 (SPEC-v4 "Kapı"): the room, 3/4 of the width — every real
+  // table at its stored place, size and rotation (no chair drawn, none
+  // invented), filled by its people from the guests' own records: planned
+  // (assignment), arrived (Checked In) and not come (No Show, which keeps its
+  // planned seat and is never counted as arrived). Read-only; a click on a table
+  // searches the list for it (the finder matches table numbers).
+  function liveRoomHTML(event){
+    const ts=(event.tables||[]).filter(x=>[x.x,x.y,x.w,x.h].every(v=>Number.isFinite(Number(v))));
+    if(!ts.length)return`<div class="live-room live-room-empty">${esc(t("live.room.none"))}</div>`;
+    const by=new Map(ts.map(x=>[x.id,{planned:0,arrived:0,noshow:0}]));
+    for(const g of event.guests){const c=g.assignment&&by.get(g.assignment.tableId);if(!c)continue;const p=paxOf(g);c.planned+=p;if(g.arrivalStatus==="Checked In")c.arrived+=p;else if(g.arrivalStatus==="No Show")c.noshow+=p;}
+    let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+    for(const x of ts){x0=Math.min(x0,+x.x);y0=Math.min(y0,+x.y);x1=Math.max(x1,+x.x+ +x.w);y1=Math.max(y1,+x.y+ +x.h);}
+    const pad=Math.max(30,(x1-x0)*.05),n=v=>Math.round(v*10)/10;
+    const shapes=ts.map(x=>{
+      const c=by.get(x.id),X=+x.x,Y=+x.y,W=+x.w,H=+x.h,cx=n(X+W/2),cy=n(Y+H/2),rot=Number(x.rotation)||0;
+      const round=/round|bistro|cocktail|circle/.test(String(x.shape||x.type||""))&&!/rect|long|banquet/.test(String(x.shape||""));
+      const state=!c.planned?"empty":c.arrived>=c.planned-c.noshow&&c.arrived>0?"full":c.arrived?"part":"wait";
+      const tr=rot?` transform="rotate(${n(rot)} ${cx} ${cy})"`:"";
+      const body=round?`<ellipse cx="${cx}" cy="${cy}" rx="${n(W/2)}" ry="${n(H/2)}"${tr}/>`:`<rect x="${n(X)}" y="${n(Y)}" width="${n(W)}" height="${n(H)}"${tr}/>`;
+      const label=String(x.number||"");
+      return`<g class="lr-t ${state}" data-live-table="${esc(x.id)}" data-planned="${c.planned}" data-arrived="${c.arrived}" data-noshow="${c.noshow}" data-live-table-number="${esc(label)}" role="button" tabindex="0" aria-label="${esc(t("live.room.table",{table:label,arrived:c.arrived,planned:c.planned}))}">${body}<text x="${cx}" y="${n(cy-2)}" text-anchor="middle" class="lr-n">${esc(label)}</text><text x="${cx}" y="${n(cy+Math.min(W,H)*.22)}" text-anchor="middle" class="lr-c">${c.arrived}/${c.planned}${c.noshow?` · ${c.noshow}✕`:""}</text></g>`;
+    }).join("");
+    return`<div class="live-room"><svg viewBox="${n(x0-pad)} ${n(y0-pad)} ${n(x1-x0+2*pad)} ${n(y1-y0+2*pad)}" preserveAspectRatio="xMidYMid meet" role="group" aria-label="${esc(t("live.room.label"))}">${shapes}</svg><div class="lr-key"><span class="k full"></span>${esc(t("live.room.full"))}<span class="k part"></span>${esc(t("live.room.part"))}<span class="k wait"></span>${esc(t("live.room.wait"))}</div></div>`;
+  }
   function focusLiveSearch(caret){
     requestAnimationFrame(()=>{
       const n=document.getElementById("liveSearch");if(!n)return;
@@ -254,6 +280,7 @@
     });
   }
   const bindLive = function(){
+    document.querySelectorAll(".live-room [data-live-table]").forEach(n=>{const go=()=>{ui.liveQuery=n.dataset.liveTableNumber||"";ui.liveCursor=null;ui.liveWindow=null;render();focusLiveSearch();};n.addEventListener("click",go);n.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}});});
     const search=document.getElementById("liveSearch");
     if(search){
       search.oninput=()=>{

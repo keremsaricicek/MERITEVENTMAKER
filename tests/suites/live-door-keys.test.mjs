@@ -7,7 +7,15 @@
 // first and hardest.
 import { click, openApp, createBlankEvent, addGuest, addTables, gotoTab, settle, typeQuery, futureDate, seatGuestOnFirstTable } from "../lib/app-actions.mjs";
 
-export const meta = { name: "live-door-keys", tags: ["business", "fast"], timeout: 120000 };
+export const meta = { name: "live-door-keys", tags: ["business", "fast"], timeout: 180000 };
+
+// REDESIGN v4 step 7 (SPEC-v4 "Kapı"): the guest list is 1/4 of the width, the
+// room 3/4 — every real table, its planned / arrived / no-show people from the
+// guests' own records; Giriş right, Gelmedi away from it; both through the
+// existing setArrival writer; No Show keeps the planned seat; Geri al takes it
+// back. Mutation proof, recorded 2026-11-07: with the room counting No Show as
+// arrived the room check fails; with the two buttons side by side the "apart"
+// check fails.
 
 export default async function run({ page, checks, baseUrl }) {
   await openApp(page, baseUrl);
@@ -161,4 +169,28 @@ export default async function run({ page, checks, baseUrl }) {
     "a completed event has no Live Event tab");
   checks.ok((await page.evaluate(() => state.events[0].guests.filter(g => g.arrivalStatus === "Checked In").length)) === 1,
     "no arrival record changed as the event became historical");
+
+  // --- REDESIGN v4 step 7: Kapı — list 1/4, room 3/4 ------------------------------
+  await page.evaluate(() => { ui.screen = "events"; render(); });
+  await createBlankEvent(page, { name: "Kapı v4", hotel: "Merit", date: futureDate(9) });
+  await addTables(page, { quantity: 3 });
+  await page.evaluate(() => { const e = activeEvent(); const g = (id, name, pax) => ({ id, name, additionalGuests: pax - 1, pax, vip: "Standard", invitedBy: "", notes: "", planningStatus: "Confirmed", arrivalStatus: "Not Arrived", assignment: null, createdAt: "" });
+    e.guests.push(g("k1", "Ayla Kurt", 2), g("k2", "Bora Er", 1)); assignGuestToTable("k1", e.tables[0].id); assignGuestToTable("k2", e.tables[0].id); touchEvent(e); render(); });
+  await gotoTab(page, "live"); await settle(page);
+  const geo = await page.evaluate(() => { const r = (s) => document.querySelector(s)?.getBoundingClientRect(); const L = r(".live-list-col"), R = r(".live-room-col");
+    const row = [...document.querySelectorAll(".arrival-row")].find((x) => /Ayla Kurt/.test(x.textContent)); const go = row?.querySelector('[data-arrival="Checked In"]')?.getBoundingClientRect(), no = row?.querySelector('[data-arrival="No Show"]')?.getBoundingClientRect();
+    return { L: L && L.width, R: R && R.width, tables: document.querySelectorAll(".live-room [data-live-table]").length, apart: go && no ? Math.round(go.left - no.right) : null, goRight: go && row ? Math.round(row.getBoundingClientRect().right - go.right) : null }; });
+  checks.ok(geo.L && geo.R && geo.L / (geo.L + geo.R) > 0.2 && geo.L / (geo.L + geo.R) < 0.32, "the guest list is about 1/4 of the width, the room 3/4", geo);
+  checks.equal(geo.tables, 3, "the room draws every real table", geo);
+  checks.ok(geo.apart >= 60 && geo.goRight <= 24, "Giriş sits at the right, Gelmedi away from it", geo);
+  const room = () => page.evaluate(() => { const e = activeEvent(), n = document.querySelector(`.live-room [data-live-table="${e.tables[0].id}"]`); return n ? { arrived: n.dataset.arrived, planned: n.dataset.planned, noshow: n.dataset.noshow } : null; });
+  checks.equal(await room(), { arrived: "0", planned: "3", noshow: "0" }, "the room starts from the plan: 3 planned at the first table", await room());
+  await page.click('.arrival-row:has-text("Ayla Kurt") [data-arrival="Checked In"]'); await settle(page);
+  checks.equal(await room(), { arrived: "2", planned: "3", noshow: "0" }, "Giriş (setArrival) fills the room: 2 of 3 arrived", await room());
+  await page.click('.arrival-row:has-text("Bora Er") [data-arrival="No Show"]'); await settle(page);
+  const bora = await page.evaluate(() => { const g = activeEvent().guests.find((x) => x.id === "k2"); return { st: g.arrivalStatus, kept: !!g.assignment }; });
+  checks.ok(bora.st === "No Show" && bora.kept, "Gelmedi keeps the planned seat", bora);
+  checks.equal(await room(), { arrived: "2", planned: "3", noshow: "1" }, "and the room shows him as not come, never as arrived", await room());
+  await page.click('.live-aside [data-live-undo="k2"]'); await settle(page);
+  checks.equal(await page.evaluate(() => activeEvent().guests.find((x) => x.id === "k2").arrivalStatus), "Not Arrived", "Geri al takes the last change back");
 }
