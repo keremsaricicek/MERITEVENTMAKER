@@ -2182,6 +2182,13 @@
     "shell.theme.toDark": { en: "Dark theme · F9", tr: "Koyu tema · F9" },
     "shell.theme.toLight": { en: "Light theme · F9", tr: "Açık tema · F9" },
     "shell.more": { en: "More", tr: "Diğer" },
+    "shell.mimar": { en: "Mimar", tr: "Mimar" },
+    "shell.nav.done": { en: "done", tr: "tamam" },
+    "shell.nav.nextStep": { en: "The next step", tr: "Sıradaki adım" },
+    "shell.nextTo": { en: "Next: {screen} →", tr: "Sonraki: {screen} →" },
+    "shell.skin.title": { en: "Theme", tr: "Tema" },
+    "shell.skin.a": { en: "A · Atlas plain", tr: "A · Atlas sade" },
+    "shell.skin.b": { en: "B · Combined", tr: "B · Birleşik" },
     "shell.menu.language": { en: "Switch to Turkish (TR)", tr: "İngilizceye geç (EN)" },
     "shell.clockTitle": { en: "Time now", tr: "Şu anki saat" },
 

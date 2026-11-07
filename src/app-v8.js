@@ -1039,7 +1039,7 @@
     const tabs=historical?historyTabs:["command","floor","guests","seating","live","reports"];
     if(!tabs.includes(ui.tab))ui.tab=tabs[0];
     const sub=[fmtDate(event.date),[event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet")].join(" · ");
-    const bar=shellBarHTML({screen:"workspace",current:ui.tab,historical,event:{name:event.name,sub},planHealth:planHealthHTML(event)});
+    const bar=shellBarHTML({screen:"workspace",current:ui.tab,historical,event:{name:event.name,sub},planHealth:planHealthHTML(event),progress:historical?null:TOPBAR.stepProgress(event)});
     return`<section class="workspace ${ui.focusMode?"v8-focus":""}">${bar}${historical?`<div class="workspace-readonly-banner">${icon("lock")}${t("nav.historicalBanner")}</div>`:ui.focusMode?"":onboardingCalloutHTML("globalFinder")}<div class="content">${tabContent(event)}</div>${ui.focusMode?`<button class="focus-exit" data-v8-action="focus">${t("nav.exitFocus")}</button>`:""}</section>`;
   };
   tabContent = function(event){
@@ -5130,6 +5130,9 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
   // export, delete) are the data-* controls bound above, as before.
   function bindShellBar(){
     document.querySelectorAll("[data-shell-theme]").forEach(b=>b.onclick=()=>TOPBAR.theme.toggle());
+    document.querySelectorAll("[data-shell-skin]").forEach(b=>b.onclick=()=>TOPBAR.skin.set(b.dataset.shellSkin));
+    // "Sonraki: X →" is the same move as clicking X in the bar.
+    document.querySelectorAll("[data-shell-next]").forEach(b=>b.onclick=()=>{const tab=document.querySelector(`header.shell-top [data-tab="${b.dataset.shellNext}"]`);if(tab)tab.click();});
     document.querySelectorAll("[data-shell-assistant]").forEach(b=>b.onclick=()=>ASSIST.toggle(true));
     document.querySelectorAll("[data-shell-open][data-shell-event]").forEach(b=>b.onclick=()=>{
       const id=b.dataset.shellEvent,tab=b.dataset.shellOpen;

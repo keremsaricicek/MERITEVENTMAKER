@@ -15,12 +15,23 @@
 //     remembered in localStorage — and a storage that throws only loses the
 //     memory, never the switch.
 //
+// REDESIGN v4 (SPEC-v4.md, owner 2026-11-07 — the step-1 look was rejected):
+//   TWO THEMES, A "Atlas sade" (default) and B "Birleşik", each light and dark,
+//     chosen in the ⋯ menu and remembered ("merit.skin.v1", try/catch).
+//   "OTEL TABELASI": the six words, no icons, in the working order; a finished
+//     step carries a thin ✓, the next unfinished step is the emphasised word,
+//     and one quiet "Sonraki: X →" sits at the bottom right. The right side is
+//     event name · clock · theme · "Mimar" (the F8 assistant's door).
+//   Mutation proof, recorded 2026-11-07: against the step-1 bar every v4 check
+//     fails (icons present, no data-skin, no ✓, no Sonraki); with the skin
+//     writer's try/catch removed the throwing-storage skin check throws.
+//
 // Mutation proof, recorded 2026-11-07: before the change (old two-row header,
 // no theme) every check below fails at the first selector; with the theme key
 // unbound (F9 removed from the keydown handler) "F9 switches back" fails; with
 // the try/catch removed from the theme writer the throwing-storage check
 // throws a page error.
-import { click, openApp, createBlankEvent, gotoTab, settle, futureDate } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, gotoTab, settle, futureDate, addTables, addGuest } from "../lib/app-actions.mjs";
 
 export const meta = { name: "shell-topbar", tags: ["ui", "fast"], timeout: 150000 };
 
@@ -32,7 +43,12 @@ const BAR = `(() => {
   return {
     height: Math.round(top.getBoundingClientRect().height),
     items: items.map((b) => ({ label: b.querySelector(".shell-nav-label")?.textContent.trim() || "", tab: b.dataset.tab || null,
-      icon: !!b.querySelector("svg"), current: b.getAttribute("aria-current") === "page", disabled: b.disabled })),
+      icon: !!b.querySelector("svg"), current: b.getAttribute("aria-current") === "page", disabled: b.disabled,
+      done: !!b.querySelector(".shell-nav-check"), next: b.classList.contains("next") })),
+    skin: document.documentElement.dataset.skin || null,
+    nextButton: document.querySelector("[data-shell-next]")?.textContent.trim() || null,
+    nextTarget: document.querySelector("[data-shell-next]")?.dataset.shellNext || null,
+    mimar: top.querySelector("[data-shell-assistant]")?.textContent.replace(/\s+/g, " ").trim() || "",
     tabs: [...document.querySelectorAll(".tabs [data-tab]")].map((b) => b.dataset.tab),
     secondRow: document.querySelectorAll(".workspace > nav.tabs, .sidebar, .side-nav").length,
     brand: top.querySelector(".shell-brand")?.textContent.replace(/\\s+/g, " ").trim() || "",
@@ -72,11 +88,12 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(home.height <= 56, "the bar is thin (the prototype's 52 px)", home.height);
   checks.equal(home.items.map((i) => i.label), ["Etkinlik", "Salon", "Misafirler", "Oturma", "Kapı", "Raporlar"],
     "six items, in the prototype's order and words", home.items);
-  checks.ok(home.items.every((i) => i.icon), "every item carries its inline icon beside the label", home.items);
+  checks.ok(home.items.every((i) => !i.icon), "hotel signage: words only, no icons", home.items);
   checks.ok(home.items[0].current, "on the events home, Etkinlik is the current item", home.items);
-  checks.ok(/MERIT/.test(home.brand) && /Event Maker/.test(home.brand), "the mark reads MERIT Event Maker", home.brand);
+  checks.ok(/^MERIT/.test(home.brand), "the mark reads MERIT", home.brand);
   checks.ok(/^\d{2}:\d{2}$/.test(home.clock), "the clock shows HH:MM", home.clock);
-  checks.ok(home.assistantKey, "the F8 command line is in the bar on the events home too", home);
+  checks.ok(home.assistantKey && /^Mimar/.test(home.mimar), "the bar's right side carries \"Mimar\", the F8 assistant's door", home.mimar);
+  checks.equal(home.nextButton, null, "the events home has no \"Sonraki\" (no event is open)", home.nextButton);
   checks.equal(home.secondRow, 0, "no left sidebar, no second tab row", home);
   checks.ok(/Segoe UI Variable/.test(home.font) && /system-ui/.test(home.font), "a modern system sans stack", home.font);
   for (const a of ["help", "backup-export", "backup-import", "recovery-restore"])
@@ -105,6 +122,36 @@ export default async function run({ page, checks, baseUrl }) {
   checks.equal(throwing, "dark", "a storage that throws loses only the memory, never the switch");
   await page.keyboard.press("F9");
 
+  // --- 2b. two themes: A "Atlas sade" (default) and B "Birleşik" ------------------
+  checks.equal(home.skin, "a", "a first boot is theme A, Atlas sade");
+  const skinFace = () => page.evaluate(() => ({ skin: document.documentElement.dataset.skin, bg: getComputedStyle(document.querySelector("header.shell-top")).backgroundColor,
+    brandFont: getComputedStyle(document.querySelector(".shell-brand b")).fontFamily, pressed: [...document.querySelectorAll("[data-shell-skin]")].filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.shellSkin) }));
+  const a = await skinFace();
+  checks.equal(a.bg, "rgb(247, 248, 245)", "theme A light is the Atlas sade surface (#F7F8F5)", a);
+  checks.ok(/Palatino|Iowan|Georgia/.test(a.brandFont), "theme A sets the mark in the serif", a.brandFont);
+  checks.equal(a.pressed, ["a"], "the ⋯ menu shows theme A as the chosen one", a.pressed);
+  await click(page, "header.shell-top .shell-more > summary");
+  await click(page, '[data-shell-skin="b"]');
+  const b = await skinFace();
+  checks.equal(b.skin, "b", "the ⋯ menu switches to theme B", b);
+  checks.equal(b.bg, "rgb(255, 255, 255)", "theme B light is the combined white surface", b);
+  checks.ok(!/Palatino|Iowan/.test(b.brandFont), "theme B keeps the mark in the sans", b.brandFont);
+  checks.equal(await page.evaluate(() => localStorage.getItem("merit.skin.v1")), "b", "the theme choice is remembered");
+  for (const [skin, mode] of [["a", "light"], ["a", "dark"], ["b", "light"], ["b", "dark"]]) {
+    await page.evaluate(([s, m]) => { document.documentElement.dataset.skin = s; document.documentElement.dataset.theme = m; }, [skin, mode]);
+    checks.ok(await navContrast(page) >= 4.5, `theme ${skin.toUpperCase()} ${mode}: the bar's text clears 4.5:1`, await navContrast(page));
+  }
+  await page.reload(); await page.waitForLoadState("networkidle");
+  await page.waitForFunction(() => { try { return Array.isArray(state.events) && !!document.querySelector("header.shell-top"); } catch { return false; } });
+  checks.equal(await page.evaluate(() => [document.documentElement.dataset.skin, document.documentElement.dataset.theme]), ["b", "light"], "theme B comes back after a reload");
+  const skinThrow = await page.evaluate(() => {
+    const orig = Storage.prototype.setItem;
+    Storage.prototype.setItem = function () { throw new Error("quota"); };
+    try { document.querySelector('[data-shell-skin="a"]').click(); return document.documentElement.dataset.skin; }
+    finally { Storage.prototype.setItem = orig; }
+  });
+  checks.equal(skinThrow, "a", "a storage that throws loses only the memory of the theme, never the switch");
+
   // --- 3. the bar in an event ---------------------------------------------------
   await createBlankEvent(page, { name: "Topbar Gala", date: futureDate(20) });
   await settle(page);
@@ -117,6 +164,23 @@ export default async function run({ page, checks, baseUrl }) {
   checks.equal(ws.secondRow, 0, "inside an event there is still only one bar", ws);
   for (const a of ["back-events", "save-now", "help", "toggle-lang"])
     checks.ok(ws.menu.includes(a), `the event header's "${a}" control kept a home in the ⋯ menu`, ws.menu);
+
+  // --- 3b. the working order: ✓ on finished steps, the next one emphasised -------
+  const step = (bar) => bar.items.map((i) => (i.done ? "✓" : "") + (i.next ? ">" : "") + i.tab).join(" ");
+  checks.equal(step(ws), "✓command >floor guests seating live reports", "a blank event: Etkinlik ✓, Salon is the next step", step(ws));
+  checks.equal([ws.nextTarget, ws.nextButton], ["floor", "Sonraki: Salon →"], "one quiet \"Sonraki: Salon →\" on the overview", ws);
+  await click(page, "[data-shell-next]");
+  await settle(page);
+  checks.equal(await page.evaluate(() => ui.tab), "floor", "\"Sonraki\" opens the next screen");
+  await addTables(page, { quantity: 2 });
+  await settle(page);
+  const afterFloor = await page.evaluate(BAR);
+  checks.equal(step(afterFloor), "✓command ✓floor >guests seating live reports", "a room with tables: Salon ✓, Misafirler next", step(afterFloor));
+  await gotoTab(page, "guests");
+  await addGuest(page, { name: "Order Guest" });
+  await settle(page);
+  const afterGuests = await page.evaluate(BAR);
+  checks.equal(step(afterGuests), "✓command ✓floor ✓guests >seating live reports", "a guest list: Misafirler ✓, Oturma next (nobody is seated yet)", step(afterGuests));
   await gotoTab(page, "live");
   const onLive = await page.evaluate(BAR);
   checks.ok(onLive.items.find((i) => i.tab === "live")?.current && onLive.items.filter((i) => i.current).length === 1,
@@ -151,5 +215,6 @@ export default async function run({ page, checks, baseUrl }) {
   await settle(page);
   const hist = await page.evaluate(BAR);
   checks.equal(hist.tabs, ["guests", "seating", "reports"], "a historical event shows no Etkinlik overview, Salon or Kapı tab", hist.tabs);
+  checks.ok(!hist.items.some((i) => i.next) && hist.nextButton === null, "a historical event has no next step and no \"Sonraki\"", hist);
   checks.ok(!hist.items.some((i) => /Salon|Kapı/.test(i.label)), "the editing surfaces are absent, not merely disabled", hist.items);
 }
