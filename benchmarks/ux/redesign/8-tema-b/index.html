@@ -2,6 +2,7 @@
 <html lang="tr" data-theme="light">
 <head>
 <meta charset="utf-8">
+<script>(function(){var D=1440;function fit(){var r=document.documentElement;r.style.zoom='';var w=window.innerWidth;if(w<1200){var s=w/D;r.style.zoom=s;r.style.setProperty('--vh','900px');r.style.width=D+'px';}else{r.style.removeProperty('--vh');r.style.width='';}}fit();addEventListener('orientationchange',function(){setTimeout(fit,300)});var t;addEventListener('resize',function(){clearTimeout(t);t=setTimeout(fit,200)});})();</script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Merit Event Maker</title>
 <link rel="icon" href="data:,">
@@ -84,7 +85,7 @@ kbd{font:600 12px var(--font);color:var(--ink3);border:1px solid var(--line2);bo
 .di .s{font-size:13px;color:var(--ink2)}
 .df{font-size:12px;color:var(--ink3);padding:8px 12px 4px;border-top:1px solid var(--line);margin-top:6px}
 
-main{height:calc(100vh - 52px);position:relative}
+main{height:calc(var(--vh,100vh) - 52px);position:relative}
 .scr{display:none;height:100%}
 .scr.on{display:flex}
 
@@ -384,7 +385,7 @@ main{height:calc(100vh - 52px);position:relative}
 .mimar-btn{height:34px;padding:0 12px 0 14px;border-radius:3px;border:1px solid var(--acc);background:var(--surf);color:var(--acc);font-variant-caps:small-caps;font-size:16px;letter-spacing:.06em;display:inline-flex;align-items:center;gap:8px;font-weight:600}
 .mimar-btn.on{background:var(--acc);color:var(--acc-ink)}
 .mimar-btn kbd{font-variant-caps:normal}
-main{height:calc(100vh - 56px)}
+main{height:calc(var(--vh,100vh) - 56px)}
 /* hazır mı */
 .hz{width:440px;flex:none;background:var(--surf);border-left:1px solid var(--line);padding:26px 28px;overflow:auto}
 .hzl{margin-top:18px;border-top:1px solid var(--line)}
@@ -395,7 +396,7 @@ main{height:calc(100vh - 56px)}
 .hzr.info .num,.hzr .num.none{background:var(--line2);color:var(--ink)}
 .hz-ok{margin-top:18px;display:flex;flex-direction:column;gap:8px;color:var(--ink2)}
 .hz-ok div{display:flex;gap:8px;align-items:center}.hz-ok svg{color:var(--ok)}
-#lead{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:35}
+#lead{position:fixed;inset:0;width:100vw;height:var(--vh,100vh);pointer-events:none;z-index:35}
 #lead path{fill:none;stroke:var(--acc);stroke-width:1.3}#lead circle{fill:var(--acc)}
 /* Mimar chat */
 #mimar{position:fixed;right:20px;bottom:0;width:340px;height:500px;background:var(--surf);border:1px solid var(--line2);border-bottom:0;border-radius:8px 8px 0 0;box-shadow:var(--shadow);display:none;flex-direction:column;z-index:45}
@@ -418,6 +419,48 @@ main{height:calc(100vh - 56px)}
 .mf{padding-bottom:22px}
 
 .st-t{font-size:26px;font-weight:650;margin:0}.sub{color:var(--ink2);margin:4px 0 0}.ti.flag .body{stroke:var(--no);stroke-width:2.6;stroke-dasharray:5 4}
+/* ═══ working order (owner 2026-11-07) ═══ */
+#nav button .ck{display:inline-block;width:9px;height:5px;border-left:1.3px solid currentColor;border-bottom:1.3px solid currentColor;transform:rotate(-45deg) translateY(-3px);margin-left:7px;opacity:.75}
+#nav button.next{color:var(--acc);font-weight:700}
+#nav button.next::after{content:"";position:absolute;left:16px;right:16px;bottom:12px;height:1px;background:var(--acc);opacity:.5}
+#nav button.next[aria-current]::after{bottom:0;height:2px;opacity:1}
+#nextBtn{position:fixed;right:24px;bottom:14px;z-index:40;height:34px;padding:0 14px;border-radius:17px;border:1px solid var(--line2);background:var(--surf);color:var(--ink2);font-size:14px;font-weight:500;box-shadow:var(--shadow)}
+#nextBtn:hover{color:var(--acc);border-color:var(--acc)}
+body.mopen #nextBtn{right:380px}
+#s-salon,.gl-main{position:relative}
+#planFlow{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:var(--room);z-index:3}
+#planFlow.on{display:flex}
+.pf{width:560px;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center}
+.pf h2{font-size:24px;font-weight:600}.pf p{color:var(--ink2);margin:0}
+.pf .drop-zone{width:100%;padding:34px 20px;background:var(--surf)}
+.pf .drop-zone.over{border-color:var(--acc);background:var(--acc2-soft)}
+.pf .file{display:flex;gap:10px;align-items:center;justify-content:center;font-weight:600}
+.pf .btn.lg{min-width:220px}
+.pf .or{color:var(--ink3);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+#handTools{position:absolute;top:16px;right:var(--htR,24px);display:none;gap:6px;z-index:4;background:var(--surf);border:1px solid var(--line);border-radius:6px;padding:5px;box-shadow:var(--shadow)}
+#handTools.on{display:flex}
+#handTools span{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);align-self:center;padding:0 6px}
+#detStrip{position:absolute;top:16px;left:50%;transform:translateX(-50%);display:none;gap:10px;align-items:center;z-index:4;background:var(--surf);border:1px solid var(--acc2);border-radius:6px;padding:8px 10px 8px 16px;box-shadow:var(--shadow);font-size:14px;white-space:nowrap}
+#detStrip.on{display:flex}
+[data-cand]{opacity:.6}[data-cand] .tshape,[data-cand] .body{stroke:var(--acc2)!important;stroke-dasharray:6 4}
+#settledBar{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:none;gap:12px;align-items:center;z-index:4;background:var(--surf);border:1px solid var(--line2);border-radius:18px;padding:5px 6px 5px 16px;font-size:14px;color:var(--ink2)}
+.settled #settledBar{display:flex}.settled .rtools,.settled .sp-sec,.settled #sugChip{display:none!important}
+#tidy{display:none;gap:10px;flex-wrap:wrap;padding:0 32px 12px}
+#tidy.on{display:flex}
+.td{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surf2);border-radius:6px;padding:6px 8px 6px 12px;font-size:14px}
+.td b{font-weight:600}.td small{color:var(--ink3);font-size:13px}
+.td-h{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);align-self:center}
+#glEmpty{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:var(--surf);z-index:3}
+#glEmpty.on{display:flex}
+.ge{display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;width:520px}
+.ge h2{font-size:24px;font-weight:600}.ge p{color:var(--ink2);margin:0 0 8px}
+.ge .opts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+.ge .opts button{height:96px;border:1px solid var(--line2);border-radius:8px;background:var(--surf2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:15px;font-weight:600;color:var(--ink)}
+.ge .opts button small{font-weight:400;color:var(--ink3);font-size:13px}
+.ge .opts button:hover{border-color:var(--acc)}
+.hz-settle{margin-top:20px;padding:18px;border:1px solid var(--ok);border-radius:8px;background:var(--ok-soft)}
+.hz-settle b{display:block;font-size:16px;margin-bottom:4px}
+
 </style>
 </head>
 <body>
@@ -433,16 +476,16 @@ main{height:calc(100vh - 56px)}
     <div class="cal-wrap"><div id="calBox"></div><aside id="evDet" aria-live="polite"></aside></div>
   </section>
   <section class="scr" id="s-hazir" aria-label="Hazır mı?"><div class="roomwrap" id="hzRoom"></div><aside class="hz" id="hzList"></aside></section>
-  <section class="scr" id="s-salon" aria-label="Salon">
+  <section class="scr" id="s-salon" aria-label="Salon"><div id="planFlow"></div><div id="handTools" role="toolbar" aria-label="Elle çizim"></div><div id="detStrip" role="status"></div><div id="settledBar">Yerleşmiş plan · sakin görünüm <button class="btn sm" id="setEdit">⋯ Düzenle</button></div>
     <div class="roomwrap" id="salonRoom" style="padding-top:64px"></div>
     <div class="rtools"><button class="btn" id="readPlan">Planı oku</button><button class="btn" id="addT">+ Masa</button><button class="chip" id="sugChip"></button></div>
     <div class="legend"><span><i class="full"></i>Dolu</span><span><i class="room"></i>Yer var</span><span><i style="border-style:dashed;border-radius:50%"></i>Boş</span><span><i class="vipl"></i>VIP masası</span><span><i style="border-width:3px;border-color:var(--chair);background:none"></i>Halka: doluluk · 8/10</span><span class="mut">Masaya ya da misafire tıklayın: masa parlar, sandalyeler görünür</span></div>
   </section>
   <section class="scr" id="s-misafirler" aria-label="Misafirler">
-    <div class="gl-main">
+    <div class="gl-main"><div id="glEmpty"></div>
       <div class="gl-bar"><h1>Misafirler</h1><span class="cnt tnum" id="glCnt"></span><div class="sp"></div><button class="btn" id="glImp">İçe aktar ▾</button><button class="btn pri" id="glAdd">+ Misafir</button></div>
       <div class="gl-bar2"><div class="seg" id="glSeg"></div><button class="btn ghost" id="glHost">Davet eden ▾</button><div class="sp" style="flex:1"></div><input class="fld" id="glQ" placeholder="Listede ara" style="width:240px"></div>
-      <div class="gl-head"><div>Misafir</div><div>Davet eden</div><div>Masa</div><div>Katılım</div><div>Varış</div></div>
+      <div id="tidy" aria-label="Öneriler"></div><div class="gl-head"><div>Misafir</div><div>Davet eden</div><div>Masa</div><div>Katılım</div><div>Varış</div></div>
       <div class="gl-rows" id="glRows"></div>
     </div>
     <aside class="gl-det" id="glDet"></aside>
@@ -473,6 +516,7 @@ main{height:calc(100vh - 56px)}
   <div class="mb" id="mb" aria-live="polite"></div>
   <div class="mf"><input class="fld" id="mq" placeholder="Yazın: “selin akı t38e oturt”" autocomplete="off"><button class="mic" disabled title="Sesle komut · yakında" aria-label="Sesle komut (yakında)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="5.5" y="1.8" width="5" height="8" rx="2.5"/><path d="M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2.2"/></svg><span>yakında</span></button><button class="btn pri" id="mSend">Gönder</button></div>
 </div>
+<button id="nextBtn" hidden></button>
 <div id="pop" role="dialog"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="dlg" role="dialog" aria-modal="true"><div class="box"></div></div>
@@ -701,13 +745,13 @@ function renderEvDetail(){const e=EVENTS.find(x=>x.id===S.ev)||EVENTS.find(x=>x.
  let rd;if(e.live){S.issues=issues();rd=S.issues.slice(0,4).map((i,k)=>`<li class="${i.bad?'bad':'info'}" data-go="${k}"><i class="mk"></i><span>${esc(i.t)}</span><span class="go">›</span></li>`).join('')}else if(e.past)rd=`<li><i class="mk"></i><span>Tamamlandı · değiştirilemez</span><span></span></li>`;else rd=`<li class="bad"><i class="mk"></i><span>${esc(e.ready||'Boş etkinlik')}</span><span></span></li>`;
  $('#evDet').innerHTML=`<div class="eyebrow ${e.live?'live':''}">${e.live?'Bu gece · canlı':e.past?'Geçmiş · salt okunur':'Yaklaşan'}</div><h2 class="ed-t">${esc(e.name)}</h2><div class="ed-m">${fmtD(e.d)}, ${DAYS[x.getDay()]}${e.t?' · '+e.t:''}<br>${esc(e.venue)}</div><dl class="facts sm">${facts.map(([k,v])=>`<div><dt>${k}</dt><dd class="tnum">${v}</dd></div>`).join('')}</dl><h3 class="ed-h">Hazır mı?</h3><ul class="rdl">${rd}</ul><div class="acts"><button class="btn pri" data-a="open">${e.past?'Raporları gör':'Etkinliği aç'}</button><button class="btn" data-a="same">Aynı yerleşimle yeni</button><button class="btn ghost icon" data-a="more" aria-label="Diğer işlemler">${IC.more}</button></div>`}
 function evAction(a,el){const e=EVENTS.find(x=>x.id===S.ev);
- if(a==='open'){if(e.live)go('kapi');else if(e.past)go('raporlar');else toast('Bu prototipte yalnızca Yılbaşı Galası dolu açılır.');return}
+ if(a==='open'){if(e.live){openGala();go('kapi')}else if(e.past)go('raporlar');else if(e.blank)openBlank(e);else toast('Bu prototipte yalnızca Yılbaşı Galası dolu açılır.');return}
  if(a==='same'){newEventDlg(`${e.name} — yeni tarih`,e.venue,true);return}
  if(a==='dup'){const d=new Date(e.d+'T12:00');d.setDate(d.getDate()+7);const n={...e,id:'c'+Date.now(),name:e.name+' (kopya)',d:d.toISOString().slice(0,10),past:false,live:false,ready:'Kopya · misafirler ve yerleşim kopyalandı'};EVENTS.push(n);S.ev=n.id;renderEvents();pushUndo(`“${e.name}” çoğaltıldı`,()=>{EVENTS.splice(EVENTS.indexOf(n),1);S.ev=e.id;if(S.scr==='etkinlik'){renderEvents()}});return}
  if(a==='exp'){toast(`“${esc(e.name)}” paketi hazırlandı (.merit · örnek)`);return}
  if(a==='more')menu(el,[{t:'Aynı yerleşimle yeni…',fn:()=>evAction('same')},{t:'Çoğalt',fn:()=>evAction('dup')},{t:'Dışa aktar',fn:()=>evAction('exp')},'-',{t:'Plan ve yerleşimi dışa aktar',fn:()=>toast('Yerleşim dosyası hazırlandı (örnek)')},'-',{t:e.past||e.live?'Silinemez · geçmiş ya da canlı':'Etkinliği sil…',danger:!(e.past||e.live),off:e.past||e.live,fn:()=>confirmDlg('Etkinlik silinsin mi?',`<b>${esc(e.name)}</b> ve içindeki her şey kaldırılır. Geri al ile döndürülebilir.`,'Sil',()=>{const i=EVENTS.indexOf(e);EVENTS.splice(i,1);S.ev='gala';renderEvents();pushUndo(`“${esc(e.name)}” silindi`,()=>{EVENTS.splice(i,0,e);S.ev=e.id;if(S.scr==='etkinlik'){renderEvents()}})},true)}])}
 function newEventDlg(name='',venue='Merit Royal Hotel · Grand Balo Salonu',same=false,date='2027-01-16'){const V=['Merit Royal Hotel · Grand Balo Salonu','Merit Royal Diamond · Kristal Salon','Merit Park Hotel · Amfi','Merit Crystal Cove · Teras'];
- dialog(`<h3>${same?'Aynı yerleşimle yeni etkinlik':'Yeni etkinlik'}</h3><p>${same?'Salon ve masa yerleşimi gelir; misafir gelmez.':'Boş başlar: masa, misafir ya da örnek veri yok.'}</p><label>Ad</label><input class="fld" id="nN" value="${esc(name)}" placeholder="Örn. Sevgililer Günü Galası"><div class="row2"><div><label>Tarih</label><input class="fld" id="nD" type="date" value="${date}"></div><div><label>Salon</label><select class="fld" id="nV">${V.map(v=>`<option ${v===venue?'selected':''}>${v}</option>`).join('')}</select></div></div><div class="dacts"><button class="btn" data-x>Vazgeç</button><button class="btn pri" data-ok>Oluştur</button></div>`,b=>{b.querySelector('[data-x]').onclick=closeDlg;b.querySelector('[data-ok]').onclick=()=>{const n={id:'n'+Date.now(),d:$('#nD').value||'2027-01-16',name:$('#nN').value.trim()||'Adsız etkinlik',venue:$('#nV').value,pax:0,tables:same?42:0,ready:same?'Yerleşim hazır · misafir listesi yok':'Boş · plan ve misafir yok'};EVENTS.push(n);S.ev=n.id;S.month=n.d.slice(0,7);closeDlg();go('etkinlik');pushUndo(`“${esc(n.name)}” oluşturuldu`,()=>{EVENTS.splice(EVENTS.indexOf(n),1);S.ev='gala';if(S.scr==='etkinlik'){renderEvents()}})}})}
+ dialog(`<h3>${same?'Aynı yerleşimle yeni etkinlik':'Yeni etkinlik'}</h3><p>${same?'Salon ve masa yerleşimi gelir; misafir gelmez.':'Boş başlar: masa, misafir ya da örnek veri yok.'}</p><label>Ad</label><input class="fld" id="nN" value="${esc(name)}" placeholder="Örn. Sevgililer Günü Galası"><div class="row2"><div><label>Tarih</label><input class="fld" id="nD" type="date" value="${date}"></div><div><label>Salon</label><select class="fld" id="nV">${V.map(v=>`<option ${v===venue?'selected':''}>${v}</option>`).join('')}</select></div></div><div class="dacts"><button class="btn" data-x>Vazgeç</button><button class="btn pri" data-ok>Oluştur</button></div>`,b=>{b.querySelector('[data-x]').onclick=closeDlg;b.querySelector('[data-ok]').onclick=()=>{const n={id:'n'+Date.now(),d:$('#nD').value||'2027-01-16',name:$('#nN').value.trim()||'Adsız etkinlik',venue:$('#nV').value,pax:0,tables:same?42:0,ready:same?'Yerleşim hazır · misafir listesi yok':'Boş · plan ve misafir yok',blank:1,same};EVENTS.push(n);S.ev=n.id;S.month=n.d.slice(0,7);closeDlg();openBlank(n);pushUndo(`“${esc(n.name)}” oluşturuldu`,()=>{EVENTS.splice(EVENTS.indexOf(n),1);S.ev='gala';if(S.scr==='etkinlik'){renderEvents()}})}})}
 
 /* ═══ SALON: calm plan; options only on the clicked table ═══ */
 function renderSugChip(){const n=SUG.filter(s=>s.state==='open').length;const c=$('#sugChip');c.style.visibility=n?'visible':'hidden';c.textContent=`${n} plan önerisi karar bekliyor`}
@@ -903,7 +947,7 @@ function hazirList(){const out=[],c=counts();
  const bel=G.filter(g=>g.plan==='Belirsiz').length;if(bel)out.push({info:1,t:`${bel} kayıt belirsiz`,d:'Katılım teyidi yok',go:'misafirler',f:'bel'});
  let n=0;out.forEach(i=>{if(i.at)i.n=++n});return out}
 function renderHazir(){S.hz=hazirList();renderRoom();const bad=S.hz.filter(i=>!i.info).length;
- $('#hzList').innerHTML=`<h1 class="st-t">Hazır mı?</h1><p class="sub">${bad?`${bad} konu açık. Üzerine gelin: planda yerini gösterir.`:'Her şey hazır.'}</p><div class="hzl">${S.hz.map((i,k)=>`<div class="hzr${i.info?' info':''}" data-k="${k}"><span class="num${i.n?'':' none'}">${i.n||'·'}</span><div><b>${esc(i.t)}</b><small>${esc(i.d)}</small></div><button class="btn sm" data-go="${k}">Git</button></div>`).join('')}</div><div class="hz-ok"><div>${IC.check}Kapı listesi hazır · A–Z, masa numaralı</div><div>${IC.check}${TABLES.length} masa · ${counts().seated} / 420 kişi yerleşti</div></div>`}
+ $('#hzList').innerHTML=`<h1 class="st-t">Hazır mı?</h1><p class="sub">${bad?`${bad} konu açık. Üzerine gelin: planda yerini gösterir.`:'Her şey hazır.'}</p><div class="hzl">${S.hz.map((i,k)=>`<div class="hzr${i.info?' info':''}" data-k="${k}"><span class="num${i.n?'':' none'}">${i.n||'·'}</span><div><b>${esc(i.t)}</b><small>${esc(i.d)}</small></div><button class="btn sm" data-go="${k}">Git</button></div>`).join('')}</div><div class="hz-ok"><div>${IC.check}Kapı listesi hazır · A–Z, masa numaralı</div><div>${IC.check}${TABLES.length} masa · ${counts().seated} / ${counts().exp} kişi yerleşti</div></div>`}
 function leadTo(row){const L=$('#lead');L.innerHTML='';$$('.flag').forEach(x=>x.classList.remove('flag'));$$('#hzList .hzr.on').forEach(x=>x.classList.remove('on'));if(!row)return;row.classList.add('on');const i=S.hz[+row.dataset.k];if(!i||!i.at)return;
  const tg=i.at==='ghost'?$('#hzRoom .ghost'):$(`#hzRoom [data-t="${i.at}"]`);if(!tg)return;if(i.at!=='ghost')tg.classList.add('flag');
  const a=row.getBoundingClientRect(),b=(tg.querySelector('.body')||tg).getBoundingClientRect(),x1=a.left-2,y1=a.top+a.height/2,x2=b.left+b.width/2,y2=b.top+b.height/2;
@@ -932,6 +976,90 @@ $('#mSend').onclick=()=>{mimarAsk($('#mq').value);$('#mq').value='';$('#mq').foc
 $('#mHead').onclick=e=>{if(e.target.closest('#mX')){mimarOpen(false);return}M.min=!M.min;$('#mimar').classList.toggle('min',M.min)};
 $('#mimarBtn').onclick=()=>mimarOpen();
 
+const THEME='B';const GRID={round:{x0:95,y0:222,dx:108,dy:90,cols:8,rows:5},rect:{x0:250,y0:130,dx:150,dy:90,cols:4,rows:1},fb:[905,592]};
+/* ═══ working order: Etkinlik → Salon → Misafirler → Oturma → (Hazır) → Kapı → Raporlar ═══ */
+const ORDER=['etkinlik','salon','misafirler','oturma','kapi','raporlar'];
+const NEXT={etkinlik:'salon',salon:'misafirler',misafirler:'oturma',oturma:'hazir',hazir:'kapi',kapi:'raporlar'};
+const NL={etkinlik:THEME==='A'?'Etkinlikler':'Etkinlik',salon:'Salon',misafirler:'Misafirler',oturma:'Oturma',hazir:'Hazır mı?',kapi:'Kapı',raporlar:'Raporlar'};
+const STORE={},FL={gala:{ready:true,settled:false,fx:{stage:1,bar:1}}};let CUR='gala',CURNAME=THEME==='A'?'Merit Royal Yılbaşı Galası':'Yılbaşı Galası';
+const FLc=()=>FL[CUR];
+function snapCur(){return{T:TABLES.splice(0),G:G.splice(0),SUG:SUG.splice(0),js:S.justSeat,w:S.warn,ji:S.justIn}}
+function switchTo(id,make){if(CUR!==id){STORE[CUR]=snapCur();const st=STORE[id]||make();CUR=id;TABLES.push(...st.T);G.push(...st.G);SUG.push(...st.SUG);S.justSeat=st.js;S.warn=st.w;S.justIn=st.ji}
+ S.selT=S.zoomT=S.focusG=S.selW=S.selG=S.preview=null;S.undo.length=0;closePop()}
+function setEvname(){$('#evname').textContent=CURNAME}
+function openGala(){switchTo('gala');CURNAME=THEME==='A'?'Merit Royal Yılbaşı Galası':'Yılbaşı Galası';setEvname()}
+function galaLayout(){return(CUR==='gala'?TABLES:STORE.gala.T).map(t=>({...t,unread:false}))}
+function openBlank(ev){const same=!!ev.same,lay=same&&!STORE[ev.id]?galaLayout():[],sug=(CUR==='gala'?SUG:STORE.gala.SUG).map(s=>({...s,state:'none'}));switchTo(ev.id,()=>({T:lay,G:[],SUG:sug,js:{},w:{},ji:{}}));
+ FL[ev.id]=FL[ev.id]||{ready:false,settled:false,fx:{stage:same?1:0,bar:same?1:0},blank:1};CURNAME=ev.n||ev.name;setEvname();go('salon')}
+counts=function(){const exp=sum(G,g=>g.pax),arrived=sum(G,g=>g.arr==='in'?g.inPax:0),no=sum(G,g=>g.arr==='no'?g.pax:0),un=sum(G,g=>!g.table?g.pax:0),seated=sum(G,g=>g.table?g.pax:0);return{arrived,no,un,seated,wait:exp-arrived-no,exp}};
+/* steps done / next */
+function done(k){const f=FLc();if(k==='etkinlik')return true;if(k==='salon')return TABLES.length>0&&!TABLES.some(t=>t.cand);if(k==='misafirler')return G.length>0&&!tidyItems().length;if(k==='oturma')return !!f.ready;return false}
+function renderNav(){const nx=ORDER.find(k=>!done(k));const cur=S.scr==='hazir'?'oturma':S.scr;
+ $('#nav').innerHTML=ORDER.map((k,i)=>`<button data-s="${k}" class="${done(k)?'done':''}${k===nx?' next':''}" title="${NL[k]} · ${i+1}${k===nx?' · sıradaki adım':''}" ${k===cur?'aria-current="page"':''}>${NL[k]}${done(k)?'<span class="ck" aria-label="tamam"></span>':''}</button>`).join('');
+ const n=NEXT[S.scr],b=$('#nextBtn');b.hidden=!n;if(n)b.textContent=`Sonraki: ${NL[n]} →`;document.body.classList.toggle('mopen',$('#mimar').classList.contains('on'))}
+const _go1=go;go=function(s){_go1(s);flowAfter(s);renderNav()};
+function flowAfter(s){if(s==='salon')flowSalon();if(s==='etkinlik')setEvname();if(s==='kapi'){const o=$('#dcount .of');if(o)o.textContent='/ '+counts().exp}}
+$('#nextBtn').onclick=()=>{const n=NEXT[S.scr];if(n==='hazir')$('#readyBtn')?$('#readyBtn').click():go('hazir');else if(n)go(n)};
+new MutationObserver(()=>document.body.classList.toggle('mopen',$('#mimar').classList.contains('on'))).observe($('#mimar'),{attributes:true});
+/* salon: upload → Analiz et → suggestions; or draw by hand */
+const _room1=roomSVG;roomSVG=function(mode){let s=_room1(mode);const fx=(FLc()||{}).fx||{stage:1,bar:1};
+ if(!fx.stage||!fx.bar){s=s.split('\n').filter(l=>!((!fx.stage&&/>SAHNE<|>DJ<|DANS P/.test(l))||(!fx.bar&&/>BAR</.test(l)))).join('\n');if(!fx.stage&&!fx.bar)s=s.replace(/<g class="fixt">.*?<\/g>/,'')}
+ TABLES.filter(t=>t.cand).forEach(t=>{s=s.replace(`data-t="${t.id}"`,`data-t="${t.id}" data-cand="1"`)});return s};
+function flowSalon(){const f=FLc(),pf=$('#planFlow'),empty=!TABLES.length&&f.blank&&!f.hand;
+ pf.classList.toggle('on',empty);
+ if(empty)pf.innerHTML=`<div class="pf"><h2>Salonun planını ekleyin</h2><p>Plan görselini ya da PDF’i bırakın; Assisted Detection masaları okur, siz tek tek onaylarsınız.</p>
+  ${f.file?`<div class="file">${IC.doc||''}${esc(f.file)} yüklendi <button class="lnk" id="pfClear">Değiştir</button></div><button class="btn pri lg" id="pfAnalyze">Analiz et</button>`:`<div class="drop-zone" id="pfDrop">Plan dosyasını buraya bırakın<br><span style="display:inline-flex;gap:8px;margin-top:12px"><button class="btn" id="pfPick">Dosya seç…</button><button class="btn ghost" id="pfSample">Örnek planı kullan</button></span></div>`}
+  <div class="or">ya da elle çizin</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">${toolBtns()}</div></div>`;
+ $('#handTools').classList.toggle('on',!!f.blank&&!empty);$('#handTools').innerHTML='<span>Elle ekle</span>'+toolBtns();
+ const nc=TABLES.filter(t=>t.cand).length,ds=$('#detStrip');ds.classList.toggle('on',nc>0);if(nc)ds.innerHTML=`<span><b>Assisted Detection</b> · ${nc} masa önerisi · tıklayıp tek tek onaylayın</span><button class="btn pri sm" id="detAll">Tümünü kabul</button><button class="btn sm" id="detNone">Tümünü reddet</button>`;
+ $('#s-salon').classList.toggle('settled',!!f.settled&&!f.edit)}
+const toolBtns=()=>[['round','Yuvarlak masa'],['rect','Dikdörtgen masa'],['chair','Sandalye'],['stage','Sahne'],['bar','Bar']].map(([k,l])=>`<button class="btn sm" data-tool="${k}">${l}</button>`).join('');
+function freeSlot(kind){const g=GRID[kind];for(let r=0;r<g.rows;r++)for(let c=0;c<g.cols;c++){const x=g.x0+c*g.dx,y=g.y0+r*g.dy;if(!TABLES.some(t=>Math.hypot(t.x-x,t.y-y)<g.dx*.6))return{x,y}}return{x:GRID.fb[0],y:GRID.fb[1]}}
+function nextId(p){let n=1;while(TABLES.some(t=>t.id===p+pad2(n)))n++;return p+pad2(n)}
+function tool(k){const f=FLc();f.hand=1;
+ if(k==='round'||k==='rect'){const p=freeSlot(k),t={id:nextId(k==='round'?'T':'B'),kind:k,cap:k==='round'?10:12,chairs:k==='round'?10:12,x:p.x,y:p.y,rot:0};TABLES.push(t);RENDER.salon();pushUndo(`${t.id} eklendi · sürükleyerek yerleştirin`,()=>{TABLES.splice(TABLES.indexOf(t),1);if(S.scr==='salon')RENDER.salon()});return}
+ if(k==='chair'){const t=S.selT&&TBL(S.selT);if(!t){toast('Önce bir masaya tıklayın; sandalye ona eklenir');return}if(t.chairs>=12){toast('Bu masada yer yok: en fazla 12 sandalye');return}const p={c:t.chairs,k:t.cap};t.chairs++;t.cap=Math.max(t.cap,t.chairs);RENDER.salon();pushUndo(`${t.id}: sandalye eklendi (${t.chairs})`,()=>{t.chairs=p.c;t.cap=p.k;if(S.scr==='salon')RENDER.salon()});return}
+ const key=k==='stage'?'stage':'bar';if(f.fx[key]){toast(`${k==='stage'?'Sahne':'Bar'} zaten planda`);return}f.fx[key]=1;RENDER.salon();pushUndo(`${k==='stage'?'Sahne ve dans pisti':'Bar'} eklendi`,()=>{f.fx[key]=0;if(S.scr==='salon')RENDER.salon()})}
+function analyze(btn){btn.disabled=true;btn.textContent='Okunuyor…';setTimeout(()=>{const c=galaLayout().map(t=>({...t,cand:true}));TABLES.push(...c);const f=FLc();f.fx={stage:1,bar:1};RENDER.salon();toast(`Assisted Detection: ${c.length} masa önerisi. Tek tek ya da “Tümünü kabul” ile onaylayın.`)},700)}
+$('#s-salon').addEventListener('click',e=>{const t=e.target;
+ if(t.closest('[data-tool]')){tool(t.closest('[data-tool]').dataset.tool);return}
+ if(t.id==='pfPick'){$('#file').onchange=ev=>{const fi=ev.target.files[0];if(fi){FLc().file=fi.name;flowSalon()}};$('#file').click();return}
+ if(t.id==='pfSample'){FLc().file='grand-balo-salonu.pdf';flowSalon();return}
+ if(t.id==='pfClear'){FLc().file=null;flowSalon();return}
+ if(t.id==='pfAnalyze'){analyze(t);return}
+ if(t.id==='detAll'||t.id==='detNone'){const c=TABLES.filter(x=>x.cand),acc=t.id==='detAll';c.forEach(x=>acc?(x.cand=false):TABLES.splice(TABLES.indexOf(x),1));RENDER.salon();pushUndo(`${c.length} öneri ${acc?'kabul edildi':'reddedildi'}`,()=>{c.forEach(x=>{if(acc)x.cand=true;else TABLES.push(x)});if(S.scr==='salon')RENDER.salon()});return}
+ if(t.id==='setEdit'){FLc().edit=1;flowSalon();return}
+ const cd=t.closest('[data-cand]');if(cd){e.stopPropagation();const x=TBL(cd.dataset.t);showPop(cd.querySelector('.tshape,.body')||cd,`<div class="pop-h"><b>${x.id}</b><span>okunan masa · ${x.kind==='round'?'yuvarlak':'dikdörtgen'}, ${x.chairs} sandalye</span></div><p class="pop-p">Bu bir öneridir; kabul edince plana girer.</p><div class="pop-acts"><button class="btn pri sm" data-ca="1">Kabul</button><button class="btn sm" data-ca="0">Reddet</button></div>`,ev=>{const b=ev.target.closest('[data-ca]');if(!b)return;closePop();if(b.dataset.ca==='1')x.cand=false;else TABLES.splice(TABLES.indexOf(x),1);RENDER.salon()})}},true);
+$('#s-salon').addEventListener('dragover',e=>{if($('#pfDrop')){e.preventDefault();$('#pfDrop').classList.add('over')}});
+$('#s-salon').addEventListener('drop',e=>{if(!$('#pfDrop'))return;e.preventDefault();const fi=e.dataTransfer.files[0];FLc().file=fi?fi.name:'plan.pdf';flowSalon()});
+const _rs=RENDER.salon;RENDER.salon=()=>{_rs();flowSalon()};
+/* misafirler: empty state + tidy suggestions */
+function tidyItems(){const f=FLc(),ign=f.ign||{},out=[];const base=n=>fold(n.replace(/\s*\(?\bVIP\b\)?\s*$/i,'').replace(/\s*\+\s*\d+\s*$/,'').trim());
+ const by={};G.forEach(g=>{(by[base(g.name)]=by[base(g.name)]||[]).push(g)});const dup=Object.values(by).filter(a=>a.length>1);
+ if(dup.length&&!ign.dup)out.push({k:'dup',t:`${dup.length} olası tekrar`,d:dup.map(a=>a[0].name).slice(0,2).join(', '),fix:()=>dup.forEach(a=>a.slice(1).forEach(x=>{a[0].add=Math.max(a[0].add,x.add);a[0].pax=1+a[0].add;G.splice(G.indexOf(x),1)}))});
+ const pl=G.filter(g=>/\+\s*\d+\s*$/.test(g.name));if(pl.length&&!ign.plus)out.push({k:'plus',t:`${pl.length} kayıtta +N okunmadı`,d:`“${pl[0].name}” → ${pl[0].name.replace(/\s*\+\s*(\d+)\s*$/,(m,n)=>`, ${1+ +n} kişi`)}`,fix:()=>pl.forEach(g=>{const m=g.name.match(/\s*\+\s*(\d+)\s*$/);g.add=+m[1];g.pax=1+g.add;g.name=g.name.slice(0,m.index).trim()})});
+ const vp=G.filter(g=>!g.vip&&/\(?\bVIP\b\)?\s*$/i.test(g.name));if(vp.length&&!ign.vip)out.push({k:'vip',t:`VIP işareti eksik (${vp.length})`,d:'İsimde “VIP” yazıyor, işaret yok',fix:()=>vp.forEach(g=>{g.vip='VIP';g.name=g.name.replace(/\s*\(?\bVIP\b\)?\s*$/i,'').trim()})});
+ return out}
+function renderTidy(){const it=tidyItems(),el=$('#tidy');el.classList.toggle('on',it.length>0);el.innerHTML=it.length?'<span class="td-h">Öneriler</span>'+it.map(i=>`<div class="td"><div><b>${i.t}</b> <small>${esc(i.d)}</small></div><button class="btn pri sm" data-tok="${i.k}">Uygula</button><button class="btn ghost sm" data-tno="${i.k}">Yoksay</button></div>`).join(''):''}
+$('#tidy').onclick=e=>{const ok=e.target.closest('[data-tok]'),no=e.target.closest('[data-tno]');if(!ok&&!no)return;const f=FLc();f.ign=f.ign||{};
+ if(no){f.ign[no.dataset.tno]=1;renderGL();renderNav();pushUndo('Öneri yoksayıldı',()=>{delete f.ign[no.dataset.tno];if(S.scr==='misafirler')renderGL();renderNav()});return}
+ const i=tidyItems().find(x=>x.k===ok.dataset.tok);if(!i)return;const before=G.map(g=>[g,{...g}]),list=[...G];i.fix();renderGL();renderDet();renderNav();
+ pushUndo(`Uygulandı: ${i.t}`,()=>{G.splice(0,G.length,...list);before.forEach(([g,o])=>Object.assign(g,o));if(S.scr==='misafirler'){renderGL();renderDet()}renderNav()})};
+function importSample(){const n0=G.length,H=['Kurumsal Satış','Otel misafiri','Casino Pazarlama','Basın'];
+ [['Ayşe Demir',1],['Ayşe Demir',0],['Kaan Uçar +2',0],['Leyla Oral +1',0],['Bora Sezer +3',0],['Nil Aksoy (VIP)',1],['Engin Tekin VIP',0]].forEach(([name,a])=>add({name,add:a,host:pick(H)}));
+ for(let i=0;i<41;i++){const r=R();add({name:uname(),add:r<.35?0:r<.75?1:r<.9?2:3,host:pick(H),vip:R()<.1?'VIP':'',plan:R()<.08?'Belirsiz':'Kesin'})}
+ const ns=G.slice(n0);renderGL();renderNav();pushUndo(`misafir-listesi.xlsx okundu · ${ns.length} kayıt, ${sum(ns,g=>g.pax)} kişi`,()=>{ns.forEach(g=>G.splice(G.indexOf(g),1));if(S.scr==='misafirler')renderGL();renderNav()})}
+const _gl1=renderGL;renderGL=function(){_gl1();renderTidy();const e=$('#glEmpty'),on=!G.length;e.classList.toggle('on',on);
+ if(on)e.innerHTML=`<div class="ge"><h2>Misafir listesini ekleyin</h2><p>Tek kayıt bir davettir: “Ad +3” dört kişidir. Ekledikten sonra listeyi toparlamak için öneriler çıkar.</p><div class="opts"><button id="geExcel">Excel’den al<small>.xlsx · .csv</small></button><button id="gePaste">Liste yapıştır<small>her satır bir kayıt</small></button><button id="geHand">Elle ekle<small>tek tek</small></button></div></div>`};
+$('#glEmpty').onclick=e=>{const id=e.target.closest('button')?.id;if(id==='geExcel')importSample();if(id==='gePaste')pasteDlg();if(id==='geHand')guestDlg(null)};
+/* oturma: Hazır */
+const _rw1=renderWait;renderWait=function(){_rw1();const h=$('#waitList .side-h');if(h&&!$('#readyBtn'))h.insertAdjacentHTML('beforeend','<button class="btn pri sm" id="readyBtn" style="margin-top:2px">Hazır</button>')};
+$('#waitList').addEventListener('click',e=>{if(e.target.id==='readyBtn'){FLc().ready=true;go('hazir')}});
+/* hazır mı: when nothing blocks, the plan settles */
+const _rh=RENDER.hazir;RENDER.hazir=()=>{_rh();const f=FLc(),bad=hazirList().filter(i=>!i.info).length;
+ if(!bad&&TABLES.length){if(!f.settled){f.settled=true;f.edit=0}$('#hzList').insertAdjacentHTML('beforeend',`<div class="hz-settle"><b>Plan yerleşti</b>Engel yok. Salon bundan sonra yerleşmiş plan olarak sakin açılır; düzenleme ⋯ ile hâlâ mümkün.<div style="margin-top:12px"><button class="btn pri" id="hzKapi">Kapıya geç →</button></div></div>`)}};
+$('#hzList').addEventListener('click',e=>{if(e.target.id==='hzKapi')go('kapi')});
+const _re=RENDER.etkinlik;RENDER.etkinlik=()=>{_re();setEvname()};
 /* ═══ theme, keys, wiring ═══ */
 function setTheme(t){document.documentElement.dataset.theme=t;$('#theme').innerHTML=t==='dark'?IC.sun:IC.moon;try{localStorage.setItem('merit8.theme',t)}catch(e){}}
 function toggleTheme(){setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark')}
