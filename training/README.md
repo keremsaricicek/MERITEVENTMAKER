@@ -1925,3 +1925,12 @@ decisive here. Decisive on the owner's 8 GB PC: a ~5 s spoken command becomes te
 **Choice:** the smallest candidate that passes both language bars. None passes → no voice engine is pinned and the
 microphone stays off. **Second stage (owner):** 20 real commands in the owner's own voice, read on his PC; bar: ≥ 17
 of 20 need no correction before Enter.
+
+## 2026-11-07 — Voice command verdict (bars as pre-registered above)
+
+FLEURS, whisper.cpp v1.9.5, `-nt -np -t 2`, nice 19, under the runP training load. Report:
+`benchmarks/voice/fleurs-2026-11-07.json`. **base-q5_1:** TR WER 0.309 (CER 0.081) — **fails**; EN 0.116 — passes.
+**small-q5_1:** TR WER **0.163** (CER 0.042) — **passes**; EN **0.084** — passes. **turbo-q5_0:** not run (the rule
+stops at the smallest passing candidate). **Chosen: ggml-small-q5_1** (190,085,487 bytes, sha256
+`ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb`). Speed here (median ~11–12 s a clip, 2 niced
+threads on a saturated CPU) is an upper bound only; the speed bar and the owner's 20-command test are still open.

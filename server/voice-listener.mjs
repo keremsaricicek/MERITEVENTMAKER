@@ -44,7 +44,7 @@ export function readVoiceManifest(file, { verify = true } = {}) {
   if (!m || typeof m !== "object" || m.format !== VOICE_MANIFEST_FORMAT) return fail("VOICE_MANIFEST_INVALID", `format must be "${VOICE_MANIFEST_FORMAT}"`);
   const id = str(m.id, 80), name = str(m.name, 120), version = str(m.version, 80), licence = str(m.licence, 200), source = str(m.source, 300), evidence = str(m.evidence, 300);
   if (!id || !/^[A-Za-z0-9._:-]+$/.test(id) || !name || !version || !licence || !source || !evidence) return fail("VOICE_MANIFEST_INVALID", "id, name, version, licence, source and evidence are all required");
-  if (!Array.isArray(m.files) || m.files.length < 2 || m.files.length > 4) return fail("VOICE_MANIFEST_INVALID", "files must list the engine and the model (2 to 4 files)");
+  if (!Array.isArray(m.files) || m.files.length < 2 || m.files.length > 8) return fail("VOICE_MANIFEST_INVALID", "files must list the engine, its libraries and the model (2 to 8 files)");
   const dir = path.dirname(path.resolve(file)), files = [];
   for (const f of m.files) {
     if (!f || typeof f.path !== "string" || !Number.isSafeInteger(f.bytes) || f.bytes <= 0 || !/^[0-9a-f]{64}$/.test(String(f.sha256 || ""))) return fail("VOICE_MANIFEST_INVALID", "each file needs a path, a byte size and a sha256");
