@@ -23,6 +23,10 @@
 //                            model on this machine only, a question its manifest says it was
 //                            measured on; the answer comes back as a closed value, never as text.
 //   POST /vlm-relay/cancel   stop a run: its in-flight request is aborted, its next step refused.
+//   POST /vlm-relay/listen   voice command: a short WAV clip → its words, by a pinned speech-to-text
+//                            engine ON THIS MACHINE (server/voice-listener.mjs); off without a manifest.
+//   POST /vlm-relay/search   opt-in web research: one question → ≤5 links, through a provider whose key
+//                            lives only in this process's environment (server/web-research.mjs); off by default.
 //
 // What it refuses, before anything is sent: a POST from another site (Origin,
 // Sec-Fetch-Site and a header a cross-site form cannot set), a Host it was not
@@ -44,6 +48,8 @@ import * as core from "./vlm-core.mjs";
 import { makeLocalClient, checkServing } from "./vlm-local.mjs";
 import { readerFromEnv, makeReader, MAX_TEXT } from "./assistant-reader.mjs";
 import { backupStoreFromEnv } from "./disk-backup.mjs";
+import { listenerFromEnv, makeListener, MAX_BYTES as VOICE_MAX_BYTES } from "./voice-listener.mjs";
+import { researchFromEnv, makeResearcher, publicStatus as researchStatus } from "./web-research.mjs";
 
 export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const RELAY_VERSION = 4;
@@ -102,7 +108,8 @@ const hostAllowed = (hostname, allowed) => {
 };
 const hostnameOf = (hostHeader) => { try { return new URL(`http://${hostHeader}`).hostname; } catch { return null; } };
 
-export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, log = console, now = Date.now, reader = { configured: false, reasonCode: "CHAT_OFF" }, readerImpl, backups = null } = {}) {
+export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, log = console, now = Date.now, reader = { configured: false, reasonCode: "CHAT_OFF" }, readerImpl, backups = null,
+  voice = { configured: false, reasonCode: "VOICE_OFF" }, listenerImpl, research = { configured: false, reasonCode: "SEARCH_OFF" }, researcherImpl } = {}) {
   const usage = new core.UsageStore(config.dataDir);
   const runs = new Map();            // runId -> { analysisId, planHash, steps, usd, cancelled, controller, at }
   const askRuns = new Map();         // runId -> { analysisId, planHash, asks, cancelled, controller, at }
@@ -229,6 +236,66 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
     if (!r.ok) return json(res, 409, { ok: false, code: r.code });
     return json(res, 200, mode === "chat" ? { ok: true, reply: r.reply, seconds } : { ok: true, reading: r.reading, sure: !!r.sure, seconds });
   }
+
+  // Voice command (server/voice-listener.mjs): one clip at a time, words back,
+  // nothing logged but the outcome and the clip's length.
+  const listener = voice.configured ? (listenerImpl || makeListener(voice, { timeoutMs: config.limits.timeoutMs })) : null;
+  let listening = false;
+  function readBinary(req, limit, type) {
+    return new Promise((resolve) => {
+      if (!type.test(req.headers["content-type"] || "")) { req.resume(); resolve({ error: "BAD_PAYLOAD" }); return; }
+      const declared = Number(req.headers["content-length"]);
+      if (Number.isFinite(declared) && declared > limit) { req.resume(); resolve({ error: "PAYLOAD_TOO_LARGE" }); return; }
+      const chunks = []; let size = 0, over = false;
+      req.on("data", (c) => { if (over) return; size += c.length; if (size > limit) { over = true; chunks.length = 0; req.resume(); resolve({ error: "PAYLOAD_TOO_LARGE" }); } else chunks.push(c); });
+      req.on("end", () => { if (!over) resolve({ buf: Buffer.concat(chunks) }); });
+      req.on("error", () => { if (!over) resolve({ error: "BAD_PAYLOAD" }); });
+    });
+  }
+  async function handleListen(req, res, url) {
+    if (!listener) { req.resume(); return json(res, 409, { ok: false, code: voice.reasonCode || "VOICE_OFF" }); }
+    if (listening) { req.resume(); return json(res, 409, { ok: false, code: "BUSY" }); }
+    const lang = url.searchParams.get("lang");
+    if ([...url.searchParams.keys()].some((k) => k !== "lang") || !voice.manifest.languages.includes(lang)) { req.resume(); return json(res, 400, { ok: false, code: "BAD_LANGUAGE" }); }
+    listening = true;
+    const started = now(), controller = new AbortController();
+    const onClose = () => { if (!res.writableEnded) controller.abort(); };
+    let r;
+    try {
+      const { buf, error } = await readBinary(req, VOICE_MAX_BYTES, /^audio\/(wav|x-wav|wave)\b/i);
+      if (error) return json(res, error === "PAYLOAD_TOO_LARGE" ? 413 : 400, { ok: false, code: error });
+      res.on("close", onClose);
+      r = await listener.listen(buf, { lang, signal: controller.signal });
+    } finally { res.off("close", onClose); listening = false; }
+    const seconds = Math.round((now() - started) / 100) / 10;
+    say(`listen: ${r.ok ? `${r.seconds.toFixed(1)}s of speech` : r.code} in ${seconds}s`);
+    if (res.writableEnded || res.destroyed) return;
+    if (!r.ok) return json(res, ["BAD_AUDIO", "AUDIO_TOO_SHORT", "BAD_LANGUAGE"].includes(r.code) ? 400 : r.code === "AUDIO_TOO_LONG" ? 413 : 409, { ok: false, code: r.code });
+    return json(res, 200, { ok: true, text: r.text, lang, seconds });
+  }
+
+  // Opt-in web research (server/web-research.mjs): one question at a time, the
+  // question never logged, the key never in a reply.
+  const researcher = research.configured ? (researcherImpl || makeResearcher(research)) : null;
+  let searching = false;
+  async function handleSearch(req, res) {
+    if (!researcher) { req.resume(); return json(res, 409, { ok: false, code: research.reasonCode || "SEARCH_OFF" }); }
+    if (searching) { req.resume(); return json(res, 409, { ok: false, code: "BUSY" }); }
+    const { body, error } = await readJson(req, 2048);
+    if (error) return json(res, error === "PAYLOAD_TOO_LARGE" ? 413 : 400, { ok: false, code: error });
+    if (!body || typeof body !== "object" || Array.isArray(body) || Object.keys(body).some((k) => k !== "query")) return json(res, 400, { ok: false, code: "UNKNOWN_FIELD" });
+    searching = true;
+    const started = now(), controller = new AbortController();
+    const onClose = () => { if (!res.writableEnded) controller.abort(); };
+    res.on("close", onClose);
+    let r;
+    try { r = await researcher.search(body.query, { signal: controller.signal }); } finally { res.off("close", onClose); searching = false; }
+    say(`search: ${r.ok ? `${r.results.length} result(s)` : r.code} in ${Math.round((now() - started) / 100) / 10}s`);
+    if (res.writableEnded || res.destroyed) return;
+    if (!r.ok) return json(res, ["BAD_QUERY", "PRIVATE_DATA"].includes(r.code) ? 400 : r.code === "DAY_LIMIT" ? 429 : 409, { ok: false, code: r.code });
+    return json(res, 200, { ok: true, provider: r.provider, results: r.results });
+  }
+  const voiceStatus = () => voice.configured ? { configured: true, name: voice.manifest.name, version: voice.manifest.version, licence: voice.manifest.licence, languages: voice.manifest.languages } : { configured: false, reasonCode: voice.reasonCode };
 
   async function handleCancel(req, res) {
     const { body, error } = await readJson(req, 4096);
@@ -497,7 +564,8 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
           uptimeS: Math.round(process.uptime()),
           backups: backups ? { enabled: true, count: backups.list().length } : { enabled: false },
           local: st.local ? { model: st.local.model || st.local.name || null, checks: (st.local.checks || []).length } : null,
-          reader: reader.configured ? { configured: true, name: reader.manifest.name, version: reader.manifest.version } : { configured: false, reasonCode: reader.reasonCode } });
+          reader: reader.configured ? { configured: true, name: reader.manifest.name, version: reader.manifest.version } : { configured: false, reasonCode: reader.reasonCode },
+          voice: voiceStatus(), research: researchStatus(research, researcher ? researcher.today() : 0) });
       }
       if (pathname === "/vlm-relay/status" && req.method === "GET") {
         if (!hostAllowed(hostnameOf(req.headers.host), hosts)) return json(res, 421, { ok: false, code: "HOST_NOT_ALLOWED" });
@@ -508,7 +576,8 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
           st.local = served.ok ? { ...st.local, serving: "verified" } : { ...st.local, checks: [], autoApply: [], serving: served.code };
         }
         const chatStatus = reader.configured ? { configured: true, name: reader.manifest.name, version: reader.manifest.version, licence: reader.manifest.licence } : { configured: false, reasonCode: reader.reasonCode };
-        return json(res, 200, { ok: true, version: RELAY_VERSION, busy: !!inFlight, ...st, asksToday: asksToday(), reader: chatStatus });
+        return json(res, 200, { ok: true, version: RELAY_VERSION, busy: !!inFlight, ...st, asksToday: asksToday(), reader: chatStatus,
+          voice: voiceStatus(), research: researchStatus(research, researcher ? researcher.today() : 0) });
       }
       if (req.method !== "POST") return json(res, 405, { ok: false, code: "METHOD" });
       const cross = refuseCrossSite(req);
@@ -519,6 +588,8 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
       if (pathname === "/vlm-relay/cancel") return await handleCancel(req, res);
       if (pathname === "/vlm-relay/read") return await handleRead(req, res);
       if (pathname === "/vlm-relay/chat") return await handleRead(req, res, "chat");
+      if (pathname === "/vlm-relay/listen") return await handleListen(req, res, url);
+      if (pathname === "/vlm-relay/search") return await handleSearch(req, res);
       return json(res, 404, { ok: false, code: "NOT_FOUND" });
     } catch (err) {
       say(`internal error: ${err && err.name}`);
@@ -536,9 +607,10 @@ function sleep(ms, signal) {
   });
 }
 
-export async function startRelay({ config, client, root = REPO_ROOT, allowedHosts, log = console, reader, readerImpl, backups = null } = {}) {
+export async function startRelay({ config, client, root = REPO_ROOT, allowedHosts, log = console, reader, readerImpl, backups = null, voice, listenerImpl, research, researcherImpl } = {}) {
   const c = client === undefined ? await makeClient(config, { log }) : client;
-  const relay = createRelay({ config, client: c, root, allowedHosts, log, ...(reader ? { reader } : {}), readerImpl, backups });
+  const relay = createRelay({ config, client: c, root, allowedHosts, log, ...(reader ? { reader } : {}), readerImpl, backups,
+    ...(voice ? { voice } : {}), listenerImpl, ...(research ? { research } : {}), researcherImpl });
   const server = http.createServer((req, res) => { relay.handler(req, res); });
   await new Promise((resolve, reject) => { server.once("error", reject); server.listen(config.port, config.host, resolve); });
   const { port } = server.address();
@@ -555,8 +627,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   // Automatic backup to disk: MERIT_BACKUP_DIR (the portable package sets its own
   // "yedekler" folder), otherwise <data dir>/backups; MERIT_BACKUP_DIR=off turns it off.
   const backups = backupStoreFromEnv(process.env, path.join(config.dataDir, "backups"));
-  const started = await startRelay({ config, allowedHosts, reader, backups, root: process.env.MERIT_APP_ROOT ? path.resolve(process.env.MERIT_APP_ROOT) : REPO_ROOT });
+  const voice = listenerFromEnv(process.env);
+  const research = researchFromEnv(process.env);
+  const started = await startRelay({ config, allowedHosts, reader, backups, voice, research, root: process.env.MERIT_APP_ROOT ? path.resolve(process.env.MERIT_APP_ROOT) : REPO_ROOT });
   console.log(`  backups     ${backups ? `${backups.dir} (newest ${backups.keepLast} + one per day for ${backups.keepDays} days)` : "off"}`);
+  console.log(`  voice       ${voice.configured ? `${voice.manifest.name} ${voice.manifest.version} (${voice.manifest.licence}), ${voice.manifest.languages.join("+")}, on this machine — words into the F8 box, nothing acts by itself` : `off (${voice.reasonCode}${voice.problem ? `: ${voice.problem}` : ""})`}`);
+  console.log(`  web search  ${research.configured ? `ON — ${research.provider}, a person starts each search, only the question leaves, ${research.maxPerDay}/day` : `off (${research.reasonCode})`}`);
   console.log(`  F8 reader   ${reader.configured ? `${reader.manifest.name} ${reader.manifest.version} (${reader.manifest.licence}) — reads what the assistant's rules could not; chosen by ${reader.manifest.evidence}` : `off (${reader.reasonCode}${reader.problem ? `: ${reader.problem}` : ""}) — the assistant's rules read alone`}`);
   const s = core.status(config, started.relay.usage.snapshot(), started.relay.usage.ledger());
   console.log("MERIT EVENT MAKER — app + vision-language relay");
