@@ -91,7 +91,7 @@ function buildPlans() {
 async function freshEvent(page, baseUrl) {
   await page.evaluate(() => { try { localStorage.clear(); } catch { /* storage isolated per suite */ } });
   await openApp(page, baseUrl);
-  await page.click('.appbar [data-action="create-event"]');
+  await page.click('.mx-head [data-action="create-event"]');
   await page.waitForTimeout(300);
   await page.fill('input[name="name"]', "Served seats");
   await page.fill('input[name="hotel"]', "Merit");

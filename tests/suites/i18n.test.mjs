@@ -41,9 +41,9 @@ export default async function run({ page, checks, baseUrl }) {
     "a fresh boot, before any language choice, defaults to Turkish — this is Turkish hospitality/casino operations software", bootDefault);
   checks.equal(bootDefault.guideLang, "tr",
     "the User Guide/help panel also defaults to Turkish, not just the main UI", bootDefault);
-  checks.ok(bootDefault.homeTitle === "Etkinlik Oluşturucu",
+  checks.ok(bootDefault.homeTitle === "Etkinlikler",
     "the very first rendered screen (Home) actually shows Turkish text, not just an internal flag", bootDefault);
-  checks.ok(/Oluştur/.test(bootDefault.createEventLabel) && !/^Create Event$/.test(bootDefault.createEventLabel),
+  checks.ok(/Yeni etkinlik/.test(bootDefault.createEventLabel) && !/New event/.test(bootDefault.createEventLabel),
     "the Home screen's primary action reads in Turkish by default", bootDefault);
 
   // --- 0b. the page says which language it is in ----------------------------
@@ -53,7 +53,7 @@ export default async function run({ page, checks, baseUrl }) {
   // English voice. innerText is the text as rendered, text-transform included.
   const pageLang = async (l) => page.evaluate((lang) => {
     if (lang) { ui.lang = lang; render(); }
-    const h = [...document.querySelectorAll("#app h2")].find((x) => getComputedStyle(x).textTransform === "uppercase" && /i/.test(x.textContent));
+    const h = [...document.querySelectorAll("#app h2, #app .cal-d-eyebrow")].find((x) => getComputedStyle(x).textTransform === "uppercase" && /i/.test(x.textContent));
     return { lang: document.documentElement.lang, raw: h?.textContent.trim() || null, shown: h?.innerText.trim() || null };
   }, l);
   const trBoot = await pageLang(null);

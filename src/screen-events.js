@@ -1,5 +1,6 @@
-// The Events home screen: the next event's hero card, the other upcoming
-// events, history and what the history says (two averaged facts, no model).
+// The Events home screen: a month calendar of the real events with a calm
+// detail panel (redesign step 1, 2026-11-07 — it replaced the hero card and
+// the two lists), and what the history says (two averaged facts, no model).
 //
 // Moved byte-for-byte out of app-v8.js on 2026-10-04 (technical gaps, item 2),
 // at the original indentation. The edits forced by the move: eventsHTML
@@ -17,57 +18,107 @@
   let esc;
   let eventMetrics;
   let fmtDate;
+  let getActiveId;
   let getState;
-  let helpButton;
   let icon;
-  let paxOf;
-  let physicalCapacity;
+  let readiness;
   let RULES;
   let seatingCapacity;
   let t;
-  let topBrand;
+  let topbarHTML;
   let created=false;
 
-  // The next event is what the operator came for 95% of the time, so it gets
-  // the hero treatment and everything else becomes a compact line.
-  function nextEventHeroHTML(event){
-    const totalPax=event.guests.reduce((n,g)=>n+paxOf(g),0);
-    const seatedPax=event.guests.filter(g=>g.assignment).reduce((n,g)=>n+paxOf(g),0);
-    // The room's seats, not its drawn chairs: this bar answers "will they
-    // fit", and "No tables in the plan yet" underneath it was a literal
-    // falsehood on a plan carrying four hundred tables.
-    const chairs=seatingCapacity(event);
-    const bar=(label,value,max,cls)=>`<div class="nb"><div class="nb-top"><span>${label}</span><b>${value} / ${max}</b></div><div class="nb-track"><div class="nb-fill ${cls}" style="width:${max?Math.min(100,Math.round(value/max*100)):0}%"></div></div></div>`;
-    const venue=[event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet");
-    return`<div class="next-event">
-      <div class="next-event-main">
-        <span class="next-badge"><i></i>${t("home.nextEvent")}</span>
-        <h2>${esc(event.name)}</h2>
-        <div class="next-event-when">${esc(fmtDate(event.date))} · ${esc(venue)}</div>
-        <div class="next-event-bars">
-          ${bar(t("home.seatedProgress"),seatedPax,totalPax,seatedPax&&seatedPax===totalPax?"good":"")}
-          ${chairs?bar(t("home.capacityProgress"),totalPax,chairs,totalPax>chairs?"warn":"good"):`<div class="nb-top" style="color:var(--amber)">${t("home.noPlanYet")}</div>`}
-        </div>
-      </div>
-      <div class="next-event-side">
-        <button class="btn primary" data-open-event="${event.id}">${t("home.openEvent")}</button>
-        <button class="btn" data-duplicate-event="${event.id}">${icon("copy")}${t("home.duplicate")}</button>
-        <button class="btn" data-duplicate-layout="${event.id}" title="${esc(t("home.duplicateLayoutTitle"))}">${icon("table")}${t("home.duplicateLayout")}</button>
-        <button class="btn" data-export-event-package="${event.id}" title="${esc(t("home.exportPackage"))}">${icon("download")}${t("home.exportPackageShort")}</button>
-        <button class="btn danger" data-delete-event="${event.id}">${icon("trash")}${t("home.delete")}</button>
-      </div>
-    </div>`;
+  // ---- THE MONTH CALENDAR (owner-approved redesign v3, 2026-11-07) -------------
+  //
+  // One slim entry per event on its own day, Monday first; past events grey with
+  // a lock (they are read-only everywhere else too: RULES().isHistorical). A click
+  // only SELECTS — the calm panel on the right fills, nothing else moves; a
+  // double-click, or "Etkinliği aç", opens. Which month and which event are shown
+  // is this screen's own view state, never stored and never part of an event.
+  //
+  // The panel's figures are the event's own records (eventMetrics: pax, not
+  // rows; seatingCapacity: logical seats, never drawn chairs; MeritArrivalWave:
+  // who checked in) and "Hazır mı?" is the Plan Doctor's reading, handed over by
+  // the shell — this screen forms no opinion of its own.
+  const view={month:null,pick:null,shown:null};
+  const pad2=n=>String(n).padStart(2,"0");
+  const todayISO=()=>new Date().toLocaleDateString("en-CA");
+  const lang=()=>(globalThis.MERIT_I18N_LANG&&globalThis.MERIT_I18N_LANG()==="en"?"en-GB":"tr-TR");
+  const validDate=d=>typeof d==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(d);
+  function monthTitle(ym){
+    const [y,m]=ym.split("-").map(Number);
+    const name=new Intl.DateTimeFormat(lang(),{month:"long"}).format(new Date(y,m-1,1,12));
+    return name.charAt(0).toLocaleUpperCase(lang())+name.slice(1)+" "+y;
   }
-  function upcomingLineHTML(event){
-    const venue=[event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet");
-    return`<div class="event-line" data-open-event="${event.id}" title="${esc(t("home.openEventNamed",{name:event.name}))}">
-      <div><b>${esc(event.name)}</b></div>
-      <div class="muted">${esc(fmtDate(event.date))}</div>
-      <div class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(venue)}</div>
-      <div class="seat-tag">${eventMetrics(event).guests}</div>
-      <div class="seat-tag">${physicalCapacity(event)}</div>
-      <div class="row-icons"><button class="row-action" data-duplicate-event="${event.id}" aria-label="${esc(t("home.a11y.duplicate",{name:event.name}))}" title="${t("home.duplicate")}">${icon("copy")}</button><button class="row-action" data-duplicate-layout="${event.id}" aria-label="${esc(t("home.a11y.duplicateLayout",{name:event.name}))}" title="${esc(t("home.duplicateLayoutTitle"))}">${icon("table")}</button><button class="row-action" data-export-event-package="${event.id}" aria-label="${esc(t("home.a11y.exportPackage",{name:event.name}))}" title="${esc(t("home.exportPackage"))}">${icon("download")}</button><button class="row-action" data-delete-event="${event.id}" aria-label="${esc(t("home.a11y.delete",{name:event.name}))}" title="${t("home.delete")}">${icon("trash")}</button></div>
-    </div>`;
+  function weekday(d){return new Intl.DateTimeFormat(lang(),{weekday:"long"}).format(new Date(d+"T12:00:00"));}
+  function venueOf(e){return[e.hotel,e.salon].filter(Boolean).join(" · ");}
+  // The event shown in the panel: the one clicked, else the one the operator
+  // was just in, else the next upcoming, else the most recent past.
+  function resolveSelected(events){
+    const byId=id=>id&&events.find(e=>e.id===id);
+    const upcoming=events.filter(e=>!RULES().isHistorical(e)).sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
+    const past=events.filter(e=>RULES().isHistorical(e)).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+    return byId(view.pick)||byId(getActiveId())||upcoming[0]||past[0]||null;
+  }
+  function select(id){view.pick=id||null;}
+  function focus(id){view.pick=id||null;view.month=null;}
+  function shift(n){
+    if(!n){view.month=todayISO().slice(0,7);return;}
+    const [y,m]=(view.month||view.shown||todayISO().slice(0,7)).split("-").map(Number);
+    const d=new Date(y,m-1+n,1,12);
+    view.month=d.getFullYear()+"-"+pad2(d.getMonth()+1);
+  }
+  function entryHTML(e,selectedId){
+    const past=RULES().isHistorical(e),venue=e.salon||e.hotel||"";
+    return`<button type="button" class="cal-entry${past?" past":""}${e.id===selectedId?" on":""}" data-cal-event="${esc(e.id)}"${past?` data-history-event="${esc(e.id)}"`:""} title="${esc(t("cal.entryTitle",{name:e.name}))}">${past?icon("lock"):"<i></i>"}<span class="cal-en"><b>${esc(e.name)}</b>${venue?`<small>${esc(venue)}</small>`:""}</span></button>`;
+  }
+  function gridHTML(events,ym,selectedId){
+    const [Y,M]=ym.split("-").map(Number),today=todayISO();
+    const start=(new Date(Y,M-1,1,12).getDay()+6)%7,days=new Date(Y,M,0,12).getDate(),cells=Math.ceil((start+days)/7)*7;
+    let h="";
+    for(let i=0;i<cells;i++){
+      const d=i-start+1;
+      if(d<1||d>days){h+=`<div class="cal-cell off"></div>`;continue;}
+      const ds=`${Y}-${pad2(M)}-${pad2(d)}`;
+      const here=events.filter(e=>e.date===ds).sort((a,b)=>String(a.name).localeCompare(String(b.name),lang()));
+      h+=`<div class="cal-cell${ds===today?" today":""}${ds<today?" was":""}"><span class="cal-dn">${d}</span>${here.map(e=>entryHTML(e,selectedId)).join("")}${ds>=today?`<button type="button" class="cal-add" data-cal-new="${ds}" aria-label="${esc(t("cal.newEvent"))} · ${d}">+</button>`:""}</div>`;
+    }
+    const dow=t("cal.dow").split("|");
+    return`<div class="cal-dow">${dow.map(x=>`<span>${esc(x)}</span>`).join("")}</div><div class="cal-grid" style="grid-template-rows:repeat(${cells/7},minmax(0,1fr))">${h}</div>`;
+  }
+  function detailHTML(e,historyEvents){
+    if(!e)return`<aside class="cal-detail" aria-live="polite"><div class="cal-d-empty"><div class="cal-d-eyebrow">${esc(t("cal.eyebrow.first"))}</div><h2 class="cal-d-title">${esc(t("cal.none"))}</h2><p>${esc(t("cal.noneHint"))}</p></div>${eventHistoryLearningHTML(historyEvents)}</aside>`;
+    const past=RULES().isHistorical(e),today=todayISO();
+    const m=eventMetrics(e),SM=globalThis.MeritSeatModel,AW=globalThis.MeritArrivalWave;
+    const tables=(e.tables||[]).filter(x=>SM?SM.canSeat(x):Number(x.capacity)>0).length;
+    const arrived=AW?AW.build({guests:e.guests||[],bucketMinutes:30}).actual.pax:0;
+    const kind=past?"past":e.date===today?"today":"upcoming";
+    const when=validDate(e.date)?`${esc(fmtDate(e.date))}, ${esc(weekday(e.date))}`:esc(t("cal.undated"));
+    const fact=(k,label,v,extra="")=>`<div data-cal-fact="${k}"><dt>${esc(label)}</dt><dd>${v}</dd>${extra}</div>`;
+    let lines;
+    if(past)lines=[{level:"info",text:t("cal.ready.past")}];
+    else{
+      const all=readiness(e)||[];
+      const cap=s=>String(s||"").charAt(0).toLocaleUpperCase(lang())+String(s||"").slice(1);
+      lines=all.length?all.slice(0,4).map(l=>({level:l.level,text:cap(l.text)})):[{level:"ok",text:t("cal.ready.none")}];
+      if(all.length>4)lines[3]={level:"info",text:t("cal.ready.more",{n:all.length-3})};
+    }
+    const id=esc(e.id);
+    const more=[
+      ...(past?[]:[`<button type="button" class="shell-menu-item" data-duplicate-event="${id}">${esc(t("home.duplicate"))}</button>`]),
+      `<button type="button" class="shell-menu-item" data-export-event-package="${id}" title="${esc(t("home.exportPackage"))}">${esc(t("cal.export"))}</button>`,
+      `<hr><button type="button" class="shell-menu-item danger" data-delete-event="${id}">${esc(t("home.delete"))}</button>`,
+    ].join("");
+    return`<aside class="cal-detail" aria-live="polite">
+      <div class="cal-d-eyebrow ${kind}">${esc(t("cal.eyebrow."+kind))}</div>
+      <h2 class="cal-d-title">${esc(e.name)}</h2>
+      <div class="cal-d-meta">${when}<br>${esc(venueOf(e)||t("appbar.venueNotSet"))}</div>
+      <dl class="cal-facts">${fact("pax",t("cal.fact.pax"),m.guests)}${fact("tables",t("cal.fact.tables"),tables,`<dd class="cal-sub">${esc(t("cal.fact.seats",{n:seatingCapacity(e)}))}</dd>`)}${fact("seated",t("cal.fact.seated"),m.assigned)}${fact("arrived",t("cal.fact.arrived"),arrived)}</dl>
+      <h3 class="cal-d-h">${esc(t("cal.ready"))}</h3>
+      <ul class="cal-ready">${lines.map(l=>`<li class="${esc(l.level)}"><i class="cal-mk"></i><span>${esc(l.text)}</span></li>`).join("")}</ul>
+      <div class="cal-d-acts"><button type="button" class="btn primary" data-open-event="${id}">${esc(t(past?"cal.openPast":"cal.open"))}</button><button type="button" class="btn" data-duplicate-layout="${id}" title="${esc(t("home.duplicateLayoutTitle"))}">${esc(t("cal.sameLayout"))}</button><details class="cal-more"><summary class="shell-icon-btn" title="${esc(t("cal.more"))}" aria-label="${esc(t("cal.more"))}"><span aria-hidden="true">⋯</span></summary><div class="shell-menu">${more}</div></details></div>
+      ${eventHistoryLearningHTML(historyEvents)}
+    </aside>`;
   }
   // ---- EVENT HISTORY & LEARNING ----------------------------------------
   //
@@ -106,16 +157,22 @@
     </div>`;
   }
   const eventsHTML = function(){
-    const upcoming=getState().events.filter(e=>!RULES().isHistorical(e)).sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
-    const history=getState().events.filter(e=>RULES().isHistorical(e)).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
-    const [next,...rest]=upcoming;
-    return`<header class="appbar">${topBrand()}<div class="crumb">${t("home.crumb")} / <b>${t("home.portfolio")}</b></div><div class="appbar-actions">${helpButton()}<button class="btn quiet icon-only" data-action="backup-export" title="${t("backup.export")}">${icon("download")}</button><button class="btn quiet icon-only" data-action="backup-import" title="${t("backup.import")}">${icon("upload")}</button><button class="btn quiet icon-only" data-action="recovery-restore" title="${t("recovery.buttonTitle")}">${icon("undo")}</button>${globalThis.MeritDiskBackup&&globalThis.MeritDiskBackup.available()?`<button class="btn quiet icon-only" data-action="diagnose-report" title="${t("diagnose.buttonTitle")}" aria-label="${t("diagnose.buttonTitle")}">${icon("alert")}</button><button class="btn quiet icon-only" data-action="disk-backup-restore" title="${t("diskBackup.buttonTitle")}" aria-label="${t("diskBackup.buttonTitle")}">${icon("save")}</button>`:""}<button class="btn primary" data-action="create-event">${icon("plus")}${t("home.createEvent")}</button></div></header><div class="mx-screen"><div class="mx-wrap">
-      <div class="mx-head"><div><div class="kicker">${t("home.eyebrow")}</div><h1>${t("home.title")}</h1><p>${t("home.subtitle")}</p></div><span class="muted" style="font-size:12px">${t(getState().events.length===1?"home.eventCount1":"home.eventsCount",{n:getState().events.length})}</span></div>
-      ${next?nextEventHeroHTML(next):`<div class="mx-empty"><h3>${t("home.noUpcoming")}</h3><p>${t("home.noUpcomingHint")}</p><button class="btn primary" data-action="create-event">${icon("plus")}${t("home.createEvent")}</button></div>`}
-      ${rest.length?`<div class="mx-section"><div class="mx-section-head"><h2>${t("home.otherUpcoming")}</h2><span class="count">${rest.length}</span></div><div class="mx-list"><div class="mx-list-head event-line"><span>${t("home.col.event")}</span><span>${t("home.col.date")}</span><span>${t("home.col.hotelSalon")}</span><span>${t("home.col.guestPax")}</span><span>${t("home.col.physicalChairs")}</span><span></span></div>${rest.map(upcomingLineHTML).join("")}</div></div>`:""}
-      ${eventHistoryLearningHTML(history)}
-      <div class="mx-section"><div class="mx-section-head"><h2>${t("home.eventsHistory")}</h2><span class="count">${t("home.historyNote")}</span></div>${history.length?`<div class="mx-list"><div class="mx-list-head event-line"><span>${t("home.col.event")}</span><span>${t("home.col.date")}</span><span>${t("home.col.hotelSalon")}</span><span>${t("home.col.guestPax")}</span><span>${t("home.col.physicalChairs")}</span><span></span></div>${history.map(e=>`<div class="event-line" data-history-event="${e.id}" title="${esc(t("home.historyOpenHint"))}"><div><b>${esc(e.name)}</b></div><div class="muted">${esc(fmtDate(e.date))}</div><div class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc([e.hotel,e.salon].filter(Boolean).join(" · ")||"—")}</div><div class="seat-tag">${eventMetrics(e).guests}</div><div class="seat-tag">${physicalCapacity(e)}</div><div class="row-icons"><span class="readonly-tag">${icon("lock")}${t("home.readOnly")}</span><button class="row-action" data-export-event-package="${e.id}" aria-label="${esc(t("home.a11y.exportPackage",{name:e.name}))}" title="${esc(t("home.exportPackage"))}">${icon("download")}</button><button class="row-action" data-delete-event="${e.id}" aria-label="${esc(t("home.a11y.delete",{name:e.name}))}" title="${t("home.delete")}">${icon("trash")}</button></div></div>`).join("")}</div>`:`<div class="mx-empty" style="padding:30px">${t("home.noHistorical")}</div>`}</div>
-    </div></div>`;
+    const events=getState().events;
+    const history=events.filter(e=>RULES().isHistorical(e)).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+    // Resolved on every render, never stored back: only a click selects, so
+    // coming back from another event shows that event.
+    const sel=resolveSelected(events),selId=sel?sel.id:null;
+    const ym=view.month||(sel&&validDate(sel.date)?sel.date.slice(0,7):todayISO().slice(0,7));
+    view.shown=ym;
+    const undated=events.filter(e=>!validDate(e.date));
+    const count=t(events.length===1?"home.eventCount1":"home.eventsCount",{n:events.length});
+    return`${topbarHTML({screen:"events",homeTarget:sel?{id:sel.id,historical:RULES().isHistorical(sel)}:null})}<section class="cal-screen theme-scope">
+      <div class="mx-head cal-head"><div><h1>${esc(t("cal.title"))}</h1><p>${esc(t("cal.subtitle"))} · ${esc(count)}</p></div><button type="button" class="btn primary" data-action="create-event">${icon("plus")}${esc(t("cal.newEvent"))}</button></div>
+      <div class="cal-wrap"><div class="cal-box">
+        <div class="cal-nav"><button type="button" class="shell-icon-btn" data-cal-month="-1" aria-label="${esc(t("cal.prev"))}" title="${esc(t("cal.prev"))}">‹</button><h2 class="cal-month">${esc(monthTitle(ym))}</h2><button type="button" class="shell-icon-btn" data-cal-month="1" aria-label="${esc(t("cal.next"))}" title="${esc(t("cal.next"))}">›</button><button type="button" class="btn sm" data-cal-month="0">${esc(t("cal.today"))}</button>${undated.length?`<div class="cal-undated"><span>${esc(t("cal.undated"))}</span>${undated.map(e=>entryHTML(e,selId)).join("")}</div>`:""}</div>
+        ${gridHTML(events,ym,selId)}
+      </div>${detailHTML(sel,history)}</div>
+    </section>`;
   };
 
   function create(deps){
@@ -124,16 +181,15 @@
     esc=deps.esc;
     eventMetrics=deps.eventMetrics;
     fmtDate=deps.fmtDate;
+    getActiveId=deps.getActiveId;
     getState=deps.getState;
-    helpButton=deps.helpButton;
     icon=deps.icon;
-    paxOf=deps.paxOf;
-    physicalCapacity=deps.physicalCapacity;
+    readiness=deps.readiness;
     RULES=deps.RULES;
     seatingCapacity=deps.seatingCapacity;
     t=deps.t;
-    topBrand=deps.topBrand;
-    return{eventsHTML};
+    topbarHTML=deps.topbarHTML;
+    return{eventsHTML,select,focus,shift};
   }
-  globalThis.MeritScreenEvents=Object.freeze({create,DEPS:Object.freeze(["esc","eventMetrics","fmtDate","getState","helpButton","icon","paxOf","physicalCapacity","RULES","seatingCapacity","t","topBrand"])});
+  globalThis.MeritScreenEvents=Object.freeze({create,DEPS:Object.freeze(["esc","eventMetrics","fmtDate","getActiveId","getState","icon","readiness","RULES","seatingCapacity","t","topbarHTML"])});
 })();

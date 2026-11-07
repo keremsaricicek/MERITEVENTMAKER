@@ -178,7 +178,7 @@ export default async function run({ page, checks, baseUrl, repoRoot, artifactDir
   checks.equal(await snapshot(), beforeEvent, "delete an event, Escape: nothing changed");
 
   // --- 6. restore a backup / import a package ---------------------------------------
-  const [dl] = await Promise.all([page.waitForEvent("download"), page.click('[data-action="backup-export"]')]);
+  const [dl] = await Promise.all([page.waitForEvent("download"), click(page, '[data-action="backup-export"]')]);
   const backupFile = path.join(artifactDir, "dialog-backup.json");
   const backup = JSON.parse(fs.readFileSync(await dl.path(), "utf8"));
   backup.payload.events[0].name = "RESTORED NAME";
@@ -195,7 +195,7 @@ export default async function run({ page, checks, baseUrl, repoRoot, artifactDir
   await answer("confirm");
   checks.ok(await page.evaluate(() => state.events[0].name === "RESTORED NAME"), "restore, confirmed: the backup replaced them");
 
-  const [pdl] = await Promise.all([page.waitForEvent("download"), page.click("[data-export-event-package]")]);
+  const [pdl] = await Promise.all([page.waitForEvent("download"), click(page, "[data-export-event-package]")]);
   const pkgFile = await pdl.path();
   const beforePkg = await snapshot();
   await click(page, '[data-action="backup-import"]');

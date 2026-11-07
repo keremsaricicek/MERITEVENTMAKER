@@ -44,7 +44,10 @@ export default async function run({ page, checks, baseUrl }) {
   await settle(page);
 
   // Open a dialog the keyboard way: focus the invoker, press Enter.
-  const openWith = async (invoker, dialogId) => {
+  const openWith = async (invoker, dialogId, menu) => {
+    // A control in the ⋯ menu (redesign step 1): open the menu from the
+    // keyboard first, as a person would.
+    if (menu) { await page.focus(menu); await page.keyboard.press("Enter"); await page.waitForTimeout(100); }
     await page.focus(invoker);
     await page.keyboard.press("Enter");
     await page.waitForFunction((id) => document.getElementById(id)?.open, dialogId, { timeout: 5000 });
@@ -75,7 +78,7 @@ export default async function run({ page, checks, baseUrl }) {
     // confirm(). Cancelled both ways, so the guest — and the invoker — stay.
     { name: "delete-guest confirmation", tab: "guests", invoker: "[data-guest-delete]", id: "meritAskDialog",
       firstMeaningful: '#meritAskDialog [data-ask="cancel"]', closer: '#meritAskDialog [data-ask="cancel"]' },
-    { name: "user guide", tab: "guests", invoker: '[data-action="help"]', id: "guideDialog",
+    { name: "user guide", tab: "guests", invoker: '[data-action="help"]', menu: "header.shell-top .shell-more > summary", returnTo: "header.shell-top .shell-more > summary", id: "guideDialog",
       firstMeaningful: "#guideDialog [data-guide-lang], #guideDialog .guide-nav a, #guideDialog [data-guide-print]", closer: "[data-guide-close]" },
   ];
 
@@ -83,7 +86,7 @@ export default async function run({ page, checks, baseUrl }) {
     for (const how of ["Escape", "close control"]) {
       await gotoTab(page, d.tab);
       await settle(page);
-      await openWith(d.invoker, d.id);
+      await openWith(d.invoker, d.id, d.menu);
       const entered = await where(page);
       checks.ok(entered.inDialog === d.id,
         `${d.name}: opening it from the keyboard moves focus INTO the dialog`, entered);
@@ -100,7 +103,7 @@ export default async function run({ page, checks, baseUrl }) {
       await page.waitForFunction((id) => !document.getElementById(id)?.open, d.id, { timeout: 5000 });
       await page.waitForTimeout(250);
       const back = await where(page);
-      checks.ok(!back.isBody && await matches(page, d.invoker),
+      checks.ok(!back.isBody && await matches(page, d.returnTo || d.invoker),
         `${d.name}, closed by ${how}: focus returns to the control that opened it — never to <body>`, back);
     }
   }

@@ -29,7 +29,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { preV8Reachability } from "../lib/reachability.mjs";
-import { openApp, createBlankEvent, addTables, futureDate, gotoTab, settle } from "../lib/app-actions.mjs";
+import { click, openApp, createBlankEvent, addTables, futureDate, gotoTab, settle } from "../lib/app-actions.mjs";
 
 export const meta = { name: "i18n-hardcoded-english", tags: ["localization", "fast"], timeout: 240000 };
 
@@ -41,11 +41,14 @@ const ALLOWED = [
   { text: "· page", why: "part of the plan's NAME as stored (`plan.pdf · page 2`) — translating it would make a stored record depend on the UI language" },
   { text: "TOTAL GUEST:", why: "the printed table plan mirrors the workbook's TABLE PLAN card, whose wording the reports contract fixes" },
   { text: "MERIT ENTERTAINMENT ·", why: "the brand" },
+  { text: "MERIT", why: "the brand mark in the one top bar" },
+  { text: "Event Maker", why: "the brand mark in the one top bar" },
 ];
 // Strings that read the same in Turkish, or are identifiers the operator sees
 // as-is (stored zone names, report sheet names fixed by the reports contract).
 const SAME_IN_BOTH = new Set(["VIP", "VVIP", "VIP / VVIP", "Bar", "Bistro", "Excel", "PDF", "CSV", "EN", "TR", "M✦",
-  "MERIT ENTERTAINMENT", "EVENT MAKER", "MERIT EVENT MAKER", "TABLE PLAN", "GUEST LIST", "UNASSIGNED",
+  "MERIT ENTERTAINMENT", "EVENT MAKER", "MERIT EVENT MAKER", "MERIT", "Event Maker",   // the one top bar's mark (redesign step 1)
+  "TABLE PLAN", "GUEST LIST", "UNASSIGNED",
   "VIP FRONT", "MAIN FLOOR", "BISTRO", "RESERVED", "Language / Dil",
   "KEREM SARICICEK"]);   // the example name in the guest dialog's placeholder: a name, not English
 
@@ -178,7 +181,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     ["seating/filter-available", () => page.evaluate(() => { ui.seatingFilter = "available"; ui.operationalMode = true; render(); })],
     ["live", () => page.evaluate(() => { ui.seatingFilter = "all"; ui.operationalMode = false; ui.tab = "live"; render(); })],
     ["reports", () => tab("reports")],
-    ["guide", async () => { await page.click('[data-action="help"]'); await page.waitForTimeout(400); }],
+    ["guide", async () => { await click(page, '[data-action="help"]'); await page.waitForTimeout(400); }],
     ["history/guests", async () => { await page.keyboard.press("Escape"); await page.waitForTimeout(300); await page.evaluate(() => { activeEvent().status = "Completed"; }); await tab("guests"); }],
     ["history/seating", () => tab("seating")],
     ["history/live", () => tab("live")],

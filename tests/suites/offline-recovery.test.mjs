@@ -134,7 +134,9 @@ export default async function run({ page, context, checks, baseUrl }) {
     const out = {};
     for (const lang of ["en", "tr"]) {
       ui.lang = lang; render();
-      out[lang] = document.querySelector('[data-action="recovery-restore"]')?.title || "";
+      // An icon button carried its words in its title; in the ⋯ menu (redesign step 1) they are its text.
+      const b = document.querySelector('[data-action="recovery-restore"]');
+      out[lang] = b?.title || b?.textContent.trim() || "";
     }
     ui.lang = "en"; render();
     return out;

@@ -243,7 +243,7 @@ export default async function run({ browser, checks, baseUrl, artifactDir, repoR
     // T1 — create an event with its floor plan ------------------------------
     await guarded("t1-create", "Create an event with its plan", async () => {
       await op.step("events list");
-      await op.click('.appbar [data-action="create-event"]');
+      await op.click('.mx-head [data-action="create-event"]');
       await op.step("create dialog");
       await op.choose("#v8PlanDrop", { name: "salon.png", mimeType: "image/png", buffer: planPng }, "#v8PlanFile");
       await page.waitForFunction(() => !!document.querySelector("#v8PlanDrop img"), null, { timeout: 15000 });
@@ -392,6 +392,7 @@ export default async function run({ browser, checks, baseUrl, artifactDir, repoR
     await guarded("t9-backup", "Back up and restore", async () => {
       await op.click('[data-action="back-events"]');
       await op.step("events");
+      await op.click("header.shell-top .shell-more > summary");   // the backup lives in the ⋯ menu (redesign step 1)
       const [download] = await Promise.all([page.waitForEvent("download", { timeout: 30000 }), op.click('[data-action="backup-export"]')]);
       const backupPath = path.join(shotDir, "backup.json");
       fs.copyFileSync(await download.path(), backupPath);

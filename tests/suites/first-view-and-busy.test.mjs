@@ -180,7 +180,7 @@ export default async function run({ page, checks, baseUrl }) {
 
   // --- 6. a PDF that cannot be read: a message, and setup usable again -------
   await page.evaluate(() => { ui.screen = "events"; render(); });
-  await click(page, '.appbar [data-action="create-event"]');
+  await click(page, '.mx-head [data-action="create-event"]');
   await page.setInputFiles("#v8PlanFile", { name: "broken.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.7\nthis is not a pdf body") });
   await page.waitForFunction(() => !ui.setupBusy, null, { timeout: 15000 });
   await page.waitForTimeout(300);

@@ -84,7 +84,7 @@ export default async function run({ context, baseUrl, checks, repoRoot }) {
   {
     const { p, pageErrors } = await pageWithout(context, baseUrl, "**/pdfjs-dist@*/**");
     await p.evaluate(() => { ui.screen = "events"; render(); });
-    await click(p, '.appbar [data-action="create-event"]');
+    await click(p, '.mx-head [data-action="create-event"]');
     const pdf = fs.readFileSync(path.join(repoRoot, "benchmarks/plans/ORNEK.pdf"));
     await p.setInputFiles("#v8PlanFile", { name: "plan.pdf", mimeType: "application/pdf", buffer: pdf });
     await p.waitForFunction(() => !ui.setupBusy && document.querySelector(".toast.error"), null, { timeout: 30000 }).catch(() => {});

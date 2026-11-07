@@ -49,7 +49,7 @@ function buildPlan() {
 
 export default async function run({ page, checks, baseUrl }) {
   await openApp(page, baseUrl);
-  await page.click('.appbar [data-action="create-event"]');
+  await page.click('.mx-head [data-action="create-event"]');
   await page.waitForTimeout(300);
   await page.fill('input[name="name"]', "Square symbols");
   await page.fill('input[name="hotel"]', "Merit");

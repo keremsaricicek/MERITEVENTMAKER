@@ -50,7 +50,7 @@ export default async function run({ page, checks, baseUrl, artifactDir }) {
     return page.locator(".toast").last().textContent().catch(() => "NO TOAST");
   };
   const download = async (selector) => {
-    const [d] = await Promise.all([page.waitForEvent("download"), page.click(selector)]);
+    const [d] = await Promise.all([page.waitForEvent("download"), click(page, selector)]);
     return JSON.parse(fs.readFileSync(await d.path(), "utf8"));
   };
 

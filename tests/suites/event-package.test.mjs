@@ -130,7 +130,7 @@ export default async function run({ page, checks, baseUrl, artifactDir }) {
   // --- 3. export the package through the real button ------------------------
   const [download] = await Promise.all([
     page.waitForEvent("download"),
-    page.click('[data-export-event-package]'),
+    click(page, '[data-export-event-package]'),
   ]);
   const filePath = await download.path();
   const pkg = JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -213,6 +213,7 @@ export default async function run({ page, checks, baseUrl, artifactDir }) {
   //        measurement found: a TABLE-scope freeze must follow the table's
   //        new id when an event is duplicated, exactly like on import -----
   await page.evaluate(() => { ui.screen = "events"; render(); });
+  await click(page, `[data-cal-event="${original}"]`);   // the calendar's panel acts on the selected event
   await click(page, `[data-duplicate-event="${original}"]`);
   await page.waitForTimeout(400);
   const dupCheck = await page.evaluate((origId) => {

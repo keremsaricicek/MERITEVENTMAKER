@@ -26,7 +26,7 @@ export default async function run({ page, checks, baseUrl, artifactDir }) {
   // --- export carries the real content --------------------------------------
   const [download] = await Promise.all([
     page.waitForEvent("download"),
-    page.click('[data-action="backup-export"]'),
+    click(page, '[data-action="backup-export"]'),
   ]);
   const exported = JSON.parse(fs.readFileSync(await download.path(), "utf8"));
   checks.require(exported.format === "merit-event-maker-backup",

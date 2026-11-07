@@ -21,6 +21,14 @@ export async function click(page, selector, { attempts = 3, timeout = 7000 } = {
   let last;
   for (let i = 0; i < attempts; i++) {
     try {
+      // A rare control lives in a ⋯ menu (a closed <details>, redesign step 1,
+      // 2026-11-07): open the menu first, as a person would.
+      await page.evaluate((sel) => {
+        let el = null;
+        try { el = document.querySelector(sel); } catch { return; }
+        const menu = el && el.closest("details:not([open])");
+        if (menu) menu.open = true;
+      }, selector).catch(() => {});
       const target = page.locator(selector).first();
       await target.waitFor({ state: "visible", timeout });
       await target.click({ timeout });

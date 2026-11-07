@@ -130,7 +130,7 @@ export default async function run({ page, checks, baseUrl, artifactDir, repoRoot
   }, { T: tagged("__FIELD__") });
   await click(page, '[data-action="back-events"]');
   await page.waitForTimeout(300);
-  const [dl] = await Promise.all([page.waitForEvent("download"), page.click('[data-action="backup-export"]')]);
+  const [dl] = await Promise.all([page.waitForEvent("download"), click(page, '[data-action="backup-export"]')]);
   const backupFile = path.join(artifactDir, "hostile-backup.json");
   fs.copyFileSync(await dl.path(), backupFile);
 

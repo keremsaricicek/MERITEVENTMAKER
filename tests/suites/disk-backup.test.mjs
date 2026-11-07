@@ -13,7 +13,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { openApp, autoAnswer, futureDate } from "../lib/app-actions.mjs";
+import { click, openApp, autoAnswer, futureDate } from "../lib/app-actions.mjs";
 
 export const meta = { name: "disk-backup", tags: ["storage", "fast"], timeout: 180000 };
 
@@ -92,8 +92,8 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     await page.evaluate(async () => { state.events.push({ id: "keep-me", name: "Keep Me", date: "2099-05-05", status: "Planning", tables: [], guests: [] }); await saveState(); render(); });
     await autoAnswer(page);
     const restoreFrom = async (name) => {
-      await page.waitForSelector('[data-action="disk-backup-restore"]', { timeout: 8000 });
-      await page.click('[data-action="disk-backup-restore"]');
+      await page.waitForSelector('[data-action="disk-backup-restore"]', { state: "attached", timeout: 8000 });
+      await click(page, '[data-action="disk-backup-restore"]');
       await page.waitForSelector(`#meritDiskBackupDialog [data-disk-backup-name="${name}"]`, { timeout: 8000 });
       await page.click(`#meritDiskBackupDialog [data-disk-backup-name="${name}"]`);
       await page.waitForTimeout(900);
@@ -119,7 +119,8 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     const readHist = () => page.evaluate(() => JSON.stringify(state.events.find((e) => e.id === "disk-hist-1")));
     const histBefore = await readHist();
     const isHist = await page.evaluate(() => globalThis.MeritEventRules.isHistorical(state.events.find((e) => e.id === "disk-hist-1")));
-    await page.click('[data-history-event="disk-hist-1"]');
+    // The calendar shows one month; opening the event is what a double-click on its entry does.
+    await page.evaluate(() => openEvent("disk-hist-1"));
     await page.waitForTimeout(500);
     for (const [k, c] of [["z", true], ["y", true], ["d", true], ["Delete", false]]) {
       await page.evaluate(({ k, c }) => { window.dispatchEvent(new KeyboardEvent("keydown", { key: k, ctrlKey: c, bubbles: true }));

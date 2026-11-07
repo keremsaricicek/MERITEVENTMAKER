@@ -38,7 +38,7 @@ const INVENTORY = {
   // object (a table at x %, a progress bar's width). Moving them to CSSOM
   // (`el.style.left = …`, which no policy blocks) is the path to dropping it.
   styleAttr: {
-    "app-guests.js": 12, "app-v8.js": 11, "app.js": 9, "screen-events.js": 7, "screen-guests.js": 5,
+    "app-guests.js": 12, "app-v8.js": 11, "app.js": 9, "screen-events.js": 2, "screen-guests.js": 5,
     "screen-live.js": 4, "screen-reading.js": 3, "screen-reports.js": 10, "screen-review.js": 6,
     "screen-seating.js": 2, "screen-vlm.js": 3, "screen-wizard.js": 2,
   },

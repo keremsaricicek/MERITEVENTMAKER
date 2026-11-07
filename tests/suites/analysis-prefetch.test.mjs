@@ -121,7 +121,7 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
   // case above set the stamp by hand and could not see it.
   const dialog = await newPage();
   await openApp(dialog, baseUrl, { lang: "en" });
-  await dialog.click('.appbar [data-action="create-event"]');
+  await dialog.click('.mx-head [data-action="create-event"]');
   await dialog.waitForSelector('input[name="name"]');
   await dialog.fill('input[name="name"]', "Dialog import");
   await dialog.fill('input[name="hotel"]', "Merit");

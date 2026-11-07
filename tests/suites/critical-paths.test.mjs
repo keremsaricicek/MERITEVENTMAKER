@@ -64,7 +64,7 @@ export default async function run({ page, checks, baseUrl, repoRoot, browser }) 
 
   // --- 1. a floor plan imported from a FILE ---------------------------------
   await openApp(page, baseUrl, { lang: "tr" });
-  await page.click('.appbar [data-action="create-event"]');
+  await page.click('.mx-head [data-action="create-event"]');
   await settle(page);
   const png = fs.readFileSync(path.join(repoRoot, "benchmarks/plans/merit-real-venue-plan.png"));
   await page.setInputFiles("#v8PlanFile", { name: "salon.png", mimeType: "image/png", buffer: png });
@@ -77,7 +77,7 @@ export default async function run({ page, checks, baseUrl, repoRoot, browser }) 
   checks.ok(bg.src.startsWith("data:image") && bg.tables === 0, "creating the event carries the plan as its background — and seeds no tables", bg);
 
   await page.evaluate(() => { ui.screen = "events"; render(); });
-  await page.click('.appbar [data-action="create-event"]');
+  await page.click('.mx-head [data-action="create-event"]');
   await settle(page);
   await page.setInputFiles("#v8PlanFile", { name: "salon.pdf", mimeType: "application/pdf", buffer: twoPagePdf() });
   await page.waitForSelector('[data-pdf-page="1"]', { timeout: 20000 });

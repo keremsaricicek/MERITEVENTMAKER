@@ -157,17 +157,17 @@ export default async function run({ page, checks, baseUrl }) {
     const e = state.events[0];
     e.tables = e.tables.map(t => ({ ...t, hasPhysicalSeats: false, chairs: [] }));
     touchEvent(e); render();
-    const rows = [...document.querySelectorAll(".next-event-bars .nb-top")];
+    // The calendar's panel (redesign step 1) carries the capacity answer under
+    // Masa: "16 koltuk" / "16 seats".
+    const seats = document.querySelector('.cal-detail [data-cal-fact="tables"] .cal-sub');
     return {
-      rows: rows.length,
-      capacityText: rows[1]?.querySelector("b")?.textContent.trim() || null,
-      noPlanNotice: rows[1]?.querySelector("b") ? null : rows[1]?.textContent.trim(),
+      capacityText: seats?.textContent.trim() || null,
       physical: MeritSeatModel.physicalCapacity(e),
     };
   });
   checks.equal(hero.physical, 0, "every table is symbolic, so there are genuinely no physical chairs", hero);
-  checks.ok(hero.capacityText && /\/\s*16\s*$/.test(hero.capacityText),
-    "and the hero's capacity bar still reads against 16 seats. Driving it from physical chairs printed 'No tables in the plan yet' over a plan carrying two tables and sixteen seats",
+  checks.ok(hero.capacityText && /^16\b/.test(hero.capacityText),
+    "and the home's capacity line still reads 16 seats. Driving it from physical chairs printed 'No tables in the plan yet' over a plan carrying two tables and sixteen seats",
     hero);
 
   // --- 6b. Reports names the figure it shows ----------------------------------

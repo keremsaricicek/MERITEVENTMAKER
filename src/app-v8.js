@@ -1011,22 +1011,36 @@
   // ---- moved to src/screen-events.js — see that file's header. The shell hands it
   // what it reads; shell functions go over as late-binding wrappers, so a body
   // this file reassigns later is the one that runs. ----------------------------
+  // The one top bar (src/screen-topbar.js, redesign step 1): markup and the
+  // light/dark choice only; every control in it is bound below by the same
+  // binder as before, so no writer moved.
+  const TOPBAR=globalThis.MeritScreenTopbar.create({esc:(...a)=>esc(...a),t:(...a)=>t(...a)});
+  function shellBarHTML(ctx){
+    return TOPBAR.barHTML({...ctx,diskBackup:!!(globalThis.MeritDiskBackup&&globalThis.MeritDiskBackup.available())});
+  }
+  // "Hazır mı?" on the calendar: the Plan Doctor's reasons in the Command
+  // Center's own words — one judge, one wording.
+  function calendarReadiness(event){
+    return eventReadiness(event).reasons.map(r=>({level:r.level==="blocker"?"blocker":"warn",text:COMMAND.doctorText(r.finding).what}));
+  }
   const EVENTS=globalThis.MeritScreenEvents.create({
-    esc:(...a)=>esc(...a),eventMetrics:(...a)=>eventMetrics(...a),fmtDate:(...a)=>fmtDate(...a),getState:()=>state,helpButton:(...a)=>helpButton(...a),icon:(...a)=>icon(...a),paxOf:(...a)=>paxOf(...a),physicalCapacity:(...a)=>physicalCapacity(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),t:(...a)=>t(...a),topBrand:(...a)=>topBrand(...a),
+    esc:(...a)=>esc(...a),eventMetrics:(...a)=>eventMetrics(...a),fmtDate:(...a)=>fmtDate(...a),getActiveId:()=>ui.activeEventId,getState:()=>state,icon:(...a)=>icon(...a),readiness:(...a)=>calendarReadiness(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),t:(...a)=>t(...a),topbarHTML:(...a)=>shellBarHTML(...a),
   });
   eventsHTML = function(...a){return EVENTS.eventsHTML(...a);};
 
   // The Command Center leads because it is the only screen that answers a
-  // question about the WHOLE event; every tab after it owns one part of the
-  // work. Historical events do not get one -- a finished event has no
-  // readiness to assess, and "12 guests unassigned" on a closed night is
-  // noise, not a finding.
-  const normalTabs=[["command",()=>t("nav.commandTab")],["floor",()=>t("nav.floorPlanTab")],["guests",()=>t("nav.guestsTab")],["seating",()=>t("nav.seatingTab")],["live",()=>t("nav.liveTab")],["reports",()=>t("nav.reportsTab")]];
-  const historyTabs=[["guests",()=>t("nav.guestsTab")],["seating",()=>t("nav.seatingTab")],["reports",()=>t("nav.reportsTab")]];
+  // question about the WHOLE event; in the one top bar it is "Etkinlik", the
+  // event's overview. Historical events do not get one -- a finished event has
+  // no readiness to assess, and "12 guests unassigned" on a closed night is
+  // noise, not a finding -- nor a Floor Plan or Live screen.
+  const historyTabs=["guests","seating","reports"];
   workspaceHTML = function(event){
-    const historical=RULES().isHistorical(event),tabs=historical?historyTabs:normalTabs;
-    if(!tabs.some(([id])=>id===ui.tab))ui.tab=tabs[0][0];
-    return`<section class="workspace ${ui.focusMode?"v8-focus":""}"><header class="workspace-head">${topBrand()}<div class="event-id"><strong>${esc(event.name)}</strong><span>${esc(fmtDate(event.date))} · ${esc([event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet"))}</span></div><div class="workspace-actions"><div class="global-search">${icon("search")}<input id="globalGuestSearch" placeholder="${t("appbar.search")}" autocomplete="off"><div id="globalSearchResults" class="search-results hidden"></div></div>${planHealthHTML(event)}<button class="btn quiet sm lang-btn" data-v8-action="toggle-lang" title="Language / Dil">${ui.lang==="tr"?"TR":"EN"}</button><button class="btn quiet icon-only" data-action="save-now" title="${t("appbar.saveNow")}">${icon("save")}</button>${helpButton()}<button class="btn sm" data-action="back-events">${t("appbar.allEvents")}</button></div></header><nav class="tabs">${tabs.map(([id,label])=>`<button class="tab ${ui.tab===id?"active":""}" data-tab="${id}">${label()}</button>`).join("")}</nav>${historical?`<div class="workspace-readonly-banner">${icon("lock")}${t("nav.historicalBanner")}</div>`:ui.focusMode?"":onboardingCalloutHTML("globalFinder")}<div class="content">${tabContent(event)}</div>${ui.focusMode?`<button class="focus-exit" data-v8-action="focus">${t("nav.exitFocus")}</button>`:""}</section>`;
+    const historical=RULES().isHistorical(event);
+    const tabs=historical?historyTabs:["command","floor","guests","seating","live","reports"];
+    if(!tabs.includes(ui.tab))ui.tab=tabs[0];
+    const sub=[fmtDate(event.date),[event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet")].join(" · ");
+    const bar=shellBarHTML({screen:"workspace",current:ui.tab,historical,event:{name:event.name,sub},planHealth:planHealthHTML(event)});
+    return`<section class="workspace ${ui.focusMode?"v8-focus":""}">${bar}${historical?`<div class="workspace-readonly-banner">${icon("lock")}${t("nav.historicalBanner")}</div>`:ui.focusMode?"":onboardingCalloutHTML("globalFinder")}<div class="content">${tabContent(event)}</div>${ui.focusMode?`<button class="focus-exit" data-v8-action="focus">${t("nav.exitFocus")}</button>`:""}</section>`;
   };
   tabContent = function(event){
     if(RULES().isHistorical(event)){
@@ -5087,13 +5101,53 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
       ui.selectedCandidateId=null;ui.activeReviewGroupId=null;ui.activeQuestionId=null;
       ui.reviewDrawMode=false;ui.selectedChangeId=null;ui.highlightId=null;render();
     });
-    const back=document.querySelector("[data-action='back-events']");if(back)back.onclick=()=>{ui.screen="events";ui.focusMode=false;render();};const save=document.querySelector("[data-action='save-now']");if(save)save.onclick=()=>saveState(true);const search=document.getElementById("globalGuestSearch");if(search){search.oninput=()=>renderGlobalSearch(search.value);search.onkeydown=guestSearchKey;}
+    // Back to the calendar: the bar's mark and the ⋯ menu both carry it. The
+    // calendar comes back on the event you were in.
+    document.querySelectorAll("[data-action='back-events'],[data-shell-home]").forEach(b=>b.onclick=()=>{EVENTS.focus(ui.activeEventId);ui.screen="events";ui.focusMode=false;render();});
+    const save=document.querySelector("[data-action='save-now']");if(save)save.onclick=()=>saveState(true);
+    const search=document.getElementById("globalGuestSearch");
+    if(search){
+      search.oninput=()=>renderGlobalSearch(search.value);search.onkeydown=guestSearchKey;
+      // ONE COMMAND LINE: a sentence that names no guest goes to F8. With a
+      // guest row on offer, Enter stays the finder's (guestSearchKey).
+      search.addEventListener("keydown",e=>{
+        if(e.key!=="Enter")return;
+        const box=document.getElementById("globalSearchResults"),v=search.value.trim();
+        if(!v||(box&&!box.classList.contains("hidden")&&box.querySelector("[data-search-guest]")))return;
+        e.preventDefault();search.value="";closeGuestSearch();ASSIST.toggle(true);ASSIST.ask(v);
+      });
+    }
+    bindShellBar();
     const backupExport=document.querySelector("[data-action='backup-export']");if(backupExport)backupExport.onclick=()=>PORTABILITY.exportBackup();
     const backupImport=document.querySelector("[data-action='backup-import']");if(backupImport)backupImport.onclick=()=>document.getElementById("backupFileInput").click();
     const recoveryBtn=document.querySelector("[data-action='recovery-restore']");if(recoveryBtn)recoveryBtn.onclick=()=>PORTABILITY.restoreLatestSnapshot();
     const backupInput=document.getElementById("backupFileInput");
     if(backupInput){const fresh=backupInput.cloneNode(true);backupInput.replaceWith(fresh);fresh.addEventListener("change",e=>{const file=e.target.files[0];if(file)PORTABILITY.importBackupFile(file);e.target.value="";});}
   }
+  // The top bar's own controls and the calendar's view controls. None of them
+  // writes to an event: theme, assistant, which screen, which month, which
+  // event is shown. The writes on the calendar (open, same layout, duplicate,
+  // export, delete) are the data-* controls bound above, as before.
+  function bindShellBar(){
+    document.querySelectorAll("[data-shell-theme]").forEach(b=>b.onclick=()=>TOPBAR.theme.toggle());
+    document.querySelectorAll("[data-shell-assistant]").forEach(b=>b.onclick=()=>ASSIST.toggle(true));
+    document.querySelectorAll("[data-shell-open][data-shell-event]").forEach(b=>b.onclick=()=>{
+      const id=b.dataset.shellEvent,tab=b.dataset.shellOpen;
+      openEvent(id);
+      if(ui.screen==="workspace"&&ui.activeEventId===id&&ui.tab!==tab){ui.tab=tab;render();}
+    });
+    document.querySelectorAll("[data-cal-month]").forEach(b=>b.onclick=()=>{EVENTS.shift(Number(b.dataset.calMonth));render();});
+    document.querySelectorAll("[data-cal-event]").forEach(b=>{
+      b.onclick=()=>{EVENTS.select(b.dataset.calEvent);render();document.querySelector(`[data-cal-event="${CSS.escape(b.dataset.calEvent)}"]`)?.focus();};
+      // A past entry already opens on double-click through [data-history-event].
+      if(!b.hasAttribute("data-history-event"))b.ondblclick=()=>openEvent(b.dataset.calEvent);
+    });
+    document.querySelectorAll("[data-cal-new]").forEach(b=>b.onclick=()=>{startNewEvent();newEventDraft.date=b.dataset.calNew;render();});
+    // A ⋯ menu closes when you pick from it.
+    document.querySelectorAll("details.shell-more .shell-menu-item,details.cal-more .shell-menu-item").forEach(b=>b.addEventListener("click",()=>{const d=b.closest("details");if(d)d.open=false;}));
+  }
+  // An open ⋯ menu closes on a click anywhere else, and on Escape.
+  document.addEventListener("pointerdown",e=>{document.querySelectorAll("details.shell-more[open],details.cal-more[open]").forEach(d=>{if(!d.contains(e.target))d.open=false;});});
   bindCommon = bindV8Common;
   // F8 "ne değişti": the day's first picture of an event, kept per event on this machine
   // (src/change-digest.js; owner 2026-11-02). Never fails the open.
@@ -5423,6 +5477,9 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
         // The opener can legitimately be gone -- the guest it belonged to was
         // just deleted. Fall back to the screen's first real control rather
         // than leaving focus on <body>.
+        // An opener in a ⋯ menu that closed behind the dialog: focus returns to
+        // the menu's own button, the control a person used to get there.
+        {const menu=target&&target.closest("details:not([open])");if(menu)target=menu.querySelector("summary");}
         if(!target||target.offsetParent===null)
           target=document.querySelector(".mx-head button, .appbar button, .tab.active");
         if(target)target.focus();
@@ -5439,6 +5496,9 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     if(document.querySelector("dialog[open]"))return;
     // F8 opens and closes the assistant from anywhere (it closes itself on Escape).
     if(e.key==="F8"){e.preventDefault();ASSIST.toggle();return;}
+    // F9: light / dark, from anywhere (owner-approved redesign: day planning
+    // light, night door dark).
+    if(e.key==="F9"){e.preventDefault();TOPBAR.theme.toggle();return;}
     // F10: the help topics in the assistant panel (owner 2026-11-02)
     if(e.key==="F10"){e.preventDefault();ASSIST.help();return;}
     // "?": the keys and the sentences F8 understands — never while typing in a field

@@ -140,9 +140,9 @@ export default async function run({ page, checks, baseUrl, artifactDir }) {
   await click(page, '[data-action="back-events"]');
   await page.waitForTimeout(300);
 
-  const [backupDl] = await Promise.all([page.waitForEvent("download"), page.click('[data-action="backup-export"]')]);
+  const [backupDl] = await Promise.all([page.waitForEvent("download"), click(page, '[data-action="backup-export"]')]);
   const backup = JSON.parse(fs.readFileSync(await backupDl.path(), "utf8"));
-  const [pkgDl] = await Promise.all([page.waitForEvent("download"), page.click("[data-export-event-package]")]);
+  const [pkgDl] = await Promise.all([page.waitForEvent("download"), click(page, "[data-export-event-package]")]);
   const pkg = JSON.parse(fs.readFileSync(await pkgDl.path(), "utf8"));
 
   const write = (name, obj) => {
