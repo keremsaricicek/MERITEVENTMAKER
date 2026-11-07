@@ -42,12 +42,11 @@ const ALLOWED = [
   { text: "TOTAL GUEST:", why: "the printed table plan mirrors the workbook's TABLE PLAN card, whose wording the reports contract fixes" },
   { text: "MERIT ENTERTAINMENT ·", why: "the brand" },
   { text: "MERIT", why: "the brand mark in the one top bar" },
-  { text: "Event Maker", why: "the brand mark in the one top bar" },
 ];
 // Strings that read the same in Turkish, or are identifiers the operator sees
 // as-is (stored zone names, report sheet names fixed by the reports contract).
 const SAME_IN_BOTH = new Set(["VIP", "VVIP", "VIP / VVIP", "Bar", "Bistro", "Excel", "PDF", "CSV", "EN", "TR", "M✦",
-  "MERIT ENTERTAINMENT", "EVENT MAKER", "MERIT EVENT MAKER", "MERIT", "Event Maker",   // the one top bar's mark (redesign step 1)
+  "MERIT ENTERTAINMENT", "EVENT MAKER", "MERIT EVENT MAKER", "MERIT", "Event Maker", "Mimar",   // the one top bar's mark; Mimar is the assistant's name (redesign v4)
   "TABLE PLAN", "GUEST LIST", "UNASSIGNED",
   "VIP FRONT", "MAIN FLOOR", "BISTRO", "RESERVED", "Language / Dil",
   "KEREM SARICICEK"]);   // the example name in the guest dialog's placeholder: a name, not English

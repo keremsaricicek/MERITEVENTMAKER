@@ -2462,6 +2462,12 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 .review-pin{transform:translate(-15%,-115%)}
 .review-pin:hover{transform:translate(-15%,-115%) scale(1.12)}
 
+/* ==== REDESIGN v4 (2026-11-07): TWO THEMES × light/dark, the "otel tabelası" bar ====
+   Theme A "Atlas sade" (default, benchmarks/ux/redesign/7-atlas-sade) and theme
+   B "Birleşik" (8-tema-b), chosen in the ⋯ menu: <html data-skin="a|b">. B's
+   light values are the ones below (step 1's); A's light values override them
+   inside the same .theme-scope; dark is the same classic night for both.
+   Earlier text, kept: */
 /* ==== REDESIGN STEP 1 (2026-11-07): the one top bar, light/dark, the events calendar ====
    Owner-approved reference: benchmarks/ux/redesign/6-birlesik + SPEC-v2.md.
    TOKENS extend the --pi-* family (no parallel system). The light values are
@@ -2478,8 +2484,22 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
   --pi-primary:#1e2b3a;--pi-primary-ink:#ffffff;
   --pi-steel:#2d5e8a;--pi-steel-soft:#e3ecf5;
   --pi-ok:#2b6a4a;--pi-cell-past:#f8f7f4;
-  --pi-bar-h:52px;
+  --pi-bar-h:56px;
+  --pi-serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --pi-brand-font:var(--font);
 }
+/* Theme A "Atlas sade", light: the calm sage-grey paper and the deep Atlas blue. */
+:root:not([data-skin="b"]):not([data-theme="dark"]) .theme-scope,:root:not([data-skin="b"]):not([data-theme="dark"]) #assistantPanel{
+  --pi-bg:#eceee9;--pi-surface:#f7f8f5;--pi-surface-2:#eef0ec;--pi-cell-past:#eef0ec;
+  --pi-line:#d9ddd8;--pi-line-soft:#e3e6e1;--pi-line-strong:#c3cac5;
+  --pi-ink:#1d2930;--pi-muted:#46525a;--pi-muted-2:#566269;
+  --pi-primary:#1e4d78;--pi-primary-ink:#ffffff;
+  --pi-steel:#1e4d78;--pi-steel-soft:#dce5ee;
+  --pi-ok:#2e5e45;--pi-warn:#8a5a12;--pi-danger:#a2352a;--vip:#7e6119;
+  --text:#1d2930;--muted:#46525a;--muted-2:#566269;--line:#d9ddd8;--line-soft:#e3e6e1;
+  --shell:#eceee9;--chrome:#f7f8f5;--panel:#f7f8f5;--panel-2:#eef0ec;
+}
+:root:not([data-skin="b"]){--pi-brand-font:var(--pi-serif)}
 :root[data-theme="dark"]{color-scheme:dark}
 :root[data-theme="dark"] .theme-scope,:root[data-theme="dark"] #assistantPanel{
   --pi-bg:#0d1117;--pi-surface:#131a23;--pi-surface-2:#18202a;--pi-cell-past:#10161e;
@@ -2499,21 +2519,27 @@ button.mx-metric:focus-visible{outline:none;box-shadow:var(--ring);z-index:1}
 :root[data-theme="dark"] .theme-scope .btn.primary{background:var(--pi-primary);border-color:var(--pi-primary);color:var(--pi-primary-ink);box-shadow:none}
 
 /* ---- the bar ---- */
-header.shell-top{height:var(--pi-bar-h);flex:0 0 auto;display:flex;align-items:center;gap:18px;padding:0 20px;background:var(--pi-surface);border-bottom:1px solid var(--pi-line);color:var(--pi-ink);position:relative;z-index:300;backdrop-filter:none}
+header.shell-top{height:var(--pi-bar-h);flex:0 0 auto;display:flex;align-items:center;gap:22px;padding:0 24px;background:var(--pi-surface);border-bottom:1px solid var(--pi-line);color:var(--pi-ink);position:relative;z-index:300;backdrop-filter:none}
 .shell-brand{display:flex;align-items:baseline;gap:8px;white-space:nowrap;background:none;border:0;padding:0;color:var(--pi-ink);font:inherit;cursor:default}
 button.shell-brand{cursor:pointer;border-radius:6px}
-.shell-brand b{font-weight:700;letter-spacing:.2em;font-size:13px}
+.shell-brand b{font-family:var(--pi-brand-font);font-weight:600;letter-spacing:.36em;font-size:16px}
 .shell-brand span{font-weight:500;font-size:13px;color:var(--pi-muted)}
 .shell-brand .brand-version{font-size:11px;color:var(--pi-muted-2);font-weight:500}
 nav.shell-nav{display:flex;align-items:stretch;height:100%;padding:0;background:none;border:0;gap:0}
-.shell-nav .shell-nav-item{height:100%;min-height:0;padding:0 12px;border:0;border-radius:0;background:none;color:var(--pi-muted);font-size:14px;font-weight:500;letter-spacing:0;text-transform:none;display:flex;align-items:center;gap:7px;position:relative;cursor:pointer}
-.shell-nav .shell-nav-item svg{width:16px;height:16px;flex:none}
+.shell-nav .shell-nav-item{height:100%;min-height:0;padding:0 16px;border:0;border-radius:0;background:none;color:var(--pi-muted);font-size:16px;font-variant-caps:small-caps;font-weight:500;letter-spacing:.05em;text-transform:none;display:flex;align-items:center;gap:0;position:relative;cursor:pointer;white-space:nowrap}
+/* "otel tabelası": thin vertical separators between the words, no icons */
+.shell-nav .shell-nav-item+.shell-nav-item::before{content:"";position:absolute;left:0;top:calc(50% - 7px);height:14px;border-left:1px solid var(--pi-line-strong)}
+.shell-nav-check{margin-left:6px;font-variant-caps:normal;font-size:13px;font-weight:400;opacity:.8}
+.shell-nav-check::before{content:"\2713"}
+.shell-nav .shell-nav-item.next{color:var(--pi-primary);font-weight:700}
+.shell-nav .shell-nav-item.next::after{content:"";position:absolute;left:16px;right:16px;bottom:14px;height:1px;background:var(--pi-primary);opacity:.5}
 .shell-nav .shell-nav-item:hover{color:var(--pi-ink)}
 .shell-nav .shell-nav-item[aria-current="page"],.shell-nav .shell-nav-item.active{color:var(--pi-ink);border-bottom-color:transparent}
-.shell-nav .shell-nav-item[aria-current="page"]::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:2px;border-radius:2px 2px 0 0;background:var(--pi-ink)}
+.shell-nav .shell-nav-item[aria-current="page"]::after{content:"";position:absolute;left:16px;right:16px;bottom:0;height:2px;border-radius:2px 2px 0 0;background:var(--pi-primary);opacity:1}
 .shell-nav .shell-nav-item:disabled{cursor:default;opacity:.55}
-.shell-cmd{flex:1;max-width:470px;min-width:220px;position:relative;margin-left:6px}
-.shell-cmd-box{display:flex;align-items:center;gap:8px;width:100%;height:36px;border:1px solid var(--pi-line-strong);border-radius:9px;background:var(--pi-surface-2);padding:0 6px 0 11px;color:var(--pi-muted-2);font:inherit;text-align:left}
+.shell-cmd{flex:1 1 auto;max-width:300px;min-width:120px;position:relative}
+.shell-cmd-empty{visibility:hidden}
+.shell-cmd-box{display:flex;align-items:center;gap:8px;width:100%;height:34px;border:1px solid var(--pi-line-strong);border-radius:4px;background:var(--pi-surface-2);padding:0 6px 0 11px;color:var(--pi-muted-2);font:inherit;text-align:left}
 .shell-cmd-box:focus-within{border-color:var(--pi-steel);background:var(--pi-surface)}
 .shell-cmd-box svg{flex:none}
 .shell-cmd-button{cursor:text}
@@ -2522,11 +2548,25 @@ nav.shell-nav{display:flex;align-items:stretch;height:100%;padding:0;background:
 .shell-cmd-box input::placeholder{color:var(--pi-muted-2)}
 .shell-cmd-key{font:600 12px var(--font);color:var(--pi-muted);border:1px solid var(--pi-line-strong);border-radius:5px;padding:1px 6px;background:var(--pi-surface);cursor:pointer;line-height:18px}
 .shell-cmd .search-results{left:0;right:auto;top:42px}
-.shell-right{margin-left:auto;display:flex;align-items:center;gap:14px;color:var(--pi-muted);white-space:nowrap}
-.shell-right .event-id{flex:none;min-width:0;max-width:260px;padding:0;border:0}
-.shell-right .event-id strong{color:var(--pi-ink);font-weight:600;font-size:14px}
+.shell-right{margin-left:auto;display:flex;align-items:center;gap:16px;color:var(--pi-muted);white-space:nowrap}
+.shell-right .event-id{flex:0 1 auto;min-width:0;max-width:260px;padding:0;border:0;overflow:hidden;text-overflow:ellipsis}
+.shell-right .event-id strong{color:var(--pi-ink);font-family:var(--pi-brand-font);font-weight:500;font-size:15px}
+.shell-sep{width:1px;height:14px;background:var(--pi-line-strong);flex:none}
+/* "Mimar": the F8 assistant's name, a quiet bordered word, not a generic AI button */
+.shell-mimar{height:34px;padding:0 10px 0 14px;border-radius:3px;border:1px solid var(--pi-primary);background:var(--pi-surface);color:var(--pi-primary);font:600 16px var(--font);font-variant-caps:small-caps;letter-spacing:.06em;display:inline-flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap}
+.shell-mimar:hover,.shell-mimar[aria-expanded="true"]{background:var(--pi-primary);color:var(--pi-primary-ink)}
+.shell-mimar kbd{font:600 12px var(--font);font-variant-caps:normal;letter-spacing:0;border:1px solid currentColor;border-radius:4px;padding:0 5px;opacity:.8}
+/* "Sonraki: X →": one quiet way on, bottom right */
+.shell-next{position:fixed;right:24px;bottom:14px;z-index:40;height:34px;padding:0 14px;border-radius:17px;border:1px solid var(--pi-line-strong);background:var(--pi-surface);color:var(--pi-muted);font:500 14px var(--font);box-shadow:var(--pi-shadow-2);cursor:pointer}
+.shell-next:hover{color:var(--pi-primary);border-color:var(--pi-primary)}
+/* it never covers a screen's own bottom-right control (Salon's add button) or the open Mimar box */
+.workspace:has(.planmap-fab) .shell-next{bottom:76px}
+body:has(#assistantPanel:not([hidden])) .shell-next{right:412px}
+.shell-menu-head{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pi-muted-2);padding:6px 12px 2px}
+.shell-skin-item[aria-pressed="true"]{font-weight:600;color:var(--pi-primary)}
+.shell-skin-item[aria-pressed="true"]::after{content:" \2713"}
 .shell-clock{font-weight:600;font-variant-numeric:tabular-nums;color:var(--pi-muted)}
-.shell-icon-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--pi-line-strong);background:var(--pi-surface);display:grid;place-items:center;color:var(--pi-muted);cursor:pointer;list-style:none;padding:0;font-size:16px}
+.shell-icon-btn{width:34px;height:34px;border-radius:3px;border:1px solid var(--pi-line-strong);background:var(--pi-surface);display:grid;place-items:center;color:var(--pi-muted);cursor:pointer;list-style:none;padding:0;font-size:16px}
 .shell-icon-btn::-webkit-details-marker{display:none}
 .shell-icon-btn:hover{color:var(--pi-ink);background:var(--pi-surface-2)}
 .shell-theme .shell-theme-sun{display:none}
@@ -2545,7 +2585,7 @@ nav.shell-nav{display:flex;align-items:stretch;height:100%;padding:0;background:
 .shell-top .search-results{background:var(--pi-surface);border-color:var(--pi-line-strong);color:var(--pi-ink)}
 .shell-top .find-row:hover,.shell-top .find-row.active,.shell-top .search-result:hover{background:var(--pi-surface-2)}
 .workspace.v8-focus header.shell-top{display:none}
-@media (max-width:1500px){.shell-nav .shell-nav-item{padding:0 9px}header.shell-top{gap:12px}.shell-brand .brand-version{display:none}}
+@media (max-width:1500px){.shell-nav .shell-nav-item{padding:0 11px;font-size:15px}.shell-nav .shell-nav-item[aria-current="page"]::after,.shell-nav .shell-nav-item.next::after{left:11px;right:11px}header.shell-top{gap:14px;padding:0 18px}.shell-right{gap:12px}.shell-right .event-id{max-width:190px}.shell-brand .brand-version{display:none}}
 
 /* ---- the events calendar ---- */
 .cal-screen{flex:1;min-height:0;display:flex;flex-direction:column;padding:26px 40px 24px;overflow:auto;background:var(--pi-bg);color:var(--pi-ink)}

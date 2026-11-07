@@ -166,9 +166,11 @@ export default async function run({ page, checks, baseUrl }) {
     checks.ok(ws.menu.includes(a), `the event header's "${a}" control kept a home in the ⋯ menu`, ws.menu);
 
   // --- 3b. the working order: ✓ on finished steps, the next one emphasised -------
+  await gotoTab(page, "command");
+  const onCommand = await page.evaluate(BAR);
   const step = (bar) => bar.items.map((i) => (i.done ? "✓" : "") + (i.next ? ">" : "") + i.tab).join(" ");
-  checks.equal(step(ws), "✓command >floor guests seating live reports", "a blank event: Etkinlik ✓, Salon is the next step", step(ws));
-  checks.equal([ws.nextTarget, ws.nextButton], ["floor", "Sonraki: Salon →"], "one quiet \"Sonraki: Salon →\" on the overview", ws);
+  checks.equal(step(onCommand), "✓command >floor guests seating live reports", "a blank event: Etkinlik ✓, Salon is the next step", step(ws));
+  checks.equal([onCommand.nextTarget, onCommand.nextButton], ["floor", "Sonraki: Salon →"], "one quiet \"Sonraki: Salon →\" on the overview", onCommand);
   await click(page, "[data-shell-next]");
   await settle(page);
   checks.equal(await page.evaluate(() => ui.tab), "floor", "\"Sonraki\" opens the next screen");
