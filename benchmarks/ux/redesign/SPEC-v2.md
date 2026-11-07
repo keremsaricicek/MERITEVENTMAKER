@@ -44,3 +44,12 @@ colours (calmer, no washed/garish tones) and the same icon plan.
 - Events calendar (light + dark) ✓ "gayet iyi". Salon glow-on-ask ✓. Door light ✓.
 - Door dark ~ "soldaki liste aşırı büyük, çok az küçült" → list shrunk ~12 % (panel 560→500, rows 66→56, name 16.5→15,
   search 58→50); applied to both themes. Awaiting his look at the re-shot door photos.
+
+## Owner's votes on the review page (2026-11-07, 89 of 90 shots; https://claude.ai/artifact/4TUAvapvZXsY2hoK7rD1VE)
+Kept → why (synthesis): Etkinlikler v3 calendar light+dark, Kontrol, Atlas, Tek Satır (calm overview of evenings; cards ✗).
+Genel bakış Kontrol + Tek Satır (open issues tied to their place on the plan, each with "Git"). Salon v2, v3, Kontrol,
+Tek Satır, Atlas table focus (clean symbolic tables, number + fill; architectural/coarse drawings ✗). Misafirler only
+combined v1/v2 (plain list). Oturma combined v1–v3 light+dark + Tek Satır. Kapı combined v1–v3 + Kontrol. Raporlar Atlas,
+Kontrol, Royal (the real document previewed beside the list of outputs). Dropped everything F8 (wants a CHAT-like
+conversation place, not a command popup), the real step-1 shots (events / top bar / ⋯ menu), all first themes.
+Owner: "aynı plan görüntüsünü çok ekledim çünkü tasarım ve planlama güzel, ama kalabalık ortam sevmiyorum".
