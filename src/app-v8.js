@@ -1469,21 +1469,31 @@
     return html.replace("</div><div class=\"canvas-status\"",`${ghostHTML()}</div><div class="canvas-status v8-status"`)
       .replace(t("canvas.editHint"),`${t("canvas.multiSelectHint")}<span class="status-right">${t("canvas.selectedCount",{n:ui.selectedObjectIds.length||0})}</span>`);
   };
-  floorPlanHTML = function(event){return`<div class="planmap-shell">${FLOORPLAN.planMapToolbarHTML(event)}${FLOORPLAN.bulkPanel(event)}${canvasViewportHTML(event,false)}${floorEmptyHTML(event)}${FLOORPLAN.contextualCardHTML(event)}${FLOORPLAN.planStatusPillHTML(event)}${FLOORPLAN.addManuallyFabHTML()}</div>`;};
+  floorPlanHTML = function(event){return`<div class="planmap-shell">${FLOORPLAN.planMapToolbarHTML(event)}${floorAnalyseHTML(event)}${FLOORPLAN.bulkPanel(event)}${canvasViewportHTML(event,false)}${floorEmptyHTML(event)}${FLOORPLAN.contextualCardHTML(event)}${FLOORPLAN.planStatusPillHTML(event)}${FLOORPLAN.addManuallyFabHTML()}</div>`;};
   // ---- EMPTY STATES THAT SAY WHAT TO DO NEXT (§20) -------------------------
   // A blank canvas used to be a blank panel: the only sentence telling the
   // operator what to do was the toast raised when the event was created --
   // the transient carrier §17 ruled out for anything that stays true. Each
   // empty state now names what is missing and carries the control for the
   // next step. The card lets clicks through everywhere but itself.
-  function canvasEmptyHTML(title,body,actions){
-    return`<div class="canvas-empty" data-canvas-empty role="status"><div class="canvas-empty-card"><b>${esc(title)}</b><span>${esc(body)}</span>${actions?`<div class="canvas-empty-actions">${actions}</div>`:""}</div></div>`;
+  function canvasEmptyHTML(title,body,actions,cardAttrs=""){
+    return`<div class="canvas-empty" data-canvas-empty role="status"><div class="canvas-empty-card"${cardAttrs}><b>${esc(title)}</b><span>${esc(body)}</span>${actions?`<div class="canvas-empty-actions">${actions}</div>`:""}</div></div>`;
   }
   function floorEmptyHTML(event){
     if(event.tables.length||(event.venueObjects||[]).length||event.background?.src||RULES().isHistorical(event))return"";
     if(ui.v8AddOpen||ui.repeatPlacement)return"";   // already adding: the card would sit in the way
     return canvasEmptyHTML(t("empty.floor.title"),t("empty.floor.body"),
-      `<button class="btn primary" data-v8-action="replace-bg">${icon("image")}${t("empty.floor.import")}</button><button class="btn" data-v8-action="add">${icon("plus")}${t("action.addManually")}</button>`);
+      `<button class="btn primary" data-v8-action="replace-bg">${icon("image")}${t("empty.floor.import")}</button><button class="btn" data-v8-action="add">${icon("plus")}${t("action.addManually")}</button><small class="canvas-empty-drop">${esc(t("empty.floor.drop"))}</small>`,
+      // SPEC-v4: the card is also where a plan file can be dropped (the same
+      // #floorPlanFile import as the button; bound in bindPlanDrop).
+      ` data-plan-drop`);
+  }
+  // A plan that is in the room but was never analysed: ONE clear "Analiz et"
+  // — the existing Assisted Detection (data-v8-action="detect"), whose
+  // suggestions are then accepted or rejected one by one in review.
+  function floorAnalyseHTML(event){
+    if(!event.background?.src||event.analysis||ui.analysisBusy||RULES().isHistorical(event))return"";
+    return`<div class="plan-analyse-strip" data-plan-analyse role="status"><span><b>${esc(t("salon.analyse.title"))}</b> ${esc(t("salon.analyse.body"))}</span><button class="btn primary" data-v8-action="detect">${esc(t("salon.analyse.go"))}</button></div>`;
   }
   // "Everyone has arrived" was shown whenever the list was empty -- but the
   // list includes checked-in guests, so it is empty only when there are no
@@ -5130,8 +5140,18 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
   // writes to an event: theme, assistant, which screen, which month, which
   // event is shown. The writes on the calendar (open, same layout, duplicate,
   // export, delete) are the data-* controls bound above, as before.
+  // A file dropped on the empty room goes through the plan file input's own
+  // change handler — one import path, whichever way the file arrived.
+  function bindPlanDrop(){
+    document.querySelectorAll("[data-plan-drop]").forEach(z=>{
+      z.ondragover=e=>{e.preventDefault();z.classList.add("dragging");};
+      z.ondragleave=()=>z.classList.remove("dragging");
+      z.ondrop=e=>{e.preventDefault();z.classList.remove("dragging");const files=e.dataTransfer&&e.dataTransfer.files,input=document.getElementById("floorPlanFile");if(!files||!files.length||!input)return;input.files=files;input.dispatchEvent(new Event("change"));};
+    });
+  }
   function bindShellBar(){
     document.querySelectorAll("[data-shell-theme]").forEach(b=>b.onclick=()=>TOPBAR.theme.toggle());
+    bindPlanDrop();
     // A theme may change what a screen shows (A: the timeline, B: the calendar).
     document.querySelectorAll("[data-shell-skin]").forEach(b=>b.onclick=()=>{TOPBAR.skin.set(b.dataset.shellSkin);render();});
     // "Sonraki: X →" is the same move as clicking X in the bar.

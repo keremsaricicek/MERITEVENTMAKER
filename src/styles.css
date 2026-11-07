@@ -2698,3 +2698,16 @@ body:has(.cal-screen) .toast{min-width:0;max-width:340px}
 .tl-screen .cal-detail>.cal-ready{grid-row:2 / span 3}
 .tl-screen .cal-detail>.cal-d-acts,.tl-screen .cal-detail>.history-learning,.tl-screen .cal-detail>.cal-d-empty{grid-column:1 / -1}
 .cal-d-acts .btn.danger{color:var(--pi-danger)}
+
+/* ==== REDESIGN v4 step 4: Salon — drop a plan, one "Analiz et", a table's people ==== */
+.canvas-empty-card[data-plan-drop]{border:1.5px dashed var(--pi-line-strong)}
+.canvas-empty-card[data-plan-drop].dragging{border-color:var(--pi-primary);background:var(--pi-steel-soft)}
+.canvas-empty-drop{display:block;margin-top:8px;font-size:12px;color:var(--pi-muted-2)}
+.plan-analyse-strip{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:41;display:flex;gap:14px;align-items:center;max-width:min(760px,calc(100% - 40px));background:var(--pi-surface);border:1px solid var(--pi-steel);border-radius:6px;padding:8px 10px 8px 16px;box-shadow:var(--pi-shadow-2);font-size:13px;color:var(--pi-ink)}
+.planmap-shell:has(.plan-analyse-strip) .planmap-toolbar{top:76px}
+.table-people{margin-top:12px;border-top:1px solid var(--pi-line);padding-top:10px}
+.table-people-h{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pi-muted-2);margin-bottom:6px}
+.table-people ul{list-style:none;margin:0;padding:0}
+.table-people li{padding:6px 0;border-bottom:1px solid var(--pi-line-soft);font-size:13px}
+.table-people p{margin:0;font-size:13px;color:var(--pi-muted)}
+.tp-pax{color:var(--pi-muted);font-weight:500}.tp-vip{color:var(--vip);font-size:12px;font-weight:650;letter-spacing:.05em}

@@ -19,6 +19,7 @@
 //   · Seating showed THREE onboarding tips at once.
 // Every control below is pressed, not just found: an empty state whose button
 // does nothing is a blank panel with a button on it.
+import fs from "node:fs";
 import { openApp, createBlankEvent, addTables, futureDate, gotoTab, settle } from "../lib/app-actions.mjs";
 
 export const meta = { name: "empty-states", tags: ["ui", "fast"], timeout: 180000 };
@@ -114,4 +115,44 @@ export default async function run({ page, checks, baseUrl }) {
     controls: document.querySelectorAll("[data-empty-action]").length }));
   checks.ok(hist.queue && hist.queue.includes("misafir yok"), "a historical event's Seating says it has no guests", hist);
   checks.equal(hist.controls, 0, "and offers no control that would edit it");
+
+  // --- REDESIGN v4 step 4 (SPEC-v4 "The working order" 2): SALON ------------------
+  // An empty room takes a plan by DROP as well as by the button; a plan that was
+  // never analysed offers ONE clear "Analiz et" (the existing Assisted Detection,
+  // data-v8-action="detect"); a table that is clicked shows its people in the
+  // right panel, and no name is drawn at a chair. Mutation proof, recorded
+  // 2026-11-07: without the drop binding the drop check fails; with the strip
+  // gated on tables instead of the analysis the "Analiz et" check fails.
+  await page.evaluate(() => { ui.screen = "events"; render(); });
+  await createBlankEvent(page, { name: "Salon v4", hotel: "Merit Royal", date: futureDate(15) });
+  await gotoTab(page, "floor"); await settle(page);
+  const png = fs.readFileSync(new URL("../../benchmarks/fixtures/rounds.png", import.meta.url)).toString("base64");
+  await page.evaluate(async (b64) => {
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const dt = new DataTransfer(); dt.items.add(new File([bytes], "salon.png", { type: "image/png" }));
+    const zone = document.querySelector("[data-canvas-empty] [data-plan-drop]");
+    zone.dispatchEvent(new DragEvent("dragover", { dataTransfer: dt, bubbles: true, cancelable: true }));
+    zone.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }));
+  }, png);
+  await page.waitForFunction(() => !!activeEvent().background?.src, null, { timeout: 15000 }).catch(() => {});
+  await settle(page);
+  const dropped = await page.evaluate(() => ({ bg: !!activeEvent().background?.src, analysed: !!activeEvent().analysis,
+    strip: document.querySelector("[data-plan-analyse]")?.textContent.replace(/\s+/g, " ").trim() || null,
+    detect: !!document.querySelector('[data-plan-analyse] [data-v8-action="detect"]') }));
+  checks.ok(dropped.bg, "a plan dropped on the empty room becomes the room's plan (the same import as the button)", dropped);
+  checks.ok(!dropped.analysed && dropped.detect && /Analiz et/.test(dropped.strip || ""), "a plan never analysed offers one clear \"Analiz et\" — the existing Assisted Detection", dropped);
+  checks.ok(!/AI|yapay zek/i.test(dropped.strip || ""), "and it is never called AI", dropped.strip);
+  await page.evaluate(() => { const e = activeEvent(); e.background = null; render(); });
+  await addTables(page, { quantity: 1 });
+  const people = await page.evaluate(() => {
+    const e = activeEvent(), tb = e.tables[e.tables.length - 1];
+    e.guests.push({ id: "sv1", name: "Selin Ak", additionalGuests: 1, pax: 2, vip: "VIP", invitedBy: "", notes: "", planningStatus: "Confirmed", arrivalStatus: "Not Arrived", assignment: null, createdAt: "" });
+    assignGuestToTable("sv1", tb.id);
+    ui.selectedObjectId = tb.id; ui.selectedObjectIds = [tb.id]; render();
+    const panel = document.querySelector(".contextual-card [data-table-people]");
+    return { rows: panel ? [...panel.querySelectorAll("li")].map((li) => li.textContent.replace(/\s+/g, " ").trim()) : null,
+      atChairs: [...document.querySelectorAll(".canvas-viewport text, .canvas-viewport .chair")].some((n) => /Selin/.test(n.textContent || "")) };
+  });
+  checks.ok(people.rows && people.rows.length === 1 && /Selin Ak/.test(people.rows[0]) && /\+1/.test(people.rows[0]), "a clicked table lists its people in the right panel (one record, \"Selin Ak +1\" = pax 2)", people);
+  checks.ok(!people.atChairs, "and no name is drawn at a chair", people);
 }
