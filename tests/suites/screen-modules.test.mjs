@@ -28,7 +28,13 @@ const BROWSER = new Set(("document window globalThis Math Number Set Map WeakMap
   "clearInterval performance Intl Boolean RegExp Symbol Infinity NaN undefined console navigator location getComputedStyle Node Element " +
   "HTMLElement Event CustomEvent KeyboardEvent MouseEvent URL Blob FileReader isNaN isFinite parseInt parseFloat encodeURIComponent " +
   "decodeURIComponent queueMicrotask structuredClone matchMedia innerWidth innerHeight scrollTo addEventListener removeEventListener " +
-  "DOMException arguments").split(" "));
+  "DOMException arguments " +
+  // Browser built-ins the capability modules (benchmarks/CODE-HEALTH-2026-11.md) use — the platform, not the shell.
+  "FormData Image ImageData OffscreenCanvas createImageBitmap fetch localStorage sessionStorage indexedDB crypto TextEncoder TextDecoder " +
+  "AbortController AbortSignal Uint8Array Uint8ClampedArray Uint16Array Uint32Array Int8Array Int16Array Int32Array Float32Array Float64Array " +
+  "ArrayBuffer DataView RangeError SyntaxError ReferenceError Reflect WeakSet atob btoa Worker File Response history DOMParser " +
+  "PointerEvent WheelEvent FocusEvent requestIdleCallback cancelIdleCallback devicePixelRatio HTMLCanvasElement HTMLImageElement " +
+  "HTMLInputElement HTMLDialogElement AggregateError").split(" "));
 const REASSIGNED_BY_SHELL = ["render", "toast", "touchEvent"];
 
 function freeNames(code) {

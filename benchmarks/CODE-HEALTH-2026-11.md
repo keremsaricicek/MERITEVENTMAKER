@@ -121,6 +121,7 @@ detector fingerprint as well), and the shell's own persistence and focus last
 |--:|---|--:|
 | — | (start, `1aa928f`) | 5,634 |
 | 1 | Guest finder panel → `src/screen-finder.js` (+ `screen-console-sweep`, the every-screen-both-themes suite) | 5,509 |
+| 2 | Event setup & plan-file intake → `src/screen-setup.js` | 5,359 |
 
 ## Seen while moving
 
@@ -164,3 +165,11 @@ entry says what was seen and what was done about it.
    walk-in commit to origin before its four gates had finished. From now: no
    `--amend` in the shared tree, ever; every move is prepared and gated in a
    separate worktree and lands with `git cherry-pick`.
+10. **The calendar day's "+" (new event on that day) had no test** — it is the
+    one place outside the setup screen that reached into the draft
+    (`newEventDraft.date=…`). `events-calendar` now presses it (mutation-
+    proven on the pre-move code), and the shell reads the draft through
+    `SETUP.currentDraft()`.
+11. **`readonlyGuestsHTML` (a historical event's guest list) sits between the
+    tab dispatch and the setup screen** and belongs to neither; it moves with
+    the Guests capability (#3's neighbour), not with setup.
