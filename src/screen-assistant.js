@@ -35,9 +35,11 @@
   let highlight;
   let onChange;
   let readText;
+  let research;
   let summary;
   let t;
   let today;
+  let voice;
   let writers;
   let created = false;
 
@@ -52,9 +54,11 @@
     highlight=deps.highlight;
     onChange=deps.onChange;
     readText=deps.readText;
+    research=deps.research;
     summary=deps.summary;
     t=deps.t;
     today=deps.today;
+    voice=deps.voice;
     writers=deps.writers;
     let root = null, log = null, input = null, status = null, strip = null;
     const turns = [];   // {who:"you"|"assistant", text, lines?, undo?}
@@ -91,7 +95,29 @@
       const body = document.createElementNS(NS, "rect"); for (const [k, v] of [["x", "5.5"], ["y", "1.8"], ["width", "5"], ["height", "8"], ["rx", "2.5"]]) body.setAttribute(k, v);
       const stand = document.createElementNS(NS, "path"); stand.setAttribute("d", "M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2.2");
       icon.append(body, stand); mic.append(icon);
-      mic.append(el("span", { class: "assistant-mic-soon" }, t("assistant.soon")));
+      // VOICE (src/voice-input.js): only when the relay reports a voice engine on
+      // this machine; otherwise the button stays disabled, "yakında". Words go INTO
+      // THE BOX; the person reads them and presses Gönder — nothing is sent by voice.
+      if (voice) Promise.resolve(voice.available()).then((on) => { if (!on) return; mic.disabled = false; mic.classList.add("is-live"); mic.title = t("assistant.micOn"); mic.setAttribute("aria-label", t("assistant.micOn")); soon.textContent = t("assistant.micSay"); }).catch((error) => console.warn("The voice engine could not be asked about.", error && error.name));
+      let rec = null;
+      mic.addEventListener("click", async () => {
+        if (mic.disabled || !voice) return;
+        if (!rec) {
+          rec = voice.createRecorder();
+          try { await rec.start(); } catch (error) { rec = null; status.textContent = t("assistant.micRefused"); console.warn("The microphone was refused.", error && error.name); return; }
+          mic.classList.add("is-recording"); soon.textContent = t("assistant.micStop"); status.textContent = t("assistant.micListening");
+          return;
+        }
+        const r = rec; rec = null; mic.classList.remove("is-recording"); soon.textContent = t("assistant.micSay");
+        working(true, t("assistant.micReading"));
+        let out;
+        try { out = await r.stop(); } catch (error) { out = { ok: false, code: (error && error.name) || "ERROR" }; }
+        working(false);
+        if (out && out.ok && out.text) { input.value = out.text; input.focus(); status.textContent = t("assistant.micHeard"); }
+        else status.textContent = t("assistant.micFailed", { code: (out && out.code) || "?" });
+      });
+      const soon = el("span", { class: "assistant-mic-soon" }, t("assistant.soon"));
+      mic.append(soon);
       form.append(label, input, mic, send);
       form.addEventListener("submit", (e) => { e.preventDefault(); const v = input.value.trim(); if (v) { input.value = ""; ask(v); } });
       root.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); toggle(false); } });
@@ -129,6 +155,12 @@
         if (turn.undone) b.append(el("p", { class: "assistant-undone" }, t("assistant.undone")));
         if (turn.go && go) { const g = el("button", { class: "btn assistant-go", type: "button" }, t("assistant.go")); g.addEventListener("click", () => go(turn.go)); b.append(g); }
         if (turn.topics) { const ul = el("ul", { class: "assistant-topics" }); for (const tp of turn.topics) { const li = el("li", {}); const a = el("button", { class: "btn quiet assistant-topic", type: "button" }, tp.title[lang()]); a.addEventListener("click", () => { turns.push(Object.assign({ who: "assistant" }, helpReply(tp))); draw(); }); li.append(a); ul.append(li); } b.append(ul); }
+        if (turn.research && !turn.searched) {
+          const go = el("button", { class: "btn primary assistant-search", type: "button" }, t("assistant.webGo"));
+          go.addEventListener("click", () => search(turn));
+          b.append(go);
+        }
+        if (turn.results) { const ul = el("ul", { class: "assistant-web" }); for (const x of turn.results) { const li = el("li", {}); li.append(el("b", {}, x.title || ""), el("span", { class: "assistant-web-url" }, x.url || ""), el("span", {}, x.snippet || "")); ul.append(li); } b.append(ul); }
         if (turn.confirm && !turn.settled) {
           const ok = el("button", { class: "btn primary assistant-confirm", type: "button" }, t("assistant.confirm"));
           const no = el("button", { class: "btn assistant-cancel", type: "button" }, t("assistant.cancel"));
@@ -224,7 +256,29 @@
       input.focus();
     }
 
+    // WEB RESEARCH (src/web-research.js): only when the person switched it on
+    // (⋯ → Ayarlar, OFF by default). "web: …" shows the exact words that would
+    // leave this machine — guest names, phones, e-mails, IDs removed — and waits
+    // for the person's "Ara"; one search per click, results shown as text marked
+    // as from the web, nothing written into the event.
+    const WEB = /^\s*(?:web|webde ara|internette ara|search the web)\s*[:：]\s*(.+)$/i;
+    async function search(turn) {
+      turn.searched = true; working(true, t("assistant.webSearching")); draw();
+      let r;
+      try { r = await research.send(turn.research.query); } catch (error) { r = { ok: false, code: (error && error.name) || "ERROR" }; }
+      working(false);
+      turns.push(r && r.ok ? { who: "assistant", text: t("assistant.webFound", { n: r.results.length }), results: r.results.slice(0, 5), web: true } : { who: "assistant", text: t("assistant.webFailed", { code: (r && r.code) || "?" }) });
+      draw();
+    }
     function ask(text) {
+      const w = research && research.enabled() && WEB.exec(text);
+      if (w) {
+        turns.push({ who: "you", text });
+        const p = research.prepare(w[1]);
+        turns.push(p.ok ? { who: "assistant", text: t("assistant.webPreview"), lines: [p.query, ...(p.anyRemoved ? [t("assistant.webRemoved")] : [])], research: { query: p.query } } : { who: "assistant", text: t("assistant.webTooShort") });
+        draw();
+        return;
+      }
       turns.push({ who: "you", text });
       working(true);
       draw();
@@ -372,5 +426,5 @@
     return { mount, toggle, isOpen, ask, help, shortcuts };
   }
 
-  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","chatText","currentId","events","go","highlight","onChange","readText","summary","t","today","writers"])});
+  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","chatText","currentId","events","go","highlight","onChange","readText","research","summary","t","today","voice","writers"])});
 })();

@@ -1,7 +1,7 @@
 // VOICE COMMAND FOR THE F8 ASSISTANT (Mimar) — speech to text, on this machine.
 //
-// NOT LOADED BY index.html YET. Groundwork: the assistant panel that will hold
-// the microphone button is being rewritten; this module records and transcribes,
+// Loaded by index.html (wiring pass, 2026-11-08): Mimar's microphone uses it only
+// when the relay reports a voice engine; this module records and transcribes,
 // and touches nothing else.
 //
 //   const rec = MeritVoiceInput.createRecorder({ lang: "tr" });
@@ -60,7 +60,7 @@
         const ctx = new OfflineCtx(1, Math.max(1, Math.ceil(secs * RATE)), RATE);
         const src = ctx.createBufferSource(); src.buffer = audioBuffer; src.connect(ctx.destination); src.start();
         return (await ctx.startRendering()).getChannelData(0);
-      } catch { /* the pure path below */ }
+      } catch (error) { console.warn("OfflineAudioContext could not resample; the pure path is used.", error && error.name); }
     }
     const ch = audioBuffer.numberOfChannels, len = Math.min(audioBuffer.length, Math.ceil(secs * audioBuffer.sampleRate)), mono = new Float32Array(len);
     for (let c = 0; c < ch; c++) { const d = audioBuffer.getChannelData(c); for (let i = 0; i < len; i++) mono[i] += d[i] / ch; }
@@ -118,7 +118,7 @@
       } finally { release(); state = "idle"; }
     }
 
-    function cancel() { if (rec && rec.state !== "inactive") { rec.onstop = null; try { rec.stop(); } catch { /* already */ } } chunks = []; release(); state = "idle"; }
+    function cancel() { if (rec && rec.state !== "inactive") { rec.onstop = null; try { rec.stop(); } catch (error) { console.warn("The recorder had already stopped.", error && error.name); } } chunks = []; release(); state = "idle"; }
 
     return { start, stop, cancel, get state() { return state; } };
   }

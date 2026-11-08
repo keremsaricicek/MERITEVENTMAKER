@@ -1,8 +1,9 @@
 // WEB RESEARCH FOR THE F8 ASSISTANT (Mimar) — opt-in, one search per click.
 //
-// NOT LOADED BY index.html YET. Groundwork: the panel that offers it is being
-// rewritten; this module is the one place the privacy rule lives, so the page
-// and the relay (server/web-research.mjs) apply the SAME rule.
+// Loaded by index.html (wiring pass, 2026-11-08): Mimar offers it only when the
+// person switched it on (⋯ → Ayarlar, OFF by default); this module is the one
+// place the privacy rule lives, so the page and the relay
+// (server/web-research.mjs) apply the SAME rule.
 //
 // The rule, structural:
 //   OFF BY DEFAULT. The relay has no provider until its operator sets one in the

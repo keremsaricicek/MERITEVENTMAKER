@@ -2828,3 +2828,12 @@ body:has(.live-v4) #toastWrap:not(.in-dialog){left:auto;right:24px;bottom:64px}
 .gd-mem ul{list-style:none;margin:0;padding:0}
 .gd-mem li{padding:5px 0;border-bottom:1px solid var(--pi-line-soft)}
 .gd-mem li span{color:var(--pi-muted)}.gd-mem li em{display:block;color:var(--pi-muted);font-style:normal}
+
+/* ==== Wiring pass (b): Mimar's microphone, web research ==== */
+.assistant-mic.is-live{cursor:pointer;color:var(--pi-ink)}
+.assistant-mic.is-recording{border-color:var(--pi-danger);color:var(--pi-danger)}
+.assistant-web{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.assistant-web li{display:flex;flex-direction:column;font-size:13px}
+.assistant-web-url{font-size:12px;color:var(--pi-muted-2);word-break:break-all}
+.assistant-search{margin-top:8px;height:30px;font-size:12px}
+.shell-menu-note{margin:2px 12px 6px;max-width:280px;font-size:12px;line-height:1.4;color:var(--pi-muted);white-space:normal}

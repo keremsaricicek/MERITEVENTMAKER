@@ -4448,11 +4448,20 @@
   // Is this page served by the relay (it names itself in a Server-Timing entry)?
   // Only then is there a /vlm-relay to ask; a page opened any other way asks nothing.
   const relayHere=()=>{try{const n=globalThis.performance.getEntriesByType("navigation")[0];return !!(n&&Array.isArray(n.serverTiming)&&n.serverTiming.some(e=>e.name==="merit-relay"));}catch{return false;}};
+  // The relay's own status, asked once per page load and only when a relay serves
+  // this page: whether a voice engine and web research are configured there.
+  let relayStatusOnce=null;
+  const relayStatus=()=>relayStatusOnce||(relayStatusOnce=!relayHere()?Promise.resolve(null):fetch("/vlm-relay/status",{headers:{"x-merit-relay":"1"},cache:"no-store",credentials:"same-origin"}).then(r=>r.ok?r.json():null).catch(error=>{console.warn("The relay status could not be read.",error&&error.name);return null;}));
   const ASSIST=globalThis.MeritScreenAssistant.create({
     events:()=>state.events,currentId:()=>ui.screen==="workspace"?ui.activeEventId:null,today:()=>new Date().toLocaleDateString("en-CA"),
     canMutate:(e)=>canMutate(e,"change this event"),t:(...a)=>t(...a),
     // SPEC-v4: a command shown first lights the table it names on the plan.
     highlight:(id)=>{ui.highlightId=id;render();},
+    // Mimar's microphone (src/voice-input.js): live only when the relay reports a
+    // voice engine; web research (src/web-research.js): only when switched on in
+    // ⋯ → Ayarlar (OFF by default), the open event's guest names removed first.
+    voice:{available:()=>relayStatus().then(s=>!!(s&&s.voice&&s.voice.configured&&globalThis.MeritVoiceInput)),createRecorder:()=>globalThis.MeritVoiceInput.createRecorder({lang:ui.lang==="en"?"en":"tr"})},
+    research:{enabled:()=>!!(globalThis.MeritWebResearch&&TOPBAR.research.enabled()),prepare:(q)=>{const e=activeEvent();return globalThis.MeritWebResearch.prepare(q,{guestNames:e?e.guests.map(g=>g.name):[]});},send:(query)=>globalThis.MeritWebResearch.send(query)},
     // The second reader: what the rules could not place, read by the pinned chat
     // model on this machine through the relay (server/assistant-reader.mjs), and
     // its small-talk reply for what is neither question nor command; null when
@@ -5195,6 +5204,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     document.querySelectorAll("[data-shell-theme]").forEach(b=>b.onclick=()=>TOPBAR.theme.toggle());
     bindPlanDrop();
     // A theme may change what a screen shows (A: the timeline, B: the calendar).
+    document.querySelectorAll("[data-shell-research]").forEach(b=>b.onclick=()=>{TOPBAR.research.set(!TOPBAR.research.enabled());render();});
     document.querySelectorAll("[data-shell-skin]").forEach(b=>b.onclick=()=>{TOPBAR.skin.set(b.dataset.shellSkin);render();});
     // "Sonraki: X →" is the same move as clicking X in the bar.
     document.querySelectorAll("[data-shell-next]").forEach(b=>b.onclick=()=>{const tab=document.querySelector(`header.shell-top [data-tab="${b.dataset.shellNext}"]`);if(tab)tab.click();});

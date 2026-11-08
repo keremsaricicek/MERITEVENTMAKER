@@ -31,6 +31,7 @@
 
   const THEME_KEY="merit.theme.v1";
   const SKIN_KEY="merit.skin.v1";
+  const RESEARCH_KEY="merit.webResearch.v1";
   const SKINS=[["a","shell.skin.a"],["b","shell.skin.b"]];
   const sv=(body,size=16)=>`<svg viewBox="0 0 16 16" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
   // The bar's few icons (the screens themselves are words), on a 16 px grid.
@@ -81,6 +82,11 @@
     return v;
   }
 
+  // ---- Ayarlar: web research for Mimar, OFF by default --------------------------
+  // A fact about this machine; read and written inside try/catch (a refusing
+  // storage keeps it OFF, the safe side).
+  function researchOn(){try{return globalThis.localStorage.getItem(RESEARCH_KEY)==="on";}catch{return false;}}
+  function setResearch(on){try{globalThis.localStorage.setItem(RESEARCH_KEY,on?"on":"off");}catch(error){console.warn("The web research choice could not be remembered on this machine.",error&&error.name);}return researchOn();}
   // ---- the working order ------------------------------------------------------
   // Derived from the event on every render, stored nowhere. Kapı and Raporlar
   // are never "finished": they are the evening and its paperwork.
@@ -129,8 +135,9 @@
     return`<div class="shell-cmd"><div class="shell-cmd-box">${IC.search}<input id="globalGuestSearch" placeholder="${ph}" aria-label="${ph}" autocomplete="off" spellcheck="false"></div><div id="globalSearchResults" class="search-results hidden"></div></div>`;
   }
   function skinRowsHTML(){
-    const cur=currentSkin();
-    return[`<div class="shell-menu-head">${esc(t("shell.skin.title"))}</div>`,...SKINS.map(([id,key])=>`<button type="button" class="shell-menu-item shell-skin-item" data-shell-skin="${id}" aria-pressed="${cur===id}">${esc(t(key))}</button>`),"<hr>"];
+    const cur=currentSkin(),web=researchOn();
+    return[`<div class="shell-menu-head">${esc(t("shell.skin.title"))}</div>`,...SKINS.map(([id,key])=>`<button type="button" class="shell-menu-item shell-skin-item" data-shell-skin="${id}" aria-pressed="${cur===id}">${esc(t(key))}</button>`),"<hr>",
+      `<div class="shell-menu-head">${esc(t("shell.settings"))}</div>`,`<button type="button" class="shell-menu-item shell-skin-item" data-shell-research aria-pressed="${web}">${esc(t(web?"shell.research.on":"shell.research.off"))}</button>`,`<p class="shell-menu-note" data-research-privacy>${esc(t("shell.research.privacy"))}</p>`,"<hr>"];
   }
   // ⋯: the same data-action / data-v8-action the shell's binder already wires.
   function menuHTML(ctx){
@@ -172,7 +179,7 @@
     t=deps.t;
     initTheme();
     startClock();
-    return{barHTML,icons:IC,stepProgress,theme:Object.freeze({current,set:setTheme,toggle:toggleTheme}),skin:Object.freeze({current:currentSkin,set:setSkin})};
+    return{barHTML,icons:IC,stepProgress,theme:Object.freeze({current,set:setTheme,toggle:toggleTheme}),skin:Object.freeze({current:currentSkin,set:setSkin}),research:Object.freeze({enabled:researchOn,set:setResearch})};
   }
   globalThis.MeritScreenTopbar=Object.freeze({create,DEPS:Object.freeze(["esc","t"])});
 })();

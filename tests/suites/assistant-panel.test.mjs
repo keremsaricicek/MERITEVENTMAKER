@@ -165,4 +165,45 @@ export default async function run({ page, checks, baseUrl }) {
   await page.keyboard.press("F8");
   checks.ok(await page.evaluate(() => !document.getElementById("assistantPanel").hidden), "and F8 brings it back with the conversation");
   checks.equal(pageErrors, [], "no page errors");
+
+  // --- WIRING PASS (b): web research behind ⋯ → Ayarlar (OFF by default) and the
+  // microphone only with a voice engine. No real network call: fetch is stubbed and
+  // the relay is played by page.route on this page's own origin. Mutation proof,
+  // recorded 2026-11-08: with the guest-name removal skipped the "never leaves"
+  // check fails; with the mic enabled unconditionally the "yakında" check fails.
+  await page.keyboard.press("Escape");
+  const web0 = await page.evaluate(() => { try { return localStorage.getItem("merit.webResearch.v1"); } catch { return "x"; } });
+  await page.click("header.shell-top .shell-more > summary");
+  const sw = await page.evaluate(() => ({ off: document.querySelector("[data-shell-research]")?.getAttribute("aria-pressed"), privacy: document.querySelector("[data-research-privacy]")?.textContent || "" }));
+  checks.ok(web0 === null && sw.off === "false" && /misafir adları/.test(sw.privacy), "web research is OFF by default, with the privacy text in ⋯ → Ayarlar", sw);
+  await page.click("[data-shell-research]"); await settle(page);
+  checks.equal(await page.evaluate(() => localStorage.getItem("merit.webResearch.v1")), "on", "the switch turns it on and is remembered");
+  await page.evaluate(() => { window.__sent = []; window.__fetch0 = window.fetch; window.fetch = async (url, init) => { window.__sent.push({ url: String(url), body: init && init.body }); return new Response(JSON.stringify({ ok: true, provider: "scripted", results: [{ title: "Merit Royal", url: "https://example.test/x", snippet: "<b>Kapasite</b> 1200" }] }), { headers: { "content-type": "application/json" } }); }; });
+  await page.keyboard.press("F8");
+  await page.fill("#assistantInput", "web: Merit Royal balo salonu kapasitesi Ahmet Yılmaz 0532 111 22 33"); await page.press("#assistantInput", "Enter"); await settle(page);
+  const pre = await page.evaluate(() => ({ text: [...document.querySelectorAll(".assistant-turn.assistant")].pop().innerText, sent: window.__sent.length }));
+  checks.ok(!/Ahmet|0532/.test(pre.text) && /Merit Royal/.test(pre.text) && pre.sent === 0, "the exact words are shown first, guest name and phone removed; nothing sent yet", pre);
+  await page.locator(".assistant-search").last().click(); await settle(page);
+  const sent = await page.evaluate(() => { const r = { sent: window.__sent, shown: [...document.querySelectorAll(".assistant-web li")].map((l) => l.textContent) }; window.fetch = window.__fetch0; return r; });
+  const body = sent.sent[0] && JSON.parse(sent.sent[0].body || "{}");
+  checks.ok(sent.sent.length === 1 && /\/vlm-relay\/search$/.test(sent.sent[0].url) && Object.keys(body).join() === "query" && !/Ahmet|0532/.test(body.query), "one click, one search: only { query } goes to the relay, never a guest name", { sent: sent.sent, body });
+  checks.ok(sent.shown.length === 1 && /Kapasite/.test(sent.shown[0]) && /example\.test/.test(sent.shown[0]), "results are shown as text, marked as from the web", sent.shown);
+  await page.keyboard.press("Escape");
+  // the microphone: live only when the relay reports a voice engine
+  const url = page.url();
+  await page.route(url, async (route) => { const r = await route.fetch(); await route.fulfill({ response: r, headers: { ...r.headers(), "server-timing": "merit-relay" } }); });
+  await page.route("**/vlm-relay/status", (route) => route.fulfill({ json: { ok: true, voice: { configured: true, languages: ["tr", "en"] }, research: { configured: false } } }));
+  await page.route("**/merit-backup/**", (route) => route.fulfill({ json: { ok: false, code: "OFF" } }));   // the relay-served page also asks the disk backup; played as off
+  await page.reload(); await page.waitForLoadState("networkidle");
+  await page.waitForFunction(() => { try { return Array.isArray(state.events); } catch { return false; } });
+  await page.evaluate(() => { globalThis.MeritVoiceInput.createRecorder = () => ({ start: async () => {}, stop: async () => ({ ok: true, text: "Ahmet Yılmaz'ı T05'e oturt" }) }); });
+  await page.keyboard.press("F8");
+  await page.waitForFunction(() => { const m = document.querySelector(".assistant-mic"); return m && !m.disabled; }, null, { timeout: 5000 }).catch(() => {});
+  const turnsBefore = await page.locator(".assistant-turn").count();
+  const live = await page.evaluate(() => { const m = document.querySelector(".assistant-mic"); return { disabled: m.disabled, text: m.textContent.trim() }; });
+  checks.ok(!live.disabled && !/yakında/.test(live.text), "with a voice engine on the relay the microphone is live", live);
+  await page.click(".assistant-mic"); await page.click(".assistant-mic"); await settle(page);
+  const heard = await page.evaluate(() => document.getElementById("assistantInput").value);
+  checks.ok(heard === "Ahmet Yılmaz'ı T05'e oturt" && await page.locator(".assistant-turn").count() === turnsBefore, "the words go INTO THE BOX; nothing is sent by voice", heard);
+  await page.unroute(url); await page.unroute("**/vlm-relay/status"); await page.unroute("**/merit-backup/**");
 }
