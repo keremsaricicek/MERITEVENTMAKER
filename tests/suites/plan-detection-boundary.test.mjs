@@ -158,7 +158,10 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // A bare identifier, never a property access: `provider.estimatePlanSkew()`
   // IS the sanctioned path and must not read as a violation.
   const bareUses = (text) =>
-    new Set([...text.matchAll(/(^|[^\w.$])([A-Za-z_$][\w$]*)\s*(?![\s]*:)/g)].map((m) => m[2]));
+    // `(?![\w$])` stops the identifier backtracking into a PREFIX of a key:
+    // without it `{stated:…}` reported a use of `state` (found 2026-11-08 when
+    // the refinement stages moved into a plan-detection-* file).
+    new Set([...text.matchAll(/(^|[^\w.$])([A-Za-z_$][\w$]*)(?![\w$])\s*(?![\s]*:)/g)].map((m) => m[2]));
 
   const v8Bare = bareUses(v8Code);
   // app.js is unwrapped, so its top-level names are globals: app-v8.js's
