@@ -124,6 +124,7 @@ detector fingerprint as well), and the shell's own persistence and focus last
 | 2 | Event setup & plan-file intake → `src/screen-setup.js` | 5,359 |
 | 3 | Guest record removal/restore/unassign undo → `src/guest-record-undo.js` (workbook before/after identical) | 5,267 |
 | 4 | Freeze zones & seating a party → `src/seating-commands.js` (workbook before/after identical) | 5,111 |
+| 5 | Service-load panel → `src/service-load-panel.js` | 5,056 |
 
 ## Seen while moving
 

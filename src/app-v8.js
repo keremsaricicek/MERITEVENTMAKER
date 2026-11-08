@@ -637,7 +637,7 @@
     // THE SERVICE LOAD LAYER. A band on the table's own surface — never a blob
     // over the drawing, and never a smooth field interpolated between tables,
     // which would invent a figure for floor the product knows nothing about.
-    const loadRow=ui.loadLayer?loadBandMap(event)?.get(table.id):null;
+    const loadRow=ui.loadLayer?LOADPANEL.loadBandMap(event)?.get(table.id):null;
     return`<div class="table-object ${esc(table.type)} ${selected?"selected multi-selected":""} ${highlighted?"highlighted":""} ${frozen?"frozen":""} ${unavailable?"unavailable":""} ${loadRow?"load-"+loadRow.band:""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match operational-match":""}" data-object-id="${table.id}" data-object-kind="table" tabindex="0" role="button" aria-pressed="${selected?"true":"false"}" aria-label="${esc([t("a11y.table",{number:formatTableNumber(table.number),seated:assigned,capacity:table.capacity}),frozen?t("a11y.frozen"):"",unavailable?t("a11y.unavailable"):""].filter(Boolean).join(", "))}" style="left:${table.x}px;top:${table.y}px;width:${table.w}px;height:${table.h}px;transform:rotate(${table.rotation||0}deg);z-index:${table.z||10}">${chairs}<div class="table-surface"${surfaceStyle(table)}><span class="table-label">${esc(formatTableNumber(table.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${table.capacity}</span>${frozen?`<span class="table-frozen" title="${esc(t("freeze.tableFrozen"))}">${icon("lock")}</span>`:""}${unavailable?`<span class="table-unavailable" title="${esc(t("avail.tableUnavailable"))}">${icon("alert")}</span>`:""}${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${esc(t("seating.emptySeats",{n:empty}))}</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`;
   };
 
@@ -987,7 +987,7 @@
   // what it reads; shell functions go over as late-binding wrappers, so a body
   // this file reassigns later is the one that runs. ----------------------------
   const COMMAND=globalThis.MeritScreenCommand.create({
-    activeEvent:(...a)=>activeEvent(...a),addHandoverNote:(...a)=>addHandoverNote(...a),AVAIL:(...a)=>AVAIL(...a),canMutate:(...a)=>canMutate(...a),doctorSignature:(...a)=>doctorSignature(...a),esc:(...a)=>esc(...a),eventMetrics:(...a)=>eventMetrics(...a),eventReadiness:(...a)=>eventReadiness(...a),exportBackup:(...a)=>PORTABILITY.exportBackup(...a),fmtDate:(...a)=>fmtDate(...a),getLive:()=>LIVE,HANDOVER:(...a)=>HANDOVER(...a),OCC:(...a)=>OCC(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxOf:(...a)=>paxOf(...a),planDoctorReport:(...a)=>planDoctorReport(...a),recordFinalCheck:(...a)=>recordFinalCheck(...a),relativeTime:(...a)=>relativeTime(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedHandoverNotes:(...a)=>resolvedHandoverNotes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),serviceLoadHTML:(...a)=>serviceLoadHTML(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),ui,
+    activeEvent:(...a)=>activeEvent(...a),addHandoverNote:(...a)=>addHandoverNote(...a),AVAIL:(...a)=>AVAIL(...a),canMutate:(...a)=>canMutate(...a),doctorSignature:(...a)=>doctorSignature(...a),esc:(...a)=>esc(...a),eventMetrics:(...a)=>eventMetrics(...a),eventReadiness:(...a)=>eventReadiness(...a),exportBackup:(...a)=>PORTABILITY.exportBackup(...a),fmtDate:(...a)=>fmtDate(...a),getLive:()=>LIVE,HANDOVER:(...a)=>HANDOVER(...a),OCC:(...a)=>OCC(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxOf:(...a)=>paxOf(...a),planDoctorReport:(...a)=>planDoctorReport(...a),recordFinalCheck:(...a)=>recordFinalCheck(...a),relativeTime:(...a)=>relativeTime(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedHandoverNotes:(...a)=>resolvedHandoverNotes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),serviceLoadHTML:(...a)=>LOADPANEL.serviceLoadHTML(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),ui,
   });
   // What was checked, reduced to something two runs can be compared on. Codes
   // and counts, not wording: a translation change must not read as the event
@@ -1654,65 +1654,10 @@
   seatRowHTML = function(...a){return SEATING.seatRowHTML(...a);};
   bindSeating = function(...a){const r=SEATING.bindSeating(...a);bindReady();return r;};
 
-  // ---- SERVICE LOAD ---------------------------------------------------------
-  //
-  // src/service-load.js owns the arithmetic. The canvas draws bands, the
-  // Command Center states the totals, and neither computes anything of its own.
-  //
-  // PLANNED on the Floor Plan, LIVE once the doors are open: the same layer
-  // answers a different question in each, because a No Show's chairs are
-  // physically free tonight while the plan correctly still shows them taken.
-  let loadMemo={event:null,epoch:-1,mode:null,load:null};
-  function serviceLoad(event,mode){
-    const SL=globalThis.MeritServiceLoad;
-    if(!SL||!event)return null;
-    const m=mode||(RULES().phase(event)==="live"?SL.MODE.LIVE:SL.MODE.PLANNED);
-    if(loadMemo.event===event&&loadMemo.epoch===mutationEpoch&&loadMemo.mode===m)return loadMemo.load;
-    loadMemo={event,epoch:mutationEpoch,mode:m,
-      load:SL.build({tables:event.tables||[],guests:event.guests||[],
-        venueObjects:event.venueObjects||[],mode:m})};
-    return loadMemo.load;
-  }
-  // tableObjectHTML runs once per table, so the band is looked up rather than
-  // recomputed — same reason the frozen set is memoised.
-  function loadBandMap(event){
-    const l=serviceLoad(event);
-    if(!l)return null;
-    if(!loadMemo.bands||loadMemo.bandsFor!==l)
-      {loadMemo.bands=new Map(l.tables.map(r=>[r.tableId,r]));loadMemo.bandsFor=l;}
-    return loadMemo.bands;
-  }
-  function loadBandText(band){const k="load.band."+band;return t(k)!==k?t(k):band;}
-  function serviceLoadHTML(event,{compact=false}={}){
-    const l=serviceLoad(event);
-    if(!l)return"";
-    const SL=globalThis.MeritServiceLoad;
-    const zones=l.zones.filter(z=>z.capacity>0).slice(0,compact?4:8);
-    const rows=zones.map(z=>`<div class="sl-zone">
-      <em>${esc(z.zone||t("load.noZone"))}</em>
-      <span class="sl-bar"><i class="sl-fill band-${z.band}" style="width:${
-        z.capacity?Math.round(z.pax/z.capacity*100):0}%"></i></span>
-      <b>${z.pax}/${z.capacity}</b>
-      <span class="sl-band band-${z.band}">${esc(loadBandText(z.band))}</span>
-    </div>`).join("");
-    // What it cannot see, from the engine's own list rather than a sentence
-    // typed here — so an aspect that ships stops being listed by itself.
-    const blind=l.notEvaluated.map(x=>t("load.notEvaluated."+x.aspect))
-      .filter((v,i)=>v!=="load.notEvaluated."+l.notEvaluated[i].aspect);
-    const service=l.servicePoints.known
-      ?`<p class="sl-service">${esc(t("load.servicePoints",{n:l.servicePoints.count}))}${
-        l.farthestFromService.length?` ${esc(t("load.farthest",{
-          number:formatTableNumber(l.farthestFromService[0].number)}))}`:""}</p>`
-      :`<p class="sl-service muted">${t("load.noServicePoints")}</p>`;
-    return`<section class="service-load ${compact?"compact":""}">
-      <div class="sl-head"><div><strong>${t("load.title")}</strong><p>${
-        t(l.mode===SL.MODE.LIVE?"load.questionLive":"load.questionPlanned")}</p></div>
-        <span class="sl-total">${l.room.seated}/${l.room.chairs}</span></div>
-      ${rows?`<div class="sl-zones">${rows}</div>`:`<p class="sl-empty">${t("load.nothing")}</p>`}
-      ${service}
-      ${blind.length?`<p class="sl-blind">${esc(t("load.doesNotCover",{aspects:blind.join(", ")}))}</p>`:""}
-    </section>`;
-  }
+  const LOADPANEL=globalThis.MeritServiceLoadPanel.create({
+    RULES:(...a)=>RULES(...a),esc:(...a)=>esc(...a),formatTableNumber:(...a)=>formatTableNumber(...a),getMutationEpoch:()=>mutationEpoch,
+    t:(...a)=>t(...a),
+  });
 
   const SEATCMD=globalThis.MeritSeatingCommands.create({
     AVAIL:(...a)=>AVAIL(...a),FREEZE:(...a)=>FREEZE(...a),RULES:(...a)=>RULES(...a),SEAT:(...a)=>SEAT(...a),activeEvent:(...a)=>activeEvent(...a),
