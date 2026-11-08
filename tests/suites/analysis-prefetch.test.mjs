@@ -18,7 +18,7 @@
 //      ends with nothing applied, and the next analysis runs to the end.
 import fs from "node:fs";
 import path from "node:path";
-import { openApp, createBlankEvent, futureDate } from "../lib/app-actions.mjs";
+import { openApp, createBlankEvent, futureDate, click } from "../lib/app-actions.mjs";
 import { routeVendorFromCache } from "../lib/vendor.mjs";
 
 export const meta = { name: "analysis-prefetch", tags: ["performance", "intelligence"], timeout: 480000 };
@@ -121,7 +121,12 @@ export default async function run({ page, context, checks, baseUrl, repoRoot }) 
   // case above set the stamp by hand and could not see it.
   const dialog = await newPage();
   await openApp(dialog, baseUrl, { lang: "en" });
-  await dialog.click('.mx-head [data-action="create-event"]');
+  // Wait on the control itself (rendered and visible), then use the retrying
+  // helper: a raw page.click here timed out under load because the Events
+  // screen can re-render between the locate and the click, and the earlier
+  // pages' OCR is still using the CPU. The state is awaited, not a delay.
+  await dialog.locator('.mx-head [data-action="create-event"]').first().waitFor({ state: "visible", timeout: 60000 });
+  await click(dialog, '.mx-head [data-action="create-event"]');
   await dialog.waitForSelector('input[name="name"]');
   await dialog.fill('input[name="name"]', "Dialog import");
   await dialog.fill('input[name="hotel"]', "Merit");
