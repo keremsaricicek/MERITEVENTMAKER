@@ -256,3 +256,18 @@ entry says what was seen and what was done about it.
 22. **The walk-in commit shipped an unclassified error toast**
     (`walkin.liveRefused`), red in `toast-discipline` on the main branch;
     fixed there on its own (1acf190).
+23. **Move 18 first wrote OVER an existing file.** The planned target name,
+    `src/review-decisions.js` / `MeritReviewDecisions`, is the review RULES
+    module that already exists; the tool overwrote it and published the same
+    global. Caught before any commit by `offline-bundle-contract` (the same
+    file twice in index.html → no unique window in the bundle); the original
+    was restored from git and the move renamed `src/review-commands.js` /
+    `MeritReviewCommands`. The tool now refuses an existing file or an
+    already-published global; every earlier move re-checked: none existed.
+24. **`npm run benchmark` and the detector fingerprint were broken by the
+    redesign** (they clicked `.appbar [data-action="create-event"]`; the top
+    bar has no `.appbar`), so every structural detector move since redesign v4
+    could not have been fingerprinted. Fixed (b724f28).
+25. **`ANALYSIS_MAX_SIDE` (the analysis canvas cap) sat inside the review
+    region**; hoisted to the shell above it before move 18, so it does not
+    move with review code it has nothing to do with.
