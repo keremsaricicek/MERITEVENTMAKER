@@ -2039,3 +2039,8 @@ click). Every other bar holds (each new set ≥ p08, 0 wrong changes, briefs 0.9
 and variants ≥ p08). As pre-registered, **p08 stays shipped**; runQ-08 is kept on disk only. Not claimed: the gains on
 deep, the originals and the briefs are on seen sets. p08's seconds re-timed on a free CPU: median **4.57 s** (runP's
 11.7 s was the loaded upper bound); its right/wrong counts are identical to runP's.
+
+**Owner's decision, 2026-11-08 (after the runQ verdict was written and shown to him):** "Yeniyi tak tabi ki." runQ
+failed one pre-registered bar (entypo9 0.889 < 1.000: one sentence asked instead of acting, no wrong change) and was
+better on the blind runQ exam (fresh10 1.000 vs 0.833, deep10 1.000 vs 0.600, wrong previews 0 vs 4). The bar was not
+changed; the owner overrode the ship rule for this model. **Shipped: q08** (`qwen3.5-0.8b-merit-chat-q08`); p08 kept for rollback.
