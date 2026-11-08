@@ -1952,3 +1952,67 @@ comparable; its right/wrong counts are unaffected. **Ship rule result: a tie** (
 The briefs favour 2B (all-right 0.95 vs 0.80). **Shipped: p08** (`qwen3.5-0.8b-merit-chat-p08`) — it passes every bar,
 replaces B7f, and runs on the 8 GB no-GPU target with the plan reader in one model; 2B kept as a candidate for an
 optional "strong mode" on bigger PCs (owner decides). Not claimed: any plan-reading change (runP measured language only).
+
+## 2026-11-08 — runQ: p08 polished on its measured weak spots (written before any runQ data, training or result)
+
+**Why.** p08's measured weak spots (runP verdict above): deep 0.800 (dq1, dq2 missed, dc2 shown wrong), originals 0.971,
+variants 0.943, briefs all-right 0.80 (fields 0.94, invented 0.014), right-at-once entypo9 0.667 / typo9 0.750. Its
+seconds were taken while the 2B trained, so they are **re-measured first on a free CPU** (the same race, label `p08t`)
+and recorded below the verdict. **Stated: those misses were read before this section was written** — p08's missed
+deep items, its clicked typo items and the categories of its 8 failed briefs. deep, fresh9/typo9/en9/entypo9,
+originals, variants and the 40 briefs are therefore SEEN sets for runQ; they stay as no-regression checks only and are
+never reported as blind. The blind test is the new exam below.
+
+**New frozen exam, written by hand first** (before grammar 8 existed; `training/assistant/`): `fresh10.jsonl` (12,
+`76a34a3e40b1f4f7`), `typo10.jsonl` (12, `d4674d81aefbe82b` — fresh10 typed carelessly with real letter slips, no
+Turkish letters), `en10.jsonl` (9, `ffc5f9faeec05caa`), `entypo10.jsonl` (9, `b4c24461e75495c6` — en10 with English
+typos: teh, tabel, durign, nxet, form, of/off, no apostrophes), `deep10.jsonl` (15, `ae853926ba3f41cd` — 4 long
+questions, 11 commands of 2–3 steps: ordered steps, a pronoun or "the same table", a delete or unseat with someone
+added in the place, a stated count change, two adds in one sentence, a negation that redirects, a "if not on the list
+ask me" tail; one English). Existing guests are the fixture's (as every set); every NEW name (Nevzat Karadağ, Berrin
+Sönmez, Ferit Akgül, Halil Şimşek, Gonca Varol, Jale Ceylan, Rahmi Peker, Yeliz Bayram, Cihan Mutlu) was checked absent
+from every pool and from every earlier data file (grep: 0 hits). A third-or-later add with its table carries the table
+on `addGuest` (deep `dc2`'s form; `toParse` folds add + assign only in a two-step plan). Golds checked with
+`--check-gold`. Race flags `--fresh10 --typo10 --en10 --entypo10 --deep10`.
+
+**Data — grammar 8** (`synth_f8.mjs --grammar 8 --seed 91 --n 2000 --prompt short`), grammar 7 plus:
+- *multi-step / deep* (30 % of items): 2–3 jobs with order words, a pronoun or "that same table", delete/unseat and
+  someone added in the place, companions counted (eşiyle, kocasıyla, bir/iki misafiriyle, tek başına → pax), a count
+  changed "from A to B" (pax B), two adds in one sentence, a negation that redirects ("X'in yanına koyma, T09'a…"), a
+  tail that does not change the reading ("listede yoksa bana sor"); long questions wrapped in clauses (an aside, a
+  restatement, "bir hatırlat"); English multi-step too. In any plan of 3 steps an add + its seat is ONE `addGuest`
+  with the table (the acting form; also applied to grammar-7-style 3-step sentences under grammar 8).
+- *careless typing*: Turkish careless rate 0.7; English gets its own slips (QWERTY neighbour, swapped, dropped and
+  doubled letters, apostrophes dropped so "Kaya's" → "Kayas" with guest "Kaya", Turkish letters dropped) on 0.6 of
+  English items; English share 0.4 as grammar 7.
+- *names*: grammar-7 pools plus new first names and surnames; **every** name word in every test file in
+  `training/assistant/` (all *.jsonl, the new exam included) and the fixture is barred and removed from the pools.
+- *planner briefs* (`synth_briefs.py --grammar 8 --seed 92 --n 600`): grammar 1 plus thousands as words, briefs
+  split into short sentences, "Ø180" (round) and a diameter or "AxB" size without a kind word (a diameter alone names
+  no kind; "AxB" names rect, square when A = B), "150 lik", numbers that are no field (garson, bar, saat, sahne 8x6)
+  so nothing is invented from them, more event words. One data dir `data-g8` = 2000 F8 + 600 BRIEF.
+- **Guard** (`training/check_g8_guard.mjs`, run on `data-g8` before training; any hit stops the run): no item text equals
+  (folded) any sentence of fresh9/typo9/en9/entypo9, deep, originals, variants, any other test file or the 40 briefs;
+  no F8 item shares a four-word run (names folded) with any test sentence; no brief shares a six-word run with a test
+  brief; no item contains a name word of any test set or the fixture. The generator imports the same guard and skips
+  what it rejects; the CLI re-checks the written file. **Made (before training):** F8 2000 (`8a36e891d10ee3c1`; 447
+  deep, 514 English, 994 skipped by the guards), BRIEF 600 (`5ea87b7f5e7ae09f`), `data-g8` (`fd3ca93889921669`); guard:
+  620 test sentences, 40 briefs, 86 name words, **0 hits**. Grammar 7 regenerated after the change is byte-identical
+  to `data-g7` (`c82aa71ca8e808dd`). Stated: the exam and grammar 8 were written by the same hand, the exam first; the
+  guard keeps sentences and four-word frames apart, while the KINDS of multi-step sentence overlap by design (that is
+  the weak spot being taught).
+
+**Run `runQ-08`:** `--init runP-08-g2`, the 0.8B flags of `chainP.sh` exactly (fp32, plan replay `--replay-tasks
+ID,NEG,COUNT,CHAIRS,MERGED,SERVES,BRIEF --replay-max 400`, data `data-g8,v6/d6,v6/c6,v5/train`, `--curriculum
+--threads 4`) plus `--save-every 5`; GGUF as before. Started only when no `tests/run` process is running.
+
+**Exam (same commands, free CPU, one model at a time):** `p08x` and `q08x` = `assistant_race.mjs --rules current
+--fresh9 --typo9 --en9 --entypo9 --fresh10 --typo10 --en10 --entypo10 --deep10 --prompt short --order hybrid --theta
+0.91` (originals, variants and deep always included), product rule; briefs `planner_brief_eval.py --prompt-cache` (p08's
+from the runP verdict; runQ's as `q08-briefs.json`).
+
+**Bars (not lowered later).** runQ ships only if ALL hold: on each of fresh10, typo10, en10, entypo10, deep10 its
+product right ≥ p08's; 0 wrong changes on every set; briefs all-right ≥ 0.80 and invented ≤ 0.02; fresh9 / typo9 /
+en9 / entypo9 stay 1.000; originals ≥ 0.971 and variants ≥ 0.943 (p08). And it must be better somewhere (new-exam
+right, right-at-once or briefs all-right); an exact tie keeps p08. Otherwise **p08 stays**. Seconds and old deep are
+reported, not bars. If it ships: `qwen3.5-0.8b-merit-chat-q08` (manifest bytes + sha256, pinned-ID suite switched).

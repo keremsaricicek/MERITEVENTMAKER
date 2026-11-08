@@ -41,6 +41,7 @@ const MUST = {
   10: ["Mabel Matiz", "T12", "gelmedi"], 11: ["T08", "gelmedi"], 12: ["T08", "T02"], 13: ["Evet", "VIP01"], 14: ["Ahmet Yılmaz"],
   15: ["Sezen Aksu", "5 kişi"], 16: ["Tarkan"], 17: ["Evet", "T08"], 18: ["T05", "koltuk 2"], 19: ["Ayşe Demir"], 20: ["kayıtlarda yok"],
 };
+const SETS10 = ["fresh10", "typo10", "en10", "entypo10", "deep10"];
 const CMDS = Object.fromEntries(lines("commands.jsonl").map((c) => [c.id, c]));
 const items = [
   ...lines("questions.jsonl").map((q) => ({ set: "original", id: "Q" + q.id, kind: "question", text: q.q, must: MUST[q.id] })),
@@ -72,6 +73,8 @@ const items = [
   ...(flag("en9") ? lines("en9.jsonl").map((d) => ({ set: "en9", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("entypo9") ? lines("entypo9.jsonl").map((d) => ({ set: "entypo9", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   ...(flag("fresh3") ? lines("fresh3.jsonl").map((d) => ({ set: "fresh3", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  // runQ's exam (training/README.md "runQ"), written by hand before grammar 8 existed
+  ...SETS10.filter(flag).flatMap((s) => lines(s + ".jsonl").map((d) => ({ set: s, id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold }))),
   ...lines("variants.jsonl").map((v) => {
     const n = Number(v.sameAs.slice(1));
     return v.kind === "question" ? { set: "variant", id: v.id, kind: "question", text: v.text, must: MUST[n] } : { set: "variant", id: v.id, kind: "command", text: v.text, cmd: CMDS[n] };
@@ -240,6 +243,7 @@ const summary = { label, at: new Date().toISOString(),
   ...(flag("en9") ? { en9: { rules: sum("en9", "rules"), model: sum("en9", "model"), both: sum("en9", "both"), product: sum("en9", "product") } } : {}),
   ...(flag("entypo9") ? { entypo9: { rules: sum("entypo9", "rules"), model: sum("entypo9", "model"), both: sum("entypo9", "both"), product: sum("entypo9", "product") } } : {}),
   ...(flag("fresh3") ? { fresh3: { rules: sum("fresh3", "rules"), model: sum("fresh3", "model"), both: sum("fresh3", "both"), product: sum("fresh3", "product") } } : {}),
+  ...Object.fromEntries(SETS10.filter(flag).map((s) => [s, { rules: sum(s, "rules"), model: sum(s, "model"), both: sum(s, "both"), product: sum(s, "product") }])),
   medianSeconds: secs.length ? secs[Math.floor(secs.length / 2)] : null };
 fs.writeFileSync(arg("out"), JSON.stringify({ summary, rows }, null, 1));
 console.log(JSON.stringify(summary));

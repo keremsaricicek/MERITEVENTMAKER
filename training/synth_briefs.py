@@ -8,6 +8,12 @@ The 40 test briefs (`planner_briefs.jsonl`) were written by hand before this
 generator and are never produced by it (checked: no generated text equals one).
 
     python -I training/synth_briefs.py --out DIR [--n 1500 --seed 64]
+
+`--grammar 8` (runQ, training/README.md): grammar 1 plus thousands as words, briefs
+split into short sentences, "Ø180" (round) and a diameter or "AxB" size with no kind
+word (a diameter alone names no kind; "AxB" names rect, square when A = B), "150 lik",
+numbers that are no field (garson, bar, saat, sahne 8x6), more event words; and a
+stricter guard: no brief shares a six-word run with a test brief.
 """
 import argparse
 import json
@@ -49,7 +55,7 @@ def deturk(s):
 
 
 def num(rng, n):
-    return words(n) if n <= 2000 and rng.random() < 0.12 else str(n)
+    return words(n) if n <= 2000 and rng.random() < (0.4 if G8 and n >= 1000 else 0.12) else str(n)
 
 
 def suffix_each(n):  # 10'ar, 8er, 6şar
@@ -59,6 +65,11 @@ def suffix_each(n):  # 10'ar, 8er, 6şar
 
 
 _R = random.Random(0)
+G8 = False
+EVENT_WORDS_8 = {"banquet": ["akşam yemeği", "öğle yemeği", "kurum yemeği"], "gala": ["gala gecesi", "yılsonu galası", "ödül gecesi"],
+                 "wedding": ["düğün yemeği", "evlilik yemeği", "nikah daveti"], "meeting": ["bilgilendirme toplantısı", "genel kurul"],
+                 "cocktail": ["açılış kokteyli", "karşılama kokteyli"], "classroom": ["eğitim semineri sınıf düzeni", "kurs"]}
+NOISE_8 = ["10 garson", "4 garson", "2 bar", "saat 20:00", "saat 19.30'da başlıyor", "sahne 8x6", "sahne 10x4 metre", "3 ikram noktası", "2 DJ kabini", "1 vestiyer", "fotoğraf köşesi"]
 
 
 def rng_choice(xs):
@@ -74,7 +85,10 @@ def make(rng):
     want["event"] = event
     pax = {"boardroom": rng.randint(6, 40), "u_shape": rng.randint(10, 60)}.get(event) or rng.choice([rng.randint(2, 30) * 10, rng.randint(12, 120), rng.randint(5, 120) * 10])
     want["pax"] = pax
-    ew = rng.choice(EVENT_WORDS[event])
+    if G8 and rng.random() < 0.08:
+        pax = rng.choice([1000, 1100, 1200, 1500, 1800, 2000])
+        want["pax"] = pax
+    ew = rng.choice(EVENT_WORDS[event] + (EVENT_WORDS_8.get(event, []) if G8 else []))
     if "tek masa" in ew:
         want["table_count"] = 1
     parts.append(rng.choice([f"{num(rng, pax)} kişilik {ew}", f"{ew} {num(rng, pax)} kişi", f"{num(rng, pax)} pax {ew}", f"{ew}, {num(rng, pax)} davetli"]))
@@ -99,11 +113,18 @@ def make(rng):
             if kind == "round" and rng.random() < 0.6:
                 d = rng.choice([150, 160, 180, 200])
                 want["table_diam_cm"] = d
-                bits.append(rng.choice([f"{d}'lik yuvarlak", f"{d} cm yuvarlak", f"Ø{d} yuvarlak", f"{d}lik yuvarlak"]))
+                if G8 and rng.random() < 0.35:
+                    if rng.random() < 0.5:
+                        bits.append(rng.choice([f"Ø{d}", f"Ø {d}"]))  # the diameter sign names a round table
+                    else:
+                        bits.append(rng.choice([f"{d}'lik", f"{d}lik", f"{d} lik"]))  # a bare diameter names no kind
+                        want["table_kind"] = None
+                else:
+                    bits.append(rng.choice([f"{d}'lik yuvarlak", f"{d} cm yuvarlak", f"Ø{d} yuvarlak", f"{d}lik yuvarlak"] + ([f"{d} lik yuvarlak"] if G8 else [])))
             elif kind in ("rect", "square") and rng.random() < 0.6:
                 L, W = (rng.choice([120, 140]),) * 2 if kind == "square" else (rng.choice([160, 180, 200, 240]), rng.choice([60, 75, 80, 100]))
                 want["table_len_cm"], want["table_wid_cm"] = L, W
-                bits.append(f"{KIND_WORDS[kind][0]} {L}x{W}")
+                bits.append(f"{L}x{W}" if G8 and rng.random() < 0.4 else f"{KIND_WORDS[kind][0]} {L}x{W}")  # "AxB" names rect / square
             else:
                 bits.append(rng.choice(KIND_WORDS[kind]))
         bits.append("masa" if not bits or not bits[-1].endswith("masa") else "")
@@ -124,8 +145,13 @@ def make(rng):
         parts.append("kalanı " + " ".join(x for x in ((f"{es} kişilik" if es else ""), ("bistro" if ek else "")) if x) + rng.choice(["", " ile doldur", " olsun"]))
     if rng.random() < 0.15:
         parts.append(rng.choice(["sahne önü boş kalsın", "acil", "VIP masa sahneye yakın", "dans pisti var"]))
+    if G8 and rng.random() < 0.3:
+        parts.append(rng.choice(NOISE_8))
     rng.shuffle(parts) if rng.random() < 0.35 else None
-    text = rng.choice([", ", ". ", " ", ", "]).join(parts)
+    if G8 and rng.random() < 0.3:
+        text = ". ".join(x[0].upper() + x[1:] for x in parts if x) + "."
+    else:
+        text = rng.choice([", ", ". ", " ", ", "]).join(parts)
     if rng.random() < 0.3:
         text = deturk(text)
     if rng.random() < 0.3:
@@ -133,18 +159,32 @@ def make(rng):
     return text, want
 
 
+def fold(t):
+    return " ".join("".join(c if c.isalnum() else " " for c in deturk(t.lower().replace("İ", "i"))).split())
+
+
+def grams6(t):
+    w = fold(t).split()
+    return [" ".join(w[i:i + 6]) for i in range(len(w) - 5)]
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--out", required=True); p.add_argument("--n", type=int, default=1500); p.add_argument("--seed", type=int, default=64)
+    p.add_argument("--grammar", default="1")
     a = p.parse_args()
+    global G8
+    G8 = a.grammar == "8"
     tests = {json.loads(l)["text"].strip().lower() for l in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "planner_briefs.jsonl"))}
+    tfold = {fold(t) for t in tests}
+    tgrams = {g for t in tests for g in grams6(t)}
     rng = random.Random(a.seed)
     os.makedirs(a.out, exist_ok=True)
     n = 0
     with open(os.path.join(a.out, "items.jsonl"), "w") as f:
         while n < a.n:
             text, want = make(rng)
-            if text.strip().lower() in tests:
+            if text.strip().lower() in tests or (G8 and (fold(text) in tfold or set(grams6(text)) & tgrams)):
                 continue
             f.write(json.dumps(dict(task="BRIEF", sub="brief", q=text, system=SYSTEM, truth=json.dumps(want, ensure_ascii=False, separators=(",", ":")),
                                     level=2, family="synth-brief", seed=a.seed, split="train", image=None), ensure_ascii=False) + "\n")

@@ -23,7 +23,8 @@ const R = globalThis.MeritAssistantReading;
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : d; };
 // `--grammar 2` (runB7b): more phrasings per intent and step, two-job sentences sharing a verb
 // or a pronoun, more small talk; grammar 1 (runB7) is unchanged and reproducible
-const G7 = arg("grammar", "1") === "7";   // runEq: grammar 6 + more careless typing, more English, surnames ending k/p/t/ç (softening)
+const G8 = arg("grammar", "1") === "8";   // runQ: grammar 7 + multi-step/deep, careless English, every test name barred
+const G7 = arg("grammar", "1") === "7" || G8;   // runEq: grammar 6 + more careless typing, more English, surnames ending k/p/t/ç (softening)
 const G6 = arg("grammar", "1") === "6" || G7;   // runB7f: grammar 5 + English sentences (owner 2026-11-02: the program is fully English too)
 const G5 = arg("grammar", "1") === "5" || G6;   // runB7e: grammar 4 + surnames ending in -in/-ın/-un/-ün kept whole, negation with other verbs
 const G4 = arg("grammar", "1") === "4" || G5;   // runB7d: grammar 3 + short/inverted questions, more "next to" verbs, terse adds, a stated count beside a story, more small talk
@@ -44,6 +45,9 @@ const LAST = ["Tekin", "Güneş", "Aydın", "Polat", "Korkmaz", "Erdoğan", "Ko�
   "Bozkurt", "Kılıç", "Sarı", "Altun", "Uysal", "Erol", "Kocabaş", "Sevim", "Ünal", "Güler", "Çakır", "Ekinci", "Tunç", "Oral", "Başaran", "Önal", "Yalçın", "Gündüz", "Akın", "Soylu"];
 const LAST7 = ["Akbulut", "Yiğit", "Kıvanç", "Bozbıyık", "Ozanalp", "Erdinç", "Karabacak", "Topçu"];
 const LAST5 = ["Bilgin", "Ergün", "Uzun", "Erkin", "Sezgin", "Durgun", "Gürsoy", "Tetik", "Kalkan", "Ersin", "Öztekin", "Bütün"];
+// grammar 8: more first names and surnames (none in any test set; checked below like every pool)
+if (G8) { FIRST.push("Alper", "Bahar", "Cenk", "Dilara", "Ferhat", "Gamze", "Hilal", "İlker", "Kübra", "Mert", "Nihat", "Özlem", "Rabia", "Selçuk", "Tülin", "Utku", "Yusuf", "Zehra");
+  LAST.push("Avcı", "Bayrak", "Coşar", "Dinç", "Gök", "Kalyoncu", "Nalbant", "Okur", "Pala", "Sağlam", "Temiz", "Vural", "Yaman", "Zengin"); }
 const ARTISTS = ["Kenan Doğulu", "Sertab Erener", "Teoman", "Gripin", "Manuş Baba", "Sıla", "Hadise", "Gökhan Türkmen", "Model", "Yüksek Sadakat", "Ezhel", "Melek Mosso", "Göksel Demirpençe", "Cem Adrian",
   "Athena", "Mor ve Ötesi", "Yaşar", "Feridun Düzağaç", "Pinhani", "Kalben"];
 const KINDS = ["konseri", "gecesi", "galası", "gösterisi"];
@@ -212,7 +216,7 @@ function command() {
   let text = parts[0]; for (let i = 1; i < parts.length; i++) text += pick(joins) + parts[i];
   // a past event named on an assign: the reading carries it (the acting layer refuses)
   if (steps.length === 1 && steps[0].op === "assign" && chance(0.12)) { const e = eventRef(); if (!e.venue && !e.month) { text = `${evCase(e, "loc")} ${text}`; steps[0].from = evRead(e); } }
-  return [text, Cr(steps)];
+  return [text, Cr(G8 ? fold3(steps) : steps)];
 }
 
 
@@ -259,8 +263,8 @@ function stepEn() {
 function commandEn() {
   const k = rnd() < 0.8 ? 1 : 2, parts = [], steps = [];
   while (parts.length < k) { const [t, s] = stepEn(), ss = Array.isArray(s) ? s : [s]; if (steps.length + ss.length > 3) break; parts.push(t); steps.push(...ss); }
-  let text = parts[0]; for (let i = 1; i < parts.length; i++) text += pick([" and ", ", then ", "; also "]) + parts[i].replace(/^./, (c) => c.toLowerCase());
-  return [text, Cr(steps)];
+  let text = parts[0]; for (let i = 1; i < parts.length; i++) text += pick([" and ", ", then ", "; also "]) + (G8 ? lcVerb(parts[i]) : parts[i].replace(/^./, (c) => c.toLowerCase()));
+  return [text, Cr(G8 ? fold3(steps) : steps)];
 }
 function english() {
   const r = rnd();
@@ -269,6 +273,122 @@ function english() {
   let tx = text + (q ? pick(["?", "?", "", " please?"]) : pick(["", "", ".", " please", " thanks"]));
   const r2 = JSON.parse(JSON.stringify(reading));
   if (low) { tx = tx.toLowerCase(); const lc = (v) => (typeof v === "string" ? v.toLocaleLowerCase("tr") : v); r2.person = lc(r2.person); r2.steps = r2.steps.map((s) => ({ ...s, guest: lc(s.guest), name: lc(s.name) })); }
+  return [tx, r2];
+}
+
+// ---- grammar 8 (runQ): multi-step / deep sentences ------------------------------------------------
+// In a plan of three steps an add and its seat are ONE addGuest carrying the table: the acting layer's
+// form (assistant-reading toParse folds add + assign only in a two-step plan; deep.jsonl dc2's gold).
+function fold3(steps) {
+  if (steps.length < 3) return steps;
+  const out = [];
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i], nx = steps[i + 1];
+    if (s.op === "addGuest" && !s.table && nx && nx.op === "assign" && nx.guest === s.name) { out.push({ ...s, table: nx.table }); i++; } else out.push(s);
+  }
+  return out;
+}
+// a joined English part is lower-cased only when it starts with a verb (never a name)
+const lcVerb = (t) => t.replace(/^(Seat|Move|Put|Take|Unseat|Delete|Remove|Set|Make|Mark|Add|New|Give)\b/, (w) => w.toLowerCase());
+const J = (...a) => a.filter(Boolean).join(" ");
+const COMP8 = [["eşiyle", 2], ["eşiyle beraber", 2], ["kocasıyla", 2], ["karısıyla birlikte", 2], ["bir misafiriyle", 2], ["bir arkadaşıyla", 2], ["iki misafiriyle", 3], ["iki arkadaşıyla beraber", 3], ["üç misafiriyle", 4], ["tek başına", 1], ["yalnız", 1]];
+const TAIL8 = ["; listede yoksa bana sor", ", böyle biri yoksa hiçbir şeye dokunma", "; bulamazsan sor", ", emin değilsen önce sor", "; kayıt yoksa değiştirme", ", yanlış kişi olursa sor"];
+const ORD8 = [["", ", sonra ", " ve "], ["Önce ", ", ardından ", ", son olarak "], ["İlk iş ", ", daha sonra ", "; en sonunda "], ["", "; sonra ", ", bir de "], ["Şöyle yapalım: ", ", sonra ", ", sonra da "]];
+const seatV = () => pick(["oturt", "yerleştir", "geçir", "al", "koy", "aktar"]);
+const daDe = (w) => (v2(w) === "a" ? "da" : "de");
+const nsfx = (n, c) => sfx(String(n), c, DIGIT[n]);
+// one job on a guest, said with the name the first time and "onu" after
+function job8(g, ref, used) {
+  const t = table(), o = person(), r = rnd(), gen = ref === "onu" ? "onun" : sfx(g, "gen");
+  if (r < 0.25 && !used.has("assign")) return [`${ref} ${tsfx(t, "dat")} ${seatV()}`, St("assign", { guest: g, table: t }), "assign"];
+  if (r < 0.4 && !used.has("unassign") && !used.has("assign")) return [`${ref} ${pick(["masasından kaldır", "masadan indir", "masasız bırak"])}`, St("unassign", { guest: g }), "unassign"];
+  if (r < 0.6 && !used.has("setVip")) return [`${ref} VIP ${pick(["yap", "olarak işaretle", "listesine al"])}`, St("setVip", { guest: g }), "setVip"];
+  if (r < 0.8 && !used.has("setPax")) { const n = 2 + Math.floor(rnd() * 5); return [pick([`${gen} kişi sayısını ${n} yap`, `${gen} grubunu ${n} kişi yap`]), St("setPax", { guest: g, pax: n }), "setPax"]; }
+  if (!used.has("assign") && o !== g) return [`${ref} ${sfx(o, "gen")} yanına ${pick(["oturt", "yerleştir", "al"])}`, St("nextTo", { guest: g, other: o.toLocaleLowerCase("tr") }), "assign"];
+  return null;
+}
+function deepCommand() {
+  const g = person(chance(0.8)), g2 = person(chance(0.8)), t = table(), f = table(), r = rnd();
+  if (g === g2 || f === t) return deepCommand();
+  const [c, cp] = pick(COMP8), nn = person(true), nn2 = person(true), ord = pick(ORD8);
+  let text, steps;
+  if (r < 0.14) {   // someone leaves the table or the list, someone is added in the place
+    const keep = chance(0.4), withT = chance(0.7);
+    const first = keep ? pick([`${sfx(g, "acc")} silme, sadece masasından kaldır`, `${sfx(g, "acc")} listeden atma, masasını boşalt`, `${g} listede kalsın ama masadan kalksın`])
+      : pick([`${g} ${pick(["artık gelmeyecekmiş", "gelemiyormuş", "iptal etti"])}, ${pick(["onu listeden tamamen sil", "kaydını sil", "onu listeden çıkar"])}`, `${sfx(g, "acc")} listeden tamamen sil`]);
+    const add = withT ? pick([J(pick(["yerine", "onun yerine", "boşalan yere"]), tsfx(t, "dat"), sfx(nn, "acc"), c, pick(["ekle", "yaz"])), J(pick(["yerine", "onun yerine"]), sfx(nn, "acc"), c, tsfx(t, "dat"), pick(["ekle", "yerleştir"]))])
+      : J(pick(["yerine", "onun yerine"]), sfx(nn, "acc"), c, "listeye ekle");
+    text = `${first}${pick(["; ", ", ", " ve "])}${add}`;
+    steps = [St(keep ? "unassign" : "deleteGuest", { guest: g }), St("addGuest", { name: nn, pax: cp, table: withT ? t : null })];
+  } else if (r < 0.28) {   // a count changed, then the group / "onu" moved
+    const a = 1 + Math.floor(rnd() * 4), b = a + 1 + Math.floor(rnd() * 3), up = chance(0.6), [from, to] = up ? [a, b] : [b, a];
+    const first = pick([`${sfx(g, "gen")} kişi sayısını ${nsfx(from, "abl")} ${nsfx(to, "dat")} ${up ? pick(["çıkar", "yükselt"]) : pick(["düşür", "indir"])}`,
+      `${sfx(g, "gen")} grubu ${up ? pick(["büyüdü", "genişledi"]) : pick(["küçüldü", "azaldı"])}, artık ${to} kişiler; ${pick(["sayıyı güncelle", "kişi sayısını düzelt", "kaydı düzelt"])}`]);
+    const o = person(); if (o === g) return deepCommand();
+    const sec = pick([[`${pick(["onu", "onları"])} ${tsfx(t, "dat")} ${pick(["taşı", "geçir", "oturt"])}`, St("assign", { guest: g, table: t })], [`onu ${sfx(o, "gen")} yanına oturt`, St("nextTo", { guest: g, other: o.toLocaleLowerCase("tr") })], [`onu VIP ${pick(["yap", "olarak işaretle"])}`, St("setVip", { guest: g })]]);
+    text = `${first}${pick([" ve ", ", sonra ", "; ardından "])}${sec[0]}`; steps = [St("setPax", { guest: g, pax: to }), sec[1]];
+  } else if (r < 0.4) {   // a whole table moved, then someone to "that same table"
+    text = `${tsfx(f, "loc")} ${pick(["oturanların hepsini", "oturan herkesi", "kim varsa"])} ${tsfx(t, "dat")} ${pick(["kaydır", "taşı", "geçir"])}${pick([", sonra ", "; ardından ", " ve "])}${sfx(g, "acc")} ${daDe(g + SUF.acc(g))} ${pick(["aynı masaya", "o masaya", "oraya", `aynı yere, ${tsfx(t, "dat")}`])} ${seatV()}`;
+    steps = [St("moveTable", { table: t, fromTable: f }), St("assign", { guest: g, table: t })];
+  } else if (r < 0.52) {   // two adds in one sentence
+    const [c2, cp2] = pick(COMP8); if (nn === nn2) return deepCommand();
+    text = pick([`${pick(["Yeni misafirler var:", "Listeye iki kişi girecek:", "İki yeni davetli:"])} ${nn} ${c}, ${nn2} ${pick(["ise", "de"])} ${c2} ${pick(["gelecek", "katılacak"])}; ${pick(["ikisini de listeye ekle", "ikisini de kaydet", "ikisini de yaz"])}`,
+      `${sfx(nn, "acc")} ${c} ve ${sfx(nn2, "acc")} ${c2} listeye ekle`]);
+    steps = [St("addGuest", { name: nn, pax: cp }), St("addGuest", { name: nn2, pax: cp2 })];
+  } else if (r < 0.62) {   // a negation that redirects
+    text = pick([`${sfx(g, "acc")} ${sfx(g2, "gen")} yanına ${pick(["koyma", "oturtma"])}, ${pick(["onu doğrudan", "direkt", "onu"])} ${tsfx(t, "dat")} ${seatV()}`, `${sfx(g, "acc")} ${tsfx(f, "dat")} değil, ${tsfx(t, "dat")} ${seatV()}`,
+      `${g} ${tsfx(f, "loc")} ${pick(["oturmasın", "kalmasın"])}, ${tsfx(t, "dat")} geçsin`, `${sfx(g, "acc")} silme, ${pick(["sadece", "yalnızca"])} ${tsfx(t, "dat")} ${seatV()}`]);
+    steps = [St("assign", { guest: g, table: t })];
+  } else if (r < 0.72) {   // an earlier seat copied, then someone else seated
+    const e = eventRef(); if (e.venue || e.month) return deepCommand();
+    text = `${sfx(g, "acc")} ${evCase(e, "loc")} ${pick(["oturduğu yere", "nerede oturduysa oraya"])} ${seatV()}${pick([", ardından ", ", sonra ", "; "])}${sfx(g2, "acc")} ${daDe(g2 + SUF.acc(g2))} ${tsfx(t, "dat")} ${seatV()}`;
+    steps = [St("copySeat", { guest: g, from: evRead(e) }), St("assign", { guest: g2, table: t })];
+  } else {   // two or three jobs with order words, "onu" for the same guest
+    const k = chance(0.55) ? 2 : 3, parts = [], used = new Map();
+    steps = [];
+    while (parts.length < k) {
+      const same = parts.length > 0 && chance(0.5), who = same ? steps[steps.length - 1].guest : parts.length === 0 ? g : g2;
+      if (!who) break;
+      const u = used.get(who) || new Set(), jb = job8(who, same ? "onu" : sfx(who, "acc"), u);
+      if (!jb) break;
+      u.add(jb[2]); used.set(who, u); parts.push(jb[0]); steps.push(jb[1]);
+    }
+    if (parts.length < 2) return deepCommand();
+    text = ord[0] + parts[0] + ord[1] + parts[1] + (parts[2] ? ord[2] + parts[2] : "");
+  }
+  if (steps.some((s) => s.guest) && chance(0.2)) text += pick(TAIL8);
+  return [text, Cr(fold3(steps))];
+}
+function deepQuestion() {
+  const [core, reading] = question();
+  const pre = pick(["Hani geçenlerde konuştuk ya, ", "Aklıma takıldı: ", "Müşteri soruyor, ", "Rapor için lazım, ", "Bir şey soracağım, ", "Toplantıdan önce şunu bilmem lazım: ", "Şunu merak ettim, ", ""]);
+  const post = pick(["", ", bir hatırlat bana", ", tam olarak söyler misin", ", kontrol eder misin", ", yani kısaca söyle", "; acelem yok ama lazım", ", kayıtlara bakar mısın"]);
+  if (!pre && !post) return deepQuestion();
+  return [pre + core + post, reading];
+}
+function deepEn() {
+  if (chance(0.3)) { const [q, rd] = questionEn(); return [pick(["Quick question before the meeting: ", "For the report, ", "A client is asking: ", "I need to know this, ", "Just checking, "]) + q + pick(["", ", can you check", ", please look it up", ", remind me", ", I need it now"]), rd]; }
+  if (chance(0.25)) {   // someone seated, then a new guest added to that same table
+    const g = person(), t = table(), name = person(true), n = pick([0, 1, 1, 2]), extra = n === 0 ? "" : n === 1 ? pick([" and his wife", " and her husband", " +1", " and a guest"]) : pick([" and two friends", " +2"]);
+    return [`${pick(["First move", "Move", "Seat"])} ${g} ${pick(["to", "at"])} ${t}${pick([", then ", " and then ", "; after that "])}put ${name}${extra} at that table as well`, Cr(fold3([St("assign", { guest: g, table: t }), St("addGuest", { name, pax: n + 1 }), St("assign", { guest: name, table: t })]))];
+  }
+  const k = chance(0.6) ? 2 : 3, parts = [], steps = [], ord = pick([["First ", ", then ", ", and finally "], ["", " and then ", ", and after that "], ["", "; after that ", "; lastly "]]);
+  while (parts.length < k) { const [t, s] = stepEn(), ss = Array.isArray(s) ? s : [s]; if (steps.length + ss.length > 3) break; parts.push(t); steps.push(...ss); }
+  if (parts.length < 2) return deepEn();
+  let text = ord[0] + (ord[0] ? lcVerb(parts[0]) : parts[0]);
+  for (let i = 1; i < parts.length; i++) text += ord[Math.min(i, 2)] + lcVerb(parts[i]);
+  return [text, Cr(fold3(steps))];
+}
+// English surface for grammar 8: case, punctuation and (sometimes) no Turkish letters, the reading kept in step
+function surfaceEn(text, reading) {
+  const q = reading.kind === "question", low = chance(0.35), tr = chance(0.4);
+  let tx = text + (q ? pick(["?", "?", "", " please?"]) : pick(["", "", ".", " please", " thanks"]));
+  const r2 = JSON.parse(JSON.stringify(reading));
+  const map = (v) => (typeof v !== "string" ? v : tr ? detr(low ? v.toLocaleLowerCase("tr") : v) : low ? v.toLocaleLowerCase("tr") : v);
+  if (low) tx = tx.toLowerCase();
+  if (tr) tx = detr(tx);
+  r2.person = map(r2.person); r2.event = map(r2.event);
+  r2.steps = r2.steps.map((s) => ({ ...s, guest: map(s.guest), name: map(s.name), other: s.other == null ? s.other : (tr ? detr(s.other) : s.other), from: s.from == null ? s.from : (tr ? detr(s.from) : s.from) }));
   return [tx, r2];
 }
 // ---- surface: fillers, case, no Turkish letters -----------------------------------------------
@@ -294,9 +414,10 @@ function finish(text, reading, isQ) {
 // ---- checks against the tests ---------------------------------------------------------
 const readLines = (f) => fs.readFileSync(path.join(repo, "training/assistant", f), "utf8").trim().split("\n").map((l) => JSON.parse(l));
 const fx = JSON.parse(fs.readFileSync(path.join(repo, "training/assistant/fixture.json"), "utf8"));
+const ALLTESTS = fs.readdirSync(path.join(repo, "training/assistant")).filter((f) => f.endsWith(".jsonl")).sort();   // grammar 8: every test file, the runQ exam included
 const norm = (s) => R && globalThis.MeritAssistantTools.fold(String(s)).replace(/[^a-z0-9]+/g, " ").trim();
 const testTexts = new Set([...readLines("questions.jsonl").map((q) => q.q), ...readLines("commands.jsonl").map((c) => c.text), ...readLines("variants.jsonl").map((v) => v.text),
-  ...readLines("deep.jsonl").map((d) => d.text), ...readLines("fresh.jsonl").map((d) => d.text), ...["fresh2.jsonl", "fresh3.jsonl", ...(G4 ? ["fresh4.jsonl", "fresh5.jsonl", "typo5.jsonl"] : []), ...(G5 ? ["fresh6.jsonl", "typo6.jsonl"] : []), ...(G6 ? ["fresh7.jsonl", "typo7.jsonl", "fresh8.jsonl", "typo8.jsonl", "en7.jsonl", "entypo7.jsonl", "en8.jsonl", "entypo8.jsonl", "fresh9.jsonl", "typo9.jsonl", "en9.jsonl", "entypo9.jsonl"] : [])].filter((f) => fs.existsSync(path.join(repo, "training/assistant", f))).flatMap((f) => readLines(f).map((d) => d.text)), ...R.EXAMPLES.map((e) => e[0])].map(norm));
+  ...readLines("deep.jsonl").map((d) => d.text), ...readLines("fresh.jsonl").map((d) => d.text), ...["fresh2.jsonl", "fresh3.jsonl", ...(G4 ? ["fresh4.jsonl", "fresh5.jsonl", "typo5.jsonl"] : []), ...(G5 ? ["fresh6.jsonl", "typo6.jsonl"] : []), ...(G6 ? ["fresh7.jsonl", "typo7.jsonl", "fresh8.jsonl", "typo8.jsonl", "en7.jsonl", "entypo7.jsonl", "en8.jsonl", "entypo8.jsonl", "fresh9.jsonl", "typo9.jsonl", "en9.jsonl", "entypo9.jsonl"] : [])].filter((f) => fs.existsSync(path.join(repo, "training/assistant", f))).flatMap((f) => readLines(f).map((d) => d.text)), ...(G8 ? ALLTESTS.flatMap((f) => readLines(f).map((d) => d.text ?? d.q)) : []), ...R.EXAMPLES.map((e) => e[0])].map(norm));
 const banned = new Set();
 for (const e of fx.events) { for (const g of e.guests) g.name.split(/\s+/).forEach((w) => banned.add(norm(w))); e.name.split(/\s+/).filter((w) => w.length > 3 && !/konser|gala/i.test(w)).forEach((w) => banned.add(norm(w))); e.venue.split(/\s+/).forEach((w) => banned.add(norm(w))); }
 ["burak", "sahin", "selin", "ak", "deniz", "yurt", "okan", "er", "elif", "sen", "can", "ozturk", "zeynep", "arslan", "mehmet", "kaya", "ahmet", "yilmaz", "ayse", "demir", "tarkan", "sezen", "aksu", "mabel", "matiz", "harbiye", "zorlu", "yilbasi"].forEach((w) => banned.add(w));
@@ -304,7 +425,8 @@ if (G4) ["burcu", "tan", "riza", "oktay"].forEach((w) => banned.add(w));
 if (G5) ["selim", "cetin", "hulya", "keskin", "kadir", "coskun", "oya", "ergin"].forEach((w) => banned.add(w));
 // grammar 6: every name in the newer tests is barred, and leaves the pools (they were written from them)
 if (G6) {
-  for (const f of ["fresh7.jsonl", "fresh8.jsonl", "en7.jsonl", "en8.jsonl", "fresh9.jsonl", "en9.jsonl"].filter((f) => fs.existsSync(path.join(repo, "training/assistant", f)))) for (const d of readLines(f)) {
+  for (const f of (G8 ? ALLTESTS : ["fresh7.jsonl", "fresh8.jsonl", "en7.jsonl", "en8.jsonl", "fresh9.jsonl", "en9.jsonl"]).filter((f) => fs.existsSync(path.join(repo, "training/assistant", f)))) for (const d of readLines(f)) {
+    if (!d.gold) continue;
     for (const st of d.gold.steps || []) for (const v of [st.guest, st.name, st.other]) if (v) norm(v).split(" ").forEach((w) => banned.add(w));
     if (d.gold.person) norm(d.gold.person).split(" ").forEach((w) => banned.add(w));
   }
@@ -345,6 +467,28 @@ function careless(text, reading) {
   return words.join(" ");
 }
 
+
+// grammar 8: English typed carelessly — QWERTY neighbours, swapped / dropped / doubled letters,
+// apostrophes dropped ("Kaya's" -> "Kayas", the guest stays "Kaya"); names, tables and numbers keep their letters
+const NEAR_EN = { a: "s", s: "a", e: "r", r: "e", t: "r", o: "i", i: "o", n: "m", m: "n", h: "j", l: "k", d: "f", c: "v", y: "t", u: "y", b: "v", w: "e", g: "h", p: "o", k: "l" };
+function carelessEn(text, reading) {
+  const keep = new Set();
+  const add = (v) => { if (typeof v === "string") for (const w of norm(v).split(" ")) keep.add(w); };
+  for (const k of ["person", "event", "phone", "table"]) add(reading[k]);
+  for (const st of reading.steps) for (const k of ["guest", "table", "from", "other", "name", "fromTable"]) add(st[k]);
+  if (chance(0.8)) text = text.replace(/[’']/g, "");
+  if (chance(0.6)) text = text.replace(/[?!.,;:]/g, "").replace(/\s+/g, " ").trim();
+  const words = text.split(" "), slips = 1 + (chance(0.4) ? 1 : 0);
+  for (let k = 0, tries = 0; k < slips && tries < 12; tries++) {
+    const i = Math.floor(rnd() * words.length), w = words[i];
+    if (w.length < 3 || /\d/.test(w) || !/^[a-zA-Z]+$/.test(w) || keep.has(norm(w)) || [...keep].some((x) => x && norm(w).startsWith(x))) continue;
+    const j = 1 + Math.floor(rnd() * (w.length - 2)), r = rnd();
+    words[i] = r < 0.25 ? w.slice(0, j) + w.slice(j + 1) : r < 0.45 ? w.slice(0, j) + w[j] + w.slice(j) : r < 0.7 ? w.slice(0, j) + w[j + 1] + w[j] + w.slice(j + 2) : w.slice(0, j) + (NEAR_EN[w[j].toLowerCase()] || w[j]) + w.slice(j + 1);
+    k++;
+  }
+  return words.join(" ");
+}
+
 // ---- write ------------------------------------------------------------------------
 const out = arg("out"), N = Number(arg("n", 2400));
 fs.mkdirSync(out, { recursive: true });
@@ -353,13 +497,28 @@ const shots = shortPrompt ? null : R.EXAMPLES.map(([u, a]) => [u, JSON.stringify
 const seen = new Set(), counts = {};
 let n = 0, skipped = 0;
 const f = fs.openSync(path.join(out, "items.jsonl"), "w");
+const G8guard = G8 ? await (await import(pathToFileURL(path.join(repo, "training/check_g8_guard.mjs")).href)).guard() : null;   // grammar 8: the runQ guard, applied as items are made
+const ok = (text, reading) => { const key = norm(text); return !((G8guard && G8guard.f8(text, reading)) || testTexts.has(key) || seen.has(key) || grams(frame(text)).some((g) => testGrams.has(g)) || key.split(" ").some((w) => banned.has(w)) || !R.valid(reading)); };
 while (n < N) {
+  // grammar 8: 30 % multi-step / deep (a quarter of them English)
+  if (G8 && chance(0.3)) {
+    let text, reading;
+    if (chance(0.25)) { [text, reading] = surfaceEn(...deepEn()); if (chance(0.6)) text = carelessEn(text, reading); }
+    else { [text, reading] = chance(0.7) ? deepCommand() : deepQuestion(); [text, reading] = finish(text, reading, reading.kind === "question"); if (chance(0.5)) text = careless(text, reading); }
+    if (!ok(text, reading)) { skipped++; continue; }
+    seen.add(norm(text)); counts.deep = (counts.deep || 0) + 1; counts[reading.kind] = (counts[reading.kind] || 0) + 1;
+    const sub = reading.kind === "question" ? reading.intent : reading.kind === "command" ? reading.steps.map((s) => s.op).join("+") : "unknown";
+    fs.writeSync(f, JSON.stringify({ task: "F8", sub, q: text, system: shortPrompt ? R.SYSTEM_SHORT : R.SYSTEM, ...(shots ? { shots } : {}), truth: JSON.stringify(reading), level: 3,
+      family: "synth-f8-deep", seed: Number(arg("seed", 71)), split: "train", image: null }) + "\n");
+    n++; continue;
+  }
   const r = rnd();
   if (G6 && chance(Number(arg("english", G7 ? "0.4" : "0.33")))) {
     let [text, reading] = english();
-    if (chance(G7 ? 0.6 : 0.45)) text = careless(text, reading);
+    if (G8 && chance(0.4)) { text = detr(text); const d = (v) => (typeof v === "string" ? detr(v) : v); reading = { ...reading, person: d(reading.person), event: d(reading.event), steps: reading.steps.map((s) => ({ ...s, guest: d(s.guest), name: d(s.name), other: d(s.other), from: d(s.from) })) }; }
+    if (chance(G7 ? 0.6 : 0.45)) text = G8 ? carelessEn(text, reading) : careless(text, reading);
     const key = norm(text);
-    if (testTexts.has(key) || seen.has(key) || grams(frame(text)).some((g) => testGrams.has(g)) || key.split(" ").some((w) => banned.has(w)) || !R.valid(reading)) { skipped++; continue; }
+    if ((G8guard && G8guard.f8(text, reading)) || testTexts.has(key) || seen.has(key) || grams(frame(text)).some((g) => testGrams.has(g)) || key.split(" ").some((w) => banned.has(w)) || !R.valid(reading)) { skipped++; continue; }
     seen.add(key); counts.english = (counts.english || 0) + 1; counts[reading.kind] = (counts[reading.kind] || 0) + 1;
     const sub = reading.kind === "question" ? reading.intent : reading.kind === "command" ? reading.steps.map((s) => s.op).join("+") : "unknown";
     fs.writeSync(f, JSON.stringify({ task: "F8", sub, q: text, system: shortPrompt ? R.SYSTEM_SHORT : R.SYSTEM, ...(shots ? { shots } : {}), truth: JSON.stringify(reading), level: reading.steps.length > 1 || text.length > 70 ? 3 : 2,
@@ -368,9 +527,9 @@ while (n < N) {
   }
   let [text, reading] = r < 0.42 ? question() : r < (G2 ? 0.89 : 0.93) ? command() : [G4 && chance(0.3) ? pick(SMALL4) : G3 && chance(0.4) ? pick(SMALL3) : G2 && chance(0.5) ? pick(SMALL2) : pick(SMALL), Ur()];
   [text, reading] = finish(text, reading, reading.kind === "question");
-  if (G4 && chance(G7 ? 0.6 : 0.45)) text = careless(text, reading);
+  if (G4 && chance(G8 ? 0.7 : G7 ? 0.6 : 0.45)) text = careless(text, reading);
   const key = norm(text);
-  if (testTexts.has(key) || seen.has(key) || (G4 && grams(frame(text)).some((g) => testGrams.has(g))) || key.split(" ").some((w) => banned.has(w)) || !R.valid(reading)) { skipped++; continue; }
+  if ((G8guard && G8guard.f8(text, reading)) || testTexts.has(key) || seen.has(key) || (G4 && grams(frame(text)).some((g) => testGrams.has(g))) || key.split(" ").some((w) => banned.has(w)) || !R.valid(reading)) { skipped++; continue; }
   seen.add(key);
   const sub = reading.kind === "question" ? reading.intent : reading.kind === "command" ? reading.steps.map((s) => s.op).join("+") : "unknown";
   counts[reading.kind] = (counts[reading.kind] || 0) + 1;
