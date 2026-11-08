@@ -125,6 +125,7 @@ detector fingerprint as well), and the shell's own persistence and focus last
 | 3 | Guest record removal/restore/unassign undo → `src/guest-record-undo.js` (workbook before/after identical) | 5,267 |
 | 4 | Freeze zones & seating a party → `src/seating-commands.js` (workbook before/after identical) | 5,111 |
 | 5 | Service-load panel → `src/service-load-panel.js` | 5,056 |
+| 6 | Arrival & availability writers, the announcer → `src/arrival-writer.js` (workbook before/after identical) | 4,989 |
 
 ## Seen while moving
 
@@ -196,3 +197,10 @@ entry says what was seen and what was done about it.
     suite now reads the shell plus every `create(deps)` module, its allow-list
     names `seating-commands.js:`, and the widened scan is mutation-proven
     (dropping `restoreGuestRecord`'s `canMutate` fails it).
+15. **A shorthand `{setArrival}` in another module's `create()` above the cut
+    is read at boot, before the new module exists.** Move 6's first run
+    failed every browser suite with `Cannot access 'ARRIVAL' before
+    initialization` (the Live screen's create call handed `recordArrival` and
+    `setArrival` by value). Caught by the targeted suites before any commit;
+    the tool now hands an inward FUNCTION over as a late-binding wrapper in a
+    shorthand, as every other shell function already goes.

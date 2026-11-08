@@ -1100,7 +1100,7 @@
   const FINDER=globalThis.MeritScreenFinder.create({
     RULES:(...a)=>RULES(...a),SEARCH,activeEvent:(...a)=>activeEvent(...a),additionalOf:(...a)=>additionalOf(...a),canMutate:(...a)=>canMutate(...a),
     esc:(...a)=>esc(...a),formatTableNumber:(...a)=>formatTableNumber(...a),paxOf:(...a)=>paxOf(...a),render:(...a)=>render(...a),
-    seatRange:(...a)=>seatRange(...a),setArrival:(...a)=>setArrival(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),
+    seatRange:(...a)=>seatRange(...a),setArrival:(...a)=>ARRIVAL.setArrival(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),
     ui,
   });
   renderGlobalSearch = function(...a){return FINDER.renderGlobalSearch(...a);};
@@ -1606,7 +1606,7 @@
   // what it reads; shell functions go over as late-binding wrappers, so a body
   // this file reassigns later is the one that runs. ----------------------------
   const SEATING=globalThis.MeritScreenSeating.create({
-    activeEvent:(...a)=>activeEvent(...a),assignGuestGroup:(...a)=>SEATCMD.assignGuestGroup(...a),assignGuestToTable:(...a)=>assignGuestToTable(...a),authoriseFreezeOverride:(...a)=>SEATCMD.authoriseFreezeOverride(...a),AVAIL:(...a)=>AVAIL(...a),availReasonText:(...a)=>SEATCMD.availReasonText(...a),bindPanelToggles:(...a)=>bindPanelToggles(...a),canMutate:(...a)=>canMutate(...a),canSeat,canvasEmptyHTML:(...a)=>canvasEmptyHTML(...a),canvasViewportHTML:(...a)=>canvasViewportHTML(...a),createFreezeFromDraft:(...a)=>SEATCMD.createFreezeFromDraft(...a),esc:(...a)=>esc(...a),eventFreezes:(...a)=>eventFreezes(...a),formatTableNumber:(...a)=>formatTableNumber(...a),FREEZE:(...a)=>FREEZE(...a),freezeReasonText:(...a)=>SEATCMD.freezeReasonText(...a),icon:(...a)=>icon(...a),liftFreeze:(...a)=>SEATCMD.liftFreeze(...a),logicalSeatCount:(...a)=>logicalSeatCount(...a),naturalSort:(...a)=>naturalSort(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxDotsHTML:(...a)=>paxDotsHTML(...a),paxOf:(...a)=>paxOf(...a),recordUndo:(...a)=>recordUndo(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),seatingQueueEmptyHTML:(...a)=>seatingQueueEmptyHTML(...a),setTableAvailability:(...a)=>setTableAvailability(...a),t:(...a)=>t(...a),tableAssignedPax:(...a)=>tableAssignedPax(...a),tableIndex:(...a)=>tableIndex(...a),tableSeatMap:(...a)=>tableSeatMap(...a),toast:(...a)=>toast(...a),toggleAssignmentLock:(...a)=>toggleAssignmentLock(...a),touchEvent:(...a)=>touchEvent(...a),ui,unassignGuest:(...a)=>unassignGuest(...a),v8Toolbar:(...a)=>FLOORPLAN.v8Toolbar(...a),
+    activeEvent:(...a)=>activeEvent(...a),assignGuestGroup:(...a)=>SEATCMD.assignGuestGroup(...a),assignGuestToTable:(...a)=>assignGuestToTable(...a),authoriseFreezeOverride:(...a)=>SEATCMD.authoriseFreezeOverride(...a),AVAIL:(...a)=>AVAIL(...a),availReasonText:(...a)=>SEATCMD.availReasonText(...a),bindPanelToggles:(...a)=>bindPanelToggles(...a),canMutate:(...a)=>canMutate(...a),canSeat,canvasEmptyHTML:(...a)=>canvasEmptyHTML(...a),canvasViewportHTML:(...a)=>canvasViewportHTML(...a),createFreezeFromDraft:(...a)=>SEATCMD.createFreezeFromDraft(...a),esc:(...a)=>esc(...a),eventFreezes:(...a)=>eventFreezes(...a),formatTableNumber:(...a)=>formatTableNumber(...a),FREEZE:(...a)=>FREEZE(...a),freezeReasonText:(...a)=>SEATCMD.freezeReasonText(...a),icon:(...a)=>icon(...a),liftFreeze:(...a)=>SEATCMD.liftFreeze(...a),logicalSeatCount:(...a)=>logicalSeatCount(...a),naturalSort:(...a)=>naturalSort(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxDotsHTML:(...a)=>paxDotsHTML(...a),paxOf:(...a)=>paxOf(...a),recordUndo:(...a)=>recordUndo(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),seatingQueueEmptyHTML:(...a)=>seatingQueueEmptyHTML(...a),setTableAvailability:(...a)=>ARRIVAL.setTableAvailability(...a),t:(...a)=>t(...a),tableAssignedPax:(...a)=>tableAssignedPax(...a),tableIndex:(...a)=>tableIndex(...a),tableSeatMap:(...a)=>tableSeatMap(...a),toast:(...a)=>toast(...a),toggleAssignmentLock:(...a)=>toggleAssignmentLock(...a),touchEvent:(...a)=>touchEvent(...a),ui,unassignGuest:(...a)=>unassignGuest(...a),v8Toolbar:(...a)=>FLOORPLAN.v8Toolbar(...a),
   });
   // REDESIGN v4 step 6 (SPEC-v4 "The working order" 5): "Hazır" on Oturma opens
   // Hazır mı? — the Plan Doctor's open issues (eventReadiness: the one judge),
@@ -1697,7 +1697,7 @@
   // toast and touchEvent are reassigned by this file, and a captured reference
   // would freeze whichever body was current when the screen was created.
   const LIVE=globalThis.MeritScreenLive.create({
-    ui,t,esc,icon,naturalSort,paxOf,OCC,SEARCH,canMutate,liveEmptyHTML,partyMetaHTML,recordArrival,seatTagHTML,setArrival,tableIndex,
+    ui,t,esc,icon,naturalSort,paxOf,OCC,SEARCH,canMutate,liveEmptyHTML,partyMetaHTML,recordArrival:(...a)=>ARRIVAL.recordArrival(...a),seatTagHTML,setArrival:(...a)=>ARRIVAL.setArrival(...a),tableIndex,
     activeEvent:()=>activeEvent(),render:()=>render(),touchEvent:e=>touchEvent(e),toast:(...a)=>toast(...a),
     epoch:()=>mutationEpoch,
     saveGuest:(e,g,data)=>saveGuestRecord(e,g,data),assignGuest:(id,tableId)=>assignGuestToTable(id,tableId),
@@ -1707,76 +1707,9 @@
   bindLive = function(){return LIVE.bind();};
   // Session-only trail so a mis-tap at the door is recoverable. Deliberately
   // ui state, not event data -- it must never reach the stored schema.
-  // ---- THE ARRIVAL AXIS, IN ONE PLACE ---------------------------------------
-  //
-  // Four call sites used to write arrivalStatus independently — the Live Enter
-  // key, the Live status buttons, the Live undo, and the guest finder — each
-  // with its own audit line and none of them recording WHEN. Four writers of
-  // one fact is how the fact drifts, and it is why the product could not draw
-  // an arrival curve it believed: the audit is capped at a thousand entries and
-  // a three-thousand-guest door would have overflowed it.
-  //
-  // So the moment lives on the guest record, next to the status it belongs to,
-  // and exactly one function maintains the pair. It writes the arrival axis and
-  // NOTHING else: planningStatus and the planned seat are separate facts and
-  // are not touched here, in either direction.
-  // The rule of change is MeritArrivalWave.arrivalTransition; this writes its
-  // answer and the audit entry, and nothing else writes the arrival axis.
-  function setArrival(event,guest,next,source){
-    if(!event||!guest||RULES().mutationRefusal(event))return null;
-    const from=guest.arrivalStatus;
-    const change=globalThis.MeritArrivalWave.arrivalTransition(guest,next,nowISO());
-    if(!change)return null;
-    guest.arrivalStatus=change.arrivalStatus;
-    guest.checkedInAt=change.checkedInAt;
-    audit(event,"ARRIVAL_STATUS_CHANGED",{guestId:guest.id,from,to:next,
-      at:guest.checkedInAt||null,source:source||"live"});
-    return{from,to:next};
-  }
-
-  // ---- TABLE AVAILABILITY, THE SAME WAY: ONE WRITER --------------------------
-  //
-  // Same discipline as setArrival(): one function maintains `availability`
-  // and its provenance fields together, so the reason and the moment can
-  // never drift from the state they describe. Marking a table unavailable
-  // touches NOTHING else — no assignment, no capacity, no chairs — the whole
-  // point of this axis being separate from every other fact about the table.
-  function setTableAvailability(event,table,next,reason,note){
-    if(!event||!table||RULES().mutationRefusal(event))return null;
-    const A=AVAIL();
-    const change=A&&A.availabilityTransition(table,next,reason,note,nowISO());
-    if(!change)return null;
-    const from=table.availability||A.STATE.AVAILABLE;
-    Object.assign(table,change);
-    audit(event,"TABLE_AVAILABILITY_CHANGED",{tableId:table.id,from,to:next,
-      reason:table.unavailableReason});
-    return{from,to:next};
-  }
-
-  // ONE LIVE REGION FOR STATUS CHANGES, outside #app so render() never
-  // replaces it: a region created in the same moment as its content is not
-  // announced, and the recent-arrivals strip is rebuilt with the whole screen
-  // on every check-in. It carries only THE CHANGE -- "AYŞE KAYA: Checked In" --
-  // never the re-rendered list, and it is polite: a door check-in must not
-  // interrupt whatever the screen reader was saying. Errors are the
-  // assertive channel, and that is the toast's own role="alert".
-  const announcer=(()=>{
-    let el=document.getElementById("a11yAnnouncer");
-    if(!el){el=document.createElement("div");el.id="a11yAnnouncer";el.className="sr-only";
-      el.setAttribute("role","status");el.setAttribute("aria-live","polite");el.setAttribute("aria-atomic","true");
-      document.body.appendChild(el);}
-    return el;
-  })();
-  // Cleared first and set a tick later, so announcing the same words twice in
-  // a row (two guests of the same name, one after the other) is still a change.
-  function announce(text){announcer.textContent="";setTimeout(()=>{announcer.textContent=text;},40);}
-  function recordArrival(g,from,to){
-    if(from!==to)announce(t("a11y.arrivalChanged",{name:g.name,status:t("status.arrival."+to)}));
-    if(!ui.liveRecent)ui.liveRecent=[];
-    ui.liveRecent=ui.liveRecent.filter(r=>r.guestId!==g.id);
-    if(from!==to)ui.liveRecent.unshift({guestId:g.id,name:g.name,from,to});
-    ui.liveRecent=ui.liveRecent.slice(0,6);
-  }
+  const ARRIVAL=globalThis.MeritArrivalWriter.create({
+    AVAIL:(...a)=>AVAIL(...a),RULES:(...a)=>RULES(...a),audit:(...a)=>audit(...a),nowISO:(...a)=>nowISO(...a),t:(...a)=>t(...a),ui,
+  });
 
   // ---- moved to src/screen-wizard.js — see that file's header. The shell hands it
   // what it reads; shell functions go over as late-binding wrappers, so a body
@@ -3944,7 +3877,7 @@
       // seating rules: the whole list replaced (undo puts the old list back); warn-only
       setSeatRules:(rules)=>{const e=activeEvent();if(!e||!canMutate(e,"change seating rules"))return null;const before=e.seatRules||[];e.seatRules=globalThis.MeritSeatingRules.normalizeAll(rules);touchEvent(e);return before;},
       // the arrival axis's one writer (setArrival), as the Live screen and the finder use it
-      setArrival:(id,status)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g)return null;return setArrival(e,g,status,"assistant");},
+      setArrival:(id,status)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g)return null;return ARRIVAL.setArrival(e,g,status,"assistant");},
       addGuest:(name,pax)=>{const e=activeEvent();if(!e||!canMutate(e,"edit guest records"))return null;return saveGuestRecord(e,null,{name,additionalGuests:pax-1,pax,planningStatus:"Confirmed",vip:"Standard",invitedBy:"",notes:"",expectedArrival:null}).guest.id;},
       // An arrangement from the planner (metres) drawn as real tables through
       // createTable, after the canvas undo snapshot: Ctrl+Z and the panel's

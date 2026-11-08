@@ -27,7 +27,7 @@ export const meta = { name: "domain-writers", tags: ["business", "fast"], timeou
 
 // field family -> the functions allowed to assign it (file:function)
 const WRITERS = {
-  arrival: { fields: ["arrivalStatus", "checkedInAt"], allowed: ["app-v8.js:setArrival", "app.js:normalizeGuest"] },
+  arrival: { fields: ["arrivalStatus", "checkedInAt"], allowed: ["arrival-writer.js:setArrival", "app.js:normalizeGuest"] },
   availability: { fields: ["availability", "unavailableReason", "unavailableSince", "unavailableNote"], allowed: [] },
   freezes: { fields: ["freezes"], allowed: ["seating-commands.js:createFreezeFromDraft", "seating-commands.js:liftFreeze", "app-v8.js:migrateEvent"] },
   handover: { fields: ["handoverNotes"], allowed: ["app-v8.js:addHandoverNote", "app-v8.js:migrateEvent"] },
@@ -83,7 +83,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     const lines = stripped[f].split("\n");
     return lines.flatMap((l, i) => /availabilityTransition\s*\(/.test(l) && f !== "table-availability.js" ? [`${f}:${enclosingFunction(lines, i)}`] : []);
   });
-  checks.equal(callers, ["app-v8.js:setTableAvailability"], "a table's availability changes only through setTableAvailability()");
+  checks.equal(callers, ["arrival-writer.js:setTableAvailability"], "a table's availability changes only through setTableAvailability()");
 
   // --- 2. static: every writer refuses a historical event itself ------------
   // The shell and every module created out of it with create(deps)
