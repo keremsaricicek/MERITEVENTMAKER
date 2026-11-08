@@ -53,8 +53,11 @@ const SAME_IN_BOTH = new Set(["VIP", "VVIP", "VIP / VVIP", "Bar", "Bistro", "Exc
 
 // The shell, and every screen moved out of it (src/screen-*.js): a template
 // that leaves app-v8.js must not leave this scan with it.
+import { screenFiles } from "../lib/shell-sources.mjs";
 const SHELL = ["app-v8.js", "app.js", "app-guests.js",
-  ...fs.readdirSync(new URL("../../src/", import.meta.url)).filter((f) => /^screen-.*\.js$/.test(f)).sort()];
+  // every module created out of the shell with create(deps), not only screens
+  // (tests/lib/shell-sources.mjs) — code that moved is still the shell's text.
+  ...screenFiles(new URL("../../", import.meta.url).pathname)];
 
 function staticFindings(repoRoot) {
   const { SRC, CODE, defs, dead, calledBack, overridden } = preV8Reachability(repoRoot);

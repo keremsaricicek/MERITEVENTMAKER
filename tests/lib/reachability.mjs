@@ -14,6 +14,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { stripCommentsAndStrings } from "./js-scan.mjs";
+import { screenFiles } from "./shell-sources.mjs";
 
 export function preV8Reachability(repoRoot) {
   const dir = path.join(repoRoot, "src");
@@ -23,13 +24,20 @@ export function preV8Reachability(repoRoot) {
   const html = fs.readFileSync(path.join(repoRoot, "index.html"), "utf8");
   const v8 = CODE["app-v8.js"];
   const overridden = new Set([...v8.matchAll(/(?:^|[;{}\s])([A-Za-z_$][\w$]*)\s*=\s*(?:async\s+)?function\b/g)].map((m) => m[1]));
-  const calledBack = new Set([...v8.matchAll(/\boriginal\.([A-Za-z_$][\w$]*)/g)].map((m) => m[1]));
+  // Called back from the override layer — app-v8.js AND every module created
+  // out of it with create(deps): an override's body that left app-v8.js in
+  // 2026-11 (benchmarks/CODE-HEALTH-2026-11.md) still calls original.X or its
+  // captured alias from its new file. Reading app-v8.js alone marked those
+  // pre-v8 bodies dead while they run on every click.
+  const shellText = [v8, ...screenFiles(repoRoot).map((f) => CODE[f])].join("\n");
+  const calledBack = new Set([...shellText.matchAll(/\boriginal\.([A-Za-z_$][\w$]*)/g)].map((m) => m[1]));
   // …and through a local ALIAS: `const oldBindCanvas=bindCanvas; … oldBindCanvas()`.
   // A first version modelled only original.NAME, so it marked the pre-v8
   // bindCanvas -- and bindInspector, which only it calls -- as dead, while the
   // Floor Plan card's Type/Rotation/Zone fields run through them every day.
-  for (const m of v8.matchAll(/\b(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=\s*([A-Za-z_$][\w$]*)\s*;/g))
-    if (new RegExp(`(?<![\\w$.])${m[1].replace(/\$/g, "\\$")}\\s*\\(`).test(v8)) calledBack.add(m[2]);
+  // (A moved capture reads the pre-v8 global as `globalThis.name`.)
+  for (const m of shellText.matchAll(/\b(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:globalThis\.)?([A-Za-z_$][\w$]*)\s*;/g))
+    if (new RegExp(`(?<![\\w$.])${m[1].replace(/\$/g, "\\$")}\\s*\\(`).test(shellText)) calledBack.add(m[2]);
   const capStart = v8.search(/const\s+original\s*=\s*\{/), capEnd = capStart < 0 ? -1 : v8.indexOf("}", capStart);
   const defs = [];
   for (const f of ["app.js", "app-guests.js"]) {
