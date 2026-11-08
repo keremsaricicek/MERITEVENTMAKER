@@ -881,7 +881,7 @@ def cmd_vlm(a):
     os.makedirs(os.path.join(a.out, "img"), exist_ok=True)
     rng = random.Random(a.seed)
     rows, n = [], 0
-    files = sorted(f for d in a.plans.split(",") for f in [os.path.join(d, x) for x in os.listdir(d) if x.startswith("syn-") and x.endswith(".json")])
+    files = sorted(f for d in a.plans.split(",") for f in [os.path.join(d, x) for x in os.listdir(d) if x.startswith("syn-") and x.endswith(".json")])[::a.every]
     for jf in files:
         ann = json.load(open(jf))
         img = Image.open(os.path.join(os.path.dirname(jf), ann["source"]["file"])).convert("RGB")
@@ -979,6 +979,7 @@ def main():
     v.add_argument("--split", default="train")
     v.add_argument("--numbers", type=int, default=3)
     v.add_argument("--jitter", action="store_true")
+    v.add_argument("--every", type=int, default=1, help="every k-th plan (sorted by name)")
     a = ap.parse_args()
     cmd_plans(a) if a.cmd == "plans" else cmd_vlm(a)
 

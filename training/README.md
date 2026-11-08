@@ -2063,7 +2063,9 @@ layout, count, position or text of a real plan is copied.
   over every layout incl. the held-out ones, half on training families with the **held-out layout**
   (`diagonal` G, `arc` P) or the **held-out numbering** (`serpentine`). No exam plan, family, layout or
   pattern is in train or val. Crops for the VLM exam: every exam plan (`vlm --seed 83 --numbers 4`, no jitter).
-  Hashes are recorded below the moment the data exists, before any model sees it.
+  Frozen hashes (sha256 over the sorted file list's sha256sum, first 16 hex): exam plans `a4f6e97e625b8cc1`
+  (80 plans), VLM exam crops `3d24b5babda8f542` (1,044 crops); VLM train crops: 1,190. Recorded the moment
+  the data existed, before any model saw it.
 - VLM training crops: every 3rd train plan, jittered, a quarter of them turned (`vlm --seed 81 --jitter
   --every 3`): ZONE, NUMBER, CHAIRS, ID and NEG (hard negatives on logos, dimension lines, planters,
   capacity/title text, legends).
