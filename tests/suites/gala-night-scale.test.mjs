@@ -38,7 +38,7 @@ const DEFAULT_BUDGET_MS = {
   guestSearchKey: 45,    // 21.2
   doorSearchKey: 45,     // 22.1
   seatingAssign: 280,    // 138.3 (assign + the Seating screen's render)
-  checkInClick: 145,     // worst p95 71.5 (2026-11-08, CPU shared with a training job); was 30.4 idle
+  checkInClick: 65,      // 30.4 idle. Not raised after the 71.5 ms miss under training load (2026-11-08): budgets are never loosened after a result; re-measure on an idle CPU.
   reportExport: 365,     // 181 (click → file, wall clock)
 };
 
