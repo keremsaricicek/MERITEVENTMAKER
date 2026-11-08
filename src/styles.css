@@ -2812,3 +2812,19 @@ body:has(.cal-screen) .toast{min-width:0;max-width:340px}
    door buttons; on the door it rises from the room's bottom-right corner, above
    "Sonraki", where the drawing keeps its margin (tables hug the top). */
 body:has(.live-v4) #toastWrap:not(.in-dialog){left:auto;right:24px;bottom:64px}
+
+/* ==== Wiring pass: walk-in at the door, guest memory ==== */
+.walkin-open{margin:8px 0 0}
+.walkin{margin-top:10px;border:1px solid var(--pi-line-strong);border-radius:6px;background:var(--pi-surface);padding:10px 12px;font-size:13px;color:var(--pi-ink)}
+.walkin-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.walkin-fields{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.walkin-row{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:36px;border-bottom:1px solid var(--pi-line-soft)}
+.walkin-listed,.walkin-opts,.walkin-done{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.walkin-ask{color:var(--pi-warn);font-style:normal;font-weight:600}
+.walkin-refused{color:var(--pi-danger);margin:6px 0 0}
+.gd-mem{margin-top:14px;border-top:1px solid var(--pi-line);padding-top:10px;font-size:13px}
+.gd-mem-h{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pi-muted-2);margin-bottom:4px}
+.gd-mem p{margin:0 0 6px;color:var(--pi-muted)}
+.gd-mem ul{list-style:none;margin:0;padding:0}
+.gd-mem li{padding:5px 0;border-bottom:1px solid var(--pi-line-soft)}
+.gd-mem li span{color:var(--pi-muted)}.gd-mem li em{display:block;color:var(--pi-muted);font-style:normal}

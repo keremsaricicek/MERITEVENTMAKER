@@ -58,9 +58,17 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   await page.click('[data-tidy-item="vip"] [data-tidy-ignore]'); await settle(page);
   sug = await tidy();
   checks.ok(!sug.some((x) => x.kind === "vip") && await page.evaluate(() => state.events[0].guests.find((x) => x.id === "v1").vip) === "Standard", "Yoksay hides it and changes nothing", sug);
+  // WIRING PASS (FEATURES-2026-11-07 §2): the guest detail panel remembers the
+  // person from past events (MeritGuestMemory.recall, read-only).
+  await page.evaluate(() => { const e = state.events[0], p = JSON.parse(JSON.stringify(e)); Object.assign(p, { id: "mem-past", name: "Bahar Galası 2025", date: "2025-04-12", status: "Completed" });
+    p.guests = [{ id: "mp1", name: "MURAT CAN", additionalGuests: 0, pax: 1, vip: "Standard", invitedBy: "", notes: "Pencere kenarı", planningStatus: "Confirmed", arrivalStatus: "Checked In", assignment: null, createdAt: "" }]; p.tables = []; state.events.push(p); render(); });
   await page.click('[data-guest-row="p1"] [role="cell"]'); await settle(page);
   const det = await page.evaluate(() => { const d = document.querySelector(".guest-detail"); return d ? { name: d.querySelector(".gd-name")?.textContent.trim(), text: d.textContent.replace(/\s+/g, " "), edit: !!d.querySelector("[data-guest-edit]"), sel: document.querySelector('[data-guest-row="p1"]')?.classList.contains("on") } : null; });
   checks.ok(det && /Murat Can/.test(det.name || "") && /3 kişi/.test(det.text) && det.edit && det.sel, "a row opens the right panel with that guest's details and actions", det);
   await page.click(".guest-detail [data-guest-detail-close]"); await settle(page);
   checks.ok(await page.evaluate(() => !document.querySelector(".guest-detail")), "and × closes it");
+
+  await page.click('[data-guest-row="p1"] [role="cell"]'); await settle(page);
+  const mem = await page.evaluate(() => document.querySelector(".guest-detail [data-guest-memory]")?.textContent.replace(/\s+/g, " ").trim() || null);
+  checks.ok(mem && /Bahar Galası 2025/.test(mem) && /geldi/i.test(mem) && /Pencere kenarı/.test(mem), "the detail panel remembers the person: the past event, that he came, the note", mem);
 }

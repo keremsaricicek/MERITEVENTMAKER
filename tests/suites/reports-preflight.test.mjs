@@ -152,4 +152,14 @@ export default async function run({ page, checks, baseUrl }) {
   checks.equal(thrown, "ok", "a storage that refuses only loses the template, never the screen", thrown);
   await click(page, '[data-reports-view="summary"]');
   checks.ok(await page.evaluate(() => !!document.querySelector('[data-report="xlsx"]') && !!document.querySelector(".preflight")), "the summary with the workbook export is one click away, unchanged");
+
+  // --- WIRING PASS (FEATURES-2026-11-07 §3): the night-end report -------------------
+  // Its own workbook, one sheet "NIGHT END" from MeritNightReport — never added to
+  // the TABLE PLAN / GUEST LIST / UNASSIGNED workbook.
+  await page.evaluate(() => { window.__wb = null; const X = globalThis.XLSX; X.__orig = X.__orig || X.writeFile; X.writeFile = (wb, name) => { window.__wb = { names: wb.SheetNames.slice(), name, rows: X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 }) }; }; });
+  await click(page, '[data-report="night"]');
+  const wb = await page.evaluate(() => { const r = window.__wb; XLSX.writeFile = XLSX.__orig; return r; });
+  checks.ok(wb && wb.names.length === 1 && wb.names[0] === "NIGHT END" && /night/i.test(wb.name), "Gece sonu raporu: its own workbook, one NIGHT END sheet", wb && { names: wb.names, name: wb.name });
+  const hi = wb ? wb.rows.findIndex((r) => r[0] === "PEOPLE") : -1, vals = hi >= 0 ? wb.rows[hi + 1] : null;
+  checks.ok(vals && wb.rows[hi][2] === "ARRIVED" && Number(vals[2]) === 2 && wb.rows[hi][3] === "NO SHOW" && Number(vals[3]) === 3, "with the night's figures from the records (2 arrived, 3 no show, in pax)", wb && wb.rows.slice(0, 12));
 }

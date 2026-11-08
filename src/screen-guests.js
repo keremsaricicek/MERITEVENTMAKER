@@ -13,6 +13,7 @@
 (() => {
   "use strict";
   let activeEvent;
+  let allEvents;
   let additionalOf;
   let app;
   let downloadExcelTemplate;
@@ -119,6 +120,21 @@
     const shown=items.slice(0,4);
     return`<div class="tidy-strip" data-tidy role="region" aria-label="${esc(t("tidy.title"))}"><span class="tidy-h">${esc(t("tidy.title"))}</span>${shown.map(row).join("")}${items.length>4?`<span class="tidy-more">${esc(t("tidy.more",{n:items.length-4}))}</span>`:""}</div>`;
   }
+  // GUEST MEMORY (benchmarks/FEATURES-2026-11-07.md §2): the same person in past
+  // events, from MeritGuestMemory.recall (the existing matcher; a phone that
+  // disagrees is another person; read-only). Two people under one name are both
+  // shown and never merged. Only "Checked In" counts as came.
+  function memoryHTML(event,g){
+    const M=globalThis.MeritGuestMemory;if(!M||!allEvents)return"";
+    let m;try{m=M.recall(allEvents(),g,{exceptEventId:event.id});}catch(error){console.warn("Guest memory could not be read.",error&&error.message);return"";}
+    if(!m)return"";
+    const head=`<div class="gd-mem-h">${esc(t("mem.title"))}</div>`;
+    if(m.ambiguous)return`<div class="gd-mem" data-guest-memory>${head}<p>${esc(t("mem.ambiguous"))}</p><ul>${(m.people||[]).map(p=>`<li>${esc(p.name)}${p.phoneEnding?` · …${esc(p.phoneEnding)}`:""}</li>`).join("")}</ul></div>`;
+    if(m.none||!m.history||!m.history.length)return`<div class="gd-mem" data-guest-memory>${head}<p>${esc(t("mem.none"))}</p></div>`;
+    const sm=m.summary||{};
+    const rows=m.history.slice(0,3).map(h=>`<li><b>${esc(h.eventName||"")}</b> <span>${esc(h.date||"")}</span> · ${esc(t("mem.outcome."+h.outcome))}${h.table?` · ${esc(String(h.table))}`:""}${h.notes?`<em>${esc(h.notes)}</em>`:""}</li>`).join("");
+    return`<div class="gd-mem" data-guest-memory>${head}<p>${esc(t("mem.summary",{events:sm.events||m.history.length,came:sm.came||0,noShow:sm.noShow||0}))}</p><ul>${rows}</ul></div>`;
+  }
   // The right panel: one guest's facts and actions (the existing writers).
   function detailHTML(event,byId){
     const g=ui.guestDetailId&&event.guests.find(x=>x.id===ui.guestDetailId);
@@ -127,6 +143,7 @@
     const kv=(k,v)=>`<div class="gd-kv"><span>${esc(k)}</span><b>${v}</b></div>`;
     return`<aside class="guest-detail" aria-label="${esc(g.name)}"><div class="gd-head"><h2 class="gd-name">${esc(g.name)}${additionalOf(g)?` <span class="gd-plus">+${additionalOf(g)}</span>`:""}</h2><button class="assistant-close" data-guest-detail-close aria-label="${esc(t("assistant.close"))}">×</button></div>
       ${kv(t("gd.party"),esc(t("gd.people",{n:pax})))}${kv(t("guests.col.status"),esc(t("status.planning."+g.planningStatus)))}${kv(t("gd.arrival"),esc(t("status.arrival."+(g.arrivalStatus||"Not Arrived"))))}${kv(t("guests.col.invitedBy"),esc(g.invitedBy||"—"))}${kv(t("guests.col.tableSeat"),seatTagHTML(event,g,byId))}${g.vip&&g.vip!=="Standard"?kv("VIP",esc(g.vip)):""}${g.phone?kv(t("gd.phone"),esc(g.phone)):""}${g.notes?kv(t("gd.notes"),esc(g.notes)):""}
+      ${memoryHTML(event,g)}
       ${hist?"":`<div class="gd-acts"><button class="btn primary" data-guest-edit="${esc(g.id)}">${icon("edit")}${esc(t("gd.edit"))}</button><button class="btn" data-guest-seat="${esc(g.id)}">${icon("seat")}${esc(t("gd.seat"))}</button><button class="btn quiet danger" data-guest-delete="${esc(g.id)}">${icon("trash")}${esc(t("gd.delete"))}</button></div>`}
     </aside>`;
   }
@@ -182,6 +199,7 @@
     if(created)throw new Error("MeritScreenGuests.create() is called once, by app-v8.js.");
     created=true;
     activeEvent=deps.activeEvent;
+    allEvents=deps.allEvents;
     additionalOf=deps.additionalOf;
     app=deps.app;
     downloadExcelTemplate=deps.downloadExcelTemplate;
@@ -202,5 +220,5 @@
     ui=deps.ui;
     return{guestsHTML,bindGuests};
   }
-  globalThis.MeritScreenGuests=Object.freeze({create,DEPS:Object.freeze(["activeEvent","additionalOf","app","downloadExcelTemplate","esc","filteredGuests","icon","openExcelWizard","openGuestDialog","original","paxDotsHTML","paxOf","render","RULES","saveGuest","seatTagHTML","t","tableIndex","ui"])});
+  globalThis.MeritScreenGuests=Object.freeze({create,DEPS:Object.freeze(["activeEvent","allEvents","additionalOf","app","downloadExcelTemplate","esc","filteredGuests","icon","openExcelWizard","openGuestDialog","original","paxDotsHTML","paxOf","render","RULES","saveGuest","seatTagHTML","t","tableIndex","ui"])});
 })();

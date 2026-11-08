@@ -193,4 +193,31 @@ export default async function run({ page, checks, baseUrl }) {
   checks.equal(await room(), { arrived: "2", planned: "3", noshow: "1" }, "and the room shows him as not come, never as arrived", await room());
   await page.click('.live-aside [data-live-undo="k2"]'); await settle(page);
   checks.equal(await page.evaluate(() => activeEvent().guests.find((x) => x.id === "k2").arrivalStatus), "Not Arrived", "Geri al takes the last change back");
+
+  // --- WIRING PASS (benchmarks/FEATURES-2026-11-07.md §1): walk-in at the door -----
+  // Kapıda kayıt: a name already on the list is shown first (nothing created); a new
+  // person becomes ONE record ("+5" = pax 6, walkIn) through saveGuestRecord and is
+  // checked in through setArrival; the seat options come from MeritWalkIn. A table
+  // that fits only thanks to a No Show stays assignable:false — shown as "Gelmeyenin
+  // yeri — sor", with no seat button (owner decision pending); Oturt only through
+  // assignGuestToTable. Mutation proof, recorded 2026-11-07: with the assignable
+  // check dropped the No-Show table gets a button and the check fails.
+  await page.click('.arrival-row:has-text("Bora Er") [data-arrival="No Show"]'); await settle(page);
+  await page.click("[data-walkin-open]"); await settle(page);
+  await page.fill("[data-walkin-name]", "Ayla Kurt"); await page.click("[data-walkin-save]"); await settle(page);
+  const listed = await page.evaluate(() => ({ shown: [...document.querySelectorAll("[data-walkin-listed]")].map((n) => n.textContent.replace(/\s+/g, " ").trim()), n: activeEvent().guests.length }));
+  checks.ok(listed.shown.some((x) => /Ayla Kurt/.test(x)) && listed.n === 2, "a name already on the list is shown first; nothing is created", listed);
+  await page.fill("[data-walkin-name]", "Zeki Demir +5"); await page.click("[data-walkin-save]"); await settle(page);
+  const zeki = await page.evaluate(() => { const g = activeEvent().guests.find((x) => x.name === "Zeki Demir"); return g && { pax: g.pax, walkIn: g.walkIn === true, st: g.arrivalStatus, at: !!g.checkedInAt, seat: g.assignment }; });
+  checks.ok(zeki && zeki.pax === 6 && zeki.walkIn && zeki.st === "Checked In" && zeki.at && !zeki.seat, "a walk-in is ONE record (pax 6), checked in through setArrival, not yet seated", zeki);
+  const opts = await page.evaluate(() => { const e = activeEvent(); return [...document.querySelectorAll("[data-walkin-option]")].map((n) => ({ table: n.dataset.walkinOption, first: n.dataset.walkinOption === e.tables[0].id, button: !!n.querySelector("[data-walkin-seat]"), text: n.textContent.replace(/\s+/g, " ").trim() })); });
+  const viaNoShow = opts.find((o) => o.first);
+  checks.ok(viaNoShow && !viaNoShow.button && /Gelmeyenin yeri — sor/.test(viaNoShow.text), "a table that fits only thanks to a No Show: \"Gelmeyenin yeri — sor\", no seat button", opts);
+  const ok = opts.find((o) => o.button);
+  checks.ok(!!ok, "an assignable table offers Oturt", opts);
+  if (ok) {
+    await page.click(`[data-walkin-option="${ok.table}"] [data-walkin-seat]`); await settle(page);
+    const after = await page.evaluate((tid) => { const e = activeEvent(); const z = e.guests.find((x) => x.name === "Zeki Demir"), b = e.guests.find((x) => x.id === "k2"); return { z: z.assignment && z.assignment.tableId === tid, bora: !!b.assignment && b.arrivalStatus === "No Show" }; }, ok.table);
+    checks.ok(after.z && after.bora, "Oturt seats the walk-in through the seat writer; the No Show keeps the planned seat", after);
+  }
 }

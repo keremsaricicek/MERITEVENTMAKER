@@ -2190,6 +2190,7 @@
     ui,t,esc,icon,naturalSort,paxOf,OCC,SEARCH,canMutate,liveEmptyHTML,partyMetaHTML,recordArrival,seatTagHTML,setArrival,tableIndex,
     activeEvent:()=>activeEvent(),render:()=>render(),touchEvent:e=>touchEvent(e),toast:(...a)=>toast(...a),
     epoch:()=>mutationEpoch,
+    saveGuest:(e,g,data)=>saveGuestRecord(e,g,data),assignGuest:(id,tableId)=>assignGuestToTable(id,tableId),
   });
   liveHTML = function(event){return LIVE.html(event);};
   bindLive = function(){return LIVE.bind();};
@@ -2303,7 +2304,7 @@
   // what it reads; shell functions go over as late-binding wrappers, so a body
   // this file reassigns later is the one that runs. ----------------------------
   const GUESTS=globalThis.MeritScreenGuests.create({
-    activeEvent:(...a)=>activeEvent(...a),additionalOf:(...a)=>additionalOf(...a),app,downloadExcelTemplate,esc:(...a)=>esc(...a),filteredGuests:(...a)=>filteredGuests(...a),icon:(...a)=>icon(...a),openExcelWizard,openGuestDialog:(...a)=>openGuestDialog(...a),original,paxDotsHTML:(...a)=>paxDotsHTML(...a),paxOf:(...a)=>paxOf(...a),render:(...a)=>render(...a),RULES:(...a)=>RULES(...a),saveGuest:(e,g,patch)=>{if(!canMutate(e,"edit guest records"))return null;return saveGuestRecord(e,g,patch);},seatTagHTML:(...a)=>seatTagHTML(...a),t:(...a)=>t(...a),tableIndex:(...a)=>tableIndex(...a),ui,
+    activeEvent:(...a)=>activeEvent(...a),allEvents:()=>state.events,additionalOf:(...a)=>additionalOf(...a),app,downloadExcelTemplate,esc:(...a)=>esc(...a),filteredGuests:(...a)=>filteredGuests(...a),icon:(...a)=>icon(...a),openExcelWizard,openGuestDialog:(...a)=>openGuestDialog(...a),original,paxDotsHTML:(...a)=>paxDotsHTML(...a),paxOf:(...a)=>paxOf(...a),render:(...a)=>render(...a),RULES:(...a)=>RULES(...a),saveGuest:(e,g,patch)=>{if(!canMutate(e,"edit guest records"))return null;return saveGuestRecord(e,g,patch);},seatTagHTML:(...a)=>seatTagHTML(...a),t:(...a)=>t(...a),tableIndex:(...a)=>tableIndex(...a),ui,
   });
   guestsHTML = function(...a){return GUESTS.guestsHTML(...a);};
   bindGuests = function(...a){return GUESTS.bindGuests(...a);};

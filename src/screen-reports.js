@@ -292,6 +292,7 @@
           <button class="btn report-btn" data-report="door">${icon("door")}${t("reports.printDoorList")}</button>
           <button class="btn report-btn" data-report="summary">${icon("check")}${t("reports.printSummary")}</button>
           <button class="btn report-btn" data-report="junket">${icon("download")}${t("reports.junketExport")}</button>
+          <button class="btn report-btn" data-report="night">${icon("download")}${esc(t("reports.nightExport"))}</button>
           <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="csv">${icon("download")}${t("reports.guestCsv")}</button>
           <p style="font-size:11px;color:var(--muted-2);margin:12px 0 0;line-height:1.45">${t("reports.sheetsInEnglish")}</p>
         </aside>
@@ -302,6 +303,7 @@
   // results directly, which blanks Reports if a button is ever conditional.
   const bindReports = function(){
     bindDesigner();
+    app.querySelectorAll("[data-report='night']").forEach(b=>b.onclick=exportNightReport);
     app.querySelectorAll("[data-report='csv']").forEach(b=>b.onclick=exportGuestCSV);
     app.querySelectorAll("[data-report='xlsx']").forEach(b=>b.onclick=()=>whileBusy(b,t("reports.preparingWorkbook"),exportTablePlanXLSX));
     app.querySelectorAll("[data-report='print']").forEach(b=>b.onclick=printTablePlan);
@@ -394,6 +396,21 @@
   // Its own small workbook — the table-plan workbook is not touched. Per host:
   // expected / came / did not come in people; then every guest of every host with
   // party size, table and arrival. A cell that starts like a formula is written as text.
+  // NIGHT-END REPORT (benchmarks/FEATURES-2026-11-07.md §3): its OWN workbook, one
+  // "NIGHT END" sheet from MeritNightReport (plain data, read-only, formula-safe
+  // cells, English labels like the other workbooks). Never added to the TABLE
+  // PLAN / GUEST LIST / UNASSIGNED workbook, which xlsx-contract guards.
+  function exportNightReport(){
+    const event=activeEvent();if(!event)return;
+    const X=globalThis.XLSX,N=globalThis.MeritNightReport;
+    if(!X||!N){toast(t("guests.engineMissing"),"error",5200);return;}
+    const rows=N.summaryRows(N.build(event),()=>"");
+    const wb=X.utils.book_new(),ws=X.utils.aoa_to_sheet(rows);
+    ws["!cols"]=[{wch:32},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12}];
+    X.utils.book_append_sheet(wb,ws,"NIGHT END");
+    X.writeFile(wb,`${String(event.name||"event").replace(/[\\/:*?"<>|]+/g,"-")}-night-end.xlsx`);
+    toast(t("reports.nightDone"),"success");
+  }
   function exportJunketReport(){
     const event=activeEvent();if(!event)return;
     const X=globalThis.XLSX,G=globalThis.MeritGuestGroups;
