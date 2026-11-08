@@ -1934,3 +1934,21 @@ FLEURS, whisper.cpp v1.9.5, `-nt -np -t 2`, nice 19, under the runP training loa
 stops at the smallest passing candidate). **Chosen: ggml-small-q5_1** (190,085,487 bytes, sha256
 `ae85e4a935d7a567bd102fe55afc16bb595bdb618e11b2fc7591bc08120411bb`). Speed here (median ~11–12 s a clip, 2 niced
 threads on a saturated CPU) is an upper bound only; the speed bar and the owner's 20-command test are still open.
+
+## 2026-11-08 — runP verdict (identical training history; exam fresh9/typo9/en9/entypo9 + briefs)
+
+| | 0.8B (p08) | 2B (p2b) |
+|---|---|---|
+| fresh9 / typo9 / en9 / entypo9 (product rule) | 1.000 / 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 / 1.000 |
+| wrong changes on the four sets | 0 | 0 |
+| original 35 / variants 35 / deep 15 | 0.971 / 0.943 / 0.800 | 0.943 / 0.971 / 0.733 |
+| right at once (fresh9 / typo9 / en9 / entypo9) | 0.833 / 0.750 / 0.889 / 0.667 | 0.917 / 0.750 / 0.889 / 0.778 |
+| briefs: fields / all right / invented | 0.940 / 0.800 / 0.014 | 0.982 / 0.950 / 0.007 |
+| median seconds (F8 race) | 11.7 **(raced while 2B trained — upper bound)** | 9.8 (free CPU) |
+| files / RAM | 0.8 GB / ~1.5 GB, also the plan reader | 2 GB / ~4 GB, chat only |
+
+Deviation, stated: the owner set a deadline (2026-11-08), so p08 was raced while runP-2B-g2 trained; its seconds are not
+comparable; its right/wrong counts are unaffected. **Ship rule result: a tie** (both 1.000 on all four sets, 0 wrong).
+The briefs favour 2B (all-right 0.95 vs 0.80). **Shipped: p08** (`qwen3.5-0.8b-merit-chat-p08`) — it passes every bar,
+replaces B7f, and runs on the 8 GB no-GPU target with the plan reader in one model; 2B kept as a candidate for an
+optional "strong mode" on bigger PCs (owner decides). Not claimed: any plan-reading change (runP measured language only).
