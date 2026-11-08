@@ -30,11 +30,11 @@ const WRITERS = {
   arrival: { fields: ["arrivalStatus", "checkedInAt"], allowed: ["arrival-writer.js:setArrival", "app.js:normalizeGuest"] },
   availability: { fields: ["availability", "unavailableReason", "unavailableSince", "unavailableNote"], allowed: [] },
   freezes: { fields: ["freezes"], allowed: ["seating-commands.js:createFreezeFromDraft", "seating-commands.js:liftFreeze", "app-v8.js:migrateEvent"] },
-  handover: { fields: ["handoverNotes"], allowed: ["app-v8.js:addHandoverNote", "app-v8.js:migrateEvent"] },
+  handover: { fields: ["handoverNotes"], allowed: ["event-log-panel.js:addHandoverNote", "app-v8.js:migrateEvent"] },
   // "A person ran the pre-flight, at this moment, against this answer." Written
   // from the Command Center's button until 2026-10-04; that screen moved out
   // of the shell, and the write stayed behind as one named writer.
-  finalCheck: { fields: ["finalCheck"], allowed: ["app-v8.js:recordFinalCheck"] },
+  finalCheck: { fields: ["finalCheck"], allowed: ["event-health.js:recordFinalCheck"] },
 };
 // The single writer of each fact, and what it must call before it writes.
 const GUARDED = ["setArrival", "setTableAvailability", "addHandoverNote", "createFreezeFromDraft", "liftFreeze", "recordFinalCheck"];
