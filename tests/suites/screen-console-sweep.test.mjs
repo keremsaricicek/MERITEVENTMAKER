@@ -32,6 +32,23 @@ export default async function run({ page, checks, baseUrl }) {
   });
   await settle(page);
 
+  // Dropping a guest card onto a table on the Seating canvas seats them. Only
+  // this path reads the seating commands from the canvas binding (since move
+  // 7b through a getter, because they are created further down the shell),
+  // and no suite dropped a guest on the canvas (2026-11-08). Mutation proof:
+  // with the getter returning nothing, this fails.
+  await page.evaluate(() => { ui.screen = "workspace"; ui.tab = "seating"; render(); });
+  await settle(page);
+  const dropped = await page.evaluate(() => {
+    const e = activeEvent(), g = e.guests.find((x) => x.name === "Cem Su"), t = e.tables[1];
+    const el = document.querySelector(`[data-object-id="${t.id}"]`);
+    if (!el) return { el: false };
+    const dt = new DataTransfer(); dt.setData("application/x-merit-guests", JSON.stringify([g.id]));
+    el.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }));
+    return { el: true, at: g.assignment && g.assignment.tableId === t.id };
+  });
+  checks.ok(dropped.el && dropped.at, "a guest dropped on a table on the Seating canvas is seated there", dropped);
+
   const views = [
     ["command", null], ["floor", null], ["floor", "review"], ["floor", "changes"],
     ["guests", null], ["seating", null], ["live", null], ["reports", null],

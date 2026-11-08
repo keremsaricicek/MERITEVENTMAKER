@@ -7,8 +7,8 @@
   framework migration, TypeScript conversion, introducing a bundler/build
   step, converting `src/*.js` to ES modules, and silently changing the
   classic-script load order in `index.html` (fixed order, `app-v8.js`
-  LAST; count with `grep -c '<script src="src/' index.html` — 118 on
-  2026-11-08, after `screen-finder`, `screen-setup`, `guest-record-undo`, `seating-commands`, `service-load-panel`, `arrival-writer` and `floor-plan-view` (capabilities 1-7a of the 2026-11 decomposition,
+  LAST; count with `grep -c '<script src="src/' index.html` — 119 on
+  2026-11-08, after `screen-finder`, `screen-setup`, `guest-record-undo`, `seating-commands`, `service-load-panel`, `arrival-writer`, `floor-plan-view` and `floor-plan-editing` (capabilities 1-7 of the 2026-11 decomposition,
   `benchmarks/CODE-HEALTH-2026-11.md`) joined the 111; each later move adds its
   file just before `app-v8.js`. The one `type="module"` tag, `src/pdf-bridge.mjs`, is the PDF
   engine's loader moved out of an inline script for the CSP, not app code).
