@@ -43,14 +43,18 @@ const MUST = {
 };
 const SETS10 = ["fresh10", "typo10", "en10", "entypo10", "deep10"];
 // `--sets a,b,…` (runR): any set file in training/assistant/ by name, scored as the deep set
-const SETSX = String(arg("sets", "")).split(",").filter(Boolean);
+const SETSX0 = String(arg("sets", "")).split(",").filter(Boolean);
 // `--voice set=FILE,…` (voice end-to-end, benchmarks/voice/): a set's sentences replaced by what the speech engine heard
 // (FILE: JSON { id: transcript }); the gold reading stays the one written for the sentence
-const VOICE = Object.fromEntries(String(arg("voice", "")).split(",").filter(Boolean).map((kv) => { const [s, f] = kv.split("="); return [s, JSON.parse(fs.readFileSync(f, "utf8"))]; }));
+// `--voice-file F` (tools/local-voice/voice-eval.mjs): { "set@voice@condition": { id: transcript } }; each key is a set of its own
+const VOICE = Object.assign(Object.fromEntries(String(arg("voice", "")).split(",").filter(Boolean).map((kv) => { const [s, f] = kv.split("="); return [s, JSON.parse(fs.readFileSync(f, "utf8"))]; })),
+  arg("voice-file", null) ? JSON.parse(fs.readFileSync(arg("voice-file"), "utf8")) : {});
+const SETSX = [...new Set([...SETSX0, ...(arg("voice-file", null) ? Object.keys(VOICE) : [])])];
 // `--help-set FILE` (runR): how-to questions ({topic, q}); the product answers them from the help topics first
 const HELPF = arg("help-set", null);
 const CMDS = Object.fromEntries(lines("commands.jsonl").map((c) => [c.id, c]));
-const items = [
+const NOBASE = flag("no-base");
+const items0 = [
   ...lines("questions.jsonl").map((q) => ({ set: "original", id: "Q" + q.id, kind: "question", text: q.q, must: MUST[q.id] })),
   ...lines("commands.jsonl").map((c) => ({ set: "original", id: "C" + c.id, kind: "command", text: c.text, cmd: c })),
   ...lines("deep.jsonl").map((d) => ({ set: "deep", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })),
@@ -82,13 +86,14 @@ const items = [
   ...(flag("fresh3") ? lines("fresh3.jsonl").map((d) => ({ set: "fresh3", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   // runQ's exam (training/README.md "runQ"), written by hand before grammar 8 existed
   ...SETS10.filter(flag).flatMap((s) => lines(s + ".jsonl").map((d) => ({ set: s, id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold }))),
-  ...SETSX.flatMap((s) => lines(s + ".jsonl").map((d) => ({ set: s, id: d.id, kind: d.gold.kind, text: VOICE[s] ? String(VOICE[s][d.id] ?? "") : d.text, gold: d.gold }))),
+  ...SETSX.flatMap((s) => lines(s.split("@")[0] + ".jsonl").map((d) => ({ set: s, id: d.id, kind: d.gold.kind, text: VOICE[s] ? String(VOICE[s][d.id] ?? "") : d.text, gold: d.gold }))),
   ...(HELPF ? fs.readFileSync(HELPF, "utf8").trim().split("\n").map((l, i) => { const h = JSON.parse(l); return { set: "help", id: "h" + (i + 1), kind: "help", text: h.q, topic: h.topic }; }) : []),
   ...lines("variants.jsonl").map((v) => {
     const n = Number(v.sameAs.slice(1));
     return v.kind === "question" ? { set: "variant", id: v.id, kind: "question", text: v.text, must: MUST[n] } : { set: "variant", id: v.id, kind: "command", text: v.text, cmd: CMDS[n] };
   }),
 ];
+const items = NOBASE ? items0.filter((i) => !["original", "variant", "deep"].includes(i.set)) : items0;
 
 // The instruction, worked examples, schema and conversion: one source with the
 // relay (src/assistant-reading.js), so what is served is what was measured.
@@ -208,13 +213,13 @@ const rows = [];
 // a restarted run asks only what is missing and scores everything again from the
 // kept readings with this code.
 const partialFile = arg("out") + ".partial.jsonl", kept = new Map();
-if (!rulesOnly && fs.existsSync(partialFile)) for (const l of fs.readFileSync(partialFile, "utf8").split("\n")) { if (!l.trim()) continue; try { const k = JSON.parse(l); if (k.label === label) kept.set(k.id, k); } catch {} }
+if (!rulesOnly && fs.existsSync(partialFile)) for (const l of fs.readFileSync(partialFile, "utf8").split("\n")) { if (!l.trim()) continue; try { const k = JSON.parse(l); if (k.label === label) kept.set(k.set ? k.set + "|" + k.id : k.id, k); } catch {} }
 for (const it of items) {
   const rules = P.parse(it.text, fx.events, fx.today);
   const row = { set: it.set, id: it.id, text: it.text, rules: score(it, rules), rulesKind: rules.kind };
   if (!rulesOnly) {
-    let m = kept.get(it.id);
-    if (!m || m.text !== it.text) { m = { label, id: it.id, text: it.text, ...(await ask(port, it.text)) }; fs.appendFileSync(partialFile, JSON.stringify(m) + "\n"); }
+    let m = kept.get(it.set + "|" + it.id) ?? kept.get(it.id);
+    if (!m || m.text !== it.text) { m = { label, ...(VOICE[it.set] ? { set: it.set } : {}), id: it.id, text: it.text, ...(await ask(port, it.text)) }; fs.appendFileSync(partialFile, JSON.stringify(m) + "\n"); }
     const mp = R.toParse(m.got, fx.events, fx.today, it.text, fx.current);
     row.model = { ...score(it, mp), reading: m.got, seconds: m.seconds, conf: m.conf ?? null };
     // the product's order: rules first, the model where they say unknown — or (`--order model-first`,
