@@ -21,7 +21,11 @@
 //     untouched: a No Show keeps `guest.assignment`, and the existing writer
 //     (assignGuestToTable) counts PLANNED seats, so an option that only fits
 //     because of a No Show says `assignable: false` instead of pretending the
-//     Apply button would work. VIP tables only for VIP/VVIP; unavailable,
+//     Apply button would work. Such a table is `livePlaceable` (owner decision
+//     2026-11-08): `liveSeats` (the No Show's freed seats first) and `noShows`
+//     (whose place it is) feed the confirmation, and only after it
+//     MeritOccupancy.placeLive seats the walk-in TONIGHT — the No Show's
+//     planned seat and assignment untouched. VIP tables only for VIP/VVIP; unavailable,
 //     frozen and seatless tables are never offered. Moves nobody.
 //
 // A historical event (Completed or past) refuses both — the canMutate rule.
@@ -114,7 +118,7 @@
     if (O && O.liveUsedIndexes) return O.liveUsedIndexes(event, tableId);
     const used = new Set();
     for (const g of event.guests || []) if (g.arrivalStatus !== "No Show" && g.assignment && g.assignment.tableId === tableId) (g.assignment.seats || []).forEach((s) => used.add(Number(s)));
-    return used;
+    return used;   // fallback without MeritOccupancy: it cannot see live placements, and none can exist without it
   }
 
   function suggestSeats(event, pax, opts) {
@@ -143,12 +147,18 @@
       const liveFree = liveFreeIdx.length, plannedFree = plannedFreeIdx.length;
       if (liveFree < need) { blocked.push({ tableId: t.id, number, why: BLOCKED.NOT_ENOUGH_SEATS, liveFree, needed: need }); continue; }
       const assignable = plannedFree >= need;
+      const freed = liveFreeIdx.filter((i) => planned.has(i));
+      const livePlaceable = !assignable && freed.length > 0;
+      const liveSeats = livePlaceable ? freed.concat(liveFreeIdx.filter((i) => !planned.has(i))).slice(0, need) : [];
+      const noShows = livePlaceable ? (event.guests || []).filter((g) => g.arrivalStatus === "No Show" && g.assignment && g.assignment.tableId === t.id
+        && (g.assignment.seats || []).some((x) => liveSeats.includes(Number(x)))).map((g) => ({ guestId: g.id, name: g.name })) : [];
       options.push({
         tableId: t.id, number, zone: t.zone || null, vipTable,
         capacity: cap, liveFree, plannedFree,
         freedByNoShow: liveFreeIdx.filter((i) => planned.has(i)).length,
         assignable,
         seats: assignable ? plannedFreeIdx.slice(0, need) : [],
+        livePlaceable, liveSeats, noShows,
       });
     }
     options.sort((a, b) => (b.assignable - a.assignable)

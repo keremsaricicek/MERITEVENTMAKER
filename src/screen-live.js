@@ -34,6 +34,7 @@
   let assignGuest;
   let tableIndex;
   let epoch;
+  let ask;
   let created=false;
 
   // ---- THE ARRIVAL WAVE -----------------------------------------------------
@@ -256,8 +257,10 @@
   // checked in by the one arrival writer (setArrival, source "walk-in"). The seat
   // options are MeritWalkIn.suggestSeats; only an assignable one offers Oturt
   // (assignGuest = assignGuestToTable). A table that fits only thanks to a No
-  // Show stays assignable:false — "Gelmeyenin yeri — sor", never seated there
-  // (owner decision pending; the No Show's planned seat is never touched).
+  // Show is not assignable; it is livePlaceable (owner decision 2026-11-08):
+  // "Gelmeyenin yerine oturt" asks first ("Gelmeyen X'in yeri — buraya
+  // oturtulsun mu?") and only a Yes calls MeritOccupancy.placeLive — a live
+  // placement, so the No Show's planned seat and assignment are never touched.
   function walkInHTML(event){
     const W=globalThis.MeritWalkIn;
     if(!W||(RULES_HIST(event)))return"";
@@ -270,10 +273,11 @@
     if(g){
       const s=W.suggestSeats(event,paxOf(g),{vip:g.vip});
       const seated=g.assignment&&event.guests&&event.tables.find(x=>x.id===g.assignment.tableId);
-      body+=`<div class="walkin-done"><b>${esc(t("walkin.created",{name:g.name,n:paxOf(g)}))}</b>${seated?`<span>${esc(t("walkin.seatedAt",{table:String(seated.number)}))}</span>`:""}</div>`;
-      if(!seated&&s&&!s.refused){
+      const liveAt=!seated&&g.livePlacement&&event.tables.find(x=>x.id===g.livePlacement.tableId);
+      body+=`<div class="walkin-done"><b>${esc(t("walkin.created",{name:g.name,n:paxOf(g)}))}</b>${seated?`<span>${esc(t("walkin.seatedAt",{table:String(seated.number)}))}</span>`:liveAt?`<span data-walkin-live-at>${esc(t("walkin.seatedLive",{table:String(liveAt.number)}))}</span>`:""}</div>`;
+      if(!seated&&!liveAt&&s&&!s.refused){
         const opts=(s.options||[]).slice(0,5);
-        body+=opts.length?`<div class="walkin-opts">${opts.map(o=>`<div class="walkin-row" data-walkin-option="${esc(o.tableId)}"><span><b>${esc(String(o.number))}</b> · ${esc(t("walkin.free",{n:o.liveFree}))}</span>${o.assignable?`<button class="btn sm primary" data-walkin-seat>${esc(t("walkin.seat"))}</button>`:o.freedByNoShow>0?`<i class="walkin-ask">${esc(t("walkin.noShowSeat"))}</i>`:""}</div>`).join("")}</div>`:`<p class="walkin-refused">${esc(t("walkin.noTable"))}</p>`;
+        body+=opts.length?`<div class="walkin-opts">${opts.map(o=>`<div class="walkin-row" data-walkin-option="${esc(o.tableId)}"><span><b>${esc(String(o.number))}</b> · ${esc(t("walkin.free",{n:o.liveFree}))}</span>${o.assignable?`<button class="btn sm primary" data-walkin-seat>${esc(t("walkin.seat"))}</button>`:o.livePlaceable?`<button class="btn sm walkin-ask" data-walkin-live>${esc(t("walkin.noShowSeat"))}</button>`:""}</div>`).join("")}</div>`:`<p class="walkin-refused">${esc(t("walkin.noTable"))}</p>`;
       }
     }
     return`<div class="walkin" data-walkin-form><div class="walkin-head"><b>${esc(t("walkin.title"))}</b><button class="assistant-close" data-walkin-close aria-label="${esc(t("assistant.close"))}">×</button></div>
@@ -311,6 +315,19 @@
       const opt=(globalThis.MeritWalkIn.suggestSeats(event,paxOf(g),{vip:g.vip}).options||[]).find(o=>o.tableId===tid);
       if(!opt||!opt.assignable)return;   // re-checked against the room as it is now
       assignGuest(g.id,tid);touchEvent(event);render();
+    });
+    document.querySelectorAll("[data-walkin-live]").forEach(b=>b.onclick=async()=>{
+      const event=activeEvent(),tid=b.closest("[data-walkin-option]").dataset.walkinOption,g=event.guests.find(x=>x.id===w.guestId);
+      if(!g||!canMutate(event,"assign guests to seats"))return;
+      const find=()=>(globalThis.MeritWalkIn.suggestSeats(event,paxOf(g),{vip:g.vip}).options||[]).find(o=>o.tableId===tid);
+      const opt=find();if(!opt||!opt.livePlaceable)return;
+      const names=opt.noShows.map(x=>x.name).join(", ");
+      if(!(await ask({title:t("walkin.askNoShow.title",{names}),body:t("walkin.askNoShow.body",{names,table:String(opt.number)}),confirmLabel:t("walkin.noShowSeat")})))return;
+      const now=find();   // the room may have changed while the question was open
+      const r=now&&now.livePlaceable?OCC().placeLive(event,g,{tableId:tid,seats:now.liveSeats},{confirmed:true,now:new Date().toISOString(),paxOf}):{refused:"CHANGED"};
+      if(r.refused){toast(t("walkin.liveRefused"),"error");render();return;}
+      touchEvent(event);render();
+      toast(t("walkin.seatedLive",{table:String(opt.number)}),"success");
     });
   }
   // REDESIGN v4 step 7 (SPEC-v4 "Kapı"): the room, 3/4 of the width — every real
@@ -490,7 +507,8 @@
     assignGuest=deps.assignGuest;
     tableIndex=deps.tableIndex;
     epoch=deps.epoch;
+    ask=deps.ask;
     return{html:liveHTML,bind:bindLive,arrivalWave,arrivalWaveHTML,bindArrivalWaveControls};
   }
-  globalThis.MeritScreenLive=Object.freeze({create,DEPS:Object.freeze(["ui", "t", "esc", "icon", "naturalSort", "paxOf", "activeEvent", "render", "touchEvent", "toast", "OCC", "SEARCH", "canMutate", "liveEmptyHTML", "partyMetaHTML", "recordArrival", "seatTagHTML", "setArrival", "saveGuest", "assignGuest", "tableIndex", "epoch"])});
+  globalThis.MeritScreenLive=Object.freeze({create,DEPS:Object.freeze(["ui", "t", "esc", "icon", "naturalSort", "paxOf", "activeEvent", "render", "touchEvent", "toast", "OCC", "SEARCH", "canMutate", "liveEmptyHTML", "partyMetaHTML", "recordArrival", "seatTagHTML", "setArrival", "saveGuest", "assignGuest", "tableIndex", "epoch", "ask"])});
 })();

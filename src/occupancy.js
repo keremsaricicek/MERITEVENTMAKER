@@ -12,6 +12,14 @@
 // and MeritSeatModel's published definitions of a logical seat, and the one
 // thing it needs from the shell — how many people a guest record is — is
 // injected, never reached for.
+//
+// ONE WRITE lives here too (owner decision 2026-11-08): placeLive, the only
+// writer of `guest.livePlacement` — a WALK-IN sitting TONIGHT in seats a No
+// Show left, after a person confirmed it. It is a live fact, not a plan: the
+// walk-in gets no `guest.assignment` (MeritSeatAssignment is not called), the
+// No Show keeps theirs, and occupiedSeatIndexes / the workbook never see it.
+// liveUsedIndexes counts it, so the door and the next walk-in see the seats
+// used again. A guest with a planned seat is never placed live.
 (function () {
   "use strict";
 
@@ -24,6 +32,7 @@
     event.guests.forEach((g) => {
       if (except.has(g.id) || g.arrivalStatus === "No Show") return;
       if (g.assignment?.tableId === tableId) (g.assignment.seats || []).forEach((index) => used.add(Number(index)));
+      else if (!g.assignment && g.livePlacement?.tableId === tableId) (g.livePlacement.seats || []).forEach((index) => used.add(Number(index)));
     });
     return used;
   }
@@ -43,5 +52,32 @@
       noShow: sum("No Show"), emptyTables, emptyChairs };
   }
 
-  globalThis.MeritOccupancy = { version: 1, liveUsedIndexes, liveStats };
+  // placeLive(event, guest, { tableId, seats }, { confirmed, now, paxOf })
+  //   -> { ok, placement } | { refused }. The whole party at one table, every
+  //   seat free tonight, at least one of them a No Show's planned seat (a
+  //   plan-free table goes through the assignment writer instead).
+  function placeLive(event, guest, place, opts) {
+    const o = opts || {};
+    const R = globalThis.MeritEventRules;   // read at call time: event-rules.js loads after this file
+    const refused = !event ? "NO_EVENT" : R && R.mutationRefusal ? R.mutationRefusal(event) : (event.status === "Completed" ? "HISTORICAL" : null);
+    if (refused) return { refused };
+    if (o.confirmed !== true) return { refused: "CONFIRM_REQUIRED" };
+    if (!guest || !(event.guests || []).includes(guest)) return { refused: "NO_GUEST" };
+    if (guest.walkIn !== true) return { refused: "NOT_A_WALK_IN" };
+    if (guest.assignment) return { refused: "HAS_PLANNED_SEAT" };
+    if (guest.arrivalStatus !== "Checked In") return { refused: "NOT_CHECKED_IN" };
+    const table = (event.tables || []).find((t) => t.id === (place && place.tableId));
+    if (!table || !SEATS().canSeat(table)) return { refused: "NO_SEATS" };
+    const seats = ((place && place.seats) || []).map(Number);
+    const cap = SEATS().logicalSeatCount(table), pax = o.paxOf ? o.paxOf(guest) : Math.max(1, Number(guest.pax) || 1);
+    const live = liveUsedIndexes(event, table.id, [guest.id]);
+    if (seats.length !== pax || new Set(seats).size !== seats.length || seats.some((i) => !Number.isInteger(i) || i < 0 || i >= cap || live.has(i))) return { refused: "SEATS_NOT_FREE" };
+    const noShowGuestIds = event.guests.filter((g) => g.arrivalStatus === "No Show" && g.assignment?.tableId === table.id
+      && (g.assignment.seats || []).some((s) => seats.includes(Number(s)))).map((g) => g.id);
+    if (!noShowGuestIds.length) return { refused: "NOT_A_NO_SHOW_SEAT" };
+    guest.livePlacement = { tableId: table.id, seats, noShowGuestIds, at: o.now || null };
+    return { ok: true, placement: guest.livePlacement };
+  }
+
+  globalThis.MeritOccupancy = { version: 1, liveUsedIndexes, liveStats, placeLive };
 })();

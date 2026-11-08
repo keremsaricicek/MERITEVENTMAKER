@@ -2191,6 +2191,7 @@
     activeEvent:()=>activeEvent(),render:()=>render(),touchEvent:e=>touchEvent(e),toast:(...a)=>toast(...a),
     epoch:()=>mutationEpoch,
     saveGuest:(e,g,data)=>saveGuestRecord(e,g,data),assignGuest:(id,tableId)=>assignGuestToTable(id,tableId),
+    ask:(o)=>ask(o),
   });
   liveHTML = function(event){return LIVE.html(event);};
   bindLive = function(){return LIVE.bind();};

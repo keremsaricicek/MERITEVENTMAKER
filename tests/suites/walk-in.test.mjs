@@ -115,4 +115,47 @@ export default async function run({ checks, repoRoot }) {
 
   checks.equal(JSON.stringify(ev), before, "suggesting seats moves nobody: planned seats, No Show assignments and arrivals are byte-identical");
   checks.equal(ev.guests[1].assignment, { tableId: "t2", seats: [0, 1, 2] }, "the No Show still holds the planned seats");
+
+  // ---- 4. a No Show's freed seat, after a confirmation (owner 2026-11-08) ----------
+  // A LIVE placement only: guest.livePlacement, written by ONE writer
+  // (MeritOccupancy.placeLive), counted by liveUsedIndexes; the No Show keeps
+  // guest.assignment and the plan (occupiedSeatIndexes) never sees the walk-in.
+  const o2 = opt(s2, "t2");
+  checks.equal(o2 && [o2.livePlaceable, o2.liveSeats, (o2.noShows || []).map((x) => [x.guestId, x.name])], [true, [0, 1], [["g2", "Burak Şahin"]]],
+    "a table that fits only thanks to a No Show is offered as a LIVE placement: the No Show's freed seats, and whose place it is (for the question)");
+  checks.equal([opt(s2, "t1").livePlaceable, opt(s2, "t1").liveSeats], [false, []], "a table with free planned seats is not a live placement — it goes through the assignment writer");
+
+  const O = ctx.MeritOccupancy;
+  checks.require(typeof O.placeLive === "function", "MeritOccupancy.placeLive is the one writer of a live placement");
+  const evL = event();
+  const walker = guest("w1", "Ali Kaya", 2, { walkIn: true, walkInAt: now, arrivalStatus: "Checked In", checkedInAt: now });
+  evL.guests.push(walker);
+  const others = (e) => JSON.stringify(e.guests.filter((g) => g.id !== "w1").map((g) => [g.id, g.assignment, g.arrivalStatus]));
+  const planBefore = others(evL);
+  const place = { tableId: "t2", seats: [0, 1] };
+  checks.equal(O.placeLive(evL, walker, place, { now }).refused, "CONFIRM_REQUIRED", "no live placement without the confirmation");
+  checks.equal("livePlacement" in walker, false, "a refused placement writes nothing");
+  checks.equal(O.placeLive(event({ status: "Completed", guests: [walker] }), walker, place, { confirmed: true, now }).refused, "HISTORICAL", "a historical event refuses a live placement");
+  checks.equal(O.placeLive(evL, evL.guests[3], place, { confirmed: true, now }).refused, "NOT_A_WALK_IN", "only a walk-in is placed live");
+  checks.equal(O.placeLive(evL, walker, { tableId: "t2", seats: [3, 0] }, { confirmed: true, now }).refused, "SEATS_NOT_FREE", "a seat somebody uses tonight is refused");
+  checks.equal(O.placeLive(evL, walker, { tableId: "t2", seats: [0] }, { confirmed: true, now }).refused, "SEATS_NOT_FREE", "the whole party sits: one seat for a party of two is refused");
+  checks.equal(O.placeLive(evL, walker, { tableId: "t1", seats: [2, 3] }, { confirmed: true, now }).refused, "NOT_A_NO_SHOW_SEAT", "plan-free seats are not a live placement (the assignment writer seats them)");
+  checks.equal(O.placeLive(evL, guest("w2", "Zeynep", 1, { walkIn: true, arrivalStatus: "Checked In" }), { tableId: "t2", seats: [0] }, { confirmed: true, now }).refused, "NO_GUEST",
+    "a guest not in this event is refused");
+  const ok = O.placeLive(evL, walker, place, { confirmed: true, now });
+  checks.equal([ok.ok, walker.livePlacement], [true, { tableId: "t2", seats: [0, 1], noShowGuestIds: ["g2"], at: now }],
+    "confirmed: the walk-in sits tonight in the No Show's freed seats, and the record says whose place it was");
+  checks.equal(walker.assignment, null, "the walk-in has NO planned seat: GUEST LIST/UNASSIGNED read the plan, which did not change");
+  checks.equal(others(evL), planBefore, "the No Show keeps guest.assignment and arrival status; nobody else moved");
+  checks.equal([...O.liveUsedIndexes(evL, "t2")].sort(), [0, 1, 3], "tonight the seats are used again (live occupancy counts the placement)");
+  const after = opt(W.suggestSeats(evL, 1), "t2");
+  checks.equal(after && [after.liveFree, after.plannedFree], [1, 0], "the next walk-in sees one free seat at that table tonight, and the plan still none");
+
+  // ONE writer: nothing else in src/ assigns guest.livePlacement.
+  const offenders = [];
+  for (const file of fs.readdirSync(path.join(repoRoot, "src")).filter((f) => f.endsWith(".js") && f !== "occupancy.js")) {
+    const src = fs.readFileSync(path.join(repoRoot, "src", file), "utf8").split("\n").filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join("\n");
+    for (const m of src.matchAll(/\.livePlacement\s*=(?!=)|\blivePlacement\s*:/g)) offenders.push(`${file}: ${m[0]}`);
+  }
+  checks.equal(offenders, [], "MeritOccupancy.placeLive is the only code in src/ that writes guest.livePlacement");
 }

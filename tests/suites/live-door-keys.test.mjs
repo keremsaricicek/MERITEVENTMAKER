@@ -198,8 +198,9 @@ export default async function run({ page, checks, baseUrl }) {
   // Kapıda kayıt: a name already on the list is shown first (nothing created); a new
   // person becomes ONE record ("+5" = pax 6, walkIn) through saveGuestRecord and is
   // checked in through setArrival; the seat options come from MeritWalkIn. A table
-  // that fits only thanks to a No Show stays assignable:false — shown as "Gelmeyenin
-  // yeri — sor", with no seat button (owner decision pending); Oturt only through
+  // that fits only thanks to a No Show is not assignable — no Oturt; it offers
+  // "Gelmeyenin yerine oturt" (owner decision 2026-11-08), which asks first and on
+  // Yes writes a LIVE placement only (MeritOccupancy.placeLive); Oturt only through
   // assignGuestToTable. Mutation proof, recorded 2026-11-07: with the assignable
   // check dropped the No-Show table gets a button and the check fails.
   await page.click('.arrival-row:has-text("Bora Er") [data-arrival="No Show"]'); await settle(page);
@@ -210,9 +211,9 @@ export default async function run({ page, checks, baseUrl }) {
   await page.fill("[data-walkin-name]", "Zeki Demir +5"); await page.click("[data-walkin-save]"); await settle(page);
   const zeki = await page.evaluate(() => { const g = activeEvent().guests.find((x) => x.name === "Zeki Demir"); return g && { pax: g.pax, walkIn: g.walkIn === true, st: g.arrivalStatus, at: !!g.checkedInAt, seat: g.assignment }; });
   checks.ok(zeki && zeki.pax === 6 && zeki.walkIn && zeki.st === "Checked In" && zeki.at && !zeki.seat, "a walk-in is ONE record (pax 6), checked in through setArrival, not yet seated", zeki);
-  const opts = await page.evaluate(() => { const e = activeEvent(); return [...document.querySelectorAll("[data-walkin-option]")].map((n) => ({ table: n.dataset.walkinOption, first: n.dataset.walkinOption === e.tables[0].id, button: !!n.querySelector("[data-walkin-seat]"), text: n.textContent.replace(/\s+/g, " ").trim() })); });
+  const opts = await page.evaluate(() => { const e = activeEvent(); return [...document.querySelectorAll("[data-walkin-option]")].map((n) => ({ table: n.dataset.walkinOption, first: n.dataset.walkinOption === e.tables[0].id, button: !!n.querySelector("[data-walkin-seat]"), live: !!n.querySelector("[data-walkin-live]"), text: n.textContent.replace(/\s+/g, " ").trim() })); });
   const viaNoShow = opts.find((o) => o.first);
-  checks.ok(viaNoShow && !viaNoShow.button && /Gelmeyenin yeri — sor/.test(viaNoShow.text), "a table that fits only thanks to a No Show: \"Gelmeyenin yeri — sor\", no seat button", opts);
+  checks.ok(viaNoShow && !viaNoShow.button && viaNoShow.live && /Gelmeyenin yerine oturt/.test(viaNoShow.text), "a table that fits only thanks to a No Show: no Oturt, \"Gelmeyenin yerine oturt\" instead", opts);
   const ok = opts.find((o) => o.button);
   checks.ok(!!ok, "an assignable table offers Oturt", opts);
   if (ok) {
@@ -220,4 +221,31 @@ export default async function run({ page, checks, baseUrl }) {
     const after = await page.evaluate((tid) => { const e = activeEvent(); const z = e.guests.find((x) => x.name === "Zeki Demir"), b = e.guests.find((x) => x.id === "k2"); return { z: z.assignment && z.assignment.tableId === tid, bora: !!b.assignment && b.arrivalStatus === "No Show" }; }, ok.table);
     checks.ok(after.z && after.bora, "Oturt seats the walk-in through the seat writer; the No Show keeps the planned seat", after);
   }
+
+  // A No Show's freed seat, after a confirmation (owner decision 2026-11-08).
+  await page.fill("[data-walkin-name]", "Selin Ak +5"); await page.click("[data-walkin-save]"); await settle(page);
+  const firstLive = async () => page.click(`[data-walkin-option="${await page.evaluate(() => activeEvent().tables[0].id)}"] [data-walkin-live]`);
+  const plan = () => page.evaluate(() => JSON.stringify(activeEvent().guests.filter((x) => x.name !== "Selin Ak").map((x) => [x.id, x.assignment, x.arrivalStatus])));
+  const planBefore = await plan();
+  await firstLive();
+  await page.waitForSelector("#meritAskDialog[open]");
+  const question = await page.textContent("#meritAskTitle");
+  checks.ok(/Gelmeyen Bora Er'in yeri — buraya oturtulsun mu\?/.test(question), "the door asks first: \"Gelmeyen Bora Er'in yeri — buraya oturtulsun mu?\"", question);
+  await page.click('#meritAskDialog [data-ask="cancel"]'); await settle(page);
+  checks.ok(await page.evaluate(() => !("livePlacement" in activeEvent().guests.find((x) => x.name === "Selin Ak"))), "No means nobody is placed");
+  await firstLive(); await page.waitForSelector("#meritAskDialog[open]");
+  await page.click('#meritAskDialog [data-ask="confirm"]'); await settle(page);
+  const selin = await page.evaluate(() => { const e = activeEvent(), g = e.guests.find((x) => x.name === "Selin Ak"); return { live: g.livePlacement && g.livePlacement.tableId === e.tables[0].id && g.livePlacement.noShowGuestIds.join(), seat: g.assignment, shown: !!document.querySelector("[data-walkin-live-at]") }; });
+  checks.ok(selin.live === "k2" && selin.seat === null && selin.shown, "Yes seats the walk-in TONIGHT in Bora Er's place — a live placement, no planned seat", selin);
+  checks.equal(await plan(), planBefore, "the No Show keeps guest.assignment and arrival status; nobody else moved");
+  checks.ok(selin.seat === null, "in the plan the walk-in is still unassigned, so GUEST LIST shows no table and UNASSIGNED lists them (makeListSheet reads guest.assignment)", selin);
+
+  // save -> reload round trip (data rule for a new persisted field): the placement,
+  // the No Show's planned seat and the live count survive a reload unchanged.
+  const shape = () => page.evaluate(() => { const e = activeEvent(), g = e.guests.find((x) => x.name === "Selin Ak"), b = e.guests.find((x) => x.id === "k2");
+    return JSON.stringify({ live: g.livePlacement, seat: g.assignment, bora: [b.assignment, b.arrivalStatus], used: [...MeritOccupancy.liveUsedIndexes(e, e.tables[0].id)].sort() }); });
+  const beforeReload = await shape();
+  await page.evaluate(() => saveState()); await page.waitForTimeout(600);
+  await page.reload(); await page.waitForLoadState("networkidle"); await page.waitForTimeout(700);
+  checks.equal(await shape(), beforeReload, "save -> reload: the live placement, the No Show's planned seat and tonight's used seats are unchanged");
 }
