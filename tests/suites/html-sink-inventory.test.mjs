@@ -41,7 +41,7 @@ const INVENTORY = [
     trace: "The recovery screen shown when a screen throws: four t() strings of fixed keys, each through esc(). The error itself is never interpolated — it goes to the console only." },
   { file: "app.js", fn: "render", target: "app.innerHTML", evidence: "boot-contract",
     trace: "The pre-v8 render. Overridden by app-v8.js's render before first use; boot-contract proves at runtime that the override is the body that runs." },
-  { file: "app-v8.js", fn: "renderGlobalSearch", target: "box.innerHTML", evidence: "hostile-input",
+  { file: "screen-finder.js", fn: "create > renderGlobalSearch", target: "box.innerHTML", evidence: "hostile-input",
     trace: "Global finder results: guestResultHTML() per row (guest name, invited-by, table number, zone — all through esc()), find.more with a numeric count, find.none literal." },
   { file: "app.js", fn: "renderGlobalSearch", target: "box.innerHTML", evidence: "boot-contract",
     trace: "The pre-v8 finder, reassigned by app-v8.js (`renderGlobalSearch = function`) at load." },
