@@ -122,6 +122,7 @@ detector fingerprint as well), and the shell's own persistence and focus last
 | — | (start, `1aa928f`) | 5,634 |
 | 1 | Guest finder panel → `src/screen-finder.js` (+ `screen-console-sweep`, the every-screen-both-themes suite) | 5,509 |
 | 2 | Event setup & plan-file intake → `src/screen-setup.js` | 5,359 |
+| 3 | Guest record removal/restore/unassign undo → `src/guest-record-undo.js` (workbook before/after identical) | 5,267 |
 
 ## Seen while moving
 
@@ -173,3 +174,15 @@ entry says what was seen and what was done about it.
 11. **`readonlyGuestsHTML` (a historical event's guest list) sits between the
     tab dispatch and the setup screen** and belongs to neither; it moves with
     the Guests capability (#3's neighbour), not with setup.
+12. **The shell-source scans read only `src/screen-*.js`** besides app-v8.js
+    (`tests/lib/shell-sources.mjs`, and `boot-contract`'s own copy), so code
+    that left the shell as a non-screen module — `data-portability.js`,
+    `review-session-log.js` since 2026-11-01 — was invisible to
+    `override-boundary`, `boot-contract`'s delegation count,
+    `audit-durability` and `large-venue-scale`. Found when move 3 took
+    `original.openGuestDialog(...)` with it and the delegation count dropped to
+    11. Both now read every module created with `create(deps)` (the
+    `screen-modules` predicate); all four suites green on the widened set.
+13. **`toastAction` (the Undo toast) is used by four capabilities** (Live,
+    guests, find-similar, the Teach Area) — a shell notification primitive, so
+    it stays with `toast`, not with any one of them.

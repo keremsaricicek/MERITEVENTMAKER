@@ -23,6 +23,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { openApp } from "../lib/app-actions.mjs";
 import { stripCommentsAndStrings } from "../lib/js-scan.mjs";
+import { screenFiles } from "../lib/shell-sources.mjs";
 
 export const meta = { name: "boot-contract", tags: ["business", "fast"], timeout: 60000 };
 
@@ -117,7 +118,8 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // A screen moved out of app-v8.js is handed the same \`original\` capture and
   // may delegate through it (screen-guests.js calls original.bindGuests): the
   // delegation is the same fact in another file, so it is looked for there too.
-  const screenSources = fs.readdirSync(path.join(repoRoot, "src")).filter((f) => /^screen-.*\.js$/.test(f))
+  // Not only screens: every module created with create(deps) (tests/lib/shell-sources.mjs).
+  const screenSources = screenFiles(repoRoot)
     .map((f) => fs.readFileSync(path.join(repoRoot, "src", f), "utf8")).join("\n");
   const isDelegated = (n) => new RegExp(`original\\.${n}\\s*\\(`).test(after + "\n" + screenSources);
 

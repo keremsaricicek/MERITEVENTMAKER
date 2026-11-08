@@ -8,8 +8,15 @@
 import fs from "node:fs";
 import path from "node:path";
 
+// Every module created once by app-v8.js with its dependencies: the screens
+// (src/screen-*.js) AND the capabilities that left the shell the same way
+// (data-portability.js, guest-record-undo.js, … — benchmarks/CODE-HEALTH-2026-11.md).
+// Code that left app-v8.js is still the shell's code; a scan that read only the
+// screens would lose it the day it moved. Same predicate as `screen-modules`.
 export function screenFiles(repoRoot) {
-  return fs.readdirSync(path.join(repoRoot, "src")).filter((f) => /^screen-.*\.js$/.test(f)).sort();
+  const dir = path.join(repoRoot, "src");
+  return fs.readdirSync(dir).filter((f) => /\.js$/.test(f)
+    && (/^screen-/.test(f) || /DEPS:Object\.freeze\(/.test(fs.readFileSync(path.join(dir, f), "utf8")))).sort();
 }
 // app-v8.js followed by every screen module, each preceded by a marker line.
 export function shellAndScreens(repoRoot) {
