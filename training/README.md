@@ -2016,3 +2016,26 @@ product right ≥ p08's; 0 wrong changes on every set; briefs all-right ≥ 0.80
 en9 / entypo9 stay 1.000; originals ≥ 0.971 and variants ≥ 0.943 (p08). And it must be better somewhere (new-exam
 right, right-at-once or briefs all-right); an exact tie keeps p08. Otherwise **p08 stays**. Seconds and old deep are
 reported, not bars. If it ships: `qwen3.5-0.8b-merit-chat-q08` (manifest bytes + sha256, pinned-ID suite switched).
+
+## 2026-11-08 — runQ verdict (bars as pre-registered above): NOT shipped, p08 stays
+
+Free CPU, one model at a time, same commands (`p08x`, `q08x`); product rule. runQ-08: 475 steps, 77.7 min after a
+resume at step 215 (the first background slot ended; `--save-every 5` resumed it).
+
+| | p08 | runQ (q08) |
+|---|---|---|
+| **fresh10 / typo10 / en10 / entypo10 / deep10** (new exam, blind) | 0.833 / 0.917 / 0.889 / 0.667 / 0.600 | **1.000** / 0.917 / 0.889 / 0.667 / **1.000** |
+| right at once (same five) | 0.833 / 0.500 / 0.778 / 0.444 / 0.333 | 1.000 / 0.583 / 0.667 / 0.444 / 0.800 |
+| shown wrong (new exam) | 4 (fresh10 1, deep10 3) | 0 |
+| wrong changes, every set | 0 | 0 |
+| fresh9 / typo9 / en9 / entypo9 (seen) | 1.000 / 1.000 / 1.000 / 1.000 | 1.000 / 1.000 / 1.000 / **0.889** |
+| original 35 / variants 35 / deep 15 (seen) | 0.971 / 0.943 / 0.800 | 1.000 / 0.971 / 0.933 |
+| briefs fields / all right / invented (seen) | 0.940 / 0.800 / 0.014 | 0.994 / 0.975 / 0.012 |
+| median seconds, F8 race, free CPU | 4.57 (`p08t`, the runP race re-timed) · 6.32 (`p08x`) | 6.38 (`q08x`) |
+
+**Bar result: fails one bar** — entypo9 must stay 1.000 and runQ is 0.889: `trc5` "set mehmet kayas party to 2" is
+read with guest "mehmet kayas" and the product asks (no change, not a wrong change; p08 reads it right after a
+click). Every other bar holds (each new set ≥ p08, 0 wrong changes, briefs 0.975 ≥ 0.80 and 0.012 ≤ 0.02, originals
+and variants ≥ p08). As pre-registered, **p08 stays shipped**; runQ-08 is kept on disk only. Not claimed: the gains on
+deep, the originals and the briefs are on seen sets. p08's seconds re-timed on a free CPU: median **4.57 s** (runP's
+11.7 s was the loaded upper bound); its right/wrong counts are identical to runP's.
