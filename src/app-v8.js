@@ -898,12 +898,12 @@
           from:t("status.arrival."+d.from),to:t("status.arrival."+d.to)});
       case"TABLE_AVAILABILITY_CHANGED":
         return d.to==="UNAVAILABLE"
-          ?t("audit.tableMarkedUnavailable",{number:tableNumber(d.tableId),reason:availReasonText(d.reason)})
+          ?t("audit.tableMarkedUnavailable",{number:tableNumber(d.tableId),reason:SEATCMD.availReasonText(d.reason)})
           :t("audit.tableMarkedAvailable",{number:tableNumber(d.tableId)});
       case"FREEZE_CREATED":
-        return t("audit.freezeCreated",{reason:freezeReasonText(d.reason)});
+        return t("audit.freezeCreated",{reason:SEATCMD.freezeReasonText(d.reason)});
       case"FREEZE_LIFTED":
-        return t("audit.freezeLifted",{reason:freezeReasonText(d.reason)});
+        return t("audit.freezeLifted",{reason:SEATCMD.freezeReasonText(d.reason)});
       case"FREEZE_OVERRIDDEN":
         return t("audit.freezeOverridden");
       case"LAYOUT_CHANGE_CONFIRMED":
@@ -1066,7 +1066,10 @@
   }
 
   const SETUP=globalThis.MeritScreenSetup.create({
-    audit:(...a)=>audit(...a),clone:(...a)=>clone(...a),esc:(...a)=>esc(...a),getState:()=>state,icon:(...a)=>icon(...a),migrateEvent:(...a)=>migrateEvent(...a),nowISO:(...a)=>nowISO(...a),openEvent:(...a)=>openEvent(...a),render:(...a)=>render(...a),saveState:(...a)=>saveState(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),topBrand:(...a)=>topBrand(...a),ui,uid:(...a)=>uid(...a),userError:(...a)=>userError(...a),userMessage:(...a)=>userMessage(...a),
+    audit:(...a)=>audit(...a),clone:(...a)=>clone(...a),esc:(...a)=>esc(...a),getState:()=>state,icon:(...a)=>icon(...a),
+    migrateEvent:(...a)=>migrateEvent(...a),nowISO:(...a)=>nowISO(...a),openEvent:(...a)=>openEvent(...a),render:(...a)=>render(...a),
+    saveState:(...a)=>saveState(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),topBrand:(...a)=>topBrand(...a),ui,uid:(...a)=>uid(...a),
+    userError:(...a)=>userError(...a),userMessage:(...a)=>userMessage(...a),
   });
 
   // ============================================================
@@ -1095,7 +1098,10 @@
   // engine for both surfaces: the finder below and Live's door search.
   const SEARCH=globalThis.MeritGuestSearch.create({formatNumber:n=>formatTableNumber(n)});
   const FINDER=globalThis.MeritScreenFinder.create({
-    RULES:(...a)=>RULES(...a),SEARCH,activeEvent:(...a)=>activeEvent(...a),additionalOf:(...a)=>additionalOf(...a),canMutate:(...a)=>canMutate(...a),esc:(...a)=>esc(...a),formatTableNumber:(...a)=>formatTableNumber(...a),paxOf:(...a)=>paxOf(...a),render:(...a)=>render(...a),seatRange:(...a)=>seatRange(...a),setArrival:(...a)=>setArrival(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),ui,
+    RULES:(...a)=>RULES(...a),SEARCH,activeEvent:(...a)=>activeEvent(...a),additionalOf:(...a)=>additionalOf(...a),canMutate:(...a)=>canMutate(...a),
+    esc:(...a)=>esc(...a),formatTableNumber:(...a)=>formatTableNumber(...a),paxOf:(...a)=>paxOf(...a),render:(...a)=>render(...a),
+    seatRange:(...a)=>seatRange(...a),setArrival:(...a)=>setArrival(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),
+    ui,
   });
   renderGlobalSearch = function(...a){return FINDER.renderGlobalSearch(...a);};
   // ---- moved to src/screen-floor-plan.js — see that file's header. The shell hands it
@@ -1576,7 +1582,7 @@
       };
     });
     viewport?.addEventListener("pointerdown",e=>{if(ui.repeatPlacement&&e.target.closest("[data-object-id]")==null){e.preventDefault();placeRepeated(e);}},true);viewport?.addEventListener("pointerdown",startMarquee,true);
-    world?.querySelectorAll("[data-object-id]").forEach(el=>{if(ui.selectedObjectIds.includes(el.dataset.objectId))el.classList.add("multi-selected");if(ui.tab==="seating"&&el.dataset.objectKind==="table"){el.addEventListener("drop",e=>{const raw=e.dataTransfer.getData("application/x-merit-guests");if(raw){e.preventDefault();e.stopPropagation();assignGuestGroup(JSON.parse(raw),el.dataset.objectId);}},true);}});
+    world?.querySelectorAll("[data-object-id]").forEach(el=>{if(ui.selectedObjectIds.includes(el.dataset.objectId))el.classList.add("multi-selected");if(ui.tab==="seating"&&el.dataset.objectKind==="table"){el.addEventListener("drop",e=>{const raw=e.dataTransfer.getData("application/x-merit-guests");if(raw){e.preventDefault();e.stopPropagation();SEATCMD.assignGuestGroup(JSON.parse(raw),el.dataset.objectId);}},true);}});
     const clear=document.querySelector("[data-clear-seating-filter]");if(clear)clear.onclick=()=>{ui.seatingFilter="all";ui.operationalMode=false;render();};
   };
 
@@ -1600,7 +1606,7 @@
   // what it reads; shell functions go over as late-binding wrappers, so a body
   // this file reassigns later is the one that runs. ----------------------------
   const SEATING=globalThis.MeritScreenSeating.create({
-    activeEvent:(...a)=>activeEvent(...a),assignGuestGroup:(...a)=>assignGuestGroup(...a),assignGuestToTable:(...a)=>assignGuestToTable(...a),authoriseFreezeOverride:(...a)=>authoriseFreezeOverride(...a),AVAIL:(...a)=>AVAIL(...a),availReasonText:(...a)=>availReasonText(...a),bindPanelToggles:(...a)=>bindPanelToggles(...a),canMutate:(...a)=>canMutate(...a),canSeat,canvasEmptyHTML:(...a)=>canvasEmptyHTML(...a),canvasViewportHTML:(...a)=>canvasViewportHTML(...a),createFreezeFromDraft:(...a)=>createFreezeFromDraft(...a),esc:(...a)=>esc(...a),eventFreezes:(...a)=>eventFreezes(...a),formatTableNumber:(...a)=>formatTableNumber(...a),FREEZE:(...a)=>FREEZE(...a),freezeReasonText:(...a)=>freezeReasonText(...a),icon:(...a)=>icon(...a),liftFreeze:(...a)=>liftFreeze(...a),logicalSeatCount:(...a)=>logicalSeatCount(...a),naturalSort:(...a)=>naturalSort(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxDotsHTML:(...a)=>paxDotsHTML(...a),paxOf:(...a)=>paxOf(...a),recordUndo:(...a)=>recordUndo(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),seatingQueueEmptyHTML:(...a)=>seatingQueueEmptyHTML(...a),setTableAvailability:(...a)=>setTableAvailability(...a),t:(...a)=>t(...a),tableAssignedPax:(...a)=>tableAssignedPax(...a),tableIndex:(...a)=>tableIndex(...a),tableSeatMap:(...a)=>tableSeatMap(...a),toast:(...a)=>toast(...a),toggleAssignmentLock:(...a)=>toggleAssignmentLock(...a),touchEvent:(...a)=>touchEvent(...a),ui,unassignGuest:(...a)=>unassignGuest(...a),v8Toolbar:(...a)=>FLOORPLAN.v8Toolbar(...a),
+    activeEvent:(...a)=>activeEvent(...a),assignGuestGroup:(...a)=>SEATCMD.assignGuestGroup(...a),assignGuestToTable:(...a)=>assignGuestToTable(...a),authoriseFreezeOverride:(...a)=>SEATCMD.authoriseFreezeOverride(...a),AVAIL:(...a)=>AVAIL(...a),availReasonText:(...a)=>SEATCMD.availReasonText(...a),bindPanelToggles:(...a)=>bindPanelToggles(...a),canMutate:(...a)=>canMutate(...a),canSeat,canvasEmptyHTML:(...a)=>canvasEmptyHTML(...a),canvasViewportHTML:(...a)=>canvasViewportHTML(...a),createFreezeFromDraft:(...a)=>SEATCMD.createFreezeFromDraft(...a),esc:(...a)=>esc(...a),eventFreezes:(...a)=>eventFreezes(...a),formatTableNumber:(...a)=>formatTableNumber(...a),FREEZE:(...a)=>FREEZE(...a),freezeReasonText:(...a)=>SEATCMD.freezeReasonText(...a),icon:(...a)=>icon(...a),liftFreeze:(...a)=>SEATCMD.liftFreeze(...a),logicalSeatCount:(...a)=>logicalSeatCount(...a),naturalSort:(...a)=>naturalSort(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxDotsHTML:(...a)=>paxDotsHTML(...a),paxOf:(...a)=>paxOf(...a),recordUndo:(...a)=>recordUndo(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),seatingQueueEmptyHTML:(...a)=>seatingQueueEmptyHTML(...a),setTableAvailability:(...a)=>setTableAvailability(...a),t:(...a)=>t(...a),tableAssignedPax:(...a)=>tableAssignedPax(...a),tableIndex:(...a)=>tableIndex(...a),tableSeatMap:(...a)=>tableSeatMap(...a),toast:(...a)=>toast(...a),toggleAssignmentLock:(...a)=>toggleAssignmentLock(...a),touchEvent:(...a)=>touchEvent(...a),ui,unassignGuest:(...a)=>unassignGuest(...a),v8Toolbar:(...a)=>FLOORPLAN.v8Toolbar(...a),
   });
   // REDESIGN v4 step 6 (SPEC-v4 "The working order" 5): "Hazır" on Oturma opens
   // Hazır mı? — the Plan Doctor's open issues (eventReadiness: the one judge),
@@ -1708,181 +1714,15 @@
     </section>`;
   }
 
-  // ---- FREEZE ZONES ---------------------------------------------------------
-  //
-  // Defined here, in Seating, because that is where an operator is thinking
-  // about who sits where; drawn on the Floor Plan as a LAYER, because that is
-  // where they are thinking about the room. Same rules, two views, one store.
-  //
-  // The freeze is never enforced by hiding a control. Every path that changes
-  // an assignment runs the same evaluation (freezeBlocks), so an operator who
-  // reaches a frozen table from a drag, a seat row, the table card or a Smart
-  // Seating suggestion gets the same challenge and the same override.
-
-  const freezeReasonText=r=>{const k="freeze.reason."+r;return t(k)!==k?t(k):r;};
-  const availReasonText=r=>{const k="avail.reason."+r;return t(k)!==k?t(k):r;};
-
-  function createFreezeFromDraft(){
-    const event=activeEvent(),F=FREEZE(),d=ui.freezeDraft;
-    if(!event||!F||!d)return;
-    if(!canMutate(event,"freeze part of the room"))return;
-    const f=F.normalize({...d,id:uid("freeze"),createdAt:nowISO()});
-    if(!f)return toast(t("freeze.invalid"),"error",5000);
-    const covered=F.tablesCovered(f,event.tables||[]);
-    // A rule that covers nothing is refused rather than stored. It would show
-    // as a held area holding nothing, and the operator would believe the room
-    // was protected when it was not.
-    if(!covered.length)return toast(t("freeze.coversNothing"),"error",5500);
-    // Replaced, not pushed: the render memo keys on this array's identity.
-    event.freezes=[...eventFreezes(event),f];
-    ui.freezeDraft=null;
-    audit(event,"FREEZE_CREATED",{freezeId:f.id,scope:f.scope,reason:f.reason,
-      tables:covered.length,tableIds:covered.map(x=>x.id)});
-    touchEvent(event);render();
-    toast(t("freeze.created",{n:covered.length}),"success",4500);
-  }
-  function liftFreeze(id){
-    const event=activeEvent(),F=FREEZE();
-    if(!event||!F)return;
-    if(!canMutate(event,"lift a freeze"))return;
-    const f=F.normalizeAll(eventFreezes(event)).find(x=>x.id===id);
-    if(!f)return;
-    event.freezes=eventFreezes(event).filter(x=>String(x&&x.id)!==id);
-    // Lifting is a deliberate act by a person and is recorded as one. It is
-    // the ONLY way a freeze ends — no override, no seating operation and no
-    // migration removes one as a side effect.
-    audit(event,"FREEZE_LIFTED",{freezeId:id,scope:f.scope,reason:f.reason});
-    touchEvent(event);render();
-    toast(t("freeze.lifted"),"success",4000);
-  }
-  function authoriseFreezeOverride(){
-    const c=ui.freezeChallenge;
-    if(!c)return;
-    const event=activeEvent();
-    if(!canMutate(event,"override a freeze"))return;
-    audit(event,"FREEZE_OVERRIDDEN",{kind:c.kind,
-      freezeIds:c.report.freezes.map(f=>f.id),
-      reasons:c.report.freezes.map(f=>f.reason),
-      directions:c.report.directions,
-      tableIds:c.report.tables.map(x=>x.id),
-      guestIds:c.guestIds,pax:c.report.movingPax});
-    ui.freezeChallenge=null;
-    // The override is spent here, as an argument to ONE call. There is no
-    // stored "overridden" flag for the next operation to find.
-    if(c.kind==="assign")assignGuestGroup(c.guestIds,c.tableId,c.preferred,{override:true});
-    else unassignGuest(c.guestIds[0],{override:true});
-  }
-
-
-
-  // WOULD THIS OPERATION CROSS A FREEZE? The single gate, used by every path
-  // that changes an assignment. Returns the case for the decision, or null.
-  //
-  // `override` is a PARAMETER and never stored state: one supervisor decision
-  // authorises exactly one operation, and the freeze is still standing when
-  // the next one arrives. There is deliberately no function anywhere that
-  // clears a freeze as a side effect of an override.
-  function freezeBlocks(event,guestIds,toTableId,options){
-    if(options&&options.override)return null;
-    const F=FREEZE();
-    if(!F||!event)return null;
-    const report=F.evaluateOperation({freezes:eventFreezes(event),
-      tables:event.tables||[],guests:event.guests||[],guestIds,toTableId});
-    return report.state===F.STATE.OVERRIDE_REQUIRED?report:null;
-  }
-  function challengeFreeze(kind,report,guestIds,tableId,preferred){
-    ui.freezeChallenge={kind,report,guestIds,tableId:tableId||null,
-      preferred:preferred===undefined?null:preferred};
-    ui.seatPreview=null;
-    render();
-  }
-  // A group member seated away from the rest of the group: said, never prevented (owner 2026-11-02).
-  const ruleLine=v=>v.kind==="apart"?t("rules.apartBroken",{a:v.a,b:v.b,table:formatTableNumber(v.table)}):t("rules.vipBroken",{name:v.name,table:formatTableNumber(v.table)});
-  // "Paste a list" (src/paste-guests.js + src/messy-list.js): the dialog asks for the open event's
-  // guests (to mark likely duplicates) and hands back the ticked rows; they are added here through
-  // the one guest writer, for the open event only, never to a past one.
-  globalThis.MERIT_PASTE_EXISTING=()=>{const e=activeEvent();return e?e.guests:[];};
-  document.addEventListener("merit:add-guests",ev=>{
-    const e=activeEvent(),rows=Array.isArray(ev.detail)?ev.detail:[];
-    if(!e||!rows.length||!canMutate(e,"edit guest records"))return;
-    let n=0;
-    for(const r of rows){const name=String(r.name||"").trim().slice(0,120);if(!name)continue;const pax=Math.max(1,Math.min(99,Number(r.pax)||1));
-      saveGuestRecord(e,null,{name,additionalGuests:pax-1,pax,planningStatus:"Confirmed",vip:"Standard",invitedBy:String(r.invitedBy||"").slice(0,120),notes:"",phone:String(r.phone||"").slice(0,30),expectedArrival:null});n++;}
-    touchEvent(e);render();toast(t("paste.done",{n}),"success",5000);
+  const SEATCMD=globalThis.MeritSeatingCommands.create({
+    AVAIL:(...a)=>AVAIL(...a),FREEZE:(...a)=>FREEZE(...a),RULES:(...a)=>RULES(...a),SEAT:(...a)=>SEAT(...a),activeEvent:(...a)=>activeEvent(...a),
+    audit:(...a)=>audit(...a),canMutate:(...a)=>canMutate(...a),clone:(...a)=>clone(...a),eventFreezes:(...a)=>eventFreezes(...a),
+    formatTableNumber:(...a)=>formatTableNumber(...a),nowISO:(...a)=>nowISO(...a),occupiedSeatIndexes:(...a)=>occupiedSeatIndexes(...a),original,
+    paxOf:(...a)=>paxOf(...a),render:(...a)=>render(...a),saveGuestRecord:(...a)=>saveGuestRecord(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),
+    toastAction:(...a)=>toastAction(...a),touchEvent:(...a)=>touchEvent(...a),ui,uid:(...a)=>uid(...a),unassignGuest:(...a)=>unassignGuest(...a),
   });
-  function groupApartWarning(event,guests){
-    const SR=globalThis.MeritSeatingRules;
-    if(SR){const names=new Set(guests.map(g=>g.name));const v=SR.violations(event).filter(x=>names.has(x.a)||names.has(x.b)||names.has(x.name));if(v.length)toast(v.map(ruleLine).join(" "),"info",8000);}
-    const G=globalThis.MeritGuestGroups;if(!G||guests.length!==1||!String(guests[0].invitedBy||"").trim())return;
-    const sp=G.spread(event).find(s=>G.findHost(event,guests[0].invitedBy).group?.host===s.host);
-    if(sp)toast(t("groups.apartToast",{name:guests[0].name,host:sp.host,tables:sp.tables.map(formatTableNumber).join(", ")}),"info",7000);
-  }
-  function assignGuestGroup(ids,tableId,preferred=null,options=null){
-    const event=activeEvent();if(!canMutate(event,"change seating assignments"))return;ids=[...new Set(ids)].filter(Boolean);const guests=ids.map(id=>event.guests.find(g=>g.id===id)).filter(Boolean),table=event.tables.find(t=>t.id===tableId);if(!guests.length||!table)return;
-    // A table marked unavailable cannot receive a NEW assignment, and unlike
-    // a freeze there is no override: the table itself cannot hold anyone
-    // tonight, the same hard stop as a table with zero capacity. Existing
-    // occupants are untouched -- this only blocks writing MORE people onto it.
-    const AV=AVAIL();
-    if(AV&&AV.isUnavailable(table))return toast(t("avail.cannotSeatToast",{number:formatTableNumber(table.number)}),"error",6000);
-    const locked=guests.find(g=>g.assignment?.locked);if(locked)return toast(t("toast.assignmentLockedName",{name:locked.name}),"error",5000);
-    const used=occupiedSeatIndexes(event,tableId,null);for(const g of guests)if(g.assignment?.tableId===tableId)(g.assignment.seats||[]).forEach(s=>used.delete(Number(s)));
-    let free=Array.from({length:table.capacity},(_,i)=>i).filter(i=>!used.has(i));if(preferred!==null&&free.includes(preferred))free=[preferred,...free.filter(i=>i!==preferred)];const required=guests.reduce((n,g)=>n+paxOf(g),0);if(free.length<required)return toast(t("toast.groupSeatsShort",{table:table.number,n:free.length,need:required}),"error",6000);
-    // After the capacity check on purpose: asking a supervisor to authorise a
-    // move that could not have happened anyway wastes the one thing this
-    // mechanism is spending, which is somebody's attention.
-    const blocked=freezeBlocks(event,ids,tableId,options);
-    if(blocked)return challengeFreeze("assign",blocked,ids,tableId,preferred);
-    const snapshot=guests.map(g=>({id:g.id,assignment:clone(g.assignment)}));let cursor=0;
-    // Undo only matters here when the group had somewhere to fall back to --
-    // a first-time assignment from Unassigned has nothing destructive to
-    // recover (Unassign already covers that), and offering it anyway would
-    // put an undo toast on every single seating instead of only real moves.
-    const isMove=snapshot.some(s=>s.assignment);
-    try{
-      for(const g of guests){const count=paxOf(g),seats=free.slice(cursor,cursor+count);cursor+=count;SEAT().write(g,{tableId,seats,locked:false});}
-      ui.selectedTableId=tableId;ui.highlightId=tableId;touchEvent(event);render();
-      groupApartWarning(event,guests);
-      const message=t("seating.groupMovedToast",{n:guests.length,plural:guests.length===1?"":"s",table:table.number,seats:required});
-      if(!isMove){toast(message,"success",5000);return;}
-      toastAction(message,t("live.undo"),()=>{
-        const now=activeEvent();if(!now||!canMutate(now,"undo a seating move"))return;
-        // Seats may have been given away since the move -- restore what's still
-        // free and leave the rest exactly where the move put them, same
-        // clash-safe contract as unassignGuest's undo.
-        let anyClash=false;
-        for(const s of snapshot){
-          const guest=now.guests.find(x=>x.id===s.id);if(!guest)continue;
-          if(!s.assignment){SEAT().clear(guest);continue;}
-          const back=now.tables.find(x=>x.id===s.assignment.tableId);
-          const used=back?occupiedSeatIndexes(now,back.id,s.id):null;
-          if(!back||(s.assignment.seats||[]).some(seat=>used.has(Number(seat)))){anyClash=true;continue;}
-          SEAT().write(guest,s.assignment);
-        }
-        RULES().syncEventChairs(now);touchEvent(now);render();
-        toast(anyClash?t("seating.groupSeatTaken"):t("seating.groupRestoredToast"),anyClash?"error":"success",5200);
-      });
-    }
-    catch(error){
-      // Section 14: touchEvent(event) above this try's own assignment loop
-      // already persisted the NEW assignment before render() ever ran, so a
-      // throw from render() itself (not the loop) would otherwise leave
-      // storage holding the successful move while this revert only undoes
-      // it in memory -- the next UNRELATED touchEvent() anywhere in the app
-      // would then persist this stale, reverted `state`, silently undoing an
-      // already-saved seating move. Re-persisting the rollback here closes
-      // that gap; it never calls render() again, since re-running whatever
-      // just threw could throw a second time.
-      snapshot.forEach(s=>{SEAT().write(event.guests.find(g=>g.id===s.id),s.assignment);});
-      touchEvent(event);
-      toast(t("toast.groupMoveRolledBack"),"error");
-    }
-  }
-  assignGuestToTable = function(guestId,tableId,preferred=null,options=null){assignGuestGroup([guestId],tableId,preferred,options);};
-  // unassignGuest is defined further down, where its undo lives.
-  toggleAssignmentLock = function(id){const event=activeEvent();if(!canMutate(event,"change an assignment lock"))return;original.toggleAssignmentLock(id);};
-
-
+  assignGuestToTable = function(...a){return SEATCMD.assignGuestToTable(...a);};
+  toggleAssignmentLock = function(...a){return SEATCMD.toggleAssignmentLock(...a);};
   // A party of N renders as N dots — one solid for the named guest, the rest
   // muted for companions. A non-technical operator reads "four people" from
   // this instantly; "+3" in a pax column reads as a spreadsheet.
@@ -2051,7 +1891,11 @@
     pushToast(el,{duration});
   }
   const GUESTUNDO=globalThis.MeritGuestRecordUndo.create({
-    RULES:(...a)=>RULES(...a),SEAT:(...a)=>SEAT(...a),activeEvent:(...a)=>activeEvent(...a),ask:(...a)=>ask(...a),audit:(...a)=>audit(...a),canMutate:(...a)=>canMutate(...a),challengeFreeze:(...a)=>challengeFreeze(...a),formatTableNumber:(...a)=>formatTableNumber(...a),freezeBlocks:(...a)=>freezeBlocks(...a),getState:()=>state,occupiedSeatIndexes:(...a)=>occupiedSeatIndexes(...a),original,render:(...a)=>render(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),toastAction:(...a)=>toastAction(...a),touchEvent:(...a)=>touchEvent(...a),translateStaticDialogs:(...a)=>translateStaticDialogs(...a),ui,
+    RULES:(...a)=>RULES(...a),SEAT:(...a)=>SEAT(...a),activeEvent:(...a)=>activeEvent(...a),ask:(...a)=>ask(...a),audit:(...a)=>audit(...a),
+    canMutate:(...a)=>canMutate(...a),challengeFreeze:(...a)=>SEATCMD.challengeFreeze(...a),formatTableNumber:(...a)=>formatTableNumber(...a),
+    freezeBlocks:(...a)=>SEATCMD.freezeBlocks(...a),getState:()=>state,occupiedSeatIndexes:(...a)=>occupiedSeatIndexes(...a),original,
+    render:(...a)=>render(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),toastAction:(...a)=>toastAction(...a),touchEvent:(...a)=>touchEvent(...a),
+    translateStaticDialogs:(...a)=>translateStaticDialogs(...a),ui,
   });
   deleteGuest = async function(...a){return GUESTUNDO.deleteGuest(...a);};
   unassignGuest = function(...a){return GUESTUNDO.unassignGuest(...a);};
@@ -4111,7 +3955,7 @@
         const r=eventReadiness(e);
         const lines=r.reasons.map(x=>{const w=COMMAND.doctorText(x.finding);return w.detail?`${w.what} — ${w.detail}`:w.what;});
         const G=globalThis.MeritGuestGroups,SR=globalThis.MeritSeatingRules;
-        for(const v of SR?SR.violations(e):[])lines.push(ruleLine(v));
+        for(const v of SR?SR.violations(e):[])lines.push(SEATCMD.ruleLine(v));
         for(const s of G?G.spread(e):[])lines.push(t("groups.spreadLine",{host:s.host,tables:s.tables.map(formatTableNumber).join(", ")}));
         return{text:lines.length?t("assistant.missingSome",{n:lines.length}):t("assistant.missingNone"),lines};
       }
@@ -4119,7 +3963,7 @@
         const SR=globalThis.MeritSeatingRules,rs=SR?SR.normalizeAll(e.seatRules):[],nm=id=>(e.guests.find(g=>g.id===id)||{}).name||"?";
         if(!rs.length)return{text:t("rules.none")};
         const v=SR.violations(e);
-        return{text:t("rules.list",{n:rs.length}),lines:[...rs.map(r=>r.kind==="apart"?t("rules.apart",{a:nm(r.a),b:nm(r.b)}):t("rules.vipFront")),...v.map(ruleLine)]};
+        return{text:t("rules.list",{n:rs.length}),lines:[...rs.map(r=>r.kind==="apart"?t("rules.apart",{a:nm(r.a),b:nm(r.b)}):t("rules.vipFront")),...v.map(SEATCMD.ruleLine)]};
       }
       if(what==="group"){
         const G=globalThis.MeritGuestGroups,h=G?G.findHost(e,since):{none:true};

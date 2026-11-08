@@ -1,7 +1,7 @@
 // Section 13/14: does a mutation that fails halfway leave storage and memory
 // agreeing with each other?
 //
-// assignGuestGroup() (src/app-v8.js) is the one function in this codebase with
+// assignGuestGroup() (src/seating-commands.js, moved out of app-v8.js 2026-11-08) is the one function in this codebase with
 // an explicit snapshot-and-rollback: if anything inside its try block throws,
 // the catch restores every guest's `assignment` from a snapshot taken before
 // the move. That block already calls touchEvent(event) -- which persists --

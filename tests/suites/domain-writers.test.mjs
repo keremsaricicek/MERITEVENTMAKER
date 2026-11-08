@@ -22,13 +22,14 @@ import path from "node:path";
 import { stripCommentsAndStrings } from "../lib/js-scan.mjs";
 import { click, openApp, createBlankEvent, addTables, futureDate, settle } from "../lib/app-actions.mjs";
 
+import { screenFiles } from "../lib/shell-sources.mjs";
 export const meta = { name: "domain-writers", tags: ["business", "fast"], timeout: 150000 };
 
 // field family -> the functions allowed to assign it (file:function)
 const WRITERS = {
   arrival: { fields: ["arrivalStatus", "checkedInAt"], allowed: ["app-v8.js:setArrival", "app.js:normalizeGuest"] },
   availability: { fields: ["availability", "unavailableReason", "unavailableSince", "unavailableNote"], allowed: [] },
-  freezes: { fields: ["freezes"], allowed: ["app-v8.js:createFreezeFromDraft", "app-v8.js:liftFreeze", "app-v8.js:migrateEvent"] },
+  freezes: { fields: ["freezes"], allowed: ["seating-commands.js:createFreezeFromDraft", "seating-commands.js:liftFreeze", "app-v8.js:migrateEvent"] },
   handover: { fields: ["handoverNotes"], allowed: ["app-v8.js:addHandoverNote", "app-v8.js:migrateEvent"] },
   // "A person ran the pre-flight, at this moment, against this answer." Written
   // from the Command Center's button until 2026-10-04; that screen moved out
@@ -85,9 +86,11 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.equal(callers, ["app-v8.js:setTableAvailability"], "a table's availability changes only through setTableAvailability()");
 
   // --- 2. static: every writer refuses a historical event itself ------------
-  const v8 = stripped["app-v8.js"];
+  // The shell and every module created out of it with create(deps)
+  // (tests/lib/shell-sources.mjs): a writer that left app-v8.js is still held.
+  const shellFiles = ["app.js", "app-guests.js", "app-v8.js", ...screenFiles(repoRoot)];
   const unguarded = GUARDED.filter((name) => {
-    const body = functionBody(v8, name);
+    const body = shellFiles.map((f) => functionBody(stripped[f], name)).find(Boolean);
     return !body || !/mutationRefusal\s*\(|canMutate\s*\(/.test(body);
   });
   checks.equal(unguarded, [], `each single writer (${GUARDED.join(", ")}) refuses a historical event itself, not only through its callers`);
@@ -98,9 +101,11 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // seeder that only a suite calls.
   const SEAT_EXEMPT = ["app.js:normalizeGuest", "app.js:seedAssignments"];
   const seatWriters = new Map();
-  // The shell and every screen moved out of it: a seating writer that moves
-  // into src/screen-*.js is still held to the same guard.
-  for (const f of ["app.js", "app-guests.js", "app-v8.js", ...files.filter((x) => /^screen-.*\.js$/.test(x))]) {
+  // The shell and every module moved out of it (screens AND capabilities
+  // created with create(deps)): a seating writer that moves is still held to
+  // the same guard. Until 2026-11-08 this read only src/screen-*.js, so
+  // guest-record-undo.js's unassign/restore had silently left the scan.
+  for (const f of shellFiles) {
     const lines = stripped[f].split("\n");
     lines.forEach((l, i) => {
       if (/(SEAT\(\)|MeritSeatAssignment)\.(write|clear)\s*\(/.test(l)) seatWriters.set(`${f}:${enclosingFunction(lines, i)}`, f);
