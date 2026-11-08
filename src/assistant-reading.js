@@ -212,7 +212,9 @@ Kullanmadığın alanlar null; many yoksa false; steps soru için boş liste.`;
     return o;
   });
   // "add, then seat at the table": the acting layer takes the table on addGuest
-  if (steps.length === 2 && steps[0].op === "addGuest" && steps[1].op === "assign" && !steps[0].table) { steps[0].table = steps[1].table; steps.pop(); }
+  // — only the added guest's own seat: "add Haluk, seat Ahmet at T08" stays two jobs (a guest of the open event other than the one added)
+  const otherGuest = (st, name) => !!(st.guest && fold(st.guest) !== fold(name || "") && (!evNow || known(st.guest)));
+  if (steps.length === 2 && steps[0].op === "addGuest" && steps[1].op === "assign" && !steps[0].table && !otherGuest(steps[1], steps[0].name)) { steps[0].table = steps[1].table; steps.pop(); }
   return loose ? { kind: "command", plan: steps, loose: true } : { kind: "command", plan: steps };
   }
   // May the panel carry this command out by itself (with the model sure of it)?

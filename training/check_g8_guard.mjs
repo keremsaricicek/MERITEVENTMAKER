@@ -23,17 +23,21 @@ const names = new Set();
 const addName = (v) => { if (typeof v === "string" && v.trim()) fold(v).split(" ").forEach((w) => w && names.add(w)); };
 const tests = [];
 for (const f of fs.readdirSync(A).filter((f) => f.endsWith(".jsonl")).sort()) for (const d of jl(path.join(A, f))) {
-  tests.push(d.text ?? d.q);
+  tests.push(d.text ?? d.q); if (d.say) tests.push(d.say);   // runR: a voice item's spoken form too
   const g = d.gold || {};
   addName(g.person); for (const st of g.steps || []) [st.guest, st.name, st.other].forEach(addName);
   for (const c of d.calls || []) if (c[0] === "addGuest") addName(c[1]);
 }
+// runR (2026-11-08): the help how-to tests are test sentences as well
+const H = path.join(repo, "training/help");
+for (const f of fs.readdirSync(H).filter((f) => f.endsWith(".jsonl")).sort()) for (const d of jl(path.join(H, f))) tests.push(d.q);
 const fx = JSON.parse(fs.readFileSync(path.join(A, "fixture.json"), "utf8"));
 for (const e of fx.events) for (const g of e.guests) addName(g.name);
 const frame = (t, extra) => fold(t).split(" ").map((w) => (names.has(w) || extra.has(w) ? "N" : w));
 const grams = (ws, k) => ws.slice(0, ws.length - k + 1).map((_, i) => ws.slice(i, i + k).join(" ")).filter((g) => g.split(" ").length === k);
 const testFold = new Set(tests.map(fold)), testG4 = new Set(tests.flatMap((t) => grams(frame(t, new Set()), 4)));
-const briefs = jl(path.join(repo, "training/planner_briefs.jsonl")).map((b) => b.text);
+// every brief test (runR: planner_briefs_en11.jsonl joined planner_briefs.jsonl)
+const briefs = fs.readdirSync(path.join(repo, "training")).filter((f) => /^planner_briefs.*\.jsonl$/.test(f)).sort().flatMap((f) => jl(path.join(repo, "training", f))).map((b) => b.text);
 const briefFold = new Set(briefs.map(fold)), briefG6 = new Set(briefs.flatMap((t) => grams(fold(t).split(" "), 6)));
 
 // the reason an item may not be trained on, or null

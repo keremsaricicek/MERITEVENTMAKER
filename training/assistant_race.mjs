@@ -21,7 +21,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-for (const f of ["src/assistant-tools.js", "src/assistant-actions.js", "src/assistant-parse.js", "src/assistant-reading.js", "training/assistant/parse-at-race.js"]) await import(pathToFileURL(path.join(repo, f)).href);
+for (const f of ["src/assistant-tools.js", "src/assistant-actions.js", "src/assistant-parse.js", "src/assistant-reading.js", "training/assistant/parse-at-race.js", "src/help-topics.js"]) await import(pathToFileURL(path.join(repo, f)).href);
 // the rules as they were when the race was pre-registered (a frozen copy): later
 // product fixes to the rules do not change what is measured here; answer() is the product's
 // (`--rules current`: the product's rules instead, as runB7 was pre-registered to be scored;
@@ -42,6 +42,13 @@ const MUST = {
   15: ["Sezen Aksu", "5 kişi"], 16: ["Tarkan"], 17: ["Evet", "T08"], 18: ["T05", "koltuk 2"], 19: ["Ayşe Demir"], 20: ["kayıtlarda yok"],
 };
 const SETS10 = ["fresh10", "typo10", "en10", "entypo10", "deep10"];
+// `--sets a,b,…` (runR): any set file in training/assistant/ by name, scored as the deep set
+const SETSX = String(arg("sets", "")).split(",").filter(Boolean);
+// `--voice set=FILE,…` (voice end-to-end, benchmarks/voice/): a set's sentences replaced by what the speech engine heard
+// (FILE: JSON { id: transcript }); the gold reading stays the one written for the sentence
+const VOICE = Object.fromEntries(String(arg("voice", "")).split(",").filter(Boolean).map((kv) => { const [s, f] = kv.split("="); return [s, JSON.parse(fs.readFileSync(f, "utf8"))]; }));
+// `--help-set FILE` (runR): how-to questions ({topic, q}); the product answers them from the help topics first
+const HELPF = arg("help-set", null);
 const CMDS = Object.fromEntries(lines("commands.jsonl").map((c) => [c.id, c]));
 const items = [
   ...lines("questions.jsonl").map((q) => ({ set: "original", id: "Q" + q.id, kind: "question", text: q.q, must: MUST[q.id] })),
@@ -75,6 +82,8 @@ const items = [
   ...(flag("fresh3") ? lines("fresh3.jsonl").map((d) => ({ set: "fresh3", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
   // runQ's exam (training/README.md "runQ"), written by hand before grammar 8 existed
   ...SETS10.filter(flag).flatMap((s) => lines(s + ".jsonl").map((d) => ({ set: s, id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold }))),
+  ...SETSX.flatMap((s) => lines(s + ".jsonl").map((d) => ({ set: s, id: d.id, kind: d.gold.kind, text: VOICE[s] ? String(VOICE[s][d.id] ?? "") : d.text, gold: d.gold }))),
+  ...(HELPF ? fs.readFileSync(HELPF, "utf8").trim().split("\n").map((l, i) => { const h = JSON.parse(l); return { set: "help", id: "h" + (i + 1), kind: "help", text: h.q, topic: h.topic }; }) : []),
   ...lines("variants.jsonl").map((v) => {
     const n = Number(v.sameAs.slice(1));
     return v.kind === "question" ? { set: "variant", id: v.id, kind: "question", text: v.text, must: MUST[n] } : { set: "variant", id: v.id, kind: "command", text: v.text, cmd: CMDS[n] };
@@ -121,13 +130,15 @@ function outcome(item, parsed) {
   return { calls, kind: calls.length ? "calls" : out.refuse ? "refuse" : out.ask ? "ask" : "nothing" };
 }
 function score(item, parsed) {
+  // a how-to question that reached a reader: nothing to change; never right (the help topic was the answer)
+  if (item.kind === "help") { const got = outcome({ kind: "command" }, parsed); return { right: false, wrongChange: got.calls.length > 0, calls: got.calls }; }
   if (item.gold) {
     // not ours to read (small talk, the world outside): right only when read as "unknown"
     if (item.kind === "unknown") { const got = outcome(item, parsed); return { right: parsed.kind === "unknown", wrongChange: got.calls.length > 0, calls: got.calls }; }
     const want = outcome(item, toParse(item.gold)), got = outcome(item, parsed);
     // typo5: the sentence is typed carelessly, so a name echoed or added may come back with or
     // without capitals and Turkish letters — the same person either way
-    const same = /typo/.test(item.set) ? (a, b) => globalThis.MeritAssistantTools.fold(String(a)) === globalThis.MeritAssistantTools.fold(String(b)) : (a, b) => a === b;
+    const same = /typo|slang|ascii|voice/.test(item.set) ? (a, b) => globalThis.MeritAssistantTools.fold(String(a)) === globalThis.MeritAssistantTools.fold(String(b)) : (a, b) => a === b;
     if (item.kind === "question") return { right: !!want.text && same(got.text, want.text), wrongChange: false, answer: got.text };
     const right = same(JSON.stringify(got.calls), JSON.stringify(want.calls)) && got.kind === want.kind;
     return { right, wrongChange: !right && got.calls.length > 0, calls: got.calls };
@@ -161,6 +172,12 @@ function score(item, parsed) {
 // and waits for Onayla: right only if the preview is the right change (one click), never a wrong change.
 // Without a model reading, the rules' reading; a deletion only the rules read is shown first too.
 function product(item, rules, mp, conf) {
+  // the panel's order (src/screen-assistant.js answer): a how-to question is answered from the help topics first
+  const H = globalThis.MeritHelpTopics;
+  if (item.kind === "help" || (H && H.isHowTo(item.text) && !P.personIn(item.text, fx.events))) {
+    const m = H && H.isHowTo(item.text) && !P.personIn(item.text, fx.events) ? H.match(item.text) : null;
+    if (m) return { right: item.kind === "help" && m.topic.id === item.topic, wrongChange: false, calls: [], help: m.topic.id };
+  }
   // a check-in the rules read is never sent to the model (src/screen-assistant.js atDoor)
   const atDoor = rules.kind === "command" && rules.plan.every((st) => st.op === "arrive");
   const byModel = !atDoor && mp && mp.kind !== "unknown", r = byModel ? mp : rules;
@@ -243,6 +260,7 @@ const summary = { label, at: new Date().toISOString(),
   ...(flag("en9") ? { en9: { rules: sum("en9", "rules"), model: sum("en9", "model"), both: sum("en9", "both"), product: sum("en9", "product") } } : {}),
   ...(flag("entypo9") ? { entypo9: { rules: sum("entypo9", "rules"), model: sum("entypo9", "model"), both: sum("entypo9", "both"), product: sum("entypo9", "product") } } : {}),
   ...(flag("fresh3") ? { fresh3: { rules: sum("fresh3", "rules"), model: sum("fresh3", "model"), both: sum("fresh3", "both"), product: sum("fresh3", "product") } } : {}),
+  ...Object.fromEntries([...SETSX, ...(HELPF ? ["help"] : [])].map((s) => [s, { rules: sum(s, "rules"), model: sum(s, "model"), both: sum(s, "both"), product: sum(s, "product") }])),
   ...Object.fromEntries(SETS10.filter(flag).map((s) => [s, { rules: sum(s, "rules"), model: sum(s, "model"), both: sum(s, "both"), product: sum(s, "product") }])),
   medianSeconds: secs.length ? secs[Math.floor(secs.length / 2)] : null };
 fs.writeFileSync(arg("out"), JSON.stringify({ summary, rows }, null, 1));

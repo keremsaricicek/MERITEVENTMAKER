@@ -2044,3 +2044,161 @@ deep, the originals and the briefs are on seen sets. p08's seconds re-timed on a
 failed one pre-registered bar (entypo9 0.889 < 1.000: one sentence asked instead of acting, no wrong change) and was
 better on the blind runQ exam (fresh10 1.000 vs 0.833, deep10 1.000 vs 0.600, wrong previews 0 vs 4). The bar was not
 changed; the owner overrode the ship rule for this model. **Shipped: q08** (`qwen3.5-0.8b-merit-chat-q08`); p08 kept for rollback.
+
+## 2026-11-08 — runS + detector v5-s: the owner's two styles (written before any data result, training or score)
+
+**Owner's goal.** Master his two plan styles and lift the weak readings: zones (stage, dance floor, bar,
+entrance, VIP area, aisles), unseen variants, phantoms (< 3 %), table numbers, chairs/capacity.
+
+**What was looked at, said first.** All three real plans (Golden, Golden 2, ORNEK) were looked at once each
+and measured for `benchmarks/plans/STYLE-SPEC-2026-11.md` (style G = Golden/Golden 2, style P = ORNEK). All
+three are **SEEN**: nothing scored on them below is blind or unseen. No real plan goes into the new data; no
+layout, count, position or text of a real plan is copied.
+
+**Data (generation 6, `training/synth_styles.py`, deterministic from seeds, `$S/g6/make_data.sh`).**
+- Plans: train G 160 + P 120 (families G-golden 20, G-scan 21, G-warm 22, P-ornek 24, P-flat 25; layouts
+  G lounge/banquet/dense/theatre/cocktail, P grid/split/dense/theatre/cocktail; numbering row/column/block/
+  skip13/prefix/letters/insert); val G 20 + P 20 (same families, new seeds).
+- **Exam (frozen, SYNTHETIC): G 40 + P 40** — half on the held-out families **G-hold (23) and P-hold (26)**
+  over every layout incl. the held-out ones, half on training families with the **held-out layout**
+  (`diagonal` G, `arc` P) or the **held-out numbering** (`serpentine`). No exam plan, family, layout or
+  pattern is in train or val. Crops for the VLM exam: every exam plan (`vlm --seed 83 --numbers 4`, no jitter).
+  Hashes are recorded below the moment the data exists, before any model sees it.
+- VLM training crops: every 3rd train plan, jittered, a quarter of them turned (`vlm --seed 81 --jitter
+  --every 3`): ZONE, NUMBER, CHAIRS, ID and NEG (hard negatives on logos, dimension lines, planters,
+  capacity/title text, legends).
+
+**Two new closed questions** (`server/local-check-questions.json`): `zone` (one word from stage, dancefloor,
+bar, entrance, vip, aisle, seating, none) and `number` (the printed text, or none). Two looks (the crop and
+the crop turned a quarter), the product's agreement rule; abstention stays: disagreeing looks = UNSURE = no
+suggestion. **A number answer is never written into a table** (rules/ai.md: a printed table number is never
+taken from a model): it can only agree with the OCR reading (evidence) or disagree (the table's number is
+flagged "check" — UNKNOWN, never a confident wrong number). A zone answer is a suggestion a person Accepts,
+one zone at a time; nothing of either is applied by itself.
+
+**Training (CPU, `flock $S/cpu.lock`).**
+- **runS** (VLM): `vlm_lora.py train --init $S/v5/runB6d` (the shipped plan adapter, manifest
+  `qwen3.5-0.8b-merit-b6d`), `--data g6/vlm-train,v6/d6,v6/c6,v5/train --replay-tasks ID,NEG,CHAIRS,MERGED,SERVES
+  --replay-max 200 --curriculum --dtype fp32`, other options at their defaults.
+- **v5-s** (detector): `detector.py train --init v2 --steps 4000` on gen2train, gen3train, g18train, g10Ltrain
+  plus g6 train G and P (each listed twice, so the new styles are drawn about a third of the time), families
+  8, 9 excluded; thresholds 0.5 for every class, fixed, never re-calibrated.
+
+**Bars (fixed now, never changed after a result). Synthetic = the frozen exam, reported as SYNTHETIC.**
+
+VLM, new questions (two looks; "agreed-wrong" = both looks give the same wrong answer, over all items):
+| question | bar |
+|---|---|
+| zone | one-look accuracy ≥ 0.80 overall and ≥ 0.75 per style; ≥ 0.70 per zone type (stage, dancefloor, bar, entrance, vip, aisle); agreed-wrong ≤ 0.05; on `none` and `seating` crops an agreed zone claim ≤ 0.05 |
+| number | one-look exact accuracy ≥ 0.85 on printed numbers; ≥ 0.75 on two-line numbers; agreed-wrong ≤ 0.03; on truth `none` (incl. unreadable dark discs) an agreed invented number ≤ 0.03 |
+| chairs (new styles) | one-look accuracy ≥ 0.80, over-count ≤ 0.10, agreed-wrong ≤ 0.05 |
+| phantoms (NEG, hard negatives) | an agreed object named on a clutter crop ≤ 0.03 |
+
+VLM, **regression on the existing tests (must not get worse)** — same benches as B6d's evidence
+(`v5-real`, `v5-tuck2`, `v5-blind4`, `v5-s1`, two looks, same commands), runS against the B6d rows:
+- merged (shipped, autoApply): passes every bar it passes today (V5, S1, real) and the apply-by-itself bar
+  (agreed-wrong ≤ 3 %, n ≥ 30 on the real test, and on the V5 test), and its real-test agreed-wrong is not
+  above B6d's;
+- every other question on the real and tucked tests: one-look accuracy not lower than B6d's by more than 0.03,
+  fabrication (NEG) and yes-on-no not higher by more than 0.02.
+- **Ship rule:** runS replaces B6d only if every regression row holds; it is then wired for merged (+ autoApply
+  merged) and, per question, for zone/number only if that question passes its bar above. If a regression row
+  fails, **B6d stays** and nothing new is wired.
+
+Detector v5-s against v2 (measured the same day, same sets, threshold 0.5):
+- exam, per style (G, P): table and chair precision/recall; **phantom rate (false tables + false chairs) /
+  (all reported tables + chairs) < 0.03**; table recall and chair recall each ≥ v2's − 0.01, and at least one of
+  table F1 / chair F1 above v2's;
+- existing synthetic sets (gen3val, heldout, blind, blind2, g18val, g10Lval): no drop of 0.01 or more on any
+  table/chair precision/recall or column recall (`compare_candidates.py --min 1 --tol 0.0099`);
+- real, through the product (`run-benchmark.mjs`, OCR from `.vendor-cache`, network refused, a clean worktree
+  at the commit): Golden + ORNEK no regression on any guarded field of `benchmarks/BASELINE.json` and none
+  against v2 the same day; Golden 2 (SEEN) tables found ≥ v2, phantom tables ≤ v2, chairs tied ≥ v2.
+- **Ship rule:** packaged and activated (`package.py --activate`, bytes + sha256 PIN) only if every row holds;
+  otherwise v2 stays.
+
+**Not claimed by any result here.** A synthetic score is not a real-venue score; Golden, Golden 2 and ORNEK are
+seen (regression only); the zone and number questions are measured on synthetic crops only — no real plan has
+zone or number crops labelled for this question, so no real-venue accuracy exists for them.
+
+## 2026-11-08 — runR: English for every kind of input; speed; voice 2 (all three written before any runR data was trained on, any speed option was measured, or any clip was made or heard)
+
+**What was read before this section (stated).** q08's readings on the SEEN sets en9/entypo9/en10/entypo10/typo10
+(`$S/race/geq/q08x.json`): a possessive typed without an apostrophe kept as the name ("mehmet kayas" → asks), "take X
+of his table" read as a copy, the weather in Ankara read as an event question, and many right English readings only
+shown for Onayla (confidence < 0.91). Those sets stay no-regression checks, never blind.
+
+**A. New frozen blind English exam, written by hand first** (`training/mk_en11.mjs` is only its transcription; every new
+name checked absent from every pool and data file): `en11` (20, `04acb785023826d8` — plain English, numbers and table
+codes as written: "table 8", "VIP 1", "t3"), `entypo11` (20, `aa24f4bfeed15971` — en11 typed carelessly), `enslang11` (20,
+`d01d5f91bca5b2d1` — pls/thx/w/o/@/->/2/n/em/ppl/tho), `enmulti11` (20, `c002dcbea2bcba35` — 2–3 jobs, "the same table",
+"there instead", "in his place", a negation that redirects, a tail, two adds, long wrapped questions), `enascii11` (21,
+`4e0f8b08f78afa95` — Turkish names typed in ASCII, numbers as words, "T 10", "VIP-01", "table 9"), help
+`training/help/howto-en11.jsonl` (20, `a24a97c0dbd54069` — loosely typed English how-to questions, gold = help topic),
+English briefs `training/planner_briefs_en11.jsonl` (20, `289a4bf52050c30b`). Race flags `--sets
+en11,entypo11,enslang11,enmulti11,enascii11 --help-set training/help/howto-en11.jsonl` (help: the panel's order — the help
+topics first, a reader only when no topic fits; right = the right topic; a change made from a how-to is a wrong change);
+names in the new sets are compared folded (as the typo sets). Found while writing the golds and fixed first (a test
+that failed first, `assistant-grounding`): `toParse` folded "add X, seat Y at T08" into "X at T08" — a wrong change; it
+now folds only the added guest's own seat. Re-scoring q08x/p08x with the fix and the race changes: every old set identical.
+
+**Data — grammar 9** (`synth_f8.mjs --grammar 9 --seed 95 --n 2400 --prompt short`; `synth_briefs.py --grammar 9 --seed
+96 --n 600`): grammar 8 plus English 0.55 of the plain items and half of the deep ones, slang/short forms (0.3 of
+English), table codes and numbers said every way (reading always canonical T07/VIP02), pax said every way ("party of
+4", "+2", "with 3 guests" = 4, "his wife and 2 kids" = 4, "5 people total"), possessives with the apostrophe dropped,
+more unseat/delete/next-to verbs, ASCII names 0.45, English multi-step (`deepEn9`), out-of-scope English and English
+how-to sentences read as unknown; English briefs half of the briefs. The guard (`check_g8_guard.mjs`, extended: every
+`training/assistant/*.jsonl` incl. the new and voice sets and their spoken forms, `training/help/*.jsonl`, every
+`planner_briefs*.jsonl`) skipped what it rejects. **Made:** F8 2400 (`12fe6833ec577ca3`; 847 English plain + ~230
+English deep, 460 deep, 1809 skipped), BRIEF 600 (`ab50d32ea11af690`, 357 English), `data-g9` (`6f9c4fe689de4175`):
+**0 guard hits**. Stated: q08's own data-g8 shares a four-word frame with the new exam in 103 of 2000 items (the exam was
+written after it), so q08's baseline on it is not fully blind either; data-g8 is not in runR's data.
+
+**Run `runR-08`:** `--init runQ-08`, the flags of runQ exactly (fp32, plan replay `--replay-tasks
+ID,NEG,COUNT,CHAIRS,MERGED,SERVES,BRIEF --replay-max 400`, data `data-g9,v6/d6,v6/c6,v5/train`, `--curriculum --threads
+4 --save-every 5`), under `flock $S/cpu.lock`. A second run `runR2-08` (same bars) only if runR fails a bar by a cause
+the data can name; its data written before its result.
+
+**Exam:** `q08y` and `r08y` = the runQ race (`--rules current --fresh9 … --deep10 --prompt short --order hybrid --theta
+0.91`) plus the new flags; briefs `planner_brief_eval.py --prompt-cache` on `planner_briefs.jsonl` and on
+`planner_briefs_en11.jsonl`. q08 is measured on the new exam AFTER data-g9 was made (its item readings not read before
+runR's result).
+
+**Bars (not lowered later).** runR ships only if ALL hold: product right **≥ 0.95 on EACH** of en11, entypo11, enslang11,
+enmulti11, enascii11 and the help set (n = 20: at most one miss); English briefs all-right ≥ 0.95, invented ≤ 0.02; **0
+wrong changes on every set**, old and new; no regression: on each of originals, variants, deep, fresh9, typo9, en9,
+entypo9, fresh10, typo10, en10, entypo10, deep10 product right ≥ q08's, Turkish briefs all-right ≥ q08's 0.975 and
+invented ≤ 0.02; and better than q08 on the new exam (sum of right). Otherwise q08 stays. If runR and runR2 both pass,
+the one with the larger new-exam sum ships. A help-topic words change, if made, is made only from a dev set written
+before that change, never from howto-en11.
+
+**B. Speed without quality loss** (the model shipped after A). **Exam** = that race with every set above (≈ 305
+sentences), the same command, one option at a time, under `flock $S/cpu.lock`. **Baseline** = as served: `Q8_0` base +
+LoRA, `-c 4096 -t 4`, prompt cache on, short prompt. **Options, one change each:** merged into the F16 base
+(`llama-export-lora`) and quantised `Q8_0`, `Q6_K`, `Q5_K_M`, `Q4_K_M`, `IQ4_XS` (importance matrix, if used, from
+training sentences only); then on the best admissible: `-c 1024`, `-t 3`, n-gram speculative decoding (if the hybrid
+architecture supports it; otherwise "not supported", stated). The prompt cache is already on and the prompt already the
+short one (cached, ~0 s) — not options. **Admissible** = on every set product right ≥ the baseline's and 0 wrong changes.
+**Ship** the fastest admissible (median seconds a sentence; p95, file size and RAM reported); a combination of admissible
+changes is measured once more (race + both brief sets: fields, all-right not lower, invented ≤ 0.02) before it ships.
+
+**C. Voice 2 — spoken commands** (`training/mk_voice11.mjs`, written by hand: `text` = the written sentence and its gold
+reading, `say` = how it is spoken). Test: `voicetr` (24, `5764505c3e655c13`), `voiceen` (24, `d8a99464e0912f05`) — open
+event's guests, new names, numbers, table codes (te beşe, vip bire, table five, VIP one), short commands, questions, one
+out-of-scope; dev (settings only, never reported as the test): `voicedevtr` (12, `dac41a05b16c91e0`), `voicedeven` (12,
+`0dbaf16b918148f6`). **Audio = synthetic speech, stated as such:** TR piper `tr_TR-dfki-medium` (CC BY-NC-SA 4.0) and
+`facebook/mms-tts-tur` (CC BY-NC 4.0); EN piper `en_US-libritts_r-medium` (CC BY 4.0) speakers 20 and 100. Test audio
+only, never shipped or trained on. **Door noise:** babble of six FLEURS test clips (CC BY 4.0, 3 TR + 3 EN, summed at
+random offsets) plus pink noise 10 dB below it, mixed at **SNR 10 dB** ("door") and **5 dB** ("loud door"); clean too.
+Every clip is 5.0 s (speech from 0.4 s; a longer sentence gets 0.8 s after it), 16 kHz mono. **Metrics:** WER after the
+FLEURS normalisation plus: digits → number words of the language (a case ending kept on: "5'e" → "beşe"), letters and
+digits split ("t05" → "t beş"), "te" → "t"; English folds Turkish letters both sides. **Command right** = the transcript
+put in the F8 box and read by the product (`assistant_race.mjs --voice`, rules + the shipped chat model, product rule):
+the gold outcome. Seconds = the engine's wall time per clip (process start to text), 4 threads, free CPU.
+**Settings searched on DEV (door 10 dB) only:** baseline (ggml-small-q5_1, `-nt -np -t 4`, beam 5), + initial prompt
+with the open event's guest names and table codes, + greedy (`-bs 1 -bo 1`), + `-ac 768`, + VAD (silero), `-t 3`, and
+`large-v3-turbo-q5_0` with the best flags. **Choice:** among settings with median ≤ 5.0 s, the most dev commands right
+(TR+EN); ties → faster. **Run once on the test. Bars (door 10 dB, per language, 48 clips):** TR WER ≤ 0.15, EN WER ≤ 0.10;
+command right ≥ 0.85; 0 wrong changes; median ≤ 5.0 s per 5-s clip on this CPU (p95 reported; the owner's PC is measured
+later). Clean and 5 dB reported, not bars. The chosen settings go into the voice config with their suite only if every
+bar holds; otherwise the shipped settings stay and the result is reported.

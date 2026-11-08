@@ -23,7 +23,8 @@ const R = globalThis.MeritAssistantReading;
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : d; };
 // `--grammar 2` (runB7b): more phrasings per intent and step, two-job sentences sharing a verb
 // or a pronoun, more small talk; grammar 1 (runB7) is unchanged and reproducible
-const G8 = arg("grammar", "1") === "8";   // runQ: grammar 7 + multi-step/deep, careless English, every test name barred
+const G9 = arg("grammar", "1") === "9";   // runR: grammar 8 + deep English (slang, table codes, numbers, ASCII names, how-to and out-of-scope English)
+const G8 = arg("grammar", "1") === "8" || G9;   // runQ: grammar 7 + multi-step/deep, careless English, every test name barred
 const G7 = arg("grammar", "1") === "7" || G8;   // runEq: grammar 6 + more careless typing, more English, surnames ending k/p/t/ç (softening)
 const G6 = arg("grammar", "1") === "6" || G7;   // runB7f: grammar 5 + English sentences (owner 2026-11-02: the program is fully English too)
 const G5 = arg("grammar", "1") === "5" || G6;   // runB7e: grammar 4 + surnames ending in -in/-ın/-un/-ün kept whole, negation with other verbs
@@ -262,13 +263,13 @@ function stepEn() {
 }
 function commandEn() {
   const k = rnd() < 0.8 ? 1 : 2, parts = [], steps = [];
-  while (parts.length < k) { const [t, s] = stepEn(), ss = Array.isArray(s) ? s : [s]; if (steps.length + ss.length > 3) break; parts.push(t); steps.push(...ss); }
+  while (parts.length < k) { const [t, s] = G9 && chance(0.65) ? stepEn9() : stepEn(), ss = Array.isArray(s) ? s : [s]; if (steps.length + ss.length > 3) break; parts.push(t); steps.push(...ss); }
   let text = parts[0]; for (let i = 1; i < parts.length; i++) text += pick([" and ", ", then ", "; also "]) + (G8 ? lcVerb(parts[i]) : parts[i].replace(/^./, (c) => c.toLowerCase()));
   return [text, Cr(G8 ? fold3(steps) : steps)];
 }
 function english() {
   const r = rnd();
-  const [text, reading] = r < 0.42 ? questionEn() : r < 0.9 ? commandEn() : [pick(SMALL_EN), Ur()];
+  const [text, reading] = r < 0.42 ? questionEn() : r < (G9 ? 0.86 : 0.9) ? commandEn() : [G9 ? pick(chance(0.45) ? OUT_EN : chance(0.4) ? HOWTO_EN : SMALL_EN) : pick(SMALL_EN), Ur()];
   const low = chance(0.3), q = reading.kind === "question";
   let tx = text + (q ? pick(["?", "?", "", " please?"]) : pick(["", "", ".", " please", " thanks"]));
   const r2 = JSON.parse(JSON.stringify(reading));
@@ -373,7 +374,7 @@ function deepEn() {
     return [`${pick(["First move", "Move", "Seat"])} ${g} ${pick(["to", "at"])} ${t}${pick([", then ", " and then ", "; after that "])}put ${name}${extra} at that table as well`, Cr(fold3([St("assign", { guest: g, table: t }), St("addGuest", { name, pax: n + 1 }), St("assign", { guest: name, table: t })]))];
   }
   const k = chance(0.6) ? 2 : 3, parts = [], steps = [], ord = pick([["First ", ", then ", ", and finally "], ["", " and then ", ", and after that "], ["", "; after that ", "; lastly "]]);
-  while (parts.length < k) { const [t, s] = stepEn(), ss = Array.isArray(s) ? s : [s]; if (steps.length + ss.length > 3) break; parts.push(t); steps.push(...ss); }
+  while (parts.length < k) { const [t, s] = G9 && chance(0.6) ? stepEn9() : stepEn(), ss = Array.isArray(s) ? s : [s]; if (steps.length + ss.length > 3) break; parts.push(t); steps.push(...ss); }
   if (parts.length < 2) return deepEn();
   let text = ord[0] + (ord[0] ? lcVerb(parts[0]) : parts[0]);
   for (let i = 1; i < parts.length; i++) text += ord[Math.min(i, 2)] + lcVerb(parts[i]);
@@ -391,6 +392,83 @@ function surfaceEn(text, reading) {
   r2.steps = r2.steps.map((s) => ({ ...s, guest: map(s.guest), name: map(s.name), other: s.other == null ? s.other : (tr ? detr(s.other) : s.other), from: s.from == null ? s.from : (tr ? detr(s.from) : s.from) }));
   return [tx, r2];
 }
+
+// ---- grammar 9 (runR): deep English, from the misses read on the SEEN sets (en9/entypo9/en10/entypo10) --------
+// possessives typed without an apostrophe ("kayas group" = Kaya), "take X of(f) the table" = unseat (not a copy),
+// out-of-scope English questions = unknown, low confidence on English — and the kinds of English the owner listed:
+// slang and short forms, table codes and numbers in every shape, Turkish names typed in ASCII, multi-step, how-to.
+const NUM_EN = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+// a table as people say or type it; the reading always carries the canonical code (T07, VIP02)
+function tableSaid(t) {
+  const m = /^([A-Z]+)(\d+)$/.exec(t), p = m[1], n = Number(m[2]), r = rnd();
+  if (p === "T") return r < 0.25 ? t : r < 0.4 ? `table ${n}` : r < 0.5 ? (n <= 12 ? `table ${NUM_EN[n]}` : `table ${n}`) : r < 0.62 ? `t${n}` : r < 0.72 ? `T${n}` : r < 0.8 ? `T ${m[2]}` : r < 0.88 ? `t${m[2]}` : r < 0.94 ? `table T${m[2]}` : `T-${m[2]}`;
+  return r < 0.3 ? t : r < 0.45 ? `${p} ${n}` : r < 0.55 ? `${p.toLowerCase()}${n}` : r < 0.65 ? `${p}-${m[2]}` : r < 0.75 ? `${p.toLowerCase()} ${m[2]}` : r < 0.85 ? (n <= 12 ? `${p} ${NUM_EN[n]}` : t) : `${p} table ${n}`;
+}
+const pron = () => pick([["him", "his"], ["her", "her"], ["them", "their"]]);
+function stepEn9() {
+  const g = person(), t = table(), ts = tableSaid(t), [ob, po] = pron(), r = rnd();
+  if (r < 0.16) return [pick([`Seat ${g} at ${ts}`, `Move ${g} to ${ts}`, `Put ${g} at ${ts}`, `${g} goes to ${ts}`, `Send ${g} over to ${ts}`, `Sit ${g} at ${ts}`, `Stick ${g} at ${ts}`, `${g} should be at ${ts}`, `Can you put ${g} at ${ts}`, `${g} -> ${ts}`]), St("assign", { guest: g, table: t })];
+  if (r < 0.24) { const e = eventEn(); if (e.word === "son konser") return stepEn9(); return [pick([`Give ${g} ${po} ${e.say.replace(/^the /, "")} seat`, `Seat ${g} where ${ob === "them" ? "they" : ob === "him" ? "he" : "she"} sat at ${e.say}`, `${g} should sit wherever ${ob === "them" ? "they" : ob === "him" ? "he" : "she"} sat at ${e.say}`, `Same seat for ${g} as at ${e.say}`]), St("copySeat", { guest: g, from: e.word })]; }
+  if (r < 0.32) { const o = person(); if (o === g) return stepEn9(); return [pick([`Sit ${g} beside ${o}`, `Seat ${g} next to ${o}`, `Put ${g} with ${o}`, `${g} sits next to ${o}`, `Place ${g} by ${o}`, `Move ${g} next to ${o}`]), St("nextTo", { guest: g, other: o.toLocaleLowerCase("tr") })]; }
+  if (r < 0.39) { const f = table(); if (f === t) return stepEn9(); const fs2 = tableSaid(f); return [pick([`Move everyone from ${fs2} to ${ts}`, `Move the whole of ${fs2} over to ${ts}`, `Everybody at ${fs2} goes to ${ts}`, `Shift all the guests at ${fs2} to ${ts}`, `Swap all of ${fs2} into ${ts}`]), St("moveTable", { table: t, fromTable: f })]; }
+  if (r < 0.5) return [pick([`Take ${g} off ${po} table`, `Take ${g} off the table but keep ${ob}`, `Free up ${own(g)} seat`, `Unseat ${g}, keep ${ob} on the list`, `${g} doesn't need a table anymore, keep ${ob} on the list`, `Clear ${own(g)} seat but don't delete ${ob}`, `Get ${g} off ${po} table`, `Remove ${g} from ${po} table only`]), St("unassign", { guest: g })];
+  if (r < 0.57) return [pick([`Delete ${g}`, `Remove ${g} from the guest list completely`, `${g} cancelled, delete ${ob}`, `Kick ${g} off the list`, `Drop ${g} from the list`, `Erase ${g}`]), St("deleteGuest", { guest: g })];
+  if (r < 0.69) {
+    const k = rnd(), n = 1 + Math.floor(rnd() * 6);
+    const [say, pax] = k < 0.25 ? [pick([`${own(g)} party is now ${n}`, `Make ${own(g)} group ${n}`, `Set ${own(g)} party to ${n}`, `${own(g)} group is ${pick(NUM_EN.slice(1, 8))} people now`].map((x) => x)), null]
+      : k < 0.45 ? [pick([`${g} is coming as ${NUM_EN[n]}`, `${g} is a party of ${n}`, `${g} will be ${n} people total`, `${g} comes with ${n} people in total`]), n]
+      : k < 0.65 ? [pick([`${g} is bringing ${NUM_EN[n]} guests`, `${g} comes with ${n} guests`, `${g} plus ${n}`]), n + 1]
+      : k < 0.8 ? [pick([`${g} is coming with ${po} wife`, `${g} brings ${po} husband`, `${g} and partner are coming`]), 2]
+      : [`${g} is coming with ${po === "their" ? "their" : po} wife and ${NUM_EN[Math.max(1, n - 1)]} kids`, 2 + Math.max(1, n - 1)];
+    if (pax === null) { const m = say.match(/(\d+)|(one|two|three|four|five|six|seven) people/); const v = m[1] ? Number(m[1]) : NUM_EN.indexOf(m[2]); return [say, St("setPax", { guest: g, pax: v })]; }
+    return [say, St("setPax", { guest: g, pax })];
+  }
+  if (r < 0.76) return [pick([`Make ${g} a VIP`, `Mark ${g} VIP`, `${g} is VIP from now on`, `Flag ${g} as VIP`, `Give ${g} VIP status`, `VIP for ${g}`]), St("setVip", { guest: g })];
+  const name = person(true), n = pick([0, 0, 1, 1, 2, 3]);
+  const extra = n === 0 ? pick(["", "", " alone", " on their own"]) : n === 1 ? pick([" +1", " and his wife", " and her husband", " with a friend", " with one guest", " plus one"]) : pick([` +${n}`, ` with ${NUM_EN[n]} guests`, ` and ${NUM_EN[n]} friends`, ` with ${n} guests`]);
+  const party = chance(0.15) ? pick([[`, party of ${n + 1}`, n + 1], [`, ${n + 1} people`, n + 1]]) : ["", null];
+  const pax = party[1] ?? n + 1, ex = party[1] ? "" : extra;
+  if (chance(0.35)) return [pick([`Add ${name}${ex}${party[0]} to ${ts}`, `Add ${name}${ex}${party[0]} and seat them at ${ts}`, `Bring in ${name}${ex} and put them at ${ts}`, `New guest ${name}${ex}, seat at ${ts}`]), [St("addGuest", { name, pax }), St("assign", { guest: name, table: t })]];
+  return [pick([`Add ${name}${ex}${party[0]}`, `New guest: ${name}${ex}${party[0]}`, `Put ${name}${ex} on the list`, `Add ${name}${ex} to the guest list`, `Sign up ${name}${ex}`]), St("addGuest", { name, pax })];
+}
+
+function deepEn9() {
+  const A = person(), B = person(), t = table(), ts = tableSaid(t), [ob, po] = pron(), N = person(true), N2 = person(true), r = rnd();
+  if (A === B || N === N2) return deepEn9();
+  const tail = pick(["", "", "", "; if they're not on the list ask me first", ", only if they're on the list", " - ask me if you can't find them", "; don't change anything if unsure"]);
+  const k = pick([0, 1, 1, 2]), plus = k === 0 ? "" : k === 1 ? pick([" and his wife", " +1", " with her husband"]) : pick([" +2", ` with ${NUM_EN[k]} guests`]);
+  if (r < 0.12) return [`${pick(["Seat", "Put", "Move"])} ${A} ${pick(["at", "to"])} ${ts}${pick([", then ", " and then ", "; after that "])}${pick([`put ${B} at the same table`, `seat ${B} there too`, `move ${B} to that table as well`, `${B} goes there too`])}${tail}`, Cr([St("assign", { guest: A, table: t }), St("assign", { guest: B, table: t })])];
+  if (r < 0.22) return [`${pick(["Take", "Get"])} ${A} off ${ts} and ${pick([`seat ${B} there instead`, `put ${B} in ${po} place`, `give the spot to ${B}`])}`, Cr([St("unassign", { guest: A }), St("assign", { guest: B, table: t })])];
+  if (r < 0.32) return [`${pick(["Delete", "Remove"])} ${A}${pick([" and", ", then"])} add ${N}${plus} in ${po} place at ${ts}`, Cr([St("deleteGuest", { guest: A }), St("addGuest", { name: N, pax: k + 1, table: t })])];
+  if (r < 0.42) { const a = 1 + Math.floor(rnd() * 3), b = a + 1 + Math.floor(rnd() * 3); return [`${pick(["Change", "Bump", "Update"])} ${own(A)} party from ${a} to ${b}${pick([" and mark", ", then make", " and make"])} ${ob} VIP`, Cr([St("setPax", { guest: A, pax: b }), St("setVip", { guest: A })])]; }
+  if (r < 0.52) return [`Add ${N}${plus} to ${ts}${pick([", then move ", " and then seat ", "; also put "])}${B} ${pick(["at the same table", "there as well", "at that table too"])}`, Cr([St("addGuest", { name: N, pax: k + 1, table: t }), St("assign", { guest: B, table: t })])];
+  if (r < 0.62) return [`${pick(["Don't seat", "Do not put", "No need to put"])} ${A} next to ${B}${pick(["; put ", ", seat ", " - move "])}${ob} at ${ts} instead`, Cr([St("assign", { guest: A, table: t })])];
+  if (r < 0.7) return [`Move ${A} to ${ts} and ${B} to ${ts} too`, Cr([St("assign", { guest: A, table: t }), St("assign", { guest: B, table: t })])];
+  if (r < 0.78) return [`Add ${N} and ${N2}${pick([", both at ", " and seat both at ", ", the two of them at "])}${ts}`, Cr([St("addGuest", { name: N, pax: 1, table: t }), St("addGuest", { name: N2, pax: 1, table: t })])];
+  if (r < 0.86) return [`${pick(["Put", "Add"])} ${N}${plus} on the list ${pick(["and seat", "and then move", ", then put"])} ${B} at ${ts}`, Cr([St("addGuest", { name: N, pax: k + 1 }), St("assign", { guest: B, table: t })])];
+  const [q, rd] = chance(0.5) ? questionEn() : [pick([`where did ${A} sit at the last concert`]), Qr("seatAt", { person: A, event: "son konser" })];
+  return [pick(["My manager is asking: ", "Quick one before the briefing: ", "For the client, ", "Just double-checking: ", "Before I print the list, ", "Sorry to bother you, ", "Can you look this up - "]) + q + pick(["", ", I need it for the report", ", thanks", ", can't remember", " - urgent"]), rd];
+}
+// short forms and slang; the reading does not change
+const SLANG = [[/\bplease\b/gi, () => pick(["pls", "plz", "please"])], [/\bthanks\b/gi, () => pick(["thx", "ty", "thanks"])], [/\bwith\b/g, () => pick(["w/", "with"])], [/\bwithout\b/g, () => "w/o"],
+  [/\b(at) (?=[A-Z]{1,3}\d|t\d|table)/g, () => pick(["@ ", "at "])], [/\band\b/g, () => pick(["n", "&", "and", "and"])], [/\bthem\b/g, () => pick(["em", "them"])], [/\bpeople\b/g, () => pick(["ppl", "people"])],
+  [/\byou\b/gi, () => pick(["u", "you"])], [/\b(next) to\b/g, () => pick(["next 2", "next to"])], [/\bthough\b/g, () => "tho"], [/\bgoing to\b/g, () => "gonna"]];
+function slangEn(text) {
+  for (const [re, f] of SLANG) if (chance(0.6)) text = text.replace(re, () => f());
+  if (chance(0.3)) text = pick(["yo ", "hey ", "ok so ", "quick one: ", "k ", "btw "]) + text.replace(/^./, (c) => c.toLowerCase());
+  if (chance(0.35)) text += pick([" asap", " pls", " thx", " k?", " rn", " ty"]);
+  return chance(0.6) ? text.toLowerCase() : text;
+}
+// questions the reader must leave alone (the world outside, other jobs), and how-to questions (the help topics answer them)
+const OUT_EN = ["What's the weather like in Izmir this weekend", "What time is it in New York", "Book a taxi for the band", "What's 12 times 14", "Translate thank you into German", "Who won the game last night",
+  "Set an alarm for 6", "Email the caterer about the menu", "Order more chairs from the supplier", "How much is the dollar today", "What's the capital of Australia", "Call the florist",
+  "Is it going to rain in Bursa tomorrow", "Remind me to buy batteries", "How far is the airport", "Write a toast for the bride", "What's the wifi password", "Play some jazz", "Tell me something interesting",
+  "What should the dress code be", "Which wine goes with fish", "How long is the drive to Bodrum", "Find me a cheap hotel", "Can you sing", "ur the best lol", "nvm", "ok cool", "brb", "lmao no", "who r u"];
+const HOWTO_EN = ["how do I print the guest list", "how can I change the event date", "where do I find the backups", "how do I rotate a table on the plan", "how do I lock part of the room",
+  "what does the green dot mean", "how do I switch the app to Turkish", "how can I mark a table out of use", "how do I send an error report", "where can I see the door list",
+  "how do I search for a guest", "how do I move an event to another computer", "how do I let the program suggest seats", "what does unassigned mean", "how can I change a table's number",
+  "how to upload a new floor plan", "how do i add guests one by one", "how do i start check in on the night"];
+
 // ---- surface: fillers, case, no Turkish letters -----------------------------------------------
 const DETR = { ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u", Ç: "C", Ğ: "G", İ: "I", Ö: "O", Ş: "S", Ü: "U" };
 const detr = (s) => s.replace(/[çğıöşüÇĞİÖŞÜ]/g, (c) => DETR[c]);
@@ -503,7 +581,7 @@ while (n < N) {
   // grammar 8: 30 % multi-step / deep (a quarter of them English)
   if (G8 && chance(0.3)) {
     let text, reading;
-    if (chance(0.25)) { [text, reading] = surfaceEn(...deepEn()); if (chance(0.6)) text = carelessEn(text, reading); }
+    if (chance(G9 ? 0.5 : 0.25)) { [text, reading] = surfaceEn(...(G9 && chance(0.55) ? deepEn9() : deepEn())); if (G9 && chance(0.25)) text = slangEn(text); else if (chance(0.6)) text = carelessEn(text, reading); }
     else { [text, reading] = chance(0.7) ? deepCommand() : deepQuestion(); [text, reading] = finish(text, reading, reading.kind === "question"); if (chance(0.5)) text = careless(text, reading); }
     if (!ok(text, reading)) { skipped++; continue; }
     seen.add(norm(text)); counts.deep = (counts.deep || 0) + 1; counts[reading.kind] = (counts[reading.kind] || 0) + 1;
@@ -513,10 +591,11 @@ while (n < N) {
     n++; continue;
   }
   const r = rnd();
-  if (G6 && chance(Number(arg("english", G7 ? "0.4" : "0.33")))) {
+  if (G6 && chance(Number(arg("english", G9 ? "0.55" : G7 ? "0.4" : "0.33")))) {
     let [text, reading] = english();
-    if (G8 && chance(0.4)) { text = detr(text); const d = (v) => (typeof v === "string" ? detr(v) : v); reading = { ...reading, person: d(reading.person), event: d(reading.event), steps: reading.steps.map((s) => ({ ...s, guest: d(s.guest), name: d(s.name), other: d(s.other), from: d(s.from) })) }; }
-    if (chance(G7 ? 0.6 : 0.45)) text = G8 ? carelessEn(text, reading) : careless(text, reading);
+    if (G8 && chance(G9 ? 0.45 : 0.4)) { text = detr(text); const d = (v) => (typeof v === "string" ? detr(v) : v); reading = { ...reading, person: d(reading.person), event: d(reading.event), steps: reading.steps.map((s) => ({ ...s, guest: d(s.guest), name: d(s.name), other: d(s.other), from: d(s.from) })) }; }
+    if (G9 && chance(0.3)) text = slangEn(text);
+    else if (chance(G7 ? 0.6 : 0.45)) text = G8 ? carelessEn(text, reading) : careless(text, reading);
     const key = norm(text);
     if ((G8guard && G8guard.f8(text, reading)) || testTexts.has(key) || seen.has(key) || grams(frame(text)).some((g) => testGrams.has(g)) || key.split(" ").some((w) => banned.has(w)) || !R.valid(reading)) { skipped++; continue; }
     seen.add(key); counts.english = (counts.english || 0) + 1; counts[reading.kind] = (counts[reading.kind] || 0) + 1;

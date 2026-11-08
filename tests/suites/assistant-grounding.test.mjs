@@ -59,4 +59,11 @@ export default async function run({ checks, repoRoot }) {
   checks.ok(T.fold(p.plan[0].guest) === "mehmet kaya" && p.loose, "a guest the model bent is taken from the sentence — and shown first", p);
   p = R.toParse(cmd([{ op: "copySeat", guest: "ahmet yilmaz", from: "can ozturkun" }]), E, fx.today, "ahmet yilmazi can ozturkun masasina oturt", fx.current);
   checks.ok(p.plan[0].op === "nextTo" && /ozturk/.test(p.plan[0].other) && p.loose, "a copy 'from' a guest is a seat next to that guest — shown first", p);
+
+  // AN ADD AND SOMEONE ELSE'S SEAT ARE TWO JOBS (2026-11-08, found writing runR's enmulti11): "add Haluk,
+  // seat Ahmet at T08" must not become "Haluk at T08" — only the added guest's own seat joins the add
+  p = R.toParse(cmd([{ op: "addGuest", name: "Haluk Yeşil", pax: 2 }, { op: "assign", guest: "Ahmet Yılmaz", table: "T08" }]), E, fx.today, "Put Haluk Yeşil on the list with his wife and seat Ahmet Yılmaz at T08", fx.current);
+  checks.ok(p.plan.length === 2 && p.plan[0].op === "addGuest" && !p.plan[0].table && p.plan[1].op === "assign" && p.plan[1].guest === "Ahmet Yılmaz", "an add and another guest's seat stay two steps", p);
+  p = R.toParse(cmd([{ op: "addGuest", name: "Haluk Yeşil", pax: 2 }, { op: "assign", guest: "haluk yesil", table: "T08" }]), E, fx.today, "add haluk yesil and his wife to t08", fx.current);
+  checks.ok(p.plan.length === 1 && p.plan[0].table === "T08", "…the added guest's own seat still joins the add", p);
 }
