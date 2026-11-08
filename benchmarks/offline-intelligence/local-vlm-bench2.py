@@ -345,7 +345,8 @@ def build_v5_items(d):
     for line in open(os.path.join(d, "items.jsonl")):
         r = json.loads(line)
         with open(os.path.join(d, r["image"]), "rb") as f:
-            items.append(dict(task=r["task"], source="v5", sub=r["sub"], truth=r["truth"], q=r["q"], level=r["level"], family=r["family"],
+            truth = norm_label(r["truth"]) if r["task"] == "NUMBER" and r["truth"] != "none" else r["truth"]
+            items.append(dict(task=r["task"], source="v5", sub=r["sub"], truth=truth, q=r["q"], level=r["level"], family=r["family"],
                               image=base64.b64encode(f.read()).decode()))
     return items
 
@@ -483,11 +484,44 @@ def peak_rss_mb(pid):
         return None
 
 
+# 2026-11-08 (generation 6, training/synth_styles.py): what an area is for, and the number
+# printed on a table. Same rule as the other answers: the earliest listed word or synonym,
+# the first label-shaped token; anything else is None ("no answer", never a guess).
+ZONE_WORDS = list(_QF.get("zoneWords", []))
+ZONE_SYN = {"dance floor": "dancefloor", "dance": "dancefloor", "door": "entrance", "doorway": "entrance", "exit": "entrance", "corridor": "aisle",
+            "walkway": "aisle", "podium": "stage", "tables": "seating", "dining": "seating", "nothing": "none", "empty": "none", "counter": "bar"}
+
+
+def answer_zone(text):
+    t = text.lower()
+    hits = [(m.start(), w) for w in ZONE_WORDS for m in [re.search(r"\b" + w + r"s?\b", t)] if m]
+    hits += [(m.start(), ZONE_SYN[w]) for w in ZONE_SYN for m in [re.search(r"\b" + w + r"s?\b", t)] if m]
+    return min(hits)[1] if hits else None
+
+
+def norm_label(s):
+    return re.sub(r"[\s\-]", "", str(s)).upper()
+
+
+def answer_label(text):
+    t = text.strip().upper()
+    if re.match(r"^(NONE|NO\b|NOTHING|N/A)", t):
+        return "none"
+    m = re.search(r"\b([A-Z]{1,2}-?\d{1,3}[A-Z]?|\d{1,3}[A-Z]?)\b", t)
+    if m:
+        return norm_label(m.group(1))
+    return "none" if re.search(r"\bNONE\b", t) else None
+
+
 def parse(task, text):
     if task in ("ID", "NEG"):
         return answer_word(text)
     if task in ("COUNT", "CHAIRS"):
         return answer_number(text)
+    if task == "ZONE":
+        return answer_zone(text)
+    if task == "NUMBER":
+        return answer_label(text)
     return answer_yesno(text)
 
 
