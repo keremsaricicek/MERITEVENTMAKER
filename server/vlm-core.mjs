@@ -472,6 +472,26 @@ export function parseAskAnswer(question, raw) {
     return null;
   }
   if (kind === "yesno") { const m = /\b(yes|no)\b/.exec(text); return m ? m[1] : null; }
+  // 2026-11-08 (runS): what an area is for, and the label printed on a table — the
+  // benchmark's answer_zone / answer_label, the same as src/plan-zone-number-check.js.
+  // A label is only ever compared with OCR's reading, never written into a table.
+  if (kind === "zone") {
+    const syn = { "dance floor": "dancefloor", dance: "dancefloor", door: "entrance", doorway: "entrance", exit: "entrance", corridor: "aisle",
+      walkway: "aisle", podium: "stage", tables: "seating", dining: "seating", nothing: "none", empty: "none", counter: "bar" };
+    let best = null;
+    for (const [w, to] of [...(ASK_SPEC.zoneWords || []).map(w => [w, w]), ...Object.entries(syn)]) {
+      const m = new RegExp("\\b" + escRe(w) + "s?\\b").exec(text);
+      if (m && (!best || m.index < best.at)) best = { at: m.index, value: to };
+    }
+    return best ? best.value : null;
+  }
+  if (kind === "label") {
+    const t = text.trim().toUpperCase();
+    if (/^(NONE|NO\b|NOTHING|N\/A)/.test(t)) return "none";
+    const m = /\b([A-Z]{1,2}-?\d{1,3}[A-Z]?|\d{1,3}[A-Z]?)\b/.exec(t);
+    if (m) return m[1].replace(/[\s-]/g, "");
+    return /\bNONE\b/.test(t) ? "none" : null;
+  }
   return null;
 }
 
