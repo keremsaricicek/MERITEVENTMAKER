@@ -38,12 +38,12 @@ const INVENTORY = {
   // object (a table at x %, a progress bar's width). Moving them to CSSOM
   // (`el.style.left = …`, which no policy blocks) is the path to dropping it.
   styleAttr: {
-    "app-guests.js": 12, "app-v8.js": 8, "app.js": 9, "screen-events.js": 2, "screen-guests.js": 5,
+    "app-guests.js": 12, "app-v8.js": 7, "app.js": 9, "screen-events.js": 2, "screen-guests.js": 5,
     "screen-live.js": 4, "screen-reading.js": 3, "screen-reports.js": 10, "screen-review.js": 6,
     "screen-seating.js": 2, "screen-vlm.js": 3, "screen-wizard.js": 2,
     // moved with their code out of app-v8.js (benchmarks/CODE-HEALTH-2026-11.md): the
     // PDF page thumbnails' and cover's sizes, and the load band's fill width.
-    "screen-setup.js": 2, "service-load-panel.js": 1,
+    "screen-setup.js": 2, "service-load-panel.js": 1, "floor-plan-view.js": 1,
   },
   // worker-src blob: / script-src blob: — the OCR engines and the ONNX worker
   // pool build their worker code into a Blob so the package needs no server.

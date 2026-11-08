@@ -98,7 +98,8 @@ function blockDecls(stmts) {
 function freeRefs(ast) {
   const refs = [];          // { name, node, parent, write, call, shorthand, compound }
   const lookup = (scope, n) => { for (let s = scope; s; s = s.up) if (s.names.has(n)) return true; return false; };
-  const ref = (node, scope, parent, extra = {}) => { if (!lookup(scope, node.name)) refs.push({ name: node.name, node, parent, ...extra }); };
+  const fnDepth = (scope) => { let d = 0; for (let s = scope; s; s = s.up) if (s.isFn) d++; return d; };
+  const ref = (node, scope, parent, extra = {}) => { if (!lookup(scope, node.name)) refs.push({ name: node.name, node, parent, depth: fnDepth(scope), ...extra }); };
   const mk = (up, names) => ({ up, names: new Set(names) });
   function writeTarget(p, scope, compound) {
     if (!p) return;
@@ -118,6 +119,7 @@ function freeRefs(ast) {
   }
   function fn(node, scope) {
     const own = mk(scope, node.type === "FunctionExpression" && node.id ? [node.id.name] : []);
+    own.isFn = true;
     const s = mk(own, [...node.params.flatMap((p) => patternNames(p)), ...(node.body.type === "BlockStatement" ? [...varNames(node.body.body), ...blockDecls(node.body.body)] : [])]);
     node.params.forEach((p) => declPattern(p, s));
     if (node.body.type === "BlockStatement") node.body.body.forEach((b) => visit(b, s, node.body)); else visit(node.body, s, node);
@@ -212,11 +214,22 @@ const overrideNames = new Set(overrides.map((o) => o.name));
 const refs = freeRefs(regionAst).filter((r) => !(overrideNames.has(r.name) && r.write && overrides.some((o) => o.stmt.expression.left === r.node)));
 
 const problems = [];
+const preOverride = new Set();
 const deps = new Map();       // name -> "fn" | "value" | "getset"
 const toGlobal = new Set();
 for (const r of refs) {
   const n = r.name;
-  if (overrideNames.has(n)) continue;                       // becomes the module's own function
+  if (overrideNames.has(n)) {
+    // Inside a function it runs after the reassignment, so it meant v8's body —
+    // the module's own function now. At the region's TOP LEVEL it ran at boot,
+    // before (or as) the override, and read the PRE-v8 global: e.g.
+    // `const oldViewport=canvasViewportHTML;` captures app.js's body. Read
+    // there through globalThis, which is that global (a top-level function of
+    // app.js); turning it into the module's hoisted local recursed forever
+    // (move 7a's first run: "Maximum call stack size exceeded").
+    if (r.depth <= 1 && !r.write) { const g = globalBindings.get(n); if (!g || g.kind !== "function") problems.push(`top-level read of override ${n}, which is not an app.js function`); else preOverride.add(r); }
+    continue;
+  }
   if (BROWSER.has(n) || EXTRA_BUILTINS.has(n)) { if (r.write) problems.push(`writes the built-in ${n}`); continue; }
   const sb = shellBindings.get(n), gb = globalBindings.get(n);
   const b = sb || gb;
@@ -235,7 +248,11 @@ for (const r of refs) {
   if (isFn && re) { deps.set(n, deps.get(n) === "getset" ? "getset" : (r.write ? "getset" : "fn")); continue; }
   if (re) { deps.set(n, "getset"); continue; }
   if (b.kind === "const" || b.kind === "let") {
-    if (sb && sb.start > regionStart) problems.push(`shell ${b.kind} ${n} is declared BELOW the cut; handing it over by value would read it before it exists`);
+    // Declared BELOW the cut: it does not exist yet when create() runs, so it
+    // is read through getName() at the moment of use, like a reassigned
+    // binding (a read at create time would still be a TDZ error at boot, which
+    // every browser suite catches).
+    if (sb && sb.start > regionStart) { if (r.write) problems.push(`writes shell ${b.kind} ${n} declared below the cut`); deps.set(n, "getset"); continue; }
     if (!deps.has(n)) deps.set(n, "value");
   }
 }
@@ -272,7 +289,7 @@ const at = (node) => node.start - WRAP.length;
 for (const r of refs) {
   const n = r.name;
   let rep = null;
-  if (toGlobal.has(n)) rep = `globalThis.${n}`;
+  if (toGlobal.has(n) || preOverride.has(r)) rep = `globalThis.${n}`;
   else if (deps.get(n) === "getset") {
     if (r.write) { edits.push({ kind: "write", name: n, node: r.node }); continue; }
     rep = `get${cap(n)}()`;

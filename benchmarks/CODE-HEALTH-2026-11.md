@@ -93,6 +93,7 @@ move; the tool is always re-run on the current file.
 | 4 | Freeze zones & group assignment (A16 + A17) | 1986–2163 | `src/seating-commands.js` | seating-freeze, guest-groups, assignment-writer, smart-seating, seating-rules |
 | 5 | Service load panel (A15) | 1926–1985 | `src/service-load-panel.js` | service-load |
 | 6 | Arrival & availability writers, the announcer (A19) | 2200–2270 | `src/arrival-writer.js` | writer-transitions, arrival-wave, table-availability, a11y-announce-contrast |
+| 7a | Floor-plan view (bulk-add fields and ghosts, fitting, viewport, screen frame) → `src/floor-plan-view.js` (workbook identical) | 4,905 |
 | 7 | Floor-plan editing: bulk add, canvas object lifecycle (A12) | 1389–1471, 1632–1867 | `src/floor-plan-editing.js` | bulk-add-integrity, floor-plan-modes, structural-objects, undo-operations |
 | 8 | Layout-change panel (A11 UI) | 1528–1631 | `src/screen-layout-changes.js` | layout-changes |
 | 9 | Empty states (§20) | 1473–1527 | `src/empty-states.js` | empty-states |
@@ -213,3 +214,12 @@ entry says what was seen and what was done about it.
     `checkInClick` p95 65.6 ms against a 65 ms budget (median 28.4) with three
     training chains on the CPU — a load effect on a path no move touched;
     re-run alone before landing.
+17. **An override read at the region's top level captures the PRE-v8
+    global** (`const oldViewport=canvasViewportHTML;` before
+    `canvasViewportHTML = function…`). Turning the override into the module's
+    hoisted function made that capture point at itself — infinite recursion on
+    the first Floor Plan render (move 7a's first run; caught by eight browser
+    suites, never committed). The tool now reads such a top-level capture
+    through `globalThis.name` (the app.js function, exactly what it read
+    before) and refuses if the name is not an app.js function. Moves 1-6 had
+    no such capture (checked).
