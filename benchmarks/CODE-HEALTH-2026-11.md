@@ -204,3 +204,12 @@ entry says what was seen and what was done about it.
     `setArrival` by value). Caught by the targeted suites before any commit;
     the tool now hands an inward FUNCTION over as a late-binding wrapper in a
     shorthand, as every other shell function already goes.
+16. **`csp-readiness` keeps a per-file inventory of inline style attributes**
+    and failed on the cumulative gate (moves 2 and 5 carried three of them
+    out of app-v8.js — same count overall). The gate on the tip caught it, not
+    the per-move targeted suites; the inventory now names `screen-setup.js` 2,
+    `service-load-panel.js` 1, `app-v8.js` 8. From move 7 on, `csp-readiness`
+    is in every move's targeted set. Same gate: `gala-night-scale`'s
+    `checkInClick` p95 65.6 ms against a 65 ms budget (median 28.4) with three
+    training chains on the CPU — a load effect on a path no move touched;
+    re-run alone before landing.
