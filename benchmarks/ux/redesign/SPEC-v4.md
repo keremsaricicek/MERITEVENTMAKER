@@ -52,3 +52,13 @@ buttons, the moon icon, drawn chairs around every table, anything that looks lik
   Chairs appear ONLY for the table under the mouse or the one Mimar was asked about; the asked guest's own chairs light NEON RED (#FF1744).
 - AI suggestions: plain grey line "Mimar önerisi · <how it knows>", always in the right panel; thinking strip only while Mimar works.
 Reference: benchmarks/ux/redesign/12-mimar-gorunumu/index.html (https://claude.ai/artifact/RT6xgYRPd7gSuwtn8VPxJK, feedback in db `gorus2`).
+
+## Owner's notes on "Merit Kurumsal" (2026-11-11, review page gorus2) — applied in 12-mimar-gorunumu v3
+Salon ✓, Mimar ✓ (keep). Changes he asked: event name + venue at the LEFT of the title row (not top right); technical
+summary ("42 masa…") only under the suggestions ("Özet"); suggestions as tidy cards, no tiny faint text; NO Açık/Koyu
+buttons in the bar → an Ayarlar page: Tema (two themes) and Açık/Koyu separately (+ font choice); buttons modern like
+Instagram/Facebook: rounded, filled, no rectangles/borders; mic round; Mimar window lightly tinted so it stands off the
+page; a real UI font, not the system default (Inter / IBM Plex Sans / Manrope offered — he picks; bundle the file in the
+offline product); occupancy colours = subtle professional NEON glow (not pastel); VIP = small star, never gold text;
+Oturma ≠ Kapı: Oturma = plan fixed on top, guest list below as its own pane (layout switchable side-by-side);
+Kapı = list-first with big search, small plan in the right panel.
