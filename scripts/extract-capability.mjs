@@ -344,7 +344,15 @@ for (const r of outsideRefs) {
   const before = regionStart - "(() => {\n".length;
   const v8pos = pos < before ? pos + "(() => {\n".length : pos - before - 1 + regionEnd;
   if (v8.slice(v8pos, v8pos + r.name.length) !== r.name) { console.error(`REFUSED: position map failed for ${r.name} at ${v8pos}`); process.exit(4); }
-  outEdits.push({ from: v8pos, to: v8pos + r.name.length, text: r.shorthand ? `${r.name}:${shellConst}.${r.name}` : `${shellConst}.${r.name}` });
+  // A shorthand `{name}` is a value handed over — usually to another module's
+  // create() above the cut, which runs BEFORE this module exists. A function
+  // goes over as a late-binding wrapper (as every shell function does);
+  // reading `${shellConst}.name` there would be a TDZ ReferenceError at boot
+  // (move 6 shipped exactly that to its first test run).
+  const isFnDecl = regionTop.some((s) => s.type === "FunctionDeclaration" && s.id.name === r.name);
+  outEdits.push({ from: v8pos, to: v8pos + r.name.length, text: r.shorthand
+    ? (isFnDecl ? `${r.name}:(...a)=>${shellConst}.${r.name}(...a)` : `${r.name}:${shellConst}.${r.name}`)
+    : `${shellConst}.${r.name}` });
 }
 let newV8 = v8.slice(0, regionStart) + shellBlock + v8.slice(regionEnd);
 const shift = shellBlock.length - (regionEnd - regionStart);

@@ -109,7 +109,7 @@ export default async function run({ page, checks, baseUrl }) {
     "naming the real transition in words", checkinRows[0]);
 
   // --- 4. table unavailable, a freeze, and a handover note all show up ------
-  // setTableAvailability() is private to app-v8.js's own closure (a plain
+  // setTableAvailability() is private to the shell (src/arrival-writer.js, created by app-v8.js) (a plain
   // function declaration with no matching outer `let`, unlike touchEvent/
   // render/state/ui) and genuinely unreachable from page.evaluate — the real
   // table card is driven instead, the same way table-availability.test.mjs
