@@ -98,7 +98,7 @@ async function detect(browser, imagePath) {
   }
   await page.goto(`${app.baseUrl}/index.html`);
   await page.waitForLoadState("networkidle");
-  await page.click('.appbar [data-action="create-event"]');
+  await page.click('[data-action="create-event"] >> nth=0');   // the top bar's control since redesign v4 (no .appbar)
   await page.waitForTimeout(300);
   await page.fill('input[name="name"]', "Benchmark");
   await page.fill('input[name="hotel"]', "Benchmark");
