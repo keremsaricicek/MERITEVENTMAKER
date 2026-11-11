@@ -2034,11 +2034,9 @@
   });
   guestsHTML = function(...a){return GUESTS.guestsHTML(...a);};
   bindGuests = function(...a){return GUESTS.bindGuests(...a);};
-  // ---- Undo for the two actions that destroy work ---------------------
-  // A guest record is typed by hand or imported once; losing one to a mis-click
-  // is the kind of mistake a non-technical operator cannot recover from. These
-  // replace the thin canMutate wrappers that used to delegate to the base
-  // implementations -- the guard is kept, the recovery is new.
+  // ---- Undo for the two actions that destroy work → src/guest-record-undo.js
+  // (deleteGuest, unassignGuest, the guest dialog opener). The toast that
+  // offers an Undo stays here: every capability that can be undone uses it.
   // Through pushToast() like every other toast, so an Undo offer is capped,
   // held and placed by the same rules -- and is the LAST thing a burst of
   // confirmations pushes off the screen.
@@ -2052,102 +2050,12 @@
     el.append(text,btn);
     pushToast(el,{duration});
   }
-  // A guest out of the event and back in, without asking and without a toast:
-  // deleteGuest's own steps, shared with the F8 assistant's undo. The whole
-  // record is kept, including its planned assignment, so a restore puts the
-  // guest back exactly where they were rather than as a fresh unassigned
-  // record. Position is kept too, so the list does not reshuffle.
-  function removeGuestRecord(event,g){
-    const index=event.guests.indexOf(g),snapshot=JSON.parse(JSON.stringify(g));
-    event.guests.splice(index,1);
-    RULES().syncEventChairs(event);
-    audit(event,"GUEST_DELETED",{guestId:g.id,name:g.name});
-    return{index,snapshot};
-  }
-  // null when the guest is already back; else whether the seat was lost. The
-  // seat may have been given away in the meantime. Restoring the record matters
-  // more than restoring the seat, so the guest comes back either way --
-  // unassigned if the seat is gone, and the caller tells the operator.
-  function restoreGuestRecord(now,kept){
-    const {index,snapshot}=kept;
-    if(!canMutate(now,"restore a guest")||now.guests.some(x=>x.id===snapshot.id))return null;
-    let seatLost=false;
-    if(snapshot.assignment){
-      const table=now.tables.find(x=>x.id===snapshot.assignment.tableId);
-      const used=table?occupiedSeatIndexes(now,table.id):null;
-      const clash=!table||(snapshot.assignment.seats||[]).some(s=>used.has(Number(s)));
-      if(clash){SEAT().clear(snapshot);seatLost=true;}
-    }
-    now.guests.splice(Math.min(index,now.guests.length),0,snapshot);
-    RULES().syncEventChairs(now);
-    audit(now,"GUEST_RESTORED",{guestId:snapshot.id,name:snapshot.name});
-    return seatLost;
-  }
-  deleteGuest = async function(id){
-    const event=activeEvent(),g=event&&event.guests.find(x=>x.id===id);
-    if(!g||!canMutate(event,"delete a guest"))return;
-    if(!(await ask({title:t("ask.deleteGuestTitle"),body:t("guests.confirmDelete",{name:g.name}),confirmLabel:t("ask.delete"),danger:true})))return;
-    const kept=removeGuestRecord(event,g);
-    touchEvent(event);render();
-    toastAction(t("guests.deletedToast",{name:g.name}),t("live.undo"),()=>{
-      const now=activeEvent();
-      if(!now||!canMutate(now,"restore a guest"))return;
-      const seatLost=restoreGuestRecord(now,kept),snapshot=kept.snapshot;
-      if(seatLost==null)return;
-      touchEvent(now);render();
-      toast(seatLost?t("guests.restoredNoSeat",{name:snapshot.name}):t("guests.restoredToast",{name:snapshot.name}),"success");
-    });
-  };
-  unassignGuest = function(id,options=null){
-    const event=activeEvent(),g=event&&event.guests.find(x=>x.id===id);
-    if(!g||!g.assignment)return;
-    if(!canMutate(event,"unassign a guest"))return;
-    if(g.assignment.locked){toast(t("seating.unlockFirst"),"error");return;}
-    // Emptying a frozen table is a crossing too. A head-table or sponsor
-    // freeze protects the arrangement that is THERE, and letting somebody be
-    // pulled out of it silently would defeat the rule as completely as
-    // filling it would.
-    const blocked=freezeBlocks(event,[id],null,options);
-    if(blocked)return challengeFreeze("unassign",blocked,[id],null,null);
-    const snapshot=JSON.parse(JSON.stringify(g.assignment));
-    const table=event.tables.find(x=>x.id===snapshot.tableId);
-    const label=table?formatTableNumber(table.number):"";
-    SEAT().clear(g);ui.selectedGuestId=id;
-    RULES().syncEventChairs(event);
-    touchEvent(event);render();
-    toastAction(t("seating.unassignedToast",{name:g.name}),t("live.undo"),()=>{
-      const now=activeEvent();
-      if(!now||!canMutate(now,"reassign a guest"))return;
-      const guest=now.guests.find(x=>x.id===id);if(!guest||guest.assignment)return;
-      const back=now.tables.find(x=>x.id===snapshot.tableId);
-      const used=back?occupiedSeatIndexes(now,back.id,id):null;
-      if(!back||(snapshot.seats||[]).some(s=>used.has(Number(s)))){
-        toast(t("seating.seatTaken",{name:guest.name}),"error",5200);return;
-      }
-      SEAT().write(guest,snapshot);
-      RULES().syncEventChairs(now);
-      audit(now,"GUEST_REASSIGNED",{guestId:id,tableId:snapshot.tableId});
-      touchEvent(now);render();
-      toast(t("seating.reassignedToast",{name:guest.name,table:label}),"success");
-    });
-  };
-
-  openGuestDialog = function(...args){if(canMutate(activeEvent(),"edit guest records")){original.openGuestDialog(...args);translateStaticDialogs();guestHistoryLine(args[0]);}};
-  // THE GUEST'S PAST, ON THE CARD (owner 2026-11-02): facts from our own past events —
-  // how many, came or not, which tables. Read only; never a prediction. Text, never markup.
-  function guestHistoryLine(id){
-    const dlg=document.getElementById("guestDialog"),body=dlg&&dlg.querySelector(".dialog-body");if(!body)return;
-    let line=body.querySelector(".guest-history");if(!line){line=document.createElement("p");line.className="guest-history";body.appendChild(line);}
-    line.textContent="";
-    const e=activeEvent(),g=id&&e&&e.guests.find(x=>x.id===id),T=globalThis.MeritAssistantTools;if(!g||!T)return;
-    const who=T.findPerson(state.events,g.name,g.phone?{phone:g.phone}:null);
-    if(who.people.length!==1){if(who.ambiguous)line.textContent=t("guest.historyAmbiguous");return;}
-    const today=new Date().toLocaleDateString("en-CA"),past=T.eventsOf(state.events,who.people[0],today).events.filter(x=>x.past&&x.event!==e.id);
-    if(!past.length){line.textContent=t("guest.historyNone");return;}
-    const came=past.filter(x=>x.came).length,tables=[...new Set(past.map(x=>x.table).filter(Boolean))].map(formatTableNumber);
-    line.textContent=t("guest.history",{n:past.length,came,missed:past.length-came,tables:tables.join(", ")||"—"});
-  }
-
+  const GUESTUNDO=globalThis.MeritGuestRecordUndo.create({
+    RULES:(...a)=>RULES(...a),SEAT:(...a)=>SEAT(...a),activeEvent:(...a)=>activeEvent(...a),ask:(...a)=>ask(...a),audit:(...a)=>audit(...a),canMutate:(...a)=>canMutate(...a),challengeFreeze:(...a)=>challengeFreeze(...a),formatTableNumber:(...a)=>formatTableNumber(...a),freezeBlocks:(...a)=>freezeBlocks(...a),getState:()=>state,occupiedSeatIndexes:(...a)=>occupiedSeatIndexes(...a),original,render:(...a)=>render(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),toastAction:(...a)=>toastAction(...a),touchEvent:(...a)=>touchEvent(...a),translateStaticDialogs:(...a)=>translateStaticDialogs(...a),ui,
+  });
+  deleteGuest = async function(...a){return GUESTUNDO.deleteGuest(...a);};
+  unassignGuest = function(...a){return GUESTUNDO.unassignGuest(...a);};
+  openGuestDialog = function(...a){return GUESTUNDO.openGuestDialog(...a);};
   // guestDialog/excelDialog markup lives once in index.html and never passes
   // through render(), so a language toggle has nothing to re-draw it. This
   // pushes the current language into that static markup directly, called on
@@ -4240,8 +4148,8 @@
     writers:{
       assign:(id,tableId,seats)=>assignGuestToTable(id,tableId,seats&&seats.length?seats[0]:null),
       unassign:(id)=>unassignGuest(id),
-      deleteGuest:(id)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g||!canMutate(e,"delete a guest"))return null;return removeGuestRecord(e,g);},
-      restoreGuest:(kept)=>{const e=activeEvent();return e?restoreGuestRecord(e,kept):null;},
+      deleteGuest:(id)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g||!canMutate(e,"delete a guest"))return null;return GUESTUNDO.removeGuestRecord(e,g);},
+      restoreGuest:(kept)=>{const e=activeEvent();return e?GUESTUNDO.restoreGuestRecord(e,kept):null;},
       setPax:(id,pax)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g||!canMutate(e,"edit guest records"))return false;return !saveGuestRecord(e,g,{additionalGuests:pax-1,pax}).short;},
       setVip:(id,vip)=>{const e=activeEvent(),g=e&&e.guests.find(x=>x.id===id);if(!g||!canMutate(e,"edit guest records"))return;saveGuestRecord(e,g,{vip});},
       // seating rules: the whole list replaced (undo puts the old list back); warn-only
