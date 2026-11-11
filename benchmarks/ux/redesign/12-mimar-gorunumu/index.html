@@ -1,0 +1,279 @@
+<title>Mimar Görünümü</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a calm viewer page; one fixed-size app window (1280x760, scaled to fit) shows five scenes of the AI inside the product. */
+:root{--page:#E3E6E1;--app:#EEF0EC;--surf:#FBFBF9;--ink:#1D2A33;--ink2:#4E5C66;--ink3:#66727B;--line:#D3D8D2;--line2:#BFC6BF;--acc:#1F3A52;--acc-t:#1F3A52;--on:#FFFFFF;--greige:#E7E3DC;--vip:#8A6A1F;--ok:#2F6B4F;--warn:#8A5A12;--halo:#D5E0EA;--fx:#E3E7E1;--chair:#9AA5AD;--zone:#F0E4CC;--zone-l:#D9C69C;--zone-t:#6F5318;
+--font:"SF Pro Text","Segoe UI Variable","Segoe UI",system-ui,sans-serif;--disp:"Iowan Old Style","Palatino Linotype",Georgia,serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--page:#0B0F14;--app:#10151C;--surf:#171E27;--ink:#ECE7DC;--ink2:#B9B2A5;--ink3:#989186;--line:#2A333F;--line2:#3A4553;--acc:#D9C69C;--acc-t:#D9C69C;--on:#10151C;--greige:#2A2E33;--vip:#D9C69C;--ok:#9FC7AE;--warn:#E0C27E;--halo:#3A3526;--fx:#1B232D;--chair:#6F7A85;--zone:#2C2A22;--zone-l:#5A513A;--zone-t:#D9C69C;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#0B0F14;--app:#10151C;--surf:#171E27;--ink:#ECE7DC;--ink2:#B9B2A5;--ink3:#989186;--line:#2A333F;--line2:#3A4553;--acc:#D9C69C;--acc-t:#D9C69C;--on:#10151C;--greige:#2A2E33;--vip:#D9C69C;--ok:#9FC7AE;--warn:#E0C27E;--halo:#3A3526;--fx:#1B232D;--chair:#6F7A85;--zone:#2C2A22;--zone-l:#5A513A;--zone-t:#D9C69C;color-scheme:dark}
+body{background:var(--page);color:var(--ink);font:15px/1.5 var(--font)}
+.wrap{max-width:1280px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mark{letter-spacing:.3em;font-weight:600;font-size:12px;color:var(--ink2);margin:0}
+h1{font:600 30px/1.15 var(--disp);margin:6px 0 8px;text-wrap:balance}
+.lead{color:var(--ink2);margin:0 0 18px;max-width:68ch}
+.dash{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:7px;background:linear-gradient(90deg,#2f6f66,#6fae9f,#d9a441,#c2703d)}
+.tabs{display:flex;flex-wrap:wrap;gap:4px 0;margin:0 0 12px}
+.tabs button{background:none;border:0;border-right:1px solid var(--line2);padding:4px 14px;font:600 13px var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);cursor:pointer}
+.tabs button:first-child{padding-left:0}.tabs button:last-child{border-right:0}
+.tabs button[aria-selected="true"]{color:var(--ink);text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px}
+.stagebox{width:100%;overflow:hidden;border:1px solid var(--line2);border-radius:10px;background:var(--app)}
+.stage{width:1280px;height:760px;transform-origin:0 0;position:relative;font-size:14px;line-height:1.45;background:var(--app)}
+.hint{color:var(--ink2);margin:12px 0 0;max-width:80ch}
+button{font-family:var(--font);cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--acc-t);outline-offset:2px}
+/* app chrome */
+.bar{height:48px;display:flex;align-items:center;padding:0 22px;border-bottom:1px solid var(--line);background:var(--surf);gap:18px}
+.bar .logo{letter-spacing:.32em;font-weight:700;font-size:13px}
+.bar nav{display:flex}
+.bar nav button{background:none;border:0;border-right:1px solid var(--line);padding:2px 13px;font:600 12px var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+.bar nav button:last-child{border-right:0}
+.bar nav button.on{color:var(--ink);text-decoration:underline;text-underline-offset:7px;text-decoration-thickness:2px}
+.bar .sp{flex:1}.bar .ev{font-weight:600}.bar .tm{color:var(--ink2);font-variant-numeric:tabular-nums}
+.bar .mm{height:30px;padding:0 12px;border-radius:6px;border:1px solid var(--line2);background:var(--greige);color:var(--ink);font:700 12px var(--font);letter-spacing:.1em}
+.bar .th{height:30px;width:30px;border-radius:6px;border:1px solid var(--line2);background:none;color:var(--ink2)}
+.strip{height:3px;background:linear-gradient(90deg,#2f6f66,#6fae9f,#d9a441,#c2703d,#d9a441,#6fae9f,#2f6f66);background-size:300% 100%;animation:flow 2.6s ease-in-out infinite alternate}
+#gstrip{position:absolute;left:0;right:0;top:48px;z-index:3}
+@keyframes flow{from{background-position:0 0}to{background-position:100% 0}}
+.body{position:absolute;inset:48px 0 0 0;display:flex}
+.main{flex:1;min-width:0;padding:18px;display:flex;position:relative}
+.roomwrap{flex:1;min-width:0;background:var(--surf);border:1px solid var(--line);border-radius:8px;padding:8px;display:flex}
+.side{width:340px;flex:none;border-left:1px solid var(--line);background:var(--surf);padding:22px;overflow:auto}
+.left{width:300px;flex:none;border-right:1px solid var(--line);background:var(--surf);display:flex;flex-direction:column;overflow:auto}
+.left .pad{padding:16px 18px}
+.eyebrow{font:700 12px var(--font);letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin:0 0 4px}
+.stage h2{font:600 24px/1.2 var(--disp);margin:0 0 6px}
+.stage h3{font:700 12px var(--font);letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);margin:20px 0 2px;display:flex;gap:8px}
+.stage h3 .n{color:var(--warn)}
+.stage p{margin:0 0 10px}.mut{color:var(--ink2)}
+.tag{font-size:12px;border:1px solid var(--line2);border-radius:4px;padding:1px 6px;color:var(--ink2);white-space:nowrap}
+.btn{height:34px;padding:0 14px;border-radius:6px;border:1px solid var(--line2);background:var(--surf);color:var(--ink);font:600 13.5px var(--font)}
+.btn.p{background:var(--acc);border-color:var(--acc);color:var(--on)}
+.lnk{background:none;border:0;padding:0;color:var(--acc-t);font:600 13.5px var(--font);text-decoration:underline;text-underline-offset:3px}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.sug{padding:12px 0;border-bottom:1px solid var(--line)}
+.sug b{display:block}.sug p{margin:2px 0 0;color:var(--ink2)}
+.sm{font-size:12px;color:var(--ink3);margin-bottom:3px}
+.res{padding:9px 0;border-bottom:1px solid var(--line);color:var(--ink2);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.res .ck{color:var(--ok);font-weight:700}
+.float{position:absolute;right:30px;top:30px;width:310px;background:var(--surf);border:1px solid var(--line2);border-radius:8px;padding:14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.12)}
+.float .sug:last-of-type,.float .res{border-bottom:0}
+/* room */
+.room{width:100%;height:100%}
+.fx{fill:var(--fx);stroke:var(--ink3);stroke-width:1}line.fx{stroke:var(--ink2);stroke-width:3}
+.fd{fill:none;stroke:var(--ink3);stroke-dasharray:4 4}
+.fl{font:600 9px var(--font);letter-spacing:.14em;fill:var(--ink2);text-anchor:middle;dominant-baseline:central}
+.z{fill:var(--zone);fill-opacity:.6;stroke:var(--zone-l);stroke-width:1}
+.zl{font:700 8.5px var(--font);letter-spacing:.1em;fill:var(--zone-t)}
+.t .b{fill:var(--surf);stroke:var(--ink2);stroke-width:1.3}
+.t .c{fill:var(--app);stroke:var(--ink3);stroke-width:1}
+.t.full .c{fill:var(--chair)}
+.t text{font:600 10.5px var(--font);fill:var(--ink);text-anchor:middle;dominant-baseline:central}
+.t .h{fill:var(--halo);opacity:0;transition:opacity .25s}
+.t.hot .h,.t.glow .h{opacity:1}.t.glow .h{animation:pulse 2.4s ease-in-out infinite}
+.t.ghost .h{opacity:1;fill:none;stroke:var(--acc-t);stroke-width:1.5;stroke-dasharray:5 4}
+.t.vip .b{stroke:var(--vip);stroke-width:1.6}
+.t.q text{fill:var(--warn)}
+.t.un .b{fill:none;stroke:var(--warn);stroke-dasharray:3 3}.t.un.table .b{fill:var(--surf);stroke:var(--ink2);stroke-dasharray:none}
+.raw .t,.raw .fx,.raw .fl,.raw .fd{opacity:.34}.raw .t.found{opacity:1;transition:opacity .3s}
+@keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+/* lists */
+.lst{width:100%;border-collapse:collapse}
+.lst th{font:700 12px var(--font);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+.lst td{padding:10px;border-bottom:1px solid var(--line)}
+.lst tr[data-a]{cursor:pointer}.lst tr.on td{background:var(--app)}
+.vipm{color:var(--vip);font-weight:700;font-size:12px;letter-spacing:.06em;margin-left:6px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.cmp div{border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:6px 10px;margin:10px 0}.kv span{color:var(--ink3)}
+.urow{padding:10px 18px;border-bottom:1px solid var(--line)}.urow small{display:block;color:var(--ink3);font-size:12.5px}
+.drow{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--line)}
+.drow .nm{flex:1;min-width:0}.drow small{display:block;color:var(--ink3);font-size:12.5px}
+.drow .st{font-size:13px;color:var(--ink2);white-space:nowrap}.drow .btn{height:30px}
+.srch{height:40px;border:1px solid var(--line2);border-radius:8px;background:var(--app);color:var(--ink);font:15px var(--font);padding:0 12px;width:100%;box-sizing:border-box}
+.walk{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 18px;background:var(--app)}
+.walk label{display:flex;gap:8px;align-items:center;margin:6px 0;color:var(--ink2)}
+.walk input{height:30px;border:1px solid var(--line2);border-radius:6px;background:var(--surf);color:var(--ink);font:14px var(--font);padding:0 8px;min-width:0}
+/* chat */
+.chat{position:absolute;right:16px;bottom:16px;width:344px;height:452px;background:var(--surf);border:1px solid var(--line2);border-radius:10px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 32px rgba(0,0,0,.16);z-index:4}
+.chat header{height:40px;flex:none;background:var(--greige);display:flex;align-items:center;gap:8px;padding:0 6px 0 14px}
+.chat header b{font:600 16px var(--disp)}.chat header span{color:var(--ink2);font-size:12.5px;flex:1}
+.chat .x{background:none;border:0;font-size:20px;color:var(--ink2);width:32px;height:32px}
+.msgs{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+.me{align-self:flex-end;background:var(--ink);color:var(--surf);padding:8px 12px;border-radius:14px 14px 4px 14px;max-width:85%}
+.me small{display:block;opacity:.75;font-size:11.5px}
+.mi{align-self:flex-start;background:var(--app);padding:10px 12px;border-radius:14px 14px 14px 4px;max-width:94%}
+.mi p{margin:2px 0 0;color:var(--ink2)}.mi .res{border:0;padding:6px 0 0}.mi ul{margin:6px 0 0;padding-left:18px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 8px}
+.chips button{font-size:12.5px;border:1px solid var(--line2);background:none;border-radius:14px;padding:4px 10px;color:var(--ink2)}
+.inp{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line);align-items:center}
+.inp input{flex:1;min-width:0;height:36px;border:1px solid var(--line2);border-radius:8px;background:var(--app);color:var(--ink);font:14px var(--font);padding:0 10px}
+.mic{width:36px;height:36px;flex:none;border-radius:8px;border:1px solid var(--line2);background:var(--surf);color:var(--ink);display:grid;place-items:center}
+.mic.on{background:var(--acc);color:var(--on);border-color:var(--acc)}
+.lis{flex:1;display:flex;align-items:center;gap:10px;color:var(--ink2)}
+.bars{display:flex;gap:3px;align-items:center;height:22px}
+.bars i{width:3px;border-radius:2px;background:var(--acc-t);height:8px;animation:bar 0.9s ease-in-out infinite}
+.bars i:nth-child(2){animation-delay:.15s}.bars i:nth-child(3){animation-delay:.3s}.bars i:nth-child(4){animation-delay:.45s}.bars i:nth-child(5){animation-delay:.6s}
+@keyframes bar{0%,100%{height:6px}50%{height:22px}}
+@media (prefers-reduced-motion:reduce){.strip,.t.glow .h,.bars i{animation:none}.bars i{height:14px}}
+/* feedback */
+.fb{margin-top:18px;background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:10px;max-width:760px}
+.fb .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.fb .v{height:38px;padding:0 16px;border-radius:8px;border:1px solid var(--line2);background:var(--surf);color:var(--ink);font:600 14px var(--font)}
+.fb .v[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:var(--on)}
+.fb textarea{width:100%;min-height:70px;box-sizing:border-box;border:1px solid var(--line2);border-radius:8px;background:var(--app);color:var(--ink);font:15px var(--font);padding:8px 10px;resize:vertical}
+.fb .sv{color:var(--ink2);font-size:13px;margin-left:auto}
+</style>
+<div class="wrap" lang="tr">
+<p class="mark">MERIT · EVENT MAKER</p>
+<h1>Mimar görünümü</h1>
+<p class="lead">Yapay zekânın programın içinde nasıl görüneceğinin tıklanabilir örneği. Her önerinin başında aynı küçük işaret <i class="dash"></i>durur ve nereden bildiği yazar; sen kabul etmeden hiçbir şey değişmez. Telefonda yan çevirin.</p>
+<div class="tabs" id="tabs" role="tablist"></div>
+<div class="stagebox" id="stagebox"><div class="stage" id="stage">
+<div class="bar"><span class="logo">MERIT</span><nav id="nav"></nav><span class="sp"></span><span class="ev">Merit Royal Yılbaşı Galası</span><span class="tm">22:14</span><button class="th" data-a="theme" aria-label="Açık ya da koyu tema"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg></button><button class="mm" data-a="go:s2">MİMAR · F8</button></div>
+<div class="strip" id="gstrip" hidden></div>
+<div class="body" id="body"></div>
+</div></div>
+<p class="hint" id="hint"></p>
+<div class="fb">
+<div class="row"><b id="fbt"></b><span class="sv" id="save" aria-live="polite"></span></div>
+<div class="row"><button class="v" id="vk" data-a="vote:keep" aria-pressed="false">Beğendim</button><button class="v" id="vd" data-a="vote:drop" aria-pressed="false">Beğenmedim</button></div>
+<textarea id="note" placeholder="Bu ekran hakkındaki düşünceni yaz…" aria-label="Bu ekran hakkındaki düşünce"></textarea>
+</div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fold=s=>String(s).toLocaleLowerCase('tr').replace(/ı/g,'i').replace(/ş/g,'s').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ö/g,'o').replace(/ç/g,'c');
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const mark=src=>`<div class="sm"><i class="dash"></i>Mimar önerisi · ${src}</div>`;
+const ok=(txt,undo)=>`<div class="res"><span><span class="ck">✓</span> ${txt}</span>${undo?`<button class="lnk" data-a="${undo}">Geri al</button>`:''}</div>`;
+const SC={s1:['Plan analizi','Önce "Analiz et"e basın. Sonra sağdaki önerilerin üstüne gelin (plandaki yeri parlar), tek tek karar verin ya da bölgeleri planda gösterin.'],
+ s2:['Mimar sohbeti ve ses','Hazır sorulardan birine basın ya da yazın. Mikrofona basınca sesli komut örneği çalışır. Bu örnek yalnızca birkaç cümleyi tanır; gerçek programda eğitilmiş model cevap verir.'],
+ s3:['Misafir önerileri','"Göster"e basıp olası tekrarı karşılaştırın. Bir satıra tıklayınca sağda o misafirin geçmişi açılır.'],
+ s4:['Yerleşim önerisi','"Taslak yerleşim öner"e basın: masalar kesik çizgiyle işaretlenir, nedenleri yazar. Uygula demeden kimse oturmaz.'],
+ s5:['Kapıda','"Listede yok"a basın, "Yer öner" deyin. Gelmeyenin yeri önerilirse önce sorar.']};
+const S={cur:'s1',s1:{phase:'up',num:null,cap:null,un:null,zones:false,zacc:false},s2:{open:true,msgs:[],think:false,listen:false,glow:null,mark:null},s3:{dup:null,pax:null,sel:0},s4:{phase:'idle'},s5:{w:null,inn:{}}};
+/* ---- room ---- */
+const T=[];(function(){const xs=[80,160,240,320,400,500,580,660,740,820],ys=[270,345,420,495];let n=1;
+ ys.forEach((y,r)=>xs.forEach((x,c)=>{if(r>=2&&c===9)return;const id='T'+String(n).padStart(2,'0');T.push({id,x,y,k:'r'});n++}));
+ [['VIP01',210,112],['VIP02',210,172],['VIP03',690,112],['VIP04',690,172]].forEach(v=>T.push({id:v[0],x:v[1],y:v[2],k:'v'}))})();
+function tsvg(t,cls,lab){let ch='';
+ if(t.k==='r'){for(let i=0;i<10;i++)ch+=`<rect class="c" x="-4.5" y="-32" width="9" height="6.5" rx="2" transform="rotate(${i*36})"/>`}
+ else{for(let i=0;i<5;i++){ch+=`<rect class="c" x="${-40.5+i*18}" y="-27" width="9" height="6.5" rx="2"/>`;if(!(t.id==='VIP02'&&i===4))ch+=`<rect class="c" x="${-40.5+i*18}" y="20.5" width="9" height="6.5" rx="2"/>`}
+  ch+='<rect class="c" x="-55" y="-4.5" width="6.5" height="9" rx="2"/><rect class="c" x="48.5" y="-4.5" width="6.5" height="9" rx="2"/>'}
+ const b=t.k==='r'?'<circle class="h" r="42"/>'+ch+'<circle class="b" r="19"/>':'<rect class="h" x="-66" y="-40" width="132" height="80" rx="22"/>'+ch+'<rect class="b" x="-45" y="-17" width="90" height="34" rx="4"/>';
+ return `<g class="t ${cls}" data-t="${t.id}" transform="translate(${t.x} ${t.y})">${b}<text>${lab}</text></g>`}
+function zones(){const Z=[['SAHNE',318,2,340,82],['DANS PİSTİ',340,84,220,114],['VIP',138,78,146,128],['VIP',618,78,146,128],['BAR',786,380,68,154],['GİRİŞ',378,582,144,34]];
+ return Z.map(z=>`<rect class="z" x="${z[1]}" y="${z[2]}" width="${z[3]}" height="${z[4]}" rx="6"/><text class="zl" x="${z[1]+6}" y="${z[2]+11}">${z[0]}</text>`).join('')}
+function room(o){o=o||{};const c=o.cls||(()=>'');let s=`<svg class="room ${o.raw?'raw':''}" viewBox="0 0 900 624" role="img" aria-label="Salon planı">`;
+ if(o.zones)s+=zones();
+ s+='<rect class="fx" x="330" y="18" width="240" height="58" rx="3"/><text class="fl" x="450" y="47">SAHNE</text><rect class="fx" x="586" y="28" width="58" height="36" rx="3"/><text class="fl" x="615" y="46">DJ</text><rect class="fd" x="350" y="98" width="200" height="92" rx="3"/><text class="fl" x="450" y="144">DANS PİSTİ</text><rect class="fx" x="800" y="392" width="40" height="130" rx="3"/><text class="fl" x="820" y="457" transform="rotate(-90 820 457)">BAR</text><line class="fx" x1="400" y1="600" x2="500" y2="600"/><text class="fl" x="450" y="612">ANA GİRİŞ</text>';
+ T.forEach(t=>{s+=tsvg(t,c(t)+(t.k==='v'?' vip':''),o.lab?o.lab(t):t.id)});
+ if(o.un&&o.un!=='none')s+=`<g class="t un ${o.un}" data-t="UN" transform="translate(560 560)"><circle class="h" r="36"/><circle class="b" r="17"/>${o.un==='table'?'<text>T39</text>':''}</g>`;
+ return s+'</svg>'}
+const fill=t=>(t.id==='T37'||t.id==='T38')?'':'full ';
+/* ---- scene 1: plan analysis ---- */
+function s1(){const a=S.s1,done=a.phase==='done';
+ const cls=t=>(done?'found ':'')+(t.id==='T23'&&a.num!=='T23'&&done?'q ':'');
+ const lab=t=>t.id==='T23'?(a.num==='T23'?'T23':'T??'):t.id;let side;
+ if(a.phase==='up')side=`<p class="eyebrow">Salon planı</p><h2>Grand Balo Salonu</h2><p class="mut">Plan yüklendi: <b>grand-balo.pdf</b>, 1. sayfa.</p><p>Planı okuyup masaları, sandalyeleri ve numaraları bulabilirim. Bulduklarım öneri olarak gelir; sen kabul etmeden salona yazılmaz.</p><div class="acts"><button class="btn p" data-a="analyze">Analiz et</button><button class="btn" data-a="noop">Elle çiz</button></div>`;
+ else if(!done)side=`<p class="eyebrow">Salon planı</p><h2>Plan okunuyor</h2><p class="mut" id="prog" aria-live="polite">Masalar bulunuyor…</p>`;
+ else{const open=(a.num?0:1)+(a.cap?0:1)+(a.un?0:1);
+  const cNum=a.num==='T23'?ok('T23 · sen yazdın','num:'):a.num==='later'?ok('T?? · sonra bakılacak','num:'):`<div class="sug" data-hot="T23">${mark('sıradan çıkardı')}<b>T?? — numara okunamadı</b><p>T22 ile T24'ün arasında duruyor; T23 olabilir.</p><div class="acts"><button class="btn p" data-a="num:T23">T23 yaz</button><button class="btn" data-a="num:later">Sonra bakarım</button></div></div>`;
+  const cCap=a.cap?ok('VIP02 · '+a.cap+' kişilik · sen seçtin','cap:'):`<div class="sug" data-hot="VIP02">${mark('çizimden saydı')}<b>VIP02 — çizimde 11 sandalye</b><p>Diğer VIP masaları 12 kişilik.</p><div class="acts"><button class="btn p" data-a="cap:11">11 kişilik</button><button class="btn" data-a="cap:12">12 kişilik</button></div></div>`;
+  const cUn=a.un==='table'?ok('Girişin yanındaki yuvarlak · masa (T39)','un:'):a.un==='none'?ok('Girişin yanındaki yuvarlak · masa değil','un:'):`<div class="sug" data-hot="UN">${mark('şekilden · emin değil')}<b>Girişin yanında numarasız yuvarlak</b><p>Masa olabilir; saksı ya da sütun da olabilir.</p><div class="acts"><button class="btn" data-a="un:table">Masa</button><button class="btn" data-a="un:none">Masa değil</button></div></div>`;
+  const cZ=a.zacc?ok('5 bölge · kabul edildi','zacc:'):`<div class="sug">${mark('yazıdan ve şekilden')}<b>5 bölge önerisi</b><p>Sahne, dans pisti, VIP, bar, giriş.</p><div class="acts"><button class="btn" data-a="zones">${a.zones?'Gizle':'Planda göster'}</button>${a.zones?'<button class="btn p" data-a="zacc:1">Bölgeleri kabul et</button>':''}</div></div>`;
+  side=`<p class="eyebrow">Plan okundu</p><h2>42 masa bulundu</h2><p class="mut">38 yuvarlak, 4 VIP · sahne, bar, DJ <span class="tag">Yardımlı algılama</span></p><h3>Bakmanı istediklerim <span class="n">${open||''}</span></h3>${cNum}${cCap}${cUn}<h3>Bölgeler</h3>${cZ}${(!a.num||!a.cap)?'<div class="acts"><button class="btn" data-a="acceptall">Emin olduğu önerileri kabul et</button></div>':''}`}
+ return `<div class="main"><div class="roomwrap">${room({raw:!done,cls,lab,zones:done&&(a.zones||a.zacc),un:done?(a.un||'ask'):''})}</div></div><aside class="side">${side}</aside>`}
+function analyze(){const a=S.s1;a.phase='run';render();$('#gstrip').hidden=false;
+ const fin=()=>{a.phase='done';$('#gstrip').hidden=true;render()};if(RM){setTimeout(fin,300);return}
+ const els=[...document.querySelectorAll('#body .t')].sort((p,q)=>{const P=T.find(t=>t.id===p.dataset.t),Q=T.find(t=>t.id===q.dataset.t);return (P.y-Q.y)||(P.x-Q.x)});let i=0;
+ const iv=setInterval(()=>{for(let k=0;k<2&&i<els.length;k++,i++)els[i].classList.add('found');const p=$('#prog');if(p)p.textContent='Masalar bulunuyor… '+i+' / '+els.length;if(i>=els.length){clearInterval(iv);setTimeout(fin,350)}},70)}
+/* ---- scene 2: chat ---- */
+const QS=['Ahmet Yılmaz nerede oturuyor?',"Selin Ak'ı T38'e oturt",'Bugün ne eksik?'];
+const MIC='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+function chat(){const a=S.s2;if(!a.open)return'';
+ const ms=a.msgs.map((m,i)=>m.w==='me'?`<div class="me">${m.html}</div>`:`<div class="mi">${m.html}${m.card&&m.st==='open'?`<div class="acts"><button class="btn p" data-a="apply:${i}">Uygula</button><button class="btn" data-a="cancel:${i}">Vazgeç</button></div>`:''}${m.st==='done'?ok('Yapıldı','undo:'+i):''}${m.st==='undone'?'<div class="res">Geri alındı</div>':''}${m.st==='cancel'?'<div class="res">Vazgeçildi</div>':''}</div>`).join('');
+ const intro='<div class="mi">Merhaba. Bir misafiri, masayı ya da eksikleri sorabilirsin. Bir iş istersen önce gösteririm.</div>';
+ const row=a.listen?`<div class="inp"><div class="lis"><span class="bars"><i></i><i></i><i></i><i></i><i></i></span>Dinliyorum…</div><button type="button" class="mic on" aria-label="Dinleniyor">${MIC}</button></div>`
+  :`<form class="inp" id="cf"><input id="cq" placeholder="Mimar'a yaz…" autocomplete="off" aria-label="Mimar'a yaz"><button type="button" class="mic" data-a="mic" aria-label="Sesle söyle">${MIC}</button><button class="btn p" type="submit">Gönder</button></form>`;
+ return `<section class="chat" aria-label="Mimar"><header><b>Mimar</b><span>asistan</span><button class="x" data-a="chatx" aria-label="Kapat">×</button></header><div class="strip" ${a.think?'':'hidden'}></div><div class="msgs" id="msgs">${intro}${ms}</div><div class="chips">${QS.map((q,i)=>`<button data-a="ask:${i}">${esc(q)}</button>`).join('')}</div>${row}</section>`}
+function s2(){const a=S.s2;const cls=t=>'found '+fill(t)+(a.glow===t.id?'glow ':'')+(a.mark===t.id?'ghost ':'');
+ return `<div class="main"><div class="roomwrap">${room({cls,lab:t=>t.id})}</div></div><aside class="side"><p class="eyebrow">Salon</p><h2>Grand Balo Salonu</h2><p class="mut">42 masa · 409 / 420 kişi yerleşti</p><p>Mimar'a sağ alttaki kutudan yaz ya da mikrofona bas. Bir iş isteyince önce gösterir; <b>Uygula</b> demeden yapmaz.</p>${a.open?'':'<div class="acts"><button class="btn" data-a="chatopen">Mimar\'ı aç</button></div>'}</aside>${chat()}`}
+function ask(text,voice){const a=S.s2;a.msgs.push({w:'me',html:esc(text)+(voice?'<small>sesten yazıldı</small>':'')});a.think=true;render();setTimeout(()=>{a.think=false;respond(text,voice);render()},RM?150:850)}
+function respond(text,voice){const a=S.s2,f=fold(text),how=voice?'söylediğinden anladı':'yazdığından anladı';
+ if(/nerede/.test(f)&&/ahmet/.test(f)){a.glow='T05';a.mark=null;a.msgs.push({w:'m',html:"<b>Ahmet Yılmaz</b> T05'te oturuyor · 4 kişi · davet eden Kerem Sarıçiçek. Planda işaretledim."})}
+ else if(/oturt/.test(f)&&/selin/.test(f)){a.mark='T38';a.glow=null;a.msgs.push({w:'m',card:'seat',st:'open',html:mark(how)+"<b>Selin Ak +2 → T38</b><p>Şimdi masasız. T38'de 10 boş yer var. Planda kesik çizgiyle gösterdim.</p>"})}
+ else if(/geldi/.test(f)&&/ayse/.test(f)){a.mark='T07';a.glow=null;a.msgs.push({w:'m',card:'in',st:'open',html:mark(how)+'<b>Ayşe Demir +1 · giriş</b><p>T07 · 2 kişi. Geliş saati 22:14 yazılacak.</p>'})}
+ else if(/eksik/.test(f)){a.msgs.push({w:'m',html:'3 konu açık:<ul><li>11 kişi oturmamış <button class="lnk" data-a="go:s4">Oturma</button></li><li>T23\'ün numarası okunamadı <button class="lnk" data-a="go:s1">Salon</button></li><li>2 olası tekrar kayıt <button class="lnk" data-a="go:s3">Misafirler</button></li></ul>'})}
+ else a.msgs.push({w:'m',html:'Bunu anlayamadım, bir şey değiştirmedim. Aşağıdaki hazır sorulardan birini deneyebilirsin.'})}
+/* ---- scene 3: guests ---- */
+const G=[{n:'Ahmet Yılmaz',p:4,vip:1,h:'Kerem Sarıçiçek',t:'T05',s:'Bekleniyor',mem:[['Cumhuriyet Balosu · 29 Ekim','T05 · geldi'],['Poker Night VIP · 12 Ekim','VIP02 · gelmedi']]},
+ {n:'A. Yılmaz',p:4,h:'Kerem Sarıçiçek',t:'—',s:'Bekleniyor',dup:1},{n:'Ayşe Demir',p:2,h:'Kurumsal Satış',t:'T07',s:'Bekleniyor',mem:[['Yaz Konseri · 22 Ağustos','T11 · geldi']]},
+ {n:'Zeynep Arslan',p:1,vip:1,h:'Merit Royal Yönetim',t:'VIP01',s:'Geldi 20:15'},{n:'Can Öztürk',p:1,h:'Loyalty Desk',t:'T02',s:'Geldi 20:40'},
+ {n:'Burak Şahin',p:1,h:'Casino Pazarlama',t:'—',s:'Bekleniyor',pax:1},{n:'Kerem Koç',p:3,h:'Loyalty Desk',t:'T09',s:'Gelmedi'},{n:'Hülya Keskin',p:2,h:'International Marketing',t:'T07',s:'Geldi 20:58'}];
+function s3(){const a=S.s3;const rows=G.map((g,i)=>({g,i})).filter(r=>!(a.dup==='merged'&&r.g.dup));
+ const dup=a.dup==='merged'?ok("Birleştirildi · A. Yılmaz kaydı Ahmet Yılmaz'a katıldı",'dup:'):a.dup==='apart'?ok('Ayrı kişiler olarak bırakıldı','dup:')
+  :a.dup==='open'?`<div class="sug">${mark('benzer kayıt')}<b>Aynı kişi olabilir</b><div class="cmp"><div><b>Ahmet Yılmaz +3</b><span class="mut">Kerem Sarıçiçek · T05</span></div><div><b>A. Yılmaz +3</b><span class="mut">Kerem Sarıçiçek · masasız</span></div></div><p>Aynı davet eden, aynı kişi sayısı, benzer ad.</p><div class="acts"><button class="btn p" data-a="dup:merged">Aynı kişi, birleştir</button><button class="btn" data-a="dup:apart">Ayrı kişiler</button></div></div>`
+  :`<div class="sug">${mark('benzer kayıt')}<b>1 olası tekrar</b><div class="acts"><button class="btn" data-a="dup:open">Göster</button></div></div>`;
+ const pax=a.pax?ok('Burak Şahin · '+a.pax+' kişi · sen seçtin','pax:'):`<div class="sug">${mark('listeden okudu')}<b>Burak Şahin — "ve eşi" yazıyor</b><p>Kişi sayısı 1 görünüyor.</p><div class="acts"><button class="btn p" data-a="pax:2">2 kişi yap</button><button class="btn" data-a="pax:1">1 kalsın</button></div></div>`;
+ const g=G[a.sel]||G[0];
+ const mem=g.mem?g.mem.map(m=>`<div class="res"><span><b>${m[0]}</b><br>${m[1]}</span></div>`).join(''):'<p class="mut">Geçmiş etkinliklerde kaydı yok.</p>';
+ return `<div class="main" style="display:block;overflow:auto"><div style="display:grid;grid-template-columns:1fr 1fr;gap:0 28px;margin-bottom:6px"><div>${dup}</div><div>${pax}</div></div>
+ <table class="lst"><thead><tr><th>Ad</th><th>Kişi</th><th>Davet eden</th><th>Masa</th><th>Durum</th></tr></thead><tbody>${rows.map(r=>`<tr data-a="sel:${r.i}" class="${r.i===a.sel?'on':''}"><td><b>${r.g.n}</b>${r.g.vip?'<span class="vipm">VIP</span>':''}</td><td>${r.g.pax&&a.pax?a.pax:r.g.p}</td><td>${r.g.h}</td><td>${r.g.t}</td><td>${r.g.s}</td></tr>`).join('')}</tbody></table></div>
+ <aside class="side"><p class="eyebrow">Misafir</p><h2>${g.n}</h2><div class="kv"><span>Kişi</span><b>${g.p}</b><span>Davet eden</span><b>${g.h}</b><span>Masa</span><b>${g.t}</b><span>Durum</span><b>${g.s}</b></div><h3>Geçmiş etkinlikler</h3>${mem}<p class="mut" style="margin-top:12px;font-size:13px">Ad ve telefonla eşleşen eski kayıtlar. Yalnızca gösterilir; kendiliğinden bir şey değiştirmez.</p></aside>`}
+/* ---- scene 4: seating draft ---- */
+const U=[['Selin Ak +2','Kerem Sarıçiçek · 3 kişi'],['Deniz Yurt +1','Kerem Sarıçiçek · 2 kişi'],['Mehmet Kaya +2','Kurumsal Satış · 3 kişi'],['Elif Şen +1','Loyalty Desk · 2 kişi'],['Burak Şahin','Casino Pazarlama · 1 kişi']];
+function s4(){const a=S.s4,d=a.phase==='draft',done=a.phase==='done';
+ const cls=t=>'found '+((done&&(t.id==='T37'||t.id==='T38'))?'full ':fill(t))+(d&&(t.id==='T37'||t.id==='T38')?'ghost ':'');
+ const list=done?'<div class="pad mut">Oturmayan kimse kalmadı.</div>':U.map(u=>`<div class="urow"><b>${u[0]}</b><small>${u[1]}</small></div>`).join('');
+ const fl=d?`<div class="float">${mark('gruplara ve boş yerlere baktı')}<b>Taslak: 11 kişi, 2 masa</b><div class="sug"><b>T38</b><p>Selin Ak +2, Deniz Yurt +1. Kerem Sarıçiçek grubu birlikte.</p></div><div class="sug"><b>T37</b><p>Mehmet Kaya +2, Elif Şen +1, Burak Şahin. En yakın boş yerler.</p></div><div class="acts"><button class="btn p" data-a="draft:done">Uygula</button><button class="btn" data-a="draft:idle">Vazgeç</button></div></div>`
+  :done?`<div class="float">${ok('11 kişi yerleşti','draft:idle')}</div>`:'';
+ return `<div class="left"><div class="pad"><p class="eyebrow">Oturmayanlar</p><h2>${done?'0':'11'} kişi</h2>${done||d?'':`<div class="acts"><button class="btn p" data-a="draft:think">Taslak yerleşim öner</button></div>`}</div>${list}</div><div class="main"><div class="roomwrap">${room({cls})}</div>${fl}</div>`}
+/* ---- scene 5: door ---- */
+const D=[['Ahmet Yılmaz +3','T05 · 4 kişi','w'],['Ayşe Demir +1','T07 · 2 kişi','w'],['Can Öztürk','T02','Geldi 20:40'],['Kerem Koç +2','T09 · 3 kişi','Gelmedi'],['Oya Ergin','T03','w'],['Zeynep Arslan','VIP01','Geldi 20:15']];
+function s5(){const a=S.s5,seat=a.w==='T37'||a.w==='T09'?a.w:null;
+ const cls=t=>'found '+fill(t)+(seat===t.id?'glow ':'')+((a.w==='sug'||a.w==='ask')&&(t.id==='T37'||t.id==='T09')?'ghost ':'');
+ let w='';
+ if(a.w==='form')w=`<div class="walk"><b>Listede olmayan misafir</b><label>Ad <input value="Murat Aydın" aria-label="Ad" style="flex:1"></label><label>Yanında <input value="1" aria-label="Yanında kaç kişi" style="width:48px"> kişi</label><div class="acts"><button class="btn p" data-a="walk:sug">Yer öner</button><button class="btn" data-a="walk:">Vazgeç</button></div></div>`;
+ else if(a.w==='sug')w=`<div class="walk">${mark('boş yerlere baktı')}<b>Murat Aydın +1 için 2 yer</b><div class="sug"><b>T37 · 7 boş yer</b><div class="acts"><button class="btn p" data-a="walk:T37">Oturt</button></div></div><div class="sug" style="border:0"><b>T09 · gelmeyenin yeri</b><p>Kerem Koç +2 gelmedi; 3 yer boş.</p><div class="acts"><button class="btn" data-a="walk:ask">Sor</button></div></div></div>`;
+ else if(a.w==='ask')w=`<div class="walk"><b>T09'a oturtulsun mu?</b><p class="mut">Kerem Koç'un planlanan yeri korunur, raporda değişmez. Murat Aydın +1 yalnızca bu gece T09'da oturur.</p><div class="acts"><button class="btn p" data-a="walk:T09">Evet, oturt</button><button class="btn" data-a="walk:sug">Hayır</button></div></div>`;
+ else if(seat)w=`<div class="walk">${ok('Murat Aydın +1 · '+seat+' · Geldi 22:14 · davetsiz','walk:')}</div>`;
+ const rows=D.map((d,i)=>{const inn=a.inn[i];return `<div class="drow"><div class="nm"><b>${d[0]}</b><small>${d[1]}</small></div>${d[2]==='w'?(inn?`<span class="st">Geldi 22:14</span><button class="lnk" data-a="in:${i}">Geri al</button>`:`<button class="btn p" data-a="in:${i}">Giriş</button>`):`<span class="st">${d[2]}</span>`}</div>`}).join('');
+ return `<div class="left" style="width:330px"><div class="pad"><input class="srch" placeholder="Misafir adı ya da masa" aria-label="Misafir ara"><div class="acts">${a.w?'':'<button class="btn" data-a="walk:form">Listede yok</button>'}</div></div>${w}${rows}</div><div class="main"><div class="roomwrap">${room({cls})}</div></div>`}
+/* ---- shell ---- */
+const R={s1,s2,s3,s4,s5},NAV=[['Etkinlik',null],['Salon','s1'],['Misafirler','s3'],['Oturma','s4'],['Kapı','s5'],['Raporlar',null]];
+function render(){const c=S.cur;$('#body').innerHTML=R[c]();
+ $('#tabs').innerHTML=Object.keys(SC).map(k=>`<button role="tab" aria-selected="${k===c}" data-a="go:${k}">${SC[k][0]}</button>`).join('');
+ const act=c==='s2'?'s1':c;$('#nav').innerHTML=NAV.map(n=>`<button class="${n[1]===act?'on':''}" ${n[1]?`data-a="go:${n[1]}"`:'data-a="noop"'}>${n[0]}</button>`).join('');
+ $('#hint').textContent=SC[c][1];$('#fbt').textContent=SC[c][0]+' ekranı';const f=FB[c]||{};
+ $('#vk').setAttribute('aria-pressed',f.v==='keep');$('#vd').setAttribute('aria-pressed',f.v==='drop');if(document.activeElement!==$('#note'))$('#note').value=f.note||'';
+ const m=$('#msgs');if(m)m.scrollTop=m.scrollHeight}
+const ACT={go:k=>{S.cur=k;if(k==='s2')S.s2.open=true;$('#gstrip').hidden=true;render()},noop:()=>{},
+ theme:()=>{const r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark'},
+ analyze,num:v=>{S.s1.num=v||null;render()},cap:v=>{S.s1.cap=v||null;render()},un:v=>{S.s1.un=v||null;render()},zones:()=>{S.s1.zones=!S.s1.zones;render()},zacc:v=>{S.s1.zacc=!!v;S.s1.zones=!!v;render()},
+ acceptall:()=>{const a=S.s1;if(!a.num)a.num='T23';if(!a.cap)a.cap='11';render()},
+ ask:i=>ask(QS[+i]),chatx:()=>{S.s2.open=false;render()},chatopen:()=>{S.s2.open=true;render()},
+ mic:()=>{const a=S.s2;a.listen=true;render();setTimeout(()=>{a.listen=false;ask('ayşe demir geldi',true)},RM?400:1800)},
+ apply:i=>{const a=S.s2,m=a.msgs[+i];m.st='done';a.glow=a.mark;a.mark=null;render()},cancel:i=>{const a=S.s2;a.msgs[+i].st='cancel';a.mark=null;render()},undo:i=>{const a=S.s2;a.msgs[+i].st='undone';a.glow=null;render()},
+ dup:v=>{S.s3.dup=v||null;if(v==='merged'&&S.s3.sel===1)S.s3.sel=0;render()},pax:v=>{S.s3.pax=v||null;render()},sel:i=>{S.s3.sel=+i;render()},
+ draft:v=>{const a=S.s4;if(v==='think'){$('#gstrip').hidden=false;setTimeout(()=>{$('#gstrip').hidden=true;a.phase='draft';if(S.cur==='s4')render()},RM?200:900)}else{a.phase=v;render()}},
+ walk:v=>{S.s5.w=v||null;render()},in:i=>{S.s5.inn[i]=!S.s5.inn[i];render()},
+ vote:v=>{const f=FB[S.cur]||(FB[S.cur]={});f.v=f.v===v?null:v;render();persist(S.cur)}};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const i=b.dataset.a.indexOf(':'),k=i<0?b.dataset.a:b.dataset.a.slice(0,i),v=i<0?'':b.dataset.a.slice(i+1);(ACT[k]||ACT.noop)(v,b)});
+document.addEventListener('submit',e=>{if(e.target.id!=='cf')return;e.preventDefault();const q=$('#cq').value.trim();if(q)ask(q)});
+const hot=(e,on)=>{const s=e.target.closest&&e.target.closest('[data-hot]');if(!s)return;const t=document.querySelector('#body .t[data-t="'+s.dataset.hot+'"]');if(t)t.classList.toggle('hot',on)};
+document.addEventListener('mouseover',e=>hot(e,true));document.addEventListener('mouseout',e=>hot(e,false));document.addEventListener('focusin',e=>hot(e,true));document.addEventListener('focusout',e=>hot(e,false));
+function fit(){const b=$('#stagebox'),s=Math.min(1,b.clientWidth/1280);$('#stage').style.transform='scale('+s+')';b.style.height=Math.round(760*s)+'px'}
+addEventListener('resize',fit);
+/* ---- feedback ---- */
+const FB={};let db=null,tm=null;
+try{Object.assign(FB,JSON.parse(localStorage.getItem('mimar-gorus')||'{}'))}catch(e){}
+async function persist(id){try{localStorage.setItem('mimar-gorus',JSON.stringify(FB))}catch(e){}const f=FB[id]||{},sv=$('#save');
+ if(!db){sv.textContent='Bu cihazda kaydedildi';return}sv.textContent='Kaydediliyor…';
+ try{await db.doc('gorus/'+id).set({v:f.v||null,note:f.note||'',at:Date.now()});sv.textContent='Kaydedildi'}catch(e){sv.textContent='Kaydedilemedi, tekrar deneyin'}}
+$('#note').addEventListener('input',e=>{const id=S.cur,f=FB[id]||(FB[id]={});f.note=e.target.value;$('#save').textContent='Yazılıyor…';clearTimeout(tm);tm=setTimeout(()=>persist(id),900)});
+render();fit();
+(async()=>{try{db=await window.claude?.use?.('db')}catch(e){db=null}if(!db)return;
+ db.collection('gorus').onSnapshot(snap=>{for(const d of snap.docs){const x=d.data()||{};if(d.id===S.cur&&document.activeElement===$('#note'))continue;FB[d.id]={v:x.v||null,note:x.note||''}}render()},()=>{})})();
+</script>
