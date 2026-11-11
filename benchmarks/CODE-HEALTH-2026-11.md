@@ -123,6 +123,7 @@ detector fingerprint as well), and the shell's own persistence and focus last
 | 1 | Guest finder panel → `src/screen-finder.js` (+ `screen-console-sweep`, the every-screen-both-themes suite) | 5,509 |
 | 2 | Event setup & plan-file intake → `src/screen-setup.js` | 5,359 |
 | 3 | Guest record removal/restore/unassign undo → `src/guest-record-undo.js` (workbook before/after identical) | 5,267 |
+| 4 | Freeze zones & seating a party → `src/seating-commands.js` (workbook before/after identical) | 5,111 |
 
 ## Seen while moving
 
@@ -186,3 +187,11 @@ entry says what was seen and what was done about it.
 13. **`toastAction` (the Undo toast) is used by four capabilities** (Live,
     guests, find-similar, the Teach Area) — a shell notification primitive, so
     it stays with `toast`, not with any one of them.
+14. **`domain-writers` read its writers from app-v8.js and the screens only.**
+    Move 3 had already taken `unassignGuest`/`restoreGuestRecord` (seating
+    writers) out of its "every seating writer refuses a historical event"
+    scan without any check failing — the scan still found ≥ 5 writers. Move 4
+    made it visible (the freeze writers' allow-list named `app-v8.js:`). The
+    suite now reads the shell plus every `create(deps)` module, its allow-list
+    names `seating-commands.js:`, and the widened scan is mutation-proven
+    (dropping `restoreGuestRecord`'s `canMutate` fails it).

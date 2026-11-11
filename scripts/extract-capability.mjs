@@ -327,8 +327,11 @@ const depArg = depNames.map((n) => {
   if (s && deps.get(base(s[1])) === "getset") return `${n}:v=>{${base(s[1])}=v;}`;
   return deps.get(n) === "fn" ? `${n}:(...a)=>${n}(...a)` : n;
 }).join(",");
+// One dependency per entry, wrapped at ~150 columns so the call does not become
+// the file's longest line.
+const depLines = depArg.split(",").reduce((acc, d) => { const last = acc[acc.length - 1]; if (last && last.length + d.length < 150) acc[acc.length - 1] = `${last}${d},`; else acc.push(`${d},`); return acc; }, []);
 const shellBlock = `  const ${shellConst}=globalThis.${globalName}.create({
-    ${depArg},
+${depLines.map((l) => `    ${l}`).join("\n")}
   });
 ${overrides.map((o) => `  ${o.name} = ${o.fnExpr.async ? "async " : ""}function(...a){return ${shellConst}.${o.name}(...a);};`).join("\n")}
 `;
