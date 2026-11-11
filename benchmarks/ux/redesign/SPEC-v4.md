@@ -40,3 +40,15 @@ Focus stays on the job of the screen. Tools sit where the hand looks for them ("
 Steps on screen (decided by Claude per owner "sana bıraktım: şık, sade, kullanışlı, elit"): the top menu IS the
 order — Etkinlik · Salon · Misafirler · Oturma · Kapı · Raporlar; a finished step carries a thin ✓, the next step
 is the emphasised word; each screen has one quiet "Sonraki: Misafirler →" at the bottom right. No wizard, no stepper bar.
+
+## Owner's verdict 2026-11-11 (angry; binding) — "Merit Kurumsal" fixed template, replaces the look of themes A/B
+Rejected: big buttons, serif/"Paint-drawn" look, ALL-CAPS labels and menu, mixed button colours and sizes, gold/champagne
+buttons, the moon icon, drawn chairs around every table, anything that looks like a website.
+- ONE fixed template on every screen: top bar · title row (status left, actions right, primary rightmost) · content · right panel (320 px).
+- ONE type family (system sans), 13 px base / 12 px secondary / 15 px titles; sentence case everywhere; no caps, no serif.
+- TWO button styles only (solid graphite primary, outlined secondary), all 30 px high, same font; "Geri al" is a text link.
+- Neutral greys in light and dark (dark primary button = light grey, never gold). Colour only carries meaning.
+- Plan: circles only, with an occupancy ring — green = yer var, amber = dolmak üzere, red = dolu, grey = boş — and "8/10" inside.
+  Chairs appear ONLY for the table under the mouse or the one Mimar was asked about; the asked guest's own chairs light NEON RED (#FF1744).
+- AI suggestions: plain grey line "Mimar önerisi · <how it knows>", always in the right panel; thinking strip only while Mimar works.
+Reference: benchmarks/ux/redesign/12-mimar-gorunumu/index.html (https://claude.ai/artifact/RT6xgYRPd7gSuwtn8VPxJK, feedback in db `gorus2`).
