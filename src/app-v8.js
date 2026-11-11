@@ -1065,159 +1065,9 @@
     }).join("")||`<tr><td colspan="8" class="muted" style="text-align:center;padding:30px">${t("history.noGuests")}</td></tr>`}</tbody></table></div></div>`;
   }
 
-  function setupHTML(){
-    const d=newEventDraft;
-    const statuses=["Planning","Confirmed","Live"];
-    return`<section class="mx-setup">
-      <header class="mx-setup-top">${topBrand()}<button class="btn" data-setup="cancel">${icon("x")}${t("setup.cancel")}</button></header>
-      <div class="mx-setup-body">
-        <section class="mx-panel">
-          <div class="kicker">${t("setup.eyebrow")}</div>
-          <h2>${t("setup.title")}</h2>
-          <p>${t("setup.subtitle")}</p>
-          <form id="v8EventForm" class="mx-form">
-            <div class="field full"><label for="fld-name-name">${t("setup.eventName")}</label><input id="fld-name-name" name="name" required autocomplete="off" value="${esc(d.name)}" placeholder="${t("setup.eventNamePh")}"></div>
-            <div class="field"><label for="fld-name-date">${t("setup.date")}</label><input id="fld-name-date" name="date" type="date" required value="${esc(d.date)}"></div>
-            <div class="field"><label for="fld-name-status">${t("setup.status")}</label><select id="fld-name-status" name="status">${statuses.map(s=>`<option value="${s}" ${d.status===s?"selected":""}>${t("setup.status."+s)}</option>`).join("")}</select></div>
-            <div class="field"><label for="fld-name-hotel">${t("setup.hotel")}</label><input id="fld-name-hotel" name="hotel" required value="${esc(d.hotel)}" placeholder="${t("setup.hotelPh")}"></div>
-            <div class="field"><label for="fld-name-salon">${t("setup.salon")}</label><input id="fld-name-salon" name="salon" value="${esc(d.salon)}" placeholder="${t("setup.salonPh")}"></div>
-            <div class="field full"><label>${t("setup.cover")} · ${t("setup.coverOptional")}</label>
-              <label class="mx-drop cover" data-cover-drop>${d.coverImage?`<img src="${d.coverImage}" alt="">`:`<span>${icon("image")} ${t("setup.chooseCover")}</span>`}<input id="v8CoverFile" type="file" accept="image/png,image/jpeg" hidden></label>
-              ${d.coverImage?`<div class="mx-setup-actions" style="margin-top:9px"><button class="btn sm" type="button" data-setup="remove-cover">${t("setup.removeCover")}</button></div>`:""}
-            </div>
-          </form>
-        </section>
-        <section class="mx-panel">
-          <div class="kicker">${t("setup.planEyebrow")}</div>
-          <h2>${t("setup.planTitle")}</h2>
-          <p>${t("setup.planSubtitle")}</p>
-          <label class="mx-drop" id="v8PlanDrop">${d.planSrc?`<img src="${d.planSrc}" alt=""><strong>${esc(d.planName)}</strong>`:`${icon("image")}<strong>${t("setup.dropPlan")}</strong><span>${t("setup.dropPlanHint")}</span>`}<input id="v8PlanFile" type="file" accept="image/png,image/jpeg,application/pdf,.png,.jpg,.jpeg,.pdf" hidden></label>
-          ${d.pdfPages?.length?`<div class="pdf-pages">${d.pdfPages.map((p,i)=>`<button class="pdf-page ${d.pdfPage===i?"active":""}" type="button" data-pdf-page="${i}"><canvas data-pdf-thumb="${i}"></canvas><span>${t("setup.page",{n:i+1})}</span></button>`).join("")}</div>`:""}
-          ${d.planSrc?`<div class="mx-setup-actions" style="margin-top:11px;justify-content:flex-start"><button class="btn sm" data-setup="replace-plan">${t("setup.replacePlan")}</button><button class="btn sm danger" data-setup="remove-plan">${t("setup.removePlan")}</button></div>`:""}
-          <p class="mx-note">${t("setup.privacy")}</p>
-          <div class="mx-setup-actions">
-            <button class="btn" data-setup="blank" ${ui.setupBusy?"disabled":""}>${t("setup.continueBlank")}</button>
-            <button class="btn primary" data-setup="create" ${ui.setupBusy?"disabled":""}>${ui.setupBusy?t("setup.preparing"):t("setup.create")}${icon("arrow")}</button>
-          </div>
-        </section>
-      </div>
-    </section>`;
-  }
-  let newEventDraft={name:"",date:"",hotel:"",salon:"",status:"Planning",coverImage:"",planSrc:"",planName:"",pdfDoc:null,pdfPages:[],pdfPage:0,pdfSource:null};
-  // SAME LAYOUT, NO GUESTS (owner 2026-11-02, "geçen etkinlikten kopyala"). A new
-  // event at the same venue starts from the last one's room: its tables (numbers,
-  // capacities, real chairs, positions), venue objects and plan — never its guests,
-  // seats, arrivals, history or decisions. Dated a week ahead so it is not born
-  // historical (a past date would make it immutable); the operator renames it.
-  function duplicateLayout(id){
-    const src=state.events.find(e=>e.id===id);if(!src)return;
-    const c=clone({tables:src.tables||[],venueObjects:src.venueObjects||[],background:src.background||null});
-    c.tables.forEach(t=>{t.id=uid("table");});
-    c.venueObjects.forEach(o=>{o.id=uid("venue");});
-    const event=migrateEvent({id:uid("event"),name:src.name+" — "+t("home.duplicateLayout"),date:new Date(Date.now()+7*86400000).toLocaleDateString("en-CA"),hotel:src.hotel||"",salon:src.salon||"",
-      status:"Planning",coverImage:src.coverImage||"",tables:c.tables,venueObjects:c.venueObjects,guests:[],background:c.background||undefined,createdAt:nowISO(),lastModified:nowISO()});
-    state.events.unshift(event);saveState();toast(t("toast.layoutCopied"),"success");openEvent(event.id);
-  }
-  function startNewEvent(){newEventDraft={name:"",date:new Date(Date.now()+7*86400000).toLocaleDateString("en-CA"),hotel:"",salon:"",status:"Planning",coverImage:"",planSrc:"",planName:"",pdfDoc:null,pdfPages:[],pdfPage:0,pdfSource:null};ui.screen="new-event";render();}
-  function syncSetupFields(){const f=document.getElementById("v8EventForm");if(!f)return;const data=new FormData(f);for(const k of ["name","date","hotel","salon","status"])newEventDraft[k]=String(data.get(k)||"");}
-  function readDataURL(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.readAsDataURL(file);});}
-  // An image is accepted only once the browser has actually DECODED it. The
-  // plan, cover and replace paths used to store whatever bytes a .png/.jpg
-  // name carried, so a truncated or mislabelled file became the event's floor
-  // plan: a broken image under every table, and Assisted Detection run on
-  // nothing. Refusing here leaves the current plan exactly as it was.
-  function decodableImage(src){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>img.naturalWidth>0?resolve(src):reject(userError(t("plan.notAnImage")));img.onerror=()=>reject(userError(t("plan.notAnImage")));img.src=src;});}
-  async function readImageFile(file){return decodableImage(await readDataURL(file));}
-  function waitForPdf(){if(globalThis.MeritPdf)return Promise.resolve(globalThis.MeritPdf);return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error("Offline PDF renderer did not initialize.")),15000);addEventListener("merit-pdf-ready",()=>{clearTimeout(timer);resolve(globalThis.MeritPdf);},{once:true});});}
-  // What the PDF page carries besides its pixels (src/plan-pdf-text.js): its
-  // text objects in the raster's own pixels, and what it is drawn with. Kept
-  // on the plan beside the image, so the analysis can use the document's own
-  // words where it would otherwise read them off pixels. A page whose text
-  // cannot be read is still a plan: the image is kept and this says why.
-  async function pdfSourceOf(page,viewport,canvas){
-    const P=globalThis.MeritPdfText;if(!P)return null;
-    let text;
-    try{text=P.itemsFromTextContent(await page.getTextContent(),viewport.transform);}
-    catch{return{page:page.pageNumber,kind:"UNREAD",reasonCode:"TEXT_LAYER_FAILED"};}
-    let vector={paths:null,images:null,text:null};
-    try{
-      const ops=await page.getOperatorList(),OPS=globalThis.pdfjsLib?.OPS;vector=P.vectorSummary(ops,OPS);
-      const shapes=P.vectorShapes(ops,OPS,viewport.transform);vector.shapes=P.shapeSummary(shapes);
-      // Furniture the document draws as repeated shapes (src/plan-vector-objects.js),
-      // kept compact on the plan so the analysis can use exact geometry where a
-      // scan would have to be interpreted. Proposals, never decisions.
-      const VO=globalThis.MeritPlanVectorObjects;
-      if(VO){
-        const props=VO.propose(shapes.shapes,{width:canvas.width,height:canvas.height,texts:text.items.map(it=>({text:it.text,cx:(it.box.x0+it.box.x1)/2,cy:(it.box.y0+it.box.y1)/2}))});
-        const r=b=>({cls:b.cls,cx:Math.round(b.cx*10)/10,cy:Math.round(b.cy*10)/10,w:Math.round(b.w*10)/10,h:Math.round(b.h*10)/10,angle:b.angle||0});
-        vector.objects={reason:props.reason,groups:props.groups,tables:props.tables.slice(0,3000).map(r),chairs:props.chairs.slice(0,9000).map(r)};
-      }
-    }catch{vector.reasonCode="OPERATORS_FAILED";}
-    return{page:page.pageNumber,scale:viewport.scale,width:canvas.width,height:canvas.height,kind:P.sourceKind(vector,text.items.length),content:P.contentClass(vector),
-      text:{items:text.items,dropped:text.dropped,truncated:text.truncated},vector};
-  }
-  async function selectPdfPage(index){
-    const doc=newEventDraft.pdfDoc;if(!doc)return;ui.setupBusy=true;render();
-    const page=await doc.getPage(index+1),viewport=page.getViewport({scale:2.6}),canvas=document.createElement("canvas");canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);await page.render({canvasContext:canvas.getContext("2d"),viewport}).promise;
-    newEventDraft.pdfSource=await pdfSourceOf(page,viewport,canvas);
-    newEventDraft.pdfPage=index;newEventDraft.planSrc=canvas.toDataURL("image/png",.96);newEventDraft.planName=`${newEventDraft.pdfName} · page ${index+1}`;ui.setupBusy=false;render();requestAnimationFrame(renderPdfThumbs);
-  }
-  async function handlePlanFile(file){
-    if(!file)return;syncSetupFields();const lower=file.name.toLowerCase();
-    if(file.type==="application/pdf"||lower.endsWith(".pdf")){
-      try{
-        ui.setupBusy=true;
-        render();
-        const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise;
-        newEventDraft.pdfDoc=doc;
-        newEventDraft.pdfName=file.name;
-        newEventDraft.pdfPages=Array.from({length:doc.numPages},(_,i)=>i);
-        ui.setupBusy=false;
-        await selectPdfPage(0);
-        toast(t(doc.numPages===1?"toast.pdfPageOne":"toast.pdfPages",{n:doc.numPages}),"success",4500);
-      }catch(error){
-        ui.setupBusy=false;
-        render();
-        toast(t("setup.planReadFailed",{reason:userMessage(error,"plan.fileUnreadable")}),"error",6000);
-      }
-      return;
-    }
-    if(!(file.type==="image/png"||file.type==="image/jpeg"||/\.(png|jpe?g)$/.test(lower)))return toast(t("toast.chooseImageType"),"error");
-    let planSrc;try{planSrc=await readImageFile(file);}catch{return toast(t("plan.unreadableImage"),"error",6500);}
-    newEventDraft.planSrc=planSrc;newEventDraft.planName=file.name;newEventDraft.pdfDoc=null;newEventDraft.pdfPages=[];newEventDraft.pdfSource=null;render();
-  }
-  async function renderPdfThumbs(){
-    const doc=newEventDraft.pdfDoc;if(!doc)return;
-    // bindSetup() runs on every render and schedules this each time, and
-    // choosing a page renders twice — so two passes could reach the SAME
-    // canvas, and PDF.js throws "Cannot use the same canvas during multiple
-    // render() operations" into the page (§28: the first suite to pick a PDF
-    // page found it). A canvas is claimed before its first await, and a
-    // thumbnail that cannot be drawn stays blank rather than throwing: it is
-    // a preview, and the page itself is rendered separately on selection.
-    for(const canvas of document.querySelectorAll("[data-pdf-thumb]")){
-      if(canvas.dataset.thumbState)continue;canvas.dataset.thumbState="rendering";
-      try{const index=Number(canvas.dataset.pdfThumb),page=await doc.getPage(index+1),v=page.getViewport({scale:.28});canvas.width=Math.ceil(v.width);canvas.height=Math.ceil(v.height);await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;canvas.dataset.thumbState="done";}
-      catch(error){canvas.dataset.thumbState="failed";}
-    }
-  }
-  function createBlankEventFromSetup(usePlan){
-    syncSetupFields();const d=newEventDraft;if(!d.name.trim()||!d.date||!d.hotel.trim()){toast(t("toast.eventFieldsRequired"),"error");return;}
-    const event=migrateEvent({id:uid("event"),name:d.name.trim(),date:d.date,hotel:d.hotel.trim(),salon:d.salon.trim(),status:d.status,coverImage:d.coverImage,tables:[],venueObjects:[],guests:[],background:{src:usePlan?d.planSrc:"",name:usePlan?d.planName:"",opacity:.34,visible:!!(usePlan&&d.planSrc),locked:true,isDefault:false,scale:100,...(usePlan&&d.planSrc?{importedAtMs:Date.now()}:{}),...(usePlan&&d.planSrc&&d.pdfSource?{pdfSource:d.pdfSource}:{})},createdAt:nowISO(),lastModified:nowISO()});
-    state.events.unshift(event);if(globalThis.MeritVenueModel)MeritVenueModel.migrateVenues(state);audit(event,"EVENT_CREATED",{blank:!event.background.src,hotel:event.hotel,salon:event.salon});saveState();ui.activeEventId=event.id;ui.screen="workspace";ui.tab="floor";ui.leftCollapsed=true;render();toast(t(event.background.src?"toast.eventCreatedWithPlan":"toast.blankEventCreated"),"success",5000);
-  }
-  function bindSetup(){
-    document.querySelector("[data-setup='cancel']").onclick=()=>{ui.screen="events";render();};
-    const drop=document.getElementById("v8PlanDrop"),input=document.getElementById("v8PlanFile");drop.onclick=e=>{if(e.target===input)return;e.preventDefault();input.click();};input.onchange=()=>handlePlanFile(input.files[0]);
-    drop.ondragover=e=>{e.preventDefault();drop.classList.add("dragging")};drop.ondragleave=()=>drop.classList.remove("dragging");drop.ondrop=e=>{e.preventDefault();drop.classList.remove("dragging");handlePlanFile(e.dataTransfer.files[0]);};
-    document.querySelector("[data-cover-drop]").onclick=e=>{const f=document.getElementById("v8CoverFile");if(e.target===f)return;e.preventDefault();f.click();};document.getElementById("v8CoverFile").onchange=async e=>{const f=e.target.files[0];if(f){syncSetupFields();let cover;try{cover=await readImageFile(f);}catch{return toast(t("plan.unreadableImage"),"error",6500);}newEventDraft.coverImage=cover;render();}};
-    document.querySelectorAll("[data-pdf-page]").forEach(b=>b.onclick=e=>{e.stopPropagation();syncSetupFields();selectPdfPage(Number(b.dataset.pdfPage));});
-    document.querySelector("[data-setup='remove-cover']")?.addEventListener("click",e=>{e.preventDefault();syncSetupFields();newEventDraft.coverImage="";render();});
-    document.querySelector("[data-setup='replace-plan']")?.addEventListener("click",e=>{e.preventDefault();input.click();});
-    document.querySelector("[data-setup='remove-plan']")?.addEventListener("click",e=>{e.preventDefault();syncSetupFields();Object.assign(newEventDraft,{planSrc:"",planName:"",pdfDoc:null,pdfPages:[],pdfPage:0,pdfSource:null});render();});
-    document.querySelector("[data-setup='blank']").onclick=e=>{e.preventDefault();createBlankEventFromSetup(false);};document.querySelector("[data-setup='create']").onclick=e=>{e.preventDefault();createBlankEventFromSetup(true);};
-    requestAnimationFrame(renderPdfThumbs);
-  }
+  const SETUP=globalThis.MeritScreenSetup.create({
+    audit:(...a)=>audit(...a),clone:(...a)=>clone(...a),esc:(...a)=>esc(...a),getState:()=>state,icon:(...a)=>icon(...a),migrateEvent:(...a)=>migrateEvent(...a),nowISO:(...a)=>nowISO(...a),openEvent:(...a)=>openEvent(...a),render:(...a)=>render(...a),saveState:(...a)=>saveState(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),topBrand:(...a)=>topBrand(...a),ui,uid:(...a)=>uid(...a),userError:(...a)=>userError(...a),userMessage:(...a)=>userMessage(...a),
+  });
 
   // ============================================================
   // Concept 3 — map-first Floor Plan workspace.
@@ -5002,11 +4852,11 @@
     ask:(...a)=>ask(...a),getState:()=>state,loggableError:(...a)=>loggableError(...a),migrateEvent:(...a)=>migrateEvent(...a),nowISO:(...a)=>nowISO(...a),parseRecordText:(...a)=>parseRecordText(...a),parseRoot:(...a)=>parseRoot(...a),RECOVERY:(...a)=>RECOVERY(...a),relativeTime:(...a)=>relativeTime(...a),render:(...a)=>render(...a),RULES:(...a)=>RULES(...a),saveState:(...a)=>saveState(...a),setState:next=>{state=next;},storageProvider,t:(...a)=>t(...a),toast:(...a)=>toast(...a),TRAIL:(...a)=>TRAIL(...a),ui,uid:(...a)=>uid(...a),
   });
   function bindV8Common(){
-    document.querySelectorAll("[data-action='create-event']").forEach(b=>b.onclick=startNewEvent);document.querySelectorAll("[data-action='help']").forEach(b=>b.onclick=openGuide);document.querySelectorAll("[data-open-event]").forEach(b=>b.onclick=()=>openEvent(b.dataset.openEvent));// Row-level open + per-row action buttons now coexist on Home, so the
+    document.querySelectorAll("[data-action='create-event']").forEach(b=>b.onclick=SETUP.startNewEvent);document.querySelectorAll("[data-action='help']").forEach(b=>b.onclick=openGuide);document.querySelectorAll("[data-open-event]").forEach(b=>b.onclick=()=>openEvent(b.dataset.openEvent));// Row-level open + per-row action buttons now coexist on Home, so the
 // buttons must not bubble into the row's open handler.
 document.querySelectorAll("[data-duplicate-layout]").forEach(b=>b.onclick=e=>{
   e.stopPropagation();
-  duplicateLayout(b.dataset.duplicateLayout);
+  SETUP.duplicateLayout(b.dataset.duplicateLayout);
 });
 document.querySelectorAll("[data-duplicate-event]").forEach(b=>b.onclick=e=>{
   e.stopPropagation();
@@ -5096,7 +4946,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
       // A past entry already opens on double-click through [data-history-event].
       if(!b.hasAttribute("data-history-event"))b.ondblclick=()=>openEvent(b.dataset.calEvent);
     });
-    document.querySelectorAll("[data-cal-new]").forEach(b=>b.onclick=()=>{startNewEvent();newEventDraft.date=b.dataset.calNew;render();});
+    document.querySelectorAll("[data-cal-new]").forEach(b=>b.onclick=()=>{SETUP.startNewEvent();SETUP.currentDraft().date=b.dataset.calNew;render();});
     // A ⋯ menu closes when you pick from it.
     document.querySelectorAll("details.shell-more .shell-menu-item,details.cal-more .shell-menu-item").forEach(b=>b.addEventListener("click",()=>{const d=b.closest("details");if(d)d.open=false;}));
   }
@@ -5253,7 +5103,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
   });
   function renderScreen(){
     translateStaticDialogs();
-    if(ui.screen==="new-event"){app.innerHTML=setupHTML();bindSetup();return;}
+    if(ui.screen==="new-event"){app.innerHTML=SETUP.setupHTML();SETUP.bindSetup();return;}
     // No review branch here any more: review renders inside the workspace's
     // content area like every other mode, so the shell above it never leaves.
     if(!state.events.length&&ui.screen!=="events")ui.screen="events";
@@ -5309,16 +5159,16 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     try{
       let src,name=file.name,pdfSource=null;
       if(file.type==="application/pdf"||file.name.toLowerCase().endsWith(".pdf")){
-        const pdf=await waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise,pageNumber=doc.numPages>1?await ask({title:t("ask.pdfPageTitle"),body:t("ask.pdfPageBody",{n:doc.numPages}),confirmLabel:t("ask.usePage"),number:{label:t("ask.pdfPageLabel"),min:1,max:doc.numPages,value:1}}):1;
+        const pdf=await SETUP.waitForPdf(),doc=await pdf.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise,pageNumber=doc.numPages>1?await ask({title:t("ask.pdfPageTitle"),body:t("ask.pdfPageBody",{n:doc.numPages}),confirmLabel:t("ask.usePage"),number:{label:t("ask.pdfPageLabel"),min:1,max:doc.numPages,value:1}}):1;
         if(pageNumber===null)return;
         const page=await doc.getPage(pageNumber),v=page.getViewport({scale:2.6}),canvas=document.createElement("canvas");
         canvas.width=Math.ceil(v.width);
         canvas.height=Math.ceil(v.height);
         await page.render({canvasContext:canvas.getContext("2d"),viewport:v}).promise;
-        pdfSource=await pdfSourceOf(page,v,canvas);
+        pdfSource=await SETUP.pdfSourceOf(page,v,canvas);
         src=canvas.toDataURL("image/png",.96);
         name=`${file.name} · page ${pageNumber}`;
-      }else src=await readImageFile(file);
+      }else src=await SETUP.readImageFile(file);
       recordUndo(event);
       event.background={src,name,opacity:.34,visible:true,locked:true,isDefault:false,scale:100,importedAtMs:Date.now(),...(pdfSource?{pdfSource}:{})};
       touchEvent(event);

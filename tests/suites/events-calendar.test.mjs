@@ -188,4 +188,16 @@ export default async function run({ page, checks, baseUrl }) {
   await createBlankEvent(page, { name: "Boş Şablon", date: futureDate(40) });
   const blank = await page.evaluate(() => { const e = state.events.find((x) => x.name === "Boş Şablon"); return { tables: e.tables.length, guests: e.guests.length, n: state.events.length }; });
   checks.equal(blank, { tables: 0, guests: 0, n: n1 + 1 }, "Yeni etkinlik starts a blank template: no tables, no guests", blank);
+
+  // A day's "+" opens the new-event form ON THAT DAY (characterization written
+  // 2026-11-08 before the setup screen left app-v8.js: no suite pressed it).
+  // Mutation proof: with the shell's write to the draft's date dropped, the
+  // form shows the default date and this fails.
+  await page.evaluate(() => { localStorage.setItem("merit.skin.v1", "b"); document.documentElement.dataset.skin = "b"; ui.screen = "events"; render(); });
+  const where = await page.evaluate(() => ({ screen: ui.screen, cal: !!document.querySelector(".cal-screen"), plus: document.querySelectorAll("[data-cal-new]").length, skin: document.documentElement.dataset.skin }));
+  checks.require(where.plus > 0, "the calendar offers a + on today and the days after it", where);
+  const day = await page.evaluate(() => { const b = [...document.querySelectorAll("[data-cal-new]")].pop(); b.click(); return b.dataset.calNew; });
+  await page.waitForSelector("#v8EventForm");
+  const formDate = await page.evaluate(() => document.querySelector('#v8EventForm [name="date"]')?.value || null);
+  checks.equal(formDate, day, "a calendar day's + opens the new-event form with that day as the date", { day, formDate });
 }
