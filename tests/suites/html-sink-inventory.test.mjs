@@ -67,7 +67,7 @@ const INVENTORY = [
     trace: "Clears the print layer: the empty string." },
   { file: "app-v8.js", fn: "translateStaticDialogs", target: "planningSel.innerHTML", evidence: "literal",
     trace: "Two <option>s whose text is t() of fixed keys and whose values are the literals Confirmed / Tentative." },
-  { file: "app-v8.js", fn: "renderGuide", target: "root.innerHTML", evidence: "literal",
+  { file: "shell-guide.js", fn: "create > renderGuide", target: "root.innerHTML", evidence: "literal",
     trace: "The user guide: hardcoded EN/TR card text and titles chosen by ui.guideLang. No stored or typed content." },
   { file: "app-guests.js", fn: "renderGuide", target: "root.innerHTML", evidence: "boot-contract",
     trace: "The pre-v8 guide (static GUIDE_EN / GUIDE_TR data), reassigned by app-v8.js." },
