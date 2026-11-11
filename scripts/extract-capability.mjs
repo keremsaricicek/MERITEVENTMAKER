@@ -339,7 +339,8 @@ ${moduleRegion.replace(/\s*$/, "")}
 // ---- the shell -----------------------------------------------------------------
 const depArg = depNames.map((n) => {
   const g = n.match(/^get([A-Z].*)$/), s = n.match(/^set([A-Z].*)$/);
-  const base = (x) => x[0].toLowerCase() + x.slice(1);
+  // getState -> state, but getSEATCMD -> SEATCMD: the name as the shell binds it.
+  const base = (x) => deps.has(x) ? x : x[0].toLowerCase() + x.slice(1);
   if (g && deps.get(base(g[1])) === "getset") return `${n}:()=>${base(g[1])}`;
   if (s && deps.get(base(s[1])) === "getset") return `${n}:v=>{${base(s[1])}=v;}`;
   return deps.get(n) === "fn" ? `${n}:(...a)=>${n}(...a)` : n;

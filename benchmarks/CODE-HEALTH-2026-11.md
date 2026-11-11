@@ -94,6 +94,7 @@ move; the tool is always re-run on the current file.
 | 5 | Service load panel (A15) | 1926–1985 | `src/service-load-panel.js` | service-load |
 | 6 | Arrival & availability writers, the announcer (A19) | 2200–2270 | `src/arrival-writer.js` | writer-transitions, arrival-wave, table-availability, a11y-announce-contrast |
 | 7a | Floor-plan view (bulk-add fields and ghosts, fitting, viewport, screen frame) → `src/floor-plan-view.js` (workbook identical) | 4,905 |
+| 7b | Floor-plan editing (create/duplicate/delete, drag/resize/rotate, inspector, capacity, venues, canvas undo, canvas binding) → `src/floor-plan-editing.js` (workbook identical) | 4,699 |
 | 7 | Floor-plan editing: bulk add, canvas object lifecycle (A12) | 1389–1471, 1632–1867 | `src/floor-plan-editing.js` | bulk-add-integrity, floor-plan-modes, structural-objects, undo-operations |
 | 8 | Layout-change panel (A11 UI) | 1528–1631 | `src/screen-layout-changes.js` | layout-changes |
 | 9 | Empty states (§20) | 1473–1527 | `src/empty-states.js` | empty-states |
@@ -223,3 +224,16 @@ entry says what was seen and what was done about it.
     through `globalThis.name` (the app.js function, exactly what it read
     before) and refuses if the name is not an app.js function. Moves 1-6 had
     no such capture (checked).
+18. **`assistant-panel` ("F8 opens the panel with the cursor in its box")
+    failed once in the gate on the move-6 tip and once alone on 7a, then
+    passed alone on moves 5, 6, 6+fix and 7a.** Focus timing under three
+    training chains, not a move (bisected: passes on every commit when the
+    CPU is not saturated). Flagged for the cheap-items agent's flaky list.
+19. **No suite dropped a guest card on a Seating-canvas table.** That handler
+    is the only canvas path that calls the seating commands; move 7b reaches
+    them through a getter (they are created further down the shell), and the
+    tool first wired that getter by a wrong name (`getSEATCMD` → looked up as
+    `sEATCMD`) — a boot ReferenceError, caught by reading before any run. The
+    tool resolves the name as the shell binds it now, and
+    `screen-console-sweep` drops a guest on a table (mutation-proven with the
+    getter returning nothing).
