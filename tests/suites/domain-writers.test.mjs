@@ -29,8 +29,8 @@ export const meta = { name: "domain-writers", tags: ["business", "fast"], timeou
 const WRITERS = {
   arrival: { fields: ["arrivalStatus", "checkedInAt"], allowed: ["arrival-writer.js:setArrival", "app.js:normalizeGuest"] },
   availability: { fields: ["availability", "unavailableReason", "unavailableSince", "unavailableNote"], allowed: [] },
-  freezes: { fields: ["freezes"], allowed: ["seating-commands.js:createFreezeFromDraft", "seating-commands.js:liftFreeze", "app-v8.js:migrateEvent"] },
-  handover: { fields: ["handoverNotes"], allowed: ["event-log-panel.js:addHandoverNote", "app-v8.js:migrateEvent"] },
+  freezes: { fields: ["freezes"], allowed: ["seating-commands.js:createFreezeFromDraft", "seating-commands.js:liftFreeze", "shell-storage.js:migrateEvent"] },
+  handover: { fields: ["handoverNotes"], allowed: ["event-log-panel.js:addHandoverNote", "shell-storage.js:migrateEvent"] },
   // "A person ran the pre-flight, at this moment, against this answer." Written
   // from the Command Center's button until 2026-10-04; that screen moved out
   // of the shell, and the write stayed behind as one named writer.

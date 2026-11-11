@@ -141,426 +141,12 @@
   const logicalSeatCount=table=>SEATS().logicalSeatCount(table);
   const physicalChairCount=table=>SEATS().physicalChairCount(table);
   const canSeat=table=>SEATS().canSeat(table);
-  function migrateEvent(event){
-    const migrated={...event};
-    migrated.id ||= uid("event"); migrated.name=String(migrated.name||"Untitled Event");
-    migrated.hotel=String(migrated.hotel ?? migrated.venue ?? "");
-    migrated.salon=String(migrated.salon ?? "");
-    migrated.venue=migrated.hotel; migrated.coverImage=migrated.coverImage||"";
-    migrated.status=["Planning","Confirmed","Live","Completed"].includes(migrated.status)?migrated.status:"Planning";
-    migrated.createdAt ||= nowISO(); migrated.lastModified ||= migrated.createdAt;
-    // capacitySource: a value this build recognises survives untouched; a
-    // table from before this field existed (or a corrupted one) is backfilled
-    // honestly as UNKNOWN rather than guessed at -- the same migration
-    // discipline as hasPhysicalSeats one line above.
-    //
-    // This is also where a stored event stops carrying fabricated chairs.
-    // syncTableChairs() (src/event-rules.js) empties `chairs` on a symbolic table and rebuilds a
-    // physical table's chairs without the retired `physical` flag, so an
-    // install that saved 4,200 invented chair coordinates sheds them on the
-    // first load. Nothing operational rides on them: capacity, assignments
-    // and seat indexes are untouched, and a physical table's real chair
-    // coordinates are carried across verbatim.
-    migrated.tables=(migrated.tables||[]).map(table=>RULES().syncTableChairs({...table,id:table.id||uid("table"),hasPhysicalSeats:table.hasPhysicalSeats!==false,capacitySource:globalThis.MeritCapacityProvenance.normalizeForTable(table.capacitySource)}));
-    migrated.venueObjects=(migrated.venueObjects||[]).map(o=>({...o,id:o.id||uid("venue")}));
-    migrated.guests=(migrated.guests||[]).map(normalizeGuest);
-    // FREEZE ZONES. An install from before them simply has none, which is the
-    // correct empty state -- there is nothing to reconstruct. Stored rules are
-    // re-normalized on every load rather than trusted: a hand-edited backup
-    // could otherwise carry a freeze whose scope covers nothing definable,
-    // which would show the operator a held area that holds nothing.
-    // seating rules (src/seating-rules.js): warn-only notes; an old event has none
-    migrated.seatRules=globalThis.MeritSeatingRules?MeritSeatingRules.normalizeAll(migrated.seatRules):(Array.isArray(migrated.seatRules)?migrated.seatRules:[]);
-    migrated.freezes=globalThis.MeritSeatingFreeze
-      ?MeritSeatingFreeze.normalizeAll(migrated.freezes)
-      :(Array.isArray(migrated.freezes)?migrated.freezes:[]);
-    // HANDOVER NOTES. An install from before them, or a brand-new blank event,
-    // simply has none -- the correct empty state, nothing to reconstruct.
-    // Re-normalized on every load like freezes: a hand-edited backup could
-    // otherwise carry a note with no text, which would render as a blank line
-    // in a log an operator is trusting for what the last shift actually said.
-    migrated.handoverNotes=globalThis.MeritEventHandover
-      ?MeritEventHandover.resolve(migrated.handoverNotes)
-      :(Array.isArray(migrated.handoverNotes)?migrated.handoverNotes:[]);
-    migrated.background={src:"",name:"",opacity:.28,visible:false,locked:true,isDefault:false,scale:100,...(migrated.background||{})};
-    if(migrated.background.isDefault){migrated.background.src="";migrated.background.visible=false;migrated.background.isDefault=false;}
-    migrated.analysis=migrated.analysis||null;
-    RULES().syncEventChairs(migrated);
-    return migrated;
-  }
-  // A record this build must not read AND must not write over. Set once, by
-  // parseRoot, when the stored schemaVersion is newer than this build knows.
-  // Exposed so the UI and the suites can see the state rather than infer it.
-  globalThis.MERIT_SCHEMA_GUARD={readOnly:false,storedVersion:null,buildVersion:null};
-  // Thrown by parseRoot so every caller -- the normal load, the legacy
-  // migration, the recovery snapshot -- gets the same containment without
-  // each having to remember to check.
-  function FutureSchemaError(storedVersion){
-    const e=new Error("Stored data was written by a newer version of this application.");
-    e.name="FutureSchemaError"; e.storedVersion=storedVersion; return e;
-  }
-  // Every record read from outside memory goes through the registry's reader,
-  // which drops `__proto__`/`constructor`/`prototype` keys before anything can
-  // copy them (src/schema-migrations.js, parseRecord).
-  function parseRecordText(raw){
-    const SM=globalThis.MeritSchemaMigrations;
-    return SM&&SM.parseRecord?SM.parseRecord(raw):JSON.parse(raw);
-  }
-  // `forImport`: the record is a FILE an operator picked, not this install's
-  // own stored record. A file from a newer build is refused exactly the same
-  // way, but the read-only guard is NOT latched -- the guard protects the
-  // stored record from being written over, and a refused file is not that
-  // record. Latching it here used to leave a healthy install silently unable
-  // to save after one wrong file was picked.
-  function parseRoot(raw,{forImport=false}={}){
-    const parsed=parseRecordText(raw);
-    // READ the version, do not stamp it. `parsed.schemaVersion=8` used to sit
-    // here: a record from a newer build had its version overwritten, its
-    // unknown fields ignored, and was then saved over on the first mutation.
-    // That is not a misread, it is data destruction, and the write is the
-    // destructive half -- so FUTURE latches a read-only guard rather than
-    // merely declining to migrate.
-    // Root lists other than `events` are set aside before the schema chain
-    // reads the record (see the per-event pass below for why). A root whose
-    // `events` is not a list stays unreadable: there is nothing to open, and
-    // the whole record is copied aside by the loader, as before.
-    const setAside=[],setAt=nowISO();
-    const isRec=v=>!!v&&typeof v==="object"&&!Array.isArray(v);
-    if(isRec(parsed))for(const key of ["venues","audit","verifiedExamples","analyses","trainingData","teachings","operatorSessions"]){
-      if(parsed[key]==null)continue;
-      if(!Array.isArray(parsed[key])){setAside.push({where:key,rule:"notList",at:setAt,raw:parsed[key]});parsed[key]=[];continue;}
-      parsed[key]=parsed[key].filter(x=>isRec(x)||(setAside.push({where:key,rule:"notRecord",at:setAt,raw:x}),false));
-    }
-    const SM=globalThis.MeritSchemaMigrations;
-    if(SM){
-      const result=SM.migrate(parsed);
-      if(result.status===SM.STATUS.FUTURE){
-        if(!forImport)MERIT_SCHEMA_GUARD={readOnly:true,storedVersion:result.from,buildVersion:SM.CURRENT_VERSION};
-        throw FutureSchemaError(result.from);
-      }
-      if(result.status===SM.STATUS.UNREADABLE)throw new Error("Stored data is not a readable record.");
-    }
-    // No `else` that stamps a version. If the registry were ever missing from
-    // the bundle, stamping would silently reintroduce the exact defect this
-    // check exists to prevent -- so the record keeps whatever version it
-    // declared and nothing claims to have migrated it.
-    // ONE UNREADABLE RECORD IS SET ASIDE, NOT THE WHOLE STORE. Measured
-    // 2026-10-03: a single event whose `guests` was not a list (or a null
-    // guest, or an `audit` that was not a list) made this function throw, the
-    // whole record went to quarantine and the operator faced an empty app —
-    // every intact event out of reach on the night. A null entry, meanwhile,
-    // was "migrated" into a fabricated "Untitled Event". Now each part that
-    // cannot be read is moved, unchanged, into `setAside` (persisted, carried
-    // by every backup), the rest opens, and the operator is told. An IMPORT
-    // stays all-or-nothing: a backup is refused whole rather than half-applied.
-    const PKG=globalThis.MeritEventPackage;
-    parsed.events=(parsed.events||[]).flatMap(e=>{
-      const problem=PKG?PKG.structureProblem(e):(isRec(e)?null:{path:"event",rule:"notRecord"});
-      const label=isRec(e)?{eventId:typeof e.id==="string"?e.id:null,name:typeof e.name==="string"?e.name:null}:{};
-      if(problem){setAside.push({where:"event",rule:problem.rule,path:problem.path,...label,at:setAt,raw:e});return[];}
-      try{return[migrateEvent(e)];}
-      catch{setAside.push({where:"event",rule:"migrationFailed",...label,at:setAt,raw:e});return[];}
-    });
-    if(setAside.length&&forImport)throw new Error("The record contains parts that cannot be read.");
-    parsed.setAside=[...(Array.isArray(parsed.setAside)?parsed.setAside:[]),...setAside];
-    if(setAside.length)MERIT_STORAGE_NOTICE.setAside={count:setAside.length,at:setAt,hidden:false};
-    parsed.verifiedExamples ||= []; parsed.analyses ||= []; parsed.audit ||= [];
-    // Re-normalized on every load, like freezes and handover notes: a
-    // hand-edited backup must not be able to claim a loss that never
-    // happened, or to lose the record of one that did.
-    parsed.auditRetention=globalThis.MeritAuditTrail
-      ?MeritAuditTrail.normalizeRetention(parsed.auditRetention)
-      :(parsed.auditRetention||null);
-    // Added with training-data capture. An install from before it simply has
-    // no examples yet -- there is nothing to reconstruct, because the crops
-    // it would have needed were never taken.
-    parsed.trainingData ||= [];
-    // The Teach Area (src/plan-teach-area.js). Lives at the root rather than on
-    // an event because its whole point is reach: a lesson scoped to a venue has
-    // to outlive the event it was taught in. An install from before it has no
-    // lessons, which is the correct empty state -- nothing to reconstruct.
-    parsed.teachings ||= [];
-    // Promote the old free-text hotel/salon strings into real Venue/Layout
-    // records (src/venue-model.js). Additive: every event keeps its original
-    // strings, and a venueRef is attached alongside, so nothing that reads
-    // event.hotel today changes behaviour.
-    if(globalThis.MeritVenueModel){
-      const result=MeritVenueModel.migrateVenues(parsed);
-      if(result.linked)parsed.audit.unshift({id:uid("audit"),eventId:null,action:"VENUE_MODEL_MIGRATION",detail:result,at:nowISO()});
-    }
-    return parsed;
-  }
-  // One-time migration source only: whatever a pre-StorageProvider install
-  // left in localStorage. Read here, never written to again after this.
-  function loadFromLegacyLocalStorage(){
-    try{
-      const own=localStorage.getItem(V8_STORAGE_KEY); if(own) return parseRoot(own);
-      for(const key of LEGACY_KEYS){const raw=localStorage.getItem(key);if(raw){const migrated=parseRoot(raw);migrated.audit.unshift({id:uid("audit"),eventId:null,action:"LEGACY_MIGRATION",detail:{source:key,venueToHotel:true,salonInvented:false},at:nowISO()});return migrated;}}
-    }catch(error){console.warn("Legacy localStorage restore failed",loggableError(error));}
-    return null;
-  }
-  // WHAT THE OPERATOR MUST BE TOLD ABOUT STORAGE, kept until it stops being
-  // true -- never only a toast, which disappears before anyone reads it.
-  //   unreadable     the stored record could not be read at boot (see below)
-  //   saveFailing    the last save failed entirely; cleared by the next success.
-  //                  {reason:"serialize"} when the state could not even be
-  //                  turned into a record -- not a storage refusal at all
-  //   imagesDropped  saves succeed only WITHOUT the plan images, so the next
-  //                  open has no plan; cleared by a save that keeps them
-  //   recovered      this session opened an automatic recovery point because
-  //                  the saved record was missing; later changes may be gone
-  // The last three were each told by one toast and nothing else (§17).
-  globalThis.MERIT_STORAGE_NOTICE={unreadable:null,saveFailing:null,dismissed:false,imagesDropped:null,recovered:null,setAside:null};
-  // THE STORED RECORD COULD NOT BE READ. It used to be dropped on the floor:
-  // the app opened empty with no word said, and the first save wrote the new,
-  // almost-empty state over it -- destroying a record that was, more often
-  // than not, one hand-edited quote away from readable
-  // (tests/suites/resilience-storage.test.mjs). It is now copied to its own
-  // key before anything else happens. If even that copy cannot be written,
-  // this session does not save at all, so the only copy is never overwritten.
-  async function quarantineUnreadable(raw){
-    const at=nowISO(),key="quarantine:"+at;
-    try{
-      await storageProvider.save(raw,key);
-      MERIT_STORAGE_NOTICE.unreadable={kept:true,key,at,raw};
-    }catch(error){
-      console.warn("Could not keep a copy of the unreadable record; this session will not save.",loggableError(error));
-      MERIT_STORAGE_NOTICE.unreadable={kept:false,key:null,at,raw};
-    }
-  }
-  // THE LAST MOMENT BEFORE THE TAB CLOSED. A save is an IndexedDB write the
-  // browser may abort when the page is torn down, so a change made just
-  // before closing could be lost (resilience-records, caught by CI
-  // 2026-10-24). On pagehide/beforeunload the same complete snapshot a save
-  // would write is also put, synchronously, in one localStorage slot; at the
-  // next boot it is used when it differs from the stored record, and any
-  // successful save removes it (the store then holds the newest picture). It
-  // is written only when a save would be allowed, and only whole: a snapshot
-  // that does not fit is not written at all (and an older one is removed),
-  // never written without its images. It carries a fingerprint of the stored
-  // record this tab last read or wrote, and is used only while the store
-  // still holds exactly that record: a store something else has written since
-  // (another tab, a restore, the suites' own injected records) is newer than
-  // this tab's last moment, and the snapshot is dropped.
-  const UNLOAD_JOURNAL_KEY="merit.unloadJournal.v1";
-  let lastStoredRaw=null;
-  const fingerprint=(str)=>{if(typeof str!=="string")return "none";let h=0x811c9dc5;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,0x01000193);}return (h>>>0).toString(16)+":"+str.length;};
-  function readUnloadJournal(){try{const j=JSON.parse(localStorage.getItem(UNLOAD_JOURNAL_KEY)||"null");return j&&typeof j.payload==="string"&&typeof j.base==="string"?j:null;}catch(error){console.warn("The record kept when the tab closed could not be read.",loggableError(error));return null;}}
-  function clearUnloadJournal(){try{localStorage.removeItem(UNLOAD_JOURNAL_KEY);}catch(error){console.warn("Could not remove the record kept when the tab closed.",loggableError(error));}}
-  // ONE serialisation per close (CI, 2026-10-27: on a 50,000-guest event the
-  // close-time work pushed the reload past its budget). beforeunload and
-  // pagehide both fire, so the snapshot is written once per close (`unloadDone`,
-  // reset when the page is shown again or saves again); and the save that
-  // app-guests' beforeunload handler has just made in this same task already
-  // holds the payload (`unloadPayload`, dropped at the next task).
-  let unloadDone=false,unloadPayload=null;
-  function writeUnloadJournal(){
-    if(unloadDone)return;
-    if(!bootReady||(globalThis.MERIT_SCHEMA_GUARD&&MERIT_SCHEMA_GUARD.readOnly)||(MERIT_STORAGE_NOTICE.unreadable&&!MERIT_STORAGE_NOTICE.unreadable.kept))return;
-    let payload=unloadPayload;
-    if(payload==null){try{state.events.forEach(e=>RULES().syncEventChairs(e));payload=JSON.stringify(state);}catch(error){console.warn("Nothing kept when the tab closed: the state could not be serialised.",loggableError(error));return;}}
-    unloadDone=true;
-    if(payload===lastStoredRaw){clearUnloadJournal();return;}
-    try{localStorage.setItem(UNLOAD_JOURNAL_KEY,JSON.stringify({base:fingerprint(lastStoredRaw),payload}));}catch(error){console.warn("Nothing kept when the tab closed: it does not fit.",loggableError(error));clearUnloadJournal();}
-  }
-  window.addEventListener("pagehide",writeUnloadJournal);
-  window.addEventListener("beforeunload",writeUnloadJournal);
-  window.addEventListener("pageshow",()=>{unloadDone=false;});
-  async function loadV8Async(){
-    let raw=null;
-    try{
-      raw=await storageProvider.load();
-      lastStoredRaw=raw;
-      const journal=readUnloadJournal();
-      if(journal&&journal.base===fingerprint(raw)&&journal.payload!==raw){
-        try{return{data:parseRoot(journal.payload),recoveredAt:null,fromJournal:true};}
-        catch(error){console.warn("The record kept when the tab closed could not be read; using the stored record.",loggableError(error));}
-      }
-      if(journal)clearUnloadJournal();
-      if(raw) return{data:parseRoot(raw),recoveredAt:null};
-    }catch(error){
-      console.warn("StorageProvider load failed, checking legacy localStorage.",loggableError(error));
-      // A record from a NEWER build is not unreadable -- the schema guard owns
-      // that case and already refuses to write over it.
-      if(!(globalThis.MERIT_SCHEMA_GUARD&&MERIT_SCHEMA_GUARD.readOnly)){
-        // The record was read and would not parse: keep a copy. Or the READ
-        // itself failed (storage blocked by another tab, a broken database):
-        // nothing is known about what is stored, so nothing may be written
-        // over it this session either.
-        if(raw!=null)await quarantineUnreadable(raw);
-        else MERIT_STORAGE_NOTICE.unreadable={kept:false,key:null,at:nowISO(),raw:null};
-      }
-    }
-    // Writing the recovered picture straight into the primary record is only
-    // safe once whatever was there has been copied aside.
-    const mayOverwrite=!MERIT_STORAGE_NOTICE.unreadable||MERIT_STORAGE_NOTICE.unreadable.kept;
-    // A record from a newer build is not a missing record. Falling through to
-    // the legacy reader or a recovery snapshot would present something OLDER
-    // as though it were the current one -- harmless to the file, since the
-    // guard blocks writes, but a lie on screen.
-    if(globalThis.MERIT_SCHEMA_GUARD&&MERIT_SCHEMA_GUARD.readOnly)return{data:blankRoot(),recoveredAt:null};
-    const legacy=loadFromLegacyLocalStorage();
-    if(legacy){
-      // Get it into the real store right away so this migration only ever
-      // has to run once, even if the provider load above merely came back
-      // empty (first run after switching to IndexedDB) rather than erroring.
-      if(mayOverwrite)storageProvider.save(JSON.stringify(legacy)).catch(error=>console.warn("Could not persist migrated legacy state.",loggableError(error)));
-      return{data:legacy,recoveredAt:null};
-    }
-    // The primary record is gone or unreadable, and there is no legacy
-    // install to fall back to either. Before conceding a blank slate that
-    // silently discards whatever the operator had, try the automatic
-    // recovery snapshot -- exactly the case offline-recovery.js exists for.
-    // A snapshot that itself fails to parse is treated the same as none.
-    try{
-      const R=RECOVERY();
-      const stored=R&&await storageProvider.load("autosnapshots");
-      const snap=R&&R.latestSnapshot(stored);
-      if(snap){
-        const data=parseRoot(snap.payload);
-        if(mayOverwrite)storageProvider.save(JSON.stringify(data)).catch(error=>console.warn("Could not persist auto-recovered state.",loggableError(error)));
-        return{data,recoveredAt:snap.at};
-      }
-    }catch(error){console.warn("Automatic recovery snapshot could not be read either.",loggableError(error));}
-    return{data:blankRoot(),recoveredAt:null};
-  }
-  // Section 13 (storage write-ordering safety): `storageProvider.save()` is
-  // async (IndexedDBStorageProvider opens its own connection per call), so
-  // two `saveState()` calls close together race on which write actually
-  // lands last -- nothing structurally guaranteed the second call to START
-  // was also the second call to LAND. `saveQueue` fixes this the direct
-  // way, not by comparing epochs after the fact: every save chains onto the
-  // one before it, so writes reach storage in exactly the order saveState()
-  // was called, whichever caller (touchEvent or a direct saveState() call)
-  // made them. persistPayload() never lets a failure break the chain --
-  // its own last .catch() always resolves -- so one save's storage error
-  // can never stall every save queued after it.
-  let saveQueue=Promise.resolve();
-  // A save that lands after failing ones ends the "not being saved" notice:
-  // every save is a whole snapshot, so the first success after a failure has
-  // written everything the failures could not.
-  function storageRecovered(){if(MERIT_STORAGE_NOTICE.saveFailing){MERIT_STORAGE_NOTICE.saveFailing=null;if(bootReady)render();}}
-  // The whole payload -- images included -- was stored, so whatever the
-  // "images not stored" notice said is no longer true.
-  function imagesStored(){if(MERIT_STORAGE_NOTICE.imagesDropped){MERIT_STORAGE_NOTICE.imagesDropped=null;if(bootReady)render();}}
-  // Every autosave repeats the strip while the image does not fit, so the
-  // notice and its toast are raised once, when the condition begins -- not
-  // on every keystroke that saves.
-  function imagesDropped(){
-    if(MERIT_STORAGE_NOTICE.imagesDropped)return;
-    MERIT_STORAGE_NOTICE.imagesDropped={at:nowISO(),hidden:false};
-    toast(t("toast.imagesNotStored"),"error",6500);
-    if(bootReady)render();
-  }
-  // READ IT BACK. A save that resolved is a promise from the storage layer,
-  // not a record on disk: a failing disk or a browser that truncates a value
-  // resolves just the same. Each save is read back and compared; a record that
-  // reads back different is a failing save, said so with its own message, and
-  // is never "fixed" by the image-strip retry, which answers a different
-  // failure (resilience-records injects it).
-  async function saveAndReadBack(payload){
-    await storageProvider.save(payload);
-    const back=await storageProvider.load();
-    if(back!==payload)throw Object.assign(new Error("The saved record read back different from what was written."),{readBack:true});
-  }
-  function persistPayload(payload,show){
-    return saveAndReadBack(payload)
-      .then(()=>{if(show)toast(t("toast.savedLocally"),"success");lastStoredRaw=payload;clearUnloadJournal();PORTABILITY.autoSnapshot(payload);storageRecovered();imagesStored();})
-      .catch(error=>{
-        if(error&&error.readBack)throw error;
-        // Large embedded images are the only realistic reason a save this
-        // size fails -- strip them and retry once before giving up.
-        //
-        // Stripped from THIS PAYLOAD, not from live `state`. Rebuilding the
-        // retry from `state` meant a save of one snapshot could persist a
-        // different one: mutate memory while the first attempt is in flight
-        // and the retry writes whatever `state` had become, under the
-        // identity of a save that was supposed to write the earlier picture.
-        // "This save writes this snapshot" is the promise the queue exists
-        // to keep, and the failure path was the one place it did not hold.
-        console.warn("StorageProvider save failed, retrying with images stripped.",loggableError(error));
-        let stripped;
-        try{
-          const compact=JSON.parse(payload);
-          (compact.events||[]).forEach(e=>{if(e.background)e.background.src="";if(e.coverImage)e.coverImage="";});
-          stripped=JSON.stringify(compact);
-        }catch(parseError){
-          // The payload is the only copy of what this save meant; if it
-          // cannot be reshaped, fail rather than substitute a different one.
-          console.warn("Could not strip images from the queued payload.",loggableError(parseError));
-          throw error;
-        }
-        return saveAndReadBack(stripped).then(()=>{storageRecovered();imagesDropped();});
-      })
-      .catch(error=>{console.warn("StorageProvider save failed entirely.",loggableError(error));
-        const first=!MERIT_STORAGE_NOTICE.saveFailing,readBack=!!(error&&error.readBack);
-        MERIT_STORAGE_NOTICE.saveFailing={at:nowISO(),reason:readBack?"readback":"write"};MERIT_STORAGE_NOTICE.dismissed=false;
-        if(first){toast(t(readBack?"toast.storageReadBack":"toast.storageFull"),"error",6500);if(bootReady)render();}});
-  }
-  // A save that is QUEUED but has not started yet. Each payload is a
-  // COMPLETE snapshot of `state`, so a waiting one is not partial work to
-  // preserve -- it is an older photograph of the same subject, and replacing
-  // it collapses a burst of writes without changing what finally lands.
-  let pendingSave=null;
-  // Returns the queued write, so a caller can wait for it. It used to return
-  // undefined while chaining onto saveQueue, which made `await saveState()`
-  // wait for nothing and resolve before a single byte was written -- a test
-  // can poll around that; an export about to hand somebody a file cannot.
-  // The returned promise never rejects: persistPayload()'s final .catch()
-  // always resolves, so awaiting is safe and NOT awaiting raises no
-  // unhandled rejection.
-  saveState = function(show=false){
-    // Nothing to persist yet, and persisting now would be actively harmful:
-    // `state` is still the boot placeholder until loadV8Async() resolves, so
-    // writing it (e.g. from the beforeunload handler firing on a reload that
-    // races ahead of the async load) would overwrite real data with a blank
-    // slate. See the isMigrationRace regression check in scratchpad.
-    if(!bootReady)return Promise.resolve();
-    // REFUSING TO READ MEANS REFUSING TO WRITE. The stored record was
-    // written by a newer build; its unrecognised fields are the only copy of
-    // somebody's work, and this build saving its own reduced picture over
-    // them is exactly the destruction the version check exists to prevent.
-    if(globalThis.MERIT_SCHEMA_GUARD&&MERIT_SCHEMA_GUARD.readOnly)return Promise.resolve();
-    // The same rule for a record that could not be read AND could not be
-    // copied aside: saving would overwrite the only copy.
-    if(MERIT_STORAGE_NOTICE.unreadable&&!MERIT_STORAGE_NOTICE.unreadable.kept)return Promise.resolve();
-    state.events.forEach(e=>RULES().syncEventChairs(e));
-    let payload;
-    try{payload=JSON.stringify(state);}
-    // Not a storage refusal: the state could not be turned into a record at
-    // all (a value JSON cannot hold). It used to toast "Browser storage is
-    // full" -- which was not what happened -- and then say nothing more
-    // while every later save failed the same way.
-    catch(error){
-      console.warn("State could not be serialised for saving.",loggableError(error));
-      const first=!MERIT_STORAGE_NOTICE.saveFailing;
-      MERIT_STORAGE_NOTICE.saveFailing={at:nowISO(),reason:"serialize"};
-      if(first){toast(t("toast.notSerializable"),"error",6500);if(bootReady)render();}
-      return Promise.resolve();
-    }
-    // a later save means a later picture; the close-time snapshot may reuse
-    // this payload only within the task that made it
-    unloadDone=false;unloadPayload=payload;setTimeout(()=>{unloadPayload=null;},0);
-    // COALESCE. The pending slot is already the tail of the queue, so
-    // handing it a newer payload keeps last-write-wins exactly: the newest
-    // snapshot is still the one that lands, and it still lands last. `show`
-    // is OR-ed because a coalesced save must not swallow somebody's request
-    // for a confirmation toast.
-    if(pendingSave){
-      pendingSave.payload=payload;
-      pendingSave.show=pendingSave.show||show;
-      return pendingSave.promise;
-    }
-    const slot={payload,show,promise:null};
-    pendingSave=slot;
-    // Reading slot.payload INSIDE the callback, not closing over the value:
-    // everything coalesced between queueing and starting must be picked up.
-    slot.promise=saveQueue=saveQueue.then(()=>{
-      pendingSave=null;
-      return persistPayload(slot.payload,slot.show);
-    });
-    return slot.promise;
-  };
+  const STORAGE=globalThis.MeritShellStorage.create({
+    LEGACY_KEYS,RECOVERY:(...a)=>RECOVERY(...a),RULES:(...a)=>RULES(...a),V8_STORAGE_KEY,blankRoot:(...a)=>blankRoot(...a),getBootReady:()=>bootReady,
+    getPORTABILITY:()=>PORTABILITY,getState:()=>state,loggableError:(...a)=>loggableError(...a),normalizeGuest:(...a)=>normalizeGuest(...a),
+    nowISO:(...a)=>nowISO(...a),render:(...a)=>render(...a),storageProvider,t:(...a)=>t(...a),toast:(...a)=>toast(...a),uid:(...a)=>uid(...a),
+  });
+  saveState = function(...a){return STORAGE.saveState(...a);};
   // Bumped by every mutation that goes through touchEvent, so render-scoped
   // memos (see frozenTableIdSet) can be invalidated by a counter rather than
   // by comparing structures that may have been edited in place.
@@ -809,13 +395,13 @@
     // their labels; the records themselves are untouched (§18).
     return`<div class="screen-inner"><div class="readonly-note">${icon("lock")}${t("history.guestsReadOnly")}</div><div class="screen-titlebar"><div><h2>${t("guests.title")}</h2><p>${t("history.guestsCount",{n:event.guests.length,pax:eventMetrics(event).guests})}</p></div></div><div class="guest-shell"><table class="guest-table"><thead><tr><th>${t("guests.col.name")}</th><th>${t("guests.col.pax")}</th><th>${t("history.col.planning")}</th><th>${t("history.col.arrival")}</th><th>${t("guests.col.vip")}</th><th>${t("guests.col.invitedBy")}</th><th>${t("guests.col.tableSeat")}</th><th>${t("guests.col.notes")}</th></tr></thead><tbody>${event.guests.map(g=>{
       const tb=event.tables.find(x=>x.id===g.assignment?.tableId);
-      return`<tr><td><b>${esc(g.name)}</b></td><td>${paxOf(g)}</td><td>${esc(t("status.planning."+g.planningStatus))}</td><td>${esc(t("status.arrival."+g.arrivalStatus))}</td><td>${esc(vipLabel(g.vip))}</td><td>${esc(g.invitedBy||"—")}</td><td>${tb?esc(tb.number)+" · "+esc(seatRange(g.assignment.seats)):"—"}</td><td>${esc(g.notes||"")}</td></tr>`
+      return`<tr><td><b>${esc(g.name)}</b></td><td>${paxOf(g)}</td><td>${esc(t("status.planning."+g.planningStatus))}</td><td>${esc(t("status.arrival."+g.arrivalStatus))}</td><td>${esc(LANGUAGE.vipLabel(g.vip))}</td><td>${esc(g.invitedBy||"—")}</td><td>${tb?esc(tb.number)+" · "+esc(seatRange(g.assignment.seats)):"—"}</td><td>${esc(g.notes||"")}</td></tr>`
     }).join("")||`<tr><td colspan="8" class="muted" style="text-align:center;padding:30px">${t("history.noGuests")}</td></tr>`}</tbody></table></div></div>`;
   }
 
   const SETUP=globalThis.MeritScreenSetup.create({
     audit:(...a)=>audit(...a),clone:(...a)=>clone(...a),esc:(...a)=>esc(...a),getState:()=>state,icon:(...a)=>icon(...a),
-    migrateEvent:(...a)=>migrateEvent(...a),nowISO:(...a)=>nowISO(...a),openEvent:(...a)=>openEvent(...a),render:(...a)=>render(...a),
+    migrateEvent:(...a)=>STORAGE.migrateEvent(...a),nowISO:(...a)=>nowISO(...a),openEvent:(...a)=>openEvent(...a),render:(...a)=>render(...a),
     saveState:(...a)=>saveState(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),topBrand:(...a)=>topBrand(...a),ui,uid:(...a)=>uid(...a),
     userError:(...a)=>userError(...a),userMessage:(...a)=>userMessage(...a),
   });
@@ -1084,67 +670,17 @@
     canMutate:(...a)=>canMutate(...a),challengeFreeze:(...a)=>SEATCMD.challengeFreeze(...a),formatTableNumber:(...a)=>formatTableNumber(...a),
     freezeBlocks:(...a)=>SEATCMD.freezeBlocks(...a),getState:()=>state,occupiedSeatIndexes:(...a)=>occupiedSeatIndexes(...a),original,
     render:(...a)=>render(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),toastAction:(...a)=>toastAction(...a),touchEvent:(...a)=>touchEvent(...a),
-    translateStaticDialogs:(...a)=>translateStaticDialogs(...a),ui,
+    translateStaticDialogs:(...a)=>LANGUAGE.translateStaticDialogs(...a),ui,
   });
   deleteGuest = async function(...a){return GUESTUNDO.deleteGuest(...a);};
   unassignGuest = function(...a){return GUESTUNDO.unassignGuest(...a);};
   openGuestDialog = function(...a){return GUESTUNDO.openGuestDialog(...a);};
-  // guestDialog/excelDialog markup lives once in index.html and never passes
-  // through render(), so a language toggle has nothing to re-draw it. This
-  // pushes the current language into that static markup directly, called on
-  // every render() and whenever the guest dialog opens.
-  const VIP_LEVELS=["Standard","VIP","VVIP"];
-  // What the operator reads for a stored VIP level. "VIP"/"VVIP" read the same
-  // in both languages; "Standard" does not.
-  function vipLabel(v){const k="vip.level."+v;return t(k)!==k?t(k):String(v||"");}
-  function translateStaticDialogs(){
-    const form=document.getElementById("guestForm");if(!form)return;
-    const editing=!!form.elements.id.value;
-    const title=document.getElementById("guestDialogTitle");if(title)title.textContent=t(editing?"guests.editGuest":"guests.addGuest");
-    const setLabel=(forId,key)=>{const lbl=form.querySelector(`label[for="${forId}"]`);if(lbl)lbl.textContent=t(key);};
-    setLabel("gfName","guestDialog.name");
-    setLabel("gfAdditional","guestDialog.additionalGuests");
-    setLabel("gfPlanning","guestDialog.planningStatus");
-    setLabel("gfVip","guestDialog.vipLevel");
-    setLabel("gfInvitedBy","guestDialog.invitedBy");
-    setLabel("gfExpectedArrival","guestDialog.expectedArrival");
-    setLabel("gfNotes","guestDialog.notes");
-    const paxLabel=document.getElementById("gfPaxLabel");if(paxLabel)paxLabel.textContent=t("guestDialog.totalPax");
-    const planningSel=form.elements.planningStatus;
-    if(planningSel){const cur=planningSel.value||"Confirmed";planningSel.innerHTML=`<option value="Confirmed">${t("status.planning.Confirmed")}</option><option value="Tentative">${t("status.planning.Tentative")}</option>`;planningSel.value=cur;}
-    const cancelBtn=form.querySelector(".dialog-foot .btn:not(.primary)");if(cancelBtn)cancelBtn.textContent=t("guestDialog.cancel");
-    const closeBtn=form.querySelector(".dialog-close");if(closeBtn)closeBtn.setAttribute("aria-label",t("a11y.close"));
-    // The VALUE is the stored level; only the label is translated.
-    const vipSel=form.elements.vip;
-    // Built as nodes with textContent, not innerHTML: no new markup sink.
-    if(vipSel){const cur=vipSel.value||"Standard";vipSel.replaceChildren(...VIP_LEVELS.map(v=>{const o=document.createElement("option");o.value=v;o.textContent=vipLabel(v);return o;}));vipSel.value=cur;}
-    const saveBtn=form.querySelector(".dialog-foot .btn.primary");if(saveBtn)saveBtn.textContent=t("guestDialog.save");
-  }
-  translateStaticDialogs();
-  loadXLSX = function(){return globalThis.XLSX?Promise.resolve():Promise.reject(new Error("Embedded spreadsheet engine did not initialize."));};
-
-  // Translate at the toast boundary rather than at ~40 call sites. Strings
-  // already localized by t() simply pass through unmatched.
-  const baseToast=toast;
-  toast=function(message,...rest){return baseToast(typeof translateToast==="function"?translateToast(message):message,...rest);};
-
-  // Cancel and the close X live inside <form method="dialog"> as untyped
-  // buttons, so both SUBMITTED the form: pressing Cancel on a guest edit
-  // committed it -- pax change, capacity check and seat repack included.
-  document.querySelectorAll("#guestDialog [value='cancel']").forEach(b=>{
-    b.type="button";
-    b.onclick=()=>document.getElementById("guestDialog").close("cancel");
+  const LANGUAGE=globalThis.MeritShellLanguage.create({
+    activeEvent:(...a)=>activeEvent(...a),canMutate:(...a)=>canMutate(...a),getOpenExcelWizard:()=>openExcelWizard,
+    setOpenExcelWizard:v=>{openExcelWizard=v;},t:(...a)=>t(...a),
   });
-
-  // Importing guests is a mutation, but neither the wizard opener nor its
-  // import step consulted canMutate; protection was incidental (bindGuests
-  // simply never runs on historical events).
-  const baseOpenExcelWizard=typeof openExcelWizard==="function"?openExcelWizard:null;
-  if(baseOpenExcelWizard)openExcelWizard=function(...a){
-    if(!canMutate(activeEvent(),"import a guest list"))return;
-    return baseOpenExcelWizard(...a);
-  };
-
+  loadXLSX = function(...a){return LANGUAGE.loadXLSX(...a);};
+  toast = function(...a){return LANGUAGE.toast(...a);};
   function yieldFrame(){return new Promise(resolve=>requestAnimationFrame(()=>resolve()));}
   function sourceBlob(src){return fetch(src).then(r=>r.blob());}
   // The classical detection pipeline used to live here (2809 lines).
@@ -1487,7 +1023,7 @@
   // the boot loader reads it as well. ------------------------------------------
   const RECOVERY=()=>globalThis.MeritOfflineRecovery||null;
   const PORTABILITY=globalThis.MeritDataPortability.create({
-    ask:(...a)=>ask(...a),getState:()=>state,loggableError:(...a)=>loggableError(...a),migrateEvent:(...a)=>migrateEvent(...a),nowISO:(...a)=>nowISO(...a),parseRecordText:(...a)=>parseRecordText(...a),parseRoot:(...a)=>parseRoot(...a),RECOVERY:(...a)=>RECOVERY(...a),relativeTime:(...a)=>relativeTime(...a),render:(...a)=>render(...a),RULES:(...a)=>RULES(...a),saveState:(...a)=>saveState(...a),setState:next=>{state=next;},storageProvider,t:(...a)=>t(...a),toast:(...a)=>toast(...a),TRAIL:(...a)=>TRAIL(...a),ui,uid:(...a)=>uid(...a),
+    ask:(...a)=>ask(...a),getState:()=>state,loggableError:(...a)=>loggableError(...a),migrateEvent:(...a)=>STORAGE.migrateEvent(...a),nowISO:(...a)=>nowISO(...a),parseRecordText:(...a)=>STORAGE.parseRecordText(...a),parseRoot:(...a)=>STORAGE.parseRoot(...a),RECOVERY:(...a)=>RECOVERY(...a),relativeTime:(...a)=>relativeTime(...a),render:(...a)=>render(...a),RULES:(...a)=>RULES(...a),saveState:(...a)=>saveState(...a),setState:next=>{state=next;},storageProvider,t:(...a)=>t(...a),toast:(...a)=>toast(...a),TRAIL:(...a)=>TRAIL(...a),ui,uid:(...a)=>uid(...a),
   });
   function bindV8Common(){
     document.querySelectorAll("[data-action='create-event']").forEach(b=>b.onclick=SETUP.startNewEvent);document.querySelectorAll("[data-action='help']").forEach(b=>b.onclick=openGuide);document.querySelectorAll("[data-open-event]").forEach(b=>b.onclick=()=>openEvent(b.dataset.openEvent));// Row-level open + per-row action buttons now coexist on Home, so the
@@ -1604,93 +1140,12 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
   openEvent = function(id){const event=state.events.find(e=>e.id===id);if(!event)return;digestRoll(event);ui.activeEventId=id;ui.screen="workspace";ui.tab=RULES().isHistorical(event)?"guests":"command";ui.selectedObjectId=null;ui.selectedObjectIds=[];ui.selectedGuestIds=[];ui.operationalMode=false;ui.undo=[];ui.redo=[];render();};
   duplicateEvent = function(id,open=false){const source=state.events.find(e=>e.id===id);if(!source)return;original.duplicateEvent(id,open);const copy=state.events[0];copy.hotel=copy.hotel||copy.venue||"";copy.salon=copy.salon||"";copy.tables.forEach(t=>{t.chairs=(t.chairs||[]).map((c,i)=>({...c,id:uid("chair"),parentTableId:t.id,seatNumber:i+1}));});saveState();};
 
-  // What the operator sees when the stored record was written by a newer
-  // build: the reason, both version numbers, and what to do -- not an empty
-  // app with no explanation. Rendered ABOVE everything else and never
-  // dismissed, because every control below it is operating on a blank slate
-  // that will not be saved.
-  // The storage notices, persistent until true no longer. Each names what
-  // happened, what was NOT lost, and the next step -- with the control for it.
-  function storageNoticeHTML(){
-    const n=MERIT_STORAGE_NOTICE;
-    const parts=[];
-    if(n.unreadable&&!n.dismissed){
-      parts.push(`<div class="schema-future-banner" data-storage-notice="unreadable" role="alert">${icon("alert")}<div>
-        <b>${esc(t("storage.unreadableTitle"))}</b>
-        <span>${esc(t(n.unreadable.kept?"storage.unreadableKept":n.unreadable.raw==null?"storage.unavailable":"storage.unreadableNotKept",{when:fmtDate(String(n.unreadable.at).slice(0,10))}))}</span>
-        <span class="storage-notice-actions">${n.unreadable.raw!=null?`<button class="btn sm" data-storage-action="download-unreadable">${esc(t("storage.downloadUnreadable"))}</button>`:""}<button class="btn sm" data-storage-action="restore">${esc(t("storage.restoreBackup"))}</button>${n.unreadable.kept?`<button class="btn sm" data-storage-action="dismiss">${esc(t("storage.dismiss"))}</button>`:""}</span>
-      </div></div>`);
-    }
-    if(n.setAside&&!n.setAside.hidden){
-      parts.push(`<div class="schema-future-banner" data-storage-notice="set-aside" role="alert">${icon("alert")}<div>
-        <b>${esc(t("storage.setAsideTitle",{n:n.setAside.count}))}</b>
-        <span>${esc(t("storage.setAsideBody"))}</span>
-        <span class="storage-notice-actions"><button class="btn sm" data-storage-action="download-set-aside">${esc(t("storage.downloadSetAside"))}</button><button class="btn sm" data-storage-action="dismiss">${esc(t("storage.dismiss"))}</button></span>
-      </div></div>`);
-    }
-    if(n.saveFailing){
-      parts.push(`<div class="schema-future-banner" data-storage-notice="save-failing" role="alert">${icon("alert")}<div>
-        <b>${esc(t("storage.saveFailingTitle"))}</b>
-        <span>${esc(t(n.saveFailing.reason==="serialize"?"storage.saveFailingSerializeBody":n.saveFailing.reason==="readback"?"storage.saveFailingReadBackBody":"storage.saveFailingBody"))}</span>
-        <span class="storage-notice-actions">${n.saveFailing.reason==="serialize"
-          // A backup is the same record that could not be made; the workbook
-          // is built from the screen, not from it.
-          ?`<button class="btn sm" data-storage-action="workbook">${esc(t("storage.exportWorkbook"))}</button>`
-          :`<button class="btn sm" data-storage-action="backup">${esc(t("storage.downloadBackup"))}</button>`}</span>
-      </div></div>`);
-    }
-    if(n.imagesDropped&&!n.imagesDropped.hidden){
-      parts.push(`<div class="schema-future-banner" data-storage-notice="images-dropped" role="alert">${icon("alert")}<div>
-        <b>${esc(t("storage.imagesDroppedTitle"))}</b>
-        <span>${esc(t("storage.imagesDroppedBody"))}</span>
-        <span class="storage-notice-actions"><button class="btn sm" data-storage-action="backup">${esc(t("storage.downloadBackup"))}</button><button class="btn sm" data-storage-action="dismiss">${esc(t("storage.dismiss"))}</button></span>
-      </div></div>`);
-    }
-    if(n.recovered){
-      parts.push(`<div class="schema-future-banner" data-storage-notice="recovered" role="alert">${icon("alert")}<div>
-        <b>${esc(t("storage.recoveredTitle"))}</b>
-        <span>${esc(t("storage.recoveredBody",{when:relativeTime(n.recovered.at)}))}</span>
-        <span class="storage-notice-actions"><button class="btn sm" data-storage-action="dismiss">${esc(t("storage.dismiss"))}</button></span>
-      </div></div>`);
-    }
-    return parts.join("");
-  }
-  document.addEventListener("click",e=>{
-    const b=e.target.closest&&e.target.closest("[data-storage-action]");
-    if(!b)return;
-    const a=b.dataset.storageAction,n=MERIT_STORAGE_NOTICE;
-    if(a==="download-unreadable"&&n.unreadable){
-      const url=URL.createObjectURL(new Blob([String(n.unreadable.raw)],{type:"application/json"}));
-      const link=document.createElement("a");link.href=url;link.download=`merit-event-maker-unreadable-${RULES().todayKey()}.json`;
-      document.body.appendChild(link);link.click();link.remove();
-      setTimeout(()=>URL.revokeObjectURL(url),4000);
-    }else if(a==="download-set-aside"){
-      const url=URL.createObjectURL(new Blob([JSON.stringify(state.setAside||[],null,2)],{type:"application/json"}));
-      const link=document.createElement("a");link.href=url;link.download=`merit-event-maker-set-aside-${RULES().todayKey()}.json`;
-      document.body.appendChild(link);link.click();link.remove();
-      setTimeout(()=>URL.revokeObjectURL(url),4000);
-    }else if(a==="restore"){document.getElementById("backupFileInput")?.click();}
-    else if(a==="backup"){PORTABILITY.exportBackup();}
-    else if(a==="workbook"){whileBusy(b,t("reports.preparingWorkbook"),exportTablePlanXLSX);}
-    else if(a==="dismiss"){
-      // Hide THIS notice: each one is dismissed on its own, and hiding one
-      // never hides another that is still true.
-      const kind=b.closest("[data-storage-notice]")?.dataset.storageNotice;
-      if(kind==="recovered")n.recovered=null;
-      else if(kind==="images-dropped"&&n.imagesDropped)n.imagesDropped.hidden=true;
-      else if(kind==="set-aside"&&n.setAside)n.setAside.hidden=true;
-      else n.dismissed=true;
-      render();
-    }
+  const NOTICE=globalThis.MeritStorageNotice.create({
+    PORTABILITY,RULES:(...a)=>RULES(...a),esc:(...a)=>esc(...a),exportTablePlanXLSX:(...a)=>exportTablePlanXLSX(...a),fmtDate:(...a)=>fmtDate(...a),
+    getState:()=>state,icon:(...a)=>icon(...a),relativeTime:(...a)=>relativeTime(...a),render:(...a)=>render(...a),t:(...a)=>t(...a),
+    whileBusy:(...a)=>whileBusy(...a),
   });
-  function futureSchemaBannerHTML(){
-    const g=globalThis.MERIT_SCHEMA_GUARD;
-    if(!g||!g.readOnly)return"";
-    return`<div class="schema-future-banner" data-schema-future role="alert">${icon("alert")}<div>
-      <b>${esc(t("schema.futureTitle"))}</b>
-      <span>${esc(t("schema.futureBody",{stored:g.storedVersion,build:g.buildVersion}))}</span>
-    </div></div>`;
-  }
+
   // A SCREEN THAT THROWS IS CONTAINED. It used to escape render() as an
   // uncaught error, leaving whatever was on screen before -- stale, and bound
   // to state that had moved on -- with no word to the operator. It now shows a
@@ -1740,12 +1195,12 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     ui.screen="events";ui.activeEventId=null;ui.selectedObjectId=null;ui.selectedObjectIds=[];render();
   });
   function renderScreen(){
-    translateStaticDialogs();
+    LANGUAGE.translateStaticDialogs();
     if(ui.screen==="new-event"){app.innerHTML=SETUP.setupHTML();SETUP.bindSetup();return;}
     // No review branch here any more: review renders inside the workspace's
     // content area like every other mode, so the shell above it never leaves.
     if(!state.events.length&&ui.screen!=="events")ui.screen="events";
-    app.innerHTML=futureSchemaBannerHTML()+storageNoticeHTML()+(ui.screen==="events"?eventsHTML():workspaceHTML(activeEvent()));bindV8Common();
+    app.innerHTML=NOTICE.futureSchemaBannerHTML()+NOTICE.storageNoticeHTML()+(ui.screen==="events"?eventsHTML():workspaceHTML(activeEvent()));bindV8Common();
     if(ui.screen==="workspace"){
       const event=activeEvent(),historical=RULES().isHistorical(event);
       // Review mode draws no editable canvas, so bindCanvas() must not run for
@@ -1807,7 +1262,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
   // The very first render must wait on the async StorageProvider load --
   // every render() after this one is driven by user interaction and needs
   // nothing more than the in-memory `state` object already being current.
-  loadV8Async().then(({data,recoveredAt,fromJournal})=>{
+  STORAGE.loadV8Async().then(({data,recoveredAt,fromJournal})=>{
     // Never a silent swap: if the primary record could not be read at all
     // and an automatic snapshot stood in for it, the operator is told
     // plainly, including that it may not hold the most recent changes --
