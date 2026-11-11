@@ -45,7 +45,7 @@ const INVENTORY = [
     trace: "Global finder results: guestResultHTML() per row (guest name, invited-by, table number, zone — all through esc()), find.more with a numeric count, find.none literal." },
   { file: "app.js", fn: "renderGlobalSearch", target: "box.innerHTML", evidence: "boot-contract",
     trace: "The pre-v8 finder, reassigned by app-v8.js (`renderGlobalSearch = function`) at load." },
-  { file: "app-v8.js", fn: "refreshGhosts", target: "world.insertAdjacentHTML", evidence: "literal",
+  { file: "floor-plan-view.js", fn: "create > refreshGhosts", target: "world.insertAdjacentHTML", evidence: "literal",
     trace: "ghostHTML(): the bulk-add preview. A table-number prefix through esc(), and x/y pixel positions computed by bulkPositions() — numbers." },
   { file: "screen-seating.js", fn: "bindFreezeZones > commit", target: "box.innerHTML", evidence: "literal",
     trace: "freezeCoveragePreviewHTML(): t() strings whose only parameters are table and chair COUNTS. No name, zone or note is interpolated." },
