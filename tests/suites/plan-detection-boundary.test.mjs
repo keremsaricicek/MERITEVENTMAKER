@@ -26,6 +26,7 @@ import path from "node:path";
 import { openApp } from "../lib/app-actions.mjs";
 import { stripCommentsAndStrings, matchLines } from "../lib/js-scan.mjs";
 
+import { shellAndScreens } from "../lib/shell-sources.mjs";
 export const meta = { name: "plan-detection-boundary", tags: ["business", "fast"], timeout: 60000 };
 
 // The whole public surface. Everything else in the file is internal.
@@ -58,6 +59,10 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   const STAGE_FILES = ["plan-detection-preprocess.js", "plan-detection-sources.js", "plan-detection-chairs.js", "plan-detection-tables.js", "plan-detection-venues.js", "plan-detection-verdict.js"];
   const pipelineCode = [detCode, ...STAGE_FILES.map((f) => stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", f), "utf8")))].join("\n");
   const v8Code = stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", "app-v8.js"), "utf8"));
+  // The shell's CALL into the pipeline left app-v8.js with the analysis run
+  // (src/analysis-run.js, 2026-11-08); the checks on how the shell calls detect()
+  // read the shell and every module created out of it with create(deps).
+  const shellCode = stripCommentsAndStrings(shellAndScreens(repoRoot));
 
   // --- 1. the file is a closed scope -------------------------------------
   checks.ok(detCode.trimStart().startsWith("(()"),
@@ -232,7 +237,7 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.ok(/confidenceThreshold=\(\)=>\.48/.test(detCode.replace(/\s/g, "")),
     "detect()'s confidenceThreshold defaults to .48, matching the uncalibrated fallback it replaced — an omitted option behaves like an uncalibrated install, not like pre-selection turned off",
     true);
-  checks.ok(/confidenceThreshold:calibratedThreshold/.test(v8Code.replace(/\s/g, "")),
+  checks.ok(/confidenceThreshold:calibratedThreshold/.test(shellCode.replace(/\s/g, "")),
     "app-v8.js injects its calibrated threshold on every detect() call, so calibration still reaches the detector — by argument now, not by reaching for state",
     true);
   checks.equal(matchLines(detCode, /(^|[^\w.$])calibratedThreshold\b/).length, 0,
@@ -245,10 +250,10 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // has to look where the thresholds actually are.
   const deskewSrc = stripCommentsAndStrings(
     fs.readFileSync(path.join(repoRoot, "src", "plan-detection-deskew.js"), "utf8"));
-  checks.ok(/applyDeg/.test(deskewSrc) && /skew\.applyDeg/.test(v8Code.replace(/\s/g, "")),
+  checks.ok(/applyDeg/.test(deskewSrc) && /skew\.applyDeg/.test(shellCode.replace(/\s/g, "")),
     "the deskew deadband is decided where its thresholds live and returned as applyDeg; the shell applies the answer rather than re-deriving it from SKEW_MIN_DEG/SKEW_MIN_GAIN",
     true);
-  checks.equal(matchLines(v8Code, /(^|[^\w.$])SKEW_MIN_(DEG|GAIN)\b/).length, 0,
+  checks.equal(matchLines(shellCode, /(^|[^\w.$])SKEW_MIN_(DEG|GAIN)\b/).length, 0,
     "app-v8.js names neither skew threshold — they moved with the measurement that uses them", 0);
 
   // --- 5. THE SECOND SEAM: the geometry group -----------------------------
