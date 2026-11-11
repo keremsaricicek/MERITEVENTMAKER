@@ -641,68 +641,6 @@
     return`<div class="table-object ${esc(table.type)} ${selected?"selected multi-selected":""} ${highlighted?"highlighted":""} ${frozen?"frozen":""} ${unavailable?"unavailable":""} ${loadRow?"load-"+loadRow.band:""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match operational-match":""}" data-object-id="${table.id}" data-object-kind="table" tabindex="0" role="button" aria-pressed="${selected?"true":"false"}" aria-label="${esc([t("a11y.table",{number:formatTableNumber(table.number),seated:assigned,capacity:table.capacity}),frozen?t("a11y.frozen"):"",unavailable?t("a11y.unavailable"):""].filter(Boolean).join(", "))}" style="left:${table.x}px;top:${table.y}px;width:${table.w}px;height:${table.h}px;transform:rotate(${table.rotation||0}deg);z-index:${table.z||10}">${chairs}<div class="table-surface"${surfaceStyle(table)}><span class="table-label">${esc(formatTableNumber(table.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${table.capacity}</span>${frozen?`<span class="table-frozen" title="${esc(t("freeze.tableFrozen"))}">${icon("lock")}</span>`:""}${unavailable?`<span class="table-unavailable" title="${esc(t("avail.tableUnavailable"))}">${icon("alert")}</span>`:""}${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${esc(t("seating.emptySeats",{n:empty}))}</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`;
   };
 
-  function planIssues(event){
-    // "Are there more people than seats" is a question about OPERATIONAL
-    // capacity, not about how many chairs the drawing depicted. Asked with
-    // physicalCapacity(), a 420-table symbolic plan answered zero and every
-    // event on it opened with a false capacity BLOCKER.
-    const issues=[],numbers=new Set(),capacity=seatingCapacity(event),pax=event.guests.reduce((n,g)=>n+paxOf(g),0);
-    // Each issue carries a stable `code` so callers can route on it without
-    // string-matching a translated title.
-    for(const table of event.tables){if(numbers.has(table.number))issues.push({level:"blocker",code:"duplicateTable",fix:"floor",title:t("health.issue.duplicateTable"),text:t("health.issue.duplicateTableText",{number:table.number})});numbers.add(table.number);}
-    if(!event.tables.length)issues.push({level:"warn",code:"blankPlan",fix:"floor",title:t("health.issue.blankPlan"),text:t("health.issue.blankPlanText")});
-    if(pax>capacity)issues.push({level:"blocker",code:"capacityExceeded",fix:"floor",title:t("health.issue.capacityExceeded"),text:t("health.issue.capacityExceededText",{pax,capacity})});
-    const unassigned=event.guests.filter(g=>!g.assignment).reduce((n,g)=>n+paxOf(g),0);if(unassigned)issues.push({level:"warn",code:"unassigned",fix:"seating",title:t("health.issue.unassigned"),text:t("health.issue.unassignedText",{n:unassigned})});
-    return issues;
-  }
-  // Two controls in one header row must not answer the same question twice.
-  // Once the Command Center exists it owns "is this event ready", so the header
-  // badge stops being a second, smaller, slightly different list and becomes
-  // the way in: same dot, same count, one place to act. It counts what the
-  // Command Center counts -- plan issues AND open plan questions AND
-  // inconsistent checks -- so the two can never disagree the way the status
-  // pill and the review chip did before B1.
-  //
-  // A historical event has no Command Center to open, so it keeps the popover.
-  function planHealthHTML(event){
-    if(RULES().isHistorical(event)){
-      const issues=planIssues(event),level=issues.some(x=>x.level==="blocker")?"blocker":issues.length?"warn":"";
-      return`<details class="plan-health"><summary><i class="health-dot ${level}"></i>${t("health.planHealth")}${issues.length?` · ${issues.length}`:` · ${t("health.ready")}`}</summary><div class="health-pop">${issues.length?issues.map(x=>`<div class="health-item"><i class="health-dot ${x.level}"></i><div><b>${esc(x.title)}</b><span>${esc(x.text)}</span></div></div>`).join(""):`<div class="health-item"><i class="health-dot"></i><div><b>${t("health.noBlockingIssues")}</b><span>${t("health.consistent")}</span></div></div>`}</div></details>`;
-    }
-    const r=eventReadiness(event);
-    const level=r.verdict==="notReady"||r.verdict==="liveRisk"?"blocker":r.verdict==="readyWithReview"?"warn":"";
-    const value=r.reasons.length?String(r.reasons.length):t("health.ready");
-    return`<button class="plan-health-badge ${level}" data-tab="command" title="${esc(t("cc.badge.title"))}"><i class="health-dot ${level}"></i>${t("cc.badge.label")} · ${esc(value)}</button>`;
-  }
-  // ---- the Event Command Center ---------------------------------------------
-  //
-  // One question: IS THIS EVENT READY, AND WHAT DESERVES MY ATTENTION NOW?
-  //
-  // It is not a dashboard and not a second Live screen. Live already owns the
-  // operational counts and the check-in flow, and none of that moves here --
-  // a number belongs where it is acted on. This states what is wrong, and
-  // takes you to the screen that owns the fix.
-  //
-  // It runs no engine of its own. Every line below comes from something that
-  // already concluded it: planIssues(), the Confidence Budget, the Self-Check,
-  // and the guest/seating state. Inventing a second opinion here would be the
-  // parallel-system mistake the programme forbids.
-  //
-  // PHASE (ready / live / closed, MeritEventRules.phase) changes what is
-  // emphasised, never what is available.
-  // ---- the Plan Doctor ------------------------------------------------------
-  //
-  // The pre-flight check, and now the ONE place the whole event is judged. The
-  // engine is src/plan-doctor.js; this is the wiring, and it exists so that
-  // nothing in the product forms a second opinion about whether the event is
-  // ready. Before it, the header badge, the readiness verdict and the reason
-  // list each assembled their own view from planIssues() and the analysis, and
-  // keeping three assemblies in agreement was a matter of care rather than
-  // architecture. There is one assembly now and everything reads it.
-  //
-  // Derived on every call, never stored: a problem an operator has just fixed
-  // is gone from the next render by construction, which is the only way to be
-  // sure a resolved warning never lingers.
   // ---- FREEZE ZONES: one resolution, read by everything ---------------------
   //
   // Every surface that needs to know whether a table is frozen goes through
@@ -779,44 +717,10 @@
     if(!A||!event)return null;
     return A.resolve(event.tables||[]);
   }
-  // ---- INTERACTIVE FIRST-RUN ONBOARDING (Section 12) -------------------------
-  //
-  // A handful of short, dismissible, feature-anchored callouts -- never a
-  // sequential "step N of M" tour, and never a second, driftable explanation
-  // of domain rules the User Guide (app-guests.js's renderGuide()) already
-  // owns. `state.onboarding` lives on `state` itself, exactly like
-  // `state.audit` -- local-only, never part of an `event`, so it is never
-  // subject to canMutate/isHistorical, never exported in a package, and
-  // never resets when a person switches events. dismissOnboarding() is the
-  // one writer; every callout site below only READS onboardingSeen().
-  function onboardingSeen(key){return !!(state.onboarding&&state.onboarding.seen&&state.onboarding.seen[key]);}
-  function dismissOnboarding(key){
-    state.onboarding=state.onboarding||{seen:{}};
-    state.onboarding.seen=state.onboarding.seen||{};
-    state.onboarding.seen[key]=true;
-    saveState();render();
-  }
-  // Reachable again anytime from Help -- staff turnover means a new hire
-  // starts on day 40 of the product's life, not day 1, so this is never a
-  // one-shot the operator can permanently lose. Called from this file's own
-  // renderGuide() override below (app-guests.js's version of renderGuide is
-  // shadowed the same way contextualCardHTML and friends are).
-  function resetOnboarding(){
-    state.onboarding={seen:{}};
-    saveState();render();
-  }
-  // ONE AT A TIME (§20). A first-day operator on Seating saw three tips at
-  // once -- the Global Finder banner, Freeze Zones and Smart Seating -- which
-  // is the warning flood the quality gates forbid. The first callout a render
-  // asks for is shown; the others wait until it is dismissed. render() clears
-  // the slot, and a partial re-render of the SAME callout is still allowed.
-  let calloutThisRender=null;
-  function onboardingCalloutHTML(key){
-    if(onboardingSeen(key))return"";
-    if(calloutThisRender&&calloutThisRender!==key)return"";
-    calloutThisRender=key;
-    return`<div class="onboarding-callout" data-onboarding="${key}"><span>${t("onboarding."+key)}</span><button class="btn sm quiet" data-onboarding-dismiss="${key}">${t("onboarding.gotIt")}</button></div>`;
-  }
+  const ONBOARDING=globalThis.MeritOnboardingPanel.create({
+    getState:()=>state,render:(...a)=>render(...a),saveState:(...a)=>saveState(...a),t:(...a)=>t(...a),
+  });
+
   // tableObjectHTML runs once per table, so resolving the rules inside it would
   // make the canvas O(tables x freezes) PER TABLE -- 160,000 comparisons a
   // render on the 400-table fixture for a feature most events never use. The
@@ -831,183 +735,27 @@
       set:F.frozenTableIds(eventFreezes(event),event.tables||[])};
     return frozenMemo.set;
   }
-  // ---- EVENT HANDOVER: the note log, one writer -----------------------------
-  //
-  // src/event-handover.js owns the shape of a note and nothing else — it does
-  // not know what a table or a guest is. The "state of the event" half of
-  // Handover is composed directly in eventHandoverHTML() below from facts that
-  // already have a single source (Plan Doctor, liveStats, eventMetrics, Freeze
-  // Zones, Table Availability), so this never becomes a second place those
-  // numbers could disagree.
+  // The handover module accessor, read by the event log and the Command Center.
   const HANDOVER=()=>globalThis.MeritEventHandover||null;
-  function resolvedHandoverNotes(event){
-    const H=HANDOVER();
-    if(!H||!event)return[];
-    return H.resolve(event.handoverNotes);
-  }
-  // The only writer. A note is appended, never edited or replaced — a
-  // handover log a person could rewrite afterwards would not be trustworthy
-  // as a record of what one shift actually told the next.
-  // The note's shape -- trimmed, capped, refused when empty -- is
-  // MeritEventHandover.normalizeNote, the same rule that reads stored notes;
-  // this used to restate it.
-  function addHandoverNote(event,text,by){
-    const H=HANDOVER();
-    // The writer refuses a historical event itself, whatever its caller
-    // checked: a screen left open past midnight is a caller that checked
-    // yesterday (domain-writers suite).
-    if(!H||!event||RULES().mutationRefusal(event))return null;
-    const note=H.normalizeNote({id:uid("handover"),text:String(text||""),by:String(by||""),at:nowISO()});
-    if(!note)return null;
-    event.handoverNotes=Array.isArray(event.handoverNotes)?event.handoverNotes:[];
-    event.handoverNotes.unshift(note);
-    audit(event,"HANDOVER_NOTE_ADDED",{noteId:note.id});
-    return note;
-  }
+  const EVENTLOG=globalThis.MeritEventLogPanel.create({
+    HANDOVER:(...a)=>HANDOVER(...a),RULES:(...a)=>RULES(...a),TRAIL:(...a)=>TRAIL(...a),audit:(...a)=>audit(...a),
+    formatTableNumber:(...a)=>formatTableNumber(...a),getSEATCMD:()=>SEATCMD,getState:()=>state,nowISO:(...a)=>nowISO(...a),t:(...a)=>t(...a),
+    uid:(...a)=>uid(...a),
+  });
 
-  // ---- AUDIT TRAIL: the foundation, not the replay ---------------------------
-  //
-  // src/audit-trail.js decides which raw `state.audit` entries are a decision
-  // worth showing — an allowlist, kept even though touchEvent() itself no
-  // longer writes a generic entry on every mutation (Section 16: that entry
-  // never carried anything event.lastModified didn't already, and it was
-  // competing with real decisions for the same shared, capped array) —
-  // a future write-path can still only add a code this module already
-  // named, never leak an unreviewed one in by default. This resolves the
-  // list for one event; auditTrailText() below turns one entry into a
-  // sentence, reaching into the CURRENT guest/table/freeze data for names,
-  // never trusting a stale copy — a deleted guest's own audit line still
-  // needs to read sensibly, so it falls back to the id it can no longer
-  // resolve rather than throwing.
-  function resolvedAuditTrail(event){
-    const T=TRAIL();
-    if(!T||!event)return[];
-    return T.resolve(state.audit,event.id);
-  }
-  function auditTrailText(event,entry){
-    const d=entry.detail||{};
-    const guestName=id=>{const g=(event.guests||[]).find(x=>x.id===id);return g?g.name:t("audit.unknownGuest");};
-    const tableNumber=id=>{const tb=(event.tables||[]).find(x=>x.id===id);return tb?formatTableNumber(tb.number):t("audit.unknownTable");};
-    switch(entry.action){
-      case"EVENT_CREATED":
-        return t(d.blank?"audit.eventCreatedBlank":"audit.eventCreatedFromPlan");
-      case"GUEST_DELETED":
-        return t("audit.guestDeleted",{name:d.name||t("audit.unknownGuest")});
-      case"ARRIVAL_STATUS_CHANGED":
-        return t("audit.arrivalChanged",{name:guestName(d.guestId),
-          from:t("status.arrival."+d.from),to:t("status.arrival."+d.to)});
-      case"TABLE_AVAILABILITY_CHANGED":
-        return d.to==="UNAVAILABLE"
-          ?t("audit.tableMarkedUnavailable",{number:tableNumber(d.tableId),reason:SEATCMD.availReasonText(d.reason)})
-          :t("audit.tableMarkedAvailable",{number:tableNumber(d.tableId)});
-      case"FREEZE_CREATED":
-        return t("audit.freezeCreated",{reason:SEATCMD.freezeReasonText(d.reason)});
-      case"FREEZE_LIFTED":
-        return t("audit.freezeLifted",{reason:SEATCMD.freezeReasonText(d.reason)});
-      case"FREEZE_OVERRIDDEN":
-        return t("audit.freezeOverridden");
-      case"LAYOUT_CHANGE_CONFIRMED":
-        return t("audit.layoutChangeConfirmed");
-      case"HANDOVER_NOTE_ADDED":{
-        const note=(event.handoverNotes||[]).find(n=>n.id===d.noteId);
-        return t("audit.handoverNoteAdded",{text:note?note.text.slice(0,80):t("audit.noteGone")});
-      }
-      case"TEACH_AREA_NUMBER_CONFIRMED":
-        return t("audit.teachNumberConfirmed",{value:d.value});
-      case"TEACH_AREA_LESSON_KEPT":
-        return t("audit.teachLessonKept");
-      case"TEACH_AREA_LESSON_FORGOTTEN":
-        return t("audit.teachLessonForgotten");
-      case"TEACH_AREA_LESSON_RESTORED":
-        return t("audit.teachLessonRestored");
-      case"EXEMPLAR_SUGGESTIONS_ADDED":
-        return t("audit.exemplarSuggestions",{n:d.count});
-      case"ASSISTED_DETECTION_COMPLETED":
-        return t("audit.detectionCompleted");
-      default:
-        return entry.action;
-    }
-  }
+  const HEALTH=globalThis.MeritEventHealth.create({
+    RULES:(...a)=>RULES(...a),canMutate:(...a)=>canMutate(...a),esc:(...a)=>esc(...a),eventMetrics:(...a)=>eventMetrics(...a),getState:()=>state,
+    nowISO:(...a)=>nowISO(...a),paxOf:(...a)=>paxOf(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),
+    resolvedUnavailable:(...a)=>resolvedUnavailable(...a),seatingCapacity:(...a)=>seatingCapacity(...a),t:(...a)=>t(...a),
+    touchEvent:(...a)=>touchEvent(...a),
+  });
 
-  // THE ONE RISK THAT CANNOT BE RECOVERED FROM ON THE NIGHT.
-  //
-  // Everything this product knows lives in one browser profile. `lastBackupAt`
-  // is recorded when an export actually succeeds — never when one is merely
-  // offered — so "backed up" on the radar means a file really left the browser.
-  function backupState(event){
-    const at=state.lastBackupAt||null;
-    if(!event)return{at,staleBy:false};
-    const changed=event.lastModified||event.createdAt||null;
-    return{at,staleBy:!!(at&&changed&&changed>at)};
-  }
-
-  function planDoctorReport(event){
-    if(!event||!globalThis.MeritPlanDoctor)return null;
-    return globalThis.MeritPlanDoctor.run({
-      phase:RULES().phase(event),
-      tables:event.tables||[],
-      guests:event.guests||[],
-      // What a person has held back, resolved here — with the REASON each table
-      // was held, because "a reserve that already has guests in it" is a
-      // contradiction and "a VIP area protecting the people in it" is not.
-      frozen:resolvedFreezes(event)||[],
-      // Tables a person took out of service, resolved the same way. The
-      // Doctor does not decide WHICH tables fail — table-availability.js does
-      // — it only reports what a failed one does to the room.
-      unavailable:resolvedUnavailable(event)||[],
-      // When a copy was last taken, and whether this event has moved since.
-      // The Doctor stores nothing; this is read fresh like everything else.
-      backup:backupState(event),
-      // The rules planIssues() owns, handed over rather than re-implemented.
-      // Whatever the Doctor does not express itself still reaches the operator.
-      planIssues:planIssues(event),
-      analysis:event.analysis||null,
-    });
-  }
-  // The verdict is one of four named states, never a percentage. A number like
-  // "92% ready" has to come from somewhere, and there is no honest weighting of
-  // "one duplicate table number" against "twelve unseated guests" -- so the
-  // product says which of four situations it is in, and lists the reasons.
-  //
-  // BLOCKING and NEEDS REVIEW become reasons; INFORMATION does not. That is the
-  // difference between the two: information is worth knowing and demands
-  // nothing, and putting it in the attention list would teach an operator that
-  // the list is safe to ignore.
-  // The four states are the Plan Doctor's own answer (MeritPlanDoctor.radar);
-  // this only gathers what the Command Center shows beside it.
-  function eventReadiness(event){
-    const doctor=planDoctorReport(event);
-    const m=eventMetrics(event);
-    const budget=event.analysis?.confidenceBudget||null;
-    const inconsistent=(event.analysis?.selfCheck?.checks||[]).filter(c=>c.verdict==="INCONSISTENT");
-    const {verdict,reasons}=globalThis.MeritPlanDoctor?globalThis.MeritPlanDoctor.radar(doctor):{verdict:"ready",reasons:[]};
-    return{phase:RULES().phase(event),verdict,reasons,metrics:m,budget,inconsistent,doctor};
-  }
   // ---- moved to src/screen-command.js — see that file's header. The shell hands it
   // what it reads; shell functions go over as late-binding wrappers, so a body
   // this file reassigns later is the one that runs. ----------------------------
   const COMMAND=globalThis.MeritScreenCommand.create({
-    activeEvent:(...a)=>activeEvent(...a),addHandoverNote:(...a)=>addHandoverNote(...a),AVAIL:(...a)=>AVAIL(...a),canMutate:(...a)=>canMutate(...a),doctorSignature:(...a)=>doctorSignature(...a),esc:(...a)=>esc(...a),eventMetrics:(...a)=>eventMetrics(...a),eventReadiness:(...a)=>eventReadiness(...a),exportBackup:(...a)=>PORTABILITY.exportBackup(...a),fmtDate:(...a)=>fmtDate(...a),getLive:()=>LIVE,HANDOVER:(...a)=>HANDOVER(...a),OCC:(...a)=>OCC(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxOf:(...a)=>paxOf(...a),planDoctorReport:(...a)=>planDoctorReport(...a),recordFinalCheck:(...a)=>recordFinalCheck(...a),relativeTime:(...a)=>relativeTime(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedHandoverNotes:(...a)=>resolvedHandoverNotes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),serviceLoadHTML:(...a)=>LOADPANEL.serviceLoadHTML(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),ui,
+    activeEvent:(...a)=>activeEvent(...a),addHandoverNote:(...a)=>EVENTLOG.addHandoverNote(...a),AVAIL:(...a)=>AVAIL(...a),canMutate:(...a)=>canMutate(...a),doctorSignature:(...a)=>HEALTH.doctorSignature(...a),esc:(...a)=>esc(...a),eventMetrics:(...a)=>eventMetrics(...a),eventReadiness:(...a)=>HEALTH.eventReadiness(...a),exportBackup:(...a)=>PORTABILITY.exportBackup(...a),fmtDate:(...a)=>fmtDate(...a),getLive:()=>LIVE,HANDOVER:(...a)=>HANDOVER(...a),OCC:(...a)=>OCC(...a),onboardingCalloutHTML:(...a)=>ONBOARDING.onboardingCalloutHTML(...a),paxOf:(...a)=>paxOf(...a),planDoctorReport:(...a)=>HEALTH.planDoctorReport(...a),recordFinalCheck:(...a)=>HEALTH.recordFinalCheck(...a),relativeTime:(...a)=>relativeTime(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedHandoverNotes:(...a)=>EVENTLOG.resolvedHandoverNotes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),serviceLoadHTML:(...a)=>LOADPANEL.serviceLoadHTML(...a),t:(...a)=>t(...a),toast:(...a)=>toast(...a),touchEvent:(...a)=>touchEvent(...a),ui,
   });
-  // What was checked, reduced to something two runs can be compared on. Codes
-  // and counts, not wording: a translation change must not read as the event
-  // having changed underneath the operator.
-  function doctorSignature(d){
-    return d.all.map(f=>f.code+"="+(f.weight??0)).sort().join("|");
-  }
-  // The one writer of event.finalCheck: a person ran the pre-flight. It stays
-  // in the shell with the other writers; the Command Center calls it.
-  //
-  // Recording that a person ran the pre-flight is a mutation of the event, so
-  // it goes through canMutate like everything else -- a historical event has no
-  // Command Center to run it from, and must not acquire one here.
-  function recordFinalCheck(event,d){
-    if(!d||!canMutate(event,"run the final check"))return;
-    event.finalCheck={at:nowISO(),verdict:d.verdict,signature:doctorSignature(d),
-      counts:{...d.counts}};
-    touchEvent(event);
-  }
-
   // ---- moved to src/screen-events.js — see that file's header. The shell hands it
   // what it reads; shell functions go over as late-binding wrappers, so a body
   // this file reassigns later is the one that runs. ----------------------------
@@ -1021,7 +769,7 @@
   // "Hazır mı?" on the calendar: the Plan Doctor's reasons in the Command
   // Center's own words — one judge, one wording.
   function calendarReadiness(event){
-    return eventReadiness(event).reasons.map(r=>({level:r.level==="blocker"?"blocker":"warn",text:COMMAND.doctorText(r.finding).what}));
+    return HEALTH.eventReadiness(event).reasons.map(r=>({level:r.level==="blocker"?"blocker":"warn",text:COMMAND.doctorText(r.finding).what}));
   }
   const EVENTS=globalThis.MeritScreenEvents.create({
     skin:()=>TOPBAR.skin.current(),esc:(...a)=>esc(...a),eventMetrics:(...a)=>eventMetrics(...a),fmtDate:(...a)=>fmtDate(...a),getActiveId:()=>ui.activeEventId,getState:()=>state,icon:(...a)=>icon(...a),readiness:(...a)=>calendarReadiness(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),t:(...a)=>t(...a),topbarHTML:(...a)=>shellBarHTML(...a),
@@ -1039,8 +787,8 @@
     const tabs=historical?historyTabs:["command","floor","guests","seating","live","reports"];
     if(!tabs.includes(ui.tab))ui.tab=tabs[0];
     const sub=[fmtDate(event.date),[event.hotel,event.salon].filter(Boolean).join(" · ")||t("appbar.venueNotSet")].join(" · ");
-    const bar=shellBarHTML({screen:"workspace",current:ui.tab,historical,event:{name:event.name,sub},planHealth:planHealthHTML(event),progress:historical?null:TOPBAR.stepProgress(event)});
-    return`<section class="workspace ${ui.focusMode?"v8-focus":""}">${bar}${historical?`<div class="workspace-readonly-banner">${icon("lock")}${t("nav.historicalBanner")}</div>`:ui.focusMode?"":onboardingCalloutHTML("globalFinder")}<div class="content">${tabContent(event)}</div>${ui.focusMode?`<button class="focus-exit" data-v8-action="focus">${t("nav.exitFocus")}</button>`:""}</section>`;
+    const bar=shellBarHTML({screen:"workspace",current:ui.tab,historical,event:{name:event.name,sub},planHealth:HEALTH.planHealthHTML(event),progress:historical?null:TOPBAR.stepProgress(event)});
+    return`<section class="workspace ${ui.focusMode?"v8-focus":""}">${bar}${historical?`<div class="workspace-readonly-banner">${icon("lock")}${t("nav.historicalBanner")}</div>`:ui.focusMode?"":ONBOARDING.onboardingCalloutHTML("globalFinder")}<div class="content">${tabContent(event)}</div>${ui.focusMode?`<button class="focus-exit" data-v8-action="focus">${t("nav.exitFocus")}</button>`:""}</section>`;
   };
   tabContent = function(event){
     if(RULES().isHistorical(event)){
@@ -1169,7 +917,7 @@
   // what it reads; shell functions go over as late-binding wrappers, so a body
   // this file reassigns later is the one that runs. ----------------------------
   const SEATING=globalThis.MeritScreenSeating.create({
-    activeEvent:(...a)=>activeEvent(...a),assignGuestGroup:(...a)=>SEATCMD.assignGuestGroup(...a),assignGuestToTable:(...a)=>assignGuestToTable(...a),authoriseFreezeOverride:(...a)=>SEATCMD.authoriseFreezeOverride(...a),AVAIL:(...a)=>AVAIL(...a),availReasonText:(...a)=>SEATCMD.availReasonText(...a),bindPanelToggles:(...a)=>bindPanelToggles(...a),canMutate:(...a)=>canMutate(...a),canSeat,canvasEmptyHTML:(...a)=>EMPTY.canvasEmptyHTML(...a),canvasViewportHTML:(...a)=>canvasViewportHTML(...a),createFreezeFromDraft:(...a)=>SEATCMD.createFreezeFromDraft(...a),esc:(...a)=>esc(...a),eventFreezes:(...a)=>eventFreezes(...a),formatTableNumber:(...a)=>formatTableNumber(...a),FREEZE:(...a)=>FREEZE(...a),freezeReasonText:(...a)=>SEATCMD.freezeReasonText(...a),icon:(...a)=>icon(...a),liftFreeze:(...a)=>SEATCMD.liftFreeze(...a),logicalSeatCount:(...a)=>logicalSeatCount(...a),naturalSort:(...a)=>naturalSort(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxDotsHTML:(...a)=>paxDotsHTML(...a),paxOf:(...a)=>paxOf(...a),recordUndo:(...a)=>recordUndo(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),seatingQueueEmptyHTML:(...a)=>EMPTY.seatingQueueEmptyHTML(...a),setTableAvailability:(...a)=>ARRIVAL.setTableAvailability(...a),t:(...a)=>t(...a),tableAssignedPax:(...a)=>tableAssignedPax(...a),tableIndex:(...a)=>tableIndex(...a),tableSeatMap:(...a)=>tableSeatMap(...a),toast:(...a)=>toast(...a),toggleAssignmentLock:(...a)=>toggleAssignmentLock(...a),touchEvent:(...a)=>touchEvent(...a),ui,unassignGuest:(...a)=>unassignGuest(...a),v8Toolbar:(...a)=>FLOORPLAN.v8Toolbar(...a),
+    activeEvent:(...a)=>activeEvent(...a),assignGuestGroup:(...a)=>SEATCMD.assignGuestGroup(...a),assignGuestToTable:(...a)=>assignGuestToTable(...a),authoriseFreezeOverride:(...a)=>SEATCMD.authoriseFreezeOverride(...a),AVAIL:(...a)=>AVAIL(...a),availReasonText:(...a)=>SEATCMD.availReasonText(...a),bindPanelToggles:(...a)=>bindPanelToggles(...a),canMutate:(...a)=>canMutate(...a),canSeat,canvasEmptyHTML:(...a)=>EMPTY.canvasEmptyHTML(...a),canvasViewportHTML:(...a)=>canvasViewportHTML(...a),createFreezeFromDraft:(...a)=>SEATCMD.createFreezeFromDraft(...a),esc:(...a)=>esc(...a),eventFreezes:(...a)=>eventFreezes(...a),formatTableNumber:(...a)=>formatTableNumber(...a),FREEZE:(...a)=>FREEZE(...a),freezeReasonText:(...a)=>SEATCMD.freezeReasonText(...a),icon:(...a)=>icon(...a),liftFreeze:(...a)=>SEATCMD.liftFreeze(...a),logicalSeatCount:(...a)=>logicalSeatCount(...a),naturalSort:(...a)=>naturalSort(...a),onboardingCalloutHTML:(...a)=>ONBOARDING.onboardingCalloutHTML(...a),paxDotsHTML:(...a)=>paxDotsHTML(...a),paxOf:(...a)=>paxOf(...a),recordUndo:(...a)=>recordUndo(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),seatingQueueEmptyHTML:(...a)=>EMPTY.seatingQueueEmptyHTML(...a),setTableAvailability:(...a)=>ARRIVAL.setTableAvailability(...a),t:(...a)=>t(...a),tableAssignedPax:(...a)=>tableAssignedPax(...a),tableIndex:(...a)=>tableIndex(...a),tableSeatMap:(...a)=>tableSeatMap(...a),toast:(...a)=>toast(...a),toggleAssignmentLock:(...a)=>toggleAssignmentLock(...a),touchEvent:(...a)=>touchEvent(...a),ui,unassignGuest:(...a)=>unassignGuest(...a),v8Toolbar:(...a)=>FLOORPLAN.v8Toolbar(...a),
   });
   // REDESIGN v4 step 6 (SPEC-v4 "The working order" 5): "Hazır" on Oturma opens
   // Hazır mı? — the Plan Doctor's open issues (eventReadiness: the one judge),
@@ -1181,7 +929,7 @@
     const settled=!!(ui.settledEvents&&ui.settledEvents.has(event.id));
     if(settled)return`<div class="settled-bar" role="status">${esc(t("ready.settled"))}<button class="btn sm" data-ready-edit>${esc(t("ready.edit"))}</button></div>`;
     if(!ui.readyOpen)return`<button class="btn primary ready-open" data-ready-open>${esc(t("ready.open"))}</button>`;
-    const reasons=eventReadiness(event).reasons||[];
+    const reasons=HEALTH.eventReadiness(event).reasons||[];
     const blockers=reasons.filter(r=>r.level==="blocker").length;
     const rows=reasons.map(r=>{const w=COMMAND.doctorText(r.finding),a=(r.finding&&r.finding.action)||{},tid=a.tableId||(a.tableIds&&a.tableIds[0])||"";
       return`<li class="ready-issue ${r.level==="blocker"?"blocker":"warn"}" data-ready-issue${tid?` data-ready-table="${esc(tid)}"`:""} tabindex="0"><i class="health-dot ${r.level==="blocker"?"blocker":"warn"}"></i><div><b>${esc(w.what)}</b>${w.detail?`<span>${esc(w.detail)}</span>`:""}</div>${COMMAND.doctorGoHTML(r.finding)}</li>`;}).join("");
@@ -1303,7 +1051,7 @@
   // what it reads; shell functions go over as late-binding wrappers, so a body
   // this file reassigns later is the one that runs. ----------------------------
   const REPORTS=globalThis.MeritScreenReports.create({
-    activeEvent:(...a)=>activeEvent(...a),app,auditTrailText:(...a)=>auditTrailText(...a),bindDoctorGo:(...a)=>COMMAND.bindDoctorGo(...a),buildTablePlanModel:(...a)=>buildTablePlanModel(...a),doctorGoHTML:(...a)=>COMMAND.doctorGoHTML(...a),doctorText:(...a)=>COMMAND.doctorText(...a),esc:(...a)=>esc(...a),eventMetrics:(...a)=>eventMetrics(...a),eventReadiness:(...a)=>eventReadiness(...a),exportGuestCSV,exportTablePlanXLSX,fmtDate:(...a)=>fmtDate(...a),formatTableNumber:(...a)=>formatTableNumber(...a),getState:()=>state,icon:(...a)=>icon(...a),LIVE,naturalSort:(...a)=>naturalSort(...a),paxOf:(...a)=>paxOf(...a),planIssues:(...a)=>planIssues(...a),relativeTime:(...a)=>relativeTime(...a),render:(...a)=>render(...a),resolvedAuditTrail:(...a)=>resolvedAuditTrail(...a),RULES:(...a)=>RULES(...a),seatExportName:(...a)=>seatExportName(...a),seatingStats:(...a)=>seatingStats(...a),t:(...a)=>t(...a),tableAssignedPax:(...a)=>tableAssignedPax(...a),toast:(...a)=>toast(...a),TRAIL:(...a)=>TRAIL(...a),ui,whileBusy:(...a)=>whileBusy(...a),
+    activeEvent:(...a)=>activeEvent(...a),app,auditTrailText:(...a)=>EVENTLOG.auditTrailText(...a),bindDoctorGo:(...a)=>COMMAND.bindDoctorGo(...a),buildTablePlanModel:(...a)=>buildTablePlanModel(...a),doctorGoHTML:(...a)=>COMMAND.doctorGoHTML(...a),doctorText:(...a)=>COMMAND.doctorText(...a),esc:(...a)=>esc(...a),eventMetrics:(...a)=>eventMetrics(...a),eventReadiness:(...a)=>HEALTH.eventReadiness(...a),exportGuestCSV,exportTablePlanXLSX,fmtDate:(...a)=>fmtDate(...a),formatTableNumber:(...a)=>formatTableNumber(...a),getState:()=>state,icon:(...a)=>icon(...a),LIVE,naturalSort:(...a)=>naturalSort(...a),paxOf:(...a)=>paxOf(...a),planIssues:(...a)=>HEALTH.planIssues(...a),relativeTime:(...a)=>relativeTime(...a),render:(...a)=>render(...a),resolvedAuditTrail:(...a)=>EVENTLOG.resolvedAuditTrail(...a),RULES:(...a)=>RULES(...a),seatExportName:(...a)=>seatExportName(...a),seatingStats:(...a)=>seatingStats(...a),t:(...a)=>t(...a),tableAssignedPax:(...a)=>tableAssignedPax(...a),toast:(...a)=>toast(...a),TRAIL:(...a)=>TRAIL(...a),ui,whileBusy:(...a)=>whileBusy(...a),
   });
   reportsHTML = function(...a){return REPORTS.reportsHTML(...a);};
   bindReports = function(...a){return REPORTS.bindReports(...a);};
@@ -1610,7 +1358,7 @@
     summary:(what,since)=>{
       const e=activeEvent();if(!e)return{text:t("assistant.noEvent")};
       if(what==="missing"){
-        const r=eventReadiness(e);
+        const r=HEALTH.eventReadiness(e);
         const lines=r.reasons.map(x=>{const w=COMMAND.doctorText(x.finding);return w.detail?`${w.what} — ${w.detail}`:w.what;});
         const G=globalThis.MeritGuestGroups,SR=globalThis.MeritSeatingRules;
         for(const v of SR?SR.violations(e):[])lines.push(SEATCMD.ruleLine(v));
@@ -1951,7 +1699,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
   // everything in memory. Still logged as an ERROR, on purpose: a render bug
   // must stay loud in every suite that does not set out to cause one.
   render = function(){
-    calloutThisRender=null;
+    ONBOARDING.beginRender();
     // The page's language is the UI's. It was fixed at "en", so in Turkish
     // every CSS-uppercased label took English capitals -- "MISAFIRLER" for
     // MİSAFİRLER, "KOMUTA MERKEZI" -- and a screen reader read Turkish text
@@ -2033,7 +1781,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     });
     root.querySelector("[data-guide-close]").onclick=()=>document.getElementById("guideDialog").close();
     root.querySelector("[data-guide-print]").onclick=()=>window.print();
-    root.querySelector("[data-guide-reset-onboarding]").onclick=()=>{resetOnboarding();toast(t("toast.tipsReset"),"success");};
+    root.querySelector("[data-guide-reset-onboarding]").onclick=()=>{ONBOARDING.resetOnboarding();toast(t("toast.tipsReset"),"success");};
   };
   // The guide opens in the language the app is in: ui.guideLang defaulted to
   // Turkish and nothing ever changed it, so an operator working in English
@@ -2099,7 +1847,7 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
   // functions should need to know this feature exists.
   document.addEventListener("click",e=>{
     const btn=e.target.closest&&e.target.closest("[data-onboarding-dismiss]");
-    if(btn)dismissOnboarding(btn.dataset.onboardingDismiss);
+    if(btn)ONBOARDING.dismissOnboarding(btn.dataset.onboardingDismiss);
   });
   // KEYBOARD ACTIVATION for the click-only surfaces: the tables and objects
   // on the canvas and the guest cards in Seating are <div>s selected by a

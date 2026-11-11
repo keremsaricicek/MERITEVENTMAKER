@@ -156,6 +156,10 @@ export default async function run({ checks, repoRoot }) {
   // `state` through an injected getter, so app-v8.js alone stops being a
   // meaningful sample of "code that uses the shell globals".
   const shellCode = ["app.js", "app-v8.js"].map((f) => stripCommentsAndStrings(fs.readFileSync(path.join(srcDir, f), "utf8"))).join("\n");
-  checks.ok(matchLines(shellCode, /(^|[^\w.$'"`])state\s*[.[]/).length > 25,
+  // A positive control, not a quality bar: the same pattern must FIND the shell's
+  // own reads of `state`. 25+ when app-v8.js held every capability; 20 on
+  // 2026-11-09 after capabilities 1-18 left it (the modules read state through
+  // an injected getter). Ten keeps the control meaningful without counting lines.
+  checks.ok(matchLines(shellCode, /(^|[^\w.$'"`])state\s*[.[]/).length > 10,
     "app.js and app-v8.js themselves use the shell globals heavily — confirming the rule above is scoped to the pure layer and is not simply finding nothing anywhere");
 }
