@@ -1112,66 +1112,15 @@
   });
   const PLANVIEW=globalThis.MeritFloorPlanView.create({
     FLOORPLAN,WORLD,activeEvent:(...a)=>activeEvent(...a),applyCanvasTransform:(...a)=>applyCanvasTransform(...a),esc:(...a)=>esc(...a),
-    floorAnalyseHTML:(...a)=>floorAnalyseHTML(...a),floorEmptyHTML:(...a)=>floorEmptyHTML(...a),t:(...a)=>t(...a),ui,worldSize:(...a)=>worldSize(...a),
+    floorAnalyseHTML:(...a)=>EMPTY.floorAnalyseHTML(...a),floorEmptyHTML:(...a)=>EMPTY.floorEmptyHTML(...a),t:(...a)=>t(...a),ui,worldSize:(...a)=>worldSize(...a),
   });
   fitCanvas = function(...a){return PLANVIEW.fitCanvas(...a);};
   canvasViewportHTML = function(...a){return PLANVIEW.canvasViewportHTML(...a);};
   floorPlanHTML = function(...a){return PLANVIEW.floorPlanHTML(...a);};
-  // ---- EMPTY STATES THAT SAY WHAT TO DO NEXT (§20) -------------------------
-  // A blank canvas used to be a blank panel: the only sentence telling the
-  // operator what to do was the toast raised when the event was created --
-  // the transient carrier §17 ruled out for anything that stays true. Each
-  // empty state now names what is missing and carries the control for the
-  // next step. The card lets clicks through everywhere but itself.
-  function canvasEmptyHTML(title,body,actions,cardAttrs=""){
-    return`<div class="canvas-empty" data-canvas-empty role="status"><div class="canvas-empty-card"${cardAttrs}><b>${esc(title)}</b><span>${esc(body)}</span>${actions?`<div class="canvas-empty-actions">${actions}</div>`:""}</div></div>`;
-  }
-  function floorEmptyHTML(event){
-    if(event.tables.length||(event.venueObjects||[]).length||event.background?.src||RULES().isHistorical(event))return"";
-    if(ui.v8AddOpen||ui.repeatPlacement)return"";   // already adding: the card would sit in the way
-    return canvasEmptyHTML(t("empty.floor.title"),t("empty.floor.body"),
-      `<button class="btn primary" data-v8-action="replace-bg">${icon("image")}${t("empty.floor.import")}</button><button class="btn" data-v8-action="add">${icon("plus")}${t("action.addManually")}</button><small class="canvas-empty-drop">${esc(t("empty.floor.drop"))}</small>`,
-      // SPEC-v4: the card is also where a plan file can be dropped (the same
-      // #floorPlanFile import as the button; bound in bindPlanDrop).
-      ` data-plan-drop`);
-  }
-  // A plan that is in the room but was never analysed: ONE clear "Analiz et"
-  // — the existing Assisted Detection (data-v8-action="detect"), whose
-  // suggestions are then accepted or rejected one by one in review.
-  function floorAnalyseHTML(event){
-    if(!event.background?.src||event.analysis||ui.analysisBusy||RULES().isHistorical(event))return"";
-    return`<div class="plan-analyse-strip" data-plan-analyse role="status"><span><b>${esc(t("salon.analyse.title"))}</b> ${esc(t("salon.analyse.body"))}</span><button class="btn primary" data-v8-action="detect">${esc(t("salon.analyse.go"))}</button></div>`;
-  }
-  // "Everyone has arrived" was shown whenever the list was empty -- but the
-  // list includes checked-in guests, so it is empty only when there are no
-  // guests at all or a filter matches nobody. It was never true where shown.
-  function liveEmptyHTML(event,q){
-    if(q)return`<h3>${t("live.noResults")}</h3>`;
-    if(!event.guests.length)return`<h3>${t("empty.noGuests")}</h3>${RULES().isHistorical(event)?"":`<button class="btn primary" data-empty-action="go-guests">${t("empty.goGuests")}</button>`}`;
-    return`<h3>${t("live.waveEmpty")}</h3>`;
-  }
-  // "No matching guest records" was shown for three different situations; only
-  // one of them involves matching.
-  function seatingQueueEmptyHTML(event){
-    if(!event.guests.length)return`<p>${t("empty.noGuests")}</p>${RULES().isHistorical(event)?"":`<button class="btn sm" data-empty-action="go-guests">${t("empty.goGuests")}</button>`}`;
-    if(ui.seatingQuery.trim())return t("seating.noMatches");
-    if(ui.seatingGuestScope!=="all")return`<p>${t("seating.allSeated")}</p><button class="btn sm" data-empty-action="seating-scope-all">${t("seating.showAll")}</button>`;
-    return t("seating.noMatches");
-  }
-  document.addEventListener("click",e=>{
-    const b=e.target.closest&&e.target.closest("[data-empty-action]");
-    if(!b)return;
-    const a=b.dataset.emptyAction;
-    if(a==="go-floor"){ui.tab="floor";ui.planMode="plan";render();}
-    else if(a==="go-guests"){ui.tab="guests";render();}
-    else if(a==="seating-scope-all"){ui.seatingGuestScope="all";render();}
+  const EMPTY=globalThis.MeritEmptyStates.create({
+    RULES:(...a)=>RULES(...a),esc:(...a)=>esc(...a),icon:(...a)=>icon(...a),render:(...a)=>render(...a),t:(...a)=>t(...a),ui,
   });
 
-  // The changes view is the SAME canvas — same toolbar, same plan, same tables.
-  // Only the outlines and the panel are added, because "the original plan
-  // remains the hero" is not a slogan: a second canvas that redrew the room
-  // from the diff would be a different drawing of the same night, and the
-  // operator would be comparing the product's picture rather than their own.
   // The venue model accessor, read by the layout-change screen and the shell.
   const VENUE=()=>globalThis.MeritVenueModel;
   const LAYOUTCHG=globalThis.MeritScreenLayoutChanges.create({
@@ -1220,7 +1169,7 @@
   // what it reads; shell functions go over as late-binding wrappers, so a body
   // this file reassigns later is the one that runs. ----------------------------
   const SEATING=globalThis.MeritScreenSeating.create({
-    activeEvent:(...a)=>activeEvent(...a),assignGuestGroup:(...a)=>SEATCMD.assignGuestGroup(...a),assignGuestToTable:(...a)=>assignGuestToTable(...a),authoriseFreezeOverride:(...a)=>SEATCMD.authoriseFreezeOverride(...a),AVAIL:(...a)=>AVAIL(...a),availReasonText:(...a)=>SEATCMD.availReasonText(...a),bindPanelToggles:(...a)=>bindPanelToggles(...a),canMutate:(...a)=>canMutate(...a),canSeat,canvasEmptyHTML:(...a)=>canvasEmptyHTML(...a),canvasViewportHTML:(...a)=>canvasViewportHTML(...a),createFreezeFromDraft:(...a)=>SEATCMD.createFreezeFromDraft(...a),esc:(...a)=>esc(...a),eventFreezes:(...a)=>eventFreezes(...a),formatTableNumber:(...a)=>formatTableNumber(...a),FREEZE:(...a)=>FREEZE(...a),freezeReasonText:(...a)=>SEATCMD.freezeReasonText(...a),icon:(...a)=>icon(...a),liftFreeze:(...a)=>SEATCMD.liftFreeze(...a),logicalSeatCount:(...a)=>logicalSeatCount(...a),naturalSort:(...a)=>naturalSort(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxDotsHTML:(...a)=>paxDotsHTML(...a),paxOf:(...a)=>paxOf(...a),recordUndo:(...a)=>recordUndo(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),seatingQueueEmptyHTML:(...a)=>seatingQueueEmptyHTML(...a),setTableAvailability:(...a)=>ARRIVAL.setTableAvailability(...a),t:(...a)=>t(...a),tableAssignedPax:(...a)=>tableAssignedPax(...a),tableIndex:(...a)=>tableIndex(...a),tableSeatMap:(...a)=>tableSeatMap(...a),toast:(...a)=>toast(...a),toggleAssignmentLock:(...a)=>toggleAssignmentLock(...a),touchEvent:(...a)=>touchEvent(...a),ui,unassignGuest:(...a)=>unassignGuest(...a),v8Toolbar:(...a)=>FLOORPLAN.v8Toolbar(...a),
+    activeEvent:(...a)=>activeEvent(...a),assignGuestGroup:(...a)=>SEATCMD.assignGuestGroup(...a),assignGuestToTable:(...a)=>assignGuestToTable(...a),authoriseFreezeOverride:(...a)=>SEATCMD.authoriseFreezeOverride(...a),AVAIL:(...a)=>AVAIL(...a),availReasonText:(...a)=>SEATCMD.availReasonText(...a),bindPanelToggles:(...a)=>bindPanelToggles(...a),canMutate:(...a)=>canMutate(...a),canSeat,canvasEmptyHTML:(...a)=>EMPTY.canvasEmptyHTML(...a),canvasViewportHTML:(...a)=>canvasViewportHTML(...a),createFreezeFromDraft:(...a)=>SEATCMD.createFreezeFromDraft(...a),esc:(...a)=>esc(...a),eventFreezes:(...a)=>eventFreezes(...a),formatTableNumber:(...a)=>formatTableNumber(...a),FREEZE:(...a)=>FREEZE(...a),freezeReasonText:(...a)=>SEATCMD.freezeReasonText(...a),icon:(...a)=>icon(...a),liftFreeze:(...a)=>SEATCMD.liftFreeze(...a),logicalSeatCount:(...a)=>logicalSeatCount(...a),naturalSort:(...a)=>naturalSort(...a),onboardingCalloutHTML:(...a)=>onboardingCalloutHTML(...a),paxDotsHTML:(...a)=>paxDotsHTML(...a),paxOf:(...a)=>paxOf(...a),recordUndo:(...a)=>recordUndo(...a),render:(...a)=>render(...a),resolvedFreezes:(...a)=>resolvedFreezes(...a),resolvedUnavailable:(...a)=>resolvedUnavailable(...a),RULES:(...a)=>RULES(...a),seatingCapacity:(...a)=>seatingCapacity(...a),seatingQueueEmptyHTML:(...a)=>EMPTY.seatingQueueEmptyHTML(...a),setTableAvailability:(...a)=>ARRIVAL.setTableAvailability(...a),t:(...a)=>t(...a),tableAssignedPax:(...a)=>tableAssignedPax(...a),tableIndex:(...a)=>tableIndex(...a),tableSeatMap:(...a)=>tableSeatMap(...a),toast:(...a)=>toast(...a),toggleAssignmentLock:(...a)=>toggleAssignmentLock(...a),touchEvent:(...a)=>touchEvent(...a),ui,unassignGuest:(...a)=>unassignGuest(...a),v8Toolbar:(...a)=>FLOORPLAN.v8Toolbar(...a),
   });
   // REDESIGN v4 step 6 (SPEC-v4 "The working order" 5): "Hazır" on Oturma opens
   // Hazır mı? — the Plan Doctor's open issues (eventReadiness: the one judge),
@@ -1311,7 +1260,7 @@
   // toast and touchEvent are reassigned by this file, and a captured reference
   // would freeze whichever body was current when the screen was created.
   const LIVE=globalThis.MeritScreenLive.create({
-    ui,t,esc,icon,naturalSort,paxOf,OCC,SEARCH,canMutate,liveEmptyHTML,partyMetaHTML,recordArrival:(...a)=>ARRIVAL.recordArrival(...a),seatTagHTML,setArrival:(...a)=>ARRIVAL.setArrival(...a),tableIndex,
+    ui,t,esc,icon,naturalSort,paxOf,OCC,SEARCH,canMutate,liveEmptyHTML:(...a)=>EMPTY.liveEmptyHTML(...a),partyMetaHTML,recordArrival:(...a)=>ARRIVAL.recordArrival(...a),seatTagHTML,setArrival:(...a)=>ARRIVAL.setArrival(...a),tableIndex,
     activeEvent:()=>activeEvent(),render:()=>render(),touchEvent:e=>touchEvent(e),toast:(...a)=>toast(...a),
     epoch:()=>mutationEpoch,
     saveGuest:(e,g,data)=>saveGuestRecord(e,g,data),assignGuest:(id,tableId)=>assignGuestToTable(id,tableId),
