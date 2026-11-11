@@ -24,7 +24,7 @@ nothing checked the behaviour it moved has proved nothing.
 | Framework migration | React / Vue / Svelte / any framework |
 | TypeScript conversion | Needs its own approved decision, not a side effect of a cleanup |
 | Vite / bundler / build-step introduction | The app deliberately has **no build step**; the offline builds are concatenators, not bundlers |
-| Silently changing classic-script load order | `index.html` loads 34 scripts in a fixed order ending with `app-v8.js`; the order is structural |
+| Silently changing classic-script load order | `index.html` loads its classic scripts (`grep -c '<script src="src/' index.html`) in a fixed order ending with `app-v8.js`; the order is structural |
 | Converting `src/*.js` to ES modules | Same reason — they share one global scope by design |
 | Behaviour change inside a refactor commit | A refactor commit's diff must be provably behaviour-neutral |
 | **Building an EXE / desktop package** | Forbidden until the user types exactly **"EXE YAP"**. Nothing in this skill authorizes it |
