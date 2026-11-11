@@ -245,7 +245,9 @@ for (const r of refs) {
     // (`globalThis.MeritWalkIn`); a published FUNCTION only ever called (`t`)
     // is handed over like every other shell function.
     if (published(n) && !/^(Merit|MERIT_)/.test(n) && refs.filter((x) => x.name === n).every((x) => x.call)) { deps.set(n, "fn"); continue; }
-    if (published(n)) { toGlobal.add(n); if (r.write) problems.push(`writes the global ${n}`); continue; }
+    // A write to a published global (`MERIT_SCHEMA_GUARD={…}`) becomes the same write to
+    // `globalThis.NAME` — in strict code that is what a bare assignment to an existing global did.
+    if (published(n)) { toGlobal.add(n); continue; }
     problems.push(`unresolved name ${n} (not a built-in, not bound by the shell)`); continue;
   }
   const isFn = b.kind === "function";

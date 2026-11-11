@@ -65,7 +65,7 @@ const INVENTORY = [
     trace: "The event summary (2026-11-02): event name, hotel/salon, host names, guest names and table numbers through esc(); counts are numbers; t() strings. Suite event-summary prints a hostile host and name as text." },
   { file: "screen-reports.js", fn: "printEventSummary > cleanup", target: "root.innerHTML", evidence: "literal",
     trace: "Clears the print layer: the empty string." },
-  { file: "app-v8.js", fn: "translateStaticDialogs", target: "planningSel.innerHTML", evidence: "literal",
+  { file: "shell-language.js", fn: "create > translateStaticDialogs", target: "planningSel.innerHTML", evidence: "literal",
     trace: "Two <option>s whose text is t() of fixed keys and whose values are the literals Confirmed / Tentative." },
   { file: "shell-guide.js", fn: "create > renderGuide", target: "root.innerHTML", evidence: "literal",
     trace: "The user guide: hardcoded EN/TR card text and titles chosen by ui.guideLang. No stored or typed content." },

@@ -2,7 +2,7 @@
 
 - Every stored-schema version bump needs a real migration for existing
   `localStorage` data, not just new-install defaults (`migrateEvent` in
-  `src/app-v8.js`).
+  `src/shell-storage.js`, created by `src/app-v8.js`).
 - Historical (`isHistorical`) events must stay immutable at the data
   layer, not only via disabled UI controls.
 - No Show must never clear `guest.assignment` — planned vs. live occupancy

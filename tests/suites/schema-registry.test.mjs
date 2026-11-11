@@ -31,6 +31,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { openApp } from "../lib/app-actions.mjs";
 
+import { shellAndScreens } from "../lib/shell-sources.mjs";
 export const meta = { name: "schema-registry", tags: ["storage", "fast"], timeout: 90000 };
 
 const DB_NAME = "meritEventMaker";
@@ -75,8 +76,12 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   checks.require(current, "the current schema version is a named constant in the registry", current);
   const CURRENT = Number(current[1]);
 
-  const v8 = fs.readFileSync(path.join(repoRoot, "src", "app-v8.js"), "utf8")
+  // parseRoot left app-v8.js for src/shell-storage.js (2026-11-11): the shell is
+  // app-v8.js plus every module created out of it, and the positive control
+  // below makes sure parseRoot is in the text this reads.
+  const v8 = shellAndScreens(repoRoot)
     .split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n").replace(/\s/g, "");
+  checks.ok(/functionparseRoot\(/.test(v8), "parseRoot is in the shell text this check reads");
   checks.ok(!/parsed\.schemaVersion=\d/.test(v8),
     "parseRoot no longer STAMPS a version over whatever it was handed — reading the stored version is the whole point of having one",
     true);
