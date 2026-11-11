@@ -26,6 +26,7 @@ import path from "node:path";
 import { stripCommentsAndStrings } from "../lib/js-scan.mjs";
 import { openApp, createBlankEvent, importPlan, runDetection, reRunDetection, futureDate, click } from "../lib/app-actions.mjs";
 
+import { screenFiles } from "../lib/shell-sources.mjs";
 export const meta = { name: "review-decisions", tags: ["intelligence"], timeout: 420000, viewport: { width: 1600, height: 1000 } };
 
 function enclosingFunction(lines, index) {
@@ -46,13 +47,14 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
     "app-v8.js:applyReviewWrites",    // the writer
     "app-v8.js:undoReviewDecision",   // its undo
     "app-v8.js:applyPlanMemory",      // analysis time: earlier human decisions re-applied
-    "app-v8.js:identifyLabelledVenueObjects", // analysis time: a printed label names an object
-    "app-v8.js:placeNamedVenueElements", // analysis time: a printed label or a wall-column family offers an element
-    "app-v8.js:holdBackOverlappingTables", // analysis time: two tables cannot stand in one place
-    "app-v8.js:applyTeachArea",       // analysis time: a kept lesson applied within its scope
+    "plan-detection-refine.js:identifyLabelledVenueObjects", // analysis time: a printed label names an object
+    "plan-detection-refine.js:placeNamedVenueElements", // analysis time: a printed label or a wall-column family offers an element
+    "plan-detection-refine.js:holdBackOverlappingTables", // analysis time: two tables cannot stand in one place
+    "plan-teach.js:applyTeachArea",       // analysis time: a kept lesson applied within its scope
     "app-v8.js:commitCandidates",     // marks what Confirm wrote to the floor plan
   ]);
-  const shell = ["app-v8.js", "app.js", ...fs.readdirSync(path.join(repoRoot, "src")).filter(f => /^screen-.*\.js$/.test(f))];
+  // the shell and every module created out of it with create(deps)
+  const shell = ["app-v8.js", "app.js", ...screenFiles(repoRoot)];
   const offenders = [];
   for (const f of shell) {
     const lines = stripCommentsAndStrings(fs.readFileSync(path.join(repoRoot, "src", f), "utf8")).split("\n");

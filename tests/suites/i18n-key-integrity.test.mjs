@@ -121,7 +121,8 @@ export default async function run({ checks }) {
   // they close is not a missing key but a message that had no key at all:
   // both sites used to toast a bare library exception ("Invalid PDF
   // structure.") with no action named, no next step, and no translation.
-  const appV8 = fs.readFileSync(path.join(SRC, "app-v8.js"), "utf8");
+  // The shell and every module created out of it (the setup screen left app-v8.js 2026-11-08).
+  const appV8 = shellAndScreens(path.dirname(SRC));
   for (const key of ["setup.planReadFailed", "plan.replaceFailed"]) {
     checks.ok(defined.has(key) && defined.get(key).en && defined.get(key).tr,
       `${key} is defined in both languages`, defined.get(key));

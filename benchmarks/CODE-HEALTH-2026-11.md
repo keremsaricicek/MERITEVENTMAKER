@@ -237,3 +237,22 @@ entry says what was seen and what was done about it.
     tool resolves the name as the shell binds it now, and
     `screen-console-sweep` drops a guest on a table (mutation-proven with the
     getter returning nothing).
+20. **Seven more scans read app-v8.js (or app-v8.js + screens) as "the shell"**
+    and lost code the day it moved: `i18n-key-integrity` (the plan-import
+    failure message), `i18n-hardcoded-english` (its SHELL list),
+    `review-decisions` (the writers of a candidate's decision fields —
+    identifyLabelledVenueObjects, placeNamedVenueElements,
+    holdBackOverlappingTables, applyTeachArea had silently left its scan),
+    `plan-detection-boundary` (how the shell calls detect()),
+    `toast-discipline` (the composed-toast inventory by file) and
+    `tests/lib/reachability.mjs`. All now read the shell plus every
+    `create(deps)` module.
+21. **`tests/lib/reachability.mjs` already called two LIVE pre-v8 bodies dead
+    before this programme**: `bindGuests` (screen-guests.js calls
+    `original.bindGuests` since 2026-11-01) and `focusGuest` (reached only
+    from it). With the scan widened, the dead set is 57 (was 59: exactly those
+    two) and every other name is unchanged across moves 1-17 — measured by
+    running the helper on the pre-move tree and on the tip.
+22. **The walk-in commit shipped an unclassified error toast**
+    (`walkin.liveRefused`), red in `toast-discipline` on the main branch;
+    fixed there on its own (1acf190).
