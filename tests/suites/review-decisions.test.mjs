@@ -44,14 +44,14 @@ export default async function run({ page, checks, baseUrl, repoRoot }) {
   // the review writer and, at analysis time, by the stages that BUILD the
   // analysis — never inline beside a button.
   const ALLOWED = new Set([
-    "app-v8.js:applyReviewWrites",    // the writer
-    "app-v8.js:undoReviewDecision",   // its undo
-    "app-v8.js:applyPlanMemory",      // analysis time: earlier human decisions re-applied
+    "review-commands.js:applyReviewWrites",    // the writer
+    "review-commands.js:undoReviewDecision",   // its undo
+    "plan-learning.js:applyPlanMemory",      // analysis time: earlier human decisions re-applied
     "plan-detection-refine.js:identifyLabelledVenueObjects", // analysis time: a printed label names an object
     "plan-detection-refine.js:placeNamedVenueElements", // analysis time: a printed label or a wall-column family offers an element
     "plan-detection-refine.js:holdBackOverlappingTables", // analysis time: two tables cannot stand in one place
     "plan-teach.js:applyTeachArea",       // analysis time: a kept lesson applied within its scope
-    "app-v8.js:commitCandidates",     // marks what Confirm wrote to the floor plan
+    "review-commands.js:commitCandidates",     // marks what Confirm wrote to the floor plan
   ]);
   // the shell and every module created out of it with create(deps)
   const shell = ["app-v8.js", "app.js", ...screenFiles(repoRoot)];

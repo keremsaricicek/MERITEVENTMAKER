@@ -44,6 +44,13 @@ if (!startArg || !endArg || !outFile || !globalName || !shellConst) {
   process.exit(2);
 }
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+// Never overwrite a file or reuse a published name: move 18 first wrote over the
+// existing src/review-decisions.js (MeritReviewDecisions, the review RULES), and
+// only offline-bundle-contract's duplicate script tag caught it.
+if (fs.existsSync(path.join(root, "src", outFile))) { console.error(`REFUSED: src/${outFile} already exists`); process.exit(3); }
+if (fs.readdirSync(path.join(root, "src")).some((f) => /\.m?js$/.test(f) && new RegExp(`globalThis\\.${globalName}\\s*=`).test(fs.readFileSync(path.join(root, "src", f), "utf8")))) {
+  console.error(`REFUSED: globalThis.${globalName} is already published`); process.exit(3);
+}
 const V8 = path.join(root, "src/app-v8.js");
 const v8 = fs.readFileSync(V8, "utf8");
 const lines = v8.split("\n");

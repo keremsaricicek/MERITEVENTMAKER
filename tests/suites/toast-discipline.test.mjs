@@ -42,7 +42,7 @@ export const meta = { name: "toast-discipline", tags: ["ui", "localization", "re
 const COMPOSED = [
   { file: "seating-commands.js", fn: "toast", arg: 'v.map(ruleLine).join(" ")', count: 1,
     from: "seating rules broken by a seating (src/seating-rules.js): each line is ruleLine(), one t() call per broken rule, joined" },
-  { file: "app-v8.js", fn: "toast", arg: "...a", count: 16,
+  { file: "app-v8.js", fn: "toast", arg: "...a", count: 17,
     from: "the hand-over to a module created with its dependencies (src/screen-*.js, src/data-portability.js): a late-binding pass-through, not a message — the module's own toast() calls are scanned in its own file like every other" },
   { file: "app-v8.js", fn: "toastAction", arg: "...a", count: 4,
     from: "the same late-binding hand-over of toastAction (the Undo toast) to the modules that left app-v8.js in 2026-11 (benchmarks/CODE-HEALTH-2026-11.md); their own calls are scanned in their own files" },
@@ -56,9 +56,9 @@ const COMPOSED = [
     from: "a choice between two keys" },
   { file: "plan-teach.js", fn: "toastAction", arg: "toastText(r.lesson)", count: 1,
     from: 'keepLesson()\'s two callers pass toastText as l=>t("number.confirmedToast",…) and l=>t("teachArea.kept",…); offered with Undo since L4 (2026-10-18)' },
-  { file: "app-v8.js", fn: "toast", arg: 't("toast.groupConfirmed",{n:strong.length,objectWord:t(strong.length===1?"word.object":"word.objects"),title:group.title})+(group.outlierIds.length?" "+t("toast.outliersRemain",{n:group.outlierIds.length}):"")', count: 1,
+  { file: "review-commands.js", fn: "toast", arg: 't("toast.groupConfirmed",{n:strong.length,objectWord:t(strong.length===1?"word.object":"word.objects"),title:group.title})+(group.outlierIds.length?" "+t("toast.outliersRemain",{n:group.outlierIds.length}):"")', count: 1,
     from: "two keys joined by a space; group.title is a Review Center group name (MERIT_I18N_STATUS.notMigrated names it)" },
-  { file: "app-v8.js", fn: "toast", arg: 'decision==="merged" ?t("toast.confirmedOneGroup",{n:newPi.planSummary.diningGroups}) :t("toast.splitIntoTables",{count:memberIds.length,n:newPi.planSummary.diningGroups})', count: 1,
+  { file: "review-commands.js", fn: "toast", arg: 'decision==="merged" ?t("toast.confirmedOneGroup",{n:newPi.planSummary.diningGroups}) :t("toast.splitIntoTables",{count:memberIds.length,n:newPi.planSummary.diningGroups})', count: 1,
     from: "a choice between two keys" },
 ];
 
