@@ -21,6 +21,11 @@
 // Door check-ins the rules read stay immediate (a plain statement at the door).
 // The reading, resolving and acting code is unchanged.
 //
+// SECOND READER (2026-11-12, src/assistant-second-reader.js): the rules answer
+// first; only what they read as "unknown" goes to the pinned local chat model,
+// whose reading is always a proposal (Uygula, then Geri al). With no relay or
+// model, the answer and the head say so ("yalnız kurallar").
+//
 // Everything this reads from the shell is handed to it by create(deps), once.
 (function () {
   "use strict";
@@ -35,6 +40,7 @@
   let highlight;
   let onChange;
   let readText;
+  let readerState;
   let research;
   let summary;
   let t;
@@ -46,6 +52,8 @@
   function create(deps) {
     if (created) throw new Error("MeritScreenAssistant.create() is called once, by app-v8.js.");
     created = true;
+    // src/assistant-second-reader.js loads after this file (just before app-v8.js): read it at call time only
+    const SR = () => globalThis.MeritAssistantSecondReader;
     canMutate=deps.canMutate;
     chatText=deps.chatText;
     currentId=deps.currentId;
@@ -54,6 +62,7 @@
     highlight=deps.highlight;
     onChange=deps.onChange;
     readText=deps.readText;
+    readerState=deps.readerState;
     research=deps.research;
     summary=deps.summary;
     t=deps.t;
@@ -62,6 +71,14 @@
     writers=deps.writers;
     let root = null, log = null, input = null, status = null, strip = null;
     const turns = [];   // {who:"you"|"assistant", text, lines?, undo?}
+    // the head's resting words: "Hazır", or "Hazır · yalnız kurallar" while the
+    // second reader is missing (src/assistant-second-reader.js)
+    let restWords = null;
+    const rest = () => restWords || t("assistant.ready");
+    function readerIs(o) {
+      restWords = o && o.state === "missing" ? t("assistant.readyRules") : null;
+      if (root && !root.classList.contains("is-working")) status.textContent = rest();
+    }
 
     function el(tag, attrs, text) {
       const n = document.createElement(tag);
@@ -132,11 +149,13 @@
       root.hidden = !want;
       document.body.classList.toggle("assistant-open", want);
       if (want) { root.classList.remove("is-min"); setTimeout(() => input.focus(), 0); }
+      // on every opening: is the local model there to read? (the relay asks the running process)
+      if (want && readerState) Promise.resolve(readerState()).then(readerIs).catch((error) => console.warn("The second reader's state could not be read.", error && error.name));
       document.querySelectorAll("[data-shell-assistant]").forEach((b) => b.setAttribute("aria-expanded", String(want)));
     }
     function working(on, text) {
       root.classList.toggle("is-working", on);
-      status.textContent = text || (on ? t("assistant.working") : t("assistant.ready"));
+      status.textContent = text || (on ? t("assistant.working") : rest());
     }
     function draw() {
       log.textContent = "";
@@ -145,6 +164,7 @@
         b.append(el("p", {}, turn.text));
         if (turn.byModel) b.append(el("p", { class: "assistant-by-model" }, t("assistant.readByModel")));
         if (turn.chat) b.append(el("p", { class: "assistant-by-model" }, t("assistant.chatNote")));
+        if (turn.missing) b.append(el("p", { class: "assistant-by-model assistant-model-missing" }, t(turn.missing.key, turn.missing.params)));
         if (turn.lines && turn.lines.length) { const ul = el("ul", { class: "assistant-lines" }); for (const l of turn.lines) ul.append(el("li", {}, l)); b.append(ul); }
         for (const opt of turn.options || []) b.append(optionCard(turn, opt));
         if (turn.undo && !turn.undone) {
@@ -251,7 +271,7 @@
     function settle(turn, yes) {
       turn.settled = true;
       const out = yes ? carryOut(turn.confirm.plan) : { text: t("assistant.cancelled") };
-      turns.push(Object.assign({ who: "assistant" }, out));
+      turns.push(Object.assign({ who: "assistant" }, out, yes && turn.byModel ? { byModel: true } : {}));
       draw();
       input.focus();
     }
@@ -305,11 +325,11 @@
       }
       return { text: t("assistant.planIntro"), options: opts.map((o) => ({ plan: o, applied: false })) };
     }
-    // The rules read first; only what they cannot place goes to the second
-    // reader (the chat model on this machine, through the relay), whose reading
-    // is the rules' own shape — answered and carried out by the same code below.
-    // With a second reader on this machine, the model reads first and the rules
-    // are the fallback (training/README.md "runB7b"); without one, the rules alone.
+    // RULES FIRST (src/assistant-second-reader.js): the rules answer; only what
+    // they cannot place goes to the second reader (the pinned chat model on this
+    // machine, through the relay), whose reading is the rules' own shape and is
+    // only ever a PROPOSAL — shown, then Uygula, then Geri al. When the model is
+    // missing, the answer says so, with why, and the rules' answer stands.
     // F8 HELP (owner 2026-11-02): "how do I …" is answered from src/help-topics.js — step by step,
     // in the UI's language, with "Götür" to the screen. No model; nothing changes.
     const lang = () => (globalThis.MERIT_I18N_LANG && globalThis.MERIT_I18N_LANG() === "en" ? "en" : "tr");
@@ -334,45 +354,38 @@
       // never when the sentence names one of our guests ("Ahmet nereye oturacak" is about Ahmet)
       if (H && H.isHowTo(text) && !P().personIn(text, evs)) { const m = H.match(text); if (m) return helpReply(m.topic); }
       const rules = P().parse(text, evs, now);
-      let r = rules, byModel = false, sure = false;
+      let r = rules, byModel = false, missing = null;
       const compound = !!rules.compound;
       if (rules.kind === "status") return summary ? summary(rules.what, rules.what === "group" ? rules.host : rules.since) : { text: t("assistant.notUnderstood") };
-      // a check-in at the door the rules read is never sent to the model (speed; it is a plain statement)
-      const atDoor = rules.kind === "command" && rules.plan.every((st) => st.op === "arrive");
-      if (readText && R() && !atDoor) {
+      if (R() && SR().needsModel(rules)) {
         status.textContent = t("assistant.reading");
-        const m = await readText(text);
-        if (m && m.reading) { const mr = R().toParse(m.reading, evs, now, text, currentId()); if (mr.kind !== "unknown") { r = mr; byModel = true; sure = !!m.sure && R().grounded(mr, text, evs, currentId()); } }
+        const m = readText ? await readText(text) : SR().outcome({ relay: false });
+        if (m && m.state === "reading") { const mr = R().toParse(m.reading, evs, now, text, currentId()); if (mr.kind !== "unknown") { r = mr; byModel = true; } }
+        if (m && m.state === "missing") missing = SR().notice(m);
+        readerIs(m && m.state === "missing" ? m : null);
       }
+      const mark = (out) => Object.assign(out, byModel ? { byModel: true } : {}, missing ? { missing } : {});
       // Neither a question about our events nor a command: small talk, from the
       // same model, marked as not resting on the data.
       // two jobs in one sentence nobody could read: asked back, never chatted about
-      if (r.kind === "unknown" && compound) return { text: t("assistant.oneAtATime") };
-      if (r.kind === "unknown" && chatText) {
+      if (r.kind === "unknown" && compound) return mark({ text: t("assistant.oneAtATime") });
+      if (r.kind === "unknown" && chatText && !missing) {
         const said = await chatText(text);
         if (said) return { text: said, chat: true };
       }
-      const out = reply(r, evs, now, byModel, { rules, sure });
-      return byModel ? Object.assign(out, { byModel: true }) : out;
+      return mark(reply(r, evs, now, byModel));
     }
-    function reply(r, evs, now, byModel, how) {
+    function reply(r, evs, now, byModel) {
       if (r.kind === "plan") { if (!currentId()) return { text: t("assistant.noEvent") }; return planReply(r.brief); }
       if (r.kind === "question") return { text: P().answer(r, evs, now, currentId(), globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : "tr").text };
       if (r.kind !== "command") return { text: t("assistant.notUnderstood") };
       if (!currentId()) return { text: t("assistant.noEvent") };
-      // Ask only when unsure (owner): a command the model read is done at once
-      // when the rules read the very same change or the model is sure of it;
-      // otherwise — and for a deletion only the rules read — it is SHOWN first and
-      // waits for Onayla: a misreading costs a click, never a guest.
-      const A = globalThis.MeritAssistantActions.create({ events, current: currentId, today, lang: () => (globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : "tr"), canMutate: (e) => canMutate(e), writers: {}, snapshot: () => null, registerUndo: () => {} });
-      const key = (res) => res.steps ? JSON.stringify(res.steps.map((x) => [x.op, x.guestId || x.name, x.tableId || x.table || null, x.seats || null, x.pax || null])) : null;
-      const agreed = byModel && how && how.rules && how.rules.kind === "command" && key(A.resolve(r.plan)) !== null && key(A.resolve(r.plan)) === key(A.resolve(how.rules.plan));
-      // SPEC-v4: every change is shown first and waits for Uygula — except a
-      // check-in at the door the rules read, and a reading the model is sure of
-      // that the rules read the same way is still shown (the person applies it).
-      const doorOnly = r.plan.every((st) => st.op === "arrive");
-      const unsure = !doorOnly || (byModel && !(agreed || (how && how.sure)));
-      if (unsure) {
+      // SPEC-v4: every change is SHOWN first and waits for Uygula — a misreading
+      // costs a click, never a guest — except a door check-in the RULES read (a
+      // plain statement at the door). A reading the model made is always shown
+      // first, however sure it is (src/assistant-second-reader.js mustShow).
+      if (SR().mustShow(r.plan, byModel)) {
+        const A = globalThis.MeritAssistantActions.create({ events, current: currentId, today, lang: () => (globalThis.MERIT_I18N_LANG ? globalThis.MERIT_I18N_LANG() : "tr"), canMutate: (e) => canMutate(e), writers: {}, snapshot: () => null, registerUndo: () => {} });
         const res = A.resolve(r.plan);
         if (res.ask) return { text: res.ask };
         if (res.refuse) return { text: res.refuse };
@@ -426,5 +439,5 @@
     return { mount, toggle, isOpen, ask, help, shortcuts };
   }
 
-  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","chatText","currentId","events","go","highlight","onChange","readText","research","summary","t","today","voice","writers"])});
+  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","chatText","currentId","events","go","highlight","onChange","readText","readerState","research","summary","t","today","voice","writers"])});
 })();

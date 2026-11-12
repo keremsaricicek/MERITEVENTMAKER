@@ -19,8 +19,10 @@
 //     same model's short reply, marked as not resting on the records; it
 //     changes nothing.
 //   RULES FIRST. The panel asks the reader only when the rules say "unknown";
-//     the reading is answered and acted on by the same code — a command is done
-//     at once, says the language model read it, and is one undo.
+//     the reading is answered and acted on by the same code — a command is SHOWN
+//     first, says the language model read it, waits for Uygula, and is one undo.
+//   HONEST WHEN MISSING. A reader that is not the measured server is named, with
+//     its reason, and the rules' answer stands; the page sends { text } only.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -133,6 +135,8 @@ export default async function run({ page, checks, repoRoot }) {
       render();
     });
     await settle(page);
+    const bodies = [];
+    page.on("request", (q) => { if (q.url().includes("/vlm-relay/read")) { let body = null; try { body = JSON.parse(q.postData() || "null"); } catch { body = "unparsable"; } bodies.push({ sameOrigin: q.url().startsWith(relay.baseUrl + "/"), body }); } });
     await page.keyboard.press("F8");
     await page.waitForSelector("#assistantPanel:not([hidden])");
     const say = async (text) => {
@@ -171,11 +175,12 @@ export default async function run({ page, checks, repoRoot }) {
       "an unsure reading (0.4 < 0.9) is shown and waits", unsure);
     await page.locator(".assistant-cancel").last().click();
     await settle(page);
-    // the model reads first; where the rules read the very same change it is still shown first (SPEC-v4)
+    // RULES FIRST (src/assistant-second-reader.js): a sentence the rules read never goes to the model,
+    // and its change is still shown first (SPEC-v4)
     const n2 = sent.length;
     const agreed = await say("Zeynep Arslan'ı T05'e oturt");
-    checks.ok(sent.length === n2 + 1 && /onaylıyor musun/i.test(agreed) && !await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment),
-      "the model reads first; even where the rules read the same change it is shown first (SPEC-v4)", agreed);
+    checks.ok(sent.length === n2 && /onaylıyor musun/i.test(agreed) && !/dil modeli okudu/.test(agreed) && !await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment),
+      "rules first: what the rules read is answered by the rules, the model is not asked, and it is shown first", { agreed, asked: sent.length - n2 });
     await page.locator(".assistant-confirm").last().click();
     await settle(page);
     await page.evaluate(() => { const g = activeEvent().guests.find((x) => x.id === "gz"); unassignGuest(g.id); });
@@ -190,6 +195,25 @@ export default async function run({ page, checks, repoRoot }) {
       && JSON.stringify(chatReq.messages) === JSON.stringify(R.chatMessages("Merhaba, nasılsın?")),
       "small talk: no reading, so the model's short reply is shown, marked as not resting on the records", { chatSaid });
     checks.equal(await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment), null, "small talk changes nothing");
+
+    // HONEST WHEN MISSING: the process is not the measured server → the panel says the model did
+    // not read it, with the reason, and the rules' answer stands; nothing changes
+    checks.ok(bodies.length > 0 && bodies.every((b) => b.sameOrigin && JSON.stringify(Object.keys(b.body || {})) === '["text"]'),
+      "what goes to the reader is the sentence only ({ text }), to this page's own relay", bodies);
+    props = { ...props, default_generation_settings: { n_ctx: 2048 } };
+    replyWith = JSON.stringify(reading);
+    const n4 = sent.length;
+    const down = await say("Zeynep Arslan T05 masasına geçsin");
+    const head = await page.evaluate(() => document.querySelector("#assistantPanel .assistant-status").textContent);
+    checks.ok(sent.length === n4 && /dil modeli bunu okuyamadı \(LOCAL_SERVER_MISMATCH\)/i.test(down) && /yalnız kurallar/i.test(down) && !/dil modeli okudu/.test(down)
+      && !/onaylıyor musun/i.test(down) && /yalnız kurallar/i.test(head),
+      "a reader that is not the measured server reads nothing; the panel says so, with its reason, and works with the rules alone", { down, head });
+    checks.equal(await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment), null, "a missing model changes nothing");
+    const ruled = await say("Zeynep Arslan'ı T05'e oturt");
+    checks.ok(/onaylıyor musun/i.test(ruled) && /Zeynep Arslan → T05/.test(ruled), "with the model missing, the rules still read and propose", ruled);
+    await page.locator(".assistant-cancel").last().click();
+    await settle(page);
+    props = { ...props, default_generation_settings: { n_ctx: 4096 } };
   } finally {
     await relay.close();
     await new Promise((r) => fake.close(r));

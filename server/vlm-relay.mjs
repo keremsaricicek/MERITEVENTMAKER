@@ -15,7 +15,8 @@
 //      (server/vlm-core.mjs), spends the key it was started with, and returns a
 //      checked answer.
 //
-//   GET  /vlm-relay/status   configured or not and why, model, prices, limits, today's spend.
+//   GET  /vlm-relay/status   configured or not and why, model, prices, limits, today's spend;
+//                            for the F8 reader, `serving` ("verified" or why not), asked of the running process.
 //   POST /vlm-relay/check    is the key accepted and the model reachable? (models.retrieve —
 //                            free; it does NOT prove there is a balance)
 //   POST /vlm-relay/run      one step of a reading: the whole plan, or one region.
@@ -575,7 +576,10 @@ export function createRelay({ config, client, root = REPO_ROOT, allowedHosts, lo
           const served = await verifyServing({ timeout: 3000 });
           st.local = served.ok ? { ...st.local, serving: "verified" } : { ...st.local, checks: [], autoApply: [], serving: served.code };
         }
-        const chatStatus = reader.configured ? { configured: true, name: reader.manifest.name, version: reader.manifest.version, licence: reader.manifest.licence } : { configured: false, reasonCode: reader.reasonCode };
+        // the F8 reader is "serving" only while its process is the measured server (same rule as above; the model is not called)
+        let chatServing;
+        if (chat) { try { const v = await chat.verify(AbortSignal.timeout(3000)); chatServing = v.ok ? "verified" : (v.code || "CHAT_NOT_RUNNING"); } catch { chatServing = "CHAT_NOT_RUNNING"; } }
+        const chatStatus = reader.configured ? { configured: true, name: reader.manifest.name, version: reader.manifest.version, licence: reader.manifest.licence, ...(chatServing ? { serving: chatServing } : {}) } : { configured: false, reasonCode: reader.reasonCode };
         return json(res, 200, { ok: true, version: RELAY_VERSION, busy: !!inFlight, ...st, asksToday: asksToday(), reader: chatStatus,
           voice: voiceStatus(), research: researchStatus(research, researcher ? researcher.today() : 0) });
       }

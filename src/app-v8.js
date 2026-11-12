@@ -887,7 +887,12 @@
     // its small-talk reply for what is neither question nor command; null when
     // no relay serves this page or no reader is configured.
     chatText:async(text)=>{if(!relayHere())return null;try{const r=await fetch("/vlm-relay/chat",{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify({text}),cache:"no-store",credentials:"same-origin"});if(!r.ok)return null;const j=await r.json();return j&&j.ok&&typeof j.reply==="string"?j.reply:null;}catch{return null;}},
-    readText:async(text)=>{if(!relayHere())return null;try{const r=await fetch("/vlm-relay/read",{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify({text}),cache:"no-store",credentials:"same-origin"});if(!r.ok)return null;const j=await r.json();return j&&j.ok&&j.reading?{reading:j.reading,sure:!!j.sure}:null;}catch{return null;}},
+    // → MeritAssistantSecondReader.outcome(): a reading, none, or why the model did not read (no relay, off, down)
+    // EXPECTED ABSTENTION: a reply that is not JSON becomes body null, which outcome()
+    // reports as the model not reading, with its HTTP code — shown in the panel.
+    readText:async(text)=>{const SR=globalThis.MeritAssistantSecondReader,body=SR.request(text);if(!relayHere()||!body)return SR.outcome({relay:false});try{const r=await fetch(SR.ENDPOINT,{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify(body),cache:"no-store",credentials:"same-origin"});return SR.outcome({http:r.status,body:await r.json().catch(()=>null)});}catch(error){return SR.outcome({error:(error&&error.name)||"Error"});}},
+    // the panel's head on opening: is the pinned model running here as measured? (asked fresh, not the cached status)
+    readerState:async()=>{const SR=globalThis.MeritAssistantSecondReader;if(!relayHere())return SR.fromStatus(false,null);try{const r=await fetch("/vlm-relay/status",{headers:{"x-merit-relay":"1"},cache:"no-store",credentials:"same-origin"});return SR.fromStatus(true,r.ok?await r.json():null);}catch{return SR.fromStatus(true,null);}},
     onChange:()=>{const e=activeEvent();if(e){RULES().syncEventChairs(e);touchEvent(e);}render();},
     // "Götür" from a help answer: the events list, or a tab of the open event (with none open, the events list)
     // F8 "bugün ne eksik" / "ne değişti": read-only summaries in the UI's language
