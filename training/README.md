@@ -2333,3 +2333,88 @@ that, not this run's.
 
 **Not claimed by any result here.** en11* and every older set are seen; a pass on en12 is 100 sentences on one fixture,
 written by the same hand as the data; the timing is this 4-core CPU, not the owner's PC.
+
+## 2026-11-12 — generation 7 + detector v6-g7 + runT: the owner's two styles, drawn like real sheets (written before any g7 exam existed, any g7 training or any g7 score)
+
+**Owner's request (2026-11-12).** "For the 2 examples (style G = Golden/Golden 2, style P = ORNEK) create realistic,
+similar examples and feed the model with them." Generation 6 drew the two looks; generation 7 draws them the way real
+sheets arrive and with far more variety. Golden, Golden 2 and ORNEK remain **SEEN** (regression only). No real plan goes
+into the data; no layout, count, position or text of a real plan is copied (generation 7 does not use generation 6's
+clutter word list, which carried strings close to real-plan text; its words are generic or generated: event names,
+dates, totals from the plan's own random counts).
+
+**Generator: `training/synth_styles7.py`** (deterministic from seeds; reuses generation 6's zones and families without
+changing a single g6 plan). Over g6 it adds:
+- *capture:* PDF vector look (crisp, or rendered without anti-aliasing at a lower size), faded print (toner loss,
+  streaks, colour cast), photocopy (grey toner, gamma, speckle, dark edges, skew), screenshot of a viewer (downscaled,
+  chrome, JPEG), crumpled paper (smooth warp, crease shading; labels warped with it), strong phone photo (perspective up to
+  15 %, desk, vignetting, colour cast, motion or defocus blur, app downscale, JPEG 30–70), plus g6's export/scan/photo/turned;
+- *furniture:* round, oval (turned), square, rectangle, long banquet with head chairs, cocktail (stools or none), merged
+  rows of touching squares; chair symbols armchair/rect/rounded/tub/dot/ring/U-back/arc-back/single stroke/petal/
+  semicircle; **partial chairs** (tucked: drawn first, a third covered by the top, labelled whole, `partial: true`);
+- *zones:* stage steps, dance floor as parquet/hatch/circle/plain/checker, L-shaped and island bars, carpet aisles,
+  hatched VIP (an empty VIP rope stays a zone only if it is labelled);
+- *hard negatives:* buffet (dishes = circles in a counter), DJ booth (two discs), photo booth/cloakroom/registration, CAD
+  grid bubbles (circled letters/numbers — they look like numbered discs), north arrow, scale bar, title block, dimension
+  lines with arrows, legends whose sample symbols are `ignore`, logos, pen marks (circles around tables, ticks,
+  handwriting), a watermark, theatre row letters;
+- *numbering:* g6's row/column/block/skip13/prefix/letters/insert plus `padded`, `outside` (a tag beside the table),
+  `vip`; *rooms:* L-shaped halls, cut corners, windows, denser rooms (P up to ~250 discs).
+- **Never used by generation 7** (they are generation 6's held-out exam, which stays a regression row): families 23 and
+  26, layouts `diagonal` and `arc`, numbering `serpentine`.
+
+**Data ($S/g7/data, `$S/g7/make_data.sh`).**
+- train: G 336 (families 20, 21, 22, 30 G-pastel, 31 G-cad, 32 G-faded, 33 G-navy; layouts lounge, banquet, dense, theatre,
+  cocktail, imperial, gala, classroom, ovals) + P 240 (families 24, 25, 35 P-copy, 36 P-cad, 37 P-colour; layouts grid,
+  split, dense, theatre, cocktail, blocks, mixedsize, imperialP, wavy); val G 28 + P 20 (same families, new seeds).
+- **Exam (frozen, SYNTHETIC): G 60 + P 60**, in thirds: (a) the held-out families **G-hold7 (34)** and **P-hold7 (38)**
+  on any layout, numbering and capture incl. the held-out ones (34 also carries the held-out **trapezoid** chair symbol and
+  a red centre dot; 38 hatched discs on cream); (b) training families on the held-out layout (**`ring`** G — rounds in
+  rings around a central dance floor; **`chevron`** P); (c) training families with the held-out capture (**`fax`**:
+  binarised, low dpi, streaks) or the held-out numbering (**`descending`**). None of these is in train or val.
+- VLM crops: train = every 3rd train plan, jittered, a quarter turned (`vlm --seed 91 --jitter --every 3`); exam = every
+  exam plan (`vlm --seed 93 --split exam --numbers 4`, no jitter). ZONE, NUMBER (none asked on `fax` plans: a fax can erase
+  a number, so its truth is not knowable), CHAIRS (incl. tucked, oval and long tables), ID, NEG (the new hard negatives).
+- Hashes (sha256 over the sorted file list's sha256sum, first 16 hex) are recorded below the moment the data exists,
+  before any model sees it.
+
+**Training (CPU, every heavy step under `flock $S/cpu.lock`, `$S/g7/chain.sh`, starts only after `CHAIN-S-DONE`).**
+- The **base** is what the runS/v5-s ship rule decided (`$S/g6/verdict.py`, its output copied to
+  `$S/g7/g6-verdict.json`): detector base = v5-s if `verdict.detector` is true, else v2; VLM base = runS if
+  `verdict["runS-regression"]` is true, else runB6d. The base is re-measured the same day on every set below.
+- **v6-g7** (detector): `detector.py train --init <base model> --steps 5000` on gen2train, gen3train, g18train, g10Ltrain,
+  g6 train, and g7 train listed twice; families 8, 9 excluded; thresholds 0.5 for every class, fixed (`$S/det/thr05.json`),
+  never re-calibrated. Packaged to `$S/det/pkg/v6-g7` (bytes + sha256 pin), **not activated** by the chain.
+- **runT** (VLM): `vlm_lora.py train --init <base run> --data g7/vlm-train,g6/vlm-train,v6/d6,v6/c6,v5/train
+  --replay-tasks ID,NEG,CHAIRS,MERGED,SERVES,ZONE,NUMBER --replay-max 200 --curriculum --dtype fp32 --threads 4`, other
+  options at their defaults.
+
+**Bars (fixed now, never changed after a result). Every exam score is SYNTHETIC and reported as such.**
+
+Detector v6-g7 against the base (same day, same sets, threshold 0.5):
+- g7 exam, per style (G, P): phantom rate (false tables + false chairs) / (all reported tables + chairs) < 0.03; table
+  recall and chair recall each ≥ base − 0.01; table F1 or chair F1 above the base's. Reported, not bars: each held-out
+  slice (family 34/38, `ring`/`chevron`, `fax`, `descending`) and each capture.
+- g6 exam (G, P) and the older synthetic sets (gen3val, heldout, blind, blind2, g18val, g10Lval): no drop of 0.01 or more
+  on any table/chair precision/recall or column recall (`compare_candidates.py --min 1 --tol 0.0099`).
+- real, through the product (`run-benchmark.mjs`, OCR from `.vendor-cache`, network refused, a clean worktree at this
+  branch): Golden + ORNEK no regression on any guarded field of `benchmarks/BASELINE.json` and none against the base the
+  same day; Golden 2 (SEEN) tables found ≥ base, phantom tables ≤ base, chairs tied ≥ base — **the same rows as the runS
+  ship rule.**
+- **Ship rule:** packaged and activated only if every row holds; otherwise the base stays.
+
+VLM runT (two looks; "agreed-wrong" = both looks give the same wrong answer):
+- g7 exam: zone one-look ≥ 0.80 overall, ≥ 0.75 per style, ≥ 0.70 per zone type, agreed-wrong ≤ 0.05, an agreed zone claim
+  on none/seating crops ≤ 0.05; number exact ≥ 0.85 on printed, ≥ 0.75 two-line, agreed-wrong ≤ 0.03, an agreed invented
+  number on truth `none` ≤ 0.03; chairs one-look ≥ 0.80, over-count ≤ 0.10, agreed-wrong ≤ 0.05; NEG agreed object on
+  clutter ≤ 0.03 (the runS bars, unchanged). The base is run on the same exam as the reference.
+- regression: on the g6 exam, zone/number/chairs one-look not lower than the base's by more than 0.03 and NEG not higher by
+  more than 0.02; on `v5-real`, `v5-tuck2`, `v5-blind4`, `v5-s1` the runS regression rows against the base's rows (merged
+  bars incl. the apply-by-itself bar: agreed-wrong ≤ 3 %, n ≥ 30 on the real test and on the V5 test, real agreed-wrong not
+  above the base's; every other question one-look ≥ base − 0.03, fabrication and yes-on-no ≤ base + 0.02).
+- **Ship rule:** runT replaces the base only if every regression row holds; zone/number are then wired per question only
+  if that question passes its g7-exam bar. Otherwise the base stays and nothing new is wired.
+
+**Not claimed by any result here.** A synthetic exam score is not a real-venue score; Golden, Golden 2 and ORNEK are seen;
+zone and number have no real labelled crops, so no real-venue accuracy exists for them. More realistic synthetic data is
+not evidence that the model reads real sheets better until the real rows say so.
