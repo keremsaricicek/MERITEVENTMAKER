@@ -23,7 +23,8 @@ const R = globalThis.MeritAssistantReading;
 const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : d; };
 // `--grammar 2` (runB7b): more phrasings per intent and step, two-job sentences sharing a verb
 // or a pronoun, more small talk; grammar 1 (runB7) is unchanged and reproducible
-const G9 = arg("grammar", "1") === "9";   // runR: grammar 8 + deep English (slang, table codes, numbers, ASCII names, how-to and out-of-scope English)
+const G10 = arg("grammar", "1") === "10";   // runR2: grammar 9 + the kinds r08y missed (names copied whole, pax, list vs table, possessives, tables in questions, multi-step), key-word typos, more names
+const G9 = arg("grammar", "1") === "9" || G10;   // runR: grammar 8 + deep English (slang, table codes, numbers, ASCII names, how-to and out-of-scope English)
 const G8 = arg("grammar", "1") === "8" || G9;   // runQ: grammar 7 + multi-step/deep, careless English, every test name barred
 const G7 = arg("grammar", "1") === "7" || G8;   // runEq: grammar 6 + more careless typing, more English, surnames ending k/p/t/ç (softening)
 const G6 = arg("grammar", "1") === "6" || G7;   // runB7f: grammar 5 + English sentences (owner 2026-11-02: the program is fully English too)
@@ -49,6 +50,14 @@ const LAST5 = ["Bilgin", "Ergün", "Uzun", "Erkin", "Sezgin", "Durgun", "Gürsoy
 // grammar 8: more first names and surnames (none in any test set; checked below like every pool)
 if (G8) { FIRST.push("Alper", "Bahar", "Cenk", "Dilara", "Ferhat", "Gamze", "Hilal", "İlker", "Kübra", "Mert", "Nihat", "Özlem", "Rabia", "Selçuk", "Tülin", "Utku", "Yusuf", "Zehra");
   LAST.push("Avcı", "Bayrak", "Coşar", "Dinç", "Gök", "Kalyoncu", "Nalbant", "Okur", "Pala", "Sağlam", "Temiz", "Vural", "Yaman", "Zengin"); }
+// grammar 10: many more names, so a name is copied rather than recalled — long ones, Turkish letters, surnames ending
+// in a vowel (the "kayas" possessive) and very short surnames (the split "elif" + "senat"); test names leave the pools below
+const FIRST10 = ["Nurettin", "Saadet", "Kıymet", "Ertuğrul", "Şükran", "Hüsnü", "Gülizar", "Necdet", "Mükerrem", "Tülay", "İsmail", "Bedriye", "Cengiz", "Fikriye", "Rıfat", "Zübeyde",
+  "Orhan", "Leman", "Yıldırım", "Perihan", "Muzaffer", "Sevgül", "Turgay", "Hatice", "Nazım", "Şaziye", "Atilla", "Gülseren", "İhsan", "Melahat", "Selahattin", "Nevin", "Doğan", "Füsun", "Ekrem", "Ülkü"];
+const LAST10 = ["Karabulut", "Yazıcı", "Demirci", "Sarıca", "Akça", "Tatlı", "Kuzu", "Bilge", "Arıca", "Kuyucu", "Çalışkan", "Tosun", "Kahraman", "Gençtürk", "Dumlupınar", "Yörük", "Çiftçi", "Eskici",
+  "Hacıoğlu", "Kocaoğlu", "Uğurlu", "Türkoğlu", "Saygılı", "Güleryüz", "Ilgın", "Börekçi", "Dağdelen", "Üstündağ", "Taşkıran", "Bıçakçı", "Ağca", "Tüfekçi", "Sönmezer", "Doğru", "Ölmez", "Erçetin"];
+const LASTS10 = ["Taş", "Öz", "Ün", "Baş", "Tok", "Ay", "Uç", "Göç"];
+if (G10) { FIRST.push(...FIRST10); LAST.push(...LAST10); }
 const ARTISTS = ["Kenan Doğulu", "Sertab Erener", "Teoman", "Gripin", "Manuş Baba", "Sıla", "Hadise", "Gökhan Türkmen", "Model", "Yüksek Sadakat", "Ezhel", "Melek Mosso", "Göksel Demirpençe", "Cem Adrian",
   "Athena", "Mor ve Ötesi", "Yaşar", "Feridun Düzağaç", "Pinhani", "Kalben"];
 const KINDS = ["konseri", "gecesi", "galası", "gösterisi"];
@@ -469,6 +478,119 @@ const HOWTO_EN = ["how do I print the guest list", "how can I change the event d
   "how do I search for a guest", "how do I move an event to another computer", "how do I let the program suggest seats", "what does unassigned mean", "how can I change a table's number",
   "how to upload a new floor plan", "how do i add guests one by one", "how do i start check in on the night"];
 
+// ---- grammar 10 (runR2): the kinds of sentence r08y missed, read AFTER the runR verdict (training/README.md "runR2") ----
+// Written from the error TYPES, never from an exam sentence: the guard below rejects any item that equals or shares a
+// four-word run (names folded) with any test sentence, en11* (seen) and en12* (the blind exam) included.
+const rare = () => `${pick(FIRST10.length ? FIRST10 : FIRST)} ${chance(0.15) && LASTS10.length ? pick(LASTS10) : pick(LAST10.length ? LAST10 : LAST)}`;
+const anyName = () => (chance(0.55) ? rare() : person(true));
+const numSaid = (n) => (chance(0.5) ? String(n) : NUM_EN[n]);
+const gend = () => (chance(0.5) ? ["him", "his", "he"] : ["her", "her", "she"]);
+// a stated count: a party / N people / N in total is N; "+N", "with N guests", "and N friends" is N + 1;
+// a partner and N children is N + 2 (the guest counts too)
+function paxEn10() {
+  const [, po] = gend(), N = 1 + Math.floor(rnd() * 8), k = 1 + Math.floor(rnd() * 4), r = rnd();
+  const forms = [
+    [`is now a party of ${numSaid(N)}`, N], [`is a party of ${numSaid(N)} now`, N], [`will be ${numSaid(N)} people in total`, N], [`- ${numSaid(N)} people total`, N], [`is now ${numSaid(N)} people`, N],
+    [`is bringing ${numSaid(k)} guests`, k + 1], [`comes with ${numSaid(k)} others`, k + 1], [`plus ${numSaid(k)}`, k + 1], [`+${k}`, k + 1], [`and ${numSaid(k)} friends are coming`, k + 1],
+    [`is coming with ${po} wife and ${numSaid(k)} kids`, k + 2], [`brings ${po} husband and ${numSaid(k)} children`, k + 2], [`is coming with ${po} wife and a kid`, 3], [`is coming alone`, 1], [`, just one person`, 1],
+  ];
+  const [say, pax] = pick(forms);
+  if (r < 0.55) { const g = person(); return [`${g} ${say}`.replace(" ,", ",").replace(" - ", " - "), Cr([St("setPax", { guest: g, pax })])]; }
+  const name = anyName(), lead = pick(["Add", "New guest:", "Sign up", "Put on the list:"]);
+  const addForms = [[`${lead} ${name}, party of ${numSaid(N)}`, N], [`${lead} ${name}, ${numSaid(N)} people total`, N], [`${lead} ${name} with ${numSaid(k)} guests`, k + 1],
+    [`${lead} ${name} plus ${numSaid(k)}`, k + 1], [`${lead} ${name}, ${po} wife and ${numSaid(k)} kids`, k + 2], [`${lead} ${name} +${k}`, k + 1], [`${lead} ${name} on ${po} own`, 1]];
+  const [t2, p2] = pick(addForms);
+  return [t2, Cr([St("addGuest", { name, pax: p2 })])];
+}
+// off the LIST is a delete; off the TABLE / seat is an unseat (the record stays)
+function listVsTableEn10() {
+  const g = person(), [ob, po] = gend();
+  if (chance(0.5)) return [pick([`${pick(["Kick", "Boot", "Drop", "Scrap", "Cross", "Strike", "Cut"])} ${g} off the list`, `${pick(["Drop", "Scrap", "Ditch", "Cut"])} ${g} from the guest list`, `${g} is off the list for good`,
+    `Take ${g} off the guest list entirely`, `Get rid of ${g} completely`, `${g} cancelled - remove ${ob} from the list`, `${g} won't come, wipe ${ob} from the list`]), Cr([St("deleteGuest", { guest: g })])];
+  return [pick([`${pick(["Bump", "Pull", "Yank", "Get", "Take"])} ${g} off ${po} table`, `Take ${g} off the table but keep ${ob}`, `${g} loses ${po} seat but stays on the list`,
+    `Get ${g} out of ${po} seat, keep the record`, `Free up the seat ${g} has`, `${g} needs no table for now, keep ${ob} listed`, `Unseat ${g} - don't delete ${ob}`]), Cr([St("unassign", { guest: g })])];
+}
+// a possessive typed without its apostrophe: "Bilges group" is guest "Bilge" (the s is not part of the name)
+function possEn10() {
+  const vowelEnd = LAST10.filter((x) => /[aeıioöuü]$/i.test(x)), g = `${pick(FIRST10.length ? FIRST10 : FIRST)} ${pick(vowelEnd.length && chance(0.7) ? vowelEnd : LAST)}`;
+  const gs = g + (chance(0.75) ? "s" : "'s"), N = 1 + Math.floor(rnd() * 7), t = table(), ts = tableSaid(t), o = person(), r = rnd();
+  if (r < 0.3) return [pick([`${gs} group is now ${numSaid(N)}`, `make ${gs} party ${numSaid(N)}`, `${gs} headcount is ${numSaid(N)}`]), Cr([St("setPax", { guest: g, pax: N })])];
+  if (r < 0.5) return [pick([`clear ${gs} seat`, `empty ${gs} chair but keep the record`, `${gs} table spot can go, keep the guest`]), Cr([St("unassign", { guest: g })])];
+  if (r < 0.7) { if (o === g) return possEn10(); return [pick([`put ${o} at ${gs} table`, `${o} goes to ${gs} table`]), Cr([St("nextTo", { guest: o, other: g.toLocaleLowerCase("tr") })])]; }
+  if (r < 0.85) return [pick([`${gs} seat should be ${ts}`, `change ${gs} table to ${ts}`]), Cr([St("assign", { guest: g, table: t })])];
+  return [pick([`flag ${gs} record as VIP`, `${gs} status: VIP`]), Cr([St("setVip", { guest: g })])];
+}
+// questions naming a table the way people type it (the reading carries the code)
+function tableQEn10() {
+  const e = eventEn(), t = table(), ts = tableSaid(t), p = anyName(), r = rnd();
+  if (r < 0.6) return [pick([`Who was at ${ts} during ${e.say}`, `Who was sitting at ${ts} for ${e.say}`, `Which guests were at ${ts} at ${e.say}`, `${ts} at ${e.say} - who was there`, `List the people at ${ts} for ${e.say}`, `Who did we put at ${ts} for ${e.say}`]),
+    Qr("whoAtTable", { event: e.word, table: t })];
+  return [pick([`Where'd ${p} sit at ${e.say}`, `Where was ${p} sitting during ${e.say}`, `What table was ${p} given at ${e.say}`, `Where did we seat ${p} for ${e.say}`]), Qr("seatAt", { person: p, event: e.word })];
+}
+// two or three jobs where the structure is the hard part
+function multiEn10() {
+  const A = person(), B = person(), t = table(), ts = tableSaid(t), [ob, , sb] = gend(), N1 = anyName(), N2 = anyName(), r = rnd();
+  if (A === B || N1 === N2) return multiEn10();
+  if (r < 0.3) return [pick([`Don't put ${A} beside ${B} - ${sb} goes to ${ts}`, `${A} must not sit with ${B}; give ${ob} ${ts}`, `Keep ${A} away from ${B} and put ${ob} at ${ts}`, `${A} shouldn't be near ${B}, move ${ob} to ${ts} instead`,
+    `Instead of sitting by ${B}, ${A} takes ${ts}`, `Not beside ${B}: ${A} belongs at ${ts}`]), Cr([St("assign", { guest: A, table: t })])];
+  if (r < 0.55) return [pick([`${N1} and ${N2} are new, seat the two of them at ${ts}`, `New guests ${N1} and ${N2} - each goes to ${ts}`, `Put new guests ${N1} and ${N2} together at ${ts}`, `Sign up ${N1} and ${N2} for ${ts}`]),
+    Cr([St("addGuest", { name: N1, pax: 1, table: t }), St("addGuest", { name: N2, pax: 1, table: t })])];
+  if (r < 0.7) return [pick([`${A} and ${B} both go to ${ts}`, `Both ${A} and ${B} -> ${ts}`, `${A} with ${B}, the pair of them at ${ts}`]), Cr([St("assign", { guest: A, table: t }), St("assign", { guest: B, table: t })])];
+  const k = pick([0, 0, 1, 2]), plus = k === 0 ? "" : k === 1 ? pick([" plus one", " +1", " with a guest"]) : pick([" +2", ` with ${NUM_EN[k]} guests`]);
+  const third = pick([[`make ${B} VIP`, St("setVip", { guest: B })], [`set ${B} to ${numSaid(3)} people`, St("setPax", { guest: B, pax: 3 })], [`unseat ${B}`, St("unassign", { guest: B })], [`delete ${B}`, St("deleteGuest", { guest: B })]]);
+  const [o0, o1, o2] = pick([["To start, ", ", next ", ", and lastly "], ["", "; after that ", "; in the end "], ["Begin with ", ", then ", " and to finish "]]);
+  return [`${o0}${o0 === "Begin with " ? "seating" : "seat"} ${A} at ${ts}${o1}${pick(["add", "sign up", "bring in"])} ${N1}${plus} ${pick(["at that table", "at the same spot", "at the same table as well"])}${o2}${third[0]}`,
+    Cr(fold3([St("assign", { guest: A, table: t }), St("addGuest", { name: N1, pax: k + 1 }), St("assign", { guest: N1, table: t }), third[1]]))];
+}
+// "add <a new name> to <table>" is an add AND a seat; "move <a guest> to <table>" a seat only
+function addToTableEn10() {
+  const name = anyName(), g = person(), t = table(), ts = tableSaid(t), [ob] = gend(), r = rnd();
+  if (r < 0.55) return [pick([`Add ${name} to ${ts}`, `Add ${name} at ${ts}`, `${name} is new, put ${ob} at ${ts}`, `Register ${name} and seat at ${ts}`, `Enter ${name} and place ${ob} at ${ts}`]), Cr([St("addGuest", { name, pax: 1 }), St("assign", { guest: name, table: t })])];
+  if (r < 0.75) return [pick([`Add ${name} to the list`, `Register ${name}`, `Enter ${name} as a guest`]), Cr([St("addGuest", { name, pax: 1 })])];
+  return [pick([`Move ${g} to ${ts}`, `Relocate ${g} to ${ts}`, `${g} switches to ${ts}`]), Cr([St("assign", { guest: g, table: t })])];
+}
+// a name right beside a short form or symbol must still be copied whole
+function slangNameEn10() {
+  const A = anyName(), B = anyName(), t = table(), ts = tableSaid(t), e = eventEn(), k = 1 + Math.floor(rnd() * 3), r = rnd();
+  if (A === B) return slangNameEn10();
+  if (r < 0.2) return [`${pick(["where'd", "where did", "whered"])} ${A} sit ${pick(["@", "at"])} ${e.say.replace(/^the /, "")}`, Qr("seatAt", { person: A, event: e.word })];
+  if (r < 0.4) return [pick([`put ${A} next 2 ${B}`, `${A} nxt 2 ${B}`, `sit ${A} w/ ${B}`, `${A} by ${B} pls`]), Cr([St("nextTo", { guest: A, other: B.toLocaleLowerCase("tr") })])];
+  if (r < 0.55) return [pick([`${A} -> ${ts}`, `${A} @ ${ts} pls`, `mv ${A} 2 ${ts}`]), Cr([St("assign", { guest: A, table: t })])];
+  if (r < 0.7) return [pick([`kick ${A} off the list`, `${A} is out, del pls`, `boot ${A} from the list thx`]), Cr([St("deleteGuest", { guest: A })])];
+  if (r < 0.85) return [pick([`add ${A} +${k} pls`, `new: ${A} w/ ${k} ppl`, `${A} +${k} new guest`]), Cr([St("addGuest", { name: A, pax: k + 1 })])];
+  return [pick([`vip ${A} pls`, `${A} = vip`, `${A} vip now k`]), Cr([St("setVip", { guest: A })])];
+}
+function weakEn10() {
+  const r = rnd();
+  return r < 0.13 ? paxEn10() : r < 0.24 ? listVsTableEn10() : r < 0.34 ? possEn10() : r < 0.46 ? tableQEn10() : r < 0.62 ? multiEn10() : r < 0.74 ? addToTableEn10() : slangNameEn10();
+}
+// a typo IN a key word (the verb, "table", "next", "beside", "concert", "people" …), never in a name
+const KEYW = new Set(["sit", "sitting", "seat", "seated", "beside", "next", "table", "concert", "people", "guests", "party", "list", "move", "add", "delete", "where", "which", "during", "group",
+  "give", "put", "place", "remove", "friends", "kids", "wife", "husband", "together", "both", "instead", "same", "then", "after", "guest", "unseat", "kick", "show", "gala"]);
+function keySlipEn(text, reading) {
+  const keep = new Set(), add = (v) => { if (typeof v === "string") for (const w of norm(v).split(" ")) keep.add(w); };
+  for (const k of ["person", "event", "phone", "table"]) add(reading[k]);
+  for (const st of reading.steps) for (const k of ["guest", "table", "from", "other", "name", "fromTable"]) add(st[k]);
+  const words = text.split(" "), idx = words.map((w, i) => [w.toLowerCase().replace(/[^a-z]/g, ""), i]).filter(([w]) => KEYW.has(w) && !keep.has(w));
+  if (!idx.length) return text;
+  const [, i] = pick(idx), w = words[i], j = 1 + Math.floor(rnd() * Math.max(1, w.length - 2)), r = rnd();
+  if (w.length < 3 || !/^[a-zA-Z]+$/.test(w)) return text;
+  words[i] = r < 0.25 ? w.slice(0, j) + w.slice(j + 1) : r < 0.45 ? w.slice(0, j) + w[j] + w.slice(j) : r < 0.75 ? w.slice(0, j) + (w[j + 1] || "") + w[j] + w.slice(j + 2) : w.slice(0, j) + (NEAR_EN[w[j].toLowerCase()] || w[j]) + w.slice(j + 1);
+  return words.join(" ");
+}
+// Turkish: a full new name right before an artist's event (the name must not take the event word), and new names with companions
+function weakTr10() {
+  const name = `${pick(FIRST10.length ? FIRST10 : FIRST)} ${pick(LAST10.length ? LAST10 : LAST)}`;
+  if (chance(0.6)) {
+    const a = pick(ARTISTS), e = chance(0.5) ? { base: `${a} ${pick(KINDS)}`, word: "" } : { base: a, word: "" };
+    e.word = e.base.toLocaleLowerCase("tr");
+    const ph = chance(0.35) ? PHONES() : null, who = ph ? `${ph} ${pick(["numaralı", "telefonlu"])} ${name}` : name;
+    return [pick([`${who} ${evCase(e, "loc")} nerede oturdu`, `${who} ${evCase(e, "loc")} hangi masadaydı`, `${who} ${evCase(e, "loc")} nerede oturuyordu`, `${who} ${evCase(e, "dat")} geldi mi`]), Qr("seatAt", { person: name, phone: ph, event: e.word })];
+  }
+  const [c, cp] = pick(COMP8);
+  return [pick([`${name} ${c} listeye ekle`, `${name} ${c} gelecek, listeye ekle`, `yeni misafir ${name}, ${c}`]), Cr([St("addGuest", { name, pax: cp })])];
+}
+
 // ---- surface: fillers, case, no Turkish letters -----------------------------------------------
 const DETR = { ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u", Ç: "C", Ğ: "G", İ: "I", Ö: "O", Ş: "S", Ü: "U" };
 const detr = (s) => s.replace(/[çğıöşüÇĞİÖŞÜ]/g, (c) => DETR[c]);
@@ -508,7 +630,7 @@ if (G6) {
     for (const st of d.gold.steps || []) for (const v of [st.guest, st.name, st.other]) if (v) norm(v).split(" ").forEach((w) => banned.add(w));
     if (d.gold.person) norm(d.gold.person).split(" ").forEach((w) => banned.add(w));
   }
-  for (const pool of [FIRST, LAST, LAST5, LAST7, ARTISTS]) for (let i = pool.length - 1; i >= 0; i--) if (norm(pool[i]).split(" ").some((w) => banned.has(w))) pool.splice(i, 1);
+  for (const pool of [FIRST, LAST, LAST5, LAST7, ARTISTS, ...(G10 ? [FIRST10, LAST10, LASTS10] : [])]) for (let i = pool.length - 1; i >= 0; i--) if (norm(pool[i]).split(" ").some((w) => banned.has(w))) pool.splice(i, 1);
 }
 // grammar 4 only: no sentence may share a four-word run (names folded to one token) with any
 // test sentence — the tests stay tests of understanding, not of a copied frame
@@ -578,6 +700,25 @@ const f = fs.openSync(path.join(out, "items.jsonl"), "w");
 const G8guard = G8 ? await (await import(pathToFileURL(path.join(repo, "training/check_g8_guard.mjs")).href)).guard() : null;   // grammar 8: the runQ guard, applied as items are made
 const ok = (text, reading) => { const key = norm(text); return !((G8guard && G8guard.f8(text, reading)) || testTexts.has(key) || seen.has(key) || grams(frame(text)).some((g) => testGrams.has(g)) || key.split(" ").some((w) => banned.has(w)) || !R.valid(reading)); };
 while (n < N) {
+  // grammar 10: 40 % from the kinds r08y missed (85 % English, 15 % Turkish), surfaced every way the exam's kinds are typed
+  if (G10 && chance(0.4)) {
+    let text, reading, fam;
+    if (chance(0.15)) { [text, reading] = weakTr10(); [text, reading] = finish(text, reading, reading.kind === "question"); if (chance(0.5)) text = careless(text, reading); fam = "synth-f8-weak-tr"; }
+    else {
+      [text, reading] = surfaceEn(...weakEn10()); text = text.replace(/i\u0307/g, "i");
+      if (chance(0.45)) { text = detr(text); const d = (v) => (typeof v === "string" ? detr(v) : v); reading = { ...reading, person: d(reading.person), event: d(reading.event), steps: reading.steps.map((s) => ({ ...s, guest: d(s.guest), name: d(s.name), other: d(s.other), from: d(s.from) })) }; }
+      const s = rnd();
+      if (s < 0.3) text = keySlipEn(text, reading); else if (s < 0.5) text = slangEn(text); else if (s < 0.75) text = carelessEn(text, reading);
+      if (chance(0.15)) text = keySlipEn(text, reading);
+      fam = "synth-f8-weak-en";
+    }
+    if (!ok(text, reading)) { skipped++; continue; }
+    seen.add(norm(text)); counts.weak = (counts.weak || 0) + 1; counts[fam] = (counts[fam] || 0) + 1; counts[reading.kind] = (counts[reading.kind] || 0) + 1;
+    const sub = reading.kind === "question" ? reading.intent : reading.kind === "command" ? reading.steps.map((s) => s.op).join("+") : "unknown";
+    fs.writeSync(f, JSON.stringify({ task: "F8", sub, q: text, system: shortPrompt ? R.SYSTEM_SHORT : R.SYSTEM, ...(shots ? { shots } : {}), truth: JSON.stringify(reading), level: reading.steps.length > 1 || text.length > 70 ? 3 : 2,
+      family: fam, seed: Number(arg("seed", 71)), split: "train", image: null }) + "\n");
+    n++; continue;
+  }
   // grammar 8: 30 % multi-step / deep (a quarter of them English)
   if (G8 && chance(0.3)) {
     let text, reading;
@@ -591,7 +732,7 @@ while (n < N) {
     n++; continue;
   }
   const r = rnd();
-  if (G6 && chance(Number(arg("english", G9 ? "0.55" : G7 ? "0.4" : "0.33")))) {
+  if (G6 && chance(Number(arg("english", G10 ? "0.4" : G9 ? "0.55" : G7 ? "0.4" : "0.33")))) {
     let [text, reading] = english();
     if (G8 && chance(G9 ? 0.45 : 0.4)) { text = detr(text); const d = (v) => (typeof v === "string" ? detr(v) : v); reading = { ...reading, person: d(reading.person), event: d(reading.event), steps: reading.steps.map((s) => ({ ...s, guest: d(s.guest), name: d(s.name), other: d(s.other), from: d(s.from) })) }; }
     if (G9 && chance(0.3)) text = slangEn(text);

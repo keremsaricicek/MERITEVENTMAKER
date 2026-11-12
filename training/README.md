@@ -2257,3 +2257,79 @@ interleaved (below).
   "Karagöz", shown wrong), typo10 t10q1 ("ayse demir sez", the name took the event word), entypo10 et10c4 ("nxet to ayse"
   → "nayse demir"). *Wrong for q08 too:* variant v12 ("nerelerde oturdu" read as attendance), entypo9 trc5 and entypo10
   et10c3 ("kayas").
+
+## 2026-11-12 — runR2: runR's English kept, its Turkish forgetting undone (written before any runR2 training or result)
+
+**Why, and what was read first (stated).** runR failed by causes the data can name (verdict above): names copied
+wrong, pax arithmetic, "off the list" vs "off the table", possessives without the apostrophe, bare table numbers in
+questions, typos in the key word, two multi-step structures — and Turkish forgetting (q08 right, runR wrong on 6 seen
+items). Every r08y reading of the en11 exam was read to write that list, so **en11, entypo11, enslang11, enmulti11,
+enascii11 are SEEN** from now on (no-regression checks only, never blind). No runR2 data, training or result exists
+at the time of writing.
+
+**A. New frozen blind exam, written by hand BEFORE the grammar-10 code and data** (`training/mk_en12.mjs`, its
+transcription; commit `e6645fc`): `en12` (20, `196e65de1a0cda4c`), `entypo12` (20, `95055fd0081e17d1` — en12 typed
+carelessly, slips also in the key words), `enslang12` (20, `2b999a0fc8e22163`), `enmulti12` (20, `db894ad71182c7d4`),
+`enascii12` (20, `2a55905350694891`) — the same five kinds as en11, new sentences, none a paraphrase of an en11 sentence;
+the hard kinds above appear in it as they would in real typing (party of N, a partner and kids, "off the list", bare
+table numbers, typos in key words, two new guests at one table, a negation that redirects).
+New names (Neriman Göksu, Reşat Kınık, Berna Çağıran, Ferdi Ulusoy, Melike Sarıgül, Kadriye Tokgöz, Sabri Karakuş, Gönül
+Erkoç, Recai Bıyıklı, Güngör Bayraktutan, Şerife Koçyiğit): no word of them in any data dir, pool or earlier test file.
+Golds checked with `--check-gold` (every command makes its writer calls on the fixture; every question has an answer).
+Blind to the lineage (`training/check_exam_blind.mjs`, new): 0 equal sentences, **0 shared four-word runs** (names
+folded) and 0 name words against data-g9 (runR) and data-g8 (q08); first drafts that shared a run were
+re-worded (17 sentences) and 14 changed so that each gold acts on the fixture (a table that has guests, a seated
+neighbour), all before the files were frozen. Older data dirs (g6/g7/B7f generation) share 34–46 runs with it; reported, not
+removed (they are three or more trainings back). Stated: the exam and the grammar-10 data are by the same hand, exam
+first; the guard keeps sentences and four-word frames apart, while the KINDS overlap by design.
+
+**B. Data — grammar 10** (`synth_f8.mjs --grammar 10 --seed 101 --n 2400 --prompt short`): grammar 9 with English 0.4 of
+the plain items (was 0.55) plus 40 % of items made from the missed kinds — English 85 % of those: stated counts (party of
+N = N; "+N", "with N guests", "and N friends" = N + 1; a partner and N kids = N + 2; digits and words; setPax and adds),
+"off the list" (delete) against "off the table / seat" (unseat) with slang verbs, apostrophe-less possessives on surnames
+ending in a vowel ("Bilges group" = Bilge), who-at-table and where questions with tables typed every way, multi-step
+(a negation that redirects with a pronoun for the subject; two new guests both at one table; two guests to one table;
+three steps with "that table" and a third person), "Add <new name> to <table>" (add + seat) against "Move <guest> to
+<table>" (seat only), names beside short forms and symbols ("next 2", "->", "@", "w/", "where'd"), each surfaced with
+case, ASCII, slang, careless slips and a slip IN a key word (sit, table, beside, next, people, …, never a name); Turkish
+15 % of those (a new full name right before an artist's event, with and without a phone; new names with companions).
+36 new first names, 36 surnames (long, Turkish letters, vowel endings) and 8 very short surnames join the pools; every
+test name leaves them. Grammar 9 regenerated after the change, without the en12 files present, is byte-identical to
+`g9-f8` (`12fe6833ec577ca3`).
+**Turkish replay** (`training/mk_replay.mjs --src data-g8 --n 900 --seed 102`): 900 Turkish F8 items of q08's own data
+(of 1,410), each re-checked by the guard as it stands today (3 dropped for a four-word run); runR had none.
+**Briefs:** `synth_briefs.py --grammar 9 --seed 103 --n 300` (new seed, ~ half English).
+**Made (before training):** g10-f8 2,400 (`06d8d3caaab85797`; 991 from the missed kinds = 776 English + 215 Turkish; plain
+English 337; deep 271 ≈ 104 English; 1,559 skipped by the guards), tr-replay-g8 900 (`baf0c6a4e1f9db7c`), g10-brief 300
+(`4b382c099c73d2f3`), `data-g10` = the three (3,600 items, `2f8c87990326254c`): **guard 0 hits** (1,067 test sentences, 60
+briefs, 150 name words), **check_exam_blind 0** against en12*. About 1,220 new English and 1,180 new Turkish F8 items +
+900 Turkish replay. Regenerating g10-f8 gives the same bytes.
+
+**Run `runR2-08`:** `--init runR-08` (runR's English kept), the flags of runR exactly (fp32, plan replay `--replay-tasks
+ID,NEG,COUNT,CHAIRS,MERGED,SERVES,BRIEF --replay-max 400`, data `data-g10,v6/d6,v6/c6,v5/train`, `--curriculum --threads 4
+--save-every 5`), under `flock $S/cpu.lock`; 4,800 items (~4 h at runR's 3.2 s/item). Script: `$S/scripts/chainR2.sh`
+(resumable; refuses to run if an exam file or data-g10 differs from the hashes above; ends `CHAINR2-DONE`); bars computed
+by `$S/scripts/r2bars.mjs` into `$S/race/geq/r2-bars.json`. **Written, not started.**
+
+**Exam (same day, nothing reused, one model at a time, after training):** `q08z` then `r2z` = `assistant_race.mjs --rules
+current --fresh9 --typo9 --en9 --entypo9 --fresh10 --typo10 --en10 --entypo10 --deep10 --sets
+en11,entypo11,enslang11,enmulti11,enascii11,en12,entypo12,enslang12,enmulti12,enascii12 --help-set
+training/help/howto-en11.jsonl --prompt short --order hybrid --theta 0.91` (originals, variants, deep always in), product
+rule; every sentence asked again (q08's kept readings are NOT reused this time, so its seconds are measured too).
+**Timing:** the same 64 sentences (`--no-base --sets en12,entypo12,fresh10,typo10`) asked in the order q08, runR2, runR2,
+q08 (`tq1 tr1 tr2 tq2`), each a fresh server and file; the load average at each start and the server's tokens/s are
+recorded. Briefs: `planner_brief_eval.py --prompt-cache` on `planner_briefs.jsonl` and `planner_briefs_en11.jsonl` (q08's
+from runQ / runR, same command).
+
+**Bars (not lowered later).** runR2 is a candidate only if ALL hold: product right **≥ 0.95 on EACH** of en12, entypo12,
+enslang12, enmulti12, enascii12 (n = 20: at most one miss each); **no regression vs q08** (`q08z`, same day) on original,
+variant and deep (product right ≥ q08's); **wrong changes** (product, summed over every set) **not above q08's** and
+**shown wrong** (summed over every set) **not above q08's**; **median seconds** a sentence on the interleaved timing (tr1 +
+tr2 pooled) **not above q08's** (tq1 + tq2 pooled); Turkish briefs all-right ≥ q08's 0.975 and invented ≤ 0.02. Reported,
+not bars: every other set (en11*, fresh9/typo9/en9/entypo9, fresh10/typo10/en10/entypo10/deep10, help), right at once,
+English briefs, the full-race medians and tokens/s. Otherwise **q08 stays**. If every bar holds, runR2 goes to
+model-qa-specialist with the run record; shipping (manifest bytes + sha256, pinned-ID suite) is a person's decision after
+that, not this run's.
+
+**Not claimed by any result here.** en11* and every older set are seen; a pass on en12 is 100 sentences on one fixture,
+written by the same hand as the data; the timing is this 4-core CPU, not the owner's PC.
