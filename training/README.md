@@ -2418,3 +2418,15 @@ VLM runT (two looks; "agreed-wrong" = both looks give the same wrong answer):
 **Not claimed by any result here.** A synthetic exam score is not a real-venue score; Golden, Golden 2 and ORNEK are seen;
 zone and number have no real labelled crops, so no real-venue accuracy exists for them. More realistic synthetic data is
 not evidence that the model reads real sheets better until the real rows say so.
+
+**Generation 7 data, frozen (recorded 2026-11-12 the moment it existed, before any model saw it; `$S/g7/make_data.sh`,
+generator at commit cf1cf1c).** sha256 over the sorted file list's sha256sum, first 16 hex:
+| set | content | hash |
+|---|---|---|
+| train | 576 plans (G 336, P 240): 38,522 tables, 63,686 chairs, 2,071 zones | `2f10a9eb3c162935` |
+| val | 48 plans (G 28, P 20) | `b7dbc549e98127d5` |
+| **exam (SYNTHETIC, frozen)** | 120 plans (G 60, P 60): 8,716 tables, 10,152 chairs, 387 zones; held-out family G 20 / P 20, layout G 22 / P 21, numbering G 14 / P 13, `fax` G 10 / P 13 | `4462df766cf74741` |
+| VLM train crops | 2,640 | `738885bbcf2e6d95` |
+| **VLM exam crops (frozen)** | 1,609 | `c153bce3627a7a98` |
+No held-out family, layout, numbering or capture occurs in train or val (counted: 0 of 576). The chain is
+`$S/g7/chain.sh` (verdict `$S/g7/verdict7.py`); it starts only after `CHAIN-S-DONE` and ends with `CHAIN-G7-DONE`.
