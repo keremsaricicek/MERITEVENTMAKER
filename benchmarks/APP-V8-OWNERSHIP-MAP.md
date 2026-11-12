@@ -741,3 +741,44 @@ that field's writer is not an extraction and should not wait for one.
 A04 (derives, stores nothing) and A22 (pure, one interface). They are what
 the rest is being moved *towards*, and they are the evidence that the target
 is cohesion rather than a smaller line count.
+
+## Re-measured 2026-11-11 — after the 2026-11 decomposition
+
+`benchmarks/CODE-HEALTH-2026-11.md` moved all 21 planned capabilities
+out of `app-v8.js` (5,634 → 1,278 lines). Where each area of this map lives
+now (`wc -l`; every module is created once by app-v8.js with `create(deps)`
+and held by `screen-modules`):
+
+| Area | Now in |
+|---|---|
+| A01 Persistence & schema migration | `shell-storage.js` (load, migrate, quarantine, unload journal, save), `storage-notice.js`; the state root and `touchEvent` stay in app-v8.js |
+| A02/A03/A04 domain primitives, occupancy, Plan Doctor rules | modules (steps 3a-3c, unchanged); the readers → `event-health.js` |
+| A05 Onboarding | `onboarding-panel.js` |
+| A06/A07 Handover, audit trail (readers, `addHandoverNote`) | `event-log-panel.js` |
+| A08 Command Center & Risk Radar | `screen-command.js` (2026-11-01) + `event-health.js` |
+| A09 Event setup & plan file intake | `screen-setup.js` |
+| A10 Smart Guest Finder | engine `guest-search.js`; panel `screen-finder.js` |
+| A11 Floor Plan & layout changes | `screen-floor-plan.js`, `floor-plan-view.js`, `screen-layout-changes.js` |
+| A12 Canvas object lifecycle | `floor-plan-editing.js` |
+| A13 Seating roster & table index | `screen-seating.js`; `tableIndex` stays in app-v8.js (read by five screens) |
+| A14 Smart Seating | `screen-seating.js` |
+| A15 Service load | `service-load-panel.js` |
+| A16/A17 Freeze zones, seat assignment command | `seating-commands.js` (writer still `seat-assignment.js`) |
+| A18 Arrival wave / Live | `screen-live.js` |
+| A19 Arrival & availability writers | `arrival-writer.js` |
+| A20 Excel import, reports, print | `screen-wizard.js`, `screen-reports.js` |
+| A21 Guests & destructive-action undo | `screen-guests.js`, `guest-record-undo.js` |
+| A22 Assisted Detection pipeline | `plan-detection-*.js`; refinement stages `plan-detection-refine.js`; the run `analysis-run.js` |
+| A23 Plan knowledge — memory, training data, OCR, Teach Area | `plan-learning.js`, `plan-text-intake.js`, `plan-teach.js`, `review-session-log.js` |
+| A24 Review screen & dataset export | `screen-review.js`, `review-commands.js` |
+| A25 Backup, package & recovery | `data-portability.js` |
+| A26 Shell binding & focus | **app-v8.js** (`bindV8Common`, `render`, overrides — the anchor); focus/keyboard `shell-focus.js`; guide `shell-guide.js` |
+
+What app-v8.js still holds: boot (`loadV8Async` … first render), the state
+root and its primitives (`touchEvent`/`mutationEpoch`, `canMutate`, `audit`,
+the `original` capture), the override layer
+(one-line delegates), every `create(deps)` call, `render`/`renderScreen`/
+`renderFailure`, the shell bar and `bindV8Common`, and the shared pieces listed
+as residue in CODE-HEALTH-2026-11.md (`tableObjectHTML`, `tableIndex`, the
+freeze/availability/provenance readers, the review canvas helpers, `toastAction`).
+The static-dialog language plumbing is `shell-language.js`.

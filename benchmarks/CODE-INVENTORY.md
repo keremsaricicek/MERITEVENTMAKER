@@ -361,3 +361,15 @@ useful output of this sweep was not a cleanup list — it was two things that
 would have looked like cleanups and were not: fourteen live functions a broken
 scanner called dead, and four "inconsistent" chair writes that are each
 deliberate and unprotected.
+
+---
+
+**Re-measured 2026-11-11 (after the 2026-11 decomposition).**
+`tests/lib/reachability.mjs` now reads the shell as app-v8.js plus every
+`create(deps)` module; on the pre-programme tree it had called two LIVE pre-v8
+bodies dead (`bindGuests`, called back by screen-guests.js since 2026-11-01,
+and `focusGuest`, reached only from it). Measured on the tip: 57 pre-v8 bodies
+unreachable (overridden and never called back), identical to the pre-move tree
+once those two are corrected. Removable functions in app-v8.js / the moved
+modules: still **zero** — nothing was deleted by the programme; every moved
+function is byte-for-byte the same text in its new file.

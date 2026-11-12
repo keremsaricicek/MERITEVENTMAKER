@@ -425,3 +425,11 @@ Order of first four steps, stated plainly:
 | 3 | extract the domain primitives | ~430 |
 
 Two of the four move nothing. That is the proposal's main claim.
+
+---
+
+**Status 2026-11-11.** The screens and capabilities left `app-v8.js` in the
+2026-11 programme, one capability per commit, in the order and with the gates
+in `benchmarks/CODE-HEALTH-2026-11.md` (21 of 21 moved; 5,634 → 1,278 lines).
+A26 stayed, as this file said it must. Persistence (A01) moved last
+(`shell-storage.js`); the state root, `touchEvent` and the boot stay.

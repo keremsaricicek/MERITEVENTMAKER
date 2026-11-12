@@ -93,8 +93,6 @@ move; the tool is always re-run on the current file.
 | 4 | Freeze zones & group assignment (A16 + A17) | 1986–2163 | `src/seating-commands.js` | seating-freeze, guest-groups, assignment-writer, smart-seating, seating-rules |
 | 5 | Service load panel (A15) | 1926–1985 | `src/service-load-panel.js` | service-load |
 | 6 | Arrival & availability writers, the announcer (A19) | 2200–2270 | `src/arrival-writer.js` | writer-transitions, arrival-wave, table-availability, a11y-announce-contrast |
-| 7a | Floor-plan view (bulk-add fields and ghosts, fitting, viewport, screen frame) → `src/floor-plan-view.js` (workbook identical) | 4,905 |
-| 7b | Floor-plan editing (create/duplicate/delete, drag/resize/rotate, inspector, capacity, venues, canvas undo, canvas binding) → `src/floor-plan-editing.js` (workbook identical) | 4,699 |
 | 7 | Floor-plan editing: bulk add, canvas object lifecycle (A12) | 1389–1471, 1632–1867 | `src/floor-plan-editing.js` | bulk-add-integrity, floor-plan-modes, structural-objects, undo-operations |
 | 8 | Layout-change panel (A11 UI) | 1528–1631 | `src/screen-layout-changes.js` | layout-changes |
 | 9 | Empty states (§20) | 1473–1527 | `src/empty-states.js` | empty-states |
@@ -119,15 +117,64 @@ detector fingerprint as well), and the shell's own persistence and focus last
 
 ## Progress
 
-| # | Moved in | app-v8.js after |
-|--:|---|--:|
-| — | (start, `1aa928f`) | 5,634 |
-| 1 | Guest finder panel → `src/screen-finder.js` (+ `screen-console-sweep`, the every-screen-both-themes suite) | 5,509 |
-| 2 | Event setup & plan-file intake → `src/screen-setup.js` | 5,359 |
-| 3 | Guest record removal/restore/unassign undo → `src/guest-record-undo.js` (workbook before/after identical) | 5,267 |
-| 4 | Freeze zones & seating a party → `src/seating-commands.js` (workbook before/after identical) | 5,111 |
-| 5 | Service-load panel → `src/service-load-panel.js` | 5,056 |
-| 6 | Arrival & availability writers, the announcer → `src/arrival-writer.js` (workbook before/after identical) | 4,989 |
+app-v8.js line counts are `wc -l` after each move. Moves 8-21 were prepared on
+the WIP branch (`origin/claude/code-health-wip`) and gated together on the tip
+(see "Gates" below); the rows are in the order the moves were made.
+
+| # | Moved in | Module (lines) | app-v8.js after |
+|--:|---|---|--:|
+| — | (start, `1aa928f`) | | 5,634 |
+| 1 | Guest finder panel (+ `screen-console-sweep`, every screen in both themes) | `screen-finder.js` (181) | 5,509 |
+| 2 | Event setup & plan-file intake | `screen-setup.js` (217) | 5,359 |
+| 3 | Guest record removal/restore/unassign undo (workbook identical) | `guest-record-undo.js` (167) | 5,267 |
+| 4 | Freeze zones & seating a party (workbook identical) | `seating-commands.js` (249) | 5,111 |
+| 5 | Service-load panel | `service-load-panel.js` (93) | 5,056 |
+| 6 | Arrival & availability writers, the announcer (workbook identical) | `arrival-writer.js` (108) | 4,989 |
+| 7a | Floor-plan view: bulk-add fields and ghosts, fitting, viewport, frame | `floor-plan-view.js` (135) | 4,905 |
+| 7b | Floor-plan editing: create/duplicate/delete, drag/resize/rotate, inspector, capacity, venues, canvas undo, canvas binding (workbook identical) | `floor-plan-editing.js` (307) | 4,699 |
+| 8 | Layout-change mode | `screen-layout-changes.js` (154) | 4,603 |
+| 9 | Empty states (§20) | `empty-states.js` (89) | 4,552 |
+| 14 | Detection refinement stages (fingerprint 28/28 IDENTICAL) | `plan-detection-refine.js` (657) | 3,955 |
+| 16 | Plan checks & the Teach Area | `plan-teach.js` (324) | 3,686 |
+| 15 | The plan's text before Analyse, printed numbers | `plan-text-intake.js` (165) | 3,574 |
+| 17 | The analysis run and Stop (fingerprint identical) | `analysis-run.js` (554) | 3,113 |
+| 13 | Plan memory, visual embedding, training-data capture (fingerprint identical) | `plan-learning.js` (392) | 2,769 |
+| 18 | Review commands: the decision writer, undo, Confirm, review drawing, dataset export, binding (fingerprint identical, workbook identical) | `review-commands.js` (614) | 2,249 |
+| 11 | Onboarding callouts | `onboarding-panel.js` (73) | 2,215 |
+| 12 | Handover notes & audit-trail text | `event-log-panel.js` (141) | 2,125 |
+| 10 | Event health: Plan Doctor report, readiness, final check, plan issues | `event-health.js` (185) | 1,997 |
+| 21 | Keyboard & focus; the User Guide | `shell-focus.js` (215), `shell-guide.js` (56) | 1,823 |
+
+| 20 | The shell's language plumbing: static dialogs, toast wrap, loaders | `shell-language.js` (94) | 1,773 |
+| 19 | Persistence (load, migrate, quarantine, unload journal, save) and the storage notice | `shell-storage.js` (485), `storage-notice.js` (135) | 1,278 |
+
+**M = 21, moved = 21.** `app-v8.js`: 5,634 → **1,278** lines.
+
+## Before / after
+
+| | before (`1aa928f`) | after |
+|---|--:|--:|
+| `app-v8.js` lines | 5,634 | 1,278 |
+| classic scripts in `index.html` (app-v8.js last) | 111 | 135 |
+| modules created by app-v8.js with `create(deps)` | 15 | 39 |
+| suites | 193 | 196 at landing (+ `screen-console-sweep`; the rest came with working-branch commits) |
+| crossings named by the tool, over the 24 new modules | — | 313 injected dependencies, 101 names published (`MODULE.name`), 26 pre-v8 overrides kept as one-line delegates in app-v8.js (measured from each module's `DEPS` list and `return{…}`) |
+| detector fingerprint, tip vs pre-move | — | 28 of 28 plans IDENTICAL |
+| operational workbook (TABLE PLAN / GUEST LIST / UNASSIGNED), fixed scenario | — | byte-identical dump |
+
+What app-v8.js holds now: the storage provider handle and the `original`
+capture, the `ui` defaults, `blankRoot`, the state primitives (`audit`,
+`canMutate`, `touchEvent`/`mutationEpoch`, `bootReady`, the module accessors),
+every `create(deps)` call in boot order, the override layer's one-line
+delegates, `render`/`renderScreen`/`renderFailure`, `bindV8Common`/
+`bindShellBar`/`bindPlanDrop`, the boot (`STORAGE.loadV8Async().then(…)`), and
+the shared pieces several screens read: `tableObjectHTML`, the freeze /
+availability / provenance readers, `tableIndex`, `readonlyGuestsHTML`, the
+seating "ready" chrome, the party/seat tag helpers, `toastAction`, the review
+canvas helpers (`reviewCandidates`, `applyReviewZoom`, `candidateBox`,
+`calibratedThreshold`, the model-grouping apply/undo), `openEvent`/
+`duplicateEvent`, and the Floor Plan file input. Those are residue, named
+here so the next pass starts from a list, not from a re-reading.
 
 ## Seen while moving
 
@@ -271,3 +318,48 @@ entry says what was seen and what was done about it.
 25. **`ANALYSIS_MAX_SIDE` (the analysis canvas cap) sat inside the review
     region**; hoisted to the shell above it before move 18, so it does not
     move with review code it has nothing to do with.
+26. **Seating slows down with the guest count** (the cheap-items agent's
+    `gala-night-scale-3000`, noted in STATE): `seatingAssign` median 105 ms at
+    1,000 guests → 249 ms at 3,000. Not caused by a move (measured before the
+    programme) and not changed by it; the writer now lives in
+    `seating-commands.js` (`assignGuestGroup`), which is where a
+    `performance-qa-engineer` measurement should start — a behaviour change,
+    so not part of a refactor commit.
+27. **The gate under shared CPU is not a gate.** With three training chains
+    running, a full run took >2.5 h and produced page.goto/page.click timeouts
+    in suites no move touched (capacity-rule-commit, chair-facing,
+    chair-families, assistant-panel's F8 focus); two runs were lost to machine
+    restarts. Per-move targeted suites + static structural suites were run for
+    every move. The four gates were then run ONCE on the WIP tip (`88a69c2`)
+    and ONCE on the landed branch, with a training job still sharing the CPU
+    (2026-11-12) — results in "Gate results at landing" below.
+28. **`tests/suites/schema-registry` would have passed vacuously** after
+    persistence moved (it asserts a pattern is ABSENT from app-v8.js); it now
+    reads the shell text and asserts parseRoot is in it.
+
+## Gate results at landing (2026-11-12)
+
+Run with one training job sharing the 4-core CPU (never stopped).
+
+| gate | WIP tip `88a69c2` | landed on `claude/merit-concept3-plan-intelligence-rebirth` |
+|---|---|---|
+| `npm run test:all` | 192/194 suites, 5678/5680 checks | 194/196 suites, 5736/5738 checks |
+| `build-offline.mjs` / `build-offline-full.mjs` | exit 0 / exit 0 | exit 0 / exit 0 |
+| `verify-offline-package.mjs` (runs the artifacts) | 47 passed, 0 failed | 47 passed, 0 failed |
+| `detector-fingerprint.mjs --compare` | 28 of 28 IDENTICAL | 28 of 28 IDENTICAL |
+| workbook dump vs `before-7` (pre-move tree) | byte-identical | byte-identical |
+
+The failures, each judged against the working branch WITHOUT the moves:
+
+- `viewport-matrix` FOCUS ("every Tab stop shows where focus is", tr events
+  list `button.tl-plate.on`, command center `#globalGuestSearch`) — fails
+  identically on the working branch before landing. Not caused by a move;
+  fixed after landing in its own commit (`2deb081`, focus ring on the
+  command search field and the selected event plate).
+- `gala-night-scale` (tip only) — a p95 timing budget, a DIFFERENT check on
+  each run (reportExport 406/365 ms, then checkInClick 74/65 ms); the working
+  branch without the moves missed doorSearchKey 47.9/45 ms under the same
+  load; it passed in the landed full run. CPU contention, not a regression;
+  a clean measurement belongs to `performance-qa-engineer` on a free CPU.
+- `doc-drift` (landed only) — the frontend-architect fact table said 14 slow
+  suites, the code has 15; corrected in `2deb081`.
