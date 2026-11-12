@@ -132,6 +132,28 @@ input.in{height:34px;border-radius:8px}.lnk{font-size:14px}
 .mini{height:230px;border-bottom:1px solid var(--bd);display:flex}
 .split{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px}.split.side{flex-direction:row}
 .split .plan{flex:1}.split .grid{flex:none;height:206px}.split.side .grid{flex:1;height:auto}.lnk{white-space:nowrap}
+
+/* v4 (owner 2026-11-12): Atlas theme default; desktop-app density; choices as one track, not stacked rectangles */
+:root[data-skin="atlas"]{--bg:#EEF0EC;--sf:#FBFBF9;--sf2:#F3F5F1;--tx:#1D2A33;--tx2:#51606B;--bd:#D9DED8;--bd2:#BFC6BF;--pr:#1F4E79;--pt:#fff;--sec:#E3E7E1;--tint:#E8EEF3;--sel:#DDE7F0;--halo:#D5E0EA}
+:root[data-theme="dark"][data-skin="atlas"]{--bg:#10151C;--sf:#171E27;--sf2:#1C2530;--tx:#ECE7DC;--tx2:#B9B2A5;--bd:#2A333F;--bd2:#3A4553;--pr:#8FB8E0;--pt:#0B1220;--sec:#232C37;--tint:#1A2535;--sel:#22324A;--halo:#2C3A4A}
+body,.stage{font-size:13px}.lnk{font-size:13px}
+.btn{height:30px;padding:0 12px;border-radius:6px;font-size:13px}.btn.ic{width:30px}
+input.in{height:30px;border-radius:6px}
+.top .brand{font-size:14px}.top nav button{font-size:13px}.head{height:52px}.head h2{font-size:15px}.head .st{font-size:12.5px}
+#gstrip{top:92px}.cols{inset:92px 0 0 0}
+.acts{display:inline-flex;flex-wrap:nowrap;background:var(--sec);border-radius:999px;padding:3px;gap:2px;margin-top:8px}
+.acts .btn{height:26px;background:none;border-radius:999px;padding:0 12px}
+.acts .btn.p,.acts .btn[aria-pressed="true"]{background:var(--pr);color:var(--pt)}
+.head .acts,.tools .acts{margin-top:0}
+.item{border:0;border-bottom:1px solid var(--bd);border-radius:0;padding:10px 0 12px;margin:0;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.item .src{grid-column:1/-1;justify-self:start;margin-bottom:2px}.item b{grid-column:1}.item p{grid-column:1/-1}.item .acts{grid-column:2;grid-row:2;margin-top:0}
+.grid,.plan,.set{border-radius:6px}.grid td{height:34px}.grid th{font-size:12px}
+.grid .btn{height:24px;border-radius:999px;padding:0 12px}
+.panel h3,.list h3{font-size:13px}
+.split.side .grid{flex:none;width:420px;height:auto}.split.side .plan{flex:1}
+.stage.full .top,.stage.full .head{display:none}.stage.full .cols{inset:0}.stage.full #gstrip{top:0}
+.flow{background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:0 12px 10px}
+.grid tr[data-hot]{cursor:default}.grid tr[data-hot]:hover td{background:var(--sel)}
 </style>
 <div class="wrap" lang="tr">
 <div class="pagehead"><h1>Merit Event Maker · görünüm örneği</h1><span id="tabs" class="r" style="display:flex;gap:6px;flex-wrap:wrap"></span></div>
@@ -153,14 +175,14 @@ const B=(label,a,p)=>`<button class="btn${p?' p':''}" data-a="${a}">${label}</bu
 const item=(src,title,text,acts,hot)=>`<div class="item"${hot?` data-hot="${hot}"`:''}><div class="src">Mimar önerisi · ${src}</div><b>${title}</b>${text?`<p>${text}</p>`:''}${acts?`<div class="acts">${acts}</div>`:''}</div>`;
 const done=(txt,undo)=>`<div class="done"><span>${txt}</span>${undo?`<button class="lnk" data-a="${undo}">Geri al</button>`:''}</div>`;
 const sec=(t,html)=>`<h3>${t}</h3><div class="pb">${html}</div>`;
-const frame=o=>`<div class="head"><div><h2>Merit Royal Yılbaşı Galası</h2><span class="st">Grand Balo Salonu · 31 Aralık 2026</span></div><span class="sp"></span>${o.acts||''}</div><div class="cols">${o.left||''}<div class="main">${o.main}</div><aside class="panel">${o.panel}${o.st?sec('Özet','<p>'+o.st+'</p>'):''}</aside></div>${o.extra||''}`;
+const frame=o=>`<div class="head"><div><h2>Merit Royal Yılbaşı Galası</h2><span class="st">Grand Balo Salonu · 31 Aralık 2026</span></div><span class="sp"></span>${o.acts?'<div class="acts">'+o.acts+'</div>':''}</div><div class="cols">${o.left||''}<div class="main">${o.main}</div>${o.panel==null?'':`<aside class="panel">${o.panel}${o.st?sec('Özet','<p>'+o.st+'</p>'):''}</aside>`}</div>${o.extra||''}`;
 const SC={s1:['Plan analizi','"Analiz et"e basın. Sağdaki önerilerin üstüne gelince plandaki yeri işaretlenir; tek tek karar verin.'],
  s2:['Mimar','Fareyle bir masanın üstüne gelince sandalyeleri açılır. Hazır cümlelerden birine basın ya da yazın; mikrofon sesli komut örneğini çalıştırır. Örnek yalnızca birkaç cümleyi tanır.'],
  s3:['Misafirler','Sağdaki önerilere bakın; bir satıra tıklayınca o misafirin bilgisi ve geçmişi açılır.'],
- s4:['Oturma','"Taslak yerleşim öner"e basın; önerilen masalar kesik çizgiyle işaretlenir.'],
- s5:['Kapı','"Listede yok"a basın, sağdaki panelden "Yer öner" deyin.'],
+ s4:['Oturma','Liste solda, plan sağda. "Taslak yerleşim öner"e basın; önerilen masalar kesik çizgiyle işaretlenir.'],
+ s5:['Kapı','Tam ekran açılır; Esc ile çıkılır. Fareyle bir misafirin üstüne gelince masası ve sandalyeleri yanar. "Listede yok" ile davetsiz misafir kaydedilir.'],
  s6:['Ayarlar','Tema, açık / koyu ve yazı tipini seçin; bütün ekranlara uygulanır. Üç yazı tipini deneyip beğendiğinizi söyleyin.']};
-const S={cur:'s1',s1:{phase:'up',num:null,cap:null,un:null,zones:false,zacc:false},s2:{open:true,msgs:[],think:false,listen:false,glow:null,mark:null,seated:false},s3:{dup:null,pax:null,sel:0},s4:{phase:'idle'},s5:{w:null,inn:{}}};
+const S={cur:'s1',s1:{phase:'up',num:null,cap:null,un:null,zones:false,zacc:false},s2:{open:true,msgs:[],think:false,listen:false,glow:null,mark:null,seated:false},s3:{dup:null,pax:null,sel:0},s4:{phase:'idle'},s5:{w:null,inn:{},full:true}};
 /* ---- plan ---- */
 const T=[];(function(){const xs=[80,160,240,320,400,500,580,660,740,820],ys=[270,345,420,495];let n=1;
  ys.forEach((y,r)=>xs.forEach((x,c)=>{if(r>=2&&c===9)return;T.push({id:'T'+String(n).padStart(2,'0'),x,y,cap:10});n++}));
@@ -227,45 +249,43 @@ function s3(){const a=S.s3;const rows=G.map((g,i)=>({g,i})).filter(r=>!(a.dup===
  const det=`<div class="kv"><span>Kişi</span><b>${a.sel===6&&a.pax?a.pax:g[1]}</b><span>Davet eden</span><span style="color:var(--tx)">${g[2]}</span><span>Masa</span><span style="color:var(--tx)">${g[3]}</span><span>Durum</span><span style="color:var(--tx)">${ST[g[4]]}</span></div>`;
  const open=(a.dup==='merged'||a.dup==='apart'?0:1)+(a.pax?0:1);
  return frame({title:'Misafirler',st:'214 kayıt · 420 kişi · 14 masasız',acts:B("Excel'den al",'noop')+B('Liste yapıştır','noop')+B('Yeni misafir','noop',1),
-  main:`<div class="tools"><input class="in" style="width:260px" placeholder="Ad, davet eden ya da masa ara" aria-label="Misafir ara"><button class="btn" aria-pressed="true" data-a="noop">Tümü</button><button class="btn" data-a="noop">VIP</button><button class="btn" data-a="noop">Masasız</button><button class="btn" data-a="noop">Gelmedi</button></div>
+  main:`<div class="tools"><input class="in" style="width:260px" placeholder="Ad, davet eden ya da masa ara" aria-label="Misafir ara"><div class="acts"><button class="btn" aria-pressed="true" data-a="noop">Tümü</button><button class="btn" data-a="noop">VIP</button><button class="btn" data-a="noop">Masasız</button><button class="btn" data-a="noop">Gelmedi</button></div></div>
   <div class="grid"><table><thead><tr><th>Ad soyad</th><th class="num">Kişi</th><th>Davet eden</th><th>Masa</th><th>Durum</th></tr></thead><tbody>${rows.map(r=>`<tr data-a="sel:${r.i}" class="${r.i===a.sel?'on':''}"><td>${r.g[0]}${r.g[5]?'<span class="vipm" title="VIP">★</span>':''}</td><td class="num">${r.i===6&&a.pax?a.pax:r.g[1]}</td><td>${r.g[2]}</td><td>${r.g[3]}</td><td>${ST[r.g[4]]}</td></tr>`).join('')}</tbody></table></div>`,
   panel:sec('Öneriler'+(open?' ('+open+')':''),dup+pax)+sec(g[0],det)+sec('Geçmiş etkinlikler',mem?mem.map(m=>`<div class="done"><span>${m[0]}</span><span>${m[1]}</span></div>`).join(''):'<p class="mut">Geçmiş etkinliklerde kaydı yok.</p>')})}
 /* ---- 4 seating ---- */
 const U=[['Selin Ak','Kerem Sarıçiçek · 3 kişi','T38'],['Deniz Yurt','Kerem Sarıçiçek · 2 kişi','T38'],['Mehmet Kaya','Kurumsal Satış · 3 kişi','T37'],['Elif Şen','Loyalty Desk · 2 kişi','T37'],['Burak Şahin','Casino Pazarlama · 1 kişi','T37']];
-function s4(){const a=S.s4,d=a.phase==='draft',dn=a.phase==='done',side=a.lay==='side';
+function s4(){const a=S.s4,d=a.phase==='draft',dn=a.phase==='done';
  const cls=t=>'found '+(d&&(t.id==='T37'||t.id==='T38')?'ghost ':'');
- const rows=dn?'<tr><td colspan="4" class="mut">Oturmayan kimse kalmadı.</td></tr>':U.map(u=>`<tr><td>${u[0]}</td><td>${u[1]}</td><td>${d?'Taslakta '+u[2]:'Masasız'}</td><td style="text-align:right">${B('Masaya oturt','noop')}</td></tr>`).join('');
- const grid=`<div class="grid"><table><thead><tr><th>Oturmayanlar · ${dn?0:11} kişi</th><th>Davet eden</th><th>Durum</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+ const rows=dn?'<tr><td colspan="3" class="mut">Oturmayan kimse kalmadı.</td></tr>':U.map(u=>`<tr><td>${u[0]}</td><td>${u[1]}</td><td style="text-align:right">${d?'Taslakta '+u[2]:'<button class="lnk" data-a="noop">Oturt</button>'}</td></tr>`).join('');
+ const grid=`<div class="grid"><table><thead><tr><th>Oturmayanlar · ${dn?0:11} kişi</th><th>Davet eden</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
  const panel=d?sec('Taslak · 11 kişi, 2 masa',item('gruplara ve boş yerlere baktı','T38 · 5 kişi','Selin Ak, Deniz Yurt. Kerem Sarıçiçek grubu birlikte.')+item('boş yerlere baktı','T37 · 6 kişi','Mehmet Kaya, Elif Şen, Burak Şahin. En yakın boş yerler.')+`<div class="acts">${B('Vazgeç','draft:idle')}${B('Uygula','draft:done',1)}</div>`)
-  :dn?sec('Taslak',done('11 kişi yerleşti','draft:idle')):sec('Yerleştirme','<p class="mut">Alttaki listeden bir misafiri masaya oturtun ya da "Taslak yerleşim öner" ile hepsi için öneri alın. Öneri, siz uygulayana kadar kimseyi oturtmaz.</p>');
- return frame({st:dn?'420 / 420 kişi yerleşti':'409 / 420 kişi yerleşti · 11 kişi oturmamış',acts:B(side?'Alt alta göster':'Yan yana göster','lay')+(d||dn?'':B('Taslak yerleşim öner','draft:think',1))+(dn?B('Hazır','noop',1):''),main:`<div class="split ${side?'side':''}">${plan({cls,occ:occOf(dn?{T37:9,T38:5}:null)})}${grid}</div>`,panel})}
+  :dn?sec('Taslak',done('11 kişi yerleşti','draft:idle')):sec('Yerleştirme','<p class="mut">Soldaki listeden bir misafiri masaya oturtun ya da "Taslak yerleşim öner" ile hepsi için öneri alın. Öneri, siz uygulayana kadar kimseyi oturtmaz.</p>');
+ return frame({st:dn?'420 / 420 kişi yerleşti':'409 / 420 kişi yerleşti · 11 kişi oturmamış',acts:(d||dn?'':B('Taslak yerleşim öner','draft:think',1))+(dn?B('Hazır','noop',1):''),main:`<div class="split side">${grid}${plan({cls,occ:occOf(dn?{T37:9,T38:5}:null)})}</div>`,panel})}
 /* ---- 5 door ---- */
 const D=[['Ahmet Yılmaz','T05 · 4 kişi','w'],['Ayşe Demir','T07 · 2 kişi','w'],['Can Öztürk','T02 · 1 kişi','in'],['Kerem Koç','T09 · 3 kişi','no'],['Oya Ergin','T03 · 1 kişi','w'],['Zeynep Arslan','VIP01 · 1 kişi','in']];
 function s5(){const a=S.s5,seat=a.w==='T37'||a.w==='T09'?a.w:null;
  const cls=t=>'found '+(seat===t.id?'glow ':'')+((a.w==='sug'||a.w==='ask')&&(t.id==='T37'||t.id==='T09')?'ghost ':'');
- const rows=D.map((d,i)=>`<tr><td>${d[0]}</td><td>${d[1]}</td><td>${d[2]==='w'?(a.inn[i]?ST.in+' 22:14':ST.w):ST[d[2]]}</td><td style="text-align:right">${d[2]==='w'?(a.inn[i]?`<button class="lnk" data-a="in:${i}">Geri al</button>`:B('Giriş','in:'+i,1)):''}</td></tr>`).join('');
- let p;
+ const rows=D.map((d,i)=>`<tr data-hot="${d[1].split(' ')[0]}" data-n="${parseInt(d[1].split('· ')[1])}"><td>${d[0]}</td><td>${d[1]}</td><td>${d[2]==='w'?(a.inn[i]?ST.in+' 22:14':ST.w):ST[d[2]]}</td><td style="text-align:right">${d[2]==='w'?(a.inn[i]?`<button class="lnk" data-a="in:${i}">Geri al</button>`:B('Giriş','in:'+i,1)):''}</td></tr>`).join('');
+ let p='';
  if(a.w==='form')p=sec('Listede olmayan misafir',`<div class="kv" style="align-items:center"><span>Ad soyad</span><input class="in" value="Murat Aydın" aria-label="Ad soyad"><span>Yanında</span><input class="in" value="1" aria-label="Yanında kaç kişi" style="width:56px"></div><div class="acts">${B('Vazgeç','walk:')}${B('Yer öner','walk:sug',1)}</div>`);
  else if(a.w==='sug')p=sec('Murat Aydın · 2 kişi',item('boş yerlere baktı','T37 · 7 boş yer','',B('Oturt','walk:T37',1))+item('gelmeyenin yeri','T09 · 3 boş yer','Kerem Koç gelmedi.',B('Sor','walk:ask')));
  else if(a.w==='ask')p=sec("T09'a oturtulsun mu?",`<p>Kerem Koç'un planlanan yeri korunur, raporda değişmez. Murat Aydın yalnızca bu gece T09'da oturur.</p><div class="acts">${B('Hayır','walk:sug')}${B('Evet, oturt','walk:T09',1)}</div>`);
  else if(seat)p=sec('Davetsiz misafir',done('Murat Aydın · 2 kişi · '+seat+' · geldi 22:14','walk:'));
- else p='';
- return frame({st:'Geldi 312 / 420 · bekleniyor 99 · gelmedi 9',acts:a.w?'':B('Listede yok','walk:form'),
-  main:`<div class="tools"><input class="in" style="flex:1;height:46px;font-size:17px" placeholder="Misafir adı ya da masa" aria-label="Misafir ara"></div><div class="grid"><table><thead><tr><th>Misafir</th><th>Masa</th><th>Durum</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`,
-  panel:`<div class="mini">${room({cls,occ:occOf(seat==='T37'?{T37:5}:null),me:seat?{id:seat,n:2}:null})}</div>`+p})}
+ return frame({acts:B('Tam ekran','full'),
+  main:`<div class="split side"><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px"><div class="tools"><input class="in" style="flex:1;height:40px;font-size:15px" placeholder="Misafir adı ya da masa" aria-label="Misafir ara">${a.w?'':`<div class="acts">${B('Listede yok','walk:form')}</div>`}</div><div class="tools mut">Geldi 312 / 420 · bekleniyor 99 · gelmedi 9<span class="sp"></span>${a.full?'Esc: tam ekrandan çık':''}</div>${p?`<div class="flow">${p}</div>`:''}<div class="grid" style="width:auto;flex:1"><table><thead><tr><th>Misafir</th><th>Masa</th><th>Durum</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>${plan({cls,occ:occOf(seat==='T37'?{T37:5}:null),me:seat?{id:seat,n:2}:null})}</div>`})}
 function s6(){const r=document.documentElement.dataset,o=(k,v,l)=>`<button class="btn" aria-pressed="${r[k]===v}" data-a="set:${k}=${v}">${l}</button>`;
- return frame({main:`<div class="set"><div class="r"><label>Tema</label>${o('skin','grafit','Grafit')}${o('skin','lacivert','Lacivert')}</div><div class="r"><label>Görünüm</label>${o('theme','light','Açık')}${o('theme','dark','Koyu')}</div><div class="r"><label>Yazı tipi</label>${o('font','inter','Inter')}${o('font','plex','IBM Plex Sans')}${o('font','manrope','Manrope')}</div></div>`,panel:sec('Ayarlar','<p>Tema ve açık / koyu ayrı seçilir. Seçim bütün ekranlara uygulanır.</p>')})}
+ return frame({main:`<div class="set"><div class="r"><label>Tema</label>${o('skin','atlas','Atlas')}${o('skin','grafit','Grafit')}${o('skin','lacivert','Lacivert')}</div><div class="r"><label>Görünüm</label>${o('theme','light','Açık')}${o('theme','dark','Koyu')}</div><div class="r"><label>Yazı tipi</label>${o('font','inter','Inter')}${o('font','plex','IBM Plex Sans')}${o('font','manrope','Manrope')}</div></div>`,panel:sec('Ayarlar','<p>Tema ve açık / koyu ayrı seçilir. Seçim bütün ekranlara uygulanır.</p>')})}
 const FONTS={inter:'"Inter"',plex:'"IBM Plex Sans"',manrope:'"Manrope"'};
 function applyFont(){document.documentElement.style.setProperty('--f',FONTS[document.documentElement.dataset.font]+',"Segoe UI",system-ui,sans-serif')}
 /* ---- shell ---- */
 const R={s1,s2,s3,s4,s5,s6},NAV=[['Etkinlik',null],['Salon','s1'],['Misafirler','s3'],['Oturma','s4'],['Kapı','s5'],['Raporlar',null]];
-function render(){const c=S.cur;$('#body').innerHTML=R[c]();
+function render(){const c=S.cur;$('#stage').classList.toggle('full',c==='s5'&&S.s5.full);$('#body').innerHTML=R[c]();
  $('#tabs').innerHTML=Object.keys(SC).map(k=>`<button class="btn" aria-pressed="${k===c}" data-a="go:${k}">${SC[k][0]}</button>`).join('');
  const act=c==='s2'?'s1':c;$('#nav').innerHTML=NAV.map(n=>`<button class="${n[1]===act?'on':''}" data-a="${n[1]?'go:'+n[1]:'noop'}">${n[0]}</button>`).join('');
  $('#hint').textContent=SC[c][1];$('#fbt').textContent=SC[c][0]+' ekranı:';const f=FB[c]||{};
  $('#vk').setAttribute('aria-pressed',f.v==='keep');$('#vd').setAttribute('aria-pressed',f.v==='drop');if(document.activeElement!==$('#note'))$('#note').value=f.note||'';
  const m=$('#msgs');if(m)m.scrollTop=m.scrollHeight}
-const ACT={go:k=>{S.cur=k;if(k==='s2')S.s2.open=true;$('#gstrip').hidden=true;render()},noop:()=>{},set:v=>{const [k,x]=v.split('=');document.documentElement.dataset[k]=x;if(k==='font')applyFont();render()},lay:()=>{S.s4.lay=S.s4.lay==='side'?'':'side';render()},
+const ACT={go:k=>{S.cur=k;if(k==='s2')S.s2.open=true;$('#gstrip').hidden=true;render()},noop:()=>{},set:v=>{const [k,x]=v.split('=');document.documentElement.dataset[k]=x;if(k==='font')applyFont();render()},full:()=>{S.s5.full=true;render()},lay:()=>{S.s4.lay=S.s4.lay==='side'?'':'side';render()},
  analyze,num:v=>{S.s1.num=v||null;render()},cap:v=>{S.s1.cap=v||null;render()},un:v=>{S.s1.un=v||null;render()},zones:()=>{S.s1.zones=!S.s1.zones;render()},zacc:v=>{S.s1.zacc=!!v;S.s1.zones=!!v;render()},
  acceptall:()=>{const a=S.s1;if(!a.num)a.num='T23';if(!a.cap)a.cap='11';render()},
  ask:i=>ask(QS[+i]),chatx:()=>{S.s2.open=false;render()},chatopen:()=>{S.s2.open=true;render()},
@@ -277,18 +297,19 @@ const ACT={go:k=>{S.cur=k;if(k==='s2')S.s2.open=true;$('#gstrip').hidden=true;re
  vote:v=>{const f=FB[S.cur]||(FB[S.cur]={});f.v=f.v===v?null:v;render();persist(S.cur)}};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const i=b.dataset.a.indexOf(':'),k=i<0?b.dataset.a:b.dataset.a.slice(0,i),v=i<0?'':b.dataset.a.slice(i+1);(ACT[k]||ACT.noop)(v,b)});
 document.addEventListener('submit',e=>{if(e.target.id!=='cf')return;e.preventDefault();const q=$('#cq').value.trim();if(q)ask(q)});
-const hot=(e,on)=>{const s=e.target.closest&&e.target.closest('[data-hot]');if(!s)return;const t=document.querySelector('#body .t[data-t="'+s.dataset.hot+'"]');if(t)t.classList.toggle('hot',on)};
+const hot=(e,on)=>{const s=e.target.closest&&e.target.closest('[data-hot]');if(!s)return;const t=document.querySelector('#body .t[data-t="'+s.dataset.hot+'"]');if(!t)return;t.classList.toggle('hot',on);if(s.dataset.n){t.classList.toggle('glow',on);[...t.querySelectorAll('.ch circle')].forEach((c,i)=>c.classList.toggle('me',on&&i<+s.dataset.n))}};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.cur==='s5'&&S.s5.full){S.s5.full=false;render()}});
 document.addEventListener('mouseover',e=>hot(e,true));document.addEventListener('mouseout',e=>hot(e,false));document.addEventListener('focusin',e=>hot(e,true));document.addEventListener('focusout',e=>hot(e,false));
 function fit(){const b=$('#stagebox'),s=Math.min(1,b.clientWidth/1280);$('#stage').style.transform='scale('+s+')';b.style.height=Math.round(760*s)+'px'}
 addEventListener('resize',fit);
 const FB={};let db=null,tm=null;
-try{Object.assign(FB,JSON.parse(localStorage.getItem('merit-kurumsal-gorus')||'{}'))}catch(e){}
-async function persist(id){try{localStorage.setItem('merit-kurumsal-gorus',JSON.stringify(FB))}catch(e){}const f=FB[id]||{},sv=$('#save');
+try{Object.assign(FB,JSON.parse(localStorage.getItem('merit-gorus-3')||'{}'))}catch(e){}
+async function persist(id){try{localStorage.setItem('merit-gorus-3',JSON.stringify(FB))}catch(e){}const f=FB[id]||{},sv=$('#save');
  if(!db){sv.textContent='Bu cihazda kaydedildi';return}sv.textContent='Kaydediliyor…';
- try{await db.doc('gorus2/'+id).set({v:f.v||null,note:f.note||'',at:Date.now()});sv.textContent='Kaydedildi'}catch(e){sv.textContent='Kaydedilemedi, tekrar deneyin'}}
+ try{await db.doc('gorus3/'+id).set({v:f.v||null,note:f.note||'',at:Date.now()});sv.textContent='Kaydedildi'}catch(e){sv.textContent='Kaydedilemedi, tekrar deneyin'}}
 $('#note').addEventListener('input',e=>{const id=S.cur,f=FB[id]||(FB[id]={});f.note=e.target.value;$('#save').textContent='Yazılıyor…';clearTimeout(tm);tm=setTimeout(()=>persist(id),900)});
-{const r=document.documentElement.dataset;if(!r.theme)r.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';r.skin='grafit';r.font='inter';applyFont()}
+{const r=document.documentElement.dataset;if(!r.theme)r.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';r.skin='atlas';r.font='inter';applyFont()}
 render();fit();
 (async()=>{try{db=await window.claude?.use?.('db')}catch(e){db=null}if(!db)return;
- db.collection('gorus2').onSnapshot(snap=>{for(const d of snap.docs){const x=d.data()||{};if(d.id===S.cur&&document.activeElement===$('#note'))continue;FB[d.id]={v:x.v||null,note:x.note||''}}render()},()=>{})})();
+ db.collection('gorus3').onSnapshot(snap=>{for(const d of snap.docs){const x=d.data()||{};if(d.id===S.cur&&document.activeElement===$('#note'))continue;FB[d.id]={v:x.v||null,note:x.note||''}}render()},()=>{})})();
 </script>

@@ -62,3 +62,10 @@ page; a real UI font, not the system default (Inter / IBM Plex Sans / Manrope of
 offline product); occupancy colours = subtle professional NEON glow (not pastel); VIP = small star, never gold text;
 Oturma ≠ Kapı: Oturma = plan fixed on top, guest list below as its own pane (layout switchable side-by-side);
 Kapı = list-first with big search, small plan in the right panel.
+
+## Owner 2026-11-12 (binding, v4 of 12-mimar-gorunumu; feedback collection gorus3)
+Atlas is THE default theme (he asked where the approved themes went) — Ayarlar offers Atlas / Grafit / Lacivert + Açık/Koyu + font.
+Mimar window look ✓ → carry into the product. Desktop corporate EXE feel, not a mobile app: 13 px, compact rows.
+No stacked rectangular buttons: a choice is ONE rounded track with its options inside; row actions are text links.
+Oturma: list LEFT, plan RIGHT. Kapı: opens full screen — list fills the left half, plan the right half, Esc leaves full
+screen; hovering a guest lights his table, opens its chairs and his seats glow neon red. Notes box must start empty on each new version.
