@@ -2554,6 +2554,9 @@ nav.shell-nav{display:flex;align-items:stretch;height:100%;padding:0;background:
 .shell-cmd-empty{visibility:hidden}
 .shell-cmd-box{display:flex;align-items:center;gap:8px;width:100%;height:34px;border:1px solid var(--pi-line-strong);border-radius:4px;background:var(--pi-surface-2);padding:0 6px 0 11px;color:var(--pi-muted-2);font:inherit;text-align:left}
 .shell-cmd-box:focus-within{border-color:var(--pi-steel);background:var(--pi-surface)}
+/* Keyboard focus on the search field: the ring sits on the box the eye reads as the field. */
+.shell-cmd-box:has(input:focus-visible){box-shadow:var(--ring)}
+.shell-cmd-box input:focus-visible{background:var(--pi-surface)}
 .shell-cmd-box svg{flex:none}
 .shell-cmd-button{cursor:text}
 .shell-cmd-button span{flex:1;font-size:14px;color:var(--pi-muted-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -2673,6 +2676,7 @@ body:has(.cal-screen) .toast{min-width:0;max-width:340px}
 .tl-plate{width:190px;flex:none;display:flex;flex-direction:column;padding:10px 14px 12px;border:0;border-radius:4px;background:none;color:var(--pi-ink);text-align:left;font:inherit;cursor:pointer}
 .tl-plate:hover .tl-nm{color:var(--pi-primary)}
 .tl-plate.on{background:var(--pi-surface);box-shadow:0 0 0 1px var(--pi-line-strong)}
+.tl-plate:focus-visible,.tl-plate.on:focus-visible{box-shadow:var(--ring)}
 .tl-plate.on .tl-cap{border-top:2.5px solid var(--pi-primary);padding-top:11px}
 .tl-dr{height:130px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:14px}
 .tl-plan{width:100%;height:100%;overflow:visible}
