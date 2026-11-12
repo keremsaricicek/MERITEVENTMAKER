@@ -7,9 +7,10 @@
 // that the running process is the measured one before every reading). This
 // module holds the panel's policy around it, and nothing else:
 //
-//   RULES FIRST. The rules (src/assistant-parse.js) answer first. Only where
-//     they are unsure — they read nothing ("unknown") — is the sentence sent to
-//     the model. A sentence the rules read never leaves the page.
+//   THE MEASURED ORDER. The order q08 was raced and shipped with ("hybrid",
+//     θ 0.91): the model reads every sentence but a door check-in the rules
+//     read; its reading is used when the rules read nothing or it is sure,
+//     otherwise the rules' reading (choose()). So the race's scores carry over.
 //   A READING IS A PROPOSAL. Whatever the model read is SHOWN first and waits
 //     for the operator's Uygula, however sure the model is; Uygula carries it
 //     out through the app's writers as ONE undo (Geri al). The only change made
@@ -31,9 +32,23 @@
   // the relay refused because no reader is set up on this machine
   const OFF_CODES = Object.freeze(["CHAT_OFF", "CHAT_NO_URL", "CHAT_NOT_LOOPBACK", "CHAT_NOT_PINNED", "CHAT_MANIFEST_INVALID", "CHAT_MODEL_MISSING", "CHAT_MODEL_INTEGRITY"]);
 
-  // Are the rules unsure, so the model is asked?
-  function needsModel(rules) {
-    return !!rules && rules.kind === "unknown";
+  // Is the model asked? Every sentence, except a door check-in the rules read
+  // (a plain statement at the door; speed).
+  function asksModel(rules) {
+    if (!rules) return false;
+    return !(rules.kind === "command" && Array.isArray(rules.plan) && rules.plan.length && rules.plan.every((st) => st && st.op === "arrive"));
+  }
+
+  // Whose reading is used — the HYBRID order q08 was raced and shipped with
+  // (training/assistant_race.mjs `--order hybrid --theta 0.91`, training/README.md
+  // runQ): the model's when it read something and either the rules read nothing
+  // or it is sure (the relay's `sure`: confidence >= the manifest's actAt, 0.91);
+  // otherwise the rules' when they read something; else nobody's.
+  // → "model" | "rules" | "none"
+  function choose(rulesKind, modelKind, sure) {
+    const modelRead = !!modelKind && modelKind !== "unknown";
+    if (modelRead && (rulesKind === "unknown" || sure === true)) return "model";
+    return rulesKind !== "unknown" ? "rules" : "none";
   }
 
   // The one request body: the sentence, trimmed; null when there is nothing to send.
@@ -88,5 +103,5 @@
     return { key: "assistant.modelDown", params: { code: o.code || "" } };
   }
 
-  globalThis.MeritAssistantSecondReader = Object.freeze({ ENDPOINT, MAX_TEXT, OFF_CODES, needsModel, request, outcome, fromStatus, mustShow, notice });
+  globalThis.MeritAssistantSecondReader = Object.freeze({ ENDPOINT, MAX_TEXT, OFF_CODES, asksModel, choose, request, outcome, fromStatus, mustShow, notice });
 })();

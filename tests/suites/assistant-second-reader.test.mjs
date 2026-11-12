@@ -39,9 +39,22 @@ export default async function run({ checks, repoRoot }) {
   checks.ok(!!S && Object.isFrozen(S), "MeritAssistantSecondReader is published, frozen");
   if (!S) return;
 
-  // ---- rules first ---------------------------------------------------------------------
-  checks.equal([S.needsModel({ kind: "unknown" }), S.needsModel({ kind: "command", plan: [] }), S.needsModel({ kind: "question" }), S.needsModel({ kind: "plan" }), S.needsModel(null)],
-    [true, false, false, false, false], "the model is asked only where the rules read nothing");
+  // ---- the hybrid order q08 was raced and shipped with ------------------------------------
+  // training/assistant_race.mjs `--order hybrid --theta 0.91`: the model's reading when it read something
+  // and (the rules read nothing or it is sure); otherwise the rules' reading if they have one.
+  checks.ok(typeof S.asksModel === "function" && typeof S.choose === "function" && typeof S.needsModel === "undefined",
+    "the policy is the hybrid order (asksModel + choose), not rules-first");
+  if (typeof S.asksModel !== "function" || typeof S.choose !== "function") return;
+  const doorCmd = { kind: "command", plan: [{ op: "arrive", guest: "A" }] };
+  checks.equal([S.asksModel({ kind: "unknown" }), S.asksModel({ kind: "command", plan: [{ op: "assign" }] }), S.asksModel({ kind: "question" }), S.asksModel(doorCmd), S.asksModel(null)],
+    [true, true, true, false, false], "the model reads every sentence except a door check-in the rules read (a plain statement)");
+  const race = (rulesKind, modelKind, sure) => (modelKind && modelKind !== "unknown" && (rulesKind === "unknown" || sure)) ? "model" : rulesKind !== "unknown" ? "rules" : "none";
+  const grid = [];
+  for (const rk of ["unknown", "command", "question"]) for (const mk of [null, "unknown", "command"]) for (const sure of [false, true]) grid.push([rk, mk, sure]);
+  checks.equal(grid.map(([rk, mk, sure]) => S.choose(rk, mk, sure)), grid.map(([rk, mk, sure]) => race(rk, mk, sure)),
+    "choose() is the race's hybrid formula on every combination (rules kind × model kind × sure)");
+  checks.equal([S.choose("command", "command", false), S.choose("command", "command", true), S.choose("unknown", "command", false), S.choose("command", null, true)],
+    ["rules", "model", "model", "rules"], "an unsure reading yields to the rules; a sure one wins; with no rules reading the model's is used");
 
   // ---- a reading is a proposal -----------------------------------------------------------
   const door = [{ op: "arrive", guest: "A" }], move = [{ op: "assign", guest: "A", table: "T05" }];

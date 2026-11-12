@@ -18,7 +18,8 @@
 //   SMALL TALK IS MARKED. What neither the rules nor the reader place gets the
 //     same model's short reply, marked as not resting on the records; it
 //     changes nothing.
-//   RULES FIRST. The panel asks the reader only when the rules say "unknown";
+//   HYBRID ORDER (as q08 was raced and shipped, --order hybrid --theta 0.91): the
+//     model's reading when the rules read nothing or it is sure, else the rules';
 //     the reading is answered and acted on by the same code — a command is SHOWN
 //     first, says the language model read it, waits for Uygula, and is one undo.
 //   HONEST WHEN MISSING. A reader that is not the measured server is named, with
@@ -131,6 +132,7 @@ export default async function run({ page, checks, repoRoot }) {
     await page.evaluate(() => {
       const e = activeEvent();
       e.tables.push({ id: "t05", number: "T05", shape: "round", capacity: 10, chairs: [], x: 100, y: 100, w: 80, h: 80, rotation: 0 });
+      e.tables.push({ id: "t06", number: "T06", shape: "round", capacity: 10, chairs: [], x: 300, y: 100, w: 80, h: 80, rotation: 0 });
       e.guests.push({ id: "gz", name: "Zeynep Arslan", additionalGuests: 0, pax: 1, planningStatus: "Confirmed", vip: "Standard", invitedBy: "", notes: "", arrivalStatus: "Not Arrived", checkedInAt: null, assignment: null, createdAt: new Date().toISOString() });
       render();
     });
@@ -175,15 +177,31 @@ export default async function run({ page, checks, repoRoot }) {
       "an unsure reading (0.4 < 0.9) is shown and waits", unsure);
     await page.locator(".assistant-cancel").last().click();
     await settle(page);
-    // RULES FIRST (src/assistant-second-reader.js): a sentence the rules read never goes to the model,
-    // and its change is still shown first (SPEC-v4)
+    // HYBRID ORDER, as q08 was raced and shipped (training/README.md runQ: --order hybrid --theta 0.91;
+    // src/assistant-second-reader.js choose): the model reads every sentence but a door check-in the
+    // rules read; its reading is used when the rules read nothing or it is sure (relay `sure` =
+    // confidence >= the manifest's actAt); otherwise the rules' reading. Either way it is SHOWN first.
+    replyWith = JSON.stringify({ ...reading, steps: [{ ...reading.steps[0], table: "T06" }] });   // the model reads T06
+    lp = Math.log(0.4);
     const n2 = sent.length;
-    const agreed = await say("Zeynep Arslan'ı T05'e oturt");
-    checks.ok(sent.length === n2 && /onaylıyor musun/i.test(agreed) && !/dil modeli okudu/.test(agreed) && !await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment),
-      "rules first: what the rules read is answered by the rules, the model is not asked, and it is shown first", { agreed, asked: sent.length - n2 });
+    const rulesWin = await say("Zeynep Arslan'ı T05'e oturt");
+    checks.ok(sent.length === n2 + 1 && /onaylıyor musun/i.test(rulesWin) && /Zeynep Arslan → T05/.test(rulesWin) && !/dil modeli okudu/.test(rulesWin)
+      && !await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment),
+      "hybrid: the model is asked, but an unsure reading (0.4 < 0.9) yields to the rules' reading, shown first", { rulesWin, asked: sent.length - n2 });
+    await page.locator(".assistant-cancel").last().click();
+    await settle(page);
+    lp = Math.log(0.97);
+    const modelWin = await say("Zeynep Arslan'ı T05'e oturt");
+    checks.ok(/onaylıyor musun/i.test(modelWin) && /Zeynep Arslan → T06/.test(modelWin) && /dil modeli okudu/.test(modelWin)
+      && !await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment),
+      "hybrid: a sure reading (0.97 >= 0.9) is used over the rules', marked as the model's, and still waits for Uygula", modelWin);
     await page.locator(".assistant-confirm").last().click();
     await settle(page);
-    await page.evaluate(() => { const g = activeEvent().guests.find((x) => x.id === "gz"); unassignGuest(g.id); });
+    checks.equal(await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment.tableId), "t06", "Uygula carries out the model's reading");
+    await page.locator(".assistant-undo").last().click();
+    await settle(page);
+    checks.equal(await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment), null, "and one Geri al takes it back");
+    replyWith = JSON.stringify(reading);
     lp = null;
 
     // small talk: the reader finds nothing to read, the same model replies, marked
@@ -210,7 +228,7 @@ export default async function run({ page, checks, repoRoot }) {
       "a reader that is not the measured server reads nothing; the panel says so, with its reason, and works with the rules alone", { down, head });
     checks.equal(await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment), null, "a missing model changes nothing");
     const ruled = await say("Zeynep Arslan'ı T05'e oturt");
-    checks.ok(/onaylıyor musun/i.test(ruled) && /Zeynep Arslan → T05/.test(ruled), "with the model missing, the rules still read and propose", ruled);
+    checks.ok(/onaylıyor musun/i.test(ruled) && /Zeynep Arslan → T05/.test(ruled) && /yalnız kurallar/i.test(ruled), "with the model missing, the rules still read and propose — and say only the rules read it", ruled);
     await page.locator(".assistant-cancel").last().click();
     await settle(page);
     props = { ...props, default_generation_settings: { n_ctx: 4096 } };

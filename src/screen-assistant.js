@@ -21,9 +21,9 @@
 // Door check-ins the rules read stay immediate (a plain statement at the door).
 // The reading, resolving and acting code is unchanged.
 //
-// SECOND READER (2026-11-12, src/assistant-second-reader.js): the rules answer
-// first; only what they read as "unknown" goes to the pinned local chat model,
-// whose reading is always a proposal (Uygula, then Geri al). With no relay or
+// SECOND READER (2026-11-12, src/assistant-second-reader.js): the order q08 was
+// raced with (hybrid, θ 0.91); a reading the pinned local chat model made is
+// always a proposal (Uygula, then Geri al). With no relay or
 // model, the answer and the head say so ("yalnız kurallar").
 //
 // Everything this reads from the shell is handed to it by create(deps), once.
@@ -325,11 +325,13 @@
       }
       return { text: t("assistant.planIntro"), options: opts.map((o) => ({ plan: o, applied: false })) };
     }
-    // RULES FIRST (src/assistant-second-reader.js): the rules answer; only what
-    // they cannot place goes to the second reader (the pinned chat model on this
-    // machine, through the relay), whose reading is the rules' own shape and is
-    // only ever a PROPOSAL — shown, then Uygula, then Geri al. When the model is
-    // missing, the answer says so, with why, and the rules' answer stands.
+    // THE MEASURED ORDER (src/assistant-second-reader.js, "hybrid" θ 0.91, as q08
+    // was raced and shipped): the second reader (the pinned chat model on this
+    // machine, through the relay) reads every sentence but a door check-in the
+    // rules read; its reading — the rules' own shape — is used when the rules read
+    // nothing or it is sure, otherwise the rules'. A model's reading is only ever a
+    // PROPOSAL — shown, then Uygula, then Geri al. When the model is missing, the
+    // answer says so, with why, and the rules' answer stands.
     // F8 HELP (owner 2026-11-02): "how do I …" is answered from src/help-topics.js — step by step,
     // in the UI's language, with "Götür" to the screen. No model; nothing changes.
     const lang = () => (globalThis.MERIT_I18N_LANG && globalThis.MERIT_I18N_LANG() === "en" ? "en" : "tr");
@@ -357,10 +359,10 @@
       let r = rules, byModel = false, missing = null;
       const compound = !!rules.compound;
       if (rules.kind === "status") return summary ? summary(rules.what, rules.what === "group" ? rules.host : rules.since) : { text: t("assistant.notUnderstood") };
-      if (R() && SR().needsModel(rules)) {
+      if (R() && SR().asksModel(rules)) {
         status.textContent = t("assistant.reading");
         const m = readText ? await readText(text) : SR().outcome({ relay: false });
-        if (m && m.state === "reading") { const mr = R().toParse(m.reading, evs, now, text, currentId()); if (mr.kind !== "unknown") { r = mr; byModel = true; } }
+        if (m && m.state === "reading") { const mr = R().toParse(m.reading, evs, now, text, currentId()); if (SR().choose(rules.kind, mr.kind, m.sure) === "model") { r = mr; byModel = true; } }
         if (m && m.state === "missing") missing = SR().notice(m);
         readerIs(m && m.state === "missing" ? m : null);
       }
