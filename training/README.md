@@ -2204,3 +2204,56 @@ with the open event's guest names and table codes, + greedy (`-bs 1 -bo 1`), + `
 command right ≥ 0.85; 0 wrong changes; median ≤ 5.0 s per 5-s clip on this CPU (p95 reported; the owner's PC is measured
 later). Clean and 5 dB reported, not bars. The chosen settings go into the voice config with their suite only if every
 bar holds; otherwise the shipped settings stay and the result is reported.
+
+## 2026-11-12 — runR verdict (part A, bars as pre-registered above): NOT shipped, q08 stays
+
+Same command (`chainR.sh`), product rule. runR-08: 525 steps, 4,200 items (data-g9 3,000 + plan replay 3 × 400), 116.6
+min after a resume at item 2,040. `q08y` reuses q08's kept readings of the old sets from `q08x` (same model, same command;
+temperature 0) and asked only the new sentences; `r08y` asked everything. Files: `$S/race/geq/{q08y,r08y}.json`,
+`{q08,r08}-briefs{,-en}.json`.
+
+| product right | q08 (`q08y`) | runR (`r08y`) | bar |
+|---|---|---|---|
+| en11 / entypo11 / enslang11 / enmulti11 / enascii11 (new, blind) | 0.650 / 0.550 / 0.750 / 0.700 / 0.667 | **0.950** / 0.750 / 0.800 / 0.850 / 0.905 | ≥ 0.95 each: **4 of 5 fail** |
+| help how-to (n 20) | 0.600 | 0.600 | ≥ 0.95: **fails** |
+| new-exam sum of right (of 121) | 79 | **98** | > q08: holds |
+| shown wrong, new exam (Onayla on a wrong reading) | 10 | 7 | — |
+| original 35 / variants 35 / deep 15 (seen) | 1.000 / 0.971 / 0.933 | **0.943** / **0.943** / 1.000 | ≥ q08: **original and variants fail** |
+| fresh9 / typo9 / en9 / entypo9 (seen) | 1.000 / 1.000 / 1.000 / 0.889 | 1.000 / 1.000 / 1.000 / 0.889 | ≥ q08: holds |
+| fresh10 / typo10 / en10 / entypo10 / deep10 (seen) | 1.000 / 0.917 / 0.889 / 0.667 / 1.000 | **0.917** / 0.917 / 1.000 / 0.778 / 1.000 | ≥ q08: **fresh10 fails** |
+| wrong changes (product), every set | 0 | 0 | 0: holds |
+| briefs TR all-right / invented | 0.975 / 0.012 | 0.975 / 0.002 | ≥ 0.975, ≤ 0.02: holds |
+| briefs EN all-right / invented | 0.650 / 0.019 | 0.950 / 0.005 | ≥ 0.95, ≤ 0.02: holds |
+| median seconds a sentence (race) | 6.68 | 10.65 | reported |
+
+**Bar result: fails** — four of the five new English sets and the help set are under 0.95, and the Turkish originals
+(1.000 → 0.943), variants (0.971 → 0.943) and fresh10 (1.000 → 0.917) regressed. As pre-registered, **runR is not
+shipped; q08 stays**; runR-08 is kept on disk only. What it did gain (English up on every new set, 79 → 98 of 121; English
+briefs 0.65 → 0.95) is real but is not a ship. The help set is answered by the help topics before any reader (the model
+reads a how-to as "unknown" by design and is never "right" on it): 0.60 for both models, the same 8 misses — a topic-words
+matter, not a model one; no topic change was made (none may be made from howto-en11).
+
+**The seconds were the machine, not the model (measured from the llama-server logs, same files).** Tokens generated per
+answer are the same for both models (mean 62.2 r08y vs 62.4 q08y, median 71 vs 70); what changed is the CPU's rate:
+`q08x` (the free-CPU run whose old-set seconds `q08y` reused) generated 11.5 tokens/s, while both `q08y`'s new sentences
+and all of `r08y` ran at 4.1–4.2 tokens/s — something else was using the CPU during both (not identified from the logs).
+q08y's median therefore mixes 184 free-CPU timings with 121 loaded ones; on the 121 sentences both models answered under
+load, the medians are q08 14.8 s and runR 9.6 s. The briefs show the same (25.7 s vs 9.3 s median at 3.9 vs 10.8
+tokens/s, equal tokens). So no speed claim either way is made from runR's race; runR2 times both models the same day,
+interleaved (below).
+
+**Every wrong answer of r08y, read after the verdict above** (15 on the five new sets, 9 on the seen sets, 8 help):
+- *New English sets, by cause:* a name copied wrong — truncated, corrupted, split or merged into the next word
+  (`gulsen keles` → "gulse", "Kıvılcım Uslu" → "Ulu", "next 2 ayşe demir" → "asya demir", "where'd elif şen" → "elif" +
+  event "senat", "kick can öztürk" → "Öztürk") **5**; a typo in a key word that changed the reading ("who was siting at
+  table 8" → person "who", "sit X besdie Y" → a question) **2**; an event invented ("new year gala … tbale" → "nisan
+  gala") **1**; a bare table number not made a code ("table 8" → "08") **1**; a possessive without its apostrophe kept
+  in the name ("mehmet kayas group") **1**; pax counted wrong ("party of 2" → 3, "his wife and 2 kids" → 3) **2**; a
+  multi-step structure ("Don't seat Z next to A; put her at T10 instead" → nextTo kept and "her" = A; "Add X and Y, both at
+  T11" → only Y got the table) **2**; "Add <new name> to T04" read as a seat for an existing guest **1**. By set: en11 1,
+  entypo11 5, enslang11 4, enmulti11 3, enascii11 2. None was a wrong change (each was asked or shown for Onayla).
+- *Seen sets — forgetting (q08 had these right):* original Q4 (the name took the event word: "Ayşe Demir Tarkan", event
+  "son konser"), Q20 and variant v20 ("geçen yılbaşı" read as the coming gala), fresh10 f10c1 ("Nevzat Karadağ" →
+  "Karagöz", shown wrong), typo10 t10q1 ("ayse demir sez", the name took the event word), entypo10 et10c4 ("nxet to ayse"
+  → "nayse demir"). *Wrong for q08 too:* variant v12 ("nerelerde oturdu" read as attendance), entypo9 trc5 and entypo10
+  et10c3 ("kayas").
