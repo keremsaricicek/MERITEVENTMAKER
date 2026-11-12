@@ -249,3 +249,7 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
   Both offline builds rebuilt, verify:offline 47/0. Pushed.
 - Next: trainings under master.sh (runR → chainV → g6) → verdicts; then design implementation on approved themes (Atlas default).
 - 2026-11-12: CODE-HEALTH-2026-11.md + ownership map/inventory/order updated with the gate results (tip and landed; fingerprint 28/28, workbook byte-identical). WIP branch kept.
+
+## 2026-11-12 — 5 parallel agents (worktrees, not pushed; I merge)
+- design impl (owns styles.css) · seating 3000-guest perf (logic only) · F8 chat wiring (no styles.css) · g7 realistic synthetic plans (prep + $S/g7/chain.sh, no training) · runR verdict + runR2 prep ($S/scripts/chainR2.sh, no training).
+- After master.sh MASTER-DONE: queue g7 then chainR2 (one at a time, cpu.lock).
