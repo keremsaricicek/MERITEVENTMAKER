@@ -242,3 +242,9 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
 - **2026-11-11 late.** New design demo for the AI surfaces (owner asked while jobs run): https://claude.ai/artifact/RT6xgYRPd7gSuwtn8VPxJK (source benchmarks/ux/redesign/12-mimar-gorunumu/index.html; 5 scenes: plan analysis, Mimar chat+voice, guest suggestions, seating draft, door walk-in; every AI suggestion carries the same small gradient mark + how it knows; feedback in db collection `gorus`, doc ids s1..s5 {v,note}). Read with ArtifactData list 'gorus' when he says he wrote.
 - **2026-11-11 night.** Owner rejected the v4 look (see SPEC-v4 'Owner's verdict 2026-11-11'): new fixed template 'Merit Kurumsal' in 12-mimar-gorunumu (republished same URL; feedback collection gorus2). After his OK: apply this template to the product (tokens + components) — after the code-health landing.
 - **2026-11-12 ~04:30 Istanbul.** Code agent a3d955fdf2681821d is STOPPED (cannot be resumed). Its work: origin/claude/code-health-wip tip 88a69c2 (moves 1–21 written, app-v8.js 1,278; gates NOT run, NOT landed; working branch still 5,634). To finish: a NEW agent (owner must ask) — four gates on the tip, fingerprint, workbook diff, cherry-pick onto the working branch, gates again, docs. CODE-DONE touched → master.sh trainings run now (waiter task re-armed). Design demo v4 published (Atlas default; SPEC-v4 'Owner 2026-11-12'); feedback collection gorus3.
+
+## 2026-11-12 — code decomposition LANDED and pushed
+- app-v8.js 6,874 → 1,278 lines; 135 classic scripts. test:all on landed branch: 194/196, the two reds fixed after
+  (viewport-matrix FOCUS was red before landing too — focus ring on search field + selected event plate; doc-drift slow count 15).
+  Both offline builds rebuilt, verify:offline 47/0. Pushed.
+- Next: trainings under master.sh (runR → chainV → g6) → verdicts; then design implementation on approved themes (Atlas default).
