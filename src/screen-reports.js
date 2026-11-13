@@ -138,7 +138,10 @@
   // SheetJS as its own workbook (one "REPORT" sheet); the one-click TABLE PLAN /
   // GUEST LIST / UNASSIGNED workbook is not built here (report-xlsx-identity).
   const TPL_KEY="merit.reportTemplates.v2",TPL_KEY_V1="merit.reportTemplates.v1";
-  const RD=()=>globalThis.MeritReportDesigner;
+  // A function body, not a top-level read: the module loads after this file.
+  function RD(){
+    return globalThis.MeritReportDesigner;
+  }
   const rdHelpers=()=>({t,formatTableNumber,naturalSort});
   function rdState(event){
     if(!ui.reportDesign||ui.reportDesign.eventId!==event.id)ui.reportDesign={eventId:event.id,design:RD().defaults(),tplName:""};
@@ -157,12 +160,12 @@
   function rdTitle(event,d){return d.title||t("rd.kind."+d.kind);}
   function rdEventLine(event){return[event.name,fmtDate(event.date),[event.hotel,event.salon].filter(Boolean).join(" · ")].filter(Boolean).join(" · ");}
   function rdSheetsHTML(event,d){
-    const R=RD(),rep=R.build(event,d,rdHelpers()),pg=R.paginate(rep),box=pg.box,cols=rep.columns,n=pg.pages.length;
+    const R=RD(),rep=R.build(event,d,rdHelpers()),pg=R.paginate(rep),cols=rep.columns,n=pg.pages.length;
     const head=`<header class="rd-doc-head">${d.logo?`<img class="rd-logo" src="${esc(d.logo)}" alt="">`:""}<div><div class="rd-title">${esc(rdTitle(event,d))}</div>${d.subtitle?`<div class="rd-subtitle">${esc(d.subtitle)}</div>`:""}${d.showEvent?`<div class="rd-sub">${esc(rdEventLine(event))}</div>`:""}</div></header>`;
     const thead=`<thead><tr>${cols.map(c=>`<th class="rd-c-${c}">${esc(t("rd.col."+c))}</th>`).join("")}</tr></thead>`;
     const part=p=>(rep.grouped?`<tr class="rd-grp"><th colspan="${cols.length}"><span>${esc(p.group.label)}${p.cont?` <i>(${esc(t("rd.cont"))})</i>`:""}</span><span class="rd-grp-n">${esc(t("rd.groupCount",{records:p.group.records,pax:p.group.pax}))}</span></th></tr>`:"")
       +p.lines.map(l=>`<tr${l.type==="companion"?` class="rd-comp"`:""}>${l.cells.map((c,i)=>`<td class="rd-c-${cols[i]}">${esc(c)}</td>`).join("")}</tr>`).join("");
-    return pg.pages.map((p,i)=>`<section class="rd-sheet" data-paper="${esc(d.paper)}" data-page="${i+1}" style="width:${box.w}mm;height:${box.h}mm;padding:${box.margin}mm;font-size:${d.font}pt" aria-label="${esc(t("rd.pageOf",{i:i+1,n}))}">
+    return pg.pages.map((p,i)=>`<section class="rd-sheet" data-paper="${esc(d.paper)}" data-page="${i+1}" data-font="${d.font}" aria-label="${esc(t("rd.pageOf",{i:i+1,n}))}">
       ${i===0?head:""}
       ${rep.totals.records?`<table class="rd-table">${thead}<tbody>${p.parts.map(part).join("")}</tbody></table>`:`<p class="rd-empty">${esc(t("rd.empty"))}</p>`}
       ${i===n-1?`<div class="rd-total">${esc(t("rd.count",{records:rep.totals.records,pax:rep.totals.pax}))}</div>`:""}
@@ -226,7 +229,7 @@
   // The preview's sheets are real millimetres; scale them to the column.
   function rdFit(){
     const pv=app.querySelector(".rd-preview"),sh=pv&&pv.querySelector(".rd-sheet");if(!sh)return;
-    const px=parseFloat(sh.style.width)*96/25.4,room=pv.clientWidth-48;
+    const px=RD().pageBox(sh.dataset.paper).w*96/25.4,room=pv.clientWidth-48;
     pv.style.setProperty("--rd-zoom",String(Math.max(.25,Math.min(1,room/px)).toFixed(3)));
   }
   let rdResizeBound=false;
@@ -274,7 +277,7 @@
     app.querySelectorAll("[data-rd-col-up]").forEach(b=>b.onclick=()=>move(b.dataset.rdColUp,-1));
     app.querySelectorAll("[data-rd-col-down]").forEach(b=>b.onclick=()=>move(b.dataset.rdColDown,1));
     // Typed fields re-render on a short pause, focus and caret kept.
-    const typed=(n,sel,set)=>{n.oninput=()=>{set(n.value);clearTimeout(ui.rdTimer);const pos=n.selectionStart;ui.rdTimer=setTimeout(()=>{again();const m=app.querySelector(sel);if(m){m.focus();try{m.setSelectionRange(pos,pos);}catch{}}},250);};};
+    const typed=(n,sel,set)=>{n.oninput=()=>{set(n.value);clearTimeout(ui.rdTimer);const pos=n.selectionStart;ui.rdTimer=setTimeout(()=>{again();const m=app.querySelector(sel);if(m){m.focus();if(m.type!=="file"&&typeof m.setSelectionRange==="function"&&pos!=null)m.setSelectionRange(pos,pos);}},250);};};
     app.querySelectorAll("[data-rd-filter]").forEach(n=>{const k=n.dataset.rdFilter;
       if(n.tagName==="INPUT")typed(n,`[data-rd-filter="${k}"]`,v=>{s.design.filters[k]=v.slice(0,80);s.design.kind="custom";});
       else n.onchange=()=>what(d=>{d.filters[k]=n.value;});});

@@ -113,10 +113,10 @@ export default async function run({ page, checks, baseUrl }) {
   await click(page, '[data-reports-view="designer"]');
   // The designer was rebuilt on 2026-11-13 (src/report-designer.js): the preview is
   // now one .rd-sheet per printed page, so rows are read across every sheet (group
-  // headings and companion lines are not records), and the font is the sheet's pt.
+  // headings and companion lines are not records), and the font is the sheet's data-font (pt).
   const pv = () => page.evaluate(() => { const p = document.querySelector(".rd-sheet"); if (!p) return null; const all = [...document.querySelectorAll(".rd-preview .rd-sheet")];
     return { head: [...p.querySelectorAll("thead th")].map((x) => x.textContent.trim()), rows: all.flatMap((sh) => [...sh.querySelectorAll("tbody tr:not(.rd-grp):not(.rd-comp)")]).map((r) => [...r.cells].map((c) => c.textContent.trim())),
-      title: p.querySelector(".rd-title")?.textContent.trim(), paper: p.dataset.paper, font: p.style.fontSize,
+      title: p.querySelector(".rd-title")?.textContent.trim(), paper: p.dataset.paper, font: p.dataset.font,
       panel: !!document.querySelector(".rd-panel"), ratio: (() => { const a = document.querySelector(".rd-preview")?.getBoundingClientRect().width, b = document.querySelector(".rd-panel")?.getBoundingClientRect().width; return a && b ? b / (a + b) : null; })() }; });
   let d = await pv();
   checks.ok(d && d.panel && d.ratio > 0.25 && d.ratio < 0.4, "Raporlar has a full preview and a designer panel of about 1/3", d);
@@ -148,7 +148,7 @@ export default async function run({ page, checks, baseUrl }) {
   await page.fill("[data-rd-text='title']", "Kapı listesi — Junket"); await page.waitForTimeout(450);
   await page.selectOption("[data-rd-paper]", "A3-landscape"); await page.selectOption("[data-rd-font]", "14"); await settle(page);
   d = await pv();
-  checks.ok(d.title === "Kapı listesi — Junket" && d.paper === "A3-landscape" && d.font === "14pt", "title, paper and font size shape the preview", d);
+  checks.ok(d.title === "Kapı listesi — Junket" && d.paper === "A3-landscape" && d.font === "14", "title, paper and font size shape the preview", d);
   await page.fill("[data-rd-template-name]", "Junket kapı"); await page.click("[data-rd-save]"); await settle(page);
   const saved = await page.evaluate(() => { try { return (JSON.parse(localStorage.getItem("merit.reportTemplates.v2") || "{}")[activeEvent().id] || []).map((x) => x.name); } catch { return null; } });
   checks.ok(saved && saved.includes("Junket kapı"), "save as template: kept on this machine, per event", saved);

@@ -3413,3 +3413,11 @@ header.shell-top .shell-cmd{width:44px;min-width:44px}header.shell-top .shell-cm
   body.printing-designer .rd-print[data-paper="A3-portrait"] .rd-sheet{page:rdA3p}
   body.printing-designer .rd-print[data-paper="A3-landscape"] .rd-sheet{page:rdA3l}
 }
+/* Sheet size and type from data attributes (no inline style: csp-readiness).
+   Millimetres match MeritReportDesigner.pageBox(); 12 mm is its margin. */
+.rd-sheet{padding:12mm;width:210mm;height:297mm;font-size:12pt}
+.rd-sheet[data-paper="A4-landscape"]{width:297mm;height:210mm}
+.rd-sheet[data-paper="A3-portrait"]{width:297mm;height:420mm}
+.rd-sheet[data-paper="A3-landscape"]{width:420mm;height:297mm}
+.rd-sheet[data-font="9"]{font-size:9pt}.rd-sheet[data-font="10"]{font-size:10pt}.rd-sheet[data-font="11"]{font-size:11pt}
+.rd-sheet[data-font="13"]{font-size:13pt}.rd-sheet[data-font="14"]{font-size:14pt}

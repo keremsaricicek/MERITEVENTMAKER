@@ -55,7 +55,7 @@ export default async function run({ page, checks, baseUrl }) {
     rows: document.querySelectorAll(".rd-preview tbody tr:not(.rd-grp):not(.rd-comp)").length,
     comps: [...document.querySelectorAll(".rd-preview tr.rd-comp .rd-c-name")].map((x) => x.textContent),
     names: [...document.querySelectorAll(".rd-preview tbody tr:not(.rd-grp):not(.rd-comp) .rd-c-name")].map((x) => x.textContent),
-    width: document.querySelector(".rd-sheet").style.width,
+    width: Math.round(parseFloat(getComputedStyle(document.querySelector(".rd-sheet")).width) * 25.4 / 96) + "mm",
     heads: [...document.querySelector(".rd-sheet thead tr").children].map((x) => x.className),
     pageLabel: document.querySelector(".rd-sheet:last-child .rd-sheet-foot span:last-child").textContent,
   }));
