@@ -3366,3 +3366,50 @@ header.shell-top .shell-cmd{width:44px;min-width:44px}header.shell-top .shell-cm
 .assistant-chips{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:8px}
 .assistant-chip{height:28px;padding:0 12px;border:1px solid var(--pi-line-strong);border-radius:14px;background:var(--pi-surface);color:var(--pi-ink);font:500 13px var(--font);cursor:pointer}
 .assistant-chip:hover{background:var(--pi-surface-2)}.assistant-chip:focus-visible{outline:2px solid var(--pi-steel);outline-offset:1px}
+
+/* ---- Rapor tasarımcısı v2 (src/report-designer.js + screen-reports.js) ------
+   The preview is the paper: each .rd-sheet is one printed page at its real
+   millimetre size, scaled to the column with --rd-zoom (set by rdFit). The
+   sheet is paper in every theme (white, dark ink); the panel follows the theme.
+   Print: the sheets are copied into #printRoot and each becomes one page of the
+   chosen size (named @page, margin 0 — the sheet carries its own 12 mm). */
+.rd-preview{--rd-zoom:.7;display:flex;flex-direction:column;align-items:center;gap:18px;padding:24px;background:var(--pi-surface-2);max-height:calc(100vh - 170px)}
+.rd-preview:focus-visible{outline:2px solid var(--pi-steel);outline-offset:2px}
+.rd-sheet{--rd-paper:#fff;--rd-ink:#1f2328;--rd-mute:#5b6168;--rd-rule:#d9dbd6;zoom:var(--rd-zoom);flex:none;box-sizing:border-box;position:relative;display:flex;flex-direction:column;
+  background:var(--rd-paper);color:var(--rd-ink);box-shadow:0 1px 2px rgba(0,0,0,.10),0 6px 18px rgba(0,0,0,.06);overflow:hidden;line-height:1.3}
+.rd-sheet .rd-doc-head{display:flex;gap:5mm;align-items:center;border-bottom:.5mm solid var(--rd-ink);padding-bottom:3mm;margin-bottom:4mm;min-height:18mm}
+.rd-sheet .rd-logo{max-height:16mm;max-width:45mm;object-fit:contain}
+.rd-sheet .rd-title{font-family:var(--pi-serif);font-size:1.6em;font-weight:500;line-height:1.15}
+.rd-sheet .rd-subtitle{font-size:1em;margin-top:1mm}
+.rd-sheet .rd-sub{font-size:.85em;color:var(--rd-mute);margin-top:1mm}
+.rd-sheet .rd-table{width:100%;border-collapse:collapse;font-size:1em;table-layout:auto}
+.rd-sheet .rd-table th{text-align:left;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:.78em;color:var(--rd-ink);border-bottom:.35mm solid var(--rd-ink);padding:1.1mm 1.6mm;white-space:nowrap}
+.rd-sheet .rd-table td{border-bottom:.2mm solid var(--rd-rule);padding:1.1mm 1.6mm;vertical-align:top}
+.rd-sheet .rd-c-pax,.rd-sheet .rd-c-table,.rd-sheet .rd-c-seat,.rd-sheet .rd-c-checkedIn{white-space:nowrap}
+.rd-sheet .rd-c-pax{text-align:right;font-variant-numeric:tabular-nums}
+.rd-sheet tr.rd-grp th{text-transform:none;letter-spacing:0;font-size:.95em;border-bottom:.35mm solid var(--rd-ink);padding-top:3mm;background:transparent}
+.rd-sheet tr.rd-grp .rd-grp-n{float:right;font-weight:500;color:var(--rd-mute)}
+.rd-sheet tr.rd-grp i{font-style:normal;font-weight:500;color:var(--rd-mute)}
+.rd-sheet tr.rd-comp td{color:var(--rd-mute);font-size:.9em}
+.rd-sheet tr.rd-comp td.rd-c-name{padding-left:5mm}
+.rd-sheet .rd-empty{color:var(--rd-mute);margin:8mm 0}
+.rd-sheet .rd-total{margin-top:3mm;font-weight:600}
+.rd-sheet .rd-sheet-foot{margin-top:auto;display:flex;justify-content:space-between;gap:4mm;padding-top:2mm;border-top:.2mm solid var(--rd-rule);font-size:.75em;color:var(--rd-mute)}
+.rd-panel{max-height:calc(100vh - 170px);padding:0 16px 16px}
+.rd-out{position:sticky;top:0;z-index:1;display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:6px;padding:14px 0 12px;margin-bottom:4px;background:var(--pi-surface);border-bottom:1px solid var(--pi-line)}
+.rd-out .btn{justify-content:center}
+.rd-panel .rd-readonly{margin:10px 0 0;padding:8px 10px;border:1px solid var(--pi-line);border-radius:var(--pi-radius-sm,4px);background:var(--pi-surface-2);font-size:12px;line-height:1.45;color:var(--pi-muted)}
+.rd-panel>.rd-f:first-of-type{margin-top:12px}
+.rd-panel .rd-note{font-size:11.5px;color:var(--pi-muted-2);margin:6px 0 0;line-height:1.4}
+.rd-panel .rd-del{margin-top:6px}
+.rd-panel .report-btn{width:100%;justify-content:center}
+@page rdA4p{size:A4 portrait;margin:0}@page rdA4l{size:A4 landscape;margin:0}@page rdA3p{size:A3 portrait;margin:0}@page rdA3l{size:A3 landscape;margin:0}
+@media print{
+  body.printing-designer #printRoot{font-size:inherit;line-height:1.3}
+  body.printing-designer #printRoot .rd-sheet{zoom:1;box-shadow:none;margin:0;break-after:page;page-break-after:always;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.printing-designer #printRoot .rd-sheet:last-child{break-after:auto;page-break-after:auto}
+  body.printing-designer .rd-print[data-paper="A4-portrait"] .rd-sheet{page:rdA4p}
+  body.printing-designer .rd-print[data-paper="A4-landscape"] .rd-sheet{page:rdA4l}
+  body.printing-designer .rd-print[data-paper="A3-portrait"] .rd-sheet{page:rdA3p}
+  body.printing-designer .rd-print[data-paper="A3-landscape"] .rd-sheet{page:rdA3l}
+}

@@ -116,124 +116,194 @@
         :`<div class="mx-empty" style="padding:28px">${t(bucket?"replay.noneInWindow":"replay.none")}</div>`}
     </div>`;
   }
-  // ---- REDESIGN v4 step 8 (SPEC-v4 "Raporlar"): RAPOR TASARIMCISI ----------------
-  // A full-size live preview of a guest document (2/3) and a designer panel
-  // (1/3): which columns and in what order, filters (name, group/junket, table,
-  // VIP, arrival), title, logo, paper (A4/A3 × portrait/landscape), font size,
-  // and templates saved on THIS machine ("merit.reportTemplates.v1", try/catch).
-  // It reads the event and writes nothing to it. The workbook (TABLE PLAN /
-  // GUEST LIST / UNASSIGNED) and its print are untouched: they stay on "Özet".
-  const TPL_KEY="merit.reportTemplates.v1";
-  const RD_COLS=["name","pax","table","seat","host","vip","planning","arrival","phone","notes"];
-  const rdFold=s=>String(s||"").toLocaleLowerCase("tr").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/ı/g,"i").trim();
-  function rdState(){
-    if(!ui.reportDesign)ui.reportDesign={cols:["name","pax","table","host","vip"],filters:{name:"",group:"",table:"",vip:false,arrival:""},title:"",logo:"",paper:"A4-portrait",font:12,tplName:""};
+  // ---- RAPOR TASARIMCISI (owner, binding: "reporting always detailed, any
+  // report you want, the preview always visible, PDF on request") -------------
+  // What a report CONTAINS is decided by src/report-designer.js (pure, tested by
+  // `report-designer`); this part only draws it, binds the controls and sends it
+  // out. Preview (left, always visible) and designer (right) sit side by side;
+  // the preview is the real sheets of paper at their millimetre size, scaled to
+  // fit, one box per printed page.
+  //
+  // READ-ONLY BY CONSTRUCTION. Nothing here writes to the event, so a historical
+  // (Completed or past) event gets the whole designer, preview and every export.
+  // Templates are kept on THIS machine, per event id, OUTSIDE the event record
+  // ("merit.reportTemplates.v2"), which is why saving one is allowed for a
+  // historical event too: it never passes through canMutate because it never
+  // mutates an event. Templates of the older build ("merit.reportTemplates.v1",
+  // one list for every event) are still offered, marked as shared.
+  //
+  // OUTPUT. PDF and Print both use the browser's own print (Save as PDF): the
+  // sheets are copied into #printRoot and the print stylesheet gives each its own
+  // page at the chosen paper size — no network, no library. Excel goes through
+  // SheetJS as its own workbook (one "REPORT" sheet); the one-click TABLE PLAN /
+  // GUEST LIST / UNASSIGNED workbook is not built here (report-xlsx-identity).
+  const TPL_KEY="merit.reportTemplates.v2",TPL_KEY_V1="merit.reportTemplates.v1";
+  const RD=()=>globalThis.MeritReportDesigner;
+  const rdHelpers=()=>({t,formatTableNumber,naturalSort});
+  function rdState(event){
+    if(!ui.reportDesign||ui.reportDesign.eventId!==event.id)ui.reportDesign={eventId:event.id,design:RD().defaults(),tplName:""};
     return ui.reportDesign;
   }
-  function rdTemplates(){try{const v=JSON.parse(globalThis.localStorage.getItem(TPL_KEY)||"[]");return Array.isArray(v)?v.filter(x=>x&&typeof x.name==="string"):[];}catch{return[];}}
-  function rdRows(event,d){
-    const byId=new Map(event.tables.map(x=>[x.id,x])),f=d.filters,q=rdFold(f.name);
-    return event.guests.filter(g=>{
-      if(q&&!rdFold(g.name).includes(q))return false;
-      if(f.group&&String(g.invitedBy||"")!==f.group)return false;
-      if(f.table&&!(g.assignment&&g.assignment.tableId===f.table))return false;
-      if(f.vip&&!/VIP/.test(String(g.vip||"")))return false;
-      if(f.arrival&&g.arrivalStatus!==f.arrival)return false;
-      return true;
-    }).map(g=>({g,tb:g.assignment&&byId.get(g.assignment.tableId)}))
-      .sort((a,b)=>(a.tb?0:1)-(b.tb?0:1)||naturalSort(a.tb?a.tb.number:"",b.tb?b.tb.number:"")||naturalSort(a.g.name,b.g.name));
+  function rdRead(key,fallback){try{const v=JSON.parse(globalThis.localStorage.getItem(key)||"null");return v==null?fallback:v;}catch{return fallback;}}
+  function rdTemplates(event){
+    const all=rdRead(TPL_KEY,{}),own=RD().templates(all&&typeof all==="object"&&!Array.isArray(all)?all[event.id]:[]);
+    return[...own.map(x=>({scope:"event",tpl:x})),...RD().templates(rdRead(TPL_KEY_V1,[])).map(x=>({scope:"shared",tpl:x}))];
   }
-  function rdCell(col,r){
-    const g=r.g;
-    if(col==="name")return g.name;
-    if(col==="pax")return String(paxOf(g));
-    if(col==="table")return r.tb?formatTableNumber(r.tb.number):"—";
-    if(col==="seat")return g.assignment&&Array.isArray(g.assignment.seats)&&g.assignment.seats.length?g.assignment.seats.map(n=>"S"+(n+1)).join(", "):"—";
-    if(col==="host")return g.invitedBy||"—";
-    if(col==="vip")return g.vip&&g.vip!=="Standard"?g.vip:"";
-    if(col==="planning")return t("status.planning."+g.planningStatus);
-    if(col==="arrival")return t("status.arrival."+(g.arrivalStatus||"Not Arrived"));
-    if(col==="phone")return g.phone||"";
-    if(col==="notes")return g.notes||"";
-    return"";
+  function rdWriteTemplates(event,list){
+    const all=rdRead(TPL_KEY,{}),next=all&&typeof all==="object"&&!Array.isArray(all)?all:{};
+    if(list.length)next[event.id]=list;else delete next[event.id];
+    globalThis.localStorage.setItem(TPL_KEY,JSON.stringify(next));
+  }
+  function rdTitle(event,d){return d.title||t("rd.kind."+d.kind);}
+  function rdEventLine(event){return[event.name,fmtDate(event.date),[event.hotel,event.salon].filter(Boolean).join(" · ")].filter(Boolean).join(" · ");}
+  function rdSheetsHTML(event,d){
+    const R=RD(),rep=R.build(event,d,rdHelpers()),pg=R.paginate(rep),box=pg.box,cols=rep.columns,n=pg.pages.length;
+    const head=`<header class="rd-doc-head">${d.logo?`<img class="rd-logo" src="${esc(d.logo)}" alt="">`:""}<div><div class="rd-title">${esc(rdTitle(event,d))}</div>${d.subtitle?`<div class="rd-subtitle">${esc(d.subtitle)}</div>`:""}${d.showEvent?`<div class="rd-sub">${esc(rdEventLine(event))}</div>`:""}</div></header>`;
+    const thead=`<thead><tr>${cols.map(c=>`<th class="rd-c-${c}">${esc(t("rd.col."+c))}</th>`).join("")}</tr></thead>`;
+    const part=p=>(rep.grouped?`<tr class="rd-grp"><th colspan="${cols.length}"><span>${esc(p.group.label)}${p.cont?` <i>(${esc(t("rd.cont"))})</i>`:""}</span><span class="rd-grp-n">${esc(t("rd.groupCount",{records:p.group.records,pax:p.group.pax}))}</span></th></tr>`:"")
+      +p.lines.map(l=>`<tr${l.type==="companion"?` class="rd-comp"`:""}>${l.cells.map((c,i)=>`<td class="rd-c-${cols[i]}">${esc(c)}</td>`).join("")}</tr>`).join("");
+    return pg.pages.map((p,i)=>`<section class="rd-sheet" data-paper="${esc(d.paper)}" data-page="${i+1}" style="width:${box.w}mm;height:${box.h}mm;padding:${box.margin}mm;font-size:${d.font}pt" aria-label="${esc(t("rd.pageOf",{i:i+1,n}))}">
+      ${i===0?head:""}
+      ${rep.totals.records?`<table class="rd-table">${thead}<tbody>${p.parts.map(part).join("")}</tbody></table>`:`<p class="rd-empty">${esc(t("rd.empty"))}</p>`}
+      ${i===n-1?`<div class="rd-total">${esc(t("rd.count",{records:rep.totals.records,pax:rep.totals.pax}))}</div>`:""}
+      <footer class="rd-sheet-foot"><span>${esc(rdTitle(event,d))}</span><span>${esc(t("rd.pageOf",{i:i+1,n}))}</span></footer>
+    </section>`).join("");
   }
   function designerHTML(event){
-    const d=rdState(),rows=rdRows(event,d),cols=d.cols.filter(c=>RD_COLS.includes(c));
-    const pax=rows.reduce((n,r)=>n+paxOf(r.g),0);
-    const groups=[...new Set(event.guests.map(g=>String(g.invitedBy||"")).filter(Boolean))].sort((a,b)=>naturalSort(a,b));
-    const tables=[...event.tables].sort((a,b)=>naturalSort(a.number,b.number));
+    const R=RD(),s=rdState(event),d=s.design,f=d.filters;
     const opt=(v,l,on)=>`<option value="${esc(v)}"${on?" selected":""}>${esc(l)}</option>`;
-    const page=`<div class="rd-page" data-paper="${esc(d.paper)}" data-font="${Number(d.font)||12}">
-      <div class="rd-doc-head">${d.logo?`<img class="rd-logo" src="${esc(d.logo)}" alt="">`:""}<div><div class="rd-title">${esc(d.title||event.name)}</div><div class="rd-sub">${esc([event.name,fmtDate(event.date),[event.hotel,event.salon].filter(Boolean).join(" · ")].filter(Boolean).join(" · "))}</div></div></div>
-      <table class="rd-table"><thead><tr>${cols.map(c=>`<th>${esc(t("rd.col."+c))}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${esc(rdCell(c,r))}</td>`).join("")}</tr>`).join("")}</tbody></table>
-      <div class="rd-foot">${esc(t("rd.count",{records:rows.length,pax}))}</div></div>`;
-    const colRows=[...cols,...RD_COLS.filter(c=>!cols.includes(c))].map(c=>{const on=cols.includes(c);return`<div class="rd-col" data-rd-col="${c}"><label><input type="checkbox"${on?" checked":""}> ${esc(t("rd.col."+c))}</label>${on?`<button class="btn sm quiet" data-rd-col-up="${c}" aria-label="${esc(t("rd.up"))}">↑</button><button class="btn sm quiet" data-rd-col-down="${c}" aria-label="${esc(t("rd.down"))}">↓</button>`:""}</div>`;}).join("");
-    const tpls=rdTemplates();
+    const sel=(attr,label,options,cur)=>`<label class="rd-f">${esc(label)}<select class="filter-input" ${attr}>${options.map(([v,l])=>opt(v,l,cur===v)).join("")}</select></label>`;
+    const hosts=[...new Map(event.guests.map(g=>String(g.invitedBy||"").trim()).filter(Boolean).map(h=>[h.toLocaleLowerCase("tr"),h])).values()].sort((a,b)=>naturalSort(a,b));
+    const zones=[...new Set(event.tables.map(x=>String(x.zone||"")).filter(Boolean))].sort((a,b)=>naturalSort(a,b));
+    const tables=[...event.tables].sort((a,b)=>naturalSort(a.number,b.number));
+    const all=["",t("rd.all")];
+    const colRows=[...d.cols,...R.COLUMNS.filter(c=>!d.cols.includes(c))].map(c=>{const on=d.cols.includes(c);return`<div class="rd-col" data-rd-col="${c}"><label><input type="checkbox"${on?" checked":""}> ${esc(t("rd.col."+c))}</label>${on?`<button class="btn sm quiet" data-rd-col-up="${c}" aria-label="${esc(t("rd.up")+": "+t("rd.col."+c))}">↑</button><button class="btn sm quiet" data-rd-col-down="${c}" aria-label="${esc(t("rd.down")+": "+t("rd.col."+c))}">↓</button>`:""}</div>`;}).join("");
+    const tpls=rdTemplates(event);
+    const historical=RULES().isHistorical(event);
     const panel=`<aside class="rd-panel" aria-label="${esc(t("rd.panel"))}">
+      <div class="rd-out" role="group" aria-label="${esc(t("rd.output"))}">
+        <button class="btn primary" data-rd-pdf>${icon("download")}${esc(t("rd.pdf"))}</button>
+        <button class="btn" data-rd-print>${icon("image")}${esc(t("rd.print"))}</button>
+        <button class="btn" data-rd-xlsx>${icon("download")}${esc(t("rd.excel"))}</button>
+      </div>
+      ${historical?`<p class="rd-readonly">${esc(t("rd.readonly"))}</p>`:""}
+      ${sel("data-rd-kind",t("rd.kind"),R.KINDS.map(k=>[k,t("rd.kind."+k)]),d.kind)}
       <h3>${esc(t("rd.columns"))}</h3><div class="rd-cols">${colRows}</div>
+      <label class="rd-check"><input type="checkbox" data-rd-companions${d.companions?" checked":""}> ${esc(t("rd.companions"))}</label>
       <h3>${esc(t("rd.filters"))}</h3>
-      <label class="rd-f">${esc(t("rd.f.name"))}<input class="filter-input" data-rd-filter="name" value="${esc(d.filters.name)}"></label>
-      <label class="rd-f">${esc(t("rd.f.group"))}<select class="filter-input" data-rd-filter="group">${opt("",t("rd.all"),!d.filters.group)}${groups.map(x=>opt(x,x,d.filters.group===x)).join("")}</select></label>
-      <label class="rd-f">${esc(t("rd.f.table"))}<select class="filter-input" data-rd-filter="table">${opt("",t("rd.all"),!d.filters.table)}${tables.map(x=>opt(x.id,formatTableNumber(x.number),d.filters.table===x.id)).join("")}</select></label>
-      <label class="rd-f">${esc(t("rd.f.arrival"))}<select class="filter-input" data-rd-filter="arrival">${opt("",t("rd.all"),!d.filters.arrival)}${["Checked In","Not Arrived","No Show"].map(x=>opt(x,t("status.arrival."+x),d.filters.arrival===x)).join("")}</select></label>
-      <label class="rd-check"><input type="checkbox" data-rd-filter="vip"${d.filters.vip?" checked":""}> ${esc(t("rd.f.vip"))}</label>
+      <label class="rd-f">${esc(t("rd.f.q"))}<input class="filter-input" type="search" data-rd-filter="q" value="${esc(f.q)}"></label>
+      <div class="rd-two">${sel(`data-rd-filter="planning"`,t("rd.f.planning"),[all,...["Confirmed","Tentative"].map(x=>[x,t("status.planning."+x)])],f.planning)}
+      ${sel(`data-rd-filter="arrival"`,t("rd.f.arrival"),[all,...["Not Arrived","Checked In","No Show"].map(x=>[x,t("status.arrival."+x)])],f.arrival)}</div>
+      <div class="rd-two">${sel(`data-rd-filter="vip"`,t("rd.col.vip"),[all,["vip",t("rd.vip.vip")],["standard",t("rd.vip.standard")]],f.vip)}
+      ${sel(`data-rd-filter="table"`,t("rd.f.table"),[all,[R.UNASSIGNED,t("rd.t.unassigned")],[R.ASSIGNED,t("rd.t.assigned")],...tables.map(x=>[x.id,formatTableNumber(x.number)])],f.table)}</div>
+      <div class="rd-two">${sel(`data-rd-filter="zone"`,t("rd.f.zone"),[all,...zones.map(z=>[z,z])],f.zone)}
+      ${sel(`data-rd-filter="host"`,t("rd.f.host"),[all,...hosts.map(h=>[h,h])],f.host)}</div>
+      <h3>${esc(t("rd.order"))}</h3>
+      <div class="rd-two">${sel("data-rd-sort",t("rd.sort"),R.SORTS.map(k=>[k,t("rd.sort."+k)]),d.sort.by)}
+      ${sel("data-rd-dir",t("rd.dir"),[["asc",t("rd.dir.asc")],["desc",t("rd.dir.desc")]],d.sort.dir)}</div>
+      ${sel("data-rd-group",t("rd.group"),R.GROUPS.map(k=>[k,t("rd.group."+k)]),d.groupBy)}
       <h3>${esc(t("rd.page"))}</h3>
-      <label class="rd-f">${esc(t("rd.title"))}<input class="filter-input" data-rd-title value="${esc(d.title)}" placeholder="${esc(event.name)}"></label>
+      <label class="rd-f">${esc(t("rd.title"))}<input class="filter-input" data-rd-text="title" value="${esc(d.title)}" placeholder="${esc(t("rd.kind."+d.kind))}"></label>
+      <label class="rd-f">${esc(t("rd.subtitleLabel"))}<input class="filter-input" data-rd-text="subtitle" value="${esc(d.subtitle)}"></label>
+      <label class="rd-check"><input type="checkbox" data-rd-showevent${d.showEvent?" checked":""}> ${esc(t("rd.showEvent"))}</label>
       <label class="rd-f">${esc(t("rd.logo"))}<input type="file" accept="image/png,image/jpeg" data-rd-logo>${d.logo?`<button class="btn sm quiet" data-rd-logo-clear>${esc(t("rd.logoClear"))}</button>`:""}</label>
-      <div class="rd-two"><label class="rd-f">${esc(t("rd.paper"))}<select class="filter-input" data-rd-paper>${["A4-portrait","A4-landscape","A3-portrait","A3-landscape"].map(x=>opt(x,t("rd.paper."+x),d.paper===x)).join("")}</select></label>
-      <label class="rd-f">${esc(t("rd.font"))}<select class="filter-input" data-rd-font>${[10,11,12,13,14].map(x=>opt(String(x),x+" pt",Number(d.font)===x)).join("")}</select></label></div>
+      <div class="rd-two">${sel("data-rd-paper",t("rd.paper"),R.PAPERS.map(x=>[x,t("rd.paper."+x)]),d.paper)}
+      ${sel("data-rd-font",t("rd.font"),R.FONTS.map(x=>[String(x),x+" pt"]),String(d.font))}</div>
       <h3>${esc(t("rd.templates"))}</h3>
-      ${tpls.length?`<label class="rd-f">${esc(t("rd.load"))}<select class="filter-input" data-rd-load>${opt("","—",true)}${tpls.map((x,i)=>opt(String(i),x.name,false)).join("")}</select></label>`:""}
-      <div class="rd-save"><input class="filter-input" data-rd-template-name placeholder="${esc(t("rd.templateName"))}" value="${esc(d.tplName||"")}"><button class="btn" data-rd-save>${esc(t("rd.save"))}</button></div>
-      <button class="btn primary rd-print" data-rd-print>${icon("image")}${esc(t("rd.print"))}</button>
+      ${tpls.length?`<label class="rd-f">${esc(t("rd.load"))}<select class="filter-input" data-rd-load>${opt("","—",true)}${tpls.map((x,i)=>opt(String(i),x.tpl.name+(x.scope==="shared"?" "+t("rd.shared"):""),false)).join("")}</select></label>`:""}
+      <div class="rd-save"><input class="filter-input" data-rd-template-name aria-label="${esc(t("rd.templateName"))}" placeholder="${esc(t("rd.templateName"))}" value="${esc(s.tplName||"")}"><button class="btn" data-rd-save>${esc(t("rd.save"))}</button></div>
+      ${tpls.some(x=>x.scope==="event"&&x.tpl.name===s.tplName)?`<button class="btn sm quiet rd-del" data-rd-delete>${esc(t("rd.delete",{name:s.tplName}))}</button>`:""}
+      <p class="rd-note">${esc(t("rd.templatesNote"))}</p>
+      <h3>${esc(t("rd.oneClickTitle"))}</h3>
+      <button class="btn report-btn" data-report="xlsx">${icon("download")}${t("reports.exportTablePlan")}</button>
     </aside>`;
-    return`<div class="rd-stage"><div class="rd-preview">${page}</div>${panel}</div>`;
+    return`<div class="rd-stage"><div class="rd-preview" role="region" aria-label="${esc(t("rd.preview"))}" tabindex="0">${rdSheetsHTML(event,d)}</div>${panel}</div>`;
   }
   function viewSwitchHTML(){
     const v=ui.reportsView==="designer"?"designer":"summary";
     return`<div class="seg rd-switch" role="group">${["summary","designer"].map(k=>`<button class="btn sm${v===k?" primary":""}" data-reports-view="${k}" aria-pressed="${v===k}">${esc(t("rd.view."+k))}</button>`).join("")}</div>`;
   }
+  // The preview's sheets are real millimetres; scale them to the column.
+  function rdFit(){
+    const pv=app.querySelector(".rd-preview"),sh=pv&&pv.querySelector(".rd-sheet");if(!sh)return;
+    const px=parseFloat(sh.style.width)*96/25.4,room=pv.clientWidth-48;
+    pv.style.setProperty("--rd-zoom",String(Math.max(.25,Math.min(1,room/px)).toFixed(3)));
+  }
+  let rdResizeBound=false;
+  function rdFileBase(event,d){return`${String(event.name||"event").replace(/[\\/:*?"<>|]+/g,"-")}-${String(rdTitle(event,d)).replace(/[\\/:*?"<>|]+/g,"-")}`.slice(0,120);}
+  function rdPrint(event,d,asPdf){
+    const sheets=app.querySelectorAll(".rd-preview .rd-sheet");if(!sheets.length)return;
+    const root=printRoot();
+    // Copies of the rendered sheets (nodes, not a string): no new markup sink.
+    const wrap=document.createElement("div");wrap.className="rd-print";wrap.dataset.paper=d.paper;
+    sheets.forEach(s=>wrap.appendChild(s.cloneNode(true)));
+    root.replaceChildren(wrap);
+    document.body.classList.add("printing","printing-designer");
+    // Save as PDF names the file after the document title.
+    const title=document.title;if(asPdf)document.title=rdFileBase(event,d);
+    const cleanup=()=>{document.body.classList.remove("printing","printing-designer");root.replaceChildren();document.title=title;window.removeEventListener("afterprint",cleanup);};
+    window.addEventListener("afterprint",cleanup);
+    if(asPdf)toast(t("rd.pdfHint"),"info",6000);
+    window.print();
+    setTimeout(cleanup,60000);
+  }
+  function rdExcel(event,d){
+    const X=globalThis.XLSX;
+    if(!X){toast(t("guests.engineMissing"),"error",5200);return;}
+    const R=RD(),rep=R.build(event,d,rdHelpers());
+    const aoa=R.sheetRows(rep,[rdTitle(event,d),d.subtitle,d.showEvent?rdEventLine(event):""],rdHelpers());
+    const wb=X.utils.book_new(),ws=X.utils.aoa_to_sheet(aoa);
+    ws["!cols"]=rep.columns.map(c=>({wch:c==="name"||c==="notes"?32:c==="host"?24:12}));
+    X.utils.book_append_sheet(wb,ws,"REPORT");
+    X.writeFile(wb,rdFileBase(event,d)+".xlsx");
+    toast(t("rd.excelDone"),"success");
+  }
   function bindDesigner(){
-    const d=rdState(),again=()=>render();
-    app.querySelectorAll("[data-reports-view]").forEach(b=>b.onclick=()=>{ui.reportsView=b.dataset.reportsView;again();});
+    app.querySelectorAll("[data-reports-view]").forEach(b=>b.onclick=()=>{ui.reportsView=b.dataset.reportsView;render();});
     if(ui.reportsView!=="designer")return;
-    app.querySelectorAll("[data-rd-col] input").forEach(i=>i.onchange=()=>{const c=i.closest("[data-rd-col]").dataset.rdCol;d.cols=i.checked?[...d.cols.filter(x=>x!==c),c]:d.cols.filter(x=>x!==c);again();});
-    const move=(c,k)=>{const i=d.cols.indexOf(c),j=i+k;if(i<0||j<0||j>=d.cols.length)return;const a=d.cols.slice();[a[i],a[j]]=[a[j],a[i]];d.cols=a;again();};
+    const event=activeEvent();if(!event||!RD())return;
+    const s=rdState(event),R=RD(),again=()=>render();
+    // Any change to WHAT is shown makes it a custom report; the kind is only where it started.
+    const what=fn=>{fn(s.design);s.design.kind="custom";s.design=R.normalize(s.design);again();};
+    rdFit();
+    if(!rdResizeBound){rdResizeBound=true;window.addEventListener("resize",()=>{if(ui.reportsView==="designer")rdFit();});}
+    const one=(sel,fn)=>{const n=app.querySelector(sel);if(n)fn(n);};
+    one("[data-rd-kind]",n=>n.onchange=()=>{s.design=R.applyKind(s.design,n.value);again();});
+    app.querySelectorAll("[data-rd-col] input").forEach(i=>i.onchange=()=>{const c=i.closest("[data-rd-col]").dataset.rdCol;what(d=>{d.cols=i.checked?[...d.cols.filter(x=>x!==c),c]:d.cols.filter(x=>x!==c);});});
+    const move=(c,k)=>what(d=>{const i=d.cols.indexOf(c),j=i+k;if(i<0||j<0||j>=d.cols.length)return;const a=d.cols.slice();[a[i],a[j]]=[a[j],a[i]];d.cols=a;});
     app.querySelectorAll("[data-rd-col-up]").forEach(b=>b.onclick=()=>move(b.dataset.rdColUp,-1));
     app.querySelectorAll("[data-rd-col-down]").forEach(b=>b.onclick=()=>move(b.dataset.rdColDown,1));
-    // Typed fields re-render on a short pause, focus and caret kept; a change
-    // event fired by the field being replaced can never start a second render.
-    const typed=(n,set)=>{n.oninput=()=>{set(n.value);clearTimeout(ui.rdTimer);const key=n.dataset.rdFilter||"title",pos=n.selectionStart;ui.rdTimer=setTimeout(()=>{again();const m=app.querySelector(key==="title"?"[data-rd-title]":`[data-rd-filter="${key}"]`);if(m){m.focus();m.setSelectionRange(pos,pos);}},250);};};
-    app.querySelectorAll("[data-rd-filter]").forEach(n=>{const k=n.dataset.rdFilter;if(n.tagName==="INPUT"&&n.type!=="checkbox")typed(n,v=>{d.filters[k]=v.slice(0,80);});else n.onchange=()=>{d.filters[k]=n.type==="checkbox"?n.checked:n.value;again();};});
-    const one=(sel,fn)=>{const n=app.querySelector(sel);if(n)fn(n);};
-    one("[data-rd-title]",n=>typed(n,v=>{d.title=v.slice(0,160);}));
-    one("[data-rd-paper]",n=>n.onchange=()=>{d.paper=n.value;again();});
-    one("[data-rd-font]",n=>n.onchange=()=>{d.font=Number(n.value)||12;again();});
-    one("[data-rd-template-name]",n=>n.oninput=()=>{d.tplName=n.value;});
-    one("[data-rd-logo]",n=>n.onchange=()=>{const f=n.files&&n.files[0];if(!f)return;if(f.size>400000){toast(t("rd.logoTooBig"),"error");return;}const rd=new FileReader();rd.onload=()=>{if(/^data:image\/(png|jpeg);base64,/.test(String(rd.result))){d.logo=String(rd.result);again();}};rd.readAsDataURL(f);});
-    one("[data-rd-logo-clear]",n=>n.onclick=()=>{d.logo="";again();});
-    one("[data-rd-load]",n=>n.onchange=()=>{const x=rdTemplates()[Number(n.value)];if(!x)return;Object.assign(d,{cols:Array.isArray(x.cols)?x.cols.filter(c=>RD_COLS.includes(c)):d.cols,filters:Object.assign({},d.filters,x.filters||{}),title:String(x.title||""),logo:String(x.logo||""),paper:String(x.paper||"A4-portrait"),font:Number(x.font)||12,tplName:x.name});again();});
+    // Typed fields re-render on a short pause, focus and caret kept.
+    const typed=(n,sel,set)=>{n.oninput=()=>{set(n.value);clearTimeout(ui.rdTimer);const pos=n.selectionStart;ui.rdTimer=setTimeout(()=>{again();const m=app.querySelector(sel);if(m){m.focus();try{m.setSelectionRange(pos,pos);}catch{}}},250);};};
+    app.querySelectorAll("[data-rd-filter]").forEach(n=>{const k=n.dataset.rdFilter;
+      if(n.tagName==="INPUT")typed(n,`[data-rd-filter="${k}"]`,v=>{s.design.filters[k]=v.slice(0,80);s.design.kind="custom";});
+      else n.onchange=()=>what(d=>{d.filters[k]=n.value;});});
+    app.querySelectorAll("[data-rd-text]").forEach(n=>{const k=n.dataset.rdText;typed(n,`[data-rd-text="${k}"]`,v=>{s.design[k]=v.slice(0,k==="title"?160:240);});});
+    one("[data-rd-sort]",n=>n.onchange=()=>what(d=>{d.sort={by:n.value,dir:d.sort.dir};}));
+    one("[data-rd-dir]",n=>n.onchange=()=>what(d=>{d.sort={by:d.sort.by,dir:n.value};}));
+    one("[data-rd-group]",n=>n.onchange=()=>what(d=>{d.groupBy=n.value;}));
+    one("[data-rd-companions]",n=>n.onchange=()=>what(d=>{d.companions=n.checked;}));
+    one("[data-rd-showevent]",n=>n.onchange=()=>{s.design.showEvent=n.checked;again();});
+    one("[data-rd-paper]",n=>n.onchange=()=>{s.design.paper=n.value;again();});
+    one("[data-rd-font]",n=>n.onchange=()=>{s.design.font=Number(n.value)||12;again();});
+    one("[data-rd-template-name]",n=>n.oninput=()=>{s.tplName=n.value;});
+    one("[data-rd-logo]",n=>n.onchange=()=>{const file=n.files&&n.files[0];if(!file)return;if(file.size>400000){toast(t("rd.logoTooBig"),"error");return;}const rd=new FileReader();rd.onload=()=>{const next=R.normalize(Object.assign({},s.design,{logo:String(rd.result)}));if(next.logo){s.design=next;again();}};rd.readAsDataURL(file);});
+    one("[data-rd-logo-clear]",n=>n.onclick=()=>{s.design.logo="";again();});
+    one("[data-rd-load]",n=>n.onchange=()=>{const x=rdTemplates(event)[Number(n.value)];if(!x)return;const{name,...design}=x.tpl;s.design=R.normalize(design);s.tplName=name;again();});
+    // EXPECTED ABSTENTION: a storage that refuses (quota, private mode) loses the
+    // template, never the screen; the person is told.
+    const store=list=>{try{rdWriteTemplates(event,list);return true;}catch(error){console.warn("The report template could not be kept on this machine.",error&&error.name);toast(t("rd.notSaved"),"error");}};
+    const own=()=>rdTemplates(event).filter(x=>x.scope==="event").map(x=>x.tpl);
     one("[data-rd-save]",n=>n.onclick=()=>{
-      const name=String((app.querySelector("[data-rd-template-name]")||{}).value||d.tplName||"").trim().slice(0,80);
-      if(!name){toast(t("rd.nameFirst"),"error");return;}
-      const list=rdTemplates().filter(x=>x.name!==name);
-      list.push({name,cols:d.cols,filters:d.filters,title:d.title,logo:d.logo,paper:d.paper,font:d.font});
-      d.tplName=name;
-      // EXPECTED ABSTENTION: a storage that refuses (quota, private mode) loses the
-      // template, never the screen; the person is told.
-      try{globalThis.localStorage.setItem(TPL_KEY,JSON.stringify(list));toast(t("rd.saved",{name}));}
-      catch(error){console.warn("The report template could not be kept on this machine.",error&&error.name);toast(t("rd.notSaved"),"error");}
-      again();
+      const name=String((app.querySelector("[data-rd-template-name]")||{}).value||s.tplName||"").trim().slice(0,80);
+      const tpl=R.template(name,s.design);
+      if(!tpl){toast(t("rd.nameFirst"),"error");return;}
+      s.tplName=tpl.name;if(store(R.upsert(own(),tpl)))toast(t("rd.saved",{name:tpl.name}));again();
     });
-    one("[data-rd-print]",n=>n.onclick=()=>{
-      const page=app.querySelector(".rd-page");if(!page)return;
-      document.body.classList.add("printing-designer");
-      document.body.dataset.rdPaper=page.dataset.paper;
-      const cleanup=()=>{document.body.classList.remove("printing-designer");delete document.body.dataset.rdPaper;window.removeEventListener("afterprint",cleanup);};
-      window.addEventListener("afterprint",cleanup);
-      window.print();
-      setTimeout(cleanup,60000);
-    });
+    one("[data-rd-delete]",n=>n.onclick=()=>{const name=s.tplName;if(store(own().filter(x=>x.name!==name)))toast(t("rd.deleted",{name}));s.tplName="";again();});
+    one("[data-rd-print]",n=>n.onclick=()=>rdPrint(event,s.design,false));
+    one("[data-rd-pdf]",n=>n.onclick=()=>rdPrint(event,s.design,true));
+    one("[data-rd-xlsx]",n=>n.onclick=()=>rdExcel(event,s.design));
   }
   const reportsHTML = function(event){
     if(ui.reportsView==="designer")return`<div class="mx-screen"><div class="mx-wrap rd-wrap">

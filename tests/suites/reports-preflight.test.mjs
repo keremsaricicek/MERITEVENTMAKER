@@ -111,29 +111,33 @@ export default async function run({ page, checks, baseUrl }) {
     assignGuestToTable("r1", e.tables[0].id); assignGuestToTable("r2", e.tables[1].id); touchEvent(e); ui.tab = "reports"; render(); });
   await settle(page);
   await click(page, '[data-reports-view="designer"]');
-  const pv = () => page.evaluate(() => { const p = document.querySelector(".rd-page"); if (!p) return null;
-    return { head: [...p.querySelectorAll("thead th")].map((x) => x.textContent.trim()), rows: [...p.querySelectorAll("tbody tr")].map((r) => [...r.cells].map((c) => c.textContent.trim())),
-      title: p.querySelector(".rd-title")?.textContent.trim(), paper: p.dataset.paper, font: getComputedStyle(p.querySelector("table")).fontSize,
+  // The designer was rebuilt on 2026-11-13 (src/report-designer.js): the preview is
+  // now one .rd-sheet per printed page, so rows are read across every sheet (group
+  // headings and companion lines are not records), and the font is the sheet's pt.
+  const pv = () => page.evaluate(() => { const p = document.querySelector(".rd-sheet"); if (!p) return null; const all = [...document.querySelectorAll(".rd-preview .rd-sheet")];
+    return { head: [...p.querySelectorAll("thead th")].map((x) => x.textContent.trim()), rows: all.flatMap((sh) => [...sh.querySelectorAll("tbody tr:not(.rd-grp):not(.rd-comp)")]).map((r) => [...r.cells].map((c) => c.textContent.trim())),
+      title: p.querySelector(".rd-title")?.textContent.trim(), paper: p.dataset.paper, font: p.style.fontSize,
       panel: !!document.querySelector(".rd-panel"), ratio: (() => { const a = document.querySelector(".rd-preview")?.getBoundingClientRect().width, b = document.querySelector(".rd-panel")?.getBoundingClientRect().width; return a && b ? b / (a + b) : null; })() }; });
   let d = await pv();
   checks.ok(d && d.panel && d.ratio > 0.25 && d.ratio < 0.4, "Raporlar has a full preview and a designer panel of about 1/3", d);
   const nAll = await page.evaluate(() => activeEvent().guests.length);
   checks.ok(d.rows.length === nAll && d.head.length >= 3, "the preview lists every guest record with the chosen columns", d);
-  await page.selectOption("[data-rd-filter='table']", { index: 1 }); await settle(page);
+  // options: All, No table, Has a table, then the tables — the first table is index 3
+  await page.selectOption("[data-rd-filter='table']", { index: 3 }); await settle(page);
   d = await pv();
   const atFirst = await page.evaluate(() => { const v = document.querySelector("[data-rd-filter='table']").value; return activeEvent().guests.filter((g) => g.assignment && g.assignment.tableId === v).map((g) => g.name).sort(); });
   checks.equal(d.rows.map((r) => r[0]).sort(), atFirst, "filter by table: only that table's people", d.rows);
   await page.selectOption("[data-rd-filter='table']", ""); await settle(page);
-  await page.fill("[data-rd-filter='name']", "gül"); await page.waitForTimeout(450); await settle(page);
+  await page.fill("[data-rd-filter='q']", "gül"); await page.waitForTimeout(450); await settle(page);
   d = await pv();
   checks.ok(d.rows.length === 1 && /Gül Ak/.test(d.rows[0].join(" ")), "filter by name (Turkish-folded)", d.rows);
-  await page.fill("[data-rd-filter='name']", ""); await page.waitForTimeout(450);
-  await page.selectOption("[data-rd-filter='group']", "Junket A"); await settle(page);
+  await page.fill("[data-rd-filter='q']", ""); await page.waitForTimeout(450);
+  await page.selectOption("[data-rd-filter='host']", "Junket A"); await settle(page);
   checks.equal((await pv()).rows.length, 2, "filter by group / junket");
-  await page.selectOption("[data-rd-filter='group']", "");
-  await page.check("[data-rd-filter='vip']"); await settle(page);
+  await page.selectOption("[data-rd-filter='host']", "");
+  await page.selectOption("[data-rd-filter='vip']", "vip"); await settle(page);
   checks.equal((await pv()).rows.length, await page.evaluate(() => activeEvent().guests.filter((g) => /VIP/.test(String(g.vip || ""))).length), "VIP only");
-  await page.uncheck("[data-rd-filter='vip']"); await settle(page);
+  await page.selectOption("[data-rd-filter='vip']", ""); await settle(page);
   const before = (await pv()).head;
   await page.click(`[data-rd-col-down="${await page.evaluate(() => document.querySelector("[data-rd-col]")?.dataset.rdCol)}"]`); await settle(page);
   const after = (await pv()).head;
@@ -141,13 +145,13 @@ export default async function run({ page, checks, baseUrl }) {
   const off = await page.evaluate(() => [...document.querySelectorAll("[data-rd-col]")].find((x) => !x.querySelector("input").checked)?.dataset.rdCol);
   await page.check(`[data-rd-col="${off}"] input`); await settle(page);
   checks.equal((await pv()).head.length, after.length + 1, "ticking a column adds it", off);
-  await page.fill("[data-rd-title]", "Kapı listesi — Junket"); await page.waitForTimeout(450);
+  await page.fill("[data-rd-text='title']", "Kapı listesi — Junket"); await page.waitForTimeout(450);
   await page.selectOption("[data-rd-paper]", "A3-landscape"); await page.selectOption("[data-rd-font]", "14"); await settle(page);
   d = await pv();
-  checks.ok(d.title === "Kapı listesi — Junket" && d.paper === "A3-landscape" && d.font === "14px", "title, paper and font size shape the preview", d);
+  checks.ok(d.title === "Kapı listesi — Junket" && d.paper === "A3-landscape" && d.font === "14pt", "title, paper and font size shape the preview", d);
   await page.fill("[data-rd-template-name]", "Junket kapı"); await page.click("[data-rd-save]"); await settle(page);
-  const saved = await page.evaluate(() => { try { return JSON.parse(localStorage.getItem("merit.reportTemplates.v1") || "[]").map((x) => x.name); } catch { return null; } });
-  checks.ok(saved && saved.includes("Junket kapı"), "save as template: kept on this machine", saved);
+  const saved = await page.evaluate(() => { try { return (JSON.parse(localStorage.getItem("merit.reportTemplates.v2") || "{}")[activeEvent().id] || []).map((x) => x.name); } catch { return null; } });
+  checks.ok(saved && saved.includes("Junket kapı"), "save as template: kept on this machine, per event", saved);
   const thrown = await page.evaluate(() => { const o = Storage.prototype.setItem; Storage.prototype.setItem = () => { throw new Error("quota"); }; try { document.querySelector("[data-rd-template-name]").value = "X"; document.querySelector("[data-rd-save]").click(); return "ok"; } catch (e) { return String(e); } finally { Storage.prototype.setItem = o; } });
   checks.equal(thrown, "ok", "a storage that refuses only loses the template, never the screen", thrown);
   await click(page, '[data-reports-view="summary"]');
