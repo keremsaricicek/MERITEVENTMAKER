@@ -13,6 +13,10 @@
 (() => {
   "use strict";
   let ui;
+  // Kapı opens FULL SCREEN (owner 2026-11-12): the list fills the left half, the
+  // plan the right half; Esc leaves full screen, "Tam ekran" goes back. A view
+  // choice of this screen, reset each time Kapı is opened from the bar.
+  let full=true;
   let t;
   let esc;
   let icon;
@@ -218,7 +222,7 @@
     const list=rows.length?windowed.map(g=>{
       const isIn=g.arrivalStatus==="Checked In",isNo=g.arrivalStatus==="No Show";
       const armed=g.id===armedId;
-      return`<div class="arrival-row ${isIn?"is-in":isNo?"is-no":""} ${armed?"is-armed":""}">
+      return`<div class="arrival-row ${isIn?"is-in":isNo?"is-no":""} ${armed?"is-armed":""}" data-live-row="${esc(g.id)}">
         <div class="arrival-who"><div class="party-name">${esc(g.name)}</div><div class="party-sub">${partyMetaHTML(g)}</div></div>
         <div>${seatTagHTML(event,g,byId)}</div>
         <div><span class="arr-state ${isIn?"in":isNo?"no":"not"}">${esc(t("status.arrival."+g.arrivalStatus))}</span></div>
@@ -230,11 +234,13 @@
         </div>
       </div>`;
     }).join(""):`<div class="mx-empty">${liveEmptyHTML(event,q)}</div>`;
-    return`<div class="mx-screen"><div class="mx-wrap">
-      <div class="mx-head"><div><h1>${t("live.title")}</h1><p>${t("live.subtitle")}</p></div></div>
+    const fullLink=`<button type="button" class="live-full-link" data-live-full="${full?"off":"on"}">${esc(t(full?"live.full.exit":"live.full.enter"))}</button>`;
+    return`<div class="mx-screen${full?" live-full":""}"><div class="mx-wrap">
+      <div class="mx-head"><div><h1>${t("live.title")}</h1><p>${t("live.subtitle")}</p></div>${full?"":fullLink}</div>
       <div class="mx-metrics">${metrics}</div>
       <div class="live-stage live-v4">
         <div class="live-list-col">
+          ${full?`<div class="live-full-head"><b>${esc(t("live.title"))}</b><span>${esc(t("live.full.count",{came:s.checked,total:s.total,no:s.noShow}))}</span>${fullLink}</div>`:""}
           <div class="live-search-hero"><span class="hero-icon">${icon("search")}</span><input id="liveSearch" value="${esc(ui.liveQuery)}" placeholder="${t("live.searchHero")}" autocomplete="off"></div>
           <p class="live-hint">${t("live.hint")}<br>${t("live.enterHint")}</p>
           ${walkInHTML(event)}
@@ -342,8 +348,13 @@
     if(!ts.length)return`<div class="live-room live-room-empty">${esc(t("live.room.none"))}</div>`;
     const by=new Map(ts.map(x=>[x.id,{planned:0,arrived:0,noshow:0}]));
     for(const g of event.guests){const c=g.assignment&&by.get(g.assignment.tableId);if(!c)continue;const p=paxOf(g);c.planned+=p;if(g.arrivalStatus==="Checked In")c.arrived+=p;else if(g.arrivalStatus==="No Show")c.noshow+=p;}
+    // Each seat's evening, from its guest's own record (Atlas: arrived seats
+    // filled, a No Show marked, the rest outlined) — read, never written.
+    const seatSt=new Map();
+    for(const g of event.guests){const a=g.assignment;if(!a||!by.has(a.tableId))continue;const st=g.arrivalStatus==="Checked In"?"in":g.arrivalStatus==="No Show"?"out":"wait";const arr=seatSt.get(a.tableId)||[];(a.seats||[]).forEach(i=>{arr[Number(i)]=st;});seatSt.set(a.tableId,arr);}
+    const vs=(event.venueObjects||[]).filter(o=>[o.x,o.y,o.w,o.h].every(v=>Number.isFinite(Number(v))));
     let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
-    for(const x of ts){x0=Math.min(x0,+x.x);y0=Math.min(y0,+x.y);x1=Math.max(x1,+x.x+ +x.w);y1=Math.max(y1,+x.y+ +x.h);}
+    for(const x of [...ts,...vs]){x0=Math.min(x0,+x.x);y0=Math.min(y0,+x.y);x1=Math.max(x1,+x.x+ +x.w);y1=Math.max(y1,+x.y+ +x.h);}
     const pad=Math.max(30,(x1-x0)*.05),n=v=>Math.round(v*10)/10;
     const shapes=ts.map(x=>{
       const c=by.get(x.id),X=+x.x,Y=+x.y,W=+x.w,H=+x.h,cx=n(X+W/2),cy=n(Y+H/2),rot=Number(x.rotation)||0;
@@ -352,9 +363,22 @@
       const tr=rot?` transform="rotate(${n(rot)} ${cx} ${cy})"`:"";
       const body=round?`<ellipse cx="${cx}" cy="${cy}" rx="${n(W/2)}" ry="${n(H/2)}"${tr}/>`:`<rect x="${n(X)}" y="${n(Y)}" width="${n(W)}" height="${n(H)}"${tr}/>`;
       const label=String(x.number||"");
-      return`<g class="lr-t ${state}" data-live-table="${esc(x.id)}" data-planned="${c.planned}" data-arrived="${c.arrived}" data-noshow="${c.noshow}" data-live-table-number="${esc(label)}"><title>${esc(t("live.room.table",{table:label,arrived:c.arrived,planned:c.planned}))}</title>${body}<text x="${cx}" y="${n(cy-2)}" text-anchor="middle" class="lr-n">${esc(label)}</text><text x="${cx}" y="${n(cy+Math.min(W,H)*.22)}" text-anchor="middle" class="lr-c">${c.arrived}/${c.planned}${c.noshow?` · ${c.noshow}✕`:""}</text></g>`;
+      // The table's seats, hidden until a guest of this table is hovered
+      // (owner 2026-11-12: "his table lights, its chairs open, his seats glow").
+      // A table that drew real chairs shows them where they are
+      // (table.chairs, % of the footprint, index = seat index, as on Oturma);
+      // otherwise the LOGICAL seats S1…Sn are marked around the shape. Drawn
+      // only: nothing is written to table.chairs.
+      const cap=Math.max(0,Math.floor(Number(x.capacity)||0)),sr=n(Math.max(3,Math.min(W,H)*.075));
+      const seatAt=Array.isArray(x.chairs)&&x.chairs.length?x.chairs.map(ch=>[X+W*(+ch.x||0)/100,Y+H*(+ch.y||0)/100])
+        :round?Array.from({length:cap},(_,i)=>{const a=-Math.PI/2+i/cap*Math.PI*2;return[cx+Math.cos(a)*(W/2+sr*1.6),cy+Math.sin(a)*(H/2+sr*1.6)];})
+        :Array.from({length:cap},(_,i)=>{const top=Math.ceil(cap/2),row=i<top?0:1,k=row?i-top:i,m=row?cap-top:top;return[X+W*(k+.5)/Math.max(1,m),row?Y+H+sr*1.6:Y-sr*1.6];});
+      const seats=seatAt.length?`<g class="lr-seats"${tr}>${seatAt.map(([sx,sy],i)=>`<circle class="lr-seat ${(seatSt.get(x.id)||[])[i]||""}" data-seat="${i}" cx="${n(sx)}" cy="${n(sy)}" r="${sr}"/>`).join("")}</g>`:"";
+      return`<g class="lr-t ${state}" data-live-table="${esc(x.id)}" data-planned="${c.planned}" data-arrived="${c.arrived}" data-noshow="${c.noshow}" data-live-table-number="${esc(label)}"><title>${esc(t("live.room.table",{table:label,arrived:c.arrived,planned:c.planned}))}</title>${seats}${body}<text x="${cx}" y="${n(cy-2)}" text-anchor="middle" class="lr-n">${esc(label)}</text><text x="${cx}" y="${n(cy+Math.min(W,H)*.22)}" text-anchor="middle" class="lr-c">${c.arrived}/${c.planned}${c.noshow?` · ${c.noshow}✕`:""}</text></g>`;
     }).join("");
-    return`<div class="live-room"><svg viewBox="${n(x0-pad)} ${n(y0-pad)} ${n(x1-x0+2*pad)} ${n(y1-y0+2*pad)}" preserveAspectRatio="xMidYMin meet" role="group" aria-label="${esc(t("live.room.label"))}">${shapes}</svg><div class="lr-key"><span class="k full"></span>${esc(t("live.room.full"))}<span class="k part"></span>${esc(t("live.room.part"))}<span class="k wait"></span>${esc(t("live.room.wait"))}</div></div>`;
+    const wp=pad*.6,walls=`<rect class="lr-wall" x="${n(x0-wp)}" y="${n(y0-wp)}" width="${n(x1-x0+2*wp)}" height="${n(y1-y0+2*wp)}"/>`;
+    const venue=vs.map(o=>{const X=+o.x,Y=+o.y,W=+o.w,H=+o.h,lab=String(o.label||""),tall=H>W*1.6;return`<g class="lr-v ${esc(String(o.type||""))}"><rect x="${n(X)}" y="${n(Y)}" width="${n(W)}" height="${n(H)}"/>${lab?`<text x="${n(X+W/2)}" y="${n(Y+H/2)}" text-anchor="middle" dominant-baseline="central"${tall?` transform="rotate(-90 ${n(X+W/2)} ${n(Y+H/2)})"`:""}>${esc(lab)}</text>`:""}</g>`;}).join("");
+    return`<div class="live-room"><svg viewBox="${n(x0-pad)} ${n(y0-pad)} ${n(x1-x0+2*pad)} ${n(y1-y0+2*pad)}" preserveAspectRatio="xMidYMin meet" role="group" aria-label="${esc(t("live.room.label"))}">${walls}${venue}${shapes}</svg><div class="lr-key"><span class="k full"></span>${esc(t("live.room.full"))}<span class="k part"></span>${esc(t("live.room.part"))}<span class="k wait"></span>${esc(t("live.room.wait"))}</div></div>`;
   }
   function focusLiveSearch(caret){
     requestAnimationFrame(()=>{
@@ -390,7 +414,7 @@
       search.onkeydown=e=>{
         // stopPropagation: the window-level Escape handler would otherwise fire a
         // second render for a key that means only "clear this field".
-        if(e.key==="Escape"){e.preventDefault();e.stopPropagation();ui.liveQuery="";ui.liveCursor=null;render();focusLiveSearch();return;}
+        if(e.key==="Escape"&&ui.liveQuery){e.preventDefault();e.stopPropagation();ui.liveQuery="";ui.liveCursor=null;render();focusLiveSearch();return;}
         // ↑/↓ choose among several matches; the chosen row is marked exactly as
         // a unique match is, so the operator sees whose door Enter will open.
         if((e.key==="ArrowDown"||e.key==="ArrowUp")&&ui.liveQuery.trim()&&liveVisibleIds.length>1){
@@ -472,6 +496,25 @@
       },{rootMargin:"400px"});
       io.observe(sentinel);
     }
+    document.querySelectorAll("[data-live-full]").forEach(b=>b.onclick=()=>{full=b.dataset.liveFull==="on";render();focusLiveSearch();});
+    // Hovering (or focusing into) a guest's row lights his table on the room,
+    // opens its seats and glows his own seats neon red. Read from
+    // guest.assignment; classes on the drawing only, nothing is written.
+    const lightGuest=(id,on)=>{
+      document.querySelectorAll(".live-room .hot").forEach(n=>n.classList.remove("hot"));
+      document.querySelectorAll(".live-room .lr-seat.me").forEach(n=>n.classList.remove("me"));
+      const ev=on&&activeEvent(),g=ev&&(ev.guests||[]).find(x=>x.id===id),a=g&&g.assignment;
+      if(!a)return;
+      const tb=document.querySelector(`.live-room [data-live-table="${CSS.escape(a.tableId)}"]`);
+      if(!tb)return;
+      tb.classList.add("hot");
+      (a.seats||[]).forEach(i=>tb.querySelector(`.lr-seat[data-seat="${Number(i)}"]`)?.classList.add("me"));
+    };
+    document.querySelectorAll("[data-live-row]").forEach(row=>{
+      const id=row.dataset.liveRow;
+      row.addEventListener("mouseenter",()=>lightGuest(id,true));row.addEventListener("mouseleave",()=>lightGuest(id,false));
+      row.addEventListener("focusin",()=>lightGuest(id,true));row.addEventListener("focusout",()=>lightGuest(id,false));
+    });
     document.querySelectorAll("[data-live-undo]").forEach(b=>b.onclick=()=>{
       const event=activeEvent();if(!canMutate(event,"change live arrival status"))return;
       const id=b.dataset.liveUndo,entry=(ui.liveRecent||[]).find(r=>r.guestId===id),g=event.guests.find(x=>x.id===id);
@@ -508,7 +551,15 @@
     tableIndex=deps.tableIndex;
     epoch=deps.epoch;
     ask=deps.ask;
-    return{html:liveHTML,bind:bindLive,arrivalWave,arrivalWaveHTML,bindArrivalWaveControls};
+    // Esc leaves Kapı's full screen (the search field keeps Esc for clearing
+    // itself while it holds text); opening Kapı from the bar opens it full again.
+    document.addEventListener("keydown",e=>{
+      if(e.key!=="Escape"||!full||!document.querySelector(".live-full")||document.querySelector("dialog[open]"))return;
+      if(e.target&&e.target.id==="liveSearch"&&e.target.value)return;
+      e.preventDefault();e.stopImmediatePropagation();full=false;render();focusLiveSearch();
+    },true);
+    document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest('header.shell-top [data-tab="live"],[data-shell-next="live"],[data-shell-open="live"]'))full=true;},true);
+    return{html:liveHTML,bind:bindLive,arrivalWave,arrivalWaveHTML,bindArrivalWaveControls,roomHTML:liveRoomHTML};
   }
   globalThis.MeritScreenLive=Object.freeze({create,DEPS:Object.freeze(["ui", "t", "esc", "icon", "naturalSort", "paxOf", "activeEvent", "render", "touchEvent", "toast", "OCC", "SEARCH", "canMutate", "liveEmptyHTML", "partyMetaHTML", "recordArrival", "seatTagHTML", "setArrival", "saveGuest", "assignGuest", "tableIndex", "epoch", "ask"])});
 })();

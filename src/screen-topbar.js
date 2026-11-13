@@ -32,13 +32,11 @@
   const THEME_KEY="merit.theme.v1";
   const SKIN_KEY="merit.skin.v1";
   const RESEARCH_KEY="merit.webResearch.v1";
-  const SKINS=[["a","shell.skin.a"],["b","shell.skin.b"]];
+  const SKINS=[["a","shell.skin.a"],["b","shell.skin.b"],["c","shell.skin.c"],["d","shell.skin.d"],["e","shell.skin.e"]];
   const sv=(body,size=16)=>`<svg viewBox="0 0 16 16" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
   // The bar's few icons (the screens themselves are words), on a 16 px grid.
   const IC={
     search:sv('<circle cx="7" cy="7" r="4.3"/><path d="M10.2 10.2 13.8 13.8"/>'),
-    moon:sv('<path d="M12.8 9.6A5.3 5.3 0 0 1 6.4 3.2a5.3 5.3 0 1 0 6.4 6.4z"/>'),
-    sun:sv('<circle cx="8" cy="8" r="2.8"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/>'),
     more:sv('<circle cx="3.5" cy="8" r=".9" fill="currentColor"/><circle cx="8" cy="8" r=".9" fill="currentColor"/><circle cx="12.5" cy="8" r=".9" fill="currentColor"/>'),
     lock:sv('<rect x="3.5" y="7" width="9" height="6.5" rx="1.4"/><path d="M5.5 7V5.2a2.5 2.5 0 0 1 5 0V7"/>',12),
   };
@@ -55,31 +53,52 @@
     clockTimer=setInterval(()=>{const v=clockText();document.querySelectorAll("[data-shell-clock]").forEach(n=>{if(n.textContent!==v)n.textContent=v;});},15000);
   }
 
-  // ---- theme ------------------------------------------------------------------
-  function readTheme(){try{const v=globalThis.localStorage.getItem(THEME_KEY);return v==="dark"?"dark":"light";}catch{return"light";}}
+  // ---- appearance: light/dark/system, theme A–E, font, text size ----------------
+  // Each is a fact about this machine, not about an event, read and written
+  // inside try/catch. EXPECTED ABSTENTION: a storage that refuses (private
+  // mode, quota) only loses the memory of the choice; the screen still
+  // switches. data-theme on <html> is always the RESOLVED mode (light|dark), so
+  // every rule keys on one attribute; "system" follows the computer's own
+  // setting and changes with it.
+  const MODES=["light","dark","system"];
+  const SKIN_IDS=SKINS.map(([id])=>id);
+  const FONTS=["system","segoe","helvetica"],SIZES=["s","m","l"];
+  const FONT_KEY="merit.font.v1",SIZE_KEY="merit.fontSize.v1";
+  function store(key,v,what){try{globalThis.localStorage.setItem(key,v);}catch(error){console.warn(`The ${what} choice could not be remembered on this machine.`,error&&error.name);}}
+  function readKey(key,allowed,fallback){try{const v=globalThis.localStorage.getItem(key);return allowed.includes(v)?v:fallback;}catch{return fallback;}}
+  let modePref="light";
+  const systemDark=()=>{try{return !!(globalThis.matchMedia&&globalThis.matchMedia("(prefers-color-scheme: dark)").matches);}catch{return false;}};
+  function resolve(){const v=modePref==="system"?(systemDark()?"dark":"light"):modePref;document.documentElement.dataset.theme=v;return v;}
   function current(){return document.documentElement.dataset.theme==="dark"?"dark":"light";}
+  function mode(){return modePref;}
   function setTheme(name){
-    const v=name==="dark"?"dark":"light";
-    document.documentElement.dataset.theme=v;
-    // EXPECTED ABSTENTION: a storage that refuses (private mode, quota) only
-    // loses the memory of the choice; the screen still switches.
-    try{globalThis.localStorage.setItem(THEME_KEY,v);}catch(error){console.warn("The theme choice could not be remembered on this machine.",error&&error.name);}
-    document.querySelectorAll("[data-shell-theme]").forEach(b=>{const label=t(v==="dark"?"shell.theme.toLight":"shell.theme.toDark");b.title=label;b.setAttribute("aria-label",label);});
-    return v;
+    modePref=MODES.includes(name)?name:"light";
+    store(THEME_KEY,modePref,"theme");
+    return resolve();
   }
   function toggleTheme(){return setTheme(current()==="dark"?"light":"dark");}
-  function initTheme(){document.documentElement.dataset.theme=readTheme();document.documentElement.dataset.skin=readSkin();}
-
-  // ---- the two themes (A Atlas sade, B Birleşik) --------------------------------
-  function readSkin(){try{return globalThis.localStorage.getItem(SKIN_KEY)==="b"?"b":"a";}catch{return"a";}}
-  function currentSkin(){return document.documentElement.dataset.skin==="b"?"b":"a";}
+  function readSkin(){return readKey(SKIN_KEY,SKIN_IDS,"a");}
+  function currentSkin(){const v=document.documentElement.dataset.skin;return SKIN_IDS.includes(v)?v:"a";}
   function setSkin(name){
-    const v=name==="b"?"b":"a";
+    const v=SKIN_IDS.includes(name)?name:"a";
     document.documentElement.dataset.skin=v;
-    // EXPECTED ABSTENTION: as for light/dark — only the memory is lost.
-    try{globalThis.localStorage.setItem(SKIN_KEY,v);}catch(error){console.warn("The theme choice could not be remembered on this machine.",error&&error.name);}
+    store(SKIN_KEY,v,"theme");
+    if(v==="c"&&readKey(THEME_KEY,MODES,null)===null){modePref="dark";resolve();}
     document.querySelectorAll("[data-shell-skin]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.shellSkin===v)));
     return v;
+  }
+  function currentFont(){const v=document.documentElement.dataset.font;return FONTS.includes(v)?v:"system";}
+  function setFont(name){const v=FONTS.includes(name)?name:"system";document.documentElement.dataset.font=v;store(FONT_KEY,v,"font");return v;}
+  function currentSize(){const v=document.documentElement.dataset.size;return SIZES.includes(v)?v:"m";}
+  function setSize(name){const v=SIZES.includes(name)?name:"m";document.documentElement.dataset.size=v;store(SIZE_KEY,v,"text size");return v;}
+  function initTheme(){
+    // Theme C (Royal gece) opens dark, as its prototype does — only until the
+    // person chooses light/dark themselves.
+    modePref=readKey(THEME_KEY,MODES,readSkin()==="c"?"dark":"light");resolve();
+    const root=document.documentElement;
+    root.dataset.skin=readSkin();root.dataset.font=readKey(FONT_KEY,FONTS,"system");root.dataset.size=readKey(SIZE_KEY,SIZES,"m");
+    // "Sistem" follows the computer when it switches (an evening auto-dark).
+    try{const mq=globalThis.matchMedia&&globalThis.matchMedia("(prefers-color-scheme: dark)");if(mq&&mq.addEventListener)mq.addEventListener("change",()=>{if(modePref==="system")resolve();});}catch(error){console.warn("This computer's own light/dark setting cannot be followed here.",error&&error.name);}
   }
 
   // ---- Ayarlar: web research for Mimar, OFF by default --------------------------
@@ -134,15 +153,12 @@
     const ph=esc(t("shell.command.placeholder"));
     return`<div class="shell-cmd"><div class="shell-cmd-box">${IC.search}<input id="globalGuestSearch" placeholder="${ph}" aria-label="${ph}" autocomplete="off" spellcheck="false"></div><div id="globalSearchResults" class="search-results hidden"></div></div>`;
   }
-  function skinRowsHTML(){
-    const cur=currentSkin(),web=researchOn();
-    return[`<div class="shell-menu-head">${esc(t("shell.skin.title"))}</div>`,...SKINS.map(([id,key])=>`<button type="button" class="shell-menu-item shell-skin-item" data-shell-skin="${id}" aria-pressed="${cur===id}">${esc(t(key))}</button>`),"<hr>",
-      `<div class="shell-menu-head">${esc(t("shell.settings"))}</div>`,`<button type="button" class="shell-menu-item shell-skin-item" data-shell-research aria-pressed="${web}">${esc(t(web?"shell.research.on":"shell.research.off"))}</button>`,`<p class="shell-menu-note" data-research-privacy>${esc(t("shell.research.privacy"))}</p>`,"<hr>"];
-  }
   // ⋯: the same data-action / data-v8-action the shell's binder already wires.
+  // Theme, Açık/Koyu and Mimar's web research moved to the Ayarlar page
+  // (src/screen-settings.js, owner 2026-11-11: no appearance buttons in the bar).
   function menuHTML(ctx){
     const item=(attr,label,title)=>`<button type="button" class="shell-menu-item" ${attr}${title?` title="${esc(title)}"`:""}>${esc(label)}</button>`;
-    const rows=[...skinRowsHTML(),...(ctx.screen==="workspace"?[
+    const rows=[...(ctx.screen==="workspace"?[
       item('data-action="back-events"',t("appbar.allEvents")),
       item('data-action="save-now"',t("appbar.saveNow")),
       `<button type="button" class="shell-menu-item lang-btn" data-v8-action="toggle-lang" title="Language / Dil">${esc(t("shell.menu.language"))}</button>`,
@@ -163,13 +179,15 @@
     const brandInner=`<b>MERIT</b>${version}`;
     // The mark is the way back to the calendar from inside an event.
     const brand=ws?`<button type="button" class="shell-brand" data-action="back-events" title="${esc(t("shell.brandTitle"))}">${brandInner}</button>`:`<div class="shell-brand">${brandInner}</div>`;
-    const theme=current(),themeLabel=esc(t(theme==="dark"?"shell.theme.toLight":"shell.theme.toDark"));
-    const eventId=ws&&ctx.event?`<div class="event-id" title="${esc(ctx.event.sub||"")}"><strong>${esc(ctx.event.name)}</strong></div><span class="shell-sep" aria-hidden="true"></span>`:"";
+    const settingsTitle=esc(t("settings.open"));
+    // Event name at the right of the nav, before the clock, as in the approved
+    // Atlas (owner 2026-11-13, zip temalar/tema-a); the venue line is its title.
+    const eventId=ws&&ctx.event?`<div class="event-id shell-event" title="${esc(ctx.event.sub||"")}"><strong>${esc(ctx.event.name)}</strong></div><span class="shell-sep" aria-hidden="true"></span>`:"";
     const open=esc(t("shell.command.open"));
     const mimar=`<button type="button" class="shell-mimar" data-shell-assistant title="${open}" aria-label="${open}">${esc(t("shell.mimar"))} <kbd>F8</kbd></button>`;
     const nx=ws&&!ctx.historical?nextScreen(ctx.current):null;
     const next=nx?`<button type="button" class="shell-next" data-shell-next="${nx}">${esc(t("shell.nextTo",{screen:t(LABEL[nx])}))}</button>`:"";
-    return`<header class="shell-top theme-scope${ws?" workspace-head":""}">${brand}${navHTML(ctx)}${commandHTML(ctx)}<div class="shell-right workspace-actions">${ctx.planHealth||""}${eventId}<span class="shell-clock" data-shell-clock title="${esc(t("shell.clockTitle"))}">${clockText()}</span><button type="button" class="shell-icon-btn shell-theme" data-shell-theme title="${themeLabel}" aria-label="${themeLabel}"><span class="shell-theme-moon">${IC.moon}</span><span class="shell-theme-sun">${IC.sun}</span></button>${mimar}${menuHTML(ctx)}</div>${next}</header>`;
+    return`<header class="shell-top theme-scope${ws?" workspace-head":""}">${brand}${navHTML(ctx)}${commandHTML(ctx)}<div class="shell-right workspace-actions">${ctx.planHealth||""}${eventId}<span class="shell-clock" data-shell-clock title="${esc(t("shell.clockTitle"))}">${clockText()}</span><button type="button" class="shell-link" data-shell-settings title="${settingsTitle}">${esc(t("shell.settings"))}</button>${mimar}${menuHTML(ctx)}</div>${next}</header>`;
   }
 
   function create(deps){
@@ -179,7 +197,8 @@
     t=deps.t;
     initTheme();
     startClock();
-    return{barHTML,icons:IC,stepProgress,theme:Object.freeze({current,set:setTheme,toggle:toggleTheme}),skin:Object.freeze({current:currentSkin,set:setSkin}),research:Object.freeze({enabled:researchOn,set:setResearch})};
+    return{barHTML,icons:IC,stepProgress,theme:Object.freeze({current,mode,set:setTheme,toggle:toggleTheme}),skin:Object.freeze({current:currentSkin,set:setSkin,ids:SKIN_IDS}),
+      font:Object.freeze({current:currentFont,set:setFont,ids:FONTS}),size:Object.freeze({current:currentSize,set:setSize,ids:SIZES}),research:Object.freeze({enabled:researchOn,set:setResearch})};
   }
   globalThis.MeritScreenTopbar=Object.freeze({create,DEPS:Object.freeze(["esc","t"])});
 })();

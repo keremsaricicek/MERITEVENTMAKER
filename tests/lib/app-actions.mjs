@@ -99,6 +99,13 @@ export async function addTables(page, { quantity, type, prefix } = {}) {
 }
 
 export async function gotoTab(page, tab) {
+  // Kapı opens FULL SCREEN (SPEC-v4, owner 2026-11-12): the bar is hidden and a
+  // person leaves with Esc (an empty search field passes Esc on). Do the same.
+  if (await page.evaluate(() => !!document.querySelector(".live-full"))) {
+    await page.evaluate(() => { const s = document.getElementById("liveSearch"); if (s && s.value) { ui.liveQuery = ""; render(); } document.activeElement?.blur?.(); });
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(() => !document.querySelector(".live-full"), null, { timeout: 5000 });
+  }
   await click(page, `[data-tab="${tab}"]`);
   await page.waitForTimeout(350);
 }

@@ -86,6 +86,10 @@ export default async function run({ page, checks, baseUrl, artifactDir }) {
     await typeQuery(page, "#guestSearch", "Sentinel");
     await gotoTab(page, "live");
     await typeQuery(page, "#liveSearch", "Selin");
+    // Kapı opens full screen since 2026-11-12 (SPEC-v4): the bar's finder is back
+    // after Esc (the first Esc clears the door search, the second leaves full screen).
+    await page.focus("#liveSearch"); await page.keyboard.press("Escape"); await page.keyboard.press("Escape");
+    await page.waitForFunction(() => !document.querySelector(".live-full"), null, { timeout: 5000 });
     await typeQuery(page, "#globalGuestSearch", "Sentinelkaya");
     await page.fill("#globalGuestSearch", "").catch(() => {});
   });

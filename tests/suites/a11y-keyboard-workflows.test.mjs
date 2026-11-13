@@ -186,6 +186,11 @@ export default async function run({ page, checks, baseUrl }) {
     "and the seated guest keeps the planned seat — a keyboard path writes arrival only, like the mouse", g8);
 
   // --- 9. EXPORT THE WORKBOOK ----------------------------------------------
+  // Kapı opens full screen since 2026-11-12 (SPEC-v4): Esc leaves it and the bar
+  // comes back — the keyboard way out, checked here rather than assumed.
+  await press("Escape"); await settleKb();
+  checks.ok(await page.evaluate(() => !document.querySelector(".live-full") && getComputedStyle(document.querySelector("header.shell-top")).display !== "none"),
+    "Esc leaves Kapı's full screen and the bar is back");
   await tabTo('[data-tab="reports"]');
   await press("Enter"); await settleKb();
   await tabTo('[data-report="xlsx"]');

@@ -180,7 +180,20 @@ export default async function run({ page, checks, baseUrl }) {
   const geo = await page.evaluate(() => { const r = (s) => document.querySelector(s)?.getBoundingClientRect(); const L = r(".live-list-col"), R = r(".live-room-col");
     const row = [...document.querySelectorAll(".arrival-row")].find((x) => /Ayla Kurt/.test(x.textContent)); const go = row?.querySelector('[data-arrival="Checked In"]')?.getBoundingClientRect(), no = row?.querySelector('[data-arrival="No Show"]')?.getBoundingClientRect();
     return { L: L && L.width, R: R && R.width, tables: document.querySelectorAll(".live-room [data-live-table]").length, apart: go && no ? Math.round(go.left - no.right) : null, goRight: go && row ? Math.round(row.getBoundingClientRect().right - go.right) : null }; });
-  checks.ok(geo.L && geo.R && geo.L / (geo.L + geo.R) > 0.2 && geo.L / (geo.L + geo.R) < 0.32, "the guest list is about 1/4 of the width, the room 3/4", geo);
+  // CHANGED 2026-11-12 by the spec (SPEC-v4 "Owner 2026-11-12"): Kapı opens FULL SCREEN, the
+  // list fills the left HALF and the plan the right half (was 1/4 · 3/4).
+  checks.ok(geo.L && geo.R && geo.L / (geo.L + geo.R) > 0.45 && geo.L / (geo.L + geo.R) < 0.55, "full screen: the guest list fills the left half, the room the right half", geo);
+  const fullNow = await page.evaluate(() => ({ full: !!document.querySelector(".live-full"), bar: !!document.querySelector("header.shell-top") && getComputedStyle(document.querySelector("header.shell-top")).display !== "none" }));
+  checks.ok(fullNow.full && !fullNow.bar, "Kapı opens full screen (the bar steps aside)", fullNow);
+  const before = await page.evaluate(() => JSON.stringify(activeEvent().guests.map((g) => [g.assignment, g.arrivalStatus])));
+  await page.hover('.arrival-row:has-text("Ayla Kurt")'); await page.waitForTimeout(250);
+  const lit = await page.evaluate(() => { const g = activeEvent().guests.find((x) => /Ayla Kurt/.test(x.name)), tb = document.querySelector(`.live-room [data-live-table="${g.assignment.tableId}"]`);
+    return { hot: !!tb && tb.classList.contains("hot"), others: document.querySelectorAll(".live-room .hot").length, me: [...tb.querySelectorAll(".lr-seat.me")].map((s) => Number(s.dataset.seat)).sort(), want: [...g.assignment.seats].sort(), shown: getComputedStyle(tb.querySelector(".lr-seats")).opacity }; });
+  checks.ok(lit.hot && lit.others === 1 && lit.shown === "1", "hovering a guest lights his table and opens its seats", lit);
+  checks.equal(lit.me, lit.want, "his own seats glow neon red, no others", lit);
+  await page.mouse.move(2, 2); await page.waitForTimeout(100);
+  checks.equal(await page.evaluate(() => document.querySelectorAll(".live-room .hot,.live-room .lr-seat.me").length), 0, "leaving the row clears it", null);
+  checks.equal(await page.evaluate(() => JSON.stringify(activeEvent().guests.map((g) => [g.assignment, g.arrivalStatus]))), before, "hovering writes nothing", null);
   checks.equal(geo.tables, 3, "the room draws every real table", geo);
   checks.ok(geo.apart >= 60 && geo.goRight <= 24, "Giriş sits at the right, Gelmedi away from it", geo);
   const room = () => page.evaluate(() => { const e = activeEvent(), n = document.querySelector(`.live-room [data-live-table="${e.tables[0].id}"]`); return n ? { arrived: n.dataset.arrived, planned: n.dataset.planned, noshow: n.dataset.noshow } : null; });

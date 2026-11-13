@@ -143,12 +143,28 @@
       return root;
     }
     function isOpen() { return !!root && !root.hidden; }
+    // The first time the window opens, Mimar greets with three example
+    // sentences as chips (the prototypes' greeting). A chip only ASKS: it goes
+    // through the same data-assistant-ask path as any other button, so the
+    // answer — or the action shown first, with Uygula — is the usual one.
+    function greet() {
+      if (!log || log.childElementCount) return;
+      const box = el("div", { class: "assistant-turn assistant assistant-greet" });
+      box.appendChild(el("p", {}, t("assistant.greet")));
+      const chips = el("div", { class: "assistant-chips" });
+      for (const k of ["assistant.chip.missing", "assistant.chip.where", "assistant.chip.seat"]) {
+        const s = t(k);
+        chips.appendChild(el("button", { type: "button", class: "assistant-chip", "data-assistant-ask": s }, s));
+      }
+      box.appendChild(chips);
+      log.appendChild(box);
+    }
     function toggle(open) {
       mount();
       const want = open == null ? root.hidden : open;
       root.hidden = !want;
       document.body.classList.toggle("assistant-open", want);
-      if (want) { root.classList.remove("is-min"); setTimeout(() => input.focus(), 0); }
+      if (want) { root.classList.remove("is-min"); greet(); setTimeout(() => input.focus(), 0); }
       // on every opening: is the local model there to read? (the relay asks the running process)
       if (want && readerState) Promise.resolve(readerState()).then(readerIs).catch((error) => console.warn("The second reader's state could not be read.", error && error.name));
       document.querySelectorAll("[data-shell-assistant]").forEach((b) => b.setAttribute("aria-expanded", String(want)));

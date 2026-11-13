@@ -31,11 +31,14 @@ export default async function run({ page, checks, baseUrl }) {
   await addTables(page, { quantity: 4 });
   checks.equal(await page.evaluate(() => activeEvent().tables.map((t) => [t.x, t.y])), [[440, 270], [630, 270], [440, 415], [630, 415]],
     "four tables land where they always did (a grid that fits the room is untouched)");
-  const fitSame = await page.evaluate(() => {
+  // CHANGED 2026-11-13 by the owner (the approved Atlas, zip temalar/tema-a): Fit fills
+  // the view with the PLAN (its own extent plus the walls' margin), no longer with the
+  // whole world — so a small grid is shown larger than the old world fit, and whole.
+  const fitPlan = await page.evaluate(() => {
     const v = document.getElementById("canvasViewport"), old = Math.max(.2, Math.min((v.clientWidth - 42) / 1355, (v.clientHeight - 42) / 788));
-    fitCanvas(); return Math.abs(ui.zoom - old) < 1e-9;
+    fitCanvas(); const r = v.getBoundingClientRect(); return { larger: ui.zoom > old, whole: [...v.querySelectorAll(".table-object")].every((n) => { const b = n.getBoundingClientRect(); return b.left >= r.left - 1 && b.top >= r.top - 1 && b.right <= r.right + 1 && b.bottom <= r.bottom + 1; }) };
   });
-  checks.ok(fitSame, "Fit on a plan whose objects lie inside the room gives exactly the old view");
+  checks.ok(fitPlan.larger && fitPlan.whole, "Fit shows the plan larger than the old whole-world view, and all of it", fitPlan);
 
   // --- 2. 24 tables through Add Manually ------------------------------------
   await page.evaluate(() => { ui.screen = "events"; render(); });

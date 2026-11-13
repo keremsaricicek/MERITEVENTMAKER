@@ -658,7 +658,7 @@
     ui=deps.ui;
     undoModelGrouping=deps.undoModelGrouping;
     undoReviewDecision=deps.undoReviewDecision;
-    return{toolbarHTML,mapHTML,panelHTML,diagnosticsHTML,onAction,afterAnalysis,session:()=>({...session,controller:!!session.controller})};
+    return{toolbarHTML,mapHTML,panelHTML,diagnosticsHTML,onAction,afterAnalysis,secondLook:Object.freeze({enabled:autoOn,set:setAuto}),session:()=>({...session,controller:!!session.controller})};
   }
   globalThis.MeritScreenVlm=Object.freeze({create,DEPS:Object.freeze(["activeEvent","applyModelGrouping","applyReviewZoom","ask","audit","canMutate","decideReview","esc","icon","render","t","toast","touchEvent","ui","undoModelGrouping","undoReviewDecision"])});
 })();

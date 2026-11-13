@@ -148,7 +148,25 @@
     const rows=here.map(g=>`<li><b>${esc(g.name)}</b>${paxOf(g)>1?` <span class="tp-pax">+${paxOf(g)-1}</span>`:""}${/VIP/.test(String(g.vip||""))?` <span class="tp-vip">${esc(g.vip)}</span>`:""}</li>`).join("");
     return`<div class="table-people" data-table-people><div class="table-people-h">${esc(t("salon.people",{n:here.reduce((n,g)=>n+paxOf(g),0)}))}</div>${here.length?`<ul>${rows}</ul>`:`<p>${esc(t("salon.peopleNone"))}</p>`}</div>`;
   }
-  function addManuallyFabHTML(){return`<button class="planmap-fab" data-v8-action="add" title="${t("action.addManually")}">${icon(ui.v8AddOpen?"x":"plus")}<span>${t("action.addManually")}</span></button>`;}
+  // SALON's right panel (owner 2026-11-13, "Atlas" = zip temalar/tema-a): the
+  // venue, the hall's name, "N masa · X / Y kişi yerleşti", one "Planı oku"
+  // (the plan file input, the same import path), "+ Masa ekle" (the same add
+  // button, moved off the plan), the waiting plan suggestions (the review
+  // centre) and a short hint with the legend. Counts are read, never stored.
+  function salonSideHTML(event){
+    const tables=event.tables||[],SM=globalThis.MeritSeatModel;
+    const seated=tables.reduce((n,x)=>n+(Number(tableAssignedPax(event,x.id))||0),0);
+    const cap=SM&&SM.seatingCapacity?SM.seatingCapacity(event):tables.reduce((n,x)=>n+(Number(x.capacity)||0),0);
+    const waiting=((event.analysis&&event.analysis.candidates)||[]).filter(c=>c&&c.status==="unreviewed").length;
+    const legend=[["full","salon.legend.full"],["free","salon.legend.free"],["empty","salon.legend.empty"],["vip","salon.legend.vip"]]
+      .map(([k,key])=>`<li><i class="lg-${k}" aria-hidden="true"></i>${esc(t(key))}</li>`).join("");
+    return`<div class="salon-side-head">${event.hotel?`<small>${esc(event.hotel)}</small>`:""}<h2>${esc(event.salon||t("appbar.venueNotSet"))}</h2><p>${esc(t("salon.summary",{tables:tables.length,seated,cap}))}</p></div>
+      <button type="button" class="btn primary salon-read" data-v8-action="replace-bg">${esc(t("salon.readPlan"))}</button>
+      ${addManuallyFabHTML()}
+      ${waiting?`<button type="button" class="salon-waiting" data-v8-action="open-review-center">${esc(t("salon.waiting",{n:waiting}))}</button>`:""}
+      <p class="salon-hint">${esc(t("salon.hint"))}</p><ul class="salon-legend">${legend}</ul>`;
+  }
+  function addManuallyFabHTML(){return`<button class="planmap-fab" data-v8-action="add" title="${t("action.addManually")}">${icon(ui.v8AddOpen?"x":"plus")}<span>${t("salon.addTable")}</span></button>`;}
 
   function v8Toolbar(event,seating=false){
     // The FREEZE ZONES layer button appears only where there is something to
@@ -188,7 +206,7 @@
     ui=deps.ui;
     VENUE=deps.VENUE;
     ZONES=deps.ZONES;
-    return{addManuallyFabHTML,bulkPanel,contextualCardHTML,planMapToolbarHTML,planModeSwitchHTML,planReviewChipHTML,planSeatsPill,planStatusPillHTML,v8Toolbar};
+    return{addManuallyFabHTML,bulkPanel,contextualCardHTML,planMapToolbarHTML,planModeSwitchHTML,planReviewChipHTML,planSeatsPill,planStatusPillHTML,salonSideHTML,v8Toolbar};
   }
   globalThis.MeritScreenFloorPlan=Object.freeze({create,DEPS:Object.freeze(["esc","eventFreezes","formatTableNumber","getState","getUnverifiedSeating","icon","reviewGroupCount","shownCols","t","tableAssignedPax","tableProvenanceHTML","toolbarBtn","ui","VENUE","ZONES"])});
 })();

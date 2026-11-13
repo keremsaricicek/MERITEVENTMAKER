@@ -81,7 +81,11 @@
   }
   function fitCanvas(){
     const v=document.getElementById("canvasViewport");if(!v)return;
-    const ev=activeEvent(),world=worldSize(ev),c=planBox(ev),x0=Math.min(0,c?c.x0:0),y0=Math.min(0,c?c.y0:0),bw=Math.max(world.width,c?c.x1:0)-x0,bh=Math.max(world.height,c?c.y1:0)-y0;
+    // A plan fills the view like the approved Atlas room (owner 2026-11-13):
+    // fit to the plan's own extent plus the drawn walls' margin; an empty
+    // event still fits the whole world.
+    const ev=activeEvent(),world=worldSize(ev),c=planBox(ev),m=56;
+    const x0=c?c.x0-m:0,y0=c?c.y0-m:0,bw=c?c.x1-c.x0+2*m:world.width,bh=c?c.y1-c.y0+2*m:world.height;
     ui.zoom=Math.max(.2,Math.min((v.clientWidth-42)/bw,(v.clientHeight-42)/bh));
     ui.pan.x=(v.clientWidth-bw*ui.zoom)/2-x0*ui.zoom;ui.pan.y=(v.clientHeight-bh*ui.zoom)/2-y0*ui.zoom;
     applyCanvasTransform();
@@ -121,14 +125,33 @@
   const shownCols=d=>d.placement==="grid"&&!d.colsChosen?bulkLayout(d).cols:d.cols;
   function ghostHTML(){if(!ui.v8AddOpen||ui.bulkDraft?.placement==="repeated")return"";return bulkPositions(ui.bulkDraft).map((p,i)=>`<div class="ghost-object" data-label="${esc((ui.bulkDraft.prefix||"T")+String(i+1).padStart(2,"0"))}" style="left:${p.x}px;top:${p.y}px;width:120px;height:82px"></div>`).join("");}
   const oldViewport=globalThis.canvasViewportHTML;
+  // The hall's walls, Atlas style: a dark outline around the plan's own extent
+  // (every drawn table and venue object, plus a margin). Pure decoration of
+  // the drawing — no object, no data, nothing to select; a plan with nothing
+  // on it has no walls.
+  function roomWallsHTML(event){
+    const items=[...(event.tables||[]),...(event.venueObjects||[])].filter(o=>[o.x,o.y,o.w,o.h].every(v=>Number.isFinite(Number(v))));
+    if(!items.length)return"";
+    let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+    for(const o of items){x0=Math.min(x0,+o.x);y0=Math.min(y0,+o.y);x1=Math.max(x1,+o.x+ +o.w);y1=Math.max(y1,+o.y+ +o.h);}
+    const pad=40,r=v=>Math.round(v);
+    return`<div class="room-walls" aria-hidden="true" style="left:${r(x0-pad)}px;top:${r(y0-pad)}px;width:${r(x1-x0+2*pad)}px;height:${r(y1-y0+2*pad)}px"></div>`;
+  }
   function canvasViewportHTML(event,seating){
-    const html=oldViewport(event,seating);if(seating)return html;
+    const raw=oldViewport(event,seating),walls=roomWallsHTML(event);
+    const html=walls?raw.replace(/(<div class="canvas-world[^"]*"[^>]*>)/,`$1${walls}`):raw;
+    if(seating)return html;
     // Both replacements go through t(), so the v8 status survives a language
     // switch instead of only matching the English string.
     return html.replace("</div><div class=\"canvas-status\"",`${ghostHTML()}</div><div class="canvas-status v8-status"`)
       .replace(t("canvas.editHint"),`${t("canvas.multiSelectHint")}<span class="status-right">${t("canvas.selectedCount",{n:ui.selectedObjectIds.length||0})}</span>`);
   }
-  function floorPlanHTML(event){return`<div class="planmap-shell">${FLOORPLAN.planMapToolbarHTML(event)}${floorAnalyseHTML(event)}${FLOORPLAN.bulkPanel(event)}${canvasViewportHTML(event,false)}${floorEmptyHTML(event)}${FLOORPLAN.contextualCardHTML(event)}${FLOORPLAN.planStatusPillHTML(event)}${FLOORPLAN.addManuallyFabHTML()}</div>`;}
+  // SALON, Atlas layout (owner 2026-11-13, zip temalar/tema-a): the room on the
+  // left with nothing floating over it; a calm right panel holds the hall, the
+  // counts, "Planı oku", "+ Masa ekle", the waiting suggestions, the selected
+  // table's card, the plan status and the view tools — the same elements and
+  // actions as before, moved off the plan.
+  function floorPlanHTML(event){return`<div class="planmap-shell salon-v5"><div class="salon-room">${floorAnalyseHTML(event)}${FLOORPLAN.bulkPanel(event)}${canvasViewportHTML(event,false)}${floorEmptyHTML(event)}</div><aside class="salon-side">${FLOORPLAN.salonSideHTML(event)}${FLOORPLAN.contextualCardHTML(event)}${FLOORPLAN.planStatusPillHTML(event)}${FLOORPLAN.planMapToolbarHTML(event)}</aside></div>`;}
     return{bulkPositions,canvasViewportHTML,firstViewFit,fitCanvas,floorPlanHTML,planFullyInView,refreshGhosts,shownCols,syncBulkFields};
   }
   globalThis.MeritFloorPlanView=Object.freeze({create,DEPS:Object.freeze(["FLOORPLAN","WORLD","activeEvent","applyCanvasTransform","esc","floorAnalyseHTML","floorEmptyHTML","t","ui","worldSize"])});

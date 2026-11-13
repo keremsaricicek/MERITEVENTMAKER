@@ -86,7 +86,8 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(home, "the events home has the one top bar", home);
   if (!home) return;
   checks.ok(home.height <= 56, "the bar is thin (the prototype's 52 px)", home.height);
-  checks.equal(home.items.map((i) => i.label), ["Etkinlik", "Salon", "Misafirler", "Oturma", "Kapı", "Raporlar"],
+  // "Etkinlikler" (plural) since 2026-11-13: the approved Atlas bar (zip temalar/tema-a).
+  checks.equal(home.items.map((i) => i.label), ["Etkinlikler", "Salon", "Misafirler", "Oturma", "Kapı", "Raporlar"],
     "six items, in the prototype's order and words", home.items);
   checks.ok(home.items.every((i) => !i.icon), "hotel signage: words only, no icons", home.items);
   checks.ok(home.items[0].current, "on the events home, Etkinlik is the current item", home.items);
@@ -99,13 +100,24 @@ export default async function run({ page, checks, baseUrl }) {
   for (const a of ["help", "backup-export", "backup-import", "recovery-restore"])
     checks.ok(home.menu.includes(a), `the events home's "${a}" control kept a home in the ⋯ menu`, home.menu);
 
-  // --- 2. light and dark --------------------------------------------------------
+  // --- 2. Ayarlar: light / dark / system (owner 2026-11-11: no appearance buttons in the bar) ---
+  // CHANGED 2026-11-12 by the spec (SPEC-v4 "Owner's notes on Merit Kurumsal" + "Owner
+  // 2026-11-12"): the moon button and the ⋯ theme rows are gone; the same writers are
+  // reached from the Ayarlar page. The behaviours guarded here are the same ones as before
+  // (switch, remember, reload, F9, a throwing storage keeps the switch), plus the five themes.
   checks.equal(home.theme, "light", "a first boot is light");
+  checks.equal(await page.evaluate(() => document.querySelectorAll("header.shell-top [data-shell-theme], header.shell-top [data-shell-skin], header.shell-top svg path[d^='M12.8 9.6']").length), 0,
+    "the bar carries no moon / theme buttons any more", null);
   checks.ok(await navContrast(page) >= 4.5, "light: the bar's text clears 4.5:1", await navContrast(page));
-  await click(page, "[data-shell-theme]");
+  await click(page, "header.shell-top [data-shell-settings]");
+  checks.ok(await page.evaluate(() => { const p = document.getElementById("settingsPage"); return !!p && !p.hidden && p.querySelectorAll("[role=radiogroup]").length >= 5; }),
+    "\"Ayarlar\" in the bar opens the settings page with its choices as radiogroups", null);
+  await click(page, '#settingsPage [data-set="mode"][data-value="dark"]');
   const dark = await page.evaluate(BAR);
-  checks.equal(dark.theme, "dark", "the toggle switches to dark", dark.theme);
+  checks.equal(dark.theme, "dark", "Koyu switches to dark", dark.theme);
   checks.equal(dark.bg, "rgb(19, 26, 35)", "dark is the prototype's classic deep navy surface (#131A23)", dark.bg);
+  checks.equal(await page.evaluate(() => getComputedStyle(document.querySelector(".workspace, .cal-screen, .tl-screen, #app") || document.body).color !== "rgb(36, 32, 24)"), true,
+    "dark reaches the screen content, not only the bar", null);
   checks.ok(await navContrast(page) >= 4.5, "dark: the bar's text clears 4.5:1", await navContrast(page));
   checks.equal(await page.evaluate(() => localStorage.getItem("merit.theme.v1")), "dark", "the choice is remembered");
   await page.reload(); await page.waitForLoadState("networkidle");
@@ -113,44 +125,67 @@ export default async function run({ page, checks, baseUrl }) {
   checks.equal(await page.evaluate(() => document.documentElement.dataset.theme), "dark", "and comes back after a reload");
   await page.keyboard.press("F9");
   checks.equal(await page.evaluate(() => document.documentElement.dataset.theme), "light", "F9 switches back");
+  await click(page, "header.shell-top [data-shell-settings]");
+  const sys = await page.evaluate(() => { document.querySelector('#settingsPage [data-set="mode"][data-value="system"]').click(); return { pref: localStorage.getItem("merit.theme.v1"), theme: document.documentElement.dataset.theme, want: matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light" }; });
+  checks.ok(sys.pref === "system" && sys.theme === sys.want, "Sistem follows the computer's own setting", sys);
   const throwing = await page.evaluate(() => {
     const orig = Storage.prototype.setItem;
     Storage.prototype.setItem = function () { throw new Error("quota"); };
-    try { document.querySelector("[data-shell-theme]").click(); return document.documentElement.dataset.theme; }
+    try { document.querySelector('#settingsPage [data-set="mode"][data-value="dark"]').click(); return document.documentElement.dataset.theme; }
     finally { Storage.prototype.setItem = orig; }
   });
   checks.equal(throwing, "dark", "a storage that throws loses only the memory, never the switch");
-  await page.keyboard.press("F9");
+  await page.evaluate(() => document.querySelector('#settingsPage [data-set="mode"][data-value="light"]').click());
 
-  // --- 2b. two themes: A "Atlas sade" (default) and B "Birleşik" ------------------
+  // --- 2b. five themes: A "Atlas sade" (default), B, C, D, E (zip "temalar") -----------
   checks.equal(home.skin, "a", "a first boot is theme A, Atlas sade");
   const skinFace = () => page.evaluate(() => ({ skin: document.documentElement.dataset.skin, bg: getComputedStyle(document.querySelector("header.shell-top")).backgroundColor,
-    brandFont: getComputedStyle(document.querySelector(".shell-brand b")).fontFamily, pressed: [...document.querySelectorAll("[data-shell-skin]")].filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.shellSkin) }));
+    brandFont: getComputedStyle(document.querySelector(".shell-brand b")).fontFamily, pressed: [...document.querySelectorAll('#settingsPage [data-set="skin"]')].filter((b) => b.getAttribute("aria-checked") === "true").map((b) => b.dataset.value) }));
   const a = await skinFace();
   checks.equal(a.bg, "rgb(247, 248, 245)", "theme A light is the Atlas sade surface (#F7F8F5)", a);
   checks.ok(/Palatino|Iowan|Georgia/.test(a.brandFont), "theme A sets the mark in the serif", a.brandFont);
-  checks.equal(a.pressed, ["a"], "the ⋯ menu shows theme A as the chosen one", a.pressed);
-  await click(page, "header.shell-top .shell-more > summary");
-  await click(page, '[data-shell-skin="b"]');
+  checks.equal(a.pressed, ["a"], "Ayarlar shows theme A as the chosen one", a.pressed);
+  checks.equal(await page.evaluate(() => [...document.querySelectorAll('#settingsPage [data-set="skin"] .set-thumb[data-preview-skin]')].map((n) => n.dataset.previewSkin)), ["a", "b", "c", "d", "e"],
+    "every theme has a live preview thumbnail", null);
+  await click(page, '#settingsPage [data-set="skin"][data-value="b"]');
   const b = await skinFace();
-  checks.equal(b.skin, "b", "the ⋯ menu switches to theme B", b);
+  checks.equal(b.skin, "b", "Ayarlar switches to theme B", b);
   checks.equal(b.bg, "rgb(255, 255, 255)", "theme B light is the combined white surface", b);
   checks.ok(!/Palatino|Iowan/.test(b.brandFont), "theme B keeps the mark in the sans", b.brandFont);
   checks.equal(await page.evaluate(() => localStorage.getItem("merit.skin.v1")), "b", "the theme choice is remembered");
-  for (const [skin, mode] of [["a", "light"], ["a", "dark"], ["b", "light"], ["b", "dark"]]) {
+  // Arrow keys move AND apply inside the radiogroup (keyboard-only operation).
+  await page.focus('#settingsPage [data-set="skin"][data-value="b"]');
+  await page.keyboard.press("ArrowRight");
+  const c = await skinFace();
+  checks.equal([c.skin, c.bg], ["c", "rgb(251, 250, 246)"], "ArrowRight picks theme C, Royal gece (#FBFAF6)", c);
+  checks.equal(await page.evaluate(() => document.activeElement?.dataset.value), "c", "focus follows the chosen option", null);
+  for (const [skin, light, dark] of [["d", "rgb(255, 255, 255)", "rgb(20, 33, 43)"], ["e", "rgb(255, 255, 255)", "rgb(24, 25, 27)"]]) {
+    await page.evaluate((s) => document.querySelector(`#settingsPage [data-set="skin"][data-value="${s}"]`).click(), skin);
+    checks.equal((await skinFace()).bg, light, `theme ${skin.toUpperCase()} light takes its prototype's surface`, null);
+    await page.evaluate(() => { document.documentElement.dataset.theme = "dark"; });
+    checks.equal((await skinFace()).bg, dark, `theme ${skin.toUpperCase()} dark takes its prototype's night surface`, null);
+    await page.evaluate(() => { document.documentElement.dataset.theme = "light"; });
+  }
+  for (const skin of ["a", "b", "c", "d", "e"]) for (const mode of ["light", "dark"]) {
     await page.evaluate(([s, m]) => { document.documentElement.dataset.skin = s; document.documentElement.dataset.theme = m; }, [skin, mode]);
     checks.ok(await navContrast(page) >= 4.5, `theme ${skin.toUpperCase()} ${mode}: the bar's text clears 4.5:1`, await navContrast(page));
   }
+  await page.evaluate(() => document.querySelector('#settingsPage [data-set="skin"][data-value="b"]').click());
+  await page.keyboard.press("Escape");
+  checks.equal(await page.evaluate(() => document.getElementById("settingsPage").hidden), true, "Esc closes the settings page", null);
   await page.reload(); await page.waitForLoadState("networkidle");
   await page.waitForFunction(() => { try { return Array.isArray(state.events) && !!document.querySelector("header.shell-top"); } catch { return false; } });
   checks.equal(await page.evaluate(() => [document.documentElement.dataset.skin, document.documentElement.dataset.theme]), ["b", "light"], "theme B comes back after a reload");
+  await click(page, "header.shell-top [data-shell-settings]");
   const skinThrow = await page.evaluate(() => {
     const orig = Storage.prototype.setItem;
     Storage.prototype.setItem = function () { throw new Error("quota"); };
-    try { document.querySelector('[data-shell-skin="a"]').click(); return document.documentElement.dataset.skin; }
+    try { document.querySelector('#settingsPage [data-set="skin"][data-value="a"]').click(); return document.documentElement.dataset.skin; }
     finally { Storage.prototype.setItem = orig; }
   });
   checks.equal(skinThrow, "a", "a storage that throws loses only the memory of the theme, never the switch");
+  await click(page, "header.shell-top [data-shell-home], header.shell-top .shell-nav-item");
+  checks.equal(await page.evaluate(() => document.getElementById("settingsPage").hidden), true, "a click on a screen in the bar leaves the settings page", null);
 
   // --- 3. the bar in an event ---------------------------------------------------
   await createBlankEvent(page, { name: "Topbar Gala", date: futureDate(20) });
@@ -158,7 +193,7 @@ export default async function run({ page, checks, baseUrl }) {
   const ws = await page.evaluate(BAR);
   checks.equal(ws.tabs, ["command", "floor", "guests", "seating", "live", "reports"],
     "Etkinlik · Salon · Misafirler · Oturma · Kapı · Raporlar are the six screens the event already had", ws.tabs);
-  checks.equal(ws.items.map((i) => i.label), ["Etkinlik", "Salon", "Misafirler", "Oturma", "Kapı", "Raporlar"], "same six words inside an event", ws.items);
+  checks.equal(ws.items.map((i) => i.label), ["Etkinlikler", "Salon", "Misafirler", "Oturma", "Kapı", "Raporlar"], "same six words inside an event", ws.items);
   checks.equal(ws.eventName, "Topbar Gala", "the event's name sits in the bar", ws);
   checks.ok(ws.search, "the guest finder is the command line's field", ws);
   checks.equal(ws.secondRow, 0, "inside an event there is still only one bar", ws);
@@ -188,6 +223,11 @@ export default async function run({ page, checks, baseUrl }) {
   checks.ok(onLive.items.find((i) => i.tab === "live")?.current && onLive.items.filter((i) => i.current).length === 1,
     "the current item follows the screen (Kapı on Live), and only one is current", onLive.items);
 
+  // Kapı opens full screen since 2026-11-12 (SPEC-v4): the bar steps aside and Esc brings it back.
+  checks.equal(await page.evaluate(() => getComputedStyle(document.querySelector("header.shell-top")).display), "none", "on Kapı's full screen the bar steps aside", null);
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() => getComputedStyle(document.querySelector("header.shell-top")).display !== "none", null, { timeout: 5000 });
+
   // --- 4. the command line opens the existing F8 assistant ---------------------
   await click(page, "[data-shell-assistant]");
   checks.ok(await page.evaluate(() => { const p = document.getElementById("assistantPanel"); return !!p && !p.hidden; }),
@@ -208,7 +248,7 @@ export default async function run({ page, checks, baseUrl }) {
   await click(page, '.shell-more [data-v8-action="toggle-lang"]');
   await settle(page);
   const en = await page.evaluate(BAR);
-  checks.equal(en.items.map((i) => i.label), ["Event", "Room", "Guests", "Seating", "Door", "Reports"], "every bar label has its English key", en.items);
+  checks.equal(en.items.map((i) => i.label), ["Events", "Room", "Guests", "Seating", "Door", "Reports"], "every bar label has its English key", en.items);
   await click(page, '.shell-more [data-v8-action="toggle-lang"]');
   await settle(page);
 

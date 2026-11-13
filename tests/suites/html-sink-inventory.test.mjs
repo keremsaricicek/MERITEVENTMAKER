@@ -69,6 +69,8 @@ const INVENTORY = [
     trace: "Two <option>s whose text is t() of fixed keys and whose values are the literals Confirmed / Tentative." },
   { file: "shell-guide.js", fn: "create > renderGuide", target: "root.innerHTML", evidence: "literal",
     trace: "The user guide: hardcoded EN/TR card text and titles chosen by ui.guideLang. No stored or typed content." },
+  { file: "screen-settings.js", fn: "paint", target: "root.innerHTML", evidence: "literal",
+    trace: "The Ayarlar page (2026-11-12): t() strings of fixed keys through esc(); option values are the fixed ids of the bar's own lists (skins a–e, light/dark/system, system/segoe/helvetica, s/m/l, tr/en, on/off) through esc(); the record counts are numbers. The storage provider's name only CHOOSES a fixed key, it is never interpolated; no event, guest or typed text reaches it." },
   { file: "app-guests.js", fn: "renderGuide", target: "root.innerHTML", evidence: "boot-contract",
     trace: "The pre-v8 guide (static GUIDE_EN / GUIDE_TR data), reassigned by app-v8.js." },
 ];

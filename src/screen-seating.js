@@ -99,7 +99,7 @@
       const t_=g.assignment&&byId.get(g.assignment.tableId);
       return`<div class="queue-card ${selectedIds.includes(g.id)?"selected multi-selected":""}" draggable="true" data-seating-guest="${g.id}" tabindex="0" role="button" aria-pressed="${selectedIds.includes(g.id)?"true":"false"}">
         <div class="party-name">${esc(g.name)}</div>
-        <div class="party-sub">${paxDotsHTML(g)}<span>${t("guests.partyOf",{n:paxOf(g)})}</span>${g.vip&&g.vip!=="Standard"?`<span class="vip-tag">${esc(g.vip)}</span>`:""}${t_?`<span class="seat-tag">${esc(formatTableNumber(t_.number))}</span>`:""}</div>
+        <div class="party-sub">${paxDotsHTML(g)}<span>${t("guests.partyOf",{n:paxOf(g)})}</span>${g.vip&&g.vip!=="Standard"?`<span class="vip-tag${g.vip==="VVIP"?" vvip":""}" title="${esc(g.vip)}">${esc(g.vip)}</span>`:""}${t_?`<span class="seat-tag">${esc(formatTableNumber(t_.number))}</span>`:""}</div>
       </div>`;
     }).join("")+(hiddenRecords>0?`<div class="live-more seat-queue-more"><span>${t("seating.showingOf",{shown:shownRecords.length,total:records.length})}</span><button class="btn sm" data-seating-action="queue-more">${t("guests.showMore")}</button></div>`:""):`<div class="mx-empty" style="border:none;background:none;padding:26px 12px">${seatingQueueEmptyHTML(event)}</div>`;
     return`<div class="seat-stage">
@@ -111,7 +111,6 @@
           <input class="filter-input" id="seatingSearch" value="${esc(ui.seatingQuery)}" placeholder="${t("seating.search")}">
         </div>
         <div class="seat-queue-list">${queue}</div>
-        <div class="seat-advice">${smartSeatingHTML(event)}${freezePanelHTML(event)}</div>
       </aside>
       <section class="seat-canvas-col">
         ${v8Toolbar(event,true)}
@@ -120,9 +119,12 @@
           RULES().isHistorical(event)?"":`<button class="btn primary" data-empty-action="go-floor">${t("empty.goFloor")}</button>`)}
         ${selectedTablePanelHTML(event)}
         ${seatingPreviewHTML(event)}
-        <div class="seat-pill">${t("seating.statusPill",{seated:seatedPax,total:totalPax,tables:event.tables.length,free:freeChairs})}</div>
         ${freezeChallengeHTML(event)}
       </section>
+      <aside class="seat-side" aria-label="${esc(t("seating.side"))}">
+        <div class="seat-advice">${smartSeatingHTML(event)}${freezePanelHTML(event)}</div>
+        <section class="seat-summary"><h3>${t("seating.summary")}</h3><p class="seat-pill">${t("seating.statusPill",{seated:seatedPax,total:totalPax,tables:event.tables.length,free:freeChairs})}</p></section>
+      </aside>
     </div>`;
   };
   // ---- SMART SEATING --------------------------------------------------------
@@ -529,6 +531,25 @@
     if(closeCard)closeCard.onclick=()=>{ui.selectedTableId=null;render();};
     document.querySelectorAll("[data-seating-scope]").forEach(b=>b.onclick=()=>{ui.seatingGuestScope=b.dataset.seatingScope;ui.selectedGuestIds=[];ui.selectedGuestId=null;render();});document.querySelectorAll("[data-seating-filter]").forEach(b=>b.onclick=()=>{ui.seatingFilter=b.dataset.seatingFilter;ui.operationalMode=false;render();});
     document.querySelectorAll("[data-seating-guest]").forEach(row=>{row.onclick=e=>{selectGuestRecord(row.dataset.seatingGuest,e,records);render();};row.ondragstart=e=>{if(!ui.selectedGuestIds.includes(row.dataset.seatingGuest))ui.selectedGuestIds=[row.dataset.seatingGuest];e.dataTransfer.setData("application/x-merit-guests",JSON.stringify(ui.selectedGuestIds));e.dataTransfer.setData("application/x-merit-guest",row.dataset.seatingGuest);};});
+    // Hovering (or focusing) a seated guest lights his table and glows his own
+    // seats neon red on the plan (owner 2026-11-11/12). A view decoration only:
+    // classes on the drawn plan, read from guest.assignment, written nowhere.
+    const lightGuest=(id,on)=>{
+      document.querySelectorAll(".seat-canvas-col .guest-hot").forEach(n=>n.classList.remove("guest-hot"));
+      document.querySelectorAll(".seat-canvas-col .guest-seat").forEach(n=>n.classList.remove("guest-seat"));
+      const g=on&&(event.guests||[]).find(x=>x.id===id),a=g&&g.assignment;
+      if(!a)return;
+      const tb=document.querySelector(`.seat-canvas-col .table-object[data-object-id="${CSS.escape(a.tableId)}"]`);
+      if(!tb)return;
+      tb.classList.add("guest-hot");
+      const chairs=tb.querySelectorAll(".chair");
+      (a.seats||[]).forEach(i=>{if(chairs[i])chairs[i].classList.add("guest-seat");});
+    };
+    document.querySelectorAll("[data-seating-guest],[data-occupant-guest]").forEach(row=>{
+      const id=row.dataset.seatingGuest||row.dataset.occupantGuest;if(!id)return;
+      row.addEventListener("mouseenter",()=>lightGuest(id,true));row.addEventListener("mouseleave",()=>lightGuest(id,false));
+      row.addEventListener("focus",()=>lightGuest(id,true));row.addEventListener("blur",()=>lightGuest(id,false));
+    });
     document.querySelectorAll("[data-occupant-guest]").forEach(row=>{if(!row.dataset.occupantGuest)return;row.onclick=e=>{selectGuestRecord(row.dataset.occupantGuest,e,event.guests);render();};row.ondragstart=e=>{if(!ui.selectedGuestIds.includes(row.dataset.occupantGuest))ui.selectedGuestIds=[row.dataset.occupantGuest];e.dataTransfer.setData("application/x-merit-guests",JSON.stringify(ui.selectedGuestIds));};});
     // The table card's primary button. It was rendered by this file and bound
     // only by the OLD bindSeating in app-guests.js, which this file replaces --

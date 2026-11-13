@@ -154,8 +154,11 @@ export default async function run({ page, checks, baseUrl }) {
   await page.evaluate(() => { ui.lang = "tr"; render(); });
 
   // --- 8. theme A: the timeline of plates --------------------------------------
-  await click(page, "header.shell-top .shell-more > summary");
-  await click(page, '[data-shell-skin="a"]');
+  // The theme is chosen on the Ayarlar page since 2026-11-12 (SPEC-v4: no theme
+  // rows in the bar's ⋯ menu); the same writer, the same re-render.
+  await click(page, "header.shell-top [data-shell-settings]");
+  await click(page, '#settingsPage [data-set="skin"][data-value="a"]');
+  await page.keyboard.press("Escape");
   await settle(page);
   const TL = `(() => {
     const s = document.querySelector(".cal-screen"); if (!s) return null;

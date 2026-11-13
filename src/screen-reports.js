@@ -288,12 +288,12 @@
             <div class="sheet-chip"><b>${t("reports.sheetUnassigned")}</b><span>${t("reports.sheetNoteGuests",{n:unassignedPax})}</span></div>
           </div>
           <button class="btn primary btn-export" data-report="xlsx">${icon("download")}${t("reports.exportTablePlan")}</button>
-          <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="print">${icon("image")}${t("reports.printTablePlan")}</button>
+          <button class="btn report-btn" data-report="print">${icon("image")}${t("reports.printTablePlan")}</button>
           <button class="btn report-btn" data-report="door">${icon("door")}${t("reports.printDoorList")}</button>
           <button class="btn report-btn" data-report="summary">${icon("check")}${t("reports.printSummary")}</button>
           <button class="btn report-btn" data-report="junket">${icon("download")}${t("reports.junketExport")}</button>
           <button class="btn report-btn" data-report="night">${icon("download")}${esc(t("reports.nightExport"))}</button>
-          <button class="btn" style="width:100%;justify-content:center;margin-top:8px" data-report="csv">${icon("download")}${t("reports.guestCsv")}</button>
+          <button class="btn report-btn" data-report="csv">${icon("download")}${t("reports.guestCsv")}</button>
           <p style="font-size:11px;color:var(--muted-2);margin:12px 0 0;line-height:1.45">${t("reports.sheetsInEnglish")}</p>
         </aside>
       </div>

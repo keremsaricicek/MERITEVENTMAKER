@@ -173,10 +173,12 @@ export default async function run({ page, checks, baseUrl }) {
   // check fails; with the mic enabled unconditionally the "yakında" check fails.
   await page.keyboard.press("Escape");
   const web0 = await page.evaluate(() => { try { return localStorage.getItem("merit.webResearch.v1"); } catch { return "x"; } });
-  await page.click("header.shell-top .shell-more > summary");
-  const sw = await page.evaluate(() => ({ off: document.querySelector("[data-shell-research]")?.getAttribute("aria-pressed"), privacy: document.querySelector("[data-research-privacy]")?.textContent || "" }));
-  checks.ok(web0 === null && sw.off === "false" && /misafir adları/.test(sw.privacy), "web research is OFF by default, with the privacy text in ⋯ → Ayarlar", sw);
-  await page.click("[data-shell-research]"); await settle(page);
+  // CHANGED 2026-11-12 by the spec (SPEC-v4: no settings in the bar menu): the switch lives on the Ayarlar page.
+  await page.click("header.shell-top [data-shell-settings]");
+  const sw = await page.evaluate(() => ({ off: document.querySelector('#settingsPage [data-set="research"][aria-checked="true"]')?.dataset.value === "off" ? "false" : "true", privacy: document.getElementById("settingsPage")?.textContent || "" }));
+  checks.ok(web0 === null && sw.off === "false" && /misafir adları/.test(sw.privacy), "web research is OFF by default, with the privacy text on Ayarlar", sw);
+  await page.click('#settingsPage [data-set="research"][data-value="on"]'); await settle(page);
+  await page.keyboard.press("Escape");
   checks.equal(await page.evaluate(() => localStorage.getItem("merit.webResearch.v1")), "on", "the switch turns it on and is remembered");
   await page.evaluate(() => { window.__sent = []; window.__fetch0 = window.fetch; window.fetch = async (url, init) => { window.__sent.push({ url: String(url), body: init && init.body }); return new Response(JSON.stringify({ ok: true, provider: "scripted", results: [{ title: "Merit Royal", url: "https://example.test/x", snippet: "<b>Kapasite</b> 1200" }] }), { headers: { "content-type": "application/json" } }); }; });
   await page.keyboard.press("F8");

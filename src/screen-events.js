@@ -211,7 +211,8 @@
     const undated=events.filter(e=>!validDate(e.date));
     const count=t(events.length===1?"home.eventCount1":"home.eventsCount",{n:events.length});
     const bar=topbarHTML({screen:"events",homeTarget:sel?{id:sel.id,historical:RULES().isHistorical(sel)}:null});
-    if(skin&&skin()==="a")return`${bar}<section class="cal-screen tl-screen theme-scope">
+    // The timeline of plates is Atlas's and C/D/E's (their prototypes); B keeps its calendar.
+    if(skin&&skin()!=="b")return`${bar}<section class="cal-screen tl-screen theme-scope">
       <div class="mx-head cal-head tl-head"><div><h1>${esc(t("cal.title"))}</h1><p>${esc(t("tl.subtitle"))} · ${esc(count)}</p></div><button type="button" class="btn primary" data-action="create-event">${icon("plus")}${esc(t("cal.newEvent"))}</button></div>
       ${timelineHTML(events,selId)}
       ${detailHTML(sel,history)}

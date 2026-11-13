@@ -211,6 +211,32 @@
     const s=table.surface;if(!s||![s.x,s.y,s.w,s.h].every(Number.isFinite))return"";
     return` style="left:${s.x}%;top:${s.y}%;width:${s.w}%;height:${s.h}%"`;
   }
+  // The occupancy ring on Oturma (owner 2026-11-11): grey = boş, green = yer
+  // var, amber = dolmak üzere (80 % or more), red = dolu. Derived from the
+  // seats already counted for the drawing; stored nowhere. A table that cannot
+  // seat anybody (capacity 0) gets no ring.
+  // A table that records NO chairs (a symbolic table: capacity only) still
+  // reads as a dining table in the Atlas drawing: its logical seats are marked
+  // around it as pure decoration. They are <i class="seat-mark">, never
+  // ".chair", never in table.chairs, never data (physical chair ≠ logical
+  // seat); a mark is filled where that logical seat is taken.
+  function seatMarksHTML(table,used){
+    const n=Math.min(40,Math.max(0,Math.floor(Number(table.capacity)||0)));
+    if(!n)return"";
+    const round=/round|bistro/.test(String(table.type||"")),out=[];
+    for(let i=0;i<n;i++){
+      let x,y;
+      let rot=0;
+      if(round){const a=-Math.PI/2+i/n*Math.PI*2;x=50+Math.cos(a)*44;y=50+Math.sin(a)*44;rot=a*180/Math.PI+90;}
+      else{const top=Math.ceil(n/2),row=i<top?0:1,k=row?i-top:i,m=row?n-top:top;x=8+84*(k+.5)/Math.max(1,m);y=row?96:4;rot=row?180:0;}
+      out.push(`<i class="seat-mark${used.has(i)?" taken":""}${used.size?"":" none"}" aria-hidden="true" style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;transform:translate(-50%,-50%) rotate(${Math.round(rot)}deg)"></i>`);
+    }
+    return out.join("");
+  }
+  function occBand(seated,capacity){
+    if(!(capacity>0))return"";
+    return seated<=0?"occ-empty":seated>=capacity?"occ-full":seated/capacity>=.8?"occ-near":"occ-free";
+  }
   tableObjectHTML = function(event,table,seating){
     RULES().syncTableChairs(table);
     const selected=(!seating&&(ui.selectedObjectId===table.id||ui.selectedObjectIds.includes(table.id)))||(seating&&ui.selectedTableId===table.id);
@@ -241,7 +267,7 @@
     // over the drawing, and never a smooth field interpolated between tables,
     // which would invent a figure for floor the product knows nothing about.
     const loadRow=ui.loadLayer?LOADPANEL.loadBandMap(event)?.get(table.id):null;
-    return`<div class="table-object ${esc(table.type)} ${selected?"selected multi-selected":""} ${highlighted?"highlighted":""} ${frozen?"frozen":""} ${unavailable?"unavailable":""} ${loadRow?"load-"+loadRow.band:""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match operational-match":""}" data-object-id="${table.id}" data-object-kind="table" tabindex="0" role="button" aria-pressed="${selected?"true":"false"}" aria-label="${esc([t("a11y.table",{number:formatTableNumber(table.number),seated:assigned,capacity:table.capacity}),frozen?t("a11y.frozen"):"",unavailable?t("a11y.unavailable"):""].filter(Boolean).join(", "))}" style="left:${table.x}px;top:${table.y}px;width:${table.w}px;height:${table.h}px;transform:rotate(${table.rotation||0}deg);z-index:${table.z||10}">${chairs}<div class="table-surface"${surfaceStyle(table)}><span class="table-label">${esc(formatTableNumber(table.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${table.capacity}</span>${frozen?`<span class="table-frozen" title="${esc(t("freeze.tableFrozen"))}">${icon("lock")}</span>`:""}${unavailable?`<span class="table-unavailable" title="${esc(t("avail.tableUnavailable"))}">${icon("alert")}</span>`:""}${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${esc(t("seating.emptySeats",{n:empty}))}</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`;
+    return`<div class="table-object ${esc(table.type)} ${selected?"selected multi-selected":""} ${highlighted?"highlighted":""} ${frozen?"frozen":""} ${unavailable?"unavailable":""} ${loadRow?"load-"+loadRow.band:""} ${seating?occBand(assigned,table.capacity):""} ${seating&&!match?"dimmed":""} ${seating&&match&&ui.seatingFilter!=="all"?"filter-match operational-match":""}" data-object-id="${table.id}" data-object-kind="table" tabindex="0" role="button" aria-pressed="${selected?"true":"false"}" aria-label="${esc([t("a11y.table",{number:formatTableNumber(table.number),seated:assigned,capacity:table.capacity}),frozen?t("a11y.frozen"):"",unavailable?t("a11y.unavailable"):""].filter(Boolean).join(", "))}" style="left:${table.x}px;top:${table.y}px;width:${table.w}px;height:${table.h}px;transform:rotate(${table.rotation||0}deg);z-index:${table.z||10}">${chairs}${table.chairs.length?"":seatMarksHTML(table,used)}<div class="table-surface"${surfaceStyle(table)}><span class="table-label">${esc(formatTableNumber(table.number))}</span><span class="table-occ">${seating?assigned+" / ":""}${table.capacity}</span>${frozen?`<span class="table-frozen" title="${esc(t("freeze.tableFrozen"))}">${icon("lock")}</span>`:""}${unavailable?`<span class="table-unavailable" title="${esc(t("avail.tableUnavailable"))}">${icon("alert")}</span>`:""}${seating&&ui.seatingFilter==="available"&&empty?`<span class="table-empty">${esc(t("seating.emptySeats",{n:empty}))}</span>`:""}</div>${selected&&!seating?handlesHTML():""}</div>`;
   };
 
   // ---- FREEZE ZONES: one resolution, read by everything ---------------------
@@ -399,7 +425,9 @@
       if(ui.tab==="seating")return`<div class="v8-lock">${seatingHTML(event)}</div>`;
       return reportsHTML(event);
     }
-    if(ui.tab==="command")return COMMAND.commandCenterHTML(event);
+    // Hazır mı? in the Atlas frame (owner 2026-11-13, zip temalar/tema-a): the
+    // room on the left, the readiness content in a calm right panel.
+    if(ui.tab==="command")return`<div class="hz-v5"><div class="hz-room">${LIVE.roomHTML(event)}</div><aside class="hz-side"><h2 class="hz-title">${esc(t("hz.title"))}</h2>${COMMAND.commandCenterHTML(event)}</aside></div>`;
     // One tab, two modes on the same drawing. Review used to be a screen that
     // replaced the shell; it is a mode now, so the event identity, the tab bar
     // and the global guest search survive the trip.
@@ -594,7 +622,7 @@
     const add=additionalOf(g),bits=[];
     bits.push(`${paxDotsHTML(g)}<span>${t("live.partyOf",{n:paxOf(g)})}</span>`);
     if(add)bits.push(`<span>${t("live.companionsOf",{n:add})}</span>`);
-    if(g.vip&&g.vip!=="Standard")bits.push(`<span class="vip-tag">${esc(g.vip)}</span>`);
+    if(g.vip&&g.vip!=="Standard")bits.push(`<span class="vip-tag${g.vip==="VVIP"?" vvip":""}" title="${esc(g.vip)}">${esc(g.vip)}</span>`);
     return bits.join("");
   }
   // `byId` is optional so single-row callers stay simple; list callers pass
@@ -1047,6 +1075,18 @@
   const PORTABILITY=globalThis.MeritDataPortability.create({
     ask:(...a)=>ask(...a),getState:()=>state,loggableError:(...a)=>loggableError(...a),migrateEvent:(...a)=>STORAGE.migrateEvent(...a),nowISO:(...a)=>nowISO(...a),parseRecordText:(...a)=>STORAGE.parseRecordText(...a),parseRoot:(...a)=>STORAGE.parseRoot(...a),RECOVERY:(...a)=>RECOVERY(...a),relativeTime:(...a)=>relativeTime(...a),render:(...a)=>render(...a),RULES:(...a)=>RULES(...a),saveState:(...a)=>saveState(...a),setState:next=>{state=next;},storageProvider,t:(...a)=>t(...a),toast:(...a)=>toast(...a),TRAIL:(...a)=>TRAIL(...a),ui,uid:(...a)=>uid(...a),
   });
+  // The Ayarlar page: controls only; every choice goes to the writer that
+  // already owned it (the bar's appearance, ui.lang, Mimar's research, the
+  // plan's second look, the backup functions).
+  const SETTINGS=globalThis.MeritScreenSettings.create({
+    counts:()=>({events:state.events.length,guests:state.events.reduce((n,e)=>n+((e&&e.guests)||[]).length,0)}),
+    diskBackup:()=>!!(globalThis.MeritDiskBackup&&globalThis.MeritDiskBackup.available()),
+    esc:(...a)=>esc(...a),exportBackup:()=>PORTABILITY.exportBackup(),getLang:()=>(ui.lang==="en"?"en":"tr"),
+    importBackup:()=>document.getElementById("backupFileInput")?.click(),openMimar:()=>ASSIST.toggle(true),render:(...a)=>render(...a),
+    research:TOPBAR.research,restoreSnapshot:()=>PORTABILITY.restoreLatestSnapshot(),saveNow:()=>saveState(true),
+    secondLook:()=>VLMSCREEN.secondLook||null,setLang:lang=>{ui.lang=lang==="en"?"en":"tr";render();},
+    storageStatus:()=>globalThis.MERIT_STORAGE_STATUS||null,t:(...a)=>t(...a),topbar:TOPBAR,
+  });
   function bindV8Common(){
     document.querySelectorAll("[data-action='create-event']").forEach(b=>b.onclick=SETUP.startNewEvent);document.querySelectorAll("[data-action='help']").forEach(b=>b.onclick=openGuide);document.querySelectorAll("[data-open-event]").forEach(b=>b.onclick=()=>openEvent(b.dataset.openEvent));// Row-level open + per-row action buttons now coexist on Home, so the
 // buttons must not bubble into the row's open handler.
@@ -1123,11 +1163,11 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     });
   }
   function bindShellBar(){
-    document.querySelectorAll("[data-shell-theme]").forEach(b=>b.onclick=()=>TOPBAR.theme.toggle());
+    // Theme, Açık/Koyu, text, language, Mimar's switches and backups live on
+    // the Ayarlar page (src/screen-settings.js); the bar only opens it.
+    document.querySelectorAll("[data-shell-settings]").forEach(b=>b.onclick=()=>SETTINGS.toggle());
+    SETTINGS.afterRender();
     bindPlanDrop();
-    // A theme may change what a screen shows (A: the timeline, B: the calendar).
-    document.querySelectorAll("[data-shell-research]").forEach(b=>b.onclick=()=>{TOPBAR.research.set(!TOPBAR.research.enabled());render();});
-    document.querySelectorAll("[data-shell-skin]").forEach(b=>b.onclick=()=>{TOPBAR.skin.set(b.dataset.shellSkin);render();});
     // "Sonraki: X →" is the same move as clicking X in the bar.
     document.querySelectorAll("[data-shell-next]").forEach(b=>b.onclick=()=>{const tab=document.querySelector(`header.shell-top [data-tab="${b.dataset.shellNext}"]`);if(tab)tab.click();});
     document.querySelectorAll("[data-shell-assistant]").forEach(b=>b.onclick=()=>ASSIST.toggle(true));
