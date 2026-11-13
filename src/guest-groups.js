@@ -66,10 +66,12 @@
   }
   // groups sitting at more than one table (for "bugün ne eksik" and the seating warning)
   function spread(event) {
-    const out = [];
+    const out = [], byId = new Map();
+    // the first table with an id, as find() returned -- looked up, not scanned per guest
+    for (const t of event.tables || []) if (!byId.has(t.id)) byId.set(t.id, t);
     for (const h of hosts(event)) {
       const at = new Map();
-      for (const g of h.guests) if (g.assignment) { const t = (event.tables || []).find((x) => x.id === g.assignment.tableId); if (t) at.set(t.number, (at.get(t.number) || 0) + pax(g)); }
+      for (const g of h.guests) if (g.assignment) { const t = byId.get(g.assignment.tableId); if (t) at.set(t.number, (at.get(t.number) || 0) + pax(g)); }
       if (at.size > 1) out.push({ host: h.host, tables: [...at.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => n) });
     }
     return out;

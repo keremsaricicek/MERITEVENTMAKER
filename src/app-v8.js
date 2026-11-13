@@ -173,8 +173,25 @@
   // (MODULARIZATION-ORDER step 3a) and is reached only through its published
   // object, so a call site says which side of the boundary it is on.
   const OCC=()=>globalThis.MeritOccupancy;
+  // ONE PASS OVER THE GUESTS PER RENDER, not two per table. The canvas asks
+  // "which seats are used here" twice for every table (the filter and the
+  // badge), and each answer walked every guest: 600 walks of 3,000 records per
+  // Seating render at 300 tables, ~15 ms of every click (measured 2026-11-12).
+  // The index lives only for one render() pass (and one mutation epoch inside
+  // it), so it can never outlive a change: outside render() the per-table
+  // functions answer exactly as before.
+  let seatIndexPass=null;
+  const NO_SEATS=new Set();
+  function usedSeatsAt(event,tableId,live){
+    if(!seatIndexPass)return live?OCC().liveUsedIndexes(event,tableId):occupiedSeatIndexes(event,tableId);
+    const key=live?"live":"planned";
+    let memo=seatIndexPass[key];
+    if(!memo||memo.event!==event||memo.guests!==event.guests||memo.epoch!==mutationEpoch)
+      memo=seatIndexPass[key]={event,guests:event.guests,epoch:mutationEpoch,map:live?OCC().liveIndex(event):OCC().plannedIndex(event)};
+    return memo.map.get(tableId)||NO_SEATS;
+  }
   tableMatchesFilter = function(event,table){
-    const used=ui.operationalMode?OCC().liveUsedIndexes(event,table.id):occupiedSeatIndexes(event,table.id);
+    const used=usedSeatsAt(event,table.id,!!ui.operationalMode);
     // Logical seats, matching the "N EMPTY" badge tableObjectHTML() draws
     // one function below -- the filter and the badge used to disagree on a
     // table whose chairs array was not its capacity.
@@ -198,7 +215,7 @@
     RULES().syncTableChairs(table);
     const selected=(!seating&&(ui.selectedObjectId===table.id||ui.selectedObjectIds.includes(table.id)))||(seating&&ui.selectedTableId===table.id);
     const highlighted=ui.highlightId===table.id,match=!seating||tableMatchesFilter(event,table);
-    const used=seating&&ui.operationalMode?OCC().liveUsedIndexes(event,table.id):occupiedSeatIndexes(event,table.id);
+    const used=usedSeatsAt(event,table.id,!!(seating&&ui.operationalMode));
     const assigned=used.size, empty=Math.max(0,table.capacity-assigned);
     // Every entry in `table.chairs` is a chair the plan really has, so all
     // of them draw. A symbolic table's ring stays silent because it has no
@@ -1167,8 +1184,10 @@ document.querySelectorAll("[data-history-event] .row-icons").forEach(el=>el.ondb
     // recovery screen is announced in the right language too.
     const lang=ui.lang==="en"?"en":"tr";
     if(document.documentElement.lang!==lang)document.documentElement.lang=lang;
+    const outerPass=seatIndexPass;seatIndexPass={};
     try{const out=renderScreen();schedulePlanTextPrefetch();return out;}
     catch(error){renderFailure(error);}
+    finally{seatIndexPass=outerPass;}
   };
   // After the frame that shows the plan, never inside it.
   function schedulePlanTextPrefetch(){

@@ -37,6 +37,35 @@
     return used;
   }
 
+  // THE SAME TWO ANSWERS FOR EVERY TABLE AT ONCE, in one pass over the guests:
+  // tableId -> Set of seat indexes. plannedIndex(event).get(id) is exactly
+  // occupiedSeatIndexes(event, id) (app.js) and liveIndex(event).get(id) is
+  // exactly liveUsedIndexes(event, id); a table nobody uses has no entry. The
+  // canvas asked the per-table question twice per table, so a render at 3,000
+  // records and 300 tables walked the guest list 600 times (measured
+  // 2026-11-12, tests/suites/seating-scale.test.mjs). Read-only results: the
+  // caller must not add to the sets.
+  function plannedIndex(event) {
+    const by = new Map();
+    for (const g of event.guests || []) {
+      const id = g.assignment?.tableId;
+      if (!id) continue;
+      let used = by.get(id);
+      if (!used) by.set(id, used = new Set());
+      for (const s of g.assignment.seats || []) used.add(Number(s));
+    }
+    return by;
+  }
+  function liveIndex(event) {
+    const by = new Map(), at = (id) => { let used = by.get(id); if (!used) by.set(id, used = new Set()); return used; };
+    for (const g of event.guests || []) {
+      if (g.arrivalStatus === "No Show") continue;
+      if (g.assignment?.tableId) { const used = at(g.assignment.tableId); (g.assignment.seats || []).forEach((index) => used.add(Number(index))); }
+      else if (!g.assignment && g.livePlacement?.tableId) { const used = at(g.livePlacement.tableId); (g.livePlacement.seats || []).forEach((index) => used.add(Number(index))); }
+    }
+    return by;
+  }
+
   // The door's figures. Free seats are counted on the LOGICAL seat space:
   // reading `chairs.length` made a symbolic table report zero free seats
   // while the same table was happily accepting assignments.
@@ -79,5 +108,5 @@
     return { ok: true, placement: guest.livePlacement };
   }
 
-  globalThis.MeritOccupancy = { version: 1, liveUsedIndexes, liveStats, placeLive };
+  globalThis.MeritOccupancy = { version: 1, liveUsedIndexes, plannedIndex, liveIndex, liveStats, placeLive };
 })();

@@ -124,6 +124,7 @@
     return { constraints: answered, unevaluated };
   }
 
+  const NONE = new Set();
   function seatsTaken(guests, tableId, exceptGuestId) {
     const used = new Set();
     for (const g of guests) {
@@ -167,11 +168,26 @@
     // model is the host, because a guest's own companions are inside the record.
     const host = String(guest.invitedBy || "").trim();
     const hostZones = new Map();
+    // Looked up, not scanned: seatsTaken() per table and tables.find() per
+    // guest made one recommendation O(tables x guests), ~9 ms on every render
+    // with a guest selected at 3,000 records (measured 2026-11-12). Same
+    // answers: the first table with an id, and each table's seats minus this
+    // guest's own.
+    const tableById = new Map();
+    for (const t of tables) if (!tableById.has(t.id)) tableById.set(t.id, t);
+    const takenAt = new Map();
+    for (const g of guests) {
+      if (!g || g.id === guest.id || !g.assignment) continue;
+      const id = g.assignment.tableId;
+      let used = takenAt.get(id);
+      if (!used) takenAt.set(id, used = new Set());
+      for (const s of g.assignment.seats || []) used.add(Number(s));
+    }
     if (host) {
       for (const g of guests) {
         if (g.id === guest.id || String(g.invitedBy || "").trim() !== host) continue;
         if (!g.assignment) continue;
-        const t = tables.find((x) => x.id === g.assignment.tableId);
+        const t = tableById.get(g.assignment.tableId);
         if (t && t.zone) hostZones.set(t.zone, (hostZones.get(t.zone) || 0) + 1);
       }
     }
@@ -198,7 +214,7 @@
         blocked.push({ tableId: t.id, number, why: BLOCKED.FROZEN, freezes: frozen.get(t.id) });
         continue;
       }
-      const used = seatsTaken(guests, t.id, guest.id);
+      const used = takenAt.get(t.id) || NONE;
       const free = num(t.capacity) - used.size;
       // The party is one record and sits at one table. A table with room for
       // three of a four-pax record is not an option that "nearly works".
