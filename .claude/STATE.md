@@ -253,3 +253,9 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
 ## 2026-11-13 — seating speed landed (d35d4de); follow-up after design merge
 - Unassign 478→238 ms, assign 339→269 ms (3,000 records). Search/table switch unchanged: full-screen redraw.
 - TODO after the design branch lands: perf proposals 1 (search redraws only the list, 238→20 ms) and 2 (table switch updates only the card, 258→8.5 ms), 3 (lighter chair CSS). Harness: $S/seatperf/ (bench.mjs, ab2.log, proto/).
+
+## 2026-11-13 15:35 UTC — handover
+- Design branch `redesign-v4-product` (worktree agent-aafb8400c45a27ba2, NOT merged): 5 themes + Ayarlar + control rules; Theme A matches zip tema-a on Salon, bar, Misafirler only. Left: A's Oturma/Kapı/Hazır mı/Etkinlikler/Raporlar; B–E screen fidelity. Pairs: $S/pairs/. Merge conflict: script count → 137.
+- Owner decisions pending: Oturma right panel (tema-a has none), Kapı full screen (tema-a not), bar extras (search/readiness/⋯/Ayarlar).
+- Trainings: g6 vbench tuck2-S running; then blind4, s1, B6d exam → CHAIN-S-DONE → master2 (g7, chainR2). Keep-alive: until MASTER2-DONE loop, run_in_background.
+- Demo artifact 9EMAwxAhzuNx7qssJxWaSE; build via $S/wt-demo (checkout commit, build-offline, strip CSP, escape).
