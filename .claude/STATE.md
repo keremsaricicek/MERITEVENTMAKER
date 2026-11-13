@@ -249,3 +249,7 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
   Both offline builds rebuilt, verify:offline 47/0. Pushed.
 - Next: trainings under master.sh (runR → chainV → g6) → verdicts; then design implementation on approved themes (Atlas default).
 - 2026-11-12: CODE-HEALTH-2026-11.md + ownership map/inventory/order updated with the gate results (tip and landed; fingerprint 28/28, workbook byte-identical). WIP branch kept.
+
+## 2026-11-13 — seating speed landed (d35d4de); follow-up after design merge
+- Unassign 478→238 ms, assign 339→269 ms (3,000 records). Search/table switch unchanged: full-screen redraw.
+- TODO after the design branch lands: perf proposals 1 (search redraws only the list, 238→20 ms) and 2 (table switch updates only the card, 258→8.5 ms), 3 (lighter chair CSS). Harness: $S/seatperf/ (bench.mjs, ab2.log, proto/).
