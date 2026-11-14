@@ -2123,6 +2123,23 @@ Detector v5-s against v2 (measured the same day, same sets, threshold 0.5):
 seen (regression only); the zone and number questions are measured on synthetic crops only — no real plan has
 zone or number crops labelled for this question, so no real-venue accuracy exists for them.
 
+### 2026-11-14 — runS + v5-s verdict (bars above, unchanged; `$S/g6/verdict.py`)
+
+- **Detector v5-s: NOT SHIPPED.** On the synthetic exam it passes every row (phantom 0.004/0.005, tables
+  recall 0.953/1.0, chairs recall 0.993/0.997, style G/P). It fails the no-drop rule on five of six older
+  synthetic sets, all on **column recall** (e.g. gen3val 0.691 → 0.576); the real Golden+ORNEK benchmark
+  rows were not run, so they count as failed, not passed. v2 stays.
+- **runS: NOT SHIPPED.** On its own synthetic exam: number PASS (exact 0.904, agreed-wrong 0.028), clutter
+  phantom 0.0 PASS, zone FAIL (aisle 0.417), chairs FAIL (0.778, agreed-wrong 0.111). Regression vs B6d
+  fails on real ID one-look (0.943 vs 0.986) and tuck2 CHAIRS (0.604 vs 0.74). **B6d stays**; nothing new
+  is wired.
+- `v5-s1` was **not measured** (its blind files are missing in this container); it is reported as missing,
+  never as passed.
+- The verdict script read a `style` field the exam rows do not carry; it now takes the style from the
+  family prefix (`G-*`/`P-*`), the same split the bar names. No bar or number was changed.
+- All runS/v5-s numbers are SYNTHETIC exams except the rows named real/tuck2; none is an unseen-venue score.
+- g7's base is therefore detector v2 and VLM runB6d, as its pre-registration says.
+
 ## 2026-11-08 — runR: English for every kind of input; speed; voice 2 (all three written before any runR data was trained on, any speed option was measured, or any clip was made or heard)
 
 **What was read before this section (stated).** q08's readings on the SEEN sets en9/entypo9/en10/entypo10/typo10
