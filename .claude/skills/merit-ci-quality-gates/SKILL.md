@@ -57,6 +57,7 @@ exit semantics, not its step name.
 | `npm test` | RELEASE GATE | any failed check in any fast suite; any console error or page error |
 | `npm run test:slow` | RELEASE GATE | the same, for the suites that run real detection on the real plan |
 | `npm run vendor:test` | RELEASE GATE | the pinned OCR engine or language data failing to download. Everything after it would otherwise measure a different product |
+| `npm run audit:deps` | INFO | never: prints known vulnerabilities in runtime dependencies (`npm audit --omit=dev`), or NOT RUN when npm audit gave no report; read by a human |
 | `npm run build:offline` | RELEASE GATE | the build throwing. In the three jobs that only need it as setup, a failure there fails that job too |
 | `npm run build:offline-full` | RELEASE GATE | the build throwing |
 | `npm run verify:offline` | RELEASE GATE | the BUILT artifacts failing to boot, making an off-origin request, or failing real OCR (27 checks) |

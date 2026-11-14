@@ -10,6 +10,7 @@
     "test:slow": "node tests/run.mjs --tag=slow",
     "test:list": "node tests/run.mjs --list",
     "serve": "node tests/serve.mjs",
+    "audit:deps": "node scripts/dep-audit.mjs",
     "serve:vlm": "node server/vlm-relay.mjs",
     "benchmark": "node benchmarks/run-benchmark.mjs",
     "benchmark:baseline": "node benchmarks/record-baseline.mjs",

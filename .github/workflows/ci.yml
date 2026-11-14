@@ -66,6 +66,11 @@ jobs:
       - name: Regression suite
         run: npm test
         id: test
+      # INFO: known vulnerabilities in runtime dependencies, for a human to read.
+      # Never blocks (the script exits 0 and says NOT RUN when npm audit cannot).
+      - name: Dependency audit (runtime, INFO)
+        run: npm run audit:deps
+        id: audit-deps
       # Every job ends by recording its steps' outcomes for the release-report
       # job (if: always(), so a failed job is recorded too). Recording decides
       # nothing; the verdict is scripts/release-report.mjs's.

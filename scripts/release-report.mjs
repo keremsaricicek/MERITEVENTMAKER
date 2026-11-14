@@ -99,6 +99,7 @@ export const EVIDENCE = {
   "test": "the job log (every suite and check, printed; downloads in tests/.artifacts/)",
   "test-slow": "the job log (every suite and check, printed; downloads in tests/.artifacts/)",
   "vendor-test": ".vendor-cache/ (pinned OCR/SheetJS/PDF.js tarballs)",
+  "audit-deps": "the job log (npm audit --omit=dev summary)",
   "build-offline": "dist/index-offline.html",
   "build-offline-full": "dist/merit-offline/",
   "verify-offline": "the job log (every check of the built artifacts, run)",
