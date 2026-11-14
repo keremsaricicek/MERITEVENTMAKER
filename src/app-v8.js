@@ -929,10 +929,9 @@
     voice:{available:()=>relayStatus().then(s=>!!(s&&s.voice&&s.voice.configured&&globalThis.MeritVoiceInput)),createRecorder:()=>globalThis.MeritVoiceInput.createRecorder({lang:ui.lang==="en"?"en":"tr"})},
     research:{enabled:()=>!!(globalThis.MeritWebResearch&&TOPBAR.research.enabled()),prepare:(q)=>{const e=activeEvent();return globalThis.MeritWebResearch.prepare(q,{guestNames:e?e.guests.map(g=>g.name):[]});},send:(query)=>globalThis.MeritWebResearch.send(query)},
     // The second reader: what the rules could not place, read by the pinned chat
-    // model on this machine through the relay (server/assistant-reader.mjs), and
-    // its small-talk reply for what is neither question nor command; null when
-    // no relay serves this page or no reader is configured.
-    chatText:async(text)=>{if(!relayHere())return null;try{const r=await fetch("/vlm-relay/chat",{method:"POST",headers:{"content-type":"application/json","x-merit-relay":"1"},body:JSON.stringify({text}),cache:"no-store",credentials:"same-origin"});if(!r.ok)return null;const j=await r.json();return j&&j.ok&&typeof j.reply==="string"?j.reply:null;}catch{return null;}},
+    // model on this machine through the relay (server/assistant-reader.mjs). Mimar
+    // does not chat: what is neither question nor command gets one fixed answer
+    // (owner 2026-11-14, suite assistant-offtopic).
     // → MeritAssistantSecondReader.outcome(): a reading, none, or why the model did not read (no relay, off, down)
     // EXPECTED ABSTENTION: a reply that is not JSON becomes body null, which outcome()
     // reports as the model not reading, with its HTTP code — shown in the panel.

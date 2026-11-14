@@ -15,9 +15,10 @@
 //   A READING OR NOTHING. A reply outside the schema is no reading; a request
 //     with any other field, too long, or from another site is refused before
 //     the model is called.
-//   SMALL TALK IS MARKED. What neither the rules nor the reader place gets the
-//     same model's short reply, marked as not resting on the records; it
-//     changes nothing.
+//   NO SMALL TALK (owner 2026-11-14). What neither the rules nor the reader
+//     place gets ONE fixed answer; the model is asked to read it once and never
+//     to chat (it invented weather and an exchange rate when it did). It changes
+//     nothing.
 //   HYBRID ORDER (as q08 was raced and shipped, --order hybrid --theta 0.91): the
 //     model's reading when the rules read nothing or it is sure, else the rules';
 //     the reading is answered and acted on by the same code — a command is SHOWN
@@ -204,14 +205,13 @@ export default async function run({ page, checks, repoRoot }) {
     replyWith = JSON.stringify(reading);
     lp = null;
 
-    // small talk: the reader finds nothing to read, the same model replies, marked
+    // small talk: the reader finds nothing to read; the fixed answer, no chat request
     replyWith = (b) => b.response_format ? JSON.stringify({ kind: "unknown", intent: null, person: null, phone: null, event: null, many: false, table: null, steps: [] }) : "Merhaba! Yoğun bir gün olmalı, kolay gelsin.";
     const n3 = sent.length;
     const chatSaid = await say("Merhaba, nasılsın?");
     const chatReq = sent[sent.length - 1];
-    checks.ok(/kolay gelsin/.test(chatSaid) && /kayıtlarına dayanmaz/.test(chatSaid) && sent.length === n3 + 2 && !chatReq.response_format
-      && JSON.stringify(chatReq.messages) === JSON.stringify(R.chatMessages("Merhaba, nasılsın?")),
-      "small talk: no reading, so the model's short reply is shown, marked as not resting on the records", { chatSaid });
+    checks.ok(!/kolay gelsin/.test(chatSaid) && /etkinlik işlerinde/.test(chatSaid) && sent.length === n3 + 1 && !!chatReq.response_format,
+      "small talk: no reading, so the fixed answer is shown and the model is never asked to chat", { chatSaid });
     checks.equal(await page.evaluate(() => activeEvent().guests.find((x) => x.id === "gz").assignment), null, "small talk changes nothing");
 
     // HONEST WHEN MISSING: the process is not the measured server → the panel says the model did

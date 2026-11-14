@@ -33,7 +33,6 @@
   const R = () => globalThis.MeritAssistantReading;
 
   let canMutate;
-  let chatText;
   let currentId;
   let events;
   let go;
@@ -55,7 +54,6 @@
     // src/assistant-second-reader.js loads after this file (just before app-v8.js): read it at call time only
     const SR = () => globalThis.MeritAssistantSecondReader;
     canMutate=deps.canMutate;
-    chatText=deps.chatText;
     currentId=deps.currentId;
     events=deps.events;
     go=deps.go;
@@ -179,7 +177,6 @@
         const b = el("div", { class: `assistant-turn ${turn.who}` });
         b.append(el("p", {}, turn.text));
         if (turn.byModel) b.append(el("p", { class: "assistant-by-model" }, t("assistant.readByModel")));
-        if (turn.chat) b.append(el("p", { class: "assistant-by-model" }, t("assistant.chatNote")));
         if (turn.missing) b.append(el("p", { class: "assistant-by-model assistant-model-missing" }, t(turn.missing.key, turn.missing.params)));
         if (turn.lines && turn.lines.length) { const ul = el("ul", { class: "assistant-lines" }); for (const l of turn.lines) ul.append(el("li", {}, l)); b.append(ul); }
         for (const opt of turn.options || []) b.append(optionCard(turn, opt));
@@ -383,14 +380,12 @@
         readerIs(m && m.state === "missing" ? m : null);
       }
       const mark = (out) => Object.assign(out, byModel ? { byModel: true } : {}, missing ? { missing } : {});
-      // Neither a question about our events nor a command: small talk, from the
-      // same model, marked as not resting on the data.
-      // two jobs in one sentence nobody could read: asked back, never chatted about
+      // two jobs in one sentence nobody could read: asked back
       if (r.kind === "unknown" && compound) return mark({ text: t("assistant.oneAtATime") });
-      if (r.kind === "unknown" && chatText && !missing) {
-        const said = await chatText(text);
-        if (said) return { text: said, chat: true };
-      }
+      // Neither a question about our events nor a command: ONE fixed answer, never
+      // the model's free text (owner 2026-11-14; measured: it invented weather and
+      // an exchange rate). Suite assistant-offtopic.
+      if (r.kind === "unknown") return mark({ text: t("assistant.offTopic") });
       return mark(reply(r, evs, now, byModel));
     }
     function reply(r, evs, now, byModel) {
@@ -457,5 +452,5 @@
     return { mount, toggle, isOpen, ask, help, shortcuts };
   }
 
-  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","chatText","currentId","events","go","highlight","onChange","readText","readerState","research","summary","t","today","voice","writers"])});
+  globalThis.MeritScreenAssistant = Object.freeze({create,DEPS:Object.freeze(["canMutate","currentId","events","go","highlight","onChange","readText","readerState","research","summary","t","today","voice","writers"])});
 })();
