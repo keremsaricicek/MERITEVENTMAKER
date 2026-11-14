@@ -594,6 +594,7 @@
   };
   selectedTablePanelHTML = function(...a){return SEATING.selectedTablePanelHTML(...a);};
   seatRowHTML = function(...a){return SEATING.seatRowHTML(...a);};
+  selectSeatingTable = function(...a){return SEATING.selectTable(...a);};
   bindSeating = function(...a){const r=SEATING.bindSeating(...a);bindReady();return r;};
 
   const LOADPANEL=globalThis.MeritServiceLoadPanel.create({

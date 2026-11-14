@@ -512,6 +512,9 @@
     render()
   }
   function bindPanelToggles(){app.querySelectorAll("[data-panel-toggle]").forEach(b=>b.onclick=()=>{if(b.dataset.panelToggle==="left")ui.leftCollapsed=!ui.leftCollapsed;else ui.rightCollapsed=!ui.rightCollapsed;render()})}
+  // Picking a table on the Seating plan. app-v8.js replaces it with the Seating
+  // screen's own, which redraws only the table card and the two marks.
+  function selectSeatingTable(id){ui.selectedTableId=id;ui.highlightId=null;render()}
   function bindCanvas(){
     const event=activeEvent(),viewport=document.getElementById("canvasViewport"),world=document.getElementById("canvasWorld"),seating=ui.tab==="seating";
     bindPanelToggles();
@@ -529,11 +532,7 @@
       el.addEventListener("pointerdown",e=>{
         if(e.target.dataset.handle)return;
         if(seating){
-          if(el.dataset.objectKind==="table"){
-            ui.selectedTableId=el.dataset.objectId;
-            ui.highlightId=null;
-            render()
-          }
+          if(el.dataset.objectKind==="table")selectSeatingTable(el.dataset.objectId);
           return
         }
         startObjectDrag(e,el.dataset.objectId,el.dataset.objectKind,el)

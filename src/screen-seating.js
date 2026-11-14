@@ -72,6 +72,26 @@
         .join(" ").toLocaleLowerCase("tr").includes(q));
   }
   const SEAT_QUEUE_STEP=150;
+  // The guest list's contents, alone: the one thing a search keystroke changes
+  // (refreshSeatQueue below), and what seatingHTML puts in .seat-queue-list.
+  function seatQueueListHTML(event,records,selectedIds){
+    const byId=tableIndex(event);
+    // WINDOWED, like the Guests list and the door (§26: the queue mounted
+    // every unassigned guest, so at 3,000 guests Seating was 23,833 DOM nodes
+    // of which the drawing was 5,601). Keyed on scope + query: whatever
+    // changes either — a search, a scope button, the finder's CHANGE TABLE —
+    // starts again from the top without every writer having to remember.
+    const qKey=ui.seatingGuestScope+"\n"+ui.seatingQuery;
+    if(!ui.seatQueueWindow||ui.seatQueueWindow.key!==qKey)ui.seatQueueWindow={key:qKey,n:SEAT_QUEUE_STEP};
+    const shownRecords=records.slice(0,ui.seatQueueWindow.n),hiddenRecords=records.length-shownRecords.length;
+    return records.length?shownRecords.map(g=>{
+      const t_=g.assignment&&byId.get(g.assignment.tableId);
+      return`<div class="queue-card ${selectedIds.includes(g.id)?"selected multi-selected":""}" draggable="true" data-seating-guest="${g.id}" tabindex="0" role="button" aria-pressed="${selectedIds.includes(g.id)?"true":"false"}">
+        <div class="party-name">${esc(g.name)}</div>
+        <div class="party-sub">${paxDotsHTML(g)}<span>${t("guests.partyOf",{n:paxOf(g)})}</span>${g.vip&&g.vip!=="Standard"?`<span class="vip-tag${g.vip==="VVIP"?" vvip":""}" title="${esc(g.vip)}">${esc(g.vip)}</span>`:""}${t_?`<span class="seat-tag">${esc(formatTableNumber(t_.number))}</span>`:""}</div>
+      </div>`;
+    }).join("")+(hiddenRecords>0?`<div class="live-more seat-queue-more"><span>${t("seating.showingOf",{shown:shownRecords.length,total:records.length})}</span><button class="btn sm" data-seating-action="queue-more">${t("guests.showMore")}</button></div>`:""):`<div class="mx-empty" style="border:none;background:none;padding:26px 12px">${seatingQueueEmptyHTML(event)}</div>`;
+  }
   const seatingHTML = function(event){
     // Floor Plan collapses the side panels for its own map-first layout.
     // Seating's whole job is "move this guest onto that seat", so the guest
@@ -86,22 +106,7 @@
     const totalPax=event.guests.reduce((n,g)=>n+paxOf(g),0);
     const seatedPax=event.guests.filter(g=>g.assignment).reduce((n,g)=>n+paxOf(g),0);
     const freeChairs=Math.max(0,seatingCapacity(event)-seatedPax);
-    const byId=tableIndex(event);
-    // WINDOWED, like the Guests list and the door (§26: the queue mounted
-    // every unassigned guest, so at 3,000 guests Seating was 23,833 DOM nodes
-    // of which the drawing was 5,601). Keyed on scope + query: whatever
-    // changes either — a search, a scope button, the finder's CHANGE TABLE —
-    // starts again from the top without every writer having to remember.
-    const qKey=ui.seatingGuestScope+"\n"+ui.seatingQuery;
-    if(!ui.seatQueueWindow||ui.seatQueueWindow.key!==qKey)ui.seatQueueWindow={key:qKey,n:SEAT_QUEUE_STEP};
-    const shownRecords=records.slice(0,ui.seatQueueWindow.n),hiddenRecords=records.length-shownRecords.length;
-    const queue=records.length?shownRecords.map(g=>{
-      const t_=g.assignment&&byId.get(g.assignment.tableId);
-      return`<div class="queue-card ${selectedIds.includes(g.id)?"selected multi-selected":""}" draggable="true" data-seating-guest="${g.id}" tabindex="0" role="button" aria-pressed="${selectedIds.includes(g.id)?"true":"false"}">
-        <div class="party-name">${esc(g.name)}</div>
-        <div class="party-sub">${paxDotsHTML(g)}<span>${t("guests.partyOf",{n:paxOf(g)})}</span>${g.vip&&g.vip!=="Standard"?`<span class="vip-tag${g.vip==="VVIP"?" vvip":""}" title="${esc(g.vip)}">${esc(g.vip)}</span>`:""}${t_?`<span class="seat-tag">${esc(formatTableNumber(t_.number))}</span>`:""}</div>
-      </div>`;
-    }).join("")+(hiddenRecords>0?`<div class="live-more seat-queue-more"><span>${t("seating.showingOf",{shown:shownRecords.length,total:records.length})}</span><button class="btn sm" data-seating-action="queue-more">${t("guests.showMore")}</button></div>`:""):`<div class="mx-empty" style="border:none;background:none;padding:26px 12px">${seatingQueueEmptyHTML(event)}</div>`;
+    const queue=seatQueueListHTML(event,records,selectedIds);
     return`<div class="seat-stage">
       <aside class="seat-queue">
         <div class="seat-queue-head"><strong>${ui.seatingGuestScope==="all"?t("seating.allGuests"):t("seating.guestQueue")}</strong><button class="btn sm seat-draft" type="button" data-assistant-ask="${esc(t("seating.draftAsk"))}" title="${esc(t("seating.draftTitle"))}">${t("seating.draft")}</button>${selectedIds.length?`<span class="sel">${t("seating.recordsSelected",{n:selectedIds.length,pax:selPax})}</span>`:""}</div>
@@ -514,12 +519,35 @@
     ui.selectedGuestId=ui.selectedGuestIds[0]||null;ui.guestAnchorId=id;
   }
 
-  const bindSeating = function(){
-    bindPanelToggles();const event=activeEvent(),records=guestSelectionRows(event),search=document.getElementById("seatingSearch");
-    // Focus and caret come back synchronously — the next-frame version
-    // reordered fast typing, as §23 measured at the door and §26 here.
-    if(search){search.oninput=()=>{ui.seatingQuery=search.value;const pos=search.selectionStart;render();const n=document.getElementById("seatingSearch");if(n){n.focus();n.setSelectionRange(pos,pos);}};}
-    const queueMore=document.querySelector("[data-seating-action='queue-more']");
+  // Hovering (or focusing) a seated guest lights his table and glows his own
+  // seats neon red on the plan (owner 2026-11-11/12). A view decoration only:
+  // classes on the drawn plan, read from guest.assignment, written nowhere.
+  function clearGuestLight(){
+    document.querySelectorAll(".seat-canvas-col .guest-hot").forEach(n=>n.classList.remove("guest-hot"));
+    document.querySelectorAll(".seat-canvas-col .guest-seat").forEach(n=>n.classList.remove("guest-seat"));
+  }
+  function lightGuest(event,id,on){
+    clearGuestLight();
+    const g=on&&(event.guests||[]).find(x=>x.id===id),a=g&&g.assignment;
+    if(!a)return;
+    const tb=document.querySelector(`.seat-canvas-col .table-object[data-object-id="${CSS.escape(a.tableId)}"]`);
+    if(!tb)return;
+    tb.classList.add("guest-hot");
+    const chairs=tb.querySelectorAll(".chair");
+    (a.seats||[]).forEach(i=>{if(chairs[i])chairs[i].classList.add("guest-seat");});
+  }
+  function bindGuestLight(event,root,sel){
+    root.querySelectorAll(sel).forEach(row=>{
+      const id=row.dataset.seatingGuest||row.dataset.occupantGuest;if(!id)return;
+      row.addEventListener("mouseenter",()=>lightGuest(event,id,true));row.addEventListener("mouseleave",()=>lightGuest(event,id,false));
+      row.addEventListener("focus",()=>lightGuest(event,id,true));row.addEventListener("blur",()=>lightGuest(event,id,false));
+    });
+  }
+  // The guest list: its cards and its "show more". Bound on every render, and
+  // again after a search has redrawn only the list.
+  function bindSeatQueue(event,records){
+    const list=document.querySelector(".seat-queue-list");if(!list)return;
+    const queueMore=list.querySelector("[data-seating-action='queue-more']");
     if(queueMore)queueMore.onclick=()=>{
       ui.seatQueueWindow.n+=SEAT_QUEUE_STEP;
       const list=document.querySelector(".seat-queue-list"),keep=list?list.scrollTop:0;
@@ -527,41 +555,62 @@
       const again=document.querySelector(".seat-queue-list");if(again)again.scrollTop=keep;
       (document.querySelector("[data-seating-action='queue-more']")||document.getElementById("seatingSearch"))?.focus({preventScroll:true});
     };
-    const closeCard=document.querySelector("[data-close-table-card]");
-    if(closeCard)closeCard.onclick=()=>{ui.selectedTableId=null;render();};
+    list.querySelectorAll("[data-seating-guest]").forEach(row=>{row.onclick=e=>{selectGuestRecord(row.dataset.seatingGuest,e,records);render();};row.ondragstart=e=>{if(!ui.selectedGuestIds.includes(row.dataset.seatingGuest))ui.selectedGuestIds=[row.dataset.seatingGuest];e.dataTransfer.setData("application/x-merit-guests",JSON.stringify(ui.selectedGuestIds));e.dataTransfer.setData("application/x-merit-guest",row.dataset.seatingGuest);};});
+    bindGuestLight(event,list,"[data-seating-guest]");
+  }
+  // A SEARCH KEYSTROKE REDRAWS THE LIST ONLY. The query decides nothing else on
+  // this screen, and the whole-screen render it used to cost was ~240 ms a key
+  // at 3,000 records, most of it the plan's 5,400 drawn chairs (seatperf,
+  // 2026-11-12/13). The input is never replaced, so focus and caret simply
+  // stay. Anything unexpected falls back to the full render.
+  function refreshSeatQueue(){
+    const event=activeEvent(),list=document.querySelector(".seat-stage .seat-queue-list");
+    if(!event||!list||ui.tab!=="seating")return false;
+    const records=guestSelectionRows(event);
+    const selectedIds=ui.selectedGuestIds.length?ui.selectedGuestIds:[ui.selectedGuestId].filter(Boolean);
+    const html=seatQueueListHTML(event,records,selectedIds);
+    // A full render starts every decoration from nothing: the hovered row is
+    // gone, and with it the table it lit.
+    clearGuestLight();
+    list.innerHTML=html;list.scrollTop=0;
+    bindSeatQueue(event,records);
+    return true;
+  }
+
+  const bindSeating = function(){
+    bindPanelToggles();const event=activeEvent(),records=guestSelectionRows(event),search=document.getElementById("seatingSearch");
+    // The list-only redraw never replaces the input, so focus and caret stay
+    // where they are. The fallback render puts them back synchronously — the
+    // next-frame version reordered fast typing, as §23 measured at the door
+    // and §26 here.
+    if(search){search.oninput=()=>{ui.seatingQuery=search.value;
+      let done=false;
+      try{done=refreshSeatQueue();}catch(error){done=false;}
+      if(done)return;
+      const pos=search.selectionStart;render();const n=document.getElementById("seatingSearch");if(n){n.focus();n.setSelectionRange(pos,pos);}};}
     document.querySelectorAll("[data-seating-scope]").forEach(b=>b.onclick=()=>{ui.seatingGuestScope=b.dataset.seatingScope;ui.selectedGuestIds=[];ui.selectedGuestId=null;render();});document.querySelectorAll("[data-seating-filter]").forEach(b=>b.onclick=()=>{ui.seatingFilter=b.dataset.seatingFilter;ui.operationalMode=false;render();});
-    document.querySelectorAll("[data-seating-guest]").forEach(row=>{row.onclick=e=>{selectGuestRecord(row.dataset.seatingGuest,e,records);render();};row.ondragstart=e=>{if(!ui.selectedGuestIds.includes(row.dataset.seatingGuest))ui.selectedGuestIds=[row.dataset.seatingGuest];e.dataTransfer.setData("application/x-merit-guests",JSON.stringify(ui.selectedGuestIds));e.dataTransfer.setData("application/x-merit-guest",row.dataset.seatingGuest);};});
-    // Hovering (or focusing) a seated guest lights his table and glows his own
-    // seats neon red on the plan (owner 2026-11-11/12). A view decoration only:
-    // classes on the drawn plan, read from guest.assignment, written nowhere.
-    const lightGuest=(id,on)=>{
-      document.querySelectorAll(".seat-canvas-col .guest-hot").forEach(n=>n.classList.remove("guest-hot"));
-      document.querySelectorAll(".seat-canvas-col .guest-seat").forEach(n=>n.classList.remove("guest-seat"));
-      const g=on&&(event.guests||[]).find(x=>x.id===id),a=g&&g.assignment;
-      if(!a)return;
-      const tb=document.querySelector(`.seat-canvas-col .table-object[data-object-id="${CSS.escape(a.tableId)}"]`);
-      if(!tb)return;
-      tb.classList.add("guest-hot");
-      const chairs=tb.querySelectorAll(".chair");
-      (a.seats||[]).forEach(i=>{if(chairs[i])chairs[i].classList.add("guest-seat");});
-    };
-    document.querySelectorAll("[data-seating-guest],[data-occupant-guest]").forEach(row=>{
-      const id=row.dataset.seatingGuest||row.dataset.occupantGuest;if(!id)return;
-      row.addEventListener("mouseenter",()=>lightGuest(id,true));row.addEventListener("mouseleave",()=>lightGuest(id,false));
-      row.addEventListener("focus",()=>lightGuest(id,true));row.addEventListener("blur",()=>lightGuest(id,false));
-    });
-    document.querySelectorAll("[data-occupant-guest]").forEach(row=>{if(!row.dataset.occupantGuest)return;row.onclick=e=>{selectGuestRecord(row.dataset.occupantGuest,e,event.guests);render();};row.ondragstart=e=>{if(!ui.selectedGuestIds.includes(row.dataset.occupantGuest))ui.selectedGuestIds=[row.dataset.occupantGuest];e.dataTransfer.setData("application/x-merit-guests",JSON.stringify(ui.selectedGuestIds));};});
+    bindSeatQueue(event,records);
+    bindTableCard(event);
+  };
+  // The table card: everything on it is bound here, on every render, and again
+  // after picking a table has replaced only the card.
+  function bindTableCard(event){
+    const card=document.querySelector(".seat-canvas-col > .table-card");if(!card)return;
+    const closeCard=card.querySelector("[data-close-table-card]");
+    if(closeCard)closeCard.onclick=()=>{ui.selectedTableId=null;render();};
+    bindGuestLight(event,card,"[data-occupant-guest]");
+    card.querySelectorAll("[data-occupant-guest]").forEach(row=>{if(!row.dataset.occupantGuest)return;row.onclick=e=>{selectGuestRecord(row.dataset.occupantGuest,e,event.guests);render();};row.ondragstart=e=>{if(!ui.selectedGuestIds.includes(row.dataset.occupantGuest))ui.selectedGuestIds=[row.dataset.occupantGuest];e.dataTransfer.setData("application/x-merit-guests",JSON.stringify(ui.selectedGuestIds));};});
     // The table card's primary button. It was rendered by this file and bound
     // only by the OLD bindSeating in app-guests.js, which this file replaces --
     // so the most prominent control on the card had no handler at all and did
     // nothing when pressed. Found while building the freeze gate, which sits on
     // exactly this path.
-    const assign=document.querySelector("[data-assign-selected]");
+    const assign=card.querySelector("[data-assign-selected]");
     if(assign)assign.onclick=()=>{
       const ids=ui.selectedGuestIds.length?ui.selectedGuestIds:[ui.selectedGuestId].filter(Boolean);
       if(ids.length)assignGuestGroup(ids,assign.dataset.assignSelected);
     };
-    document.querySelectorAll("[data-empty-seat]").forEach(row=>row.onclick=()=>{const ids=ui.selectedGuestIds.length?ui.selectedGuestIds:[ui.selectedGuestId].filter(Boolean);if(ids.length)assignGuestGroup(ids,ui.selectedTableId,Number(row.dataset.emptySeat));});
+    card.querySelectorAll("[data-empty-seat]").forEach(row=>row.onclick=()=>{const ids=ui.selectedGuestIds.length?ui.selectedGuestIds:[ui.selectedGuestId].filter(Boolean);if(ids.length)assignGuestGroup(ids,ui.selectedTableId,Number(row.dataset.emptySeat));});
     // Unassign and Lock sit INSIDE the occupant's seat row, whose own click
     // selects that guest and renders. The button's action renders, then the
     // click bubbled on to the (now detached) row and rendered the whole app a
@@ -581,11 +630,11 @@
       act();
       if(row&&row.dataset.occupantGuest&&b.isConnected)render();
     };
-    document.querySelectorAll("[data-unassign]").forEach(b=>b.onclick=e=>seatRowAction(b,e,()=>unassignGuest(b.dataset.unassign)));document.querySelectorAll("[data-lock-assignment]").forEach(b=>b.onclick=e=>seatRowAction(b,e,()=>toggleAssignmentLock(b.dataset.lockAssignment)));
+    card.querySelectorAll("[data-unassign]").forEach(b=>b.onclick=e=>seatRowAction(b,e,()=>unassignGuest(b.dataset.unassign)));card.querySelectorAll("[data-lock-assignment]").forEach(b=>b.onclick=e=>seatRowAction(b,e,()=>toggleAssignmentLock(b.dataset.lockAssignment)));
     // Mark unavailable / mark available — the table card's own axis, next to
     // the freeze indicator but never touching it: marking a table unavailable
     // writes nothing but `availability` and its provenance.
-    const availBtn=document.querySelector("[data-avail-mark]");
+    const availBtn=card.querySelector("[data-avail-mark]");
     if(availBtn)availBtn.onclick=()=>{
       const ev=activeEvent();if(!canMutate(ev,"change a table's availability"))return;
       const table=ev.tables.find(x=>x.id===availBtn.dataset.availMark);if(!table)return;
@@ -600,10 +649,57 @@
     // Selecting a stranded guest reuses the exact selection Smart Seating
     // already reads — this never moves anyone; it only shows recommendations
     // for the person selected, the same as picking them from the queue.
-    document.querySelectorAll("[data-avail-select-guest]").forEach(b=>b.onclick=()=>{
+    card.querySelectorAll("[data-avail-select-guest]").forEach(b=>b.onclick=()=>{
       ui.selectedGuestId=b.dataset.availSelectGuest;ui.selectedGuestIds=[b.dataset.availSelectGuest];render();
     });
-  };
+  }
+  // PICKING A TABLE ON THE PLAN changes three things on this screen: the table
+  // card, which table is marked selected, and the finder's highlight, which a
+  // pick clears. The whole-screen render it cost was ~260 ms at 300 tables
+  // (seatperf, 2026-11-12/13); this replaces the card and moves the two marks.
+  // First-day tips are shown one at a time, the first one a render asks for
+  // winning (onboarding-panel.js), and the slot stays claimed until the next
+  // render. The card's own tip comes after the header's and before the side
+  // panel's, so the card alone gives the same answer as a full render unless a
+  // tip AFTER the card is on screen (the card would now take its place), or
+  // the old card had the tip and the new one does not (a later tip would get
+  // it). In those two cases the full render decides.
+  function patchSelectedTable(event,prev){
+    const col=document.querySelector(".seat-stage .seat-canvas-col"),world=document.getElementById("canvasWorld");
+    if(!col||!world)return false;
+    const old=col.querySelector(":scope > .table-card");
+    const tips=[...document.querySelectorAll(".onboarding-callout")].filter(n=>!(old&&old.contains(n)));
+    if(tips.some(n=>col.contains(n)||(col.compareDocumentPosition(n)&Node.DOCUMENT_POSITION_FOLLOWING)))return false;
+    const anchor=old||col.querySelector(":scope > .seat-preview, :scope > .freeze-challenge-scrim");
+    const html=selectedTablePanelHTML(event);
+    if(!html)return false;
+    if(old&&old.querySelector(".onboarding-callout")&&!html.includes("data-onboarding="))return false;
+    const tpl=document.createElement("template");tpl.innerHTML=html.trim();
+    const card=tpl.content.firstElementChild;
+    if(!card||tpl.content.childElementCount!==1)return false;
+    // A full render starts every decoration from nothing.
+    clearGuestLight();
+    if(old)old.replaceWith(card);else if(anchor)col.insertBefore(card,anchor);else col.appendChild(card);
+    world.querySelectorAll(".table-object.highlighted").forEach(n=>n.classList.remove("highlighted"));
+    const mark=(id,on)=>{
+      const n=id&&world.querySelector(`.table-object[data-object-id="${CSS.escape(id)}"]`);if(!n)return;
+      n.classList.toggle("selected",on);n.classList.toggle("multi-selected",on);n.setAttribute("aria-pressed",on?"true":"false");
+    };
+    if(prev!==ui.selectedTableId)mark(prev,false);
+    mark(ui.selectedTableId,true);
+    bindTableCard(event);
+    return true;
+  }
+  // The pointer's table pick on Seating (bindCanvas): the same state as
+  // before, and the full render whenever the patch cannot stand in for it.
+  function selectTable(id){
+    const event=activeEvent(),prev=ui.selectedTableId;
+    ui.selectedTableId=id;ui.highlightId=null;
+    let done=false;
+    try{done=!!event&&ui.tab==="seating"&&!RULES().isHistorical(event)&&patchSelectedTable(event,prev);}
+    catch(error){done=false;}
+    if(!done)render();
+  }
 
   function create(deps){
     if(created)throw new Error("MeritScreenSeating.create() is called once, by app-v8.js.");
@@ -650,7 +746,7 @@
     ui=deps.ui;
     unassignGuest=deps.unassignGuest;
     v8Toolbar=deps.v8Toolbar;
-    return{seatingHTML,selectedTablePanelHTML,seatRowHTML,bindSeating,bindFreezeZones,bindSmartSeating};
+    return{seatingHTML,selectedTablePanelHTML,seatRowHTML,bindSeating,bindFreezeZones,bindSmartSeating,selectTable};
   }
   globalThis.MeritScreenSeating=Object.freeze({create,DEPS:Object.freeze(["activeEvent","assignGuestGroup","assignGuestToTable","authoriseFreezeOverride","AVAIL","availReasonText","bindPanelToggles","canMutate","canSeat","canvasEmptyHTML","canvasViewportHTML","createFreezeFromDraft","esc","eventFreezes","formatTableNumber","FREEZE","freezeReasonText","icon","liftFreeze","logicalSeatCount","naturalSort","onboardingCalloutHTML","paxDotsHTML","paxOf","recordUndo","render","resolvedFreezes","resolvedUnavailable","RULES","seatingCapacity","seatingQueueEmptyHTML","setTableAvailability","t","tableAssignedPax","tableIndex","tableSeatMap","toast","toggleAssignmentLock","touchEvent","ui","unassignGuest","v8Toolbar"])});
 })();

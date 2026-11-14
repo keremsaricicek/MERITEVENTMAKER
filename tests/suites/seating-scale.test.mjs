@@ -14,7 +14,9 @@
 //     rendered, then the click bubbled to the seat row, which rendered again.
 //
 // So this suite holds the SHAPE (counted, no timer noise): one render per
-// action, one guest walk per render for the canvas, and the indexes answer
+// action — and none for a search keystroke or a table pick, which redraw only
+// the list / the card and two marks (2026-11-13), checked against what a full
+// render draws — one guest walk per render for the canvas, and the indexes answer
 // exactly what the per-table functions answer — plus the operator's actions
 // timed (median / p95 / max) against budgets from the measured p95 (rule as
 // in benchmarks/perf/BUDGETS.json: max(2 x worst p95, worst p95 + 15 ms),
@@ -159,8 +161,39 @@ export default async function run({ page, checks, baseUrl }) {
     const count = async (f) => { renders = 0; walks = 0; f(); const out = { renders, walks }; await idle(); return out; };
     const tableEl = (id) => document.querySelector(`#canvasWorld [data-object-id="${id}"]`);
     const out = {};
+    // What the screen shows, in the parts a table pick or a search may change:
+    // the guest list, the table card (and where it sits), and every table's
+    // marks on the plan. A partial redraw must leave exactly what a full
+    // render() of the same state draws.
+    const snap = () => {
+      const col = document.querySelector(".seat-canvas-col"), card = col && col.querySelector(":scope > .table-card");
+      return { list: document.querySelector(".seat-queue-list").innerHTML, card: card ? card.outerHTML : null, cardAt: card ? [...col.children].indexOf(card) : -1,
+        tables: [...document.querySelectorAll("#canvasWorld .table-object")].map((n) => `${n.dataset.objectId}:${[...n.classList].sort().join(".")}:${n.getAttribute("aria-pressed")}`).join("\n") };
+    };
+    const sameAsRender = () => { const a = snap(); realRender(); const b = snap(); return Object.keys(a).filter((k) => a[k] !== b[k]); };
+    const down = (id) => tableEl(id).dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
     try {
-      out.selectTable = await count(() => tableEl("tbl270").dispatchEvent(new PointerEvent("pointerdown", { bubbles: true })));
+      // First pick (no card yet) and a switch, each with a finder highlight on
+      // another table that the pick clears.
+      ui.selectedTableId = null; ui.highlightId = "tbl5"; realRender(); await idle();
+      out.firstTable = await count(() => down("tbl271"));
+      out.firstTableDiff = sameAsRender(); await idle();
+      ui.highlightId = "tbl6"; realRender(); await idle();
+      out.switchTable = await count(() => down("tbl3"));
+      // The switched card is live: its seat row selects that guest.
+      const occ = document.querySelector(".table-card [data-occupant-guest]:not([data-occupant-guest=''])");
+      out.cardRow = { id: occ && occ.dataset.occupantGuest, clicks: await count(() => occ.click()), selected: ui.selectedGuestId };
+      ui.selectedGuestIds = []; ui.selectedGuestId = null; realRender(); await idle();
+      out.switchBack = await count(() => down("tbl271"));
+      out.switchTableDiff = sameAsRender(); await idle();
+      // With the header's first-day tip dismissed, the card's own tip shows (one
+      // tip at a time): a pick and a switch still draw what a full render draws.
+      const keepTips = state.onboarding; state.onboarding = { seen: { globalFinder: true } };
+      ui.selectedTableId = null; realRender(); await idle();
+      down("tbl40"); out.tipFirst = { shown: !!document.querySelector(".table-card [data-onboarding]"), diff: sameAsRender() }; await idle();
+      down("tbl41"); out.tipSwitch = sameAsRender(); await idle();
+      state.onboarding = keepTips; ui.selectedTableId = "tbl271"; realRender(); await idle();
+      out.selectTable = await count(() => down("tbl270"));
       const gid = document.querySelector("[data-seating-guest]").dataset.seatingGuest;
       out.gid = gid;
       out.selectGuest = await count(() => document.querySelector("[data-seating-guest]").click());
@@ -184,9 +217,20 @@ export default async function run({ page, checks, baseUrl }) {
       // Every badge on the canvas equals a recount after all that.
       render(); await idle();
       out.badgesWrong = e.tables.filter((t) => tableEl(t.id).querySelector(".table-occ").textContent.trim() !== `${realOcc(e, t.id).size} / ${t.capacity}`).map((t) => t.id);
-      const n = document.getElementById("seatingSearch"); n.value = "kaya";
+      ui.seatingGuestScope = "all"; ui.selectedTableId = "tbl3"; realRender(); await idle();
+      const n = document.getElementById("seatingSearch"); n.focus(); n.value = "kaya"; n.setSelectionRange(2, 2);
       out.searchKey = await count(() => n.dispatchEvent(new Event("input", { bubbles: true })));
-      n.value = ""; n.dispatchEvent(new Event("input", { bubbles: true })); await idle();
+      const box = document.activeElement;
+      out.searchFocus = { id: box && box.id, caret: box && box.selectionStart, value: box && box.value };
+      // The redrawn list is live: a card selects its guest (one render).
+      const first = document.querySelector("[data-seating-guest]");
+      out.searchCard = { id: first && first.dataset.seatingGuest, clicks: await count(() => first.click()), selected: ui.selectedGuestId };
+      const n2 = document.getElementById("seatingSearch"); n2.value = "kay";
+      await count(() => n2.dispatchEvent(new Event("input", { bubbles: true })));
+      out.searchDiff = sameAsRender(); await idle();
+      ui.selectedGuestIds = []; ui.selectedGuestId = null;
+      const n3 = document.getElementById("seatingSearch"); n3.value = ""; n3.dispatchEvent(new Event("input", { bubbles: true })); await idle();
+      ui.seatingGuestScope = "unassigned"; ui.selectedTableId = null; realRender(); await idle();
     } finally { render = realRender; occupiedSeatIndexes = realOcc; if (realPlanned) MeritOccupancy.plannedIndex = realPlanned; }
     return out;
   });
@@ -196,9 +240,23 @@ export default async function run({ page, checks, baseUrl }) {
     "Unassign frees the seat, leaves that guest selected (the row's own selection), back in the queue, and the canvas badge says 0 / 18");
   checks.equal(shape.refusedState, { kept: "tbl3", selected: [shape.refusedId] }, "a refused (locked) Unassign keeps the seat and still selects the row's guest");
   checks.equal(shape.badgesWrong, [], "after all of it, every table's badge on the canvas equals a recount from the records");
-  const perAction = Object.fromEntries(["selectTable", "selectGuest", "assign", "lock", "unassign", "refused", "searchKey"].map((k) => [k, shape[k].renders]));
-  checks.equal(perAction, { selectTable: 1, selectGuest: 1, assign: 1, lock: 1, unassign: 1, refused: 1, searchKey: 1 },
-    "every Seating action renders the app exactly once (Unassign and Lock rendered twice: the click bubbled to the seat row)");
+  const perAction = Object.fromEntries(["selectGuest", "assign", "lock", "unassign", "refused"].map((k) => [k, shape[k].renders]));
+  checks.equal(perAction, { selectGuest: 1, assign: 1, lock: 1, unassign: 1, refused: 1 },
+    "every Seating action that changes the room or the selected guest renders the app exactly once (Unassign and Lock rendered twice: the click bubbled to the seat row)");
+  // Measured 2026-11-13 (seatperf, 3,000 records): a search keystroke and a
+  // table pick each redrew the whole screen (~240 / ~260 ms, mostly the plan's
+  // 5,400 chairs) to change the list, or the card and two marks.
+  const partial = Object.fromEntries(["firstTable", "switchTable", "switchBack", "selectTable", "searchKey"].map((k) => [k, shape[k].renders]));
+  checks.equal(partial, { firstTable: 0, switchTable: 0, switchBack: 0, selectTable: 0, searchKey: 0 },
+    "picking a table and typing in the search redraw only the table card / the guest list, never the whole screen");
+  checks.equal({ firstTable: shape.firstTableDiff, switchTable: shape.switchTableDiff, search: shape.searchDiff, tipFirst: shape.tipFirst, tipSwitch: shape.tipSwitch },
+    { firstTable: [], switchTable: [], search: [], tipFirst: { shown: true, diff: [] }, tipSwitch: [] },
+    "after a table pick, a table switch and a search, the list, the card (and its place) and every table's marks are exactly what a full render draws (highlight cleared, aria-pressed moved)");
+  checks.equal(shape.searchFocus, { id: "seatingSearch", caret: 2, value: "kaya" }, "typing keeps focus and the caret in the search box");
+  checks.ok(shape.searchCard.id && shape.searchCard.selected === shape.searchCard.id && shape.searchCard.clicks.renders === 1,
+    "a guest card in the redrawn list selects its guest", shape.searchCard);
+  checks.ok(shape.cardRow.id && shape.cardRow.selected === shape.cardRow.id && shape.cardRow.clicks.renders === 1,
+    "a seat row on the switched table card selects its guest", shape.cardRow);
   const walks = Object.fromEntries(["selectTable", "selectGuest", "assign", "unassign", "searchKey"].map((k) => [k, shape[k].walks]));
   checks.ok(Object.values(walks).every((n) => n <= 3),
     "the canvas walks the guest list once per render for its seat counts, not twice per table (was 600 walks at 300 tables)", walks);
