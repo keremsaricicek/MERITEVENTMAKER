@@ -17,8 +17,9 @@
 //                        first two and lose the guest).
 //
 // THE MODEL HERE IS SCRIPTED (a fake chat process on this machine, as in
-// `assistant-reader`): its reading and its small-talk reply are chosen to carry
-// the payload. Nothing here measures a model.
+// `assistant-reader`): its reading and the chat reply it would give are chosen to
+// carry the payload; since 2026-11-14 Mimar never shows a chat reply (one fixed
+// answer, suite assistant-offtopic). Nothing here measures a model.
 //
 // MUTATION PROOF, recorded 2026-11-01:
 //   P1  the assistant's `el()` writing `innerHTML` instead of `textContent` →
@@ -229,8 +230,8 @@ export default async function run({ page, checks, repoRoot }) {
     // The typed sentence itself is echoed back as the person's turn.
     reading = unknown; chatReply = tagged("chatReply");
     const said = await say(tagged("typedQuestion").slice(0, 380));
-    await audit(page, "F8, a typed sentence carrying the payload, answered by small talk", checks, [mark("typedQuestion"), mark("chatReply")]);
-    checks.ok(said.includes(mark("chatReply")), "the model's small-talk reply is shown as text, payload and all", said.slice(0, 120));
+    await audit(page, "F8, a typed sentence carrying the payload, answered by the fixed reply", checks, [mark("typedQuestion")]);
+    checks.ok(!said.includes(mark("chatReply")) && /event work|etkinlik işlerinde/.test(said), "a model reply carrying the payload is never shown; the fixed answer is", said.slice(0, 120));
 
     // A question about the hostile guest, answered from the records by the rules.
     reading = unknown; chatReply = "";
