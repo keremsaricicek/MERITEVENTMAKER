@@ -7,6 +7,15 @@
  "source": "unsloth/Qwen3.5-0.8B-GGUF (base Qwen/Qwen3.5-0.8B); adapter: this repository, models/local-chat/qwen3.5-0.8b-merit-chat-r2",
  "runtime": "llama.cpp llama-server (0fa5950): --lora adapter.gguf, --jinja, -c 4096",
  "evidence": "training/README.md 'runR2 verdict' + owner's override rule written 2026-11-14 before the result",
+ "evidenceFiles": [
+  "benchmarks/offline-intelligence/assistant-race/geq/r2-bars.json",
+  "benchmarks/offline-intelligence/assistant-race/geq/r2z.json",
+  "benchmarks/offline-intelligence/assistant-race/geq/r2-briefs.json",
+  "benchmarks/offline-intelligence/assistant-race/geq/r2-briefs-en.json",
+  "benchmarks/offline-intelligence/assistant-race/geq/q08z.json",
+  "benchmarks/offline-intelligence/assistant-race/geq/q08-briefs.json",
+  "benchmarks/offline-intelligence/assistant-race/geq/q08-briefs-en.json"
+ ],
  "serve": {
   "model": "Qwen3.5-0.8B-Q8_0.gguf",
   "lora": [

@@ -28,6 +28,12 @@ export default async function run({ checks, repoRoot }) {
   const r = RD.readChatManifest(mf, { verify: false });
   checks.ok(r.ok, "it passes the relay's own manifest check", r);
   const m = JSON.parse(fs.readFileSync(mf, "utf8"));
+  // Its raw exam results are in git, named by the manifest, and say it did NOT pass
+  // the pre-registered bars (shipped by the owner's rule) — audit 2026-11-14, item 17.
+  const ev = Array.isArray(m.evidenceFiles) ? m.evidenceFiles : [];
+  checks.ok(ev.length >= 3 && ev.every((f) => fs.existsSync(path.join(repoRoot, f))), "the manifest names its raw exam files and every one is committed", ev);
+  const bars = ev.find((f) => /r2-bars\.json$/.test(f));
+  checks.ok(!!bars && JSON.parse(fs.readFileSync(path.join(repoRoot, bars), "utf8")).pass === false, "the bars file it names says pass:false (an owner override, not a pass)");
   checks.equal(m.id, ID, "its id is the file's name");
   checks.equal(m.serve && m.serve.prompt, "short", "it serves the short prompt it was trained and measured with");
   checks.equal(m.serve && m.serve.actAt, 0.91, "it acts by itself only at the race's confidence (θ 0.91)");

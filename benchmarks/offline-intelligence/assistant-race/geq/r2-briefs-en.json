@@ -1,0 +1,697 @@
+{
+ "summary": {
+  "briefs": 20,
+  "fieldsRight": 0.93,
+  "briefsAllRight": 0.8,
+  "inventedRate": 0.014,
+  "medianSeconds": 6.58,
+  "model": "Qwen3.5-0.8B-Q8_0.gguf",
+  "lora": "adapter.gguf"
+ },
+ "rows": [
+  {
+   "id": 1101,
+   "text": "Gala dinner for 400 guests, 40 round tables of 10",
+   "want": {
+    "pax": 400,
+    "event": "gala",
+    "table_kind": "round",
+    "table_count": 40,
+    "seats_per_table": 10
+   },
+   "got": {
+    "pax": 400,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": 40,
+    "table_diam_cm": 10,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "gala",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "seats_per_table"
+   ],
+   "invented": [
+    "table_diam_cm"
+   ],
+   "allRight": false,
+   "seconds": 7.9
+  },
+  {
+   "id": 1102,
+   "text": "Wedding, 250 people, round tables 180 cm, 10 per table",
+   "want": {
+    "pax": 250,
+    "event": "wedding",
+    "table_kind": "round",
+    "table_diam_cm": 180,
+    "seats_per_table": 10
+   },
+   "got": {
+    "pax": 250,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": null,
+    "table_diam_cm": 180,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": 10,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "wedding",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.65
+  },
+  {
+   "id": 1103,
+   "text": "Training session for 60 people, classroom layout, the room is 12 by 15 meters",
+   "want": {
+    "pax": 60,
+    "event": "classroom",
+    "room_w_m": 12,
+    "room_l_m": 15
+   },
+   "got": {
+    "pax": 60,
+    "area_m2": null,
+    "room_w_m": 12,
+    "room_l_m": 15,
+    "table_count": null,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "classroom",
+    "table_kind": null,
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.42
+  },
+  {
+   "id": 1104,
+   "text": "Cocktail party, 300 pax, 30 bistro tables",
+   "want": {
+    "pax": 300,
+    "event": "cocktail",
+    "table_kind": "bistro",
+    "table_count": 30
+   },
+   "got": {
+    "pax": 300,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": 30,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "cocktail",
+    "table_kind": "bistro",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.31
+  },
+  {
+   "id": 1105,
+   "text": "Company dinner for 180, rectangular tables 200x80, 8 seats each",
+   "want": {
+    "pax": 180,
+    "event": "banquet",
+    "table_kind": "rect",
+    "table_len_cm": 200,
+    "table_wid_cm": 80,
+    "seats_per_table": 8
+   },
+   "got": {
+    "pax": 180,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": null,
+    "table_diam_cm": null,
+    "table_len_cm": 200,
+    "table_wid_cm": 80,
+    "seats_per_table": 8,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "banquet",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.75
+  },
+  {
+   "id": 1106,
+   "text": "Board meeting, 14 people, one table",
+   "want": {
+    "pax": 14,
+    "event": "boardroom",
+    "table_count": 1
+   },
+   "got": {
+    "pax": 14,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": 1,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "boardroom",
+    "table_kind": null,
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.16
+  },
+  {
+   "id": 1107,
+   "text": "Theatre seating for 500 in a 600 square meter hall",
+   "want": {
+    "pax": 500,
+    "event": "theatre",
+    "area_m2": 600
+   },
+   "got": {
+    "pax": 500,
+    "area_m2": 600,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": null,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "theatre",
+    "table_kind": null,
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.59
+  },
+  {
+   "id": 1108,
+   "text": "840 guests, 100 tables spread evenly, fill the rest with 2-seat bistros",
+   "want": {
+    "pax": 840,
+    "table_count": 100,
+    "extra_kind": "bistro",
+    "extra_seats": 2
+   },
+   "got": {
+    "pax": 840,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": 100,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": 2,
+    "event": "meeting",
+    "table_kind": null,
+    "extra_kind": "bistro"
+   },
+   "wrong": [],
+   "invented": [
+    "event"
+   ],
+   "allRight": true,
+   "seconds": 6.95
+  },
+  {
+   "id": 1109,
+   "text": "U-shape setup for 30 people, chairs 45 by 50 cm",
+   "want": {
+    "pax": 30,
+    "event": "u_shape",
+    "chair_w_cm": 45,
+    "chair_d_cm": 50
+   },
+   "got": {
+    "pax": 30,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": null,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": 45,
+    "chair_d_cm": 50,
+    "extra_seats": null,
+    "event": "u_shape",
+    "table_kind": null,
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.47
+  },
+  {
+   "id": 1110,
+   "text": "Engagement party for 120, square tables, 6 a table",
+   "want": {
+    "pax": 120,
+    "event": "wedding",
+    "table_kind": "square",
+    "seats_per_table": 6
+   },
+   "got": {
+    "pax": 120,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": null,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": 6,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "wedding",
+    "table_kind": "square",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.26
+  },
+  {
+   "id": 1111,
+   "text": "Banquet, 1,200 people, 120 rounds of 10",
+   "want": {
+    "pax": 1200,
+    "event": "banquet",
+    "table_kind": "round",
+    "table_count": 120,
+    "seats_per_table": 10
+   },
+   "got": {
+    "pax": 1200,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": null,
+    "table_diam_cm": 10,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "banquet",
+    "table_kind": null,
+    "extra_kind": null
+   },
+   "wrong": [
+    "table_kind",
+    "table_count",
+    "seats_per_table"
+   ],
+   "invented": [
+    "table_diam_cm"
+   ],
+   "allRight": false,
+   "seconds": 6.74
+  },
+  {
+   "id": 1112,
+   "text": "Gala for two hundred and fifty guests in a 30 x 40 m ballroom",
+   "want": {
+    "pax": 250,
+    "event": "gala",
+    "room_w_m": 30,
+    "room_l_m": 40
+   },
+   "got": {
+    "pax": 250,
+    "area_m2": null,
+    "room_w_m": 30,
+    "room_l_m": 40,
+    "table_count": null,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "gala",
+    "table_kind": null,
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.41
+  },
+  {
+   "id": 1113,
+   "text": "Product launch, 200 people standing, cocktail style, 20 high tables",
+   "want": {
+    "pax": 200,
+    "event": "cocktail",
+    "table_kind": "bistro",
+    "table_count": 20
+   },
+   "got": {
+    "pax": 200,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": 20,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "cocktail",
+    "table_kind": "bistro",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.66
+  },
+  {
+   "id": 1114,
+   "text": "Birthday dinner for 45 people, 5 round tables",
+   "want": {
+    "pax": 45,
+    "event": "banquet",
+    "table_kind": "round",
+    "table_count": 5
+   },
+   "got": {
+    "pax": 45,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": 5,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "banquet",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.26
+  },
+  {
+   "id": 1115,
+   "text": "Conference, 350 seats, theatre style",
+   "want": {
+    "pax": 350,
+    "event": "theatre"
+   },
+   "got": {
+    "pax": 350,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": null,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "theatre",
+    "table_kind": null,
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.23
+  },
+  {
+   "id": 1116,
+   "text": "Workshop for 24, room 8 m by 10 m",
+   "want": {
+    "pax": 24,
+    "event": "classroom",
+    "room_w_m": 8,
+    "room_l_m": 10
+   },
+   "got": {
+    "pax": 24,
+    "area_m2": null,
+    "room_w_m": 8,
+    "room_l_m": 10,
+    "table_count": null,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "classroom",
+    "table_kind": null,
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.58
+  },
+  {
+   "id": 1117,
+   "text": "Wedding for 600 guests, 60 round tables of ten, 150 cm",
+   "want": {
+    "pax": 600,
+    "event": "wedding",
+    "table_kind": "round",
+    "table_count": 60,
+    "seats_per_table": 10,
+    "table_diam_cm": 150
+   },
+   "got": {
+    "pax": 600,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": 60,
+    "table_diam_cm": 150,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "wedding",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [
+    "seats_per_table"
+   ],
+   "invented": [],
+   "allRight": false,
+   "seconds": 6.83
+  },
+  {
+   "id": 1118,
+   "text": "Gala, 90 square meters, 70 people, Ø160 round tables",
+   "want": {
+    "pax": 70,
+    "event": "gala",
+    "area_m2": 90,
+    "table_kind": "round",
+    "table_diam_cm": 160
+   },
+   "got": {
+    "pax": 70,
+    "area_m2": 90,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": null,
+    "table_diam_cm": 160,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "gala",
+    "table_kind": "round",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.66
+  },
+  {
+   "id": 1119,
+   "text": "Dinner for 96 at 12 square tables of 8",
+   "want": {
+    "pax": 96,
+    "event": "banquet",
+    "table_kind": "square",
+    "table_count": 12,
+    "seats_per_table": 8
+   },
+   "got": {
+    "pax": 96,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": 12,
+    "table_diam_cm": null,
+    "table_len_cm": null,
+    "table_wid_cm": null,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "banquet",
+    "table_kind": "square",
+    "extra_kind": null
+   },
+   "wrong": [
+    "seats_per_table"
+   ],
+   "invented": [],
+   "allRight": false,
+   "seconds": 6.5
+  },
+  {
+   "id": 1120,
+   "text": "Meeting, 20 people, rectangular tables 180 by 75",
+   "want": {
+    "pax": 20,
+    "event": "meeting",
+    "table_kind": "rect",
+    "table_len_cm": 180,
+    "table_wid_cm": 75
+   },
+   "got": {
+    "pax": 20,
+    "area_m2": null,
+    "room_w_m": null,
+    "room_l_m": null,
+    "table_count": null,
+    "table_diam_cm": null,
+    "table_len_cm": 180,
+    "table_wid_cm": 75,
+    "seats_per_table": null,
+    "chair_w_cm": null,
+    "chair_d_cm": null,
+    "extra_seats": null,
+    "event": "meeting",
+    "table_kind": "rect",
+    "extra_kind": null
+   },
+   "wrong": [],
+   "invented": [],
+   "allRight": true,
+   "seconds": 6.18
+  }
+ ],
+ "chat": [
+  {
+   "q": "Merhaba, nasılsın?",
+   "a": "nasılsın?",
+   "seconds": 0.76
+  },
+  {
+   "q": "Bugün çok yoğunum, 3 etkinliğim var. Bana kısa bir moral ver.",
+   "a": "3 etkinlik var. Bugün çok yoğunum, 3 etkinliğim var. Bana kısa bir moral ver.",
+   "seconds": 2.0
+  },
+  {
+   "q": "Gala ile banket arasındaki fark ne?",
+   "a": "Gala ile banket arasındaki fark, hemikim ve neşeyi sunan, neşeyi sunan ve neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan gibi, neşeyi sunan",
+   "seconds": 11.69
+  },
+  {
+   "q": "100 kişilik bir düğün için kaç tane 10 kişilik masa gerekir?",
+   "a": "100 kişilik bir düğün için 100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+   "seconds": 11.83
+  },
+  {
+   "q": "Yarın bana hatırlat: saat 10'da salon keşfi var.",
+   "a": "10:00'da salon keşfi var.",
+   "seconds": 1.45
+  },
+  {
+   "q": "Kokteylde kişi başı kaç metrekare ayırmalıyım?",
+   "a": "Kokteylde kişi başı 10 metrekare ayır.",
+   "seconds": 1.61
+  },
+  {
+   "q": "Sandalyeler masanın altına itilmiş görünüyorsa planda nasıl anlarım?",
+   "a": "plana sandalyeler masanın altına itilmiş görünüyorsa, plana sandalyeler masanın altına itilmiş görünüyorsa, plana sandalyeler masanın altına itilmiş görünüyorsa, plana sandalyeler masanın altına itilmiş görünüyorsa",
+   "seconds": 3.71
+  },
+  {
+   "q": "Teşekkürler, iyi akşamlar!",
+   "a": "<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n<think>\n\n</think>\n\n",
+   "seconds": 11.68
+  }
+ ]
+}
