@@ -2384,6 +2384,19 @@ exam — holds (95 of 100 vs 64); Turkish sentence sets at most 2 fewer right th
 invented ≤ 0.02 — holds (0.007). **Shipped: r2** (`qwen3.5-0.8b-merit-chat-r2`) as an owner override, not as passing
 the bars; q08 kept for rollback. Not claimed: anything about plan reading (runR2 measured language only).
 
+## 2026-11-14 — Owner's standing rule: better than what is shipped → shipped (written before any g7 verdict; runT exam at 1027/1611)
+
+Owner: "eğer ki bizim eğittiğimiz model önceki modelimizden iyiyse yine takılması lazım ... barajı geçmemesi üstüne
+çalışmamız için bir neden." From now on, for EVERY candidate (detector, plan reader, Mimar), the pre-registered bars are
+still reported unchanged as they fall, and a candidate that fails them is still shipped **by the owner's standing rule**
+when ALL hold against the shipped model, measured the same way on the same exams: (1) **safety is not worse anywhere**:
+wrong changes, agreed-and-wrong, invented items, phantom/merged tables on every set are ≤ the shipped model's;
+(2) **more right in total** across the same sets; (3) **no single set loses more than 2 items** (the owner's "20'de
+kazanıp 1-2'de kaybetmek"); (4) **every set is actually measured** — an unmeasured set (e.g. the real Golden+ORNEK
+bench) counts as a loss, never as a tie. A ship under this rule is recorded as an owner override with the failed bars
+named, never as passing them; the previous model stays in the repo for rollback. A candidate worse on safety is never
+shipped, however much it wins elsewhere.
+
 ## 2026-11-12 — generation 7 + detector v6-g7 + runT: the owner's two styles, drawn like real sheets (written before any g7 exam existed, any g7 training or any g7 score)
 
 **Owner's request (2026-11-12).** "For the 2 examples (style G = Golden/Golden 2, style P = ORNEK) create realistic,
