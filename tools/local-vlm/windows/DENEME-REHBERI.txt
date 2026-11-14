@@ -1,0 +1,47 @@
+MERIT EVENT MAKER — DENEME REHBERİ (10 adım)
+
+Her adımda "Olması gereken"i kontrol et. Olmazsa adım numarasını ve ekranın
+fotoğrafını gönder. Ayarlar > Tanı raporu düğmesi bir dosya üretir; onu da ekle
+(içinde misafir adı yoktur).
+
+1. AÇ
+   MERIT-Baslat.cmd dosyasına çift tıkla. Windows "bilinmeyen uygulama" derse:
+   "Ek bilgi" > "Yine de çalıştır".
+   Olması gereken: tarayıcı açılır, en geç 2 dakikada ana ekran gelir.
+
+2. ETKİNLİK
+   "Yeni etkinlik" ile bir etkinlik aç (ad, tarih, mekân).
+   Olması gereken: boş etkinlik; içinde örnek masa ya da misafir yok.
+
+3. PLAN
+   Mekânın planını (PDF ya da resim) sürükle ya da tıklayıp seç, "Planı oku"ya bas.
+   Olması gereken: masalar ve sandalyeler çizilir; emin olmadıklarını ayrıca gösterir.
+
+4. KONTROL
+   Plan Doktoru'nu aç; işaretli yerleri tek tek "Kabul" ya da "Düzelt" ile geç.
+   Olması gereken: hiçbir şey sen onaylamadan değişmez.
+
+5. MİSAFİR
+   Excel misafir listesini içe aktar.
+   Olması gereken: "Ahmet Yılmaz +3" tek kayıt, 4 kişi olarak görünür.
+
+6. F8 İLE OTURT
+   F8'e bas, kendi yazdığın gibi yaz: "ahmet yilmazi t05e oturt".
+   Olması gereken: Ahmet Yılmaz T05'e geçer. Emin değilse sana sorar, "Onayla" beklenir.
+   Bir de soru sor: "galada masasi olmayanlar kim".
+
+7. CANLI
+   Canlı ekranında birkaç misafiri "Geldi", birini "Gelmedi" yap.
+   Olması gereken: gelmeyenin planlı yeri kaybolmaz.
+
+8. RAPOR
+   Raporlar > Excel indir.
+   Olması gereken: TABLE PLAN, GUEST LIST, UNASSIGNED sayfaları dolu ve düzgün.
+
+9. YEDEK
+   Programı kapat, tekrar aç (adım 1).
+   Olması gereken: etkinlik ve misafirler aynen yerinde.
+
+10. DİL
+   Dili İngilizce yap, F8'e "who has no table yet" yaz.
+   Olması gereken: bütün ekran ve F8'in cevabı İngilizce.

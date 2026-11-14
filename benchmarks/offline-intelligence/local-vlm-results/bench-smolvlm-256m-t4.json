@@ -1,0 +1,1135 @@
+{
+ "ranAt": "2026-10-18T01:19:54Z",
+ "crops": 136,
+ "seed": 5,
+ "prompts": {
+  "T1": "This is a small crop of an event venue floor plan drawing, seen from above. What single object is at the centre of the image? Answer with exactly one word from this list: table, chair, sofa, bench, banquette, column, stage, bar, nothing.",
+  "T2": "This is a crop of an event venue floor plan drawing, seen from above. How many tables are in the image? Count only tables, not chairs, sofas or benches. Answer with a number only."
+ },
+ "results": [
+  {
+   "summary": {
+    "model": "smolvlm-256m",
+    "threads": 4,
+    "loadSeconds": 0.5,
+    "peakRssMb": 1088,
+    "t1Generated": 0.017,
+    "t1Furniture": 0.028,
+    "t1Real": 0.031,
+    "fabrication": 0.0,
+    "unparsed": 69,
+    "t2Exact": 0.417,
+    "t2OverCount": 0.25,
+    "medianSeconds": 7.99,
+    "p90Seconds": 8.25,
+    "perClass": {
+     "generated-negative:nothing": "1/20",
+     "generated:banquette": "1/12",
+     "generated:bench": "0/12",
+     "generated:chair": "0/12",
+     "generated:sofa": "0/12",
+     "generated:table": "0/12",
+     "golden:banquette": "1/3",
+     "golden:chair": "0/8",
+     "golden:stage": "0/1",
+     "golden:table": "0/12",
+     "ornek:table": "0/8"
+    }
+   },
+   "rows": [
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.334
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.121
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Nothing.",
+     "parsed": "nothing",
+     "seconds": 8.018
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Nothing",
+     "parsed": "nothing",
+     "seconds": 8.131
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.281
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Nothing.",
+     "parsed": "nothing",
+     "seconds": 8.55
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Nothing.",
+     "parsed": "nothing",
+     "seconds": 7.821
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.887
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Nothing.",
+     "parsed": "nothing",
+     "seconds": 7.902
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.209
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.893
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "sofa",
+     "answer": "Nothing.",
+     "parsed": "nothing",
+     "seconds": 7.707
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Nothing",
+     "parsed": "nothing",
+     "seconds": 7.935
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Nothing",
+     "parsed": "nothing",
+     "seconds": 8.032
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.012
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Banquette.",
+     "parsed": "banquette",
+     "seconds": 7.995
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Nothing",
+     "parsed": "nothing",
+     "seconds": 8.041
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Nothing",
+     "parsed": "nothing",
+     "seconds": 8.04
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.953
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Nothing",
+     "parsed": "nothing",
+     "seconds": 8.021
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Banquette",
+     "parsed": "banquette",
+     "seconds": 7.895
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.715
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.106
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "bench",
+     "answer": "Sofa.",
+     "parsed": "sofa",
+     "seconds": 7.889
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.814
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Nothing",
+     "parsed": "nothing",
+     "seconds": 7.964
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.91
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.083
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Banquette.",
+     "parsed": "banquette",
+     "seconds": 7.74
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.968
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Nothing",
+     "parsed": "nothing",
+     "seconds": 7.803
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Nothing",
+     "parsed": "nothing",
+     "seconds": 7.84
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.141
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Nothing",
+     "parsed": "nothing",
+     "seconds": 8.036
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.84
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "banquette",
+     "answer": "Nothing",
+     "parsed": "nothing",
+     "seconds": 7.958
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.998
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.901
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.087
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.864
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.932
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.827
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Banquette.",
+     "parsed": "banquette",
+     "seconds": 7.949
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.761
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Nothing",
+     "parsed": "nothing",
+     "seconds": 8.133
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Chair",
+     "parsed": "chair",
+     "seconds": 7.971
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Nothing",
+     "parsed": "nothing",
+     "seconds": 7.98
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "table",
+     "answer": "Nothing.",
+     "parsed": "nothing",
+     "seconds": 8.047
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.971
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.062
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.192
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.004
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.016
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.443
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "table",
+     "parsed": "table",
+     "seconds": 8.079
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.485
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Nothing.",
+     "parsed": "nothing",
+     "seconds": 8.22
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.101
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.183
+    },
+    {
+     "task": "T1",
+     "source": "generated",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.775
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.042
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.876
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.95
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.893
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.104
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.749
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.663
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.043
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.084
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.77
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.766
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.839
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.296
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.858
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.871
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.125
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Nothing.",
+     "parsed": "nothing",
+     "seconds": 8.253
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.759
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.865
+    },
+    {
+     "task": "T1",
+     "source": "generated-negative",
+     "truth": "nothing",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.085
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "0",
+     "parsed": 0,
+     "seconds": 8.032
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "1.",
+     "parsed": 1,
+     "seconds": 8.103
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "1.",
+     "parsed": 1,
+     "seconds": 7.985
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "1",
+     "parsed": 1,
+     "seconds": 8.017
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "4",
+     "parsed": 4,
+     "seconds": 8.225
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "1",
+     "parsed": 1,
+     "seconds": 8.003
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "1",
+     "parsed": 1,
+     "seconds": 8.298
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "0",
+     "parsed": 0,
+     "seconds": 8.05
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "4",
+     "parsed": 4,
+     "seconds": 7.933
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "1",
+     "parsed": 1,
+     "seconds": 8.122
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "0",
+     "parsed": 0,
+     "seconds": 8.538
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "1",
+     "parsed": 1,
+     "seconds": 8.221
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "1",
+     "parsed": 1,
+     "seconds": 8.283
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "0",
+     "parsed": 0,
+     "seconds": 8.152
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "1",
+     "parsed": 1,
+     "seconds": 8.21
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "3",
+     "parsed": 3,
+     "seconds": 7.971
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "0",
+     "parsed": 0,
+     "seconds": 8.092
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "0",
+     "parsed": 0,
+     "seconds": 8.045
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 2,
+     "answer": "3",
+     "parsed": 3,
+     "seconds": 8.234
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "1",
+     "parsed": 1,
+     "seconds": 8.179
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "0",
+     "parsed": 0,
+     "seconds": 8.481
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "0",
+     "parsed": 0,
+     "seconds": 8.274
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 1,
+     "answer": "2",
+     "parsed": 2,
+     "seconds": 7.919
+    },
+    {
+     "task": "T2",
+     "source": "generated",
+     "truth": 3,
+     "answer": "4",
+     "parsed": 4,
+     "seconds": 7.935
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.788
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Banquette.",
+     "parsed": "banquette",
+     "seconds": 7.914
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.865
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "chair",
+     "parsed": "chair",
+     "seconds": 7.927
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.123
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Banquette.",
+     "parsed": "banquette",
+     "seconds": 8.148
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.868
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Banquette.",
+     "parsed": "banquette",
+     "seconds": 7.756
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Banquette",
+     "parsed": "banquette",
+     "seconds": 7.908
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.796
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Banquette.",
+     "parsed": "banquette",
+     "seconds": 7.762
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.776
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Nothing.",
+     "parsed": "nothing",
+     "seconds": 8.374
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.392
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.107
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.013
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.008
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Nothing.",
+     "parsed": "nothing",
+     "seconds": 8.22
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.927
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "chair",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.795
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "banquette",
+     "answer": "Banquette.",
+     "parsed": "banquette",
+     "seconds": 8.38
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "banquette",
+     "answer": "Sofa.",
+     "parsed": "sofa",
+     "seconds": 7.902
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "banquette",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 8.025
+    },
+    {
+     "task": "T1",
+     "source": "golden",
+     "truth": "stage",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.922
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "Nothing.",
+     "parsed": "nothing",
+     "seconds": 7.99
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "nothing",
+     "parsed": "nothing",
+     "seconds": 7.925
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.836
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "Nothing.",
+     "parsed": "nothing",
+     "seconds": 7.825
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "Nothing.",
+     "parsed": "nothing",
+     "seconds": 7.866
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.927
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "Banquet.",
+     "parsed": null,
+     "seconds": 7.871
+    },
+    {
+     "task": "T1",
+     "source": "ornek",
+     "truth": "table",
+     "answer": "Nothing",
+     "parsed": "nothing",
+     "seconds": 7.974
+    }
+   ],
+   "files": [
+    "SmolVLM-256M-Instruct-Q8_0.gguf",
+    "mmproj-SmolVLM-256M-Instruct-Q8_0.gguf"
+   ]
+  }
+ ]
+}

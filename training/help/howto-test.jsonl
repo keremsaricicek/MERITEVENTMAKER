@@ -1,0 +1,82 @@
+{"topic": "event.create", "q": "yeni etkinlik nasil acarim", "lang": "tr"}
+{"topic": "event.create", "q": "How do I create a new event?", "lang": "en"}
+{"topic": "event.copyLayout", "q": "gecen etkinligin duzeniyle yeni etkinlik acmak istiyorum", "lang": "tr"}
+{"topic": "event.copyLayout", "q": "start a new event with the same tables as last time", "lang": "en"}
+{"topic": "event.duplicate", "q": "etkinligi misafirleriyle birlikte cogaltma", "lang": "tr"}
+{"topic": "event.duplicate", "q": "duplicate an event with its guests", "lang": "en"}
+{"topic": "event.delete", "q": "etkinligi nasil silerim", "lang": "tr"}
+{"topic": "event.delete", "q": "how to delete an event", "lang": "en"}
+{"topic": "event.edit", "q": "etkinligin tarihini degistirmem lazim", "lang": "tr"}
+{"topic": "event.edit", "q": "change the event name", "lang": "en"}
+{"topic": "event.package", "q": "etkinligi baska bilgisayara nasil tasirim", "lang": "tr"}
+{"topic": "event.package", "q": "send this event to another computer", "lang": "en"}
+{"topic": "plan.upload", "q": "salon planini nereden yukleyecegim", "lang": "tr"}
+{"topic": "plan.upload", "q": "where do I upload the floor plan pdf", "lang": "en"}
+{"topic": "plan.read", "q": "plani okut masalari otomatik bulsun nasil", "lang": "tr"}
+{"topic": "plan.read", "q": "how do I make it detect the tables from the plan", "lang": "en"}
+{"topic": "plan.review", "q": "planda yanlis bulunan masayi nasil duzeltirim", "lang": "tr"}
+{"topic": "plan.review", "q": "fix a table the plan reading got wrong", "lang": "en"}
+{"topic": "table.add", "q": "masa nasil eklenir", "lang": "tr"}
+{"topic": "table.add", "q": "add a round table", "lang": "en"}
+{"topic": "table.capacity", "q": "masanin kisi sayisini 12 yapmak", "lang": "tr"}
+{"topic": "table.capacity", "q": "change how many seats a table has", "lang": "en"}
+{"topic": "table.number", "q": "masa numarasini degistirme", "lang": "tr"}
+{"topic": "table.number", "q": "rename table T05 to VIP02", "lang": "en"}
+{"topic": "table.move", "q": "masayi baska yere tasimak dondurmek", "lang": "tr"}
+{"topic": "table.move", "q": "rotate a table", "lang": "en"}
+{"topic": "table.delete", "q": "masa silme", "lang": "tr"}
+{"topic": "table.delete", "q": "remove a table from the plan", "lang": "en"}
+{"topic": "guest.add", "q": "tek tek misafir ekleme", "lang": "tr"}
+{"topic": "guest.add", "q": "add a guest by hand", "lang": "en"}
+{"topic": "guest.import", "q": "excelden misafir listesi yukleme", "lang": "tr"}
+{"topic": "guest.import", "q": "import the guest list from excel", "lang": "en"}
+{"topic": "guest.pax", "q": "ahmet +3 ne demek kac kisi sayilir", "lang": "tr"}
+{"topic": "guest.pax", "q": "what does +2 mean on a guest", "lang": "en"}
+{"topic": "guest.edit", "q": "misafirin adini yanlis yazmisim duzeltecegim", "lang": "tr"}
+{"topic": "guest.edit", "q": "edit a guest's details", "lang": "en"}
+{"topic": "guest.delete", "q": "misafiri listeden cikarma", "lang": "tr"}
+{"topic": "guest.delete", "q": "delete a guest", "lang": "en"}
+{"topic": "guest.vip", "q": "vip misafir nasil isaretlenir", "lang": "tr"}
+{"topic": "guest.vip", "q": "mark a guest as VIP", "lang": "en"}
+{"topic": "guest.invitedBy", "q": "kimin davet ettigini nereye yaziyoruz junket", "lang": "tr"}
+{"topic": "guest.invitedBy", "q": "where do I put who invited the guest", "lang": "en"}
+{"topic": "seat.assign", "q": "misafiri masaya oturtma", "lang": "tr"}
+{"topic": "seat.assign", "q": "how do I seat a guest at a table", "lang": "en"}
+{"topic": "seat.move", "q": "misafiri baska masaya gecirme", "lang": "tr"}
+{"topic": "seat.move", "q": "move a guest to another table", "lang": "en"}
+{"topic": "seat.unassign", "q": "misafiri masadan kaldirma ama silmeme", "lang": "tr"}
+{"topic": "seat.unassign", "q": "unseat a guest without deleting", "lang": "en"}
+{"topic": "seat.smart", "q": "akilli yerlestirme oneri nasil calisir", "lang": "tr"}
+{"topic": "seat.smart", "q": "get a seat suggestion for a guest", "lang": "en"}
+{"topic": "seat.freeze", "q": "bir bolgeyi kilitleyip kimse oturtulmasin", "lang": "tr"}
+{"topic": "seat.freeze", "q": "lock an area so nobody is seated there", "lang": "en"}
+{"topic": "table.unavailable", "q": "kirik masayi kullanilamaz yapmak", "lang": "tr"}
+{"topic": "table.unavailable", "q": "mark a table as unavailable", "lang": "en"}
+{"topic": "live.checkin", "q": "etkinlik gunu gelenleri nasil isaretlerim", "lang": "tr"}
+{"topic": "live.checkin", "q": "check guests in on the night", "lang": "en"}
+{"topic": "live.noshow", "q": "gelmeyeni gelmedi olarak isaretleme", "lang": "tr"}
+{"topic": "live.noshow", "q": "mark a no show", "lang": "en"}
+{"topic": "live.door", "q": "kapida f8 ile hizli giris", "lang": "tr"}
+{"topic": "live.door", "q": "fast check in at the door with F8", "lang": "en"}
+{"topic": "report.excel", "q": "masa planini excel olarak indirme", "lang": "tr"}
+{"topic": "report.excel", "q": "export the table plan to excel", "lang": "en"}
+{"topic": "report.printPlan", "q": "masa planini yazdirmak", "lang": "tr"}
+{"topic": "report.printPlan", "q": "print the table plan", "lang": "en"}
+{"topic": "report.doorList", "q": "kapi listesi nasil alinir", "lang": "tr"}
+{"topic": "report.doorList", "q": "print the door list", "lang": "en"}
+{"topic": "backup.export", "q": "yedek nasil alinir", "lang": "tr"}
+{"topic": "backup.export", "q": "make a backup of everything", "lang": "en"}
+{"topic": "backup.restore", "q": "yedekten geri donmek", "lang": "tr"}
+{"topic": "backup.restore", "q": "restore from a backup", "lang": "en"}
+{"topic": "backup.disk", "q": "diske otomatik yedek nerede", "lang": "tr"}
+{"topic": "backup.disk", "q": "where are the automatic backups on disk", "lang": "en"}
+{"topic": "f8.use", "q": "f8 asistani ne yapabilir", "lang": "tr"}
+{"topic": "f8.use", "q": "what can the F8 assistant do", "lang": "en"}
+{"topic": "lang.switch", "q": "dili ingilizce yapmak", "lang": "tr"}
+{"topic": "lang.switch", "q": "switch the language to Turkish", "lang": "en"}
+{"topic": "diag.report", "q": "bir sorun oldu rapor nasil gonderirim", "lang": "tr"}
+{"topic": "diag.report", "q": "the program broke how do I send a report", "lang": "en"}
+{"topic": "search.guest", "q": "bir misafiri hizlica bulmak", "lang": "tr"}
+{"topic": "search.guest", "q": "search for a guest", "lang": "en"}
+{"topic": "undo", "q": "yanlislikla sildim geri alabilir miyim", "lang": "tr"}
+{"topic": "undo", "q": "undo my last change", "lang": "en"}

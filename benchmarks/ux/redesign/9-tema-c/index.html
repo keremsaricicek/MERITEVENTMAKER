@@ -1,0 +1,1361 @@
+<!doctype html>
+<html lang="tr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<script>(function(){var D=1440;function fit(){var r=document.documentElement;r.style.zoom='';var w=window.innerWidth;if(w<1200){var s=w/D;r.style.zoom=s;r.style.setProperty('--vh','900px');r.style.width=D+'px';}else{r.style.removeProperty('--vh');r.style.width='';}}fit();addEventListener('orientationchange',function(){setTimeout(fit,300)});var t;addEventListener('resize',function(){clearTimeout(t);t=setTimeout(fit,200)});})();</script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Merit Event Maker · Royal gece</title>
+<link rel="icon" href="data:,">
+<style>
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI Variable Text","Segoe UI Variable","Segoe UI",system-ui,"Helvetica Neue",Arial,sans-serif;
+  --bg:#F3F2EF;--surf:#FFFFFF;--surf2:#F8F7F4;--line:#E4E2DD;--line2:#CFCBC3;
+  --ink:#16191D;--ink2:#474D55;--ink3:#61676F;
+  --acc:#1E2B3A;--acc-ink:#FFFFFF;--acc2:#2D5E8A;--acc2-soft:#E3ECF5;
+  --vip:#86651B;--ok:#2B6A4A;--ok-soft:#E2EFE7;--no:#8E2F3C;--no-soft:#F5E3E6;--warn:#8A5A0E;--warn-soft:#F7EBD6;
+  --t-full:#E8E6E1;--room:#FAF9F6;--chair:#4A5059;--ring:#8C9198;--me:#2D5E8A;--glow:#D7E3EF;
+  --shadow:0 1px 2px rgba(20,22,26,.06),0 10px 28px rgba(20,22,26,.12);
+  color-scheme:light}
+:root[data-theme="dark"]{
+  --bg:#0D1117;--surf:#131A23;--surf2:#18202A;--line:#232C38;--line2:#334050;
+  --ink:#EEE7D9;--ink2:#C2BAAB;--ink3:#948E83;
+  --acc:#CDB98F;--acc-ink:#12161C;--acc2:#CDBD99;--acc2-soft:#1E2631;
+  --vip:#D3B068;--ok:#A7B59F;--ok-soft:#1A2120;--no:#C4A09A;--no-soft:#261E20;--warn:#CDAE74;--warn-soft:#262219;
+  --t-full:#1C242E;--room:#0F151C;--chair:#A9A398;--ring:#8D887E;--me:#D9C69C;--glow:#2C2A22;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.45);
+  color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.45 var(--font);-webkit-font-smoothing:antialiased}
+body{overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+.tnum{font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--acc2);outline-offset:2px}
+h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+.mut{color:var(--ink3)}
+.btn{height:34px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:var(--surf);color:var(--ink);font-weight:500;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;transition:background .12s}
+.btn:hover{background:var(--surf2)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.btn.pri:hover{filter:brightness(1.12)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink2)}
+.btn.ghost:hover{background:var(--surf2);color:var(--ink)}
+.btn.lg{height:44px;font-size:15px;font-weight:600;padding:0 22px;border-radius:10px}
+.btn.sm{height:30px;padding:0 12px;font-size:13px}
+.btn.icon{width:34px;padding:0}
+.danger{color:var(--no)!important}
+.lnk{background:none;border:0;padding:0;color:var(--acc2);font-weight:500}
+.lnk:hover{text-decoration:underline}
+.vip{display:inline-flex;align-items:center;gap:4px;color:var(--vip);font-size:12px;font-weight:650;letter-spacing:.05em;margin-left:8px;vertical-align:1px}
+i.px,.wn i,.gn i,h2 i{font-style:normal;color:var(--ink3);font-weight:500;margin-left:6px}
+.st{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:14px}
+.st.ok{color:var(--ok)}.st.no{color:var(--no)}
+.warn{color:var(--warn)}
+.okt{color:var(--ok)}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:9px;padding:2px;background:var(--surf2)}
+.seg button{height:28px;padding:0 12px;border:0;background:none;border-radius:7px;color:var(--ink2);font-size:13px;font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--surf);color:var(--ink);box-shadow:0 0 0 1px var(--line2)}
+.fld{height:34px;border:1px solid var(--line2);border-radius:8px;background:var(--surf2);color:var(--ink);font:14px var(--font);padding:0 12px;outline:none}
+.fld:focus{border-color:var(--acc2)}
+
+/* top bar */
+#top{height:52px;display:flex;align-items:center;gap:18px;padding:0 20px;background:var(--surf);border-bottom:1px solid var(--line);position:relative;z-index:30}
+.brand{font-weight:700;letter-spacing:.2em;font-size:13px;white-space:nowrap}
+.brand span{font-weight:500;letter-spacing:0;color:var(--ink3);margin-left:8px}
+#nav{display:flex;height:100%}
+#nav button{height:52px;padding:0 12px;border:0;background:none;color:var(--ink2);font-weight:500;font-size:14px;display:flex;align-items:center;gap:7px;position:relative}
+#nav button:hover{color:var(--ink)}
+#nav button[aria-current]{color:var(--ink)}
+#nav button[aria-current]::after{content:"";position:absolute;left:12px;right:12px;bottom:0;height:2px;border-radius:2px 2px 0 0;background:var(--ink)}
+#cmd{flex:1;max-width:470px;position:relative;margin-left:6px}
+#cmd .box{display:flex;align-items:center;gap:8px;height:36px;border:1px solid var(--line2);border-radius:9px;background:var(--surf2);padding:0 8px 0 11px;color:var(--ink3)}
+#cmd .box:focus-within{border-color:var(--acc2);background:var(--surf)}
+#q{flex:1;min-width:0;border:0;background:none;outline:none;color:var(--ink);font:14.5px var(--font)}
+#q::placeholder{color:var(--ink3)}
+kbd{font:600 12px var(--font);color:var(--ink3);border:1px solid var(--line2);border-radius:5px;padding:1px 6px;background:var(--surf)}
+.tright{margin-left:auto;display:flex;align-items:center;gap:14px;color:var(--ink2);white-space:nowrap}
+#evname{color:var(--ink);font-weight:600}
+#clock{font-weight:600}
+#theme{width:34px;height:34px;border-radius:8px;border:1px solid var(--line2);background:var(--surf);display:grid;place-items:center;color:var(--ink2)}
+#drop{position:absolute;top:44px;left:0;width:580px;background:var(--surf);border:1px solid var(--line2);border-radius:12px;box-shadow:var(--shadow);padding:8px;display:none;max-height:72vh;overflow:auto}
+#drop.on{display:block}
+.dh{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);padding:6px 12px 4px}
+.di{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:10px 12px;border-radius:9px;cursor:pointer}
+.di.hi{background:var(--surf2);box-shadow:inset 0 0 0 1px var(--line)}
+.di .k{font-size:12px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em}
+.di .t{font-size:15px;font-weight:600}
+.di .s{font-size:13px;color:var(--ink2)}
+.df{font-size:12px;color:var(--ink3);padding:8px 12px 4px;border-top:1px solid var(--line);margin-top:6px}
+
+main{height:calc(var(--vh,100vh) - 52px);position:relative}
+.scr{display:none;height:100%}
+.scr.on{display:flex}
+
+/* events */
+#s-etkinlik{flex-direction:column;padding:26px 40px 24px;overflow:auto}
+.tl-head{display:flex;align-items:baseline;gap:16px}
+.tl-head h1{font-size:22px}
+.tl-head .sub{color:var(--ink3)}
+.tl-head .btn{margin-left:auto;align-self:center}
+.cal-wrap{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:32px;margin-top:14px}
+#calBox{display:flex;flex-direction:column;min-height:0}
+.cal-h{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.cal-h h2{font-size:18px;min-width:150px;text-align:center}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);padding-bottom:6px}
+.cal-dow span{padding-left:10px}
+.cal-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.cell{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px 6px 4px;position:relative;min-width:0;background:var(--surf);display:flex;flex-direction:column;gap:3px;overflow:hidden}
+.cell.off{background:transparent}
+.cell.was{background:var(--surf2)}
+.cdn{font-size:12.5px;color:var(--ink3);font-weight:600;padding:1px 6px;align-self:flex-start}
+.cell.today .cdn{color:var(--acc-ink);background:var(--acc);border-radius:10px}
+.ce{display:flex;align-items:center;gap:6px;width:100%;text-align:left;border:0;border-radius:6px;padding:4px 6px;background:none;font-size:12.5px;color:var(--ink);min-width:0}
+.ce .cn{display:flex;flex-direction:column;min-width:0;line-height:1.3}.ce .cn b{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ce .cn small{font-size:12px;color:var(--ink3)}.ce.live .cn b{font-weight:650}
+.ce i{width:3px;height:28px;border-radius:2px;background:var(--acc2);flex:none}
+.ce:hover{background:var(--surf2)}
+.ce.on{background:var(--acc2-soft);box-shadow:inset 0 0 0 1px var(--acc2)}
+.ce.past{color:var(--ink3)}.ce svg{flex:none}
+.ce.live{font-weight:600}
+.cadd{position:absolute;right:6px;top:4px;width:24px;height:24px;border-radius:6px;border:0;background:none;color:var(--ink3);opacity:0;font-size:16px;line-height:1}
+.cell:hover .cadd,.cadd:focus-visible{opacity:1}.cadd:hover{background:var(--surf2);color:var(--ink)}
+#evDet{border-left:1px solid var(--line);padding:2px 0 0 32px;overflow:auto}
+.ed-t{font-size:22px;margin:4px 0 6px}
+.ed-m{color:var(--ink2);line-height:1.6}
+.facts.sm{gap:28px;margin:20px 0}.facts.sm dd{font-size:22px}
+.ed-h{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin:0 0 6px}
+.rdl{list-style:none;margin:0 0 22px;padding:0;border-top:1px solid var(--line)}
+.rdl li{display:grid;grid-template-columns:16px 1fr auto;align-items:center;gap:8px;min-height:40px;border-bottom:1px solid var(--line);font-size:13.5px}
+.rdl li[data-go]{cursor:pointer}.rdl li[data-go]:hover{background:var(--surf2)}
+.rdl .mk{width:8px;height:8px;border-radius:50%;background:var(--ok)}.rdl .bad .mk{background:var(--warn)}.rdl .info .mk{background:var(--line2)}
+.rdl .go{color:var(--acc2);padding-right:4px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
+.eyebrow.live{color:var(--acc2)}
+
+.meta{color:var(--ink2);font-size:15px}
+.facts{display:flex;gap:44px;margin:22px 0 24px}
+.facts div{display:flex;flex-direction:column}
+.facts dt{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+.facts dd{margin:0;font-size:28px;font-weight:600;letter-spacing:-.01em}
+.acts{display:flex;gap:8px;align-items:center}
+.evd-ready h3{font-size:15px;margin-bottom:10px}
+.checks{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.checks li{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;min-height:56px;border-bottom:1px solid var(--line);padding:6px 4px}
+.checks li[data-go]{cursor:pointer}
+.checks li[data-go]:hover{background:var(--surf2)}
+.checks b{font-weight:600;display:block}
+.checks small{color:var(--ink3);font-size:13px}
+.checks .mk{width:10px;height:10px;border-radius:50%;background:var(--ok);justify-self:center}
+.checks .bad .mk{background:var(--warn)}
+.checks .info .mk{background:var(--line2)}
+.checks .go{color:var(--acc2);font-weight:500;font-size:13px}
+
+/* rooms */
+.roomwrap{flex:1;min-width:0;position:relative;background:var(--room);padding:18px 24px 40px}
+.roomwrap>svg{width:100%;height:100%;display:block}
+.wall{fill:none;stroke:var(--ink3);stroke-width:2}
+.fixt rect{fill:var(--surf2);stroke:var(--line2)}
+.fixt text,.ftxt{fill:var(--ink3);font:600 12px var(--font);letter-spacing:.16em}
+.tb{cursor:pointer}
+.tb .body{fill:var(--surf);stroke:var(--ink3);stroke-width:1.2;transition:fill .2s,stroke .2s}
+.tb.full .body{fill:var(--t-full)}
+.tb.empty .body{stroke-dasharray:3 3}
+.tb.vipt .body{stroke:var(--vip);stroke-width:1.8}
+.tb .tl{fill:var(--ink);font:600 12.5px var(--font);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.tb .fr{fill:var(--acc2);font:600 12px var(--font);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.tb .tl.q{fill:var(--warn)}
+.ch{fill:transparent;stroke:var(--line2);stroke-width:1.2}
+.ch.p{fill:var(--chair);stroke:var(--chair)}
+.ch.d{fill:none;stroke:var(--chair);stroke-dasharray:2 2;stroke-width:1.4}
+.ch.new{fill:var(--acc2);stroke:var(--acc2)}
+.ch.in{fill:var(--ok);stroke:var(--ok)}
+.ch.w{fill:var(--surf);stroke:var(--chair);stroke-width:1.4}
+.ch.no{fill:var(--no-soft);stroke:var(--no);stroke-width:1.6}
+.tb.sel .body,.tb.hi .body{stroke:var(--acc2);stroke-width:3}
+.tb.fit .body{fill:var(--acc2-soft);stroke:var(--acc2);stroke-width:2}
+.tb.grp .body{stroke-width:3.4}
+.tb.dim{opacity:.3}
+.tb.lit .ch.in{animation:lit 1.4s ease-out}
+@keyframes lit{from{stroke-width:9;stroke-opacity:.3}to{stroke-width:1.2;stroke-opacity:1}}
+.pin circle{fill:var(--warn)}
+.pin text{fill:var(--surf);font:700 13px var(--font);text-anchor:middle;dominant-baseline:central}
+.pin{cursor:pointer}
+.ghost{fill:none;stroke:var(--warn);stroke-width:1.6;stroke-dasharray:4 3;cursor:pointer}
+.floor{fill:var(--surf);stroke:var(--line)}
+.fx{fill:var(--surf2);stroke:var(--line2)}
+.fx.dance{fill:none;stroke:var(--line2);stroke-dasharray:4 4}
+.fxt{fill:var(--ink3);font:600 13px var(--font);letter-spacing:.16em;text-anchor:middle;dominant-baseline:central}
+.entr{stroke:var(--ink3);stroke-width:3;stroke-linecap:round}
+.ti{cursor:pointer}
+.ti .body{fill:var(--surf);stroke:var(--line2);stroke-width:1;transition:fill .2s}
+.ti.full .body{fill:var(--t-full)}
+.ti.vipt .body{stroke:var(--vip);stroke-width:1.6}
+.ti .trk{fill:none;stroke:var(--line);stroke-width:4}
+.ti.empty .trk{stroke:var(--line2);stroke-dasharray:3 4}
+.ti .arc{fill:none;stroke:var(--ring);stroke-width:4}
+.ti .arc.in{stroke:var(--ok)}.ti .arc.no{stroke:var(--no)}
+.ti .trkb{fill:var(--line)}.ti .bar{fill:var(--ring)}.ti .bar.in{fill:var(--ok)}.ti .bar.no{fill:var(--no)}
+.ti .tn{fill:var(--ink);font:650 15px var(--font);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.ti .tn.q{fill:var(--warn)}
+.ti .tc{fill:var(--ink3);font:500 12.5px var(--font);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.door .ti .tn{font-size:17px}.door .ti .tc{font-size:14px}
+.ti.sel .body,.ti.hi .body{stroke:var(--acc2);stroke-width:2.5}
+.ti.lit .arc.in{animation:lit2 1.2s ease-out}
+.halo{fill:var(--glow);animation:pulse 2.4s ease-in-out infinite;pointer-events:none}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:.95}}
+.fc{fill:none;stroke:var(--line2);stroke-width:1.2}
+.fc.p{fill:var(--ring);stroke:var(--ring)}.fc.w{fill:var(--surf);stroke:var(--ring);stroke-width:1.4}
+.fc.in{fill:var(--ok);stroke:var(--ok)}.fc.no{fill:var(--no-soft);stroke:var(--no)}
+.fc.me{stroke:var(--me);stroke-width:2.6}.fc.p.me,.fc.w.me{fill:var(--me)}
+.ti.foc .body{stroke:var(--me);stroke-width:2.2}
+.drow.sel{background:var(--acc2-soft)}
+.pop-g li[data-fg]{cursor:pointer;border-radius:6px;padding:0 6px;margin:0 -6px}.pop-g li[data-fg]:hover{background:var(--surf2)}.pop-g li.me{background:var(--acc2-soft)}
+@keyframes lit2{from{stroke-width:11;stroke-opacity:.35}to{stroke-width:4;stroke-opacity:1}}
+.rtools{position:absolute;top:16px;left:24px;display:flex;gap:8px;align-items:center;z-index:2}
+.chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:17px;background:var(--warn-soft);color:var(--warn);font-weight:600;border:0}
+.legend{position:absolute;left:24px;bottom:12px;display:flex;gap:18px;font-size:13px;color:var(--ink2);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;border:1.4px solid var(--chair)}
+.legend i.p{background:var(--chair)}.legend i.in{background:var(--ok);border-color:var(--ok)}.legend i.no{background:var(--no-soft);border-color:var(--no)}.legend i.full{background:var(--t-full);border-color:var(--ink3);border-radius:4px}.legend i.room{border-radius:4px;border-color:var(--ink3);background:var(--surf)}.legend i.vipl{border-color:var(--vip);border-width:2px;border-radius:4px}.legend i.fit{background:var(--acc2-soft);border-color:var(--acc2);border-radius:4px}
+
+/* side panels */
+.side{width:400px;flex:none;background:var(--surf);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.side-h{display:flex;align-items:flex-start;justify-content:space-between;padding:22px 24px 8px}
+.side-h h2{font-size:20px}
+.side-h .sub{color:var(--ink2)}
+.side-h .sub b{font-size:15px}
+.selstrip{margin:8px 24px 10px;height:46px;line-height:44px;border-radius:10px;background:var(--surf2);border:1px solid var(--line);padding:0 14px;color:var(--ink2);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.selstrip.on{background:var(--acc2-soft);border-color:var(--acc2);color:var(--ink)}
+.wl{overflow:auto;flex:1;scrollbar-gutter:stable;padding:0 12px 24px 16px}
+.grp-h{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);padding:16px 8px 6px}
+.grp-h .lnk{text-transform:none;letter-spacing:0;font-size:13px}
+.wrow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;height:60px;padding:0 10px;border-radius:9px;cursor:pointer;border:1px solid transparent}
+.wrow:hover{background:var(--surf2)}
+.wrow.on{background:var(--acc2-soft);border-color:var(--acc2)}
+.wrow.done{cursor:default;background:none}
+.wrow.done .wn b{color:var(--ink2)}
+.wn{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wn b{font-weight:600;font-size:15px}
+.ws{font-size:13px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis}
+.wr{display:flex;align-items:center;gap:10px;font-weight:600}
+.wr .pax{color:var(--ink2);font-weight:500}
+.sw{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2);cursor:pointer;margin-top:4px}
+.sw input{position:absolute;opacity:0;width:0}
+.sw span{width:32px;height:18px;border-radius:9px;background:var(--line2);position:relative;transition:background .15s}
+.sw span::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--surf);transition:transform .15s}
+.sw input:checked+span{background:var(--acc2)}
+.sw input:checked+span::after{transform:translateX(14px)}
+.sw input:focus-visible+span{outline:2px solid var(--acc2);outline-offset:2px}
+
+/* door */
+.side.wide{width:500px}
+.dsearch{padding:16px 20px 10px;position:relative}
+.dsearch svg{position:absolute;left:36px;top:31px;color:var(--ink3)}
+#dq{width:100%;height:50px;border:1px solid var(--line2);border-radius:12px;background:var(--surf2);color:var(--ink);font:19px var(--font);padding:0 14px 0 48px;outline:none}
+#dq:focus{border-color:var(--acc2);background:var(--surf)}
+.dcount{display:grid;grid-template-columns:1.3fr 1fr 1fr;padding:4px 20px 10px;gap:8px}
+.dcount div{display:flex;flex-direction:column}
+.dcount small{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+.dcount b{font-size:23px;font-weight:650;letter-spacing:-.01em}
+.dcount b.ok{color:var(--ok)}.dcount b.no{color:var(--no)}
+.dcount .of{font-size:15px;color:var(--ink3);font-weight:500}
+.tick-on{animation:tk .9s ease-out}
+@keyframes tk{from{background:var(--ok-soft)}to{background:transparent}}
+.dgroups{display:flex;gap:6px;padding:0 20px 10px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.dgroups button{height:30px;padding:0 10px;border-radius:15px;border:1px solid var(--line2);background:var(--surf);font-size:13px;color:var(--ink2);white-space:nowrap}
+.dgroups button[aria-pressed="true"]{background:var(--ink);color:var(--surf);border-color:var(--ink)}
+.dgroups .n{font-variant-numeric:tabular-nums;margin-left:5px;opacity:.85}
+.dlist{overflow:auto;flex:1;scrollbar-gutter:stable}
+.drow{display:grid;grid-template-columns:40px 1fr 176px;align-items:center;height:56px;border-bottom:1px solid var(--line);padding:0 16px 0 8px}
+.drow:hover{background:var(--surf2)}
+.drow .more{width:34px;height:34px;border-radius:8px;border:0;background:none;color:var(--ink3);display:grid;place-items:center}
+.drow .more:hover{background:var(--line);color:var(--ink)}
+.dn{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dn b{font-size:15px;font-weight:600}
+.drow.in .dn b{color:var(--ink2);font-weight:500}
+.ds{font-size:13px;color:var(--ink3)}
+.dact{display:flex;justify-content:flex-end;align-items:center;gap:10px;height:38px}
+.dact .giris{width:116px}
+
+/* guests */
+#s-misafirler{background:var(--surf)}
+.gl-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.gl-bar{display:flex;align-items:center;gap:12px;padding:22px 32px 10px}
+.gl-bar h1{font-size:22px}
+.gl-bar .cnt{color:var(--ink3)}
+.gl-bar .sp,.rp-bar .sp{flex:1}
+.gl-bar2{display:flex;align-items:center;gap:10px;padding:2px 32px 14px}
+.gl-head,.gr{display:grid;grid-template-columns:minmax(0,1fr) 220px 80px 100px 120px;gap:14px;align-items:center;padding:0 32px}
+.gl-head{height:34px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.gl-rows{overflow:auto;flex:1;scrollbar-gutter:stable}
+.gr{height:46px;border-bottom:1px solid var(--line);cursor:pointer}
+.gr:hover{background:var(--surf2)}
+.gr.on{background:var(--acc2-soft)}
+.gn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gn b{font-weight:600}
+.gr>div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gl-det{width:380px;flex:none;border-left:1px solid var(--line);background:var(--surf2);padding:28px 28px;overflow:auto}
+.gl-det h2{font-size:22px}
+.gl-det .sub{color:var(--ink2);margin:4px 0 18px}
+.kv{margin:0;border-top:1px solid var(--line)}
+.kv>div{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center;min-height:50px;border-bottom:1px solid var(--line)}
+.kv dt{color:var(--ink3);font-size:13px}
+.kv dd{margin:0;display:flex;gap:12px;align-items:center}
+.det-acts{display:flex;gap:8px;margin-top:20px}
+.note{color:var(--ink3);font-size:13px;margin-top:18px}
+.empty{color:var(--ink3);padding:40px 8px}
+.empty b{color:var(--ink2);display:block;font-size:15px;margin-bottom:4px}
+
+/* reports */
+.rp-list{width:380px;flex:none;background:var(--surf);border-right:1px solid var(--line);padding:22px 16px}
+.rp-list h1{font-size:22px;padding:0 10px 14px}
+.rp{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:center;width:100%;text-align:left;padding:12px 10px;border:1px solid transparent;border-radius:10px;background:none;margin-bottom:4px}
+.rp:hover{background:var(--surf2)}
+.rp.on{background:var(--acc2-soft);border-color:var(--acc2)}
+.rp svg{color:var(--ink2)}
+.rp b{display:block;font-weight:600;font-size:15px}
+.rp small{color:var(--ink3);font-size:13px}
+.rp-prev{flex:1;min-width:0;display:flex;flex-direction:column}
+.rp-bar{display:flex;align-items:center;gap:10px;padding:18px 32px;border-bottom:1px solid var(--line);background:var(--surf)}
+.rp-bar b{display:block;font-size:16px}
+.rp-bar small{color:var(--ink3);font-size:13px}
+.paperwrap{flex:1;overflow:auto;padding:28px 32px}
+.paper{--surf:#FFFFFF;--surf2:#F6F5F2;--line:#E2E0DB;--line2:#CBC7BF;--ink:#16191D;--ink2:#474D55;--ink3:#61676F;--chair:#474D55;--t-full:#E4E1DA;--vip:#86651B;--room:#fff;
+  width:820px;margin:0 auto;background:#fff;color:#16191D;box-shadow:var(--shadow);border-radius:4px;padding:34px 40px;min-height:600px;font-size:13px}
+.paper h3{font-size:16px;margin-bottom:2px}
+.paper .pm{color:#61676F;margin-bottom:18px}
+.tabs{display:flex;gap:0;border-bottom:1px solid #CBC7BF;margin-bottom:16px}
+.tabs span{padding:6px 14px;font-weight:600;font-size:12px;letter-spacing:.06em;color:#61676F}
+.tabs span.on{color:#16191D;border-bottom:2px solid #16191D}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.card{border:1px solid #CBC7BF;padding:8px 10px;min-height:150px}
+.card h4{margin:0 0 6px;font-size:13px;display:flex;justify-content:space-between;border-bottom:1px solid #E2E0DB;padding-bottom:4px}
+.card div{font-size:12px;line-height:1.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .go{color:#61676F}
+.az{columns:3;column-gap:28px;font-size:12.5px}
+.az div{display:flex;justify-content:space-between;gap:8px;break-inside:avoid;line-height:1.7;border-bottom:1px dotted #E2E0DB}
+.az h5{margin:8px 0 2px;font-size:13px;break-after:avoid}
+.ptab{width:100%;border-collapse:collapse;font-size:13.5px}
+.ptab th{text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#61676F;border-bottom:1px solid #CBC7BF;padding:8px 6px}
+.ptab td{border-bottom:1px solid #E2E0DB;padding:9px 6px}
+.ptab td.n,.ptab th.n{text-align:right;font-variant-numeric:tabular-nums}
+
+/* overlays */
+#pop{position:fixed;z-index:50;display:none;width:300px;background:var(--surf);border:1px solid var(--line2);border-radius:12px;box-shadow:var(--shadow);padding:14px}
+#pop.on{display:block}
+#pop.menu{width:auto;min-width:230px;padding:6px}
+.mi{display:block;width:100%;text-align:left;padding:9px 12px;border-radius:7px;background:none;border:0;font-size:14px}
+.mi:hover{background:var(--surf2)}
+.mi[disabled]{color:var(--ink3);cursor:default;background:none}
+#pop hr{border:0;border-top:1px solid var(--line);margin:5px 4px}
+.pop-h{display:flex;align-items:baseline;gap:10px}
+.pop-h b{font-size:18px}
+.pop-h span,.pop-sub{color:var(--ink3);font-size:13px}
+.pop-g{list-style:none;margin:10px 0;padding:8px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pop-g li{display:flex;justify-content:space-between;align-items:center;line-height:1.9}
+.pop-row{display:flex;justify-content:space-between;align-items:center;margin:6px 0 10px}
+.step{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:8px}
+.step button{width:32px;height:30px;border:0;background:none;font-size:16px}
+.step b{min-width:28px;text-align:center}
+.pop-acts{display:flex;gap:6px;flex-wrap:wrap}
+.pop-foot{font-size:12px;color:var(--ink3);margin-top:10px}
+.pop-p{color:var(--ink2);margin:8px 0 12px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:55;background:var(--acc);color:var(--acc-ink);border-radius:10px;padding:10px 12px 10px 18px;display:flex;gap:16px;align-items:center;font-size:14px;opacity:0;pointer-events:none;transition:opacity .18s;box-shadow:var(--shadow);white-space:nowrap}
+#toast.on{opacity:1;pointer-events:auto}
+#toast button{background:none;border:1px solid currentColor;border-radius:7px;color:inherit;padding:4px 10px;font-weight:600}
+#toast kbd{color:inherit;background:none;border-color:currentColor;opacity:.75}
+#dlg{position:fixed;inset:0;z-index:60;background:rgba(10,12,15,.38);display:none;align-items:center;justify-content:center}
+#dlg.on{display:flex}
+#dlg .box{width:460px;background:var(--surf);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+#dlg h3{font-size:18px;margin-bottom:6px}
+#dlg p{color:var(--ink2);margin:0 0 14px}
+#dlg label{display:block;font-size:13px;color:var(--ink2);margin:10px 0 4px}
+#dlg .fld{width:100%;height:38px}
+#dlg textarea.fld{height:130px;padding:10px 12px;resize:none}
+#dlg .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#dlg .dacts{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.drop-zone{border:1.5px dashed var(--line2);border-radius:10px;padding:26px;text-align:center;color:var(--ink2)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ═══ 7 · Atlas sade: Atlas palette, calm; classic night ═══ */
+:root{--serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --bg:#ECEEE9;--surf:#F7F8F5;--surf2:#EEF0EC;--line:#D9DDD8;--line2:#C3CAC5;--ink:#1D2930;--ink2:#46525A;--ink3:#566269;
+  --acc:#1E4D78;--acc-ink:#FFFFFF;--acc2:#1E4D78;--acc2-soft:#DCE5EE;--vip:#7E6119;--ok:#2E5E45;--ok-soft:#DEE8E1;--no:#A2352A;--no-soft:#F2E1DC;
+  --warn:#8A5A12;--warn-soft:#F1E6CF;--t-full:#E2E5E0;--room:#F2F3EF;--table:#FBFBF9;--chair:#1D2930;--me:#1E4D78;--glow:#DCE5EE;color-scheme:light}
+:root[data-theme="dark"]{--bg:#0D1117;--surf:#131A23;--surf2:#18202A;--line:#232C38;--line2:#334050;--ink:#EEE7D9;--ink2:#C2BAAB;--ink3:#948E83;
+  --acc:#CDB98F;--acc-ink:#12161C;--acc2:#CDBD99;--acc2-soft:#1E2631;--vip:#D3B068;--ok:#A7B59F;--ok-soft:#1A2120;--no:#C4A09A;--no-soft:#261E20;
+  --warn:#CDAE74;--warn-soft:#262219;--t-full:#1C242E;--room:#10161D;--table:#18212B;--chair:#D9D1C0;--me:#D9C69C;--glow:#2C2A22;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.45);color-scheme:dark}
+html,body{font-size:15px}
+.btn{border-radius:3px}.btn.wide{width:100%;justify-content:flex-start}
+.st-t{font-family:var(--serif);font-weight:500;font-size:30px;letter-spacing:0;line-height:1.15}
+.st-t.sm{font-size:24px}
+.sub{color:var(--ink2);margin:4px 0 0}
+/* top: hotel signage */
+#top{height:56px;gap:26px;padding:0 28px}
+.brand{font-family:var(--serif);font-weight:600;letter-spacing:.36em;font-size:16px}
+#nav button{height:56px;padding:0 16px;font-size:16px;font-variant-caps:small-caps;letter-spacing:.05em;font-weight:500;gap:0}
+#nav button+button::before{content:"";position:absolute;left:0;top:21px;height:14px;border-left:1px solid var(--line2)}
+#nav button[aria-current]::after{left:16px;right:16px;background:var(--acc)}
+.tright{gap:16px}
+#evname{font-family:var(--serif);font-weight:500;font-size:15px}
+.tsep{width:1px;height:14px;background:var(--line2)}
+.mimar-btn{height:34px;padding:0 12px 0 14px;border-radius:3px;border:1px solid var(--acc);background:var(--surf);color:var(--acc);font-variant-caps:small-caps;font-size:16px;letter-spacing:.06em;display:inline-flex;align-items:center;gap:8px;font-weight:600}
+.mimar-btn.on{background:var(--acc);color:var(--acc-ink)}
+.mimar-btn kbd{font-variant-caps:normal}
+main{height:calc(var(--vh,100vh) - 56px)}
+/* events: Atlas timeline with plan thumbnails */
+#s-etkinlik{flex-direction:column;padding:30px 56px 24px;overflow:auto}
+.ev-head{display:flex;justify-content:space-between;align-items:flex-start}
+.ev-head .st-t{font-size:40px}
+#strip{display:flex;justify-content:center;align-items:stretch;margin-top:64px;overflow-x:auto;padding:30px 0 6px}
+.plate{width:190px;padding:0 14px;display:flex;flex-direction:column;cursor:pointer;position:relative;flex:none;border-radius:4px}
+.plate .dr{height:150px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:16px}
+.plate .dr svg{width:100%;height:100%;overflow:visible}
+.plate .cap{border-top:1.5px solid var(--ink);padding-top:12px}
+.plate .dt{font-size:14px;color:var(--ink2)}
+.plate .nm2{font-family:var(--serif);font-size:19px;line-height:1.2;margin:3px 0 4px}
+.plate .vn{font-size:14px;color:var(--ink2)}
+.plate .ss{font-size:14px;margin-top:6px;font-weight:600;display:flex;gap:5px;align-items:baseline}
+.plate .ss.red{color:var(--no)}
+.plate.past .dr{opacity:.55}.plate.past .nm2,.plate.past .ss{color:var(--ink2)}
+.plate:hover .nm2{color:var(--acc)}
+.plate.sel{background:var(--surf);box-shadow:0 0 0 1px var(--line2)}
+.plate.sel .cap{border-top-color:var(--acc);border-top-width:2.5px}
+.plate.sel .dr svg .w{stroke:#1E4D78}
+.meridian{width:100px;position:relative;flex:none}
+.meridian::before{content:"";position:absolute;left:50%;top:-30px;bottom:-10px;border-left:1.5px dashed var(--acc)}
+.meridian .lab{position:absolute;left:50%;transform:translateX(-50%);top:134px;background:var(--bg);padding:4px 6px;text-align:center;font-size:14px;color:var(--acc);font-weight:600;white-space:nowrap;line-height:1.3}
+#evAct{margin:40px auto 0;display:flex;flex-direction:column;align-items:center;gap:12px}
+.ea-t{display:flex;gap:12px;align-items:baseline}.ea-t b{font-family:var(--serif);font-weight:500;font-size:20px}.ea-t span{color:var(--ink2)}
+.ea-b{display:flex;gap:8px}
+.ea-n{color:var(--ink3);font-size:14px}
+/* rooms: Atlas drawing, no grid, no rulers */
+.roomwrap{padding:20px 28px 44px}
+.floor{fill:var(--room)}
+.wallr{fill:none;stroke:var(--ink);stroke-width:12}
+.fx{fill:var(--surf2);stroke:var(--ink2);stroke-width:2}
+.fxd{fill:var(--surf2);stroke:var(--line2);stroke-width:2}
+.fxt{fill:var(--ink2);font:600 20px var(--font);letter-spacing:.18em;text-anchor:middle;dominant-baseline:central}
+.tbl{cursor:pointer}
+.tbl .tshape{fill:var(--table);stroke:var(--ink);stroke-width:2}
+.tbl.vip .tshape{stroke:var(--vip);stroke-width:2.6}
+.tbl .vipring{fill:none;stroke:var(--vip);stroke-width:1.2}
+.tbl .tl{font:650 20px var(--font);fill:var(--ink);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.tbl.vip .tl{fill:var(--vip)}.tbl .tl.q{fill:var(--warn)}
+.tbl .fr{font:600 16px var(--font);fill:var(--acc2);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.tbl .halo{fill:var(--acc2-soft);stroke:var(--acc2);stroke-width:2;opacity:0;animation:none}
+.tbl.sel .halo,.tbl.hi .halo,.tbl.fit .halo{opacity:.85}
+.tbl.foc .halo,.tbl.pv .halo{opacity:.9;fill:var(--glow);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.45}50%{opacity:.95}}
+.tbl.flag .halo{opacity:.9;fill:var(--no-soft);stroke:var(--no);stroke-dasharray:6 5}
+.tbl.dim{opacity:.3}
+.zoom .tbl:not(.zt){opacity:.35}
+.seat .body{fill:var(--table);stroke:var(--chair);stroke-width:1.6}
+.seat .back{stroke:var(--chair);stroke-width:3}
+.seat .x{stroke:var(--no);stroke-width:2;display:none}
+.seat.empty .body{fill:none;stroke:var(--ink3);stroke-dasharray:3 2;stroke-width:1.2}
+.seat.empty .back{stroke:var(--ink3);stroke-width:1.2}
+.seat.in .body{fill:var(--chair)}
+.seat.out .body,.seat.out .back{stroke:var(--no)}.seat.out .x{display:block}
+.seat.vg .body{stroke:var(--vip)}.seat.vg.in .body{fill:var(--vip)}
+.seat.draft .body{stroke-dasharray:3 2}
+.seat.new .body{fill:var(--acc2);stroke:var(--acc2)}
+.seat.pend .body{fill:var(--acc2-soft);stroke:var(--acc2);stroke-width:2.4;stroke-dasharray:3 2}
+.seat.me .body{stroke:var(--me);stroke-width:3.4}.seat.me:not(.in) .body{fill:var(--glow)}
+.tbl.lit .seat.in .body{animation:fillin .8s ease-out}
+@keyframes fillin{from{fill:var(--table)}to{fill:var(--chair)}}
+.nm{font:500 7.5px var(--font);fill:var(--ink);dominant-baseline:central;pointer-events:none}
+.nm.co{fill:var(--ink3)}.nm.me{fill:var(--me);font-weight:700}
+.pin{cursor:pointer}.pin circle{fill:var(--warn)}.pin text{fill:var(--surf);font:700 18px var(--font);text-anchor:middle;dominant-baseline:central}
+.ghost{fill:none;stroke:var(--warn);stroke-width:2.4;stroke-dasharray:7 5;cursor:pointer}
+.legend i.in{background:var(--chair);border-color:var(--chair)}
+/* hazır mı */
+.hz{width:440px;flex:none;background:var(--surf);border-left:1px solid var(--line);padding:26px 28px;overflow:auto}
+.hzl{margin-top:18px;border-top:1px solid var(--line)}
+.hzr{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:12px;align-items:center;min-height:66px;border-bottom:1px solid var(--line);padding:6px 6px;cursor:pointer}
+.hzr:hover,.hzr.on{background:var(--surf2)}
+.hzr b{display:block;font-weight:600}.hzr small{color:var(--ink3);font-size:13.5px}
+.hzr .num{width:26px;height:26px;border-radius:50%;background:var(--warn);color:var(--surf);display:grid;place-items:center;font-weight:700;font-size:13px}
+.hzr.info .num,.hzr .num.none{background:var(--line2);color:var(--ink)}
+.hz-ok{margin-top:18px;display:flex;flex-direction:column;gap:8px;color:var(--ink2)}
+.hz-ok div{display:flex;gap:8px;align-items:center}.hz-ok svg{color:var(--ok)}
+#lead{position:fixed;inset:0;width:100vw;height:var(--vh,100vh);pointer-events:none;z-index:35}
+#lead path{fill:none;stroke:var(--acc);stroke-width:1.3}#lead circle{fill:var(--acc)}
+/* salon panel */
+.spanel{width:360px;flex:none;background:var(--surf);border-left:1px solid var(--line);padding:24px 26px;overflow:auto}
+.sp-sec{display:flex;flex-direction:column;gap:8px;margin:20px 0}
+.sp-sec .chip{justify-content:flex-start}
+.hint{color:var(--ink2);font-size:14px}
+.sp-g{list-style:none;margin:18px 0;padding:0;border-top:1px solid var(--line)}
+.sp-g li{padding:9px 8px;border-bottom:1px solid var(--line);cursor:pointer}
+.sp-g li:hover{background:var(--surf2)}.sp-g li.me{background:var(--acc2-soft)}
+.sp-g b{font-weight:600}.sp-g small{display:block;color:var(--ink3);font-size:13.5px}
+.sp-row{display:flex;justify-content:space-between;align-items:center;margin:8px 0 14px}
+.sp-acts{display:flex;gap:8px;flex-wrap:wrap}
+.lg2{display:flex;flex-direction:column;gap:8px;margin-top:22px;padding-top:16px;border-top:1px solid var(--line);color:var(--ink2);font-size:14px}
+.lg2 span{display:flex;align-items:center;gap:10px}
+.lg2 i{width:15px;height:12px;border-radius:2.5px;border:1.6px solid var(--chair);display:inline-block}
+.lg2 i.f{background:var(--chair)}.lg2 i.e{border-style:dashed;border-color:var(--ink3)}.lg2 i.v{border-color:var(--vip)}
+/* kapı 1/4 */
+#s-kapi .side.wide{width:25%}
+#s-kapi .dsearch{padding:18px 18px 10px}#s-kapi .dsearch svg{left:34px;top:35px}
+#s-kapi #dq{font-size:19px;height:54px;padding-left:48px}
+#s-kapi .dcount{padding:4px 18px 10px}#s-kapi .dcount b{font-size:22px}
+#s-kapi .dgroups{padding:0 18px 12px}
+#s-kapi .drow{grid-template-columns:34px minmax(0,1fr) 112px;height:68px;padding:0 12px 0 4px}
+#s-kapi .dact{flex-direction:column;align-items:flex-end;justify-content:center;gap:2px;height:auto}
+#s-kapi .dact .giris{width:104px;height:42px;padding:0}
+/* raporlar */
+.rp-prev{background:var(--bg)}
+.rp-design{width:33.333%;flex:none;border-left:1px solid var(--line);background:var(--surf);overflow:auto;padding:22px 26px}
+.dsec{border-top:1px solid var(--line);padding:14px 0;display:flex;flex-direction:column;gap:8px}
+.dsec.off{opacity:.45;pointer-events:none}
+.dl{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
+.dl small{text-transform:none;letter-spacing:0;font-weight:500;margin-left:6px}
+.fld.wide{width:100%}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center}
+.row3{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.colr{display:grid;grid-template-columns:1fr 30px 30px;align-items:center;height:34px;border-radius:3px;padding:0 4px}
+.colr:hover{background:var(--surf2)}.colr.offc label{color:var(--ink3)}
+.colr label,.ck{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px}
+.ib{width:28px;height:28px;border:1px solid var(--line2);border-radius:3px;background:var(--surf);color:var(--ink2)}
+.ib[disabled]{opacity:.3;cursor:default}
+.tpl{display:block;width:100%;text-align:left;padding:8px 10px;border:1px solid var(--line);border-radius:3px;background:var(--surf2);font-size:14px}
+.tpl:hover{border-color:var(--acc)}
+.page{background:#fff;color:#1D2930;margin:0 auto;box-shadow:var(--shadow);padding:38px 44px;font-size:13px}
+.page h3{font-family:var(--serif);font-weight:500;font-size:24px;margin:0}
+.page .pm{color:#566269;margin:2px 0 18px}
+.plogo{font-family:var(--serif);letter-spacing:.36em;font-weight:600;font-size:13px;color:#1D2930;margin-bottom:14px}
+.page .ptab th{color:#566269;border-bottom-color:#C3CAC5}.page .ptab td{border-bottom-color:#E2E5E0;padding:7px 6px}
+.pfoot{margin-top:14px;color:#566269;font-size:12px}
+.page .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.page .card{border:1px solid #C3CAC5;padding:8px 10px;min-height:140px}
+.page .card h4{margin:0 0 6px;font-size:13px;display:flex;justify-content:space-between;border-bottom:1px solid #E2E5E0;padding-bottom:4px}
+.page .card div{font-size:12px;line-height:1.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.page .go{color:#566269}
+/* Mimar chat */
+#mimar{position:fixed;right:20px;bottom:0;width:340px;height:500px;background:var(--surf);border:1px solid var(--line2);border-bottom:0;border-radius:8px 8px 0 0;box-shadow:var(--shadow);display:none;flex-direction:column;z-index:45}
+#mimar.on{display:flex}#mimar.min{height:44px}#mimar.min .mb,#mimar.min .mf{display:none}
+.mh{height:44px;flex:none;display:flex;align-items:center;gap:8px;padding:0 6px 0 16px;background:var(--acc);color:var(--acc-ink);border-radius:8px 8px 0 0;cursor:pointer}
+.mh b{font-family:var(--serif);font-size:17px;font-weight:600;letter-spacing:.06em}.mh small{opacity:.85;font-size:13px;flex:1}
+.mh button{width:32px;height:32px;border:0;background:none;color:inherit;font-size:18px;border-radius:4px;line-height:1}
+.mh button:hover{background:rgba(255,255,255,.14)}
+.mb{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+.bub{max-width:88%;padding:9px 12px;border-radius:12px;font-size:14px;line-height:1.45}
+.bub.me{align-self:flex-end;background:var(--acc);color:var(--acc-ink);border-bottom-right-radius:4px}
+.bub.ai{align-self:flex-start;background:var(--surf);border:1px solid var(--line);border-bottom-left-radius:4px}
+.mit{margin-top:6px}.mit .t{font-weight:600}.mit .s{color:var(--ink2);font-size:13.5px}
+.bub .acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.chips button{border:1px solid var(--line2);background:var(--surf2);border-radius:14px;padding:4px 10px;font-size:13.5px;color:var(--ink2)}
+.mf{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line);flex:none;align-items:center}
+.mf .fld{flex:1;height:38px}
+.mic{width:38px;height:38px;border-radius:4px;border:1px solid var(--line2);background:var(--surf2);color:var(--ink3);display:grid;place-items:center;cursor:not-allowed;position:relative}
+.mic span{position:absolute;bottom:-1px;left:50%;transform:translate(-50%,100%);font-size:12px;color:var(--ink3);white-space:nowrap}
+.mf{padding-bottom:22px}
+/* ═══ working order (owner 2026-11-07) ═══ */
+#nav button .ck{display:inline-block;width:9px;height:5px;border-left:1.3px solid currentColor;border-bottom:1.3px solid currentColor;transform:rotate(-45deg) translateY(-3px);margin-left:7px;opacity:.75}
+#nav button.next{color:var(--acc);font-weight:700}
+#nav button.next::after{content:"";position:absolute;left:16px;right:16px;bottom:12px;height:1px;background:var(--acc);opacity:.5}
+#nav button.next[aria-current]::after{bottom:0;height:2px;opacity:1}
+#nextBtn{position:fixed;right:24px;bottom:14px;z-index:40;height:34px;padding:0 14px;border-radius:17px;border:1px solid var(--line2);background:var(--surf);color:var(--ink2);font-size:14px;font-weight:500;box-shadow:var(--shadow)}
+#nextBtn:hover{color:var(--acc);border-color:var(--acc)}
+body.mopen #nextBtn{right:380px}
+#s-salon,.gl-main{position:relative}
+#planFlow{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:var(--room);z-index:3}
+#planFlow.on{display:flex}
+.pf{width:560px;text-align:center;display:flex;flex-direction:column;gap:14px;align-items:center}
+.pf h2{font-size:24px;font-weight:600}.pf p{color:var(--ink2);margin:0}
+.pf .drop-zone{width:100%;padding:34px 20px;background:var(--surf)}
+.pf .drop-zone.over{border-color:var(--acc);background:var(--acc2-soft)}
+.pf .file{display:flex;gap:10px;align-items:center;justify-content:center;font-weight:600}
+.pf .btn.lg{min-width:220px}
+.pf .or{color:var(--ink3);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+#handTools{position:absolute;top:16px;right:var(--htR,24px);display:none;gap:6px;z-index:4;background:var(--surf);border:1px solid var(--line);border-radius:6px;padding:5px;box-shadow:var(--shadow)}
+#handTools.on{display:flex}
+#handTools span{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);align-self:center;padding:0 6px}
+#detStrip{position:absolute;top:16px;left:50%;transform:translateX(-50%);display:none;gap:10px;align-items:center;z-index:4;background:var(--surf);border:1px solid var(--acc2);border-radius:6px;padding:8px 10px 8px 16px;box-shadow:var(--shadow);font-size:14px;white-space:nowrap}
+#detStrip.on{display:flex}
+[data-cand]{opacity:.6}[data-cand] .tshape,[data-cand] .body{stroke:var(--acc2)!important;stroke-dasharray:6 4}
+#settledBar{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:none;gap:12px;align-items:center;z-index:4;background:var(--surf);border:1px solid var(--line2);border-radius:18px;padding:5px 6px 5px 16px;font-size:14px;color:var(--ink2)}
+.settled #settledBar{display:flex}.settled .rtools,.settled .sp-sec,.settled #sugChip{display:none!important}
+#tidy{display:none;gap:10px;flex-wrap:wrap;padding:0 32px 12px}
+#tidy.on{display:flex}
+.td{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surf2);border-radius:6px;padding:6px 8px 6px 12px;font-size:14px}
+.td b{font-weight:600}.td small{color:var(--ink3);font-size:13px}
+.td-h{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);align-self:center}
+#glEmpty{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:var(--surf);z-index:3}
+#glEmpty.on{display:flex}
+.ge{display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;width:520px}
+.ge h2{font-size:24px;font-weight:600}.ge p{color:var(--ink2);margin:0 0 8px}
+.ge .opts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+.ge .opts button{height:96px;border:1px solid var(--line2);border-radius:8px;background:var(--surf2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:15px;font-weight:600;color:var(--ink)}
+.ge .opts button small{font-weight:400;color:var(--ink3);font-size:13px}
+.ge .opts button:hover{border-color:var(--acc)}
+.hz-settle{margin-top:20px;padding:18px;border:1px solid var(--ok);border-radius:8px;background:var(--ok-soft)}
+.hz-settle b{display:block;font-size:16px;margin-bottom:4px}
+/* Mimar: warm off-grey title bar, thin flowing strip while it works */
+:root{--mhb:#E8E4DC;--mhi:#2B2824}:root[data-theme="dark"]{--mhb:#2B2925;--mhi:#EEE7D9}
+.mh{background:var(--mhb);color:var(--mhi);border-bottom:1px solid var(--line)}.mh button:hover{background:rgba(127,120,110,.16)}
+.mstrip{height:3px;flex:none;background:var(--line)}#mimar.min .mstrip{display:none}
+#mimar.working .mstrip{background:linear-gradient(90deg,#2f6f66,#6fae9f,#d9a441,#c2703d,#d9a441,#6fae9f,#2f6f66);background-size:300% 100%;animation:mflow 2.6s ease-in-out infinite alternate}
+@keyframes mflow{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+@media (prefers-reduced-motion:reduce){#mimar.working .mstrip{animation:none}}
+.mf .fld{min-width:0;width:0}#mSend{padding:0 12px;flex:none}.mf{min-width:0}
+#s-salon{--htR:384px}
+/* ═══ v5 (owner 2026-11-11/12): one control system, Ayarlar, Mimar window, neon seats, Kapı full screen, desktop density ═══ */
+:root{--btn:var(--acc);--btn-ink:var(--acc-ink);--neon:#FF1744}
+:root[data-theme="dark"]{--btn:#D8D5CE;--btn-ink:#14161A}
+html,body{font-size:13px}
+.btn,.btn.sm,.btn.lg{height:30px;padding:0 14px;border-radius:15px;font-size:13px;font-weight:500;min-width:0}
+.btn.pri{background:var(--btn);border-color:var(--btn);color:var(--btn-ink)}
+.track{display:inline-flex;align-items:center;gap:2px;padding:1px;border-radius:16px;background:var(--surf2);border:1px solid var(--line2);vertical-align:middle;max-width:100%;flex-wrap:wrap}
+.track .btn,.track .btn.sm,.track .btn.lg{height:26px;border:0;background:transparent;border-radius:13px;padding:0 12px;width:auto;text-decoration:none}
+.track .btn.pri{background:var(--btn);color:var(--btn-ink)}
+.track .btn:not(.pri):hover{background:var(--line)}
+.seg{border-radius:16px;padding:1px}.seg button{height:26px;border-radius:13px;font-size:13px}
+.seg button[aria-pressed="true"]{background:var(--btn);color:var(--btn-ink);box-shadow:none}
+.dgroups button{font-size:13px}.dgroups button[aria-pressed="true"]{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
+.hzr .btn,.dact .btn:not(.giris){height:auto;padding:0;border:0;background:none;color:var(--acc2);font-weight:600;border-radius:0}
+.hzr .btn:hover,.dact .btn:not(.giris):hover{text-decoration:underline;background:none}
+#s-kapi .dact .giris,.dact .giris{width:84px;height:30px;font-size:13px;font-weight:600}
+#toast{background:var(--btn);color:var(--btn-ink)}
+.mimar-btn{border-radius:15px;height:30px;border-color:var(--line2);color:var(--ink);font-size:14px}.mimar-btn.on{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
+#theme{display:none}
+#ayBtn{font-size:13px}
+.vip{font-size:0;margin-left:6px}.vip svg{display:none}.vip::before{content:"★";font-size:12px;color:var(--vip)}
+.tbl.vip .tl{fill:var(--ink)}
+.ge .opts{display:inline-flex;width:auto;gap:2px;padding:1px;border:1px solid var(--line2);border-radius:16px;background:var(--surf2)}
+.ge .opts button{height:26px;flex-direction:row;border:0;background:none;border-radius:13px;padding:0 14px;font-size:13px;font-weight:500}
+.ge .opts button small{display:none}.ge .opts button:first-child{background:var(--btn);color:var(--btn-ink)}
+#handTools{border-radius:17px;padding:2px 2px 2px 8px}
+.tpl{border-radius:15px;height:30px;padding:0 12px;font-size:13px}
+/* event name + venue at the left */
+.evwrap{display:flex;flex-direction:column;line-height:1.25;white-space:nowrap;margin-right:6px}
+.evwrap #evname{font-size:14px;font-weight:600;color:var(--ink)}.evwrap small{font-size:12px;color:var(--ink3)}
+.tsep{display:none}
+/* suggestions as tidy rows */
+.sgr{border-top:1px solid var(--line);padding:10px 0 12px}
+.sgr b{display:block;font-size:13.5px}.sgr p{margin:3px 0 4px;color:var(--ink2);font-size:13px}
+.sgr .src,.src{font-size:12px;color:var(--ink3);margin-bottom:8px}
+.ozet{margin:4px 0 8px;color:var(--ink2)}
+/* Mimar window */
+#mimar{background:color-mix(in srgb,var(--acc2-soft) 45%,var(--surf));box-shadow:0 22px 60px rgba(0,0,0,.30),0 2px 8px rgba(0,0,0,.14),0 0 0 1px var(--line2);border-radius:12px 12px 0 0}
+.mh{border-radius:12px 12px 0 0}.mb{background:transparent}
+.bub{font-size:13px}.bub.me{background:var(--btn);color:var(--btn-ink)}
+.mic{border-radius:50%;width:32px;height:32px}.mf .fld{height:32px;border-radius:16px}
+/* neon: the asked guest's own seats, and status on the plan */
+.seat.me .body,.seat.me:not(.in) .body{fill:var(--neon);stroke:var(--neon);stroke-width:2;filter:drop-shadow(0 0 5px var(--neon))}
+.seat.me .back{stroke:var(--neon)}
+.fc.me,.fc.p.me,.fc.w.me{fill:var(--neon);stroke:var(--neon);filter:drop-shadow(0 0 4px var(--neon))}
+.nm.me{fill:var(--neon)}
+#doorRoom .seat.in .body{fill:#12B76A;stroke:#12B76A;filter:drop-shadow(0 0 2.5px rgba(18,183,106,.75))}
+#doorRoom .seat.in .back{stroke:#12B76A}
+#doorRoom .seat.out .body,#doorRoom .seat.out .back{stroke:#F04438;filter:drop-shadow(0 0 2.5px rgba(240,68,56,.7))}
+#doorRoom .ti .arc.in{stroke:#12B76A;filter:drop-shadow(0 0 2.5px rgba(18,183,106,.75))}#doorRoom .ti .arc.no{stroke:#F04438;filter:drop-shadow(0 0 2.5px rgba(240,68,56,.7))}
+.tbl:hover .halo{opacity:.85}
+/* Kapı full screen */
+body.kfull #top{display:none}body.kfull main{height:var(--vh,100vh)}
+body.kfull #s-kapi .side.wide{width:50%}
+body.kfull #s-kapi .drow{grid-template-columns:34px minmax(0,1fr) 190px}
+body.kfull #s-kapi .dact{flex-direction:row;gap:12px;align-items:center}
+body.kfull #s-kapi .legend{left:calc(50% + 28px)!important}
+#kExit{display:none;position:fixed;top:66px;right:16px;z-index:41;box-shadow:var(--shadow)}
+body.onkapi #kExit{display:inline-flex}body.kfull #kExit{top:10px}
+/* desktop density */
+.drow,#s-kapi .drow{height:50px}.dn b{font-size:14px}.ds{font-size:12px}
+#dq,#s-kapi #dq{height:40px;font-size:16px;border-radius:20px}#s-kapi .dsearch svg,.dsearch svg{top:28px}
+.dcount b,#s-kapi .dcount b{font-size:20px}
+.gr{height:36px}.gl-head{height:30px}.gl-bar{padding-top:16px}.gl-bar h1,.side-h h2{font-size:18px}
+.wrow{height:46px}.wn b{font-size:14px}.ws{font-size:12px}
+.hzr{min-height:50px}.hzr small{font-size:12px}
+.sp-g li{padding:6px 8px}.sp-g small{font-size:12px}
+.st-t{font-size:24px}.ev-head .st-t{font-size:32px}.st-t.sm{font-size:20px}
+.fld{height:30px;font-size:13px}.colr{height:30px}.td{font-size:13px;border-radius:16px}
+.kv>div{min-height:40px}.gl-det h2{font-size:18px}
+/* Ayarlar */
+#s-ayarlar{overflow:auto}
+.ay{width:760px;margin:0 auto;padding:36px 0}
+.ayr{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:16px 0;border-top:1px solid var(--line)}
+.ayr b{display:block;font-size:14px}.ayr small{color:var(--ink3);font-size:12px}
+.settled .sp-tools{display:none!important}
+/* ═══ theme C · Royal gece — visual layer only ═══ */
+:root{--bg:#F3F1EA;--surf:#FBFAF6;--surf2:#EFEDE5;--line:#DEDACF;--line2:#C9C3B4;--ink:#13241F;--ink2:#3F4F49;--ink3:#56645E;--acc:#1F4D40;--acc-ink:#FFFFFF;--acc2:#1F4D40;--acc2-soft:#DCE8E2;--vip:#7A5D16;--ok:#2C6047;--ok-soft:#DFEBE4;--no:#9C3428;--no-soft:#F3E2DE;--warn:#86580F;--warn-soft:#F1E7D3;--t-full:#E3E6DF;--room:#F1F0E9;--table:#FDFCF8;--chair:#13241F;--me:#1F4D40;--glow:#DCE8E2;--mhb:#E7E3DA;--mhi:#2A2722;--serif:"Bodoni 72","Didot","Iowan Old Style","Palatino Linotype",Georgia,serif}
+:root[data-theme="dark"]{--bg:#0C1714;--surf:#11201C;--surf2:#162925;--line:#1F3530;--line2:#2E4A43;--ink:#EDE6D3;--ink2:#C3BBA6;--ink3:#9A9483;--acc:#C9A96A;--acc-ink:#0C1714;--acc2:#CDB27C;--acc2-soft:#1B2E29;--vip:#E3C474;--ok:#9FBFA5;--ok-soft:#15261F;--no:#D9A39B;--no-soft:#2A1D1C;--warn:#D8B371;--warn-soft:#262117;--t-full:#183029;--room:#0E1B18;--table:#132520;--chair:#D8CFB8;--me:#E3CD95;--glow:#2A2A1E;--mhb:#2B2925;--mhi:#EDE6D3}
+.st-t{font-weight:400;letter-spacing:.01em}.brand{letter-spacing:.44em}#nav button[aria-current]::after{height:1px}
+.tbl .tshape{stroke-width:1.4}.tbl .vipring{stroke-width:.9}.seat .body{rx:4px;stroke-width:1.2}.seat .back{stroke-width:2}.wallr{stroke-width:7}.fx,.fxd{stroke-width:1.2}
+</style>
+</head>
+<body>
+<header id="top">
+  <div class="brand">MERIT</div>
+  <nav id="nav" aria-label="Ekranlar"></nav>
+  <div class="tright"><span id="evname">Merit Royal Yılbaşı Galası</span><span class="tsep"></span><span id="clock" class="tnum">22:14</span><button id="theme" title="Tema · F9" aria-label="Temayı değiştir (F9)"></button><button class="mimar-btn" id="mimarBtn" aria-expanded="false">Mimar <kbd>F8</kbd></button></div>
+</header>
+<main>
+  <section class="scr" id="s-etkinlik" aria-label="Etkinlikler">
+    <div class="ev-head"><div><h1 class="st-t">Etkinlikler</h1><p class="sub">Geçmiş solda, salt okunur · bu gece ve yaklaşanlar sağda. Bir etkinliğe tıklayın.</p></div><button class="btn pri" id="newEv">+ Yeni etkinlik</button></div>
+    <div id="strip"></div>
+    <div id="evAct"></div>
+  </section>
+  <section class="scr" id="s-hazir" aria-label="Hazır mı?"><div class="roomwrap" id="hzRoom"></div><aside class="hz" id="hzList"></aside></section>
+  <section class="scr" id="s-salon" aria-label="Salon"><div id="planFlow"></div><div id="handTools" role="toolbar" aria-label="Elle çizim"></div><div id="detStrip" role="status"></div><div id="settledBar">Yerleşmiş plan · sakin görünüm <button class="btn sm" id="setEdit">⋯ Düzenle</button></div><div class="roomwrap" id="salonRoom"></div><div class="rtools" id="salonTools"></div><aside class="spanel" id="salonPanel"></aside></section>
+  <section class="scr" id="s-misafirler" aria-label="Misafirler">
+    <div class="gl-main"><div id="glEmpty"></div>
+      <div class="gl-bar"><h1>Misafirler</h1><span class="cnt tnum" id="glCnt"></span><div class="sp"></div><button class="btn" id="glImp">İçe aktar ▾</button><button class="btn pri" id="glAdd">+ Misafir</button></div>
+      <div class="gl-bar2"><div class="seg" id="glSeg"></div><button class="btn ghost" id="glHost">Davet eden ▾</button><div class="sp" style="flex:1"></div><input class="fld" id="glQ" placeholder="Listede ara" style="width:240px"></div>
+      <div id="tidy" aria-label="Öneriler"></div><div class="gl-head"><div>Misafir</div><div>Davet eden</div><div>Masa</div><div>Katılım</div><div>Varış</div></div>
+      <div class="gl-rows" id="glRows"></div>
+    </div>
+    <aside class="gl-det" id="glDet"></aside>
+  </section>
+  <section class="scr" id="s-oturma" aria-label="Oturma">
+    <aside class="side" id="waitList"></aside>
+    <div class="roomwrap" id="seatRoom"></div>
+    <div class="legend" style="left:424px"><span><i class="fit"></i>Uyan masa</span><span><i class="p"></i>Oturuyor</span><span><i style="border-style:dashed"></i>Taslak</span><span><i style="background:var(--acc2);border-color:var(--acc2)"></i>Az önce</span></div>
+  </section>
+  <section class="scr" id="s-kapi" aria-label="Kapı">
+    <aside class="side wide">
+      <div class="dsearch"><span id="dqi"></span><input id="dq" autocomplete="off" spellcheck="false" placeholder="Misafir adı ya da masa" aria-label="Kapıda misafir ara"></div>
+      <div class="dcount" id="dcount"></div>
+      <div class="dgroups" id="dgroups"></div>
+      <div class="dlist" id="dlist"></div>
+    </aside>
+    <div class="roomwrap door" id="doorRoom"></div>
+    <div class="legend" style="left:calc(25% + 28px)"><span><i class="in" style="border-radius:3px"></i>Geldi</span><span><i style="border-radius:3px"></i>Bekleniyor</span><span><i class="no" style="border-radius:3px"></i>Gelmedi · yeri korunur</span><span class="mut">Bir misafire tıklayın: masası parlar</span></div>
+  </section>
+    <section class="scr" id="s-raporlar" aria-label="Raporlar"><div class="rp-prev"><div class="rp-bar" id="rpBar"></div><div class="paperwrap"><div id="paper"></div></div></div><aside class="rp-design" id="rpDesign" aria-label="Rapor tasarımı"></aside></section>
+  <section class="scr" id="s-ayarlar" aria-label="Ayarlar"></section>
+</main>
+<svg id="lead" aria-hidden="true"></svg>
+<div id="mimar" role="dialog" aria-label="Mimar">
+  <div class="mh" id="mHead"><b>Mimar</b><small>asistan</small><button id="mMin" aria-label="Küçült">–</button><button id="mX" aria-label="Kapat">×</button></div>
+  <div class="mstrip" aria-hidden="true"></div>
+  <div class="mb" id="mb" aria-live="polite"></div>
+  <div class="mf"><input class="fld" id="mq" placeholder="Yazın: “selin akı t38e oturt”" autocomplete="off"><button class="mic" disabled title="Sesle komut · yakında" aria-label="Sesle komut (yakında)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><rect x="5.5" y="1.8" width="5" height="8" rx="2.5"/><path d="M3.5 7.5a4.5 4.5 0 0 0 9 0M8 12v2.2"/></svg><span>yakında</span></button><button class="btn pri" id="mSend">Gönder</button></div>
+</div>
+<button id="nextBtn" hidden></button>
+<div id="pop" role="dialog"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="dlg" role="dialog" aria-modal="true"><div class="box"></div></div>
+<input type="file" id="file" accept=".xlsx,.xls,.csv,.pdf,.png,.jpg" hidden>
+<script>
+/* ═══ utilities (from 2-kontrol) ═══ */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad2=n=>String(n).padStart(2,'0');
+const fold=s=>String(s).toLocaleLowerCase('tr-TR').replace(/ı/g,'i').replace(/i̇/g,'i').replace(/ş/g,'s').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ö/g,'o').replace(/ç/g,'c').replace(/â/g,'a');
+const UP=s=>String(s).toLocaleUpperCase('tr-TR');
+const collator=new Intl.Collator('tr');
+const DAT={1:"'e",2:"'ye",3:"'e",4:"'e",5:"'e",6:"'ya",7:"'ye",8:"'e",9:"'a"},DAT0={10:"'a",20:"'ye",30:"'a",40:"'a"};
+const LOC={1:"'de",2:"'de",3:"'te",4:"'te",5:"'te",6:"'da",7:"'de",8:"'de",9:"'da"},LOC0={10:"'da",20:"'de",30:"'da",40:"'ta"};
+const sfx=(id,A,A0)=>{const n=parseInt(id.replace(/\D/g,''),10);return id+(n%10?A[n%10]:A0[n])};
+const dat=id=>sfx(id,DAT,DAT0), loc=id=>sfx(id,LOC,LOC0);
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R=rng(20261231), pick=a=>a[Math.floor(R()*a.length)];
+const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
+const hm=m=>{const t=19*60+30+m;return pad2(Math.floor(t/60)%24)+':'+pad2(t%60)};
+const NS='http://www.w3.org/2000/svg';
+const sv=(d,w=16)=>`<svg width="${w}" height="${w}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const IC={cal:sv('<rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/>'),
+ plan:sv('<rect x="2" y="2" width="12" height="12" rx="1.5"/><circle cx="6" cy="6.2" r="1.7"/><circle cx="10.3" cy="10.3" r="1.7"/>'),
+ ppl:sv('<circle cx="6" cy="5.5" r="2.3"/><path d="M2 13.2c.6-2.3 2.2-3.6 4-3.6s3.4 1.3 4 3.6M10.6 3.4a2.2 2.2 0 0 1 0 4.3M12 9.9c1 .5 1.6 1.6 1.9 3.3"/>'),
+ seat:sv('<circle cx="8" cy="8" r="2.8"/><circle cx="8" cy="2.6" r="1.1"/><circle cx="8" cy="13.4" r="1.1"/><circle cx="2.6" cy="8" r="1.1"/><circle cx="13.4" cy="8" r="1.1"/>'),
+ door:sv('<path d="M4 14V2.5h8V14M2.5 14h11"/><circle cx="9.7" cy="8.5" r=".6" fill="currentColor"/>'),
+ doc:sv('<path d="M4 1.8h5.5L12.5 5v9.2H4z"/><path d="M9.5 1.8V5h3M6 8.2h4.5M6 10.8h4.5"/>'),
+ search:sv('<circle cx="7" cy="7" r="4.3"/><path d="M10.2 10.2 13.8 13.8"/>'),
+ more:sv('<circle cx="3.5" cy="8" r=".9" fill="currentColor"/><circle cx="8" cy="8" r=".9" fill="currentColor"/><circle cx="12.5" cy="8" r=".9" fill="currentColor"/>'),
+ x:sv('<path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/>',14),
+ check:sv('<path d="M3.2 8.4 6.4 11.4 12.8 4.8"/>',15),
+ sun:sv('<circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/>'),
+ moon:sv('<path d="M13 9.6A5.5 5.5 0 0 1 6.4 3a5.5 5.5 0 1 0 6.6 6.6z"/>'),
+ lock:sv('<rect x="3.5" y="7" width="9" height="6.5" rx="1.2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/>',12),
+ xls:sv('<rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M2.5 6.2h11M2.5 9.8h11M6.5 2.5v11"/>',18),
+ print:sv('<path d="M4.5 6V2.5h7V6M4.5 11.5h-2V6h11v5.5h-2"/><rect x="4.5" y="9.5" width="7" height="4.5"/>',18),
+ list:sv('<path d="M5.5 4h8M5.5 8h8M5.5 12h8"/><circle cx="2.7" cy="4" r=".6" fill="currentColor"/><circle cx="2.7" cy="8" r=".6" fill="currentColor"/><circle cx="2.7" cy="12" r=".6" fill="currentColor"/>',18),
+ grp:sv('<circle cx="6" cy="5.5" r="2.3"/><path d="M2 13.2c.6-2.3 2.2-3.6 4-3.6s3.4 1.3 4 3.6M10.6 3.4a2.2 2.2 0 0 1 0 4.3M12 9.9c1 .5 1.6 1.6 1.9 3.3"/>',18),
+ bars:sv('<path d="M3 13.5V8M6.5 13.5V4M10 13.5V9.5M13.5 13.5V6"/>',18)};
+const VIPSVG='<svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0 10 5 5 10 0 5Z" fill="currentColor"/></svg>';
+const vipMark=v=>v?`<span class="vip">${VIPSVG}${v}</span>`:'';
+
+
+/* ═══ the room: Atlas layout (1600 × 1040), 42 tables ═══ */
+const TABLES=[];const addT=(id,kind,cap,x,y)=>TABLES.push({id,kind,cap,chairs:cap,x,y,rot:0});
+addT('VIP01','rect',12,440,214);addT('VIP02','rect',12,440,330);addT('VIP03','rect',12,1160,214);addT('VIP04','rect',12,1160,330);
+{const L=[150,290,430,570,710],R5=[890,1030,1170,1310,1450],R4=[890,1030,1170,1310];let n=1;const row=(xs,y)=>xs.forEach(x=>addT('T'+pad2(n++),'round',10,x,y));row([...L,...R5],480);row([...L,...R5],610);row([...L,...R4],740);row([...L,...R4],870)}
+TABLES.find(t=>t.id==='VIP02').chairs=11;
+TABLES.find(t=>t.id==='T23').unread=true;
+const TBL=id=>TABLES.find(t=>t.id===id);
+
+/* ═══ guests: one record per party (2-kontrol data) ═══ */
+const G=[];let gid=1;const used=new Set();
+function add(o){const r=Object.assign({id:gid++,add:0,vip:'',host:'—',junket:'',table:null,plan:'Kesin',arr:'wait',at:null,inPax:0},o);r.pax=1+r.add;used.add(r.name);G.push(r);return r}
+add({name:'Ahmet Yılmaz',add:3,vip:'VIP',host:'Kerem Sarıçiçek',junket:'Kerem Sarıçiçek',fixed:'T05',keep:true});
+add({name:'Ayşe Demir',add:1,host:'Kurumsal Satış',fixed:'T07',arr:'in',at:88});
+add({name:'Mehmet Kaya',add:2,host:'Kurumsal Satış',plan:'Belirsiz'});
+add({name:'Zeynep Arslan',vip:'VVIP',host:'Genel Müdürlük',fixed:'VIP01',arr:'in',at:121});
+add({name:'Can Öztürk',host:'Otel misafiri',fixed:'T02',arr:'in',at:64});
+add({name:'Elif Şen',add:1,host:'Loyalty Desk',junket:'Loyalty Desk'});
+add({name:'Burak Şahin',host:'Kurumsal Satış',apart:'Can Öztürk'});
+add({name:'Selin Ak',add:2,host:'Kerem Sarıçiçek',junket:'Kerem Sarıçiçek'});
+add({name:'Deniz Yurt',add:1,host:'International Marketing',junket:'International Marketing',plan:'Belirsiz'});
+add({name:'Kerem Koç',add:2,host:'Kurumsal Satış',fixed:'T09',arr:'no'});
+add({name:'Hülya Keskin',add:1,host:'Genel Müdürlük',fixed:'T08',keep:true});
+add({name:'Oya Ergin',host:'Kurumsal Satış',fixed:'VIP03',keep:true});
+add({name:'Tolga Er',add:2,host:'Otel misafiri',plan:'Belirsiz'});
+const FIRST=['Ali','Ayhan','Barış','Begüm','Berk','Buse','Cem','Cemre','Damla','Doğan','Ebru','Emre','Esra','Fatih','Filiz','Gizem','Gökhan','Hakan','Hande','İlker','İpek','Kaan','Leyla','Levent','Melis','Murat','Nazlı','Necla','Onur','Özge','Pınar','Rıza','Seda','Serkan','Sevgi','Sinan','Şule','Tuba','Tuncay','Ufuk','Umut','Volkan','Yasemin','Yiğit','Zafer','Gülay','Erdem','Nil','Orhan','Aslı','Bora','Ceren','Derya','Engin','Figen','Halil','Irmak','Kemal','Lale','Mert'];
+const LAST=['Aydın','Bulut','Çelik','Doğru','Erdoğan','Güneş','Işık','Kara','Kılıç','Koçak','Kurt','Özdemir','Polat','Sarı','Tekin','Tunç','Uçar','Vural','Yavuz','Yıldız','Aksoy','Bayram','Coşkun','Duman','Eren','Gür','Karaca','Oral','Sezer','Toprak','Ünal','Akın','Ateş','Başaran','Demirtaş','Ekinci','Gündoğdu','Kaplan','Metin','Soylu'];
+const uname=()=>{let n;do n=pick(FIRST)+' '+pick(LAST);while(used.has(n));return n};
+function gen(total,base,w=[.34,.42,.15,.09]){const out=[];let left=total;while(left>0){const r=R();let p=r<w[0]?1:r<w[0]+w[1]?2:r<w[0]+w[1]+w[2]?3:4;p=Math.min(p,left);const vip=typeof base.vip==='function'?base.vip():base.vip||'';out.push(add({...base,vip,name:uname(),add:p-1,plan:R()<.1?'Belirsiz':'Kesin'}));left-=p}return out}
+const gVIP=gen(41,{host:'Genel Müdürlük',vip:()=>R()<.3?'VVIP':'VIP'});
+const gKS=gen(31,{host:'Kerem Sarıçiçek',junket:'Kerem Sarıçiçek'});
+const gLD=gen(22,{host:'Loyalty Desk',junket:'Loyalty Desk'});
+const gIM=gen(14,{host:'International Marketing',junket:'International Marketing'});
+const HOSTS=['Kurumsal Satış','Otel misafiri','Casino Pazarlama','Basın','Genel Müdürlük'];
+const gRest=[];{let left=284;while(left>0){const p=left>40?pick([1,2,2,2,3,4]):Math.min(left,pick([1,2]));gRest.push(add({name:uname(),add:p-1,host:pick(HOSTS),plan:R()<.08?'Belirsiz':'Kesin'}));left-=p}}
+const occ=(id,ex)=>G.reduce((s,g)=>s+(g.table===id&&g!==ex?g.pax:0),0);
+function place(r,start){const pool=TABLES.filter(t=>t.id.startsWith('VIP')===start.startsWith('VIP'));const i0=pool.findIndex(t=>t.id===start);for(let k=0;k<pool.length;k++){const t=pool[(i0+k)%pool.length];if(occ(t.id)+r.pax<=t.cap){r.table=t.id;return true}}return false}
+G.filter(g=>g.fixed).forEach(g=>g.table=g.fixed);
+gVIP.forEach(g=>place(g,'VIP01'));gKS.forEach(g=>place(g,'T03'));gLD.forEach(g=>place(g,'T10'));gIM.forEach(g=>place(g,'T14'));
+gRest.forEach(g=>place(g,'T01'));
+{let left=6;for(const g of [...gRest].reverse()){if(left<=0)break;if(g.table&&g.pax<=left&&g.pax<=2){g.arr='no';left-=g.pax}}}
+const tri=()=>{const u=R(),v=R();return Math.round(Math.min(160,Math.max(0,(u+v)*62+(R()<.2?R()*40:0))))};
+{let have=sum(G.filter(g=>g.arr==='in'),g=>g.pax);for(const g of G.filter(g=>g.table&&g.arr==='wait'&&!g.keep)){if(have>=312)break;if(have+g.pax<=312){g.arr='in';g.at=tri();have+=g.pax}}}
+G.forEach(g=>{if(g.arr==='in')g.inPax=g.pax});
+
+
+/* ═══ suggestions, state ═══ */
+const SUG=[
+ {id:'s1',at:'T23',title:'T23 — numara çizimde okunamadı',why:'Sıra düzeni T22 ile T24 arasında olduğunu gösteriyor. Okunan yazı yok; karar sizin.',yes:'T23 olarak kabul et',no:'Reddet',state:'open'},
+ {id:'s2',at:'VIP02',title:'VIP02 — çizimde 11 sandalye var',why:'Kapasite 12 kayıtlı. Sandalye ile kapasite ayrı tutulur; hangisi doğru?',yes:'Kapasiteyi 11 yap',no:'12 kalsın',state:'open'},
+ {id:'s3',at:'ghost',title:'Barın yanında numarasız yuvarlak',why:'Masa şeklinde bir çizim; üzerinde numara ve sandalye yok.',yes:'Masa olarak ekle',no:'Masa değil',state:'open'}];
+const GHOST={x:1420,y:805};
+const SCR=[['etkinlik','Etkinlikler'],['hazir','Hazır mı?'],['salon','Salon'],['misafirler','Misafirler'],['oturma','Oturma'],['kapi','Kapı'],['raporlar','Raporlar']];
+const SCRL=Object.fromEntries(SCR.map(s=>[s[0],s[1]]));
+const MONTHS=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+const DAYS=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+const S={scr:'etkinlik',focusG:null,selT:null,zoomT:null,preview:null,selW:null,selG:null,doorHi:null,doorF:'all',glF:'all',glHost:null,rep:'list',draft:false,justSeat:{},warn:{},justIn:{},undo:[],items:[],hi:0,help:false,issues:[],hz:[]};
+const AEV=[
+ {id:'yaz',past:1,d:'22 Ağustos 2026 · Cumartesi',n:'Yaz Konseri',v:'Merit Crystal Cove · Havuz Terası',s:'498 / 520 geldi',plan:'arc'},
+ {id:'poker',past:1,d:'12 Ekim 2026 · Pazartesi',n:'Poker Turnuvası Kapanış Yemeği',v:'Merit Royal Premium · Kristal Salon',s:'114 / 120 geldi',plan:'grid'},
+ {id:'cumh',past:1,d:'29 Ekim 2026 · Perşembe',n:'Cumhuriyet Balosu',v:'Merit Royal Hotel · Grand Balo Salonu',s:'362 / 380 geldi',plan:'main'},
+ {id:'junket',past:1,d:'14 Kasım 2026 · Cumartesi',n:'Junket Karşılama Yemeği',v:'Merit Park Hotel · Akdeniz Restoran',s:'92 / 96 geldi',plan:'small'},
+ {id:'gala',main:1,d:'31 Aralık 2026 · Perşembe',n:'Merit Royal Yılbaşı Galası',v:'Merit Royal Hotel · Grand Balo Salonu',red:1,plan:'main'},
+ {id:'sev',d:'14 Şubat 2027 · Pazar',n:'Sevgililer Günü Konseri',v:'Merit Crystal Cove · Amfi Salon',s:'Boş etkinlik · plan yok',plan:'blank'}];
+let EVSEL='gala';
+
+/* ═══ derived facts (nothing stored) ═══ */
+function counts(){const arrived=sum(G,g=>g.arr==='in'?g.inPax:0),no=sum(G,g=>g.arr==='no'?g.pax:0),un=sum(G,g=>!g.table?g.pax:0),seated=sum(G,g=>g.table?g.pax:0);return{arrived,no,un,seated,wait:420-arrived-no}}
+const sugOpen=id=>SUG.find(s=>s.id===id).state==='open';
+function ruleWarn(g,tid){if(tid.startsWith('VIP')&&!g.vip)return 'VIP masası, misafir VIP değil';if(g.apart){const o=G.find(x=>x.name===g.apart);if(o&&o.table===tid)return `${o.name} ile ayrı olmalı`}if(g.vip&&!tid.startsWith('VIP'))return 'VIP misafir VIP masasında değil';return ''}
+function issues(){const out=[],c=counts();
+ if(c.un)out.push({bad:1,t:`${c.un} kişi oturmamış`,d:`${G.filter(g=>!g.table).length} kayıt bekliyor`,go:'oturma'});
+ const ns=SUG.filter(s=>s.state==='open').length;if(ns)out.push({bad:1,t:`Plan okuması: ${ns} öneri karar bekliyor`,d:'Salonda soru işaretli yerler',go:'salon'});
+ G.filter(g=>g.table&&g.table.startsWith('VIP')&&!g.vip).forEach(g=>out.push({bad:1,t:`${g.name} VIP değil, ${loc(g.table)} oturuyor`,d:'Kural uyarısı · engellemez',go:'misafirler',g:g.id}));
+ G.filter(g=>g.apart&&g.table).forEach(g=>{const o=G.find(x=>x.name===g.apart);if(o&&o.table===g.table)out.push({bad:1,t:`${g.name} ile ${o.name} aynı masada`,d:'Kural: ayrı masalarda olmalı',go:'oturma'})});
+ const bel=G.filter(g=>g.plan==='Belirsiz').length;if(bel)out.push({info:1,t:`${bel} kayıt belirsiz`,d:'Katılım teyidi yok · Misafirler › Belirsiz',go:'misafirler',f:'bel'});
+ return out}
+const arrTxt=g=>g.arr==='in'?(g.inPax<g.pax?`${g.inPax}/${g.pax} geldi`:'Geldi'):g.arr==='no'?'Gelmedi':'Bekleniyor';
+const where=g=>`${g.table||'Masasız'} · ${arrTxt(g)}`;
+const gName=g=>`${esc(g.name)}${g.add?` <i class="px">+${g.add}</i>`:''}${vipMark(g.vip)}`;
+
+/* ═══ clock ═══ */
+const T0=Date.now(),BASE=(22*60+14)*60+5;
+const nowS=()=>BASE+Math.floor((Date.now()-T0)/1000), nowHM=()=>{const s=nowS();return pad2(Math.floor(s/3600)%24)+':'+pad2(Math.floor(s/60)%60)}, nowMin=()=>Math.floor(nowS()/60)-(19*60+30);
+setInterval(()=>{$('#clock').textContent=nowHM()},1000);
+
+
+/* ═══ room drawing: Atlas tables and real chairs; no grid, rulers or coordinates ═══ */
+const selGuest=()=>S.selW!=null?G.find(g=>g.id===S.selW):null;
+const focusT=mode=>{const g=S.focusG!=null&&G.find(x=>x.id===S.focusG);if(g&&g.table&&mode!=='oturma')return g.table;return null};
+function chairGeo(t){const out=[];
+ if(t.kind==='round'){for(let i=0;i<t.chairs;i++){const a=-90+i*360/t.chairs,r=a*Math.PI/180;out.push({x:Math.cos(r)*45,y:Math.sin(r)*45,a})}}
+ else{const w=170,h=54,top=Math.ceil((t.chairs-2)/2),bot=t.chairs-2-top;
+  for(let i=0;i<top;i++)out.push({x:-w/2+w*(i+.5)/top,y:-(h/2+13),a:-90});out.push({x:w/2+13,y:0,a:0});
+  for(let i=bot-1;i>=0;i--)out.push({x:-w/2+w*(i+.5)/bot,y:h/2+13,a:90});out.push({x:-(w/2+13),y:0,a:180})}
+ return out}
+function seatList(t){const out=[];G.filter(g=>g.table===t.id).sort((a,b)=>a.id-b.id).forEach(g=>{for(let k=0;k<g.pax;k++)out.push({g,k})});return out}
+function seatCls(o,mode){if(!o)return 'empty';const g=o.g;let c='plan';
+ if(mode==='kapi'){if(g.arr==='no')c='out';else if(g.arr==='in'&&o.k<g.inPax)c='in'}
+ if(g.vip)c+=' vg';if(g.draft)c+=' draft';
+ if(mode==='oturma'&&S.justSeat[g.id]&&!g.draft)c+=' new';
+ if(S.focusG===g.id&&mode!=='oturma')c+=' me';return c}
+function tableSVG(t,mode){const P=chairGeo(t),st=seatList(t),round=t.kind==='round',vip=t.id.startsWith('VIP');
+ let cls='tbl'+(vip?' vip':''),free=null;
+ if(mode==='salon'&&S.selT===t.id)cls+=' sel zt';
+ if(focusT(mode)===t.id)cls+=' foc zt';
+ if(S.preview&&S.preview.t===t.id)cls+=' pv';
+ if(mode==='kapi'&&S.doorHi){const g=G.find(x=>x.id===S.doorHi);if(g&&g.table===t.id)cls+=' hi'}
+ if(mode==='oturma'){const g=selGuest();if(g){const f=t.cap-occ(t.id,g);if(g.table===t.id)cls+=' sel';else if(f>=g.pax&&(!!g.vip||!vip)){cls+=' fit';free=f}else cls+=' dim'}}
+ let s=`<g class="${cls}" data-t="${t.id}" transform="translate(${t.x} ${t.y}) rotate(${t.rot})">`;
+ s+=round?'<circle class="halo" r="68"/>':'<rect class="halo" x="-118" y="-62" width="236" height="124" rx="10"/>';
+ let pend=S.preview&&S.preview.t===t.id?(G.find(x=>x.id===S.preview.g)||{pax:0}).pax:0;
+ const names=false;let nm='';
+ P.forEach((c,i)=>{const so=st[i];let k=seatCls(so,mode);if(!so&&pend>0){k='pend';pend--}
+  s+=`<g class="seat ${k}" transform="translate(${c.x.toFixed(1)} ${c.y.toFixed(1)}) rotate(${c.a-90})"><rect class="body" x="-7.5" y="-6" width="15" height="12" rx="2.5"/><line class="back" x1="-6.5" y1="6.5" x2="6.5" y2="6.5"/><line class="x" x1="-6" y1="-5" x2="6" y2="5"/></g>`;
+  if(names&&so){const r=c.a*Math.PI/180,x=(c.x+Math.cos(r)*14).toFixed(1),y=(c.y+Math.sin(r)*14).toFixed(1),wa=((c.a+t.rot)%360+360)%360,flip=wa>90&&wa<270,p=so.g.name.split(' ');
+   nm+=`<text class="nm${so.k?' co':''}${S.focusG===so.g.id?' me':''}" x="${x}" y="${y}" transform="rotate(${flip?c.a+180:c.a} ${x} ${y})" text-anchor="${flip?'end':'start'}">${esc(so.k?'+ misafir':p[0]+' '+p[p.length-1][0]+'.')}</text>`}});
+ s+=round?'<circle class="tshape" r="30"/>':'<rect class="tshape" x="-85" y="-27" width="170" height="54" rx="3"/><rect class="vipring" x="-80" y="-22" width="160" height="44" rx="2"/>';
+ const unread=t.unread&&sugOpen('s1');
+ if(free!=null)s+=`<g transform="rotate(${-t.rot})"><text class="tl" y="-9">${t.id}</text><text class="fr" y="11">${free} boş</text></g>`;
+ else s+=`<text class="tl${unread?' q':''}" transform="rotate(${-t.rot})">${unread?'T??':t.id}</text>`;
+ return s+nm+'</g>'}
+function zoomVB(id){const t=TBL(id);return `${t.x-300} ${t.y-225} 600 450`}
+function roomSVG(mode){const z=mode==='salon'&&S.zoomT&&TBL(S.zoomT);
+ let s=`<svg viewBox="${z?zoomVB(S.zoomT):'-40 -40 1680 1120'}" preserveAspectRatio="xMidYMid meet" class="${z?'zoom':''}" role="img" aria-label="Grand Balo Salonu planı">`;
+ s+=`<rect class="floor" x="0" y="0" width="1600" height="1040"/><path class="wallr" d="M740 1040 H0 V0 H1600 V1040 H860"/>
+ <rect class="fx" x="560" y="0" width="480" height="150"/><text class="fxt" x="800" y="76">SAHNE</text>
+ <rect class="fx" x="1062" y="34" width="128" height="76"/><text class="fxt" x="1126" y="72" style="font-size:16px">DJ</text>
+ <rect class="fxd" x="610" y="186" width="380" height="178" rx="4"/><text class="fxt" x="800" y="275" style="font-size:17px">DANS PİSTİ</text>
+ <rect class="fx" x="1494" y="690" width="70" height="270" rx="4"/><text class="fxt" transform="translate(1529 825) rotate(-90)" style="font-size:17px">BAR</text>
+ <text class="fxt" x="800" y="1068" style="font-size:16px">ANA GİRİŞ</text>`;
+ const ft=focusT(mode)||(S.preview&&S.preview.t)||(mode==='salon'&&S.selT);
+ TABLES.filter(t=>t.id!==ft).forEach(t=>s+=tableSVG(t,mode));if(ft&&TBL(ft))s+=tableSVG(TBL(ft),mode);
+ if(mode==='salon'||mode==='hazir'){if(sugOpen('s3'))s+=`<circle class="ghost" cx="${GHOST.x}" cy="${GHOST.y}" r="30" data-sug="s3"/>`;
+  const pins=mode==='hazir'?S.hz.filter(i=>i.at).map(i=>[i.at,i.n,i.sug||'']):SUG.filter(x=>x.state==='open').map(x=>[x.at,'?',x.id]);
+  pins.forEach(([at,lab,sg])=>{const p=at==='ghost'?GHOST:TBL(at);if(!p)return;const v=at.startsWith('VIP');s+=`<g class="pin"${sg?` data-sug="${sg}"`:''} transform="translate(${p.x+(v?104:42)} ${p.y-(v?30:42)})"><circle r="17"/><text>${lab}</text></g>`})}
+ return s+'</svg>'}
+const ROOMBOX={hazir:'#hzRoom',salon:'#salonRoom',oturma:'#seatRoom',kapi:'#doorRoom'};
+const roomBox=()=>ROOMBOX[S.scr]&&$(ROOMBOX[S.scr]);
+function renderRoom(){const b=roomBox();if(b)b.innerHTML=roomSVG(S.scr)}
+function redrawT(id){renderRoom();return roomBox()&&roomBox().querySelector(`[data-t="${id}"]`)}
+function seatsTxt(g){let n=0;for(const x of G.filter(y=>y.table===g.table).sort((a,b)=>a.id-b.id)){if(x===g)break;n+=x.pax}return g.pax>1?`sandalye ${n+1}–${n+g.pax}`:`sandalye ${n+1}`}
+function showWhere(g){if(!g.table){S.selW=g.id;go('oturma');return}S.focusG=g.id;if(S.scr==='kapi'||S.scr==='hazir')renderRoom();else{S.selT=S.zoomT=g.table;if(S.scr!=='salon')go('salon');else renderSalon()}toast(`${esc(g.name)} ${loc(g.table)} oturuyor · ${seatsTxt(g)} · ${g.pax} kişi`)}
+function tablePop(id){S.selT=S.zoomT=id;if(S.scr!=='salon')go('salon');else renderSalon()}
+
+/* ═══ overlays: popover, menu, dialog, toast, undo ═══ */
+function showPop(anchor,html,bind,below){const p=$('#pop');p.className='on';p.innerHTML=html;const r=anchor.getBoundingClientRect(),pw=p.offsetWidth,ph=p.offsetHeight;let x,y;
+ if(below){x=Math.min(r.left,innerWidth-pw-12);y=r.bottom+6;if(y+ph>innerHeight-12)y=r.top-ph-6}
+ else{x=r.right+12;if(x+pw>innerWidth-12)x=r.left-pw-12;y=r.top+r.height/2-ph/2}
+ p.style.left=Math.max(12,x)+'px';p.style.top=Math.max(60,Math.min(y,innerHeight-ph-12))+'px';S.popA=anchor;if(bind)p.onclick=bind}
+function menu(anchor,items){showPop(anchor,items.map((it,i)=>it==='-'?'<hr>':`<button class="mi${it.danger?' danger':''}" data-i="${i}" ${it.off?'disabled':''}>${it.t}</button>`).join(''),e=>{const b=e.target.closest('[data-i]');if(!b||b.disabled)return;const it=items[+b.dataset.i];closePop();it.fn&&it.fn()},true);$('#pop').classList.add('menu')}
+function closePop(){const p=$('#pop');p.className='';p.innerHTML='';S.popA=null}
+function dialog(html,bind){const d=$('#dlg');d.querySelector('.box').innerHTML=html;d.classList.add('on');bind&&bind(d.querySelector('.box'));const f=d.querySelector('input,textarea,select,button.pri');f&&f.focus()}
+function closeDlg(){$('#dlg').classList.remove('on')}
+function confirmDlg(title,body,ok,fn,danger){dialog(`<h3>${title}</h3><p>${body}</p><div class="dacts"><button class="btn" data-x>Vazgeç</button><button class="btn pri ${danger?'danger':''}" data-ok>${ok}</button></div>`,b=>{b.querySelector('[data-x]').onclick=closeDlg;b.querySelector('[data-ok]').onclick=()=>{closeDlg();fn()}})}
+let toastT=null;
+function toast(msg,undoable){const t=$('#toast');t.innerHTML=`<span>${msg}</span>${undoable?'<button id="tUndo">Geri al</button><kbd>Ctrl+Z</kbd>':''}`;t.classList.add('on');if(undoable)$('#tUndo').onclick=()=>undo();clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),undoable?7000:3800)}
+function pushUndo(label,fn,key){S.undo.push({label,fn,key});toast(label,true)}
+function undo(key){let i=key?S.undo.map(u=>u.key).lastIndexOf(key):S.undo.length-1;if(i<0)return;const u=S.undo.splice(i,1)[0];u.fn();toast('Geri alındı · '+u.label)}
+
+
+/* ═══ Atlas venue plan thumbnails (4-atlas, unchanged) ═══ */
+function plateSVG(kind){const W=1600,H=1040;let s=`<svg viewBox="-40 -40 1680 1120" preserveAspectRatio="xMidYMax meet">`;
+  const wall=(w,h)=>`<rect class="w" x="0" y="0" width="${w}" height="${h}" fill="#F2F3EF" stroke="#1D2930" stroke-width="14"/>`;
+  const tab=(x,y,r=30)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#FBFBF9" stroke="#1D2930" stroke-width="5"/><circle cx="${x}" cy="${y}" r="${r+15}" fill="none" stroke="#46525A" stroke-width="9" stroke-dasharray="7 9"/>`;
+  if(kind==='main'){s+=wall(W,H)+`<rect x="560" y="0" width="480" height="150" fill="#DDE1DC" stroke="#1D2930" stroke-width="6"/><rect x="610" y="186" width="380" height="178" fill="#E6E9E4" stroke="#5E6A71" stroke-width="4"/><path d="M740 1040 H860" stroke="#ECEEE9" stroke-width="20"/>`;
+    TABLES.slice(0,42).forEach(t=>{s+=t.shape==='round'?tab(t.x,t.y):`<rect x="${t.x-85}" y="${t.y-27}" width="170" height="54" fill="#FBFBF9" stroke="#7E6119" stroke-width="6"/>`})}
+  else if(kind==='small'){s+=`<rect class="w" x="300" y="200" width="1000" height="760" fill="#F2F3EF" stroke="#1D2930" stroke-width="14"/>`;for(let r=0;r<2;r++)for(let c=0;c<5;c++)s+=tab(440+c*180,420+r*260,40)}
+  else if(kind==='grid'){s+=`<rect class="w" x="160" y="120" width="1280" height="880" fill="#F2F3EF" stroke="#1D2930" stroke-width="14"/><rect x="560" y="180" width="480" height="70" fill="#FBFBF9" stroke="#1D2930" stroke-width="6"/>`;for(let r=0;r<3;r++)for(let c=0;c<4;c++)s+=tab(380+c*280,420+r*200,40)}
+  else if(kind==='arc'){s+=`<path class="w" d="M100 1000 L100 420 Q800 -120 1500 420 L1500 1000Z" fill="#E4EAEA" stroke="#1D2930" stroke-width="14"/><rect x="620" y="840" width="360" height="120" fill="#DDE1DC" stroke="#1D2930" stroke-width="6"/>`;for(let r=0;r<3;r++)for(let c=0;c<9;c++){const a=Math.PI*(.15+c*.7/8),R0=300+r*170;s+=tab(800-Math.cos(a)*R0*1.25,900-Math.sin(a)*R0,32)}}
+  else if(kind==='blank'){s+=`<rect class="w" x="80" y="80" width="1440" height="900" fill="none" stroke="#5E6A71" stroke-width="8" stroke-dasharray="30 20"/><text x="800" y="545" text-anchor="middle" font-size="96" fill="#5E6A71" font-family="Georgia,serif" font-style="italic">plan yok</text>`}
+  else if(kind==='new'){s+=`<rect class="w" x="80" y="80" width="1440" height="900" fill="none" stroke="#1E4D78" stroke-width="8" stroke-dasharray="30 20"/><path d="M800 400 V700 M650 550 H950" stroke="#1E4D78" stroke-width="16"/>`}
+  return s+'</svg>'}
+
+/* ═══ navigation ═══ */
+function go(s){if(s!=='salon'){S.zoomT=null;S.selT=null}S.scr=s;closePop();leadTo(null);$$('.scr').forEach(x=>x.classList.toggle('on',x.id==='s-'+s));$$('#nav button').forEach(b=>b.dataset.s===s?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));RENDER[s]()}
+const RENDER={etkinlik:renderEvents,hazir:renderHazir,salon:renderSalon,misafirler:()=>{renderSeg();renderGL();renderDet()},oturma:()=>{renderWait();renderRoom()},kapi:()=>{renderDoorTop();renderDoorList();renderRoom()},raporlar:renderReps};
+function goIssue(i){if(!i)return;if(i.f)S.glF=i.f;if(i.g)S.selG=i.g;go(i.go)}
+
+/* ═══ ETKİNLİKLER: Atlas timeline with each venue's plan; tools visible ═══ */
+function renderEvents(){let h='',crossed=false;
+ AEV.forEach(ev=>{if(!ev.past&&!crossed){crossed=true;h+=`<div class="meridian" aria-hidden="true"><div class="lab">Bugün<br>31 Aralık 2026</div></div>`}
+  const st=ev.main?`${hazirList().filter(i=>!i.info).length} konu açık · ${counts().seated} / 420 yerleşti`:ev.s;
+  h+=`<div class="plate${ev.past?' past':''}${EVSEL===ev.id?' sel':''}" data-ev="${ev.id}" tabindex="0" role="button" aria-pressed="${EVSEL===ev.id}"><div class="dr">${plateSVG(ev.plan)}</div><div class="cap"><div class="dt">${ev.d.replace(' · ','<br>')}</div><div class="nm2">${esc(ev.n)}</div><div class="vn">${esc(ev.v)}</div><div class="ss${ev.red?' red':''}">${ev.past?IC.lock+'Salt okunur · ':''}${esc(st)}</div></div></div>`});
+ $('#strip').innerHTML=h;renderEvAct()}
+function renderEvAct(){const ev=AEV.find(e=>e.id===EVSEL)||AEV.find(e=>e.main);EVSEL=ev.id;
+ $('#evAct').innerHTML=`<div class="ea-t"><b>${esc(ev.n)}</b><span>${esc(ev.d)}</span></div><div class="ea-b"><button class="btn pri" data-a="open">${ev.past?'Görüntüle':'Aç'}</button><button class="btn" data-a="same">Aynı yerleşimle yeni</button><button class="btn" data-a="dup">Çoğalt</button><button class="btn" data-a="exp">Dışa aktar</button><button class="btn ghost danger" data-a="del" ${ev.main?'disabled title="Bu gecenin etkinliği silinemez"':''}>Sil…</button></div><div class="ea-n">${ev.past?'Geçmiş etkinlik değiştirilemez; açılır ve rapor alınır.':ev.main?'Açınca “Hazır mı?” ile başlar.':'Yaklaşan etkinlik'}</div>`}
+function fmtIso(iso){const x=new Date(iso+'T12:00');return `${x.getDate()} ${MONTHS[x.getMonth()]} ${x.getFullYear()} · ${DAYS[x.getDay()]}`}
+function newEventDlg(name='',same=false){const V=['Merit Royal Hotel · Grand Balo Salonu','Merit Royal Premium · Kristal Salon','Merit Park Hotel · Akdeniz Restoran','Merit Crystal Cove · Amfi Salon'];
+ dialog(`<h3>${same?'Aynı yerleşimle yeni etkinlik':'Yeni etkinlik'}</h3><p>${same?'Salon ve masa yerleşimi gelir; misafir gelmez.':'Boş başlar: masa, misafir ya da örnek veri yok.'}</p><label>Ad</label><input class="fld" id="nN" value="${esc(name)}" placeholder="Örn. Bahar Galası"><div class="row2"><div><label>Tarih</label><input class="fld" id="nD" type="date" value="2027-03-20"></div><div><label>Salon</label><select class="fld" id="nV">${V.map(v=>`<option>${v}</option>`).join('')}</select></div></div><div class="dacts"><button class="btn" data-x>Vazgeç</button><button class="btn pri" data-ok>Oluştur</button></div>`,b=>{b.querySelector('[data-x]').onclick=closeDlg;b.querySelector('[data-ok]').onclick=()=>{const n={id:'n'+Date.now(),d:fmtIso($('#nD').value||'2027-03-20'),n:$('#nN').value.trim()||'Adsız etkinlik',v:$('#nV').value,s:same?'Yerleşim hazır · misafir yok':'Boş etkinlik · plan yok',plan:same?'main':'blank',blank:1,same};AEV.push(n);EVSEL=n.id;closeDlg();openBlank(n);pushUndo(`“${esc(n.n)}” oluşturuldu`,()=>{AEV.splice(AEV.indexOf(n),1);EVSEL='gala';if(S.scr==='etkinlik')renderEvents()})}})}
+function evAction(a){const ev=AEV.find(e=>e.id===EVSEL);if(!ev)return;
+ if(a==='open'){if(ev.main){openGala();go('hazir')}else if(ev.blank)openBlank(ev);else toast(ev.past?'Salt okunur açılır · prototipte yalnızca Yılbaşı Galası dolu':'Bu prototipte yalnızca Yılbaşı Galası dolu açılır');return}
+ if(a==='same'){newEventDlg(ev.n+' — yeni tarih',true);return}
+ if(a==='dup'){const n={...ev,id:'c'+Date.now(),n:ev.n+' (kopya)',past:0,main:0,red:0,s:'Kopya · misafirleriyle'};AEV.push(n);EVSEL=n.id;renderEvents();pushUndo(`“${esc(ev.n)}” çoğaltıldı`,()=>{AEV.splice(AEV.indexOf(n),1);EVSEL=ev.id;if(S.scr==='etkinlik')renderEvents()});return}
+ if(a==='exp'){toast(`“${esc(ev.n)}” dışa aktarıldı · ${ev.id}.merit (örnek)`);return}
+ if(a==='del')confirmDlg('Etkinlik silinsin mi?',`<b>${esc(ev.n)}</b> listeden kaldırılır. Geri al ile döner.`,'Sil',()=>{const i=AEV.indexOf(ev);AEV.splice(i,1);EVSEL='gala';renderEvents();pushUndo(`“${esc(ev.n)}” silindi`,()=>{AEV.splice(i,0,ev);EVSEL=ev.id;if(S.scr==='etkinlik')renderEvents()})},true)}
+$('#strip').addEventListener('click',e=>{const p=e.target.closest('[data-ev]');if(!p)return;EVSEL=p.dataset.ev;$$('#strip .plate').forEach(x=>{const on=x===p;x.classList.toggle('sel',on);x.setAttribute('aria-pressed',on)});renderEvAct()});
+$('#strip').addEventListener('dblclick',e=>{if(e.target.closest('[data-ev]'))evAction('open')});
+$('#strip').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('.plate'))e.target.click()});
+$('#evAct').onclick=e=>{const b=e.target.closest('[data-a]');if(b&&!b.disabled)evAction(b.dataset.a)};
+$('#newEv').onclick=()=>newEventDlg();
+
+/* ═══ HAZIR MI?: plan left, open issues right; a thin line points to the place ═══ */
+function hazirList(){const out=[],c=counts();
+ if(c.un)out.push({t:`${c.un} kişi oturmamış`,d:`${G.filter(g=>!g.table).length} kayıt masa bekliyor`,go:'oturma'});
+ SUG.filter(s=>s.state==='open').forEach(s=>out.push({t:s.title,d:'Plan okuması önerisi · kararınızı bekliyor',go:'salon',at:s.at,sug:s.id}));
+ G.filter(g=>g.table&&g.table.startsWith('VIP')&&!g.vip).forEach(g=>out.push({t:`${g.name} VIP değil, ${loc(g.table)} oturuyor`,d:'Kural uyarısı · engellemez',go:'misafirler',at:g.table,g:g.id}));
+ G.filter(g=>g.apart&&g.table).forEach(g=>{const o=G.find(x=>x.name===g.apart);if(o&&o.table===g.table)out.push({t:`${g.name} ile ${o.name} aynı masada`,d:'Kural: ayrı masalarda olmalı',go:'oturma',at:g.table})});
+ const bel=G.filter(g=>g.plan==='Belirsiz').length;if(bel)out.push({info:1,t:`${bel} kayıt belirsiz`,d:'Katılım teyidi yok',go:'misafirler',f:'bel'});
+ let n=0;out.forEach(i=>{if(i.at)i.n=++n});return out}
+function renderHazir(){S.hz=hazirList();renderRoom();const bad=S.hz.filter(i=>!i.info).length;
+ $('#hzList').innerHTML=`<h1 class="st-t">Hazır mı?</h1><p class="sub">${bad?`${bad} konu açık. Üzerine gelin: planda yerini gösterir.`:'Her şey hazır.'}</p><div class="hzl">${S.hz.map((i,k)=>`<div class="hzr${i.info?' info':''}" data-k="${k}"><span class="num${i.n?'':' none'}">${i.n||'·'}</span><div><b>${esc(i.t)}</b><small>${esc(i.d)}</small></div><button class="btn sm" data-go="${k}">Git</button></div>`).join('')}</div><div class="hz-ok"><div>${IC.check}Kapı listesi hazır · A–Z, masa numaralı</div><div>${IC.check}${TABLES.length} masa · ${counts().seated} / ${counts().exp} kişi yerleşti</div></div>`}
+function leadTo(row){const L=$('#lead');L.innerHTML='';$$('.tbl.flag').forEach(x=>x.classList.remove('flag'));$$('#hzList .hzr.on').forEach(x=>x.classList.remove('on'));if(!row)return;row.classList.add('on');const i=S.hz[+row.dataset.k];if(!i||!i.at)return;
+ const tg=i.at==='ghost'?$('#hzRoom .ghost'):$(`#hzRoom [data-t="${i.at}"]`);if(!tg)return;if(i.at!=='ghost')tg.classList.add('flag');
+ const a=row.getBoundingClientRect(),b=(tg.querySelector('.tshape')||tg).getBoundingClientRect(),x1=a.left-2,y1=a.top+a.height/2,x2=b.left+b.width/2,y2=b.top+b.height/2;
+ L.innerHTML=`<path d="M${x1} ${y1} H${x1-28} L${x2} ${y2}"/><circle cx="${x2}" cy="${y2}" r="4"/><circle cx="${x1}" cy="${y1}" r="2.5"/>`}
+$('#hzList').addEventListener('mouseover',e=>{const r=e.target.closest('.hzr');if(r&&!r.classList.contains('on'))leadTo(r)});
+$('#hzList').addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(b){const i=S.hz[+b.dataset.go];if(i.sug){S.zoomT=null;S.selT=null;go('salon');const el=$(`#salonRoom .pin[data-sug="${i.sug}"]`);if(el)sugPop(i.sug,el)}else goIssue(i);return}const r=e.target.closest('.hzr');if(r)leadTo(r)});
+$('#hzRoom').addEventListener('click',e=>{const sg=e.target.closest('[data-sug]');if(sg)sugPop(sg.dataset.sug,sg)});
+
+/* ═══ SALON: quiet plan; a clicked table opens with names by the chairs ═══ */
+function renderSalon(){renderRoom();renderSalonPanel();$('#salonTools').innerHTML=S.zoomT?'<button class="btn" data-z="out">‹ Tüm salon</button>':''}
+function renderSalonPanel(){const id=S.zoomT,P=$('#salonPanel'),c=counts();
+ if(!id||!TBL(id)){const open=SUG.filter(s=>s.state==='open');P.innerHTML=`<h1 class="st-t">Salon</h1>
+  ${open.length?`<div class="eyebrow" style="margin-top:14px">Öneriler</div>${open.map(s=>`<div class="sgr"><b>${esc(s.title)}</b><p>${esc(s.why)}</p><div class="src">Mimar önerisi · ${SRC[s.id]||'çizimden okudu'}</div><span class="track"><button class="btn pri" data-sy="${s.id}:yes">${s.yes}</button><button class="btn" data-sy="${s.id}:later">Sonra bakarım</button></span></div>`).join('')}`:''}
+  <div class="eyebrow" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">Özet</div><p class="ozet">${TABLES.length} masa · ${c.seated} / ${counts().exp} kişi yerleşti</p>
+  <span class="track sp-tools" style="margin:0 0 12px"><button class="btn" data-a="read">Planı oku</button><button class="btn" data-a="add">Masa ekle</button></span>
+  <p class="hint">Bir masaya tıklayın: açılır; sandalyeler ve kişiler sağda listelenir. Masayı taşımak için sürükleyin.</p>
+  <div class="lg2"><span><i class="f"></i>Dolu sandalye</span><span><i></i>Yer var</span><span><i class="e"></i>Boş sandalye</span><span><i class="v"></i>VIP masası</span></div>`;return}
+ const t=TBL(id),gs=G.filter(g=>g.table===id).sort((a,b)=>a.id-b.id),o=occ(id);
+ P.innerHTML=`<button class="lnk" data-z="out">‹ Tüm salon</button><h1 class="st-t" style="margin-top:10px">${t.id}</h1><p class="sub">${t.kind==='round'?'Yuvarlak':'Dikdörtgen'}${t.id.startsWith('VIP')?' · VIP':''} · <b class="tnum">${o} / ${t.cap}</b> dolu${t.chairs!==t.cap?` · çizimde ${t.chairs} sandalye`:''}</p>
+  <ul class="sp-g">${gs.map(g=>`<li data-fg="${g.id}" class="${S.focusG===g.id?'me':''}" title="Sandalyesini göster"><b>${esc(g.name)}</b>${g.add?`<i class="px">+${g.add}</i>`:''}${vipMark(g.vip)}<small>${seatsTxt(g)} · ${esc(g.junket||g.host)}</small></li>`).join('')||'<li class="mut">Henüz kimse oturmuyor</li>'}</ul>
+  <div class="sp-row"><span>Kapasite</span><div class="step"><button data-a="cap-" aria-label="Azalt">−</button><b class="tnum">${t.cap}</b><button data-a="cap+" aria-label="Artır">+</button></div></div>
+  <div class="sp-acts">${t.kind==='rect'?'<button class="btn" data-a="rot">Döndür 15°</button>':''}<button class="btn" data-a="seat">Bu masaya oturt</button><button class="btn ghost danger" data-a="del">Kaldır…</button></div>`}
+function zoomOut(){S.zoomT=null;S.selT=null;S.focusG=null;closePop();renderSalon()}
+function sugPop(id,anchor){const s=SUG.find(x=>x.id===id);if(!s||s.state!=='open')return;
+ showPop(anchor,`<div class="pop-h"><b style="font-size:15px">${esc(s.title)}</b></div><p class="pop-p">${esc(s.why)}</p><div class="pop-acts"><button class="btn pri sm" data-a="yes">${s.yes}</button><button class="btn sm" data-a="no">${s.no}</button></div><div class="pop-foot">Plan okuması bir öneridir; her biri tek tek onaylanır.</div>`,e=>{const a=e.target.closest('[data-a]')?.dataset.a;if(!a)return;closePop();sugApply(id,a)})}
+const SRC={s1:'sıradan çıkardı',s2:'sandalyeleri saydı',s3:'çizimde gördü'};
+function sugApply(id,a){const s=SUG.find(x=>x.id===id);if(!s)return;
+  let undoFn=()=>{};if(a==='yes'){if(id==='s1')TBL('T23').unread=false;if(id==='s2'){TBL('VIP02').cap=11;undoFn=()=>TBL('VIP02').cap=12}if(id==='s3'){const t={id:'T39',cap:10,chairs:10,kind:'round',x:GHOST.x,y:GHOST.y,rot:0};TABLES.push(t);undoFn=()=>TABLES.splice(TABLES.indexOf(t),1)}}
+  s.state=a;RENDER[S.scr]();pushUndo(`${a==='yes'?'Kabul edildi':a==='later'?'Sonraya bırakıldı':'Reddedildi'}: ${esc(s.title)}`,()=>{s.state='open';undoFn();if(id==='s1')TBL('T23').unread=true;RENDER[S.scr]()})}
+function svgPt(e,svg){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())}
+let dragMoved=false;
+$('#salonRoom').addEventListener('pointerdown',e=>{if(S.zoomT)return;const g=e.target.closest('[data-t]');if(!g)return;const t=TBL(g.dataset.t),svg=g.ownerSVGElement,p0=svgPt(e,svg),st={x:t.x,y:t.y};dragMoved=false;
+ const mv=ev=>{const p=svgPt(ev,svg),dx=p.x-p0.x,dy=p.y-p0.y;if(!dragMoved&&Math.hypot(dx,dy)<6)return;dragMoved=true;t.x=Math.round(st.x+dx);t.y=Math.round(st.y+dy);g.setAttribute('transform',`translate(${t.x} ${t.y}) rotate(${t.rot})`)};
+ const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);if(dragMoved)pushUndo(`${t.id} taşındı`,()=>{t.x=st.x;t.y=st.y;if(S.scr==='salon')renderRoom()})};
+ addEventListener('pointermove',mv);addEventListener('pointerup',up)});
+$('#salonRoom').addEventListener('click',e=>{if(dragMoved){dragMoved=false;return}const sg=e.target.closest('[data-sug]');if(sg){sugPop(sg.dataset.sug,sg);return}const g=e.target.closest('[data-t]');
+ if(!g){if(S.zoomT)zoomOut();return}const id=g.dataset.t;S.selT=S.zoomT=id;const fg=S.focusG!=null&&G.find(x=>x.id===S.focusG);if(!fg||fg.table!==id)S.focusG=null;renderSalon()});
+$('#salonTools').onclick=e=>{if(e.target.closest('[data-z]'))zoomOut()};
+$('#salonPanel').onclick=e=>{const sy=e.target.closest('[data-sy]');if(sy){const [i,a]=sy.dataset.sy.split(':');sugApply(i,a);return}if(e.target.closest('[data-z]')){zoomOut();return}const fg=e.target.closest('[data-fg]');if(fg){S.focusG=S.focusG===+fg.dataset.fg?null:+fg.dataset.fg;renderSalon();return}
+ const a=e.target.closest('[data-a]')?.dataset.a;if(!a)return;const t=S.zoomT&&TBL(S.zoomT);
+ if(a==='read'){$('#file').onchange=ev=>{const f=ev.target.files[0];if(f)toast(`“${esc(f.name)}” okunacak · öneriler tek tek onaylanır (örnek)`)};$('#file').click()}
+ if(a==='add'){let n=39;while(TBL('T'+n))n++;const nt={id:'T'+n,cap:10,chairs:10,kind:'round',x:1450,y:980,rot:0};TABLES.push(nt);renderSalon();pushUndo(`${nt.id} eklendi · sürükleyerek yerleştirin`,()=>{TABLES.splice(TABLES.indexOf(nt),1);if(S.scr==='salon')renderSalon()})}
+ if(a==='sug'){const s=SUG.find(x=>x.state==='open');const el=s&&$(`#salonRoom .pin[data-sug="${s.id}"]`);if(el)sugPop(s.id,el)}
+ if(!t)return;const o=occ(t.id);
+ if(a==='cap-'||a==='cap+'){const prev={cap:t.cap,chairs:t.chairs},sync=t.chairs===t.cap,n=t.cap+(a==='cap+'?1:-1);if(n<Math.max(1,o)){toast(`${t.id}: ${o} kişi oturuyor; kapasite ${o} altına inemez`);return}if(n>12){toast('En fazla 12 kişilik');return}t.cap=n;if(sync)t.chairs=n;renderSalon();pushUndo(`${t.id} kapasite ${n}`,()=>{Object.assign(t,prev);if(S.scr==='salon')renderSalon()},'t'+t.id)}
+ if(a==='rot'){const p=t.rot;t.rot=(t.rot+15)%180;renderSalon();pushUndo(`${t.id} döndürüldü`,()=>{t.rot=p;if(S.scr==='salon')renderSalon()})}
+ if(a==='seat')go('oturma');
+ if(a==='del'){const gs=G.filter(g=>g.table===t.id);confirmDlg(`${t.id} kaldırılsın mı?`,gs.length?`${o} kişi oturmamış listesine döner; kayıtları silinmez.`:'Masa boş.','Kaldır',()=>{const i=TABLES.indexOf(t),back=gs.map(g=>[g,g.table]);gs.forEach(g=>g.table=null);TABLES.splice(i,1);zoomOut();pushUndo(`${t.id} kaldırıldı`,()=>{TABLES.splice(i,0,t);back.forEach(([g,tb])=>g.table=tb);if(S.scr==='salon')renderSalon()})},true)}};
+
+/* ═══ MİSAFİRLER: one quiet list + a fixed detail pane ═══ */
+const GLF=[['all','Tümü',()=>true],['vip','VIP',g=>!!g.vip],['un','Oturmamış',g=>!g.table],['bel','Belirsiz',g=>g.plan==='Belirsiz'],['no','Gelmedi',g=>g.arr==='no']];
+function renderSeg(){$('#glSeg').innerHTML=GLF.map(([k,l])=>`<button data-f="${k}" ${S.glF===k?'aria-pressed="true"':''}>${l}</button>`).join('');$('#glHost').textContent=(S.glHost||'Davet eden')+' ▾'}
+function glList(){const f=GLF.find(x=>x[0]===S.glF)[2],q=fold($('#glQ').value.trim());return G.filter(g=>f(g)&&(!S.glHost||g.host===S.glHost||g.junket===S.glHost)&&(!q||fold(g.name+' '+(g.table||'')+' '+g.host).includes(q))).sort((a,b)=>collator.compare(a.name,b.name))}
+const arrPill=g=>g.arr==='in'?`<span class="st ok">${arrTxt(g)}</span>`:g.arr==='no'?'<span class="st no">Gelmedi</span>':'<span class="mut">Bekleniyor</span>';
+const glRow=g=>`<div class="gr${S.selG===g.id?' on':''}" data-g="${g.id}"><div class="gn"><b>${esc(g.name)}</b>${g.add?`<i>+${g.add}</i>`:''}${vipMark(g.vip)}</div><div class="mut">${esc(g.junket||g.host)}</div><div class="tnum">${g.table||'<span class="warn">—</span>'}</div><div>${g.plan}</div><div>${arrPill(g)}</div></div>`;
+function renderGL(){const L=glList();$('#glCnt').textContent=`${sum(G,g=>g.pax)} kişi · ${G.length} kayıt${L.length!==G.length?` · ${L.length} gösteriliyor`:''}`;$('#glRows').innerHTML=L.map(glRow).join('')||'<div class="empty" style="padding:40px 32px">Bu süzgeçte kimse yok.</div>'}
+function updGRow(g){const el=$(`#glRows [data-g="${g.id}"]`);if(el)el.outerHTML=glRow(g)}
+function renderDet(){const g=G.find(x=>x.id===S.selG);if(!g){$('#glDet').innerHTML='<div class="empty"><b>Bir misafir seçin</b>Ayrıntı burada açılır; liste yerinden oynamaz.</div>';return}
+ $('#glDet').innerHTML=`<h2>${esc(g.name)}${g.add?`<i>+${g.add}</i>`:''}${vipMark(g.vip)}</h2><div class="sub">${g.pax} kişi · tek kayıt${g.add?` · eşlikçiler “GUEST OF ${esc(UP(g.name))}”`:''}</div>
+ <dl class="kv"><div><dt>Davet eden</dt><dd>${esc(g.host)}</dd></div>${g.junket?`<div><dt>Junket</dt><dd>${esc(g.junket)}</dd></div>`:''}<div><dt>Masa</dt><dd><b class="tnum">${g.table||'Oturmamış'}</b><button class="lnk" data-a="seat">${g.table?'Değiştir':'Oturt'}</button></dd></div>
+ <div><dt>Katılım</dt><dd><div class="seg">${['Kesin','Belirsiz'].map(p=>`<button data-plan="${p}" ${g.plan===p?'aria-pressed="true"':''}>${p}</button>`).join('')}</div></dd></div>
+ <div><dt>Varış</dt><dd>${arrPill(g)}<button class="lnk" data-a="door">Kapıda aç</button></dd></div></dl>
+ <div class="det-acts"><button class="btn" data-a="edit">Düzenle</button><button class="btn ghost danger" data-a="del">Sil…</button></div><p class="note">Katılım ve varış ayrı tutulur; biri diğerini değiştirmez.</p>`}
+$('#glSeg').onclick=e=>{const b=e.target.closest('[data-f]');if(!b)return;S.glF=b.dataset.f;renderSeg();renderGL()};
+$('#glQ').oninput=renderGL;
+$('#glHost').onclick=e=>menu(e.currentTarget,[{t:'Hepsi',fn:()=>{S.glHost=null;renderSeg();renderGL()}},'-',...['Kerem Sarıçiçek','Loyalty Desk','International Marketing',...HOSTS].map(h=>({t:h,fn:()=>{S.glHost=h;renderSeg();renderGL()}}))]);
+$('#glRows').onclick=e=>{const r=e.target.closest('[data-g]');if(!r)return;const prev=S.selG;S.selG=+r.dataset.g;if(prev){const p=G.find(x=>x.id===prev);p&&updGRow(p)}r.classList.add('on');renderDet()};
+$('#glDet').onclick=e=>{const g=G.find(x=>x.id===S.selG);if(!g)return;const p=e.target.closest('[data-plan]');
+ if(p){const prev=g.plan;if(prev===p.dataset.plan)return;g.plan=p.dataset.plan;updGRow(g);renderDet();pushUndo(`${esc(g.name)}: katılım ${g.plan}`,()=>{g.plan=prev;if(S.scr==='misafirler'){updGRow(g);renderDet()}});return}
+ const a=e.target.closest('[data-a]')?.dataset.a;if(!a)return;
+ if(a==='seat'){S.selW=g.id;go('oturma')}
+ if(a==='door'){go('kapi');$('#dq').value=g.name;renderDoorList()}
+ if(a==='edit')guestDlg(g);
+ if(a==='del')confirmDlg('Misafir silinsin mi?',`<b>${esc(g.name)}</b> (${g.pax} kişi, tek kayıt) listeden kaldırılır.`,'Sil',()=>{const i=G.indexOf(g);G.splice(i,1);S.selG=null;renderGL();renderDet();pushUndo(`${esc(g.name)} silindi`,()=>{G.splice(i,0,g);if(S.scr==='misafirler'){renderGL();renderDet()}})},true)};
+function guestDlg(g){const H=['Kerem Sarıçiçek','Loyalty Desk','International Marketing',...HOSTS];
+ dialog(`<h3>${g?'Misafiri düzenle':'Misafir ekle'}</h3><p>“Ad +3” tek kayıttır: 4 kişi.</p><label>Ad soyad</label><input class="fld" id="gN" value="${esc(g?.name||'')}"><div class="row2"><div><label>Ek kişi (+N)</label><input class="fld" id="gA" type="number" min="0" max="20" value="${g?.add||0}"></div><div><label>VIP</label><select class="fld" id="gV">${['','VIP','VVIP'].map(v=>`<option value="${v}" ${(g?.vip||'')===v?'selected':''}>${v||'—'}</option>`).join('')}</select></div></div><label>Davet eden</label><select class="fld" id="gH">${H.map(h=>`<option ${g&&(g.junket||g.host)===h?'selected':''}>${h}</option>`).join('')}</select><div class="dacts"><button class="btn" data-x>Vazgeç</button><button class="btn pri" data-ok>Kaydet</button></div>`,b=>{b.querySelector('[data-x]').onclick=closeDlg;b.querySelector('[data-ok]').onclick=()=>{const name=$('#gN').value.trim();if(!name){$('#gN').focus();return}const addN=Math.max(0,+$('#gA').value||0),vip=$('#gV').value,host=$('#gH').value,jk=['Kerem Sarıçiçek','Loyalty Desk','International Marketing'].includes(host)?host:'';closeDlg();
+  if(g){const prev={name:g.name,add:g.add,pax:g.pax,vip:g.vip,host:g.host,junket:g.junket};Object.assign(g,{name,add:addN,pax:1+addN,vip,host,junket:jk});updGRow(g);renderDet();pushUndo(`${esc(name)} güncellendi`,()=>{Object.assign(g,prev);if(S.scr==='misafirler'){updGRow(g);renderDet()}})}
+  else{const n=add({name,add:addN,vip,host,junket:jk});S.selG=n.id;renderGL();renderDet();pushUndo(`${esc(name)} eklendi · ${n.pax} kişi`,()=>{G.splice(G.indexOf(n),1);S.selG=null;if(S.scr==='misafirler'){renderGL();renderDet()}})}}})}
+$('#glAdd').onclick=()=>guestDlg(null);
+$('#glImp').onclick=e=>menu(e.currentTarget,[{t:'Excel dosyası…',fn:excelDlg},{t:'Liste yapıştır…',fn:pasteDlg}]);
+function excelDlg(){dialog(`<h3>Excel’den içe aktar</h3><p>Sütunlar kendiliğinden eşleşir: Ad, +N, VIP, Davet eden, Masa. Yinelenen isimler önce sorulur.</p><div class="drop-zone">Dosyayı buraya bırakın<br><button class="btn" style="margin-top:10px" data-f>Dosya seç…</button></div><div class="dacts"><button class="btn" data-x>Kapat</button></div>`,b=>{b.querySelector('[data-x]').onclick=closeDlg;b.querySelector('[data-f]').onclick=()=>{$('#file').onchange=ev=>{const f=ev.target.files[0];closeDlg();if(f)toast(`“${esc(f.name)}” okunuyor · eşleştirme önizlemesi açılır (örnek)`)};$('#file').click()}})}
+function pasteDlg(){dialog(`<h3>Liste yapıştır</h3><p>Her satır bir kayıt. “Ad Soyad +2” biçimi eşlikçileri anlar.</p><textarea class="fld" id="pT" placeholder="Gamze Tan +1&#10;Rüya Akdağ&#10;Orçun Bilge +3"></textarea><div class="dacts"><button class="btn" data-x>Vazgeç</button><button class="btn pri" data-ok>Ekle</button></div>`,b=>{b.querySelector('[data-x]').onclick=closeDlg;b.querySelector('[data-ok]').onclick=()=>{const rows=$('#pT').value.split('\n').map(s=>s.trim()).filter(Boolean).map(s=>{const m=s.match(/^(.*?)\s*\+\s*(\d+)$/);return m?{name:m[1],add:+m[2]}:{name:s,add:0}});closeDlg();if(!rows.length)return;const ns=rows.map(r=>add({...r,host:'Kurumsal Satış'}));if(S.scr==='misafirler')renderGL();pushUndo(`${ns.length} kayıt eklendi · ${sum(ns,g=>g.pax)} kişi`,()=>{ns.forEach(n=>G.splice(G.indexOf(n),1));if(S.scr==='misafirler')renderGL()})}})}
+
+/* ═══ OTURMA: waiting list left, room right (5-tek-satır, simplified) ═══ */
+const waitRows=()=>G.filter(g=>!g.table||S.justSeat[g.id]);
+function wRow(g){const done=g.table&&S.justSeat[g.id],w=S.warn[g.id];
+ const sub=done?(w?`<span class="warn">${esc(w)} · yine de oturtuldu</span>`:`<span class="okt">Oturtuldu${g.draft?' · taslak':''}</span>`):`${esc(g.junket?'Junket':g.host)} · ${g.plan}${g.apart?` · ${esc(g.apart)} ile ayrı`:''}`;
+ return `<div class="wrow${S.selW===g.id?' on':''}${done?' done':''}" data-g="${g.id}" ${done?'':'draggable="true"'}><div class="wn"><b>${esc(g.name)}</b>${g.add?`<i>+${g.add}</i>`:''}${vipMark(g.vip)}<div class="ws">${sub}</div></div><div class="wr">${done?`<span class="tnum">→ ${g.table}</span><button class="lnk" data-unseat="${g.id}">Geri al</button>`:`<span class="pax tnum">${g.pax} kişi</span>`}</div></div>`}
+function selStrip(){const g=selGuest();return g?`<div class="selstrip on" id="selStrip"><b>${esc(g.name)}</b>${g.add?`<i class="px">+${g.add}</i>`:''} · ${g.pax} kişi${g.table?` · şu an ${g.table}`:''} — uyan masaya tıklayın</div>`:`<div class="selstrip" id="selStrip">Misafire, sonra masaya tıklayın — ya da sürükleyin.</div>`}
+function renderWait(){const rows=waitRows(),groups={};rows.forEach(g=>{const k=g.junket||'Diğer';(groups[k]=groups[k]||[]).push(g)});
+ let h=`<div class="side-h"><div><h2>Oturmamış</h2><div class="sub"><b class="tnum" id="unN">${counts().un}</b> kişi bekliyor</div></div><label class="sw"><input type="checkbox" id="draftSw" ${S.draft?'checked':''}><span></span>Taslak</label></div>${selStrip()}<div class="wl">`;
+ Object.keys(groups).sort((a,b)=>a==='Diğer'?1:b==='Diğer'?-1:collator.compare(a,b)).forEach(k=>{const open=groups[k].filter(g=>!g.table);h+=`<div class="grp"><div class="grp-h"><span>${esc(k)}</span>${k!=='Diğer'&&open.length?`<button class="lnk" data-grp="${esc(k)}">Grubunun yanına oturt</button>`:''}</div>${groups[k].map(wRow).join('')}</div>`});
+ if(!rows.length)h+='<div class="empty"><b>Herkes oturdu.</b>Bekleyen misafir yok.</div>';
+ $('#waitList').innerHTML=h+'</div>'}
+function updWRow(g){const el=$(`#waitList .wrow[data-g="${g.id}"]`);if(el)el.outerHTML=wRow(g);else renderWait()}
+function refreshSeat(g){if(S.scr==='oturma'){updWRow(g);$('#selStrip').outerHTML=selStrip();$('#unN').textContent=counts().un;renderRoom()}else if(S.scr==='misafirler'){updGRow(g);renderDet()}else if(roomBox())renderRoom()}
+function assign(g,tid){const t=TBL(tid),free=t.cap-occ(tid,g);if(g.table===tid)return false;
+ if(free<g.pax){const alt=nearestFree(g,t);toast(`${loc(tid)} yer yok: ${free} boş, ${g.pax} kişi gerekiyor${alt?` · en yakın ${alt.id}`:''}`);return false}
+ const prev={table:g.table,draft:g.draft,js:S.justSeat[g.id]};g.table=tid;g.draft=S.draft;S.justSeat[g.id]=tid;const w=ruleWarn(g,tid);if(w)S.warn[g.id]=w;else delete S.warn[g.id];if(S.selW===g.id)S.selW=null;
+ refreshSeat(g);pushUndo(`${esc(g.name)} → ${tid}${w?' · '+esc(w):''}`,()=>{g.table=prev.table;g.draft=prev.draft;if(prev.js)S.justSeat[g.id]=prev.js;else delete S.justSeat[g.id];delete S.warn[g.id];refreshSeat(g)},'seat'+g.id);return true}
+function nearestFree(g,t){return TABLES.filter(x=>x.id!==t.id&&x.cap-occ(x.id,g)>=g.pax&&(!!g.vip||!x.id.startsWith('VIP'))).sort((a,b)=>Math.hypot(a.x-t.x,a.y-t.y)-Math.hypot(b.x-t.x,b.y-t.y))[0]}
+function seatGroup(k){const open=G.filter(g=>!g.table&&g.junket===k);const need=sum(open,g=>g.pax);const mates=TABLES.filter(t=>G.some(g=>g.junket===k&&g.table===t.id));let t=mates.find(x=>x.cap-occ(x.id)>=need)||TABLES.filter(x=>!x.id.startsWith('VIP')&&x.cap-occ(x.id)>=need).sort((a,b)=>mates.length?Math.hypot(a.x-mates[0].x,a.y-mates[0].y)-Math.hypot(b.x-mates[0].x,b.y-mates[0].y):0)[0];
+ if(!t){toast(`${esc(k)} için ${need} kişilik boş masa yok`);return}open.forEach(g=>assign(g,t.id))}
+$('#waitList').addEventListener('click',e=>{const un=e.target.closest('[data-unseat]');if(un){undo('seat'+un.dataset.unseat);return}const gr=e.target.closest('[data-grp]');if(gr){seatGroup(gr.dataset.grp);return}
+ const r=e.target.closest('.wrow');if(!r||r.classList.contains('done'))return;const id=+r.dataset.g;const prev=S.selW;S.selW=prev===id?null:id;
+ $$('#waitList .wrow.on').forEach(x=>x.classList.remove('on'));if(S.selW)r.classList.add('on');$('#selStrip').outerHTML=selStrip();renderRoom()});
+$('#waitList').addEventListener('change',e=>{if(e.target.id==='draftSw'){S.draft=e.target.checked;toast(S.draft?'Taslak açık: yeni oturtmalar kesik çizgiyle görünür':'Taslak kapalı')}});
+$('#waitList').addEventListener('dragstart',e=>{const r=e.target.closest('.wrow');if(!r)return;e.dataTransfer.setData('text/plain',r.dataset.g);S.selW=+r.dataset.g;$$('#waitList .wrow.on').forEach(x=>x.classList.remove('on'));r.classList.add('on');$('#selStrip').outerHTML=selStrip();renderRoom()});
+$('#seatRoom').addEventListener('dragover',e=>e.preventDefault());
+$('#seatRoom').addEventListener('drop',e=>{e.preventDefault();const t=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-t]');const g=G.find(x=>x.id===+e.dataTransfer.getData('text/plain'));if(t&&g)assign(g,t.dataset.t)});
+$('#seatRoom').addEventListener('click',e=>{const el=e.target.closest('[data-t]');if(!el)return;const g=selGuest();if(g){assign(g,el.dataset.t);return}
+ const id=el.dataset.t,t=TBL(id),gs=G.filter(x=>x.table===id);showPop(el.querySelector('.body'),`<div class="pop-h"><b>${id}</b><span class="tnum">${occ(id)} / ${t.cap} dolu</span></div><ul class="pop-g">${gs.map(x=>`<li><span>${gName(x)}</span><button class="lnk" data-out="${x.id}">Masadan al</button></li>`).join('')||'<li class="mut">Boş masa</li>'}</ul><div class="pop-foot">Soldan bir misafir seçip bu masaya tıklayarak oturtun.</div>`,ev=>{const b=ev.target.closest('[data-out]');if(!b)return;const x=G.find(y=>y.id===+b.dataset.out);const prev={table:x.table,draft:x.draft};x.table=null;x.draft=false;closePop();renderWait();renderRoom();pushUndo(`${esc(x.name)} ${id} masasından alındı`,()=>{Object.assign(x,prev);if(S.scr==='oturma'){renderWait();renderRoom()}})})});
+
+/* ═══ KAPI: big search, big Giriş right, Gelmedi in the menu; the room fills in place ═══ */
+const JK=['Kerem Sarıçiçek','Loyalty Desk','International Marketing'];
+function grpCount(f){const m=G.filter(f);return[sum(m,g=>g.arr==='in'?g.inPax:0),sum(m,g=>g.pax)]}
+function renderDoorTop(){const c=counts();const box=$('#dcount');
+ const v={a:c.arrived,w:c.wait,n:c.no};
+ if(!box.dataset.built){box.innerHTML=`<div><small>Geldi</small><span><b class="ok tnum" id="cA"></b> <span class="of tnum">/ 420</span></span></div><div><small>Bekleniyor</small><b class="tnum" id="cW"></b></div><div><small>Gelmedi</small><b class="no tnum" id="cN"></b></div>`;box.dataset.built=1}
+ [['cA',v.a],['cW',v.w],['cN',v.n]].forEach(([id,val])=>{const el=$('#'+id);if(el.textContent!==String(val)){if(el.textContent){el.classList.remove('tick-on');void el.offsetWidth;el.classList.add('tick-on')}el.textContent=val}});
+ const chips=[['all','Tümü',null],['vip','VIP',g=>!!g.vip],...JK.map(j=>[j,j==='International Marketing'?'Intl. Marketing':j,g=>g.junket===j])];
+ $('#dgroups').innerHTML=chips.map(([k,l,f])=>{const n=f?grpCount(f):null;return `<button data-f="${esc(k)}" ${S.doorF===k?'aria-pressed="true"':''}>${l}${n?`<span class="n">${n[0]}/${n[1]}</span>`:''}</button>`}).join('')}
+function doorList(){const toks=fold($('#dq').value.trim()).split(/\s+/).filter(Boolean);
+ return G.filter(g=>{if(S.doorF==='vip'&&!g.vip)return false;if(JK.includes(S.doorF)&&g.junket!==S.doorF)return false;if(!toks.length)return true;const hay=fold(g.name+' '+(g.table||'')+' '+(g.junket||g.host)).split(/\s+/);return toks.every(t=>hay.some(w=>w.startsWith(t)))}).sort((a,b)=>collator.compare(a.name,b.name))}
+function stateCell(g){const j=S.justIn[g.id];
+ if(g.arr==='in'){const part=g.inPax<g.pax;return `<span class="st ok">${IC.check}${part?`${g.inPax}/${g.pax} geldi`:`Geldi ${hm(g.at)}`}</span>${part?`<button class="btn sm" data-in="${g.id}">Kalanlar</button>`:j?`<button class="lnk" data-undo-door="${g.id}">Geri al</button>`:''}`}
+ if(g.arr==='no')return `<span class="st no">${IC.x}Gelmedi</span>${j?`<button class="lnk" data-undo-door="${g.id}">Geri al</button>`:''}`;
+ return `<button class="btn pri lg giris" data-in="${g.id}">Giriş</button>`}
+const dRow=g=>`<div class="drow ${g.arr}${S.focusG===g.id?' sel':''}" data-g="${g.id}"><button class="more" data-more="${g.id}" aria-label="${esc(g.name)}: diğer işlemler">${IC.more}</button><div class="dn"><b>${esc(g.name)}</b>${g.add?`<i class="px">+${g.add}</i>`:''}${vipMark(g.vip)}<div class="ds"><span class="tnum">${g.table||'<span class="warn">Masa yok</span>'}</span> · ${esc(g.junket||g.host)}${g.add?` · ${g.pax} kişi`:''}</div></div><div class="dact" data-state="${g.id}">${stateCell(g)}</div></div>`;
+function renderDoorList(){const L=doorList();$('#dlist').innerHTML=L.map(dRow).join('')||'<div class="empty" style="padding:32px 24px"><b>Bu isimde misafir yok.</b>Yazımı deneyin ya da Misafirler’den ekleyin.</div>'}
+function afterDoor(g,lit){if(S.scr!=='kapi')return;const c=$(`#dlist [data-state="${g.id}"]`);if(c){c.innerHTML=stateCell(g);$$('#dlist .drow.sel').forEach(x=>x.classList.remove('sel'));c.closest('.drow').className='drow '+g.arr+(S.focusG===g.id?' sel':'')}if(g.table){renderRoom();const n=lit&&roomBox().querySelector(`[data-t="${g.table}"]`);if(n)n.classList.add('lit')}renderDoorTop()}
+function checkIn(g,n){if(g.arr==='in'&&g.inPax>=g.pax)return;const prev={arr:g.arr,at:g.at,inPax:g.inPax};g.arr='in';if(prev.arr!=='in')g.at=nowMin();g.inPax=n??g.pax;S.justIn[g.id]=1;S.focusG=g.id;afterDoor(g,true);
+ pushUndo(`${esc(g.name)} · giriş ${g.inPax}/${g.pax}${g.table?' · '+g.table:''}`,()=>{Object.assign(g,prev);delete S.justIn[g.id];afterDoor(g)},'door'+g.id)}
+function markNo(g){const prev={arr:g.arr,at:g.at,inPax:g.inPax};g.arr='no';g.inPax=0;S.justIn[g.id]=1;afterDoor(g);pushUndo(`${esc(g.name)} gelmedi · ${g.table||'masa'} korunuyor`,()=>{Object.assign(g,prev);delete S.justIn[g.id];afterDoor(g)},'door'+g.id)}
+function askNo(g){confirmDlg('Gelmedi olarak işaretlensin mi?',`<b>${esc(g.name)}</b> · ${g.pax} kişi. Planlanan yeri${g.table?` (${g.table})`:''} korunur; yalnızca canlı kapasite boşalır. Geri alınabilir.`,'Gelmedi işaretle',()=>markNo(g),true)}
+$('#dq').addEventListener('input',renderDoorList);
+$('#dq').addEventListener('keydown',e=>{if(e.key!=='Enter')return;const L=doorList().filter(g=>g.arr==='wait');if(L.length===1)checkIn(L[0]);else toast(L.length?`${L.length} bekleyen eşleşme · birini seçin`:'Bekleyen eşleşme yok')});
+$('#dgroups').onclick=e=>{const b=e.target.closest('[data-f]');if(!b)return;S.doorF=b.dataset.f;renderDoorTop();renderDoorList()};
+$('#dlist').addEventListener('click',e=>{const i=e.target.closest('[data-in]');if(i){checkIn(G.find(g=>g.id===+i.dataset.in));return}
+ const u=e.target.closest('[data-undo-door]');if(u){undo('door'+u.dataset.undoDoor);return}
+ const m=e.target.closest('[data-more]');if(m){const g=G.find(x=>x.id===+m.dataset.more);const items=[];if(g.arr!=='in'&&g.pax>1)for(let k=1;k<g.pax;k++)items.push({t:`Kısmi giriş · ${k} / ${g.pax} kişi`,fn:()=>checkIn(g,k)});if(items.length)items.push('-');
+  items.push({t:'Misafir kartını aç',fn:()=>{S.selG=g.id;S.glF='all';go('misafirler')}});if(g.arr==='wait')items.push('-',{t:'Gelmedi olarak işaretle…',danger:true,fn:()=>askNo(g)});menu(m,items);return}
+ const row=e.target.closest('.drow');if(row){S.focusG=+row.dataset.g;$$('#dlist .drow.sel').forEach(x=>x.classList.remove('sel'));row.classList.add('sel');renderRoom()}});
+$('#dlist').addEventListener('mouseover',e=>{const r=e.target.closest('.drow');if(!r)return;const id=+r.dataset.g;if(S.doorHi===id)return;const old=S.doorHi&&G.find(x=>x.id===S.doorHi);S.doorHi=id;const g=G.find(x=>x.id===id);const b=roomBox();if(!b)return;if(old&&old.table)b.querySelector(`[data-t="${old.table}"]`)?.classList.remove('hi');if(g&&g.table)b.querySelector(`[data-t="${g.table}"]`)?.classList.add('hi')});
+$('#doorRoom').addEventListener('click',e=>{const el=e.target.closest('[data-t]');if(!el)return;$('#dq').value=el.dataset.t;renderDoorList()});
+
+
+/* ═══ COMMAND LINE (F8): typing is optional; every answer is also a click ═══ */
+const VERB=/^(oturt|otur|yerlestir|koy|tasi|giris|geldi|gelmedi|yap|et|ver|masa|nerede|goster|bul)/;
+function tableIn(f){const m=f.match(/\b(vip|t)\s*0?(\d{1,2})/);if(!m)return null;const id=m[1]==='vip'?'VIP0'+(+m[2]):'T'+pad2(+m[2]);return TBL(id)?id:null}
+function guestsIn(f){const toks=f.split(/[^a-z0-9]+/).filter(w=>w.length>=3&&!/^(vip|t)?\d/.test(w)&&!VERB.test(w));if(!toks.length)return[];let best=[],bs=0;
+ G.forEach(g=>{let s=0;fold(g.name).split(' ').forEach(p=>{if(toks.some(t=>t.startsWith(p)||p.startsWith(t)))s++});if(s>bs){bs=s;best=[g]}else if(s===bs&&s>0)best.push(g)});return best}
+const EX=['ahmet yılmaz nerede oturuyor','bugün ne eksik','mehmet kayayı t36ya oturt','ahmet yılmaz','kapı listesi yazdır','gece teması'];
+function helpItems(){return[
+ {k:'Kapı',t:'Misafiri bulun, Giriş’e basın',s:'Liste A–Z. Gelmedi ⋯ menüsündedir ve önce sorar. Geri al her zaman var.',b:'Kapıya git',run:()=>go('kapi')},
+ {k:'Oturma',t:'Misafire, sonra masaya tıklayın',s:'Uyan masalar açılır, “N boş” yazar. Kurallar yalnızca uyarır.',b:'Oturmaya git',run:()=>go('oturma')},
+ {k:'Salon',t:'Masaya tıklayın: seçenekler orada',s:'Sürükleyerek taşıyın. Plan önerileri tek tek onaylanır.',b:'Salona git',run:()=>go('salon')},
+ {k:'Raporlar',t:'Excel masa planı, kapı listesi, junket, özet',s:'Önizleme sağda; tek tuşla indirilir.',b:'Raporlar',run:()=>go('raporlar')},
+ {k:'Klavye',t:'F8 komut · F9 tema · F10 yardım',s:'1–6 ekranlar · Ctrl+Z geri al · Esc kapat',b:null,run:()=>'keep'}]}
+function parse(raw){const f=fold(raw).trim();
+ if(!f)return S.help?helpItems():EX.map(x=>({k:'Örnek',t:esc(x),b:'Dene',run:()=>{$('#q').value=x;S.hi=0;openDrop();return 'keep'}}));
+ const nav={etkinlik:'etkinlik',etkinlikler:'etkinlik',salon:'salon',plan:'salon',misafir:'misafirler',misafirler:'misafirler',liste:'misafirler',oturma:'oturma',kapi:'kapi',rapor:'raporlar',raporlar:'raporlar'};
+ if(nav[f])return[{k:'Git',t:SCRL[nav[f]],b:'Aç',run:()=>go(nav[f])}];
+ if(/eksik|hazir mi|sorun/.test(f))return issues().map(i=>({k:'Eksik',t:esc(i.t),s:esc(i.d),b:SCRL[i.go],run:()=>goIssue(i)}));
+ if(/yardim|^\?$/.test(f))return helpItems();
+ if(/tema|karanlik|aydinlik|gece|gunduz/.test(f))return[{k:'Tema',t:'Açık / koyu tema',s:'F9 ya da sağ üstteki düğme ile de değişir',b:'Değiştir',run:toggleTheme}];
+ if(/yeni etkinlik/.test(f))return[{k:'Etkinlik',t:'Yeni, boş etkinlik',s:'Masa, misafir ya da örnek veri olmadan başlar',b:'Oluştur',run:()=>{go('etkinlik');newEventDlg()}}];
+ if(/yazdir|excel|rapor|listesi|junket|ozet/.test(f)){const hit=REPS.filter(r=>fold(r.t+' '+r.d).split(/[^a-z0-9]+/).some(w=>w.length>3&&f.includes(w)));return(hit.length?hit:REPS).map(r=>({k:'Rapor',t:r.t,s:r.d,b:'Önizle',run:()=>{S.rep=r.id;go('raporlar')}}))}
+ const tid=tableIn(f),gs=guestsIn(f),noV=/gelmedi/.test(f),inV=!noV&&/giris|geldi/.test(f);
+ if(gs.length&&/nerede|hangi masa/.test(f))return gs.slice(0,6).map(g=>({k:'Nerede',t:gName(g),s:g.table?`${loc(g.table)} oturuyor · ${seatsTxt(g)} · ${arrTxt(g)}`:'Henüz oturmamış',b:g.table?(S.scr==='kapi'?'Planda göster':'Salonda göster'):'Oturt…',run:()=>showWhere(g)}));
+ if(gs.length&&tid){if(gs.length>1)return gs.slice(0,6).map(g=>({k:'Hangisi?',t:gName(g),s:where(g),b:`${dat(tid)} oturt`,run:()=>assign(g,tid)}));
+  const g=gs[0],t=TBL(tid),free=t.cap-occ(tid,g),w=ruleWarn(g,tid);
+  if(free>=g.pax)return[{k:'Anladığım',t:`${gName(g)} → ${tid}`,s:`Şimdi: ${g.table||'oturmamış'} · Sonra: ${tid} (${free} boş, ${g.pax} kişi)${w?' · uyarı: '+esc(w):''}`,b:'Uygula',run:()=>assign(g,tid)}];
+  const alt=nearestFree(g,t);return[{k:'Yer yok',t:`${loc(tid)} ${free} boş, ${g.pax} kişi gerekiyor`,s:alt?`En yakın uygun masa: ${alt.id} (${alt.cap-occ(alt.id,g)} boş)`:'Uygun masa yok',b:alt?`${dat(alt.id)} oturt`:null,run:()=>{if(alt)assign(g,alt.id)}}]}
+ if(gs.length&&noV)return gs.slice(0,6).map(g=>({k:'Gelmedi',t:gName(g),s:`${where(g)} · masası korunur, önce sorarım`,b:'Gelmedi…',run:()=>askNo(g)}));
+ if(gs.length&&inV)return gs.slice(0,6).map(g=>({k:'Giriş',t:gName(g),s:where(g),b:'Giriş',run:()=>checkIn(g)}));
+ if(gs.length)return gs.slice(0,8).map(g=>({k:'Misafir',t:gName(g),s:where(g)+(g.junket?' · '+esc(g.junket):''),b:S.scr==='kapi'&&g.arr==='wait'?'Giriş':'Göster',run:()=>{if(S.scr==='kapi'&&g.arr==='wait')checkIn(g);else{S.selG=g.id;S.glF='all';go('misafirler');$(`#glRows [data-g="${g.id}"]`)?.scrollIntoView({block:'center'})}}}));
+ if(tid)return[{k:'Masa',t:tid,s:`${occ(tid)} / ${TBL(tid).cap} dolu`,b:'Salonda göster',run:()=>{S.selT=tid;go('salon');tablePop(tid)}}];
+ return[{k:'Anlayamadım',t:'Bunu tam anlayamadım',s:'Örnek: “ahmet yılmazı t05e oturt”, “bugün ne eksik”, “kapı”',b:'Yardım',run:()=>{S.help=true;$('#q').value='';openDrop();return 'keep'}}]}
+
+/* ═══ RAPORLAR: full live preview + designer (1/3) ═══ */
+const REPS=[{id:'list',t:'Misafir listesi',d:'Seçtiğiniz sütun ve süzgeçlerle'},{id:'door',t:'Kapı listesi A–Z',d:'Soyada göre, masa numarasıyla'},{id:'xls',t:'Masa planı',d:'TABLE PLAN · GUEST LIST · UNASSIGNED'},{id:'junket',t:'Junket raporu',d:'Gruplara göre gelen, gelmeyen'},{id:'sum',t:'Etkinlik özeti',d:'Sayılar ve açık konular'}];
+const COLS={name:'Misafir',pax:'Kişi',table:'Masa',seat:'Sandalye',host:'Davet eden',vip:'VIP',plan:'Katılım',arr:'Varış'};
+const RD={cols:['name','pax','table','host','arr'],q:'',grp:'',tbl:'',vip:false,arr:'all',title:'',logo:true,paper:'A4',orient:'P',fs:12,
+ tpls:[{n:'Kapı · gece listesi',v:{rep:'door',cols:['name','table','seat','arr'],vip:false,arr:'all',orient:'P',fs:13}},{n:'VIP karşılama',v:{rep:'list',cols:['name','pax','table','host'],vip:true,arr:'all',orient:'P',fs:12}}]};
+const listy=()=>S.rep==='list'||S.rep==='door';
+function rrows(){const q=fold(RD.q.trim()),tb=RD.tbl.trim().toUpperCase();const L=G.filter(g=>(!q||fold(g.name).includes(q))&&(!RD.grp||g.junket===RD.grp||g.host===RD.grp)&&(!tb||(g.table||'').startsWith(tb))&&(!RD.vip||g.vip)&&(RD.arr==='all'||g.arr===RD.arr));
+ const sn=n=>n.split(' ').pop();return L.sort((a,b)=>S.rep==='door'?collator.compare(sn(a.name),sn(b.name)):collator.compare(a.name,b.name))}
+function rcell(g,c){const p=g.name.split(' ');switch(c){case 'name':return esc(S.rep==='door'?p[p.length-1]+', '+p.slice(0,-1).join(' '):g.name)+(g.add?' +'+g.add:'');case 'pax':return g.pax;case 'table':return g.table||'—';case 'seat':return g.table?seatsTxt(g).replace('sandalye ',''):'—';case 'host':return esc(g.junket||g.host);case 'vip':return g.vip||'';case 'plan':return g.plan;default:return arrTxt(g)}}
+const sortT=()=>[...TABLES].sort((a,b)=>(a.id.startsWith('VIP')?0:1)-(b.id.startsWith('VIP')?0:1)||parseInt(a.id.replace(/\D/g,''))-parseInt(b.id.replace(/\D/g,'')));
+function renderPreview(){const r=REPS.find(x=>x.id===S.rep)||REPS[0],title=RD.title||r.t,land=RD.orient==='L',W=land?880:640,H=Math.round(land?W/1.414:W*1.414),fs=+(RD.fs*(RD.paper==='A3'?.72:1)*1.1).toFixed(1);
+ let body='',L=listy()?rrows():null;
+ if(L){const per=Math.max(6,Math.floor((H-200)/(fs*1.45+15)));body=`<table class="ptab" style="font-size:${fs}px"><tr>${RD.cols.map(c=>`<th>${COLS[c]}</th>`).join('')}</tr>${L.slice(0,per).map(g=>`<tr>${RD.cols.map(c=>`<td>${rcell(g,c)}</td>`).join('')}</tr>`).join('')}</table><div class="pfoot">Sayfa 1 / ${Math.max(1,Math.ceil(L.length/per))} · ${L.length} kayıt</div>`}
+ else if(S.rep==='xls'){body='<div class="cards">'+sortT().slice(0,land?12:8).map(t=>{const ls=[];G.filter(g=>g.table===t.id).forEach(g=>{ls.push(esc(UP(g.name)));for(let i=0;i<g.add;i++)ls.push(`<span class="go">GUEST OF ${esc(UP(g.name))}</span>`)});return `<div class="card"><h4><span>${t.id}</span><span class="tnum">${occ(t.id)}/${t.cap}</span></h4>${ls.slice(0,8).map(l=>`<div>${l}</div>`).join('')}${ls.length>8?`<div class="go">+${ls.length-8} kişi</div>`:''}</div>`}).join('')+'</div>'}
+ else if(S.rep==='junket'){const rows=['Kerem Sarıçiçek','Loyalty Desk','International Marketing','Diğer davetliler'].map(j=>{const m=G.filter(g=>j==='Diğer davetliler'?!g.junket:g.junket===j);return[j,sum(m,g=>g.pax),sum(m,g=>g.arr==='in'?g.inPax:0),sum(m,g=>g.arr==='no'?g.pax:0),sum(m,g=>g.table?0:g.pax)]});body=`<table class="ptab" style="font-size:${fs}px"><tr><th>Grup</th><th class="n">Beklenen</th><th class="n">Geldi</th><th class="n">Gelmedi</th><th class="n">Oturmamış</th></tr>${rows.map(r=>`<tr><td>${r[0]}</td>${r.slice(1).map(v=>`<td class="n">${v}</td>`).join('')}</tr>`).join('')}</table>`}
+ else{const c=counts();body=`<table class="ptab" style="font-size:${fs}px"><tr><th>Beklenen</th><th>Geldi</th><th>Gelmedi</th><th>Oturmamış</th></tr><tr style="font-size:1.5em;font-weight:600"><td>420</td><td>${c.arrived}</td><td>${c.no}</td><td>${c.un}</td></tr></table><h4 style="margin:22px 0 6px">Açık konular</h4>${hazirList().map(i=>`<div style="padding:5px 0;border-bottom:1px solid #E2E5E0">${esc(i.t)}</div>`).join('')}`}
+ $('#rpBar').innerHTML=`<div><b>${esc(title)}</b><small>${RD.paper} · ${land?'yatay':'dikey'} · ${RD.fs} pt${L?` · ${L.length} satır`:''}</small></div><div class="sp"></div><button class="btn" data-go="xls">Excel indir</button><button class="btn pri" data-go="print">Yazdır</button>`;
+ $('#paper').innerHTML=`<div class="page" style="width:${W}px;min-height:${H}px">${RD.logo?'<div class="plogo">MERIT</div>':''}<h3>${esc(title)}</h3><div class="pm">Merit Royal Yılbaşı Galası · 31 Aralık 2026 · Grand Balo Salonu</div>${body}</div>`}
+function renderDesign(){const G2=['','Kerem Sarıçiçek','Loyalty Desk','International Marketing',...HOSTS],on=listy(),seg=(k,opts)=>`<div class="seg" data-k="${k}">${opts.map(([v,l])=>`<button data-v="${v}" ${RD[k]===v?'aria-pressed="true"':''}>${l}</button>`).join('')}</div>`;
+ $('#rpDesign').innerHTML=`<h2 class="st-t sm">Rapor tasarımı</h2>
+ <div class="dsec" style="border-top:0"><label class="dl" for="rdRep">Rapor</label><select class="fld wide" id="rdRep">${REPS.map(r=>`<option value="${r.id}" ${S.rep===r.id?'selected':''}>${r.t}</option>`).join('')}</select></div>
+ <div class="dsec${on?'':' off'}"><span class="dl">Sütunlar <small>${on?'işaretleyin, oklarla sıralayın':'bu raporun düzeni sabit'}</small></span>${[...RD.cols,...Object.keys(COLS).filter(c=>!RD.cols.includes(c))].map(c=>{const o=RD.cols.includes(c),i=RD.cols.indexOf(c);return `<div class="colr${o?'':' offc'}"><label><input type="checkbox" data-col="${c}" ${o?'checked':''}>${COLS[c]}</label><button class="ib" data-mv="${c}:-1" ${!o||i===0?'disabled':''} aria-label="${COLS[c]} yukarı">↑</button><button class="ib" data-mv="${c}:1" ${!o||i===RD.cols.length-1?'disabled':''} aria-label="${COLS[c]} aşağı">↓</button></div>`}).join('')}</div>
+ <div class="dsec${on?'':' off'}"><span class="dl">Süzgeçler</span><input class="fld wide" id="rdQ" placeholder="Kişi adı" value="${esc(RD.q)}"><div class="row2"><select class="fld" id="rdG" aria-label="Grup">${G2.map(o=>`<option value="${esc(o)}" ${RD.grp===o?'selected':''}>${o||'Tüm gruplar · junketler'}</option>`).join('')}</select><input class="fld" id="rdT" placeholder="Masa no (örn. T05)" value="${esc(RD.tbl)}"></div><label class="ck"><input type="checkbox" id="rdV" ${RD.vip?'checked':''}>Yalnız VIP</label>${seg('arr',[['all','Tümü'],['in','Geldi'],['no','Gelmedi'],['wait','Bekleniyor']])}</div>
+ <div class="dsec"><span class="dl">Başlık, logo, kâğıt</span><input class="fld wide" id="rdTitle" placeholder="${esc((REPS.find(x=>x.id===S.rep)||REPS[0]).t)}" value="${esc(RD.title)}"><label class="ck"><input type="checkbox" id="rdL" ${RD.logo?'checked':''}>MERIT logosu</label><div class="row3">${seg('paper',[['A4','A4'],['A3','A3']])}${seg('orient',[['P','Dikey'],['L','Yatay']])}<div class="step"><button data-fs="-1" aria-label="Yazı küçült">−</button><b class="tnum">${RD.fs} pt</b><button data-fs="1" aria-label="Yazı büyüt">+</button></div></div></div>
+ <div class="dsec"><span class="dl">Şablonlar</span>${RD.tpls.map((t,i)=>`<button class="tpl" data-tpl="${i}">${esc(t.n)}</button>`).join('')}<div class="row2"><input class="fld" id="rdTN" placeholder="Şablon adı"><button class="btn pri" id="rdSave">Şablon olarak kaydet</button></div></div>`}
+function renderReps(){renderPreview();renderDesign()}
+$('#rpDesign').addEventListener('click',e=>{const t=e.target;let full=true;
+ const mv=t.closest('[data-mv]');if(mv){const [c,d]=mv.dataset.mv.split(':'),i=RD.cols.indexOf(c),j=i+ +d;[RD.cols[i],RD.cols[j]]=[RD.cols[j],RD.cols[i]]}
+ else if(t.closest('.seg[data-k] [data-v]')){const b=t.closest('[data-v]');RD[b.parentNode.dataset.k]=b.dataset.v}
+ else if(t.closest('[data-fs]')){RD.fs=Math.max(9,Math.min(18,RD.fs+ +t.closest('[data-fs]').dataset.fs))}
+ else if(t.closest('[data-tpl]')){const v=RD.tpls[+t.closest('[data-tpl]').dataset.tpl].v;S.rep=v.rep;Object.assign(RD,{...v,cols:[...v.cols]});toast('Şablon uygulandı')}
+ else if(t.id==='rdSave'){const n=$('#rdTN').value.trim()||`Şablon ${RD.tpls.length+1}`;RD.tpls.push({n,v:{rep:S.rep,cols:[...RD.cols],vip:RD.vip,arr:RD.arr,orient:RD.orient,fs:RD.fs}});toast(`“${esc(n)}” şablonu kaydedildi`)}
+ else full=false;if(full)renderReps()});
+$('#rpDesign').addEventListener('change',e=>{const t=e.target;if(t.dataset.col){const c=t.dataset.col;if(t.checked)RD.cols.push(c);else if(RD.cols.length>1)RD.cols=RD.cols.filter(x=>x!==c);renderReps();return}
+ if(t.id==='rdRep'){S.rep=t.value;RD.title='';renderReps()}if(t.id==='rdG'){RD.grp=t.value;renderPreview()}if(t.id==='rdV'){RD.vip=t.checked;renderPreview()}if(t.id==='rdL'){RD.logo=t.checked;renderPreview()}});
+$('#rpDesign').addEventListener('input',e=>{const m={rdQ:'q',rdT:'tbl',rdTitle:'title'}[e.target.id];if(m){RD[m]=e.target.value;renderPreview()}});
+$('#rpBar').onclick=e=>{const b=e.target.closest('[data-go]');if(b)toast(b.dataset.go==='print'?'Yazdırma penceresi açılır (örnek)':'Excel dosyası hazırlandı · .xlsx (örnek)')};
+
+/* ═══ MİMAR: bottom-right chat; an action is shown first, then Uygula, then Geri al ═══ */
+const M={open:false,min:false,msgs:[]};
+function renderM(){const b=$('#mb');b.innerHTML=M.msgs.map((m,i)=>`<div class="bub ${m.who}">${m.html}${(m.items||[]).map((it,j)=>`<div class="mit"><div class="t">${it.t}</div>${it.s?`<div class="s">${it.s}</div>`:''}${it.b&&!m.done?`<div class="acts"><button class="btn sm pri" data-mi="${i}:${j}">${it.b}</button>${m.seat?`<button class="btn sm" data-mx="${i}">Vazgeç</button>`:''}</div>`:''}</div>`).join('')}${m.chips?`<div class="chips">${m.chips.map(c=>`<button data-chip="${esc(c)}">${esc(c)}</button>`).join('')}</div>`:''}${m.undo&&!m.undone?`<div class="acts"><button class="btn sm" data-mu="${i}">Geri al</button></div>`:''}</div>`).join('');b.scrollTop=b.scrollHeight}
+function mimarOpen(v){M.open=v??!M.open;$('#mimar').classList.toggle('on',M.open);$('#mimarBtn').classList.toggle('on',M.open);$('#mimarBtn').setAttribute('aria-expanded',M.open);if(M.open){M.min=false;$('#mimar').classList.remove('min');if(!M.msgs.length)M.msgs.push({who:'ai',html:'Merhaba, ben <b>Mimar</b>. Ne yapmamı istersiniz? Önce planda gösteririm, siz <b>Uygula</b> deyince yaparım.',chips:['bugün ne eksik','ahmet yılmaz nerede oturuyor','selin akı t38e oturt']});renderM();setTimeout(()=>$('#mq').focus(),0)}}
+function mimarAsk(text){if(!text.trim())return;M.msgs.push({who:'me',html:esc(text)});renderM();const mm=$('#mimar');mm.classList.add('working');clearTimeout(M.t);M.t=setTimeout(()=>{mm.classList.remove('working');mimarAnswer(text)},650)}
+function mimarAnswer(text){const f=fold(text),items=parse(text).slice(0,4);
+ if(items.length===1&&items[0].k==='Anladığım'){const tid=tableIn(f),g=guestsIn(f)[0];S.preview={t:tid,g:g.id};if(!ROOMBOX[S.scr]){go('salon')}else renderRoom();
+  M.msgs.push({who:'ai',html:'Şunu yapacağım — masayı planda işaretledim:',items:[{...items[0],b:'Uygula'}],seat:{g:g.id,t:tid}})}
+ else M.msgs.push({who:'ai',html:items.length>1?'Şunları buldum:':'',items});renderM()}
+$('#mb').addEventListener('click',e=>{const t=e.target;
+ const c=t.closest('[data-chip]');if(c){mimarAsk(c.dataset.chip);return}
+ const mi=t.closest('[data-mi]');if(mi){const [i,j]=mi.dataset.mi.split(':').map(Number),m=M.msgs[i],it=m.items[j];m.done=true;
+  if(m.seat){S.preview=null;const g=G.find(x=>x.id===m.seat.g);if(assign(g,m.seat.t)){M.msgs.push({who:'ai',html:`Tamam: <b>${esc(g.name)}</b> ${loc(m.seat.t)} oturdu.`,undo:'seat'+g.id})}else{renderRoom();M.msgs.push({who:'ai',html:'Yapamadım; masada yer kalmamış. Başka bir masa söyleyin.'})}if(S.scr==='salon')renderSalon()}
+  else{const r=it.run&&it.run();if(r==='keep')m.done=false;else M.msgs.push({who:'ai',html:'Tamam.'})}renderM();return}
+ const mx=t.closest('[data-mx]');if(mx){M.msgs[+mx.dataset.mx].done=true;S.preview=null;renderRoom();M.msgs.push({who:'ai',html:'Vazgeçildi; hiçbir şey değişmedi.'});renderM();return}
+ const mu=t.closest('[data-mu]');if(mu){const m=M.msgs[+mu.dataset.mu];undo(m.undo);m.undone=true;M.msgs.push({who:'ai',html:'Geri alındı; her şey eski hâlinde.'});renderM()}});
+$('#mq').addEventListener('keydown',e=>{if(e.key==='Enter'){mimarAsk($('#mq').value);$('#mq').value=''}});
+$('#mSend').onclick=()=>{mimarAsk($('#mq').value);$('#mq').value='';$('#mq').focus()};
+$('#mHead').onclick=e=>{if(e.target.closest('#mX')){mimarOpen(false);return}M.min=!M.min;$('#mimar').classList.toggle('min',M.min)};
+$('#mimarBtn').onclick=()=>mimarOpen();
+
+const THEME='A';const GRID={round:{x0:150,y0:480,dx:140,dy:130,cols:10,rows:4},rect:{x0:440,y0:214,dx:720,dy:116,cols:2,rows:2},fb:[1450,990]};
+/* ═══ working order: Etkinlik → Salon → Misafirler → Oturma → (Hazır) → Kapı → Raporlar ═══ */
+const ORDER=['etkinlik','salon','misafirler','oturma','kapi','raporlar'];
+const NEXT={etkinlik:'salon',salon:'misafirler',misafirler:'oturma',oturma:'hazir',hazir:'kapi',kapi:'raporlar'};
+const NL={etkinlik:THEME==='A'?'Etkinlikler':'Etkinlik',salon:'Salon',misafirler:'Misafirler',oturma:'Oturma',hazir:'Hazır mı?',kapi:'Kapı',raporlar:'Raporlar'};
+const STORE={},FL={gala:{ready:true,settled:false,fx:{stage:1,bar:1}}};let CUR='gala',CURNAME=THEME==='A'?'Merit Royal Yılbaşı Galası':'Yılbaşı Galası';
+const FLc=()=>FL[CUR];
+function snapCur(){return{T:TABLES.splice(0),G:G.splice(0),SUG:SUG.splice(0),js:S.justSeat,w:S.warn,ji:S.justIn}}
+function switchTo(id,make){if(CUR!==id){STORE[CUR]=snapCur();const st=STORE[id]||make();CUR=id;TABLES.push(...st.T);G.push(...st.G);SUG.push(...st.SUG);S.justSeat=st.js;S.warn=st.w;S.justIn=st.ji}
+ S.selT=S.zoomT=S.focusG=S.selW=S.selG=S.preview=null;S.undo.length=0;closePop()}
+function setEvname(){$('#evname').textContent=CURNAME}
+function openGala(){switchTo('gala');CURNAME=THEME==='A'?'Merit Royal Yılbaşı Galası':'Yılbaşı Galası';setEvname()}
+function galaLayout(){return(CUR==='gala'?TABLES:STORE.gala.T).map(t=>({...t,unread:false}))}
+function openBlank(ev){const same=!!ev.same,lay=same&&!STORE[ev.id]?galaLayout():[],sug=(CUR==='gala'?SUG:STORE.gala.SUG).map(s=>({...s,state:'none'}));switchTo(ev.id,()=>({T:lay,G:[],SUG:sug,js:{},w:{},ji:{}}));
+ FL[ev.id]=FL[ev.id]||{ready:false,settled:false,fx:{stage:same?1:0,bar:same?1:0},blank:1};CURNAME=ev.n||ev.name;setEvname();go('salon')}
+counts=function(){const exp=sum(G,g=>g.pax),arrived=sum(G,g=>g.arr==='in'?g.inPax:0),no=sum(G,g=>g.arr==='no'?g.pax:0),un=sum(G,g=>!g.table?g.pax:0),seated=sum(G,g=>g.table?g.pax:0);return{arrived,no,un,seated,wait:exp-arrived-no,exp}};
+/* steps done / next */
+function done(k){const f=FLc();if(k==='etkinlik')return true;if(k==='salon')return TABLES.length>0&&!TABLES.some(t=>t.cand);if(k==='misafirler')return G.length>0&&!tidyItems().length;if(k==='oturma')return !!f.ready;return false}
+function renderNav(){const nx=ORDER.find(k=>!done(k));const cur=S.scr==='hazir'?'oturma':S.scr;
+ $('#nav').innerHTML=ORDER.map((k,i)=>`<button data-s="${k}" class="${done(k)?'done':''}${k===nx?' next':''}" title="${NL[k]} · ${i+1}${k===nx?' · sıradaki adım':''}" ${k===cur?'aria-current="page"':''}>${NL[k]}${done(k)?'<span class="ck" aria-label="tamam"></span>':''}</button>`).join('');
+ const n=NEXT[S.scr],b=$('#nextBtn');b.hidden=!n;if(n)b.textContent=`Sonraki: ${NL[n]} →`;document.body.classList.toggle('mopen',$('#mimar').classList.contains('on'))}
+const _go1=go;go=function(s){_go1(s);flowAfter(s);renderNav()};
+function flowAfter(s){if(s==='salon')flowSalon();if(s==='etkinlik')setEvname();if(s==='kapi'){const o=$('#dcount .of');if(o)o.textContent='/ '+counts().exp}}
+$('#nextBtn').onclick=()=>{const n=NEXT[S.scr];if(n==='hazir')$('#readyBtn')?$('#readyBtn').click():go('hazir');else if(n)go(n)};
+new MutationObserver(()=>document.body.classList.toggle('mopen',$('#mimar').classList.contains('on'))).observe($('#mimar'),{attributes:true});
+/* salon: upload → Analiz et → suggestions; or draw by hand */
+const _room1=roomSVG;roomSVG=function(mode){let s=_room1(mode);const fx=(FLc()||{}).fx||{stage:1,bar:1};
+ if(!fx.stage||!fx.bar){s=s.split('\n').filter(l=>!((!fx.stage&&/>SAHNE<|>DJ<|DANS P/.test(l))||(!fx.bar&&/>BAR</.test(l)))).join('\n');if(!fx.stage&&!fx.bar)s=s.replace(/<g class="fixt">.*?<\/g>/,'')}
+ TABLES.filter(t=>t.cand).forEach(t=>{s=s.replace(`data-t="${t.id}"`,`data-t="${t.id}" data-cand="1"`)});return s};
+function flowSalon(){const f=FLc(),pf=$('#planFlow'),empty=!TABLES.length&&f.blank&&!f.hand;
+ pf.classList.toggle('on',empty);
+ if(empty)pf.innerHTML=`<div class="pf"><h2>Salonun planını ekleyin</h2><p>Plan görselini ya da PDF’i bırakın; Assisted Detection masaları okur, siz tek tek onaylarsınız.</p>
+  ${f.file?`<div class="file">${IC.doc||''}${esc(f.file)} yüklendi <button class="lnk" id="pfClear">Değiştir</button></div><button class="btn pri lg" id="pfAnalyze">Analiz et</button>`:`<div class="drop-zone" id="pfDrop">Plan dosyasını buraya bırakın<br><span style="display:inline-flex;gap:8px;margin-top:12px"><button class="btn" id="pfPick">Dosya seç…</button><button class="btn ghost" id="pfSample">Örnek planı kullan</button></span></div>`}
+  <div class="or">ya da elle çizin</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">${toolBtns()}</div></div>`;
+ $('#handTools').classList.toggle('on',!!f.blank&&!empty);$('#handTools').innerHTML='<span>Elle ekle</span>'+toolBtns();
+ const nc=TABLES.filter(t=>t.cand).length,ds=$('#detStrip');ds.classList.toggle('on',nc>0);if(nc)ds.innerHTML=`<span><b>Assisted Detection</b> · ${nc} masa önerisi · tıklayıp tek tek onaylayın</span><button class="btn pri sm" id="detAll">Tümünü kabul</button><button class="btn sm" id="detNone">Tümünü reddet</button>`;
+ $('#s-salon').classList.toggle('settled',!!f.settled&&!f.edit)}
+const toolBtns=()=>[['round','Yuvarlak masa'],['rect','Dikdörtgen masa'],['chair','Sandalye'],['stage','Sahne'],['bar','Bar']].map(([k,l])=>`<button class="btn sm" data-tool="${k}">${l}</button>`).join('');
+function freeSlot(kind){const g=GRID[kind];for(let r=0;r<g.rows;r++)for(let c=0;c<g.cols;c++){const x=g.x0+c*g.dx,y=g.y0+r*g.dy;if(!TABLES.some(t=>Math.hypot(t.x-x,t.y-y)<g.dx*.6))return{x,y}}return{x:GRID.fb[0],y:GRID.fb[1]}}
+function nextId(p){let n=1;while(TABLES.some(t=>t.id===p+pad2(n)))n++;return p+pad2(n)}
+function tool(k){const f=FLc();f.hand=1;
+ if(k==='round'||k==='rect'){const p=freeSlot(k),t={id:nextId(k==='round'?'T':'B'),kind:k,cap:k==='round'?10:12,chairs:k==='round'?10:12,x:p.x,y:p.y,rot:0};TABLES.push(t);RENDER.salon();pushUndo(`${t.id} eklendi · sürükleyerek yerleştirin`,()=>{TABLES.splice(TABLES.indexOf(t),1);if(S.scr==='salon')RENDER.salon()});return}
+ if(k==='chair'){const t=S.selT&&TBL(S.selT);if(!t){toast('Önce bir masaya tıklayın; sandalye ona eklenir');return}if(t.chairs>=12){toast('Bu masada yer yok: en fazla 12 sandalye');return}const p={c:t.chairs,k:t.cap};t.chairs++;t.cap=Math.max(t.cap,t.chairs);RENDER.salon();pushUndo(`${t.id}: sandalye eklendi (${t.chairs})`,()=>{t.chairs=p.c;t.cap=p.k;if(S.scr==='salon')RENDER.salon()});return}
+ const key=k==='stage'?'stage':'bar';if(f.fx[key]){toast(`${k==='stage'?'Sahne':'Bar'} zaten planda`);return}f.fx[key]=1;RENDER.salon();pushUndo(`${k==='stage'?'Sahne ve dans pisti':'Bar'} eklendi`,()=>{f.fx[key]=0;if(S.scr==='salon')RENDER.salon()})}
+function analyze(btn){btn.disabled=true;btn.textContent='Okunuyor…';setTimeout(()=>{const c=galaLayout().map(t=>({...t,cand:true}));TABLES.push(...c);const f=FLc();f.fx={stage:1,bar:1};RENDER.salon();toast(`Assisted Detection: ${c.length} masa önerisi. Tek tek ya da “Tümünü kabul” ile onaylayın.`)},700)}
+$('#s-salon').addEventListener('click',e=>{const t=e.target;
+ if(t.closest('[data-tool]')){tool(t.closest('[data-tool]').dataset.tool);return}
+ if(t.id==='pfPick'){$('#file').onchange=ev=>{const fi=ev.target.files[0];if(fi){FLc().file=fi.name;flowSalon()}};$('#file').click();return}
+ if(t.id==='pfSample'){FLc().file='grand-balo-salonu.pdf';flowSalon();return}
+ if(t.id==='pfClear'){FLc().file=null;flowSalon();return}
+ if(t.id==='pfAnalyze'){analyze(t);return}
+ if(t.id==='detAll'||t.id==='detNone'){const c=TABLES.filter(x=>x.cand),acc=t.id==='detAll';c.forEach(x=>acc?(x.cand=false):TABLES.splice(TABLES.indexOf(x),1));RENDER.salon();pushUndo(`${c.length} öneri ${acc?'kabul edildi':'reddedildi'}`,()=>{c.forEach(x=>{if(acc)x.cand=true;else TABLES.push(x)});if(S.scr==='salon')RENDER.salon()});return}
+ if(t.id==='setEdit'){FLc().edit=1;flowSalon();return}
+ const cd=t.closest('[data-cand]');if(cd){e.stopPropagation();const x=TBL(cd.dataset.t);showPop(cd.querySelector('.tshape,.body')||cd,`<div class="pop-h"><b>${x.id}</b><span>okunan masa · ${x.kind==='round'?'yuvarlak':'dikdörtgen'}, ${x.chairs} sandalye</span></div><p class="pop-p">Bu bir öneridir; kabul edince plana girer.</p><div class="pop-acts"><button class="btn pri sm" data-ca="1">Kabul</button><button class="btn sm" data-ca="0">Reddet</button></div>`,ev=>{const b=ev.target.closest('[data-ca]');if(!b)return;closePop();if(b.dataset.ca==='1')x.cand=false;else TABLES.splice(TABLES.indexOf(x),1);RENDER.salon()})}},true);
+$('#s-salon').addEventListener('dragover',e=>{if($('#pfDrop')){e.preventDefault();$('#pfDrop').classList.add('over')}});
+$('#s-salon').addEventListener('drop',e=>{if(!$('#pfDrop'))return;e.preventDefault();const fi=e.dataTransfer.files[0];FLc().file=fi?fi.name:'plan.pdf';flowSalon()});
+const _rs=RENDER.salon;RENDER.salon=()=>{_rs();flowSalon()};
+/* misafirler: empty state + tidy suggestions */
+function tidyItems(){const f=FLc(),ign=f.ign||{},out=[];const base=n=>fold(n.replace(/\s*\(?\bVIP\b\)?\s*$/i,'').replace(/\s*\+\s*\d+\s*$/,'').trim());
+ const by={};G.forEach(g=>{(by[base(g.name)]=by[base(g.name)]||[]).push(g)});const dup=Object.values(by).filter(a=>a.length>1);
+ if(dup.length&&!ign.dup)out.push({k:'dup',t:`${dup.length} olası tekrar`,d:dup.map(a=>a[0].name).slice(0,2).join(', '),fix:()=>dup.forEach(a=>a.slice(1).forEach(x=>{a[0].add=Math.max(a[0].add,x.add);a[0].pax=1+a[0].add;G.splice(G.indexOf(x),1)}))});
+ const pl=G.filter(g=>/\+\s*\d+\s*$/.test(g.name));if(pl.length&&!ign.plus)out.push({k:'plus',t:`${pl.length} kayıtta +N okunmadı`,d:`“${pl[0].name}” → ${pl[0].name.replace(/\s*\+\s*(\d+)\s*$/,(m,n)=>`, ${1+ +n} kişi`)}`,fix:()=>pl.forEach(g=>{const m=g.name.match(/\s*\+\s*(\d+)\s*$/);g.add=+m[1];g.pax=1+g.add;g.name=g.name.slice(0,m.index).trim()})});
+ const vp=G.filter(g=>!g.vip&&/\(?\bVIP\b\)?\s*$/i.test(g.name));if(vp.length&&!ign.vip)out.push({k:'vip',t:`VIP işareti eksik (${vp.length})`,d:'İsimde “VIP” yazıyor, işaret yok',fix:()=>vp.forEach(g=>{g.vip='VIP';g.name=g.name.replace(/\s*\(?\bVIP\b\)?\s*$/i,'').trim()})});
+ return out}
+function renderTidy(){const it=tidyItems(),el=$('#tidy');el.classList.toggle('on',it.length>0);el.innerHTML=it.length?'<span class="td-h">Öneriler</span>'+it.map(i=>`<div class="td"><div><b>${i.t}</b> <small>${esc(i.d)}</small></div><button class="btn pri sm" data-tok="${i.k}">Uygula</button><button class="btn ghost sm" data-tno="${i.k}">Yoksay</button></div>`).join(''):''}
+$('#tidy').onclick=e=>{const ok=e.target.closest('[data-tok]'),no=e.target.closest('[data-tno]');if(!ok&&!no)return;const f=FLc();f.ign=f.ign||{};
+ if(no){f.ign[no.dataset.tno]=1;renderGL();renderNav();pushUndo('Öneri yoksayıldı',()=>{delete f.ign[no.dataset.tno];if(S.scr==='misafirler')renderGL();renderNav()});return}
+ const i=tidyItems().find(x=>x.k===ok.dataset.tok);if(!i)return;const before=G.map(g=>[g,{...g}]),list=[...G];i.fix();renderGL();renderDet();renderNav();
+ pushUndo(`Uygulandı: ${i.t}`,()=>{G.splice(0,G.length,...list);before.forEach(([g,o])=>Object.assign(g,o));if(S.scr==='misafirler'){renderGL();renderDet()}renderNav()})};
+function importSample(){const n0=G.length,H=['Kurumsal Satış','Otel misafiri','Casino Pazarlama','Basın'];
+ [['Ayşe Demir',1],['Ayşe Demir',0],['Kaan Uçar +2',0],['Leyla Oral +1',0],['Bora Sezer +3',0],['Nil Aksoy (VIP)',1],['Engin Tekin VIP',0]].forEach(([name,a])=>add({name,add:a,host:pick(H)}));
+ for(let i=0;i<41;i++){const r=R();add({name:uname(),add:r<.35?0:r<.75?1:r<.9?2:3,host:pick(H),vip:R()<.1?'VIP':'',plan:R()<.08?'Belirsiz':'Kesin'})}
+ const ns=G.slice(n0);renderGL();renderNav();pushUndo(`misafir-listesi.xlsx okundu · ${ns.length} kayıt, ${sum(ns,g=>g.pax)} kişi`,()=>{ns.forEach(g=>G.splice(G.indexOf(g),1));if(S.scr==='misafirler')renderGL();renderNav()})}
+const _gl1=renderGL;renderGL=function(){_gl1();renderTidy();const e=$('#glEmpty'),on=!G.length;e.classList.toggle('on',on);
+ if(on)e.innerHTML=`<div class="ge"><h2>Misafir listesini ekleyin</h2><p>Tek kayıt bir davettir: “Ad +3” dört kişidir. Ekledikten sonra listeyi toparlamak için öneriler çıkar.</p><div class="opts"><button id="geExcel">Excel’den al<small>.xlsx · .csv</small></button><button id="gePaste">Liste yapıştır<small>her satır bir kayıt</small></button><button id="geHand">Elle ekle<small>tek tek</small></button></div></div>`};
+$('#glEmpty').onclick=e=>{const id=e.target.closest('button')?.id;if(id==='geExcel')importSample();if(id==='gePaste')pasteDlg();if(id==='geHand')guestDlg(null)};
+/* oturma: Hazır */
+const _rw1=renderWait;renderWait=function(){_rw1();const h=$('#waitList .side-h');if(h&&!$('#readyBtn'))h.insertAdjacentHTML('beforeend','<button class="btn pri sm" id="readyBtn" style="margin-top:2px">Hazır</button>')};
+$('#waitList').addEventListener('click',e=>{if(e.target.id==='readyBtn'){FLc().ready=true;go('hazir')}});
+/* hazır mı: when nothing blocks, the plan settles */
+const _rh=RENDER.hazir;RENDER.hazir=()=>{_rh();const f=FLc(),bad=hazirList().filter(i=>!i.info).length;
+ if(!bad&&TABLES.length){if(!f.settled){f.settled=true;f.edit=0}$('#hzList').insertAdjacentHTML('beforeend',`<div class="hz-settle"><b>Plan yerleşti</b>Engel yok. Salon bundan sonra yerleşmiş plan olarak sakin açılır; düzenleme ⋯ ile hâlâ mümkün.<div style="margin-top:12px"><button class="btn pri" id="hzKapi">Kapıya geç →</button></div></div>`)}};
+$('#hzList').addEventListener('click',e=>{if(e.target.id==='hzKapi')go('kapi')});
+const _re=RENDER.etkinlik;RENDER.etkinlik=()=>{_re();setEvname()};
+const TID='c';
+/* ═══ v5: tracks, Ayarlar, event name left, Kapı full screen, hover → seats ═══ */
+let tq=0;
+function trackify(root){root.querySelectorAll('.btn').forEach(b=>{const p=b.parentNode;if(!p||p.classList.contains('track')||b.closest('.mf,#top,.step'))return;const pv=b.previousElementSibling;if(pv&&pv.classList.contains('btn'))return;const run=[b];let n=b.nextElementSibling;while(n&&n.classList.contains('btn')){run.push(n);n=n.nextElementSibling}if(run.length<2)return;const t=document.createElement('span');t.className='track';p.insertBefore(t,b);run.forEach(x=>t.appendChild(x))})}
+new MutationObserver(()=>{if(!tq){tq=1;requestAnimationFrame(()=>{tq=0;trackify(document.body)})}}).observe(document.body,{childList:true,subtree:true});
+{const w=document.createElement('div');w.className='evwrap';$('.brand').after(w);w.appendChild($('#evname'));w.insertAdjacentHTML('beforeend','<small id="evvenue">Merit Royal Hotel · Grand Balo Salonu</small>');
+ $('#theme').insertAdjacentHTML('beforebegin','<button class="lnk" id="ayBtn">Ayarlar</button>');
+ document.body.insertAdjacentHTML('beforeend','<button class="btn" id="kExit"></button>')}
+const TLIST=[['a','Atlas','7-atlas-sade'],['b','Tema B','8-tema-b'],['c','Royal gece','9-tema-c'],['d','Riviera','10-tema-d'],['e','Grafit','11-tema-e']];
+const FONTS={sys:['Sistem',''],segoe:['Segoe UI','"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif'],helv:['Helvetica','"Helvetica Neue",Helvetica,Arial,sans-serif']};
+const inRepo=/\/(7-atlas-sade|8-tema-b|9-tema-c|10-tema-d|11-tema-e)\//.test(location.pathname);
+function setFont(k){if(FONTS[k]&&FONTS[k][1])document.documentElement.style.setProperty('--font',FONTS[k][1]);else document.documentElement.style.removeProperty('--font');try{localStorage.setItem('merit.font',k)}catch(e){}}
+function curFont(){let f='sys';try{f=localStorage.getItem('merit.font')||'sys'}catch(e){}return FONTS[f]?f:'sys'}
+SCR.push(['ayarlar','Ayarlar']);
+RENDER.ayarlar=()=>{const dark=document.documentElement.dataset.theme==='dark',f=curFont();
+ $('#s-ayarlar').innerHTML=`<div class="ay"><h1 class="st-t">Ayarlar</h1><p class="sub" style="margin-bottom:18px">Görünüm bu bilgisayarda saklanır; etkinlik verisine dokunmaz.</p>
+ <div class="ayr"><div><b>Tema</b><small>Beş onaylı tema · düzen ve işleyiş hepsinde aynı</small></div><span class="track">${TLIST.map(([k,n,d])=>`<a class="btn${k===TID?' pri':''}" href="${inRepo?`../${d}/index.html`:`tema-${k}.html`}#ayarlar">${n}</a>`).join('')}</span></div>
+ <div class="ayr"><div><b>Açık / Koyu</b><small>Gündüz planlama açık, gece kapı koyu</small></div><span class="track"><button class="btn${dark?'':' pri'}" data-th="light">Açık</button><button class="btn${dark?' pri':''}" data-th="dark">Koyu</button></span></div>
+ <div class="ayr"><div><b>Yazı tipi</b><small>Yalnız bu bilgisayarda kurulu yazı tipleri; ağdan indirilmez</small></div><span class="track">${Object.entries(FONTS).map(([k,v])=>`<button class="btn${k===f?' pri':''}" data-font="${k}">${v[0]}</button>`).join('')}</span></div></div>`};
+$('#s-ayarlar').onclick=e=>{const t=e.target.closest('[data-th]'),f=e.target.closest('[data-font]');if(t){setTheme(t.dataset.th);RENDER.ayarlar()}if(f){setFont(f.dataset.font);RENDER.ayarlar()}};
+$('#ayBtn').onclick=()=>go('ayarlar');setFont(curFont());
+/* Kapı opens full screen; Esc leaves */
+function kfull(on){S.kfull=on;document.body.classList.toggle('kfull',on&&S.scr==='kapi');$('#kExit').textContent=on?'Tam ekrandan çık · Esc':'Tam ekran'}
+const _go5=go;go=function(s){const was=S.scr;_go5(s);document.body.classList.toggle('onkapi',s==='kapi');kfull(s==='kapi'&&(was!=='kapi'||S.kfull));const v=$('#evvenue');if(v)v.style.visibility=CUR==='gala'?'visible':'hidden'};
+$('#kExit').onclick=()=>kfull(!S.kfull);
+addEventListener('keydown',e=>{if(e.key==='Escape'&&S.scr==='kapi'&&S.kfull&&!$('#dlg').classList.contains('on')&&!$('#pop').classList.contains('on'))kfull(false)});
+/* hovering a guest row lights his table and his own seats */
+$('#dlist').addEventListener('mouseover',e=>{const r=e.target.closest('.drow');if(!r)return;const id=+r.dataset.g;if(S.focusG===id)return;S.focusG=id;renderRoom()});
+/* ═══ theme, keys, wiring ═══ */
+function setTheme(t){document.documentElement.dataset.theme=t;$('#theme').innerHTML=t==='dark'?IC.sun:IC.moon;try{localStorage.setItem('merit-c.theme',t)}catch(e){}}
+function toggleTheme(){setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark')}
+$('#theme').onclick=toggleTheme;
+$('#nav').innerHTML=SCR.map(([k,l],i)=>`<button data-s="${k}" title="${l} · ${i+1}">${l}</button>`).join('');
+$('#nav').onclick=e=>{const b=e.target.closest('[data-s]');if(b)go(b.dataset.s)};
+$('#dqi').innerHTML=sv('<circle cx="7" cy="7" r="4.3"/><path d="M10.2 10.2 13.8 13.8"/>',20);
+document.addEventListener('pointerdown',e=>{if($('#pop').classList.contains('on')&&!e.target.closest('#pop')&&!(S.popA&&S.popA.contains&&S.popA.contains(e.target))&&!e.target.closest('[data-t],[data-sug],[data-more],#glImp,#glHost'))closePop();if(e.target.id==='dlg')closeDlg()});
+addEventListener('keydown',e=>{
+ if(e.key==='F8'){e.preventDefault();mimarOpen(true);return}
+ if(e.key==='F9'){e.preventDefault();toggleTheme();return}
+ if(e.key==='Escape'){if($('#pop').classList.contains('on')||$('#dlg').classList.contains('on')){closePop();closeDlg()}else if(S.scr==='salon'&&S.zoomT)zoomOut();return}
+ const ae=document.activeElement,inField=ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName);
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!(inField&&ae.value)){e.preventDefault();undo();return}
+ if(!inField&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&/^[1-7]$/.test(e.key)&&!$('#dlg').classList.contains('on'))go(SCR[+e.key-1][0])});
+addEventListener('resize',()=>{closePop();leadTo(null)});
+let th='dark';try{th=localStorage.getItem('merit-c.theme')||'dark'}catch(e){}
+const hp=location.hash.slice(1).split(',');if(hp.includes('dark'))th='dark';if(hp.includes('light'))th='light';
+setTheme(th);
+go(SCR.some(s=>s[0]===hp[0])?hp[0]:'etkinlik');
+</script>
+</body>
+</html>

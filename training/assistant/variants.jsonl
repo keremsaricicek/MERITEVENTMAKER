@@ -1,0 +1,35 @@
+{"id": "v1", "kind": "question", "text": "Sezen Aksu konserinde Ahmet Yılmaz hangi masadaydı?", "sameAs": "Q1"}
+{"id": "v2", "kind": "question", "text": "ahmet yilmaz bugune kadar kac konserimize katildi", "sameAs": "Q2"}
+{"id": "v3", "kind": "question", "text": "Ayşe Demir kaç etkinliğimize gelmiş?", "sameAs": "Q3"}
+{"id": "v4", "kind": "question", "text": "Tarkan konserinde 0544 999 99 99 telefonlu Ayşe Demir hangi koltuktaydı?", "sameAs": "Q4"}
+{"id": "v5", "kind": "question", "text": "Mehmet Kaya Sezen Aksu'ya kaç kişiyle gelmişti?", "sameAs": "Q5"}
+{"id": "v6", "kind": "question", "text": "Tarkan'a toplam kaç kişi geldi?", "sameAs": "Q6"}
+{"id": "v7", "kind": "question", "text": "Galada masası olmayan misafirler kimler?", "sameAs": "Q7"}
+{"id": "v8", "kind": "question", "text": "Can Öztürk bugüne kadar kaç konserimize geldi?", "sameAs": "Q8"}
+{"id": "v9", "kind": "question", "text": "Selin Ak'ın masası neresi?", "sameAs": "Q9"}
+{"id": "v10", "kind": "question", "text": "Ahmet Mabel Matiz konserinde hangi masaya yerleştirilmişti?", "sameAs": "Q10"}
+{"id": "v11", "kind": "question", "text": "Elif Şen Sezen Aksu konserine katıldı mı?", "sameAs": "Q11"}
+{"id": "v12", "kind": "question", "text": "Elif Şen hangi konserlerde nerelerde oturdu?", "sameAs": "Q12"}
+{"id": "v13", "kind": "question", "text": "Zeynep Arslan geçmişte hiç VIP masada oturdu mu?", "sameAs": "Q13"}
+{"id": "v14", "kind": "question", "text": "Mabel Matiz konserine kimler gelmedi?", "sameAs": "Q14"}
+{"id": "v15", "kind": "question", "text": "En kalabalık konserimiz hangisiydi?", "sameAs": "Q15"}
+{"id": "v16", "kind": "question", "text": "Haziran ayında hangi etkinliğimiz vardı?", "sameAs": "Q16"}
+{"id": "v17", "kind": "question", "text": "Mehmet Kaya hep aynı masada mı oturuyor?", "sameAs": "Q17"}
+{"id": "v18", "kind": "question", "text": "ahmet tarkanda nerdeydi", "sameAs": "Q18"}
+{"id": "v19", "kind": "question", "text": "Yılbaşı galasında T07'de kimler oturuyor?", "sameAs": "Q19"}
+{"id": "v20", "kind": "question", "text": "Geçen yılbaşı galasında Ahmet hangi masadaydı?", "sameAs": "Q20"}
+{"id": "w1", "kind": "command", "text": "Ahmet Yılmazı Sezen Aksu konserinde oturduğu yere oturt", "sameAs": "C1"}
+{"id": "w2", "kind": "command", "text": "Ahmet'i son konserdeki koltuğuna yerleştir", "sameAs": "C2"}
+{"id": "w3", "kind": "command", "text": "Zeynep Arslan VIP01 masasına geçsin", "sameAs": "C3"}
+{"id": "w4", "kind": "command", "text": "Can Öztürk'ü listeden çıkar", "sameAs": "C4"}
+{"id": "w5", "kind": "command", "text": "Burak Şahin ve bir misafirini T05'e ekle", "sameAs": "C5"}
+{"id": "w6", "kind": "command", "text": "Mehmet Kaya'yı T20 masasına al", "sameAs": "C6"}
+{"id": "w7", "kind": "command", "text": "Tarkan konserinde Ahmet'i T01'e oturt", "sameAs": "C7"}
+{"id": "w8", "kind": "command", "text": "Mehmet Kaya'yı Mabel Matiz'de oturduğu masaya oturt", "sameAs": "C8"}
+{"id": "w9", "kind": "command", "text": "Ayşe Demir'i masasından al", "sameAs": "C9"}
+{"id": "w10", "kind": "command", "text": "Ayşe Demir'i Tarkan konserindeki koltuğuna koy", "sameAs": "C10"}
+{"id": "w11", "kind": "command", "text": "Selin Ak'ı T03'e yerleştir", "sameAs": "C11"}
+{"id": "w12", "kind": "command", "text": "Zeynep'i Ahmet'in yanına koy", "sameAs": "C12"}
+{"id": "w13", "kind": "command", "text": "T02'dekilerin hepsini T03'e geçir", "sameAs": "C13"}
+{"id": "w14", "kind": "command", "text": "Mehmet Kaya'nın kişi sayısını 3 yap", "sameAs": "C14"}
+{"id": "w15", "kind": "command", "text": "Can Öztürk VIP olsun", "sameAs": "C15"}

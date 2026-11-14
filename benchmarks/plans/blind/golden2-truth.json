@@ -1,0 +1,20 @@
+{
+  "plan": "golden2.pdf",
+  "written": "2026-10-31, at the exam, before the product read the plan; counted by hand from the drawing (300 dpi render)",
+  "printedOnPlan": "72 pax seating / Total: 72pax",
+  "tables": { "total": 27, "round": 4, "square": 22, "rectLong": 1 },
+  "roundChairs": [6, 6, 5, 5],
+  "chairs": 68,
+  "banquettes": 3,
+  "seatsNote": "68 drawn chairs + 3 banquettes; the plan says 72, so the banquettes count 4 seats together — not stated per banquette. Seat-count scoring uses the 68 chairs; banquettes are reported apart.",
+  "groups": [
+    { "what": "2 square tables side by side, 2 chairs each", "count": 2 },
+    { "what": "1 long rectangular table, 4 chairs each side (one outline, two centrepieces: counted as ONE table)", "count": 1 },
+    { "what": "3 square tables in a column, 2 chairs each", "count": 1 },
+    { "what": "3 square tables in a row before the stage, 2 chairs each", "count": 3 },
+    { "what": "2 square tables + 2 chairs + 1 banquette", "count": 3 },
+    { "what": "round table alone", "count": 4 }
+  ],
+  "other": ["bar", "stage (SAHNE, 8 m x 3.10 m)", "2 entrances (GIRIS)", "planter by the bar"],
+  "orientation": "drawing rotated 90 degrees on the A4 page; scored as scanned"
+}

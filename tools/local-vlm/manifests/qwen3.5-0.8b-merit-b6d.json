@@ -1,0 +1,44 @@
+{
+ "format": "merit-local-vlm/1",
+ "id": "qwen3.5-0.8b-merit-b6d",
+ "name": "Qwen3.5-0.8B (GGUF Q8_0) + Merit plan LoRA, run B6d (V6)",
+ "version": "unsloth GGUF 2026-10-18 + merit-lora-b6d (V6, 2026-10-28)",
+ "licence": "Apache-2.0 (base model); adapter trained here on generated plans and on the training part of the two real plans",
+ "source": "unsloth/Qwen3.5-0.8B-GGUF (base Qwen/Qwen3.5-0.8B): model + mmproj-F16, projector quantized here to Q8_0 (pinned llama-quantize); adapter: this repository, models/local-vlm/qwen3.5-0.8b-merit-b6d",
+ "runtime": "llama.cpp llama-server 11351 cpu_mkl (0fa5950): --mmproj, --lora adapter.gguf, -c 2048, --cache-ram 0",
+ "checks": [
+  "merged"
+ ],
+ "autoApply": [
+  "merged"
+ ],
+ "checksEvidence": "benchmarks/offline-intelligence/local-vlm-results/v5-blind4-B6d.json + benchmarks/offline-intelligence/local-vlm-results/v5-s1-B6d.json + benchmarks/offline-intelligence/local-vlm-results/v5-real-B6d.json + benchmarks/offline-intelligence/local-vlm-results/v5-tuck2-B6d.json",
+ "serve": {
+  "model": "Qwen3.5-0.8B-Q8_0.gguf",
+  "lora": [
+   {
+    "path": "adapter.gguf",
+    "scale": 1
+   }
+  ],
+  "ctx": 2048
+ },
+ "files": [
+  {
+   "path": "Qwen3.5-0.8B-Q8_0.gguf",
+   "bytes": 811843840,
+   "sha256": "0ad885ffd4bb022fc4f0d33a3308fa108ef8613159d3b3a67e23abca056b7a6c"
+  },
+  {
+   "path": "mmproj-Qwen3.5-0.8B-Q8_0-local.gguf",
+   "bytes": 113564512,
+   "sha256": "bc786f196ae8529b4b7285d2401bf1175d68d7cddc3634eb00cb8f4cbe1b9432"
+  },
+  {
+   "path": "adapter.gguf",
+   "bytes": 21243648,
+   "sha256": "643d42fab763b2adee491e9f14e19dd3fc2a30d73687082c445abf15414b882e"
+  }
+ ],
+ "licenceNote": "(Hugging Face model card of unsloth/Qwen3.5-0.8B-GGUF and of Qwen/Qwen3.5-0.8B, Apache-2.0, read 2026-10-18)"
+}

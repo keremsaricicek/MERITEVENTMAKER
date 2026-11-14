@@ -1,0 +1,20 @@
+{"topic":"event.create","q":"how do i make a new event","lang":"en"}
+{"topic":"event.copyLayout","q":"how can I reuse the last event's layout for a new one","lang":"en"}
+{"topic":"event.duplicate","q":"how do i copy an event with all the guests","lang":"en"}
+{"topic":"event.delete","q":"how to delete an event pls","lang":"en"}
+{"topic":"plan.upload","q":"where do I upload the floor plan pdf","lang":"en"}
+{"topic":"plan.read","q":"how do I get it to find the tables on the plan","lang":"en"}
+{"topic":"plan.review","q":"the plan reading got a table wrong, how do i fix it","lang":"en"}
+{"topic":"table.add","q":"how do i add a table by hand","lang":"en"}
+{"topic":"table.capacity","q":"how can i change how many seats a table has","lang":"en"}
+{"topic":"table.number","q":"how do I renumber a table","lang":"en"}
+{"topic":"guest.import","q":"how do i import guests from excel","lang":"en"}
+{"topic":"guest.pax","q":"what does +3 mean next to a name","lang":"en"}
+{"topic":"guest.vip","q":"how do i make someone vip","lang":"en"}
+{"topic":"seat.assign","q":"how do i seat a guest at a table","lang":"en"}
+{"topic":"seat.unassign","q":"how do I take a guest off a table without deleting them","lang":"en"}
+{"topic":"live.checkin","q":"how do i check ppl in at the door","lang":"en"}
+{"topic":"live.noshow","q":"how do i mark a no show","lang":"en"}
+{"topic":"report.excel","q":"how do I export the table plan to excel","lang":"en"}
+{"topic":"backup.export","q":"how do i make a backup","lang":"en"}
+{"topic":"undo","q":"how do I undo my last change","lang":"en"}

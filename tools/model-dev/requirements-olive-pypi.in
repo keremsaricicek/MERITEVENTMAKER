@@ -1,0 +1,5 @@
+# What --with-olive-pypi adds to .venv-model-dev: CPU-capable torch from PyPI
+# (the CUDA build; it runs on CPU), and the two packages Olive imports with it.
+torch==2.14.1
+torchmetrics==1.9.0
+lightning-utilities

@@ -1,0 +1,272 @@
+// The F8 assistant's SECOND reader: can a local chat model place what the rules
+// could not? (training/README.md "Chat-model race", pre-registered 2026-10-28.)
+//
+// A running llama-server (any chat model, optionally with a LoRA) is asked to read
+// each sentence into the rules' own shape (src/assistant-parse.js parse():
+// a question's intent / person / event words, or a command's writer steps),
+// schema-constrained, temperature 0, thinking off. What it returns is then
+// answered and carried out by the SAME code the panel uses (answer(),
+// MeritAssistantActions with recording writers) and scored like
+// tests/suites/assistant-parse.test.mjs: a question by the facts its answer must
+// carry, a command by the exact writer calls (or that it asked / refused and
+// changed nothing). A wrong writer call is a WRONG CHANGE.
+//
+// Three readings per set: rules alone, model alone, rules first then the model
+// for what the rules left "unknown" (the product's design).
+//
+//   node training/assistant_race.mjs --port 8099 --label qwen4b --out OUT.json
+//   node training/assistant_race.mjs --rules-only --out OUT.json
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+for (const f of ["src/assistant-tools.js", "src/assistant-actions.js", "src/assistant-parse.js", "src/assistant-reading.js", "training/assistant/parse-at-race.js", "src/help-topics.js"]) await import(pathToFileURL(path.join(repo, f)).href);
+// the rules as they were when the race was pre-registered (a frozen copy): later
+// product fixes to the rules do not change what is measured here; answer() is the product's
+// (`--rules current`: the product's rules instead, as runB7 was pre-registered to be scored;
+// `--prompt short`: asked as a model trained on the readings is, MeritAssistantReading.SYSTEM_SHORT)
+const arg = (k, d) => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : d; };
+const flag = (k) => process.argv.includes("--" + k);
+const P = arg("rules", "frozen") === "current" ? globalThis.MeritAssistantParse : { ...globalThis.MeritAssistantParse, parse: globalThis.MeritAssistantParseAtRace.parse }, Tl = globalThis.MeritAssistantTools;
+const fx = JSON.parse(fs.readFileSync(path.join(repo, "training/assistant/fixture.json"), "utf8"));
+const lines = (f) => fs.readFileSync(path.join(repo, "training/assistant", f), "utf8").trim().split("\n").map((l) => JSON.parse(l));
+
+// The facts each question's answer must carry (as assistant-parse.test.mjs), and
+// the writer calls each command must make — the originals; a variant has its
+// original's outcome (`sameAs`).
+const MUST = {
+  1: ["T12", "koltuk 4", "geldi"], 2: ["2 etkinliğimize", "Sezen Aksu", "Tarkan", "Mabel Matiz"], 3: ["2 kişi var", "Hangisi"], 4: ["T07", "koltuk 3"],
+  5: ["3 kişi", "geldi"], 6: ["4 kişi geldi"], 7: ["Ahmet Yılmaz", "Zeynep Arslan", "Mehmet Kaya"], 8: ["0 etkinliğimize"], 9: ["kayıt yok"],
+  10: ["Mabel Matiz", "T12", "gelmedi"], 11: ["T08", "gelmedi"], 12: ["T08", "T02"], 13: ["Evet", "VIP01"], 14: ["Ahmet Yılmaz"],
+  15: ["Sezen Aksu", "5 kişi"], 16: ["Tarkan"], 17: ["Evet", "T08"], 18: ["T05", "koltuk 2"], 19: ["Ayşe Demir"], 20: ["kayıtlarda yok"],
+};
+const SETS10 = ["fresh10", "typo10", "en10", "entypo10", "deep10"];
+// `--sets a,b,…` (runR): any set file in training/assistant/ by name, scored as the deep set
+const SETSX0 = String(arg("sets", "")).split(",").filter(Boolean);
+// `--voice set=FILE,…` (voice end-to-end, benchmarks/voice/): a set's sentences replaced by what the speech engine heard
+// (FILE: JSON { id: transcript }); the gold reading stays the one written for the sentence
+// `--voice-file F` (tools/local-voice/voice-eval.mjs): { "set@voice@condition": { id: transcript } }; each key is a set of its own
+const VOICE = Object.assign(Object.fromEntries(String(arg("voice", "")).split(",").filter(Boolean).map((kv) => { const [s, f] = kv.split("="); return [s, JSON.parse(fs.readFileSync(f, "utf8"))]; })),
+  arg("voice-file", null) ? JSON.parse(fs.readFileSync(arg("voice-file"), "utf8")) : {});
+const SETSX = [...new Set([...SETSX0, ...(arg("voice-file", null) ? Object.keys(VOICE) : [])])];
+// `--help-set FILE` (runR): how-to questions ({topic, q}); the product answers them from the help topics first
+const HELPF = arg("help-set", null);
+const CMDS = Object.fromEntries(lines("commands.jsonl").map((c) => [c.id, c]));
+const NOBASE = flag("no-base");
+const items0 = [
+  ...lines("questions.jsonl").map((q) => ({ set: "original", id: "Q" + q.id, kind: "question", text: q.q, must: MUST[q.id] })),
+  ...lines("commands.jsonl").map((c) => ({ set: "original", id: "C" + c.id, kind: "command", text: c.text, cmd: c })),
+  ...lines("deep.jsonl").map((d) => ({ set: "deep", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })),
+  // `--fresh`: the set written for runB7 before its training data (training/assistant/fresh.jsonl), scored as the deep set
+  ...(flag("fresh") ? lines("fresh.jsonl").map((d) => ({ set: "fresh", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  // `--fresh2`: runB7b's decisive set (training/assistant/fresh2.jsonl), written before its data
+  ...(flag("fresh2") ? lines("fresh2.jsonl").map((d) => ({ set: "fresh2", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  // `--fresh3`: runB7c's decisive set (training/assistant/fresh3.jsonl), written before its data
+  ...(flag("fresh4") ? lines("fresh4.jsonl").map((d) => ({ set: "fresh4", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("fresh5") ? lines("fresh5.jsonl").map((d) => ({ set: "fresh5", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("typo5") ? lines("typo5.jsonl").map((d) => ({ set: "typo5", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("fresh6") ? lines("fresh6.jsonl").map((d) => ({ set: "fresh6", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("typo6") ? lines("typo6.jsonl").map((d) => ({ set: "typo6", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  // `--fresh7 --typo7`: written 2026-11-02 before the name grounding (training/README.md "Grounding")
+  ...(flag("fresh7") ? lines("fresh7.jsonl").map((d) => ({ set: "fresh7", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("typo7") ? lines("typo7.jsonl").map((d) => ({ set: "typo7", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  // `--en7 --entypo7`: English, written 2026-11-02 before any English measurement (training/README.md "English")
+  ...(flag("en7") ? lines("en7.jsonl").map((d) => ({ set: "en7", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("entypo7") ? lines("entypo7.jsonl").map((d) => ({ set: "entypo7", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  // `--fresh8 --typo8`: written 2026-11-02 after fresh7/typo7 were seen, before any change made from them
+  ...(flag("fresh8") ? lines("fresh8.jsonl").map((d) => ({ set: "fresh8", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("typo8") ? lines("typo8.jsonl").map((d) => ({ set: "typo8", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("en8") ? lines("en8.jsonl").map((d) => ({ set: "en8", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("entypo8") ? lines("entypo8.jsonl").map((d) => ({ set: "entypo8", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("fresh9") ? lines("fresh9.jsonl").map((d) => ({ set: "fresh9", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("typo9") ? lines("typo9.jsonl").map((d) => ({ set: "typo9", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("en9") ? lines("en9.jsonl").map((d) => ({ set: "en9", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("entypo9") ? lines("entypo9.jsonl").map((d) => ({ set: "entypo9", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  ...(flag("fresh3") ? lines("fresh3.jsonl").map((d) => ({ set: "fresh3", id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold })) : []),
+  // runQ's exam (training/README.md "runQ"), written by hand before grammar 8 existed
+  ...SETS10.filter(flag).flatMap((s) => lines(s + ".jsonl").map((d) => ({ set: s, id: d.id, kind: d.gold.kind, text: d.text, gold: d.gold }))),
+  ...SETSX.flatMap((s) => lines(s.split("@")[0] + ".jsonl").map((d) => ({ set: s, id: d.id, kind: d.gold.kind, text: VOICE[s] ? String(VOICE[s][d.id] ?? "") : d.text, gold: d.gold }))),
+  ...(HELPF ? fs.readFileSync(HELPF, "utf8").trim().split("\n").map((l, i) => { const h = JSON.parse(l); return { set: "help", id: "h" + (i + 1), kind: "help", text: h.q, topic: h.topic }; }) : []),
+  ...lines("variants.jsonl").map((v) => {
+    const n = Number(v.sameAs.slice(1));
+    return v.kind === "question" ? { set: "variant", id: v.id, kind: "question", text: v.text, must: MUST[n] } : { set: "variant", id: v.id, kind: "command", text: v.text, cmd: CMDS[n] };
+  }),
+];
+const items = NOBASE ? items0.filter((i) => !["original", "variant", "deep"].includes(i.set)) : items0;
+
+// The instruction, worked examples, schema and conversion: one source with the
+// relay (src/assistant-reading.js), so what is served is what was measured.
+const R = globalThis.MeritAssistantReading;
+
+async function ask(port, text) {
+  // the fixed instruction and examples are kept in the server's prompt cache, as the relay asks (2026-10-28)
+  // logprobs: the reading's confidence (its least likely token) for the ask-when-unsure rule
+  const body = { messages: R.messages(text, { prompt: arg("prompt", "full") }), temperature: 0, max_tokens: 400, cache_prompt: true, logprobs: true, top_logprobs: 1, chat_template_kwargs: { enable_thinking: false },
+    response_format: { type: "json_schema", json_schema: { name: "reading", schema: R.SCHEMA } } };
+  const t0 = Date.now();
+  const r = await fetch(`http://127.0.0.1:${port}/v1/chat/completions`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const j = await r.json();
+  let got = null;
+  try { got = JSON.parse(j.choices[0].message.content); } catch { got = null; }
+  if (got && !R.valid(got)) got = null;   // the relay takes no reading outside the shape
+  const lp = j.choices && j.choices[0].logprobs && j.choices[0].logprobs.content;
+  const conf = Array.isArray(lp) && lp.length ? +Math.min(...lp.map((x) => Math.exp(x.logprob))).toFixed(4) : null;
+  return { got, raw: j.choices && j.choices[0].message.content, seconds: (Date.now() - t0) / 1000, conf };
+}
+const toParse = (m) => R.toParse(m, fx.events, fx.today);
+// A deep item's expected outcome is what its gold reading produces through the
+// same code: the same answer text, or the same writer calls / ask / refusal.
+function outcome(item, parsed) {
+  if (item.kind === "question") {
+    let a = { text: "" };
+    try { a = parsed.kind === "question" ? P.answer(parsed, fx.events, fx.today, fx.current) : { text: "" }; } catch { a = { text: "" }; }
+    return { text: a.text || "" };
+  }
+  const events = JSON.parse(JSON.stringify(fx.events)), calls = [];
+  const gala = () => events.find((e) => e.id === fx.current);
+  const rec = (name) => (...a) => { calls.push([name, ...a]); if (name === "addGuest") { gala().guests.push({ id: "new1", name: a[0], pax: a[1], assignment: null }); return "new1"; } };
+  const A = globalThis.MeritAssistantActions.create({ events: () => events, current: () => fx.current, today: () => fx.today,
+    canMutate: (e) => e.date >= fx.today && e.status !== "Completed",
+    writers: { assign: rec("assign"), unassign: rec("unassign"), deleteGuest: rec("deleteGuest"), setPax: rec("setPax"), setVip: rec("setVip"), addGuest: rec("addGuest") },
+    snapshot: () => null, registerUndo: () => {} });
+  let out;
+  try { out = parsed.kind === "command" ? A.run(parsed.plan) : { ask: "not understood" }; } catch (e) { out = { ask: String(e.message || e) }; }
+  return { calls, kind: calls.length ? "calls" : out.refuse ? "refuse" : out.ask ? "ask" : "nothing" };
+}
+function score(item, parsed) {
+  // a how-to question that reached a reader: nothing to change; never right (the help topic was the answer)
+  if (item.kind === "help") { const got = outcome({ kind: "command" }, parsed); return { right: false, wrongChange: got.calls.length > 0, calls: got.calls }; }
+  if (item.gold) {
+    // not ours to read (small talk, the world outside): right only when read as "unknown"
+    if (item.kind === "unknown") { const got = outcome(item, parsed); return { right: parsed.kind === "unknown", wrongChange: got.calls.length > 0, calls: got.calls }; }
+    const want = outcome(item, toParse(item.gold)), got = outcome(item, parsed);
+    // typo5: the sentence is typed carelessly, so a name echoed or added may come back with or
+    // without capitals and Turkish letters — the same person either way
+    const same = /typo|slang|ascii|voice/.test(item.set) ? (a, b) => globalThis.MeritAssistantTools.fold(String(a)) === globalThis.MeritAssistantTools.fold(String(b)) : (a, b) => a === b;
+    if (item.kind === "question") return { right: !!want.text && same(got.text, want.text), wrongChange: false, answer: got.text };
+    const right = same(JSON.stringify(got.calls), JSON.stringify(want.calls)) && got.kind === want.kind;
+    return { right, wrongChange: !right && got.calls.length > 0, calls: got.calls };
+  }
+  if (item.kind === "question") {
+    let a = { text: "" };
+    try { a = parsed.kind === "question" ? P.answer(parsed, fx.events, fx.today, fx.current) : { text: "" }; } catch (e) { a = { text: "" }; }
+    return { right: item.must.every((w) => (a.text || "").includes(w)), wrongChange: false, answer: a.text || "" };
+  }
+  const events = JSON.parse(JSON.stringify(fx.events)), calls = [];
+  const gala = () => events.find((e) => e.id === fx.current);
+  const rec = (name) => (...a) => { calls.push([name, ...a]); if (name === "addGuest") { gala().guests.push({ id: "new1", name: a[0], pax: a[1], assignment: null }); return "new1"; } };
+  const A = globalThis.MeritAssistantActions.create({ events: () => events, current: () => fx.current, today: () => fx.today,
+    canMutate: (e) => e.date >= fx.today && e.status !== "Completed",
+    writers: { assign: rec("assign"), unassign: rec("unassign"), deleteGuest: rec("deleteGuest"), setPax: rec("setPax"), setVip: rec("setVip"), addGuest: rec("addGuest") },
+    snapshot: () => null, registerUndo: () => {} });
+  let out;
+  try { out = parsed.kind === "command" ? A.run(parsed.plan) : { ask: "not understood" }; } catch (e) { out = { ask: String(e.message || e) }; }
+  const c = item.cmd;
+  if (c.calls) {
+    const want = c.calls.map((x) => x[0] === "assign" && x[1] === "<new>" ? ["assign", "new1", x[2], x[3]] : x);
+    const right = JSON.stringify(calls) === JSON.stringify(want);
+    return { right, wrongChange: !right && calls.length > 0, calls };
+  }
+  return { right: calls.length === 0 && (c.ask ? !!out.ask : !!out.refuse), wrongChange: calls.length > 0, calls };
+}
+
+// `product` (2026-11-02): exactly what the F8 panel does (src/screen-assistant.js answer/reply). The model
+// reads first; a question is answered from its reading; a command it read is carried out at once only
+// when it is sure (conf >= --theta) or the rules resolve the very same change — otherwise it is SHOWN
+// and waits for Onayla: right only if the preview is the right change (one click), never a wrong change.
+// Without a model reading, the rules' reading; a deletion only the rules read is shown first too.
+function product(item, rules, mp, conf) {
+  // the panel's order (src/screen-assistant.js answer): a how-to question is answered from the help topics first
+  const H = globalThis.MeritHelpTopics;
+  if (item.kind === "help" || (H && H.isHowTo(item.text) && !P.personIn(item.text, fx.events))) {
+    const m = H && H.isHowTo(item.text) && !P.personIn(item.text, fx.events) ? H.match(item.text) : null;
+    if (m) return { right: item.kind === "help" && m.topic.id === item.topic, wrongChange: false, calls: [], help: m.topic.id };
+  }
+  // a check-in the rules read is never sent to the model (src/screen-assistant.js atDoor)
+  const atDoor = rules.kind === "command" && rules.plan.every((st) => st.op === "arrive");
+  const byModel = !atDoor && mp && mp.kind !== "unknown", r = byModel ? mp : rules;
+  const s = score(item, r);
+  if (r.kind !== "command") return s;
+  const ev = JSON.parse(JSON.stringify(fx.events));
+  const A = globalThis.MeritAssistantActions.create({ events: () => ev, current: () => fx.current, today: () => fx.today, canMutate: (e) => e.date >= fx.today && e.status !== "Completed", writers: {}, snapshot: () => null, registerUndo: () => {} });
+  const key = (res) => res.steps ? JSON.stringify(res.steps.map((x) => [x.op, x.guestId || x.name, x.tableId || x.table || null, x.seats || null, x.pax || null])) : null;
+  let unsure;
+  if (byModel) {
+    const agreed = rules.kind === "command" && key(A.resolve(r.plan)) !== null && key(A.resolve(r.plan)) === key(A.resolve(rules.plan));
+    const sure = conf != null && conf >= Number(arg("theta", "0.91")) && (!R.grounded || R.grounded(r, item.text, ev, fx.current));
+    unsure = !(agreed || sure);
+  } else unsure = r.plan.some((st) => st.op === "deleteGuest");
+  if (!unsure) return s;
+  const res = A.resolve(r.plan);
+  if (res.ask || res.refuse) return { right: s.right && !s.wrongChange && s.calls.length === 0, wrongChange: false, calls: [], asked: true };
+  return { right: s.right, wrongChange: false, calls: [], click: true, shownWrong: !s.right };
+}
+
+if (flag("check-gold")) {
+  for (const it of items.filter((i) => i.gold)) { const o = outcome(it, toParse(it.gold)); console.log(it.id, it.kind, JSON.stringify(o).slice(0, 160)); }
+  process.exit(0);
+}
+const port = Number(arg("port", 8099)), label = arg("label", "rules"), rulesOnly = flag("rules-only");
+const rows = [];
+// Resumable: each sentence's model reading is kept as it comes (OUT.partial.jsonl);
+// a restarted run asks only what is missing and scores everything again from the
+// kept readings with this code.
+const partialFile = arg("out") + ".partial.jsonl", kept = new Map();
+if (!rulesOnly && fs.existsSync(partialFile)) for (const l of fs.readFileSync(partialFile, "utf8").split("\n")) { if (!l.trim()) continue; try { const k = JSON.parse(l); if (k.label === label) kept.set(k.set ? k.set + "|" + k.id : k.id, k); } catch {} }
+for (const it of items) {
+  const rules = P.parse(it.text, fx.events, fx.today);
+  const row = { set: it.set, id: it.id, text: it.text, rules: score(it, rules), rulesKind: rules.kind };
+  if (!rulesOnly) {
+    let m = kept.get(it.set + "|" + it.id) ?? kept.get(it.id);
+    if (!m || m.text !== it.text) { m = { label, ...(VOICE[it.set] ? { set: it.set } : {}), id: it.id, text: it.text, ...(await ask(port, it.text)) }; fs.appendFileSync(partialFile, JSON.stringify(m) + "\n"); }
+    const mp = R.toParse(m.got, fx.events, fx.today, it.text, fx.current);
+    row.model = { ...score(it, mp), reading: m.got, seconds: m.seconds, conf: m.conf ?? null };
+    // the product's order: rules first, the model where they say unknown — or (`--order model-first`,
+    // runB7b) the model first, the rules where the model gives no reading or says unknown
+    // `--order hybrid --theta T` (runB7c): the model's reading when it is sure (confidence >= T) or the
+    // rules read nothing; otherwise the rules' reading if they have one
+    const order = arg("order", "rules-first"), modelRead = m.got && m.got.kind !== "unknown";
+    row.both = order === "model-first" ? (modelRead ? row.model : row.rules)
+      : order === "hybrid" ? (modelRead && (rules.kind === "unknown" || (m.conf != null && m.conf >= Number(arg("theta", "0.87")))) ? row.model : rules.kind !== "unknown" ? row.rules : row.model)
+      : rules.kind === "unknown" ? row.model : row.rules;
+    row.product = product(it, rules, mp, m.conf);
+  }
+  rows.push(row);
+  process.stdout.write(`${it.id} rules:${row.rules.right ? "+" : "-"}${row.model ? ` model:${row.model.right ? "+" : "-"}${row.model.wrongChange ? "!" : ""} ${row.model.seconds.toFixed(1)}s` : ""}\n`);
+}
+const sum = (set, k) => {
+  const rs = rows.filter((r) => r.set === set && r[k]);
+  return rs.length ? { n: rs.length, right: +(rs.filter((r) => r[k].right).length / rs.length).toFixed(3), wrongChanges: rs.filter((r) => r[k].wrongChange).length,
+    ...(k === "product" ? { rightAtOnce: +(rs.filter((r) => r[k].right && !r[k].click).length / rs.length).toFixed(3), shownWrong: rs.filter((r) => r[k].shownWrong).length } : {}) } : null;
+};
+const secs = rows.filter((r) => r.model).map((r) => r.model.seconds).sort((a, b) => a - b);
+const summary = { label, at: new Date().toISOString(),
+  original: { rules: sum("original", "rules"), model: sum("original", "model"), both: sum("original", "both"), product: sum("original", "product") },
+  variant: { rules: sum("variant", "rules"), model: sum("variant", "model"), both: sum("variant", "both"), product: sum("variant", "product") },
+  deep: { rules: sum("deep", "rules"), model: sum("deep", "model"), both: sum("deep", "both"), product: sum("deep", "product") },
+  ...(flag("fresh") ? { fresh: { rules: sum("fresh", "rules"), model: sum("fresh", "model"), both: sum("fresh", "both"), product: sum("fresh", "product") } } : {}),
+  ...(flag("fresh2") ? { fresh2: { rules: sum("fresh2", "rules"), model: sum("fresh2", "model"), both: sum("fresh2", "both"), product: sum("fresh2", "product") } } : {}),
+  ...(flag("fresh4") ? { fresh4: { rules: sum("fresh4", "rules"), model: sum("fresh4", "model"), both: sum("fresh4", "both"), product: sum("fresh4", "product") } } : {}),
+  ...(flag("fresh5") ? { fresh5: { rules: sum("fresh5", "rules"), model: sum("fresh5", "model"), both: sum("fresh5", "both"), product: sum("fresh5", "product") } } : {}),
+  ...(flag("typo5") ? { typo5: { rules: sum("typo5", "rules"), model: sum("typo5", "model"), both: sum("typo5", "both"), product: sum("typo5", "product") } } : {}),
+  ...(flag("fresh6") ? { fresh6: { rules: sum("fresh6", "rules"), model: sum("fresh6", "model"), both: sum("fresh6", "both"), product: sum("fresh6", "product") } } : {}),
+  ...(flag("typo6") ? { typo6: { rules: sum("typo6", "rules"), model: sum("typo6", "model"), both: sum("typo6", "both"), product: sum("typo6", "product") } } : {}),
+  ...(flag("fresh7") ? { fresh7: { rules: sum("fresh7", "rules"), model: sum("fresh7", "model"), both: sum("fresh7", "both"), product: sum("fresh7", "product") } } : {}),
+  ...(flag("typo7") ? { typo7: { rules: sum("typo7", "rules"), model: sum("typo7", "model"), both: sum("typo7", "both"), product: sum("typo7", "product") } } : {}),
+  ...(flag("en7") ? { en7: { rules: sum("en7", "rules"), model: sum("en7", "model"), both: sum("en7", "both"), product: sum("en7", "product") } } : {}),
+  ...(flag("entypo7") ? { entypo7: { rules: sum("entypo7", "rules"), model: sum("entypo7", "model"), both: sum("entypo7", "both"), product: sum("entypo7", "product") } } : {}),
+  ...(flag("fresh8") ? { fresh8: { rules: sum("fresh8", "rules"), model: sum("fresh8", "model"), both: sum("fresh8", "both"), product: sum("fresh8", "product") } } : {}),
+  ...(flag("typo8") ? { typo8: { rules: sum("typo8", "rules"), model: sum("typo8", "model"), both: sum("typo8", "both"), product: sum("typo8", "product") } } : {}),
+  ...(flag("en8") ? { en8: { rules: sum("en8", "rules"), model: sum("en8", "model"), both: sum("en8", "both"), product: sum("en8", "product") } } : {}),
+  ...(flag("entypo8") ? { entypo8: { rules: sum("entypo8", "rules"), model: sum("entypo8", "model"), both: sum("entypo8", "both"), product: sum("entypo8", "product") } } : {}),
+  ...(flag("fresh9") ? { fresh9: { rules: sum("fresh9", "rules"), model: sum("fresh9", "model"), both: sum("fresh9", "both"), product: sum("fresh9", "product") } } : {}),
+  ...(flag("typo9") ? { typo9: { rules: sum("typo9", "rules"), model: sum("typo9", "model"), both: sum("typo9", "both"), product: sum("typo9", "product") } } : {}),
+  ...(flag("en9") ? { en9: { rules: sum("en9", "rules"), model: sum("en9", "model"), both: sum("en9", "both"), product: sum("en9", "product") } } : {}),
+  ...(flag("entypo9") ? { entypo9: { rules: sum("entypo9", "rules"), model: sum("entypo9", "model"), both: sum("entypo9", "both"), product: sum("entypo9", "product") } } : {}),
+  ...(flag("fresh3") ? { fresh3: { rules: sum("fresh3", "rules"), model: sum("fresh3", "model"), both: sum("fresh3", "both"), product: sum("fresh3", "product") } } : {}),
+  ...Object.fromEntries([...SETSX, ...(HELPF ? ["help"] : [])].map((s) => [s, { rules: sum(s, "rules"), model: sum(s, "model"), both: sum(s, "both"), product: sum(s, "product") }])),
+  ...Object.fromEntries(SETS10.filter(flag).map((s) => [s, { rules: sum(s, "rules"), model: sum(s, "model"), both: sum(s, "both"), product: sum(s, "product") }])),
+  medianSeconds: secs.length ? secs[Math.floor(secs.length / 2)] : null };
+fs.writeFileSync(arg("out"), JSON.stringify({ summary, rows }, null, 1));
+console.log(JSON.stringify(summary));

@@ -1,0 +1,27 @@
+{
+  "note": "Adversarial FAILs ACCEPTED IN WRITING, per .claude/skills/merit-plan-reliability (\"Fixed\" or \"Accepted in writing — with the reason, the operator-visible consequence, and an owner\"; there is no third state). Acceptance lets the CI gate tell a known failure from a new one. It does not make the output right: each is printed as FAIL on every run. A FAIL code not listed here blocks CI; a listed code the fixture stops producing also blocks until its entry is removed, so its return would be caught. SYNTHETIC FIXTURES — NOT REAL VENUES.",
+  "fails": [
+    {
+      "planId": "a2-mixed-families",
+      "codes": [
+        "HELD_BACK_REAL"
+      ],
+      "why": "Two table families in one drawing. Measured with the pinned OCR engine (§27): 3 real tables are detected and then held back below the review threshold. The threshold is deliberately not lowered to pass it. The §7 diagnosis in benchmarks/MASTER-PROGRAMME-STATE.md was measured on a machine where OCR never loaded (7 held back, 23 phantom tables); those numbers describe a different configuration and its conclusions have not been re-checked against these.",
+      "consequence": "Three real tables are detected but deselected by default, so confirming the proposal as offered leaves them off the floor plan; nine more are not detected at all (table recall 0.571), and three phantom tables are proposed — all three OFFERED (selected), so confirming as offered puts them on the floor plan (measured 2026-10-04: phantoms offered 3, held back 0).",
+      "owner": "computer-vision-engineer (Assisted Detection)",
+      "ref": "benchmarks/MASTER-PROGRAMME-STATE.md — entry H (§7) and the 'Open, measured' table: a2",
+      "since": "2026-09-04 (adversarial baseline); codes re-measured with pinned OCR in §27"
+    },
+    {
+      "planId": "a6-architectural-confusion",
+      "codes": [
+        "PHANTOM_MAJORITY"
+      ],
+      "why": "Architecture drawn like furniture. Measured with the pinned OCR engine (§27): 21 phantom tables against 8 real ones (precision 0.276). The four theories §7 tested and refuted were measured without OCR (46 phantom tables); the surviving hypothesis — the SHAPE of the chairs-per-table distribution rather than its mean — is untested in either configuration.",
+      "consequence": "21 phantom tables are proposed beside 8 real ones, and every one of them is HELD BACK — deselected with a stated reason (19 seatsInsideBody: a box whose only seat is inside itself; 2 belowReviewThreshold) — so confirming the proposal as offered commits the 8 real tables and no phantom (measured 2026-10-04: phantoms offered 0, held back 21). What the operator still meets is 21 unticked proposals to look past, which is what PHANTOM_MAJORITY counts. All 8 real tables are found. The earlier text said confirming put them on the floor plan; measured, it does not. What IS still wrong downstream: the plan's physical seat count includes the 19 seats found inside held-back phantoms (51 against 32 drawn). Setting held-back tables' seats aside was measured across all 28 plans before being written and REFUTED: it fixes a6 (error 19 -> 0) and moves 8 other plans further from their annotated chair count (total error 81 -> 168), because on the photometric renderings a held-back box wraps a REAL chair.",
+      "owner": "computer-vision-engineer (Assisted Detection)",
+      "ref": "benchmarks/MASTER-PROGRAMME-STATE.md — entry H (§7) and the 'Open, measured' table: a6",
+      "since": "2026-09-04 (adversarial baseline); numbers re-measured with pinned OCR in §27"
+    }
+  ]
+}

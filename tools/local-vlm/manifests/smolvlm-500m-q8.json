@@ -1,0 +1,22 @@
+{
+ "format": "merit-local-vlm/1",
+ "id": "smolvlm-500m-q8",
+ "name": "SmolVLM-500M-Instruct (GGUF Q8_0)",
+ "version": "SmolVLM-500M-Instruct-GGUF@main 2026-10-17",
+ "licence": "Apache-2.0",
+ "source": "https://huggingface.co/ggml-org/SmolVLM-500M-Instruct-GGUF (base model HuggingFaceTB/SmolVLM-500M-Instruct)",
+ "runtime": "llama.cpp llama-server, conda-forge llama.cpp 11351 cpu_mkl (version 0.5.0-dev, commit 0fa5950)",
+ "files": [
+  {
+   "path": "SmolVLM-500M-Instruct-Q8_0.gguf",
+   "bytes": 436806912,
+   "sha256": "9d4612de6a42214499e301494a3ecc2be0abdd9de44e663bda63f1152fad1bf4"
+  },
+  {
+   "path": "mmproj-SmolVLM-500M-Instruct-Q8_0.gguf",
+   "bytes": 108783360,
+   "sha256": "d1eb8b6b23979205fdf63703ed10f788131a3f812c7b1f72e0119d5d81295150"
+  }
+ ],
+ "licenceNote": "(Hugging Face model card of ggml-org/SmolVLM-500M-Instruct-GGUF and of HuggingFaceTB/SmolVLM-500M-Instruct, read 2026-10-18)"
+}

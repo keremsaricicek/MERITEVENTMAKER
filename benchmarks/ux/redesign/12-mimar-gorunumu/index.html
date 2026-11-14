@@ -1,0 +1,315 @@
+<title>Merit Kurumsal Görünüm</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=IBM+Plex+Sans:wght@400;600&family=Manrope:wght@400;600&display=swap">
+<style>
+/* One fixed template for every screen: top bar, title row (actions right), content, right panel.
+   One type size family, sentence case, two button styles, neutral greys; colour only for table occupancy and status. */
+:root{--bg:#F3F4F6;--sf:#FFFFFF;--sf2:#F7F8F9;--tx:#1B1F24;--tx2:#5A6370;--bd:#E1E4E8;--bd2:#C6CBD2;--pr:#22272E;--pt:#FFFFFF;--ok:#2E7D5B;--mid:#A86A12;--no:#B23B3B;--vip:#8A6A1F;--sel:#E9EEF4;--halo:#DCE3EA;
+--f:"Segoe UI Variable","Segoe UI","SF Pro Text",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181C;--sf:#1C2025;--sf2:#22272E;--tx:#E8EAED;--tx2:#A3ABB5;--bd:#2E343C;--bd2:#434B56;--pr:#E8EAED;--pt:#15181C;--ok:#6CC094;--mid:#E0B15A;--no:#E58A8A;--vip:#D9C69C;--sel:#28303A;--halo:#343D49;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15181C;--sf:#1C2025;--sf2:#22272E;--tx:#E8EAED;--tx2:#A3ABB5;--bd:#2E343C;--bd2:#434B56;--pr:#E8EAED;--pt:#15181C;--ok:#6CC094;--mid:#E0B15A;--no:#E58A8A;--vip:#D9C69C;--sel:#28303A;--halo:#343D49;color-scheme:dark}
+body{background:var(--bg);color:var(--tx);font:13px/1.45 var(--f)}
+.wrap{max-width:1280px;margin:0 auto;padding-block:16px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.pagehead{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:10px}
+.pagehead h1{font:600 15px var(--f);margin:0 8px 0 0}
+.note{color:var(--tx2);margin:8px 0 0;max-width:90ch}
+button{font-family:var(--f);cursor:pointer}
+.btn{height:30px;padding:0 12px;border-radius:4px;border:1px solid var(--bd2);background:var(--sf);color:var(--tx);font:600 13px var(--f);white-space:nowrap}
+.btn.p{background:var(--pr);border-color:var(--pr);color:var(--pt)}
+.btn[aria-pressed="true"]{background:var(--sel);border-color:var(--tx2)}
+.btn.ic{width:30px;padding:0;display:inline-grid;place-items:center}
+.lnk{background:none;border:0;padding:0;color:var(--tx);font:13px var(--f);text-decoration:underline;text-underline-offset:2px;text-align:left}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--tx);outline-offset:1px}
+input.in,textarea{border:1px solid var(--bd2);border-radius:4px;background:var(--sf);color:var(--tx);font:13px var(--f);padding:0 8px;box-sizing:border-box}
+input.in{height:30px}
+.stagebox{width:100%;overflow:hidden;border:1px solid var(--bd2);border-radius:4px;background:var(--bg)}
+.stage{width:1280px;height:760px;transform-origin:0 0;position:relative;background:var(--bg)}
+/* template */
+.top{height:40px;display:flex;align-items:center;padding:0 16px;gap:16px;border-bottom:1px solid var(--bd);background:var(--sf)}
+.top .brand{font-weight:600}
+.top nav{display:flex;align-self:stretch}
+.top nav button{padding:0 10px;background:none;border:0;border-bottom:2px solid transparent;border-top:2px solid transparent;color:var(--tx2);font:13px var(--f)}
+.top nav button.on{color:var(--tx);font-weight:600;border-bottom-color:var(--tx)}
+.sp{flex:1}.top .ev{color:var(--tx2)}
+.seg{display:flex}.seg .btn:first-child{border-radius:4px 0 0 4px}.seg .btn:last-child{border-radius:0 4px 4px 0;margin-left:-1px}
+.kbd{color:var(--tx2);font-weight:400;margin-left:6px}
+.head{height:48px;display:flex;align-items:center;padding:0 16px;gap:10px;border-bottom:1px solid var(--bd);background:var(--sf)}
+.head h2{font:600 15px var(--f);margin:0}.head .st{color:var(--tx2)}
+.strip{height:2px;background:linear-gradient(90deg,#2f6f66,#6fae9f,#d9a441,#c2703d,#d9a441,#6fae9f,#2f6f66);background-size:300% 100%;animation:flow 2.6s ease-in-out infinite alternate}
+#gstrip{position:absolute;left:0;right:0;top:88px;z-index:3}
+@keyframes flow{from{background-position:0 0}to{background-position:100% 0}}
+.cols{position:absolute;inset:88px 0 0 0;display:flex}
+.main{flex:1;min-width:0;padding:12px;display:flex;flex-direction:column;gap:10px}
+.panel{width:320px;flex:none;border-left:1px solid var(--bd);background:var(--sf);overflow:auto}
+.panel h3,.list h3{font:600 13px var(--f);margin:0;padding:10px 14px;border-bottom:1px solid var(--bd);background:var(--sf2)}
+.pb{padding:2px 14px 12px}
+.pb p{margin:8px 0 0}.mut{color:var(--tx2)}
+.item{padding:10px 0;border-bottom:1px solid var(--bd)}
+.item .src{font-size:12px;color:var(--tx2)}.item b{display:block;font-weight:600}.item p{margin:2px 0 0;color:var(--tx2)}
+.acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.done{padding:8px 0;border-bottom:1px solid var(--bd);color:var(--tx2);display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.kv{display:grid;grid-template-columns:96px 1fr;gap:4px 8px;margin-top:8px}.kv span{color:var(--tx2)}
+.list{width:300px;flex:none;border-right:1px solid var(--bd);background:var(--sf);overflow:auto}
+.row{display:flex;align-items:center;gap:8px;min-height:44px;padding:4px 14px;border-bottom:1px solid var(--bd)}
+.row .nm{flex:1;min-width:0}.row small{display:block;color:var(--tx2);font-size:12px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--bd2)}
+.dot.ok{background:var(--ok)}.dot.mid{background:var(--mid)}.dot.no{background:var(--no)}
+.vip{color:var(--vip);font-size:12px;font-weight:600;border:1px solid var(--vip);border-radius:3px;padding:0 4px;margin-left:6px}
+/* plan */
+.plan{flex:1;min-height:0;background:var(--sf);border:1px solid var(--bd);border-radius:4px;display:flex;flex-direction:column}
+.room{flex:1;min-height:0;width:100%}
+.lg{height:32px;flex:none;border-top:1px solid var(--bd);display:flex;gap:18px;align-items:center;padding:0 12px;color:var(--tx2);font-size:12px}
+.fx{fill:var(--sf2);stroke:var(--bd2)}line.fx{stroke:var(--tx2);stroke-width:2}
+.fd{fill:none;stroke:var(--bd2);stroke-dasharray:4 4}
+.fl{font:11px var(--f);fill:var(--tx2);text-anchor:middle;dominant-baseline:central}
+.z{fill:var(--halo);fill-opacity:.5;stroke:var(--bd2)}.zl{font:600 10px var(--f);fill:var(--tx2)}
+.t .b{fill:var(--sf)}.t .tr{fill:none;stroke:var(--bd2);stroke-width:3}
+.t .ar{fill:none;stroke-width:3}.ar.ok{stroke:var(--ok)}.ar.mid{stroke:var(--mid)}.ar.no{stroke:var(--no)}
+.t .n{font:600 11px var(--f);fill:var(--tx);text-anchor:middle}.t .o{font:10px var(--f);fill:var(--tx2);text-anchor:middle}
+.t .ch{opacity:0;transition:opacity .15s}.t:hover .ch,.t.glow .ch{opacity:1}.ch circle{fill:var(--sf);stroke:var(--tx2);stroke-width:1}.ch circle.me{fill:#FF1744;stroke:#FF1744;filter:drop-shadow(0 0 3px #FF1744)}
+.t .h{fill:var(--halo);opacity:0}.t.hot .h,.t.glow .h{opacity:1}
+.t.ghost .h{opacity:1;fill:none;stroke:var(--tx);stroke-width:1.2;stroke-dasharray:4 3}
+.t.q .tr{stroke:var(--mid);stroke-dasharray:3 3}.t.un .tr{stroke:var(--mid);stroke-dasharray:3 3}
+.raw .t,.raw .fx,.raw .fl,.raw .fd{opacity:.3}.raw .t.found{opacity:1;transition:opacity .25s}
+/* grid */
+.tools{display:flex;gap:6px;align-items:center}
+.grid{flex:1;min-height:0;overflow:auto;background:var(--sf);border:1px solid var(--bd);border-radius:4px}
+.grid table{width:100%;border-collapse:collapse}
+.grid th{position:sticky;top:0;background:var(--sf2);font:600 12px var(--f);color:var(--tx2);text-align:left;padding:0 12px;height:32px;border-bottom:1px solid var(--bd)}
+.grid td{padding:0 12px;height:36px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.grid tr[data-a]{cursor:pointer}.grid tr.on td{background:var(--sel)}
+.grid .num{text-align:right;font-variant-numeric:tabular-nums}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}.cmp div{border:1px solid var(--bd);border-radius:4px;padding:6px 8px}
+/* chat */
+.chat{position:absolute;right:12px;bottom:12px;width:320px;height:410px;background:var(--sf);border:1px solid var(--bd2);border-radius:4px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.14);z-index:4}
+.chat header{height:36px;flex:none;display:flex;align-items:center;gap:8px;padding:0 4px 0 12px;background:var(--sf2);border-bottom:1px solid var(--bd)}
+.chat header b{font-weight:600;flex:1}
+.msgs{flex:1;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.me{align-self:flex-end;background:var(--sel);border-radius:6px;padding:6px 10px;max-width:85%}.me small{display:block;color:var(--tx2);font-size:12px}
+.mi{align-self:flex-start;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:8px 10px;max-width:94%}
+.mi .src{font-size:12px;color:var(--tx2)}.mi p{margin:2px 0 0;color:var(--tx2)}.mi ul{margin:4px 0 0;padding-left:16px}.mi .done{border:0;padding:6px 0 0}
+.qs{padding:6px 10px;border-top:1px solid var(--bd);display:grid;gap:2px;color:var(--tx2);font-size:12px}
+.inp{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--bd);align-items:center}
+.inp .in{flex:1;min-width:0}
+.lis{flex:1;display:flex;align-items:center;gap:8px;color:var(--tx2);height:30px}
+.bars{display:flex;gap:3px;align-items:center;height:18px}.bars i{width:3px;border-radius:1px;background:var(--tx);height:6px;animation:bar .9s ease-in-out infinite}
+.bars i:nth-child(2){animation-delay:.15s}.bars i:nth-child(3){animation-delay:.3s}.bars i:nth-child(4){animation-delay:.45s}
+@keyframes bar{0%,100%{height:5px}50%{height:18px}}
+@media (prefers-reduced-motion:reduce){.strip,.bars i{animation:none}.bars i{height:12px}}
+.fb{margin-top:12px;display:grid;gap:8px;max-width:720px}
+.fb .r{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.fb textarea{width:100%;min-height:64px;padding:6px 8px;resize:vertical}
+
+/* v3 (owner notes 2026-11-11): modern rounded filled buttons, real UI font, neon occupancy, tinted Mimar window, settings page */
+:root{--sec:#E9ECEF;--tint:#F1F2F4;--nok:#0FBF83;--nmid:#F5A300;--nno:#FF2D55;--f:"Inter","Segoe UI",system-ui,sans-serif}
+:root[data-theme="dark"]{--sec:#2B313A;--tint:#232830;--nok:#19E6A0;--nmid:#FFB627;--nno:#FF3B63}
+:root[data-skin="grafit"]{--pr:#1F2328;--pt:#fff}
+:root[data-theme="dark"][data-skin="grafit"]{--pr:#F0F2F5;--pt:#15181C}
+:root[data-skin="lacivert"]{--pr:#0A5BC4;--pt:#fff;--tint:#EDF3FB;--sel:#E3EDFA}
+:root[data-theme="dark"][data-skin="lacivert"]{--pr:#4C9AFF;--pt:#08111F;--tint:#1A2535;--sel:#22324A}
+body,.stage{font-size:14px}
+.btn{height:34px;padding:0 14px;border-radius:8px;border:0;background:var(--sec)}
+.btn.p,.btn[aria-pressed="true"]{background:var(--pr);color:var(--pt)}
+.btn.ic{width:34px;border-radius:50%}
+input.in{height:34px;border-radius:8px}.lnk{font-size:14px}
+.top .brand{font-size:15px}.top nav button{font-size:14px}
+.head{height:56px}.head h2{font-size:16px}.head .st{font-size:13px}
+#gstrip{top:96px}.cols{inset:96px 0 0 0}
+.item{border:1px solid var(--bd);border-radius:10px;padding:12px;margin:10px 0 0}
+.item .src{display:inline-block;font-size:12px;color:var(--tx);background:var(--sec);border-radius:10px;padding:1px 8px;margin-bottom:6px}
+.item .acts{justify-content:flex-end}.done{color:var(--tx)}
+.panel h3,.list h3{font-size:14px;background:none;padding:14px 14px 4px;border:0}
+.t .tr,.t .ar{stroke-width:3.5}.t .n{font-size:11.5px}
+.ar.ok{stroke:var(--nok);filter:drop-shadow(0 0 2.5px var(--nok))}.ar.mid{stroke:var(--nmid);filter:drop-shadow(0 0 2.5px var(--nmid))}.ar.no{stroke:var(--nno);filter:drop-shadow(0 0 2.5px var(--nno))}
+.dot.ok{background:var(--nok)}.dot.mid{background:var(--nmid)}.dot.no{background:var(--nno)}
+.vipm{margin-left:6px;color:var(--pr)}
+.chat{background:var(--tint);border-color:var(--pr);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.22)}
+.chat header{background:var(--tint)}
+.mi{background:var(--sf);border-radius:14px 14px 14px 4px}
+.me{background:var(--pr);color:var(--pt);border-radius:14px 14px 4px 14px}.me small{color:inherit;opacity:.8}
+.grid,.plan{border-radius:10px}.grid td{height:40px}.grid th{font-size:13px}
+.set{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:18px;display:grid;gap:18px;max-width:600px;align-self:flex-start}
+.set .r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.set label{width:120px;font-weight:600}
+.mini{height:230px;border-bottom:1px solid var(--bd);display:flex}
+.split{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px}.split.side{flex-direction:row}
+.split .plan{flex:1}.split .grid{flex:none;height:206px}.split.side .grid{flex:1;height:auto}.lnk{white-space:nowrap}
+
+/* v4 (owner 2026-11-12): Atlas theme default; desktop-app density; choices as one track, not stacked rectangles */
+:root[data-skin="atlas"]{--bg:#EEF0EC;--sf:#FBFBF9;--sf2:#F3F5F1;--tx:#1D2A33;--tx2:#51606B;--bd:#D9DED8;--bd2:#BFC6BF;--pr:#1F4E79;--pt:#fff;--sec:#E3E7E1;--tint:#E8EEF3;--sel:#DDE7F0;--halo:#D5E0EA}
+:root[data-theme="dark"][data-skin="atlas"]{--bg:#10151C;--sf:#171E27;--sf2:#1C2530;--tx:#ECE7DC;--tx2:#B9B2A5;--bd:#2A333F;--bd2:#3A4553;--pr:#8FB8E0;--pt:#0B1220;--sec:#232C37;--tint:#1A2535;--sel:#22324A;--halo:#2C3A4A}
+body,.stage{font-size:13px}.lnk{font-size:13px}
+.btn{height:30px;padding:0 12px;border-radius:6px;font-size:13px}.btn.ic{width:30px}
+input.in{height:30px;border-radius:6px}
+.top .brand{font-size:14px}.top nav button{font-size:13px}.head{height:52px}.head h2{font-size:15px}.head .st{font-size:12.5px}
+#gstrip{top:92px}.cols{inset:92px 0 0 0}
+.acts{display:inline-flex;flex-wrap:nowrap;background:var(--sec);border-radius:999px;padding:3px;gap:2px;margin-top:8px}
+.acts .btn{height:26px;background:none;border-radius:999px;padding:0 12px}
+.acts .btn.p,.acts .btn[aria-pressed="true"]{background:var(--pr);color:var(--pt)}
+.head .acts,.tools .acts{margin-top:0}
+.item{border:0;border-bottom:1px solid var(--bd);border-radius:0;padding:10px 0 12px;margin:0;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.item .src{grid-column:1/-1;justify-self:start;margin-bottom:2px}.item b{grid-column:1}.item p{grid-column:1/-1}.item .acts{grid-column:2;grid-row:2;margin-top:0}
+.grid,.plan,.set{border-radius:6px}.grid td{height:34px}.grid th{font-size:12px}
+.grid .btn{height:24px;border-radius:999px;padding:0 12px}
+.panel h3,.list h3{font-size:13px}
+.split.side .grid{flex:none;width:420px;height:auto}.split.side .plan{flex:1}
+.stage.full .top,.stage.full .head{display:none}.stage.full .cols{inset:0}.stage.full #gstrip{top:0}
+.flow{background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:0 12px 10px}
+.grid tr[data-hot]{cursor:default}.grid tr[data-hot]:hover td{background:var(--sel)}
+</style>
+<div class="wrap" lang="tr">
+<div class="pagehead"><h1>Merit Event Maker · görünüm örneği</h1><span id="tabs" class="r" style="display:flex;gap:6px;flex-wrap:wrap"></span></div>
+<div class="stagebox" id="stagebox"><div class="stage" id="stage">
+<div class="top"><span class="brand">Merit Event Maker</span><nav id="nav"></nav><span class="sp"></span><button class="btn" data-a="go:s6">Ayarlar</button><button class="btn p" data-a="go:s2">Mimar<span class="kbd" style="color:inherit;opacity:.75">F8</span></button></div>
+<div class="strip" id="gstrip" hidden></div>
+<div id="body"></div>
+</div></div>
+<p class="note" id="hint"></p>
+<div class="fb"><div class="r"><b id="fbt"></b><button class="btn" id="vk" data-a="vote:keep" aria-pressed="false">Beğendim</button><button class="btn" id="vd" data-a="vote:drop" aria-pressed="false">Beğenmedim</button><span class="mut" id="save" aria-live="polite"></span></div>
+<textarea id="note" placeholder="Bu ekran hakkındaki düşünceni yaz" aria-label="Bu ekran hakkındaki düşünce"></textarea></div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fold=s=>String(s).toLocaleLowerCase('tr').replace(/ı/g,'i').replace(/ş/g,'s').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ö/g,'o').replace(/ç/g,'c');
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const B=(label,a,p)=>`<button class="btn${p?' p':''}" data-a="${a}">${label}</button>`;
+const item=(src,title,text,acts,hot)=>`<div class="item"${hot?` data-hot="${hot}"`:''}><div class="src">Mimar önerisi · ${src}</div><b>${title}</b>${text?`<p>${text}</p>`:''}${acts?`<div class="acts">${acts}</div>`:''}</div>`;
+const done=(txt,undo)=>`<div class="done"><span>${txt}</span>${undo?`<button class="lnk" data-a="${undo}">Geri al</button>`:''}</div>`;
+const sec=(t,html)=>`<h3>${t}</h3><div class="pb">${html}</div>`;
+const frame=o=>`<div class="head"><div><h2>Merit Royal Yılbaşı Galası</h2><span class="st">Grand Balo Salonu · 31 Aralık 2026</span></div><span class="sp"></span>${o.acts?'<div class="acts">'+o.acts+'</div>':''}</div><div class="cols">${o.left||''}<div class="main">${o.main}</div>${o.panel==null?'':`<aside class="panel">${o.panel}${o.st?sec('Özet','<p>'+o.st+'</p>'):''}</aside>`}</div>${o.extra||''}`;
+const SC={s1:['Plan analizi','"Analiz et"e basın. Sağdaki önerilerin üstüne gelince plandaki yeri işaretlenir; tek tek karar verin.'],
+ s2:['Mimar','Fareyle bir masanın üstüne gelince sandalyeleri açılır. Hazır cümlelerden birine basın ya da yazın; mikrofon sesli komut örneğini çalıştırır. Örnek yalnızca birkaç cümleyi tanır.'],
+ s3:['Misafirler','Sağdaki önerilere bakın; bir satıra tıklayınca o misafirin bilgisi ve geçmişi açılır.'],
+ s4:['Oturma','Liste solda, plan sağda. "Taslak yerleşim öner"e basın; önerilen masalar kesik çizgiyle işaretlenir.'],
+ s5:['Kapı','Tam ekran açılır; Esc ile çıkılır. Fareyle bir misafirin üstüne gelince masası ve sandalyeleri yanar. "Listede yok" ile davetsiz misafir kaydedilir.'],
+ s6:['Ayarlar','Tema, açık / koyu ve yazı tipini seçin; bütün ekranlara uygulanır. Üç yazı tipini deneyip beğendiğinizi söyleyin.']};
+const S={cur:'s1',s1:{phase:'up',num:null,cap:null,un:null,zones:false,zacc:false},s2:{open:true,msgs:[],think:false,listen:false,glow:null,mark:null,seated:false},s3:{dup:null,pax:null,sel:0},s4:{phase:'idle'},s5:{w:null,inn:{},full:true}};
+/* ---- plan ---- */
+const T=[];(function(){const xs=[80,160,240,320,400,500,580,660,740,820],ys=[270,345,420,495];let n=1;
+ ys.forEach((y,r)=>xs.forEach((x,c)=>{if(r>=2&&c===9)return;T.push({id:'T'+String(n).padStart(2,'0'),x,y,cap:10});n++}));
+ [['VIP01',190,140],['VIP02',262,140],['VIP03',638,140],['VIP04',710,140]].forEach(v=>T.push({id:v[0],x:v[1],y:v[2],cap:12,v:1}))})();
+const BASE={T08:8,T09:7,T25:9,T37:3,T38:0,VIP03:11,VIP04:7};
+function tsvg(t,cls,lab,occ,me){const r=t.v?25:21,ch=Array.from({length:t.cap},(_,i)=>{const g=i*2*Math.PI/t.cap-Math.PI/2;return `<circle${i<(me||0)?' class="me"':''} cx="${((r+8)*Math.cos(g)).toFixed(1)}" cy="${((r+8)*Math.sin(g)).toFixed(1)}" r="3.2"/>`}).join(''),c=2*Math.PI*r,f=occ==null?0:occ/t.cap,col=f>=1?'no':f>=.8?'mid':'ok';
+ return `<g class="t ${cls}" data-t="${t.id}" transform="translate(${t.x} ${t.y})"><circle class="h" r="${r+14}"/><g class="ch">${ch}</g><circle class="b" r="${r}"/><circle class="tr" r="${r}"/>${f>0?`<circle class="ar ${col}" r="${r}" stroke-dasharray="${(c*Math.min(f,1)).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90)"/>`:''}<text class="n" y="${occ==null?4:-1}">${lab}</text>${occ==null?'':`<text class="o" y="11">${occ}/${t.cap}</text>`}</g>`}
+function zones(){return [['Sahne',330,6,310,74],['Dans pisti',340,84,220,116],['VIP',152,96,150,88],['VIP',600,96,150,88],['Bar',788,382,64,150],['Giriş',386,556,128,40]].map(z=>`<rect class="z" x="${z[1]}" y="${z[2]}" width="${z[3]}" height="${z[4]}" rx="3"/><text class="zl" x="${z[1]+5}" y="${z[2]+11}">${z[0]}</text>`).join('')}
+function room(o){o=o||{};const c=o.cls||(()=>''),oc=o.occ||(()=>null);let s=`<svg class="room ${o.raw?'raw':''}" viewBox="0 0 900 604" role="img" aria-label="Salon planı">`;
+ if(o.zones)s+=zones();
+ s+='<rect class="fx" x="340" y="20" width="220" height="50" rx="2"/><text class="fl" x="450" y="45">Sahne</text><rect class="fx" x="574" y="28" width="52" height="34" rx="2"/><text class="fl" x="600" y="45">DJ</text><rect class="fd" x="350" y="98" width="200" height="92" rx="2"/><text class="fl" x="450" y="144">Dans pisti</text><rect class="fx" x="800" y="392" width="40" height="130" rx="2"/><text class="fl" x="820" y="457" transform="rotate(-90 820 457)">Bar</text><line class="fx" x1="400" y1="574" x2="500" y2="574"/><text class="fl" x="450" y="587">Ana giriş</text>';
+ T.forEach(t=>{s+=tsvg(t,c(t),o.lab?o.lab(t):t.id,oc(t),o.me&&o.me.id===t.id?o.me.n:0)});
+ if(o.un&&o.un!=='none')s+=`<g class="t ${o.un==='table'?'':'un'}" data-t="UN" transform="translate(570 548)"><circle class="h" r="26"/><circle class="b" r="16"/><circle class="tr" r="16"/>${o.un==='table'?'<text class="n" y="4">T39</text>':''}</g>`;
+ return s+'</svg>'}
+const LG='<div class="lg"><span><i class="dot ok"></i>Yer var</span><span><i class="dot mid"></i>Dolmak üzere</span><span><i class="dot no"></i>Dolu</span><span><i class="dot"></i>Boş</span></div>';
+const plan=(o,lg)=>`<div class="plan">${room(o)}${lg===false?'':LG}</div>`;
+const occOf=(extra)=>t=>{const e=extra&&extra[t.id];return e!=null?e:(BASE[t.id]!=null?BASE[t.id]:t.cap)};
+/* ---- 1 plan analysis ---- */
+function s1(){const a=S.s1,dn=a.phase==='done';
+ const cls=t=>(dn?'found ':'')+(t.id==='T23'&&a.num!=='T23'&&dn?'q ':'');const lab=t=>t.id==='T23'?(a.num==='T23'?'T23':'T??'):t.id;let panel;
+ if(a.phase==='up')panel=sec('Plan','<p>Plan yüklendi: grand-balo.pdf, 1. sayfa.</p><p class="mut">"Analiz et" masaları ve numaraları bulur. Bulunanlar öneri olarak gelir; kabul etmeden salona yazılmaz.</p>');
+ else if(!dn)panel=sec('Plan okunuyor','<p class="mut" id="prog" aria-live="polite">Masalar bulunuyor…</p>');
+ else{const open=(a.num?0:1)+(a.cap?0:1)+(a.un?0:1);
+  const i1=a.num==='T23'?done('T23 · sen yazdın','num:'):a.num==='later'?done('T?? · sonra bakılacak','num:'):item('sıradan çıkardı','T?? · numara okunamadı',"T22 ile T24'ün arasında duruyor; T23 olabilir.",B('T23 yaz','num:T23',1)+B('Sonra bakarım','num:later'),'T23');
+  const i2=a.cap?done('VIP02 · '+a.cap+' kişilik · sen seçtin','cap:'):item('çizimden saydı','VIP02 · çizimde 11 sandalye','Diğer VIP masaları 12 kişilik.',B('11 kişilik','cap:11',1)+B('12 kişilik','cap:12'),'VIP02');
+  const i3=a.un==='table'?done('Girişin yanındaki yuvarlak · masa (T39)','un:'):a.un==='none'?done('Girişin yanındaki yuvarlak · masa değil','un:'):item('şekilden · emin değil','Girişin yanında numarasız yuvarlak','Masa olabilir; saksı ya da sütun da olabilir.',B('Masa','un:table')+B('Masa değil','un:none'),'UN');
+  const z=a.zacc?done('5 bölge · kabul edildi','zacc:'):item('yazıdan ve şekilden','5 bölge önerisi','Sahne, dans pisti, VIP, bar, giriş.',B(a.zones?'Gizle':'Planda göster','zones')+(a.zones?B('Kabul et','zacc:1',1):''));
+  panel=sec('Bakılacaklar'+(open?' ('+open+')':''),i1+i2+i3)+sec('Bölgeler',z)}
+ return frame({title:'Salon',st:dn?'42 masa bulundu · 38 yuvarlak, 4 VIP · yardımlı algılama':'grand-balo.pdf · 1. sayfa',
+  acts:dn?((!a.num||!a.cap)?B('Emin olduklarını kabul et','acceptall'):''):(a.phase==='up'?B('Elle çiz','noop')+B('Analiz et','analyze',1):''),
+  main:plan({raw:!dn,cls,lab,zones:dn&&(a.zones||a.zacc),un:dn?(a.un||'ask'):''},false),panel})}
+function analyze(){const a=S.s1;a.phase='run';render();$('#gstrip').hidden=false;
+ const fin=()=>{a.phase='done';$('#gstrip').hidden=true;render()};if(RM){setTimeout(fin,300);return}
+ const els=[...document.querySelectorAll('#body .t')].sort((p,q)=>{const P=T.find(t=>t.id===p.dataset.t),Q=T.find(t=>t.id===q.dataset.t);return (P.y-Q.y)||(P.x-Q.x)});let i=0;
+ const iv=setInterval(()=>{for(let k=0;k<2&&i<els.length;k++,i++)els[i].classList.add('found');const p=$('#prog');if(p)p.textContent='Masalar bulunuyor… '+i+' / '+els.length;if(i>=els.length){clearInterval(iv);setTimeout(fin,350)}},70)}
+/* ---- 2 Mimar ---- */
+const QS=['Ahmet Yılmaz nerede oturuyor?',"Selin Ak'ı T38'e oturt",'Bugün ne eksik?'];
+const MIC='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+function chat(){const a=S.s2;if(!a.open)return'';
+ const ms=a.msgs.map((m,i)=>m.w==='me'?`<div class="me">${m.html}</div>`:`<div class="mi">${m.html}${m.card&&m.st==='open'?`<div class="acts">${B('Vazgeç','cancel:'+i)}${B('Uygula','apply:'+i,1)}</div>`:''}${m.st==='done'?done('Yapıldı','undo:'+i):''}${m.st==='undone'?'<div class="done">Geri alındı</div>':''}${m.st==='cancel'?'<div class="done">Vazgeçildi</div>':''}</div>`).join('');
+ const row=a.listen?`<div class="inp"><div class="lis"><span class="bars"><i></i><i></i><i></i><i></i></span>Dinliyorum…</div></div>`
+  :`<form class="inp" id="cf"><input class="in" id="cq" placeholder="Mimar'a yaz" autocomplete="off" aria-label="Mimar'a yaz"><button type="button" class="btn ic" data-a="mic" aria-label="Sesle söyle">${MIC}</button><button class="btn p" type="submit">Gönder</button></form>`;
+ return `<section class="chat" aria-label="Mimar"><header><b>Mimar</b><button class="btn ic" data-a="chatx" aria-label="Kapat" style="border:0;background:none">×</button></header><div class="strip" ${a.think?'':'hidden'}></div><div class="msgs" id="msgs"><div class="mi">Bir misafiri, masayı ya da eksikleri sorabilirsin. Bir iş istersen önce gösteririm.</div>${ms}</div><div class="qs">${QS.map((q,i)=>`<button class="lnk" data-a="ask:${i}">${esc(q)}</button>`).join('')}</div>${row}</section>`}
+const T05=[['Ahmet Yılmaz +3',1],['Nazlı Sarı'],['Doğan Kahraman +1'],['Burak Duman'],['Emre Turan +1']];
+function s2(){const a=S.s2;const cls=t=>'found '+(a.glow===t.id?'glow ':'')+(a.mark===t.id?'ghost ':'');
+ const panel=a.glow==='T05'?sec('T05 · 10/10',T05.map(g=>`<div class="done"><span>${g[1]?'<b>'+g[0]+'</b>':g[0]}</span></div>`).join('')):sec('Salon','<p>42 masa · 409 / 420 kişi yerleşti.</p><p class="mut">Bir masaya tıklayınca kişileri burada görünür. Mimar bir işi önce planda gösterir; "Uygula" demeden yapmaz.</p>'+(a.open?'':`<div class="acts">${B("Mimar'ı aç",'chatopen')}</div>`));
+ return frame({title:'Salon',st:'42 masa · 409 / 420 kişi yerleşti',acts:B('Planı oku','noop')+B('Masa ekle','noop'),main:plan({cls,occ:occOf(a.seated?{T38:3}:null),me:a.glow?{id:a.glow,n:{T05:4,T38:3,T07:2}[a.glow]||0}:null}),panel,extra:chat()})}
+function ask(text,voice){const a=S.s2;a.msgs.push({w:'me',html:esc(text)+(voice?'<small>sesten yazıldı</small>':'')});a.think=true;render();setTimeout(()=>{a.think=false;respond(text,voice);render()},RM?150:850)}
+function respond(text,voice){const a=S.s2,f=fold(text),src=`<div class="src">Mimar önerisi · ${voice?'söylediğinden anladı':'yazdığından anladı'}</div>`;
+ if(/nerede/.test(f)&&/ahmet/.test(f)){a.glow='T05';a.mark=null;a.msgs.push({w:'m',html:"Ahmet Yılmaz T05'te oturuyor · 4 kişi. Planda işaretledim, kişiler sağda."})}
+ else if(/oturt/.test(f)&&/selin/.test(f)){a.mark='T38';a.glow=null;a.msgs.push({w:'m',card:'seat',st:'open',html:src+"<b>Selin Ak +2 → T38</b><p>Şimdi masasız. T38'de 10 boş yer var.</p>"})}
+ else if(/geldi/.test(f)&&/ayse/.test(f)){a.mark='T07';a.glow=null;a.msgs.push({w:'m',card:'in',st:'open',html:src+'<b>Ayşe Demir +1 · giriş</b><p>T07 · 2 kişi. Geliş saati 22:14 yazılacak.</p>'})}
+ else if(/eksik/.test(f)){a.msgs.push({w:'m',html:'3 konu açık:<ul><li><button class="lnk" data-a="go:s4">11 kişi oturmamış</button></li><li><button class="lnk" data-a="go:s1">T23\'ün numarası okunamadı</button></li><li><button class="lnk" data-a="go:s3">1 olası tekrar kayıt</button></li></ul>'})}
+ else a.msgs.push({w:'m',html:'Bunu anlayamadım, bir şey değiştirmedim. Aşağıdaki cümlelerden birini deneyebilirsin.'})}
+/* ---- 3 guests ---- */
+const G=[['Ahmet Yılmaz',4,'Kerem Sarıçiçek','T05','w',1],['A. Yılmaz',4,'Kerem Sarıçiçek','—','w'],['Ali Uçar',1,'Genel Müdürlük','VIP02','in',1],['Aslı Ateş',3,'Otel misafiri','T24','in'],['Ayşe Demir',2,'Kurumsal Satış','T07','w'],['Barış Koçak',1,'Otel misafiri','T16','in'],['Burak Şahin',1,'Casino Pazarlama','—','w'],['Can Öztürk',1,'Loyalty Desk','T02','in'],['Deniz Yurt',2,'Kerem Sarıçiçek','—','w'],['Hülya Keskin',2,'International Marketing','T07','in'],['Kerem Koç',3,'Loyalty Desk','T09','no'],['Selin Ak',3,'Kerem Sarıçiçek','—','w'],['Zeynep Arslan',1,'Merit Royal Yönetim','VIP01','in',1]];
+const ST={w:'<i class="dot"></i>Bekleniyor',in:'<i class="dot ok"></i>Geldi',no:'<i class="dot no"></i>Gelmedi'};
+const MEM={0:[['Cumhuriyet Balosu · 29 Ekim','T05 · geldi'],['Poker Night VIP · 12 Ekim','VIP02 · gelmedi']],4:[['Yaz Konseri · 22 Ağustos','T11 · geldi']]};
+function s3(){const a=S.s3;const rows=G.map((g,i)=>({g,i})).filter(r=>!(a.dup==='merged'&&r.i===1));
+ const dup=a.dup==='merged'?done("A. Yılmaz, Ahmet Yılmaz'la birleştirildi",'dup:'):a.dup==='apart'?done('Ayrı kişiler olarak bırakıldı','dup:')
+  :item('benzer kayıt','Aynı kişi olabilir','<span class="cmp"><span style="display:contents"><div><b>Ahmet Yılmaz</b>4 kişi · T05</div><div><b>A. Yılmaz</b>4 kişi · masasız</div></span></span>Aynı davet eden, aynı kişi sayısı, benzer ad.',B('Birleştir','dup:merged',1)+B('Ayrı kişiler','dup:apart'));
+ const pax=a.pax?done('Burak Şahin · '+a.pax+' kişi · sen seçtin','pax:'):item('listeden okudu','Burak Şahin · "ve eşi" yazıyor','Kişi sayısı 1 görünüyor.',B('2 kişi yap','pax:2',1)+B('1 kalsın','pax:1'));
+ const g=G[a.sel]||G[0],mem=MEM[a.sel];
+ const det=`<div class="kv"><span>Kişi</span><b>${a.sel===6&&a.pax?a.pax:g[1]}</b><span>Davet eden</span><span style="color:var(--tx)">${g[2]}</span><span>Masa</span><span style="color:var(--tx)">${g[3]}</span><span>Durum</span><span style="color:var(--tx)">${ST[g[4]]}</span></div>`;
+ const open=(a.dup==='merged'||a.dup==='apart'?0:1)+(a.pax?0:1);
+ return frame({title:'Misafirler',st:'214 kayıt · 420 kişi · 14 masasız',acts:B("Excel'den al",'noop')+B('Liste yapıştır','noop')+B('Yeni misafir','noop',1),
+  main:`<div class="tools"><input class="in" style="width:260px" placeholder="Ad, davet eden ya da masa ara" aria-label="Misafir ara"><div class="acts"><button class="btn" aria-pressed="true" data-a="noop">Tümü</button><button class="btn" data-a="noop">VIP</button><button class="btn" data-a="noop">Masasız</button><button class="btn" data-a="noop">Gelmedi</button></div></div>
+  <div class="grid"><table><thead><tr><th>Ad soyad</th><th class="num">Kişi</th><th>Davet eden</th><th>Masa</th><th>Durum</th></tr></thead><tbody>${rows.map(r=>`<tr data-a="sel:${r.i}" class="${r.i===a.sel?'on':''}"><td>${r.g[0]}${r.g[5]?'<span class="vipm" title="VIP">★</span>':''}</td><td class="num">${r.i===6&&a.pax?a.pax:r.g[1]}</td><td>${r.g[2]}</td><td>${r.g[3]}</td><td>${ST[r.g[4]]}</td></tr>`).join('')}</tbody></table></div>`,
+  panel:sec('Öneriler'+(open?' ('+open+')':''),dup+pax)+sec(g[0],det)+sec('Geçmiş etkinlikler',mem?mem.map(m=>`<div class="done"><span>${m[0]}</span><span>${m[1]}</span></div>`).join(''):'<p class="mut">Geçmiş etkinliklerde kaydı yok.</p>')})}
+/* ---- 4 seating ---- */
+const U=[['Selin Ak','Kerem Sarıçiçek · 3 kişi','T38'],['Deniz Yurt','Kerem Sarıçiçek · 2 kişi','T38'],['Mehmet Kaya','Kurumsal Satış · 3 kişi','T37'],['Elif Şen','Loyalty Desk · 2 kişi','T37'],['Burak Şahin','Casino Pazarlama · 1 kişi','T37']];
+function s4(){const a=S.s4,d=a.phase==='draft',dn=a.phase==='done';
+ const cls=t=>'found '+(d&&(t.id==='T37'||t.id==='T38')?'ghost ':'');
+ const rows=dn?'<tr><td colspan="3" class="mut">Oturmayan kimse kalmadı.</td></tr>':U.map(u=>`<tr><td>${u[0]}</td><td>${u[1]}</td><td style="text-align:right">${d?'Taslakta '+u[2]:'<button class="lnk" data-a="noop">Oturt</button>'}</td></tr>`).join('');
+ const grid=`<div class="grid"><table><thead><tr><th>Oturmayanlar · ${dn?0:11} kişi</th><th>Davet eden</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+ const panel=d?sec('Taslak · 11 kişi, 2 masa',item('gruplara ve boş yerlere baktı','T38 · 5 kişi','Selin Ak, Deniz Yurt. Kerem Sarıçiçek grubu birlikte.')+item('boş yerlere baktı','T37 · 6 kişi','Mehmet Kaya, Elif Şen, Burak Şahin. En yakın boş yerler.')+`<div class="acts">${B('Vazgeç','draft:idle')}${B('Uygula','draft:done',1)}</div>`)
+  :dn?sec('Taslak',done('11 kişi yerleşti','draft:idle')):sec('Yerleştirme','<p class="mut">Soldaki listeden bir misafiri masaya oturtun ya da "Taslak yerleşim öner" ile hepsi için öneri alın. Öneri, siz uygulayana kadar kimseyi oturtmaz.</p>');
+ return frame({st:dn?'420 / 420 kişi yerleşti':'409 / 420 kişi yerleşti · 11 kişi oturmamış',acts:(d||dn?'':B('Taslak yerleşim öner','draft:think',1))+(dn?B('Hazır','noop',1):''),main:`<div class="split side">${grid}${plan({cls,occ:occOf(dn?{T37:9,T38:5}:null)})}</div>`,panel})}
+/* ---- 5 door ---- */
+const D=[['Ahmet Yılmaz','T05 · 4 kişi','w'],['Ayşe Demir','T07 · 2 kişi','w'],['Can Öztürk','T02 · 1 kişi','in'],['Kerem Koç','T09 · 3 kişi','no'],['Oya Ergin','T03 · 1 kişi','w'],['Zeynep Arslan','VIP01 · 1 kişi','in']];
+function s5(){const a=S.s5,seat=a.w==='T37'||a.w==='T09'?a.w:null;
+ const cls=t=>'found '+(seat===t.id?'glow ':'')+((a.w==='sug'||a.w==='ask')&&(t.id==='T37'||t.id==='T09')?'ghost ':'');
+ const rows=D.map((d,i)=>`<tr data-hot="${d[1].split(' ')[0]}" data-n="${parseInt(d[1].split('· ')[1])}"><td>${d[0]}</td><td>${d[1]}</td><td>${d[2]==='w'?(a.inn[i]?ST.in+' 22:14':ST.w):ST[d[2]]}</td><td style="text-align:right">${d[2]==='w'?(a.inn[i]?`<button class="lnk" data-a="in:${i}">Geri al</button>`:B('Giriş','in:'+i,1)):''}</td></tr>`).join('');
+ let p='';
+ if(a.w==='form')p=sec('Listede olmayan misafir',`<div class="kv" style="align-items:center"><span>Ad soyad</span><input class="in" value="Murat Aydın" aria-label="Ad soyad"><span>Yanında</span><input class="in" value="1" aria-label="Yanında kaç kişi" style="width:56px"></div><div class="acts">${B('Vazgeç','walk:')}${B('Yer öner','walk:sug',1)}</div>`);
+ else if(a.w==='sug')p=sec('Murat Aydın · 2 kişi',item('boş yerlere baktı','T37 · 7 boş yer','',B('Oturt','walk:T37',1))+item('gelmeyenin yeri','T09 · 3 boş yer','Kerem Koç gelmedi.',B('Sor','walk:ask')));
+ else if(a.w==='ask')p=sec("T09'a oturtulsun mu?",`<p>Kerem Koç'un planlanan yeri korunur, raporda değişmez. Murat Aydın yalnızca bu gece T09'da oturur.</p><div class="acts">${B('Hayır','walk:sug')}${B('Evet, oturt','walk:T09',1)}</div>`);
+ else if(seat)p=sec('Davetsiz misafir',done('Murat Aydın · 2 kişi · '+seat+' · geldi 22:14','walk:'));
+ return frame({acts:B('Tam ekran','full'),
+  main:`<div class="split side"><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px"><div class="tools"><input class="in" style="flex:1;height:40px;font-size:15px" placeholder="Misafir adı ya da masa" aria-label="Misafir ara">${a.w?'':`<div class="acts">${B('Listede yok','walk:form')}</div>`}</div><div class="tools mut">Geldi 312 / 420 · bekleniyor 99 · gelmedi 9<span class="sp"></span>${a.full?'Esc: tam ekrandan çık':''}</div>${p?`<div class="flow">${p}</div>`:''}<div class="grid" style="width:auto;flex:1"><table><thead><tr><th>Misafir</th><th>Masa</th><th>Durum</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>${plan({cls,occ:occOf(seat==='T37'?{T37:5}:null),me:seat?{id:seat,n:2}:null})}</div>`})}
+function s6(){const r=document.documentElement.dataset,o=(k,v,l)=>`<button class="btn" aria-pressed="${r[k]===v}" data-a="set:${k}=${v}">${l}</button>`;
+ return frame({main:`<div class="set"><div class="r"><label>Tema</label>${o('skin','atlas','Atlas')}${o('skin','grafit','Grafit')}${o('skin','lacivert','Lacivert')}</div><div class="r"><label>Görünüm</label>${o('theme','light','Açık')}${o('theme','dark','Koyu')}</div><div class="r"><label>Yazı tipi</label>${o('font','inter','Inter')}${o('font','plex','IBM Plex Sans')}${o('font','manrope','Manrope')}</div></div>`,panel:sec('Ayarlar','<p>Tema ve açık / koyu ayrı seçilir. Seçim bütün ekranlara uygulanır.</p>')})}
+const FONTS={inter:'"Inter"',plex:'"IBM Plex Sans"',manrope:'"Manrope"'};
+function applyFont(){document.documentElement.style.setProperty('--f',FONTS[document.documentElement.dataset.font]+',"Segoe UI",system-ui,sans-serif')}
+/* ---- shell ---- */
+const R={s1,s2,s3,s4,s5,s6},NAV=[['Etkinlik',null],['Salon','s1'],['Misafirler','s3'],['Oturma','s4'],['Kapı','s5'],['Raporlar',null]];
+function render(){const c=S.cur;$('#stage').classList.toggle('full',c==='s5'&&S.s5.full);$('#body').innerHTML=R[c]();
+ $('#tabs').innerHTML=Object.keys(SC).map(k=>`<button class="btn" aria-pressed="${k===c}" data-a="go:${k}">${SC[k][0]}</button>`).join('');
+ const act=c==='s2'?'s1':c;$('#nav').innerHTML=NAV.map(n=>`<button class="${n[1]===act?'on':''}" data-a="${n[1]?'go:'+n[1]:'noop'}">${n[0]}</button>`).join('');
+ $('#hint').textContent=SC[c][1];$('#fbt').textContent=SC[c][0]+' ekranı:';const f=FB[c]||{};
+ $('#vk').setAttribute('aria-pressed',f.v==='keep');$('#vd').setAttribute('aria-pressed',f.v==='drop');if(document.activeElement!==$('#note'))$('#note').value=f.note||'';
+ const m=$('#msgs');if(m)m.scrollTop=m.scrollHeight}
+const ACT={go:k=>{S.cur=k;if(k==='s2')S.s2.open=true;$('#gstrip').hidden=true;render()},noop:()=>{},set:v=>{const [k,x]=v.split('=');document.documentElement.dataset[k]=x;if(k==='font')applyFont();render()},full:()=>{S.s5.full=true;render()},lay:()=>{S.s4.lay=S.s4.lay==='side'?'':'side';render()},
+ analyze,num:v=>{S.s1.num=v||null;render()},cap:v=>{S.s1.cap=v||null;render()},un:v=>{S.s1.un=v||null;render()},zones:()=>{S.s1.zones=!S.s1.zones;render()},zacc:v=>{S.s1.zacc=!!v;S.s1.zones=!!v;render()},
+ acceptall:()=>{const a=S.s1;if(!a.num)a.num='T23';if(!a.cap)a.cap='11';render()},
+ ask:i=>ask(QS[+i]),chatx:()=>{S.s2.open=false;render()},chatopen:()=>{S.s2.open=true;render()},
+ mic:()=>{const a=S.s2;a.listen=true;render();setTimeout(()=>{a.listen=false;ask('ayşe demir geldi',true)},RM?400:1800)},
+ apply:i=>{const a=S.s2,m=a.msgs[+i];m.st='done';if(m.card==='seat')a.seated=true;a.glow=a.mark;a.mark=null;render()},cancel:i=>{const a=S.s2;a.msgs[+i].st='cancel';a.mark=null;render()},undo:i=>{const a=S.s2,m=a.msgs[+i];m.st='undone';if(m.card==='seat')a.seated=false;a.glow=null;render()},
+ dup:v=>{S.s3.dup=v||null;if(v==='merged'&&S.s3.sel===1)S.s3.sel=0;render()},pax:v=>{S.s3.pax=v||null;render()},sel:i=>{S.s3.sel=+i;render()},
+ draft:v=>{const a=S.s4;if(v==='think'){$('#gstrip').hidden=false;setTimeout(()=>{$('#gstrip').hidden=true;a.phase='draft';if(S.cur==='s4')render()},RM?200:900)}else{a.phase=v;render()}},
+ walk:v=>{S.s5.w=v||null;render()},in:i=>{S.s5.inn[i]=!S.s5.inn[i];render()},
+ vote:v=>{const f=FB[S.cur]||(FB[S.cur]={});f.v=f.v===v?null:v;render();persist(S.cur)}};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const i=b.dataset.a.indexOf(':'),k=i<0?b.dataset.a:b.dataset.a.slice(0,i),v=i<0?'':b.dataset.a.slice(i+1);(ACT[k]||ACT.noop)(v,b)});
+document.addEventListener('submit',e=>{if(e.target.id!=='cf')return;e.preventDefault();const q=$('#cq').value.trim();if(q)ask(q)});
+const hot=(e,on)=>{const s=e.target.closest&&e.target.closest('[data-hot]');if(!s)return;const t=document.querySelector('#body .t[data-t="'+s.dataset.hot+'"]');if(!t)return;t.classList.toggle('hot',on);if(s.dataset.n){t.classList.toggle('glow',on);[...t.querySelectorAll('.ch circle')].forEach((c,i)=>c.classList.toggle('me',on&&i<+s.dataset.n))}};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.cur==='s5'&&S.s5.full){S.s5.full=false;render()}});
+document.addEventListener('mouseover',e=>hot(e,true));document.addEventListener('mouseout',e=>hot(e,false));document.addEventListener('focusin',e=>hot(e,true));document.addEventListener('focusout',e=>hot(e,false));
+function fit(){const b=$('#stagebox'),s=Math.min(1,b.clientWidth/1280);$('#stage').style.transform='scale('+s+')';b.style.height=Math.round(760*s)+'px'}
+addEventListener('resize',fit);
+const FB={};let db=null,tm=null;
+try{Object.assign(FB,JSON.parse(localStorage.getItem('merit-gorus-3')||'{}'))}catch(e){}
+async function persist(id){try{localStorage.setItem('merit-gorus-3',JSON.stringify(FB))}catch(e){}const f=FB[id]||{},sv=$('#save');
+ if(!db){sv.textContent='Bu cihazda kaydedildi';return}sv.textContent='Kaydediliyor…';
+ try{await db.doc('gorus3/'+id).set({v:f.v||null,note:f.note||'',at:Date.now()});sv.textContent='Kaydedildi'}catch(e){sv.textContent='Kaydedilemedi, tekrar deneyin'}}
+$('#note').addEventListener('input',e=>{const id=S.cur,f=FB[id]||(FB[id]={});f.note=e.target.value;$('#save').textContent='Yazılıyor…';clearTimeout(tm);tm=setTimeout(()=>persist(id),900)});
+{const r=document.documentElement.dataset;if(!r.theme)r.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';r.skin='atlas';r.font='inter';applyFont()}
+render();fit();
+(async()=>{try{db=await window.claude?.use?.('db')}catch(e){db=null}if(!db)return;
+ db.collection('gorus3').onSnapshot(snap=>{for(const d of snap.docs){const x=d.data()||{};if(d.id===S.cur&&document.activeElement===$('#note'))continue;FB[d.id]={v:x.v||null,note:x.note||''}}render()},()=>{})})();
+</script>

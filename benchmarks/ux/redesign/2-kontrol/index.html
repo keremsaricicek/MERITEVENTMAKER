@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Merit Kontrol Masası</title>
+<style>
+:root{
+  --ink-0:#0D1015;   /* the desk itself: frame, stage */
+  --ink-1:#141820;   /* the answer column */
+  --ink-2:#1B2029;   /* raised / hover */
+  --ink-3:#252B35;   /* pressed / stage block */
+  --rule:#2A313B;
+  --rule-2:#3B434F;
+  --paper:#EDE7DB;   /* primary text */
+  --paper-2:#BDB5A7; /* secondary text */
+  --paper-3:#9A9387; /* tertiary text, still >= 4.5:1 */
+  --bronze:#C99D6B;  /* the one accent: line, focus, leader */
+  --bronze-2:#8C6A47;
+  --bronze-ink:#18120B;
+  --vip:#E4C886;     /* only for a genuine VIP */
+  --ok:#93C4A1;      /* geldi */
+  --no:#E59C8C;      /* gelmedi / blocking */
+  --info:#A7B9CD;
+  --sheet:#F1ECE2;   /* printed paper preview only */
+  --sheet-ink:#22201C;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Charter,"Bitstream Charter",Georgia,serif;
+  --sans:"Segoe UI","SF Pro Text",-apple-system,Inter,system-ui,sans-serif;
+  --mono:"SF Mono","Cascadia Mono","JetBrains Mono",Consolas,"DejaVu Sans Mono",monospace;
+  --col:470px;
+  --t:150ms;
+}
+@media (min-width:1700px){:root{--col:540px}}
+@media (prefers-reduced-motion:reduce){:root{--t:0ms}}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--ink-0);color:var(--paper);font:15px/1.45 var(--sans);
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;
+  display:grid;grid-template-rows:56px minmax(0,1fr) 64px;grid-template-columns:minmax(0,1fr) var(--col);
+  height:100vh;overflow:hidden}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--bronze);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ── pano: the top rail of the desk ─────────────────────────────── */
+.pano{grid-column:1/-1;display:flex;align-items:center;gap:22px;padding:0 24px;border-bottom:1px solid var(--rule)}
+.mark{font:500 15px/1 var(--serif);letter-spacing:.34em;color:var(--paper);padding-right:20px;border-right:1px solid var(--rule)}
+.evbtn{white-space:nowrap;min-width:0;background:none;border:0;padding:6px 8px;margin-left:-8px;border-radius:3px;cursor:pointer;text-align:left;display:flex;align-items:baseline;gap:12px}
+.evbtn:hover{background:var(--ink-2)}
+.evbtn b{font:400 19px/1.1 var(--serif);letter-spacing:.01em}
+.evbtn span{color:var(--paper-2);font-size:14px}
+.lamp{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ok);letter-spacing:.06em;text-transform:uppercase}
+.lamp::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(147,196,161,.14)}
+.tally{margin-left:auto;display:flex;align-items:baseline;gap:26px}
+.tally div{display:flex;align-items:baseline;gap:8px}
+.tally small{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--paper-3)}
+.tally output{white-space:nowrap;font:500 17px/1 var(--mono);display:inline-block;text-align:right;padding:3px 4px;border-radius:2px;transition:background-color 900ms}
+.tally output.tick{background:rgba(201,157,107,.26);transition:none}
+#t-arr{min-width:9ch}#t-wait{min-width:3.5ch}#t-no{min-width:3ch}#t-un{min-width:3ch}
+.clock{font:400 17px/1 var(--mono);color:var(--paper-2);padding-left:22px;border-left:1px solid var(--rule)}
+
+/* ── stage: the room, always the ground ─────────────────────────── */
+.stage{grid-row:2;grid-column:1;position:relative;overflow:hidden;background:var(--ink-0)}
+#room{position:absolute;inset:18px 28px 46px 28px}
+#room svg{width:100%;height:100%;display:block}
+.caption{position:absolute;left:28px;right:28px;bottom:0;height:42px;display:flex;align-items:center;gap:22px;
+  border-top:1px solid var(--rule);font-size:14px;color:var(--paper-2)}
+.caption .read{min-width:0;flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.caption .read b{color:var(--paper);font-weight:600}
+.legend{display:flex;gap:16px;color:var(--paper-3);font-size:13px;white-space:nowrap}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.last{width:330px;flex:none;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--paper-2)}
+.last button{background:none;border:0;color:var(--bronze);cursor:pointer;padding:2px 4px;text-decoration:underline;text-underline-offset:3px}
+
+/* room drawing */
+.wall{fill:none;stroke:var(--rule-2);stroke-width:2}
+.fixt rect{fill:var(--ink-3);stroke:var(--rule-2)}
+.fixt text,.ftxt{fill:var(--paper-3);font:600 14px var(--sans);letter-spacing:.32em}
+.tb{cursor:pointer;transition:opacity var(--t)}
+.tb .body{fill:var(--ink-2);stroke:var(--paper-3);stroke-width:1.4;transition:stroke var(--t)}
+.tb.vipt .body{stroke:var(--vip);stroke-opacity:.75}
+.tb .tl{fill:var(--paper);font:600 15px var(--sans);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.tb .tl.q{fill:var(--bronze)}
+.tb:hover .body,.tb.sel .body{stroke:var(--bronze);stroke-width:2.2}
+.tb.fit .body{stroke:var(--bronze);stroke-width:2}
+.tb.dim{opacity:.32}
+.tb.grp .body{stroke-dasharray:3 3}
+.ch{fill:none;stroke:var(--paper-3);stroke-width:1.2;opacity:.8;transition:fill var(--t),stroke var(--t)}
+.ch.plan{fill:var(--paper-3);stroke:var(--paper-3);opacity:1}
+.ch.mine{fill:var(--bronze);stroke:var(--bronze);opacity:1}
+.ch.prev{fill:none;stroke:var(--bronze);stroke-dasharray:2 2;stroke-width:1.6;opacity:1}
+.ch.draft{fill:none;stroke:var(--paper);stroke-dasharray:2 1.5;opacity:1}
+.ch.in{fill:var(--ok);stroke:var(--ok);opacity:1}
+.ch.part{fill:var(--ink-0);stroke:var(--ok);stroke-width:2;opacity:1}
+.ch.no{fill:var(--ink-0);stroke:var(--no);stroke-width:1.6;opacity:1}
+.ch.wait{fill:none;stroke:var(--paper-2);opacity:1}
+.ch.lit{animation:lit 1.4s ease-out 1}
+@keyframes lit{0%{stroke:var(--bronze);stroke-width:5}100%{stroke-width:1.2}}
+@media (prefers-reduced-motion:reduce){.ch.lit{animation:none}}
+.pin circle{fill:var(--ink-0);stroke:var(--bronze);stroke-width:1.6}
+.pin.bad circle{stroke:var(--no)}
+.pin text{fill:var(--paper);font:700 13px var(--sans);text-anchor:middle;dominant-baseline:central}
+.ghost{fill:none;stroke:var(--bronze);stroke-dasharray:4 4;stroke-width:1.4}
+.plan-edit .tb{cursor:grab}
+
+/* ── answer column ──────────────────────────────────────────────── */
+.col{grid-row:2;grid-column:2;border-left:1px solid var(--rule);background:var(--ink-1);display:flex;flex-direction:column;min-height:0}
+.ch-h{padding:22px 26px 16px;border-bottom:1px solid var(--rule);display:flex;align-items:flex-end;gap:14px;flex:none}
+.ch-h h1{margin:0;font:400 27px/1.1 var(--serif);letter-spacing:.005em}
+.ch-h p{margin:5px 0 0;color:var(--paper-2);font-size:14px}
+.ch-h .act{margin-left:auto;display:flex;gap:8px;align-items:center;flex:none}
+.scroll{flex:1 1 auto;overflow:auto;min-height:0;padding:6px 0 18px;scrollbar-width:thin;scrollbar-color:var(--rule-2) transparent}
+.foot{flex:none;border-top:1px solid var(--rule);padding:16px 26px 18px;background:var(--ink-1)}
+.eyebrow{margin:20px 26px 8px;font:600 12px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--paper-3);display:flex;gap:10px;align-items:baseline}
+.eyebrow span{letter-spacing:0;text-transform:none;font-weight:400}
+.btn{height:34px;padding:0 14px;border-radius:3px;border:1px solid var(--rule-2);background:transparent;cursor:pointer;font-size:14px;white-space:nowrap}
+.btn:hover{border-color:var(--paper-3);background:var(--ink-2)}
+.btn.pri{background:var(--bronze);border-color:var(--bronze);color:var(--bronze-ink);font-weight:600}
+.btn.pri:hover{background:#D6AB79}
+.btn.sm{height:28px;padding:0 10px;font-size:13px}
+.txt{background:none;border:0;padding:4px 2px;color:var(--paper-2);cursor:pointer;font-size:14px;text-decoration:underline;text-decoration-color:var(--rule-2);text-underline-offset:4px}
+.txt:hover{color:var(--paper);text-decoration-color:var(--bronze)}
+.txt.danger{color:var(--no)}
+.kbd{font:500 12px/1 var(--mono);color:var(--paper-2);border:1px solid var(--rule-2);border-radius:3px;padding:3px 5px}
+.verdict{margin:22px 26px 6px;font:400 25px/1.3 var(--serif)}
+.verdict em{font-style:normal;color:var(--bronze)}
+.row{display:grid;align-items:center;gap:12px;padding:10px 26px;border-bottom:1px solid rgba(42,49,59,.7);cursor:pointer;position:relative}
+.row:hover{background:var(--ink-2)}
+.row.on{background:var(--ink-2);box-shadow:inset 3px 0 0 var(--bronze)}
+.row .t1{font-size:15px;color:var(--paper)}
+.row .t2{font-size:13.5px;color:var(--paper-2)}
+.issue{grid-template-columns:24px 1fr auto}
+.glyph{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--bronze);display:grid;place-items:center;font:700 12px var(--sans);color:var(--paper)}
+.glyph.bad{border-color:var(--no)}
+.glyph.none{border-style:dashed;border-color:var(--paper-3)}
+.check{display:grid;grid-template-columns:20px 1fr;gap:10px;padding:7px 26px;font-size:14px;color:var(--paper-2)}
+.check svg{margin-top:3px}
+.numline{margin:4px 26px 0;font-size:14px;color:var(--paper-2);display:flex;flex-wrap:wrap;gap:4px 18px}
+.numline b{font:500 15px var(--mono);color:var(--paper)}
+.spark{margin:6px 26px 0}
+.spark text{fill:var(--paper-3);font:12px var(--sans)}
+.vip{display:inline-flex;align-items:center;gap:4px;font:600 12px/1 var(--sans);letter-spacing:.08em;color:var(--vip)}
+.st{font-size:13.5px;white-space:nowrap}
+.st.in{color:var(--ok)}.st.no{color:var(--no)}.st.wait{color:var(--paper-3)}
+.code{font:500 15px var(--mono);color:var(--paper)}
+.muted{color:var(--paper-3)}
+.filters{display:flex;flex-wrap:wrap;gap:4px 18px;padding:12px 26px 10px;border-bottom:1px solid var(--rule)}
+.filters button{background:none;border:0;padding:4px 0;cursor:pointer;color:var(--paper-2);font-size:14px;border-bottom:2px solid transparent}
+.filters button b{font:500 13px var(--mono);color:var(--paper-3);margin-left:5px}
+.filters button.on{color:var(--paper);border-bottom-color:var(--bronze)}
+.roll{grid-template-columns:minmax(0,1fr) 112px 54px 58px;padding-top:9px;padding-bottom:9px}
+.roll .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.roll .plus{color:var(--paper-3);font-family:var(--mono);font-size:13.5px;margin-left:6px}
+.roll .h{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px;color:var(--paper-2)}
+.rollhead{display:grid;grid-template-columns:minmax(0,1fr) 112px 54px 58px;gap:12px;padding:8px 26px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--paper-3);border-bottom:1px solid var(--rule)}
+.dl{display:grid;grid-template-columns:110px 1fr;gap:6px 14px;font-size:14px;margin-top:12px}
+.dl dt{color:var(--paper-3)}.dl dd{margin:0}
+.seg{display:inline-flex;border:1px solid var(--rule-2);border-radius:3px;overflow:hidden}
+.seg button{background:none;border:0;padding:5px 12px;cursor:pointer;color:var(--paper-2);font-size:13.5px}
+.seg button+button{border-left:1px solid var(--rule-2)}
+.seg button.on{background:var(--ink-3);color:var(--paper)}
+.note{font-size:13.5px;color:var(--paper-2);margin-top:6px}
+.warn{font-size:13.5px;color:var(--no)}
+.tray{grid-template-columns:minmax(0,1fr) auto}
+.tray .stt{min-width:120px;text-align:right;font-size:13.5px}
+.door{grid-template-columns:minmax(0,1fr) 70px 150px;min-height:70px;padding-top:12px;padding-bottom:12px}
+.door .t1{font-size:18px;font-weight:500}
+.door .tcode{font:500 21px var(--mono);text-align:center}
+.door .tcode.none{font:500 13px var(--sans);color:var(--no)}
+.door .state{display:flex;justify-content:flex-end;align-items:center;gap:6px;height:36px}
+.door .state .in{color:var(--ok);font-size:14px;text-align:right;line-height:1.2}
+.door .state .no{color:var(--no);font-size:14px;text-align:right;line-height:1.2}
+.more{width:30px;height:34px;border:0;background:none;color:var(--paper-2);cursor:pointer;border-radius:3px;font-size:18px;line-height:1}
+.more:hover{background:var(--ink-3);color:var(--paper)}
+.stepper{display:flex;align-items:center;gap:6px;font:500 15px var(--mono)}
+.stepper button{width:28px;height:28px;border:1px solid var(--rule-2);background:none;border-radius:3px;cursor:pointer}
+.grp{display:grid;grid-template-columns:minmax(0,1fr) 80px;gap:4px 12px;padding:9px 26px;font-size:14px}
+.grp .bar{grid-column:1/-1;height:3px;background:var(--rule);position:relative}
+.grp .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--bronze-2);transition:width 600ms}
+.grp .n{text-align:right;font:500 14px var(--mono)}
+.results{display:flex;flex-direction:column;min-height:100%}
+.results>:first-child{margin-top:auto}
+.kind{font:600 12px/1 var(--sans);letter-spacing:.12em;color:var(--bronze);text-transform:uppercase;margin-bottom:5px}
+.prop{grid-template-columns:minmax(0,1fr) auto}
+.prop .enter{visibility:hidden}
+.row.on .enter{visibility:visible}
+.qhead{padding:20px 26px 14px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex:none}
+.qhead b{font:400 21px var(--serif)}
+.qhead span{font-size:13px;color:var(--paper-3)}
+.empty{padding:26px;color:var(--paper-2)}
+.help{padding:0 26px 14px;color:var(--paper-2);font-size:14px}
+.field{display:grid;gap:6px;margin-top:12px}
+.field label{font-size:13px;color:var(--paper-3)}
+.field input,.field select,.field textarea{background:var(--ink-0);border:1px solid var(--rule-2);border-radius:3px;padding:8px 10px;font-size:14.5px}
+.field textarea{min-height:96px;resize:vertical;font-family:var(--mono);font-size:13.5px}
+.repo{grid-template-columns:minmax(0,1fr) auto}
+.fmt{font:500 12px var(--mono);color:var(--paper-2);border:1px solid var(--rule-2);border-radius:2px;padding:3px 6px}
+
+/* ── the lower desk: lens dial + the line ───────────────────────── */
+.dial{grid-row:3;grid-column:1;display:flex;align-items:stretch;padding:0 14px;border-top:1px solid var(--rule)}
+.dial button{background:none;border:0;cursor:pointer;display:flex;align-items:center;gap:9px;padding:0 15px;color:var(--paper-2);font-size:15px;position:relative}
+.dial button .kbd{border-color:transparent;color:var(--paper-3);padding:0}
+.dial button:hover{color:var(--paper)}
+.dial button.on{color:var(--paper)}
+.dial button.on::before{content:"";position:absolute;left:12px;right:12px;top:-1px;height:2px;background:var(--bronze)}
+.dial button.on .kbd{color:var(--bronze)}
+.dial .sep{width:1px;background:var(--rule);margin:16px 6px}
+.line{grid-row:3;grid-column:2;border-top:1px solid var(--rule);border-left:1px solid var(--rule);display:flex;align-items:center;gap:10px;padding:0 18px 0 22px;background:var(--ink-1)}
+.line.focus{border-top-color:var(--bronze)}
+.line .pr{font:400 24px/1 var(--serif);color:var(--bronze);margin-top:-3px}
+.line input{flex:1;min-width:0;background:none;border:0;outline:none;font-size:16px;color:var(--paper);caret-color:var(--bronze)}
+.line input::placeholder{color:var(--paper-3)}
+
+/* ── home: the season strip ─────────────────────────────────────── */
+#season{position:absolute;inset:0 0 42px 0;display:none}
+.axis{position:absolute;left:56px;right:56px;top:52%;height:1px;background:var(--rule-2)}
+.month{position:absolute;top:calc(52% + 12px);font:600 12px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--paper-3);transform:translateX(-50%)}
+.mtick{position:absolute;top:calc(52% - 4px);width:1px;height:9px;background:var(--rule-2)}
+.now{position:absolute;top:13%;bottom:13%;width:1px;background:var(--bronze-2)}
+.now span{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);font:600 12px var(--sans);letter-spacing:.12em;color:var(--bronze);white-space:nowrap}
+.ev{position:absolute;transform:translateX(-50%);background:none;border:0;cursor:pointer;text-align:center;padding:6px 8px;border-radius:3px;width:180px}
+.ev:hover{background:rgba(27,32,41,.8)}
+.ev .d{font:400 34px/1 var(--serif);color:var(--paper)}
+.ev .m{font:600 12px var(--sans);letter-spacing:.12em;color:var(--paper-3);text-transform:uppercase;margin-top:3px}
+.ev .n{font-size:14.5px;color:var(--paper);margin-top:8px;line-height:1.3}
+.ev .v{font-size:13px;color:var(--paper-2)}
+.ev.past .d,.ev.past .n{color:var(--paper-2)}
+.ev.on{box-shadow:inset 0 -2px 0 var(--bronze);background:rgba(27,32,41,.9)}
+.dot{position:absolute;top:52%;width:13px;height:13px;margin:-6px 0 0 -6px;border-radius:50%;border:1.5px solid var(--paper-2);background:var(--ink-0)}
+.dot.past{border-color:var(--paper-3)}
+.dot.live{border-color:var(--bronze);background:var(--bronze)}
+.dot.new{border-style:dashed;border-color:var(--bronze)}
+.stem{position:absolute;width:1px;background:var(--rule)}
+.seasonhead{position:absolute;left:56px;top:28px;font:400 15px var(--serif);color:var(--paper-2)}
+.seasonhead b{display:block;font:400 30px/1.15 var(--serif);color:var(--paper);margin-bottom:4px}
+
+/* ── report preview: paper under the desk lamp ──────────────────── */
+#paper{position:absolute;inset:26px 40px 70px 40px;display:none;overflow:auto}
+.sheet{background:var(--sheet);color:var(--sheet-ink);margin:0 auto;max-width:1100px;padding:34px 40px;border-radius:2px;box-shadow:0 30px 80px rgba(0,0,0,.55);font-size:13px}
+.sheet h2{margin:0 0 2px;font:400 22px var(--serif)}
+.sheet .sub{color:#5B564D;font-size:13px;margin-bottom:18px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.card{border:1px solid #B9B1A3;padding:8px 10px}
+.card b{display:block;font:700 13px var(--sans);border-bottom:1px solid #B9B1A3;padding-bottom:4px;margin-bottom:4px}
+.card div{font-size:12px;line-height:1.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tabs{display:flex;gap:0;margin-top:18px;border-top:1px solid #B9B1A3}
+.tabs span{padding:6px 14px;font:600 12px var(--sans);border:1px solid #B9B1A3;border-top:0;margin-right:-1px;color:#5B564D}
+.tabs span:first-child{background:#fff;color:var(--sheet-ink)}
+.az{columns:3;column-gap:28px;font-size:12.5px;line-height:1.75}
+.az div{display:flex;justify-content:space-between;border-bottom:1px dotted #B9B1A3;break-inside:avoid}
+.az h4{margin:8px 0 2px;font:700 13px var(--serif)}
+.jr{width:100%;border-collapse:collapse;font-size:12.5px}
+.jr th{text-align:left;font-weight:600;border-bottom:1.5px solid #22201C;padding:5px 6px}
+.jr td{border-bottom:1px solid #D2CBBE;padding:5px 6px}
+.jr tr.g td{font-weight:700;background:#E6E0D4}
+
+/* ── popover menu ───────────────────────────────────────────────── */
+.menu{position:fixed;z-index:20;min-width:230px;background:var(--ink-2);border:1px solid var(--rule-2);border-radius:3px;padding:5px 0;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.menu button{display:block;width:100%;text-align:left;background:none;border:0;padding:9px 16px;cursor:pointer;font-size:14px}
+.menu button:hover,.menu button:focus-visible{background:var(--ink-3);outline:none}
+.menu button.danger{color:var(--no)}
+.menu hr{border:0;border-top:1px solid var(--rule);margin:5px 0}
+#leader{position:fixed;inset:0;pointer-events:none;z-index:10;width:100vw;height:100vh}
+#leader path{fill:none;stroke:var(--bronze);stroke-width:1.2}
+#leader circle{fill:var(--bronze)}
+</style>
+</head>
+<body>
+<header class="pano">
+  <div class="mark">MERIT</div>
+  <button class="evbtn" id="evbtn" title="Etkinlikler (0)"><b>Merit Royal Yılbaşı Galası</b><span>31 Aralık 2026 · Grand Balo Salonu</span></button>
+  <span class="lamp">Canlı</span>
+  <div class="tally" aria-live="polite">
+    <div><small>Geldi</small><output id="t-arr"></output></div>
+    <div><small>Bekleniyor</small><output id="t-wait"></output></div>
+    <div><small>Gelmedi</small><output id="t-no"></output></div>
+    <div><small>Oturmamış</small><output id="t-un"></output></div>
+    <span class="clock" id="clock">22:14</span>
+  </div>
+</header>
+
+<section class="stage" id="stage" aria-label="Salon">
+  <div id="room"></div>
+  <div id="season"></div>
+  <div id="paper"></div>
+  <div class="caption">
+    <div class="read" id="read"></div>
+    <div class="legend" id="legend"></div>
+    <div class="last" id="last"></div>
+  </div>
+</section>
+
+<aside class="col" id="col" aria-live="polite"></aside>
+
+<nav class="dial" id="dial" aria-label="Mercekler">
+  <button data-lens="home"><span class="kbd">0</span>Etkinlikler</button>
+  <span class="sep"></span>
+  <button data-lens="durum"><span class="kbd">1</span>Durum</button>
+  <button data-lens="plan"><span class="kbd">2</span>Plan</button>
+  <button data-lens="misafir"><span class="kbd">3</span>Misafirler</button>
+  <button data-lens="oturma"><span class="kbd">4</span>Oturma</button>
+  <button data-lens="kapi"><span class="kbd">5</span>Kapı</button>
+  <button data-lens="rapor"><span class="kbd">6</span>Raporlar</button>
+</nav>
+
+<div class="line" id="line">
+  <span class="pr" aria-hidden="true">›</span>
+  <label for="q" class="sr">Komut satırı</label>
+  <input id="q" autocomplete="off" spellcheck="false" placeholder="İsim, masa ya da komut yazın…">
+  <span class="kbd">F8</span>
+</div>
+
+<div class="menu" id="menu" hidden role="menu"></div>
+<svg id="leader" aria-hidden="true"></svg>
+
+<script>
+'use strict';
+/* ═══ utilities ═════════════════════════════════════════════════════ */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad2=n=>String(n).padStart(2,'0');
+const fold=s=>String(s).toLocaleLowerCase('tr-TR').replace(/ı/g,'i').replace(/i̇/g,'i').replace(/ş/g,'s').replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ö/g,'o').replace(/ç/g,'c').replace(/â/g,'a');
+const UP=s=>String(s).toLocaleUpperCase('tr-TR');
+const collator=new Intl.Collator('tr');
+const DAT={1:"'e",2:"'ye",3:"'e",4:"'e",5:"'e",6:"'ya",7:"'ye",8:"'e",9:"'a"},DAT0={10:"'a",20:"'ye",30:"'a",40:"'a"};
+const LOC={1:"'de",2:"'de",3:"'te",4:"'te",5:"'te",6:"'da",7:"'de",8:"'de",9:"'da"},LOC0={10:"'da",20:"'de",30:"'da",40:"'ta"};
+const sfx=(id,A,A0)=>{const n=parseInt(id.replace(/\D/g,''),10);return id+(n%10?A[n%10]:A0[n])};
+const dat=id=>sfx(id,DAT,DAT0), loc=id=>sfx(id,LOC,LOC0);
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R=rng(20261231), pick=a=>a[Math.floor(R()*a.length)];
+const VIPSVG='<svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0 10 5 5 10 0 5Z" fill="currentColor"/></svg>';
+const vipMark=v=>v?`<span class="vip">${VIPSVG}${v}</span>`:'';
+const hm=m=>{const t=19*60+30+m;return pad2(Math.floor(t/60)%24)+':'+pad2(t%60)};
+
+/* ═══ the room: 42 tables, as drawn ═════════════════════════════════ */
+const TABLES=[];
+[250,400,600,750].forEach((x,i)=>TABLES.push({id:'VIP0'+(i+1),cap:12,chairs:12,kind:'rect',x,y:130,rot:0}));
+let tn=1;
+[222,312,402,492,582].forEach((y,ri)=>{const cols=ri<3?8:7,x0=ri<3?95:149;for(let c=0;c<cols;c++)TABLES.push({id:'T'+pad2(tn++),cap:10,chairs:10,kind:'round',x:x0+c*108,y,rot:0})});
+TABLES.find(t=>t.id==='VIP02').chairs=11; // the drawing carries 11 chairs; capacity stays 12 until a person decides
+TABLES.find(t=>t.id==='T23').unread=true;
+const TBL=id=>TABLES.find(t=>t.id===id);
+
+/* ═══ guests: one record per party ══════════════════════════════════ */
+const G=[];let gid=1;const used=new Set();
+function add(o){const r=Object.assign({id:gid++,add:0,vip:'',host:'—',junket:'',table:null,plan:'Kesin',arr:'wait',at:null,inPax:0},o);r.pax=1+r.add;used.add(r.name);G.push(r);return r}
+add({name:'Ahmet Yılmaz',add:3,vip:'VIP',host:'Kerem Sarıçiçek',junket:'Kerem Sarıçiçek',fixed:'T05',arr:'in',at:132});
+add({name:'Ayşe Demir',add:1,host:'Kurumsal Satış',fixed:'T07',arr:'in',at:88});
+add({name:'Mehmet Kaya',add:2,host:'Kurumsal Satış',plan:'Belirsiz',unseated:true});
+add({name:'Zeynep Arslan',vip:'VVIP',host:'Genel Müdürlük',fixed:'VIP01',arr:'in',at:121});
+add({name:'Can Öztürk',host:'Otel misafiri',fixed:'T02',arr:'in',at:64});
+add({name:'Elif Şen',add:1,host:'Loyalty Desk',junket:'Loyalty Desk',unseated:true});
+add({name:'Burak Şahin',host:'Kurumsal Satış',unseated:true,apart:'Can Öztürk'});
+add({name:'Selin Ak',add:2,host:'Kerem Sarıçiçek',junket:'Kerem Sarıçiçek',unseated:true});
+add({name:'Deniz Yurt',add:1,host:'International Marketing',junket:'International Marketing',plan:'Belirsiz',unseated:true});
+add({name:'Kerem Koç',add:2,host:'Kurumsal Satış',fixed:'T09',arr:'no'});
+add({name:'Hülya Keskin',add:1,host:'Genel Müdürlük',fixed:'T08',keep:true});
+add({name:'Oya Ergin',host:'Kurumsal Satış',fixed:'VIP03',keep:true});
+add({name:'Tolga Er',add:2,host:'Otel misafiri',plan:'Belirsiz',unseated:true});
+const FIRST=['Ali','Ayhan','Barış','Begüm','Berk','Buse','Cem','Cemre','Damla','Doğan','Ebru','Emre','Esra','Fatih','Filiz','Gizem','Gökhan','Hakan','Hande','İlker','İpek','Kaan','Leyla','Levent','Melis','Murat','Nazlı','Necla','Onur','Özge','Pınar','Rıza','Seda','Serkan','Sevgi','Sinan','Şule','Tuba','Tuncay','Ufuk','Umut','Volkan','Yasemin','Yiğit','Zafer','Gülay','Erdem','Nil','Orhan','Aslı','Bora','Ceren','Derya','Engin','Figen','Halil','Irmak','Kemal','Lale','Mert'];
+const LAST=['Aydın','Bulut','Çelik','Doğru','Erdoğan','Güneş','Işık','Kara','Kılıç','Koçak','Kurt','Özdemir','Polat','Sarı','Tekin','Tunç','Uçar','Vural','Yavuz','Yıldız','Aksoy','Bayram','Coşkun','Duman','Eren','Gür','Karaca','Oral','Sezer','Toprak','Ünal','Akın','Ateş','Başaran','Demirtaş','Ekinci','Gündoğdu','Kaplan','Metin','Soylu'];
+const uname=()=>{let n;do n=pick(FIRST)+' '+pick(LAST);while(used.has(n));return n};
+function gen(total,base,w=[.34,.42,.15,.09]){const out=[];let left=total;while(left>0){const r=R();let p=r<w[0]?1:r<w[0]+w[1]?2:r<w[0]+w[1]+w[2]?3:4;p=Math.min(p,left);const vip=typeof base.vip==='function'?base.vip():base.vip||'';out.push(add({...base,vip,name:uname(),add:p-1,plan:R()<.1?'Belirsiz':'Kesin'}));left-=p}return out}
+const gVIP=gen(41,{host:'Genel Müdürlük',vip:()=>R()<.3?'VVIP':'VIP'});
+const gKS=gen(31,{host:'Kerem Sarıçiçek',junket:'Kerem Sarıçiçek'});
+const gLD=gen(22,{host:'Loyalty Desk',junket:'Loyalty Desk'});
+const gIM=gen(14,{host:'International Marketing',junket:'International Marketing'});
+const HOSTS=['Kurumsal Satış','Otel misafiri','Casino Pazarlama','Basın','Genel Müdürlük','—'];
+const gRest=[];{let left=284;while(left>0){const p=left>40?pick([1,2,2,2,3,4]):Math.min(left,pick([1,2]));gRest.push(add({name:uname(),add:p-1,host:pick(HOSTS),plan:R()<.08?'Belirsiz':'Kesin'}));left-=p}}
+const occ=(id,ex)=>G.reduce((s,g)=>s+(g.table===id&&g!==ex?g.pax:0),0);
+function place(r,start){const pool=TABLES.filter(t=>t.id.startsWith('VIP')===start.startsWith('VIP'));const i0=pool.findIndex(t=>t.id===start);for(let k=0;k<pool.length;k++){const t=pool[(i0+k)%pool.length];if(occ(t.id)+r.pax<=t.cap){r.table=t.id;return true}}return false}
+G.filter(g=>g.fixed).forEach(g=>g.table=g.fixed);
+gVIP.forEach(g=>place(g,'VIP01'));gKS.forEach(g=>place(g,'T03'));gLD.forEach(g=>place(g,'T10'));gIM.forEach(g=>place(g,'T14'));
+gRest.forEach(g=>{if(!place(g,'T01'))console.warn('unplaced',g.name)});
+// no-shows: 9 people, arrivals: 312 people
+{let left=9-3;for(const g of [...gRest].reverse()){if(left<=0)break;if(g.pax<=left&&g.pax<=2){g.arr='no';left-=g.pax}}}
+const tri=()=>{const u=R(),v=R();return Math.round(Math.min(160,Math.max(0,(u+v)*62+ (R()<.2?R()*40:0))))};
+{let have=G.filter(g=>g.arr==='in').reduce((s,g)=>s+g.pax,0);const cand=G.filter(g=>g.table&&g.arr==='wait'&&!g.keep);for(const g of cand){if(have>=312)break;if(have+g.pax<=312){g.arr='in';g.at=tri();have+=g.pax}}}
+G.forEach(g=>{if(g.arr==='in')g.inPax=g.pax;if(g.arr==='no')g.at=148});
+
+/* ═══ events, suggestions, rules ════════════════════════════════════ */
+const EVENTS=[
+ {id:'e1',d:'2026-08-15',name:'Yaz Konseri',venue:'Merit Park Hotel · Amfi',pax:1200,arr:1146,tables:0,past:true},
+ {id:'e2',d:'2026-09-12',name:'Poker Turnuvası Kapanış Galası',venue:'Merit Royal Diamond · Kristal Salon',pax:104,arr:96,tables:11,past:true},
+ {id:'e3',d:'2026-10-29',name:'Cumhuriyet Balosu',venue:'Merit Royal Hotel · Grand Balo Salonu',pax:402,arr:388,tables:41,past:true},
+ {id:'e4',d:'2026-11-28',name:'Blackjack Masters Ödül Gecesi',venue:'Merit Crystal Cove · Teras',pax:180,arr:171,tables:18,past:true},
+ {id:'gala',d:'2026-12-31',name:'Merit Royal Yılbaşı Galası',venue:'Merit Royal Hotel · Grand Balo Salonu',pax:420,tables:42,live:true},
+ {id:'e6',d:'2027-02-14',name:'Sevgililer Günü Konseri',venue:'Merit Park Hotel · Amfi',pax:680,tables:64,ready:'Plan hazır · 212 kişi oturmamış'},
+ {id:'e7',d:'2027-03-06',name:'Bahar Junket Gecesi',venue:'Merit Royal Diamond · Kristal Salon',pax:140,tables:14,ready:'Misafir listesi henüz yok'},
+ {id:'e8',d:'2027-04-23',name:'Egemenlik Resepsiyonu',venue:'Merit Crystal Cove · Teras',pax:260,tables:0,ready:'Plan henüz okunmadı'},
+];
+const MONTHS=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+const MSH=['OCA','ŞUB','MAR','NİS','MAY','HAZ','TEM','AĞU','EYL','EKİ','KAS','ARA'];
+const SUG=[
+ {id:'s1',at:'T23',title:'T23 — numara çizimde okunamadı',why:'Sıra düzeni T22 ile T24 arasında olduğunu gösteriyor. Okunan yazı yok.',yes:'T23 olarak kabul et',no:'Reddet',state:'open'},
+ {id:'s2',at:'VIP02',title:'VIP02 — çizimde 11 sandalye var',why:'Kapasite 12 kayıtlı. Sandalye ile kapasite ayrı tutulur; hangisi doğru?',yes:'Kapasiteyi 11 yap',no:'12 kalsın',state:'open'},
+ {id:'s3',at:'ghost',title:'Girişin sağında numarasız bir yuvarlak',why:'Masa şeklinde bir çizim; üzerinde numara ve sandalye yok.',yes:'Masa olarak ekle',no:'Masa değil',state:'open'},
+];
+const GHOST={x:905,y:592};
+const state={lens:'durum',q:'',hi:0,selGuest:null,selTable:null,selEvent:'gala',selRep:'xls',selSug:null,anchor:null,filter:'all',draft:false,tool:'sec',foot:null,help:null,justIn:{},partial:{},undo:[],flash:null,items:[],newEv:false};
+
+/* ═══ counts ════════════════════════════════════════════════════════ */
+const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
+function counts(){const arrived=sum(G,g=>g.arr==='in'?g.inPax:0),no=sum(G,g=>g.arr==='no'?g.pax:0),un=sum(G,g=>(!g.table||g.draft)?g.pax:0);return{arrived,no,un,wait:420-arrived-no}}
+let lastT=null;
+function renderTally(){const c=counts(),v={arr:`${c.arrived} / 420`,wait:String(c.wait),no:String(c.no),un:String(c.un)};
+  for(const k in v){const el=$('#t-'+k);if(el.textContent!==v[k]){if(lastT){el.classList.add('tick');requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove('tick')))}el.textContent=v[k]}}lastT=c}
+const T0=Date.now(),BASE=(22*60+14)*60+5;
+const nowS=()=>BASE+Math.floor((Date.now()-T0)/1000), nowHM=()=>{const s=nowS();return pad2(Math.floor(s/3600)%24)+':'+pad2(Math.floor(s/60)%60)}, nowMin=()=>Math.floor(nowS()/60)-(19*60+30);
+setInterval(()=>{$('#clock').textContent=nowHM()},1000);
+
+/* ═══ issues (derived, nothing stored) ══════════════════════════════ */
+function issues(){const out=[];const c=counts();
+  if(c.un) out.push({n:'',bad:true,title:`${c.un} kişi oturmamış`,detail:`${G.filter(g=>!g.table||g.draft).length} kayıt · Oturma merceğinde bekliyor`,go:()=>setLens('oturma')});
+  G.filter(g=>g.table&&g.table.startsWith('VIP')&&!g.vip).forEach(g=>out.push({at:g.table,bad:true,title:`${g.name} VIP değil, ${loc(g.table)} oturuyor`,detail:'Kural: VIP masalarına yalnızca VIP misafir',go:()=>{state.selGuest=g.id;setLens('misafir')}}));
+  G.filter(g=>g.apart&&g.table).forEach(g=>{const o=G.find(x=>x.name===g.apart);if(o&&o.table===g.table)out.push({at:g.table,bad:true,title:`${g.name} ile ${o.name} aynı masada`,detail:'Kural: ayrı masalarda olmalı',go:()=>setLens('oturma')})});
+  SUG.filter(s=>s.state==='open').forEach(s=>out.push({at:s.at,title:s.title,detail:'Plan okuması önerisi · karar bekliyor',go:()=>{state.selSug=s.id;setLens('plan')}}));
+  let k=0;out.forEach(i=>{if(i.at)i.n=++k});return out}
+
+/* ═══ room drawing ═════════════════════════════════════════════════ */
+function chairPos(t){const P=[];if(t.kind==='round'){for(let i=0;i<t.chairs;i++){const a=-Math.PI/2+i*2*Math.PI/t.chairs;P.push([Math.cos(a)*34,Math.sin(a)*34])}}
+  else{const xs=[-40,-20,0,20,40];xs.forEach(x=>P.push([x,-25]));P.push([62,0]);[...xs].reverse().forEach(x=>P.push([x,25]));P.push([-62,0]);if(t.chairs<12)P.length=t.chairs}return P}
+function seatStates(t){const lens=state.lens,out=[];
+  G.filter(g=>g.table===t.id).sort((a,b)=>a.id-b.id).forEach(g=>{for(let i=0;i<g.pax;i++){let c='plan';
+    if(g.draft)c='draft';
+    if(lens==='kapi'){c=g.arr==='in'?(i<g.inPax?'in':'part'):g.arr==='no'?'no':'wait'}
+    if(lens==='plan')c='';
+    if(state.selGuest===g.id&&lens!=='kapi'&&lens!=='plan')c='mine';
+    out.push({c,g:g.id})}});
+  const pv=state.preview;if(pv&&pv.table===t.id){for(let i=0;i<pv.pax;i++)out.push({c:'prev'})}
+  return out}
+function tableSVG(t){const st=seatStates(t),P=chairPos(t),lens=state.lens;let cls='tb'+(t.id.startsWith('VIP')?' vipt':'');
+  if(state.selTable===t.id)cls+=' sel';
+  const sg=state.lens==='oturma'&&state.selGuest&&G.find(g=>g.id===state.selGuest);
+  if(sg&&!sg.table){const free=t.cap-occ(t.id);if(free>=sg.pax&&(sg.vip||!t.id.startsWith('VIP')))cls+=' fit';else cls+=' dim';if(sg.junket&&G.some(g=>g.junket===sg.junket&&g.table===t.id&&g!==sg))cls+=' grp'}
+  if(lens==='misafir'&&state.selGuest){const g=G.find(x=>x.id===state.selGuest);if(g&&g.table!==t.id)cls+=' dim'}
+  let s=`<g class="${cls}" data-t="${t.id}" transform="translate(${t.x} ${t.y}) rotate(${t.rot})">`;
+  P.forEach((p,i)=>{const c=st[i]?st[i].c:'';s+=`<circle class="ch ${c}" data-i="${i}" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="5.6"/>`});
+  if(st.length>P.length){/* logical seats beyond drawn chairs are not drawn: capacity is not chairs */}
+  s+=t.kind==='round'?`<circle class="body" r="23"/>`:`<rect class="body" x="-52" y="-16" width="104" height="32" rx="2"/>`;
+  const unread=t.unread&&SUG.find(x=>x.id==='s1').state!=='yes';
+  s+=`<text class="tl${unread?' q':''}" transform="rotate(${-t.rot})">${unread?'T??':t.id}</text></g>`;return s}
+function roomSVG(){const lens=state.lens;let s=`<svg viewBox="0 0 1000 660" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Grand Balo Salonu planı">`;
+  s+=`<defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#2A313B"/></pattern></defs>`;
+  if(lens==='plan')s+=`<rect x="10" y="10" width="980" height="640" fill="url(#dots)"/>`;
+  s+=`<path class="wall" d="M440 650 H10 V10 H990 V650 H560"/>`;
+  s+=`<g class="fixt"><rect x="330" y="20" width="340" height="60" rx="2"/><text x="500" y="55" text-anchor="middle">SAHNE</text>
+     <rect x="690" y="30" width="70" height="40" rx="2"/><text x="725" y="55" text-anchor="middle" style="letter-spacing:.16em">DJ</text>
+     <rect x="934" y="170" width="46" height="340" rx="2"/><text transform="translate(962 340) rotate(-90)" text-anchor="middle">BAR</text></g>
+     <text class="ftxt" x="500" y="640" text-anchor="middle" style="font-size:13px">ANA GİRİŞ</text>`;
+  TABLES.forEach(t=>s+=tableSVG(t));
+  if(lens==='plan'&&SUG.find(x=>x.id==='s3').state==='open')s+=`<circle class="ghost" cx="${GHOST.x}" cy="${GHOST.y}" r="23" data-sug="s3"/>`;
+  if(lens==='plan'){SUG.filter(x=>x.state==='open').forEach(x=>{const p=x.at==='ghost'?GHOST:TBL(x.at);const dx=x.at.startsWith('VIP')?56:24;s+=`<g class="pin" transform="translate(${p.x+dx} ${p.y-26})"><circle r="11"/><text>?</text></g>`})}
+  if(lens==='durum'){issues().filter(i=>i.at).forEach(i=>{const p=i.at==='ghost'?GHOST:TBL(i.at);if(!p)return;const dx=p.id&&p.id.startsWith('VIP')?56:24;s+=`<g class="pin${i.bad?' bad':''}" transform="translate(${p.x+dx} ${p.y-26})"><circle r="11"/><text>${i.n}</text></g>`})}
+  return s+'</svg>'}
+function renderRoom(){const show=state.lens!=='home'&&state.lens!=='rapor';$('#room').style.display=show?'block':'none';$('#season').style.display=state.lens==='home'?'block':'none';$('#paper').style.display=state.lens==='rapor'?'block':'none';
+  if(show){$('#room').innerHTML=roomSVG();$('#room').classList.toggle('plan-edit',state.lens==='plan')}
+  if(state.lens==='home')renderSeason();if(state.lens==='rapor')renderPaper();renderCaption()}
+function redrawTable(id,lit){const t=TBL(id),el=$(`#room [data-t="${id}"]`);if(!el)return;const tmp=document.createElementNS('http://www.w3.org/2000/svg','g');tmp.innerHTML=tableSVG(t);const n=tmp.firstChild;el.replaceWith(n);if(lit)lit.forEach(i=>{const c=n.querySelector(`[data-i="${i}"]`);c&&c.classList.add('lit')})}
+
+/* ═══ caption: readout, legend, last action ═══════════════════════ */
+function tableReadout(id){const t=TBL(id);if(!t)return'';const o=occ(id),gs=G.filter(g=>g.table===id);const grp=[...new Set(gs.map(g=>g.junket).filter(Boolean))];
+  const arr=sum(gs,g=>g.arr==='in'?g.inPax:0);
+  return `<b>${id}</b> · ${t.kind==='round'?'yuvarlak':'dikdörtgen'} · ${t.cap} kişilik · ${o} oturtuldu · ${t.cap-o} boş`+(state.lens==='kapi'?` · ${arr} geldi`:'')+(t.chairs!==t.cap?` · çizimde ${t.chairs} sandalye`:'')+(grp.length?` · ${esc(grp.join(', '))}`:'')}
+const LEG={durum:'<span><i style="background:var(--paper-3)"></i>Oturtulmuş</span><span><i style="border:1.2px solid var(--paper-3)"></i>Boş</span><span><i style="border:1.6px solid var(--bronze)"></i>Açık konu</span>',
+ oturma:'<span><i style="background:var(--paper-3)"></i>Oturtulmuş</span><span><i style="border:1.6px solid var(--bronze)"></i>Uygun masa</span><span><i style="border:1.2px dashed var(--paper)"></i>Taslak</span>',
+ kapi:'<span><i style="background:var(--ok)"></i>Geldi</span><span><i style="border:1.2px solid var(--paper-2)"></i>Bekleniyor</span><span><i style="border:1.6px solid var(--no)"></i>Gelmedi</span>',
+ misafir:'<span><i style="background:var(--bronze)"></i>Seçili misafir</span>',plan:'<span><i style="border:1.6px solid var(--bronze)"></i>Öneri</span><span><i style="border:1.4px solid var(--vip)"></i>VIP masası</span>',home:'',rapor:''};
+function renderCaption(hover){const r=$('#read');
+  if(hover)r.innerHTML=tableReadout(hover);
+  else if(state.selTable&&state.lens!=='home'&&state.lens!=='rapor')r.innerHTML=tableReadout(state.selTable);
+  else r.innerHTML={home:'Sezon · ← → ile gezin, Enter ile açın',rapor:'Önizleme · çıktı nasıl görünecekse öyle',plan:'Masayı sürükleyerek taşıyın · R ile döndürün',oturma:'Misafiri seçin, sonra masaya tıklayın ya da sürükleyin',kapi:'Kapı · isim yazın, Enter ile giriş',misafir:'Bir misafir seçin; masası salonda belirir',durum:'Bir konuya gelin; yeri salonda gösterilir'}[state.lens]||'';
+  $('#legend').innerHTML=LEG[state.lens]||'';
+  const u=state.undo[state.undo.length-1];$('#last').innerHTML=u?`${esc(u.label)} · <button id="undoBtn" title="Ctrl+Z">Geri al</button>`:'';}
+function pushUndo(label,fn){state.undo.push({label,fn});renderCaption()}
+function undo(){const u=state.undo.pop();if(!u)return;u.fn();renderTally();renderCaption()}
+
+/* ═══ leader line: what you read → where it is ═══════════════════ */
+function drawLeader(){const svg=$('#leader');svg.innerHTML='';const id=state.anchor;if(!id)return;
+  const row=$(`#col [data-anchor="${id}"].on`)||$(`#col [data-anchor="${id}"]:hover`);let tgt=id==='ghost'?$('#room .ghost'):$(`#room [data-t="${id}"] .body`);
+  if(!row||!tgt||$('#room').style.display==='none')return;const a=row.getBoundingClientRect(),b=tgt.getBoundingClientRect(),colR=$('#col').getBoundingClientRect();
+  if(a.bottom<colR.top+60||a.top>colR.bottom)return;
+  const x1=a.left,y1=a.top+a.height/2,x2=b.left+b.width/2+b.width/2+4,y2=b.top+b.height/2;const mx=x1-26;
+  svg.innerHTML=`<path d="M${x1} ${y1} H${mx} L${x2+10} ${y2} H${x2}"/><circle cx="${x2}" cy="${y2}" r="3"/>`}
+window.addEventListener('resize',drawLeader);
+
+/* ═══ the answer column ═══════════════════════════════════════════ */
+function head(title,sub,act=''){return `<div class="ch-h"><div style="min-width:0"><h1>${title}</h1>${sub?`<p>${sub}</p>`:''}</div>${act?`<div class="act">${act}</div>`:''}</div>`}
+function renderCol(keepScroll=true){const sc=$('#col .scroll'),top=keepScroll&&sc?sc.scrollTop:0;
+  const html=state.q.trim()?colQuery():state.help!==null?colHelp():({home:colHome,durum:colDurum,plan:colPlan,misafir:colMisafir,oturma:colOturma,kapi:colKapi,rapor:colRapor}[state.lens])();
+  $('#col').innerHTML=html;const s2=$('#col .scroll');if(s2){if(state.q.trim()){s2.scrollTop=s2.scrollHeight}else s2.scrollTop=top;s2.addEventListener('scroll',drawLeader)}
+  drawLeader()}
+
+/* durum */
+function colDurum(){const is=issues(),c=counts(),n=is.length;
+  let h=head('Durum','Bu gece hazır mı? — salondan ve listeden türetilir, hiçbir şey saklanmaz');
+  h+=`<div class="scroll"><p class="verdict">Gala sürüyor. ${n?`<em>${n} konu</em> açık; hiçbiri kapıyı durdurmuyor.`:'Açık konu yok.'}</p>`;
+  h+=`<div class="numline"><span><b>${420-c.un}</b> oturtuldu</span><span><b>${c.un}</b> oturmamış</span><span><b>${c.arrived}</b> geldi</span><span><b>${c.no}</b> gelmedi</span></div>`;
+  h+=`<div class="eyebrow">Açık konular <span>${n}</span></div>`;
+  is.forEach((i,k)=>{h+=`<div class="row issue${state.anchor===i.at&&i.at?' on':''}" data-issue="${k}" ${i.at?`data-anchor="${i.at}"`:''} tabindex="0"><span class="glyph ${i.at?(i.bad?'bad':''):'none'}">${i.n||'–'}</span><div><div class="t1">${esc(i.title)}</div><div class="t2">${esc(i.detail)}</div></div><button class="txt" data-go="${k}">Git</button></div>`});
+  const chk=(ok,t)=>`<div class="check"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">${ok?'<path d="M2 7.5 5.5 11 12 3.5" stroke="#93C4A1" stroke-width="1.8" fill="none"/>':'<circle cx="7" cy="7" r="5.5" stroke="#C99D6B" stroke-width="1.5" fill="none"/><path d="M7 4v3.6M7 9.6v.4" stroke="#C99D6B" stroke-width="1.6"/>'}</svg><span>${t}</span></div>`;
+  const s1=SUG.find(x=>x.id==='s1').state, s2=SUG.find(x=>x.id==='s2').state;
+  h+=`<div class="eyebrow">Plan kontrolleri</div>`+chk(true,'42 masa çizimde bulundu (yardımlı algılama)')+chk(s1==='yes',s1==='yes'?'42 masa numarası doğrulandı':'41 masa numarası okundu · T23 karar bekliyor')+chk(true,`Kapasite ${sum(TABLES,t=>t.cap)} · beklenen 420`)+chk(s2!=='open',s2==='open'?'VIP02: çizimde 11 sandalye, kapasite 12':'Sandalye ve kapasite kararları verildi')+chk(true,'Masalar çakışmıyor · giriş yolu açık');
+  h+=`<div class="eyebrow">Varış ritmi <span>15 dakikalık dilimler · kişi</span></div>`+spark()+'</div>';return h}
+function spark(){const B=new Array(12).fill(0);G.forEach(g=>{if(g.arr==='in'&&g.at!=null)B[Math.min(11,Math.floor(g.at/15))]+=g.inPax});
+  const W=400,H=96,mx=Math.max(...B),bw=W/12;let s=`<svg class="spark" width="100%" viewBox="0 0 ${W} ${H+22}" role="img" aria-label="Varış ritmi">`;
+  B.forEach((v,i)=>{const h=v/mx*H;s+=`<rect x="${i*bw+3}" y="${H-h}" width="${bw-6}" height="${h}" fill="${i===Math.min(11,Math.floor(nowMin()/15))?'#C99D6B':'#4A4F58'}"><title>${hm(i*15)} · ${v} kişi</title></rect>`});
+  ['19:30','20:30','21:30'].forEach((t,i)=>s+=`<text x="${i*4*bw+3}" y="${H+17}">${t}</text>`);return s+`<line x1="0" x2="${W}" y1="${H+.5}" y2="${H+.5}" stroke="#3B434F"/></svg>`}
+
+/* plan */
+function colPlan(){const t=state.selTable&&TBL(state.selTable);
+  let h=head('Kat planı','Grand Balo Salonu · 42 masa · '+sum(TABLES,t=>t.cap)+' kişilik',`<button class="btn pri" id="readPlan">Planı oku</button>`);
+  h+=`<div class="scroll"><div style="padding:16px 26px 4px;display:flex;gap:12px;align-items:center"><div class="seg" role="group" aria-label="Araç">${[['sec','Seç','V'],['ekle','Masa ekle','M']].map(([k,l,kb])=>`<button data-tool="${k}" class="${state.tool===k?'on':''}">${l} <span class="muted">${kb}</span></button>`).join('')}</div><span class="note" style="margin:0">${state.tool==='ekle'?'Salonda bir yere tıklayın':'Sürükle: taşı'}</span></div>`;
+  h+=`<div class="eyebrow">Seçili masa</div>`;
+  if(t){const gs=G.filter(g=>g.table===t.id);h+=`<div style="padding:0 26px"><div style="font:400 22px var(--serif)">${t.id} <span class="muted" style="font:14px var(--sans)">· ${t.kind==='round'?'yuvarlak':'dikdörtgen'} · ${t.cap} kişilik</span></div>
+    <div class="note">${occ(t.id)} kişi oturtuldu · çizimde ${t.chairs} sandalye${t.rot?` · ${t.rot}°`:''}</div>
+    <div style="display:flex;gap:8px;margin-top:12px">${t.kind==='rect'?'<button class="btn sm" id="rot">Döndür 15° <span class="muted">R</span></button>':''}<button class="txt" id="toSeat">Oturma düzenine git</button></div>
+    <div class="note" style="margin-top:12px">${gs.map(g=>esc(g.name)+(g.add?` <span class="muted">+${g.add}</span>`:'')).join(' · ')||'Boş masa'}</div></div>`}
+  else h+=`<div class="help">Bir masaya tıklayın. Taşımak için sürükleyin.</div>`;
+  const open=SUG.filter(s=>s.state==='open').length;
+  h+=`<div class="eyebrow">Plan okuması önerileri <span>${open} karar bekliyor · yardımlı algılama, model değil</span></div>`;
+  SUG.forEach(s=>{h+=`<div class="row prop${state.selSug===s.id?' on':''}" data-sug="${s.id}" data-anchor="${s.at}" style="grid-template-columns:1fr"><div><div class="t1">${esc(s.title)}</div><div class="t2">Kanıt: ${esc(s.why)}</div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:9px;min-height:30px" data-sugact="${s.id}">${sugAct(s)}</div></div></div>`});
+  return h+'</div>'}
+function sugAct(s){if(s.state==='open')return `<button class="btn sm" data-yes="${s.id}">${esc(s.yes)}</button><button class="txt" data-no="${s.id}">${esc(s.no)}</button>`;
+  return `<span class="st ${s.state==='yes'?'in':'wait'}">${s.state==='yes'?'Kabul edildi':'Reddedildi'} · ${nowHM()}</span><button class="txt" data-reopen="${s.id}">Geri al</button>`}
+
+/* misafir */
+const FILT={all:['Tümü',()=>true],vip:['VIP',g=>!!g.vip],junket:['Junket',g=>!!g.junket],un:['Oturmamış',g=>!g.table],no:['Gelmedi',g=>g.arr==='no']};
+function arrCell(g){return g.arr==='in'?`<span class="st in">${g.inPax<g.pax?g.inPax+'/'+g.pax:'Geldi'}</span>`:g.arr==='no'?'<span class="st no">Gelmedi</span>':'<span class="st wait">—</span>'}
+function colMisafir(){const list=G.filter(FILT[state.filter][1]).sort((a,b)=>collator.compare(a.name,b.name));
+  let h=head('Misafirler',`${G.length} kayıt · ${sum(G,g=>g.pax)} kişi · bir kayıt = bir grup`,`<button class="btn" id="imp">İçe aktar ▾</button><button class="btn pri" id="addG">Ekle</button>`);
+  h+=`<div class="filters" role="group" aria-label="Süzgeç">${Object.entries(FILT).map(([k,[l,f]])=>`<button data-f="${k}" class="${state.filter===k?'on':''}">${l}<b>${G.filter(f).length}</b></button>`).join('')}</div>`;
+  h+=`<div class="rollhead"><span>Ad</span><span>Davet eden</span><span>Masa</span><span>Varış</span></div><div class="scroll" style="padding-top:0">`;
+  list.forEach(g=>{h+=`<div class="row roll${state.selGuest===g.id?' on':''}" data-g="${g.id}" ${g.table?`data-anchor="${g.table}"`:''} tabindex="0"><div class="nm">${g.vip?vipMark(g.vip)+' ':''}<span class="t1">${esc(g.name)}</span>${g.add?`<span class="plus">+${g.add}</span>`:''}</div><div class="h">${esc(g.host)}</div><div class="code" style="font-size:14px">${g.table||'<span class="muted">—</span>'}</div><div>${arrCell(g)}</div></div>`});
+  h+=`</div><div class="foot" style="min-height:236px">${footMisafir()}</div>`;return h}
+function footMisafir(){
+  if(state.foot==='paste'){return `<div class="eyebrow" style="margin:0 0 4px">Liste yapıştır</div><div class="field"><label for="pasteA">Her satır bir kayıt. “+2” ek kişi demektir.</label><textarea id="pasteA">Murat Eren +1
+Seda Polat
+Kaan Toprak +3</textarea></div><div style="display:flex;gap:10px;align-items:center;margin-top:12px"><button class="btn pri" id="pasteGo">3 kayıt ekle · 7 kişi</button><button class="txt" id="footX">Vazgeç</button></div>`}
+  if(state.foot==='add'){return `<div class="eyebrow" style="margin:0 0 4px">Yeni misafir</div><div style="display:grid;grid-template-columns:1fr 90px;gap:0 12px"><div class="field"><label for="nA">Ad soyad</label><input id="nA" placeholder="ör. Leyla Gür"></div><div class="field"><label for="nP">Ek kişi</label><input id="nP" type="number" min="0" value="0"></div></div><div style="display:flex;gap:10px;align-items:center;margin-top:12px"><button class="btn pri" id="addGo">Kaydet</button><button class="txt" id="footX">Vazgeç</button></div>`}
+  const g=G.find(x=>x.id===state.selGuest);if(!g)return `<div class="help" style="padding:0">Bir kayıt seçin. Yazarak da bulabilirsiniz: aşağıdaki satıra bir isim yazın.</div>`;
+  return `<div style="display:flex;align-items:baseline;gap:10px"><div style="font:400 23px var(--serif)">${esc(g.name)}</div>${vipMark(g.vip)}</div>
+  <div class="note">${g.pax} kişi${g.add?` · ${esc(g.name)} +${g.add}`:''}</div>
+  <dl class="dl"><dt>Davet eden</dt><dd>${esc(g.host)}</dd><dt>Masa</dt><dd>${g.table?`<span class="code">${g.table}</span>`:'<span class="warn">Oturmamış</span> · <button class="txt" id="toSeat2">Oturt</button>'}</dd>
+  <dt>Plan durumu</dt><dd><span class="seg" data-planseg="${g.id}"><button class="${g.plan==='Kesin'?'on':''}" data-plan="Kesin">Kesin</button><button class="${g.plan==='Belirsiz'?'on':''}" data-plan="Belirsiz">Belirsiz</button></span></dd>
+  <dt>Varış</dt><dd>${g.arr==='in'?`<span class="st in">Geldi ${g.inPax<g.pax?g.inPax+'/'+g.pax:''} · ${hm(g.at)}</span>`:g.arr==='no'?'<span class="st no">Gelmedi</span>':'<span class="st wait">Bekleniyor</span>'}</dd></dl>
+  ${g.add?`<div class="note" style="margin-top:10px">Raporda refakatçiler <span class="code" style="font-size:13px">GUEST OF ${esc(UP(g.name))}</span> olarak yazılır.</div>`:''}`}
+
+/* oturma */
+function colOturma(){const un=G.filter(g=>!g.table||g.draft||state.justSeat?.[g.id]);const drafts=G.filter(g=>g.draft);
+  let h=head('Oturma',`${420-counts().un} / 420 kişi oturtuldu · ${counts().un} kişi bekliyor`,`<span class="note" style="margin:0">Taslak</span><span class="seg"><button data-draft="0" class="${state.draft?'':'on'}">Kapalı</button><button data-draft="1" class="${state.draft?'on':''}">Açık</button></span>`);
+  h+=`<div class="scroll">`;
+  if(state.draft||drafts.length)h+=`<div style="padding:12px 26px;border-bottom:1px solid var(--rule);display:flex;gap:10px;align-items:center;min-height:56px"><span class="note" style="margin:0;flex:1">Taslak: ${drafts.length} değişiklik · salonda kesik çizgili</span>${drafts.length?'<button class="btn sm pri" id="draftSave">Kaydet</button><button class="txt" id="draftDrop">At</button>':''}</div>`;
+  const groups={};un.forEach(g=>{const k=g.junket?g.junket+' · junket':'Diğer davetliler';(groups[k]=groups[k]||[]).push(g)});
+  Object.keys(groups).sort((a,b)=>a==='Diğer davetliler'?1:b==='Diğer davetliler'?-1:collator.compare(a,b)).forEach(k=>{
+    const gs=groups[k],jt=gs[0].junket?[...new Set(G.filter(x=>x.junket===gs[0].junket&&x.table&&!x.draft).map(x=>x.table))].sort():[];
+    h+=`<div class="eyebrow" lang="${/^(Loyalty|International)/.test(k)?'en':'tr'}">${esc(k)} <span>${jt.length?'grubu: '+jt.join(', '):''}</span></div>`;
+    gs.forEach(g=>{const js=state.justSeat?.[g.id];const w=state.warn?.[g.id];
+      h+=`<div class="row tray${state.selGuest===g.id?' on':''}" data-seat="${g.id}" draggable="${!js}" tabindex="0" ${g.table?`data-anchor="${g.table}"`:''}><div><div class="t1">${vipMark(g.vip)} ${esc(g.name)} <span class="muted" style="font-size:13.5px;margin-left:4px">${g.pax} kişi</span></div><div class="t2">${w?`<span class="warn">${esc(w)}</span>`:g.apart?`Kural: ${esc(g.apart)} ile ayrı masa`:g.plan==='Belirsiz'?'Katılımı belirsiz':esc(g.host)}</div></div>
+      <div class="stt">${js||g.draft?`<span class="st ${g.draft?'wait':'in'}">${g.table}${g.draft?' · taslak':''}</span> <button class="txt" data-unseat="${g.id}">Geri al</button>`:state.selGuest===g.id?'<span class="muted">Masa seçin</span>':'<span class="muted">Seç</span>'}</div></div>`})});
+  if(!un.length)h+=`<div class="empty">Herkes oturtuldu.</div>`;
+  h+=`<div class="eyebrow">Kurallar <span>uyarır, engellemez</span></div><div class="help">VIP masalarına yalnızca VIP misafir.<br>Burak Şahin ile Can Öztürk ayrı masalarda.<br>Junket grupları kendi masalarına yakın.</div></div>`;return h}
+
+/* kapı */
+function doorRow(g,on){const ji=state.justIn[g.id],pp=state.partial[g.id];
+  return `<div class="row door${on?' on':''}" data-door="${g.id}" ${g.table?`data-anchor="${g.table}"`:''}><div style="min-width:0"><div class="t1">${vipMark(g.vip)} ${esc(g.name)}${g.add?` <span class="plus muted" style="font:400 15px var(--mono)">+${g.add}</span>`:''}</div><div class="t2">${g.pax} kişi · ${esc(g.junket||g.host)}</div></div>
+  <div class="tcode${g.table?'':' none'}">${g.table||'Masa yok'}</div><div class="state" data-state="${g.id}">${stateCell(g,on)}</div></div>`}
+function stateCell(g,on){const pp=state.partial[g.id];
+  if(pp!=null)return `<div class="stepper"><button data-pm="${g.id}" aria-label="Azalt">−</button><span>${pp}/${g.pax}</span><button data-pp="${g.id}" aria-label="Artır">+</button></div><button class="btn sm pri" data-pok="${g.id}">Tamam</button>`;
+  if(g.arr==='in')return `<div class="in">${g.inPax<g.pax?g.inPax+'/'+g.pax+' geldi':'Geldi'} ${hm(g.at)}${state.justIn[g.id]?`<br><button class="txt" style="font-size:13px;padding:0" data-undoin="${g.id}">Geri al</button>`:''}</div>`;
+  if(g.arr==='no')return `<div class="no">Gelmedi${state.justIn[g.id]?`<br><button class="txt" style="font-size:13px;padding:0" data-undoin="${g.id}">Geri al</button>`:''}</div>`;
+  return `<button class="btn pri" data-in="${g.id}">Giriş${on?' ↵':''}</button><button class="more" data-more="${g.id}" aria-label="Diğer">⋯</button>`}
+function groupsHTML(){const gr=[['Kerem Sarıçiçek',g=>g.junket==='Kerem Sarıçiçek'],['Loyalty Desk',g=>g.junket==='Loyalty Desk'],['International Marketing',g=>g.junket==='International Marketing'],['VIP ve VVIP',g=>!!g.vip],['Diğer davetliler',g=>!g.junket&&!g.vip]];
+  return gr.map(([n,f])=>{const gs=G.filter(f),t=sum(gs,g=>g.pax),a=sum(gs,g=>g.arr==='in'?g.inPax:0);return `<div class="grp" data-grp="${esc(n)}"><span>${esc(n)}</span><span class="n">${a} / ${t}</span><div class="bar"><i style="width:${(a/t*100).toFixed(1)}%"></i></div></div>`}).join('')}
+function colKapi(){const vip=G.filter(g=>g.vip&&g.arr==='wait').sort((a,b)=>collator.compare(a.name,b.name)).slice(0,5);
+  let h=head('Kapı','Ana giriş · isim yazın, Enter ile giriş. Gelmedi ayrı menüde.');
+  h+=`<div class="scroll"><div class="eyebrow">Gruplar <span>gelen / beklenen kişi</span></div><div id="groups">${groupsHTML()}</div>`;
+  h+=`<div class="eyebrow">Beklenen VIP'ler</div>`+(vip.length?vip.map(g=>doorRow(g,false)).join(''):'<div class="empty">Bekleyen VIP yok.</div>');
+  return h+'</div>'}
+
+/* rapor */
+const REPS=[{id:'xls',name:'Masa planı',fmt:'XLSX',desc:'TABLE PLAN · GUEST LIST · UNASSIGNED sayfaları',act:'Excel indir'},
+ {id:'print',name:'Masa planı — baskı',fmt:'A3',desc:'Salon çizimi, masa numaraları ve isimlerle',act:'Yazdır'},
+ {id:'az',name:'Kapı listesi A–Z',fmt:'A4',desc:'Kapıdaki görevli için isim → masa',act:'Yazdır'},
+ {id:'jk',name:'Junket raporu',fmt:'XLSX',desc:'Grup başına misafir, kişi, masa, varış',act:'Excel indir'},
+ {id:'sum',name:'Etkinlik özeti',fmt:'A4',desc:'Beklenen, gelen, gelmeyen; masa doluluğu',act:'Yazdır'}];
+function colRapor(){const r=REPS.find(x=>x.id===state.selRep);
+  let h=head('Raporlar','Önizleme solda; çıktı nasıl görünecekse öyle',`<button class="btn pri" id="repGo">${r.act}</button>`);
+  h+=`<div class="scroll">`;REPS.forEach(x=>{h+=`<div class="row repo${x.id===state.selRep?' on':''}" data-rep="${x.id}" tabindex="0"><div><div class="t1">${x.name}</div><div class="t2">${x.desc}</div></div><span class="fmt">${x.fmt}</span></div>`});
+  h+=`<div class="help" style="margin-top:16px" id="repMsg">${state.repMsg||'Dosyalar bu bilgisayarda üretilir; internet gerekmez.'}</div></div>`;return h}
+
+/* home */
+function colHome(){if(state.newEv)return colNewEv();const e=EVENTS.find(x=>x.id===state.selEvent),d=new Date(e.d);
+  let h=head(esc(e.name),`${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} · ${esc(e.venue)}`,`<button class="btn pri" id="openEv">${e.past?'Salt okunur aç':'Aç'} ↵</button>`);
+  h+=`<div class="scroll"><dl class="dl" style="margin:18px 26px">`+(e.live?`<dt>Durum</dt><dd><span class="st in">Canlı</span> · ${counts().arrived} / 420 geldi</dd>`:e.past?`<dt>Durum</dt><dd>Tamamlandı · ${e.arr} / ${e.pax} geldi</dd>`:`<dt>Hazırlık</dt><dd>${esc(e.ready)}</dd>`)+`<dt>Beklenen</dt><dd>${e.pax.toLocaleString('tr-TR')} kişi</dd><dt>Masa</dt><dd>${e.tables||'Kokteyl düzeni'}</dd></dl>`;
+  if(e.past)h+=`<div class="help">Geçmiş etkinlikler değiştirilemez. Yerleşimini yeni bir etkinliğe taşıyabilirsiniz.</div>`;
+  h+=`<div class="eyebrow">Bu etkinlikle</div><div style="padding:0 26px;display:grid;justify-items:start;gap:6px" id="evActs">
+     <button class="txt" data-evact="same">Aynı yerleşimle yeni etkinlik</button><button class="txt" data-evact="dup">Çoğalt (misafirlerle)</button><button class="txt" data-evact="exp">Dışa aktar (.merit paketi)</button><button class="txt danger" data-evact="del">Sil…</button></div>
+     <div class="help" style="margin-top:14px;min-height:40px" id="evMsg"></div></div>`;return h}
+function colNewEv(){return head('Yeni etkinlik','Boş başlar: masa, misafir ya da örnek veri yok')+`<div class="scroll" style="padding:4px 26px"><div class="field"><label for="neN">Ad</label><input id="neN" value="Merit Royal Sevgililer Gecesi"></div><div class="field"><label for="neD">Tarih</label><input id="neD" type="date" value="2027-02-13"></div><div class="field"><label for="neV">Mekân</label><select id="neV"><option>Merit Royal Hotel · Grand Balo Salonu</option><option>Merit Park Hotel · Amfi</option><option>Merit Royal Diamond · Kristal Salon</option><option>Merit Crystal Cove · Teras</option></select></div><div class="field"><label for="neS">Başlangıç</label><select id="neS"><option>Boş salon</option><option>Cumhuriyet Balosu yerleşimi</option><option>Yılbaşı Galası yerleşimi</option></select></div><div style="display:flex;gap:10px;margin-top:18px;align-items:center"><button class="btn pri" id="neGo">Oluştur</button><button class="txt" id="neX">Vazgeç</button></div></div>`}
+
+/* help (F10) */
+const HELP=[['Komut satırı','Her şey alttaki tek satırdan: bir isim, bir masa (t05, vip2) ya da bir iş yazın. “ahmet yılmazı t05e oturt”, “bugün ne eksik”, “t12 kimler”. Emin olmadığında önce gösterir; Enter ile uygular, Ctrl+Z geri alır.'],
+ ['Mercekler','Salon hep aynı yerde durur; 1–6 tuşları onu farklı okur: Durum, Plan, Misafirler, Oturma, Kapı, Raporlar. Mercek değişince hiçbir şey yer değiştirmez, yalnızca renkler.'],
+ ['Kapıda giriş','5 ile Kapı merceği. İsmin ilk harflerini yazın; en iyi eşleşme satırın hemen üstündedir. Enter = Giriş. Gelmedi yalnız ⋯ menüsünde, yanlışlıkla basılmaz. Her işlem kendi satırında geri alınır.'],
+ ['Oturtma','Misafiri seçin; sığan masalar bronz çizgiyle belirir. Masaya tıklayın ya da sürükleyin. Kurallar uyarır, engellemez. Taslak açıkken hiçbir şey kesinleşmez.'],
+ ['Plan okuma','PDF ya da görsel yükleyin. Okunan her şey öneridir ve kanıtıyla gelir; tek tek kabul ya da reddedilir. Sandalye sayısı ile kapasite ayrı tutulur.'],
+ ['Kısayollar','F8 komut · F10 yardım · 0–6 mercekler · ↑↓ seç · Enter uygula · Esc temizle · Ctrl+Z geri al · V/M/R plan araçları']];
+function colHelp(){let h=head('Yardım','F10 · konuyu seçin');h+=`<div class="scroll">`;HELP.forEach(([t,b],i)=>{h+=`<div class="row${state.help===i?' on':''}" data-help="${i}" style="grid-template-columns:1fr" tabindex="0"><div class="t1">${t}</div>${state.help===i?`<div class="t2" style="font-size:14.5px;line-height:1.55">${b}</div>`:''}</div>`});return h+'</div>'}
+
+/* ═══ the line: parse what was typed ═════════════════════════════ */
+const STEM=t=>t.length>4?t.replace(/(nin|nun|in|un|yi|yu|ye|ya|i|u|e|a|de|da|te|ta|den|dan)$/,''):t;
+function findGuests(toks){if(!toks.length)return[];const res=[];G.forEach(g=>{const nt=fold(g.name).split(' ');let score=0,ok=true;
+  for(const q of toks){const s=STEM(q);let best=0;for(const n of nt){if(n===q||n===s)best=Math.max(best,3);else if(n.startsWith(q))best=Math.max(best,2);else if(s.length>=3&&(n.startsWith(s)||q.startsWith(n)&&n.length>=3))best=Math.max(best,1)}if(!best){ok=false;break}score+=best}
+  if(ok)res.push({g,score})});return res.sort((a,b)=>b.score-a.score||collator.compare(a.g.name,b.g.name)).map(r=>r.g)}
+function nearestFree(pax,from,ex){return TABLES.filter(t=>t.cap-occ(t.id,ex)>=pax&&(!!ex?.vip||!t.id.startsWith('VIP'))).sort((a,b)=>Math.hypot(a.x-from.x,a.y-from.y)-Math.hypot(b.x-from.x,b.y-from.y)).slice(0,2)}
+function parse(raw){const f=fold(raw).trim();const items=[];if(!f)return items;
+  let toks=f.split(/[\s,.;:!?']+/).filter(Boolean);let table=null;
+  toks=toks.filter((t,i)=>{let m=t.match(/^(vip|t)-?0*(\d{1,2})[a-z]*$/);if(m){const id=m[1]==='vip'?'VIP'+pad2(m[2]):'T'+pad2(m[2]);if(TBL(id)){table=id;return false}}if(t==='vip'&&/^\d/.test(toks[i+1]||'')){const id='VIP'+pad2(parseInt(toks[i+1]));if(TBL(id)){table=id;toks[i+1]='';return false}}return true}).filter(Boolean);
+  const has=re=>toks.some(t=>re.test(t));
+  const vSeat=has(/^(oturt|otur|tasi|koy|yerlestir|ata)/),vIn=has(/^(giris|geldi|iceri)/),vNo=has(/^gelmedi/),vWhere=has(/^(nerede|hangi|masasi)/);
+  const STOP=/^(oturt\w*|otur\w*|tasi\w*|koy\w*|yerlestir\w*|ata|giris\w*|geldi\w*|gelmedi\w*|nerede|hangi|masa\w*|kim\w*|var|yap\w*|bul|goster|ve|ile|lutfen|bugun|ne|eksik|kaldi|hazir|mi|mu|durum\w*|rapor\w*|liste\w*|yazdir\w*|excel|yardim|git|ac)$/;
+  const nameT=toks.filter(t=>!STOP.test(t));
+  if(/eksik|ne kaldi|hazir mi|sorun/.test(f)){issues().forEach(i=>items.push({kind:'Açık konu',title:i.title,detail:i.detail,anchor:i.at,run:i.go}));if(!items.length)items.push({kind:'Cevap',title:'Açık konu yok.',detail:'Plan, oturma ve kurallar temiz.'});return items}
+  if(/yardim/.test(f)){items.push({kind:'Yardım',title:'Yardım konularını aç',detail:'F10',run:()=>{clearQ();state.help=0;renderCol()}});}
+  if(/yazdir|rapor|excel|liste/.test(f)){(/kapi/.test(f)?[REPS[2]]:REPS).forEach(r=>items.push({kind:'Rapor',title:`${r.name} · ${r.act}`,detail:r.desc,run:()=>{clearQ();state.selRep=r.id;setLens('rapor')}}));return items}
+  const L=[['durum','durum'],['plan','plan'],['misafir','misafir'],['oturma','oturma'],['kapi','kapi'],['rapor','rapor'],['etkinlik','home']];
+  if(has(/^(git|ac)$/)||toks.length===1){L.forEach(([w,l])=>{if(toks.some(t=>t.startsWith(w)))items.push({kind:'Git',title:`${{durum:'Durum',plan:'Plan',misafir:'Misafirler',oturma:'Oturma',kapi:'Kapı',rapor:'Raporlar',home:'Etkinlikler'}[l]} merceğine geç`,detail:'',run:()=>{clearQ();setLens(l)}})})}
+  const gs=nameT.length?findGuests(nameT):[];
+  if(vSeat&&table&&gs.length){const cands=gs.slice(0,4);const info=[];if(cands.length>1)info.push({kind:'Emin değilim',title:`“${nameT.join(' ')}” ${cands.length} kişiye uyuyor`,detail:'Hangisi? Aşağıdan seçin; hiçbir şey kendiliğinden yapılmaz.'});
+    cands.forEach(g=>{const t=TBL(table);const free=t.cap-occ(table,g);
+      if(g.table===table){items.push({kind:'Oturt',title:`${g.name} zaten ${loc(table)}`,detail:`${g.pax} kişi · değişiklik yok`,anchor:table})}
+      else if(free>=g.pax){const w=ruleWarn(g,table);items.push({kind:'Oturt',title:`${g.name} → ${table}`,detail:`${g.pax} kişi · ${table}: ${occ(table)} → ${occ(table)+g.pax} / ${t.cap}`+(g.table?` · ${g.table} boşalır`:'')+(w?` · Uyarı: ${w}`:''),anchor:table,preview:{table,pax:g.pax,gid:g.id},run:()=>{clearQ();assign(g,table,true)}})}
+      else{info.push({kind:'Sığmıyor',title:free?`${loc(table)} ${free} boş yer var; ${g.name} ${g.pax} kişi`:`${table} dolu (${occ(table)}/${t.cap}); ${g.name} ${g.pax} kişi`,detail:`Hiçbir şey yapılmadı. ${dat(table)} en yakın boş masalar aşağıda.`,anchor:table});
+        nearestFree(g.pax,t,g).forEach((a,k)=>items.push({kind:k?'Öneri':'Öneri · en yakın',title:`${g.name} → ${a.id}`,detail:`${g.pax} kişi · ${a.id}: ${a.cap-occ(a.id)} boş yer`,anchor:a.id,preview:{table:a.id,pax:g.pax,gid:g.id},run:()=>{clearQ();assign(g,a.id,true)}}))}});
+    return items.concat(info)}
+  if(table&&!gs.length){const gt=G.filter(g=>g.table===table);items.push({kind:'Masa',title:`${table} · ${occ(table)} / ${TBL(table).cap}`,detail:gt.map(g=>g.name+(g.add?' +'+g.add:'')).join(' · ')||'Boş masa',anchor:table,run:()=>{clearQ();state.selTable=table;renderAll()}})}
+  if(gs.length){gs.slice(0,8).forEach(g=>{
+    if(state.lens==='kapi'||vIn){items.push({door:g})}
+    else if(vNo)items.push({kind:'Gelmedi',title:`${g.name} gelmedi olarak işaretlensin mi?`,detail:`${g.pax} kişi · masa ${g.table||'yok'} planda kalır, canlı yer boşalır`,anchor:g.table,run:()=>{clearQ();markNo(g)}});
+    else items.push({kind:'Misafir',title:g.name+(g.add?' +'+g.add:''),detail:`${g.pax} kişi · ${g.table?'masa '+g.table:'oturmamış'} · ${g.arr==='in'?'geldi '+hm(g.at):g.arr==='no'?'gelmedi':'bekleniyor'}`,anchor:g.table,vip:g.vip,run:()=>{clearQ();state.selGuest=g.id;setLens(g.table?'misafir':'oturma')}})})}
+  if(!items.length)items.push({kind:'Anlamadım',title:`“${raw.trim()}” için bir şey bulamadım`,detail:'Örnek: “mehmet kaya t14e oturt”, “bugün ne eksik”, “t12 kimler”, “kapı listesi yazdır”.'});
+  return items}
+function ruleWarn(g,table){if(table.startsWith('VIP')&&!g.vip)return 'VIP masası, misafir VIP değil';if(g.apart){const o=G.find(x=>x.name===g.apart);if(o&&o.table===table)return `${g.apart} ile aynı masa`}return ''}
+function colQuery(){const items=parse(state.q);state.items=items;if(state.hi>=items.length)state.hi=0;
+  if(!state.hiSet){const k=items.findIndex(x=>x.run||x.door);state.hi=k<0?0:k}const it=items[state.hi];state.preview=it&&it.preview||null;state.anchor=it?(it.door?it.door.table:it.anchor)||null:null;
+  let h=`<div class="qhead"><b>“${esc(state.q.trim())}”</b><span>↵ uygula · Esc</span></div><div class="scroll"><div class="results">`;
+  [...items].map((x,i)=>[x,i]).reverse().forEach(([x,i])=>{const on=i===state.hi;
+    if(x.door){h+=doorRow(x.door,on).replace('class="row door','data-item="'+i+'" class="row door');return}
+    h+=`<div class="row prop${on?' on':''}" data-item="${i}" ${x.anchor?`data-anchor="${x.anchor}"`:''}><div><div class="kind">${esc(x.kind)}</div><div class="t1">${x.vip?vipMark(x.vip)+' ':''}${esc(x.title)}</div>${x.detail?`<div class="t2">${esc(x.detail)}</div>`:''}</div>${x.run?'<span class="kbd enter">↵</span>':''}</div>`});
+  return h+'</div></div>'}
+
+/* ═══ actions (each one changes only what it is about) ════════════ */
+function checkIn(g,pax){if(g.arr==='in'&&!state.partial[g.id])return;const prev={arr:g.arr,at:g.at,inPax:g.inPax};g.arr='in';g.at=nowMin();g.inPax=pax??g.pax;delete state.partial[g.id];state.justIn[g.id]=1;
+  afterDoor(g,true);pushUndo(`${g.name} · giriş ${nowHM()}`,()=>{Object.assign(g,prev);delete state.justIn[g.id];afterDoor(g)})}
+function markNo(g){const prev={arr:g.arr,at:g.at,inPax:g.inPax};g.arr='no';g.inPax=0;state.justIn[g.id]=1;afterDoor(g);pushUndo(`${g.name} · gelmedi`,()=>{Object.assign(g,prev);delete state.justIn[g.id];afterDoor(g)})}
+function afterDoor(g,lit){renderTally();const cell=$(`#col [data-state="${g.id}"]`);if(cell){const on=!!cell.closest('.row.on');cell.innerHTML=stateCell(g,on)}
+  if($('#groups'))$$('#groups .grp').forEach((el,i)=>{const tmp=document.createElement('div');tmp.innerHTML=groupsHTML();const n=tmp.children[i];el.querySelector('.n').textContent=n.querySelector('.n').textContent;el.querySelector('.bar i').style.width=n.querySelector('.bar i').style.width});
+  if(g.table&&state.lens==='kapi'){const before=G.filter(x=>x.table===g.table&&x.id<g.id).reduce((s,x)=>s+x.pax,0);redrawTable(g.table,lit?Array.from({length:g.pax},(_,i)=>before+i):null)}
+  renderCaption()}
+function assign(g,table,fromLine){const prev={table:g.table,draft:g.draft};const w=ruleWarn(g,table);g.table=table;g.draft=!!state.draft;state.justSeat=state.justSeat||{};state.justSeat[g.id]=table;state.warn=state.warn||{};if(w)state.warn[g.id]='Uyarı: '+w+' — yine de oturtuldu';else delete state.warn[g.id];
+  state.selGuest=null;state.preview=null;state.selTable=table;
+  pushUndo(`${g.name} → ${table}${g.draft?' (taslak)':''}`,()=>{g.table=prev.table;g.draft=prev.draft;delete state.warn?.[g.id];renderAll()});renderTally();renderAll()}
+function unseat(g){g.table=null;g.draft=false;delete state.warn?.[g.id];renderTally();renderAll()}
+
+/* ═══ season strip (home) ════════════════════════════════════════ */
+function renderSeason(){const box=$('#season');const W=box.clientWidth-112,x0=56;const start=new Date('2026-08-01'),end=new Date('2027-06-01');const X=d=>x0+(new Date(d)-start)/(end-start)*W;
+  let h=`<div class="seasonhead"><b>Sezon 2026–27</b>Geçmiş solda ve salt okunur · bu gece ortada · yaklaşanlar sağda</div><div class="axis"></div>`;
+  for(let m=0;m<=10;m++){const d=new Date(2026,7+m,1);h+=`<div class="mtick" style="left:${X(d)}px"></div>`;if(m<10)h+=`<div class="month" style="left:${X(new Date(2026,7+m,15))}px">${MSH[d.getMonth()]} ${String(d.getFullYear()).slice(2)}</div>`}
+  h+=`<div class="now" style="left:${X('2026-12-31')}px"><span>BU GECE · ${nowHM()}</span></div>`;
+  const all=[...EVENTS,...(state.extraEv||[])].sort((a,b)=>a.d.localeCompare(b.d));
+  all.forEach((e,i)=>{const d=new Date(e.d),x=X(e.d),up=i%2===0;const top=up?'calc(52% - 210px)':'calc(52% + 50px)';
+    h+=`<div class="stem" style="left:${x}px;top:${up?'calc(52% - 70px)':'calc(52% + 8px)'};height:62px"></div><div class="dot${e.past?' past':''}${e.live?' live':''}" style="left:${x}px"></div>
+    <button class="ev${e.past?' past':''}${state.selEvent===e.id?' on':''}" data-ev="${e.id}" style="left:${x}px;top:${top}"><div class="d">${d.getDate()}</div><div class="m">${MSH[d.getMonth()]} ${d.getFullYear()}${e.past?' · kilitli':e.live?' · canlı':''}</div><div class="n">${esc(e.name)}</div><div class="v">${esc(e.venue.split(' · ')[0])}</div></button>`});
+  const nx=X('2027-04-23')+0;h+=`<div class="dot new" style="left:${X('2027-05-16')}px"></div><button class="ev" id="newEvBtn" style="left:${X('2027-05-16')}px;top:calc(52% - 210px);width:130px"><div class="d" style="color:var(--bronze)">+</div><div class="m">Yeni</div><div class="n">Yeni etkinlik</div></button>`;
+  box.innerHTML=h}
+
+/* ═══ paper preview (reports) ════════════════════════════════════ */
+function renderPaper(){const r=state.selRep;let h='<div class="sheet">';const head=(t)=>`<h2>${t}</h2><div class="sub">Merit Royal Yılbaşı Galası · 31 Aralık 2026 · Grand Balo Salonu</div>`;
+  const nat=(a,b)=>{const ra=a.startsWith('VIP')?0:1,rb=b.startsWith('VIP')?0:1;return ra-rb||collator.compare(a,b)};
+  if(r==='xls'||r==='print'){h+=head(r==='xls'?'TABLE PLAN':'Masa planı');h+='<div class="cards">';TABLES.map(t=>t.id).sort(nat).slice(0,16).forEach(id=>{const gs=G.filter(g=>g.table===id&&!g.draft);let lines=[];gs.forEach(g=>{lines.push(UP(g.name));for(let i=0;i<g.add;i++)lines.push('GUEST OF '+UP(g.name))});h+=`<div class="card"><b>${id} · ${lines.length}/${TBL(id).cap}</b>${lines.slice(0,8).map(l=>`<div>${esc(l)}</div>`).join('')}${lines.length>8?`<div style="color:#5B564D">+${lines.length-8} kişi daha</div>`:''}</div>`});h+='</div>';if(r==='xls')h+='<div class="tabs"><span>TABLE PLAN</span><span>GUEST LIST</span><span>UNASSIGNED</span></div>'}
+  else if(r==='az'){h+=head('Kapı listesi A–Z');h+='<div class="az">';let L='';G.slice().sort((a,b)=>collator.compare(a.name,b.name)).slice(0,120).forEach(g=>{const l=UP(g.name[0]);if(l!==L){L=l;h+=`<h4>${l}</h4>`}h+=`<div><span>${esc(g.name)}${g.add?' +'+g.add:''}</span><b>${g.table||'—'}</b></div>`});h+='</div>'}
+  else if(r==='jk'){h+=head('Junket raporu');h+='<table class="jr"><tr><th>Misafir</th><th>Kişi</th><th>Masa</th><th>Varış</th></tr>';['Kerem Sarıçiçek','Loyalty Desk','International Marketing'].forEach(j=>{const gs=G.filter(g=>g.junket===j);h+=`<tr class="g"><td>${j}</td><td>${sum(gs,g=>g.pax)}</td><td></td><td>${sum(gs,g=>g.arr==='in'?g.inPax:0)} geldi</td></tr>`;gs.slice(0,7).forEach(g=>h+=`<tr><td>${esc(g.name)}${g.add?' +'+g.add:''}</td><td>${g.pax}</td><td>${g.table||'—'}</td><td>${g.arr==='in'?'Geldi '+hm(g.at):g.arr==='no'?'Gelmedi':'—'}</td></tr>`)});h+='</table>'}
+  else{const c=counts();h+=head('Etkinlik özeti');h+=`<table class="jr" style="max-width:560px"><tr><td>Beklenen</td><td>420 kişi · ${G.length} kayıt</td></tr><tr><td>Gelen</td><td>${c.arrived} kişi</td></tr><tr><td>Gelmeyen</td><td>${c.no} kişi</td></tr><tr><td>Henüz gelmeyen</td><td>${c.wait} kişi</td></tr><tr><td>Oturmamış</td><td>${c.un} kişi</td></tr><tr><td>Masa</td><td>42 · ${sum(TABLES,t=>t.cap)} kişilik</td></tr><tr><td>Junket</td><td>Kerem Sarıçiçek 38 · Loyalty Desk 24 · International Marketing 16</td></tr></table>`}
+  $('#paper').innerHTML=h+'</div>'}
+
+/* ═══ menu ════════════════════════════════════════════════════════ */
+function menu(anchor,items){const m=$('#menu');m.innerHTML=items.map((it,i)=>it==='-'?'<hr>':`<button role="menuitem" data-mi="${i}" class="${it.danger?'danger':''}">${esc(it.label)}</button>`).join('');m.hidden=false;
+  const r=anchor.getBoundingClientRect();m.style.top=Math.min(r.bottom+4,innerHeight-m.offsetHeight-8)+'px';m.style.left=Math.max(8,r.right-m.offsetWidth)+'px';
+  m.onclick=e=>{const b=e.target.closest('[data-mi]');if(!b)return;m.hidden=true;items[+b.dataset.mi].fn()};m.querySelector('button')?.focus()}
+document.addEventListener('mousedown',e=>{if(!e.target.closest('#menu'))$('#menu').hidden=true});
+
+/* ═══ lens switching: the room never moves ═══════════════════════ */
+function setLens(l){state.lens=l;state.help=null;state.foot=null;state.preview=null;state.anchor=null;if(l!=='plan')state.selSug=null;if(l!=='oturma')state.justSeat={};
+  $$('#dial button').forEach(b=>b.classList.toggle('on',b.dataset.lens===l));renderAll(false);if(l==='kapi')$('#q').focus()}
+function renderAll(keep=true){renderRoom();renderCol(keep)}
+function clearQ(){state.hiSet=false;state.q='';$('#q').value='';state.hi=0;state.preview=null}
+
+/* ═══ events ══════════════════════════════════════════════════════ */
+$('#dial').addEventListener('click',e=>{const b=e.target.closest('[data-lens]');if(b){clearQ();setLens(b.dataset.lens)}});
+$('#evbtn').addEventListener('click',()=>{clearQ();setLens('home')});
+const q=$('#q');
+q.addEventListener('input',()=>{state.q=q.value;state.hi=0;state.hiSet=false;state.help=null;renderCol(false);renderRoomSoft()});
+q.addEventListener('focus',()=>$('#line').classList.add('focus'));q.addEventListener('blur',()=>$('#line').classList.remove('focus'));
+function renderRoomSoft(){if($('#room').style.display!=='none'){$('#room').innerHTML=roomSVG()}renderCaption(state.anchor&&state.anchor!=='ghost'?state.anchor:null)}
+q.addEventListener('keydown',e=>{const n=state.items.length;
+  if(e.key==='ArrowUp'&&state.q){e.preventDefault();state.hiSet=true;state.hi=Math.min(n-1,state.hi+1);renderCol();renderRoomSoft()}
+  else if(e.key==='ArrowDown'&&state.q){e.preventDefault();state.hiSet=true;state.hi=Math.max(0,state.hi-1);renderCol();renderRoomSoft()}
+  else if(e.key==='Enter'&&state.q){e.preventDefault();const it=state.items[state.hi];if(!it)return;if(it.door){const g=it.door;if(g.arr==='wait'){checkIn(g);}return}if(it.run)it.run()}
+  else if(e.key==='Escape'){if(state.q){clearQ();renderAll()}else q.blur()}});
+document.addEventListener('keydown',e=>{
+  if(e.key==='F8'){e.preventDefault();q.focus();q.select();return}
+  if(e.key==='F10'){e.preventDefault();clearQ();state.help=state.help===null?0:null;renderCol(false);return}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!(e.target.matches('input,textarea')&&e.target.value)){e.preventDefault();undo();return}
+  const typing=e.target.matches('input,textarea,select');
+  if(e.altKey&&/^[0-6]$/.test(e.key)){e.preventDefault();clearQ();setLens(['home','durum','plan','misafir','oturma','kapi','rapor'][+e.key]);return}
+  if(typing)return;
+  if(/^[0-6]$/.test(e.key)){e.preventDefault();clearQ();setLens(['home','durum','plan','misafir','oturma','kapi','rapor'][+e.key]);return}
+  if(e.key==='Escape'){state.help=null;state.selGuest=null;state.selTable=null;state.anchor=null;renderAll();return}
+  if(state.lens==='home'&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){const all=[...EVENTS,...(state.extraEv||[])].sort((a,b)=>a.d.localeCompare(b.d));let i=all.findIndex(x=>x.id===state.selEvent);i=Math.max(0,Math.min(all.length-1,i+(e.key==='ArrowRight'?1:-1)));state.selEvent=all[i].id;renderAll();return}
+  if(state.lens==='home'&&e.key==='Enter'){openEvent();return}
+  if(state.lens==='plan'){if(e.key==='v'||e.key==='V'){state.tool='sec';renderCol()}if(e.key==='m'||e.key==='M'){state.tool='ekle';renderCol()}if((e.key==='r'||e.key==='R')&&state.selTable){rotate()}}
+  if(e.key.length===1&&/\S/.test(e.key)&&!e.ctrlKey&&!e.metaKey&&!e.altKey){q.focus()} // any letter goes to the line
+});
+function rotate(){const t=TBL(state.selTable);if(t.kind!=='rect')return;const p=t.rot;t.rot=(t.rot+15)%180;redrawTable(t.id);renderCol();pushUndo(`${t.id} döndürüldü ${t.rot}°`,()=>{t.rot=p;renderAll()})}
+function openEvent(){const e=EVENTS.find(x=>x.id===state.selEvent);if(e&&e.live){setLens('durum')}else{const m=$('#evMsg');if(m)m.textContent='Bu prototipte yalnız Yılbaşı Galası açılır.'}}
+
+// room interactions
+const room=$('#room');
+room.addEventListener('mouseover',e=>{const t=e.target.closest('[data-t]');if(t)renderCaption(t.dataset.t)});
+room.addEventListener('mouseleave',()=>renderCaption());
+let drag=null;
+room.addEventListener('pointerdown',e=>{const tg=e.target.closest('[data-t]');const svg=room.querySelector('svg');if(!svg)return;
+  if(state.lens==='plan'&&state.tool==='ekle'&&!tg){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const p=pt.matrixTransform(svg.getScreenCTM().inverse());const id='T'+pad2(TABLES.filter(t=>t.id[0]==='T').length+1);TABLES.push({id,cap:10,chairs:10,kind:'round',x:Math.round(p.x),y:Math.round(p.y),rot:0});state.selTable=id;state.tool='sec';pushUndo(`${id} eklendi`,()=>{TABLES.splice(TABLES.findIndex(t=>t.id===id),1);state.selTable=null;renderAll()});renderAll();return}
+  if(!tg)return;const id=tg.dataset.t,t=TBL(id);
+  if(state.lens==='plan'){state.selTable=id;const ctm=svg.getScreenCTM();drag={t,sx:e.clientX,sy:e.clientY,ox:t.x,oy:t.y,k:ctm.a,moved:false};tg.setPointerCapture(e.pointerId);$$('#room .tb.sel').forEach(n=>n.classList.remove('sel'));tg.classList.add('sel');return}
+  if(state.lens==='oturma'&&state.selGuest){const g=G.find(x=>x.id===state.selGuest);if(g&&!g.table){if(TBL(id).cap-occ(id)>=g.pax)assign(g,id);else renderCaption(id);return}}
+  state.selTable=state.selTable===id?null:id;state.anchor=null;if(state.lens==='misafir'||state.lens==='kapi'){if(state.selTable){clearQ();state.q=id;q.value=id;renderCol(false);renderRoomSoft();return}}renderAll()});
+room.addEventListener('pointermove',e=>{if(!drag)return;const dx=(e.clientX-drag.sx)/drag.k,dy=(e.clientY-drag.sy)/drag.k;if(Math.abs(dx)+Math.abs(dy)>2)drag.moved=true;drag.t.x=Math.round(drag.ox+dx);drag.t.y=Math.round(drag.oy+dy);const el=$(`#room [data-t="${drag.t.id}"]`);el.setAttribute('transform',`translate(${drag.t.x} ${drag.t.y}) rotate(${drag.t.rot})`)});
+room.addEventListener('pointerup',()=>{if(!drag)return;const d=drag;drag=null;if(d.moved){pushUndo(`${d.t.id} taşındı`,()=>{d.t.x=d.ox;d.t.y=d.oy;renderAll()})}renderCol()});
+room.addEventListener('dragover',e=>{if(e.target.closest('[data-t]'))e.preventDefault()});
+room.addEventListener('drop',e=>{const tg=e.target.closest('[data-t]');const id=+e.dataTransfer.getData('text/plain');const g=G.find(x=>x.id===id);if(tg&&g){e.preventDefault();assign(g,tg.dataset.t)}});
+
+// column interactions (delegated)
+const col=$('#col');
+col.addEventListener('dragstart',e=>{const r=e.target.closest('[data-seat]');if(r){e.dataTransfer.setData('text/plain',r.dataset.seat);state.selGuest=+r.dataset.seat;renderRoom()}});
+col.addEventListener('mouseover',e=>{const r=e.target.closest('[data-anchor]');if(r&&!state.q){$$('#col .row.hov').forEach(x=>x.classList.remove('hov'));state.anchorHover=r.dataset.anchor;const svg=$('#leader');const keep=state.anchor;state.anchor=r.dataset.anchor;drawLeaderFor(r);state.anchor=keep}});
+col.addEventListener('mouseleave',()=>drawLeader());
+function drawLeaderFor(row){const id=row.dataset.anchor;const svg=$('#leader');const tgt=id==='ghost'?$('#room .ghost'):$(`#room [data-t="${id}"] .body`);if(!tgt||$('#room').style.display==='none'){svg.innerHTML='';return}
+  const a=row.getBoundingClientRect(),b=tgt.getBoundingClientRect();const x1=a.left,y1=a.top+a.height/2,x2=b.right+4,y2=b.top+b.height/2;svg.innerHTML=`<path d="M${x1} ${y1} H${x1-26} L${x2+10} ${y2} H${x2}"/><circle cx="${x2}" cy="${y2}" r="3"/>`}
+col.addEventListener('click',e=>{const T=e.target,c=s=>T.closest(s);let b;
+  if(b=c('[data-go]')){issues()[+b.dataset.go].go();return}
+  if(b=c('[data-issue]')){const i=issues()[+b.dataset.issue];state.anchor=i.at||null;state.selTable=i.at&&i.at!=='ghost'?i.at:null;renderAll();return}
+  if(b=c('[data-tool]')){state.tool=b.dataset.tool;renderCol();return}
+  if(c('#readPlan')){const f=document.createElement('input');f.type='file';f.accept='.pdf,image/*';f.click();return}
+  if(c('#rot')){rotate();return}
+  if(c('#toSeat')){setLens('oturma');return}
+  if(b=c('[data-yes]')||c('[data-no]')){const s=SUG.find(x=>x.id===(b.dataset.yes||b.dataset.no));const yes=!!b.dataset.yes;s.state=yes?'yes':'no';
+    if(yes&&s.id==='s2')TBL('VIP02').cap=11;if(yes&&s.id==='s3'){TABLES.push({id:'T39',cap:10,chairs:0,kind:'round',x:GHOST.x,y:GHOST.y,rot:0})}
+    $(`[data-sugact="${s.id}"]`).innerHTML=sugAct(s);if(s.at!=='ghost')redrawTable(s.at);else renderRoom();renderRoomSoft();
+    pushUndo(`${s.title.split(' — ')[0]} · ${yes?'kabul':'ret'}`,()=>reopen(s));return}
+  if(b=c('[data-reopen]')){reopen(SUG.find(x=>x.id===b.dataset.reopen));return}
+  if(b=c('[data-sug]')){state.selSug=b.dataset.sug;state.anchor=b.dataset.anchor;$$('#col [data-sug]').forEach(r=>r.classList.toggle('on',r===b));drawLeader();return}
+  if(b=c('[data-f]')){state.filter=b.dataset.f;renderCol(false);return}
+  if(c('#imp')){menu(c('#imp'),[{label:'Excel dosyası (.xlsx)…',fn:()=>{const f=document.createElement('input');f.type='file';f.accept='.xlsx,.xls,.csv';f.click()}},{label:'Liste yapıştır',fn:()=>{state.foot='paste';renderCol()}}]);return}
+  if(c('#addG')){state.foot='add';renderCol();$('#nA')?.focus();return}
+  if(c('#footX')){state.foot=null;renderCol();return}
+  if(c('#pasteGo')){const lines=$('#pasteA').value.split('\n').map(s=>s.trim()).filter(Boolean);const added=lines.map(l=>{const m=l.match(/^(.*?)\s*\+\s*(\d+)$/);return add({name:m?m[1]:l,add:m?+m[2]:0,host:'—'})});state.foot=null;state.filter='all';state.selGuest=added[0].id;pushUndo(`${added.length} kayıt eklendi`,()=>{added.forEach(a=>G.splice(G.indexOf(a),1));renderAll()});renderAll();return}
+  if(c('#addGo')){const n=$('#nA').value.trim();if(!n){$('#nA').focus();return}const g=add({name:n,add:+$('#nP').value||0});state.foot=null;state.selGuest=g.id;pushUndo(`${n} eklendi`,()=>{G.splice(G.indexOf(g),1);renderAll()});renderAll();return}
+  if(b=c('[data-plan]')){const g=G.find(x=>x.id===+c('[data-planseg]').dataset.planseg);const p=g.plan;g.plan=b.dataset.plan;$$('[data-plan]').forEach(x=>x.classList.toggle('on',x===b));pushUndo(`${g.name} · plan ${g.plan.toLowerCase()}`,()=>{g.plan=p;renderCol()});return}
+  if(c('#toSeat2')){setLens('oturma');return}
+  if(b=c('[data-g]')){state.selGuest=+b.dataset.g;state.foot=null;state.anchor=b.dataset.anchor||null;$$('#col [data-g]').forEach(r=>r.classList.toggle('on',r===b));$('#col .foot').innerHTML=footMisafir();renderRoomSoft();drawLeader();return}
+  if(b=c('[data-unseat]')){const g=G.find(x=>x.id===+b.dataset.unseat);delete state.justSeat[g.id];unseat(g);return}
+  if(b=c('[data-draft]')){state.draft=b.dataset.draft==='1';renderCol();return}
+  if(c('#draftSave')){const d=G.filter(g=>g.draft);d.forEach(g=>g.draft=false);pushUndo(`Taslak kaydedildi · ${d.length}`,()=>{d.forEach(g=>g.draft=true);renderAll()});renderTally();renderAll();return}
+  if(c('#draftDrop')){G.filter(g=>g.draft).forEach(g=>{g.table=null;g.draft=false});renderTally();renderAll();return}
+  if(b=c('[data-seat]')){const id=+b.dataset.seat;state.selGuest=state.selGuest===id?null:id;state.anchor=null;renderAll();return}
+  if(b=c('[data-in]')){checkIn(G.find(x=>x.id===+b.dataset.in));return}
+  if(b=c('[data-undoin]')){const g=G.find(x=>x.id===+b.dataset.undoin);const i=state.undo.map(u=>u.label).lastIndexOf(state.undo.find(u=>u.label.startsWith(g.name))?.label);const k=[...state.undo].reverse().findIndex(u=>u.label.startsWith(g.name+' ·'));if(k>-1){const u=state.undo.splice(state.undo.length-1-k,1)[0];u.fn();renderCaption()}return}
+  if(b=c('[data-more]')){const g=G.find(x=>x.id===+b.dataset.more);menu(b,[{label:'Kısmi giriş…',fn:()=>{state.partial[g.id]=Math.max(1,g.pax-1);$(`[data-state="${g.id}"]`).innerHTML=stateCell(g)}},{label:'Masayı salonda göster',fn:()=>{state.selTable=g.table;renderRoomSoft()}},'-',{label:'Gelmedi olarak işaretle',danger:true,fn:()=>markNo(g)}]);return}
+  if(b=c('[data-pm]')||c('[data-pp]')){const id=+(b.dataset.pm||b.dataset.pp),g=G.find(x=>x.id===id);state.partial[id]=Math.max(1,Math.min(g.pax,state.partial[id]+(b.dataset.pp?1:-1)));$(`[data-state="${id}"]`).innerHTML=stateCell(g);return}
+  if(b=c('[data-pok]')){const id=+b.dataset.pok,g=G.find(x=>x.id===id);checkIn(g,state.partial[id]);return}
+  if(b=c('[data-item]')){const i=+b.dataset.item;if(state.hi!==i){state.hi=i;state.hiSet=true;renderCol();renderRoomSoft();return}const it=state.items[i];if(it&&it.run)it.run();return}
+  if(b=c('[data-rep]')){state.selRep=b.dataset.rep;state.repMsg='';renderAll();return}
+  if(c('#repGo')){const r=REPS.find(x=>x.id===state.selRep);state.repMsg=`${r.name} hazırlandı (prototip: dosya üretilmez).`;$('#repMsg').textContent=state.repMsg;pushUndo(`${r.name} · ${r.act.toLowerCase()}`,()=>{});return}
+  if(c('#openEv')){openEvent();return}
+  if(b=c('[data-evact]')){const a=b.dataset.evact,m=$('#evMsg');
+    if(a==='del'){$('#evActs').innerHTML=`<span class="warn">Bu etkinlik ve tüm kayıtları silinsin mi?</span><div style="display:flex;gap:10px;margin-top:6px"><button class="btn sm" style="border-color:var(--no);color:var(--no)" id="delYes">Sil</button><button class="txt" id="delNo">Vazgeç</button></div>`;return}
+    m.textContent={same:'Yeni etkinlik bu salon yerleşimiyle, misafirsiz açılacak.',dup:'Kopya hazırlandı: misafirler ve masalar birlikte.',exp:'Paket hazırlandı: merit-yilbasi-gala.merit (prototip).'}[a];return}
+  if(c('#delNo')){renderCol();return}
+  if(c('#delYes')){$('#evMsg').textContent='Prototip: silme yapılmadı.';renderCol();return}
+  if(c('#neX')){state.newEv=false;renderCol();return}
+  if(c('#neGo')){const e={id:'n'+Date.now(),d:$('#neD').value||'2027-02-13',name:$('#neN').value||'Yeni etkinlik',venue:$('#neV').value,pax:0,tables:0,ready:'Boş — salon planı yok'};state.extraEv=[...(state.extraEv||[]),e];state.newEv=false;state.selEvent=e.id;renderAll();return}
+  if(b=c('[data-help]')){const i=+b.dataset.help;state.help=state.help===i?null:i;if(state.help===null)state.help=i;renderCol();return}
+});
+function reopen(s){s.state='open';if(s.id==='s2')TBL('VIP02').cap=12;if(s.id==='s3'){const i=TABLES.findIndex(t=>t.id==='T39');if(i>-1)TABLES.splice(i,1)}renderAll()}
+$('#stage').addEventListener('click',e=>{const b=e.target.closest('[data-ev]');if(b){state.selEvent=b.dataset.ev;state.newEv=false;renderAll();return}if(e.target.closest('#newEvBtn')){state.newEv=true;renderCol();$('#neN')?.focus();return}if(e.target.id==='undoBtn')undo()});
+$('#stage').addEventListener('dblclick',e=>{if(e.target.closest('[data-ev]'))openEvent()});
+
+/* ═══ boot ════════════════════════════════════════════════════════ */
+renderTally();setLens('durum');
+window.__merit={G,TABLES,counts,state,setLens,parse};
+</script>
+</body>
+</html>

@@ -1,0 +1,197 @@
+{
+ "measuredOn": "2026-10-11T15:00:25.502Z",
+ "cpu": "pid 26083's current affinity list: 0,1",
+ "runs": 3,
+ "node": "v22.22.2",
+ "memoryCgroup": {
+  "path": "/sys/fs/cgroup/memory/merit8g",
+  "limitMB": 4096
+ },
+ "plans": {
+  "golden": {
+   "detectMs": {
+    "median": 16214,
+    "p95": 16330,
+    "all": [
+     16214,
+     16330,
+     14621
+    ]
+   },
+   "readMs": {
+    "median": 7.4,
+    "p95": 7.4,
+    "all": [
+     7.4,
+     7.2,
+     7.4
+    ]
+   },
+   "peakPssMB": {
+    "median": 1035,
+    "p95": 1063,
+    "all": [
+     1035,
+     1035,
+     1063
+    ]
+   },
+   "peakHeapMB": {
+    "median": 38,
+    "p95": 38,
+    "all": [
+     38,
+     38,
+     37
+    ]
+   },
+   "longestTaskMs": {
+    "median": 3529,
+    "p95": 3776,
+    "all": [
+     3529,
+     3776,
+     3032
+    ]
+   },
+   "totalBlockingMs": {
+    "median": 10562,
+    "p95": 10790,
+    "all": [
+     10562,
+     10790,
+     9520
+    ]
+   },
+   "localModelMs": {
+    "median": 2934,
+    "p95": 3532,
+    "all": [
+     2430,
+     3532,
+     2934
+    ]
+   },
+   "localModelLoadMs": {
+    "median": 432,
+    "p95": 1018,
+    "all": [
+     423,
+     1018,
+     432
+    ]
+   },
+   "cgroupPeakMB": {
+    "median": 939,
+    "p95": 978,
+    "all": [
+     928,
+     978,
+     939
+    ]
+   },
+   "cgroupFailcnt": {
+    "median": 0,
+    "p95": 0,
+    "all": [
+     0,
+     0,
+     0
+    ]
+   }
+  },
+  "ornek": {
+   "detectMs": {
+    "median": 68992,
+    "p95": 69008,
+    "all": [
+     68992,
+     69008,
+     68250
+    ]
+   },
+   "readMs": {
+    "median": 13.3,
+    "p95": 15.7,
+    "all": [
+     12.4,
+     15.7,
+     13.3
+    ]
+   },
+   "peakPssMB": {
+    "median": 1458,
+    "p95": 1494,
+    "all": [
+     1444,
+     1494,
+     1458
+    ]
+   },
+   "peakHeapMB": {
+    "median": 60,
+    "p95": 65,
+    "all": [
+     59,
+     65,
+     60
+    ]
+   },
+   "longestTaskMs": {
+    "median": 4510,
+    "p95": 5749,
+    "all": [
+     5749,
+     3983,
+     4510
+    ]
+   },
+   "totalBlockingMs": {
+    "median": 44536,
+    "p95": 45089,
+    "all": [
+     44536,
+     45089,
+     44176
+    ]
+   },
+   "localModelMs": {
+    "median": 2919,
+    "p95": 3283,
+    "all": [
+     3283,
+     2919,
+     2543
+    ]
+   },
+   "localModelLoadMs": {
+    "median": 287,
+    "p95": 361,
+    "all": [
+     287,
+     361,
+     281
+    ]
+   },
+   "cgroupPeakMB": {
+    "median": 1329,
+    "p95": 1365,
+    "all": [
+     1327,
+     1365,
+     1329
+    ]
+   },
+   "cgroupFailcnt": {
+    "median": 0,
+    "p95": 0,
+    "all": [
+     0,
+     0,
+     0
+    ]
+   }
+  }
+ },
+ "localDetector": "on"
+}

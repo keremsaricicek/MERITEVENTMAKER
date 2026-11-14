@@ -1,0 +1,34 @@
+ornek run 1: cold 16097 ms (longest task 173, input 118) · warm 14104 ms (longest 184) · gap 5000 ms (longest task in it 201) prefetch {"model":true,"page":true,"startedBeforeMs":5308}
+   cold stages: decode 247 · tesseractStart 0 · skew 77 · deskew 14 · ocrModel 8484 · classicalDetect 1190 · localModelAndVector 14 · embedMemoryBuild 674 · tesseractWait 0 · textSuppression 89 · labels 2130 · venueAndFacing 300 · tableNumbers 2444 · planHash 39 · intelligence 199 · tesseract(worker) 7529
+ornek run 2: cold 16210 ms (longest task 161, input 183) · warm 14801 ms (longest 175) · gap 5000 ms (longest task in it 166) prefetch {"model":true,"page":true,"startedBeforeMs":5381}
+   cold stages: decode 299 · tesseractStart 0 · skew 78 · deskew 12 · ocrModel 8340 · classicalDetect 1049 · localModelAndVector 13 · embedMemoryBuild 694 · tesseractWait 0 · textSuppression 99 · labels 2271 · venueAndFacing 305 · tableNumbers 2478 · planHash 50 · intelligence 255 · tesseract(worker) 7623
+ornek run 3: cold 15690 ms (longest task 138, input 77) · warm 13924 ms (longest 231) · gap 5000 ms (longest task in it 195) prefetch {"model":true,"page":true,"startedBeforeMs":5357}
+   cold stages: decode 285 · tesseractStart 0 · skew 59 · deskew 10 · ocrModel 8631 · classicalDetect 1068 · localModelAndVector 16 · embedMemoryBuild 655 · tesseractWait 0 · textSuppression 87 · labels 1978 · venueAndFacing 232 · tableNumbers 2191 · planHash 41 · intelligence 175 · tesseract(worker) 7599
+ornek run 4: cold 16970 ms (longest task 168, input 145) · warm 14551 ms (longest 189) · gap 5000 ms (longest task in it 168) prefetch {"model":true,"page":true,"startedBeforeMs":5314}
+   cold stages: decode 237 · tesseractStart 0 · skew 81 · deskew 11 · ocrModel 8726 · classicalDetect 1274 · localModelAndVector 10 · embedMemoryBuild 852 · tesseractWait 0 · textSuppression 91 · labels 2228 · venueAndFacing 292 · tableNumbers 2664 · planHash 46 · intelligence 225 · tesseract(worker) 7178
+ornek run 5: cold 15189 ms (longest task 165, input 92) · warm 13701 ms (longest 207) · gap 5000 ms (longest task in it 163) prefetch {"model":true,"page":true,"startedBeforeMs":5528}
+   cold stages: decode 343 · tesseractStart 0 · skew 89 · deskew 13 · ocrModel 7766 · classicalDetect 1100 · localModelAndVector 11 · embedMemoryBuild 696 · tesseractWait 0 · textSuppression 81 · labels 1971 · venueAndFacing 267 · tableNumbers 2319 · planHash 38 · intelligence 212 · tesseract(worker) 6893
+golden run 1: cold 3480 ms (longest task 123, input 124) · warm 2837 ms (longest 80) · gap 5000 ms (longest task in it 123) prefetch {"model":true,"page":true,"startedBeforeMs":5125}
+   cold stages: decode 53 · tesseractStart 0 · skew 41 · deskew 5 · ocrModel 6 · classicalDetect 895 · localModelAndVector 1127 · embedMemoryBuild 478 · tesseractWait 0 · textSuppression 18 · labels 239 · venueAndFacing 368 · tableNumbers 1 · planHash 14 · intelligence 75 · tesseract(worker) 1
+golden run 2: cold 3241 ms (longest task 201, input 64) · warm 2822 ms (longest 78) · gap 5000 ms (longest task in it 62) prefetch {"model":true,"page":true,"startedBeforeMs":5120}
+   cold stages: decode 54 · tesseractStart 0 · skew 31 · deskew 3 · ocrModel 5 · classicalDetect 815 · localModelAndVector 1141 · embedMemoryBuild 393 · tesseractWait 0 · textSuppression 19 · labels 214 · venueAndFacing 333 · tableNumbers 0 · planHash 9 · intelligence 64 · tesseract(worker) 2
+golden run 3: cold 3834 ms (longest task 213, input 106) · warm 3032 ms (longest 92) · gap 5000 ms (longest task in it 79) prefetch {"model":true,"page":true,"startedBeforeMs":5187}
+   cold stages: decode 71 · tesseractStart 0 · skew 38 · deskew 4 · ocrModel 8 · classicalDetect 1045 · localModelAndVector 1272 · embedMemoryBuild 503 · tesseractWait 0 · textSuppression 32 · labels 232 · venueAndFacing 366 · tableNumbers 0 · planHash 10 · intelligence 56 · tesseract(worker) 2
+golden run 4: cold 3917 ms (longest task 224, input 78) · warm 3118 ms (longest 86) · gap 5000 ms (longest task in it 71) prefetch {"model":true,"page":true,"startedBeforeMs":5129}
+   cold stages: decode 54 · tesseractStart 0 · skew 39 · deskew 5 · ocrModel 7 · classicalDetect 1055 · localModelAndVector 1286 · embedMemoryBuild 522 · tesseractWait 0 · textSuppression 22 · labels 239 · venueAndFacing 446 · tableNumbers 0 · planHash 9 · intelligence 56 · tesseract(worker) 2
+golden run 5: cold 5045 ms (longest task 309, input 82) · warm 3498 ms (longest 95) · gap 5000 ms (longest task in it 74) prefetch {"model":true,"page":true,"startedBeforeMs":5148}
+   cold stages: decode 60 · tesseractStart 0 · skew 49 · deskew 6 · ocrModel 11 · classicalDetect 1190 · localModelAndVector 1971 · embedMemoryBuild 742 · tesseractWait 0 · textSuppression 31 · labels 264 · venueAndFacing 497 · tableNumbers 1 · planHash 9 · intelligence 52 · tesseract(worker) 2
+
+ornek cold: total 16097 / 16970 ms · longest task 165 ms · input latency max 118 ms · peak memory 1712 MB (pss)
+  ocrModel 8484 · tableNumbers 2444 · labels 2130 · classicalDetect 1100 · embedMemoryBuild 694 · venueAndFacing 292 · decode 285 · intelligence 212 · textSuppression 89 · skew 78 · planHash 41 · localModelAndVector 13 · deskew 12 · tesseractStart 0 · tesseractWait 0
+
+ornek warm: total 14104 / 14801 ms · longest task 189 ms · input latency max 160 ms · peak memory 1842 MB (pss)
+  ocrModel 9920 · classicalDetect 972 · labels 564 · tableNumbers 403 · venueAndFacing 311 · embedMemoryBuild 289 · decode 277 · skew 214 · intelligence 179 · tesseractStart 107 · textSuppression 98 · localModelAndVector 77 · deskew 10 · tesseractWait 0 · planHash 0
+
+golden cold: total 3834 / 5045 ms · longest task 213 ms · input latency max 82 ms · peak memory 1254 MB (pss)
+  localModelAndVector 1272 · classicalDetect 1045 · embedMemoryBuild 503 · venueAndFacing 368 · labels 239 · intelligence 56 · decode 54 · skew 39 · textSuppression 22 · planHash 9 · ocrModel 7 · deskew 5 · tesseractStart 0 · tesseractWait 0 · tableNumbers 0
+
+golden warm: total 3032 / 3498 ms · longest task 86 ms · input latency max 55 ms · peak memory 1352 MB (pss)
+  ocrModel 1650 · classicalDetect 498 · venueAndFacing 396 · skew 86 · decode 68 · embedMemoryBuild 68 · labels 55 · intelligence 48 · tesseractStart 27 · textSuppression 23 · localModelAndVector 21 · deskew 5 · tesseractWait 0 · tableNumbers 0 · planHash 0
+
+wrote ../../../tmp/claude-0/-home-user-MERITEVENTMAKER/7b41f49a-1109-57da-b022-838b2499b2be/scratchpad/quiet/profile-0x3-gap5.json (cores pid 10336's current affinity list: 0-3)

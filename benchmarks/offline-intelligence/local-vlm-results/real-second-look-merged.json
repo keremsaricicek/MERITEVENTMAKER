@@ -1,0 +1,274 @@
+{
+ "when": "2026-10-19T08:13:55.054Z",
+ "serverPeakHwmMb": 1213,
+ "relayLog": [
+  "[vlm-relay] ask run_950262f9 merged: yes in 6s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.8s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.6s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.8s",
+  "[vlm-relay] ask run_950262f9 merged: no in 5.6s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.1s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.3s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.2s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.9s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.3s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.9s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.5s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.4s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.8s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.3s",
+  "[vlm-relay] ask run_950262f9 merged: no in 5.2s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.3s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.5s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.4s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.7s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.4s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.2s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.5s",
+  "[vlm-relay] ask run_950262f9 merged: yes in 5.4s"
+ ],
+ "results": [
+  {
+   "plan": "golden",
+   "analyseSeconds": 8.441,
+   "lookStarted": true,
+   "lookDone": true,
+   "lookSeconds": 134.103,
+   "status": "done",
+   "mode": "check",
+   "checks": [
+    {
+     "question": "merged",
+     "reason": "unansweredGroup",
+     "detector": "yes",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "verdict": "AGREES",
+     "value": "yes",
+     "ids": [
+      "candidate_96dd8e2d-9005-413b-9c9d-086453840653",
+      "candidate_b9cd175d-80e2-4770-b3e6-a81cbb22bad5",
+      "candidate_09c07037-59b2-429f-ac92-e8567e93548a"
+     ]
+    },
+    {
+     "question": "merged",
+     "reason": "unansweredGroup",
+     "detector": "yes",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "verdict": "AGREES",
+     "value": "yes",
+     "ids": [
+      "candidate_f37cc322-825b-4afe-a7a3-cf4902b006db",
+      "candidate_3b55c7fc-2120-4778-865e-004020e11c3f",
+      "candidate_e864ba0b-f282-41f0-8ed2-2e3a73fc708c"
+     ]
+    },
+    {
+     "question": "merged",
+     "reason": "unansweredGroup",
+     "detector": "yes",
+     "answers": [
+      "no",
+      "yes"
+     ],
+     "verdict": "UNSURE",
+     "value": null,
+     "ids": [
+      "candidate_b18773b7-439a-441d-8316-a99fdbbcc5a1",
+      "candidate_cb021422-b62d-4511-b892-af99730081bf"
+     ]
+    },
+    {
+     "question": "merged",
+     "reason": "unansweredGroup",
+     "detector": "yes",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "verdict": "AGREES",
+     "value": "yes",
+     "ids": [
+      "candidate_27f68bc3-832e-4423-a4be-82b05986fca1",
+      "candidate_a8a1f121-e779-44b3-bb8a-01dc2d044a9a",
+      "candidate_9770ec37-5efe-414d-834c-0ab0464e51a9",
+      "candidate_73923bff-f9b0-4975-bb83-67c8fb60688c"
+     ]
+    },
+    {
+     "question": "merged",
+     "reason": "unansweredGroup",
+     "detector": "yes",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "verdict": "AGREES",
+     "value": "yes",
+     "ids": [
+      "candidate_66f9427e-4f5e-4508-a260-f12760f361fb",
+      "candidate_1c2f2287-968b-4399-8d92-e7612b5d63b0",
+      "candidate_9899ae55-1d53-4dc3-be85-fbe6fe164ecf"
+     ]
+    },
+    {
+     "question": "merged",
+     "reason": "unansweredGroup",
+     "detector": "yes",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "verdict": "AGREES",
+     "value": "yes",
+     "ids": [
+      "candidate_ba83746b-8b95-45a5-aefd-e649cc5772e7",
+      "candidate_4b8f9cf2-e23f-48e0-a013-9927bde19845",
+      "candidate_ee8cf574-e540-46de-b380-6fe0f49ba819"
+     ]
+    },
+    {
+     "question": "merged",
+     "reason": "unansweredGroup",
+     "detector": "yes",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "verdict": "AGREES",
+     "value": "yes",
+     "ids": [
+      "candidate_0dda56a5-ec2c-411c-9aa4-5308253ae092",
+      "candidate_04ea89eb-da13-42da-a322-fd3f2578386b",
+      "candidate_442260e2-c8c4-48e2-b85e-256c5e412513",
+      "candidate_5afd1f26-cbd2-4b1f-8015-43b756f71a12"
+     ]
+    },
+    {
+     "question": "merged",
+     "reason": "unansweredGroup",
+     "detector": "yes",
+     "answers": [
+      "yes",
+      "no"
+     ],
+     "verdict": "UNSURE",
+     "value": null,
+     "ids": [
+      "candidate_2e30a17d-c745-4acb-928e-6f92eef4f58c",
+      "candidate_ee855911-33f7-40f1-9e05-97c27cf84fca",
+      "candidate_02fa13a6-b6ab-4fe9-8028-e3a820f766a4"
+     ]
+    },
+    {
+     "question": "merged",
+     "reason": "unansweredGroup",
+     "detector": "yes",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "verdict": "AGREES",
+     "value": "yes",
+     "ids": [
+      "candidate_acf33a5e-a8ae-45cf-a203-ba043ffb66e2",
+      "candidate_1a76c61a-ad5f-47e4-bf9f-fe86d487ab56",
+      "candidate_ab140996-c464-472a-a678-fc38f27e5032"
+     ]
+    },
+    {
+     "question": "merged",
+     "reason": "unansweredGroup",
+     "detector": "yes",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "verdict": "AGREES",
+     "value": "yes",
+     "ids": [
+      "candidate_d2e6afd9-6426-464a-a08d-635d54b04459",
+      "candidate_3f234beb-2b7b-4f99-94f2-165d7ad25993",
+      "candidate_42af05aa-9346-4dc2-bc8b-eed55b4b4c36"
+     ]
+    },
+    {
+     "question": "merged",
+     "reason": "unansweredGroup",
+     "detector": "yes",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "verdict": "AGREES",
+     "value": "yes",
+     "ids": [
+      "candidate_17e0b548-2e74-4925-bc6a-5e7c5ee53c8e",
+      "candidate_6b75a05f-af1f-4b7c-8fcc-2aa508872fc6",
+      "candidate_27da7ab0-c90b-4f4b-a680-1c5e316b0eaf"
+     ]
+    },
+    {
+     "question": "merged",
+     "reason": "unansweredGroup",
+     "detector": "yes",
+     "answers": [
+      "yes",
+      "yes"
+     ],
+     "verdict": "AGREES",
+     "value": "yes",
+     "ids": [
+      "candidate_7d187cff-a44b-4379-9fd7-1b5874824f89",
+      "candidate_c94776aa-417b-4268-b70e-e00bacac410c",
+      "candidate_64840336-de48-46b9-a4ac-373e14d54c02"
+     ]
+    }
+   ],
+   "findings": [],
+   "tally": {
+    "asked": 12,
+    "AGREES": 10,
+    "DIFFERS": 0,
+    "UNSURE": 2,
+    "NO_ANSWER": 0
+   },
+   "applied": 0,
+   "longTasksDuringLook": 0,
+   "longestTaskMs": 0,
+   "candidates": 63,
+   "peakMb": {
+    "server": 1213,
+    "relayNode": 146,
+    "browser": 0
+   },
+   "errors": []
+  },
+  {
+   "plan": "ornek",
+   "analyseSeconds": 24.952,
+   "lookStarted": false,
+   "lookDone": false,
+   "lookSeconds": 0.002,
+   "checks": [],
+   "findings": [],
+   "tally": null,
+   "applied": 0,
+   "longTasksDuringLook": 0,
+   "longestTaskMs": 0,
+   "candidates": 187,
+   "peakMb": {
+    "server": 0,
+    "relayNode": 140,
+    "browser": 0
+   },
+   "errors": []
+  }
+ ]
+}

@@ -1,0 +1,33 @@
+/* Theme proposal "kapi" (Kapı — door-first high contrast, cool white). benchmarks/ux, 2026-11-02.
+   Drop-in: load AFTER src/styles.css. Redefines existing custom properties only.
+   Idea: the screen is read standing, fast, under ballroom/foyer light: white work surfaces,
+   near-black text, cool grey structure, saturated semantic colours. Warmth stays only in VIP brass. */
+:root{
+  --fp-table:#e2e6eb;--fp-table-line:#aeb8c3;--fp-chair:#ffffff;--fp-chair-line:#4f5b67;
+  --fp-venue:rgba(60,80,100,.08);--fp-venue-line:rgba(40,55,70,.45);--fp-venue-ink:#1f2a35;
+  --fp-stage:rgba(26,86,176,.10);--fp-stage-line:rgba(26,86,176,.55);
+  --shell:#f2f4f7;--chrome:#ffffff;--panel:#ffffff;--panel-2:#f6f8fa;--panel-3:#edf0f4;
+  --line:#d3d9e0;--line-soft:#e5e9ee;--text:#0e151d;--muted:#3a4652;--muted-2:#47535f;
+  --paper:#eef1f4;--paper-2:#dde2e8;--ink:#0e151d;
+  --blue:#1a56b0;--blue-2:#1a56b0;--blue-dim:#174c9b;--blue-soft:rgba(26,86,176,.10);--blue-soft-strong:rgba(26,86,176,.20);
+  --green:#157347;--green-soft:rgba(21,115,71,.11);--green-ink:#105c39;
+  --amber:#9a5800;--amber-soft:rgba(196,122,0,.13);--amber-ink:#744200;
+  --red:#bd2229;--red-soft:rgba(189,34,41,.10);--red-ink:#9d1b21;
+  --v8-bg:#ffffff;--v8-panel:#f8fafc;--v8-panel-2:#f2f5f8;--v8-line:#d9dfe6;
+  --v8-text:var(--text);--v8-muted:#3a4652;
+  --v8-blue:#1a56b0;--v8-cyan:#11729b;--v8-orange:#c25a00;--v8-red:#bd2229;--v8-green:#157347;
+  --shadow-1:0 1px 2px rgba(14,21,29,.08),0 1px 1px rgba(14,21,29,.05);
+  --shadow-2:0 2px 4px rgba(14,21,29,.06),0 6px 16px rgba(14,21,29,.09);
+  --shadow-3:0 4px 10px rgba(14,21,29,.08),0 16px 38px rgba(14,21,29,.13);
+  --shadow-4:0 8px 20px rgba(14,21,29,.10),0 30px 74px rgba(14,21,29,.18);
+  --ring:0 0 0 3px rgba(26,86,176,.38);
+  --vip:#86651a;--vip-soft:rgba(134,101,26,.12);--vip-line:rgba(134,101,26,.45);--vip-ink:#634a10;
+}
+:root{
+  --pi-bg:#edf0f4;--pi-surface:#ffffff;--pi-surface-2:#f6f8fa;
+  --pi-ink:#0e151d;--pi-muted:#3a4652;--pi-muted-2:#47535f;
+  --pi-line:#d3d9e0;--pi-line-soft:#e5e9ee;
+  --pi-accent:#1a56b0;--pi-accent-strong:#123f86;--pi-accent-soft:rgba(26,86,176,.11);
+  --pi-danger:#bd2229;--pi-danger-soft:rgba(189,34,41,.09);--pi-warn:#9a5800;
+  --pi-radius:8px;--pi-radius-sm:6px;--radius-md:4px;--radius-lg:5px;
+}

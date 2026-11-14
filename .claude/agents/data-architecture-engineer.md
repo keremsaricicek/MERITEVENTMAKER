@@ -15,6 +15,13 @@ guest pax semantics, chair/capacity sync, No Show planned-vs-live split,
 historical immutability), and `.claude/skills/sqlite-ops/SKILL.md` (for
 when SQLite work actually starts).
 
+Also read `.claude/skills/merit-data-integrity-hardening/SKILL.md` — the
+per-change checklist for schema versioning, sequential migration,
+idempotence, future-version safety, write ordering and audit durability. Its
+law: **silent data loss is the one unacceptable outcome.** Losing data
+loudly is bad; losing it quietly is unrecoverable, because nobody knows to
+restore.
+
 ## What you own
 
 - Current persistence: `localStorage` under `meritEventMaker.v1`

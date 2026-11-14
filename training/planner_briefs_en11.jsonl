@@ -1,0 +1,20 @@
+{"id":1101,"text":"Gala dinner for 400 guests, 40 round tables of 10","want":{"pax":400,"event":"gala","table_kind":"round","table_count":40,"seats_per_table":10}}
+{"id":1102,"text":"Wedding, 250 people, round tables 180 cm, 10 per table","want":{"pax":250,"event":"wedding","table_kind":"round","table_diam_cm":180,"seats_per_table":10}}
+{"id":1103,"text":"Training session for 60 people, classroom layout, the room is 12 by 15 meters","want":{"pax":60,"event":"classroom","room_w_m":12,"room_l_m":15}}
+{"id":1104,"text":"Cocktail party, 300 pax, 30 bistro tables","want":{"pax":300,"event":"cocktail","table_kind":"bistro","table_count":30}}
+{"id":1105,"text":"Company dinner for 180, rectangular tables 200x80, 8 seats each","want":{"pax":180,"event":"banquet","table_kind":"rect","table_len_cm":200,"table_wid_cm":80,"seats_per_table":8}}
+{"id":1106,"text":"Board meeting, 14 people, one table","want":{"pax":14,"event":"boardroom","table_count":1}}
+{"id":1107,"text":"Theatre seating for 500 in a 600 square meter hall","want":{"pax":500,"event":"theatre","area_m2":600}}
+{"id":1108,"text":"840 guests, 100 tables spread evenly, fill the rest with 2-seat bistros","want":{"pax":840,"table_count":100,"extra_kind":"bistro","extra_seats":2}}
+{"id":1109,"text":"U-shape setup for 30 people, chairs 45 by 50 cm","want":{"pax":30,"event":"u_shape","chair_w_cm":45,"chair_d_cm":50}}
+{"id":1110,"text":"Engagement party for 120, square tables, 6 a table","want":{"pax":120,"event":"wedding","table_kind":"square","seats_per_table":6}}
+{"id":1111,"text":"Banquet, 1,200 people, 120 rounds of 10","want":{"pax":1200,"event":"banquet","table_kind":"round","table_count":120,"seats_per_table":10}}
+{"id":1112,"text":"Gala for two hundred and fifty guests in a 30 x 40 m ballroom","want":{"pax":250,"event":"gala","room_w_m":30,"room_l_m":40}}
+{"id":1113,"text":"Product launch, 200 people standing, cocktail style, 20 high tables","want":{"pax":200,"event":"cocktail","table_kind":"bistro","table_count":20}}
+{"id":1114,"text":"Birthday dinner for 45 people, 5 round tables","want":{"pax":45,"event":"banquet","table_kind":"round","table_count":5}}
+{"id":1115,"text":"Conference, 350 seats, theatre style","want":{"pax":350,"event":"theatre"}}
+{"id":1116,"text":"Workshop for 24, room 8 m by 10 m","want":{"pax":24,"event":"classroom","room_w_m":8,"room_l_m":10}}
+{"id":1117,"text":"Wedding for 600 guests, 60 round tables of ten, 150 cm","want":{"pax":600,"event":"wedding","table_kind":"round","table_count":60,"seats_per_table":10,"table_diam_cm":150}}
+{"id":1118,"text":"Gala, 90 square meters, 70 people, Ø160 round tables","want":{"pax":70,"event":"gala","area_m2":90,"table_kind":"round","table_diam_cm":160}}
+{"id":1119,"text":"Dinner for 96 at 12 square tables of 8","want":{"pax":96,"event":"banquet","table_kind":"square","table_count":12,"seats_per_table":8}}
+{"id":1120,"text":"Meeting, 20 people, rectangular tables 180 by 75","want":{"pax":20,"event":"meeting","table_kind":"rect","table_len_cm":180,"table_wid_cm":75}}
