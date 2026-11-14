@@ -260,3 +260,4 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
 - Trainings: g6 vbench tuck2-S running; then blind4, s1, B6d exam → CHAIN-S-DONE → master2 (g7, chainR2). Keep-alive: until MASTER2-DONE loop, run_in_background.
 - Demo artifact 9EMAwxAhzuNx7qssJxWaSE; build via $S/wt-demo (checkout commit, build-offline, strip CSP, escape).
 - 2026-11-14: owner override rule for runR2 recorded in training/README.md (0 wrong changes, more EN right, ≤2 TR sentences lost).
+- 2026-11-14 owner: EXE target = 2026-11-15 evening (Istanbul), auto-update REQUIRED in it (fixes go out as updates). Gate still closed: waiting for exact 'EXE YAP' + 'açık depo tamam'. Plan: benchmarks/desktop/AUTO-UPDATE-PLAN.md.
